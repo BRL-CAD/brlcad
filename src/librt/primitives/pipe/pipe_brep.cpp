@@ -35,9 +35,8 @@
  *			R T _ P I P E _ B R E P
  */
 
-void generate_curves(point_t prevp, point_t curp, double od, double id, ON_Plane *plane, ON_SimpleArray<ON_Curve*> *outer, ON_SimpleArray<ON_Curve*> *inner) {
-    point_t current_point;
-   ON_Circle outercirclestart = ON_Circle(*plane, od/2.0);
+void generate_curves(double id, double od, ON_Plane *plane, ON_SimpleArray<ON_Curve*> *outer, ON_SimpleArray<ON_Curve*> *inner) {
+    ON_Circle outercirclestart = ON_Circle(*plane, od/2.0);
     ON_NurbsCurve *ocurve = ON_NurbsCurve::New();
     outercirclestart.GetNurbForm(*ocurve);
     outer->Append(ON_Curve::Cast(ocurve));
@@ -93,11 +92,24 @@ void make_linear_surfaces(ON_Brep **b, ON_SimpleArray<ON_Curve*> *startoutercurv
     }
 }
 
-void make_curved_surfaces(ON_Brep **b, ON_SimpleArray<ON_Curve*> *startoutercurves, ON_SimpleArray<ON_Curve*> *endoutercurves, ON_SimpleArray<ON_Curve*> *startinnercurves, ON_SimpleArray<ON_Curve*> *endinnercurves) {
-   /* ON_RevSurface* revsurf = ON_RevSurface::New();
-    revsurf->m_curve = allsegments[i];
+void make_curved_surfaces(ON_Brep **b, ON_SimpleArray<ON_Curve*> *startoutercurves, ON_SimpleArray<ON_Curve*> *startinnercurves, fastf_t angle, point_t bend_center, vect_t norm) {
+    point_t rev, raxis;
+    VADD2(rev, bend_center, norm);
+    
+    ON_Line *revaxis = new ON_Line(ON_3dPoint(bend_center), ON_3dPoint(rev));
+    ON_RevSurface* revsurf = ON_RevSurface::New();
+    revsurf->m_curve = *startoutercurves[0];
     revsurf->m_axis = *revaxis;
-    ON_BrepFace *face = (*b)->NewFace(*revsurf);*/
+    revsurf->m_angle = ON_Interval(2*ON_PI - angle, 2*ON_PI);
+    ON_BrepFace *face = (*b)->NewFace(*revsurf);
+    (*b)->FlipFace(*face);
+    
+    revsurf = ON_RevSurface::New();
+    revsurf->m_curve = *startinnercurves[0];
+    revsurf->m_axis = *revaxis;
+    revsurf->m_angle = ON_Interval(2*ON_PI - angle, 2*ON_PI);
+    face = (*b)->NewFace(*revsurf);
+    
 }
 
 extern "C" void
@@ -108,6 +120,8 @@ rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
     register struct wdb_pipept *prevp;
     register struct wdb_pipept *curp;
     register struct wdb_pipept *nextp;
+    point_t current_point;
+    vect_t x_dir, y_dir, pipe_dir;
 
     ON_SimpleArray<ON_Curve*> startoutercurves;
     ON_SimpleArray<ON_Curve*> startinnercurves;
@@ -115,15 +129,12 @@ rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
     ON_SimpleArray<ON_Curve*> endoutercurves;
     ON_SimpleArray<ON_Curve*> endinnercurves;
  
-    vect_t x_dir, y_dir, pipe_dir;
     ON_3dPoint plane_origin;
     ON_3dVector plane_x_dir, plane_y_dir;
     
     ON_Plane *startplane;
     ON_Plane *endplane;
     ON_BrepLoop *bloop;
-
-    *b = NULL; 
 
     RT_CK_DB_INTERNAL(ip);
     pip = (struct rt_pipe_internal *)ip->idb_ptr;
@@ -134,20 +145,22 @@ rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
     curp = BU_LIST_NEXT(wdb_pipept, &prevp->l);
     nextp = BU_LIST_NEXT(wdb_pipept, &curp->l);
     if (BU_LIST_IS_HEAD(&curp->l, &pip->pipe_segs_head)) return;
-   
-    *b = new ON_Brep();
-
+  
+    VMOVE(current_point, prevp->pp_coord);
+     
+    *b = ON_Brep::New();
    
     VSUB2(pipe_dir, prevp->pp_coord, curp->pp_coord);
     bn_vec_ortho(x_dir, pipe_dir);
     VCROSS(y_dir, pipe_dir, x_dir);
     VUNITIZE(y_dir);
+
     plane_origin = ON_3dPoint(prevp->pp_coord);
     plane_x_dir = ON_3dVector(x_dir);
     plane_y_dir = ON_3dVector(y_dir);
     endplane = new ON_Plane(plane_origin, plane_x_dir, plane_y_dir); 
  
-    generate_curves(prevp->pp_coord, curp->pp_coord, prevp->pp_id, prevp->pp_od, endplane, &endoutercurves, &endinnercurves);
+    generate_curves(prevp->pp_id, prevp->pp_od, endplane, &endoutercurves, &endinnercurves);
     
     ON_PlaneSurface* bp = new ON_PlaneSurface();
     bp->m_plane = (*endplane);
@@ -178,7 +191,7 @@ rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
     if (prevp->pp_id > 0.0) {
 	(*b)->NewPlanarFaceLoop(bface.m_face_index, ON_BrepLoop::inner, endinnercurves, true);
     }
-   (*b)->SetTrimIsoFlags(bface);
+    (*b)->SetTrimIsoFlags(bface);
   
     while (1) {
 	vect_t n1, n2;
@@ -199,7 +212,7 @@ rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
 	    plane_x_dir = ON_3dVector(x_dir);
 	    plane_y_dir = ON_3dVector(y_dir);
 	    endplane = new ON_Plane(plane_origin, plane_x_dir, plane_y_dir); 
-	    generate_curves(prevp->pp_coord, curp->pp_coord, prevp->pp_id, prevp->pp_od, endplane, &endoutercurves, &endinnercurves);
+	    generate_curves(prevp->pp_id, prevp->pp_od, endplane, &endoutercurves, &endinnercurves);
 	    make_linear_surfaces(b, &startoutercurves, &endoutercurves, &startinnercurves, &endinnercurves);
 	    break;
 	}
@@ -216,38 +229,57 @@ rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
 	    
     	    if (isnan(dist_to_bend) || VNEAR_ZERO(norm, SQRT_SMALL_FASTF) || NEAR_ZERO(dist_to_bend, SQRT_SMALL_FASTF)) {
     		// points are colinear, treat as linear segment 
-    		VSUB2(pipe_dir, prevp->pp_coord, curp->pp_coord);
+    		VSUB2(pipe_dir, prevp->pp_coord, current_point);
 	    	bn_vec_ortho(x_dir, pipe_dir);
 	    	VCROSS(y_dir, pipe_dir, x_dir);
 	    	VUNITIZE(y_dir);
-	    	plane_origin = ON_3dPoint(curp->pp_coord);
+	    	plane_origin = ON_3dPoint(current_point);
 	    	plane_x_dir = ON_3dVector(x_dir);
 	    	plane_y_dir = ON_3dVector(y_dir);
 	    	endplane = new ON_Plane(plane_origin, plane_x_dir, plane_y_dir); 
-       		generate_curves(prevp->pp_coord, curp->pp_coord, prevp->pp_id, prevp->pp_od, endplane, &endoutercurves, &endinnercurves);
+       		generate_curves(prevp->pp_id, prevp->pp_od, endplane, &endoutercurves, &endinnercurves);
     		make_linear_surfaces(b, &startoutercurves, &endoutercurves, &startinnercurves, &endinnercurves);
+		VMOVE(current_point, curp->pp_coord);
     	    } else {
 		point_t bend_center;
 		point_t bend_start;
 		point_t bend_end;
 		vect_t v1, v2;
+
 		VUNITIZE(norm);
+
+		// Linear part first
 		VJOIN1(bend_start, curp->pp_coord, dist_to_bend, n1);
     		VSUB2(pipe_dir, prevp->pp_coord, curp->pp_coord);
 	    	bn_vec_ortho(x_dir, pipe_dir);
 	    	VCROSS(y_dir, pipe_dir, x_dir);
 	    	VUNITIZE(y_dir);
-	    	plane_origin = ON_3dPoint(curp->pp_coord);
+	    	plane_origin = ON_3dPoint(bend_start);
 	    	plane_x_dir = ON_3dVector(x_dir);
 	    	plane_y_dir = ON_3dVector(y_dir);
 	    	endplane = new ON_Plane(plane_origin, plane_x_dir, plane_y_dir); 
-       		generate_curves(prevp->pp_coord, bend_start, prevp->pp_id, prevp->pp_od, endplane, &endoutercurves, &endinnercurves);
+       		generate_curves(prevp->pp_id, prevp->pp_od, endplane, &endoutercurves, &endinnercurves);
     		make_linear_surfaces(b, &startoutercurves, &endoutercurves, &startinnercurves, &endinnercurves);
+		
+		// Now do curved section
 		VJOIN1(bend_end, curp->pp_coord, dist_to_bend, n2);
 		VCROSS(v1, n1, norm);
 		VCROSS(v2, v1, norm);
 		VJOIN1(bend_center, bend_start, -curp->pp_bendradius, v1);
-//		make_curved_surfaces
+		make_curved_surfaces(b, &startoutercurves, &startinnercurves, angle, bend_center, norm);
+		startinnercurves.Empty();
+		startoutercurves.Empty();
+    		VSUB2(pipe_dir, curp->pp_coord, nextp->pp_coord);
+	    	bn_vec_ortho(x_dir, pipe_dir);
+	    	VCROSS(y_dir, pipe_dir, x_dir);
+	    	VUNITIZE(y_dir);
+	    	plane_origin = ON_3dPoint(bend_end);
+	    	plane_x_dir = ON_3dVector(x_dir);
+	    	plane_y_dir = ON_3dVector(y_dir);
+	    	endplane = new ON_Plane(plane_origin, plane_x_dir, plane_y_dir); 
+       		generate_curves(prevp->pp_id, prevp->pp_od, endplane, &startoutercurves, &startinnercurves);
+
+		VMOVE(current_point, bend_end);
 	    }
 	}
 	prevp = curp;
@@ -267,7 +299,7 @@ rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
     plane_y_dir = ON_3dVector(y_dir);
     endplane = new ON_Plane(plane_origin, plane_x_dir, plane_y_dir); 
  
-    generate_curves(prevp->pp_coord, curp->pp_coord, prevp->pp_id, prevp->pp_od, endplane, &endoutercurves, &endinnercurves);
+    generate_curves(prevp->pp_id, prevp->pp_od, endplane, &endoutercurves, &endinnercurves);
     
     ON_PlaneSurface* ebp = new ON_PlaneSurface();
     ebp->m_plane = (*endplane);

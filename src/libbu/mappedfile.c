@@ -17,30 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup mf */
-/** @{ */
-/** @file mappedfile.c
- *
- * @brief
- * Routines for sharing large read-only data files.
- *
- * Routines for sharing large read-only data files like height fields,
- * bit map solids, texture maps, etc.  Uses memory mapped files where
- * available.
- *
- * Each instance of the file has the raw data available as element
- * "buf".  If a particular application needs to transform the raw data
- * in a manner that is identical across all uses of that application
- * (e.g. height fields, EBMs, etc), then the application should
- * provide a non-null "appl" string, to tag the format of the "apbuf".
- * This will keep different applications from sharing that instance of
- * the file.
- *
- * Thus, if the same filename is opened for interpretation as both an
- * EBM and a height field, they will be assigned different mapped file
- * structures, so that the "apbuf" pointers are distinct.
- *
- */
 
 #include "common.h"
 
@@ -55,7 +31,7 @@
 #ifdef HAVE_SYS_MMAN_H
 #  include <sys/mman.h>
 #  if !defined(MAP_FAILED)
-#    define MAP_FAILED	((void *)-1)	/* Error return from mmap() */
+#    define MAP_FAILED ((void *)-1)	/* Error return from mmap() */
 #  endif
 #endif
 #include "bio.h"
@@ -63,37 +39,26 @@
 #include "bu.h"
 
 
-static struct bu_list	bu_mapped_file_list = {
+static struct bu_list bu_mapped_file_list = {
     0,
     (struct bu_list *)NULL,
     (struct bu_list *)NULL
 };	/* list of currently open mapped files */
 
 
-/**
- * B U _ O P E N _ M A P P E D _ F I L E
- *
- * If the file can not be opened, as descriptive an error message as
- * possible will be printed, to simplify code handling in the caller.
- *
- * Mapped files are always opened read-only.
- *
- * If the system does not support mapped files, the data is read into
- * memory.
- */
 struct bu_mapped_file *
 bu_open_mapped_file(const char *name, const char *appl)
     /* file name */
     /* non-null only when app. will use 'apbuf' */
 {
-    struct bu_mapped_file	*mp = (struct bu_mapped_file *)NULL;
+    struct bu_mapped_file *mp = (struct bu_mapped_file *)NULL;
 #ifdef HAVE_SYS_STAT_H
-    struct stat		sb;
-    int			fd;	/* unix file descriptor */
+    struct stat sb;
+    int fd;	/* unix file descriptor */
 #else
-    FILE			*fp = (FILE *)NULL;	/* stdio file pointer */
+    FILE *fp = (FILE *)NULL;	/* stdio file pointer */
 #endif
-    int			ret;
+    int ret;
 
     if (bu_debug&BU_DEBUG_MAPPED_FILE)
 #ifdef HAVE_SBRK
@@ -232,8 +197,8 @@ bu_open_mapped_file(const char *name, const char *appl)
     }
     /* Read it once to see how large it is */
     {
-	char	buf[32768] = {0};
-	int	got;
+	char buf[32768] = {0};
+	int got;
 	mp->buflen = 0;
 
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
@@ -298,18 +263,6 @@ bu_open_mapped_file(const char *name, const char *appl)
 }
 
 
-/**
- * B U _ C L O S E _ M A P P E D _ F I L E
- *
- * Release a use of a mapped file.  Because it may be re-used shortly,
- * e.g. by the next frame of an animation, don't release the memory
- * even on final close, so that it's available when next needed.
- *
- * Call bu_free_mapped_files() after final close to reclaim space.
- * But only do that if you're SURE that ALL these files will never
- * again need to be mapped by this process.  Such as when running
- * multi-frame animations.
- */
 void
 bu_close_mapped_file(struct bu_mapped_file *mp)
 {
@@ -329,9 +282,6 @@ bu_close_mapped_file(struct bu_mapped_file *mp)
 }
 
 
-/**
- * B U _ P R _ M A P P E D _ F I L E
- */
 void
 bu_pr_mapped_file(const char *title, const struct bu_mapped_file *mp)
 {
@@ -344,19 +294,10 @@ bu_pr_mapped_file(const char *title, const struct bu_mapped_file *mp)
 }
 
 
-/**
- * B U _ F R E E _ M A P P E D _ F I L E S
- *
- * Release storage being used by mapped files with no remaining users.
- * This entire routine runs inside a critical section, for parallel
- * protection.  Only call this routine if you're SURE that ALL these
- * files will never again need to be mapped by this process.  Such as
- * when running multi-frame animations.
- */
 void
 bu_free_mapped_files(int verbose)
 {
-    struct bu_mapped_file	*mp, *next;
+    struct bu_mapped_file *mp, *next;
 
     if (bu_debug&BU_DEBUG_MAPPED_FILE)
 	bu_log("bu_free_mapped_files(verbose=%d)\n", verbose);
@@ -384,7 +325,7 @@ bu_free_mapped_files(int verbose)
 
 #ifdef HAVE_SYS_MMAN_H
 	if (mp->is_mapped) {
-	    int	ret;
+	    int ret;
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);
 	    ret = munmap(mp->buf, (size_t)mp->buflen);
 	    bu_semaphore_release(BU_SEM_SYSCALL);
@@ -404,25 +345,15 @@ bu_free_mapped_files(int verbose)
 }
 
 
-/**
- * B U _ O P E N _ M A P P E D _ F I L E _ W I T H _ P A T H
- *
- * A wrapper for bu_open_mapped_file() which uses a search path to
- * locate the file.
- *
- * The search path is specified as a normal C argv array, terminated
- * by a null string pointer.  If the file name begins with a slash
- * ('/') the path is not used.
- */
 struct bu_mapped_file *
 bu_open_mapped_file_with_path(char *const *path, const char *name, const char *appl)
 
     /* file name */
     /* non-null only when app. will use 'apbuf' */
 {
-    char	* const *pathp = path;
-    struct bu_vls	str;
-    struct bu_mapped_file	*ret;
+    char * const *pathp = path;
+    struct bu_vls str;
+    struct bu_mapped_file *ret;
 
     BU_ASSERT_PTR(name, !=, NULL);
     BU_ASSERT_PTR(pathp, !=, NULL);
@@ -450,8 +381,6 @@ bu_open_mapped_file_with_path(char *const *path, const char *name, const char *a
     bu_vls_free(&str);
     return (struct bu_mapped_file *)NULL;
 }
-
-/** @} */
 
 /*
  * Local Variables:

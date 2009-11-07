@@ -17,20 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup magic */
-/** @{ */
-/** @file magic.c
- *
- * Routines involved with handling "magic numbers" used to identify
- * various in-memory data structures.  Magic numbers provide a means
- * to perform run-time sanity checks for memory corruption and
- * uninitialized data.
- *
- * The one ugly thing about this implementation is that every BRL-CAD
- * structure needs to have it's magic number registered here and in
- * the header.
- *
- */
 
 #include "common.h"
 
@@ -337,7 +323,6 @@ bu_identify_magic(register unsigned long magic)
     return "Unknown_Magic";
 }
 
-/** @} */
 /*
  * Local Variables:
  * mode: C

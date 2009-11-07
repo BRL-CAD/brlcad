@@ -44,6 +44,9 @@
 #include "./mged.h"
 #include "./cmd.h"
 
+
+extern Tk_Window tkwin; /* in cmd.c */
+
 extern void init_qray(void);
 extern void mged_global_variable_setup(Tcl_Interp *interp);
 
@@ -60,6 +63,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"ae2dir", cmd_ged_plain_wrapper, ged_ae2dir},
     {"aip", f_aip, GED_FUNC_PTR_NULL},
     {"analyze", cmd_ged_plain_wrapper, ged_analyze},
+    {"annotate", cmd_ged_plain_wrapper, ged_annotate},
     {"arb", cmd_ged_plain_wrapper, ged_arb},
     {"arced", cmd_ged_plain_wrapper, ged_arced},
     {"area", f_area, GED_FUNC_PTR_NULL},

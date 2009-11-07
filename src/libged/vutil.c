@@ -72,7 +72,7 @@ ged_view_update(struct ged_view	*gvp)
 }
 
 void
-ged_mat_aet(struct ged_view *gvp)
+_ged_mat_aet(struct ged_view *gvp)
 {
     mat_t tmat;
     fastf_t twist;
@@ -92,7 +92,7 @@ ged_mat_aet(struct ged_view *gvp)
 }
 
 int
-ged_do_rot(struct ged	*gedp,
+_ged_do_rot(struct ged	*gedp,
 	   char		coord,
 	   mat_t	rmat,
 	   int		(*func)())
@@ -156,7 +156,7 @@ ged_do_rot(struct ged	*gedp,
 }
 
 int
-ged_do_slew(struct ged *gedp, vect_t svec)
+_ged_do_slew(struct ged *gedp, vect_t svec)
 {
     point_t model_center;
 
@@ -168,7 +168,7 @@ ged_do_slew(struct ged *gedp, vect_t svec)
 }
 
 int
-ged_do_tra(struct ged	*gedp,
+_ged_do_tra(struct ged	*gedp,
 	   char		coord,
 	   vect_t	tvec,
 	   int		(*func)())
@@ -202,7 +202,7 @@ ged_do_tra(struct ged	*gedp,
 }
 
 int
-ged_do_zoom(struct ged *gedp, fastf_t sf)
+_ged_do_zoom(struct ged *gedp, fastf_t sf)
 {
     gedp->ged_gvp->gv_scale /= sf;
     if (gedp->ged_gvp->gv_scale < RT_MINVIEWSCALE)

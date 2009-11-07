@@ -36,7 +36,7 @@
 
 
 int
-ged_scale_extrude(struct ged *gedp, struct rt_extrude_internal *extrude, const char *attribute, fastf_t sf, int rflag)
+_ged_scale_extrude(struct ged *gedp, struct rt_extrude_internal *extrude, const char *attribute, fastf_t sf, int rflag)
 {
     vect_t hvec;
 

@@ -17,14 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup butcl */
-/** @{ */
-/** @file libbu/cmd.c
- *
- * @brief
- * Utility routines for handling commands.
- *
- */
 
 #include "common.h"
 
@@ -32,34 +24,16 @@
 #include "bio.h"
 
 #include "tcl.h"
-#include "cmd.h"			/* includes bu.h */
+#include "bu.h"
+#include "cmd.h"
 
-/**
- *
- * bu_cmd
- *
- * This function is intended to be used for parsing subcommands.
- * If the command is found in the array of commands, the associated
- * function is called. Otherwise, an error message is created and
- * added to interp.
- *
- * @param clientData	- data/state associated with the command
- * @param interp		- tcl interpreter wherein this command is registered
- * (Note - the result of the command is also stored here)
- * @param argc		- number of arguments in argv
- * @param argv		- command to execute and its arguments
- * @param cmds		- commands and related function pointers
- * @param cmd_index	- indicates which argv element holds the subcommand
- *
- * @return TCL_OK if successful, otherwise, TCL_ERROR.
- */
 int
-bu_cmd(ClientData	clientData,
-       Tcl_Interp	*interp,
-       int		argc,
-       const char	**argv,
-       struct bu_cmdtab	*cmds,
-       int		cmd_index)
+bu_cmd(ClientData clientData,
+       Tcl_Interp *interp,
+       int argc,
+       const char **argv,
+       struct bu_cmdtab *cmds,
+       int cmd_index)
 {
     register struct bu_cmdtab *ctp;
 
@@ -93,31 +67,18 @@ bu_cmd(ClientData	clientData,
     return TCL_ERROR;
 }
 
-/**
- *
- * bu_register_cmds
- *
- * This is a convenience routine for registering an array of commands
- * with a Tcl interpreter. Note - this is not intended for use by
- * commands with associated state (i.e. ClientData).
- *
- * @param interp		- Tcl interpreter wherein to register the commands
- * @param cmds		- commands and related function pointers
- *
- * @return
- * void
- */
 void
-bu_register_cmds(Tcl_Interp		*interp,
-		 struct bu_cmdtab	*cmds)
+bu_register_cmds(Tcl_Interp *interp,
+		 struct bu_cmdtab *cmds)
 {
     register struct bu_cmdtab *ctp;
 
-    for (ctp = cmds; ctp->ct_name != (char *)NULL; ctp++)
+    for (ctp = cmds; ctp->ct_name != (char *)NULL; ctp++) {
 	(void)Tcl_CreateCommand(interp, ctp->ct_name, ctp->ct_func,
 				(ClientData)ctp, (Tcl_CmdDeleteProc *)NULL);
+    }
 }
-/** @} */
+
 /*
  * Local Variables:
  * mode: C

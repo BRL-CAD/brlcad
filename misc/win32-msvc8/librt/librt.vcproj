@@ -300,7 +300,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\bspline\bspline.c"
+				RelativePath="..\..\..\src\librt\primitives\bspline\bspline.cpp"
 				>
 			</File>
 			<File
@@ -656,6 +656,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\nmg\nmg_tri_mc.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\primitives\nmg\nmg_visit.c"
 				>
 			</File>
@@ -669,6 +673,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\librt\primitives\bspline\nurb_bound.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\bspline\nurb_brep.cpp"
 				>
 			</File>
 			<File

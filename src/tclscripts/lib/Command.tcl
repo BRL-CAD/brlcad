@@ -40,6 +40,7 @@
     itk_option define -result_color result_color TextColor blue3
     itk_option define -maxlines maxlines MaxLines 1000
 
+    public method clear {}
     public method history {}
     public method edit_style {args}
     private method do_get_more_args {}
@@ -227,6 +228,14 @@
 
 
 ############################## Public Methods ##############################
+::itcl::body Command::clear {} {
+    set w $itk_component(text)
+    $w delete 1.0 end
+    $w insert insert " "
+    beginning_of_line
+    $w edit reset
+}
+
 ::itcl::body Command::history {} {
     eval $hist history
 }

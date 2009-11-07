@@ -92,7 +92,7 @@ make_face(struct rt_nurb_internal *s, fastf_t *a, fastf_t *b, fastf_t *c, fastf_
 
 
 int
-main(int argc, char **argv)
+main(int argc, char *argv[])
 {
     point_t a, b, c, d;
     struct rt_wdb *fp;
@@ -117,8 +117,8 @@ main(int argc, char **argv)
     mk_id(fp, "Mike's Spline Test");
 
     VSET(a,  0,  0,  0);
-    VSET(b, 10,  0,  0);
-    VSET(c, 10, 10,  0);
+    VSET(b, 10,  0,  -5);
+    VSET(c, 10, 10,  10);
     VSET(d,  0, 10,  0);
 
     si = (struct rt_nurb_internal *)bu_malloc(sizeof(struct rt_nurb_internal), "spltest rt_nurb_internal");

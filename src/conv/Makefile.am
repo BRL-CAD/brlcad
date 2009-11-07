@@ -34,9 +34,14 @@ bin_PROGRAMS = \
 else !ONLY_BENCHMARK
 
 SUBDIRS = \
-	iges \
 	${STEPDIR} \
+	iges \
 	intaval
+
+DIST_SUBDIRS = \
+	iges \
+	intaval \
+	step
 
 bin_PROGRAMS = \
 	3dm-g \

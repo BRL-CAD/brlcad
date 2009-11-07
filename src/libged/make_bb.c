@@ -37,17 +37,15 @@
 int
 ged_make_bb(struct ged *gedp, int argc, const char *argv[])
 {
-    register int		i;
-    point_t			rpp_min, rpp_max;
-    struct directory	*dp;
-    struct rt_arb_internal	*arb;
-    struct rt_db_internal	new_intern;
-    char			*new_name;
-    int			use_air = 0;
+    register int i;
+    point_t rpp_min, rpp_max;
+    struct directory *dp;
+    struct rt_arb_internal *arb;
+    struct rt_db_internal new_intern;
+    char *new_name;
+    int use_air = 0;
     static const char *usage = "bbname object(s)";
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     /* initialize result */
@@ -64,10 +62,13 @@ ged_make_bb(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_READ_ONLY(gedp, GED_ERROR);
+
     i = 1;
 
     /* look for a USEAIR option */
-    if ( ! strcmp(argv[i], "-u") ) {
+    if (! strcmp(argv[i], "-u")) {
 	use_air = 1;
 	i++;
     }
@@ -84,7 +85,7 @@ ged_make_bb(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    if (ged_get_obj_bounds(gedp, argc-2, (const char **)argv+2, use_air, rpp_min, rpp_max) == GED_ERROR)
+    if (_ged_get_obj_bounds(gedp, argc-2, (const char **)argv+2, use_air, rpp_min, rpp_max) == GED_ERROR)
 	return GED_ERROR;
 
     /* build bounding RPP */

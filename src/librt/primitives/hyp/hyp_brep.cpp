@@ -37,15 +37,14 @@
 extern "C" void
 rt_hyp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {
-    struct rt_hyp_internal	*eip;
-
-    *b = NULL; 
+    struct rt_hyp_internal *eip;
 
     RT_CK_DB_INTERNAL(ip);
     eip = (struct rt_hyp_internal *)ip->idb_ptr;
     RT_HYP_CK_MAGIC(eip);
 
-    *b = new ON_Brep();
+    *b = ON_Brep::New();
+
     ON_TextLog dump_to_stdout;
     ON_TextLog* dump = &dump_to_stdout;
 

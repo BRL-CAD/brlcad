@@ -36,7 +36,7 @@
 
 
 int
-ged_rotate_extrude(struct ged *gedp, struct rt_extrude_internal *extrude, const char *attribute, matp_t rmat)
+_ged_rotate_extrude(struct ged *gedp, struct rt_extrude_internal *extrude, const char *attribute, matp_t rmat)
 {
     RT_EXTRUDE_CK_MAGIC(extrude);
 

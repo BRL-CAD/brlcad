@@ -147,24 +147,19 @@ void FindLoops(ON_Brep **b) {
 extern "C" void
 rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {
-
-    struct rt_sketch_internal	*eip;
-
-    *b = NULL; 
+    struct rt_sketch_internal *eip;
 
     RT_CK_DB_INTERNAL(ip);
     eip = (struct rt_sketch_internal *)ip->idb_ptr;
     RT_SKETCH_CK_MAGIC(eip);
 
-    *b = new ON_Brep();
-
+    *b = ON_Brep::New();
 
     ON_TextLog dump_to_stdout;
     ON_TextLog* dump = &dump_to_stdout;
 
     ON_3dPoint plane_origin;
     ON_3dVector plane_x_dir, plane_y_dir;
-
 
     //  Find plane in 3 space corresponding to the sketch.
 
@@ -227,7 +222,7 @@ rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol
 			bezpoints->Append((*b)->m_V[bsg->ctl_points[i]].Point());
 		    }
 		    ON_BezierCurve* bez3d = new ON_BezierCurve((const ON_3dPointArray)*bezpoints);
-		    ON_NurbsCurve* beznurb3d = new ON_NurbsCurve();
+		    ON_NurbsCurve* beznurb3d = ON_NurbsCurve::New();
 		    bez3d->GetNurbForm(*beznurb3d);
 		    beznurb3d->SetDomain(0.0,1.0);
 		    (*b)->m_C3.Append(beznurb3d);

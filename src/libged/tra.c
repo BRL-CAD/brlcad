@@ -99,7 +99,7 @@ ged_tra(struct ged *gedp, int argc, const char *argv[])
     if ((ret = ged_tra_args(gedp, argc, argv, &coord, tvec)) != GED_OK)
 	return ret;
 
-    return ged_do_tra(gedp, coord, tvec, (int (*)())0);
+    return _ged_do_tra(gedp, coord, tvec, (int (*)())0);
 }
 
 

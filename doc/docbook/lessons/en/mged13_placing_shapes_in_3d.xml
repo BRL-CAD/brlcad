@@ -1,0 +1,509 @@
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+"../../resources/standard/dtd/docbookx.dtd">
+<article xmlns:xi="http://www.w3.org/2001/XInclude">
+  <articleinfo>
+    <title>Placing Shapes in 3-D Space</title>
+
+    <xi:include href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
+
+    <legalnotice>
+       <para>Approved for public release; distribution is unlimited</para>
+   </legalnotice>
+  </articleinfo>
+
+    <para id="placing_shapes_in_3d_overviewlist">
+      In this lesson, you will:
+      
+      <itemizedlist mark='bullet'>
+	<listitem>
+	  <para>Create, edit, and place shapes in 3-D space.</para>
+	</listitem>
+	<listitem>
+	  <para>Create custom colors using the Combination Editor.</para>
+	</listitem>
+	<listitem>
+	  <para>Identify the attributes of the checker shader.</para>
+	</listitem>
+	<listitem>
+	  <para>Identify how RGB colors are created.</para>
+	</listitem>
+      </itemizedlist>
+
+    </para>
+
+    <para id="placing_shapes_in_3d_intro1"> 
+      In previous lessons, you created and edited shapes. You also placed
+      objects in three-dimensional space. This lesson will provide more advanced
+      practice on creating and editing shapes and placing them in 3-D space.
+    </para>
+
+    <para id="placing_shapes_in_3d_intro2">
+      The design you will make in this lesson is a simple candle in a candle
+      holder sitting on a table (as shown in the following figure). In the next
+      lesson, you will add decorations and lighting to make the design more
+      realistic.
+
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" fileref="../../lessons/en/images/mged13_candle_design.png" format="PNG"></imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	      The Candle Design
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
+    </para>
+
+    <para id="placing_shapes_in_3d_intro3">
+      Begin by creating a new database called candle.g. Title your database
+      Candle Tutorial.
+    </para>
+
+    <sect1 id="candle_create_tabletop">
+      <title>Creating the Tabletop</title>
+      <para>
+	Create an arb8 from the GUI. Name the shape arb8.s. Go to View and select
+	Front.
+      </para>
+      <para>
+	Go to the Edit option of the menu bar. The arb8 needs to be made larger,
+	so, under the Edit menu, select Scale. Put the mouse pointer in the upper
+	half of the screen to make the arb8 larger and click the middle mouse
+	button until the sides of the arb8 touch each side of the screen. Use the
+	SHIFT key and left mouse button to drag the arb into position, if
+	necessary.
+      </para>
+      <para>
+	Under the Edit menu, select Move Faces and then Move Face 4378. Place the
+	mouse pointer in the lower  half of the screen and click the middle mouse
+	button until the arb8 is about the thickness of a tabletop. Go back to
+	Edit and Accept the changes, and then use the SHIFT and any mouse key to
+	position the tabletop so that it appears similar to the following:
+
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" fileref="../../lessons/en/images/mged13_candle_tabletop_wireframe_front.png" format="PNG"></imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	      Wireframe Representation of Tabletop from Front View
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
+
+      </para>
+      <para>
+	Make a region of the tabletop by typing at the Command Window prompt:
+	
+	<command>r table1.r u arb8.s[Enter]</command>
+      </para>
+    </sect1>
+
+    <sect1 id="candle_create_base">
+      <title>Creating the Candle Base</title>
+      <para>
+	Create an eto and name it eto1.s. To create the bottom of the candle base,
+	you will need to flip the eto 180'0. Type at the Command Window prompt:
+	
+	<command>rot 0 180 0[Enter]</command>
+	
+	This tells <application>MGED</application> to rotate the shape 180'0 along the y axis. Next, select
+	Scale and make the eto a little smaller than its default size. Place the
+	eto on the tabletop by using the SHIFT key and left mouse button to drag
+	the base into position.
+      </para>
+
+      <para>
+	View your design from different angles to make sure the eto sits flush on
+	the center of the tabletop. Click on Accept when you are satisfied with
+	its size and placement. Your base should be similar to the one shown as
+	follows:
+
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" fileref="../../lessons/en/images/mged13_candle_tabletop_eto1_wireframe_front.png" format="PNG"></imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	      Wireframe Representation of Tabletop and First eto
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
+      </para>
+
+      <para>
+	The next step in creating a candle base is to make a right circular
+	cylinder (rcc). Name the shape rcc1.s.
+      </para>
+      <para>
+	Go to Edit. In addition to the standard commands, you will be presented
+	with a menu of thirteen shape-specific ways to edit this shape.
+	<informaltable>
+	  <tgroup cols='2'>
+	    <tbody>
+	      <row>
+		<entry>
+		  <literallayout>
+Set H
+Set H (Move V)
+Set A
+Set B
+Set c
+Set d
+		  </literallayout>
+		</entry>
+		<entry>
+		  <literallayout>
+Set A,B
+Set C,D
+Set A,B,C,D
+Rotate H
+Rotate AxB
+Move End H(rt)
+Move End H
+		  </literallayout>
+		</entry>
+	      </row>
+	    </tbody>
+	  </tgroup>
+	</informaltable>
+      </para>
+
+      <para>
+	Scale the shape until it is slightly larger in diameter than the top of
+	the eto1.s (you can check this by switching to a top view). Go back to
+	Edit and select Set H. Reduce the height of the shape until the rcc is
+	about two times the height of eto1.s. Position the cylinder on the
+	candle-holder base. Check the placement of the rcc from the top, left, and
+	front to ensure that it is centered in the eto. Make sure the bottom of
+	the rcc is not quite touching the tabletop. Accept your changes. When
+	done, your design should look like the following:
+
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" fileref="../../lessons/en/images/mged13_candle_tabletop_eto1_rcc_wireframe_front.png" format="PNG"></imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	      Wireframe Representation of Tabletop, First eto and First rcc
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
+
+      </para>
+
+      <para>
+	The last step in making the candle base is to create another eto. Name it
+	eto2.s. Edit this shape as you did the previous eto and place it on top of
+	the rcc, as shown in the following figure. Accept your changes when
+	finished. Your candle base should now look like this:
+
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" fileref="../../lessons/en/images/mged13_candle_tabletop_base_front.png" format="PNG"></imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	      Wireframe Representation of Tabletop and Candle Base
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
+
+      </para>
+      <para>
+	Make a region of the three shapes of the base. Name it base1.r. Your
+	Boolean expression should read:
+	
+	<command>r base1.r u eto1.s u rcc1.s u eto2.s</command>
+	
+	Note that we could have written it
+	
+	<command>r base1.r u eto1.s u eto2.s u rcc1.s</command>
+	
+	but the first expression is preferred to be consistent with the order of a
+	later example. In a moment, we will want to remove some material that
+	eto2.s gives us. By placing eto2.s last in the list, we can perform this
+	removal easily.
+      </para>
+    </sect1>
+
+    <sect1 id="candle_create_candle">
+      <title>Creating the Candle</title>
+      <para>
+	Create an rcc and name it rcc2.s. Edit the shape as you did the previous
+	rcc. When you are done, it should look similar to the one in the following
+	illustration. (Note: After you have accepted the changes, you can get all
+	of your tabletop and candle in the Graphics Window by using the SHIFT key
+	and left mouse button to move your view of the design.)
+
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" fileref="../../lessons/en/images/mged13_candle_tabletop_base_candle_front.png" format="PNG"></imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	      Wireframe Representation of Tabletop, Candle Base, and Candle
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
+
+      </para>
+      <para>
+	Make a region of the candle. Your Boolean statement should read:
+	
+	<command>r candle1.r u rcc2.s</command>
+	
+	Now we create a cylindrical cutout in the base for the candle to sit in.
+	To do this we can use the shape of the candle, as follows:
+	
+	<command>r base1.r - rcc2.s</command>
+	
+	Earlier we had mentioned that we would want to remove some material that
+	we got from eto2.s. Now we have done it.
+      </para>
+    </sect1>
+
+    <sect1 id="candle_create_flame">
+      <title>Creating the Candle Flame</title>
+
+      <para>
+	Create a particle (part) and name it part1.s. Edit and position the shape
+	until your design looks like the following one:
+
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" fileref="../../lessons/en/images/mged13_candle_complete_front.png" format="PNG"></imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	      Wireframe Representation of Completed Candle Design
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
+
+	Make a region of the flame by typing at the Command Window prompt:
+	
+	<command>r flame1.r u part1.s[Enter]</command>
+      </para>
+    </sect1>
+    
+    <sect1 id="candle_create_combination">
+      <title>Making a Combination of the Base, Candle, and Flame</title>
+
+      <para>
+	To make a combination of the parts of the candle, type at the Command
+	Window prompt:
+	
+	<command>comb candle1.c u base1.r u candle1.r u flame1.r[Enter]</command>
+      </para>
+    </sect1>
+
+    <sect1 id="candle_check_data_tree">
+      <title>Checking the Data Tree</title>
+      <para>
+	Now that you have made a number of regions and a combination, it would be
+	a good time to check your data tree and make sure it agrees with the
+	following tree. If you find that you have made a mistake in any of the
+	parts of the tree, you can change them in the Boolean Expression box of
+	the Combination Editor (refer to Lesson 5). At the Command Line prompt,
+	type:
+	
+	<command>tree candle1.c[Enter]</command>
+	
+	Your Boolean expression should read:
+	
+	<literallayout>
+   candle1.c/
+	
+   u base1.r/R
+
+   u eto1.s
+
+   u rcc1.s
+
+   u eto2.s
+
+   - rcc2.s
+
+   u candle1.r/R
+
+   u rcc2.s
+
+   u flame1.r/R
+
+   u part1.s
+	</literallayout>
+      </para>
+    </sect1>
+
+    <sect1 id="candle_assign_mater_prop">
+      <title>Assigning Material Properties to the Elements of the Design</title>
+      <para>
+	To assign material properties to your design, go to the Edit menu and
+	select the Combination Editor. Assign the following material properties to
+	each of the elements:
+	
+	<informaltable frame="all">
+	  <tgroup cols='4'>
+	    <thead>
+	      <row>
+		<entry>Element</entry>
+		<entry>Shader</entry>
+		<entry>Color(s)</entry>
+		<entry>Other</entry>
+	      </row>
+	    </thead>
+	    <tbody>
+	      <row>
+		<entry>Tabletop</entry>
+		<entry>Checker</entry>
+		<entry>Red (255 0 0); White (255 255 255)</entry>
+		<entry>Scale (10)</entry>
+	      </row>
+	      <row>
+		<entry>Candle Base</entry>
+		<entry>Plastic</entry>
+		<entry>Medium Gray (128 130 144)</entry>
+		<entry></entry>
+	      </row>
+	      <row>
+		<entry>Candle</entry>
+		<entry>Plastic</entry>
+		<entry>Light Blue (0 166 255)</entry>
+		<entry></entry>
+	      </row>
+	      <row>
+		<entry>Flame</entry>
+		<entry>Plastic</entry>
+		<entry>Light Yellow (255 255 190)</entry>
+		<entry></entry>
+	      </row>
+	    </tbody>
+	  </tgroup>
+	</informaltable>
+      </para>
+      <para>
+	Notice that the checker shader for the tabletop includes two color values
+	and a scale value. Type the values for red, white, and a scale of 10 in
+	the boxes, as follows:
+
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" fileref="../../lessons/en/images/mged13_candle_comb_ed_checker.png" format="PNG"></imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	      Combination Editor with the Checker Shader Selected
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
+
+      </para>
+      <para>
+	For the rest of the elements of the design, use the Color Tool to make the
+	colors shown or simply type them in the Color text box, remembering to
+	leave a space between each set of numbers.
+      </para>
+
+      <note>
+	<para>
+	  As discussed previously, a color is made up of three numbers, ranging 
+	  from 0 to 255. The first number represents the amount of red, the     
+	  second represents the amount of green, and the third represents the   
+	  amount of blue used to make the color. A color of 0 0 0 is black, and 
+	  255 255 255 is white. This method of creating colors is different     
+	  from mixing pigment colors used in painting because you are dealing   
+	  with light. While it may seem strange at first, most <application>MGED</application> users       
+	  quickly become adept at creating RGB colors.                          
+	</para>
+      </note>
+    </sect1>
+
+    <sect1 id="candle_raytrace">
+      <title>Raytracing Your Design</title>
+      
+      <para>
+	Before raytracing, change the View to az35, el25 to give a better view of
+	the completed design and then Blast the old design by typing at the
+	Command Window prompt:
+	
+	<command>B table1.r candle1.c[Enter]</command>
+	
+	This command tells the <application>MGED</application> program to:
+	<informaltable>
+	  <tgroup cols='3'>
+	    <tbody>
+	      <row>
+		<entry>B</entry>
+		<entry>table1.r</entry>
+		<entry>candle1.c</entry>
+	      </row>
+	      <row>
+		<entry>Clear the Graphics Window</entry>
+		<entry>Draw the region named table1.r</entry>
+		<entry>Draw the combination named candle1.c</entry>
+	      </row>
+	    </tbody>
+	  </tgroup>
+	</informaltable>
+      </para>
+      <para>
+	To provide the most light on your design, use a white background color.
+	Your raytraced candle should look similar to the following:
+
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" fileref="../../lessons/en/images/mged13_candle_raytraced_overlay.png" format="PNG"></imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	      Raytraced Candle Design in Overlay Mode
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
+
+      </para>
+    </sect1>
+
+    <sect1 id="placing_shapes_in_3d_review">
+      <title>Review</title>
+      <para>
+	
+	In this lesson, you:
+	<itemizedlist mark='bullet'>
+	  <listitem>
+	    <para>Created, edited, and placed shapes in 3-D space.</para>
+	  </listitem>
+	  <listitem>
+	    <para>Created custom colors using the Combination Editor.</para>
+	  </listitem>
+	  <listitem>
+	    <para>Identified the attributes of the checker shader.</para>
+	  </listitem>
+	  <listitem>
+	    <para>Identified how RGB colors are created.</para>
+	  </listitem>
+	</itemizedlist>
+      </para>
+    </sect1>
+
+  </article>

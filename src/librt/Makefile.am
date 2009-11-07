@@ -92,11 +92,12 @@ librt_nil_la_SOURCES = \
 	primitives/bot/bot_mirror.c \
 	primitives/brep/brep.cpp \
 	primitives/brep/brep_debug.cpp \
-	primitives/bspline/bspline.c \
+	primitives/bspline/bspline.cpp \
 	primitives/bspline/bspline_mirror.c \
 	primitives/bspline/nurb_basis.c \
 	primitives/bspline/nurb_bezier.c \
 	primitives/bspline/nurb_bound.c \
+	primitives/bspline/nurb_brep.cpp \
 	primitives/bspline/nurb_c2.c \
 	primitives/bspline/nurb_copy.c \
 	primitives/bspline/nurb_diff.c \
@@ -172,6 +173,7 @@ librt_nil_la_SOURCES = \
 	primitives/nmg/nmg_rt_isect.c \
 	primitives/nmg/nmg_rt_segs.c \
 	primitives/nmg/nmg_tri.c \
+	primitives/nmg/nmg_tri_mc.c \
 	primitives/nmg/nmg_visit.c \
 	primitives/part/part.c \
 	primitives/part/part_mirror.c \

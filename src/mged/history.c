@@ -40,7 +40,6 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "./mged.h"
-#include "./mgedtcl.h"
 
 struct mged_hist mged_hist_head;
 

@@ -17,16 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup image */
-/** @{ */
-/** @file image.c
- *
- * @brief image save/load routines
- *
- * save or load images in a variety of formats.
- *
- */
-/** @} */
 
 #include "common.h"
 
@@ -52,7 +42,7 @@
 /* private functions */
 
 /* flip an image vertically */
-static int
+HIDDEN int
 image_flip(unsigned char *buf, int width, int height)
 {
     unsigned char *buf2;
@@ -67,22 +57,25 @@ image_flip(unsigned char *buf, int width, int height)
     return 0;
 }
 
-/* Save functions use the return value not only for success/failure, but also to
- * note if further action is needed.
+/* Save functions use the return value not only for success/failure,
+ * but also to note if further action is needed.
+ *
  *   0 - failure.
  *   1 - success, no further action needed.
  *   2 - success, close() required on fd.
- * This might be better just using the f* functions instead of mixing...
+ *
+ * This might be better just using the f* functions instead of
+ * mixing...
  */
 
 /*
  * Attempt to guess the file type. Understands ImageMagick style
- * FMT:filename as being preferred, but will attempt to guess
- * based on extension as well.
+ * FMT:filename as being preferred, but will attempt to guess based on
+ * extension as well.
  *
  * I suck. I'll fix this later. Honest.
  */
-static int
+HIDDEN int
 guess_file_format(char *filename, char *trimmedname)
 {
     /* look for the FMT: header */
@@ -108,7 +101,7 @@ guess_file_format(char *filename, char *trimmedname)
     return BU_IMAGE_PIX;
 }
 
-static int
+HIDDEN int
 png_save(int fd, unsigned char *rgb, int width, int height)
 {
     png_structp png_ptr = NULL;
@@ -148,7 +141,7 @@ png_save(int fd, unsigned char *rgb, int width, int height)
     return 1;
 }
 
-static int
+HIDDEN int
 bmp_save(int fd, unsigned char *rgb, int width, int height)
 {
     FILE *fh;
@@ -170,7 +163,7 @@ bmp_save(int fd, unsigned char *rgb, int width, int height)
     return 0;
 }
 
-static int
+HIDDEN int
 pix_save(int fd, unsigned char *rgb, int size)
 {
     write(fd, rgb, (unsigned)size);
@@ -178,8 +171,9 @@ pix_save(int fd, unsigned char *rgb, int size)
 }
 
 /* size is bytes of PIX data, bw output file will be 1/3 this size.
- * Also happens to munge up the contents of rgb. */
-static int
+ * Also happens to munge up the contents of rgb.
+ */
+HIDDEN int
 bw_save(int fd, unsigned char *rgb, int size)
 {
     int bwsize = size/3, i;
@@ -189,7 +183,9 @@ bw_save(int fd, unsigned char *rgb, int size)
 	return 0;
     }
 
-    /* an ugly naïve pixel grey-scale hack. Does not take human color curves. */
+    /* an ugly naive pixel grey-scale hack. Does not take human color
+     * curves.
+     */
     for (i=0;i<bwsize;++i)
 	rgb[i] = (int)((float)rgb[i*3]+(float)rgb[i*3+1]+(float)rgb[i*3+2]/3.0);
 
@@ -198,7 +194,7 @@ bw_save(int fd, unsigned char *rgb, int size)
     return 2;
 }
 
-static int
+HIDDEN int
 ppm_save(int fd, unsigned char *rgb, int width, int height)
 {
     char buf[BUFSIZ] = {0};

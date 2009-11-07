@@ -3403,6 +3403,9 @@ RT_EXPORT BU_EXTERN(int rt_metaball_ck,
 RT_EXPORT BU_EXTERN(fastf_t rt_metaball_point_value,
 		    (const point_t *p,
 		     const struct rt_metaball_internal *mb));
+RT_EXPORT BU_EXTERN(int rt_metaball_point_inside,
+		    (const point_t *p,
+		     const struct rt_metaball_internal *mb));
 RT_EXPORT BU_EXTERN(int rt_metaball_lookup_type_id,
 		    (const char *name));
 RT_EXPORT BU_EXTERN(const char *rt_metaball_lookup_type_name,
@@ -4720,6 +4723,11 @@ RT_EXPORT BU_EXTERN(void nmg_triangulate_fu,
 		    (struct faceuse *fu,
 		     const struct bn_tol *tol));
 
+/*  nmg_tri_mc.c */
+RT_EXPORT BU_EXTERN(void nmg_triangulate_model_mc,
+		    (struct model *m,
+		     const struct bn_tol *tol));
+
 /* nmg_manif.c */
 RT_EXPORT BU_EXTERN(int nmg_dangling_face,
 		    (const struct faceuse *fu,
@@ -5073,22 +5081,6 @@ RT_EXPORT extern void (*nmg_plot_anim_upcall)();
 RT_EXPORT extern void (*nmg_vlblock_anim_upcall)();
 RT_EXPORT extern void (*nmg_mged_debug_display_hack)();
 RT_EXPORT extern double nmg_eue_dist;
-
-/* nurb_util.c */
-RT_EXPORT BU_EXTERN(void rt_nurb_clean_cnurb,
-		    (struct edge_g_cnurb * crv));
-
-/* nurb_knot.c */
-RT_EXPORT BU_EXTERN(int rt_nurb_knot_index,
-		    (const struct knot_vector *kv,
-		     fastf_t k_value,
-		     int	order));
-
-/* nurb_trim.c */
-RT_EXPORT BU_EXTERN(int nmg_uv_in_lu,
-		    (const fastf_t u,
-		     const fastf_t v,
-		     const struct loopuse *lu));
 
 
 /* from nmg_mesh.c */
@@ -5581,26 +5573,6 @@ RT_EXPORT BU_EXTERN(void rt_dspline_n,
 		     const int n,
 		     const int depth,
 		     const double alpha));
-
-/* From nurb_bezier.c */
-RT_EXPORT BU_EXTERN(int rt_nurb_bezier,
-		    (struct bu_list *bezier_hd,
-		     const struct face_g_snurb *orig_surf,
-		     struct resource *res));
-RT_EXPORT BU_EXTERN(int rt_bez_check,
-		    (const struct face_g_snurb * srf));
-RT_EXPORT BU_EXTERN(int nurb_crv_is_bezier,
-		    (const struct edge_g_cnurb *crv));
-RT_EXPORT BU_EXTERN(void nurb_c_to_bezier,
-		    (struct bu_list *clist,
-		     struct edge_g_cnurb *crv));
-
-/* From nurb_copy.c */
-RT_EXPORT BU_EXTERN(struct face_g_snurb *rt_nurb_scopy,
-		    (const struct face_g_snurb * srf,
-		     struct resource *res));
-RT_EXPORT BU_EXTERN(struct edge_g_cnurb *rt_nurb_crv_copy,
-		    (const struct edge_g_cnurb * crv));
 
 /* From nmg_fuse.c */
 RT_EXPORT BU_EXTERN(int nmg_is_common_bigloop,

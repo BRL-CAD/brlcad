@@ -17,13 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup libbu */
-/** @{ */
-/** @file fchmod.c
- *
- * Wrapper around fchmod.
- *
- */
 
 #include "common.h"
 
@@ -38,7 +31,7 @@
 
 
 int
-bu_fchmod(FILE	     	*fp,
+bu_fchmod(FILE *fp,
 	  unsigned long pmode)
 {
     if (!fp) {
@@ -52,7 +45,6 @@ bu_fchmod(FILE	     	*fp,
 #endif
 }
 
-/** @} */
 /*
  * Local Variables:
  * mode: C

@@ -66,7 +66,9 @@ adrt_master_SOURCES = \
 adrt_master_LDADD = \
 	libtie.la \
 	${BU} \
+	${LIBNETWORK} \
 	${LIBTHREAD} \
+	${LIBBSD} \
 	${LIBM} \
 	${LIBZ}
 
@@ -80,7 +82,8 @@ adrt_slave_LDADD = \
 	${LIBM} \
 	librender.la \
 	libtie.la \
-	${RT} ${GCV}
+	${RT} \
+	${GCV}
 
 tieincludedir = $(includedir)/tie
 tieinclude_HEADERS = \

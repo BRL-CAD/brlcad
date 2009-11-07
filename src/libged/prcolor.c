@@ -107,7 +107,7 @@ ged_vls_col_item(struct bu_vls	*str,
 		 int		*clp)		/* column length pointer */
 {
     /* Output newline if last column printed. */
-    if (*ccp >= GED_COLUMNS || (*clp+GED_V4_MAXNAME-1) >= GED_TERMINAL_WIDTH) {
+    if (*ccp >= _GED_COLUMNS || (*clp+_GED_V4_MAXNAME-1) >= _GED_TERMINAL_WIDTH) {
 	/* line now full */
 	bu_vls_putc(str, '\n');
 	*ccp = 0;
@@ -116,7 +116,7 @@ ged_vls_col_item(struct bu_vls	*str,
 	do {
 	    bu_vls_putc(str, ' ');
 	    ++*clp;
-	}  while ((*clp % GED_V4_MAXNAME) != 0);
+	}  while ((*clp % _GED_V4_MAXNAME) != 0);
     }
     /* Output string and save length for next tab. */
     *clp = 0;

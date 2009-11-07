@@ -17,13 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup bu_log */
-/** @{ */
-/** @file backtrace.c
- *
- * Extract a backtrace of the current call stack.
- *
- */
 
 #include "common.h"
 
@@ -261,23 +254,6 @@ backtrace(char **args, int fd)
 }
 
 
-/**
- * b u _ b a c k t r a c e
- *
- * this routine provides a trace of the call stack to the caller,
- * generally called either directly, via a signal handler, or through
- * bu_bomb() with the appropriate bu_debug flags set.
- *
- * the routine waits indefinitely (in a spin loop) until a signal
- * (SIGINT) is received, at which point execution continues, or until
- * some other signal is received that terminates the application.
- *
- * the stack backtrace will be written to the provided 'fp' file
- * pointer.  it's the caller's responsibility to open and close
- * that pointer if necessary.  If 'fp' is NULL, stdout will be used.
- *
- * returns truthfully if a backtrace was attempted.
- */
 int
 bu_backtrace(FILE *fp)
 {
@@ -406,8 +382,6 @@ main(int argc, char *argv[])
     return 0;
 }
 #endif  /* TEST_BACKTRACE */
-
-/** @} */
 
 /*
  * Local Variables:

@@ -17,20 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup hton */
-/** @{ */
-/** @file htester.c
- *
- * @brief
- * Test network float conversion.
- *
- * Expected to be used in pipes, or with TTCP links to other machines,
- * or with files RCP'ed between machines.
- *
- * @author
- * Michael John Muuss
- */
-/** @} */
 
 #include "common.h"
 
@@ -40,10 +26,9 @@
 #include "bu.h"
 
 
-#define	NUM	3000
-double	orig[NUM], after[NUM];
-
-unsigned char	buf[NUM*8];
+#define NUM 3000
+double orig[NUM], after[NUM];
+unsigned char buf[NUM*8];
 
 void
 flpr(unsigned char *cp)

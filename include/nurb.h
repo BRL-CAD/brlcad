@@ -130,14 +130,19 @@ struct bezier_2d_list {
     point2d_t	*ctl;
 };
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* nurb_basis.c */
 RT_EXPORT BU_EXTERN(fastf_t rt_nurb_basis_eval, (struct knot_vector *knts, int interval,
 						 int order, fastf_t mu));
 
 /* nurb_bezier.c */
-RT_EXPORT BU_EXTERN(int rt_nurb_bezier, (struct bu_list *bezier_hd,
-					 const struct face_g_snurb * srf, struct resource *res));
+RT_EXPORT BU_EXTERN(int rt_nurb_bezier, (struct bu_list *bezier_hd, const struct face_g_snurb * srf, struct resource *res));
 RT_EXPORT BU_EXTERN(int rt_bez_check, (const struct face_g_snurb * srf));
+RT_EXPORT BU_EXTERN(int nurb_crv_is_bezier, (const struct edge_g_cnurb *crv));
+RT_EXPORT BU_EXTERN(void nurb_c_to_bezier, (struct bu_list *clist, struct edge_g_cnurb *crv));
 
 /* nurb_bound.c */
 RT_EXPORT BU_EXTERN(int rt_nurb_s_bound, (struct face_g_snurb *srf, point_t bmin, point_t bmax));
@@ -147,6 +152,7 @@ RT_EXPORT BU_EXTERN(int rt_nurb_c_check, (struct edge_g_cnurb *crv));
 
 /* nurb_copy.c */
 RT_EXPORT BU_EXTERN(struct face_g_snurb *rt_nurb_scopy, (const struct face_g_snurb *srf, struct resource *res));
+RT_EXPORT BU_EXTERN(struct edge_g_cnurb *rt_nurb_crv_copy, (const struct edge_g_cnurb * crv));
 
 /* nurb_diff.c */
 RT_EXPORT BU_EXTERN(struct face_g_snurb *rt_nurb_s_diff, (const struct face_g_snurb *srf, int dir));
@@ -186,8 +192,7 @@ RT_EXPORT BU_EXTERN(void rt_nurb_kvextract, (struct knot_vector *new_kv,
 RT_EXPORT BU_EXTERN(void rt_nurb_kvcopy, (struct knot_vector *new_kv,
 					  const struct knot_vector *old_kv, struct resource *res));
 RT_EXPORT BU_EXTERN(void rt_nurb_kvnorm, (struct knot_vector *kv));
-RT_EXPORT BU_EXTERN(int rt_knot_index, (const struct knot_vector *kv, fastf_t k_value,
-					int order));
+RT_EXPORT BU_EXTERN(int rt_nurb_knot_index, (const struct knot_vector *kv, fastf_t k_value, int order));
 RT_EXPORT BU_EXTERN(void rt_nurb_gen_knot_vector, (struct knot_vector *new_knots,
 						   int order, fastf_t lower, fastf_t upper, struct resource *res));
 
@@ -247,6 +252,9 @@ RT_EXPORT BU_EXTERN(void rt_nurb_s_split, (struct bu_list *split_hd, const struc
 					   int dir, struct resource *res));
 RT_EXPORT BU_EXTERN(void rt_nurb_c_split, (struct bu_list *split_hd, const struct edge_g_cnurb *crv));
 
+/* nurb_trim.c */
+RT_EXPORT BU_EXTERN(int nmg_uv_in_lu, (const fastf_t u, const fastf_t v, const struct loopuse *lu));
+
 /* nurb_util.c */
 RT_EXPORT BU_EXTERN(struct face_g_snurb *rt_nurb_new_snurb, (int u_order, int v_order,
 							     int n_u_knots, int n_v_knots,
@@ -260,6 +268,7 @@ RT_EXPORT BU_EXTERN(void rt_nurb_s_print, (char *c, const struct face_g_snurb *s
 RT_EXPORT BU_EXTERN(void rt_nurb_pr_kv, (const struct knot_vector *kv));
 RT_EXPORT BU_EXTERN(void rt_nurb_pr_mesh, (const struct face_g_snurb *m));
 RT_EXPORT BU_EXTERN(void rt_nurb_print_pt_type, (int c));
+RT_EXPORT BU_EXTERN(void rt_nurb_clean_cnurb, (struct edge_g_cnurb *crv));
 
 /* nurb_xsplit.c */
 RT_EXPORT BU_EXTERN(struct face_g_snurb *rt_nurb_s_xsplit, (struct face_g_snurb *srf,
@@ -290,6 +299,10 @@ RT_EXPORT BU_EXTERN( int FindRoots, (point2d_t *w, int degree, point2d_t **inter
 				     int depth, fastf_t epsilon) );
 RT_EXPORT BU_EXTERN( struct bezier_2d_list *subdivide_bezier, (struct bezier_2d_list *bezier_hd, int degree,
 							       fastf_t epsilon, int depth) );
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* __NURB_H__ */
 
 /** @} */

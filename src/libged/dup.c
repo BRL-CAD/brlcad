@@ -110,7 +110,7 @@ ged_dup(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* Get array to hold names of duplicates */
-    if ((dirp0 = ged_getspace(gedp->ged_wdbp->dbip, 0)) == (struct directory **) 0) {
+    if ((dirp0 = _ged_getspace(gedp->ged_wdbp->dbip, 0)) == (struct directory **) 0) {
 	bu_vls_printf(&gedp->ged_result_str, "f_dup: unable to get memory\n");
 	db_close( newdbp );
 	return GED_ERROR;
@@ -123,23 +123,23 @@ ged_dup(struct ged *gedp, int argc, const char *argv[])
     if ( newdbp->dbi_version < 5 ) {
 	if (db_scan(newdbp, ged_dir_check, 0, (genptr_t)&dcs) < 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "dup: db_scan failure");
-	    bu_free((genptr_t)dirp0, "ged_getspace array");
+	    bu_free((genptr_t)dirp0, "_ged_getspace array");
 	    db_close(newdbp);
 	    return GED_ERROR;
 	}
     } else {
 	if ( db5_scan( newdbp, ged_dir_check5, (genptr_t)&dcs) < 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "dup: db_scan failure");
-	    bu_free((genptr_t)dirp0, "ged_getspace array");
+	    bu_free((genptr_t)dirp0, "_ged_getspace array");
 	    db_close(newdbp);
 	    return GED_ERROR;
 	}
     }
     rt_mempurge( &(newdbp->dbi_freep) );        /* didn't really build a directory */
 
-    ged_vls_col_pr4v(&gedp->ged_result_str, dirp0, (int)(dcs.dup_dirp - dirp0), 0);
+    _ged_vls_col_pr4v(&gedp->ged_result_str, dirp0, (int)(dcs.dup_dirp - dirp0), 0);
     bu_vls_printf(&gedp->ged_result_str, "\n -----  %d duplicate names found  -----", gedp->ged_wdbp->wdb_num_dups);
-    bu_free((genptr_t)dirp0, "ged_getspace array");
+    bu_free((genptr_t)dirp0, "_ged_getspace array");
     db_close(newdbp);
 
     return GED_OK;
@@ -186,9 +186,9 @@ ged_dir_check5(register struct db_i		*input_dbip,
 	    bu_vls_strncpy( &local, bu_vls_addr( &dcsp->wdbp->wdb_prestr ), dcsp->wdbp->wdb_ncharadd );
 	    bu_vls_strcat( &local, name );
 	} else {
-	    bu_vls_strncpy( &local, name, GED_V4_MAXNAME );
+	    bu_vls_strncpy( &local, name, _GED_V4_MAXNAME );
 	}
-	bu_vls_trunc( &local, GED_V4_MAXNAME );
+	bu_vls_trunc( &local, _GED_V4_MAXNAME );
     } else {
 	if (dcsp->wdbp->wdb_ncharadd > 0) {
 	    (void)bu_vls_vlscat( &local, &dcsp->wdbp->wdb_prestr );
@@ -234,9 +234,9 @@ ged_dir_check(register struct db_i *input_dbip, register const char *name, long 
 	    bu_vls_strncpy( &local, bu_vls_addr( &dcsp->wdbp->wdb_prestr ), dcsp->wdbp->wdb_ncharadd );
 	    bu_vls_strcat( &local, name );
 	} else {
-	    bu_vls_strncpy( &local, name, GED_V4_MAXNAME );
+	    bu_vls_strncpy( &local, name, _GED_V4_MAXNAME );
 	}
-	bu_vls_trunc( &local, GED_V4_MAXNAME );
+	bu_vls_trunc( &local, _GED_V4_MAXNAME );
     } else {
 	if (dcsp->wdbp->wdb_ncharadd > 0) {
 	    bu_vls_vlscat( &local, &dcsp->wdbp->wdb_prestr );

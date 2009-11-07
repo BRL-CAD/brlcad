@@ -17,17 +17,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup butcl */
+/** @addtogroup libbu */
 /** @{ */
-/** @file cmdhist.c
- *
- * @brief
- * Routines for maintaining a command history
- *
- * The history routines were borrowed from mged/history.c
- * and modified to work with command history objects.
- *
- */
 
 #include "common.h"
 
@@ -36,19 +27,18 @@
 
 #include "tcl.h"
 
+#include "bu.h"
 #include "cmd.h"
 
-/*
+
+/**
  * H I S T O R Y _ R E C O R D
  *
  * Stores the given command with start and finish times in the
- * history vls'es.
+ * history vls'es. 'status' is either TCL_OK or TCL_ERROR.
  */
-static void
+HIDDEN void
 history_record(struct bu_cmdhist_obj *chop, struct bu_vls *cmdp, struct timeval *start, struct timeval *finish, int status)
-
-
-    /* Either TCL_OK or TCL_ERROR */
 {
     struct bu_cmdhist *new_hist;
 
@@ -67,7 +57,8 @@ history_record(struct bu_cmdhist_obj *chop, struct bu_vls *cmdp, struct timeval 
     chop->cho_curr = &chop->cho_head;
 }
 
-static int
+
+HIDDEN int
 timediff(struct timeval *tvdiff, struct timeval *start, struct timeval *finish)
 {
     if (finish->tv_sec == 0 && finish->tv_usec == 0)
@@ -85,17 +76,11 @@ timediff(struct timeval *tvdiff, struct timeval *start, struct timeval *finish)
     return 0;
 }
 
-/**
- * @brief
- * Prints out the command history.
- *
- * USAGE:
- *        procname history [-delays] [-outfile filename]
- */
+
 int
 bu_cmdhist_history(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
 {
-    struct bu_cmdhist_obj *chop = (struct  bu_cmdhist_obj *)clientData;
+    struct bu_cmdhist_obj *chop = (struct bu_cmdhist_obj *)clientData;
     FILE *fp;
     int with_delays = 0;
     struct bu_cmdhist *hp, *hp_prev;
@@ -168,17 +153,11 @@ bu_cmdhist_history(ClientData clientData, Tcl_Interp *interp, int argc, const ch
     return TCL_OK;
 }
 
-/**
- * @brief
- * Add a command to the history list.
- *
- * USAGE:
- *        procname add cmd
- */
+
 int
 bu_cmdhist_add(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
 {
-    struct bu_cmdhist_obj *chop = (struct  bu_cmdhist_obj *)clientData;
+    struct bu_cmdhist_obj *chop = (struct bu_cmdhist_obj *)clientData;
     struct bu_vls vls;
     struct timeval zero;
 
@@ -205,16 +184,11 @@ bu_cmdhist_add(ClientData clientData, Tcl_Interp *interp, int argc, const char *
     return TCL_OK;
 }
 
-/**
- * Set the current command to the previous command.
- *
- * USAGE:
- *        procname prev
- */
+
 int
 bu_cmdhist_prev(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
 {
-    struct bu_cmdhist_obj *chop = (struct  bu_cmdhist_obj *)clientData;
+    struct bu_cmdhist_obj *chop = (struct bu_cmdhist_obj *)clientData;
     struct bu_cmdhist *hp;
 
     if (argc != 2) {
@@ -235,16 +209,11 @@ bu_cmdhist_prev(ClientData clientData, Tcl_Interp *interp, int argc, const char 
     return TCL_OK;
 }
 
-/**
- * Return the current command.
- *
- * USAGE:
- *        procname curr
- */
+
 int
 bu_cmdhist_curr(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
 {
-    struct bu_cmdhist_obj *chop = (struct  bu_cmdhist_obj *)clientData;
+    struct bu_cmdhist_obj *chop = (struct bu_cmdhist_obj *)clientData;
 
     if (argc != 2) {
 	struct bu_vls vls;
@@ -262,16 +231,11 @@ bu_cmdhist_curr(ClientData clientData, Tcl_Interp *interp, int argc, const char 
     return TCL_OK;
 }
 
-/**
- * Set the current command to the next command.
- *
- * USAGE:
- *        procname next
- */
+
 int
 bu_cmdhist_next(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
 {
-    struct bu_cmdhist_obj *chop = (struct  bu_cmdhist_obj *)clientData;
+    struct bu_cmdhist_obj *chop = (struct bu_cmdhist_obj *)clientData;
 
     if (argc != 2) {
 	struct bu_vls vls;
@@ -294,41 +258,8 @@ bu_cmdhist_next(ClientData clientData, Tcl_Interp *interp, int argc, const char 
     return TCL_OK;
 }
 
-#if 0
-/**
- * F _ D E L A Y
- *
- * 	Uses select to delay for the specified amount of seconds and
- * microseconds.
- */
-
-int
-f_delay(clientData, interp, argc, argv)
-    ClientData clientData;
-    Tcl_Interp *interp;
-    int argc;
-    char **argv;
-{
-    struct timeval tv;
-
-    if (argc < 3 || 3 < argc) {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "help delay");
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return TCL_ERROR;
-    }
-
-    tv.tv_sec = atoi(argv[1]);
-    tv.tv_usec = atoi(argv[2]);
-    select(0, NULL, NULL, NULL, &tv);
-
-    return TCL_OK;
-}
-#endif
 /** @} */
+
 /*
  * Local Variables:
  * mode: C

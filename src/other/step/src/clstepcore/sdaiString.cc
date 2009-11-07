@@ -92,7 +92,11 @@ SCLP23(String)::STEPread (istream& in, ErrorDescriptor *err)
     in >> c;
 
 	// remember the current format state to restore the previous settings
+#if defined(__GNUC__) && (__GNUC__ > 2)
     ios_base::fmtflags flags = in.flags();
+#else
+    ios::fmtflags flags = in.flags();
+#endif
     in.unsetf(ios::skipws);
 
     if (c == STRING_DELIM)

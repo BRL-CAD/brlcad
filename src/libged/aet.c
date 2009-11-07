@@ -76,7 +76,7 @@ ged_aet(struct ged *gedp, int argc, const char *argv[])
 	} else {
 	    VMOVE(gedp->ged_gvp->gv_aet, aet);
 	}
-	ged_mat_aet(gedp->ged_gvp);
+	_ged_mat_aet(gedp->ged_gvp);
 	ged_view_update(gedp->ged_gvp);
 
 	return GED_OK;
@@ -106,7 +106,7 @@ ged_aet(struct ged *gedp, int argc, const char *argv[])
 	} else {
 	    VMOVE(gedp->ged_gvp->gv_aet, aet);
 	}
-	ged_mat_aet(gedp->ged_gvp);
+	_ged_mat_aet(gedp->ged_gvp);
 	ged_view_update(gedp->ged_gvp);
 
 	return GED_OK;

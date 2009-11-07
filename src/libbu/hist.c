@@ -19,18 +19,6 @@
  */
 /** @addtogroup bu_hist */
 /** @{ */
-/** @file hist.c
- *
- * @brief
- * General purpose histogram handling routines.
- *
- * The macro RT_HISTOGRAM_TALLY is used to record items that
- * live in a single "bin", while the subroutine rt_hist_range()
- * is used to record items that may extend across multiple "bin"s.
- *
- * @author  Michael John Muuss
- *
- */
 
 #include "common.h"
 
@@ -40,9 +28,7 @@
 
 #include "bu.h"
 
-/**
- * B U _ H I S T _ F R E E
- */
+
 void
 bu_hist_free(struct bu_hist *histp)
 {
@@ -61,12 +47,7 @@ bu_hist_free(struct bu_hist *histp)
     histp->magic = (unsigned int)-1;	/* sanity */
 }
 
-/**
- * B U _ H I S T _ I N I T
- *
- * Initialize a bu_hist structure.
- * It is expected that the structure is junk upon entry.
- */
+
 void
 bu_hist_init(struct bu_hist *histp, fastf_t min, fastf_t max, unsigned int nbins)
 {
@@ -90,15 +71,13 @@ bu_hist_init(struct bu_hist *histp, fastf_t min, fastf_t max, unsigned int nbins
     histp->magic = BU_HIST_MAGIC;
 }
 
-/**
- * B U _ H I S T _ R A N G E
- */
+
 void
 bu_hist_range(register struct bu_hist *hp, fastf_t low, fastf_t high)
 {
-    long		a;
-    long		b;
-    register int	i;
+    long a;
+    long b;
+    register int i;
 
     BU_CK_HIST(hp);
     if (low <= hp->hg_min)
@@ -117,23 +96,24 @@ bu_hist_range(register struct bu_hist *hp, fastf_t low, fastf_t high)
     hp->hg_nsamples++;
 }
 
+
 /**
- * B U _ H I S T _ P R _ S U P P R E S S
+ * _ B U _ H I S T _ P R _ S U P P R E S S
  *
  * Allows caller control over zero-suppression feature.
  */
-void
-bu_hist_pr_suppress(register const struct bu_hist *histp, const char *title, int zero_suppress)
+HIDDEN void
+_bu_hist_pr_suppress(register const struct bu_hist *histp, const char *title, int zero_suppress)
 {
-    register int	i;
-    long		maxcount;
-    static const char	marks[] = "################################################################";
-#define	NMARKS	50
-    char		buf[256];
-    int		percent;
-    unsigned int	mark_count;
-    double		val;
-    int		nbins;
+    register int i;
+    long maxcount;
+    static const char marks[] = "################################################################";
+#define NMARKS 50
+    char buf[256];
+    int percent;
+    unsigned int mark_count;
+    double val;
+    int nbins;
 
     BU_CK_HIST(histp);
 
@@ -190,15 +170,11 @@ bu_hist_pr_suppress(register const struct bu_hist *histp, const char *title, int
     }
 }
 
-/**
- * B U _ H I S T _ P R
- *
- * The original interface.
- */
+
 void
 bu_hist_pr(register const struct bu_hist *histp, const char *title)
 {
-    bu_hist_pr_suppress(histp, title, 1);
+    _bu_hist_pr_suppress(histp, title, 1);
 }
 
 /** @} */

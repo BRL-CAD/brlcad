@@ -31,15 +31,16 @@ brlcadinclude_wanted = \
 	dm-X.h \
 	dm-glx.h \
 	dm-ogl.h \
-	dm-rtgl.h \
-	dm-wgl.h \
 	dm-pex.h \
 	dm-plot.h \
 	dm-ps.h \
+	dm-rtgl.h \
 	dm-tk.h \
+	dm-wgl.h \
 	dm.h \
 	dm_color.h \
 	dm_xvars.h \
+	dvec.h \
 	fb.h \
 	fbio.h \
 	fbserv_obj.h \
@@ -65,7 +66,6 @@ brlcadinclude_wanted = \
 	spm.h \
 	vectfont.h \
 	vector_fpu.h \
-	vector.h \
 	vector_x86.h \
 	vfont-if.h \
 	vmath.h \

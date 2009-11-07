@@ -16,6 +16,7 @@
 
 #include "opennurbs.h"
 #include <assert.h>
+#include <float.h>
 #include <list>
 
 /* FIXME: (assumedly) temporary for debugging purposes */
@@ -3311,13 +3312,12 @@ ON_Curve::CloseTo(const ON_3dPoint& pt, double epsilon, Sample& closest) const
   // *should* bound the closest point.
 
   // use these to find the closest point through a 'binary' search
-  std::list<Sample>::iterator i2 = samples.begin();
   Sample s1 = samples.front(); samples.pop_front();
   Sample s2 = samples.front();
 
 //   return samples.front().dist < epsilon;
 
-  closest.dist = real.infinity();
+  closest.dist = DBL_MAX;
   if (s1.dist < epsilon) {
     closest = s1;
     TRACE1("1:" << s1.dist << " < " << epsilon);
@@ -3540,7 +3540,7 @@ bool ON_SortCurves( int curve_count, const ON_Curve* const* curve_list, int* ind
   }
   else
   {
-    rc = ON_SortLines( curve_count, line_list, index, bReverse );
+    rc = ON_SortLines( curve_count, line_list.Array(), index, bReverse );
   }
   return rc;
 }

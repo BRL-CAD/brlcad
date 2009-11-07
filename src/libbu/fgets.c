@@ -17,14 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup bu_log */
-/** @{ */
-/** @file fgets.c
- *
- * @brief
- * fgets replacement function that also handles CR as an EOL marker
- *
- */
 
 #include "common.h"
 
@@ -36,17 +28,6 @@
 #include "bu.h"
 
 
-/**
- * b u _ f g e t s
- *
- * Reads in at most one less than size characters from stream and
- * stores them into the buffer pointed to by s. Reading stops after an
- * EOF, CR, LF, or a CR/LF combination. If a LF or CR is read, it is
- * stored into the buffer. If a CR/LF is read, just a CR is stored
- * into the buffer. A '\\0' is stored after the last character in the
- * buffer. Returns s on success, and NULL on error or when end of file
- * occurs while no characters have been read.
- */
 char *
 bu_fgets(char *s, int size, FILE *stream)
 {
@@ -112,8 +93,6 @@ bu_fgets(char *s, int size, FILE *stream)
 	return s;
 }
 
-
-/** @} */
 
 /*
  * Local Variables:

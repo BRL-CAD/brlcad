@@ -214,6 +214,9 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
     struct dm *dmp = (struct dm *)NULL;
     Tk_Window tkwin;
 
+    struct dm_xvars *pubvars = NULL;
+    struct ogl_vars *privvars = NULL;
+
     if ((tkwin = Tk_MainWindow(interp)) == NULL) {
 	return DM_NULL;
     }
@@ -232,6 +235,7 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
 	bu_free(dmp, "ogl_open: dmp");
 	return DM_NULL;
     }
+    pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
 
     dmp->dm_vars.priv_vars = (genptr_t)bu_calloc(1, sizeof(struct ogl_vars), "ogl_open: ogl_vars");
     if (dmp->dm_vars.priv_vars == (genptr_t)NULL) {
@@ -239,6 +243,7 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
 	bu_free(dmp, "ogl_open: dmp");
 	return DM_NULL;
     }
+    privvars = (struct ogl_vars *)dmp->dm_vars.priv_vars;
 
     dmp->dm_vp = &default_viewscale;
 
@@ -265,25 +270,25 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
 	bu_vls_strcpy(&init_proc_vls, "bind_dm");
 
     /* initialize dm specific variables */
-    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->devmotionnotify = LASTEvent;
-    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->devbuttonpress = LASTEvent;
-    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->devbuttonrelease = LASTEvent;
+    pubvars->devmotionnotify = LASTEvent;
+    pubvars->devbuttonpress = LASTEvent;
+    pubvars->devbuttonrelease = LASTEvent;
     dmp->dm_aspect = 1.0;
 
     /* initialize modifiable variables */
-    ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.rgb = 1;
-    ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.doublebuffer = 1;
-    ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.fastfog = 1;
-    ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.fogdensity = 1.0;
-    ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.lighting_on = dmp->dm_light;
-    ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuffer_on = dmp->dm_zbuffer;
-    ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.zclipping_on = dmp->dm_zclip;
-    ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.debug = dmp->dm_debugLevel;
-    ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.bound = dmp->dm_bound;
-    ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.boundFlag = dmp->dm_boundFlag;
+    privvars->mvars.rgb = 1;
+    privvars->mvars.doublebuffer = 1;
+    privvars->mvars.fastfog = 1;
+    privvars->mvars.fogdensity = 1.0;
+    privvars->mvars.lighting_on = dmp->dm_light;
+    privvars->mvars.zbuffer_on = dmp->dm_zbuffer;
+    privvars->mvars.zclipping_on = dmp->dm_zclip;
+    privvars->mvars.debug = dmp->dm_debugLevel;
+    privvars->mvars.bound = dmp->dm_bound;
+    privvars->mvars.boundFlag = dmp->dm_boundFlag;
 
     /* this is important so that ogl_configureWin knows to set the font */
-    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = NULL;
+    pubvars->fontstruct = NULL;
 
     if ((tmp_dpy = XOpenDisplay(bu_vls_addr(&dmp->dm_dName))) == NULL) {
 	bu_vls_free(&init_proc_vls);
@@ -329,36 +334,36 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
 
     if (dmp->dm_top) {
 	/* Make xtkwin a toplevel window */
-	((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin =
+	pubvars->xtkwin =
 	    Tk_CreateWindowFromPath(interp,
 				    tkwin,
 				    bu_vls_addr(&dmp->dm_pathName),
 				    bu_vls_addr(&dmp->dm_dName));
-	((struct dm_xvars *)dmp->dm_vars.pub_vars)->top = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin;
+	pubvars->top = pubvars->xtkwin;
     } else {
 	char *cp;
 
 	cp = strrchr(bu_vls_addr(&dmp->dm_pathName), (int)'.');
 	if (cp == bu_vls_addr(&dmp->dm_pathName)) {
-	    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->top = tkwin;
+	    pubvars->top = tkwin;
 	} else {
 	    struct bu_vls top_vls;
 
 	    bu_vls_init(&top_vls);
 	    bu_vls_printf(&top_vls, "%*s", cp - bu_vls_addr(&dmp->dm_pathName),
 			  bu_vls_addr(&dmp->dm_pathName));
-	    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->top =
+	    pubvars->top =
 		Tk_NameToWindow(interp, bu_vls_addr(&top_vls), tkwin);
 	    bu_vls_free(&top_vls);
 	}
 
 	/* Make xtkwin an embedded window */
-	((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin =
-	    Tk_CreateWindow(interp, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->top,
+	pubvars->xtkwin =
+	    Tk_CreateWindow(interp, pubvars->top,
 			    cp + 1, (char *)NULL);
     }
 
-    if ( ((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin == NULL ) {
+    if ( pubvars->xtkwin == NULL ) {
 	bu_log("dm-Ogl: Failed to open %s\n", bu_vls_addr(&dmp->dm_pathName));
 	bu_vls_free(&init_proc_vls);
 	(void)ogl_close(dmp);
@@ -366,7 +371,7 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
     }
 
     bu_vls_printf(&dmp->dm_tkName, "%s",
-		  (char *)Tk_Name(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin));
+		  (char *)Tk_Name(pubvars->xtkwin));
 
     bu_vls_init(&str);
     bu_vls_printf(&str, "_init_dm %V %V\n",
@@ -383,42 +388,38 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
     bu_vls_free(&init_proc_vls);
     bu_vls_free(&str);
 
-    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy =
-	Tk_Display(((struct dm_xvars *)dmp->dm_vars.pub_vars)->top);
+    pubvars->dpy =
+	Tk_Display(pubvars->top);
 
     /* make sure there really is a display before proceeding. */
-    if (!((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy) {
+    if (!(pubvars->dpy)) {
 	bu_vls_free(&init_proc_vls);
 	bu_vls_free(&str);
 	(void)ogl_close(dmp);
 	return DM_NULL;
     }
 
-    Tk_GeometryRequest(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin,
+    Tk_GeometryRequest(pubvars->xtkwin,
 		       dmp->dm_width,
 		       dmp->dm_height);
 
     /* must do this before MakeExist */
-    if ((((struct dm_xvars *)dmp->dm_vars.pub_vars)->vip=ogl_choose_visual(dmp,
-									   ((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin)) == NULL) {
+    if ((pubvars->vip=ogl_choose_visual(dmp,pubvars->xtkwin)) == NULL) {
 	bu_log("ogl_open: Can't get an appropriate visual.\n");
 	(void)ogl_close(dmp);
 	return DM_NULL;
     }
 
-    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->depth = ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.depth;
+    pubvars->depth = privvars->mvars.depth;
 
-    Tk_MakeWindowExist(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin);
+    Tk_MakeWindowExist(pubvars->xtkwin);
 
-    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win =
-	Tk_WindowId(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin);
-    dmp->dm_id = ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win;
+    pubvars->win = Tk_WindowId(pubvars->xtkwin);
+    dmp->dm_id = pubvars->win;
 
     /* open GLX context */
-    if ((((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc =
-	 glXCreateContext(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			  ((struct dm_xvars *)dmp->dm_vars.pub_vars)->vip,
-			  (GLXContext)NULL, GL_TRUE))==NULL) {
+    if ((privvars->glxc =
+	 glXCreateContext(pubvars->dpy, pubvars->vip, (GLXContext)NULL, GL_TRUE))==NULL) {
 	bu_log("ogl_open: couldn't create glXContext.\n");
 	(void)ogl_close(dmp);
 	return DM_NULL;
@@ -427,16 +428,14 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
     /* If we used an indirect context, then as far as sgi is concerned,
      * gl hasn't been used.
      */
-    ((struct ogl_vars *)dmp->dm_vars.priv_vars)->is_direct =
-	(char) glXIsDirect(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			   ((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc);
+    privvars->is_direct = (char) glXIsDirect(pubvars->dpy,privvars->glxc);
 
     /*
      * Take a look at the available input devices. We're looking
      * for "dial+buttons".
      */
-    if (XQueryExtension(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy, "XInputExtension", &unused, &unused, &unused)) {
-	olist = list = (XDeviceInfoPtr)XListInputDevices(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy, &ndevices);
+    if (XQueryExtension(pubvars->dpy, "XInputExtension", &unused, &unused, &unused)) {
+	olist = list = (XDeviceInfoPtr)XListInputDevices(pubvars->dpy, &ndevices);
     }
 
     /* IRIX 4.0.5 bug workaround */
@@ -446,7 +445,7 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
     for (j = 0; j < ndevices; ++j, list++) {
 	if (list->use == IsXExtensionDevice) {
 	    if (!strcmp(list->name, "dial+buttons")) {
-		if ((dev = XOpenDevice(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+		if ((dev = XOpenDevice(pubvars->dpy,
 				       list->id)) == (XDevice *)NULL) {
 		    bu_log("ogl_open: Couldn't open the dials+buttons\n");
 		    goto Done;
@@ -457,17 +456,17 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
 		    switch (cip->input_class) {
 #ifdef IR_BUTTONS
 			case ButtonClass:
-			    DeviceButtonPress(dev, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->devbuttonpress,
+			    DeviceButtonPress(dev, pubvars->devbuttonpress,
 					      e_class[nclass]);
 			    ++nclass;
-			    DeviceButtonRelease(dev, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->devbuttonrelease,
+			    DeviceButtonRelease(dev, pubvars->devbuttonrelease,
 						e_class[nclass]);
 			    ++nclass;
 			    break;
 #endif
 #ifdef IR_KNOBS
 			case ValuatorClass:
-			    DeviceMotionNotify(dev, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->devmotionnotify,
+			    DeviceMotionNotify(dev, pubvars->devmotionnotify,
 					       e_class[nclass]);
 			    ++nclass;
 			    break;
@@ -477,8 +476,7 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
 		    }
 		}
 
-		XSelectExtensionEvent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-				      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win, e_class, nclass);
+		XSelectExtensionEvent(pubvars->dpy, pubvars->win, e_class, nclass);
 		goto Done;
 	    }
 	}
@@ -486,28 +484,28 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
  Done:
     XFreeDeviceList(olist);
 
-    if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
-			((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
+    Tk_MapWindow(pubvars->xtkwin);
+
+    if (!glXMakeCurrent(pubvars->dpy, pubvars->win, privvars->glxc)) {
 	bu_log("ogl_open: Couldn't make context current\n");
 	(void)ogl_close(dmp);
 	return DM_NULL;
     }
 
     /* display list (fontOffset + char) will display a given ASCII char */
-    if ((((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset = glGenLists(128))==0) {
+    if ((privvars->fontOffset = glGenLists(128))==0) {
 	bu_log("dm-ogl: Can't make display lists for font.\n");
 	(void)ogl_close(dmp);
 	return DM_NULL;
     }
 
     /* This is the applications display list offset */
-    dmp->dm_displaylist = ((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset + 128;
+    dmp->dm_displaylist = privvars->fontOffset + 128;
 
     ogl_setBGColor(dmp, 0, 0, 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.doublebuffer)
+    if (privvars->mvars.doublebuffer)
 	glDrawBuffer(GL_BACK);
     else
 	glDrawBuffer(GL_FRONT);
@@ -533,16 +531,15 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glOrtho( -xlim_view, xlim_view, -ylim_view, ylim_view, 0.0, 2.0 );
-    glGetDoublev(GL_PROJECTION_MATRIX, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->faceplate_mat);
+    glGetDoublev(GL_PROJECTION_MATRIX, privvars->faceplate_mat);
     glPushMatrix();
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     glTranslatef(0.0, 0.0, -1.0);
     glPushMatrix();
     glLoadIdentity();
-    ((struct ogl_vars *)dmp->dm_vars.priv_vars)->face_flag = 1;	/* faceplate matrix is on top of stack */
+    privvars->face_flag = 1;	/* faceplate matrix is on top of stack */
 
-    Tk_MapWindow(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin);
     return dmp;
 }
 

@@ -15,8 +15,8 @@
 */
 
 #include "opennurbs.h"
-#include <limits>
 #include <assert.h>
+#include <float.h>
 #include <list>
 
 ON_PolynomialCurve::ON_PolynomialCurve()
@@ -1137,7 +1137,6 @@ int sign(double num) {
   return (num >= 0) ? 1 : -1;
 }
 
-static std::numeric_limits<double> real;
 
 int ON_BezierCurve::NumIntersectionsWith(const ON_Line& segment) const
 {
@@ -1198,8 +1197,8 @@ if (crv.CVCount() < 1 ) {
 
 	// calculate the trimming points
 	// XXX - ack - make sure this handles all cases
-	double tmin = real.infinity();
-	double tmax = -real.infinity();
+	double tmin = DBL_MAX;
+	double tmax = -DBL_MAX;
 	for (int i2 = 0; i2 < (crv.m_order-1); i2++) {
 	  for (int j = i2+1; j < crv.m_order; j++) {
 	    int a = i2;

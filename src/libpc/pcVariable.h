@@ -36,10 +36,14 @@
 
 #include <iostream>
 #include <cstdlib>
-#include <limits>
 #include <string>
 #include <list>
 #include <vector>
+
+#include <float.h>
+#ifndef DBL_MAX
+#  include <limits>
+#endif
 
 #include "pcBasic.h"
 #include "pcInterval.h"

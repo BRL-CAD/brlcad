@@ -17,16 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup bu_log */
-/** @{ */
-/** @file linebuf.c
- *
- * @brief
- * A portable way of doing setlinebuf().
- *
- * A portable way of doing setlinebuf().
- *
- */
 
 #include "common.h"
 
@@ -38,9 +28,7 @@
 #  define BUFSIZE 2048
 #endif
 
-/**
- * deprecated call for compatibility
- */
+
 void
 port_setlinebuf(FILE *fp)
 {
@@ -63,7 +51,7 @@ bu_setlinebuf(FILE *fp)
 	perror("bu_setlinebuf");
     }
 }
-/** @} */
+
 /*
  * Local Variables:
  * mode: C

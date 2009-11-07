@@ -3289,6 +3289,10 @@ ON_Brep::IsValidLoop( int loop_index, ON_TextLog* text_log  ) const
   }
 
 
+  const ON_Surface *surf = loop.Face()->SurfaceOf();
+  double urange = surf->Domain(0)[1] - surf->Domain(0)[0];
+  double vrange = surf->Domain(1)[1] - surf->Domain(1)[0];
+
   // make sure ends of trims jibe
   int ci0, ci1, next_lti;
   ON_3dPoint P0, P1;
@@ -3316,12 +3320,12 @@ ON_Brep::IsValidLoop( int loop_index, ON_TextLog* text_log  ) const
       //    didn't get flagged as bad.
 //      double xtol = (fabs(P0.x) + fabs(P1.x))*1.0e-10;  XXX - not using our tolerance? WTF?
 //      double ytol = (fabs(P0.y) + fabs(P1.y))*1.0e-10;
-      double xtol = (fabs(P0.x) + fabs(P1.x))*trim0.m_tolerance[0];
-      double ytol = (fabs(P0.y) + fabs(P1.y))*trim0.m_tolerance[1];
-      if ( xtol < ON_ZERO_TOLERANCE )
-	xtol = ON_ZERO_TOLERANCE;
-      if ( ytol < ON_ZERO_TOLERANCE )
-	ytol = ON_ZERO_TOLERANCE;
+      double xtol = (urange) * trim0.m_tolerance[0];
+      double ytol = (vrange) * trim0.m_tolerance[1];
+      if (xtol < ON_ZERO_TOLERANCE)
+            xtol = ON_ZERO_TOLERANCE;
+      if (ytol < ON_ZERO_TOLERANCE)
+            ytol = ON_ZERO_TOLERANCE;
       double dx = fabs(P0.x-P1.x);
       double dy = fabs(P0.y-P1.y);
       if ( dx > xtol || dy > ytol )

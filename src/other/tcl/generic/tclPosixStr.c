@@ -994,7 +994,7 @@ Tcl_SignalId(
 #ifdef SIGQUIT
     case SIGQUIT: return "SIGQUIT";
 #endif
-#ifdef SIGSEGV
+#if defined(SIGSEGV) && (!defined(SIGBUS) || (SIGSEGV != SIGBUS))
     case SIGSEGV: return "SIGSEGV";
 #endif
 #ifdef SIGSTOP
@@ -1125,7 +1125,7 @@ Tcl_SignalMsg(
 #ifdef SIGQUIT
     case SIGQUIT: return "quit signal";
 #endif
-#ifdef SIGSEGV
+#if defined(SIGSEGV) && (!defined(SIGBUS) || (SIGSEGV != SIGBUS))
     case SIGSEGV: return "segmentation violation";
 #endif
 #ifdef SIGSTOP

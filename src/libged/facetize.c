@@ -49,6 +49,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     int			failed;
     int			nmg_use_tnurbs = 0;
     int			make_bot;
+    int			marching_cube = 0;
     struct db_tree_state	init_state;
     struct db_i		*dbip;
     union tree		*facetize_tree;
@@ -88,8 +89,11 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 
     /* Parse options. */
     bu_optind = 1;		/* re-init bu_getopt() */
-    while ( (c=bu_getopt(argc, (char * const *)argv, "ntT")) != EOF )  {
+    while ( (c=bu_getopt(argc, (char * const *)argv, "mntT")) != EOF )  {
 	switch (c)  {
+	    case 'm':
+		marching_cube = triangulate = 1;
+		/* no break, marching cubes assumes nmg for now */
 	    case 'n':
 		make_bot = 0;
 		break;
@@ -204,7 +208,10 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 	    nmg_model = (struct model *)NULL;
 	    return GED_ERROR;
 	}
-	nmg_triangulate_model( nmg_model, &gedp->ged_wdbp->wdb_tol );
+	if(marching_cube == 1)
+	    nmg_triangulate_model_mc( nmg_model, &gedp->ged_wdbp->wdb_tol );
+	else
+	    nmg_triangulate_model( nmg_model, &gedp->ged_wdbp->wdb_tol );
 	BU_UNSETJUMP;
     }
 

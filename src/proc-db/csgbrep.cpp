@@ -92,7 +92,7 @@ main(int argc, char** argv)
     outfp = wdb_fopen("csgbrep.g");
     const char* id_name = "CSG B-Rep Examples";
     mk_id(outfp, id_name);
-/*
+
     bu_log("Writing an ARB4 (via NMG) brep...\n");
     ON_Brep* arb4brep = ON_Brep::New();
     struct rt_arb_internal *arb4;
@@ -325,7 +325,7 @@ main(int argc, char** argv)
     VSET(rhc->rhc_V, 0, 0, 0);
     VSET(rhc->rhc_H, 0, 2000, 0);
     VSET(rhc->rhc_B, 0, 0, 2000);
-    rhc->rhc_r = 100;
+    rhc->rhc_r = 1000;
     rhc->rhc_c = 400;
     tmp_internal->idb_ptr = (genptr_t)rhc;
     rt_rhc_brep(&rhcbrep, tmp_internal, tol);
@@ -382,7 +382,7 @@ main(int argc, char** argv)
     const char* ehy_name = "ehy_nurb.s";
     mk_brep(outfp, ehy_name, ehybrep);
     delete ehybrep;
-*/ 
+
     bu_log("Writing a HYP b-rep...\n");
     ON_Brep* hypbrep = ON_Brep::New();
     struct rt_hyp_internal *hyp;
@@ -398,7 +398,7 @@ main(int argc, char** argv)
     const char* hyp_name = "hyp_nurb.s";
     mk_brep(outfp, hyp_name, hypbrep);
     delete hypbrep;
-/*
+
     bu_log("Writing a TGC b-rep...\n");
     ON_Brep* tgcbrep = ON_Brep::New();
     struct rt_tgc_internal *tgc;
@@ -432,7 +432,7 @@ main(int argc, char** argv)
     const char* tor_name = "tor_nurb.s";
     mk_brep(outfp, tor_name, torbrep);
     delete torbrep;
-
+    
     bu_log("Writing an Elliptical Torus b-rep...\n");
     ON_Brep* etobrep = ON_Brep::New();
     struct rt_eto_internal *eto;
@@ -451,30 +451,30 @@ main(int argc, char** argv)
     const char* eto_name = "eto_nurb.s";
     mk_brep(outfp, eto_name, etobrep);
     delete etobrep;
-*/
+
     bu_log("Writing a Pipe b-rep...\n");
     ON_Brep* pipebrep = ON_Brep::New();
     struct wdb_pipept pipe1[] = {
      {
          {(long)WDB_PIPESEG_MAGIC, 0, 0},
-	 {0, 1, 0},
-	 0.5, 0.1, 0.1
+	 {0, 1000, 0},
+	 50, 100, 100
      },
      {
 	 {(long)WDB_PIPESEG_MAGIC, 0, 0},
-	 {4, 5, 0},
-	 0.5, 0.1, 0.1
+	 {4000, 5000, 0},
+	 50,100,2000
      },
      {
 	 {(long)WDB_PIPESEG_MAGIC, 0, 0},
-	 {4, 9, 0},
-	 0.5, 0.1, 0.1
-     }/*,
+	 {4000, 9000, 0},
+	 50,100,1500
+     },
      {
 	 {(long)WDB_PIPESEG_MAGIC, 0, 0},
-	 {9, 9, 0},
-	 0.5, 0.1, 0.1
-     }*/
+	 {9000, 9000, 0},
+	 50,100,100
+     }
     };
     int pipe1_npts = sizeof(pipe1)/sizeof(struct wdb_pipept);
     
@@ -491,9 +491,8 @@ main(int argc, char** argv)
     const char* pipe_name = "pipe_nurb.s";
     mk_brep(outfp, pipe_name, pipebrep);
 //    delete pipebrep;
-   /* 
+    
     bu_log("Writing a Sketch (non-solid) b-rep...\n");
-    int cnti;
     ON_Brep* sketchbrep = ON_Brep::New();
     struct rt_sketch_internal *skt;
     struct bezier_seg *bsg;
@@ -513,6 +512,7 @@ main(int argc, char** argv)
 	{ 125, 0 },     // 8 
 	{ 200, 200 }    // 9 
     };
+    int cnti;
     VSET(V, 10, 20, 30);
     VSET(u_vec, 1, 0, 0);
     VSET(v_vec, 0, 1, 0);
@@ -615,7 +615,7 @@ main(int argc, char** argv)
     VMOVE(eskt->u_vec, u_vec);
     VMOVE(eskt->v_vec, v_vec);
     eskt->vert_count = 10;
-    eskt->verts = (point2d_t *)bu_calloc(skt->vert_count, sizeof(point2d_t), "verts");
+    eskt->verts = (point2d_t *)bu_calloc(eskt->vert_count, sizeof(point2d_t), "verts");
     for (cnti=0; cnti < eskt->vert_count; cnti++) {
 	V2MOVE(eskt->verts[cnti], everts[cnti]);
     }
@@ -787,8 +787,8 @@ main(int argc, char** argv)
     const char* revolve_name = "revolve_nurb.s";
     mk_brep(outfp, revolve_name, revolvebrep);
 //    delete revolvebrep;
-*/ 
-
+ 
+/*
     bu_log("Writing a DSP b-rep...\n");
     ON_Brep* dspbrep = ON_Brep::New();
     struct rt_dsp_internal *dsp;
@@ -808,8 +808,7 @@ main(int argc, char** argv)
     const char* dsp_name = "dsp_nurb.s";
     mk_brep(outfp, dsp_name, dspbrep);
     delete dspbrep;
-
-
+*/
     bu_free(tmp_internal, "free tmp_internal");
     wdb_close(outfp);
 

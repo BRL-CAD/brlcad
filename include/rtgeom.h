@@ -183,9 +183,12 @@ struct rt_pg_internal {
 
 /* ID_BSPLINE */
 struct rt_nurb_internal {
-    unsigned long	magic;
-    int	 	nsrf;		/**< @brief  number of surfaces */
+    unsigned long magic;
+    int nsrf;			/**< @brief  number of surfaces */
     struct face_g_snurb **srfs;	/**< @brief  The surfaces themselves */
+#ifdef CONVERT_TO_BREP
+    ON_Brep *brep;
+#endif
 };
 
 #define RT_NURB_CK_MAGIC( _p) BU_CKMAG(_p, RT_NURB_INTERNAL_MAGIC, "rt_nurb_internal");

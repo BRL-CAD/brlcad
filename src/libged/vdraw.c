@@ -584,7 +584,7 @@ ged_vdraw_send(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* 0 means OK, -1 means conflict with real solid name */
-    index = ged_invent_solid(gedp,
+    index = _ged_invent_solid(gedp,
 			     solid_name,
 			     &(gedp->ged_gdp->gd_currVHead->vdc_vhd),
 			     gedp->ged_gdp->gd_currVHead->vdc_rgb,

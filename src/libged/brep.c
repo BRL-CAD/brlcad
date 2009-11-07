@@ -34,9 +34,9 @@
 
 #if 1
 RT_EXPORT BU_EXTERN(int brep_command,
-		    (struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp,int argc, char *argv[], char *commtag));
+		    (struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int argc, const char *argv[], char *commtag));
 #else
-extern int brep_surface_plot(struct ged *gedp, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp,int index);
+extern int brep_surface_plot(struct ged *gedp, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int index);
 #endif
 
 int
@@ -47,13 +47,13 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
     char *command;
     static const char *usage = "brep brepname.s [command]";
     register struct directory *ndp;
-    struct rt_db_internal	intern;
+    struct rt_db_internal intern;
     struct rt_brep_internal* bi;
     struct brep_specific* bs;
     struct soltab *stp;
     int real_flag;
-    char		commtag[64];
-    char		namebuf[64];
+    char commtag[64];
+    char namebuf[64];
     
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
@@ -81,7 +81,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
     }
     
     solid_name = (char *)argv[1];
-    if ( (ndp = db_lookup( gedp->ged_wdbp->dbip,  solid_name, LOOKUP_NOISY )) == DIR_NULL ) {
+    if ((ndp = db_lookup(gedp->ged_wdbp->dbip,  solid_name, LOOKUP_NOISY)) == DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "Error: %s is not a solid or does not exist in database", solid_name);
 	return GED_ERROR;
     } else {
@@ -117,11 +117,10 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 
     vbp = rt_vlblock_init();
 
-    brep_command(&gedp->ged_result_str,bs,bi,vbp,argc,argv,commtag);
+    brep_command(&gedp->ged_result_str, bs, bi, vbp, argc, argv, commtag);
 
-
-	snprintf(namebuf, 64, "%s%s_", commtag, solid_name);
-    ged_cvt_vlblock_to_solids(gedp, vbp, namebuf, 0);
+    snprintf(namebuf, 64, "%s%s_", commtag, solid_name);
+    _ged_cvt_vlblock_to_solids(gedp, vbp, namebuf, 0);
     rt_vlblock_free(vbp);
     vbp = (struct bn_vlblock *)NULL;
 

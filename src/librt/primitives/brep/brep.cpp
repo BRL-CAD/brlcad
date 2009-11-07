@@ -41,7 +41,7 @@
 #include "vmath.h"
 
 #include "brep.h"
-#include "vector.h"
+#include "dvec.h"
 
 #include "raytrace.h"
 #include "rtgeom.h"
@@ -411,7 +411,7 @@ split_trims_hv_tangent(const ON_Curve* curve, ON_Interval& t, list<double>& list
 
 
 int
-brep_build_bvh(struct brep_specific* bs, struct rt_brep_internal* bi)
+brep_build_bvh(struct brep_specific* bs)
 {
     // First, run the openNURBS validity check on the brep in question
     ON_TextLog tl(stderr);
@@ -473,6 +473,7 @@ rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip)
      */
     struct rt_brep_internal* bi;
     struct brep_specific* bs;
+    const struct bn_tol *tol = &rtip->rti_tol;
 
     RT_CK_DB_INTERNAL(ip);
     bi = (struct rt_brep_internal*)ip->idb_ptr;
@@ -487,18 +488,20 @@ rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip)
 
     /* The workhorse routines of BREP prep are called by brep_build_bvh
      */
-    if (brep_build_bvh(bs, bi) < 0) {
+    if (brep_build_bvh(bs) < 0) {
 	return -1;
     }
 
     /* Once a proper SurfaceTree is built, finalize the bounding
      * volumes */
-    point_t adjust;
-    VSETALL(adjust, 1);
     bs->bvh->GetBBox(stp->st_min, stp->st_max);
-    // expand outer bounding box...
+
+    // expand outer bounding box just a little bit
+    point_t adjust;
+    VSETALL(adjust, tol->dist < SMALL_FASTF ? SMALL_FASTF : tol->dist);
     VSUB2(stp->st_min, stp->st_min, adjust);
     VADD2(stp->st_max, stp->st_max, adjust);
+
     VADD2SCALE(stp->st_center, stp->st_min, stp->st_max, 0.5);
     vect_t work;
     VSUB2SCALE(work, stp->st_max, stp->st_min, 0.5);
@@ -726,6 +729,25 @@ getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv , BBNode* node) {
 			break;
 		}
 		brep_newton_iterate(surf, pr, Rcurr, su, sv, nuv, new_uv);
+
+		//push answer back to within node bounds
+		double ufluff = (node->m_u[1] - node->m_u[0])*0.01;
+		double vfluff = (node->m_v[1] - node->m_v[0])*0.01;
+		if (new_uv[0] < node->m_u[0] - ufluff)
+			new_uv[0] = node->m_u[0];
+		else if (new_uv[0] > node->m_u[1] + ufluff)
+			new_uv[0] = node->m_u[1];
+
+		if (new_uv[1] < node->m_v[0] - vfluff)
+			new_uv[1] = node->m_v[0];
+		else if (new_uv[1] > node->m_v[1] + vfluff)
+			new_uv[1] = node->m_v[1];
+
+
+		surf->EvNormal(new_uv[0],new_uv[1],newpt,ray.m_dir);
+		ray.m_dir.Reverse();
+		brep_get_plane_ray(ray,pr);
+
 		move(nuv, new_uv);
 		Dlast = d;
 	}
@@ -2858,7 +2880,7 @@ rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
 	ONX_Model_Object mo = model.m_object_table[0];
 	// XXX does openNURBS force us to copy? it seems the answer is
 	// YES due to the const-ness
-	bi->brep = new ON_Brep(*ON_Brep::Cast(mo.m_object));
+	bi->brep = ON_Brep::New(*ON_Brep::Cast(mo.m_object));
 	return 0;
     } else {
 	return -1;

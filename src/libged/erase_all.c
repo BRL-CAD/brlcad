@@ -60,7 +60,7 @@ ged_erase_all(struct ged *gedp, int argc, const char *argv[])
     }
 
     for (i = 1; i < argc; ++i)
-	ged_eraseAllPathsFromDisplay(gedp, argv[i], 0);
+	_ged_eraseAllPathsFromDisplay(gedp, argv[i], 0);
 
     return GED_OK;
 }

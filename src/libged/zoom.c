@@ -63,7 +63,7 @@ ged_zoom(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    return ged_do_zoom(gedp, sf);
+    return _ged_do_zoom(gedp, sf);
 }
 
 

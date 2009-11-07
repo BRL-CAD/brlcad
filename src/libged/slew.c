@@ -64,7 +64,7 @@ ged_slew(struct ged *gedp, int argc, const char *argv[])
 	    svec[Z] = 0.0;
 	}
 
-	return ged_do_slew(gedp, svec);
+	return _ged_do_slew(gedp, svec);
     }
 
     if (argc == 3 || argc == 4) {
@@ -86,7 +86,7 @@ ged_slew(struct ged *gedp, int argc, const char *argv[])
 	} else
 	    svec[Z] = 0.0;
 
-	return ged_do_slew(gedp, svec);
+	return _ged_do_slew(gedp, svec);
     }
 
     bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);

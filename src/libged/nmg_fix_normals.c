@@ -43,7 +43,7 @@ ged_nmg_fix_normals(struct ged *gedp, int argc, const char *argv[])
     struct model *m;
     struct nmgregion *r;
     struct shell *s;
-    char *nmg_name;
+    const char *nmg_name;
     struct bn_tol tol;
 
     static const char *usage = "nmg_prim";

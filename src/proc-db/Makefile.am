@@ -19,6 +19,7 @@ bin_PROGRAMS = \
 	lens \
 	masonry \
 	metaball \
+	mkbuilding \
 	molecule \
 	nmgmodel \
 	pipe \
@@ -82,6 +83,8 @@ kurt_SOURCES = kurt.c
 lens_SOURCES = lens.c
 masonry_SOURCES = masonry.c
 metaball_SOURCES = metaball.c
+mkbuilding_SOURCES = mkbuilding.c \
+	makebuilding/makebuilding.c
 molecule_SOURCES = molecule.c
 nmgmodel_SOURCES = nmgmodel.c
 pipe_SOURCES = pipe.c
@@ -103,6 +106,7 @@ wdb_example_SOURCES = wdb_example.c
 
 noinst_HEADERS = \
 	brepintersect.h \
+	mkbuilding.h \
 	surfaceintersect.h \
 	ducks.h \
 	patches.h \

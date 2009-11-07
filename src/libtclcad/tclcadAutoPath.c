@@ -22,22 +22,21 @@
  *
  * Locate the BRL-CAD tclscripts
  *
- * Author --
- *   Christopher Sean Morrison
  */
 
 #include "common.h"
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "tcl.h"
-#include "tk.h"
-#include "itcl.h"
 
-#if !defined(_WIN32) || defined(__CYGWIN__)
-#include "itk.h"
+#ifdef HAVE_TK
+#  include "tk.h"
+#  include "itk.h"
 #endif
+#include "itcl.h"
 
 /* incrTcl prior to 3.3 doesn't provide ITK_VERSION */
 #ifndef ITK_VERSION
@@ -55,6 +54,9 @@
 #endif
 
 #define MAX_BUF 2048
+
+/* FIXME: we utilize this Tcl internal in here */
+extern Tcl_Obj *TclGetLibraryPath (void);
 
 
 /* helper routine to determine whether the full 'path' includes a
@@ -103,6 +105,7 @@ tclcad_tcl_library(Tcl_Interp *interp)
     Tcl_Obj *tclpath = NULL;
     char buffer[MAX_BUF] = {0};
 
+    /* FIXME: this is a private internal call */
     tclpath = TclGetLibraryPath();
     if (!tclpath) {
 	bu_log("WARNING: Unable to get the library path\n");
@@ -125,9 +128,12 @@ tclcad_tcl_library(Tcl_Interp *interp)
 		TclSetLibraryPath(listtl);
 	    }
 	}
+
 	Tcl_DecrRefCount(tclpath);
+	/* FIXME: this is a private internal call */
 	tclpath = TclGetLibraryPath();
 	Tcl_IncrRefCount(tclpath);
+
 	Tcl_ListObjLength(NULL, tclpath, &pathcount);
 	if (pathcount <= 0) {
 	    bu_log("WARNING: tcl_library is unset (unexpected)\n");
@@ -261,12 +267,16 @@ tclcad_auto_path(Tcl_Interp *interp)
 		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR);
 	bu_vls_printf(&auto_path, "%c%s%clib%ctcl%s",
 		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, TCL_VERSION);
+#ifdef HAVE_TK
 	bu_vls_printf(&auto_path, "%c%s%clib%ctk%s",
 		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, TK_VERSION);
+#endif
 	bu_vls_printf(&auto_path, "%c%s%clib%citcl%s",
 		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, ITCL_VERSION);
+#ifdef HAVE_TK
 	bu_vls_printf(&auto_path, "%c%s%clib%citk%s",
 		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, ITK_VERSION);
+#endif
 	bu_vls_printf(&auto_path, "%c%s%clib%ciwidgets%s",
 		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, IWIDGETS_VERSION);
 	bu_vls_printf(&auto_path, "%c%s%ctclscripts",
@@ -366,12 +376,16 @@ tclcad_auto_path(Tcl_Interp *interp)
 		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR);
 	bu_vls_printf(&auto_path, "%c%s%clib%ctcl%s",
 		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, TCL_VERSION);
+#ifdef HAVE_TK
 	bu_vls_printf(&auto_path, "%c%s%clib%ctk%s",
 		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, TK_VERSION);
+#endif
 	bu_vls_printf(&auto_path, "%c%s%clib%citcl%s",
 		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, ITCL_VERSION);
+#ifdef HAVE_TK
 	bu_vls_printf(&auto_path, "%c%s%clib%citk%s",
 		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, ITK_VERSION);
+#endif
 	bu_vls_printf(&auto_path, "%c%s%clib%ciwidgets%s",
 		      BU_PATH_SEPARATOR, root, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, IWIDGETS_VERSION);
 	bu_vls_printf(&auto_path, "%c%s%ctclscripts",

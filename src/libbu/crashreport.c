@@ -17,19 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup bu_log */
-/** @{ */
-/** @file crashreport.c
- *
- * Generate a crash report file, including a call stack backtrace and
- * other system details.
- *
- * Author -
- *   Christopher Sean Morrison
- *
- * Source -
- *   BRL-CAD Open Source
- */
 
 #include "common.h"
 
@@ -52,18 +39,6 @@ static time_t now;
 static const char *path = NULL;
 
 
-/**
- * b u _ c r a s h r e p o r t
- *
- * this routine writes out details of the currently running process to
- * the specified file, including an informational header about the
- * execution environment, stack trace details, kernel and hardware
- * information, and current version information.
- *
- * returns truthfully if the crash report was written.
- *
- * due to various reasons, this routine is NOT thread-safe.
- */
 int
 bu_crashreport(const char *filename)
 {
@@ -163,8 +138,6 @@ bu_crashreport(const char *filename)
     /* success */
     return 1;
 }
-
-/** @} */
 
 /*
  * Local Variables:

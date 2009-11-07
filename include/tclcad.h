@@ -90,6 +90,7 @@ struct ged_obj {
     struct bu_vls	go_more_args_callback;
     struct bu_vls	*go_prim_label_list;
     int			go_prim_label_list_size;
+    int			go_refresh_on;
     Tcl_Interp		*go_interp;
 };
 

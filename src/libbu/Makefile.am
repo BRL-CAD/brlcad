@@ -87,7 +87,7 @@ htester_LDADD = \
 	libbu.la \
 	${BU_LIBS}
 
-include_HEADERS = \
+noinst_HEADERS = \
 	rb_internals.h \
 	uce-dirent.h
 

@@ -42,7 +42,9 @@
 #include "bio.h"
 
 #include "tcl.h"
-#include "tk.h"
+#ifdef HAVE_TK
+#  include "tk.h"
+#endif
 
 #include "itcl.h"
 
@@ -74,6 +76,7 @@ extern int db_version;
 
 int glob_compat_mode = 1;
 int output_as_return = 1;
+
 Tk_Window tkwin = NULL;
 
 /* The following is for GUI output hooks: contains name of function to

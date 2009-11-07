@@ -1227,6 +1227,14 @@ GED_EXPORT BU_EXTERN(int ged_aet, (struct ged *gedp, int argc, const char *argv[
 GED_EXPORT BU_EXTERN(int ged_analyze, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Creates an annotation.
+ *
+ * Usage:
+ *     annotate [object(s)] [-n name] [-p x y z] [-t type] [-m message]
+ */
+GED_EXPORT BU_EXTERN(int ged_annotate, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Allow editing of the matrix, etc., along an arc.
  *
  * Usage:

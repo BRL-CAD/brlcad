@@ -17,16 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup vls */
-/** @{ */
-/** @file str.c
- *
- * Compatibility routines to various string processing functions
- * including strlcat and strlcpy.
- *
- * @author
- *   Christopher Sean Morrison
- */
 
 #include "common.h"
 
@@ -38,15 +28,6 @@
 #include "bu.h"
 
 
-/**
- * b u _ s t r l c a t / b u _ s t r l c a t m
- *
- * concatenate one string onto the end of another, returning the
- * length of the dst string after the concatenation.
- *
- * bu_strlcat() is a macro to bu_strlcatm() so that we can report the
- * file name and line number of any erroneous callers.
- */
 size_t
 bu_strlcatm(char *dst, const char *src, size_t size, const char *label)
 {
@@ -103,15 +84,6 @@ bu_strlcatm(char *dst, const char *src, size_t size, const char *label)
 }
 
 
-/**
- * b u _ s t r l c p y / b u _ s t r l c p y m
- *
- * copies one string into another, returning the length of the dst
- * string after the copy.
- *
- * bu_strlcpy() is a macro to bu_strlcpym() so that we can report the
- * file name and line number of any erroneous callers.
- */
 size_t
 bu_strlcpym(char *dst, const char *src, size_t size, const char *label)
 {
@@ -158,15 +130,6 @@ bu_strlcpym(char *dst, const char *src, size_t size, const char *label)
 }
 
 
-/**
- * b u _ s t r d u p  / b u _ s t r d u p m
- *
- * Given a string, allocate enough memory to hold it using bu_malloc(),
- * duplicate the strings, returns a pointer to the new string.
- *
- * bu_strdup() is a macro that includes the current file name and line
- * number that can be used when bu debugging is enabled.
- */
 char *
 bu_strdupm(register const char *cp, const char *label)
 {
@@ -195,8 +158,6 @@ bu_strdupm(register const char *cp, const char *label)
     return (base);
 }
 
-
-/** @} */
 /*
  * Local Variables:
  * mode: C

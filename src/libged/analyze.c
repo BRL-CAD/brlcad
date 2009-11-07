@@ -92,7 +92,7 @@ ged_analyze(struct ged *gedp, int argc, const char *argv[])
 
 	GED_DB_GET_INTERNAL(gedp, &intern, ndp, bn_mat_identity, &rt_uniresource, GED_ERROR);
 
-	ged_do_list(gedp, ndp, 1);
+	_ged_do_list(gedp, ndp, 1);
 	ged_do_anal(gedp, &intern);
 	rt_db_free_internal(&intern, &rt_uniresource);
     }

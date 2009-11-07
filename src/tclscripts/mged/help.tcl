@@ -126,6 +126,7 @@ set mged_help_data(debugnmg)	{{[hex code]}	{show/set debugging bit vector for NM
 set mged_help_data(decompose)	{{nmg_solid [prefix]}	{decompose nmg_solid into maximally connected shells}}
 set mged_help_data(delay)	{{sec usec}	{delay for the specified amount of time}}
 set mged_help_data(dm)		{{set var [val]}	{do display-manager specific command}}
+set mged_help_data(dmtype)	{{{set dmtype}}	{Without argument, display current display manager type.  With 'set dmtype' changes display manager instances to new type.}}
 set mged_help_data(draw)	$helplib_data(dgo_draw)
 set mged_help_data(dump)	$helplib_data(wdb_dump)
 set mged_help_data(dup)		$helplib_data(wdb_dup)
@@ -151,7 +152,7 @@ set mged_help_data(expand)	$helplib_data(wdb_expand)
 set mged_help_data(eye_pt)	$helplib_data(vo_eye)
 set mged_help_data(e_muves)	{{MUVES_component_1 MUVES_component2 ...}	{display listed MUVES components/systems}}
 set mged_help_data(facedef)	{{####}	{define new face for an arb}}
-set mged_help_data(facetize)	{{[-ntT] [-P#] new_obj old_obj(s)}	{convert objects to faceted BOT objects (or NMG for -n option) at current tol}}
+set mged_help_data(facetize)	{{[-mntT] [-P#] new_obj old_obj(s)}	{convert objects to faceted BOT objects (or NMG for -n option, with -m for marching cubes) at current tol}}
 set mged_help_data(form)	$helplib_data(wdb_form)
 set mged_help_data(fracture)	{{NMGsolid [prefix]}	{fracture an NMG solid into many NMG solids, each containing one face}}
 set mged_help_data(g)		$helplib_data(wdb_group)
@@ -208,7 +209,7 @@ set mged_help_data(nmg_collapse)	$helplib_data(wdb_nmg_collapse)
 set mged_help_data(nmg_fix_normals)	{{NMG object} {Attempt to fix the normals of an NMG object.}}
 set mged_help_data(nmg_simplify)	$helplib_data(wdb_nmg_simplify)
 set mged_help_data(oed)		{{path_lhs path_rhs}	{go from view to object_edit of path_lhs/path_rhs}}
-set mged_help_data(opendb)	{{[database.g]}	{close any currently open .g file and open the specified database.g file, or return the name of the currently open geometry database}}
+set mged_help_data(opendb)	{{[database.g] [y|n]}	{close any currently open .g file and open the specified database.g file, or return the name of the currently open geometry database.  A trailing 'y' or 'n' indicates whether to create a new database if one does not already exist.}}
 set mged_help_data(orientation)	$helplib_data(vo_orient)
 set mged_help_data(orot)	{{[-i] xdeg ydeg zdeg}	{rotate object being edited}}
 set mged_help_data(oscale)	{{factor}	{scale object by factor}}

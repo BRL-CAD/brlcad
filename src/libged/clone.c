@@ -796,22 +796,22 @@ deep_copy_object(struct resource *resp, struct ged_clone_state *state)
  * how to use clone.  blissfully simple interface.
  */
 static void
-print_usage(struct ged *gedp)
+print_usage(struct bu_vls *str)
 {
-    bu_vls_printf(&gedp->ged_result_str, "Usage: clone [-abhimnprtv] <object>\n\n");
-    bu_vls_printf(&gedp->ged_result_str, "-a <n> <x> <y> <z>\t- Specifies a translation split between n copies.\n");
-    bu_vls_printf(&gedp->ged_result_str, "-b <n> <x> <y> <z>\t- Specifies a rotation around x, y, and z axes \n\t\t\t  split between n copies.\n");
-    bu_vls_printf(&gedp->ged_result_str, "-c\t\t\t- Increment the second number in object names.\n");
-    bu_vls_printf(&gedp->ged_result_str, "-f\t\t\t- Don't draw the new object.\n");
-    bu_vls_printf(&gedp->ged_result_str, "-g\t\t\t- Don't resize the view after drawing new objects.\n");
-    bu_vls_printf(&gedp->ged_result_str, "-h\t\t\t- Prints this message.\n");
-    bu_vls_printf(&gedp->ged_result_str, "-i <n>\t\t\t- Specifies the increment between each copy.\n");
-    bu_vls_printf(&gedp->ged_result_str, "-m <axis> <pos>\t\t- Specifies the axis and point to mirror the group.\n");
-    bu_vls_printf(&gedp->ged_result_str, "-n <# copies>\t\t- Specifies the number of copies to make.\n");
-    bu_vls_printf(&gedp->ged_result_str, "-p <x> <y> <z>\t\t- Specifies point to rotate around for -r. \n\t\t\t  Default is 0 0 0.\n");
-    bu_vls_printf(&gedp->ged_result_str, "-r <x> <y> <z>\t\t- Specifies the rotation around x, y, and z axes.\n");
-    bu_vls_printf(&gedp->ged_result_str, "-t <x> <y> <z>\t\t- Specifies translation between each copy.\n");
-    bu_vls_printf(&gedp->ged_result_str, "-v\t\t\t- Prints version info.\n");
+    bu_vls_printf(str, "Usage: clone [-abhimnprtv] <object>\n\n");
+    bu_vls_printf(str, "-a <n> <x> <y> <z>\t- Specifies a translation split between n copies.\n");
+    bu_vls_printf(str, "-b <n> <x> <y> <z>\t- Specifies a rotation around x, y, and z axes \n\t\t\t  split between n copies.\n");
+    bu_vls_printf(str, "-c\t\t\t- Increment the second number in object names.\n");
+    bu_vls_printf(str, "-f\t\t\t- Don't draw the new object.\n");
+    bu_vls_printf(str, "-g\t\t\t- Don't resize the view after drawing new objects.\n");
+    bu_vls_printf(str, "-h\t\t\t- Prints this message.\n");
+    bu_vls_printf(str, "-i <n>\t\t\t- Specifies the increment between each copy.\n");
+    bu_vls_printf(str, "-m <axis> <pos>\t\t- Specifies the axis and point to mirror the group.\n");
+    bu_vls_printf(str, "-n <# copies>\t\t- Specifies the number of copies to make.\n");
+    bu_vls_printf(str, "-p <x> <y> <z>\t\t- Specifies point to rotate around for -r. \n\t\t\t  Default is 0 0 0.\n");
+    bu_vls_printf(str, "-r <x> <y> <z>\t\t- Specifies the rotation around x, y, and z axes.\n");
+    bu_vls_printf(str, "-t <x> <y> <z>\t\t- Specifies translation between each copy.\n");
+    bu_vls_printf(str, "-v\t\t\t- Prints version info.\n");
     return;
 }
 
@@ -864,7 +864,7 @@ get_args(struct ged *gedp, int argc, char **argv, struct ged_clone_state *state)
 		state->autoview = 0;
 		break;
 	    case 'h':
-		print_usage(gedp);
+		print_usage(&gedp->ged_result_str);
 		return GED_ERROR;
 		break;
 	    case 'i':
@@ -900,7 +900,7 @@ get_args(struct ged *gedp, int argc, char **argv, struct ged_clone_state *state)
 		return GED_ERROR;
 		break;
 	    default:
-		print_usage(gedp);
+		print_usage(&gedp->ged_result_str);
 		return GED_ERROR;
 	}
     }
@@ -908,11 +908,11 @@ get_args(struct ged *gedp, int argc, char **argv, struct ged_clone_state *state)
     /* make sure not too few/many args */
     if ((argc - bu_optind) == 0) {
 	bu_vls_printf(&gedp->ged_result_str, "Need to specify an <object> to be cloned.\n");
-	print_usage(gedp);
+	print_usage(&gedp->ged_result_str);
 	return GED_ERROR;
     } else if (bu_optind + 1 < argc) {
 	bu_vls_printf(&gedp->ged_result_str, "clone:  Can only clone exactly one <object> at a time right now.\n");
-	print_usage(gedp);
+	print_usage(&gedp->ged_result_str);
 	return GED_ERROR;
     }
 
@@ -944,7 +944,7 @@ ged_clone(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	print_usage(gedp);
+	print_usage(&gedp->ged_result_str);
 	return GED_HELP;
     }
 

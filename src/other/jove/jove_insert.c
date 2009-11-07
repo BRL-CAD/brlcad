@@ -104,7 +104,7 @@ LineInsert()
 	newdot = curline;
 	while (num--) {
 		newdot = listput(curbuf, newdot);	/* Put after newdot */
-		newdot->l_dline = putline("") | DIRTY;
+		newdot->l_dline = put_line("") | DIRTY;
 	}
 	linebuf[curchar] = '\0';	/* Shorten this line */
 	SavLine(curline, linebuf);
@@ -123,7 +123,7 @@ void
 LineAI()
 {
 	LineInsert();
-	whitesp(getline(curline->l_prev->l_dline, genbuf), linebuf);
+	whitesp(get_line(curline->l_prev->l_dline, genbuf), linebuf);
 }
 
 void
@@ -319,9 +319,9 @@ AtMargin()
 TwoBlank()
 {
 	return (curline->l_next &&
-			(getline(curline->l_next->l_dline,
+			(get_line(curline->l_next->l_dline,
 			genbuf)[0] == '\0') && curline->l_next->l_next &&
-			(getline(curline->l_next->l_next->l_dline,
+			(get_line(curline->l_next->l_next->l_dline,
 			genbuf)[0] == '\0'));
 }
 
@@ -407,7 +407,7 @@ BUFFER	*whatbuf;
 		buf[tchar] = '\0';
 
 	linecopy(genbuf, atchar, &buf[fchar]);
-	atline->l_dline = putline(genbuf);
+	atline->l_dline = put_line(genbuf);
 	makedirty(atline);
 
 	fline = fline->l_next;
@@ -420,10 +420,10 @@ BUFFER	*whatbuf;
 		atchar = 0;
 	}
 
-	ignore(getline(atline->l_dline, genbuf));
+	ignore(get_line(atline->l_dline, genbuf));
 	atchar += tchar;
 	linecopy(genbuf, atchar, save);
-	atline->l_dline = putline(genbuf);
+	atline->l_dline = put_line(genbuf);
 	makedirty(atline);
 	IFixMarks(startline, startchar, atline, atchar);
 	bp.p_line = atline;

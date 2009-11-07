@@ -124,7 +124,6 @@ main(int argc, char **argv)
 
     BU_LIST_INIT(&head.l);
     BU_LIST_INIT(&ghead.l);
-    rt_uniresource.re_magic = RESOURCE_MAGIC;
 
     outfp = wdb_fopen("tube.g");
     if ((pos_fp = fopen("pos.dat", "r")) == NULL)

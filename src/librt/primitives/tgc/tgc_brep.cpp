@@ -37,15 +37,14 @@
 extern "C" void
 rt_tgc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {
-    struct rt_tgc_internal	*eip;
-
-    *b = NULL; 
+    struct rt_tgc_internal *eip;
 
     RT_CK_DB_INTERNAL(ip);
     eip = (struct rt_tgc_internal *)ip->idb_ptr;
     RT_TGC_CK_MAGIC(eip);
 
-    *b = new ON_Brep();
+    *b = ON_Brep::New();
+
     point_t p1_origin, p2_origin;
     ON_3dPoint plane1_origin, plane2_origin;
     ON_3dVector plane1_x_dir, plane1_y_dir, plane2_x_dir, plane2_y_dir;

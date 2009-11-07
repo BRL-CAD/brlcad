@@ -17,15 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup bu_list */
-/** @{ */
-/** @file ./libbu/list.c
- *
- * @brief Support routines for linked lists.
- *
- * Generic bu_list routines.
- *
- */
 
 #include "common.h"
 
@@ -33,11 +24,6 @@
 #include "bu.h"
 
 
-/**
- * B U _ L I S T _ N E W
- *
- * Creates and initializes a bu_list head structure
- */
 struct bu_list *
 bu_list_new(void)
 {
@@ -49,11 +35,6 @@ bu_list_new(void)
     return (new_list);
 }
 
-/**
- * B U _ L I S T _ P O P
- *
- * Returns the results of BU_LIST_POP
- */
 struct bu_list *
 bu_list_pop(struct bu_list *hp)
 {
@@ -64,16 +45,11 @@ bu_list_pop(struct bu_list *hp)
     return (p);
 }
 
-/**
- * B U _ L I S T _ L E N
- *
- * Returns the number of elements on a bu_list brand linked list.
- */
 int
 bu_list_len(register const struct bu_list *hd)
 {
-    register int			count = 0;
-    register const struct bu_list	*ep;
+    register int count = 0;
+    register const struct bu_list *ep;
 
     for (BU_LIST_FOR(ep, bu_list, hd)) {
 	count++;
@@ -81,11 +57,6 @@ bu_list_len(register const struct bu_list *hd)
     return count;
 }
 
-/**
- * B U _ L I S T _ R E V E R S E
- *
- * Reverses the order of elements in a bu_list linked list.
- */
 void
 bu_list_reverse(register struct bu_list *hd)
 {
@@ -103,18 +74,10 @@ bu_list_reverse(register struct bu_list *hd)
     }
 }
 
-/**
- * B U _ L I S T _ F R E E
- *
- * Given a list of structures allocated with bu_malloc() enrolled
- * on a bu_list head, walk the list and free the structures.
- * This routine can only be used when the structures have no interior
- * pointers.
- */
 void
 bu_list_free(struct bu_list *hd)
 {
-    struct bu_list	*p;
+    struct bu_list *p;
 
     while (BU_LIST_WHILE(p, bu_list, hd)) {
 	BU_LIST_DEQUEUE(p);
@@ -122,15 +85,6 @@ bu_list_free(struct bu_list *hd)
     }
 }
 
-/**
- * B U _ L I S T _ P A R A L L E L _ A P P E N D
- *
- * Simple parallel-safe routine for appending a data structure to the end
- * of a bu_list doubly-linked list.
- * @par Issues:
- *  	Only one semaphore shared by all list heads.
- * @n	No portable way to notify waiting thread(s) that are sleeping
- */
 void
 bu_list_parallel_append(struct bu_list *headp, struct bu_list *itemp)
 {
@@ -139,18 +93,6 @@ bu_list_parallel_append(struct bu_list *headp, struct bu_list *itemp)
     bu_semaphore_release(BU_SEM_LISTS);
 }
 
-/**
- * B U _ L I S T _ P A R A L L E L _ D E Q U E U E
- *
- * Simple parallel-safe routine for dequeueing one data structure from
- * the head of a bu_list doubly-linked list.
- * If the list is empty, wait until some other thread puts something on
- * the list.
- *
- * @par Issues:
- * No portable way to not spin and burn CPU time while waiting
- * @n	for something to show up on the list.
- */
 struct bu_list *
 bu_list_parallel_dequeue(struct bu_list *headp)
 {
@@ -174,38 +116,33 @@ bu_list_parallel_dequeue(struct bu_list *headp)
     /* NOTREACHED */
 }
 
-/**
- * B U _ C K _ L I S T
- *
- * Generic bu_list doubly-linked list checker.
- */
 void
 bu_ck_list(const struct bu_list *hd, const char *str)
 {
-    register const struct bu_list	*cur;
-    int	head_count = 0;
+    register const struct bu_list *cur;
+    int head_count = 0;
 
     cur = hd;
     do  {
 	if (cur->magic == BU_LIST_HEAD_MAGIC)  head_count++;
 	if (!cur->forw) {
 	    bu_log("bu_ck_list(%s) cur=%p, cur->forw=%p, hd=%p\n",
-		   str, cur, cur->forw, hd);
+		   str, (void *)cur, (void *)cur->forw, (void *)hd);
 	    bu_bomb("bu_ck_list() forw\n");
 	}
 	if (cur->forw->back != cur) {
 	    bu_log("bu_ck_list(%s) cur=%p, cur->forw=%p, cur->forw->back=%p, hd=%p\n",
-		   str, cur, cur->forw, cur->forw->back, hd);
+		   str, (void *)cur, (void *)cur->forw, (void *)cur->forw->back, (void *)hd);
 	    bu_bomb("bu_ck_list() forw->back\n");
 	}
 	if (!cur->back) {
 	    bu_log("bu_ck_list(%s) cur=%p, cur->back=%p, hd=%p\n",
-		   str, cur, cur->back, hd);
+		   str, (void *)cur, (void *)cur->back, (void *)hd);
 	    bu_bomb("bu_ck_list() back\n");
 	}
 	if (cur->back->forw != cur) {
 	    bu_log("bu_ck_list(%s) cur=%p, cur->back=%p, cur->back->forw=%p, hd=%p\n",
-		   str, cur, cur->back, cur->back->forw, hd);
+		   str, (void *)cur, (void *)cur->back, (void *)cur->back->forw, (void *)hd);
 	    bu_bomb("bu_ck_list() back->forw\n");
 	}
 	cur = cur->forw;
@@ -213,23 +150,17 @@ bu_ck_list(const struct bu_list *hd, const char *str)
 
     if (head_count != 1) {
 	bu_log("bu_ck_list(%s) head_count = %d, hd=%p\n",
-	       str, head_count, hd);
+	       str, head_count, (void *)hd);
 	bu_bomb("bu_ck_list() headless!\n");
     }
 }
 
-/**
- * B U _ C K _ L I S T _ M A G I C
- *
- * bu_list doubly-linked list checker which checks the magic number for
- * all elements in the linked list
- */
 void
 bu_ck_list_magic(const struct bu_list *hd, const char *str, const unsigned long magic)
 {
-    register const struct bu_list	*cur;
-    int	head_count = 0;
-    int	item = 0;
+    register const struct bu_list *cur;
+    int head_count = 0;
+    int item = 0;
 
     cur = hd;
     do  {
@@ -237,9 +168,10 @@ bu_ck_list_magic(const struct bu_list *hd, const char *str, const unsigned long 
 	    head_count++;
 	} else if (cur->magic != magic) {
 	    bu_log("bu_ck_list(%s) cur magic=(%s)%p, cur->forw magic=(%s)%p, hd magic=(%s)%p, item=%d\n",
-		   str, bu_identify_magic(cur->magic), cur->magic,
-		   bu_identify_magic(cur->forw->magic), cur->forw->magic,
-		   bu_identify_magic(hd->magic), hd->magic,
+		   str, 
+		   bu_identify_magic(cur->magic), (void *)cur->magic,
+		   bu_identify_magic(cur->forw->magic), (void *)cur->forw->magic,
+		   bu_identify_magic(hd->magic), (void *)hd->magic,
 		   item);
 	    bu_bomb("bu_ck_list_magic() cur->magic\n");
 	}
@@ -251,7 +183,8 @@ bu_ck_list_magic(const struct bu_list *hd, const char *str, const unsigned long 
 	}
 	if (cur->forw->back != cur) {
 	    bu_log("bu_ck_list_magic(%s) cur=%p, cur->forw=%p, cur->forw->back=%p, hd=%p, item=%d\n",
-		   str, cur, cur->forw, cur->forw->back, hd, item);
+		   str,
+		   (void *)cur, (void *)cur->forw, (void *)cur->forw->back, (void *)hd, item);
 	    bu_log(" cur=%s, cur->forw=%s, cur->forw->back=%s\n",
 		   bu_identify_magic(cur->magic),
 		   bu_identify_magic(cur->forw->magic),
@@ -260,12 +193,12 @@ bu_ck_list_magic(const struct bu_list *hd, const char *str, const unsigned long 
 	}
 	if (!cur->back) {
 	    bu_log("bu_ck_list_magic(%s) cur=%p, cur->back=%p, hd=%p, item=%d\n",
-		   str, cur, cur->back, hd, item);
+		   str, (void *)cur, (void *)cur->back, (void *)hd, item);
 	    bu_bomb("bu_ck_list_magic() back NULL\n");
 	}
 	if (cur->back->forw != cur) {
 	    bu_log("bu_ck_list_magic(%s) cur=%p, cur->back=%p, cur->back->forw=%p, hd=%p, item=%d\n",
-		   str, cur, cur->back, cur->back->forw, hd, item);
+		   str, (void *)cur, (void *)cur->back, (void *)cur->back->forw, (void *)hd, item);
 	    bu_bomb("bu_ck_list_magic() cur->back->forw != cur\n");
 	}
 	cur = cur->forw;
@@ -274,7 +207,7 @@ bu_ck_list_magic(const struct bu_list *hd, const char *str, const unsigned long 
 
     if (head_count != 1) {
 	bu_log("bu_ck_list_magic(%s) head_count = %d, hd=%p, items=%d\n",
-	       str, head_count, hd, item);
+	       str, head_count, (void *)hd, item);
 	bu_bomb("bu_ck_list_magic() headless!\n");
     }
 }
@@ -291,8 +224,6 @@ bu_list_dequeue_next(struct bu_list *hp, struct bu_list *p)
 
     return (p2);
 }
-
-/** @} */
 
 /*
  * Local Variables:
