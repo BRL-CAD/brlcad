@@ -1173,6 +1173,7 @@ perf ( ) {
 start="`date '+%H %M %S'`"
 $ECHO "Running the BRL-CAD Benchmark tests... please wait ..."
 $ECHO
+ret=0
 
 bench moss all.g $ARGS << EOF
 viewsize 1.572026215e+02;
@@ -1182,6 +1183,7 @@ viewrot -5.735764503e-01 8.191520572e-01 0.000000000e+00 0.000000000e+00
 	7.424039245e-01 5.198368430e-01 4.226182699e-01 0.000000000e+00
 	0.000000000e+00 0.000000000e+00 0.000000000e+00 1.000000000e+00 ;
 EOF
+ret=`expr $ret + $?`
 
 bench world all.g $ARGS << EOF
 viewsize 1.572026215e+02;
@@ -1191,6 +1193,7 @@ viewrot -5.735764503e-01 8.191520572e-01 0.000000000e+00 0.000000000e+00
 	7.424039245e-01 5.198368430e-01 4.226182699e-01 0.000000000e+00
 	0.000000000e+00 0.000000000e+00 0.000000000e+00 1.000000000e+00 ;
 EOF
+ret=`expr $ret + $?`
 
 bench star all $ARGS << EOF
 viewsize 2.500000000e+05;
@@ -1200,6 +1203,7 @@ viewrot -6.733560560e-01 6.130643360e-01 4.132114880e-01 0.000000000e+00
 	4.896120540e-01 7.885590550e-01 -3.720948210e-01 0.000000000e+00
 	0.000000000e+00 0.000000000e+00 0.000000000e+00 1.000000000e+00 ;
 EOF
+ret=`expr $ret + $?`
 
 bench bldg391 all.g $ARGS << EOF
 viewsize 1.800000000e+03;
@@ -1209,6 +1213,7 @@ viewrot -5.735764503e-01 8.191520572e-01 0.000000000e+00 0.000000000e+00
 	7.424039245e-01 5.198368430e-01 4.226182699e-01 0.000000000e+00
 	0.000000000e+00 0.000000000e+00 0.000000000e+00 1.000000000e+00;
 EOF
+ret=`expr $ret + $?`
 
 bench m35 all.g $ARGS <<EOF
 viewsize 6.787387985e+03;
@@ -1218,17 +1223,35 @@ viewrot -5.527838919e-01 8.332423558e-01 1.171090926e-02 0.000000000e+00
 	6.800964482e-01 4.429747496e-01 5.841593895e-01 0.000000000e+00
 	0.000000000e+00 0.000000000e+00 0.000000000e+00 1.000000000e+00 ;
 EOF
+ret=`expr $ret + $?`
 
 bench sphflake scene.r $ARGS <<EOF
 viewsize 2.556283261452611e+04;
 orientation 4.406810841785839e-01 4.005093234738861e-01 5.226451688385938e-01 6.101102288499644e-01;
 eye_pt 2.418500583758302e+04 -3.328563644344796e+03 8.489926952850350e+03;
 EOF
+ret=`expr $ret + $?`
 
 $ECHO
 $ECHO "... Done."
 $ECHO
 $ECHO "Total testing time elapsed: `$ELP $start`"
+
+# see if we fail
+if test ! "x$ret" = "x0" ; then
+    $ECHO
+    $ECHO "THE BENCHARK ANALYSIS DID NOT COMPLETE SUCCESSFULLY." 
+    $ECHO
+    $ECHO "A benchmark failure means this is not a viable install of BRL-CAD.  This may be"
+    $ECHO "a new bug or (more likely) is a compilation configuration error.  Ensure your"
+    $ECHO "compiler has strict aliasing disabled, compilation is unoptimized, and you have"
+    $ECHO "installed BRL-CAD (some platforms require this).  If you still get a failure,"
+    $ECHO "please report your configuration information to benchmark@brlcad.org"
+    $ECHO
+    $ECHO "Output was saved to $LOGFILE from `pwd`"
+    $ECHO "Benchmark testing failed."
+    exit 2
+fi
 
 
 ##############################
