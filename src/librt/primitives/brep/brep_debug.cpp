@@ -763,31 +763,132 @@ brep_surface_info(struct brep_specific* bs, struct bu_vls *vls, int si)
     return 0;
 }
 
-int
-brep_face_info(struct brep_specific* bs, struct bu_vls *vls, int si)
+int brep_face_info(struct brep_specific* bs, struct bu_vls *vls, int fi)
 {
+    ON_wString s;
+    ON_TextLog dump(s);
     ON_Brep *brep = bs->brep;
-    if ((si >= 0) && (si < brep->m_S.Count())) {
-	const ON_Surface* srf = brep->m_S[si];
 
-	if (srf)
-	{
-	    ON_Interval udom = srf->Domain(0);
-	    ON_Interval vdom = srf->Domain(1);
-	    const char* s = srf->ClassId()->ClassName();
-	    if (!s)
-		s = "";
-	    bu_vls_printf(vls, "surface[%2d]: %s u(%g, %g) v(%g, %g)\n",
-			  si, s, 
-			  udom[0], udom[1], 
-			  vdom[0], vdom[1]
-		);
-	}
-	else
-	{
-	    bu_vls_printf(vls, "surface[%2d]: NULL\n", si);
-	}
+    const ON_BrepFace& face = brep->m_F[fi];
+    const ON_Surface* face_srf = face.SurfaceOf();
+    dump.Print("face[%2d]: surface(%d) reverse(%d) loops(", fi, face.m_si, face.m_bRev);
+    int fli;
+    for (fli = 0; fli < face.m_li.Count(); fli++) {
+	dump.Print((fli) ? ",%d" : "%d", face.m_li[fli]);
     }
+    dump.Print(")\n");
+    dump.PushIndent();
+
+    for (fli = 0; fli < face.m_li.Count(); fli++) {
+	const int li = face.m_li[fli];
+	const ON_BrepLoop& loop = brep->m_L[li];
+	const char* sLoopType = 0;
+	switch (loop.m_type) {
+	case ON_BrepLoop::unknown:
+	    sLoopType = "unknown";
+	    break;
+	case ON_BrepLoop::outer:
+	    sLoopType = "outer";
+	    break;
+	case ON_BrepLoop::inner:
+	    sLoopType = "inner";
+	    break;
+	case ON_BrepLoop::slit:
+	    sLoopType = "slit";
+	    break;
+	case ON_BrepLoop::crvonsrf:
+	    sLoopType = "crvonsrf";
+	    break;
+	default:
+	    sLoopType = "unknown";
+	    break;
+	}
+	dump.Print("loop[%2d]: type(%s) %d trims(", li, sLoopType, loop.m_ti.Count());
+	int lti;
+	for (lti = 0; lti < loop.m_ti.Count(); lti++) {
+	    dump.Print((lti) ? ",%d" : "%d", loop.m_ti[lti]);
+	}
+	dump.Print(")\n");
+	dump.PushIndent();
+	for (lti = 0; lti < loop.m_ti.Count(); lti++) {
+	    const int ti = loop.m_ti[lti];
+	    const ON_BrepTrim& trim = brep->m_T[ti];
+	    const char* sTrimType = "?";
+	    const char* sTrimIso = "-?";
+	    const ON_Curve* c2 = trim.TrimCurveOf();
+	    ON_3dPoint trim_start, trim_end;
+	    switch (trim.m_type) {
+	    case ON_BrepTrim::unknown:
+		sTrimType = "unknown ";
+		break;
+	    case ON_BrepTrim::boundary:
+		sTrimType = "boundary";
+		break;
+	    case ON_BrepTrim::mated:
+		sTrimType = "mated   ";
+		break;
+	    case ON_BrepTrim::seam:
+		sTrimType = "seam    ";
+		break;
+	    case ON_BrepTrim::singular:
+		sTrimType = "singular";
+		break;
+	    case ON_BrepTrim::crvonsrf:
+		sTrimType = "crvonsrf";
+		break;
+	    default:
+		sTrimType = "unknown";
+		break;
+	    }
+	    switch (trim.m_iso) {
+	    case ON_Surface::not_iso:
+		sTrimIso = "";
+		break;
+	    case ON_Surface::x_iso:
+		sTrimIso = "-u iso";
+		break;
+	    case ON_Surface::W_iso:
+		sTrimIso = "-west side iso";
+		break;
+	    case ON_Surface::E_iso:
+		sTrimIso = "-east side iso";
+		break;
+	    case ON_Surface::y_iso:
+		sTrimIso = "-v iso";
+		break;
+	    case ON_Surface::S_iso:
+		sTrimIso = "-south side iso";
+		break;
+	    case ON_Surface::N_iso:
+		sTrimIso = "-north side iso";
+		break;
+	    default:
+		sTrimIso = "-unknown_iso_flag";
+		break;
+	    }
+	    dump.Print("trim[%2d]: edge(%2d) v0(%2d) v1(%2d) tolerance(%g,%g)\n", ti, trim.m_ei, trim.m_vi[0], trim.m_vi[1], trim.m_tolerance[0], trim.m_tolerance[1]);
+	    dump.PushIndent();
+	    dump.Print("type(%s%s) rev3d(%d) 2d_curve(%d)\n", sTrimType, sTrimIso, trim.m_bRev3d, trim.m_c2i);
+	    if (c2) {
+		trim_start = trim.PointAtStart();
+		trim_end = trim.PointAtEnd();
+		dump.Print("domain(%g,%g) start(%g,%g) end(%g,%g)\n", trim.Domain()[0], trim.Domain()[1], trim_start.x, trim_start.y, trim_end.x, trim_end.y);
+		if (0 != face_srf) {
+		    ON_3dPoint trim_srfstart = face_srf->PointAt(trim_start.x, trim_start.y);
+		    ON_3dPoint trim_srfend = face_srf->PointAt(trim_end.x, trim_end.y);
+		    dump.Print("surface points start(%g,%g,%g) end(%g,%g,%g)\n", trim_srfstart.x, trim_srfstart.y, trim_srfstart.z, trim_srfend.x, trim_srfend.y, trim_srfend.z);
+		}
+	    } else {
+		dump.Print("domain(%g,%g) start(?,?) end(?,?)\n", trim.Domain()[0], trim.Domain()[1]);
+	    }
+	    dump.PopIndent();
+	}
+	dump.PopIndent();
+    }
+    dump.PopIndent();
+
+    ON_String ss = s;
+    bu_vls_printf(vls, "%s\n", ss.Array());
 
     return 0;
 }
