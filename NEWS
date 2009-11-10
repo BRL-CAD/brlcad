@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 --- 2009-11-06  Release 7.16.2                                     ---
 ----------------------------------------------------------------------
 
+* added manual page documentation for pix-ppm command - Sean Morrison
 * added -o file output option to pix-png and pix-ppm - Sean Morrison
 * improved NURBS geometry raytracing support - Keith Bowman
 * improved mged 'opendb' prompting - Sean Morrison, Jack Devanney

@@ -180,10 +180,6 @@ toUV(PBCData& data, ON_2dPoint& out_pt, double t, double knudge=0.0) {
 	  out_pt.Set(uv.x,uv.y);
 	  return true;
   } else {
-	  if ( data.surftree->getSurfacePoint((const ON_3dPoint&)pointOnCurve,uv,(const ON_3dPoint&)knudgedPointOnCurve) > 0 ) {
-	  	  out_pt.Set(uv.x,uv.y);
-	  	  return true;
-	  }
 	  return false;
   }
 
@@ -1773,7 +1769,10 @@ resolve_pullback_seams(list<PBCData*> &pbcs) {
 				}
 
 				//2) walk rest of way down with resolved prev point
-				prev = &(*samples)[samples->Count() -1];
+				if (samples->Count() > 1)
+				    prev = &(*samples)[samples->Count() -1];
+				else
+				    prev = NULL;
 				si++;
 				while (cs != pbcs.end()) {
 					while(si != data->segments.end()) {
@@ -1782,7 +1781,10 @@ resolve_pullback_seams(list<PBCData*> &pbcs) {
 						if ( !resolve_seam_segment(surf,*samples)) {
 							resolve_seam_segment_from_prev(surf, *samples, prev);
 						}
-						prev = &(*samples)[samples->Count() -1];
+						if (samples->Count() > 1)
+						    prev = &(*samples)[samples->Count() -1];
+						else
+						    prev = NULL;
 						si++;
 					}
 					cs++;

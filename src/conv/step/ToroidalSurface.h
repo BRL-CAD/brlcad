@@ -41,6 +41,10 @@ public:
 	ToroidalSurface();
 	virtual ~ToroidalSurface();
 	ToroidalSurface(STEPWrapper *sw,int STEPid);
+	const double *GetOrigin();
+	const double *GetNormal();
+	const double *GetXAxis();
+	const double *GetYAxis();
 	bool Load(STEPWrapper *sw,SCLP23(Application_instance) *sse);
 	virtual bool LoadONBrep(ON_Brep *brep);
 	virtual void Print(int level);

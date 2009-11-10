@@ -25,6 +25,8 @@
 #include "STEPWrapper.h"
 #include "Factory.h"
 
+#include "Axis2Placement3D.h"
+
 #include "ToroidalSurface.h"
 
 #define CLASSNAME "ToroidalSurface"
@@ -42,6 +44,26 @@ ToroidalSurface::ToroidalSurface(STEPWrapper *sw,int STEPid) {
 }
 
 ToroidalSurface::~ToroidalSurface() {
+}
+
+const double *
+ToroidalSurface::GetOrigin() {
+	return position->GetOrigin();
+}
+
+const double *
+ToroidalSurface::GetNormal() {
+	return position->GetAxis(2);
+}
+
+const double *
+ToroidalSurface::GetXAxis() {
+	return position->GetXAxis();
+}
+
+const double *
+ToroidalSurface::GetYAxis() {
+	return position->GetYAxis();
 }
 
 bool
@@ -93,14 +115,6 @@ ToroidalSurface::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		return (*i).second;
 	}
 }
-
-bool
-ToroidalSurface::LoadONBrep(ON_Brep *brep)
-{
-	cerr << "Error: ::LoadONBrep(ON_Brep *brep) not implemented for " << entityname << endl;
-	return false;
-}
-
 
 // Local Variables:
 // tab-width: 8

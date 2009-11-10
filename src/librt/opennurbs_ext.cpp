@@ -728,6 +728,7 @@ SurfaceTree::getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv, const ON_3dPo
 	    } else if (NEAR_ZERO(dist,tolerance)) {
 		if (dist < min_dist) {
 		    uv = curr_uv;
+		    min_dist = dist;
 		    found = true; //within tolerance but may be a point closer so keep looking
 		}
 	    }
