@@ -110,7 +110,9 @@ log ( ) {
     # this routine writes the provided argument(s) to a log file as
     # well as echoing them to stdout if we're not in quiet mode.
 
-    echo "$*" >> "$LOGFILE"
+    if test ! "x$LOGFILE" = "x" ; then
+	echo "$*" >> "$LOGFILE"
+    fi
     if test ! "x$QUIET" = "x1" ; then
 	echo "$*"
     fi
@@ -339,7 +341,6 @@ fi
 ###
 if test "x$CLEAN" = "x1" ; then
     ECHO=echo
-    rm -f "$LOGFILE"
     $ECHO
     if test "x$CLOBBER" = "x1" ; then
 	$ECHO "About to wipe out all benchmark images and log files in `pwd`"
@@ -347,6 +348,7 @@ if test "x$CLEAN" = "x1" ; then
 	sleep 5
     else
 	$ECHO "Deleting most benchmark images and log files in `pwd`"
+	$ECHO "Running '$0 clobber' will remove run logs."
     fi
     $ECHO
 
@@ -1249,6 +1251,7 @@ if test ! "x$ret" = "x0" ; then
     $ECHO "please report your configuration information to benchmark@brlcad.org"
     $ECHO
     $ECHO "Output was saved to $LOGFILE from `pwd`"
+    $ECHO "Run '$0 clean' to remove generated pix files."
     $ECHO "Benchmark testing failed."
     exit 2
 fi
@@ -1273,6 +1276,8 @@ $ECHO "  *.pix ..... final pix image files for each individual raytrace test"
 $ECHO "  *.log.* ... log files for previous frames and raytrace tests"
 $ECHO "  *.pix.* ... pix image files for previous frames and raytrace tests"
 $ECHO "  summary ... performance results summary, 2 lines per run"
+$ECHO
+$ECHO "Run '$0 clean' to remove generated pix files."
 $ECHO
 
 $ECHO "Summary:"
