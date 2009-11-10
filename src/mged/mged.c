@@ -342,6 +342,7 @@ main(int argc, char *argv[])
 	bu_semaphore_init(RT_SEM_LAST);
     }
 
+    bu_optind = 1;
     while ((c = bu_getopt(argc, argv, "a:d:hbicnrx:X:v?")) != EOF) {
 	switch (c) {
 	    case 'a':
