@@ -1076,8 +1076,10 @@ bench
 
 12) Post the source and platform-specific binary distributions to
 SourceForge and then select them on the sf.net File Release System:
-sftp sfusername@frs.sourceforge.net:uploads
-put brlcad-*
+sftp sfusername@frs.sourceforge.net:/home/frs/project/b/br/brlcad
+cd BRL-CAD\ Source
+mkdir MAJOR.MINOR.PATCH
+put brlcad-MAJOR.MINOR.PATCH*
 
 13) Increment and commit the next BRL-CAD release numbers to SVN;
 update the include/conf/(MAJOR|MINOR|PATCH) version files immediately
