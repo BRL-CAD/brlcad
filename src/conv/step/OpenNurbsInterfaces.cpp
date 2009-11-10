@@ -1323,6 +1323,9 @@ CylindricalSurface::LoadONBrep(ON_Brep *brep)
 
 	origin = origin*LocalUnits::length;
 
+	// make sure origin is part of the bbox
+	trim_curve_3d_bbox->Set(origin, true);
+
 	double bbdiag = trim_curve_3d_bbox->Diagonal().Length();
 	origin=origin - bbdiag*norm;
 	ON_Plane p(origin,xaxis,yaxis);
@@ -2509,6 +2512,10 @@ SurfaceOfLinearExtrusion::LoadONBrep(ON_Brep *brep)
 	if (ON_id >= 0)
 		return true; // already loaded
 
+	// use trimming edge bounding box diagonal to make sure extrusion
+	// magnitude is correctly represented
+	double bbdiag = trim_curve_3d_bbox->Diagonal().Length();
+
 	// load parent class
 	if (!SweptSurface::LoadONBrep(brep)) {
 		cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << endl;
@@ -2519,6 +2526,8 @@ SurfaceOfLinearExtrusion::LoadONBrep(ON_Brep *brep)
 
 	ON_3dPoint dir = extrusion_axis->Orientation();
 	double mag = extrusion_axis->Magnitude()*LocalUnits::length;
+	mag = MAX(mag, bbdiag);
+
 	ON_3dPoint startpnt = swept_curve->PointAtStart();
 
 	startpnt = startpnt*LocalUnits::length;
