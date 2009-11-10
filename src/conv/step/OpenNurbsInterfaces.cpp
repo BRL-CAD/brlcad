@@ -88,6 +88,8 @@ class SCLP23(Application_instance);
 #include "RationalBSplineSurfaceWithKnots.h"
 #include "RationalQuasiUniformSurface.h"
 #include "RationalUniformSurface.h"
+#include "SphericalSurface.h"
+#include "ToroidalSurface.h"
 #include "UniformSurface.h"
 
 #include "AdvancedBrepShapeRepresentation.h"
@@ -2585,6 +2587,62 @@ SurfaceOfRevolution::LoadONBrep(ON_Brep *brep)
 
 	//cerr << "Error: ::LoadONBrep(ON_Brep *brep) not implemented for " << entityname << endl;
 	return true;
+}
+
+bool SphericalSurface::LoadONBrep(ON_Brep *brep)
+{
+    // get sphere center
+    ON_3dPoint center = GetOrigin();
+    center = center * LocalUnits::length;
+
+    // Creates a sphere with given center and radius.
+    ON_Sphere sphere(center, radius * LocalUnits::length);
+
+    ON_RevSurface* s = sphere.RevSurfaceForm();
+    if (s) {
+	double r = fabs(sphere.radius);
+	if ( r <= ON_SQRT_EPSILON )
+	r = 1.0;
+	r *= ON_PI;
+	s->SetDomain(0,0.0,2.0*r);
+	s->SetDomain(1,-r,r);
+    }
+    ON_id = brep->AddSurface(s);
+
+    return true;
+}
+
+bool ToroidalSurface::LoadONBrep(ON_Brep *brep)
+{
+    ON_3dPoint origin = GetOrigin();
+    ON_3dVector norm = GetNormal();
+    ON_3dVector xaxis = GetXAxis();
+    ON_3dVector yaxis = GetYAxis();
+
+    origin = origin * LocalUnits::length;
+
+    ON_Plane p(origin, xaxis, yaxis);
+
+    // Creates a torus parallel to the plane
+    // with given major and minor radius.
+    ON_Torus torus(p, major_radius * LocalUnits::length, minor_radius * LocalUnits::length);
+
+    ON_RevSurface* s = torus.RevSurfaceForm();
+    if (s) {
+	double r = fabs(torus.major_radius);
+	if (r <= ON_SQRT_EPSILON)
+	    r = 1.0;
+	r *= ON_PI;
+	s->SetDomain(0, 0.0, 2.0 * r);
+	r = fabs(torus.minor_radius);
+	if (r <= ON_SQRT_EPSILON)
+	    r = 1.0;
+	r *= ON_PI;
+	s->SetDomain(1, 0.0, 2.0 * r);
+    }
+    ON_id = brep->AddSurface(s);
+
+    return true;
 }
 
 bool

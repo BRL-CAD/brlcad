@@ -25,6 +25,8 @@
 #include "STEPWrapper.h"
 #include "Factory.h"
 
+#include "Axis2Placement3D.h"
+
 #include "SphericalSurface.h"
 
 #define CLASSNAME "SphericalSurface"
@@ -43,6 +45,27 @@ SphericalSurface::SphericalSurface(STEPWrapper *sw,int STEPid) {
 
 SphericalSurface::~SphericalSurface() {
 }
+
+const double *
+SphericalSurface::GetOrigin() {
+	return position->GetOrigin();
+}
+
+const double *
+SphericalSurface::GetNormal() {
+	return position->GetAxis(2);
+}
+
+const double *
+SphericalSurface::GetXAxis() {
+	return position->GetXAxis();
+}
+
+const double *
+SphericalSurface::GetYAxis() {
+	return position->GetYAxis();
+}
+
 
 bool
 SphericalSurface::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
@@ -91,15 +114,6 @@ SphericalSurface::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		return (*i).second;
 	}
 }
-
-bool
-SphericalSurface::LoadONBrep(ON_Brep *brep)
-{
-	cerr << "Error: ::LoadONBrep(ON_Brep *brep) not implemented for " << entityname << endl;
-	return false;
-}
-
-
 // Local Variables:
 // tab-width: 8
 // mode: C++
