@@ -1032,16 +1032,17 @@ Get the date from the NEWS file.
 6) Sync trunk with the STABLE branch.  Make sure all changes since the
 previous sync are included and that STABLE matches trunk.
 
-    # review the log and obtain the last trunk merge revision number from comments, or use PREV
+    # review the log and obtain the last trunk merge revision number from comments
     svn log --stop-on-copy https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/branches/STABLE . | more
+    export PREV=[[last_trunk_rev]]
 	*** OR ***
     export PREV=`svn log --xml --stop-on-copy https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/branches/STABLE | grep 'revision=' | head -n 1 | sed 's/.*revision="\([0-9][0-9]*\)".*/\1/g'`
-    export CURR=`svn log --xml -rHEAD https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/trunk | grep 'revision=' | sed 's/.*="\([0-9][0-9]*\)".*/\1/g'`
 
     # merge that range of changes into STABLE and make sure it works
     svn co https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/branches/STABLE brlcad.STABLE && cd brlcad.STABLE
     svn merge https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/trunk@$PREV https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/trunk@HEAD .
     sh autogen.sh && ./configure --enable-all && make distcheck
+    export CURR=`svn log --xml -rHEAD https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/trunk | grep 'revision=' | sed 's/.*="\([0-9][0-9]*\)".*/\1/g'`
     svn commit -m "merge trunk to STABLE from r$PREV to HEAD r$CURR"
 
 7) Tag the release using "rel-MAJOR-MINOR-PATCH" format:
