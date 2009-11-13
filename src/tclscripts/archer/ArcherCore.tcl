@@ -542,6 +542,7 @@ Popup Menu    Right or Ctrl-Left
 	method initCenterMode {}
 
 	method initCompPick {}
+	method mrayCallback_pick {_start _target _partitions}
 
 	method initMeasure {}
 	method beginMeasure {_dm _x _y}
@@ -1672,7 +1673,18 @@ Popup Menu    Right or Ctrl-Left
 	return
     }
 
+    $itk_component(ged) add_mouse_ray_callback [::itcl::code $this mrayCallback_pick]
     $itk_component(ged) init_comp_pick
+}
+
+::itcl::body ArcherCore::mrayCallback_pick {_start _target _partitions} {
+    set partition [lindex $_partitions 0]
+    if {$partition == {}} {
+	$itk_component(cmd) putstring "Missed!"
+    } else {
+	set region [bu_get_value_by_keyword "region" $partition]
+	$itk_component(cmd) putstring "$region"
+    }
 }
 
 ::itcl::body ArcherCore::initMeasure {} {
