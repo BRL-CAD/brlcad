@@ -496,6 +496,7 @@ package provide cadwidgets::Ged 1.0
 	method shoot_ray {_start _op _target _prep _no_bool _onehit}
 
 	method add_mouse_ray_callback {_callback}
+	method clear_mouse_ray_callback_list {}
 	method delete_mouse_ray_callback {_callback}
  
 	#XXX Still needs to be resolved
@@ -2585,7 +2586,11 @@ package provide cadwidgets::Ged 1.0
     set vZ [expr {[lindex $bounds 4] / -2048.0}]
     set start [$mGed v2m_point $itk_component($_pane) [lindex $view 0] [lindex $view 1] $vZ]
 
-    set partitions [shoot_ray $start "at" $target 1 1 0]
+
+    if {[catch {shoot_ray $start "at" $target 1 1 0} partitions]} {
+	return $partitions
+    }
+
     set partition [lindex $partitions 0]
 
     if {$_pflag} {
@@ -2741,7 +2746,16 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::add_mouse_ray_callback {_callback} {
-    lappend mMouseRayCallbacks $_callback
+    set i [lsearch $mMouseRayCallbacks $_callback]
+
+    # Add if not already in list
+    if {$i == -1} {
+	lappend mMouseRayCallbacks $_callback
+    }
+}
+
+::itcl::body cadwidgets::Ged::clear_mouse_ray_callback_list {} {
+    set mMouseRayCallbacks {}
 }
 
 ::itcl::body cadwidgets::Ged::delete_mouse_ray_callback {_callback} {
