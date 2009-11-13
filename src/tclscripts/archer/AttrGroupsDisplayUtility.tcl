@@ -609,7 +609,14 @@
 	$mArchersGed refresh_off
     }
 
+    set alist [$itk_component(alist) get 0 end]
+
     if {$mHighlightedAttr != ""} {
+	set i [lsearch $alist $mHighlightedAttr]
+        if {$i != -1} {
+            $itk_component(alist) itemconfigure $i -background white
+        }
+
 	set rlist [getAttrArgs $mCurrentAttr $mHighlightedAttr]
 	set slist [lindex $rlist 0]
 	set slen [llength $slist]
@@ -623,6 +630,12 @@
     }
 
     set mHighlightedAttr [$itk_component(alist) getcurselection]
+    if {$mHighlightedAttr != ""} {
+	set i [lsearch $alist $mHighlightedAttr]
+        if {$i != -1} {
+            $itk_component(alist) itemconfigure $i -background \#c3c3c3
+        }
+    }
     set rlist [highlightCurrentAttr]
     if {$rlist != {}} {
 	return $rlist
@@ -641,7 +654,12 @@
     if {$cs == ""} {
 	return
     }
+
     set csindex [lsearch -index 0 $mMasterAttrGroups $cs]
+    if {$csindex == -1} {
+        return
+    }
+
     set glist [lindex $mMasterAttrGroups $csindex]
     set glen [llength $glist]
     if {$glen != 3} {
@@ -653,6 +671,15 @@
     if {$mManageRefresh} {
 	$mArchersGed refresh_off
     }
+
+    if {$mCurrentGroup != ""} {
+        set i [lsearch -index 0 $mMasterAttrGroups $mCurrentGroup]
+        if {$i != -1} {
+            $itk_component(glist) itemconfigure $i -background white
+        }
+    }
+    $itk_component(glist) itemconfigure $csindex -background \#c3c3c3
+
 
     set mCurrentGroup $cs
     set mCurrentAttr [lindex $glist 1]
