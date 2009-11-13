@@ -17,14 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup magic */
-/** @{ */
-/** @file badmagic.c
- *
- * Routines involved with handling "magic numbers" used to identify
- * various in-memory data structures.
- *
- */
 
 #include "common.h"
 
@@ -61,7 +53,6 @@ bu_badmagic(const unsigned long *ptr, unsigned long magic, const char *str, cons
     }
 }
 
-/** @} */
 /*
  * Local Variables:
  * mode: C

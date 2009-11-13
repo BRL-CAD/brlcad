@@ -61,19 +61,19 @@ adrt_master_SOURCES = \
 	master/compnet.c \
 	master/dispatcher.c \
 	master/tienet_master.c \
-	master/master.c \
-	master/main.c
+	master/master.c
 
 adrt_master_LDADD = \
 	libtie.la \
 	${BU} \
+	${LIBNETWORK} \
 	${LIBTHREAD} \
+	${LIBBSD} \
 	${LIBM} \
 	${LIBZ}
 
 adrt_slave_SOURCES = \
 	slave/slave.c \
-	slave/smain.c \
 	slave/tienet_slave.c
 
 adrt_slave_LDADD = \
@@ -82,7 +82,8 @@ adrt_slave_LDADD = \
 	${LIBM} \
 	librender.la \
 	libtie.la \
-	${RT} ${GCV}
+	${RT} \
+	${GCV}
 
 tieincludedir = $(includedir)/tie
 tieinclude_HEADERS = \

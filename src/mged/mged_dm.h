@@ -33,11 +33,9 @@
 #include "pkg.h" /* struct pkg_conn */
 #include "ged.h"
 
-/* mgedtcl.h must come before the #define statements below (pathName
- * in particular as it's in the tk.h header)
- */
-#include "./mgedtcl.h"
-
+#ifdef HAVE_TK
+#  include <tk.h>
+#endif
 
 #define MGED_DISPLAY_VAR "mged_display"
 

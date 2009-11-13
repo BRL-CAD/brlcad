@@ -1474,7 +1474,7 @@ int read_args(int argc, const char **argv, char *topLevel, struct human_data_t *
 
     /* don't report errors */
     bu_opterr = 0;
-
+    bu_optind = 1;
     while ((c=bu_getopt(argc, (char * const *)argv, options)) != EOF) {
 	/*bu_log("%c \n", c); Testing to see if args are getting read */
 	switch (c) {

@@ -17,26 +17,12 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup vlb */
-/** @{ */
-/** @file vlb.c
- *
- * @brief The variable length buffer package.
- *
- * The variable length buffer package.
- *
- */
 
 #include "common.h"
 #include "bu.h"
 #include <string.h>
 
-/**
- * Initialize the specified bu_vlb structure and mallocs the initial
- * block of memory.
- *
- * @param vlb Pointer to an unitialized bu_vlb structure
- */
+
 void
 bu_vlb_init(struct bu_vlb *vlb)
 {
@@ -46,13 +32,7 @@ bu_vlb_init(struct bu_vlb *vlb)
     vlb->magic = BU_VLB_MAGIC;
 }
 
-/**
- * Initialize the specified bu_vlb structure and mallocs the initial
- * block of memory with the specified size
- *
- * @param vlb Pointer to an unitialized bu_vlb structure
- * @param initialSize The desired initial size of the buffer
- */
+
 void
 bu_vlb_initialize(struct bu_vlb *vlb, int initialSize)
 {
@@ -67,14 +47,7 @@ bu_vlb_initialize(struct bu_vlb *vlb, int initialSize)
     vlb->magic = BU_VLB_MAGIC;
 }
 
-/**
- * Write some bytes to the end of the bu_vlb structure. If necessary,
- * additional memory will be allocated.
- *
- * @param vlb Pointer to the bu_vlb structure to receive the bytes
- * @param start Pointer to the first byte to be copied to the bu_vlb structure
- * @param len The number of bytes to copy to the bu_vlb structure
- */
+
 void
 bu_vlb_write(struct bu_vlb *vlb, unsigned char *start, int len)
 {
@@ -97,24 +70,15 @@ bu_vlb_write(struct bu_vlb *vlb, unsigned char *start, int len)
     vlb->nextByte += len;
 }
 
-/**
- * Reset the bu_vlb counter to the start of its byte array. This essentially
- * ignores any bytes currenty in the buffer, but does not free any memory.
- *
- * @param vlb Pointer to the bu_vlb structure to be reset
- */
+
 void
 bu_vlb_reset(struct bu_vlb *vlb)
 {
     BU_CKMAG(vlb, BU_VLB_MAGIC, "magic for bu_vlb");
     vlb->nextByte = 0;
 }
-/**
- * Get a pointer to the byte array held by the bu_vlb structure
- *
- * @param vlb Pointer to the bu_vlb structure
- * @return A pointer to the byte array contained by the bu_vlb structure
- */
+
+
 unsigned char *
 bu_vlb_getBuffer(struct bu_vlb *vlb)
 {
@@ -122,12 +86,7 @@ bu_vlb_getBuffer(struct bu_vlb *vlb)
     return vlb->buf;
 }
 
-/**
- * Return the number of bytes used in the bu_vlb structure
- *
- * @param vlb Pointer to the bu_vlb structure
- * @return The number of bytes written to the bu_vlb structure
- */
+
 int
 bu_vlb_getBufferLength(struct bu_vlb *vlb)
 {
@@ -135,12 +94,7 @@ bu_vlb_getBufferLength(struct bu_vlb *vlb)
     return vlb->nextByte;
 }
 
-/**
- * Free the memory allocated for the byte array in the bu_vlb structure.
- * Also unitializes the structure.
- *
- * @param vlb Pointer to the bu_vlb structure
- */
+
 void
 bu_vlb_free(struct bu_vlb *vlb)
 {
@@ -154,19 +108,14 @@ bu_vlb_free(struct bu_vlb *vlb)
     vlb->magic = 0;
 }
 
-/**
- * Write the current byte array from the bu_vlb structure to a file
- *
- * @param vlb Pointer to the bu_vlb structure that is the source of the bytes
- * @param fd Pointer to a FILE to receive the bytes
- */
+
 void
 bu_vlb_print(struct bu_vlb *vlb, FILE *fd)
 {
     BU_CKMAG(vlb, BU_VLB_MAGIC, "magic for bu_vlb");
     fwrite(vlb->buf, 1, vlb->nextByte, fd);
 }
-/** @} */
+
 /*
  * Local Variables:
  * mode: C

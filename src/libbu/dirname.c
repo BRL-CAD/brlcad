@@ -17,15 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup bu_log */
-/** @{ */
-/** @file dirname.c
- *
- * @brief
- * Routines to process path names.
- *
- * @author      Christopher Sean Morrison
- */
 
 #include "common.h"
 
@@ -34,25 +25,6 @@
 #include "bu.h"
 
 
-/**
- * B U _ D I R N A M E
- *
- * Given a filesystem pathname, return a pointer to a dynamic string
- * which is the parent directory of that file/directory.
- *
- *	/usr/dir/file	/usr/dir
- * @n	/usr/dir/	/usr
- * @n	/usr/file	/usr
- * @n	/usr/		/
- * @n	/usr		/
- * @n	/		/
- * @n	.		.
- * @n	..		.
- * @n	usr		.
- * @n	a/b		a
- * @n	a/		.
- * @n	../a/b		../a
- */
 char *
 bu_dirname(const char *cp)
 {
@@ -90,8 +62,6 @@ bu_dirname(const char *cp)
 
     return ret;
 }
-
-/** @} */
 
 /*
  * Local Variables:

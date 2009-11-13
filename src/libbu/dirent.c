@@ -17,13 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup bu_log */
-/** @{ */
-/** @file dirent.c
- *
- * Functionality for accessing all files in a directory.
- *
- */
 
 #include "common.h"
 
@@ -35,19 +28,18 @@
 #include "bu.h"
 #include "./uce-dirent.h"
 
-/**
- * Count number of files in directory whose type matches substr
- */
-int bu_count_path(char *path, char *substr)
+
+int
+bu_count_path(char *path, char *substr)
 {
     int filecount = 0;
     DIR *dir = opendir(path);
     struct dirent *dp;
     while ((dp = readdir(dir)) != NULL) {
-	if (strcmp(substr,"") == 0) {
+	if (strcmp(substr, "") == 0) {
 	    filecount++;
 	} else {
-	    if (strcmp(dp->d_name+(strlen(dp->d_name)-strlen(substr)),substr) == 0) {
+	    if (strcmp(dp->d_name+(strlen(dp->d_name)-strlen(substr)), substr) == 0) {
 		filecount++;
 	    }
 	}
@@ -56,29 +48,24 @@ int bu_count_path(char *path, char *substr)
     return filecount;
 }
 
-/**
- * Return array with filenames with suffix matching substr
- */
-void bu_list_path(char *path, char *substr, char **filearray)
+void
+bu_list_path(char *path, char *substr, char **filearray)
 {
     int filecount = -1;
     DIR *dir = opendir(path);
     struct dirent *dp;
     while ((dp = readdir(dir)) != NULL) {
-	if (strcmp(substr,"") == 0) {
+	if (strcmp(substr, "") == 0) {
 	    filecount++;
 	    filearray[filecount]=dp->d_name;
 	} else {
-	    if (strcmp(dp->d_name+(strlen(dp->d_name)-strlen(substr)),substr) == 0) {
+	    if (strcmp(dp->d_name+(strlen(dp->d_name)-strlen(substr)), substr) == 0) {
 		filecount++;
 		filearray[filecount]=dp->d_name;
 	    }
 	}
     }
 }
-
-
-/** @} */
 
 /*
  * Local Variables:

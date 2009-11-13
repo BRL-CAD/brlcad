@@ -40,7 +40,7 @@ ged_do_trace(struct db_i		*dbip,
     matp_t			old_xlate;
     mat_t			new_xlate;
     struct directory	*nextdp;
-    struct ged_trace_data	*gtdp;
+    struct _ged_trace_data	*gtdp;
 
     RT_CK_DBI(dbip);
     RT_CK_TREE(comb_leaf);
@@ -50,17 +50,17 @@ ged_do_trace(struct db_i		*dbip,
 
     pathpos = (int *)user_ptr1;
     old_xlate = (matp_t)user_ptr2;
-    gtdp = (struct ged_trace_data *)user_ptr3;
+    gtdp = (struct _ged_trace_data *)user_ptr3;
 
     /*
-     * In GED_EVAL_ONLY mode we're collecting the matrices along
+     * In _GED_EVAL_ONLY mode we're collecting the matrices along
      * the path in order to perform some type of edit where the object
      * lives (i.e. after applying the accumulated transforms). So, if
      * we're doing a matrix edit (i.e. the last object in the path is
      * a combination), we skip its leaf matrices because those are the
      * one's we'll be editing.
      */
-    if (gtdp->gtd_flag != GED_EVAL_ONLY ||
+    if (gtdp->gtd_flag != _GED_EVAL_ONLY ||
 	(*pathpos)+1 < gtdp->gtd_objpos) {
 	if (comb_leaf->tr_l.tl_mat) {
 	    bn_mat_mul(new_xlate, old_xlate, comb_leaf->tr_l.tl_mat);
@@ -71,7 +71,7 @@ ged_do_trace(struct db_i		*dbip,
 	MAT_COPY(new_xlate, old_xlate);
     }
 
-    ged_trace(nextdp, (*pathpos)+1, new_xlate, gtdp);
+    _ged_trace(nextdp, (*pathpos)+1, new_xlate, gtdp);
 }
 
 /**
@@ -79,10 +79,10 @@ ged_do_trace(struct db_i		*dbip,
  *
  */
 void
-ged_trace(register struct directory	*dp,
+_ged_trace(register struct directory	*dp,
 	  int				pathpos,
 	  const mat_t			old_xlate,
-	  struct ged_trace_data		*gtdp)
+	  struct _ged_trace_data		*gtdp)
 {
     struct rt_db_internal	intern;
     struct rt_comb_internal	*comb;
@@ -92,10 +92,10 @@ ged_trace(register struct directory	*dp,
 
     bu_vls_init(&str);
 
-    if (pathpos >= GED_MAX_LEVELS) {
-	bu_vls_printf(&gtdp->gtd_gedp->ged_result_str, "nesting exceeds %d levels\n", GED_MAX_LEVELS);
+    if (pathpos >= _GED_MAX_LEVELS) {
+	bu_vls_printf(&gtdp->gtd_gedp->ged_result_str, "nesting exceeds %d levels\n", _GED_MAX_LEVELS);
 
-	for (i=0; i<GED_MAX_LEVELS; i++)
+	for (i=0; i<_GED_MAX_LEVELS; i++)
 	    bu_vls_printf(&gtdp->gtd_gedp->ged_result_str, "/%s", gtdp->gtd_path[i]->d_namep);
 
 	bu_vls_printf(&gtdp->gtd_gedp->ged_result_str, "\n");
@@ -125,7 +125,7 @@ ged_trace(register struct directory	*dp,
     gtdp->gtd_path[pathpos] = dp;
 
     /* check for desired path */
-    if ( gtdp->gtd_flag == GED_CPEVAL ) {
+    if ( gtdp->gtd_flag == _GED_CPEVAL ) {
 	for (i=0; i<=pathpos; i++) {
 	    if (gtdp->gtd_path[i]->d_addr != gtdp->gtd_obj[i]->d_addr) {
 		/* not the desired path */
@@ -145,20 +145,20 @@ ged_trace(register struct directory	*dp,
     MAT_COPY(gtdp->gtd_xform, old_xlate);
     gtdp->gtd_prflag = 1;
 
-    if (gtdp->gtd_flag == GED_CPEVAL ||
-	gtdp->gtd_flag == GED_EVAL_ONLY)
+    if (gtdp->gtd_flag == _GED_CPEVAL ||
+	gtdp->gtd_flag == _GED_EVAL_ONLY)
 	return;
 
     /* print the path */
     for (i=0; i<pathpos; i++)
 	bu_vls_printf(&gtdp->gtd_gedp->ged_result_str, "/%s", gtdp->gtd_path[i]->d_namep);
 
-    if (gtdp->gtd_flag == GED_LISTPATH) {
+    if (gtdp->gtd_flag == _GED_LISTPATH) {
 	bu_vls_printf(&gtdp->gtd_gedp->ged_result_str, "/%s:\n", dp->d_namep);
 	return;
     }
 
-    /* NOTE - only reach here if gtd_flag == GED_LISTEVAL */
+    /* NOTE - only reach here if gtd_flag == _GED_LISTEVAL */
     bu_vls_printf(&gtdp->gtd_gedp->ged_result_str, "/");
     if ((id=rt_db_get_internal(&intern, dp, gtdp->gtd_gedp->ged_wdbp->dbip, gtdp->gtd_xform, &rt_uniresource)) < 0) {
 	bu_vls_printf(&gtdp->gtd_gedp->ged_result_str, "rt_db_get_internal(%s) failure", dp->d_namep);

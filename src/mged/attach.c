@@ -35,8 +35,10 @@
 #include "bio.h"
 
 #include "tcl.h"
-#include "tk.h"
-#include "itk.h"
+#ifdef HAVE_TK
+#  include "tk.h"
+#  include "itk.h"
+#endif
 
 #include "bu.h"
 #include "vmath.h"
@@ -49,6 +51,7 @@
 #include "./sedit.h"
 #include "./mged_dm.h"
 
+
 #define NEED_GUI(_type) (\
 	IS_DM_TYPE_WGL(_type) || \
 	IS_DM_TYPE_OGL(_type) || \
@@ -57,6 +60,7 @@
 	IS_DM_TYPE_PEX(_type) || \
 	IS_DM_TYPE_TK(_type) || \
 	IS_DM_TYPE_X(_type))
+
 
 /* All systems can compile these! */
 extern int Plot_dm_init(struct dm_list *o_dm_list, int argc, char **argv);
@@ -383,6 +387,7 @@ gui_setup(char *dstr)
 #endif
     }
 
+#ifdef HAVE_TK
     /* This runs the tk.tcl script */
     if (Tk_Init(interp) == TCL_ERROR) {
 	const char *result = Tcl_GetStringResult(interp);
@@ -405,6 +410,7 @@ gui_setup(char *dstr)
 		   "::itk::*", /* allowOverwrite */ 1) != TCL_OK) {
 	return TCL_ERROR;
     }
+#endif
 
     /* Initialize the Iwidgets package */
     if (Tcl_Eval(interp, "package require Iwidgets") != TCL_OK) {
@@ -423,6 +429,7 @@ gui_setup(char *dstr)
     /* Initialize libfb */
     (void)Fb_Init(interp);
 
+#ifdef HAVE_TK
     if ((tkwin = Tk_MainWindow(interp)) == NULL) {
 	return TCL_ERROR;
     }
@@ -432,16 +439,14 @@ gui_setup(char *dstr)
 
     Tcl_Eval(interp, "wm withdraw .");
     Tcl_Eval(interp, "tk appname mged");
+#endif
 
     return TCL_OK;
 }
 
 
 int
-mged_attach(
-    struct w_dm *wp,
-    int argc,
-    const char *argv[])
+mged_attach(struct w_dm *wp, int argc, const char *argv[])
 {
     register struct dm_list *o_dm_list;
 
@@ -535,6 +540,7 @@ mged_attach(
     return TCL_ERROR;
 }
 
+
 void
 get_attached(void)
 {
@@ -614,12 +620,6 @@ get_attached(void)
 int
 f_dm(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    if (!cmd_hook) {
-	Tcl_AppendResult(interp, "The '", dmp->dm_name,
-			 "' display manager does not support local commands.\n",
-			 (char *)NULL);
-	return TCL_ERROR;
-    }
 
     if (argc < 2) {
 	struct bu_vls vls;
@@ -631,10 +631,62 @@ f_dm(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_ERROR;
     }
 
+    if (!strcmp(argv[1],"valid")) {
+	if (argc < 3) {
+    	    struct bu_vls vls;
+	    
+    	    bu_vls_init(&vls);
+    	    bu_vls_printf(&vls, "help dm");
+    	    Tcl_Eval(interp, bu_vls_addr(&vls));
+    	    bu_vls_free(&vls);
+    	    return TCL_ERROR;
+    	}
+#ifdef DM_X
+    	if (!strcmp(argv[argc-1], "X")) {
+    	    Tcl_AppendResult(interp, "X", (char *)NULL);
+    	}
+#endif /* DM_X */
+#ifdef DM_TK
+    	if (!strcmp(argv[argc-1], "tk")) {
+    	    Tcl_AppendResult(interp, "tk", (char *)NULL);
+    	}
+#endif /* DM_TK */
+#ifdef DM_WGL
+    	if (!strcmp(argv[argc-1], "wgl")) {
+	    Tcl_AppendResult(interp, "wgl", (char *)NULL);
+	}
+#endif /* DM_WGL */
+#ifdef DM_OGL
+    	if (!strcmp(argv[argc-1], "ogl")) {
+	    Tcl_AppendResult(interp, "ogl", (char *)NULL);
+	}
+#endif /* DM_OGL */
+#ifdef DM_RTGL
+    	if (!strcmp(argv[argc-1], "rtgl")) {
+	    Tcl_AppendResult(interp, "rtgl", (char *)NULL);
+	}
+#endif /* DM_RTGL */
+#ifdef DM_GLX
+    	if (!strcmp(argv[argc-1], "glx")) {
+	    Tcl_AppendResult(interp, "glx", (char *)NULL);
+	}
+#endif /* DM_GLX */
+       return TCL_OK;
+    }       
+    
+    if (!cmd_hook) {
+	Tcl_AppendResult(interp, "The '", dmp->dm_name,
+			 "' display manager does not support local commands.\n",
+			 (char *)NULL);
+	return TCL_ERROR;
+    }
+
+
     return cmd_hook(argc-1, argv+1);
 }
 
-/*
+
+/**
  * I S _ D M _ N U L L
  *
  * Returns -
@@ -725,6 +777,7 @@ mged_link_vars(struct dm_list *p)
     bu_vls_printf(&p->dml_adc_name, "%s(%V,adc)", MGED_DISPLAY_VAR,
 		  &p->dml_dmp->dm_pathName);
 }
+
 
 int
 f_get_dm_list(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)

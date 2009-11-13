@@ -277,12 +277,12 @@ ged_erasePathFromDisplay(struct ged *gedp,
 		RT_CK_DIR(dp);
 		if (dp->d_addr == RT_DIR_PHONY_ADDR) {
 		    if (db_dirdelete(gedp->ged_wdbp->dbip, dp) < 0) {
-			bu_vls_printf(&gedp->ged_result_str, "ged_zap: db_dirdelete failed\n");
+			bu_vls_printf(&gedp->ged_result_str, "ged_erasePathFromDisplay: db_dirdelete failed\n");
 		    }
 		}
 
 		BU_LIST_DEQUEUE(&sp->l);
-		FREE_SOLID(sp, &FreeSolid.l);
+		FREE_SOLID(sp, &_FreeSolid.l);
 	    }
 
 	    BU_LIST_DEQUEUE(&gdlp->l);
@@ -300,7 +300,7 @@ ged_erasePathFromDisplay(struct ged *gedp,
 
 		if (db_full_path_match_top(&subpath, &sp->s_fullpath)) {
 		    BU_LIST_DEQUEUE(&sp->l);
-		    FREE_SOLID(sp, &FreeSolid.l);
+		    FREE_SOLID(sp, &_FreeSolid.l);
 		    need_split = 1;
 		}
 
@@ -342,7 +342,7 @@ ged_erasePathFromDisplay(struct ged *gedp,
  * 
  */
 void
-ged_eraseAllNamesFromDisplay(struct ged *gedp,
+_ged_eraseAllNamesFromDisplay(struct ged *gedp,
 			     const char *name,
 			     const int skip_first)
 {
@@ -371,7 +371,7 @@ ged_eraseAllNamesFromDisplay(struct ged *gedp,
 	    }
 
 	    if (!strcmp(tok, name)) {
-		ged_freeDisplayListItem(gedp, gdlp);
+		_ged_freeDisplayListItem(gedp, gdlp);
 		found = 1;
 
 		break;
@@ -385,7 +385,7 @@ ged_eraseAllNamesFromDisplay(struct ged *gedp,
 	    struct db_full_path subpath;
 
 	    if (db_string_to_path(&subpath, gedp->ged_wdbp->dbip, name) == 0) {
-		ged_eraseAllSubpathsFromSolidList(gedp, gdlp, &subpath, skip_first);
+		_ged_eraseAllSubpathsFromSolidList(gedp, gdlp, &subpath, skip_first);
 		db_free_full_path(&subpath);
 	    }
 	}
@@ -399,7 +399,7 @@ ged_eraseAllNamesFromDisplay(struct ged *gedp,
  * Erase/remove display list item from headDisplay if path is a subset of item's path.
  */
 void
-ged_eraseAllPathsFromDisplay(struct ged *gedp,
+_ged_eraseAllPathsFromDisplay(struct ged *gedp,
 			     const char *path,
 			     const int skip_first)
 {
@@ -414,9 +414,9 @@ ged_eraseAllPathsFromDisplay(struct ged *gedp,
 
 	    if (db_string_to_path(&fullpath, gedp->ged_wdbp->dbip, bu_vls_addr(&gdlp->gdl_path)) == 0) {
 		if (db_full_path_subset(&fullpath, &subpath, skip_first)) {
-		    ged_freeDisplayListItem(gedp, gdlp);
+		    _ged_freeDisplayListItem(gedp, gdlp);
 		} else {
-		    ged_eraseAllSubpathsFromSolidList(gedp, gdlp, &subpath, skip_first);
+		    _ged_eraseAllSubpathsFromSolidList(gedp, gdlp, &subpath, skip_first);
 		}
 
 		db_free_full_path(&fullpath);
@@ -430,7 +430,7 @@ ged_eraseAllPathsFromDisplay(struct ged *gedp,
 }
 
 void
-ged_eraseAllSubpathsFromSolidList(struct ged *gedp,
+_ged_eraseAllSubpathsFromSolidList(struct ged *gedp,
 				  struct ged_display_list *gdlp,
 				  struct db_full_path *subpath,
 				  const int skip_first)
@@ -443,14 +443,14 @@ ged_eraseAllSubpathsFromSolidList(struct ged *gedp,
 	nsp = BU_LIST_PNEXT(solid, sp);
 	if (db_full_path_subset(&sp->s_fullpath, subpath, skip_first)) {
 	    BU_LIST_DEQUEUE(&sp->l);
-	    FREE_SOLID(sp, &FreeSolid.l);
+	    FREE_SOLID(sp, &_FreeSolid.l);
 	}
 	sp = nsp;
     }
 }
 
 void
-ged_freeDisplayListItem (struct ged *gedp,
+_ged_freeDisplayListItem (struct ged *gedp,
 			 struct ged_display_list *gdlp)
 {
     register struct solid *sp;
@@ -462,12 +462,12 @@ ged_freeDisplayListItem (struct ged *gedp,
 	RT_CK_DIR(dp);
 	if (dp->d_addr == RT_DIR_PHONY_ADDR) {
 	    if (db_dirdelete(gedp->ged_wdbp->dbip, dp) < 0) {
-		bu_vls_printf(&gedp->ged_result_str, "ged_zap: db_dirdelete failed\n");
+		bu_vls_printf(&gedp->ged_result_str, "_ged_freeDisplayListItem: db_dirdelete failed\n");
 	    }
 	}
 
 	BU_LIST_DEQUEUE(&sp->l);
-	FREE_SOLID(sp, &FreeSolid.l);
+	FREE_SOLID(sp, &_FreeSolid.l);
     }
 
     /* Free up the display list */

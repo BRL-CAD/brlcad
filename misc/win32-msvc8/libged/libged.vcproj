@@ -250,6 +250,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\libged\annotate.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libged\arb.c"
 				>
 			</File>

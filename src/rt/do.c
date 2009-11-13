@@ -413,7 +413,6 @@ int cm_closedb(int argc, char **argv)
 extern struct bu_structparse view_parse[];
 
 struct bu_structparse set_parse[] = {
-#if !defined(__alpha) /* XXX Alpha does not support this initialization! */
     {"%d",	1, "width",	bu_byteoffset(width),		BU_STRUCTPARSE_FUNC_NULL },
     {"%d",	1, "height",	bu_byteoffset(height),		BU_STRUCTPARSE_FUNC_NULL },
     {"%d",	1, "save_overlaps", bu_byteoffset(save_overlaps),	BU_STRUCTPARSE_FUNC_NULL },
@@ -426,7 +425,6 @@ struct bu_structparse set_parse[] = {
 #endif
     {"%V",  1, "ray_data_file", bu_byteoffset(ray_data_file), BU_STRUCTPARSE_FUNC_NULL },
     {"i", bu_byteoffset(view_parse[0]), "View_Module-Specific Parameters", 0, BU_STRUCTPARSE_FUNC_NULL },
-#endif
     {"",	0, (char *)0,	0,				BU_STRUCTPARSE_FUNC_NULL }
 };
 

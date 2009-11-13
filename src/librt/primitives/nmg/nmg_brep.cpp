@@ -36,7 +36,7 @@
 */
 static ON_Surface* sideSurface(const ON_3dPoint& SW, const ON_3dPoint& SE, const ON_3dPoint& NE, const ON_3dPoint& NW)
 {
-    ON_NurbsSurface *surf = new ON_NurbsSurface(3,FALSE, 2, 2, 2, 2);
+    ON_NurbsSurface *surf = ON_NurbsSurface::New(3,FALSE, 2, 2, 2, 2);
     surf->SetCV(0,0,SW);
     surf->SetCV(1,0,SE);
     surf->SetCV(1,1,NE);
@@ -68,7 +68,8 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     brepi = static_cast<long*>(bu_malloc(m->maxindex * sizeof(long), "rt_nmg_brep: brepi[]"));
     for (int i = 0; i < m->maxindex; i++) brepi[i] = -INT_MAX;
     
-    *b = new ON_Brep();
+    *b = ON_Brep::New();
+
     for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
 	for (BU_LIST_FOR(s, shell, &r->s_hd)) {
 	    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
@@ -145,6 +146,7 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 			VMOVE(max_pt, tmppt);
 		    }
 		}
+		bu_ptbl_free(&vert_table);
 		int ccw = 0;
 		vect_t vtmp, uv1, uv2, uv3, uv4, vnormal;
 		// If an outer loop is found in the nmg with a cw orientation, use a flipped normal

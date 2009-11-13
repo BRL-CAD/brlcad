@@ -17,23 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup color */
-/** @{ */
-/** @file color.c
- *
- * Convert between RGB and HSV color models
- *
- * R, G, and B are in {0, 1, ..., 255},
- *
- * H is in [0.0, 360.0), and S and V are in [0.0, 1.0],
- *
- * unless S = 0.0, in which case H = ACHROMATIC.
- *
- * These two routines are adapted from:
- * pp. 592-3 of J.D. Foley, A. van Dam, S.K. Feiner, and J.F. Hughes,
- * _Computer graphics: principles and practice_, 2nd ed., Addison-Wesley,
- * Reading, MA, 1990.
- */
 
 #include "common.h"
 
@@ -48,18 +31,18 @@
 
 
 /* libfb defines replicated here to avoid a libfb dependency */
-#define	ACHROMATIC	-1.0
+#define ACHROMATIC -1.0
 
-#define	HUE	0
-#define	SAT	1
-#define	VAL	2
+#define HUE 0
+#define SAT 1
+#define VAL 2
 
-#define	RED	0
-#define	GRN	1
-#define	BLU	2
+#define RED 0
+#define GRN 1
+#define BLU 2
 
 
-/* vmath/libbu routines replicated here to avoid a libbu dependency */
+/* vmath/libbu routines replicated here to avoid a libbn dependency */
 enum axis {
     X = 0,
     Y = 1,
@@ -71,14 +54,14 @@ enum axis {
 #define V3ARGS(a) (a)[X], (a)[Y], (a)[Z]
 
 
-void bu_rgb_to_hsv (unsigned char *rgb, fastf_t *hsv)
+void bu_rgb_to_hsv(unsigned char *rgb, fastf_t *hsv)
 {
-    fastf_t	red, grn, blu;
-    fastf_t	*hue = &hsv[HUE];
-    fastf_t	*sat = &hsv[SAT];
-    fastf_t	*val = &hsv[VAL];
-    fastf_t	max, min;
-    fastf_t	delta;
+    fastf_t red, grn, blu;
+    fastf_t *hue = &hsv[HUE];
+    fastf_t *sat = &hsv[SAT];
+    fastf_t *val = &hsv[VAL];
+    fastf_t max, min;
+    fastf_t delta;
 
     /*
      * Compute value
@@ -131,13 +114,13 @@ void bu_rgb_to_hsv (unsigned char *rgb, fastf_t *hsv)
 }
 
 
-int bu_hsv_to_rgb (fastf_t *hsv, unsigned char *rgb)
+int bu_hsv_to_rgb(fastf_t *hsv, unsigned char *rgb)
 {
-    fastf_t	float_rgb[3];
-    fastf_t	hue, sat, val;
-    fastf_t	hue_frac;
-    fastf_t	p, q, t;
-    int		hue_int;
+    fastf_t float_rgb[3];
+    fastf_t hue, sat, val;
+    fastf_t hue_frac;
+    fastf_t p, q, t;
+    int hue_int;
 
     hue = hsv[HUE];
     sat = hsv[SAT];
@@ -187,10 +170,10 @@ int bu_hsv_to_rgb (fastf_t *hsv, unsigned char *rgb)
 }
 
 
-int bu_str_to_rgb (char *str, unsigned char *rgb)
+int bu_str_to_rgb(char *str, unsigned char *rgb)
 {
-    int	num;
-    int	r, g, b;
+    int num;
+    int r, g, b;
 
     if (!str || !rgb) {
 	return 0;
@@ -204,19 +187,10 @@ int bu_str_to_rgb (char *str, unsigned char *rgb)
 	if (strlen(++str) != 6)
 	    return 0;
 	num = sscanf(str, "%02x%02x%02x", (unsigned int *)&r, (unsigned int *)&g, (unsigned int *)&b);
-#if 0
-	bu_log("# notation: I read %d of %d, %d, %d\n", num, r, g, b);
-#endif
     } else if (isdigit(*str)) {
 	num = sscanf(str, "%d/%d/%d", &r, &g, &b);
-#if 0
-	bu_log("slash separation: I read %d of %d, %d, %d\n", num, r, g, b);
-#endif
 	if (num == 1) {
 	    num = sscanf(str, "%d %d %d", &r, &g, &b);
-#if 0
-	    bu_log("blank separation: I read %d of %d, %d, %d\n", num, r, g, b);
-#endif
 	}
 	VSET(rgb, r, g, b);
 	if ((r < 0) || (r > 255)
@@ -262,7 +236,6 @@ bu_color_from_rgb_floats(struct bu_color *cp, fastf_t *rgb)
     return 1;
 }
 
-/** @} */
 /*
  * Local Variables:
  * mode: C

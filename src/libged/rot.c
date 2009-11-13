@@ -103,7 +103,7 @@ ged_rot(struct ged *gedp, int argc, const char *argv[])
     if ((ret = ged_rot_args(gedp, argc, argv, &coord, rmat)) != GED_OK)
 	return ret;
 
-    return ged_do_rot(gedp, coord, rmat, (int (*)())0);
+    return _ged_do_rot(gedp, coord, rmat, (int (*)())0);
 }
 
 /*

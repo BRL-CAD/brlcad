@@ -17,18 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup bu_log */
-/** @{ */
-/** @file ./libbu/bomb.c
- *
- * The bu_bomb routine is called on a fatal error, generally where no
- * recovery is possible.  Error handlers may, however, be registered
- * with BU_SETJMP.  This routine intentionally limits calls to other
- * functions and intentionally uses no stack variables.  Just in case
- * the application is out of memory, bu_bomb deallocates a small
- * buffer of memory.
- *
- */
 
 #include "common.h"
 
@@ -41,7 +29,7 @@
 #include "bu.h"
 
 
-/** failsafe storage to help ensure graceful shutdown */
+/* failsafe storage to help ensure graceful shutdown */
 static char *_bu_bomb_failsafe = NULL;
 
 /* used for tty printing */
@@ -74,18 +62,6 @@ bu_bomb_failsafe_init()
 }
 
 
-/**
- * B U _ B O M B
- * @brief
- * Abort the program with a message.
- *
- * Only produce a core-dump when that debugging bit is set.  Note that
- * this function is meant to be a last resort graceful abort.  It
- * should not attempt to allocate anything on the stack or heap.
- *
- * This routine should never return unless there is a bu_setjmp
- * handler registered.
- */
 void
 bu_bomb(const char *str)
 {
@@ -186,20 +162,6 @@ bu_bomb(const char *str)
 }
 
 
-/**
- * b u _ e x i t
- *
- * Semi-graceful termination of the application that doesn't cause a
- * stack trace, exiting with the specified status after printing the
- * given message.  It's okay for this routine to use the stack,
- * contrary to bu_bomb's behavior since it should be called for
- * expected termination situations.
- *
- * This routine should generally not be called within a library.  Use
- * bu_bomb or (better) cascade the error back up to the application.
- *
- * This routine should never return.
- */
 void
 bu_exit(int status, const char *fmt, ...)
 {
@@ -224,8 +186,6 @@ bu_exit(int status, const char *fmt, ...)
     exit(status);
 }
 
-
-/** @} */
 /*
  * Local Variables:
  * mode: C

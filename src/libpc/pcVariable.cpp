@@ -23,9 +23,7 @@
  *
  * Methods for Variable Class
  *
- * @author Dawn Thomas
  */
-
 
 #include "pcVariable.h"
 
@@ -55,8 +53,16 @@ Variable<int>::Variable(std::string vid, int vvalue) :
     VariableAbstract(vid),
     value(vvalue)
 {
+    double min, max;
     VariableAbstract::type = VAR_INT;
-    addInterval(Interval<int>( -std::numeric_limits<int>::max(), std::numeric_limits<int>::max(), 1));
+#ifdef DBL_MAX
+    min = -DBL_MAX;
+    max = DBL_MAX;
+#else
+    min = -std::numeric_limits<double>::max();
+    max = std::numeric_limits<double>::max();
+#endif
+    addInterval(Interval<int>(min, max, 1));
 }
 
 template<>
@@ -64,11 +70,20 @@ Variable<double>::Variable(std::string vid, double vvalue) :
     VariableAbstract(vid),
     value(vvalue)
 {
+    double min, max;
     VariableAbstract::type = VAR_DBL;
-    addInterval(Interval<double>( -std::numeric_limits<double>::max(), std::numeric_limits<double>::max(), .00001));
+#ifdef DBL_MAX
+    min = -DBL_MAX;
+    max = DBL_MAX;
+#else
+    min = -std::numeric_limits<double>::max();
+    max = std::numeric_limits<double>::max();
+#endif
+    addInterval(Interval<double>(min, max, .00001));
 }
 
 /** @} */
+
 /*
  * Local Variables:
  * mode: C++

@@ -26,16 +26,32 @@
 #ifndef BRLCADWRAPPER_H_
 #define BRLCADWRAPPER_H_
 
+class ON_Brep;
+
 class BRLCADWrapper {
 private:
+	string filename;
 	struct rt_wdb *outfp;
+	static int sol_reg_cnt;
+
 public:
 	BRLCADWrapper();
 	virtual ~BRLCADWrapper();
 	bool OpenFile( const char * flnm);
 	bool WriteHeader();
 	bool WriteSphere(double *center, double radius);
+	bool WriteBrep(string name,ON_Brep *brep);
 	bool Close();
 };
 
 #endif /* BRLCADWRAPPER_H_ */
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

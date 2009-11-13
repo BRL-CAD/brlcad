@@ -408,7 +408,7 @@ extern int	UpdModLine,	/* Whether we want to update the mode line */
 extern long	lseek();
 #endif
 
-extern disk_line	putline();
+extern disk_line put_line();
 
 extern LINE
 	*next_line(),
@@ -428,7 +428,7 @@ extern char
 	*index(),
 #endif
 	*RunEdit(),
-	*getline(),
+	*get_line(),
 	*getblock(),
 	*emalloc(),
 	*mktemp(),

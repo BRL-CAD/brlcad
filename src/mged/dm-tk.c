@@ -30,7 +30,9 @@
 #include <math.h>
 #include <X11/Xutil.h>
 
-#include "tk.h"
+#ifdef HAVE_TK
+#  include "tk.h"
+#endif
 
 #include "bu.h"
 #include "vmath.h"

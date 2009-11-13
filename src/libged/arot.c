@@ -94,7 +94,7 @@ ged_arot(struct ged *gedp, int argc, const char *argv[])
     if ((ret = ged_arot_args(gedp, argc, argv, rmat)) != GED_OK)
 	return ret;
 
-    return ged_do_rot(gedp, gedp->ged_gvp->gv_coord, rmat, (int (*)())0);
+    return _ged_do_rot(gedp, gedp->ged_gvp->gv_coord, rmat, (int (*)())0);
 }
 
 /*

@@ -40,18 +40,14 @@
 #
 ###
 
-
 missing=0
 
-for dir in src/libbn src/libbu src/libgcv src/libged src/librt src/libsysv src/libwdb ; do
+for dir in src/libbn src/libbu src/libgcv src/libged src/librt src/libsysv src/libwdb src/conv/intaval src/conv/iges src/nirt ; do
 
     if test ! -f $dir/CMakeLists.txt ; then
 	echo "ERROR: cannot find $dir/CMakeLists.txt"
 	exit 1
     fi
-
-    # get a list of all the source files listed in CMakeLists.txt
-    cmfiles="`cat $dir/CMakeLists.txt | sed '/set([A-Z_]*SOURCES/,/)/{s/[[:space:]]*\(.*\)[[:space:]]*/::\1/;}' | grep -v '[)(}{]' | grep '::' | sed 's/:://' | sort | uniq`"
 
     if test ! -f $dir/Makefile.am ; then
 	echo "ERROR: cannot find $dir/Makefile.am"
@@ -61,8 +57,12 @@ for dir in src/libbn src/libbu src/libgcv src/libged src/librt src/libsysv src/l
     # get a list of all the source files listed in Makefile.am
     amfiles="`cat $dir/Makefile.am | perl -pi -e 's/\\\\\n//g' | grep \"^[a-zA-Z_]*SOURCES\" | sed 's/.*SOURCES[[:space:]]*=[[:space:]]*//;/[{(]/d' | sort | uniq`"
 
+    # read in the cmake file
+    cmfile="`cat $dir/CMakeLists.txt`"
+
     for file in $amfiles ; do
-	result="`echo \"$cmfiles\" | grep $file`"
+	# See if our automake source file is referenced somewhere/anywhere in the cmake file
+	result="`echo \"$cmfile\" | grep $file`"
 	if test "x$result" = "x" ; then
 	    missing=1
 	    echo "MISSING from $dir/CMakeLists.txt: $file"

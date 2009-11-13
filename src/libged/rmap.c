@@ -40,9 +40,9 @@ ged_rmap(struct ged *gedp, int argc, const char *argv[])
     register struct directory *dp;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
-    struct ged_id_to_names headIdName;
-    struct ged_id_to_names *itnp;
-    struct ged_id_names *inp;
+    struct _ged_id_to_names headIdName;
+    struct _ged_id_to_names *itnp;
+    struct _ged_id_names *inp;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
@@ -82,11 +82,11 @@ ged_rmap(struct ged *gedp, int argc, const char *argv[])
 
 	    comb = (struct rt_comb_internal *)intern.idb_ptr;
 	    /* check to see if the region id or air code matches one in our list */
-	    for (BU_LIST_FOR(itnp, ged_id_to_names, &headIdName.l)) {
+	    for (BU_LIST_FOR(itnp, _ged_id_to_names, &headIdName.l)) {
 		if ((comb->region_id == itnp->id) ||
 		    (comb->aircode != 0 && -comb->aircode == itnp->id)) {
 		    /* add region name to our name list for this region */
-		    BU_GETSTRUCT(inp, ged_id_names);
+		    BU_GETSTRUCT(inp, _ged_id_names);
 		    bu_vls_init(&inp->name);
 		    bu_vls_strcpy(&inp->name, dp->d_namep);
 		    BU_LIST_INSERT(&itnp->headName.l, &inp->l);
@@ -97,7 +97,7 @@ ged_rmap(struct ged *gedp, int argc, const char *argv[])
 
 	    if (!found) {
 		/* create new id_to_names node */
-		BU_GETSTRUCT(itnp, ged_id_to_names);
+		BU_GETSTRUCT(itnp, _ged_id_to_names);
 		if (0 < comb->region_id)
 		    itnp->id = comb->region_id;
 		else
@@ -106,7 +106,7 @@ ged_rmap(struct ged *gedp, int argc, const char *argv[])
 		BU_LIST_INIT(&itnp->headName.l);
 
 		/* add region name to our name list for this region */
-		BU_GETSTRUCT(inp, ged_id_names);
+		BU_GETSTRUCT(inp, _ged_id_names);
 		bu_vls_init(&inp->name);
 		bu_vls_strcpy(&inp->name, dp->d_namep);
 		BU_LIST_INSERT(&itnp->headName.l, &inp->l);
@@ -117,13 +117,13 @@ ged_rmap(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* place data in the result string */
-    while (BU_LIST_WHILE(itnp, ged_id_to_names, &headIdName.l)) {
+    while (BU_LIST_WHILE(itnp, _ged_id_to_names, &headIdName.l)) {
 
 	/* add this id to the list */
 	bu_vls_printf(&gedp->ged_result_str, "%d {", itnp->id);
 
 	/* start sublist of names associated with this id */
-	while (BU_LIST_WHILE(inp, ged_id_names, &itnp->headName.l)) {
+	while (BU_LIST_WHILE(inp, _ged_id_names, &itnp->headName.l)) {
 	    /* add the this name to this sublist */
 	    bu_vls_printf(&gedp->ged_result_str, " %s", bu_vls_addr(&inp->name));
 

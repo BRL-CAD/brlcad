@@ -234,6 +234,29 @@
 	  </para>
 	</listitem>
       </varlistentry>
+      <varlistentry>
+	<term>
+	    <command>valid</command>
+	    <arg choice='req'>
+	      <group>
+		<arg>ogl</arg>
+		<arg>X</arg>
+		<arg>wgl</arg>
+		<arg>rtgl</arg>
+		<arg>...</arg>
+	      </group>
+	    </arg>
+	</term>
+	<listitem>
+	  <para>
+	    The "valid" subcommand provides a way to determine if a particular type of
+	    display manager (X Windows, OpenGL, etc.) is available - if the display manager
+            type is supported the string denoting that type (X, ogl, etc.) is returned back,
+            otherwise nothing is returned.
+  	  </para>
+	</listitem>
+      </varlistentry>
+ 
     </variablelist>
   </refsect1>
    

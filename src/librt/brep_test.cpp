@@ -29,7 +29,7 @@
 #include <assert.h>
 #include "vmath.h"
 #include "brep.h"
-#include "vector.h"
+#include "dvec.h"
 
 
 const int COUNT = 100000000;

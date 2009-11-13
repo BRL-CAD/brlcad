@@ -128,12 +128,26 @@ void FindLoops(ON_Brep **b, const ON_Line* revaxis) {
     bu_log("curve_array[%d,%d,%d,%d,%d,%d]\n", curvearray[0], curvearray[1], curvearray[2], curvearray[3], curvearray[4], curvearray[5]);
 
 
-    for (int i = 0; i < allsegments.Count(); i++) {
-	ON_RevSurface* revsurf = ON_RevSurface::New();
-	revsurf->m_curve = allsegments[i];
+    for (int i = 0; i < loopcount ; i++) {
+	bu_log("loopcount: %d\n", i);
+	ON_PolyCurve* poly_curve = NULL;
+    	for (int j = 0; j < allsegments.Count(); j++) {
+	    if ( curvearray[j] == i ) {
+    		if ( !poly_curve ) {
+		    poly_curve = new ON_PolyCurve();
+		    poly_curve->Append(allsegments[j]);
+		} else {
+		    poly_curve->Append(allsegments[j]);
+		}
+	    }
+	}
+	ON_NurbsCurve *revcurve = ON_NurbsCurve::New();
+	poly_curve->GetNurbForm(*revcurve);
+    	ON_RevSurface* revsurf = ON_RevSurface::New();
+	revsurf->m_curve = revcurve;
 	revsurf->m_axis = *revaxis;
 	ON_BrepFace *face = (*b)->NewFace(*revsurf);
-        if (curvearray[i] != largest_loop_index) {
+	if (i == largest_loop_index) {
 	    (*b)->FlipFace(*face);
 	}
     }
@@ -154,15 +168,13 @@ rt_revolve_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_to
     RT_INIT_DB_INTERNAL(tmp_internal);
     struct rt_revolve_internal *rip;
     struct rt_sketch_internal *eip;
+
     rip = (struct rt_revolve_internal *)ip->idb_ptr;
     RT_REVOLVE_CK_MAGIC(rip);
     eip = rip->sk;
     RT_SKETCH_CK_MAGIC(eip);
    
-    *b = NULL;
-
-*b = new ON_Brep();
-
+    *b = ON_Brep::New();
 
     ON_TextLog dump_to_stdout;
     ON_TextLog* dump = &dump_to_stdout;
@@ -233,7 +245,7 @@ rt_revolve_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_to
                         bezpoints->Append((*b)->m_V[bsg->ctl_points[i]].Point());
                     }
                     ON_BezierCurve* bez3d = new ON_BezierCurve((const ON_3dPointArray)*bezpoints);
-                    ON_NurbsCurve* beznurb3d = new ON_NurbsCurve();
+                    ON_NurbsCurve* beznurb3d = ON_NurbsCurve::New();
                     bez3d->GetNurbForm(*beznurb3d);
                     beznurb3d->SetDomain(0.0,1.0);
                     (*b)->m_C3.Append(beznurb3d);

@@ -17,37 +17,12 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup bu_log */
-/** @{ */
-/** @file basename.c
- *
- * @brief
- * Routines to process file names.
- *
- */
 
 #include "common.h"
 
 #include "bu.h"
 
 
-/**
- * B U _ B A S E N A M E
- *
- * Given a string containing slashes such as a pathname, return a
- * pointer to the first character after the last slash.
- *
- *	/usr/dir/file	file
- * @n	/usr/dir/	dir
- * @n	/usr/		usr
- * @n	/usr		usr
- * @n	/		/
- * @n	.		.
- * @n	..		..
- * @n	usr		usr
- * @n	a/b		b
- * @n	a/		a
- */
 const char *
 bu_basename(const char *str)
 {
@@ -63,8 +38,6 @@ bu_basename(const char *str)
 
     return str;
 }
-
-/** @} */
 
 /*
  * Local Variables:

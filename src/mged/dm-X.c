@@ -19,7 +19,7 @@
  */
 /** @file dm-X.c
  *
- *  Routines specific to MGED's use of LIBDM's X display manager.
+ * Routines specific to MGED's use of LIBDM's X display manager.
  *
  */
 
@@ -32,7 +32,10 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
-#include "tk.h"
+#ifdef HAVE_TK
+#  include "tk.h"
+#endif
+
 #include "bu.h"
 #include "vmath.h"
 #include "mater.h"
@@ -48,28 +51,88 @@
 
 extern void dm_var_init(struct dm_list *initial_dm_list);		/* defined in attach.c */
 
-static int X_dm(int argc, char **argv);
-static void dirty_hook(void);
-static void zclip_hook(void);
 
-#ifdef USE_PROTOTYPES
-static Tk_GenericProc X_doevent;
-#else
-static int X_doevent();
-#endif
+static void
+dirty_hook(void)
+{
+    dirty = 1;
+}
+
+static void
+zclip_hook(void)
+{
+    view_state->vs_gvp->gv_zclip = dmp->dm_zclip;
+    dirty_hook();
+}
+
 
 struct bu_structparse X_vparse[] = {
-    {"%f",  1, "bound",		 DM_O(dm_bound),	dirty_hook},
-    {"%d",  1, "useBound",	 DM_O(dm_boundFlag),	dirty_hook},
-    {"%d",  1, "zclip",		 DM_O(dm_zclip),	zclip_hook},
-    {"%d",  1, "debug",		 DM_O(dm_debugLevel),	BU_STRUCTPARSE_FUNC_NULL},
-    {"",	  0, (char *)0,		 0,			BU_STRUCTPARSE_FUNC_NULL}
+    {"%f",  1, "bound",		DM_O(dm_bound),		dirty_hook},
+    {"%d",  1, "useBound",	DM_O(dm_boundFlag),	dirty_hook},
+    {"%d",  1, "zclip",		DM_O(dm_zclip),		zclip_hook},
+    {"%d",  1, "debug",		DM_O(dm_debugLevel),	BU_STRUCTPARSE_FUNC_NULL},
+    {"",    0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL}
 };
 
+
+/*
+  This routine is being called from doEvent() to handle Expose events.
+*/
+static int
+X_doevent(ClientData clientData,
+	  XEvent *eventPtr)
+{
+    if (eventPtr->type == Expose && eventPtr->xexpose.count == 0) {
+	dirty = 1;
+
+	/* no further processing of this event */
+	return TCL_RETURN;
+    }
+
+    /* allow further processing of this event */
+    return TCL_OK;
+}
+
+
+static int
+X_dm(int argc,
+     char *argv[])
+{
+    if (!strcmp(argv[0], "set")) {
+	struct bu_vls vls;
+
+	bu_vls_init(&vls);
+
+	if (argc < 2) {
+	    /* Bare set command, print out current settings */
+	    bu_vls_struct_print2(&vls, "dm_X internal variables", X_vparse, (const char *)dmp);
+	} else if (argc == 2) {
+	    bu_vls_struct_item_named(&vls, X_vparse, argv[1], (const char *)dmp, ',');
+	} else {
+	    struct bu_vls tmp_vls;
+
+	    bu_vls_init(&tmp_vls);
+	    bu_vls_printf(&tmp_vls, "%s=\"", argv[1]);
+	    bu_vls_from_argv(&tmp_vls, argc-2, (const char **)argv+2);
+	    bu_vls_putc(&tmp_vls, '\"');
+	    bu_struct_parse(&tmp_vls, X_vparse, (char *)dmp);
+	    bu_vls_free(&tmp_vls);
+	}
+
+	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
+	bu_vls_free(&vls);
+
+	return TCL_OK;
+    }
+
+    return common_dm(argc, argv);
+}
+
+
 int
-X_dm_init(struct dm_list	*o_dm_list,
-	  int			argc,
-	  char			*argv[])
+X_dm_init(struct dm_list *o_dm_list,
+	  int argc,
+	  char *argv[])
 {
     struct bu_vls vls;
 
@@ -78,7 +141,10 @@ X_dm_init(struct dm_list	*o_dm_list,
     /* register application provided routines */
     cmd_hook = X_dm;
 
+#ifdef HAVE_TK
     Tk_DeleteGenericHandler(doEvent, (ClientData)NULL);
+#endif
+
     if ((dmp = dm_open(interp, DM_TYPE_X, argc-1, argv)) == DM_NULL)
 	return TCL_ERROR;
 
@@ -86,7 +152,11 @@ X_dm_init(struct dm_list	*o_dm_list,
     dmp->dm_perspective = mged_variables->mv_perspective_mode;
 
     eventHandler = X_doevent;
+
+#ifdef HAVE_TK
     Tk_CreateGenericHandler(doEvent, (ClientData)NULL);
+#endif
+
     (void)DM_CONFIGURE_WIN(dmp);
 
     bu_vls_init(&vls);
@@ -126,70 +196,6 @@ X_fb_open(void)
 		       ((struct x_vars *)dmp->dm_vars.priv_vars)->gc);
 }
 
-/*
-  This routine is being called from doEvent() to handle Expose events.
-*/
-static int
-X_doevent(ClientData	clientData,
-	  XEvent	*eventPtr)
-{
-    if (eventPtr->type == Expose && eventPtr->xexpose.count == 0) {
-	dirty = 1;
-
-	/* no further processing of this event */
-	return TCL_RETURN;
-    }
-
-    /* allow further processing of this event */
-    return TCL_OK;
-}
-
-static int
-X_dm(int	argc,
-     char	*argv[])
-{
-    if (!strcmp(argv[0], "set")) {
-	struct bu_vls	vls;
-
-	bu_vls_init(&vls);
-
-	if (argc < 2) {
-	    /* Bare set command, print out current settings */
-	    bu_vls_struct_print2(&vls, "dm_X internal variables", X_vparse, (const char *)dmp );
-	} else if (argc == 2) {
-	    bu_vls_struct_item_named(&vls, X_vparse, argv[1], (const char *)dmp, ',');
-	} else {
-	    struct bu_vls tmp_vls;
-
-	    bu_vls_init(&tmp_vls);
-	    bu_vls_printf(&tmp_vls, "%s=\"", argv[1]);
-	    bu_vls_from_argv(&tmp_vls, argc-2, (const char **)argv+2);
-	    bu_vls_putc(&tmp_vls, '\"');
-	    bu_struct_parse(&tmp_vls, X_vparse, (char *)dmp);
-	    bu_vls_free(&tmp_vls);
-	}
-
-	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-	bu_vls_free(&vls);
-
-	return TCL_OK;
-    }
-
-    return common_dm(argc, argv);
-}
-
-static void
-dirty_hook(void)
-{
-    dirty = 1;
-}
-
-static void
-zclip_hook(void)
-{
-    view_state->vs_gvp->gv_zclip = dmp->dm_zclip;
-    dirty_hook();
-}
 
 /*
  * Local Variables:

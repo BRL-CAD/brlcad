@@ -2989,19 +2989,19 @@ X24_open_existing(FBIO *ifp, int argc, char **argv)
     if (argc != 9)
 	return -1;
 
-    if (sscanf(argv[1], "%lu", (unsigned long *)&dpy) != 1)
+    if (sscanf(argv[1], "%llu", (unsigned long long *)&dpy) != 1)
 	return -1;
 
-    if (sscanf(argv[2], "%lu", (unsigned long *)&win) != 1)
+    if (sscanf(argv[2], "%llu", (unsigned long long *)&win) != 1)
 	return -1;
 
-    if (sscanf(argv[3], "%lu", (unsigned long *)&cwinp) != 1)
+    if (sscanf(argv[3], "%llu", (unsigned long long *)&cwinp) != 1)
 	return -1;
 
-    if (sscanf(argv[4], "%lu", (unsigned long *)&cmap) != 1)
+    if (sscanf(argv[4], "%llu", (unsigned long long *)&cmap) != 1)
 	return -1;
 
-    if (sscanf(argv[5], "%lu", (unsigned long *)&vip) != 1)
+    if (sscanf(argv[5], "%llu", (unsigned long long *)&vip) != 1)
 	return -1;
 
     if (sscanf(argv[6], "%d", &width) != 1)
@@ -3010,7 +3010,7 @@ X24_open_existing(FBIO *ifp, int argc, char **argv)
     if (sscanf(argv[7], "%d", &height) != 1)
 	return -1;
 
-    if (sscanf(argv[8], "%lu", (unsigned long *)&gc) != 1)
+    if (sscanf(argv[8], "%llu", (unsigned long long *)&gc) != 1)
 	return -1;
 
     return _X24_open_existing(ifp, dpy, win, cwinp, cmap, vip, width, height, gc);

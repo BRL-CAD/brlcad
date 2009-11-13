@@ -235,7 +235,7 @@ LINE	*line1,
 	lsave();	/* Need this! */
 
 	while (line1 != line2->l_next) {
-		lp = getline(line1->l_dline, linebuf) + char1;
+		lp = get_line(line1->l_dline, linebuf) + char1;
 		if (line1 == line2)
 			linebuf[char2] = '\0';
 		for (;;) {
@@ -323,22 +323,22 @@ char	*file;
 	count = 0L;
 	s_mess("\"%s\"", file);
 	UpdateMesg();
-	ignore(getline(curline->l_dline, end));
+	ignore(get_line(curline->l_dline, end));
 	strcpy(genbuf, end);
 	strcpy(end, &end[curchar]);
 	if ((xeof = getfline(linebuf)) == 0)
 		linecopy(genbuf, curchar, linebuf);
 
-	curline->l_dline = putline(genbuf);
+	curline->l_dline = put_line(genbuf);
 	if (!xeof) do {
 		xeof = getfline(linebuf);
 		nlines++;
 		curline = listput(curbuf, curline);
-		curline->l_dline = putline(linebuf) | DIRTY;
+		curline->l_dline = put_line(linebuf) | DIRTY;
 	} while (!xeof);
 
 	linecopy(linebuf, (curchar = strlen(linebuf)), end);
-	curline->l_dline = putline(linebuf);
+	curline->l_dline = put_line(linebuf);
 	FileMess(file, nlines, count);
 }
 
@@ -595,7 +595,7 @@ BUFFER	*bp;
 	lfreelist(bp->b_zero);
 	ignore(listput(bp, (LINE *) 0));		/* First line in buffer */
 
-	bp->b_dot->l_dline = putline("") | DIRTY;
+	bp->b_dot->l_dline = put_line("") | DIRTY;
 	bp->b_char = 0;
 	AllMarkSet(bp, bp->b_dot, 0);
 	if (bp == curbuf)  {
@@ -722,7 +722,7 @@ tmpinit()
    long. */
 
 char *
-getline(tl, buf)
+get_line(tl, buf)
 disk_line	tl;
 char	*buf;
 {
@@ -749,7 +749,7 @@ char	*buf;
 /* Put `buf' and return the disk address */
 
 disk_line
-putline(buf)
+put_line(buf)
 char	*buf;
 {
 	register char	*bp,
@@ -882,7 +882,7 @@ lsave()
 	if (curbuf == 0 || !DOLsave)	/* Nothing modified recently */
 		return;
 
-	if (!strcmp(linebuf, getline(curline->l_dline, tmp)))
+	if (!strcmp(linebuf, get_line(curline->l_dline, tmp)))
 		return;		/* They are the same. */
 	SavLine(curline, linebuf);	/* Put linebuf on the disk */
 	DOLsave = 0;
@@ -891,7 +891,7 @@ lsave()
 void
 getDOT()
 {
-	ignore(getline(curline->l_dline, linebuf));
+	ignore(get_line(curline->l_dline, linebuf));
 }
 
 void
@@ -899,5 +899,5 @@ SavLine(addr, buf)
 LINE	*addr;
 char	*buf;
 {
-	addr->l_dline = putline(buf);
+	addr->l_dline = put_line(buf);
 }

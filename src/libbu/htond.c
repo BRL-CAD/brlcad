@@ -17,45 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup hton */
-/** @{ */
-/** @file htond.c
- *
- * @brief
- * convert doubles to host/network format
- *
- * Library routines for conversion between the local host 64-bit
- * ("double precision") representation, and 64-bit IEEE double
- * precision representation, in "network order", ie, big-endian, the
- * MSB in byte [0], on the left.
- *
- * As a quick review, the IEEE double precision format is as follows:
- * sign bit, 11 bits of exponent (bias 1023), and 52 bits of mantissa,
- * with a hidden leading one (0.1 binary).
- *
- * When the exponent is 0, IEEE defines a "denormalized number", which
- * is not supported here.
- *
- * When the exponent is 2047 (all bits set), and:
- *	all mantissa bits are zero,
- *	value is infinity*sign,
- *	mantissa is non-zero, and:
- *		msb of mantissa=0:  signaling NAN
- *		msb of mantissa=1:  quiet NAN
- *
- * Note that neither the input or output buffers need be word aligned,
- * for greatest flexability in converting data, even though this
- * imposes a speed penalty here.
- *
- * These subroutines operate on a sequential block of numbers, to save
- * on subroutine linkage execution costs, and to allow some hope for
- * vectorization.
- *
- * On brain-damaged machines like the SGI 3-D, where type "double"
- * allocates only 4 bytes of space, these routines *still* return 8
- * bytes in the IEEE buffer.
- *
- */
 
 #include "common.h"
 
@@ -89,11 +50,7 @@
 	*out++ = 0xAD; \
 	continue; } \
 
-/**
- * H T O N D
- *
- * @brief Host to Network Doubles
- */
+
 void
 htond(register unsigned char *out, register const unsigned char *in, int count)
 {
@@ -137,11 +94,10 @@ htond(register unsigned char *out, register const unsigned char *in, int count)
 
 #if defined(sgi) && !defined(mips)
     /*
-     * Silicon Graphics Iris workstation.
-     * On the 2-D and 3-D, a double is type converted to a float
-     * (4 bytes), but IEEE single precision has a different
-     * number of exponent bits than double precision, so we
-     * have to engage in gyrations here.
+     * Silicon Graphics Iris workstation.  On the 2-D and 3-D, a
+     * double is type converted to a float (4 bytes), but IEEE single
+     * precision has a different number of exponent bits than double
+     * precision, so we have to engage in gyrations here.
      */
     for (i=count-1; i >= 0; i--) {
 	/* Brain-damaged 3-D case */
@@ -398,11 +354,7 @@ htond(register unsigned char *out, register const unsigned char *in, int count)
     bu_bomb("htond.c:  ERROR, no HtoND conversion for this machine type\n");
 }
 
-/**
- * N T O H D
- *
- * @brief Network to Host Doubles
- */
+
 void
 ntohd(register unsigned char *out, register const unsigned char *in, int count)
 {
@@ -622,9 +574,9 @@ ntohd(register unsigned char *out, register const unsigned char *in, int count)
 #endif
 #if defined(CRAY1) || defined(CRAY2) || defined(eta10)
     /*
-     * Cray version.  Somewhat easier using 64-bit registers.
-     * 15 bit exponent, biased 040000 (octal).  48 mantissa bits.
-     * No hidden bits.
+     * Cray version.  Somewhat easier using 64-bit registers.  15 bit
+     * exponent, biased 040000 (octal).  48 mantissa bits.  No hidden
+     * bits.
      */
     for (i=count-1; i >= 0; i--) {
 	register unsigned long word, signbit;
@@ -698,7 +650,7 @@ ntohd(register unsigned char *out, register const unsigned char *in, int count)
 
     bu_bomb("ntohd.c:  ERROR, no NtoHD conversion for this machine type\n");
 }
-/** @} */
+
 /*
  * Local Variables:
  * mode: C

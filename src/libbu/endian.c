@@ -17,11 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file endian.c
- *
- * Run-time byte order detection.
- *
- */
 
 #include "common.h"
 

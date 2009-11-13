@@ -54,11 +54,12 @@ set(LIBRT_SOURCES
     primitives/bot/bot_mirror.c
     primitives/brep/brep.cpp
     primitives/brep/brep_debug.cpp
-    primitives/bspline/bspline.c
+    primitives/bspline/bspline.cpp
     primitives/bspline/bspline_mirror.c
     primitives/bspline/nurb_basis.c
     primitives/bspline/nurb_bezier.c
     primitives/bspline/nurb_bound.c
+    primitives/bspline/nurb_brep.cpp
     primitives/bspline/nurb_c2.c
     primitives/bspline/nurb_copy.c
     primitives/bspline/nurb_diff.c
@@ -81,6 +82,7 @@ set(LIBRT_SOURCES
     primitives/bspline/nurb_xsplit.c
     primitives/cline/cline.c
     primitives/dsp/dsp.c
+    primitives/dsp/dsp_brep.cpp
     primitives/dsp/dsp_mirror.c
     primitives/ebm/ebm.c
     primitives/ebm/ebm_brep.cpp
@@ -104,6 +106,7 @@ set(LIBRT_SOURCES
     primitives/half/half_mirror.c
     primitives/hf/hf.c
     primitives/hyp/hyp.c
+    primitives/hyp/hyp_brep.cpp
     primitives/hyp/hyp_mirror.c
     primitives/metaball/metaball.c
     primitives/mirror.c
@@ -132,6 +135,7 @@ set(LIBRT_SOURCES
     primitives/nmg/nmg_rt_isect.c
     primitives/nmg/nmg_rt_segs.c
     primitives/nmg/nmg_tri.c
+    primitives/nmg/nmg_tri_mc.c
     primitives/nmg/nmg_visit.c
     primitives/part/part.c
     primitives/part/part_mirror.c

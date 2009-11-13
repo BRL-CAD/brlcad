@@ -59,10 +59,10 @@ ged_rrt(struct ged *gedp, int argc, const char *argv[])
 	*vp++ = (char *)argv[i];
     *vp++ = gedp->ged_wdbp->dbip->dbi_filename;
 
-    ged_current_gedp = gedp;
+    _ged_current_gedp = gedp;
 
-    ged_setup_rt(gedp, vp, 1);
-    (void)ged_run_rt(gedp);
+    _ged_setup_rt(gedp, vp, 1);
+    (void)_ged_run_rt(gedp);
 
     return GED_OK;
 }

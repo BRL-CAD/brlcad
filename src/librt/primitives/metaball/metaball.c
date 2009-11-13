@@ -151,6 +151,13 @@ fastf_t rt_metaball_get_bounding_sphere(point_t *center, fastf_t threshold, stru
     return r;
 }
 
+static void
+rt_metaball_set_bbox(point_t center, fastf_t radius, point_t *min, point_t *max)
+{
+    VSET(*min, center[X] - radius, center[Y] - radius, center[Z] - radius);
+    VSET(*max, center[X] + radius, center[Y] + radius, center[Z] + radius);
+    return;
+}
 
 /**
  * R T _ M E T A B A L L _ P R E P
@@ -199,14 +206,7 @@ rt_metaball_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 
     /* generate a bounding box around the sphere...
      * XXX this can be optimized greatly to reduce the BSP presense... */
-    VSET(stp->st_min,
-	 stp->st_center[X] - stp->st_aradius,
-	 stp->st_center[Y] - stp->st_aradius,
-	 stp->st_center[Z] - stp->st_aradius);
-    VSET(stp->st_max,
-	 stp->st_center[X] + stp->st_aradius,
-	 stp->st_center[Y] + stp->st_aradius,
-	 stp->st_center[Z] + stp->st_aradius);
+    rt_metaball_set_bbox(stp->st_center, stp->st_aradius, &stp->st_min, &stp->st_max);
     stp->st_specific = (void *)nmb;
     return 0;
 }
@@ -307,6 +307,34 @@ rt_metaball_point_value(const point_t *p, const struct rt_metaball_internal *mb)
     return 0;
 }
 
+/* returns true if the point is in/on the unscaled metaball. */
+int
+rt_metaball_point_inside(const point_t *p, const struct rt_metaball_internal *mb)
+{
+    return rt_metaball_point_value(p,mb) >= mb->threshold;
+}
+
+/* 
+ * Solve the surface intersection of mb with an accuracy of finalstep given that
+ * one of the two points (a and b) are inside and the other is outside.
+ */
+int
+rt_metaball_find_intersection(point_t *intersect, const struct rt_metaball_internal *mb, const point_t *a, const point_t *b, fastf_t step, const fastf_t finalstep)
+{
+    point_t mid;
+    VADD2(mid, *a, *b);
+    VSCALE(mid, mid, 0.5);
+
+    if(finalstep > step) {
+	VMOVE(*intersect, mid);	/* should this be the midpoint between a and b? */
+	return 0;
+    }
+
+    /* should probably make a or b necessarily inside, to eliminate one point
+     * computation? */
+    return rt_metaball_find_intersection(intersect,mb,(const point_t *)&mid, (rt_metaball_point_inside(a,mb) == rt_metaball_point_inside((const point_t *)&mid,mb)) ?b:a ,step/2.0, finalstep);
+}
+
 /*
  * R T _ M E T A B A L L _ S H O T
  */
@@ -328,6 +356,9 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
  * cut the step size in half and start over... Note that once we're
  * happily inside, we do NOT change the step size back!
  */
+/* TODO: rework this crud to use the rt_metaball_point_intersect function. 
+ * And do performance testing. or something.
+ * */
 #define STEPBACK { distleft += step; VSUB2(p, p, inc); step *= .5; VSCALE(inc, inc, .5); }
 #define STEPIN(x) { --segsleft; ++retval; VSUB2(delta, p, rp->r_pt); segp->seg_##x.hit_dist = MAGNITUDE(delta); }
     while (distleft >= 0.0) {
@@ -506,6 +537,7 @@ rt_metaball_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
     return 0;
 }
 
+static int bitcount(unsigned char w) { if(w==0) return 0; return bitcount(w>>1) + w|1; }
 
 /**
  * R T _ M E T A B A L L _ T E S S
@@ -515,6 +547,74 @@ rt_metaball_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 int
 rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
+    struct rt_metaball_internal *mb;
+    fastf_t mtol, radius;
+    point_t center, min, max;
+    fastf_t i, j, k, finalstep = +INFINITY;
+    int meh;
+    struct bu_vls times;
+    struct wdb_metaballpt *mbpt;
+
+    RT_CK_DB_INTERNAL(ip);
+    mb = (struct rt_metaball_internal *)ip->idb_ptr;
+    RT_METABALL_CK_MAGIC(mb);
+
+    bu_vls_init(&times);
+    rt_prep_timer();
+
+    /* since this geometry isn't necessarily prepped, we have to figure out the
+     * finalstep and bounding box manually. */
+    for (BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_ctrl_head))
+	V_MIN(finalstep, mbpt->fldstr);
+    finalstep /= (fastf_t)1e5;
+
+    radius = rt_metaball_get_bounding_sphere(&center, mb->threshold, mb);
+    rt_metaball_set_bbox(center, radius, &min, &max);
+
+    /* TODO: get better sampling tolerance, unless this is "good enough" */
+    mtol = ttol->abs;
+    V_MAX(mtol, ttol->rel * radius);
+    V_MAX(mtol, tol->dist);
+
+    /* the incredibly naïve approach. Time could be cut in half by simply
+     * caching 4 point values, more by actually marching or doing active
+     * refinement. This is the simplest pattern for now.
+     */
+    for(i = min[X]; i<max[X]; i+=mtol)
+	for(j = min[Y]; j<max[Y]; j+=mtol)
+	    for(k = min[Z]; k<max[Z]; k+=mtol) {
+		point_t p;
+		int pv = 0;
+		int pvbc;	/* bit count */
+		VSET(p, i,      j,      k);		pv |= rt_metaball_point_inside((const point_t *)&p, mb) << 0;
+		VSET(p, i,      j,      k+mtol);	pv |= rt_metaball_point_inside((const point_t *)&p, mb) << 1;
+		VSET(p, i,      j+mtol, k);		pv |= rt_metaball_point_inside((const point_t *)&p, mb) << 2;
+		VSET(p, i,      j+mtol, k+mtol);	pv |= rt_metaball_point_inside((const point_t *)&p, mb) << 3;
+		VSET(p, i+mtol, j,      k);		pv |= rt_metaball_point_inside((const point_t *)&p, mb) << 4;
+		VSET(p, i+mtol, j,      k+mtol);	pv |= rt_metaball_point_inside((const point_t *)&p, mb) << 5;
+		VSET(p, i+mtol, j+mtol, k);		pv |= rt_metaball_point_inside((const point_t *)&p, mb) << 6;
+		VSET(p, i+mtol, j+mtol, k+mtol);	pv |= rt_metaball_point_inside((const point_t *)&p, mb) << 7;
+		pvbc = bitcount(pv);
+		if(pvbc==1) {
+		    point_t a, b, mid;
+		    VSET(a, i, j, k);
+		    VSET(b, i, j, k+mtol);
+		    rt_metaball_find_intersection(&mid, mb, (const point_t *)&a, (const point_t *)&*b, mtol, finalstep);
+		    bu_log("Intersect between %f,%f,%f and %f,%f,%f is at %f,%f,%f\n", V3ARGS(a), V3ARGS(b), V3ARGS(mid));
+		}
+		/*	test if it's a surface dealie....
+		    if(pv != 0 && pv != 0xff) 
+			    bu_log("%02x %d\n", pv, pvbc);
+		*/
+		/* should the actual surface intersection be searched for, or
+		 * just say the mid point is good enough? */
+		/* needs to be stitched into a triangle style NMG. Then
+		 * decimated, perhaps? */
+	    }
+
+    rt_get_timer(&times, NULL);
+    bu_log("metaball tesselate: %s\n", bu_vls_addr(&times));
+
     bu_log("ERROR: rt_metaball_tess called() is not implemented\n");
     return -1;
 }

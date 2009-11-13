@@ -34,7 +34,7 @@
 #include "./ged_private.h"
 
 
-void ged_do_list(struct ged *gedp, register struct directory *dp, int verbose);
+void _ged_do_list(struct ged *gedp, register struct directory *dp, int verbose);
 
 int
 ged_list(struct ged *gedp, int argc, const char *argv[])
@@ -117,7 +117,7 @@ ged_list(struct ged *gedp, int argc, const char *argv[])
 	    if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[arg], LOOKUP_NOISY)) == DIR_NULL)
 		continue;
 
-	    ged_do_list(gedp, dp, 99);	/* very verbose */
+	    _ged_do_list(gedp, dp, 99);	/* very verbose */
 	}
     }
 
@@ -129,7 +129,7 @@ ged_list(struct ged *gedp, int argc, const char *argv[])
  *			G E D _ D O _ L I S T
  */
 void
-ged_do_list(struct ged *gedp, register struct directory *dp, int verbose)
+_ged_do_list(struct ged *gedp, register struct directory *dp, int verbose)
 {
     int			id;
     struct rt_db_internal	intern;

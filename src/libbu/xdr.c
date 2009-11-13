@@ -17,20 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup hton */
-/** @{ */
-/** @file xdr.c
- *
- * Routines to implement an external data representation (XDR)
- * compatible with the usual InterNet standards, e.g.:
- * big-endian, twos-compliment fixed point, and IEEE floating point.
- *
- * Routines to insert/extract short/long's into char arrays,
- * independend of machine byte order and word-alignment.
- * Uses encoding compatible with routines found in libpkg,
- * and BSD system routines htonl(), htons(), ntohl(), ntohs().
- *
- */
 
 #include "common.h"
 
@@ -42,9 +28,6 @@
 #include "bu.h"
 
 
-/**
- * B U _ G S H O R T
- */
 unsigned short
 bu_gshort(const unsigned char *msgp)
 {
@@ -56,9 +39,6 @@ bu_gshort(const unsigned char *msgp)
 }
 
 
-/**
- * B U _ G L O N G
- */
 unsigned long
 bu_glong(const unsigned char *msgp)
 {
@@ -72,9 +52,6 @@ bu_glong(const unsigned char *msgp)
 }
 
 
-/**
- * B U _ P S H O R T
- */
 unsigned char *
 bu_pshort(register unsigned char *msgp, register int s)
 {
@@ -85,9 +62,6 @@ bu_pshort(register unsigned char *msgp, register int s)
 }
 
 
-/**
- * B U _ P L O N G
- */
 unsigned char *
 bu_plong(register unsigned char *msgp, register long unsigned int l)
 {
@@ -99,7 +73,6 @@ bu_plong(register unsigned char *msgp, register long unsigned int l)
     return (msgp+4);
 }
 
-/** @} */
 /*
  * Local Variables:
  * mode: C

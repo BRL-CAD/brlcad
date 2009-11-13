@@ -29,7 +29,7 @@
 #include "ged.h"
 
 static char usage[] = "\
-Usage: %s [-b] [-m directory] [-o file] [-t dxf|obj|sat|stl] [-u units] geom.g [bot1 bot2 ...]\n";
+Usage: %s [-b] [-n] [-m directory] [-o file] [-t dxf|obj|sat|stl] [-u units] geom.g [bot1 bot2 ...]\n";
 
 
 /*
@@ -48,9 +48,10 @@ main(int argc, char *argv[])
     bu_optind = 1;
 
     /* Get past command line options. */
-    while ((c = bu_getopt(argc, argv, "bo:m:t:u:")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "bno:m:t:u:")) != EOF) {
 	switch (c) {
 	    case 'b':
+	    case 'n':
 	    case 'm':
 	    case 'o':
 	    case 't':

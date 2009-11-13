@@ -5,6 +5,7 @@ set(LIBGED_SOURCES
     ae2dir.c
     aet.c
     analyze.c
+    annotate.c
     arb.c
     arced.c
     arot.c
@@ -70,6 +71,7 @@ set(LIBGED_SOURCES
     form.c
     fracture.c
     ged.c
+    ged_util.c
     get.c
     get_autoview.c
     get_comb.c

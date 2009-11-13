@@ -45,7 +45,7 @@
 #define V3ARGS_SCALE(_a)       (_a)[X]*cfactor, (_a)[Y]*cfactor, (_a)[Z]*cfactor
 
 static char usage[] = "\
-Usage: %s [-b] [-m directory] [-o file] [-t dxf|obj|sat|stl] [-u units] [bot1 bot2 ...]\n";
+Usage: %s [-b] [-n] [-m directory] [-o file] [-t dxf|obj|sat|stl] [-u units] [bot1 bot2 ...]\n";
 
 enum otype {
     OTYPE_DXF = 1,
@@ -56,6 +56,7 @@ enum otype {
 
 static enum otype output_type = OTYPE_STL;
 static int binary = 0;
+static int normals = 0;
 static fastf_t cfactor = 1.0;
 static int v_offset = 1;
 static char *output_file = NULL;	/* output filename */
@@ -329,7 +330,13 @@ write_bot_obj(struct rt_bot_internal *bot, FILE *fp, char *name)
     int num_vertices;
     fastf_t *vertices;
     int num_faces, *faces;
-    register int i;
+    point_t A;
+    point_t B;
+    point_t C;
+    vect_t BmA;
+    vect_t CmA;
+    vect_t norm;
+    register int i,vi;
 
     num_vertices = bot->num_vertices;
     vertices = bot->vertices;
@@ -342,8 +349,36 @@ write_bot_obj(struct rt_bot_internal *bot, FILE *fp, char *name)
 	fprintf(fp, "v %f %f %f\n", V3ARGS_SCALE(&vertices[3*i]));
     }
 
-    for (i = 0; i < num_faces; i++) {
-	fprintf(fp, "f %d %d %d\n", faces[3*i]+v_offset, faces[3*i+1]+v_offset, faces[3*i+2]+v_offset);
+    if (normals) {
+	for (i = 0; i < num_faces; i++) {
+	    vi = 3*faces[3*i];
+	    VSET(A, vertices[vi], vertices[vi+1], vertices[vi+2]);
+	    vi = 3*faces[3*i+1];
+	    VSET(B, vertices[vi], vertices[vi+1], vertices[vi+2]);
+	    vi = 3*faces[3*i+2];
+	    VSET(C, vertices[vi], vertices[vi+1], vertices[vi+2]);
+	    
+	    VSUB2(BmA, B, A);
+	    VSUB2(CmA, C, A);
+	    if (bot->orientation != RT_BOT_CW) {
+		VCROSS(norm, BmA, CmA);
+	    } else {
+		VCROSS(norm, CmA, BmA);
+	    }
+	    VUNITIZE(norm);
+	    
+	    fprintf(fp, "vn %lf %lf %lf\n", V3ARGS(norm));
+	}
+    }
+
+    if (normals) {
+	for (i = 0; i < num_faces; i++) {
+	    fprintf(fp, "f %d//%d %d//%d %d//%d\n", faces[3*i]+v_offset, i+1, faces[3*i+1]+v_offset, i+1, faces[3*i+2]+v_offset, i+1);
+	}
+    } else {
+	for (i = 0; i < num_faces; i++) {
+	    fprintf(fp, "f %d %d %d\n", faces[3*i]+v_offset, faces[3*i+1]+v_offset, faces[3*i+2]+v_offset);
+	}
     }
 
     v_offset += num_vertices;
@@ -610,10 +645,13 @@ ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
     bu_optind = 1;
 
     /* Get command line options. */
-    while ((c = bu_getopt(argc, (char * const *)argv, "bo:m:t:u:")) != EOF) {
+    while ((c = bu_getopt(argc, (char * const *)argv, "bno:m:t:u:")) != EOF) {
 	switch (c) {
 	    case 'b':		/* Binary output file */
 		binary=1;
+		break;
+	    case 'n':		/* Binary output file */
+		normals=1;
 		break;
 	    case 'm':
 		output_directory = bu_optarg;

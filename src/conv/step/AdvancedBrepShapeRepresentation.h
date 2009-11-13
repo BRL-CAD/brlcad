@@ -26,10 +26,42 @@
 #ifndef ADVANCEDBREPSHAPEREPRESENTATION_H_
 #define ADVANCEDBREPSHAPEREPRESENTATION_H_
 
-class AdvancedBrepShapeRepresentation {
+#include <list>
+
+#include "ShapeRepresentation.h"
+
+class ON_Brep;
+
+class AdvancedBrepShapeRepresentation : public ShapeRepresentation {
+private:
+	static string entityname;
+
+protected:
+
 public:
 	AdvancedBrepShapeRepresentation();
+	AdvancedBrepShapeRepresentation(STEPWrapper *sw, int STEPid);
 	virtual ~AdvancedBrepShapeRepresentation();
+
+	ON_Brep *GetONBrep();
+	virtual bool LoadONBrep(ON_Brep *brep);
+
+	bool Load(STEPWrapper *sw, SCLP23(Application_instance) *sse);
+	string Name() {return name;};
+	virtual void Print(int level);
+
+	//static methods
+	static STEPEntity *Create(STEPWrapper *sw,SCLP23(Application_instance) *sse);
 };
 
 #endif /* ADVANCEDBREPSHAPEREPRESENTATION_H_ */
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

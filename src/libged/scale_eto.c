@@ -36,7 +36,7 @@
 
 
 int
-ged_scale_eto(struct ged *gedp, struct rt_eto_internal *eto, const char *attribute, fastf_t sf, int rflag)
+_ged_scale_eto(struct ged *gedp, struct rt_eto_internal *eto, const char *attribute, fastf_t sf, int rflag)
 {
     fastf_t newrad;
 

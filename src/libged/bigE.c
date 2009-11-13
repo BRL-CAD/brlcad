@@ -45,7 +45,7 @@
 
 /* #define debug 1 */
 
-union E_tree *build_etree(union tree *tp, struct ged_client_data *dgcdp);
+union E_tree *build_etree(union tree *tp, struct _ged_client_data *dgcdp);
 
 /* segment types (stored in the "seg_stp" field of the (struct seg) */
 #define ON_SURF	(struct soltab *)0x1
@@ -112,7 +112,7 @@ Edrawtree(int dp)
 HIDDEN union E_tree *
 add_solid(const struct directory *dp,
 	  matp_t mat,
-	  struct ged_client_data *dgcdp)
+	  struct _ged_client_data *dgcdp)
 {
     union E_tree *eptr;
     struct nmgregion *r;
@@ -246,7 +246,7 @@ add_solid(const struct directory *dp,
 /* build an E_tree corresponding to the region tree (tp) */
 union E_tree *
 build_etree(union tree *tp,
-	    struct ged_client_data *dgcdp)
+	    struct _ged_client_data *dgcdp)
 {
     union E_tree *eptr = NULL;
     struct soltab *stp;
@@ -323,7 +323,7 @@ show_seg(struct bu_list *seg, int str)
 /* given a segment list, eliminate any overlaps in the segments */
 HIDDEN void
 eliminate_overlaps(struct bu_list *seghead,
-		   struct ged_client_data *dgcdp)
+		   struct _ged_client_data *dgcdp)
 {
     struct seg *a, *b, *nextb;
 
@@ -363,7 +363,7 @@ do_intersect(struct seg *A,
 	     struct seg *B,
 	     struct bu_list *seghead,
 	     struct soltab *type,
-	     struct ged_client_data *dgcdp)
+	     struct _ged_client_data *dgcdp)
 {
     struct seg *tmp=(struct seg *)NULL;
 
@@ -404,7 +404,7 @@ HIDDEN void
 do_subtract(struct seg *A,
 	    struct seg *B,
 	    struct bu_list *seghead,
-	    struct ged_client_data *dgcdp)
+	    struct _ged_client_data *dgcdp)
 {
     struct seg *tmp=(struct seg *)NULL;
 
@@ -456,7 +456,7 @@ HIDDEN void
 do_union(struct seg *A,
 	 struct seg *B,
 	 struct bu_list *seghead,
-	 struct ged_client_data *dgcdp)
+	 struct _ged_client_data *dgcdp)
 {
     struct seg *tmp;
 
@@ -494,7 +494,7 @@ do_union(struct seg *A,
 
 HIDDEN void
 promote_ints(struct bu_list *head,
-	     struct ged_client_data *dgcdp)
+	     struct _ged_client_data *dgcdp)
 {
     struct seg *a, *b, *tmp;
 
@@ -696,7 +696,7 @@ HIDDEN struct bu_list *
 eval_op(struct bu_list *A,
 	int op,
 	struct bu_list *B,
-	struct ged_client_data *dgcdp)
+	struct _ged_client_data *dgcdp)
 {
     struct seg *sega, *segb, *tmp, *next;
     struct bu_list ret, ons, ins;
@@ -1016,7 +1016,7 @@ eval_op(struct bu_list *A,
 /* evaluate an E-tree */
 HIDDEN struct bu_list *
 eval_etree(union E_tree *eptr,
-	   struct ged_client_data *dgcdp)
+	   struct _ged_client_data *dgcdp)
 
 {
     struct bu_list *A, *B;
@@ -1080,7 +1080,7 @@ inverse_dir(vect_t dir, vect_t inv_dir)
 }
 
 HIDDEN struct soltab *
-classify_seg(struct seg *seg, struct soltab *shoot, struct xray *rp, struct ged_client_data *dgcdp)
+classify_seg(struct seg *seg, struct soltab *shoot, struct xray *rp, struct _ged_client_data *dgcdp)
 {
     fastf_t mid_dist;
     struct xray new_rp;
@@ -1177,7 +1177,7 @@ shoot_and_plot(point_t start_pt,
 	       int skip_leaf2,
 	       union E_tree *eptr,
 	       struct soltab *type,
-	       struct ged_client_data *dgcdp)
+	       struct _ged_client_data *dgcdp)
 {
     struct xray rp;
     struct ray_data rd;
@@ -1403,7 +1403,7 @@ shoot_and_plot(point_t start_pt,
 HIDDEN void
 Eplot(union E_tree *eptr,
       struct bu_list *vhead,
-      struct ged_client_data *dgcdp)
+      struct _ged_client_data *dgcdp)
 {
     point_t start_pt;
     int leaf_no;
@@ -1765,7 +1765,7 @@ Eplot(union E_tree *eptr,
 
 HIDDEN void
 free_etree(union E_tree *eptr,
-	   struct ged_client_data *dgcdp)
+	   struct _ged_client_data *dgcdp)
 {
     CK_ETREE(eptr);
 
@@ -1802,7 +1802,7 @@ free_etree(union E_tree *eptr,
 
 /* convert all "half" solids to polysolids */
 HIDDEN void
-fix_halfs(struct ged_client_data *dgcdp)
+fix_halfs(struct _ged_client_data *dgcdp)
 {
     point_t max, min;
     int i, count=0;
@@ -2084,7 +2084,7 @@ ged_E(struct ged *gedp, int argc, const char *argv[])
     register int c;
     int ac = 1;
     char *av[2];
-    struct ged_client_data *dgcdp;
+    struct _ged_client_data *dgcdp;
     static const char *usage = "[-C#/#/# -s] objects(s)";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -2103,15 +2103,15 @@ ged_E(struct ged *gedp, int argc, const char *argv[])
     if (bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck())
 	bu_log("Error at start of 'E'\n");
 
-    BU_GETSTRUCT(dgcdp, ged_client_data);
+    BU_GETSTRUCT(dgcdp, _ged_client_data);
     dgcdp->gedp = gedp;
     dgcdp->do_polysolids = 0;
     dgcdp->wireframe_color_override = 0;
     dgcdp->transparency = 0;
 #if 1
-    dgcdp->dmode = GED_BOOL_EVAL;
+    dgcdp->dmode = _GED_BOOL_EVAL;
 #else
-    dgcdp->dmode = GED_WIREFRAME;
+    dgcdp->dmode = _GED_WIREFRAME;
 #endif
 
     /* Parse options. */

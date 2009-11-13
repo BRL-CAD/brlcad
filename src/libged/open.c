@@ -55,7 +55,7 @@ ged_reopen(struct ged *gedp, int argc, const char *argv[])
     if (argc == 2) {
 	char *av[2];
 
-	if ((dbip = ged_open_dbip(argv[1], 0)) == DBI_NULL) {
+	if ((dbip = _ged_open_dbip(argv[1], 0)) == DBI_NULL) {
 	    bu_vls_printf(&gedp->ged_result_str, "ged_reopen: failed to open %s\n", argv[1]);
 	    return GED_ERROR;
 	}

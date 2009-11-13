@@ -62,7 +62,9 @@
 #include "bio.h"
 
 #include "tcl.h"
-#include "tk.h"
+#ifdef HAVE_TK
+#  include "tk.h"
+#endif
 
 #include "bu.h"
 #include "vmath.h"
@@ -340,6 +342,7 @@ main(int argc, char *argv[])
 	bu_semaphore_init(RT_SEM_LAST);
     }
 
+    bu_optind = 1;
     while ((c = bu_getopt(argc, argv, "a:d:hbicnrx:X:v?")) != EOF) {
 	switch (c) {
 	    case 'a':
@@ -392,7 +395,7 @@ main(int argc, char *argv[])
     if (bu_debug > 0)
 	out = fopen("/tmp/stdout", "w+"); /* I/O testing */
 
-    if (argc > 2) {
+    if (argc > 1) {
 	/* if there is more than a file name remaining, mged is not interactive */
 	interactive = 0;
     } else {
@@ -444,7 +447,7 @@ main(int argc, char *argv[])
 	    fflush(out);
 	    fclose(out);
 	}
-    } /* argc > 2 */
+    } /* argc > 1 */
 
     if (bu_debug > 0)
 	fprintf(out, "DEBUG: interactive=%d, classic_mged=%d\n", interactive, classic_mged);
@@ -672,11 +675,17 @@ main(int argc, char *argv[])
     }
 
     /* Open the database */
-    if (argc >= 2) {
+    if (argc >= 1) {
+	char *av[3];
+
+	av[0] = "opendb";
+	av[1] = argv[0];
+	av[2] = NULL;
+
 	/* Command line may have more than 2 args, opendb only wants 2
 	 * expecting second to be the file name.
 	 */
-	if (f_opendb((ClientData)NULL, interp, 2, argv) == TCL_ERROR) {
+	if (f_opendb((ClientData)NULL, interp, 2, av) == TCL_ERROR) {
 	    if (!run_in_foreground && use_pipe) {
 		notify_parent_done(parent_pipe[1]);
 	    }
@@ -781,7 +790,7 @@ main(int argc, char *argv[])
     /* --- Now safe to process geometry. --- */
 
     /* If this is an argv[] invocation, do it now */
-    if (argc > 2) {
+    if (argc > 1) {
 	char *av[2];
 
 	av[0] = "q";
@@ -790,7 +799,7 @@ main(int argc, char *argv[])
 	/* Call cmdline instead of calling mged_cmd directly so that
 	 * access to Tcl/Tk is possible.
 	 */
-	for (argc -= 2, argv += 2; argc; --argc, ++argv)
+	for (argc -= 1, argv += 1; argc; --argc, ++argv)
 	    bu_vls_printf(&input_str, "%s ", *argv);
 
 	cmdline(&input_str, TRUE);
@@ -2268,7 +2277,7 @@ mged_finish(int exitcode)
 	}
     }
 
-    for (BU_LIST_FOR(c, cmd_list, &head_cmd_list.l)) {
+    for (BU_LIST_FOR (c, cmd_list, &head_cmd_list.l)) {
 	bu_vls_free(&c->cl_name);
 	bu_vls_free(&c->cl_more_default);
     }
@@ -2550,9 +2559,12 @@ f_opendb(
 
     bu_vls_init(&msg);
 
-    if (argc == 3 &&
-	strcmp("y", argv[2]) && strcmp("Y", argv[2]) &&
-	strcmp("n", argv[2]) && strcmp("N", argv[2])) {
+    if (argc == 3
+	&& strcmp("y", argv[2])
+	&& strcmp("Y", argv[2])
+	&& strcmp("n", argv[2])
+	&& strcmp("N", argv[2]))
+    {
 	bu_vls_printf(&vls, "help opendb");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -2590,7 +2602,7 @@ f_opendb(
 	}
 
 	/* File does not exist */
-	if (interactive) {
+	if (interactive && argc < 3) {
 	    if (mged_init_flag) {
 		if (classic_mged) {
 		    bu_log("Create new database (y|n)[n]? ");
@@ -2625,7 +2637,7 @@ f_opendb(
 			bu_vls_free(&msg);
 			return TCL_OK;
 		    }
-		}
+		} /* classic */
 	    } else {
 		/* not initializing mged */
 		if (argc == 2) {
@@ -2641,15 +2653,20 @@ f_opendb(
 		    return TCL_ERROR;
 		}
 
-		if (*argv[2] != 'y' && *argv[2] != 'Y') {
-		    gedp = save_gedp;
-		    dbip = save_dbip; /* restore previous database */
-		    rt_new_material_head(save_materp);
-		    bu_vls_free(&vls);
-		    bu_vls_free(&msg);
-		    return TCL_OK;
-		}
 	    }
+	}
+
+	/* did the caller specify not creating a new database? */
+	if (argc >= 3
+	    && *argv[2] != 'y'
+	    && *argv[2] != 'Y')
+	{
+	    gedp = save_gedp;
+	    dbip = save_dbip; /* restore previous database */
+	    rt_new_material_head(save_materp);
+	    bu_vls_free(&vls);
+	    bu_vls_free(&msg);
+	    return TCL_OK;
 	}
 
 	/* File does not exist, and should be created */
@@ -2667,11 +2684,9 @@ f_opendb(
 		return TCL_OK;
 	    }
 
-	    Tcl_AppendResult(interp, "opendb: failed to create ", argv[1], "\n", \
-			     (char *)NULL);
+	    Tcl_AppendResult(interp, "opendb: failed to create ", argv[1], "\n", (char *)NULL);
 	    if (dbip == DBI_NULL)
-		Tcl_AppendResult(interp, "opendb: no database is currently opened!", \
-				 (char *)NULL);
+		Tcl_AppendResult(interp, "opendb: no database is currently opened!", (char *)NULL);
 
 	    return TCL_ERROR;
 	}

@@ -59,6 +59,7 @@ int main(int argc, char** argv) {
     int mcount = 0;
     int verbose_mode = 0;
     int random_colors = 0;
+    int use_uuidnames = 0;
     struct rt_wdb* outfp;
     ON_TextLog error_log;
     const char* id_name = "3dm -> g conversion";
@@ -71,7 +72,7 @@ int main(int argc, char** argv) {
     ON_TextLog* dump = &dump_to_stdout;
 
     int c;
-    while ((c = bu_getopt(argc, argv, "o:dv:t:s:r")) != EOF) {
+    while ((c = bu_getopt(argc, argv, "o:dv:t:s:ru")) != EOF) {
 	switch ( c ) {
 	    case 's':	/* scale factor */
 		break;
@@ -89,6 +90,9 @@ int main(int argc, char** argv) {
 		break;
 	    case 'r':  /* randomize colors */
 		random_colors = 1;
+		break;
+	    case 'u':
+		use_uuidnames = 1;
 	    default:
 		break;
 	}
@@ -145,19 +149,28 @@ int main(int argc, char** argv) {
 	
 	// object's attibutes
 	ON_3dmObjectAttributes myAttributes = model.m_object_table[i].m_attributes;
-	ON_String constr(myAttributes.m_name);
-	myAttributes.Dump(*dump); // On debug print
-	dump->Print("\n");
 
 	std::string geom_base;
-	if (constr == NULL) {
-	    std::string genName("rhino");
-	    genName+=itoa(mcount++);
-	    geom_base = genName.c_str();
-	    dump->Print("Object has no name - creating one %s.\n", geom_base.c_str());
-	} else {
+	myAttributes.Dump(*dump); // On debug print
+	dump->Print("\n");
+	
+	if (use_uuidnames == 1) {
+    	    char uuidstring[37];
+    	    ON_UuidToString(myAttributes.m_uuid, uuidstring);
+    	    ON_String constr(uuidstring);
 	    const char* cstr = constr;
 	    geom_base = cstr;
+	} else {
+    	    ON_String constr(myAttributes.m_name);
+	    if (constr == NULL) {
+    		std::string genName("rhino");
+    		genName+=itoa(mcount++);
+    		geom_base = genName.c_str();
+    		dump->Print("Object has no name - creating one %s.\n", geom_base.c_str());
+    	    } else {
+		const char* cstr = constr;
+		geom_base = cstr;
+    	    }
 	}
 
 	std::string geom_name(geom_base+".s");
@@ -207,10 +220,10 @@ int main(int argc, char** argv) {
 		mk_brep(outfp, geom_name.c_str(), brep);
 		unsigned char rgb[] = {r,g,b};
 		mk_region1(outfp, region_name.c_str(), geom_name.c_str(), "plastic", "", rgb);
-                (void)mk_addmember(region_name.c_str(), &all_regions.l, NULL, WMOP_UNION);
+		(void)mk_addmember(region_name.c_str(), &all_regions.l, NULL, WMOP_UNION);
 		if (verbose_mode > 0) brep->Dump(*dump);
 		dump->PopIndent();
-	    } else if (pGeometry->HasBrepForm()) {
+     	    } else if (pGeometry->HasBrepForm()) {
 		dump->Print("\n\n ***** HasBrepForm. ***** \n\n");
 		dump->PopIndent();
 	    } else if ((curve = const_cast<ON_Curve * >(ON_Curve::Cast(pGeometry)))) {

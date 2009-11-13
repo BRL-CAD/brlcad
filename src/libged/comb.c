@@ -93,7 +93,7 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
 	    continue;
 	}
 
-	if (ged_combadd(gedp, dp, comb_name, 0, oper, 0, 0) == DIR_NULL) {
+	if (_ged_combadd(gedp, dp, comb_name, 0, oper, 0, 0) == DIR_NULL) {
 	    bu_vls_printf(&gedp->ged_result_str, "error in combadd");
 	    return GED_ERROR;
 	}
@@ -114,7 +114,7 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
  *  Preserves the GIFT semantics.
  */
 struct directory *
-ged_combadd(struct ged			*gedp,
+_ged_combadd(struct ged			*gedp,
 	    register struct directory	*objp,
 	    char			*combname,
 	    int				region_flag,	/* true if adding region */

@@ -17,11 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file process.c
- *
- * process management routines
- *
- */
 
 #include "common.h"
 
@@ -33,9 +28,6 @@
 #include "bu.h"
 
 
-/**
- * returns the process ID of the calling process
- */
 int
 bu_process_id()
 {

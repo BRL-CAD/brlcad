@@ -17,13 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup bu_log */
-/** @{ */
-/** @file fopen_uniq.c
- *
- * @brief DEPRECATED: Routine to open a unique filename.
- *
- */
 
 #include "common.h"
 
@@ -42,27 +35,7 @@
 
 #include "bu.h"
 
-/**
- * B U _ F O P E N _ U N I Q
- * @brief
- * Open a file for output.  Assures that the file did not previously exist.
- * This routine is DEPRECATED.  Do not use.
- *
- * Typical Usages:
- @code
- *	static int n = 0;
- *	FILE *fp;
- *
- *	fp = bu_fopen_uniq("writing to %s for results", "output%d.pl", n++);
- *	...
- *	fclose(fp);
- *
- *
- *	fp = bu_fopen_uniq((char *)NULL, "output%d.pl", n++);
- *	...
- *	fclose(fp);
- @endcode
-*/
+
 FILE *
 bu_fopen_uniq(const char *outfmt, const char *namefmt, int n)
 {
@@ -95,7 +68,6 @@ bu_fopen_uniq(const char *outfmt, const char *namefmt, int n)
 
     return fp;
 }
-/** @} */
 
 /*
  * Local Variables:

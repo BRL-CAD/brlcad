@@ -21,15 +21,22 @@
  *
  */
 
+#include "common.h"
+
 #ifndef TIE_PRECISION
 # define TIE_PRECISION 0
 #endif
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <signal.h>
 #include <string.h>
 #include <sys/time.h>
 #include <pthread.h>
+
+#ifdef HAVE_GETOPT_H
+#  include <getopt.h>
+#endif
 
 #include "libtie/tie.h"
 #include "adrt.h"
@@ -106,10 +113,12 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 
 	case ADRT_WORK_STATUS:
 	{
-	    double loadavg;
+	    double loadavg = -1.0;
 
+#ifdef HAVE_GETLOADAVG
 	    getloadavg (&loadavg, 1);
 	    printf ("load average: %f\n", loadavg);
+#endif
 	}
 	break;
 
@@ -494,6 +503,117 @@ void adrt_slave_mesg(void *mesg, unsigned int mesg_len)
     }
 }
 #endif
+
+#ifdef HAVE_GETOPT_LONG
+static struct option longopts[] =
+{
+    { "help",	no_argument,		NULL, 'h' },
+    { "port",	required_argument,	NULL, 'p' },
+    { "threads",	required_argument,	NULL, 't' },
+    { "version",	no_argument,		NULL, 'v' },
+};
+#endif
+static char shortopts[] = "Xdhp:t:v";
+
+
+static void finish(int sig)
+{
+    bu_exit(EXIT_FAILURE, "Collected signal %d, aborting!\n", sig);
+}
+
+static void info(int sig)
+{
+	/* something to display info about clients, threads and port. */
+    return;
+}
+
+static void help()
+{
+    printf("%s\n", ADRT_VER_DETAIL);
+    printf("%s", "usage: adrt_slave [options] [host]\n\
+  -v\t\tdisplay version\n\
+  -h\t\tdisplay help\n\
+  -p\t\tport number\n\
+  -t ...\tnumber of threads to launch for processing\n");
+}
+
+
+int main(int argc, char **argv)
+{
+    int		port = 0, c = 0, threads = 0;
+    char		host[64], temp[64];
+
+
+    /* Default Port */
+    signal(SIGINT, finish);
+#ifdef SIGUSR1
+    signal(SIGUSR1, info);
+#endif
+#ifdef SIGINFO
+    signal(SIGINFO, info);
+#endif
+
+    /* Initialize strings */
+    host[0] = 0;
+    port = 0;
+
+
+    /* Parse command line options */
+
+    while ((c =
+#ifdef HAVE_GETOPT_LONG
+	    getopt_long(argc, argv, shortopts, longopts, NULL)
+#else
+	    getopt(argc, argv, shortopts)
+#endif
+	       )!= -1) {
+	switch (c) {
+	    case 'h':
+		help();
+		return EXIT_SUCCESS;
+
+	    case 'p':
+		port = atoi(optarg);
+		break;
+
+	    case 't':
+		strncpy(temp, optarg, 4);
+		threads = atoi(temp);
+		if (threads < 0) threads = 0;
+		if (threads > 32) threads = 32;
+		break;
+
+	    case 'v':
+		printf("%s\n", ADRT_VER_DETAIL);
+		return EXIT_SUCCESS;
+
+	    default:
+		help();
+		return EXIT_FAILURE;
+	}
+    }
+
+    argc -= optind;
+    argv += optind;
+
+    if (argc) {
+	strncpy(host, argv[0], 64-1);
+	host[64-1] = '\0'; /* sanity */
+    }
+
+    if (!host[0]) {
+	if (!port)
+	    port = TN_SLAVE_PORT;
+	printf("running as daemon.\n");
+    } else {
+	if (!port)
+	    port = TN_MASTER_PORT;
+    }
+
+    adrt_slave(port, host, threads);
+
+    return EXIT_SUCCESS;
+}
 
 /*
  * Local Variables:

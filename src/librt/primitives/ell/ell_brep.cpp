@@ -41,7 +41,7 @@ rt_ell_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
    eip = (struct rt_ell_internal *)ip->idb_ptr;
    RT_ELL_CK_MAGIC(eip);
 
-   *b = new ON_Brep();
+   *b = ON_Brep::New();
 
    point_t origin;
    VSET(origin, 0,0,0);

@@ -169,7 +169,7 @@ ged_killtree_callback(struct db_i		*dbip,
 	    }
 	}
     } else {
-	ged_eraseAllNamesFromDisplay(gktdp->gedp, dp->d_namep, 0);
+	_ged_eraseAllNamesFromDisplay(gktdp->gedp, dp->d_namep, 0);
 
 	bu_vls_printf(&gktdp->gedp->ged_result_str, "KILL %s:  %s\n",
 		      (dp->d_flags & DIR_COMB) ? "COMB" : "Solid",

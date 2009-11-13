@@ -17,11 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file argv.c
- *
- * Functions related to argv processing.
- *
- */
 
 #include "common.h"
 
@@ -35,12 +30,38 @@ bu_free_argv(int argc, char *argv[])
 {
     register int i;
 
-    for (i = 0; i < argc; ++i)
-	if (argv[i] != (char *)0)
+    for (i = 0; i < argc; ++i) {
+	if (argv[i]) {
 	    bu_free((void *)argv[i], "bu_free_argv");
+	    argv[i] = NULL; /* sanity */
+	}
+    }
 
     bu_free((void *)argv, "bu_free_argv");
+    argv = NULL;
 }
+
+
+void
+bu_free_array(int argc, char *argv[], const char *str)
+{
+    int count = 0;
+
+    if (!argv || argc <= 0) {
+	return;
+    }
+
+    while (count < argc) {
+	if (argv[count]) {
+	    bu_free(argv[count], str);
+	    argv[count] = NULL;
+	}
+	count++;
+    }
+
+    return;
+}
+
 
 char **
 bu_dup_argv(int argc, const char *argv[])
@@ -58,6 +79,7 @@ bu_dup_argv(int argc, const char *argv[])
 
     return av;
 }
+
 
 char **
 bu_dupinsert_argv(int insert, int insertArgc, const char *insertArgv[], int argc, const char *argv[])
@@ -99,6 +121,7 @@ bu_dupinsert_argv(int insert, int insertArgc, const char *insertArgv[], int argc
 
     return av;
 }
+
 
 char **
 bu_argv_from_path(const char *path, int *ac)

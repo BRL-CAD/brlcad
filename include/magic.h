@@ -29,6 +29,24 @@
  * The defines should be considered PRIVATE (even though they are not)
  * and should NEVER be referenced by value.
  */
+/** @file magic.c
+ *
+ * Routines involved with handling "magic numbers" used to identify
+ * various in-memory data structures.  Magic numbers provide a means
+ * to perform run-time sanity checks for memory corruption and
+ * uninitialized data.
+ *
+ * The one ugly thing about this implementation is that every BRL-CAD
+ * structure needs to have it's magic number registered here and in
+ * the header.
+ *
+ */
+/** @file badmagic.c
+ *
+ * Routines involved with handling "magic numbers" used to identify
+ * various in-memory data structures.
+ *
+ */
 
 #ifndef __MAGIC_H__
 #define __MAGIC_H__
@@ -207,12 +225,12 @@
 #  define BU_CKMAG_TCL(_interp, _ptr, _magic, _str)
 #else
 #  define BU_CKMAG(_ptr, _magic, _str)	\
-	if ( !(_ptr) || ( ((unsigned long)(_ptr)) & (sizeof(unsigned long)-1) ) || *((unsigned long *)(_ptr)) != (unsigned long)(_magic) )  { \
-		bu_badmagic( (unsigned long *)(_ptr), (unsigned long)_magic, _str, __FILE__, __LINE__ ); \
+	if (!(_ptr) || (((unsigned long)(_ptr)) & (sizeof(unsigned long)-1)) || *((unsigned long *)(_ptr)) != (unsigned long)(_magic)) { \
+		bu_badmagic((unsigned long *)(_ptr), (unsigned long)_magic, _str, __FILE__, __LINE__); \
 	}
 #  define BU_CKMAG_TCL(_interp, _ptr, _magic, _str)	\
-	if ( !(_ptr) || ( ((unsigned long)(_ptr)) & (sizeof(unsigned long)-1) ) || *((unsigned long *)(_ptr)) != (_magic) )  { \
-		bu_badmagic_tcl( (_interp), (unsigned long *)(_ptr), (unsigned long)_magic, _str, __FILE__, __LINE__ ); \
+	if (!(_ptr) || (((unsigned long)(_ptr)) & (sizeof(unsigned long)-1)) || *((unsigned long *)(_ptr)) != (_magic)) { \
+		bu_badmagic_tcl((_interp), (unsigned long *)(_ptr), (unsigned long)_magic, _str, __FILE__, __LINE__); \
 		return TCL_ERROR; \
 	}
 #endif
@@ -230,6 +248,21 @@ BU_EXPORT BU_EXTERN(void bu_badmagic, (const unsigned long *ptr, unsigned long m
  *
  * Bad magic checking for Tcl routines.  The presence of Tcl_Interp as
  * an arg prevents giving arg list.
+ *
+ * Support routine for BU_CKMAG_TCL macro. As used by BU_CKMAG_TCL,
+ * this routine is not called unless there is trouble with the
+ * pointer. When called, an appropriate message is added to interp
+ * indicating the problem.
+ *
+ * @param interp	- tcl interpreter where result is stored
+ * @param ptr	- pointer to a data structure
+ * @param magic	- the correct/desired magic number
+ * @param str	- usually indicates the data structure name
+ * @param file	- file where this routine was called
+ * @param line	- line number in the above file
+ *
+ * @return
+ * void
  */
 BU_EXPORT BU_EXTERN(void bu_badmagic_tcl, (Tcl_Interp *interp, const unsigned long *ptr, unsigned long magic, const char *str, const char *file, int line));
 

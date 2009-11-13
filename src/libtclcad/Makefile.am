@@ -31,7 +31,6 @@ endif
 libtclcad_la_SOURCES = \
 	tclcad.c \
 	tclcadAutoPath.c \
-	tclcadTkSetup.c \
 	tkImgFmtPIX.c \
 	ged_obj.c
 

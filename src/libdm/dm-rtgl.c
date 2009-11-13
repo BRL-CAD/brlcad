@@ -195,22 +195,24 @@ struct bu_hash_tbl *colorTable;
 struct ptInfoList *currItem;
 
 /* list of ray trace jobs */
-struct jobList jobs;
 struct jobList *currJob;
 
+int numJobs = 0;
+int rtglWasClosed = 0;
+
 /* free all jobs from job list */
-void freeJobList(void) {
+void freeJobList(struct jobList *jobs) {
 
     /* list cannot be empty */
-    if (jobs.l.forw != NULL && (struct jobList *)jobs.l.forw != &jobs) {
+    if (jobs->l.forw != NULL && (struct jobList *)jobs->l.forw != &(*jobs)) {
 
-	while (BU_LIST_WHILE (currJob, jobList, &(jobs.l))) {
+	while (BU_LIST_WHILE (currJob, jobList, &(jobs->l))) {
 
 	    BU_LIST_DEQUEUE(&(currJob->l));
 	    bu_free(currJob, "free jobs currJob");
 	}
 
-	jobs.l.forw = BU_LIST_NULL;
+	jobs->l.forw = BU_LIST_NULL;
     }
 }
 
@@ -524,6 +526,8 @@ rtgl_open(Tcl_Interp *interp, int argc, char **argv)
 Done:
     XFreeDeviceList(olist);
 
+    Tk_MapWindow(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin);
+    
     if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
 			((struct rtgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
@@ -580,7 +584,6 @@ Done:
     glLoadIdentity();
     ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->face_flag = 1;	/* faceplate matrix is on top of stack */
 
-    Tk_MapWindow(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin);
     return dmp;
 }
 
@@ -781,9 +784,10 @@ rtgl_close(struct dm *dmp)
     bu_free(dmp->dm_vars.pub_vars, "rtgl_close: dm_xvars");
     bu_free(dmp, "rtgl_close: dmp");
 
-    /* free job list */
-    freeJobList();
-
+    /* reset job count */
+    numJobs = 0;
+    rtglWasClosed = 1;
+    
     /* free draw list */
     if (colorTable != NULL) {
 	bu_hash_tbl_free(colorTable);
@@ -1371,7 +1375,6 @@ void swapItems(struct bu_list *a, struct bu_list *b) {
     }
 }
 
-int numJobs = 0;
 
 struct jobList **jobsArray = NULL;
 
@@ -1417,7 +1420,7 @@ void shuffleJobs(void) {
 }
 
 /* add jobs for an even grid of parallel rays in a principle direction */
-void shootGrid(vect_t min, vect_t max, double maxSpan, int pixels, int uAxis, int vAxis, int iAxis) {
+void shootGrid(struct jobList *jobs, vect_t min, vect_t max, double maxSpan, int pixels, int uAxis, int vAxis, int iAxis) {
     int i, j;
     vect_t span;
     int uDivs, vDivs;
@@ -1463,7 +1466,7 @@ void shootGrid(vect_t min, vect_t max, double maxSpan, int pixels, int uAxis, in
 	    if (currJob->used == JOB_ARRAY_SIZE) {
 
 		BU_GETSTRUCT(currJob, jobList);
-		BU_LIST_PUSH(&(jobs.l), currJob);
+		BU_LIST_PUSH(&(jobs->l), currJob);
 		currJob->used = 0;
 	    }
 	    
@@ -1483,7 +1486,7 @@ void shootGrid(vect_t min, vect_t max, double maxSpan, int pixels, int uAxis, in
 int numShot = 0;
 
 /* return 1 if all jobs done, 0 if not */
-int shootJobs(void) {
+int shootJobs(struct jobList *jobs) {
     int i, last, *used;
     double elapsed_time;
 
@@ -1528,7 +1531,7 @@ int shootJobs(void) {
 	    }
 	}
 
-	jobs.l.forw = BU_LIST_NULL;
+	jobs->l.forw = BU_LIST_NULL;
     }
 
     return 1;
@@ -1617,7 +1620,8 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
     vect_t span;
     char *currTree, *visibleTrees[RT_MAXARGS];
     struct db_i *dbip;
-
+    struct jobList jobs;
+    
     vect_t vCenter;
 
     /* get ged struct */
@@ -1657,12 +1661,50 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
     /* get number and names of visible tree tops */
     numVisible = ged_build_tops(gedp, visibleTrees, &visibleTrees[RT_MAXARGS]);
 
+    int foundalloldtrees = 1;
+    int foundthistree = 0;
+    for (i = 0; i < oldNumTrees; i++) {
+	currTree = oldTrees[i];
+	foundthistree = 0;
+ 	for (j = 0; j < numVisible; j++) {
+	    if (strcmp(currTree, visibleTrees[j]) == 0) 
+		foundthistree = 1;
+	}
+	if (foundthistree == 0) foundalloldtrees = 0;
+    }
+
+    /* display out of date */
+    if (foundalloldtrees == 0) {
+
+    	foundalloldtrees = 1;
+	
+	/* drop previous work */
+	oldNumTrees = 0;
+	freeJobList(&jobs);
+
+	if (colorTable != NULL) {
+	    bu_hash_tbl_free(colorTable);
+	    colorTable = NULL;
+	}
+
+	if (jobsArray != NULL) {
+	    bu_free(jobsArray, "dm-rtgl.c: jobsArray");
+	    jobsArray = NULL;
+	}
+
+	RTGL_DIRTY = 1;
+
+	maxSpan = 0.0;
+	numShot = numJobs = 0;
+    }
+
+
     /* no objects are visible */
     if (numVisible == 0) {
 
 	/* drop previous work */
 	oldNumTrees = 0;
-	freeJobList();
+	freeJobList(&jobs);
 
 	if (colorTable != NULL) {
 	    bu_hash_tbl_free(colorTable);
@@ -1690,18 +1732,50 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
     /* look for new trees in need of ray tracing */
     numNew = 0;
     
+    if (rtglWasClosed == 1) {
+	rtglWasClosed = 0;
+	oldNumTrees = 0;
+    	/* drop previous work */
+	freeJobList(&jobs);
+	
+	if (colorTable != NULL) {
+	    bu_hash_tbl_free(colorTable);
+	    colorTable = NULL;
+	}
+	
+	if (jobsArray != NULL) {
+	    bu_free(jobsArray, "dm-rtgl.c: jobsArray");
+	    jobsArray = NULL;
+	}
+	
+	RTGL_DIRTY = 0;
+	
+	/* reset for dynamic z-clipping */
+	if (dmp->dm_zclip) {
+	    startScale = 1;
+	}
+	
+	maxSpan = 0.0;
+	numShot = numJobs = 0;
+    }
+ 
+    
     for (i = 0; i < numVisible; i++) {
         currTree = visibleTrees[i];
         new = 1;
         
-        /* if this tree is in the old tree list, it's not new */
+        /* if this tree is in the old tree list, it's not new
+	 * if it's NOT in the old list, it needs to be cleared,
+	 * but that's not set up yet without clearing everything
+	 * first and starting over.
+	 */
         for (j = 0; j < oldNumTrees; j++) {
             if (strcmp(currTree, oldTrees[j]) == 0)
                 new = 0;
         }
         
         if (new) {
-	    /* will ray trace new tree*/
+    	    /* will ray trace new tree*/
             if (rt_gettree(rtip, currTree) < 0)
                 return TCL_ERROR;
 
@@ -1747,9 +1821,9 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 
 #if 1
 	/* create ray-trace jobs */
-	shootGrid(min, max, maxSpan, maxPixels, X, Y, Z);
-	shootGrid(min, max, maxSpan, maxPixels, Z, X, Y);
-	shootGrid(min, max, maxSpan, maxPixels, Y, Z, X);
+	shootGrid(&jobs, min, max, maxSpan, maxPixels, X, Y, Z);
+	shootGrid(&jobs, min, max, maxSpan, maxPixels, Z, X, Y);
+	shootGrid(&jobs, min, max, maxSpan, maxPixels, Y, Z, X);
 
 	bu_log("firing %d jobs", numJobs);
 
@@ -1818,7 +1892,18 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
     if (!jobsDone) {
 	RTGL_DIRTY = 1;
 
-	if ((jobsDone = shootJobs())) {
+	if ((jobsDone = shootJobs(&jobs))) {	
+    	    freeJobList(&jobs);
+	    
+    	    if (jobsArray != NULL) {
+    		bu_free(jobsArray, "dm-rtgl.c: jobsArray");
+    		jobsArray = NULL;
+    	    }
+	    
+    	    RTGL_DIRTY = 0;
+    	   
+    	    numShot = numJobs = 0;
+
 	    bu_log("jobs done");
 	}
     } else {

@@ -8,6 +8,7 @@ bin_PROGRAMS = \
 	d-f \
 	d-i \
 	d-u \
+	d2-c \
 	damdf \
 	dauto \
 	dauto2 \
@@ -17,7 +18,7 @@ bin_PROGRAMS = \
 	dmod \
 	dpeak \
 	dsel \
-	dstat \
+	dstats \
 	dwin \
 	f-d \
 	f-i \
@@ -27,14 +28,15 @@ bin_PROGRAMS = \
 	i-f \
 	ihist \
 	imod \
-	istat \
+	istats \
+	smod \
 	syn \
 	u-a \
 	u-bw \
 	u-d \
 	u-f \
 	umod \
-	ustat
+	ustats
 
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
 
@@ -58,6 +60,9 @@ d_u_LDADD = ${BU}
 
 d_bw_SOURCES = d-bw.c
 d_bw_LDADD = ${BU}
+
+d2_c_SOURCES = d2-c.c
+d2_c_LDADD = ${BU}
 
 d_f_SOURCES = d-f.c
 d_f_LDADD = ${BU}
@@ -114,20 +119,23 @@ imod_LDADD = ${BU} ${LIBM}
 umod_SOURCES = umod.c
 umod_LDADD = ${BU} ${LIBM}
 
+smod_SOURCES = smod.c
+smod_LDADD = ${BU}
+
 
 #  Misc
 
-dstat_SOURCES = dstat.c
-dstat_LDADD = ${BU} ${LIBM}
+dstats_SOURCES = dstats.c
+dstats_LDADD = ${BU} ${LIBM}
 
 dsel_SOURCES = dsel.c
 dsel_LDADD = ${BU}
 
-istat_SOURCES = istat.c
-istat_LDADD = ${BU}
+istats_SOURCES = istats.c
+istats_LDADD = ${BU}
 
-ustat_SOURCES = ustat.c
-ustat_LDADD = ${BU}
+ustats_SOURCES = ustats.c
+ustats_LDADD = ${BU}
 
 
 #  Experimental
@@ -147,13 +155,6 @@ dauto2_LDADD = ${BU}
 ihist_SOURCES = ihist.c
 ihist_LDADD = ${BU}
 
-# XXX need to review why these are not built
-EXTRA_DIST = \
-	d2-c.c \
-	fhor2.c \
-	fhor3.c \
-	smod.c
-
 DEPENDS = src/libfb src/libfft
 
 include $(top_srcdir)/misc/Makefile.defs
@@ -167,6 +168,7 @@ FAST_OBJECTS = \
 	$(d_f_OBJECTS) \
 	$(d_i_OBJECTS) \
 	$(d_u_OBJECTS) \
+	$(d2_c_OBJECTS) \
 	$(damdf_OBJECTS) \
 	$(dauto_OBJECTS) \
 	$(dauto2_OBJECTS) \
@@ -176,7 +178,7 @@ FAST_OBJECTS = \
 	$(dmod_OBJECTS) \
 	$(dpeak_OBJECTS) \
 	$(dsel_OBJECTS) \
-	$(dstat_OBJECTS) \
+	$(dstats_OBJECTS) \
 	$(dwin_OBJECTS) \
 	$(f_d_OBJECTS) \
 	$(f_i_OBJECTS) \
@@ -186,12 +188,13 @@ FAST_OBJECTS = \
 	$(i_f_OBJECTS) \
 	$(ihist_OBJECTS) \
 	$(imod_OBJECTS) \
-	$(istat_OBJECTS) \
+	$(istats_OBJECTS) \
+	$(smod_OBJECTS) \
 	$(syn_OBJECTS) \
 	$(u_a_OBJECTS) \
 	$(u_bw_OBJECTS) \
 	$(u_d_OBJECTS) \
 	$(u_f_OBJECTS) \
 	$(umod_OBJECTS) \
-	$(ustat_OBJECTS) \
+	$(ustats_OBJECTS) \
 	$(bin_PROGRAMS)

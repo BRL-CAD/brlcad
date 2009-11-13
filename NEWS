@@ -11,9 +11,35 @@ changes made.  See document footer for additional details.
 
 
 ----------------------------------------------------------------------
---- 2009-08-XX  Release 7.16.0                                     ---
+--- 2009-11-XX  Release 7.16.4                                     ---
 ----------------------------------------------------------------------
 
+* TBD
+
+
+----------------------------------------------------------------------
+--- 2009-11-06  Release 7.16.2                                     ---
+----------------------------------------------------------------------
+
+* added manual page documentation for pix-ppm command - Sean Morrison
+* added -o file output option to pix-png and pix-ppm - Sean Morrison
+* improved NURBS geometry raytracing support - Keith Bowman
+* improved mged 'opendb' prompting - Sean Morrison, Jack Devanney
+* renamed [diu]stat tools to dstats/istats/ustats - Sean Morrison
+* improved obj-g ignoring textures and surface normals  - Keith Bowman
+* added -n export surface normals option to bot_dump - Keith Bowman
+* new archer plugin for displaying groups of attributes - Bob Parker
+* added -R non-recursive option to mged 'keep' command - Sean Morrison
+* fix crash of 'attach ogl' commands on OSX - Cliff Yapp
+* added an mged menu option to change display managers - Cliff Yapp
+* utilize new raytracing on old bspline/nurbs geometry - Sean Morrison
+
+
+----------------------------------------------------------------------
+--- 2009-09-29  Release 7.16.0                                     ---
+----------------------------------------------------------------------
+
+* added '-u' flag to 3dm-g - uses UUID for import names - Cliff Yapp
 * improved fb-png and pix-png defaut gamma correction - Sean Morrison
 * added a '-g' gamma correction option to pix-png - Sean Morrison
 * added mged '-a' option for attaching display manager - Sean Morrison

@@ -143,16 +143,23 @@ mged_CFLAGS = \
 	-I$(top_srcdir)/src/other/tk/generic \
 	-I$(top_srcdir)/src/other/tk/unix
 
+if WITH_X11
+mged_tk_libs = \
+	${ITK} \
+	${TK}
+else
+mged_tk_libs =
+endif
+
 mged_LDADD = \
 	${POINTS_LDADD} \
 	${TERMIO} \
 	${WDB} \
 	${GED} \
 	${DM} ${DM_LIBS} \
-	${ITK} \
 	${ITCL} \
-	${TK} \
-	${TCLCAD}
+	${TCLCAD} \
+	${mged_tk_libs}
 
 EXTRA_PROGRAMS = sged
 sged_SOURCES = $(mged_SOURCES)
@@ -176,7 +183,6 @@ noinst_HEADERS = \
 	mgdev.h \
 	mged.h \
 	mged_dm.h \
-	mgedtcl.h \
 	qray.h \
 	scroll.h \
 	sedit.h \

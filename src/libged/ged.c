@@ -104,7 +104,7 @@ ged_drawable_init(struct ged_drawable *gdp)
 #endif
     BU_LIST_INIT(&gdp->gd_headRunRt.l);
 
-    gdp->gd_freeSolids = &FreeSolid;
+    gdp->gd_freeSolids = &_FreeSolid;
     gdp->gd_uplotOutputMode = PL_OUTPUT_MODE_BINARY;
     ged_init_qray(gdp);
 }
@@ -219,7 +219,7 @@ ged_view_init(struct ged_view *gvp)
     VSET(gvp->gv_view_scale.gos_line_color, 255, 255, 0);
     VSET(gvp->gv_view_scale.gos_text_color, 255, 255, 255);
 
-    ged_mat_aet(gvp);
+    _ged_mat_aet(gvp);
     ged_view_update(gvp);
 }
 
@@ -236,7 +236,7 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
     if (strcmp(dbtype, "db") == 0) {
 	struct db_i	*dbip;
 
-	if ((dbip = ged_open_dbip(filename, existing_only)) == DBI_NULL) {
+	if ((dbip = _ged_open_dbip(filename, existing_only)) == DBI_NULL) {
 	    /* Restore RT's material head */
 	    rt_new_material_head(save_materp);
 
@@ -251,7 +251,7 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
     } else {
 	struct db_i	*dbip;
 
-	if (sscanf(filename, "%ul", (unsigned long *)&dbip) != 1) {
+	if (sscanf(filename, "%llu", (unsigned long long *)&dbip) != 1) {
 	    /* Restore RT's material head */
 	    rt_new_material_head(save_materp);
 
@@ -315,7 +315,7 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
  * Open/Create the database and build the in memory directory.
  */
 struct db_i *
-ged_open_dbip(const char *filename, int existing_only)
+_ged_open_dbip(const char *filename, int existing_only)
 {
     struct db_i *dbip;
 
@@ -327,7 +327,7 @@ ged_open_dbip(const char *filename, int existing_only)
 	 * Check to see if we can access the database
 	 */
 	if (bu_file_exists(filename) && !bu_file_readable(filename)) {
-	    bu_log("ged_open_dbip: %s is not readable", filename);
+	    bu_log("_ged_open_dbip: %s is not readable", filename);
 
 	    return DBI_NULL;
 	}
@@ -337,7 +337,7 @@ ged_open_dbip(const char *filename, int existing_only)
 
 	/* db_create does a db_dirbuild */
 	if ((dbip = db_create(filename, 5)) == DBI_NULL) {
-	    bu_log("ged_open_dbip: failed to create %s\n", filename);
+	    bu_log("_ged_open_dbip: failed to create %s\n", filename);
 
 	    return DBI_NULL;
 	}
@@ -350,7 +350,7 @@ ged_open_dbip(const char *filename, int existing_only)
 }
 
 void
-ged_print_node(struct ged		*gedp,
+_ged_print_node(struct ged		*gedp,
 	       register struct directory *dp,
 	       int			pathpos,
 	       int			indentSize,
@@ -457,7 +457,7 @@ ged_print_node(struct ged		*gedp,
 		bu_vls_printf(&gedp->ged_result_str, "%s\n", rt_tree_array[i].tl_tree->tr_l.tl_name);
 	    } else {
 		if (currdisplayDepth < displayDepth) {
-		    ged_print_node(gedp, nextdp, pathpos+1, indentSize, op, cflag, displayDepth, currdisplayDepth+1);
+		    _ged_print_node(gedp, nextdp, pathpos+1, indentSize, op, cflag, displayDepth, currdisplayDepth+1);
 		}
 	    }
 	    db_free_tree(rt_tree_array[i].tl_tree, &rt_uniresource);

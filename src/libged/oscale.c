@@ -37,7 +37,7 @@ int
 ged_oscale(struct ged *gedp, int argc, const char *argv[])
 {
     register struct directory *dp;
-    struct ged_trace_data gtd;
+    struct _ged_trace_data gtd;
     struct rt_db_internal intern;
     mat_t smat;
     mat_t emat;
@@ -73,12 +73,12 @@ ged_oscale(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (argc == 3) {
-	if (ged_get_obj_bounds2(gedp, 1, argv+1, &gtd, rpp_min, rpp_max) == TCL_ERROR)
+	if (_ged_get_obj_bounds2(gedp, 1, argv+1, &gtd, rpp_min, rpp_max) == TCL_ERROR)
 	    return TCL_ERROR;
 
 	dp = gtd.gtd_obj[gtd.gtd_objpos-1];
 	if (!(dp->d_flags & DIR_SOLID)) {
-	    if (ged_get_obj_bounds(gedp, 1, argv+1, 1, rpp_min, rpp_max) == TCL_ERROR)
+	    if (_ged_get_obj_bounds(gedp, 1, argv+1, 1, rpp_min, rpp_max) == TCL_ERROR)
 		return TCL_ERROR;
 	}
 

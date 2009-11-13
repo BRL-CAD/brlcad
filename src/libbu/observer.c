@@ -19,12 +19,6 @@
  */
 /** @addtogroup butcl */
 /** @{ */
-/** @file observer.c
- *
- * @brief
- * Routines for implementing the observer pattern.
- *
- */
 
 #include "common.h"
 
@@ -34,33 +28,6 @@
 #include "tcl.h"
 #include "cmd.h"                  /* includes bu.h */
 
-static int bu_observer_attach_tcl(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv);
-static int bu_observer_detach_tcl(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv);
-static int bu_observer_show_tcl(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv);
-
-
-/**
- * observer commands for libdm and librt's dg_obj, view_obj, and
- * wdb_obj interfaces.
- */
-static struct bu_cmdtab bu_observer_cmds[] = {
-    {"attach",	bu_observer_attach_tcl},
-    {"detach",	bu_observer_detach_tcl},
-    {"show",	bu_observer_show_tcl},
-    {(char *)0,	CMD_NULL}
-};
-
-
-/**
- * runs a given command, calling the corresponding observer callback
- * if it matches.
- */
-int
-bu_observer_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
-{
-    return bu_cmd(clientData, interp, argc, argv, bu_observer_cmds, 0);
-}
-
 
 /**
  * Attach observer.
@@ -69,8 +36,8 @@ bu_observer_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char 
  * attach observer [cmd]
  *
  */
-static int
-bu_observer_attach_tcl(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
+HIDDEN int
+_bu_observer_attach_tcl(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
 {
     struct bu_observer *headp = (struct bu_observer *)clientData;
     struct bu_observer *op;
@@ -115,6 +82,7 @@ bu_observer_attach_tcl(ClientData clientData, Tcl_Interp *interp, int argc, cons
     return TCL_OK;
 }
 
+
 /**
  * Detach observer.
  *
@@ -122,8 +90,8 @@ bu_observer_attach_tcl(ClientData clientData, Tcl_Interp *interp, int argc, cons
  * detach observer
  *
  */
-static int
-bu_observer_detach_tcl(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
+HIDDEN int
+_bu_observer_detach_tcl(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
 {
     struct bu_observer *headp = (struct bu_observer *)clientData;
     struct bu_observer *op;
@@ -144,7 +112,7 @@ bu_observer_detach_tcl(ClientData clientData, Tcl_Interp *interp, int argc, cons
 	    BU_LIST_DEQUEUE(&op->l);
 	    bu_vls_free(&op->observer);
 	    bu_vls_free(&op->cmd);
-	    bu_free((genptr_t)op, "bu_observer_detach_tcl: op");
+	    bu_free((genptr_t)op, "_bu_observer_detach_tcl: op");
 
 	    return TCL_OK;
 	}
@@ -153,6 +121,7 @@ bu_observer_detach_tcl(ClientData clientData, Tcl_Interp *interp, int argc, cons
     return TCL_ERROR;
 }
 
+
 /**
  * Show/list observers.
  *
@@ -160,8 +129,8 @@ bu_observer_detach_tcl(ClientData clientData, Tcl_Interp *interp, int argc, cons
  * show
  *
  */
-static int
-bu_observer_show_tcl(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
+HIDDEN int
+_bu_observer_show_tcl(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
 {
     struct bu_observer *headp = (struct bu_observer *)clientData;
     struct bu_observer *op;
@@ -184,9 +153,7 @@ bu_observer_show_tcl(ClientData clientData, Tcl_Interp *interp, int argc, const 
     return TCL_OK;
 }
 
-/**
- * Notify observers.
- */
+
 void
 bu_observer_notify(Tcl_Interp *interp, struct bu_observer *headp, char *self)
 {
@@ -209,9 +176,7 @@ bu_observer_notify(Tcl_Interp *interp, struct bu_observer *headp, char *self)
     bu_vls_free(&vls);
 }
 
-/**
- * Free observers.
- */
+
 void
 bu_observer_free(struct bu_observer *headp)
 {
@@ -228,6 +193,26 @@ bu_observer_free(struct bu_observer *headp)
 	op = nop;
     }
 }
+
+
+/**
+ * observer commands for libdm and librt's dg_obj, view_obj, and
+ * wdb_obj interfaces.
+ */
+static struct bu_cmdtab bu_observer_cmds[] = {
+    {"attach",	_bu_observer_attach_tcl},
+    {"detach",	_bu_observer_detach_tcl},
+    {"show",	_bu_observer_show_tcl},
+    {(char *)0,	CMD_NULL}
+};
+
+
+int
+bu_observer_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
+{
+    return bu_cmd(clientData, interp, argc, argv, bu_observer_cmds, 0);
+}
+
 
 /** @} */
 /*

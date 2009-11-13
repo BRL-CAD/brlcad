@@ -19,17 +19,6 @@
  */
 /** @addtogroup malloc */
 /** @{ */
-/**
- * @file malloc.c
- *
- * @brief
- * Parallel-protected debugging-enhanced wrapper around system malloc().
- *
- * The bu_malloc() routines can't use bu_log() because that uses the
- * bu_vls() routines which depend on bu_malloc().  So it goes direct
- * to stderr, semaphore protected.
- *
- */
 
 #include "common.h"
 
@@ -54,26 +43,26 @@ typedef enum {
 } alloc_t;
 
 
-#define MDB_MAGIC	0x12348969
+#define MDB_MAGIC 0x12348969
 struct memdebug {
-    long		magic;		/* corruption can be everywhere */
-    genptr_t	mdb_addr;
-    const char	*mdb_str;
-    int		mdb_len;
+    long magic;		/* corruption can be everywhere */
+    genptr_t mdb_addr;
+    const char *mdb_str;
+    int mdb_len;
 };
-static struct memdebug	*bu_memdebug = (struct memdebug *)NULL;
-static struct memdebug	*bu_memdebug_lowat = (struct memdebug *)NULL;
-static size_t		bu_memdebug_len = 0;
-#define MEMDEBUG_NULL	((struct memdebug *)0)
+static struct memdebug *bu_memdebug = (struct memdebug *)NULL;
+static struct memdebug *bu_memdebug_lowat = (struct memdebug *)NULL;
+static size_t bu_memdebug_len = 0;
+#define MEMDEBUG_NULL ((struct memdebug *)0)
 
 struct memqdebug {
-    struct bu_list	q;
-    struct memdebug	m;
+    struct bu_list q;
+    struct memdebug m;
 };
 
 static struct bu_list *bu_memq = BU_LIST_NULL;
 static struct bu_list bu_memqhd;
-#define MEMQDEBUG_NULL	((struct memqdebug *)0)
+#define MEMQDEBUG_NULL ((struct memqdebug *)0)
 
 /* non-published globals */
 extern const char bu_vls_message[];
@@ -81,12 +70,12 @@ extern const char bu_strdup_message[];
 
 
 /**
- * B U _ M E M D E B U G _ A D D
+ * _ B U _ M E M D E B U G _ A D D
  *
  * Add another entry to the memory debug table
  */
 HIDDEN void
-bu_memdebug_add(genptr_t ptr, unsigned int cnt, const char *str)
+_bu_memdebug_add(genptr_t ptr, unsigned int cnt, const char *str)
 {
     register struct memdebug *mp;
  top:
@@ -125,13 +114,13 @@ bu_memdebug_add(genptr_t ptr, unsigned int cnt, const char *str)
 	bu_memdebug = (struct memdebug *)calloc(
 	    bu_memdebug_len, sizeof(struct memdebug));
 	if (bu_memdebug == (struct memdebug *)0)
-	    bu_bomb("bu_memdebug_add() malloc failure\n");
+	    bu_bomb("_bu_memdebug_add() malloc failure\n");
     } else {
-	size_t	old_len = bu_memdebug_len;
+	size_t old_len = bu_memdebug_len;
 	bu_memdebug_len *= 16;
 	bu_memdebug = (struct memdebug *)realloc((char *)bu_memdebug, sizeof(struct memdebug) * bu_memdebug_len);
 	if (bu_memdebug == (struct memdebug *)0)
-	    bu_bomb("bu_memdebug_add() malloc failure\n");
+	    bu_bomb("_bu_memdebug_add() malloc failure\n");
 	memset((char *)&bu_memdebug[old_len], 0,
 	       (bu_memdebug_len-old_len) * sizeof(struct memdebug));
     }
@@ -142,36 +131,36 @@ bu_memdebug_add(genptr_t ptr, unsigned int cnt, const char *str)
 
 
 /**
- * B U _ M E M D E B U G _ C H E C K
+ * _ B U _ M E M D E B U G _ C H E C K
  *
  * Check an entry against the memory debug table, based upon it's address.
  */
 HIDDEN struct memdebug *
-bu_memdebug_check(register genptr_t ptr, const char *str)
+_bu_memdebug_check(register genptr_t ptr, const char *str)
 {
     register struct memdebug *mp = &bu_memdebug[bu_memdebug_len-1];
-    register long	*ip;
+    register long *ip;
 
     if (bu_memdebug == (struct memdebug *)0) {
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
-	fprintf(stderr, "bu_memdebug_check(x%lx, %s)  no memdebug table yet\n",
+	fprintf(stderr, "_bu_memdebug_check(x%lx, %s)  no memdebug table yet\n",
 		(long)ptr, str);
 	bu_semaphore_release(BU_SEM_SYSCALL);
 	return MEMDEBUG_NULL;
     }
     for (; mp >= bu_memdebug; mp--) {
 	if (!mp->magic)  continue;
-	if (mp->magic != MDB_MAGIC)  bu_bomb("bu_memdebug_check() malloc tracing table corrupted!\n");
+	if (mp->magic != MDB_MAGIC)  bu_bomb("_bu_memdebug_check() malloc tracing table corrupted!\n");
 	if (mp->mdb_len <= 0)  continue;
 	if (mp->mdb_addr != ptr)  continue;
 	ip = (long *)((char *)ptr+mp->mdb_len-sizeof(long));
 	if (*ip != MDB_MAGIC) {
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);
-	    fprintf(stderr, "ERROR bu_memdebug_check(x%lx, %s) %s, barrier word corrupted!\nbarrier at x%lx was=x%lx s/b=x%x, len=%d\n",
+	    fprintf(stderr, "ERROR _bu_memdebug_check(x%lx, %s) %s, barrier word corrupted!\nbarrier at x%lx was=x%lx s/b=x%x, len=%d\n",
 		    (long)ptr, str, mp->mdb_str,
 		    (long)ip, *ip, MDB_MAGIC, mp->mdb_len);
 	    bu_semaphore_release(BU_SEM_SYSCALL);
-	    bu_bomb("bu_memdebug_check() memory corruption\n");
+	    bu_bomb("_bu_memdebug_check() memory corruption\n");
 	}
 	return (mp);		/* OK */
     }
@@ -180,7 +169,7 @@ bu_memdebug_check(register genptr_t ptr, const char *str)
 
 
 /**
- * B U _ A L L O C
+ * _ B U _ A L L O C
  *
  * This routine only returns on successful allocation.  We promise
  * never to return a NULL pointer; caller doesn't have to check.
@@ -192,8 +181,8 @@ bu_memdebug_check(register genptr_t ptr, const char *str)
  *
  * type is 0 for malloc, 1 for calloc
  */
-static genptr_t
-bu_alloc(alloc_t type, unsigned int cnt, unsigned int sz, const char *str)
+HIDDEN genptr_t
+_bu_alloc(alloc_t type, unsigned int cnt, unsigned int sz, const char *str)
 {
     register genptr_t ptr = 0;
     register unsigned long int size = cnt * sz;
@@ -207,7 +196,7 @@ bu_alloc(alloc_t type, unsigned int cnt, unsigned int sz, const char *str)
     }
 
     if (size == 0) {
-	fprintf(stderr, "ERROR: bu_alloc size=0 (cnt=%d, sz=%d) %s\n", cnt, sz, str);
+	fprintf(stderr, "ERROR: _bu_alloc size=0 (cnt=%d, sz=%d) %s\n", cnt, sz, str);
 	bu_bomb("ERROR: bu_malloc(0)\n");
     }
 
@@ -243,7 +232,7 @@ bu_alloc(alloc_t type, unsigned int cnt, unsigned int sz, const char *str)
 	    }
 	    break;
 	default:
-	    bu_bomb("ERROR: bu_alloc with unknown type\n");
+	    bu_bomb("ERROR: _bu_alloc with unknown type\n");
     }
 
     if (ptr==(char *)0 || bu_debug&BU_DEBUG_MEM_LOG) {
@@ -258,7 +247,7 @@ bu_alloc(alloc_t type, unsigned int cnt, unsigned int sz, const char *str)
 	bu_bomb("bu_malloc: malloc failure");
     }
     if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	bu_memdebug_add(ptr, size, str);
+	_bu_memdebug_add(ptr, size, str);
 
 	/* Install a barrier word at the end of the dynamic arena */
 	/* Correct location depends on 'size' being rounded up, above */
@@ -285,37 +274,20 @@ bu_alloc(alloc_t type, unsigned int cnt, unsigned int sz, const char *str)
 }
 
 
-/**
- * B U _ M A L L O C
- *
- * This routine only returns on successful allocation.  We promise
- * never to return a NULL pointer; caller doesn't have to check.
- * Allocation failure results in bu_bomb() being called.
- */
 genptr_t
 bu_malloc(size_t size, const char *str)
 {
-    return bu_alloc(MALLOC, 1, size, str);
+    return _bu_alloc(MALLOC, 1, size, str);
 }
 
 
-/**
- * B U _ C A L L O C
- *
- * This routine only returns on successful allocation.
- * We promise never to return a NULL pointer; caller doesn't have to check.
- * Failure results in bu_bomb() being called.
- */
 genptr_t
 bu_calloc(unsigned int nelem, size_t elsize, const char *str)
 {
-    return bu_alloc(CALLOC, nelem, elsize, str);
+    return _bu_alloc(CALLOC, nelem, elsize, str);
 }
 
 
-/*
- * B U _ F R E E
- */
 void
 bu_free(genptr_t ptr, const char *str)
 {
@@ -329,8 +301,8 @@ bu_free(genptr_t ptr, const char *str)
 	return;
     }
     if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	struct memdebug	*mp;
-	if ((mp = bu_memdebug_check(ptr, str)) == MEMDEBUG_NULL) {
+	struct memdebug *mp;
+	if ((mp = _bu_memdebug_check(ptr, str)) == MEMDEBUG_NULL) {
 	    fprintf(stderr, "ERROR bu_free(x%lx, %s) pointer bad, or not allocated with bu_malloc!  Ignored.\n", (long)ptr, str);
 	} else {
 	    mp->mdb_len = 0;	/* successful delete */
@@ -362,15 +334,6 @@ bu_free(genptr_t ptr, const char *str)
 }
 
 
-/**
- * B U _ R E A L L O C
- *
- * bu_malloc()/bu_free() compatible wrapper for realloc().
- *
- * While the string 'str' is provided for the log messages, don't
- * disturb the mdb_str value, so that this storage allocation can be
- * tracked back to it's original creator.
- */
 genptr_t
 bu_realloc(register genptr_t ptr, size_t cnt, const char *str)
 {
@@ -378,15 +341,15 @@ bu_realloc(register genptr_t ptr, size_t cnt, const char *str)
     genptr_t original_ptr;
 
     if (! ptr) {
-	/* This is so we are compatible with system realloc.
-	 * It seems like an odd behaviour, but some non-BRL-CAD
-	 * code relies on this.
+	/* This is so we are compatible with system realloc.  It seems
+	 * like an odd behaviour, but some non-BRL-CAD code relies on
+	 * this.
 	 */
 	return bu_malloc(cnt, str);
     }
 
     if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	if (ptr && (mp = bu_memdebug_check(ptr, str)) == MEMDEBUG_NULL) {
+	if (ptr && (mp = _bu_memdebug_check(ptr, str)) == MEMDEBUG_NULL) {
 	    fprintf(stderr, "%8lx realloc%6d %s ** barrier check failure\n",
 		    (long)ptr, (int)cnt, str);
 	}
@@ -403,9 +366,8 @@ bu_realloc(register genptr_t ptr, size_t cnt, const char *str)
 		    "or not allocated with bu_malloc!  Ignored.\n",
 		    (long)ptr, str);
 	    /*
-	     * Since we're ignoring this, atleast return
-	     * the pointer that was passed in. We should
-	     * probably return NULL.
+	     * Since we're ignoring this, atleast return the pointer
+	     * that was passed in. We should probably return NULL.
 	     */
 	    return ptr;
 	}
@@ -445,8 +407,10 @@ bu_realloc(register genptr_t ptr, size_t cnt, const char *str)
 	mp->mdb_addr = ptr;
 	mp->mdb_len = cnt;
 
-	/* Install a barrier word at the new end of the dynamic arena */
-	/* Correct location depends on 'cnt' being rounded up, above */
+	/* Install a barrier word at the new end of the dynamic
+	 * arena. Correct location depends on 'cnt' being rounded up,
+	 * above.
+	 */
 	*((long *)(((char *)ptr)+cnt-sizeof(long))) = MDB_MAGIC;
 	bu_semaphore_release(BU_SEM_SYSCALL);
     } else if (bu_debug&BU_DEBUG_MEM_QCHECK && ptr) {
@@ -468,11 +432,6 @@ bu_realloc(register genptr_t ptr, size_t cnt, const char *str)
 }
 
 
-/**
- * B U _ P R M E M
- *
- * Print map of memory currently in use.
- */
 void
 bu_prmem(const char *str)
 {
@@ -495,7 +454,7 @@ bu_prmem(const char *str)
 	mp = &bu_memdebug[bu_memdebug_len-1];
 	for (; mp >= bu_memdebug; mp--) {
 	    if (!mp->magic)  continue;
-	    if (mp->magic != MDB_MAGIC)  bu_bomb("bu_memdebug_check() malloc tracing table corrupted!\n");
+	    if (mp->magic != MDB_MAGIC)  bu_bomb("_bu_memdebug_check() malloc tracing table corrupted!\n");
 	    if (mp->mdb_len <= 0)  continue;
 
 	    count++;
@@ -549,23 +508,6 @@ bu_prmem(const char *str)
 }
 
 
-/**
- * B U _ M A L L O C _ L E N _ R O U N D U P
- *
- * On systems with the CalTech malloc(), the amount of storage
- * ACTUALLY ALLOCATED is the amount requested rounded UP to the
- * nearest power of two.  For structures which are acquired and
- * released often, this works well, but for structures which will
- * remain unchanged for the duration of the program, this wastes as
- * much as 50% of the address space (and usually memory as well).
- * Here, we round up a byte size to the nearest power of two, leaving
- * off the malloc header, so as to ask for storage without wasting
- * any.
- *
- * On systems with the traditional malloc(), this strategy will just
- * consume the memory in somewhat larger chunks, but overall little
- * unused memory will be consumed.
- */
 int
 bu_malloc_len_roundup(register int nbytes)
 {
@@ -579,7 +521,7 @@ bu_malloc_len_roundup(register int nbytes)
     if (pagesz == 0)
 	pagesz = getpagesize();
 
-#define OVERHEAD	(4*sizeof(unsigned char) + \
+#define OVERHEAD (4*sizeof(unsigned char) + \
 			2*sizeof(unsigned short) + \
 			sizeof(unsigned int))
     n = pagesz - OVERHEAD;
@@ -595,23 +537,11 @@ bu_malloc_len_roundup(register int nbytes)
 }
 
 
-/**
- * B U _ C K _ M A L L O C _ P T R
- *
- * For a given pointer allocated by bu_malloc(), check the magic
- * number stored after the allocation area when BU_DEBUG_MEM_CHECK is
- * set.
- *
- * This is the individual version of bu_mem_barriercheck().
- *
- * returns if pointer good or BU_DEBUG_MEM_CHECK not set, bombs if
- * memory is corrupted.
- */
 void
 bu_ck_malloc_ptr(genptr_t ptr, const char *str)
 {
     register struct memdebug *mp = &bu_memdebug[bu_memdebug_len-1];
-    register long	*ip;
+    register long *ip;
 
 
     if (ptr == (char *)NULL) {
@@ -653,25 +583,11 @@ bu_ck_malloc_ptr(genptr_t ptr, const char *str)
 }
 
 
-/**
- * B U _ M E M _ B A R R I E R C H E C K
- *
- * Check *all* entries in the memory debug table for barrier word
- * corruption.  Intended to be called periodicly through an
- * application during debugging.  Has to run single-threaded, to
- * prevent table mutation.
- *
- * This is the bulk version of bu_ck_malloc_ptr()
- *
- * Returns -
- *  -1	something is wrong
- *   0	all is OK;
- */
 int
 bu_mem_barriercheck(void)
 {
     register struct memdebug *mp = &bu_memdebug[bu_memdebug_len-1];
-    register long	*ip;
+    register long *ip;
 
     if (bu_memdebug == (struct memdebug *)0) {
 	fprintf(stderr, "bu_mem_barriercheck()  no memdebug table yet\n");
@@ -697,32 +613,6 @@ bu_mem_barriercheck(void)
     }
     bu_semaphore_release(BU_SEM_SYSCALL);
     return 0;			/* OK */
-}
-
-
-/**
- * b u _ f r e e _ a r r a y
- *
- * free up to argc elements of memory allocated to an array without
- * free'ing the array itself.
- */
-void bu_free_array(int argc, char *argv[], const char *str)
-{
-    int count = 0;
-
-    if (!argv || argc <= 0) {
-	return;
-    }
-
-    while (count < argc) {
-	if (argv[count]) {
-	    bu_free(argv[count], str);
-	    argv[count] = NULL;
-	}
-	count++;
-    }
-
-    return;
 }
 
 /** @} */

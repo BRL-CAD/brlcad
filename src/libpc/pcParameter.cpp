@@ -23,24 +23,14 @@
  *
  * Methods of Parameter and derived classes
  *
- * @author Dawn Thomas
  */
+
 #include "pcParameter.h"
 #include "pcVCSet.h"
 #include "pc.h"
-#if 0
-#define PC_PARAM_ADDVAR(_vcs,_name,_value) \
-	    Parameter::_vcs.addVariable<double>(_name,_value,\
-		    -std::numeric_limits<double>::max(), \
-		    std::numeric_limits<double>::max(), .00001)
-#endif
-#define PC_PARAM_ADDVAR(_vcs,_name,_value) \
-	    Parameter::_vcs.addVariable<double>(_name,_value,\
-		    -10, 10, .1)
 
-/**
- *			Parameter Methods
- *
+/*
+ * Parameter Methods
  */
 
 Parameter::Parameter(VCSet & vcs, std::string n)
@@ -106,7 +96,7 @@ void Parameter::display() const
 void Parameter::setConst(bool t)
 {
     iterator i;
-    for ( i = begin(); i != end(); ++i) {
+    for (i = begin(); i != end(); ++i) {
 	if (t)
 	    (*i).setConst();
 	else
@@ -115,70 +105,79 @@ void Parameter::setConst(bool t)
 }
 
 /**
- *			Vector Methods
+ * Vector Methods
  *
  */
-
-Vector::Vector(VCSet & vcs,std::string n, void * ptr)
+Vector::Vector(VCSet & vcs, std::string n, void * ptr)
     : Parameter(vcs, n)
 {
     Parameter::setType(PC_DB_VECTOR_T);
     vectp_t p = vectp_t (ptr);
     if (ptr) {
-	std::string t = Parameter::name; 
-	t+="[x]";
-	Variables.push_back(PC_PARAM_ADDVAR(vcset,t,*p));
-	//PC_PARAM_ADDVAR(vcset,t,*p);
-	//Variables.push_back(vcs.getVariablebyID(t));
+	std::string t;
+	VariableAbstract* var;
+
 	t = Parameter::name; 
-	t+="[y]";
-	Variables.push_back(PC_PARAM_ADDVAR(vcset,t,*(p+1)));
-	//PC_PARAM_ADDVAR(vcset,t,*(p+1));
-	//Variables.push_back(vcs.getVariablebyID(t));
+	t += "[x]";
+	var = vcset.addVariable<double>(t, *(p+0), -10.0, 10.0, 0.1);
+	Variables.push_back(var);
+
 	t = Parameter::name; 
-	t+="[z]";
-	//PC_PARAM_ADDVAR(vcset,t,*(p+2));
-	//Variables.push_back(vcs.getVariablebyID(t));
-	Variables.push_back(PC_PARAM_ADDVAR(vcset,t,*(p+2)));
+	t += "[y]";
+	var = vcset.addVariable<double>(t, *(p+1), -10.0, 10.0, 0.1);
+	Variables.push_back(var);
+
+	t = Parameter::name; 
+	t += "[z]";
+	var = vcset.addVariable<double>(t, *(p+2), -10.0, 10.0, 0.1);
+	Variables.push_back(var);
     }
 }
 
 /**
- *			Point Methods
+ * Point Methods
  *
  */
-
-Point::Point(VCSet & vcs,std::string n, void * ptr)
+Point::Point(VCSet & vcs, std::string n, void * ptr)
     : Parameter(vcs, n)
 {
     Parameter::setType(PC_DB_POINT_T);
     pointp_t p = pointp_t (ptr);
     if (ptr) {
-	std::string t = Parameter::name; 
-	t+="[x]";
-	Variables.push_back(PC_PARAM_ADDVAR(vcset,t,*p));
+	std::string t;
+	VariableAbstract* var;
+
 	t = Parameter::name; 
-	t+="[y]";
-	Variables.push_back(PC_PARAM_ADDVAR(vcset,t,*(p+1)));
+	t += "[x]";
+	var = vcset.addVariable<double>(t, *(p+0), -10.0, 10.0, 0.1);
+	Variables.push_back(var);
+
 	t = Parameter::name; 
-	t+="[z]";
-	Variables.push_back(PC_PARAM_ADDVAR(vcset,t,*(p+2)));
+	t += "[y]";
+	var = vcset.addVariable<double>(t, *(p+1), -10.0, 10.0, 0.1);
+	Variables.push_back(var);
+
+	t = Parameter::name; 
+	t += "[z]";
+	var = vcset.addVariable<double>(t, *(p+2), -10.0, 10.0, 0.1);
+	Variables.push_back(var);
     }
 }
 
 /**
- *			FastF Methods
+ * FastF Methods
  *
  */
 
-FastF::FastF(VCSet & vcs,std::string n, void * ptr)
+FastF::FastF(VCSet & vcs, std::string n, void * ptr)
     : Parameter(vcs, n)
 {
     Parameter::setType(PC_DB_FASTF_T);
     fastf_t *p = (fastf_t *) ptr;
     if (ptr) {
 	std::string t = Parameter::name; 
-	Variables.push_back(PC_PARAM_ADDVAR(vcset,t,*p));
+	VariableAbstract* var = vcset.addVariable<double>(t, *(p+0), -10.0, 10.0, 0.1);
+	Variables.push_back(var);
     }
 }
 

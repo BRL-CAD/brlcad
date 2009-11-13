@@ -17,13 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup bitv */
-/** @{ */
-/** @file printb.c
- *
- * @brief print bitfields
- *
- */
 
 #include "common.h"
 
@@ -33,21 +26,6 @@
 #include "bu.h"
 
 
-/**
- * B U _ V L S _ P R I N T B
- *
- * Format a value a la the %b format of the kernel's printf
- *
- * @param   vls	variable length string to put output in
- * @param    s		title string
- * @param   v		the integer with the bits in it
- * @param   bits	a string which starts with the desired base (8 or 16)
- * as \\010 or \\020, followed by
- * words preceeded with embedded low-value bytes indicating
- * bit number plus one,
- * in little-endian order, eg:
- * "\010\2Bit_one\1BIT_zero"
- */
 void
 bu_vls_printb(struct bu_vls *vls, const char *s, register long unsigned int v, register const char *bits)
 {
@@ -72,22 +50,18 @@ bu_vls_printb(struct bu_vls *vls, const char *s, register long unsigned int v, r
     bu_vls_strcat(vls, ">");
 }
 
-/**
- * B U _ P R I N T B
- *
- * Format and print, like bu_vls_printb().
- */
+
 void
 bu_printb(const char *s, register long unsigned int v, register const char *bits)
 {
-    struct bu_vls	str;
+    struct bu_vls str;
 
     bu_vls_init(&str);
     bu_vls_printb(&str, s, v, bits);
     bu_log("%s", bu_vls_addr(&str));
     bu_vls_free(&str);
 }
-/** @} */
+
 /*
  * Local Variables:
  * mode: C

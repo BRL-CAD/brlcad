@@ -61,7 +61,7 @@ ged_cat(struct ged *gedp, int argc, const char *argv[])
 	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[arg], LOOKUP_NOISY)) == DIR_NULL)
 	    continue;
 
-	ged_do_list(gedp, dp, 0);	/* non-verbose */
+	_ged_do_list(gedp, dp, 0);	/* non-verbose */
     }
 
     return GED_OK;
