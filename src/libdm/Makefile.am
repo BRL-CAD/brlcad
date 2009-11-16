@@ -81,6 +81,7 @@ libdm_la_LIBADD = \
 	${DM_RTGL_LIBS}
 
 EXTRA_DIST = \
+	TODO \
 	libdm.dsp
 
 DEPENDS = src/librt src/libfb src/libged
