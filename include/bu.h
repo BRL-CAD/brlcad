@@ -158,6 +158,14 @@ __BEGIN_DECLS
 #  endif
 #endif
 
+/* If we're compiling strict, turn attributes off */
+#if defined(__STRICT_ANSI__)
+#  ifdef __attribute__
+#    undef __attribute__
+#  endif
+#  define __attribute__(ignore) /* empty */
+#endif
+
 /**
  * shorthand declaration of a printf-style functions
  */
