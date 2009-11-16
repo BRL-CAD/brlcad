@@ -174,10 +174,6 @@ AC_CANONICAL_TARGET
 # sanity check, make sure we have sources where we expect them
 AC_CONFIG_SRCDIR([src/express/express.c])
 
-# where are we coming from and where are we going to.
-# prefix is set to NONE until AC_OUTPUT unless --prefix is used
-AC_PREFIX_DEFAULT([/usr/scl])
-
 # set up the SCL_ROOT installation path, sets bc_prefix
 BC_SCL_ROOT
 
@@ -188,10 +184,6 @@ BC_SCL_DATA
 # init the venerable automake only _once_ or incur the wrath of
 # several automake bugs (like "aclocal-" and install detection)
 AM_INIT_AUTOMAKE([1.6 dist-zip dist-bzip2])
-
-# disables the build system dependency tracking by default for the
-# automake and autoconf template files.
-#AM_MAINTAINER_MODE
 
 # write out all of our definitions to this header
 AM_CONFIG_HEADER([include/scl_config.h])
@@ -425,152 +417,12 @@ dnl Libtool may need AR so try to find it
 AC_PATH_PROG(AR, ar, [], $PATH:/usr/bin:/usr/local/bin:/usr/ccs/bin)
 AC_SUBST(AR)
 
-dnl check for basic shell facilities
-AC_PATH_PROG(SH, sh)
-AC_PATH_PROG(MV, mv)
-AC_PATH_PROG(CP, cp)
-AC_PATH_PROG(RM, rm)
-
-dnl figure out which compiler is seems like we are using
-dnl detected values include: gcc, mipspro, sunpro
-dnl none of the tests should be compiler-specific, but it's good to
-dnl know in the log which it seems we are using
-compiler=unknown
-
-dnl Determine whether we are using GCC
-if test "x$GCC" = "xyes" ; then
-    compiler=gnu
-fi
-
-dnl Determine whether we are using the MIPSpro compiler on SGI systems
-if test "x$build_vendor" = "xsgi" ; then
-    AC_MSG_CHECKING([whether we are using the MIPSpro compiler])
-    using_mipspro=no
-    AC_LINK_IFELSE([#if defined(sgi) && defined(_COMPILER_VERSION) && !defined(__GNUC__)
-If we get here, we are using the MIPSPro compiler (and the link should fail).
-#endif
-int main() { return 0; }
-    ], [using_mipspro=no], [using_mipspro=yes])
-    AC_MSG_RESULT($using_mipspro)
-    if test "x$using_mipspro" = "xyes" ; then
-	compiler=sgi
-    fi
-fi
-
-dnl Determine whether we are using the SUNWspro Sun Workshop compiler
-if test "x$build_vendor" = "xsun" ; then
-    AC_MSG_CHECKING([whether we are using the SUNWspro compiler])
-    using_sunpro=no
-    AC_LINK_IFELSE([#if defined(sun) && defined(__SUNPRO_C) && !defined(__GNUC__)
-If we get here, we are using the SUNWspro compiler (and the link should fail).
-#endif
-int main() { return 0; }
-    ], [using_sunpro=no], [using_sunpro=yes])
-    AC_MSG_RESULT($using_sunpro)
-    if test "x$using_sunpro" = "xyes" ; then
-	AR="CC -xar"
-	LD="CC -G"
-	export AR LD
-	compiler=sun
-    fi
-fi
-
-AC_FUNC_ALLOCA
-
 
 dnl ***************************
 dnl *** Check for libraries ***
 dnl ***************************
 
 BC_CONFIGURE_STAGE([libraries], [3 of 9])
-
-dnl check whether we ended up with functioning posix threading.
-AC_MSG_CHECKING([whether we are using POSIX threading])
-posix_threading=no
-PRELIBS="$LIBS"
-LIBS="$LIBS $LIBTHREAD"
-AC_TRY_LINK([#include <pthread.h>], [
-    pthread_t th;
-    pthread_join(th, 0);
-    pthread_attr_init(0);
-    pthread_cleanup_push(0,0);
-    pthread_create(0,0,0,0);
-    pthread_cleanup_pop(0);
-], [posix_threading=yes])
-LIBS="$PRELIBS"
-AC_MSG_RESULT($posix_threading)
-
-dnl find a curses or other terminal library
-LIBTERMLIB=""
-AC_CHECK_LIB(termlib, tputs, LIBTERMLIB="-ltermlib",
-    [AC_CHECK_LIB(ncurses, tputs, LIBTERMLIB="-lncurses",
-	[AC_CHECK_LIB(curses, tputs, LIBTERMLIB="-lcurses",
-	    [AC_CHECK_LIB(termcap, tputs, LIBTERMLIB="-ltermcap",
-		[AC_CHECK_LIB(terminfo, tputs, LIBTERMLIB="-lterminfo",
-		    [AC_CHECK_LIB(tinfo, tputs, LIBTERMLIB="-ltinfo",
-			[AC_CHECK_LIB(ocurses, tputs, LIBTERMLIB="-locurses")]
-		    )]
-		)]
-	    )]
-	)]
-    )]
-)
-
-dnl check if a math library links
-m_link_works=no
-LIBM=""
-AC_CHECK_LIB(m, cos, m_link_works=yes ; LIBM="-lm")
-
-dnl detect a useable system regular expression library
-regex_link_works=no
-LIBREGEX=""
-AC_CHECK_LIB(c, regcomp, regex_link_works=yes ; LIBREGEX="-lc",
-    [AC_CHECK_LIB(regex, regcomp, regex_link_works=yes ; LIBREGEX="-lregex",
-	[AC_CHECK_LIB(compat, regcomp, regex_link_works=yes ; LIBREGEX="-lcompat")]
-    )]
-)
-
-dnl check if a socket library links
-socket_link_works=no
-LIBSOCKET=""
-AC_CHECK_LIB(socket, socket, socket_link_works=yes ; LIBSOCKET="-lsocket")
-
-dnl check if a network socket library links
-nsl_link_works=no
-LIBNSL=""
-AC_CHECK_LIB(nsl, gethostbyaddr, nsl_link_works=yes ; LIBNSL="-lnsl")
-
-dnl check if a malloc library links
-malloc_link_works=no
-LIBMALLOC=""
-AC_CHECK_LIB(c, mallopt, malloc_link_works=yes ; LIBMALLOC="-lc",
-    [AC_CHECK_LIB(malloc, mallopt, malloc_link_works=yes ; LIBMALLOC="-lmalloc")]
-)
-
-dnl check if a mx library links
-mx_link_works=no
-LIBMX=""
-AC_CHECK_LIB(mx, matherr, mx_link_works=yes ; LIBMX="-lmx")
-
-dnl check if a dynamic link library links
-dl_link_works=no
-LIBDL=""
-AC_CHECK_LIB(dl, dlopen, dl_link_works=yes ; LIBDL="-ldl")
-
-dnl check if the SGI generic SCSI library links
-ds_link_works=no
-LIBDS=""
-AC_CHECK_LIB(ds, dsopen, ds_link_works=yes ; LIBDS="-lds")
-
-dnl check if the Solaris lexer library links
-l_link_works=no
-LIBL=""
-AC_CHECK_LIB(l, yyless, l_link_works=yes ; LIBL="-ll")
-
-dnl check for the IRIX libgen library (for basename/dirname)
-gen_link_works=no
-LIGEN=""
-AC_CHECK_LIB(gen, basename, gen_link_works=yes ; LIBGEN="-lgen")
 
 dnl check if the standard c++ library links without checking for any particular symbol
 dnl library is needed when linking c++ code against c code (e.g. openNURBS)
@@ -591,105 +443,16 @@ dnl *************************
 
 BC_CONFIGURE_STAGE([headers], [4 of 9])
 
-# C89 headers: assert.h, ctype.h, errno.h, float.h, limits.h, locale.h,
-# math.h, setjmp.h, signal.h, stdarg.h, stddef.h, stdio.h, stdlib.h,
-# string.h, time.h
-
-# C95 headers: wchar.h, wctype.h, iso646.h
-
-# C99 headers: complex.h, fenv.h, inttypes.h, stdbool.h, stdint.h,
-# tgmath.h
-
-# POSIX.1 headers includes C89, C95, and C99 plus the following:
-# aio.h, arpa/inet.h, cpio.h, dirent.h, dlfcn.h, fcntl.h, fmtmsg.h,
-# fnmatch.h, ftw.h, glob.h, grp.h, iconv.h, langinfo.h, libgen.h,
-# monetary.h, mqueue.h, ndbm.h, net/if.h, netdb.h, netinet/in.h,
-# netinet/tcp.h, nl_types.h, poll.h, pthread.h, pwd.h, regex.h,
-# sched.h, search.h, semaphore.h, spawn.h, strings.h, stropts.h,
-# sys/ipc.h, sys/mman.h, sys/msg.h, sys/resource.h, sys/select.h,
-# sys/stat.h, sys/statvfs.h, sys/time.h, sys/timeb.h, sys/times.h,
-# sys/types.h, sys/uio.h, sys/un.h, sys/utsname.h, sys/wait.h,
-# syslog.h, tar.h, termios.h, trace.h, ucontext.h, ulimit.h, unistd.h,
-# utime.h, utmpx.h, wordexp.h
-
 AC_HEADER_STDC
 AC_HEADER_DIRENT
-AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS( \
-	inttypes.h \
-	io.h \
-	memory.h \
-	poll.h \
-	pthread.h \
-	pwd.h \
-	rle.h \
-	sched.h \
-	sgtty.h \
-	stdint.h \
-	sys/file.h \
-	sys/_ioctl.h \
-	sys/ioctl.h \
-	sys/ioctl_compat.h \
-	sys/machd.h \
-	sys/mman.h \
-	sys/param.h \
-	sys/prctl.h \
-	sys/select.h \
-	sys/socket.h \
+	ndir.h \
+	stdarg.h \
 	sys/stat.h \
-	sys/sysctl.h \
-	sys/sysinfo.h \
-	sys/sysmp.h \
-	sys/time.h \
-	sys/times.h \
-	sys/types.h \
-	sys/un.h \
-	sys/wait.h \
+	sysent.h \
 	unistd.h \
 )
 
-AC_CHECK_HEADER(sys/sched.h,
-		AC_DEFINE(HAVE_SYS_SCHED_H, 1, Define to 1 if you have the <sys/sched.h> header file.),,
-		[
-#ifdef HAVE_PTHREAD_H
-#  include <pthread.h>
-#endif
-#include <sys/sched.h>
-])
-
-AC_CHECK_HEADER(sys/mount.h,
-		AC_DEFINE(HAVE_SYS_MOUNT_H,1, Define to 1 if you have the <sys/mount.h> header file.),,
-		[
-#ifdef HAVE_SYS_PARAM_H
-#  include <sys/param.h>
-#endif
-#include <sys/mount.h>
-])
-
-AC_CHECK_HEADER(term.h,
-		AC_DEFINE(HAVE_TERM_H, 1, Define to 1 if you have the <term.h> header file.),,
-		[
-#if HAVE_NCURSES_H
-#  include <ncurses.h>
-#else
-#  ifdef HAVE_CURSES_H
-#    include <curses.h>
-#  else
-#    ifdef HAVE_TERMCAP_H
-#      include <termcap.h>
-#    else
-#      ifdef HAVE_TERMINFO_H
-#        include <terminfo.h>
-#      else
-#        ifdef HAVE_TINFO_H
-#          include <tinfo.h>
-#        endif
-#      endif
-#    endif
-#  endif
-#endif
-#include <term.h>
-])
 
 dnl **********************************
 dnl *** Check for types/structures ***
@@ -697,32 +460,8 @@ dnl **********************************
 
 BC_CONFIGURE_STAGE([types], [5 of 9])
 
-dnl added in autoconf 2.55
-dnl AC_HEADER_STDBOOL
-
 AC_C_CHAR_UNSIGNED
-AC_HEADER_STAT
-AC_HEADER_TIME
-AC_STRUCT_ST_BLOCKS
-AC_STRUCT_ST_BLKSIZE
-AC_CHECK_MEMBERS([struct stat.st_blksize])
-AC_CHECK_MEMBERS([struct stat.st_rdev])
-AC_STRUCT_TM
-AC_TYPE_UID_T
-AC_TYPE_MODE_T
-AC_TYPE_OFF_T
-AC_TYPE_PID_T
 AC_TYPE_SIZE_T
-AC_CHECK_TYPE(socklen_t, ,
-    AC_DEFINE([socklen_t], [int], [Define to int if <sys/socket.h> nor <sys/types.h define socklen_t]),
-    [
-#ifdef HAVE_SYS_TYPES_H
-#  include <sys/types.h>
-#endif
-#ifdef HAVE_SYS_SOCKET_H
-#  include <sys/socket.h>
-#endif
-])
 
 
 dnl ******************************************
@@ -754,25 +493,6 @@ if test "xyes" = "xyes" ; then
        FEXCEPTIONS="-fexceptions"
        AC_SUBST(FEXCEPTIONS)
     fi
-
-    dnl dynamic SSE optimizations for NURBS processing
-dnl
-dnl XXX disable the SSE flags for now as they can cause illegal instructions.
-dnl     the test needs to also be tied to run-time functionality since gcc
-dnl     may still output SSE instructions (e.g., for cross-compiling).
-dnl
-dnl     BC_COMPILER_AND_LINKER_RECOGNIZES([-msse], [msse], [nokeep])
-dnl     MSSE=""
-dnl     if test "x$bc_msse_works" = "xyes" ; then
-dnl        MSSE="-msse"
-dnl     fi
-dnl     MSSE2=""
-dnl     BC_COMPILER_AND_LINKER_RECOGNIZES([-msse2], [msse2], [nokeep])
-dnl     if test "x$bc_msse2_works" = "xyes" ; then
-dnl        MSSE2="-msse2"
-dnl     fi
-dnl     SSE="$MSSE $MSSE2"
-dnl     AC_SUBST(SSE)
 
     dnl check for -search_paths_first linker flag.
     dnl prevent a false-positive where it can be treated as a -s and-e
@@ -916,46 +636,12 @@ if test "x$bc_build_warnings" != "xno" ; then
 	fi
 fi
 
-# determine the minimum single-precision floating point tolerance
-# value at compile time such that: 1.0 + value != 1.0
-# ANSI defines this as FLT_EPSILON but float.h may not provide it.
-BC_FLOAT_EPSILON
-
-# determine the minimum double-precision floating point tolerance
-# value at compile time such that: 1.0 + value != 1.0
-# ANSI defines this as DBL_EPSILON but float.h may not provide it.
-BC_DOUBLE_EPSILON
-
-# determine whether the single-precision floating point implementation
-# seems IEEE 754 compliant.
-BC_COMPLIANT_FLOAT
-
-# determine whether the double-precision floating point implementation
-# seems IEEE 754 compliant.
-BC_COMPLIANT_DOUBLE
-
-# warn if either floating point compliance failed
-if test "x$bc_compliant_float" = "xno" || test "x$bc_compliant_double" = "xno" ; then
-    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-    AC_MSG_WARN([The floating point implementation does not seem to be IEEE 754])
-    AC_MSG_WARN([compliant.  The behavior of htond and htonf may be incorrect.])
-    AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
-fi
-
 dnl AC_C_PROTOTYPES
 AM_C_PROTOTYPES
 
 AC_C_CONST
 AC_C_INLINE
 AC_C_VOLATILE
-AC_C_BIGENDIAN
-
-# figure out what size pointers the compiler is actually generating
-AC_CHECK_SIZEOF(int)
-AC_CHECK_SIZEOF(long)
-AC_CHECK_SIZEOF(long long)
-AC_CHECK_SIZEOF(void *, 4)
-pointer_size="$ac_cv_sizeof_void_p"
 
 dnl Make sure that we can actually compile C code
 BC_SANITY_CHECK([$CC compiler and flags for sanity])
@@ -971,8 +657,6 @@ dnl *** Check for functions ***
 dnl ***************************
 
 BC_CONFIGURE_STAGE([functions], [7 of 9])
-
-AC_TYPE_SIGNAL
 
 # specifically not checked for and not used:
 #   access - security concerns
@@ -1004,79 +688,10 @@ AC_TYPE_SIGNAL
 # mktime, strftime, time
 
 AC_CHECK_FUNCS(\
-	alarm \
-	dlopen \
-	drand48 \
-	fchmod \
-	fsync \
-	geteuid \
-	getegid \
-	gethostname \
-	getopt_long \
-	getprogname \
-	kill \
-	lrand48 \
+	abs \
 	memcpy \
 	memmove \
-	memset \
-	mkstemp \
-	pipe \
-	random \
-	sbrk \
-	setenv \
-	setpgid \
-	setpriority \
-	setprogname \
-	srand48 \
-	strchr \
-	strdup \
-	strlcat \
-	strlcpy \
-	strsep \
-	strtok \
-	sync \
-	sysctl \
-	sysmp \
-	vfork \
-	writev \
 )
-# strcasecmp checked for BLT
-
-dnl *** check if basename() exists ***
-AC_MSG_CHECKING([for basename])
-PRELIBS="$LIBS"
-LIBS="$LIBS $LIBGEN"
-AC_TRY_RUN([
-#ifdef HAVE_LIBGEN_H
-#  include <libgen.h>
-#endif
-int main(int argc, char *argv[]) {
-  (void)basename(argv[0]);
-  return 0;
-}],
-[ AC_MSG_RESULT(yes)
-  AC_DEFINE([HAVE_BASENAME], [1], [Define to 1 if you have the `basename' function.])
-],
-[ AC_MSG_RESULT(no) ])
-LIBS="$PRELIBS"
-
-dnl *** check if dirname() exists ***
-AC_MSG_CHECKING([for dirname])
-PRELIBS="$LIBS"
-LIBS="$LIBS $LIBGEN"
-AC_TRY_RUN([
-#ifdef HAVE_LIBGEN_H
-#  include <libgen.h>
-#endif
-int main(int argc, char *argv[]) {
-  (void)dirname(argv[0]);
-  return 0;
-}],
-[ AC_MSG_RESULT(yes)
-  AC_DEFINE([HAVE_DIRNAME], [1], [Define to 1 if you have the `dirname' function.])
-],
-[ AC_MSG_RESULT(no) ])
-LIBS="$PRELIBS"
 
 
 dnl *********************************
@@ -1084,109 +699,6 @@ dnl *** Check for system services ***
 dnl *********************************
 
 BC_CONFIGURE_STAGE([services], [8 of 9])
-
-dnl *** check for bison/yacc or flex/lex ***
-# scanner and parser are optionally needed for mged and other tools
-# that utilize a parser.  if both are found, provide a make var so we
-# can conditionally compile the parsers.
-build_parsers=no
-if test "x$ac_cv_prog_LEX" != "x" ; then
-    if test "x$ac_cv_prog_YACC" != "x" ; then
-	# we have both
-	build_parsers=yes
-    else
-	AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-	AC_MSG_WARN([A YACC-style parser was not found so dependant portions])
-	AC_MSG_WARN([of the package (various MGED commands) will be disabled.])
-	AC_MSG_NOTICE([Installation of GNU Bison or Yacc before continuing is recommended.])
-	AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
-	sleep 5
-    fi
-else
-    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-    if test "x$ac_cv_prog_YACC" != "x" ; then
-	AC_MSG_WARN([A LEX-style scanner was not found so dependant portions])
-	AC_MSG_WARN([of the package (various MGED commands) will be disabled.])
-	AC_MSG_NOTICE([Installation of GNU Flex or Lex before continuing is recommended.])
-    else
-	AC_MSG_WARN([Neither a YACC-style parser or a LEX-style scanner was found.])
-	AC_MSG_WARN([Dependant portions of the package will be disabled.])
-	AC_MSG_NOTICE([Installation of Bison/Yacc and Flex/Lex before continuing is recommended.])
-    fi
-    AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
-    sleep 5
-fi
-AC_MSG_CHECKING([whether we have the essentials to make parsers])
-if test "x$build_parsers" = "xyes" ; then
-    AC_DEFINE(BC_WITH_PARSERS, 1, [Define to enable compilation of parsers])
-    AC_MSG_RESULT(yes)
-else
-    AC_MSG_RESULT(no)
-fi
-
-
-dnl *** libthread ***
-AC_MSG_CHECKING(for threading library availability)
-AC_MSG_RESULT($thread_link_works)
-AC_SUBST(LIBTHREAD)
-
-AC_MSG_CHECKING(if pthreading works)
-thread_works=no
-AC_TRY_RUN([
-#ifdef HAVE_PTHREAD_H
-#  include <pthread.h>
-#endif
-void *thread_hook(void *arg) {
-    return NULL;
-}
-main () {
-    pthread_t thread;
-    pthread_create(&thread, (void *)0, thread_hook, (void *)0);
-    pthread_join(thread, NULL);
-    return 0;
-}
-], [thread_works=yes])
-AC_MSG_RESULT($thread_works)
-
-dnl *** libsocket ***
-AC_MSG_CHECKING(for system socket library availability)
-AC_MSG_RESULT([$socket_link_works])
-AC_SUBST(LIBSOCKET)
-
-dnl *** libnsl ***
-AC_MSG_CHECKING(for system network socket library availablity)
-AC_MSG_RESULT([$nsl_link_works])
-AC_SUBST(LIBNSL)
-
-dnl *** libmalloc ***
-AC_MSG_CHECKING(for system malloc library availability)
-AC_MSG_RESULT([$malloc_link_works])
-AC_SUBST(LIBMALLOC)
-
-dnl *** libmx ***
-AC_MSG_CHECKING(for system mx library availability)
-AC_MSG_RESULT([$mx_link_works])
-AC_SUBST(LIBMX)
-
-dnl *** libdl ***
-AC_MSG_CHECKING(for system dynamic linker library availability)
-AC_MSG_RESULT([$dl_link_works])
-AC_SUBST(LIBDL)
-
-dnl *** libds ***
-AC_MSG_CHECKING(for SGI /dev/scsi library availability)
-AC_MSG_RESULT([$ds_link_works])
-AC_SUBST(LIBDS)
-
-dnl *** libl Solaris lexer library ***
-AC_MSG_CHECKING(for Solaris lexer library availability)
-AC_MSG_RESULT($l_link_works)
-AC_SUBST(LIBL)
-
-dnl *** libgen IRIX dirname/basename library ***
-AC_MSG_CHECKING(for libgen library availability)
-AC_MSG_RESULT($gen_link_works)
-AC_SUBST(LIBGEN)
 
 dnl *** libstdc++ C++ library ***
 AC_MSG_CHECKING(whether the Standard C++ library is available)
@@ -1259,43 +771,6 @@ LIBS="`echo $LIBS`"
 AM_CONDITIONAL(ONLY_EXPRESS, [test "x$bc_only_express" != "xno"])
 
 
-dnl Any combination of the different optimizations listed below may individually be
-dnl optionally turned off by commenting out the unwanted defines in the config file.
-dnl
-dnl NO_BOMBING_MACROS
-dnl      turns off many macros in h/bu.h and h/bn.h that check a condition (such as a
-dnl      magic number) and bu_bomb on failure.  note that turning this flag on will
-dnl      remove the debug capability to catch fatal runtime erros (bugs) and exit
-dnl      gracefully.
-dnl NO_MAGIC_CHECKING
-dnl      turns off allocation of (some) variables and calls to check magic numbers.
-dnl      note that this will hinder memory corrupting bug detection.
-dnl NO_BADRAY_CHECKING
-dnl      is a risky optimization to turn off checking in librt/shoot.c for bad rays
-dnl      passed in to the expensive shootray() routine.
-dnl NO_DEBUG_CHECKING
-dnl      is an optimization that replaces instances of rt_g.debug in if statements
-dnl      where checking for a debug level occurs (in order to output a debug message)
-dnl      with the integer constant 0.  note that turning this flag on will remove the
-dnl      capability to output debug messages and commands that take a debug-level args
-dnl      will not output as expected.  see h/raytrace.h for the implementation details.
-
-if test "x$bc_build_runtime_debug" = "xno" ; then
-	AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-	AC_MSG_WARN([While disabling run-time debugging should increase])
-	AC_MSG_WARN([performance, it will likewise remove several])
-	AC_MSG_WARN([data-protection safeguards that are in place to])
-	AC_MSG_WARN([minimize the possibility of corrupted data files])
-	AC_MSG_WARN([in the inevitable event of a user encountering a bug.])
-	AC_MSG_WARN([You have been warned.  Proceed at your own risk.])
-	AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
-	sleep 5
-	AC_DEFINE(NO_BOMBING_MACROS, 1, [Define to not do anything for macros that only bomb on a fatal error])
-	AC_DEFINE(NO_MAGIC_CHECKING, 1, [Define to not perform magic number checking])
-	AC_DEFINE(NO_BADRAY_CHECKING, 1, [Define to not check for divide by zero during ray shots])
-	AC_DEFINE(NO_DEBUG_CHECKING, 1, [Define to not provide run-time debug facilities via rt_g.debug])
-fi
-
 dnl compile-time debug
 if test "x$bc_use_debug" != "xno" ; then
 	AC_DEFINE(DEBUG, 1, [Define to enable compile-time debug code])
@@ -1320,15 +795,6 @@ AC_SUBST(CLUTILS)
 AC_SUBST(CLDAI)
 AC_SUBST(CLEDITOR)
 AC_SUBST(CLSTEPCORE)
-
-# if compiling with the MIPSpro 7.3 compiler, there is a bug when
-# trying to link using an rpath longer than 256 that causes the linker
-# to core dump.
-AM_CONDITIONAL(LINK_STATIC_REQUIRED, [test "x$build_vendor" = "xsgi" -a "x$compiler" = "xsgi" ])
-
-dnl sample applications
-SAMPLE_APPLICATIONS_DIR='${SCL_DATA}/sample_applications'
-AC_SUBST(SAMPLE_APPLICATIONS_DIR)
 
 # stash the top builddir before configuring subdirectories
 bc_top_builddir="$ac_top_builddir"
