@@ -705,40 +705,6 @@ AC_MSG_CHECKING(whether the Standard C++ library is available)
 AC_MSG_RESULT($stdcxx_link_works)
 AC_SUBST(LIBSTDCXX)
 
-dnl *** 64-bit compilation ***
-dnl figure out whether we are building 64-bit
-build_scl_64bit="no"
-if test "x$bc_build_64bit" = "xyes" ; then
-    if test "x$pointer_size" != "x8" ; then
-	AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-	AC_MSG_NOTICE([Try removing --enable-64bit-build or modifying the CFLAGS/LDFLAGS])
-	AC_MSG_ERROR([*** Building 64-bit was requested, yet the build seems to be non-64-bit ***])
-    fi
-    build_scl_64bit=yes
-else
-    if test "x$bc_build_64bit" = "xno" ; then
-	if test "x$pointer_size" = "x8" ; then
-	    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-	    AC_MSG_NOTICE([Try removing --disable-64bit-build or modifying the CFLAGS/LDFLAGS])
-	    AC_MSG_ERROR([*** Building non-64-bit was requested, yet the build seems to be 64-bit ***])
-	fi
-    fi
-
-    dnl automatic detection
-    if test "x$pointer_size" = "x8" ; then
-	build_scl_64bit="yes"
-    elif test "x$pointer_size" = "x4" ; then
-	build_scl_64bit="no (32-bit)"
-    elif test "x$pointer_size" = "x2" ; then
-	build_scl_64bit="no (16-bit)"
-    elif test "x$pointer_size" = "x1" ; then
-	build_scl_64bit="no (8-bit)"
-    else
-	AC_MSG_WARN([Unknown pointer size: $pointer_size])
-	sleep 5
-    fi
-fi
-
 dnl search the SCL include directory (required for non-srcdir builds).
 dnl should come after the system services checks otherwise or our headers
 dnl may conflict.
@@ -902,7 +868,6 @@ fi
 AC_MSG_RESULT([])
 AC_MSG_RESULT([Enable run-time debugging (optional)..: $bc_build_runtime_debug])
 AC_MSG_RESULT([])
-AC_MSG_RESULT([Build 64-bit release .................: $build_scl_64bit])
 AC_MSG_RESULT([Build optimized release ..............: $bc_use_optimized])
 AC_MSG_RESULT([Build debug release ..................: $bc_use_debug])
 AC_MSG_RESULT([Build profile release ................: $bc_use_profiling])
