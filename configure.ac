@@ -1990,6 +1990,17 @@ if test "x$bc_build_warnings" != "xno" ; then
 	fi
 fi
 
+dnl we are more strict on clean dirs by default (no-long-long needed due to tcl.h)
+BC_COMPILER_AND_LINKER_RECOGNIZES([-w -pedantic -W -Wall -Werror -Wno-long-long], [strict], [no])
+if test "x$bc_strict_works" = "xyes" ; then
+    # do not include -w as that was just to suppress any test warnings
+    STRICT_FLAGS="-pedantic -W -Wall -Werror -Wno-long-long"
+    AC_SUBST(STRICT_FLAGS)
+fi
+
+# make our minimum compliance goal explicit
+BC_COMPILER_AND_LINKER_RECOGNIZES([-std=c89], [c89])
+
 # determine the minimum single-precision floating point tolerance
 # value at compile time such that: 1.0 + value != 1.0
 # ANSI defines this as FLT_EPSILON but float.h may not provide it.
