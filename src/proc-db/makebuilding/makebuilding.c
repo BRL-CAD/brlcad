@@ -34,11 +34,11 @@ mkbldg_makeWallSegment(char *name, struct rt_wdb *db_fileptr, point_t bbp1, poin
      
     struct bu_vls *newName = bu_vls_vlsinit();
 
-//build the new object name
+/* build the new object name */
     bu_vls_strcpy(newName, name);
     bu_vls_strcat(newName, "_frame");
 
-//make the frame
+/* make the frame */
     mkbldg_makeframe (newName, db_fileptr, bbp1, bbp2, 1.5*25.4);
 
     bu_vls_vlsfree(newName);
@@ -60,7 +60,7 @@ mkbldg_makeframe(struct bu_vls *name, struct rt_wdb *db_fileptr, point_t p1, poi
     struct bu_vls *newName = bu_vls_vlsinit();
     
     
-// make the combo:
+/* make the combo: */
     struct wmember combo;
     struct bu_list *child_list = &combo.l;
 
@@ -70,62 +70,62 @@ mkbldg_makeframe(struct bu_vls *name, struct rt_wdb *db_fileptr, point_t p1, poi
      * Bottom
      */
 
-// build name
+/* build name */
     bu_vls_strcpy(newName, bu_vls_addr(name));
     bu_vls_strcat(newName, "_bottom");
-// calc points
+/* calc points */
     VSET(bottomP2, p2[0], p2[1], (p1[2] + thickness) );
-//make prim
+/* make prim */
     mk_rpp(db_fileptr, bu_vls_addr(newName), p1, bottomP2);
-//Add to child list.
+/* Add to child list. */
     (void)mk_addmember(bu_vls_addr(newName), child_list, NULL, WMOP_UNION);
 
     /*
      * Top
      */
 
-// build name
+/* build name */
     bu_vls_strcpy(newName, bu_vls_addr(name));
     bu_vls_strcat(newName, "_top");
-// calc points
+/* calc points */
     VSET(topP1, p1[0], p1[1], (p2[2] - thickness) );
-//make prim
+/* make prim */
     mk_rpp(db_fileptr, bu_vls_addr(newName), topP1, p2);
-//Add to child list.
+/* Add to child list. */
     (void)mk_addmember(bu_vls_addr(newName), child_list, NULL, WMOP_UNION);
 
     /*
      * Left
      */
 
-// build name
+/* build name */
     bu_vls_strcpy(newName, bu_vls_addr(name));
     bu_vls_strcat(newName, "_left");
-// calc points
+/* calc points */
     VSET(leftP1, p1[0], p1[1], (p1[2] + thickness) );
     VSET(leftP2, p2[0], (p1[1] + thickness), (p2[2] - thickness) );
-//make prim
+/* make prim */
     mk_rpp(db_fileptr, bu_vls_addr(newName), leftP1, leftP2);
-//Add to child list.
+/* Add to child list. */
     (void)mk_addmember(bu_vls_addr(newName), child_list, NULL, WMOP_UNION);
  
     /*
      * Right
      */
 
-// build name
+/* build name */
     bu_vls_strcpy(newName, bu_vls_addr(name));
     bu_vls_strcat(newName, "_right");
-// calc points
+/* calc points */
     VSET(rightP1, p1[0], (p2[1] - thickness), (p1[2] + thickness) );
     VSET(rightP2, p2[0], p2[1], (p2[2] - thickness) );
-// make prim
+/* make prim */
     mk_rpp(db_fileptr, bu_vls_addr(newName), rightP1, rightP2);
-// Add to child list.
+/* Add to child list. */
     (void)mk_addmember(bu_vls_addr(newName), child_list, NULL, WMOP_UNION);
 	   
 
-//make the combo
+/* make the combo */
     unsigned char rgb[3];
     VSET(rgb, 64, 180, 96);
     mk_lcomb(db_fileptr, bu_vls_addr(name), &combo, 1, NULL, NULL, rgb, 0);

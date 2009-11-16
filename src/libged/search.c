@@ -2027,7 +2027,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
     register int i;
     register struct directory *dp;
     struct db_full_path dfp;
-    //COPY argv_orig to argv;
+    /* COPY argv_orig to argv; */
     char **argv = bu_dup_argv(argc, argv_orig);
 
     if (argc < 2) {
