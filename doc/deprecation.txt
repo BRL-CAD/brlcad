@@ -17,7 +17,7 @@ b) during a minor release provided that
 c) during a minor release provided that
     1) the API was never publicly announced or otherwise documented
     2) the interface was declared in a public header
-    3) there exists a an equivalent alternative interface
+    3) there exists an equivalent alternative interface
     (e.g. changing the name of a function)
 
 Otherwise, changes to interfaces that are never publicly announced,
