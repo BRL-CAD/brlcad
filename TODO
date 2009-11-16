@@ -36,8 +36,6 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
   also be useful to allow an optional "thickness" so that the
   annotations can represent physical geometry (so they raytrace).
 
-* utilize -pedantic -Wall -Werror on 'clean' directories
-
 * refactor rt_functab accessors to go through an api call or calls so
   that the array is not accessed directly.  either an rt_eval() style
   interface with data-driven keys to tell it with function(s) to call,
