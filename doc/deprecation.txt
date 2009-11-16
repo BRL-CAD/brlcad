@@ -48,6 +48,12 @@ new names should be listed for reference.
 * DEPRECATED *
 **************
 
+7.16
+----
+mged
+	make_bb -> bb [deprecated 7.16]
+
+
 7.14
 ----
 include/dm_color.h
