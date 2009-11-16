@@ -1467,6 +1467,12 @@ dnl *************************
 
 BC_CONFIGURE_STAGE([headers], [4 of 9])
 
+# make our minimum compliance goal explicit
+# BC_COMPILER_AND_LINKER_RECOGNIZES([-std=c89], [c89], [no])
+# if test "x$bc_c89_works" = "xyes" ; then
+#     CFLAGS="$CFLAGS -std=c89"
+# fi
+
 # C89 headers: assert.h, ctype.h, errno.h, float.h, limits.h, locale.h,
 # math.h, setjmp.h, signal.h, stdarg.h, stddef.h, stdio.h, stdlib.h,
 # string.h, time.h
@@ -1997,12 +2003,6 @@ if test "x$bc_strict_works" = "xyes" ; then
     STRICT_FLAGS="-pedantic -W -Wall -Werror -Wno-long-long"
     AC_SUBST(STRICT_FLAGS)
 fi
-
-# make our minimum compliance goal explicit
-# BC_COMPILER_AND_LINKER_RECOGNIZES([-std=c89], [c89], [no])
-# if test "x$bc_c89_works" = "xyes" ; then
-#     CFLAGS="$CFLAGS -std=c89"
-# fi
 
 # determine the minimum single-precision floating point tolerance
 # value at compile time such that: 1.0 + value != 1.0
