@@ -1467,7 +1467,8 @@ dnl *************************
 
 BC_CONFIGURE_STAGE([headers], [4 of 9])
 
-# make our minimum compliance goal explicit
+# make our minimum compliance goal explicit (needs to be tested here
+# so header files and types are tested properly)
 # BC_COMPILER_AND_LINKER_RECOGNIZES([-std=c89], [c89], [no])
 # if test "x$bc_c89_works" = "xyes" ; then
 #     CFLAGS="$CFLAGS -std=c89"
