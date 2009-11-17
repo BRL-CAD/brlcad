@@ -42,7 +42,9 @@ void ON_Font::Defaults()
   m_logfont.lfHeight = normal_font_height;
   m_logfont.lfCharSet = default_charset;
 #endif
-  SetFontFaceName(L"Arial");
+  ON_wString wstr("Arial");
+  const wchar_t* w = wstr;
+  SetFontFaceName(w);
   SetFontWeight(normal_weight);
 }
 
