@@ -63,13 +63,15 @@ namespace eval ArcherCore {
 	common TRANSLATE_MODE 1
 	common SCALE_MODE 2
 	common CENTER_MODE 3
-	common COMP_PICK_MODE 4
-	common COMP_ERASE_MODE 5
-	common MEASURE_MODE 6
-	common OBJECT_ROTATE_MODE 7
-	common OBJECT_TRANSLATE_MODE 8
-	common OBJECT_SCALE_MODE 9
-	common OBJECT_CENTER_MODE 10
+	common CENTER_VIEW_OBJECT_MODE 4
+	common COMP_PICK_MODE 5
+	common COMP_ERASE_MODE 6
+	common MEASURE_MODE 7
+	common OBJECT_ROTATE_MODE 8
+	common OBJECT_TRANSLATE_MODE 9
+	common OBJECT_SCALE_MODE 10
+	common OBJECT_CENTER_MODE 11
+	common FIRST_FREE_BINDING_MODE 12
 
 	common OBJ_EDIT_VIEW_MODE 0
 	common OBJ_ATTR_VIEW_MODE 1
@@ -541,9 +543,11 @@ Popup Menu    Right or Ctrl-Left
 	method endViewTranslate {_pane}
 
 	method initCenterMode {}
+	method initCenterViewObjectMode {}
 
 	method initCompErase {}
 	method initCompPick {}
+	method mrayCallback_cvo {_start _target _partitions}
 	method mrayCallback_erase {_start _target _partitions}
 	method mrayCallback_pick {_start _target _partitions}
 
@@ -1567,6 +1571,13 @@ Popup Menu    Right or Ctrl-Left
 	-value $CENTER_MODE \
 	-command [::itcl::code $this initCenterMode] \
 	-state disabled
+    $itk_component(primaryToolbar) add radiobutton centervo \
+	-balloonstr "Center View on Object" \
+	-helpstr "Center View on Object" \
+	-variable [::itcl::scope mDefaultBindingMode] \
+	-value $CENTER_VIEW_OBJECT_MODE \
+	-command [::itcl::code $this initCenterViewObjectMode] \
+	-state disabled
     $itk_component(primaryToolbar) add radiobutton cpick \
 	-balloonstr "Component Pick" \
 	-helpstr "Component Pick" \
@@ -1593,6 +1604,7 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(primaryToolbar) itemconfigure translate -state disabled
     $itk_component(primaryToolbar) itemconfigure scale -state disabled
     $itk_component(primaryToolbar) itemconfigure center -state disabled
+    $itk_component(primaryToolbar) itemconfigure centervo -state disabled
     $itk_component(primaryToolbar) itemconfigure cpick -state disabled
     $itk_component(primaryToolbar) itemconfigure cerase -state disabled
     $itk_component(primaryToolbar) itemconfigure measure -state disabled
@@ -1679,6 +1691,16 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(ged) init_view_center
 }
 
+::itcl::body ArcherCore::initCenterViewObjectMode {} {
+    if {![info exists itk_component(ged)]} {
+	return
+    }
+
+    $itk_component(ged) clear_mouse_ray_callback_list
+    $itk_component(ged) add_mouse_ray_callback [::itcl::code $this mrayCallback_cvo]
+    $itk_component(ged) init_comp_pick
+}
+
 ::itcl::body ArcherCore::initCompErase {} {
     if {![info exists itk_component(ged)]} {
 	return
@@ -1697,6 +1719,29 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(ged) clear_mouse_ray_callback_list
     $itk_component(ged) add_mouse_ray_callback [::itcl::code $this mrayCallback_pick]
     $itk_component(ged) init_comp_pick
+}
+
+::itcl::body ArcherCore::mrayCallback_cvo {_start _target _partitions} {
+    if {$_partitions == ""} {
+	return
+    }
+
+    set partition [lindex $_partitions 0]
+
+    if {[catch {bu_get_value_by_keyword in $partition} in]} {
+	puts "Partition does not contain an \"in\""
+	puts "$in"
+	return
+    }
+
+    if {[catch {bu_get_value_by_keyword point $in} point]} {
+	puts "Partition does not contain an \"in\" point"
+	puts "$point"
+	return
+    }
+
+    set point [vscale $point [$itk_component(ged) base2local]]
+    $itk_component(ged) center $point
 }
 
 ::itcl::body ArcherCore::mrayCallback_erase {_start _target _partitions} {
@@ -1801,6 +1846,7 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(primaryToolbar) itemconfigure translate -state normal
     $itk_component(primaryToolbar) itemconfigure scale -state normal
     $itk_component(primaryToolbar) itemconfigure center -state normal
+    $itk_component(primaryToolbar) itemconfigure centervo -state normal
     $itk_component(primaryToolbar) itemconfigure cpick -state normal
     $itk_component(primaryToolbar) itemconfigure cerase -state normal
     $itk_component(primaryToolbar) itemconfigure measure -state normal
@@ -2997,6 +3043,9 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(primaryToolbar) itemconfigure center \
 	-image [image create photo \
 		    -file [file join $dir view_select.png]]
+    $itk_component(primaryToolbar) itemconfigure centervo \
+	-image [image create photo \
+		    -file [file join $dir view_obj_select.png]]
     $itk_component(primaryToolbar) itemconfigure cpick \
 	-image [image create photo \
 		    -file [file join $dir compSelect.png]]
@@ -3295,6 +3344,14 @@ Popup Menu    Right or Ctrl-Left
 	} \
 	$CENTER_MODE { \
 		initCenterMode \
+		set ret 1
+	} \
+	$CENTER_VIEW_OBJECT_MODE { \
+		initCenterViewObjectMode \
+		set ret 1
+	} \
+	$COMP_ERASE_MODE { \
+		initCompErase \
 		set ret 1
 	} \
 	$COMP_PICK_MODE { \

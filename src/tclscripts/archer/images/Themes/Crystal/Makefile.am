@@ -66,6 +66,7 @@ dist_tcl_DATA = \
 	run.png \
 	save.png \
 	view_left_right_small.png \
+	view_obj_select.png \
 	view_rotate.png \
 	view_scale.png \
 	view_select.png \
