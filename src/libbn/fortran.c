@@ -103,20 +103,6 @@ pl_strncpy(register char *out, register char *in, register int sz)
  */
 
 /**
- *			I F D O P E
- *
- *  Open a file descriptor for plotting.
- */
-void
-F(ifdopn, IFDOPN)( plotfp, fd )
-    FILE	**plotfp;
-    int	*fd;
-{
-    if ( (*plotfp = fdopen(*fd, "wb")) == NULL )
-	perror("IFDOPN/fdopen");
-}
-
-/**
  *			I F O P E N
  *
  *  Open a file (by name) for plotting.
