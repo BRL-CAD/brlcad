@@ -128,7 +128,7 @@ BUILTARTICLES_ENHTML = \
 
 articlesDOCBOOK_ENhtmlimagesdir = $(BRLCAD_DATA)/html/articles/en/images
 articlesDOCBOOK_ENhtmlimages_DATA = \
-	$(BUILTARTICLES_ENIMAGES)
+	$(articlesDOCBOOK_EN_IMAGES)
 
 if BUILD_PDF_DOCS
 
@@ -277,7 +277,7 @@ BUILTLESSONS_ENHTML = \
 
 lessonsDOCBOOK_ENhtmlimagesdir = $(BRLCAD_DATA)/html/lessons/en/images
 lessonsDOCBOOK_ENhtmlimages_DATA = \
-	$(BUILTLESSONS_ENIMAGES)
+	$(lessonsDOCBOOK_EN_IMAGES)
 
 if BUILD_PDF_DOCS
 
@@ -338,7 +338,7 @@ BUILTBOOKS_ENHTML = \
 
 booksDOCBOOK_ENhtmlimagesdir = $(BRLCAD_DATA)/html/books/en/images
 booksDOCBOOK_ENhtmlimages_DATA = \
-	$(BUILTBOOKS_ENIMAGES)
+	$(booksDOCBOOK_EN_IMAGES)
 
 if BUILD_PDF_DOCS
 
