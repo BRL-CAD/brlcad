@@ -116,7 +116,7 @@ bn_multipoly_set(register struct bn_multipoly *P, int s, int t, double val)
  *
  * @brief add two polynomials
  */
-struct bn_multiply *
+struct bn_multipoly *
 bn_multpoly_add(register struct bn_multipoly *p1, register struct bn_multipoly *p2)
 {
     struct bn_multipoly *sum = bn_multipoly_new(Max(p1->dgrs, p2->dgrs), Max(p1->dgrt, p2->dgrs));

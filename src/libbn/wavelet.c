@@ -131,7 +131,7 @@
  *    This will completely decompose the data in buffer.  The first sample will
  *    be the average of all the samples.  Alternatively:
  *
- *	bn_wlt_haar_1d_double_decompose(tbuffer, buffer, 512, 3, 64);
+ * bn_wlt_haar_1d_double_decompose(tbuffer, buffer, 512, 3, 64);
  *
  *    decomposes buffer into a 64-sample "average image" and 3 "detail" sets.
  *
@@ -300,23 +300,23 @@ unsigned long limit; \
 
 /* Believe it or not, this is where the actual code is generated */
 
-make_wlt_haar_1d_decompose(double);
-make_wlt_haar_1d_reconstruct(double);
+make_wlt_haar_1d_decompose(double)
+make_wlt_haar_1d_reconstruct(double)
 
-make_wlt_haar_1d_decompose(float);
-make_wlt_haar_1d_reconstruct(float);
+make_wlt_haar_1d_decompose(float)
+make_wlt_haar_1d_reconstruct(float)
 
-make_wlt_haar_1d_decompose(char);
-make_wlt_haar_1d_reconstruct(char);
+make_wlt_haar_1d_decompose(char)
+make_wlt_haar_1d_reconstruct(char)
 
-make_wlt_haar_1d_decompose(int);
-make_wlt_haar_1d_reconstruct(int);
+make_wlt_haar_1d_decompose(int)
+make_wlt_haar_1d_reconstruct(int)
 
-make_wlt_haar_1d_decompose(short);
-make_wlt_haar_1d_reconstruct(short);
+make_wlt_haar_1d_decompose(short)
+make_wlt_haar_1d_reconstruct(short)
 
-make_wlt_haar_1d_decompose(long);
-make_wlt_haar_1d_reconstruct(long);
+make_wlt_haar_1d_decompose(long)
+make_wlt_haar_1d_reconstruct(long)
 
 
 #define decompose_2d( DATATYPE ) bn_wlt_haar_2d_ ## DATATYPE ## _decompose
@@ -524,19 +524,19 @@ unsigned long limit; \
 	} \
 }
 
-make_wlt_haar_2d_decompose(double);
-make_wlt_haar_2d_decompose(float);
-make_wlt_haar_2d_decompose(char);
-make_wlt_haar_2d_decompose(int);
-make_wlt_haar_2d_decompose(short);
-make_wlt_haar_2d_decompose(long);
+make_wlt_haar_2d_decompose(double)
+make_wlt_haar_2d_decompose(float)
+make_wlt_haar_2d_decompose(char)
+make_wlt_haar_2d_decompose(int)
+make_wlt_haar_2d_decompose(short)
+make_wlt_haar_2d_decompose(long)
 
-make_wlt_haar_2d_reconstruct(double);
-make_wlt_haar_2d_reconstruct(float);
-make_wlt_haar_2d_reconstruct(char);
-make_wlt_haar_2d_reconstruct(int);
-make_wlt_haar_2d_reconstruct(short);
-make_wlt_haar_2d_reconstruct(long);
+make_wlt_haar_2d_reconstruct(double)
+make_wlt_haar_2d_reconstruct(float)
+make_wlt_haar_2d_reconstruct(char)
+make_wlt_haar_2d_reconstruct(int)
+make_wlt_haar_2d_reconstruct(short)
+make_wlt_haar_2d_reconstruct(long)
 
 
 #define decompose_2d_2( DATATYPE ) bn_wlt_haar_2d_ ## DATATYPE ## _decompose2
@@ -643,12 +643,12 @@ unsigned long limit; \
 	} \
 }
 
-make_wlt_haar_2d_decompose2(double);
-make_wlt_haar_2d_decompose2(float);
-make_wlt_haar_2d_decompose2(char);
-make_wlt_haar_2d_decompose2(int);
-make_wlt_haar_2d_decompose2(short);
-make_wlt_haar_2d_decompose2(long);
+make_wlt_haar_2d_decompose2(double)
+make_wlt_haar_2d_decompose2(float)
+make_wlt_haar_2d_decompose2(char)
+make_wlt_haar_2d_decompose2(int)
+make_wlt_haar_2d_decompose2(short)
+make_wlt_haar_2d_decompose2(long)
 
 
 /*

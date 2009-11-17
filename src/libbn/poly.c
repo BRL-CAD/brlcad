@@ -56,6 +56,8 @@ static jmp_buf	bn_abort_buf;
 
 HIDDEN void bn_catch_FPE(int sig)
 {
+    if (sig != SIGFPE)
+	bu_bomb("bn_catch_FPE() unexpected signal!");
     if ( !bn_expecting_fpe )
 	bu_bomb("bn_catch_FPE() unexpected SIGFPE!");
     if ( !bu_is_parallel() )
