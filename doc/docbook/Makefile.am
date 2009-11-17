@@ -13,14 +13,10 @@ XML_CATALOG_FILES=$(top_srcdir)/doc/docbook/catalog.xml
 	mv '$(@F)' system/man1/en/
 
 .fo.pdf: .xml.fo
-	$(APACHEFOP) $? -pdf $@
+	$(APACHEFOP) -c fop.xconf $? -pdf $@
 
 .xml.fo:
 	XML_CATALOG_FILES=$(XML_CATALOG_FILES) $(XSLTPROC) $(XSLTPROC_FLAGS) -o $@ $(XSL_FO_STYLESHEET) $?
-
-.docpng.png:
-	mkdir -p `dirname $@`
-	cp $? $@
 
 
 articlesDOCBOOK_EN = \
@@ -35,93 +31,93 @@ articlesDOCBOOK_EN = \
 	articles/en/tire.xml 
 
 articlesDOCBOOK_EN_IMAGES = \
-	articles/en/images/build_pattern_fig01.docpng \
-	articles/en/images/build_pattern_fig02.docpng \
-	articles/en/images/build_pattern_fig03.docpng \
-	articles/en/images/build_pattern_fig04.docpng \
-	articles/en/images/build_pattern_fig05.docpng \
-	articles/en/images/build_pattern_fig06.docpng \
-	articles/en/images/build_pattern_fig07.docpng \
-	articles/en/images/build_region_fig01.docpng \
-	articles/en/images/build_region_fig02.docpng \
-	articles/en/images/build_region_fig03.docpng \
-	articles/en/images/build_region_fig04.docpng \
-	articles/en/images/ebm_primitive_fig01.docpng \
-	articles/en/images/ebm_primitive_fig02.docpng \
-	articles/en/images/ebm_primitive_fig03.docpng \
-	articles/en/images/mgedrc_fig02.docpng \
-	articles/en/images/mgedrc_fig03.docpng \
-	articles/en/images/nirt_fig01.docpng \
-	articles/en/images/nirt_fig02.docpng \
-	articles/en/images/nirt_fig03.docpng \
-	articles/en/images/nirt_fig04.docpng \
-	articles/en/images/nirt_fig05.docpng \
-	articles/en/images/nirt_fig06.docpng \
-	articles/en/images/nirt_fig07.docpng \
-	articles/en/images/nirt_fig08.docpng \
-	articles/en/images/nirt_fig09.docpng \
-	articles/en/images/nirt_fig10.docpng \
-	articles/en/images/nirt_fig11.docpng \
-	articles/en/images/nirt_fig12.docpng \
-	articles/en/images/nirt_fig13.docpng \
-	articles/en/images/nirt_fig14.docpng \
-	articles/en/images/nirt_fig15.docpng \
-	articles/en/images/nirt_fig16.docpng \
-	articles/en/images/nirt_fig17.docpng \
-	articles/en/images/nirt_fig18.docpng \
-	articles/en/images/nirt_fig19.docpng \
-	articles/en/images/nirt_fig20.docpng \
-	articles/en/images/nirt_fig21.docpng \
-	articles/en/images/nirt_fig22.docpng \
-	articles/en/images/nirt_fig23.docpng \
-	articles/en/images/nirt_fig24.docpng \
-	articles/en/images/oed_fig01.docpng \
-	articles/en/images/oed_fig02.docpng \
-	articles/en/images/oed_fig03.docpng \
-	articles/en/images/oed_fig04.docpng \
-	articles/en/images/oed_fig05.docpng \
-	articles/en/images/oed_fig06.docpng \
-	articles/en/images/oed_fig07.docpng \
-	articles/en/images/oed_fig08.docpng \
-	articles/en/images/oed_fig09.docpng \
-	articles/en/images/oed_fig10.docpng \
-	articles/en/images/oed_fig11.docpng \
-	articles/en/images/oed_fig12.docpng \
-	articles/en/images/oed_fig13.docpng \
-	articles/en/images/pipes_fig01.docpng \
-	articles/en/images/pipes_fig02.docpng \
-	articles/en/images/pipes_fig03.docpng \
-	articles/en/images/pipes_fig04.docpng \
-	articles/en/images/pipes_fig05.docpng \
-	articles/en/images/pipes_fig06.docpng \
-	articles/en/images/pipes_fig07.docpng \
-	articles/en/images/pipes_fig08.docpng \
-	articles/en/images/pipes_fig09.docpng \
-	articles/en/images/pipes_fig10.docpng \
-	articles/en/images/pipes_fig11.docpng \
-	articles/en/images/pipes_fig12.docpng \
-	articles/en/images/pipes_fig13.docpng \
-	articles/en/images/projection_shader_fig01.docpng \
-	articles/en/images/projection_shader_fig02.docpng \
-	articles/en/images/projection_shader_fig03.docpng \
-	articles/en/images/projection_shader_fig04.docpng \
-	articles/en/images/projection_shader_fig05.docpng \
-	articles/en/images/projection_shader_fig06.docpng \
-	articles/en/images/projection_shader_fig07.docpng \
-	articles/en/images/tire_fig01.docpng \
-	articles/en/images/tire_fig02.docpng \
-	articles/en/images/tire_fig03.docpng \
-	articles/en/images/tire_fig04.docpng \
-	articles/en/images/tire_fig05.docpng \
-	articles/en/images/tire_fig06.docpng \
-	articles/en/images/tire_fig07.docpng \
-	articles/en/images/tire_fig08.docpng \
-	articles/en/images/tire_fig09.docpng \
-	articles/en/images/tire_fig10.docpng \
-	articles/en/images/tire_fig11.docpng \
-	articles/en/images/tire_fig12.docpng \
-	articles/en/images/tire_fig13.docpng \
-	articles/en/images/tire_fig14.docpng
+	articles/en/images/build_pattern_fig01.png \
+	articles/en/images/build_pattern_fig02.png \
+	articles/en/images/build_pattern_fig03.png \
+	articles/en/images/build_pattern_fig04.png \
+	articles/en/images/build_pattern_fig05.png \
+	articles/en/images/build_pattern_fig06.png \
+	articles/en/images/build_pattern_fig07.png \
+	articles/en/images/build_region_fig01.png \
+	articles/en/images/build_region_fig02.png \
+	articles/en/images/build_region_fig03.png \
+	articles/en/images/build_region_fig04.png \
+	articles/en/images/ebm_primitive_fig01.png \
+	articles/en/images/ebm_primitive_fig02.png \
+	articles/en/images/ebm_primitive_fig03.png \
+	articles/en/images/mgedrc_fig02.png \
+	articles/en/images/mgedrc_fig03.png \
+	articles/en/images/nirt_fig01.png \
+	articles/en/images/nirt_fig02.png \
+	articles/en/images/nirt_fig03.png \
+	articles/en/images/nirt_fig04.png \
+	articles/en/images/nirt_fig05.png \
+	articles/en/images/nirt_fig06.png \
+	articles/en/images/nirt_fig07.png \
+	articles/en/images/nirt_fig08.png \
+	articles/en/images/nirt_fig09.png \
+	articles/en/images/nirt_fig10.png \
+	articles/en/images/nirt_fig11.png \
+	articles/en/images/nirt_fig12.png \
+	articles/en/images/nirt_fig13.png \
+	articles/en/images/nirt_fig14.png \
+	articles/en/images/nirt_fig15.png \
+	articles/en/images/nirt_fig16.png \
+	articles/en/images/nirt_fig17.png \
+	articles/en/images/nirt_fig18.png \
+	articles/en/images/nirt_fig19.png \
+	articles/en/images/nirt_fig20.png \
+	articles/en/images/nirt_fig21.png \
+	articles/en/images/nirt_fig22.png \
+	articles/en/images/nirt_fig23.png \
+	articles/en/images/nirt_fig24.png \
+	articles/en/images/oed_fig01.png \
+	articles/en/images/oed_fig02.png \
+	articles/en/images/oed_fig03.png \
+	articles/en/images/oed_fig04.png \
+	articles/en/images/oed_fig05.png \
+	articles/en/images/oed_fig06.png \
+	articles/en/images/oed_fig07.png \
+	articles/en/images/oed_fig08.png \
+	articles/en/images/oed_fig09.png \
+	articles/en/images/oed_fig10.png \
+	articles/en/images/oed_fig11.png \
+	articles/en/images/oed_fig12.png \
+	articles/en/images/oed_fig13.png \
+	articles/en/images/pipes_fig01.png \
+	articles/en/images/pipes_fig02.png \
+	articles/en/images/pipes_fig03.png \
+	articles/en/images/pipes_fig04.png \
+	articles/en/images/pipes_fig05.png \
+	articles/en/images/pipes_fig06.png \
+	articles/en/images/pipes_fig07.png \
+	articles/en/images/pipes_fig08.png \
+	articles/en/images/pipes_fig09.png \
+	articles/en/images/pipes_fig10.png \
+	articles/en/images/pipes_fig11.png \
+	articles/en/images/pipes_fig12.png \
+	articles/en/images/pipes_fig13.png \
+	articles/en/images/projection_shader_fig01.png \
+	articles/en/images/projection_shader_fig02.png \
+	articles/en/images/projection_shader_fig03.png \
+	articles/en/images/projection_shader_fig04.png \
+	articles/en/images/projection_shader_fig05.png \
+	articles/en/images/projection_shader_fig06.png \
+	articles/en/images/projection_shader_fig07.png \
+	articles/en/images/tire_fig01.png \
+	articles/en/images/tire_fig02.png \
+	articles/en/images/tire_fig03.png \
+	articles/en/images/tire_fig04.png \
+	articles/en/images/tire_fig05.png \
+	articles/en/images/tire_fig06.png \
+	articles/en/images/tire_fig07.png \
+	articles/en/images/tire_fig08.png \
+	articles/en/images/tire_fig09.png \
+	articles/en/images/tire_fig10.png \
+	articles/en/images/tire_fig11.png \
+	articles/en/images/tire_fig12.png \
+	articles/en/images/tire_fig13.png \
+	articles/en/images/tire_fig14.png
 
 articlesDOCBOOK_ENhtmldir = $(BRLCAD_DATA)/html/articles/en
 articlesDOCBOOK_ENhtml_DATA = \
@@ -133,10 +129,6 @@ BUILTARTICLES_ENHTML = \
 articlesDOCBOOK_ENhtmlimagesdir = $(BRLCAD_DATA)/html/articles/en/images
 articlesDOCBOOK_ENhtmlimages_DATA = \
 	$(BUILTARTICLES_ENIMAGES)
-
-BUILTARTICLES_ENIMAGES = \
-	${articlesDOCBOOK_EN_IMAGES:docpng=png}
-
 
 if BUILD_PDF_DOCS
 
@@ -171,109 +163,109 @@ lessonsDOCBOOK_EN = \
 	lessons/en/mged16_mod_tech_struct.xml 
 
 lessonsDOCBOOK_EN_IMAGES = \
-	lessons/en/images/mged01_commandwindow.docpng \
-	lessons/en/images/mged01_graphicswindow.docpng \
-	lessons/en/images/mged01_terminal.docpng \
-	lessons/en/images/mged02_coordsys.docpng \
-	lessons/en/images/mged02_defaultradio.docpng \
-	lessons/en/images/mged02_flower_zooomin.docpng \
-	lessons/en/images/mged02_flower_zooomout.docpng \
-	lessons/en/images/mged02_multipane.docpng \
-	lessons/en/images/mged02_radio_35_25.docpng \
-	lessons/en/images/mged02_radio_front.docpng \
-	lessons/en/images/mged02_radio_right.docpng \
-	lessons/en/images/mged02_radio_top.docpng \
-	lessons/en/images/mged02_truck_0_0_14.docpng \
-	lessons/en/images/mged02_truck_270_-90.docpng \
-	lessons/en/images/mged02_truck_270_90.docpng \
-	lessons/en/images/mged02_truck_35_0.docpng \
-	lessons/en/images/mged02_truck_35_25.docpng \
-	lessons/en/images/mged02_truck_35_60.docpng \
-	lessons/en/images/mged02_truck_35_90.docpng \
-	lessons/en/images/mged02_truck_front.docpng \
-	lessons/en/images/mged02_truck_left.docpng \
-	lessons/en/images/mged02_truck_rear.docpng \
-	lessons/en/images/mged02_truck_right.docpng \
-	lessons/en/images/mged04_commandwindow.docpng \
-	lessons/en/images/mged04_fb_overlay_mode.docpng \
-	lessons/en/images/mged04_raytracedshapes.docpng \
-	lessons/en/images/mged05_combinationeditor.docpng \
-	lessons/en/images/mged05_intersectionspheres.docpng \
-	lessons/en/images/mged05_raytraceddome.docpng \
-	lessons/en/images/mged05_raytracedpart1.docpng \
-	lessons/en/images/mged05_raytracedpart2.docpng \
-	lessons/en/images/mged05_raytracedpart3.docpng \
-	lessons/en/images/mged05_subtractionspheres.docpng \
-	lessons/en/images/mged05_twoprimitivespheres.docpng \
-	lessons/en/images/mged05_unionspheres.docpng \
-	lessons/en/images/mged06_base_substracted_vol.docpng \
-	lessons/en/images/mged06_goblet1stsphere.docpng \
-	lessons/en/images/mged06_gobletbase.docpng \
-	lessons/en/images/mged06_gobletbasestembasin.docpng \
-	lessons/en/images/mged06_gobletstem.docpng \
-	lessons/en/images/mged06_rtgoblet.docpng \
-	lessons/en/images/mged06_rtgobletaz_35_el_25.docpng \
-	lessons/en/images/mged07_goblet_complete_window.docpng \
-	lessons/en/images/mged07_goblet_mater_complete.docpng \
-	lessons/en/images/mged07_goblet_mirror.docpng \
-	lessons/en/images/mged07_goblet_semitransparent.docpng \
-	lessons/en/images/mged08_comb_editor_window_mater_prop.docpng \
-	lessons/en/images/mged08_goblet_combeditor.docpng \
-	lessons/en/images/mged08_goblet_reflectivity_1.docpng \
-	lessons/en/images/mged08_goblet_reflectivity_2.docpng \
-	lessons/en/images/mged08_refractive_index.docpng \
-	lessons/en/images/mged08_spec_vs_diff_reflectivity.docpng \
-	lessons/en/images/mged09_globe_base_box_raytraced.docpng \
-	lessons/en/images/mged09_globe_base_box_wireframe.docpng \
-	lessons/en/images/mged09_globe_inside_outside_box.docpng \
-	lessons/en/images/mged09_globe_outside_display_box.docpng \
-	lessons/en/images/mged09_globe_raytraced.docpng \
-	lessons/en/images/mged09_globe_wireframe.docpng \
-	lessons/en/images/mged10_mug_wireframe.docpng \
-	lessons/en/images/mged11_mug_raytraced_norim.docpng \
-	lessons/en/images/mged11_mug_raytraced_rim.docpng \
-	lessons/en/images/mged12_cyls_frontview.docpng \
-	lessons/en/images/mged12_mug_gui_finished_raytraced.docpng \
-	lessons/en/images/mged12_mug_handle_frontview.docpng \
-	lessons/en/images/mged12_mug_handle_topview.docpng \
-	lessons/en/images/mged12_mug_rim_frontview.docpng \
-	lessons/en/images/mged13_candle_comb_ed_checker.docpng \
-	lessons/en/images/mged13_candle_complete_front.docpng \
-	lessons/en/images/mged13_candle_design.docpng \
-	lessons/en/images/mged13_candle_raytraced_overlay.docpng \
-	lessons/en/images/mged13_candle_tabletop_base_candle_front.docpng \
-	lessons/en/images/mged13_candle_tabletop_base_front.docpng \
-	lessons/en/images/mged13_candle_tabletop_eto1_rcc_wireframe_front.docpng \
-	lessons/en/images/mged13_candle_tabletop_eto1_wireframe_front.docpng \
-	lessons/en/images/mged13_candle_tabletop_wireframe_front.docpng \
-	lessons/en/images/mged14_candle_base_sphere_topview.docpng \
-	lessons/en/images/mged14_candle_multipane.docpng \
-	lessons/en/images/mged14_candle_spheres_az35el25.docpng \
-	lessons/en/images/mged14_candle_spheres_frontview.docpng \
-	lessons/en/images/mged14_candle_spheres_raytraced.docpng \
-	lessons/en/images/mged14_candle_spheres_topview.docpng \
-	lessons/en/images/mged14_primitive_editor.docpng \
-	lessons/en/images/mged14_primitive_selection_dropdown.docpng \
-	lessons/en/images/mged15_cameo_shader.docpng \
-	lessons/en/images/mged15_prim_ed_wheel_well.docpng \
-	lessons/en/images/mged15_truck_2nd_wheel_wheel_place.docpng \
-	lessons/en/images/mged15_truck_ambient_lighting.docpng \
-	lessons/en/images/mged15_truck_cab1s.docpng \
-	lessons/en/images/mged15_truck_cab_body.docpng \
-	lessons/en/images/mged15_truck_cab_cutoff.docpng \
-	lessons/en/images/mged15_truck_default_lighting.docpng \
-	lessons/en/images/mged15_truck_design.docpng \
-	lessons/en/images/mged15_truck_multipane_1stwheel.docpng \
-	lessons/en/images/mged15_truck_wheel_wells_wireframe.docpng \
-	lessons/en/images/mged15_truck_wheels.docpng \
-	lessons/en/images/mged16_radio_casecut_raytrace.docpng \
-	lessons/en/images/mged16_radio_cut_raytrace.docpng \
-	lessons/en/images/mged16_radio_cut_wireframe.docpng \
-	lessons/en/images/mged16_radio_default_components_props.docpng \
-	lessons/en/images/mged16_radio_new_design.docpng \
-	lessons/en/images/mged16_radio_transparent.docpng \
-	lessons/en/images/mged16_radio_wireframe_circ_board.docpng \
-	lessons/en/images/mged16_radio_with_mater_props.docpng
+	lessons/en/images/mged01_commandwindow.png \
+	lessons/en/images/mged01_graphicswindow.png \
+	lessons/en/images/mged01_terminal.png \
+	lessons/en/images/mged02_coordsys.png \
+	lessons/en/images/mged02_defaultradio.png \
+	lessons/en/images/mged02_flower_zooomin.png \
+	lessons/en/images/mged02_flower_zooomout.png \
+	lessons/en/images/mged02_multipane.png \
+	lessons/en/images/mged02_radio_35_25.png \
+	lessons/en/images/mged02_radio_front.png \
+	lessons/en/images/mged02_radio_right.png \
+	lessons/en/images/mged02_radio_top.png \
+	lessons/en/images/mged02_truck_0_0_14.png \
+	lessons/en/images/mged02_truck_270_-90.png \
+	lessons/en/images/mged02_truck_270_90.png \
+	lessons/en/images/mged02_truck_35_0.png \
+	lessons/en/images/mged02_truck_35_25.png \
+	lessons/en/images/mged02_truck_35_60.png \
+	lessons/en/images/mged02_truck_35_90.png \
+	lessons/en/images/mged02_truck_front.png \
+	lessons/en/images/mged02_truck_left.png \
+	lessons/en/images/mged02_truck_rear.png \
+	lessons/en/images/mged02_truck_right.png \
+	lessons/en/images/mged04_commandwindow.png \
+	lessons/en/images/mged04_fb_overlay_mode.png \
+	lessons/en/images/mged04_raytracedshapes.png \
+	lessons/en/images/mged05_combinationeditor.png \
+	lessons/en/images/mged05_intersectionspheres.png \
+	lessons/en/images/mged05_raytraceddome.png \
+	lessons/en/images/mged05_raytracedpart1.png \
+	lessons/en/images/mged05_raytracedpart2.png \
+	lessons/en/images/mged05_raytracedpart3.png \
+	lessons/en/images/mged05_subtractionspheres.png \
+	lessons/en/images/mged05_twoprimitivespheres.png \
+	lessons/en/images/mged05_unionspheres.png \
+	lessons/en/images/mged06_base_substracted_vol.png \
+	lessons/en/images/mged06_goblet1stsphere.png \
+	lessons/en/images/mged06_gobletbase.png \
+	lessons/en/images/mged06_gobletbasestembasin.png \
+	lessons/en/images/mged06_gobletstem.png \
+	lessons/en/images/mged06_rtgoblet.png \
+	lessons/en/images/mged06_rtgobletaz_35_el_25.png \
+	lessons/en/images/mged07_goblet_complete_window.png \
+	lessons/en/images/mged07_goblet_mater_complete.png \
+	lessons/en/images/mged07_goblet_mirror.png \
+	lessons/en/images/mged07_goblet_semitransparent.png \
+	lessons/en/images/mged08_comb_editor_window_mater_prop.png \
+	lessons/en/images/mged08_goblet_combeditor.png \
+	lessons/en/images/mged08_goblet_reflectivity_1.png \
+	lessons/en/images/mged08_goblet_reflectivity_2.png \
+	lessons/en/images/mged08_refractive_index.png \
+	lessons/en/images/mged08_spec_vs_diff_reflectivity.png \
+	lessons/en/images/mged09_globe_base_box_raytraced.png \
+	lessons/en/images/mged09_globe_base_box_wireframe.png \
+	lessons/en/images/mged09_globe_inside_outside_box.png \
+	lessons/en/images/mged09_globe_outside_display_box.png \
+	lessons/en/images/mged09_globe_raytraced.png \
+	lessons/en/images/mged09_globe_wireframe.png \
+	lessons/en/images/mged10_mug_wireframe.png \
+	lessons/en/images/mged11_mug_raytraced_norim.png \
+	lessons/en/images/mged11_mug_raytraced_rim.png \
+	lessons/en/images/mged12_cyls_frontview.png \
+	lessons/en/images/mged12_mug_gui_finished_raytraced.png \
+	lessons/en/images/mged12_mug_handle_frontview.png \
+	lessons/en/images/mged12_mug_handle_topview.png \
+	lessons/en/images/mged12_mug_rim_frontview.png \
+	lessons/en/images/mged13_candle_comb_ed_checker.png \
+	lessons/en/images/mged13_candle_complete_front.png \
+	lessons/en/images/mged13_candle_design.png \
+	lessons/en/images/mged13_candle_raytraced_overlay.png \
+	lessons/en/images/mged13_candle_tabletop_base_candle_front.png \
+	lessons/en/images/mged13_candle_tabletop_base_front.png \
+	lessons/en/images/mged13_candle_tabletop_eto1_rcc_wireframe_front.png \
+	lessons/en/images/mged13_candle_tabletop_eto1_wireframe_front.png \
+	lessons/en/images/mged13_candle_tabletop_wireframe_front.png \
+	lessons/en/images/mged14_candle_base_sphere_topview.png \
+	lessons/en/images/mged14_candle_multipane.png \
+	lessons/en/images/mged14_candle_spheres_az35el25.png \
+	lessons/en/images/mged14_candle_spheres_frontview.png \
+	lessons/en/images/mged14_candle_spheres_raytraced.png \
+	lessons/en/images/mged14_candle_spheres_topview.png \
+	lessons/en/images/mged14_primitive_editor.png \
+	lessons/en/images/mged14_primitive_selection_dropdown.png \
+	lessons/en/images/mged15_cameo_shader.png \
+	lessons/en/images/mged15_prim_ed_wheel_well.png \
+	lessons/en/images/mged15_truck_2nd_wheel_wheel_place.png \
+	lessons/en/images/mged15_truck_ambient_lighting.png \
+	lessons/en/images/mged15_truck_cab1s.png \
+	lessons/en/images/mged15_truck_cab_body.png \
+	lessons/en/images/mged15_truck_cab_cutoff.png \
+	lessons/en/images/mged15_truck_default_lighting.png \
+	lessons/en/images/mged15_truck_design.png \
+	lessons/en/images/mged15_truck_multipane_1stwheel.png \
+	lessons/en/images/mged15_truck_wheel_wells_wireframe.png \
+	lessons/en/images/mged15_truck_wheels.png \
+	lessons/en/images/mged16_radio_casecut_raytrace.png \
+	lessons/en/images/mged16_radio_cut_raytrace.png \
+	lessons/en/images/mged16_radio_cut_wireframe.png \
+	lessons/en/images/mged16_radio_default_components_props.png \
+	lessons/en/images/mged16_radio_new_design.png \
+	lessons/en/images/mged16_radio_transparent.png \
+	lessons/en/images/mged16_radio_wireframe_circ_board.png \
+	lessons/en/images/mged16_radio_with_mater_props.png
 
 
 lessonsDOCBOOK_ENhtmldir = $(BRLCAD_DATA)/html/lessons/en
@@ -286,10 +278,6 @@ BUILTLESSONS_ENHTML = \
 lessonsDOCBOOK_ENhtmlimagesdir = $(BRLCAD_DATA)/html/lessons/en/images
 lessonsDOCBOOK_ENhtmlimages_DATA = \
 	$(BUILTLESSONS_ENIMAGES)
-
-BUILTLESSONS_ENIMAGES = \
-	${lessonsDOCBOOK_EN_IMAGES:docpng=png}
-
 
 if BUILD_PDF_DOCS
 
@@ -311,35 +299,35 @@ booksDOCBOOK_EN = \
 	books/en/BRL-CAD_Tutorial_Series-VolumeIII.xml
 
 booksDOCBOOK_EN_IMAGES = \
-	books/en/images/tutorial_series_volIII_fig01.docpng \
-	books/en/images/tutorial_series_volIII_fig02.docpng \
-	books/en/images/tutorial_series_volIII_fig03.docpng \
-	books/en/images/tutorial_series_volIII_fig04.docpng \
-	books/en/images/tutorial_series_volIII_fig05.docpng \
-	books/en/images/tutorial_series_volIII_fig06.docpng \
-	books/en/images/tutorial_series_volIII_fig07.docpng \
-	books/en/images/tutorial_series_volIII_fig08.docpng \
-	books/en/images/tutorial_series_volIII_fig09.docpng \
-	books/en/images/tutorial_series_volIII_fig10.docpng \
-	books/en/images/tutorial_series_volIII_fig11.docpng \
-	books/en/images/tutorial_series_volIII_fig12.docpng \
-	books/en/images/tutorial_series_volIII_fig13.docpng \
-	books/en/images/tutorial_series_volIII_fig14.docpng \
-	books/en/images/tutorial_series_volIII_fig15.docpng \
-	books/en/images/tutorial_series_volIII_fig16.docpng \
-	books/en/images/tutorial_series_volIII_fig17.docpng \
-	books/en/images/tutorial_series_volIII_fig18.docpng \
-	books/en/images/tutorial_series_volIII_fig19.docpng \
-	books/en/images/tutorial_series_volIII_fig20.docpng \
-	books/en/images/tutorial_series_volIII_fig21.docpng \
-	books/en/images/tutorial_series_volIII_fig22.docpng \
-	books/en/images/tutorial_series_volIII_fig23.docpng \
-	books/en/images/tutorial_series_volIII_fig24.docpng \
-	books/en/images/tutorial_series_volIII_fig25.docpng \
-	books/en/images/tutorial_series_volIII_fig26.docpng \
-	books/en/images/tutorial_series_volIII_fig27.docpng \
-	books/en/images/tutorial_series_volIII_fig28.docpng \
-	books/en/images/tutorial_series_volIII_fig29.docpng
+	books/en/images/tutorial_series_volIII_fig01.png \
+	books/en/images/tutorial_series_volIII_fig02.png \
+	books/en/images/tutorial_series_volIII_fig03.png \
+	books/en/images/tutorial_series_volIII_fig04.png \
+	books/en/images/tutorial_series_volIII_fig05.png \
+	books/en/images/tutorial_series_volIII_fig06.png \
+	books/en/images/tutorial_series_volIII_fig07.png \
+	books/en/images/tutorial_series_volIII_fig08.png \
+	books/en/images/tutorial_series_volIII_fig09.png \
+	books/en/images/tutorial_series_volIII_fig10.png \
+	books/en/images/tutorial_series_volIII_fig11.png \
+	books/en/images/tutorial_series_volIII_fig12.png \
+	books/en/images/tutorial_series_volIII_fig13.png \
+	books/en/images/tutorial_series_volIII_fig14.png \
+	books/en/images/tutorial_series_volIII_fig15.png \
+	books/en/images/tutorial_series_volIII_fig16.png \
+	books/en/images/tutorial_series_volIII_fig17.png \
+	books/en/images/tutorial_series_volIII_fig18.png \
+	books/en/images/tutorial_series_volIII_fig19.png \
+	books/en/images/tutorial_series_volIII_fig20.png \
+	books/en/images/tutorial_series_volIII_fig21.png \
+	books/en/images/tutorial_series_volIII_fig22.png \
+	books/en/images/tutorial_series_volIII_fig23.png \
+	books/en/images/tutorial_series_volIII_fig24.png \
+	books/en/images/tutorial_series_volIII_fig25.png \
+	books/en/images/tutorial_series_volIII_fig26.png \
+	books/en/images/tutorial_series_volIII_fig27.png \
+	books/en/images/tutorial_series_volIII_fig28.png \
+	books/en/images/tutorial_series_volIII_fig29.png
 
 booksDOCBOOK_ENhtmldir = $(BRLCAD_DATA)/html/books/en
 booksDOCBOOK_ENhtml_DATA = \
@@ -351,10 +339,6 @@ BUILTBOOKS_ENHTML = \
 booksDOCBOOK_ENhtmlimagesdir = $(BRLCAD_DATA)/html/books/en/images
 booksDOCBOOK_ENhtmlimages_DATA = \
 	$(BUILTBOOKS_ENIMAGES)
-
-BUILTBOOKS_ENIMAGES = \
-	${booksDOCBOOK_EN_IMAGES:docpng=png}
-
 
 if BUILD_PDF_DOCS
 
@@ -489,16 +473,12 @@ man1DOCBOOK_ENpdf_DATA = $(BUILTMAN_ENPDF)
 
 
 BUILT_SOURCES = \
-	$(BUILTARTICLES_ENIMAGES) \
 	$(BUILTARTICLES_ENHTML) \
 	$(BUILTARTICLES_ENPDF) \
-	$(BUILTLESSONS_ENIMAGES) \
 	$(BUILTLESSONS_ENHTML) \
 	$(BUILTLESSONS_ENPDF) \
-	$(BUILTBOOKS_ENIMAGES) \
 	$(BUILTBOOKS_ENHTML) \
 	$(BUILTBOOKS_ENPDF) \
-	$(BUILTSPECS_ENIMAGES) \
 	$(BUILTSPECS_ENHTML) \
 	$(BUILTSPECS_ENPDF) \
 	$(BUILTMAN_ENHTML) \
@@ -515,10 +495,6 @@ MOSTLYCLEANFILES = \
          $(BUILTMAN_EN_SOURCES)
 
 clean-generic: mostlyclean-generic
-	-rmdir -p articles/en/images
-	-rmdir -p books/en/images
-	-rmdir -p lessons/en/images
-	-rmdir -p specifications/en
 	-rmdir -p system/man1/en
 
 EXTRA_DIST = \
@@ -537,6 +513,7 @@ EXTRA_DIST = \
 	books/README \
 	books/en/tutorial_series_authors.xml \
 	catalog.xml \
+	fop.xconf.in \
 	resources \
 	system/man1/README \
 	system/man1/mged_cmd_template.xml

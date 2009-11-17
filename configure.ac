@@ -3883,6 +3883,7 @@ AC_CONFIG_FILES([
 	doc/Makefile
 	doc/book/Makefile
 	doc/docbook/Makefile
+	doc/docbook/fop.xconf
 	doc/html/Makefile
 	doc/html/ReleaseNotes/Makefile
 	doc/html/ReleaseNotes/Rel5.0/Makefile

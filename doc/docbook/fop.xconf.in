@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<fop version="1.0">
+  <!-- Base URL for resolving relative URLs -->
+  <!-- It is necessary that this directory be two levels below -->
+  <!-- the doc/docbook level in order to resolve ../../* image -->
+  <!-- links properly.  It is somewhat arbitrarily set to system/man1 -->
+  <!-- but could be set to any valid directory of the correct depth. -->
+  <!-- This also constrains how images may be referenced in docbook -->
+  <!-- xml files - ALL image references must be defined so that -->
+  <!-- the base path below works. This referencing is needed so -->
+  <!-- that xincluded sections of documents referenced across -->
+  <!-- multiple directories can still find their target images. -->
+  <base>@srcdir@/system/man1</base>
+</fop>
+

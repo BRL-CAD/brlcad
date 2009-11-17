@@ -160,7 +160,7 @@
 	<title>Ballistic penetration model with transparent exterior.</title>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="images/tutorial_series_volIII_fig01.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../books/en/images/tutorial_series_volIII_fig01.png" format="PNG"></imagedata>
 	  </imageobject>
 	</mediaobject>
       </figure>
@@ -169,7 +169,7 @@
 	<title>External detail commonly used in radar signature models.</title>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="images/tutorial_series_volIII_fig02.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../books/en/images/tutorial_series_volIII_fig02.png" format="PNG"></imagedata>
 	  </imageobject>
 	</mediaobject>
       </figure>
@@ -247,7 +247,7 @@
 	<title>M-O-D-E-L: the five-stage modeling process.</title>
 	<mediaobject>
 	  <imageobject>
-	    <imagedata align = "center" fileref="images/tutorial_series_volIII_fig03.png" format="PNG"></imagedata>
+	    <imagedata align = "center" fileref="../../books/en/images/tutorial_series_volIII_fig03.png" format="PNG"></imagedata>
 	  </imageobject>
 	</mediaobject>
       </figure>
@@ -300,7 +300,7 @@
 		Blueprints/schematics/mechanical drawings/photographs
 	      </para>
 	      <para>
-		<inlinegraphic fileref="images/tutorial_series_volIII_fig20.png" />
+		<inlinegraphic fileref="../../books/en/images/tutorial_series_volIII_fig20.png" />
 	      </para>
 	    </entry>
 	    <entry>
@@ -320,7 +320,7 @@
 		Measurable objects
 	      </para>
 	      <para>
-		<inlinegraphic fileref="images/tutorial_series_volIII_fig21.png" />
+		<inlinegraphic fileref="../../books/en/images/tutorial_series_volIII_fig21.png" />
 	      </para>
 	    </entry>
 	    <entry>
@@ -338,7 +338,7 @@
 		Converted geometry
 	      </para>
 	      <para>
-		<inlinegraphic fileref="images/tutorial_series_volIII_fig22.png" />
+		<inlinegraphic fileref="../../books/en/images/tutorial_series_volIII_fig22.png" />
 	      </para>
 	    </entry>
 	    <entry>
@@ -937,7 +937,7 @@ mvall oldname newname
 	    <title>Location-based structure of the radio in Volume II.</title>
 	    <mediaobject>
 	      <imageobject>
-		<imagedata align = "center" fileref="images/tutorial_series_volIII_fig04.png" format="PNG"></imagedata>
+		<imagedata align = "center" fileref="../../books/en/images/tutorial_series_volIII_fig04.png" format="PNG"></imagedata>
 	      </imageobject>
 	    </mediaobject>
 	  </figure>
@@ -945,7 +945,7 @@ mvall oldname newname
 	    <title>Function-based structure of the radio in Volume II.</title>
 	    <mediaobject>
 	      <imageobject>
-		<imagedata align = "center" fileref="images/tutorial_series_volIII_fig05.png" format="PNG"></imagedata>
+		<imagedata align = "center" fileref="../../books/en/images/tutorial_series_volIII_fig05.png" format="PNG"></imagedata>
 	      </imageobject>
 	    </mediaobject>
 	  </figure>
@@ -1128,7 +1128,7 @@ mvall oldname newname
 		      <informalfigure>
 			<mediaobject>
 			  <imageobject>
-			    <imagedata align = "center" fileref="images/tutorial_series_volIII_fig24.png" format="PNG"></imagedata>
+			    <imagedata align = "center" fileref="../../books/en/images/tutorial_series_volIII_fig24.png" format="PNG"></imagedata>
 			  </imageobject>
 			  <caption>
 			    <para>
@@ -1156,7 +1156,7 @@ mvall oldname newname
 			  Illegal variations include the following: 
 			</para>
 			<para>
-			  <inlinegraphic fileref="images/tutorial_series_volIII_fig23.png" />
+			  <inlinegraphic fileref="../../books/en/images/tutorial_series_volIII_fig23.png" />
 			</para>
 		      </listitem>
 		    </itemizedlist>
@@ -1168,7 +1168,7 @@ mvall oldname newname
 		      <informalfigure>
 			<mediaobject>
 			  <imageobject>
-			    <imagedata align = "center" fileref="images/tutorial_series_volIII_fig25.png" format="PNG"></imagedata>
+			    <imagedata align = "center" fileref="../../books/en/images/tutorial_series_volIII_fig25.png" format="PNG"></imagedata>
 			  </imageobject>
 			  <caption>
 			    <para>
@@ -1201,7 +1201,7 @@ mvall oldname newname
 		      <informalfigure>
 			<mediaobject>
 			  <imageobject>
-			    <imagedata align = "center" fileref="images/tutorial_series_volIII_fig26.png" format="PNG"></imagedata>
+			    <imagedata align = "center" fileref="../../books/en/images/tutorial_series_volIII_fig26.png" format="PNG"></imagedata>
 			  </imageobject>
 			  <caption>
 			    <para>
@@ -1243,7 +1243,7 @@ mvall oldname newname
 		      <informalfigure>
 			<mediaobject>
 			  <imageobject>
-			    <imagedata align = "center" fileref="images/tutorial_series_volIII_fig27.png" format="PNG"></imagedata>
+			    <imagedata align = "center" fileref="../../books/en/images/tutorial_series_volIII_fig27.png" format="PNG"></imagedata>
 			  </imageobject>
 			  <caption>
 			    <para>
@@ -1291,7 +1291,7 @@ mvall oldname newname
 		      <informalfigure>
 			<mediaobject>
 			  <imageobject>
-			    <imagedata align = "center" fileref="images/tutorial_series_volIII_fig28.png" format="PNG"></imagedata>
+			    <imagedata align = "center" fileref="../../books/en/images/tutorial_series_volIII_fig28.png" format="PNG"></imagedata>
 			  </imageobject>
 			  <caption>
 			    <para>
@@ -1333,7 +1333,7 @@ mvall oldname newname
 		      <informalfigure>
 			<mediaobject>
 			  <imageobject>
-			    <imagedata align = "center" fileref="images/tutorial_series_volIII_fig29.png"></imagedata>
+			    <imagedata align = "center" fileref="../../books/en/images/tutorial_series_volIII_fig29.png"></imagedata>
 			  </imageobject>
 			  <caption>
 			    <para>
@@ -1596,7 +1596,7 @@ mvall oldname newname
 	    <title>Coordinate axes of a turreted ground vehicle.</title>
 	    <mediaobject>
 	      <imageobject>
-		<imagedata align = "center" fileref="images/tutorial_series_volIII_fig06.png" format="PNG"></imagedata>
+		<imagedata align = "center" fileref="../../books/en/images/tutorial_series_volIII_fig06.png" format="PNG"></imagedata>
 	      </imageobject>
 	    </mediaobject>
 	  </figure>
@@ -1604,7 +1604,7 @@ mvall oldname newname
 	    <title>Coordinate axes of a nonturreted ground vehicle.</title>
 	    <mediaobject>
 	      <imageobject>
-		<imagedata align = "center" fileref="images/tutorial_series_volIII_fig07.png" format="PNG"></imagedata>
+		<imagedata align = "center" fileref="../../books/en/images/tutorial_series_volIII_fig07.png" format="PNG"></imagedata>
 	      </imageobject>
 	    </mediaobject>
 	  </figure>
@@ -1612,7 +1612,7 @@ mvall oldname newname
 	    <title>Coordinate axes of a fixed-wing aircraft.</title>
 	    <mediaobject>
 	      <imageobject>
-		<imagedata align = "center" fileref="images/tutorial_series_volIII_fig08.png" format="PNG"></imagedata>
+		<imagedata align = "center" fileref="../../books/en/images/tutorial_series_volIII_fig08.png" format="PNG"></imagedata>
 	      </imageobject>
 	    </mediaobject>
 	  </figure>
@@ -1620,7 +1620,7 @@ mvall oldname newname
 	    <title>Coordinate axes of a rotary-wing aircraft.</title>
 	    <mediaobject>
 	      <imageobject>
-		<imagedata align = "center" fileref="images/tutorial_series_volIII_fig09.png" format="PNG"></imagedata>
+		<imagedata align = "center" fileref="../../books/en/images/tutorial_series_volIII_fig09.png" format="PNG"></imagedata>
 	      </imageobject>
 	    </mediaobject>
 	  </figure>
@@ -1660,7 +1660,7 @@ mvall oldname newname
 	    <title>Building multiple occurrences through replication.</title>
 	    <mediaobject>
 	      <imageobject>
-		<imagedata align = "center" fileref="images/tutorial_series_volIII_fig10.png" format="PNG"></imagedata>
+		<imagedata align = "center" fileref="../../books/en/images/tutorial_series_volIII_fig10.png" format="PNG"></imagedata>
 	      </imageobject>
 	    </mediaobject>
 	  </figure>
@@ -1669,7 +1669,7 @@ mvall oldname newname
 	    <title>Building multiple occurrences through referencing.</title>
 	    <mediaobject>
 	      <imageobject>
-		<imagedata align = "center" fileref="images/tutorial_series_volIII_fig11.png" format="PNG"></imagedata>
+		<imagedata align = "center" fileref="../../books/en/images/tutorial_series_volIII_fig11.png" format="PNG"></imagedata>
 	      </imageobject>
 	    </mediaobject>
 	  </figure>
@@ -1903,7 +1903,7 @@ mged>  dbconcat [-s, -p] filename.g [prefix]
 	    <title>Target geometry.</title>
 	    <mediaobject>
 	      <imageobject>
-		<imagedata align = "center" fileref="images/tutorial_series_volIII_fig12.png" format="PNG"></imagedata>
+		<imagedata align = "center" fileref="../../books/en/images/tutorial_series_volIII_fig12.png" format="PNG"></imagedata>
 	      </imageobject>
 	    </mediaobject>
 	  </figure>
@@ -1911,7 +1911,7 @@ mged>  dbconcat [-s, -p] filename.g [prefix]
 	    <title>Example of an Overly Large Bounding Primitive.</title>
 	    <mediaobject>
 	      <imageobject>
-		<imagedata align = "center" fileref="images/tutorial_series_volIII_fig13.png" format="PNG"></imagedata>
+		<imagedata align = "center" fileref="../../books/en/images/tutorial_series_volIII_fig13.png" format="PNG"></imagedata>
 	      </imageobject>
 	    </mediaobject>
 	  </figure>
@@ -1919,7 +1919,7 @@ mged>  dbconcat [-s, -p] filename.g [prefix]
 	    <title>Example of a compact bounding primitive.</title>
 	    <mediaobject>
 	      <imageobject>
-		<imagedata align = "center" fileref="images/tutorial_series_volIII_fig14.png" format="PNG"></imagedata>
+		<imagedata align = "center" fileref="../../books/en/images/tutorial_series_volIII_fig14.png" format="PNG"></imagedata>
 	      </imageobject>
 	    </mediaobject>
 	  </figure>
@@ -1957,7 +1957,7 @@ mged>  dbconcat [-s, -p] filename.g [prefix]
 	      <title>Example of grouping objects for articulation.</title>
 	    <mediaobject>
 	      <imageobject>
-		<imagedata align = "center" fileref="images/tutorial_series_volIII_fig15.png" format="PNG"></imagedata>
+		<imagedata align = "center" fileref="../../books/en/images/tutorial_series_volIII_fig15.png" format="PNG"></imagedata>
 	      </imageobject>
 	    </mediaobject>
 	    </figure>
@@ -2018,7 +2018,7 @@ mged>  dbconcat [-s, -p] filename.g [prefix]
 	    <title>Sample Boolean operations.</title>
 	    <mediaobject>
 	      <imageobject>
-		<imagedata align = "center" fileref="images/tutorial_series_volIII_fig16.png" format="PNG"></imagedata>
+		<imagedata align = "center" fileref="../../books/en/images/tutorial_series_volIII_fig16.png" format="PNG"></imagedata>
 	      </imageobject>
 	    </mediaobject>
 	  </figure>
@@ -2107,7 +2107,7 @@ comb comb_name u a - b + c
 	    <title>Properly (top) and improperly (bottom) ordered regions.</title>
 	    <mediaobject>
 	      <imageobject>
-		<imagedata align = "center" fileref="images/tutorial_series_volIII_fig17.png" format="PNG"></imagedata>
+		<imagedata align = "center" fileref="../../books/en/images/tutorial_series_volIII_fig17.png" format="PNG"></imagedata>
 	      </imageobject>
 	    </mediaobject>
 	  </figure>
@@ -2993,7 +2993,7 @@ comb comb_name u a - b + c
       <title>Shotline through a tank.</title>
       <mediaobject>
 	<imageobject>
-	  <imagedata align = "center" fileref="images/tutorial_series_volIII_fig18.png" format="PNG"></imagedata>
+	  <imagedata align = "center" fileref="../../books/en/images/tutorial_series_volIII_fig18.png" format="PNG"></imagedata>
 	</imageobject>
       </mediaobject>
     </figure>
@@ -3067,7 +3067,7 @@ comb comb_name u a - b + c
       <title>Example of overlaps in the graphics window.</title>
       <mediaobject>
 	<imageobject>
-	  <imagedata align = "center" fileref="images/tutorial_series_volIII_fig19.png" format="PNG"></imagedata>
+	  <imagedata align = "center" fileref="../../books/en/images/tutorial_series_volIII_fig19.png" format="PNG"></imagedata>
 	</imageobject>
       </mediaobject>
     </figure>
@@ -3088,7 +3088,7 @@ comb comb_name u a - b + c
       <title>Example of an overlap report in the command window.</title>
       <mediaobject>
 	<imageobject>
-	  <imagedata align = "center" fileref="images/tutorial_series_volIII_fig20.png" format="PNG"></imagedata>
+	  <imagedata align = "center" fileref="../../books/en/images/tutorial_series_volIII_fig20.png" format="PNG"></imagedata>
 	</imageobject>
       </mediaobject>
     </figure>
