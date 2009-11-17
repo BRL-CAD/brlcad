@@ -109,7 +109,7 @@ static char *kn2_knobs[] = {
 static int button0 = 0;
 #endif
 
-#ifdef HAVE_X11_XLIB_H
+#ifdef HAVE_X11_TYPES
 int
 doEvent(ClientData clientData, XEvent *eventPtr)
 {
@@ -224,7 +224,7 @@ common_dbtext(char *str)
 #endif
 
 
-#ifdef HAVE_X11_XLIB_H
+#ifdef HAVE_X11_TYPES
 HIDDEN void
 motion_event_handler(XMotionEvent *xmotion)
 {
