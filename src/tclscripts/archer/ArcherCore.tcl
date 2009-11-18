@@ -126,6 +126,7 @@ namespace eval ArcherCore {
 	method setSave {}
 	method getLastSelectedDir  {}
 	method refreshDisplay      {}
+	method putString           {_str}
 
 	# Commands exposed to the user via the command line.
 	# More to be added later...
@@ -3278,6 +3279,10 @@ Popup Menu    Right or Ctrl-Left
     } else {
 	$mCurrentDisplay refresh
     }
+}
+
+::itcl::body ArcherCore::putString {_str} {
+    $itk_component(cmd) putstring $_str
 }
 
 ::itcl::body ArcherCore::mouseRay {_dm _x _y} {
