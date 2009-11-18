@@ -502,7 +502,7 @@ bu_prmem(const char *str)
 	}
     }
 
-    fprintf(stderr, "%lu allocation entries\n", count);
+    fprintf(stderr, "%lu allocation entries\n", (unsigned long)count);
 
 
 }
