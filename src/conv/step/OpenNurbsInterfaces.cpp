@@ -1462,6 +1462,7 @@ Circle::LoadONBrep(ON_Brep *brep)
 			//must be point trim so calc t,s from points
 			ON_3dPoint pnt1 = trim_startpoint;
 			ON_3dPoint pnt2 = trim_endpoint;
+
 			c.ClosestPointTo(pnt1,&t);
 			c.ClosestPointTo(pnt2,&s);
 			if (s < t) {
@@ -1719,6 +1720,277 @@ intersectLines(ON_Line &l1,ON_Line &l2, ON_3dPoint &out) {
 	return i;
 }
 
+void
+Ellipse::SetParameterTrim(double start, double end) {
+	double startpoint[3];
+	double endpoint[3];
+
+	t = start*LocalUnits::planeangle;
+	s = end*LocalUnits::planeangle;
+
+	if (s < t) {
+		t = t - 2*ON_PI;
+	}
+	ON_3dPoint origin=GetOrigin();
+	ON_3dVector xaxis=GetXAxis();
+	ON_3dVector yaxis=GetYAxis();
+	ON_3dPoint center = origin * LocalUnits::length;
+
+	double a = semi_axis_1 * LocalUnits::length;
+	double b = semi_axis_2 * LocalUnits::length;
+	double yt = b * sin(t);
+	double xt = a * cos(t);
+
+	double ys = b * sin(s);
+	double xs = a * cos(s);
+
+	ON_3dVector X = xt * xaxis;
+	ON_3dVector Y = yt * yaxis;
+	ON_3dPoint P = center + X + Y;
+
+	startpoint[0] = P.x;
+	startpoint[1] = P.y;
+	startpoint[2] = P.z;
+
+	X = xs * xaxis;
+	Y = ys * yaxis;
+	P = center + X + Y;
+
+	endpoint[0] = P.x;
+	endpoint[1] = P.y;
+	endpoint[2] = P.z;
+
+	SetPointTrim(startpoint, endpoint);
+}
+
+bool
+Ellipse::LoadONBrep(ON_Brep *brep)
+{
+    ON_TextLog dump;
+
+    //if (ON_id >= 0)
+    //	return true; // already loaded
+
+    ON_3dPoint origin = GetOrigin();
+    ON_3dVector xaxis = GetXAxis();
+    ON_3dVector yaxis = GetYAxis();
+
+    origin = origin * LocalUnits::length;
+    xaxis.Unitize();
+    yaxis.Unitize();
+
+    ON_Plane p(origin, xaxis, yaxis);
+
+    ON_3dPoint center = origin;
+    double a = semi_axis_1 * LocalUnits::length;
+    double b = semi_axis_2 * LocalUnits::length;
+
+    double eccentricity = sqrt(1.0 - (b * b) / (a * a));
+    ON_3dPoint focus_1 = center + (eccentricity * a) * xaxis;
+    ON_3dPoint focus_2 = center - (eccentricity * a) * xaxis;
+
+    ON_3dPoint pnt1;
+    ON_3dPoint pnt2;
+    if (trimmed) { //explicitly trimmed
+	if (parameter_trim) {
+	    if (s < t) {
+		double tmp = s;
+		s = t;
+		t = s;
+	    }
+	    //TODO: check sense agreement
+	} else {
+	    //must be point trim so calc t,s from points
+	    pnt1 = trim_startpoint;
+	    pnt2 = trim_endpoint;
+	    // NOTE: point from point trim entity already converted to proper units
+
+	    ON_3dVector fp = pnt1 - center;
+	    double xdot = fp * xaxis;
+	    double ydot = fp * yaxis;
+	    t = atan2(ydot/b, xdot/a);
+
+	    fp = pnt2 - center;
+	    xdot = fp * xaxis;
+	    ydot = fp * yaxis;
+	    s = atan2(ydot/b, xdot/a);
+
+	    if (s < t) {
+		double tmp = s;
+		s = t;
+		t = s;
+	    }
+	}
+    } else if ((start != NULL) && (end != NULL)) { //not explicit let's try edge vertices
+	pnt1 = start->Point3d();
+	pnt2 = end->Point3d();
+
+	pnt1 = pnt1 * LocalUnits::length;
+	pnt2 = pnt2 * LocalUnits::length;
+
+	ON_3dVector fp = pnt1 - center;
+	double xdot = fp * xaxis;
+	double ydot = fp * yaxis;
+	t = atan2(ydot/b, xdot/a);
+
+	fp = pnt2 - center;
+	xdot = fp * xaxis;
+	ydot = fp * yaxis;
+	s = atan2(ydot/b, xdot/a);
+
+	if (s < t) {
+	    double tmp = s;
+	    s = t;
+	    t = s;
+	}
+    } else {
+	cerr << "Error: ::LoadONBrep(ON_Brep *brep) not endpoints for specified for curve " << entityname << endl;
+	return false;
+    }
+    double yt = b * sin(t);
+    double xt = a * cos(t);
+
+    double ys = b * sin(s);
+    double xs = a * cos(s);
+
+    double m = (t+s)/2.0;
+    double ym = b * sin(m);
+    double xm = a * cos(m);
+
+    ON_3dPoint P0 = center + xt * xaxis + yt * yaxis;
+    ON_3dPoint PX = center + xm * xaxis + ym * yaxis;
+    ON_3dPoint P2 = center + xs * xaxis + ys * yaxis;
+
+    // Using foci get tangent of ellipse at P1
+    // For ellipse tangent is the perpendicular (in plane)
+    // to the bisector of vectors P1F1 and P1F2
+    ON_3dVector d1 = focus_1 - P0;
+    d1.Unitize();
+    ON_3dVector d2 = focus_2 - P0;
+    d2.Unitize();
+    ON_3dVector v1 = d1 + d2;
+    ON_3dVector v2 = ON_CrossProduct(d1,v1);
+    v1 = ON_CrossProduct(v1,v2);
+    v1.Unitize();
+
+    ON_3dPoint V1 = P0 + 10.0 * v1;
+    ON_Line tangent1(P0,V1);
+
+    d1 = focus_1 - P2;
+    d1.Unitize();
+    d2 = focus_2 - P2;
+    d2.Unitize();
+    v1 = d1 + d2;
+    v2 = ON_CrossProduct(d1,v1);
+    v1 = ON_CrossProduct(v1,v2);
+    v1.Unitize();
+
+    V1 = P2 + 5 * v1;
+    ON_Line tangent2(P2,V1);
+
+    ON_3dPoint P1;
+    if (intersectLines(tangent1,tangent2,P1) != 1 ) {
+	cerr << entityname << ": Error: Control point can not be calculated." << endl;
+	return false;
+    }
+
+    ON_Line l1(P1,center);
+    ON_Line l2(P0,P2);
+    ON_3dPoint PM;
+    if (intersectLines(l1,l2,PM) != 1 ) {
+	cerr << entityname << ": Error: Control point can not be calculated." << endl;
+	return false;
+    }
+
+    double mx = PM.DistanceTo(PX);
+    double mp1 = PM.DistanceTo(P1);
+    double R = mx / mp1;
+    double w = R / (1 - R);
+    //TODO: inverse arc s->t for testing
+    //w = -w;
+
+    P1 = (w) * P1; // must pre-weight before putting into NURB
+
+    // add hyperbola weightings
+    ON_3dPointArray cpts(3);
+    cpts.Append(P0);
+    cpts.Append(P1);
+    cpts.Append(P2);
+    ON_BezierCurve *bcurve = new ON_BezierCurve(cpts);
+    bcurve->MakeRational();
+    bcurve->SetWeight(1, w);
+
+    ON_NurbsCurve fullhypernurbscurve;
+    ON_NurbsCurve* hypernurbscurve = ON_NurbsCurve::New();
+
+    bcurve->GetNurbForm(fullhypernurbscurve);
+    fullhypernurbscurve.GetNurbForm(*hypernurbscurve);
+
+    ON_id = brep->AddEdgeCurve(hypernurbscurve);
+
+    return true;
+}
+
+void
+Hyperbola::SetParameterTrim(double start, double end) {
+	double startpoint[3];
+	double endpoint[3];
+
+	t = start;
+	s = end;
+
+	ON_3dPoint origin=GetOrigin();
+	ON_3dVector norm=GetNormal();
+	ON_3dVector xaxis=GetXAxis();
+	ON_3dVector yaxis=GetYAxis();
+
+	origin = origin;
+
+	ON_Plane p(origin,xaxis,yaxis);
+
+	ON_3dPoint center = origin;
+	double a = semi_axis;
+	double b = semi_imag_axis;
+
+	double e = sqrt(1.0 + (b*b)/(a*a));
+	double fd = a/e;
+
+	double theta = atan(b/a);
+
+	double sint = sin(theta);
+	double cost = cos(theta);
+
+	if (s < t) {
+		double tmp = s;
+		s = t;
+		t = s;
+	}
+
+	double y = b*tan(t);
+	double x = a/cos(t);
+
+	ON_3dVector X = x * xaxis;
+	ON_3dVector Y = y * yaxis;
+	ON_3dPoint P = center + X + Y;
+
+	startpoint[0] = P.x;
+	startpoint[1] = P.y;
+	startpoint[2] = P.z;
+
+	y = b*tan(s);
+	x = a/cos(s);
+
+	X = x * xaxis;
+	Y = y * yaxis;
+	P = center + X + Y;
+
+	endpoint[0] = P.x;
+	endpoint[1] = P.y;
+	endpoint[2] = P.z;
+
+	SetPointTrim(startpoint, endpoint);
+}
+
 bool
 Hyperbola::LoadONBrep(ON_Brep *brep)
 {
@@ -1761,9 +2033,7 @@ Hyperbola::LoadONBrep(ON_Brep *brep)
 				//must be point trim so calc t,s from points
 				pnt1 = trim_startpoint;
 				pnt2 = trim_endpoint;
-
-				pnt1 = pnt1*LocalUnits::length;
-				pnt2 = pnt2*LocalUnits::length;
+				// NOTE: point from point trim entity already converted to proper units
 
 				ON_3dVector fp = pnt1 - focus;
 				double ydot = fp*yaxis;
@@ -2357,9 +2627,7 @@ Parabola::LoadONBrep(ON_Brep *brep)
 			//must be point trim so calc t,s from points
 			ON_3dPoint pnt1 = trim_startpoint;
 			ON_3dPoint pnt2 = trim_endpoint;
-
-			pnt1 = pnt1*LocalUnits::length;
-			pnt2 = pnt2*LocalUnits::length;
+			// NOTE: point from point trim entity already converted to proper units
 
 			ON_3dVector fp = pnt1 - focus;
 			double dotp = fp*yaxis;
