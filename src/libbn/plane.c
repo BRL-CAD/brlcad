@@ -2583,7 +2583,7 @@ bn_hlf_class(const fastf_t *half_eqn, const fastf_t *min, const fastf_t *max, co
     CHECK_PT(max[X], max[Y], max[Z]);
     if (class == BN_CLASSIFY_UNIMPLEMENTED)
 	bu_log("bn_hlf_class: error in implementation\
-min = (%g, %g, %g), max = (%g, %g, %g), half_eqn = (%0f, %0f, %0f, %0f)\n",
+min = (%g, %g, %g), max = (%g, %g, %g), half_eqn = (%d, %d, %d, %d)\n",
 	       V3ARGS(min), V3ARGS(max), V3ARGS(half_eqn),
 	       half_eqn[3]);
     return class;
