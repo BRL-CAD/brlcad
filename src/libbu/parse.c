@@ -2184,7 +2184,7 @@ bu_structparse_argv(struct bu_vls *logstr,
 			    bu_vls_printf(logstr,
 					  "not enough values for \"%V\" argument: should be %ld",
 					  sdp->sp_name,
-					  (long int)sdp->sp_count);
+					  sdp->sp_count);
 			    return BRLCAD_ERROR;
 			}
 
