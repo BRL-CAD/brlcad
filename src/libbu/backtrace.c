@@ -48,6 +48,11 @@
 #include "bu.h"
 
 
+/* c99 doesn't declare these */
+extern int kill(pid_t, int);
+extern int fileno(FILE*);
+
+
 /* so we don't have to worry as much about stack stomping */
 #define BT_BUFSIZE 4096
 static char buffer[BT_BUFSIZE] = {0};

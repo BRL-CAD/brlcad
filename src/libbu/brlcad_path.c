@@ -85,9 +85,11 @@ _bu_ipwd()
     ipwd = getenv("PWD"); /* not our memory to free */
 
     if (!ipwd && (ipwd = bu_which("pwd"))) {
-	FILE *fp;
+	FILE *fp = NULL;
 
+#ifdef HAVE_POPEN
 	fp = popen(ipwd, "r");
+#endif
 	if (fp) {
 	    if (bu_fgets(buffer, MAXPATHLEN, fp)) {
 		ipwd = buffer;
