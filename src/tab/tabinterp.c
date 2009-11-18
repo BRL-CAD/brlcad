@@ -779,7 +779,7 @@ rate_interpolate( struct chan *chp, fastf_t *times )
     rate = chp->c_ival[1];
 
     for ( t=0; t < o_len; t++ )  {
-	chp->c_oval[t] = ival + rate * times[t];
+	chp->c_oval[t] = ival + rate * t;
     }
 }
 
