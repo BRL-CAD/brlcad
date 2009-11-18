@@ -52,7 +52,10 @@
 #ifdef HAVE_KILL
 extern int kill(pid_t, int);
 #endif
+
+#ifndef fileno 
 extern int fileno(FILE*);
+#endif
 
 
 /* so we don't have to worry as much about stack stomping */
