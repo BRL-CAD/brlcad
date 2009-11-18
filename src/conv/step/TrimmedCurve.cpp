@@ -26,6 +26,7 @@
 
 #include "STEPWrapper.h"
 #include "Factory.h"
+#include "LocalUnits.h"
 #include "TrimmingSelect.h"
 
 #include "TrimmedCurve.h"
@@ -205,26 +206,30 @@ TrimmedCurve::LoadONBrep(ON_Brep *brep)
 	if (ts->IsParameterTrim()) {
 		trimmed = true;
 		parameter_trim = true;
-		t = ts->GetParameterTrim();
+		t = ts->GetParameterTrim(); // no units conversion here because we're not
+					    // sure what type of parameter it is until we
+					    // look at the entity it belongs to.
 	} else {
 		const double *point=ts->GetPointTrim();
 		trimmed = true;
 		parameter_trim = false;
 		for(int i=0;i<3;i++)
-			trim_startpoint[i] = point[i];
+			trim_startpoint[i] = point[i] * LocalUnits::length;
 	}
 	i = trim_2.begin();
 	TrimmingSelect *te = (*i);
 	if (te->IsParameterTrim()) {
 		trimmed = true;
 		parameter_trim = true;
-		s = te->GetParameterTrim();
+		s = te->GetParameterTrim(); // no units conversion here because we're not
+					    // sure what type of parameter it is until we
+					    // look at the entity it belongs to.
 	} else {
 		const double *point=te->GetPointTrim();
 		trimmed = true;
 		parameter_trim = false;
 		for(int i=0;i<3;i++)
-			trim_endpoint[i] = point[i];
+			trim_endpoint[i] = point[i] * LocalUnits::length;
 	}
 
 	if (parameter_trim) {
