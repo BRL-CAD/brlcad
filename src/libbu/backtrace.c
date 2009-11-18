@@ -49,7 +49,9 @@
 
 
 /* c99 doesn't declare these */
+#ifdef HAVE_KILL
 extern int kill(pid_t, int);
+#endif
 extern int fileno(FILE*);
 
 

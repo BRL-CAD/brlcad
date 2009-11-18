@@ -30,6 +30,11 @@
 #include "bu.h"
 
 
+/* c99 doesn't declare these */
+extern int fileno(FILE*);
+extern int fchmod(int, mode_t);
+
+
 int
 bu_fchmod(FILE *fp,
 	  unsigned long pmode)

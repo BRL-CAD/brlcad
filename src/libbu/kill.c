@@ -28,6 +28,12 @@
 #include "bu.h"
 
 
+/* c99 doesn't declare these */
+#ifdef HAVE_KILL
+extern int kill(pid_t, int);
+#endif
+
+
 int
 bu_terminate(int process)
 {

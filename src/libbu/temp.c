@@ -36,6 +36,10 @@
 #define _TF_FAIL "WARNING: Unable to create a temporary file\n"
 
 
+/* c99 doesn't declare these */
+extern FILE *fdopen(int, const char *);
+
+
 struct _bu_tf_list {
     struct bu_list l;
     struct bu_vls fn;
@@ -152,6 +156,9 @@ mkstemp(char *file_template)
 
     return fd;
 }
+#else
+/* for c99 strict, doesn't declare */
+extern int mkstemp(char *);
 #endif
 
 

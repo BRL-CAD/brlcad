@@ -30,6 +30,11 @@
 
 #include "bu.h"
 
+
+/* c99 doesn't declare these */
+extern FILE *fdopen(int, const char *);
+
+
 /*** bif flags ***/
 /* streaming output (like pix and bw) vs buffer output (like png) */
 #define BIF_STREAM 0x0
@@ -244,10 +249,10 @@ bu_image_save_open(char *filename, int format, int width, int height, int depth)
     if (format == BU_IMAGE_AUTO) {
 	char buf[BUFSIZ];
 	bif->format = guess_file_format(filename, buf);
-	bif->filename = strdup(buf);
+	bif->filename = bu_strdup(buf);
     } else {
 	bif->format = format;
-	bif->filename = strdup(filename);
+	bif->filename = bu_strdup(filename);
     }
 
     /* if we want the ability to "continue" a stopped output, this would be
