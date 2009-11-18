@@ -32,7 +32,10 @@
 
 /* c99 doesn't declare these */
 extern int fileno(FILE*);
+
+#ifdef HAVE_FCHMOD
 extern int fchmod(int, mode_t);
+#endif
 
 
 int
