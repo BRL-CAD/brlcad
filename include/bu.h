@@ -159,7 +159,7 @@ __BEGIN_DECLS
 #endif
 
 /* If we're compiling strict, turn attributes off */
-#if defined(__STRICT_ANSI__)
+#if defined(HAVE_STRICT_FLAGS)
 #  ifdef __attribute__
 #    undef __attribute__
 #  endif
