@@ -374,6 +374,9 @@ cm_times(int argc, char **argv)
     double a, b;
     register int i;
 
+    if (argc < 3)
+	bu_exit(1, "Internal error.  Unexpected argument count encountered.");
+
     a = atof(argv[1]);
     b = atof(argv[2]);
     fps = atoi(argv[3]);
@@ -591,6 +594,7 @@ rate_interpolate(struct chan *chp, fastf_t *times)
     register double ival;
     register double rate;
 
+    times = times; /* quell warning */
     if (chp->c_ilen != 2) {
 	bu_log("rate_interpolate:  only 2 points (ival & rate) may be specified\n");
 	return;
@@ -615,6 +619,7 @@ accel_interpolate(struct chan *chp, fastf_t *times)
     double mul;
     register double scale;
 
+    times = times; /* quell warning */
     if (chp->c_ilen != 2) {
 	bu_log("accel_interpolate:  only 2 points (ival & mul) may be specified\n");
 	return;
@@ -810,7 +815,9 @@ spline(register struct chan *chp, fastf_t *times)
     if (chp->c_periodic == 0)
 	linear_interpolate(chp, times);
 
-    if (chp->c_periodic && chp->c_ival[0] != chp->c_ival[chp->c_ilen-1]) {
+    if (chp->c_periodic
+	&& !NEAR_ZERO(chp->c_ival[0] - chp->c_ival[chp->c_ilen-1], SMALL_FASTF))
+    {
 	bu_log("spline(%s): endpoints don't match, replacing final data value\n", chp->c_itag);
 	chp->c_ival[chp->c_ilen-1] = chp->c_ival[0];
     }
@@ -1099,12 +1106,12 @@ cm_next(int argc, char **argv)
     if (argc > 3)  offset = atoi(argv[3]);
     /* If input channel not loaded, or not interpolated, error */
     if (chan[ichan].c_ilen <= 0 || chan[ichan].c_interp <= 0) {
-	bu_log("ERROR next: ichan %d not loaded yet\n");
+	bu_log("ERROR next: ichan %d not loaded yet\n", ichan);
 	return 0;
     }
     /* If output channel is loaded, error */
     if (chan[ochan].c_ilen > 0) {
-	bu_log("ERROR next: ochan %d previous loaded\n");
+	bu_log("ERROR next: ochan %d previous loaded\n", ochan);
 	return 0;
     }
     sprintf(buf, "next: value of chan %d [%d]", ichan, offset);
@@ -1173,8 +1180,7 @@ cm_help(int argc, char **argv)
 {
     register struct command_tab *ctp;
 
-    if (argc <= 1)
-    {
+    if (argc <= 1) {
 	bu_log("The following commands are available:\n\n");
 	for (ctp = cmdtab; ctp->ct_cmd != (char *)0; ctp++) {
 	    bu_log("%s %s\n\t%s\n",
@@ -1183,7 +1189,7 @@ cm_help(int argc, char **argv)
 	}
 	return 0;
     }
-    bu_log("Detailed help is not yet available.\n");
+    bu_log("%s: Detailed help is not yet available.\n", argv[0]);
     return -1;
 }
 
