@@ -1064,7 +1064,7 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
 
 	if ((ret = pthread_join(thread_tbl[x], NULL)) != 0) {
 	    /* badness happened */
-	    fprintf(stderr, "pthread_join(thread_tbl[%d]=0x%lx) ret=%d\n", x, (size_t)thread_tbl[x], ret);
+	    fprintf(stderr, "pthread_join(thread_tbl[%d]=%p) ret=%d\n", x, (void *)thread_tbl[x], ret);
 	}
 	nthreade++;
 	thread_tbl[x] = (rt_thread_t)-1;
