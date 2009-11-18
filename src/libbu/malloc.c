@@ -243,7 +243,7 @@ _bu_alloc(alloc_t type, unsigned int cnt, unsigned int sz, const char *str)
 #endif
 
     if (ptr==(char *)0) {
-	fprintf(stderr, "bu_malloc: Insufficient memory available, sbrk(0)=x%lx\n", (long)sbrk(0));
+	fprintf(stderr, "bu_malloc: Insufficient memory available\n");
 	bu_bomb("bu_malloc: malloc failure");
     }
     if (bu_debug&BU_DEBUG_MEM_CHECK) {
@@ -398,7 +398,7 @@ bu_realloc(register genptr_t ptr, size_t cnt, const char *str)
 	bu_semaphore_release(BU_SEM_SYSCALL);
     }
     if (ptr==(char *)0 && cnt > 0) {
-	fprintf(stderr, "bu_realloc: Insufficient memory available, sbrk(0)=x%lx\n", (long)sbrk(0));
+	fprintf(stderr, "bu_realloc: Insufficient memory available\n");
 	bu_bomb("bu_realloc: malloc failure");
     }
     if (bu_debug&BU_DEBUG_MEM_CHECK && ptr) {
