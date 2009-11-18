@@ -51,7 +51,7 @@ _rb_select(struct bu_rb_node *root, int order, int k)
     rank = rb_size(rb_left_child(root, order), order) + 1;
     if (root->rbn_tree->rbt_debug & BU_RB_DEBUG_OS)
 	bu_log("_rb_select(<%p>, %d, %d): rank=%d\n",
-	       root, order, k, rank);
+	       (void *)root, order, k, rank);
 
     if (rank == k)
 	return (root);
@@ -73,13 +73,13 @@ bu_rb_select(bu_rb_tree *tree, int order, int k)
     if ((k < 1) || (k > tree->rbt_nm_nodes)) {
 	if (tree->rbt_debug & BU_RB_DEBUG_OS)
 	    bu_log("bu_rb_select(<%p>, %d, %d): k out of bounds [1, %d]\n",
-		   tree, order, k, tree->rbt_nm_nodes);
+		   (void *)tree, order, k, tree->rbt_nm_nodes);
 	rb_current(tree) = rb_null(tree);
 	return (NULL);
     }
     if (tree->rbt_debug & BU_RB_DEBUG_OS)
 	bu_log("bu_rb_select(<%p>, %d, %d): root=<%p>\n",
-	       tree, order, k, rb_root(tree, order));
+	       (void *)tree, order, k, (void *)rb_root(tree, order));
 
     rb_current(tree) = node
 	= _rb_select(rb_root(tree, order), order, k);

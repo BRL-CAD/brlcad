@@ -36,7 +36,7 @@ bu_strlcatm(char *dst, const char *src, size_t size, const char *label)
 
     if (!dst && label) {
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
-	fprintf(stderr, "WARNING: NULL destination string, size %ld [%s]\n", size, label);
+	fprintf(stderr, "WARNING: NULL destination string, size %ld [%s]\n", (unsigned long)size, label);
 	bu_semaphore_release(BU_SEM_SYSCALL);
     }
     if (!dst || !src || size <= 0) {
@@ -51,17 +51,17 @@ bu_strlcatm(char *dst, const char *src, size_t size, const char *label)
 
     if (dstsize == size - 1) {
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
-	fprintf(stderr, "WARNING: [%s] concatenation string is already full at %ld chars\n", label, size-1);
+	fprintf(stderr, "WARNING: [%s] concatenation string is already full at %ld chars\n", label, (unsigned long)size-1);
 	bu_semaphore_release(BU_SEM_SYSCALL);
     } else if (dstsize > size - 1) {
 	/* probably missing null-termination or is not an initialized buffer */
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
-	fprintf(stderr, "WARNING: [%s] concatenation string is already full, exceeds size (%ld > %ld)\n", label, dstsize, size-1);
+	fprintf(stderr, "WARNING: [%s] concatenation string is already full, exceeds size (%ld > %ld)\n", label, (unsigned long)dstsize, (unsigned long)size-1);
 	bu_semaphore_release(BU_SEM_SYSCALL);
     } else if (srcsize >= size - dstsize) {
 	if (bu_debug) {
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);
-	    fprintf(stderr, "WARNING: [%s] string truncation, exceeding %ld char max concatenating %ld chars (started with %ld)\n", label, size-1, srcsize, dstsize);
+	    fprintf(stderr, "WARNING: [%s] string truncation, exceeding %ld char max concatenating %ld chars (started with %ld)\n", label, (unsigned long)size-1, (unsigned long)srcsize, (unsigned long)dstsize);
 	    bu_semaphore_release(BU_SEM_SYSCALL);
 	}
     }
@@ -92,7 +92,7 @@ bu_strlcpym(char *dst, const char *src, size_t size, const char *label)
 
     if (!dst && label) {
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
-	fprintf(stderr, "WARNING: NULL destination string, size %ld [%s]\n", size, label);
+	fprintf(stderr, "WARNING: NULL destination string, size %ld [%s]\n", (unsigned long)size, label);
 	bu_semaphore_release(BU_SEM_SYSCALL);
     }
     if (!dst || !src || size <= 0) {
@@ -107,7 +107,7 @@ bu_strlcpym(char *dst, const char *src, size_t size, const char *label)
     if (bu_debug) {
 	if (srcsize >= size) {
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);
-	    fprintf(stderr, "WARNING: [%s] string truncation, exceeding %ld char max copying %ld chars\n", label, size-1, srcsize);
+	    fprintf(stderr, "WARNING: [%s] string truncation, exceeding %ld char max copying %ld chars\n", label, (unsigned long)size-1, (unsigned long)srcsize);
 	    bu_semaphore_release(BU_SEM_SYSCALL);
 	}
     }
