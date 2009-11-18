@@ -158,14 +158,6 @@ __BEGIN_DECLS
 #  endif
 #endif
 
-/* If we're compiling strict, turn attributes off */
-#if defined(HAVE_STRICT_FLAGS)
-#  ifdef __attribute__
-#    undef __attribute__
-#  endif
-#  define __attribute__(ignore) /* empty */
-#endif
-
 /**
  * shorthand declaration of a printf-style functions
  */
@@ -176,6 +168,21 @@ __BEGIN_DECLS
  * shorthand declaration of a function that doesn't return
  */
 #define __BU_ATTR_NORETURN __attribute__ ((__noreturn__))
+
+/**
+ *  If we're compiling strict, turn off "format string vs arguments"
+ *  checks - BRL-CAD customizes the arguments to some of these function
+ *  types and that is a problem with strict checking
+ */
+#if defined(HAVE_STRICT_FLAGS)
+#  undef __BU_ATTR_FORMAT12
+#  undef __BU_ATTR_FORMAT23
+#  undef __BU_ATTR_NORETURN
+#  define __BU_ATTR_FORMAT12
+#  define __BU_ATTR_FORMAT23
+#  define __BU_ATTR_NORETURN
+#endif
+
 
 /*
  * I N T E R F A C E H E A D E R S
