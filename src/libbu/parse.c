@@ -738,7 +738,7 @@ bu_struct_parse(const struct bu_vls *in_vls, const struct bu_structparse *desc, 
 	/* NAME = VALUE white-space-separator */
 
 	/* skip any leading whitespace */
-	while (*cp != '\0' && isascii(*cp) && isspace(*cp))
+	while (*cp != '\0' && isspace(*cp))
 	    cp++;
 
 	/* Find equal sign */
