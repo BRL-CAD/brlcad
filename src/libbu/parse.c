@@ -777,7 +777,7 @@ bu_struct_parse(const struct bu_vls *in_vls, const struct bu_structparse *desc, 
 	} else {
 	    /* non-strings are white-space delimited */
 	    value = cp;
-	    while (*cp != '\0' && isascii(*cp) && !isspace(*cp))
+	    while (*cp != '\0' && !isspace(*cp))
 		cp++;
 	}
 
