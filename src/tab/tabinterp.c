@@ -84,112 +84,81 @@ int nchans;		/* number of chan[] elements in use */
 int max_chans;		/* current size of chan[] array */
 struct chan *chan;	/* ptr to array of chan structs */
 
-extern int cm_file();
-extern int cm_times();
-extern int cm_interp();
-extern int cm_idump();
-extern int cm_rate();
-extern int cm_accel();
-extern int cm_next();
-extern int cm_help();
 
-void linear_interpolate();
-void rate_interpolate();
-void accel_interpolate();
-void go();
-void output();
-void pr_ichan();
-void next_interpolate();
-void step_interpolate();
-void quat_interpolate();
-int get_args(int argc, char **argv);
-int create_chan(char *num, int len, char *itag);
-int chan_not_loaded_or_specified(int ch);
-int spline(struct chan *chp, fastf_t *times);
-
-
-struct command_tab cmdtab[] = {
-    {"file", "filename chan_num(s)", "load channels from file",
-     cm_file,	3, 999},
-    {"times", "start stop fps", "specify time range and fps rate",
-     cm_times,	4, 4},
-    {"interp", "{step|linear|spline|cspline|quat} chan_num(s)", "set interpolation type",
-     cm_interp,	3, 999},
-    {"next", "dest_chan src_chan [+/- #nsamp]", "lookahead in time",
-     cm_next,	3, 4},
-    {"idump", "[chan_num(s)]", "dump input channel values",
-     cm_idump,	1, 999},
-    {"rate", "chan_num init_value incr_per_sec [comment]", "create rate based channel",
-     cm_rate,	4, 5},
-    {"accel", "chan_num init_value mult_per_sec [comment]", "create acceleration based channel",
-     cm_accel,	4, 5},
-    {"help", "", "print help message",
-     cm_help,	1, 999},
-    {(char *)0, (char *)0, (char *)0,
-     0,		0, 0}	/* END */
-};
+/*
+ * Returns -
+ * -1 on error
+ *  0 if data loaded, and interpolator not yet set.
+ *  1 if no data, or interpolator already set (message printed)
+ */
+HIDDEN int
+chan_not_loaded_or_specified(int ch)
+{
+    if (ch < 0 || ch >= nchans)  return -1;
+    if (chan[ch].c_ilen <= 0) {
+	bu_log("error: attempt to set interpolation type on unallocated channel %d\n", ch);
+	return 1;
+    }
+    if (chan[ch].c_interp > 0) {
+	bu_log("error: attempt to modify channel %d which already has interpolation type set\n", ch);
+	return 1;
+    }
+    return 0;
+}
 
 
 /*
- * M A I N
+ * C R E A T E _ C H A N
  */
-int
-main(int argc, char **argv)
+HIDDEN int
+create_chan(char *num, int len, char *itag)
 {
-    register char *buf;
-    register int ret;
+    int n;
 
-    get_args(argc, argv);
-    /*
-     * All the work happens in the functions called by rt_do_cmd().
-     * NOTE that the value of MAXWORDS in rt_do_cmd() limits the
-     * maximum number of columns that a 'file' command can list.
-     */
-    while ((buf = rt_read_cmd(stdin)) != (char *)0) {
-	if (verbose) bu_log("cmd: %s\n", buf);
-	ret = rt_do_cmd(0, buf, cmdtab);
-	bu_free(buf, "cmd buf");
-	if (ret < 0) {
-	    if (verbose) bu_log("aborting\n");
-	    bu_exit(1, NULL);
+    n = atoi(num);
+    if (n < 0)  return(-1);
+
+    if (n >= max_chans) {
+	int prev = max_chans;
+
+	if (max_chans <= 0) {
+	    max_chans = 32;
+	    chan = (struct chan *)bu_calloc(1,
+					    max_chans * sizeof(struct chan),
+					    "chan[]");
+	} else {
+	    while (n >= max_chans)
+		max_chans *= 2;
+	    if (verbose) bu_log("reallocating from %d to %d chans\n",
+				prev, max_chans);
+	    chan = (struct chan *)bu_realloc((char *)chan,
+					     max_chans * sizeof(struct chan),
+					     "chan[]");
+	    memset((char *)(&chan[prev]), 0, (max_chans-prev)*sizeof(struct chan));
+	}
+    }
+    /* Allocate and clear channels */
+    while (nchans <= n) {
+	if (chan[nchans].c_ilen > 0) {
+	    bu_log("create_chan: internal error\n");
+	    return -1;
+	} else {
+	    memset((char *)&chan[nchans++], 0, sizeof(struct chan));
 	}
     }
 
-    if (verbose) bu_log("performing interpolations\n");
-    go();
-
-    if (verbose) bu_log("writing output\n");
-    output();
-
-    bu_exit(0, NULL);
+    if (verbose) bu_log("chan %d:  %s\n", n, itag);
+    chan[n].c_ilen = len;
+    chan[n].c_itag = bu_strdup(itag);
+    chan[n].c_ival = (fastf_t *)bu_malloc(len * sizeof(fastf_t), "c_ival");
+    return(n);
 }
 
-/*
- * XXX this really should go in librt/cmd.c as rt_help_cmd().
- */
-int
-cm_help(int argc, char **argv)
-{
-    register struct command_tab *ctp;
-
-    if (argc <= 1)
-    {
-	bu_log("The following commands are available:\n\n");
-	for (ctp = cmdtab; ctp->ct_cmd != (char *)0; ctp++) {
-	    bu_log("%s %s\n\t%s\n",
-		   ctp->ct_cmd, ctp->ct_parms,
-		   ctp->ct_comment);
-	}
-	return 0;
-    }
-    bu_log("Detailed help is not yet available.\n");
-    return -1;
-}
 
 /*
  * C M _ F I L E
  */
-int
+HIDDEN int
 cm_file(int argc, char **argv)
 {
     FILE *fp;
@@ -315,82 +284,13 @@ cm_file(int argc, char **argv)
     return(0);
 }
 
-/*
- * C R E A T E _ C H A N
- */
-int
-create_chan(char *num, int len, char *itag)
-{
-    int n;
-
-    n = atoi(num);
-    if (n < 0)  return(-1);
-
-    if (n >= max_chans) {
-	int prev = max_chans;
-
-	if (max_chans <= 0) {
-	    max_chans = 32;
-	    chan = (struct chan *)bu_calloc(1,
-					    max_chans * sizeof(struct chan),
-					    "chan[]");
-	} else {
-	    while (n >= max_chans)
-		max_chans *= 2;
-	    if (verbose) bu_log("reallocating from %d to %d chans\n",
-				prev, max_chans);
-	    chan = (struct chan *)bu_realloc((char *)chan,
-					     max_chans * sizeof(struct chan),
-					     "chan[]");
-	    memset((char *)(&chan[prev]), 0, (max_chans-prev)*sizeof(struct chan));
-	}
-    }
-    /* Allocate and clear channels */
-    while (nchans <= n) {
-	if (chan[nchans].c_ilen > 0) {
-	    bu_log("create_chan: internal error\n");
-	    return -1;
-	} else {
-	    memset((char *)&chan[nchans++], 0, sizeof(struct chan));
-	}
-    }
-
-    if (verbose) bu_log("chan %d:  %s\n", n, itag);
-    chan[n].c_ilen = len;
-    chan[n].c_itag = bu_strdup(itag);
-    chan[n].c_ival = (fastf_t *)bu_malloc(len * sizeof(fastf_t), "c_ival");
-    return(n);
-}
-
-/*
- * C M _ I D U M P
- *
- * Dump the indicated input channels, or all, if none specified.
- */
-int
-cm_idump(int argc, char **argv)
-{
-    register int ch;
-    register int i;
-
-    if (argc <= 1) {
-	for (ch=0; ch < nchans; ch++) {
-	    pr_ichan(ch);
-	}
-    } else {
-	for (i = 1; i < argc; i++) {
-	    pr_ichan(atoi(argv[i]));
-	}
-    }
-    return(0);
-}
 
 /*
  * P R _ I C H A N S
  *
  * Print input channel values.
  */
-void
+HIDDEN void
 pr_ichan(int ch)
 {
     register struct chan *cp;
@@ -409,10 +309,35 @@ pr_ichan(int ch)
     }
 }
 
+
+/*
+ * C M _ I D U M P
+ *
+ * Dump the indicated input channels, or all, if none specified.
+ */
+HIDDEN int
+cm_idump(int argc, char **argv)
+{
+    register int ch;
+    register int i;
+
+    if (argc <= 1) {
+	for (ch=0; ch < nchans; ch++) {
+	    pr_ichan(ch);
+	}
+    } else {
+	for (i = 1; i < argc; i++) {
+	    pr_ichan(atoi(argv[i]));
+	}
+    }
+    return(0);
+}
+
+
 /*
  * O U T P U T
  */
-void
+HIDDEN void
 output()
 {
     register int ch;
@@ -439,10 +364,11 @@ output()
     }
 }
 
+
 /*
  * C M _ T I M E S
  */
-int
+HIDDEN int
 cm_times(int argc, char **argv)
 {
     double a, b;
@@ -474,10 +400,11 @@ cm_times(int argc, char **argv)
     return(0);
 }
 
+
 /*
  * C M _ I N T E R P
  */
-int
+HIDDEN int
 cm_interp(int argc, char **argv)
 {
     int interp = 0;
@@ -534,116 +461,9 @@ cm_interp(int argc, char **argv)
 
 
 /*
- * G O
- *
- * Perform the requested interpolation on each channel
- */
-void
-go()
-{
-    int ch;
-    struct chan *chp;
-    fastf_t *times;
-    register int t;
-
-    if (!o_time) {
-	bu_log("times command not given\n");
-	return;
-    }
-
-    times = (fastf_t *)bu_malloc(o_len*sizeof(fastf_t), "periodic times");
-
-    /* First, get memory for all output channels */
-    for (ch=0; ch < nchans; ch++) {
-	chp = &chan[ch];
-	if (chp->c_ilen <= 0)
-	    continue;
-
-	/* Allocate memory for all the output values */
-	chan[ch].c_oval = (fastf_t *)bu_malloc(
-	    o_len * sizeof(fastf_t), "c_oval[]");
-    }
-
-    /* Interpolate values for all "interp" channels */
-    for (ch=0; ch < nchans; ch++) {
-	chp = &chan[ch];
-	if (chp->c_ilen <= 0)
-	    continue;
-	if (chp->c_interp == INTERP_NEXT)  continue;
-
-	/* As a service to interpolators, if this is a periodic
-	 * interpolation, build the mapped time array.
-	 */
-	if (chp->c_periodic) {
-	    for (t=0; t < o_len; t++) {
-		register double cur_t;
-
-		cur_t = o_time[t];
-
-		while (cur_t > chp->c_itime[chp->c_ilen-1]) {
-		    cur_t -= (chp->c_itime[chp->c_ilen-1] -
-			      chp->c_itime[0]);
-		}
-		while (cur_t < chp->c_itime[0]) {
-		    cur_t += (chp->c_itime[chp->c_ilen-1] -
-			      chp->c_itime[0]);
-		}
-		times[t] = cur_t;
-	    }
-	} else {
-	    for (t=0; t < o_len; t++) {
-		times[t] = o_time[t];
-	    }
-	}
-    again:
-	switch (chp->c_interp) {
-	    default:
-		bu_log("channel %d: unknown interpolation type %d\n", ch, chp->c_interp);
-		break;
-	    case INTERP_LINEAR:
-		linear_interpolate(chp, times);
-		break;
-	    case INTERP_STEP:
-		step_interpolate(chp, times);
-		break;
-	    case INTERP_SPLINE:
-		if (spline(chp, times) <= 0) {
-		    bu_log("spline failure, switching to linear\n");
-		    chp->c_interp = INTERP_LINEAR;
-		    goto again;
-		}
-		break;
-	    case INTERP_RATE:
-		rate_interpolate(chp, times);
-		break;
-	    case INTERP_ACCEL:
-		accel_interpolate(chp, times);
-		break;
-	    case INTERP_QUAT:
-		quat_interpolate(chp, &chan[ch+1], &chan[ch+2], &chan[ch+3], times);
-		break;
-	    case INTERP_QUAT2:
-		/* Don't touch these here, handled above */
-		continue;
-	}
-    }
-
-    /* Copy out values for all "next" channels */
-    for (ch=0; ch < nchans; ch++) {
-	chp = &chan[ch];
-	if (chp->c_ilen <= 0)
-	    continue;
-	if (chp->c_interp != INTERP_NEXT)  continue;
-	next_interpolate(chp);
-    }
-
-    bu_free((char *)times, "loc times");
-}
-
-/*
  * N E X T _ I N T E R P O L A T E
  */
-void
+HIDDEN void
 next_interpolate(struct chan *chp)
 {
     register int t;		/* output time index */
@@ -666,6 +486,7 @@ next_interpolate(struct chan *chp)
     }
 }
 
+
 /*
  * S T E P _ I N T E R P O L A T E
  *
@@ -676,7 +497,7 @@ next_interpolate(struct chan *chp)
  * This routine takes advantage of (and depends on) the fact that the
  * input and output is sorted in increasing time values.
  */
-void
+HIDDEN void
 step_interpolate(struct chan *chp, fastf_t *times)
 {
     register int t;		/* output time index */
@@ -715,7 +536,7 @@ step_interpolate(struct chan *chp, fastf_t *times)
  * This routine takes advantage of (and depends on) the fact that the
  * input and output arrays are sorted in increasing time values.
  */
-void
+HIDDEN void
 linear_interpolate(struct chan *chp, fastf_t *times)
 {
     register int t;		/* output time index */
@@ -763,7 +584,7 @@ linear_interpolate(struct chan *chp, fastf_t *times)
  * unspecified units per second.  This is really just a hack to allow
  * multiplying the time by a constant.
  */
-void
+HIDDEN void
 rate_interpolate(struct chan *chp, fastf_t *times)
 {
     register int t;		/* output time index */
@@ -786,7 +607,7 @@ rate_interpolate(struct chan *chp, fastf_t *times)
  * A C C E L _ I N T E R P O L A T E
  *
  */
-void
+HIDDEN void
 accel_interpolate(struct chan *chp, fastf_t *times)
 {
     register int t;		/* output time index */
@@ -809,6 +630,144 @@ accel_interpolate(struct chan *chp, fastf_t *times)
     }
 }
 
+
+/*
+ * Q U A T _ I N T E R P O L A T E
+ *
+ * Do linear interpolation for first and last span.  Use Bezier
+ * interpolation for all the rest.
+ *
+ * This routine depends on the four input channels having identical
+ * time stamps, because only the "x" input times are used.
+ */
+HIDDEN void
+quat_interpolate(struct chan *x, struct chan *y, struct chan *z, struct chan *w, fastf_t *times)
+{
+    register int t;		/* output time index */
+    register int i;		/* input time index */
+
+#define QIGET(_q, _it)  QSET((_q), x->c_ival[(_it)], y->c_ival[(_it)], z->c_ival[(_it)], w->c_ival[(_it)]);
+#define QPUT(_q) { x->c_oval[t] = (_q)[X]; y->c_oval[t] = (_q)[Y]; \
+			z->c_oval[t] = (_q)[Z]; w->c_oval[t] = (_q)[W]; }
+
+    i = 0;
+    for (t=0; t<o_len; t++) {
+	register fastf_t now = times[t];
+
+	/* Check for below initial time */
+	if (now <= x->c_itime[0]) {
+	    quat_t q1;
+
+	    QIGET(q1, 0);
+	    QUNITIZE(q1);
+	    QPUT(q1);
+	    continue;
+	}
+
+	/* Find time range in input data. */
+	while (i < x->c_ilen-1) {
+	    if (now >= x->c_itime[i] &&
+		now <  x->c_itime[i+1])
+		break;
+	    i++;
+	}
+
+	/* Check for above final time */
+	if (i >= x->c_ilen-1) {
+	    quat_t q1;
+
+	    i = x->c_ilen-1;
+	    QIGET(q1, i);
+	    QUNITIZE(q1);
+	    QPUT(q1);
+	    continue;
+	}
+
+	/* Check for being in first or last time span */
+	if (i == 0 || i >= x->c_ilen-2)
+	{
+	    fastf_t f;
+	    quat_t qout, q1, q2, q3, qtemp1, qtemp2, qtemp3;
+
+	    f = (now - x->c_itime[i]) /
+		(x->c_itime[i+1] - x->c_itime[i]);
+
+	    if (i==0)
+	    {
+		QIGET(q1, i);
+		QIGET(q2, i+1);
+		QIGET(q3, i+2);
+		QUNITIZE(q1);
+		QUNITIZE(q2);
+		QUNITIZE(q3);
+		quat_make_nearest(q2, q1);
+		quat_make_nearest(q3, q2);
+	    }
+	    else
+	    {
+		QIGET(q1, i+1);
+		QIGET(q2, i);
+		QIGET(q3, i-1);
+		f = 1.0 - f;
+		QUNITIZE(q1);
+		QUNITIZE(q2);
+		QUNITIZE(q3);
+		quat_make_nearest(q2, q3);
+		quat_make_nearest(q1, q2);
+	    }
+
+	    /* find middle control point */
+	    quat_slerp(qtemp1, q3, q2, 2.0);
+	    quat_slerp(qtemp2, qtemp1, q1, 0.5);
+	    quat_slerp(qtemp3, q2, qtemp2, 0.33333);
+
+	    /* do 3-point bezier interpolation */
+	    quat_slerp(qtemp1, q1, qtemp3, f);
+	    quat_slerp(qtemp2, qtemp3, q2, f);
+	    quat_slerp(qout, qtemp1, qtemp2, f);
+
+	    QPUT(qout);
+	    continue;
+	}
+
+	/* In an intermediate time span */
+	{
+	    fastf_t f;
+	    quat_t qout, q1, q2, q3, q4, qa, qb, qtemp1, qtemp2;
+
+	    f = (now - x->c_itime[i]) /
+		(x->c_itime[i+1] - x->c_itime[i]);
+
+	    QIGET(q1, i-1);
+	    QIGET(q2, i);
+	    QIGET(q3, i+1);
+	    QIGET(q4, i+2);
+
+	    QUNITIZE(q1);
+	    QUNITIZE(q2);
+	    QUNITIZE(q3);
+	    QUNITIZE(q4);
+	    quat_make_nearest(q2, q1);
+	    quat_make_nearest(q3, q2);
+	    quat_make_nearest(q4, q3);
+
+	    /* find two middle control points */
+	    quat_slerp(qtemp1, q1, q2, 2.0);
+	    quat_slerp(qtemp2, qtemp1, q3, 0.5);
+	    quat_slerp(qa, q2, qtemp2, 0.333333);
+
+	    quat_slerp(qtemp1, q4, q3, 2.0);
+	    quat_slerp(qtemp2, qtemp1, q2, 0.5);
+	    quat_slerp(qb, q3, qtemp2, 0.333333);
+
+	    quat_sberp(qout, q2, qa, qb, q3, f);
+	    QPUT(qout);
+	}
+
+    }
+}
+
+
 /*
  * S P L I N E
  *
@@ -820,7 +779,7 @@ accel_interpolate(struct chan *chp, fastf_t *times)
  * 0	bad
  * 1	OK
  */
-int
+HIDDEN int
 spline(register struct chan *chp, fastf_t *times)
 {
     double d, s;
@@ -967,6 +926,115 @@ spline(register struct chan *chp, fastf_t *times)
     return(0);
 }
 
+
+/*
+ * G O
+ *
+ * Perform the requested interpolation on each channel
+ */
+HIDDEN void
+go()
+{
+    int ch;
+    struct chan *chp;
+    fastf_t *times;
+    register int t;
+
+    if (!o_time) {
+	bu_log("times command not given\n");
+	return;
+    }
+
+    times = (fastf_t *)bu_malloc(o_len*sizeof(fastf_t), "periodic times");
+
+    /* First, get memory for all output channels */
+    for (ch=0; ch < nchans; ch++) {
+	chp = &chan[ch];
+	if (chp->c_ilen <= 0)
+	    continue;
+
+	/* Allocate memory for all the output values */
+	chan[ch].c_oval = (fastf_t *)bu_malloc(
+	    o_len * sizeof(fastf_t), "c_oval[]");
+    }
+
+    /* Interpolate values for all "interp" channels */
+    for (ch=0; ch < nchans; ch++) {
+	chp = &chan[ch];
+	if (chp->c_ilen <= 0)
+	    continue;
+	if (chp->c_interp == INTERP_NEXT)  continue;
+
+	/* As a service to interpolators, if this is a periodic
+	 * interpolation, build the mapped time array.
+	 */
+	if (chp->c_periodic) {
+	    for (t=0; t < o_len; t++) {
+		register double cur_t;
+
+		cur_t = o_time[t];
+
+		while (cur_t > chp->c_itime[chp->c_ilen-1]) {
+		    cur_t -= (chp->c_itime[chp->c_ilen-1] -
+			      chp->c_itime[0]);
+		}
+		while (cur_t < chp->c_itime[0]) {
+		    cur_t += (chp->c_itime[chp->c_ilen-1] -
+			      chp->c_itime[0]);
+		}
+		times[t] = cur_t;
+	    }
+	} else {
+	    for (t=0; t < o_len; t++) {
+		times[t] = o_time[t];
+	    }
+	}
+    again:
+	switch (chp->c_interp) {
+	    default:
+		bu_log("channel %d: unknown interpolation type %d\n", ch, chp->c_interp);
+		break;
+	    case INTERP_LINEAR:
+		linear_interpolate(chp, times);
+		break;
+	    case INTERP_STEP:
+		step_interpolate(chp, times);
+		break;
+	    case INTERP_SPLINE:
+		if (spline(chp, times) <= 0) {
+		    bu_log("spline failure, switching to linear\n");
+		    chp->c_interp = INTERP_LINEAR;
+		    goto again;
+		}
+		break;
+	    case INTERP_RATE:
+		rate_interpolate(chp, times);
+		break;
+	    case INTERP_ACCEL:
+		accel_interpolate(chp, times);
+		break;
+	    case INTERP_QUAT:
+		quat_interpolate(chp, &chan[ch+1], &chan[ch+2], &chan[ch+3], times);
+		break;
+	    case INTERP_QUAT2:
+		/* Don't touch these here, handled above */
+		continue;
+	}
+    }
+
+    /* Copy out values for all "next" channels */
+    for (ch=0; ch < nchans; ch++) {
+	chp = &chan[ch];
+	if (chp->c_ilen <= 0)
+	    continue;
+	if (chp->c_interp != INTERP_NEXT)  continue;
+	next_interpolate(chp);
+    }
+
+    bu_free((char *)times, "loc times");
+}
+
+
 /*
  * C M _ R A T E
  *
@@ -974,7 +1042,7 @@ spline(register struct chan *chp, fastf_t *times)
  * First is initial value, second is change PER SECOND. Input time
  * values are meaningless.
  */
-int
+HIDDEN int
 cm_rate(int argc, char **argv)
 {
     register struct chan *chp;
@@ -992,6 +1060,7 @@ cm_rate(int argc, char **argv)
     return(0);
 }
 
+
 /*
  * C M _ A C C E L
  *
@@ -999,7 +1068,7 @@ cm_rate(int argc, char **argv)
  * First is initial value, second is change PER SECOND. Input time
  * values are meaningless.
  */
-int
+HIDDEN int
 cm_accel(int argc, char **argv)
 {
     register struct chan *chp;
@@ -1017,143 +1086,8 @@ cm_accel(int argc, char **argv)
     return(0);
 }
 
-/*
- * Q U A T _ I N T E R P O L A T E
- *
- * Do linear interpolation for first and last span.  Use Bezier
- * interpolation for all the rest.
- *
- * This routine depends on the four input channels having identical
- * time stamps, because only the "x" input times are used.
- */
-void
-quat_interpolate(struct chan *x, struct chan *y, struct chan *z, struct chan *w, fastf_t *times)
-{
-    register int t;		/* output time index */
-    register int i;		/* input time index */
 
-#define QIGET(_q, _it)  QSET((_q), x->c_ival[(_it)], y->c_ival[(_it)], z->c_ival[(_it)], w->c_ival[(_it)]);
-#define QPUT(_q) { x->c_oval[t] = (_q)[X]; y->c_oval[t] = (_q)[Y]; \
-			z->c_oval[t] = (_q)[Z]; w->c_oval[t] = (_q)[W]; }
-
-    i = 0;
-    for (t=0; t<o_len; t++) {
-	register fastf_t now = times[t];
-
-	/* Check for below initial time */
-	if (now <= x->c_itime[0]) {
-	    quat_t q1;
-
-	    QIGET(q1, 0);
-	    QUNITIZE(q1);
-	    QPUT(q1);
-	    continue;
-	}
-
-	/* Find time range in input data. */
-	while (i < x->c_ilen-1) {
-	    if (now >= x->c_itime[i] &&
-		now <  x->c_itime[i+1])
-		break;
-	    i++;
-	}
-
-	/* Check for above final time */
-	if (i >= x->c_ilen-1) {
-	    quat_t q1;
-
-	    i = x->c_ilen-1;
-	    QIGET(q1, i);
-	    QUNITIZE(q1);
-	    QPUT(q1);
-	    continue;
-	}
-
-	/* Check for being in first or last time span */
-	if (i == 0 || i >= x->c_ilen-2)
-	{
-	    fastf_t f;
-	    quat_t qout, q1, q2, q3, qtemp1, qtemp2, qtemp3;
-
-	    f = (now - x->c_itime[i]) /
-		(x->c_itime[i+1] - x->c_itime[i]);
-
-	    if (i==0)
-	    {
-		QIGET(q1, i);
-		QIGET(q2, i+1);
-		QIGET(q3, i+2);
-		QUNITIZE(q1);
-		QUNITIZE(q2);
-		QUNITIZE(q3);
-		quat_make_nearest(q2, q1);
-		quat_make_nearest(q3, q2);
-	    }
-	    else
-	    {
-		QIGET(q1, i+1);
-		QIGET(q2, i);
-		QIGET(q3, i-1);
-		f = 1.0 - f;
-		QUNITIZE(q1);
-		QUNITIZE(q2);
-		QUNITIZE(q3);
-		quat_make_nearest(q2, q3);
-		quat_make_nearest(q1, q2);
-	    }
-
-	    /* find middle control point */
-	    quat_slerp(qtemp1, q3, q2, 2.0);
-	    quat_slerp(qtemp2, qtemp1, q1, 0.5);
-	    quat_slerp(qtemp3, q2, qtemp2, 0.33333);
-
-	    /* do 3-point bezier interpolation */
-	    quat_slerp(qtemp1, q1, qtemp3, f);
-	    quat_slerp(qtemp2, qtemp3, q2, f);
-	    quat_slerp(qout, qtemp1, qtemp2, f);
-
-	    QPUT(qout);
-	    continue;
-	}
-
-	/* In an intermediate time span */
-	{
-	    fastf_t f;
-	    quat_t qout, q1, q2, q3, q4, qa, qb, qtemp1, qtemp2;
-
-	    f = (now - x->c_itime[i]) /
-		(x->c_itime[i+1] - x->c_itime[i]);
-
-	    QIGET(q1, i-1);
-	    QIGET(q2, i);
-	    QIGET(q3, i+1);
-	    QIGET(q4, i+2);
-
-	    QUNITIZE(q1);
-	    QUNITIZE(q2);
-	    QUNITIZE(q3);
-	    QUNITIZE(q4);
-	    quat_make_nearest(q2, q1);
-	    quat_make_nearest(q3, q2);
-	    quat_make_nearest(q4, q3);
-
-	    /* find two middle control points */
-	    quat_slerp(qtemp1, q1, q2, 2.0);
-	    quat_slerp(qtemp2, qtemp1, q3, 0.5);
-	    quat_slerp(qa, q2, qtemp2, 0.333333);
-
-	    quat_slerp(qtemp1, q4, q3, 2.0);
-	    quat_slerp(qtemp2, qtemp1, q2, 0.5);
-	    quat_slerp(qb, q3, qtemp2, 0.333333);
-
-	    quat_sberp(qout, q2, qa, qb, q3, f);
-	    QPUT(qout);
-	}
-
-    }
-}
-
-int
+HIDDEN int
 cm_next(int argc, char **argv)
 {
     int ochan, ichan;
@@ -1188,29 +1122,10 @@ cm_next(int argc, char **argv)
     return 0;
 }
 
-/*
- * Returns -
- * -1 on error
- *  0 if data loaded, and interpolator not yet set.
- *  1 if no data, or interpolator already set (message printed)
- */
-int
-chan_not_loaded_or_specified(int ch)
-{
-    if (ch < 0 || ch >= nchans)  return -1;
-    if (chan[ch].c_ilen <= 0) {
-	bu_log("error: attempt to set interpolation type on unallocated channel %d\n", ch);
-	return 1;
-    }
-    if (chan[ch].c_interp > 0) {
-	bu_log("error: attempt to modify channel %d which already has interpolation type set\n", ch);
-	return 1;
-    }
-    return 0;
-}
 
 #define OPT_STR "q"
-int get_args(int argc, char **argv)
+HIDDEN int
+get_args(int argc, char **argv)
 {
     int c;
     while ((c=bu_getopt(argc, argv, OPT_STR)) != EOF) {
@@ -1225,6 +1140,88 @@ int get_args(int argc, char **argv)
     }
     return(1);
 }
+
+int cm_help(int argc, char **argv);
+
+struct command_tab cmdtab[] = {
+    {"file", "filename chan_num(s)", "load channels from file",
+     cm_file,	3, 999},
+    {"times", "start stop fps", "specify time range and fps rate",
+     cm_times,	4, 4},
+    {"interp", "{step|linear|spline|cspline|quat} chan_num(s)", "set interpolation type",
+     cm_interp,	3, 999},
+    {"next", "dest_chan src_chan [+/- #nsamp]", "lookahead in time",
+     cm_next,	3, 4},
+    {"idump", "[chan_num(s)]", "dump input channel values",
+     cm_idump,	1, 999},
+    {"rate", "chan_num init_value incr_per_sec [comment]", "create rate based channel",
+     cm_rate,	4, 5},
+    {"accel", "chan_num init_value mult_per_sec [comment]", "create acceleration based channel",
+     cm_accel,	4, 5},
+    {"help", "", "print help message",
+     cm_help,	1, 999},
+    {(char *)0, (char *)0, (char *)0,
+     0,		0, 0}	/* END */
+};
+
+
+/*
+ * XXX this really should go in librt/cmd.c as rt_help_cmd().
+ */
+HIDDEN int
+cm_help(int argc, char **argv)
+{
+    register struct command_tab *ctp;
+
+    if (argc <= 1)
+    {
+	bu_log("The following commands are available:\n\n");
+	for (ctp = cmdtab; ctp->ct_cmd != (char *)0; ctp++) {
+	    bu_log("%s %s\n\t%s\n",
+		   ctp->ct_cmd, ctp->ct_parms,
+		   ctp->ct_comment);
+	}
+	return 0;
+    }
+    bu_log("Detailed help is not yet available.\n");
+    return -1;
+}
+
+
+/*
+ * M A I N
+ */
+int
+main(int argc, char *argv[])
+{
+    register char *buf;
+    register int ret;
+
+    get_args(argc, argv);
+    /*
+     * All the work happens in the functions called by rt_do_cmd().
+     * NOTE that the value of MAXWORDS in rt_do_cmd() limits the
+     * maximum number of columns that a 'file' command can list.
+     */
+    while ((buf = rt_read_cmd(stdin)) != (char *)0) {
+	if (verbose) bu_log("cmd: %s\n", buf);
+	ret = rt_do_cmd(0, buf, cmdtab);
+	bu_free(buf, "cmd buf");
+	if (ret < 0) {
+	    if (verbose) bu_log("aborting\n");
+	    bu_exit(1, NULL);
+	}
+    }
+
+    if (verbose) bu_log("performing interpolations\n");
+    go();
+
+    if (verbose) bu_log("writing output\n");
+    output();
+
+    bu_exit(0, NULL);
+}
+
 
 /*
  * Local Variables:
