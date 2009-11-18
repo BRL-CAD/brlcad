@@ -261,6 +261,9 @@ BC_ARG_ENABLE([only_rts], [only-rtserver], [Only build the components necessary 
 # run-time debugging
 BC_ARG_ENABLE([build_runtime_debug], [runtime-debug], [Enable run-time debug checking], [yes])
 
+# run-time debugging
+BC_ARG_ENABLE([strict_build], [strict-build], [Enable strict compiler settings], [yes])
+
 # enable 64-bit builds
 BC_ARG_ENABLE([build_64bit], [64bit-build], [Enable 64-bit compilation mode], [auto])
 
@@ -407,6 +410,12 @@ BC_ARG_ALIAS([only_rts], [librtserver-only])
 BC_ARG_ALIAS([build_runtime_debug], [run-time-debug])
 BC_ARG_ALIAS([build_runtime_debug], [runtime-debugging])
 BC_ARG_ALIAS([build_runtime_debug], [run-time-debugging])
+
+# run-time debugging (help uses runtime-debug)
+BC_ARG_ALIAS([strict_build], [strict])
+BC_ARG_ALIAS([strict_build], [strict-compile])
+BC_ARG_ALIAS([strict_build], [strict-compile-flags])
+
 
 # Docbook documentation (help uses documentation)
 BC_ARG_ALIAS([build_docs], [documentation-install])
@@ -622,6 +631,9 @@ if test "x$set_everything" != "x" ; then
 	if test "x$bc_build_runtime_debug_set" = "xno" ; then
 		bc_build_runtime_debug="$set_everything"
 	fi
+	if test "x$bc_build_strict_compile" = "xno" ; then
+		bc_strict_build="$set_everything"
+	fi
 	if test "x$bc_build_regex_set" = "xno" ; then
 		bc_build_regex="$set_everything"
 	fi
@@ -742,6 +754,9 @@ AC_MSG_RESULT($bc_only_rts)
 
 AC_MSG_CHECKING(whether to use run-time debug checks)
 AC_MSG_RESULT($bc_build_runtime_debug)
+
+AC_MSG_CHECKING(whether to use strict compiler options)
+AC_MSG_RESULT($bc_strict_build)
 
 AC_MSG_CHECKING(whether to compile and install Docbook documentation)
 AC_MSG_RESULT($bc_build_docs)
@@ -1998,11 +2013,13 @@ if test "x$bc_build_warnings" != "xno" ; then
 fi
 
 dnl we are more strict on clean dirs by default (no-long-long needed due to tcl.h)
-BC_COMPILER_AND_LINKER_RECOGNIZES([-w -pedantic -W -Wall -Werror -Wno-long-long], [strict], [no])
-if test "x$bc_strict_works" = "xyes" ; then
-    # do not include -w as that was just to suppress any test warnings
-    STRICT_FLAGS="-pedantic -W -Wall -Werror -Wno-long-long"
-    AC_SUBST(STRICT_FLAGS)
+if test "x$bc_strict_build" = "xyes" ; then
+   BC_COMPILER_AND_LINKER_RECOGNIZES([-w -pedantic -W -Wall -Werror -Wno-long-long], [strict], [no])
+   if test "x$bc_strict_works" = "xyes" ; then
+       # do not include -w as that was just to suppress any test warnings
+       STRICT_FLAGS="-pedantic -W -Wall -Werror -Wno-long-long"
+       AC_SUBST(STRICT_FLAGS)
+   fi
 fi
 
 # determine the minimum single-precision floating point tolerance
@@ -4189,6 +4206,7 @@ AC_MSG_RESULT([])
 AC_MSG_RESULT([X11 support (optional)................: $build_against_x11])
 AC_MSG_RESULT([OpenGL support (optional).............: $build_against_opengl])
 AC_MSG_RESULT([librtserver JDK support (optional)....: $build_against_java])
+AC_MSG_RESULT([Enable strict building (optional).....: $bc_strict_build])
 AC_MSG_RESULT([Enable run-time debugging (optional)..: $bc_build_runtime_debug])
 AC_MSG_RESULT([])
 AC_MSG_RESULT([Build 64-bit release .................: $build_brlcad_64bit])
