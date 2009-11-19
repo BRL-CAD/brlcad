@@ -787,12 +787,12 @@ bn_mat_fromto(mat_t m, const vect_t from, const vect_t to)
      * = 0.0005729 degrees (1/2000 degree)
      */
     dot = VDOT(unit_from, unit_to);
-    if (dot > 1.0 - 0.00001) {
+    if (dot > 1.0 - SMALL_FASTF) {
 	/* dot == 1, return identity matrix */
 	MAT_IDN(m);
 	return;
     }
-    if (dot < -1.0 + 0.00001) {
+    if (dot < -1.0 + SMALL_FASTF) {
 	/* dot == -1, select random perpendicular N vector */
 	bn_vec_perp(N, unit_from);
     } else {
@@ -1011,8 +1011,10 @@ bn_vec_ortho(register vect_t out, register const vect_t in)
     register fastf_t f;
     register int i;
 
-    if (NEAR_ZERO(in[X], 0.0001) && NEAR_ZERO(in[Y], 0.0001) &&
-	NEAR_ZERO(in[Z], 0.0001)) {
+    if (NEAR_ZERO(in[X], SMALL_FASTF)
+	&& NEAR_ZERO(in[Y], SMALL_FASTF)
+	&& NEAR_ZERO(in[Z], SMALL_FASTF))
+    {
 	VSETALL(out, 0);
 	VPRINT("bn_vec_ortho: zero-length input", in);
 	return;
@@ -1286,10 +1288,11 @@ bn_mat_ck(const char *title, const mat_t m)
     fx = VDOT(A, B);
     fy = VDOT(B, C);
     fz = VDOT(A, C);
-    if (!NEAR_ZERO(fx, 0.0001) ||
-	!NEAR_ZERO(fy, 0.0001) ||
-	!NEAR_ZERO(fz, 0.0001) ||
-	NEAR_ZERO(m[15], VDIVIDE_TOL)) {
+    if (!NEAR_ZERO(fx, SMALL_FASTF)
+	|| !NEAR_ZERO(fy, SMALL_FASTF)
+	|| !NEAR_ZERO(fz, SMALL_FASTF)
+	|| NEAR_ZERO(m[15], VDIVIDE_TOL))
+    {
 	bu_log("bn_mat_ck(%s):  bad matrix, does not preserve axis perpendicularity.\n  X.Y=%g, Y.Z=%g, X.Z=%g, s=%g\n",
 	       title, fx, fy, fz, m[15]);
 	bn_mat_print("bn_mat_ck() bad matrix", m);
