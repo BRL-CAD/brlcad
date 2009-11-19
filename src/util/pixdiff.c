@@ -118,11 +118,14 @@ main(int argc, char **argv)
 		matching++;
 	    }
 	}  else  {
-	    /* Common case:  equal.  Give B&W NTSC average */
-	    /* .35 R +  .55 G + .10 B, done in fixed-point */
+	    /* Common case: equal.  Give B&W NTSC average of 0.35 R +
+	     * 0.55 G + 0.10 B, calculated in fixed-point, output at
+	     * half intensity.
+	     */
 	    register long i;
 	    i = ((22937 * r1 + 36044 * g1 + 6553 * b1)>>17);
 	    if ( i < 0 )  i = 0;
+	    i /= 2;
 	    putc( i, stdout);
 	    putc( i, stdout);
 	    putc( i, stdout);
