@@ -1276,21 +1276,22 @@ bn_mat_ck(const char *title, const mat_t m)
      * checking that A.B == 0, B.C == 0, A.C == 0 XXX these vectors
      * should just be grabbed out of the matrix
      */
-#if 0
-    MAT4X3VEC(A, m, xaxis);
-    MAT4X3VEC(B, m, yaxis);
-    MAT4X3VEC(C, m, zaxis);
-#else
     VMOVE(A, &m[0]);
     VMOVE(B, &m[4]);
     VMOVE(C, &m[8]);
-#endif
+
     fx = VDOT(A, B);
     fy = VDOT(B, C);
     fz = VDOT(A, C);
-    if (!NEAR_ZERO(fx, VUNITIZE_TOL)
-	|| !NEAR_ZERO(fy, VUNITIZE_TOL)
-	|| !NEAR_ZERO(fz, VUNITIZE_TOL)
+
+    /* NOTE: this tolerance cannot be any more tight than 0.00001 due
+     * to default calculation tolernacing used by models.  Matrices
+     * exported to disk outside of tolerance and will fail import if
+     * set too restrictive.
+     */
+    if (!NEAR_ZERO(fx, 0.00001)
+	|| !NEAR_ZERO(fy, 0.00001)
+	|| !NEAR_ZERO(fz, 0.00001)
 	|| NEAR_ZERO(m[15], VDIVIDE_TOL))
     {
 	bu_log("bn_mat_ck(%s):  bad matrix, does not preserve axis perpendicularity.\n  X.Y=%g, Y.Z=%g, X.Z=%g, s=%g\n",
