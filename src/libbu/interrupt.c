@@ -21,7 +21,6 @@
 #include "common.h"
 
 #include <signal.h>
-#include <assert.h>
 
 #include "bu.h"
 
@@ -101,7 +100,7 @@ _bu_suspend_signal_handler(int signum)
 HIDDEN int
 _bu_suspend_signal(int signum)
 {
-    assert(signum < _BU_MAX_SIGNUM && "signal number out of range");
+    BU_ASSERT(signum < _BU_MAX_SIGNUM && "signal number out of range");
 
     if (_bu_signal_func[signum] == _bu_suspend_signal_handler) {
 	return 1;
@@ -136,7 +135,7 @@ _bu_suspend_signal(int signum)
 HIDDEN int
 _bu_restore_signal(int signum)
 {
-    assert(signum < _BU_MAX_SIGNUM && "signal number out of range");
+    BU_ASSERT(signum < _BU_MAX_SIGNUM && "signal number out of range");
 
     /* must be before the test to avoid a race condition */
     _bu_defer_signal[signum]--;

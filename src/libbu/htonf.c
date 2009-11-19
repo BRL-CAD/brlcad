@@ -20,19 +20,21 @@
 
 #include "common.h"
 
-#include <stdio.h>
-#include "bu.h"
-
 #ifdef HAVE_MEMORY_H
 #  include <memory.h>
 #endif
 #include <stdio.h>
+#include <assert.h>
+
+#include "bu.h"
 
 
 void
 htonf(register unsigned char *out, register const unsigned char *in, int count)
 {
     register int i;
+
+    assert(sizeof(float) == SIZEOF_NETWORK_FLOAT);
 
     switch (bu_byteorder()) {
 	case BU_BIG_ENDIAN:
@@ -69,6 +71,8 @@ ntohf(register unsigned char *out, register const unsigned char *in, int count)
 {
     register int i;
 
+    assert(sizeof(float) == SIZEOF_NETWORK_FLOAT);
+
     switch (bu_byteorder()) {
 	case BU_BIG_ENDIAN:
 	    /*
@@ -76,8 +80,6 @@ ntohf(register unsigned char *out, register const unsigned char *in, int count)
 	     * IEEE format internally, using big-endian order.  These
 	     * are the lucky ones.
 	     */
-	    if (sizeof(float) != SIZEOF_NETWORK_FLOAT)
-		bu_bomb("ntohf:  sizeof(float) != SIZEOF_NETWORK_FLOAT\n");
 	    memcpy(out, in, count*SIZEOF_NETWORK_FLOAT);
 	    return;
 	case BU_LITTLE_ENDIAN:

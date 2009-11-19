@@ -2178,7 +2178,7 @@ bu_structparse_argv(struct bu_vls *logstr,
 			/* argv[0] contains the string.  i.e., we have
 			 * exactly one value
 			 */
-			assert(sdp->sp_count == 1);
+			BU_ASSERT(sdp->sp_count == 1);
 
 			if (argc < 1) {
 			    bu_vls_printf(logstr,

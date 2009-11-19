@@ -78,17 +78,23 @@ HIDDEN void
 _bu_memdebug_add(genptr_t ptr, unsigned int cnt, const char *str)
 {
     register struct memdebug *mp;
+
  top:
     bu_semaphore_acquire(BU_SEM_SYSCALL);
+
     if (bu_memdebug) {
 	mp = &bu_memdebug[bu_memdebug_len-1];
-	if (bu_memdebug_lowat > bu_memdebug &&
-	    bu_memdebug_lowat < mp) {
+	if (bu_memdebug_lowat > bu_memdebug
+	    && bu_memdebug_lowat < mp)
+	{
 	    mp = bu_memdebug_lowat;
 	} else {
 	    bu_memdebug_lowat = mp;
 	}
-    again:
+    }
+
+ again:
+    if (bu_memdebug) {
 	for (; mp >= bu_memdebug; mp--) {
 	    /* Search for an empty slot */
 	    if (mp->mdb_len > 0)  continue;
