@@ -261,8 +261,8 @@ BC_ARG_ENABLE([only_rts], [only-rtserver], [Only build the components necessary 
 # run-time debugging
 BC_ARG_ENABLE([build_runtime_debug], [runtime-debug], [Enable run-time debug checking], [yes])
 
-# run-time debugging
-BC_ARG_ENABLE([strict_build], [strict-build], [Enable strict compiler settings], [yes])
+# strict compilation flags
+BC_ARG_ENABLE([build_strict], [strict-build], [Enable strict compiler settings], [yes])
 
 # enable 64-bit builds
 BC_ARG_ENABLE([build_64bit], [64bit-build], [Enable 64-bit compilation mode], [auto])
@@ -412,9 +412,9 @@ BC_ARG_ALIAS([build_runtime_debug], [runtime-debugging])
 BC_ARG_ALIAS([build_runtime_debug], [run-time-debugging])
 
 # run-time debugging (help uses runtime-debug)
-BC_ARG_ALIAS([strict_build], [strict])
-BC_ARG_ALIAS([strict_build], [strict-compile])
-BC_ARG_ALIAS([strict_build], [strict-compile-flags])
+BC_ARG_ALIAS([build_strict], [strict])
+BC_ARG_ALIAS([build_strict], [strict-compile])
+BC_ARG_ALIAS([build_strict], [strict-compile-flags])
 
 
 # Docbook documentation (help uses documentation)
@@ -632,7 +632,7 @@ if test "x$set_everything" != "x" ; then
 		bc_build_runtime_debug="$set_everything"
 	fi
 	if test "x$bc_build_strict_compile" = "xno" ; then
-		bc_strict_build="$set_everything"
+		bc_build_strict="$set_everything"
 	fi
 	if test "x$bc_build_regex_set" = "xno" ; then
 		bc_build_regex="$set_everything"
@@ -756,7 +756,7 @@ AC_MSG_CHECKING(whether to use run-time debug checks)
 AC_MSG_RESULT($bc_build_runtime_debug)
 
 AC_MSG_CHECKING(whether to use strict compiler options)
-AC_MSG_RESULT($bc_strict_build)
+AC_MSG_RESULT($bc_build_strict)
 
 AC_MSG_CHECKING(whether to compile and install Docbook documentation)
 AC_MSG_RESULT($bc_build_docs)
@@ -2013,7 +2013,7 @@ if test "x$bc_build_warnings" != "xno" ; then
 fi
 
 dnl we are more strict on clean dirs by default (no-long-long needed due to tcl.h)
-if test "x$bc_strict_build" = "xyes" ; then
+if test "x$bc_build_strict" = "xyes" ; then
    BC_COMPILER_AND_LINKER_RECOGNIZES([-w -pedantic -W -Wall -Werror -Wno-long-long], [strict], [no])
    if test "x$bc_strict_works" = "xyes" ; then
        # do not include -w as that was just to suppress any test warnings
@@ -2049,9 +2049,6 @@ if test "x$bc_compliant_float" = "xno" || test "x$bc_compliant_double" = "xno" ;
     AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
     sleep 5
 fi
-
-dnl AC_C_PROTOTYPES
-AM_C_PROTOTYPES
 
 AC_C_CONST
 AC_C_INLINE

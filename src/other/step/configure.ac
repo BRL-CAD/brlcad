@@ -636,9 +636,6 @@ if test "x$bc_build_warnings" != "xno" ; then
 	fi
 fi
 
-dnl AC_C_PROTOTYPES
-AM_C_PROTOTYPES
-
 AC_C_CONST
 AC_C_INLINE
 AC_C_VOLATILE
