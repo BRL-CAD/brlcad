@@ -69,7 +69,7 @@ tp_3vector(FILE *plotfp, fastf_t *from, fastf_t *to, double fromheadfract, doubl
     bn_vec_ortho( c1, diff );
     VCROSS( c2, c1, diff );
 
-    if ( fromheadfract != 0 )  {
+    if ( !NEAR_ZERO(fromheadfract, SMALL_FASTF) )  {
 	hooklen = fromheadfract*len;
 	VSCALE( backup, diff, -hooklen );
 
@@ -82,7 +82,7 @@ tp_3vector(FILE *plotfp, fastf_t *from, fastf_t *to, double fromheadfract, doubl
 	VADD3( tip, from, h2, backup );
 	pdv_3move( plotfp, tip );
     }
-    if ( toheadfract != 0 )  {
+    if ( !NEAR_ZERO(toheadfract, SMALL_FASTF) )  {
 	hooklen = toheadfract*len;
 	VSCALE( backup, diff, -hooklen );
 
@@ -96,7 +96,7 @@ tp_3vector(FILE *plotfp, fastf_t *from, fastf_t *to, double fromheadfract, doubl
 	pdv_3move( plotfp, tip );
     }
     /* Be certain "pen" is left at "to" position */
-    if ( fromheadfract != 0 || toheadfract != 0 )
+    if ( !NEAR_ZERO(fromheadfract, SMALL_FASTF) || !NEAR_ZERO(toheadfract, SMALL_FASTF) )
 	pdv_3cont( plotfp, to );
 
 }
