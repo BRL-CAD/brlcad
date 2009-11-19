@@ -56,7 +56,7 @@
 spm_map_t *
 spm_init(int N, int elsize)
 {
-    int	i, nx, total, index;
+    int	i, nx, total, idx;
     register spm_map_t *mapp;
 
     mapp = (spm_map_t *)bu_malloc( sizeof(spm_map_t), "spm_map_t");
@@ -93,10 +93,10 @@ spm_init(int N, int elsize)
 	return( SPM_NULL );
     }
 
-    index = 0;
+    idx = 0;
     for ( i = 0; i < N/2; i++ ) {
-	mapp->xbin[i] = &((mapp->_data)[index]);
-	index += elsize * mapp->nx[i];
+	mapp->xbin[i] = &((mapp->_data)[idx]);
+	idx += elsize * mapp->nx[i];
     }
     mapp->magic = SPM_MAGIC;
     return( mapp );

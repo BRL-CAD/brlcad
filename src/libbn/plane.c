@@ -55,8 +55,8 @@ bn_dist_pt3_pt3(const fastf_t *a, const fastf_t *b)
 /**
  * B N _ P T 3 _ P T 3 _ E Q U A L
  *
- * @return	1	if the two points are equal, within the tolerance
- * @return	0	if the two points are not "the same"
+ * @return 1	if the two points are equal, within the tolerance
+ * @return 0	if the two points are not "the same"
  */
 int
 bn_pt3_pt3_equal(const fastf_t *a, const fastf_t *b, const struct bn_tol *tol)
@@ -72,8 +72,8 @@ bn_pt3_pt3_equal(const fastf_t *a, const fastf_t *b, const struct bn_tol *tol)
 /**
  * B N _ P T 2 _ P T 2 _ E Q U A L
  *
- * @return	1	if the two points are equal, within the tolerance
- * @return	0	if the two points are not "the same"
+ * @return 1	if the two points are equal, within the tolerance
+ * @return 0	if the two points are not "the same"
  */
 int
 bn_pt2_pt2_equal(const fastf_t *a, const fastf_t *b, const struct bn_tol *tol)
@@ -94,8 +94,8 @@ bn_pt2_pt2_equal(const fastf_t *a, const fastf_t *b, const struct bn_tol *tol)
  * The algorithm is designed to work properly regardless of the order
  * in which the points are provided.
  *
- * @return	1	If 3 points are collinear
- * @return	0	If they are not
+ * @return 1	If 3 points are collinear
+ * @return 0	If they are not
  */
 int
 bn_3pts_collinear(fastf_t *a, fastf_t *b, fastf_t *c, const struct bn_tol *tol)
@@ -159,8 +159,8 @@ bn_3pts_collinear(fastf_t *a, fastf_t *b, fastf_t *c, const struct bn_tol *tol)
  * there is at least sqrt(dist_tol_sq) distance between every pair of
  * points.
  *
- * @return	1 If all three points are distinct
- * @return	0 If two or more points are closer together than dist_tol_sq
+ * @return 1 If all three points are distinct
+ * @return 0 If two or more points are closer together than dist_tol_sq
  */
 int
 bn_3pts_distinct(const fastf_t *a, const fastf_t *b, const fastf_t *c, const struct bn_tol *tol)
@@ -256,17 +256,6 @@ bn_mk_plane_3pts(fastf_t *plane,
     /* XXX Should do with pt that has smallest magnitude (closest to origin) */
     plane[3] = VDOT(plane, a);
 
-#if 0
-    /* Check to be sure that angle between A-Origin and N vect < 89 degrees */
-    /* XXX Could complain for pts on axis-aligned plane, far from origin */
-    mag = MAGSQ(a);
-    if (mag > tol->dist_sq) {
-	/* cos(89 degrees) = 0.017452406, reciprocal is 57.29 */
-	if (plane[3]/sqrt(mag) < 0.017452406) {
-	    bu_log("bn_mk_plane_3pts() WARNING: plane[3] value is suspect\n");
-	}
-    }
-#endif
     return(0);		/* OK */
 }
 
@@ -391,7 +380,6 @@ bn_2line3_colinear(const fastf_t *p1,
  * direction vector need not have unit length.  The first three
  * elements of the plane equation must form a unit lengh vector.
  *
- *
  * @return	-2	missed (ray is outside halfspace)
  * @return	-1	missed (ray is inside)
  * @return	 0	line lies on plane
@@ -455,12 +443,10 @@ bn_isect_line3_plane(fastf_t *dist,
  * RPP.  If this convention is unnecessary, just pass (0, 0, 0) as
  * rpp_min.
  *
- *
  * @return	 0	OK, line of intersection stored in `pt' and `dir'.
  * @return	-1	FAIL, planes are identical (co-planar)
  * @return	-2	FAIL, planes are parallel and distinct
  * @return	-3	FAIL, unable to find line of intersection
- *
  *
  * @param[out]	pt	Starting point of line of intersection
  * @param[out]	dir	Direction vector of line of intersection (unit length)
@@ -558,7 +544,6 @@ bn_isect_2planes(fastf_t *pt,
  *
  * The direction vectors C and D need not have unit length.
  *
- *
  * @return	-1	no intersection, lines are parallel.
  * @return	 0	lines are co-linear
  *@n			dist[0] gives distance from P to A,
@@ -567,7 +552,7 @@ bn_isect_2planes(fastf_t *pt,
  *@n			dist[0] gives distance from P to isect,
  *@n			dist[1] gives distance from A to isect.
  *
- * @param dist	When explicit return > 0, dist[0] and dist[1] are the
+ * @param dist When explicit return > 0, dist[0] and dist[1] are the
  * line parameters of the intersection point on the 2 rays.  The
  * actual intersection coordinates can be found by substituting either
  * of these into the original ray equations.
@@ -732,36 +717,6 @@ bn_isect_line2_line2(fastf_t *dist, const fastf_t *p, const fastf_t *d, const fa
     if (bu_debug & BU_DEBUG_MATH) {
 	bu_log("\tintersection, t = %g, u = %g\n", dist[0], dist[1]);
     }
-
-#if 0
-    /* XXX This isn't any good.
-     *
-     * 1) Sometimes, dist[0] is very large.  Only caller can tell
-     * whether that is useful to him or not.
-     *
-     * 2) Sometimes, the difference between the two hit points is not
-     * much more than tol->dist.  Either hit point is perfectly good;
-     * the caller just needs to be careful and not use *both*.
-     */
-    {
-	point_t hit1, hit2;
-	vect_t diff;
-	fastf_t dist_sq;
-
-	VJOIN1_2D(hit1, p, dist[0], d);
-	VJOIN1_2D(hit2, a, dist[1], c);
-	VSUB2_2D(diff, hit1, hit2);
-	dist_sq = MAGSQ_2D(diff);
-	if (dist_sq >= tol->dist_sq) {
-	    if (bu_debug & BU_DEBUG_MATH || dist_sq < 100*tol->dist_sq) {
-		bu_log("bn_isect_line2_line2(): dist=%g >%g, inconsistent solution, hit1=(%g, %g), hit2=(%g, %g)\n",
-		       sqrt(dist_sq), tol->dist,
-		       hit1[X], hit1[Y], hit2[X], hit2[Y]);
-	    }
-	    return -2;	/* s/b -1? */
-	}
-    }
-#endif
 
     return 1;		/* Intersection found */
 }
@@ -981,13 +936,11 @@ bn_isect_line2_lseg2(fastf_t *dist,
  * Intersect two 2D line segments, defined by two points and two
  * vectors.  The vectors are unlikely to be unit length.
  *
- *
  * @return	-2	missed (line segments are parallel)
  * @return	-1	missed (colinear and non-overlapping)
  * @return	 0	hit (line segments colinear and overlapping)
  * @return	 1	hit (normal intersection)
  *
-
  * @param dist  The value at dist[] is set to the parametric distance of the
  *		intercept.
  *@n	dist[0] is parameter along p, range 0 to 1, to intercept.
@@ -1002,13 +955,11 @@ bn_isect_line2_lseg2(fastf_t *dist,
  * *two* intersections, if q is contained within span p to (p + pdir).
  * And either may be -10 if the point is outside the span.
  *
- *
  * @param p	point 1
  * @param pdir	direction1
  * @param q	point 2
  * @param qdir	direction2
  * @param tol	tolerance values
- *
  */
 int
 bn_isect_lseg2_lseg2(fastf_t *dist,
@@ -1204,7 +1155,6 @@ bn_isect_lseg3_lseg3(fastf_t *dist,
  *
  * The direction vectors C and D need not have unit length.
  *
- *
  * @return  -2	no intersection, lines are parallel.
  * @return  -1	no intersection
  * @return   0	lines are co-linear (t returned for u=0 to give distance to A)
@@ -1324,12 +1274,6 @@ bn_isect_line3_line3(fastf_t *t,
 	    s = Z;
 	}
     }
-
-#if 0
-    /* XXX Use bn_isect_line2_line2() here */
-    /* move the 2d vectors around */
-    bn_isect_line2_line2(&dist, p, d, a, c, tol);
-#endif
 
     /*
      * From the two components q and r, form a system of 2 equations
@@ -1465,16 +1409,15 @@ bn_isect_line3_line3(fastf_t *t,
  * @return	 2	Intersection at vertex B
  * @return	 3	Intersection between A and B
  *
- *  @par Implicit Returns -
- *	t	When explicit return >= 0, t is the parameter that describes
- *		the intersection of the line and the line segment.
- *		The actual intersection coordinates can be found by
- *		solving P + t * D.  However, note that for return codes
- *		1 and 2 (intersection exactly at a vertex), it is
- *		strongly recommended that the original values passed in
- *		A or B are used instead of solving P + t * D, to prevent
- *		numeric error from creeping into the position of
- *		the endpoints.
+ * @par Implicit Returns -
+ *
+ * t When explicit return >= 0, t is the parameter that describes the
+ * intersection of the line and the line segment.  The actual
+ * intersection coordinates can be found by solving P + t * D.
+ * However, note that for return codes 1 and 2 (intersection exactly
+ * at a vertex), it is strongly recommended that the original values
+ * passed in A or B are used instead of solving P + t * D, to prevent
+ * numeric error from creeping into the position of the endpoints.
  *
  * XXX should probably be called bn_isect_line3_lseg3()
  * XXX should probably be changed to return dist[2]
@@ -2282,13 +2225,13 @@ double
 bn_angle_measure(fastf_t *vec, const fastf_t *x_dir, const fastf_t *y_dir)
 {
     fastf_t xproj, yproj;
-    fastf_t gamma;
+    fastf_t gam;
     fastf_t ang;
 
     xproj = -VDOT(vec, x_dir);
     yproj = -VDOT(vec, y_dir);
-    gamma = atan2(yproj, xproj);	/* -pi..+pi */
-    ang = bn_pi + gamma;		/* 0..+2pi */
+    gam = atan2(yproj, xproj);	/* -pi..+pi */
+    ang = bn_pi + gam;		/* 0..+2pi */
     if (ang < 0) {
 	do {
 	    ang += bn_twopi;
