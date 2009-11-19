@@ -21,23 +21,13 @@
 /** @{ */
 /** @file noise.c
  *
- *  Signed noise functions
+ * These noise functions provide mostly random noise at the integer
+ * lattice points.  The functions should be evaluated at non-integer
+ * locations for their nature to be realized.
  *
- *	- bn_noise_perlin	Robert Skinner's Perlin-style "Noise" function
- *	- bn_noise_vec	Vector-valued noise
- *
- *  Spectral Noise functions
- *
- *	- bn_noise_fbm	fractional Brownian motion.  Based on bn_noise_perlin
- *	- bn_noise_turb	turbulence.  Based on bn_noise_perlin
- *
- *  These noise functions provide mostly random noise at the integer lattice
- *  points.  The functions should be evaluated at non-integer locations for
- *  their nature to be realized.
- *
- *  Conatins contributed code from:
- *	F. Kenton Musgrave
- *  	Robert Skinner
+ * Conatins contributed code from:
+ * F. Kenton Musgrave
+ * Robert Skinner
  *
  */
 
@@ -53,7 +43,8 @@
 
 /**
  * @brief interpolate smoothly from 0 .. 1
- *  SMOOTHSTEP() takes a value in the range [0:1] and provides a number
+ *
+ * SMOOTHSTEP() takes a value in the range [0:1] and provides a number
  * in the same range indicating the amount of (a) present in a smooth
  * interpolation transition between (a) and (b)
  */
@@ -63,8 +54,9 @@
 #define FLOOR(x)	(  (int)(x) - (  (x) < 0 && (x) != (int)(x)  )  )
 
 /**
- *@brief fold space to extend the domain over which we can take
- * noise values.
+ * @brief
+ * fold space to extend the domain over which we can take noise
+ * values.
  *
  *@n x, y, z are set to the noise space location for the source point.
  *@n ix, iy, iz are the integer lattice point (integer portion of x, y, z)
@@ -73,7 +65,7 @@
  * The noise function has a finite domain, which can be exceeded when
  * using fractal textures with very high frequencies.  This routine is
  * designed to extend the effective domain of the function, albeit by
- * introducing periodicity.	-FKM 4/93
+ * introducing periodicity. -FKM 4/93
  */
 static void
 filter_args(fastf_t *src, fastf_t *p, fastf_t *f, int *ip)
@@ -111,7 +103,7 @@ filter_args(fastf_t *src, fastf_t *p, fastf_t *f, int *ip)
 /**
  * The RTable maps numbers into the range [-1..1]
  */
-static double	RTable[MAXSIZE];
+static double RTable[MAXSIZE];
 
 #define INCRSUM(m, s, x, y, z)	((s)*(RTable[m]*0.5		\
 					+ RTable[m+1]*(x)	\
@@ -120,26 +112,26 @@ static double	RTable[MAXSIZE];
 
 
 /**
- *  A heavily magic-number protected version of the hashtable.
+ * A heavily magic-number protected version of the hashtable.
  *
- *  This table is used to convert integers into repeatable random results
- *  for indicies into RTable.
+ * This table is used to convert integers into repeatable random
+ * results for indicies into RTable.
  */
 struct str_ht {
-    long	magic;
-    char	hashTableValid;
-    long	*hashTableMagic1;
-    short	*hashTable;
-    long	*hashTableMagic2;
-    long	magic_end;
+    long magic;
+    char hashTableValid;
+    long *hashTableMagic1;
+    short *hashTable;
+    long *hashTableMagic2;
+    long magic_end;
 };
 
 static struct str_ht ht;
 
-#define MAGIC_STRHT1	1771561
-#define MAGIC_STRHT2	1651771
-#define MAGIC_TAB1	   9823
-#define MAGIC_TAB2	 784642
+#define MAGIC_STRHT1 1771561
+#define MAGIC_STRHT2 1651771
+#define MAGIC_TAB1 9823
+#define MAGIC_TAB2 784642
 #define CK_HT() { \
 	BU_CKMAG(&ht.magic, MAGIC_STRHT1, "struct str_ht ht 1"); \
 	BU_CKMAG(&ht.magic_end, MAGIC_STRHT2, "struct str_ht ht 2"); \
@@ -152,10 +144,11 @@ static struct str_ht ht;
 }
 
 /**
- * Map integer point into repeatable random number [0..4095]
- * We actually only use the first 8 bits of the final value extracted from
- * this table.  It's not quite clear that we really need this big a table.
- * The extra size does provide some extra randomness for intermediate results.
+ * Map integer point into repeatable random number [0..4095].  We
+ * actually only use the first 8 bits of the final value extracted
+ * from this table.  It's not quite clear that we really need this big
+ * a table.  The extra size does provide some extra randomness for
+ * intermediate results.
  */
 #define Hash3d(a, b, c) \
 	ht.hashTable[  \
@@ -222,34 +215,32 @@ bn_noise_init(void)
  *@brief
  * Robert Skinner's Perlin-style "Noise" function
  *
- * Results are in the range [-0.5 .. 0.5].  Unlike many implementations,
- * this function provides random noise at the integer lattice values.
- * However this produces much poorer quality and should be avoided if
- * possible.
+ * Results are in the range [-0.5 .. 0.5].  Unlike many
+ * implementations, this function provides random noise at the integer
+ * lattice values.  However this produces much poorer quality and
+ * should be avoided if possible.
  *
- * The power distribution of the result has no particular shape, though it
- * isn't as flat as the literature would have one believe.
+ * The power distribution of the result has no particular shape,
+ * though it isn't as flat as the literature would have one believe.
  */
 double
 bn_noise_perlin(fastf_t *point)
 {
-    register int	jx, jy, jz;
+    register int jx, jy, jz;
     int ix, iy, iz;	/* lower integer lattice point */
     double x, y, z;	/* corrected point */
     double fx, fy, fz;	/* distance above integer lattice point */
-    double	sx, sy, sz, tx, ty, tz;
-    double	sum;
-    short	m;
+    double sx, sy, sz, tx, ty, tz;
+    double sum;
+    short m;
     point_t p, f;
     int ip[3];
 
-    if (!ht.hashTableValid) bn_noise_init();
-    else {
-/*		CK_HT(); */
-    }
+    if (!ht.hashTableValid)
+	bn_noise_init();
 
     /* IS: const fastf_t *, point_t, point_t, int[3] */
-    /* NE: fastf_t *, fastf_t *, fastf_t *, int *    */
+    /* NE: fastf_t *, fastf_t *, fastf_t *, int * */
     filter_args( point, p, f, ip);
     ix = ip[X];
     iy = ip[Y];
@@ -277,7 +268,7 @@ bn_noise_perlin(fastf_t *point)
     tz = 1.0 - sz;
 
     /*
-     *  interpolate!
+     * interpolate!
      */
     /* get a repeatable random # 0..4096 & 0xFF*/
     m = Hash3d( ix, iy, iz ) & 0xFF;
@@ -314,12 +305,12 @@ bn_noise_perlin(fastf_t *point)
 void
 bn_noise_vec(fastf_t *point, fastf_t *result)
 {
-    register int	jx, jy, jz;
+    register int jx, jy, jz;
     int ix, iy, iz;		/* lower integer lattice point */
     double x, y, z;		/* corrected point */
-    double		px, py, pz, s;
-    double		sx, sy, sz, tx, ty, tz;
-    short		m;
+    double px, py, pz, s;
+    double sx, sy, sz, tx, ty, tz;
+    short m;
     point_t p, f;
     int ip[3];
 
@@ -353,7 +344,7 @@ bn_noise_vec(fastf_t *point, fastf_t *result)
     tz = 1.0 - sz;
 
     /*
-     *  interpolate!
+     * interpolate!
      */
     m = Hash3d( ix, iy, iz ) & 0xFF;
     px = x-ix;
@@ -415,26 +406,26 @@ bn_noise_vec(fastf_t *point, fastf_t *result)
 }
 /*************************************************************
  *@brief
- *	Spectral Noise functions
+ * Spectral Noise functions
  *
  *************************************************************
  *
- *	The Spectral Noise functions cache the values of the
- *	term:
+ * The Spectral Noise functions cache the values of the term:
+ *
  *@code
 		    (-h_val)
 		freq
-		*@endcode
-		*	Which on some systems is rather expensive to compute.
-		*
-		*************************************************************/
+ *@endcode
+ * Which on some systems is rather expensive to compute.
+ *
+ *************************************************************/
 struct fbm_spec {
-    long	magic;
-    double	octaves;
-    double	lacunarity;
-    double	h_val;
-    double	remainder;
-    double	*spec_wgts;
+    long magic;
+    double octaves;
+    double lacunarity;
+    double h_val;
+    double remainder;
+    double *spec_wgts;
 };
 #define MAGIC_fbm_spec_wgt 0x837592
 
@@ -449,14 +440,15 @@ static int etbl_size = 0;
 static struct fbm_spec *
 build_spec_tbl(double h_val, double lacunarity, double octaves)
 {
-    struct fbm_spec	*ep;
-    double		*spec_wgts;
-    double		frequency;
-    int		i;
+    struct fbm_spec *ep;
+    double *spec_wgts;
+    double frequency;
+    int i;
 
-    /* The right spectral weights table for these parameters has not been
-     * pre-computed.  As a result, we compute the table now and save it
-     * with the knowledge that we'll likely want it again later.
+    /* The right spectral weights table for these parameters has not
+     * been pre-computed.  As a result, we compute the table now and
+     * save it with the knowledge that we'll likely want it again
+     * later.
      */
 
     /* allocate storage for new tables if needed */
@@ -494,16 +486,15 @@ build_spec_tbl(double h_val, double lacunarity, double octaves)
 }
 
 /**
- * The first order of business is to see if we have pre-computed
- * the spectral weights table for these parameters in a previous
- * invocation.  If not, the we compute them and save them for
- * possible future use
+ * The first order of business is to see if we have pre-computed the
+ * spectral weights table for these parameters in a previous
+ * invocation.  If not, the we compute them and save them for possible
+ * future use
  */
-
-struct fbm_spec		*
+struct fbm_spec *
 find_spec_wgt(double h, double l, double o)
 {
-    struct fbm_spec	*ep;
+    struct fbm_spec *ep;
     int i;
 
 
@@ -538,36 +529,37 @@ find_spec_wgt(double h, double l, double o)
 }
 /**
  * @brief
- * Procedural fBm evaluated at "point"; returns value stored in "value".
+ * Procedural fBm evaluated at "point"; returns value stored in
+ * "value".
  *
- * @param   point		location to sample noise
- * @param   ``h_val''		fractal increment parameter
- * @param   ``lacunarity''	gap between successive frequencies
- * @param   ``octaves''  	number of frequencies in the fBm
+ * @param point          location to sample noise
+ * @param ``h_val''      fractal increment parameter
+ * @param ``lacunarity'' gap between successive frequencies
+ * @param ``octaves''  	 number of frequencies in the fBm
  *
- * The spectral properties of the result are in the APPROXIMATE range [-1..1]
- * Depending upon the number of octaves computed, this range may be exceeded.
- * Applications should clamp or scale the result to their needs.
- * The results have a more-or-less gaussian distribution.  Typical
- * results for 1M samples include:
+ * The spectral properties of the result are in the APPROXIMATE range
+ * [-1..1] Depending upon the number of octaves computed, this range
+ * may be exceeded.  Applications should clamp or scale the result to
+ * their needs.  The results have a more-or-less gaussian
+ * distribution.  Typical results for 1M samples include:
  *
- * @li  Min           -1.15246
- * @li  Max            1.23146
- * @li  Mean        -0.0138744
- * @li  s.d.          0.306642
- * @li  Var          0.0940295
+ * @li Min -1.15246
+ * @li Max  1.23146
+ * @li Mean -0.0138744
+ * @li s.d.  0.306642
+ * @li Var 0.0940295
  *
- * The function call pow() is relatively expensive.  Therfore, this function
- * pre-computes and saves the spectral weights in a table for re-use in
- * successive invocations.
+ * The function call pow() is relatively expensive.  Therfore, this
+ * function pre-computes and saves the spectral weights in a table for
+ * re-use in successive invocations.
  */
 double
 bn_noise_fbm(fastf_t *point, double h_val, double lacunarity, double octaves)
 {
-    struct fbm_spec		*ep;
-    double			value, remainder, *spec_wgts;
-    point_t			pt;
-    int			i, oct;
+    struct fbm_spec *ep;
+    double value, remainder, *spec_wgts;
+    point_t pt;
+    int i, oct;
 
     /* The first order of business is to see if we have pre-computed
      * the spectral weights table for these parameters in a previous
@@ -594,8 +586,8 @@ bn_noise_fbm(fastf_t *point, double h_val, double lacunarity, double octaves)
 
     remainder = octaves - (int)octaves;
     if ( remainder ) {
-	/* add in ``octaves''  remainder
-	 * ``i''  and spatial freq. are preset in loop above
+	/* add in ``octaves'' remainder ``i'' and spatial freq. are
+	 * preset in loop above
 	 */
 	value += remainder * bn_noise_perlin( pt ) * spec_wgts[i];
     }
@@ -609,35 +601,35 @@ bn_noise_fbm(fastf_t *point, double h_val, double lacunarity, double octaves)
  * @brief
  * Procedural turbulence evaluated at "point";
  *
- * @return  turbulence value for point
+ * @return turbulence value for point
  *
- * @param	point		location to sample noise at
- * @param   ``h_val''		fractal increment parameter
- * @param   ``lacunarity''	gap between successive frequencies
- * @param   ``octaves''  	number of frequencies in the fBm
+ * @param point          location to sample noise at
+ * @param ``h_val''      fractal increment parameter
+ * @param ``lacunarity'' gap between successive frequencies
+ * @param ``octaves''    number of frequencies in the fBm
  *
- * The result is characterized by sharp, narrow trenches in low values and
- * a more fbm-like quality in the mid-high values.  Values are in the
- * APPROXIMATE range [0 .. 1] depending upon the number of octaves evaluated.
- * Typical results:
+ * The result is characterized by sharp, narrow trenches in low values
+ * and a more fbm-like quality in the mid-high values.  Values are in
+ * the APPROXIMATE range [0 .. 1] depending upon the number of octaves
+ * evaluated.  Typical results:
  @code
- * Min         0.00857137
- * Max            1.26712
- * Mean          0.395122
- * s.d.          0.174796
- * Var          0.0305536
+ * Min  0.00857137
+ * Max  1.26712
+ * Mean 0.395122
+ * s.d. 0.174796
+ * Var  0.0305536
  @endcode
- * The function call pow() is relatively expensive.  Therfore, this function
- * pre-computes and saves the spectral weights in a table for re-use in
- * successive invocations.
+ * The function call pow() is relatively expensive.  Therfore, this
+ * function pre-computes and saves the spectral weights in a table for
+ * re-use in successive invocations.
  */
 double
 bn_noise_turb(fastf_t *point, double h_val, double lacunarity, double octaves)
 {
-    struct fbm_spec		*ep;
-    double			value, remainder, *spec_wgts;
-    point_t			pt;
-    int			i, oct;
+    struct fbm_spec *ep;
+    double value, remainder, *spec_wgts;
+    point_t pt;
+    int i, oct;
 
 
     /* The first order of business is to see if we have pre-computed
@@ -655,8 +647,8 @@ bn_noise_turb(fastf_t *point, double h_val, double lacunarity, double octaves)
 
     value = 0.0;            /* initialize vars to proper values */
 
-    /* copy the point so we don't corrupt
-     * the caller's copy of the variable
+    /* copy the point so we don't corrupt the caller's copy of the
+     * variable
      */
     PCOPY(pt, point);
     spec_wgts = ep->spec_wgts;
@@ -670,15 +662,15 @@ bn_noise_turb(fastf_t *point, double h_val, double lacunarity, double octaves)
 
     remainder = octaves - (int)octaves;
     if ( remainder ) {
-	/* add in ``octaves''  remainder
-	 * ``i''  and spatial freq. are preset in loop above
+	/* add in ``octaves'' remainder ``i'' and spatial freq. are
+	 * preset in loop above
 	 */
 	value += remainder * bn_noise_perlin( pt ) * spec_wgts[i];
     }
 #else
     PCOPY(pt, point);
 
-    value = 0.0;            /* initialize vars to proper values */
+    value = 0.0;      /* initialize vars to proper values */
     frequency = 1.0;
 
     oct=(int)octaves; /* save repeating double->int cast */
@@ -690,8 +682,8 @@ bn_noise_turb(fastf_t *point, double h_val, double lacunarity, double octaves)
 
     remainder = octaves - (int)octaves;
     if ( remainder ) {
-	/* add in ``octaves''  remainder
-	 * ``i''  and spatial freq. are preset in loop above
+	/* add in ``octaves'' remainder ``i'' and spatial freq. are
+	 * preset in loop above
 	 */
 	value += remainder * bn_noise_perlin( pt ) * pow(frequency, -h_val);
     }
@@ -704,15 +696,15 @@ bn_noise_turb(fastf_t *point, double h_val, double lacunarity, double octaves)
  *@brief
  * A ridged noise pattern
  *
- *	From "Texturing and Modeling, A Procedural Approach" 2nd ed p338
+ * From "Texturing and Modeling, A Procedural Approach" 2nd ed p338
  */
 double
 bn_noise_ridged(fastf_t *point, double h_val, double lacunarity, double octaves, double offset)
 {
-    struct fbm_spec		*ep;
-    double			result, weight, signal, *spec_wgts;
-    point_t			pt;
-    int			i;
+    struct fbm_spec *ep;
+    double result, weight, signal, *spec_wgts;
+    point_t pt;
+    int i;
 
     /* The first order of business is to see if we have pre-computed
      * the spectral weights table for these parameters in a previous
@@ -722,8 +714,8 @@ bn_noise_ridged(fastf_t *point, double h_val, double lacunarity, double octaves,
 
     ep = find_spec_wgt(h_val, lacunarity, octaves);
 
-    /* copy the point so we don't corrupt
-     * the caller's copy of the variable
+    /* copy the point so we don't corrupt the caller's copy of the
+     * variable
      */
     PCOPY(pt, point);
     spec_wgts = ep->spec_wgts;
@@ -762,17 +754,16 @@ bn_noise_ridged(fastf_t *point, double h_val, double lacunarity, double octaves,
 
 /**
  *
- *	From "Texturing and Modeling, A Procedural Approach" 2nd ed
+ * From "Texturing and Modeling, A Procedural Approach" 2nd ed
  */
-
 double
 bn_noise_mf(fastf_t *point, double h_val, double lacunarity, double octaves, double offset)
 {
-    double 			frequency = 1.0;
-    struct fbm_spec		*ep;
-    double			result, weight, signal, *spec_wgts;
-    point_t			pt;
-    int			i;
+    double frequency = 1.0;
+    struct fbm_spec *ep;
+    double result, weight, signal, *spec_wgts;
+    point_t pt;
+    int i;
 
     /* The first order of business is to see if we have pre-computed
      * the spectral weights table for these parameters in a previous
@@ -782,8 +773,8 @@ bn_noise_mf(fastf_t *point, double h_val, double lacunarity, double octaves, dou
 
     ep = find_spec_wgt( h_val, lacunarity, octaves );
 
-    /* copy the point so we don't corrupt
-     * the caller's copy of the variable
+    /* copy the point so we don't corrupt the caller's copy of the
+     * variable.
      */
     PCOPY( pt, point );
     spec_wgts = ep->spec_wgts;
