@@ -395,12 +395,12 @@ bn_htov_move(register vect_t v, register const vect_t h)
 {
     register fastf_t inv;
 
-    if (h[3] == 1.0) {
+    if (NEAR_ZERO(h[3] - 1.0, SMALL_FASTF)) {
 	v[X] = h[X];
 	v[Y] = h[Y];
 	v[Z] = h[Z];
     } else {
-	if (h[W] == SMALL_FASTF) {
+	if (NEAR_ZERO(h[W], SMALL_FASTF)) {
 	    bu_log("bn_htov_move: divide by %f!\n", h[W]);
 	    return;
 	}
@@ -567,7 +567,7 @@ bn_mat_angles(register fastf_t *mat, double alpha_in, double beta_in, double gga
     double calpha, cbeta, cgamma;
     double salpha, sbeta, sgamma;
 
-    if (alpha_in == 0.0 && beta_in == 0.0 && ggamma_in == 0.0) {
+    if (NEAR_ZERO(alpha_in, 0.0) && NEAR_ZERO(beta_in, 0.0) && NEAR_ZERO(ggamma_in, 0.0)) {
 	MAT_IDN(mat);
 	return;
     }
@@ -584,17 +584,17 @@ bn_mat_angles(register fastf_t *mat, double alpha_in, double beta_in, double gga
      * result in errors when some codes try to convert this back to
      * azimuth and elevation.  do_frame() uses this technique!!!
      */
-    if (alpha_in == 180.0)
+    if (NEAR_ZERO(alpha_in - 180.0, SMALL_FASTF))
 	salpha = 0.0;
     else
 	salpha = sin(alpha);
 
-    if (beta_in == 180.0)
+    if (NEAR_ZERO(beta_in - 180.0, SMALL_FASTF))
 	sbeta = 0.0;
     else
 	sbeta = sin(beta);
 
-    if (ggamma_in == 180.0)
+    if (NEAR_ZERO(ggamma_in - 180.0, SMALL_FASTF))
 	sgamma = 0.0;
     else
 	sgamma = sin(ggamma);
@@ -637,7 +637,7 @@ bn_mat_angles_rad(register mat_t	mat,
     double calpha, cbeta, cgamma;
     double salpha, sbeta, sgamma;
 
-    if (alpha == 0.0 && beta == 0.0 && ggamma == 0.0) {
+    if (NEAR_ZERO(alpha, SMALL_FASTF) && NEAR_ZERO(beta, SMALL_FASTF) && NEAR_ZERO(ggamma, SMALL_FASTF)) {
 	MAT_IDN(mat);
 	return;
     }
@@ -741,7 +741,7 @@ bn_vec_perp(vect_t new, const vect_t old)
     if (fabs(old[Z])<fabs(old[i])) i=Z;
     VSETALL(another, 0);
     another[i] = 1.0;
-    if (old[X] == 0 && old[Y] == 0 && old[Z] == 0) {
+    if (NEAR_ZERO(old[X], SMALL_FASTF) && NEAR_ZERO(old[Y], SMALL_FASTF) && NEAR_ZERO(old[Z], SMALL_FASTF)) {
 	VMOVE(new, another);
     } else {
 	VCROSS(new, another, old);
@@ -787,12 +787,12 @@ bn_mat_fromto(mat_t m, const vect_t from, const vect_t to)
      * = 0.0005729 degrees (1/2000 degree)
      */
     dot = VDOT(unit_from, unit_to);
-    if (dot > 1.0-0.00001) {
+    if (dot > 1.0 - 0.00001) {
 	/* dot == 1, return identity matrix */
 	MAT_IDN(m);
 	return;
     }
-    if (dot < -1.0+0.00001) {
+    if (dot < -1.0 + 0.00001) {
 	/* dot == -1, select random perpendicular N vector */
 	bn_vec_perp(N, unit_from);
     } else {
@@ -1188,7 +1188,7 @@ bn_mat_arb_rot(mat_t m, const point_t pt, const vect_t dir, const fastf_t ang)
     double n1_sq, n2_sq, n3_sq;
     double n1_n2, n1_n3, n2_n3;
 
-    if (ang == 0.0) {
+    if (NEAR_ZERO(ang, SMALL_FASTF)) {
 	MAT_IDN(m);
 	return;
     }
@@ -1375,7 +1375,7 @@ bn_mat_is_non_unif(const mat_t m)
 	return 1;
     }
 
-    if (m[12] != 0.0 || m[13] != 0.0 || m[14] != 0.0)
+    if (!NEAR_ZERO(m[12], SMALL_FASTF) || !NEAR_ZERO(m[13], SMALL_FASTF) || !NEAR_ZERO(m[14], SMALL_FASTF))
 	return 2;
 
     return 0;
