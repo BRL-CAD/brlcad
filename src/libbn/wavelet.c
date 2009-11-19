@@ -157,22 +157,25 @@
 #define decompose_1d(DATATYPE) bn_wlt_haar_1d_ ## DATATYPE ## _decompose
 
 
+/*
+ * DATATYPE *tbuffer;      // temporary buffer
+ * DATATYPE *buffer;       // data buffer
+ * unsigned long dimen;	   // # of samples in data buffer
+ * unsigned long channels; // # of data values per sample
+ * unsigned long limit;	   // extent of decomposition
+*/
+
 #define make_wlt_haar_1d_decompose(DATATYPE)  \
 void \
 decompose_1d(DATATYPE) \
-( tbuffer, buffer, dimen, channels, limit ) \
-DATATYPE *tbuffer;		/* temporary buffer */ \
-DATATYPE *buffer;		/* data buffer */ \
-unsigned long dimen;	/* # of samples in data buffer */ \
-unsigned long channels;	/* # of data values per sample */ \
-unsigned long limit;	/* extent of decomposition */ \
+( DATATYPE *tbuffer, DATATYPE *buffer, unsigned long dimen, unsigned long channels, unsigned long limit ) \
 { \
 	register DATATYPE *detail; \
 	register DATATYPE *avg; \
 	unsigned long img_size; \
 	unsigned long half_size; \
 	int do_free = 0; \
-	unsigned long x, x_tmp, d, i, j; \
+	unsigned long x, x_tmp, d, i, j_idx; \
 	register fastf_t onehalf = (fastf_t)0.5; \
 \
 	CK_POW_2( dimen ); \
@@ -199,9 +202,9 @@ unsigned long limit;	/* extent of decomposition */ \
 \
 			for (d=0; d < channels; d++, avg++, detail++) { \
 				i = x_tmp + d; \
-				j = i + channels; \
-				*detail = (buffer[i] - buffer[j]) * onehalf; \
-				*avg    = (buffer[i] + buffer[j]) * onehalf; \
+				j_idx = i + channels; \
+				*detail = (buffer[i] - buffer[j_idx]) * onehalf; \
+				*avg    = (buffer[i] + buffer[j_idx]) * onehalf; \
 			} \
 		} \
 \
@@ -224,20 +227,14 @@ unsigned long limit;	/* extent of decomposition */ \
 #define make_wlt_haar_1d_reconstruct( DATATYPE ) \
 void \
 reconstruct(DATATYPE) \
-( tbuffer, buffer, dimen, channels, subimage_size, limit )\
-DATATYPE *tbuffer; \
-DATATYPE *buffer; \
-unsigned long dimen; \
-unsigned long channels; \
-unsigned long subimage_size; \
-unsigned long limit; \
+( DATATYPE *tbuffer, DATATYPE *buffer, unsigned long dimen, unsigned long channels, unsigned long subimage_size, unsigned long limit )\
 { \
 	register DATATYPE *detail; \
 	register DATATYPE *avg; \
 	unsigned long img_size; \
 	unsigned long dbl_size; \
 	int do_free = 0; \
-	unsigned long x_tmp, d, x, i, j; \
+	unsigned long x_tmp, d, x, i, j_idx; \
 \
 	CK_POW_2( subimage_size ); \
 	CK_POW_2( dimen ); \
@@ -286,9 +283,9 @@ unsigned long limit; \
 			x_tmp = x * channels; \
 			for (d=0; d < channels; d++, avg++, detail++ ) { \
 				i = x_tmp + d; \
-				j = i + channels; \
+				j_idx = i + channels; \
 				buffer[i] = *avg + *detail; \
-				buffer[j] = *avg - *detail; \
+				buffer[j_idx] = *avg - *detail; \
 			} \
 		} \
 	} \
@@ -324,18 +321,13 @@ make_wlt_haar_1d_reconstruct(long)
 #define make_wlt_haar_2d_decompose(DATATYPE) \
 void \
 decompose_2d(DATATYPE) \
-(tbuffer, buffer, dimen, channels, limit) \
-DATATYPE *tbuffer; \
-DATATYPE *buffer; \
-unsigned long dimen; \
-unsigned long channels; \
-unsigned long limit; \
+(DATATYPE *tbuffer, DATATYPE *buffer, unsigned long dimen, unsigned long channels, unsigned long limit) \
 { \
 	register DATATYPE *detail; \
 	register DATATYPE *avg; \
 	unsigned long img_size; \
 	unsigned long half_size; \
-	unsigned long x, y, x_tmp, y_tmp, d, i, j; \
+	unsigned long x, y, x_tmp, y_tmp, d, i, j_idx; \
 	register fastf_t onehalf = (fastf_t)0.5; \
 \
 	CK_POW_2( dimen ); \
@@ -365,9 +357,9 @@ unsigned long limit; \
 \
 				for (d=0; d < channels; d++, avg++, detail++) { \
 					i = x_tmp + d; \
-					j = i + channels; \
-					*detail = (buffer[i] - buffer[j]) * onehalf; \
-					*avg    = (buffer[i] + buffer[j]) * onehalf; \
+					j_idx = i + channels; \
+					*detail = (buffer[i] - buffer[j_idx]) * onehalf; \
+					*avg    = (buffer[i] + buffer[j_idx]) * onehalf; \
 				} \
 			} \
 			/* "avg" now points to the first element AFTER the \
@@ -391,9 +383,9 @@ unsigned long limit; \
 \
 				for (d=0; d < channels; d++, avg++, detail++) { \
 					i = y_tmp + d; \
-					j = i + dimen*channels; \
-					*detail = (buffer[i] - buffer[j]) * onehalf; \
-					*avg    = (buffer[i] + buffer[j]) * onehalf; \
+					j_idx = i + dimen*channels; \
+					*detail = (buffer[i] - buffer[j_idx]) * onehalf; \
+					*avg    = (buffer[i] + buffer[j_idx]) * onehalf; \
 				} \
 				avg += (dimen-1)*channels; \
 			} \
@@ -422,19 +414,13 @@ unsigned long limit; \
 #define make_wlt_haar_2d_reconstruct(DATATYPE) \
 void \
 reconstruct_2d(DATATYPE) \
-(tbuf, buf, width, channels, avg_size, limit) \
-DATATYPE *tbuf; \
-DATATYPE *buf; \
-unsigned long width; \
-unsigned long channels; \
-unsigned long avg_size; \
-unsigned long limit; \
+(DATATYPE *tbuf, DATATYPE *buf, unsigned long width, unsigned long channels, unsigned long avg_size, unsigned long limit) \
 { \
 	register DATATYPE *detail; \
 	register DATATYPE *avg; \
 	unsigned long img_size; \
 	unsigned long dbl_size; \
-	unsigned long x_tmp, d, x, i, j; \
+	unsigned long x_tmp, d, x, i, j_idx; \
 	unsigned long y, row_len, row_start; \
  \
 	CK_POW_2( avg_size ); \
@@ -470,9 +456,9 @@ unsigned long limit; \
 			x_tmp = x*channels; \
 			for (y=0; y < img_size; y++) { \
 				i = x_tmp + y*row_len; \
-				j = y * channels; \
+				j_idx = y * channels; \
 				for (d=0; d < channels; d++) { \
-					tbuf[j++] = buf[i++]; \
+					tbuf[j_idx++] = buf[i++]; \
 				} \
 			} \
 			avg = tbuf; \
@@ -482,11 +468,11 @@ unsigned long limit; \
 			for (y=0; y < dbl_size; y += 2) { \
  \
 				i = x_tmp + y*row_len; \
-				j = i + row_len; \
+				j_idx = i + row_len; \
  \
 				for (d=0; d < channels; d++, avg++, detail++) { \
 					buf[i++] = *avg + *detail; \
-					buf[j++] = *avg - *detail; \
+					buf[j_idx++] = *avg - *detail; \
 				} \
 				detail += row_len - channels; \
 			} \
@@ -513,11 +499,11 @@ unsigned long limit; \
 			for (x=0; x < dbl_size; x += 2 ) { \
 				x_tmp = x * channels; \
 				i = row_start + x * channels; \
-				j = i + channels; \
+				j_idx = i + channels; \
  \
 				for (d=0; d < channels; d++, avg++, detail++) { \
 					buf[i++] = *avg + *detail; \
-					buf[j++] = *avg - *detail; \
+					buf[j_idx++] = *avg - *detail; \
 				} \
 			} \
 		} \
@@ -544,13 +530,7 @@ make_wlt_haar_2d_reconstruct(long)
 #define make_wlt_haar_2d_decompose2(DATATYPE) \
 void \
 decompose_2d_2(DATATYPE) \
-(tbuffer, buffer, width, height, channels, limit) \
-DATATYPE *tbuffer; \
-DATATYPE *buffer; \
-unsigned long width; \
-unsigned long height; \
-unsigned long channels; \
-unsigned long limit; \
+(DATATYPE *tbuffer, DATATYPE *buffer, unsigned long width, unsigned long height, unsigned long channels, unsigned long limit) \
 { \
 	register DATATYPE *detail; \
 	register DATATYPE *avg; \
@@ -558,7 +538,7 @@ unsigned long limit; \
 	unsigned long img_hsize; \
 	unsigned long half_wsize; \
 	unsigned long half_hsize; \
-	unsigned long x, y, x_tmp, y_tmp, d, i, j; \
+	unsigned long x, y, x_tmp, y_tmp, d, i, j_idx; \
 	register fastf_t onehalf = (fastf_t)0.5; \
 \
 	CK_POW_2( width ); \
@@ -592,9 +572,9 @@ unsigned long limit; \
 \
 				for (d=0; d < channels; d++, avg++, detail++) { \
 					i = x_tmp + d; \
-					j = i + channels; \
-					*detail = (buffer[i] - buffer[j]) * onehalf; \
-					*avg    = (buffer[i] + buffer[j]) * onehalf; \
+					j_idx = i + channels; \
+					*detail = (buffer[i] - buffer[j_idx]) * onehalf; \
+					*avg    = (buffer[i] + buffer[j_idx]) * onehalf; \
 				} \
 			} \
 			/* "avg" now points to the first element AFTER the \
@@ -618,9 +598,9 @@ unsigned long limit; \
 \
 				for (d=0; d < channels; d++, avg++, detail++) { \
 					i = y_tmp + d; \
-					j = i + width*channels; \
-					*detail = (buffer[i] - buffer[j]) * onehalf; \
-					*avg    = (buffer[i] + buffer[j]) * onehalf; \
+					j_idx = i + width*channels; \
+					*detail = (buffer[i] - buffer[j_idx]) * onehalf; \
+					*avg    = (buffer[i] + buffer[j_idx]) * onehalf; \
 				} \
 				avg += (width-1)*channels; \
 			} \
