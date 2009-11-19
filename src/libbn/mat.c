@@ -1288,9 +1288,9 @@ bn_mat_ck(const char *title, const mat_t m)
     fx = VDOT(A, B);
     fy = VDOT(B, C);
     fz = VDOT(A, C);
-    if (!NEAR_ZERO(fx, SMALL_FASTF)
-	|| !NEAR_ZERO(fy, SMALL_FASTF)
-	|| !NEAR_ZERO(fz, SMALL_FASTF)
+    if (!NEAR_ZERO(fx, VUNITIZE_TOL)
+	|| !NEAR_ZERO(fy, VUNITIZE_TOL)
+	|| !NEAR_ZERO(fz, VUNITIZE_TOL)
 	|| NEAR_ZERO(m[15], VDIVIDE_TOL))
     {
 	bu_log("bn_mat_ck(%s):  bad matrix, does not preserve axis perpendicularity.\n  X.Y=%g, Y.Z=%g, X.Z=%g, s=%g\n",
