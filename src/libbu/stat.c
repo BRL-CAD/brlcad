@@ -137,7 +137,7 @@ HIDDEN int
 _bu_file_access(const char *path, int access_level)
 {
     struct stat sb;
-    int mask;
+    int mask = 0;
 
     /* 0 is root or Windows user */
     uid_t uid = 0;

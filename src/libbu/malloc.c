@@ -77,7 +77,7 @@ extern const char bu_strdup_message[];
 HIDDEN void
 _bu_memdebug_add(genptr_t ptr, unsigned int cnt, const char *str)
 {
-    register struct memdebug *mp;
+    register struct memdebug *mp = NULL;
 
  top:
     bu_semaphore_acquire(BU_SEM_SYSCALL);
