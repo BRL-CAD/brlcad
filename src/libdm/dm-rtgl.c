@@ -1088,30 +1088,6 @@ void aeVect(fastf_t *aeVect, fastf_t *aet, fastf_t *center, double radius) {
     aeVect[Z] += center[Z];
 }
 
-void aeUniformVect(fastf_t *aeVect, fastf_t *aet, fastf_t *center, double radius) {
-    fastf_t azRad, elRad, crossRad, scale;
-
-    /* convert to radians */
-    azRad = aet[0] * DEG2RAD;
-    elRad = aet[1] * DEG2RAD;
-
-    /* calculate Z */
-    aeVect[Z] = radius * sin(elRad);
-
-    /* calculate radius of this cross-section */
-    crossRad = sqrt((radius * radius) - (aeVect[Z] * aeVect[Z]));
-
-    /* calculate X and Y for this cross-section */
-    scale = sqrt((radius * radius) - aeVect[Z] * (aeVect[Z]));
-    aeVect[X] = scale * cos(azRad); 
-    aeVect[Y] = scale * sin(azRad);
-
-    /* apply center offset */
-    aeVect[X] += center[X];
-    aeVect[Y] += center[Y];
-    aeVect[Z] += center[Z];
-}
-
 /* convert color vector to unsigned char array */
 unsigned char* getColorKey(float *color) {
     int i, value;
