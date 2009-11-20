@@ -1289,7 +1289,7 @@ dmo_drawVList_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
     /* XXX this causes a core dump if vp is bogus */
     BN_CK_VLIST_TCL(interp, vp);
 
-    return DM_DRAW_VLIST(dmop->dmo_dmp, vp);
+    return DM_DRAW(dmop->dmo_dmp, NULL, (void *)vp);
 }
 
 static void
@@ -1304,7 +1304,7 @@ dmo_drawSolid(struct dm_obj *dmop,
 		       (unsigned char)sp->s_color[1],
 		       (unsigned char)sp->s_color[2], 0, sp->s_transparency);
 
-    DM_DRAW_VLIST(dmop->dmo_dmp, (struct bn_vlist *)&sp->s_vlist);
+    DM_DRAW(dmop->dmo_dmp, NULL, (void *)&sp->s_vlist);
 }
 
 /*

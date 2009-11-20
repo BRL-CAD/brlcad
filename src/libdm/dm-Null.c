@@ -54,7 +54,6 @@ struct dm dm_Null = {
     Nu_int0,
     Nu_int0,
     Nu_int0,
-    Nu_int0,
     Nu_dr,
     Nu_fg,
     Nu_bg,

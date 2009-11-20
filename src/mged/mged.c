@@ -2097,7 +2097,7 @@ refresh(void)
 		    /* Draw each solid in it's proper place on the
 		     * screen by applying zoom, rotation, &
 		     * translation.  Calls DM_LOADMATRIX() and
-		     * DM_DRAW_VLIST().
+		     * DM_DRAW().
 		     */
 
 		    if (dmp->dm_stereo == 0 ||

@@ -659,7 +659,6 @@ void
 createDList(struct solid *sp)
 {
     DM_BEGINDLIST(dmp, sp->s_dlist);
-/*    DM_DRAW_VLIST(dmp, (struct bn_vlist *)&sp->s_vlist);*/
     DM_DRAW(dmp, return_vlist, (void *)&sp->s_vlist);
     DM_ENDDLIST(dmp);
 }

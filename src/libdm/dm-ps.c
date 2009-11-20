@@ -59,8 +59,7 @@ static int	ps_drawBegin(struct dm *dmp), ps_drawEnd(struct dm *dmp);
 static int	ps_normal(struct dm *dmp), ps_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye);
 static int	ps_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int size, int use_aspect), ps_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2);
 static int      ps_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y);
-static int	ps_drawVList(struct dm *dmp, register struct bn_vlist *vp);
-static int      ps_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), genptr_t *data){};
+static int      ps_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), genptr_t *data);
 static int      ps_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency);
 static int      ps_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b);
 static int      ps_setLineAttr(struct dm *dmp, int width, int style);
@@ -75,7 +74,6 @@ struct dm dm_ps = {
     ps_drawString2D,
     ps_drawLine2D,
     ps_drawPoint2D,
-    ps_drawVList,
     ps_draw,
     ps_setFGColor,
     ps_setBGColor,
@@ -415,7 +413,7 @@ ps_drawEnd(struct dm *dmp)
  *  			P S _ N E W R O T
  *
  *  Load a new transformation matrix.  This will be followed by
- *  many calls to ps_drawVList().
+ *  many calls to ps_draw().
  */
 static int
 ps_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
@@ -450,18 +448,25 @@ ps_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 }
 
 /*
- *  			P S _ O B J E C T
- *
- *  Set up for an object, transformed as indicated, and with an
- *  object center as specified.  The ratio of object to screen size
- *  is passed in as a convienience.
- *
- *  Returns 0 if object could be drawn, !0 if object was omitted.
+ *  			P S _ D R A W
  */
 /* ARGSUSED */
 static int
-ps_drawVList(struct dm *dmp, register struct bn_vlist *vp)
+ps_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), genptr_t *data)
 {
+    struct bn_vlist *vp;
+    if (!callback_function) {
+        if (data) {
+            vp = (struct bn_vlist *)data;
+        }
+    } else {
+        if (!data) {
+            return TCL_ERROR;
+        } else {
+            vp = callback_function(data);
+        }
+    }
+									 
     static vect_t			last;
     register struct bn_vlist	*tvp;
     register point_t		*pt_prev=NULL;
