@@ -1064,30 +1064,6 @@ rtgl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
     return TCL_OK;
 }
 
-/* converts degrees of azimuth/elevation into a vector */
-void aeVect(fastf_t *aeVect, fastf_t *aet, fastf_t *center, double radius) {
-    fastf_t azRad, elRad, crossRad;
-
-    /* convert to radians */
-    azRad = aet[0] * DEG2RAD;
-    elRad = aet[1] * DEG2RAD;
-
-    /* calculate Z */
-    aeVect[Z] = radius * sin(elRad);
-
-    /* calculate radius of this cross-section */
-    crossRad = sqrt((radius * radius) - (aeVect[Z] * aeVect[Z]));
-
-    /* calculate X and Y for this cross-section */
-    aeVect[X] = crossRad * cos(azRad); 
-    aeVect[Y] = crossRad * sin(azRad);
-
-    /* apply center offset */
-    aeVect[X] += center[X];
-    aeVect[Y] += center[Y];
-    aeVect[Z] += center[Z];
-}
-
 /* convert color vector to unsigned char array */
 unsigned char* getColorKey(float *color) {
     int i, value;
@@ -1249,7 +1225,8 @@ void randShots(fastf_t *center, fastf_t radius, int flag) {
 	    view[1] = j;
 	    
 	    /* use view vector for direction */
-	    aeVect(dir, view, center, radius);
+	    bn_vec_aed(dir, view[0]*DEG2RAD, view[1]*DEG2RAD, radius);
+	    VADD2(dir, dir, center);
 	    VMOVE(app.a_ray.r_pt, dir);
 	
 	    /* use opposite sphere point for origin */
@@ -1846,8 +1823,7 @@ rtgl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *))
     } /* numNew > 0 */
 
     /* get view vector */
-    VSET(vCenter, 0, 0, 0);
-    aeVect(view, gedp->ged_gvp->gv_aet, vCenter, 1);
+    bn_vec_aed(view, gedp->ged_gvp->gv_aet[0]*DEG2RAD, gedp->ged_gvp->gv_aet[1]*DEG2RAD, 1);
 
     if (difftime(time(NULL), start) > 3) {
 
