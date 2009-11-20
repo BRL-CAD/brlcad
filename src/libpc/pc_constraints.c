@@ -45,7 +45,7 @@ pc_isperpendicular(double ** v)
 		v[0][0], v[0][1], v[0][2], v[1][0], v[1][1], v[1][2],\
 		(v[0][0]*v[1][0] + v[0][1]*v[1][1] +v[0][2]*v[1][2]));
     */
-    if (NEAR_ZERO( (VDOT(v[0],v[1])), .00001)) 
+    if (NEAR_ZERO( (VDOT(v[0],v[1])), SMALL_FASTF)) /* TODO: this needs to be toleranced properly */
     	return 0;
     else
     	return -1;
@@ -69,7 +69,7 @@ int
 pc_isfixed(double ** v)
 {
     
-    if ( MAGSQ(v[0]) )
+    if ( NEAR_ZERO(MAGSQ(v[0]), SMALL_FASTF) ) /* TODO: this needs to be toleranced properly */
     	return 0;
     else
     	return -1;
@@ -84,8 +84,6 @@ pc_isfixed(double ** v)
 void
 pc_mk_ismodpositive(struct pc_constrnt ** c,const char * name, const char ** args)
 {
-    register int i;
-    
     pc_getconstraint_struct(c,1);
     bu_vls_strcat(&((*c)->name), name);
     (*c)->data.cf.fp = &pc_isperpendicular;
