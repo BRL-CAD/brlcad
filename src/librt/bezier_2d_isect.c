@@ -55,7 +55,6 @@ int CrossingCount(
     point2d_t      *V,		/*  2D Control pts of Bezier curve */
     int         degree,         /*  Degreee of Bezier curve     */
     point2d_t	ray_start,	/*  starting point for ray	*/
-    point2d_t	ray_dir,	/*  unit ray direction (actually a vector, not a point) */
     point2d_t	ray_perp)	/*  unit vector perpendicular to ray direction */
 {
     int         i;
@@ -276,7 +275,6 @@ ComputeXIntercept(
     int         degree,                 /*  Degree of curve     */
     point2d_t	ray_start,		/*  starting point of ray */
     point2d_t	ray_dir,		/* unit ray direction	*/
-    double	epsilon,		/* maximum allowable error */
     point2d_t	intercept,		/* calculated intercept point */
     point2d_t	normal )		/* calculated unit normal at intercept */
 {
@@ -383,7 +381,7 @@ FindRoots(
     int		total_count;
     point2d_t	eval_pt;
 
-    switch (CrossingCount(w, degree, ray_start, ray_dir, ray_perp)) {
+    switch (CrossingCount(w, degree, ray_start, ray_perp)) {
 	case 0 : {
 	    /* No solutions here    */
 	    return 0;
@@ -401,7 +399,7 @@ FindRoots(
 	    if (ControlPolygonFlatEnough(w, degree, epsilon)) {
 		*intercept = (point2d_t *)bu_malloc( sizeof( point2d_t ), "FindRoots: unique solution (intercept)" );
 		*normal = (point2d_t *)bu_malloc( sizeof( point2d_t ), "FindRoots: unique solution (normal)" );
-		if ( !ComputeXIntercept( w, degree, ray_start, ray_dir, epsilon, *intercept[0], *normal[0] ) ) {
+		if ( !ComputeXIntercept( w, degree, ray_start, ray_dir, *intercept[0], *normal[0] ) ) {
 		    bu_free( (char *)(*intercept), "FindRoots: no solution" );
 		    bu_free( (char *)(*normal), "FindRoots: no solution" );
 		    return 0;

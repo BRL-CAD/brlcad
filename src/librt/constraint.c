@@ -40,10 +40,10 @@
 
 
 const struct bu_structparse rt_constraint_parse[] = {
-    {"%d", 1, "ID",      bu_offsetof(struct rt_constraint_internal, id), BU_STRUCTPARSE_FUNC_NULL},
-    {"%d", 1, "N",       bu_offsetof(struct rt_constraint_internal, type), BU_STRUCTPARSE_FUNC_NULL},
-    {"%V", 1, "Ex",	bu_offsetof(struct rt_constraint_internal, expression), BU_STRUCTPARSE_FUNC_NULL},
-    {"",   0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL }
+    {"%d", 1, "ID", bu_offsetof(struct rt_constraint_internal, id), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "N", bu_offsetof(struct rt_constraint_internal, type), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%V", 1, "Ex", bu_offsetof(struct rt_constraint_internal, expression), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"", 0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
@@ -59,6 +59,7 @@ rt_constraint_ifree( struct rt_db_internal *ip, struct resource *resp)
 
     RT_CK_DB_INTERNAL(ip);
     constraint = (struct rt_constraint_internal *)ip->idb_ptr;
+    if (!resp) resp = &rt_uniresource;
     
     if (constraint) {
 	constraint->magic = 0;			/* sanity */
@@ -91,11 +92,15 @@ rt_constraint_export5(
     struct bu_vls			str;
 
     RT_CK_DB_INTERNAL(ip);
+    if (dbip) RT_CK_DBI(dbip);
+    if (resp) RT_CK_RESOURCE(resp);
 
     if ( ip->idb_type != ID_CONSTRAINT ) bu_bomb("rt_constraint_export() type not ID_CONSTRAINT");
     cip = (struct rt_constraint_internal *) ip->idb_ptr;
     /*RT_CONSTRAINT_CK_MAGIC(cip);*/
     constraint = *cip;
+
+    local2mm = local2mm; /* quell */
 
     BU_INIT_EXTERNAL(ep);
 /*    BU_CK_EXTERNAL(ep);*/
@@ -124,6 +129,14 @@ rt_constraint_import5(
     struct resource		*resp,
     const int		minor_type)
 {
+    RT_CK_DB_INTERNAL(ip);
+    BU_CK_EXTERNAL( ep );
+    mat = mat;
+    RT_CK_DBI(dbip);
+    if (resp) RT_CK_RESOURCE(resp);
+    if (minor_type != ID_CONSTRAINT)
+	bu_log("unexpected minor type [%d]\n", minor_type);
+
     return 0; /* OK */
 }
 

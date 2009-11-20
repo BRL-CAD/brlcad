@@ -865,7 +865,7 @@ rt_fdiff(double a, double b)
 	goto out;
     }
     if ( d >= INFINITY )  {
-	if ( a == b )  {
+	if ( NEAR_ZERO(a - b, SMALL_FASTF) )  {
 	    ret = 0;
 	    goto out;
 	}
@@ -1208,6 +1208,7 @@ rt_silent_logoverlap(struct application *ap, const struct partition *pp, const s
     RT_CK_AP(ap);
     RT_CK_PT(pp);
     BU_CK_PTBL(regiontable);
+    InputHdp = InputHdp; /* quell */
     return;
 }
 
@@ -1232,6 +1233,7 @@ rt_default_logoverlap(struct application *ap, const struct partition *pp, const 
     RT_CK_AP(ap);
     RT_CK_PT(pp);
     BU_CK_PTBL(regiontable);
+    InputHdp = InputHdp; /* quell */
 
     /* Attempt to control tremendous error outputs */
     if ( ++count > 100 )  {
@@ -1787,9 +1789,9 @@ rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t sta
 		   ap->a_x, ap->a_y, ap->a_level );
 	    rt_pr_partitions( ap->a_rt_i, InputHdp, "With problem" );
 	}
-	if ( pp->pt_forw != InputHdp &&
-	     pp->pt_outhit->hit_dist != pp->pt_forw->pt_inhit->hit_dist )  {
-	    diff = pp->pt_outhit->hit_dist - pp->pt_forw->pt_inhit->hit_dist;
+	diff = pp->pt_outhit->hit_dist - pp->pt_forw->pt_inhit->hit_dist;
+	if ( pp->pt_forw != InputHdp && !NEAR_ZERO(diff, SMALL_FASTF) )
+	{
 	    if ( NEAR_ZERO( diff, ap->a_rt_i->rti_tol.dist ) )  {
 		if (RT_G_DEBUG&DEBUG_PARTITION)  bu_log("rt_boolfinal:  fusing 2 partitions x%x x%x\n",
 							pp, pp->pt_forw );
@@ -2129,7 +2131,7 @@ rt_reldiff(double a, double b)
     } else {
 	if ( (-b) > d )  d = (-b);
     }
-    if ( d==0.0 )
+    if ( NEAR_ZERO(d, SMALL_FASTF) )
 	return( 0.0 );
     if ( (diff = a - b) < 0.0 )  diff = -diff;
     return( diff / d );
