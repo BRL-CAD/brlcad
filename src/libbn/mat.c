@@ -551,6 +551,41 @@ bn_aet_vec(fastf_t *az, fastf_t *el, fastf_t *twist, fastf_t *vec_ae, fastf_t *v
 
 
 /**
+ * B N _ V E C _ A E
+ *
+ * Find a unit vector from the origin given azimuth and elevation. 
+ */
+void
+bn_vec_ae(vect_t vect, fastf_t az, fastf_t el)
+{
+    fastf_t vx, vy, vz;
+    vz = sin(el);
+    vy = fabs(vz) * sin(az);
+    vx = fabs(vz) * cos(az);
+    VSET(vect, vx, vy ,vz);
+    VUNITIZE(vect);
+}
+
+
+/**
+ * B N _ V E C _ A E D
+ *
+ * Find a vector from the origin given azimuth, elevation, and distance. 
+ */
+void
+bn_vec_aed(vect_t vect, fastf_t az, fastf_t el, fastf_t distance)
+{
+    fastf_t vx, vy, vz, rtemp;
+    vz = distance * sin(el);
+    rtemp = sqrt((distance * distance) - (vz * vz));
+    vy = rtemp * sin(az);
+    vx = rtemp * cos(az);
+    VSET(vect, vx, vy ,vz);
+}
+
+
+
+/**
  * B N _ M A T _ A N G L E S
  *
  * This routine builds a Homogeneous rotation matrix, given alpha,
