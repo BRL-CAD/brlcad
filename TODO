@@ -17,12 +17,6 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* test it, ship it
-
-
-THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
--------------------------------------------------------
-
 * 64-bit port of BRL-CAD on Windows
 
 * annotation primitive.  specifically a means to create an object in
@@ -36,18 +30,25 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
   also be useful to allow an optional "thickness" so that the
   annotations can represent physical geometry (so they raytrace).
 
+
+THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
+-------------------------------------------------------
+
 * refactor rt_functab accessors to go through an api call or calls so
   that the array is not accessed directly.  either an rt_eval() style
   interface with data-driven keys to tell it with function(s) to call,
   or simply have an rt_*() for each function (e.g., rt_mirror(),
   rt_shot(), rt_describe(), etc).
 
-* finish obj-g importer.  need to test more inputs and make sure all
-  geometry is preserved on import in some form.
-
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* finish obj-g importer.  need to test more inputs and make sure all
+  geometry is preserved on import in some form.
+
+* MINOR: add tolerance parameters to the bn_*() functions that have
+  near-zero tests.
 
 * verify/improve kicking off an EDITOR in mged so that we don't lock
   up mged in vim/emacs/jove/whatever without a controlling terminal,
