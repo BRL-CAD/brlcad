@@ -60,6 +60,7 @@ static int	ps_normal(struct dm *dmp), ps_loadMatrix(struct dm *dmp, fastf_t *mat
 static int	ps_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int size, int use_aspect), ps_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2);
 static int      ps_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y);
 static int	ps_drawVList(struct dm *dmp, register struct bn_vlist *vp);
+static int      ps_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), genptr_t *data){};
 static int      ps_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency);
 static int      ps_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b);
 static int      ps_setLineAttr(struct dm *dmp, int width, int style);
@@ -75,6 +76,7 @@ struct dm dm_ps = {
     ps_drawLine2D,
     ps_drawPoint2D,
     ps_drawVList,
+    ps_draw,
     ps_setFGColor,
     ps_setBGColor,
     ps_setLineAttr,

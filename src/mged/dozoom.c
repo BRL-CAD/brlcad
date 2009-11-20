@@ -48,6 +48,18 @@ mat_t	identity;
 extern unsigned char geometry_default_color[];		/* defined in dodraw.c */
 
 
+/* Just a test function for testing the DM_DRAW callback - should go away
+ * and be replaced with NULL if a vlist is already present once testing is
+ * complete.
+ */
+struct bn_vlist * 
+return_vlist(void *data) {
+    return (struct bn_vlist *)data;
+}
+
+
+
+
 /*
  *			P E R S P _ M A T
  *
@@ -284,7 +296,7 @@ drawSolid(register struct solid *sp,
 	sp->s_flag = UP;
 	ndrawn++;
     } else {
-        if (DM_DRAW_VLIST(dmp, (struct bn_vlist *)&sp->s_vlist) == TCL_OK) {
+        if (DM_DRAW(dmp, return_vlist, (void *)&sp->s_vlist) == TCL_OK) {
             sp->s_flag = UP;
             ndrawn++;
         }
@@ -406,7 +418,7 @@ dozoom(int which_eye)
         RTGL_GEDP = gedp;
 
 	/* will ray trace visible objects and draw the intersection points */
-	DM_DRAW_VLIST(dmp, (struct bn_vlist *)NULL);
+	DM_DRAW(dmp, NULL, (void *)NULL);
       
 	/* force update if needed */
 	dirty = RTGL_DIRTY;
@@ -563,7 +575,7 @@ dozoom(int which_eye)
 		       color_scheme->cs_predictor[0],
 		       color_scheme->cs_predictor[1],
 		       color_scheme->cs_predictor[2], 1, 1.0);
-	DM_DRAW_VLIST(dmp, (struct bn_vlist *)&curr_dm_list->dml_p_vlist);
+	DM_DRAW(dmp, return_vlist, (void *)&curr_dm_list->dml_p_vlist);
     }
 
     /*
@@ -622,7 +634,7 @@ dozoom(int which_eye)
 		ndrawn++;
 	    } else {
 		/* draw in immediate mode */
-		if (DM_DRAW_VLIST(dmp, (struct bn_vlist *)&sp->s_vlist) == TCL_OK) {
+		if (DM_DRAW(dmp, return_vlist, (void *)&sp->s_vlist) == TCL_OK) {
 		    sp->s_flag = UP;
 		    ndrawn++;
 		}
@@ -647,7 +659,8 @@ void
 createDList(struct solid *sp)
 {
     DM_BEGINDLIST(dmp, sp->s_dlist);
-    DM_DRAW_VLIST(dmp, (struct bn_vlist *)&sp->s_vlist);
+/*    DM_DRAW_VLIST(dmp, (struct bn_vlist *)&sp->s_vlist);*/
+    DM_DRAW(dmp, return_vlist, (void *)&sp->s_vlist);
     DM_ENDDLIST(dmp);
 }
 

@@ -60,6 +60,7 @@ static int	plot_normal(struct dm *dmp), plot_loadMatrix(struct dm *dmp, fastf_t 
 static int	plot_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int size, int use_aspect), plot_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2);
 static int      plot_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y);
 static int	plot_drawVList(struct dm *dmp, register struct bn_vlist *vp);
+static int      plot_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), genptr_t *data){};
 static int      plot_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency);
 static int      plot_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b);
 static int      plot_setLineAttr(struct dm *dmp, int width, int style);
@@ -75,6 +76,7 @@ struct dm dm_plot = {
     plot_drawLine2D,
     plot_drawPoint2D,
     plot_drawVList,
+    plot_draw,
     plot_setFGColor,
     plot_setBGColor,
     plot_setLineAttr,

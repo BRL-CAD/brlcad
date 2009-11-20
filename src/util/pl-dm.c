@@ -186,7 +186,7 @@ refresh() {
 		    DM_SET_FGCOLOR(dmp, (rgb>>16) & 0xFF, (rgb>>8) & 0xFF, rgb & 0xFF, 0, (fastf_t)0.0);
 		}
 
-		DM_DRAW_VLIST(dmp, (struct bn_vlist *)&plp->pl_vbp->head[i]);
+		DM_DRAW(dmp, NULL, (void *)(&plp->pl_vbp->head[i]));
 	    }
     }
 

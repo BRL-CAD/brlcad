@@ -77,6 +77,7 @@ HIDDEN int	wgl_normal(), wgl_loadMatrix();
 HIDDEN int	wgl_drawString2D(), wgl_drawLine2D();
 HIDDEN int      wgl_drawPoint2D();
 HIDDEN int	wgl_drawVList();
+HIDDEN int	wgl_draw();
 HIDDEN int      wgl_setFGColor(), wgl_setBGColor();
 HIDDEN int	wgl_setLineAttr();
 HIDDEN int	wgl_configureWin_guts();
@@ -100,6 +101,7 @@ struct dm dm_wgl = {
     wgl_drawLine2D,
     wgl_drawPoint2D,
     wgl_drawVList,
+    wgl_draw,
     wgl_setFGColor,
     wgl_setBGColor,
     wgl_setLineAttr,

@@ -92,6 +92,7 @@ HIDDEN int	ogl_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf
 HIDDEN int	ogl_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2);
 HIDDEN int      ogl_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y);
 HIDDEN int	ogl_drawVList(struct dm *dmp, register struct bn_vlist *vp);
+HIDDEN int 	ogl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), genptr_t *data);
 HIDDEN int      ogl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency);
 HIDDEN int	ogl_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b);
 HIDDEN int	ogl_setLineAttr(struct dm *dmp, int width, int style);
@@ -116,6 +117,7 @@ struct dm dm_ogl = {
     ogl_drawLine2D,
     ogl_drawPoint2D,
     ogl_drawVList,
+    ogl_draw,
     ogl_setFGColor,
     ogl_setBGColor,
     ogl_setLineAttr,
@@ -1073,6 +1075,141 @@ ogl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 
     return TCL_OK;
 }
+
+
+/*
+ *  			O G L _ D R A W
+ *
+ */
+HIDDEN int
+ogl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), genptr_t *data)
+{
+    struct bn_vlist *vp;
+    if (!callback_function) {
+	if (data) {
+	    vp = (struct bn_vlist *)data;
+	}
+    } else {
+	if (!data) {
+	    return TCL_ERROR;
+	} else {
+	    vp = callback_function(data);
+	}
+    }
+    register struct bn_vlist	*tvp;
+    int				first;
+#if USE_VECTOR_THRESHHOLD
+    static int			nvectors = 0;
+#endif
+    int mflag = 1;
+    float black[4] = {0.0, 0.0, 0.0, 0.0};
+
+    if (dmp->dm_debugLevel)
+	bu_log("ogl_drawVList()\n");
+
+    /* Viewing region is from -1.0 to +1.0 */
+    first = 1;
+    for (BU_LIST_FOR(tvp, bn_vlist, &vp->l)) {
+	register int	i;
+	register int	nused = tvp->nused;
+	register int	*cmd = tvp->cmd;
+	register point_t *pt = tvp->pt;
+	for (i = 0; i < nused; i++, cmd++, pt++) {
+	    if (dmp->dm_debugLevel > 2)
+		bu_log(" %d (%g %g %g)\n", *cmd, V3ARGS(pt));
+	    switch (*cmd) {
+		case BN_VLIST_LINE_MOVE:
+		    /* Move, start line */
+		    if (first == 0)
+			glEnd();
+		    first = 0;
+
+		    if (dmp->dm_light && mflag) {
+			mflag = 0;
+			glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, wireColor);
+			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, black);
+			glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, black);
+			glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, black);
+
+			if (dmp->dm_transparency)
+			    glDisable(GL_BLEND);
+		    }
+
+		    glBegin(GL_LINE_STRIP);
+		    glVertex3dv(*pt);
+		    break;
+		case BN_VLIST_POLY_START:
+		    /* Start poly marker & normal */
+		    if (first == 0)
+			glEnd();
+
+		    if (dmp->dm_light && mflag) {
+			mflag = 0;
+			glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, black);
+			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambientColor);
+			glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specularColor);
+
+			if (1 < dmp->dm_light) {
+			    glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuseColor);
+			    glMaterialfv(GL_BACK, GL_DIFFUSE, backColor);
+			} else
+			    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuseColor);
+
+			if (dmp->dm_transparency)
+			    glEnable(GL_BLEND);
+		    }
+
+		    glBegin(GL_POLYGON);
+		    /* Set surface normal (vl_pnt points outward) */
+		    glNormal3dv(*pt);
+		    break;
+		case BN_VLIST_LINE_DRAW:
+		case BN_VLIST_POLY_MOVE:
+		case BN_VLIST_POLY_DRAW:
+		    glVertex3dv(*pt);
+		    break;
+		case BN_VLIST_POLY_END:
+		    /* Draw, End Polygon */
+		    glVertex3dv(*pt);
+		    glEnd();
+		    first = 1;
+		    break;
+		case BN_VLIST_POLY_VERTNORM:
+		    /* Set per-vertex normal.  Given before vert. */
+		    glNormal3dv(*pt);
+		    break;
+	    }
+	}
+
+#if USE_VECTOR_THRESHHOLD
+/*XXX The Tcl_DoOneEvent below causes the following error:
+  X Error of failed request:  GLXBadContextState
+*/
+
+	nvectors += nused;
+
+	if (nvectors >= vectorThreshold) {
+	    if (dmp->dm_debugLevel)
+		bu_log("ogl_drawVList(): handle Tcl events\n");
+
+	    nvectors = 0;
+
+	    /* Handle events in the queue */
+	    while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
+
+	    if (dmp->dm_debugLevel)
+		bu_log("ogl_drawVList(): handled Tcl events successfully\n");
+	}
+#endif
+    }
+
+    if (first == 0)
+	glEnd();
+
+    return TCL_OK;
+}
+
+
 
 /*
  *			O G L _ N O R M A L
