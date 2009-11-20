@@ -50,12 +50,13 @@ const struct bu_structparse rt_constraint_parse[] = {
 /**
  * R T _ C O N S T R A I N T _ I F R E E
  *
- * Free the storage associated with the rt_db_internal version of constraint object.
+ * Free the storage associated with the rt_db_internal version of
+ * constraint object.
  */
 void
-rt_constraint_ifree( struct rt_db_internal *ip, struct resource *resp)
+rt_constraint_ifree(struct rt_db_internal *ip, struct resource *resp)
 {
-    register struct rt_constraint_internal	*constraint;
+    register struct rt_constraint_internal *constraint;
 
     RT_CK_DB_INTERNAL(ip);
     constraint = (struct rt_constraint_internal *)ip->idb_ptr;
@@ -68,7 +69,7 @@ rt_constraint_ifree( struct rt_db_internal *ip, struct resource *resp)
 	else
 	    bu_log("Freeing bogus constraint, VLS not initialized\n");
 
-	bu_free( (genptr_t)constraint, "constraint ifree" );
+	bu_free((genptr_t)constraint, "constraint ifree");
     }
     ip->idb_ptr = GENPTR_NULL;	/* sanity */
 }
@@ -76,26 +77,26 @@ rt_constraint_ifree( struct rt_db_internal *ip, struct resource *resp)
 
 
 /**
- * R T _ C O N S T R A I N T  _ E X P O R T 5
+ * R T _ C O N S T R A I N T _ E X P O R T 5
  *
  */
 int
 rt_constraint_export5(
-    struct bu_external		*ep,
-    const struct rt_db_internal	*ip,
-    double			local2mm,
-    const struct db_i		*dbip,
-    struct resource		*resp)
+    struct bu_external *ep,
+    const struct rt_db_internal *ip,
+    double local2mm,
+    const struct db_i *dbip,
+    struct resource *resp)
 {
-    struct rt_constraint_internal	*cip;
-    struct rt_constraint_internal	constraint;
-    struct bu_vls			str;
+    struct rt_constraint_internal *cip;
+    struct rt_constraint_internal constraint;
+    struct bu_vls str;
 
     RT_CK_DB_INTERNAL(ip);
     if (dbip) RT_CK_DBI(dbip);
     if (resp) RT_CK_RESOURCE(resp);
 
-    if ( ip->idb_type != ID_CONSTRAINT ) bu_bomb("rt_constraint_export() type not ID_CONSTRAINT");
+    if (ip->idb_type != ID_CONSTRAINT) bu_bomb("rt_constraint_export() type not ID_CONSTRAINT");
     cip = (struct rt_constraint_internal *) ip->idb_ptr;
     /*RT_CONSTRAINT_CK_MAGIC(cip);*/
     constraint = *cip;
@@ -103,16 +104,16 @@ rt_constraint_export5(
     local2mm = local2mm; /* quell */
 
     BU_INIT_EXTERNAL(ep);
-/*    BU_CK_EXTERNAL(ep);*/
     
     bu_vls_init(&str);
     bu_vls_struct_print(&str, rt_constraint_parse, (char *) &constraint);
 
     ep->ext_nbytes = bu_vls_strlen(&str);
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes,"constrnt external");
-    bu_strlcpy(ep->ext_buf,bu_vls_addr(&str),ep->ext_nbytes);
+    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "constrnt external");
+    bu_strlcpy(ep->ext_buf, bu_vls_addr(&str), ep->ext_nbytes);
    
     bu_vls_free(&str);
+
     return 0;	/* OK */
 }
 
@@ -122,15 +123,15 @@ rt_constraint_export5(
  */
 int
 rt_constraint_import5(
-    struct rt_db_internal	*ip,
+    struct rt_db_internal *ip,
     const struct bu_external *ep,
-    const mat_t		mat,
-    const struct db_i	*dbip,
-    struct resource		*resp,
-    const int		minor_type)
+    const mat_t mat,
+    const struct db_i *dbip,
+    struct resource *resp,
+    const int minor_type)
 {
     RT_CK_DB_INTERNAL(ip);
-    BU_CK_EXTERNAL( ep );
+    BU_CK_EXTERNAL(ep);
     mat = mat;
     RT_CK_DBI(dbip);
     if (resp) RT_CK_RESOURCE(resp);
