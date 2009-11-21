@@ -194,6 +194,7 @@ struct dm {
     int (*dm_drawString2D)();	/**< @brief formerly dmr_puts */
     int (*dm_drawLine2D)();	/**< @brief formerly dmr_2d_line */
     int (*dm_drawPoint2D)();
+    int (*dm_drawVList)();
     int (*dm_draw)(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), genptr_t *data);	/**< @brief formerly dmr_object */
     int (*dm_setFGColor)(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency);
     int (*dm_setBGColor)(struct dm *, unsigned char, unsigned char, unsigned char);
@@ -271,6 +272,7 @@ struct dm_obj {
      _dmp->dm_drawString2D(_dmp, _str, _x, _y, _size, _use_aspect)
 #define DM_DRAW_LINE_2D(_dmp, _x1, _y1, _x2, _y2) _dmp->dm_drawLine2D(_dmp, _x1, _y1, _x2, _y2)
 #define DM_DRAW_POINT_2D(_dmp, _x, _y) _dmp->dm_drawPoint2D(_dmp, _x, _y)
+#define DM_DRAW_VLIST(_dmp, _vlist) _dmp->dm_drawVList(_dmp, _vlist)
 #define DM_DRAW(_dmp, _callback, _data) _dmp->dm_draw(_dmp, _callback, _data)
 #define DM_SET_FGCOLOR(_dmp, _r, _g, _b, _strict, _transparency) _dmp->dm_setFGColor(_dmp, _r, _g, _b, _strict, _transparency)
 #define DM_SET_BGCOLOR(_dmp, _r, _g, _b) _dmp->dm_setBGColor(_dmp, _r, _g, _b)

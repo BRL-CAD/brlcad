@@ -91,6 +91,7 @@ HIDDEN int rtgl_normal(struct dm *dmp), rtgl_loadMatrix(struct dm *dmp, fastf_t 
 HIDDEN int rtgl_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int size, int use_aspect);
 HIDDEN int rtgl_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2);
 HIDDEN int rtgl_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y);
+HIDDEN int rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp);
 HIDDEN int rtgl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), genptr_t *data);
 HIDDEN int rtgl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency);
 HIDDEN int rtgl_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b);
@@ -115,6 +116,7 @@ struct dm dm_rtgl = {
     rtgl_drawString2D,
     rtgl_drawLine2D,
     rtgl_drawPoint2D,
+    rtgl_drawVList,
     rtgl_draw,
     rtgl_setFGColor,
     rtgl_setBGColor,
@@ -1566,21 +1568,8 @@ time_t start = 0;
  *
  */
 HIDDEN int
-rtgl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), genptr_t *data)
+rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 {
-    struct bn_vlist *vp;
-    if (!callback_function) {
-         if (data) {
-             vp = (struct bn_vlist *)data;
-         }
-     } else {
-         if (!data) {
-             return TCL_ERROR;
-         } else {    
-             vp = callback_function(data);
-         }
-     }
-								
     int i, j, new, numVisible, numNew, maxPixels, viewSize;
     vect_t span;
     char *currTree, *visibleTrees[RT_MAXARGS];
@@ -1879,6 +1868,29 @@ rtgl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *))
     return TCL_OK;
 }
 
+/*
+ * R T G L _ D R A W
+ *
+ */
+HIDDEN int
+rtgl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), genptr_t *data)
+{
+    struct bn_vlist *vp;
+    if (!callback_function) {
+         if (data) {
+             vp = (struct bn_vlist *)data;
+	     rtgl_drawVList(dmp,vp);
+         }
+     } else {
+         if (!data) {
+             return TCL_ERROR;
+         } else {    
+             vp = callback_function(data);
+         }
+     }
+     return TCL_OK;
+}
+	
 
 /*
  * O G L _ N O R M A L

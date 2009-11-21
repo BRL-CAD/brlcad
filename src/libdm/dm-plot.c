@@ -59,6 +59,7 @@ static int	plot_drawBegin(struct dm *dmp), plot_drawEnd(struct dm *dmp);
 static int	plot_normal(struct dm *dmp), plot_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye);
 static int	plot_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int size, int use_aspect), plot_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2);
 static int      plot_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y);
+static int      plot_drawVList(struct dm *dmp, register struct bn_vlist *vp);
 static int      plot_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), genptr_t *data);
 static int      plot_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency);
 static int      plot_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b);
@@ -74,6 +75,7 @@ struct dm dm_plot = {
     plot_drawString2D,
     plot_drawLine2D,
     plot_drawPoint2D,
+    plot_drawVList,
     plot_draw,
     plot_setFGColor,
     plot_setBGColor,
@@ -356,21 +358,8 @@ plot_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
  *  Returns 0 if object could be drawn, !0 if object was omitted.
  */
 static int
-plot_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), genptr_t *data)
+plot_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 {
-     struct bn_vlist *vp;
-     if (!callback_function) {
-         if (data) {
-             vp = (struct bn_vlist *)data;
-         }
-     } else {
-         if (!data) {
-             return TCL_ERROR;
-         } else {
-             vp = callback_function(data);
-         }
-     }
-									
     static vect_t			last;
     register struct bn_vlist	*tvp;
     register point_t		*pt_prev=NULL;
@@ -502,6 +491,28 @@ plot_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *))
     return TCL_ERROR;
 }
 
+/*
+ *  P L O T _ D R A W
+ */
+static int
+plot_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), genptr_t *data)
+{
+     struct bn_vlist *vp;
+     if (!callback_function) {
+         if (data) {
+             vp = (struct bn_vlist *)data;
+	     plot_drawVList(dmp,vp);
+         }
+     } else {
+         if (!data) {
+             return TCL_ERROR;
+         } else {
+             vp = callback_function(data);
+         }
+     }
+     return TCL_OK;
+}
+	
 /*
  *			P L O T _ N O R M A L
  *

@@ -91,6 +91,7 @@ HIDDEN int	ogl_normal(struct dm *dmp), ogl_loadMatrix(struct dm *dmp, fastf_t *m
 HIDDEN int	ogl_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int size, int use_aspect);
 HIDDEN int	ogl_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2);
 HIDDEN int      ogl_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y);
+HIDDEN int      ogl_drawVList(struct dm *dmp, register struct bn_vlist *vp);
 HIDDEN int 	ogl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), genptr_t *data);
 HIDDEN int      ogl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency);
 HIDDEN int	ogl_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b);
@@ -115,6 +116,7 @@ struct dm dm_ogl = {
     ogl_drawString2D,
     ogl_drawLine2D,
     ogl_drawPoint2D,
+    ogl_drawVList,
     ogl_draw,
     ogl_setFGColor,
     ogl_setBGColor,
@@ -955,24 +957,12 @@ ogl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 }
 
 /*
- *  			O G L _ D R A W
+ *  			O G L _ D R A W V L I S T
  *
  */
 HIDDEN int
-ogl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), genptr_t *data)
+ogl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 {
-    struct bn_vlist *vp;
-    if (!callback_function) {
-	if (data) {
-	    vp = (struct bn_vlist *)data;
-	}
-    } else {
-	if (!data) {
-	    return TCL_ERROR;
-	} else {
-	    vp = callback_function(data);
-	}
-    }
     register struct bn_vlist	*tvp;
     int				first;
 #if USE_VECTOR_THRESHHOLD
@@ -1086,7 +1076,28 @@ ogl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)),
     return TCL_OK;
 }
 
-
+/*
+ *  			O G L _ D R A W
+ *
+ */
+HIDDEN int
+ogl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), genptr_t *data)
+{
+    struct bn_vlist *vp;
+    if (!callback_function) {
+	if (data) {
+	    vp = (struct bn_vlist *)data;
+	    ogl_drawVList(dmp,vp);
+	}
+    } else {
+	if (!data) {
+	    return TCL_ERROR;
+	} else {
+	    vp = callback_function(data);
+	}
+    }
+    return TCL_OK;
+}
 
 /*
  *			O G L _ N O R M A L

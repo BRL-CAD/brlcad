@@ -79,6 +79,7 @@ HIDDEN int X_normal(struct dm *dmp), X_loadMatrix(struct dm *dmp, fastf_t *mat, 
 HIDDEN int X_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int size, int use_aspect);
 HIDDEN int X_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2);
 HIDDEN int X_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y);
+HIDDEN int X_drawVList(struct dm *dmp, register struct bn_vlist *vp);
 HIDDEN int X_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), genptr_t *data);
 HIDDEN int X_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency);
 HIDDEN int X_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b);
@@ -98,6 +99,7 @@ struct dm dm_X = {
     X_drawString2D,
     X_drawLine2D,
     X_drawPoint2D,
+    X_drawVList,
     X_draw,
     X_setFGColor,
     X_setBGColor,
@@ -677,24 +679,12 @@ X_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 
 
 /**
- * X _ D R A W
+ * X _ D R A W V L I S T
  *
  */
 HIDDEN int
-X_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), genptr_t *data)
+X_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 {
-    struct bn_vlist *vp;
-    if (!callback_function) {
-	if (data) {
-	    vp = (struct bn_vlist *)data;
-	}
-    } else {
-	if (!data) {
-	    return TCL_ERROR;
-	} else {
-	    vp = callback_function(data);
-	}
-    }
     static vect_t spnt, lpnt, pnt;
     register struct bn_vlist *tvp;
     XSegment segbuf[1024];	/* XDrawSegments list */
@@ -928,6 +918,28 @@ X_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), g
     return TCL_OK;
 }
 
+/**
+ * X _ D R A W
+ *
+ */
+HIDDEN int
+X_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), genptr_t *data)
+{
+    struct bn_vlist *vp;
+    if (!callback_function) {
+	if (data) {
+	    vp = (struct bn_vlist *)data;
+	    X_drawList(dmp,vp);
+	}
+    } else {
+	if (!data) {
+	    return TCL_ERROR;
+	} else {
+	    vp = callback_function(data);
+	}
+    }
+    return TCL_OK;
+} 
 
 /**
  * X _ N O R M A L

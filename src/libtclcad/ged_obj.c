@@ -6568,7 +6568,7 @@ go_drawSolid(struct dm *dmp, struct solid *sp)
 		       (unsigned char)sp->s_color[1],
 		       (unsigned char)sp->s_color[2], 0, sp->s_transparency);
 
-    DM_DRAW(dmp, NULL, (void *)&sp->s_vlist);
+    DM_DRAW_VLIST(dmp, (struct bn_vlist *)&sp->s_vlist);
 }
 
 /* Draw all display lists */
