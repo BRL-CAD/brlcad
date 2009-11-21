@@ -929,7 +929,7 @@ X_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), g
     if (!callback_function) {
 	if (data) {
 	    vp = (struct bn_vlist *)data;
-	    X_drawList(dmp,vp);
+	    X_drawVList(dmp,vp);
 	}
     } else {
 	if (!data) {
