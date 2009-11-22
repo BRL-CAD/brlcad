@@ -33,7 +33,11 @@
  *
  * preVector (vect_t)	Matrix (mat_t)		postVector (vect_t)
  @endcode
-*/
+ *
+ * TODO: need a better way to control tolerancing, either via
+ * additional tolerance parameters or perhaps providing a global
+ * tolerance state interface.
+ */
 /** @} */
 
 #include "common.h"
