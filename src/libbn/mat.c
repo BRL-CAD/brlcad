@@ -389,6 +389,8 @@ bn_vtoh_move(register vect_t h, register const vect_t v)
  * Takes a pointer to [x, y, z, w], and converts it to an ordinary
  * vector [x/w, y/w, z/w].  Optimization for the case of w==1 is
  * performed.
+ *
+ * FIXME: make tolerance configurable
  */
 void
 bn_htov_move(register vect_t v, register const vect_t h)
@@ -594,6 +596,8 @@ bn_vec_aed(vect_t vect, fastf_t az, fastf_t el, fastf_t distance)
  * Alpha is angle of rotation about the X axis, and is done third.
  * Beta is angle of rotation about the Y axis, and is done second.
  * Gamma is angle of rotation about Z axis, and is done first.
+ *
+ * FIXME: make tolerance configurable
  */
 void
 bn_mat_angles(register fastf_t *mat, double alpha_in, double beta_in, double ggamma_in)
@@ -662,6 +666,8 @@ bn_mat_angles(register fastf_t *mat, double alpha_in, double beta_in, double gga
  * Alpha is angle of rotation about the X axis, and is done third.
  * Beta is angle of rotation about the Y axis, and is done second.
  * Gamma is angle of rotation about Z axis, and is done first.
+ *
+ * FIXME: make tolerance configurable
  */
 void
 bn_mat_angles_rad(register mat_t	mat,
@@ -764,6 +770,8 @@ bn_eigen2x2(fastf_t *val1, fastf_t *val2, fastf_t *vec1, fastf_t *vec2, fastf_t 
  * Given a vector, create another vector which is perpendicular to it.
  * The output vector will have unit length only if the input vector
  * did.
+ *
+ * FIXME: make tolerance configurable
  */
 void
 bn_vec_perp(vect_t new, const vect_t old)
@@ -792,6 +800,8 @@ bn_vec_perp(vect_t new, const vect_t old)
  *
  * The input 'from' and 'to' vectors need not be unit length.
  * MAT4X3VEC(to, m, from) is the identity that is created.
+ *
+ * FIXME: make tolerance configurable
  */
 void
 bn_mat_fromto(mat_t m, const vect_t from, const vect_t to)
@@ -1038,6 +1048,8 @@ bn_mat_lookat(mat_t rot, const vect_t dir, int yflip)
  * Given a vector, create another vector which is perpendicular to it,
  * and with unit length.  This algorithm taken from Gift's arvec.f; a
  * faster algorithm may be possible.
+ *
+ * FIXME: make tolerance configurable
  */
 void
 bn_vec_ortho(register vect_t out, register const vect_t in)
@@ -1091,6 +1103,8 @@ bn_vec_ortho(register vect_t out, register const vect_t in)
  *
  * @return	-1	if scale is too small.
  * @return	 0	if OK.
+ *
+ * FIXME: make tolerance configurable
  */
 int
 bn_mat_scale_about_pt(mat_t mat, const point_t pt, const double scale)
@@ -1216,6 +1230,8 @@ bn_mat_is_identity(const mat_t m)
  * Construct a transformation matrix for rotation about an arbitrary
  * axis.  The axis is defined by a point (pt) and a unit direction
  * vector (dir).  The angle of rotation is "ang"
+ *
+ * FIXME: make tolerance configurable
  */
 void
 bn_mat_arb_rot(mat_t m, const point_t pt, const vect_t dir, const fastf_t ang)
@@ -1398,6 +1414,8 @@ bn_mat_determinant(const mat_t m)
 
 /**
  *
+ *
+ * FIXME: make tolerance configurable
  */
 int
 bn_mat_is_non_unif(const mat_t m)
