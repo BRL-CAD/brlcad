@@ -838,12 +838,12 @@ bn_mat_fromto(mat_t m, const vect_t from, const vect_t to)
      * = 0.0005729 degrees (1/2000 degree)
      */
     dot = VDOT(unit_from, unit_to);
-    if (dot > 1.0 - SMALL_FASTF) {
+    if (dot > 1.0 - 0.00001) {
 	/* dot == 1, return identity matrix */
 	MAT_IDN(m);
 	return;
     }
-    if (dot < -1.0 + SMALL_FASTF) {
+    if (dot < -1.0 + 0.00001) {
 	/* dot == -1, select random perpendicular N vector */
 	bn_vec_perp(N, unit_from);
     } else {
@@ -1064,9 +1064,9 @@ bn_vec_ortho(register vect_t out, register const vect_t in)
     register fastf_t f;
     register int i;
 
-    if (NEAR_ZERO(in[X], SMALL_FASTF)
-	&& NEAR_ZERO(in[Y], SMALL_FASTF)
-	&& NEAR_ZERO(in[Z], SMALL_FASTF))
+    if (NEAR_ZERO(in[X], 0.0001)
+	&& NEAR_ZERO(in[Y], 0.0001)
+	&& NEAR_ZERO(in[Z], 0.0001))
     {
 	VSETALL(out, 0);
 	VPRINT("bn_vec_ortho: zero-length input", in);
