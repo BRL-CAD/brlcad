@@ -181,26 +181,22 @@ extern float specularColor[4];
 extern float diffuseColor[4];
 extern float backColor[];
 
-int controlClip = 1;
-int calls, jobsDone;
+struct rtglJobs rtgljob = {
+    1,
+    0,
+    0,
+    NULL,
+    0,
+    NULL,
+    NULL,
+    NULL,
+    0,
+    0
+};
 
 /* ray trace vars */
 struct application app;
 struct rt_i *rtip;
-
-/* last trees drawn */
-char *oldTrees[RT_MAXARGS];
-int oldNumTrees = 0;
-
-/* color table */
-struct bu_hash_tbl *colorTable;
-struct ptInfoList *currItem;
-
-/* list of ray trace jobs */
-struct jobList *currJob;
-
-int numJobs = 0;
-int rtglWasClosed = 0;
 
 /* free all jobs from job list */
 void freeJobList(struct jobList *jobs) {
@@ -208,10 +204,10 @@ void freeJobList(struct jobList *jobs) {
     /* list cannot be empty */
     if (jobs->l.forw != NULL && (struct jobList *)jobs->l.forw != &(*jobs)) {
 
-	while (BU_LIST_WHILE (currJob, jobList, &(jobs->l))) {
+	while (BU_LIST_WHILE (rtgljob.currJob, jobList, &(jobs->l))) {
 
-	    BU_LIST_DEQUEUE(&(currJob->l));
-	    bu_free(currJob, "free jobs currJob");
+	    BU_LIST_DEQUEUE(&(rtgljob.currJob->l));
+	    bu_free(rtgljob.currJob, "free jobs rtgljob.currJob");
 	}
 
 	jobs->l.forw = BU_LIST_NULL;
@@ -301,8 +297,8 @@ rtgl_open(Tcl_Interp *interp, int argc, char **argv)
     if (bu_vls_strlen(&init_proc_vls) == 0)
 	bu_vls_strcpy(&init_proc_vls, "bind_dm");
 
-    calls = 1;
-    jobsDone = 1;
+    rtgljob.calls = 1;
+    rtgljob.jobsDone = 1;
 
     /* initialize dm specific variables */
     ((struct dm_xvars *)dmp->dm_vars.pub_vars)->devmotionnotify = LASTEvent;
@@ -787,13 +783,13 @@ rtgl_close(struct dm *dmp)
     bu_free(dmp, "rtgl_close: dmp");
 
     /* reset job count */
-    numJobs = 0;
-    rtglWasClosed = 1;
+    rtgljob.numJobs = 0;
+    rtgljob.rtglWasClosed = 1;
     
     /* free draw list */
-    if (colorTable != NULL) {
-	bu_hash_tbl_free(colorTable);
-	colorTable = NULL;
+    if (rtgljob.colorTable != NULL) {
+	bu_hash_tbl_free(rtgljob.colorTable);
+	rtgljob.colorTable = NULL;
     }
 
     return TCL_OK;
@@ -985,7 +981,7 @@ rtgl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
     if (dmp->dm_zclip) {
 
 	/* use custom clipping to control zbuffer precision */
-	if (controlClip) {
+	if (rtgljob.controlClip) {
 	    clip = scale / startScale - .75;
 
 	    if (clip > 1)
@@ -1046,7 +1042,7 @@ rtgl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
     glEnable(GL_RESCALE_NORMAL);
 
     /* apply view */
-    if (controlClip) {
+    if (rtgljob.controlClip) {
 /*
   bu_log("clip: %3.2f translate:%3.2f", clip, clip - 1.25);
 */
@@ -1107,7 +1103,7 @@ void addInfo(struct application *app, struct hit *hit, struct soltab *soltab, ch
 
     /* find the table bin for this color */
     colorKey = getColorKey(partColor);
-    entry = bu_find_hash_entry(colorTable, colorKey, KEY_LENGTH, &prev, &index);
+    entry = bu_find_hash_entry(rtgljob.colorTable, colorKey, KEY_LENGTH, &prev, &index);
 
     /* look for the correct color bin in the found entries */
     newColor = 1;
@@ -1136,12 +1132,12 @@ void addInfo(struct application *app, struct hit *hit, struct soltab *soltab, ch
 	BU_LIST_INIT(head);
 
 	/* add first list item */
-	BU_GETSTRUCT(currItem, ptInfoList);
-	BU_LIST_PUSH(head, currItem);
-	currItem->used = 0;
+	BU_GETSTRUCT(rtgljob.currItem, ptInfoList);
+	BU_LIST_PUSH(head, rtgljob.currItem);
+	rtgljob.currItem->used = 0;
 
 	/* add the new bin to the table */
-	entry = bu_hash_add_entry(colorTable, colorKey, KEY_LENGTH, &newColor);
+	entry = bu_hash_add_entry(rtgljob.colorTable, colorKey, KEY_LENGTH, &newColor);
 	bu_set_hash_value(entry, (unsigned char *)bin);	
     }
 
@@ -1150,27 +1146,27 @@ void addInfo(struct application *app, struct hit *hit, struct soltab *soltab, ch
 
 	/* get bin's current list item */
 	head = &(bin->list->l);
-	currItem = (struct ptInfoList *)head->forw;
+	rtgljob.currItem = (struct ptInfoList *)head->forw;
 
 	/* if list item is full, create a new item */
-	if (currItem->used == PT_ARRAY_SIZE) {
+	if (rtgljob.currItem->used == PT_ARRAY_SIZE) {
 
-	    BU_GETSTRUCT(currItem, ptInfoList);
-	    BU_LIST_PUSH(head, currItem);
-	    currItem->used = 0;
+	    BU_GETSTRUCT(rtgljob.currItem, ptInfoList);
+	    BU_LIST_PUSH(head, rtgljob.currItem);
+	    rtgljob.currItem->used = 0;
 	}
     }
 
     /* add point and normal to bin's current list */
-    currItem->points[X + currItem->used] = point[X];
-    currItem->points[Y + currItem->used] = point[Y];
-    currItem->points[Z + currItem->used] = point[Z];
+    rtgljob.currItem->points[X + rtgljob.currItem->used] = point[X];
+    rtgljob.currItem->points[Y + rtgljob.currItem->used] = point[Y];
+    rtgljob.currItem->points[Z + rtgljob.currItem->used] = point[Z];
 
-    currItem->norms[X + currItem->used] = normal[X];
-    currItem->norms[Y + currItem->used] = normal[Y];
-    currItem->norms[Z + currItem->used] = normal[Z];
+    rtgljob.currItem->norms[X + rtgljob.currItem->used] = normal[X];
+    rtgljob.currItem->norms[Y + rtgljob.currItem->used] = normal[Y];
+    rtgljob.currItem->norms[Z + rtgljob.currItem->used] = normal[Z];
 
-    currItem->used += 3;
+    rtgljob.currItem->used += 3;
 }
 
 /* add all hit point info to info list */
@@ -1337,7 +1333,7 @@ struct jobList **jobsArray = NULL;
 struct job* getJob(int n) {
     int bin, index, start;
 
-    if (n > numJobs)
+    if (n > rtgljob.numJobs)
 	return (struct job *)NULL;	
 
     n--; /* meta-index of nth item */
@@ -1352,9 +1348,9 @@ struct job* getJob(int n) {
     index = n - start;
 
     /* get the bin link */
-    currJob = jobsArray[bin];
+    rtgljob.currJob = jobsArray[bin];
 
-    return &(currJob->jobs[index]);
+    return &(rtgljob.currJob->jobs[index]);
 }
 
 /* Fisher-Yates shuffle */
@@ -1362,7 +1358,7 @@ void shuffleJobs(void) {
     int i;
     struct job *a, *b, temp;
 
-    for (i = numJobs; i > 0; i--) {
+    for (i = rtgljob.numJobs; i > 0; i--) {
 
 	a = getJob(i);
 	b = getJob((rand() % i) + 1);
@@ -1418,19 +1414,19 @@ void shootGrid(struct jobList *jobs, vect_t min, vect_t max, double maxSpan, int
 	    app.a_ray.r_pt[vAxis] = v;
 		
 	    /* make new job if needed */
-	    if (currJob->used == JOB_ARRAY_SIZE) {
+	    if (rtgljob.currJob->used == JOB_ARRAY_SIZE) {
 
-		BU_GETSTRUCT(currJob, jobList);
-		BU_LIST_PUSH(&(jobs->l), currJob);
-		currJob->used = 0;
+		BU_GETSTRUCT(rtgljob.currJob, jobList);
+		BU_LIST_PUSH(&(jobs->l), rtgljob.currJob);
+		rtgljob.currJob->used = 0;
 	    }
 	    
-	    VMOVE(currJob->jobs[currJob->used].pt, app.a_ray.r_pt);
-	    VMOVE(currJob->jobs[currJob->used].dir, app.a_ray.r_dir);
+	    VMOVE(rtgljob.currJob->jobs[rtgljob.currJob->used].pt, app.a_ray.r_pt);
+	    VMOVE(rtgljob.currJob->jobs[rtgljob.currJob->used].dir, app.a_ray.r_dir);
 
-	    currJob->used++;
+	    rtgljob.currJob->used++;
 
-	    numJobs++;
+	    rtgljob.numJobs++;
 	}
 	
 	/* reset u */
@@ -1449,7 +1445,7 @@ int shootJobs(struct jobList *jobs) {
     if (jobsArray != NULL) {
 	
 	/* get last non-null item */
-	last = numJobs - numShot;
+	last = rtgljob.numJobs - numShot;
 	last /= JOB_ARRAY_SIZE;
 	last++;
 
@@ -1460,22 +1456,22 @@ int shootJobs(struct jobList *jobs) {
 	/* last to first item */
 	for (i = last; i >= 0; i--) {
 
-	    currJob = jobsArray[i];
-	    used = &(currJob->used);
+	    rtgljob.currJob = jobsArray[i];
+	    used = &(rtgljob.currJob->used);
 
 	    /* shoot jobs in this array */
 	    while (*used > 0) {
 
-		VMOVE(app.a_ray.r_pt, currJob->jobs[*used].pt);
-		VMOVE(app.a_ray.r_dir, currJob->jobs[*used].dir);
+		VMOVE(app.a_ray.r_pt, rtgljob.currJob->jobs[*used].pt);
+		VMOVE(app.a_ray.r_dir, rtgljob.currJob->jobs[*used].dir);
 		rt_shootray(&app);
 		
 		numShot++;
 		(*used)--;
 		    
 		if (*used == 0) {
-		    BU_LIST_DEQUEUE(&(currJob->l));
-		    bu_free(currJob, "free jobs currJob");
+		    BU_LIST_DEQUEUE(&(rtgljob.currJob->l));
+		    bu_free(rtgljob.currJob, "free jobs rtgljob.currJob");
 		    jobsArray[i] = NULL;
 		    break;
 		}
@@ -1501,7 +1497,7 @@ void drawPoints(float *view, int pointSize) {
     struct bu_hash_record record;
 
     /* get first table entry */
-    if ((entry = bu_hash_tbl_first(colorTable, &record)) == NULL)
+    if ((entry = bu_hash_tbl_first(rtgljob.colorTable, &record)) == NULL)
 	return;
 
     /* drawing shaded points */
@@ -1526,15 +1522,15 @@ void drawPoints(float *view, int pointSize) {
 	/* visit each item in bin's list */
 	head = &(bin->list->l);
 	
-	for (BU_LIST_FOR (currItem, ptInfoList, head)) {
-	    used = currItem->used;
+	for (BU_LIST_FOR (rtgljob.currItem, ptInfoList, head)) {
+	    used = rtgljob.currItem->used;
 
 #if 1
 	    glBegin(GL_POINTS);
 	    for (i = 0; i < used; i += 3) {
 
-		point = &(currItem->points[i]);
-		normal = &(currItem->norms[i]);
+		point = &(rtgljob.currItem->points[i]);
+		normal = &(rtgljob.currItem->norms[i]);
 		
 		/* draw if visible */
 		dot = VDOT(view, normal);
@@ -1546,8 +1542,8 @@ void drawPoints(float *view, int pointSize) {
 	    }
 	    glEnd();
 #else
-	    glNormalPointer(GL_FLOAT, 0, &(currItem->norms));
-	    glVertexPointer(3, GL_FLOAT, 0, &(currItem->points));
+	    glNormalPointer(GL_FLOAT, 0, &(rtgljob.currItem->norms));
+	    glVertexPointer(3, GL_FLOAT, 0, &(rtgljob.currItem->points));
 	    glDrawArrays(GL_POINTS, 0, (used / 3));
 #endif
 	}
@@ -1606,10 +1602,10 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
     viewSize = gedp->ged_gvp->gv_size;
 
     /* initialize draw list */
-    if (calls == 1 || colorTable == NULL) {
+    if (rtgljob.calls == 1 || rtgljob.colorTable == NULL) {
 
 	/* create color hash table */
-	colorTable = bu_create_hash_tbl(START_TABLE_SIZE);
+	rtgljob.colorTable = bu_create_hash_tbl(START_TABLE_SIZE);
     }
 
     /* get number and names of visible tree tops */
@@ -1617,8 +1613,8 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 
     int foundalloldtrees = 1;
     int foundthistree = 0;
-    for (i = 0; i < oldNumTrees; i++) {
-	currTree = oldTrees[i];
+    for (i = 0; i < rtgljob.oldNumTrees; i++) {
+	currTree = rtgljob.oldTrees[i];
 	foundthistree = 0;
  	for (j = 0; j < numVisible; j++) {
 	    if (strcmp(currTree, visibleTrees[j]) == 0) 
@@ -1633,12 +1629,12 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
     	foundalloldtrees = 1;
 	
 	/* drop previous work */
-	oldNumTrees = 0;
+	rtgljob.oldNumTrees = 0;
 	freeJobList(&jobs);
 
-	if (colorTable != NULL) {
-	    bu_hash_tbl_free(colorTable);
-	    colorTable = NULL;
+	if (rtgljob.colorTable != NULL) {
+	    bu_hash_tbl_free(rtgljob.colorTable);
+	    rtgljob.colorTable = NULL;
 	}
 
 	if (jobsArray != NULL) {
@@ -1649,7 +1645,7 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 	RTGL_DIRTY = 1;
 
 	maxSpan = 0.0;
-	numShot = numJobs = 0;
+	numShot = rtgljob.numJobs = 0;
     }
 
 
@@ -1657,12 +1653,12 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
     if (numVisible == 0) {
 
 	/* drop previous work */
-	oldNumTrees = 0;
+	rtgljob.oldNumTrees = 0;
 	freeJobList(&jobs);
 
-	if (colorTable != NULL) {
-	    bu_hash_tbl_free(colorTable);
-	    colorTable = NULL;
+	if (rtgljob.colorTable != NULL) {
+	    bu_hash_tbl_free(rtgljob.colorTable);
+	    rtgljob.colorTable = NULL;
 	}
 
 	if (jobsArray != NULL) {
@@ -1678,7 +1674,7 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 	}
 
 	maxSpan = 0.0;
-	numShot = numJobs = 0;
+	numShot = rtgljob.numJobs = 0;
 
 	return TCL_OK;
     }
@@ -1686,15 +1682,15 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
     /* look for new trees in need of ray tracing */
     numNew = 0;
     
-    if (rtglWasClosed == 1) {
-	rtglWasClosed = 0;
-	oldNumTrees = 0;
+    if (rtgljob.rtglWasClosed == 1) {
+	rtgljob.rtglWasClosed = 0;
+	rtgljob.oldNumTrees = 0;
     	/* drop previous work */
 	freeJobList(&jobs);
 	
-	if (colorTable != NULL) {
-	    bu_hash_tbl_free(colorTable);
-	    colorTable = NULL;
+	if (rtgljob.colorTable != NULL) {
+	    bu_hash_tbl_free(rtgljob.colorTable);
+	    rtgljob.colorTable = NULL;
 	}
 	
 	if (jobsArray != NULL) {
@@ -1710,7 +1706,7 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 	}
 	
 	maxSpan = 0.0;
-	numShot = numJobs = 0;
+	numShot = rtgljob.numJobs = 0;
     }
  
     
@@ -1723,8 +1719,8 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 	 * but that's not set up yet without clearing everything
 	 * first and starting over.
 	 */
-        for (j = 0; j < oldNumTrees; j++) {
-            if (strcmp(currTree, oldTrees[j]) == 0)
+        for (j = 0; j < rtgljob.oldNumTrees; j++) {
+            if (strcmp(currTree, rtgljob.oldTrees[j]) == 0)
                 new = 0;
         }
         
@@ -1735,7 +1731,7 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 
 	    /* add new tree to list of displayed */
             numNew++;
-	    oldTrees[oldNumTrees++] = currTree;
+	    rtgljob.oldTrees[rtgljob.oldNumTrees++] = currTree;
         }
     }
 
@@ -1745,9 +1741,9 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 	/* initialize job list */
 	BU_LIST_INIT(&(jobs.l));
 
-	BU_GETSTRUCT(currJob, jobList);
-	BU_LIST_PUSH(&(jobs.l), currJob);
-	currJob->used = 0;
+	BU_GETSTRUCT(rtgljob.currJob, jobList);
+	BU_LIST_PUSH(&(jobs.l), rtgljob.currJob);
+	rtgljob.currJob->used = 0;
 
         /* set up application */
         RT_APPLICATION_INIT(&app);
@@ -1779,14 +1775,14 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 	shootGrid(&jobs, min, max, maxSpan, maxPixels, Z, X, Y);
 	shootGrid(&jobs, min, max, maxSpan, maxPixels, Y, Z, X);
 
-	bu_log("firing %d jobs", numJobs);
+	bu_log("firing %d jobs", rtgljob.numJobs);
 
 	/* create job array */
-	jobsArray = bu_malloc(sizeof(struct jobList *) * numJobs, "dm-rtgl.c: jobsArray");
+	jobsArray = bu_malloc(sizeof(struct jobList *) * rtgljob.numJobs, "dm-rtgl.c: jobsArray");
 	    
 	i = 0;
-	for (BU_LIST_FOR_BACKWARDS(currJob, jobList, &(jobs.l))) {
-	    jobsArray[i++] = currJob;
+	for (BU_LIST_FOR_BACKWARDS(rtgljob.currJob, jobList, &(jobs.l))) {
+	    jobsArray[i++] = rtgljob.currJob;
 	}
 
 	start = time(NULL);
@@ -1807,7 +1803,7 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 #endif
 
 	/* new jobs to do */
-	jobsDone = 0;
+	rtgljob.jobsDone = 0;
 
     } /* numNew > 0 */
 
@@ -1820,7 +1816,7 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 	int pointSize = 2;
 
 	/* adjust point size based on % jobs completed */
-	double p = (double) numShot / (double) numJobs;
+	double p = (double) numShot / (double) rtgljob.numJobs;
 
 	float fview[3];
 	VMOVE(fview, view);
@@ -1842,10 +1838,10 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 	drawPoints(fview, pointSize);
     }
     
-    if (!jobsDone) {
+    if (!rtgljob.jobsDone) {
 	RTGL_DIRTY = 1;
 
-	if ((jobsDone = shootJobs(&jobs))) {	
+	if ((rtgljob.jobsDone = shootJobs(&jobs))) {	
     	    freeJobList(&jobs);
 	    
     	    if (jobsArray != NULL) {
@@ -1855,7 +1851,7 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 	    
     	    RTGL_DIRTY = 0;
     	   
-    	    numShot = numJobs = 0;
+    	    numShot = rtgljob.numJobs = 0;
 
 	    bu_log("jobs done");
 	}
@@ -1863,7 +1859,7 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 	RTGL_DIRTY = 0;
     }
 
-    calls++;
+    rtgljob.calls++;
 
     return TCL_OK;
 }
