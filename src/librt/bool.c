@@ -1789,11 +1789,9 @@ rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t sta
 		   ap->a_x, ap->a_y, ap->a_level );
 	    rt_pr_partitions( ap->a_rt_i, InputHdp, "With problem" );
 	}
-	if ( pp->pt_forw != InputHdp )
-	{
+	if ( pp->pt_forw != InputHdp ) {
 	    diff = pp->pt_outhit->hit_dist - pp->pt_forw->pt_inhit->hit_dist;
-	    if ( !NEAR_ZERO(diff, SMALL_FASTF) )
-	    {
+	    if ( !NEAR_ZERO(diff, SMALL_FASTF) ) {
 		if ( NEAR_ZERO( diff, ap->a_rt_i->rti_tol.dist ) )  {
 		    if (RT_G_DEBUG&DEBUG_PARTITION)  bu_log("rt_boolfinal:  fusing 2 partitions x%x x%x\n",
 							pp, pp->pt_forw );
