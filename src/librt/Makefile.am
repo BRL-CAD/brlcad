@@ -28,6 +28,8 @@ AM_CPPFLAGS = \
 	${BREP_CPPFLAGS} \
 	${DM_RTGL_CPPFLAGS}
 
+AM_CFLAGS = ${STRICT_FLAGS}
+
 noinst_PROGRAMS = \
 	comb \
 	nurb_example \

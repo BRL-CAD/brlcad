@@ -422,7 +422,7 @@ rt_boolweave(struct seg *out_hd, struct seg *in_hd, struct partition *PartHdp, s
 		    bu_log("newpp starts at %.12e, pp starts at %.12e\n",
 			   newpp->pt_inhit->hit_dist,
 			   pp->pt_inhit->hit_dist);
-		    bu_log("newpp = x%x, pp = x%x\n", newpp, pp);
+		    bu_log("newpp = %p, pp = %p\n", (void *)newpp, (void *)pp);
 		}
 		goto equal_start;
 	    }
@@ -514,7 +514,7 @@ rt_boolweave(struct seg *out_hd, struct seg *in_hd, struct partition *PartHdp, s
 			bu_log("newpp starts at %.12e, pp starts at %.12e\n",
 			       newpp->pt_inhit->hit_dist,
 			       pp->pt_inhit->hit_dist);
-			bu_log("newpp = x%x, pp = x%x\n", newpp, pp);
+			bu_log("newpp = %p, pp = %p\n", (void *)newpp, (void *)pp);
 		    }
 		    goto done_weave;
 		}
@@ -1176,22 +1176,25 @@ rt_default_multioverlap(struct application *ap, struct partition *pp, struct bu_
 	    /*
 	     * Destroy the whole partition.
 	     */
-	    if (RT_G_DEBUG&DEBUG_PARTITION) bu_log("rt_default_multioverlap:  overlap code=0, partition=x%x deleted\n", pp);
+	    if (RT_G_DEBUG&DEBUG_PARTITION)
+		bu_log("rt_default_multioverlap:  overlap code=0, partition=%p deleted\n", (void *)pp);
 	    bu_ptbl_reset(regiontable);
 	    return;
 	} else if (code == 1) {
 	code1:
 	    /* Keep partition, claiming region = lastregion */
-	    if (RT_G_DEBUG&DEBUG_PARTITION) bu_log("rt_default_multioverlap:  overlap policy=1, code=%d, p retained in region=%s\n",
-						   code, lastregion->reg_name);
+	    if (RT_G_DEBUG&DEBUG_PARTITION)
+		bu_log("rt_default_multioverlap:  overlap policy=1, code=%d, p retained in region=%s\n",
+		       code, lastregion->reg_name);
 	    BU_PTBL_CLEAR_I(regiontable, i);
 	} else {
 	code2:
 	    /* Keep partition, claiming region = regp */
 	    bu_ptbl_zero(regiontable, (long *)lastregion);
 	    lastregion = regp;
-	    if (RT_G_DEBUG&DEBUG_PARTITION) bu_log("rt_default_multioverlap:  overlap policy!=(0, 1) code=%d, p retained in region=%s\n",
-						   code, lastregion->reg_name);
+	    if (RT_G_DEBUG&DEBUG_PARTITION)
+		bu_log("rt_default_multioverlap:  overlap policy!=(0, 1) code=%d, p retained in region=%s\n",
+		       code, lastregion->reg_name);
 	}
     }
 }
@@ -1505,7 +1508,7 @@ stack:
 	    treep = treep->tr_b.tb_left;
 	    goto stack;
 	default:
-	    bu_log("rt_booleval:  bad stack op x%x\n", treep->tr_op);
+	    bu_log("rt_booleval:  bad stack op [%d]\n", treep->tr_op);
 	    return(BOOL_TRUE);	/* screw up output */
     }
 pop:
@@ -1596,7 +1599,7 @@ pop:
 	    }
 	    goto pop;
 	default:
-	    bu_log("rt_booleval:  bad pop op x%x\n", treep->tr_op);
+	    bu_log("rt_booleval:  bad pop op [%d]\n", treep->tr_op);
 	    return(BOOL_TRUE);	/* screw up output */
     }
     /* NOTREACHED */
@@ -1784,8 +1787,8 @@ rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t sta
 
 	/* Sanity checks on sorting. */
 	if (pp->pt_inhit->hit_dist > pp->pt_outhit->hit_dist) {
-	    bu_log("rt_boolfinal: inverted partition %.8x x%d y%d lvl%d\n",
-		   pp,
+	    bu_log("rt_boolfinal: inverted partition %p x%d y%d lvl%d\n",
+		   (void *)pp,
 		   ap->a_x, ap->a_y, ap->a_level);
 	    rt_pr_partitions(ap->a_rt_i, InputHdp, "With problem");
 	}
@@ -1793,16 +1796,16 @@ rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t sta
 	    diff = pp->pt_outhit->hit_dist - pp->pt_forw->pt_inhit->hit_dist;
 	    if (!NEAR_ZERO(diff, SMALL_FASTF)) {
 		if (NEAR_ZERO(diff, ap->a_rt_i->rti_tol.dist)) {
-		    if (RT_G_DEBUG&DEBUG_PARTITION) bu_log("rt_boolfinal:  fusing 2 partitions x%x x%x\n",
-							   pp, pp->pt_forw);
+		    if (RT_G_DEBUG&DEBUG_PARTITION) bu_log("rt_boolfinal:  fusing 2 partitions %p %p\n",
+							   (void *)pp, (void *)pp->pt_forw);
 		    pp->pt_forw->pt_inhit->hit_dist = pp->pt_outhit->hit_dist;
 		} else if (diff > 0) {
 		    bu_log("rt_boolfinal:  sorting defect %e > %e! x%d y%d lvl%d, diff = %g\n",
 			   pp->pt_outhit->hit_dist,
 			   pp->pt_forw->pt_inhit->hit_dist,
 			   ap->a_x, ap->a_y, ap->a_level, diff);
-		    bu_log("sort defect is between parts x%x and x%x\n",
-			   pp, pp->pt_forw);
+		    bu_log("sort defect is between parts %p and %p\n",
+			   (void *)pp, (void *)pp->pt_forw);
 		    if (!(RT_G_DEBUG & DEBUG_PARTITION))
 			rt_pr_partitions(ap->a_rt_i, InputHdp, "With DEFECT");
 		    ret = 0;
@@ -1820,9 +1823,9 @@ rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t sta
 	 */
 	if (pp->pt_outhit->hit_dist <= 0.001 /* milimeters */) {
 	    register struct partition *zap_pp;
-	    if (RT_G_DEBUG&DEBUG_PARTITION)bu_log(
-		"discarding partition x%x behind ray start, out dist=%g\n",
-		pp, pp->pt_outhit->hit_dist);
+	    if (RT_G_DEBUG&DEBUG_PARTITION)
+		bu_log("discarding partition %p behind ray start, out dist=%g\n",
+		       (void *)pp, pp->pt_outhit->hit_dist);
 	    zap_pp = pp;
 	    pp = pp->pt_forw;
 	    DEQUEUE_PT(zap_pp);
@@ -1837,8 +1840,8 @@ rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t sta
 	 */
 	diff = pp->pt_inhit->hit_dist - enddist;
 	if (diff > ap->a_rt_i->rti_tol.dist) {
-	    if (RT_G_DEBUG&DEBUG_PARTITION)bu_log(
-		"partition begins %g beyond current box end, returning\n", diff);
+	    if (RT_G_DEBUG&DEBUG_PARTITION)
+		bu_log("partition begins %g beyond current box end, returning\n", diff);
 	    reason = "partition begins beyond current box end";
 	    ret = 0;
 	    goto out;
@@ -1853,8 +1856,8 @@ rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t sta
 	 */
 	diff = pp->pt_outhit->hit_dist - enddist;
 	if (diff > ap->a_rt_i->rti_tol.dist) {
-	    if (RT_G_DEBUG&DEBUG_PARTITION)bu_log(
-		"partition ends beyond current box end\n");
+	    if (RT_G_DEBUG&DEBUG_PARTITION)
+		bu_log("partition ends beyond current box end\n");
 	    if (ap->a_onehit != 1) {
 		ret = 0;
 		reason = "a_onehit != 1, trace remaining boxes";
@@ -1903,8 +1906,8 @@ rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t sta
 	}
 
 	if (indefinite_outpt) {
-	    if (RT_G_DEBUG&DEBUG_PARTITION)bu_log(
-		"indefinite out point, checking partition eligibility for early evaluation.\n");
+	    if (RT_G_DEBUG&DEBUG_PARTITION)
+		bu_log("indefinite out point, checking partition eligibility for early evaluation.\n");
 	    /*
 	     * More hits still needed.  HITS_TODO > 0.  If every solid
 	     * in every region participating in this partition has
@@ -1915,8 +1918,8 @@ rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t sta
 		reason = "Partition not yet eligible for evaluation";
 		goto out;
 	    }
-	    if (RT_G_DEBUG&DEBUG_PARTITION)bu_log(
-		"Partition is eligibile for evaluation.\n");
+	    if (RT_G_DEBUG&DEBUG_PARTITION)
+		bu_log("Partition is eligibile for evaluation.\n");
 	}
 
 	/* Evaluate the boolean trees of any regions involved */
@@ -1931,33 +1934,36 @@ rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t sta
 		    rt_pr_tree_val(regp->reg_treetop, pp, 2, 0);
 		    rt_pr_tree_val(regp->reg_treetop, pp, 1, 0);
 		    rt_pr_tree_val(regp->reg_treetop, pp, 0, 0);
-		    bu_log("%.8x=bit%d, %s: ",
-			   regp, regp->reg_bit,
-			   regp->reg_name);
+		    bu_log("%p=bit%d, %s: ", (void *)regp, regp->reg_bit, regp->reg_name);
 		}
 		if (regp->reg_all_unions) {
-		    if (RT_G_DEBUG&DEBUG_PARTITION) bu_log("BOOL_TRUE (all union)\n");
+		    if (RT_G_DEBUG&DEBUG_PARTITION)
+			bu_log("BOOL_TRUE (all union)\n");
 		    claiming_regions++;
 		    lastregion = regp;
 		    continue;
 		}
 		if (rt_booleval(regp->reg_treetop, pp, TrueRg,
 				ap->a_resource) == BOOL_FALSE) {
-		    if (RT_G_DEBUG&DEBUG_PARTITION) bu_log("BOOL_FALSE\n");
+		    if (RT_G_DEBUG&DEBUG_PARTITION)
+			bu_log("BOOL_FALSE\n");
 		    /* Null out non-claiming region's pointer */
 		    *regpp = REGION_NULL;
 		    continue;
 		}
 		/* This region claims partition */
-		if (RT_G_DEBUG&DEBUG_PARTITION) bu_log("BOOL_TRUE (eval)\n");
+		if (RT_G_DEBUG&DEBUG_PARTITION)
+		    bu_log("BOOL_TRUE (eval)\n");
 		claiming_regions++;
 		lastregion = regp;
 	    }
 	}
-	if (RT_G_DEBUG&DEBUG_PARTITION) bu_log("rt_boolfinal:  claiming_regions=%d (%g <-> %g)\n",
-					       claiming_regions, pp->pt_inhit->hit_dist, pp->pt_outhit->hit_dist);
+	if (RT_G_DEBUG&DEBUG_PARTITION)
+	    bu_log("rt_boolfinal:  claiming_regions=%d (%g <-> %g)\n",
+		   claiming_regions, pp->pt_inhit->hit_dist, pp->pt_outhit->hit_dist);
 	if (claiming_regions == 0) {
-	    if (RT_G_DEBUG&DEBUG_PARTITION)bu_log("rt_boolfinal moving past partition x%x\n", pp);
+	    if (RT_G_DEBUG&DEBUG_PARTITION)
+		bu_log("rt_boolfinal moving past partition %p\n", (void *)pp);
 	    pp = pp->pt_forw;		/* onwards! */
 	    continue;
 	}
@@ -1968,7 +1974,7 @@ rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t sta
 	     * multi-overlap handler.
 	     */
 	    if (RT_G_DEBUG&DEBUG_PARTITION)
-		bu_log("rt_boolfinal:  invoking a_multioverlap() pp=x%x\n", pp);
+		bu_log("rt_boolfinal:  invoking a_multioverlap() pp=%p\n", (void *)pp);
 	    bu_ptbl_rm(regiontable, (long *)NULL);
 	    ap->a_logoverlap(ap, pp, regiontable, InputHdp);
 	    ap->a_multioverlap(ap, pp, regiontable, InputHdp);
@@ -1998,7 +2004,8 @@ rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t sta
 	    if (claiming_regions != 1) {
 		register struct partition *zap_pp;
 
-		if (RT_G_DEBUG&DEBUG_PARTITION)bu_log("rt_boolfinal discarding overlap partition x%x\n", pp);
+		if (RT_G_DEBUG&DEBUG_PARTITION)
+		    bu_log("rt_boolfinal discarding overlap partition %p\n", (void *)pp);
 		zap_pp = pp;
 		pp = pp->pt_forw;		/* onwards! */
 		DEQUEUE_PT(zap_pp);
@@ -2042,11 +2049,13 @@ rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t sta
 		     newpp->pt_overlap_reg))
 		) {
 		/* same region, merge by extending last final partition */
-		if (RT_G_DEBUG&DEBUG_PARTITION)bu_log("rt_boolfinal 'exact match', extending last partition, discarding x%x\n", newpp);
+		if (RT_G_DEBUG&DEBUG_PARTITION)
+		    bu_log("rt_boolfinal 'exact match', extending last partition, discarding %p\n", (void *)newpp);
 		RT_CK_PT(lastpp);
 		RT_CHECK_SEG(lastpp->pt_inseg);	/* sanity */
 		RT_CHECK_SEG(lastpp->pt_outseg);/* sanity */
-		if (RT_G_DEBUG&DEBUG_PARTITION)bu_log("rt_boolfinal collapsing %x %x\n", lastpp, newpp);
+		if (RT_G_DEBUG&DEBUG_PARTITION)
+		    bu_log("rt_boolfinal collapsing %p %p\n", (void *)lastpp, (void *)newpp);
 		lastpp->pt_outhit = newpp->pt_outhit;
 		lastpp->pt_outflip = newpp->pt_outflip;
 		lastpp->pt_outseg = newpp->pt_outseg;

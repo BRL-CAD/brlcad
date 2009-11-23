@@ -141,6 +141,9 @@ rt_cut_optimize_parallel(int cpu, genptr_t arg)
     union cutter *cp;
     int i;
 
+    if (!arg && RT_G_DEBUG&DEBUG_CUT)
+	bu_log("rt_cut_optimized_parallel(%d): NULL rtip\n", cpu);
+
     RT_CK_RTI(rtip);
     for (;;) {
 
@@ -807,6 +810,8 @@ rt_cut_it(register struct rt_i *rtip, int ncpu)
     FILE *plotfp;
     int num_splits=0;
 
+    if (ncpu < 1) ncpu = 1; /* sanity */
+
     /* Make a list of all solids into one special boxnode, then refine. */
     BU_GETUNION(finp, cutter);
     finp->cut_type = CUT_BOXNODE;
@@ -973,8 +978,8 @@ rt_cut_extend(register union cutter *cutp, struct soltab *stp, const struct rt_i
     BU_ASSERT(cutp->cut_type == CUT_BOXNODE);
 
     if (RT_G_DEBUG&DEBUG_CUTDETAIL) {
-	bu_log("rt_cut_extend(cutp=x%x) %s npieces=%d\n",
-	       cutp, stp->st_name, stp->st_npieces);
+	bu_log("rt_cut_extend(cutp=%p) %s npieces=%ld\n",
+	       (void *)cutp, stp->st_name, stp->st_npieces);
     }
 
     if (stp->st_npieces > 0) {
@@ -1041,7 +1046,7 @@ rt_cut_extend(register union cutter *cutp, struct soltab *stp, const struct rt_i
  *  0 Node has been cut
  */
 HIDDEN int
-rt_ct_plan(struct rt_i *rtip, union cutter *cutp, int depth)
+rt_ct_plan(struct rt_i *rtip, union cutter *cutp)
 {
     int axis;
     int status[3];
@@ -1348,8 +1353,8 @@ rt_ct_box(struct rt_i *rtip, register union cutter *cutp, register int axis, dou
 
     RT_CK_RTI(rtip);
     if (RT_G_DEBUG&DEBUG_CUTDETAIL) {
-	bu_log("rt_ct_box(x%x, %c) %g .. %g .. %g\n",
-	       cutp, "XYZ345"[axis],
+	bu_log("rt_ct_box(%p, %c) %g .. %g .. %g\n",
+	       (void *)cutp, "XYZ345"[axis],
 	       cutp->bn.bn_min[axis],
 	       where,
 	       cutp->bn.bn_max[axis]);
@@ -1498,12 +1503,13 @@ rt_ct_optim(struct rt_i *rtip, register union cutter *cutp, int depth)
 	return;
     }
     if (cutp->cut_type != CUT_BOXNODE) {
-	bu_log("rt_ct_optim: bad node x%x\n", cutp->cut_type);
+	bu_log("rt_ct_optim: bad node [%d]\n", cutp->cut_type);
 	return;
     }
 
     oldlen = rt_ct_piececount(cutp);	/* save before rt_ct_box() */
-    if (RT_G_DEBUG&DEBUG_CUTDETAIL)  bu_log("rt_ct_optim(cutp=x%x, depth=%d) piececount=%d\n", cutp, depth, oldlen);
+    if (RT_G_DEBUG&DEBUG_CUTDETAIL)
+	bu_log("rt_ct_optim(cutp=%p, depth=%d) piececount=%d\n", (void *)cutp, depth, oldlen);
 
     /*
      * BOXNODE (leaf)
@@ -1516,12 +1522,12 @@ rt_ct_optim(struct rt_i *rtip, register union cutter *cutp, int depth)
     /**** XXX This test can be improved ****/
     if (depth >= 6 && oldlen <= rtip->rti_cutlen)
 	return;				/* Fine enough */
-#if NEW_WAY
+#ifdef NEW_WAY
     /* New way */
     /*
      * Attempt to make an optimal cut
      */
-    if (rt_ct_plan(rtip, cutp, depth) < 0) {
+    if (rt_ct_plan(rtip, cutp) < 0) {
 	/* Unable to further subdivide this box node */
 	return;
     }
@@ -1579,8 +1585,8 @@ rt_ct_optim(struct rt_i *rtip, register union cutter *cutp, int depth)
 	if (rt_ct_piececount(cutp->cn.cn_l) >= oldlen &&
 	    rt_ct_piececount(cutp->cn.cn_r) >= oldlen) {
 	    if (RT_G_DEBUG&DEBUG_CUTDETAIL)
-		bu_log("rt_ct_optim(cutp=x%x, depth=%d) oldlen=%d, lhs=%d, rhs=%d, hopeless\n",
-		       cutp, depth, oldlen,
+		bu_log("rt_ct_optim(cutp=%p, depth=%d) oldlen=%d, lhs=%d, rhs=%d, hopeless\n",
+		       (void *)cutp, depth, oldlen,
 		       rt_ct_piececount(cutp->cn.cn_l),
 		       rt_ct_piececount(cutp->cn.cn_r));
 	    return; /* hopeless */
@@ -1614,7 +1620,8 @@ rt_ct_old_assess(register union cutter *cutp, register int axis, double *where_p
     register int i;
     register double left, right;
 
-    if (RT_G_DEBUG&DEBUG_CUTDETAIL)bu_log("rt_ct_old_assess(x%x, %c)\n", cutp, "XYZ345"[axis]);
+    if (RT_G_DEBUG&DEBUG_CUTDETAIL)
+	bu_log("rt_ct_old_assess(%p, %c)\n", (void *)cutp, "XYZ345"[axis]);
 
     /* In absolute terms, each box must be at least 1mm wide after cut. */
     if ((right=cutp->bn.bn_max[axis])-(left=cutp->bn.bn_min[axis]) < 2.0)
@@ -1728,9 +1735,9 @@ rt_ct_get(struct rt_i *rtip)
 	bu_ptbl_init(&rtip->rti_busy_cutter_nodes, 128, "rti_busy_cutter_nodes");
 
     if (rtip->rti_CutFree == CUTTER_NULL) {
-	register int bytes;
+	size_t bytes;
 
-	bytes = bu_malloc_len_roundup(64*sizeof(union cutter));
+	bytes = (size_t)bu_malloc_len_roundup(64*sizeof(union cutter));
 	cutp = (union cutter *)bu_malloc(bytes, " rt_ct_get");
 	/* Remember this allocation for later */
 	bu_ptbl_ins(&rtip->rti_busy_cutter_nodes, (long *)cutp);
@@ -1799,7 +1806,7 @@ rt_ct_release_storage(register union cutter *cutp)
 	    break;
 
 	default:
-	    bu_log("rt_ct_release_storage: Unknown type=x%x\n", cutp->cut_type);
+	    bu_log("rt_ct_release_storage: Unknown type [%d]\n", cutp->cut_type);
 	    break;
     }
 }
@@ -1829,15 +1836,15 @@ rt_ct_free(struct rt_i *rtip, register union cutter *cutp)
  * R T _ P R _ C U T
  *
  * Print out a cut tree.
+ *
+ * lvl is recursion level.
  */
 void
-rt_pr_cut(register const union cutter *cutp, int lvl)
-
-    /* recursion level */
+rt_pr_cut(const union cutter *cutp, int lvl)
 {
-    register int i, j;
+    int i, j;
 
-    bu_log("%.8x ", cutp);
+    bu_log("%p ", (void *)cutp);
     for (i=lvl; i>0; i--)
 	bu_log("   ");
 
@@ -1854,7 +1861,7 @@ rt_pr_cut(register const union cutter *cutp, int lvl)
 		   cutp->cn.cn_point);
 	    rt_pr_cut(cutp->cn.cn_l, lvl+1);
 
-	    bu_log("%.8x ", cutp);
+	    bu_log("%p ", (void *)cutp);
 	    for (i=lvl; i>0; i--)
 		bu_log("   ");
 	    bu_log("CUT R %c >= %f\n",
@@ -1889,7 +1896,6 @@ rt_pr_cut(register const union cutter *cutp, int lvl)
 	    for (i=0; i < cutp->bn.bn_piecelen; i++) {
 		struct rt_piecelist *plp = &(cutp->bn.bn_piecelist[i]);
 		struct soltab *stp;
-		int j;
 
 		RT_CK_PIECELIST(plp);
 		stp = plp->stp;
@@ -1898,7 +1904,7 @@ rt_pr_cut(register const union cutter *cutp, int lvl)
 		bu_log("        ");
 		for (j=lvl; j>0; j--)
 		    bu_log("   ");
-		bu_log("    %s, %d pieces: ",
+		bu_log("    %s, %ld pieces: ",
 		       stp->st_name, plp->npieces);
 
 		/* Loop for every piece of this solid */
@@ -1913,7 +1919,7 @@ rt_pr_cut(register const union cutter *cutp, int lvl)
 	case CUT_NUGRIDNODE:
 	    /* not implemented yet */
 	default:
-	    bu_log("Unknown type=x%x\n", cutp->cut_type);
+	    bu_log("Unknown type [%d]\n", cutp->cut_type);
 	    break;
     }
     return;
@@ -1969,7 +1975,7 @@ rt_fr_cut(struct rt_i *rtip, register union cutter *cutp)
 	    return; }
 
 	default:
-	    bu_log("rt_fr_cut: Unknown type=x%x\n", cutp->cut_type);
+	    bu_log("rt_fr_cut: Unknown type [%d]\n", cutp->cut_type);
 	    break;
     }
     return;
@@ -2172,7 +2178,7 @@ rt_ct_measure(register struct rt_i *rtip, register union cutter *cutp, int depth
 	    }
 	    return;
 	default:
-	    bu_log("rt_ct_measure: bad node x%x\n", cutp->cut_type);
+	    bu_log("rt_ct_measure: bad node [%d]\n", cutp->cut_type);
 	    return;
     }
 }
@@ -2221,7 +2227,7 @@ rt_pr_cut_info(const struct rt_i *rtip, const char *str)
 
     RT_CK_RTI(rtip);
 
-    bu_log("%s %s: %d nu, %d cut, %d box (%d empty)\n",
+    bu_log("%s %s: %d nu, %d cut, %d box (%ld empty)\n",
 	   str,
 	   rtip->rti_space_partition == RT_PART_NUGRID ?
 	   "NUGrid" : "NUBSP",
@@ -2271,7 +2277,7 @@ rt_pr_cut_info(const struct rt_i *rtip, const char *str)
 void
 remove_from_bsp(struct soltab *stp, union cutter *cutp, struct bn_tol *tol)
 {
-    int index;
+    int idx;
     int i;
 
     switch (cutp->cut_type) {
@@ -2280,10 +2286,10 @@ remove_from_bsp(struct soltab *stp, union cutter *cutp, struct bn_tol *tol)
 		int remove_count, new_count;
 		struct rt_piecelist *new_piece_list;
 
-		index = 0;
+		idx = 0;
 		remove_count = 0;
-		for (index=0; index<cutp->bn.bn_piecelen; index++) {
-		    if (cutp->bn.bn_piecelist[index].stp == stp) {
+		for (idx=0; idx<cutp->bn.bn_piecelen; idx++) {
+		    if (cutp->bn.bn_piecelist[idx].stp == stp) {
 			remove_count++;
 		    }
 		}
@@ -2297,9 +2303,9 @@ remove_from_bsp(struct soltab *stp, union cutter *cutp, struct bn_tol *tol)
 			    "bn_piecelist");
 
 			i = 0;
-			for (index=0; index<cutp->bn.bn_piecelen; index++) {
-			    if (cutp->bn.bn_piecelist[index].stp != stp) {
-				new_piece_list[i] = cutp->bn.bn_piecelist[index];
+			for (idx=0; idx<cutp->bn.bn_piecelen; idx++) {
+			    if (cutp->bn.bn_piecelist[idx].stp != stp) {
+				new_piece_list[i] = cutp->bn.bn_piecelist[idx];
 				i++;
 			    }
 			}
@@ -2308,9 +2314,9 @@ remove_from_bsp(struct soltab *stp, union cutter *cutp, struct bn_tol *tol)
 			new_piece_list = NULL;
 		    }
 
-		    for (index=0; index<cutp->bn.bn_piecelen; index++) {
-			if (cutp->bn.bn_piecelist[index].stp == stp) {
-			    bu_free(cutp->bn.bn_piecelist[index].pieces, "pieces");
+		    for (idx=0; idx<cutp->bn.bn_piecelen; idx++) {
+			if (cutp->bn.bn_piecelist[idx].stp == stp) {
+			    bu_free(cutp->bn.bn_piecelist[idx].pieces, "pieces");
 			}
 		    }
 		    bu_free(cutp->bn.bn_piecelist, "piecelist");
@@ -2319,11 +2325,11 @@ remove_from_bsp(struct soltab *stp, union cutter *cutp, struct bn_tol *tol)
 		    cutp->bn.bn_maxpiecelen = new_count;
 		}
 	    } else {
-		for (index=0; index < cutp->bn.bn_len; index++) {
-		    if (cutp->bn.bn_list[index] == stp) {
+		for (idx=0; idx < cutp->bn.bn_len; idx++) {
+		    if (cutp->bn.bn_list[idx] == stp) {
 			/* found it, now remove it */
 			cutp->bn.bn_len--;
-			for (i=index; i < cutp->bn.bn_len; i++) {
+			for (i=idx; i < cutp->bn.bn_len; i++) {
 			    cutp->bn.bn_list[i] = cutp->bn.bn_list[i+1];
 			}
 			return;
@@ -2342,8 +2348,8 @@ remove_from_bsp(struct soltab *stp, union cutter *cutp, struct bn_tol *tol)
 	    }
 	    break;
 	default:
-	    bu_log("remove_from_bsp(): unrecognized cut type (%d) in BSP!!!\n");
-	    bu_bomb("remove_from_bsp(): unrecognized cut type in BSP!!!\n");
+	    bu_log("remove_from_bsp(): unrecognized cut type (%d) in BSP!\n", cutp->cut_type);
+	    bu_bomb("remove_from_bsp(): unrecognized cut type in BSP!\n");
     }
 }
 
@@ -2440,8 +2446,8 @@ insert_in_bsp(struct soltab *stp, union cutter *cutp)
 	    }
 	    break;
 	default:
-	    bu_log("insert_in_bsp(): unrecognized cut type (%d) in BSP!!!\n");
-	    bu_bomb("insert_in_bsp(): unrecognized cut type in BSP!!!\n");
+	    bu_log("insert_in_bsp(): unrecognized cut type (%d) in BSP!\n", cutp->cut_type);
+	    bu_bomb("insert_in_bsp(): unrecognized cut type in BSP!\n");
     }
 
 }
@@ -2476,8 +2482,8 @@ fill_out_bsp(struct rt_i *rtip, union cutter *cutp, struct resource *resp, fastf
 	    fill_out_bsp(rtip, cutp->cn.cn_l, resp, bb2);
 	    break;
 	default:
-	    bu_log("fill_out_bsp(): unrecognized cut type (%d) in BSP!!!\n");
-	    bu_bomb("fill_out_bsp(): unrecognized cut type in BSP!!!\n");
+	    bu_log("fill_out_bsp(): unrecognized cut type (%d) in BSP!\n", cutp->cut_type);
+	    bu_bomb("fill_out_bsp(): unrecognized cut type in BSP!\n");
     }
 
 }

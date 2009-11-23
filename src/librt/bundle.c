@@ -165,7 +165,7 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
 
     if ( BU_LIST_UNINITIALIZED( &resp->re_parthead ) )  {
 	/* XXX This shouldn't happen any more */
-	bu_log("rt_shootray_bundle() resp=x%x uninitialized, fixing it\n", resp);
+	bu_log("rt_shootray_bundle() resp=%p uninitialized, fixing it\n", (void *)resp);
 	/*
 	 *  We've been handed a mostly un-initialized resource struct,
 	 *  with only a magic number and a cpu number filled in.
@@ -197,7 +197,6 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
 	f = MAGSQ(ap->a_ray.r_dir);
 	if ( NEAR_ZERO(f, 0.0001) )  {
 	    bu_bomb("rt_shootray_bundle:  zero length dir vector\n");
-	    return(0);
 	}
 	diff = f - 1;
 	if ( !NEAR_ZERO( diff, 0.0001 ) )  {

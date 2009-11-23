@@ -289,7 +289,7 @@ db5_get_raw_internal_ptr( struct db5_raw_internal *rip, const unsigned char *ip)
     cp += db5_decode_length( &rip->object_length, cp, rip->h_object_width );
     rip->object_length <<= 3;	/* cvt 8-byte chunks to byte count */
 
-    if ( rip->object_length < sizeof(struct db5_ondisk_header) )  {
+    if ( (size_t)rip->object_length < sizeof(struct db5_ondisk_header) )  {
 	bu_log("db5_get_raw_internal_ptr(): object_length=%ld is too short, database is corrupted\n",
 	       rip->object_length);
 	return NULL;
@@ -382,7 +382,7 @@ db5_get_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp)
     used += db5_decode_length( &rip->object_length, lenbuf, rip->h_object_width );
     rip->object_length <<= 3;	/* cvt 8-byte chunks to byte count */
 
-    if ( rip->object_length < sizeof(struct db5_ondisk_header) )  {
+    if ( (size_t)rip->object_length < sizeof(struct db5_ondisk_header) )  {
 	bu_log("db5_get_raw_internal_fp(): object_length=%ld is too short, database is corrupted\n",
 	       rip->object_length);
 	return -1;
@@ -697,7 +697,6 @@ db5_import_attributes( struct bu_attribute_value_set *avs, const struct bu_exter
     const char	*cp;
     const char	*ep;
     int		count = 0;
-    struct bu_attribute_value_pair *app;
 
     BU_CK_EXTERNAL(ap);
 
@@ -709,7 +708,6 @@ db5_import_attributes( struct bu_attribute_value_set *avs, const struct bu_exter
 
     /* Null "name" string indicates end of attribute list */
     while ( *cp != '\0' )  {
-	const char *name = cp;
 	if ( cp >= ep )  {
 	    bu_log("db5_import_attributes() ran off end of buffer, database is probably corrupted\n");
 	    return -1;
@@ -769,7 +767,7 @@ db5_import_attributes( struct bu_attribute_value_set *avs, const struct bu_exter
 
     BU_ASSERT_PTR( cp+1, ==, ep );
     BU_ASSERT_LONG( avs->count, <=, avs->max );
-    BU_ASSERT_LONG( avs->count, ==, count );
+    BU_ASSERT_LONG( (size_t)avs->count, ==, (size_t)count );
 
     if (bu_debug & BU_DEBUG_AVS) {
 	bu_avs_print(avs, "db5_import_attributes");
@@ -795,7 +793,7 @@ db5_export_attributes( struct bu_external *ext, const struct bu_attribute_value_
     int	need = 0;
     const struct bu_attribute_value_pair	*avpp;
     char	*cp;
-    int	i;
+    size_t	i;
 
     BU_CK_AVS( avs );
     BU_INIT_EXTERNAL(ext);
@@ -811,7 +809,7 @@ db5_export_attributes( struct bu_external *ext, const struct bu_attribute_value_
     /* First pass -- determine how much space is required */
     need = 0;
     avpp = avs->avp;
-    for ( i = 0; i < avs->count; i++, avpp++ )  {
+    for ( i = 0; i < (size_t)avs->count; i++, avpp++ )  {
 	if (avpp->name) {
 	    need += strlen(avpp->name) + 1; /* include room for NULL */
 	} else {

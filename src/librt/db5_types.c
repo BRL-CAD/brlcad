@@ -52,7 +52,7 @@ struct db5_type {
  *	and it must occur below any of its entries that
  *	have heed_minor==1.
  */
-const static struct db5_type type_table[] = {
+static const struct db5_type type_table[] = {
     {
 	DB5_MAJORTYPE_BRLCAD, DB5_MINORTYPE_BRLCAD_TOR, 1, "tor", "torus"
     },
