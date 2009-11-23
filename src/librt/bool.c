@@ -1789,25 +1789,28 @@ rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t sta
 		   ap->a_x, ap->a_y, ap->a_level );
 	    rt_pr_partitions( ap->a_rt_i, InputHdp, "With problem" );
 	}
-	diff = pp->pt_outhit->hit_dist - pp->pt_forw->pt_inhit->hit_dist;
-	if ( pp->pt_forw != InputHdp && !NEAR_ZERO(diff, SMALL_FASTF) )
+	if ( pp->pt_forw != InputHdp )
 	{
-	    if ( NEAR_ZERO( diff, ap->a_rt_i->rti_tol.dist ) )  {
-		if (RT_G_DEBUG&DEBUG_PARTITION)  bu_log("rt_boolfinal:  fusing 2 partitions x%x x%x\n",
+	    diff = pp->pt_outhit->hit_dist - pp->pt_forw->pt_inhit->hit_dist;
+	    if ( !NEAR_ZERO(diff, SMALL_FASTF) )
+	    {
+		if ( NEAR_ZERO( diff, ap->a_rt_i->rti_tol.dist ) )  {
+		    if (RT_G_DEBUG&DEBUG_PARTITION)  bu_log("rt_boolfinal:  fusing 2 partitions x%x x%x\n",
 							pp, pp->pt_forw );
-		pp->pt_forw->pt_inhit->hit_dist = pp->pt_outhit->hit_dist;
-	    } else if ( diff > 0 )  {
-		bu_log("rt_boolfinal:  sorting defect %e > %e! x%d y%d lvl%d, diff = %g\n",
-		       pp->pt_outhit->hit_dist,
-		       pp->pt_forw->pt_inhit->hit_dist,
-		       ap->a_x, ap->a_y, ap->a_level, diff );
-		bu_log( "sort defect is between parts x%x and x%x\n",
-			pp, pp->pt_forw );
-		if ( !(RT_G_DEBUG & DEBUG_PARTITION) )
-		    rt_pr_partitions( ap->a_rt_i, InputHdp, "With DEFECT" );
-		ret = 0;
-		reason = "ERROR, sorting defect, give up";
-		goto out;
+		    pp->pt_forw->pt_inhit->hit_dist = pp->pt_outhit->hit_dist;
+		} else if ( diff > 0 )  {
+		    bu_log("rt_boolfinal:  sorting defect %e > %e! x%d y%d lvl%d, diff = %g\n",
+			   pp->pt_outhit->hit_dist,
+			   pp->pt_forw->pt_inhit->hit_dist,
+			   ap->a_x, ap->a_y, ap->a_level, diff );
+		    bu_log( "sort defect is between parts x%x and x%x\n",
+			    pp, pp->pt_forw );
+		    if ( !(RT_G_DEBUG & DEBUG_PARTITION) )
+			rt_pr_partitions( ap->a_rt_i, InputHdp, "With DEFECT" );
+		    ret = 0;
+		    reason = "ERROR, sorting defect, give up";
+		    goto out;
+		}
 	    }
 	}
 
