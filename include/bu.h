@@ -171,8 +171,9 @@ __BEGIN_DECLS
 
 /**
  *  If we're compiling strict, turn off "format string vs arguments"
- *  checks - BRL-CAD customizes the arguments to some of these function
- *  types and that is a problem with strict checking
+ *  checks - BRL-CAD customizes the arguments to some of these
+ *  function types (adding bu_vls support) and that is a problem with
+ *  strict checking.
  */
 #if defined(STRICT_FLAGS)
 #  undef __BU_ATTR_FORMAT12
