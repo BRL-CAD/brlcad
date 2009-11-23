@@ -1484,10 +1484,10 @@ BC_CONFIGURE_STAGE([headers], [4 of 9])
 
 # make our minimum compliance goal explicit (needs to be tested here
 # so header files and types are tested properly)
-BC_COMPILER_AND_LINKER_RECOGNIZES([-std=c99], [cstd], [no])
-if test "x$bc_cstd_works" = "xyes" ; then
-    CFLAGS="$CFLAGS -std=c99"
-fi
+dnl BC_COMPILER_AND_LINKER_RECOGNIZES([-std=c99], [cstd], [no])
+dnl if test "x$bc_cstd_works" = "xyes" ; then
+dnl     CFLAGS="$CFLAGS -std=c99"
+dnl fi
 
 # C89 headers: assert.h, ctype.h, errno.h, float.h, limits.h, locale.h,
 # math.h, setjmp.h, signal.h, stdarg.h, stddef.h, stdio.h, stdlib.h,
