@@ -44,6 +44,9 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* make fbclear and raytrace control panel obey a -F advanced option,
+  i.e., better remote framebuffer support.
+
 * finish obj-g importer.  need to test more inputs and make sure all
   geometry is preserved on import in some form.
 
