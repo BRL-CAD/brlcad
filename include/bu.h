@@ -174,7 +174,7 @@ __BEGIN_DECLS
  *  checks - BRL-CAD customizes the arguments to some of these function
  *  types and that is a problem with strict checking
  */
-#if defined(HAVE_STRICT_FLAGS)
+#if defined(STRICT_FLAGS)
 #  undef __BU_ATTR_FORMAT12
 #  undef __BU_ATTR_FORMAT23
 #  undef __BU_ATTR_NORETURN

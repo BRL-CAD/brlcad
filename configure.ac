@@ -1484,10 +1484,10 @@ BC_CONFIGURE_STAGE([headers], [4 of 9])
 
 # make our minimum compliance goal explicit (needs to be tested here
 # so header files and types are tested properly)
-dnl BC_COMPILER_AND_LINKER_RECOGNIZES([-std=c89], [cstd], [no])
-dnl if test "x$bc_cstd_works" = "xyes" ; then
-dnl     CFLAGS="$CFLAGS -std=c89"
-dnl fi
+BC_COMPILER_AND_LINKER_RECOGNIZES([-std=c99], [cstd], [no])
+if test "x$bc_cstd_works" = "xyes" ; then
+    CFLAGS="$CFLAGS -std=c99"
+fi
 
 # C89 headers: assert.h, ctype.h, errno.h, float.h, limits.h, locale.h,
 # math.h, setjmp.h, signal.h, stdarg.h, stddef.h, stdio.h, stdlib.h,
@@ -2019,7 +2019,7 @@ if test "x$bc_build_strict" = "xyes" ; then
        # do not include -w as that was just to suppress any test warnings
        STRICT_FLAGS="-pedantic -W -Wall -Werror -Wno-long-long"
        AC_SUBST(STRICT_FLAGS)
-       AC_DEFINE([HAVE_STRICT_FLAGS], [1], [Define to 1 if enabling strict compiler flags.])
+       AC_DEFINE([STRICT_FLAGS], [1], [Define to 1 if enabling strict compiler flags.])
    fi
 fi
 
