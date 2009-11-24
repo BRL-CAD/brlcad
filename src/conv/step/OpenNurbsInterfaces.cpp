@@ -1387,6 +1387,31 @@ ConicalSurface::LoadONBrep(ON_Brep *brep)
 	return true;
 }
 
+int
+intersectLines(ON_Line &l1,ON_Line &l2, ON_3dPoint &out) {
+	fastf_t t,u;
+	point_t p,a;
+	vect_t d,c;
+	struct bn_tol tol;
+
+	tol.magic = BN_TOL_MAGIC;
+	tol.dist = 0.005;
+	tol.dist_sq = tol.dist * tol.dist;
+	tol.perp = 1e-6;
+	tol.para = 1 - tol.perp;
+
+	VMOVE(p,l1.from);
+	VMOVE(a,l2.from);
+	VMOVE(d,l1.Direction());
+	VMOVE(c,l2.Direction());
+	int i = bn_isect_line3_line3(&t, &u, p, d, a, c, &tol);
+	if (i == 1) {
+		VMOVE(out,l1.from);
+		out = out + t*l1.Direction();
+	}
+	return i;
+}
+
 void
 Circle::SetParameterTrim(double start, double end) {
 	double startpoint[3];
@@ -1429,114 +1454,96 @@ Circle::SetParameterTrim(double start, double end) {
 bool
 Circle::LoadONBrep(ON_Brep *brep)
 {
-	// this curve may be used in multiple trimming instances
-	//if (ON_id >= 0)
-	//	return true; // already loaded
+	    ON_TextLog dump;
 
-	ON_3dPoint origin=GetOrigin();
-	ON_3dVector norm=GetNormal();
-	ON_3dVector xaxis=GetXAxis();
-	ON_3dVector yaxis=GetYAxis();
+	    //if (ON_id >= 0)
+	    //	return true; // already loaded
 
-	origin = origin*LocalUnits::length;
+	    ON_3dPoint origin = GetOrigin();
+	    ON_3dVector norm=GetNormal();
+	    ON_3dVector xaxis = GetXAxis();
+	    ON_3dVector yaxis = GetYAxis();
 
-	ON_Plane p(origin,xaxis,yaxis);
+	    origin = origin * LocalUnits::length;
+	    norm.Unitize();
+	    xaxis.Unitize();
+	    yaxis.Unitize();
 
-	// Creates a circle parallel to the plane
-	// with given center and radius.
-	ON_Circle c(p,origin,radius*LocalUnits::length);
-	ON_Curve *curve = NULL;
-	if (trimmed) { //explicitly trimmed
-		if (parameter_trim) {
-			//load params
-			if (s < t) {
-				t = t - 2*ON_PI;
-			}
-			//TODO: lookat ellipse code seems simpler
-			ON_Interval i(t,s);
-			ON_Arc a(c,i);
-			ON_ArcCurve *arccurve = new ON_ArcCurve(a);
-			arccurve->SetDomain(t,s);
-			curve = arccurve;
-		} else {
-			//must be point trim so calc t,s from points
-			ON_3dPoint pnt1 = trim_startpoint;
-			ON_3dPoint pnt2 = trim_endpoint;
+	    ON_3dPoint center = origin;
 
-			c.ClosestPointTo(pnt1,&t);
-			c.ClosestPointTo(pnt2,&s);
-			if (s < t) {
-				t = t - 2*ON_PI;
-			}
-			//TODO: lookat ellipse code seems simpler
-			ON_Interval i(t,s);
-			ON_Arc a(c,i);
-			ON_ArcCurve *arccurve = new ON_ArcCurve(a);
-			arccurve->SetDomain(t,s);
-			curve = arccurve;
-		}
-	} else if ((start != NULL) && (end != NULL)){ //not explicit let's try edge vertices
-		int v1 = start->GetONId();
-		int v2 = end->GetONId();
-		if (v1 != v2) {
-			ON_3dPoint pnt1 = start->Point3d();
-			ON_3dPoint pnt2 = end->Point3d();
+	    ON_3dPoint pnt1;
+	    ON_3dPoint pnt2;
+	    if (trimmed) { //explicitly trimmed
+		pnt1 = trim_startpoint;
+		pnt2 = trim_endpoint;
+	    } else if ((start != NULL) && (end != NULL)) { //not explicit let's try edge vertices
+		pnt1 = start->Point3d();
+		pnt2 = end->Point3d();
 
-			pnt1 = pnt1*LocalUnits::length;
-			pnt2 = pnt2*LocalUnits::length;
-
-			c.ClosestPointTo(pnt1,&t);
-			c.ClosestPointTo(pnt2,&s);
-			if (s < t) {
-				t = t - 2*ON_PI;
-			}
-			//TODO: lookat ellipse code seems simpler
-			ON_Interval i(t,s);
-			ON_Arc a(c,i);
-			ON_ArcCurve *arccurve = new ON_ArcCurve(a);
-			arccurve->SetDomain(t,s);
-			curve = arccurve;
-		} else {
-			ON_NurbsCurve *nurbcurve = new ON_NurbsCurve();
-			if (!c.GetNurbForm(*nurbcurve)) {
-				cerr << "Error: ::LoadONBrep(ON_Brep *brep) error generating NURB form of " << entityname << endl;
-				return false;
-			}
-			curve = nurbcurve;
-		}
-	} else {
+		pnt1 = pnt1 * LocalUnits::length;
+		pnt2 = pnt2 * LocalUnits::length;
+	    } else {
 		cerr << "Error: ::LoadONBrep(ON_Brep *brep) not endpoints for specified for curve " << entityname << endl;
 		return false;
-	}
+	    }
 
-	ON_id = brep->AddEdgeCurve(curve);
+	    ON_3dPoint P0 = pnt1;
+	    ON_3dPoint P2 = pnt2;
+	    ON_3dVector v0 = P0 - center;
+	    ON_3dVector v2 = P2 - center;
+	    ON_3dVector vx = (v0 + v2);
+	    vx.Unitize();
 
-	return true;
-}
+	    double r = radius*LocalUnits::length;
+	    ON_3dPoint PX = center + r * vx;
 
-int
-intersectLines(ON_Line &l1,ON_Line &l2, ON_3dPoint &out) {
-	fastf_t t,u;
-	point_t p,a;
-	vect_t d,c;
-	struct bn_tol tol;
+	    ON_3dVector t1 = ON_CrossProduct(norm,v0);
+	    t1.Unitize();
+	    ON_3dVector t2 = ON_CrossProduct(norm,v2);
+	    t2.Unitize();
+	    ON_Line tangent1(P0,P0 + 10.0 * t1);
+	    ON_Line tangent2(P2,P2 + 10.0 * t2);
 
-	tol.magic = BN_TOL_MAGIC;
-	tol.dist = 0.005;
-	tol.dist_sq = tol.dist * tol.dist;
-	tol.perp = 1e-6;
-	tol.para = 1 - tol.perp;
 
-	VMOVE(p,l1.from);
-	VMOVE(a,l2.from);
-	VMOVE(d,l1.Direction());
-	VMOVE(c,l2.Direction());
-	int i = bn_isect_line3_line3(&t, &u, p, d, a, c, &tol);
-	if (i == 1) {
-		VMOVE(out,l1.from);
-		out = out + t*l1.Direction();
-	}
-	return i;
+	    ON_3dPoint P1;
+	    if (intersectLines(tangent1,tangent2,P1) != 1 ) {
+		cerr << entityname << ": Error: Control point can not be calculated." << endl;
+		return false;
+	    }
+
+	    ON_Line l1(P1,center);
+	    ON_Line l2(P0,P2);
+	    ON_3dPoint PM;
+	    if (intersectLines(l1,l2,PM) != 1 ) {
+		cerr << entityname << ": Error: Control point can not be calculated." << endl;
+		return false;
+	    }
+
+	    double mx = PM.DistanceTo(PX);
+	    double mp1 = PM.DistanceTo(P1);
+	    double R = mx / mp1;
+	    double w = R / (1 - R);
+	    //TODO: inverse arc s->t for testing
+	    //w = -w;
+
+	    P1 = (w) * P1; // must pre-weight before putting into NURB
+
+	    ON_3dPointArray cpts(3);
+	    cpts.Append(P0);
+	    cpts.Append(P1);
+	    cpts.Append(P2);
+	    ON_BezierCurve *bcurve = new ON_BezierCurve(cpts);
+	    bcurve->MakeRational();
+	    // add calculated circle weight
+	    bcurve->SetWeight(1, w);
+
+	    ON_NurbsCurve* circlenurbscurve = ON_NurbsCurve::New();
+
+	    bcurve->GetNurbForm(*circlenurbscurve);
+
+	    ON_id = brep->AddEdgeCurve(circlenurbscurve);
+
+	    return true;
 }
 
 void
@@ -1739,13 +1746,11 @@ Ellipse::LoadONBrep(ON_Brep *brep)
     bcurve->MakeRational();
     bcurve->SetWeight(1, w);
 
-    ON_NurbsCurve fullhypernurbscurve;
-    ON_NurbsCurve* hypernurbscurve = ON_NurbsCurve::New();
+    ON_NurbsCurve* ellipsenurbscurve = ON_NurbsCurve::New();
 
-    bcurve->GetNurbForm(fullhypernurbscurve);
-    fullhypernurbscurve.GetNurbForm(*hypernurbscurve);
+    bcurve->GetNurbForm(*ellipsenurbscurve);
 
-    ON_id = brep->AddEdgeCurve(hypernurbscurve);
+    ON_id = brep->AddEdgeCurve(ellipsenurbscurve);
 
     return true;
 }
@@ -2415,143 +2420,147 @@ Parabola::LoadONBrep(ON_Brep *brep)
 
     ON_TextLog dump;
 
-	//if (ON_id >= 0)
-	//	return true; // already loaded
+    //if (ON_id >= 0)
+    //	return true; // already loaded
 
-	ON_3dPoint origin=GetOrigin();
-	ON_3dVector norm=GetNormal();
-	ON_3dVector xaxis=GetXAxis();
-	ON_3dVector yaxis=GetYAxis();
+    ON_3dPoint origin = GetOrigin();
+    ON_3dVector normal = GetNormal();
+    ON_3dVector xaxis = GetXAxis();
+    ON_3dVector yaxis = GetYAxis();
 
-	origin = origin*LocalUnits::length;
+    origin = origin * LocalUnits::length;
 
-	ON_Plane p(origin,xaxis,yaxis);
+    ON_Plane p(origin, xaxis, yaxis);
 
-	//  Next, create a parabolic NURBS curve
-	ON_3dPoint vertex = origin;
+    //  Next, create a parabolic NURBS curve
+    ON_3dPoint vertex = origin;
 
-	double fd = focal_dist*LocalUnits::length;
-	ON_3dPoint focus = vertex + fd*xaxis;
-	ON_3dPoint directrix = vertex - fd*xaxis;
-	double eccentricity = 1.0; // for parabola eccentricity is always 1.0
+    double fd = focal_dist * LocalUnits::length;
+    ON_3dPoint focus = vertex + fd * xaxis;
+    ON_3dPoint directrix = vertex - fd * xaxis;
+    double eccentricity = 1.0; // for parabola eccentricity is always 1.0
 
-	if (trimmed) { //explicitly trimmed
-		if (parameter_trim) {
-			if (s < t) {
-				double tmp = s;
-				s = t;
-				t = s;
-			}
-		} else {
-			//must be point trim so calc t,s from points
-			ON_3dPoint pnt1 = trim_startpoint;
-			ON_3dPoint pnt2 = trim_endpoint;
-			// NOTE: point from point trim entity already converted to proper units
-
-			ON_3dVector fp = pnt1 - focus;
-			double dotp = fp*yaxis;
-
-			double F = pnt1.DistanceTo(focus);
-			double D = F/eccentricity;
-			double H = pnt1.DistanceTo(directrix);
-			double x = sqrt(H*H - D*D);
-			//t  = atan(x/fd);
-			t = x / (2.0 * fd);
-
-			if (dotp < 0.0)
-				t *=-1.0;
-
-			fp = pnt2 - focus;
-			dotp = fp*yaxis;
-			F = pnt2.DistanceTo(focus);
-			D = F/eccentricity;
-			H = pnt2.DistanceTo(directrix);
-			x = sqrt(H*H - D*D);
-			//s  = atan(x/fd);
-			s = x / (2.0 * fd);
-
-			if (dotp < 0.0)
-				s *=-1.0;
-
-			if (s < t) {
-				double tmp = s;
-				s = t;
-				t = s;
-			}
-		}
-	} else if ((start != NULL) && (end != NULL)){ //not explicit let's try edge vertices
-		ON_3dPoint pnt1 = start->Point3d();
-		ON_3dPoint pnt2 = end->Point3d();
-
-		pnt1 = pnt1*LocalUnits::length;
-		pnt2 = pnt2*LocalUnits::length;
-
-		ON_3dVector fp = pnt1 - focus;
-		double dotp = fp*yaxis;
-
-		double F = pnt1.DistanceTo(focus);
-		double D = F/eccentricity;
-		double H = pnt1.DistanceTo(directrix);
-		double x = sqrt(H*H - D*D);
-		//t  = atan(x/fd);
-		t = x / (2.0 * fd);
-
-		if (dotp < 0.0)
-			t *=-1.0;
-
-		fp = pnt2 - focus;
-		dotp = fp*yaxis;
-		F = pnt2.DistanceTo(focus);
-		D = F/eccentricity;
-		H = pnt2.DistanceTo(directrix);
-		x = sqrt(H*H - D*D);
-		//s  = atan(x/fd);
-		s = x / (2.0 * fd);
-
-		if (dotp < 0.0)
-			s *=-1.0;
-
-		if (s < t) {
-			double tmp = s;
-			s = t;
-			t = s;
-		}
+    ON_3dPoint pnt1;
+    ON_3dPoint pnt2;
+    if (trimmed) { //explicitly trimmed
+	if (parameter_trim) {
+	    if (s < t) {
+		double tmp = s;
+		s = t;
+		t = s;
+	    }
 	} else {
-		cerr << "Error: ::LoadONBrep(ON_Brep *brep) not endpoints for specified for curve " << entityname << endl;
-		return false;
+	    //must be point trim so calc t,s from points
+	    pnt1 = trim_startpoint;
+	    pnt2 = trim_endpoint;
+	    // NOTE: point from point trim entity already converted to proper units
+
+	    ON_3dVector fp = pnt1 - focus;
+	    double dotp = fp * yaxis;
+
+	    double F = pnt1.DistanceTo(focus);
+	    double D = F / eccentricity;
+	    double H = pnt1.DistanceTo(directrix);
+	    double x = sqrt(H * H - D * D);
+	    //t  = atan(x/fd);
+	    t = x / (2.0 * fd);
+
+	    if (dotp < 0.0)
+		t *= -1.0;
+
+	    fp = pnt2 - focus;
+	    dotp = fp * yaxis;
+	    F = pnt2.DistanceTo(focus);
+	    D = F / eccentricity;
+	    H = pnt2.DistanceTo(directrix);
+	    x = sqrt(H * H - D * D);
+	    //s  = atan(x/fd);
+	    s = x / (2.0 * fd);
+
+	    if (dotp < 0.0)
+		s *= -1.0;
+
+	    if (s < t) {
+		double tmp = s;
+		s = t;
+		t = s;
+	    }
 	}
-	double extent = MAX(fabs(t),fabs(s));
-	double x = 2.0*fd*extent;
-	double y = (x*x)/(4*fd);
+    } else if ((start != NULL) && (end != NULL)) { //not explicit let's try edge vertices
+	pnt1 = start->Point3d();
+	pnt2 = end->Point3d();
 
-	ON_3dVector X = x * yaxis;
-	ON_3dVector Y = y * xaxis;
-	ON_3dPoint P0 = vertex - X + Y;
-	ON_3dPoint P1 = vertex;
-	ON_3dPoint P2 = vertex + X + Y;
+	pnt1 = pnt1 * LocalUnits::length;
+	pnt2 = pnt2 * LocalUnits::length;
 
-	// calc tang intersect with transverse axis
-	ON_3dVector ToFocus;
-	ToFocus.x = -x;
-	ToFocus.y = fd - y;
-	ToFocus.z = 0.0;
-	ToFocus.Unitize();
+	ON_3dVector fp = pnt1 - focus;
+	double dotp = fp * yaxis;
 
-	ON_3dVector ToDirectrix;
-	ToDirectrix.x = 0.0;
-	ToDirectrix.y = -fd - y;
-	ToDirectrix.z = 0.0;
-	ToDirectrix.Unitize();
+	double F = pnt1.DistanceTo(focus);
+	double D = F / eccentricity;
+	double H = pnt1.DistanceTo(directrix);
+	double x = sqrt(H * H - D * D);
+	//t  = atan(x/fd);
+	t = x / (2.0 * fd);
 
-	ON_3dVector bisector = ToFocus + ToDirectrix;
-	bisector.Unitize();
+	if (dotp < 0.0)
+	    t *= -1.0;
 
-	double isect = y - (bisector.y/bisector.x)*x;
-	ON_3dPoint A = vertex + isect*xaxis;
+	fp = pnt2 - focus;
+	dotp = fp * yaxis;
+	F = pnt2.DistanceTo(focus);
+	D = F / eccentricity;
+	H = pnt2.DistanceTo(directrix);
+	x = sqrt(H * H - D * D);
+	//s  = atan(x/fd);
+	s = x / (2.0 * fd);
 
-	P1 = A;
+	if (dotp < 0.0)
+	    s *= -1.0;
 
-	// make parabola from bezier
+	if (s < t) {
+	    double tmp = s;
+	    s = t;
+	    t = s;
+	}
+    } else {
+	cerr << "Error: ::LoadONBrep(ON_Brep *brep) not endpoints for specified for curve " << entityname << endl;
+	return false;
+    }
+    double extent = MAX(fabs(t),fabs(s));
+    double x = 2.0 * fd * extent;
+    double y = (x * x) / (4 * fd);
+
+    ON_3dVector X = x * yaxis;
+    ON_3dVector Y = y * xaxis;
+    ON_3dPoint P0 = vertex - X + Y;
+    P0 = pnt1;
+
+    ON_3dPoint P2 = vertex + X + Y;
+    P2 = pnt2;
+
+    // calc tang intersect with transverse axis
+    ON_3dVector ToFocus;
+
+    ToFocus = P0 - focus;
+    ToFocus.Unitize();
+    ON_3dVector bisector = ToFocus + xaxis;
+    bisector.Unitize();
+    ON_Line tangent1(P0,P0 + 10.0*bisector);
+
+    ToFocus = P2 - focus;
+    ToFocus.Unitize();
+    bisector = ToFocus + xaxis;
+    bisector.Unitize();
+    ON_Line tangent2(P2,P2 + 10.0*bisector);
+
+    ON_3dPoint P1;
+    if (intersectLines(tangent1,tangent2,P1) != 1 ) {
+	cerr << entityname << ": Error: Control point can not be calculated." << endl;
+	return false;
+    }
+
+    // make parabola from bezier
     ON_3dPointArray cpts(3);
     cpts.Append(P0);
     cpts.Append(P1);
@@ -2559,17 +2568,12 @@ Parabola::LoadONBrep(ON_Brep *brep)
     ON_BezierCurve *bcurve = new ON_BezierCurve(cpts);
     bcurve->MakeRational();
 
-    ON_NurbsCurve fullparabnurbscurve;
     ON_NurbsCurve* parabnurbscurve = ON_NurbsCurve::New();
 
-    bcurve->GetNurbForm(fullparabnurbscurve);
-    fullparabnurbscurve.SetDomain(-extent,extent);
-    ON_Interval subdomain(t,s);
-    fullparabnurbscurve.GetNurbForm(*parabnurbscurve,0.0,&subdomain);
+    bcurve->GetNurbForm(*parabnurbscurve);
+    ON_id = brep->AddEdgeCurve(parabnurbscurve);
 
-	ON_id = brep->AddEdgeCurve(parabnurbscurve);
-
-	return true;
+    return true;
 }
 
 bool
