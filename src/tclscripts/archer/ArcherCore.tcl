@@ -1724,6 +1724,8 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body ArcherCore::mrayCallback_cvo {_start _target _partitions} {
     if {$_partitions == ""} {
+	set rpos [$itk_component(ged) lastMouseRayPos]
+	eval $itk_component(ged) vslew $rpos
 	return
     }
 
