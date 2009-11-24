@@ -35,7 +35,6 @@
 
 /* arbitrary numerical arguments, integer value: */
 #define SIGN(x)	((x) == 0 ? 0 : (x) > 0 ? 1 : -1)
-#define ABS(a)	((a) >= 0 ? (a) : -(a))
 
 
 /**
@@ -56,7 +55,7 @@ bn_cx_div(register bn_complex_t *ap, register const bn_complex_t *bp)
     ap__re = ap->re;
     r = bp->re;
     s = bp->im;
-    if (ABS(r) >= ABS(s)) {
+    if (fabs(r) >= fabs(s)) {
 	if (NEAR_ZERO(r, SQRT_SMALL_FASTF))
 	    goto err;
 	r = s / r;			/* <= 1 */
@@ -65,7 +64,6 @@ bn_cx_div(register bn_complex_t *ap, register const bn_complex_t *bp)
 	ap->im = (ap->im - ap__re * r) * s;
 	return;
     }  else  {
-	/* ABS(s) > ABS(r) */
 	if (NEAR_ZERO(s, SQRT_SMALL_FASTF))
 	    goto err;
 	r = r / s;			/* < 1 */
