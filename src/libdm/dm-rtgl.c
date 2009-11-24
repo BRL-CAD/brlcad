@@ -783,6 +783,10 @@ rtgl_close(struct dm *dmp)
     bu_free(dmp, "rtgl_close: dmp");
 
     /* reset job count */
+    rtgljob.controlClip = 1;
+    rtgljob.calls = 0;
+    rtgljob.jobsDone = 0;
+    rtgljob.oldNumTrees = 0;
     rtgljob.numJobs = 0;
     rtgljob.rtglWasClosed = 1;
     
@@ -791,6 +795,11 @@ rtgl_close(struct dm *dmp)
 	bu_hash_tbl_free(rtgljob.colorTable);
 	rtgljob.colorTable = NULL;
     }
+
+    rtgljob.currItem = NULL;
+    rtgljob.currJob = NULL;
+
+    
 
     return TCL_OK;
 }
