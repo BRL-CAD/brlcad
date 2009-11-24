@@ -1746,6 +1746,51 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 
     /* get points for new trees */
     if (numNew > 0) {
+	/* If we're still in progress on something,
+	 * adding another job is Bad given current
+	 * setup - for now, punt and start over.
+	 */
+	if (rtgljob.numJobs != 0) {
+	    freeJobList(&jobs);
+	    if (rtgljob.colorTable != NULL) {
+		bu_hash_tbl_free(rtgljob.colorTable);
+		rtgljob.colorTable = NULL;
+	    }
+	    if (jobsArray != NULL) {
+		bu_free(jobsArray, "dm-rtgl.c: jobsArray");
+		jobsArray = NULL;
+	    }
+	    maxSpan = 0.0;
+	    rtgljob.oldNumTrees = 0;
+    	    numShot = rtgljob.numJobs = 0;
+	    rtgljob.currJob = NULL;
+	    numVisible = ged_build_tops(gedp, visibleTrees, &visibleTrees[RT_MAXARGS]);
+	    for (i = 0; i < numVisible; i++) {
+		currTree = visibleTrees[i];
+		new = 1;
+		
+		/* if this tree is in the old tree list, it's not new
+		 * if it's NOT in the old list, it needs to be cleared,
+		 * but that's not set up yet without clearing everything
+		 * first and starting over.
+		 **/
+		for (j = 0; j < rtgljob.oldNumTrees; j++) {
+		    if (strcmp(currTree, rtgljob.oldTrees[j]) == 0)
+			new = 0;
+		}
+		
+		if (new) {
+		    /* will ray trace new tree*/
+		    if (rt_gettree(rtip, currTree) < 0)
+			return TCL_ERROR;
+		    
+		    /* add new tree to list of displayed */
+		    numNew++;
+		    rtgljob.oldTrees[rtgljob.oldNumTrees++] = currTree;
+		}
+	    }
+	    
+	}
 
 	/* initialize job list */
 	BU_LIST_INIT(&(jobs.l));
@@ -1778,7 +1823,6 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 	if (span[Z] > maxSpan)
 	    maxSpan = span[Z];
 
-#if 1
 	/* create ray-trace jobs */
 	shootGrid(&jobs, min, max, maxSpan, maxPixels, X, Y, Z);
 	shootGrid(&jobs, min, max, maxSpan, maxPixels, Z, X, Y);
@@ -1796,21 +1840,7 @@ rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 
 	start = time(NULL);
 
-#if 1
 	shuffleJobs();
-#endif
-#else
-        /* use length of bounding box's longest diagonal as radius of bounding sphere */
-	radius = sqrt((span[X] * span[X]) + (span[Y] * span[Y]) + (span[Z] * span[Z])); 
-
-	/* use center of bounding box as center of bounding sphere */
-	center[X] = (min[X] + max[X]) / 2;
-	center[Y] = (min[Y] + max[Y]) / 2;
-	center[Z] = (min[Z] + max[Z]) / 2;
-
-	randShots(center, radius, 1);
-#endif
-
 	/* new jobs to do */
 	rtgljob.jobsDone = 0;
 
