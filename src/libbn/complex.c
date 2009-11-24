@@ -34,8 +34,8 @@
 
 
 /* arbitrary numerical arguments, integer value: */
-#define SIGN(x)	((long)(x) == 0L ? 0 : (long)(x) > 0L ? 1 : -1)
-#define ABS(a)	((long)(a) >= 0L ? (a) : -(a))
+#define SIGN(x)	((x) == 0 ? 0 : (x) > 0 ? 1 : -1)
+#define ABS(a)	((a) >= 0 ? (a) : -(a))
 
 
 /**
