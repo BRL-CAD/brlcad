@@ -91,7 +91,7 @@ bu_crashreport(const char *filename)
     path = bu_which("uname");
     if (path) {
 	snprintf(buffer, CR_BUFSIZE, "%s -a 2>&1", path);
-#ifdef HAVE_POPEN
+#if defined(HAVE_POPEN) && !defined(STRICT_FLAGS)
 	popenfp = popen(buffer, "r");
 #endif
 	if (!popenfp) {
@@ -103,7 +103,7 @@ bu_crashreport(const char *filename)
 		fprintf(fp, "%s", buffer);
 	    }
 	}
-#ifdef HAVE_POPEN
+#if defined(HAVE_POPEN) && !defined(STRICT_FLAGS)
 	(void)pclose(popenfp);
 #endif
 	popenfp = NULL;
@@ -115,7 +115,7 @@ bu_crashreport(const char *filename)
     if (path) {
 	/* need 2>&1 to capture stderr junk from sysctl on Mac OS X for kern.exec */
 	snprintf(buffer, CR_BUFSIZE, "%s -a 2>&1", path);
-#ifdef HAVE_POPEN
+#if defined(HAVE_POPEN) && !defined(STRICT_FLAGS)
 	popenfp = popen(buffer, "r");
 #endif
 	if (popenfp == (FILE *)NULL) {
@@ -130,7 +130,7 @@ bu_crashreport(const char *filename)
 		fprintf(fp, "%s", buffer);
 	    }
 	}
-#ifdef HAVE_POPEN
+#if defined(HAVE_POPEN) && !defined(STRICT_FLAGS)
 	(void)pclose(popenfp);
 #endif
 	popenfp = NULL;

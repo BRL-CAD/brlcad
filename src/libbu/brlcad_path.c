@@ -87,7 +87,7 @@ _bu_ipwd()
     if (!ipwd && (ipwd = bu_which("pwd"))) {
 	FILE *fp = NULL;
 
-#ifdef HAVE_POPEN
+#if defined(HAVE_POPEN) && !defined(STRICT_FLAGS)
 	fp = popen(ipwd, "r");
 #endif
 	if (fp) {
