@@ -1454,7 +1454,7 @@ int numShot = 0;
 
 /* return 1 if all jobs done, 0 if not */
 int shootJobs(struct jobList *jobs) {
-    int i, last, *used;
+    int i, last, used;
     double elapsed_time;
 
     /* list cannot be empty */
@@ -1473,19 +1473,19 @@ int shootJobs(struct jobList *jobs) {
 	for (i = last; i >= 0; i--) {
 
 	    rtgljob.currJob = jobsArray[i];
-	    used = &(rtgljob.currJob->used);
+	    used = rtgljob.currJob->used;
 
 	    /* shoot jobs in this array */
-	    while (*used > 0) {
+	    while (used > 0) {
 
-		VMOVE(app.a_ray.r_pt, rtgljob.currJob->jobs[*used].pt);
-		VMOVE(app.a_ray.r_dir, rtgljob.currJob->jobs[*used].dir);
+		VMOVE(app.a_ray.r_pt, rtgljob.currJob->jobs[used].pt);
+		VMOVE(app.a_ray.r_dir, rtgljob.currJob->jobs[used].dir);
 		rt_shootray(&app);
 		
 		numShot++;
-		(*used)--;
+		used--;
 		    
-		if (*used == 0) {
+		if (used == 0) {
 		    BU_LIST_DEQUEUE(&(rtgljob.currJob->l));
 		    bu_free(rtgljob.currJob, "free jobs rtgljob.currJob");
 		    jobsArray[i] = NULL;
