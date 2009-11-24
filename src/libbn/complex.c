@@ -63,7 +63,7 @@ bn_cx_div(register bn_complex_t *ap, register const bn_complex_t *bp)
 	ap->re = (ap->re + ap->im * r) * s;
 	ap->im = (ap->im - ap__re * r) * s;
 	return;
-    }  else  {
+    } else {
 	if (NEAR_ZERO(s, SQRT_SMALL_FASTF))
 	    goto err;
 	r = r / s;			/* < 1 */
@@ -72,7 +72,7 @@ bn_cx_div(register bn_complex_t *ap, register const bn_complex_t *bp)
 	ap->im = (ap->im * r - ap__re) * s;
 	return;
     }
- err:
+err:
     bu_log("bn_cx_div: division by zero: %gR+%gI / %gR+%gI\n",
 	   ap->re, ap->im, bp->re, bp->im);
     ap->re = ap->im = 1.0e20;		/* "INFINITY" */
@@ -83,7 +83,7 @@ bn_cx_div(register bn_complex_t *ap, register const bn_complex_t *bp)
  *@brief
  * Compute square root of complex number
  *
- * bn_cx_sqrt(&out, &c)	replaces out by sqrt(c)
+ * bn_cx_sqrt(&out, &c) replaces out by sqrt(c)
  *
  * Note: This is a double-valued function; the result of bn_cx_sqrt()
  * always has nonnegative imaginary part.
@@ -100,22 +100,24 @@ bn_cx_sqrt(bn_complex_t *op, register const bn_complex_t *ip)
     im_sign = SIGN(ip->im);
     re_sign = SIGN(ip->re);
     if (re_sign == 0) {
-	if (im_sign == 0)
+	if (im_sign == 0) {
 	    op->re = op->im = 0;
-	else if (im_sign > 0)
+	} else if (im_sign > 0) {
 	    op->re = op->im = sqrt(ip->im * 0.5);
-	else			/* im_sign < 0 */
+	} else {
+	    /* im_sign < 0 */
 	    op->re = -(op->im = sqrt(ip->im * -0.5));
+	}
     } else if (im_sign == 0) {
 	if (re_sign > 0) {
 	    op->re = sqrt(ip->re);
 	    op->im = 0.0;
-	}  else  {
+	} else {
 	    /* re_sign < 0 */
 	    op->im = sqrt(-ip->re);
 	    op->re = 0.0;
 	}
-    }  else  {
+    } else {
 	/* no shortcuts */
 	ampl = bn_cx_ampl(ip);
 	if ((temp = (ampl - ip->re) * 0.5) < 0.0) {
@@ -125,16 +127,19 @@ bn_cx_sqrt(bn_complex_t *op, register const bn_complex_t *ip)
 	     * 10**20.  Just ignore the imaginary part.
 	     */
 	    op->im = 0;
-	} else
+	} else {
 	    op->im = sqrt(temp);
+	}
 
 	if ((temp = (ampl + ip->re) * 0.5) < 0.0) {
 	    op->re = 0.0;
 	} else {
-	    if (im_sign > 0)
+	    if (im_sign > 0) {
 		op->re = sqrt(temp);
-	    else			/* im_sign < 0 */
+	    } else {
+		/* im_sign < 0 */
 		op->re = -sqrt(temp);
+	    }
 	}
     }
 }
