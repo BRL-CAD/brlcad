@@ -87,7 +87,7 @@ struct dm *rtgl_open(Tcl_Interp *interp, int argc, char **argv);
 HIDDEN int rtgl_close(struct dm *dmp);
 HIDDEN int rtgl_drawBegin(struct dm *dmp);
 HIDDEN int rtgl_drawEnd(struct dm *dmp);
-HIDDEN int rtgl_normal(struct dm *dmp)
+HIDDEN int rtgl_normal(struct dm *dmp);
 HIDDEN int rtgl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye);
 HIDDEN int rtgl_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int size, int use_aspect);
 HIDDEN int rtgl_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2);
