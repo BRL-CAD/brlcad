@@ -74,10 +74,14 @@ HIDDEN XVisualInfo *X_choose_visual(struct dm *dmp);
 #define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
 struct dm *X_open_dm(Tcl_Interp *interp, int argc, char **argv);
 HIDDEN int X_close_dm(struct dm *dmp);
-HIDDEN int X_drawBegin(struct dm *dmp), X_drawEnd(struct dm *dmp);
-HIDDEN int X_normal(struct dm *dmp), X_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye);
+HIDDEN int X_drawBegin(struct dm *dmp);
+HIDDEN int X_drawEnd(struct dm *dmp);
+HIDDEN int X_normal(struct dm *dmp);
+HIDDEN int X_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye);
 HIDDEN int X_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int size, int use_aspect);
 HIDDEN int X_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2);
+HIDDEN int X_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2);
+HIDDEN int X_drawLines3D(struct dm *dmp, int npoints, point_t *points);
 HIDDEN int X_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y);
 HIDDEN int X_drawVList(struct dm *dmp, register struct bn_vlist *vp);
 HIDDEN int X_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), genptr_t *data);
@@ -88,7 +92,8 @@ HIDDEN int X_configureWin_guts(struct dm *dmp, int force);
 HIDDEN int X_configureWin(struct dm *dmp);
 HIDDEN int X_setLight(struct dm *dmp, int light_on);
 HIDDEN int X_setZBuffer(struct dm *dmp, int zbuffer_on);
-HIDDEN int X_setWinBounds(struct dm *dmp, register int *w), X_debug(struct dm *dmp, int lvl);
+HIDDEN int X_setWinBounds(struct dm *dmp, register int *w);
+HIDDEN int X_debug(struct dm *dmp, int lvl);
 
 struct dm dm_X = {
     X_close_dm,
@@ -98,6 +103,8 @@ struct dm dm_X = {
     X_loadMatrix,
     X_drawString2D,
     X_drawLine2D,
+    X_drawLine3D,
+    X_drawLines3D,
     X_drawPoint2D,
     X_drawVList,
     X_draw,
@@ -1018,6 +1025,18 @@ X_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2)
 	      privars->gc,
 	      sx1, sy1, sx2, sy2);
 
+    return TCL_OK;
+}
+
+HIDDEN int
+X_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2)
+{
+    return TCL_OK;
+}
+
+HIDDEN int
+X_drawLines3D(struct dm *dmp, int npoints, point_t *points)
+{
     return TCL_OK;
 }
 

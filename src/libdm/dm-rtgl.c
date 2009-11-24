@@ -87,9 +87,12 @@ struct dm *rtgl_open(Tcl_Interp *interp, int argc, char **argv);
 HIDDEN int rtgl_close(struct dm *dmp);
 HIDDEN int rtgl_drawBegin(struct dm *dmp);
 HIDDEN int rtgl_drawEnd(struct dm *dmp);
-HIDDEN int rtgl_normal(struct dm *dmp), rtgl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye);
+HIDDEN int rtgl_normal(struct dm *dmp)
+HIDDEN int rtgl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye);
 HIDDEN int rtgl_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int size, int use_aspect);
 HIDDEN int rtgl_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2);
+HIDDEN int rtgl_drawLine3D(struct dm *dmp, struct dm *dmp, point_t pt1, point_t pt2);
+HIDDEN int rtgl_drawLines3D(struct dm *dmp, int npoints, point_t *points);
 HIDDEN int rtgl_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y);
 HIDDEN int rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp);
 HIDDEN int rtgl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), genptr_t *data);
@@ -102,8 +105,10 @@ HIDDEN int rtgl_setLight(struct dm *dmp, int lighting_on);
 HIDDEN int rtgl_setTransparency(struct dm *dmp, int transparency_on);
 HIDDEN int rtgl_setDepthMask(struct dm *dmp, int depthMask_on);
 HIDDEN int rtgl_setZBuffer(struct dm *dmp, int zbuffer_on);
-HIDDEN int rtgl_setWinBounds(struct dm *dmp, int *w), rtgl_debug(struct dm *dmp, int lvl);
-HIDDEN int rtgl_beginDList(struct dm *dmp, unsigned int list), rtgl_endDList(struct dm *dmp);
+HIDDEN int rtgl_setWinBounds(struct dm *dmp, int *w);
+HIDDEN int rtgl_debug(struct dm *dmp, int lvl);
+HIDDEN int rtgl_beginDList(struct dm *dmp, unsigned int list);
+HIDDEN int rtgl_endDList(struct dm *dmp);
 HIDDEN int rtgl_drawDList(struct dm *dmp, unsigned int list);
 HIDDEN int rtgl_freeDLists(struct dm *dmp, unsigned int list, int range);
 
@@ -115,6 +120,8 @@ struct dm dm_rtgl = {
     rtgl_loadMatrix,
     rtgl_drawString2D,
     rtgl_drawLine2D,
+    rtgl_drawLine3D,
+    rtgl_drawLines3D,
     rtgl_drawPoint2D,
     rtgl_drawVList,
     rtgl_draw,
@@ -2014,6 +2021,26 @@ rtgl_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2)
     glVertex2f(x2, y2);
     glEnd();
 
+    return TCL_OK;
+}
+
+/*
+ * O G L _ D R A W L I N E 3 D
+ *
+ */
+HIDDEN int
+rtgl_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2)
+{
+    return TCL_OK;
+}
+
+/*
+ * O G L _ D R A W L I N E S 3 D
+ *
+ */
+HIDDEN int
+rtgl_drawLines3D(struct dm *dmp, int npoints, point_t *points)
+{
     return TCL_OK;
 }
 
