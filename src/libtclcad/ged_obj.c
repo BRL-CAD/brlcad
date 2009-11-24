@@ -98,6 +98,13 @@ static int go_autoview(struct ged *gedp,
 		       ged_func_ptr func,
 		       const char *usage,
 		       int maxargs);
+static int go_axes(struct ged *gedp,
+		   struct ged_dm_view *gdvp,
+		   struct ged_axes_state *gasp,
+		   int argc,
+		   const char *argv[],
+		   const char *usage,
+		   int dflag);
 static int go_base2local(struct ged *gedp,
 			 int argc,
 			 const char *argv[],
@@ -140,12 +147,18 @@ static int go_constrain_tmode(struct ged *gedp,
 			      ged_func_ptr func,
 			      const char *usage,
 			      int maxargs);
-int go_copy(struct ged *gedp,
-	    int argc,
-	    const char *argv[],
-	    ged_func_ptr func,
-	    const char *usage,
-	    int maxargs);
+static int go_copy(struct ged *gedp,
+		   int argc,
+		   const char *argv[],
+		   ged_func_ptr func,
+		   const char *usage,
+		   int maxargs);
+static int go_data_axes(struct ged *gedp,
+			int argc,
+			const char *argv[],
+			ged_func_ptr func,
+			const char *usage,
+			int maxargs);
 static int go_init_view_bindings(struct ged *gedp,
 				 int argc,
 				 const char *argv[],
@@ -623,6 +636,7 @@ static struct go_cmdtab go_cmds[] = {
     {"cpi",	(char *)0, MAXARGS, go_pass_through_func, ged_cpi},
     {"d",	(char *)0, MAXARGS, go_pass_through_and_refresh_func, ged_erase},
     {"dall",	(char *)0, MAXARGS, go_pass_through_and_refresh_func, ged_erase_all},
+    {"data_axes",	"???", MAXARGS, go_data_axes, GED_FUNC_PTR_NULL},
     {"dbconcat",	(char *)0, MAXARGS, go_pass_through_func, ged_concat},
     {"dbfind",	(char *)0, MAXARGS, go_pass_through_func, ged_find},
     {"dbip",	(char *)0, MAXARGS, go_pass_through_func, ged_dbip},
@@ -1147,6 +1161,477 @@ go_autoview(struct ged *gedp,
 }
 
 static int
+go_axes(struct ged *gedp,
+	struct ged_dm_view *gdvp,
+	struct ged_axes_state *gasp,
+	int argc,
+	const char *argv[],
+	const char *usage,
+	int dflag)
+{
+
+    if (strcmp(argv[2], "draw") == 0) {
+	if (argc == 3) {
+	    bu_vls_printf(&gedp->ged_result_str, "%d", gasp->gas_draw);
+	    return BRLCAD_OK;
+	}
+
+	if (argc == 4) {
+	    int i;
+
+	    if (sscanf(argv[3], "%d", &i) != 1)
+		goto bad;
+
+	    if (i)
+		gasp->gas_draw = 1;
+	    else
+		gasp->gas_draw = 0;
+
+	    go_refresh_view(gdvp);
+	    return BRLCAD_OK;
+	}
+
+	goto bad;
+    }
+
+    if (strcmp(argv[2], "axes_size") == 0) {
+	if (argc == 3) {
+	    bu_vls_printf(&gedp->ged_result_str, "%lf", gasp->gas_axes_size);
+	    return BRLCAD_OK;
+	}
+
+	if (argc == 4) {
+	    fastf_t size;
+
+	    if (sscanf(argv[3], "%lf", &size) != 1)
+		goto bad;
+
+	    gasp->gas_axes_size = size;
+
+	    go_refresh_view(gdvp);
+	    return BRLCAD_OK;
+	}
+
+	goto bad;
+    }
+
+    if (strcmp(argv[2], "axes_pos") == 0) {
+	if (argc == 3) {
+	    bu_vls_printf(&gedp->ged_result_str, "%lf %lf %lf",
+			  V3ARGS(gasp->gas_axes_pos));
+	    return BRLCAD_OK;
+	}
+
+	if (argc == 6) {
+	    fastf_t x, y, z;
+
+	    if (sscanf(argv[3], "%lf", &x) != 1 ||
+		sscanf(argv[4], "%lf", &y) != 1 ||
+		sscanf(argv[5], "%lf", &z) != 1)
+		goto bad;
+
+	    VSET(gasp->gas_axes_pos, x, y, z);
+
+	    go_refresh_view(gdvp);
+	    return BRLCAD_OK;
+	}
+
+	goto bad;
+    }
+
+    if (strcmp(argv[2], "axes_color") == 0) {
+	if (argc == 3) {
+	    bu_vls_printf(&gedp->ged_result_str, "%d %d %d",
+			  V3ARGS(gasp->gas_axes_color));
+	    return BRLCAD_OK;
+	}
+
+	if (argc == 6) {
+	    int r, g, b;
+
+	    /* set background color */
+	    if (sscanf(argv[3], "%d", &r) != 1 ||
+		sscanf(argv[4], "%d", &g) != 1 ||
+		sscanf(argv[5], "%d", &b) != 1)
+		goto bad;
+
+	    /* validate color */
+	    if (r < 0 || 255 < r ||
+		g < 0 || 255 < g ||
+		b < 0 || 255 < b)
+		goto bad;
+
+	    VSET(gasp->gas_axes_color, r, g, b);
+
+	    go_refresh_view(gdvp);
+	    return BRLCAD_OK;
+	}
+
+	goto bad;
+    }
+
+    if (strcmp(argv[2], "label_color") == 0) {
+	if (argc == 3) {
+	    bu_vls_printf(&gedp->ged_result_str, "%d %d %d",
+			  V3ARGS(gasp->gas_label_color));
+	    return BRLCAD_OK;
+	}
+
+	if (argc == 6) {
+	    int r, g, b;
+
+	    /* set background color */
+	    if (sscanf(argv[3], "%d", &r) != 1 ||
+		sscanf(argv[4], "%d", &g) != 1 ||
+		sscanf(argv[5], "%d", &b) != 1)
+		goto bad;
+
+	    /* validate color */
+	    if (r < 0 || 255 < r ||
+		g < 0 || 255 < g ||
+		b < 0 || 255 < b)
+		goto bad;
+
+	    VSET(gasp->gas_label_color, r, g, b);
+
+	    go_refresh_view(gdvp);
+	    return BRLCAD_OK;
+	}
+
+	goto bad;
+    }
+
+    if (strcmp(argv[2], "line_width") == 0) {
+	if (argc == 3) {
+	    bu_vls_printf(&gedp->ged_result_str, "%d", gasp->gas_line_width);
+	    return BRLCAD_OK;
+	}
+
+	if (argc == 4) {
+	    int line_width;
+
+	    if (sscanf(argv[3], "%d", &line_width) != 1)
+		goto bad;
+
+	    gasp->gas_line_width = line_width;
+
+	    go_refresh_view(gdvp);
+	    return BRLCAD_OK;
+	}
+
+	goto bad;
+    }
+
+    if (strcmp(argv[2], "pos_only") == 0) {
+	if (argc == 3) {
+	    bu_vls_printf(&gedp->ged_result_str, "%d", gasp->gas_pos_only);
+	    return BRLCAD_OK;
+	}
+
+	if (argc == 4) {
+	    int i;
+
+	    if (sscanf(argv[3], "%d", &i) != 1)
+		goto bad;
+
+	    if (i)
+		gasp->gas_pos_only = 1;
+	    else
+		gasp->gas_pos_only = 0;
+
+	    go_refresh_view(gdvp);
+	    return BRLCAD_OK;
+	}
+
+	goto bad;
+    }
+
+    if (strcmp(argv[2], "tick_color") == 0) {
+	if (argc == 3) {
+	    bu_vls_printf(&gedp->ged_result_str, "%d %d %d",
+			  V3ARGS(gasp->gas_tick_color));
+	    return BRLCAD_OK;
+	}
+
+	if (argc == 6) {
+	    int r, g, b;
+
+	    /* set background color */
+	    if (sscanf(argv[3], "%d", &r) != 1 ||
+		sscanf(argv[4], "%d", &g) != 1 ||
+		sscanf(argv[5], "%d", &b) != 1)
+		goto bad;
+
+	    /* validate color */
+	    if (r < 0 || 255 < r ||
+		g < 0 || 255 < g ||
+		b < 0 || 255 < b)
+		goto bad;
+
+	    VSET(gasp->gas_tick_color, r, g, b);
+
+	    go_refresh_view(gdvp);
+	    return BRLCAD_OK;
+	}
+
+	goto bad;
+    }
+
+    if (strcmp(argv[2], "tick_enabled") == 0) {
+	if (argc == 3) {
+	    bu_vls_printf(&gedp->ged_result_str, "%d", gasp->gas_tick_enabled);
+	    return BRLCAD_OK;
+	}
+
+	if (argc == 4) {
+	    int i;
+
+	    if (sscanf(argv[3], "%d", &i) != 1)
+		goto bad;
+
+	    if (i)
+		gasp->gas_tick_enabled = 1;
+	    else
+		gasp->gas_tick_enabled = 0;
+
+	    go_refresh_view(gdvp);
+	    return BRLCAD_OK;
+	}
+
+	goto bad;
+    }
+
+    if (strcmp(argv[2], "tick_interval") == 0) {
+	if (argc == 3) {
+	    bu_vls_printf(&gedp->ged_result_str, "%d", gasp->gas_tick_interval);
+	    return BRLCAD_OK;
+	}
+
+	if (argc == 4) {
+	    int tick_interval;
+
+	    if (sscanf(argv[3], "%d", &tick_interval) != 1)
+		goto bad;
+
+	    gasp->gas_tick_interval = tick_interval;
+
+	    go_refresh_view(gdvp);
+	    return BRLCAD_OK;
+	}
+
+	goto bad;
+    }
+
+    if (strcmp(argv[2], "tick_length") == 0) {
+	if (argc == 3) {
+	    bu_vls_printf(&gedp->ged_result_str, "%d", gasp->gas_tick_length);
+	    return BRLCAD_OK;
+	}
+
+	if (argc == 4) {
+	    int tick_length;
+
+	    if (sscanf(argv[3], "%d", &tick_length) != 1)
+		goto bad;
+
+	    gasp->gas_tick_length = tick_length;
+
+	    go_refresh_view(gdvp);
+	    return BRLCAD_OK;
+	}
+
+	goto bad;
+    }
+
+    if (strcmp(argv[2], "tick_major_color") == 0) {
+	if (argc == 3) {
+	    bu_vls_printf(&gedp->ged_result_str, "%d %d %d",
+			  V3ARGS(gasp->gas_tick_major_color));
+	    return BRLCAD_OK;
+	}
+
+	if (argc == 6) {
+	    int r, g, b;
+
+	    /* set background color */
+	    if (sscanf(argv[3], "%d", &r) != 1 ||
+		sscanf(argv[4], "%d", &g) != 1 ||
+		sscanf(argv[5], "%d", &b) != 1)
+		goto bad;
+
+	    /* validate color */
+	    if (r < 0 || 255 < r ||
+		g < 0 || 255 < g ||
+		b < 0 || 255 < b)
+		goto bad;
+
+	    VSET(gasp->gas_tick_major_color, r, g, b);
+
+	    go_refresh_view(gdvp);
+	    return BRLCAD_OK;
+	}
+
+	goto bad;
+    }
+
+    if (strcmp(argv[2], "tick_major_length") == 0) {
+	if (argc == 3) {
+	    bu_vls_printf(&gedp->ged_result_str, "%d", gasp->gas_tick_major_length);
+	    return BRLCAD_OK;
+	}
+
+	if (argc == 4) {
+	    int tick_major_length;
+
+	    if (sscanf(argv[3], "%d", &tick_major_length) != 1)
+		goto bad;
+
+	    gasp->gas_tick_major_length = tick_major_length;
+
+	    go_refresh_view(gdvp);
+	    return BRLCAD_OK;
+	}
+
+	goto bad;
+    }
+
+    if (strcmp(argv[2], "ticks_per_major") == 0) {
+	if (argc == 3) {
+	    bu_vls_printf(&gedp->ged_result_str, "%d", gasp->gas_ticks_per_major);
+	    return BRLCAD_OK;
+	}
+
+	if (argc == 4) {
+	    int ticks_per_major;
+
+	    if (sscanf(argv[3], "%d", &ticks_per_major) != 1)
+		goto bad;
+
+	    gasp->gas_ticks_per_major = ticks_per_major;
+
+	    go_refresh_view(gdvp);
+	    return BRLCAD_OK;
+	}
+
+	goto bad;
+    }
+
+    if (strcmp(argv[2], "tick_threshold") == 0) {
+	if (argc == 3) {
+	    bu_vls_printf(&gedp->ged_result_str, "%d", gasp->gas_tick_threshold);
+	    return BRLCAD_OK;
+	}
+
+	if (argc == 4) {
+	    int tick_threshold;
+
+	    if (sscanf(argv[3], "%d", &tick_threshold) != 1)
+		goto bad;
+
+	    if (tick_threshold < 1)
+		tick_threshold = 1;
+
+	    gasp->gas_tick_threshold = tick_threshold;
+
+	    go_refresh_view(gdvp);
+	    return BRLCAD_OK;
+	}
+
+	goto bad;
+    }
+
+    if (strcmp(argv[2], "triple_color") == 0) {
+	if (argc == 3) {
+	    bu_vls_printf(&gedp->ged_result_str, "%d", gasp->gas_triple_color);
+	    return BRLCAD_OK;
+	}
+
+	if (argc == 4) {
+	    int i;
+
+	    if (sscanf(argv[3], "%d", &i) != 1)
+		goto bad;
+
+	    if (i)
+		gasp->gas_triple_color = 1;
+	    else
+		gasp->gas_triple_color = 0;
+
+	    go_refresh_view(gdvp);
+	    return BRLCAD_OK;
+	}
+
+	goto bad;
+    }
+
+    if (dflag && strcmp(argv[2], "points") == 0) {
+	register int i;
+
+	if (argc == 3) {
+	    bu_vls_printf(&gedp->ged_result_str, "{");
+	    for (i = 0; i < gasp->gas_num_data_points; ++i) {
+		bu_vls_printf(&gedp->ged_result_str, " {%lf %lf %lf} ",
+			      V3ARGS(gasp->gas_data_points[i]));
+	    }
+	    bu_vls_printf(&gedp->ged_result_str, "}");
+	    return BRLCAD_OK;
+	}
+
+	if (argc == 4) {
+	    int ret;
+	    int ac;
+	    const char **av;
+
+	    if (Tcl_SplitList(go_current_gop->go_interp, argv[3], &ac, &av) != TCL_OK) {
+		bu_vls_printf(&gedp->ged_result_str, "%s", Tcl_GetStringResult(go_current_gop->go_interp));
+		return BRLCAD_ERROR;
+	    }
+
+	    if (gasp->gas_num_data_points) {
+		bu_free((genptr_t)gasp->gas_data_points, "data points");
+		gasp->gas_data_points = (point_t *)0;
+		gasp->gas_num_data_points = 0;
+	    }
+
+	    /* Clear out data points */
+	    if (ac < 1) {
+		go_refresh_view(gdvp);
+		Tcl_Free((char *)av);
+		return BRLCAD_OK;
+	    }
+
+	    gasp->gas_num_data_points = ac;
+	    gasp->gas_data_points = (point_t *)bu_calloc(ac, sizeof(point_t), "data points");
+	    for (i = 0; i < ac; ++i) {
+		if (sscanf(av[i], "%lf %lf %lf",
+			   &gasp->gas_data_points[i][X],
+			   &gasp->gas_data_points[i][Y],
+			   &gasp->gas_data_points[i][Z]) != 3) {
+
+		    bu_free((genptr_t)gasp->gas_data_points, "data points");
+		    gasp->gas_data_points = (point_t *)0;
+		    gasp->gas_num_data_points = 0;
+		    bu_vls_printf(&gedp->ged_result_str, "bad data point - {%lf %lf %lf}\n",
+				  V3ARGS(gasp->gas_data_points[i]));
+
+		    go_refresh_view(gdvp);
+		    Tcl_Free((char *)av);
+		    return BRLCAD_ERROR;
+		}
+	    }
+
+	    go_refresh_view(gdvp);
+	    Tcl_Free((char *)av);
+	    return BRLCAD_OK;
+	}
+    }
+
+ bad:
+    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    return BRLCAD_ERROR;
+}
+
+static int
 go_base2local(struct ged *gedp,
 	      int argc,
 	      const char *argv[],
@@ -1519,7 +2004,7 @@ go_constrain_tmode(struct ged *gedp,
     return BRLCAD_OK;
 }
 
-int
+static int
 go_copy(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -1644,6 +2129,43 @@ go_copy(struct ged *gedp,
     bu_vls_free(&to_vls);
 
     return ret;
+}
+
+static int
+go_data_axes(struct ged *gedp,
+	     int argc,
+	     const char *argv[],
+	     ged_func_ptr func,
+	     const char *usage,
+	     int maxargs)
+{
+    struct ged_dm_view *gdvp;
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    if (argc < 3 || 6 < argc) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
+    }
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
+	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	    break;
+    }
+
+    if (BU_LIST_IS_HEAD(&gdvp->l, &go_current_gop->go_head_views.l)) {
+	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	return BRLCAD_ERROR;
+    }
+
+    return go_axes(gedp, gdvp, &gdvp->gdv_view->gv_data_axes, argc, argv, usage, 1);
 }
 
 static void
@@ -2387,414 +2909,6 @@ go_mirror(struct ged *gedp,
 }
 
 static int
-go_axes(struct ged *gedp,
-	struct ged_dm_view *gdvp,
-	struct ged_axes_state *gasp,
-	int argc,
-	const char *argv[],
-	const char *usage)
-{
-
-    if (strcmp(argv[2], "draw") == 0) {
-	if (argc == 3) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d", gasp->gas_draw);
-	    return BRLCAD_OK;
-	}
-
-	if (argc == 4) {
-	    int i;
-
-	    if (sscanf(argv[3], "%d", &i) != 1)
-		goto bad;
-
-	    if (i)
-		gasp->gas_draw = 1;
-	    else
-		gasp->gas_draw = 0;
-
-	    go_refresh_view(gdvp);
-	    return BRLCAD_OK;
-	}
-
-	goto bad;
-    }
-
-    if (strcmp(argv[2], "axes_size") == 0) {
-	if (argc == 3) {
-	    bu_vls_printf(&gedp->ged_result_str, "%lf", gasp->gas_axes_size);
-	    return BRLCAD_OK;
-	}
-
-	if (argc == 4) {
-	    fastf_t size;
-
-	    if (sscanf(argv[3], "%lf", &size) != 1)
-		goto bad;
-
-	    gasp->gas_axes_size = size;
-
-	    go_refresh_view(gdvp);
-	    return BRLCAD_OK;
-	}
-
-	goto bad;
-    }
-
-    if (strcmp(argv[2], "axes_pos") == 0) {
-	if (argc == 3) {
-	    bu_vls_printf(&gedp->ged_result_str, "%lf %lf %lf",
-			  V3ARGS(gasp->gas_axes_pos));
-	    return BRLCAD_OK;
-	}
-
-	if (argc == 6) {
-	    fastf_t x, y, z;
-
-	    if (sscanf(argv[3], "%lf", &x) != 1 ||
-		sscanf(argv[4], "%lf", &y) != 1 ||
-		sscanf(argv[5], "%lf", &z) != 1)
-		goto bad;
-
-	    VSET(gasp->gas_axes_pos, x, y, z);
-
-	    go_refresh_view(gdvp);
-	    return BRLCAD_OK;
-	}
-
-	goto bad;
-    }
-
-    if (strcmp(argv[2], "axes_color") == 0) {
-	if (argc == 3) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d %d %d",
-			  V3ARGS(gasp->gas_axes_color));
-	    return BRLCAD_OK;
-	}
-
-	if (argc == 6) {
-	    int r, g, b;
-
-	    /* set background color */
-	    if (sscanf(argv[3], "%d", &r) != 1 ||
-		sscanf(argv[4], "%d", &g) != 1 ||
-		sscanf(argv[5], "%d", &b) != 1)
-		goto bad;
-
-	    /* validate color */
-	    if (r < 0 || 255 < r ||
-		g < 0 || 255 < g ||
-		b < 0 || 255 < b)
-		goto bad;
-
-	    VSET(gasp->gas_axes_color, r, g, b);
-
-	    go_refresh_view(gdvp);
-	    return BRLCAD_OK;
-	}
-
-	goto bad;
-    }
-
-    if (strcmp(argv[2], "label_color") == 0) {
-	if (argc == 3) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d %d %d",
-			  V3ARGS(gasp->gas_label_color));
-	    return BRLCAD_OK;
-	}
-
-	if (argc == 6) {
-	    int r, g, b;
-
-	    /* set background color */
-	    if (sscanf(argv[3], "%d", &r) != 1 ||
-		sscanf(argv[4], "%d", &g) != 1 ||
-		sscanf(argv[5], "%d", &b) != 1)
-		goto bad;
-
-	    /* validate color */
-	    if (r < 0 || 255 < r ||
-		g < 0 || 255 < g ||
-		b < 0 || 255 < b)
-		goto bad;
-
-	    VSET(gasp->gas_label_color, r, g, b);
-
-	    go_refresh_view(gdvp);
-	    return BRLCAD_OK;
-	}
-
-	goto bad;
-    }
-
-    if (strcmp(argv[2], "line_width") == 0) {
-	if (argc == 3) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d", gasp->gas_line_width);
-	    return BRLCAD_OK;
-	}
-
-	if (argc == 4) {
-	    int line_width;
-
-	    if (sscanf(argv[3], "%d", &line_width) != 1)
-		goto bad;
-
-	    gasp->gas_line_width = line_width;
-
-	    go_refresh_view(gdvp);
-	    return BRLCAD_OK;
-	}
-
-	goto bad;
-    }
-
-    if (strcmp(argv[2], "pos_only") == 0) {
-	if (argc == 3) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d", gasp->gas_pos_only);
-	    return BRLCAD_OK;
-	}
-
-	if (argc == 4) {
-	    int i;
-
-	    if (sscanf(argv[3], "%d", &i) != 1)
-		goto bad;
-
-	    if (i)
-		gasp->gas_pos_only = 1;
-	    else
-		gasp->gas_pos_only = 0;
-
-	    go_refresh_view(gdvp);
-	    return BRLCAD_OK;
-	}
-
-	goto bad;
-    }
-
-    if (strcmp(argv[2], "tick_color") == 0) {
-	if (argc == 3) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d %d %d",
-			  V3ARGS(gasp->gas_tick_color));
-	    return BRLCAD_OK;
-	}
-
-	if (argc == 6) {
-	    int r, g, b;
-
-	    /* set background color */
-	    if (sscanf(argv[3], "%d", &r) != 1 ||
-		sscanf(argv[4], "%d", &g) != 1 ||
-		sscanf(argv[5], "%d", &b) != 1)
-		goto bad;
-
-	    /* validate color */
-	    if (r < 0 || 255 < r ||
-		g < 0 || 255 < g ||
-		b < 0 || 255 < b)
-		goto bad;
-
-	    VSET(gasp->gas_tick_color, r, g, b);
-
-	    go_refresh_view(gdvp);
-	    return BRLCAD_OK;
-	}
-
-	goto bad;
-    }
-
-    if (strcmp(argv[2], "tick_enabled") == 0) {
-	if (argc == 3) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d", gasp->gas_tick_enabled);
-	    return BRLCAD_OK;
-	}
-
-	if (argc == 4) {
-	    int i;
-
-	    if (sscanf(argv[3], "%d", &i) != 1)
-		goto bad;
-
-	    if (i)
-		gasp->gas_tick_enabled = 1;
-	    else
-		gasp->gas_tick_enabled = 0;
-
-	    go_refresh_view(gdvp);
-	    return BRLCAD_OK;
-	}
-
-	goto bad;
-    }
-
-    if (strcmp(argv[2], "tick_interval") == 0) {
-	if (argc == 3) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d", gasp->gas_tick_interval);
-	    return BRLCAD_OK;
-	}
-
-	if (argc == 4) {
-	    int tick_interval;
-
-	    if (sscanf(argv[3], "%d", &tick_interval) != 1)
-		goto bad;
-
-	    gasp->gas_tick_interval = tick_interval;
-
-	    go_refresh_view(gdvp);
-	    return BRLCAD_OK;
-	}
-
-	goto bad;
-    }
-
-    if (strcmp(argv[2], "tick_length") == 0) {
-	if (argc == 3) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d", gasp->gas_tick_length);
-	    return BRLCAD_OK;
-	}
-
-	if (argc == 4) {
-	    int tick_length;
-
-	    if (sscanf(argv[3], "%d", &tick_length) != 1)
-		goto bad;
-
-	    gasp->gas_tick_length = tick_length;
-
-	    go_refresh_view(gdvp);
-	    return BRLCAD_OK;
-	}
-
-	goto bad;
-    }
-
-    if (strcmp(argv[2], "tick_major_color") == 0) {
-	if (argc == 3) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d %d %d",
-			  V3ARGS(gasp->gas_tick_major_color));
-	    return BRLCAD_OK;
-	}
-
-	if (argc == 6) {
-	    int r, g, b;
-
-	    /* set background color */
-	    if (sscanf(argv[3], "%d", &r) != 1 ||
-		sscanf(argv[4], "%d", &g) != 1 ||
-		sscanf(argv[5], "%d", &b) != 1)
-		goto bad;
-
-	    /* validate color */
-	    if (r < 0 || 255 < r ||
-		g < 0 || 255 < g ||
-		b < 0 || 255 < b)
-		goto bad;
-
-	    VSET(gasp->gas_tick_major_color, r, g, b);
-
-	    go_refresh_view(gdvp);
-	    return BRLCAD_OK;
-	}
-
-	goto bad;
-    }
-
-    if (strcmp(argv[2], "tick_major_length") == 0) {
-	if (argc == 3) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d", gasp->gas_tick_major_length);
-	    return BRLCAD_OK;
-	}
-
-	if (argc == 4) {
-	    int tick_major_length;
-
-	    if (sscanf(argv[3], "%d", &tick_major_length) != 1)
-		goto bad;
-
-	    gasp->gas_tick_major_length = tick_major_length;
-
-	    go_refresh_view(gdvp);
-	    return BRLCAD_OK;
-	}
-
-	goto bad;
-    }
-
-    if (strcmp(argv[2], "ticks_per_major") == 0) {
-	if (argc == 3) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d", gasp->gas_ticks_per_major);
-	    return BRLCAD_OK;
-	}
-
-	if (argc == 4) {
-	    int ticks_per_major;
-
-	    if (sscanf(argv[3], "%d", &ticks_per_major) != 1)
-		goto bad;
-
-	    gasp->gas_ticks_per_major = ticks_per_major;
-
-	    go_refresh_view(gdvp);
-	    return BRLCAD_OK;
-	}
-
-	goto bad;
-    }
-
-    if (strcmp(argv[2], "tick_threshold") == 0) {
-	if (argc == 3) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d", gasp->gas_tick_threshold);
-	    return BRLCAD_OK;
-	}
-
-	if (argc == 4) {
-	    int tick_threshold;
-
-	    if (sscanf(argv[3], "%d", &tick_threshold) != 1)
-		goto bad;
-
-	    if (tick_threshold < 1)
-		tick_threshold = 1;
-
-	    gasp->gas_tick_threshold = tick_threshold;
-
-	    go_refresh_view(gdvp);
-	    return BRLCAD_OK;
-	}
-
-	goto bad;
-    }
-
-    if (strcmp(argv[2], "triple_color") == 0) {
-	if (argc == 3) {
-	    bu_vls_printf(&gedp->ged_result_str, "%d", gasp->gas_triple_color);
-	    return BRLCAD_OK;
-	}
-
-	if (argc == 4) {
-	    int i;
-
-	    if (sscanf(argv[3], "%d", &i) != 1)
-		goto bad;
-
-	    if (i)
-		gasp->gas_triple_color = 1;
-	    else
-		gasp->gas_triple_color = 0;
-
-	    go_refresh_view(gdvp);
-	    return BRLCAD_OK;
-	}
-
-	goto bad;
-    }
-
- bad:
-    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
-    return BRLCAD_ERROR;
-}
-
-static int
 go_model_axes(struct ged *gedp,
 	      int argc,
 	      const char *argv[],
@@ -2828,7 +2942,7 @@ go_model_axes(struct ged *gedp,
 	return BRLCAD_ERROR;
     }
 
-    return go_axes(gedp, gdvp, &gdvp->gdv_view->gv_model_axes, argc, argv, usage);
+    return go_axes(gedp, gdvp, &gdvp->gdv_view->gv_model_axes, argc, argv, usage, 0);
 }
 
 static int
@@ -5925,7 +6039,7 @@ go_view_axes(struct ged *gedp,
 	return BRLCAD_ERROR;
     }
 
-    return go_axes(gedp, gdvp, &gdvp->gdv_view->gv_view_axes, argc, argv, usage);
+    return go_axes(gedp, gdvp, &gdvp->gdv_view->gv_view_axes, argc, argv, usage, 0);
 }
 
 static int
@@ -6989,6 +7103,8 @@ go_refresh_view(struct ged_dm_view *gdvp)
 	restore_zbuffer = 1;
     }
 
+    /*XXX Need to check if window is even visible before drawing */
+
     DM_DRAW_BEGIN(gdvp->gdv_dmp);
 
     if (gdvp->gdv_fbs.fbs_mode == GED_OBJ_FB_MODE_OVERLAY) {
@@ -7033,6 +7149,13 @@ go_refresh_view(struct ged_dm_view *gdvp)
 	}
 
 	go_draw(gdvp);
+    }
+
+    if (gdvp->gdv_view->gv_data_axes.gas_draw && gdvp->gdv_view->gv_data_axes.gas_num_data_points) {
+	dm_draw_data_axes(gdvp->gdv_dmp,
+			  gdvp->gdv_view->gv_size,
+			  bn_mat_identity,
+			  &gdvp->gdv_view->gv_data_axes);
     }
 
     /* Restore to non-rotated, full brightness */
