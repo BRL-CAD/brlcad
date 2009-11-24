@@ -33,10 +33,6 @@
 #include "bn.h"
 
 
-/* arbitrary numerical arguments, integer value: */
-#define SIGN(x)	((x) == 0 ? 0 : (x) > 0 ? 1 : -1)
-
-
 /**
  * B N _ C X _ D I V
  *@brief
@@ -78,6 +74,7 @@ err:
     ap->re = ap->im = 1.0e20;		/* "INFINITY" */
 }
 
+
 /**
  * B N _ C X _ S Q R T
  *@brief
@@ -89,55 +86,53 @@ err:
  * always has nonnegative imaginary part.
  */
 void
-bn_cx_sqrt(bn_complex_t *op, register const bn_complex_t *ip)
+bn_cx_sqrt(bn_complex_t *op, const bn_complex_t *ip)
 {
-    register fastf_t ampl, temp;
-    /* record signs of original real & imaginary parts */
-    register int re_sign;
-    register int im_sign;
+    const fastf_t re = ip->re;
+    const fastf_t im = ip->im;
 
     /* special cases are not necessary; they are here for speed */
-    im_sign = SIGN(ip->im);
-    re_sign = SIGN(ip->re);
-    if (re_sign == 0) {
-	if (im_sign == 0) {
-	    op->re = op->im = 0;
-	} else if (im_sign > 0) {
-	    op->re = op->im = sqrt(ip->im * 0.5);
+    if (NEAR_ZERO(re, SMALL_FASTF)) {
+	if (NEAR_ZERO(im, SMALL_FASTF)) {
+	    op->re = op->im = 0.0;
+	} else if (im > 0.0) {
+	    op->re = op->im = sqrt(im * 0.5);
 	} else {
-	    /* im_sign < 0 */
-	    op->re = -(op->im = sqrt(ip->im * -0.5));
+	    /* ip->im < 0.0 */
+	    op->re = -(op->im = sqrt(im * -0.5));
 	}
-    } else if (im_sign == 0) {
-	if (re_sign > 0) {
-	    op->re = sqrt(ip->re);
+    } else if (NEAR_ZERO(im, SMALL_FASTF)) {
+	if (re > 0.0) {
+	    op->re = sqrt(re);
 	    op->im = 0.0;
 	} else {
-	    /* re_sign < 0 */
-	    op->im = sqrt(-ip->re);
+	    /* ip->re < 0.0 */
+	    op->im = sqrt(-re);
 	    op->re = 0.0;
 	}
     } else {
+	fastf_t ampl, temp;
+
 	/* no shortcuts */
 	ampl = bn_cx_ampl(ip);
-	if ((temp = (ampl - ip->re) * 0.5) < 0.0) {
+	if ((temp = (ampl - re) * 0.5) < 0.0) {
 	    /* This case happens rather often, when the hypot() in
 	     * bn_cx_ampl() returns an ampl ever so slightly smaller
 	     * than ip->re.  This can easily happen when ip->re ~=
 	     * 10**20.  Just ignore the imaginary part.
 	     */
-	    op->im = 0;
+	    op->im = 0.0;
 	} else {
 	    op->im = sqrt(temp);
 	}
 
-	if ((temp = (ampl + ip->re) * 0.5) < 0.0) {
+	if ((temp = (ampl + re) * 0.5) < 0.0) {
 	    op->re = 0.0;
 	} else {
-	    if (im_sign > 0) {
+	    if (im > 0.0) {
 		op->re = sqrt(temp);
 	    } else {
-		/* im_sign < 0 */
+		/* ip->im < 0.0 */
 		op->re = -sqrt(temp);
 	    }
 	}
