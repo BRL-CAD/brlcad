@@ -54,23 +54,8 @@
 
 #define PLOTBOUND	1000.0	/* Max magnification in Rot matrix */
 struct dm	*ps_open(Tcl_Interp *interp, int argc, char **argv);
-static int	ps_close(struct dm *dmp);
-static int	ps_drawBegin(struct dm *dmp);
-static int	ps_drawEnd(struct dm *dmp);
-static int	ps_normal(struct dm *dmp);
-static int	ps_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye);
-static int	ps_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int size, int use_aspect);
-static int	ps_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2);
-static int	ps_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2);
-static int	ps_drawLines3D(struct dm *dmp, int npoints, point_t *points);
-static int      ps_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y);
-static int      ps_drawVList(struct dm *dmp, register struct bn_vlist *vp);
-static int      ps_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), genptr_t *data);
-static int      ps_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency);
-static int      ps_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b);
-static int      ps_setLineAttr(struct dm *dmp, int width, int style);
-static int	ps_setWinBounds(struct dm *dmp, register int *w);
-static int	ps_debug(struct dm *dmp, int lvl);
+
+HIDDEN_DM_FUNCTION_PROTOTYPES(ps)
 
 struct dm dm_ps = {
     ps_close,
@@ -371,7 +356,7 @@ NEWPG\n\
  *
  *  Gracefully release the display.
  */
-static int
+HIDDEN int
 ps_close(struct dm *dmp)
 {
     if (!((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp)
@@ -397,7 +382,7 @@ ps_close(struct dm *dmp)
  *
  * There are global variables which are parameters to this routine.
  */
-static int
+HIDDEN int
 ps_drawBegin(struct dm *dmp)
 {
     return TCL_OK;
@@ -406,7 +391,7 @@ ps_drawBegin(struct dm *dmp)
 /*
  *			P S _ E P I L O G
  */
-static int
+HIDDEN int
 ps_drawEnd(struct dm *dmp)
 {
     if ( !((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp )
@@ -425,7 +410,7 @@ ps_drawEnd(struct dm *dmp)
  *  Load a new transformation matrix.  This will be followed by
  *  many calls to ps_draw().
  */
-static int
+HIDDEN int
 ps_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 {
     Tcl_Obj	*obj;
@@ -461,7 +446,7 @@ ps_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
  *  			P S _ D R A W V L I S T
  */
 /* ARGSUSED */
-static int
+HIDDEN int
 ps_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 {
     static vect_t			last;
@@ -612,7 +597,7 @@ ps_drawVList(struct dm *dmp, register struct bn_vlist *vp)
  *  			P S _ D R A W
  */
 /* ARGSUSED */
-static int
+HIDDEN int
 ps_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), genptr_t *data)
 {
     struct bn_vlist *vp;
@@ -638,7 +623,7 @@ ps_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), 
  * (ie, not scaled, rotated, displaced, etc).
  * Turns off windowing.
  */
-static int
+HIDDEN int
 ps_normal(struct dm *dmp)
 {
     return TCL_OK;
@@ -651,7 +636,7 @@ ps_normal(struct dm *dmp)
  * The starting position of the beam is as specified.
  */
 /* ARGSUSED */
-static int
+HIDDEN int
 ps_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int size, int use_aspect)
 {
     int sx, sy;
@@ -688,7 +673,7 @@ ps_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int si
  *			P S _ D R A W L I N E 2 D
  *
  */
-static int
+HIDDEN int
 ps_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2)
 {
     int sx1, sy1;
@@ -709,36 +694,36 @@ ps_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2)
     return TCL_OK;
 }
 
-static int
+HIDDEN int
 ps_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2)
 {
     return TCL_OK;
 }
 
-static int
+HIDDEN int
 ps_drawLines3D(struct dm *dmp, int npoints, point_t *points)
 {
     return TCL_OK;
 }
 
-static int
+HIDDEN int
 ps_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
 {
     return ps_drawLine2D(dmp, x, y, x, y);
 }
 
-static int
+HIDDEN int
 ps_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency)
 {
     return TCL_OK;
 }
-static int
+HIDDEN int
 ps_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
 {
     return TCL_OK;
 }
 
-static int
+HIDDEN int
 ps_setLineAttr(struct dm *dmp, int width, int style)
 {
     dmp->dm_lineWidth = width;
@@ -753,14 +738,14 @@ ps_setLineAttr(struct dm *dmp, int width, int style)
 }
 
 /* ARGSUSED */
-static int
+HIDDEN int
 ps_debug(struct dm *dmp, int lvl)
 {
     dmp->dm_debugLevel = lvl;
     return TCL_OK;
 }
 
-static int
+HIDDEN int
 ps_setWinBounds(struct dm *dmp, register int *w)
 {
     /* Compute the clipping bounds */

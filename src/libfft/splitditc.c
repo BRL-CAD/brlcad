@@ -19,29 +19,31 @@
  */
 /** @file splitditc.c
  *
- *  Real valued, split-radix, decimation in time FFT code generator.
+ * Real valued, split-radix, decimation in time FFT code generator.
  *
  */
 
 #include "common.h"
 
 #include <stdio.h>
-#include <math.h>
 
-#define	INVSQ2	0.70710678118654752440
+#include "fft.h"
 
-int	rfft_adds, rfft_mults;
+
+/* used by fftc.c */
+int rfft_adds, rfft_mults;
+
 
 void
-splitdit(double *X, int N, int M)
+splitdit(int N, int M)
 {
-    int	i0, i1, i2, i3;
-    int	a0, a1, a2, a3, b0, b1, b2, b3;
-    int	s, d;
-    double	a, aa3, e;
-    double	cc1, ss1, cc3, ss3;
-    int	i, j, k, ni;
-    int	n2, n4;
+    int i0, i1, i2, i3;
+    int a0, a1, a2, a3, b0, b1, b2, b3;
+    int s, d;
+    double a, aa3, e;
+    double cc1, ss1, cc3, ss3;
+    int i, j, k, ni;
+    int n2, n4;
     rfft_adds = rfft_mults = 0;
 
     printf("/*\n"
@@ -54,7 +56,7 @@ splitdit(double *X, int N, int M)
     printf("/*\n"
 	   " * Machine-generated Real Split Radix Decimation in Time FFT\n"
 	   " */\n\n");
-    printf("#define INVSQ2 0.70710678118654752440\n\n");
+    printf("#include \"fft.h\"\n\n");
     printf("void\n");
     printf("rfft%d(register double X[])\n", N);
     printf("{\n");
@@ -118,8 +120,8 @@ splitdit(double *X, int N, int M)
 		i1 = i0 + n4;
 		i2 = i1 + n4;
 		i3 = i2 + n4;
-		printf("    t0 = (X[%d]-X[%d])*INVSQ2;\n", i2-1, i3-1);
-		printf("    t1 = (X[%d]+X[%d])*INVSQ2;\n", i2-1, i3-1);
+		printf("    t0 = (X[%d]-X[%d])*M_SQRT1_2;\n", i2-1, i3-1);
+		printf("    t1 = (X[%d]+X[%d])*M_SQRT1_2;\n", i2-1, i3-1);
 		printf("    X[%d] = t1 - X[%d];\n", i2-1, i1-1);
 		printf("    X[%d] = t1 + X[%d];\n", i3-1, i1-1);
 		printf("    X[%d] = X[%d] - t0;\n", i1-1, i0-1);
@@ -174,7 +176,7 @@ splitdit(double *X, int N, int M)
      * sign, so we reverse it here!  We need to figure this out!
      */
     printf("\n    /* reverse Imag part! */\n");
-    printf("    for(i = %d/2+1; i < %d; i++)\n", N, N);
+    printf("    for (i = %d/2+1; i < %d; i++)\n", N, N);
     printf("\tX[i] = -X[i];\n");
     printf("}\n");
 }

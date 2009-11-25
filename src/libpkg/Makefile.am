@@ -5,6 +5,8 @@ noinst_PROGRAMS = tpkg
 
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
 
+AM_CFLAGS = ${STRICT_FLAGS}
+
 libpkg_la_SOURCES = \
 	pkg.c \
 	tcl.c \

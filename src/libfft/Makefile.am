@@ -19,6 +19,8 @@ libfft_la_LDFLAGS = -version-info 19:1 -no-undefined
 libfft_la_LIBADD = \
 	${FFT_LIBS}
 
+AM_CFLAGS = ${STRICT_FLAGS}
+
 noinst_HEADERS = \
 	fft.h
 

@@ -19,42 +19,37 @@
  */
 /** @file ditsplit.c
  *
- *  Split Radix, Decimation in Frequency,
- *  Inverse Real-valued FFT.
+ * Split Radix, Decimation in Frequency, Inverse Real-valued FFT.
  *
- *  Input order:
- *	[ Re(0), Re(1),..., Re(N/2), Im(N/2-1),..., Im(1) ]
+ * Input order:
+ *	[ Re(0), Re(1), ..., Re(N/2), Im(N/2-1), ..., Im(1) ]
  *
- *  Transactions on Acoustics, Speech, and Signal Processing, June 1987.
+ * Transactions on Acoustics, Speech, and Signal Processing, June 1987.
  *
  */
 
 #include "common.h"
 
 #include <stdio.h>
-#include <math.h>
 
-#define	INVSQ2	0.70710678118654752440
-#define	SQRT2	1.4142136
+#include "fft.h"
 
-int	irfft_adds, irfft_mults;
 
 void
-irfft(double *x, int n)
-
-    /* length */
+irfft(double *x, int n /* length */)
 {
-    int	i, j, k, n1, n2, n4, n8;
-    int	i0, i1, i2, i3, i4, i5, i6, i7, i8;
-    int	is, id;
-    double	t1, t2, t3, t4, t5;
-    double	cc1, ss1, cc3, ss3, e, a, a3;
+    int i, j, k, n1, n2, n4, n8;
+    int i0, i1, i2, i3, i4, i5, i6, i7, i8;
+    int is, id;
+    double t1, t2, t3, t4, t5;
+    double cc1, ss1, cc3, ss3, e, a, a3;
+    int irfft_adds, irfft_mults;
+
     irfft_adds = irfft_mults = 0;
 
     /* L shaped butterflies */
     n2 = n << 1;
-/*	for ( k = 1; k < m; k++ ) {*/
-    for ( k = 2; k < n; k <<= 1 ) {
+    for (k = 2; k < n; k <<= 1) {
 	is = 0;
 	id = n2;
 	n2 = n2 >> 1;
@@ -62,7 +57,7 @@ irfft(double *x, int n)
 	n8 = n4 >> 1;
 	e = 2.0*M_PI / n2;
     l17:
-	for ( i = is; i < n; i += id ) {
+	for (i = is; i < n; i += id) {
 	    i1 = i + 1;
 	    i2 = i1 + n4;
 	    i3 = i2 + n4;
@@ -75,29 +70,29 @@ irfft(double *x, int n)
 	    x[i4-1] = t1 + 2.0 * x[i4-1];
 	    irfft_adds += 4; irfft_mults += 3;
 
-	    if ( n4 == 1 )
+	    if (n4 == 1)
 		continue;
 	    i1 += n8;
 	    i2 += n8;
 	    i3 += n8;
 	    i4 += n8;
 
-	    t1 = (x[i2-1] - x[i1-1]) * INVSQ2;
-	    t2 = (x[i4-1] + x[i3-1]) * INVSQ2;
+	    t1 = (x[i2-1] - x[i1-1]) * M_SQRT1_2;
+	    t2 = (x[i4-1] + x[i3-1]) * M_SQRT1_2;
 	    x[i1-1] += x[i2-1];
 	    x[i2-1] = x[i4-1] - x[i3-1];
-	    x[i3-1] = -2.0 * ( t2 + t1 );
-	    x[i4-1] = 2.0 * ( -t2 + t1 );
+	    x[i3-1] = -2.0 * (t2 + t1);
+	    x[i4-1] = 2.0 * (-t2 + t1);
 	    irfft_adds += 6; irfft_mults += 4;
 
 	}
 	is = 2 * id - n2;
 	id = 4 * id;
-	if ( is < n-1 )
+	if (is < n-1)
 	    goto l17;
 
 	a = e;
-	for ( j = 2; j <= n8; j++ ) {
+	for (j = 2; j <= n8; j++) {
 	    a3 = 3.0 * a;
 	    cc1 = cos(a);
 	    ss1 = sin(a);
@@ -107,7 +102,7 @@ irfft(double *x, int n)
 	    is = 0;
 	    id = 2 * n2;
 	l40:
-	    for ( i = is; i < n; i += id ) {
+	    for (i = is; i < n; i += id) {
 		i1 = i + j;
 		i2 = i1 + n4;
 		i3 = i2 + n4;
@@ -138,7 +133,7 @@ irfft(double *x, int n)
 	    }
 	    is = 2 * id - n2;
 	    id = 4 * id;
-	    if ( is < n-1)
+	    if (is < n-1)
 		goto l40;
 	}
     }
@@ -146,8 +141,8 @@ irfft(double *x, int n)
     /* Length two butterflies */
     is = 1;
     id = 4;
- l70:
-    for ( i0 = is; i0 <= n; i0 += id ) {
+l70:
+    for (i0 = is; i0 <= n; i0 += id) {
 	i1 = i0 + 1;
 
 	t1 = x[i0-1];
@@ -158,20 +153,20 @@ irfft(double *x, int n)
     }
     is = 2 * id - 1;
     id = 4 * id;
-    if ( is < n )
+    if (is < n)
 	goto l70;
 
     /* Digit reverse counter */
     j = 1;
     n1 = n - 1;
-    for ( i = 1; i <= n1; i++ ) {
-	if ( i < j ) {
+    for (i = 1; i <= n1; i++) {
+	if (i < j) {
 	    t1 = x[j-1];
 	    x[j-1] = x[i-1];
 	    x[i-1] = t1;
 	}
 	k = n/2;
-	while ( k < j ) {
+	while (k < j) {
 	    j -= k;
 	    k /= 2;
 	}
@@ -179,7 +174,7 @@ irfft(double *x, int n)
     }
 
     /* scale result */
-    for ( i = 0; i < n; i++ )
+    for (i = 0; i < n; i++)
 	x[i] /= (double)n;
 }
 

@@ -84,33 +84,8 @@ HIDDEN XVisualInfo *ogl_choose_visual(struct dm *dmp, Tk_Window tkwin);
 
 #define PLOTBOUND	1000.0	/* Max magnification in Rot matrix */
 struct dm	*ogl_open(Tcl_Interp *interp, int argc, char **argv);
-HIDDEN int	ogl_close(struct dm *dmp);
-HIDDEN int	ogl_drawBegin(struct dm *dmp);
-HIDDEN int      ogl_drawEnd(struct dm *dmp);
-HIDDEN int	ogl_normal(struct dm *dmp);
-HIDDEN int	ogl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye);
-HIDDEN int	ogl_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int size, int use_aspect);
-HIDDEN int	ogl_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2);
-HIDDEN int	ogl_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2);
-HIDDEN int	ogl_drawLines3D(struct dm *dmp, int npoints, point_t *points);
-HIDDEN int      ogl_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y);
-HIDDEN int      ogl_drawVList(struct dm *dmp, register struct bn_vlist *vp);
-HIDDEN int 	ogl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), genptr_t *data);
-HIDDEN int      ogl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency);
-HIDDEN int	ogl_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b);
-HIDDEN int	ogl_setLineAttr(struct dm *dmp, int width, int style);
-HIDDEN int	ogl_configureWin_guts(struct dm *dmp, int force);
-HIDDEN int	ogl_configureWin(struct dm *dmp);
-HIDDEN int	ogl_setLight(struct dm *dmp, int lighting_on);
-HIDDEN int	ogl_setTransparency(struct dm *dmp, int transparency_on);
-HIDDEN int	ogl_setDepthMask(struct dm *dmp, int depthMask_on);
-HIDDEN int	ogl_setZBuffer(struct dm *dmp, int zbuffer_on);
-HIDDEN int	ogl_setWinBounds(struct dm *dmp, int *w);
-HIDDEN int	ogl_debug(struct dm *dmp, int lvl);
-HIDDEN int      ogl_beginDList(struct dm *dmp, unsigned int list);
-HIDDEN int	ogl_endDList(struct dm *dmp);
-HIDDEN int      ogl_drawDList(struct dm *dmp, unsigned int list);
-HIDDEN int      ogl_freeDLists(struct dm *dmp, unsigned int list, int range);
+
+HIDDEN_DM_FUNCTION_PROTOTYPES(ogl)
 
 struct dm dm_ogl = {
     ogl_close,
