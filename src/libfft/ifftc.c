@@ -19,11 +19,7 @@
  */
 /** @file ifftc.c
  *
- *  Split Radix Decimation in Freq
- *  Inverse FFT C code generator.
- *
- *  Author -
- *	Phil Dykstra
+ * Split Radix Decimation in Freq Inverse FFT C code generator.
  *
  */
 
@@ -40,8 +36,7 @@ extern int irfft_adds, irfft_mults;
 int
 main(int argc, char **argv)
 {
-    double	x[4097];
-    int	n, m;
+    int n, m;
 
     if ( argc != 2 ) {
 	fprintf( stderr, "Usage: ifftc length > fftlength.c\n" );
@@ -51,7 +46,7 @@ main(int argc, char **argv)
     n = atoi(argv[1]);
     m = log((double)n)/log(2.0) + 0.5;	/* careful truncation */
 
-    ditsplit( x, n, m );
+    ditsplit( n, m );
     fprintf( stderr, "adds = %d, mults = %d\n", irfft_adds, irfft_mults );
     return 0;
 }
