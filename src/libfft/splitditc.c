@@ -26,9 +26,9 @@
 #include "common.h"
 
 #include <stdio.h>
-#include <math.h>
 
-#define INVSQ2 0.70710678118654752440
+#include "fft.h"
+
 
 /* used by fftc.c */
 int rfft_adds, rfft_mults;

@@ -25,8 +25,14 @@
 
 #include <math.h>
 
-#if !defined(M_PI)
+#ifndef M_PI
 #  define M_PI 3.141592653589793238462643
+#endif
+#ifndef INVSQ2
+#  define INVSQ2 0.70710678118654752440084436210
+#endif
+#ifndef SQRT2
+#  define SQRT2 1.41421356237309504880168872421
 #endif
 
 extern void splitdit(int N, int M);

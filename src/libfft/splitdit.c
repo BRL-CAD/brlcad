@@ -18,17 +18,20 @@
  * information.
  */
 /** @file splitdit.c
+ *
  *  Real valued, split-radix, decimation in time FFT.
  *
  *  Data comes out as:
  *
  *	[ Re(0), Re(1), ..., Re(N/2), Im(N/2-1), ..., Im(1) ]
+ *
  */
+
+#include "fft.h"
+
+
 int	rfft_adds, rfft_mults;
 
-#include <math.h>
-
-#define	INVSQ2	0.70710678118654752440
 
 void
 rfft(double *X, int N)

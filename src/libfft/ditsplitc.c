@@ -31,10 +31,9 @@
 #include "common.h"
 
 #include <stdio.h>
-#include <math.h>
 
-#define INVSQ2 0.70710678118654752440084436210
-#define SQRT2 1.41421356237309504880168872421
+#include "fft.h"
+
 
 /* used by ifftc.c */
 int irfft_adds, irfft_mults;
