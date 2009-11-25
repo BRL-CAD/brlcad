@@ -375,9 +375,7 @@ hit( struct application *ap, struct partition *part, struct seg *seg )
 }
 
 int
-main( argc, argv )
-    int argc;
-    char *argv[];
+main(int argc, char *argv[])
 {
     char idbuf[132];
     struct application ap;
