@@ -27,3 +27,10 @@ add_executable(nirt
 target_link_libraries(nirt
     BrlcadCore
 )
+
+add_executable(showshot
+    showshot.c
+)
+target_link_libraries(showshot
+    BrlcadCore
+)

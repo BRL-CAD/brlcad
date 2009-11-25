@@ -17,16 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup vls */
-/** @{ */
-/** @file str.c
- *
- * Compatibility routines to various string processing functions
- * including strlcat and strlcpy.
- *
- * @author
- *   Christopher Sean Morrison
- */
 
 #include "common.h"
 
@@ -38,15 +28,6 @@
 #include "bu.h"
 
 
-/**
- * b u _ s t r l c a t / b u _ s t r l c a t m
- *
- * concatenate one string onto the end of another, returning the
- * length of the dst string after the concatenation.
- *
- * bu_strlcat() is a macro to bu_strlcatm() so that we can report the
- * file name and line number of any erroneous callers.
- */
 size_t
 bu_strlcatm(char *dst, const char *src, size_t size, const char *label)
 {
@@ -55,7 +36,7 @@ bu_strlcatm(char *dst, const char *src, size_t size, const char *label)
 
     if (!dst && label) {
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
-	fprintf(stderr, "WARNING: NULL destination string, size %ld [%s]\n", size, label);
+	fprintf(stderr, "WARNING: NULL destination string, size %lu [%s]\n", (unsigned long)size, label);
 	bu_semaphore_release(BU_SEM_SYSCALL);
     }
     if (!dst || !src || size <= 0) {
@@ -70,17 +51,17 @@ bu_strlcatm(char *dst, const char *src, size_t size, const char *label)
 
     if (dstsize == size - 1) {
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
-	fprintf(stderr, "WARNING: [%s] concatenation string is already full at %ld chars\n", label, size-1);
+	fprintf(stderr, "WARNING: [%s] concatenation string is already full at %lu chars\n", label, (unsigned long)size-1);
 	bu_semaphore_release(BU_SEM_SYSCALL);
     } else if (dstsize > size - 1) {
 	/* probably missing null-termination or is not an initialized buffer */
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
-	fprintf(stderr, "WARNING: [%s] concatenation string is already full, exceeds size (%ld > %ld)\n", label, dstsize, size-1);
+	fprintf(stderr, "WARNING: [%s] concatenation string is already full, exceeds size (%lu > %lu)\n", label, (unsigned long)dstsize, (unsigned long)size-1);
 	bu_semaphore_release(BU_SEM_SYSCALL);
     } else if (srcsize >= size - dstsize) {
 	if (bu_debug) {
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);
-	    fprintf(stderr, "WARNING: [%s] string truncation, exceeding %ld char max concatenating %ld chars (started with %ld)\n", label, size-1, srcsize, dstsize);
+	    fprintf(stderr, "WARNING: [%s] string truncation, exceeding %lu char max concatenating %lu chars (started with %lu)\n", label, (unsigned long)size-1, (unsigned long)srcsize, (unsigned long)dstsize);
 	    bu_semaphore_release(BU_SEM_SYSCALL);
 	}
     }
@@ -103,15 +84,6 @@ bu_strlcatm(char *dst, const char *src, size_t size, const char *label)
 }
 
 
-/**
- * b u _ s t r l c p y / b u _ s t r l c p y m
- *
- * copies one string into another, returning the length of the dst
- * string after the copy.
- *
- * bu_strlcpy() is a macro to bu_strlcpym() so that we can report the
- * file name and line number of any erroneous callers.
- */
 size_t
 bu_strlcpym(char *dst, const char *src, size_t size, const char *label)
 {
@@ -120,7 +92,7 @@ bu_strlcpym(char *dst, const char *src, size_t size, const char *label)
 
     if (!dst && label) {
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
-	fprintf(stderr, "WARNING: NULL destination string, size %ld [%s]\n", size, label);
+	fprintf(stderr, "WARNING: NULL destination string, size %lu [%s]\n", (unsigned long)size, label);
 	bu_semaphore_release(BU_SEM_SYSCALL);
     }
     if (!dst || !src || size <= 0) {
@@ -135,7 +107,7 @@ bu_strlcpym(char *dst, const char *src, size_t size, const char *label)
     if (bu_debug) {
 	if (srcsize >= size) {
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);
-	    fprintf(stderr, "WARNING: [%s] string truncation, exceeding %ld char max copying %ld chars\n", label, size-1, srcsize);
+	    fprintf(stderr, "WARNING: [%s] string truncation, exceeding %lu char max copying %lu chars\n", label, (unsigned long)size-1, (unsigned long)srcsize);
 	    bu_semaphore_release(BU_SEM_SYSCALL);
 	}
     }
@@ -158,15 +130,6 @@ bu_strlcpym(char *dst, const char *src, size_t size, const char *label)
 }
 
 
-/**
- * b u _ s t r d u p  / b u _ s t r d u p m
- *
- * Given a string, allocate enough memory to hold it using bu_malloc(),
- * duplicate the strings, returns a pointer to the new string.
- *
- * bu_strdup() is a macro that includes the current file name and line
- * number that can be used when bu debugging is enabled.
- */
 char *
 bu_strdupm(register const char *cp, const char *label)
 {
@@ -195,8 +158,6 @@ bu_strdupm(register const char *cp, const char *label)
     return (base);
 }
 
-
-/** @} */
 /*
  * Local Variables:
  * mode: C

@@ -28,6 +28,8 @@ AM_CPPFLAGS = \
 	${BREP_CPPFLAGS} \
 	${DM_RTGL_CPPFLAGS}
 
+# AM_CFLAGS = ${STRICT_FLAGS}
+
 noinst_PROGRAMS = \
 	comb \
 	nurb_example \
@@ -173,6 +175,7 @@ librt_nil_la_SOURCES = \
 	primitives/nmg/nmg_rt_isect.c \
 	primitives/nmg/nmg_rt_segs.c \
 	primitives/nmg/nmg_tri.c \
+	primitives/nmg/nmg_tri_mc.c \
 	primitives/nmg/nmg_visit.c \
 	primitives/part/part.c \
 	primitives/part/part_mirror.c \

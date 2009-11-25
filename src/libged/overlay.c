@@ -82,7 +82,7 @@ ged_overlay(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    ged_cvt_vlblock_to_solids(gedp, vbp, name, 0);
+    _ged_cvt_vlblock_to_solids(gedp, vbp, name, 0);
     rt_vlblock_free(vbp);
 
     return GED_OK;

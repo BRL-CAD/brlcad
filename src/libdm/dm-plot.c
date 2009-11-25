@@ -55,15 +55,22 @@
 #define PLOTBOUND	1000.0	/* Max magnification in Rot matrix */
 struct dm	*plot_open(Tcl_Interp *interp, int argc, char **argv);
 static int	plot_close(struct dm *dmp);
-static int	plot_drawBegin(struct dm *dmp), plot_drawEnd(struct dm *dmp);
-static int	plot_normal(struct dm *dmp), plot_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye);
-static int	plot_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int size, int use_aspect), plot_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2);
+static int	plot_drawBegin(struct dm *dmp);
+static int	plot_drawEnd(struct dm *dmp);
+static int	plot_normal(struct dm *dmp);
+static int	plot_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye);
+static int	plot_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int size, int use_aspect);
+static int	plot_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2);
+static int	plot_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2);
+static int	plot_drawLines3D(struct dm *dmp, int npoints, point_t *points);
 static int      plot_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y);
-static int	plot_drawVList(struct dm *dmp, register struct bn_vlist *vp);
+static int      plot_drawVList(struct dm *dmp, register struct bn_vlist *vp);
+static int      plot_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), genptr_t *data);
 static int      plot_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency);
 static int      plot_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b);
 static int      plot_setLineAttr(struct dm *dmp, int width, int style);
-static int	plot_setWinBounds(struct dm *dmp, register int *w), plot_debug(struct dm *dmp, int lvl);
+static int	plot_setWinBounds(struct dm *dmp, register int *w);
+static int	plot_debug(struct dm *dmp, int lvl);
 
 struct dm dm_plot = {
     plot_close,
@@ -73,8 +80,11 @@ struct dm dm_plot = {
     plot_loadMatrix,
     plot_drawString2D,
     plot_drawLine2D,
+    plot_drawLine3D,
+    plot_drawLines3D,
     plot_drawPoint2D,
     plot_drawVList,
+    plot_draw,
     plot_setFGColor,
     plot_setBGColor,
     plot_setLineAttr,
@@ -313,7 +323,7 @@ plot_drawEnd(struct dm *dmp)
  *  			P L O T _ L O A D M A T R I X
  *
  *  Load a new transformation matrix.  This will be followed by
- *  many calls to plot_drawVList().
+ *  many calls to plot_draw().
  */
 static int
 plot_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
@@ -490,6 +500,28 @@ plot_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 }
 
 /*
+ *  P L O T _ D R A W
+ */
+static int
+plot_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), genptr_t *data)
+{
+     struct bn_vlist *vp;
+     if (!callback_function) {
+         if (data) {
+             vp = (struct bn_vlist *)data;
+	     plot_drawVList(dmp,vp);
+         }
+     } else {
+         if (!data) {
+             return TCL_ERROR;
+         } else {
+             vp = callback_function(data);
+         }
+     }
+     return TCL_OK;
+}
+	
+/*
  *			P L O T _ N O R M A L
  *
  * Restore the display processor to a normal mode of operation
@@ -543,6 +575,17 @@ plot_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2)
     return TCL_OK;
 }
 
+static int
+plot_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2)
+{
+    return TCL_OK;
+}
+
+static int
+plot_drawLines3D(struct dm *dmp, int npoints, point_t *points)
+{
+    return TCL_OK;
+}
 
 static int
 plot_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)

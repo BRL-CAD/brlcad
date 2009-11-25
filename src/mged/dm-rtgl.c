@@ -39,7 +39,10 @@
 #  include <gl/device.h>
 #endif
 
-#include "tk.h"
+#ifdef HAVE_TK
+#  include "tk.h"
+#endif
+
 #include "bu.h"
 #include "vmath.h"
 #include "mater.h"

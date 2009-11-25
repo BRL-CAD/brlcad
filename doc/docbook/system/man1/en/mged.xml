@@ -1,0 +1,331 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "../../../resources/standard/dtd/docbookx.dtd">
+
+<!-- Copyright (c) 2005-2009 United States Government as represented by -->
+<!-- the U.S. Army Research Laboratory.                                 -->
+<!--                                                                    -->
+<!-- Redistribution and use in source (Docbook format) and 'compiled'   -->
+<!-- forms (PDF, PostScript, HTML, RTF, etc), with or without           -->
+<!-- modification, are permitted provided that the following conditions -->
+<!-- are met:                                                           -->
+<!--                                                                    -->
+<!-- 1. Redistributions of source code (Docbook format) must retain the -->
+<!-- above copyright notice, this list of conditions and the following  -->
+<!-- disclaimer.                                                        -->
+<!--                                                                    -->
+<!-- 2. Redistributions in compiled form (transformed to other DTDs,    -->
+<!-- converted to PDF, PostScript, HTML, RTF, and other formats) must   -->
+<!-- reproduce the above copyright notice, this list of conditions and  -->
+<!-- the following disclaimer in the documentation and/or other         -->
+<!-- materials provided with the distribution.                          -->
+<!--                                                                    -->
+<!-- 3. The name of the author may not be used to endorse or promote    -->
+<!-- products derived from this documentation without specific prior    -->
+<!-- written permission.                                                -->
+<!--                                                                    -->
+<!-- THIS DOCUMENTATION IS PROVIDED BY THE AUTHOR "AS IS" AND ANY       -->
+<!-- EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE  -->
+<!-- IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR -->
+<!-- PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR -->
+<!-- ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR           -->
+<!-- CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT  -->
+<!-- OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR -->
+<!-- BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF         -->
+<!-- LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT          -->
+<!-- (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE  -->
+<!-- USE OF THIS DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF   -->
+<!-- SUCH DAMAGE.                                                       -->
+
+<refentry id='mged1'>
+  <refmeta>
+    <refentrytitle>MGED</refentrytitle>
+    <manvolnum>1</manvolnum>
+    <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+    <refmiscinfo class='manual'>BRL-CAD User Commands</refmiscinfo>
+  </refmeta>
+  <refnamediv id='name'>
+    <refname>mged</refname>
+    <refpurpose>multi-display interactive combinatorial solid geometry editor</refpurpose>
+  </refnamediv>
+  
+  <!-- body begins here -->
+  <refsynopsisdiv id='synopsis'>
+    <cmdsynopsis>
+      <command>mged</command>
+      <arg choice='opt'>-a attach</arg>
+      <arg choice='opt'>-b </arg>
+      <arg choice='opt'>-c </arg>
+      <arg choice='opt'>-d display</arg>
+      <arg choice='opt'>-h </arg>
+      <arg choice='opt'>-r </arg>
+      <arg choice='opt'>-x#</arg>
+      <arg choice='opt'>-X#</arg>
+      <arg choice='opt'>-v</arg>
+      <arg choice='opt'><replaceable>database.g</replaceable></arg>
+      <arg choice='opt'><replaceable>mged_command</replaceable></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+  
+
+  <refsect1 id='description'>
+    <title>DESCRIPTION</title>
+    <para>
+      <application>MGED</application>, a.k.a the "Multi-Device Geometry Editor" is the
+      central interaction environment for the BRL-CAD package.  It offers both command line
+      and menu driven interactions, as well as wireframe displays and integrated raytracing
+      capabilities.  It is the primary tool for BRL-CAD geometry creation and interactive
+      manipulation.
+    </para>
+    <para>
+      <application>MGED</application>'s history traces back to the earlier "GED" (a.k.a "Geometry 
+      Editor",) and much of GED's functionality is preserved in <application>MGED</application>.
+      A full description of MGED's abilities is beyond the scope of this document - 
+      the reader is referred to Volumes II and III of the BRL-CAD Tutorial Series, available
+      at http://brlcad.org, for a more comprehensive introduction.  This document will deal
+      with the various options available when it comes to starting MGED.
+    </para>
+    <para>
+      The primary mode for modern <application>MGED</application> usage is the Tcl/Tk based
+      environment, which offers menu support and a number of Tcl based tools.  It is also possible
+      to run more minimalist environments of terminal + framebuffer and a terminal without any display
+      window.  <application>MGED</application> also allows users to execute single commands from
+      the command line without starting any environment, allowing for activities such as
+      scripting.  Some examples of such usage are present in the Examples section of this document.
+    </para>
+    <para>
+      Technically, <application>MGED</application> can be opened without a database file
+      being supplied, but until one <emphasis>is</emphasis> supplied it will not be terribly useful.  
+      This can be done either by supplying a file name on the command line or by opening a database from
+      with <application>MGED</application> using the File->Open... menu or the <command>opendb</command>
+      command.  
+    </para>
+  
+    <variablelist remap='TP'>
+      <varlistentry>
+        <term><option>-a attach</option></term>
+        <listitem>
+          <para>
+            The <option>-a</option> option specifies a display manager to automatically attach to
+            when starting <application>MGED</application>.
+          </para>
+          <para>
+	    Without specifying the <option>-a</option> attach option,
+	    <application>MGED</application> will prompt which display manager to attach during
+	    startup: <prompt>attach (nu|X|ogl)[nu]?</prompt>
+          </para>
+          <para>
+            The list of available display managers varies from platform to platform and across
+	    releases.  However, some commonly available options are the <emphasis>nu</emphasis>
+	    (NULL) display manager, which will start <application>MGED</application> without any
+	    display manager attached; the <emphasis>X</emphasis> display manager, which provides an
+	    X11 graphical wireframe display; and the <emphasis>ogl</emphasis> display manager, which
+	    is similar to <emphasis>X</emphasis> but starts up a display manager that uses the
+	    OpenGL protocol for drawing wireframes.
+          </para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-b </option></term>
+	<listitem>
+	  <para>
+	    Supplying the <option>-b</option> to <command>mged</command> will result in
+	    <application>MGED</application> being started as a background process.  This
+	    is handy if the users still wishes to make use of the terminal from which
+	    <application>MGED</application> is being started.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-c</option></term>
+	<listitem>
+	  <para>
+	    Instructs <application>MGED</application> to start using classic mode instead of the
+	    default Tcl/Tk-based GUI.  The <option>-c</option> option is often used when specifying
+	    an <option>mged_command</option> to indicate that <application>MGED</application> is
+	    being run in a command-mode without a default GUI.  Example:
+	    <userinput><command>mged</command> <option>-c</option> db/moss.g tops</userinput>
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-d display</option></term>
+	<listitem>
+	  <para>
+            The <option>-d</option> option to <application>MGED</application> specifies which X
+            server to connect to for platforms that have a running X11 server available.  This
+            option is an analogous alternative to setting the DISPLAY environment variable.  You can
+            specify a local or remote display in X11 HOST:PORT format (e.g., "-d :0" or "-d host:0")
+            and <application>MGED</application> should draw windows to that display.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-h </option></term>
+	<listitem>
+	  <para>
+	    Prints out a brief help statement showing the options available when starting 
+	    <application>MGED</application>.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-r </option></term>
+	<listitem>
+	  <para>
+	    Opens the database.g file in read-only mode.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-x #</option></term>
+	<listitem>
+	  <para>
+	    Specify the debug level of librt.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-X #</option></term>
+	<listitem>
+	  <para>
+	    Specify the debug level of libbu.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-v</option></term>
+	<listitem>
+	  <para>
+	    Display the version and exit.
+	  </para>
+	</listitem>
+      </varlistentry>
+    </variablelist>
+
+  </refsect1>
+  
+  <refsect1 id='hints'>
+    <title>HINTS</title>
+    <para>
+      <application>MGED</application> database names conventionally end with
+      <markup>.g</markup>.
+    </para>
+
+    <para>
+      SIGINT aborts the current command.
+    </para>
+
+    <para>
+      "q" or EOF exits the program.
+    </para>
+
+    <para>
+      The ".mgedrc" file is searched for in three places.
+      The first one found is used, and any others are ignored.
+      <orderedlist numeration='loweralpha'>
+	<listitem>
+	  <para>If the environment variable MGED_RCFILE is set, it is used
+	  as a path name for the file to be used.</para>
+	</listitem>
+	<listitem>
+	  <para>If the environment variable HOME is set, then HOME/.mgedrc
+	  is used.</para>
+	</listitem>
+	<listitem>
+	  <para>If the file ".mgedrc" exists in the current directory, it is used.</para>
+	</listitem>
+      </orderedlist>
+    </para>
+
+
+  </refsect1>
+
+  <refsect1 id='examples'>
+    <title>EXAMPLES</title>
+    <para>
+      The following are run from the operating system command prompt:
+    </para>
+     
+    <example>
+      <title>Running the <application>MGED</application> <command>l</command> from the operating
+      system command line.</title>
+      <para>
+	<prompt>user:~ </prompt><userinput>mged /usr/brlcad/share/brlcad/7.12.2/db/m35.g l component</userinput>
+	<literallayout>
+Opened in READ ONLY mode
+component:  --
+   u bed
+   u frame
+   u cab
+   u suspension
+   u misc
+   u power.train
+	</literallayout>
+      </para>
+    </example>
+
+    <example>
+      <title>Running <application>MGED</application> without a dislay manager.</title>
+      <para>
+	<prompt>user:~ </prompt><userinput>mged -c</userinput>
+	<literallayout>
+BRL-CAD Release 7.13.0  Geometry Editor (MGED)
+    Thu, 09 Oct 2008 22:31:41 -0400, Compilation 1
+    user@localhost:/usr/brlcad/
+
+attach (nu|X|ogl)[nu]? <userinput>nu</userinput>
+mged> 
+	</literallayout>
+      </para>
+    </example>
+
+    <example>
+      <title>Running <application>MGED</application> and bypassing the attach prompt by specifying
+      the X11 dislay manager.</title>
+      <para>
+        <prompt>user:~ </prompt><userinput>mged -a X -c</userinput>
+        <literallayout>
+BRL-CAD Release 7.15.0  Geometry Editor (MGED)
+    Tue, 22 Sep 2009 12:40:01 -0400, Compilation 1
+    user@localhost:/usr/brlcad/
+
+ATTACHING X (X Window System (X11))
+
+mged> 
+        </literallayout>
+      </para>
+    </example>
+
+  </refsect1>
+  
+  <refsect1 id='see_also'>
+    <title>SEE ALSO</title>
+    <para>
+      <emphasis remap='I'>Computer Graphics for Target Descriptions</emphasis>, BRL Technical Report ARBRL-TR-02480, <emphasis remap='I'>GED:  An Interactive Solid Modeling System for Vulnerability Assessments</emphasis>     
+    </para>
+    <para>
+    <citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>comgeom-g</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>vdeck</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>.
+    </para>
+  </refsect1>
+  
+  <refsect1 id='diagnostics'>
+    <title>DIAGNOSTICS</title>
+    <para>Error messages are intended to be self-explanatory.</para>
+  </refsect1>
+  
+  <refsect1 id='author'>
+    <title>AUTHOR</title>
+    <para>BRL-CAD Team</para>
+  </refsect1>
+
+
+  <refsect1 id='bug_reports'>
+    <title>BUG REPORTS</title>
+    <para>
+      Reports of bugs or problems should be submitted via electronic
+      mail to &lt;devs@brlcad.org&gt;.
+    </para>
+  </refsect1>
+</refentry>
+

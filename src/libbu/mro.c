@@ -17,14 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup mro */
-/** @{ */
-/** @file mro.c
- *
- * @brief
- * The Multiply Represented Object package.
- *
- */
 
 #include "common.h"
 
@@ -35,9 +27,7 @@
 
 #include "bu.h"
 
-/**
- *
- */
+
 void
 bu_mro_init(struct bu_mro *mrop)
 {
@@ -47,9 +37,6 @@ bu_mro_init(struct bu_mro *mrop)
 }
 
 
-/**
- *
- */
 void
 bu_mro_free(struct bu_mro *mrop)
 {
@@ -60,9 +47,6 @@ bu_mro_free(struct bu_mro *mrop)
 }
 
 
-/**
- *
- */
 void
 bu_mro_set(struct bu_mro *mrop, const char *string)
 {
@@ -74,9 +58,6 @@ bu_mro_set(struct bu_mro *mrop, const char *string)
 }
 
 
-/**
- *
- */
 void
 bu_mro_init_with_string(struct bu_mro *mrop, const char *string)
 {
@@ -86,7 +67,6 @@ bu_mro_init_with_string(struct bu_mro *mrop, const char *string)
     BU_MRO_INVALIDATE(mrop);
 }
 
-/** @} */
 /*
  * Local Variables:
  * mode: C

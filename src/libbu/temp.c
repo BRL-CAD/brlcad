@@ -17,13 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup bu_log */
-/** @{ */
-/** @file temp.c
- *
- * Routine to open a temporary file.
- *
- */
 
 #include "common.h"
 
@@ -43,6 +36,10 @@
 #define _TF_FAIL "WARNING: Unable to create a temporary file\n"
 
 
+/* c99 doesn't declare these */
+extern FILE *fdopen(int, const char *);
+
+
 struct _bu_tf_list {
     struct bu_list l;
     struct bu_vls fn;
@@ -53,7 +50,7 @@ static int _bu_temp_files = 0;
 static struct _bu_tf_list *_bu_tf = NULL;
 
 
-static void
+HIDDEN void
 _bu_close_files()
 {
     struct _bu_tf_list *popped;
@@ -90,7 +87,7 @@ _bu_close_files()
 }
 
 
-static void
+HIDDEN void
 _bu_add_to_list(const char *fn, int fd)
 {
     struct _bu_tf_list *newtf;
@@ -124,7 +121,7 @@ _bu_add_to_list(const char *fn, int fd)
 
 
 #ifndef HAVE_MKSTEMP
-static int
+HIDDEN int
 mkstemp(char *file_template)
 {
     int fd = -1;
@@ -159,47 +156,12 @@ mkstemp(char *file_template)
 
     return fd;
 }
+#else
+/* for c99 strict, doesn't declare */
+extern int mkstemp(char *);
 #endif
 
 
-/**
- * b u _ t e m p _ f i l e
- *
- * Create a temporary file.  The first readable/writable directory
- * will be used, searching TMPDIR/TEMP/TMP environment variable
- * directories followed by default system temp directories and
- * ultimately trying the current directory.
- *
- * This routine is guaranteed to return a new unique file or return
- * NULL on failure.  The temporary file will be automatically unlinked
- * on application exit.  It is the caller's responsibility to set file
- * access settings, preserve file contents, or destroy file contents
- * if the default behavior is non-optimal.
- *
- * The name of the temporary file will be copied into a user-provided
- * (filepath) buffer if it is a non-NULL pointer and of a sufficient
- * (len) length to contain the filename.
- *
- * This routine is NOT thread-safe.
- *
- * Typical Use:
- @code
- * FILE *fp;
- * char filename[MAXPATHLEN];
- * fp = bu_temp_file(&filename, MAXPATHLEN); // get file name
- * ...
- * fclose(fp); // optional, auto-closed on exit
- *
- * ...
- *
- * fp = bu_temp_file(NULL, 0); // don't need file name
- *      fchmod(fileno(fp), 0777);
- * ...
- * rewind(fp);
- * while (fputc(0, fp) == 0);
- * fclose(fp);
- @endcode
-*/
 FILE *
 bu_temp_file(char *filepath, size_t len)
 {
@@ -283,9 +245,6 @@ bu_temp_file(char *filepath, size_t len)
 
     return fp;
 }
-
-
-/** @} */
 
 /*
  * Local Variables:

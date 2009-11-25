@@ -94,7 +94,7 @@ _ged_edcolor(struct ged *gedp, int argc, const char *argv[])
 	while (rt_material_head() != MATER_NULL) {
 	    zot = rt_material_head();
 	    rt_new_material_head(zot->mt_forw);
-	    ged_color_zaprec(gedp, zot);
+	    _ged_color_zaprec(gedp, zot);
 	    bu_free((genptr_t)zot, "mater rec");
 	}
 
@@ -116,7 +116,7 @@ _ged_edcolor(struct ged *gedp, int argc, const char *argv[])
 	    mp->mt_b = b;
 	    mp->mt_daddr = MATER_NO_ADDR;
 	    rt_insert_color(mp);
-	    ged_color_putrec(gedp, mp);
+	    _ged_color_putrec(gedp, mp);
 	}
     } else {
 	struct bu_vls vls;
@@ -219,7 +219,7 @@ ged_color(struct ged *gedp, int argc, const char *argv[])
 	mp = rt_material_head();
 	while (mp != MATER_NULL) {
 	    next_mater = mp->mt_forw;
-	    ged_color_zaprec(gedp, mp);
+	    _ged_color_zaprec(gedp, mp);
 	    mp = next_mater;
 	}
 
@@ -239,7 +239,7 @@ ged_color(struct ged *gedp, int argc, const char *argv[])
 	mp = rt_material_head();
 	while (mp != MATER_NULL) {
 	    next_mater = mp->mt_forw;
-	    ged_color_putrec(gedp, mp);
+	    _ged_color_putrec(gedp, mp);
 	    mp = next_mater;
 	}
     } else {
@@ -279,7 +279,7 @@ ged_color(struct ged *gedp, int argc, const char *argv[])
  *  In some cases, storage will need to be allocated.
  */
 void
-ged_color_putrec(struct ged		*gedp,
+_ged_color_putrec(struct ged		*gedp,
 		 register struct mater	*mp)
 		 
 {
@@ -296,7 +296,7 @@ ged_color_putrec(struct ged		*gedp,
     rec.md.md_b = mp->mt_b;
 
     /* Fake up a directory entry for db_* routines */
-    RT_DIR_SET_NAMEP( &dir, "ged_color_putrec" );
+    RT_DIR_SET_NAMEP( &dir, "_ged_color_putrec" );
     dir.d_magic = RT_DIR_MAGIC;
     dir.d_flags = 0;
 
@@ -324,7 +324,7 @@ ged_color_putrec(struct ged		*gedp,
  *  Used to release database resources occupied by a material record.
  */
 void
-ged_color_zaprec(struct ged		*gedp,
+_ged_color_zaprec(struct ged		*gedp,
 		 register struct mater	*mp)
 		 
 {
@@ -335,7 +335,7 @@ ged_color_zaprec(struct ged		*gedp,
 	return;
 
     dir.d_magic = RT_DIR_MAGIC;
-    RT_DIR_SET_NAMEP( &dir, "ged_color_zaprec" );
+    RT_DIR_SET_NAMEP( &dir, "_ged_color_zaprec" );
     dir.d_len = 1;
     dir.d_addr = mp->mt_daddr;
     dir.d_flags = 0;

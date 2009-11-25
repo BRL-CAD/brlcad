@@ -49,21 +49,22 @@ static int vertmax = 1;
 
 struct region_s {
     char *name;
-    struct rt_bot_internal bot;
+    struct rt_bot_internal *bot;
 };
 
 struct region_s *
 new_region(char *name)
 {
     struct region_s *r = (struct region_s *)bu_calloc(1, sizeof(struct region_s), "new_region");;
+    r->bot = (struct rt_bot_internal *)bu_calloc(1, sizeof(struct rt_bot_internal), "new_region:rt_bot_internal");;
     r->name = strdup(name);
-    r->bot.magic = RT_BOT_INTERNAL_MAGIC;
-    r->bot.mode = RT_BOT_SURFACE;
-    r->bot.orientation = RT_BOT_UNORIENTED;
-    r->bot.num_vertices = 0;
-    r->bot.vertices = NULL;
-    r->bot.num_faces = 0;
-    r->bot.faces = NULL;
+    r->bot->magic = RT_BOT_INTERNAL_MAGIC;
+    r->bot->mode = RT_BOT_SURFACE;
+    r->bot->orientation = RT_BOT_UNORIENTED;
+    r->bot->num_vertices = 0;
+    r->bot->vertices = NULL;
+    r->bot->num_faces = 0;
+    r->bot->faces = NULL;
     return r;
 }
 
@@ -72,6 +73,8 @@ free_region(struct region_s * r)
 {
     if (r && r->name)
 	bu_free(r->name, "region name");
+    if (r && r->bot)
+	bu_free(r->bot, "rt_bot_internal");
     if (r)
 	bu_free(r, "region");
     return 0;
@@ -83,16 +86,16 @@ write_region(struct region_s *r, struct rt_wdb *out_fp)
     int rval = -1;
     const char *regname;
 
-    if (r->bot.num_faces == 0) {
+    if (r->bot->num_faces == 0) {
 	if (strncmp(r->name, "all.s", 6))
 	    rval = fprintf(stderr, "%s has 0 faces, skipping\n", r->name), 0;
     } else {
 	int faces;
 	/* add the region long name to list */
-	vertmax += r->bot.num_vertices;
+	vertmax += r->bot->num_vertices;
 	regname = bu_basename(r->name);
-	faces = r->bot.num_faces;
-	rval = wdb_export(out_fp, regname, (genptr_t)&(r->bot), ID_BOT, 1.0);
+	faces = r->bot->num_faces;
+	rval = wdb_export(out_fp, regname, (genptr_t)(r->bot), ID_BOT, 1.0);
 	if(verbose)
 	    printf("Wrote %s (%d faces)\n", regname, faces);
     }
@@ -104,29 +107,41 @@ int
 add_vertex(struct region_s * r, char *buf)
 {
     /* syntax is "v <x> <y> <z> [w]" */
-    r->bot.vertices = bu_realloc(r->bot.vertices, sizeof(fastf_t) * 3 * (r->bot.num_vertices + 1), "bot vertices");
+    r->bot->vertices = bu_realloc(r->bot->vertices, sizeof(fastf_t) * 3 * (r->bot->num_vertices + 1), "bot vertices");
     sscanf(buf, "%lf %lf %lf", 
-	   r->bot.vertices + 3*r->bot.num_vertices,
-	   r->bot.vertices + 3*r->bot.num_vertices + 1,
-	   r->bot.vertices + 3*r->bot.num_vertices + 2);
-    r->bot.num_vertices++;
+	   r->bot->vertices + 3*r->bot->num_vertices,
+	   r->bot->vertices + 3*r->bot->num_vertices + 1,
+	   r->bot->vertices + 3*r->bot->num_vertices + 2);
+    r->bot->num_vertices++;
     return 0;
 }
 
 int
 add_face(struct region_s * r, char *buf)
 {
+    char *contains_slash = strchr( buf,'/');
     /* syntax is ... messy. v1/vt1/vn1, can be
      * "f 1 2 3 ...", or "f 1//1 2//x ..." or "f 1/1/1/ ..." or "f 1/1 ..." or ... */
-    r->bot.faces = bu_realloc(r->bot.faces, sizeof(int) * 3 * (r->bot.num_faces + 1), "bot faces");
-    sscanf(buf, "%d %d %d", 
-	   r->bot.faces + 3*r->bot.num_faces,
-	   r->bot.faces + 3*r->bot.num_faces + 1,
-	   r->bot.faces + 3*r->bot.num_faces + 2);
-    r->bot.faces[3*r->bot.num_faces+0]-=vertmax;
-    r->bot.faces[3*r->bot.num_faces+1]-=vertmax;
-    r->bot.faces[3*r->bot.num_faces+2]-=vertmax;
-    r->bot.num_faces++;
+    r->bot->faces = bu_realloc(r->bot->faces, sizeof(int) * 3 * (r->bot->num_faces + 1), "bot faces");
+    /*
+     * checking to see if OBJ file contains texture and/or normal data
+     * we won't be using it but will need to parse around it.
+     */
+    if (contains_slash) {
+	sscanf(buf, "%d/%*s %d/%*s %d/%*s", 
+	       r->bot->faces + 3*r->bot->num_faces,
+	       r->bot->faces + 3*r->bot->num_faces + 1,
+	       r->bot->faces + 3*r->bot->num_faces + 2);
+    } else {
+	sscanf(buf, "%d %d %d", 
+	       r->bot->faces + 3*r->bot->num_faces,
+	       r->bot->faces + 3*r->bot->num_faces + 1,
+	       r->bot->faces + 3*r->bot->num_faces + 2);
+    }
+    r->bot->faces[3*r->bot->num_faces+0]-=vertmax;
+    r->bot->faces[3*r->bot->num_faces+1]-=vertmax;
+    r->bot->faces[3*r->bot->num_faces+2]-=vertmax;
+    r->bot->num_faces++;
     return 0;
 }
 

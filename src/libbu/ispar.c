@@ -17,19 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup thread */
-/** @{ */
-/** @file ispar.c
- *
- * @brief
- * subroutine to determine if we are multi-threaded
- *
- * This subroutine is separated off from parallel.c so that bu_bomb()
- * and others can call it, without causing either parallel.c or
- * semaphore.c to get referenced and thus causing the loader to drag
- * in all the parallel processing stuff from the vendor library.
- *
- */
 
 #include "common.h"
 
@@ -46,12 +33,6 @@
 extern int bu_pid_of_initiating_thread;
 
 
-/**
- * B U _ I S _ P A R A L L E L
- *
- * A clean way for bu_bomb() to tell if this is a parallel application.
- * If bu_parallel() is active, this routine will return non-zero.
- */
 int
 bu_is_parallel(void)
 {
@@ -60,12 +41,7 @@ bu_is_parallel(void)
     return 0;
 }
 
-/**
- * B U _ K I L L _ P A R A L L E L
- *
- * Used by bu_bomb() to help terminate parallel threads,
- * without dragging in the whole parallel library if it isn't being used.
- */
+
 void
 bu_kill_parallel(void)
 {
@@ -80,7 +56,6 @@ bu_kill_parallel(void)
     return;
 }
 
-/** @} */
 /*
  * Local Variables:
  * mode: C

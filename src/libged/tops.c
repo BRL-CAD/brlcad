@@ -99,7 +99,7 @@ ged_tops(struct ged *gedp, int argc, const char *argv[])
     /*
      * Find number of possible entries and allocate memory
      */
-    dirp = ged_dir_getspace(gedp->ged_wdbp->dbip, 0);
+    dirp = _ged_dir_getspace(gedp->ged_wdbp->dbip, 0);
     dirp0 = dirp;
 
     if (gedp->ged_wdbp->dbip->dbi_version < 5) {
@@ -138,7 +138,7 @@ ged_tops(struct ged *gedp, int argc, const char *argv[])
 	    }
     }
 
-    ged_vls_col_pr4v(&gedp->ged_result_str, dirp0, (int)(dirp - dirp0), no_decorate);
+    _ged_vls_col_pr4v(&gedp->ged_result_str, dirp0, (int)(dirp - dirp0), no_decorate);
     bu_free((genptr_t)dirp0, "wdb_tops_cmd: wdb_dir_getspace");
 
     return GED_OK;
@@ -153,7 +153,7 @@ ged_tops(struct ged *gedp, int argc, const char *argv[])
  *  b) the number of entries specified by the argument if > 0.
  */
 struct directory **
-ged_dir_getspace(struct db_i	*dbip,
+_ged_dir_getspace(struct db_i	*dbip,
 		 register int	num_entries)
 {
     register struct directory *dp;

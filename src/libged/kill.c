@@ -113,7 +113,7 @@ ged_kill(struct ged *gedp, int argc, const char *argv[])
 	    if (is_phony)
 		continue;
 
-	    ged_eraseAllNamesFromDisplay(gedp, argv[i], 0);
+	    _ged_eraseAllNamesFromDisplay(gedp, argv[i], 0);
 
 	    if (db_delete(gedp->ged_wdbp->dbip, dp) < 0 ||
 		db_dirdelete(gedp->ged_wdbp->dbip, dp) < 0) {

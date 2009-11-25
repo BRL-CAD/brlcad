@@ -77,10 +77,10 @@ ged_how(struct ged *gedp, int argc, const char *argv[])
 	argv[1][1] == 'b') {
 	both = 1;
 
-	if ((dpp = ged_build_dpp(gedp, argv[2])) == NULL)
+	if ((dpp = _ged_build_dpp(gedp, argv[2])) == NULL)
 	    goto good;
     } else {
-	if ((dpp = ged_build_dpp(gedp, argv[1])) == NULL)
+	if ((dpp = _ged_build_dpp(gedp, argv[1])) == NULL)
 	    goto good;
     }
 
@@ -124,7 +124,7 @@ ged_how(struct ged *gedp, int argc, const char *argv[])
 
 
 struct directory **
-ged_build_dpp(struct ged *gedp,
+_ged_build_dpp(struct ged *gedp,
 	      const char *path) {
     register struct directory *dp;
     struct directory **dpp;
@@ -177,7 +177,7 @@ ged_build_dpp(struct ged *gedp,
      * Next, we build an array of directory pointers that
      * correspond to the object's path.
      */
-    dpp = bu_calloc(ac+1, sizeof(struct directory *), "ged_build_dpp: directory pointers");
+    dpp = bu_calloc(ac+1, sizeof(struct directory *), "_ged_build_dpp: directory pointers");
     for (i = 0; i < ac; ++i) {
 	if ((dp = db_lookup(gedp->ged_wdbp->dbip, av[i], 0)) != DIR_NULL)
 	    dpp[i] = dp;
@@ -185,7 +185,7 @@ ged_build_dpp(struct ged *gedp,
 	    /* object is not currently being displayed */
 	    bu_vls_printf(&gedp->ged_result_str, "-1");
 
-	    bu_free((genptr_t)dpp, "ged_build_dpp: directory pointers");
+	    bu_free((genptr_t)dpp, "_ged_build_dpp: directory pointers");
 	    Tcl_Free((char *)av_orig);
 	    bu_vls_free(&vls);
 	    return (struct directory **)NULL;

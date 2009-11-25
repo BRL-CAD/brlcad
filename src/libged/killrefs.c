@@ -74,7 +74,7 @@ ged_killrefs(struct ged *gedp, int argc, const char *argv[])
 
     if (!nflag && !gedp->ged_internal_call) {
 	for (k = 1; k < argc; k++)
-	    ged_eraseAllNamesFromDisplay(gedp, argv[k], 1);
+	    _ged_eraseAllNamesFromDisplay(gedp, argv[k], 1);
     }
 
     ret = GED_OK;

@@ -34,7 +34,7 @@
 #include "./ged_private.h"
 
 int
-ged_scale_epa(struct ged *gedp, struct rt_epa_internal *epa, const char *attribute, fastf_t sf, int rflag)
+_ged_scale_epa(struct ged *gedp, struct rt_epa_internal *epa, const char *attribute, fastf_t sf, int rflag)
 {
     fastf_t ma, mb;
     fastf_t newrad;

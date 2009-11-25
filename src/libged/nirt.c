@@ -59,7 +59,32 @@
 
 
 /* defined in draw.c */
-extern void ged_cvt_vlblock_to_solids(struct ged *gedp, struct bn_vlblock *vbp, char *name, int copy);
+extern void _ged_cvt_vlblock_to_solids(struct ged *gedp, struct bn_vlblock *vbp, char *name, int copy);
+
+#ifdef _WIN32
+static void
+strip_crlf(char *cdata) {
+    int i = 0;
+
+    if (cdata == (char *)0)
+	return;
+
+    while (cdata[i] != '\0') {
+	if (cdata[i] == '\r' &&
+	    cdata[i+1] == '\n') {
+	    int j = i;
+
+	    /* Slide everything over */
+	    while (cdata[j] != '\0') {
+		cdata[j] = cdata[j+1];
+		++j;
+	    }
+	}
+
+	++i;
+    }
+}
+#endif
 
 
 /*
@@ -284,36 +309,18 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     if (gedp->ged_gdp->gd_qray_cmd_echo) {
 	/* Print out the command we are about to run */
 	vp = &gedp->ged_gdp->gd_rt_cmd[0];
-#if 1
+
 	while (*vp)
 	    bu_vls_printf(&gedp->ged_result_str, "%s ", *vp++);
 
 	bu_vls_printf(&gedp->ged_result_str, "\n");
-#else
-	while (*vp)
-	    Tcl_AppendResult(interp, *vp++, " ", (char *)NULL);
-
-	Tcl_AppendResult(interp, "\n", (char *)NULL);
-#endif
     }
 
     if (use_input_orig) {
-#if 1
 	bu_vls_printf(&gedp->ged_result_str, "\nFiring from (%lf, %lf, %lf)...\n",
 		      center_model[X], center_model[Y], center_model[Z]);
-#else
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "\nFiring from (%lf, %lf, %lf)...\n",
-		      center_model[X], center_model[Y], center_model[Z]);
-	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
-	bu_vls_free(&vls);
-#endif
     } else
-#if 1
 	bu_vls_printf(&gedp->ged_result_str, "\nFiring from view center...\n");
-#else
-    Tcl_AppendResult(interp, "\nFiring from view center...\n", (char *)NULL);
-#endif
 
 #ifndef _WIN32
     (void)pipe(pipe_in);
@@ -444,8 +451,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 
     /* use fp_in to feed view info to nirt */
     CloseHandle(pipe_in[0]);
-    fp_in = _fdopen(_open_osfhandle((HFILE)pipe_inDup, _O_TEXT), "wb");
-    setmode(fileno(fp_in), O_BINARY);
+    fp_in = _fdopen(_open_osfhandle((HFILE)pipe_inDup, _O_TEXT), "w");
 
     /* send commands down the pipe */
     for (i=1; i<gedp->ged_gdp->gd_rt_cmd_len-2; i++)
@@ -454,13 +460,11 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 
     /* use fp_out to read back the result */
     CloseHandle(pipe_out[1]);
-    fp_out = _fdopen(_open_osfhandle((HFILE)pipe_outDup, _O_TEXT), "rb");
-    setmode(fileno(fp_out), O_BINARY);
+    fp_out = _fdopen(_open_osfhandle((HFILE)pipe_outDup, _O_TEXT), "r");
 
     /* use fp_err to read any error messages */
     CloseHandle(pipe_err[1]);
-    fp_err = _fdopen(_open_osfhandle((HFILE)pipe_errDup, _O_TEXT), "rb");
-    setmode(fileno(fp_err), O_BINARY);
+    fp_err = _fdopen(_open_osfhandle((HFILE)pipe_errDup, _O_TEXT), "r");
 
     /* send quit command to nirt */
     fwrite( "q\n", 1, 2, fp_in );
@@ -478,12 +482,11 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 
 	/* handle partitions */
 	while (bu_fgets(line, RT_MAXLINE, fp_out) != (char *)NULL) {
-	    if (line[0] == '\n') {
-#if 1
-		bu_vls_printf(&gedp->ged_result_str, "%s", line+1);
-#else
-		Tcl_AppendResult(interp, line+1, (char *)NULL);
+#ifdef _WIN32
+	    strip_crlf(line);
 #endif
+	    if (line[0] == '\n') {
+		bu_vls_printf(&gedp->ged_result_str, "%s", line+1);
 		break;
 	    }
 
@@ -498,17 +501,16 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 	vbp = rt_vlblock_init();
 	ged_qray_data_to_vlist(gedp, vbp, &HeadQRayData, dir, 0);
 	bu_list_free(&HeadQRayData.l);
-	ged_cvt_vlblock_to_solids(gedp, vbp, bu_vls_addr(&gedp->ged_gdp->gd_qray_basename), 0);
+	_ged_cvt_vlblock_to_solids(gedp, vbp, bu_vls_addr(&gedp->ged_gdp->gd_qray_basename), 0);
 	rt_vlblock_free(vbp);
 
 	/* handle overlaps */
 	while (bu_fgets(line, RT_MAXLINE, fp_out) != (char *)NULL) {
-	    if (line[0] == '\n') {
-#if 1
-		bu_vls_printf(&gedp->ged_result_str, "%s", line+1);
-#else
-		Tcl_AppendResult(interp, line+1, (char *)NULL);
+#ifdef _WIN32
+	    strip_crlf(line);
 #endif
+	    if (line[0] == '\n') {
+		bu_vls_printf(&gedp->ged_result_str, "%s", line+1);
 		break;
 	    }
 
@@ -522,7 +524,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 	vbp = rt_vlblock_init();
 	ged_qray_data_to_vlist(gedp, vbp, &HeadQRayData, dir, 1);
 	bu_list_free(&HeadQRayData.l);
-	ged_cvt_vlblock_to_solids(gedp, vbp, bu_vls_addr(&gedp->ged_gdp->gd_qray_basename), 0);
+	_ged_cvt_vlblock_to_solids(gedp, vbp, bu_vls_addr(&gedp->ged_gdp->gd_qray_basename), 0);
 	rt_vlblock_free(vbp);
     }
 
@@ -538,22 +540,22 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     if (DG_QRAY_TEXT(gedp->ged_gdp)) {
 	bu_vls_free(&t_vls);
 
-	while (bu_fgets(line, RT_MAXLINE, fp_out) != (char *)NULL)
-#if 1
-	    bu_vls_printf(&gedp->ged_result_str, "%s", line);
-#else
-	Tcl_AppendResult(interp, line, (char *)NULL);
+	while (bu_fgets(line, RT_MAXLINE, fp_out) != (char *)NULL) {
+#ifdef _WIN32
+	    strip_crlf(line);
 #endif
+	    bu_vls_printf(&gedp->ged_result_str, "%s", line);
+	}
     }
 
     (void)fclose(fp_out);
 
-    while (bu_fgets(line, RT_MAXLINE, fp_err) != (char *)NULL)
-#if 1
-	bu_vls_printf(&gedp->ged_result_str, "%s", line);
-#else
-    Tcl_AppendResult(interp, line, (char *)NULL);
+    while (bu_fgets(line, RT_MAXLINE, fp_err) != (char *)NULL) {
+#ifdef _WIN32
+	strip_crlf(line);
 #endif
+	bu_vls_printf(&gedp->ged_result_str, "%s", line);
+    }
     (void)fclose(fp_err);
 
 
@@ -564,7 +566,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 	;	/* NULL */
 
     if (retcode != 0)
-	ged_wait_status(&gedp->ged_result_str, retcode);
+	_ged_wait_status(&gedp->ged_result_str, retcode);
 #else
     /* Wait for program to finish */
     WaitForSingleObject( pi.hProcess, INFINITE );

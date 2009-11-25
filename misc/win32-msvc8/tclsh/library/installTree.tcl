@@ -153,6 +153,8 @@ puts "Creating [file join $shareDir plugins archer]"
 file mkdir [file join $shareDir plugins archer]
 puts "Creating [file join $shareDir plugins archer Utility]"
 file mkdir [file join $shareDir plugins archer Utility]
+puts "Creating [file join $shareDir plugins archer Utility attrGroupsDisplayUtilityP]"
+file mkdir [file join $shareDir plugins archer Utility attrGroupsDisplayUtilityP]
 puts "Creating [file join $shareDir plugins archer Wizards]"
 file mkdir [file join $shareDir plugins archer Wizards]
 puts "Creating [file join $shareDir plugins archer Wizards tankwizard]"
@@ -161,6 +163,8 @@ puts "Creating [file join $shareDir plugins archer Wizards tirewizard]"
 file mkdir [file join $shareDir plugins archer Wizards tirewizard]
 puts "Creating [file join $shareDir db]"
 file mkdir [file join $shareDir db]
+puts "Creating [file join $shareDir doc]"
+file mkdir [file join $shareDir doc]
 #puts "Creating [file join $shareDir pix]"
 #file mkdir [file join $shareDir pix]
 puts "Creating [file join $shareDir sample_applications]"
@@ -211,8 +215,10 @@ puts "copy [file join $rootDir AUTHORS] [file join $shareDir]"
 file copy [file join $rootDir AUTHORS] [file join $shareDir]
 puts "copy [file join $rootDir COPYING] [file join $shareDir]"
 file copy [file join $rootDir COPYING] [file join $shareDir]
-puts "copy [file join $rootDir doc] [file join $shareDir]"
-file copy [file join $rootDir doc] [file join $shareDir]
+#puts "copy [file join $rootDir doc] [file join $shareDir]"
+#file copy [file join $rootDir doc] [file join $shareDir]
+puts "copy [file join $rootDir doc archer_ack.txt] [file join $shareDir doc]"
+file copy [file join $rootDir doc archer_ack.txt] [file join $shareDir doc]
 puts "copy [file join $rootDir doc html] [file join $shareDir]"
 file copy [file join $rootDir doc html] [file join $shareDir]
 puts "copy [file join $rootDir HACKING] [file join $shareDir]"
@@ -232,6 +238,12 @@ file copy [file join $rootDir src tclscripts] [file join $shareDir]
 puts "copy [file join $rootDir src archer plugins utility.tcl] [file join $shareDir plugins archer]"
 file copy [file join $rootDir src archer plugins utility.tcl] \
     [file join $shareDir plugins archer]
+puts "copy [file join $rootDir src archer plugins Utility attrGroupsDisplayUtilityP.tcl] [file join $shareDir plugins archer Utility]"
+file copy [file join $rootDir src archer plugins Utility attrGroupsDisplayUtilityP.tcl] \
+    [file join $shareDir plugins archer Utility]
+puts "copy [file join $rootDir src archer plugins Utility attrGroupsDisplayUtilityP AttrGroupsDisplayUtilityP.tcl] [file join $shareDir plugins archer Utility attrGroupsDisplayUtilityP]"
+file copy [file join $rootDir src archer plugins Utility attrGroupsDisplayUtilityP AttrGroupsDisplayUtilityP.tcl] \
+    [file join $shareDir plugins archer Utility attrGroupsDisplayUtilityP]
 puts "copy [file join $rootDir src archer plugins wizards.tcl] [file join $shareDir plugins archer]"
 file copy [file join $rootDir src archer plugins wizards.tcl] \
     [file join $shareDir plugins archer]

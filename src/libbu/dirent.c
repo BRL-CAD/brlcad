@@ -17,13 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup bu_log */
-/** @{ */
-/** @file dirent.c
- *
- * Functionality for accessing all files in a directory.
- *
- */
 
 #include "common.h"
 
@@ -36,7 +29,8 @@
 #include "./uce-dirent.h"
 
 
-int bu_count_path(char *path, char *substr)
+int
+bu_count_path(char *path, char *substr)
 {
     int filecount = 0;
     DIR *dir = opendir(path);
@@ -54,7 +48,8 @@ int bu_count_path(char *path, char *substr)
     return filecount;
 }
 
-void bu_list_path(char *path, char *substr, char **filearray)
+void
+bu_list_path(char *path, char *substr, char **filearray)
 {
     int filecount = -1;
     DIR *dir = opendir(path);
@@ -71,9 +66,6 @@ void bu_list_path(char *path, char *substr, char **filearray)
 	}
     }
 }
-
-
-/** @} */
 
 /*
  * Local Variables:

@@ -101,7 +101,7 @@ char	*buf;
 	if (line == curline)
 		return linebuf;
 	else {
-		ignore(getline(line->l_dline, buf));
+		ignore(get_line(line->l_dline, buf));
 		return buf;
 	}
 }
@@ -117,7 +117,7 @@ char	*buf;
 		if (buf != linebuf)
 			strcpy(buf, linebuf);
 	} else
-		ignore(getline(line->l_dline, buf));
+		ignore(get_line(line->l_dline, buf));
 	return buf;
 }
 
@@ -135,7 +135,7 @@ register LINE	*line1,
 	if (line1 != line2)
 		KludgeWindows(line1, line2);
 	SetModified(curbuf);
-	if (line2 == curline) {		/* So we don't need to getline it */
+	if (line2 == curline) {		/* So we don't need to get_line it */
 		if (line1 == curline)
 			twoptr = linebuf;
 		else {
@@ -174,7 +174,7 @@ LINE	*line1, *line2;
 		genbuf[char2] = '\0';
 
 	retline->l_prev = 0;
-	retline->l_dline = putline(&genbuf[char1]);
+	retline->l_dline = put_line(&genbuf[char1]);
 	patchup(line1, char1, line2, char2);
 
 	if (line1 == line2)
@@ -183,7 +183,7 @@ LINE	*line1, *line2;
 		retline->l_next = line1->l_next;
 		ignore(getright(line2, genbuf));
 		genbuf[char2] = '\0';
-		line2->l_dline = putline(genbuf);	/* Shorten this line */
+		line2->l_dline = put_line(genbuf);	/* Shorten this line */
 	}
 
 	if (line1 != line2) {
@@ -288,7 +288,7 @@ LINE	*line1, *line2;
 			ignore(getright(lastln, buf));
 			ignore(getright(fl, genbuf));
 			linecopy(buf, strlen(buf), genbuf);
-			lastln->l_dline = putline(buf);
+			lastln->l_dline = put_line(buf);
 			killbuf[killptr] = nl;
 			lastln->l_next = fl->l_next;
 		} else {
@@ -296,7 +296,7 @@ LINE	*line1, *line2;
 			ignore(getright(ol, buf));
 			ignore(getright(nl, genbuf));
 			linecopy(buf, strlen(buf), genbuf);
-			ol->l_dline = putline(buf);
+			ol->l_dline = put_line(buf);
 			makedirty(ol);
 			ol->l_next = nl->l_next;
 		}

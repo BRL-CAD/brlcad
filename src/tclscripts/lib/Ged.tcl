@@ -147,6 +147,7 @@ package provide cadwidgets::Ged 1.0
 	method copymat {args}
 	method cp {args}
 	method cpi {args}
+	method data_axes {args}
 	method dbconcat {args}
 	method dbfind {args}
 	method dbip {args}
@@ -201,6 +202,7 @@ package provide cadwidgets::Ged 1.0
 	method killrefs {args}
 	method killtree {args}
 	method l {args}
+	method lastMouseRayPos {}
 	method light {args}
 	method light_all {args}
 	method list_views {args}
@@ -378,6 +380,8 @@ package provide cadwidgets::Ged 1.0
 	method red {args}
 	method refresh {args}
 	method refresh_all {args}
+	method refresh_off {}
+	method refresh_on {}
 	method regdef {args}
 	method regions {args}
 	method report {args}
@@ -487,14 +491,26 @@ package provide cadwidgets::Ged 1.0
 	method init_view_rotate {}
 	method init_view_scale {}
 	method init_view_translate {}
-	method mouse_ray {_pane _x _y}
+	method center_ray {{_pflag 0}}
+	method mouse_ray {_x _y {_pflag 0}}
+	method pane_mouse_ray {_pane _x _y {_pflag 0}}
 	method pane {args}
 	method shoot_ray {_start _op _target _prep _no_bool _onehit}
 
+	method add_mouse_ray_callback {_callback}
+	method clear_mouse_ray_callback_list {}
+	method delete_mouse_ray_callback {_callback}
  
 	#XXX Still needs to be resolved
 	method set_outputHandler {args}
 	method fb_active {args}
+
+#	method get_ged_color {_color}
+#	method get_rgb_color {_color}
+#	method get_vdraw_color {_color}
+	proc get_ged_color {_color}
+	proc get_rgb_color {_color}
+	proc get_vdraw_color {_color}
     }
 
     protected {
@@ -505,9 +521,9 @@ package provide cadwidgets::Ged 1.0
 	variable mMeasureStart
 	variable mMeasuringStickColorVDraw ffff00
 	variable mMouseRayCallbacks ""
+	variable mRefreshOn 1
+	variable mLastMouseRayPos ""
 
-	method get_rgb_color {_color}
-	method get_vdraw_color {_color}
 	method multi_pane {args}
 	method new_view {args}
 	method toggle_multi_pane {}
@@ -945,6 +961,13 @@ package provide cadwidgets::Ged 1.0
     eval $mGed cpi $args
 }
 
+::itcl::body cadwidgets::Ged::data_axes {args} {
+    eval $mGed data_axes $itk_component(ur) $args
+    eval $mGed data_axes $itk_component(ul) $args
+    eval $mGed data_axes $itk_component(ll) $args
+    eval $mGed data_axes $itk_component(lr) $args
+}
+
 ::itcl::body cadwidgets::Ged::dbconcat {args} {
     eval $mGed dbconcat $args
 }
@@ -1070,6 +1093,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::get_eyemodel {args} {
     eval $mGed get_eyemodel $itk_component($itk_option(-pane)) $args
+}
+
+::itcl::body cadwidgets::Ged::lastMouseRayPos {} {
+    return $mLastMouseRayPos
 }
 
 ::itcl::body cadwidgets::Ged::get_type {args} {
@@ -1905,6 +1932,22 @@ package provide cadwidgets::Ged 1.0
     eval $mGed refresh_all $args
 }
 
+::itcl::body cadwidgets::Ged::refresh_off {} {
+    incr mRefreshOn -1
+
+    if {$mRefreshOn == 0} {
+	eval $mGed refresh_on 0
+    }
+}
+
+::itcl::body cadwidgets::Ged::refresh_on {} {
+    incr mRefreshOn 1
+
+    if {$mRefreshOn == 1} {
+	eval $mGed refresh_on 1
+    }
+}
+
 ::itcl::body cadwidgets::Ged::regdef {args} {
     eval $mGed regdef $args
 }
@@ -2387,10 +2430,10 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::init_comp_pick {} {
-    bind $itk_component(ur) <1> "[::itcl::code $this mouse_ray ur %x %y]; break"
-    bind $itk_component(ul) <1> "[::itcl::code $this mouse_ray ul %x %y]; break"
-    bind $itk_component(ll) <1> "[::itcl::code $this mouse_ray ll %x %y]; break"
-    bind $itk_component(lr) <1> "[::itcl::code $this mouse_ray lr %x %y]; break"
+    bind $itk_component(ur) <1> "[::itcl::code $this pane_mouse_ray ur %x %y]; break"
+    bind $itk_component(ul) <1> "[::itcl::code $this pane_mouse_ray ul %x %y]; break"
+    bind $itk_component(ll) <1> "[::itcl::code $this pane_mouse_ray ll %x %y]; break"
+    bind $itk_component(lr) <1> "[::itcl::code $this pane_mouse_ray lr %x %y]; break"
 
     bind $itk_component(ur) <ButtonRelease-1> ""
     bind $itk_component(ul) <ButtonRelease-1> ""
@@ -2538,7 +2581,20 @@ package provide cadwidgets::Ged 1.0
     bind $itk_component(lr) <ButtonRelease-1> "[::itcl::code $this handle_view_translate_end lr]; break"
 }
 
-::itcl::body cadwidgets::Ged::mouse_ray {_pane _x _y} {
+::itcl::body cadwidgets::Ged::center_ray {{_pflag 0}} {
+    set wsize [$mGed view_win_size $itk_component($itk_option(-pane))]
+    set x [expr {[lindex $wsize 0] * 0.5}]
+    set y [expr {[lindex $wsize 1] * 0.5}]
+    mouse_ray $x $y $_pflag
+}
+
+::itcl::body cadwidgets::Ged::mouse_ray {_x _y {_pflag 0}} {
+    pane_mouse_ray $itk_option(-pane) $_x $_y $_pflag
+}
+
+::itcl::body cadwidgets::Ged::pane_mouse_ray {_pane _x _y {_pflag 0}} {
+    set mLastMouseRayPos "$_x $_y"
+
     set target [$mGed screen2model $itk_component($_pane) $_x $_y]
     set view [$mGed screen2view $itk_component($_pane) $_x $_y]
 
@@ -2546,8 +2602,16 @@ package provide cadwidgets::Ged 1.0
     set vZ [expr {[lindex $bounds 4] / -2048.0}]
     set start [$mGed v2m_point $itk_component($_pane) [lindex $view 0] [lindex $view 1] $vZ]
 
-    set partitions [shoot_ray $start "at" $target 1 1 0]
+
+    if {[catch {shoot_ray $start "at" $target 1 1 0} partitions]} {
+	return $partitions
+    }
+
     set partition [lindex $partitions 0]
+
+    if {$_pflag} {
+	return $partitions
+    }
 
     # mMouseRayCallbacks is not currently active
     if {[llength $mMouseRayCallbacks] == 0} {
@@ -2697,19 +2761,58 @@ package provide cadwidgets::Ged 1.0
     return [ray shootray $_start $_op $_target]
 }
 
+::itcl::body cadwidgets::Ged::add_mouse_ray_callback {_callback} {
+    set i [lsearch $mMouseRayCallbacks $_callback]
 
-############################### Commands that still need to be resolved ###############################
-::itcl::body cadwidgets::Ged::set_outputHandler {args} {
-   eval set_output_script $args
+    # Add if not already in list
+    if {$i == -1} {
+	lappend mMouseRayCallbacks $_callback
+    }
 }
 
-::itcl::body cadwidgets::Ged::fb_active {args} {
-    eval set_fb_mode $args
+::itcl::body cadwidgets::Ged::clear_mouse_ray_callback_list {} {
+    set mMouseRayCallbacks {}
 }
 
+::itcl::body cadwidgets::Ged::delete_mouse_ray_callback {_callback} {
+    set i [lsearch $mMouseRayCallbacks $_callback]
+    if {$i != -1} {
+	set mMouseRayCallbacks [lreplace $mMouseRayCallbacks $i $i]
+    }
+}
 
-
-############################### Protected Methods ###############################
+::itcl::body cadwidgets::Ged::get_ged_color {_color} {
+    switch -- $_color {
+	"Grey" {
+	    return "64/64/64"
+	}
+	"Black" {
+	    return "0/0/0"
+	}
+	"Blue" {
+	    return "0/0/255"
+	}
+	"Cyan" {
+	    return "0/255/255"
+	}
+	"Green" {
+	    return "0/255/0"
+	}
+	"Magenta" {
+	    return "255/0/255"
+	}
+	"Red" {
+	    return "255/0/0"
+	}
+	"Yellow" {
+	    return "255/255/0"
+	}
+	"White" -
+	default {
+	    return "255/255/255"
+	}
+    }
+}
 
 ::itcl::body cadwidgets::Ged::get_rgb_color {_color} {
     switch -- $_color {
@@ -2776,6 +2879,20 @@ package provide cadwidgets::Ged 1.0
 	}
     }
 }
+
+
+
+############################### Commands that still need to be resolved ###############################
+::itcl::body cadwidgets::Ged::set_outputHandler {args} {
+   eval set_output_script $args
+}
+
+::itcl::body cadwidgets::Ged::fb_active {args} {
+    eval set_fb_mode $args
+}
+
+
+############################### Protected Methods ###############################
 
 ::itcl::body cadwidgets::Ged::multi_pane {args} {
     # get multi_pane
@@ -2944,7 +3061,7 @@ package provide cadwidgets::Ged 1.0
     $help add expand		{{expression} {globs expression against database objects}}
     $help add eye		{{mx my mz} {set eye point to given model coordinates}}
     $help add eye_pos		{{mx my mz} {set eye position to given model coordinates}}
-    $help add facetize		{{[-n] [-t] [-T] new_obj old_obj [old_obj2 old_obj3 ...]} {create a new bot object by facetizing the specified objects}}
+    $help add facetize		{{[-m] [-n] [-t] [-T] new_obj old_obj [old_obj2 old_obj3 ...]} {create a new bot object by facetizing the specified objects}}
     $help add form		{{objType} {returns form of objType}}
     $help add fracture		{{} {}}
     $help add g			{{groupname <objects>} {group objects}}

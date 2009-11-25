@@ -52,9 +52,6 @@
 #define OVERCAST_SKY	2
 
 /* Sometimes found in <math.h> */
-#if !defined(PI)
-#define PI    3.14159265358979323846264338327950288419716939937511
-#endif
 #define MIKE_TOL	.000001
 
 /* Local information */
@@ -161,18 +158,18 @@ toyota_setup(register struct region *rp, struct bu_vls *matparm, char **dtp, str
     tp->atmos_trans = 0.772;/* atmospheric transmittance */
     tp->weather = CLEAR_SKY;/* no clouds */
 
-    /*            / 2*PI  / arctan(rs/d)
+    /*            / 2*M_PI  / arctan(rs/d)
      * sun_sang = |       |
      *	      |       |     sin(theta) d-theta d-phi
      *	     /       /
      *
-     *	    = 2*PI*(1 - cos(arctan(rs/d)))
+     *	    = 2*M_PI*(1 - cos(arctan(rs/d)))
      *
-     *          = 2*PI*(1 - cos(arctan(695300/149000000)))
+     *          = 2*M_PI*(1 - cos(arctan(695300/149000000)))
      *
-     *	    = 2*PI*(1 - cos(.00466640908179121739))
+     *	    = 2*M_PI*(1 - cos(.00466640908179121739))
      *
-     *	    = 2*PI*(1 - .99998911233289762807)
+     *	    = 2*M_PI*(1 - .99998911233289762807)
      *
      *	    = .00006840922996708585320208283043854326275346156491
      *
@@ -306,7 +303,7 @@ air_mass(fastf_t gamma)
 	bu_log("air_mass: sun altitude of %g degrees ignored.\n");
 	m = 0.;
     } else
-	m = 1./(sin(gamma*PI/180.)
+	m = 1./(sin(gamma*M_PI/180.)
 		+ 0.1500*pow((gamma + 3.885), -1.253));
     return(m);
 }
@@ -400,9 +397,6 @@ clear_sky_lum(fastf_t lz, fastf_t *Sky_elmt, fastf_t *Sun, fastf_t *Zenith)
 	* (0.91 + 10*exp(-3.*gamma) + 0.45*cos_gamma*cos_gamma)
 	* (1. - exp(-0.32/cos_theta))
 	/ 0.27385*(0.91 + 10.*exp(-3.*z0) + 0.45*cos_z0*cos_z0);
-#if 0
-    bu_log("clear_sky_lum(lz=%g, ...) = %g\n", lz, lum );
-#endif
 
     return(lum);
 }
@@ -1650,7 +1644,7 @@ skylight_spectral_dist(fastf_t lambda, fastf_t *Zenith, fastf_t *Sky_elmt, fastf
 	/* to a given luminance.  Units: K */
 	x, y;	/* 1931 CIE chromaticity coordinates. */
 
-    sun_alt = 90 - acos(VDOT(Sun, Zenith))*180/PI;
+    sun_alt = 90 - acos(VDOT(Sun, Zenith))*180/M_PI;
     lz = zenith_luminance(sun_alt, t_vl);
     /* Get luminance distribution */
     switch (weather) {
@@ -1698,9 +1692,6 @@ skylight_spectral_dist(fastf_t lambda, fastf_t *Zenith, fastf_t *Sky_elmt, fastf
 	    + 1.9018e6/(t_cp*t_cp)
 	    + 0.24748e3/t_cp
 	    + 0.237040;
-#if 0
-	bu_bomb("temp");
-#endif
     }
     y = 2.870*x - 3.000*x*x - 0.275;
 
@@ -1754,10 +1745,6 @@ sun_radiance(fastf_t lambda, fastf_t alpha, fastf_t beta, fastf_t sun_alt, fastf
     coz = ozone_absorption(lambda);
     em = e0 * exp(-(cr + cm + coz)*air_mass(sun_alt));
     ls = em/sun_sang;
-#if 0
-    bu_log("e0 = %g\ncr = %g\ncm = %g\ncoz = %g\nem = %g\n", e0, cr, cm, coz, em);
-    bu_log("sun radiance = %g\n", ls);
-#endif
     return(ls);
 }
 
@@ -1955,9 +1942,6 @@ reflectance(fastf_t lambda, fastf_t alpha, fastf_t *refl, int lines)
 	+ beta_l;
 
  out:
-#if 0
-    bu_log("reflectance(lambda=%g, alpha=%g)=%g\n", lambda, alpha, beta );
-#endif
     return(beta);
 }
 
@@ -2166,10 +2150,10 @@ background_light(fastf_t lambda, struct toyota_specific *ts, fastf_t *Refl, fast
 	work;
 
 /* Angular spread between vectors used in solid angle integration. */
-#define SPREAD		(10*PI/180)
+#define SPREAD		(10*M_PI/180)
 
     /* Differential solid angle. */
-    del_omega = PI*sin(SPREAD/2)*sin(SPREAD/2);
+    del_omega = M_PI*sin(SPREAD/2)*sin(SPREAD/2);
 
     /* Find limits of solid angle. */
     alpha0 = 0.0;	/* degrees. */
@@ -2188,7 +2172,7 @@ background_light(fastf_t lambda, struct toyota_specific *ts, fastf_t *Refl, fast
     if (refl == -1.)
 	alpha1--;
     alpha_c = (alpha0 + alpha1)/2;	/* degrees. */
-    alpha_c *= PI/180;		/* radians. */
+    alpha_c *= M_PI/180;		/* radians. */
 
     /* Find horizontal component of reflected light. */
     if (!NEAR_ZERO(VDOT(swp->sw_hit.hit_normal, Refl)-1, MIKE_TOL)) {
@@ -2207,7 +2191,7 @@ background_light(fastf_t lambda, struct toyota_specific *ts, fastf_t *Refl, fast
 
     /* Angle between Ctr and edge of solid angle. */
     alpha_c = (alpha1 - alpha0)/2;	/* degrees. */
-    alpha_c *= PI/180;		/* radians. */
+    alpha_c *= M_PI/180;		/* radians. */
 
     /* Set up coord axes with Ctr as Z axis. */
     VCROSS(Xaxis, Yaxis, Ctr);
@@ -2217,35 +2201,13 @@ background_light(fastf_t lambda, struct toyota_specific *ts, fastf_t *Refl, fast
 /* JUST INTEGRATE OVER HEMISPHERE - THIS IS CURRENTLY WRONG */
     for (ang = SPREAD; ang < alpha_c; ang += SPREAD) {
 	r = sin(ang);
-	for (phi = 0.; phi < 2*PI; phi += SPREAD) {
+	for (phi = 0.; phi < 2*M_PI; phi += SPREAD) {
 	    x = r*cos(phi);
 	    y = r*sin(phi);
 	    VJOIN2(Sky_elmnt, Ctr, x, Xaxis, y, Yaxis);
 	    VUNITIZE(Sky_elmnt);
 	    i_dot_n = VDOT(swp->sw_hit.hit_normal, Sky_elmnt);
 	    if (i_dot_n >= 1.) i_dot_n = .9999;
-#if 0
-/*
- *			shoot_ray(Ctr);
- *			if (hit)
- *				bg_radiance = toyota_render();
- *			else
- *				bg_radiance = skylight_spectral_dist(
- *					lambda, ts->Zenith, Ctr,
- *					Sun, ts->weather, t_vl);
- *
- *			Might look something like:
- *
- *			VSET(ap.a_ray.r_pt, ?, ?, ?);
- *			VMOVE(ap.a_ray.r_dir, Sky_elmnt);
- *			ap.a_hit = toyota_render();
- *			ap.a_miss = skylight_spectral_dist(
- *					lambda, ts->Zenith, Sky_elmnt,
- *					Sun, ts->weather, t_vl);
- *			shoot_ray(Sky_elmnt);
- *			bg_radiance = return val from hit or miss
- */
-#else
 	    if (rdebug&RDEBUG_RAYPLOT )  {
 		VSCALE(work, Sky_elmnt, 200.);
 		VADD2(work, swp->sw_hit.hit_point, work);
@@ -2256,7 +2218,6 @@ background_light(fastf_t lambda, struct toyota_specific *ts, fastf_t *Refl, fast
 	    bg_radiance = skylight_spectral_dist(
 		lambda, ts->Zenith, Sky_elmnt,
 		Sun, ts->weather, t_vl);
-#endif
 	    /* XXX hack */		if (i_dot_n > 0.) {
 		irradiance +=
 		    reflectance(lambda, acos(i_dot_n)*bn_radtodeg,
@@ -2264,30 +2225,12 @@ background_light(fastf_t lambda, struct toyota_specific *ts, fastf_t *Refl, fast
 		    * bg_radiance
 		    * i_dot_n
 		    * del_omega;
-#if 0
-		bu_log("bg radiance = %g\n", bg_radiance);
-		bu_log("I . N = %g\n", i_dot_n);
-		bu_log("del_omega = %g\n", del_omega);
-		bu_log("irradiance = %g\n", irradiance);
-#endif
 	    }
 	}
     }
     /* Don't forget contribution from luminance at Ctr. */
-#if 0
-/*
- *		shoot_ray(Ctr);
- *		if (hit)
- *			bg_radiance = toyota_render();
- *		else
- *			bg_radiance = skylight_spectral_dist(
- *				lambda, ts->Zenith, Ctr,
- *				Sun, ts->weather, t_vl);
- */
-#else
     bg_radiance = skylight_spectral_dist(lambda, ts->Zenith, Ctr,
 					 Sun, ts->weather, t_vl);
-#endif
     if (rdebug&RDEBUG_RAYPLOT )  {
 	VSCALE(work, Ctr, 200.);
 	VADD2(work, swp->sw_hit.hit_point, work);
@@ -2299,10 +2242,7 @@ background_light(fastf_t lambda, struct toyota_specific *ts, fastf_t *Refl, fast
 	* bg_radiance
 	* VDOT(Sky_elmnt, swp->sw_hit.hit_normal)
 	* del_omega;
-    irradiance /= PI;
-#if 0
-    bu_log("irradiance = %g\n\n", irradiance);
-#endif
+    irradiance /= M_PI;
 
     return(irradiance);
 }
@@ -2327,9 +2267,6 @@ toyota_render(register struct application *ap, struct partition *pp, struct shad
 	i_refl,			/* Radiance of reflected light. */
 	refl_radiance,		/* Radiance of reflected ray. */
 	rx, ry,
-#if 0
-	solar_radiance,
-#endif
 	specular_light,
 	sun_alt,		/* Altitude of sun over horizon. */
 	sun_dot_n,		/* Sun, Normal dot product. */
@@ -2367,12 +2304,7 @@ toyota_render(register struct application *ap, struct partition *pp, struct shad
 	VUNITIZE(Sun);
 /* VPRINT("Sun", Sun); */
 	/* Altitude of sun above horizon (degrees). */
-	sun_alt = 90 - acos(VDOT(Sun, ts->Zenith))*180/PI;
-#if 0
-	/* Solar radiance. */
-	solar_radiance = sun_radiance(ts->lambda, ts->alpha, ts->beta,
-				      sun_alt, ts->sun_sang);
-#endif
+	sun_alt = 90 - acos(VDOT(Sun, ts->Zenith))*180/M_PI;
 
 	/* Create reflected ray. */
 	i_dot_n = VDOT(swp->sw_hit.hit_normal, ap->a_ray.r_dir);
@@ -2389,47 +2321,14 @@ toyota_render(register struct application *ap, struct partition *pp, struct shad
 
 	/* Direct sunlight contribution. */
 	direct_sunlight =
-	    1./PI
+	    1./M_PI
 	    * reflectance(ts->lambda, acos(i_dot_n)*bn_radtodeg,
 			  ts->refl, ts->refl_lines)
 	    * sun_radiance(ts->lambda, ts->alpha, ts->beta,
 			   sun_alt, ts->sun_sang)
 	    * sun_dot_n
 	    * ts->sun_sang;
-#if 0
-	bu_log("1/PI = %g\n", 1/PI);
-	bu_log("beta = %g\n", reflectance(ts->lambda, acos(i_dot_n)*bn_radtodeg,
-					  ts->refl, ts->refl_lines));
-	bu_log("sun radiance = %g\n",  sun_radiance(ts->lambda, ts->alpha, ts->beta,
-						    sun_alt, ts->sun_sang));
-	bu_log("direct_sunlight = %g\n", direct_sunlight);
-	bu_log("S . N = %g\n", sun_dot_n);
-#endif
 
-#if 0
-/*
- *		shoot_ray(Reflected);
- *		if (hit)
- *			refl_radiance = toyota_render();
- *		else
- *			refl_radiance = skylight_spectral_dist(ts->lambda,
- *				ts->Zenith, Reflected, Sun, ts->weather, t_vl);
- */
-	refl_ap = *ap;		/* struct copy */
-	refl_ap.a_level = ap->a_level + 1;
-	refl_ap.a_onehit = 1;
-	VMOVE( refl_ap.a_ray.r_pt, swp->sw_hit.hit_point );
-	VMOVE( refl_ap.a_ray.r_dir, Reflected );
-	refl_ap.a_purpose = "Toyota reflected sun ray";
-	/* a_hit should be colorview() */
-#if 0
-	refl_ap.a_hit = toyota_render;	/* XXX is this right */
-#endif
-	refl_ap.a_miss = toyota_miss;
-	refl_ap.a_logoverlap = ap->a_logoverlap;
-	(void)rt_shootray( &refl_ap );
-	/* a_return or a_user to hold hit/miss flag? */
-#else
 	/* XXX Hack:  it always misses */
 	if (rdebug&RDEBUG_RAYPLOT )  {
 	    VSCALE(work, Reflected, 200.);
@@ -2443,7 +2342,6 @@ toyota_render(register struct application *ap, struct partition *pp, struct shad
 
 	/* Regularly reflected light contribution. */
 	specular_light = f * refl_radiance;
-#endif
 
 	i_refl +=
 	    direct_sunlight
@@ -2469,21 +2367,10 @@ toyota_render(register struct application *ap, struct partition *pp, struct shad
 	    VBLEND2(Transmitted, sin(theta), Horiz,
 		    -cos(theta), swp->sw_hit.hit_normal);
 	    VUNITIZE(Transmitted);
-#if 0
-/*
- *			shoot_ray(Transmitted);
- *			if (hit)
- *				trans_radiance = toyota_render();
- *			else
- *				trans_radiance = skylight_spectral_dist(
- *					ts->lambda, ts->Zenith, Transmitted,
- *					Sun, ts->weather, t_vl);
- */
-#else
 	    trans_radiance = skylight_spectral_dist(
 		ts->lambda, ts->Zenith, Transmitted,
 		Sun, ts->weather, t_vl);
-#endif
+
 	    dist = 1;	/* XXX what distance to use? */
 	    transmitted_light =
 		(1 - f)
@@ -2494,16 +2381,10 @@ toyota_render(register struct application *ap, struct partition *pp, struct shad
 	}
 
 	i_refl *= lp->lt_fraction;
-#if 0
-	bu_log("i_refl = %g\n", i_refl);
-#endif
 
-/* WHERE DOES THIS GO??  NOT HERE.  SO WHERE DOES i_refl GO THEN. */
+	/* WHERE DOES THIS GO??  NOT HERE.  SO WHERE DOES i_refl GO THEN. */
 	/* Convert wavelength and radiance into RGB triple. */
 	lambda_to_rgb(ts->lambda, i_refl, swp->sw_color);
-#if 0
-	bu_log("rgb = (%g  %g  %g)\n", swp->sw_color[0], swp->sw_color[1], swp->sw_color[2]);
-#endif
     }
 
     /* Turn off colorview()'s handling of reflect/refract */

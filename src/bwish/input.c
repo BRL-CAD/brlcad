@@ -73,7 +73,7 @@ extern void Cad_Exit(int status);
 /* defined in cmd.c */
 extern struct bu_vls *history_prev(void);
 extern struct bu_vls *history_next(void);
-extern void history_record(struct bu_vls *cmdp, struct timeval *start, struct timeval *finish, int status);
+extern void history_record_priv(struct bu_vls *cmdp, struct timeval *start, struct timeval *finish, int status);
 
 /* defined in main.c */
 extern Tcl_Interp *interp;
@@ -180,7 +180,7 @@ processChar(char ch)
 		if (strlen(result))
 		    bu_log("%s\n", result);
 
-		history_record(&input_str_prefix, &start, &finish, status);
+		history_record_priv(&input_str_prefix, &start, &finish, status);
 		bu_vls_trunc(&input_str_prefix, 0);
 		bu_vls_trunc(&input_str, 0);
 		set_Cbreak(fileno(stdin)); /* Back to single-character mode */

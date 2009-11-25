@@ -33,11 +33,9 @@
 #include "pkg.h" /* struct pkg_conn */
 #include "ged.h"
 
-/* mgedtcl.h must come before the #define statements below (pathName
- * in particular as it's in the tk.h header)
- */
-#include "./mgedtcl.h"
-
+#ifdef HAVE_TK
+#  include <tk.h>
+#endif
 
 #define MGED_DISPLAY_VAR "mged_display"
 
@@ -565,7 +563,7 @@ extern int update_views;		/* defined in mged.c */
 extern struct dm_list head_dm_list;	/* defined in attach.c */
 extern struct dm_list *curr_dm_list;	/* defined in attach.c */
 
-extern int doEvent();			/* defined in doevent.c */
+extern int doEvent(ClientData, XEvent *);			/* defined in doevent.c */
 extern int common_dm();			/* defined in dm-generic.c */
 
 extern void mged_rtCmdNotify();		/* defined in setup.c */

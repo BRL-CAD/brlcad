@@ -33,9 +33,9 @@
 #include "./ged_private.h"
 
 
-vect_t ged_eye_model;
-mat_t ged_viewrot;
-struct ged *ged_current_gedp;
+vect_t _ged_eye_model;
+mat_t _ged_viewrot;
+struct ged *_ged_current_gedp;
 
 /**
  * here we define a minimal table of commands that are supported by the
@@ -44,45 +44,45 @@ struct ged *ged_current_gedp;
  */
 struct command_tab ged_loadview_cmdtab[] = {
     {"viewsize", "size in mm", "set view size",
-     ged_cm_vsize,	2, 2},
+     _ged_cm_vsize,	2, 2},
     {"eye_pt", "xyz of eye", "set eye point",
-     ged_cm_eyept,	4, 4},
+     _ged_cm_eyept,	4, 4},
     {"lookat_pt", "x y z [yflip]", "set eye look direction, in X-Y plane",
-     ged_cm_lookat_pt,	4, 5},
+     _ged_cm_lookat_pt,	4, 5},
     {"viewrot", "4x4 matrix", "set view direction from matrix",
-     ged_cm_vrot,	17, 17},
+     _ged_cm_vrot,	17, 17},
     {"orientation", "quaturnion", "set view direction from quaturnion",
-     ged_cm_orientation,	5, 5},
+     _ged_cm_orientation,	5, 5},
     {"set", 	"", "show or set parameters",
-     ged_cm_set,		1, 999},
+     _ged_cm_set,		1, 999},
 
     /* begin unsupported commands (for view loading) */
 
     {"start", "frame number", "start a new frame",
-     ged_cm_null,	2, 2},
+     _ged_cm_null,	2, 2},
     {"clean", "", "clean articulation from previous frame",
-     ged_cm_null,	1, 1},
+     _ged_cm_null,	1, 1},
     {"end", 	"", "end of frame setup, begin raytrace",
-     ged_cm_null,		1, 1},
+     _ged_cm_null,		1, 1},
 
     /* not output, by default in saveview */
 
     {"multiview", "", "produce stock set of views",
-     ged_cm_null,	1, 1},
+     _ged_cm_null,	1, 1},
     {"anim", 	"path type args", "specify articulation animation",
-     ged_cm_null,	4, 999},
+     _ged_cm_null,	4, 999},
     {"tree", 	"treetop(s)", "specify alternate list of tree tops",
-     ged_cm_null,	1, 999},
+     _ged_cm_null,	1, 999},
     {"ae", "azim elev", "specify view as azim and elev, in degrees",
-     ged_cm_null,		3, 3},
+     _ged_cm_null,		3, 3},
     {"opt", "-flags", "set flags, like on command line",
-     ged_cm_null,		2, 999},
+     _ged_cm_null,		2, 999},
 
     /* this is a quick hack used for quietly parsing the EOF delimiter in the
      * script files.
      */
     {"EOF", "", "End of file delimiter",
-     ged_cm_null,		1, 1},
+     _ged_cm_null,		1, 1},
 
     /* XXX support for the ae command is not included, though it probably should */
     {(char *)0, (char *)0, (char *)0,
@@ -130,7 +130,7 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
     }
 
     prevPerspective =  gedp->ged_gvp->gv_perspective;
-    ged_current_gedp = gedp;
+    _ged_current_gedp = gedp;
 
     /* turn perspective mode off, by default.  A "-p" option in the
      * view script will turn it back on.
@@ -237,8 +237,8 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
      * of a commands section, we may finish the computations.
      */
     /* First step:  put eye at view center (view 0, 0, 0) */
-    MAT_COPY(gedp->ged_gvp->gv_rotation, ged_viewrot);
-    MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, ged_eye_model);
+    MAT_COPY(gedp->ged_gvp->gv_rotation, _ged_viewrot);
+    MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, _ged_eye_model);
     ged_view_update(gedp->ged_gvp);
 
     return GED_OK;
@@ -246,33 +246,33 @@ ged_loadview(struct ged *gedp, int argc, const char *argv[])
 
 
 int
-ged_cm_vsize(int argc, char **argv)
+_ged_cm_vsize(int argc, char **argv)
 {
     if ( argc < 2 )
 	return(-1);
     /* for some reason, scale is supposed to be half of size... */
-    ged_current_gedp->ged_gvp->gv_size = atof(argv[1]);
-    ged_current_gedp->ged_gvp->gv_scale = ged_current_gedp->ged_gvp->gv_size * 0.5;
-    ged_current_gedp->ged_gvp->gv_isize = 1.0 / ged_current_gedp->ged_gvp->gv_size;
+    _ged_current_gedp->ged_gvp->gv_size = atof(argv[1]);
+    _ged_current_gedp->ged_gvp->gv_scale = _ged_current_gedp->ged_gvp->gv_size * 0.5;
+    _ged_current_gedp->ged_gvp->gv_isize = 1.0 / _ged_current_gedp->ged_gvp->gv_size;
     return(0);
 }
 
 
 int
-ged_cm_eyept(int argc, char **argv)
+_ged_cm_eyept(int argc, char **argv)
 {
     if ( argc < 4 )
 	return(-1);
-    ged_eye_model[X] = atof(argv[1]);
-    ged_eye_model[Y] = atof(argv[2]);
-    ged_eye_model[Z] = atof(argv[3]);
+    _ged_eye_model[X] = atof(argv[1]);
+    _ged_eye_model[Y] = atof(argv[2]);
+    _ged_eye_model[Z] = atof(argv[3]);
     /* Processing is deferred until ged_cm_end() */
     return(0);
 }
 
 
 int
-ged_cm_lookat_pt(int argc, char **argv)
+_ged_cm_lookat_pt(int argc, char **argv)
 {
     point_t	pt;
     vect_t	dir;
@@ -283,7 +283,7 @@ ged_cm_lookat_pt(int argc, char **argv)
     pt[Y] = atof(argv[2]);
     pt[Z] = atof(argv[3]);
 
-    VSUB2( dir, pt, ged_eye_model );
+    VSUB2( dir, pt, _ged_eye_model );
     VUNITIZE( dir );
 
 #if 1
@@ -295,10 +295,10 @@ ged_cm_lookat_pt(int argc, char **argv)
 	vect_t neg_Z_axis;
 
 	VSET(neg_Z_axis, 0.0, 0.0, -1.0);
-	bn_mat_fromto( ged_viewrot, dir, neg_Z_axis);
+	bn_mat_fromto( _ged_viewrot, dir, neg_Z_axis);
     }
 #else
-    bn_mat_lookat( ged_viewrot, dir, yflip );
+    bn_mat_lookat( _ged_viewrot, dir, yflip );
 #endif
 
     /*  Final processing is deferred until ged_cm_end(), but eye_pt
@@ -309,32 +309,32 @@ ged_cm_lookat_pt(int argc, char **argv)
 
 
 int
-ged_cm_vrot(int argc, char **argv)
+_ged_cm_vrot(int argc, char **argv)
 {
     register int	i;
 
     if ( argc < 17 )
 	return(-1);
     for ( i=0; i<16; i++ )
-	ged_viewrot[i] = atof(argv[i+1]);
+	_ged_viewrot[i] = atof(argv[i+1]);
     /* Processing is deferred until ged_cm_end() */
     return(0);
 }
 
 int
-ged_cm_orientation(int argc, char **argv)
+_ged_cm_orientation(int argc, char **argv)
 {
     register int	i;
     quat_t		quat;
 
     for ( i=0; i<4; i++ )
 	quat[i] = atof( argv[i+1] );
-    quat_quat2mat( ged_viewrot, quat );
+    quat_quat2mat( _ged_viewrot, quat );
     return(0);
 }
 
 int
-ged_cm_set(int argc, char **argv)
+_ged_cm_set(int argc, char **argv)
 {
     return(-1);
 }
@@ -344,7 +344,7 @@ ged_cm_set(int argc, char **argv)
  * routine to avoid rt_do_cmd() "command not found" error reporting
  */
 int
-ged_cm_null(int argc, char **argv)
+_ged_cm_null(int argc, char **argv)
 {
     return(0);
 }

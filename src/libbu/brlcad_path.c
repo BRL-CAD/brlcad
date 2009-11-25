@@ -19,13 +19,6 @@
  */
 /** @addtogroup bu_log */
 /** @{ */
-/** @file brlcad_path.c
- *
- * @brief
- * A support routine to provide the executable code with the path
- * to where the BRL-CAD programs and libraries are installed.
- *
- */
 
 #include "common.h"
 
@@ -92,9 +85,11 @@ _bu_ipwd()
     ipwd = getenv("PWD"); /* not our memory to free */
 
     if (!ipwd && (ipwd = bu_which("pwd"))) {
-	FILE *fp;
+	FILE *fp = NULL;
 
+#if defined(HAVE_POPEN) && !defined(STRICT_FLAGS)
 	fp = popen(ipwd, "r");
+#endif
 	if (fp) {
 	    if (bu_fgets(buffer, MAXPATHLEN, fp)) {
 		ipwd = buffer;
@@ -692,6 +687,7 @@ bu_brlcad_data(const char *rhs, int fail_quietly)
 }
 
 /** @} */
+
 /*
  * Local Variables:
  * mode: C

@@ -53,9 +53,7 @@ librender_la_SOURCES = \
 
 librender_la_LIBADD = \
 	libtie.la \
-	${BN} \
-	${BU} \
-	${LIBM}
+	${GCV}
 
 adrt_master_SOURCES = \
 	master/compnet.c \
@@ -66,7 +64,9 @@ adrt_master_SOURCES = \
 adrt_master_LDADD = \
 	libtie.la \
 	${BU} \
+	${LIBNETWORK} \
 	${LIBTHREAD} \
+	${LIBBSD} \
 	${LIBM} \
 	${LIBZ}
 
@@ -76,11 +76,8 @@ adrt_slave_SOURCES = \
 
 adrt_slave_LDADD = \
 	${LIBTHREAD} \
-	${LIBZ} \
-	${LIBM} \
 	librender.la \
-	libtie.la \
-	${RT} ${GCV}
+	libtie.la
 
 tieincludedir = $(includedir)/tie
 tieinclude_HEADERS = \

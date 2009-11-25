@@ -126,14 +126,14 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
 
 	bu_vls_printf(&gedp->ged_result_str, "\n");
     }
-    (void)ged_run_rt(gedp);
+    (void)_ged_run_rt(gedp);
 
     return GED_OK;
 }
 
 
 int
-ged_run_rt(struct ged *gedp)
+_ged_run_rt(struct ged *gedp)
 {
     register int i;
     FILE *fp_in;
@@ -151,7 +151,7 @@ ged_run_rt(struct ged *gedp)
 #endif
     vect_t eye_model;
     struct ged_run_rt *run_rtp;
-    struct ged_rt_client_data *drcdp;
+    struct _ged_rt_client_data *drcdp;
 #ifndef _WIN32
     int pid;
 
@@ -188,8 +188,8 @@ ged_run_rt(struct ged *gedp)
 
     (void)close(pipe_err[1]);
 
-    ged_rt_set_eye_model(gedp, eye_model);
-    ged_rt_write(gedp, fp_in, eye_model);
+    _ged_rt_set_eye_model(gedp, eye_model);
+    _ged_rt_write(gedp, fp_in, eye_model);
     (void)fclose(fp_in);
 
     BU_GETSTRUCT(run_rtp, ged_run_rt);
@@ -199,13 +199,13 @@ ged_run_rt(struct ged *gedp)
     run_rtp->fd = pipe_err[0];
     run_rtp->pid = pid;
 
-    BU_GETSTRUCT(drcdp, ged_rt_client_data);
+    BU_GETSTRUCT(drcdp, _ged_rt_client_data);
     drcdp->gedp = gedp;
     drcdp->rrtp = run_rtp;
 
     Tcl_CreateFileHandler(run_rtp->fd,
 			  TCL_READABLE,
-			  ged_rt_output_handler,
+			  _ged_rt_output_handler,
 			  (ClientData)drcdp);
 
     return 0;
@@ -262,8 +262,8 @@ ged_run_rt(struct ged *gedp)
     /* As parent, send view information down pipe */
     fp_in = _fdopen( _open_osfhandle((HFILE)pipe_inDup, _O_TEXT), "wb" );
 
-    ged_rt_set_eye_model(gedp, eye_model);
-    ged_rt_write(gedp, fp_in, eye_model);
+    _ged_rt_set_eye_model(gedp, eye_model);
+    _ged_rt_write(gedp, fp_in, eye_model);
     (void)fclose(fp_in);
 
     BU_GETSTRUCT(run_rtp, ged_run_rt);
@@ -276,13 +276,13 @@ ged_run_rt(struct ged *gedp)
     run_rtp->aborted=0;
     run_rtp->chan = Tcl_MakeFileChannel(run_rtp->fd, TCL_READABLE);
 
-    BU_GETSTRUCT(drcdp, ged_rt_client_data);
+    BU_GETSTRUCT(drcdp, _ged_rt_client_data);
     drcdp->gedp = gedp;
     drcdp->rrtp = run_rtp;
 
     Tcl_CreateChannelHandler(run_rtp->chan,
 			     TCL_READABLE,
-			     ged_rt_output_handler,
+			     _ged_rt_output_handler,
 			     (ClientData)drcdp);
 
     return 0;
@@ -290,7 +290,7 @@ ged_run_rt(struct ged *gedp)
 }
 
 void
-ged_rt_write(struct ged *gedp,
+_ged_rt_write(struct ged *gedp,
 	     FILE	*fp,
 	     vect_t	eye_model)
 {
@@ -358,16 +358,16 @@ ged_rt_write(struct ged *gedp,
 
 
 void
-ged_rt_output_handler(ClientData	clientData,
+_ged_rt_output_handler(ClientData	clientData,
 		      int		mask)
 {
-    struct ged_rt_client_data *drcdp = (struct ged_rt_client_data *)clientData;
+    struct _ged_rt_client_data *drcdp = (struct _ged_rt_client_data *)clientData;
     struct ged_run_rt *run_rtp;
     int count;
     int read_failed = 0;
     char line[RT_MAXLINE+1];
 
-    if (drcdp == (struct ged_rt_client_data *)NULL ||
+    if (drcdp == (struct _ged_rt_client_data *)NULL ||
 	drcdp->gedp == (struct ged *)NULL ||
 	drcdp->rrtp == (struct ged_run_rt *)NULL ||
 	brlcad_interp == (Tcl_Interp *)NULL)
@@ -408,7 +408,7 @@ ged_rt_output_handler(ClientData	clientData,
 	aborted = run_rtp->aborted;
 #else
 	Tcl_DeleteChannelHandler(run_rtp->chan,
-				 ged_rt_output_handler,
+				 _ged_rt_output_handler,
 				 (ClientData)drcdp);
 	Tcl_Close(brlcad_interp, run_rtp->chan);
 
@@ -443,9 +443,9 @@ ged_rt_output_handler(ClientData	clientData,
 
 	/* free run_rtp */
 	BU_LIST_DEQUEUE(&run_rtp->l);
-	bu_free((genptr_t)run_rtp, "ged_rt_output_handler: run_rtp");
+	bu_free((genptr_t)run_rtp, "_ged_rt_output_handler: run_rtp");
 
-	bu_free((genptr_t)drcdp, "ged_rt_output_handler: drcdp");
+	bu_free((genptr_t)drcdp, "_ged_rt_output_handler: drcdp");
 
 	return;
     }
@@ -491,7 +491,7 @@ ged_build_tops(struct ged	*gedp,
 
 
 void
-ged_rt_set_eye_model(struct ged *gedp,
+_ged_rt_set_eye_model(struct ged *gedp,
 		     vect_t eye_model)
 {
     if (gedp->ged_gvp->gv_zclip || gedp->ged_gvp->gv_perspective > 0) {

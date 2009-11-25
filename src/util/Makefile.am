@@ -7,6 +7,9 @@ PL_X_EXTRA =
 PL_DM = pl-dm
 PL_DM_EXTRA =
 
+BOMBARDIER = bombardier
+BOMBARDIER_EXTRA =
+
 else !WITH_X11
 
 PL_X =
@@ -15,11 +18,24 @@ PL_X_EXTRA = pl-X.c
 PL_DM =
 PL_DM_EXTRA = pl-dm.c
 
+BOMBARDIER =
+BOMBARDIER_EXTRA = bombardier.c
+
 endif
 # WITH_X11
 
+if BUILD_BOOST
+PC_TEST = pc_test
+PC_TEST_EXTRA =
+else
+PC_TEST =
+PC_TEST_EXTRA = pc_test.c
+endif
+# BUILD_BOOST
+
 
 bin_PROGRAMS = \
+	${BOMBARDIER} \
 	${PL_DM} \
 	${PL_X} \
 	alias-pix \
@@ -28,7 +44,6 @@ bin_PROGRAMS = \
 	azel \
 	bary \
 	binfo \
-	bombardier \
 	buffer \
 	bw-a \
 	bw-imp \
@@ -146,8 +161,8 @@ bin_PROGRAMS = \
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
 
 noinst_PROGRAMS = \
-	roots_example \
-	pc_test
+	${PC_TEST} \
+	roots_example
 
 
 dist_bin_SCRIPTS = \
@@ -177,9 +192,14 @@ bary_LDADD = ${BU}
 binfo_SOURCES = binfo.c
 binfo_LDADD = ${RT} ${FB} ${BU}
 
+# FIXME: this needs to be tied to a WITH_TK intead of WITH_X11 (but
+# have to change configure so that doesn't mean an fb/dm interface).
+if WITH_X11
 bombardier_SOURCES = bombardier.c bombardier.h
 bombardier_LDADD = ${TCLCAD} ${BU} ${TCL} ${TK}
 bombardier_CFLAGS = ${TK_CPPFLAGS} ${TCL_CPPFLAGS}
+endif
+# WITH_X11
 
 buffer_SOURCES = buffer.c
 buffer_LDADD = ${BU}
@@ -451,7 +471,6 @@ pixuntile_SOURCES = pixuntile.c
 pixuntile_LDADD = ${BU}
 
 if WITH_X11
-
 pl_X_SOURCES = pl-X.c
 pl_X_LDADD = ${DM} ${DM_LIBS} ${BU}
 pl_X_CFLAGS = ${X_CFLAGS}
@@ -459,8 +478,8 @@ pl_X_CFLAGS = ${X_CFLAGS}
 pl_dm_SOURCES = pl-dm.c
 pl_dm_LDADD = ${DM} ${DM_LIBS} ${BU} ${TK}
 pl_dm_CFLAGS = ${TK_CPPFLAGS} ${X_CFLAGS}
-
 endif
+# WITH_X11
 
 pl_asc_SOURCES = pl-asc.c
 pl_asc_LDADD = ${BU}
@@ -526,8 +545,11 @@ rle_pix_CFLAGS = ${RLE_CPPFLAGS}
 roots_example_SOURCES = roots_example.c
 roots_example_LDADD = ${RT} ${BU}
 
+if BUILD_BOOST
 pc_test_SOURCES = pc_test.c
 pc_test_LDADD = ${PC} ${PC_LIBS} ${WDB} ${WDB_LIBS}
+endif
+# BUILD_BOOST
 
 sgi_pix_SOURCES = sgi-pix.c
 sgi_pix_LDADD = ${BU} ${LIBSGIGL}
@@ -542,7 +564,7 @@ texturescale_SOURCES = texturescale.c
 texturescale_LDADD = ${FB} ${BN} ${BU}
 
 ttcp_SOURCES = ttcp.c
-ttcp_LDADD = ${LIBSOCKET} ${LIBNSL}
+ttcp_LDADD = ${LIBSOCKET} ${LIBNSL} ${LIBNETWORK}
 
 wavelet_SOURCES = wavelet.c
 wavelet_LDADD = ${FB} ${BN} ${BU}
@@ -601,6 +623,7 @@ man_MANS = \
 	pix-bw3.1 \
 	pix-orle.1 \
 	pix-png.1 \
+	pix-ppm.1 \
 	pix-ps.1 \
 	pix-rle.1 \
 	pix-sun.1 \
@@ -664,6 +687,8 @@ sample_applications_DATA = \
 EXTRA_DIST = \
 	$(man_MANS) \
 	$(sample_applications_DATA) \
+	${BOMBARDIER_EXTRA} \
+	${PC_TEST_EXTRA} \
 	${PL_DM_EXTRA} \
 	${PL_X_EXTRA} \
 	rtwizard.bat \

@@ -12,6 +12,12 @@ else
 ON_NIL =
 endif
 
+if BUILD_BOOST
+PCDIR = libpc
+else
+PCDIR =
+endif
+
 libbrlcad_nil_la_SOURCES =
 libbrlcad_nil_la_LIBADD = \
 	$(top_builddir)/src/libbu/libbu_nil.la \
@@ -27,7 +33,7 @@ required_dirs = \
 	libbu \
 	libbn \
 	libsysv \
-	libpc \
+	${PCDIR} \
 	librt \
 	external
 
@@ -122,7 +128,13 @@ endif
 # end ONLY_BENCHMARK
 
 DIST_SUBDIRS= \
-	$(required_dirs) \
+	other \
+	libbu \
+	libbn \
+	libsysv \
+	libpc \
+	librt \
+	external \
 	$(bench_dirs) \
 	$(rts_dirs) \
 	$(kitchensink_dirs)

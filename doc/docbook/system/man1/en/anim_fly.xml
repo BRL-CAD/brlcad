@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "../../../resources/standard/dtd/docbookx.dtd">
+
+<!-- Copyright (c) 2005-2009 United States Government as represented by -->
+<!-- the U.S. Army Research Laboratory.                                 -->
+<!--                                                                    -->
+<!-- Redistribution and use in source (Docbook format) and 'compiled'   -->
+<!-- forms (PDF, PostScript, HTML, RTF, etc), with or without           -->
+<!-- modification, are permitted provided that the following conditions -->
+<!-- are met:                                                           -->
+<!--                                                                    -->
+<!-- 1. Redistributions of source code (Docbook format) must retain the -->
+<!-- above copyright notice, this list of conditions and the following  -->
+<!-- disclaimer.                                                        -->
+<!--                                                                    -->
+<!-- 2. Redistributions in compiled form (transformed to other DTDs,    -->
+<!-- converted to PDF, PostScript, HTML, RTF, and other formats) must   -->
+<!-- reproduce the above copyright notice, this list of conditions and  -->
+<!-- the following disclaimer in the documentation and/or other         -->
+<!-- materials provided with the distribution.                          -->
+<!--                                                                    -->
+<!-- 3. The name of the author may not be used to endorse or promote    -->
+<!-- products derived from this documentation without specific prior    -->
+<!-- written permission.                                                -->
+<!--                                                                    -->
+<!-- THIS DOCUMENTATION IS PROVIDED BY THE AUTHOR "AS IS" AND ANY       -->
+<!-- EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE  -->
+<!-- IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR -->
+<!-- PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR -->
+<!-- ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR           -->
+<!-- CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT  -->
+<!-- OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR -->
+<!-- BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF         -->
+<!-- LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT          -->
+<!-- (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE  -->
+<!-- USE OF THIS DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF   -->
+<!-- SUCH DAMAGE.                                                       -->
+
+<refentry id='anim_fly1'>
+  <refmeta>
+    <refentrytitle>ANIM_FLY</refentrytitle>
+    <manvolnum>1</manvolnum>
+    <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+    <refmiscinfo class='manual'>BRL-CAD User Commands</refmiscinfo>
+  </refmeta>
+  <refnamediv id='name'>
+    <refname>anim_fly</refname>
+    <refpurpose>make animation table to simulate flying motion</refpurpose>
+  </refnamediv>
+  <!-- body begins here -->
+  <refsynopsisdiv id='synopsis'>
+    <cmdsynopsis>
+      <command>anim_fly</command>    
+      <arg choice='opt'>-f <replaceable>factor</replaceable></arg>
+      <arg choice='opt'>-r </arg>
+      <arg choice='opt'>-p <replaceable>integer</replaceable></arg>
+      <arg choice='opt'>-b <replaceable>max_bank_angle</replaceable></arg>
+      <arg choice='opt'>-s <replaceable>step</replaceable></arg>
+      <arg choice='plain'><replaceable>in.table</replaceable></arg>
+      <arg choice='plain'><replaceable>out.table</replaceable></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsect1 id='description'>
+    <title>DESCRIPTION</title>
+    <para>
+      This filter is designed to simulate the motion of an airplane.
+      Given a four-column table specifying the desired 3D position of the
+      airplane at each relevant time step, <command>anim_fly</command>
+      produces a seven-column file which also includes the orientation 
+      of the plane in terms of yaw, pitch, and roll. The yaw and pitch 
+      are manipulated so that the plane faces the direction of motion, 
+      while the roll is used to do banking.
+    </para>
+  </refsect1>
+  
+  <refsect1 id='options'>
+    <title>OPTIONS</title>
+    <variablelist remap='TP'>
+      <varlistentry>
+	<term><option>-f#</option></term>
+	<listitem>
+	  <para>
+	    This option specifies a factor to control the severity of the banking.
+	    The best factor is a subjective decision; a good starting point can best
+	    be obtained by using the <option> -b</option> option. Animations representing aircraft
+	    of different scales will need different factors.
+	    If the slightest curve throws the plane into a 90-degree bank, the factor is
+	    too large; if it doesn't bank enough, the factor is too small. The size
+	    of the best factor varies inversely with the size of the imagined
+	    aircraft plane. If a factor of 0 is used, there will be no banking. This would be 
+	    appropriate for animating a ground vehicle.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-b#</option></term>
+	<listitem>
+	  <para>
+	    This option is used to estimate a good value for the <option>-f</option> option. The
+	    parameter is the maximum desired banking angle. <command>Anim_fly</command> then computes
+	    the factor necessary to keep the banking below the specified angle. This
+	    value is returned instead of <command>anim_fly</command>'s usual output.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-r</option></term>
+	<listitem>
+	  <para>
+	    Suppress vertical loop smoothing.  A special case occurs if the aircraft is to perform a vertical
+	    loop. Normally, the algorithm likes to keep the aircraft right-side up. This would cause the 
+	    airplane to do an instantaneous 180-degree roll as it hits the vertical portion of the loop. 
+	    To counter this, a capability was built in which prevents this sudden roll, allowing the aircraft to go
+	    upside-down in a loop situation. This feature can be suppressed with the
+	    <option>-r</option> flag.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-p</option></term>
+	<listitem>
+	  <para>
+	    Specify the ratio of input rows to output rows, which must be an integer. The default, of course, 
+	    is one. The accuracy of the output depends on having a large number of input lines, which is not 
+	    usually a problem in animations, which require a large number of frames per
+	    second, anyway. If a test animation with a small number of frames per
+	    second is being created, the user should still use an input table
+	    with a high number of input rows, reducing the frequency of the output
+	    with the <option>-p</option> option. For example, if <emphasis remap='B' role='B'>in.table</emphasis>
+	    contains 30 rows for each second of the animation, then the command:
+	  </para>
+	  <para>
+	    <userinput>anim_fly -f0.001 -p10 &lt; in.table &gt; out.table</userinput>
+	  </para>
+	  <para>
+	    would produce an animation table containing 3 rows for each second of the animation.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-s</option></term>
+	<listitem>
+	  <para>
+	    Specify the minimum step size for the discrete-time differentiation. At any
+	    given point on the flight path, the yaw, pitch, and roll are calculated based
+	    on a past point, the current point, and a future point. Normally,
+	    these are consecutive points from the input table. If the time
+	    difference between the points falls below a certain threshold,
+	    then non-consecutive points are used to avoid
+	    numerical instability. The default time threshhold is 0.1 seconds; this
+	    can be raised or lowered using the <option>-s</option> option.
+	    Try raising the threshold if the output orientations experience random
+	    jitter.
+	  </para>
+	</listitem>
+      </varlistentry>
+    </variablelist>
+  </refsect1>
+  
+  <refsect1 id='author'>
+    <title>AUTHOR</title>
+    <para>Carl J. Nuzman</para>
+  </refsect1>
+  
+  <refsect1 id='copyright'>
+    <title>COPYRIGHT</title>
+    <para>
+      This software is Copyright (c) 1993-2009 by the United States
+      Government as represented by U.S. Army Research Laboratory.
+    </para>
+  </refsect1>
+
+  <refsect1 id='bug_reports'>
+    <title>BUG REPORTS</title>
+    <para>
+      Reports of bugs or problems should be submitted via electronic
+      mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

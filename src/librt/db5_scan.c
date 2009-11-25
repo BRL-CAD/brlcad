@@ -210,6 +210,10 @@ db5_diradd(struct db_i *dbip,
 
     RT_CK_DBI(dbip);
 
+    if (client_data && RT_G_DEBUG&DEBUG_DB) {
+	bu_log("WARNING: db5_diradd() received non-NULL client_data\n");
+    }
+
     bu_vls_init(&local);
     bu_vls_strcpy(&local, rip->name.ext_buf);
     if (db_dircheck(dbip, &local, 0, &headp) < 0) {

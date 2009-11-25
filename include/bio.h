@@ -55,7 +55,18 @@
 #  include <unistd.h>
 #endif
 
+/* needed for testing O_TEMPORARY and O_BINARY */
 #include <fcntl.h>
+
+/* _O_TEMPORARY on Windows removes file when last descriptor is closed */
+#ifndef O_TEMPORARY
+#  define O_TEMPORARY 0
+#endif
+
+/* _O_BINARY on Windows indicates whether to use binary or text (default) I/O */
+#ifndef O_BINARY
+#  define O_BINARY 0
+#endif
 
 /* account for badness in Tcl regex header */
 #ifdef regfree

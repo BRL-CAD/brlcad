@@ -19,18 +19,6 @@
  */
 /** @addtogroup vfont */
 /** @{ */
-/** @file vfont.c
- *
- * @brief Berkely Vector Fonts
- *
- * Provide a machine-independent interface to files containing
- * Berkeley VFONT format fonts, stored with VAX byte ordering
- * and word alignment.
- *
- * @author
- * Michael John Muuss
- *
- */
 
 #include "common.h"
 
@@ -38,42 +26,40 @@
 #include "vfont-if.h"
 #include "bu.h"
 
-#define FONTDIR2	"/usr/lib/vfont"
-#define DEFAULT_FONT	"nonie.r.12"
-#define FONTNAMESZ	128
+#define FONTDIR2 "/usr/lib/vfont"
+#define DEFAULT_FONT "nonie.r.12"
+#define FONTNAMESZ 128
 
-/*
- * Forward Definitions
- */
-static int vax_gshort(unsigned char *);
 
 /**
- * V F O N T _ G E T
+ * _ V A X _ G S H O R T
  *
- * Fetch the named font, and return a struct vfont pointer.
- *
- * First the filename provided is used, then the BRL-CAD font
- * directory is searched (for places where "system" directories
- * are considered sacred), and then finally the ordinary
- * font directory is searched.
- *
- * The font files are treated as pure byte streams, and are expected
- * to be in VAX order.
- *
- * VFONT_NULL is returned on error.  On ordinary errors, the function
- * is silent.  On extraordinary errors, a remark is placed on stderr.
+ * Obtain a 16-bit signed integer from two adjacent characters, stored
+ * in VAX order, regardless of word alignment.
  */
+HIDDEN int
+_vax_gshort(unsigned char *msgp)
+{
+    register unsigned char *p = (unsigned char *) msgp;
+    register int i;
+
+    if ((i = (p[1] << 8) | p[0]) & 0x8000)
+	return (i | ~0xFFFF);	/* Sign extend */
+    return (i);
+}
+
+
 struct vfont *
 vfont_get(char *font)
 {
-    register struct vfont	*vfp = VFONT_NULL;
-    register FILE		*fp = NULL;
-    register int	i;
-    char		fname[FONTNAMESZ];
-    unsigned char	header[2*5];		/* 5 16-bit vax shorts */
-    unsigned char	dispatch[10*256];	/* 256 10-byte structs */
-    int		magic;
-    int		size;
+    register struct vfont *vfp = VFONT_NULL;
+    register FILE *fp = NULL;
+    register int i;
+    char fname[FONTNAMESZ];
+    unsigned char header[2*5];		/* 5 16-bit vax shorts */
+    unsigned char dispatch[10*256];	/* 256 10-byte structs */
+    int magic;
+    int size;
 
     if (font == NULL)
 	font = DEFAULT_FONT;
@@ -94,8 +80,8 @@ vfont_get(char *font)
 	fclose(fp);
 	return (VFONT_NULL);
     }
-    magic = vax_gshort(&header[0*2]) & 0xFFFF;
-    size = vax_gshort(&header[1*2]) & 0xFFFF;	/* unsigned short */
+    magic = _vax_gshort(&header[0*2]) & 0xFFFF;
+    size = _vax_gshort(&header[1*2]) & 0xFFFF;	/* unsigned short */
 
     if (magic != 0436) {
 	fprintf(stderr, "vfont_get(%s):  bad magic number 0%o\n",
@@ -116,58 +102,39 @@ vfont_get(char *font)
     }
 
     /*
-     * Convert VAX data in header[] and dispatch[] arrays to
-     * native machine form.
+     * Convert VAX data in header[] and dispatch[] arrays to native
+     * machine form.
      */
-    vfp->vf_maxx = vax_gshort(&header[2*2]);
-    vfp->vf_maxy = vax_gshort(&header[3*2]);
-    vfp->vf_xtend = vax_gshort(&header[4*2]);
+    vfp->vf_maxx = _vax_gshort(&header[2*2]);
+    vfp->vf_maxy = _vax_gshort(&header[3*2]);
+    vfp->vf_xtend = _vax_gshort(&header[4*2]);
 
     for (i=0; i<255; i++) {
-	register struct vfont_dispatch	*vdp = &(vfp->vf_dispatch[i]);
-	register unsigned char		*cp = &dispatch[i*10];
+	register struct vfont_dispatch *vdp = &(vfp->vf_dispatch[i]);
+	register unsigned char *cp = &dispatch[i*10];
 
-	vdp->vd_addr = vax_gshort(&cp[0]);
-	vdp->vd_nbytes = vax_gshort(&cp[2]);
+	vdp->vd_addr = _vax_gshort(&cp[0]);
+	vdp->vd_nbytes = _vax_gshort(&cp[2]);
 	vdp->vd_up = SXT(cp[4]);
 	vdp->vd_down = SXT(cp[5]);
 	vdp->vd_left = SXT(cp[6]);
 	vdp->vd_right = SXT(cp[7]);
-	vdp->vd_width = vax_gshort(&cp[8]);
+	vdp->vd_width = _vax_gshort(&cp[8]);
     }
     fclose(fp);
     return (vfp);
 }
 
-/**
- * V A X _ G S H O R T
- *
- * Obtain a 16-bit signed integer from two adjacent characters,
- * stored in VAX order, regardless of word alignment.
- */
-static int
-vax_gshort(unsigned char *msgp)
-{
-    register unsigned char *p = (unsigned char *) msgp;
-    register int	i;
 
-    if ((i = (p[1] << 8) | p[0]) & 0x8000)
-	return (i | ~0xFFFF);	/* Sign extend */
-    return (i);
-}
-
-/**
- * V F O N T _ F R E E
- *
- * Return the storage associated with a struct vfont
- */
 void
 vfont_free(register struct vfont *vfp)
 {
     bu_free(vfp->vf_bits, "vfont bits");
     bu_free((char *)vfp, "vfont");
 }
+
 /** @} */
+
 /*
  * Local Variables:
  * mode: C

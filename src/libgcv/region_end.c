@@ -28,14 +28,20 @@
 #include "gcv.h"
 
 
-union tree *gcv_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+/* FIXME: this be a dumb hack to avoid void* conversion */
+struct gcv_data {
+    void (*func)(struct nmgregion *, struct db_full_path *, int, int, float [3]);
+};
+
+union tree *
+gcv_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
     union tree *ret_tree;
     struct bu_list vhead;
     struct nmgregion *r;
     int NMG_debug_state;
 
-    void (*write_region)(struct nmgregion *r, struct db_full_path *pathp, int region_id, int material_id, float color[3]) = client_data;
+    void (*write_region)(struct nmgregion *, struct db_full_path *, int, int, float [3]) = ((struct gcv_data *)client_data)->func;
 
     if (!write_region) {
 	bu_log("gcv_region_end missing conversion callback\n");

@@ -80,7 +80,7 @@ ged_sphgroup(struct ged *gedp, int argc, const char *argv[])
 	   if (!(strcmp(dp->d_namep, sphdp->d_namep))) continue;
 	   if (!(dp->d_flags & DIR_REGION)) continue;
 	   inside_flag = 0;
-	   if (ged_get_obj_bounds(gedp, 1, (const char **)&(dp->d_namep), 0, obj_min, obj_max) != GED_ERROR) {
+	   if (_ged_get_obj_bounds(gedp, 1, (const char **)&(dp->d_namep), 0, obj_min, obj_max) != GED_ERROR) {
 	       VSETALL(rpp_min, MAX_FASTF);
 	       VSETALL(rpp_max, -MAX_FASTF);
 	       VMINMAX(rpp_min, rpp_max, (double *)obj_min);
@@ -100,7 +100,7 @@ ged_sphgroup(struct ged *gedp, int argc, const char *argv[])
 	       VSET(centerpt, (rpp_min[0] + rpp_max[0])*0.5, (rpp_min[1] + rpp_max[1])*0.5, (rpp_min[2] + rpp_max[2])*0.5);
 	       if (DIST_PT_PT(centerpt, bsph->v) <= MAGNITUDE(bsph->a)) inside_flag = 1;
 	       if (inside_flag == 1) {
-       		   if (ged_combadd(gedp, dp, (char *)argv[1], 0, WMOP_UNION, 0, 0) == DIR_NULL) return GED_ERROR;
+       		   if (_ged_combadd(gedp, dp, (char *)argv[1], 0, WMOP_UNION, 0, 0) == DIR_NULL) return GED_ERROR;
 		   inside_flag = 0;
 	       }
 	   }	       

@@ -29,7 +29,11 @@
 #define RESOURCE_INCLUDED 1
 #include <tcl.h>
 #include <itcl.h>
-#include <itk.h>
+
+#ifdef HAVE_TK
+#  include <itk.h>
+#endif
+
 #include "bio.h"
 
 #include "bu.h"
@@ -46,12 +50,11 @@
 int
 Tclcad_Init(Tcl_Interp *interp)
 {
-    /* XXX why are these disabled? */
-#if 0
     if (Tcl_Init(interp) == TCL_ERROR) {
 	return TCL_ERROR;
     }
 
+#ifdef HAVE_TK
     if (Tk_Init(interp) == TCL_ERROR) {
 	return TCL_ERROR;
     }
@@ -66,11 +69,13 @@ Tclcad_Init(Tcl_Interp *interp)
 	return TCL_ERROR;
     }
 
+#ifdef HAVE_TK
     /* Initialize [incr Tk] */
     if (Itk_Init(interp) == TCL_ERROR) {
 	bu_log("Itk_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	return TCL_ERROR;
     }
+#endif
 
     /* Initialize the Iwidgets package */
     if (Tcl_Eval(interp, "package require Iwidgets") != TCL_OK) {

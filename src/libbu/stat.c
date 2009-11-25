@@ -19,13 +19,6 @@
  */
 /** @addtogroup bu_log */
 /** @{ */
-/** @file stat.c
- *
- * Support routines for identifying properties of files and
- * directories such as whether they exist or are the same as another
- * given file.
- *
- */
 
 #include "common.h"
 
@@ -57,12 +50,6 @@
 #endif
 
 
-/**
- * B U _ F I L E _ E X I S T S
- *
- * @return	1	The given filename exists.
- * @return	0	The given filename does not exist.
- */
 int
 bu_file_exists(const char *path)
 {
@@ -97,13 +84,6 @@ bu_file_exists(const char *path)
 }
 
 
-/**
- * b u _ s a m e _ f i l e
- *
- * returns truthfully as to whether or not the two provided filenames
- * are the same file.  if either file does not exist, the result is
- * false.
- */
 int
 bu_same_file(const char *fn1, const char *fn2)
 {
@@ -128,13 +108,6 @@ bu_same_file(const char *fn1, const char *fn2)
 }
 
 
-/**
- * b u _ s a m e _ f d
- *
- * returns truthfully as to whether or not the two provided file
- * descriptors are the same file.  if either file does not exist, the
- * result is false.
- */
 int
 bu_same_fd(int fd1, int fd2)
 {
@@ -160,11 +133,11 @@ bu_same_fd(int fd1, int fd2)
  * the current user has the ability permission-wise to access the
  * specified file.
  */
-static int
+HIDDEN int
 _bu_file_access(const char *path, int access_level)
 {
     struct stat sb;
-    int mask;
+    int mask = 0;
 
     /* 0 is root or Windows user */
     uid_t uid = 0;
@@ -231,12 +204,6 @@ _bu_file_access(const char *path, int access_level)
 }
 
 
-/**
- * b u _ f i l e _ r e a d a b l e
- *
- * returns truthfully if current user can read the specified file or
- * directory.
- */
 int
 bu_file_readable(const char *path)
 {
@@ -244,12 +211,6 @@ bu_file_readable(const char *path)
 }
 
 
-/**
- * b u _ f i l e _ w r i t a b l e
- *
- * returns truthfully if current user can write to the specified file
- * or directory.
- */
 int
 bu_file_writable(const char *path)
 {
@@ -257,20 +218,14 @@ bu_file_writable(const char *path)
 }
 
 
-/**
- * b u _ f i l e _ e x e c u t a b l e
- *
- * returns truthfully if current user can run the specified file or
- * directory.
- */
 int
 bu_file_executable(const char *path)
 {
     return _bu_file_access(path, X_OK);
 }
 
-
 /** @} */
+
 /*
  * Local Variables:
  * mode: C

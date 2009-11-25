@@ -113,10 +113,12 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 
 	case ADRT_WORK_STATUS:
 	{
-	    double loadavg;
+	    double loadavg = -1.0;
 
+#ifdef HAVE_GETLOADAVG
 	    getloadavg (&loadavg, 1);
 	    printf ("load average: %f\n", loadavg);
+#endif
 	}
 	break;
 

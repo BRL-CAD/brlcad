@@ -17,20 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup hton */
-/** @{ */
-/** @file htester.c
- *
- * @brief
- * Test network float conversion.
- *
- * Expected to be used in pipes, or with TTCP links to other machines,
- * or with files RCP'ed between machines.
- *
- * @author
- * Michael John Muuss
- */
-/** @} */
 
 #include "common.h"
 
@@ -40,10 +26,9 @@
 #include "bu.h"
 
 
-#define	NUM	3000
-double	orig[NUM], after[NUM];
-
-unsigned char	buf[NUM*8];
+#define NUM 3000
+double orig[NUM], after[NUM];
+unsigned char buf[NUM*8];
 
 void
 flpr(unsigned char *cp)
@@ -82,6 +67,7 @@ main(int argc, char **argv)
 {
     unsigned int i;
     unsigned int nbytes;
+    int len = sizeof(double);
 
 #define A argv[1][1]
     if (argc != 2 || argv[1][0] != '-' || (A != 'o' && A != 'i' && A != 'v')) {
@@ -100,7 +86,8 @@ main(int argc, char **argv)
 	orig[i] = orig[i-1] * -0.1;
     }
     for (i=2035; i<3000; i++) {
-	orig[i] = orig[i-1000] + (i&1)?(-1):1;
+	int hilow = (i&1) ? (-1) : 1;
+	orig[i] = orig[i-1000] + hilow;
     }
 
     /* Second stage, write out, or read and compare */
@@ -112,16 +99,25 @@ main(int argc, char **argv)
     }
 
     /* Read and compare */
-    if (sizeof(double) >= 8)
-	nbytes = 6;
-    else
-	nbytes = 4;
+    switch (len) {
+	case 8:
+	    nbytes = 6;
+	    break;
+	case 4:
+	    /* untested */
+	    nbytes = 4;
+	    break;
+	default:
+	    bu_bomb("unknown and untested double size\n");
+	    break;
+    }
     fread(buf, 8, NUM, stdin);
 /* ntohd((char *)after, buf, NUM);	*//* bulk conversion */
     for (i=0; i<NUM; i++) {
 	ntohd((unsigned char *)&after[i], (unsigned char *)&buf[i*8], 1);	/* incremental */
 	/* Floating point compare */
-	if (orig[i] == after[i])  continue;
+	if ((orig[i] - after[i]) > -SMALL_FASTF && (orig[i] - after[i]) < SMALL_FASTF)
+	    continue;
 
 	/* Byte-for-byte compare */
 	if (ckbytes((unsigned char *)&orig[i],

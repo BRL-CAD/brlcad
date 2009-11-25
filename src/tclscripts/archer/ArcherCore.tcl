@@ -63,12 +63,15 @@ namespace eval ArcherCore {
 	common TRANSLATE_MODE 1
 	common SCALE_MODE 2
 	common CENTER_MODE 3
-	common COMP_PICK_MODE 4
-	common MEASURE_MODE 5
-	common OBJECT_ROTATE_MODE 6
-	common OBJECT_TRANSLATE_MODE 7
-	common OBJECT_SCALE_MODE 8
-	common OBJECT_CENTER_MODE 9
+	common CENTER_VIEW_OBJECT_MODE 4
+	common COMP_PICK_MODE 5
+	common COMP_ERASE_MODE 6
+	common MEASURE_MODE 7
+	common OBJECT_ROTATE_MODE 8
+	common OBJECT_TRANSLATE_MODE 9
+	common OBJECT_SCALE_MODE 10
+	common OBJECT_CENTER_MODE 11
+	common FIRST_FREE_BINDING_MODE 12
 
 	common OBJ_EDIT_VIEW_MODE 0
 	common OBJ_ATTR_VIEW_MODE 1
@@ -123,6 +126,7 @@ namespace eval ArcherCore {
 	method setSave {}
 	method getLastSelectedDir  {}
 	method refreshDisplay      {}
+	method putString           {_str}
 
 	# Commands exposed to the user via the command line.
 	# More to be added later...
@@ -540,8 +544,13 @@ Popup Menu    Right or Ctrl-Left
 	method endViewTranslate {_pane}
 
 	method initCenterMode {}
+	method initCenterViewObjectMode {}
 
+	method initCompErase {}
 	method initCompPick {}
+	method mrayCallback_cvo {_start _target _partitions}
+	method mrayCallback_erase {_start _target _partitions}
+	method mrayCallback_pick {_start _target _partitions}
 
 	method initMeasure {}
 	method beginMeasure {_dm _x _y}
@@ -1563,12 +1572,26 @@ Popup Menu    Right or Ctrl-Left
 	-value $CENTER_MODE \
 	-command [::itcl::code $this initCenterMode] \
 	-state disabled
+    $itk_component(primaryToolbar) add radiobutton centervo \
+	-balloonstr "Center View on Object" \
+	-helpstr "Center View on Object" \
+	-variable [::itcl::scope mDefaultBindingMode] \
+	-value $CENTER_VIEW_OBJECT_MODE \
+	-command [::itcl::code $this initCenterViewObjectMode] \
+	-state disabled
     $itk_component(primaryToolbar) add radiobutton cpick \
 	-balloonstr "Component Pick" \
 	-helpstr "Component Pick" \
 	-variable [::itcl::scope mDefaultBindingMode] \
 	-value $COMP_PICK_MODE \
 	-command [::itcl::code $this initCompPick] \
+	-state disabled
+    $itk_component(primaryToolbar) add radiobutton cerase \
+	-balloonstr "Component Erase" \
+	-helpstr "Component Erase" \
+	-variable [::itcl::scope mDefaultBindingMode] \
+	-value $COMP_ERASE_MODE \
+	-command [::itcl::code $this initCompErase] \
 	-state disabled
     $itk_component(primaryToolbar) add radiobutton measure \
 	-balloonstr "Measuring Tool" \
@@ -1582,7 +1605,9 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(primaryToolbar) itemconfigure translate -state disabled
     $itk_component(primaryToolbar) itemconfigure scale -state disabled
     $itk_component(primaryToolbar) itemconfigure center -state disabled
+    $itk_component(primaryToolbar) itemconfigure centervo -state disabled
     $itk_component(primaryToolbar) itemconfigure cpick -state disabled
+    $itk_component(primaryToolbar) itemconfigure cerase -state disabled
     $itk_component(primaryToolbar) itemconfigure measure -state disabled
 
     eval pack configure [pack slaves $itk_component(primaryToolbar)] -padx 2
@@ -1667,12 +1692,92 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(ged) init_view_center
 }
 
+::itcl::body ArcherCore::initCenterViewObjectMode {} {
+    if {![info exists itk_component(ged)]} {
+	return
+    }
+
+    $itk_component(ged) clear_mouse_ray_callback_list
+    $itk_component(ged) add_mouse_ray_callback [::itcl::code $this mrayCallback_cvo]
+    $itk_component(ged) init_comp_pick
+}
+
+::itcl::body ArcherCore::initCompErase {} {
+    if {![info exists itk_component(ged)]} {
+	return
+    }
+
+    $itk_component(ged) clear_mouse_ray_callback_list
+    $itk_component(ged) add_mouse_ray_callback [::itcl::code $this mrayCallback_erase]
+    $itk_component(ged) init_comp_pick
+}
+
 ::itcl::body ArcherCore::initCompPick {} {
     if {![info exists itk_component(ged)]} {
 	return
     }
 
+    $itk_component(ged) clear_mouse_ray_callback_list
+    $itk_component(ged) add_mouse_ray_callback [::itcl::code $this mrayCallback_pick]
     $itk_component(ged) init_comp_pick
+}
+
+::itcl::body ArcherCore::mrayCallback_cvo {_start _target _partitions} {
+    if {$_partitions == ""} {
+	set rpos [$itk_component(ged) lastMouseRayPos]
+	eval $itk_component(ged) vslew $rpos
+	return
+    }
+
+    set partition [lindex $_partitions 0]
+
+    if {[catch {bu_get_value_by_keyword in $partition} in]} {
+	puts "Partition does not contain an \"in\""
+	puts "$in"
+	return
+    }
+
+    if {[catch {bu_get_value_by_keyword point $in} point]} {
+	puts "Partition does not contain an \"in\" point"
+	puts "$point"
+	return
+    }
+
+    set point [vscale $point [$itk_component(ged) base2local]]
+    $itk_component(ged) center $point
+}
+
+::itcl::body ArcherCore::mrayCallback_erase {_start _target _partitions} {
+    if {$_partitions == ""} {
+	return
+    }
+
+    set partition [lindex $_partitions 0]
+
+    if {[catch {bu_get_value_by_keyword in $partition} in]} {
+	puts "Partition does not contain an \"in\""
+	puts "$in"
+	return
+    }
+
+    if {[catch {bu_get_value_by_keyword path $in} path]} {
+	puts "Partition does not contain an \"in\" path"
+	puts "[subst $[subst pt_$i]]"
+	return
+    }
+
+    erase $path
+    $itk_component(cmd) putstring "erase $path"
+}
+
+::itcl::body ArcherCore::mrayCallback_pick {_start _target _partitions} {
+    set partition [lindex $_partitions 0]
+    if {$partition == {}} {
+	$itk_component(cmd) putstring "Missed!"
+    } else {
+	set region [bu_get_value_by_keyword "region" $partition]
+	$itk_component(cmd) putstring "$region"
+    }
 }
 
 ::itcl::body ArcherCore::initMeasure {} {
@@ -1744,7 +1849,9 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(primaryToolbar) itemconfigure translate -state normal
     $itk_component(primaryToolbar) itemconfigure scale -state normal
     $itk_component(primaryToolbar) itemconfigure center -state normal
+    $itk_component(primaryToolbar) itemconfigure centervo -state normal
     $itk_component(primaryToolbar) itemconfigure cpick -state normal
+    $itk_component(primaryToolbar) itemconfigure cerase -state normal
     $itk_component(primaryToolbar) itemconfigure measure -state normal
 
     $itk_component(ged) init_view_bindings
@@ -2939,9 +3046,15 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(primaryToolbar) itemconfigure center \
 	-image [image create photo \
 		    -file [file join $dir view_select.png]]
+    $itk_component(primaryToolbar) itemconfigure centervo \
+	-image [image create photo \
+		    -file [file join $dir view_obj_select.png]]
     $itk_component(primaryToolbar) itemconfigure cpick \
 	-image [image create photo \
 		    -file [file join $dir compSelect.png]]
+    $itk_component(primaryToolbar) itemconfigure cerase \
+	-image [image create photo \
+		    -file [file join $dir compErase.png]]
     $itk_component(primaryToolbar) itemconfigure measure \
 	-image [image create photo \
 		    -file [file join $dir measure.png]]
@@ -3170,6 +3283,10 @@ Popup Menu    Right or Ctrl-Left
     }
 }
 
+::itcl::body ArcherCore::putString {_str} {
+    $itk_component(cmd) putstring $_str
+}
+
 ::itcl::body ArcherCore::mouseRay {_dm _x _y} {
     set target [$_dm screen2model $_x $_y]
     set view [$_dm screen2view $_x $_y]
@@ -3234,6 +3351,14 @@ Popup Menu    Right or Ctrl-Left
 	} \
 	$CENTER_MODE { \
 		initCenterMode \
+		set ret 1
+	} \
+	$CENTER_VIEW_OBJECT_MODE { \
+		initCenterViewObjectMode \
+		set ret 1
+	} \
+	$COMP_ERASE_MODE { \
+		initCompErase \
 		set ret 1
 	} \
 	$COMP_PICK_MODE { \
@@ -3355,11 +3480,7 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::clear {args} {
-    eval gedWrapper clear 0 0 0 1 $args
-
-    if {$mShowGroundPlane} {
-	showGroundPlane
-    }
+    $itk_component(cmd) clear
 }
 
 ::itcl::body ArcherCore::clone {args} {

@@ -17,16 +17,7 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* initial step-g with basic file parsing capability but without
-  creation of .g geometry just yet
-
-* refactor rt_functab accessors to go through an api call or calls so
-  that the array is not accessed directly.  either an rt_eval() style
-  interface with data-driven keys to tell it with function(s) to call,
-  or simply have an rt_*() for each function (e.g., rt_mirror(),
-  rt_shot(), rt_describe(), etc).
-
-* utilize -pedantic -Wall -Werror on 'clean' directories
+* 64-bit port of BRL-CAD on Windows
 
 * annotation primitive.  specifically a means to create an object in
   the database that can optionally be associated with an object and/or
@@ -39,22 +30,28 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   also be useful to allow an optional "thickness" so that the
   annotations can represent physical geometry (so they raytrace).
 
-* 64-bit port of BRL-CAD on Windows
-
-* finish obj-g importer.  need to test more inputs and make sure all
-  geometry is preserved on import in some form.
-
-* rename istat/dstat to avoid naming conflicts
-
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
 
-* TBD
+* refactor rt_functab accessors to go through an api call or calls so
+  that the array is not accessed directly.  either an rt_eval() style
+  interface with data-driven keys to tell it with function(s) to call,
+  or simply have an rt_*() for each function (e.g., rt_mirror(),
+  rt_shot(), rt_describe(), etc).
 
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* make fbclear and raytrace control panel obey a -F advanced option,
+  i.e., better remote framebuffer support.
+
+* finish obj-g importer.  need to test more inputs and make sure all
+  geometry is preserved on import in some form.
+
+* MINOR: add tolerance parameters to the bn_*() functions that have
+  near-zero tests.
 
 * verify/improve kicking off an EDITOR in mged so that we don't lock
   up mged in vim/emacs/jove/whatever without a controlling terminal,
@@ -557,7 +554,7 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * modify the raytracers to use common fb and file output code
 
 * add missing manual pages (jra generated list on 04.2007):
-	a-d archer asc2g asc2pix binfo bot-bldxf bottest brep_cube brep_simple brickwall btclsh burst bw-a bw-d bwish c-d chan_add clutter contours d-a damdf dauto dauto2 d-bw dconv ddisp d-f dfft d-i dmod double-asc dpeak dsel dsp_add dstat d-u dwin euclid_format euclid_unformat fbgammamod f-d fence fhor f-i files-tape g-adrt g-euclid1 g-jack globe g-off i-a i-d i-f ihist imod ipuscan ipustat istat jack-g kurt lowp molecule msrandom mst nmgmodel nmg-sgp off-g pipe pipetest pix2g pix3filter pixcount pixelswap pixembed pixfields pixfieldsep pixflip-fb pix-ipu pixpaste pix-ppm pix-spm pix-yuv plstat png-ipu pyramid rawbot remapid rlesortmap rletovcr room rtcell rtexample rtfrac rtrad rtsil rtsrv rtwizard script-tab sgi-pix sketch solshoot sphflake spltest spm-fb ssampview syn tea tea_nmg testfree texturescale torii ttcp tube txyz-pl u-a u-bw u-d u-f umod ustat vcrtorle vegitation wall wdb_example xbmtorle xyz-pl yuv-pix
+	a-d archer asc2g asc2pix binfo bot-bldxf bottest brep_cube brep_simple brickwall btclsh burst bw-a bw-d bwish c-d chan_add clutter contours d-a damdf dauto dauto2 d-bw dconv ddisp d-f dfft d-i dmod double-asc dpeak dsel dsp_add dstat d-u dwin euclid_format euclid_unformat fbgammamod f-d fence fhor f-i files-tape g-adrt g-euclid1 g-jack globe g-off i-a i-d i-f ihist imod ipuscan ipustat istat jack-g kurt lowp molecule msrandom mst nmgmodel nmg-sgp off-g pipe pipetest pix2g pix3filter pixcount pixelswap pixembed pixfields pixfieldsep pixflip-fb pix-ipu pixpaste pix-spm pix-yuv plstat png-ipu pyramid rawbot remapid rlesortmap rletovcr room rtcell rtexample rtfrac rtrad rtsil rtsrv rtwizard script-tab sgi-pix sketch solshoot sphflake spltest spm-fb ssampview syn tea tea_nmg testfree texturescale torii ttcp tube txyz-pl u-a u-bw u-d u-f umod ustat vcrtorle vegitation wall wdb_example xbmtorle xyz-pl yuv-pix
 
 * design plugin system to allow domain specific tools (say, for example,
   a tool to create propeller parts) to identify themselves and their

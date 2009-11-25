@@ -17,14 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup butcl */
-/** @{ */
-/** @file libbu/cmd.c
- *
- * @brief
- * Utility routines for handling commands.
- *
- */
 
 #include "common.h"
 
@@ -87,7 +79,6 @@ bu_register_cmds(Tcl_Interp *interp,
     }
 }
 
-/** @} */
 /*
  * Local Variables:
  * mode: C

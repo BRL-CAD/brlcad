@@ -1,0 +1,26 @@
+The books subdirectory contains DocBook files intended to serve as
+both individual books with new content and agglomerations of individual
+files into larger collections.
+
+tutorial_series/
+	This directory contains the re-formatted contents of the BRL-CAD
+	Tutorial Series Volumes II and III.  The reformatting has also
+	involved updates and fixes - the results of these files are not
+	claimed to be exact replicas of the original pdf files.  
+	
+	In the case of Volume II the individual lessons have been organized
+	into individual DocBook files in ../lessons/en and are included
+	from that directory into BRL-CAD_Tutorial_Series_VolumeII.xml.  
+	By and large, any editing of lesson contents should occur in the 
+	individual files - editing of VolumeII.xml is needed only if lessons 
+	are to be added, renamed or removed.  Eventually, it is intended 
+	that the appendix of system commands present in the original 
+	Volume II be replaced with direct inclusion of the command 
+	documentation from system/man1 files.
+	
+	BRL-CAD_Tutorial_Series_VolumeIII.xml retains most of its content 
+	within the file itself, but the appendices detailing specific 
+	advanced features have been broken out into individual files 
+	in articles - note that not all of the articals in the articles 
+	directory were present in the original Volume III.
+	

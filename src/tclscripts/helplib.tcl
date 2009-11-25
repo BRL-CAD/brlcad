@@ -88,7 +88,7 @@ set helplib_data(wdb_get_type)		{{object} {get the object's type}}
 set helplib_data(wdb_group)		{{gname object(s)} {create or append object(s) to a group}}
 set helplib_data(wdb_hide)              {{<objects>} {set the "hidden" flag for the specified objects so they do not appear in an "ls" command output}}
 set helplib_data(wdb_instance)		{{obj comb [op]} {add instance of obj to comb}}
-set helplib_data(wdb_keep)		{{file object(s)} {save named objects in the specified file}}
+set helplib_data(wdb_keep)		{{[-R] file object(s)} {save named objects in the specified file.  Does not recursively keep objects with the -R option.}}
 set helplib_data(wdb_kill)		{{<objects>} {kill/delete database objects}}
 set helplib_data(wdb_killall)		{{<objects>} {kill/delete database objects, removing all references}}
 set helplib_data(wdb_killtree)		{{[-a] <objects>} {kill all paths belonging to objects}}

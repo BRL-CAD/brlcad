@@ -65,27 +65,6 @@ else !BUILD_TERMLIB
 TERMLIBDIR=
 endif
 
-if WITH_OPENGL
-TOGL_MAKE=$(MAKE)
-else
-TOGL_MAKE=:
-endif
-
-togl-all:
-	cd togl && ${TOGL_MAKE} $(AM_MAKEFLAGS) LIBS="${X_LIBS} ${LIBGL} -lXmu" all
-
-togl-install:
-	cd togl && ${TOGL_MAKE} $(AM_MAKEFLAGS) LIBS="${X_LIBS} ${LIBGL} -lXmu" install
-
-togl-clean:
-	cd togl && ${TOGL_MAKE} $(AM_MAKEFLAGS) LIBS="${X_LIBS} ${LIBGL} -lXmu" clean
-
-togl-distclean:
-	cd togl && ${TOGL_MAKE} $(AM_MAKEFLAGS) LIBS="${X_LIBS} ${LIBGL} -lXmu" distclean
-
-togl-uninstall:
-	cd togl && ${TOGL_MAKE} $(AM_MAKEFLAGS) LIBS="${X_LIBS} ${LIBGL} -lXmu" uninstall
-
 if BUILD_DOCS
 if BUILD_TKHTML3
 if WITH_X11
@@ -115,15 +94,13 @@ tkhtml3-distclean:
 tkhtml3-uninstall:
 	cd tkhtml3 && ${TKHTML3_MAKE} $(AM_MAKEFLAGS) LIBS="${X_LIBS} ${LIBS}" uninstall
 
-all-local: tkhtml3-all togl-all
-install-exec-local: tkhtml3-install togl-install
-clean-local: tkhtml3-clean togl-clean
-distclean-local: tkhtml3-distclean togl-distclean
-uninstall-local: tkhtml3-uninstall togl-uninstall
+all-local: tkhtml3-all
+install-exec-local: tkhtml3-install
+clean-local: tkhtml3-clean
+distclean-local: tkhtml3-distclean
+uninstall-local: tkhtml3-uninstall
 
-.PHONY : tkhtml3-all tkhtml3-install tkhtml3-clean tkhtml3-distclean tkhtml3-uninstall togl-all togl-install togl-clean togl-distclean togl-uninstall
-
-
+.PHONY : tkhtml3-all tkhtml3-install tkhtml3-clean tkhtml3-distclean tkhtml3-uninstall
 
 if BUILD_TKIMG
 if WITH_X11

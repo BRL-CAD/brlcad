@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="744.09448819"
+   height="1052.3622047"
+   id="svg2"
+   sodipodi:version="0.32"
+   inkscape:version="0.46"
+   inkscape:export-filename="/home/cyapp/cadtoplevel/brlcad/newdocs/tire_doc/tire_0013.png"
+   inkscape:export-xdpi="90"
+   inkscape:export-ydpi="90"
+   sodipodi:docname="tire_0013.svg"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape">
+  <defs
+     id="defs4">
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="0 : 526.18109 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_z="744.09448 : 526.18109 : 1"
+       inkscape:persp3d-origin="372.04724 : 350.78739 : 1"
+       id="perspective10" />
+    <inkscape:perspective
+       id="perspective2447"
+       inkscape:persp3d-origin="372.04724 : 350.78739 : 1"
+       inkscape:vp_z="744.09448 : 526.18109 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 526.18109 : 1"
+       sodipodi:type="inkscape:persp3d" />
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     gridtolerance="10000"
+     guidetolerance="10"
+     objecttolerance="10"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.98994949"
+     inkscape:cx="421.79805"
+     inkscape:cy="728.87525"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     inkscape:window-width="1211"
+     inkscape:window-height="881"
+     inkscape:window-x="250"
+     inkscape:window-y="234" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <image
+       y="109.93361"
+       x="117.5"
+       id="image2449"
+       height="389.22223"
+       width="479.97083"
+       sodipodi:absref="/home/cyapp/cadtoplevel/brlcad/newdocs/tire_doc/workinggraphics/sidewallmaxheight.png"
+       xlink:href="workinggraphics/sidewallmaxheight.png"
+       inkscape:export-filename="/home/cyapp/cadtoplevel/brlcad/newdocs/tire_doc/text3298.png"
+       inkscape:export-xdpi="90"
+       inkscape:export-ydpi="90" />
+    <g
+       id="g3255"
+       transform="matrix(0.8980078,0,0,0.8980078,11.984079,11.212366)"
+       inkscape:export-filename="/home/cyapp/cadtoplevel/brlcad/newdocs/tire_doc/text3298.png"
+       inkscape:export-xdpi="90"
+       inkscape:export-ydpi="90">
+      <path
+         sodipodi:nodetypes="cc"
+         id="path2453"
+         d="M 202.43512,322.87498 L 202.43512,176.8019"
+         style="fill:none;fill-rule:evenodd;stroke:#ffff00;stroke-width:3.9230485;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+      <path
+         sodipodi:nodetypes="cc"
+         id="path3225"
+         d="M 384.81257,323.09029 L 384.81257,169.01897"
+         style="fill:none;fill-rule:evenodd;stroke:#ffff00;stroke-width:3.92236161;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+      <path
+         sodipodi:nodetypes="cc"
+         id="path3227"
+         d="M 568.74114,322.9664 L 568.74114,163.48721"
+         style="fill:none;fill-rule:evenodd;stroke:#ffff00;stroke-width:3.91902733;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+      <path
+         sodipodi:nodetypes="cc"
+         id="path3231"
+         d="M 133.90539,168.73126 L 264.72606,168.73126"
+         style="fill:none;fill-rule:evenodd;stroke:#ffff00;stroke-width:3.71258807;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+      <path
+         sodipodi:nodetypes="cc"
+         id="path3233"
+         d="M 316.23617,161.15511 L 446.93406,161.15511"
+         style="fill:none;fill-rule:evenodd;stroke:#ffff00;stroke-width:3.71084547;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+      <path
+         sodipodi:nodetypes="cc"
+         id="path3235"
+         d="M 498.56872,157.61957 L 629.26661,157.61957"
+         style="fill:none;fill-rule:evenodd;stroke:#ffff00;stroke-width:3.71084547;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+      <path
+         sodipodi:nodetypes="cccc"
+         id="path3249"
+         d="M 198.24244,177.06502 L 202.66186,170.37275 L 206.44993,177.06502 L 198.24244,177.06502 z"
+         style="fill:#ffff00;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+      <path
+         sodipodi:nodetypes="cccc"
+         id="path3251"
+         d="M 380.6381,169.67827 L 385.05752,162.986 L 388.84559,169.67827 L 380.6381,169.67827 z"
+         style="fill:#ffff00;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+      <path
+         sodipodi:nodetypes="cccc"
+         id="path3253"
+         d="M 564.61214,166.14274 L 569.03156,159.45047 L 572.81963,166.14274 L 564.61214,166.14274 z"
+         style="fill:#ffff00;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+    </g>
+    <g
+       id="g3266"
+       transform="matrix(0.8980078,0,0,-0.8980078,12.040385,588.73525)"
+       inkscape:export-filename="/home/cyapp/cadtoplevel/brlcad/newdocs/tire_doc/text3298.png"
+       inkscape:export-xdpi="90"
+       inkscape:export-ydpi="90">
+      <path
+         sodipodi:nodetypes="cc"
+         id="path3268"
+         d="M 202.43512,322.87498 L 202.43512,176.8019"
+         style="fill:none;fill-rule:evenodd;stroke:#ffff00;stroke-width:3.9230485;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+      <path
+         sodipodi:nodetypes="cc"
+         id="path3270"
+         d="M 384.81257,323.09029 L 384.81257,169.01897"
+         style="fill:none;fill-rule:evenodd;stroke:#ffff00;stroke-width:3.92236161;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+      <path
+         sodipodi:nodetypes="cc"
+         id="path3272"
+         d="M 568.74114,322.9664 L 568.74114,163.48721"
+         style="fill:none;fill-rule:evenodd;stroke:#ffff00;stroke-width:3.91902733;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+      <path
+         sodipodi:nodetypes="cc"
+         id="path3274"
+         d="M 133.90539,168.73126 L 264.72606,168.73126"
+         style="fill:none;fill-rule:evenodd;stroke:#ffff00;stroke-width:3.71258807;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+      <path
+         sodipodi:nodetypes="cc"
+         id="path3276"
+         d="M 316.23617,161.15511 L 446.93406,161.15511"
+         style="fill:none;fill-rule:evenodd;stroke:#ffff00;stroke-width:3.71084547;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+      <path
+         sodipodi:nodetypes="cc"
+         id="path3278"
+         d="M 498.56872,157.61957 L 629.26661,157.61957"
+         style="fill:none;fill-rule:evenodd;stroke:#ffff00;stroke-width:3.71084547;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+      <path
+         sodipodi:nodetypes="cccc"
+         id="path3280"
+         d="M 198.24244,177.06502 L 202.66186,170.37275 L 206.44993,177.06502 L 198.24244,177.06502 z"
+         style="fill:#ffff00;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+      <path
+         sodipodi:nodetypes="cccc"
+         id="path3282"
+         d="M 380.6381,169.67827 L 385.05752,162.986 L 388.84559,169.67827 L 380.6381,169.67827 z"
+         style="fill:#ffff00;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+      <path
+         sodipodi:nodetypes="cccc"
+         id="path3284"
+         d="M 564.61214,166.14274 L 569.03156,159.45047 L 572.81963,166.14274 L 564.61214,166.14274 z"
+         style="fill:#ffff00;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+    </g>
+    <text
+       xml:space="preserve"
+       style="font-size:12.11682415px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="129.40855"
+       y="499.32129"
+       id="text3286"
+       transform="scale(0.9750508,1.0255876)"
+       inkscape:export-filename="/home/cyapp/cadtoplevel/brlcad/newdocs/tire_doc/text3298.png"
+       inkscape:export-xdpi="90"
+       inkscape:export-ydpi="90"><tspan
+         sodipodi:role="line"
+         id="tspan3288"
+         x="129.40855"
+         y="499.32129">Max width -&gt; Max Width</tspan><tspan
+         sodipodi:role="line"
+         x="129.40855"
+         y="514.46735"
+         id="tspan3290">= 2 * 250mm</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:12.11682415px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="292.17911"
+       y="499.465"
+       id="text3292"
+       transform="scale(0.9750508,1.0255876)"
+       inkscape:export-filename="/home/cyapp/cadtoplevel/brlcad/newdocs/tire_doc/text3298.png"
+       inkscape:export-xdpi="90"
+       inkscape:export-ydpi="90"><tspan
+         sodipodi:role="line"
+         id="tspan3294"
+         x="292.17911"
+         y="499.465">Max width -&gt; Max Width</tspan><tspan
+         sodipodi:role="line"
+         x="292.17911"
+         y="514.61102"
+         id="tspan3296">= 2 * 263.2mm</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:12.11682415px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="458.92218"
+       y="499.465"
+       id="text3298"
+       transform="scale(0.9750508,1.0255876)"
+       inkscape:export-xdpi="90"
+       inkscape:export-ydpi="90"><tspan
+         sodipodi:role="line"
+         id="tspan3300"
+         x="458.92218"
+         y="499.465">Max width -&gt; Max Width</tspan><tspan
+         sodipodi:role="line"
+         x="458.92218"
+         y="514.61102"
+         id="tspan3302">= 2 * 270mm</tspan></text>
+  </g>
+</svg>

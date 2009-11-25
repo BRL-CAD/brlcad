@@ -34,7 +34,7 @@ int
 ged_orotate(struct ged *gedp, int argc, const char *argv[])
 {
     register struct directory *dp;
-    struct ged_trace_data gtd;
+    struct _ged_trace_data gtd;
     struct rt_db_internal intern;
     fastf_t xrot, yrot, zrot;
     mat_t rmat;
@@ -83,12 +83,12 @@ ged_orotate(struct ged *gedp, int argc, const char *argv[])
     if (argc == 5) {
 	/* Use the object's center as the keypoint. */
 
-	if (ged_get_obj_bounds2(gedp, 1, argv+1, &gtd, rpp_min, rpp_max) == GED_ERROR)
+	if (_ged_get_obj_bounds2(gedp, 1, argv+1, &gtd, rpp_min, rpp_max) == GED_ERROR)
 	    return GED_ERROR;
 
 	dp = gtd.gtd_obj[gtd.gtd_objpos-1];
 	if (!(dp->d_flags & DIR_SOLID)) {
-	    if (ged_get_obj_bounds(gedp, 1, argv+1, 1, rpp_min, rpp_max) == GED_ERROR)
+	    if (_ged_get_obj_bounds(gedp, 1, argv+1, 1, rpp_min, rpp_max) == GED_ERROR)
 		return GED_ERROR;
 	}
 

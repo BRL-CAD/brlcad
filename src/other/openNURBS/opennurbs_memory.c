@@ -117,7 +117,7 @@ size_t onmsize( const void* memblock )
   return _msize((void*)memblock);
 #else
   // OS doesn't support _msize().
-  return 0;
+  return memblock != memblock; /* quell warning, always return 0 */
 #endif
 }
 

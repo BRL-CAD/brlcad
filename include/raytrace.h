@@ -3403,6 +3403,9 @@ RT_EXPORT BU_EXTERN(int rt_metaball_ck,
 RT_EXPORT BU_EXTERN(fastf_t rt_metaball_point_value,
 		    (const point_t *p,
 		     const struct rt_metaball_internal *mb));
+RT_EXPORT BU_EXTERN(int rt_metaball_point_inside,
+		    (const point_t *p,
+		     const struct rt_metaball_internal *mb));
 RT_EXPORT BU_EXTERN(int rt_metaball_lookup_type_id,
 		    (const char *name));
 RT_EXPORT BU_EXTERN(const char *rt_metaball_lookup_type_name,
@@ -4718,6 +4721,11 @@ RT_EXPORT BU_EXTERN(void nmg_triangulate_model,
 		     const struct bn_tol *tol));
 RT_EXPORT BU_EXTERN(void nmg_triangulate_fu,
 		    (struct faceuse *fu,
+		     const struct bn_tol *tol));
+
+/*  nmg_tri_mc.c */
+RT_EXPORT BU_EXTERN(void nmg_triangulate_model_mc,
+		    (struct model *m,
 		     const struct bn_tol *tol));
 
 /* nmg_manif.c */

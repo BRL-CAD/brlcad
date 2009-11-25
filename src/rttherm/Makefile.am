@@ -1,9 +1,32 @@
 
+ssampview_SRCS = \
+	spectrum.c \
+	ssampview.c
+
+
+if WITH_X11
+SSAMPVIEW = ssampview
+
+ssampview_SOURCES = ${ssampview_SRCS}
+ssampview_CFLAGS = \
+	${X_CFLAGS} \
+	${TK_CPPFLAGS}
+ssampview_LDADD = \
+	${OPTICAL} \
+	${FB} \
+	${TK}
+SSAMPVIEW_EXTRA =
+
+else
+SSAMPVIEW =
+SSAMPVIEW_EXTRA = ${ssampview_SRCS}
+endif
+
 # pixtest removed, looks like an outdated sample_application
 bin_PROGRAMS = \
 	rttherm \
 	ssamp-bw \
-	ssampview
+	${SSAMPVIEW}
 
 noinst_PROGRAMS = pixtest
 
@@ -29,18 +52,6 @@ rttherm_LDADD = \
 	${FB} \
 	${GED}
 
-ssampview_SOURCES = \
-	spectrum.c \
-	ssampview.c
-
-ssampview_CFLAGS = \
-	${X_CFLAGS} \
-	${TK_CPPFLAGS}
-ssampview_LDADD = \
-	${OPTICAL} \
-	${FB} \
-	${TK}
-
 ssamp_bw_SOURCES = ssamp-bw.c
 ssamp_bw_LDADD = ${OPTICAL}
 
@@ -54,6 +65,7 @@ pixtest_LDADD = \
 
 EXTRA_DIST = \
 	$(man_MANS) \
+	${SSAMPVIEW_EXTRA} \
 	std_day_1km.dat \
 	test.sh
 

@@ -105,6 +105,7 @@ GetArgs(int argc, char **argv)			/* process command arguments */
     static int	oflag = 0;	/* set if "-o" option found */
     int		c;		/* option letter */
 
+    bu_optind = 1;
     while ( (c = bu_getopt( argc, argv, "i:o:" )) != EOF )
 	switch ( c )
 	{

@@ -656,6 +656,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\nmg\nmg_tri_mc.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\primitives\nmg\nmg_visit.c"
 				>
 			</File>

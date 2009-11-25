@@ -17,8 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file fnmatch.c
- *
+/*
  * Based off of OpenBSD's fnmatch.c v 1.13 2006/03/31
  *
  * Copyright (c) 1989, 1993, 1994
@@ -51,11 +50,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- ***
- *
- * Function fnmatch() as specified in POSIX 1003.2-1992, section B.6.
- * Compares a filename or pathname to a pattern.
- *
  */
 
 #include "common.h"
@@ -70,8 +64,8 @@
 
 #define _BU_FNMATCH_H_
 
-#define BU_FNM_NOMATCH     1       /* Match failed. */
-#define BU_FNM_NOSYS       2       /* Function not supported (unused). */
+#define BU_FNM_NOMATCH 1       /* Match failed. */
+#define BU_FNM_NOSYS   2       /* Function not supported (unused). */
 
 #define BU_FNM_NOESCAPE    0x01    /* Disable backslash escaping. */
 #define BU_FNM_PATHNAME    0x02    /* Slash must be matched by slash. */
@@ -80,11 +74,11 @@
 #define BU_FNM_IGNORECASE  BU_CASEFOLD
 #define BU_FNM_FILE_NAME   BU_FNM_PATHNAME
 
-#define	BU_FNM_EOS	'\0'
+#define BU_FNM_EOS '\0'
 
-#define	BU_FNM_RANGE_MATCH	1
-#define	BU_FNM_RANGE_NOMATCH	0
-#define	BU_FNM_RANGE_ERROR	(-1)
+#define BU_FNM_RANGE_MATCH   1
+#define BU_FNM_RANGE_NOMATCH 0
+#define BU_FNM_RANGE_ERROR   (-1)
 
 /* isblank appears to be obsolete in newer ctype.h files so use
  * ccblank instead when looking for the "blank" character class.
@@ -176,8 +170,8 @@ _rangematch(const char *pattern, char test, int flags, char **newp)
      * A bracket expression starting with an unquoted circumflex
      * character produces unspecified results (IEEE 1003.2-1992,
      * 3.13.2).  This implementation treats it like '!', for
-     * consistency with the regular expression syntax.
-     * J.T. Conklin (conklin@ngai.kaleida.com)
+     * consistency with the regular expression syntax.  J.T. Conklin
+     * (conklin@ngai.kaleida.com)
      */
     if ((negate = (*pattern == '!' || *pattern == '^')))
 	++pattern;
@@ -235,7 +229,9 @@ bu_fnmatch(const char *pattern, const char *string, int flags)
     const char *stringstart;
     char *newp;
     char c, test;
-    for (stringstart = string;;) {
+    int limit = 10000;
+
+    for (stringstart = string; limit > 0; limit--) {
 	switch (c = *pattern++) {
 	    case BU_FNM_EOS:
 		if ((flags & BU_FNM_LEADING_DIR) && *string == '/')
@@ -327,7 +323,7 @@ bu_fnmatch(const char *pattern, const char *string, int flags)
 	}
     }
 
-    /* NOTREACHED */
+    /* NOTREACHED (unless inf looping) */
     return 0;
 }
 

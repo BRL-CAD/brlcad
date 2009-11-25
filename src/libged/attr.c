@@ -34,7 +34,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
     struct directory	*dp;
     struct bu_attribute_value_set avs;
     struct bu_attribute_value_pair	*avpp;
-    static const char *usage = "set|get|show|rm|append} object [args]";
+    static const char *usage = "{set|get|show|rm|append} object [key [value] ... ]";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);

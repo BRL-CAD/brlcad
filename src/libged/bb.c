@@ -124,7 +124,7 @@ ged_bb(struct ged *gedp, int argc, const char *argv[])
     VSETALL(rpp_min, MAX_FASTF);
     VSETALL(rpp_max, -MAX_FASTF);
     for (i = 0; i < argc; i++) {
-    	if (ged_get_obj_bounds(gedp, argc - i, (const char **)argv+i, use_air, obj_min, obj_max) == GED_ERROR)
+    	if (_ged_get_obj_bounds(gedp, argc - i, (const char **)argv+i, use_air, obj_min, obj_max) == GED_ERROR)
     	    return GED_ERROR;
 	VMINMAX(rpp_min, rpp_max, (double *)obj_min);
 	VMINMAX(rpp_min, rpp_max, (double *)obj_max);
@@ -134,7 +134,7 @@ ged_bb(struct ged *gedp, int argc, const char *argv[])
     str = bu_units_string(gedp->ged_wdbp->dbip->dbi_local2base);
     if (!str) str = "Unknown_unit";
 
-    // Print Header
+    /* Print Header */
     if (print_header == 1) {
     	bu_vls_printf(&gedp->ged_result_str, "Bounding Box Dimensions, Object(s)");
 	for (i = 0; i < argc - 1 ; i++) {
@@ -143,12 +143,12 @@ ged_bb(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(&gedp->ged_result_str, " %s:\n", argv[argc-1]);
     }
 
-    // Print rpp
+    /* Print rpp */
     if (print_rpp == 1) {
 	bu_vls_printf(&gedp->ged_result_str, "min {%f %f %f} max {%f %f %f}\n", rpp_min[0], rpp_min[1], rpp_min[2], rpp_max[0], rpp_max[1], rpp_max[2]);
     }
 
-    // Print dim info
+    /* Print dim info */
     if (print_dim == 1) {
     	xlen = fabs(rpp_max[X] - rpp_min[X])*gedp->ged_wdbp->dbip->dbi_base2local;
     	ylen = fabs(rpp_max[Y] - rpp_min[Y])*gedp->ged_wdbp->dbip->dbi_base2local;

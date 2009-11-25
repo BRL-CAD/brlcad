@@ -41,7 +41,7 @@
 #include "vmath.h"
 
 #include "brep.h"
-#include "vector.h"
+#include "dvec.h"
 
 #include "raytrace.h"
 #include "rtgeom.h"
@@ -729,6 +729,25 @@ getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv , BBNode* node) {
 			break;
 		}
 		brep_newton_iterate(surf, pr, Rcurr, su, sv, nuv, new_uv);
+
+		//push answer back to within node bounds
+		double ufluff = (node->m_u[1] - node->m_u[0])*0.01;
+		double vfluff = (node->m_v[1] - node->m_v[0])*0.01;
+		if (new_uv[0] < node->m_u[0] - ufluff)
+			new_uv[0] = node->m_u[0];
+		else if (new_uv[0] > node->m_u[1] + ufluff)
+			new_uv[0] = node->m_u[1];
+
+		if (new_uv[1] < node->m_v[0] - vfluff)
+			new_uv[1] = node->m_v[0];
+		else if (new_uv[1] > node->m_v[1] + vfluff)
+			new_uv[1] = node->m_v[1];
+
+
+		surf->EvNormal(new_uv[0],new_uv[1],newpt,ray.m_dir);
+		ray.m_dir.Reverse();
+		brep_get_plane_ray(ray,pr);
+
 		move(nuv, new_uv);
 		Dlast = d;
 	}

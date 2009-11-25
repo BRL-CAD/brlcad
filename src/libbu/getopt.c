@@ -17,21 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup getopt */
-/** @{ */
-/** @file getopt.c
- *
- * @brief
- * Special re-entrant version of getopt.
- *
- * Everything is prefixed with bu_, to distinguish it from the various
- * getopt routines found in libc.
- *
- * Important note -
- * If bu_getopt() it going to be used more than once, it is necessary
- * to reinitialize bu_optind=1 before beginning on the next argument
- * list.
- */
 
 #include "common.h"
 
@@ -44,8 +29,8 @@
  * see globals.c for details
  */
 
-#define BADCH	(int)'?'
-#define EMSG	""
+#define BADCH (int)'?'
+#define EMSG ""
 #define tell(s)	if (bu_opterr) { \
     fputs(*nargv, stderr); \
     fputs(s, stderr); \
@@ -57,8 +42,8 @@
 int
 bu_getopt(int nargc, char * const nargv[], const char *ostr)
 {
-    static char	*place = EMSG;	/* option letter processing */
-    register char	*oli;		/* option letter list index */
+    static char *place = EMSG;	/* option letter processing */
+    register char *oli;		/* option letter list index */
 
     if (*place=='\0') {
 	/* update scanning pointer */
@@ -75,15 +60,8 @@ bu_getopt(int nargc, char * const nargv[], const char *ostr)
 	}
     }				/* option letter okay? */
     if ((bu_optopt = (int)*place++) == (int)':' || !(oli = strchr(ostr, bu_optopt))) {
-#if 0
-	if (*place == '\0') {
-	    ++bu_optind;
-	    place = EMSG;
-	}
-#else
 	++bu_optind;
 	place = EMSG;
-#endif
 	tell(": illegal option -- ");
     }
     if (*++oli != ':') {
@@ -108,7 +86,7 @@ bu_getopt(int nargc, char * const nargv[], const char *ostr)
     }
     return (bu_optopt);			/* dump back option letter */
 }
-/** @} */
+
 /*
  * Local Variables:
  * mode: C

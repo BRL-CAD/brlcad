@@ -229,7 +229,7 @@ CopyRegion()
 	if (killbuf[killptr])
 		lfreelist(killbuf[killptr]);
 	nl = killbuf[killptr] = nbufline();
-	nl->l_dline = putline("");
+	nl->l_dline = put_line("");
 	nl->l_next = nl->l_prev = 0;
 
 	status = inorder(mp->m_line, mp->m_char, curline, curchar);
@@ -383,7 +383,7 @@ LINE	*l1,
 	nlines = diffnum;
 	SetLine(l1);
 
-	if (lastp(l2) && !blnkp(getline(l2->l_dline, genbuf)))
+	if (lastp(l2) && !blnkp(get_line(l2->l_dline, genbuf)))
 		nlines++;
 
 	while (nlines) {	/* One line at a time */
@@ -1412,18 +1412,18 @@ LINE	*line1,
 	SetModified(curbuf);
 	fixorder(&line1, &char1, &line2, &char2);
 	lsave();
-	ignore(getline(line1->l_dline, lbuf));
+	ignore(get_line(line1->l_dline, lbuf));
 	for (;;) {
 		if (line1 == line2 && char1 == char2)
 			break;
 		if (lbuf[char1] == '\0') {
 			char1 = 0;
-			line1->l_dline = putline(lbuf);
+			line1->l_dline = put_line(lbuf);
 			makedirty(line1);
 			if (lastp(line1))
 				break;
 			line1 = line1->l_next;
-			ignore(getline(line1->l_dline, lbuf));
+			ignore(get_line(line1->l_dline, lbuf));
 			continue;
 		}
 		if (up)
@@ -1432,7 +1432,7 @@ LINE	*line1,
 			lower(&lbuf[char1]);
 		char1++;
 	}
-	line1->l_dline = putline(lbuf);
+	line1->l_dline = put_line(lbuf);
 	makedirty(line1);
 	getDOT();
 }

@@ -56,7 +56,7 @@ ged_get_eyemodel(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    ged_rt_set_eye_model(gedp, eye_model);
+    _ged_rt_set_eye_model(gedp, eye_model);
     quat_mat2quat(quat, gedp->ged_gvp->gv_rotation);
 
     bu_vls_printf(&gedp->ged_result_str, "viewsize %.15e;\n", gedp->ged_gvp->gv_size);

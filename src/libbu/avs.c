@@ -17,14 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup avs */
-/** @{ */
-/** @file avs.c
- *
- * @brief
- * Routines to manage attribute/value sets.
- *
- */
 
 #include "common.h"
 
@@ -51,7 +43,7 @@ void
 bu_avs_init(struct bu_attribute_value_set *avsp, int len, const char *str)
 {
     if (bu_debug & BU_DEBUG_AVS)
-	bu_log("bu_avs_init(%p, len=%d, %s)\n", avsp, len, str);
+	bu_log("bu_avs_init(%p, len=%d, %s)\n", (void *)avsp, len, str);
 
     avsp->magic = BU_AVS_MAGIC;
     if (len <= 0)
@@ -72,7 +64,7 @@ bu_avs_new(int len, const char *str)
     bu_avs_init(avsp, len, "bu_avs_new");
 
     if (bu_debug & BU_DEBUG_AVS)
-	bu_log("bu_avs_new(len=%d, %s) = %p\n", len, str, avsp);
+	bu_log("bu_avs_new(len=%d, %s) = %p\n", len, str, (void *)avsp);
 
     return avsp;
 }
@@ -308,7 +300,6 @@ bu_avs_add_nonunique(struct bu_attribute_value_set *avsp, const char *name, cons
     }
 }
 
-/** @} */
 /*
  * Local Variables:
  * mode: C

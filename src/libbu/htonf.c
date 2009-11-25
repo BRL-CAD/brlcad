@@ -17,36 +17,25 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup hton */
-/** @{ */
-/** @file htonf.c
- *
- * @brief convert floats to host/network format
- *
- * Host to Network Floats  +  Network to Host Floats.
- *
- */
 
 #include "common.h"
-
-#include <stdio.h>
-#include "bu.h"
 
 #ifdef HAVE_MEMORY_H
 #  include <memory.h>
 #endif
 #include <stdio.h>
+#include <assert.h>
 
-/**
- * H T O N F
- *
- * Host to Network Floats
- */
+#include "bu.h"
+
+
 void
 htonf(register unsigned char *out, register const unsigned char *in, int count)
 {
     register int i;
 
+    assert(sizeof(float) == SIZEOF_NETWORK_FLOAT);
+
     switch (bu_byteorder()) {
 	case BU_BIG_ENDIAN:
 	    /*
@@ -77,16 +66,13 @@ htonf(register unsigned char *out, register const unsigned char *in, int count)
 }
 
 
-/**
- * N T O H F
- *
- * Network to Host Floats
- */
 void
 ntohf(register unsigned char *out, register const unsigned char *in, int count)
 {
     register int i;
 
+    assert(sizeof(float) == SIZEOF_NETWORK_FLOAT);
+
     switch (bu_byteorder()) {
 	case BU_BIG_ENDIAN:
 	    /*
@@ -94,8 +80,6 @@ ntohf(register unsigned char *out, register const unsigned char *in, int count)
 	     * IEEE format internally, using big-endian order.  These
 	     * are the lucky ones.
 	     */
-	    if (sizeof(float) != SIZEOF_NETWORK_FLOAT)
-		bu_bomb("ntohf:  sizeof(float) != SIZEOF_NETWORK_FLOAT\n");
 	    memcpy(out, in, count*SIZEOF_NETWORK_FLOAT);
 	    return;
 	case BU_LITTLE_ENDIAN:
@@ -118,7 +102,6 @@ ntohf(register unsigned char *out, register const unsigned char *in, int count)
     bu_bomb("ntohf.c:  ERROR, no NtoHD conversion for this machine type\n");
 }
 
-/** @} */
 /*
  * Local Variables:
  * mode: C

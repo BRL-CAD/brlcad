@@ -28,14 +28,16 @@
 #include "bio.h"
 #include <assert.h>
 #include <vector>
-#include <limits>
 
 #include "tnt.h"
 #include "jama_lu.h"
 
 #include "vmath.h"
 #include "bu.h"
-#include "vector.h"
+
+#include "brep.h"
+#include "dvec.h"
+
 #include "opennurbs_ext.h"
 
 
@@ -704,20 +706,36 @@ SurfaceTree::getSurface() {
 }
 
 int
-SurfaceTree::getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv, const ON_3dPoint& from) const {
+SurfaceTree::getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv, const ON_3dPoint& from, double tolerance) const {
     list<BBNode*> nodes;
     int num_nodes = m_root->getLeavesBoundingPoint(from, nodes);
+
+    double min_dist = MAX_FASTF;
+    ON_2dPoint curr_uv;
+    bool found = false;
 
     list<BBNode*>::iterator i;
     fastf_t dist = MAX_FASTF;
     for (i = nodes.begin(); i != nodes.end(); i++) {
 	BBNode* node = (*i);
-	if (::getSurfacePoint(pt, uv, node)) {
-	    ON_3dPoint fp = m_face->SurfaceOf()->PointAt(uv.x, uv.y);
-	    if (VAPPROXEQUAL(pt, fp, 0.001)) {
-		return 1;
+	if (::getSurfacePoint(pt, curr_uv, node)) {
+	    ON_3dPoint fp = m_face->SurfaceOf()->PointAt(curr_uv.x, curr_uv.y);
+	    double dist = fp.DistanceTo(pt);
+	    if (NEAR_ZERO(dist,BREP_SAME_POINT_TOLERANCE)) {
+		    uv = curr_uv;
+		    found = true;
+		    return 1; //close enough to same point so no sense in looking for one closer
+	    } else if (NEAR_ZERO(dist,tolerance)) {
+		if (dist < min_dist) {
+		    uv = curr_uv;
+		    min_dist = dist;
+		    found = true; //within tolerance but may be a point closer so keep looking
+		}
 	    }
 	}
+    }
+    if (found) {
+	return 1;
     }
     return -1;
 }
@@ -727,7 +745,9 @@ SurfaceTree::surfaceBBox(bool isLeaf, ON_3dPoint *m_corners, ON_3dVector *m_norm
 {
     const ON_Surface* surf = m_face->SurfaceOf();
 
-    point_t min, max;
+    point_t min, max,buffer;
+
+    VSETALL(buffer, BREP_EDGE_MISS_TOLERANCE);
     VSETALL(min, MAX_FASTF);
     VSETALL(max, -MAX_FASTF);
     for (int i = 0; i < 9; i++)
@@ -747,6 +767,8 @@ SurfaceTree::surfaceBBox(bool isLeaf, ON_3dPoint *m_corners, ON_3dVector *m_norm
     if (isLeaf) {
 	vect_t delta;
 		
+	VSUB2(min,min,buffer);
+	VADD2(max,max,buffer);
 	VSUB2(delta, max, min);
 	VSCALE(delta, delta, BBOX_GROW_3D);
 	VSUB2(min, min, delta);
@@ -1130,7 +1152,7 @@ get_closest_point(ON_2dPoint& outpt,
     int try_count = 0;
     bool delete_tree = false;
     bool found = false;
-    double d_last = real.infinity();
+    double d_last = DBL_MAX;
     pt2d_t curr_grad;
     pt2d_t new_uv;
     GCPData data;
@@ -1345,7 +1367,7 @@ generateParameters(BSpline& bspline) {
 	getCoefficients(bspline, n, t);
     }
     for (int i = 0; i < bspline.n+1; i++) {
-	double max = -real.max();
+	double max = -DBL_MAX;
 	for (int j = 0; j < UNIVERSAL_SAMPLE_COUNT; j++) {
 	    double f = N[j][i];
 	    double t = ((double)j)/(UNIVERSAL_SAMPLE_COUNT-1);

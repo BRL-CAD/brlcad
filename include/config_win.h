@@ -76,6 +76,7 @@
 #define HAVE_OFF_T		1
 #define HAVE_PROCESS_H  	1
 #define HAVE_REGEX_H		1
+#define HAVE_SIG_T		1
 #define HAVE_STRCHR		1
 #define HAVE_STRDUP		1
 #define HAVE_STRDUP_DECL	1
@@ -90,6 +91,9 @@
 #define sbrk(i) (NULL)
 
 #define fb_log bu_log
+
+#define HAVE_TK 1
+#define HAVE_X11_TYPES 1
 
 /*
  * functions declared in io.h

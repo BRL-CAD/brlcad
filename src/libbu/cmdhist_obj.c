@@ -17,14 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup butcl */
-/** @{ */
-/** @file cmdhist_obj.c
- *
- * A cmdhist object contains the attributes and
- * methods for maintaining command history.
- *
- */
 
 #include "common.h"
 
@@ -179,7 +171,7 @@ cho_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     bu_vls_free(&vls);
     return TCL_ERROR;
 }
-/** @} */
+
 /*
  * Local Variables:
  * mode: C

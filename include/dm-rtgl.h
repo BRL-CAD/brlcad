@@ -128,6 +128,24 @@ struct objTree {
 	((struct objTree *)(p))->ptInfo = NULL;		\
 }
 
+/**
+ *  Structure to hold information specific to running the incremental
+ *  ray firings and drawing events needed for rtgl
+ */
+struct rtglJobs {
+    int controlClip;
+    int calls;
+    int jobsDone;
+    char *oldTrees[RT_MAXARGS];
+    int oldNumTrees;
+    struct bu_hash_tbl *colorTable;
+    struct ptInfoList *currItem;
+    struct jobList *currJob;
+    int numJobs;
+    int rtglWasClosed;
+};
+
+
 #endif /* __DM_RTGL__ */
 
 /** @} */

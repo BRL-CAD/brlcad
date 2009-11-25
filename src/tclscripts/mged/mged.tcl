@@ -454,6 +454,16 @@ proc ia_invoke { w } {
 	    cmd_win set $id
 	}
 
+	# NOTE: Ideally, control of globbing behavior should
+	# be handled on a command-by-command basis, not an
+	# "all or nothing" approach.  Perhaps if there are
+	# situations where a complete top level glob expansion
+	# is desired, a non-default option could be added to
+	# do it here - as it is however, commands like search
+	# that want to do their own handling of such strings
+	# are out of luck unless the input strings are heavily
+	# (and manually) quoted to pass through db_glob and come
+	# out as valid strings for the next round.
 	if {$glob_compat_mode == 0} {
 	    set result [catch { uplevel \#0 $cmd } ia_msg]
 	} else {

@@ -133,9 +133,7 @@ Suggestions()
 }
 
 int
-main( argc, argv )
-    int argc;
-    char *argv[];
+main(int argc, char *argv [])
 {
     int i;
     int c;

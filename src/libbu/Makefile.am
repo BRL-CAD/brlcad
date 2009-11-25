@@ -87,7 +87,7 @@ htester_LDADD = \
 	libbu.la \
 	${BU_LIBS}
 
-include_HEADERS = \
+noinst_HEADERS = \
 	rb_internals.h \
 	uce-dirent.h
 
@@ -105,6 +105,8 @@ AM_CPPFLAGS = \
 	${PNG_CPPFLAGS} \
 	${TCL_CPPFLAGS} \
 	${LIBZ_CPPFLAGS}
+
+AM_CFLAGS = ${STRICT_FLAGS}
 
 if BUILD_TCL
 TCLDEP = $(LDEP) src/other/tcl

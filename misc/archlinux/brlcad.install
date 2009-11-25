@@ -57,15 +57,3 @@ pre_remove() {
   chmod 644 etc/ld.so.conf
   sbin/ldconfig -r .
 }
-
-
-op=$1
-shift
-$op $*
-
-# Local Variables:
-# tab-width: 8
-# mode: sh
-# indent-tabs-mode: t
-# End:
-# ex: shiftwidth=4 tabstop=8
