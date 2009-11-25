@@ -261,6 +261,9 @@ BC_ARG_ENABLE([only_rts], [only-rtserver], [Only build the components necessary 
 # run-time debugging
 BC_ARG_ENABLE([build_runtime_debug], [runtime-debug], [Enable run-time debug checking], [yes])
 
+# strict compilation flags
+BC_ARG_ENABLE([build_strict], [strict-build], [Enable strict compiler settings], [yes])
+
 # enable 64-bit builds
 BC_ARG_ENABLE([build_64bit], [64bit-build], [Enable 64-bit compilation mode], [auto])
 
@@ -410,6 +413,12 @@ BC_ARG_ALIAS([only_rts], [librtserver-only])
 BC_ARG_ALIAS([build_runtime_debug], [run-time-debug])
 BC_ARG_ALIAS([build_runtime_debug], [runtime-debugging])
 BC_ARG_ALIAS([build_runtime_debug], [run-time-debugging])
+
+# run-time debugging (help uses runtime-debug)
+BC_ARG_ALIAS([build_strict], [strict])
+BC_ARG_ALIAS([build_strict], [strict-compile])
+BC_ARG_ALIAS([build_strict], [strict-compile-flags])
+
 
 # Docbook documentation (help uses documentation)
 BC_ARG_ALIAS([build_docs], [documentation-install])
@@ -628,6 +637,9 @@ if test "x$set_everything" != "x" ; then
 	if test "x$bc_build_runtime_debug_set" = "xno" ; then
 		bc_build_runtime_debug="$set_everything"
 	fi
+	if test "x$bc_build_strict_compile" = "xno" ; then
+		bc_build_strict="$set_everything"
+	fi
 	if test "x$bc_build_regex_set" = "xno" ; then
 		bc_build_regex="$set_everything"
 	fi
@@ -751,6 +763,9 @@ AC_MSG_RESULT($bc_only_rts)
 
 AC_MSG_CHECKING(whether to use run-time debug checks)
 AC_MSG_RESULT($bc_build_runtime_debug)
+
+AC_MSG_CHECKING(whether to use strict compiler options)
+AC_MSG_RESULT($bc_build_strict)
 
 AC_MSG_CHECKING(whether to compile and install Docbook documentation)
 AC_MSG_RESULT($bc_build_docs)
@@ -1028,6 +1043,13 @@ AC_CHECK_LIB(c, sproc, thread_link_works=yes ; LIBTHREAD="-lc",
 	)]
     )]
 )
+
+dnl check for the daemon function in -lbsd and/or -lc for adrt
+LIBBSD=""
+AC_CHECK_LIB(bsd, daemon, LIBBSD="-lbsd",
+    [AC_CHECK_LIB(c, daemon, LIBBSD="-lc")]
+)
+AC_SUBST(LIBBSD)
 
 dnl check whether we ended up with functioning posix threading.
 AC_MSG_CHECKING([whether we are using POSIX threading])
@@ -1355,6 +1377,11 @@ nsl_link_works=no
 LIBNSL=""
 AC_CHECK_LIB(nsl, gethostbyaddr, nsl_link_works=yes ; LIBNSL="-lnsl")
 
+dnl check if a network library links
+newtork_link_works=no
+LIBNETWORK=""
+AC_CHECK_LIB(network, socket, network_link_works=yes ; LIBNETWORK="-lnetwork")
+
 dnl check if a malloc library links
 malloc_link_works=no
 LIBMALLOC=""
@@ -1467,6 +1494,13 @@ dnl *************************
 
 BC_CONFIGURE_STAGE([headers], [4 of 9])
 
+# make our minimum compliance goal explicit (needs to be tested here
+# so header files and types are tested properly)
+dnl BC_COMPILER_AND_LINKER_RECOGNIZES([-std=c99], [cstd], [no])
+dnl if test "x$bc_cstd_works" = "xyes" ; then
+dnl     CFLAGS="$CFLAGS -std=c99"
+dnl fi
+
 # C89 headers: assert.h, ctype.h, errno.h, float.h, limits.h, locale.h,
 # math.h, setjmp.h, signal.h, stdarg.h, stddef.h, stdio.h, stdlib.h,
 # string.h, time.h
@@ -1543,6 +1577,18 @@ AC_CHECK_HEADERS( \
 	unistd.h \
 	winsock.h \
 )
+
+# specifically for openNURBS
+AC_CHECK_HEADERS( \
+	ieeefp.h \
+)
+
+AC_LANG_PUSH([C++])
+AC_CHECK_HEADERS( \
+	limits \
+	istream \
+)
+AC_LANG_POP
 
 if test "x$bc_with_dtrace" != "xno" ; then
     AC_CHECK_HEADER(sys/sdt.h,, [bc_with_dtrace=no])
@@ -1765,7 +1811,7 @@ AC_TYPE_MODE_T
 AC_TYPE_OFF_T
 AC_TYPE_PID_T
 AC_TYPE_SIZE_T
-AC_CHECK_TYPE(socklen_t, ,
+AC_CHECK_TYPE([socklen_t], [],
     AC_DEFINE([socklen_t], [int], [Define to int if <sys/socket.h> nor <sys/types.h> define socklen_t]),
     [
 #ifdef HAVE_SYS_TYPES_H
@@ -1775,6 +1821,7 @@ AC_CHECK_TYPE(socklen_t, ,
 #  include <sys/socket.h>
 #endif
 ])
+AC_CHECK_TYPES([sig_t], [], [], [#include <signal.h>])
 
 
 dnl ******************************************
@@ -1805,6 +1852,15 @@ if test "xyes" = "xyes" ; then
     if test "x$bc_fexceptions_works" = "xyes" ; then
        FEXCEPTIONS="-fexceptions"
        AC_SUBST(FEXCEPTIONS)
+    fi
+
+    dnl check for -ftemplate-depth-NN this is needed in libpc and
+    dnl other code using boost where the template instantiation depth
+    dnl needs to be increased from the default ANSI minimum of 17.
+    BC_COMPILER_RECOGNIZES([-ftemplate-depth-50], [template_depth], [nokeep])
+    if test "x$bc_template_depth_works" = "xyes" ; then
+	TEMPLATE_DEPTH="-ftemplate-depth-50"
+	AC_SUBST(TEMPLATE_DEPTH)
     fi
 
     dnl dynamic SSE optimizations for NURBS processing
@@ -1968,6 +2024,17 @@ if test "x$bc_build_warnings" != "xno" ; then
 	fi
 fi
 
+dnl we are more strict on clean dirs by default (no-long-long needed due to tcl.h)
+if test "x$bc_build_strict" = "xyes" ; then
+   BC_COMPILER_AND_LINKER_RECOGNIZES([-w -pedantic -W -Wall -Werror -Wno-long-long], [strict], [no])
+   if test "x$bc_strict_works" = "xyes" ; then
+       # do not include -w as that was just to suppress any test warnings
+       STRICT_FLAGS="-pedantic -W -Wall -Werror -Wno-long-long"
+       AC_SUBST(STRICT_FLAGS)
+       AC_DEFINE([STRICT_FLAGS], [1], [Define to 1 if enabling strict compiler flags.])
+   fi
+fi
+
 # determine the minimum single-precision floating point tolerance
 # value at compile time such that: 1.0 + value != 1.0
 # ANSI defines this as FLT_EPSILON but float.h may not provide it.
@@ -1994,9 +2061,6 @@ if test "x$bc_compliant_float" = "xno" || test "x$bc_compliant_double" = "xno" ;
     AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
     sleep 5
 fi
-
-dnl AC_C_PROTOTYPES
-AM_C_PROTOTYPES
 
 AC_C_CONST
 AC_C_INLINE
@@ -2063,9 +2127,10 @@ AC_CHECK_FUNCS(\
 	drand48 \
 	fchmod \
 	fsync \
-	geteuid \
 	getegid \
+	geteuid \
 	gethostname \
+	getloadavg \
 	getopt_long \
 	getprogname \
 	kill \
@@ -2073,6 +2138,7 @@ AC_CHECK_FUNCS(\
 	memset \
 	mkstemp \
 	pipe \
+	popen \
 	random \
 	sbrk \
 	setenv \
@@ -3175,6 +3241,11 @@ AC_MSG_CHECKING(for system network socket library availablity)
 AC_MSG_RESULT([$nsl_link_works])
 AC_SUBST(LIBNSL)
 
+dnl *** libnetwork ***
+AC_MSG_CHECKING(for system network library availablity)
+AC_MSG_RESULT([$network_link_works])
+AC_SUBST(LIBNETWORK)
+
 dnl *** libmalloc ***
 AC_MSG_CHECKING(for system malloc library availability)
 AC_MSG_RESULT([$malloc_link_works])
@@ -3506,6 +3577,17 @@ fi
 AC_MSG_RESULT($dials_and_buttons)
 
 
+dnl *** MGED GUI ***
+tk_gui=yes
+if test "x$build_against_x11" = "xno" && test "x$build_against_opengl" = "xno" && test "x$build_against_wgl" = "xno" ; then
+    if test "x$build_brlcad_tk" = "xno" ; then
+	tk_gui=no
+    fi
+fi
+if test "x$tk_gui" = "xyes" ; then
+    AC_DEFINE(HAVE_TK, 1, [Support for a Tk GUI is enabled])
+fi
+
 dnl *** Docbook functionality ***
 docbook_processing=no
 docbook_pdf_processing=no
@@ -3589,6 +3671,7 @@ AM_CONDITIONAL(BUILD_REGEX, [test "x$build_brlcad_regex" = "xyes"])
 AM_CONDITIONAL(BUILD_ZLIB, [test "x$build_brlcad_zlib" = "xyes"])
 AM_CONDITIONAL(BUILD_URT, [test "x$build_brlcad_urt" = "xyes"])
 AM_CONDITIONAL(BUILD_OPENNURBS, [test "x$build_brlcad_opennurbs" = "xyes"])
+AM_CONDITIONAL(BUILD_BOOST, [test "x$ac_cv_header_limit" = "xyes" && test "x$ac_cv_header_istream" = "xyes"])
 AM_CONDITIONAL(BUILD_STEP, [test "x$build_brlcad_step" = "xyes"])
 AM_CONDITIONAL(BUILD_TERMLIB, [test "x$build_brlcad_termlib" = "xyes"])
 AM_CONDITIONAL(BUILD_TNT, [test "x$build_brlcad_tnt" = "xyes"])
@@ -3707,7 +3790,7 @@ STEP_EXPPP='${top_builddir}/src/other/step/src/exppp/exppp'
 STEP_AP203='${top_srcdir}/src/other/step/data/ap203/203wseds.exp'
 
 ORLE_LIBS=
-PKG_LIBS="${LIBSOCKET} ${LIBNSL}"
+PKG_LIBS="${LIBSOCKET} ${LIBNSL} ${LIBNETWORK}"
 SYSV_LIBS=
 TERMIO_LIBS="${TERMLIB}"
 CURSOR_LIBS="${TERMLIB}"
@@ -3718,12 +3801,17 @@ RT_LIBS="${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${REGEX} ${LIBM} ${SYSV} ${OPENNURBS}
 GCV_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 GED_LIBS="${WDB} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${PNG} ${TCL} ${REGEX}"
 WDB_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
-FB_LIBS="${BU} ${BU_LIBS} ${PKG} ${TCL} ${SOCKET} ${NSL}" # additional/optional FB_LIBS: ${TK} ${X_LIBS} ${LIBGL}
+FB_LIBS="${BU} ${BU_LIBS} ${PKG} ${PKG_LIBS} ${TCL}" # additional/optional FB_LIBS: ${TK} ${X_LIBS} ${LIBGL}
 OPTICAL_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${TCL}"
 MULTISPECTRAL_LIBS="${OPTICAL} ${OPTICAL_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 PC_LIBS="${LIBSTDCXX} ${BU} ${BU_LIBS}"
-DM_LIBS="${GED} ${GED_LIBS} ${RT} ${RT_LIBS} ${FB} ${FB_LIBS} ${PNG} ${TK} ${X_LIBS} ${FRAMEWORK_CARBON}"
-TCLCAD_LIBS="${GED} ${GED_LIBS} ${DM} ${DM_LIBS} ${FB} ${FB_LIBS} ${ITK} ${ITCL} ${TK} ${TCLSTUB} ${TCL}"
+if test "x$build_against_x11" = "xno" ; then
+    DM_LIBS="${GED} ${GED_LIBS} ${RT} ${RT_LIBS} ${FB} ${FB_LIBS} ${PNG} ${FRAMEWORK_CARBON}"
+    TCLCAD_LIBS="${GED} ${GED_LIBS} ${DM} ${DM_LIBS} ${FB} ${FB_LIBS} ${ITCL} ${TCLSTUB} ${TCL}"
+else
+    DM_LIBS="${GED} ${GED_LIBS} ${RT} ${RT_LIBS} ${FB} ${FB_LIBS} ${PNG} ${TK} ${X_LIBS} ${FRAMEWORK_CARBON}"
+    TCLCAD_LIBS="${GED} ${GED_LIBS} ${DM} ${DM_LIBS} ${FB} ${FB_LIBS} ${ITK} ${ITCL} ${TK} ${TCLSTUB} ${TCL}"
+fi
 BRLCAD_LIBS="${GED} ${GED_LIBS} ${WDB} ${WDB_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 
 AC_SUBST(BN)
@@ -3853,59 +3941,7 @@ AC_CONFIG_FILES([
 	doc/Makefile
 	doc/book/Makefile
 	doc/docbook/Makefile
-        doc/docbook/articles/Makefile
-	doc/docbook/articles/build_pattern/Makefile
-	doc/docbook/articles/build_pattern/en/Makefile
-	doc/docbook/articles/build_pattern/build_pattern_images/Makefile
-	doc/docbook/articles/build_region/Makefile
-	doc/docbook/articles/build_region/en/Makefile
-	doc/docbook/articles/build_region/build_region_images/Makefile
-	doc/docbook/articles/ebm_primitive/Makefile
-	doc/docbook/articles/ebm_primitive/en/Makefile
-	doc/docbook/articles/ebm_primitive/ebm_primitive_images/Makefile
-	doc/docbook/articles/mgedrc/Makefile
-	doc/docbook/articles/mgedrc/en/Makefile
-	doc/docbook/articles/mgedrc/mgedrc_images/Makefile
-	doc/docbook/articles/nirt/Makefile
-	doc/docbook/articles/nirt/en/Makefile
-	doc/docbook/articles/nirt/nirt_images/Makefile
-	doc/docbook/articles/pipes/Makefile
-	doc/docbook/articles/pipes/en/Makefile
-	doc/docbook/articles/pipes/pipe_images/Makefile
-	doc/docbook/articles/projection_shader/Makefile
-	doc/docbook/articles/projection_shader/en/Makefile
-	doc/docbook/articles/projection_shader/projection_shader_images/Makefile
-	doc/docbook/articles/oed/Makefile
-	doc/docbook/articles/oed/en/Makefile
-	doc/docbook/articles/oed/oed_images/Makefile
-	doc/docbook/articles/tire/Makefile
-	doc/docbook/articles/tire/en/Makefile
-	doc/docbook/articles/tire/tire_images/Makefile
-	doc/docbook/books/Makefile
-	doc/docbook/books/tutorial_series/Makefile
-	doc/docbook/books/tutorial_series/en/Makefile
-	doc/docbook/books/tutorial_series/volumeIII_images/Makefile
-	doc/docbook/lessons/Makefile
-	doc/docbook/lessons/mged/Makefile
-	doc/docbook/lessons/mged/en/Makefile
-	doc/docbook/lessons/mged/L001_imgs/Makefile
-	doc/docbook/lessons/mged/L002_imgs/Makefile
-	doc/docbook/lessons/mged/L004_imgs/Makefile
-	doc/docbook/lessons/mged/L005_imgs/Makefile
-	doc/docbook/lessons/mged/L006_imgs/Makefile
-	doc/docbook/lessons/mged/L007_imgs/Makefile
-	doc/docbook/lessons/mged/L008_imgs/Makefile
-	doc/docbook/lessons/mged/L009_imgs/Makefile
-	doc/docbook/lessons/mged/L010_imgs/Makefile
-	doc/docbook/lessons/mged/L011_imgs/Makefile
-	doc/docbook/lessons/mged/L012_imgs/Makefile
-	doc/docbook/lessons/mged/L013_imgs/Makefile
-	doc/docbook/lessons/mged/L014_imgs/Makefile
-	doc/docbook/lessons/mged/L015_imgs/Makefile
-	doc/docbook/lessons/mged/L016_imgs/Makefile
-	doc/docbook/system/Makefile
-	doc/docbook/system/man1/Makefile
-	doc/docbook/system/man1/en/Makefile
+	doc/docbook/fop.xconf
 	doc/html/Makefile
 	doc/html/ReleaseNotes/Makefile
 	doc/html/ReleaseNotes/Rel5.0/Makefile
@@ -3965,6 +4001,7 @@ AC_CONFIG_FILES([
 	src/archer/plugins/Core/Makefile
 	src/archer/plugins/Makefile
 	src/archer/plugins/Utility/Makefile
+	src/archer/plugins/Utility/attrGroupsDisplayUtilityP/Makefile
 	src/archer/plugins/Wizards/Makefile
 	src/archer/plugins/Wizards/humanwizard/Makefile
 	src/archer/plugins/Wizards/tankwizard/Makefile
@@ -3977,8 +4014,8 @@ AC_CONFIG_FILES([
 	src/canon/Makefile
 	src/conv/Makefile
 	src/conv/iges/Makefile
-	src/conv/step/Makefile
 	src/conv/intaval/Makefile
+	src/conv/step/Makefile
 	src/external/Makefile
 	src/external/Cubit/Makefile
 	src/external/EndgameFramework/Makefile
