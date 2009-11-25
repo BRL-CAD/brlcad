@@ -77,8 +77,8 @@
 /* +-2048 to +-1 */
 #define GED_TO_PM1(x) (((fastf_t)(x))*INV_GED)
 
-#if IR_KNOBS
-#define NOISE 16		/* Size of dead spot on knob */
+#ifdef IR_KNOBS
+#  define NOISE 16		/* Size of dead spot on knob */
 #endif
 
 /* the font used depends on the size of the window opened */
