@@ -802,6 +802,7 @@ rle_encode_ln(register FILE *fp, RLEpixel (*scan_buf))
     register int i;
     register int color;		/* holds current color */
     register int nseg;		/* number of non-bg run segments */
+    int skipline = 1;
 
     scan_p = (RLEpixel *)&(scan_buf[w_setup.h_xpos][RED]);
     last_p = (RLEpixel *)&(scan_buf[w_setup.h_xpos+(w_setup.h_xlen-1)][RED]);
@@ -809,7 +810,7 @@ rle_encode_ln(register FILE *fp, RLEpixel (*scan_buf))
 	if ((nseg = _bg_Get_Runs(scan_p, last_p)) == -1)
 	    return -1;
 	if (nseg <= 0) {
-	    RSkipLines(1);
+	    RSkipLines(skipline);
 	    return 0;
 	}
     } else {
@@ -845,7 +846,7 @@ rle_encode_ln(register FILE *fp, RLEpixel (*scan_buf))
 		SkipPixels(runlen);
 	}
     }
-    RSkipLines(1);
+    RSkipLines(skipline);
     return 0;
 }
 
