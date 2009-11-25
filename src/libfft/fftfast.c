@@ -36,15 +36,12 @@
 
 #include <stdlib.h>
 #include <stdio.h>	/* for stderr */
-#include <math.h>	/* for double sin(), cos() */
+
+#include "fft.h"
 
 
 #define MAXSIZE 65536	/* Needed for sin/cos tables */
 int _init_size = 0;	/* Internal: shows last initialized size */
-
-#if !defined(M_PI)
-#	define M_PI 3.141592653589793238462643
-#endif
 
 
 /* The COMPLEX type used throughout */
