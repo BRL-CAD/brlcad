@@ -59,7 +59,7 @@ ditsplit(int n /* length */, int m /* n = 2^m */)
 	   " * Machine-generated Real Split Radix Decimation in Freq Inverse FFT\n"
 	   " */\n\n");
 
-    printf("#define INVSQ2 0.70710678118654752440\n\n");
+    printf("#define M_SQRT1_2 0.70710678118654752440\n\n");
     printf("void\n");
     printf("irfft%d(register double x[])\n", n);
     printf("{\n");
@@ -97,8 +97,8 @@ ditsplit(int n /* length */, int m /* n = 2^m */)
 	    i3 += n8;
 	    i4 += n8;
 
-	    printf("    t1 = (x[%d] - x[%d]) * INVSQ2;\n", i2-1, i1-1);
-	    printf("    t2 = (x[%d] + x[%d]) * INVSQ2;\n", i4-1, i3-1);
+	    printf("    t1 = (x[%d] - x[%d]) * M_SQRT1_2;\n", i2-1, i1-1);
+	    printf("    t2 = (x[%d] + x[%d]) * M_SQRT1_2;\n", i4-1, i3-1);
 	    printf("    x[%d] += x[%d];\n", i1-1, i2-1);
 	    printf("    x[%d] = x[%d] - x[%d];\n", i2-1, i4-1, i3-1);
 	    printf("    x[%d] = -2.0 * (t2 + t1);\n", i3-1);

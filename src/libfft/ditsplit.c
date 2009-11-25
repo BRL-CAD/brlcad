@@ -77,8 +77,8 @@ irfft(double *x, int n /* length */)
 	    i3 += n8;
 	    i4 += n8;
 
-	    t1 = (x[i2-1] - x[i1-1]) * INVSQ2;
-	    t2 = (x[i4-1] + x[i3-1]) * INVSQ2;
+	    t1 = (x[i2-1] - x[i1-1]) * M_SQRT1_2;
+	    t2 = (x[i4-1] + x[i3-1]) * M_SQRT1_2;
 	    x[i1-1] += x[i2-1];
 	    x[i2-1] = x[i4-1] - x[i3-1];
 	    x[i3-1] = -2.0 * (t2 + t1);

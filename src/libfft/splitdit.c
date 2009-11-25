@@ -99,8 +99,8 @@ rfft(double *X, int N)
 		i1 = i0 + n4;
 		i2 = i1 + n4;
 		i3 = i2 + n4;
-		t1 = (X[i2-1]-X[i3-1])*INVSQ2;
-		t2 = (X[i2-1]+X[i3-1])*INVSQ2;
+		t1 = (X[i2-1]-X[i3-1])*M_SQRT1_2;
+		t2 = (X[i2-1]+X[i3-1])*M_SQRT1_2;
 		X[i2-1] = t2 - X[i1-1];
 		X[i3-1] = t2 + X[i1-1];
 		X[i1-1] = X[i0-1] - t1;

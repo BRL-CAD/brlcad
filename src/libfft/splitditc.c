@@ -56,7 +56,7 @@ splitdit(int N, int M)
     printf("/*\n"
 	   " * Machine-generated Real Split Radix Decimation in Time FFT\n"
 	   " */\n\n");
-    printf("#define INVSQ2 0.70710678118654752440\n\n");
+    printf("#define M_SQRT1_2 0.70710678118654752440\n\n");
     printf("void\n");
     printf("rfft%d(register double X[])\n", N);
     printf("{\n");
@@ -120,8 +120,8 @@ splitdit(int N, int M)
 		i1 = i0 + n4;
 		i2 = i1 + n4;
 		i3 = i2 + n4;
-		printf("    t0 = (X[%d]-X[%d])*INVSQ2;\n", i2-1, i3-1);
-		printf("    t1 = (X[%d]+X[%d])*INVSQ2;\n", i2-1, i3-1);
+		printf("    t0 = (X[%d]-X[%d])*M_SQRT1_2;\n", i2-1, i3-1);
+		printf("    t1 = (X[%d]+X[%d])*M_SQRT1_2;\n", i2-1, i3-1);
 		printf("    X[%d] = t1 - X[%d];\n", i2-1, i1-1);
 		printf("    X[%d] = t1 + X[%d];\n", i3-1, i1-1);
 		printf("    X[%d] = X[%d] - t0;\n", i1-1, i0-1);
