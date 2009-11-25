@@ -19,7 +19,7 @@
  */
 /** @file dm-ogl.c
  *
- *  An X11 OpenGL Display Manager.
+ * An X11 OpenGL Display Manager.
  *
  */
 
@@ -37,8 +37,8 @@
 #  include <X11/Xosdefs.h>
 #endif
 #ifdef linux
-#  undef   X_NOT_STDC_ENV
-#  undef   X_NOT_POSIX
+#  undef X_NOT_STDC_ENV
+#  undef X_NOT_POSIX
 #endif
 
 #define XLIB_ILLEGAL_ACCESS	/* necessary on facist SGI 5.0.1 */
@@ -70,25 +70,16 @@
 #define YSTEREO		491	/* subfield height, in scanlines */
 #define YOFFSET_LEFT	532	/* YSTEREO + YBLANK ? */
 
-#define USE_VECTOR_THRESHHOLD 0
-
-#if USE_VECTOR_THRESHHOLD
-extern int vectorThreshold;	/* defined in libdm/tcl.c */
-#endif
-
-static int ogl_actively_drawing;
-HIDDEN XVisualInfo *ogl_choose_visual(struct dm *dmp, Tk_Window tkwin);
-
 /* Display Manager package interface */
-#define IRBOUND	4095.9	/* Max magnification in Rot matrix */
+#define IRBOUND 4095.9	/* Max magnification in Rot matrix */
+#define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
 
-#define PLOTBOUND	1000.0	/* Max magnification in Rot matrix */
-struct dm	*ogl_open(Tcl_Interp *interp, int argc, char **argv);
 
+static int ogl_actively_drawing = 0;
 
 HIDDEN fastf_t default_viewscale = 1000.0;
-HIDDEN double	xlim_view = 1.0;	/* args for glOrtho*/
-HIDDEN double	ylim_view = 1.0;
+HIDDEN double xlim_view = 1.0;	/* args for glOrtho*/
+HIDDEN double ylim_view = 1.0;
 
 /* lighting parameters */
 HIDDEN float amb_three[] = {0.3, 0.3, 0.3, 1.0};
@@ -147,11 +138,11 @@ ogl_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b
 
 
 /*
- *			O G L _ C O N F I G U R E W I N
+ * O G L _ C O N F I G U R E W I N
  *
- *  Either initially, or on resize/reshape of the window,
- *  sense the actual size of the window, and perform any
- *  other initializations of the window configuration.
+ * Either initially, or on resize/reshape of the window,
+ * sense the actual size of the window, and perform any
+ * other initializations of the window configuration.
  *
  * also change font size if necessary
  */
@@ -160,7 +151,7 @@ ogl_configureWin_guts(struct dm *dmp, int force)
 {
     GLint mm;
     XWindowAttributes xwa;
-    XFontStruct	*newfontstruct;
+    XFontStruct *newfontstruct;
 
     if (dmp->dm_debugLevel)
 	bu_log("ogl_configureWin_guts()\n");
@@ -172,8 +163,8 @@ ogl_configureWin_guts(struct dm *dmp, int force)
 	return TCL_ERROR;
     }
 
-    XGetWindowAttributes( ((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			  ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win, &xwa );
+    XGetWindowAttributes(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+			 ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win, &xwa);
 
     /* nothing to do */
     if (!force &&
@@ -211,14 +202,14 @@ ogl_configureWin_guts(struct dm *dmp, int force)
     glGetIntegerv(GL_MATRIX_MODE, &mm);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    glOrtho( -xlim_view, xlim_view, -ylim_view, ylim_view, 0.0, 2.0 );
+    glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, 0.0, 2.0);
     glMatrixMode(mm);
 
     /* First time through, load a font or quit */
     if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct == NULL) {
 	if ((((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct =
 	     XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			    FONT9)) == NULL ) {
+			    FONT9)) == NULL) {
 	    /* Try hardcoded backup font */
 	    if ((((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct =
 		 XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
@@ -227,8 +218,8 @@ ogl_configureWin_guts(struct dm *dmp, int force)
 		return TCL_ERROR;
 	    }
 	}
-	glXUseXFont( ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
-		     0, 127, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+	glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
+		    0, 127, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
     }
 
 
@@ -238,56 +229,56 @@ ogl_configureWin_guts(struct dm *dmp, int force)
     if (dmp->dm_width < 582) {
 	if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 5) {
 	    if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-						FONT5)) != NULL ) {
+						FONT5)) != NULL) {
 		XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 			  ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
 		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		glXUseXFont( ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
-			     0, 127, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+		glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
+			    0, 127, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
 	    }
 	}
     } else if (dmp->dm_width < 679) {
 	if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 6) {
 	    if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-						FONT6)) != NULL ) {
+						FONT6)) != NULL) {
 		XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 			  ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
 		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		glXUseXFont( ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
-			     0, 127, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+		glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
+			    0, 127, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
 	    }
 	}
     } else if (dmp->dm_width < 776) {
 	if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 7) {
 	    if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-						FONT7)) != NULL ) {
+						FONT7)) != NULL) {
 		XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 			  ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
 		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		glXUseXFont( ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
-			     0, 127, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+		glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
+			    0, 127, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
 	    }
 	}
     } else if (dmp->dm_width < 873) {
 	if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 8) {
 	    if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-						FONT8)) != NULL ) {
+						FONT8)) != NULL) {
 		XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 			  ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
 		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		glXUseXFont( ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
-			     0, 127, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+		glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
+			    0, 127, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
 	    }
 	}
     } else {
 	if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 9) {
 	    if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-						FONT9)) != NULL ) {
+						FONT9)) != NULL) {
 		XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 			  ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
 		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
-		glXUseXFont( ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
-			     0, 127, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
+		glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
+			    0, 127, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
 	    }
 	}
     }
@@ -342,10 +333,149 @@ ogl_setLight(struct dm *dmp, int lighting_on)
 }
 
 
+/**
+ * currently, get a double buffered rgba visual that works with Tk and
+ * OpenGL
+ */
+HIDDEN XVisualInfo *
+ogl_choose_visual(struct dm *dmp, Tk_Window tkwin)
+{
+    XVisualInfo *vip, vitemp, *vibase, *maxvip;
+    int tries, baddepth;
+    int num, i, j;
+    int fail;
+    int *good = NULL;
+
+    /* requirements */
+    int use;
+    int rgba;
+    int dbfr;
+
+    /* desires */
+    int m_zbuffer = 1; /* m_zbuffer - try to get zbuffer */
+    int zbuffer;
+
+    int m_stereo; /* m_stereo - try to get stereo */
+    int stereo;
+
+    if (dmp->dm_stereo) {
+	m_stereo = 1;
+    } else {
+	m_stereo = 0;
+    }
+
+    memset((void *)&vitemp, 0, sizeof(XVisualInfo));
+    /* Try to satisfy the above desires with a color visual of the
+     * greatest depth */
+
+    vibase = XGetVisualInfo(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+			    0, &vitemp, &num);
+
+    good = (int *)bu_malloc(sizeof(int)*num, "alloc good visuals");
+
+    while (1) {
+	for (i=0, j=0, vip=vibase; i<num; i++, vip++) {
+	    /* requirements */
+	    fail = glXGetConfig(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+				vip, GLX_USE_GL, &use);
+	    if (fail || !use)
+		continue;
+
+	    fail = glXGetConfig(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+				vip, GLX_RGBA, &rgba);
+	    if (fail || !rgba)
+		continue;
+
+	    fail = glXGetConfig(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+				vip, GLX_DOUBLEBUFFER, &dbfr);
+	    if (fail || !dbfr)
+		continue;
+
+	    /* desires */
+	    if (m_zbuffer) {
+		fail = glXGetConfig(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+				    vip, GLX_DEPTH_SIZE, &zbuffer);
+		if (fail || !zbuffer)
+		    continue;
+	    }
+
+	    if (m_stereo) {
+		fail = glXGetConfig(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+				    vip, GLX_STEREO, &stereo);
+		if (fail || !stereo) {
+		    bu_log("ogl_choose_visual: failed visual - GLX_STEREO\n");
+		    continue;
+		}
+	    }
+
+	    /* this visual meets criteria */
+	    good[j++] = i;
+	}
+
+	/* j = number of acceptable visuals under consideration */
+	if (j >= 1) {
+	    baddepth = 1000;
+	    for (tries = 0; tries < j; ++tries) {
+		maxvip = vibase + good[0];
+		for (i=1; i<j; i++) {
+		    vip = vibase + good[i];
+		    if ((vip->depth > maxvip->depth)&&(vip->depth < baddepth)) {
+			maxvip = vip;
+		    }
+		}
+
+		((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap =
+		    XCreateColormap(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+				    RootWindow(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+					       maxvip->screen), maxvip->visual, AllocNone);
+
+		if (Tk_SetWindowVisual(tkwin,
+				       maxvip->visual, maxvip->depth,
+				       ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap)) {
+
+		    glXGetConfig(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+				 maxvip, GLX_DEPTH_SIZE,
+				 &((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.depth);
+		    if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.depth > 0)
+			((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuf = 1;
+
+		    bu_free(good, "dealloc good visuals");
+		    return maxvip; /* success */
+		} else {
+		    /* retry with lesser depth */
+		    baddepth = maxvip->depth;
+		    XFreeColormap(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+				  ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap);
+		}
+	    }
+	}
+
+	/* if no success at this point, relax a desire and try again */
+
+	if (m_stereo) {
+	    m_stereo = 0;
+	    bu_log("Stereo not available.\n");
+	    continue;
+	}
+
+	if (m_zbuffer) {
+	    m_zbuffer = 0;
+	    continue;
+	}
+
+	/* ran out of visuals, give up */
+	break;
+    }
+
+    bu_free(good, "dealloc good visuals");
+    return (XVisualInfo *)NULL; /* failure */
+}
+
+
 /*
- *  			O G L _ C L O S E
+ * O G L _ C L O S E
  *
- *  Gracefully release the display.
+ * Gracefully release the display.
  */
 HIDDEN int
 ogl_close(struct dm *dmp)
@@ -381,7 +511,7 @@ ogl_close(struct dm *dmp)
 
 
 /*
- *			O G L _ O P E N
+ * O G L _ O P E N
  *
  * Fire up the display manager, and the display processor.
  *
@@ -557,7 +687,7 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
 			    cp + 1, (char *)NULL);
     }
 
-    if ( pubvars->xtkwin == NULL ) {
+    if (pubvars->xtkwin == NULL) {
 	bu_log("dm-Ogl: Failed to open %s\n", bu_vls_addr(&dmp->dm_pathName));
 	bu_vls_free(&init_proc_vls);
 	(void)ogl_close(dmp);
@@ -598,7 +728,7 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
 		       dmp->dm_height);
 
     /* must do this before MakeExist */
-    if ((pubvars->vip=ogl_choose_visual(dmp,pubvars->xtkwin)) == NULL) {
+    if ((pubvars->vip=ogl_choose_visual(dmp, pubvars->xtkwin)) == NULL) {
 	bu_log("ogl_open: Can't get an appropriate visual.\n");
 	(void)ogl_close(dmp);
 	return DM_NULL;
@@ -622,7 +752,7 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
     /* If we used an indirect context, then as far as sgi is concerned,
      * gl hasn't been used.
      */
-    privvars->is_direct = (char) glXIsDirect(pubvars->dpy,privvars->glxc);
+    privvars->is_direct = (char) glXIsDirect(pubvars->dpy, privvars->glxc);
 
     /*
      * Take a look at the available input devices. We're looking
@@ -633,8 +763,8 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
     }
 
     /* IRIX 4.0.5 bug workaround */
-    if ( list == (XDeviceInfoPtr)NULL ||
-	 list == (XDeviceInfoPtr)1 )  goto Done;
+    if (list == (XDeviceInfoPtr)NULL ||
+	list == (XDeviceInfoPtr)1) goto Done;
 
     for (j = 0; j < ndevices; ++j, list++) {
 	if (list->use == IsXExtensionDevice) {
@@ -675,7 +805,7 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
 	    }
 	}
     }
- Done:
+Done:
     XFreeDeviceList(olist);
 
     Tk_MapWindow(pubvars->xtkwin);
@@ -708,7 +838,7 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
     (void)ogl_configureWin_guts(dmp, 1);
 
     /* Lines will be solid when stippling disabled, dashed when enabled*/
-    glLineStipple( 1, 0xCF33);
+    glLineStipple(1, 0xCF33);
     glDisable(GL_LINE_STIPPLE);
 
     backgnd[0] = backgnd[1] = backgnd[2] = backgnd[3] = 0.0;
@@ -724,7 +854,7 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
     /* Leave it in model_view mode normally */
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    glOrtho( -xlim_view, xlim_view, -ylim_view, ylim_view, 0.0, 2.0 );
+    glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, 0.0, 2.0);
     glGetDoublev(GL_PROJECTION_MATRIX, privvars->faceplate_mat);
     glPushMatrix();
     glMatrixMode(GL_MODELVIEW);
@@ -799,7 +929,7 @@ ogl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 	(void)ogl_configureWin_guts(dmp1, 1);
 
 	/* Lines will be solid when stippling disabled, dashed when enabled*/
-	glLineStipple( 1, 0xCF33);
+	glLineStipple(1, 0xCF33);
 	glDisable(GL_LINE_STIPPLE);
 
 	backgnd[0] = backgnd[1] = backgnd[2] = backgnd[3] = 0.0;
@@ -816,7 +946,7 @@ ogl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 	/* Leave it in model_view mode normally */
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	glOrtho( -xlim_view, xlim_view, -ylim_view, ylim_view, 0.0, 2.0 );
+	glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, 0.0, 2.0);
 	glGetDoublev(GL_PROJECTION_MATRIX, ((struct ogl_vars *)dmp1->dm_vars.priv_vars)->faceplate_mat);
 	glPushMatrix();
 	glMatrixMode(GL_MODELVIEW);
@@ -869,7 +999,7 @@ ogl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 	(void)ogl_configureWin_guts(dmp2, 1);
 
 	/* Lines will be solid when stippling disabled, dashed when enabled*/
-	glLineStipple( 1, 0xCF33);
+	glLineStipple(1, 0xCF33);
 	glDisable(GL_LINE_STIPPLE);
 
 	backgnd[0] = backgnd[1] = backgnd[2] = backgnd[3] = 0.0;
@@ -886,7 +1016,7 @@ ogl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 	/* Leave it in model_view mode normally */
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	glOrtho( -xlim_view, xlim_view, -ylim_view, ylim_view, 0.0, 2.0 );
+	glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, 0.0, 2.0);
 	glGetDoublev(GL_PROJECTION_MATRIX, ((struct ogl_vars *)dmp2->dm_vars.priv_vars)->faceplate_mat);
 	glPushMatrix();
 	glMatrixMode(GL_MODELVIEW);
@@ -904,8 +1034,9 @@ ogl_share_dlist(struct dm *dmp1, struct dm *dmp2)
     return TCL_OK;
 }
 
+
 /*
- *			O G L _ D R A W B E G I N
+ * O G L _ D R A W B E G I N
  *
  * There are global variables which are parameters to this routine.
  */
@@ -964,8 +1095,9 @@ ogl_drawBegin(struct dm *dmp)
     return TCL_OK;
 }
 
+
 /*
- *			O G L _ D R A W E N D
+ * O G L _ D R A W E N D
  */
 HIDDEN int
 ogl_drawEnd(struct dm *dmp)
@@ -1018,18 +1150,19 @@ ogl_drawEnd(struct dm *dmp)
     return TCL_OK;
 }
 
+
 /*
- *  			O G L _ L O A D M A T R I X
+ * O G L _ L O A D M A T R I X
  *
- *  Load a new transformation matrix.  This will be followed by
- *  many calls to ogl_draw().
+ * Load a new transformation matrix.  This will be followed by
+ * many calls to ogl_draw().
  */
 HIDDEN int
 ogl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 {
     register fastf_t *mptr;
     GLfloat gtmat[16];
-    mat_t	newm;
+    mat_t newm;
 
     if (dmp->dm_debugLevel) {
 	struct bu_vls tmp_vls;
@@ -1048,34 +1181,34 @@ ogl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 	bu_vls_free(&tmp_vls);
     }
 
-    switch (which_eye)  {
+    switch (which_eye) {
 	case 0:
 	    /* Non-stereo */
 	    break;
 	case 1:
 	    /* R eye */
-	    glViewport(0,  0, (XMAXSCREEN)+1, ( YSTEREO)+1);
+	    glViewport(0,  0, (XMAXSCREEN)+1, (YSTEREO)+1);
 	    glScissor(0,  0, (XMAXSCREEN)+1, (YSTEREO)+1);
-	    ogl_drawString2D( dmp, "R", 0.986, 0.0, 0, 1 );
+	    ogl_drawString2D(dmp, "R", 0.986, 0.0, 0, 1);
 	    break;
 	case 2:
 	    /* L eye */
-	    glViewport(0,  0+YOFFSET_LEFT, ( XMAXSCREEN)+1,
-		       ( YSTEREO+YOFFSET_LEFT)-( YOFFSET_LEFT)+1);
-	    glScissor(0,  0+YOFFSET_LEFT, ( XMAXSCREEN)+1,
-		      ( YSTEREO+YOFFSET_LEFT)-( YOFFSET_LEFT)+1);
+	    glViewport(0,  0+YOFFSET_LEFT, (XMAXSCREEN)+1,
+		       (YSTEREO+YOFFSET_LEFT)-(YOFFSET_LEFT)+1);
+	    glScissor(0,  0+YOFFSET_LEFT, (XMAXSCREEN)+1,
+		      (YSTEREO+YOFFSET_LEFT)-(YOFFSET_LEFT)+1);
 	    break;
     }
 
     if (!dmp->dm_zclip) {
-	mat_t       nozclip;
+	mat_t nozclip;
 
-	MAT_IDN( nozclip );
+	MAT_IDN(nozclip);
 	nozclip[10] = 1.0e-20;
-	bn_mat_mul( newm, nozclip, mat );
+	bn_mat_mul(newm, nozclip, mat);
 	mptr = newm;
     } else {
-	mat_t       nozclip;
+	mat_t nozclip;
 
 	MAT_IDN(nozclip);
 	nozclip[10] = dmp->dm_bound;
@@ -1105,24 +1238,22 @@ ogl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-    glTranslatef( 0.0, 0.0, -1.0 );
-    glMultMatrixf( gtmat );
+    glTranslatef(0.0, 0.0, -1.0);
+    glMultMatrixf(gtmat);
 
     return TCL_OK;
 }
 
+
 /*
- *  			O G L _ D R A W V L I S T
+ * O G L _ D R A W V L I S T
  *
  */
 HIDDEN int
 ogl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 {
-    register struct bn_vlist	*tvp;
-    int				first;
-#if USE_VECTOR_THRESHHOLD
-    static int			nvectors = 0;
-#endif
+    register struct bn_vlist *tvp;
+    int first;
     int mflag = 1;
     static float black[4] = {0.0, 0.0, 0.0, 0.0};
 
@@ -1132,9 +1263,9 @@ ogl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
     /* Viewing region is from -1.0 to +1.0 */
     first = 1;
     for (BU_LIST_FOR(tvp, bn_vlist, &vp->l)) {
-	register int	i;
-	register int	nused = tvp->nused;
-	register int	*cmd = tvp->cmd;
+	register int i;
+	register int nused = tvp->nused;
+	register int *cmd = tvp->cmd;
 	register point_t *pt = tvp->pt;
 	for (i = 0; i < nused; i++, cmd++, pt++) {
 	    if (dmp->dm_debugLevel > 2)
@@ -1202,27 +1333,6 @@ ogl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 		    break;
 	    }
 	}
-
-#if USE_VECTOR_THRESHHOLD
-/*XXX The Tcl_DoOneEvent below causes the following error:
-  X Error of failed request:  GLXBadContextState
-*/
-
-	nvectors += nused;
-
-	if (nvectors >= vectorThreshold) {
-	    if (dmp->dm_debugLevel)
-		bu_log("ogl_drawVList(): handle Tcl events\n");
-
-	    nvectors = 0;
-
-	    /* Handle events in the queue */
-	    while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
-
-	    if (dmp->dm_debugLevel)
-		bu_log("ogl_drawVList(): handled Tcl events successfully\n");
-	}
-#endif
     }
 
     if (first == 0)
@@ -1231,8 +1341,9 @@ ogl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
     return TCL_OK;
 }
 
+
 /*
- *  			O G L _ D R A W
+ * O G L _ D R A W
  *
  */
 HIDDEN int
@@ -1242,7 +1353,7 @@ ogl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)),
     if (!callback_function) {
 	if (data) {
 	    vp = (struct bn_vlist *)data;
-	    ogl_drawVList(dmp,vp);
+	    ogl_drawVList(dmp, vp);
 	}
     } else {
 	if (!data) {
@@ -1254,8 +1365,9 @@ ogl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)),
     return TCL_OK;
 }
 
+
 /*
- *			O G L _ N O R M A L
+ * O G L _ N O R M A L
  *
  * Restore the display processor to a normal mode of operation
  * (ie, not scaled, rotated, displaced, etc).
@@ -1270,7 +1382,7 @@ ogl_normal(struct dm *dmp)
     if (!((struct ogl_vars *)dmp->dm_vars.priv_vars)->face_flag) {
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();
-	glLoadMatrixd( ((struct ogl_vars *)dmp->dm_vars.priv_vars)->faceplate_mat );
+	glLoadMatrixd(((struct ogl_vars *)dmp->dm_vars.priv_vars)->faceplate_mat);
 	glMatrixMode(GL_MODELVIEW);
 	glPushMatrix();
 	glLoadIdentity();
@@ -1284,8 +1396,9 @@ ogl_normal(struct dm *dmp)
     return TCL_OK;
 }
 
+
 /*
- *			O G L _ D R A W S T R I N G 2 D
+ * O G L _ D R A W S T R I N G 2 D
  *
  * Output a string.
  * The starting position of the beam is as specified.
@@ -1302,14 +1415,14 @@ ogl_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int s
 	glRasterPos2f(x, y);
 
     glListBase(((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-    glCallLists(strlen( str ), GL_UNSIGNED_BYTE,  str );
+    glCallLists(strlen(str), GL_UNSIGNED_BYTE,  str);
 
     return TCL_OK;
 }
 
 
 /*
- *			O G L _ D R A W L I N E 2 D
+ * O G L _ D R A W L I N E 2 D
  *
  */
 HIDDEN int
@@ -1344,8 +1457,9 @@ ogl_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2)
     return TCL_OK;
 }
 
+
 /*
- *			O G L _ D R A W L I N E 3 D
+ * O G L _ D R A W L I N E 3 D
  *
  */
 HIDDEN int
@@ -1391,8 +1505,9 @@ ogl_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2)
     return TCL_OK;
 }
 
+
 /*
- *			O G L _ D R A W L I N E S 3 D
+ * O G L _ D R A W L I N E S 3 D
  *
  */
 HIDDEN int
@@ -1443,6 +1558,7 @@ ogl_drawLines3D(struct dm *dmp, int npoints, point_t *points)
     return TCL_OK;
 }
 
+
 HIDDEN int
 ogl_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
 {
@@ -1476,7 +1592,7 @@ ogl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b
     wireColor[3] = transparency;
 
     if (strict) {
-	glColor3ub( (GLubyte)r, (GLubyte)g, (GLubyte)b );
+	glColor3ub((GLubyte)r, (GLubyte)g, (GLubyte)b);
     } else {
 
 	if (dmp->dm_light) {
@@ -1504,7 +1620,7 @@ ogl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b
 #endif
 
 	} else {
-	    glColor3ub( (GLubyte)r,  (GLubyte)g,  (GLubyte)b );
+	    glColor3ub((GLubyte)r,  (GLubyte)g,  (GLubyte)b);
 	}
     }
 
@@ -1531,7 +1647,7 @@ ogl_setLineAttr(struct dm *dmp, int width, int style)
     return TCL_OK;
 }
 
-/* ARGSUSED */
+
 HIDDEN int
 ogl_debug(struct dm *dmp, int lvl)
 {
@@ -1539,6 +1655,7 @@ ogl_debug(struct dm *dmp, int lvl)
 
     return TCL_OK;
 }
+
 
 HIDDEN int
 ogl_setWinBounds(struct dm *dmp, int *w)
@@ -1559,144 +1676,6 @@ ogl_setWinBounds(struct dm *dmp, int *w)
 	dmp->dm_bound = GED_MAX / dmp->dm_clipmax[2];
 
     return TCL_OK;
-}
-
-#define OGL_DO_STEREO 1
-/* currently, get a double buffered rgba visual that works with Tk and
- * OpenGL
- */
-HIDDEN XVisualInfo *
-ogl_choose_visual(struct dm *dmp, Tk_Window tkwin)
-{
-    XVisualInfo *vip, vitemp, *vibase, *maxvip;
-    int tries, baddepth;
-    int num, i, j;
-    int fail;
-    int *good = NULL;
-
-    /* requirements */
-    int use;
-    int rgba;
-    int dbfr;
-
-    /* desires */
-    int m_zbuffer = 1; /* m_zbuffer - try to get zbuffer */
-    int zbuffer;
-
-    int m_stereo; /* m_stereo - try to get stereo */
-    int stereo;
-
-    if ( dmp->dm_stereo )  {
-	m_stereo = 1;
-    } else {
-	m_stereo = 0;
-    }
-
-    memset((void *)&vitemp, 0, sizeof(XVisualInfo));
-    /* Try to satisfy the above desires with a color visual of the
-     * greatest depth */
-
-    vibase = XGetVisualInfo(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			    0, &vitemp, &num);
-
-    good = (int *)bu_malloc(sizeof(int)*num, "alloc good visuals");
-
-    while (1) {
-	for (i=0, j=0, vip=vibase; i<num; i++, vip++) {
-	    /* requirements */
-	    fail = glXGetConfig(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-				vip, GLX_USE_GL, &use);
-	    if (fail || !use)
-		continue;
-
-	    fail = glXGetConfig(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-				vip, GLX_RGBA, &rgba);
-	    if (fail || !rgba)
-		continue;
-
-	    fail = glXGetConfig(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-				vip, GLX_DOUBLEBUFFER, &dbfr);
-	    if (fail || !dbfr)
-		continue;
-
-	    /* desires */
-	    if ( m_zbuffer ) {
-		fail = glXGetConfig(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-				    vip, GLX_DEPTH_SIZE, &zbuffer);
-		if (fail || !zbuffer)
-		    continue;
-	    }
-
-	    if ( m_stereo ) {
-		fail = glXGetConfig(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-				    vip, GLX_STEREO, &stereo);
-		if (fail || !stereo) {
-		    bu_log("ogl_choose_visual: failed visual - GLX_STEREO\n");
-		    continue;
-		}
-	    }
-
-	    /* this visual meets criteria */
-	    good[j++] = i;
-	}
-
-	/* j = number of acceptable visuals under consideration */
-	if (j >= 1) {
-	    baddepth = 1000;
-	    for (tries = 0; tries < j; ++tries) {
-		maxvip = vibase + good[0];
-		for (i=1; i<j; i++) {
-		    vip = vibase + good[i];
-		    if ((vip->depth > maxvip->depth)&&(vip->depth < baddepth)) {
-			maxvip = vip;
-		    }
-		}
-
-		((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap =
-		    XCreateColormap(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-				    RootWindow(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-					       maxvip->screen), maxvip->visual, AllocNone);
-
-		if (Tk_SetWindowVisual(tkwin,
-				       maxvip->visual, maxvip->depth,
-				       ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap)) {
-
-		    glXGetConfig(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-				 maxvip, GLX_DEPTH_SIZE,
-				 &((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.depth);
-		    if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.depth > 0)
-			((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuf = 1;
-
-		    bu_free(good, "dealloc good visuals");
-		    return maxvip; /* success */
-		} else {
-		    /* retry with lesser depth */
-		    baddepth = maxvip->depth;
-		    XFreeColormap(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-				  ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap);
-		}
-	    }
-	}
-
-	/* if no success at this point, relax a desire and try again */
-
-	if ( m_stereo ) {
-	    m_stereo = 0;
-	    bu_log("Stereo not available.\n");
-	    continue;
-	}
-
-	if ( m_zbuffer ) {
-	    m_zbuffer = 0;
-	    continue;
-	}
-
-	/* ran out of visuals, give up */
-	break;
-    }
-
-    bu_free(good, "dealloc good visuals");
-    return (XVisualInfo *)NULL; /* failure */
 }
 
 
@@ -1728,6 +1707,7 @@ ogl_setTransparency(struct dm *dmp,
 
     return TCL_OK;
 }
+
 
 HIDDEN int
 ogl_setDepthMask(struct dm *dmp,
