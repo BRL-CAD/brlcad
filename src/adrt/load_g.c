@@ -211,6 +211,7 @@ nmg_to_adrt_regstart(struct db_tree_state *ts, struct db_full_path *path, const 
     return 0;
 }
 
+
 static void
 nmg_to_adrt_gcvwrite(struct nmgregion *r, struct db_full_path *pathp, int region_id, int material_id, float color[3])
 {
@@ -242,6 +243,12 @@ nmg_to_adrt_gcvwrite(struct nmgregion *r, struct db_full_path *pathp, int region
 
     nmg_to_adrt_internal(mesh, r);
 }
+
+/* FIXME: this be a dumb hack to avoid void* conversion */
+struct gcv_data {
+    void (*func)(struct nmgregion *, struct db_full_path *, int, int, float [3]);
+};
+static struct gcv_data gcvwriter = {nmg_to_adrt_gcvwrite};
 
 int
 load_g (tie_t *tie, const char *db, int argc, const char **argv)
@@ -319,7 +326,7 @@ load_g (tie_t *tie, const char *db, int argc, const char **argv)
 			nmg_to_adrt_regstart,	/* region start function */
 			gcv_region_end,		/* region end function */
 			nmg_booltree_leaf_tess,	/* leaf func */
-			(genptr_t)nmg_to_adrt_gcvwrite);	/* client data */
+			(genptr_t)&gcvwriter);	/* client data */
 
     /* Release dynamic storage */
     nmg_km(the_model);

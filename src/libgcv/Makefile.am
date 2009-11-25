@@ -16,6 +16,8 @@ libgcv_la_LIBADD = \
 EXTRA_DIST = \
         CMakeLists.txt
 
+AM_CFLAGS = ${STRICT_FLAGS}
+
 DEPENDS = src/librt
 
 include $(top_srcdir)/misc/Makefile.defs

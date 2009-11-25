@@ -283,13 +283,18 @@ nmg_to_stl(struct nmgregion *r, struct db_full_path *pathp, int region_id, int m
 }
 
 
+/* FIXME: this be a dumb hack to avoid void* conversion */
+struct gcv_data {
+    void (*func)(struct nmgregion *, struct db_full_path *, int, int, float [3]);
+};
+static struct gcv_data gcvwriter = {nmg_to_stl};
+
+
 /*
  *			M A I N
  */
 int
-main(argc, argv)
-    int argc;
-    char *argv[];
+main(int argc, char *argv[])
 {
     register int c;
     double percent;
@@ -460,7 +465,7 @@ main(argc, argv)
 			0,			/* take all regions */
 			gcv_region_end,
 			nmg_booltree_leaf_tess,
-			(genptr_t)nmg_to_stl);
+			(genptr_t)&gcvwriter);
 
     percent = 0;
     if (regions_tried>0) {
