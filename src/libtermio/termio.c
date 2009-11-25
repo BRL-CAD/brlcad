@@ -343,7 +343,7 @@ set_HUPCL( fd )
 	Turn off CR/LF mapping, fd.
 */
 void
-clr_CRNL( fd )
+clr_CRNL( int fd )
 {
 #ifdef BSD
     curr_tio[fd].sg_flags &= ~CRMOD;
@@ -367,7 +367,7 @@ clr_CRNL( fd )
 	Get the terminals output speed, 'fd'.
 */
 unsigned short
-get_O_Speed( fd )
+get_O_Speed( int fd )
 {
 #ifdef BSD
     return	(unsigned short) save_tio[fd].sg_ospeed;
@@ -387,7 +387,7 @@ void
 save_Tty( fd )
     int	fd;
 {
-#if BSD
+#ifdef BSD
     (void) ioctl( fd, TIOCGETP, &save_tio[fd] );
 #endif
 #ifdef SYSV
@@ -408,10 +408,10 @@ void
 reset_Tty( fd )
     int	fd;
 {
-#if BSD
+#ifdef BSD
     (void) ioctl( fd, TIOCSETP, &save_tio[fd] ); /* Write setting.		*/
 #endif
-#if SYSV
+#ifdef SYSV
     (void) ioctl( fd, TCSETA, &save_tio[fd] ); /* Write setting.		*/
 #endif
 #if HAVE_TERMIOS_H
