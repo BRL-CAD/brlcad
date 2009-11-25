@@ -1,0 +1,39 @@
+TODO List for integrating MGED features into Archer
+
+Intended as a "list of work to be done" for porting MGED features to Archer.  The absence of a feature
+does not necessarily mean it is intended that this feature be added, particularly for "minor" features
+or features that are currently not working well in MGED to start with - these are primarly discussion
+points.
+
+Starting with a "walkthrough" of the MGED menu:
+
+     MGED Feature                   |         Archer Status of Feature or Alternative to Feature
+------------------------------------------------------------------------------------------------------
+Create New Database                 |                             DONE
+Open Existing Database              |                             DONE
+Import Database	                    |    dbconcat available on command line, no menu options as in MGED
+Export Database                     |    keep available on command line, no GUI menu options
+Load Script                         |    no GUI dialog available, presumably command line works?
+Raytrace Control Panel              |    older version in Archer, needs updating to current MGED
+Render View options                 |                            UNKNOWN
+Preferences->Units                  |    No GUI options for setting, units works on command line
+Preferences->Command Line Edit      |                            UNKNOWN
+Preferences->Special Characters     |                            UNKNOWN
+Preferences->Colors                 |    Subset of MGED panel available in Archer preferences tabs, are
+                                    |    more needed?  Not clear.
+Preferences->Fonts                  |                            UNKNOWN
+Create/Update .mgedrc               |    Would be .archerrc?     UNKNOWN
+Clear Command Window                |    clear command works on command line, Menu item needed?
+Exit                                |                             DONE
+Primitive Selection                 |    Not as such - tree view sufficient?
+Matrix Selection                    |                            UNKNOWN
+Primitive Editor                    |    Not as such - needed or right panel editing options sufficient?
+Combination Editor                  |    Not clear if Archer functionality is as flexible, but most
+				    |    functionality is present in editing tabs to right of view
+Attribute Editor                    |    Not present in general form
+Geometry Browser                    |    Make sure tree widget duplicates all functionality, maybe done
+Create Primitives                   |                           INCOMPLETE
+View                                |                             DONE  (duplicated elsewhere)
+ViewRing			    |                            UNKNOWN
+ 
+
