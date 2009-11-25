@@ -1,3 +1,6 @@
+/*.a
+/*.o
+/*.dylib
 /config.log
 /pkgIndex.tcl
 /togl_ws.h
