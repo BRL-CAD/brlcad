@@ -59,7 +59,7 @@ ditsplit(int n /* length */, int m /* n = 2^m */)
 	   " * Machine-generated Real Split Radix Decimation in Freq Inverse FFT\n"
 	   " */\n\n");
 
-    printf("#define M_SQRT1_2 0.70710678118654752440\n\n");
+    printf("#include \"fft.h\"\n\n");
     printf("void\n");
     printf("irfft%d(register double x[])\n", n);
     printf("{\n");

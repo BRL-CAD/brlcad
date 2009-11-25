@@ -56,7 +56,7 @@ splitdit(int N, int M)
     printf("/*\n"
 	   " * Machine-generated Real Split Radix Decimation in Time FFT\n"
 	   " */\n\n");
-    printf("#define M_SQRT1_2 0.70710678118654752440\n\n");
+    printf("#include \"fft.h\"\n\n");
     printf("void\n");
     printf("rfft%d(register double X[])\n", N);
     printf("{\n");
