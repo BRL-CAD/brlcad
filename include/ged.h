@@ -276,6 +276,8 @@ struct ged_axes_state {
     int	      gas_tick_threshold;
     int	      gas_tick_color[3];
     int	      gas_tick_major_color[3];
+    int       gas_num_data_points;
+    point_t   *gas_data_points;		/* in view coordinates */
 };
 
 struct ged_grid_state {
@@ -415,6 +417,7 @@ struct ged_view {
     int				gv_mode;
     int				gv_zclip;
     struct ged_adc_state 	gv_adc;
+    struct ged_axes_state 	gv_data_axes;
     struct ged_axes_state 	gv_model_axes;
     struct ged_axes_state 	gv_view_axes;
     struct ged_grid_state 	gv_grid;

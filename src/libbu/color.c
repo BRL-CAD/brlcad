@@ -116,7 +116,7 @@ void bu_rgb_to_hsv(unsigned char *rgb, fastf_t *hsv)
 
 int bu_hsv_to_rgb(fastf_t *hsv, unsigned char *rgb)
 {
-    fastf_t float_rgb[3];
+    fastf_t float_rgb[3] = { 0.0, 0.0, 0.0 };
     fastf_t hue, sat, val;
     fastf_t hue_frac;
     fastf_t p, q, t;

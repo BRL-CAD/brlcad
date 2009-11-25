@@ -43,6 +43,8 @@ libbn_la_LIBADD = \
 
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
 
+AM_CFLAGS = ${STRICT_FLAGS}
+
 EXTRA_DIST = \
 	$(man_MANS) \
 	CMakeLists.txt \

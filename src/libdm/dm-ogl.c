@@ -87,11 +87,15 @@ struct dm	*ogl_open(Tcl_Interp *interp, int argc, char **argv);
 HIDDEN int	ogl_close(struct dm *dmp);
 HIDDEN int	ogl_drawBegin(struct dm *dmp);
 HIDDEN int      ogl_drawEnd(struct dm *dmp);
-HIDDEN int	ogl_normal(struct dm *dmp), ogl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye);
+HIDDEN int	ogl_normal(struct dm *dmp);
+HIDDEN int	ogl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye);
 HIDDEN int	ogl_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int size, int use_aspect);
 HIDDEN int	ogl_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2);
+HIDDEN int	ogl_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2);
+HIDDEN int	ogl_drawLines3D(struct dm *dmp, int npoints, point_t *points);
 HIDDEN int      ogl_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y);
-HIDDEN int	ogl_drawVList(struct dm *dmp, register struct bn_vlist *vp);
+HIDDEN int      ogl_drawVList(struct dm *dmp, register struct bn_vlist *vp);
+HIDDEN int 	ogl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), genptr_t *data);
 HIDDEN int      ogl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency);
 HIDDEN int	ogl_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b);
 HIDDEN int	ogl_setLineAttr(struct dm *dmp, int width, int style);
@@ -101,8 +105,10 @@ HIDDEN int	ogl_setLight(struct dm *dmp, int lighting_on);
 HIDDEN int	ogl_setTransparency(struct dm *dmp, int transparency_on);
 HIDDEN int	ogl_setDepthMask(struct dm *dmp, int depthMask_on);
 HIDDEN int	ogl_setZBuffer(struct dm *dmp, int zbuffer_on);
-HIDDEN int	ogl_setWinBounds(struct dm *dmp, int *w), ogl_debug(struct dm *dmp, int lvl);
-HIDDEN int      ogl_beginDList(struct dm *dmp, unsigned int list), ogl_endDList(struct dm *dmp);
+HIDDEN int	ogl_setWinBounds(struct dm *dmp, int *w);
+HIDDEN int	ogl_debug(struct dm *dmp, int lvl);
+HIDDEN int      ogl_beginDList(struct dm *dmp, unsigned int list);
+HIDDEN int	ogl_endDList(struct dm *dmp);
 HIDDEN int      ogl_drawDList(struct dm *dmp, unsigned int list);
 HIDDEN int      ogl_freeDLists(struct dm *dmp, unsigned int list, int range);
 
@@ -114,8 +120,11 @@ struct dm dm_ogl = {
     ogl_loadMatrix,
     ogl_drawString2D,
     ogl_drawLine2D,
+    ogl_drawLine3D,
+    ogl_drawLines3D,
     ogl_drawPoint2D,
     ogl_drawVList,
+    ogl_draw,
     ogl_setFGColor,
     ogl_setBGColor,
     ogl_setLineAttr,
@@ -865,7 +874,7 @@ ogl_drawEnd(struct dm *dmp)
  *  			O G L _ L O A D M A T R I X
  *
  *  Load a new transformation matrix.  This will be followed by
- *  many calls to ogl_drawVList().
+ *  many calls to ogl_draw().
  */
 HIDDEN int
 ogl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
@@ -967,7 +976,7 @@ ogl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
     static int			nvectors = 0;
 #endif
     int mflag = 1;
-    float black[4] = {0.0, 0.0, 0.0, 0.0};
+    static float black[4] = {0.0, 0.0, 0.0, 0.0};
 
     if (dmp->dm_debugLevel)
 	bu_log("ogl_drawVList()\n");
@@ -1075,6 +1084,29 @@ ogl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 }
 
 /*
+ *  			O G L _ D R A W
+ *
+ */
+HIDDEN int
+ogl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), genptr_t *data)
+{
+    struct bn_vlist *vp;
+    if (!callback_function) {
+	if (data) {
+	    vp = (struct bn_vlist *)data;
+	    ogl_drawVList(dmp,vp);
+	}
+    } else {
+	if (!data) {
+	    return TCL_ERROR;
+	} else {
+	    vp = callback_function(data);
+	}
+    }
+    return TCL_OK;
+}
+
+/*
  *			O G L _ N O R M A L
  *
  * Restore the display processor to a normal mode of operation
@@ -1164,6 +1196,105 @@ ogl_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2)
     return TCL_OK;
 }
 
+/*
+ *			O G L _ D R A W L I N E 3 D
+ *
+ */
+HIDDEN int
+ogl_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2)
+{
+    static float black[4] = {0.0, 0.0, 0.0, 0.0};
+
+    if (dmp->dm_debugLevel)
+	bu_log("ogl_drawLine3D()\n");
+
+    if (dmp->dm_debugLevel) {
+	GLfloat pmat[16];
+
+	glGetFloatv(GL_PROJECTION_MATRIX, pmat);
+	bu_log("projection matrix:\n");
+	bu_log("%g %g %g %g\n", pmat[0], pmat[4], pmat[8], pmat[12]);
+	bu_log("%g %g %g %g\n", pmat[1], pmat[5], pmat[9], pmat[13]);
+	bu_log("%g %g %g %g\n", pmat[2], pmat[6], pmat[10], pmat[14]);
+	bu_log("%g %g %g %g\n", pmat[3], pmat[7], pmat[11], pmat[15]);
+	glGetFloatv(GL_MODELVIEW_MATRIX, pmat);
+	bu_log("modelview matrix:\n");
+	bu_log("%g %g %g %g\n", pmat[0], pmat[4], pmat[8], pmat[12]);
+	bu_log("%g %g %g %g\n", pmat[1], pmat[5], pmat[9], pmat[13]);
+	bu_log("%g %g %g %g\n", pmat[2], pmat[6], pmat[10], pmat[14]);
+	bu_log("%g %g %g %g\n", pmat[3], pmat[7], pmat[11], pmat[15]);
+    }
+
+    if (dmp->dm_light) {
+	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, wireColor);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, black);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, black);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, black);
+
+	if (dmp->dm_transparency)
+	    glDisable(GL_BLEND);
+    }
+
+    glBegin(GL_LINES);
+    glVertex3dv(pt1);
+    glVertex3dv(pt2);
+    glEnd();
+
+    return TCL_OK;
+}
+
+/*
+ *			O G L _ D R A W L I N E S 3 D
+ *
+ */
+HIDDEN int
+ogl_drawLines3D(struct dm *dmp, int npoints, point_t *points)
+{
+    register int i;
+    static float black[4] = {0.0, 0.0, 0.0, 0.0};
+
+    if (dmp->dm_debugLevel)
+	bu_log("ogl_drawLine3D()\n");
+
+    if (dmp->dm_debugLevel) {
+	GLfloat pmat[16];
+
+	glGetFloatv(GL_PROJECTION_MATRIX, pmat);
+	bu_log("projection matrix:\n");
+	bu_log("%g %g %g %g\n", pmat[0], pmat[4], pmat[8], pmat[12]);
+	bu_log("%g %g %g %g\n", pmat[1], pmat[5], pmat[9], pmat[13]);
+	bu_log("%g %g %g %g\n", pmat[2], pmat[6], pmat[10], pmat[14]);
+	bu_log("%g %g %g %g\n", pmat[3], pmat[7], pmat[11], pmat[15]);
+	glGetFloatv(GL_MODELVIEW_MATRIX, pmat);
+	bu_log("modelview matrix:\n");
+	bu_log("%g %g %g %g\n", pmat[0], pmat[4], pmat[8], pmat[12]);
+	bu_log("%g %g %g %g\n", pmat[1], pmat[5], pmat[9], pmat[13]);
+	bu_log("%g %g %g %g\n", pmat[2], pmat[6], pmat[10], pmat[14]);
+	bu_log("%g %g %g %g\n", pmat[3], pmat[7], pmat[11], pmat[15]);
+    }
+
+    /* Must be an even number of points */
+    if (npoints%2)
+	return;
+
+    if (dmp->dm_light) {
+	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, wireColor);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, black);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, black);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, black);
+
+	if (dmp->dm_transparency)
+	    glDisable(GL_BLEND);
+    }
+
+    glBegin(GL_LINES);
+    for (i = 0; i < npoints; ++i)
+	glVertex3dv(points[i]);
+    glEnd();
+
+    return TCL_OK;
+}
+
 HIDDEN int
 ogl_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
 {
@@ -1190,18 +1321,18 @@ ogl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b
     dmp->dm_fg[1] = g;
     dmp->dm_fg[2] = b;
 
+    /* wireColor gets the full rgb */
+    wireColor[0] = r / 255.0;
+    wireColor[1] = g / 255.0;
+    wireColor[2] = b / 255.0;
+    wireColor[3] = transparency;
+
     if (strict) {
 	glColor3ub( (GLubyte)r, (GLubyte)g, (GLubyte)b );
     } else {
 
 	if (dmp->dm_light) {
 	    /* Ambient = .2, Diffuse = .6, Specular = .2 */
-
-	    /* wireColor gets the full rgb */
-	    wireColor[0] = r / 255.0;
-	    wireColor[1] = g / 255.0;
-	    wireColor[2] = b / 255.0;
-	    wireColor[3] = transparency;
 
 	    ambientColor[0] = wireColor[0] * 0.2;
 	    ambientColor[1] = wireColor[1] * 0.2;

@@ -45,6 +45,7 @@
 #  include <limits>
 #endif
 
+#include "vmath.h"
 #include "pcBasic.h"
 #include "pcInterval.h"
 
@@ -116,6 +117,8 @@ private:
 class VariableAbstract {
 public:
     VariableAbstract(std::string vid ="");
+    virtual ~VariableAbstract();
+
     int getType() const { return type; }
     std::string getID() const { return id; }
     virtual void display();
@@ -143,7 +146,7 @@ public:
     
     /* Constructor and Destructor */
     Variable(std::string vid = "" , T vvalue = 0);
-    ~Variable();
+    virtual ~Variable();
     
     /* Data Access methods */
     T getValue() { return value; }
@@ -275,9 +278,9 @@ Domain<T>::erase(iterator location)
 
 template<typename T>
 typename Domain<T>::iterator
-Domain<T>::erase(iterator begin, iterator end)
+Domain<T>::erase(iterator begini, iterator endi)
 {
-    return makeIterator(Interv.erase(begin.base(), end.base()));
+    return makeIterator(Interv.erase(begini.base(), endi.base()));
 }
 
 template<typename T>
@@ -409,7 +412,7 @@ int Domain<T>::mergeIntervals (typename std::list<Interval<T> >::iterator i)
 {
     if (i!=Interv.end()) {
 	typename std::list<Interval<T> >::iterator j = i;j++;
-	if (j->getStep() == i->getStep()) {
+	if (NEAR_ZERO(j->getStep() - i->getStep(), SMALL_FASTF)) {
 	    /* If interval is not inside the present one */
 	    if (j->getHigh() > i->getHigh())
 		i->setHigh(j->getHigh());
@@ -431,7 +434,6 @@ void  Domain<T>::packIntervals ()
 	i=j=Interv.begin();j++;
 
 	do {
-
 	    if (i->getHigh() > j->getLow() ) {
 		if (mergeIntervals(i) !=0) {
 		    std::cout << "Error: Incompatible stepsizes" << std::endl;
@@ -479,19 +481,19 @@ Variable<T>& Variable<T>::operator++()
 	value = D.getNextLow(value) + I.getStep();
 	return *this;
     }
-};
+}
 
 template<class T>
 void Variable<T>::addInterval(const Interval<T> t)
 {
     D.addInterval(t);
-};
+}
 
 template<class T>
 void Variable<T>::addInterval(T low, T high, T step)
 {
     D.addInterval(low, high, step);
-};
+}
 
 template<class T>
 void Variable<T>::display()
@@ -642,13 +644,13 @@ void Solution<T>::cdisplay()
     std::cout << std::endl;
 
     for (l = 0; l < minmax.size()/2; ++l) {
-	if ( minmax[2*l] != minmax[2*l+1])
+	if ( !NEAR_ZERO(minmax[2*l] - minmax[2*l+1], SMALL_FASTF) ) /* TODO: needs proper tolerancing */
 	    std::cout << "to" << "\t";
     }
     std::cout << std::endl;
     
     for (l = 0; l < minmax.size()/2; ++l) {
-	if ( minmax[2*l] != minmax[2*l+1])
+	if ( !NEAR_ZERO(minmax[2*l] - minmax[2*l+1], SMALL_FASTF) ) /* TODO: needs proper tolerancing */
 	    std::cout << minmax[2*l+1] << "\t";
     }
     

@@ -102,7 +102,7 @@ bu_rb_summarize_tree(bu_rb_tree *tree)
     bu_log("Empty node:       <%p>\n", tree->rbt_empty_node);
     bu_log("Size (in nodes):  %d\n", tree->rbt_nm_nodes);
     bu_log("Number of orders: %d\n", tree->rbt_nm_orders);
-    bu_log("Debug bits:       <%p>\n", tree->rbt_debug);
+    bu_log("Debug bits:       <0x%X>\n", tree->rbt_debug);
     if ((tree->rbt_nm_orders > 0) && (tree->rbt_nm_nodes > 0)) {
 	bu_log("i    Order[i]   Uniq[i]  Root[i]      Package[i]     Data[i]\n");
 	for (i = 0; i < tree->rbt_nm_orders; ++i) {

@@ -245,7 +245,7 @@ int
 rt_comb_export5(
     struct bu_external		*ep,
     const struct rt_db_internal	*ip,
-    double				local2mm,
+    double				local2mm __attribute__((unused)),
     const struct db_i		*dbip,
     struct resource			*resp)
 {
@@ -263,6 +263,7 @@ rt_comb_export5(
 
     RT_CK_DB_INTERNAL( ip );
     RT_CK_RESOURCE(resp);
+    if (dbip) RT_CK_DBI(dbip);
 
     if ( ip->idb_type != ID_COMBINATION ) bu_bomb("rt_comb_export5() type not ID_COMBINATION");
     comb = (struct rt_comb_internal *)ip->idb_ptr;
@@ -469,7 +470,7 @@ rt_comb_import5(
     const mat_t		mat,
     const struct db_i	*dbip,
     struct resource		*resp,
-    const int		minor_type)
+    const int		minor_type __attribute__((unused)))
 {
     struct rt_comb_internal	*comb;
     unsigned char	*cp;
@@ -515,8 +516,6 @@ rt_comb_import5(
 
     if ( rpn_len == 0 )  {
 	/* This tree is all union operators, import it as a balanced tree */
-
-	int	i;
 	struct bu_ptbl *tbl1, *tbl2;
 
 	tbl1 = (struct bu_ptbl *)bu_malloc( sizeof( struct bu_ptbl ), "rt_comb_import5: tbl1" );

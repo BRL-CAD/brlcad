@@ -420,6 +420,15 @@ BN_EXPORT BU_EXTERN(void bn_aet_vec,
 		     vect_t vec_ae,
 		     vect_t vec_twist,
 		     fastf_t accuracy));
+BN_EXPORT BU_EXTERN(void bn_vec_ae,
+		    (vect_t vec,
+		     fastf_t az,
+		     fastf_t el));
+BN_EXPORT BU_EXTERN(void bn_vec_aed,
+		    (vect_t vec,
+		     fastf_t az,
+		     fastf_t el,
+		     fastf_t dist));
 
 BN_EXPORT BU_EXTERN(void bn_mat_angles,
 		    (register mat_t mat,

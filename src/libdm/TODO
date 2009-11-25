@@ -1,0 +1,14 @@
+* refactor all of the DM_* sections in dm-generic.c as there should
+  not be any functions with #ifdefs for various dm types.  that is the
+  point of the struct dm callbacks.  implies there is probably a
+  callback field missing from struct dm.
+
+* add support for drawing more than 3d plot lines (more than
+  drawVList()).  the interface should be generalized where the default
+  for a given display type is built in (similar to default overlap
+  callback in librt) but can be overridden by a calling user.  useful
+  by interfaces like rtgl where there is a custom application display
+  driver.
+
+* decouple from Tcl/Tk (dm_open and internals)
+

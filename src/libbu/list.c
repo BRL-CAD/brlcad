@@ -178,7 +178,7 @@ bu_ck_list_magic(const struct bu_list *hd, const char *str, const unsigned long 
 
 	if (!cur->forw) {
 	    bu_log("bu_ck_list_magic(%s) cur=%p, cur->forw=%p, hd=%p, item=%d\n",
-		   str, cur, cur->forw, hd, item);
+		   str, (void *)cur, (void *)cur->forw, (void *)hd, item);
 	    bu_bomb("bu_ck_list_magic() forw NULL\n");
 	}
 	if (cur->forw->back != cur) {

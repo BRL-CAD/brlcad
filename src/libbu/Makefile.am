@@ -106,6 +106,8 @@ AM_CPPFLAGS = \
 	${TCL_CPPFLAGS} \
 	${LIBZ_CPPFLAGS}
 
+AM_CFLAGS = ${STRICT_FLAGS}
+
 if BUILD_TCL
 TCLDEP = $(LDEP) src/other/tcl
 else

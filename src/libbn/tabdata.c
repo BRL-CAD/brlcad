@@ -1455,7 +1455,7 @@ bn_table_merge2(const struct bn_table *a, const struct bn_table *b)
 	    break;
 	}
 	/* Both have remaining elements, take lower one */
-	if ( a->x[i] == b->x[j] )  {
+	if (NEAR_ZERO( a->x[i] - b->x[j], SMALL_FASTF))  {
 	    new->x[k++] = a->x[i++];
 	    j++;		/* compress out duplicate */
 	    continue;

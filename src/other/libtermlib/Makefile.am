@@ -1,7 +1,7 @@
 
 lib_LTLIBRARIES = libtermlib.la
 
-AM_CPPFLAGS = -DCM_N -DCM_GT -DCM_B -DCM_D ${TERMLIB_CPPFLAGS}
+AM_CPPFLAGS = -DCM_N -DCM_GT -DCM_B -DCM_D ${TERMLIB_CPPFLAGS} -DB_TERMCAP="\"${BRLCAD_DATA}/etc/termcap\""
 
 noinst_HEADERS = termcap.h
 

@@ -36,6 +36,10 @@
 #include "bu.h"
 
 
+/* c99 doesn't declare these */
+extern FILE *fdopen(int, const char *);
+
+
 FILE *
 bu_fopen_uniq(const char *outfmt, const char *namefmt, int n)
 {

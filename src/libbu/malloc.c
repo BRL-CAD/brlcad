@@ -77,18 +77,24 @@ extern const char bu_strdup_message[];
 HIDDEN void
 _bu_memdebug_add(genptr_t ptr, unsigned int cnt, const char *str)
 {
-    register struct memdebug *mp;
+    register struct memdebug *mp = NULL;
+
  top:
     bu_semaphore_acquire(BU_SEM_SYSCALL);
+
     if (bu_memdebug) {
 	mp = &bu_memdebug[bu_memdebug_len-1];
-	if (bu_memdebug_lowat > bu_memdebug &&
-	    bu_memdebug_lowat < mp) {
+	if (bu_memdebug_lowat > bu_memdebug
+	    && bu_memdebug_lowat < mp)
+	{
 	    mp = bu_memdebug_lowat;
 	} else {
 	    bu_memdebug_lowat = mp;
 	}
-    again:
+    }
+
+ again:
+    if (bu_memdebug) {
 	for (; mp >= bu_memdebug; mp--) {
 	    /* Search for an empty slot */
 	    if (mp->mdb_len > 0)  continue;
@@ -243,7 +249,7 @@ _bu_alloc(alloc_t type, unsigned int cnt, unsigned int sz, const char *str)
 #endif
 
     if (ptr==(char *)0) {
-	fprintf(stderr, "bu_malloc: Insufficient memory available, sbrk(0)=x%lx\n", (long)sbrk(0));
+	fprintf(stderr, "bu_malloc: Insufficient memory available\n");
 	bu_bomb("bu_malloc: malloc failure");
     }
     if (bu_debug&BU_DEBUG_MEM_CHECK) {
@@ -398,7 +404,7 @@ bu_realloc(register genptr_t ptr, size_t cnt, const char *str)
 	bu_semaphore_release(BU_SEM_SYSCALL);
     }
     if (ptr==(char *)0 && cnt > 0) {
-	fprintf(stderr, "bu_realloc: Insufficient memory available, sbrk(0)=x%lx\n", (long)sbrk(0));
+	fprintf(stderr, "bu_realloc: Insufficient memory available\n");
 	bu_bomb("bu_realloc: malloc failure");
     }
     if (bu_debug&BU_DEBUG_MEM_CHECK && ptr) {
@@ -502,9 +508,7 @@ bu_prmem(const char *str)
 	}
     }
 
-    fprintf(stderr, "%lu allocation entries\n", count);
-
-
+    fprintf(stderr, "%lu allocation entries\n", (unsigned long)count);
 }
 
 

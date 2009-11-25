@@ -388,8 +388,8 @@ char	*fname;
 	if (stat(fname, &stbuf))
 		return;
 	if ((stbuf.st_ino != curbuf->b_ino
-	   || stbuf.st_dev != curbuf->b_dev)
-	  && (stbuf.st_mode & S_IFMT) != S_IFCHR)
+	     || stbuf.st_dev != curbuf->b_dev)
+	    && !S_ISCHR(stbuf.st_mode))
 		confirm("\"%s\" already exist; are you sure? ", fname);
 }
 
