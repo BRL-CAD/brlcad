@@ -73,30 +73,11 @@ HIDDEN XVisualInfo *X_choose_visual(struct dm *dmp);
 
 #define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
 struct dm *X_open_dm(Tcl_Interp *interp, int argc, char **argv);
-HIDDEN int X_close_dm(struct dm *dmp);
-HIDDEN int X_drawBegin(struct dm *dmp);
-HIDDEN int X_drawEnd(struct dm *dmp);
-HIDDEN int X_normal(struct dm *dmp);
-HIDDEN int X_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye);
-HIDDEN int X_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int size, int use_aspect);
-HIDDEN int X_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2);
-HIDDEN int X_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2);
-HIDDEN int X_drawLines3D(struct dm *dmp, int npoints, point_t *points);
-HIDDEN int X_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y);
-HIDDEN int X_drawVList(struct dm *dmp, register struct bn_vlist *vp);
-HIDDEN int X_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), genptr_t *data);
-HIDDEN int X_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency);
-HIDDEN int X_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b);
-HIDDEN int X_setLineAttr(struct dm *dmp, int width, int style);
-HIDDEN int X_configureWin_guts(struct dm *dmp, int force);
-HIDDEN int X_configureWin(struct dm *dmp);
-HIDDEN int X_setLight(struct dm *dmp, int light_on);
-HIDDEN int X_setZBuffer(struct dm *dmp, int zbuffer_on);
-HIDDEN int X_setWinBounds(struct dm *dmp, register int *w);
-HIDDEN int X_debug(struct dm *dmp, int lvl);
+
+HIDDEN_DM_FUNCTION_PROTOTYPES(X)
 
 struct dm dm_X = {
-    X_close_dm,
+    X_close,
     X_drawBegin,
     X_drawEnd,
     X_normal,
@@ -330,7 +311,7 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 
     if (pubvars->xtkwin == NULL) {
 	bu_log("X_open_dm: Failed to open %s\n", bu_vls_addr(&dmp->dm_pathName));
-	(void)X_close_dm(dmp);
+	(void)X_close(dmp);
 	return DM_NULL;
     }
 
@@ -346,7 +327,7 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 
     if (Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR) {
 	bu_vls_free(&str);
-	(void)X_close_dm(dmp);
+	(void)X_close(dmp);
 	return DM_NULL;
     }
 
@@ -361,7 +342,7 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
     /* make sure there really is a display before proceeding. */
     if (!pubvars->dpy) {
 	bu_log("ERROR: Unable to attach to display (%s)\n", bu_vls_addr(&dmp->dm_pathName));
-	(void)X_close_dm(dmp);
+	(void)X_close(dmp);
 	return DM_NULL;
     }
 
@@ -377,7 +358,7 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
     /* make sure there really is a screen before proceesing. */
     if (!screen) {
 	bu_log("ERROR: Unable to attach to screen (%s)\n", bu_vls_addr(&dmp->dm_pathName));
-	(void)X_close_dm(dmp);
+	(void)X_close(dmp);
 	return DM_NULL;
     }
 
@@ -413,7 +394,7 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
     /* must do this before MakeExist */
     if ((pubvars->vip = X_choose_visual(dmp)) == NULL) {
 	bu_log("X_open_dm: Can't get an appropriate visual.\n");
-	(void)X_close_dm(dmp);
+	(void)X_close(dmp);
 	return DM_NULL;
     }
 
@@ -555,7 +536,7 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
  * Gracefully release the display.
  */
 HIDDEN int
-X_close_dm(struct dm *dmp)
+X_close(struct dm *dmp)
 {
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
     struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
@@ -589,9 +570,9 @@ X_close_dm(struct dm *dmp)
     bu_vls_free(&dmp->dm_pathName);
     bu_vls_free(&dmp->dm_tkName);
     bu_vls_free(&dmp->dm_dName);
-    bu_free((genptr_t)dmp->dm_vars.priv_vars, "X_close_dm: x_vars");
-    bu_free((genptr_t)dmp->dm_vars.pub_vars, "X_close_dm: dm_xvars");
-    bu_free((genptr_t)dmp, "X_close_dm: dmp");
+    bu_free((genptr_t)dmp->dm_vars.priv_vars, "X_close: x_vars");
+    bu_free((genptr_t)dmp->dm_vars.pub_vars, "X_close: dm_xvars");
+    bu_free((genptr_t)dmp, "X_close: dmp");
 
     return TCL_OK;
 }
