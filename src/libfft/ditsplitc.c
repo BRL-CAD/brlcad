@@ -19,12 +19,12 @@
  */
 /** @file ditsplitc.c
  *
- *  Split Radix, Decimation in Frequency, Inverse Real-valued FFT.
+ * Split Radix, Decimation in Frequency, Inverse Real-valued FFT.
  *
- *  Input order:
- *	[ Re(0), Re(1),..., Re(N/2), Im(N/2-1),..., Im(1) ]
+ * Input order:
+ *	[ Re(0), Re(1), ..., Re(N/2), Im(N/2-1), ..., Im(1) ]
  *
- *  Transactions on Acoustics, Speech, and Signal Processing, June 1987.
+ * Transactions on Acoustics, Speech, and Signal Processing, June 1987.
  *
  */
 
@@ -33,21 +33,18 @@
 #include <stdio.h>
 #include <math.h>
 
-#define	INVSQ2	0.70710678118654752440
-#define	SQRT2	1.4142136
+#define INVSQ2 0.70710678118654752440084436210
+#define SQRT2 1.41421356237309504880168872421
 
-int	irfft_adds, irfft_mults;
 
 void
-ditsplit(double *x, int n, int m)
-
-    /* length */
-    /* n = 2^m */
+ditsplit(double *x, int n /* length */, int m /* n = 2^m */)
 {
-    int	i, j, k, n1, n2, n4, n8;
-    int	i0, i1, i2, i3, i4, i5, i6, i7, i8;
-    int	is, id;
-    double	cc1, ss1, cc3, ss3, e, a, a3;
+    int i, j, k, n1, n2, n4, n8;
+    int i0, i1, i2, i3, i4, i5, i6, i7, i8;
+    int is, id;
+    double cc1, ss1, cc3, ss3, e, a, a3;
+    int irfft_adds, irfft_mults;
     irfft_adds = irfft_mults = 0;
 
     printf("/*\n"
@@ -164,7 +161,7 @@ ditsplit(double *x, int n, int m)
     printf("\n    /* Length two butterflies */\n");
     is = 1;
     id = 4;
- l70:
+l70:
     for (i0 = is; i0 <= n; i0 += id) {
 	i1 = i0 + 1;
 
@@ -198,7 +195,7 @@ ditsplit(double *x, int n, int m)
     }
 
     printf("\n    /* scale result */\n");
-    printf("    for(i = 0; i < %d; i++)\n", n);
+    printf("    for (i = 0; i < %d; i++)\n", n);
     printf("\tx[i] /= %f;\n", (double)n);
     printf("}\n");
 }

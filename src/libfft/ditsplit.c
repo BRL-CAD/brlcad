@@ -19,8 +19,7 @@
  */
 /** @file ditsplit.c
  *
- * Split Radix, Decimation in Frequency,
- * Inverse Real-valued FFT.
+ * Split Radix, Decimation in Frequency, Inverse Real-valued FFT.
  *
  * Input order:
  *	[ Re(0), Re(1), ..., Re(N/2), Im(N/2-1), ..., Im(1) ]
