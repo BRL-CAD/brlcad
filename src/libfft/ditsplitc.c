@@ -36,15 +36,17 @@
 #define INVSQ2 0.70710678118654752440084436210
 #define SQRT2 1.41421356237309504880168872421
 
+/* used by ifftc.c */
+int irfft_adds, irfft_mults;
+
 
 void
-ditsplit(double *x, int n /* length */, int m /* n = 2^m */)
+ditsplit(int n /* length */, int m /* n = 2^m */)
 {
     int i, j, k, n1, n2, n4, n8;
     int i0, i1, i2, i3, i4, i5, i6, i7, i8;
     int is, id;
     double cc1, ss1, cc3, ss3, e, a, a3;
-    int irfft_adds, irfft_mults;
     irfft_adds = irfft_mults = 0;
 
     printf("/*\n"
