@@ -74,21 +74,8 @@ HIDDEN void     x_var_init();
 /* Display Manager package interface */
 
 #define PLOTBOUND	1000.0	/* Max magnification in Rot matrix */
-HIDDEN int	tk_close(struct dm *dmp);
-HIDDEN int	tk_drawBegin(struct dm *dmp), tk_drawEnd(struct dm *dmp);
-HIDDEN int	tk_normal(struct dm *dmp), tk_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye);
-HIDDEN int      tk_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int size, int use_aspect);
-HIDDEN int	tk_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2);
-HIDDEN int      tk_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y);
-HIDDEN int	tk_drawVList(struct dm *dmp, register struct bn_vlist *vp);
-HIDDEN int      tk_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency);
-HIDDEN int	tk_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b);
-HIDDEN int	tk_setLineAttr(struct dm *dmp, int width, int style);
-HIDDEN int	tk_configureWin_guts(struct dm *dmp, int force);
-HIDDEN int	tk_configureWin(struct dm *dmp);
-HIDDEN int	tk_setLight(struct dm *dmp, int light_on);
-HIDDEN int	tk_setZBuffer(struct dm *dmp, int zbuffer_on);
-HIDDEN int	tk_setWinBounds(struct dm *dmp, register int *w), tk_debug(struct dm *dmp, int lvl);
+
+HIDDEN_DM_FUNCTION_PROTOTYPES(tk)
 
 struct dm dm_tk = {
     tk_close,

@@ -84,33 +84,8 @@ HIDDEN XVisualInfo *rtgl_choose_visual(struct dm *dmp, Tk_Window tkwin);
 
 
 struct dm *rtgl_open(Tcl_Interp *interp, int argc, char **argv);
-HIDDEN int rtgl_close(struct dm *dmp);
-HIDDEN int rtgl_drawBegin(struct dm *dmp);
-HIDDEN int rtgl_drawEnd(struct dm *dmp);
-HIDDEN int rtgl_normal(struct dm *dmp);
-HIDDEN int rtgl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye);
-HIDDEN int rtgl_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int size, int use_aspect);
-HIDDEN int rtgl_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2);
-HIDDEN int rtgl_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2);
-HIDDEN int rtgl_drawLines3D(struct dm *dmp, int npoints, point_t *points);
-HIDDEN int rtgl_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y);
-HIDDEN int rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp);
-HIDDEN int rtgl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), genptr_t *data);
-HIDDEN int rtgl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency);
-HIDDEN int rtgl_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b);
-HIDDEN int rtgl_setLineAttr(struct dm *dmp, int width, int style);
-HIDDEN int rtgl_configureWin_guts(struct dm *dmp, int force);
-HIDDEN int rtgl_configureWin(struct dm *dmp);
-HIDDEN int rtgl_setLight(struct dm *dmp, int lighting_on);
-HIDDEN int rtgl_setTransparency(struct dm *dmp, int transparency_on);
-HIDDEN int rtgl_setDepthMask(struct dm *dmp, int depthMask_on);
-HIDDEN int rtgl_setZBuffer(struct dm *dmp, int zbuffer_on);
-HIDDEN int rtgl_setWinBounds(struct dm *dmp, int *w);
-HIDDEN int rtgl_debug(struct dm *dmp, int lvl);
-HIDDEN int rtgl_beginDList(struct dm *dmp, unsigned int list);
-HIDDEN int rtgl_endDList(struct dm *dmp);
-HIDDEN int rtgl_drawDList(struct dm *dmp, unsigned int list);
-HIDDEN int rtgl_freeDLists(struct dm *dmp, unsigned int list, int range);
+
+HIDDEN_DM_FUNCTION_PROTOTYPES(rtgl)
 
 struct dm dm_rtgl = {
     rtgl_close,
