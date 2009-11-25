@@ -77,24 +77,25 @@
 
 static int ogl_actively_drawing = 0;
 
-HIDDEN fastf_t default_viewscale = 1000.0;
-HIDDEN double xlim_view = 1.0;	/* args for glOrtho*/
-HIDDEN double ylim_view = 1.0;
+static fastf_t default_viewscale = 1000.0;
+static double xlim_view = 1.0;	/* args for glOrtho*/
+static double ylim_view = 1.0;
 
 /* lighting parameters */
-HIDDEN float amb_three[] = {0.3, 0.3, 0.3, 1.0};
+static float amb_three[] = {0.3, 0.3, 0.3, 1.0};
 
 
-HIDDEN float light0_direction[] = {0.0, 0.0, 1.0, 0.0};
-HIDDEN float light0_position[] = {100.0, 200.0, 100.0, 0.0};
-HIDDEN float light0_diffuse[] = {1.0, 1.0, 1.0, 1.0}; /* white */
-HIDDEN float wireColor[4];
-HIDDEN float ambientColor[4];
-HIDDEN float specularColor[4];
-HIDDEN float diffuseColor[4];
-HIDDEN float backColor[] = {1.0, 1.0, 0.0, 1.0}; /* yellow */
+static float light0_direction[] = {0.0, 0.0, 1.0, 0.0};
+static float light0_position[] = {100.0, 200.0, 100.0, 0.0};
+static float light0_diffuse[] = {1.0, 1.0, 1.0, 1.0}; /* white */
+static float wireColor[4];
+static float ambientColor[4];
+static float specularColor[4];
+static float diffuseColor[4];
+static float backColor[] = {1.0, 1.0, 0.0, 1.0}; /* yellow */
 
-void
+
+HIDDEN void
 ogl_fogHint(struct dm *dmp, int fastfog)
 {
     ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.fastfog = fastfog;
