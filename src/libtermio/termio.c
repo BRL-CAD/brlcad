@@ -36,16 +36,7 @@
 #  endif
 #endif
 
-#ifndef TAB3
-#  define TAB3 (TAB1|TAB2)
-#endif
-#ifndef XTABS
-#  define XTABS (TAB1 | TAB2)
-#endif
-
-
 #include "bio.h"
-
 
 /*
  * This file will work IFF one of these three flags is set:
@@ -78,6 +69,24 @@
 #endif
 #if !defined(FOPEN_MAX)
 #  define FOPEN_MAX 32
+#endif
+
+
+/* figure out how to do tab-expansion */
+#if !defined(TAB_EXPANSION) && defined(TAB3)
+#  define TAB_EXPANSION TAB3
+#endif
+#if !defined(TAB_EXPANSION) && defined(XTABS)
+#  define TAB_EXPANSION XTABS
+#endif
+#if !defined(TAB_EXPANSION) && defined(OXTABS)
+#  define TAB_EXPANSION OXTABS
+#endif
+#if !defined(TAB_EXPANSION) && defined(TAB1) && defined(TAB2)
+#  define TAB_EXPANSION (TAB1 | TAB2) /* obsolete */
+#endif
+#ifndef TAB_EXPANSION
+#  define TAB_EXPANSION 0 /* punt */
 #endif
 
 
@@ -265,15 +274,17 @@ void
 set_Tabs(int fd)
 {
 #ifdef BSD
-    curr_tio[fd].sg_flags |= XTABS;		/* Tab expansion ON.	*/
+    curr_tio[fd].sg_flags |= TAB_EXPANSION;		/* Tab expansion ON.	*/
     (void) ioctl(fd, TIOCSETP, &curr_tio[fd]);
 #endif
+
 #ifdef SYSV
-    curr_tio[fd].c_oflag |= TAB3;		/* Tab expansion ON.	*/
+    curr_tio[fd].c_oflag |= TAB_EXPANSION;		/* Tab expansion ON.	*/
     (void) ioctl(fd, TCSETA, &curr_tio[fd]);
 #endif
+
 #ifdef HAVE_TERMIOS_H
-    curr_tio[fd].c_oflag |= TAB3;		/* Tab expansion ON.	*/
+    curr_tio[fd].c_oflag |= TAB_EXPANSION;		/* Tab expansion ON.	*/
     (void)tcsetattr(fd, TCSANOW, &curr_tio[fd]);
 #endif
     return;
@@ -286,15 +297,15 @@ void
 clr_Tabs(int fd)
 {
 #ifdef BSD
-    curr_tio[fd].sg_flags &= ~XTABS;	/* Tab expans. OFF.	*/
+    curr_tio[fd].sg_flags &= ~TAB_EXPANSION;		/* Tab expans. OFF.	*/
     (void) ioctl(fd, TIOCSETP, &curr_tio[fd]);
 #endif
 #ifdef SYSV
-    curr_tio[fd].c_oflag &= ~TAB3;		/* Tab expans. OFF.	*/
+    curr_tio[fd].c_oflag &= ~TAB_EXPANSION;		/* Tab expans. OFF.	*/
     (void) ioctl(fd, TCSETA, &curr_tio[fd]);
 #endif
 #ifdef HAVE_TERMIOS_H
-    curr_tio[fd].c_oflag &= ~TAB3;		/* Tab expans. OFF.	*/
+    curr_tio[fd].c_oflag &= ~TAB_EXPANSION;		/* Tab expans. OFF.	*/
     (void)tcsetattr(fd, TCSANOW, &curr_tio[fd]);
 #endif
     return;
