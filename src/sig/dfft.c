@@ -21,8 +21,8 @@
  *
  * Compute FFT's of a stream of doubles (Real data).
  *
- * Presently 512 point spectrum only.
- * Which means we need a 1K data segment to get spectrum at midpoint.
+ * Presently 512 point spectrum only, which means we need a 1K data
+ * segment to get spectrum at midpoint.
  *
  */
 
@@ -35,27 +35,27 @@
 
 #include "bu.h"
 
-#define	MAXFFT	4096
-#define	MAXOUT	2048		/* MAXFFT/2 XXX (Actually + 1) */
+#define MAXFFT 4096
+#define MAXOUT 2048		/* MAXFFT/2 XXX (Actually + 1) */
 
-double	data[MAXFFT];		/* Data buffer: 2*Points in spectrum */
+double data[MAXFFT];		/* Data buffer: 2*Points in spectrum */
 
-double	mindB = -120.0;
-int	lflag = 0;
-int	cflag = 0;
-int	phase = 0;
-int	linear_output = 0;
-int	ascii_output = 0;
-int	normalize_output = 0;
+double mindB = -120.0;
+int lflag = 0;
+int cflag = 0;
+int phase = 0;
+int linear_output = 0;
+int ascii_output = 0;
+int normalize_output = 0;
 
-double	cbfilter[27];
-void	cbweights(double *filter, int window, int points);
-double	cbsum;
-void	fftdisp(double *dat, int N);
-void	fftmag2(double *mags, double *dat, int N);
-void	fftphase(double *dat, int N);
-void	rfft();
-void	LintoLog(double *in, double *out, int num);
+double cbfilter[27];
+void cbweights(double *filter, int window, int points);
+double cbsum;
+void fftdisp(double *dat, int N);
+void fftmag2(double *mags, double *dat, int N);
+void fftphase(double *dat, int N);
+void rfft();
+void LintoLog(double *in, double *out, int num);
 
 static const char usage[] = "\
 Usage: dfft [options] [width (1024)] < doubles > 512logmags\n\
@@ -69,14 +69,14 @@ Usage: dfft [options] [width (1024)] < doubles > 512logmags\n\
 
 int main(int argc, char **argv)
 {
-    int	i, n, c;
-    int	L = 1024;
+    int i, n, c;
+    int L = 1024;
 
-    if ( isatty(fileno(stdin)) || isatty(fileno(stdout)) ) {
-	bu_exit(1, "%s", usage );
+    if (isatty(fileno(stdin)) || isatty(fileno(stdout))) {
+	bu_exit(1, "%s", usage);
     }
 
-    while ( (c = bu_getopt(argc, argv, "d:clpLANh")) != EOF)
+    while ((c = bu_getopt(argc, argv, "d:clpLANh")) != EOF)
 	switch (c) {
 	    case 'd': mindB = -atof(optarg); break;
 	    case 'c': cflag++; break;
@@ -91,8 +91,8 @@ int main(int argc, char **argv)
 	    default:  printf("Unknown argument: %c\n%s\n", c, usage); return EXIT_FAILURE;
 	}
 
-    if ( L > MAXFFT ) {
-	bu_exit(2, "dfft: can't go over %d\n", MAXFFT );
+    if (L > MAXFFT) {
+	bu_exit(2, "dfft: can't go over %d\n", MAXFFT);
     }
 
     /* Calculate Critical Band filter weights */
@@ -105,7 +105,7 @@ int main(int argc, char **argv)
 
     while ((n = fread(data, sizeof(*data), L, stdin)) > 0) {
 	if (n != L) {
-	    fprintf( stderr, "dfft: warning - partial record, adding %d zeros\n", L-n );
+	    fprintf(stderr, "dfft: warning - partial record, adding %d zeros\n", L-n);
 	    memset((char *)&data[n], 0, L-n);
 	}
 
@@ -126,38 +126,38 @@ int main(int argc, char **argv)
 void
 fftdisp(double *dat, int N)
 {
-    int	i, j;
-    double	mags[MAXOUT];
+    int i, j;
+    double mags[MAXOUT];
 
     /* Periodogram scaling */
-    for ( i = 0; i < N; i++ )
+    for (i = 0; i < N; i++)
 	dat[i] /= (double)N;
 
-    fftmag2( mags, dat, N );
+    fftmag2(mags, dat, N);
 
     /* Interp to Log freq scale */
-    if ( lflag ) {
-	double	logout[MAXOUT+1];
+    if (lflag) {
+	double logout[MAXOUT+1];
 
-	LintoLog( mags, logout, N/2 );
+	LintoLog(mags, logout, N/2);
 	/* put result back in mags */
-	for ( i = 0; i < N/2; i++ )
+	for (i = 0; i < N/2; i++)
 	    mags[i] = logout[i];
     }
 
     /* Critical Band Filter */
-    if ( cflag ) {
-	double	sum;
-	double	tmp[MAXOUT];
+    if (cflag) {
+	double sum;
+	double tmp[MAXOUT];
 
 	/* save working copy */
-	for ( i = 0; i < N/2; i++ )
+	for (i = 0; i < N/2; i++)
 	    tmp[i] = mags[i];
 
 	/* filter it */
-	for ( i = 0+9; i < N/2-9; i++ ) {
+	for (i = 0+9; i < N/2-9; i++) {
 	    sum = 0.0;
-	    for ( j = -9; j <= 9; j++ )
+	    for (j = -9; j <= 9; j++)
 		sum += tmp[i+j] * cbfilter[j+9];
 	    mags[i] = sum / cbsum;
 	}
@@ -190,24 +190,24 @@ fftdisp(double *dat, int N)
 #if 0
 	/* normalize dB range from 0 to 1 */
 	value = (dB/mindB) + 1.0;
-	if ( value < 0 ) value = 0;
-	else if ( value > 1.0 ) value = 1.0;
+	if (value < 0) value = 0;
+	else if (value > 1.0) value = 1.0;
 #endif
-	fwrite( mags, sizeof(*mags), N/2, stdout );
+	fwrite(mags, sizeof(*mags), N/2, stdout);
     }
 }
 
 void
 fftmag2(double *mags, double *dat, int N)
 {
-    int	i;
-    double	value, dB;
+    int i;
+    double value, dB;
 
     /* DC */
     mags[0] = dat[0]*dat[0];
 
     /* Normal */
-    for ( i = 1; i < N/2; i++ ) {
+    for (i = 1; i < N/2; i++) {
 	mags[i] = dat[i]*dat[i] + dat[N-i]*dat[N-i];
     }
 
@@ -226,7 +226,7 @@ fftmag2(double *mags, double *dat, int N)
 	/* Log output */
 	for (i = 0; i <= N/2; i++) {
 	    value = mags[i];
-	    if ( value > 1.0e-18 )
+	    if (value > 1.0e-18)
 		dB = 10*log10(value);
 	    else
 		dB = -180.0;
@@ -238,20 +238,20 @@ fftmag2(double *mags, double *dat, int N)
 void
 fftphase(double *dat, int N)
 {
-    int	i;
-    double	value, out[MAXFFT];
+    int i;
+    double value, out[MAXFFT];
 
-    for ( i = 0; i < N; i++ )
+    for (i = 0; i < N; i++)
 	dat[i] /= (double)N;
 
-    for ( i = 1; i < N/2; i++ ) {
-	value = atan2( dat[N-i], dat[i] );
+    for (i = 1; i < N/2; i++) {
+	value = atan2(dat[N-i], dat[i]);
 	out[i] = value / M_PI;
     }
     /* DC */
     out[i] = 0;
 
-    fwrite( out, sizeof(*out), N/2, stdout );
+    fwrite(out, sizeof(*out), N/2, stdout);
 }
 
 /*
