@@ -348,13 +348,13 @@ DM_EXPORT BU_EXTERN(void dm_draw_adc,
 DM_EXPORT BU_EXTERN(void dm_draw_data_axes,
 		    (struct dm *dmp,
 		     fastf_t viewSize,
-		     mat_t rmat,
+		     const mat_t rmat,
 		     struct ged_axes_state *gasp));
 
 DM_EXPORT BU_EXTERN(void dm_draw_axes,
 		    (struct dm *dmp,
 		     fastf_t viewSize,
-		     mat_t rmat,
+		     const mat_t rmat,
 		     struct ged_axes_state *gasp));
 
 /* clip.c */

@@ -40,7 +40,7 @@
 void
 dm_draw_data_axes(struct		dm *dmp,
 		  fastf_t		viewSize, /* in mm */
-		  mat_t			rmat,     /* view rotation matrix */
+		  const mat_t			rmat,     /* view rotation matrix */
 		  struct ged_axes_state *gasp)
 {
     register int i, j;
@@ -199,7 +199,7 @@ dm_draw_data_axes(struct		dm *dmp,
 void
 dm_draw_data_axes(struct		dm *dmp,
 		  fastf_t		viewSize, /* in mm */
-		  mat_t			rmat,     /* view rotation matrix */
+		  const mat_t		rmat,     /* view rotation matrix */
 		  struct ged_axes_state *gasp)
 {
     register fastf_t halfAxesSize;		/* half the length of an axis */
@@ -263,7 +263,7 @@ dm_draw_data_axes(struct		dm *dmp,
 void
 dm_draw_axes(struct dm			*dmp,
 	     fastf_t			viewSize, /* in mm */
-	     mat_t			rmat,       /* view rotation matrix */
+	     const mat_t		rmat,       /* view rotation matrix */
 	     struct ged_axes_state 	*gasp)
 {
     register fastf_t halfAxesSize;		/* half the length of an axis */
