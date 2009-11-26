@@ -1472,7 +1472,7 @@ _pkg_dispatch(register struct pkg_conn *pc)
 	_pkg_timestamp();
 	fprintf(_pkg_debug,
 		"_pkg_dispatch(pc=x%lx) type=%d, buf=x%lx, len=%ld\n",
-		(long)pc, pc->pkc_type, (long)(pc->pkc_buf), pc->pkc_len);
+		(long)pc, pc->pkc_type, (long)(pc->pkc_buf), (long)(pc->pkc_len));
 	fflush(_pkg_debug);
     }
     if (pc->pkc_left != 0)  return(-1);
@@ -1732,7 +1732,7 @@ pkg_suckin(register struct pkg_conn *pc)
     if ((got = PKG_READ(pc->pkc_fd, &pc->pkc_inbuf[pc->pkc_inend], avail)) <= 0) {
 #ifdef HAVE_WINSOCK_H
 	int ecode = WSAGetLastError();
-	
+
 #endif
 	if (got == 0) {
 	    if (_pkg_debug) {
