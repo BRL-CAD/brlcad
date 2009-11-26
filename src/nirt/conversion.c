@@ -21,12 +21,6 @@
  *
  * handle ae/direction/grid conversions
  *
- * Author:
- *   Natalie L. Barker
- *
- * Date:
- *   Jan 90
- *
  */
 
 #include "common.h"
@@ -40,15 +34,15 @@
 #include "./usrfmt.h"
 
 
-extern outval	ValTab[];
+extern outval ValTab[];
 
 void
 dir2ae(void)
 {
     double square;
+    int zeroes = NEAR_ZERO(direct(Y), SMALL_FASTF) && NEAR_ZERO(direct(X), SMALL_FASTF);
 
-    azimuth() = ((direct(Y) == 0) && (direct(X) == 0)) ? 0.0 :
-	atan2 ( -(direct(Y)), -(direct(X)) ) / DEG2RAD;
+    azimuth() = zeroes ? 0.0 : atan2 (-(direct(Y)), -(direct(X))) / DEG2RAD;
 
     square = sqrt(direct(X) * direct(X) + direct(Y) * direct(Y));
     elevation() = atan2 (-(direct(Z)), square) / DEG2RAD;
@@ -58,8 +52,8 @@ dir2ae(void)
 void
 grid2targ(void)
 {
-    double	ar = azimuth() * DEG2RAD;
-    double	er = elevation() * DEG2RAD;
+    double ar = azimuth() * DEG2RAD;
+    double er = elevation() * DEG2RAD;
 
     target(X) = - grid(HORZ) * sin(ar)
 	- grid(VERT) * cos(ar) * sin(er)
@@ -75,8 +69,8 @@ grid2targ(void)
 void
 targ2grid(void)
 {
-    double	ar = azimuth() * DEG2RAD;
-    double	er = elevation() * DEG2RAD;
+    double ar = azimuth() * DEG2RAD;
+    double er = elevation() * DEG2RAD;
 
     grid(HORZ) = - target(X) * sin(ar)
 	+ target(Y) * cos(ar);
@@ -92,16 +86,16 @@ targ2grid(void)
 void
 ae2dir(void)
 {
-    double	ar = azimuth() * DEG2RAD;
-    double	er = elevation() * DEG2RAD;
+    double ar = azimuth() * DEG2RAD;
+    double er = elevation() * DEG2RAD;
 
-    int		i;
-    vect_t	dir;
+    int i;
+    vect_t dir;
 
     dir[X] = -cos(ar) * cos(er);
     dir[Y] = -sin(ar) * cos(er);
     dir[Z] = -sin(er);
-    VUNITIZE( dir );
+    VUNITIZE(dir);
     for (i = 0; i < 3; ++i)
 	direct(i) = dir[i];
 }

@@ -21,12 +21,6 @@
  *
  * Parse the output formatter
  *
- * Author:
- * Natalie L. Barker
- *
- * Date:
- * Jan 90
- *
  */
 
 #include "common.h"
@@ -44,71 +38,71 @@
 
 /* The table of output values */
 outval ValTab[] = {
-    { 0, VTI_LITERAL, 0 },
-    { "x_orig", VTI_X_ORIG, OIT_FLOAT },
-    { "y_orig", VTI_Y_ORIG, OIT_FLOAT },
-    { "z_orig", VTI_Z_ORIG, OIT_FLOAT },
-    { "h", VTI_H, OIT_FLOAT },
-    { "v", VTI_V, OIT_FLOAT },
-    { "d_orig", VTI_D_ORIG, OIT_FLOAT },
-    { "x_dir", VTI_X_DIR, OIT_FNOUNIT },
-    { "y_dir", VTI_Y_DIR, OIT_FNOUNIT },
-    { "z_dir", VTI_Z_DIR, OIT_FNOUNIT },
-    { "a", VTI_A, OIT_FNOUNIT },
-    { "e", VTI_E, OIT_FNOUNIT },
-    { "x_in", VTI_X_IN, OIT_FLOAT },
-    { "y_in", VTI_Y_IN, OIT_FLOAT },
-    { "z_in", VTI_Z_IN, OIT_FLOAT },
-    { "d_in", VTI_D_IN, OIT_FLOAT },
-    { "x_out", VTI_X_OUT, OIT_FLOAT },
-    { "y_out", VTI_Y_OUT, OIT_FLOAT },
-    { "z_out", VTI_Z_OUT, OIT_FLOAT },
-    { "d_out", VTI_D_OUT, OIT_FLOAT },
-    { "los", VTI_LOS, OIT_FLOAT },
-    { "scaled_los", VTI_SLOS, OIT_FLOAT },
-    { "path_name", VTI_PATH_NAME, OIT_STRING },
-    { "reg_name", VTI_REG_NAME, OIT_STRING },
-    { "reg_id", VTI_REG_ID, OIT_INT },
-    { "obliq_in", VTI_OBLIQ_IN, OIT_FNOUNIT },
-    { "obliq_out", VTI_OBLIQ_OUT, OIT_FNOUNIT },
-    { "nm_x_in", VTI_NM_X_IN, OIT_FNOUNIT },
-    { "nm_y_in", VTI_NM_Y_IN, OIT_FNOUNIT },
-    { "nm_z_in", VTI_NM_Z_IN, OIT_FNOUNIT },
-    { "nm_d_in", VTI_NM_D_IN, OIT_FNOUNIT },
-    { "nm_h_in", VTI_NM_H_IN, OIT_FNOUNIT },
-    { "nm_v_in", VTI_NM_V_IN, OIT_FNOUNIT },
-    { "nm_x_out", VTI_NM_X_OUT, OIT_FNOUNIT },
-    { "nm_y_out", VTI_NM_Y_OUT, OIT_FNOUNIT },
-    { "nm_z_out", VTI_NM_Z_OUT, OIT_FNOUNIT },
-    { "nm_d_out", VTI_NM_D_OUT, OIT_FNOUNIT },
-    { "nm_h_out", VTI_NM_H_OUT, OIT_FNOUNIT },
-    { "nm_v_out", VTI_NM_V_OUT, OIT_FNOUNIT },
-    { "ov_reg1_name", VTI_OV_REG1_NAME, OIT_STRING },
-    { "ov_reg1_id", VTI_OV_REG1_ID, OIT_INT },
-    { "ov_reg2_name", VTI_OV_REG2_NAME, OIT_STRING },
-    { "ov_reg2_id", VTI_OV_REG2_ID, OIT_INT },
-    { "ov_sol_in", VTI_OV_SOL_IN, OIT_STRING },
-    { "ov_sol_out", VTI_OV_SOL_OUT, OIT_STRING },
-    { "ov_los", VTI_OV_LOS, OIT_FLOAT },
-    { "ov_x_in", VTI_OV_X_IN, OIT_FLOAT },
-    { "ov_y_in", VTI_OV_Y_IN, OIT_FLOAT },
-    { "ov_z_in", VTI_OV_Z_IN, OIT_FLOAT },
-    { "ov_d_in", VTI_OV_D_IN, OIT_FLOAT },
-    { "ov_x_out", VTI_OV_X_OUT, OIT_FLOAT },
-    { "ov_y_out", VTI_OV_Y_OUT, OIT_FLOAT },
-    { "ov_z_out", VTI_OV_Z_OUT, OIT_FLOAT },
-    { "ov_d_out", VTI_OV_D_OUT, OIT_FLOAT },
-    { "surf_num_in", VTI_SURF_NUM_IN, OIT_INT },
-    { "surf_num_out", VTI_SURF_NUM_OUT, OIT_INT },
-    { "claimant_count", VTI_CLAIMANT_COUNT, OIT_INT },
-    { "claimant_list", VTI_CLAIMANT_LIST, OIT_STRING },
-    { "claimant_listn", VTI_CLAIMANT_LISTN, OIT_STRING },
-    { "attributes", VTI_ATTRIBUTES, OIT_STRING },
-    { "x_gap_in", VTI_XPREV_OUT, OIT_FLOAT },
-    { "y_gap_in", VTI_YPREV_OUT, OIT_FLOAT },
-    { "z_gap_in", VTI_ZPREV_OUT, OIT_FLOAT },
-    { "gap_los", VTI_GAP_LOS, OIT_FLOAT },
-    { 0, 0, 0 }
+    { 0, VTI_LITERAL, OIT_FNOUNIT, {0} },
+    { "x_orig", VTI_X_ORIG, OIT_FLOAT, {0} },
+    { "y_orig", VTI_Y_ORIG, OIT_FLOAT, {0} },
+    { "z_orig", VTI_Z_ORIG, OIT_FLOAT, {0} },
+    { "h", VTI_H, OIT_FLOAT, {0} },
+    { "v", VTI_V, OIT_FLOAT, {0} },
+    { "d_orig", VTI_D_ORIG, OIT_FLOAT, {0} },
+    { "x_dir", VTI_X_DIR, OIT_FNOUNIT, {0} },
+    { "y_dir", VTI_Y_DIR, OIT_FNOUNIT, {0} },
+    { "z_dir", VTI_Z_DIR, OIT_FNOUNIT, {0} },
+    { "a", VTI_A, OIT_FNOUNIT, {0} },
+    { "e", VTI_E, OIT_FNOUNIT, {0} },
+    { "x_in", VTI_X_IN, OIT_FLOAT, {0} },
+    { "y_in", VTI_Y_IN, OIT_FLOAT, {0} },
+    { "z_in", VTI_Z_IN, OIT_FLOAT, {0} },
+    { "d_in", VTI_D_IN, OIT_FLOAT, {0} },
+    { "x_out", VTI_X_OUT, OIT_FLOAT, {0} },
+    { "y_out", VTI_Y_OUT, OIT_FLOAT, {0} },
+    { "z_out", VTI_Z_OUT, OIT_FLOAT, {0} },
+    { "d_out", VTI_D_OUT, OIT_FLOAT, {0} },
+    { "los", VTI_LOS, OIT_FLOAT, {0} },
+    { "scaled_los", VTI_SLOS, OIT_FLOAT, {0} },
+    { "path_name", VTI_PATH_NAME, OIT_STRING, {0} },
+    { "reg_name", VTI_REG_NAME, OIT_STRING, {0} },
+    { "reg_id", VTI_REG_ID, OIT_INT, {0} },
+    { "obliq_in", VTI_OBLIQ_IN, OIT_FNOUNIT, {0} },
+    { "obliq_out", VTI_OBLIQ_OUT, OIT_FNOUNIT, {0} },
+    { "nm_x_in", VTI_NM_X_IN, OIT_FNOUNIT, {0} },
+    { "nm_y_in", VTI_NM_Y_IN, OIT_FNOUNIT, {0} },
+    { "nm_z_in", VTI_NM_Z_IN, OIT_FNOUNIT, {0} },
+    { "nm_d_in", VTI_NM_D_IN, OIT_FNOUNIT, {0} },
+    { "nm_h_in", VTI_NM_H_IN, OIT_FNOUNIT, {0} },
+    { "nm_v_in", VTI_NM_V_IN, OIT_FNOUNIT, {0} },
+    { "nm_x_out", VTI_NM_X_OUT, OIT_FNOUNIT, {0} },
+    { "nm_y_out", VTI_NM_Y_OUT, OIT_FNOUNIT, {0} },
+    { "nm_z_out", VTI_NM_Z_OUT, OIT_FNOUNIT, {0} },
+    { "nm_d_out", VTI_NM_D_OUT, OIT_FNOUNIT, {0} },
+    { "nm_h_out", VTI_NM_H_OUT, OIT_FNOUNIT, {0} },
+    { "nm_v_out", VTI_NM_V_OUT, OIT_FNOUNIT, {0} },
+    { "ov_reg1_name", VTI_OV_REG1_NAME, OIT_STRING, {0} },
+    { "ov_reg1_id", VTI_OV_REG1_ID, OIT_INT, {0} },
+    { "ov_reg2_name", VTI_OV_REG2_NAME, OIT_STRING, {0} },
+    { "ov_reg2_id", VTI_OV_REG2_ID, OIT_INT, {0} },
+    { "ov_sol_in", VTI_OV_SOL_IN, OIT_STRING, {0} },
+    { "ov_sol_out", VTI_OV_SOL_OUT, OIT_STRING, {0} },
+    { "ov_los", VTI_OV_LOS, OIT_FLOAT, {0} },
+    { "ov_x_in", VTI_OV_X_IN, OIT_FLOAT, {0} },
+    { "ov_y_in", VTI_OV_Y_IN, OIT_FLOAT, {0} },
+    { "ov_z_in", VTI_OV_Z_IN, OIT_FLOAT, {0} },
+    { "ov_d_in", VTI_OV_D_IN, OIT_FLOAT, {0} },
+    { "ov_x_out", VTI_OV_X_OUT, OIT_FLOAT, {0} },
+    { "ov_y_out", VTI_OV_Y_OUT, OIT_FLOAT, {0} },
+    { "ov_z_out", VTI_OV_Z_OUT, OIT_FLOAT, {0} },
+    { "ov_d_out", VTI_OV_D_OUT, OIT_FLOAT, {0} },
+    { "surf_num_in", VTI_SURF_NUM_IN, OIT_INT, {0} },
+    { "surf_num_out", VTI_SURF_NUM_OUT, OIT_INT, {0} },
+    { "claimant_count", VTI_CLAIMANT_COUNT, OIT_INT, {0} },
+    { "claimant_list", VTI_CLAIMANT_LIST, OIT_STRING, {0} },
+    { "claimant_listn", VTI_CLAIMANT_LISTN, OIT_STRING, {0} },
+    { "attributes", VTI_ATTRIBUTES, OIT_STRING, {0} },
+    { "x_gap_in", VTI_XPREV_OUT, OIT_FLOAT, {0} },
+    { "y_gap_in", VTI_YPREV_OUT, OIT_FLOAT, {0} },
+    { "z_gap_in", VTI_ZPREV_OUT, OIT_FLOAT, {0} },
+    { "gap_los", VTI_GAP_LOS, OIT_FLOAT, {0} },
+    { 0, 0, 0, {0} }
 };
 
 outitem *oi_list[FMT_NONE];
@@ -237,10 +231,6 @@ parse_fmt(const char *uoutspec, int outcom_type)
     outitem *oip;
     outitem *prev_oip = OUTITEM_NULL;
     outval *vtp;
-    int slen;
-
-
-    /* N.B. bu_malloc() only returns upon successful allocation */
 
     mycopy = uos = bu_malloc(strlen(uoutspec)+1, "uos");
     bu_strlcpy(uos, uoutspec, strlen(uoutspec)+1);
@@ -553,7 +543,7 @@ fopenrc(void)
 }
 
 int
-check_conv_spec (outitem *oip)
+check_conv_spec(outitem *oip)
 {
     char *cp;
     int oi_type;
@@ -770,6 +760,10 @@ dump_state(const char *buffer, com_table *ctp)
     int f;
     outitem *oip;		/* Pointer into list of output items */
 
+    /* quellage */
+    buffer = buffer;
+    ctp = ctp;
+
     if ((sfPtr = fopen(sf_name, "wb")) == NULL) {
 	fprintf(stderr, "Cannot open statefile '%s'\n", sf_name);
 	return;
@@ -813,6 +807,10 @@ void
 load_state(char *buffer, com_table *ctp)
 {
     FILE *sfPtr;
+
+    /* quellage */
+    buffer = buffer;
+    ctp = ctp;
 
     if ((sfPtr = fopen(sf_name, "rb")) == NULL) {
 	fprintf(stderr, "Cannot open statefile '%s'\n", sf_name);

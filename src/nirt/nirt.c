@@ -41,99 +41,79 @@
 #include "brlcad_version.h"
 
 
-extern void	cm_libdebug();
-extern void	cm_debug();
-extern void	cm_attr();
+/* bleh */
+int need_prep = 1;
 
 
-const char	usage[] = "\
+const char usage[] = "\
 Usage: 'nirt [options] model.g objects...'\n\
 Options:\n\
- -b        back out of geometry before first shot\n\
- -B n      set rt_bot_minpieces=n\n\
- -e script run script before interacting\n\
- -f sfile  run script sfile before interacting\n\
- -L        list output formatting options\n\
- -M        read matrix, cmds on stdin\n\
- -O action handle overlap claims via action\n\
- -s        run in silent (non-verbose) mode\n\
- -u n      set use_air=n (default 0)\n\
- -v        run in verbose mode\n\
- -x v      set librt(3) diagnostic flag=v\n\
- -X v      set nirt diagnostic flag=v\n\
+ -b         back out of geometry before first shot\n\
+ -B n       set rt_bot_minpieces=n\n\
+ -e script  run script before interacting\n\
+ -f sfile   run script sfile before interacting\n\
+ -L         list output formatting options\n\
+ -M         read matrix, cmds on stdin\n\
+ -O action  handle overlap claims via action\n\
+ -s         run in silent (non-verbose) mode\n\
+ -u n       set use_air=n (default 0)\n\
+ -v         run in verbose mode\n\
+ -x v       set librt(3) diagnostic flag=v\n\
+ -X v       set nirt diagnostic flag=v\n\
 ";
 
-char		*db_name;	/* the name of the BRL-CAD geometry file */
-const com_table	ComTab[] = {
+
+const com_table ComTab[] = {
     { "attr", cm_attr, "select attributes", "<-f(flush) | -p(print) | attribute_name>" },
-    { "ae", az_el, "set/query azimuth and elevation",
-      "azimuth elevation" },
-    { "dir", dir_vect, "set/query direction vector",
-      "x-component y-component z-component" },
-    { "hv", grid_coor, "set/query gridplane coordinates",
-      "horz vert [dist]" },
-    { "xyz", target_coor, "set/query target coordinates",
-      "X Y Z" },
-    { "s", shoot, "shoot a ray at the target" },
-    { "backout", backout, "back out of model" },
-    { "useair", use_air, "set/query use of air",
-      "<0|1|2|...>" },
-    { "units", nirt_units, "set/query local units",
-      "<mm|cm|m|in|ft>" },
-    { "overlap_claims", do_overlap_claims,
-      "set/query overlap rebuilding/retention",
-      "<0|1|2|3>" },
-    { "fmt", format_output, "set/query output formats",
-      "{rhpfmog} format item item ..." },
-    { "dest", direct_output, "set/query output destination",
-      "file/pipe" },
-    { "statefile", state_file,
-      "set/query name of state file", "file" },
-    { "dump", dump_state,
-      "write current state of NIRT to the state file" },
-    { "load", load_state,
-      "read new state for NIRT from the state file" },
-    { "print", print_item, "query an output item",
-      "item" },
-    { "bot_minpieces", bot_minpieces,
-      "Get/Set value for rt_bot_minpieces (0 means do not use pieces, default is 32)",
-      "min_pieces" },
-    { "libdebug", cm_libdebug,
-      "set/query librt debug flags", "hex_flag_value" },
-    { "debug", cm_debug,
-      "set/query nirt debug flags", "hex_flag_value" },
-    { "!", sh_esc, "escape to the shell" },
-    { "q", quit, "quit" },
-    { "?", show_menu, "display this help menu" },
+    { "ae", az_el, "set/query azimuth and elevation", "azimuth elevation" },
+    { "dir", dir_vect, "set/query direction vector", "x-component y-component z-component" },
+    { "hv", grid_coor, "set/query gridplane coordinates", "horz vert [dist]" },
+    { "xyz", target_coor, "set/query target coordinates", "X Y Z" },
+    { "s", shoot, "shoot a ray at the target", NULL },
+    { "backout", backout, "back out of model", NULL },
+    { "useair", use_air, "set/query use of air", "<0|1|2|...>" },
+    { "units", nirt_units, "set/query local units", "<mm|cm|m|in|ft>" },
+    { "overlap_claims", do_overlap_claims, "set/query overlap rebuilding/retention", "<0|1|2|3>" },
+    { "fmt", format_output, "set/query output formats", "{rhpfmog} format item item ..." },
+    { "dest", direct_output, "set/query output destination", "file/pipe" },
+    { "statefile", state_file, "set/query name of state file", "file" },
+    { "dump", dump_state, "write current state of NIRT to the state file", NULL },
+    { "load", load_state, "read new state for NIRT from the state file", NULL },
+    { "print", print_item, "query an output item", "item" },
+    { "bot_minpieces", bot_minpieces, "Get/Set value for rt_bot_minpieces (0 means do not use pieces, default is 32)", "min_pieces" },
+    { "libdebug", cm_libdebug, "set/query librt debug flags", "hex_flag_value" },
+    { "debug", cm_debug, "set/query nirt debug flags", "hex_flag_value" },
+    { "!", sh_esc, "escape to the shell", NULL },
+    { "q", quit, "quit", NULL },
+    { "?", show_menu, "display this help menu", NULL },
     { (char *)NULL, NULL, (char *)NULL, (char *)NULL }
 };
 
 
 struct script_rec
 {
-    struct bu_list	l;
-    int			sr_type;	/* Direct or indirect */
-    struct bu_vls	sr_script;	/* Literal or file name */
+    struct bu_list l;
+    int sr_type;	/* Direct or indirect */
+    struct bu_vls sr_script;	/* Literal or file name */
 };
-#define	SCRIPT_REC_NULL	((struct script_rec *) 0)
-#define SCRIPT_REC_MAGIC	0x73637270
-#define	sr_magic		l.magic
+#define SCRIPT_REC_NULL ((struct script_rec *) 0)
+#define SCRIPT_REC_MAGIC 0x73637270
+#define sr_magic l.magic
 
 
-int		do_backout = 0;			/* Backout before shooting? */
-int		overlap_claims = OVLP_RESOLVE;	/* Rebuild/retain overlaps? */
-char		*ocname[4];
-int		silent_flag = SILENT_UNSET;	/* Refrain from babbling? */
-int		nirt_debug = 0;			/* Control of diagnostics */
+int do_backout = 0;			/* Backout before shooting? */
+int overlap_claims = OVLP_RESOLVE;	/* Rebuild/retain overlaps? */
+char *ocname[4];
+int silent_flag = SILENT_UNSET;	/* Refrain from babbling? */
+int nirt_debug = 0;			/* Control of diagnostics */
 
 /* Parallel structures needed for operation w/ and w/o air */
-struct rt_i		*rti_tab[2];
-struct rt_i		*rtip;
-struct resource		res_tab;
+struct rt_i *rti_tab[2];
+struct rt_i *rtip;
+struct resource res_tab;
 
-struct application	ap;
+struct application ap;
 
-int need_prep = 1;
 attr_table a_tab;
 
 
@@ -172,11 +152,11 @@ void listformats(void)
 	cfPtr = fopen(bu_vls_addr(&nirtpathtofile), "rb");
 	fnddesc = 0;
 	while (bu_vls_gets(&vlsfileline, cfPtr) && fnddesc == 0) {
-	   if (strncmp(bu_vls_addr(&vlsfileline), "# Description: ", 15) == 0) {
-	       fnddesc = 1;
-	       bu_log("%s\n", bu_vls_addr(&vlsfileline)+15);
-	   }
-	   bu_vls_trunc(&vlsfileline, 0);
+	    if (strncmp(bu_vls_addr(&vlsfileline), "# Description: ", 15) == 0) {
+		fnddesc = 1;
+		bu_log("%s\n", bu_vls_addr(&vlsfileline)+15);
+	    }
+	    bu_vls_trunc(&vlsfileline, 0);
 	}
 	fclose(cfPtr);
     }
@@ -213,7 +193,7 @@ attrib_flush(void)
 
 
 void
-attrib_add(char *a)
+attrib_add(char *a, int *prep)
 {
     char *p;
 
@@ -239,7 +219,7 @@ attrib_add(char *a)
 	a_tab.attrib[++a_tab.attrib_use] = (char *)NULL;
 
 	p = strtok((char *)NULL, "\t ");
-	need_prep = 1;
+	*prep = 1;
     }
 }
 
@@ -247,9 +227,10 @@ attrib_add(char *a)
 /**
  * string is a literal or a file name
  */
-static void enqueue_script (struct bu_list *qp, int type, char *string)
+static void
+enqueue_script(struct bu_list *qp, int type, char *string)
 {
-    struct script_rec	*srp;
+    struct script_rec *srp;
     FILE *cfPtr;
     struct bu_vls str;
     bu_vls_init(&str);
@@ -268,17 +249,17 @@ static void enqueue_script (struct bu_list *qp, int type, char *string)
 	bu_vls_printf(&str, "%s", string);
 	cfPtr = fopen(bu_vls_addr(&str), "rb");
 	if (cfPtr == NULL) {
-	   bu_vls_trunc(&str, 0);
-	   bu_vls_printf(&str, "%s/%s.nrt", bu_brlcad_data("nirt", 0), string);
-	   cfPtr = fopen(bu_vls_addr(&str), "rb");
-	   if (cfPtr != NULL) {
-	       fclose(cfPtr);
-	   } else {
-	       bu_vls_trunc(&str, 0);
-	       bu_vls_printf(&str, "%s", string);
-	   }
+	    bu_vls_trunc(&str, 0);
+	    bu_vls_printf(&str, "%s/%s.nrt", bu_brlcad_data("nirt", 0), string);
+	    cfPtr = fopen(bu_vls_addr(&str), "rb");
+	    if (cfPtr != NULL) {
+		fclose(cfPtr);
+	    } else {
+		bu_vls_trunc(&str, 0);
+		bu_vls_printf(&str, "%s", string);
+	    }
 	} else {
-	   fclose(cfPtr);
+	    fclose(cfPtr);
 	}
 	bu_vls_printf(&(srp->sr_script), "%s", bu_vls_addr(&str));
     } else {
@@ -292,15 +273,16 @@ static void enqueue_script (struct bu_list *qp, int type, char *string)
 /**
  * text is for the title line
  */
-static void show_scripts (struct bu_list *sl, char *text)
+static void
+show_scripts(struct bu_list *sl, char *text)
 {
-    int			i;
-    struct script_rec	*srp;
+    int i;
+    struct script_rec *srp;
 
     BU_CK_LIST_HEAD(sl);
 
     i = 0;
-    bu_log("- - - - - - - The command-line scripts - - - - - - -\n");
+    bu_log("- - - - - - - The command-line scripts - - - - - - -\n%s\n", text);
     for (BU_LIST_FOR(srp, script_rec, sl)) {
 	BU_CKMAG(srp, SCRIPT_REC_MAGIC, "script record");
 
@@ -314,7 +296,8 @@ static void show_scripts (struct bu_list *sl, char *text)
 }
 
 
-static void free_script (struct script_rec *srp)
+static void
+free_script(struct script_rec *srp)
 {
     BU_CKMAG(srp, SCRIPT_REC_MAGIC, "script record");
 
@@ -323,11 +306,12 @@ static void free_script (struct script_rec *srp)
 }
 
 
-static void run_scripts (struct bu_list *sl)
+static void
+run_scripts(struct bu_list *sl)
 {
-    struct script_rec	*srp;
-    char		*cp;
-    FILE		*fPtr;
+    struct script_rec *srp;
+    char *cp;
+    FILE *fPtr;
 
     if (nirt_debug & DEBUG_SCRIPTS)
 	show_scripts(sl, "before running them");
@@ -368,45 +352,30 @@ static void run_scripts (struct bu_list *sl)
 
 
 int
-main (int argc, char **argv)
+main(int argc, char *argv[])
 {
-    char                db_title[TITLE_LEN+1];/* title from MGED file      */
-    const char		*tmp_str;
-    extern char		local_u_name[65];
-    extern double	base2local;
-    extern double	local2base;
-    FILE		*fPtr;
-    int			Ch;		/* Option name */
-    int			mat_flag = 0;	/* Read matrix from stdin? */
-    int			use_of_air = 0;
-    char		ocastring[1024] = {0};
-    struct bu_list	script_list;	/* For -e and -f options */
-    struct script_rec	*srp;
-    extern outval	ValTab[];
+    char db_title[TITLE_LEN+1];/* title from MGED file */
+    const char *tmp_str;
+    extern char local_u_name[65];
+    extern double base2local;
+    extern double local2base;
+    FILE *fPtr;
+    int Ch;		/* Option name */
+    int mat_flag = 0;	/* Read matrix from stdin? */
+    int use_of_air = 0;
+    char ocastring[1024] = {0};
+    struct bu_list script_list;	/* For -e and -f options */
+    struct script_rec *srp;
+    extern outval ValTab[];
 
-    /* FUNCTIONS */
-    void                   do_rt_gettrees(struct rt_i *rtip, char **object_name, int nm_objects);
-    void		   grid2targ(void);
-    void		   targ2grid(void);
-    void		   ae2dir(void);
-    void		   dir2ae(void);
-    void	           set_diameter(struct rt_i *rtip);
-    int	           	   str_dbl(char *buf, double *Result);
-    void		   az_el();
-    void		   sh_esc();
-    void		   grid_coor();
-    void		   target_coor();
-    void		   dir_vect();
-    void		   backout();
-    void		   quit();
-    void		   show_menu();
-    void		   print_item(char *buffer, com_table *ctp);
-    void		   shoot();
 
-    /* callback functions for overlap, hit, and miss shots */
-    int                    if_overlap(register struct application *ap, register struct partition *pp, struct region *reg1, struct region *reg2, struct partition *InputHdp);
-    int             	   if_hit(struct application *ap, struct partition *part_head, struct seg *finished_segs);
-    int             	   if_miss(struct application *ap);
+    /* the name of the BRL-CAD geometry file */
+    char *db_name;
+
+    /* from if.c, callback functions for overlap, hit, and miss shots */
+    int if_overlap(register struct application *, register struct partition *, struct region *, struct region *, struct partition *);
+    int if_hit(struct application *, struct partition *, struct seg *);
+    int if_miss(struct application *);
 
     BU_LIST_INIT(&script_list);
 
@@ -422,7 +391,7 @@ main (int argc, char **argv)
     while ((Ch = bu_getopt(argc, argv, OPT_STRING)) != EOF) {
 	switch (Ch) {
 	    case 'A':
-		attrib_add(bu_optarg);
+		attrib_add(bu_optarg, &need_prep);
 		break;
 	    case 'B':
 		rt_bot_minpieces = atoi(bu_optarg);
@@ -563,23 +532,23 @@ main (int argc, char **argv)
     rtip->rti_save_overlaps = (overlap_claims > 0);
 
     ++bu_optind;
-    do_rt_gettrees (rtip, argv + bu_optind, argc - bu_optind);
+    do_rt_gettrees(rtip, argv + bu_optind, argc - bu_optind, &need_prep);
 
     /* Initialize the table of resource structures */
     rt_init_resource(&res_tab, 0, rtip);
 
     /* initialization of the application structure */
     RT_APPLICATION_INIT(&ap);
-    ap.a_hit = if_hit;        /* branch to if_hit routine            */
-    ap.a_miss = if_miss;      /* branch to if_miss routine           */
-    ap.a_overlap = if_overlap;/* branch to if_overlap routine        */
+    ap.a_hit = if_hit;        /* branch to if_hit routine */
+    ap.a_miss = if_miss;      /* branch to if_miss routine */
+    ap.a_overlap = if_overlap;/* branch to if_overlap routine */
     ap.a_logoverlap = rt_silent_logoverlap;
     ap.a_onehit = 0;          /* continue through shotline after hit */
     ap.a_resource = &res_tab;
     ap.a_purpose = "NIRT ray";
-    ap.a_rt_i = rtip;         /* rt_i pointer                        */
-    ap.a_zero1 = 0;           /* sanity check, sayth raytrace.h      */
-    ap.a_zero2 = 0;           /* sanity check, sayth raytrace.h      */
+    ap.a_rt_i = rtip;         /* rt_i pointer */
+    ap.a_zero1 = 0;           /* sanity check, sayth raytrace.h */
+    ap.a_zero2 = 0;           /* sanity check, sayth raytrace.h */
     ap.a_uptr = (genptr_t)a_tab.attrib;
 
     /* initialize variables */
@@ -625,7 +594,7 @@ main (int argc, char **argv)
 	fclose(fPtr);
     }
 
-    /*	Run all scripts specified on the command line */
+    /* Run all scripts specified on the command line */
     run_scripts(&script_list);
 
     /* Perform the user interface */
@@ -641,10 +610,10 @@ main (int argc, char **argv)
 
 
 void
-do_rt_gettrees (struct rt_i *rtip, char **object_name, int nm_objects)
+do_rt_gettrees(struct rt_i *my_rtip, char **object_name, int nm_objects, int *prep)
 {
-    static char	**prev_names = 0;
-    static int	prev_nm = 0;
+    static char **prev_names = 0;
+    static int prev_nm = 0;
     int i;
 
     if (object_name == NULL) {
@@ -663,19 +632,19 @@ do_rt_gettrees (struct rt_i *rtip, char **object_name, int nm_objects)
 	fflush(stdout);
     }
 
-    i = rt_gettrees_and_attrs(rtip, (const char **)a_tab.attrib, nm_objects, (const char **) object_name, 1);
+    i = rt_gettrees_and_attrs(my_rtip, (const char **)a_tab.attrib, nm_objects, (const char **) object_name, 1);
     if (i) {
 	fflush(stdout);
 	bu_exit (1, "rt_gettrees() failed\n");
     }
 
-    if (need_prep) {
+    if (*prep) {
 	if (silent_flag != SILENT_YES) {
 	    printf("\nPrepping the geometry...");
 	    fflush(stdout);
 	}
-	rt_prep(rtip);
-	need_prep = 0;
+	rt_prep(my_rtip);
+	*prep = 0;
     }
 
     if (silent_flag != SILENT_YES) {
