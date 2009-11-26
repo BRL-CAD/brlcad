@@ -140,8 +140,10 @@ brlcad_version(void)
 
     if (version[0] == 0) {
 	snprintf(version, 32, "%d.%d.%d", BRLCAD_MAJOR, BRLCAD_MINOR, BRLCAD_PATCH);
-    } else {
-	/* quell use warnings, does nothing useful */
+
+	/* quell use warning, does nothing useful except initialize
+	 * the brlcad_ident string. it MUST come after setting version
+	 */
 	(void)brlcad_ident(NULL);
     }
 
@@ -172,11 +174,6 @@ brlcad_ident(const char *title)
 		 BRLCAD_DATE, BRLCAD_COUNT,
 		 BRLCAD_USER, BRLCAD_HOST, BRLCAD_PATH
 	    );
-    }
-
-    /* quell use warnings, never true */
-    if (label[0] == 'Z') {
-	return brlcad_ident(NULL);
     }
 
     return ident;
