@@ -41,6 +41,10 @@ ViewRing			    |                            UNKNOWN
 Other Issues
 ------------
 
+* documentation (even for windows) should not be a .chm file in our
+  repository.  the documentation should be generated from docbook
+  source formatting.
+
 * archer html documentation refers to an 'ae' command, yet only 'aet'
   exists.  either the docs need updating or ae added.
 
