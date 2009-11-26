@@ -128,6 +128,8 @@ static const char BRLCAD_USER[256] = {
 #endif
 
 
+static const char *brlcad_ident(const char *title);
+
 /**
  * provides the version string in MAJOR.MINOR.PATCH triplet form.
  */
@@ -138,6 +140,9 @@ brlcad_version(void)
 
     if (version[0] == 0) {
 	snprintf(version, 32, "%d.%d.%d", BRLCAD_MAJOR, BRLCAD_MINOR, BRLCAD_PATCH);
+    } else {
+	/* quell use warnings, does nothing useful */
+	(void)brlcad_ident(NULL);
     }
 
     return version;
