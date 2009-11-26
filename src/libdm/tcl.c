@@ -44,41 +44,11 @@ extern char *dm_bestXType();
 /* from libdm/dm_obj.c */
 extern int Dmo_Init(Tcl_Interp *interp);
 
-HIDDEN int dm_validXType_tcl();
-HIDDEN int dm_bestXType_tcl();
-
 int vectorThreshold = 100000;
 
-HIDDEN struct bu_cmdtab cmdtab[] = {
-    {"dm_validXType",	dm_validXType_tcl},
-    {"dm_bestXType",	dm_bestXType_tcl},
-    {(char *)0,		(int (*)())0}
-};
-
-int
-Dm_Init(Tcl_Interp *interp)
-{
-    struct bu_vls	vls;
-
-    /* register commands */
-    bu_register_cmds(interp, cmdtab);
-
-    bu_vls_init(&vls);
-    bu_vls_strcpy(&vls, "vectorThreshold");
-    Tcl_LinkVar(interp, bu_vls_addr(&vls), (char *)&vectorThreshold,
-		TCL_LINK_INT);
-    bu_vls_free(&vls);
-
-    /* initialize display manager object code */
-    Dmo_Init(interp);
-
-    Tcl_PkgProvide(interp,  "Dm", brlcad_version());
-
-    return TCL_OK;
-}
 
 HIDDEN int
-dm_validXType_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+dm_validXType_tcl(ClientData clientData __attribute__((unused)), Tcl_Interp *interp, int argc, char **argv)
 {
     struct bu_vls	vls;
     Tcl_Obj		*obj;
@@ -104,7 +74,7 @@ dm_validXType_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
 }
 
 HIDDEN int
-dm_bestXType_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+dm_bestXType_tcl(ClientData clientData __attribute__((unused)), Tcl_Interp *interp, int argc, char **argv)
 {
     Tcl_Obj		*obj;
     const char *best_dm;
@@ -132,6 +102,36 @@ dm_bestXType_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **arg
     }
     return TCL_ERROR;
 }
+
+
+static struct bu_cmdtab cmdtab[] = {
+    {"dm_validXType",	dm_validXType_tcl},
+    {"dm_bestXType",	dm_bestXType_tcl},
+    {(char *)0,		(int (*)())0}
+};
+
+int
+Dm_Init(Tcl_Interp *interp)
+{
+    struct bu_vls	vls;
+
+    /* register commands */
+    bu_register_cmds(interp, cmdtab);
+
+    bu_vls_init(&vls);
+    bu_vls_strcpy(&vls, "vectorThreshold");
+    Tcl_LinkVar(interp, bu_vls_addr(&vls), (char *)&vectorThreshold,
+		TCL_LINK_INT);
+    bu_vls_free(&vls);
+
+    /* initialize display manager object code */
+    Dmo_Init(interp);
+
+    Tcl_PkgProvide(interp,  "Dm", brlcad_version());
+
+    return TCL_OK;
+}
+
 
 /*
  * Local Variables:
