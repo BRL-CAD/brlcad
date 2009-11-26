@@ -29,7 +29,7 @@
 #  include <sys/file.h>
 #endif
 
-#if HAVE_SYS_IOCTL_COMPAT_H
+#ifdef HAVE_SYS_IOCTL_COMPAT_H
 #  include <sys/ioctl_compat.h>
 #  if !defined(OCRNL)
 #    define OCRNL 0000010
