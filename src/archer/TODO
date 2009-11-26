@@ -44,8 +44,7 @@ Other Issues
 * archer html documentation refers to an 'ae' command, yet only 'aet'
   exists.  either the docs need updating or ae added.
 
-* archer help menu is titled "Crossbow" and calls archer commands
-  "BRL-CAD Commands" (which is wrong)
+* archer help menu incorrectly calls archer commands "BRL-CAD Commands"
 
 * opendb command doesn't seem to be available.
 
