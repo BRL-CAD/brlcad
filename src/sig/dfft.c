@@ -34,6 +34,7 @@
 #include "bio.h"
 
 #include "bu.h"
+#include "vmath.h"
 
 #define MAXFFT 4096
 #define MAXOUT 2048		/* MAXFFT/2 XXX (Actually + 1) */
@@ -72,13 +73,13 @@ int main(int argc, char **argv)
     int i, n, c;
     int L = 1024;
 
-    if (isatty(fileno(stdin)) || isatty(fileno(stdout))) {
+    if (isatty(STDIN_FILENO) || isatty(STDOUT_FILENO)) {
 	bu_exit(1, "%s", usage);
     }
 
     while ((c = bu_getopt(argc, argv, "d:clpLANh")) != EOF)
 	switch (c) {
-	    case 'd': mindB = -atof(optarg); break;
+	    case 'd': mindB = -atof(bu_optarg); break;
 	    case 'c': cflag++; break;
 	    case 'l': lflag++; break;
 	    case 'p': phase++; break;
