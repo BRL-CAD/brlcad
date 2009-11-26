@@ -659,8 +659,10 @@ direct_output(const char *buffer, com_table *ctp)
 
     if (*(buffer+i) == '\0') {
 	/* display current destination */
+#if defined(HAVE_POPEN) && !defined(STRICT_FLAGS)
 	printf("destination = %s%s'\n",
 	       (openfunc == popen) ? "'| " : "'", dest_string);
+#endif
 	return;
     }
 
@@ -675,8 +677,13 @@ direct_output(const char *buffer, com_table *ctp)
 	openfunc = 0;
     } else {
 	if (*(buffer + i) == '|') {
+#if defined(HAVE_POPEN) && !defined(STRICT_FLAGS)
 	    openfunc=popen;
 	    ++i;
+#else
+	    fprintf(stderr, "Error, support for pipe output is disabled.  Try a redirect instead.\n");
+	    return;
+#endif
 	} else {
 	    openfunc=fopen;
 	}
@@ -692,8 +699,10 @@ direct_output(const char *buffer, com_table *ctp)
 	    return;
 	}
 	if ((newf = (*openfunc)(new_dest, "w")) == NULL) {
+#if defined(HAVE_POPEN) && !defined(STRICT_FLAGS)
 	    fprintf(stderr, "Cannot open %s '%s'\n",
 		    (openfunc == popen) ? "pipe" : "file", new_dest);
+#endif
 	    fprintf(stderr, "Destination remains = '%s'\n", dest_string);
 
 	    bu_free(new_dest, "new(now old)dest");
