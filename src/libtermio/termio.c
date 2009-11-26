@@ -30,12 +30,19 @@
 #endif
 
 #if HAVE_SYS_IOCTL_COMPAT_H
-#	include <sys/ioctl_compat.h>
-#	define TAB3 (TAB1|TAB2)
-#	if !defined(OCRNL)
-#		define OCRNL 0000010
-#	endif
+#  include <sys/ioctl_compat.h>
+#  if !defined(OCRNL)
+#    define OCRNL 0000010
+#  endif
 #endif
+
+#ifndef TAB3
+#  define TAB3 (TAB1|TAB2)
+#endif
+#ifndef XTABS
+#  define XTABS (TAB1 | TAB2)
+#endif
+
 
 #include "bio.h"
 
@@ -93,9 +100,6 @@ static struct termio save_tio[FOPEN_MAX], curr_tio[FOPEN_MAX];
 #  ifdef BSD
 #    undef SYSV
 #    include <sys/ioctl.h>
-#      ifndef XTABS
-#	define XTABS (TAB1 | TAB2)
-#      endif /* XTABS */
 
 static struct sgttyb save_tio[FOPEN_MAX], curr_tio[FOPEN_MAX];
 #  endif /* BSD */
@@ -120,10 +124,8 @@ clr_Cbreak(int fd)
 #endif
 #ifdef SYSV
     curr_tio[fd].c_lflag |= ICANON;		/* Canonical input ON.	*/
-
     curr_tio[fd].c_cc[VEOF] = 4;		/* defaults!		*/
     curr_tio[fd].c_cc[VEOL] = 0;		/* best we can do.... */
-
     (void) ioctl(fd, TCSETA, &curr_tio[fd]);
 #endif
 #ifdef HAVE_TERMIOS_H
@@ -147,10 +149,8 @@ set_Cbreak(int fd)
 #endif
 #ifdef SYSV
     curr_tio[fd].c_lflag &= ~ICANON;	/* Canonical input OFF. */
-
     curr_tio[fd].c_cc[VMIN] = 1;
     curr_tio[fd].c_cc[VTIME] = 0;
-
     (void) ioctl(fd, TCSETA, &curr_tio[fd]);
 #endif
 #ifdef HAVE_TERMIOS_H
@@ -174,11 +174,9 @@ clr_Raw(int fd)
 #endif
 #ifdef SYSV
     curr_tio[fd].c_lflag |= ICANON;		/* Canonical input ON.	*/
-
     curr_tio[fd].c_lflag |= ISIG;		/* Signals ON.		*/
     curr_tio[fd].c_cc[VEOF] = 4;		/* defaults!		*/
     curr_tio[fd].c_cc[VEOL] = 0;		/* best we can do.... */
-
     (void) ioctl(fd, TCSETA, &curr_tio[fd]);
 #endif
 #ifdef HAVE_TERMIOS_H
@@ -203,11 +201,9 @@ set_Raw(int fd)
 #endif
 #ifdef SYSV
     curr_tio[fd].c_lflag &= ~ICANON;	/* Canonical input OFF. */
-
     curr_tio[fd].c_lflag &= ~ISIG;		/* Signals OFF.		*/
     curr_tio[fd].c_cc[VMIN] = 1;
     curr_tio[fd].c_cc[VTIME] = 0;
-
     (void) ioctl(fd, TCSETA, &curr_tio[fd]);
 #endif
 #ifdef HAVE_TERMIOS_H
@@ -273,9 +269,7 @@ set_Tabs(int fd)
     (void) ioctl(fd, TIOCSETP, &curr_tio[fd]);
 #endif
 #ifdef SYSV
-
     curr_tio[fd].c_oflag |= TAB3;		/* Tab expansion ON.	*/
-
     (void) ioctl(fd, TCSETA, &curr_tio[fd]);
 #endif
 #ifdef HAVE_TERMIOS_H
@@ -296,9 +290,7 @@ clr_Tabs(int fd)
     (void) ioctl(fd, TIOCSETP, &curr_tio[fd]);
 #endif
 #ifdef SYSV
-
     curr_tio[fd].c_oflag &= ~TAB3;		/* Tab expans. OFF.	*/
-
     (void) ioctl(fd, TCSETA, &curr_tio[fd]);
 #endif
 #ifdef HAVE_TERMIOS_H
@@ -341,10 +333,8 @@ clr_CRNL(int fd)
     (void) ioctl(fd, TIOCSETP, &curr_tio[fd]);
 #endif
 #ifdef SYSV
-
     curr_tio[fd].c_oflag &= ~(ONLCR|OCRNL);
     curr_tio[fd].c_iflag &= ~(ICRNL|INLCR);
-
     (void) ioctl(fd, TCSETA, &curr_tio[fd]);
 #endif
 #ifdef HAVE_TERMIOS_H
