@@ -1361,7 +1361,7 @@ pkg_waitfor (int type, char *buf, size_t len, register struct pkg_conn *pc)
 	size_t excess;
 	snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE,
 		 "pkg_waitfor: message %ld exceeds buffer %ld\n",
-		 pc->pkc_len, (long)len);
+		 (long)pc->pkc_len, (long)len);
 	(pc->pkc_errlog)(_pkg_errbuf);
 	if ((i = _pkg_inget(pc, buf, len)) != len) {
 	    snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE,
@@ -1390,7 +1390,7 @@ pkg_waitfor (int type, char *buf, size_t len, register struct pkg_conn *pc)
     if ((i = _pkg_inget(pc, buf, pc->pkc_len)) != pc->pkc_len) {
 	snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE,
 		 "pkg_waitfor: _pkg_inget %ld gave %ld\n",
-		 pc->pkc_len, (long)i);
+		 (long)pc->pkc_len, (long)i);
 	(pc->pkc_errlog)(_pkg_errbuf);
 	return(-1);
     }
@@ -1441,7 +1441,7 @@ pkg_bwaitfor (int type, register struct pkg_conn *pc)
     /* Read the whole message into the dynamic buffer */
     if ((i = _pkg_inget(pc, pc->pkc_buf, pc->pkc_len)) != pc->pkc_len) {
 	snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE,
-		 "pkg_bwaitfor: _pkg_inget %ld gave %ld\n", pc->pkc_len, (long)i);
+		 "pkg_bwaitfor: _pkg_inget %ld gave %ld\n", (long)pc->pkc_len, (long)i);
 	(pc->pkc_errlog)(_pkg_errbuf);
     }
     tmpbuf = pc->pkc_buf;
@@ -1497,7 +1497,7 @@ _pkg_dispatch(register struct pkg_conn *pc)
 	return(1);
     }
     snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "_pkg_dispatch: no handler for message type %d, len %ld\n",
-	     pc->pkc_type, pc->pkc_len);
+	     pc->pkc_type, (long)pc->pkc_len);
     (pc->pkc_errlog)(_pkg_errbuf);
     (void)free(pc->pkc_buf);
     pc->pkc_buf = (char *)0;
