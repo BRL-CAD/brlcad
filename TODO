@@ -50,6 +50,8 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * finish obj-g importer.  need to test more inputs and make sure all
   geometry is preserved on import in some form.
 
+* MINOR: rename bu_ptbl() (c++, hides struct constructor)
+
 * MINOR: add tolerance parameters to the bn_*() functions that have
   near-zero tests.
 
