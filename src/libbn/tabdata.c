@@ -55,7 +55,7 @@
 void
 bn_table_free(struct bn_table *tabp)
 {
-    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_table_free(x%x)\n", tabp);
+    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_table_free(%p)\n", (void *)tabp);
     BN_CK_TABLE(tabp);
 
     tabp->nx = 0;			/* sanity */
@@ -68,7 +68,7 @@ bn_table_free(struct bn_table *tabp)
 void
 bn_tabdata_free(struct bn_tabdata *data)
 {
-    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_free(x%x)\n", data);
+    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_free(%p)\n", (void *)data);
 
     BN_CK_TABDATA(data);
     BN_CK_TABLE(data->table);
@@ -86,7 +86,7 @@ bn_ck_table(const struct bn_table *tabp)
 {
     register int	i;
 
-    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_ck_table(x%x)\n", tabp);
+    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_ck_table(%p)\n", (void *)tabp);
 
     BN_CK_TABLE(tabp);
 
@@ -143,7 +143,7 @@ bn_tabdata_add(struct bn_tabdata *out, const struct bn_tabdata *in1, const struc
     register fastf_t	*op;
     register const fastf_t	*i1, *i2;
 
-    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_add(x%x, x%x, x%x)\n", out, in1, in2);
+    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_add(%p, %p, %p)\n", (void *)out, (void *)in1, (void *)in2);
 
     BN_CK_TABDATA( out );
     BN_CK_TABDATA( in1 );
@@ -174,7 +174,7 @@ bn_tabdata_mul(struct bn_tabdata *out, const struct bn_tabdata *in1, const struc
     register fastf_t	*op;
     register const fastf_t	*i1, *i2;
 
-    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_mul(x%x, x%x, x%x)\n", out, in1, in2);
+    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_mul(%p, %p, %p)\n", (void *)out, (void *)in1, (void *)in2);
 
     BN_CK_TABDATA( out );
     BN_CK_TABDATA( in1 );
@@ -205,7 +205,7 @@ bn_tabdata_mul3(struct bn_tabdata *out, const struct bn_tabdata *in1, const stru
     register fastf_t	*op;
     register const fastf_t	*i1, *i2, *i3;
 
-    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_mul3(x%x, x%x, x%x, x%x)\n", out, in1, in2, in3);
+    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_mul3(%p, %p, %p, %p)\n", (void *)out, (void *)in1, (void *)in2, (void *)in3);
 
     BN_CK_TABDATA( out );
     BN_CK_TABDATA( in1 );
@@ -240,7 +240,7 @@ bn_tabdata_incr_mul3_scale(struct bn_tabdata *out, const struct bn_tabdata *in1,
     register fastf_t	*op;
     register const fastf_t	*i1, *i2, *i3;
 
-    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_incr_mul3_scale(x%x, x%x, x%x, x%x, %g)\n", out, in1, in2, in3, scale);
+    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_incr_mul3_scale(%p, %p, %p, %p, %g)\n", (void *)out, (void *)in1, (void *)in2, (void *)in3, scale);
 
     BN_CK_TABDATA( out );
     BN_CK_TABDATA( in1 );
@@ -274,7 +274,7 @@ bn_tabdata_incr_mul2_scale(struct bn_tabdata *out, const struct bn_tabdata *in1,
     register fastf_t	*op;
     register const fastf_t	*i1, *i2;
 
-    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_incr_mul2_scale(x%x, x%x, x%x, %g)\n", out, in1, in2, scale);
+    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_incr_mul2_scale(%p, %p, %p, %g)\n", (void *)out, (void *)in1, (void *)in2, scale);
 
     BN_CK_TABDATA( out );
     BN_CK_TABDATA( in1 );
@@ -304,7 +304,7 @@ bn_tabdata_scale(struct bn_tabdata *out, const struct bn_tabdata *in1, register 
     register fastf_t	*op;
     register const fastf_t	*i1;
 
-    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_scale(x%x, x%x, %g)\n", out, in1, scale);
+    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_scale(%p, %p, %g)\n", (void *)out, (void *)in1, scale);
 
     BN_CK_TABDATA( out );
     BN_CK_TABDATA( in1 );
@@ -332,7 +332,7 @@ bn_table_scale(struct bn_table *tabp, register double scale)
     register int		j;
     register fastf_t	*op;
 
-    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_table_scale(x%x, %g)\n", tabp, scale );
+    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_table_scale(%p, %g)\n", (void *)tabp, scale );
 
     BN_CK_TABLE( tabp );
 
@@ -356,7 +356,7 @@ bn_tabdata_join1(struct bn_tabdata *out, const struct bn_tabdata *in1, register 
     register fastf_t	*op;
     register const fastf_t	*i1, *i2;
 
-    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_join1(x%x, x%x, %g, x%x)\n", out, in1, scale, in2 );
+    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_join1(%p, %p, %g, %p)\n", (void *)out, (void *)in1, scale, (void *)in2 );
 
     BN_CK_TABDATA( out );
     BN_CK_TABDATA( in1 );
@@ -392,7 +392,7 @@ bn_tabdata_join2(struct bn_tabdata *out, const struct bn_tabdata *in1, register 
     register fastf_t	*op;
     register const fastf_t	*i1, *i2, *i3;
 
-    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_join2(x%x, x%x, %g, x%x, %g, x%x)\n", out, in1, scale2, in2, scale3, in3 );
+    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_join2(%p, %p, %g, %p, %g, %p)\n", (void *)out, (void *)in1, scale2, (void *)in2, scale3, (void *)in3 );
 
     BN_CK_TABDATA( out );
     BN_CK_TABDATA( in1 );
@@ -426,7 +426,7 @@ bn_tabdata_blend2(struct bn_tabdata *out, register double scale1, const struct b
     register fastf_t	*op;
     register const fastf_t	*i1, *i2;
 
-    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_blend2(x%x, %g, x%x, %g, x%x)\n", out, scale1, in1, scale2, in2 );
+    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_blend2(%p, %g, %p, %g, %p)\n", (void *)out, scale1, (void *)in1, scale2, (void *)in2 );
 
     BN_CK_TABDATA( out );
     BN_CK_TABDATA( in1 );
@@ -457,7 +457,7 @@ bn_tabdata_blend3(struct bn_tabdata *out, register double scale1, const struct b
     register fastf_t	*op;
     register const fastf_t	*i1, *i2, *i3;
 
-    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_blend3(x%x, %g, x%x, %g, x%x, %g, x%x)\n", out, scale1, in1, scale2, in2, scale3, in3 );
+    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_blend3(%p, %g, %p, %g, %p, %g, %p)\n", (void *)out, scale1, (void *)in1, scale2, (void *)in2, scale3, (void *)in3 );
 
     BN_CK_TABDATA( out );
     BN_CK_TABDATA( in1 );
@@ -503,7 +503,7 @@ bn_tabdata_area1(const struct bn_tabdata *in)
     for ( j = in->ny; j > 0; j-- )
 	area += *ip++;
 
-    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_area(x%x) = %g\n", in, area);
+    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_area(%p) = %g\n", (void *)in, area);
 
     return area;
 }
@@ -534,7 +534,7 @@ bn_tabdata_area2(const struct bn_tabdata *in)
 	area += in->y[j] * width;
     }
 
-    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_area2(x%x) = %g\n", in, area);
+    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_area2(%p) = %g\n", (void *)in, area);
     return area;
 }
 
@@ -563,7 +563,7 @@ bn_tabdata_mul_area1(const struct bn_tabdata *in1, const struct bn_tabdata *in2)
     for ( j = in1->ny; j > 0; j-- )
 	area += *i1++ * *i2++;
 
-    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_mul_area1(x%x, x%x) = %g\n", in1, in2, area);
+    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_mul_area1(%p, %p) = %g\n", (void *)in1, (void *)in2, area);
     return area;
 }
 
@@ -594,7 +594,7 @@ bn_tabdata_mul_area2(const struct bn_tabdata *in1, const struct bn_tabdata *in2)
 	area += in1->y[j] * in2->y[j] * width;
     }
 
-    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_mul_area2(x%x, x%x) = %g\n", in1, in2, area);
+    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_mul_area2(%p, %p) = %g\n", (void *)in1, (void *)in2, area);
     return area;
 }
 
@@ -618,7 +618,7 @@ bn_table_find_x(const struct bn_table *tabp, double xval)
 {
     register int	i;
 
-    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_table_find_x(x%x, %g)\n", tabp, xval );
+    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_table_find_x(%p, %g)\n", (void *)tabp, xval );
     BN_CK_TABLE(tabp);
 
     if ( xval > tabp->x[tabp->nx] )  return -2;
@@ -647,7 +647,7 @@ bn_table_lin_interp(const struct bn_tabdata *samp, register double wl)
     register fastf_t	fract;
     register fastf_t	ret;
 
-    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_table_lin_interp(x%x, %g)\n", samp, wl);
+    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_table_lin_interp(%p, %g)\n", (void *)samp, wl);
 
     BN_CK_TABDATA(samp);
     tabp = samp->table;
@@ -697,7 +697,7 @@ bn_tabdata_resample_max(const struct bn_table *newtable, const struct bn_tabdata
     int			i;
     int			j, k;
 
-    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_resample_max(x%x, x%x)\n", newtable, olddata);
+    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_resample_max(%p, %p)\n", (void *)newtable, (void *)olddata);
 
     BN_CK_TABLE(newtable);
     BN_CK_TABDATA(olddata);
@@ -778,7 +778,7 @@ bn_tabdata_resample_avg(const struct bn_table *newtable, const struct bn_tabdata
     int			i;
     int			j, k;
 
-    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_resample_avg(x%x, x%x)\n", newtable, olddata);
+    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_resample_avg(%p, %p)\n", (void *)newtable, (void *)olddata);
 
     BN_CK_TABLE(newtable);
     BN_CK_TABDATA(olddata);
@@ -859,7 +859,7 @@ bn_table_write(const char *filename, const struct bn_table *tabp)
     FILE	*fp;
     int	j;
 
-    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_table_write(%s, x%x)\n", filename, tabp);
+    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_table_write(%s, %p)\n", filename, (void *)tabp);
 
     BN_CK_TABLE(tabp);
 
@@ -869,7 +869,7 @@ bn_table_write(const char *filename, const struct bn_table *tabp)
 
     if ( fp == NULL )  {
 	perror(filename);
-	bu_log("bn_table_write(%s, x%x) FAILED\n", filename, tabp);
+	bu_log("bn_table_write(%s, %p) FAILED\n", filename, (void *)tabp);
 	return -1;
     }
 
@@ -984,7 +984,7 @@ bn_print_table_and_tabdata(const char *filename, const struct bn_tabdata *data)
     const struct bn_table	*tabp;
     int	j;
 
-    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_print_table_and_tabdata(%s, x%x)\n", filename, data);
+    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_print_table_and_tabdata(%s, %p)\n", filename, (void *)data);
 
     BN_CK_TABDATA(data);
     tabp = data->table;
@@ -996,7 +996,7 @@ bn_print_table_and_tabdata(const char *filename, const struct bn_tabdata *data)
 
     if ( fp == NULL )  {
 	perror(filename);
-	bu_log("bn_print_table_and_tabdata(%s, x%x) FAILED\n", filename, data );
+	bu_log("bn_print_table_and_tabdata(%s, %p) FAILED\n", filename, (void *)data );
 	return -1;
     }
 
@@ -1092,7 +1092,7 @@ bn_tabdata_binary_read(const char *filename, int num, const struct bn_table *tab
     int	fd;
     int	i;
 
-    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_binary_read(%s, num=%d, x%x)\n", filename, num, tabp);
+    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_binary_read(%s, num=%d, %p)\n", filename, num, (void *)tabp);
 
     BN_CK_TABLE(tabp);
 
@@ -1163,7 +1163,7 @@ bn_tabdata_malloc_array(const struct bn_table *tabp, int num)
     int	nw;
     int	nbytes;
 
-    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_malloc_array(x%x, num=%d)\n", tabp, num);
+    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_malloc_array(%p, num=%d)\n", (void *)tabp, num);
 
     BN_CK_TABLE(tabp);
     nw = tabp->nx;
@@ -1191,7 +1191,7 @@ bn_tabdata_malloc_array(const struct bn_table *tabp, int num)
 void
 bn_tabdata_copy(struct bn_tabdata *out, const struct bn_tabdata *in)
 {
-    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_copy(x%x, x%x)\n", out, in);
+    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_copy(%p, %p)\n", (void *)out, (void *)in);
 
     BN_CK_TABDATA( out );
     BN_CK_TABDATA( in );
@@ -1217,7 +1217,7 @@ bn_tabdata_dup(const struct bn_tabdata *in)
 
     memcpy((char *)data->y, (const char *)in->y, BN_SIZEOF_TABDATA_Y(in));
 
-    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_dup(x%x) = x%x\n", in, data);
+    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_dup(%p) = %p\n", (void *)in, (void *)data);
     return data;
 }
 
@@ -1241,7 +1241,7 @@ bn_tabdata_get_constval(double val, const struct bn_table *tabp)
     for ( todo = data->ny-1; todo >= 0; todo-- )
 	*op++ = val;
 
-    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_get_constval(val=%g, x%x)=x%x\n", val, tabp, data);
+    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_get_constval(val=%g, %p)=%p\n", val, (void *)tabp, (void *)data);
 
     return data;
 }
@@ -1257,7 +1257,7 @@ bn_tabdata_constval(struct bn_tabdata *data, double val)
     int			todo;
     register fastf_t	*op;
 
-    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_constval(x%x, val=%g)\n", data, val);
+    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_constval(%p, val=%g)\n", (void *)data, val);
 
     BN_CK_TABDATA(data);
 
@@ -1280,7 +1280,7 @@ bn_tabdata_to_tcl(struct bu_vls *vp, const struct bn_tabdata *data)
     register int i;
     register fastf_t	minval = MAX_FASTF, maxval = -MAX_FASTF;
 
-    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_to_tcl(x%x, x%x)\n", vp, data);
+    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_to_tcl(%p, %p)\n", (void *)vp, (void *)data);
 
     BU_CK_VLS(vp);
     BN_CK_TABDATA(data);
@@ -1339,7 +1339,7 @@ bn_tabdata_from_array(const double *array)
 	data->y[i] = array[(i<<1)+1];
     }
 
-    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_from_array(x%x) = x%x\n", array, data);
+    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_from_array(%p) = %p\n", (void *)array, (void *)data);
     return data;
 }
 
@@ -1355,7 +1355,7 @@ bn_tabdata_freq_shift(struct bn_tabdata *out, const struct bn_tabdata *in, doubl
     const struct bn_table	*tabp;
     register int 		i;
 
-    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_freq_shift(x%x, x%x, offset=%g)\n", out, in, offset);
+    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_freq_shift(%p, %p, offset=%g)\n", (void *)out, (void *)in, offset);
 
     BN_CK_TABDATA( out );
     BN_CK_TABDATA( in );
@@ -1388,7 +1388,7 @@ bn_table_interval_num_samples(const struct bn_table *tabp, double low, double hi
 	if ( tabp->x[i] >= low && tabp->x[i] <= hi )  count++;
     }
 
-    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_table_interval_num_samples(x%x, low=%g, hi=%g) = %d\n", tabp, low, hi, count);
+    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_table_interval_num_samples(%p, low=%g, hi=%g) = %d\n", (void *)tabp, low, hi, count);
     return count;
 }
 
@@ -1405,7 +1405,7 @@ bn_table_delete_sample_pts(struct bn_table *tabp, int i, int j)
     int	tokill;
     int	k;
 
-    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_table_delete_samples(x%x, %d, %d)\n", tabp, i, j);
+    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_table_delete_samples(%p, %d, %d)\n", (void *)tabp, i, j);
 
     BN_CK_TABLE(tabp);
 
@@ -1469,7 +1469,7 @@ bn_table_merge2(const struct bn_table *a, const struct bn_table *b)
     if ( k > new->nx )  bu_bomb("bn_table_merge2() assertion failed, k>nx?\n");
     new->nx = k-1;
 
-    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_table_merge2(x%x, x%x) = x%x\n", a, b, new);
+    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_table_merge2(%p, %p) = %p\n", (void *)a, (void *)b, (void *)new);
     return new;
 }
 
@@ -1498,7 +1498,7 @@ bn_tabdata_mk_linear_filter(const struct bn_table *spectrum, double lower_wavele
 
     BN_CK_TABLE(spectrum);
 
-    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_mk_linear_filter(x%x, low=%g, up=%g)\n", spectrum, lower_wavelen, upper_wavelen);
+    if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_tabdata_mk_linear_filter(%p, low=%g, up=%g)\n", (void *)spectrum, lower_wavelen, upper_wavelen);
 
     if ( lower_wavelen < spectrum->x[0] )
 	if ( upper_wavelen > spectrum->x[spectrum->nx] )
