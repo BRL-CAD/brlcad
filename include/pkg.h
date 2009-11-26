@@ -127,7 +127,7 @@ struct pkg_conn {
  *
  * Returns PKC_ERROR on error.
  */
-PKG_EXPORT PKG_EXTERN(struct pkg_conn *pkg_open, (const char *host, const char *service, const char *protocol, const char *uname, const char *passwd, const struct pkg_switch* switchp, pkg_errlog errlog));
+PKG_EXPORT PKG_EXTERN(struct pkg_conn *pkg_open, (const char *host, const char *service, const char *protocol, const char *username, const char *passwd, const struct pkg_switch* switchp, pkg_errlog errlog));
 
 /**
  * Close a network connection.
