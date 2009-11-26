@@ -178,20 +178,6 @@ brlcad_ident(const char *title)
 }
 
 
-/**
- * just so the above statics are used in every translation unit that
- * includes this file.
- */
-void
-brlcad_identify(FILE *fp)
-{
-    if (!fp)
-	return;
-
-    (void)fprintf(fp, "%s", brlcad_ident(NULL));
-}
-
-
 /*
  * Local Variables:
  * tab-width: 8
