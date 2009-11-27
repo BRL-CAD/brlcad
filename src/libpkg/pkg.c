@@ -873,7 +873,8 @@ _pkg_checkin(register struct pkg_conn *pc, int nodelay)
 {
     struct timeval tv;
     fd_set bits;
-    register int i, j;
+    int i;
+    unsigned int j;
 
     /* Check socket for unexpected input */
     tv.tv_sec = 0;
