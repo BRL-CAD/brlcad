@@ -116,6 +116,9 @@ struct application ap;
 
 attr_table a_tab;
 
+/* the name of the BRL-CAD geometry file */
+char *db_name;
+
 
 void printusage(void)
 {
@@ -367,10 +370,6 @@ main(int argc, char *argv[])
     struct bu_list script_list;	/* For -e and -f options */
     struct script_rec *srp;
     extern outval ValTab[];
-
-
-    /* the name of the BRL-CAD geometry file */
-    char *db_name;
 
     /* from if.c, callback functions for overlap, hit, and miss shots */
     int if_overlap(register struct application *, register struct partition *, struct region *, struct region *, struct partition *);
