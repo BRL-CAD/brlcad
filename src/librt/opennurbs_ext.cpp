@@ -145,62 +145,45 @@ CurveTree::CurveTree(ON_BrepFace* face)
 	    (void)trimCurve->GetDomain(&min, &max);
 	    ON_Interval t(min, max);
 				
-	    if (false) { // (trimCurve->IsLinear()) {
-		ON_3dPoint points[2];
-		points[0] = trimCurve->PointAtStart();
-		points[1] = trimCurve->PointAtEnd();
-		point_t minpt, maxpt;
-		VSETALL(minpt, MAX_FASTF);
-		VSETALL(maxpt, -MAX_FASTF);
-		for (i = 0; i < 2; i++)
-		    VMINMAX(minpt, maxpt, ((double*)points[i]));
-		points[0]=ON_3dPoint(minpt);
-		points[1]=ON_3dPoint(maxpt);
-		ON_BoundingBox bb(points[0], points[1]);
-		TRACE("linear no need to subdivide");
-		m_root->addChild(curveBBox(trimCurve, adj_face_index, t, true, innerLoop, bb));
+	    TRACE("need to subdivide");
+	    // divide on param interval
+
+	    if (!trimCurve->IsLinear()) {
+		int knotcnt = trimCurve->SpanCount();
+		double *knots = new double[knotcnt+1];
+
+		trimCurve->GetSpanVector(knots);
+		list<double> splitlist;
+		for (i=1;i<=knotcnt;i++) {
+		    ON_Interval range(knots[i-1], knots[i]);
+
+		    getHVTangents(trimCurve, range, splitlist);
+		}
+		for (list<double>::iterator l=splitlist.begin();l != splitlist.end();l++) {
+		    double xmax = *l;
+		    if (!NEAR_ZERO(xmax-min, TOL)) {
+			m_root->addChild(subdivideCurve(trimCurve, adj_face_index, min, xmax, innerLoop, 0));
+		    }
+		    min = xmax;
+		}
+		delete knots;
 	    } else {
-		TRACE("need to subdivide");
-		// divide on param interval
-#define KTANGENTBREAK
-#ifdef KTANGENTBREAK
-		if (!trimCurve->IsLinear()) {
-		    int knotcnt = trimCurve->SpanCount();
-		    double *knots = new double[knotcnt+1];
+		int knotcnt = trimCurve->SpanCount();
+		double *knots = new double[knotcnt+1];
 
-		    trimCurve->GetSpanVector(knots);
-		    list<double> splitlist;
-		    for (i=1;i<=knotcnt;i++) {
-			ON_Interval range(knots[i-1], knots[i]);
-
-			getHVTangents(trimCurve, range, splitlist);
+		trimCurve->GetSpanVector(knots);
+		for (i=1;i<=knotcnt;i++) {
+		    double xmax = knots[i];
+		    if (!NEAR_ZERO(xmax-min, TOL)) {
+			m_root->addChild(subdivideCurve(trimCurve, adj_face_index, min, xmax, innerLoop, 0));
 		    }
-		    for (list<double>::iterator l=splitlist.begin();l != splitlist.end();l++) {
-			double xmax = *l;
-			if (!NEAR_ZERO(xmax-min, TOL)) {
-			    m_root->addChild(subdivideCurve(trimCurve, adj_face_index, min, xmax, innerLoop, 0));
-			}
-			min = xmax;
-		    }
-		    delete knots;
-		} else {
-		    int knotcnt = trimCurve->SpanCount();
-		    double *knots = new double[knotcnt+1];
-
-		    trimCurve->GetSpanVector(knots);
-		    for (i=1;i<=knotcnt;i++) {
-			double xmax = knots[i];
-			if (!NEAR_ZERO(xmax-min, TOL)) {
-			    m_root->addChild(subdivideCurve(trimCurve, adj_face_index, min, xmax, innerLoop, 0));
-			}
-			min = xmax;
-		    }
-		    delete knots;
+		    min = xmax;
 		}
-#endif
-		if (!NEAR_ZERO(max-min, TOL)) {
-		    m_root->addChild(subdivideCurve(trimCurve, adj_face_index, min, max, innerLoop, 0));
-		}
+		delete knots;
+	    }
+
+	    if (!NEAR_ZERO(max-min, TOL)) {
+		m_root->addChild(subdivideCurve(trimCurve, adj_face_index, min, max, innerLoop, 0));
 	    }
 	}
     }
