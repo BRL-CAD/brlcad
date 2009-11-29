@@ -1180,7 +1180,7 @@ namespace brlcad {
 			   ON_BrepFace* face,
 			   const ON_3dPoint& point,
 			   SurfaceTree* tree = NULL,
-			   double tolerance = -1.0);
+			   double tolerance = BREP_FCP_ROOT_EPSILON);
 
 
     /**                  p u l l b a c k _ c u r v e
@@ -1210,7 +1210,7 @@ namespace brlcad {
     extern ON_Curve* pullback_curve(ON_BrepFace* face,
 				    const ON_Curve* curve,
 				    SurfaceTree* tree = NULL,
-				    double tolerance = 1.0e-6,
+				    double tolerance = BREP_FCP_ROOT_EPSILON,
 				    double flatness = 1.0e-3);
 
 
