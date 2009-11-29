@@ -94,7 +94,7 @@ namespace brlcad {
 	BANode();
 	BANode(const BA& node);
 	BANode(const ON_Curve* curve, int m_adj_face_index, const BA& node,
-	       const ON_BrepFace* face, const ON_Interval& t, fastf_t vdot,
+	       const ON_BrepFace* face, const ON_Interval& t,
 	       bool innerTrim = false, bool checkTrim = true, bool trimmed = false);
 	~BANode();
 
@@ -178,10 +178,10 @@ namespace brlcad {
     template<class BA>
     inline 
     BANode<BA>::BANode(const ON_Curve* curve, int adj_face_index, const BA& node,
-		       const ON_BrepFace* face, const ON_Interval& t, fastf_t vdot, bool innerTrim,
-		       bool checkTrim, bool trimmed)
-	: m_trim(curve), m_adj_face_index(adj_face_index), m_node(node), m_face(face), 
-	  m_t(t), m_innerTrim(innerTrim), m_checkTrim(checkTrim), m_trimmed(trimmed) {
+		       const ON_BrepFace* face, const ON_Interval& t,
+		       bool innerTrim, bool checkTrim, bool trimmed)
+	: m_node(node), m_face(face), m_trim(curve), m_t(t), m_adj_face_index(adj_face_index), m_checkTrim(checkTrim), m_trimmed(trimmed), m_innerTrim(innerTrim)
+    {
 	m_start = curve->PointAt(m_t[0]);
 	m_end = curve->PointAt(m_t[1]);
 	// check for vertical segments they can be removed
