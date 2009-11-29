@@ -555,18 +555,16 @@ CurveTree::subdivideCurve(const ON_Curve* curve, int adj_face_index, double min,
 	//    bb.Set(points[i], true); //grow bound to encompass midpoint
 	//}
 	return curveBBox(curve, adj_face_index, t, true, innerTrim, bb);
-    } else {
-	//subdivide
-	BRNode* parent = curveBBox(curve, adj_face_index, t, false, innerTrim, bb);
-	double mid = (max+min)/2.0;
-	BRNode* l = subdivideCurve(curve, adj_face_index, min, mid, innerTrim, divDepth+1);
-	BRNode* r = subdivideCurve(curve, adj_face_index, mid, max, innerTrim, divDepth+1);
-	parent->addChild(l);
-	parent->addChild(r);
-	return parent;
     }
-		
-    return NULL;
+
+    // else subdivide
+    BRNode* parent = curveBBox(curve, adj_face_index, t, false, innerTrim, bb);
+    double mid = (max+min)/2.0;
+    BRNode* l = subdivideCurve(curve, adj_face_index, min, mid, innerTrim, divDepth+1);
+    BRNode* r = subdivideCurve(curve, adj_face_index, mid, max, innerTrim, divDepth+1);
+    parent->addChild(l);
+    parent->addChild(r);
+    return parent;
 }
 
 /**
@@ -1177,7 +1175,6 @@ try_again:
 	double d = p.DistanceTo(point);
 	TRACE("dist: " << d);
 
-	// was BREP_FCP_ROOT_EPSILON
 	if (NEAR_ZERO((d-d_last), tolerance)) {
 	    found = true; break;
 	} else if (d > d_last) {
@@ -1320,10 +1317,10 @@ getCoefficients(BSpline& bspline, Array1D<double>& N, double u) {
     // evaluate the b-spline basis function for the given parameter u
     // place the results in N[]
     N = 0.0;
-    if (u == bspline.knots[0]) {
+    if (NEAR_ZERO(u - bspline.knots[0], BREP_FCP_ROOT_EPSILON)) {
 	N[0] = 1.0;
 	return 0;
-    } else if (u == bspline.knots[bspline.m]) {
+    } else if (NEAR_ZERO(u - bspline.knots[bspline.m], BREP_FCP_ROOT_EPSILON)) {
 	N[bspline.n] = 1.0;
 	return bspline.n;
     }
