@@ -1157,21 +1157,26 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 #define BN_VEC_NON_UNIT_LEN(_vec)	\
 	(fabs(MAGSQ(_vec)) < 0.0001 || fabs(fabs(MAGSQ(_vec))-1) > 0.0001)
 
-/** @brief Compare two vectors for EXACT equality.  Use carefully. */
-#define VEQUAL(a, b)	((a)[X]==(b)[X] && (a)[Y]==(b)[Y] && (a)[Z]==(b)[Z])
+/**
+ * @brief Compare two vectors for equality within minimum computation
+ * tolerance.  Use carefully.
+ */
+#define VEQUAL(a, b) VAPPROXEQUAL(a, b, SMALL_FASTF)
 
 /**
  * @brief Compare two vectors for approximate equality, within the
  * specified absolute tolerance.
  */
-#define VAPPROXEQUAL(a, b, tol)	( \
-	NEAR_ZERO( (a)[X]-(b)[X], tol ) && \
-	NEAR_ZERO( (a)[Y]-(b)[Y], tol ) && \
-	NEAR_ZERO( (a)[Z]-(b)[Z], tol ) )
+#define VAPPROXEQUAL(a, b, tol) \
+	(NEAR_ZERO((a)[X]-(b)[X], tol) \
+	 && NEAR_ZERO((a)[Y]-(b)[Y], tol) \
+	 && NEAR_ZERO((a)[Z]-(b)[Z], tol))
 
 /** @brief Test for all elements of `v' being smaller than `tol'. */
-#define VNEAR_ZERO(v, tol)	( \
-	NEAR_ZERO(v[X], tol) && NEAR_ZERO(v[Y], tol) && NEAR_ZERO(v[Z], tol)  )
+#define VNEAR_ZERO(v, tol) \
+	(NEAR_ZERO(v[X], tol) \
+	 && NEAR_ZERO(v[Y], tol) \
+	 && NEAR_ZERO(v[Z], tol))
 
 /**
  * @brief Included below are macros to update min and max X, Y, Z
