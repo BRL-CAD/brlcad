@@ -431,10 +431,13 @@ struct arbn_pts
     int plane_no[3];	/* which planes intersect here */
     struct vertex **vp;		/* pointer to vertex struct pointer for NMG's */
 };
+
+
 struct arbn_edges
 {
     int v1_no, v2_no;	/* index into arbn_pts for endpoints of edge */
 };
+
 
 #define LOC(i, j) i*(aip->neqn)+j
 
@@ -1213,6 +1216,7 @@ rt_arbn_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
 {
     return(0);			/* OK */
 }
+
 
 /** @} */
 /*

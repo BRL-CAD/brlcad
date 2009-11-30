@@ -76,7 +76,7 @@ extern void brep_bvh_subdivide(BBNode* parent, const std::list<SurfaceTree*>& fa
 
 static int pcount = 0;
 static FILE* plot = NULL;
-static FILE*
+HIDDEN FILE*
 plot_file()
 {
     if (plot == NULL) {
@@ -90,7 +90,7 @@ plot_file()
 }
 
 
-static FILE*
+HIDDEN FILE*
 plot_file(const char *pname)
 {
     if (plot != NULL) {
@@ -179,7 +179,8 @@ plot_file(const char *pname)
 	ARB_FACE(pt, 1, 5, 6, 2);		\
     }
 
-void plotsurfaceleafs(SurfaceTree* surf) {
+void
+plotsurfaceleafs(SurfaceTree* surf) {
     double min[3], max[3];
     list<BBNode*> leaves;
     surf->getLeaves(leaves);
@@ -220,7 +221,9 @@ void plotsurfaceleafs(SurfaceTree* surf) {
 }
 
 
-void plotsurfaceleafs(SurfaceTree* surf, struct bn_vlblock *vbp, bool dim3d) {
+void
+plotsurfaceleafs(SurfaceTree* surf, struct bn_vlblock *vbp, bool dim3d)
+{
     register struct bu_list *vhead;
     double min[3], max[3];
     list<BBNode*> leaves;
@@ -255,7 +258,9 @@ void plotsurfaceleafs(SurfaceTree* surf, struct bn_vlblock *vbp, bool dim3d) {
 }
 
 
-void plottrimleafs(SurfaceTree* st, struct bn_vlblock *vbp, bool dim3d) {
+void
+plottrimleafs(SurfaceTree* st, struct bn_vlblock *vbp, bool dim3d)
+{
     register struct bu_list *vhead;
     double min[3], max[3];
     list<BRNode*> leaves;
@@ -291,7 +296,9 @@ void plottrimleafs(SurfaceTree* st, struct bn_vlblock *vbp, bool dim3d) {
 }
 
 
-void plotleaf3d(BBNode* bb) {
+void
+plotleaf3d(BBNode* bb)
+{
     double min[3], max[3];
     double u, v;
     ON_2dPoint uv[2];
@@ -349,7 +356,9 @@ void plotleaf3d(BBNode* bb) {
 }
 
 
-void plotleafuv(BBNode* bb) {
+void
+plotleafuv(BBNode* bb)
+{
     double min[3], max[3];
 
     if (bb->m_trimmed) {
@@ -372,7 +381,9 @@ void plotleafuv(BBNode* bb) {
 }
 
 
-void plottrim(ON_BrepFace &face, struct bn_vlblock *vbp, int plotres, bool dim3d) {
+void
+plottrim(ON_BrepFace &face, struct bn_vlblock *vbp, int plotres, bool dim3d)
+{
     register struct bu_list *vhead;
     const ON_Surface* surf = face.SurfaceOf();
     double umin, umax;
@@ -411,7 +422,9 @@ void plottrim(ON_BrepFace &face, struct bn_vlblock *vbp, int plotres, bool dim3d
 }
 
 
-void plottrim2d(ON_BrepFace &face, struct bn_vlblock *vbp, int plotres) {
+void
+plottrim2d(ON_BrepFace &face, struct bn_vlblock *vbp, int plotres)
+{
     register struct bu_list *vhead;
     const ON_Surface* surf = face.SurfaceOf();
     double umin, umax;
@@ -448,7 +461,9 @@ void plottrim2d(ON_BrepFace &face, struct bn_vlblock *vbp, int plotres) {
 }
 
 
-void plotUVDomain2d(ON_BrepFace &face, struct bn_vlblock *vbp, int plotres) {
+void
+plotUVDomain2d(ON_BrepFace &face, struct bn_vlblock *vbp, int plotres)
+{
     register struct bu_list *vhead;
     const ON_Surface* surf = face.SurfaceOf();
     double umin, umax, urange;
@@ -494,7 +509,9 @@ void plotUVDomain2d(ON_BrepFace &face, struct bn_vlblock *vbp, int plotres) {
 }
 
 
-void plottrim(ON_BrepTrim& trim, struct bn_vlblock *vbp, int plotres, bool dim3d) {
+void
+plottrim(ON_BrepTrim& trim, struct bn_vlblock *vbp, int plotres, bool dim3d)
+{
     register struct bu_list *vhead;
     ON_BrepFace *face= trim.Face();
     const ON_Surface* surf = face->SurfaceOf();
@@ -529,7 +546,9 @@ void plottrim(ON_BrepTrim& trim, struct bn_vlblock *vbp, int plotres, bool dim3d
 }
 
 
-void plottrimdirection(ON_BrepFace &face, struct bn_vlblock *vbp, int plotres) {
+void
+plottrimdirection(ON_BrepFace &face, struct bn_vlblock *vbp, int plotres)
+{
     register struct bu_list *vhead;
     const ON_Surface* surf = face.SurfaceOf();
     double umin, umax;
@@ -586,7 +605,9 @@ void plottrimdirection(ON_BrepFace &face, struct bn_vlblock *vbp, int plotres) {
 }
 
 
-void plotsurface(ON_Surface &surf, struct bn_vlblock *vbp, int isocurveres, int gridres) {
+void
+plotsurface(ON_Surface &surf, struct bn_vlblock *vbp, int isocurveres, int gridres)
+{
     register struct bu_list *vhead;
     double umin, umax;
     double vmin, vmax;
@@ -623,7 +644,9 @@ void plotsurface(ON_Surface &surf, struct bn_vlblock *vbp, int isocurveres, int 
 }
 
 
-void plotsurfacenormals(ON_Surface &surf, struct bn_vlblock *vbp, int gridres) {
+void
+plotsurfacenormals(ON_Surface &surf, struct bn_vlblock *vbp, int gridres)
+{
     register struct bu_list *vhead;
     double umin, umax;
     double vmin, vmax;
@@ -651,7 +674,9 @@ void plotsurfacenormals(ON_Surface &surf, struct bn_vlblock *vbp, int gridres) {
 }
 
 
-void plotcurve(ON_Curve &curve, struct bn_vlblock *vbp, int plotres) {
+void
+plotcurve(ON_Curve &curve, struct bn_vlblock *vbp, int plotres)
+{
     register struct bu_list *vhead;
     double umin, umax;
     double pt1[3], pt2[3];
@@ -698,7 +723,9 @@ void plotcurve(ON_Curve &curve, struct bn_vlblock *vbp, int plotres) {
 }
 
 
-void plottrim(const ON_Curve &curve, double from, double to) {
+void
+plottrim(const ON_Curve &curve, double from, double to)
+{
     point_t pt1, pt2;
     // XXX todo: dynamically sample the curve
     for (int i = 0; i <= 10000; i++) {
@@ -712,7 +739,9 @@ void plottrim(const ON_Curve &curve, double from, double to) {
 }
 
 
-void plottrim(ON_Curve &curve) {
+void
+plottrim(ON_Curve &curve)
+{
     point_t pt1, pt2;
     // XXX todo: dynamically sample the curve
     ON_Interval dom = curve.Domain();
@@ -781,7 +810,8 @@ brep_surface_info(struct brep_specific* bs, struct bu_vls *vls, int si)
 }
 
 
-int brep_face_info(struct brep_specific* bs, struct bu_vls *vls, int fi)
+int
+brep_face_info(struct brep_specific* bs, struct bu_vls *vls, int fi)
 {
     ON_wString s;
     ON_TextLog dump(s);

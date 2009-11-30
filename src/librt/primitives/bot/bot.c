@@ -66,6 +66,7 @@
 	} \
 }
 
+
 /* forward declarations needed for the included routines below */
 HIDDEN int
 rt_bot_makesegs(
@@ -146,6 +147,7 @@ rt_botface_w_normals(struct soltab *stp,
 					   vertex_normals, face_no, tol);
     }
 }
+
 
 int
 rt_botface(struct soltab *stp,
@@ -352,6 +354,7 @@ rt_bot_piece_hitsegs(struct rt_piecestate *psp, struct seg *seghead, struct appl
     /* build segments */
     (void)rt_bot_makesegs(psp->htab.hits, psp->htab.end, psp->stp, &ap->a_ray, ap, seghead, psp);
 }
+
 
 #define RT_BOT_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
 
@@ -1252,11 +1255,13 @@ rt_bot_ifree(struct rt_db_internal *ip, struct resource *resp)
     ip->idb_ptr = GENPTR_NULL;	/* sanity */
 }
 
+
 int
 rt_bot_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bn_tol *tol)
 {
     return(1);
 }
+
 
 int
 rt_bot_xform(struct rt_db_internal *op, const fastf_t *mat, struct rt_db_internal *ip, const int free, struct db_i *dbip)
@@ -1334,6 +1339,7 @@ rt_bot_xform(struct rt_db_internal *op, const fastf_t *mat, struct rt_db_interna
     return(0);
 }
 
+
 int
 rt_bot_find_v_nearest_pt2(
     const struct rt_bot_internal *bot,
@@ -1363,6 +1369,7 @@ rt_bot_find_v_nearest_pt2(
 
     return(closest);
 }
+
 
 int
 rt_bot_edge_in_list(const int v1, const int v2, const int edge_list[], const int edge_count)
@@ -1504,6 +1511,7 @@ rt_bot_find_e_nearest_pt2(
     return(0);
 }
 
+
 static char *modes[]={
     "ERROR: Unrecognized mode",
     "surf",
@@ -1512,12 +1520,14 @@ static char *modes[]={
     "plate_nocos"
 };
 
+
 static char *orientation[]={
     "ERROR: Unrecognized orientation",
     "no",
     "rh",
     "lh"
 };
+
 
 static char *los[]={
     "center",
@@ -2321,6 +2331,7 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
     return BRLCAD_OK;
 }
 
+
 int
 bot_check_vertex_indices(struct bu_vls *log, struct rt_bot_internal *bot)
 {
@@ -2408,6 +2419,7 @@ rt_bot_vertex_fuse(struct rt_bot_internal *bot)
     return(count);
 }
 
+
 int
 rt_bot_same_orientation(const int *a, const int *b)
 {
@@ -2427,6 +2439,7 @@ rt_bot_same_orientation(const int *a, const int *b)
 
     return(0);
 }
+
 
 int
 rt_bot_face_fuse(struct rt_bot_internal *bot)
@@ -2965,11 +2978,13 @@ rt_bot_sort_faces(struct rt_bot_internal *bot, int tris_per_piece)
     return(0);
 }
 
+
 struct bot_edge {
     int v;
     int use_count;
     struct bot_edge *next;
 };
+
 
 HIDDEN void
 delete_edge(int v1, int v2, struct bot_edge **edges)
@@ -3632,6 +3647,7 @@ bot_smooth_hit(struct application *ap, struct partition *PartHeadp, struct seg *
     return 1;
 }
 
+
 int
 rt_bot_smooth(struct rt_bot_internal *bot, char *bot_name, struct db_i *dbip, fastf_t norm_tol_angle)
 {
@@ -3835,6 +3851,7 @@ rt_bot_flip(struct rt_bot_internal *bot)
 
     return 0;
 }
+
 
 struct tri_edges {
     struct bu_list l;

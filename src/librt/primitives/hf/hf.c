@@ -26,6 +26,21 @@
  * parameters of that data file may be read in from an external
  * control file.
  *
+ * Description of the external string description of the HF.
+ *
+ * There are two versions of this parse table.  The string solid in
+ * the .g file can set any parameter.  The indirect control file
+ * (cfile) can only set parameters relating to dfile parameters, and
+ * not to the geometric position, orientation, and scale of the HF's
+ * bounding RPP.
+ *
+ * In general, the cfile should be thought of as describing the data
+ * arrangement of the dfile, and the string solid should be thought of
+ * as describing the "geometry" of the height field's bounding RPP.
+ *
+ * The string solid is parsed first.  If a cfile is present, it is
+ * parsed second, and any parameters specified in the cfile override
+ * the values taken from the string solid.
  */
 
 #include "common.h"
@@ -45,24 +60,7 @@
 #include "raytrace.h"
 
 
-/**
- * Description of the external string description of the HF.
- *
- * There are two versions of this parse table.  The string solid in
- * the .g file can set any parameter.  The indirect control file
- * (cfile) can only set parameters relating to dfile parameters, and
- * not to the geometric position, orientation, and scale of the HF's
- * bounding RPP.
- *
- * In general, the cfile should be thought of as describing the data
- * arrangement of the dfile, and the string solid should be thought of
- * as describing the "geometry" of the height field's bounding RPP.
- *
- * The string solid is parsed first.  If a cfile is present, it is
- * parsed second, and any parameters specified in the cfile override
- * the values taken from the string solid.
- */
-#define HF_O(m)			bu_offsetof(struct rt_hf_internal, m)
+#define HF_O(m) bu_offsetof(struct rt_hf_internal, m)
 
 /* All fields valid in string solid */
 const struct bu_structparse rt_hf_parse[] = {
@@ -92,22 +90,24 @@ const struct bu_structparse rt_hf_cparse[] = {
     {"",	0,	(char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
+
 struct hf_specific {
-    vect_t	hf_V;		/* min vertex/origin of HF */
-    vect_t	hf_VO;		/* max vertex of HF */
-    vect_t	hf_X;		/* X direction vector */
-    fastf_t	hf_Xlen;	/* magnitude of HF in X direction */
-    vect_t	hf_Y;		/* Y Direction vector */
-    fastf_t	hf_Ylen;	/* magnitude of HF in Y direction */
-    vect_t	hf_N;		/* dir of elevation */
-    fastf_t	hf_min;		/* bounding box of hf solid */
-    fastf_t	hf_max;
-    fastf_t	hf_file2mm;	/* scale file elevation units to mm */
+    vect_t hf_V;	/* min vertex/origin of HF */
+    vect_t hf_VO;	/* max vertex of HF */
+    vect_t hf_X;	/* X direction vector */
+    fastf_t hf_Xlen;	/* magnitude of HF in X direction */
+    vect_t hf_Y;	/* Y Direction vector */
+    fastf_t hf_Ylen;	/* magnitude of HF in Y direction */
+    vect_t hf_N;	/* dir of elevation */
+    fastf_t hf_min;	/* bounding box of hf solid */
+    fastf_t hf_max;
+    fastf_t hf_file2mm;	/* scale file elevation units to mm */
     int hf_w;		/* X dimension of file */
     int hf_n;		/* Y dimension of file */
     int hf_shorts;	/* Boolean: use shorts instead of double */
     struct bu_mapped_file *hf_mp;
 };
+
 
 /**
  * R T _ H F _ T O _ D S P
@@ -163,10 +163,13 @@ rt_hf_to_dsp(struct rt_db_internal *db_intern, struct resource *resp)
     VUNITIZE(tmp);
 
     /* The next line should be:
+     *
      * VSCALE(tmp, tmp, hip->zscale * hip->file2mm);
-     * This will make the converted DSP plot in MGED agree with what he HF looks like,
-     * but the HF ignores 'zscale' in the shot routine.
-     * So we choose to duplicate the raytrace behavior (ignore zscale)
+     *
+     * This will make the converted DSP plot in MGED agree with what
+     * he HF looks like, but the HF ignores 'zscale' in the shot
+     * routine.  So we choose to duplicate the raytrace behavior
+     * (ignore zscale)
      */
     VSCALE(tmp, tmp, hip->file2mm);
 
@@ -198,12 +201,12 @@ rt_hf_to_dsp(struct rt_db_internal *db_intern, struct resource *resp)
  * various terms of the formula.
  *
  * Returns -
- *  	0	HF is OK
- *  	!0	Error in description
+ * 0 HF is OK
+ * !0 Error in description
  *
  * Implicit return -
- *  	A struct hf_specific is created, and it's address is stored in
- *  	stp->st_specific for use by hf_shot().
+ * A struct hf_specific is created, and it's address is stored in
+ * stp->st_specific for use by hf_shot().
  */
 int
 rt_hf_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
@@ -343,6 +346,7 @@ rt_hf_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     return 0;
 }
 
+
 /**
  * R T _ H F _ P R I N T
  */
@@ -358,6 +362,7 @@ rt_hf_print(register const struct soltab *stp)
     bu_log("XL %g\n", hf->hf_Xlen);
     bu_log("YL %g\n", hf->hf_Ylen);
 }
+
 
 static int
 rt_hf_cell_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct hit *hitp, int xCell, int yCell)
@@ -415,8 +420,6 @@ rt_hf_cell_shot(struct soltab *stp, register struct xray *rp, struct application
 	       yCell+1, yvect);
 	VSUB2(tri_CA2nd, tri_C, tri_A);
 
-/* VMOVE(tri_BA2nd, tri_CA1st); */
-
 	VSUB2(tri_BA2nd, tri_B, tri_A);
 	VCROSS(tri_wn2nd, tri_BA2nd, tri_CA2nd);
     } else {
@@ -443,7 +446,6 @@ rt_hf_cell_shot(struct soltab *stp, register struct xray *rp, struct application
 	VJOIN3(tri_C, hfp->hf_V, *fp*hf2mm, hfp->hf_N, xCell+0, xvect,
 	       yCell+1, yvect);
 	VSUB2(tri_CA2nd, tri_C, tri_A);
-/* VMOVE(tri_BA2nd, tri_CA1st); */
 	VSUB2(tri_BA2nd, tri_B, tri_A);
 	VCROSS(tri_wn2nd, tri_BA2nd, tri_CA2nd);
     }
@@ -470,24 +472,6 @@ rt_hf_cell_shot(struct soltab *stp, register struct xray *rp, struct application
 
     fnd1 = fnd2 = 0;
 
-#if 0
-    dn = VDOT(tri_wn1st, rp->r_dir); /* wn1st points out */
-    abs_dn = (dn >= 0.0) ? dn : (-dn);
-    if (abs_dn < SQRT_SMALL_FASTF)
-	goto other_half; /* ray parellel to plane */
-
-    VSUB2(wxb, tri_A, rp->r_pt);
-    VCROSS(xp, wxb, rp->r_dir);
-    alpha = VDOT(tri_CA1st, xp);	/* alpha = dist along CA1 to isect pt */
-    if (dn < 0.0) alpha = -alpha;
-    if (alpha < 0.0 || alpha > abs_dn) goto other_half;
-    beta = VDOT(tri_BA1st, xp);	/* beta = dist along BA1 to isect pt */
-    if (dn > 0.0) beta = -beta;
-    if (beta < 0.0 || beta > abs_dn) goto other_half;
-    if (alpha + beta > abs_dn) goto other_half;
-    k1st = VDOT(wxb, tri_wn1st) / dn;
-    fnd1 = 1;
-#else
     /* Ray triangle intersection.
      * See: "Graphics Gems" An Efficient Ray-Polygon Intersection P:390
      */
@@ -532,8 +516,6 @@ rt_hf_cell_shot(struct soltab *stp, register struct xray *rp, struct application
 	    }
 	}
     }
-#endif
-
 
     /* XXX This is really hard to read.  Need to fix this like above */
     dn = VDOT(tri_wn2nd, rp->r_dir);
@@ -574,8 +556,6 @@ rt_hf_cell_shot(struct soltab *stp, register struct xray *rp, struct application
      * replace the out if dn>0 or the in if dn<0.
      */
 
-/* bu_log("cell: k1st=%g, k2nd=%g\n", k1st, k2nd); */
-
     if (!fnd2) {
 	hitp->hit_magic = RT_HIT_MAGIC;
 	hitp->hit_dist = k1st;
@@ -592,23 +572,6 @@ rt_hf_cell_shot(struct soltab *stp, register struct xray *rp, struct application
 	hitp->hit_surfno = yCell*hfp->hf_w+xCell;
 	return 1;
     }
-#if 0
-    if (fabs(k1st) < fabs(k2nd)) {
-	hitp->hit_magic = RT_HIT_MAGIC;
-	hitp->hit_dist = k1st;
-	VMOVE(hitp->hit_normal, tri_wn1st);
-	VUNITIZE(hitp->hit_normal);
-	hitp->hit_surfno = yCell*hfp->hf_w+xCell;
-	return 1;
-    } else {
-	hitp->hit_magic = RT_HIT_MAGIC;
-	hitp->hit_dist = k2nd;
-	VMOVE(hitp->hit_normal, tri_wn2nd);
-	VUNITIZE(hitp->hit_normal);
-	hitp->hit_surfno = yCell*hfp->hf_w+xCell;
-	return 1;
-    }
-#else
     /*
      * This is the two hit situation which can cause interesting
      * problems.  Three are basicly five different cases that must be
@@ -637,8 +600,8 @@ rt_hf_cell_shot(struct soltab *stp, register struct xray *rp, struct application
     VUNITIZE(hitp->hit_normal);
     hitp->hit_surfno = yCell*hfp->hf_w+xCell;
     return 2;
-#endif
 }
+
 
 #define MAXHITS 128		/* # of surfaces hit, must be even */
 
@@ -751,7 +714,7 @@ axis_plane_isect(int plane, fastf_t inout, struct xray *rp, struct hf_specific *
  * struct seg will be acquired and filled in.
  *
  * Returns -
- *  0 MISS
+ * 0 MISS
  * >0 HIT
  */
 int
@@ -834,7 +797,6 @@ rt_hf_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 
 	dxbdn = VDOT(peqn, rp->r_pt) - pdist;
 	dn = -VDOT(peqn, rp->r_dir);
-/*		allDist[allIndex] = s = dxbdn/dn; */
 	if (RT_G_DEBUG & DEBUG_HF) {
 	    VPRINT("hf: Plane Equation", peqn);
 	    bu_log("hf: dn=%g, dxbdn=%g, ", dn, dxbdn);
@@ -923,8 +885,8 @@ rt_hf_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
      * to use a fast DDA to check ONLY the cells we are interested in.
      * The basic idea and some of the pseudo code comes from:
      *
-     * Grid Tracing: Fast Ray Tracing for Height Fields
-     * By: F. Kenton Musgrave.
+     * Grid Tracing: Fast Ray Tracing for Height Fields By: F. Kenton
+     * Musgrave.
      */
 
     /*
@@ -948,7 +910,7 @@ rt_hf_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 	VSUB2(tmp, rp->r_pt, hf->hf_V);
 	xCell = tmp[X]/hf->hf_Xlen*hf->hf_w;
 	yCell = tmp[Y]/hf->hf_Ylen*hf->hf_n;
-	if ( (r=rt_hf_cell_shot(stp, rp, ap, hp, xCell, yCell))) {
+	if ((r=rt_hf_cell_shot(stp, rp, ap, hp, xCell, yCell))) {
 	    if ((nhits+=r)>MAXHITS) bu_bomb("g_hf.c: too many hits.\n");
 	    hp+=r;
 	}
@@ -974,12 +936,6 @@ rt_hf_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 	 * (Xdist*cell_width)/Xdist deltaY = (Ydist*cell_width)/Xdist;
 	 */
 	tmp = xWidth/fabs(aray[X]);
-
-#if 0
-	bu_log("hf: tmp=%g\n", tmp);
-	bu_log("hf: before VSCALE... aray=(%g, %g, %g)\n",
-	       aray[X], aray[Y], aray[Z]);
-#endif
 
 	VSCALE(aray, aray, tmp);
 
@@ -1016,12 +972,7 @@ rt_hf_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 	error = curloc[Y]-yCell*yWidth;
 	error /= yWidth;
 
-/*		delta = aray[Y]/yWidth; */
 	delta = aray[Y]/fabs(aray[X]);
-
-#if 0
-	bu_log("aray[Y]/aray[X]=%g\n", delta);
-#endif
 
 	if (delta < 0.0) {
 	    delta = -delta;
@@ -1057,7 +1008,7 @@ rt_hf_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 	     * Are we on the grid yet?  If not, then we will check for
 	     * a side step and inc.
 	     */
-/* CTJ - Or maxZ < hf->hf_min then no chance to hit */
+	    /* CTJ - Or maxZ < hf->hf_min then no chance to hit */
 	    if (yCell < 0 || yCell > hf->hf_n-2) {
 		if (error > -SQRT_SMALL_FASTF) {
 		    if (yCell >= -1) goto skip_first;
@@ -1122,10 +1073,9 @@ rt_hf_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 		       lowest, highest);
 	    }
 
-/*
- * This is the primary test.  It is designed to get all cells that the
- * ray passes through.
- */
+	    /* This is the primary test.  It is designed to get all
+	     * cells that the ray passes through.
+	     */
 	    if (maxZ+deltaZ > lowest &&
 		minZ-deltaZ < highest) {
 		int r;
@@ -1134,9 +1084,9 @@ rt_hf_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 		    hp+=r;
 		}
 	    }
-/*
- * This is the DDA trying to fill in the corners as it walks the path.
- */
+	    /* This is the DDA trying to fill in the corners as it
+	     * walks the path.
+	     */
 	skip_first:
 	    if (error > SQRT_SMALL_FASTF) {
 		yCell += signY;
@@ -1211,8 +1161,10 @@ rt_hf_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 	    bu_log("htf: leaving loop, %d, %d, %g vs. 0--%d, 0--%d, 0.0--%g\n",
 		   xCell, yCell, curloc[Z], hf->hf_w-1, hf->hf_n-1, hf->hf_max);
 	}
-/* OTHER HALF */
+
     } else {
+	/* OTHER HALF */
+
 	double tmp;
 	register double farZ, minZ, maxZ;
 	double deltaZ;
@@ -1235,12 +1187,6 @@ rt_hf_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 	 * deltaY = (Ydist*cell_width)/Xdist;
 	 */
 	tmp = yWidth/fabs(aray[Y]);
-
-#if 0
-	bu_log("hf: tmp=%g\n", tmp);
-	bu_log("hf: before VSCALE... aray=(%g, %g, %g)\n",
-	       aray[X], aray[Y], aray[Z]);
-#endif
 
 	VSCALE(aray, aray, tmp);
 
@@ -1277,12 +1223,8 @@ rt_hf_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 	error = curloc[X]-xCell*xWidth;
 	error /= xWidth;
 
-/*		delta = aray[X]/xWidth; */
+/* delta = aray[X]/xWidth; */
 	delta = aray[X]/fabs(aray[Y]);
-
-#if 0
-	bu_log("aray[X]/aray[Y]=%g\n", delta);
-#endif
 
 	if (delta < 0.0) {
 	    delta = -delta;
@@ -1313,7 +1255,7 @@ rt_hf_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 		bu_log("hf: cell %d, %d [%g -- %g] ",
 		       xCell, yCell, minZ, maxZ);
 	    }
-/* CTJ - Or maxZ < hf->hf_min */
+	    /* CTJ - Or maxZ < hf->hf_min */
 	    if (xCell < 0 || xCell > hf->hf_w-2) {
 		if (error > -SQRT_SMALL_FASTF) {
 		    if (xCell >= -1) goto skip_2nd;
@@ -1372,10 +1314,9 @@ rt_hf_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 		       lowest, highest);
 	    }
 
-/*
- * This is the primary test.  It is designed to get all cells that the
- * ray passes through.
- */
+	    /* This is the primary test.  It is designed to get all
+	     * cells that the ray passes through.
+	     */
 	    if (maxZ+deltaZ > lowest &&
 		minZ-deltaZ < highest) {
 		int r;
@@ -1384,9 +1325,9 @@ rt_hf_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 		    hp+=r;
 		}
 	    }
-/*
- * This is the DDA trying to fill in the corners as it walks the path.
- */
+	    /* This is the DDA trying to fill in the corners as it
+	     * walks the path.
+	     */
 	skip_2nd:
 	    if (error > SQRT_SMALL_FASTF) {
 		xCell += signX;
@@ -1462,6 +1403,7 @@ rt_hf_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 		   xCell, yCell, curloc[Z], hf->hf_w-1, hf->hf_n-1, hf->hf_max);
 	}
     }
+
     /* Sort hits, near to Far */
     {
 	register int i, j;
@@ -1475,6 +1417,7 @@ rt_hf_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 	    }
 	}
     }
+
     if (nhits & 1) {
 	register int i;
 	static int nerrors = 0;
@@ -1488,11 +1431,8 @@ rt_hf_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 	    }
 	    bu_log("\n");
 	}
-#if 0
-	rt_g.debug |= DEBUG_HF;
-	bu_bomb("Odd number of hits.");
-#endif
     }
+
     /* nhits is even, build segments */
     {
 	register struct seg *segp;
@@ -1507,6 +1447,8 @@ rt_hf_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
     }
     return nhits;	/* hits or misses */
 }
+
+
 /**
  * R T _ H F _ N O R M
  *
@@ -1551,6 +1493,7 @@ rt_hf_norm(register struct hit *hitp, struct soltab *stp, register struct xray *
 
 }
 
+
 /**
  * R T _ H F _ C U R V E
  *
@@ -1565,11 +1508,13 @@ rt_hf_curve(register struct curvature *cvp, register struct hit *hitp, struct so
     bn_vec_ortho(cvp->crv_pdir, hitp->hit_normal);
 }
 
+
 /**
  * R T _ H F _ U V
  *
- * For a hit on the surface of an hf, return the (u, v) coordinates
- * of the hit point, 0 <= u, v <= 1.
+ * For a hit on the surface of an hf, return the (u, v) coordinates of
+ * the hit point, 0 <= u, v <= 1.
+ *
  * u = azimuth
  * v = elevation
  */
@@ -1601,6 +1546,7 @@ rt_hf_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, 
     uvp->uv_dv = r;
 }
 
+
 /**
  * R T _ H F _ F R E E
  */
@@ -1617,6 +1563,7 @@ rt_hf_free(register struct soltab *stp)
     bu_free((char *)hf, "hf_specific");
 }
 
+
 /**
  * R T _ H F _ C L A S S
  */
@@ -1625,6 +1572,7 @@ rt_hf_class(void)
 {
     return(0);
 }
+
 
 /**
  * R T _ H F _ P L O T
@@ -1779,13 +1727,13 @@ rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tes
 	step = (int)(ttol->rel * rstep);
     } else {
 	/* No relative tol specified, limit drawing to 'goal' # of vectors */
-	if (goal <= 0)  return 0;		/* no vectors for interior */
+	if (goal <= 0) return 0;		/* no vectors for interior */
 
 	/* Compute data stride based upon producing no more than 'goal' vectors */
 	step = ceil(sqrt(2*(xip->w-1)*(xip->n-1) / (double)goal));
     }
-    if (step < 1)  step = 1;
-    if ((half_step = step/2) < 1)  half_step = 1;
+    if (step < 1) step = 1;
+    if ((half_step = step/2) < 1) half_step = 1;
 
     /* Draw the contour lines in W (x) direction.  Don't redo ridges. */
     for (y = half_step; y < xip->n-half_step; y += step) {
@@ -1875,12 +1823,13 @@ rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tes
     return 0;
 }
 
+
 /**
  * R T _ H F _ T E S S
  *
  * Returns -
- *	-1	failure
- *	 0	OK.  *r points to nmgregion that holds this tessellation.
+ * -1 failure
+ * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
 int
 rt_hf_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
@@ -1893,6 +1842,7 @@ rt_hf_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, con
 
     return(-1);
 }
+
 
 /**
  * R T _ H F _ I M P O R T
@@ -2028,7 +1978,7 @@ rt_hf_import4(struct rt_db_internal *ip, const struct bu_external *ep, register 
     count = mp->buflen / in_len;
 
     /* If this data has already been mapped, all done */
-    if (mp->apbuf)  return 0;		/* OK */
+    if (mp->apbuf) return 0;		/* OK */
 
     /* Transform external data to internal format -- short or double */
     if (xip->shorts) {
@@ -2056,6 +2006,7 @@ rt_hf_import4(struct rt_db_internal *ip, const struct bu_external *ep, register 
     return(0);			/* OK */
 }
 
+
 /**
  * R T _ H F _ E X P O R T
  *
@@ -2079,7 +2030,7 @@ rt_hf_export4(struct bu_external *ep, const struct rt_db_internal *ip, double lo
     struct bu_vls str;
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_HF)  return(-1);
+    if (ip->idb_type != ID_HF) return(-1);
     xip = (struct rt_hf_internal *)ip->idb_ptr;
     RT_HF_CK_MAGIC(xip);
 
@@ -2096,8 +2047,8 @@ rt_hf_export4(struct bu_external *ep, const struct rt_db_internal *ip, double lo
     bu_vls_init(&str);
     bu_vls_struct_print(&str, rt_hf_parse, (char *)xip);
 
-    /* Any changes made by solid editing affect .g file only,
-     * and not the cfile, if specified.
+    /* Any changes made by solid editing affect .g file only, and not
+     * the cfile, if specified.
      */
 
     rec->s.s_id = DBID_STRSOL;
@@ -2108,6 +2059,7 @@ rt_hf_export4(struct bu_external *ep, const struct rt_db_internal *ip, double lo
     return(0);
 }
 
+
 int
 rt_hf_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
@@ -2117,6 +2069,7 @@ rt_hf_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fas
     return -1;
 }
 
+
 int
 rt_hf_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
@@ -2125,6 +2078,7 @@ rt_hf_export5(struct bu_external *ep, const struct rt_db_internal *ip, double lo
     /* The rt_hf_to_dsp() routine can also be used */
     return -1;
 }
+
 
 /**
  * R T _ H F _ D E S C R I B E
@@ -2142,12 +2096,13 @@ rt_hf_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose,
     BU_CK_VLS(str);
     RT_HF_CK_MAGIC(xip);
 
-    bu_vls_printf(str, "Height Field (HF)  mm2local=%g\n", mm2local);
+    bu_vls_printf(str, "Height Field (HF) mm2local=%g\n", mm2local);
     bu_vls_struct_print(str, rt_hf_parse, ip->idb_ptr);
     bu_vls_strcat(str, "\n");
 
     return(0);
 }
+
 
 /**
  * R T _ H F _ I F R E E
@@ -2169,8 +2124,7 @@ rt_hf_ifree(struct rt_db_internal *ip, struct resource *resp)
     RT_HF_CK_MAGIC(xip);
     xip->magic = 0;			/* sanity */
 
-    if (xip->mp)
-    {
+    if (xip->mp) {
 	BU_CK_MAPPED_FILE(xip->mp);
 	bu_close_mapped_file(xip->mp);
     }
@@ -2187,6 +2141,7 @@ rt_hf_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
 {
     return(0);			/* OK */
 }
+
 
 /** @} */
 /*

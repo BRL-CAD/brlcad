@@ -74,11 +74,13 @@ struct oface {
     fastf_t arb_Vlen;		/* length of V basis (for dv) */
 };
 
+
 /* One of these for each face */
 struct aface {
     fastf_t A[3];		/* "A" point */
     plane_t peqn;		/* Plane equation, unit normal */
 };
+
 
 /* One of these for each ARB, custom allocated to size */
 struct arb_specific  {
@@ -86,6 +88,7 @@ struct arb_specific  {
     struct oface *arb_opt;	/* pointer to optional info */
     struct aface arb_face[4];	/* May really be up to [6] faces */
 };
+
 
 /* These hold temp values for the face being prep'ed */
 struct prep_arb {
@@ -101,6 +104,7 @@ struct prep_arb {
     int pa_doopt;		/* compute pa_opt[] stuff */
 };
 
+
 /*
  * Layout of arb in input record.
  * Points are listed in "clockwise" order,
@@ -111,6 +115,8 @@ struct arb_info {
     char *ai_title;
     int ai_sub[4];
 };
+
+
 static const struct arb_info rt_arb_info[6] = {
     { "1234", {3, 2, 1, 0} },	/* "bottom" face */
     { "8765", {4, 5, 6, 7} },	/* "top" face */
@@ -132,6 +138,7 @@ const struct bu_structparse rt_arb_parse[] = {
     { "%f", 3, "V8", bu_offsetof(struct rt_arb_internal, pt[7][X]), BU_STRUCTPARSE_FUNC_NULL },
     { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
 };
+
 
 /* rt_arb_get_cgtype(), rt_arb_std_type(), and rt_arb_centroid()
  * stolen from mged/arbs.c */
@@ -858,6 +865,7 @@ rt_arb_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     return(2);			/* HIT */
 }
 
+
 #define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;
 
 
@@ -1086,6 +1094,7 @@ rt_arb_free(register struct soltab *stp)
 	bu_free((char *)arbp->arb_opt, "arb_opt");
     bu_free((char *)arbp, "arb_specific");
 }
+
 
 #define ARB_FACE(valp, a, b, c, d) \
 	RT_ADD_VLIST(vhead, valp[a], BN_VLIST_LINE_MOVE); \
@@ -1518,6 +1527,7 @@ rt_arb_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     return(0);
 }
 
+
 static const fastf_t rt_arb_uvw[5*3] = {
     0, 0, 0,
     1, 0, 0,
@@ -1525,6 +1535,8 @@ static const fastf_t rt_arb_uvw[5*3] = {
     0, 1, 0,
     0, 0, 0
 };
+
+
 static const int rt_arb_vert_index_scramble[4] = { 0, 1, 3, 2 };
 
 
@@ -1693,6 +1705,7 @@ rt_arb_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     return(0);
 }
 
+
 /* --- General ARB8 utility routines --- */
 
 /**
@@ -1729,6 +1742,7 @@ rt_arb_calc_points(
     return 0;					/* success */
 }
 
+
 /* planes to define ARB vertices */
 static const int rt_arb_planes[5][24] = {
     {0, 1, 3, 0, 1, 2, 0, 2, 3, 0, 1, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3},	/* ARB4 */
@@ -1737,6 +1751,7 @@ static const int rt_arb_planes[5][24] = {
     {0, 2, 4, 0, 3, 4, 0, 3, 5, 0, 2, 5, 1, 4, 5, 1, 3, 4, 1, 3, 5, 1, 2, 4},	/* ARB7 */
     {0, 2, 4, 0, 3, 4, 0, 3, 5, 0, 2, 5, 1, 2, 4, 1, 3, 4, 1, 3, 5, 1, 2, 5},	/* ARB8 */
 };
+
 
 /**
  * R T _ A R B _ 3 F A C E _ I N T E R S E C T
@@ -2128,6 +2143,7 @@ rt_arb_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
 {
     return(0);			/* OK */
 }
+
 
 /** @} */
 

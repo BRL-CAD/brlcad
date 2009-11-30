@@ -163,6 +163,7 @@ rt_nmg_mirror(struct rt_db_internal *ip, register const plane_t plane)
     return 0;
 }
 
+
 /*
  * Local Variables:
  * tab-width: 8

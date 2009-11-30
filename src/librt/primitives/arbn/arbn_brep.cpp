@@ -64,6 +64,7 @@ rt_arbn_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
     bu_free(tmp_internal, "free temporary rt_db_internal");
 }
 
+
 // Local Variables:
 // tab-width: 8
 // mode: C++

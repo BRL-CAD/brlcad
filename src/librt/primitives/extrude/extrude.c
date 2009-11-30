@@ -23,9 +23,6 @@
  *
  * Provide support for solids of extrusion.
  *
- * Authors -
- * 	John R. Anderson
- *
  */
 
 #include "common.h"
@@ -50,17 +47,18 @@ extern int seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, p
 
 struct extrude_specific {
     mat_t rot, irot;	/* rotation and translation to get extrsuion vector in +z direction with V at origin */
-    vect_t unit_h;		/* unit vector in direction of extrusion vector */
-    vect_t u_vec;		/* u vector rotated and projected */
-    vect_t v_vec;		/* v vector rotated and projected */
+    vect_t unit_h;	/* unit vector in direction of extrusion vector */
+    vect_t u_vec;	/* u vector rotated and projected */
+    vect_t v_vec;	/* v vector rotated and projected */
     fastf_t uv_scale;	/* length of original, untransformed u_vec */
     vect_t rot_axis;	/* axis of rotation for rotation matrix */
-    vect_t perp;		/* vector in pl1_rot plane and normal to rot_axis */
+    vect_t perp;	/* vector in pl1_rot plane and normal to rot_axis */
     plane_t pl1, pl2;	/* plane equations of the top and bottom planes (not rotated) */
     plane_t pl1_rot;	/* pl1 rotated by rot */
-    point_t *verts;		/* sketch vertices projected onto a plane normal to extrusion vector */
+    point_t *verts;	/* sketch vertices projected onto a plane normal to extrusion vector */
     struct curve crv;	/* copy of the referenced curve */
 };
+
 
 static struct bn_tol extr_tol={
     /* a fake tolerance structure for the intersection routines */
@@ -70,6 +68,7 @@ static struct bn_tol extr_tol={
     0.0,
     1.0
 };
+
 
 #define MAX_HITS 64
 
@@ -92,19 +91,19 @@ static struct bn_tol extr_tol={
 
 
 /**
- *  			R T _ E X T R U D E _ P R E P
+ * R T _ E X T R U D E _ P R E P
  *
- *  Given a pointer to a GED database record, and a transformation matrix,
- *  determine if this is a valid EXTRUDE, and if so, precompute various
- *  terms of the formula.
+ * Given a pointer to a GED database record, and a transformation
+ * matrix, determine if this is a valid EXTRUDE, and if so, precompute
+ * various terms of the formula.
  *
- *  Returns -
- *  	0 EXTRUDE is OK
- *  	!0 Error in description
+ * Returns -
+ * 0 EXTRUDE is OK
+ * !0 Error in description
  *
- *  Implicit return -
- *  	A struct extrude_specific is created, and it's address is stored in
- *  	stp->st_specific for use by extrude_shot().
+ * Implicit return -
+ * A struct extrude_specific is created, and it's address is stored in
+ * stp->st_specific for use by extrude_shot().
  */
 int
 rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
@@ -136,12 +135,14 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
     VMOVE(extr->unit_h, eip->h);
     VUNITIZE(extr->unit_h);
 
-    /* the length of the u_vec is used for scaling radii of circular arcs
-     * the u_vec and the v_vec must have the same length
+    /* the length of the u_vec is used for scaling radii of circular
+     * arcs the u_vec and the v_vec must have the same length
      */
     extr->uv_scale = MAGNITUDE(eip->u_vec);
 
-    /* build a transformation matrix to rotate extrusion vector to z-axis */
+    /* build a transformation matrix to rotate extrusion vector to
+     * z-axis
+     */
     VSET(tmp, 0, 0, 1);
     bn_mat_fromto(extr->rot, eip->h, tmp);
 
@@ -175,7 +176,9 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
 	vert_count++;
     }
 
-    /* apply the rotation matrix to all the vertices, and start bounding box calculation */
+    /* apply the rotation matrix to all the vertices, and start
+     * bounding box calculation
+     */
     if (vert_count)
 	extr->verts = (point_t *)bu_calloc(vert_count, sizeof(point_t), "extr->verts");
     VSETALL(stp->st_min, MAX_FASTF);
@@ -230,7 +233,9 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
 	ldir[i] = MAGNITUDE(tmp);
     }
 
-    /* if any part of the curve is a circular arc, the arc may extend beyond the listed vertices */
+    /* if any part of the curve is a circular arc, the arc may extend
+     * beyond the listed vertices
+     */
     for (i=0; i<skt->skt_curve.seg_count; i++) {
 	struct carc_seg *csg=(struct carc_seg *)skt->skt_curve.segments[i];
 	struct carc_seg *csg_extr=(struct carc_seg *)extr->crv.segments[i];
@@ -327,13 +332,15 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
     return(0);              /* OK */
 }
 
+
 /**
- *			R T _ E X T R U D E _ P R I N T
+ * R T _ E X T R U D E _ P R I N T
  */
 void
 rt_extrude_print(register const struct soltab *stp)
 {
 }
+
 
 int
 get_quadrant(fastf_t *v, fastf_t *local_x, fastf_t *local_y, fastf_t *vx, fastf_t *vy)
@@ -354,6 +361,7 @@ get_quadrant(fastf_t *v, fastf_t *local_x, fastf_t *local_y, fastf_t *vx, fastf_
 	    return(3);
     }
 }
+
 
 int
 isect_line2_ellipse(fastf_t *dist, fastf_t *ray_start, fastf_t *ray_dir, fastf_t *center, fastf_t *ra, fastf_t *rb)
@@ -540,15 +548,14 @@ isect_line_earc(fastf_t *dist, fastf_t *ray_start, fastf_t *ray_dir, fastf_t *ce
 
 
 /**
- *  			R T _ E X T R U D E _ S H O T
+ * R T _ E X T R U D E _ S H O T
  *
- *  Intersect a ray with a extrude.
- *  If an intersection occurs, a struct seg will be acquired
- *  and filled in.
+ * Intersect a ray with a extrude.  If an intersection occurs, a
+ * struct seg will be acquired and filled in.
  *
- *  Returns -
- *  	0 MISS
- *	>0 HIT
+ * Returns -
+ * 0 MISS
+ * >0 HIT
  */
 int
 rt_extrude_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
@@ -594,7 +601,7 @@ rt_extrude_shot(struct soltab *stp, register struct xray *rp, struct application
 	dist_top = MAX_FASTF;
     } else {
 	dist_bottom = -DIST_PT_PLANE(rp->r_pt, extr->pl1)/dot_pl1;
-	to_bottom = dist_bottom;					/* need to remember this */
+	to_bottom = dist_bottom;				/* need to remember this */
 	dist_top = -DIST_PT_PLANE(rp->r_pt, extr->pl2)/dot_pl1;	/* pl1 and pl2 are parallel */
 	if (dist_bottom > dist_top) {
 	    fastf_t tmp1;
@@ -616,12 +623,14 @@ rt_extrude_shot(struct soltab *stp, register struct xray *rp, struct application
 	dir_dot_z = -dir_dot_z;
 
     if (NEAR_ZERO(dir_dot_z - 1.0, SMALL_FASTF)) {
-	/* ray is parallel to extrusion vector
-	 * set mode to just count intersections for Jordan Theorem
+	/* ray is parallel to extrusion vector set mode to just count
+	 * intersections for Jordan Theorem
 	 */
 	check_inout = 1;
 
-	/* set the ray start to the intersection of the original ray and the base plane */
+	/* set the ray start to the intersection of the original ray
+	 * and the base plane
+	 */
 	VJOIN1(tmp, rp->r_pt, to_bottom, rp->r_dir);
 	MAT4X3PNT(ray_start, extr->rot, tmp);
 
@@ -655,7 +664,9 @@ rt_extrude_shot(struct soltab *stp, register struct xray *rp, struct application
 		surfno = LINE_SEG;
 		break;
 	    case CURVE_CARC_MAGIC:
-		/* circular arcs become elliptical arcs when projected in the XY-plane */
+		/* circular arcs become elliptical arcs when projected
+		 * in the XY-plane
+		 */
 		csg = (struct carc_seg *)lng;
 		{
 		    vect_t ra, rb;
@@ -665,8 +676,9 @@ rt_extrude_shot(struct soltab *stp, register struct xray *rp, struct application
 			/* full circle */
 			radius = -csg->radius;
 
-			/* build the ellipse, this actually builds a circle in 3D,
-			 * but the intersection routine only uses the X and Y components
+			/* build the ellipse, this actually builds a
+			 * circle in 3D, but the intersection routine
+			 * only uses the X and Y components
 			 */
 			VSCALE(ra, extr->rot_axis, radius);
 			VSCALE(rb, extr->perp, radius);
@@ -743,7 +755,9 @@ rt_extrude_shot(struct soltab *stp, register struct xray *rp, struct application
 	    }
 	}
 
-	/* eliminate duplicate hits below the bottom plane of the extrusion */
+	/* eliminate duplicate hits below the bottom plane of the
+	 * extrusion
+	 */
 	for (j=0; j<hits_before_bottom; j++) {
 	    k = 0;
 	    while (k < dist_count) {
@@ -764,7 +778,9 @@ rt_extrude_shot(struct soltab *stp, register struct xray *rp, struct application
 	    }
 	}
 
-	/* eliminate duplicate hits above the top plane of the extrusion */
+	/* eliminate duplicate hits above the top plane of the
+	 * extrusion
+	 */
 	for (j=0; j<hits_after_top; j++) {
 	    k = 0;
 	    while (k < dist_count) {
@@ -864,7 +880,7 @@ rt_extrude_shot(struct soltab *stp, register struct xray *rp, struct application
 
 	    RT_GET_SEG(segp, ap->a_resource);
 	    segp->seg_stp = stp;
-	    segp->seg_in = hits[0];		/* struct copy */
+	    segp->seg_in = hits[0];	/* struct copy */
 	    segp->seg_out = hits[1];	/* struct copy */
 	    BU_LIST_INSERT(&(seghead->l), &(segp->l));
 	    return(2);
@@ -926,7 +942,7 @@ rt_extrude_shot(struct soltab *stp, register struct xray *rp, struct application
 	for (i=0; i < hit_count; i += 2) {
 	    RT_GET_SEG(segp, ap->a_resource);
 	    segp->seg_stp = stp;
-	    segp->seg_in = hits[i];		/* struct copy */
+	    segp->seg_in = hits[i];	/* struct copy */
 	    segp->seg_out = hits[i+1];	/* struct copy */
 	    segp->seg_out.hit_surfno = -segp->seg_out.hit_surfno;	/* for exit hits */
 	    BU_LIST_INSERT(&(seghead->l), &(segp->l));
@@ -936,12 +952,13 @@ rt_extrude_shot(struct soltab *stp, register struct xray *rp, struct application
     return(hit_count);
 }
 
+
 #define RT_EXTRUDE_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
 
 /**
- *			R T _ E X T R U D E _ V S H O T
+ * R T _ E X T R U D E _ V S H O T
  *
- *  Vectorized version.
+ * Vectorized version.
  */
 void
 rt_extrude_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
@@ -954,10 +971,11 @@ rt_extrude_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n,
     rt_vstub(stp, rp, segp, n, ap);
 }
 
+
 /**
- *  			R T _ E X T R U D E _ N O R M
+ * R T _ E X T R U D E _ N O R M
  *
- *  Given ONE ray distance, return the normal and entry/exit point.
+ * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
 rt_extrude_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
@@ -969,8 +987,7 @@ rt_extrude_norm(register struct hit *hitp, struct soltab *stp, register struct x
 
     VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir);
 
-    switch (hitp->hit_surfno)
-    {
+    switch (hitp->hit_surfno) {
 	case LINE_SEG:
 	    MAT4X3VEC(tmp, extr->irot, hitp->hit_vpriv);
 	    VCROSS(hitp->hit_normal, extr->unit_h, tmp);
@@ -1014,10 +1031,11 @@ rt_extrude_norm(register struct hit *hitp, struct soltab *stp, register struct x
 
 }
 
+
 /**
- *			R T _ E X T R U D E _ C U R V E
+ * R T _ E X T R U D E _ C U R V E
  *
- *  Return the curvature of the extrude.
+ * Return the curvature of the extrude.
  */
 void
 rt_extrude_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
@@ -1039,8 +1057,9 @@ rt_extrude_curve(register struct curvature *cvp, register struct hit *hitp, stru
 	    break;
 	case CARC_SEG:
 	case -CARC_SEG:
-	    /* curvature for an ellipse (the rotated and projected circular arc) in XY-plane
-	     * based on curvature for ellipse = |ra||rb|/(|derivative|**3)
+	    /* curvature for an ellipse (the rotated and projected
+	     * circular arc) in XY-plane based on curvature for
+	     * ellipse = |ra||rb|/(|derivative|**3)
 	     */
 	    csg = (struct carc_seg *)hitp->hit_private;
 	    VCROSS(cvp->crv_pdir, extr->unit_h, hitp->hit_normal);
@@ -1070,21 +1089,24 @@ rt_extrude_curve(register struct curvature *cvp, register struct hit *hitp, stru
     }
 }
 
+
 /**
- *  			R T _ E X T R U D E _ U V
+ * R T _ E X T R U D E _ U V
  *
- *  For a hit on the surface of an extrude, return the (u, v) coordinates
- *  of the hit point, 0 <= u, v <= 1.
- *  u = azimuth
- *  v = elevation
+ * For a hit on the surface of an extrude, return the (u, v)
+ * coordinates of the hit point, 0 <= u, v <= 1.
+ *
+ * u = azimuth
+ * v = elevation
  */
 void
 rt_extrude_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
 {
 }
 
+
 /**
- *		R T _ E X T R U D E _ F R E E
+ * R T _ E X T R U D E _ F R E E
  */
 void
 rt_extrude_free(register struct soltab *stp)
@@ -1098,8 +1120,9 @@ rt_extrude_free(register struct soltab *stp)
     bu_free((char *)extrude, "extrude_specific");
 }
 
+
 /**
- *			R T _ E X T R U D E _ C L A S S
+ * R T _ E X T R U D E _ C L A S S
  */
 int
 rt_extrude_class(void)
@@ -1107,8 +1130,9 @@ rt_extrude_class(void)
     return(0);
 }
 
+
 /**
- *			R T _ E X T R U D E _ P L O T
+ * R T _ E X T R U D E _ P L O T
  */
 int
 rt_extrude_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
@@ -1195,6 +1219,7 @@ rt_extrude_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
     return(0);
 }
 
+
 void
 get_indices(genptr_t seg, int *start, int *end)
 {
@@ -1230,6 +1255,7 @@ get_indices(genptr_t seg, int *start, int *end)
 	    break;
     }
 }
+
 
 void
 get_seg_midpoint(genptr_t seg, struct rt_sketch_internal *skt, point2d_t pt)
@@ -1361,12 +1387,14 @@ get_seg_midpoint(genptr_t seg, struct rt_sketch_internal *skt, point2d_t pt)
     }
 }
 
+
 struct loop_inter {
     int which_loop;
     int vert_index;	/* index of vertex intersected, or -1 if no hit on a vertex */
-    fastf_t dist;		/* hit distance */
+    fastf_t dist;	/* hit distance */
     struct loop_inter *next;
 };
+
 
 void
 isect_2D_loop_ray(point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct loop_inter **root,
@@ -1599,6 +1627,7 @@ isect_2D_loop_ray(point2d_t pta, point2d_t dir, struct bu_ptbl *loop, struct loo
     }
 }
 
+
 static void
 sort_intersections(struct loop_inter **root, struct bn_tol *tol)
 {
@@ -1654,6 +1683,7 @@ sort_intersections(struct loop_inter **root, struct bn_tol *tol)
 	}
     }
 }
+
 
 int
 classify_sketch_loops(struct bu_ptbl *loopa, struct bu_ptbl *loopb, struct rt_sketch_internal *ip)
@@ -1725,12 +1755,13 @@ classify_sketch_loops(struct bu_ptbl *loopa, struct bu_ptbl *loopb, struct rt_sk
     return(ret);
 }
 
+
 /*
- *			R T _ E X T R U D E _ T E S S
+ * R T _ E X T R U D E _ T E S S
  *
- *  Returns -
- *	-1 failure
- *	 0 OK.  *r points to nmgregion that holds this tessellation.
+ * Returns -
+ * -1 failure
+ * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
 int
 rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
@@ -2033,11 +2064,12 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
     return(-1);
 }
 
+
 /**
- *			R T _ E X T R U D E _ I M P O R T
+ * R T _ E X T R U D E _ I M P O R T
  *
- *  Import an EXTRUDE from the database format to the internal format.
- *  Apply modeling transformations as well.
+ * Import an EXTRUDE from the database format to the internal format.
+ * Apply modeling transformations as well.
  */
 int
 rt_extrude_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip, struct resource *resp)
@@ -2103,10 +2135,11 @@ rt_extrude_import4(struct rt_db_internal *ip, const struct bu_external *ep, regi
     return(0);			/* OK */
 }
 
+
 /**
- *			R T _ E X T R U D E _ E X P O R T
+ * R T _ E X T R U D E _ E X P O R T
  *
- *  The name is added by the caller, in the usual place.
+ * The name is added by the caller, in the usual place.
  */
 int
 rt_extrude_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
@@ -2117,7 +2150,7 @@ rt_extrude_export4(struct bu_external *ep, const struct rt_db_internal *ip, doub
     unsigned char *ptr;
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_EXTRUDE)  return(-1);
+    if (ip->idb_type != ID_EXTRUDE) return(-1);
     extrude_ip = (struct rt_extrude_internal *)ip->idb_ptr;
     RT_EXTRUDE_CK_MAGIC(extrude_ip);
 
@@ -2149,9 +2182,9 @@ rt_extrude_export4(struct bu_external *ep, const struct rt_db_internal *ip, doub
 
 
 /**
- *			R T _ E X T R U D E _ E X P O R T 5
+ * R T _ E X T R U D E _ E X P O R T 5
  *
- *  The name is added by the caller, in the usual place.
+ * The name is added by the caller, in the usual place.
  */
 int
 rt_extrude_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
@@ -2162,7 +2195,7 @@ rt_extrude_export5(struct bu_external *ep, const struct rt_db_internal *ip, doub
     int rem;
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_EXTRUDE)  return(-1);
+    if (ip->idb_type != ID_EXTRUDE) return(-1);
 
     extrude_ip = (struct rt_extrude_internal *)ip->idb_ptr;
     RT_EXTRUDE_CK_MAGIC(extrude_ip);
@@ -2195,10 +2228,10 @@ rt_extrude_export5(struct bu_external *ep, const struct rt_db_internal *ip, doub
 
 
 /**
- *			R T _ E X T R U D E _ I M P O R T 5
+ * R T _ E X T R U D E _ I M P O R T 5
  *
- *  Import an EXTRUDE from the database format to the internal format.
- *  Apply modeling transformations as well.
+ * Import an EXTRUDE from the database format to the internal format.
+ * Apply modeling transformations as well.
  */
 int
 rt_extrude_import5(
@@ -2259,12 +2292,13 @@ rt_extrude_import5(
     return(0);			/* OK */
 }
 
-/*8
- *			R T _ E X T R U D E _ D E S C R I B E
+
+/**
+ * R T _ E X T R U D E _ D E S C R I B E
  *
- *  Make human-readable formatted presentation of this solid.
- *  First line describes type of solid.
- *  Additional lines are indented one tab, and give parameter values.
+ * Make human-readable formatted presentation of this solid.  First
+ * line describes type of solid.  Additional lines are indented one
+ * tab, and give parameter values.
  */
 int
 rt_extrude_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
@@ -2293,10 +2327,12 @@ rt_extrude_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ver
     return(0);
 }
 
+
 /**
- *			R T _ E X T R U D E _ I F R E E
+ * R T _ E X T R U D E _ I F R E E
  *
- *  Free the storage associated with the rt_db_internal version of this solid.
+ * Free the storage associated with the rt_db_internal version of this
+ * solid.
  */
 void
 rt_extrude_ifree(struct rt_db_internal *ip, struct resource *resp)
@@ -2320,12 +2356,13 @@ rt_extrude_ifree(struct rt_db_internal *ip, struct resource *resp)
 	tmp_ip.idb_meth = &rt_functab[ID_SKETCH];
 	tmp_ip.idb_meth->ft_ifree(&tmp_ip, resp);
     }
-    extrude_ip->magic = 0;			/* sanity */
+    extrude_ip->magic = 0;	/* sanity */
 
     bu_free(extrude_ip->sketch_name, "Extrude sketch_name");
     bu_free((char *)extrude_ip, "extrude ifree");
     ip->idb_ptr = GENPTR_NULL;	/* sanity */
 }
+
 
 int
 rt_extrude_xform(
@@ -2394,6 +2431,7 @@ rt_extrude_xform(
     return(0);
 }
 
+
 int
 rt_extrude_form(struct bu_vls *log, const struct rt_functab *ftp)
 {
@@ -2403,6 +2441,7 @@ rt_extrude_form(struct bu_vls *log, const struct rt_functab *ftp)
 
     return BRLCAD_OK;
 }
+
 
 int
 rt_extrude_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *attr)
@@ -2418,9 +2457,7 @@ rt_extrude_get(struct bu_vls *log, const struct rt_db_internal *intern, const ch
 	bu_vls_printf(log, " A {%.25g %.25g %.25g}", V3ARGS(extr->u_vec));
 	bu_vls_printf(log, " B {%.25g %.25g %.25g}", V3ARGS(extr->v_vec));
 	bu_vls_printf(log, " S %s", extr->sketch_name);
-	/*	bu_vls_printf(log, " K %d", extr->keypoint); */
-    }
-    else if (*attr == 'V')
+    } else if (*attr == 'V')
 	bu_vls_printf(log, "%.25g %.25g %.25g", V3ARGS(extr->V));
     else if (*attr == 'H')
 	bu_vls_printf(log, "%.25g %.25g %.25g", V3ARGS(extr->h));
@@ -2430,17 +2467,14 @@ rt_extrude_get(struct bu_vls *log, const struct rt_db_internal *intern, const ch
 	bu_vls_printf(log, "%.25g %.25g %.25g", V3ARGS(extr->v_vec));
     else if (*attr == 'S')
 	bu_vls_printf(log, "%s", extr->sketch_name);
-/*
-  else if (*attr == 'K')
-  bu_vls_printf(log, "%d", extr->keypoint);
-*/
     else {
-	bu_vls_strcat(log, "ERROR: unrecognized attribute, must be V, H, A, B, S, or K!");
+	bu_vls_strcat(log, "ERROR: unrecognized attribute, must be V, H, A, B, or S!");
 	return BRLCAD_ERROR;
     }
 
     return BRLCAD_OK;
 }
+
 
 int
 rt_extrude_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char **argv)
@@ -2506,6 +2540,7 @@ rt_extrude_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, c
     return BRLCAD_OK;
 }
 
+
 /**
  * R T _ E X T R U D E _ P A R A M S
  *
@@ -2515,6 +2550,7 @@ rt_extrude_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
 {
     return(0);			/* OK */
 }
+
 
 /** @} */
 

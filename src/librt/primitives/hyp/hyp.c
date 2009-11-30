@@ -17,46 +17,17 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup primitives  */
+/** @addtogroup primitives */
 /** @{ */
 /** @file hyp.c
  *
  * Intersect a ray with an elliptical hyperboloid of one sheet.
  *
- * Adding a new solid type:
- * Design disk record
- *
- * define rt_hyp_internal --- parameters for solid
- * define hyp_specific --- raytracing form, possibly w/precomuted terms
- * define rt_hyp_parse --- struct bu_structparse for "db get", "db adjust", ...
- *
- * code import/export4/describe/print/ifree/plot/prep/shot/curve/uv/tess
- *
- * edit db.h add solidrec s_type define
- * edit rtgeom.h to add rt_hyp_internal
- * edit table.c:
- *   RT_DECLARE_INTERFACE()
- *   struct rt_functab entry
- *   rt_id_solid()
- * edit raytrace.h to make ID_HYP, increment ID_MAXIMUM
- * edit db_scan.c to add the new solid to db_scan()
- * edit Makefile.am to add g_hyp.c to compile
- *
- * Then:
- * go to src/libwdb and create mk_hyp() routine
- * go to src/conv and edit g2asc.c and asc2g.c to support the new solid
- * go to src/librt and edit tcl.c to add the new solid to
- *   rt_solid_type_lookup[]
- *   also add the interface table and to rt_id_solid() in table.c
- * go to src/mged and create the edit support
- *  
- * Hyperboloid of one sheet:
- *  
  * [ (x*x) / (r1*r1) ] + [ (y*y) / (r2*r2) ] - [ (z*z) * (c*c) / (r1*r1) ] = 1
  *  
- *   r1:	semi-major axis, along Au
- *   r2:	semi-minor axis, along Au x H
- *    c:	slope of asymptotic cone in the Au-H plane
+ * r1:	semi-major axis, along Au
+ * r2:	semi-minor axis, along Au x H
+ * c:	slope of asymptotic cone in the Au-H plane
  */
 /** @} */
 
@@ -95,6 +66,7 @@ struct hyp_specific {
     fastf_t hyp_bounds;	/* const used to check if a ray hits the top/bottom surfaces */
 };
 
+
 struct hyp_specific * 
 hyp_internal_to_specific(struct rt_hyp_internal *hyp_in) {
     struct hyp_specific *hyp;
@@ -129,6 +101,7 @@ hyp_internal_to_specific(struct rt_hyp_internal *hyp_in) {
     return hyp; 
 }
 
+
 const struct bu_structparse rt_hyp_parse[] = {
     { "%f", 3, "V",   bu_offsetof(struct rt_hyp_internal, hyp_Vi[X]),  BU_STRUCTPARSE_FUNC_NULL },
     { "%f", 3, "H",   bu_offsetof(struct rt_hyp_internal, hyp_Hi[X]),  BU_STRUCTPARSE_FUNC_NULL },
@@ -138,6 +111,7 @@ const struct bu_structparse rt_hyp_parse[] = {
     { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
 };
 
+
 /**
  * R T _ H Y P _ P R E P
  *
@@ -146,12 +120,12 @@ const struct bu_structparse rt_hyp_parse[] = {
  * various terms of the formula.
  *
  * Returns -
- *  0  HYP is OK
- *  !0 Error in description
+ * 0  HYP is OK
+ * !0 Error in description
  *
  * Implicit return -
- *   A struct hyp_specific is created, and it's address is stored in
- *   stp->st_specific for use by hyp_shot().
+ * A struct hyp_specific is created, and it's address is stored in
+ * stp->st_specific for use by hyp_shot().
  */
 int
 rt_hyp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
@@ -213,6 +187,7 @@ rt_hyp_print(const struct soltab *stp)
     fprintf(stderr, "h = %g\n", hyp->hyp_Hmag);
 }
 
+
 /* hit_surfno is set to one of these */
 #define HYP_NORM_BODY	(1)		/* compute normal */
 #define HYP_NORM_TOP	(2)		/* copy hyp_Hunit */
@@ -226,8 +201,8 @@ rt_hyp_print(const struct soltab *stp)
  * seg will be acquired and filled in.
  *
  * Returns -
- *   0 MISS
- *   >0 HIT
+ * 0 MISS
+ * >0 HIT
  */
 int
 rt_hyp_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
@@ -334,7 +309,8 @@ rt_hyp_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 	return(0);	/* MISS */
     }
 
-    if (hitp == &hits[2]) {	/* 2 hits */
+    if (hitp == &hits[2]) {
+	/* 2 hits */
 	if (hits[0].hit_dist < hits[1].hit_dist) {
 	    /* entry is [0], exit is [1] */
 	    register struct seg *segp;
@@ -355,7 +331,8 @@ rt_hyp_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 	    BU_LIST_INSERT(&(seghead->l), &(segp->l));
 	}
 	return(2);			/* HIT */
-    } else {	/* 4 hits:  0, 1 are sides, 2, 3 are top/bottom*/
+    } else {
+	/* 4 hits:  0, 1 are sides, 2, 3 are top/bottom*/
 	struct hit sorted[4];
 
 	if (hits[0].hit_dist > hits[1].hit_dist) {
@@ -395,6 +372,7 @@ rt_hyp_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 	return(4);
     }
 }
+
 
 #define RT_HYP_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
 
@@ -722,8 +700,8 @@ rt_hyp_plot(struct bu_list *vhead, struct rt_db_internal *incoming, const struct
  * R T _ H Y P _ T E S S
  *
  * Returns -
- *   -1 failure
- *    0 OK.  *r points to nmgregion that holds this tessellation.
+ * -1 failure
+ * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
 int
 rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
@@ -781,13 +759,13 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     /* make unit vectors in A, H, and HxA directions */
-    VMOVE(  Hu, xip->hyp_H);
+    VMOVE(Hu, xip->hyp_H);
     VUNITIZE(Hu);
-    VMOVE(  Au, xip->hyp_Au);
-    VCROSS( Bu, Hu, Au);
+    VMOVE(Au, xip->hyp_Au);
+    VCROSS(Bu, Hu, Au);
 
     /*
-     *  Establish tolerances
+     * Establish tolerances
      */
     if (ttol->rel <= 0.0 || ttol->rel >= 1.0)
 	dtol = 0.0;		/* none */
@@ -859,7 +837,7 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		    p1[Y] = fabs(m*r2*r2*c) / sqrt(m*m*r2*r2*c*c - r1*r1);
 		    p1[Z] = (r3/r2) * sqrt(p1[Y]*p1[Y] - r2*r2);
 		}
-		if (p0[Z] + p2[Z] < 0)  p1[Z] = -p1[Z];
+		if (p0[Z] + p2[Z] < 0) p1[Z] = -p1[Z];
 
 		VSUB2(v01, p1, p0);
 		VSUB2(v02, p2, p0);
@@ -942,11 +920,6 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    outfaceuses = (struct faceuse **)
 		bu_malloc((face+1) * sizeof(struct faceuse *), "hyp: *outfaceuses[]");
 	    theta_prev = theta_new;
-/*	} else if (theta_new < theta_prev) {
-	nseg *= 2;
-	pts_dbl[i] = 1;
-	theta_prev = theta_new;
-*/	
 	} else {
 	    pts_dbl[i] = 0;
 	}
@@ -1245,10 +1218,9 @@ rt_hyp_import5(struct rt_db_internal *ip, const struct bu_external *ep, const ma
     hyp_ip = (struct rt_hyp_internal *)ip->idb_ptr;
     hyp_ip->hyp_magic = RT_HYP_INTERNAL_MAGIC;
 
-    /* Convert the data in ep->ext_buf into internal format.
-     * Note the conversion from network data
-     * (Big Endian ints, IEEE double floating point) to host local data
-     * representations.
+    /* Convert the data in ep->ext_buf into internal format.  Note the
+     * conversion from network data (Big Endian ints, IEEE double
+     * floating point) to host local data representations.
      */
     ntohd((unsigned char *)&vec, (const unsigned char *)ep->ext_buf, ELEMENTS_PER_VECT*4);
 
@@ -1281,7 +1253,7 @@ rt_hyp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     fastf_t vec[ELEMENTS_PER_VECT * 4];
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_HYP)  return(-1);
+    if (ip->idb_type != ID_HYP) return(-1);
     hyp_ip = (struct rt_hyp_internal *)ip->idb_ptr;
     RT_HYP_CK_MAGIC(hyp_ip);
 
@@ -1387,6 +1359,7 @@ rt_hyp_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
 {
     return(0);			/* OK */
 }
+
 
 /*
  * Local Variables:

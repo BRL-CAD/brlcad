@@ -70,6 +70,8 @@ rt_ars_free(register struct soltab *stp)
 {
     bu_bomb("rt_ars_free s/b rt_bot_free\n");
 }
+
+
 int
 rt_ars_class(const struct soltab *stp,
 	     const vect_t min,
@@ -1373,6 +1375,7 @@ rt_ars_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
 {
     return(0);			/* OK */
 }
+
 
 /** @} */
 /*

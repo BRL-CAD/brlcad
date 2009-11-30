@@ -21,8 +21,8 @@
 /** @{ */
 /** @file nmg_tri_mc.c
  *
- *  Triangulate the faces of a polygonal NMG using the marching cubes
- *  algorithm.
+ * Triangulate the faces of a polygonal NMG using the marching cubes
+ * algorithm.
  *
  */
 /** @} */
@@ -75,6 +75,7 @@ nmg_triangulate_model_mc(struct model *m, const struct bn_tol *tol)
     if (rt_g.NMG_debug & DEBUG_TRI)
 	bu_log("Triangulation completed\n");
 }
+
 
 /*
  * Local Variables:

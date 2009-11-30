@@ -738,7 +738,10 @@ typedef enum {
     BREP_INTERSECT_OOB = -1,
     BREP_INTERSECT_TRIMMED = 0,
     BREP_INTERSECT_FOUND = 1
-} brep_intersect_reason_t;
+}
+
+
+brep_intersect_reason_t;
 
 
 HIDDEN const char*
@@ -1476,6 +1479,8 @@ opposite(const BBNode* sbv, pt2d_t uv)
 	    uv[0] = sbv->m_u.Max();
     }
 }
+
+
 #endif
 
 

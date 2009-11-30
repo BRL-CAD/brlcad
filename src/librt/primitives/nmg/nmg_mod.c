@@ -58,8 +58,7 @@ nmg_merge_regions(struct nmgregion *r1, struct nmgregion *r2, const struct bn_to
 	bu_bomb("nmg_merge_regions: Tried to merge regions from different models!!");
 
     /* move all of r2's faces into r1 */
-    while (BU_LIST_NON_EMPTY(&r2->s_hd))
-    {
+    while (BU_LIST_NON_EMPTY(&r2->s_hd)) {
 	struct shell *s;
 
 	s = BU_LIST_FIRST(shell, &r2->s_hd);
@@ -122,10 +121,10 @@ nmg_shell_coplanar_face_merge(struct shell *s, const struct bn_tol *tol, const i
     for (BU_LIST_FOR(fu1, faceuse, &s->fu_hd)) {
 	plane_t n1;
 
-	if (BU_LIST_NEXT_IS_HEAD(fu1, &s->fu_hd))  break;
+	if (BU_LIST_NEXT_IS_HEAD(fu1, &s->fu_hd)) break;
 	f1 = fu1->f_p;
 	NMG_CK_FACE(f1);
-	if (NMG_INDEX_TEST(flags1, f1))  continue;
+	if (NMG_INDEX_TEST(flags1, f1)) continue;
 	NMG_INDEX_SET(flags1, f1);
 
 	fg1 = f1->g.plane_p;
@@ -144,7 +143,7 @@ nmg_shell_coplanar_face_merge(struct shell *s, const struct bn_tol *tol, const i
 
 	    f2 = fu2->f_p;
 	    NMG_CK_FACE(f2);
-	    if (NMG_INDEX_TEST(flags2, f2))  continue;
+	    if (NMG_INDEX_TEST(flags2, f2)) continue;
 	    NMG_INDEX_SET(flags2, f2);
 
 	    fg2 = f2->g.plane_p;
@@ -351,20 +350,18 @@ nmg_rm_redundancies(struct shell *s, const struct bn_tol *tol)
     }
 
     /* There really shouldn't be a lone vertex by now */
-    if (s->vu_p)  bu_log("nmg_rm_redundancies() lone vertex?\n");
+    if (s->vu_p) bu_log("nmg_rm_redundancies() lone vertex?\n");
 
     /* get rid of matching OT_SAME/OT_OPPOSITE loops in same faceuse */
     fu = BU_LIST_FIRST(faceuse, &s->fu_hd);
-    while (BU_LIST_NOT_HEAD(&fu->l, &s->fu_hd))
-    {
+    while (BU_LIST_NOT_HEAD(&fu->l, &s->fu_hd)) {
 	struct faceuse *next_fu;
 	int lu1_count;
 	int lu_count;
 
 	NMG_CK_FACEUSE(fu);
 
-	if (fu->orientation != OT_SAME)
-	{
+	if (fu->orientation != OT_SAME) {
 	    fu = BU_LIST_NEXT(faceuse, &fu->l);
 	    continue;
 	}
@@ -374,8 +371,7 @@ nmg_rm_redundancies(struct shell *s, const struct bn_tol *tol)
 	    next_fu = BU_LIST_NEXT(faceuse, &next_fu->l);
 
 	lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
-	while (BU_LIST_NOT_HEAD(&lu->l, &fu->lu_hd))
-	{
+	while (BU_LIST_NOT_HEAD(&lu->l, &fu->lu_hd)) {
 	    struct loopuse *next_lu;
 	    struct loopuse *lu1;
 	    struct edgeuse *eu;
@@ -384,8 +380,7 @@ nmg_rm_redundancies(struct shell *s, const struct bn_tol *tol)
 
 	    next_lu = BU_LIST_NEXT(loopuse, &lu->l);
 
-	    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
-	    {
+	    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC) {
 		lu = next_lu;
 		continue;
 	    }
@@ -397,28 +392,24 @@ nmg_rm_redundancies(struct shell *s, const struct bn_tol *tol)
 
 	    /* look for anther loopuse with opposite orientation */
 	    lu1 = BU_LIST_FIRST(loopuse, &fu->lu_hd);
-	    while (BU_LIST_NOT_HEAD(&lu1->l, &fu->lu_hd))
-	    {
+	    while (BU_LIST_NOT_HEAD(&lu1->l, &fu->lu_hd)) {
 		struct loopuse *next_lu1;
 
 		NMG_CK_LOOPUSE(lu1);
 
 		next_lu1 = BU_LIST_PNEXT(loopuse, &lu1->l);
 
-		if (BU_LIST_FIRST_MAGIC(&lu1->down_hd) != NMG_EDGEUSE_MAGIC)
-		{
+		if (BU_LIST_FIRST_MAGIC(&lu1->down_hd) != NMG_EDGEUSE_MAGIC) {
 		    lu1 = next_lu1;
 		    continue;
 		}
 
-		if (lu1 == lu)
-		{
+		if (lu1 == lu) {
 		    lu1 = next_lu1;
 		    continue;
 		}
 
-		if (lu1->orientation == lu->orientation)
-		{
+		if (lu1->orientation == lu->orientation) {
 		    lu1 = next_lu1;
 		    continue;
 		}
@@ -428,14 +419,12 @@ nmg_rm_redundancies(struct shell *s, const struct bn_tol *tol)
 		for (BU_LIST_FOR(eu, edgeuse, &lu1->down_hd))
 		    lu1_count++;
 
-		if (lu_count != lu1_count)
-		{
+		if (lu_count != lu1_count) {
 		    lu1 = next_lu1;
 		    continue;
 		}
 
-		if (nmg_classify_lu_lu(lu, lu1, tol) != NMG_CLASS_AonBshared)
-		{
+		if (nmg_classify_lu_lu(lu, lu1, tol) != NMG_CLASS_AonBshared) {
 		    lu1 = next_lu1;
 		    continue;
 		}
@@ -451,17 +440,13 @@ nmg_rm_redundancies(struct shell *s, const struct bn_tol *tol)
 		    next_lu = BU_LIST_NEXT(loopuse, &next_lu->l);
 
 		(void)nmg_klu(lu);
-		if (nmg_klu(lu1))
-		{
+		if (nmg_klu(lu1)) {
 		    /* faceuse is empty, kill it */
-		    if (nmg_kfu(fu))
-		    {
+		    if (nmg_kfu(fu)) {
 			/* shell is empty, set "nexts" to get out */
 			next_fu = (struct faceuse *)(&s->fu_hd);
 			next_lu = (struct loopuse *)NULL;
-		    }
-		    else
-		    {
+		    } else {
 			/* shell not empty, but fu is */
 			next_lu = (struct loopuse *)NULL;
 		    }
@@ -478,23 +463,20 @@ nmg_rm_redundancies(struct shell *s, const struct bn_tol *tol)
     }
 
     /* get rid of redundant loops in same fu (OT_SAME within an OT_SAME), etc. */
-    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd))
-    {
+    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
 	NMG_CK_FACEUSE(fu);
 
 	if (fu->orientation != OT_SAME)
 	    continue;
 
-	for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd))
-	{
+	for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 	    struct loopuse *lu1;
 
 	    NMG_CK_LOOPUSE(lu);
 
 	    /* look for another loop with same orientation */
 	    lu1 = BU_LIST_FIRST(loopuse, &fu->lu_hd);
-	    while (BU_LIST_NOT_HEAD(&lu1->l, &fu->lu_hd))
-	    {
+	    while (BU_LIST_NOT_HEAD(&lu1->l, &fu->lu_hd)) {
 		struct loopuse *next_lu;
 		struct loopuse *lu2;
 		int found;
@@ -503,20 +485,17 @@ nmg_rm_redundancies(struct shell *s, const struct bn_tol *tol)
 
 		next_lu = BU_LIST_PNEXT(loopuse, &lu1->l);
 
-		if (lu1 == lu)
-		{
+		if (lu1 == lu) {
 		    lu1 = next_lu;
 		    continue;
 		}
 
-		if (lu1->orientation != lu->orientation)
-		{
+		if (lu1->orientation != lu->orientation) {
 		    lu1 = next_lu;
 		    continue;
 		}
 
-		if (nmg_classify_lu_lu(lu1, lu, tol) != NMG_CLASS_AinB)
-		{
+		if (nmg_classify_lu_lu(lu1, lu, tol) != NMG_CLASS_AinB) {
 		    lu1 = next_lu;
 		    continue;
 		}
@@ -526,8 +505,7 @@ nmg_rm_redundancies(struct shell *s, const struct bn_tol *tol)
 		 * between them.
 		 */
 		found = 0;
-		for (BU_LIST_FOR(lu2, loopuse, &fu->lu_hd))
-		{
+		for (BU_LIST_FOR(lu2, loopuse, &fu->lu_hd)) {
 		    int class1, class2;
 
 		    NMG_CK_LOOPUSE(lu2);
@@ -542,14 +520,12 @@ nmg_rm_redundancies(struct shell *s, const struct bn_tol *tol)
 		    class2 = nmg_classify_lu_lu(lu1, lu2, tol);
 
 		    if (class1 == NMG_CLASS_AinB &&
-			class2 == NMG_CLASS_AinB)
-		    {
+			class2 == NMG_CLASS_AinB) {
 			found = 1;
 			break;
 		    }
 		}
-		if (!found)
-		{
+		if (!found) {
 		    /* lu1 is a redundant loop */
 		    (void) nmg_klu(lu1);
 		}
@@ -561,36 +537,31 @@ nmg_rm_redundancies(struct shell *s, const struct bn_tol *tol)
     /* get rid of redundant loops in same fu where there are two
      * identical loops, but with opposite orientation
      */
-    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd))
-    {
+    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
 	if (fu->orientation != OT_SAME)
 	    continue;
 
-	for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd))
-	{
+	for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 	    struct loopuse *lu1;
 
 	    if (lu->orientation != OT_SAME)
 		continue;
 
 	    lu1 = BU_LIST_FIRST(loopuse, &fu->lu_hd);
-	    while (BU_LIST_NOT_HEAD(&lu1->l, &fu->lu_hd))
-	    {
+	    while (BU_LIST_NOT_HEAD(&lu1->l, &fu->lu_hd)) {
 		int class;
 		struct loopuse *next_lu;
 
 		next_lu = BU_LIST_PNEXT(loopuse, &lu1->l);
 
-		if (lu1 == lu || lu1->orientation != OT_OPPOSITE)
-		{
+		if (lu1 == lu || lu1->orientation != OT_OPPOSITE) {
 		    lu1 = next_lu;
 		    continue;
 		}
 
 		class = nmg_classify_lu_lu(lu, lu1, tol);
 
-		if (class == NMG_CLASS_AonBshared)
-		{
+		if (class == NMG_CLASS_AonBshared) {
 		    nmg_klu(lu1); /* lu1 is redudndant */
 		}
 
@@ -724,7 +695,7 @@ nmg_s_split_touchingloops(struct shell *s, const struct bn_tol *tol)
     /* Second, reorient any split loop fragments */
     for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
 	for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
-	    if (lu->orientation != OT_UNSPEC)  continue;
+	    if (lu->orientation != OT_UNSPEC) continue;
 	    nmg_lu_reorient(lu);
 	}
     }
@@ -766,7 +737,7 @@ nmg_s_join_touchingloops(struct shell *s, const struct bn_tol *tol)
     /* Second, reorient any disoriented loop fragments */
     for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
 	for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
-	    if (lu->orientation != OT_UNSPEC)  continue;
+	    if (lu->orientation != OT_UNSPEC) continue;
 	    nmg_lu_reorient(lu);
 	}
     }
@@ -962,7 +933,7 @@ nmg_invert_shell(struct shell *s)
     for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
 	NMG_CK_FACEUSE(fu);
 	/* By tagging on faces, marks fu and fumate together */
-	if (NMG_INDEX_TEST(tags, fu->f_p))  continue;
+	if (NMG_INDEX_TEST(tags, fu->f_p)) continue;
 	NMG_INDEX_SET(tags, fu->f_p);
 	/* Process fu and fumate together */
 	nmg_reverse_face(fu);
@@ -1123,7 +1094,7 @@ nmg_cmface(struct shell *s, struct vertex ***verts, int n)
     if (n > 1) {
 	if ((eur = nmg_findeu(*verts[0], *verts[1], s, euold, 1))) {
 	    nmg_je(eur, euold);
-	} else  {
+	} else {
 	    if (rt_g.NMG_debug & DEBUG_CMFACE)
 		bu_log("nmg_cmface() didn't find edge from verts[%d]%8x to verts[%d]%8x\n",
 		       0, *verts[0], 1, *verts[1]);
@@ -1380,8 +1351,7 @@ nmg_fu_planeeqn(struct faceuse *fu, const struct bn_tol *tol)
     lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
     NMG_CK_LOOPUSE(lu);
 
-    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
-    {
+    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC) {
 	bu_log("nmg_fu_planeeqn(): First loopuse does not contain edges\n");
 	return(-1);
     }
@@ -1396,8 +1366,7 @@ nmg_fu_planeeqn(struct faceuse *fu, const struct bn_tol *tol)
     do {
 	eu_next = BU_LIST_PNEXT_CIRC(edgeuse, eu_next);
 	NMG_CK_EDGEUSE(eu_next);
-	if (eu_next == eu)
-	{
+	if (eu_next == eu) {
 	    bu_log("nmg_fu_planeeqn(): First loopuse contains only one edgeuse\n");
 	    return -1;
 	}
@@ -1413,8 +1382,7 @@ nmg_fu_planeeqn(struct faceuse *fu, const struct bn_tol *tol)
     do {
 	eu_final = BU_LIST_PNEXT_CIRC(edgeuse, eu_final);
 	NMG_CK_EDGEUSE(eu_final);
-	if (eu_final == eu)
-	{
+	if (eu_final == eu) {
 	    bu_log("nmg_fu_planeeqn(): Cannot find three distinct vertices\n");
 	    return -1;
 	}
@@ -1648,7 +1616,6 @@ nmg_reverse_face(register struct faceuse *fu)
 }
 
 
-#if 0
 /**
  * XXX Called in nmg_misc.c / nmg_reverse_face_and_radials()
  * N M G _ F A C E _ F I X _ R A D I A L _ P A R I T Y
@@ -1689,9 +1656,7 @@ nmg_reverse_face(register struct faceuse *fu)
  * count of number of edges fixed.
  */
 int
-nmg_face_fix_radial_parity(fu, tol)
-    struct faceuse *fu;
-    const struct bn_tol *tol;
+nmg_face_fix_radial_parity(struct faceuse *fu, const struct bn_tol *tol)
 {
     struct loopuse *lu;
     struct edgeuse *eu;
@@ -1749,12 +1714,12 @@ nmg_face_fix_radial_parity(fu, tol)
 		 sbefore = sbefore->eumate_p->radial_p
 		) {
 		struct faceuse *bfu;
-		if (nmg_find_s_of_eu(sbefore) != s)  continue;
+		if (nmg_find_s_of_eu(sbefore) != s) continue;
 
 		bfu = nmg_find_fu_of_eu(sbefore);
 		/* If edgeuse isn't part of a faceuse, skip */
-		if (!bfu)  continue;
-		if (bfu->f_p == fu->f_p)  continue;
+		if (!bfu) continue;
+		if (bfu->f_p == fu->f_p) continue;
 		/* Found a candidate */
 		break;
 	    }
@@ -1764,7 +1729,7 @@ nmg_face_fix_radial_parity(fu, tol)
 		continue;
 
 	    /*
-	     *  'eu' is in an OT_SAME faceuse.
+	     * 'eu' is in an OT_SAME faceuse.
 	     * If the first faceuse in the 'before' direction
 	     * from this shell is OT_SAME, no fix is required.
 	     */
@@ -1794,7 +1759,6 @@ nmg_face_fix_radial_parity(fu, tol)
 
     return count;
 }
-#endif
 
 
 /**
@@ -1995,28 +1959,27 @@ nmg_dup_face(struct faceuse *fu, struct shell *s)
 	    NMG_GET_FU_PLANE(pl, fu);
 	    nmg_face_g(new_fu, pl);
 	    break;
-	case NMG_FACE_G_SNURB_MAGIC:
-	    {
-		struct face_g_snurb *old = fu->f_p->g.snurb_p;
-		struct face_g_snurb *new;
-		/* Create a new, duplicate snurb */
-		nmg_face_g_snurb(new_fu,
-				 old->order[0], old->order[1],
-				 old->u.k_size, old->v.k_size,
-				 NULL, NULL,
-				 old->s_size[0], old->s_size[1],
-				 old->pt_type,
-				 NULL);
-		new = new_fu->f_p->g.snurb_p;
-		/* Copy knots */
-		memcpy(new->u.knots, old->u.knots, old->u.k_size*sizeof(fastf_t));
-		memcpy(new->v.knots, old->v.knots, old->v.k_size*sizeof(fastf_t));
-		/* Copy mesh */
-		memcpy(new->ctl_points, old->ctl_points,
-		       old->s_size[0] * old->s_size[1] *
-		       RT_NURB_EXTRACT_COORDS(old->pt_type) *
-		       sizeof(fastf_t));
-	    }
+	case NMG_FACE_G_SNURB_MAGIC: {
+	    struct face_g_snurb *old = fu->f_p->g.snurb_p;
+	    struct face_g_snurb *new;
+	    /* Create a new, duplicate snurb */
+	    nmg_face_g_snurb(new_fu,
+			     old->order[0], old->order[1],
+			     old->u.k_size, old->v.k_size,
+			     NULL, NULL,
+			     old->s_size[0], old->s_size[1],
+			     old->pt_type,
+			     NULL);
+	    new = new_fu->f_p->g.snurb_p;
+	    /* Copy knots */
+	    memcpy(new->u.knots, old->u.knots, old->u.k_size*sizeof(fastf_t));
+	    memcpy(new->v.knots, old->v.knots, old->v.k_size*sizeof(fastf_t));
+	    /* Copy mesh */
+	    memcpy(new->ctl_points, old->ctl_points,
+		   old->s_size[0] * old->s_size[1] *
+		   RT_NURB_EXTRACT_COORDS(old->pt_type) *
+		   sizeof(fastf_t));
+	}
     }
     new_fu->orientation = fu->orientation;
     new_fu->fumate_p->orientation = fu->fumate_p->orientation;
@@ -2130,7 +2093,7 @@ nmg_jl(struct loopuse *lu, struct edgeuse *eu)
      * Kill the one remaining use of the (formerly) "shared" edge in
      * lu and voila: one contiguous loop.
      */
-    if (nmg_keu(eu))  bu_bomb("nmg_jl() loop vanished?\n");
+    if (nmg_keu(eu)) bu_bomb("nmg_jl() loop vanished?\n");
 
     nmg_lu_reorient(lu);
 }
@@ -2208,7 +2171,7 @@ nmg_join_2loops(struct vertexuse *vu1, struct vertexuse *vu2)
     }
     /* second_new_eu is eu that departs from shared vertex */
     vu2 = second_new_eu->vu_p;	/* replacement for original vu2 */
-    if (vu1->v_p != vu2->v_p)  bu_bomb("nmg_join_2loops: jaunt failed\n");
+    if (vu1->v_p != vu2->v_p) bu_bomb("nmg_join_2loops: jaunt failed\n");
 
     /*
      * Gobble edges off of loop2 (starting with eu2), and insert them
@@ -2265,9 +2228,9 @@ nmg_join_singvu_loop(struct vertexuse *vu1, struct vertexuse *vu2)
     }
 
     if (*vu2->up.magic_p != NMG_LOOPUSE_MAGIC ||
-	*vu1->up.magic_p != NMG_EDGEUSE_MAGIC)  bu_bomb("nmg_join_singvu_loop bad args\n");
+	*vu1->up.magic_p != NMG_EDGEUSE_MAGIC) bu_bomb("nmg_join_singvu_loop bad args\n");
 
-    if (vu1->v_p == vu2->v_p)  bu_bomb("nmg_join_singvu_loop same vertex\n");
+    if (vu1->v_p == vu2->v_p) bu_bomb("nmg_join_singvu_loop same vertex\n");
 
     /* Take jaunt from vu1 to vu2 and back */
     eu1 = vu1->up.eu_p;
@@ -2315,9 +2278,9 @@ nmg_join_2singvu_loops(struct vertexuse *vu1, struct vertexuse *vu2)
     NMG_CK_VERTEXUSE(vu2);
 
     if (*vu2->up.magic_p != NMG_LOOPUSE_MAGIC ||
-	*vu1->up.magic_p != NMG_LOOPUSE_MAGIC)  bu_bomb("nmg_join_2singvu_loops bad args\n");
+	*vu1->up.magic_p != NMG_LOOPUSE_MAGIC) bu_bomb("nmg_join_2singvu_loops bad args\n");
 
-    if (vu1->v_p == vu2->v_p)  bu_bomb("nmg_join_2singvu_loops same vertex\n");
+    if (vu1->v_p == vu2->v_p) bu_bomb("nmg_join_2singvu_loops same vertex\n");
 
     /* Take jaunt from vu1 to vu2 and back */
     /* Make a 0 length edge on vu1 */
@@ -2622,9 +2585,9 @@ nmg_split_lu_at_vu(struct loopuse *lu, struct vertexuse *split_vu)
 	/* When split_v is encountered, stop */
 	vu = eu->vu_p;
 	NMG_CK_VERTEXUSE(vu);
-	if (vu->v_p == split_v)  break;
+	if (vu->v_p == split_v) break;
     }
-    if (iteration >= 10000)  bu_bomb("nmg_split_lu_at_vu:  infinite loop\n");
+    if (iteration >= 10000) bu_bomb("nmg_split_lu_at_vu:  infinite loop\n");
  out:
     if (rt_g.NMG_debug & DEBUG_BASIC) {
 	bu_log("nmg_split_lu_at_vu(lu=x%x, split_vu=x%x) newlu=x%x\n",
@@ -2673,14 +2636,14 @@ nmg_find_repeated_v_in_lu(struct vertexuse *vu)
 	struct edgeuse *teu;
 	struct loopuse *tlu;
 
-	if (tvu == vu)  continue;
-	if (*tvu->up.magic_p != NMG_EDGEUSE_MAGIC)  continue;
+	if (tvu == vu) continue;
+	if (*tvu->up.magic_p != NMG_EDGEUSE_MAGIC) continue;
 	teu = tvu->up.eu_p;
 	NMG_CK_EDGEUSE(teu);
-	if (*teu->up.magic_p != NMG_LOOPUSE_MAGIC)  continue;
+	if (*teu->up.magic_p != NMG_LOOPUSE_MAGIC) continue;
 	tlu = teu->up.lu_p;
 	NMG_CK_LOOPUSE(tlu);
-	if (tlu != lu)  continue;
+	if (tlu != lu) continue;
 	/*
 	 * Repeated vertex exists.  Return (one) other use of it.
 	 */
@@ -2730,18 +2693,16 @@ nmg_split_touchingloops(struct loopuse *lu, const struct bn_tol *tol)
 	NMG_CK_VERTEXUSE(vu);
 
 #if 1
-	if (!nmg_find_repeated_v_in_lu(vu))  continue;
+	if (!nmg_find_repeated_v_in_lu(vu)) continue;
 
 	/* avoid splitting a crack if possible */
-	for (BU_LIST_FOR(other_vu, vertexuse, &vu->v_p->vu_hd))
-	{
+	for (BU_LIST_FOR(other_vu, vertexuse, &vu->v_p->vu_hd)) {
 	    if (nmg_find_lu_of_vu(other_vu) != lu)
 		continue;
 	    if (*other_vu->up.magic_p != NMG_EDGEUSE_MAGIC)
 		continue;
 	    other_eu = other_vu->up.eu_p;
-	    if (nmg_eu_is_part_of_crack(other_eu))
-	    {
+	    if (nmg_eu_is_part_of_crack(other_eu)) {
 		vu_save = other_vu;
 		vu_is_part_of_crack = 1;
 		break;
@@ -2769,8 +2730,7 @@ nmg_split_touchingloops(struct loopuse *lu, const struct bn_tol *tol)
 	goto top;
     }
 
-    if (vu_save)
-    {
+    if (vu_save) {
 	/* split loop at crack */
 	newlu = nmg_split_lu_at_vu(lu, vu_save);
 	NMG_CK_LOOPUSE(newlu);
@@ -2801,14 +2761,14 @@ nmg_split_touchingloops(struct loopuse *lu, const struct bn_tol *tol)
 	struct edgeuse *teu;
 	struct loopuse *tlu;
 
-	if (tvu == vu)  continue;
-	if (*tvu->up.magic_p != NMG_EDGEUSE_MAGIC)  continue;
+	if (tvu == vu) continue;
+	if (*tvu->up.magic_p != NMG_EDGEUSE_MAGIC) continue;
 	teu = tvu->up.eu_p;
 	NMG_CK_EDGEUSE(teu);
-	if (*teu->up.magic_p != NMG_LOOPUSE_MAGIC)  continue;
+	if (*teu->up.magic_p != NMG_LOOPUSE_MAGIC) continue;
 	tlu = teu->up.lu_p;
 	NMG_CK_LOOPUSE(tlu);
-	if (tlu != lu)  continue;
+	if (tlu != lu) continue;
 	/*
 	 * Repeated vertex exists, Split loop into two loops
 	 */
@@ -2878,19 +2838,19 @@ nmg_join_touchingloops(struct loopuse *lu)
 	    struct edgeuse *teu;
 	    struct loopuse *tlu;
 
-	    if (tvu == vu)  continue;
-	    if (*tvu->up.magic_p != NMG_EDGEUSE_MAGIC)  continue;
+	    if (tvu == vu) continue;
+	    if (*tvu->up.magic_p != NMG_EDGEUSE_MAGIC) continue;
 	    teu = tvu->up.eu_p;
 	    NMG_CK_EDGEUSE(teu);
-	    if (*teu->up.magic_p != NMG_LOOPUSE_MAGIC)  continue;
+	    if (*teu->up.magic_p != NMG_LOOPUSE_MAGIC) continue;
 	    tlu = teu->up.lu_p;
 	    NMG_CK_LOOPUSE(tlu);
 	    if (tlu == lu) {
 		/* We touch ourselves at another vu? */
 		continue;
 	    }
-	    if (*tlu->up.magic_p != NMG_FACEUSE_MAGIC)  continue;
-	    if (tlu->up.fu_p != fu)  continue;	/* wrong faceuse */
+	    if (*tlu->up.magic_p != NMG_FACEUSE_MAGIC) continue;
+	    if (tlu->up.fu_p != fu) continue;	/* wrong faceuse */
 	    /*
 	     * Loop 'lu' touches loop 'tlu' at this vertex,
 	     * join them.
@@ -2945,26 +2905,24 @@ nmg_get_touching_jaunts(const struct loopuse *lu, struct bu_ptbl *tbl, int *need
     if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
 	return(0);
 
-    for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd))
-    {
+    for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 	struct edgeuse *eu2, *eu3;
 
 	eu2 = BU_LIST_PNEXT_CIRC(edgeuse, &eu->l);
 	eu3 = BU_LIST_PNEXT_CIRC(edgeuse, &eu2->l);
 
 	/* If it's a 2 vertex crack, stop here */
-	if (eu->vu_p == eu3->vu_p)  break;
+	if (eu->vu_p == eu3->vu_p) break;
 
 	/* If not jaunt, move on */
-	if (eu->vu_p->v_p != eu3->vu_p->v_p)  continue;
+	if (eu->vu_p->v_p != eu3->vu_p->v_p) continue;
 
 	/* It's a jaunt, see if tip touches same loop */
 	if (nmg_find_repeated_v_in_lu(eu2->vu_p) == (struct vertexuse *)NULL)
 	    continue;
 
 	/* This is a touching jaunt, add it to the list */
-	if (*need_init)
-	{
+	if (*need_init) {
 	    bu_ptbl_init(tbl, 64, " tbl");
 	    *need_init = 0;
 	}
@@ -3034,10 +2992,8 @@ nmg_check_proposed_loop(struct edgeuse *start_eu, struct edgeuse **next_start_eu
      */
     last_eu = NULL;
     loop_eu = start_eu;
-    while (!done)
-    {
-	for (j=0; j<BU_PTBL_END(jaunt_tbl); j++)
-	{
+    while (!done) {
+	for (j=0; j<BU_PTBL_END(jaunt_tbl); j++) {
 	    struct edgeuse *jaunt_eu;
 
 	    /* Don't worru about this jaunt */
@@ -3076,10 +3032,9 @@ nmg_check_proposed_loop(struct edgeuse *start_eu, struct edgeuse **next_start_eu
     /* check all jaunts to see if they are still touching jaunts in
      * the proposed loop
      */
-    for (j=0; j<BU_PTBL_END(jaunt_tbl); j++)
-    {
-	if (jaunt_status[j] == JS_JAUNT) /* proposed loop contains this jaunt */
-	{
+    for (j=0; j<BU_PTBL_END(jaunt_tbl); j++) {
+	if (jaunt_status[j] == JS_JAUNT) {
+	    /* proposed loop contains this jaunt */
 	    if (visit_count[j] > 1)	/* it's still a touching jaunt */
 		jaunt_status[j] = JS_TOUCHING_JAUNT;
 	}
@@ -3089,8 +3044,7 @@ nmg_check_proposed_loop(struct edgeuse *start_eu, struct edgeuse **next_start_eu
      * proposed loop will split the jaunt, so set its status to
      * JS_SPLIT.
      */
-    for (j=0; j<BU_PTBL_END(jaunt_tbl); j++)
-    {
+    for (j=0; j<BU_PTBL_END(jaunt_tbl); j++) {
 	struct edgeuse *jaunt_eu;
 	struct edgeuse *jaunt_eu2;
 
@@ -3103,6 +3057,7 @@ nmg_check_proposed_loop(struct edgeuse *start_eu, struct edgeuse **next_start_eu
 
     return;
 }
+
 
 void
 nmg_kill_accordions(struct loopuse *lu)
@@ -3120,13 +3075,11 @@ nmg_kill_accordions(struct loopuse *lu)
     /* first look for a jaunt */
     jaunt_eu1 = (struct edgeuse *)NULL;
     jaunt_eu3 = (struct edgeuse *)NULL;
-    for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd))
-    {
+    for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 	struct edgeuse *eu2;
 
 	eu2 = BU_LIST_PPREV_CIRC(edgeuse, &eu->l);
-	if ((eu2->vu_p->v_p == eu->eumate_p->vu_p->v_p) && (eu != eu2))
-	{
+	if ((eu2->vu_p->v_p == eu->eumate_p->vu_p->v_p) && (eu != eu2)) {
 	    struct edgeuse *eu3;
 
 	    /* found a jaunt */
@@ -3135,13 +3088,11 @@ nmg_kill_accordions(struct loopuse *lu)
 
 	    /* look for a third eu between the same vertices */
 	    jaunt_eu3 = (struct edgeuse *)NULL;
-	    for (BU_LIST_FOR(eu3, edgeuse, &lu->down_hd))
-	    {
+	    for (BU_LIST_FOR(eu3, edgeuse, &lu->down_hd)) {
 		if (eu3 == jaunt_eu1 || eu3 == jaunt_eu2)
 		    continue;
 
-		if (NMG_ARE_EUS_ADJACENT(eu3, jaunt_eu1))
-		{
+		if (NMG_ARE_EUS_ADJACENT(eu3, jaunt_eu1)) {
 		    jaunt_eu3 = eu3;
 		    break;
 		}
@@ -3154,15 +3105,12 @@ nmg_kill_accordions(struct loopuse *lu)
     if (!jaunt_eu3)
 	return;
 
-    if (jaunt_eu2 != jaunt_eu1->eumate_p)
-    {
+    if (jaunt_eu2 != jaunt_eu1->eumate_p) {
 	if ((rt_g.NMG_debug & DEBUG_BASIC) || (rt_g.NMG_debug & DEBUG_CUTLOOP))
 	    bu_log("Killing jaunt in accordion eu's x%x and x%x\n", jaunt_eu1, jaunt_eu2);
 	(void)nmg_keu(jaunt_eu1);
 	(void)nmg_keu(jaunt_eu2);
-    }
-    else
-    {
+    } else {
 	if ((rt_g.NMG_debug & DEBUG_BASIC) || (rt_g.NMG_debug & DEBUG_CUTLOOP))
 	    bu_log("Killing jaunt in accordion eu x%x\n", jaunt_eu1);
 	(void)nmg_keu(jaunt_eu1);
@@ -3217,27 +3165,22 @@ nmg_loop_split_at_touching_jaunt(struct loopuse *lu, const struct bn_tol *tol)
 
  top:
     jaunt_count = nmg_get_touching_jaunts(lu, &jaunt_tbl, &need_init);
-    if (rt_g.NMG_debug & DEBUG_CUTLOOP)
-    {
+    if (rt_g.NMG_debug & DEBUG_CUTLOOP) {
 	bu_log("nmg_loop_split_at_touching_jaunt: found %d touching jaunts in lu x%x\n", jaunt_count, lu);
-	if (jaunt_count)
-	{
-	    for (i=0; i<BU_PTBL_END(&jaunt_tbl); i++)
-	    {
+	if (jaunt_count) {
+	    for (i=0; i<BU_PTBL_END(&jaunt_tbl); i++) {
 		eu = (struct edgeuse *)BU_PTBL_GET(&jaunt_tbl, i);
 		bu_log("\tx%x\n", eu);
 	    }
 	}
     }
 
-    if (jaunt_count < 0)
-    {
+    if (jaunt_count < 0) {
 	bu_log("nmg_loop_split_at_touching_jaunt: nmg_get_touching_jaunts() returned %d for lu x%x\n", jaunt_count, lu);
 	bu_bomb("nmg_loop_split_at_touching_jaunt: bad jaunt count\n");
     }
 
-    if (jaunt_count == 0)
-    {
+    if (jaunt_count == 0) {
 	if (visit_count)
 	    bu_free((char *)visit_count, "nmg_loop_split_at_touching_jaunt: visit_count[]\n");
 	if (jaunt_status)
@@ -3252,8 +3195,7 @@ nmg_loop_split_at_touching_jaunt(struct loopuse *lu, const struct bn_tol *tol)
 	return(count);
     }
 
-    if (jaunt_count == 1)
-    {
+    if (jaunt_count == 1) {
 	/* just one jaunt, split it and return */
 	BU_CK_PTBL(&jaunt_tbl);
 
@@ -3311,8 +3253,7 @@ nmg_loop_split_at_touching_jaunt(struct loopuse *lu, const struct bn_tol *tol)
 				    "nmg_loop_split_at_touching_jaunt: jaunt_status[]");
 
     /* consider each jaunt as a possible location for splitting the loop */
-    for (jaunt_no=0; jaunt_no<BU_PTBL_END(&jaunt_tbl); jaunt_no++)
-    {
+    for (jaunt_no=0; jaunt_no<BU_PTBL_END(&jaunt_tbl); jaunt_no++) {
 	struct edgeuse *start_eu1;	/* EU that will start a new loop upon split */
 	struct edgeuse *start_eu2;	/* EU that will start the remaining loop */
 	int do_split=1;			/* flag: 1 -> this jaunt is a good choice for making the split */
@@ -3328,8 +3269,7 @@ nmg_loop_split_at_touching_jaunt(struct loopuse *lu, const struct bn_tol *tol)
 	/* get new loop starting edgeuse */
 	start_eu1 = BU_LIST_PNEXT_CIRC(edgeuse, &eu->l);
 
-	if (rt_g.NMG_debug & DEBUG_CUTLOOP)
-	{
+	if (rt_g.NMG_debug & DEBUG_CUTLOOP) {
 	    bu_log("\tConsider splitting lu x%x at vu=x%x\n", lu, start_eu1->vu_p);
 	    bu_log("\t\t(jaunt number %d\n", jaunt_no);
 	}
@@ -3342,16 +3282,13 @@ nmg_loop_split_at_touching_jaunt(struct loopuse *lu, const struct bn_tol *tol)
 	nmg_check_proposed_loop(start_eu2, &start_eu1, visit_count,
 				jaunt_status, &jaunt_tbl, jaunt_no, 1);
 
-	if (rt_g.NMG_debug & DEBUG_CUTLOOP)
-	{
-	    for (i=0; i<BU_PTBL_END(&jaunt_tbl); i++)
-	    {
+	if (rt_g.NMG_debug & DEBUG_CUTLOOP) {
+	    for (i=0; i<BU_PTBL_END(&jaunt_tbl); i++) {
 		struct edgeuse *tmp_eu;
 
 		tmp_eu = (struct edgeuse *)BU_PTBL_GET(&jaunt_tbl, i);
 		bu_log("\t\tpredicted status of jaunt at eu x%x is ", tmp_eu);
-		switch (jaunt_status[i])
-		{
+		switch (jaunt_status[i]) {
 		    case JS_UNKNOWN:
 			bu_log("unknown\n");
 			break;
@@ -3375,20 +3312,16 @@ nmg_loop_split_at_touching_jaunt(struct loopuse *lu, const struct bn_tol *tol)
 	 * one must be either split or still a touching jaunt.  Any
 	 * other status will create loops of two edgeuses!!!
 	 */
-	for (i=0; i<BU_PTBL_END(&jaunt_tbl); i++)
-	{
-	    if (jaunt_status[i] != JS_SPLIT && jaunt_status[i] != JS_TOUCHING_JAUNT)
-	    {
+	for (i=0; i<BU_PTBL_END(&jaunt_tbl); i++) {
+	    if (jaunt_status[i] != JS_SPLIT && jaunt_status[i] != JS_TOUCHING_JAUNT) {
 		do_split = 0;
 		break;
 	    }
 	}
 
 	/* if splitting lu at this touching jaunt is not desirable, check the next one */
-	if (!do_split)
-	{
-	    if (rt_g.NMG_debug & DEBUG_CUTLOOP)
-	    {
+	if (!do_split) {
+	    if (rt_g.NMG_debug & DEBUG_CUTLOOP) {
 		bu_log("\t\tCannot split lu x%x at proposed vu\n");
 	    }
 	    continue;
@@ -3399,8 +3332,7 @@ nmg_loop_split_at_touching_jaunt(struct loopuse *lu, const struct bn_tol *tol)
 
 	new_lu = nmg_split_lu_at_vu(lu, eu2->vu_p);
 
-	if (rt_g.NMG_debug & DEBUG_CUTLOOP)
-	{
+	if (rt_g.NMG_debug & DEBUG_CUTLOOP) {
 	    bu_log("\tnmg_loop_split_at_touching_jaunt: splitting lu x%x at vu x%x\n", lu, eu2->vu_p);
 	    bu_log("\t\tnew_lu is x%x\n", new_lu);
 	}
@@ -3511,8 +3443,8 @@ nmg_simplify_loop(struct loopuse *lu)
  * Removes "snake" or "disconnected crack" edges from loopuse.
  *
  * Returns -
- * 0	If all went well
- * 1	If the loopuse is now empty and needs to be killed.
+ * 0 If all went well
+ * 1 If the loopuse is now empty and needs to be killed.
  */
 int
 nmg_kill_snakes(struct loopuse *lu)
@@ -3560,7 +3492,7 @@ nmg_kill_snakes(struct loopuse *lu)
 	    if (! BU_LIST_NOT_HEAD(vu, &v->vu_hd)) {
 		/* this is the tail of a snake! */
 		(void)nmg_keu(eu_r);
-		if (nmg_keu(eu))  return 1; /* kill lu */
+		if (nmg_keu(eu)) return 1; /* kill lu */
 		if (BU_LIST_IS_EMPTY(&lu->down_hd))
 		    return 1;	/* loopuse is empty */
 		eu = BU_LIST_FIRST(edgeuse, &lu->down_hd);
@@ -3814,24 +3746,6 @@ nmg_dup_loop(struct loopuse *lu, unsigned long *parent, long int **trans_tbl)
 	if (trans_tbl)
 	    NMG_INDEX_ASSIGN(trans_tbl, eu, (long *)new_eu);
     }
-#if 0
-/* XXX untested */
-    if (trans_tbl)
-    {
-	/* All vertex structs are shared.  Make shared edges be shared */
-	for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-	    /* Use old_e as subscript, to get 1st new_eu (for new_e) */
-	    /* Use old_eu to get mapped new_eu */
-	    tbl_eu = NMG_INDEX_GETP(edgeuse, trans_tbl, eu->e_p);
-	    new_eu = NMG_INDEX_GETP(edgeuse, trans_tbl, eu);
-	    if (tbl_eu->e_p == new_eu->e_p)  continue;
-
-	    /* new_eu isn't sharing edge with tbl_eu, join them */
-	    /* XXX Is radial relationship preserved (enough)? */
-	    nmg_je(tbl_eu, new_eu);
-	}
-    }
-#endif
 
     /* Now that we've got all the right topology created and the
      * vertex geometries are in place we can create the edge geometries.
@@ -3841,7 +3755,7 @@ nmg_dup_loop(struct loopuse *lu, unsigned long *parent, long int **trans_tbl)
     for (BU_LIST_FOR(new_eu, edgeuse, &new_lu->down_hd)) {
 	NMG_CK_EDGEUSE(new_eu);
 	NMG_CK_EDGE(new_eu->e_p);
-	if (new_eu->g.magic_p)  continue;
+	if (new_eu->g.magic_p) continue;
 	nmg_edge_g(new_eu);
     }
 
@@ -3941,7 +3855,7 @@ nmg_lu_reorient(struct loopuse *lu)
     else
 	geom_orient = OT_SAME;
 
-    if (lu->orientation == geom_orient)  return;
+    if (lu->orientation == geom_orient) return;
     if (rt_g.NMG_debug & DEBUG_BASIC) {
 	bu_log("nmg_lu_reorient(x%x):  changing orientation: %s to %s\n",
 	       lu, nmg_orientation(lu->orientation),
@@ -3991,7 +3905,7 @@ nmg_lu_reorient(struct loopuse *lu)
  *
  * List on return -
  *
- *		     oldeu(cw)    eu1
+ *		     oldeu(cw) eu1
  *		    .------->   .----->
  *		   /           /
  *	   (edge) A ========= V ~~~~~~~ B (new edge)
@@ -4043,7 +3957,7 @@ nmg_eusplit(struct vertex *v, struct edgeuse *oldeu, int share_geom)
 	 *      eu1			       oldeu
 	 *  .----------->		  .------------->
 	 * /				 /
-	 *V ~~~~~~~~~~~~~ B (new edge)	A =============== B (edge)
+	 *V ~~~~~~~~~~~~~ B (new edge) A =============== B (edge)
 	 *		 /				 /
 	 *  <-----------.		  <-------------.
 	 *      eu2			      oldeumate
@@ -4067,7 +3981,7 @@ nmg_eusplit(struct vertex *v, struct edgeuse *oldeu, int share_geom)
 	BU_LIST_APPEND(&eu1->l, &eu2->l);
 
 	/*
-	 *	     oldeu(cw)    eu1
+	 *	     oldeu(cw) eu1
 	 *	    .------->   .----->
 	 *	   /           /
 	 * (edge) A ========= V ~~~~~~~ B (new edge)
@@ -4093,8 +4007,7 @@ nmg_eusplit(struct vertex *v, struct edgeuse *oldeu, int share_geom)
 	    eu1->l2.magic = NMG_EDGEUSE2_MAGIC;
 	}
 	goto out;
-    }
-    else if (*oldeu->up.magic_p != NMG_LOOPUSE_MAGIC) {
+    } else if (*oldeu->up.magic_p != NMG_LOOPUSE_MAGIC) {
 	bu_log("nmg_eusplit() in %s at %d invalid edgeuse parent\n",
 	       __FILE__, __LINE__);
 	bu_bomb("nmg_eusplit\n");
@@ -4135,7 +4048,7 @@ nmg_eusplit(struct vertex *v, struct edgeuse *oldeu, int share_geom)
      *	      eu1				       oldeu
      *	  .------------->			  .------------->
      *	 /					 /
-     *	V ~~~~~~~~~~~~~~~ V (new edge)		A =============== B (edge)
+     *	V ~~~~~~~~~~~~~~~ V (new edge) A =============== B (edge)
      *			 /					 /
      *	  <-------------.			  <-------------.
      *	      eu2				      oldeumate
@@ -4208,7 +4121,7 @@ nmg_eusplit(struct vertex *v, struct edgeuse *oldeu, int share_geom)
 	oldeumate->l2.magic = NMG_EDGEUSE2_MAGIC;
 	eu1->l2.magic = NMG_EDGEUSE2_MAGIC;
     }
-    if (oldeu->g.magic_p != oldeu->eumate_p->g.magic_p)  bu_bomb("nmg_eusplit() unshared geom\n");
+    if (oldeu->g.magic_p != oldeu->eumate_p->g.magic_p) bu_bomb("nmg_eusplit() unshared geom\n");
 
  out:
     if (rt_g.NMG_debug & DEBUG_BASIC) {
@@ -4368,8 +4281,7 @@ nmg_esplit(struct vertex *v, struct edgeuse *eu, int share_geom)
 		   v, eu, share_geom, neu2);
 	}
 	return neu2;
-    }
-    else if (neu1->vu_p->v_p == v && neu1->eumate_p->vu_p->v_p == vB) {
+    } else if (neu1->vu_p->v_p == v && neu1->eumate_p->vu_p->v_p == vB) {
 	if (rt_g.NMG_debug & DEBUG_BASIC) {
 	    bu_log("nmg_esplit(v=x%x, eu=x%x, share=%d) neu1=x%x\n",
 		   v, eu, share_geom, neu1);
@@ -4409,7 +4321,7 @@ nmg_ebreak(struct vertex *v, struct edgeuse *eu)
     NMG_CK_EDGEUSE(eu);
     NMG_CK_EDGEUSE(new_eu);
 
-    if (eu->e_p == new_eu->e_p)  bu_bomb("nmb_ebreak() same edges?\n");
+    if (eu->e_p == new_eu->e_p) bu_bomb("nmb_ebreak() same edges?\n");
 
     if (rt_g.NMG_debug & DEBUG_BASIC) {
 	bu_log("nmg_ebreak(v=x%x, eu=x%x) new_eu=x%x\n",
@@ -4467,7 +4379,7 @@ nmg_ebreaker(struct vertex *v, struct edgeuse *eu, const struct bn_tol *tol)
 	    oeu = nmg_find_e(new_eu->vu_p->v_p,
 			     new_eu->eumate_p->vu_p->v_p,
 			     (struct shell *)NULL, new_eu->e_p);
-	    if (!oeu)  break;
+	    if (!oeu) break;
 	    if (rt_g.NMG_debug & DEBUG_BASIC) {
 		bu_log("nmg_ebreaker() joining new_eu=x%x to oeu=x%x\n",
 		       new_eu, oeu);
@@ -4551,8 +4463,8 @@ nmg_e2break(struct edgeuse *eu1, struct edgeuse *eu2)
  * No new topology structures are created by this operation.
  *
  * Returns -
- * 0	OK, edge unbroken
- *	<0 failure, nothing changed
+ * 0 OK, edge unbroken
+ * <0 failure, nothing changed
  */
 int
 nmg_unbreak_edge(struct edgeuse *eu1_first)
@@ -4644,7 +4556,7 @@ nmg_unbreak_edge(struct edgeuse *eu1_first)
 	    goto out;
 	}
 	teu = teu->eumate_p->radial_p;
-	if (teu == eu1)  break;
+	if (teu == eu1) break;
     }
 
     /* Visit all edgeuse pairs radial to eu2 (B--C) */
@@ -4656,7 +4568,7 @@ nmg_unbreak_edge(struct edgeuse *eu1_first)
 	    goto out;
 	}
 	teu = teu->eumate_p->radial_p;
-	if (teu == eu2)  break;
+	if (teu == eu2) break;
     }
 
     /* All preconditions are met, begin the unbreak operation */
@@ -4669,8 +4581,7 @@ nmg_unbreak_edge(struct edgeuse *eu1_first)
 	       V3ARGS(vc->vg_p->coord));
     }
 
-    if (va == vc)
-    {
+    if (va == vc) {
 	/* bu_log("nmg_unbreak_edge(eu=%x): Trying to break a jaunt, va==vc (%x)\n", eu1_first, va); */
 	ret = -9;
 	goto out;
@@ -4722,7 +4633,7 @@ nmg_unbreak_edge(struct edgeuse *eu1_first)
 	    bu_bomb("nmg_unbreak_edge 4\n");
 	}
 	eu1 = eu1->eumate_p->radial_p;
-	if (eu1 == eu1_first)  break;
+	if (eu1 == eu1_first) break;
     }
  out:
     if (rt_g.NMG_debug & DEBUG_BASIC) {
@@ -4771,7 +4682,7 @@ nmg_unbreak_edge(struct edgeuse *eu1_first)
  * No new topology structures are created by this operation.
  *
  * Returns -
- *  0	OK, edge unbroken
+ *  0 OK, edge unbroken
  * <0 failure, nothing changed
  */
 int
@@ -4793,8 +4704,7 @@ nmg_unbreak_shell_edge_unsafe(struct edgeuse *eu1_first)
     e1 = eu1_first->e_p;
     NMG_CK_EDGE(e1);
 
-    if (eu1_first->g.magic_p != eu1_first->eumate_p->g.magic_p)
-    {
+    if (eu1_first->g.magic_p != eu1_first->eumate_p->g.magic_p) {
 	ret = -10;
 	goto out;
     }
@@ -4861,7 +4771,7 @@ nmg_unbreak_shell_edge_unsafe(struct edgeuse *eu1_first)
 	    goto out;
 	}
 	teu = teu->eumate_p->radial_p;
-	if (teu == eu1)  break;
+	if (teu == eu1) break;
     }
 
     /* Visit all edgeuse pairs radial to eu2 (B--C) */
@@ -4873,7 +4783,7 @@ nmg_unbreak_shell_edge_unsafe(struct edgeuse *eu1_first)
 	    goto out;
 	}
 	teu = teu->eumate_p->radial_p;
-	if (teu == eu2)  break;
+	if (teu == eu2) break;
     }
 
     /* All preconditions are met, begin the unbreak operation */
@@ -4886,8 +4796,7 @@ nmg_unbreak_shell_edge_unsafe(struct edgeuse *eu1_first)
 	       V3ARGS(vc->vg_p->coord));
     }
 
-    if (va == vc)
-    {
+    if (va == vc) {
 	/* bu_log("nmg_unbreak_edge(eu=%x): Trying to break a jaunt, va==vc (%x)\n", eu1_first, va); */
 	ret = -9;
 	goto out;
@@ -4939,7 +4848,7 @@ nmg_unbreak_shell_edge_unsafe(struct edgeuse *eu1_first)
 	    bu_bomb("nmg_unbreak_edge 4\n");
 	}
 	eu1 = eu1->eumate_p->radial_p;
-	if (eu1 == eu1_first)  break;
+	if (eu1 == eu1_first) break;
     }
  out:
     if (rt_g.NMG_debug & DEBUG_BASIC) {
@@ -4989,8 +4898,7 @@ nmg_eins(struct edgeuse *eu)
     if (*eu->up.magic_p == NMG_SHELL_MAGIC) {
 	s = eu->up.s_p;
 	NMG_CK_SHELL(s);
-    }
-    else {
+    } else {
 	struct loopuse *lu;
 
 	lu = eu->up.lu_p;
@@ -5019,8 +4927,7 @@ nmg_eins(struct edgeuse *eu)
 
 	eu1->up.lu_p = eu->up.lu_p;
 	eu2->up.lu_p = eumate->up.lu_p;
-    }
-    else {
+    } else {
 	bu_bomb("nmg_eins() Cannot yet insert null edge in shell\n");
     }
     if (rt_g.NMG_debug & DEBUG_BASIC) {
@@ -5111,6 +5018,7 @@ nmg_mv_vu_between_shells(struct shell *dest, register struct shell *src, registe
     }
     nmg_kvu(vu);
 }
+
 
 /*
  * Local Variables:

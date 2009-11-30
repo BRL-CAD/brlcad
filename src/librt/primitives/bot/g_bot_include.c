@@ -110,6 +110,7 @@ XGLUE(rt_botface_w_normals_, TRI_TYPE)(struct soltab *stp,
     return(3);				/* OK */
 }
 
+
 /*
  * Do the prep to support pieces for a BOT/ARS
  */
@@ -213,6 +214,7 @@ XGLUE(rt_bot_prep_pieces_, TRI_TYPE)(struct bot_specific *bot,
     }
 
 }
+
 
 /**
  * R T _ B O T _ P R E P
@@ -380,6 +382,7 @@ XGLUE(rt_bot_prep_, TRI_TYPE)(stp, bot_ip, rtip)
     return 0;
 }
 
+
 static int
 XGLUE(rt_bot_plate_segs_, TRI_TYPE)(struct hit *hits,
 				    int nhits,
@@ -455,6 +458,7 @@ XGLUE(rt_bot_plate_segs_, TRI_TYPE)(struct hit *hits,
     return(nhits*2);
 
 }
+
 
 static int
 XGLUE(rt_bot_unoriented_segs_, TRI_TYPE)(struct hit *hits,
@@ -935,6 +939,7 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, int nhits, struct soltab *st
     return(nhits);			/* HIT */
 }
 
+
 /**
  * R T _ B O T _ S H O T
  *
@@ -1036,6 +1041,7 @@ XGLUE(rt_bot_shot_, TRI_TYPE)(struct soltab *stp, struct xray *rp, struct applic
     /* build segments */
     return rt_bot_makesegs(hits, nhits, stp, rp, ap, seghead, NULL);
 }
+
 
 /**
  * R T _ B O T _ P I E C E _ S H O T
@@ -1198,6 +1204,7 @@ XGLUE(rt_bot_piece_shot_, TRI_TYPE)(struct rt_piecestate *psp, struct rt_pieceli
     return psp->htab.end - starting_hits;
 }
 
+
 /**
  * R T _ B O T _ N O R M
  *
@@ -1265,6 +1272,7 @@ XGLUE(rt_bot_norm_, TRI_TYPE)(bot, hitp, stp, rp)
     }
 }
 
+
 /**
  * R T _ B O T _ F R E E
  */
@@ -1301,6 +1309,7 @@ XGLUE(rt_bot_free_, TRI_TYPE)(bot)
     bot->bot_facelist = NULL;
     bu_free((char *)bot, "bot_specific");
 }
+
 
 /** @} */
 

@@ -35,6 +35,7 @@ extern "C" {
     extern void rt_nmg_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
 }
 
+
 /**
  * R T _ B O T _ B R E P
  */
@@ -61,6 +62,7 @@ rt_bot_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     FREE_MODEL(botm);
     bu_free(tmp_internal, "free temporary rt_db_internal");
 }
+
 
 // Local Variables:
 // tab-width: 8
