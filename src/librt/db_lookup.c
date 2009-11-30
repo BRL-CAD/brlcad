@@ -485,8 +485,8 @@ db_pr_dir(register const struct db_i *dbip)
 void
 db_get_directory(register struct resource *resp)
 {
-    register struct directory	*dp;
-    register int		bytes;
+    struct directory	*dp;
+    size_t bytes;
 
     RT_CK_RESOURCE(resp);
     BU_CK_PTBL( &resp->re_directory_blocks );
@@ -494,7 +494,7 @@ db_get_directory(register struct resource *resp)
     BU_ASSERT_PTR( resp->re_directory_hd, ==, NULL );
 
     /* Get a BIG block */
-    bytes = bu_malloc_len_roundup(1024*sizeof(struct directory));
+    bytes = (size_t)bu_malloc_len_roundup(1024*sizeof(struct directory));
     dp = (struct directory *)bu_malloc(bytes, "re_directory_blocks from db_get_directory() " BU_FLSTR);
 
     /* Record storage for later */
@@ -569,8 +569,8 @@ db_lookup_by_attr(struct db_i *dbip, int dir_flags, struct bu_attribute_value_se
 	    
 	    draw = 0;
 	    match_count = 0;
-	    for ( i=0; i<avs->count; i++ ) {
-		for ( j=0; j<obj_avs.count; j++ ) {
+	    for ( i=0; (size_t)i<(size_t)avs->count; i++ ) {
+		for ( j=0; (size_t)j<(size_t)obj_avs.count; j++ ) {
 		    if ( !strcmp( avs->avp[i].name, obj_avs.avp[j].name ) ) {
 			if ( !strcmp( avs->avp[i].value, obj_avs.avp[j].value ) ) {
 			    if ( op == 2 ) {

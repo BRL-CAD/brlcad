@@ -67,20 +67,29 @@ db_comb_mat_categorize(const fastf_t *matp)
 
     if (!matp) return 0;
 
-    if (matp[0] != 1.0 || matp[5] != 1.0 || matp[10] != 1.0)
+    if (!NEAR_ZERO(matp[0] - 1.0, SMALL_FASTF)
+	|| !NEAR_ZERO(matp[5] - 1.0, SMALL_FASTF)
+	|| !NEAR_ZERO(matp[10] - 1.0, SMALL_FASTF))
+    {
 	status |= STAT_ROT;
+    }
 
-    if (matp[MDX] != 0.0 ||
-	matp[MDY] != 0.0 ||
-	matp[MDZ] != 0.0)
+    if (!NEAR_ZERO(matp[MDX], SMALL_FASTF)
+	|| !NEAR_ZERO(matp[MDY], SMALL_FASTF)
+	|| !NEAR_ZERO(matp[MDZ], SMALL_FASTF))
+    {
 	status |= STAT_XLATE;
+    }
 
-    if (matp[12] != 0.0 ||
-	matp[13] != 0.0 ||
-	matp[14] != 0.0)
+    if (!NEAR_ZERO(matp[12], SMALL_FASTF)
+	|| !NEAR_ZERO(matp[13], SMALL_FASTF)
+	|| !NEAR_ZERO(matp[14], SMALL_FASTF))
+    {
 	status |= STAT_PERSP;
+    }
 
-    if (matp[15] != 1.0) status |= STAT_SCALE;
+    if (!NEAR_ZERO(matp[15], SMALL_FASTF))
+	status |= STAT_SCALE;
 
     return status;
 }
@@ -208,6 +217,7 @@ rt_comb_import4(
 
     BU_CK_EXTERNAL(ep);
     rp = (union record *)ep->ext_buf;
+    if (dbip) RT_CK_DBI(dbip);
 
     if (rp[0].u_id != ID_COMB) {
 	bu_log("rt_comb_import4: Attempt to import a non-combination\n");
@@ -276,9 +286,11 @@ rt_comb_import4(
 	    }
 
 	    /* Verify that perspective isn't used as a modeling transform */
-	    if (diskmat[12] != 0 || diskmat[13] != 0 || diskmat[14] != 0) {
-		bu_log("ERROR: %s/%s has perspective transform\n",
-		       rp[0].c.c_name, namebuf);
+	    if (!NEAR_ZERO(diskmat[12], SMALL_FASTF)
+		|| !NEAR_ZERO(diskmat[13], SMALL_FASTF)
+		|| !NEAR_ZERO(diskmat[14], SMALL_FASTF))
+	    {
+		bu_log("ERROR: %s/%s has perspective transform\n", rp[0].c.c_name, namebuf);
 	    }
 
 	    /* See if disk record is identity matrix */
@@ -408,7 +420,7 @@ int
 rt_comb_export4(
     struct bu_external *ep,
     const struct rt_db_internal *ip,
-    double local2mm,
+    double local2mm __attribute__((unused)),
     const struct db_i *dbip,
     struct resource *resp)
 {
@@ -423,6 +435,7 @@ rt_comb_export4(
     struct bu_vls tmp_vls;
 
     RT_CK_DB_INTERNAL(ip);
+    if (dbip) RT_CK_DBI(dbip);
     RT_CK_RESOURCE(resp);
     if (ip->idb_type != ID_COMBINATION) bu_bomb("rt_comb_export4() type not ID_COMBINATION");
     comb = (struct rt_comb_internal *)ip->idb_ptr;
@@ -533,7 +546,7 @@ rt_comb_export4(
     } else {
 	endp = strchr(bu_vls_addr(&tmp_vls), ' ');
 	if (endp) {
-	    int len;
+	    size_t len;
 	    len = endp - bu_vls_addr(&tmp_vls);
 	    if (len <= 0 && bu_vls_strlen(&tmp_vls) > 0) {
 		bu_log("WARNING: leading spaces on shader '%s' implies NULL shader\n",
@@ -555,7 +568,7 @@ rt_comb_export4(
 	    bu_strlcpy(rp[0].c.c_matname, bu_vls_addr(&tmp_vls), sizeof(rp[0].c.c_matname));
 	    bu_strlcpy(rp[0].c.c_matparm, endp+1, sizeof(rp[0].c.c_matparm));
 	} else {
-	    if (bu_vls_strlen(&tmp_vls) >= sizeof(rp[0].c.c_matname)) {
+	    if ((size_t)bu_vls_strlen(&tmp_vls) >= sizeof(rp[0].c.c_matname)) {
 		bu_log("ERROR:  Shader name '%s' exceeds v4 database field, aborting.\n",
 		       bu_vls_addr(&tmp_vls));
 		return -1;
@@ -901,12 +914,13 @@ rt_comb_describe(
     int verbose,
     double mm2local,
     struct resource *resp,
-    struct db_i *db_i)
+    struct db_i *dbip)
 {
     const struct rt_comb_internal *comb;
 
     RT_CK_DB_INTERNAL(ip);
     RT_CK_RESOURCE(resp);
+    if (dbip) RT_CK_DBI(dbip);
 
     comb = (struct rt_comb_internal *)ip->idb_ptr;
     RT_CK_COMB(comb);

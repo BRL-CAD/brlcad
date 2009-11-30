@@ -35,6 +35,7 @@
 #include "vmath.h"
 #include "db.h"
 #include "raytrace.h"
+#include "mater.h"
 
 
 #define DEBUG_PR(aaa, rrr) 	{\
@@ -353,6 +354,7 @@ db_update_ident( struct db_i *dbip, const char *new_title, double local2mm )
     union record		rec;
     char			*old_title;
     int			v4units;
+    const char *ident = "/IDENT/";
 
     RT_CK_DBI(dbip);
 
@@ -374,7 +376,7 @@ db_update_ident( struct db_i *dbip, const char *new_title, double local2mm )
     if ( dbip->dbi_version > 4 )
 	return db5_update_ident( dbip, new_title, local2mm );
 
-    RT_DIR_SET_NAMEP(&dir, "/IDENT/");
+    RT_DIR_SET_NAMEP(&dir, ident);
     dir.d_addr = 0L;
     dir.d_len = 1;
     dir.d_magic = RT_DIR_MAGIC;

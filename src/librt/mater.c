@@ -59,6 +59,37 @@ rt_pr_mater(register const struct mater *mp)
 }
 
 
+HIDDEN void
+_rt_check_overlap(struct mater *newp)
+{
+    struct mater *zot;
+
+    /* Check for overlap, ie, redefinition of following colors */
+    while ( newp->mt_forw != MATER_NULL &&
+	    newp->mt_high >= newp->mt_forw->mt_low )
+    {
+	if ( newp->mt_high >= newp->mt_forw->mt_high )  {
+	    /* Drop this mater struct */
+	    zot = newp->mt_forw;
+	    newp->mt_forw = zot->mt_forw;
+	    bu_log("dropping overlaping region-id based material property entry:\n");
+	    rt_pr_mater( zot );
+	    bu_free( (char *)zot, "getstruct mater" );
+	    continue;
+	}
+	if ( newp->mt_high >= newp->mt_forw->mt_low )  {
+	    /* Shorten this mater struct, then done */
+	    bu_log("Shortening region-id based material property entry rhs range, from:\n");
+	    rt_pr_mater( newp->mt_forw );
+	    bu_log("to:\n");
+	    newp->mt_forw->mt_low = newp->mt_high+1;
+	    rt_pr_mater( newp->mt_forw );
+	    continue;	/* more conservative than returning */
+	}
+    }
+}
+
+
 /**
  * R T _ I N S E R T _ C O L O R
  *
@@ -69,8 +100,8 @@ rt_pr_mater(register const struct mater *mp)
 void
 rt_insert_color( struct mater *newp )
 {
-    register struct mater *mp;
-    register struct mater *zot;
+    struct mater *mp;
+    struct mater *zot;
 
     if ( material_head == MATER_NULL || newp->mt_high < material_head->mt_low )  {
 	/* Insert at head of list */
@@ -82,7 +113,8 @@ rt_insert_color( struct mater *newp )
 	/* Insert at head of list, check for redefinition */
 	newp->mt_forw = material_head;
 	material_head = newp;
-	goto check_overlap;
+	_rt_check_overlap(newp);
+	return;
     }
     for ( mp = material_head; mp != MATER_NULL; mp = mp->mt_forw )  {
 	if ( mp->mt_low == newp->mt_low  &&
@@ -93,7 +125,8 @@ rt_insert_color( struct mater *newp )
 	    *mp = *newp;		/* struct copy */
 	    bu_free( (char *)newp, "getstruct mater" );
 	    newp = mp;
-	    goto check_overlap;
+	    _rt_check_overlap(newp);
+	    return;
 	}
 	if ( mp->mt_low  < newp->mt_low  &&
 	     mp->mt_high > newp->mt_high )  {
@@ -124,14 +157,16 @@ rt_insert_color( struct mater *newp )
 	    /* Now append */
 	    newp->mt_forw = mp->mt_forw;
 	    mp->mt_forw = newp;
-	    goto check_overlap;
+	    _rt_check_overlap(newp);
+	    return;
 	}
 	if ( mp->mt_forw == MATER_NULL ||
 	     newp->mt_low < mp->mt_forw->mt_low )  {
 	    /* Append */
 	    newp->mt_forw = mp->mt_forw;
 	    mp->mt_forw = newp;
-	    goto check_overlap;
+	    _rt_check_overlap(newp);
+	    return;
 	}
     }
     bu_log("fell out of rt_insert_color loop, append region-id based material property entry to end of list\n");
@@ -139,30 +174,6 @@ rt_insert_color( struct mater *newp )
     newp->mt_forw = MATER_NULL;
     mp->mt_forw = newp;
     return;
-
-    /* Check for overlap, ie, redefinition of following colors */
- check_overlap:
-    while ( newp->mt_forw != MATER_NULL &&
-	    newp->mt_high >= newp->mt_forw->mt_low )  {
-	if ( newp->mt_high >= newp->mt_forw->mt_high )  {
-	    /* Drop this mater struct */
-	    zot = newp->mt_forw;
-	    newp->mt_forw = zot->mt_forw;
-	    bu_log("dropping overlaping region-id based material property entry:\n");
-	    rt_pr_mater( zot );
-	    bu_free( (char *)zot, "getstruct mater" );
-	    continue;
-	}
-	if ( newp->mt_high >= newp->mt_forw->mt_low )  {
-	    /* Shorten this mater struct, then done */
-	    bu_log("Shortening region-id based material property entry rhs range, from:\n");
-	    rt_pr_mater( newp->mt_forw );
-	    bu_log("to:\n");
-	    newp->mt_forw->mt_low = newp->mt_high+1;
-	    rt_pr_mater( newp->mt_forw );
-	    continue;	/* more conservative than returning */
-	}
-    }
 }
 
 
@@ -276,7 +287,7 @@ rt_dup_material_head()
     register struct mater *mp = NULL;
     register struct mater *newmp = NULL;
     struct mater *newmater = NULL;
-    struct mater *dup = NULL;
+    struct mater *dupmater = NULL;
 
     mp = material_head;    
     while (mp != MATER_NULL) {
@@ -284,8 +295,8 @@ rt_dup_material_head()
 	*newmater = *mp; /* struct copy */
 	newmater->mt_forw = MATER_NULL;
 
-	if (dup == NULL) {
-	    dup = newmater;
+	if (dupmater == NULL) {
+	    dupmater = newmater;
 	} else {
 	    newmp->mt_forw = newmater;
 	}
@@ -294,7 +305,7 @@ rt_dup_material_head()
 	mp = mp->mt_forw;
     }
 
-    return dup;
+    return dupmater;
 }
 
 

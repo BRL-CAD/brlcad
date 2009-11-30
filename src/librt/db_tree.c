@@ -50,7 +50,7 @@ void
 db_dup_db_tree_state(struct db_tree_state *otsp, const struct db_tree_state *itsp)
 {
     int		shader_len=0;
-    int		i;
+    size_t i;
 
     RT_CK_DBTS(itsp);
     RT_CK_DBI(itsp->ts_dbip);
@@ -69,7 +69,7 @@ db_dup_db_tree_state(struct db_tree_state *otsp, const struct db_tree_state *its
 
     if ( itsp->ts_attrs.count > 0 ) {
 	bu_avs_init( &otsp->ts_attrs, itsp->ts_attrs.count, "otsp->ts_attrs" );
-	for ( i=0; i<itsp->ts_attrs.count; i++ )
+	for ( i=0; i<(size_t)itsp->ts_attrs.count; i++ )
 	    bu_avs_add( &otsp->ts_attrs, itsp->ts_attrs.avp[i].name,
 			itsp->ts_attrs.avp[i].value );
     } else {
@@ -175,7 +175,7 @@ db_free_combined_tree_state(register struct combined_tree_state *ctsp)
 void
 db_pr_tree_state(register const struct db_tree_state *tsp)
 {
-    int i;
+    size_t i;
 
     RT_CK_DBTS(tsp);
 
@@ -193,7 +193,7 @@ db_pr_tree_state(register const struct db_tree_state *tsp)
 	   tsp->ts_mater.ma_color[2] );
     bu_log(" ts_mater.ma_temperature=%g K\n", tsp->ts_mater.ma_temperature);
     bu_log(" ts_mater.ma_shader=%s\n", tsp->ts_mater.ma_shader ? tsp->ts_mater.ma_shader : "" );
-    for ( i=0; i<tsp->ts_attrs.count; i++ ) {
+    for ( i=0; i<(size_t)tsp->ts_attrs.count; i++ ) {
 	bu_log( "\t%s = %s\n", tsp->ts_attrs.avp[i].name, tsp->ts_attrs.avp[i].value );
     }
     bn_mat_print("ts_mat", tsp->ts_mat );
@@ -1111,7 +1111,6 @@ db_recurse(struct db_tree_state *tsp, struct db_full_path *pathp, struct combine
     struct directory	*dp;
     struct rt_db_internal	intern;
     union tree		*curtree = TREE_NULL;
-    static long int		depth = 0;
 
     RT_CK_DBTS(tsp);
     RT_CHECK_DBI( tsp->ts_dbip );
@@ -1960,7 +1959,8 @@ db_tally_subtree_regions(
 
 /* ============================== */
 
-HIDDEN union tree *db_gettree_region_end(register struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+HIDDEN union tree *
+db_gettree_region_end(register struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data __attribute__((unused)))
 {
 
     RT_CK_DBTS(tsp);
@@ -1976,7 +1976,8 @@ HIDDEN union tree *db_gettree_region_end(register struct db_tree_state *tsp, str
     return(curtree);
 }
 
-HIDDEN union tree *db_gettree_leaf(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
+HIDDEN union tree *
+db_gettree_leaf(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data __attribute__((unused)))
 {
     register union tree	*curtree;
 

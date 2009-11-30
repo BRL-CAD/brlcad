@@ -44,10 +44,11 @@
 #include "raytrace.h"
 #include "db.h"
 #include "wdb.h"
+#include "mater.h"
 
 
 #ifndef SEEK_SET
-#  define SEEK_SET	0
+#  define SEEK_SET 0
 #endif
 
 #define DEFAULT_DB_TITLE "Untitled BRL-CAD Database"

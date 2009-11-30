@@ -1457,10 +1457,14 @@ static int
 unprep_reg_start(struct db_tree_state *tsp,
 		 struct db_full_path *pathp,
 		 const struct rt_comb_internal *comb,
-		 genptr_t client_data)
+		 genptr_t client_data __attribute__((unused)))
 {
-    RT_CK_RTI(tsp->ts_rtip);
-    RT_CK_RESOURCE(tsp->ts_resp);
+    if (tsp) {
+	RT_CK_RTI(tsp->ts_rtip);
+	RT_CK_RESOURCE(tsp->ts_resp);
+    }
+    if (pathp) RT_CK_FULL_PATH(pathp);
+    if (comb) RT_CK_COMB(comb);
 
     /* Ignore "air" regions unless wanted */
     if (tsp->ts_rtip->useair == 0 &&  tsp->ts_aircode != 0) {
@@ -1474,8 +1478,15 @@ static union tree *
 unprep_reg_end(struct db_tree_state *tsp,
 	       struct db_full_path *pathp,
 	       union tree *tree,
-	       genptr_t client_data)
+	       genptr_t client_data __attribute__((unused)))
 {
+    if (tsp) {
+	RT_CK_RTI(tsp->ts_rtip);
+	RT_CK_RESOURCE(tsp->ts_resp);
+    }
+    if (pathp) RT_CK_FULL_PATH(pathp);
+    if (tree) RT_CK_TREE(tree);
+
     return((union tree *)NULL);
 }
 
@@ -1483,7 +1494,7 @@ static union tree *
 unprep_leaf(struct db_tree_state *tsp,
 	    struct db_full_path *pathp,
 	    struct rt_db_internal *ip,
-	    genptr_t client_data)
+	    genptr_t client_data __attribute__((unused)))
 {
     register struct soltab *stp;
     struct directory *dp;
@@ -1773,7 +1784,6 @@ rt_reprep(struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *r
     struct region *rp;
     struct soltab *stp;
     fastf_t old_min[3], old_max[3];
-    int model_extremes_have_changed=0;
     long bitno;
 
     VMOVE(old_min, rtip->mdl_min);
@@ -1855,18 +1865,9 @@ rt_reprep(struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *r
 
     bu_ptbl_free(&rtip->rti_new_solids);
 
-    for (i=0; i<3; i++) {
-	if (rtip->mdl_min[i] != old_min[i]) {
-	    model_extremes_have_changed = 1;
-	    break;
-	}
-	if (rtip->mdl_max[i] != old_max[i]) {
-	    model_extremes_have_changed = 1;
-	    break;
-	}
-    }
-
-    if (model_extremes_have_changed) {
+    if (!VAPPROXEQUAL(rtip->mdl_min, old_min, SMALL_FASTF)
+	|| !VAPPROXEQUAL(rtip->mdl_max, old_min, SMALL_FASTF))
+    {
 	/* fill out BSP, it must completely fill the model BB */
 	fastf_t bb[6];
 

@@ -37,10 +37,36 @@
 #include "raytrace.h"
 
 
-int fr_hit(struct application *ap, struct partition *headp, struct seg *segp);
-int fr_miss(struct application *ap);
-
 static struct partition fr_global_head;
+
+
+HIDDEN int
+fr_hit(struct application *ap, struct partition *headp, struct seg *segp)
+{
+    RT_CK_AP(ap);
+    RT_CK_PT_HD(headp);
+    if (segp) RT_CK_SEG(segp);
+
+    if ( headp->pt_forw == headp )  return(0);
+
+    /* Steal the linked list, hang it off a global header */
+    fr_global_head.pt_forw = headp->pt_forw;
+    fr_global_head.pt_back = headp->pt_back;
+    fr_global_head.pt_back->pt_forw = &fr_global_head;
+    fr_global_head.pt_forw->pt_back = &fr_global_head;
+
+    headp->pt_forw = headp->pt_back = headp;
+    return(1);
+}
+
+HIDDEN int
+fr_miss(struct application *ap)
+{
+    RT_CK_AP(ap);
+
+    fr_global_head.pt_forw = fr_global_head.pt_back = &fr_global_head;
+    return(0);
+}
 
 
 /**
@@ -246,28 +272,6 @@ BU_FORTRAN(frshot, FRSHOT)(int			*nloc,		/* input & output */
     }
 }
 
-int
-fr_hit(struct application *ap, struct partition *headp, struct seg *segp)
-{
-    if ( headp->pt_forw == headp )  return(0);
-
-    /* Steal the linked list, hang it off a global header */
-    fr_global_head.pt_forw = headp->pt_forw;
-    fr_global_head.pt_back = headp->pt_back;
-    fr_global_head.pt_back->pt_forw = &fr_global_head;
-    fr_global_head.pt_forw->pt_back = &fr_global_head;
-
-    headp->pt_forw = headp->pt_back = headp;
-    return(1);
-}
-
-int
-fr_miss(struct application *ap)
-{
-    fr_global_head.pt_forw = fr_global_head.pt_back = &fr_global_head;
-    return(0);
-}
-
 
 /**
  * F R N O R M
@@ -281,32 +285,18 @@ fr_miss(struct application *ap)
  */
 void
 BU_FORTRAN(frnorm, FRNORM)(double		*normal,	/* output only */
-			   int			*index,		/* input only */
+			   int			*idx,		/* input only */
 			   double		*indist,
 			   struct context	*context,
-			   double		*pt,
-			   double		*dir)
+			   double		*pt __attribute__((unused)),
+			   double		*dir __attribute__((unused)))
 {
     register struct context	*ctp;
     struct hit	hit;
-#if 0
-    struct xray	ray;
-#endif
     struct soltab	*stp;
     register int	i;
 
-    i = *index-1;		/* Selects which inhit is used */
-
-#if 0
-    /* Reconstruct the ray structure */
-    ray.r_pt[X] = pt[0];
-    ray.r_pt[Y] = pt[1];
-    ray.r_pt[Z] = pt[2];
-    ray.r_dir[X] = dir[0];
-    ray.r_dir[Y] = dir[1];
-    ray.r_dir[Z] = dir[2];
-    /* Unitize r_dir? */
-#endif
+    i = *idx - 1; /* Selects which inhit is used */
 
     /* Reconstruct the hit structure */
     hit.hit_dist = indist[i];
@@ -315,12 +305,8 @@ BU_FORTRAN(frnorm, FRNORM)(double		*normal,	/* output only */
     VMOVE( hit.hit_vpriv, ctp->co_vpriv );
     hit.hit_private = ctp->co_priv;
 
-#if 0
-    RT_HIT_NORMAL( normal, &hit, stp, &ray, ctp->co_inflip );
-#else
     /* The new macro doesn't use ray argument */
     RT_HIT_NORMAL( normal, &hit, stp, NULL, ctp->co_inflip );
-#endif
 }
 
 

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup librt
+/** @addtogroup librt */
 /** @{ */
 /** @file oslo_calc.c
  *
@@ -43,8 +43,8 @@
 #include "raytrace.h"
 #include "nurb.h"
 
-#define AMAX(i, j)    ( (i) > (j) ? (i) : (j) )
-#define AMIN(i, j)    ( (i) < (j) ? (i) : (j) )
+#define AMAX(i, j)    ((i) > (j) ? (i) : (j))
+#define AMIN(i, j)    ((i) < (j) ? (i) : (j))
 
 struct oslo_mat *
 rt_nurb_calc_oslo(register int order, register const struct knot_vector *tau_kv, register struct knot_vector *t_kv, struct resource *res)
@@ -53,12 +53,12 @@ rt_nurb_calc_oslo(register int order, register const struct knot_vector *tau_kv,
     /* new knot vector */
 
 {
-    register fastf_t	*t_p;
-    register const fastf_t	*tau_p;
+    register fastf_t *t_p;
+    register const fastf_t *tau_p;
     fastf_t ah[20];
     fastf_t newknots[20];			/* new knots */
-    register int  j;			/* d(j), j = 0 : # of new ctl points */
-    int     mu,				/* mu:  tau[mu] <= t[j] < tau[mu+1]*/
+    register int j;			/* d(j), j = 0 : # of new ctl points */
+    int mu,				/* mu:  tau[mu] <= t[j] < tau[mu+1]*/
 	muprim,
 	v,				/* Nu value (order of matrix) */
 	p,
@@ -71,6 +71,8 @@ rt_nurb_calc_oslo(register int order, register const struct knot_vector *tau_kv,
 
     struct oslo_mat * head, * o_ptr, *new_o;
 
+    if (res) RT_CK_RESOURCE(res);
+
     n1 = t_kv->k_size - order;
 
     t_p = t_kv->knots;
@@ -79,19 +81,18 @@ rt_nurb_calc_oslo(register int order, register const struct knot_vector *tau_kv,
     mu = 0;				/* initialize mu */
 
     head = (struct oslo_mat *) bu_malloc (
-	sizeof( struct oslo_mat),
-	"rt_nurb_calc_oslo: oslo mat head" );
+	sizeof(struct oslo_mat),
+	"rt_nurb_calc_oslo: oslo mat head");
 
     o_ptr = head;
 
     for (j = 0; j < n1; j++) {
-	register int  i;
+	register int i;
 
-	if ( j != 0 )
-	{
+	if (j != 0) {
 	    new_o = (struct oslo_mat *) bu_malloc (
-		sizeof( struct oslo_mat),
-		"rt_nurb_calc_oslo: oslo mat struct" );
+		sizeof(struct oslo_mat),
+		"rt_nurb_calc_oslo: oslo mat struct");
 
 	    o_ptr->next = new_o;
 	    o_ptr = new_o;
@@ -104,7 +105,7 @@ rt_nurb_calc_oslo(register int order, register const struct knot_vector *tau_kv,
 
 	i = j + 1;
 
-	while ((t_p[i] == tau_p[muprim]) && i < (j + order)) {
+	while (NEAR_ZERO(t_p[i] - tau_p[muprim], SMALL_FASTF) && i < (j + order)) {
 	    i++;
 	    muprim--;
 	}
@@ -112,7 +113,7 @@ rt_nurb_calc_oslo(register int order, register const struct knot_vector *tau_kv,
 	ih = muprim + 1;
 
 	for (v = 0, p = 1; p < order; p++) {
-	    if (t_p[j + p] == tau_p[ih])
+	    if (NEAR_ZERO(t_p[j + p] - tau_p[ih], SMALL_FASTF))
 		ih++;
 	    else
 		newknots[++v - 1] = t_p[j + p];
@@ -167,13 +168,13 @@ rt_nurb_calc_oslo(register int order, register const struct knot_vector *tau_kv,
 	    }
 	}
 
-	o_ptr->o_vec = (fastf_t *) bu_malloc ( sizeof( fastf_t) * (v+1),
-					       "rt_nurb_calc_oslo: oslo vector");
+	o_ptr->o_vec = (fastf_t *) bu_malloc (sizeof(fastf_t) * (v+1),
+					      "rt_nurb_calc_oslo: oslo vector");
 
 	o_ptr->offset = AMAX(muprim -v, 0);
 	o_ptr->osize = v;
 
-	for ( i = v, p = 0; i >= 0; i--)
+	for (i = v, p = 0; i >= 0; i--)
 	    o_ptr->o_vec[p++] =  ah[(order-1) - i];
     }
 
@@ -183,7 +184,7 @@ rt_nurb_calc_oslo(register int order, register const struct knot_vector *tau_kv,
 
 
 /*
- *  rt_pr_oslo() - FOR DEBUGGING PURPOSES
+ * rt_pr_oslo() - FOR DEBUGGING PURPOSES
  */
 void
 rt_nurb_pr_oslo(struct oslo_mat *om)
@@ -191,17 +192,16 @@ rt_nurb_pr_oslo(struct oslo_mat *om)
     struct oslo_mat * omp;
     int j;
 
-    for ( omp = om; omp!= ( struct oslo_mat *) 0; omp = omp->next)
-    {
+    for (omp = om; omp!= (struct oslo_mat *) 0; omp = omp->next) {
 	fprintf(stderr, "%lx offset %d osize %d next %lx\n",
 		(unsigned long)omp,  omp->offset,  omp->osize,
 		(unsigned long)omp->next);
 
 	fprintf(stderr, "\t%f",  omp->o_vec[0]);
 
-	for ( j = 1; j <= omp->osize; j++)
+	for (j = 1; j <= omp->osize; j++)
 	    fprintf(stderr, "\t%f",  omp->o_vec[j]);
-	fprintf(  stderr, "\n");
+	fprintf(stderr, "\n");
     }
 }
 
@@ -214,12 +214,13 @@ rt_nurb_free_oslo(struct oslo_mat *om, struct resource *res)
 {
     register struct oslo_mat * omp;
 
-    while ( om != (struct oslo_mat *) 0 )
-    {
+    if (res) RT_CK_RESOURCE(res);
+
+    while (om != (struct oslo_mat *) 0) {
 	omp = om;
 	om = om->next;
-	bu_free( (char *)omp->o_vec, "rt_nurb_free_oslo: ovec");
-	bu_free( (char *)omp, "rt_nurb_free_oslo: struct oslo");
+	bu_free((char *)omp->o_vec, "rt_nurb_free_oslo: ovec");
+	bu_free((char *)omp, "rt_nurb_free_oslo: struct oslo");
     }
 }
 

@@ -2574,7 +2574,7 @@ rt_bot_vertex_fuse( struct rt_bot_internal *bot )
     {
 	j = i + 1;
 	while ( j < bot->num_vertices ) {
-	    /* specifically not using tolerances here */
+	    /* specifically not using tolerances here (except underlying representation tolerance) */
 	    if ( VEQUAL( &bot->vertices[i*3], &bot->vertices[j*3] ) )
 	    {
 		count++;
