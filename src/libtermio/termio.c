@@ -30,6 +30,9 @@
 #endif
 
 #ifdef HAVE_SYS_IOCTL_COMPAT_H
+#  if defined(__FreeBSD__) && !defined(COMPAT_43TTY) /* TODO: figure out a better way, mebbe 43bsd tty semantics isn't right anymore? */
+#    define COMPAT_43TTY 1
+#  endif
 #  include <sys/ioctl_compat.h>
 #  if !defined(OCRNL)
 #    define OCRNL 0000010
