@@ -703,7 +703,7 @@ rt_find_backing_dist( struct rt_shootray_status *ss, struct bu_bitv *backbits ) 
     /* get a bit vector of our own to avoid duplicate bounding box
      * intersection calculations
      */
-    solidbits = get_solidbitv( rtip->nsolids, resp );
+    solidbits = rt_get_solidbitv( rtip->nsolids, resp );
     bu_bitv_clear(solidbits);
 
     ray = ss->ap->a_ray;	/* struct copy, don't mess with the original */
@@ -1013,7 +1013,7 @@ rt_shootray(register struct application *ap)
     if ( resp != &rt_uniresource )
 	BU_ASSERT_PTR( BU_PTBL_GET(&rtip->rti_resources, resp->re_cpu), !=, NULL );
 
-    solidbits = get_solidbitv( rtip->nsolids, resp );
+    solidbits = rt_get_solidbitv( rtip->nsolids, resp );
     bu_bitv_clear(solidbits);
 
     if ( BU_LIST_IS_EMPTY( &resp->re_region_ptbl ) )  {
@@ -1192,7 +1192,7 @@ rt_shootray(register struct application *ap)
 	     * having bounding boxes extending behind the ray start
 	     * point and using pieces)
 	     */
-	    backbits = get_solidbitv( rtip->nsolids, resp );
+	    backbits = rt_get_solidbitv( rtip->nsolids, resp );
 	    bu_bitv_clear(backbits);
 
 	    /* call "rt_find_backing_dist()" to calculate the required

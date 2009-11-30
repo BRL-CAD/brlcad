@@ -3605,8 +3605,9 @@ RT_EXPORT BU_EXTERN(int rt_find_paths,
 		     struct directory *end,
 		     struct bu_ptbl *paths,
 		     struct resource *resp));
-RT_EXPORT BU_EXTERN(struct bu_bitv *get_solidbitv,
-		    (long nbits,
+
+RT_EXPORT BU_EXTERN(struct bu_bitv *rt_get_solidbitv,
+		    (size_t nbits,
 		     struct resource *resp));
 
 /* shoot.c */

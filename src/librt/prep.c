@@ -870,7 +870,7 @@ rt_clean_resource(struct rt_i *rtip, struct resource *resp)
 
 
 struct bu_bitv *
-get_solidbitv(long nbits, struct resource *resp)
+rt_get_solidbitv(size_t nbits, struct resource *resp)
 {
     struct bu_bitv *solidbits;
     int counter=0;
@@ -1089,7 +1089,9 @@ rt_clean(register struct rt_i *rtip)
 int
 rt_del_regtree(struct rt_i *rtip, register struct region *delregp, struct resource *resp)
 {
+    if (rtip) RT_CK_RTI(rtip);
     RT_CK_RESOURCE(resp);
+    RT_CK_REGION(delregp);
 
     if (RT_G_DEBUG & DEBUG_REGIONS)
 	bu_log("rt_del_regtree(%s): region deleted\n", delregp->reg_name);
