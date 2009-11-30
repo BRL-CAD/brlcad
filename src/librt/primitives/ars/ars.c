@@ -256,9 +256,9 @@ rt_ars_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	    for (el=0; el < lim; el++) {
 		vect_t diff;
 		if (cur==0 && npts==0 && el==0)
-		    VSCALE(diff, fp, local2mm);
+		    VSCALE(diff, fp, local2mm)
 		else
-		    VSUB2SCALE(diff, fp, base_pt, local2mm);
+		    VSUB2SCALE(diff, fp, base_pt, local2mm)
 		/* NOTE: also type converts to dbfloat_t */
 		VMOVE(&(bp->b_values[el*3]), diff);
 		fp += ELEMENTS_PER_VECT;
