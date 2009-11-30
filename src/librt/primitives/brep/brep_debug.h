@@ -110,8 +110,6 @@ using namespace brlcad;
 #define BB_PLOT(p1, p2) pdv_3box(plot_file(), p1, p2)
 
 
-
-
 void plotsurfaceleafs(SurfaceTree* surf);
 void plotleaf3d(BBNode* bb);
 void plotleafuv(BBNode* bb);
