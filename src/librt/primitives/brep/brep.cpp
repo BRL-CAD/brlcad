@@ -183,7 +183,7 @@ brep_pt_trimmed(pt2d_t pt, const ON_BrepFace& face) {
 
 static int pcount = 0;
 static FILE* plot = NULL;
-HIDDEN FILE*
+static FILE*
 plot_file()
 {
     if (plot == NULL) {
@@ -197,7 +197,7 @@ plot_file()
 }
 
 
-HIDDEN FILE*
+static FILE*
 plot_file(const char *pname)
 {
     if (plot != NULL) {

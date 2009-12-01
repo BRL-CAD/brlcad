@@ -76,7 +76,7 @@ extern void brep_bvh_subdivide(BBNode* parent, const std::list<SurfaceTree*>& fa
 
 static int pcount = 0;
 static FILE* plot = NULL;
-HIDDEN FILE*
+static FILE*
 plot_file()
 {
     if (plot == NULL) {
@@ -90,7 +90,7 @@ plot_file()
 }
 
 
-HIDDEN FILE*
+static FILE*
 plot_file(const char *pname)
 {
     if (plot != NULL) {
