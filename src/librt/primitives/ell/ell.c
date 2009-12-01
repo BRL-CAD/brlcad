@@ -659,14 +659,6 @@ rt_ell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 }
 
 
-#define XPLUS 0
-#define XMIN  1
-#define YPLUS 2
-#define YMIN  3
-#define ZPLUS 4
-#define ZMIN  5
-#endif
-
 /* Vertices of a unit octahedron.  These need to be organized properly
  * to give reasonable normals.
  *
