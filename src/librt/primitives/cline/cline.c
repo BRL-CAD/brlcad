@@ -228,17 +228,19 @@ rt_cline_shot(struct soltab *stp, register struct xray *rp, struct application *
 	segp->seg_stp = stp;
 	segp->seg_in.hit_dist = dist[0];
 	segp->seg_in.hit_surfno = 1;
-	if (cosa > 0.0)
+	if (cosa > 0.0) {
 	    VREVERSE(segp->seg_in.hit_normal, cline->h);
-	else
+	} else {
 	    VMOVE(segp->seg_in.hit_normal, cline->h);
+	}
 
 	segp->seg_out.hit_dist = dist[1];
 	segp->seg_out.hit_surfno = -1;
-	if (cosa < 0.0)
+	if (cosa < 0.0) {
 	    VREVERSE(segp->seg_out.hit_normal, cline->h);
-	else
+	} else {
 	    VMOVE(segp->seg_out.hit_normal, cline->h);
+	}
 	BU_LIST_INSERT(&(seghead->l), &(segp->l));
 	return(1);
 #endif
@@ -368,10 +370,11 @@ rt_cline_norm(register struct hit *hitp, struct soltab *stp, register struct xra
     VCROSS(hitp->hit_normal, tmp, hitp->hit_vpriv);
     VUNITIZE(hitp->hit_normal);
     dot = VDOT(hitp->hit_normal, rp->r_dir);
-    if (dot < 0.0 && hitp->hit_surfno < 0)
-	VREVERSE(hitp->hit_normal, hitp->hit_normal)
-    else if (dot > 0.0 && hitp->hit_surfno > 0)
-	VREVERSE(hitp->hit_normal, hitp->hit_normal)
+    if (dot < 0.0 && hitp->hit_surfno < 0) {
+	VREVERSE(hitp->hit_normal, hitp->hit_normal);
+    } else if (dot > 0.0 && hitp->hit_surfno > 0) {
+	VREVERSE(hitp->hit_normal, hitp->hit_normal);
+    }
 
     if (MAGNITUDE(hitp->hit_normal) < 0.9) {
 	bu_log("BAD normal for solid %s for ray -p %g %g %g -d %g %g %g\n",
