@@ -195,7 +195,7 @@ CurveTree::CurveTree(ON_BrepFace* face)
     return;
 }
 
-	
+
 CurveTree::~CurveTree()
 {
     delete m_root;
@@ -214,6 +214,7 @@ CurveTree::depth()
 {
     return m_root->depth();
 }
+
 
 ON_2dPoint
 CurveTree::getClosestPointEstimate(const ON_3dPoint& pt)
@@ -402,8 +403,7 @@ CurveTree::curveBBox(const ON_Curve* curve, int adj_face_index, ON_Interval& t, 
     fastf_t vdot = 1.0;
 	
     if (isLeaf) {
-	TRACE("creating leaf: u(" << u.Min() << ", " << u.Max() <<
-	      ") v(" << v.Min() << ", " << v.Max() << ")");
+	TRACE("creating leaf: u(" << u.Min() << ", " << u.Max() << ") v(" << v.Min() << ", " << v.Max() << ")");
 	node = new BRNode(curve, adj_face_index, bb, m_face, t, vdot, innerTrim);
     } else {
 	node = new BRNode(bb);
@@ -810,7 +810,7 @@ SurfaceTree::subdivideSurface(const ON_Interval& u,
 	 *
 	 **********************************************************************/
 
-	    
+
 	ON_3dPoint sharedcorners[4];
 	ON_3dVector sharednormals[4];
 	surf->EvNormal(u.Mid(), v.Min(), sharedcorners[0], sharednormals[0]);
@@ -1094,7 +1094,7 @@ get_closest_point(ON_2dPoint& outpt,
     // 1. if the gradient falls below an epsilon (preferred :-)
     // 2. if the gradient diverges
     // 3. iterated MAX_FCP_ITERATIONS
- try_again:
+try_again:
     int diverge_count = 0;
     for (int i = 0; i < BREP_MAX_FCP_ITERATIONS; i++) {
 	assert(gcp_gradient(curr_grad, data, uv));
@@ -1494,6 +1494,7 @@ bool sortY(BRNode* first, BRNode* second)
     else 
 	return false;
 }
+
 
 } /* end namespace */
 
