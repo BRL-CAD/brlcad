@@ -76,26 +76,15 @@ extern void brep_bvh_subdivide(BBNode* parent, const std::list<SurfaceTree*>& fa
 
 static int pcount = 0;
 static FILE* plot = NULL;
-static FILE*
-plot_file()
-{
-    if (plot == NULL) {
-	plot = fopen("out.pl", "w");
-	point_t min, max;
-	VSET(min, -2048, -2048, -2048);
-	VSET(max, 2048, 2048, 2048);
-	pdv_3space(plot, min, max);
-    }
-    return plot;
-}
-
-
-static FILE*
-plot_file(const char *pname)
+HIDDEN FILE*
+_plot_file(const char *pname = NULL)
 {
     if (plot != NULL) {
 	(void)fclose(plot);
 	plot = NULL;
+    }
+    if (pname == NULL) {
+	pname = "out.pl";
     }
     plot = fopen(pname, "w");
     point_t min, max;
@@ -139,23 +128,23 @@ plot_file(const char *pname)
 #define BLACK 0, 0, 0
 #define WHITE 255, 255, 255
 
-#define M_COLOR_PLOT(c) pl_color(plot_file(), c)
-#define COLOR_PLOT(r, g, b) pl_color(plot_file(), (r), (g), (b))
+#define M_COLOR_PLOT(c) pl_color(_plot_file(), c)
+#define COLOR_PLOT(r, g, b) pl_color(_plot_file(), (r), (g), (b))
 #define M_PT_PLOT(p) {				\
 	point_t pp, ppp;		        \
 	vect_t grow;				\
 	VSETALL(grow, 0.01);			\
 	VADD2(pp, p, grow);			\
 	VSUB2(ppp, p, grow);			\
-	pdv_3box(plot_file(), pp, ppp); 	\
+	pdv_3box(_plot_file(), pp, ppp); 	\
     }
 #define PT_PLOT(p) {				\
 	point_t pp;				\
 	VSCALE(pp, p, 1.001);			\
-	pdv_3box(plot_file(), p, pp);		\
+	pdv_3box(_plot_file(), p, pp);		\
     }
-#define LINE_PLOT(p1, p2) pdv_3move(plot_file(), p1); pdv_3line(plot_file(), p1, p2)
-#define BB_PLOT(p1, p2) pdv_3box(plot_file(), p1, p2)
+#define LINE_PLOT(p1, p2) pdv_3move(_plot_file(), p1); pdv_3line(_plot_file(), p1, p2)
+#define BB_PLOT(p1, p2) pdv_3box(_plot_file(), p1, p2)
 
 #define ARB_FACE(valp, a, b, c, d)			\
     RT_ADD_VLIST(vhead, valp[a], BN_VLIST_LINE_MOVE);	\
