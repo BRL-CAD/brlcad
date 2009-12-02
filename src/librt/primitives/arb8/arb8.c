@@ -128,15 +128,15 @@ static const struct arb_info rt_arb_info[6] = {
 
 
 const struct bu_structparse rt_arb_parse[] = {
-    { "%f", 3, "V1", bu_offsetof(struct rt_arb_internal, pt[0][X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "V2", bu_offsetof(struct rt_arb_internal, pt[1][X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "V3", bu_offsetof(struct rt_arb_internal, pt[2][X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "V4", bu_offsetof(struct rt_arb_internal, pt[3][X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "V5", bu_offsetof(struct rt_arb_internal, pt[4][X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "V6", bu_offsetof(struct rt_arb_internal, pt[5][X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "V7", bu_offsetof(struct rt_arb_internal, pt[6][X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "V8", bu_offsetof(struct rt_arb_internal, pt[7][X]), BU_STRUCTPARSE_FUNC_NULL },
-    { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
+    { "%f", 3, "V1", bu_offsetof(struct rt_arb_internal, pt[0][X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "V2", bu_offsetof(struct rt_arb_internal, pt[1][X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "V3", bu_offsetof(struct rt_arb_internal, pt[2][X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "V4", bu_offsetof(struct rt_arb_internal, pt[3][X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "V5", bu_offsetof(struct rt_arb_internal, pt[4][X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "V6", bu_offsetof(struct rt_arb_internal, pt[5][X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "V7", bu_offsetof(struct rt_arb_internal, pt[6][X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "V8", bu_offsetof(struct rt_arb_internal, pt[7][X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
@@ -881,6 +881,8 @@ rt_arb_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
     fastf_t dxbdn;
     fastf_t s;
 
+    if (ap) RT_CK_APPLICATION(ap);
+
     /* Intialize return values */
     for (i = 0; i < n; i++) {
 	segp[i].seg_stp = stp[i];	/* Assume hit, if 0 then miss */
@@ -976,6 +978,7 @@ rt_arb_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 void
 rt_arb_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
 {
+    if (stp) RT_CK_SOLTAB(stp);
 
     bn_vec_ortho(cvp->crv_pdir, hitp->hit_normal);
     cvp->crv_c1 = cvp->crv_c2 = 0;
@@ -1106,7 +1109,7 @@ rt_arb_free(register struct soltab *stp)
  * be.
  */
 int
-rt_arb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_arb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
 {
     struct rt_arb_internal *aip;
 
@@ -1172,6 +1175,8 @@ rt_arb_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     fastf_t vec[3*8];
 
     BU_CK_EXTERNAL(ep);
+    if (dbip) RT_CK_DBI(dbip);
+
     rp = (union record *)ep->ext_buf;
     /* Check record type */
     if (rp->u_id != ID_SOLID) {
@@ -1215,6 +1220,8 @@ rt_arb_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     register int i;
 
     RT_CK_DB_INTERNAL(ip);
+    if (dbip) RT_CK_DBI(dbip);
+
     if (ip->idb_type != ID_ARB8) return(-1);
     aip = (struct rt_arb_internal *)ip->idb_ptr;
     RT_ARB_CK_MAGIC(aip);
@@ -1251,9 +1258,12 @@ rt_arb_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     register int i;
     fastf_t vec[3*8];
 
-    BU_CK_EXTERNAL(ep);
-    BU_ASSERT_LONG(ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * 3*8);
     RT_CK_DB_INTERNAL(ip);
+    BU_CK_EXTERNAL(ep);
+    if (dbip) RT_CK_DBI(dbip);
+
+    BU_ASSERT_LONG(ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * 3*8);
+
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_ARB8;
     ip->idb_meth = &rt_functab[ID_ARB8];
@@ -1283,6 +1293,8 @@ rt_arb_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     register int i;
 
     RT_CK_DB_INTERNAL(ip);
+    if (dbip) RT_CK_DBI(dbip);
+
     if (ip->idb_type != ID_ARB8) return -1;
     aip = (struct rt_arb_internal *)ip->idb_ptr;
     RT_ARB_CK_MAGIC(aip);
@@ -1436,7 +1448,7 @@ rt_arb_ifree(struct rt_db_internal *ip, struct resource *resp)
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_arb_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_arb_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol)
 {
     struct rt_arb_internal *aip;
     struct shell *s;
@@ -1709,11 +1721,7 @@ rt_arb_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
  * This is an analog of rt_arb_calc_planes().
  */
 int
-rt_arb_calc_points(
-    struct rt_arb_internal *arb,		/* needs wdb.h */
-    int cgtype,
-    const plane_t planes[6],
-    const struct bn_tol *tol)
+rt_arb_calc_points(struct rt_arb_internal *arb, int cgtype, const plane_t planes[6], const struct bn_tol *tol __attribute__((unused)))
 {
     int i;
     point_t pt[8];
@@ -2019,7 +2027,7 @@ rt_arb_edit(struct bu_vls *error_msg_ret,
 	/* calculate edge direction */
 	VSUB2(edge_dir, arb->pt[pt2], arb->pt[pt1]);
 
-	if (MAGNITUDE(edge_dir) == 0.0)
+	if (NEAR_ZERO(MAGNITUDE(edge_dir), SMALL_FASTF))
 	    goto err;
 
 	/* bounding planes bp1, bp2 */
@@ -2134,6 +2142,9 @@ rt_arb_edit(struct bu_vls *error_msg_ret,
 int
 rt_arb_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
 {
+    ps = ps; /* quellage */
+    RT_CK_DB_INTERNAL(ip);
+
     return(0);			/* OK */
 }
 

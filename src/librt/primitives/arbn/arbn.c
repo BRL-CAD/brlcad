@@ -56,7 +56,7 @@ rt_arbn_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     struct rt_arbn_internal *aip;
     vect_t work;
     fastf_t f;
-    register int i;
+    int i;
     int j;
     int k;
     int *used = (int *)0;	/* plane eqn use count */
@@ -98,7 +98,7 @@ rt_arbn_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
 	    /* Have an edge line, isect with higher numbered planes */
 	    for (k=j+1; k<aip->neqn; k++) {
-		register int m;
+		int m;
 		point_t pt;
 		int next_k;
 
@@ -156,8 +156,22 @@ rt_arbn_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
  * R T _ A R B N _ P R I N T
  */
 void
-rt_arbn_print(register const struct soltab *stp)
+rt_arbn_print(const struct soltab *stp)
 {
+    int i;
+    struct rt_arbn_internal *arbp = (struct rt_arbn_internal *)stp->st_specific;
+
+    RT_ARBN_CK_MAGIC(arbp);
+    bu_log("arbn bounded by %d planes\n", arbp->neqn);
+
+    for (i=0; i < arbp->neqn; i++) {
+	bu_log("\t%d: (%g, %g, %g) %g\n",
+	       i,
+	       INTCLAMP(arbp->eqn[i][X]),		/* should have unit length */
+	       INTCLAMP(arbp->eqn[i][Y]),
+	       INTCLAMP(arbp->eqn[i][Z]),
+	       INTCLAMP(arbp->eqn[i][W]));
+    }
 }
 
 
@@ -173,11 +187,11 @@ rt_arbn_print(register const struct soltab *stp)
  * >0 HIT
  */
 int
-rt_arbn_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
+rt_arbn_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
-    register struct rt_arbn_internal *aip =
+    struct rt_arbn_internal *aip =
 	(struct rt_arbn_internal *)stp->st_specific;
-    register int i;
+    int i;
     int iplane, oplane;
     fastf_t in, out;	/* ray in/out distances */
 
@@ -226,7 +240,7 @@ rt_arbn_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	return(0);	/* MISS */
 
     {
-	register struct seg *segp;
+	struct seg *segp;
 
 	RT_GET_SEG(segp, ap->a_resource);
 	segp->seg_stp = stp;
@@ -246,10 +260,10 @@ rt_arbn_shot(struct soltab *stp, register struct xray *rp, struct application *a
  */
 void
 rt_arbn_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
-    /* An array of solid pointers */
-    /* An array of ray pointers */
-    /* array of segs (results returned) */
-    /* Number of ray/object pairs */
+/* An array of solid pointers */
+/* An array of ray pointers */
+/* array of segs (results returned) */
+/* Number of ray/object pairs */
 
 {
     rt_vstub(stp, rp, segp, n, ap);
@@ -262,9 +276,9 @@ rt_arbn_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, st
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
-rt_arbn_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
+rt_arbn_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
-    register struct rt_arbn_internal *aip =
+    struct rt_arbn_internal *aip =
 	(struct rt_arbn_internal *)stp->st_specific;
     int h;
 
@@ -287,8 +301,11 @@ rt_arbn_norm(register struct hit *hitp, struct soltab *stp, register struct xray
  * indicate no curvature.
  */
 void
-rt_arbn_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
+rt_arbn_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
+    struct rt_arbn_internal *arbn = (struct rt_arbn_internal *)stp->st_specific;
+
+    RT_ARBN_CK_MAGIC(arbn);
 
     bn_vec_ortho(cvp->crv_pdir, hitp->hit_normal);
     cvp->crv_c1 = cvp->crv_c2 = 0;
@@ -304,10 +321,18 @@ rt_arbn_curve(register struct curvature *cvp, register struct hit *hitp, struct 
  * v extends along the arb_V direction defined by Nx(B-A).
  */
 void
-rt_arbn_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
+rt_arbn_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
-    uvp->uv_u = uvp->uv_v = 0;
-    uvp->uv_du = uvp->uv_dv = 0;
+    struct rt_arbn_internal *arbn = (struct rt_arbn_internal *)stp->st_specific;
+
+    if (ap) RT_CK_APPLICATION(ap);
+    RT_ARBN_CK_MAGIC(arbn);
+    if (hitp) RT_CK_HIT(hitp);
+
+    if (uvp) {
+	uvp->uv_u = uvp->uv_v = 0;
+	uvp->uv_du = uvp->uv_dv = 0;
+    }
 }
 
 
@@ -315,9 +340,9 @@ rt_arbn_uv(struct application *ap, struct soltab *stp, register struct hit *hitp
  * R T _ A R B N _ F R E E
  */
 void
-rt_arbn_free(register struct soltab *stp)
+rt_arbn_free(struct soltab *stp)
 {
-    register struct rt_arbn_internal *aip =
+    struct rt_arbn_internal *aip =
 	(struct rt_arbn_internal *)stp->st_specific;
 
     bu_free((char *)aip->eqn, "rt_arbn_internal eqn[]");
@@ -337,12 +362,12 @@ rt_arbn_free(register struct soltab *stp)
  * Note that the vectors will be drawn in no special order.
  */
 int
-rt_arbn_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_arbn_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol)
 {
-    register struct rt_arbn_internal *aip;
-    register int i;
-    register int j;
-    register int k;
+    struct rt_arbn_internal *aip;
+    int i;
+    int j;
+    int k;
 
     RT_CK_DB_INTERNAL(ip);
     aip = (struct rt_arbn_internal *)ip->idb_ptr;
@@ -362,7 +387,7 @@ rt_arbn_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 	    /* Have an edge line, isect with all other planes */
 	    point_count = 0;
 	    for (k=0; k<aip->neqn; k++) {
-		register int m;
+		int m;
 		point_t pt;
 		int next_k;
 
@@ -503,7 +528,7 @@ Sort_edges(struct arbn_edges *edges, int *edge_count, const struct rt_arbn_inter
 /**
  * R T _ A R B N _ T E S S
  *
- *  "Tessellate" an ARB into an NMG data structure.
+ * "Tessellate" an ARB into an NMG data structure.
  * Purely a mechanical transformation of one faceted object
  * into another.
  *
@@ -512,7 +537,7 @@ Sort_edges(struct arbn_edges *edges, int *edge_count, const struct rt_arbn_inter
  *  0 OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_arbn_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_arbn_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol)
 {
     struct rt_arbn_internal *aip;
     struct shell *s;
@@ -745,7 +770,7 @@ rt_arbn_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 
     return(0);
 
- fail:
+fail:
     bu_free((char *)pts, "rt_arbn_tess: pts");
     bu_free((char *)edges, "rt_arbn_tess: edges");
     bu_free((char *)edge_count, "rt_arbn_tess: edge_count");
@@ -761,11 +786,13 @@ rt_arbn_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
  * Transform
  */
 int
-rt_arbn_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_arbn_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     union record *rp;
     struct rt_arbn_internal *aip;
-    register int i;
+    int i;
+
+    if (dbip) RT_CK_DBI(dbip);
 
     BU_CK_EXTERNAL(ep);
     rp = (union record *)ep->ext_buf;
@@ -828,8 +855,10 @@ rt_arbn_export4(struct bu_external *ep, const struct rt_db_internal *ip, double 
     union record *rec;
     int ngrans;
     double *sbuf;		/* scalling buffer */
-    register double *sp;
-    register int i;
+    double *sp;
+    int i;
+
+    if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_ARBN) return(-1);
@@ -879,15 +908,17 @@ rt_arbn_export4(struct bu_external *ep, const struct rt_db_internal *ip, double 
  * Transform
  */
 int
-rt_arbn_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_arbn_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_arbn_internal *aip;
-    register int i;
+    int i;
     unsigned long neqn;
     int double_count;
     int byte_count;
 
+    RT_CK_DB_INTERNAL(ip);
     BU_CK_EXTERNAL(ep);
+    if (dbip) RT_CK_DBI(dbip);
 
     neqn = bu_glong((unsigned char *)ep->ext_buf);
     double_count = neqn * ELEMENTS_PER_PLANE;
@@ -895,7 +926,6 @@ rt_arbn_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
 
     BU_ASSERT_LONG(ep->ext_nbytes, ==, 4+ byte_count);
 
-    RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_ARBN;
     ip->idb_meth = &rt_functab[ID_ARBN];
@@ -947,13 +977,15 @@ int
 rt_arbn_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_arbn_internal *aip;
-    register int i;
+    int i;
     fastf_t *vec;
-    register fastf_t *sp;
+    fastf_t *sp;
     int double_count;
     int byte_count;
 
     RT_CK_DB_INTERNAL(ip);
+    if (dbip) RT_CK_DBI(dbip);
+
     if (ip->idb_type != ID_ARBN) return(-1);
     aip = (struct rt_arbn_internal *)ip->idb_ptr;
     RT_ARBN_CK_MAGIC(aip);
@@ -997,7 +1029,7 @@ rt_arbn_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
 int
 rt_arbn_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
-    register struct rt_arbn_internal *aip =
+    struct rt_arbn_internal *aip =
 	(struct rt_arbn_internal *)ip->idb_ptr;
     char buf[256];
     int i;
@@ -1056,42 +1088,42 @@ rt_arbn_ifree(struct rt_db_internal *ip, struct resource *resp)
  *	no arguments returns everything
  */
 int
-rt_arbn_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *attr)
+rt_arbn_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr)
 {
-    register struct rt_arbn_internal *arbn=(struct rt_arbn_internal *)intern->idb_ptr;
+    struct rt_arbn_internal *arbn=(struct rt_arbn_internal *)intern->idb_ptr;
     int i;
 
     RT_ARBN_CK_MAGIC(arbn);
 
     if (attr == (char *)NULL) {
-	bu_vls_strcpy(log, "arbn");
-	bu_vls_printf(log, " N %d", arbn->neqn);
+	bu_vls_strcpy(logstr, "arbn");
+	bu_vls_printf(logstr, " N %d", arbn->neqn);
 	for (i=0; i<arbn->neqn; i++) {
-	    bu_vls_printf(log, " P%d {%.25g %.25g %.25g %.25g}", i,
+	    bu_vls_printf(logstr, " P%d {%.25g %.25g %.25g %.25g}", i,
 			  V4ARGS(arbn->eqn[i]));
 	}
     } else if (!strcmp(attr, "N")) {
-	bu_vls_printf(log, "%d", arbn->neqn);
+	bu_vls_printf(logstr, "%d", arbn->neqn);
     } else if (!strcmp(attr, "P")) {
 	for (i=0; i<arbn->neqn; i++) {
-	    bu_vls_printf(log, " P%d {%.25g %.25g %.25g %.25g}", i,
+	    bu_vls_printf(logstr, " P%d {%.25g %.25g %.25g %.25g}", i,
 			  V4ARGS(arbn->eqn[i]));
 	}
     } else if (attr[0] == 'P') {
 	if (isdigit(attr[1]) == 0) {
-	    bu_vls_printf(log, "ERROR: Illegal plane number\n");
+	    bu_vls_printf(logstr, "ERROR: Illegal plane number\n");
 	    return BRLCAD_ERROR;
 	}
 
 	i = atoi(&attr[1]);
 	if (i >= arbn->neqn || i < 0) {
-	    bu_vls_printf(log, "ERROR: Illegal plane number\n");
+	    bu_vls_printf(logstr, "ERROR: Illegal plane number\n");
 	    return BRLCAD_ERROR;
 	}
 
-	bu_vls_printf(log, "%.25g %.25g %.25g %.25g", V4ARGS(arbn->eqn[i]));
+	bu_vls_printf(logstr, "%.25g %.25g %.25g %.25g", V4ARGS(arbn->eqn[i]));
     } else {
-	bu_vls_printf(log, "ERROR: Unknown attribute, choices are N, P, or P#\n");
+	bu_vls_printf(logstr, "ERROR: Unknown attribute, choices are N, P, or P#\n");
 	return BRLCAD_ERROR;
     }
 
@@ -1111,7 +1143,7 @@ rt_arbn_get(struct bu_vls *log, const struct rt_db_internal *intern, const char 
  *		"P+" - add a new plane to the list of planes
  */
 int
-rt_arbn_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char **argv)
+rt_arbn_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv)
 {
     struct rt_arbn_internal *arbn;
     unsigned char *c;
@@ -1139,7 +1171,7 @@ rt_arbn_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char
 		}
 		arbn->neqn = i;
 	    } else {
-		bu_vls_printf(log,
+		bu_vls_printf(logstr,
 			      "ERROR: number of planes must be greater than 0\n");
 	    }
 	} else if (!strcmp(argv[0], "P")) {
@@ -1154,7 +1186,7 @@ rt_arbn_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char
 	    (void)tcl_list_to_fastf_array(brlcad_interp, argv[1], &new_planes, &len);
 
 	    if (len%4) {
-		bu_vls_printf(log,
+		bu_vls_printf(logstr,
 			      "ERROR: Incorrect number of plane coefficients\n");
 		if (len)
 		    bu_free((char *)new_planes, "new_planes");
@@ -1176,12 +1208,12 @@ rt_arbn_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char
 	    } else if (isdigit(argv[0][1])) {
 		i = atoi(&argv[0][1]);
 	    } else {
-		bu_vls_printf(log,
+		bu_vls_printf(logstr,
 			      "ERROR: illegal argument, choices are P, P#, P+, or N\n");
 		return(TCL_ERROR);
 	    }
 	    if (i < 0 || i >= arbn->neqn) {
-		bu_vls_printf(log,
+		bu_vls_printf(logstr,
 			      "ERROR: plane number out of range\n");
 		return BRLCAD_ERROR;
 	    }
@@ -1189,13 +1221,13 @@ rt_arbn_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char
 	    array = (fastf_t *)&arbn->eqn[i];
 	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1],
 					&array, &len) != 4) {
-		bu_vls_printf(log,
+		bu_vls_printf(logstr,
 			      "ERROR: incorrect number of coefficients for a plane\n");
 		return BRLCAD_ERROR;
 	    }
 	    VUNITIZE(arbn->eqn[i]);
 	} else {
-	    bu_vls_printf(log,
+	    bu_vls_printf(logstr,
 			  "ERROR: illegal argument, choices are P, P#, P+, or N\n");
 	    return BRLCAD_ERROR;
 	}
@@ -1212,8 +1244,16 @@ rt_arbn_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char
  *
  */
 int
-rt_arbn_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
+rt_arbn_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 {
+    struct rt_arbn_internal *aip;
+
+    RT_CK_DB_INTERNAL(ip);
+    aip = (struct rt_arbn_internal *)ip->idb_ptr;
+    RT_ARBN_CK_MAGIC(aip);
+
+    ps = ps; /* quellage */
+
     return(0);			/* OK */
 }
 
