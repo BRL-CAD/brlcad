@@ -980,27 +980,12 @@ rt_ebm_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     MAT4X3PNT(ideal_ray.r_pt, ebmp->ebm_mat, rp->r_pt);
     MAT4X3VEC(ideal_ray.r_dir, ebmp->ebm_mat, rp->r_dir);
 
-#if 0
-    bu_log("%g %g %g %g %g %g\n",
-	   ideal_ray.r_pt[X], ideal_ray.r_pt[Y], ideal_ray.r_pt[Z],
-	   ideal_ray.r_dir[X], ideal_ray.r_dir[Y], ideal_ray.r_dir[Z]);
-#endif
     if (rt_ebm_dda(&ideal_ray, stp, ap, &myhead) <= 0)
 	return(0);
 
     VSET(norm, 0, 0, -1);		/* letters grow in +z, which is "inside" the halfspace */
     i = rt_seg_planeclip(seghead, &myhead, norm, 0.0, ebmp->ebm_i.tallness,
 			 &ideal_ray, ap);
-#if 0
-    if (segp) {
-	vect_t a, b;
-	/* Plot where WE think the ray goes */
-	VJOIN1(a, rp->r_pt, segp->seg_in.hit_dist, rp->r_dir);
-	VJOIN1(b, rp->r_pt, segp->seg_out.hit_dist, rp->r_dir);
-	pl_color(stdout, 0, 0, 255);	/* B */
-	pdv_3line(stdout, a, b);
-    }
-#endif
     return(i);
 }
 

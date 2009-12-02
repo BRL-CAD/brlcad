@@ -1002,12 +1002,6 @@ hole_end_vertex(struct pt2d *pt, struct bu_list *tbl2d, struct bu_list *tlist)
 	NMG_CK_TRAP(tp);
 
 	if (tp->bot) {
-#if 0
-	    if (rt_g.NMG_debug & DEBUG_TRI) {
-		print_trap(tp, tbl2d);
-		bu_log("Completed... Skipping\n");
-	    }
-#endif
 	    continue;
 	} else {
 	    if (rt_g.NMG_debug & DEBUG_TRI)
@@ -2443,12 +2437,6 @@ nmg_plot_flat_face(struct faceuse *fu, struct bu_list *tbl2d)
 
 	    eu_pnext = BU_LIST_PNEXT_CIRC(edgeuse, &eu->l);
 
-#if 0
-	    if (rt_g.NMG_debug & DEBUG_TRI)
-		bu_log("eu vert @ %g %g %g\n",
-		       V3ARGS(eu->vu_p->v_p->vg_p->coord));
-
-#endif
 	    if (! (p=find_pt2d(tbl2d, eu->vu_p)))
 		bu_bomb("didn't find vertexuse in list!\n");
 

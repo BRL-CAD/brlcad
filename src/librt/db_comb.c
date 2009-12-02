@@ -356,13 +356,6 @@ rt_comb_import4(
 	comb->aircode = rp[0].c.c_aircode;
 	comb->GIFTmater = rp[0].c.c_material;
 	comb->los = rp[0].c.c_los;
-#if 0
-	if (comb->region_id && comb->aircode) {
-	    bu_log("NOTICE: region %s has both id=%d and aircode=%d, ignoring aircode!!!\n",
-		   rp[0].c.c_name, comb->region_id, comb->aircode);
-	    comb->aircode = 0;
-	}
-#endif
     } else {
  	/* set some reasonable defaults */
 	comb->region_id = 0;

@@ -1216,9 +1216,6 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 	     * whether this lies within the governing ellipse.
 	     */
 	    if (dprime[Z] == 0.0) {
-#if 0
-		bu_log("tgc: dprime[Z] = 0!\n");
-#endif
 		RT_TGC_SEG_MISS(segp[ix]);
 		continue;
 	    }
@@ -1243,9 +1240,6 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 		nflag = TGC_NORM_TOP;	/* copy normal */
 	    } else {
 		/* intersection apparently invalid */
-#if 0
-		bu_log("tgc(%s):  only 1 intersect\n", stp[ix]->st_name);
-#endif
 		RT_TGC_SEG_MISS(segp[ix]);
 		continue;
 	    }

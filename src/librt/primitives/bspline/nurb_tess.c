@@ -184,21 +184,6 @@ rt_cnurb_par_edge(const struct edge_g_cnurb *crv, fastf_t epsilon)
     d1 = rt_nurb_c_diff( crv );
     d2 = rt_nurb_c_diff( d1 );
 
-#if 0
-    pt = d1->ctl_points;
-    for ( i=0; i<d1->c_size; i++ )
-    {
-	for ( j=0; j<num_coords; j++ )
-	{
-	    fastf_t abs_val;
-
-	    abs_val = *pt > 0.0 ? *pt : -(*pt);
-	    if ( abs_val > der1[j] )
-		der1[j] = abs_val;
-	    pt++;
-	}
-    }
-#endif
     pt = d2->ctl_points;
     for ( i=0; i<d2->c_size; i++ )
     {

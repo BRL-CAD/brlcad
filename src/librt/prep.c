@@ -67,8 +67,8 @@ rt_new_rti(struct db_i *dbip)
     if (BU_LIST_FIRST(bu_list, &rt_g.rtg_vlfree) == 0) {
 	char *envflags;
 	envflags = getenv("LIBRT_DEBUG");
-	if(envflags) {
-	    if(rt_g.debug)
+	if (envflags) {
+	    if (rt_g.debug)
 		bu_log("WARNING: discarding LIBRT_DEBUG value in favor of application specified flags\n");
 	    else
 		rt_g.debug = strtol(envflags, NULL, 0x10);
@@ -213,9 +213,9 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
 
     RT_CK_RTI(rtip);
 
-    if (RT_G_DEBUG&DEBUG_REGIONS)  bu_log("rt_prep_parallel(%s, %d, ncpu=%d) START\n",
-					  rtip->rti_dbip->dbi_filename,
-					  rtip->rti_dbip->dbi_uses, ncpu);
+    if (RT_G_DEBUG&DEBUG_REGIONS) bu_log("rt_prep_parallel(%s, %d, ncpu=%d) START\n",
+					 rtip->rti_dbip->dbi_filename,
+					 rtip->rti_dbip->dbi_uses, ncpu);
 
     bu_semaphore_acquire(RT_SEM_RESULTS);	/* start critical section */
     if (!rtip->needprep) {
@@ -270,7 +270,7 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
 
     /* If a resource structure has been provided for us, use it. */
     resp = (struct resource *)BU_PTBL_GET(&rtip->rti_resources, 0);
-    if (!resp)  resp = &rt_uniresource;
+    if (!resp) resp = &rt_uniresource;
     RT_CK_RESOURCE(resp);
 
     /* Build array of region pointers indexed by reg_bit.  Optimize
@@ -278,9 +278,9 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
      * bit vector of every solid contained in the subtree.
      */
     rtip->Regions = (struct region **)bu_calloc(rtip->nregions, sizeof(struct region *), "rtip->Regions[]");
-    if (RT_G_DEBUG&DEBUG_REGIONS)  bu_log("rt_prep_parallel(%s, %d) about to optimize regions\n",
-					  rtip->rti_dbip->dbi_filename,
-					  rtip->rti_dbip->dbi_uses);
+    if (RT_G_DEBUG&DEBUG_REGIONS) bu_log("rt_prep_parallel(%s, %d) about to optimize regions\n",
+					 rtip->rti_dbip->dbi_filename,
+					 rtip->rti_dbip->dbi_uses);
     for (BU_LIST_FOR(regp, region, &(rtip->HeadRegion))) {
 	/* Ensure bit numbers are unique */
 	BU_ASSERT_PTR(rtip->Regions[regp->reg_bit], ==, REGION_NULL);
@@ -336,7 +336,7 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
     }
     /* Malloc the storage and zero the counts */
     for (i=0; i <= ID_MAX_SOLID; i++) {
-	if (rtip->rti_nsol_by_type[i] <= 0)  continue;
+	if (rtip->rti_nsol_by_type[i] <= 0) continue;
 	rtip->rti_sol_by_type[i] = (struct soltab **)bu_calloc(
 	    rtip->rti_nsol_by_type[i],
 	    sizeof(struct soltab *),
@@ -373,9 +373,9 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
 
 	diff = (rtip->mdl_max[X] - rtip->mdl_min[X]);
 	f = (rtip->mdl_max[Y] - rtip->mdl_min[Y]);
-	if (f > diff)  diff = f;
+	if (f > diff) diff = f;
 	f = (rtip->mdl_max[Z] - rtip->mdl_min[Z]);
-	if (f > diff)  diff = f;
+	if (f > diff) diff = f;
 	diff *= 0.1;	/* 10% expansion of box */
 	rtip->rti_pmin[0] = rtip->mdl_min[0] - diff;
 	rtip->rti_pmin[1] = rtip->mdl_min[1] - diff;
@@ -427,9 +427,9 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
     rtip->needprep = 0;		/* prep is done */
     bu_semaphore_release(RT_SEM_RESULTS);	/* end critical section */
 
-    if (RT_G_DEBUG&DEBUG_REGIONS)  bu_log("rt_prep_parallel(%s, %d, ncpu=%d) FINISH\n",
-					  rtip->rti_dbip->dbi_filename,
-					  rtip->rti_dbip->dbi_uses, ncpu);
+    if (RT_G_DEBUG&DEBUG_REGIONS) bu_log("rt_prep_parallel(%s, %d, ncpu=%d) FINISH\n",
+					 rtip->rti_dbip->dbi_filename,
+					 rtip->rti_dbip->dbi_uses, ncpu);
 }
 
 
@@ -461,7 +461,7 @@ rt_plot_all_bboxes(FILE *fp, struct rt_i *rtip)
     pdv_3space(fp, rtip->rti_pmin, rtip->rti_pmax);
     RT_VISIT_ALL_SOLTABS_START(stp, rtip) {
 	/* Ignore "dead" solids in the list.  (They failed prep) */
-	if (stp->st_aradius <= 0)  continue;
+	if (stp->st_aradius <= 0) continue;
 	/* Don't draw infinite solids */
 	if (stp->st_aradius >= INFINITY)
 	    continue;
@@ -487,7 +487,7 @@ rt_plot_all_solids(
 
     RT_VISIT_ALL_SOLTABS_START(stp, rtip) {
 	/* Ignore "dead" solids in the list.  (They failed prep) */
-	if (stp->st_aradius <= 0)  continue;
+	if (stp->st_aradius <= 0) continue;
 
 	/* Don't draw infinite solids */
 	if (stp->st_aradius >= INFINITY)
@@ -618,7 +618,7 @@ rt_init_resource(struct resource *resp,
 
     if (resp == &rt_uniresource) {
 	cpu_num = MAX_PSW;		/* array is [MAX_PSW+1] just for this */
-	if (rtip)  RT_CK_RTI(rtip);	/* check it if provided */
+	if (rtip) RT_CK_RTI(rtip);	/* check it if provided */
     } else {
 	BU_ASSERT_PTR(resp, !=, NULL);
 	BU_ASSERT_LONG(cpu_num, >=, 0);
@@ -934,8 +934,7 @@ rt_clean(register struct rt_i *rtip)
 	db_free_tree(regp->reg_treetop, &rt_uniresource);
 	bu_free((genptr_t)regp->reg_name, "region name str");
 	regp->reg_name = (char *)0;
-	if (regp->reg_mater.ma_shader)
-	{
+	if (regp->reg_mater.ma_shader) {
 	    bu_free((genptr_t)regp->reg_mater.ma_shader, "ma_shader");
 	    regp->reg_mater.ma_shader = (char *)NULL;
 	}
@@ -984,7 +983,7 @@ rt_clean(register struct rt_i *rtip)
 
     /* Free array of solid table pointers indexed by solid ID */
     for (i=0; i <= ID_MAX_SOLID; i++) {
-	if (rtip->rti_nsol_by_type[i] <= 0)  continue;
+	if (rtip->rti_nsol_by_type[i] <= 0) continue;
 	if (rtip->rti_sol_by_type[i]) {
 	    bu_free((char *)rtip->rti_sol_by_type[i], "sol_by_type");
 	}
@@ -1010,7 +1009,7 @@ rt_clean(register struct rt_i *rtip)
 	    /* After using a submodel, some entries may be NULL
 	     * while others are not NULL
 	     */
-	    if (*rpp == NULL)  continue;
+	    if (*rpp == NULL) continue;
 	    RT_CK_RESOURCE(*rpp);
 	    /* Clean but do not free the resource struct */
 	    rt_clean_resource(rtip, *rpp);
@@ -1453,6 +1452,7 @@ obj_in_path(const char *path, const char *obj)
     return(0);
 }
 
+
 static int
 unprep_reg_start(struct db_tree_state *tsp,
 		 struct db_full_path *pathp,
@@ -1474,6 +1474,7 @@ unprep_reg_start(struct db_tree_state *tsp,
     return(0);
 }
 
+
 static union tree *
 unprep_reg_end(struct db_tree_state *tsp,
 	       struct db_full_path *pathp,
@@ -1489,6 +1490,7 @@ unprep_reg_end(struct db_tree_state *tsp,
 
     return((union tree *)NULL);
 }
+
 
 static union tree *
 unprep_leaf(struct db_tree_state *tsp,
@@ -1699,8 +1701,7 @@ rt_unprep(struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *r
 	/* XXX db_free_tree(rp->reg_treetop, resp); */
 	bu_free((genptr_t)rp->reg_name, "region name str");
 	rp->reg_name = (char *)0;
-	if (rp->reg_mater.ma_shader)
-	{
+	if (rp->reg_mater.ma_shader) {
 	    bu_free((genptr_t)rp->reg_mater.ma_shader, "ma_shader");
 	    rp->reg_mater.ma_shader = (char *)NULL;
 	}
@@ -1768,6 +1769,7 @@ rt_unprep(struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *r
 
     return(0);
 }
+
 
 /**
  * R T _ R E P R E P
@@ -1890,6 +1892,7 @@ rt_reprep(struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *r
 
     return(0);
 }
+
 
 /** @} */
 

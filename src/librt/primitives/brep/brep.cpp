@@ -1448,32 +1448,6 @@ brep_intersect(const BBNode* sbv, const ON_BrepFace* face, const ON_Surface* sur
 }
 
 
-#if 0
-HIDDEN void
-opposite(const BBNode* sbv, pt2d_t uv)
-{
-    if (uv[1] > sbv->m_v.Mid()) {
-	// quadrant I or II
-	uv[1] = sbv->m_v.Min();
-	if (uv[0] > sbv->m_u.Mid())
-	    // quad I
-	    uv[0] = sbv->m_u.Min();
-	else
-	    // quad II
-	    uv[0] = sbv->m_u.Max();
-    } else {
-	uv[1] = sbv->m_v.Max();
-	if (uv[0] > sbv->m_u.Mid())
-	    uv[0] = sbv->m_u.Min();
-	else
-	    uv[0] = sbv->m_u.Max();
-    }
-}
-
-
-#endif
-
-
 typedef std::pair<int, int> ip_t;
 typedef std::list<ip_t> MissList;
 

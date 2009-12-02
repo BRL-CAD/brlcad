@@ -52,16 +52,16 @@
 void
 rt_regionfix(struct rt_i *rtip)
 {
-    FILE	*fp;
-    char	*file;
-    char	*line;
-    char	*tabp;
-    int	linenum = 0;
-    register struct region	*rp;
-    int	ret;
-    int	oldid;
-    int	newid;
-    struct bu_vls	name;
+    FILE *fp;
+    char *file;
+    char *line;
+    char *tabp;
+    int linenum = 0;
+    register struct region *rp;
+    int ret;
+    int oldid;
+    int newid;
+    struct bu_vls name;
 
     RT_CK_RTI(rtip);
 
@@ -71,53 +71,53 @@ rt_regionfix(struct rt_i *rtip)
      */
     bu_vls_init(&name);
     file = rtip->rti_region_fix_file;
-    if ( file == (char *)NULL )  {
-	bu_vls_strcpy( &name, rtip->rti_dbip->dbi_filename );
-	if ( (tabp = strrchr( bu_vls_addr(&name), '.' )) != NULL )  {
+    if (file == (char *)NULL) {
+	bu_vls_strcpy(&name, rtip->rti_dbip->dbi_filename);
+	if ((tabp = strrchr(bu_vls_addr(&name), '.')) != NULL) {
 	    /* Chop off "." and suffix */
-	    bu_vls_trunc( &name, tabp-bu_vls_addr(&name) );
+	    bu_vls_trunc(&name, tabp-bu_vls_addr(&name));
 	}
-	bu_vls_strcat( &name, ".regexp" );
+	bu_vls_strcat(&name, ".regexp");
 	file = bu_vls_addr(&name);
     }
 
-    fp = fopen( file, "rb" );
-    if ( fp == NULL ) {
-	if ( rtip->rti_region_fix_file ) perror(file);
+    fp = fopen(file, "rb");
+    if (fp == NULL) {
+	if (rtip->rti_region_fix_file) perror(file);
 	bu_vls_free(&name);
 	return;
     }
     bu_log("librt/rt_regionfix(%s):  Modifying instanced region-ids.\n", file);
 
-    while ( (line = rt_read_cmd( fp )) != (char *) 0 )  {
-	regex_t	re_space;
+    while ((line = rt_read_cmd(fp)) != (char *) 0) {
+	regex_t re_space;
 	linenum++;
 
 	/* For now, establish a simple format:
 	 * regexp TAB [more_white_space] formula SEMICOLON
 	 */
-	if ( (tabp = strchr( line, '\t' )) == (char *)0 )  {
-	    bu_log("%s: missing TAB on line %d:\n%s\n", file, linenum, line );
+	if ((tabp = strchr(line, '\t')) == (char *)0) {
+	    bu_log("%s: missing TAB on line %d:\n%s\n", file, linenum, line);
 	    continue;		/* just ignore it */
 	}
 
 	*tabp++ = '\0';
-	while ( *tabp && isspace( *tabp ) )  tabp++;
-	if ( (ret = regcomp(&re_space, line, 0)) != 0 )  {
-	    bu_log("%s: line %d, regcomp error '%d'\n", file, line, ret );
+	while (*tabp && isspace(*tabp)) tabp++;
+	if ((ret = regcomp(&re_space, line, 0)) != 0) {
+	    bu_log("%s: line %d, regcomp error '%d'\n", file, line, ret);
 	    continue;		/* just ignore it */
 	}
 
-	for ( BU_LIST_FOR( rp, region, &(rtip->HeadRegion) ) )  {
+	for (BU_LIST_FOR(rp, region, &(rtip->HeadRegion))) {
 	    ret = regexec(&re_space, (char *)rp->reg_name, 0, 0, 0);
-	    if (RT_G_DEBUG&DEBUG_INSTANCE)  {
+	    if (RT_G_DEBUG&DEBUG_INSTANCE) {
 		bu_log("'%s' %s '%s'\n", line,
 		       ret==1 ? "==" : "!=",
 		       rp->reg_name);
 	    }
-	    if ( (ret) == 0  )
+	    if ((ret) == 0)
 		continue;	/* didn't match */
-	    if ( ret == -1 )  {
+	    if (ret == -1) {
 		bu_log("%s: line %d, invalid regular expression\n", file, linenum);
 		break;		/* on to next RE */
 	    }
@@ -133,27 +133,28 @@ rt_regionfix(struct rt_i *rtip)
 	     *          current instance (use) count.
 	     */
 	    oldid = rp->reg_regionid;
-	    if ( strcmp( tabp, "+uses" ) == 0  )  {
+	    if (strcmp(tabp, "+uses") == 0) {
 		newid = oldid + rp->reg_instnum;
-	    } else if ( *tabp == '+' )  {
-		newid = oldid + atoi( tabp+1 );
+	    } else if (*tabp == '+') {
+		newid = oldid + atoi(tabp+1);
 	    } else {
-		newid = atoi( tabp );
-		if ( newid == 0 )  bu_log("%s, line %d Warning:  new id = 0\n", file, linenum );
+		newid = atoi(tabp);
+		if (newid == 0) bu_log("%s, line %d Warning:  new id = 0\n", file, linenum);
 	    }
-	    if (RT_G_DEBUG&DEBUG_INSTANCE)  {
+	    if (RT_G_DEBUG&DEBUG_INSTANCE) {
 		bu_log("%s instance %d:  region id changed from %d to %d\n",
 		       rp->reg_name, rp->reg_instnum,
-		       oldid, newid );
+		       oldid, newid);
 	    }
 	    rp->reg_regionid = newid;
 	}
 	regfree(&re_space);
-	bu_free( line, "reg_expr line");
+	bu_free(line, "reg_expr line");
     }
-    fclose( fp );
+    fclose(fp);
     bu_vls_free(&name);
 }
+
 
 /*
  * Local Variables:

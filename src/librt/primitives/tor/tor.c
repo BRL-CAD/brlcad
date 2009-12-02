@@ -703,10 +703,6 @@ rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	if (num_zero == 0) {
 	    SEG_MISS(segp[i]);		/* MISS */
 	} else if (num_zero != 2 && num_zero != 4) {
-#if 0
-	    bu_log("rt_tor_shot: reduced 4 to %d roots\n", i);
-	    bn_pr_roots(stp->st_name, val, 4);
-#endif
 	    SEG_MISS(segp[i]);		/* MISS */
 	}
     }
@@ -768,19 +764,6 @@ rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	/* Set aside vector for rt_tor_norm() later */
 	VJOIN1(segp[i].seg_in.hit_vpriv, pprime, C[i].cf[1], dprime);
 	VJOIN1(segp[i].seg_out.hit_vpriv, pprime, C[i].cf[0], dprime);
-
-#if 0
-	/* C[i].cf[3] is entry point */
-	/* Attach second hit to segment chain */
-	/* XXXX need convention for vectorizing doubly linked list */
-	GET_SEG(seg2p, resp);
-	segp[i].seg_next = seg2p;
-	seg2p->seg_stp = stp[i];
-	seg2p->seg_in.hit_dist =  C[i].cf[3]*tor->tor_r1;
-	seg2p->seg_out.hit_dist = C[i].cf[2]*tor->tor_r1;
-	VJOIN1(seg2p->seg_in.hit_vpriv, pprime, C[i].cf[3], dprime);
-	VJOIN1(seg2p->seg_out.hit_vpriv, pprime, C[i].cf[2], dprime);
-#endif
     }
 
     /* Free tmp space used */

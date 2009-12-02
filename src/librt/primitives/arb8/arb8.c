@@ -276,13 +276,6 @@ rt_arb_get_cgtype(
 
 	    return(0);
     }
-#if 0
-    bu_log("uvec: ");
-    for (j=0; j<8; j++) bu_log("%d, ", uvec[j]);
-    bu_log("\nsvec: ");
-    for (j=0; j<11; j++) bu_log("%d, ", svec[j]);
-    bu_log("\n");
-#endif
     return(numuvec);
 }
 

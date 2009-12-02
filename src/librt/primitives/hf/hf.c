@@ -691,10 +691,6 @@ axis_plane_isect(int plane, fastf_t inout, struct xray *rp, struct hf_specific *
     left *= hf->hf_file2mm;
     right *= hf->hf_file2mm;
     answer = (right-left)/xright*xx+left;
-#if 0
-    bu_log("inout: loc[Z]=%g, answer=%g, left=%g, right=%g, xright=%g, xx=%g\n",
-	   loc[Z], answer, left, right, xright, xx);
-#endif
 
     if (loc[Z]-SQRT_SMALL_FASTF < answer) {
 	(*hp)->hit_magic = RT_HIT_MAGIC;
@@ -1527,16 +1523,9 @@ rt_hf_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, 
     fastf_t r = 0;
 
     VSUB2(delta, hitp->hit_point, hf->hf_V);
-#if 0
-    VUNITIZE(delta);
-    uvp->uv_u = VDOT(delta, hf->hf_X);
-    uvp->uv_v = VDOT(delta, hf->hf_Y);
-    r = ap->a_rbeam + ap->a_diverge * hitp->hit_dist;
-#else
     uvp->uv_u = delta[X] / hf->hf_Xlen;
     uvp->uv_v = delta[Y] / hf->hf_Ylen;
     r = 0.0;
-#endif
     if (uvp->uv_u < 0.0) uvp->uv_u=0.0;
     if (uvp->uv_u > 1.0) uvp->uv_u=1.0;
     if (uvp->uv_v < 0.0) uvp->uv_v=0.0;

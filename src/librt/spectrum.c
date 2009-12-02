@@ -26,9 +26,9 @@
  * (Note that there is also a rttherm/spectrum.c)
  *
  * Inspired by -
- *	Roy Hall and his book "Illumination and Color in Computer
- *	Generated Imagery", Springer Verlag, New York, 1989.
- *	ISBN 0-387-96774-5
+ * Roy Hall and his book "Illumination and Color in Computer
+ * Generated Imagery", Springer Verlag, New York, 1989.
+ * ISBN 0-387-96774-5
  *
  * With thanks to Russ Moulton Jr, EOSoft Inc. for his "rad.c" module.
  */
@@ -51,7 +51,7 @@
  * (1975), table 2.6, these are for the 1931 standard observer with a
  * 2-degree visual field.  From Roy Hall, pg 228.
  */
-static const double	rt_CIE_XYZ[81][4] = {
+static const double rt_CIE_XYZ[81][4] = {
     {380, 0.0014, 0.0000, 0.0065}, {385, 0.0022, 0.0001, 0.0105},
     {390, 0.0042, 0.0001, 0.0201}, {395, 0.0076, 0.0002, 0.0362},
     {400, 0.0143, 0.0004, 0.0679}, {405, 0.0232, 0.0006, 0.1102},
@@ -113,41 +113,41 @@ static const double	rt_CIE_XYZ[81][4] = {
 void
 rt_spect_make_CIE_XYZ(struct bn_tabdata **x, struct bn_tabdata **y, struct bn_tabdata **z, const struct bn_table *tabp)
 {
-    struct bn_tabdata	*a, *b, *c;
-    fastf_t	xyz_scale;
-    int	i;
-    int	j;
+    struct bn_tabdata *a, *b, *c;
+    fastf_t xyz_scale;
+    int i;
+    int j;
 
     BN_CK_TABLE(tabp);
 
-    i = bn_table_interval_num_samples( tabp, 430., 650. );
-    if ( i <= 4 )  bu_log("rt_spect_make_CIE_XYZ: insufficient samples (%d) in visible band\n", i);
+    i = bn_table_interval_num_samples(tabp, 430., 650.);
+    if (i <= 4) bu_log("rt_spect_make_CIE_XYZ: insufficient samples (%d) in visible band\n", i);
 
-    BN_GET_TABDATA( a, tabp );
-    BN_GET_TABDATA( b, tabp );
-    BN_GET_TABDATA( c, tabp );
+    BN_GET_TABDATA(a, tabp);
+    BN_GET_TABDATA(b, tabp);
+    BN_GET_TABDATA(c, tabp);
     *x = a;
     *y = b;
     *z = c;
 
     /* No CIE data below 380 nm */
-    for ( j=0; tabp->x[j] < 380 && j < tabp->nx; j++ )  {
+    for (j=0; tabp->x[j] < 380 && j < tabp->nx; j++) {
 	a->y[j] = b->y[j] = c->y[j] = 0;
     }
 
     /* Traverse the CIE table.  Produce as many output values as
      * possible before advancing to next CIE table entry.
      */
-    for ( i = 0; i < 81-1; i++ )  {
-	fastf_t	fract;		/* fraction from [i] to [i+1] */
+    for (i = 0; i < 81-1; i++) {
+	fastf_t fract;		/* fraction from [i] to [i+1] */
 
     again:
-	if ( j >= tabp->nx )  break;
-	if ( tabp->x[j] < rt_CIE_XYZ[i][0] ) bu_bomb("rt_spect_make_CIE_XYZ assertion1 failed\n");
-	if ( tabp->x[j] >= rt_CIE_XYZ[i+1][0] )  continue;
+	if (j >= tabp->nx) break;
+	if (tabp->x[j] < rt_CIE_XYZ[i][0]) bu_bomb("rt_spect_make_CIE_XYZ assertion1 failed\n");
+	if (tabp->x[j] >= rt_CIE_XYZ[i+1][0]) continue;
 	/* The CIE table has 5nm spacing */
-	fract = (tabp->x[j] - rt_CIE_XYZ[i][0] ) / 5;
-	if ( fract < 0 || fract > 1 )  bu_bomb("rt_spect_make_CIE_XYZ assertion2 failed\n");
+	fract = (tabp->x[j] - rt_CIE_XYZ[i][0]) / 5;
+	if (fract < 0 || fract > 1) bu_bomb("rt_spect_make_CIE_XYZ assertion2 failed\n");
 	a->y[j] = (1-fract) * rt_CIE_XYZ[i][1] + fract * rt_CIE_XYZ[i+1][1];
 	b->y[j] = (1-fract) * rt_CIE_XYZ[i][2] + fract * rt_CIE_XYZ[i+1][2];
 	c->y[j] = (1-fract) * rt_CIE_XYZ[i][3] + fract * rt_CIE_XYZ[i+1][3];
@@ -156,20 +156,20 @@ rt_spect_make_CIE_XYZ(struct bn_tabdata **x, struct bn_tabdata **y, struct bn_ta
     }
 
     /* No CIE data above 780 nm */
-    for (; j < tabp->nx; j++ )  {
+    for (; j < tabp->nx; j++) {
 	a->y[j] = b->y[j] = c->y[j] = 0;
     }
 
     /* Normalize the curves so that area under Y curve is 1.0 */
-    xyz_scale = bn_tabdata_area2( b );
-    if ( fabs(xyz_scale) < VDIVIDE_TOL )  {
+    xyz_scale = bn_tabdata_area2(b);
+    if (fabs(xyz_scale) < VDIVIDE_TOL) {
 	bu_log("rt_spect_make_CIE_XYZ(): Area = 0 (no luminance) in this part of the spectrum, skipping normalization step\n");
 	return;
     }
     xyz_scale = 1 / xyz_scale;
-    bn_tabdata_scale( a, a, xyz_scale );
-    bn_tabdata_scale( b, b, xyz_scale );
-    bn_tabdata_scale( c, c, xyz_scale );
+    bn_tabdata_scale(a, a, xyz_scale);
+    bn_tabdata_scale(b, b, xyz_scale);
+    bn_tabdata_scale(c, c, xyz_scale);
 }
 
 
@@ -183,9 +183,9 @@ rt_spect_make_CIE_XYZ(struct bn_tabdata **x, struct bn_tabdata **y, struct bn_ta
  * three non-overlapping bands, and the reflectance is constant over
  * each:
  *
- *	red	572nm to 1, 000, 000nm	(includes the full IR band)
- *	green	492nm to 572nm		(just green)
- *	blue	1nm to 492nm		(includes Ultraviolet)
+ * red ===> 572nm to 1, 000, 000nm (includes the full IR band)
+ * green => 492nm to 572nm (just green)
+ * blue	==> 1nm to 492nm (includes Ultraviolet)
  *
  * As the caller may be doing a lot of this, the caller is expected to
  * provide a pointer to a valid bn_tabdata structure which is to be
@@ -195,40 +195,41 @@ rt_spect_make_CIE_XYZ(struct bn_tabdata **x, struct bn_tabdata **y, struct bn_ta
 void
 rt_spect_reflectance_rgb(struct bn_tabdata *curve, const float *rgb)
 {
-    register int	i;
-    register const struct bn_table	*tabp;
+    register int i;
+    register const struct bn_table *tabp;
 
     BN_CK_TABDATA(curve);
     tabp = curve->table;
     BN_CK_TABLE(tabp);
 
     /* Fill in blue values, everything up to but not including 492nm */
-    for ( i=0; i < tabp->nx; i++ )  {
-	if ( tabp->x[i] >= 492 )  break;
+    for (i=0; i < tabp->nx; i++) {
+	if (tabp->x[i] >= 492) break;
 	curve->y[i] = rgb[2];
     }
 
     /* Fill in green values, everything up to but not including 572nm */
-    for (; i < tabp->nx; i++ )  {
-	if ( tabp->x[i] >= 572 )  break;
+    for (; i < tabp->nx; i++) {
+	if (tabp->x[i] >= 572) break;
 	curve->y[i] = rgb[1];
     }
 
     /* Fill in red values, everything from here up to end of table */
-    for (; i < tabp->nx; i++ )  {
+    for (; i < tabp->nx; i++) {
 	curve->y[i] = rgb[0];
     }
 }
 
-#define PLANCK_C1	37415		/* watts um^4 cm^-2 */
-#define PLANCK_C2	14387.86	/* um K */
+
+#define PLANCK_C1 37415		/* watts um^4 cm^-2 */
+#define PLANCK_C2 14387.86	/* um K */
 /* Russ gives these values at 37, 415 and 14, 388 */
 /* Handbook of Physics and Chem gives these values as 37, 403 and 14, 384 */
 /* Aircraft Combat Surv gives these values as 37, 483.2 and 14, 387.86 */
 
 /* Requires wavelength _w in um, not nm, returns units: W / cm**2 / um */
-#define	PLANCK(_w, _tempK)	\
-	(PLANCK_C1/(_w*_w*_w*_w*_w*(exp(PLANCK_C2/(_w*_tempK))-1)))
+#define PLANCK(_w, _tempK)					\
+    (PLANCK_C1/(_w*_w*_w*_w*_w*(exp(PLANCK_C2/(_w*_tempK))-1)))
 
 /**
  * R T _ S P E C T _ B L A C K _ B O D Y
@@ -243,32 +244,32 @@ rt_spect_reflectance_rgb(struct bn_tabdata *curve, const float *rgb)
 void
 rt_spect_black_body(struct bn_tabdata *data, double temp, unsigned int n)
 
-    /* Degrees Kelvin */
-    /* # wavelengths to eval at */
+/* Degrees Kelvin */
+/* # wavelengths to eval at */
 {
-    const struct bn_table	*tabp;
-    int				j;
+    const struct bn_table *tabp;
+    int j;
 
     BN_CK_TABDATA(data);
     tabp = data->table;
     BN_CK_TABLE(tabp);
 
-    if (bu_debug&BU_DEBUG_TABDATA)  {
-	bu_log("rt_spect_black_body( x%x, %g degK ) %g um to %g um\n",
+    if (bu_debug&BU_DEBUG_TABDATA) {
+	bu_log("rt_spect_black_body(x%x, %g degK) %g um to %g um\n",
 	       data, temp,
 	       tabp->x[0] * 0.001,	/* nm to um */
 	       tabp->x[tabp->nx] * 0.001	/* nm to um */
 	    );
     }
 
-    if ( n < 3 )  n = 3;
+    if (n < 3) n = 3;
 
-    for ( j = 0; j < tabp->nx; j++ )  {
-	double	ax;		/* starting wavelength, um */
-	double	bx;		/* ending wavelength, um */
-	double	dx;		/* wavelength interval, um */
-	double	w_sum;		/* sum over wavelengths */
-	double	wavlen;		/* current wavelength */
+    for (j = 0; j < tabp->nx; j++) {
+	double ax;		/* starting wavelength, um */
+	double bx;		/* ending wavelength, um */
+	double dx;		/* wavelength interval, um */
+	double w_sum;		/* sum over wavelengths */
+	double wavlen;		/* current wavelength */
 	unsigned long i;
 
 	ax = tabp->x[j] * 0.001;	/* nm to um */
@@ -277,7 +278,7 @@ rt_spect_black_body(struct bn_tabdata *data, double temp, unsigned int n)
 
 	w_sum = 0;
 	wavlen = ax;
-	for (i=0; i<n; i++)  {
+	for (i=0; i<n; i++) {
 	    w_sum += PLANCK(wavlen, temp);
 	    wavlen += dx;
 	}
@@ -303,25 +304,26 @@ rt_spect_black_body(struct bn_tabdata *data, double temp, unsigned int n)
 void
 rt_spect_black_body_fast(struct bn_tabdata *data, double temp)
 
-    /* Degrees Kelvin */
+/* Degrees Kelvin */
 {
-    const struct bn_table	*tabp;
-    int				j;
+    const struct bn_table *tabp;
+    int j;
 
     BN_CK_TABDATA(data);
     tabp = data->table;
     BN_CK_TABLE(tabp);
 
-    if (bu_debug&BU_DEBUG_TABDATA)  {
-	bu_log("rt_spect_black_body_fast( x%x, %g degK )\n",
-	       data, temp );
+    if (bu_debug&BU_DEBUG_TABDATA) {
+	bu_log("rt_spect_black_body_fast(x%x, %g degK)\n",
+	       data, temp);
     }
 
-    for ( j = 0; j < tabp->nx; j++ )  {
-	data->y[j] = PLANCK( (tabp->x[j]*0.001), temp ) *
+    for (j = 0; j < tabp->nx; j++) {
+	data->y[j] = PLANCK((tabp->x[j]*0.001), temp) *
 	    (tabp->x[j+1] - tabp->x[j]) * 0.001;
     }
 }
+
 
 /**
  * R T _ S P E C T _ B L A C K _ B O D Y _ P O I N T S
@@ -333,24 +335,25 @@ rt_spect_black_body_fast(struct bn_tabdata *data, double temp)
 void
 rt_spect_black_body_points(struct bn_tabdata *data, double temp)
 
-    /* Degrees Kelvin */
+/* Degrees Kelvin */
 {
-    const struct bn_table	*tabp;
-    int				j;
+    const struct bn_table *tabp;
+    int j;
 
     BN_CK_TABDATA(data);
     tabp = data->table;
     BN_CK_TABLE(tabp);
 
-    if (bu_debug&BU_DEBUG_TABDATA)  {
-	bu_log("rt_spect_black_body_points( x%x, %g degK )\n",
-	       data, temp );
+    if (bu_debug&BU_DEBUG_TABDATA) {
+	bu_log("rt_spect_black_body_points(x%x, %g degK)\n",
+	       data, temp);
     }
 
-    for ( j = 0; j < tabp->nx; j++ )  {
-	data->y[j] = PLANCK( (tabp->x[j]*0.001), temp );
+    for (j = 0; j < tabp->nx; j++) {
+	data->y[j] = PLANCK((tabp->x[j]*0.001), temp);
     }
 }
+
 
 /*
  * Local Variables:

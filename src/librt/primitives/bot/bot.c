@@ -3433,12 +3433,6 @@ rt_bot_decimate(struct rt_bot_internal *bot,	/* BOT to be decimated */
 
     RT_BOT_CK_MAGIC(bot);
 
-#if 0
-    if (max_chord_error <= SMALL_FASTF &&
-	max_normal_error <= SMALL_FASTF &&
-	min_edge_length <= SMALL_FASTF)
-	return 0;
-#endif
     /* convert normal error to something useful (a minimum dot product) */
     if (max_normal_error > -1.0) {
 	max_normal_error = cos(max_normal_error * M_PI / 180.0);

@@ -797,13 +797,6 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, int nhits, struct soltab *st
 	    }
 	}
     }
-#if 0
-    bu_log("nhits = %d\n", nhits);
-    for (i=0; i<nhits; i++) {
-	rt_bot_norm(&hits[i], stp, rp);
-	bu_log("dist=%g, normal = (%g %g %g), %s\n", hits[i].hit_dist, V3ARGS(hits[i].hit_normal), hits[i].hit_vpriv[X] > 0 ? "exit" : "entrance");
-    }
-#endif
 
     /* if first hit is an exit, it is likely due to the "piece" for
      * the corresponding entrance not being processed (this is OK, but
