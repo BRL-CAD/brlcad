@@ -401,7 +401,7 @@ DIST_DIR=$(distdir)
 distdir: 
 	mkdir -p $(DIST_DIR)
 	cp -p   $(srcdir)/README* $(srcdir)/configure \
-		$(srcdir)/COPYRIGHT* $(srcdir)/aclocal.m4 $(srcdir)/*.in \
+		$(srcdir)/COPYING* $(srcdir)/aclocal.m4 $(srcdir)/*.in \
 		$(DIST_DIR)/
 	chmod 664 $(DIST_DIR)/Makefile.in $(DIST_DIR)/aclocal.m4
 	chmod 775 $(DIST_DIR)/configure.in $(DIST_DIR)/configure
