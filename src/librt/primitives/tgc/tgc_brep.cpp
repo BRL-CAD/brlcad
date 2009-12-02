@@ -30,9 +30,8 @@
 #include "brep.h"
 
 
-
 /**
- *			R T _ T G C _ B R E P
+ * R T _ T G C _ B R E P
  */
 extern "C" void
 rt_tgc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
@@ -51,13 +50,12 @@ rt_tgc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 
     double ell1_axis_len_1, ell1_axis_len_2, ell2_axis_len_1, ell2_axis_len_2;
     
-    //  First, find planes in 3 space with x and y axes
-    //  along the axis of the ellipses defining the top and
-    //  bottom of the TGC, with coordinate origins at the 
-    //  center of the ellipses.  This information will be needed
-    //  for the ruled surface definition (for the sides) and 
-    //  also for the trimmed planes needed for the top and bottom
-    //  of the volume.
+    // First, find planes in 3 space with x and y axes along the axis
+    // of the ellipses defining the top and bottom of the TGC, with
+    // coordinate origins at the center of the ellipses.  This
+    // information will be needed for the ruled surface definition
+    // (for the sides) and also for the trimmed planes needed for the
+    // top and bottom of the volume.
    
     vect_t tmp, x1_dir, y1_dir, x2_dir, y2_dir;
     
@@ -80,8 +78,8 @@ rt_tgc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     const ON_Plane* ell1_plane = new ON_Plane(plane1_origin, plane1_x_dir, plane1_y_dir); 
     const ON_Plane* ell2_plane = new ON_Plane(plane2_origin, plane2_x_dir, plane2_y_dir);
    
-    //  Once the planes have been created, create the ellipses
-    //  within the planes.
+    // Once the planes have been created, create the ellipses within
+    // the planes.
     ell1_axis_len_1 = MAGNITUDE(eip->a);
     ell1_axis_len_2 = MAGNITUDE(eip->b);
     ell2_axis_len_1 = MAGNITUDE(eip->c);
@@ -90,33 +88,35 @@ rt_tgc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     ON_Ellipse* ellipse1 = new ON_Ellipse(*ell1_plane, ell1_axis_len_1, ell1_axis_len_2);
     ON_Ellipse* ellipse2 = new ON_Ellipse(*ell2_plane, ell2_axis_len_1, ell2_axis_len_2);
 
-    //  Generate an ON_Curves from the ellipses
+    // Generate an ON_Curves from the ellipses
     ON_NurbsCurve* ellcurve1 = ON_NurbsCurve::New();
     ellipse1->GetNurbForm((*ellcurve1));
     ON_NurbsCurve* ellcurve2 = ON_NurbsCurve::New();
     ellipse2->GetNurbForm((*ellcurve2));
-    ellcurve1->SetDomain(0.0,1.0);
-    ellcurve2->SetDomain(0.0,1.0);
+    ellcurve1->SetDomain(0.0, 1.0);
+    ellcurve2->SetDomain(0.0, 1.0);
    
-    //  Create the side surface with ON_NurbsSurface::CreateRuledSurface and the top
-    //  and bottom planes by using the ellipses as outer trimming curves - define UV
-    //  surfaces for the top and bottom such that they contain the ellipses.
+    // Create the side surface with
+    // ON_NurbsSurface::CreateRuledSurface and the top and bottom
+    // planes by using the ellipses as outer trimming curves - define
+    // UV surfaces for the top and bottom such that they contain the
+    // ellipses.
     ON_SimpleArray<ON_Curve*> bottomboundary;
     bottomboundary.Append(ON_Curve::Cast(ellcurve1)); 
     ON_PlaneSurface* bp = new ON_PlaneSurface();
     bp->m_plane = (*ell1_plane);
-    bp->SetDomain(0, -100.0, 100.0 );
-    bp->SetDomain(1, -100.0, 100.0 );
-    bp->SetExtents(0, bp->Domain(0) );
-    bp->SetExtents(1, bp->Domain(1) );
+    bp->SetDomain(0, -100.0, 100.0);
+    bp->SetDomain(1, -100.0, 100.0);
+    bp->SetExtents(0, bp->Domain(0));
+    bp->SetExtents(1, bp->Domain(1));
     const int bsi = (*b)->AddSurface(bp);
     ON_BrepFace& bface = (*b)->NewFace(bsi);
     (*b)->NewPlanarFaceLoop(bface.m_face_index, ON_BrepLoop::outer, bottomboundary, true); 
     const ON_BrepLoop* bloop = (*b)->m_L.Last();
-    bp->SetDomain(0, bloop->m_pbox.m_min.x, bloop->m_pbox.m_max.x );
-    bp->SetDomain(1, bloop->m_pbox.m_min.y, bloop->m_pbox.m_max.y );
-    bp->SetExtents(0,bp->Domain(0));
-    bp->SetExtents(1,bp->Domain(1));
+    bp->SetDomain(0, bloop->m_pbox.m_min.x, bloop->m_pbox.m_max.x);
+    bp->SetDomain(1, bloop->m_pbox.m_min.y, bloop->m_pbox.m_max.y);
+    bp->SetExtents(0, bp->Domain(0));
+    bp->SetExtents(1, bp->Domain(1));
     (*b)->SetTrimIsoFlags(bface);
     (*b)->FlipFace(bface);
  
@@ -124,23 +124,23 @@ rt_tgc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     topboundary.Append(ON_Curve::Cast(ellcurve2)); 
     ON_PlaneSurface* tp = new ON_PlaneSurface();
     tp->m_plane = (*ell2_plane);
-    tp->SetDomain(0, -100.0, 100.0 );
-    tp->SetDomain(1, -100.0, 100.0 );
-    tp->SetExtents(0, tp->Domain(0) );
-    tp->SetExtents(1, tp->Domain(1) );
+    tp->SetDomain(0, -100.0, 100.0);
+    tp->SetDomain(1, -100.0, 100.0);
+    tp->SetExtents(0, tp->Domain(0));
+    tp->SetExtents(1, tp->Domain(1));
     const int tsi = (*b)->AddSurface(tp);
     ON_BrepFace& tface = (*b)->NewFace(tsi);
     (*b)->NewPlanarFaceLoop(tface.m_face_index, ON_BrepLoop::outer, topboundary, true); 
     const ON_BrepLoop* tloop = (*b)->m_L.Last();
-    tp->SetDomain(0, tloop->m_pbox.m_min.x, tloop->m_pbox.m_max.x );
-    tp->SetDomain(1, tloop->m_pbox.m_min.y, tloop->m_pbox.m_max.y );
-    tp->SetExtents(0,tp->Domain(0));
-    tp->SetExtents(1,tp->Domain(1));
+    tp->SetDomain(0, tloop->m_pbox.m_min.x, tloop->m_pbox.m_max.x);
+    tp->SetDomain(1, tloop->m_pbox.m_min.y, tloop->m_pbox.m_max.y);
+    tp->SetExtents(0, tp->Domain(0));
+    tp->SetExtents(1, tp->Domain(1));
     (*b)->SetTrimIsoFlags(tface);
  
 
-    // Need to use NewRuledEdge here, which means valid edges
-    // need to be created using the ellipses
+    // Need to use NewRuledEdge here, which means valid edges need to
+    // be created using the ellipses
 
     int ell1ind = (*b)->AddEdgeCurve(ellcurve1);
     int ell2ind = (*b)->AddEdgeCurve(ellcurve2);
@@ -158,8 +158,8 @@ rt_tgc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     int tei = (*b)->m_E.Count() - 1;
 
     ON_BrepFace *sidefce = (*b)->NewRuledFace((*b)->m_E[bei], false, (*b)->m_E[tei], false); 
-
 }
+
 
 // Local Variables:
 // tab-width: 8

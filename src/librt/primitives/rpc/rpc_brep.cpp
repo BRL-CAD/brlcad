@@ -30,9 +30,8 @@
 #include "brep.h"
 
 
-
 /**
- *			R T _ R P C _ B R E P
+ * R T _ R P C _ B R E P
  */
 extern "C" void
 rt_rpc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
@@ -52,7 +51,8 @@ rt_rpc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     ON_3dPoint plane1_origin, plane2_origin;
     ON_3dVector plane_x_dir, plane_y_dir;
     
-    //  First, find plane in 3 space corresponding to the bottom face of the RPC.
+    // First, find plane in 3 space corresponding to the bottom face
+    // of the RPC.
    
     vect_t tmp, x_dir, y_dir;
     
@@ -67,8 +67,8 @@ rt_rpc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     plane_y_dir = ON_3dVector(y_dir);
     const ON_Plane* rpc_bottom_plane = new ON_Plane(plane1_origin, plane_x_dir, plane_y_dir); 
    
-    //  Next, create a parabolic NURBS curve corresponding to the shape of
-    //  the parabola in the two planes.
+    // Next, create a parabolic NURBS curve corresponding to the shape
+    // of the parabola in the two planes.
     point_t x_rev_dir, ep1, ep2, ep3, tmppt;
     VREVERSE(x_rev_dir, x_dir);
 
@@ -81,21 +81,21 @@ rt_rpc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     ON_3dPoint onp3 = ON_3dPoint(ep3);
 
 
-    ON_NurbsCurve* parabnurbscurve = ON_NurbsCurve::New(3,false,3,3);
+    ON_NurbsCurve* parabnurbscurve = ON_NurbsCurve::New(3, false, 3, 3);
     parabnurbscurve->SetKnot(0, 0);
     parabnurbscurve->SetKnot(1, 0);
     parabnurbscurve->SetKnot(2, 1);
     parabnurbscurve->SetKnot(3, 1);
-    parabnurbscurve->SetCV(0,ON_3dPoint(ep1));
-    parabnurbscurve->SetCV(1,ON_3dPoint(ep2));
-    parabnurbscurve->SetCV(2,ON_3dPoint(ep3));
+    parabnurbscurve->SetCV(0, ON_3dPoint(ep1));
+    parabnurbscurve->SetCV(1, ON_3dPoint(ep2));
+    parabnurbscurve->SetCV(2, ON_3dPoint(ep3));
     bu_log("Valid nurbs curve: %d\n", parabnurbscurve->IsValid(dump));
     parabnurbscurve->Dump(*dump);
 
     // Also need a staight line from the beginning to the end to
-    // complete the loop
+    // complete the loop.
 
-    ON_LineCurve* straightedge = new ON_LineCurve(onp3,onp1);   
+    ON_LineCurve* straightedge = new ON_LineCurve(onp3, onp1);   
     bu_log("Valid curve: %d\n", straightedge->IsValid(dump));
     straightedge->Dump(*dump);
    
@@ -106,29 +106,31 @@ rt_rpc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     
     ON_PlaneSurface* bp = new ON_PlaneSurface();
     bp->m_plane = (*rpc_bottom_plane);
-    bp->SetDomain(0, -100.0, 100.0 );
-    bp->SetDomain(1, -100.0, 100.0 );
-    bp->SetExtents(0, bp->Domain(0) );
-    bp->SetExtents(1, bp->Domain(1) );
+    bp->SetDomain(0, -100.0, 100.0);
+    bp->SetDomain(1, -100.0, 100.0);
+    bp->SetExtents(0, bp->Domain(0));
+    bp->SetExtents(1, bp->Domain(1));
     (*b)->m_S.Append(bp);
     const int bsi = (*b)->m_S.Count() - 1;
     ON_BrepFace& bface = (*b)->NewFace(bsi);
     (*b)->NewPlanarFaceLoop(bface.m_face_index, ON_BrepLoop::outer, boundary, true); 
     const ON_BrepLoop* bloop = (*b)->m_L.Last();
-    bp->SetDomain(0, bloop->m_pbox.m_min.x, bloop->m_pbox.m_max.x );
-    bp->SetDomain(1, bloop->m_pbox.m_min.y, bloop->m_pbox.m_max.y );
-    bp->SetExtents(0,bp->Domain(0));
-    bp->SetExtents(1,bp->Domain(1));
+    bp->SetDomain(0, bloop->m_pbox.m_min.x, bloop->m_pbox.m_max.x);
+    bp->SetDomain(1, bloop->m_pbox.m_min.y, bloop->m_pbox.m_max.y);
+    bp->SetExtents(0, bp->Domain(0));
+    bp->SetExtents(1, bp->Domain(1));
     (*b)->SetTrimIsoFlags(bface);
     
-    // Now the side face and top cap - extrude the bottom face and set the cap flag to true
+    // Now the side face and top cap - extrude the bottom face and set
+    // the cap flag to true.
     vect_t vp2;
-    VADD2(vp2,eip->rpc_V, eip->rpc_H);
+    VADD2(vp2, eip->rpc_V, eip->rpc_H);
     const ON_Curve* extrudepath = new ON_LineCurve(ON_3dPoint(eip->rpc_V), ON_3dPoint(vp2));
     ON_Brep& brep = *(*b);
-    ON_BrepExtrudeFace(brep,0, *extrudepath, true);
+    ON_BrepExtrudeFace(brep, 0, *extrudepath, true);
   
 }
+
 
 // Local Variables:
 // tab-width: 8

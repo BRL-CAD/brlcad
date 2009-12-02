@@ -2,32 +2,33 @@
  * Intersect a ray with an 'xxx' primitive object.
  *
  * Adding a new solid type:
- *	Design disk record
  *
- *	define rt_xxx_internal --- parameters for solid
- *	define xxx_specific --- raytracing form, possibly w/precomuted terms
- *	define rt_xxx_parse --- struct bu_structparse for "db get", "db adjust", ...
+ * Design disk record
  *
- *	code import/export/describe/print/ifree/plot/prep/shot/curve/uv/tess
+ * define rt_xxx_internal --- parameters for solid
+ * define xxx_specific --- raytracing form, possibly w/precomuted terms
+ * define rt_xxx_parse --- struct bu_structparse for "db get", "db adjust", ...
  *
- *	edit db.h add solidrec s_type define
- *	edit rtgeom.h to add rt_xxx_internal
- *      edit magic.h to add RT_XXX_INTERNAL_MAGIC
- *	edit table.c:
- *		RT_DECLARE_INTERFACE()
- *		struct rt_functab entry
- *		rt_id_solid()
- *	edit raytrace.h to make ID_XXX, increment ID_MAXIMUM
- *	edit db_scan.c to add the new solid to db_scan()
- *	edit Makefile.am to add g_xxx.c to compile
+ * code import/export4/describe/print/ifree/plot/prep/shot/curve/uv/tess
  *
- *	Then:
- *	go to src/libwdb and create mk_xxx() routine
- *	go to src/conv and edit g2asc.c and asc2g.c to support the new solid
- *	go to src/librt and edit tcl.c to add the new solid to
- *		rt_solid_type_lookup[]
- *		also add the interface table and to rt_id_solid() in table.c
- *	go to src/mged and create the edit support
+ * edit db.h add solidrec s_type define
+ * edit rtgeom.h to add rt_xxx_internal
+ * edit magic.h to add RT_XXX_INTERNAL_MAGIC
+ * edit table.c:
+ *	RT_DECLARE_INTERFACE()
+ *	struct rt_functab entry
+ *	rt_id_solid()
+ * edit raytrace.h to make ID_XXX, increment ID_MAXIMUM
+ * edit db_scan.c to add the new solid to db_scan()
+ * edit Makefile.am to add g_xxx.c to compile
+ *
+ * go to src/libwdb and create mk_xxx() routine
+ * go to src/conv and edit g2asc.c and asc2g.c to support the new solid
+ * go to src/librt and edit tcl.c to add the new solid to
+ *	rt_solid_type_lookup[]
+ *	also add the interface table and to rt_id_solid() in table.c
+ * go to src/mged and create the edit support
+ *
  */
 
 #include "common.h"
@@ -45,12 +46,13 @@
 
 /* parameters for solid, internal representation */
 struct rt_xxx_internal {
-    long	magic;
-    vect_t	v;
+    long magic;
+    vect_t v;
 };
 
-#  define RT_XXX_INTERNAL_MAGIC	0x78787878 /* 'xxxx' */
-#  define RT_XXX_CK_MAGIC(_p)	BU_CKMAG(_p, RT_XXX_INTERNAL_MAGIC, "rt_xxx_internal")
+
+#  define RT_XXX_INTERNAL_MAGIC 0x78787878 /* 'xxxx' */
+#  define RT_XXX_CK_MAGIC(_p) BU_CKMAG(_p, RT_XXX_INTERNAL_MAGIC, "rt_xxx_internal")
 
 /* should set in raytrace.h to ID_MAX_SOLID and increment the max */
 #  define ID_XXX 0
@@ -59,7 +61,7 @@ struct rt_xxx_internal {
 
 /* ray tracing form of solid, including precomputed terms */
 struct xxx_specific {
-    vect_t	xxx_V;
+    vect_t xxx_V;
 };
 
 
