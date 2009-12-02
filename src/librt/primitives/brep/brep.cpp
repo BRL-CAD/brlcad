@@ -183,26 +183,16 @@ brep_pt_trimmed(pt2d_t pt, const ON_BrepFace& face) {
 
 static int pcount = 0;
 static FILE* plot = NULL;
-static FILE*
-plot_file()
-{
-    if (plot == NULL) {
-	plot = fopen("out.pl", "w");
-	point_t min, max;
-	VSET(min, -2048, -2048, -2048);
-	VSET(max, 2048, 2048, 2048);
-	pdv_3space(plot, min, max);
-    }
-    return plot;
-}
 
-
-static FILE*
-plot_file(const char *pname)
+HIDDEN FILE*
+_plot_file(const char *pname = NULL)
 {
     if (plot != NULL) {
 	(void)fclose(plot);
 	plot = NULL;
+    }
+    if (pname == NULL) {
+	pname = "out.pl";
     }
     plot = fopen(pname, "w");
     point_t min, max;
@@ -246,23 +236,23 @@ plot_file(const char *pname)
 #define BLACK 0, 0, 0
 #define WHITE 255, 255, 255
 
-#define M_COLOR_PLOT(c) pl_color(plot_file(), c)
-#define COLOR_PLOT(r, g, b) pl_color(plot_file(), (r), (g), (b))
+#define M_COLOR_PLOT(c) pl_color(_plot_file(), c)
+#define COLOR_PLOT(r, g, b) pl_color(_plot_file(), (r), (g), (b))
 #define M_PT_PLOT(p) { 		\
     point_t pp, ppp;		        \
     vect_t grow;                        \
     VSETALL(grow, 0.01);                  \
     VADD2(pp, p, grow);                 \
     VSUB2(ppp, p, grow);                \
-    pdv_3box(plot_file(), pp, ppp); 	\
+    pdv_3box(_plot_file(), pp, ppp); 	\
 }
 #define PT_PLOT(p) { 		\
     point_t pp; 			\
     VSCALE(pp, p, 1.001); 		\
-    pdv_3box(plot_file(), p, pp); 	\
+    pdv_3box(_plot_file(), p, pp); 	\
 }
-#define LINE_PLOT(p1, p2) pdv_3move(plot_file(), p1); pdv_3line(plot_file(), p1, p2)
-#define BB_PLOT(p1, p2) pdv_3box(plot_file(), p1, p2)
+#define LINE_PLOT(p1, p2) pdv_3move(_plot_file(), p1); pdv_3line(_plot_file(), p1, p2)
+#define BB_PLOT(p1, p2) pdv_3box(_plot_file(), p1, p2)
 #endif /* PLOTTING */
 
 double
@@ -588,52 +578,52 @@ public:
     brep_hit(const ON_BrepFace& f, const point_t orig, const point_t p, const vect_t n, const pt2d_t _uv)
 	: face(f), trimmed(false), closeToEdge(false), oob(false), sbv(NULL)
     {
-	VMOVE(origin, orig);
-	VMOVE(point, p);
-	VMOVE(normal, n);
-	move(uv, _uv);
+	    VMOVE(origin, orig);
+	    VMOVE(point, p);
+	    VMOVE(normal, n);
+	    move(uv, _uv);
     }
 
     brep_hit(const brep_hit& h)
 	: face(h.face), trimmed(h.trimmed), closeToEdge(h.closeToEdge), oob(h.oob), sbv(h.sbv)
     {
-	VMOVE(origin, h.origin);
-	VMOVE(point, h.point);
-	VMOVE(normal, h.normal);
-	move(uv, h.uv);
-	trimmed = h.trimmed;
-	closeToEdge = h.closeToEdge;
-	oob = h.oob;
-	sbv = h.sbv;
-	hit = h.hit;
-	direction = h.direction;
+	    VMOVE(origin, h.origin);
+	    VMOVE(point, h.point);
+	    VMOVE(normal, h.normal);
+	    move(uv, h.uv);
+	    trimmed = h.trimmed;
+	    closeToEdge = h.closeToEdge;
+	    oob = h.oob;
+	    sbv = h.sbv;
+	    hit = h.hit;
+	    direction = h.direction;
     }
 
     brep_hit& operator=(const brep_hit& h)
     {
-	const_cast<ON_BrepFace&>(face) = h.face;
-	VMOVE(origin, h.origin);
-	VMOVE(point, h.point);
-	VMOVE(normal, h.normal);
-	move(uv, h.uv);
-	trimmed = h.trimmed;
-	closeToEdge = h.closeToEdge;
-	oob = h.oob;
-	sbv = h.sbv;
-	hit = h.hit;
-	direction = h.direction;
+	    const_cast<ON_BrepFace&>(face) = h.face;
+	    VMOVE(origin, h.origin);
+	    VMOVE(point, h.point);
+	    VMOVE(normal, h.normal);
+	    move(uv, h.uv);
+	    trimmed = h.trimmed;
+	    closeToEdge = h.closeToEdge;
+	    oob = h.oob;
+	    sbv = h.sbv;
+	    hit = h.hit;
+	    direction = h.direction;
 
-	return *this;
+	    return *this;
     }
 
     bool operator==(const brep_hit& h)
     {
-	return NEAR_ZERO(DIST_PT_PT(point, h.point), BREP_SAME_POINT_TOLERANCE);
+	    return NEAR_ZERO(DIST_PT_PT(point, h.point), BREP_SAME_POINT_TOLERANCE);
     }
 
     bool operator<(const brep_hit& h)
     {
-	return DIST_PT_PT(point, origin) < DIST_PT_PT(h.point, origin);
+	    return DIST_PT_PT(point, origin) < DIST_PT_PT(h.point, origin);
     }
 };
 
@@ -1560,7 +1550,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
     }
 
 #ifdef KDEBUGMISS
-    //(void)fclose(plot_file());
+    //(void)fclose(_plot_file());
     //	plot = NULL;
 #endif
     HitList hits = all_hits;
@@ -2092,19 +2082,19 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 
 		// draw bounding box
 		BB_PLOT(i->sbv->m_node.m_min, i->sbv->m_node.m_max);
-		fflush(plot_file());
+		fflush(_plot_file());
 	    }
 #endif
 
-	    // 	    if ((num == 0 && dot > 0) || sign(dot) == lastSign) {
-	    // remove hits with "bad" normals
-	    // 		i = hits.erase(i);
-	    // 		--i;
-	    // 		TRACE("removed a hit!");
-	    // 		continue;
-	    // 	    } else {
-	    // 		lastSign = sign(dot);
-	    // 	    }
+	    // if ((num == 0 && dot > 0) || sign(dot) == lastSign) {
+	    //   // remove hits with "bad" normals
+	    // 	 i = hits.erase(i);
+	    //   --i;
+	    //   TRACE("removed a hit!");
+	    //   continue;
+	    // } else {
+	    //   lastSign = sign(dot);
+	    // }
 
 	    TRACE("hit " << num << ": " << ON_PRINT3(i->point) << " [" << dot << "]");
 	    while ((m != misses.end()) && (m->first == num)) {
@@ -2545,7 +2535,7 @@ rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 	}
     }
 
-    
+
 /*
  * DEBUGGING WIREFRAMES
  */

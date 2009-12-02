@@ -91,23 +91,23 @@ using namespace brlcad;
 #define BLACK 0, 0, 0
 #define WHITE 255, 255, 255
 
-#define M_COLOR_PLOT(c) pl_color(plot_file(), c)
-#define COLOR_PLOT(r, g, b) pl_color(plot_file(), (r), (g), (b))
+#define M_COLOR_PLOT(c) pl_color(_plot_file(), c)
+#define COLOR_PLOT(r, g, b) pl_color(_plot_file(), (r), (g), (b))
 #define M_PT_PLOT(p) {				\
 	point_t pp, ppp;		        \
 	vect_t grow;				\
 	VSETALL(grow, 0.01);			\
 	VADD2(pp, p, grow);			\
 	VSUB2(ppp, p, grow);			\
-	pdv_3box(plot_file(), pp, ppp); 	\
+	pdv_3box(_plot_file(), pp, ppp); 	\
     }
 #define PT_PLOT(p) {				\
 	point_t pp;				\
 	VSCALE(pp, p, 1.001);			\
-	pdv_3box(plot_file(), p, pp);		\
+	pdv_3box(_plot_file(), p, pp);		\
     }
-#define LINE_PLOT(p1, p2) pdv_3move(plot_file(), p1); pdv_3line(plot_file(), p1, p2)
-#define BB_PLOT(p1, p2) pdv_3box(plot_file(), p1, p2)
+#define LINE_PLOT(p1, p2) pdv_3move(_plot_file(), p1); pdv_3line(_plot_file(), p1, p2)
+#define BB_PLOT(p1, p2) pdv_3box(_plot_file(), p1, p2)
 
 
 void plotsurfaceleafs(SurfaceTree* surf);
