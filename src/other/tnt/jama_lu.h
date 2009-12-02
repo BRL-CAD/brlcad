@@ -3,7 +3,11 @@
 
 #include "tnt.h"
 #include <algorithm>
+#include <float.h>
 //for min(), max() below
+
+#define NEAR_ZERO(val, epsilon)(((val) > -epsilon) && ((val) < epsilon))
+
 
 using namespace TNT;
 using namespace std;
@@ -36,32 +40,32 @@ class LU
 
 
    Array2D<Real> permute_copy(const Array2D<Real> &A,
-   			const Array1D<int> &piv, int j0, int j1)
+   			const Array1D<int> &pivot, int j0, int j1)
 	{
-		int piv_length = piv.dim();
+		int pivotlength = pivot.dim();
 
-		Array2D<Real> X(piv_length, j1-j0+1);
+		Array2D<Real> X(pivotlength, j1-j0+1);
 
 
-         for (int i = 0; i < piv_length; i++)
+         for (int i = 0; i < pivotlength; i++)
             for (int j = j0; j <= j1; j++)
-               X[i][j-j0] = A[piv[i]][j];
+               X[i][j-j0] = A[pivot[i]][j];
 
 		return X;
 	}
 
    Array1D<Real> permute_copy(const Array1D<Real> &A,
-   		const Array1D<int> &piv)
+   		const Array1D<int> &pivot)
 	{
-		int piv_length = piv.dim();
-		if (piv_length != A.dim())
+		int pivotlength = pivot.dim();
+		if (pivotlength != A.dim())
 			return Array1D<Real>();
 
-		Array1D<Real> x(piv_length);
+		Array1D<Real> x(pivotlength);
 
 
-         for (int i = 0; i < piv_length; i++)
-               x[i] = A[piv[i]];
+         for (int i = 0; i < pivotlength; i++)
+               x[i] = A[pivot[i]];
 
 		return x;
 	}
@@ -138,7 +142,7 @@ class LU
 
          // Compute multipliers.
 
-         if ((j < m) && (LU_[j][j] != 0.0)) {
+         if ((j < m) && (NEAR_ZERO(LU_[j][j], DBL_MIN))) {
             for (int i = j+1; i < m; i++) {
                LU_[i][j] /= LU_[j][j];
             }
@@ -154,7 +158,7 @@ class LU
 
    int isNonsingular () {
       for (int j = 0; j < n; j++) {
-         if (LU_[j][j] == 0)
+        if (NEAR_ZERO(LU_[j][j], DBL_MIN))
             return 0;
       }
       return 1;
