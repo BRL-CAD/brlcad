@@ -300,19 +300,23 @@ struct hit {
  * Return the post-boolean normal into caller-provided _normal vector.
  */
 #define RT_HIT_NORMAL(_normal, _hitp, _stp, _unused, _flipflag) { \
-	RT_CK_HIT(_hitp); \
-	RT_CK_SOLTAB(_stp); \
-	RT_CK_FUNCTAB((_stp)->st_meth); \
+    RT_CK_HIT(_hitp); \
+    RT_CK_SOLTAB(_stp); \
+    RT_CK_FUNCTAB((_stp)->st_meth); \
+    { \
+	void *_n = (void *)_normal; \
 	if ((_stp)->st_meth->ft_norm) { \
-		(_stp)->st_meth->ft_norm(_hitp, _stp, (_hitp)->hit_rayp); \
+	    (_stp)->st_meth->ft_norm(_hitp, _stp, (_hitp)->hit_rayp); \
 	} \
-	if (_normal) { \
-		if (_flipflag) { \
-			VREVERSE((fastf_t *)_normal, (_hitp)->hit_normal); \
-		} else { \
-			VMOVE((fastf_t *)_normal, (_hitp)->hit_normal); \
-		} \
+	if (_n != NULL) { \
+	    int _f = (int)_flipflag; \
+	    if (_f) { \
+		VREVERSE((fastf_t *)_normal, (_hitp)->hit_normal); \
+	    } else { \
+		VMOVE((fastf_t *)_normal, (_hitp)->hit_normal); \
+	    } \
 	} \
+    } \
  }
 
 /* A more powerful interface would be: */
