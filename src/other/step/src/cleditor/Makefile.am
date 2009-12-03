@@ -25,8 +25,9 @@ libstepeditor_la_SOURCES =
 libstepeditor_la_LDFLAGS = -no-undefined -Wc,${FEXCEPTIONS} -version-info 19:1
 libstepeditor_la_LIBADD = \
 	libstepeditor_nil.la \
-	${CLUTILS} \
-	${CLSTEPCORE} \
+	${STEPCORE} \
+	${STEPDAI} \
+	${STEPUTILS} \
 	${LIBSTDCXX}
 
 noinst_HEADERS = \
