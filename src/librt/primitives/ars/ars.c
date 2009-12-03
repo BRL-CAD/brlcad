@@ -1080,8 +1080,9 @@ rt_hitsort(register struct hit *h, register int nh)
 void
 rt_ars_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
-    register struct tri_specific *trip =
-	(struct tri_specific *)hitp->hit_private;
+    struct tri_specific *trip = (struct tri_specific *)stp->st_specific;
+    if (!trip)
+	return;
 
     VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir);
     VMOVE(hitp->hit_normal, trip->tri_N);
@@ -1097,6 +1098,10 @@ rt_ars_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 void
 rt_ars_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
 {
+    struct tri_specific *trip = (struct tri_specific *)stp->st_specific;
+    if (!trip)
+	return;
+
     bn_vec_ortho(cvp->crv_pdir, hitp->hit_normal);
     cvp->crv_c1 = cvp->crv_c2 = 0;
 }
@@ -1114,11 +1119,13 @@ rt_ars_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 void
 rt_ars_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
 {
-    register struct tri_specific *trip =
-	(struct tri_specific *)hitp->hit_private;
     vect_t P_A;
     fastf_t r;
     fastf_t xxlen, yylen;
+
+    struct tri_specific *trip = (struct tri_specific *)stp->st_specific;
+    if (!trip)
+	return;
 
     xxlen = MAGNITUDE(trip->tri_BA);
     yylen = MAGNITUDE(trip->tri_CA);
@@ -1144,7 +1151,7 @@ rt_ars_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
  * R T _ A R S _ P L O T
  */
 int
-rt_ars_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_ars_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
 {
     register int i;
     register int j;
@@ -1180,7 +1187,7 @@ rt_ars_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 
 
 int
-rt_ars_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *attr)
+rt_ars_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr)
 {
     register struct rt_ars_internal *ars=(struct rt_ars_internal *)intern->idb_ptr;
     int i, j;
@@ -1188,35 +1195,35 @@ rt_ars_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *
     RT_ARS_CK_MAGIC(ars);
 
     if (attr == (char *)NULL) {
-	bu_vls_strcpy(log, "ars");
-	bu_vls_printf(log, " NC %d PPC %d", ars->ncurves, ars->pts_per_curve);
+	bu_vls_strcpy(logstr, "ars");
+	bu_vls_printf(logstr, " NC %d PPC %d", ars->ncurves, ars->pts_per_curve);
 	for (i=0; i<ars->ncurves; i++) {
-	    bu_vls_printf(log, " C%d {", i);
+	    bu_vls_printf(logstr, " C%d {", i);
 	    for (j=0; j<ars->pts_per_curve; j++) {
-		bu_vls_printf(log, " { %.25g %.25g %.25g }",
+		bu_vls_printf(logstr, " { %.25g %.25g %.25g }",
 			      V3ARGS(&ars->curves[i][j*3]));
 	    }
-	    bu_vls_printf(log, " }");
+	    bu_vls_printf(logstr, " }");
 	}
     } else if (!strcmp(attr, "NC")) {
-	bu_vls_printf(log, "%d", ars->ncurves);
+	bu_vls_printf(logstr, "%d", ars->ncurves);
     } else if (!strcmp(attr, "PPC")) {
-	bu_vls_printf(log, "%d", ars->pts_per_curve);
+	bu_vls_printf(logstr, "%d", ars->pts_per_curve);
     } else if (attr[0] == 'C') {
 	char *ptr;
 
 	if (attr[1] == '\0') {
 	    /* all the curves */
 	    for (i=0; i<ars->ncurves; i++) {
-		bu_vls_printf(log, " C%d {", i);
+		bu_vls_printf(logstr, " C%d {", i);
 		for (j=0; j<ars->pts_per_curve; j++) {
-		    bu_vls_printf(log, " { %.25g %.25g %.25g }",
+		    bu_vls_printf(logstr, " { %.25g %.25g %.25g }",
 				  V3ARGS(&ars->curves[i][j*3]));
 		}
-		bu_vls_printf(log, " }");
+		bu_vls_printf(logstr, " }");
 	    }
 	} else if (!isdigit(attr[1])) {
-	    bu_vls_printf(log, 
+	    bu_vls_printf(logstr, 
 			  "ERROR: illegal argument, must be NC, PPC, C, C#, or C#P#\n");
 	    return BRLCAD_ERROR;
 	}
@@ -1224,20 +1231,20 @@ rt_ars_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *
 	if ((ptr=strchr(attr, 'P'))) {
 	    /* a specific point on a specific curve */
 	    if (!isdigit(*(ptr+1))) {
-		bu_vls_printf(log, 
+		bu_vls_printf(logstr, 
 			      "ERROR: illegal argument, must be NC, PPC, C, C#, or C#P#\n");
 		return BRLCAD_ERROR;
 	    }
 	    j = atoi((ptr+1));
 	    *ptr = '\0';
 	    i = atoi(&attr[1]);
-	    bu_vls_printf(log, "%.25g %.25g %.25g",
+	    bu_vls_printf(logstr, "%.25g %.25g %.25g",
 			  V3ARGS(&ars->curves[i][j*3]));
 	} else {
 	    /* the entire curve */
 	    i = atoi(&attr[1]);
 	    for (j=0; j<ars->pts_per_curve; j++) {
-		bu_vls_printf(log, " { %.25g %.25g %.25g }",
+		bu_vls_printf(logstr, " { %.25g %.25g %.25g }",
 			      V3ARGS(&ars->curves[i][j*3]));
 	    }
 	}
@@ -1248,7 +1255,7 @@ rt_ars_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *
 
 
 int
-rt_ars_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char **argv)
+rt_ars_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv)
 {
     struct rt_ars_internal *ars;
     int i, j, k;
@@ -1299,7 +1306,7 @@ rt_ars_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 	    /* change the number of points per curve */
 	    i = atoi(argv[1]);
 	    if (i < 3) {
-		bu_vls_printf(log,
+		bu_vls_printf(logstr,
 			      "ERROR: must have at least 3 points per curve\n");
 		return BRLCAD_ERROR;
 	    }
@@ -1341,7 +1348,7 @@ rt_ars_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 		    if (tcl_list_to_fastf_array(brlcad_interp, argv[1],
 						&array,
 						&len)!= len) {
-			bu_vls_printf(log,
+			bu_vls_printf(logstr,
 				      "WARNING: incorrect number of parameters provided for a point\n");
 		    }
 		} else {
@@ -1363,17 +1370,17 @@ rt_ars_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 		    if (tcl_list_to_fastf_array(brlcad_interp, argv[1],
 						&ars->curves[i],
 						&len) != len) {
-			bu_vls_printf(log,
+			bu_vls_printf(logstr,
 				      "WARNING: incorrect number of parameters provided for a curve\n");
 		    }
 		}
 	    } else {
-		bu_vls_printf(log,
+		bu_vls_printf(logstr,
 			      "ERROR: Illegal argument, must be NC, PPC, C#, or C#P#\n");
 		return BRLCAD_ERROR;
 	    }
 	} else {
-	    bu_vls_printf(log,
+	    bu_vls_printf(logstr,
 			  "ERROR: Illegal argument, must be NC, PPC, C#, or C#P#\n");
 	    return BRLCAD_ERROR;
 	}
@@ -1390,8 +1397,11 @@ rt_ars_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
  *
  */
 int
-rt_ars_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
+rt_ars_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 {
+    ps = ps; /* quellage */
+    RT_CK_DB_INTERNAL(ip);
+
     return(0);			/* OK */
 }
 
