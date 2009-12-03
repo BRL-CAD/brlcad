@@ -64,22 +64,33 @@ extern int rt_bot_minpieces;
 
 /* from g_bot.c */
 extern int rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip);
+extern void rt_bot_ifree(struct rt_db_internal *ip, struct resource *resp);
+
 
 void
 rt_ars_free(register struct soltab *stp)
 {
-    bu_bomb("rt_ars_free s/b rt_bot_free\n");
+    register struct tri_specific *trip =
+	(struct tri_specific *)stp->st_specific;
+
+    if (trip == TRI_NULL)
+	bu_bomb("rt_ars_free s/b rt_bot_free\n");
 }
 
 
 int
 rt_ars_class(const struct soltab *stp,
-	     const vect_t min,
-	     const vect_t max,
-	     const struct bn_tol *tol)
+	     const vect_t min __attribute__((unused)),
+	     const vect_t max __attribute__((unused)),
+	     const struct bn_tol *tol __attribute__((unused)))
 {
-    bu_bomb("rt_ars_class s/b rt_bot_class\n");
-    return 0; /* not reached */
+    register struct tri_specific *trip =
+	(struct tri_specific *)stp->st_specific;
+
+    if (trip == TRI_NULL)
+	bu_bomb("rt_ars_class s/b rt_bot_class\n");
+
+    return 0;
 }
 
 
@@ -140,6 +151,8 @@ rt_ars_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     register int i, j;
     vect_t base_vect;
     int currec;
+
+    if (dbip) RT_CK_DBI(dbip);
 
     BU_CK_EXTERNAL(ep);
     rp = (union record *)ep->ext_buf;
@@ -216,6 +229,8 @@ rt_ars_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     int gno; /* current granule number */
 
     RT_CK_DB_INTERNAL(ip);
+    if (dbip) RT_CK_DBI(dbip);
+
     if (ip->idb_type != ID_ARS) return(-1);
     arip = (struct rt_ars_internal *)ip->idb_ptr;
     RT_ARS_CK_MAGIC(arip);
@@ -291,8 +306,9 @@ rt_ars_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     vect_t tmp_vec;
     register fastf_t *fp;
 
-    BU_CK_EXTERNAL(ep);
     RT_CK_DB_INTERNAL(ip);
+    BU_CK_EXTERNAL(ep);
+    if (dbip) RT_CK_DBI(dbip);
 
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_ARS;
@@ -348,6 +364,8 @@ rt_ars_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     if (ip->idb_type != ID_ARS) return(-1);
     arip = (struct rt_ars_internal *)ip->idb_ptr;
     RT_ARS_CK_MAGIC(arip);
+
+    if (dbip) RT_CK_DBI(dbip);
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = 2 * SIZEOF_NETWORK_LONG +
@@ -464,7 +482,7 @@ rt_ars_ifree(struct rt_db_internal *ip, struct resource *resp)
  * R T _ A R S _ T E S S
  */
 int
-rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol)
 {
     register int i;
     register int j;
@@ -937,8 +955,9 @@ rt_ars_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     {
 	register int i, j;
 
-	if (nhits)
+	if (nhits) {
 	    RT_HIT_NORMAL(NULL, &hits[0], stp, 0, 0);
+	}
 
 	for (i=0; i<nhits-1; i++) {
 	    fastf_t dist;
