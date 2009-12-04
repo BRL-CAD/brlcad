@@ -17,6 +17,12 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* NADA
+
+
+THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
+-------------------------------------------------------
+
 * 64-bit port of BRL-CAD on Windows
 
 * annotation primitive.  specifically a means to create an object in
@@ -30,9 +36,9 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   also be useful to allow an optional "thickness" so that the
   annotations can represent physical geometry (so they raytrace).
 
-
-THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
--------------------------------------------------------
+* deprecate dbfind - ensure functionality is fully captured by the
+  search command, make it report a deprecation statement on use and
+  utilize search under the hood.
 
 * refactor rt_functab accessors to go through an api call or calls so
   that the array is not accessed directly.  either an rt_eval() style
