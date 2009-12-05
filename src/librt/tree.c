@@ -41,6 +41,7 @@
 #include "bn.h"
 #include "db.h"
 #include "raytrace.h"
+#include "mater.h"
 
 
 #define ACQUIRE_SEMAPHORE_TREE(_hash) switch ((_hash)&03) {	\
@@ -115,10 +116,14 @@ _rt_tree_region_assign(register union tree *tp, register const struct region *re
  * This routine must be prepared to run in parallel.
  */
 HIDDEN int
-_rt_gettree_region_start(struct db_tree_state *tsp, struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
+_rt_gettree_region_start(struct db_tree_state *tsp, struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data __attribute__((unused)))
 {
-    RT_CK_RTI(tsp->ts_rtip);
-    RT_CK_RESOURCE(tsp->ts_resp);
+    if (tsp) {
+	RT_CK_RTI(tsp->ts_rtip);
+	RT_CK_RESOURCE(tsp->ts_resp);
+    }
+    if (pathp) RT_CK_FULL_PATH(pathp);
+    if (combp) RT_CHECK_COMB(combp);
 
     /* Ignore "air" regions unless wanted */
     if (tsp->ts_rtip->useair == 0 &&  tsp->ts_aircode != 0) {
@@ -149,7 +154,7 @@ _rt_gettree_region_end(register struct db_tree_state *tsp, struct db_full_path *
     struct directory *dp;
     int shader_len=0;
     struct rt_i *rtip;
-    int i;
+    size_t i;
     Tcl_HashTable *tbl = (Tcl_HashTable *)client_data;
     Tcl_HashEntry *entry;
     matp_t inv_mat;
@@ -177,7 +182,7 @@ _rt_gettree_region_end(register struct db_tree_state *tsp, struct db_full_path *
     if (tsp->ts_attrs.count && tsp->ts_attrs.avp) {
 	rp->attr_values = (struct bu_mro **)bu_calloc(tsp->ts_attrs.count+1,
 						      sizeof(struct bu_mro *), "regp->attr_values");
-	for (i=0; i<tsp->ts_attrs.count; i++) {
+	for (i=0; i<(size_t)tsp->ts_attrs.count; i++) {
 	    rp->attr_values[i] = bu_malloc(sizeof(struct bu_mro),
 					   "rp->attr_values[i]");
 	    bu_mro_init_with_string(rp->attr_values[i], tsp->ts_attrs.avp[i].value);
@@ -234,10 +239,7 @@ _rt_gettree_region_end(register struct db_tree_state *tsp, struct db_full_path *
 	long int reg_bit = rp->reg_bit;
 
 	inv_mat = (matp_t)bu_calloc(16, sizeof(fastf_t), "inv_mat");
-	if (tsp->ts_mat)
-	    bn_mat_inv(inv_mat, tsp->ts_mat);
-	else
-	    MAT_IDN(inv_mat);
+	bn_mat_inv(inv_mat, tsp->ts_mat);
 
 	/* enter critical section */
 	bu_semaphore_acquire(RT_SEM_RESULTS);
@@ -449,7 +451,7 @@ _rt_find_identical_solid(register const matp_t mat, register struct directory *d
  * This routine must be prepared to run in parallel.
  */
 HIDDEN union tree *
-_rt_gettree_leaf(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
+_rt_gettree_leaf(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data __attribute__((unused)))
 {
     register struct soltab *stp;
     struct directory *dp;
@@ -621,8 +623,8 @@ found_it:
  *
  * This routine semaphore protects against other copies of itself
  * running in parallel, and against other routines (such as
- * _rt_find_identical_solid()) which might also be modifying the linked
- * list heads.
+ * _rt_find_identical_solid()) which might also be modifying the
+ * linked list heads.
  *
  * Called by -
  * db_free_tree()
