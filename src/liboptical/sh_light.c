@@ -1326,8 +1326,6 @@ light_vis(struct light_obs_stuff *los, char *flags)
 	VMOVE(shoot_dir, los->lsp->lt_vec);
 
     } else if (los->lsp->lt_pt_count > 0) {
-	static const vect_t zero = { 0.0, 0.0, 0.0 };
-
 	/* pick a point at random from the list of points on
 	 * the surface of the light.  If the normals indicate
 	 * inter-visibility, then shoot at that point
@@ -1381,7 +1379,7 @@ light_vis(struct light_obs_stuff *los, char *flags)
 	    VisRayvsSurfN
 		= VDOT(los->swp->sw_hit.hit_normal, dir);
 
-	    if (VEQUAL(lpt->lp_norm, zero)) {
+	    if (VNEAR_ZERO(lpt->lp_norm, SMALL_FASTF)) {
 		VisRayvsLightN = 1.0;
 	    } else {
 		VisRayvsLightN = VDOT(lpt->lp_norm, rdir);
@@ -1406,7 +1404,6 @@ light_vis(struct light_obs_stuff *los, char *flags)
 		bu_log("VisRayvsLightN %g\n", VisRayvsLightN);
 		bu_log("VisRayvsSurfN %g\n", VisRayvsSurfN);
 		VPRINT("norm", lpt->lp_norm);
-		VPRINT("zero", zero);
 	    }
 	    /* the sample point is backfacing to the location
 	     * we want to test from
