@@ -635,23 +635,24 @@ found_it:
 void
 rt_free_soltab(struct soltab *stp)
 {
-    int hash;
+    int hash = 0;
 
     RT_CK_SOLTAB(stp);
     if (stp->st_id < 0)
 	bu_bomb("rt_free_soltab:  bad st_id");
 
-    hash = db_dirhash(stp->st_dp->d_namep);
+    if (stp->st_dp && stp->st_dp->d_namep)
+	hash = db_dirhash(stp->st_dp->d_namep);
 
-    ACQUIRE_SEMAPHORE_TREE(hash);		/* start critical section */
+    ACQUIRE_SEMAPHORE_TREE(hash);	/* start critical section */
     if (--(stp->st_uses) > 0) {
 	RELEASE_SEMAPHORE_TREE(hash);
 	return;
     }
-    BU_LIST_DEQUEUE(&(stp->l2));		/* remove from st_dp->d_use_hd list */
+    BU_LIST_DEQUEUE(&(stp->l2));	/* remove from st_dp->d_use_hd list */
     BU_LIST_DEQUEUE(&(stp->l));		/* uses rti_solidheads[] */
 
-    RELEASE_SEMAPHORE_TREE(hash);		/* end critical section */
+    RELEASE_SEMAPHORE_TREE(hash);	/* end critical section */
 
     if (stp->st_aradius > 0) {
 	if (stp->st_meth->ft_free)
@@ -663,7 +664,7 @@ rt_free_soltab(struct soltab *stp)
 
     bu_ptbl_free(&stp->st_regions);
 
-    stp->st_dp = DIR_NULL;		/* Sanity */
+    stp->st_dp = DIR_NULL;	/* Sanity */
 
     if (stp->st_path.magic) {
 	RT_CK_FULL_PATH(&stp->st_path);
