@@ -109,7 +109,7 @@ int
 rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_extrude_internal *eip;
-    register struct extrude_specific *extr;
+    struct extrude_specific *extr;
     struct rt_sketch_internal *skt;
     vect_t tmp, xyz[3];
     fastf_t tmp_f, ldir[3];
@@ -337,7 +337,7 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
  * R T _ E X T R U D E _ P R I N T
  */
 void
-rt_extrude_print(register const struct soltab *stp)
+rt_extrude_print(const struct soltab *stp)
 {
 }
 
@@ -558,10 +558,10 @@ isect_line_earc(fastf_t *dist, fastf_t *ray_start, fastf_t *ray_dir, fastf_t *ce
  * >0 HIT
  */
 int
-rt_extrude_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
+rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
     struct extrude_specific *extr=(struct extrude_specific *)stp->st_specific;
-    register int i, j, k;
+    int i, j, k;
     fastf_t dist_top, dist_bottom, to_bottom=0;
     fastf_t dist[2];
     fastf_t dot_pl1, dir_dot_z;
@@ -865,7 +865,7 @@ rt_extrude_shot(struct soltab *stp, register struct xray *rp, struct application
 
     if (check_inout) {
 	if (hit_count&1) {
-	    register struct seg *segp;
+	    struct seg *segp;
 
 	    hit_count = 2;
 	    hits[0].hit_magic = RT_HIT_MAGIC;
@@ -937,7 +937,7 @@ rt_extrude_shot(struct soltab *stp, register struct xray *rp, struct application
 
     /* build segments */
     {
-	register struct seg *segp;
+	struct seg *segp;
 
 	for (i=0; i < hit_count; i += 2) {
 	    RT_GET_SEG(segp, ap->a_resource);
@@ -978,7 +978,7 @@ rt_extrude_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n,
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
-rt_extrude_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
+rt_extrude_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
     struct extrude_specific *extr=(struct extrude_specific *)stp->st_specific;
     fastf_t alpha;
@@ -1038,7 +1038,7 @@ rt_extrude_norm(register struct hit *hitp, struct soltab *stp, register struct x
  * Return the curvature of the extrude.
  */
 void
-rt_extrude_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
+rt_extrude_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
     struct extrude_specific *extr=(struct extrude_specific *)stp->st_specific;
     struct carc_seg *csg;
@@ -1100,7 +1100,7 @@ rt_extrude_curve(register struct curvature *cvp, register struct hit *hitp, stru
  * v = elevation
  */
 void
-rt_extrude_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
+rt_extrude_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
 }
 
@@ -1109,9 +1109,9 @@ rt_extrude_uv(struct application *ap, struct soltab *stp, register struct hit *h
  * R T _ E X T R U D E _ F R E E
  */
 void
-rt_extrude_free(register struct soltab *stp)
+rt_extrude_free(struct soltab *stp)
 {
-    register struct extrude_specific *extrude =
+    struct extrude_specific *extrude =
 	(struct extrude_specific *)stp->st_specific;
 
     if (extrude->verts)
@@ -2072,7 +2072,7 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
  * Apply modeling transformations as well.
  */
 int
-rt_extrude_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip, struct resource *resp)
+rt_extrude_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip, struct resource *resp)
 {
     struct rt_extrude_internal *extrude_ip;
     struct rt_db_internal tmp_ip;
@@ -2237,7 +2237,7 @@ int
 rt_extrude_import5(
     struct rt_db_internal *ip,
     const struct bu_external *ep,
-    register const mat_t mat,
+    const mat_t mat,
     const struct db_i *dbip,
     struct resource *resp,
     const int minor_type)
@@ -2303,7 +2303,7 @@ rt_extrude_import5(
 int
 rt_extrude_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
-    register struct rt_extrude_internal *extrude_ip =
+    struct rt_extrude_internal *extrude_ip =
 	(struct rt_extrude_internal *)ip->idb_ptr;
     char buf[256];
     point_t V;
@@ -2337,7 +2337,7 @@ rt_extrude_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ver
 void
 rt_extrude_ifree(struct rt_db_internal *ip, struct resource *resp)
 {
-    register struct rt_extrude_internal *extrude_ip;
+    struct rt_extrude_internal *extrude_ip;
     struct rt_db_internal tmp_ip;
 
     RT_CK_DB_INTERNAL(ip);
@@ -2446,7 +2446,7 @@ rt_extrude_form(struct bu_vls *log, const struct rt_functab *ftp)
 int
 rt_extrude_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *attr)
 {
-    register struct rt_extrude_internal *extr=(struct rt_extrude_internal *) intern->idb_ptr;
+    struct rt_extrude_internal *extr=(struct rt_extrude_internal *) intern->idb_ptr;
 
     RT_EXTRUDE_CK_MAGIC(extr);
 

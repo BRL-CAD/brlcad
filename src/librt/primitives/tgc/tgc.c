@@ -1334,10 +1334,10 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
  * Sorts the values in t[] in descending order.
  */
 void
-rt_pt_sort(register fastf_t t[], int npts)
+rt_pt_sort(fastf_t t[], int npts)
 {
     fastf_t u;
-    register short lim, n;
+    short lim, n;
 
     for (lim = npts-1; lim > 0; lim--) {
 	for (n = 0; n < lim; n++) {

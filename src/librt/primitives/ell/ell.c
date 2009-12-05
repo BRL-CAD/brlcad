@@ -583,8 +583,8 @@ rt_ell_class(void)
  */
 #define ELLOUT(n) ov+(n-1)*3
 void
-rt_ell_16pts(register fastf_t *ov,
-	     register fastf_t *V,
+rt_ell_16pts(fastf_t *ov,
+	     fastf_t *V,
 	     fastf_t *A,
 	     fastf_t *B)
 {

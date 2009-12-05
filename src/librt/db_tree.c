@@ -125,7 +125,7 @@ db_init_db_tree_state(struct db_tree_state *tsp, struct db_i *dbip, struct resou
  * D B _ N E W _ C O M B I N E D _ T R E E _ S T A T E
  */
 struct combined_tree_state *
-db_new_combined_tree_state(register const struct db_tree_state *tsp, register const struct db_full_path *pathp)
+db_new_combined_tree_state(const struct db_tree_state *tsp, const struct db_full_path *pathp)
 {
     struct combined_tree_state *new;
 
@@ -164,7 +164,7 @@ db_dup_combined_tree_state(const struct combined_tree_state *old)
  * D B _ F R E E _ C O M B I N E D _ T R E E _ S T A T E
  */
 void
-db_free_combined_tree_state(register struct combined_tree_state *ctsp)
+db_free_combined_tree_state(struct combined_tree_state *ctsp)
 {
     RT_CK_CTS(ctsp);
     db_free_full_path(&(ctsp->cts_p));
@@ -178,7 +178,7 @@ db_free_combined_tree_state(register struct combined_tree_state *ctsp)
  * D B _ P R _ T R E E _ S T A T E
  */
 void
-db_pr_tree_state(register const struct db_tree_state *tsp)
+db_pr_tree_state(const struct db_tree_state *tsp)
 {
     size_t i;
 
@@ -210,7 +210,7 @@ db_pr_tree_state(register const struct db_tree_state *tsp)
  * D B _ P R _ C O M B I N E D _ T R E E _ S T A T E
  */
 void
-db_pr_combined_tree_state(register const struct combined_tree_state *ctsp)
+db_pr_combined_tree_state(const struct combined_tree_state *ctsp)
 {
     char *str;
 
@@ -236,7 +236,7 @@ db_pr_combined_tree_state(register const struct combined_tree_state *ctsp)
  * 1 success, this is the top of a new region.
  */
 int
-db_apply_state_from_comb(struct db_tree_state *tsp, const struct db_full_path *pathp, register const struct rt_comb_internal *comb)
+db_apply_state_from_comb(struct db_tree_state *tsp, const struct db_full_path *pathp, const struct rt_comb_internal *comb)
 {
     RT_CK_DBTS(tsp);
     RT_CK_COMB(comb);
@@ -353,7 +353,7 @@ db_apply_state_from_comb(struct db_tree_state *tsp, const struct db_full_path *p
 int
 db_apply_state_from_memb(struct db_tree_state *tsp, struct db_full_path *pathp, const union tree *tp)
 {
-    register struct directory *mdp;
+    struct directory *mdp;
     mat_t xmat;
     mat_t old_xlate;
 
@@ -858,7 +858,7 @@ db_follow_path(
 	RT_CK_DIR(dp);
 
 	if (tsp->ts_dbip->dbi_anroot) {
-	    register struct animate *anp;
+	    struct animate *anp;
 	    mat_t old_xlate, xmat;
 
 	    for (anp=tsp->ts_dbip->dbi_anroot; anp != ANIM_NULL; anp = anp->an_forw) {
@@ -1450,7 +1450,7 @@ db_ck_tree(const union tree *tp)
  * children nodes.
  */
 void
-db_free_tree(register union tree *tp, struct resource *resp)
+db_free_tree(union tree *tp, struct resource *resp)
 {
     RT_CK_TREE(tp);
     RT_CK_RESOURCE(resp);
@@ -1470,7 +1470,7 @@ db_free_tree(register union tree *tp, struct resource *resp)
 
 	case OP_SOLID:
 	    if (tp->tr_a.tu_stp) {
-		register struct soltab *stp = tp->tr_a.tu_stp;
+		struct soltab *stp = tp->tr_a.tu_stp;
 		RT_CK_SOLTAB(stp);
 		tp->tr_a.tu_stp = RT_SOLTAB_NULL;
 		rt_free_soltab(stp);
@@ -1526,7 +1526,7 @@ db_free_tree(register union tree *tp, struct resource *resp)
 	case OP_SUBTRACT:
 	case OP_XOR:
 	    {
-		register union tree *fp;
+		union tree *fp;
 
 		/* This node is known to be a binary op */
 		fp = tp->tr_b.tb_left;
@@ -1587,7 +1587,7 @@ db_left_hvy_node(union tree *tp)
  * down near the region nodes.
  */
 void
-db_non_union_push(register union tree *tp, struct resource *resp)
+db_non_union_push(union tree *tp, struct resource *resp)
 {
     union tree *A, *B, *C;
     union tree *tmp;
@@ -1975,7 +1975,7 @@ db_tally_subtree_regions(
 /* ============================== */
 
 HIDDEN union tree *
-_db_gettree_region_end(register struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data __attribute__((unused)))
+_db_gettree_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data __attribute__((unused)))
 {
 
     RT_CK_DBTS(tsp);
@@ -1995,7 +1995,7 @@ _db_gettree_region_end(register struct db_tree_state *tsp, struct db_full_path *
 HIDDEN union tree *
 _db_gettree_leaf(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data __attribute__((unused)))
 {
-    register union tree *curtree;
+    union tree *curtree;
 
     RT_CK_DBTS(tsp);
     RT_CK_DBI(tsp->ts_dbip);
@@ -2031,7 +2031,7 @@ struct db_walk_parallel_state {
  */
 HIDDEN void
 _db_walk_subtree(
-    register union tree *tp,
+    union tree *tp,
     struct combined_tree_state **region_start_statepp,
     union tree *(*leaf_func) BU_ARGS((struct db_tree_state *, struct db_full_path *, struct rt_db_internal *, void *)),
     genptr_t client_data,
@@ -2294,7 +2294,7 @@ db_walk_tree(struct db_i *dbip,
 
     /* Walk each of the given path strings */
     for (i=0; i < argc; i++) {
-	register union tree *curtree;
+	union tree *curtree;
 	struct db_tree_state ts;
 	struct db_full_path path;
 	struct combined_tree_state *region_start_statep;
@@ -2511,8 +2511,8 @@ db_path_to_mat(
 void
 db_apply_anims(struct db_full_path *pathp, struct directory *dp, mat_t stack, mat_t arc, struct mater_info *materp)
 {
-    register struct animate *anp;
-    register int i, j;
+    struct animate *anp;
+    int i, j;
 
     /* Check here for animation to apply */
 
@@ -2529,7 +2529,7 @@ db_apply_anims(struct db_full_path *pathp, struct directory *dp, mat_t stack, ma
      * leafward to rootward).
      */
     for (anp = dp->d_animate; anp != ANIM_NULL; anp = anp->an_forw) {
-	register int anim_flag;
+	int anim_flag;
 
 	j = pathp->fp_len-1;
 
