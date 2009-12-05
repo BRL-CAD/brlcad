@@ -60,7 +60,8 @@ bu_open_mapped_file(const char *name, const char *appl)
 #endif
     int ret;
 
-    bu_log("bu_open_mapped_file(%s, %s)\n", name, appl?appl:"(NIL)");
+    if (bu_debug&BU_DEBUG_MAPPED_FILE)
+	bu_log("bu_open_mapped_file(%s, %s)\n", name, appl?appl:"(NIL)");
 
     /* See if file has already been mapped, and can be shared */
     bu_semaphore_acquire(BU_SEM_MAPPEDFILE);
