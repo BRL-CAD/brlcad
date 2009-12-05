@@ -37,15 +37,15 @@
  *
  * The transformation from X to X' is accomplished by:
  *
- * X' = S(R( X - V ))
+ * X' = S(R(X - V))
  *
- * where R(X) = ( A/(|A|) )
- *		( B/(|B|) ) . X
- *		( H/(|H|) )
+ * where R(X) = (A/(|A|))
+ *		(B/(|B|)) . X
+ *		(H/(|H|))
  *
- * and S(X) =	(  1/|A|   0     0   )
- *		(   0    1/|A|   0    ) . X
- *		(   0      0   1/|A| )
+ * and S(X) =	(1/|A|   0     0)
+ *		(0    1/|A|   0) . X
+ *		(0      0   1/|A|)
  * where |A| = R1
  *
  * To find the intersection of a line with the torus, consider the
@@ -58,7 +58,7 @@
  *
  * L' : { P'(n) | P' + t(n) . D' }
  *
- * W = invR( invS( W' ) ) + V
+ * W = invR(invS(W')) + V
  *
  * Where W' = k D' + P'.
  *
@@ -67,14 +67,14 @@
  *
  * The equation for the torus is:
  *
- * [ X**2 + Y**2 + Z**2 + (1 - alpha**2) ]**2 - 4*( X**2 + Y**2 )  =  0
+ * [ X**2 + Y**2 + Z**2 + (1 - alpha**2) ]**2 - 4*(X**2 + Y**2)  =  0
  *
  * First, find X, Y, and Z in terms of 't' for this line, then
  * substitute them into the equation above.
  *
  * Wx = Dx*t + Px
  *
- * Wx**2 = Dx**2 * t**2  +  2 * Dx * Px  +  Px**2
+ * Wx**2 = Dx**2 * t**2 +  2 * Dx * Px +  Px**2
  *
  * The real roots of the equation in 't' are the intersect points
  * along the parameteric line.
@@ -82,24 +82,24 @@
  * NORMALS.  Given the point W on the torus, what is the vector normal
  * to the tangent plane at that point?
  *
- * Map W onto the unit torus, ie: W' = S( R( W - V ) ).  In this case,
+ * Map W onto the unit torus, ie: W' = S(R(W - V)).  In this case,
  * we find W' by solving the parameteric line given k.
  *
  * The gradient of the torus at W' is in fact the normal vector.
  *
  * Given that the equation for the unit torus is:
  *
- * [ X**2 + Y**2 + Z**2 + (1 - alpha**2) ]**2 - 4*( X**2 + Y**2 )  =  0
+ * [ X**2 + Y**2 + Z**2 + (1 - alpha**2) ]**2 - 4*(X**2 + Y**2)  =  0
  *
  * let w = X**2 + Y**2 + Z**2 + (1 - alpha**2), then the equation becomes:
  *
- * w**2 - 4*( X**2 + Y**2 )  =  0
+ * w**2 - 4*(X**2 + Y**2)  =  0
  *
- * For f(x, y, z) = 0, the gradient of f() is ( df/dx, df/dy, df/dz ).
+ * For f(x, y, z) = 0, the gradient of f() is (df/dx, df/dy, df/dz).
  *
- *	df/dx = 2 * w * 2 * x - 8 * x	= (4 * w - 8) * x
- *	df/dy = 2 * w * 2 * y - 8 * y	= (4 * w - 8) * y
- *	df/dz = 2 * w * 2 * z		= 4 * w * z
+ * df/dx = 2 * w * 2 * x - 8 * x	= (4 * w - 8) * x
+ * df/dy = 2 * w * 2 * y - 8 * y	= (4 * w - 8) * y
+ * df/dz = 2 * w * 2 * z		= 4 * w * z
  *
  * Note that the normal vector produced above will not have unit
  * length.  Also, to make this useful for the original torus, it will
@@ -143,13 +143,13 @@ const struct bu_structparse rt_tor_parse[] = {
 
 
 struct tor_specific {
-    fastf_t	tor_alpha;	/* 0 < (R2/R1) <= 1 */
-    fastf_t	tor_r1;		/* for inverse scaling of k values. */
-    fastf_t	tor_r2;		/* for curvature */
-    vect_t	tor_V;		/* Vector to center of torus */
-    vect_t	tor_N;		/* unit normal to plane of torus */
-    mat_t	tor_SoR;	/* Scale(Rot(vect)) */
-    mat_t	tor_invR;	/* invRot(vect') */
+    fastf_t tor_alpha;	/* 0 < (R2/R1) <= 1 */
+    fastf_t tor_r1;		/* for inverse scaling of k values. */
+    fastf_t tor_r2;		/* for curvature */
+    vect_t tor_V;		/* Vector to center of torus */
+    vect_t tor_N;		/* unit normal to plane of torus */
+    mat_t tor_SoR;	/* Scale(Rot(vect)) */
+    mat_t tor_invR;	/* invRot(vect') */
 };
 
 
@@ -161,22 +161,22 @@ struct tor_specific {
  * various terms of the formula.
  *
  * Returns -
- *	0	TOR is OK
- *	!0	Error in description
+ * 0 TOR is OK
+ * !0 Error in description
  *
  * Implicit return -
- *	A struct tor_specific is created, and it's address is stored in
- *	stp->st_specific for use by rt_tor_shot().
+ * A struct tor_specific is created, and it's address is stored in
+ * stp->st_specific for use by rt_tor_shot().
  */
 int
 rt_tor_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     register struct tor_specific *tor;
-    struct rt_tor_internal	*tip;
+    struct rt_tor_internal *tip;
 
-    mat_t	R;
-    vect_t	P, w1;	/* for RPP calculation */
-    fastf_t	f;
+    mat_t R;
+    vect_t P, w1;	/* for RPP calculation */
+    fastf_t f;
 
     tip = (struct rt_tor_internal *)ip->idb_ptr;
     RT_TOR_CK_MAGIC(tip);
@@ -312,9 +312,9 @@ rt_tor_print(register const struct soltab *stp)
  * a point, P(x0, y0, z0) and a direction normal, D = ax + by + cz.
  * Any point on a line can be expressed by one variable 't', where
  *
- *	X = a*t + x0,	eg, X = Dx*t + Px
- *	Y = b*t + y0,
- *	Z = c*t + z0.
+ * X = a*t + x0,	eg, X = Dx*t + Px
+ * Y = b*t + y0,
+ * Z = c*t + z0.
  *
  * First, convert the line to the coordinate system of a "stan- dard"
  * torus.  This is a torus which lies in the X-Y plane, circles the
@@ -328,8 +328,8 @@ rt_tor_print(register const struct soltab *stp)
  * system.
  *
  * Returns -
- *  	0	MISS
- *	>0	HIT
+ * 0 MISS
+ * >0 HIT
  */
 int
 rt_tor_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
@@ -337,18 +337,18 @@ rt_tor_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     register struct tor_specific *tor =
 	(struct tor_specific *)stp->st_specific;
     register struct seg *segp;
-    vect_t	dprime;		/* D' */
-    vect_t	pprime;		/* P' */
-    vect_t	work;		/* temporary vector */
-    bn_poly_t	C;		/* The final equation */
+    vect_t dprime;		/* D' */
+    vect_t pprime;		/* P' */
+    vect_t work;		/* temporary vector */
+    bn_poly_t C;		/* The final equation */
     bn_complex_t val[4];		/* The complex roots */
-    double	k[4];		/* The real roots */
-    register int	i;
-    int	j;
-    bn_poly_t	A, Asqr;
-    bn_poly_t	X2_Y2;		/* X**2 + Y**2 */
-    vect_t	cor_pprime;	/* new ray origin */
-    fastf_t	cor_proj;
+    double k[4];		/* The real roots */
+    register int i;
+    int j;
+    bn_poly_t A, Asqr;
+    bn_poly_t X2_Y2;		/* X**2 + Y**2 */
+    vect_t cor_pprime;	/* new ray origin */
+    fastf_t cor_proj;
 
     /* Convert vector into the space of the unit torus */
     MAT4X3VEC(dprime, tor->tor_SoR, rp->r_dir);
@@ -462,34 +462,34 @@ rt_tor_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	    return(0);		/* No hit */
 
 	case 2:
-	{
-	    /* Sort most distant to least distant. */
-	    fastf_t	u;
-	    if ((u=k[0]) < k[1]) {
-		/* bubble larger towards [0] */
-		k[0] = k[1];
-		k[1] = u;
+	    {
+		/* Sort most distant to least distant. */
+		fastf_t u;
+		if ((u=k[0]) < k[1]) {
+		    /* bubble larger towards [0] */
+		    k[0] = k[1];
+		    k[1] = u;
+		}
 	    }
-	}
-	break;
+	    break;
 	case 4:
-	{
-	    register short	n;
-	    register short	lim;
+	    {
+		register short n;
+		register short lim;
 
-	    /*  Inline rt_pt_sort().  Sorts k[] into descending order. */
-	    for (lim = i-1; lim > 0; lim--) {
-		for (n = 0; n < lim; n++) {
-		    fastf_t	u;
-		    if ((u=k[n]) < k[n+1]) {
-			/* bubble larger towards [0] */
-			k[n] = k[n+1];
-			k[n+1] = u;
+		/* Inline rt_pt_sort().  Sorts k[] into descending order. */
+		for (lim = i-1; lim > 0; lim--) {
+		    for (n = 0; n < lim; n++) {
+			fastf_t u;
+			if ((u=k[n]) < k[n+1]) {
+			    /* bubble larger towards [0] */
+			    k[n] = k[n+1];
+			    k[n+1] = u;
+			}
 		    }
 		}
 	    }
-	}
-	break;
+	    break;
     }
 
     /* Now, t[0] > t[npts-1] */
@@ -520,6 +520,7 @@ rt_tor_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     return(4);			/* HIT */
 }
 
+
 #define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;
 
 
@@ -536,19 +537,19 @@ rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
     /* Number of ray/object pairs */
 
 {
-    register int    i;
+    register int i;
     register struct tor_specific *tor;
-    vect_t	dprime;		/* D' */
-    vect_t	pprime;		/* P' */
-    vect_t	work;		/* temporary vector */
-    bn_poly_t	*C;		/* The final equation */
+    vect_t dprime;		/* D' */
+    vect_t pprime;		/* P' */
+    vect_t work;		/* temporary vector */
+    bn_poly_t *C;		/* The final equation */
     bn_complex_t (*val)[4];	/* The complex roots */
-    int	num_roots;
-    int	num_zero;
-    bn_poly_t	A, Asqr;
-    bn_poly_t	X2_Y2;		/* X**2 + Y**2 */
-    vect_t	cor_pprime;	/* new ray origin */
-    fastf_t	*cor_proj;
+    int num_roots;
+    int num_zero;
+    bn_poly_t A, Asqr;
+    bn_poly_t X2_Y2;		/* X**2 + Y**2 */
+    vect_t cor_pprime;	/* new ray origin */
+    fastf_t *cor_proj;
 
     /* Allocate space for polys and roots */
     C = (bn_poly_t *)bu_malloc(n * sizeof(bn_poly_t), "tor bn_poly_t");
@@ -702,10 +703,6 @@ rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	if (num_zero == 0) {
 	    SEG_MISS(segp[i]);		/* MISS */
 	} else if (num_zero != 2 && num_zero != 4) {
-#if 0
-	    bu_log("rt_tor_shot: reduced 4 to %d roots\n", i);
-	    bn_pr_roots(stp->st_name, val, 4);
-#endif
 	    SEG_MISS(segp[i]);		/* MISS */
 	}
     }
@@ -713,7 +710,7 @@ rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
     /* Process each one segment hit */
     for (i = 0; i < n; i++) {
 	if (segp[i].seg_stp == 0) continue; /* Skip */
-	if (C[i].dgr != 2)  continue;  /* Not one segment */
+	if (C[i].dgr != 2) continue;  /* Not one segment */
 
 	tor = (struct tor_specific *)stp[i]->st_specific;
 
@@ -748,7 +745,7 @@ rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
     for (i = 0; i < n; i++) {
 
 	if (segp[i].seg_stp == 0) continue;	/* Skip */
-	if (C[i].dgr != 4)  continue;  /* Not two segment */
+	if (C[i].dgr != 4) continue;  /* Not two segment */
 
 	tor = (struct tor_specific *)stp[i]->st_specific;
 
@@ -767,19 +764,6 @@ rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	/* Set aside vector for rt_tor_norm() later */
 	VJOIN1(segp[i].seg_in.hit_vpriv, pprime, C[i].cf[1], dprime);
 	VJOIN1(segp[i].seg_out.hit_vpriv, pprime, C[i].cf[0], dprime);
-
-#if 0
-	/* C[i].cf[3] is entry point */
-	/* Attach second hit to segment chain */
-	/* XXXX need convention for vectorizing doubly linked list */
-	GET_SEG(seg2p, resp);
-	segp[i].seg_next = seg2p;
-	seg2p->seg_stp = stp[i];
-	seg2p->seg_in.hit_dist =  C[i].cf[3]*tor->tor_r1;
-	seg2p->seg_out.hit_dist = C[i].cf[2]*tor->tor_r1;
-	VJOIN1(seg2p->seg_in.hit_vpriv, pprime, C[i].cf[3], dprime);
-	VJOIN1(seg2p->seg_out.hit_vpriv, pprime, C[i].cf[2], dprime);
-#endif
     }
 
     /* Free tmp space used */
@@ -850,8 +834,8 @@ rt_tor_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 {
     register struct tor_specific *tor =
 	(struct tor_specific *)stp->st_specific;
-    vect_t	w4, w5;
-    fastf_t	nx, ny, nz, x1, y1, z1;
+    vect_t w4, w5;
+    fastf_t nx, ny, nz, x1, y1, z1;
     fastf_t d;
 
     nx = tor->tor_N[X];
@@ -887,18 +871,19 @@ rt_tor_curve(register struct curvature *cvp, register struct hit *hitp, struct s
     VUNITIZE(cvp->crv_pdir);
 }
 
+
 /**
  * R T _ T O R _ U V
  */
 void
 rt_tor_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
 {
-    register struct tor_specific	*tor =
+    register struct tor_specific *tor =
 	(struct tor_specific *) stp -> st_specific;
-    vect_t			work;
-    vect_t			pprime;
-    vect_t			pprime2;
-    fastf_t			costheta;
+    vect_t work;
+    vect_t pprime;
+    vect_t pprime2;
+    fastf_t costheta;
 
     VSUB2(work, hitp -> hit_point, tor -> tor_V);
     MAT4X3VEC(pprime, tor -> tor_SoR, work);
@@ -928,6 +913,7 @@ rt_tor_free(struct soltab *stp)
     bu_free((char *)tor, "tor_specific");
 }
 
+
 int
 rt_tor_class(void)
 {
@@ -949,21 +935,21 @@ rt_tor_class(void)
  * angle theta/2 hits the chord, and where it hits the circle (at
  * 'radius' distance).
  *
- *	error_distance = radius * (1 - cos(theta/2))
+ * error_distance = radius * (1 - cos(theta/2))
  *
  * or
  *
- *	theta = 2 * acos(1 - error_distance / radius)
+ * theta = 2 * acos(1 - error_distance / radius)
  *
  * Returns -
- *	number of segments.  Always at least 6.
+ * number of segments.  Always at least 6.
  */
 int
-rt_num_circular_segments(double	maxerr, double	radius)
+rt_num_circular_segments(double maxerr, double radius)
 {
-    register fastf_t	cos_half_theta;
-    register fastf_t	half_theta;
-    int			n;
+    register fastf_t cos_half_theta;
+    register fastf_t half_theta;
+    int n;
 
     if (radius <= SMALL_FASTF || maxerr <= SMALL_FASTF || maxerr >= radius) {
 	/* Return a default number of segments */
@@ -991,8 +977,8 @@ rt_num_circular_segments(double	maxerr, double	radius)
     n = (bn_pi / half_theta) + 0.99;
 
     /* Impose the limits again */
-    if (n <= 6)  return(6);
-    if (n >= 360*10)  return(360*10);
+    if (n <= 6) return(6);
+    if (n >= 360*10) return(360*10);
     return(n);
 }
 
@@ -1001,28 +987,28 @@ rt_num_circular_segments(double	maxerr, double	radius)
  * R T _ T O R _ P L O T
  *
  * The TORUS has the following input fields:
- *	ti.v	V from origin to center
- *	ti.h	Radius Vector, Normal to plane of torus
- *	ti.a, ti.b	perpindicular, to CENTER of torus (for top, bottom)
+ * ti.v V from origin to center
+ * ti.h Radius Vector, Normal to plane of torus
+ * ti.a, ti.b perpindicular, to CENTER of torus (for top, bottom)
  */
 int
 rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
-    fastf_t		alpha;
-    fastf_t		beta;
-    fastf_t		cos_alpha, sin_alpha;
-    fastf_t		cos_beta, sin_beta;
-    fastf_t		dist_to_rim;
-    struct rt_tor_internal	*tip;
-    int		w;
-    int		nw = 8;
-    int		len;
-    int		nlen = 16;
-    fastf_t		*pts;
-    vect_t		G;
-    vect_t		radius;
-    vect_t		edge;
-    fastf_t		rel;
+    fastf_t alpha;
+    fastf_t beta;
+    fastf_t cos_alpha, sin_alpha;
+    fastf_t cos_beta, sin_beta;
+    fastf_t dist_to_rim;
+    struct rt_tor_internal *tip;
+    int w;
+    int nw = 8;
+    int len;
+    int nlen = 16;
+    fastf_t *pts;
+    vect_t G;
+    vect_t radius;
+    vect_t edge;
+    fastf_t rel;
 
     RT_CK_DB_INTERNAL(ip);
     tip = (struct rt_tor_internal *)ip->idb_ptr;
@@ -1065,7 +1051,7 @@ rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
      * tolerance requires 180*180 tessellation!
      */
     if (ttol->norm > 0.0) {
-	register int	nseg;
+	register int nseg;
 	nseg = (bn_pi / ttol->norm) + 0.99;
 	if (nseg > nlen) nlen = nseg;
 	if (nseg > nw) nw = nseg;
@@ -1125,28 +1111,28 @@ rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 int
 rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
-    fastf_t		alpha;
-    fastf_t		beta;
-    fastf_t		cos_alpha, sin_alpha;
-    fastf_t		cos_beta, sin_beta;
-    fastf_t		dist_to_rim;
-    struct rt_tor_internal	*tip;
-    int		w;
-    int		nw = 6;
-    int		len;
-    int		nlen = 6;
-    fastf_t		*pts;
-    vect_t		G;
-    vect_t		radius;
-    vect_t		edge;
-    struct shell	*s;
-    struct vertex	**verts;
-    struct faceuse	**faces;
-    fastf_t		*norms;
-    struct vertex	**vertp[4];
-    int		nfaces;
-    int		i;
-    fastf_t		rel;
+    fastf_t alpha;
+    fastf_t beta;
+    fastf_t cos_alpha, sin_alpha;
+    fastf_t cos_beta, sin_beta;
+    fastf_t dist_to_rim;
+    struct rt_tor_internal *tip;
+    int w;
+    int nw = 6;
+    int len;
+    int nlen = 6;
+    fastf_t *pts;
+    vect_t G;
+    vect_t radius;
+    vect_t edge;
+    struct shell *s;
+    struct vertex **verts;
+    struct faceuse **faces;
+    fastf_t *norms;
+    struct vertex **vertp[4];
+    int nfaces;
+    int i;
+    fastf_t rel;
 
     RT_CK_DB_INTERNAL(ip);
     tip = (struct rt_tor_internal *)ip->idb_ptr;
@@ -1189,7 +1175,7 @@ rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
      * tolerance requires 180*180 tessellation!
      */
     if (ttol->norm > 0.0) {
-	register int	nseg;
+	register int nseg;
 	nseg = (bn_pi / ttol->norm) + 0.99;
 	if (nseg > nlen) nlen = nseg;
 	if (nseg > nw) nw = nseg;
@@ -1303,11 +1289,11 @@ rt_tor_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 int
 rt_tor_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
-    struct rt_tor_internal	*tip;
-    union record		*rp;
-    fastf_t		vec[3*4];
-    vect_t			axb;
-    register fastf_t	f;
+    struct rt_tor_internal *tip;
+    union record *rp;
+    fastf_t vec[3*4];
+    vect_t axb;
+    register fastf_t f;
 
     BU_CK_EXTERNAL(ep);
     rp = (union record *)ep->ext_buf;
@@ -1364,8 +1350,8 @@ rt_tor_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
 int
 rt_tor_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
-    double			vec[2*3+2];
-    struct rt_tor_internal	*tip;
+    double vec[2*3+2];
+    struct rt_tor_internal *tip;
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_TOR) return -1;
@@ -1378,7 +1364,7 @@ rt_tor_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     /* scale values into local buffer */
     VSCALE(&vec[0*3], tip->v, local2mm);
-    VMOVE( &vec[1*3], tip->h);		/* UNIT vector, not scaled */
+    VMOVE(&vec[1*3], tip->h);		/* UNIT vector, not scaled */
     vec[2*3+0] = tip->r_a*local2mm;		/* r1 */
     vec[2*3+1] = tip->r_h*local2mm;		/* r2 */
 
@@ -1397,16 +1383,16 @@ rt_tor_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 int
 rt_tor_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
-    struct rt_tor_internal	*tip;
-    union record		*rec;
-    vect_t			norm;
-    vect_t			cross1, cross2;
-    fastf_t			r1, r2;
-    fastf_t			r3, r4;
-    double			m2;
+    struct rt_tor_internal *tip;
+    union record *rec;
+    vect_t norm;
+    vect_t cross1, cross2;
+    fastf_t r1, r2;
+    fastf_t r3, r4;
+    double m2;
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_TOR)  return(-1);
+    if (ip->idb_type != ID_TOR) return(-1);
     tip = (struct rt_tor_internal *)ip->idb_ptr;
     RT_TOR_CK_MAGIC(tip);
 
@@ -1479,25 +1465,25 @@ rt_tor_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
  * R T _ T O R _ I M P O R T 5
  *
  * Taken from the database record:
- *	v	vertex (point) of center of torus.
- *	h	unit vector in the normal direction of the torus
- *	major	radius of ring from 'v' to center of ring
- *	minor	radius of the ring
+ * v vertex (point) of center of torus.
+ * h unit vector in the normal direction of the torus
+ * major radius of ring from 'v' to center of ring
+ * minor radius of the ring
  *
  * Calculate:
- *	2nd radius of ring (==1st radius)
- *	ring unit vector 1
- *	ring unit vector 2
+ * 2nd radius of ring (==1st radius)
+ * ring unit vector 1
+ * ring unit vector 2
  */
 int
 rt_tor_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
-    struct rt_tor_internal	*tip;
+    struct rt_tor_internal *tip;
     struct rec {
-	double	v[3];
-	double	h[3];
-	double	ra;	/* r1 */
-	double	rh;	/* r2 */
+	double v[3];
+	double h[3];
+	double ra;	/* r1 */
+	double rh;	/* r2 */
     } rec;
 
     BU_CK_EXTERNAL(ep);
@@ -1506,7 +1492,7 @@ rt_tor_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     RT_CK_DB_INTERNAL(ip);
 
     if (mat == NULL) mat = bn_mat_identity;
-    if (bn_mat_is_non_unif(mat)) {
+    if (bn_mat_is_non_unif (mat)) {
 	bu_log("------------------ WARNING ----------------\nNon-uniform matrix transform on torus.  Ignored\n");
     }
 
@@ -1551,9 +1537,9 @@ rt_tor_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 int
 rt_tor_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
-    register struct rt_tor_internal	*tip =
+    register struct rt_tor_internal *tip =
 	(struct rt_tor_internal *)ip->idb_ptr;
-    double				r3, r4;
+    double r3, r4;
 
     RT_TOR_CK_MAGIC(tip);
     bu_vls_strcat(str, "torus (TOR)\n");
@@ -1570,7 +1556,7 @@ rt_tor_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 		  INTCLAMP(tip->h[Y] * mm2local),
 		  INTCLAMP(tip->h[Z] * mm2local));
 
-    if (!verbose)  return(0);
+    if (!verbose) return(0);
 
     bu_vls_printf(str, "\tA=(%g, %g, %g)\n",
 		  INTCLAMP(tip->a[X] * mm2local / tip->r_a),
@@ -1607,7 +1593,7 @@ rt_tor_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 void
 rt_tor_ifree(struct rt_db_internal *ip, struct resource *resp)
 {
-    register struct rt_tor_internal	*tip;
+    register struct rt_tor_internal *tip;
 
     RT_CK_DB_INTERNAL(ip);
 
@@ -1632,6 +1618,7 @@ rt_tor_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
 {
     return(0);			/* OK */
 }
+
 
 /*
  * Local Variables:

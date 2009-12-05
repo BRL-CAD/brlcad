@@ -14,6 +14,8 @@ changes made.  See document footer for additional details.
 --- 2009-11-XX  Release 7.16.4                                     ---
 ----------------------------------------------------------------------
 
+* fixed mged "Pick Edit-Primitive" crash after killall - Sean Morrison
+* configure --enable-strict-build compilation option - Sean Morrison
 * librt now queries env LIBRT_DEBUG for more flags - Erik Greenwald
 * pixdiff outputs matching pixels at half-intensity - Sean Morrison
 * fixed rate interpolation bug in tabinterp - Emton

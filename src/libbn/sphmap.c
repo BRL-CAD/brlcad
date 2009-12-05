@@ -438,11 +438,11 @@ spm_dump(spm_map_t *mp, int verbose)
 
     bu_log("elsize = %d\n", mp->elsize );
     bu_log("ny = %d\n", mp->ny );
-    bu_log("_data = 0x%x\n", mp->_data );
+    bu_log("_data = %p\n", (void *)mp->_data );
     if ( !verbose )  return;
     for ( i = 0; i < mp->ny; i++ ) {
-	bu_log("  nx[%d] = %3d, xbin[%d] = 0x%x\n",
-	       i, mp->nx[i], i, mp->xbin[i] );
+	bu_log("  nx[%d] = %3d, xbin[%d] = %p\n",
+	       i, mp->nx[i], i, (void *)mp->xbin[i] );
     }
 }
 /** @} */

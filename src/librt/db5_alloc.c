@@ -253,14 +253,6 @@ db5_realloc( struct db_i *dbip, struct directory *dp, struct bu_external *ep )
     dp->d_len = ep->ext_nbytes;
     if (RT_G_DEBUG&DEBUG_DB)
 	bu_log("db5_realloc(%s) extending database addr=x%x, len=%d\n", dp->d_namep, dp->d_addr, dp->d_len);
-#if 0
-    /* Extending db with free record isn't necessary even to
-     * provide "stable-store" capability.
-     * If program or system aborts before caller write new object,
-     * there is no problem.
-     */
-    if ( db5_write_free( dbip, dp, dp->d_len ) < 0 )  return -1;
-#endif
     return 0;
 }
 

@@ -54,6 +54,7 @@ struct id_pipe {
     int pipe_is_bend;
 };
 
+
 struct lin_pipe {
     struct bu_list l;
     int pipe_is_bend;
@@ -71,6 +72,7 @@ struct lin_pipe {
     point_t pipe_min;
     point_t pipe_max;
 };
+
 
 struct bend_pipe {
     struct bu_list l;
@@ -95,7 +97,8 @@ struct bend_pipe {
     fastf_t bend_bound_radius_sq;	/* square of bounding sphere radius */
 };
 
-#define PIPE_MM(_v)       VMINMAX(stp->st_min, stp->st_max, _v);
+
+#define PIPE_MM(_v) VMINMAX(stp->st_min, stp->st_max, _v);
 
 #define ARC_SEGS 16	/* number of segments used to plot a circle */
 
@@ -167,8 +170,8 @@ rt_bend_pipe_prep(struct soltab *stp, struct bu_list *head, fastf_t *bend_center
         bu_free(pipe, "rt_bend_pipe_prep:pipe");
         return 0; /* there is nothing to bend, that's OK */
     }
-    
-    
+
+
     MAT_COPY(pipe->bend_SoR, R);
     pipe->bend_SoR[15] *= pipe->bend_radius;
     
@@ -208,6 +211,7 @@ rt_bend_pipe_prep(struct soltab *stp, struct bu_list *head, fastf_t *bend_center
     
 }
 
+
 HIDDEN void
 rt_linear_pipe_prep(struct soltab *stp, struct bu_list *head, fastf_t *pt1, fastf_t id1, fastf_t od1, fastf_t *pt2, fastf_t id2, fastf_t od2)
 {
@@ -221,8 +225,8 @@ rt_linear_pipe_prep(struct soltab *stp, struct bu_list *head, fastf_t *pt1, fast
     
     pipe = (struct lin_pipe *)bu_malloc(sizeof(struct lin_pipe), "rt_bend_pipe_prep:pipe");
     BU_LIST_INSERT(head, &pipe->l);
-    
-    
+
+
     VMOVE(pipe->pipe_V, pt1);
     
     VSUB2(seg_ht, pt2, pt1);
@@ -293,6 +297,7 @@ rt_linear_pipe_prep(struct soltab *stp, struct bu_list *head, fastf_t *pt1, fast
 	VMINMAX(pipe->pipe_min, pipe->pipe_max, work);
     
 }
+
 
 /**
  * R T _ P I P E _ P R E P
@@ -418,14 +423,15 @@ rt_pipe_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     dx = (stp->st_max[X] - stp->st_min[X])/2;
     f = dx;
     dy = (stp->st_max[Y] - stp->st_min[Y])/2;
-    if (dy > f)  f = dy;
+    if (dy > f) f = dy;
     dz = (stp->st_max[Z] - stp->st_min[Z])/2;
-    if (dz > f)  f = dz;
+    if (dz > f) f = dz;
     stp->st_aradius = f;
     stp->st_bradius = sqrt(dx*dx + dy*dy + dz*dz);
     
     return(0);
 }
+
 
 /**
  * R T _ P I P E _ P R I N T
@@ -436,6 +442,7 @@ rt_pipe_print(register const struct soltab *stp)
     /* register struct bu_list *pipe =
        (struct bu_list *)stp->st_specific; */
 }
+
 
 /**
  * R T _ P I P E P T _ P R I N T
@@ -458,6 +465,7 @@ rt_pipept_print(const struct wdb_pipept *pipe, double mm2local)
     }
 }
 
+
 /**
  * R T _ V L S _ P I P E P T
  */
@@ -476,8 +484,8 @@ rt_vls_pipept(struct bu_vls *vp, int seg_no, const struct rt_db_internal *ip, do
     pipe = BU_LIST_FIRST(wdb_pipept, &pint->pipe_segs_head);
     while (++seg_count != seg_no && BU_LIST_NOT_HEAD(&pipe->l, &pint->pipe_segs_head))
         pipe = BU_LIST_NEXT(wdb_pipept, &pipe->l);
-    
-    
+
+
     sprintf(buf, "Pipe Vertex:\n");
     bu_vls_strcat(vp, buf);
     VSCALE(p1, pipe->pp_coord, mm2local);
@@ -494,6 +502,7 @@ rt_vls_pipept(struct bu_vls *vp, int seg_no, const struct rt_db_internal *ip, do
     }
     bu_vls_strcat(vp, buf);
 }
+
 
 /**
  * Check for hits on surfaces created by discontinuous radius changes
@@ -556,6 +565,7 @@ discont_radius_shot(register struct xray *rp, struct seg *seghead,
     }
 }
 
+
 /**
  * check if a ray passes within a bounding sphere
  */
@@ -576,6 +586,7 @@ rt_in_sph(struct xray *rp, point_t center, fastf_t radius_sq)
         return 0;
     }
 }
+
 
 HIDDEN void
 bend_pipe_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead, struct bend_pipe *pipe, struct hit *hits, int *hit_count, int seg_no)
@@ -834,8 +845,8 @@ bend_pipe_shot(struct soltab *stp, register struct xray *rp, struct application 
             }
         }
     }
-    
-    
+
+
  check_discont_radii:
     /* check for surfaces created by discontinuous changes in radii */
     prev = BU_LIST_BACK(id_pipe, &pipe->l);
@@ -881,11 +892,12 @@ bend_pipe_shot(struct soltab *stp, register struct xray *rp, struct application 
             }
         }
     }
-    
-    
+
+
     return;
     
 }
+
 
 HIDDEN void
 linear_pipe_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead, struct lin_pipe *pipe, struct hit *hits, int *hit_count, int seg_no)
@@ -1029,6 +1041,7 @@ linear_pipe_shot(struct soltab *stp, register struct xray *rp, struct applicatio
     
 }
 
+
 HIDDEN void
 pipe_start_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead, struct id_pipe *pipe, struct hit *hits, int *hit_count, int seg_no)
 {
@@ -1096,6 +1109,7 @@ pipe_start_shot(struct soltab *stp, register struct xray *rp, struct application
         }
     }
 }
+
 
 HIDDEN void
 pipe_end_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead, struct id_pipe *pipe, struct hit *hits, int *hit_count, int seg_no)
@@ -1172,6 +1186,7 @@ pipe_end_shot(struct soltab *stp, register struct xray *rp, struct application *
         }
     }
 }
+
 
 HIDDEN void
 rt_pipe_elim_dups(struct hit *hit, int *nh, register struct xray *rp, struct soltab *stp)
@@ -1261,6 +1276,7 @@ rt_pipe_elim_dups(struct hit *hit, int *nh, register struct xray *rp, struct sol
     }
 }
 
+
 /**
  * R T _ P I P E _ N O R M
  *
@@ -1346,6 +1362,7 @@ rt_pipe_norm(register struct hit *hitp, struct soltab *stp, register struct xray
             break;
     }
 }
+
 
 /**
  * R T _ P I P E _ S H O T
@@ -1436,13 +1453,14 @@ rt_pipe_shot(struct soltab *stp, register struct xray *rp, struct application *a
         
         BU_LIST_INSERT(&(seghead->l), &(segp->l));
     }
-    
-    
+
+
     if (total_hits)
         return(1);		/* HIT */
     else
         return(0);		/* MISS */
 }
+
 
 #define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;
 
@@ -1462,6 +1480,7 @@ rt_pipe_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, st
     rt_vstub(stp, rp, segp, n, ap);
 }
 
+
 /**
  * R T _ P I P E _ C U R V E
  *
@@ -1479,6 +1498,7 @@ rt_pipe_curve(register struct curvature *cvp, register struct hit *hitp, struct 
     bn_vec_ortho(cvp->crv_pdir, hitp->hit_normal);
 }
 
+
 /**
  * R T _ P I P E _ U V
  *
@@ -1493,6 +1513,7 @@ rt_pipe_uv(struct application *ap, struct soltab *stp, register struct hit *hitp
     /* register struct bu_list *pipe =
        (struct bu_list *)stp->st_specific; */
 }
+
 
 /**
  * R T _ P I P E _ F R E E
@@ -1517,6 +1538,7 @@ rt_pipe_free(register struct soltab *stp)
 #endif
 }
 
+
 /**
  * R T _ P I P E _ C L A S S
  */
@@ -1525,6 +1547,7 @@ rt_pipe_class(void)
 {
     return(0);
 }
+
 
 /**
  * D R A W _ P I P E _ A R C
@@ -1573,6 +1596,7 @@ draw_pipe_arc(struct bu_list *vhead, fastf_t radius, fastf_t *center, const fast
     }
 }
 
+
 HIDDEN void
 draw_linear_seg(struct bu_list *vhead, const fastf_t *p1, const fastf_t or1, const fastf_t ir1, const fastf_t *p2, const fastf_t or2, const fastf_t ir2, const fastf_t *v1, const fastf_t *v2)
 {
@@ -1615,6 +1639,7 @@ draw_linear_seg(struct bu_list *vhead, const fastf_t *p1, const fastf_t or1, con
     VJOIN1(pt, p2, -ir2, v2);
     RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_DRAW);
 }
+
 
 HIDDEN void
 draw_pipe_bend(struct bu_list *vhead, const fastf_t *center, const fastf_t *end, const fastf_t radius, const fastf_t angle, const fastf_t *v1, const fastf_t *v2, const fastf_t *norm, const fastf_t or, const fastf_t ir, fastf_t *f1, fastf_t *f2, const int seg_count)
@@ -1697,6 +1722,7 @@ draw_pipe_bend(struct bu_list *vhead, const fastf_t *center, const fastf_t *end,
     VMOVE(f1, end_f1);
     VMOVE(f2, end_f2);
 }
+
 
 /**
  * R T _ P I P E _ P L O T
@@ -1802,6 +1828,7 @@ rt_pipe_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
     return(0);
 }
 
+
 HIDDEN void
 tesselate_pipe_start(struct wdb_pipept *pipe, int arc_segs, double sin_del, double cos_del, struct vertex ***outer_loop, struct vertex ***inner_loop, fastf_t *r1, fastf_t *r2, struct shell *s, const struct bn_tol *tol)
 {
@@ -1839,8 +1866,8 @@ tesselate_pipe_start(struct wdb_pipept *pipe, int arc_segs, double sin_del, doub
     
     if (NEAR_ZERO(ir - or, tol->dist))
         return;
-    
-    
+
+
     fu = nmg_cface(s, *outer_loop, arc_segs);
     
     x = or;
@@ -1908,6 +1935,7 @@ tesselate_pipe_start(struct wdb_pipept *pipe, int arc_segs, double sin_del, doub
         }
     }
 }
+
 
 HIDDEN void
 tesselate_pipe_linear(fastf_t *start_pt,
@@ -2179,8 +2207,8 @@ tesselate_pipe_linear(fastf_t *start_pt,
         point_t pt, pt_next;
         fastf_t x, y, xnew, ynew;
         struct vertex **verts[3];
-        
-        
+
+
         x = 1.0;
         y = 0.0;
         VCOMB2(norms[0], x, r1, y, r2);
@@ -2572,6 +2600,7 @@ tesselate_pipe_linear(fastf_t *start_pt,
     }
     bu_free((char *)norms, "tesselate_linear_pipe: norms");
 }
+
 
 HIDDEN void
 tesselate_pipe_bend(fastf_t *bend_start, fastf_t *bend_end, fastf_t *bend_center, fastf_t or, fastf_t ir, int arc_segs, double sin_del, double cos_del, struct vertex ***outer_loop, struct vertex ***inner_loop, fastf_t *start_r1, fastf_t *start_r2, struct
@@ -3013,6 +3042,7 @@ tesselate_pipe_end(struct wdb_pipept *pipe, int arc_segs, double sin_del, double
     }
 }
 
+
 /**
  * R T _ P I P E _ T E S S
  *
@@ -3194,6 +3224,7 @@ rt_pipe_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     return(0);
 }
 
+
 /**
  * R T _ P I P E _ I M P O R T
  */
@@ -3249,6 +3280,7 @@ rt_pipe_import4(struct rt_db_internal *ip, const struct bu_external *ep, registe
     return(0);			/* OK */
 }
 
+
 /**
  * R T _ P I P E _ E X P O R T
  */
@@ -3266,7 +3298,7 @@ rt_pipe_export4(struct bu_external *ep, const struct rt_db_internal *ip, double 
     union record *rec;
     
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_PIPE)  return(-1);
+    if (ip->idb_type != ID_PIPE) return(-1);
     pip = (struct rt_pipe_internal *)ip->idb_ptr;
     RT_PIPE_CK_MAGIC(pip);
     
@@ -3313,6 +3345,7 @@ rt_pipe_export4(struct bu_external *ep, const struct rt_db_internal *ip, double 
     
     return(0);
 }
+
 
 /**
  * R T _ P I P E _ I M P O R T 5
@@ -3373,6 +3406,7 @@ rt_pipe_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
     return(0);			/* OK */
 }
 
+
 /**
  * R T _ P I P E _ E X P O R T 5
  */
@@ -3390,7 +3424,7 @@ rt_pipe_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
     int i = 0;
     
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_PIPE)  return(-1);
+    if (ip->idb_type != ID_PIPE) return(-1);
     pip = (struct rt_pipe_internal *)ip->idb_ptr;
     RT_PIPE_CK_MAGIC(pip);
     
@@ -3434,6 +3468,7 @@ rt_pipe_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
     return(0);
 }
 
+
 /**
  * R T _ P I P E _ D E S C R I B E
  *
@@ -3456,7 +3491,7 @@ rt_pipe_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbos
     sprintf(buf, "pipe with %d points\n", pip->pipe_count);
     bu_vls_strcat(str, buf);
     
-    if (!verbose)  return(0);
+    if (!verbose) return(0);
     
 #if 1
     /* Too much for the MGED Display!!!! */
@@ -3483,6 +3518,7 @@ rt_pipe_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbos
 #endif
     return(0);
 }
+
 
 /**
  * R T _ P I P E _ I F R E E
@@ -3514,6 +3550,7 @@ rt_pipe_ifree(struct rt_db_internal *ip, struct resource *resp)
     ip->idb_ptr = GENPTR_NULL;
 }
 
+
 /**
  * R T _ P I P E _ C K
  *
@@ -3536,7 +3573,7 @@ rt_pipe_ck(const struct bu_list *headp)
 
     if (prev->pp_id >= prev->pp_od) {
         bu_log("Inner diameter (%gmm) has to be less than outer diameter (%gmm)\n",
-	   prev->pp_id, prev->pp_od);
+	       prev->pp_id, prev->pp_od);
         error_count++;
     }
 
@@ -3613,7 +3650,7 @@ rt_pipe_ck(const struct bu_list *headp)
 
     if (cur->pp_id >= cur->pp_od) {
         bu_log("Inner diameter (%gmm) has to be less than outer diameter (%gmm)\n",
-	   cur->pp_id, cur->pp_od);
+	       cur->pp_id, cur->pp_od);
         error_count++;
     }
 
@@ -3631,12 +3668,12 @@ rt_pipe_ck(const struct bu_list *headp)
  * R T _ P I P E _ G E T
  *
  * Examples -
- * db get name V#			get coordinates for vertex #
- * db get name I#			get inner radius for vertex #
- * db get name O#			get outer radius for vertex #
- * db get name R#			get bendradius for vertex #
- * db get name P#			get all data for vertex #
- * db get name N			get number of vertices
+ * db get name V# => get coordinates for vertex #
+ * db get name I# => get inner radius for vertex #
+ * db get name O# => get outer radius for vertex #
+ * db get name R# => get bendradius for vertex #
+ * db get name P# => get all data for vertex #
+ * db get name N ==> get number of vertices
  */
 int
 rt_pipe_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *attr)
@@ -3711,6 +3748,7 @@ rt_pipe_get(struct bu_vls *log, const struct rt_db_internal *intern, const char 
     return BRLCAD_OK;
 }
 
+
 int
 rt_pipe_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char **argv, struct resource *resp)
 {
@@ -3722,8 +3760,8 @@ rt_pipe_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char
     int curr_seg;
     fastf_t tmp;
     char *v_str;
-    
-    
+
+
     RT_CK_DB_INTERNAL(intern);
     pipe = (struct rt_pipe_internal *)intern->idb_ptr;
     RT_PIPE_CK_MAGIC(pipe);
@@ -3776,8 +3814,8 @@ rt_pipe_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char
                 break;
             curr_seg++;
         }
-        
-        
+
+
         switch (argv[0][0]) {
             case 'V':
                 obj = Tcl_NewStringObj(argv[1], -1);
@@ -3833,6 +3871,7 @@ rt_pipe_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char
     return (rt_pipe_ck(&pipe->pipe_segs_head) == 0) ? TCL_OK : BRLCAD_ERROR;
 }
 
+
 /**
  * R T _ P I P E _ P A R A M S
  *
@@ -3842,6 +3881,7 @@ rt_pipe_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
 {
     return(0);			/* OK */
 }
+
 
 /*
  * Local Variables:

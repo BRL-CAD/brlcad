@@ -216,10 +216,14 @@ static struct bu_semaphores *bu_semaphores = (struct bu_semaphores *)NULL;
 void
 bu_semaphore_init(unsigned int nsemaphores)
 {
+    unsigned int i;
+
+    if (nsemaphores <= 0)
+	nsemaphores = i = 1;
+
 #if !defined(PARALLEL) && !defined(DEFINED_BU_SEMAPHORES)
     return;					/* No support on this hardware */
 #else
-    unsigned int i;
 
     if (bu_nsemaphores != 0)  return;	/* Already called */
     bu_semaphores = (struct bu_semaphores *)calloc(nsemaphores, sizeof(struct bu_semaphores));
@@ -320,6 +324,9 @@ bu_semaphore_init(unsigned int nsemaphores)
 void
 bu_semaphore_reinit(unsigned int nsemaphores)
 {
+    if (nsemaphores <= 0)
+	nsemaphores = 1;
+
 #if !defined(PARALLEL) && !defined(DEFINED_BU_SEMAPHORES)
     return;					/* No support on this hardware */
 #else

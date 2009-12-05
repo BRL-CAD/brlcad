@@ -35,7 +35,7 @@
 #
 ###
 # demo.tcl
-#	setenv LD_LIBRARY_PATH /usr/lib/X11:/usr/X11/lib
+# setenv LD_LIBRARY_PATH /usr/lib/X11:/usr/X11/lib
 #
 # A GUI to drive MGED through a series of plot files.
 # -Mike Muuss, ARL, July 97.
@@ -69,6 +69,7 @@ if { [catch { send mged echo NIL } status] } {
     exit
 }
 
+
 proc do_advance {} {
     global num
 
@@ -76,12 +77,14 @@ proc do_advance {} {
     send mged "Z; overlay cell$num.pl"
 }
 
+
 proc do_reverse {} {
     global num
 
     incr num -1
     send mged "Z; overlay cell$num.pl"
 }
+
 
 # Local Variables:
 # mode: Tcl

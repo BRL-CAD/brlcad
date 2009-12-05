@@ -133,6 +133,11 @@ include/raytrace.h
 * OBSOLETE *
 ************
 
+7.16.4
+------
+include/raytrace.h
+        get_solidbitv() -> rt_get_solidbitv() [deprecated 7.16]
+
 7.14.4
 ------
 include/pkg.h

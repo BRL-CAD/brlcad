@@ -22,8 +22,8 @@
 /** @file timer52brl.c
  *
  * To provide timing information for RT.
- *	This version for System V, Release TWO, under 4.2 BSD,
- *	using Doug Gwyn's System-V-under-4.2 emulation.
+ * This version for System V, Release TWO, under 4.2 BSD,
+ * using Doug Gwyn's System-V-under-4.2 emulation.
  *
  */
 
@@ -37,14 +37,14 @@
 #include "/sys/h/time.h"
 #include "/sys/h/resource.h"
 
-static struct	timeval time0;	/* Time at which timeing started */
-static struct	rusage ru0;	/* Resource utilization at the start */
+static struct timeval time0;	/* Time at which timeing started */
+static struct rusage ru0;	/* Resource utilization at the start */
 
 static void prusage();
 static void tvadd();
 
 /*
- *			P R E P _ T I M E R
+ * P R E P _ T I M E R
  */
 void
 rt_prep_timer()
@@ -52,6 +52,7 @@ rt_prep_timer()
     _gettimeofday(&time0, (struct timezone *)0);
     _getrusage(RUSAGE_SELF, &ru0);
 }
+
 
 static void
 tvsub(tdiff, t1, t0)
@@ -64,8 +65,9 @@ tvsub(tdiff, t1, t0)
 	tdiff->tv_sec--, tdiff->tv_usec += 1000000;
 }
 
+
 /*
- *			R E A D _ T I M E R
+ * R E A D _ T I M E R
  *
  */
 double
@@ -81,12 +83,13 @@ rt_read_timer(str, len)
     _getrusage(RUSAGE_SELF, &ru1);
     _gettimeofday(&timedol, (struct timezone *)0);
     prusage(&ru0, &ru1, &timedol, &time0, line);
-    bu_strlcpy( str, line, len );
-    tvsub( &td, &ru1.ru_utime, &ru0.ru_utime );
+    bu_strlcpy(str, line, len);
+    tvsub(&td, &ru1.ru_utime, &ru0.ru_utime);
     usert = td.tv_sec + ((double)td.tv_usec) / 1000000;
-    if ( usert < 0.00001 )  usert = 0.00001;
-    return( usert );
+    if (usert < 0.00001) usert = 0.00001;
+    return(usert);
 }
+
 
 static void
 psecs(l, cp)
@@ -112,6 +115,7 @@ psecs(l, cp)
     sprintf(cp, "%d%d", i / 10, i % 10);
 }
 
+
 static void
 prusage(r0, r1, e, b, outp)
     register struct rusage *r0, *r1;
@@ -130,92 +134,93 @@ prusage(r0, r1, e, b, outp)
 	(r1->ru_stime.tv_usec-r0->ru_stime.tv_usec)/10000;
     ms =  (e->tv_sec-b->tv_sec)*100 + (e->tv_usec-b->tv_usec)/10000;
 
-#define END(x)	{while(*x) x++;}
+#define END(x) {while (*x) x++;}
     cp = "%Uuser %Ssys %Ereal %P %Xi+%Dd %Mmaxrss %F+%Rpf %Ccsw";
-    for (; *cp; cp++)  {
+    for (; *cp; cp++) {
 	if (*cp != '%')
 	    *outp++ = *cp;
 	else if (cp[1]) switch (*++cp) {
 
-	    case 'U':
-		tvsub(&tdiff, &r1->ru_utime, &r0->ru_utime);
-		sprintf(outp, "%d.%01d", tdiff.tv_sec, tdiff.tv_usec/100000);
-		END(outp);
-		break;
+		case 'U':
+		    tvsub(&tdiff, &r1->ru_utime, &r0->ru_utime);
+		    sprintf(outp, "%d.%01d", tdiff.tv_sec, tdiff.tv_usec/100000);
+		    END(outp);
+		    break;
 
-	    case 'S':
-		tvsub(&tdiff, &r1->ru_stime, &r0->ru_stime);
-		sprintf(outp, "%d.%01d", tdiff.tv_sec, tdiff.tv_usec/100000);
-		END(outp);
-		break;
+		case 'S':
+		    tvsub(&tdiff, &r1->ru_stime, &r0->ru_stime);
+		    sprintf(outp, "%d.%01d", tdiff.tv_sec, tdiff.tv_usec/100000);
+		    END(outp);
+		    break;
 
-	    case 'E':
-		psecs(ms / 100, outp);
-		END(outp);
-		break;
+		case 'E':
+		    psecs(ms / 100, outp);
+		    END(outp);
+		    break;
 
-	    case 'P':
-		sprintf(outp, "%d%%", (int) (t*100 / ((ms ? ms : 1))));
-		END(outp);
-		break;
+		case 'P':
+		    sprintf(outp, "%d%%", (int) (t*100 / ((ms ? ms : 1))));
+		    END(outp);
+		    break;
 
-	    case 'W':
-		i = r1->ru_nswap - r0->ru_nswap;
-		sprintf(outp, "%d", i);
-		END(outp);
-		break;
+		case 'W':
+		    i = r1->ru_nswap - r0->ru_nswap;
+		    sprintf(outp, "%d", i);
+		    END(outp);
+		    break;
 
-	    case 'X':
-		sprintf(outp, "%d", t == 0 ? 0 : (r1->ru_ixrss-r0->ru_ixrss)/t);
-		END(outp);
-		break;
+		case 'X':
+		    sprintf(outp, "%d", t == 0 ? 0 : (r1->ru_ixrss-r0->ru_ixrss)/t);
+		    END(outp);
+		    break;
 
-	    case 'D':
-		sprintf(outp, "%d", t == 0 ? 0 :
-			(r1->ru_idrss+r1->ru_isrss-(r0->ru_idrss+r0->ru_isrss))/t);
-		END(outp);
-		break;
+		case 'D':
+		    sprintf(outp, "%d", t == 0 ? 0 :
+			    (r1->ru_idrss+r1->ru_isrss-(r0->ru_idrss+r0->ru_isrss))/t);
+		    END(outp);
+		    break;
 
-	    case 'K':
-		sprintf(outp, "%d", t == 0 ? 0 :
-			((r1->ru_ixrss+r1->ru_isrss+r1->ru_idrss) -
-			 (r0->ru_ixrss+r0->ru_idrss+r0->ru_isrss))/t);
-		END(outp);
-		break;
+		case 'K':
+		    sprintf(outp, "%d", t == 0 ? 0 :
+			    ((r1->ru_ixrss+r1->ru_isrss+r1->ru_idrss) -
+			     (r0->ru_ixrss+r0->ru_idrss+r0->ru_isrss))/t);
+		    END(outp);
+		    break;
 
-	    case 'M':
-		sprintf(outp, "%d", r1->ru_maxrss/2);
-		END(outp);
-		break;
+		case 'M':
+		    sprintf(outp, "%d", r1->ru_maxrss/2);
+		    END(outp);
+		    break;
 
-	    case 'F':
-		sprintf(outp, "%d", r1->ru_majflt-r0->ru_majflt);
-		END(outp);
-		break;
+		case 'F':
+		    sprintf(outp, "%d", r1->ru_majflt-r0->ru_majflt);
+		    END(outp);
+		    break;
 
-	    case 'R':
-		sprintf(outp, "%d", r1->ru_minflt-r0->ru_minflt);
-		END(outp);
-		break;
+		case 'R':
+		    sprintf(outp, "%d", r1->ru_minflt-r0->ru_minflt);
+		    END(outp);
+		    break;
 
-	    case 'I':
-		sprintf(outp, "%d", r1->ru_inblock-r0->ru_inblock);
-		END(outp);
-		break;
+		case 'I':
+		    sprintf(outp, "%d", r1->ru_inblock-r0->ru_inblock);
+		    END(outp);
+		    break;
 
-	    case 'O':
-		sprintf(outp, "%d", r1->ru_oublock-r0->ru_oublock);
-		END(outp);
-		break;
-	    case 'C':
-		sprintf(outp, "%d+%d", r1->ru_nvcsw-r0->ru_nvcsw,
-			r1->ru_nivcsw-r0->ru_nivcsw );
-		END(outp);
-		break;
-	}
+		case 'O':
+		    sprintf(outp, "%d", r1->ru_oublock-r0->ru_oublock);
+		    END(outp);
+		    break;
+		case 'C':
+		    sprintf(outp, "%d+%d", r1->ru_nvcsw-r0->ru_nvcsw,
+			    r1->ru_nivcsw-r0->ru_nivcsw);
+		    END(outp);
+		    break;
+	    }
     }
     *outp = '\0';
 }
+
 
 static void
 tvadd(tsum, t0)

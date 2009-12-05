@@ -320,7 +320,7 @@ main(int argc, char *argv[])
 	    bu_exit(1, "Cannot determine status of %s\n", output_file );
 	}
 
-	if ( !(stat_ptr.st_mode & S_IFDIR) )
+	if ( !(S_ISDIR(stat_ptr.st_mode)) )
 	{
 	    bu_exit(1, "-o option must provide a directory, %s is not a directory\n", output_file );
 	}

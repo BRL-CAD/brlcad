@@ -114,11 +114,6 @@ bu_structprint(const char *title, const struct bu_structparse *parsetab, const c
 		   sdp->sp_name, sdp->sp_fmt );
 	    continue;
 	}
-#if 0
-	bu_vls_trunc( &vls, 0 );
-	bu_vls_item_print( &vls, sdp, base );
-	bu_log( " %s=%s\n", sdp->sp_name, bu_vls_addr(&vls) );
-#else
 	switch ( sdp->sp_fmt[1] )  {
 	    case 'c':
 	    case 's':
@@ -215,7 +210,6 @@ bu_structprint(const char *title, const struct bu_structparse *parsetab, const c
 			sdp->sp_name, sdp->sp_fmt );
 		break;
 	}
-#endif
     }
     bu_vls_free(&vls);
 }

@@ -37,3 +37,20 @@ View                                |                             DONE  (duplica
 ViewRing			    |                            UNKNOWN
  
 
+
+Other Issues
+------------
+
+* documentation (even for windows) should not be a .chm file in our
+  repository.  the documentation should be generated from docbook
+  source formatting.
+
+* archer html documentation refers to an 'ae' command, yet only 'aet'
+  exists.  either the docs need updating or ae added.
+
+* archer help menu incorrectly calls archer commands "BRL-CAD Commands"
+
+* opendb command doesn't seem to be available.
+
+* archer reports "invalid command" on 'aet' and other commands until a
+  database is opened.  it shouldn't.

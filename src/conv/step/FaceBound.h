@@ -60,6 +60,7 @@ public:
 	bool Load(STEPWrapper *sw,SCLP23(Application_instance) *sse);
 	virtual bool LoadONBrep(ON_Brep *brep);
 	virtual void Print(int level);
+	bool Oriented();
 	void SetFaceIndex(int index) { ON_face_index = index; };
 
 	//static methods

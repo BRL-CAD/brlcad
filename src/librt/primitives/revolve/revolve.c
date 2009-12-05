@@ -58,12 +58,12 @@
  * various terms of the formula.
  *
  * Returns -
- *	0   REVOLVE is OK
- *	!0  Error in description
+ * 0 REVOLVE is OK
+ * !0 Error in description
  *
  * Implicit return -
- *	A struct revolve_specific is created, and it's address is stored
- *	in stp->st_specific for use by revolve_shot().
+ * A struct revolve_specific is created, and it's address is stored
+ * in stp->st_specific for use by revolve_shot().
  */
 int
 rt_revolve_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
@@ -111,8 +111,8 @@ rt_revolve_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
     /* check the sketch - degree & closed/open */
 
     /* count the number of times an endpoint is used:
-     *   if even, the point is ok
-     *   if odd, the point is at the end of a path
+     * if even, the point is ok
+     * if odd, the point is at the end of a path
      */
     endcount = (int *)bu_calloc(rev->sk->vert_count, sizeof(int), "endcount");
     for (i=0; i<rev->sk->vert_count; i++) endcount[i] = 0;
@@ -195,6 +195,7 @@ rt_revolve_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
     return 0;			/* OK */
 }
 
+
 /**
  * R T _ R E V O L V E _ P R I N T
  */
@@ -212,6 +213,7 @@ rt_revolve_print(const struct soltab *stp)
     fprintf(stderr, "sketch = %s\n", rev->sketch_name);
 }
 
+
 /**
  * R T _ R E V O L V E _ S H O T
  *
@@ -219,8 +221,8 @@ rt_revolve_print(const struct soltab *stp)
  * seg will be acquired and filled in.
  *
  * Returns -
- *	0   MISS
- *	>0  HIT
+ * 0 MISS
+ * >0 HIT
  */
 int
 rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
@@ -348,15 +350,15 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
     }
 
     /**
-     *	if (ur[Z] == 1) {
+     * if (ur[Z] == 1) {
      *	    bb = inf;
      *	    // ray becomes a line parallel to sketch's y-axis instead of a hyberbola
-     *	}
-     *	if (ur[Z] == 0) {
+     * }
+     * if (ur[Z] == 0) {
      *	    bb = 0;
      *	    // ray becomes a line parallel to sketch's x-axis instead of a hyperbola
      *	    // all hits must have x > aa
-     *	}
+     * }
      */
 
     /* handle open sketches */
@@ -364,13 +366,15 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 	for (i=0; i<rev->sk->vert_count && rev->ends[i] != -1; i++) {
 	    V2MOVE(pt1, rev->sk->verts[rev->ends[i]]);
 	    hit2d[Y] = pt1[Y];
-	    if (NEAR_ZERO(fabs(ur[Z])-1.0, RT_DOT_TOL)) {  /* ur[Z] == 1 */
+	    if (NEAR_ZERO(fabs(ur[Z])-1.0, RT_DOT_TOL)) {
+		/* ur[Z] == 1 */
 		hit2d[X] = aa;
 	    } else {
 		hit2d[X] = aa*sqrt((hit2d[Y]-h)*(hit2d[Y]-h)/(bb*bb) + 1);
 	    }
 	    if (pt1[X] < 0) hit2d[X] = -fabs(hit2d[X]);
-	    if (fabs(hit2d[X]) < fabs(pt1[X])) {	/* valid hit */
+	    if (fabs(hit2d[X]) < fabs(pt1[X])) {
+		/* valid hit */
 		if (nhits >= MAX_HITS) return -1; /* too many hits */
 		hitp = hits[nhits++];
 		hitp->hit_magic = RT_HIT_MAGIC;
@@ -679,129 +683,129 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 		break;
 	    case CURVE_CARC_MAGIC:
 		/*
-		circle: (x-cx)^2 + (y-cy)^2 = cr^2
-			x = (1/2cx)y^2 + (-cy/cx)y + (1/2cx)(cy^2 + cx^2 - cr^2) + (1/2cx)(x^2)
-			x = f(y) + (1/2cx)x^2
+		  circle: (x-cx)^2 + (y-cy)^2 = cr^2
+		  x = (1/2cx)y^2 + (-cy/cx)y + (1/2cx)(cy^2 + cx^2 - cr^2) + (1/2cx)(x^2)
+		  x = f(y) + (1/2cx)x^2
 		
-		hyperbola:
-			[(x-hx)/a]^2 - [(y-hy)/b]^2 = 1
-			x^2 = (a^2/b^2)y^2 + (-2*hy*a^2/b^2)y + (hy^2 * a^2/b^2) + a^2
-			x^2 = g(y)
+		  hyperbola:
+		  [(x-hx)/a]^2 - [(y-hy)/b]^2 = 1
+		  x^2 = (a^2/b^2)y^2 + (-2*hy*a^2/b^2)y + (hy^2 * a^2/b^2) + a^2
+		  x^2 = g(y)
 			
-		plug the second equation into the first to get:
-			x = f(y) + (1/2cx)g(y)
-		then square that to get:
-			x^2 = {f(y) + (1/2cx)g(y)}^2 = g(y)
-		move all to one side to get:
-			0 = {f(y) + (1/2cx)g(y)}^2 - g(y)
-		this is a fourth order polynomial in y.
+		  plug the second equation into the first to get:
+		  x = f(y) + (1/2cx)g(y)
+		  then square that to get:
+		  x^2 = {f(y) + (1/2cx)g(y)}^2 = g(y)
+		  move all to one side to get:
+		  0 = {f(y) + (1/2cx)g(y)}^2 - g(y)
+		  this is a fourth order polynomial in y.
 		*/
-	    {
-		bn_poly_t	circleX;	/* f(y) */
-		bn_poly_t	hypXsq;		/* g(y) */
-		bn_poly_t	hypXsq_scaled;	/* g(y) / (2*cx) */
-		bn_poly_t	sum;		/* f(y) + g(y)/(2cx) */
-		bn_poly_t	sum_sq;		/* {f(y) + g(y)/(2cx)}^2 */
-		bn_poly_t	answer;		/* {f(y) + g(y)/(2cx)}^2 - g(y) */
-		bn_complex_t	roots[4];
+		{
+		    bn_poly_t circleX;	/* f(y) */
+		    bn_poly_t hypXsq;		/* g(y) */
+		    bn_poly_t hypXsq_scaled;	/* g(y) / (2*cx) */
+		    bn_poly_t sum;		/* f(y) + g(y)/(2cx) */
+		    bn_poly_t sum_sq;		/* {f(y) + g(y)/(2cx)}^2 */
+		    bn_poly_t answer;		/* {f(y) + g(y)/(2cx)}^2 - g(y) */
+		    bn_complex_t roots[4];
 		
-		fastf_t		cx, cy, crsq;	/* carc's (x,y) coords and radius^2 */
-		point2d_t	center, radius;
+		    fastf_t cx, cy, crsq;	/* carc's (x, y) coords and radius^2 */
+		    point2d_t center, radius;
 		
-		/* calculate circle parameters */
-		csg = (struct carc_seg *)lng;
+		    /* calculate circle parameters */
+		    csg = (struct carc_seg *)lng;
 		
-		if (csg->radius <= 0.0) {
-		    /* full circle, "end" is center and "start" is on the circle */
-		    V2MOVE(center, rev->sk->verts[csg->end]);
-		    V2SUB2(radius, rev->sk->verts[csg->start], center);
-		    crsq = MAG2SQ(radius);
-		} else {
-		    point_t start, end, mid;
-		    vect_t s_to_m;
-		    vect_t bisector;
-		    vect_t vertical;
-		    fastf_t dist;
-		    fastf_t magsq_s2m;
-		    
-		    VSET(vertical, 0, 0, 1);
-		    VMOVE(start, rev->sk->verts[csg->start]);
-		    start[Z] = 0.0;
-		    VMOVE(end, rev->sk->verts[csg->end]);
-		    end[Z] = 0.0;
-		    
-		    VBLEND2(mid, 0.5, start, 0.5, end);
-		    VSUB2(s_to_m, mid, start);
-		    VCROSS(bisector, vertical, s_to_m);
-		    VUNITIZE(bisector);
-		    magsq_s2m = MAGSQ(s_to_m);
-		    if (magsq_s2m > csg->radius*csg->radius) {
-			fastf_t max_radius;
-			
-			max_radius = sqrt(magsq_s2m);
-			if (NEAR_ZERO(max_radius - csg->radius, RT_LEN_TOL)) {
-			    csg->radius = max_radius;
-			} else {
-			    bu_log("Impossible radius for circular arc in extrusion (%s), is %g, cannot be more than %g!\n",
-			    stp->st_dp->d_namep, csg->radius, sqrt(magsq_s2m));
-			    bu_log("Difference is %g\n", max_radius - csg->radius);
-			    return(-1);
-			}
-		    }
-		    dist = sqrt(csg->radius*csg->radius - magsq_s2m);
-		    
-		    /* save arc center */
-		    if (csg->center_is_left) {
-			VJOIN1(center, mid, dist, bisector);
+		    if (csg->radius <= 0.0) {
+			/* full circle, "end" is center and "start" is on the circle */
+			V2MOVE(center, rev->sk->verts[csg->end]);
+			V2SUB2(radius, rev->sk->verts[csg->start], center);
+			crsq = MAG2SQ(radius);
 		    } else {
-			VJOIN1(center, mid, -dist, bisector);
-		    }
-		}
-		
-		cx = center[X];
-		cy = center[Y];
-		
-		circleX.dgr = 2;
-		hypXsq.dgr = 2;
-		hypXsq_scaled.dgr = 2;
-		sum.dgr = 2;
-		sum_sq.dgr = 4;
-		answer.dgr = 4;
-		
-		circleX.cf[0] = (cy*cy + cx*cx - crsq)/(2.0*cx);
-		circleX.cf[1] = -cy/cx;
-		circleX.cf[2] = 1/(2.0*cx);
-		
-		hypXsq_scaled.cf[0] = hypXsq.cf[0] = aa*aa + h*h*aa*aa/(bb*bb);
-		hypXsq_scaled.cf[1] = hypXsq.cf[1] = -2.0*h*aa*aa/(bb*bb);
-		hypXsq_scaled.cf[2] = hypXsq.cf[2] = (aa*aa)/(bb*bb);
-		
-		bn_poly_scale(&hypXsq_scaled, 1.0 / (2.0 * cx));
-		bn_poly_add(&sum, &hypXsq_scaled, &circleX);
-		bn_poly_mul(&sum_sq, &sum, &sum);
-		bn_poly_sub(&answer, &sum_sq, &hypXsq);
-		
-		/* It is known that the equation is 4th order.  Therefore, if the
-		* root finder returns other than 4 roots, error.
-		*/
-		if ((i = rt_poly_roots(&answer, roots, stp->st_dp->d_namep)) != 4) {
-		    if (i > 0) {
-			bu_log("tor:  rt_poly_roots() 4!=%d\n", i);
-			bn_pr_roots(stp->st_name, roots, i);
-		    } else if (i < 0) {
-			static int reported=0;
-			bu_log("The root solver failed to converge on a solution for %s\n", stp->st_dp->d_namep);
-			if (!reported) {
-			    VPRINT("while shooting from:\t", rp->r_pt);
-			    VPRINT("while shooting at:\t", rp->r_dir);
-			    bu_log("Additional torus convergence failure details will be suppressed.\n");
-			    reported=1;
+			point_t start, end, mid;
+			vect_t s_to_m;
+			vect_t bisector;
+			vect_t vertical;
+			fastf_t dist;
+			fastf_t magsq_s2m;
+		    
+			VSET(vertical, 0, 0, 1);
+			VMOVE(start, rev->sk->verts[csg->start]);
+			start[Z] = 0.0;
+			VMOVE(end, rev->sk->verts[csg->end]);
+			end[Z] = 0.0;
+		    
+			VBLEND2(mid, 0.5, start, 0.5, end);
+			VSUB2(s_to_m, mid, start);
+			VCROSS(bisector, vertical, s_to_m);
+			VUNITIZE(bisector);
+			magsq_s2m = MAGSQ(s_to_m);
+			if (magsq_s2m > csg->radius*csg->radius) {
+			    fastf_t max_radius;
+			
+			    max_radius = sqrt(magsq_s2m);
+			    if (NEAR_ZERO(max_radius - csg->radius, RT_LEN_TOL)) {
+				csg->radius = max_radius;
+			    } else {
+				bu_log("Impossible radius for circular arc in extrusion (%s), is %g, cannot be more than %g!\n",
+				       stp->st_dp->d_namep, csg->radius, sqrt(magsq_s2m));
+				bu_log("Difference is %g\n", max_radius - csg->radius);
+				return(-1);
+			    }
+			}
+			dist = sqrt(csg->radius*csg->radius - magsq_s2m);
+		    
+			/* save arc center */
+			if (csg->center_is_left) {
+			    VJOIN1(center, mid, dist, bisector);
+			} else {
+			    VJOIN1(center, mid, -dist, bisector);
 			}
 		    }
-		}
 		
-		break;
-	    }
+		    cx = center[X];
+		    cy = center[Y];
+		
+		    circleX.dgr = 2;
+		    hypXsq.dgr = 2;
+		    hypXsq_scaled.dgr = 2;
+		    sum.dgr = 2;
+		    sum_sq.dgr = 4;
+		    answer.dgr = 4;
+		
+		    circleX.cf[0] = (cy*cy + cx*cx - crsq)/(2.0*cx);
+		    circleX.cf[1] = -cy/cx;
+		    circleX.cf[2] = 1/(2.0*cx);
+		
+		    hypXsq_scaled.cf[0] = hypXsq.cf[0] = aa*aa + h*h*aa*aa/(bb*bb);
+		    hypXsq_scaled.cf[1] = hypXsq.cf[1] = -2.0*h*aa*aa/(bb*bb);
+		    hypXsq_scaled.cf[2] = hypXsq.cf[2] = (aa*aa)/(bb*bb);
+		
+		    bn_poly_scale(&hypXsq_scaled, 1.0 / (2.0 * cx));
+		    bn_poly_add(&sum, &hypXsq_scaled, &circleX);
+		    bn_poly_mul(&sum_sq, &sum, &sum);
+		    bn_poly_sub(&answer, &sum_sq, &hypXsq);
+		
+		    /* It is known that the equation is 4th order.  Therefore, if the
+		     * root finder returns other than 4 roots, error.
+		     */
+		    if ((i = rt_poly_roots(&answer, roots, stp->st_dp->d_namep)) != 4) {
+			if (i > 0) {
+			    bu_log("tor:  rt_poly_roots() 4!=%d\n", i);
+			    bn_pr_roots(stp->st_name, roots, i);
+			} else if (i < 0) {
+			    static int reported=0;
+			    bu_log("The root solver failed to converge on a solution for %s\n", stp->st_dp->d_namep);
+			    if (!reported) {
+				VPRINT("while shooting from:\t", rp->r_pt);
+				VPRINT("while shooting at:\t", rp->r_dir);
+				bu_log("Additional torus convergence failure details will be suppressed.\n");
+				reported=1;
+			    }
+			}
+		    }
+		
+		    break;
+		}
 	    case CURVE_BEZIER_MAGIC:
 		break;
 	    case CURVE_NURB_MAGIC:
@@ -863,6 +867,7 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
     return nhits;
 }
 
+
 #define RT_REVOLVE_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
 
 
@@ -880,6 +885,7 @@ rt_revolve_vshot(struct soltab *stp[],	/* An array of solid pointers */
 {
     rt_vstub(stp, rp, segp, n, ap);
 }
+
 
 /**
  * R T _ R E V O L V E _ N O R M
@@ -954,6 +960,7 @@ rt_revolve_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
     }
 }
 
+
 /**
  * R T _ R E V O L V E _ C U R V E
  *
@@ -970,6 +977,7 @@ rt_revolve_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
     /* any tangent direction */
     bn_vec_ortho(cvp->crv_pdir, hitp->hit_normal);
 }
+
 
 /**
  * R T _ R E V O L V E _ U V
@@ -1066,6 +1074,7 @@ rt_revolve_uv(struct application *ap, struct soltab *stp, struct hit *hitp, stru
 	uvp->uv_v = 1.0;
 }
 
+
 /**
  * R T _ R E V O L V E _ F R E E
  */
@@ -1078,6 +1087,7 @@ rt_revolve_free(struct soltab *stp)
     bu_free((char *)revolve, "revolve_specific");
 }
 
+
 /**
  * R T _ R E V O L V E _ C L A S S
  */
@@ -1086,6 +1096,7 @@ rt_revolve_class(const struct soltab *stp, const vect_t min, const vect_t max, c
 {
     return 0;
 }
+
 
 /**
  * R T _ R E V O L V E _ P L O T
@@ -1132,36 +1143,36 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
     VUNITIZE(uz);
 
     /* setup unit circle to be scaled */
-    VMOVE(	ucir[ 0], ux);
-    VREVERSE(	ucir[ 8], ucir[0]);
+    VMOVE(ucir[ 0], ux);
+    VREVERSE(ucir[ 8], ucir[0]);
 
     VSCALE(xdir, ux, cos22_5);
     VSCALE(ydir, uy, cos67_5);
-    VADD2(	ucir[ 1], xdir, ydir);
-    VREVERSE(	ucir[ 9], ucir[1]);
+    VADD2(ucir[ 1], xdir, ydir);
+    VREVERSE(ucir[ 9], ucir[1]);
     VREVERSE(xdir, xdir);
-    VADD2(	ucir[ 7], xdir, ydir);
-    VREVERSE(	ucir[15], ucir[7]);
+    VADD2(ucir[ 7], xdir, ydir);
+    VREVERSE(ucir[15], ucir[7]);
 
     VSCALE(xdir, ux, M_SQRT1_2);
     VSCALE(ydir, uy, M_SQRT1_2);
-    VADD2(	ucir[ 2], xdir, ydir);
-    VREVERSE(	ucir[10], ucir[2]);
+    VADD2(ucir[ 2], xdir, ydir);
+    VREVERSE(ucir[10], ucir[2]);
     VREVERSE(xdir, xdir);
-    VADD2(	ucir[ 6], xdir, ydir);
-    VREVERSE(	ucir[14], ucir[6]);
+    VADD2(ucir[ 6], xdir, ydir);
+    VREVERSE(ucir[14], ucir[6]);
 
 
     VSCALE(xdir, ux, cos67_5);
     VSCALE(ydir, uy, cos22_5);
-    VADD2(	ucir[ 3], xdir, ydir);
-    VREVERSE(	ucir[11], ucir[3]);
+    VADD2(ucir[ 3], xdir, ydir);
+    VREVERSE(ucir[11], ucir[3]);
     VREVERSE(xdir, xdir);
-    VADD2(	ucir[ 5], xdir, ydir);
-    VREVERSE(	ucir[13], ucir[5]);
+    VADD2(ucir[ 5], xdir, ydir);
+    VREVERSE(ucir[13], ucir[5]);
 
-    VMOVE(	ucir[ 4], uy);
-    VREVERSE(	ucir[12], ucir[4]);
+    VMOVE(ucir[ 4], uy);
+    VREVERSE(ucir[12], ucir[4]);
 
     /* find open endpoints, and determine which points are used */
     endcount = (int *)bu_calloc(rip->sk->vert_count, sizeof(int), "endcount");
@@ -1306,8 +1317,8 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
  * R T _ R E V O L V E _ T E S S
  *
  * Returns -
- *	-1  failure
- *	 0  OK.  *r points to nmgregion that holds this tessellation.
+ * -1 failure
+ * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
 int
 rt_revolve_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
@@ -1361,22 +1372,17 @@ rt_revolve_import5(struct rt_db_internal *ip, const struct bu_external *ep, cons
     sketch_name = (char *)ptr + (ELEMENTS_PER_VECT*3 + 1)*SIZEOF_NETWORK_DOUBLE;
     if (!dbip)
 	rip->sk = (struct rt_sketch_internal *)NULL;
-    else if ((dp=db_lookup(dbip, sketch_name, LOOKUP_NOISY)) == DIR_NULL)
-    {
+    else if ((dp=db_lookup(dbip, sketch_name, LOOKUP_NOISY)) == DIR_NULL) {
 	bu_log("rt_revolve_import4: ERROR: Cannot find sketch (%s) for extrusion\n",
 	       sketch_name);
 	rip->sk = (struct rt_sketch_internal *)NULL;
-    }
-    else
-    {
-	if (rt_db_get_internal(&tmp_ip, dp, dbip, bn_mat_identity, resp) != ID_SKETCH)
-	{
+    } else {
+	if (rt_db_get_internal(&tmp_ip, dp, dbip, bn_mat_identity, resp) != ID_SKETCH) {
 	    bu_log("rt_revolve_import4: ERROR: Cannot import sketch (%s) for extrusion\n",
 		   sketch_name);
 	    bu_free(ip->idb_ptr, "extrusion");
 	    return(-1);
-	}
-	else
+	} else
 	    rip->sk = (struct rt_sketch_internal *)tmp_ip.idb_ptr;
     }
 
@@ -1396,6 +1402,7 @@ rt_revolve_import5(struct rt_db_internal *ip, const struct bu_external *ep, cons
     return(0);			/* OK */
 }
 
+
 /**
  * R T _ R E V O L V E _ E X P O R T 5
  *
@@ -1413,7 +1420,7 @@ rt_revolve_export5(struct bu_external *ep, const struct rt_db_internal *ip, doub
     unsigned char *ptr;
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_REVOLVE)  return(-1);
+    if (ip->idb_type != ID_REVOLVE) return(-1);
     rip = (struct rt_revolve_internal *)ip->idb_ptr;
     RT_REVOLVE_CK_MAGIC(rip);
 
@@ -1439,6 +1446,7 @@ rt_revolve_export5(struct bu_external *ep, const struct rt_db_internal *ip, doub
 
     return 0;
 }
+
 
 /**
  * R T _ R E V O L V E _ D E S C R I B E
@@ -1485,6 +1493,7 @@ rt_revolve_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ver
     return(0);
 }
 
+
 /**
  * R T _ R E V O L V E _ I F R E E
  *
@@ -1515,6 +1524,7 @@ rt_revolve_ifree(struct rt_db_internal *ip, struct resource *resp)
     ip->idb_ptr = GENPTR_NULL;	/* sanity */
 }
 
+
 /**
  * R T _ R E V O L V E _ X F O R M
  *
@@ -1526,6 +1536,7 @@ int
 rt_revolve_xform(struct rt_db_internal *op, const mat_t mat, struct rt_db_internal *ip, int free)
 {
 }
+
 
 /*
  * Local Variables:

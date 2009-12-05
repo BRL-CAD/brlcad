@@ -20,13 +20,10 @@
  */
 /** @file pixcmp.c
  *
- *  Compute the difference between two .pix files.
- *  To establish context, a monochrome image is produced when there
- *  are no differences;  otherwise the channels that differ are
- *  highlighted on differing pixels.
+ * Compute and summarily report differences between two .pix files.
  *
- *  This routine operates on a pixel-by-pixel basis, and thus
- *  is independent of the resolution of the image.
+ * This routine operates on a pixel-by-pixel basis, and thus
+ * is independent of the resolution of the image.
  *
  */
 
@@ -34,6 +31,9 @@
 
 #include <stdlib.h>
 #include <string.h>
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 #include "bio.h"
 
 
@@ -47,7 +47,7 @@
 #define OFF_BY_MANY 2
 
 
-void
+HIDDEN void
 usage(const char *name)
 {
     const char *unknown = "pixcmp";
@@ -70,7 +70,7 @@ usage(const char *name)
 }
 
 
-void
+HIDDEN void
 handle_i_opt(const char *arg, long *skip1, long *skip2)
 {
     const char *endptr = arg;
@@ -113,6 +113,9 @@ handle_i_opt(const char *arg, long *skip1, long *skip2)
 int
 main(int argc, char *argv[])
 {
+    extern char *optarg;
+    extern int optind;
+
     FILE *f1 = NULL;
     FILE *f2 = NULL;
 
@@ -154,7 +157,7 @@ main(int argc, char *argv[])
     argv += optind;
 
     /* validate what is left over */
-    if ( argc < 1 || argc > 4)  {
+    if (argc < 1 || argc > 4) {
 	fprintf(stderr, "ERROR: incorrect number of arguments provided\n\n");
 	usage(argv[0]);
 	exit(OPTS_ERROR);
@@ -181,11 +184,11 @@ main(int argc, char *argv[])
 	handle_i_opt(range, &f1_skip, &f2_skip);
     }
 
-    /*    printf("Skip from FILE1: %ld and from FILE2: %ld\n", f1_skip, f2_skip); */
+    /* printf("Skip from FILE1: %ld and from FILE2: %ld\n", f1_skip, f2_skip); */
 
-    if (strcmp(argv[0], "-") == 0 ) {
+    if (strcmp(argv[0], "-") == 0) {
 	f1 = stdin;
-    } else if ((f1 = fopen(argv[0], "rb")) == NULL)  {
+    } else if ((f1 = fopen(argv[0], "rb")) == NULL) {
 	perror(argv[1]);
 	exit(FILE_ERROR);
     }
@@ -229,17 +232,17 @@ main(int argc, char *argv[])
 	register int r1, r2, g1, g2, b1, b2;
 	r1 = r2 = g1 = g2 = b1 = b2 = -1;
 
-	r1 = fgetc( f1 );
-	r2 = fgetc( f2 );
+	r1 = fgetc(f1);
+	r2 = fgetc(f2);
 	if (feof(f1) || feof(f2)) break;
 	bytes++;
 	if (!print_bytes) {
-	    g1 = fgetc( f1 );
-	    g2 = fgetc( f2 );
+	    g1 = fgetc(f1);
+	    g2 = fgetc(f2);
 	    if (feof(f1) || feof(f2)) break;
 	    bytes++;
-	    b1 = fgetc( f1 );
-	    b2 = fgetc( f2 );
+	    b1 = fgetc(f1);
+	    b2 = fgetc(f2);
 	    if (feof(f1) || feof(f2)) break;
 	    bytes++;
 	}
@@ -283,7 +286,7 @@ main(int argc, char *argv[])
 	    if (print_bytes) {
 		printf("%ld %3d %3d\n", bytes, r1, r2);
 	    } else {
-		printf("%ld\t( %3d, %3d, %3d )\t( %3d, %3d, %3d )\n", bytes / 3, r1, g1, b1, r2, g2, b2);
+		printf("%ld\t(%3d, %3d, %3d)\t(%3d, %3d, %3d)\n", bytes / 3, r1, g1, b1, r2, g2, b2);
 	    }
 	}
     }
@@ -293,7 +296,7 @@ main(int argc, char *argv[])
 	fprintf(stdout,
 		"pixcmp %s: %8ld matching, %8ld off by 1, %8ld off by many\n",
 		print_bytes?"bytes":"pixels",
-		matching, off1, offmany );
+		matching, off1, offmany);
     }
 
     /* check for errors */

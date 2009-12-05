@@ -39,32 +39,33 @@ static clock_t start;
 time_t time0;
 
 /*
- *			P R E P _ T I M E R
+ * P R E P _ T I M E R
  */
 void
 rt_prep_timer(void)
 {
     start = clock();
-    time( &time0 );
+    time(&time0);
 }
 
+
 /*
- *			R T _ G E T _ T I M E R
+ * R T _ G E T _ T I M E R
  *
- *  Reports on the passage of time, since rt_prep_timer() was called.
- *  Explicit return is number of CPU seconds.
- *  String return is descriptive.
- *  If "elapsed" pointer is non-null, number of elapsed seconds are returned.
- *  Times returned will never be zero.
+ * Reports on the passage of time, since rt_prep_timer() was called.
+ * Explicit return is number of CPU seconds.
+ * String return is descriptive.
+ * If "elapsed" pointer is non-null, number of elapsed seconds are returned.
+ * Times returned will never be zero.
  */
 double
-rt_get_timer(struct bu_vls	*vp, double *elapsed)
+rt_get_timer(struct bu_vls *vp, double *elapsed)
 {
-    time_t	now;
-    double	user_cpu_secs;
-    double	sys_cpu_secs;
-    double	elapsed_secs;
-    double	percent;
+    time_t now;
+    double user_cpu_secs;
+    double sys_cpu_secs;
+    double elapsed_secs;
+    double percent;
     clock_t finish;
 
     /* Real time.  1 second resolution. */
@@ -77,39 +78,42 @@ rt_get_timer(struct bu_vls	*vp, double *elapsed)
 
     user_cpu_secs = sys_cpu_secs;
 
-    if ( user_cpu_secs < 0.00001 )  user_cpu_secs = 0.00001;
-    if ( elapsed_secs < 0.00001 )  elapsed_secs = user_cpu_secs;	/* It can't be any less! */
+    if (user_cpu_secs < 0.00001) user_cpu_secs = 0.00001;
+    if (elapsed_secs < 0.00001) elapsed_secs = user_cpu_secs;	/* It can't be any less! */
 
-    if ( elapsed )  *elapsed = elapsed_secs;
+    if (elapsed)  *elapsed = elapsed_secs;
 
-    if ( vp )  {
+    if (vp) {
 	percent = user_cpu_secs/elapsed_secs*100.0;
 	BU_CK_VLS(vp);
-	bu_vls_printf( vp,
-		       "%g user + %g sys in %g elapsed secs (%g%%)",
-		       user_cpu_secs, sys_cpu_secs, elapsed_secs, percent );
+	bu_vls_printf(vp,
+		      "%g user + %g sys in %g elapsed secs (%g%%)",
+		      user_cpu_secs, sys_cpu_secs, elapsed_secs, percent);
     }
-    return( user_cpu_secs );
+    return(user_cpu_secs);
 }
+
 
 double
 rt_read_timer(char *str, int len)
 {
-    struct bu_vls	vls;
-    double		cpu;
-    int		todo;
+    struct bu_vls vls;
+    double cpu;
+    int todo;
 
-    if ( !str )  return  rt_get_timer( (struct bu_vls *)0, (double *)0 );
+    if (!str)
+	return rt_get_timer((struct bu_vls *)0, (double *)0);
 
-    bu_vls_init( &vls );
-    cpu = rt_get_timer( &vls, (double *)0 );
-    todo = bu_vls_strlen( &vls );
+    bu_vls_init(&vls);
+    cpu = rt_get_timer(&vls, (double *)0);
+    todo = bu_vls_strlen(&vls);
     if (todo > len)
 	todo = len;
-    bu_strlcpy( str, bu_vls_addr(&vls), todo );
+    bu_strlcpy(str, bu_vls_addr(&vls), todo);
 
     return cpu;
 }
+
 
 /** @} */
 /*

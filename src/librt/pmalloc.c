@@ -21,52 +21,52 @@
 /** @{ */
 /** @file pmalloc.c
  *
- *  The Princeton memory allocater.
+ * The Princeton memory allocater.
  *
- *  Functions -
- *	rt_pmalloc
- *	rt_pfree
- *	rt_prealloc
- *	rt_forget
+ * Functions -
+ * rt_pmalloc
+ * rt_pfree
+ * rt_prealloc
+ * rt_forget
  *
- *  Author -
- *	Wiliam L. Sebok
+ * Author -
+ * Wiliam L. Sebok
  *
- *  Modified:
- *	John Anderson - modified for use in multi-threaded applications.
- *		It now uses a field from the BRL-CAD resource structure
- *		to store the memory blocks. Also replaced mlindx() routine
- *		with a faster (but less general) version that takes advantage
- *		of the fact that bucket sizes increase by powers of two.
+ * Modified:
+ * John Anderson - modified for use in multi-threaded applications.
+ * It now uses a field from the BRL-CAD resource structure
+ * to store the memory blocks. Also replaced mlindx() routine
+ * with a faster (but less general) version that takes advantage
+ * of the fact that bucket sizes increase by powers of two.
  *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * A  "smarter" malloc v1.0			William L. Sebok
+ * A "smarter" malloc v1.0			William L. Sebok
  *					Sept. 24, 1984 rev. June 30, 1986
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  *
- *	Algorithm:
- *	 Assign to each area an index "n". This is currently proportional to
- *	the log 2 of size of the area rounded down to the nearest integer.
- *	Then all free areas of storage whose length have the same index n are
- *	organized into a chain with other free areas of index n (the "bucket"
- *	chain). A request for allocation of storage first searches the list of
- *	free memory.  The search starts at the bucket chain of index equal to
- *	that of the storage request, continuing to higher index bucket chains
- *	if the first attempt fails.
- *	If the search fails then new memory is allocated.  Only the amount of
- *	new memory needed is allocated.  Any old free memory left after an
- *	allocation is returned to the free list.
+ * Algorithm:
+ * Assign to each area an index "n". This is currently proportional to
+ * the log 2 of size of the area rounded down to the nearest integer.
+ * Then all free areas of storage whose length have the same index n are
+ * organized into a chain with other free areas of index n (the "bucket"
+ * chain). A request for allocation of storage first searches the list of
+ * free memory.  The search starts at the bucket chain of index equal to
+ * that of the storage request, continuing to higher index bucket chains
+ * if the first attempt fails.
+ * If the search fails then new memory is allocated.  Only the amount of
+ * new memory needed is allocated.  Any old free memory left after an
+ * allocation is returned to the free list.
  *
- *	  All memory areas (free or busy) handled by rt_pmalloc are also chained
- *	sequentially by increasing address (the adjacency chain).  When memory
- *	is freed it is merged with adjacent free areas, if any.  If a free area
- *	of memory ends at the end of memory (i.e. at the break), and if the
- *	variable "endfree" is non-zero, then the break is contracted, freeing
- *	the memory back to the system.
+ * All memory areas (free or busy) handled by rt_pmalloc are also chained
+ * sequentially by increasing address (the adjacency chain).  When memory
+ * is freed it is merged with adjacent free areas, if any.  If a free area
+ * of memory ends at the end of memory (i.e. at the break), and if the
+ * variable "endfree" is non-zero, then the break is contracted, freeing
+ * the memory back to the system.
  *
- *	Notes:
- *		ov_length field includes sizeof(struct overhead)
- *		adjacency chain includes all memory, allocated plus free.
+ * Notes:
+ * ov_length field includes sizeof(struct overhead)
+ * adjacency chain includes all memory, allocated plus free.
  */
 /** @} */
 
@@ -86,10 +86,10 @@
  */
 
 /* alignment requirement for machine (in bytes) */
-#define NALIGN	sizeof(double)
+#define NALIGN sizeof(double)
 
 /* size of an integer large enough to hold a character pointer */
-typedef	long	Size;
+typedef long Size;
 
 /*
  * CURBRK returns the value of the current system break, i.e., the system's
@@ -99,9 +99,9 @@ typedef	long	Size;
  */
 
 #ifndef CURBRK
-#define CURBRK	sbrk(0)
+#define CURBRK sbrk(0)
 #else  /* CURBRK */
-#	if	CURBRK == curbrk
+#	if CURBRK == curbrk
 extern Size curbrk;
 #	endif
 #endif /* CURBRK */
@@ -114,37 +114,29 @@ extern Size curbrk;
  */
 
 #ifndef BRK
-#define BRK(x)	brk(x)
+#define BRK(x) brk(x)
 #endif /* Not BRK */
 
 /* END of machine dependent portion */
 
-#define	MAGIC_FREE	0x548a934c
-#define	MAGIC_BUSY	0xc139569a
+#define MAGIC_FREE 0x548a934c
+#define MAGIC_BUSY 0xc139569a
 
-#if 0
-#define RT_PM_NBUCKETS	18
-
-struct rt_qelem {
-    struct rt_qelem *q_forw;
-    struct rt_qelem *q_back;
-};
-
-#endif
 struct overhead {
-    struct rt_qelem	ov_adj;		/* adjacency chain pointers */
-    struct rt_qelem	ov_buk;		/* bucket chain pointers */
-    long		ov_magic;
-    Size		ov_length;
+    struct rt_qelem ov_adj;		/* adjacency chain pointers */
+    struct rt_qelem ov_buk;		/* bucket chain pointers */
+    long ov_magic;
+    Size ov_length;
 };
+
 
 /*
  * The following macros depend on the order of the elements in struct overhead
  */
 #define TOADJ(p)	((struct rt_qelem *)(p))
 #define FROMADJ(p)	((struct overhead *)(p))
-#define FROMBUK(p)	((struct overhead *)( (char *)p - sizeof(struct rt_qelem)))
-#define TOBUK(p)	((struct rt_qelem *)( (char *)p + sizeof(struct rt_qelem)))
+#define FROMBUK(p)	((struct overhead *)((char *)p - sizeof(struct rt_qelem)))
+#define TOBUK(p)	((struct rt_qelem *)((char *)p + sizeof(struct rt_qelem)))
 
 extern char endfree;
 
@@ -157,17 +149,17 @@ extern void (*mlabort)();
 
 #define debug 1
 #ifdef debug
-# define ASSERT(p, q)	if (!(p)) { \
-				bu_semaphore_acquire( BU_SEM_SYSCALL ); \
-				mllcerr(q); \
-				bu_semaphore_release( BU_SEM_SYSCALL ); \
-			}
+# define ASSERT(p, q) if (!(p)) {		\
+	bu_semaphore_acquire(BU_SEM_SYSCALL);	\
+	mllcerr(q);				\
+	bu_semaphore_release(BU_SEM_SYSCALL);	\
+    }
 #else
 # define ASSERT(p, q)
 #endif
 
 #ifndef NULL
-#define NULL	0
+#define NULL 0
 #endif
 
 /*
@@ -182,23 +174,6 @@ static Size mlsizes[RT_PM_NBUCKETS] = {
     65536, 131072, 262144, 524288, 1048576, 2097152, 4194304
 };
 
-#if 0
-/* head of adjacency chain */
-static struct rt_qelem adjhead = { &adjhead, &adjhead };
-
-/* head of bucket chains */
-static struct rt_qelem buck[RT_PM_NBUCKETS] = {
-    &buck[0],  &buck[0],	&buck[1],  &buck[1],
-    &buck[2],  &buck[2],	&buck[3],  &buck[3],
-    &buck[4],  &buck[4],	&buck[5],  &buck[5],
-    &buck[6],  &buck[6],	&buck[7],  &buck[7],
-    &buck[8],  &buck[8],	&buck[9],  &buck[9],
-    &buck[10], &buck[10],	&buck[11], &buck[11],
-    &buck[12], &buck[12],	&buck[13], &buck[13],
-    &buck[14], &buck[14],	&buck[15], &buck[15],
-    &buck[16], &buck[16],	&buck[17], &buck[17]
-};
-#endif
 
 void (*mlabort)() = {0};	/* ptr to optional user-provided error handler */
 
@@ -237,30 +212,25 @@ rt_pmalloc(nbytes, pmem)
 	register Size i;
 	long ret;
 
-	bu_semaphore_acquire( BU_SEM_SYSCALL );
+	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	p = (struct overhead *)CURBRK;
 	i = ((Size)p)&(NALIGN-1);
 	if (i != 0)
 	    p = (struct overhead *)((char *)p + NALIGN - i);
 	ret = (long)BRK(((char *)p) + nbytes);
-	bu_semaphore_release( BU_SEM_SYSCALL );
+	bu_semaphore_release(BU_SEM_SYSCALL);
 
-	if ( ret )
-	    bu_bomb( "rt_pmalloc: brk() failure. Insufficient memory available!\n" );
+	if (ret)
+	    bu_bomb("rt_pmalloc: brk() failure. Insufficient memory available!\n");
 
 	p->ov_length = nbytes;
 	surplus = 0;
 
 	/* add to end of adjacency chain */
-#if 0
-	ASSERT((FROMADJ(pmem->adjhead.q_back)) < p,
-	       "\nrt_pmalloc: Entry in adjacency chain found with address lower than Chain head!\n"
-	    )
-#endif
-	    rt_pm_insque(TOADJ(p), pmem->adjhead.q_back);
+	rt_pm_insque(TOADJ(p), pmem->adjhead.q_back);
     }
 
- foundit:
+foundit:
     /* mark surplus memory free */
     if (surplus > sizeof(struct overhead)) {
 	/* if big enough, split it up */
@@ -281,53 +251,34 @@ rt_pmalloc(nbytes, pmem)
     return((char*)p + sizeof(struct overhead));
 }
 
+
 /*
  * select the proper size bucket
  */
-#if 0
-static Size
-mlindx(n)
-    register Size n;
-{
-    register Size *p, *q, *r;
-    p = &mlsizes[0];
-    r = &mlsizes[RT_PM_NBUCKETS];
-    /* binary search */
-    while ((q = (p + (r-p)/2)) > p) {
-	if (n < *q)
-	    r = q;
-	else
-	    p = q;
-    }
-    return(q - &mlsizes[0]);
-}
-#else
 /* this version of mlindx() will only work with the original RT_PM_NBUCKETS
  * and mlsizes[]
  */
 static Size
-mlindx( n )
+mlindx(n)
     register Size n;
 {
     register Size index=0, shifter;
 
-    if ( n >= mlsizes[RT_PM_NBUCKETS-1] )
+    if (n >= mlsizes[RT_PM_NBUCKETS-1])
 	index = RT_PM_NBUCKETS-1;
-    else if ( n < mlsizes[1] )
+    else if (n < mlsizes[1])
 	index = 0;
-    else
-    {
+    else {
 	shifter = n >> 6;
-	while ( shifter )
-	{
+	while (shifter) {
 	    index++;
 	    shifter = shifter >> 1;
 	}
     }
 
-    return( index );
+    return(index);
 }
-#endif
+
 
 static void
 mllcerr(p)
@@ -343,12 +294,13 @@ mllcerr(p)
 	abort();
 }
 
+
 /*
  * The vax has wondrous instructions for inserting and removing items into
  * doubly linked queues.  On the vax the assembler output of the C compiler is
  * massaged by an sed script to turn these function calls into invocations of
  * the rt_pm_insque and rt_pm_remque machine instructions.
- *  In BRL's version, all machines use these functions.  No assembler.
+ * In BRL's version, all machines use these functions.  No assembler.
  */
 
 static void
@@ -364,6 +316,7 @@ rt_pm_insque(item, queu)
     pueu->q_back = item;
 }
 
+
 static void
 rt_pm_remque(item)
     register struct rt_qelem *item;
@@ -376,8 +329,9 @@ rt_pm_remque(item)
     pueu->q_back = queu;
 }
 
+
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- *  rt_pfree					William L. Sebok
+ * rt_pfree					William L. Sebok
  * A "smarter" malloc v1.0		Sept. 24, 1984 rev. June 30, 1986
  *
  * 	rt_pfree takes a previously rt_pmalloc-allocated area at mem and frees it.
@@ -407,11 +361,11 @@ rt_pfree(mem, pmem)
 
     if (q != FROMADJ(&pmem->adjhead)) {
 	ASSERT(q < p,
-	       "\nrt_pfree: While trying to merge a free area with a lower adjacent free area,\n\
+	       "\nrt_pfree: While trying to merge a free area with a lower adjacent free area, \n\
  addresses were found out of order!\n")
 	    /* If lower segment can be merged */
-	    if (   q->ov_magic == MAGIC_FREE
-		   && (char *)q + q->ov_length == (char *)p
+	    if (q->ov_magic == MAGIC_FREE
+		&& (char *)q + q->ov_length == (char *)p
 		) {
 		/* remove lower address area from bucket chain */
 		rt_pm_remque(TOBUK(q));
@@ -431,10 +385,10 @@ rt_pfree(mem, pmem)
     if (q != FROMADJ(&pmem->adjhead)) {
 	/* upper segment can be merged */
 	ASSERT(q > p,
-	       "\nrt_pfree: While trying to merge a free area with a higher adjacent free area,\n\
+	       "\nrt_pfree: While trying to merge a free area with a higher adjacent free area, \n\
  addresses were found out of order!\n")
-	    if ( 	q->ov_magic == MAGIC_FREE
-			&&	(char *)p + p->ov_length == (char *)q
+	    if (q->ov_magic == MAGIC_FREE
+		&&	(char *)p + p->ov_length == (char *)q
 		) {
 		/* remove upper from bucket chain */
 		rt_pm_remque(TOBUK(q));
@@ -453,24 +407,24 @@ rt_pfree(mem, pmem)
     rt_pm_insque(TOBUK(p), &pmem->buckets[mlindx(p->ov_length)]);
 
     if (endfree)
-	mlfree_end( pmem );
+	mlfree_end(pmem);
 
     return;
 }
 
+
 static void
-mlfree_end( pmem )
+mlfree_end(pmem)
     register struct rt_pm_res *pmem;
 {
     register struct overhead *p;
 
     p = FROMADJ(pmem->adjhead.q_back);
-    if ( p->ov_magic != MAGIC_FREE )
+    if (p->ov_magic != MAGIC_FREE)
 	return;
 
-    bu_semaphore_acquire( BU_SEM_SYSCALL );
-    if ( (char*)p + p->ov_length == (char *)CURBRK)
-    {
+    bu_semaphore_acquire(BU_SEM_SYSCALL);
+    if ((char*)p + p->ov_length == (char *)CURBRK) {
 	/* area is free and at end of memory */
 
 	p->ov_magic = 0;	/* decommission (just in case) */
@@ -484,14 +438,15 @@ mlfree_end( pmem )
 	/* release memory to system */
 	(void)BRK((char *)p);
     }
-    bu_semaphore_release( BU_SEM_SYSCALL );
+    bu_semaphore_release(BU_SEM_SYSCALL);
 
     return;
 }
 
+
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- *  rt_prealloc				William L. Sebok
- * A  "smarter" malloc v1.0		Sept. 24, 1984 rev. June 30, 1986
+ * rt_prealloc				William L. Sebok
+ * A "smarter" malloc v1.0		Sept. 24, 1984 rev. June 30, 1986
  *
  *	rt_prealloc takes previously rt_pmalloc-allocated area at mem, and tries
  *	 to change its size to nbytes bytes, moving it and copying its
@@ -530,13 +485,13 @@ rt_prealloc(mem, nbytes, pmem)
 	endfree = oendfree;
     }
 
-    if (  p->ov_magic == MAGIC_FREE
-	  && (surplus = length - nbytes - sizeof(struct overhead)) >= 0
+    if (p->ov_magic == MAGIC_FREE
+	&& (surplus = length - nbytes - sizeof(struct overhead)) >= 0
 	) {
 	/* shrink area in place */
 	if (surplus > sizeof(struct overhead)) {
-	    q = (struct overhead *)( (char *)p + nbytes
-				     + sizeof(struct overhead));
+	    q = (struct overhead *)((char *)p + nbytes
+				    + sizeof(struct overhead));
 	    q->ov_length = surplus;
 	    q->ov_magic = MAGIC_FREE;
 	    rt_pm_insque(TOADJ(q), TOADJ(p));
@@ -548,27 +503,26 @@ rt_prealloc(mem, nbytes, pmem)
 	p->ov_magic = MAGIC_BUSY;
 
 	if (endfree)
-	    mlfree_end( pmem );
+	    mlfree_end(pmem);
 	return(mem);
     }
 
     /* if at break, grow in place */
 
-    bu_semaphore_acquire( BU_SEM_SYSCALL );
+    bu_semaphore_acquire(BU_SEM_SYSCALL);
     if (p->ov_magic == MAGIC_FREE && ((char *)p + p->ov_length) == (char *)CURBRK) {
 	nbytes += sizeof(struct overhead);
 
 	BRK((char *)p + nbytes);
-	bu_semaphore_release( BU_SEM_SYSCALL );
+	bu_semaphore_release(BU_SEM_SYSCALL);
 
 	p->ov_length = nbytes;
 	/* declare it to be busy */
 	rt_pm_remque(TOBUK(p));
 	p->ov_magic = MAGIC_BUSY;
 	return(mem);
-    }
-    else
-	bu_semaphore_release( BU_SEM_SYSCALL );
+    } else
+	bu_semaphore_release(BU_SEM_SYSCALL);
 
     newmem = rt_pmalloc((long)nbytes, pmem);
 
@@ -580,107 +534,16 @@ rt_prealloc(mem, nbytes, pmem)
     }
 
     if (endfree)
-	mlfree_end( pmem );
+	mlfree_end(pmem);
 
     return(newmem);
 }
 
-#if 0
-/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- *  rt_forget				William L. Sebok
- * A "smarter" malloc v1.0		Sept. 24, 1984 rev. June 30, 1986
- *
- *	rt_forget returns to the rt_pmalloc arena all memory allocated by sbrk()
- *	 above "bpnt".
- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-void
-rt_forget(bpnt, pmem)
-    char *bpnt;
-    struct rt_pm_res *pmem;
-{
-    register struct overhead *p, *q, *r, *b;
-    register Size l;
-    struct overhead *crbrk;
-    char pinvalid, oendfree;
-
-    /*
-     * b = rt_forget point
-     * p = beginning of entry
-     * q = end of entry, beginning of gap
-     * r = end of gap, beginning of next entry (or the break)
-     * pinvalid = true when groveling at rt_forget point
-     */
-
-    pinvalid = 0;
-    oendfree = endfree;	endfree = 0;
-    b = (struct overhead *)bpnt;
-    p = FROMADJ(pmem->adjhead.q_back);
-    q = (struct overhead *)0;
-    bu_semaphore_acquire( BU_SEM_SYSCALL );
-    r = crbrk = (struct overhead *)CURBRK;
-    bu_semaphore_release( BU_SEM_SYSCALL );
-
-    for (;pinvalid == 0 && b < r; p = FROMADJ(TOADJ(r = p)->q_back)) {
-	if ( p == FROMADJ(&pmem->adjhead)
-	     || (q = (struct overhead *)((char *)p + p->ov_length)) < b
-	    ) {
-	    pinvalid = 1;
-	    q = b;
-	}
-
-	if (q == r)
-	    continue;
-
-	ASSERT(q < r,
-	       "\nrt_forget: addresses in adjacency chain are out of order!\n")
-
-	    /* end of gap is at break */
-	    if (oendfree && r == crbrk) {
-
-		bu_semaphore_acquire( BU_SEM_SYSCALL );
-		(void)BRK((char *)q);	/* free it yourself */
-		bu_semaphore_release( BU_SEM_SYSCALL );
-
-		crbrk = r = q;
-		continue;
-	    }
-
-	if (pinvalid)
-	    q = (struct overhead *) /* align q pointer */
-		(((long)q + (NALIGN-1)) & (~(NALIGN-1)));
-
-	l = (char *)r - (char *)q;
-	/*
-	 * note: unless something is screwy: (l%NALIGN) == 0
-	 * as r should be aligned by this point
-	 */
-
-	if (l >= sizeof(struct overhead)) {
-	    /* construct busy entry and free it */
-	    q->ov_magic = MAGIC_BUSY;
-	    q->ov_length = l;
-	    rt_pm_insque(TOADJ(q), TOADJ(p));
-	    rt_pfree((char *)q + sizeof(struct overhead));
-	} else if (pinvalid == 0) {
-	    /* append it to previous entry */
-	    p->ov_length += l;
-	    if (p->ov_magic == MAGIC_FREE) {
-		rt_pm_remque(TOBUK(p));
-		rt_pm_insque(TOBUK(p), &pmem->buckets[mlindx(p->ov_length)]);
-	    }
-	}
-    }
-    endfree = oendfree;
-    if (endfree)
-	mlfree_end( pmem );
-    return;
-}
-#endif
 /*
- *		P C A L L O C
+ * P C A L L O C
  *
- *  Malloc() a block of memory, and clear it.
+ * Malloc() a block of memory, and clear it.
  */
 char *
 rt_pcalloc(num, size, pmem)
@@ -690,11 +553,12 @@ rt_pcalloc(num, size, pmem)
     register char *p;
 
     size *= num;
-    if ( (p = rt_pmalloc((long)size, pmem)) )  {
+    if ((p = rt_pmalloc((long)size, pmem))) {
 	memset(p, 0, size);
     }
     return (p);
 }
+
 
 void
 rt_cfree(p, num, size, pmem)
@@ -705,6 +569,7 @@ rt_cfree(p, num, size, pmem)
 {
     rt_pfree(p, pmem);
 }
+
 
 /*
  * Local Variables:

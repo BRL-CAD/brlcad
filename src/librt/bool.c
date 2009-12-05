@@ -1278,11 +1278,6 @@ rt_default_logoverlap(struct application *ap, const struct partition *pp, const 
 
     bu_log("%s", bu_vls_addr(&str));
     bu_vls_free(&str);
-
-#if 0
-    rt_pr_partitions(ap->a_rt_i, pheadp, "Entire ray containing overlap");
-#endif
-
 }
 
 
@@ -2102,17 +2097,6 @@ out:
 	rt_pr_partitions(ap->a_rt_i, InputHdp, "rt_boolfinal: Input/pending partition list at return:");
 	bu_log("rt_boolfinal() ret=%d, %s\n", ret, reason);
     }
-#if 0
-    /* This is no longer a valid check!!! */
-    /* Sanity check */
-    if (RT_G_DEBUG && ap->a_onehit == 0 &&
-	InputHdp->pt_forw != InputHdp && enddist >= INFINITY) {
-	bu_log("rt_boolfinal() ret=%d, %s\n", ret, reason);
-	rt_pr_partitions(ap->a_rt_i, FinalHdp, "rt_boolfinal: Final partition list at return:");
-	rt_pr_partitions(ap->a_rt_i, InputHdp, "rt_boolfinal: Input/pending partition list at return:");
-	bu_bomb("rt_boolfinal() failed to process InputHdp list\n");
-    }
-#endif
     return ret;
 }
 

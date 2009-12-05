@@ -202,9 +202,13 @@ endif
 
 EXTRA_DIST = \
 	boost \
-	tkhtml3/COPYRIGHT \
+	tkhtml3/AUTHORS \
+	tkhtml3/COPYING \
+	tkhtml3/ChangeLog \
+	tkhtml3/INSTALL \
 	tkhtml3/Makefile \
 	tkhtml3/Makefile.in \
+	tkhtml3/NEWS \
 	tkhtml3/README \
 	tkhtml3/aclocal.m4 \
 	tkhtml3/configure \

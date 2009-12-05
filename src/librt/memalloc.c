@@ -278,7 +278,7 @@ rt_memfree(struct mem_map **pp, unsigned int size, long unsigned int addr)
     register int type = 0;
     register struct mem_map *prevp = MAP_NULL;
     register struct mem_map *curp;
-    long il;
+    size_t il;
     struct mem_map *tmap;
 
     if ( size == 0 )
@@ -292,15 +292,15 @@ rt_memfree(struct mem_map **pp, unsigned int size, long unsigned int addr)
     /* Make up the `type' variable */
 
     if ( prevp )  {
-	if ( (il=prevp->m_addr+prevp->m_size) > addr )
+	if ( (size_t)(il=prevp->m_addr+prevp->m_size) > (size_t)addr )
 	    type |= M_BOVFL;
-	if ( il == addr )
+	if ( il == (size_t)addr )
 	    type |= M_BMTCH;
     }
     if ( curp )  {
-	if ( (il=addr+size) > curp->m_addr )
+	if ( (size_t)(il=addr+size) > (size_t)curp->m_addr )
 	    type |= M_TOVFL;
-	if ( il == curp->m_addr )
+	if ( (size_t)il == (size_t)curp->m_addr )
 	    type |= M_TMTCH;
     }
 

@@ -73,6 +73,7 @@ const char *metaballnames[] =
     NULL
 };
 
+
 int rt_metaball_lookup_type_id(const char *name)
 {
     int i = 0;
@@ -82,10 +83,12 @@ int rt_metaball_lookup_type_id(const char *name)
     return -1;
 }
 
+
 const char *rt_metaball_lookup_type_name(const int id)
 {
     return metaballnames[id];
 }
+
 
 /* compute the bounding sphere for a metaball cluster. center is
  * filled, and the radius is returned.
@@ -151,6 +154,7 @@ fastf_t rt_metaball_get_bounding_sphere(point_t *center, fastf_t threshold, stru
     return r;
 }
 
+
 static void
 rt_metaball_set_bbox(point_t center, fastf_t radius, point_t *min, point_t *max)
 {
@@ -158,6 +162,7 @@ rt_metaball_set_bbox(point_t center, fastf_t radius, point_t *min, point_t *max)
     VSET(*max, center[X] + radius, center[Y] + radius, center[Z] + radius);
     return;
 }
+
 
 /**
  * R T _ M E T A B A L L _ P R E P
@@ -187,7 +192,7 @@ rt_metaball_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     for (BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_ctrl_head)) {
 	nmbpt = (struct wdb_metaballpt *)bu_malloc(sizeof(struct wdb_metaballpt), "rt_metaball_prep: nmbpt");
 	nmbpt->fldstr = mbpt->fldstr;
-	if(mbpt->fldstr < minfstr)
+	if (mbpt->fldstr < minfstr)
 	    minfstr = mbpt->fldstr;
 	nmbpt->sweat = mbpt->sweat;
 	VMOVE(nmbpt->coord, mbpt->coord);
@@ -198,7 +203,7 @@ rt_metaball_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     stp->st_aradius = rt_metaball_get_bounding_sphere(&stp->st_center, mb->threshold, mb);
     stp->st_bradius = stp->st_aradius * 1.01;
 
-    /* XXX magic numbers, increase if scalloping is observed. :( */
+    /* XXX magic numbers, increase if scalloping is observed. :(*/
     nmb->initstep = minfstr / 2;
     if (nmb->initstep < (stp->st_aradius / 200.0))
 	nmb->initstep = (stp->st_aradius / 200.0);
@@ -248,6 +253,7 @@ rt_metaballpt_print(const struct wdb_metaballpt *metaball, double mm2local)
     return;
 }
 
+
 fastf_t
 rt_metaball_point_value_metaball(const point_t *p, const struct bu_list *points)
 {
@@ -256,6 +262,7 @@ rt_metaball_point_value_metaball(const point_t *p, const struct bu_list *points)
     /* Makes the compiler happy */
     return 0.0;
 }
+
 
 fastf_t
 rt_metaball_point_value_iso(const point_t *p, const struct bu_list *points)
@@ -270,6 +277,7 @@ rt_metaball_point_value_iso(const point_t *p, const struct bu_list *points)
     }
     return ret;
 }
+
 
 fastf_t
 rt_metaball_point_value_blob(const point_t *p, const struct bu_list *points)
@@ -286,6 +294,7 @@ rt_metaball_point_value_blob(const point_t *p, const struct bu_list *points)
     }
     return ret;
 }
+
 
 /* main point evaluation function, to be exposed to the ugly outside
  * world.
@@ -307,12 +316,14 @@ rt_metaball_point_value(const point_t *p, const struct rt_metaball_internal *mb)
     return 0;
 }
 
+
 /* returns true if the point is in/on the unscaled metaball. */
 int
 rt_metaball_point_inside(const point_t *p, const struct rt_metaball_internal *mb)
 {
-    return rt_metaball_point_value(p,mb) >= mb->threshold;
+    return rt_metaball_point_value(p, mb) >= mb->threshold;
 }
+
 
 /* 
  * Solve the surface intersection of mb with an accuracy of finalstep given that
@@ -325,15 +336,16 @@ rt_metaball_find_intersection(point_t *intersect, const struct rt_metaball_inter
     VADD2(mid, *a, *b);
     VSCALE(mid, mid, 0.5);
 
-    if(finalstep > step) {
+    if (finalstep > step) {
 	VMOVE(*intersect, mid);	/* should this be the midpoint between a and b? */
 	return 0;
     }
 
     /* should probably make a or b necessarily inside, to eliminate one point
      * computation? */
-    return rt_metaball_find_intersection(intersect,mb,(const point_t *)&mid, (rt_metaball_point_inside(a,mb) == rt_metaball_point_inside((const point_t *)&mid,mb)) ?b:a ,step/2.0, finalstep);
+    return rt_metaball_find_intersection(intersect, mb, (const point_t *)&mid, (rt_metaball_point_inside(a, mb) == rt_metaball_point_inside((const point_t *)&mid, mb)) ?b:a , step/2.0, finalstep);
 }
+
 
 /*
  * R T _ M E T A B A L L _ S H O T
@@ -379,7 +391,7 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 		    RT_GET_SEG(segp, ap->a_resource);
 		    segp->seg_stp = stp;
 		    STEPIN(in);
-		    segp->seg_out.hit_dist = segp->seg_in.hit_dist + 1; /* cope with silliness */
+		    segp->seg_out.hit_dist = segp->seg_in.hit_dist + 1; /* this causes shelling */
 		    segp->seg_in.hit_surfno = 0;
 		    segp->seg_out.hit_surfno = 0;
 		    BU_LIST_INSERT(&(seghead->l), &(segp->l));
@@ -537,7 +549,8 @@ rt_metaball_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
     return 0;
 }
 
-static int bitcount(unsigned char w) { if(w==0) return 0; return bitcount(w>>1) + w|1; }
+
+static int bitcount(unsigned char w) { if (w==0) return 0; return bitcount(w>>1) + w|1; }
 
 /**
  * R T _ M E T A B A L L _ T E S S
@@ -580,9 +593,9 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
      * caching 4 point values, more by actually marching or doing active
      * refinement. This is the simplest pattern for now.
      */
-    for(i = min[X]; i<max[X]; i+=mtol)
-	for(j = min[Y]; j<max[Y]; j+=mtol)
-	    for(k = min[Z]; k<max[Z]; k+=mtol) {
+    for (i = min[X]; i<max[X]; i+=mtol)
+	for (j = min[Y]; j<max[Y]; j+=mtol)
+	    for (k = min[Z]; k<max[Z]; k+=mtol) {
 		point_t p;
 		int pv = 0;
 		int pvbc;	/* bit count */
@@ -595,17 +608,13 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
 		VSET(p, i+mtol, j+mtol, k);		pv |= rt_metaball_point_inside((const point_t *)&p, mb) << 6;
 		VSET(p, i+mtol, j+mtol, k+mtol);	pv |= rt_metaball_point_inside((const point_t *)&p, mb) << 7;
 		pvbc = bitcount(pv);
-		if(pvbc==1) {
+		if (pvbc==1) {
 		    point_t a, b, mid;
 		    VSET(a, i, j, k);
 		    VSET(b, i, j, k+mtol);
 		    rt_metaball_find_intersection(&mid, mb, (const point_t *)&a, (const point_t *)&*b, mtol, finalstep);
-		    bu_log("Intersect between %f,%f,%f and %f,%f,%f is at %f,%f,%f\n", V3ARGS(a), V3ARGS(b), V3ARGS(mid));
+		    bu_log("Intersect between %f, %f, %f and %f, %f, %f is at %f, %f, %f\n", V3ARGS(a), V3ARGS(b), V3ARGS(mid));
 		}
-		/*	test if it's a surface dealie....
-		    if(pv != 0 && pv != 0xff) 
-			    bu_log("%02x %d\n", pv, pvbc);
-		*/
 		/* should the actual surface intersection be searched for, or
 		 * just say the mid point is good enough? */
 		/* needs to be stitched into a triangle style NMG. Then
@@ -669,16 +678,16 @@ rt_metaball_import5(struct rt_db_internal *ip, const struct bu_external *ep, reg
  * R T _ M E T A B A L L _ E X P O R T 5
  *
  * storage is something like
- * long		numpoints
- * long		method
- * fastf_t	threshold
- *	fastf_t X1 (start point)
- *	fastf_t Y1
- *	fastf_t Z1
- *	fastf_t fldstr1 
- *	fastf_t sweat1 (end point)
- *	fastf_t X2 (start point)
- *	...
+ * long numpoints
+ * long method
+ * fastf_t threshold
+ * fastf_t X1 (start point)
+ * fastf_t Y1
+ * fastf_t Z1
+ * fastf_t fldstr1 
+ * fastf_t sweat1 (end point)
+ * fastf_t X2 (start point)
+ * ...
  */
 int
 rt_metaball_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
@@ -839,6 +848,7 @@ rt_metaball_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
 {
     return 0;			/* OK */
 }
+
 
 /*
  * Local Variables:

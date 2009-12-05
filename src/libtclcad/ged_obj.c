@@ -88,289 +88,289 @@
 #endif /* DM_WGL */
 
 
-static int go_open_tcl(ClientData clientData,
+HIDDEN int go_open_tcl(ClientData clientData,
 		       Tcl_Interp *interp,
 		       int argc,
 		       const char **argv);
-static int go_autoview(struct ged *gedp,
+HIDDEN int go_autoview(struct ged *gedp,
 		       int argc,
 		       const char *argv[],
 		       ged_func_ptr func,
 		       const char *usage,
 		       int maxargs);
-static int go_axes(struct ged *gedp,
+HIDDEN int go_axes(struct ged *gedp,
 		   struct ged_dm_view *gdvp,
 		   struct ged_axes_state *gasp,
 		   int argc,
 		   const char *argv[],
 		   const char *usage,
 		   int dflag);
-static int go_base2local(struct ged *gedp,
+HIDDEN int go_base2local(struct ged *gedp,
 			 int argc,
 			 const char *argv[],
 			 ged_func_ptr func,
 			 const char *usage,
 			 int maxargs);
-static int go_bg(struct ged *gedp,
+HIDDEN int go_bg(struct ged *gedp,
 		 int argc,
 		 const char *argv[],
 		 ged_func_ptr func,
 		 const char *usage,
 		 int maxargs);
-static int go_blast(struct ged *gedp,
+HIDDEN int go_blast(struct ged *gedp,
 		    int argc,
 		    const char *argv[],
 		    ged_func_ptr func,
 		    const char *usage,
 		    int maxargs);
-static int go_bounds(struct ged *gedp,
+HIDDEN int go_bounds(struct ged *gedp,
 		     int argc,
 		     const char *argv[],
 		     ged_func_ptr func,
 		     const char *usage,
 		     int maxargs);
-static int go_configure(struct ged *gedp,
+HIDDEN int go_configure(struct ged *gedp,
 			int argc,
 			const char *argv[],
 			ged_func_ptr func,
 			const char *usage,
 			int maxargs);
-static int go_constrain_rmode(struct ged *gedp,
+HIDDEN int go_constrain_rmode(struct ged *gedp,
 			      int argc,
 			      const char *argv[],
 			      ged_func_ptr func,
 			      const char *usage,
 			      int maxargs);
-static int go_constrain_tmode(struct ged *gedp,
+HIDDEN int go_constrain_tmode(struct ged *gedp,
 			      int argc,
 			      const char *argv[],
 			      ged_func_ptr func,
 			      const char *usage,
 			      int maxargs);
-static int go_copy(struct ged *gedp,
+HIDDEN int go_copy(struct ged *gedp,
 		   int argc,
 		   const char *argv[],
 		   ged_func_ptr func,
 		   const char *usage,
 		   int maxargs);
-static int go_data_axes(struct ged *gedp,
+HIDDEN int go_data_axes(struct ged *gedp,
 			int argc,
 			const char *argv[],
 			ged_func_ptr func,
 			const char *usage,
 			int maxargs);
-static int go_init_view_bindings(struct ged *gedp,
+HIDDEN int go_init_view_bindings(struct ged *gedp,
 				 int argc,
 				 const char *argv[],
 				 ged_func_ptr func,
 				 const char *usage,
 				 int maxargs);
-static int go_delete_view(struct ged *gedp,
+HIDDEN int go_delete_view(struct ged *gedp,
 			  int argc,
 			  const char *argv[],
 			  ged_func_ptr func,
 			  const char *usage,
 			  int maxargs);
-static int go_faceplate(struct ged *gedp,
+HIDDEN int go_faceplate(struct ged *gedp,
 			int argc,
 			const char *argv[],
 			ged_func_ptr func,
 			const char *usage,
 			int maxargs);
-static int go_idle_mode(struct ged *gedp,
+HIDDEN int go_idle_mode(struct ged *gedp,
 			int argc,
 			const char *argv[],
 			ged_func_ptr func,
 			const char *usage,
 			int maxargs);
-static int go_light(struct ged *gedp,
+HIDDEN int go_light(struct ged *gedp,
 		    int argc,
 		    const char *argv[],
 		    ged_func_ptr func,
 		    const char *usage,
 		    int maxargs);
-static int go_list_views(struct ged *gedp,
+HIDDEN int go_list_views(struct ged *gedp,
 			 int argc,
 			 const char *argv[],
 			 ged_func_ptr func,
 			 const char *usage,
 			 int maxargs);
-static int go_listen(struct ged *gedp,
+HIDDEN int go_listen(struct ged *gedp,
 		     int argc,
 		     const char *argv[],
 		     ged_func_ptr func,
 		     const char *usage,
 		     int maxargs);
-static int go_local2base(struct ged *gedp,
+HIDDEN int go_local2base(struct ged *gedp,
 			 int argc,
 			 const char *argv[],
 			 ged_func_ptr func,
 			 const char *usage,
 			 int maxargs);
-static int go_make(struct ged *gedp,
+HIDDEN int go_make(struct ged *gedp,
 		   int argc,
 		   const char *argv[],
 		   ged_func_ptr func,
 		   const char *usage,
 		   int maxargs);
-static int go_mirror(struct ged *gedp,
+HIDDEN int go_mirror(struct ged *gedp,
 		     int argc,
 		     const char *argv[],
 		     ged_func_ptr func,
 		     const char *usage,
 		     int maxargs);
-static int go_model_axes(struct ged *gedp,
+HIDDEN int go_model_axes(struct ged *gedp,
 			 int argc,
 			 const char *argv[],
 			 ged_func_ptr func,
 			 const char *usage,
 			 int maxargs);
-static int go_more_args_callback(struct ged *gedp,
+HIDDEN int go_more_args_callback(struct ged *gedp,
 				 int argc,
 				 const char *argv[],
 				 ged_func_ptr func,
 				 const char *usage,
 				 int maxargs);
-static int go_mouse_constrain_rot(struct ged *gedp,
+HIDDEN int go_mouse_constrain_rot(struct ged *gedp,
 				  int argc,
 				  const char *argv[],
 				  ged_func_ptr func,
 				  const char *usage,
 				  int maxargs);
-static int go_mouse_constrain_trans(struct ged *gedp,
+HIDDEN int go_mouse_constrain_trans(struct ged *gedp,
 				    int argc,
 				    const char *argv[],
 				    ged_func_ptr func,
 				    const char *usage,
 				    int maxargs);
-static int go_mouse_move_arb_edge(struct ged *gedp,
+HIDDEN int go_mouse_move_arb_edge(struct ged *gedp,
 				  int argc,
 				  const char *argv[],
 				  ged_func_ptr func,
 				  const char *usage,
 				  int maxargs);
-static int go_mouse_move_arb_face(struct ged *gedp,
+HIDDEN int go_mouse_move_arb_face(struct ged *gedp,
 				  int argc,
 				  const char *argv[],
 				  ged_func_ptr func,
 				  const char *usage,
 				  int maxargs);
-static int go_mouse_orotate(struct ged *gedp,
+HIDDEN int go_mouse_orotate(struct ged *gedp,
 			    int argc,
 			    const char *argv[],
 			    ged_func_ptr func,
 			    const char *usage,
 			    int maxargs);
-static int go_mouse_oscale(struct ged *gedp,
+HIDDEN int go_mouse_oscale(struct ged *gedp,
 			   int argc,
 			   const char *argv[],
 			   ged_func_ptr func,
 			   const char *usage,
 			   int maxargs);
-static int go_mouse_otranslate(struct ged *gedp,
+HIDDEN int go_mouse_otranslate(struct ged *gedp,
 			       int argc,
 			       const char *argv[],
 			       ged_func_ptr func,
 			       const char *usage,
 			       int maxargs);
-static int go_mouse_translate(struct ged *gedp,
+HIDDEN int go_mouse_translate(struct ged *gedp,
 			      int argc,
 			      const char *argv[],
 			      ged_func_ptr func,
 			      const char *usage,
 			      int maxargs);
-static int go_mouse_ray(struct ged *gedp,
+HIDDEN int go_mouse_ray(struct ged *gedp,
 			int argc,
 			const char *argv[],
 			ged_func_ptr func,
 			const char *usage,
 			int maxargs);
-static int go_mouse_rot(struct ged *gedp,
+HIDDEN int go_mouse_rot(struct ged *gedp,
 			int argc,
 			const char *argv[],
 			ged_func_ptr func,
 			const char *usage,
 			int maxargs);
-static int go_mouse_rotate_arb_face(struct ged *gedp,
+HIDDEN int go_mouse_rotate_arb_face(struct ged *gedp,
 				    int argc,
 				    const char *argv[],
 				    ged_func_ptr func,
 				    const char *usage,
 				    int maxargs);
-static int go_mouse_scale(struct ged *gedp,
+HIDDEN int go_mouse_scale(struct ged *gedp,
 			  int argc,
 			  const char *argv[],
 			  ged_func_ptr func,
 			  const char *usage,
 			  int maxargs);
-static int go_mouse_protate(struct ged *gedp,
+HIDDEN int go_mouse_protate(struct ged *gedp,
 			    int argc,
 			    const char *argv[],
 			    ged_func_ptr func,
 			    const char *usage,
 			    int maxargs);
-static int go_mouse_pscale(struct ged *gedp,
+HIDDEN int go_mouse_pscale(struct ged *gedp,
 			   int argc,
 			   const char *argv[],
 			   ged_func_ptr func,
 			   const char *usage,
 			   int maxargs);
-static int go_mouse_ptranslate(struct ged *gedp,
+HIDDEN int go_mouse_ptranslate(struct ged *gedp,
 			       int argc,
 			       const char *argv[],
 			       ged_func_ptr func,
 			       const char *usage,
 			       int maxargs);
-static int go_mouse_trans(struct ged *gedp,
+HIDDEN int go_mouse_trans(struct ged *gedp,
 			  int argc,
 			  const char *argv[],
 			  ged_func_ptr func,
 			  const char *usage,
 			  int maxargs);
-static int go_move_arb_edge_mode(struct ged *gedp,
+HIDDEN int go_move_arb_edge_mode(struct ged *gedp,
 				 int argc,
 				 const char *argv[],
 				 ged_func_ptr func,
 				 const char *usage,
 				 int maxargs);
-static int go_move_arb_face_mode(struct ged *gedp,
+HIDDEN int go_move_arb_face_mode(struct ged *gedp,
 				 int argc,
 				 const char *argv[],
 				 ged_func_ptr func,
 				 const char *usage,
 				 int maxargs);
-static int go_new_view(struct ged *gedp,
+HIDDEN int go_new_view(struct ged *gedp,
 		       int argc,
 		       const char *argv[],
 		       ged_func_ptr func,
 		       const char *usage,
 		       int maxargs);
-static int go_orotate_mode(struct ged *gedp,
+HIDDEN int go_orotate_mode(struct ged *gedp,
 			   int argc,
 			   const char *argv[],
 			   ged_func_ptr func,
 			   const char *usage,
 			   int maxargs);
-static int go_oscale_mode(struct ged *gedp,
+HIDDEN int go_oscale_mode(struct ged *gedp,
 			  int argc,
 			  const char *argv[],
 			  ged_func_ptr func,
 			  const char *usage,
 			  int maxargs);
-static int go_otranslate_mode(struct ged *gedp,
+HIDDEN int go_otranslate_mode(struct ged *gedp,
 			      int argc,
 			      const char *argv[],
 			      ged_func_ptr func,
 			      const char *usage,
 			      int maxargs);
-static int go_paint_rect_area(struct ged *gedp,
+HIDDEN int go_paint_rect_area(struct ged *gedp,
 			      int argc,
 			      const char *argv[],
 			      ged_func_ptr func,
 			      const char *usage,
 			      int maxargs);
 #if defined(DM_OGL) || defined(DM_WGL)
-static int go_png(struct ged *gedp,
+HIDDEN int go_png(struct ged *gedp,
 		  int argc,
 		  const char *argv[],
 		  ged_func_ptr func,
@@ -378,139 +378,139 @@ static int go_png(struct ged *gedp,
 		  int maxargs);
 #endif
 
-static int go_prim_label(struct ged *gedp,
+HIDDEN int go_prim_label(struct ged *gedp,
 			 int argc,
 			 const char *argv[],
 			 ged_func_ptr func,
 			 const char *usage,
 			 int maxargs);
-static int go_refresh(struct ged *gedp,
+HIDDEN int go_refresh(struct ged *gedp,
 		      int argc,
 		      const char *argv[],
 		      ged_func_ptr func,
 		      const char *usage,
 		      int maxargs);
-static int go_refresh_all(struct ged *gedp,
+HIDDEN int go_refresh_all(struct ged *gedp,
 			  int argc,
 			  const char *argv[],
 			  ged_func_ptr func,
 			  const char *usage,
 			  int maxargs);
-static int go_refresh_on(struct ged *gedp,
+HIDDEN int go_refresh_on(struct ged *gedp,
 			 int argc,
 			 const char *argv[],
 			 ged_func_ptr func,
 			 const char *usage,
 			 int maxargs);
-static int go_rotate_arb_face_mode(struct ged *gedp,
+HIDDEN int go_rotate_arb_face_mode(struct ged *gedp,
 				   int argc,
 				   const char *argv[],
 				   ged_func_ptr func,
 				   const char *usage,
 				   int maxargs);
-static int go_rotate_mode(struct ged *gedp,
+HIDDEN int go_rotate_mode(struct ged *gedp,
 			  int argc,
 			  const char *argv[],
 			  ged_func_ptr func,
 			  const char *usage,
 			  int maxargs);
-static int go_rt_gettrees(struct ged *gedp,
+HIDDEN int go_rt_gettrees(struct ged *gedp,
 			  int argc,
 			  const char *argv[],
 			  ged_func_ptr func,
 			  const char *usage,
 			  int maxargs);
-static int go_protate_mode(struct ged *gedp,
+HIDDEN int go_protate_mode(struct ged *gedp,
 			   int argc,
 			   const char *argv[],
 			   ged_func_ptr func,
 			   const char *usage,
 			   int maxargs);
-static int go_pscale_mode(struct ged *gedp,
+HIDDEN int go_pscale_mode(struct ged *gedp,
 			  int argc,
 			  const char *argv[],
 			  ged_func_ptr func,
 			  const char *usage,
 			  int maxargs);
-static int go_ptranslate_mode(struct ged *gedp,
+HIDDEN int go_ptranslate_mode(struct ged *gedp,
 			      int argc,
 			      const char *argv[],
 			      ged_func_ptr func,
 			      const char *usage,
 			      int maxargs);
-static int go_scale_mode(struct ged *gedp,
+HIDDEN int go_scale_mode(struct ged *gedp,
 			 int argc,
 			 const char *argv[],
 			 ged_func_ptr func,
 			 const char *usage,
 			 int maxargs);
-static int go_screen2model(struct ged *gedp,
+HIDDEN int go_screen2model(struct ged *gedp,
 			   int argc,
 			   const char *argv[],
 			   ged_func_ptr func,
 			   const char *usage,
 			   int maxargs);
-static int go_screen2view(struct ged *gedp,
+HIDDEN int go_screen2view(struct ged *gedp,
 			  int argc,
 			  const char *argv[],
 			  ged_func_ptr func,
 			  const char *usage,
 			  int maxargs);
-static int go_set_coord(struct ged *gedp,
+HIDDEN int go_set_coord(struct ged *gedp,
 			int argc,
 			const char *argv[],
 			ged_func_ptr func,
 			const char *usage,
 			int maxargs);
-static int go_set_fb_mode(struct ged *gedp,
+HIDDEN int go_set_fb_mode(struct ged *gedp,
 			  int argc,
 			  const char *argv[],
 			  ged_func_ptr func,
 			  const char *usage,
 			  int maxargs);
-static int go_translate_mode(struct ged *gedp,
+HIDDEN int go_translate_mode(struct ged *gedp,
 			     int argc,
 			     const char *argv[],
 			     ged_func_ptr func,
 			     const char *usage,
 			     int maxargs);
-static int go_transparency(struct ged *gedp,
+HIDDEN int go_transparency(struct ged *gedp,
 			   int argc,
 			   const char *argv[],
 			   ged_func_ptr func,
 			   const char *usage,
 			   int maxargs);
-static int go_view_axes(struct ged *gedp,
+HIDDEN int go_view_axes(struct ged *gedp,
 			int argc,
 			const char *argv[],
 			ged_func_ptr func,
 			const char *usage,
 			int maxargs);
-static int go_view_win_size(struct ged *gedp,
+HIDDEN int go_view_win_size(struct ged *gedp,
 			    int argc,
 			    const char *argv[],
 			    ged_func_ptr func,
 			    const char *usage,
 			    int maxargs);
-static int go_vmake(struct ged *gedp,
+HIDDEN int go_vmake(struct ged *gedp,
 		    int argc,
 		    const char *argv[],
 		    ged_func_ptr func,
 		    const char *usage,
 		    int maxargs);
-static int go_vslew(struct ged *gedp,
+HIDDEN int go_vslew(struct ged *gedp,
 		    int argc,
 		    const char *argv[],
 		    ged_func_ptr func,
 		    const char *usage,
 		    int maxargs);
-static int go_zbuffer(struct ged *gedp,
+HIDDEN int go_zbuffer(struct ged *gedp,
 		      int argc,
 		      const char *argv[],
 		      ged_func_ptr func,
 		      const char *usage,
 		      int maxargs);
-static int go_zclip(struct ged *gedp,
+HIDDEN int go_zclip(struct ged *gedp,
 		    int argc,
 		    const char *argv[],
 		    ged_func_ptr func,
@@ -518,37 +518,37 @@ static int go_zclip(struct ged *gedp,
 		    int maxargs);
 
 /* Wrapper Functions */
-static int go_autoview_func(struct ged *gedp,
+HIDDEN int go_autoview_func(struct ged *gedp,
 			    int argc,
 			    const char *argv[],
 			    ged_func_ptr func,
 			    const char *usage,
 			    int maxargs);
-static int go_edit_redraw_func(struct ged *gedp,
+HIDDEN int go_edit_redraw_func(struct ged *gedp,
 			       int argc,
 			       const char *argv[],
 			       ged_func_ptr func,
 			       const char *usage,
 			       int maxargs);
-static int go_more_args_func(struct ged *gedp,
+HIDDEN int go_more_args_func(struct ged *gedp,
 			     int argc,
 			     const char *argv[],
 			     ged_func_ptr func,
 			     const char *usage,
 			     int maxargs);
-static int go_pass_through_func(struct ged *gedp,
+HIDDEN int go_pass_through_func(struct ged *gedp,
 				int argc,
 				const char *argv[],
 				ged_func_ptr func,
 				const char *usage,
 				int maxargs);
-static int go_pass_through_and_refresh_func(struct ged *gedp,
+HIDDEN int go_pass_through_and_refresh_func(struct ged *gedp,
 					    int argc,
 					    const char *argv[],
 					    ged_func_ptr func,
 					    const char *usage,
 					    int maxargs);
-static int go_view_func(struct ged *gedp,
+HIDDEN int go_view_func(struct ged *gedp,
 			int argc,
 			const char *argv[],
 			ged_func_ptr func,
@@ -556,20 +556,20 @@ static int go_view_func(struct ged *gedp,
 			int maxargs);
 
 /* Utility Functions */
-static void go_drawSolid(struct dm *dmp, struct solid *sp);
-static int go_drawDList(struct dm *dmp, struct bu_list *hsp);
+HIDDEN void go_drawSolid(struct dm *dmp, struct solid *sp);
+HIDDEN int go_drawDList(struct dm *dmp, struct bu_list *hsp);
 
-static int go_close_fbs(struct ged_dm_view *gdvp);
-static void go_fbs_callback();
-static int go_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp);
+HIDDEN int go_close_fbs(struct ged_dm_view *gdvp);
+HIDDEN void go_fbs_callback();
+HIDDEN int go_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp);
 
-static void go_refresh_view(struct ged_dm_view *gdvp);
-static void go_refresh_handler(void *clientdata);
-static void go_refresh_all_views(struct ged_obj *gop);
-static void go_autoview_view(struct ged_dm_view *gdvp);
-static void go_autoview_all_views(struct ged_obj *gop);
+HIDDEN void go_refresh_view(struct ged_dm_view *gdvp);
+HIDDEN void go_refresh_handler(void *clientdata);
+HIDDEN void go_refresh_all_views(struct ged_obj *gop);
+HIDDEN void go_autoview_view(struct ged_dm_view *gdvp);
+HIDDEN void go_autoview_all_views(struct ged_obj *gop);
 
-static void go_output_handler(struct ged *gedp, char *line);
+HIDDEN void go_output_handler(struct ged *gedp, char *line);
 
 typedef int (*go_wrapper_func_ptr)(struct ged *, int, const char *[], ged_func_ptr, const char *, int);
 #define GO_WRAPPER_FUNC_PTR_NULL (go_wrapper_func_ptr)0
@@ -913,7 +913,7 @@ Go_Init(Tcl_Interp *interp)
  *
  * @return result of ged command.
  */
-static int
+HIDDEN int
 go_cmd(ClientData clientData,
        Tcl_Interp *interp,
        int argc,
@@ -1063,7 +1063,7 @@ go_create_cmd(Tcl_Interp *interp,
  *@n db get white.r
  *@n db close
  */
-static int
+HIDDEN int
 go_open_tcl(ClientData clientData,
 	    Tcl_Interp *interp,
 	    int argc,
@@ -1127,7 +1127,7 @@ Usage: go_open\n\
 
 
 /*************************** Local Command Functions ***************************/
-static int
+HIDDEN int
 go_autoview(struct ged *gedp,
 	    int argc,
 	    const char *argv[],
@@ -1160,7 +1160,7 @@ go_autoview(struct ged *gedp,
     return BRLCAD_OK;
 }
 
-static int
+HIDDEN int
 go_axes(struct ged *gedp,
 	struct ged_dm_view *gdvp,
 	struct ged_axes_state *gasp,
@@ -1578,7 +1578,6 @@ go_axes(struct ged *gedp,
 	}
 
 	if (argc == 4) {
-	    int ret;
 	    int ac;
 	    const char **av;
 
@@ -1631,7 +1630,7 @@ go_axes(struct ged *gedp,
     return BRLCAD_ERROR;
 }
 
-static int
+HIDDEN int
 go_base2local(struct ged *gedp,
 	      int argc,
 	      const char *argv[],
@@ -1647,7 +1646,7 @@ go_base2local(struct ged *gedp,
     return BRLCAD_OK;
 }
 
-static int
+HIDDEN int
 go_bg(struct ged *gedp,
       int argc,
       const char *argv[],
@@ -1717,7 +1716,7 @@ go_bg(struct ged *gedp,
     return BRLCAD_ERROR;
 }
 
-static int
+HIDDEN int
 go_blast(struct ged *gedp,
 	 int argc,
 	 const char *argv[],
@@ -1737,7 +1736,7 @@ go_blast(struct ged *gedp,
     return ret;
 }
 
-static int
+HIDDEN int
 go_bounds(struct ged *gedp,
 	  int argc,
 	  const char *argv[],
@@ -1810,7 +1809,7 @@ go_bounds(struct ged *gedp,
     return BRLCAD_OK;
 }
 
-static int
+HIDDEN int
 go_configure(struct ged *gedp,
 	     int argc,
 	     const char *argv[],
@@ -1874,7 +1873,7 @@ go_configure(struct ged *gedp,
     return BRLCAD_ERROR;
 }
 
-static int
+HIDDEN int
 go_constrain_rmode(struct ged *gedp,
 		   int argc,
 		   const char *argv[],
@@ -1939,7 +1938,7 @@ go_constrain_rmode(struct ged *gedp,
     return BRLCAD_OK;
 }
 
-static int
+HIDDEN int
 go_constrain_tmode(struct ged *gedp,
 		   int argc,
 		   const char *argv[],
@@ -2004,7 +2003,7 @@ go_constrain_tmode(struct ged *gedp,
     return BRLCAD_OK;
 }
 
-static int
+HIDDEN int
 go_copy(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -2131,7 +2130,7 @@ go_copy(struct ged *gedp,
     return ret;
 }
 
-static int
+HIDDEN int
 go_data_axes(struct ged *gedp,
 	     int argc,
 	     const char *argv[],
@@ -2168,7 +2167,7 @@ go_data_axes(struct ged *gedp,
     return go_axes(gedp, gdvp, &gdvp->gdv_view->gv_data_axes, argc, argv, usage, 1);
 }
 
-static void
+HIDDEN void
 go_deleteViewProc(ClientData clientData)
 {
     struct ged_dm_view *gdvp = (struct ged_dm_view *)clientData;
@@ -2180,7 +2179,7 @@ go_deleteViewProc(ClientData clientData)
     bu_free((genptr_t)gdvp, "ged_dm_view");
 }
 
-static void
+HIDDEN void
 go_init_default_bindings(struct ged_dm_view *gdvp)
 {
     struct bu_vls bindings;
@@ -2363,7 +2362,7 @@ go_init_default_bindings(struct ged_dm_view *gdvp)
     bu_vls_free(&bindings);
 }
 
-static int
+HIDDEN int
 go_init_view_bindings(struct ged *gedp,
 		      int argc,
 		      const char *argv[],
@@ -2402,7 +2401,7 @@ go_init_view_bindings(struct ged *gedp,
     return BRLCAD_OK;
 }
 
-static int
+HIDDEN int
 go_delete_view(struct ged *gedp,
 	       int argc,
 	       const char *argv[],
@@ -2441,7 +2440,7 @@ go_delete_view(struct ged *gedp,
     return BRLCAD_OK;
 }
 
-static int
+HIDDEN int
 go_faceplate(struct ged *gedp,
 	     int argc,
 	     const char *argv[],
@@ -2639,7 +2638,7 @@ go_faceplate(struct ged *gedp,
     return BRLCAD_ERROR;
 }
 
-static int
+HIDDEN int
 go_idle_mode(struct ged *gedp,
 	     int argc,
 	     const char *argv[],
@@ -2698,7 +2697,7 @@ go_idle_mode(struct ged *gedp,
     return BRLCAD_OK;
 }
 
-static int
+HIDDEN int
 go_light(struct ged *gedp,
 	 int argc,
 	 const char *argv[],
@@ -2756,7 +2755,7 @@ go_light(struct ged *gedp,
     return BRLCAD_OK;
 }
 
-static int
+HIDDEN int
 go_list_views(struct ged *gedp,
 	      int argc,
 	      const char *argv[],
@@ -2780,7 +2779,7 @@ go_list_views(struct ged *gedp,
     return BRLCAD_OK;
 }
 
-static int
+HIDDEN int
 go_listen(struct ged *gedp,
 	  int argc,
 	  const char *argv[],
@@ -2846,7 +2845,7 @@ go_listen(struct ged *gedp,
     return BRLCAD_ERROR;
 }
 
-static int
+HIDDEN int
 go_local2base(struct ged *gedp,
 	      int argc,
 	      const char *argv[],
@@ -2862,7 +2861,7 @@ go_local2base(struct ged *gedp,
     return BRLCAD_OK;
 }
 
-static int
+HIDDEN int
 go_make(struct ged *gedp,
 	int argc,
 	const char *argv[],
@@ -2885,7 +2884,7 @@ go_make(struct ged *gedp,
     return ret;
 }
 
-static int
+HIDDEN int
 go_mirror(struct ged *gedp,
 	  int argc,
 	  const char *argv[],
@@ -2908,7 +2907,7 @@ go_mirror(struct ged *gedp,
     return ret;
 }
 
-static int
+HIDDEN int
 go_model_axes(struct ged *gedp,
 	      int argc,
 	      const char *argv[],
@@ -2945,7 +2944,7 @@ go_model_axes(struct ged *gedp,
     return go_axes(gedp, gdvp, &gdvp->gdv_view->gv_model_axes, argc, argv, usage, 0);
 }
 
-static int
+HIDDEN int
 go_more_args_callback(struct ged *gedp,
 		      int argc,
 		      const char *argv[],
@@ -2973,7 +2972,7 @@ go_more_args_callback(struct ged *gedp,
     return BRLCAD_OK;
 }
 
-static int
+HIDDEN int
 go_mouse_constrain_rot(struct ged *gedp,
 		       int argc,
 		       const char *argv[],
@@ -3074,7 +3073,7 @@ go_mouse_constrain_rot(struct ged *gedp,
     return BRLCAD_OK;
 }
 
-static int
+HIDDEN int
 go_mouse_constrain_trans(struct ged *gedp,
 			 int argc,
 			 const char *argv[],
@@ -3177,7 +3176,7 @@ go_mouse_constrain_trans(struct ged *gedp,
     return BRLCAD_OK;
 }
 
-static int
+HIDDEN int
 go_mouse_move_arb_edge(struct ged *gedp,
 		       int argc,
 		       const char *argv[],
@@ -3274,7 +3273,7 @@ go_mouse_move_arb_edge(struct ged *gedp,
     return BRLCAD_OK;
 }
 
-static int
+HIDDEN int
 go_mouse_move_arb_face(struct ged *gedp,
 		       int argc,
 		       const char *argv[],
@@ -3371,7 +3370,7 @@ go_mouse_move_arb_face(struct ged *gedp,
     return BRLCAD_OK;
 }
 
-static int
+HIDDEN int
 go_mouse_orotate(struct ged *gedp,
 		 int argc,
 		 const char *argv[],
@@ -3474,7 +3473,7 @@ go_mouse_orotate(struct ged *gedp,
     return BRLCAD_OK;
 }
 
-static int
+HIDDEN int
 go_mouse_oscale(struct ged *gedp,
 		int argc,
 		const char *argv[],
@@ -3568,7 +3567,7 @@ go_mouse_oscale(struct ged *gedp,
     return BRLCAD_OK;
 }
 
-static int
+HIDDEN int
 go_mouse_otranslate(struct ged *gedp,
 		    int argc,
 		    const char *argv[],
@@ -3673,7 +3672,7 @@ go_mouse_otranslate(struct ged *gedp,
     return BRLCAD_OK;
 }
 
-static int
+HIDDEN int
 go_mouse_ray(struct ged *gedp,
 	     int argc,
 	     const char *argv[],
@@ -3754,7 +3753,7 @@ go_mouse_ray(struct ged *gedp,
     return BRLCAD_OK;
 }
 
-static int
+HIDDEN int
 go_mouse_rot(struct ged *gedp,
 	     int argc,
 	     const char *argv[],
@@ -3838,7 +3837,7 @@ go_mouse_rot(struct ged *gedp,
     return BRLCAD_OK;
 }
 
-static int
+HIDDEN int
 go_mouse_rotate_arb_face(struct ged *gedp,
 			 int argc,
 			 const char *argv[],
@@ -3933,7 +3932,7 @@ go_mouse_rotate_arb_face(struct ged *gedp,
     return BRLCAD_OK;
 }
 
-static int
+HIDDEN int
 go_mouse_scale(struct ged *gedp,
 	       int argc,
 	       const char *argv[],
@@ -4022,7 +4021,7 @@ go_mouse_scale(struct ged *gedp,
     return BRLCAD_OK;
 }
 
-static int
+HIDDEN int
 go_mouse_protate(struct ged *gedp,
 		 int argc,
 		 const char *argv[],
@@ -4116,7 +4115,7 @@ go_mouse_protate(struct ged *gedp,
     return BRLCAD_OK;
 }
 
-static int
+HIDDEN int
 go_mouse_pscale(struct ged *gedp,
 		int argc,
 		const char *argv[],
@@ -4212,7 +4211,7 @@ go_mouse_pscale(struct ged *gedp,
     return BRLCAD_OK;
 }
 
-static int
+HIDDEN int
 go_mouse_ptranslate(struct ged *gedp,
 		    int argc,
 		    const char *argv[],
@@ -4309,7 +4308,7 @@ go_mouse_ptranslate(struct ged *gedp,
     return BRLCAD_OK;
 }
 
-static int
+HIDDEN int
 go_mouse_trans(struct ged *gedp,
 	       int argc,
 	       const char *argv[],
@@ -4395,7 +4394,7 @@ go_mouse_trans(struct ged *gedp,
     return BRLCAD_OK;
 }
 
-static int
+HIDDEN int
 go_view_cmd(ClientData clientData,
 	    Tcl_Interp *interp,
 	    int argc,
@@ -4404,7 +4403,7 @@ go_view_cmd(ClientData clientData,
     return TCL_OK;
 }
 
-static int
+HIDDEN int
 go_move_arb_edge_mode(struct ged *gedp,
 		      int argc,
 		      const char *argv[],
@@ -4463,7 +4462,7 @@ go_move_arb_edge_mode(struct ged *gedp,
     return BRLCAD_OK;
 }
 
-static int
+HIDDEN int
 go_move_arb_face_mode(struct ged *gedp,
 		      int argc,
 		      const char *argv[],
@@ -4522,7 +4521,7 @@ go_move_arb_face_mode(struct ged *gedp,
     return BRLCAD_OK;
 }
 
-static int
+HIDDEN int
 go_new_view(struct ged *gedp,
 	    int argc,
 	    const char *argv[],
@@ -4531,7 +4530,7 @@ go_new_view(struct ged *gedp,
 	    int maxargs)
 {
     struct ged_dm_view *new_gdvp = BU_LIST_LAST(ged_dm_view, &go_current_gop->go_head_views.l);
-    static const int name_index = 1;
+    HIDDEN const int name_index = 1;
     int type = DM_TYPE_BAD;
     struct bu_vls event_vls;
 
@@ -4653,7 +4652,7 @@ go_new_view(struct ged *gedp,
     return BRLCAD_OK;
 }
 
-static int
+HIDDEN int
 go_orotate_mode(struct ged *gedp,
 		int argc,
 		const char *argv[],
@@ -4711,7 +4710,7 @@ go_orotate_mode(struct ged *gedp,
     return BRLCAD_OK;
 }
 
-static int
+HIDDEN int
 go_oscale_mode(struct ged *gedp,
 	       int argc,
 	       const char *argv[],
@@ -4769,7 +4768,7 @@ go_oscale_mode(struct ged *gedp,
     return BRLCAD_OK;
 }
 
-static int
+HIDDEN int
 go_otranslate_mode(struct ged *gedp,
 		   int argc,
 		   const char *argv[],
@@ -4827,7 +4826,7 @@ go_otranslate_mode(struct ged *gedp,
     return BRLCAD_OK;
 }
 
-static int
+HIDDEN int
 go_paint_rect_area(struct ged *gedp,
 		   int argc,
 		   const char *argv[],
@@ -4868,7 +4867,7 @@ go_paint_rect_area(struct ged *gedp,
 
 
 #if defined(DM_OGL) || defined(DM_WGL)
-static int
+HIDDEN int
 go_png(struct ged *gedp,
        int argc,
        const char *argv[],
@@ -4959,13 +4958,13 @@ go_png(struct ged *gedp,
 	}
 
 	{
-	    unsigned int sizeof_uint = sizeof(unsigned int);
-	    unsigned int sizeof_GLuint = sizeof(GLuint);
 	    unsigned int pixel;
 	    unsigned int red_mask = 0xff000000;
 	    unsigned int green_mask = 0x00ff0000;
 	    unsigned int blue_mask = 0x0000ff00;
+#if defined(DM_WGL)
 	    unsigned int alpha_mask = 0x000000ff;
+#endif
 	    int big_endian, swap_bytes;
 	    int bytes_per_line = gdvp->gdv_dmp->dm_width * bytes_per_pixel;
 	    GLuint *pixels = bu_calloc(width * height, bytes_per_pixel, "pixels");
@@ -5069,7 +5068,7 @@ go_png(struct ged *gedp,
 }
 #endif
 
-static int
+HIDDEN int
 go_prim_label(struct ged *gedp,
 	      int argc,
 	      const char *argv[],
@@ -5105,7 +5104,7 @@ go_prim_label(struct ged *gedp,
     return BRLCAD_OK;
 }
 
-static int
+HIDDEN int
 go_refresh(struct ged *gedp,
 	   int argc,
 	   const char *argv[],
@@ -5144,7 +5143,7 @@ go_refresh(struct ged *gedp,
     return BRLCAD_OK;
 }
 
-static int
+HIDDEN int
 go_refresh_all(struct ged *gedp,
 	       int argc,
 	       const char *argv[],
@@ -5162,7 +5161,7 @@ go_refresh_all(struct ged *gedp,
     return BRLCAD_OK;
 }
 
-static int
+HIDDEN int
 go_refresh_on(struct ged *gedp,
 	      int argc,
 	      const char *argv[],
@@ -5194,6 +5193,7 @@ go_refresh_on(struct ged *gedp,
     return BRLCAD_OK;
 }
 
+HIDDEN int
 go_rotate_arb_face_mode(struct ged *gedp,
 			int argc,
 			const char *argv[],
@@ -5253,7 +5253,7 @@ go_rotate_arb_face_mode(struct ged *gedp,
     return BRLCAD_OK;
 }
 
-static int
+HIDDEN int
 go_rotate_mode(struct ged *gedp,
 	       int argc,
 	       const char *argv[],
@@ -5316,7 +5316,7 @@ go_rotate_mode(struct ged *gedp,
  *@brief
  * Called when the named proc created by rt_gettrees() is destroyed.
  */
-static void
+HIDDEN void
 go_deleteProc_rt(ClientData clientData)
 {
     struct application *ap = (struct application *)clientData;
@@ -5434,7 +5434,7 @@ go_rt_gettrees(struct ged *gedp,
     return TCL_OK;
 }
 
-static int
+HIDDEN int
 go_protate_mode(struct ged *gedp,
 		int argc,
 		const char *argv[],
@@ -5493,7 +5493,7 @@ go_protate_mode(struct ged *gedp,
     return BRLCAD_OK;
 }
 
-static int
+HIDDEN int
 go_pscale_mode(struct ged *gedp,
 	       int argc,
 	       const char *argv[],
@@ -5552,7 +5552,7 @@ go_pscale_mode(struct ged *gedp,
     return BRLCAD_OK;
 }
 
-static int
+HIDDEN int
 go_ptranslate_mode(struct ged *gedp,
 		   int argc,
 		   const char *argv[],
@@ -5611,7 +5611,7 @@ go_ptranslate_mode(struct ged *gedp,
     return BRLCAD_OK;
 }
 
-static int
+HIDDEN int
 go_scale_mode(struct ged *gedp,
 	      int argc,
 	      const char *argv[],
@@ -5668,7 +5668,7 @@ go_scale_mode(struct ged *gedp,
     return BRLCAD_OK;
 }
 
-static int
+HIDDEN int
 go_screen2model(struct ged *gedp,
 		int argc,
 		const char *argv[],
@@ -5727,7 +5727,7 @@ go_screen2model(struct ged *gedp,
     return BRLCAD_OK;
 }
 
-static int
+HIDDEN int
 go_screen2view(struct ged *gedp,
 	       int argc,
 	       const char *argv[],
@@ -5784,7 +5784,7 @@ go_screen2view(struct ged *gedp,
     return BRLCAD_OK;
 }
 
-static int
+HIDDEN int
 go_set_coord(struct ged *gedp,
 	     int argc,
 	     const char *argv[],
@@ -5835,7 +5835,7 @@ go_set_coord(struct ged *gedp,
     return BRLCAD_OK;
 }
 
-static int
+HIDDEN int
 go_set_fb_mode(struct ged *gedp,
 	       int argc,
 	       const char *argv[],
@@ -5893,7 +5893,7 @@ go_set_fb_mode(struct ged *gedp,
     return BRLCAD_OK;
 }
 
-static int
+HIDDEN int
 go_translate_mode(struct ged *gedp,
 		  int argc,
 		  const char *argv[],
@@ -5950,7 +5950,7 @@ go_translate_mode(struct ged *gedp,
     return BRLCAD_OK;
 }
 
-static int
+HIDDEN int
 go_transparency(struct ged *gedp,
 		int argc,
 		const char *argv[],
@@ -6005,7 +6005,7 @@ go_transparency(struct ged *gedp,
     return BRLCAD_OK;
 }
 
-static int
+HIDDEN int
 go_view_axes(struct ged *gedp,
 	     int argc,
 	     const char *argv[],
@@ -6042,7 +6042,7 @@ go_view_axes(struct ged *gedp,
     return go_axes(gedp, gdvp, &gdvp->gdv_view->gv_view_axes, argc, argv, usage, 0);
 }
 
-static int
+HIDDEN int
 go_view_win_size(struct ged *gedp,
 		 int argc,
 		 const char *argv[],
@@ -6109,7 +6109,7 @@ go_view_win_size(struct ged *gedp,
     return BRLCAD_OK;
 }
 
-static int
+HIDDEN int
 go_vmake(struct ged *gedp,
 	 int argc,
 	 const char *argv[],
@@ -6149,11 +6149,11 @@ go_vmake(struct ged *gedp,
 	char center[512];
 	char scale[128];
 
-	sprintf(center, "%lf %lf %lf",
+	sprintf(center, "%f %f %f",
 		-gdvp->gdv_view->gv_center[MDX],
 		-gdvp->gdv_view->gv_center[MDY],
 		-gdvp->gdv_view->gv_center[MDZ]);
-	sprintf(scale, "%lf", gdvp->gdv_view->gv_scale * 2.0);
+	sprintf(scale, "%f", gdvp->gdv_view->gv_scale * 2.0);
 
 	av[0] = (char *)argv[0];
 	av[1] = "-o";
@@ -6177,7 +6177,7 @@ go_vmake(struct ged *gedp,
     }
 }
 
-static int
+HIDDEN int
 go_vslew(struct ged *gedp,
 	 int argc,
 	 const char *argv[],
@@ -6188,8 +6188,8 @@ go_vslew(struct ged *gedp,
     int ret;
     int ac;
     char *av[3];
-    fastf_t x1, y1;
-    fastf_t x2, y2;
+    fastf_t xpos1, ypos1;
+    fastf_t xpos2, ypos2;
     fastf_t sf;
     struct bu_vls slew_vec;
     struct ged_dm_view *gdvp;
@@ -6218,18 +6218,18 @@ go_vslew(struct ged *gedp,
 	return BRLCAD_ERROR;
     }
 
-    if (sscanf(argv[2], "%lf", &x1) != 1 ||
-	sscanf(argv[3], "%lf", &y1) != 1) {
+    if (sscanf(argv[2], "%lf", &xpos1) != 1 ||
+	sscanf(argv[3], "%lf", &ypos1) != 1) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return BRLCAD_ERROR;
     }
 
-    x2 = 0.5 * gdvp->gdv_dmp->dm_width;
-    y2 = 0.5 * gdvp->gdv_dmp->dm_height;
+    xpos2 = 0.5 * gdvp->gdv_dmp->dm_width;
+    ypos2 = 0.5 * gdvp->gdv_dmp->dm_height;
     sf = 2.0 / gdvp->gdv_dmp->dm_width;
 
     bu_vls_init(&slew_vec);
-    bu_vls_printf(&slew_vec, "%lf %lf", (x1 - x2) * sf, (y2 - y1) * sf);
+    bu_vls_printf(&slew_vec, "%lf %lf", (xpos1 - xpos2) * sf, (ypos2 - ypos1) * sf);
 
     gedp->ged_gvp = gdvp->gdv_view;
     ac = 2;
@@ -6242,7 +6242,6 @@ go_vslew(struct ged *gedp,
 
     if (ret == GED_OK) {
 	if (gdvp->gdv_view->gv_grid.ggs_snap) {
-	    char *av[3];
 
 	    gedp->ged_gvp = gdvp->gdv_view;
 	    av[0] = "grid";
@@ -6256,7 +6255,7 @@ go_vslew(struct ged *gedp,
     return ret;
 }
 
-static int
+HIDDEN int
 go_zbuffer(struct ged *gedp,
 	   int argc,
 	   const char *argv[],
@@ -6314,7 +6313,7 @@ go_zbuffer(struct ged *gedp,
     return BRLCAD_OK;
 }
 
-static int
+HIDDEN int
 go_zclip(struct ged *gedp,
 	 int argc,
 	 const char *argv[],
@@ -6375,7 +6374,7 @@ go_zclip(struct ged *gedp,
 
 
 /*************************** Wrapper Functions ***************************/
-static int
+HIDDEN int
 go_autoview_func(struct ged *gedp,
 		 int argc,
 		 const char *argv[],
@@ -6406,7 +6405,7 @@ go_autoview_func(struct ged *gedp,
     return ret;
 }
 
-static int
+HIDDEN int
 go_edit_redraw_func(struct ged *gedp,
 		    int argc,
 		    const char *argv[],
@@ -6491,7 +6490,7 @@ go_edit_redraw_func(struct ged *gedp,
     return ret;
 }
 
-static int
+HIDDEN int
 go_more_args_func(struct ged *gedp,
 		  int argc,
 		  const char *argv[],
@@ -6583,7 +6582,7 @@ go_more_args_func(struct ged *gedp,
     return ret;
 }
 
-static int
+HIDDEN int
 go_pass_through_func(struct ged *gedp,
 		     int argc,
 		     const char *argv[],
@@ -6594,7 +6593,7 @@ go_pass_through_func(struct ged *gedp,
     return (*func)(gedp, argc, argv);
 }
 
-static int
+HIDDEN int
 go_pass_through_and_refresh_func(struct ged *gedp,
 				 int argc,
 				 const char *argv[],
@@ -6612,7 +6611,7 @@ go_pass_through_and_refresh_func(struct ged *gedp,
     return ret;
 }
 
-static int
+HIDDEN int
 go_view_func(struct ged *gedp,
 	     int argc,
 	     const char *argv[],
@@ -6671,7 +6670,7 @@ go_view_func(struct ged *gedp,
 
 
 /*************************** Local Utility Functions ***************************/
-static void
+HIDDEN void
 go_drawSolid(struct dm *dmp, struct solid *sp)
 {
     if (sp->s_iflag == UP)
@@ -6686,7 +6685,7 @@ go_drawSolid(struct dm *dmp, struct solid *sp)
 }
 
 /* Draw all display lists */
-static int
+HIDDEN int
 go_drawDList(struct dm *dmp, struct bu_list *hdlp)
 {
     register struct ged_display_list *gdlp;
@@ -6725,7 +6724,7 @@ go_drawDList(struct dm *dmp, struct bu_list *hdlp)
 
 	    FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
 		/* already drawn above */
-		if (sp->s_transparency == 1.0)
+		if (NEAR_ZERO(sp->s_transparency - 1.0, SMALL_FASTF))
 		    continue;
 
 		if (line_style != sp->s_soldash) {
@@ -6762,7 +6761,7 @@ go_drawDList(struct dm *dmp, struct bu_list *hdlp)
     return BRLCAD_OK;
 }
 
-static void
+HIDDEN void
 go_fbs_callback(genptr_t clientData)
 {
     struct ged_dm_view *gdvp = (struct ged_dm_view *)clientData;
@@ -6770,7 +6769,7 @@ go_fbs_callback(genptr_t clientData)
     go_refresh_view(gdvp);
 }
 
-static int
+HIDDEN int
 go_close_fbs(struct ged_dm_view *gdvp)
 {
     if (gdvp->gdv_fbs.fbs_fbp == FBIO_NULL)
@@ -6816,7 +6815,7 @@ go_close_fbs(struct ged_dm_view *gdvp)
 /*
  * Open/activate the display managers framebuffer.
  */
-static int
+HIDDEN int
 go_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp)
 {
 
@@ -6936,7 +6935,7 @@ go_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp)
     return TCL_OK;
 }
 
-static void
+HIDDEN void
 go_draw(struct ged_dm_view *gdvp)
 {
     mat_t new;
@@ -6952,7 +6951,7 @@ go_draw(struct ged_dm_view *gdvp)
 	VSET(l, -1.0, -1.0, -1.0);
 	VSET(h, 1.0, 1.0, 200.0);
 
-	if (gdvp->gdv_view->gv_eye_pos[Z] == 1.0) {
+	if (NEAR_ZERO(gdvp->gdv_view->gv_eye_pos[Z] - 1.0, SMALL_FASTF)) {
 	    /* This way works, with reasonable Z-clipping */
 	    ged_persp_mat(perspective_mat, gdvp->gdv_view->gv_perspective,
 			  (fastf_t)1.0f, (fastf_t)0.01f, (fastf_t)1.0e10f, (fastf_t)1.0f);
@@ -6996,7 +6995,7 @@ go_draw(struct ged_dm_view *gdvp)
     go_drawDList(gdvp->gdv_dmp, &gdvp->gdv_gop->go_gedp->ged_gdp->gd_headDisplay);
 }
 
-static void
+HIDDEN void
 go_draw_faceplate(struct ged_dm_view *gdvp)
 {
     /* Center dot */
@@ -7088,7 +7087,7 @@ go_draw_faceplate(struct ged_dm_view *gdvp)
 	dm_draw_rect(gdvp->gdv_dmp, &gdvp->gdv_view->gv_rect, gdvp->gdv_view);
 }
 
-static void
+HIDDEN void
 go_refresh_view(struct ged_dm_view *gdvp)
 {
     int restore_zbuffer = 0;
@@ -7183,7 +7182,7 @@ go_refresh_view(struct ged_dm_view *gdvp)
     }
 }
 
-static void
+HIDDEN void
 go_refresh_handler(void *clientdata)
 {
     struct ged_dm_view *gdvp = (struct ged_dm_view *)clientdata;
@@ -7191,7 +7190,7 @@ go_refresh_handler(void *clientdata)
     go_refresh_view(gdvp);
 }
 
-static void
+HIDDEN void
 go_refresh_all_views(struct ged_obj *gop)
 {
     struct ged_dm_view *gdvp;
@@ -7201,7 +7200,7 @@ go_refresh_all_views(struct ged_obj *gop)
     }
 }
 
-static void
+HIDDEN void
 go_autoview_view(struct ged_dm_view *gdvp)
 {
     int ret;
@@ -7216,7 +7215,7 @@ go_autoview_view(struct ged_dm_view *gdvp)
 	go_refresh_view(gdvp);
 }
 
-static void
+HIDDEN void
 go_autoview_all_views(struct ged_obj *gop)
 {
     struct ged_dm_view *gdvp;
@@ -7226,7 +7225,7 @@ go_autoview_all_views(struct ged_obj *gop)
     }
 }
 
-static void
+HIDDEN void
 go_output_handler(struct ged *gedp, char *line)
 {
     if (gedp->ged_output_script != (char *)0) {

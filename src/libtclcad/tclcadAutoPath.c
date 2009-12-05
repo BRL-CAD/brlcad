@@ -70,7 +70,6 @@ extern Tcl_Obj *TclGetLibraryPath (void);
 static const char *
 path_to_src(const char *path)
 {
-    int i;
     static char buffer[MAX_BUF] = {0};
     char *match = NULL;
 
@@ -199,8 +198,6 @@ tclcad_auto_path(Tcl_Interp *interp)
     const char *which_argv = NULL;
     const char *srcpath = NULL;
     int from_installed = 0;
-
-    Tcl_Obj *tclpath = NULL;
 
     int found_init_tcl = 0;
     int found_tk_tcl = 0;

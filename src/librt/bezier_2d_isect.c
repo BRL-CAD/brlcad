@@ -306,48 +306,6 @@ ComputeXIntercept(
     normal[Y] /= len;
 
     return 1;
-#if 0
-    V2MOVE( p, ray_start );
-    p[Z] = 0.0;
-    V2MOVE( d, ray_dir );
-    d[Z] = 0.0;
-    V2MOVE( a, V[0] );
-    a[Z] = 0.0;
-    V2SUB2( c, V[degree], V[0] );
-    c[Z] = 0.0;
-
-    /* calculate intercept */
-    ret = bn_isect_line2_lseg2( dist, p, d, a, c, &tol );
-
-    bu_log( "\tbn_isect_line2_lseg2() returned %d\n", ret );
-
-    if ( ret <= 0 )
-	return 0;
-
-    switch ( ret ) {
-	case 1:
-	    /* intercept at V[0] */
-	    V2MOVE( intercept, V[0] );
-	    break;
-	case 2:
-	    /* intercept at V[degree] */
-	    V2MOVE( intercept, V[degree] );
-	    break;
-	case 3:
-	    /* intercept between endpoints */
-	    V2JOIN1( intercept, ray_start, dist[0], ray_dir );
-	    break;
-    }
-
-    /* calculate normal */
-    normal[X] = c[Y];
-    normal[Y] = -c[X];
-    len = sqrt( MAG2SQ( c ) );
-    normal[X] /= len;
-    normal[Y] /= len;
-
-    return 1;
-#endif
 }
 
 

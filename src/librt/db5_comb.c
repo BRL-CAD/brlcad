@@ -309,11 +309,7 @@ rt_comb_export5(
 
     BU_INIT_EXTERNAL(ep);
     ep->ext_nbytes = need;
-#if 0
-    ep->ext_buf = bu_malloc( need, "rt_comb_export5 ext_buf" );
-#else
     ep->ext_buf = bu_calloc( 1, need, "rt_comb_export5 ext_buf" );
-#endif
 
     /* Build combination's on-disk header section */
     cp = (unsigned char *)ep->ext_buf;
@@ -401,20 +397,6 @@ rt_comb_export5(
     else
 	bu_avs_remove( avsp, "oshader" );
 
-#if 0
-    if ( bu_vls_strlen( &comb->material ) > 0 )
-	bu_avs_add_vls( avsp, "material", &comb->material );
-    else
-	bu_avs_remove( avsp, "material" );
-#endif
-#if 0
-    if ( comb->temperature > 0 )  {
-	bu_vls_trunc( &value, 0 );
-	bu_vls_printf( &value, "%f", comb->temperature );
-	bu_avs_add_vls( avsp, "temp", &value );
-    } else
-	bu_avs_remove( avsp, "temp" );
-#endif
     /* GIFT compatability */
     if ( comb->region_id != 0 )  {
 	bu_vls_trunc( &value, 0 );
@@ -784,9 +766,6 @@ rt_comb_import5(
 	}
 	if ( (ap = bu_avs_get( &ip->idb_avs, "material_id" )) != NULL )  {
 	    comb->GIFTmater = atoi( ap );
-#if 0
-	    bu_vls_printf( &comb->material, "gift%d", comb->GIFTmater );
-#endif
 	}
 	if ( (ap = bu_avs_get( &ip->idb_avs, "los" )) != NULL )  {
 	    comb->los = atoi( ap );

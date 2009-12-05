@@ -65,7 +65,7 @@
  * about not creating fundamental structures on his own...  :-)
  * Retired in favor of more modern tessellation strategies.
  */
-static struct shell *
+HIDDEN struct shell *
 nmg_polytonmg(FILE *fp, struct nmgregion *r, const struct bn_tol *tol)
 {
     int i, j, num_pts, num_facets, pts_this_face, facet;
@@ -149,12 +149,11 @@ nmg_polytonmg(FILE *fp, struct nmgregion *r, const struct bn_tol *tol)
 			     tol)) {
 	    bu_log("At %d in %s\n", __LINE__, __FILE__);
 	    bu_bomb("polytonmg() cannot make plane equation\n");
-	}
-	else nmg_face_g(fu, plane);
+	} else nmg_face_g(fu, plane);
     }
 
     for (i=0; i < num_pts; ++i) {
-	if (BU_LIST_IS_EMPTY(&v[i]->vu_hd))  continue;
+	if (BU_LIST_IS_EMPTY(&v[i]->vu_hd)) continue;
 	FREE_VERTEX(v[i]);
     }
     bu_free((char *)v, "vertex array");
@@ -177,7 +176,7 @@ nmg_polytonmg(FILE *fp, struct nmgregion *r, const struct bn_tol *tol)
  * does only "interior" edges, and is not a general face/shell
  * intersector.
  */
-static void
+HIDDEN void
 nmg_isect_face3p_shell_int(struct nmg_inter_struct *is, struct faceuse *fu1, struct shell *s2)
 {
     struct shell *s1;
@@ -221,6 +220,7 @@ nmg_isect_face3p_shell_int(struct nmg_inter_struct *is, struct faceuse *fu1, str
     if (rt_g.NMG_debug & DEBUG_POLYSECT)
 	bu_log("nmg_isect_face3p_shell_int(, fu1=x%x, s2=x%x) END\n", fu1, s2);
 }
+
 
 /*
  * Local Variables:

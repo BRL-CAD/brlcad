@@ -1013,7 +1013,7 @@ typedef int	Tk_ItemIndexProc _ANSI_ARGS_((Tcl_Interp *interp,
 		    Tk_Canvas canvas, Tk_Item *itemPtr, char *indexString,
 		    int *indexPtr));
 typedef void	Tk_ItemCursorProc _ANSI_ARGS_((Tk_Canvas canvas,
-		    Tk_Item *itemPtr, int index));
+		    Tk_Item *itemPtr, int idx));
 typedef int	Tk_ItemSelectionProc _ANSI_ARGS_((Tk_Canvas canvas,
 		    Tk_Item *itemPtr, int offset, char *buffer,
 		    int maxBytes));

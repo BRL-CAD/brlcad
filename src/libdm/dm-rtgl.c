@@ -148,20 +148,20 @@ struct dm dm_rtgl = {
     0				/* Tcl interpreter */
 };
 
-extern fastf_t default_viewscale;
-extern double xlim_view;	/* args for glOrtho*/
-extern double ylim_view;
+static fastf_t default_viewscale = 1000.0;
+static double xlim_view = 1.0;	/* args for glOrtho*/
+static double ylim_view = 1.0;
 
 /* lighting parameters */
-extern float amb_three[];
-extern float light0_direction[];
-extern float light0_position[];
-extern float light0_diffuse[];
-extern float wireColor[4];
-extern float ambientColor[4];
-extern float specularColor[4];
-extern float diffuseColor[4];
-extern float backColor[];
+static float amb_three[] = {0.3, 0.3, 0.3, 1.0};
+static float light0_direction[] = {0.0, 0.0, 1.0, 0.0};
+static float light0_position[] = {100.0, 200.0, 100.0, 0.0};
+static float light0_diffuse[] = {1.0, 1.0, 1.0, 1.0};
+static float wireColor[4];
+static float ambientColor[4];
+static float specularColor[4];
+static float diffuseColor[4];
+static float backColor[] = {1.0, 1.0, 0.0, 1.0};
 
 struct rtglJobs rtgljob = {
     1,
