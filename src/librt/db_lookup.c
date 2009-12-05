@@ -105,8 +105,8 @@ db_ck_directory(const struct db_i *dbip)
 /**
  * D B _ D I R H A S H
  *
- * Internal function to return pointer to head of hash chain
- * corresponding to the given string.
+ * Returns a hash index for a given string that corresponds with the
+ * head of that string's hash chain.
  */
 int
 db_dirhash(const char *str)
@@ -114,6 +114,11 @@ db_dirhash(const char *str)
     const unsigned char *s = (unsigned char *)str;
     long sum;
     int i;
+
+    /* sanity */
+    if (!str) {
+	return 0;
+    }
 
     sum = 0;
     /* BSD name hashing starts i=0, discarding first char.  why? */
