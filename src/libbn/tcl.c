@@ -157,6 +157,52 @@ static void bn_vblend(mat_t a, fastf_t b, mat_t c, fastf_t d, mat_t e)
     VBLEND2( a, b, c, d, e );
 }
 
+
+static struct math_func_link {
+    char *name;
+    void (*func)();
+} math_funcs[] = {
+    {"bn_isect_line2_line2",	(void (*)())bn_isect_line2_line2},
+    {"bn_isect_line3_line3",	(void (*)())bn_isect_line3_line3},
+    {"mat_mul",            bn_mat_mul},
+    {"mat_inv",            bn_mat_inv},
+    {"mat_trn",            bn_mat_trn},
+    {"matXvec",            bn_matXvec},
+    {"mat4x3vec",          bn_mat4x3vec},
+    {"mat4x3pnt",          bn_mat4x3pnt},
+    {"hdivide",            bn_hdivide},
+    {"vjoin1",	           bn_vjoin1},
+    {"vblend",	           bn_vblend},
+    {"mat_ae",             bn_mat_ae},
+    {"mat_ae_vec",         bn_ae_vec},
+    {"mat_aet_vec",        bn_aet_vec},
+    {"mat_angles",         bn_mat_angles},
+    {"mat_eigen2x2",       bn_eigen2x2},
+    {"mat_fromto",         bn_mat_fromto},
+    {"mat_xrot",           bn_mat_xrot},
+    {"mat_yrot",           bn_mat_yrot},
+    {"mat_zrot",           bn_mat_zrot},
+    {"mat_lookat",         bn_mat_lookat},
+    {"mat_vec_ortho",      bn_vec_ortho},
+    {"mat_vec_perp",       bn_vec_perp},
+    {"mat_scale_about_pt", bn_mat_scale_about_pt_wrapper},
+    {"mat_xform_about_pt", bn_mat_xform_about_pt},
+    {"mat_arb_rot",        bn_mat_arb_rot},
+    {"quat_mat2quat",      quat_mat2quat},
+    {"quat_quat2mat",      quat_quat2mat},
+    {"quat_distance",      bn_quat_distance_wrapper},
+    {"quat_double",        quat_double},
+    {"quat_bisect",        quat_bisect},
+    {"quat_slerp",         quat_slerp},
+    {"quat_sberp",         quat_sberp},
+    {"quat_make_nearest",  quat_make_nearest},
+    {"quat_exp",           quat_exp},
+    {"quat_log",           quat_log},
+    {0, 0}
+};
+
+
+
 /**
  *			B N _ M A T H _ C M D
  *@brief
@@ -165,14 +211,15 @@ static void bn_vblend(mat_t a, fastf_t b, mat_t c, fastf_t d, mat_t e)
  * This is where you should put clauses, in the below "if" statement, to add
  * Tcl support for the LIBBN math routines.
  */
-
 int
 bn_math_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
     void (*math_func)();
     struct bu_vls result;
+    struct math_func_link *mfl;
 
-    math_func = (void (*)())clientData; /* object-to-function cast */
+    mfl = (struct math_func_link *)clientData;
+    math_func = mfl->func;
     bu_vls_init(&result);
 
     if (math_func == bn_mat_mul) {
@@ -613,48 +660,6 @@ bn_math_cmd(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_ERROR;
 }
 
-static struct math_func_link {
-    char *name;
-    void (*func)();
-} math_funcs[] = {
-    {"bn_isect_line2_line2",	(void (*)())bn_isect_line2_line2},
-    {"bn_isect_line3_line3",	(void (*)())bn_isect_line3_line3},
-    {"mat_mul",            bn_mat_mul},
-    {"mat_inv",            bn_mat_inv},
-    {"mat_trn",            bn_mat_trn},
-    {"matXvec",            bn_matXvec},
-    {"mat4x3vec",          bn_mat4x3vec},
-    {"mat4x3pnt",          bn_mat4x3pnt},
-    {"hdivide",            bn_hdivide},
-    {"vjoin1",	           bn_vjoin1},
-    {"vblend",	           bn_vblend},
-    {"mat_ae",             bn_mat_ae},
-    {"mat_ae_vec",         bn_ae_vec},
-    {"mat_aet_vec",        bn_aet_vec},
-    {"mat_angles",         bn_mat_angles},
-    {"mat_eigen2x2",       bn_eigen2x2},
-    {"mat_fromto",         bn_mat_fromto},
-    {"mat_xrot",           bn_mat_xrot},
-    {"mat_yrot",           bn_mat_yrot},
-    {"mat_zrot",           bn_mat_zrot},
-    {"mat_lookat",         bn_mat_lookat},
-    {"mat_vec_ortho",      bn_vec_ortho},
-    {"mat_vec_perp",       bn_vec_perp},
-    {"mat_scale_about_pt", bn_mat_scale_about_pt_wrapper},
-    {"mat_xform_about_pt", bn_mat_xform_about_pt},
-    {"mat_arb_rot",        bn_mat_arb_rot},
-    {"quat_mat2quat",      quat_mat2quat},
-    {"quat_quat2mat",      quat_quat2mat},
-    {"quat_distance",      bn_quat_distance_wrapper},
-    {"quat_double",        quat_double},
-    {"quat_bisect",        quat_bisect},
-    {"quat_slerp",         quat_slerp},
-    {"quat_sberp",         quat_sberp},
-    {"quat_make_nearest",  quat_make_nearest},
-    {"quat_exp",           quat_exp},
-    {"quat_log",           quat_log},
-    {0, 0}
-};
 
 int
 bn_cmd_noise_perlin(ClientData clientData,
@@ -664,6 +669,8 @@ bn_cmd_noise_perlin(ClientData clientData,
 {
     point_t pt;
     double	v;
+
+    clientData = clientData; /* quell warning */
 
     if (argc != 4) {
 	Tcl_AppendResult(interp, "wrong # args: should be \"",
@@ -697,6 +704,8 @@ bn_cmd_noise(ClientData clientData,
     double lacunarity;
     double octaves;
     double val;
+
+    clientData = clientData; /* quell warning */
 
     if (argc != 7) {
 	Tcl_AppendResult(interp, "wrong # args: should be \"",
@@ -758,6 +767,8 @@ bn_cmd_noise_slice(ClientData clientData,
     int noise_type = NOISE_FBM;
     double val;
     point_t pt;
+
+    clientData = clientData; /* quell warning */
 
     if (argc != 7) {
 	Tcl_AppendResult(interp, "wrong # args: should be \"",
@@ -840,6 +851,8 @@ bn_cmd_random(ClientData clientData,
     double rnd;
     char buf[32];
 
+    clientData = clientData; /* quell warning */
+
     if (argc != 2) {
 	Tcl_AppendResult(interp, "Wrong # args:  Should be \"",
 			 argv[0], " varname\"", NULL);
@@ -899,7 +912,7 @@ bn_tcl_setup(Tcl_Interp *interp)
     for (mp = math_funcs; mp->name != NULL; mp++) {
 	(void)Tcl_CreateCommand(interp, mp->name,
 				(Tcl_CmdProc *)bn_math_cmd,
-				(ClientData)mp->func, /* Function-to-Object pointer cast */
+				(ClientData)mp,
 				(Tcl_CmdDeleteProc *)NULL);
     }
 

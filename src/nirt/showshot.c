@@ -106,7 +106,7 @@ main (int argc, char **argv)
     while (bu_fgets(buf, BUF_LEN, stdin) != NULL) {
 	++line_nm;
 	bp = buf;
-	if ((nlp = index(bp, '\n')) != 0)
+	if ((nlp = strchr(bp, '\n')) != 0)
 	    *nlp = '\0';
 
 	/* Skip initial white space */

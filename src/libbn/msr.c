@@ -260,6 +260,10 @@ struct bn_gauss *
 bn_gauss_init(long int setseed, int method)
 {
     struct bn_gauss *p;
+
+    if (method != 0)
+	bu_bomb("Method not yet supported in bn_unif_init()");
+
     p = (struct bn_gauss *) bu_malloc(sizeof(struct bn_gauss), "bn_msr_guass");
     p->msr_gausses=(double *) bu_malloc(BN_MSR_MAXTBL*sizeof(double), "msr guass table");
     p->msr_gauss_doubles=(double *) bu_malloc(BN_MSR_MAXTBL*sizeof(double), "msr guass doubles");

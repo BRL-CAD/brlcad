@@ -124,7 +124,6 @@ db_preorder_traverse( struct directory *dp,
 	} else {
 	    struct rt_db_internal in;
 	    struct rt_comb_internal *comb;
-	    struct directory *ndp;
 
 	    if ( rt_db_get_internal5( &in, dp, dtp->dbip, NULL, dtp->resp ) < 0 )
 		return;

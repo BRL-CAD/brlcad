@@ -184,9 +184,7 @@ bu_units_conversion(const char *str)
     /* Copy the given string, making it lower case */
     ip = ubuf;
     while ((c = *ip)) {
-	if (!isascii(c))
-	    *ip++ = '_';
-	else if (isupper(c))
+	if (isupper(c))
 	    *ip++ = tolower(c);
 	else
 	    ip++;

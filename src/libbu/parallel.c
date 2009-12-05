@@ -248,32 +248,6 @@ bu_avail_cpus(void)
 
 #ifdef PARALLEL
 
-#  if defined(_SC_NPROCESSORS_ONLN)
-    /* SUNOS and linux */
-    ncpu = sysconf(_SC_NPROCESSORS_ONLN);
-    if (ncpu < 0) {
-	perror("Unable to get the number of available CPUs");
-	ncpu = 1;
-    }
-    goto DONE_NCPU;
-#  elif defined(_SC_NPROC_ONLN)
-    ncpu = sysconf(_SC_NPROC_ONLN);
-    if (ncpu < 0) {
-	perror("Unable to get the number of available CPUs");
-	ncpu = 1;
-    }
-    goto DONE_NCPU;
-#  elif defined(_SC_CRAY_NCPU)
-    /* cray */
-    ncpu = sysconf(_SC_CRAY_NCPU);
-    if (ncpu < 0) {
-	perror("Unable to get the number of available CPUs");
-	ncpu = 1;
-    }
-    goto DONE_NCPU;
-#  endif
-
-
 #  ifdef SGI_4D
     /* XXX LAB 04 June 2002
      *
@@ -287,16 +261,19 @@ bu_avail_cpus(void)
      * comes up with a fix.
      */
 #    ifdef HAVE_SYSMP
-    ncpu = sysmp(MP_NPROCS);
+    if (ncpu < 0) {
+	ncpu = sysmp(MP_NPROCS);
+    }
 #    elif defined(HAVE_PRCTL)
-    ncpu = (int)prctl(PR_MAXPPROCS);
+    if (ncpu < 0) {
+	ncpu = (int)prctl(PR_MAXPPROCS);
+    }
 #    endif
-    goto DONE_NCPU;
 #  endif /* SGI_4D */
 
 
 #  ifdef alliant
-    {
+    if (ncpu < 0) {
 	long memsize, ipnum, cenum, detnum, attnum;
 
 #    if !defined(i860)
@@ -307,13 +284,12 @@ bu_avail_cpus(void)
 	attnum = 28;
 #    endif /* i860 */
 	ncpu = attnum;		/* # of CEs attached to parallel Complex */
-	goto DONE_NCPU;
     }
 #  endif /* alliant */
 
 
 #  if defined(__sp3__)
-    {
+    if (ncpu < 0) {
 	int status;
 	int cmd;
 	int parmlen;
@@ -325,20 +301,21 @@ bu_avail_cpus(void)
 	    bu_bomb("bu_parallel(): sysconfig error for sp3");
 	}
 	ncpu = p.v_ncpus;
-	goto DONE_NCPU;
     }
 #  endif	/* __sp3__ */
 
 
 #  if defined(n16)
-    if ((ncpu = sysadmin(SADMIN_NUMCPUS, 0)) < 0)
-	perror("sysadmin");
-    goto DONE_NCPU;
+    if (ncpu < 0) {
+	if ((ncpu = sysadmin(SADMIN_NUMCPUS, 0)) < 0) {
+	    perror("sysadmin");
+	}
+    }
 #  endif /* n16 */
 
 
 #  ifdef __FreeBSD__
-    {
+    if (ncpu < 0) {
 	int maxproc;
 	size_t len;
 	len = 4;
@@ -348,39 +325,70 @@ bu_avail_cpus(void)
 	} else {
 	    ncpu = maxproc;
 	}
-	goto DONE_NCPU;
     }
 #  endif
 
 
 #  if defined(__APPLE__)
-    {
-	int mib[2], maxproc;
+    if (ncpu < 0) {
 	size_t len;
+	int maxproc;
+	int mib[] = {CTL_HW, HW_AVAILCPU};
 
-	mib[0] = CTL_HW;
-	mib[1] = HW_AVAILCPU;
 	len = sizeof(maxproc);
 	if (sysctl(mib, 2, &maxproc, &len, NULL, 0) == -1) {
-	    ncpu = 1;
 	    perror("sysctl");
+	    ncpu = 1;
 	} else {
 	    ncpu = maxproc; /* should be able to get sysctl to return maxproc */
 	}
-	goto DONE_NCPU;
     }
 #  endif /* __ppc__ */
 
 
 #  if defined(HAVE_GET_NPROCS)
-    ncpu = get_nprocs(); /* GNU extension from sys/sysinfo.h */
-    goto DONE_NCPU;
+    if (ncpu < 0) {
+	ncpu = get_nprocs(); /* GNU extension from sys/sysinfo.h */
+    }
 #  endif
 
 
-#  if defined(linux) && 0
-    {
-	/* old retired linux method */
+#  if defined(_SC_NPROCESSORS_ONLN)
+    /* SUNOS and linux (and now Mac 10.6+) */
+    if (ncpu < 0) {
+	ncpu = sysconf(_SC_NPROCESSORS_ONLN);
+	if (ncpu < 0) {
+	    perror("Unable to get the number of available CPUs");
+	    ncpu = 1;
+	}
+    }
+#endif
+
+#if defined(_SC_NPROC_ONLN)
+    if (ncpu < 0) {
+	ncpu = sysconf(_SC_NPROC_ONLN);
+	if (ncpu < 0) {
+	    perror("Unable to get the number of available CPUs");
+	    ncpu = 1;
+	}
+    }
+#endif
+
+#if defined(_SC_CRAY_NCPU)
+    /* cray */
+    if (ncpu < 0) {
+	ncpu = sysconf(_SC_CRAY_NCPU);
+	if (ncpu < 0) {
+	    perror("Unable to get the number of available CPUs");
+	    ncpu = 1;
+	}
+    }
+#  endif
+
+
+#  if defined(linux)
+    if (ncpu < 0) {
+	/* old linux method */
 	/*
 	 * Ultra-kludgey way to determine the number of cpus in a
 	 * linux box--count the number of processor entries in
@@ -410,22 +418,19 @@ bu_avail_cpus(void)
 		ncpu = 1;
 	    }
 	}
-	goto DONE_NCPU;
     }
 #  endif
 
+
 #  if defined(_WIN32)
     /* Windows */
-    {
+    if (ncpu < 0) {
 	SYSTEM_INFO sysinfo;
 
 	GetSystemInfo(&sysinfo);
 	ncpu = (int)sysinfo.dwNumberOfProcessors;
-	goto DONE_NCPU;
     }
 #  endif
-
- DONE_NCPU:  ; /* allows debug and final validity check */
 
 #endif /* PARALLEL */
 
@@ -1064,7 +1069,7 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
 
 	if ((ret = pthread_join(thread_tbl[x], NULL)) != 0) {
 	    /* badness happened */
-	    fprintf(stderr, "pthread_join(thread_tbl[%d]=0x%lx) ret=%d\n", x, (size_t)thread_tbl[x], ret);
+	    fprintf(stderr, "pthread_join(thread_tbl[%d]=%p) ret=%d\n", x, (void *)thread_tbl[x], ret);
 	}
 	nthreade++;
 	thread_tbl[x] = (rt_thread_t)-1;

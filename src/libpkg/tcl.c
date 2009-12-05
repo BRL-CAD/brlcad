@@ -30,6 +30,8 @@
 int
 Pkg_Init(Tcl_Interp *interp)
 {
+    if (!interp)
+	return TCL_ERROR;
     return TCL_OK;
 }
 

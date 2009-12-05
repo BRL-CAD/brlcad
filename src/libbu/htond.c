@@ -24,11 +24,12 @@
 #  include <memory.h>
 #endif
 #include <stdio.h>
+#include <assert.h>
 
 #include "bu.h"
 
 
-#define	OUT_IEEE_ZERO	{ \
+#define OUT_IEEE_ZERO { \
 	*out++ = 0; \
 	*out++ = 0; \
 	*out++ = 0; \
@@ -39,7 +40,7 @@
 	*out++ = 0; \
 	continue; } \
 
-#define	OUT_IEEE_NAN	{ /* Signaling NAN */ \
+#define OUT_IEEE_NAN { /* Signaling NAN */ \
 	*out++ = 0xFF; \
 	*out++ = 0xF0; \
 	*out++ = 0x0B; \
@@ -56,6 +57,8 @@ htond(register unsigned char *out, register const unsigned char *in, int count)
 {
     register int i;
 
+    assert(sizeof(double) == SIZEOF_NETWORK_DOUBLE);
+
     switch (bu_byteorder()) {
 	case BU_BIG_ENDIAN:
 	    /*
@@ -63,7 +66,7 @@ htond(register unsigned char *out, register const unsigned char *in, int count)
 	     * IEEE format internally, using big-endian order.  These
 	     * are the lucky ones.
 	     */
-	    memcpy(out, in, count*8);
+	    memcpy(out, in, count*SIZEOF_NETWORK_DOUBLE);
 	    return;
 	case BU_LITTLE_ENDIAN:
 	    /*
@@ -325,7 +328,7 @@ htond(register unsigned char *out, register const unsigned char *in, int count)
      * so we do too.
      */
     for (i=count-1; i >= 0; i--) {
-	register unsigned long long	word;
+	register unsigned long long word;
 	register int exp;
 
 
@@ -360,6 +363,8 @@ ntohd(register unsigned char *out, register const unsigned char *in, int count)
 {
     register int i;
 
+    assert(sizeof(double) == SIZEOF_NETWORK_DOUBLE);
+
     switch (bu_byteorder()) {
 	case BU_BIG_ENDIAN:
 	    /*
@@ -367,8 +372,6 @@ ntohd(register unsigned char *out, register const unsigned char *in, int count)
 	     * IEEE format internally, using big-endian order.  These
 	     * are the lucky ones.
 	     */
-	    if (sizeof(double) != SIZEOF_NETWORK_DOUBLE)
-		bu_bomb("ntohd:  sizeof(double) != SIZEOF_NETWORK_DOUBLE\n");
 	    memcpy(out, in, count*SIZEOF_NETWORK_DOUBLE);
 	    return;
 	case BU_LITTLE_ENDIAN:
@@ -620,7 +623,7 @@ ntohd(register unsigned char *out, register const unsigned char *in, int count)
      * Convex C1 version, for Native Convex floating point.
      */
     for (i=count-1; i >= 0; i--) {
-	register unsigned long long	word;
+	register unsigned long long word;
 	register int exp;
 
 	word = *((unsigned long long *)in);

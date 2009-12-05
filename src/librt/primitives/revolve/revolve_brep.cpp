@@ -31,7 +31,7 @@
 #include "brep.h"
 
 extern "C" {
-extern void rt_sketch_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
+    extern void rt_sketch_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
 }
 
 
@@ -71,7 +71,7 @@ void FindLoops(ON_Brep **b, const ON_Line* revaxis) {
         }
         // First, sort through things to assign curves to loops.
         loop_complete = 0;
-        while ( (loop_complete != 1) && (allcurvesassigned != 1)) {
+        while ((loop_complete != 1) && (allcurvesassigned != 1)) {
             curvearray[curvecount] = loopcount;
             ON_Curve *currentcurve = allsegments[curvecount];
             ptmatch = (*b)->m_C3[curvecount]->PointAtEnd();
@@ -119,21 +119,21 @@ void FindLoops(ON_Brep **b, const ON_Line* revaxis) {
         currdist = DIST_PT_PT(minpt, maxpt);
         bu_log("currdist: %f\n", currdist);
         if (currdist > maxdist) {
-          maxdist = currdist;
-          largest_loop_index = i;
+	    maxdist = currdist;
+	    largest_loop_index = i;
         }
     }
     bu_log("largest_loop_index = %d\n", largest_loop_index);
 
-    bu_log("curve_array[%d,%d,%d,%d,%d,%d]\n", curvearray[0], curvearray[1], curvearray[2], curvearray[3], curvearray[4], curvearray[5]);
+    bu_log("curve_array[%d, %d, %d, %d, %d, %d]\n", curvearray[0], curvearray[1], curvearray[2], curvearray[3], curvearray[4], curvearray[5]);
 
 
     for (int i = 0; i < loopcount ; i++) {
 	bu_log("loopcount: %d\n", i);
 	ON_PolyCurve* poly_curve = NULL;
     	for (int j = 0; j < allsegments.Count(); j++) {
-	    if ( curvearray[j] == i ) {
-    		if ( !poly_curve ) {
+	    if (curvearray[j] == i) {
+    		if (!poly_curve) {
 		    poly_curve = new ON_PolyCurve();
 		    poly_curve->Append(allsegments[j]);
 		} else {
@@ -152,14 +152,10 @@ void FindLoops(ON_Brep **b, const ON_Line* revaxis) {
 	}
     }
 }
-	    
-	      
-
-
 
 
 /**
- *			R T _ R E V O L V E _ B R E P
+ * R T _ R E V O L V E _ B R E P
  */
 extern "C" void
 rt_revolve_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
@@ -211,25 +207,23 @@ rt_revolve_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_to
     for (int i = 0; i < (&eip->skt_curve)->seg_count; i++) {
         lng = (long *)(&eip->skt_curve)->segments[i];
         switch (*lng) {
-            case CURVE_LSEG_MAGIC:
-                {
-                    lsg = (struct line_seg *)lng;
-                    ON_Curve* lsg3d = new ON_LineCurve((*b)->m_V[lsg->start].Point(), (*b)->m_V[lsg->end].Point());
-                    lsg3d->SetDomain(0.0, 1.0);
-                    (*b)->m_C3.Append(lsg3d);
-                }
+            case CURVE_LSEG_MAGIC: {
+		lsg = (struct line_seg *)lng;
+		ON_Curve* lsg3d = new ON_LineCurve((*b)->m_V[lsg->start].Point(), (*b)->m_V[lsg->end].Point());
+		lsg3d->SetDomain(0.0, 1.0);
+		(*b)->m_C3.Append(lsg3d);
+	    }
                 break;
             case CURVE_CARC_MAGIC:
                 csg = (struct carc_seg *)lng;
-                if (csg->radius < 0) {
-                    {
-                        ON_3dPoint cntrpt = (*b)->m_V[csg->end].Point();
-                        ON_3dPoint edgept = (*b)->m_V[csg->start].Point();
-                        ON_Circle* c3dcirc = new ON_Circle(cntrpt,cntrpt.DistanceTo(edgept));
-                        ON_Curve* c3d = new ON_ArcCurve((const ON_Circle)*c3dcirc);
-                        c3d->SetDomain(0.0,1.0);
-                        (*b)->m_C3.Append(c3d);
-                    }
+                if (csg->radius < 0) { {
+		    ON_3dPoint cntrpt = (*b)->m_V[csg->end].Point();
+		    ON_3dPoint edgept = (*b)->m_V[csg->start].Point();
+		    ON_Circle* c3dcirc = new ON_Circle(cntrpt, cntrpt.DistanceTo(edgept));
+		    ON_Curve* c3d = new ON_ArcCurve((const ON_Circle)*c3dcirc);
+		    c3d->SetDomain(0.0, 1.0);
+		    (*b)->m_C3.Append(c3d);
+		}
                 } else {
                     // need to calculated 3rd point on arc - look to sketch.c around line 581 for
                     // logic
@@ -247,7 +241,7 @@ rt_revolve_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_to
                     ON_BezierCurve* bez3d = new ON_BezierCurve((const ON_3dPointArray)*bezpoints);
                     ON_NurbsCurve* beznurb3d = ON_NurbsCurve::New();
                     bez3d->GetNurbForm(*beznurb3d);
-                    beznurb3d->SetDomain(0.0,1.0);
+                    beznurb3d->SetDomain(0.0, 1.0);
                     (*b)->m_C3.Append(beznurb3d);
                 }
                 break;
@@ -256,14 +250,15 @@ rt_revolve_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_to
                 break;
         }
     }
-    
-    
+
+
     const ON_Line& revaxis = ON_Line(ON_3dPoint(rip->v3d), ON_3dPoint(rip->axis3d));
     
     FindLoops(b, &revaxis);
     
     bu_free(tmp_internal, "free temporary rt_db_internal");
 }
+
 
 // Local Variables:
 // tab-width: 8

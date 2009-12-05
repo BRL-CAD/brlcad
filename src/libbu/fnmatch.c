@@ -229,7 +229,9 @@ bu_fnmatch(const char *pattern, const char *string, int flags)
     const char *stringstart;
     char *newp;
     char c, test;
-    for (stringstart = string;;) {
+    int limit = 10000;
+
+    for (stringstart = string; limit > 0; limit--) {
 	switch (c = *pattern++) {
 	    case BU_FNM_EOS:
 		if ((flags & BU_FNM_LEADING_DIR) && *string == '/')
@@ -321,7 +323,7 @@ bu_fnmatch(const char *pattern, const char *string, int flags)
 	}
     }
 
-    /* NOTREACHED */
+    /* NOTREACHED (unless inf looping) */
     return 0;
 }
 

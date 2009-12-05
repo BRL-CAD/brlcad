@@ -69,53 +69,54 @@ static const int binu_sizes[]={
  * XXX these are the interface routines needed for table.c
  */
 int
-rt_bin_expm_export5(struct bu_external *ep,
-		    const struct rt_db_internal *ip,
-		    double local2mm,
-		    const struct db_i *dbip,
-		    struct resource *resp)
+rt_bin_expm_export5(struct bu_external *ep __attribute__((unused)),
+		    const struct rt_db_internal *ip __attribute__((unused)),
+		    double local2mm __attribute__((unused)),
+		    const struct db_i *dbip __attribute__((unused)),
+		    struct resource *resp __attribute__((unused)))
 {
     bu_log("rt_bin_expm_export5() not implemented\n");
     return -1;
 }
 
 int
-rt_bin_unif_export5(struct bu_external *ep,
-		    const struct rt_db_internal *ip,
-		    double local2mm,
-		    const struct db_i *dbip,
-		    struct resource *resp)
+rt_bin_unif_export5(struct bu_external *ep __attribute__((unused)),
+		    const struct rt_db_internal *ip __attribute__((unused)),
+		    double local2mm __attribute__((unused)),
+		    const struct db_i *dbip __attribute__((unused)),
+		    struct resource *resp __attribute__((unused)))
 {
     bu_log("rt_bin_unif_export5() not implemented\n");
     return -1;
 }
+
 int
-rt_bin_unif_import5(struct rt_db_internal * ip,
-		    const struct bu_external *ep,
-		    const mat_t mat,
-		    const struct db_i *dbip,
-		    struct resource *resp)
+rt_bin_unif_import5(struct rt_db_internal *ip __attribute__((unused)),
+		    const struct bu_external *ep __attribute__((unused)),
+		    const mat_t mat __attribute__((unused)),
+		    const struct db_i *dbip __attribute__((unused)),
+		    struct resource *resp __attribute__((unused)))
 {
     bu_log("rt_bin_unif_import5() not implemented\n");
     return -1;
 }
 int
-rt_bin_expm_import5(struct rt_db_internal * ip,
-		    const struct bu_external *ep,
-		    const mat_t mat,
-		    const struct db_i *dbip,
-		    struct resource *resp)
+rt_bin_expm_import5(struct rt_db_internal *ip __attribute__((unused)),
+		    const struct bu_external *ep __attribute__((unused)),
+		    const mat_t mat __attribute__((unused)),
+		    const struct db_i *dbip __attribute__((unused)),
+		    struct resource *resp __attribute__((unused)))
 {
     bu_log("rt_bin_expm_import5() not implemented\n");
     return -1;
 }
 
 int
-rt_bin_mime_import5(struct rt_db_internal * ip,
-		    const struct bu_external *ep,
-		    const mat_t mat,
-		    const struct db_i *dbip,
-		    struct resource *resp)
+rt_bin_mime_import5(struct rt_db_internal * ip __attribute__((unused)),
+		    const struct bu_external *ep __attribute__((unused)),
+		    const mat_t mat __attribute__((unused)),
+		    const struct db_i *dbip __attribute__((unused)),
+		    struct resource *resp __attribute__((unused)))
 {
     bu_log("rt_bin_mime_import5() not implemented\n");
     return -1;
@@ -130,7 +131,7 @@ rt_bin_mime_import5(struct rt_db_internal * ip,
 int
 rt_binunif_import5( struct rt_db_internal	*ip,
 		    const struct bu_external	*ep,
-		    const mat_t			mat,
+		    const mat_t			mat __attribute__((unused)),
 		    const struct db_i		*dbip,
 		    struct resource		*resp,
 		    const int			minor_type)
@@ -143,6 +144,8 @@ rt_binunif_import5( struct rt_db_internal	*ip,
     int				gotten;
 
     BU_CK_EXTERNAL( ep );
+    if (dbip) RT_CK_DBI(dbip);
+    if (resp) RT_CK_RESOURCE(resp);
 
     /*
      * There's no particular size to expect
@@ -191,14 +194,6 @@ rt_binunif_import5( struct rt_db_internal	*ip,
 	    bip->count = ep->ext_nbytes/2;
 	    bip->u.uint8 = (unsigned char *) bu_malloc( ep->ext_nbytes,
 							"rt_binunif_internal" );
-#if 0
-	    srcp = (unsigned char *) ep->ext_buf;
-	    sdestp = (unsigned short *) bip->u.uint8;
-	    for (i = 0; i < bip->count; ++i, ++sdestp, srcp += 2) {
-		*sdestp = bu_gshort( srcp );
-		bu_log("Just got %d", *sdestp);
-	    }
-#endif
 	    in_cookie = bu_cv_cookie("nus");
 	    out_cookie = bu_cv_cookie("hus");
 	    if (bu_cv_optimize(in_cookie) != bu_cv_optimize(out_cookie)) {
@@ -260,10 +255,10 @@ rt_binunif_dump( struct rt_binunif_internal *bip) {
  * the internal structure.
  */
 int
-rt_binexpm_import5( struct rt_db_internal	*ip,
-		    const unsigned char		minor_type,
-		    const struct bu_external	*ep,
-		    const struct db_i		*dbip )
+rt_binexpm_import5( struct rt_db_internal	*ip __attribute__((unused)),
+		    const unsigned char		minor_type __attribute__((unused)),
+		    const struct bu_external	*ep __attribute__((unused)),
+		    const struct db_i		*dbip __attribute__((unused)))
 {
     bu_log("rt_binexpm_import5() not implemented yet\n");
     return -1;
@@ -277,10 +272,10 @@ rt_binexpm_import5( struct rt_db_internal	*ip,
  * internal structure.
  */
 int
-rt_binmime_import5( struct rt_db_internal	*ip,
-		    const unsigned char		minor_type,
-		    const struct bu_external	*ep,
-		    const struct db_i		*dbip )
+rt_binmime_import5( struct rt_db_internal	*ip __attribute__((unused)),
+		    const unsigned char		minor_type __attribute__((unused)),
+		    const struct bu_external	*ep __attribute__((unused)),
+		    const struct db_i		*dbip __attribute__((unused)))
 {
     bu_log("rt_binmime_import5() not implemented yet\n");
     return -1;
@@ -300,8 +295,6 @@ rt_bin_import5( struct rt_db_internal		*ip,
 		const struct bu_external	*ep,
 		const struct db_i		*dbip )
 {
-    RT_CK_DB_INTERNAL(ip);
-
     switch (major_type) {
 	case DB5_MAJORTYPE_BINARY_EXPM:
 	    return rt_binexpm_import5( ip, minor_type, ep, dbip );
@@ -321,7 +314,7 @@ rt_bin_import5( struct rt_db_internal		*ip,
 int
 rt_binunif_export5( struct bu_external		*ep,
 		    const struct rt_db_internal	*ip,
-		    double			local2mm,	/* we ignore */
+		    double			local2mm __attribute__((unused)), /* we ignore */
 		    const struct db_i		*dbip,
 		    struct resource		*resp,
 		    const int			minor_type )
@@ -332,6 +325,9 @@ rt_binunif_export5( struct bu_external		*ep,
     unsigned long			*lsrcp;
     int				in_cookie, out_cookie;
     int				gotten;
+
+    if (dbip) RT_CK_DBI(dbip);
+    if (resp) RT_CK_RESOURCE(resp);
 
     RT_CK_DB_INTERNAL(ip);
     if ( ip->idb_minor_type != minor_type ) {
@@ -426,8 +422,8 @@ rt_binunif_export5( struct bu_external		*ep,
 int
 rt_binunif_describe( struct bu_vls		*str,
 		     const struct rt_db_internal	*ip,
-		     int				verbose,
-		     double			mm2local )
+		     int				verbose __attribute__((unused)),
+		     double			mm2local __attribute__((unused)))
 {
     register struct rt_binunif_internal	*bip;
     char					buf[256];
@@ -609,6 +605,8 @@ rt_binunif_make(const struct rt_functab *ftp, struct rt_db_internal *intern, dou
 {
     struct rt_binunif_internal *bip;
 
+    diameter = diameter; /* quell */
+
     intern->idb_type = DB5_MINORTYPE_BINU_8BITINT;
     intern->idb_major_type = DB5_MAJORTYPE_BINARY_UNIF;
     BU_ASSERT(&rt_functab[ID_BINUNIF] == ftp);
@@ -624,7 +622,7 @@ rt_binunif_make(const struct rt_functab *ftp, struct rt_db_internal *intern, dou
 }
 
 int
-rt_binunif_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *attr)
+rt_binunif_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr)
 {
     register struct rt_binunif_internal *bip=(struct rt_binunif_internal *)intern->idb_ptr;
     struct bu_external	ext;
@@ -636,39 +634,39 @@ rt_binunif_get(struct bu_vls *log, const struct rt_db_internal *intern, const ch
     if (attr == (char *)NULL) {
 	/* export the object to get machine independent form */
 	if ( rt_binunif_export5( &ext, intern, 1.0, NULL, NULL, intern->idb_minor_type ) ) {
-	    bu_vls_strcpy( log, "Failed to export binary object!!\n" );
+	    bu_vls_strcpy( logstr, "Failed to export binary object!!\n" );
 	    return BRLCAD_ERROR;
 	} else {
-	    bu_vls_strcpy( log, "binunif" );
-	    bu_vls_printf( log, " T %d D {", bip->type );
+	    bu_vls_strcpy( logstr, "binunif" );
+	    bu_vls_printf( logstr, " T %d D {", bip->type );
 	    c = ext.ext_buf;
 	    for ( i=0; i<ext.ext_nbytes; i++, c++ ) {
-		if ( i%40 == 0 ) bu_vls_strcat( log, "\n" );
-		bu_vls_printf( log, "%2.2x", *c );
+		if ( i%40 == 0 ) bu_vls_strcat( logstr, "\n" );
+		bu_vls_printf( logstr, "%2.2x", *c );
 	    }
-	    bu_vls_strcat( log, "}" );
+	    bu_vls_strcat( logstr, "}" );
 	    bu_free_external( &ext );
 	}
 
     } else {
 	if ( !strcmp( attr, "T" ) ) {
-	    bu_vls_printf( log, "%d", bip->type );
+	    bu_vls_printf( logstr, "%d", bip->type );
 	} else if ( !strcmp( attr, "D" ) ) {
 	    /* export the object to get machine independent form */
 	    if ( rt_binunif_export5( &ext, intern, 1.0, NULL, NULL,
 				     intern->idb_minor_type ) ) {
-		bu_vls_strcpy( log, "Failed to export binary object!!\n" );
+		bu_vls_strcpy( logstr, "Failed to export binary object!!\n" );
 		return BRLCAD_ERROR;
 	    } else {
 		c = ext.ext_buf;
 		for ( i=0; i<ext.ext_nbytes; i++, c++ ) {
-		    if ( i != 0 && i%40 == 0 ) bu_vls_strcat( log, "\n" );
-		    bu_vls_printf( log, "%2.2x", *c );
+		    if ( i != 0 && i%40 == 0 ) bu_vls_strcat( logstr, "\n" );
+		    bu_vls_printf( logstr, "%2.2x", *c );
 		}
 		bu_free_external( &ext );
 	    }
 	} else {
-	    bu_vls_printf( log, "Binary object has no attribute '%s'", attr );
+	    bu_vls_printf( logstr, "Binary object has no attribute '%s'", attr );
 	    return BRLCAD_ERROR;
 	}
     }
@@ -677,7 +675,7 @@ rt_binunif_get(struct bu_vls *log, const struct rt_db_internal *intern, const ch
 }
 
 int
-rt_binunif_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char **argv )
+rt_binunif_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv )
 {
     struct rt_binunif_internal *bip;
     int i;
@@ -705,7 +703,7 @@ rt_binunif_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, c
 		new_type = atoi( argv[1] );
 	    } else {
 		if ( argv[1][1] != '\0' ) {
-		    bu_vls_printf(log,
+		    bu_vls_printf(logstr,
 				  "Illegal type: %s, must be 'f', 'd', 'c', 'i', 'l', 'C', 'S', 'I', or 'L'",
 				  argv[1]);
 		    return BRLCAD_ERROR;
@@ -747,18 +745,18 @@ rt_binunif_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, c
 		 new_type > DB5_MINORTYPE_BINU_64BITINT ||
 		 binu_types[new_type] == NULL ) {
 		/* Illegal value for type */
-		bu_vls_printf(log, "Illegal value for binary type: %s", argv[1]);
+		bu_vls_printf(logstr, "Illegal value for binary type: %s", argv[1]);
 		return BRLCAD_ERROR;
 	    } else {
 		if ( bip->u.uint8 ) {
 		    int new_count;
 		    int old_byte_count, new_byte_count;
-		    int remainder;
+		    int remainder_count;
 
 		    old_byte_count = bip->count * binu_sizes[bip->type];
 		    new_count = old_byte_count / binu_sizes[new_type];
-		    remainder = old_byte_count % binu_sizes[new_type];
-		    if ( remainder ) {
+		    remainder_count = old_byte_count % binu_sizes[new_type];
+		    if ( remainder_count ) {
 			new_count++;
 			new_byte_count = new_count * binu_sizes[new_type];
 		    } else {
@@ -798,7 +796,7 @@ rt_binunif_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, c
 	    }
 
 	    if ( hexlen % 2 ) {
-		bu_vls_printf(log, "Hex form of binary data must have an even number of hex digits");
+		bu_vls_printf(logstr, "Hex form of binary data must have an even number of hex digits");
 		return BRLCAD_ERROR;
 	    }
 

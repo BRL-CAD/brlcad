@@ -21,11 +21,22 @@
  *
  */
 
-extern void splitdit( double X[], int N, int M );
-extern void ditsplit(
-    double x[],
-    int	n,	/* length */
-    int	m);	/* n = 2^m */
+#include "common.h"
+
+#include <math.h>
+
+#ifndef M_PI
+#  define M_PI 3.141592653589793238462643
+#endif
+#ifndef M_SQRT1_2
+#  define M_SQRT1_2 0.70710678118654752440084436210
+#endif
+#ifndef M_SQRT2
+#  define M_SQRT2 1.41421356237309504880168872421
+#endif
+
+extern void splitdit(int N, int M);
+extern void ditsplit(int n /* length */, int m /* n = 2^m */);
 
 /*
  * Local Variables:

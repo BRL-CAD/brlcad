@@ -48,6 +48,16 @@
 #include "bu.h"
 
 
+/* c99 doesn't declare these */
+#ifdef HAVE_KILL
+extern int kill(pid_t, int);
+#endif
+
+#ifndef fileno 
+extern int fileno(FILE*);
+#endif
+
+
 /* so we don't have to worry as much about stack stomping */
 #define BT_BUFSIZE 4096
 static char buffer[BT_BUFSIZE] = {0};
@@ -118,9 +128,22 @@ backtrace(char **args, int fd)
 
     pid = fork();
     if (pid == 0) {
-	close(0); dup(input[0]); /* set the stdin to the in pipe */
-	close(1); dup(output[1]); /* set the stdout to the out pipe */
-	close(2); dup(output[1]); /* set the stderr to the out pipe */
+	int ret;
+
+	close(0);
+	ret = dup(input[0]); /* set the stdin to the in pipe */
+	if (ret == -1)
+	    perror("dup");
+
+	close(1);
+	ret = dup(output[1]); /* set the stdout to the out pipe */
+	if (ret == -1)
+	    perror("dup");
+
+	close(2);
+	ret = dup(output[1]); /* set the stderr to the out pipe */
+	if (ret == -1)
+	    perror("dup");
 
 	execvp(args[0], args); /* invoke debugger */
 	perror("exec failed");
@@ -135,15 +158,22 @@ backtrace(char **args, int fd)
     FD_ZERO(&fdset);
     FD_SET(output[0], &fdset);
 
-    write(input[1], "set prompt\n", 12);
-    write(input[1], "set confirm off\n", 16);
-    write(input[1], "set backtrace past-main on\n", 27);
-    write(input[1], "bt full\n", 8);
+    if (write(input[1], "set prompt\n", 12) != 12) {
+	perror("write [set prompt] failed");
+    } else if (write(input[1], "set confirm off\n", 16) != 16) {
+	perror("write [set confirm off] failed");
+    } else if (write(input[1], "set backtrace past-main on\n", 27) != 27) {
+	perror("write [set backtrace past-main on] failed");
+    } else if (write(input[1], "bt full\n", 8) != 8) {
+	perror("write [bt full] failed");
+    }
     /* can add additional gdb commands here.  output will contain
      * everything up to the "Detaching from process" statement from
      * quit.
      */
-    write(input[1], "quit\n", 5);
+    if(write(input[1], "quit\n", 5) != 5) {
+	perror("write [quit] failed");
+    }
 
     position = 0;
     processing_bt = 0;

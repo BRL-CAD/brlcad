@@ -19,35 +19,33 @@
  */
 /** @file ditsplitc.c
  *
- *  Split Radix, Decimation in Frequency, Inverse Real-valued FFT.
+ * Split Radix, Decimation in Frequency, Inverse Real-valued FFT.
  *
- *  Input order:
- *	[ Re(0), Re(1),..., Re(N/2), Im(N/2-1),..., Im(1) ]
+ * Input order:
+ *	[ Re(0), Re(1), ..., Re(N/2), Im(N/2-1), ..., Im(1) ]
  *
- *  Transactions on Acoustics, Speech, and Signal Processing, June 1987.
+ * Transactions on Acoustics, Speech, and Signal Processing, June 1987.
  *
  */
 
 #include "common.h"
 
 #include <stdio.h>
-#include <math.h>
 
-#define	INVSQ2	0.70710678118654752440
-#define	SQRT2	1.4142136
+#include "fft.h"
 
-int	irfft_adds, irfft_mults;
+
+/* used by ifftc.c */
+int irfft_adds, irfft_mults;
+
 
 void
-ditsplit(double *x, int n, int m)
-
-    /* length */
-    /* n = 2^m */
+ditsplit(int n /* length */, int m /* n = 2^m */)
 {
-    int	i, j, k, n1, n2, n4, n8;
-    int	i0, i1, i2, i3, i4, i5, i6, i7, i8;
-    int	is, id;
-    double	cc1, ss1, cc3, ss3, e, a, a3;
+    int i, j, k, n1, n2, n4, n8;
+    int i0, i1, i2, i3, i4, i5, i6, i7, i8;
+    int is, id;
+    double cc1, ss1, cc3, ss3, e, a, a3;
     irfft_adds = irfft_mults = 0;
 
     printf("/*\n"
@@ -61,7 +59,7 @@ ditsplit(double *x, int n, int m)
 	   " * Machine-generated Real Split Radix Decimation in Freq Inverse FFT\n"
 	   " */\n\n");
 
-    printf("#define INVSQ2 0.70710678118654752440\n\n");
+    printf("#include \"fft.h\"\n\n");
     printf("void\n");
     printf("irfft%d(register double x[])\n", n);
     printf("{\n");
@@ -99,8 +97,8 @@ ditsplit(double *x, int n, int m)
 	    i3 += n8;
 	    i4 += n8;
 
-	    printf("    t1 = (x[%d] - x[%d]) * INVSQ2;\n", i2-1, i1-1);
-	    printf("    t2 = (x[%d] + x[%d]) * INVSQ2;\n", i4-1, i3-1);
+	    printf("    t1 = (x[%d] - x[%d]) * M_SQRT1_2;\n", i2-1, i1-1);
+	    printf("    t2 = (x[%d] + x[%d]) * M_SQRT1_2;\n", i4-1, i3-1);
 	    printf("    x[%d] += x[%d];\n", i1-1, i2-1);
 	    printf("    x[%d] = x[%d] - x[%d];\n", i2-1, i4-1, i3-1);
 	    printf("    x[%d] = -2.0 * (t2 + t1);\n", i3-1);
@@ -164,7 +162,7 @@ ditsplit(double *x, int n, int m)
     printf("\n    /* Length two butterflies */\n");
     is = 1;
     id = 4;
- l70:
+l70:
     for (i0 = is; i0 <= n; i0 += id) {
 	i1 = i0 + 1;
 
@@ -198,7 +196,7 @@ ditsplit(double *x, int n, int m)
     }
 
     printf("\n    /* scale result */\n");
-    printf("    for(i = 0; i < %d; i++)\n", n);
+    printf("    for (i = 0; i < %d; i++)\n", n);
     printf("\tx[i] /= %f;\n", (double)n);
     printf("}\n");
 }

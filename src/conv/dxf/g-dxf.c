@@ -364,6 +364,13 @@ union tree *get_layer(tsp, pathp, curtree, client_data)
 }
 
 
+/* FIXME: this be a dumb hack to avoid void* conversion */
+struct gcv_data {
+    void (*func)(struct nmgregion *, struct db_full_path *, int, int, float [3]);
+};
+static struct gcv_data gcvwriter = {nmg_to_dxf};
+
+
 /**
  * M A I N
  *
@@ -538,7 +545,7 @@ main(argc, argv)
 			0,			/* take all regions */
 			gcv_region_end,
 			nmg_booltree_leaf_tess,
-			(genptr_t)nmg_to_dxf);	/* callback for gcv_region_end */
+			(genptr_t)&gcvwriter);	/* callback for gcv_region_end */
 
     percent = 0;
     if (regions_tried>0) {

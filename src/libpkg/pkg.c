@@ -488,6 +488,8 @@ pkg_open(const char *host, const char *service, const char *protocol, const char
 struct pkg_conn *
 pkg_transerver(const struct pkg_switch *switchp, void (*errlog)(char *))
 {
+    struct pkg_conn *conn;
+
     _pkg_ck_debug();
     if (_pkg_debug) {
 	_pkg_timestamp();
@@ -501,7 +503,8 @@ pkg_transerver(const struct pkg_switch *switchp, void (*errlog)(char *))
      * XXX - Somehow the system has to know what connection was
      * accepted, it's protocol, etc.  For UNIX/inetd we use stdin.
      */
-    return(_pkg_makeconn(fileno(stdin), switchp, errlog));
+    conn = _pkg_makeconn(STDIN_FILENO, switchp, errlog);
+    return(conn);
 }
 
 
@@ -870,7 +873,8 @@ _pkg_checkin(register struct pkg_conn *pc, int nodelay)
 {
     struct timeval tv;
     fd_set bits;
-    register int i, j;
+    int i;
+    unsigned int j;
 
     /* Check socket for unexpected input */
     tv.tv_sec = 0;
@@ -957,9 +961,9 @@ pkg_send(int type, const char *buf, size_t len, register struct pkg_conn *pc)
     pkg_plong((char *)hdr.pkh_len, (unsigned long)len);
 
 #ifdef HAVE_WRITEV
-    cmdvec[0].iov_base = (caddr_t)&hdr;
+    cmdvec[0].iov_base = (void *)&hdr;
     cmdvec[0].iov_len = sizeof(hdr);
-    cmdvec[1].iov_base = (caddr_t)buf;
+    cmdvec[1].iov_base = (void *)buf;
     cmdvec[1].iov_len = len;
 
     /*
@@ -1065,11 +1069,11 @@ pkg_2send(int type, const char *buf1, size_t len1, const char *buf2, size_t len2
     pkg_plong((char *)hdr.pkh_len, (unsigned long)(len1+len2));
 
 #ifdef HAVE_WRITEV
-    cmdvec[0].iov_base = (caddr_t)&hdr;
+    cmdvec[0].iov_base = (void *)&hdr;
     cmdvec[0].iov_len = sizeof(hdr);
-    cmdvec[1].iov_base = (caddr_t)buf1;
+    cmdvec[1].iov_base = (void *)buf1;
     cmdvec[1].iov_len = len1;
-    cmdvec[2].iov_base = (caddr_t)buf2;
+    cmdvec[2].iov_base = (void *)buf2;
     cmdvec[2].iov_len = len2;
 
     /*
@@ -1272,7 +1276,7 @@ _pkg_gethdr(register struct pkg_conn *pc, char *buf)
     while (pkg_gshort((char *)pc->pkc_hdr.pkh_magic) != PKG_MAGIC) {
 	int c;
 	c = *((unsigned char *)&pc->pkc_hdr);
-	if (isascii(c) && isprint(c)) {
+	if (isprint(c)) {
 	    snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE,
 		     "_pkg_gethdr: skipping noise x%x %c\n",
 		     c, c);
@@ -1358,7 +1362,7 @@ pkg_waitfor (int type, char *buf, size_t len, register struct pkg_conn *pc)
 	size_t excess;
 	snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE,
 		 "pkg_waitfor: message %ld exceeds buffer %ld\n",
-		 pc->pkc_len, (long)len);
+		 (long)pc->pkc_len, (long)len);
 	(pc->pkc_errlog)(_pkg_errbuf);
 	if ((i = _pkg_inget(pc, buf, len)) != len) {
 	    snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE,
@@ -1387,7 +1391,7 @@ pkg_waitfor (int type, char *buf, size_t len, register struct pkg_conn *pc)
     if ((i = _pkg_inget(pc, buf, pc->pkc_len)) != pc->pkc_len) {
 	snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE,
 		 "pkg_waitfor: _pkg_inget %ld gave %ld\n",
-		 pc->pkc_len, (long)i);
+		 (long)pc->pkc_len, (long)i);
 	(pc->pkc_errlog)(_pkg_errbuf);
 	return(-1);
     }
@@ -1438,7 +1442,7 @@ pkg_bwaitfor (int type, register struct pkg_conn *pc)
     /* Read the whole message into the dynamic buffer */
     if ((i = _pkg_inget(pc, pc->pkc_buf, pc->pkc_len)) != pc->pkc_len) {
 	snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE,
-		 "pkg_bwaitfor: _pkg_inget %ld gave %ld\n", pc->pkc_len, (long)i);
+		 "pkg_bwaitfor: _pkg_inget %ld gave %ld\n", (long)pc->pkc_len, (long)i);
 	(pc->pkc_errlog)(_pkg_errbuf);
     }
     tmpbuf = pc->pkc_buf;
@@ -1469,7 +1473,7 @@ _pkg_dispatch(register struct pkg_conn *pc)
 	_pkg_timestamp();
 	fprintf(_pkg_debug,
 		"_pkg_dispatch(pc=x%lx) type=%d, buf=x%lx, len=%ld\n",
-		(long)pc, pc->pkc_type, (long)(pc->pkc_buf), pc->pkc_len);
+		(long)pc, pc->pkc_type, (long)(pc->pkc_buf), (long)(pc->pkc_len));
 	fflush(_pkg_debug);
     }
     if (pc->pkc_left != 0)  return(-1);
@@ -1494,7 +1498,7 @@ _pkg_dispatch(register struct pkg_conn *pc)
 	return(1);
     }
     snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "_pkg_dispatch: no handler for message type %d, len %ld\n",
-	     pc->pkc_type, pc->pkc_len);
+	     pc->pkc_type, (long)pc->pkc_len);
     (pc->pkc_errlog)(_pkg_errbuf);
     (void)free(pc->pkc_buf);
     pc->pkc_buf = (char *)0;
@@ -1729,7 +1733,7 @@ pkg_suckin(register struct pkg_conn *pc)
     if ((got = PKG_READ(pc->pkc_fd, &pc->pkc_inbuf[pc->pkc_inend], avail)) <= 0) {
 #ifdef HAVE_WINSOCK_H
 	int ecode = WSAGetLastError();
-	
+
 #endif
 	if (got == 0) {
 	    if (_pkg_debug) {

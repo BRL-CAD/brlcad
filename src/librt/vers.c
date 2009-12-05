@@ -40,6 +40,7 @@ rt_version(void)
     return brlcad_ident("The BRL-CAD Ray-Tracing Library");
 }
 
+
 /*
  * Local Variables:
  * tab-width: 8

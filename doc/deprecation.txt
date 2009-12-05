@@ -2,43 +2,49 @@
 BRL-CAD Deprecation Log
 =======================
 
-Included below is a deprecation log and notes for BRL-CAD API changes
-that potentially impact developers.  The general practice is that
-public API changes may go from deprecated to obsolete during one of
-the following events:
+Included below is a deprecation log and notes for BRL-CAD public
+interface changes that potentially impact external developers and
+users.  Public interfaces include developer application programming
+interface (API) calls as well as user application command-line
+interface (CLI) and graphical user interface (GUI) behaviors.
 
-a) during a major release
-    (e.g. going from 7.*.* to 8.*.*)
-b) during a minor release provided that
-    1) change was publicly announced as deprecated beforehand
-    2) sufficient deprecation warning was been given
-	i) at least three minor releases have passed since deprecation
-	ii) at least three months have passed since deprecation
-c) during a minor release provided that
-    1) the API was never publicly announced or otherwise documented
-    2) the interface was declared in a public header
-    3) there exists a an equivalent alternative interface
-    (e.g. changing the name of a function)
+The general practice is that public interface changes may go from
+deprecated to obsolete, whereby previous published behavior is removed
+or changed, during one of the following events:
 
-Otherwise, changes to interfaces that are never publicly announced,
-are not part of publicly available documentation, and are not in
-public headers are fair game to implement as needed at any time.
+a) during a major release (e.g. going from 7.*.* to 8.*.*)
 
-If a change will intentionally replace or remove routines, then those
-routines should be then marked as deprecated first.  If the change is
-"minimally impacting", i.e. a change to a non-critical routine that
-has a suitable and completely equivalent alternative, can generally be
-changed during minor releases.  An example of minimally impacting
-changes include modifications like adding a new parameter to a
-function or renaming a non-critical function.  Critical functions are
-those related directly to geometry creation, loading, processing, and
-ray-tracing; as well as the common library facilities in bu and bn.
+b) during a minor release provided the change was publicly announced
+   as deprecated beforehand AND sufficient deprecation warning was
+   given via either i) three minor releases included the deprecation
+   notice, or ii) three months passed since deprecation
 
-Marking routines as deprecated can be done during compile-time with
-#warning pre-processor declarations or during run-time with print
-statements.
+c) during a minor release provided there still exists an equivalent
+   alternative interface that will not impose an undue burden on users
+   or developers (see "Minimally Impacting")
 
-The items listed below are items that are deprecated or obsolete,
+d) during a patch release provided you can correctly prove P = NP
+
+If a change will intentionally replace or remove functionality, then
+they should be then marked as deprecated first.  Otherwise, changes to
+interfaces that are never publicly announced, not installed, or are
+not part of publicly available documentation are fair game to change
+as needed.
+
+Minimally Impacting: If a change to an interface has a suitable and
+completely equivalent alternative, the change is deemed to be
+"minimally impacting" and can be made during any minor release.
+Examples of such changes include renaming an interface, reordering
+parameters, adding new parameters to an interface for previously
+implicit or restricted behavior, and removing unused parameters.
+Basically, the impact can usually be considered minor if a simple
+regular expression search-and-replace is all that is needed.
+
+Where feasible, interfaces should be visibly marked as deprecated
+either during compile-time with #warning pre-processor declarations or
+during run-time with print statements.
+
+The items listed below are interfaces that are deprecated or obsolete,
 categorized by the release in which the change was made.  If the
 change involved a rename/removal of a routine, both the original and
 new names should be listed for reference.
@@ -47,6 +53,12 @@ new names should be listed for reference.
 **************
 * DEPRECATED *
 **************
+
+7.16
+----
+mged
+	make_bb -> bb [deprecated 7.16]
+
 
 7.14
 ----
@@ -120,6 +132,11 @@ include/raytrace.h
 ************
 * OBSOLETE *
 ************
+
+7.16.4
+------
+include/raytrace.h
+        get_solidbitv() -> rt_get_solidbitv() [deprecated 7.16]
 
 7.14.4
 ------

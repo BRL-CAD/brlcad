@@ -32,10 +32,11 @@
 
 
 /**
- *			R T _ P I P E _ B R E P
+ * R T _ P I P E _ B R E P
  */
-
-void generate_curves(double id, double od, ON_Plane *plane, ON_SimpleArray<ON_Curve*> *outer, ON_SimpleArray<ON_Curve*> *inner) {
+void
+generate_curves(double id, double od, ON_Plane *plane, ON_SimpleArray<ON_Curve*> *outer, ON_SimpleArray<ON_Curve*> *inner)
+{
     ON_Circle outercirclestart = ON_Circle(*plane, od/2.0);
     ON_NurbsCurve *ocurve = ON_NurbsCurve::New();
     outercirclestart.GetNurbForm(*ocurve);
@@ -48,7 +49,10 @@ void generate_curves(double id, double od, ON_Plane *plane, ON_SimpleArray<ON_Cu
     }
 }
 
-void make_linear_surfaces(ON_Brep **b, ON_SimpleArray<ON_Curve*> *startoutercurves, ON_SimpleArray<ON_Curve*> *endoutercurves, ON_SimpleArray<ON_Curve*> *startinnercurves, ON_SimpleArray<ON_Curve*> *endinnercurves) {
+
+void
+make_linear_surfaces(ON_Brep **b, ON_SimpleArray<ON_Curve*> *startoutercurves, ON_SimpleArray<ON_Curve*> *endoutercurves, ON_SimpleArray<ON_Curve*> *startinnercurves, ON_SimpleArray<ON_Curve*> *endinnercurves)
+{
     bu_log("make_linear_surfaces\n");
     int c1ind = (*b)->AddEdgeCurve(*(startoutercurves[0]));
     int c2ind = (*b)->AddEdgeCurve(*(endoutercurves[0]));
@@ -60,7 +64,7 @@ void make_linear_surfaces(ON_Brep **b, ON_SimpleArray<ON_Curve*> *startoutercurv
     int vert2ind = (*b)->m_V.Count() - 1;
     ON_BrepEdge& startedge = (*b)->NewEdge((*b)->m_V[vert1ind], (*b)->m_V[vert1ind], c1ind);
     startedge.m_tolerance = 0.0;
-    ON_BrepEdge& endedge = (*b)->NewEdge((*b)->m_V[vert2ind], (*b)->m_V[vert2ind],c2ind);
+    ON_BrepEdge& endedge = (*b)->NewEdge((*b)->m_V[vert2ind], (*b)->m_V[vert2ind], c2ind);
     endedge.m_tolerance = 0.0;
     startoutercurves->Empty();
     for (int i = 0; i < endoutercurves->Count(); i++) {
@@ -81,7 +85,7 @@ void make_linear_surfaces(ON_Brep **b, ON_SimpleArray<ON_Curve*> *startoutercurv
     	int vert4ind = (*b)->m_V.Count() - 1;
     	ON_BrepEdge& startinneredge = (*b)->NewEdge((*b)->m_V[vert3ind], (*b)->m_V[vert3ind], c3ind);
 	startinneredge.m_tolerance = 0.0;
-    	ON_BrepEdge& endinneredge = (*b)->NewEdge((*b)->m_V[vert4ind], (*b)->m_V[vert4ind],c4ind);
+    	ON_BrepEdge& endinneredge = (*b)->NewEdge((*b)->m_V[vert4ind], (*b)->m_V[vert4ind], c4ind);
 	endinneredge.m_tolerance = 0.0;
 	startinnercurves->Empty();
 	for (int i = 0; i < endinnercurves->Count(); i++) {
@@ -92,7 +96,10 @@ void make_linear_surfaces(ON_Brep **b, ON_SimpleArray<ON_Curve*> *startoutercurv
     }
 }
 
-void make_curved_surfaces(ON_Brep **b, ON_SimpleArray<ON_Curve*> *startoutercurves, ON_SimpleArray<ON_Curve*> *startinnercurves, fastf_t angle, point_t bend_center, vect_t norm) {
+
+void
+make_curved_surfaces(ON_Brep **b, ON_SimpleArray<ON_Curve*> *startoutercurves, ON_SimpleArray<ON_Curve*> *startinnercurves, fastf_t angle, point_t bend_center, vect_t norm)
+{
     point_t rev, raxis;
     VADD2(rev, bend_center, norm);
     
@@ -112,10 +119,11 @@ void make_curved_surfaces(ON_Brep **b, ON_SimpleArray<ON_Curve*> *startoutercurv
     
 }
 
+
 extern "C" void
 rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {
-    struct rt_pipe_internal	*pip;
+    struct rt_pipe_internal *pip;
 
     register struct wdb_pipept *prevp;
     register struct wdb_pipept *curp;
@@ -164,10 +172,10 @@ rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
     
     ON_PlaneSurface* bp = new ON_PlaneSurface();
     bp->m_plane = (*endplane);
-    bp->SetDomain(0, -100.0, 100.0 );
-    bp->SetDomain(1, -100.0, 100.0 );
-    bp->SetExtents(0, bp->Domain(0) );
-    bp->SetExtents(1, bp->Domain(1) );
+    bp->SetDomain(0, -100.0, 100.0);
+    bp->SetDomain(1, -100.0, 100.0);
+    bp->SetExtents(0, bp->Domain(0));
+    bp->SetExtents(1, bp->Domain(1));
     (*b)->m_S.Append(bp);
     const int bsi = (*b)->m_S.Count() - 1;
     ON_BrepFace& bface = (*b)->NewFace(bsi);
@@ -184,10 +192,10 @@ rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
     
     (*b)->NewPlanarFaceLoop(bface.m_face_index, ON_BrepLoop::outer, endoutercurves, true);
     bloop = (*b)->m_L.Last();
-    bp->SetDomain(0, bloop->m_pbox.m_min.x, bloop->m_pbox.m_max.x );
-    bp->SetDomain(1, bloop->m_pbox.m_min.y, bloop->m_pbox.m_max.y );
-    bp->SetExtents(0,bp->Domain(0));
-    bp->SetExtents(1,bp->Domain(1));
+    bp->SetDomain(0, bloop->m_pbox.m_min.x, bloop->m_pbox.m_max.x);
+    bp->SetDomain(1, bloop->m_pbox.m_min.y, bloop->m_pbox.m_max.y);
+    bp->SetExtents(0, bp->Domain(0));
+    bp->SetExtents(1, bp->Domain(1));
     if (prevp->pp_id > 0.0) {
 	(*b)->NewPlanarFaceLoop(bface.m_face_index, ON_BrepLoop::inner, endinnercurves, true);
     }
@@ -303,25 +311,25 @@ rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
     
     ON_PlaneSurface* ebp = new ON_PlaneSurface();
     ebp->m_plane = (*endplane);
-    ebp->SetDomain(0, -100.0, 100.0 );
-    ebp->SetDomain(1, -100.0, 100.0 );
-    ebp->SetExtents(0, bp->Domain(0) );
-    ebp->SetExtents(1, bp->Domain(1) );
+    ebp->SetDomain(0, -100.0, 100.0);
+    ebp->SetDomain(1, -100.0, 100.0);
+    ebp->SetExtents(0, bp->Domain(0));
+    ebp->SetExtents(1, bp->Domain(1));
     (*b)->m_S.Append(ebp);
     const int ebsi = (*b)->m_S.Count() - 1;
     ON_BrepFace& ebface = (*b)->NewFace(ebsi);
     (*b)->NewPlanarFaceLoop(ebface.m_face_index, ON_BrepLoop::outer, endoutercurves, true);
     const ON_BrepLoop* ebloop = (*b)->m_L.Last();
-    ebp->SetDomain(0, ebloop->m_pbox.m_min.x, ebloop->m_pbox.m_max.x );
-    ebp->SetDomain(1, ebloop->m_pbox.m_min.y, ebloop->m_pbox.m_max.y );
-    ebp->SetExtents(0,ebp->Domain(0));
-    ebp->SetExtents(1,ebp->Domain(1));
+    ebp->SetDomain(0, ebloop->m_pbox.m_min.x, ebloop->m_pbox.m_max.x);
+    ebp->SetDomain(1, ebloop->m_pbox.m_min.y, ebloop->m_pbox.m_max.y);
+    ebp->SetExtents(0, ebp->Domain(0));
+    ebp->SetExtents(1, ebp->Domain(1));
     if (prevp->pp_id > 0.0) {
 	(*b)->NewPlanarFaceLoop(ebface.m_face_index, ON_BrepLoop::inner, endinnercurves, true);
     }
-   (*b)->SetTrimIsoFlags(ebface);
+    (*b)->SetTrimIsoFlags(ebface);
 }
-	
+
 
 // Local Variables:
 // tab-width: 8

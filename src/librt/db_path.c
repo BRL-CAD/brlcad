@@ -77,7 +77,7 @@ db_add_node_to_full_path( struct db_full_path *pp, struct directory *dp )
  * D B _ D U P _ F U L L _ P A T H
  */
 void
-db_dup_full_path(register struct db_full_path *newp, register const struct db_full_path *oldp)
+db_dup_full_path(struct db_full_path *newp, const struct db_full_path *oldp)
 {
     RT_CK_FULL_PATH(newp);
     RT_CK_FULL_PATH(oldp);
@@ -152,7 +152,7 @@ db_append_full_path( struct db_full_path *dest, const struct db_full_path *src )
  * Dup old path from starting index to end.
  */
 void
-db_dup_path_tail(register struct db_full_path *newp, register const struct db_full_path *oldp, int start)
+db_dup_path_tail(struct db_full_path *newp, const struct db_full_path *oldp, int start)
 {
     RT_CK_FULL_PATH(newp);
     RT_CK_FULL_PATH(oldp);
@@ -180,7 +180,7 @@ db_dup_path_tail(register struct db_full_path *newp, register const struct db_fu
 char *
 db_path_to_string( const struct db_full_path *pp )
 {
-    register char *cp;
+    char *cp;
     char *buf;
     int len;
     int rem;
@@ -226,7 +226,7 @@ db_path_to_string( const struct db_full_path *pp )
 void
 db_path_to_vls( struct bu_vls *str, const struct db_full_path *pp )
 {
-    register int i;
+    int i;
 
     BU_CK_VLS(str);
     RT_CK_FULL_PATH( pp );
@@ -269,8 +269,8 @@ db_pr_full_path( const char *msg, const struct db_full_path *pathp )
 int
 db_string_to_path(struct db_full_path *pp, const struct db_i *dbip, const char *str)
 {
-    register char	*cp;
-    register char	*slashp;
+    char	*cp;
+    char	*slashp;
     struct directory	*dp;
     char		*copy;
     int			nslash = 0;
@@ -347,7 +347,7 @@ db_string_to_path(struct db_full_path *pp, const struct db_i *dbip, const char *
  *	 0	OK
  */
 int
-db_argv_to_path(register struct db_full_path *pp, struct db_i *dbip, int argc, const char *const *argv)
+db_argv_to_path(struct db_full_path *pp, struct db_i *dbip, int argc, const char *const *argv)
 {
     struct directory *dp;
     int ret = 0;
@@ -382,7 +382,7 @@ db_argv_to_path(register struct db_full_path *pp, struct db_i *dbip, int argc, c
  * structure itself, which might be automatic.
  */
 void
-db_free_full_path(register struct db_full_path *pp)
+db_free_full_path(struct db_full_path *pp)
 {
     RT_CK_FULL_PATH( pp );
 
@@ -406,7 +406,7 @@ db_identical_full_paths(
     const struct db_full_path *a,
     const struct db_full_path *b )
 {
-    register int i;
+    int i;
 
     RT_CK_FULL_PATH(a);
     RT_CK_FULL_PATH(b);
@@ -433,7 +433,7 @@ db_full_path_subset(
     const struct db_full_path *b,
     const int skip_first)
 {
-    register int i;
+    int i;
 
     RT_CK_FULL_PATH(a);
     RT_CK_FULL_PATH(b);
@@ -446,7 +446,7 @@ db_full_path_subset(
 	i = 0;
 
     for (; i < a->fp_len; i++ )  {
-	register int j;
+	int j;
 
 	if ( a->fp_names[i] != b->fp_names[0] )  continue;
 
@@ -480,7 +480,7 @@ db_full_path_match_top(
     const struct db_full_path *a,
     const struct db_full_path *b)
 {
-    register int i;
+    int i;
 
     RT_CK_FULL_PATH(a);
     RT_CK_FULL_PATH(b);
@@ -505,7 +505,7 @@ db_full_path_match_top(
 int
 db_full_path_search( const struct db_full_path *a, const struct directory *dp )
 {
-    register int i;
+    int i;
 
     RT_CK_FULL_PATH(a);
     RT_CK_DIR(dp);

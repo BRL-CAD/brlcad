@@ -29,6 +29,7 @@
 #include "rtgeom.h"
 #include "opennurbs_torus.h"
 
+
 extern "C" void
 rt_tor_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 {
@@ -44,6 +45,7 @@ rt_tor_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     ON_Torus tor(p, tip->r_a, tip->r_h);  
     *b = ON_BrepTorus(tor);
 }
+
 
 // Local Variables:
 // tab-width: 8

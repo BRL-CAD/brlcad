@@ -30,54 +30,55 @@
 #include "brep.h"
 
 /**
- *			R T _ E L L _ B R E P
+ * R T _ E L L _ B R E P
  */
 extern "C" void
 rt_ell_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {
-   struct rt_ell_internal *eip;
+    struct rt_ell_internal *eip;
 
-   RT_CK_DB_INTERNAL(ip);
-   eip = (struct rt_ell_internal *)ip->idb_ptr;
-   RT_ELL_CK_MAGIC(eip);
+    RT_CK_DB_INTERNAL(ip);
+    eip = (struct rt_ell_internal *)ip->idb_ptr;
+    RT_ELL_CK_MAGIC(eip);
 
-   *b = ON_Brep::New();
+    *b = ON_Brep::New();
 
-   point_t origin;
-   VSET(origin, 0,0,0);
+    point_t origin;
+    VSET(origin, 0, 0, 0);
    
-   ON_Sphere sph(origin, MAGNITUDE(eip->a));
+    ON_Sphere sph(origin, MAGNITUDE(eip->a));
    
-   // Get the NURBS form of the surface
-   ON_NurbsSurface *ellcurvedsurf = ON_NurbsSurface::New();
-   sph.GetNurbForm(*ellcurvedsurf);
+    // Get the NURBS form of the surface
+    ON_NurbsSurface *ellcurvedsurf = ON_NurbsSurface::New();
+    sph.GetNurbForm(*ellcurvedsurf);
 
-   // Scale control points for b and c
-   for( int i = 0; i < ellcurvedsurf->CVCount(0); i++ ) {
-       for (int j = 0; j < ellcurvedsurf->CVCount(1); j++) {
-	   point_t cvpt;
-	   ON_4dPoint ctrlpt;
-	   ellcurvedsurf->GetCV(i,j, ctrlpt);
-	   VSET(cvpt, ctrlpt.x, ctrlpt.y * MAGNITUDE(eip->b)/MAGNITUDE(eip->a), ctrlpt.z * MAGNITUDE(eip->c)/MAGNITUDE(eip->a));
-	   ON_4dPoint newpt = ON_4dPoint(cvpt[0],cvpt[1],cvpt[2],ctrlpt.w);
-	   ellcurvedsurf->SetCV(i,j, newpt);
-         }
-   }
+    // Scale control points for b and c
+    for (int i = 0; i < ellcurvedsurf->CVCount(0); i++) {
+	for (int j = 0; j < ellcurvedsurf->CVCount(1); j++) {
+	    point_t cvpt;
+	    ON_4dPoint ctrlpt;
+	    ellcurvedsurf->GetCV(i, j, ctrlpt);
+	    VSET(cvpt, ctrlpt.x, ctrlpt.y * MAGNITUDE(eip->b)/MAGNITUDE(eip->a), ctrlpt.z * MAGNITUDE(eip->c)/MAGNITUDE(eip->a));
+	    ON_4dPoint newpt = ON_4dPoint(cvpt[0], cvpt[1], cvpt[2], ctrlpt.w);
+	    ellcurvedsurf->SetCV(i, j, newpt);
+	}
+    }
 
-   ellcurvedsurf->SetDomain(0,0.0,1.0);
-   ellcurvedsurf->SetDomain(1,0.0,1.0);
+    ellcurvedsurf->SetDomain(0, 0.0, 1.0);
+    ellcurvedsurf->SetDomain(1, 0.0, 1.0);
    
 
-   // Rotate and Translate
+    // Rotate and Translate
   
 
-   // Make final BREP structure   
-   (*b)->m_S.Append(ellcurvedsurf);   
-   int surfindex = (*b)->m_S.Count();
-   ON_BrepFace& face = (*b)->NewFace(surfindex - 1);
-   int faceindex = (*b)->m_F.Count();
-   ON_BrepLoop* outerloop = (*b)->NewOuterLoop(faceindex-1);
+    // Make final BREP structure   
+    (*b)->m_S.Append(ellcurvedsurf);   
+    int surfindex = (*b)->m_S.Count();
+    ON_BrepFace& face = (*b)->NewFace(surfindex - 1);
+    int faceindex = (*b)->m_F.Count();
+    ON_BrepLoop* outerloop = (*b)->NewOuterLoop(faceindex-1);
 }
+
 
 // Local Variables:
 // tab-width: 8

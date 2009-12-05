@@ -4650,7 +4650,7 @@ package provide Archer 1.0
 	-state disabled
     $itk_component(menubar) menuconfigure .modes.light \
 	-offvalue 0 \
-	-onvalue 1 \
+	-onvalue 2 \
 	-variable [::itcl::scope mLighting] \
 	-command [::itcl::code $this doLighting] \
 	-state disabled

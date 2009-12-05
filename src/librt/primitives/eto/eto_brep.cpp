@@ -30,16 +30,15 @@
 #include "brep.h"
 
 
-
 /**
- *			R T _ E T O _ B R E P
+ * R T _ E T O _ B R E P
  */
 extern "C" void
 rt_eto_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {
-    mat_t	R;
-    mat_t	S;
-    struct rt_eto_internal	*eip;
+    mat_t R;
+    mat_t S;
+    struct rt_eto_internal *eip;
 
     *b = NULL; 
 
@@ -77,9 +76,8 @@ rt_eto_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     plane_y_dir = ON_3dVector(y_dir);
    
     const ON_Plane* ell_plane = new ON_Plane(plane_origin, plane_x_dir, plane_y_dir); 
-    
-    
-   
+
+
     //  Once the plane has been created, create the ellipse
     //  within the plane.
     ell_axis_len_1 = MAGNITUDE(eip->eto_C);
@@ -106,6 +104,7 @@ rt_eto_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 //    (*b)->Standardize();
  //   (*b)->Compact();
 }
+
 
 // Local Variables:
 // tab-width: 8

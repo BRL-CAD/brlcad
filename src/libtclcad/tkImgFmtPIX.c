@@ -98,6 +98,7 @@ Tk_PhotoImageFormat tkImgFmtPIX = {
     NULL,			/* stringReadProc */
     FileWritePIX,		/* fileWriteProc */
     NULL,			/* stringWriteProc */
+    NULL			/* nextPtr/tk-private */
 };
 
 /*
@@ -124,7 +125,7 @@ Tk_PhotoImageFormat tkImgFmtPIX = {
  */
 
 static int
-FileMatchPIX(Tcl_Channel chan, const char *fileName, Tcl_Obj *format, int *widthPtr, int *heightPtr, Tcl_Interp *interp)
+FileMatchPIX(Tcl_Channel chan __attribute__((unused)), const char *fileName, Tcl_Obj *format, int *widthPtr, int *heightPtr, Tcl_Interp *interp)
 
     /* The name of the image file. */
     /* User-specified format string, or NULL. */
@@ -140,7 +141,7 @@ FileMatchPIX(Tcl_Channel chan, const char *fileName, Tcl_Obj *format, int *width
     int len;
     unsigned long int width, height;
 
-    if (format == NULL)
+    if (format == NULL || interp == NULL)
 	return 0;
 
     formatString = Tcl_GetStringFromObj(format, &len);
@@ -196,7 +197,7 @@ FileReadPIX(Tcl_Interp *interp, Tcl_Channel chan, const char *fileName, Tcl_Obj 
     /* Coordinates of top-left pixel to be used
      * in image being read. */
 {
-    unsigned long int fileWidth, fileHeight;
+    size_t fileWidth, fileHeight;
     int nBytes, h, count;
     unsigned char *pixelPtr;
     Tk_PhotoImageBlock block;
@@ -221,14 +222,14 @@ FileReadPIX(Tcl_Interp *interp, Tcl_Channel chan, const char *fileName, Tcl_Obj 
 	return TCL_ERROR;
     }
 
-    if ((srcX + width) > fileWidth) {
+    if ((size_t)(srcX + width) > fileWidth) {
 	width = fileWidth - srcX;
     }
-    if ((srcY + height) > fileHeight) {
+    if ((size_t)(srcY + height) > fileHeight) {
 	height = fileHeight - srcY;
     }
     if ((width <= 0) || (height <= 0)
-	|| (srcX >= fileWidth) || (srcY >= fileHeight)) {
+	|| ((size_t)srcX >= fileWidth) || ((size_t)srcY >= fileHeight)) {
 	return TCL_OK;
     }
 
@@ -245,7 +246,7 @@ FileReadPIX(Tcl_Interp *interp, Tcl_Channel chan, const char *fileName, Tcl_Obj 
     Tk_PhotoExpand(interp, imageHandle, destX + width, destY + height);
 #endif
 
-    if ((srcY + height) < fileHeight) {
+    if ((size_t)(srcY + height) < fileHeight) {
 	Tcl_Seek( chan, (long) ((fileHeight - srcY - height) * block.pitch),
 		  SEEK_CUR );
 
@@ -305,8 +306,7 @@ FileWritePIX(Tcl_Interp *interp, const char *fileName, Tcl_Obj *format, Tk_Photo
     unsigned char *pixelPtr, *pixLinePtr;
 
     if ((f = fopen(fileName, "wb")) == NULL) {
-	Tcl_AppendResult(interp, fileName, ": ", Tcl_PosixError(interp),
-			 (char *)NULL);
+	Tcl_AppendResult(interp, fileName, ": ", Tcl_PosixError(interp), (char *)NULL);
 	return TCL_ERROR;
     }
 
@@ -320,7 +320,8 @@ FileWritePIX(Tcl_Interp *interp, const char *fileName, Tcl_Obj *format, Tk_Photo
 	for (w = blockPtr->width; w > 0; w--) {
 	    if ((putc(pixelPtr[0], f) == EOF)
 		|| (putc(pixelPtr[greenOffset], f) == EOF)
-		|| (putc(pixelPtr[blueOffset], f) == EOF)) {
+		|| (putc(pixelPtr[blueOffset], f) == EOF))
+	    {
 		goto writeerror;
 	    }
 	    pixelPtr += blockPtr->pixelSize;
@@ -334,8 +335,7 @@ FileWritePIX(Tcl_Interp *interp, const char *fileName, Tcl_Obj *format, Tk_Photo
     f = NULL;
 
  writeerror:
-    Tcl_AppendResult(interp, "error writing \"", fileName, "\": ",
-		     Tcl_PosixError(interp), (char *) NULL);
+    Tcl_AppendResult(interp, "error writing \"", fileName, "\" as format [", format, "]: ", Tcl_PosixError(interp), (char *) NULL);
     if (f != NULL) {
 	fclose(f);
     }

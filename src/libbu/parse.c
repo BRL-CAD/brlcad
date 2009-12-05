@@ -738,7 +738,7 @@ bu_struct_parse(const struct bu_vls *in_vls, const struct bu_structparse *desc, 
 	/* NAME = VALUE white-space-separator */
 
 	/* skip any leading whitespace */
-	while (*cp != '\0' && isascii(*cp) && isspace(*cp))
+	while (*cp != '\0' && isspace(*cp))
 	    cp++;
 
 	/* Find equal sign */
@@ -777,7 +777,7 @@ bu_struct_parse(const struct bu_vls *in_vls, const struct bu_structparse *desc, 
 	} else {
 	    /* non-strings are white-space delimited */
 	    value = cp;
-	    while (*cp != '\0' && isascii(*cp) && !isspace(*cp))
+	    while (*cp != '\0' && !isspace(*cp))
 		cp++;
 	}
 
@@ -2178,7 +2178,7 @@ bu_structparse_argv(struct bu_vls *logstr,
 			/* argv[0] contains the string.  i.e., we have
 			 * exactly one value
 			 */
-			assert(sdp->sp_count == 1);
+			BU_ASSERT(sdp->sp_count == 1);
 
 			if (argc < 1) {
 			    bu_vls_printf(logstr,

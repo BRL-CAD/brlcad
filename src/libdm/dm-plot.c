@@ -54,16 +54,8 @@
 
 #define PLOTBOUND	1000.0	/* Max magnification in Rot matrix */
 struct dm	*plot_open(Tcl_Interp *interp, int argc, char **argv);
-static int	plot_close(struct dm *dmp);
-static int	plot_drawBegin(struct dm *dmp), plot_drawEnd(struct dm *dmp);
-static int	plot_normal(struct dm *dmp), plot_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye);
-static int	plot_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int size, int use_aspect), plot_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2);
-static int      plot_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y);
-static int	plot_drawVList(struct dm *dmp, register struct bn_vlist *vp);
-static int      plot_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency);
-static int      plot_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b);
-static int      plot_setLineAttr(struct dm *dmp, int width, int style);
-static int	plot_setWinBounds(struct dm *dmp, register int *w), plot_debug(struct dm *dmp, int lvl);
+
+HIDDEN_DM_FUNCTION_PROTOTYPES(plot)
 
 struct dm dm_plot = {
     plot_close,
@@ -73,8 +65,11 @@ struct dm dm_plot = {
     plot_loadMatrix,
     plot_drawString2D,
     plot_drawLine2D,
+    plot_drawLine3D,
+    plot_drawLines3D,
     plot_drawPoint2D,
     plot_drawVList,
+    plot_draw,
     plot_setFGColor,
     plot_setBGColor,
     plot_setLineAttr,
@@ -267,7 +262,7 @@ plot_open(Tcl_Interp *interp, int argc, char **argv)
  *
  *  Gracefully release the display.
  */
-static int
+HIDDEN int
 plot_close(struct dm *dmp)
 {
     (void)fflush(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp);
@@ -288,7 +283,7 @@ plot_close(struct dm *dmp)
  *
  * There are global variables which are parameters to this routine.
  */
-static int
+HIDDEN int
 plot_drawBegin(struct dm *dmp)
 {
     /* We expect the screen to be blank so far, from last frame flush */
@@ -299,7 +294,7 @@ plot_drawBegin(struct dm *dmp)
 /*
  *			P L O T _ E P I L O G
  */
-static int
+HIDDEN int
 plot_drawEnd(struct dm *dmp)
 {
     pl_flush(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp); /* BRL-specific command */
@@ -313,9 +308,9 @@ plot_drawEnd(struct dm *dmp)
  *  			P L O T _ L O A D M A T R I X
  *
  *  Load a new transformation matrix.  This will be followed by
- *  many calls to plot_drawVList().
+ *  many calls to plot_draw().
  */
-static int
+HIDDEN int
 plot_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 {
     Tcl_Obj	*obj;
@@ -355,7 +350,7 @@ plot_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
  *
  *  Returns 0 if object could be drawn, !0 if object was omitted.
  */
-static int
+HIDDEN int
 plot_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 {
     static vect_t			last;
@@ -490,13 +485,35 @@ plot_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 }
 
 /*
+ *  P L O T _ D R A W
+ */
+HIDDEN int
+plot_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), genptr_t *data)
+{
+     struct bn_vlist *vp;
+     if (!callback_function) {
+         if (data) {
+             vp = (struct bn_vlist *)data;
+	     plot_drawVList(dmp,vp);
+         }
+     } else {
+         if (!data) {
+             return TCL_ERROR;
+         } else {
+             vp = callback_function(data);
+         }
+     }
+     return TCL_OK;
+}
+	
+/*
  *			P L O T _ N O R M A L
  *
  * Restore the display processor to a normal mode of operation
  * (ie, not scaled, rotated, displaced, etc).
  * Turns off windowing.
  */
-static int
+HIDDEN int
 plot_normal(struct dm *dmp)
 {
     return TCL_OK;
@@ -510,7 +527,7 @@ plot_normal(struct dm *dmp)
  * The starting position of the beam is as specified.
  */
 /* ARGSUSED */
-static int
+HIDDEN int
 plot_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int size, int use_aspect)
 {
     int	sx, sy;
@@ -527,7 +544,7 @@ plot_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int 
  *			P L O T _ 2 D _ G O T O
  *
  */
-static int
+HIDDEN int
 plot_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2)
 {
     int	sx1, sy1;
@@ -543,28 +560,39 @@ plot_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2)
     return TCL_OK;
 }
 
+HIDDEN int
+plot_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2)
+{
+    return TCL_OK;
+}
 
-static int
+HIDDEN int
+plot_drawLines3D(struct dm *dmp, int npoints, point_t *points)
+{
+    return TCL_OK;
+}
+
+HIDDEN int
 plot_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
 {
     return plot_drawLine2D(dmp, x, y, x, y);
 }
 
 
-static int
+HIDDEN int
 plot_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency)
 {
     pl_color(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp, (int)r, (int)g, (int)b);
     return TCL_OK;
 }
-static int
+HIDDEN int
 plot_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
 {
     return TCL_OK;
 }
 
 
-static int
+HIDDEN int
 plot_setLineAttr(struct dm *dmp, int width, int style)
 {
     dmp->dm_lineWidth = width;
@@ -579,7 +607,7 @@ plot_setLineAttr(struct dm *dmp, int width, int style)
 }
 
 /* ARGSUSED */
-static int
+HIDDEN int
 plot_debug(struct dm *dmp, int lvl)
 {
     Tcl_Obj	*obj;
@@ -596,7 +624,7 @@ plot_debug(struct dm *dmp, int lvl)
     return TCL_OK;
 }
 
-static int
+HIDDEN int
 plot_setWinBounds(struct dm *dmp, register int *w)
 {
     /* Compute the clipping bounds */

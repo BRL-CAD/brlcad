@@ -97,6 +97,14 @@ FaceBound::Print(int level) {
 	TopologicalRepresentationItem::Print(level+1);
 }
 
+bool
+FaceBound::Oriented() {
+    if (orientation == SCLBOOL_H(BTrue)) {
+	return true;
+    }
+    return false;
+}
+
 STEPEntity *
 FaceBound::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 	Factory::OBJECTS::iterator i;

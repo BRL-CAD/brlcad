@@ -77,8 +77,8 @@
 /* +-2048 to +-1 */
 #define GED_TO_PM1(x) (((fastf_t)(x))*INV_GED)
 
-#if IR_KNOBS
-#define NOISE 16		/* Size of dead spot on knob */
+#ifdef IR_KNOBS
+#  define NOISE 16		/* Size of dead spot on knob */
 #endif
 
 /* the font used depends on the size of the window opened */
@@ -193,8 +193,11 @@ struct dm {
     int (*dm_loadMatrix)();
     int (*dm_drawString2D)();	/**< @brief formerly dmr_puts */
     int (*dm_drawLine2D)();	/**< @brief formerly dmr_2d_line */
+    int (*dm_drawLine3D)();
+    int (*dm_drawLines3D)();
     int (*dm_drawPoint2D)();
-    int (*dm_drawVList)();	/**< @brief formerly dmr_object */
+    int (*dm_drawVList)();
+    int (*dm_draw)(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), genptr_t *data);	/**< @brief formerly dmr_object */
     int (*dm_setFGColor)(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency);
     int (*dm_setBGColor)(struct dm *, unsigned char, unsigned char, unsigned char);
     int (*dm_setLineAttr)();	/**< @brief currently - linewidth, (not-)dashed */
@@ -270,8 +273,11 @@ struct dm_obj {
 #define DM_DRAW_STRING_2D(_dmp, _str, _x, _y, _size, _use_aspect)\
      _dmp->dm_drawString2D(_dmp, _str, _x, _y, _size, _use_aspect)
 #define DM_DRAW_LINE_2D(_dmp, _x1, _y1, _x2, _y2) _dmp->dm_drawLine2D(_dmp, _x1, _y1, _x2, _y2)
+#define DM_DRAW_LINE_3D(_dmp, _pt1, _pt2) _dmp->dm_drawLine3D(_dmp, _pt1, _pt2)
+#define DM_DRAW_LINES_3D(_dmp, _npoints, _points) _dmp->dm_drawLines3D(_dmp, _npoints, _points)
 #define DM_DRAW_POINT_2D(_dmp, _x, _y) _dmp->dm_drawPoint2D(_dmp, _x, _y)
 #define DM_DRAW_VLIST(_dmp, _vlist) _dmp->dm_drawVList(_dmp, _vlist)
+#define DM_DRAW(_dmp, _callback, _data) _dmp->dm_draw(_dmp, _callback, _data)
 #define DM_SET_FGCOLOR(_dmp, _r, _g, _b, _strict, _transparency) _dmp->dm_setFGColor(_dmp, _r, _g, _b, _strict, _transparency)
 #define DM_SET_BGCOLOR(_dmp, _r, _g, _b) _dmp->dm_setBGColor(_dmp, _r, _g, _b)
 #define DM_SET_LINE_ATTR(_dmp, _width, _dashed) _dmp->dm_setLineAttr(_dmp, _width, _dashed)
@@ -342,13 +348,13 @@ DM_EXPORT BU_EXTERN(void dm_draw_adc,
 DM_EXPORT BU_EXTERN(void dm_draw_data_axes,
 		    (struct dm *dmp,
 		     fastf_t viewSize,
-		     mat_t rmat,
+		     const mat_t rmat,
 		     struct ged_axes_state *gasp));
 
 DM_EXPORT BU_EXTERN(void dm_draw_axes,
 		    (struct dm *dmp,
 		     fastf_t viewSize,
-		     mat_t rmat,
+		     const mat_t rmat,
 		     struct ged_axes_state *gasp));
 
 /* clip.c */
@@ -399,6 +405,76 @@ DM_EXPORT BU_EXTERN(void dm_draw_scale,
 /* vers.c */
 DM_EXPORT BU_EXTERN(const char *dm_version, (void));
 
+
+
+
+
+/************************************************/
+/* dm-*.c macros for autogenerating common code */
+/************************************************/
+
+/* These functions are internal to each display manager - emulate
+ * the behavior of the common.h macro HIDDEN */
+#if defined(NDEBUG)
+ #define HIDDEN_DM_FUNCTION_PROTOTYPES(_dmtype) \
+ static int _dmtype##_close(struct dm *dmp); \
+ static int _dmtype##_drawBegin(struct dm *dmp); \
+ static int _dmtype##_drawEnd(struct dm *dmp); \
+ static int _dmtype##_normal(struct dm *dmp); \
+ static int _dmtype##_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye); \
+ static int _dmtype##_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int size, int use_aspect); \
+ static int _dmtype##_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2); \
+ static int _dmtype##_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2); \
+ static int _dmtype##_drawLines3D(struct dm *dmp, int npoints, point_t *points); \
+ static int _dmtype##_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y); \
+ static int _dmtype##_drawVList(struct dm *dmp, register struct bn_vlist *vp); \
+ static int _dmtype##_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), genptr_t *data); \
+ static int _dmtype##_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency); \
+ static int _dmtype##_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b); \
+ static int _dmtype##_setLineAttr(struct dm *dmp, int width, int style); \
+ static int _dmtype##_configureWin_guts(struct dm *dmp, int force); \
+ static int _dmtype##_configureWin(struct dm *dmp); \
+ static int _dmtype##_setLight(struct dm *dmp, int lighting_on); \
+ static int _dmtype##_setTransparency(struct dm *dmp, int transparency_on); \
+ static int _dmtype##_setDepthMask(struct dm *dmp, int depthMask_on); \
+ static int _dmtype##_setZBuffer(struct dm *dmp, int zbuffer_on); \
+ static int _dmtype##_setWinBounds(struct dm *dmp, int *w); \
+ static int _dmtype##_debug(struct dm *dmp, int lvl); \
+ static int _dmtype##_beginDList(struct dm *dmp, unsigned int list); \
+ static int _dmtype##_endDList(struct dm *dmp); \
+ static int _dmtype##_drawDList(struct dm *dmp, unsigned int list); \
+ static int _dmtype##_freeDLists(struct dm *dmp, unsigned int list, int range); 
+#else
+ #define HIDDEN_DM_FUNCTION_PROTOTYPES(_dmtype) \
+ int _dmtype##_close(struct dm *dmp); \
+ int _dmtype##_drawBegin(struct dm *dmp); \
+ int _dmtype##_drawEnd(struct dm *dmp); \
+ int _dmtype##_normal(struct dm *dmp); \
+ int _dmtype##_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye); \
+ int _dmtype##_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int size, int use_aspect); \
+ int _dmtype##_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2); \
+ int _dmtype##_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2); \
+ int _dmtype##_drawLines3D(struct dm *dmp, int npoints, point_t *points); \
+ int _dmtype##_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y); \
+ int _dmtype##_drawVList(struct dm *dmp, register struct bn_vlist *vp); \
+ int _dmtype##_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), genptr_t *data); \
+ int _dmtype##_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency); \
+ int _dmtype##_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b); \
+ int _dmtype##_setLineAttr(struct dm *dmp, int width, int style); \
+ int _dmtype##_configureWin_guts(struct dm *dmp, int force); \
+ int _dmtype##_configureWin(struct dm *dmp); \
+ int _dmtype##_setLight(struct dm *dmp, int lighting_on); \
+ int _dmtype##_setTransparency(struct dm *dmp, int transparency_on); \
+ int _dmtype##_setDepthMask(struct dm *dmp, int depthMask_on); \
+ int _dmtype##_setZBuffer(struct dm *dmp, int zbuffer_on); \
+ int _dmtype##_setWinBounds(struct dm *dmp, int *w); \
+ int _dmtype##_debug(struct dm *dmp, int lvl); \
+ int _dmtype##_beginDList(struct dm *dmp, unsigned int list); \
+ int _dmtype##_endDList(struct dm *dmp); \
+ int _dmtype##_drawDList(struct dm *dmp, unsigned int list); \
+ int _dmtype##_freeDLists(struct dm *dmp, unsigned int list, int range); 
+
+#endif
 
 
 

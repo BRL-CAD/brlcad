@@ -58,6 +58,7 @@ bu_optind
 bu_plong
 bu_printb
 bu_prmem
+bu_process_id
 bu_ptbl
 bu_ptbl_free
 bu_ptbl_init

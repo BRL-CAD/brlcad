@@ -54,8 +54,7 @@ db_read(const struct db_i *dbip, genptr_t addr, long int count, long int offset)
     /* byte count */
     /* byte offset from start of file */
 {
-    register int got;
-    register long s;
+    int got;
 
     RT_CK_DBI(dbip);
     if (RT_G_DEBUG&DEBUG_DB) {

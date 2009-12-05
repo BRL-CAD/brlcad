@@ -22,10 +22,10 @@
  * Common defines and declarations used by nirt.
  *
  * Author:
- *   Natalie L. Barker
+ * Natalie L. Barker
  *
  * Date:
- *   Jan 90
+ * Jan 90
  *
  */
 
@@ -36,7 +36,7 @@
 #define fmax(x, y) nbsd_fmax(x, y)
 static double nbsd_fmax(double x, double y)
 {
-  return x > y ? x : y;
+    return x > y ? x : y;
 }
 #endif /* __NetBSD__ */
 
@@ -50,119 +50,123 @@ static double nbsd_fmax(double x, double y)
 
 
 /** CONSTANTS */
-#define	VAR_NULL	((struct VarTable *) 0)
-#define	CT_NULL		((com_table *) 0)
-#define	SILENT_UNSET	0
-#define	SILENT_YES	1
-#define	SILENT_NO	-1
-#define	NIRT_PROMPT	"nirt>  "
-#define	TITLE_LEN	80
-#if !defined(PI)
-#  define	PI		3.141592654
-#endif
+#define VAR_NULL	((struct VarTable *) 0)
+#define CT_NULL		((com_table *) 0)
+#define SILENT_UNSET	0
+#define SILENT_YES	1
+#define SILENT_NO	-1
+#define NIRT_PROMPT	"nirt>  "
+#define TITLE_LEN	80
 
-#define	OFF		0
-#define	ON		1
-#define	YES		1
-#define	NO		0
-#define	HIT		1     /* HIT the target  */
-#define	MISS		0     /* MISS the target */
-#define	END		2
-#define	HORZ		0
-#define	VERT		1
-#define	DIST		2
-#define	POS		1
-#define	NEG		0
-#define	AIR		1
-#define	NO_AIR		0
-#define	READING_FILE	1
-#define	READING_STRING	2
+#define OFF		0
+#define ON		1
+#define YES		1
+#define NO		0
+#define HIT		1     /* HIT the target */
+#define MISS		0     /* MISS the target */
+#define END		2
+#define HORZ		0
+#define VERT		1
+#define DIST		2
+#define POS		1
+#define NEG		0
+#define AIR		1
+#define NO_AIR		0
+#define READING_FILE	1
+#define READING_STRING	2
 
 /** FLAG VALUES FOR overlap_claims */
-#define	OVLP_RESOLVE		0
-#define	OVLP_REBUILD_FASTGEN	1
-#define	OVLP_REBUILD_ALL	2
-#define	OVLP_RETAIN		3
+#define OVLP_RESOLVE		0
+#define OVLP_REBUILD_FASTGEN	1
+#define OVLP_REBUILD_ALL	2
+#define OVLP_RETAIN		3
 
 /** FLAG VALUES FOR nirt_debug */
-#define	DEBUG_INTERACT	0x001
-#define	DEBUG_SCRIPTS	0x002
-#define	DEBUG_MAT	0x004
-#define	DEBUG_BACKOUT	0x008
-#define	DEBUG_HITS	0x010
+#define DEBUG_INTERACT	0x001
+#define DEBUG_SCRIPTS	0x002
+#define DEBUG_MAT	0x004
+#define DEBUG_BACKOUT	0x008
+#define DEBUG_HITS	0x010
 
 #define RT_DEBUG_FMT	DEBUG_FORMAT
 #define DEBUG_FMT	"\020\5HITS\4BACKOUT\3MAT\2SCRIPTS\1INTERACT"
 
 /** STRING FOR USE WITH GETOPT(3) */
-#define	OPT_STRING      "A:bB:Ee:f:LMO:su:vx:X:?"
+#define OPT_STRING      "A:bB:Ee:f:LMO:su:vx:X:?"
 
-#define	made_it()	bu_log("Made it to %s:%d\n", __FILE__, __LINE__)
+#define made_it()	bu_log("Made it to %s:%d\n", __FILE__, __LINE__)
 
 /** MACROS WITH ARGUMENTS */
-#define	com_usage(c)	fprintf (stderr, "Usage:  %s %s\n", \
+#define com_usage(c)	fprintf (stderr, "Usage:  %s %s\n", \
 				c->com_name, c->com_args);
 
 /** DATA STRUCTURES */
 typedef struct {
-    char	*com_name;		/* for invoking	    	         */
-    void	(*com_func)();          /* what to do?      	         */
-    char	*com_desc;		/* Help description 	         */
-    char	*com_args;		/* Command arguments for usage   */
+    char *com_name;		/* for invoking */
+    void (*com_func)();          /* what to do?      	         */
+    char *com_desc;		/* Help description */
+    char *com_args;		/* Command arguments for usage */
 } com_table;
 
 struct VarTable {
-    double	azimuth;
-    double	elevation;
-    vect_t  direct;
-    vect_t  target;
-    vect_t  grid;
+    double azimuth;
+    double elevation;
+    vect_t direct;
+    vect_t target;
+    vect_t grid;
 };
 
 typedef struct attributes {
-    int	attrib_use;
-    int	attrib_cnt;
+    int attrib_use;
+    int attrib_cnt;
     char **attrib;
 } attr_table;
 
 extern attr_table a_tab;
 
-extern struct rt_i	*rtip;
-extern void		attrib_add(char *a);
-extern void 		attrib_print(void);
-extern void 		attrib_flush(void);
-extern void		az_el();
-extern void		dir_vect();
-extern void	        grid_coor();
-extern void		interact(int input_source, void *sPtr);
-extern void	        target_coor();
-extern void	        backout();
-extern void		shoot();
-extern void		sh_esc();
-extern void	        quit();
-extern void		show_menu();
-extern void		format_output(const char* buffer, com_table* ctp);
-extern void		direct_output(const char* buffer, com_table* ctp);
-extern void		nirt_units();
-extern void		do_overlap_claims();
-extern void		use_air();
-extern void		state_file(const char* buffer, com_table* ctp);
-extern void		dump_state(const char* buffer, com_table* ctp);
-extern void		load_state(char *buffer, com_table *ctp);
-extern void		default_ospec(void);
-extern void		print_item(char *buffer, com_table *ctp);
-extern com_table	*get_comtab_ent(char *pattern, int pat_len);
-extern void		read_mat(void);
-extern void		ae2dir(void);
-extern void		grid2targ(void);
-extern void		targ2grid(void);
-extern void		dir2ae(void);
-extern void		set_diameter(struct rt_i *rtip);
-extern void		report(int outcom_type);
-extern int		check_conv_spec(outitem *oip);
-extern void             do_rt_gettrees(struct rt_i *rtip, char **object_name, int nm_objects);
-extern void		bot_minpieces();
-extern int		need_prep;
+extern struct rt_i *rtip;
+
+extern void ae2dir(void);
+extern void attrib_add(char *a, int *prep);
+extern void attrib_flush(void);
+extern void attrib_print(void);
+extern void az_el(char *buffer, com_table *ctp);
+extern void backout(char *buffer, com_table *ctp);
+extern void bot_minpieces();
+extern int check_conv_spec(outitem *oip);
+extern void default_ospec(void);
+extern void dir2ae(void);
+extern void dir_vect(char *buffer, com_table *ctp);
+extern void direct_output(const char* buffer, com_table* ctp);
+extern void do_overlap_claims();
+extern void do_rt_gettrees(struct rt_i *, char **object_name, int nm_objects, int *do_prep);
+extern void dump_state(const char* buffer, com_table* ctp);
+extern void format_output(const char* buffer, com_table* ctp);
+extern com_table *get_comtab_ent(char *pattern, int pat_len);
+extern void grid2targ(void);
+extern void grid_coor(char *buffer, com_table *ctp);
+extern void interact(int input_source, void *sPtr);
+extern void load_state(char *buffer, com_table *ctp);
+extern void nirt_units();
+extern void print_item(char *buffer, com_table *ctp);
+extern void printusage(void);
+extern void quit();
+extern void read_mat(void);
+extern void report(int outcom_type);
+extern void set_diameter(struct rt_i *);
+extern void sh_esc(char *buffer);
+extern void shoot(char *buffer, com_table *ctp);
+extern void show_menu();
+extern void state_file(const char* buffer, com_table* ctp);
+extern void targ2grid(void);
+extern void target_coor(char *buffer, com_table *ctp);
+extern void use_air(char *buffer, com_table *ctp);
+
+/* main driver needs to get at these, even though they're command-specific */
+extern void cm_libdebug();
+extern void cm_debug();
+extern void cm_attr();
+
 
 #endif /* __NIRT_H__ */
 

@@ -27,12 +27,12 @@
 
 #include "pcVariable.h"
 
-/*Abstract Variable Class methods */
+/* Abstract Variable Class methods */
 VariableAbstract::VariableAbstract(std::string vid) :
     type(VAR_ABS),
+    const_(false),
     id(vid),
-    constrained_(0),
-    const_(false)
+    constrained_(0)
 {
 }
 

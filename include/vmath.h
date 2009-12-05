@@ -28,34 +28,35 @@
  *
  * Note that while many people in the computer graphics field use
  * post-multiplication with row vectors (ie, vector * matrix * matrix
- * ...)  the BRL-CAD system uses the more traditional representation
+ * ...) the BRL-CAD system uses the more traditional representation
  * of column vectors (ie, ... matrix * matrix * vector).  (The
  * matrices in these two representations are the transposes of each
  * other). Therefore, when transforming a vector by a matrix,
  * pre-multiplication is used, ie:
  *
- *   view_vec = model2view_mat * model_vec
+ * view_vec = model2view_mat * model_vec
  *
- * Furthermore, additional transformations are multiplied on the left, ie:
+ * Furthermore, additional transformations are multiplied on the left,
+ * ie:
  *
  <tt> @code
- *		vec'  =  T1 * vec
- *		vec'' =  T2 * T1 * vec  =  T2 * vec'
+ * vec'  =  T1 * vec
+ * vec'' =  T2 * T1 * vec  =  T2 * vec'
  @endcode </tt>
  *
  * The most notable implication of this is the location of the "delta"
  * (translation) values in the matrix, ie:
  *
  <tt> @code
- *        x'     ( R0   R1   R2   Dx )      x
- *        y' =   ( R4   R5   R6   Dy )   *  y
- *        z'     ( R8   R9   R10  Dz )      z
- *        w'     (  0    0    0   1/s)      w
+ * x'   (R0  R1  R2 Dx) x
+ * y' = (R4  R5  R6 Dy) * y
+ * z'   (R8  R9 R10 Dz) z
+ * w'   (0   0   0  1/s) w
  @endcode </tt>
  *
- * @par Note -
- *  	vect_t objects are 3-tuples
- *@n	hvect_t objects are 4-tuples
+ * Note -
+ *@n  vect_t objects are 3-tuples
+ *@n hvect_t objects are 4-tuples
  *
  * Most of these macros require that the result be in separate
  * storage, distinct from the input parameters, except where noted.
@@ -143,7 +144,7 @@ __BEGIN_DECLS
 #endif
 
 #ifndef DEG2RAD
-#  define DEG2RAD       0.017453292519943295769236907684 /**< pi/180 */
+#  define DEG2RAD	0.017453292519943295769236907684 /**< pi/180 */
 #endif
 #ifndef RAD2DEG
 #  define RAD2DEG	57.295779513082320876798154814105 /**< 180/pi */
@@ -152,18 +153,18 @@ __BEGIN_DECLS
 
 /* minimum computation tolerances */
 #ifdef vax
-#  define VDIVIDE_TOL		( 1.0e-10 )
-#  define VUNITIZE_TOL		( 1.0e-7 )
+#  define VDIVIDE_TOL		(1.0e-10)
+#  define VUNITIZE_TOL		(1.0e-7)
 #else
 #  ifdef DBL_EPSILON
-#    define VDIVIDE_TOL		( DBL_EPSILON )
+#    define VDIVIDE_TOL		(DBL_EPSILON)
 #  else
-#    define VDIVIDE_TOL		( 1.0e-20 )
+#    define VDIVIDE_TOL		(1.0e-20)
 #  endif
 #  ifdef FLT_EPSILON
-#    define VUNITIZE_TOL	( FLT_EPSILON )
+#    define VUNITIZE_TOL	(FLT_EPSILON)
 #  else
-#    define VUNITIZE_TOL	( 1.0e-15 )
+#    define VUNITIZE_TOL	(1.0e-15)
 #  endif
 #endif
 
@@ -211,16 +212,16 @@ typedef fastf_t point2d_t[ELEMENTS_PER_POINT2D];
 typedef fastf_t *point2dp_t;
 
 /** @brief 3-tuple vector */
-typedef	fastf_t	vect_t[ELEMENTS_PER_VECT];
+typedef fastf_t vect_t[ELEMENTS_PER_VECT];
 
 /** @brief pointer to a 3-tuple vector */
-typedef	fastf_t	*vectp_t;
+typedef fastf_t *vectp_t;
 
 /** @brief 3-tuple point */
-typedef fastf_t	point_t[ELEMENTS_PER_POINT];
+typedef fastf_t point_t[ELEMENTS_PER_POINT];
 
 /** @brief pointer to a 3-tuple point */
-typedef fastf_t	*pointp_t;
+typedef fastf_t *pointp_t;
 
 /** @brief 4-tuple vector */
 typedef fastf_t hvect_t[ELEMENTS_PER_HVECT];
@@ -232,10 +233,10 @@ typedef hvect_t quat_t;
 typedef fastf_t hpoint_t[ELEMENTS_PER_HPOINT];
 
 /** @brief 4x4 matrix */
-typedef	fastf_t	mat_t[ELEMENTS_PER_MAT];
+typedef fastf_t mat_t[ELEMENTS_PER_MAT];
 
 /** @brief pointer to a 4x4 matrix */
-typedef	fastf_t	*matp_t;
+typedef fastf_t *matp_t;
 
 /** Vector component names for homogeneous (4-tuple) vectors */
 typedef enum bn_vector_component_ {
@@ -268,27 +269,27 @@ typedef enum bn_matrix_component_ {
  * the plane (in element N[W]).
  *
  * The plane consists of all points P=(x, y, z) such that
- *@n	VDOT(P, N) - N[W] == 0
+ *@n VDOT(P, N) - N[W] == 0
  *@n that is,
- *@n	N[X]*x + N[Y]*y + N[Z]*z - N[W] == 0
+ *@n N[X]*x + N[Y]*y + N[Z]*z - N[W] == 0
  *
  * The inside of the halfspace bounded by the plane
  * consists of all points P such that
- *@n	VDOT(P, N) - N[W] <= 0
+ *@n VDOT(P, N) - N[W] <= 0
  *
  * A ray with direction D is classified w.r.t. the plane by
  *
- *@n	VDOT(D, N) < 0	ray enters halfspace defined by plane
- *@n	VDOT(D, N) == 0	ray is parallel to plane
- *@n	VDOT(D, N) > 0	ray exits halfspace defined by plane
+ *@n VDOT(D, N) < 0 ray enters halfspace defined by plane
+ *@n VDOT(D, N) == 0 ray is parallel to plane
+ *@n VDOT(D, N) > 0 ray exits halfspace defined by plane
  */
-typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
+typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 
 
 /**
  * return truthfully whether a value is within some epsilon from zero.
  */
-#define NEAR_ZERO(val, epsilon)	( ((val) > -epsilon) && ((val) < epsilon) )
+#define NEAR_ZERO(val, epsilon)	(((val) > -epsilon) && ((val) < epsilon))
 
 /**
  * clamp a value to a low/high number.
@@ -300,10 +301,10 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 #define DIST_PT_PLANE(_pt, _pl) (VDOT(_pt, _pl) - (_pl)[W])
 
 /** @brief Compute distance between two points. */
-#define DIST_PT_PT(a, b)		sqrt( \
+#define DIST_PT_PT(a, b) sqrt(\
 	((a)[X]-(b)[X])*((a)[X]-(b)[X]) + \
 	((a)[Y]-(b)[Y])*((a)[Y]-(b)[Y]) + \
-	((a)[Z]-(b)[Z])*((a)[Z]-(b)[Z]) )
+	((a)[Z]-(b)[Z])*((a)[Z]-(b)[Z]))
 
 /** @brief set translation values of 4x4 matrix with x, y, z values. */
 #define MAT_DELTAS(_m, _x, _y, _z) { \
@@ -314,14 +315,14 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 
 /** @brief set translation values of 4x4 matrix from a vector. */
 #define MAT_DELTAS_VEC(_m, _v)	\
-	MAT_DELTAS(_m, (_v)[X], (_v)[Y], (_v)[Z] )
+	MAT_DELTAS(_m, (_v)[X], (_v)[Y], (_v)[Z])
 
 /**
  * @brief set translation values of 4x4 matrix from a reversed
  * vector.
  */
 #define MAT_DELTAS_VEC_NEG(_m, _v)	\
-	MAT_DELTAS(_m, -(_v)[X], -(_v)[Y], -(_v)[Z] )
+	MAT_DELTAS(_m, -(_v)[X], -(_v)[Y], -(_v)[Z])
 
 /** @brief get translation values of 4x4 matrix to a vector. */
 #define MAT_DELTAS_GET(_v, _m) { \
@@ -506,7 +507,7 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 }
 
 /** @brief Copy a matrix. */
-#define MAT_COPY( d, s ) { \
+#define MAT_COPY(d, s) { \
 	(d)[0] = (s)[0]; \
 	(d)[1] = (s)[1]; \
 	(d)[2] = (s)[2]; \
@@ -731,10 +732,10 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 /** @brief Normalize vector `a' to be a unit vector. */
 #define VUNITIZE(a) { \
 	register double _f = MAGSQ(a); \
-	if ( ! NEAR_ZERO( _f-1.0, VUNITIZE_TOL ) ) { \
-		_f = sqrt( _f ); \
-		if ( _f < VDIVIDE_TOL ) { \
-			VSETALL( (a), 0.0 ); \
+	if (! NEAR_ZERO(_f-1.0, VUNITIZE_TOL)) { \
+		_f = sqrt(_f); \
+		if (_f < VDIVIDE_TOL) { \
+			VSETALL((a), 0.0); \
 		} else { \
 			_f = 1.0/_f; \
 			(a)[X] *= _f; (a)[Y] *= _f; (a)[Z] *= _f; \
@@ -746,7 +747,7 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 #define VUNITIZE_RET(a, ret) { \
 	register double _f; \
 	_f = MAGNITUDE(a); \
-	if ( _f < VDIVIDE_TOL ) return(ret); \
+	if (_f < VDIVIDE_TOL) return(ret); \
 	_f = 1.0/_f; \
 	(a)[X] *= _f; (a)[Y] *= _f; (a)[Z] *= _f; \
 }
@@ -761,11 +762,11 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 			(o)[Z] = ((a)[Z] + (b)[Z]) * (s); \
 }
 
-#define VADD2SCALEN( o, a, b, n ) { \
+#define VADD2SCALEN(o, a, b, n) { \
 	register int _vadd2scale; \
-	for ( _vadd2scale = 0; \
+	for (_vadd2scale = 0; \
 	_vadd2scale < (n); \
-	_vadd2scale++ ) { \
+	_vadd2scale++) { \
 		(o)[_vadd2scale] = ((a)[_vadd2scale] + (b)[_vadd2scale]) * (s); \
 	} \
 }
@@ -782,9 +783,9 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 
 #define VSUB2SCALEN(o, a, b, n) { \
 	register int _vsub2scale; \
-	for ( _vsub2scale = 0; \
+	for (_vsub2scale = 0; \
 	_vsub2scale < (n); \
-	_vsub2scale++ ) { \
+	_vsub2scale++) { \
 		(o)[_vsub2scale] = ((a)[_vsub2scale] - (b)[_vsub2scale]) * (s); \
 	} \
 }
@@ -835,9 +836,9 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 
 /**
  * @brief Compose vector at `a' of:
- *   Vector at `b' plus
- *   scalar `c' times vector at `d' plus
- *   scalar `e' times vector at `f'
+ * Vector at `b' plus
+ * scalar `c' times vector at `d' plus
+ * scalar `e' times vector at `f'
  */
 #define VJOIN2(a, b, c, d, e, f) { \
 	(a)[X] = (b)[X] + (c) * (d)[X] + (e) * (f)[X]; \
@@ -883,8 +884,8 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 
 /**
  * @brief Blend into vector `a'
- *   scalar `b' times vector at `c' plus
- *   scalar `d' times vector at `e'
+ * scalar `b' times vector at `c' plus
+ * scalar `d' times vector at `e'
  */
 #define VBLEND2(a, b, c, d, e) { \
 	(a)[X] = (b) * (c)[X] + (d) * (e)[X]; \
@@ -903,7 +904,7 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 
 /**
  * @brief Project vector `a' onto `b'
- *   vector `c' is the component of `a' parallel   to `b'
+ * vector `c' is the component of `a' parallel to `b'
  *     "    `d' "   "     "      "   "  orthogonal "   "
  */
 #define VPROJECT(a, b, c, d) { \
@@ -912,11 +913,11 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 }
 
 /** @brief Return scalar magnitude squared of vector at `a' */
-#define MAGSQ(a)	( (a)[X]*(a)[X] + (a)[Y]*(a)[Y] + (a)[Z]*(a)[Z] )
-#define MAG2SQ(a)	( (a)[X]*(a)[X] + (a)[Y]*(a)[Y] )
+#define MAGSQ(a)	((a)[X]*(a)[X] + (a)[Y]*(a)[Y] + (a)[Z]*(a)[Z])
+#define MAG2SQ(a)	((a)[X]*(a)[X] + (a)[Y]*(a)[Y])
 
 /** @brief Return scalar magnitude of vector at `a' */
-#define MAGNITUDE(a)	sqrt(MAGSQ(a))
+#define MAGNITUDE(a) sqrt(MAGSQ(a))
 
 /**
  * @brief Store cross product of vectors at `b' and `c' in vector at
@@ -939,18 +940,18 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 }
 
 /** @brief Compute dot product of vectors at `a' and `b'. */
-#define VDOT(a, b)	( (a)[X]*(b)[X] + (a)[Y]*(b)[Y] + (a)[Z]*(b)[Z] )
+#define VDOT(a, b)	((a)[X]*(b)[X] + (a)[Y]*(b)[Y] + (a)[Z]*(b)[Z])
 
-#define V2DOT(a, b)	( (a)[X]*(b)[X] + (a)[Y]*(b)[Y] )
+#define V2DOT(a, b)	((a)[X]*(b)[X] + (a)[Y]*(b)[Y])
 
 /**
  * @brief Subtract two points to make a vector, dot with another
  * vector.
  */
-#define VSUB2DOT(_pt2, _pt, _vec)	( \
+#define VSUB2DOT(_pt2, _pt, _vec)	(\
 	((_pt2)[X] - (_pt)[X]) * (_vec)[X] + \
 	((_pt2)[Y] - (_pt)[Y]) * (_vec)[Y] + \
-	((_pt2)[Z] - (_pt)[Z]) * (_vec)[Z] )
+	((_pt2)[Z] - (_pt)[Z]) * (_vec)[Z])
 
 /**
  * @brief Turn a vector into comma-separated list of elements, for
@@ -966,22 +967,22 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
  * cannot yet until floats are replaced universally with fastf_t's
  * since their epsilon is considerably less than that of a double.
  */
-#define INTCLAMP(_a) ( NEAR_ZERO((_a) - rint(_a), VUNITIZE_TOL) ? (double)(long)rint(_a) : (_a) )
+#define INTCLAMP(_a) (NEAR_ZERO((_a) - rint(_a), VUNITIZE_TOL) ? (double)(long)rint(_a) : (_a))
 
 /** @brief integer clamped versions of the previous arg macros. */
-#define V2INTCLAMPARGS(a)	INTCLAMP((a)[X]), INTCLAMP((a)[Y])
+#define V2INTCLAMPARGS(a) INTCLAMP((a)[X]), INTCLAMP((a)[Y])
 /** @brief integer clamped versions of the previous arg macros. */
-#define V3INTCLAMPARGS(a)	INTCLAMP((a)[X]), INTCLAMP((a)[Y]), INTCLAMP((a)[Z])
+#define V3INTCLAMPARGS(a) INTCLAMP((a)[X]), INTCLAMP((a)[Y]), INTCLAMP((a)[Z])
 /** @brief integer clamped versions of the previous arg macros. */
-#define V4INTCLAMPARGS(a)	INTCLAMP((a)[X]), INTCLAMP((a)[Y]), INTCLAMP((a)[Z]), INTCLAMP((a)[W])
+#define V4INTCLAMPARGS(a) INTCLAMP((a)[X]), INTCLAMP((a)[Y]), INTCLAMP((a)[Z]), INTCLAMP((a)[W])
 
 /** @brief Print vector name and components on stderr. */
 #define V2PRINT(a, b)	\
-	(void)fprintf(stderr, "%s (%g, %g)\n", a, V2ARGS(b) );
+	(void)fprintf(stderr, "%s (%g, %g)\n", a, V2ARGS(b));
 #define VPRINT(a, b)	\
-	(void)fprintf(stderr, "%s (%g, %g, %g)\n", a, V3ARGS(b) );
+	(void)fprintf(stderr, "%s (%g, %g, %g)\n", a, V3ARGS(b));
 #define HPRINT(a, b)	\
-	(void)fprintf(stderr, "%s (%g, %g, %g, %g)\n", a, V4ARGS(b) );
+	(void)fprintf(stderr, "%s (%g, %g, %g, %g)\n", a, V4ARGS(b));
 
 /**
  * @brief Included below are integer clamped versions of the previous
@@ -989,19 +990,19 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
  */
 
 #define V2INTCLAMPPRINT(a, b)	\
-	(void)fprintf(stderr, "%s (%g, %g)\n", a, V2INTCLAMPARGS(b) );
+	(void)fprintf(stderr, "%s (%g, %g)\n", a, V2INTCLAMPARGS(b));
 #define VINTCLAMPPRINT(a, b)	\
-	(void)fprintf(stderr, "%s (%g, %g, %g)\n", a, V3INTCLAMPARGS(b) );
+	(void)fprintf(stderr, "%s (%g, %g, %g)\n", a, V3INTCLAMPARGS(b));
 #define HINTCLAMPPRINT(a, b)	\
-	(void)fprintf(stderr, "%s (%g, %g, %g, %g)\n", a, V4INTCLAMPARGS(b) );
+	(void)fprintf(stderr, "%s (%g, %g, %g, %g)\n", a, V4INTCLAMPARGS(b));
 
 #ifdef __cplusplus
-#define CPP_V3PRINT( _os, _title, _p )	(_os) << (_title) << "=(" << \
+#define CPP_V3PRINT(_os, _title, _p)	(_os) << (_title) << "=(" << \
 	(_p)[X] << ", " << (_p)[Y] << ")\n";
-#define CPP_VPRINT( _os, _title, _p )	(_os) << (_title) << "=(" << \
+#define CPP_VPRINT(_os, _title, _p)	(_os) << (_title) << "=(" << \
 	(_p)[X] << ", " << (_p)[Y] << ", " << (_p)[Z] << ")\n";
-#define CPP_HPRINT( _os, _title, _p )	(_os) << (_title) << "=(" << \
-	(_p)[X] << ", " << (_p)[Y] << ", " << (_p)[Z] << "," << (_p)[W]<< ")\n";
+#define CPP_HPRINT(_os, _title, _p)	(_os) << (_title) << "=(" << \
+	(_p)[X] << ", " << (_p)[Y] << ", " << (_p)[Z] << ", " << (_p)[W]<< ")\n";
 #endif
 
 /** @brief Vector element multiplication.  Really: diagonal matrix X vect. */
@@ -1028,20 +1029,20 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
  * @brief Given a direction vector, compute the inverses of each element.
  * When division by zero would have occured, mark inverse as INFINITY.
  */
-#define VINVDIR( _inv, _dir ) { \
-	if ( (_dir)[X] < -SQRT_SMALL_FASTF || (_dir)[X] > SQRT_SMALL_FASTF ) { \
+#define VINVDIR(_inv, _dir) { \
+	if ((_dir)[X] < -SQRT_SMALL_FASTF || (_dir)[X] > SQRT_SMALL_FASTF) { \
 		(_inv)[X]=1.0/(_dir)[X]; \
 	} else { \
 		(_dir)[X] = 0.0; \
 		(_inv)[X] = INFINITY; \
 	} \
-	if ( (_dir)[Y] < -SQRT_SMALL_FASTF || (_dir)[Y] > SQRT_SMALL_FASTF ) { \
+	if ((_dir)[Y] < -SQRT_SMALL_FASTF || (_dir)[Y] > SQRT_SMALL_FASTF) { \
 		(_inv)[Y]=1.0/(_dir)[Y]; \
 	} else { \
 		(_dir)[Y] = 0.0; \
 		(_inv)[Y] = INFINITY; \
 	} \
-	if ( (_dir)[Z] < -SQRT_SMALL_FASTF || (_dir)[Z] > SQRT_SMALL_FASTF ) { \
+	if ((_dir)[Z] < -SQRT_SMALL_FASTF || (_dir)[Z] > SQRT_SMALL_FASTF) { \
 		(_inv)[Z]=1.0/(_dir)[Z]; \
 	} else { \
 		(_dir)[Z] = 0.0; \
@@ -1157,30 +1158,35 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 #define BN_VEC_NON_UNIT_LEN(_vec)	\
 	(fabs(MAGSQ(_vec)) < 0.0001 || fabs(fabs(MAGSQ(_vec))-1) > 0.0001)
 
-/** @brief Compare two vectors for EXACT equality.  Use carefully. */
-#define VEQUAL(a, b)	((a)[X]==(b)[X] && (a)[Y]==(b)[Y] && (a)[Z]==(b)[Z])
+/**
+ * @brief Compare two vectors for equality within minimum computation
+ * tolerance.  Use carefully.
+ */
+#define VEQUAL(a, b) VAPPROXEQUAL(a, b, SMALL_FASTF)
 
 /**
  * @brief Compare two vectors for approximate equality, within the
  * specified absolute tolerance.
  */
-#define VAPPROXEQUAL(a, b, tol)	( \
-	NEAR_ZERO( (a)[X]-(b)[X], tol ) && \
-	NEAR_ZERO( (a)[Y]-(b)[Y], tol ) && \
-	NEAR_ZERO( (a)[Z]-(b)[Z], tol ) )
+#define VAPPROXEQUAL(a, b, tol) \
+	(NEAR_ZERO((a)[X]-(b)[X], tol) \
+	 && NEAR_ZERO((a)[Y]-(b)[Y], tol) \
+	 && NEAR_ZERO((a)[Z]-(b)[Z], tol))
 
 /** @brief Test for all elements of `v' being smaller than `tol'. */
-#define VNEAR_ZERO(v, tol)	( \
-	NEAR_ZERO(v[X], tol) && NEAR_ZERO(v[Y], tol) && NEAR_ZERO(v[Z], tol)  )
+#define VNEAR_ZERO(v, tol) \
+	(NEAR_ZERO(v[X], tol) \
+	 && NEAR_ZERO(v[Y], tol) \
+	 && NEAR_ZERO(v[Z], tol))
 
 /**
  * @brief Included below are macros to update min and max X, Y, Z
  * values to contain a point
  */
 
-#define V_MIN(r, s)	if ( (r) > (s) ) r = (s)
+#define V_MIN(r, s) if ((r) > (s)) r = (s)
 
-#define V_MAX(r, s)	if ( (r) < (s) ) r = (s)
+#define V_MAX(r, s) if ((r) < (s)) r = (s)
 
 #define VMIN(r, s) { \
 	V_MIN((r)[X], (s)[X]); V_MIN((r)[Y], (s)[Y]); V_MIN((r)[Z], (s)[Z]); \
@@ -1191,7 +1197,7 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 }
 
 #define VMINMAX(min, max, pt) { \
-	VMIN( (min), (pt) ); VMAX( (max), (pt) ); \
+	VMIN((min), (pt)); VMAX((max), (pt)); \
 }
 
 /**
@@ -1212,16 +1218,16 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
  *
  * THESE ARE ALL DEPRECATED.
  */
-#define VADD2_2D(a, b, c)	V2ADD2(a, b, c)
-#define VSUB2_2D(a, b, c)	V2SUB2(a, b, c)
-#define MAGSQ_2D(a)		MAG2SQ(a)
-#define VDOT_2D(a, b)		V2DOT(a, b)
-#define VMOVE_2D(a, b)		V2MOVE(a, b)
-#define VSCALE_2D(a, b, c)	V2SCALE(a, b, c)
-#define VJOIN1_2D(a, b, c, d) 	V2JOIN1(a, b, c, d)
+#define VADD2_2D(a, b, c) V2ADD2(a, b, c)
+#define VSUB2_2D(a, b, c) V2SUB2(a, b, c)
+#define MAGSQ_2D(a) MAG2SQ(a)
+#define VDOT_2D(a, b) V2DOT(a, b)
+#define VMOVE_2D(a, b) V2MOVE(a, b)
+#define VSCALE_2D(a, b, c) V2SCALE(a, b, c)
+#define VJOIN1_2D(a, b, c, d) V2JOIN1(a, b, c, d)
 
 /** @brief Compare two vectors for EXACT equality.  Use carefully. 
- *  Version for degree 2 vectors. 
+ * Version for degree 2 vectors. 
  */
 #define V2EQUAL(a, b)	((a)[X]==(b)[X] && (a)[Y]==(b)[Y])
 
@@ -1230,16 +1236,16 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
  * specified absolute tolerance.
  * Version for degree 2 vectors.
  */
-#define V2APPROXEQUAL(a, b, tol)	( \
-	NEAR_ZERO( (a)[X]-(b)[X], tol ) && \
-	NEAR_ZERO( (a)[Y]-(b)[Y], tol ) )
+#define V2APPROXEQUAL(a, b, tol)	(\
+	NEAR_ZERO((a)[X]-(b)[X], tol) && \
+	NEAR_ZERO((a)[Y]-(b)[Y], tol))
 
 /** 
  * @brief Test for all elements of `v' being smaller than `tol'. 
  * Version for degree 2 vectors.
  */
-#define V2NEAR_ZERO(v, tol)	( \
-	NEAR_ZERO(v[X], tol) && NEAR_ZERO(v[Y], tol) )
+#define V2NEAR_ZERO(v, tol)	(\
+	NEAR_ZERO(v[X], tol) && NEAR_ZERO(v[Y], tol))
 
 
 /**
@@ -1257,20 +1263,20 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
  * To produce a quaternion representing a rotation by PI radians about
  * X-axis:
  *
- *    VSET(axis, 1, 0, 0);
- *    QUAT_FROM_VROT( quat, M_PI, axis);
- *		or
- *    QUAT_FROM_ROT( quat, M_PI, 1.0, 0.0, 0.0, 0.0 );
+ * VSET(axis, 1, 0, 0);
+ * QUAT_FROM_VROT(quat, M_PI, axis);
+ * or
+ * QUAT_FROM_ROT(quat, M_PI, 1.0, 0.0, 0.0, 0.0);
  *
  * Alternatively, in degrees:
- *    QUAT_FROM_ROT_DEG( quat, 180.0, 1.0, 0.0, 0.0, 0.0 );
+ * QUAT_FROM_ROT_DEG(quat, 180.0, 1.0, 0.0, 0.0, 0.0);
  */
 #define QUAT_FROM_ROT(q, r, x, y, z) { \
 	register fastf_t _rot = (r) * 0.5; \
 	QSET(q, x, y, z, cos(_rot)); \
 	VUNITIZE(q); \
 	_rot = sin(_rot); /* _rot is really just a temp variable now */ \
-	VSCALE(q, q, _rot ); \
+	VSCALE(q, q, _rot); \
 }
 
 #define QUAT_FROM_VROT(q, r, v) { \
@@ -1279,7 +1285,7 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 	VUNITIZE(q); \
 	(q)[W] = cos(_rot); \
 	_rot = sin(_rot); /* _rot is really just a temp variable now */ \
-	VSCALE(q, q, _rot ); \
+	VSCALE(q, q, _rot); \
 }
 
 #define QUAT_FROM_VROT_DEG(q, r, v) \
@@ -1342,29 +1348,29 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 #define QUNITIZE(a) { \
 	register double _f; \
 	_f = QMAGNITUDE(a); \
-	if ( _f < VDIVIDE_TOL ) _f = 0.0; else _f = 1.0/_f; \
+	if (_f < VDIVIDE_TOL) _f = 0.0; else _f = 1.0/_f; \
 	(a)[X] *= _f; (a)[Y] *= _f; (a)[Z] *= _f; (a)[W] *= _f; \
 }
 
 /** @brief Return scalar magnitude squared of quaternion at `a'. */
 #define QMAGSQ(a) \
-	( (a)[X]*(a)[X] + (a)[Y]*(a)[Y] \
-	+ (a)[Z]*(a)[Z] + (a)[W]*(a)[W] )
+	((a)[X]*(a)[X] + (a)[Y]*(a)[Y] \
+	+ (a)[Z]*(a)[Z] + (a)[W]*(a)[W])
 
 /** @brief Return scalar magnitude of quaternion at `a'. */
-#define QMAGNITUDE(a)	sqrt( QMAGSQ( a ) )
+#define QMAGNITUDE(a) sqrt(QMAGSQ(a))
 
 /** @brief Compute dot product of quaternions at `a' and `b'. */
 #define QDOT(a, b) \
-	( (a)[X]*(b)[X] + (a)[Y]*(b)[Y] \
-	+ (a)[Z]*(b)[Z] + (a)[W]*(b)[W] )
+	((a)[X]*(b)[X] + (a)[Y]*(b)[Y] \
+	+ (a)[Z]*(b)[Z] + (a)[W]*(b)[W])
 
 /**
  * @brief Compute quaternion product a = b * c
  *
- *    a[W] = b[W]*c[W] - VDOT(b, c);
- *    VCROSS( temp, b, c );
- *    VJOIN2( a, temp, b[W], c, c[W], b );
+ * a[W] = b[W]*c[W] - VDOT(b, c);
+ * VCROSS(temp, b, c);
+ * VJOIN2(a, temp, b[W], c, c[W], b);
  */
 #define QMUL(a, b, c) { \
 	(a)[W] = (b)[W]*(c)[W] - (b)[X]*(c)[X] - (b)[Y]*(c)[Y] - (b)[Z]*(c)[Z]; \
@@ -1384,7 +1390,7 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 /** @brief Multiplicative inverse quaternion */
 #define QINVERSE(a, b) { \
 	register double _f = QMAGSQ(b); \
-	if ( _f < VDIVIDE_TOL ) _f = 0.0; else _f = 1.0/_f; \
+	if (_f < VDIVIDE_TOL) _f = 0.0; else _f = 1.0/_f; \
 	(a)[X] = -(b)[X] * _f; \
 	(a)[Y] = -(b)[Y] * _f; \
 	(a)[Z] = -(b)[Z] * _f; \
@@ -1394,8 +1400,8 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 /**
  * @brief Blend into quaternion `a'
  *
- *    scalar `b' times quaternion at `c' plus
- *    scalar `d' times quaternion at `e'
+ * scalar `b' times quaternion at `c' plus
+ * scalar `d' times quaternion at `e'
  */
 #define QBLEND2(a, b, c, d, e) { \
 	(a)[X] = (b) * (c)[X] + (d) * (e)[X]; \
@@ -1415,13 +1421,13 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
  * Compare two bounding boxes and return true if they are disjoint.
  */
 #define V3RPP_DISJOINT(_l1, _h1, _l2, _h2) \
-      ( (_l1)[X] > (_h2)[X] || (_l1)[Y] > (_h2)[Y] || (_l1)[Z] > (_h2)[Z] || \
-	(_l2)[X] > (_h1)[X] || (_l2)[Y] > (_h1)[Y] || (_l2)[Z] > (_h1)[Z] )
+      ((_l1)[X] > (_h2)[X] || (_l1)[Y] > (_h2)[Y] || (_l1)[Z] > (_h2)[Z] || \
+	(_l2)[X] > (_h1)[X] || (_l2)[Y] > (_h1)[Y] || (_l2)[Z] > (_h1)[Z])
 
 /** Compare two bounding boxes and return true If they overlap. */
 #define V3RPP_OVERLAP(_l1, _h1, _l2, _h2) \
     (! ((_l1)[X] > (_h2)[X] || (_l1)[Y] > (_h2)[Y] || (_l1)[Z] > (_h2)[Z] || \
-	(_l2)[X] > (_h1)[X] || (_l2)[Y] > (_h1)[Y] || (_l2)[Z] > (_h1)[Z]) )
+	(_l2)[X] > (_h1)[X] || (_l2)[Y] > (_h1)[Y] || (_l2)[Z] > (_h1)[Z]))
 
 /**
  * @brief If two extents overlap within distance tolerance, return
@@ -1433,30 +1439,30 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 	(_l1)[Z] > (_h2)[Z] + (_t)->dist || \
 	(_l2)[X] > (_h1)[X] + (_t)->dist || \
 	(_l2)[Y] > (_h1)[Y] + (_t)->dist || \
-	(_l2)[Z] > (_h1)[Z] + (_t)->dist ) )
+	(_l2)[Z] > (_h1)[Z] + (_t)->dist))
 
 /** @brief Is the point within or on the boundary of the RPP? */
-#define V3PT_IN_RPP(_pt, _lo, _hi)	( \
+#define V3PT_IN_RPP(_pt, _lo, _hi)	(\
 	(_pt)[X] >= (_lo)[X] && (_pt)[X] <= (_hi)[X] && \
 	(_pt)[Y] >= (_lo)[Y] && (_pt)[Y] <= (_hi)[Y] && \
-	(_pt)[Z] >= (_lo)[Z] && (_pt)[Z] <= (_hi)[Z]  )
+	(_pt)[Z] >= (_lo)[Z] && (_pt)[Z] <= (_hi)[Z])
 
 /**
  * @brief Within the distance tolerance, is the point within the RPP?
  */
-#define V3PT_IN_RPP_TOL(_pt, _lo, _hi, _t)	( \
+#define V3PT_IN_RPP_TOL(_pt, _lo, _hi, _t)	(\
 	(_pt)[X] >= (_lo)[X]-(_t)->dist && (_pt)[X] <= (_hi)[X]+(_t)->dist && \
 	(_pt)[Y] >= (_lo)[Y]-(_t)->dist && (_pt)[Y] <= (_hi)[Y]+(_t)->dist && \
-	(_pt)[Z] >= (_lo)[Z]-(_t)->dist && (_pt)[Z] <= (_hi)[Z]+(_t)->dist  )
+	(_pt)[Z] >= (_lo)[Z]-(_t)->dist && (_pt)[Z] <= (_hi)[Z]+(_t)->dist)
 
 /**
  * @brief Determine if one bounding box is within another.  Also
  * returns true if the boxes are the same.
  */
-#define V3RPP1_IN_RPP2( _lo1, _hi1, _lo2, _hi2 )	( \
+#define V3RPP1_IN_RPP2(_lo1, _hi1, _lo2, _hi2)	(\
 	(_lo1)[X] >= (_lo2)[X] && (_hi1)[X] <= (_hi2)[X] && \
 	(_lo1)[Y] >= (_lo2)[Y] && (_hi1)[Y] <= (_hi2)[Y] && \
-	(_lo1)[Z] >= (_lo2)[Z] && (_hi1)[Z] <= (_hi2)[Z] )
+	(_lo1)[Z] >= (_lo2)[Z] && (_hi1)[Z] <= (_hi2)[Z])
 
 /** Convert an azimuth/elevation to a direction vector. */
 #define V3DIR_FROM_AZEL(_d, _a, _e) { \
@@ -1468,8 +1474,8 @@ typedef fastf_t	plane_t[ELEMENTS_PER_PLANE];
 
 /** Convert a direction vector to azimuth/elevation (in radians). */
 #define AZEL_FROM_V3DIR(_a, _e, _d) { \
-	(_a) = (((_d)[X] == 0) && ((_d)[Y] == 0)) ? 0.0 : atan2( -((_d)[Y]), -((_d)[X]) ) * -RAD2DEG; \
-	(_e) = atan2( -((_d)[Z]), sqrt((_d)[X]*(_d)[X] + (_d)[Y]*(_d)[Y]) ) * -RAD2DEG; \
+	(_a) = (((_d)[X] == 0) && ((_d)[Y] == 0)) ? 0.0 : atan2(-((_d)[Y]), -((_d)[X])) * -RAD2DEG; \
+	(_e) = atan2(-((_d)[Z]), sqrt((_d)[X]*(_d)[X] + (_d)[Y]*(_d)[Y])) * -RAD2DEG; \
 }
 
 __END_DECLS

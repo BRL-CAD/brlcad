@@ -22,12 +22,12 @@
  * Complex Number and FFT Library
  *
  * "Fast" Version - Function calls to complex math routines removed.
- *      Uses pre-computed sine/cosine tables.
+ * Uses pre-computed sine/cosine tables.
  *
- *  The FFT is:
+ * The FFT is:
  *
  *	        N-1
- *	Xf(k) = Sum x(n)( cos(2PI(nk/N)) - isin(2PI(nk/N)) )
+ *	Xf(k) = Sum x(n)(cos(2PI(nk/N)) - isin(2PI(nk/N)))
  *	        n=0
  *
  */
@@ -36,24 +36,24 @@
 
 #include <stdlib.h>
 #include <stdio.h>	/* for stderr */
-#include <math.h>	/* for double sin(), cos() */
 
-#define	MAXSIZE	65536	/* Needed for sin/cos tables */
-int	_init_size = 0;	/* Internal: shows last initialized size */
+#include "fft.h"
 
-#if !defined(PI)
-#	define	PI	3.141592653589793238462643
-#endif
+
+#define MAXSIZE 65536	/* Needed for sin/cos tables */
+int _init_size = 0;	/* Internal: shows last initialized size */
+
 
 /* The COMPLEX type used throughout */
 typedef struct {
-    double	re;	/* Real Part */
-    double	im;	/* Imaginary Part */
+    double re;	/* Real Part */
+    double im;	/* Imaginary Part */
 } COMPLEX;
 
-void	scramble(int numpoints, COMPLEX *dat);
-void	butterflies(int numpoints, int inverse, COMPLEX *dat);
-int	init_sintab( int size );
+void scramble(int numpoints, COMPLEX *dat);
+void butterflies(int numpoints, int inverse, COMPLEX *dat);
+int init_sintab(int size);
+
 
 /*
  * Forward Complex Fourier Transform
@@ -62,15 +62,15 @@ void
 cfft(COMPLEX *dat, int num)
 {
     /* Check for trig table initialization */
-    if ( num != _init_size ) {
-	if ( init_sintab( num ) == 0 ) {
+    if (num != _init_size) {
+	if (init_sintab(num) == 0) {
 	    /* Can't do requested size */
 	    return;
 	}
     }
 
-    scramble( num, dat );
-    butterflies( num, -1, dat );
+    scramble(num, dat);
+    butterflies(num, -1, dat);
 }
 
 /*
@@ -80,8 +80,8 @@ void
 icfft(COMPLEX *dat, int num)
 {
     /* Check for trig table initialization */
-    if ( num != _init_size ) {
-	if ( init_sintab( num ) == 0 ) {
+    if (num != _init_size) {
+	if (init_sintab(num) == 0) {
 	    /* Can't do requested size */
 	    return;
 	}
@@ -94,69 +94,69 @@ icfft(COMPLEX *dat, int num)
 /******************* INTERNAL FFT ROUTINES ********************/
 
 /* The trig tables */
-double	*sintab;
-double	*costab;
+double *sintab;
+double *costab;
 
 /*
- *		I N I T _ S I N T A B
+ * I N I T _ S I N T A B
  *
  * Internal routine to initialize the sine/cosine table for
- *  transforms of a given size.  Checks size for power of two
- *  and within table limits.
+ * transforms of a given size.  Checks size for power of two
+ * and within table limits.
  *
  * Note that once initialized for one size it ready for one
- *  smaller than that also, but it is convenient to do power of
- *  two checking here so we change the _init_size every time
- *  (We *could* pick up where ever we left off by keeping a
- *  _max_init_size but forget that for now).
+ * smaller than that also, but it is convenient to do power of
+ * two checking here so we change the _init_size every time
+ * (We *could* pick up where ever we left off by keeping a
+ * _max_init_size but forget that for now).
  *
- * Note that we need sin and cos values for +/- (PI * (m / col))
- *  where col = 1, 2, 4, ..., N/2
- *          m = 0, 1, 2, ..., col-1
+ * Note that we need sin and cos values for +/- (M_PI * (m / col))
+ * where col = 1, 2, 4, ..., N/2
+ * m = 0, 1, 2, ..., col-1
  *
- *  Thus we can subscript by: table[(m / col) * N/2]
- *   or with twice as many values by: table[m + col]
- *   We chose the later. (but N.B. this doesn't allow sub
- *   _init_size requests to use existing numbers!)
+ * Thus we can subscript by: table[(m / col) * N/2]
+ * or with twice as many values by: table[m + col]
+ * We chose the later. (but N.B. this doesn't allow sub
+ * _init_size requests to use existing numbers!)
  */
 int
 init_sintab(int size)
 {
-    double	theta;
-    int	col, m;
+    double theta;
+    int col, m;
 
     /*
      * Check whether the requested size is within our compiled
-     *  limit and make sure it's a power of two.
+     * limit and make sure it's a power of two.
      */
-    if ( size > MAXSIZE ) {
-	fprintf( stderr, "fft: Only compiled for max size of %d\n", MAXSIZE );
-	fprintf( stderr, "fft: Can't do the requested %d\n", size );
-	return( 0 );
+    if (size > MAXSIZE) {
+	fprintf(stderr, "fft: Only compiled for max size of %d\n", MAXSIZE);
+	fprintf(stderr, "fft: Can't do the requested %d\n", size);
+	return(0);
     }
-    for ( m = size; (m & 1) == 0; m >>= 1 )
+    for (m = size; (m & 1) == 0; m >>= 1)
 	;
-    if ( m != 1 ) {
-	fprintf( stderr, "fft: Can only do powers of two, not %d\n", size );
-	fprintf( stderr, "fft: What do you think this is, a Winograd transform?\n" );
-	return( 0 );
+    if (m != 1) {
+	fprintf(stderr, "fft: Can only do powers of two, not %d\n", size);
+	fprintf(stderr, "fft: What do you think this is, a Winograd transform?\n");
+	return(0);
     }
 
     /* Get some buffer space */
-    if ( sintab != NULL ) free( sintab );
-    if ( costab != NULL ) free( costab );
+    if (sintab != NULL) free(sintab);
+    if (costab != NULL) free(costab);
     /* should not use bu_calloc() as libfft is not dependant upon libbu */
-    sintab = (double *)calloc( sizeof(*sintab), size );
-    costab = (double *)calloc( sizeof(*costab), size );
+    sintab = (double *)calloc(sizeof(*sintab), size);
+    costab = (double *)calloc(sizeof(*costab), size);
 
     /*
      * Size is okay.  Set up tables.
      */
-    for ( col = 1; col < size; col <<= 1 ) {
-	for ( m = 0; m < col; m++ ) {
-	    theta = PI * (double)m / (double)col;
-	    sintab[ m + col ] = sin( theta );
-	    costab[ m + col ] = cos( theta );
+    for (col = 1; col < size; col <<= 1) {
+	for (m = 0; m < col; m++) {
+	    theta = M_PI * (double)m / (double)col;
+	    sintab[ m + col ] = sin(theta);
+	    costab[ m + col ] = cos(theta);
 	}
     }
 
@@ -164,8 +164,8 @@ init_sintab(int size)
      * Mark size and return success.
      */
     _init_size = size;
-/*	fprintf( stderr, "fft: table init, size = %d\n", size );*/
-    return( 1 );
+/* fprintf(stderr, "fft: table init, size = %d\n", size);*/
+    return(1);
 }
 
 /*
@@ -179,17 +179,17 @@ init_sintab(int size)
  * SCRAMBLE - put data in bit reversed order
  *
  * Note: Could speed this up with pointers if necessary,
- *   but the butterflies take much longer.
+ * but the butterflies take much longer.
  */
 void
 scramble(int numpoints, COMPLEX *dat)
 {
-    register int	i, j, m;
-    COMPLEX	temp;
+    register int i, j, m;
+    COMPLEX temp;
 
     j = 0;
-    for ( i = 0; i < numpoints; i++, j += m ) {
-	if ( i < j ) {
+    for (i = 0; i < numpoints; i++, j += m) {
+	if (i < j) {
 	    /* Switch nodes i and j */
 	    temp.re = dat[j].re;
 	    temp.im = dat[j].im;
@@ -199,7 +199,7 @@ scramble(int numpoints, COMPLEX *dat)
 	    dat[i].im = temp.im;
 	}
 	m = numpoints/2;
-	while ( m-1 < j ) {
+	while (m-1 < j) {
 	    j -= m;
 	    m = (m + 1) / 2;
 	}
@@ -211,32 +211,32 @@ butterflies(int numpoints, int inverse, COMPLEX *dat)
 {
     register COMPLEX *node1, *node2;
     register int step, column, m;
-    COMPLEX	w, temp;
+    COMPLEX w, temp;
 
     /*
      * For each column of the butterfly
      */
-    for ( column = 1; column < numpoints; column = step ) {
+    for (column = 1; column < numpoints; column = step) {
 	step = 2 * column;	/* step is size of "cross-hatch" */
 	/*
-	 * For each principle value of W  (roots on units).
+	 * For each principle value of W (roots on units).
 	 */
-	for ( m = 0; m < column; m++ ) {
+	for (m = 0; m < column; m++) {
 	    /*
 	     * Do these by table lookup:
-	     *	theta = PI*(inverse*m)/column;
-	     *	w.re = cos( theta );
-	     *	w.im = sin( theta );
+	     * theta = M_PI*(inverse*m)/column;
+	     * w.re = cos(theta);
+	     * w.im = sin(theta);
 	     */
 	    w.re = costab[ column + m ];
 	    w.im = sintab[ column + m ] * inverse;
 	    /* Do all pairs of nodes */
-	    for ( node1 = &dat[m]; node1 < &dat[numpoints]; node1 += step ) {
+	    for (node1 = &dat[m]; node1 < &dat[numpoints]; node1 += step) {
 		node2 = node1 + column;
 		/*
 		 * Want to compute:
-		 *  dat[node2] = dat[node1] - w * dat[node2];
-		 *  dat[node1] = dat[node1] + w * dat[node2];
+		 * dat[node2] = dat[node1] - w * dat[node2];
+		 * dat[node1] = dat[node1] + w * dat[node2];
 		 *
 		 * We do all this with pointers now.
 		 */
@@ -262,11 +262,11 @@ butterflies(int numpoints, int inverse, COMPLEX *dat)
      * The canonical definition does the scaleing only
      * after the inverse xform.  Our method may hurt certain
      * other forms of analysis, e.g. cepstrum.
-     *   **** We Now Do It The Canonical Way! ****
+     * **** We Now Do It The Canonical Way! ****
      */
-    if ( inverse > 0 ) {
-	for ( node1 = &dat[0]; node1 < &dat[numpoints]; node1++ ) {
-	    /* cdiv( &dat[i], &const, &dat[i] ); */
+    if (inverse > 0) {
+	for (node1 = &dat[0]; node1 < &dat[numpoints]; node1++) {
+	    /* cdiv(&dat[i], &const, &dat[i]); */
 	    node1->re /= (double)numpoints;
 	    node1->im /= (double)numpoints;
 	}
@@ -311,7 +311,7 @@ cmult(COMPLEX *result, COMPLEX *val1, COMPLEX *val2)
 void
 cdiv(COMPLEX *result, COMPLEX *val1, COMPLEX *val2)
 {
-    double	denom;
+    double denom;
 
     denom = val2->re*val2->re + val2->im*val2->im;
     result->re = (val1->re*val2->re + val1->im*val2->im)/denom;

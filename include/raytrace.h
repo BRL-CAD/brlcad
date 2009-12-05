@@ -300,19 +300,23 @@ struct hit {
  * Return the post-boolean normal into caller-provided _normal vector.
  */
 #define RT_HIT_NORMAL(_normal, _hitp, _stp, _unused, _flipflag) { \
-	RT_CK_HIT(_hitp); \
-	RT_CK_SOLTAB(_stp); \
-	RT_CK_FUNCTAB((_stp)->st_meth); \
+    RT_CK_HIT(_hitp); \
+    RT_CK_SOLTAB(_stp); \
+    RT_CK_FUNCTAB((_stp)->st_meth); \
+    { \
+	void *_n = (void *)_normal; \
 	if ((_stp)->st_meth->ft_norm) { \
-		(_stp)->st_meth->ft_norm(_hitp, _stp, (_hitp)->hit_rayp); \
+	    (_stp)->st_meth->ft_norm(_hitp, _stp, (_hitp)->hit_rayp); \
 	} \
-	if (_normal) { \
-		if (_flipflag) { \
-			VREVERSE((fastf_t *)_normal, (_hitp)->hit_normal); \
-		} else { \
-			VMOVE((fastf_t *)_normal, (_hitp)->hit_normal); \
-		} \
+	if (_n != NULL) { \
+	    int _f = (int)_flipflag; \
+	    if (_f) { \
+		VREVERSE((fastf_t *)_normal, (_hitp)->hit_normal); \
+	    } else { \
+		VMOVE((fastf_t *)_normal, (_hitp)->hit_normal); \
+	    } \
 	} \
+    } \
  }
 
 /* A more powerful interface would be: */
@@ -2630,7 +2634,7 @@ RT_EXPORT BU_EXTERN(int db_string_to_path,
 		     const struct db_i *dbip,
 		     const char *str));
 RT_EXPORT BU_EXTERN(int db_argv_to_path,
-		    (register struct db_full_path	*pp,
+		    (struct db_full_path	*pp,
 		     struct db_i			*dbip,
 		     int				argc,
 		     const char			*const*argv));
@@ -2863,13 +2867,13 @@ RT_EXPORT BU_EXTERN(int rt_comb_get_color,
 
 /* tgc.c */
 RT_EXPORT BU_EXTERN(void rt_pt_sort,
-		    (register fastf_t t[],
+		    (fastf_t t[],
 		     int npts));
 
 /* ell.c */
 RT_EXPORT BU_EXTERN(void rt_ell_16pts,
-		    (register fastf_t *ov,
-		     register fastf_t *V,
+		    (fastf_t *ov,
+		     fastf_t *V,
 		     fastf_t *A,
 		     fastf_t *B));
 
@@ -2982,7 +2986,7 @@ RT_EXPORT BU_EXTERN(int rt_comb_import5,
 RT_EXPORT BU_EXTERN(int rt_extrude_import5,
 		    (struct rt_db_internal	*ip,
 		     const struct bu_external	*ep,
-		     register const mat_t	mat,
+		     const mat_t mat,
 		     const struct db_i		*dbip,
 		     struct resource		*resp,
 		     const int			minor_type));
@@ -3282,10 +3286,10 @@ RT_EXPORT BU_EXTERN(int rt_db_lookup_internal,
 		     int noisy,
 		     struct resource *resp));
 RT_EXPORT BU_EXTERN(void rt_optim_tree,
-		    (register union tree *tp,
+		    (union tree *tp,
 		     struct resource *resp));
 RT_EXPORT BU_EXTERN(void db_get_directory,
-		    (register struct resource *resp));
+		    (struct resource *resp));
 
 /* db_walk.c */
 RT_EXPORT BU_EXTERN(void db_functree,
@@ -3605,8 +3609,9 @@ RT_EXPORT BU_EXTERN(int rt_find_paths,
 		     struct directory *end,
 		     struct bu_ptbl *paths,
 		     struct resource *resp));
-RT_EXPORT BU_EXTERN(struct bu_bitv *get_solidbitv,
-		    (long nbits,
+
+RT_EXPORT BU_EXTERN(struct bu_bitv *rt_get_solidbitv,
+		    (size_t nbits,
 		     struct resource *resp));
 
 /* shoot.c */

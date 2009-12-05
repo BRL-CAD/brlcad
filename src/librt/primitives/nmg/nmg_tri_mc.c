@@ -21,11 +21,29 @@
 /** @{ */
 /** @file nmg_tri_mc.c
  *
- *  Triangulate the faces of a polygonal NMG using the marching cubes
- *  algorithm.
+ * Triangulate the faces of a polygonal NMG using the marching cubes
+ * algorithm.
  *
  */
 /** @} */
+
+/* rough game plan
+ *   [ ] develop/proof metaball primitive tesselation using MC
+ *       [ ] asc-g/g-asc of metaballs for regression/comparison testing
+ *       [ ] edge solve cubes
+ *       [ ] write compiled table shtuff (use existing table, the hex/index one?)
+ *       [ ] produce NMG mesh
+ *       [ ] experiment with decimating
+ *   [ ] hoist code where final cube edge intersections is known
+ *   [ ] implement ray-firing to find edge intersects
+ *   [ ] hoise table stuff
+ *   [ ] hoist NMG mesh writer.
+ *   [ ] try decimation?
+ *   [ ] ???
+ *   [ ] profit!
+ *   [ ] explore optimizations if time left?
+ *   [ ] compare old nmg tesselator for accuracy/performance/robustness?
+ */
 
 #include "common.h"
 
@@ -57,6 +75,7 @@ nmg_triangulate_model_mc(struct model *m, const struct bn_tol *tol)
     if (rt_g.NMG_debug & DEBUG_TRI)
 	bu_log("Triangulation completed\n");
 }
+
 
 /*
  * Local Variables:

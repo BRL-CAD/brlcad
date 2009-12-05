@@ -142,6 +142,9 @@ rt_do_cmd(struct rt_i *rtip, const char *ilp, register const struct command_tab 
     char 		*lp;
     int		retval;
 
+    if (rtip)
+	RT_CK_RTI(rtip);
+
     lp = bu_strdup(ilp);
 
     nwords = bu_argv_from_string( cmd_args, MAXWORDS, lp );

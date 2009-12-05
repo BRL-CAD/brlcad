@@ -176,7 +176,7 @@ toUV(PBCData& data, ON_2dPoint& out_pt, double t, double knudge=0.0) {
   ON_3dPoint knudgedPointOnCurve = data.curve->PointAt(t+knudge);
 
   ON_2dPoint uv;
-  if ( data.surftree->getSurfacePoint((const ON_3dPoint&)pointOnCurve,uv,(const ON_3dPoint&)knudgedPointOnCurve) > 0 ) {
+  if ( data.surftree->getSurfacePoint((const ON_3dPoint&)pointOnCurve,uv,(const ON_3dPoint&)knudgedPointOnCurve,BREP_EDGE_MISS_TOLERANCE) > 0 ) {
 	  out_pt.Set(uv.x,uv.y);
 	  return true;
   } else {
@@ -740,7 +740,7 @@ IsAtSeam(const ON_Surface *surf, double u, double v) {
 		if (!surf->IsClosed(i))
 		  continue;
 		double p = (i) ? v : u;
-		if (NEAR_EQUAL(p,surf->Domain(i)[0],PBC_TOL) || NEAR_EQUAL(p,surf->Domain(i)[1],PBC_TOL))
+		if (NEAR_EQUAL(p,surf->Domain(i)[0],PBC_SEAM_TOL) || NEAR_EQUAL(p,surf->Domain(i)[1],PBC_SEAM_TOL))
 		  rc += (i+1);
 	}
 

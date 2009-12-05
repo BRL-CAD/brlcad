@@ -263,8 +263,8 @@ public:
 	_init(0, 0);
     }
 
-    vec2d(double x, double y) {
-	_init(x, y);
+    vec2d(double x_, double y_) {
+	_init(x_, y_);
     }
 
     vec2d(const vec2d& proto) {
@@ -327,10 +327,10 @@ private:
 
     v2df vec() const { return _vec; }
 
-    void _init(double x, double y) {
+    void _init(double x_, double y_) {
 	double  v[2] __attribute__((aligned(16)));
-	v[0] = x;
-	v[1] = y;
+	v[0] = x_;
+	v[1] = y_;
 	_vec = _mm_load_pd(v);
     }
 

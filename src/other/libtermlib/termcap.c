@@ -39,8 +39,6 @@ static char *sccsid = "@(#)termcap.c	1.7 (gritter) 11/23/04";
 #endif
 #endif
 
-#include "common.h"
-
 /* from termcap.c	5.1 (Berkeley) 6/5/85 */
 
 #if 0	/* GR */
@@ -49,8 +47,7 @@ static char *sccsid = "@(#)termcap.c	1.7 (gritter) 11/23/04";
 #include "termcap.h"
 #endif
 
-#define	E_TERMCAP	"/etc/termcap"
-#define B_TERMCAP BRLCAD_DATA "/etc/termcap"
+#define	E_TERMCAP "/etc/termcap"
 
 #define MAXHOP		32	/* max number of tc= indirections */
 
@@ -187,10 +184,9 @@ tgetent(char *bp, const char *name)
 	register int c;
 	register int i = 0, cnt = 0;
 	char ibuf[TCBUFSIZE];
-	int tf;
+	int tf = -1;
 
 	tbuf = bp;
-	tf = -1;
 
 	cp = getenv("TERMCAP");
 	/*
@@ -214,10 +210,15 @@ tgetent(char *bp, const char *name)
 		}
 	}
 
+#ifdef B_TERMCAP
 	if (tf < 0)
 	  tf = open(B_TERMCAP, 0);
+#endif
+
+#ifdef E_TERMCAP
 	if (tf < 0)
 	  tf = open(E_TERMCAP, 0);
+#endif
 
 	if (tf < 0)
 		return (-1);

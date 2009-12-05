@@ -46,6 +46,7 @@ rt_sph_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     *b = ON_BrepSphere(sph);
 }
 
+
 // Local Variables:
 // tab-width: 8
 // mode: C++

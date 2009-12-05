@@ -147,6 +147,7 @@ package provide cadwidgets::Ged 1.0
 	method copymat {args}
 	method cp {args}
 	method cpi {args}
+	method data_axes {args}
 	method dbconcat {args}
 	method dbfind {args}
 	method dbip {args}
@@ -201,6 +202,7 @@ package provide cadwidgets::Ged 1.0
 	method killrefs {args}
 	method killtree {args}
 	method l {args}
+	method lastMouseRayPos {}
 	method light {args}
 	method light_all {args}
 	method list_views {args}
@@ -519,6 +521,7 @@ package provide cadwidgets::Ged 1.0
 	variable mMeasuringStickColorVDraw ffff00
 	variable mMouseRayCallbacks ""
 	variable mRefreshOn 1
+	variable mLastMouseRayPos ""
 
 	method multi_pane {args}
 	method new_view {args}
@@ -957,6 +960,13 @@ package provide cadwidgets::Ged 1.0
     eval $mGed cpi $args
 }
 
+::itcl::body cadwidgets::Ged::data_axes {args} {
+    eval $mGed data_axes $itk_component(ur) $args
+    eval $mGed data_axes $itk_component(ul) $args
+    eval $mGed data_axes $itk_component(ll) $args
+    eval $mGed data_axes $itk_component(lr) $args
+}
+
 ::itcl::body cadwidgets::Ged::dbconcat {args} {
     eval $mGed dbconcat $args
 }
@@ -1082,6 +1092,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::get_eyemodel {args} {
     eval $mGed get_eyemodel $itk_component($itk_option(-pane)) $args
+}
+
+::itcl::body cadwidgets::Ged::lastMouseRayPos {} {
+    return $mLastMouseRayPos
 }
 
 ::itcl::body cadwidgets::Ged::get_type {args} {
@@ -2578,6 +2592,8 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::pane_mouse_ray {_pane _x _y {_pflag 0}} {
+    set mLastMouseRayPos "$_x $_y"
+
     set target [$mGed screen2model $itk_component($_pane) $_x $_y]
     set view [$mGed screen2view $itk_component($_pane) $_x $_y]
 

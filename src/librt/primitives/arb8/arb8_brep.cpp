@@ -31,12 +31,13 @@
 #include "brep.h"
 
 extern "C" {
-extern void rt_arb_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol,const struct bn_tol *tol);
-extern void rt_nmg_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
+    extern void rt_arb_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol);
+    extern void rt_nmg_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
 }
 
+
 /**
- *			R T _ A R B 8 _ B R E P
+ * R T _ A R B 8 _ B R E P
  */
 extern "C" void
 rt_arb8_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
@@ -61,6 +62,7 @@ rt_arb8_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
     FREE_MODEL(arbm);
     bu_free(tmp_internal, "free temporary rt_db_internal");
 }
+
 
 // Local Variables:
 // tab-width: 8

@@ -155,13 +155,18 @@ nmg_to_egg(struct nmgregion *r, struct db_full_path *pathp, int region_id, int m
 }
 
 
+/* FIXME: this be a dumb hack to avoid void* conversion */
+struct gcv_data {
+    void (*func)(struct nmgregion *, struct db_full_path *, int, int, float [3]);
+};
+static struct gcv_data gcvwriter = {nmg_to_egg};
+
+
 /*
  *			M A I N
  */
 int
-main(argc, argv)
-    int argc;
-    char *argv[];
+main(int argc, char *argv[])
 {
     double percent;
     int i;
@@ -293,13 +298,13 @@ main(argc, argv)
 	fprintf(fp, "<Group> %s {\n", *(argv+1));
 	(void) db_walk_tree(dbip,		/* db_i */
 			    1,			/* argc */
-			    ++argv,		/* argv */
+			    (const char **)(++argv),	/* argv */
 			    1,			/* ncpu */
 			    &tree_state,	/* state */
 			    0,			/* start func */
 			    gcv_region_end,	/* end func */
 			    nmg_booltree_leaf_tess, /* leaf func */
-			    (genptr_t)nmg_to_egg);  /* client_data */
+			    (genptr_t)&gcvwriter);  /* client_data */
 	fprintf(fp, "}\n");
     }
 

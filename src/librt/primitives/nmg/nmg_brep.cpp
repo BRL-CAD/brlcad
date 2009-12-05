@@ -32,21 +32,23 @@
 #include "bu.h"
 
 /**
-* 
-*/
-static ON_Surface* sideSurface(const ON_3dPoint& SW, const ON_3dPoint& SE, const ON_3dPoint& NE, const ON_3dPoint& NW)
+ * 
+ */
+HIDDEN ON_Surface*
+sideSurface(const ON_3dPoint& SW, const ON_3dPoint& SE, const ON_3dPoint& NE, const ON_3dPoint& NW)
 {
-    ON_NurbsSurface *surf = ON_NurbsSurface::New(3,FALSE, 2, 2, 2, 2);
-    surf->SetCV(0,0,SW);
-    surf->SetCV(1,0,SE);
-    surf->SetCV(1,1,NE);
-    surf->SetCV(0,1,NW);
-    surf->SetKnot(0,0,0.0);
-    surf->SetKnot(0,1,1.0);
-    surf->SetKnot(1,0,0.0);
-    surf->SetKnot(1,1,1.0);
+    ON_NurbsSurface *surf = ON_NurbsSurface::New(3, FALSE, 2, 2, 2, 2);
+    surf->SetCV(0, 0, SW);
+    surf->SetCV(1, 0, SE);
+    surf->SetCV(1, 1, NE);
+    surf->SetCV(0, 1, NW);
+    surf->SetKnot(0, 0, 0.0);
+    surf->SetKnot(0, 1, 1.0);
+    surf->SetKnot(1, 0, 0.0);
+    surf->SetKnot(1, 1, 1.0);
     return surf;
 }
+
 
 extern "C" void
 rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
@@ -74,26 +76,32 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 	for (BU_LIST_FOR(s, shell, &r->s_hd)) {
 	    for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
 		NMG_CK_FACEUSE(fu);
-		if(fu->orientation != OT_SAME) continue;
+		if (fu->orientation != OT_SAME) continue;
 		
-		// Need to create ON_NurbsSurface based on plane of face
-		// in order to have UV space in which to define trimming
-		// loops.  Bounding points are NOT on the face plane, so 
-		// another approach must be used.
+		// Need to create ON_NurbsSurface based on plane of
+		// face in order to have UV space in which to define
+		// trimming loops.  Bounding points are NOT on the
+		// face plane, so another approach must be used.
 		//
-		// General approach:  For all loops in the faceuse, collect all the vertices.
-		// Find the center point of all the vertices, and search for the point with
-		// the greatest distance from that center point.  Once found, cross the vector
-		// between the center point and furthest point with the normal of the face
-		// and scale the resulting vector to have the same length as the vector to
-		// the furthest point.  Add the two resulting vectors to find the first
-		// corner point.  Mirror the first corner point across the center to find the
-		// second corner point.  Cross the two vectors created by the first two corner
-		// points with the face normal to get the vectors of the other two corners,
-		// and scale the resulting vectors to the same magnitude as the first two.
-		// These four points bound all vertices on the plane and form a suitable
-		// staring point for a UV space, since all points on all the edges are equal
-		// to or further than the distance between the furthest vertex and the center
+		// General approach: For all loops in the faceuse,
+		// collect all the vertices.  Find the center point of
+		// all the vertices, and search for the point with the
+		// greatest distance from that center point.  Once
+		// found, cross the vector between the center point
+		// and furthest point with the normal of the face and
+		// scale the resulting vector to have the same length
+		// as the vector to the furthest point.  Add the two
+		// resulting vectors to find the first corner point.
+		// Mirror the first corner point across the center to
+		// find the second corner point.  Cross the two
+		// vectors created by the first two corner points with
+		// the face normal to get the vectors of the other two
+		// corners, and scale the resulting vectors to the
+		// same magnitude as the first two.  These four points
+		// bound all vertices on the plane and form a suitable
+		// staring point for a UV space, since all points on
+		// all the edges are equal to or further than the
+		// distance between the furthest vertex and the center
 		// point.
 		
 		// ............. .............
@@ -114,8 +122,8 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
  		// .           *             .
  		// ...........................
  		//
- 	       	
- 		
+
+
  		const struct face_g_plane *fg = fu->f_p->g.plane_p;
 		struct bu_ptbl vert_table;
 		nmg_tabulate_face_g_verts(&vert_table, fg);
@@ -149,8 +157,9 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 		bu_ptbl_free(&vert_table);
 		int ccw = 0;
 		vect_t vtmp, uv1, uv2, uv3, uv4, vnormal;
-		// If an outer loop is found in the nmg with a cw orientation, use a flipped normal
-		// to form the NURBS surface
+		// If an outer loop is found in the nmg with a cw
+		// orientation, use a flipped normal to form the NURBS
+		// surface
                 for (BU_LIST_FOR(lu, loopuse, &fu->lu_hd)) {
 		    if (lu->orientation == OT_SAME && nmg_loop_is_ccw(lu, fg->N, tol) == -1) ccw = -1;
 		}
@@ -182,11 +191,12 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 		// Now that we have the surface, define the face
 		ON_BrepFace& face = (*b)->NewFace(surfindex - 1);
 		
-		// With the surface and the face defined, make trimming loops and
-		// create faces.  To generate UV coordinates for each
-		// from and to for the edgecurves, the UV origin is
-		// defined to be v1, v1->v2 is defined as the U domain,
-		// and v1->v4 is defined as the V domain.
+		// With the surface and the face defined, make
+		// trimming loops and create faces.  To generate UV
+		// coordinates for each from and to for the
+		// edgecurves, the UV origin is defined to be v1,
+		// v1->v2 is defined as the U domain, and v1->v4 is
+		// defined as the V domain.
 		vect_t u_axis, v_axis;
 		VSUB2(u_axis, uv2, uv1);
 		VSUB2(v_axis, uv4, uv1);
@@ -218,7 +228,7 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 			int vert2 = brepi[vg2->index];
 			VMOVE(ev2, vg2->coord);
 			// Add edge if not already added
-			if(brepi[eu->e_p->index] == -INT_MAX) {
+			if (brepi[eu->e_p->index] == -INT_MAX) {
 			    /* always add edges with the small vertex index as from */
 			    if (vg1->index > vg2->index) {
 				int tmpvert = vert1;
@@ -236,8 +246,9 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 			    e.m_tolerance = 0.0;
 			    brepi[eu->e_p->index] = e.m_edge_index;
 			}
-			// Regardless of whether the edge existed as an object, it
-			// needs to be added to the trimming loop
+			// Regardless of whether the edge existed as
+			// an object, it needs to be added to the
+			// trimming loop
 			vect_t u_component, v_component;
 			ON_3dPoint vg1pt(vg1->coord);
 			int orientation = 0;
@@ -262,8 +273,8 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 			to_uv.x = v0 + MAGNITUDE(v_component)/v_axis_dist*(v1-v0);
 			ON_3dPoint S1, S2;
 			ON_3dVector Su, Sv;
-			surf->Ev1Der(from_uv.x,from_uv.y,S1,Su,Sv);
-			surf->Ev1Der(to_uv.x,to_uv.y,S2,Su,Sv);
+			surf->Ev1Der(from_uv.x, from_uv.y, S1, Su, Sv);
+			surf->Ev1Der(to_uv.x, to_uv.y, S2, Su, Sv);
 			ON_Curve* c2d =  new ON_LineCurve(from_uv, to_uv);
 			c2d->SetDomain(0.0, 1.0);
 			int c2i = (*b)->m_C2.Count();
@@ -282,7 +293,6 @@ rt_nmg_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 
     bu_free(brepi, "rt_nmg_brep: brepi[]");
 }
-
 
 
 // Local Variables:

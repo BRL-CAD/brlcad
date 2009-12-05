@@ -54,16 +54,8 @@
 
 #define PLOTBOUND	1000.0	/* Max magnification in Rot matrix */
 struct dm	*ps_open(Tcl_Interp *interp, int argc, char **argv);
-static int	ps_close(struct dm *dmp);
-static int	ps_drawBegin(struct dm *dmp), ps_drawEnd(struct dm *dmp);
-static int	ps_normal(struct dm *dmp), ps_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye);
-static int	ps_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int size, int use_aspect), ps_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2);
-static int      ps_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y);
-static int	ps_drawVList(struct dm *dmp, register struct bn_vlist *vp);
-static int      ps_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency);
-static int      ps_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b);
-static int      ps_setLineAttr(struct dm *dmp, int width, int style);
-static int	ps_setWinBounds(struct dm *dmp, register int *w), ps_debug(struct dm *dmp, int lvl);
+
+HIDDEN_DM_FUNCTION_PROTOTYPES(ps)
 
 struct dm dm_ps = {
     ps_close,
@@ -73,8 +65,11 @@ struct dm dm_ps = {
     ps_loadMatrix,
     ps_drawString2D,
     ps_drawLine2D,
+    ps_drawLine3D,
+    ps_drawLines3D,
     ps_drawPoint2D,
     ps_drawVList,
+    ps_draw,
     ps_setFGColor,
     ps_setBGColor,
     ps_setLineAttr,
@@ -361,7 +356,7 @@ NEWPG\n\
  *
  *  Gracefully release the display.
  */
-static int
+HIDDEN int
 ps_close(struct dm *dmp)
 {
     if (!((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp)
@@ -387,7 +382,7 @@ ps_close(struct dm *dmp)
  *
  * There are global variables which are parameters to this routine.
  */
-static int
+HIDDEN int
 ps_drawBegin(struct dm *dmp)
 {
     return TCL_OK;
@@ -396,7 +391,7 @@ ps_drawBegin(struct dm *dmp)
 /*
  *			P S _ E P I L O G
  */
-static int
+HIDDEN int
 ps_drawEnd(struct dm *dmp)
 {
     if ( !((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp )
@@ -413,9 +408,9 @@ ps_drawEnd(struct dm *dmp)
  *  			P S _ N E W R O T
  *
  *  Load a new transformation matrix.  This will be followed by
- *  many calls to ps_drawVList().
+ *  many calls to ps_draw().
  */
-static int
+HIDDEN int
 ps_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 {
     Tcl_Obj	*obj;
@@ -448,16 +443,10 @@ ps_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 }
 
 /*
- *  			P S _ O B J E C T
- *
- *  Set up for an object, transformed as indicated, and with an
- *  object center as specified.  The ratio of object to screen size
- *  is passed in as a convienience.
- *
- *  Returns 0 if object could be drawn, !0 if object was omitted.
+ *  			P S _ D R A W V L I S T
  */
 /* ARGSUSED */
-static int
+HIDDEN int
 ps_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 {
     static vect_t			last;
@@ -605,13 +594,36 @@ ps_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 }
 
 /*
+ *  			P S _ D R A W
+ */
+/* ARGSUSED */
+HIDDEN int
+ps_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), genptr_t *data)
+{
+    struct bn_vlist *vp;
+    if (!callback_function) {
+        if (data) {
+            vp = (struct bn_vlist *)data;
+	    ps_drawVList(dmp,vp);
+        }
+    } else {
+        if (!data) {
+            return TCL_ERROR;
+        } else {
+            vp = callback_function(data);
+        }
+    }
+    return TCL_OK;
+}
+
+/*
  *			P S _ N O R M A L
  *
  * Restore the display processor to a normal mode of operation
  * (ie, not scaled, rotated, displaced, etc).
  * Turns off windowing.
  */
-static int
+HIDDEN int
 ps_normal(struct dm *dmp)
 {
     return TCL_OK;
@@ -624,7 +636,7 @@ ps_normal(struct dm *dmp)
  * The starting position of the beam is as specified.
  */
 /* ARGSUSED */
-static int
+HIDDEN int
 ps_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int size, int use_aspect)
 {
     int sx, sy;
@@ -661,7 +673,7 @@ ps_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int si
  *			P S _ D R A W L I N E 2 D
  *
  */
-static int
+HIDDEN int
 ps_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2)
 {
     int sx1, sy1;
@@ -682,24 +694,36 @@ ps_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2)
     return TCL_OK;
 }
 
-static int
+HIDDEN int
+ps_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2)
+{
+    return TCL_OK;
+}
+
+HIDDEN int
+ps_drawLines3D(struct dm *dmp, int npoints, point_t *points)
+{
+    return TCL_OK;
+}
+
+HIDDEN int
 ps_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
 {
     return ps_drawLine2D(dmp, x, y, x, y);
 }
 
-static int
+HIDDEN int
 ps_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency)
 {
     return TCL_OK;
 }
-static int
+HIDDEN int
 ps_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
 {
     return TCL_OK;
 }
 
-static int
+HIDDEN int
 ps_setLineAttr(struct dm *dmp, int width, int style)
 {
     dmp->dm_lineWidth = width;
@@ -714,14 +738,14 @@ ps_setLineAttr(struct dm *dmp, int width, int style)
 }
 
 /* ARGSUSED */
-static int
+HIDDEN int
 ps_debug(struct dm *dmp, int lvl)
 {
     dmp->dm_debugLevel = lvl;
     return TCL_OK;
 }
 
-static int
+HIDDEN int
 ps_setWinBounds(struct dm *dmp, register int *w)
 {
     /* Compute the clipping bounds */

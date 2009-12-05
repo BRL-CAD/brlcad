@@ -21,12 +21,6 @@
  *
  * handle user interaction with nirt.
  *
- * Author:
- *   Natalie L. Barker
- *
- * Date:
- *   Jan 90
- *
  */
 
 #include "common.h"
@@ -43,17 +37,17 @@
 #include "./usrfmt.h"
 
 
-extern int		nirt_debug;
-extern com_table	ComTab[];
-extern int		silent_flag;
+extern int nirt_debug;
+extern com_table ComTab[];
+extern int silent_flag;
 
 
 static int
 sgetc (char *string)
 {
-    static char	*prev_string = 0;
-    static char	*sp;
-    static int	reported_EOS = 0;
+    static char *prev_string = 0;
+    static char *sp;
+    static int reported_EOS = 0;
 
     if (nirt_debug & DEBUG_INTERACT)
 	bu_log("sgetc(%s) '%s' '%s'... ", string, prev_string, sp);
@@ -95,16 +89,16 @@ sgetc (char *string)
 void
 interact(int input_source, void *sPtr)
 {
-    int		Ch;		/* individual characters of the input line */
-    int		Prev_ch=0;	/* previous character */
-    char    	line_buffer[256];	/* line of text the user types   */
-    int		i;		/* position on the line_buffer[]           */
-    com_table	*ctp;		/* command table pointer		   */
-    int		key_len;	/* the length of the key word             */
-    int		in_cmt;		/* are we now within a comment? */
-    int		more_on_line = 0;/* are we withing a multi-command line? */
+    int Ch;			/* individual characters of the input line */
+    int Prev_ch=0;		/* previous character */
+    char line_buffer[256];	/* line of text the user types */
+    int i;			/* position on the line_buffer[]           */
+    com_table *ctp;		/* command table pointer */
+    int key_len;		/* the length of the key word */
+    int in_cmt;			/* are we now within a comment? */
+    int more_on_line = 0;	/* are we withing a multi-command line? */
 
-#define	next_char(s)	(input_source == READING_FILE)		?	\
+#define next_char(s)	(input_source == READING_FILE)		?	\
 			    fgetc((FILE *) s)			:       \
 			(input_source == READING_STRING)	?	\
 			    sgetc((char *) s)			:	\
@@ -112,7 +106,7 @@ interact(int input_source, void *sPtr)
 			    input_source), EOF)
 
     if (nirt_debug & DEBUG_INTERACT) {
-	bu_log("interact(%s, %x)...\n",
+	bu_log("interact(%s, %p)...\n",
 	       (input_source == READING_FILE) ? "READING_FILE" :
 	       (input_source == READING_STRING) ? "READING_STRING" : "???",
 	       sPtr);
@@ -193,6 +187,7 @@ interact(int input_source, void *sPtr)
 		    "Invalid command name '%s'.  Enter '?' for help\n",
 		    line_buffer);
 	} else {
+	    /* call the callback */
 	    (*(ctp->com_func)) (&line_buffer[key_len], ctp);
 	}
     }
@@ -200,10 +195,10 @@ interact(int input_source, void *sPtr)
 
 
 com_table *
-get_comtab_ent (char *pattern, int pat_len)
+get_comtab_ent(char *pattern, int pat_len)
 {
-    com_table	*ctp;
-    int		len;
+    com_table *ctp;
+    int len;
 
     for (ctp = ComTab; ctp->com_name; ++ctp) {
 	len = FMAX(pat_len, (int)strlen(ctp->com_name));
