@@ -28,25 +28,21 @@
  * For purposes of the "struct hit" surface number, the
  * "non-elevation" surfaces are numbered 0 .. 7 where:
  *
- *	     Plane #	Name  plane dist
- *	--------------------------------------------------
- *		0	XMIN (dist = 0)
- *		1	XMAX (dist = xsiz)
- *		2	YMIN (dist = 0)
- *		3	YMAX (dist = ysiz)
- *		4	ZMIN (dist = 0)
- *		5	ZMAX (dsp_max)
+ *     Plane #	Name  plane dist
+ * --------------------------------------------------
+ *	0	XMIN (dist = 0)
+ *	1	XMAX (dist = xsiz)
+ *	2	YMIN (dist = 0)
+ *	3	YMAX (dist = ysiz)
+ *	4	ZMIN (dist = 0)
+ *	5	ZMAX (dsp_max)
  *
- *		6	ZMID (dsp_min)
- *		7	ZTOP (computed)
+ *	6	ZMID (dsp_min)
+ *	7	ZTOP (computed)
  *
- * if the "struct hit" surfno surface is ZMAX, then
- *  	hit_vpriv[X, Y] holds the cell that was hit.
- * 	hit_vpriv[Z] is 0 if this was an in-hit.  1 if an out-hit
- *
- *
- * Authors -
- *  	Lee A. Butler
+ * if the "struct hit" surfno surface is ZMAX, then hit_vpriv[X, Y]
+ * holds the cell that was hit.  hit_vpriv[Z] is 0 if this was an
+ * in-hit.  1 if an out-hit.
  *
  */
 
@@ -79,13 +75,15 @@ struct dsp_rpp {
     unsigned short dsp_max[3];
 };
 
-/* This structure contains a bounding box for a portion of the DSP
+
+/**
+ * This structure contains a bounding box for a portion of the DSP
  * along with information about sub-bounding boxes, and what layer
  * (resolution) of the DSP this box bounds
  */
 struct dsp_bb {
-    long	magic;
-    struct dsp_rpp	dspb_rpp;	/* our bounding box */
+    long magic;
+    struct dsp_rpp dspb_rpp;	/* our bounding box */
     /*
      * the next two elements indicate the number and locations of
      * sub-bounding rpps.
@@ -93,32 +91,34 @@ struct dsp_bb {
      * dsp_b_ch_dim is typically DIM_BB_CHILDREN, DIM_BB_CHILDREN
      * except for "border" areas of the array
      */
-    unsigned short	dspb_subcell_size;/* XXX This is not yet computed */
-    unsigned short	dspb_ch_dim[2];	/* dimensions of children[] */
-    struct dsp_bb	*dspb_children[NUM_BB_CHILDREN];
+    unsigned short dspb_subcell_size;/* XXX This is not yet computed */
+    unsigned short dspb_ch_dim[2];	/* dimensions of children[] */
+    struct dsp_bb *dspb_children[NUM_BB_CHILDREN];
 };
+
+
 #define MAGIC_dsp_bb 234
 #define DSP_BB_CK(_p) BU_CKMAG(_p, MAGIC_dsp_bb, "dsp_bb")
 /*
- * This structure provides a handle to all of the bounding boxes for the DSP
- * at a particular resolution.
+ * This structure provides a handle to all of the bounding boxes for
+ * the DSP at a particular resolution.
  */
 #define LAYER(l, x, y) l->p[l->dim[1]*y+x]
 struct dsp_bb_layer {
-    int	dim[2];		/* the dimensions of the array at element p */
+    int dim[2];		/* the dimensions of the array at element p */
     struct dsp_bb *p;	/* array of dsp_bb's for this level */
 };
 
 
-extern int rt_retrieve_binunif(struct rt_db_internal *intern,
-			       const struct db_i	*dbip,
-			       const char *name);
+extern int rt_retrieve_binunif (struct rt_db_internal *intern,
+				const struct db_i *dbip,
+				const char *name);
 
 
 #define dlog if (RT_G_DEBUG & DEBUG_HF) bu_log
 
 
-#define BBOX_PLANES	7	/* 2 tops & 5 other sides */
+#define BBOX_PLANES 7 /* 2 tops & 5 other sides */
 #define XMIN 0
 #define XMAX 1
 #define YMIN 2
@@ -129,17 +129,18 @@ extern int rt_retrieve_binunif(struct rt_db_internal *intern,
 #define ZTOP 7
 
 
-/* per-solid ray tracing form of solid, including precomputed terms
+/**
+ * per-solid ray tracing form of solid, including precomputed terms
  *
- * The dsp_i element MUST BE FIRST so that we can cast a pointer to
- *  a dsp_specific to a rt_dsp_intermal.
+ * The dsp_i element MUST BE FIRST so that we can cast a pointer to a
+ * dsp_specific to a rt_dsp_intermal.
  */
 struct dsp_specific {
     struct rt_dsp_internal dsp_i;	/* MUST BE FIRST */
-    double		dsp_pl_dist[BBOX_PLANES];
-    int		xsiz;
-    int		ysiz;
-    int		layers;
+    double dsp_pl_dist[BBOX_PLANES];
+    int xsiz;
+    int ysiz;
+    int layers;
     struct dsp_bb_layer *layer;
     struct dsp_bb *bb_array;
 };
@@ -154,20 +155,22 @@ dsp_val(struct rt_dsp_internal *dsp_i, unsigned x, unsigned y, char *file, int l
     RT_DSP_CK_MAGIC(dsp_i);
 
     if (x >= dsp_i->dsp_xcnt || y >= dsp_i->dsp_ycnt) {
-	bu_log("%s:%d xy: %u,%u cnt: %u,%u\n",
+	bu_log("%s:%d xy: %u, %u cnt: %u, %u\n",
 	       file, line, x, y, dsp_i->dsp_xcnt, dsp_i->dsp_ycnt);
 	bu_bomb("");
     }
 
     return dsp_i->dsp_buf[ y * dsp_i->dsp_xcnt + x ];
 }
+
+
 #else
-# define DSP(_p, _x, _y) ( \
-	( \
+# define DSP(_p, _x, _y) (\
+	(\
 	 (unsigned short *) \
 	  ((_p)->dsp_buf) \
-	)[ \
-	     (_y) * ((struct rt_dsp_internal *)_p)->dsp_xcnt + (_x) ] )
+)[ \
+	     (_y) * ((struct rt_dsp_internal *)_p)->dsp_xcnt + (_x) ])
 #endif
 
 # define XCNT(_p) (((struct rt_dsp_internal *)_p)->dsp_xcnt)
@@ -177,35 +180,37 @@ dsp_val(struct rt_dsp_internal *dsp_i, unsigned x, unsigned y, char *file, int l
 
 
 struct bbox_isect {
-    double	in_dist;
-    double	out_dist;
-    int	in_surf;
-    int	out_surf;
+    double in_dist;
+    double out_dist;
+    int in_surf;
+    int out_surf;
 };
 
 
-/* per-ray ray tracing information
- *
+/**
+ * per-ray ray tracing information
  */
 struct isect_stuff {
-    struct dsp_specific	*dsp;
-    struct bu_list	seglist;	/* list of segments */
-    struct xray		r;		/* solid space ray */
-    vect_t 		inv_dir;	/* inverses of ray direction */
-    struct application	*ap;
-    struct soltab	*stp;
-    struct bn_tol	*tol;
+    struct dsp_specific *dsp;
+    struct bu_list seglist;	/**< list of segments */
+    struct xray r;		/**< solid space ray */
+    vect_t inv_dir;		/**< inverses of ray direction */
+    struct application *ap;
+    struct soltab *stp;
+    struct bn_tol *tol;
 
-    struct bbox_isect	bbox;
-    struct bbox_isect	minbox;
+    struct bbox_isect bbox;
+    struct bbox_isect minbox;
 
-    int			num_segs;
-    int			dmin, dmax;	/* for dsp_in_rpp, {X, Y, Z}MIN/MAX */
+    int num_segs;
+    int dmin, dmax;	/* for dsp_in_rpp, {X, Y, Z}MIN/MAX */
 };
 
 
-/* plane equations (minus offset distances) for bounding RPP */
-static const vect_t	dsp_pl[BBOX_PLANES] = {
+/**
+ * plane equations (minus offset distances) for bounding RPP
+ */
+static const vect_t dsp_pl[BBOX_PLANES] = {
     {-1.0, 0.0, 0.0},
     { 1.0, 0.0, 0.0},
 
@@ -217,27 +222,30 @@ static const vect_t	dsp_pl[BBOX_PLANES] = {
     {0.0, 0.0,  1.0},
 };
 
-/*
+
+/**
  * This function computes the DSP mtos matrix from the stom matrix
  * whenever the stom matrix is parsed using a bu_structparse.
  */
-static void
+HIDDEN void
 hook_mtos_from_stom(
-    const struct bu_structparse	*ip,
-    const char 			*sp_name,
-    genptr_t			base,
-    char			*p)
+    const struct bu_structparse *ip,
+    const char *sp_name,
+    genptr_t base,
+    char *p)
 {
     struct rt_dsp_internal *dsp_ip = (struct rt_dsp_internal *)base;
 
     bn_mat_inv(dsp_ip->dsp_mtos, dsp_ip->dsp_stom);
 }
-static void
+
+
+HIDDEN void
 hook_file(
-    const struct bu_structparse	*ip,
-    const char 			*sp_name,
-    genptr_t			base,
-    char			*p)
+    const struct bu_structparse *ip,
+    const char *sp_name,
+    genptr_t base,
+    char *p)
 {
     struct rt_dsp_internal *dsp_ip = (struct rt_dsp_internal *)base;
 
@@ -245,12 +253,11 @@ hook_file(
     dsp_ip->dsp_bip = (struct rt_db_internal *)NULL;
 }
 
+
 #define DSP_O(m) bu_offsetof(struct rt_dsp_internal, m)
 #define DSP_AO(a) bu_offsetofarray(struct rt_dsp_internal, a)
 
-/*
- *	These are only used when editing a v4 database
- */
+/** only used when editing a v4 database */
 const struct bu_structparse rt_dsp_parse[] = {
     {"%V",	1, "file", DSP_O(dsp_name), hook_file },
     {"%i",	1, "sm", DSP_O(dsp_smooth), BU_STRUCTPARSE_FUNC_NULL },
@@ -260,6 +267,8 @@ const struct bu_structparse rt_dsp_parse[] = {
     {"",	0, (char *)0, 0,	BU_STRUCTPARSE_FUNC_NULL }
 };
 
+
+/** only used when editing a v4 database */
 const struct bu_structparse rt_dsp_ptab[] = {
     {"%V",	1, "file", DSP_O(dsp_name), BU_STRUCTPARSE_FUNC_NULL },
     {"%i",	1, "sm", DSP_O(dsp_smooth), BU_STRUCTPARSE_FUNC_NULL },
@@ -269,8 +278,9 @@ const struct bu_structparse rt_dsp_ptab[] = {
     {"",	0, (char *)0, 0,	BU_STRUCTPARSE_FUNC_NULL }
 };
 
+
 /*
- *	This one is used by the rt_dsp_tclget()
+ * This one is used by the rt_dsp_tclget()
  */
 
 
@@ -278,11 +288,11 @@ static int plot_file_num=0;
 
 
 /**
- *	P L O T _ R P P
+ * P L O T _ R P P
  *
  * Plot an RPP to a file in the given color
  */
-static void
+HIDDEN void
 plot_rpp(FILE *fp, struct bound_rpp *rpp, int r, int g, int b)
 {
     pl_color(fp, r, g, b);
@@ -301,11 +311,12 @@ plot_rpp(FILE *fp, struct bound_rpp *rpp, int r, int g, int b)
 }
 
 
-/**	P L O T _ D S P _ B B
+/**
+ * P L O T _ D S P _ B B
  *
- *  Plot a dsp_bb structure
+ * Plot a dsp_bb structure
  */
-static void
+HIDDEN void
 plot_dsp_bb(FILE *fp, struct dsp_bb *dsp_bb,
 	    struct dsp_specific *dsp,
 	    int r, int g, int b, int blather)
@@ -324,14 +335,16 @@ plot_dsp_bb(FILE *fp, struct dsp_bb *dsp_bb,
 
     if (blather)
 	bu_log(" (%g %g %g) (%g %g %g)\n",
-	       V3ARGS(rpp.min), V3ARGS(rpp.max) );
+	       V3ARGS(rpp.min), V3ARGS(rpp.max));
 
     plot_rpp(fp, &rpp, r, g, b);
 }
+
+
 /*
  * drawing support for isect_ray_dsp_bb()
  */
-static FILE *
+HIDDEN FILE *
 draw_dsp_bb(int *plotnum,
 	    struct dsp_bb *dsp_bb,
 	    struct dsp_specific *dsp,
@@ -342,7 +355,7 @@ draw_dsp_bb(int *plotnum,
     struct dsp_bb bb;
 
     sprintf(buf, "dsp_bb%03d.pl", (*plotnum)++);
-    if ( (fp=fopen(buf, "wb")) == (FILE *)NULL) {
+    if ((fp=fopen(buf, "wb")) == (FILE *)NULL) {
 	perror(buf);
 	bu_bomb("");
     }
@@ -355,14 +368,17 @@ draw_dsp_bb(int *plotnum,
     return fp;
 }
 
+
 #define PLOT_LAYERS
 #ifdef PLOT_LAYERS
-/**	P L O T _ L A Y E R S
+
+
+/**
+ * P L O T _ L A Y E R S
  *
- *
- *  Plot the bounding box layers for a dsp
+ * Plot the bounding box layers for a dsp
  */
-static void
+HIDDEN void
 plot_layers(struct dsp_specific *dsp_sp)
 {
     FILE *fp;
@@ -381,16 +397,16 @@ plot_layers(struct dsp_specific *dsp_sp)
     struct dsp_bb *d_bb;
 
     for (l=0; l < dsp_sp->layers; l++) {
-	bu_semaphore_acquire( BU_SEM_SYSCALL);
+	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	sprintf(buf, "Dsp_layer%d.pl", l);
 	fp=fopen(buf, "wb");
-	bu_semaphore_release( BU_SEM_SYSCALL);
-	if ( fp == (FILE *)NULL ) {
+	bu_semaphore_release(BU_SEM_SYSCALL);
+	if (fp == (FILE *)NULL) {
 	    bu_log("%s:%d error opening %s\n", __FILE__, __LINE__,
 		   buf);
 	    return;
 	} else
-	    bu_log("plotting \"%s\" dim:%d,%d\n", buf,
+	    bu_log("plotting \"%s\" dim:%d, %d\n", buf,
 		   dsp_sp->layer[l].dim[X],
 		   dsp_sp->layer[l].dim[Y]);
 	c = l % 6;
@@ -398,34 +414,28 @@ plot_layers(struct dsp_specific *dsp_sp)
 	g = colors[c][1];
 	b = colors[c][2];
 
-	for (y=0; y < dsp_sp->layer[l].dim[Y]; y+= 2 ) {
-	    for (x=0; x < dsp_sp->layer[l].dim[X]; x+= 2 ) {
+	for (y=0; y < dsp_sp->layer[l].dim[Y]; y+= 2) {
+	    for (x=0; x < dsp_sp->layer[l].dim[X]; x+= 2) {
 		n = y * dsp_sp->layer[l].dim[X] + x;
 		d_bb = &dsp_sp->layer[l].p[n];
 		plot_dsp_bb(fp, d_bb, dsp_sp, r, g, b, 0);
 
-#if 0
-		if (RT_G_DEBUG & DEBUG_HF)
-		    bu_log("\t%d,%d ch_dim:%d,%d  min:(%d %d %d)  max:(%d %d %d)\n",
-			   x, y,
-			   d_bb->dspb_ch_dim[X],
-			   d_bb->dspb_ch_dim[Y],
-			   V3ARGS(d_bb->dspb_rpp.dsp_min),
-			   V3ARGS(d_bb->dspb_rpp.dsp_max));
-#endif
 	    }
 	}
 	fclose(fp);
     }
 }
+
+
 #endif
 
-/**	P L O T _ C E L L _ T O P
+
+/**
+ * P L O T _ C E L L _ T O P
  *
- *	Plot the results of intersecting a ray with the top of a cell
- *
+ * Plot the results of intersecting a ray with the top of a cell
  */
-static void
+HIDDEN void
 plot_cell_top(struct isect_stuff *isect,
 	      struct dsp_bb *dsp_bb,
 	      point_t A,
@@ -453,7 +463,7 @@ plot_cell_top(struct isect_stuff *isect,
 
     DSP_BB_CK(dsp_bb);
 
-    bu_semaphore_acquire( BU_SEM_SYSCALL);
+    bu_semaphore_acquire(BU_SEM_SYSCALL);
     if (style)
 	sprintf(buf, "dsp_cell_isect%04d.pl", cnt++);
     else
@@ -461,9 +471,9 @@ plot_cell_top(struct isect_stuff *isect,
 
     fp=fopen(buf, "wb");
 
-    bu_semaphore_release( BU_SEM_SYSCALL);
+    bu_semaphore_release(BU_SEM_SYSCALL);
 
-    if ( fp == (FILE *)NULL) {
+    if (fp == (FILE *)NULL) {
 	bu_log("error opening \"%s\"\n", buf);
 	return;
     } else {
@@ -495,7 +505,7 @@ plot_cell_top(struct isect_stuff *isect,
 
     /* plot the hit points */
 
-    for (in_seg = 0, i = 0; i < 4; i++ ) {
+    for (in_seg = 0, i = 0; i < 4; i++) {
 	if (hitflags & (1<<i)) {
 	    if (in_seg) {
 		in_seg = 0;
@@ -512,9 +522,11 @@ plot_cell_top(struct isect_stuff *isect,
     fclose(fp);
 }
 
-/**	D S P _ P R I N T _ V 4
+
+/**
+ * D S P _ P R I N T _ V 4
  */
-static void
+HIDDEN void
 dsp_print_v4(struct bu_vls *vls, const struct rt_dsp_internal *dsp_ip)
 {
     point_t pt, v;
@@ -522,35 +534,37 @@ dsp_print_v4(struct bu_vls *vls, const struct rt_dsp_internal *dsp_ip)
     BU_CK_VLS(&dsp_ip->dsp_name);
     BU_CK_VLS(vls);
 
-    bu_vls_printf( vls, "Displacement Map\n  file='%s' w=%d n=%d sm=%d",
-		   bu_vls_addr(&dsp_ip->dsp_name),
-		   dsp_ip->dsp_xcnt,
-		   dsp_ip->dsp_ycnt,
-		   dsp_ip->dsp_smooth);
+    bu_vls_printf(vls, "Displacement Map\n  file='%s' w=%d n=%d sm=%d",
+		  bu_vls_addr(&dsp_ip->dsp_name),
+		  dsp_ip->dsp_xcnt,
+		  dsp_ip->dsp_ycnt,
+		  dsp_ip->dsp_smooth);
 
     VSETALL(pt, 0.0);
 
     MAT4X3PNT(v, dsp_ip->dsp_stom, pt);
 
-    bu_vls_printf( vls, " (origin at %g %g %g)mm\n", V3INTCLAMPARGS(v));
+    bu_vls_printf(vls, " (origin at %g %g %g)mm\n", V3INTCLAMPARGS(v));
 
-    bu_vls_printf( vls, "  stom=\n");
-    bu_vls_printf( vls, "  %8.3f %8.3f %8.3f %8.3f\n",
-		   V4INTCLAMPARGS(dsp_ip->dsp_stom) );
+    bu_vls_printf(vls, "  stom=\n");
+    bu_vls_printf(vls, "  %8.3f %8.3f %8.3f %8.3f\n",
+		  V4INTCLAMPARGS(dsp_ip->dsp_stom));
 
-    bu_vls_printf( vls, "  %8.3f %8.3f %8.3f %8.3f\n",
-		   V4INTCLAMPARGS( &dsp_ip->dsp_stom[4]) );
+    bu_vls_printf(vls, "  %8.3f %8.3f %8.3f %8.3f\n",
+		  V4INTCLAMPARGS(&dsp_ip->dsp_stom[4]));
 
-    bu_vls_printf( vls, "  %8.3f %8.3f %8.3f %8.3f\n",
-		   V4INTCLAMPARGS( &dsp_ip->dsp_stom[8]) );
+    bu_vls_printf(vls, "  %8.3f %8.3f %8.3f %8.3f\n",
+		  V4INTCLAMPARGS(&dsp_ip->dsp_stom[8]));
 
-    bu_vls_printf( vls, "  %8.3f %8.3f %8.3f %8.3f\n",
-		   V4INTCLAMPARGS( &dsp_ip->dsp_stom[12]) );
+    bu_vls_printf(vls, "  %8.3f %8.3f %8.3f %8.3f\n",
+		  V4INTCLAMPARGS(&dsp_ip->dsp_stom[12]));
 }
 
-/**	D S P _ P R I N T _ V 5
+
+/**
+ * D S P _ P R I N T _ V 5
  */
-static void
+HIDDEN void
 dsp_print_v5(struct bu_vls *vls,
 	     const struct rt_dsp_internal *dsp_ip)
 {
@@ -562,40 +576,40 @@ dsp_print_v5(struct bu_vls *vls,
     BU_CK_VLS(&dsp_ip->dsp_name);
 
 
-    bu_vls_printf( vls, "Displacement Map\n" );
+    bu_vls_printf(vls, "Displacement Map\n");
 
     switch (dsp_ip->dsp_datasrc) {
 	case RT_DSP_SRC_V4_FILE:
-	    bu_vls_printf( vls, "  Error Error Error");
+	    bu_vls_printf(vls, "  Error Error Error");
 	    break;
 	case RT_DSP_SRC_FILE:
-	    bu_vls_printf( vls, "  file");
+	    bu_vls_printf(vls, "  file");
 	    break;
 	case RT_DSP_SRC_OBJ:
-	    bu_vls_printf( vls, "  obj");
+	    bu_vls_printf(vls, "  obj");
 	    break;
 	default:
-	    bu_vls_printf( vls, "unk src type'%c'", dsp_ip->dsp_datasrc);
+	    bu_vls_printf(vls, "unk src type'%c'", dsp_ip->dsp_datasrc);
 	    break;
     }
 
-    bu_vls_printf( vls, "='%s'\n  w=%d n=%d sm=%d ",
-		   bu_vls_addr(&dsp_ip->dsp_name),
-		   dsp_ip->dsp_xcnt,
-		   dsp_ip->dsp_ycnt,
-		   dsp_ip->dsp_smooth);
+    bu_vls_printf(vls, "='%s'\n  w=%d n=%d sm=%d ",
+		  bu_vls_addr(&dsp_ip->dsp_name),
+		  dsp_ip->dsp_xcnt,
+		  dsp_ip->dsp_ycnt,
+		  dsp_ip->dsp_smooth);
 
     switch (dsp_ip->dsp_cuttype) {
 	case DSP_CUT_DIR_ADAPT:
-	    bu_vls_printf( vls, "cut=ad" ); break;
+	    bu_vls_printf(vls, "cut=ad"); break;
 	case DSP_CUT_DIR_llUR:
-	    bu_vls_printf( vls, "cut=lR" ); break;
+	    bu_vls_printf(vls, "cut=lR"); break;
 	case DSP_CUT_DIR_ULlr:
-	    bu_vls_printf( vls, "cut=Lr" ); break;
+	    bu_vls_printf(vls, "cut=Lr"); break;
 	default:
-	    bu_vls_printf( vls, "cut bogus('%c'/%d)",
-			   dsp_ip->dsp_cuttype,
-			   dsp_ip->dsp_cuttype ); break;
+	    bu_vls_printf(vls, "cut bogus('%c'/%d)",
+			  dsp_ip->dsp_cuttype,
+			  dsp_ip->dsp_cuttype); break;
     }
 
 
@@ -603,17 +617,18 @@ dsp_print_v5(struct bu_vls *vls,
 
     MAT4X3PNT(v, dsp_ip->dsp_stom, pt);
 
-    bu_vls_printf( vls, " (origin at %g %g %g)mm\n", V3INTCLAMPARGS(v));
+    bu_vls_printf(vls, " (origin at %g %g %g)mm\n", V3INTCLAMPARGS(v));
 
-    bu_vls_printf( vls, "  stom=\n");
-    bu_vls_printf( vls, "  %8.3f %8.3f %8.3f %8.3f\n", V4INTCLAMPARGS(dsp_ip->dsp_stom) );
-    bu_vls_printf( vls, "  %8.3f %8.3f %8.3f %8.3f\n", V4INTCLAMPARGS( &dsp_ip->dsp_stom[4]) );
-    bu_vls_printf( vls, "  %8.3f %8.3f %8.3f %8.3f\n", V4INTCLAMPARGS( &dsp_ip->dsp_stom[8]) );
-    bu_vls_printf( vls, "  %8.3f %8.3f %8.3f %8.3f\n", V4INTCLAMPARGS( &dsp_ip->dsp_stom[12]) );
+    bu_vls_printf(vls, "  stom=\n");
+    bu_vls_printf(vls, "  %8.3f %8.3f %8.3f %8.3f\n", V4INTCLAMPARGS(dsp_ip->dsp_stom));
+    bu_vls_printf(vls, "  %8.3f %8.3f %8.3f %8.3f\n", V4INTCLAMPARGS(&dsp_ip->dsp_stom[4]));
+    bu_vls_printf(vls, "  %8.3f %8.3f %8.3f %8.3f\n", V4INTCLAMPARGS(&dsp_ip->dsp_stom[8]));
+    bu_vls_printf(vls, "  %8.3f %8.3f %8.3f %8.3f\n", V4INTCLAMPARGS(&dsp_ip->dsp_stom[12]));
 }
 
+
 /**
- *			R T _ D S P _ P R I N T
+ * R T _ D S P _ P R I N T
  */
 void
 rt_dsp_print(register const struct soltab *stp)
@@ -626,35 +641,35 @@ rt_dsp_print(register const struct soltab *stp)
     RT_DSP_CK_MAGIC(dsp);
     BU_CK_VLS(&dsp->dsp_i.dsp_name);
 
-    bu_vls_init( &vls );
+    bu_vls_init(&vls);
     BU_CK_VLS(&vls);
 
     bu_vls_printf(&vls, "\n---------db version: %d----------\n",
-		  stp->st_rtip->rti_dbip->dbi_version );
+		  stp->st_rtip->rti_dbip->dbi_version);
 
     switch (stp->st_rtip->rti_dbip->dbi_version) {
 	case 4:
 	    BU_CK_VLS(&vls);
-	    dsp_print_v4(&vls, &(dsp->dsp_i) );
+	    dsp_print_v4(&vls, &(dsp->dsp_i));
 	    break;
 	case 5:
 	    BU_CK_VLS(&vls);
-	    dsp_print_v5(&vls, &(dsp->dsp_i) );
+	    dsp_print_v5(&vls, &(dsp->dsp_i));
 	    break;
     }
 
-    bu_log("%s", bu_vls_addr( &vls));
+    bu_log("%s", bu_vls_addr(&vls));
 
-    if (BU_VLS_IS_INITIALIZED( &vls )) bu_vls_free( &vls );
+    if (BU_VLS_IS_INITIALIZED(&vls)) bu_vls_free(&vls);
 
 }
 
 
 /**
- *	compute bounding boxes for each cell, then compute bounding boxes
- *	for collections of bounding boxes
+ * compute bounding boxes for each cell, then compute bounding boxes
+ * for collections of bounding boxes
  */
-static void
+HIDDEN void
 dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_max)
 {
     int idx, i, j, k, curr_layer, x, y, xs, ys, xv, yv, tot;
@@ -671,7 +686,7 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
     tot = xs * ys;
     /*    bu_log("layer %d   %dx%d\n", 0, xs, ys); */
     dsp->layers = 1;
-    while ( xs > 1 || ys > 1 ) {
+    while (xs > 1 || ys > 1) {
 	xv = xs / DIM_BB_CHILDREN;
 	yv = ys / DIM_BB_CHILDREN;
 	if (xs % DIM_BB_CHILDREN) xv++;
@@ -722,10 +737,6 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
 
 	for (x=0; x < XSIZ(dsp); x++) {
 
-#if 0
-	    if (RT_G_DEBUG & DEBUG_HF)
-		bu_log("filling %d,%d\n", x, y);
-#endif
 	    elev = DSP(&dsp->dsp_i, x, y);
 	    cell_min = cell_max = elev;
 
@@ -756,16 +767,11 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
 	    /* There are no "children" of a layer 0 element */
 	    dsp_bb->dspb_ch_dim[X] = 0;
 	    dsp_bb->dspb_ch_dim[Y] = 0;
-	    for (k=0; k < NUM_BB_CHILDREN; k++ ) {
+	    for (k=0; k < NUM_BB_CHILDREN; k++) {
 		dsp_bb->dspb_children[k] =
 		    (struct dsp_bb *)NULL;
 	    }
 	    dsp_bb->magic = MAGIC_dsp_bb;
-#if 0
-	    dlog("cell %d,%d min: %d,%d,%d  max: %d,%d,%d\n",
-		 x, y, V3ARGS(dsp_bb->dspb_rpp.dsp_min),
-		 V3ARGS(dsp_bb->dspb_rpp.dsp_max) );
-#endif
 
 	    /* XXX should we compute the triangle orientation and
 	     * save it here too?
@@ -783,7 +789,7 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
     subcell_size = 1;
 
     /* now we compute successive layers from the initial layer */
-    for (curr_layer = 1; curr_layer < dsp->layers; curr_layer++ ) {
+    for (curr_layer = 1; curr_layer < dsp->layers; curr_layer++) {
 	/* compute the number of cells in each direction for this layer */
 
 	xs = dsp->layer[curr_layer-1].dim[X];
@@ -804,7 +810,7 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
 
 	/* set the start of the array for this layer */
 	dsp->layer[curr_layer].p =
-	    &dsp->layer[curr_layer-1].p[dsp->layer[curr_layer-1].dim[X] *	dsp->layer[curr_layer-1].dim[Y] ];
+	    &dsp->layer[curr_layer-1].p[dsp->layer[curr_layer-1].dim[X] * dsp->layer[curr_layer-1].dim[Y] ];
 
 	curr = &dsp->layer[curr_layer];
 	prev = &dsp->layer[curr_layer-1];
@@ -813,8 +819,8 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
 	    bu_log("layer %d  subcell size %d\n", curr_layer, subcell_size);
 
 	/* walk the grid and fill in the values for this layer */
-	for (y=0; y < curr->dim[Y]; y++ ) {
-	    for (x=0; x < curr->dim[X]; x++ ) {
+	for (y=0; y < curr->dim[Y]; y++) {
+	    for (x=0; x < curr->dim[X]; x++) {
 		int n, xp, yp;
 		/* x, y are in the coordinates in the current
 		 * layer.  xp, yp are the coordinates of the
@@ -826,7 +832,7 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
 		/* initialize the current dsp_bb cell */
 		dsp_bb = &curr->p[y*curr->dim[X]+x];
 		dsp_bb->magic = MAGIC_dsp_bb;
-		n = (int)pow( (double)DIM_BB_CHILDREN, (double)curr_layer);
+		n = (int)pow((double)DIM_BB_CHILDREN, (double)curr_layer);
 		VSET(dsp_bb->dspb_rpp.dsp_min,
 		     x * n, y * n, 0x0ffff);
 		VSET(dsp_bb->dspb_rpp.dsp_max,
@@ -837,12 +843,6 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
 
 
 		tot = 0;
-#if 0
-		dlog("  cell %d,%d  (%d,%d-%d,%d)\n", x, y,
-		     dsp_bb->dspb_rpp.dsp_min[X],
-		     dsp_bb->dspb_rpp.dsp_min[Y],
-		     (x+1) * n, (y+1)*n);
-#endif
 		i=0;
 		for (j=0; j<DIM_BB_CHILDREN && (yp+j)<prev->dim[Y]; j++) {
 		    for (i=0; i<DIM_BB_CHILDREN && (xp+i)<prev->dim[X]; i++) {
@@ -858,22 +858,8 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
 
 			dsp_bb->dspb_children[tot++] = &prev->p[ idx ];
 
-#if 0
-			dlog("\t\tsubcell %d,%d min: %d,%d,%d  max: %d,%d,%d\n",
-			     xp+i, yp+j, V3ARGS(t->dsp_min), V3ARGS(t->dsp_max) );
-
-			if (RT_G_DEBUG & DEBUG_HF)
-			    if (i+1 >= DIM_BB_CHILDREN || xp+i+1 >= prev->dim[X])
-				bu_log("\n");
-#endif
 		    }
 		}
-#if 0
-		dlog("\t\txy: %d,%d, ij:%d,%d min:%d,%d,%d max:%d,%d,%d\n",
-		     x, y, i, j,
-		     V3ARGS(dsp_bb->dspb_rpp.dsp_min),
-		     V3ARGS(dsp_bb->dspb_rpp.dsp_max) );
-#endif
 
 		dsp_bb->dspb_ch_dim[X] = i;
 		dsp_bb->dspb_ch_dim[Y] = j;
@@ -893,25 +879,25 @@ dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_ma
 
 
 /**
- *  			R T _ D S P _ P R E P
+ * R T _ D S P _ P R E P
  *
- *  Given a pointer to a GED database record, and a transformation matrix,
- *  determine if this is a valid DSP, and if so, precompute various
- *  terms of the formula.
+ * Given a pointer to a GED database record, and a transformation
+ * matrix, determine if this is a valid DSP, and if so, precompute
+ * various terms of the formula.
  *
- *  Returns -
- *  	0	DSP is OK
- *  	!0	Error in description
+ * Returns -
+ * 0 DSP is OK
+ * !0 Error in description
  *
- *  Implicit return -
- *  	A struct dsp_specific is created, and it's address is stored in
- *  	stp->st_specific for use by dsp_shot().
+ * Implicit return -
+ * A struct dsp_specific is created, and it's address is stored in
+ * stp->st_specific for use by dsp_shot().
  */
 int
 rt_dsp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
-    struct rt_dsp_internal		*dsp_ip;
-    register struct dsp_specific	*dsp;
+    struct rt_dsp_internal *dsp_ip;
+    register struct dsp_specific *dsp;
     unsigned short dsp_min, dsp_max;
     point_t pt, bbpt;
     vect_t work;
@@ -937,9 +923,9 @@ rt_dsp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	    /* we do this here and now because we will need it for the
 	     * dsp_specific structure in a few lines
 	     */
-	    bu_semaphore_acquire( RT_SEM_MODEL);
+	    bu_semaphore_acquire(RT_SEM_MODEL);
 	    ++dsp_ip->dsp_mp->uses;
-	    bu_semaphore_release( RT_SEM_MODEL);
+	    bu_semaphore_release(RT_SEM_MODEL);
 	    break;
 	case RT_DSP_SRC_OBJ:
 	    if (!dsp_ip->dsp_bip) {
@@ -952,12 +938,12 @@ rt_dsp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     }
 
 
-    BU_GETSTRUCT( dsp, dsp_specific );
+    BU_GETSTRUCT(dsp, dsp_specific);
     stp->st_specific = (genptr_t) dsp;
 
-    /* this works ok, because the mapped file keeps track of the number of
-     * uses.  However, the binunif interface does not.  We'll
-     * have to copy the data for that one.
+    /* this works ok, because the mapped file keeps track of the
+     * number of uses.  However, the binunif interface does not.
+     * We'll have to copy the data for that one.
      */
     dsp->dsp_i = *dsp_ip;		/* struct copy */
 
@@ -987,7 +973,7 @@ rt_dsp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 #define BBOX_PT(_x, _y, _z) \
 	VSET(pt, (fastf_t)_x, (fastf_t)_y, (fastf_t)_z); \
 	MAT4X3PNT(bbpt, dsp_ip->dsp_stom, pt); \
-	VMINMAX( stp->st_min, stp->st_max, bbpt)
+	VMINMAX(stp->st_min, stp->st_max, bbpt)
 
     BBOX_PT(-.1,		 -.1,		      -.1);
     BBOX_PT(dsp_ip->dsp_xcnt+.1, -.1,		      -.1);
@@ -1000,12 +986,12 @@ rt_dsp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
 #undef BBOX_PT
 
-    VADD2SCALE( stp->st_center, stp->st_min, stp->st_max, 0.5 );
-    VSUB2SCALE( work, stp->st_max, stp->st_min, 0.5 );
+    VADD2SCALE(stp->st_center, stp->st_min, stp->st_max, 0.5);
+    VSUB2SCALE(work, stp->st_max, stp->st_min, 0.5);
 
     f = work[X];
-    if (work[Y] > f )  f = work[Y];
-    if (work[Z] > f )  f = work[Z];
+    if (work[Y] > f) f = work[Y];
+    if (work[Z] > f) f = work[Z];
     stp->st_aradius = f;
     stp->st_bradius = MAGNITUDE(work);
 
@@ -1019,12 +1005,12 @@ rt_dsp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-static void
+HIDDEN void
 plot_seg(struct isect_stuff *isect,
 	 struct hit *in_hit,
 	 struct hit *out_hit,
-	 const point_t bbmin,/* The bounding box of what you are adding ... */
-	 const point_t bbmax,/* ... */
+	 const point_t bbmin, /* The bounding box of what you are adding ... */
+	 const point_t bbmax, /* ... */
 	 int r, int g, int b)/* ... this is strictly for debug plot purposes */
 {
     fastf_t *stom = &isect->dsp->dsp_i.dsp_stom[0];
@@ -1034,10 +1020,10 @@ plot_seg(struct isect_stuff *isect,
     static int segnum =0;
 
     /* plot the bounding box and the seg */
-    bu_semaphore_acquire( BU_SEM_SYSCALL);
+    bu_semaphore_acquire(BU_SEM_SYSCALL);
     sprintf(fname, "dsp_seg%04d.pl", segnum++);
     fp=fopen(fname, "wb");
-    bu_semaphore_release( BU_SEM_SYSCALL);
+    bu_semaphore_release(BU_SEM_SYSCALL);
 
     if (fp != (FILE *)NULL) {
 	bu_log("plotting %s\n", fname);
@@ -1053,31 +1039,33 @@ plot_seg(struct isect_stuff *isect,
 	pl_color(fp, r, g, b);
 	pdv_3line(fp, rpp.min, rpp.max);
 
-	bu_semaphore_acquire( BU_SEM_SYSCALL);
+	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	fclose(fp);
-	bu_semaphore_release( BU_SEM_SYSCALL);
+	bu_semaphore_release(BU_SEM_SYSCALL);
     }
 }
 
-/**	A D D _ S E G
- *
- *  Add a segment to the list of intersections in DSP space
- *
- *	Return:
- *	0	continue to intersect
- *	1	All intersections computed, terminate intersection processing
- */
+
 #define ADD_SEG(isect, in, out, min, max, r, g, b) \
 	add_seg(isect, in, out, min, max, r, g, b, __LINE__)
 
 
-static int
+/**
+ * A D D _ S E G
+ *
+ * Add a segment to the list of intersections in DSP space
+ *
+ * Return:
+ * 0 continue to intersect
+ * 1 All intersections computed, terminate intersection processing
+ */
+HIDDEN int
 add_seg(struct isect_stuff *isect,
 	struct hit *in_hit,
 	struct hit *out_hit,
-	const point_t bbmin,/* The bounding box of what you are adding ... */
-	const point_t bbmax,/* ... */
-	int r, int g, int b,/* ... this is strictly for debug plot purposes */
+	const point_t bbmin, /* The bounding box of what you are adding ... */
+	const point_t bbmax, /* ... */
+	int r, int g, int b, /* ... this is strictly for debug plot purposes */
 	int line)
 
 {
@@ -1093,21 +1081,16 @@ add_seg(struct isect_stuff *isect,
     tt *= tt;
 
 #ifdef ORDERED_ISECT
-    if (BU_LIST_NON_EMPTY(&isect->seglist) ) {
+    if (BU_LIST_NON_EMPTY(&isect->seglist)) {
 	/* if the new in-distance equals the old out distance
 	 * we just extend the old segment
 	 */
 	seg = BU_LIST_LAST(seg, &isect->seglist);
-	if ( fabs(seg->seg_out.hit_dist - in_hit->hit_dist) <= tt) {
+	if (fabs(seg->seg_out.hit_dist - in_hit->hit_dist) <= tt) {
 
-#if 0
-	    seg->seg_out = *out_hit; /* struct copy  most expensive line */
-	    seg->seg_out.hit_magic = RT_HIT_MAGIC;
-#else
 	    seg->seg_out.hit_dist = out_hit->hit_dist;
 	    seg->seg_out.hit_surfno = out_hit->hit_surfno;
 	    VMOVE(seg->seg_out.hit_normal, out_hit->hit_normal);
-#endif
 	    if (out_hit->hit_surfno == ZTOP) {
 		seg->seg_out.hit_vpriv[X] = out_hit->hit_vpriv[X];
 		seg->seg_out.hit_vpriv[Y] = out_hit->hit_vpriv[Y];
@@ -1126,11 +1109,11 @@ add_seg(struct isect_stuff *isect,
     dlog("searching for insertion point for seg w in/out dist %g %g\n",
 	 in_hit->hit_dist, out_hit->hit_dist);
 
-    for ( BU_LIST_FOR(seg, seg, &isect->seglist) ) {
+    for (BU_LIST_FOR(seg, seg, &isect->seglist)) {
 	dlog("checking %g->%g seg\n", seg->seg_in.hit_dist,
 	     seg->seg_out.hit_dist);
 	/* found the spot for this one */
-	if ( fabs(seg->seg_out.hit_dist - in_hit->hit_dist) <= tt ) {
+	if (fabs(seg->seg_out.hit_dist - in_hit->hit_dist) <= tt) {
 	    seg->seg_out = *out_hit; /* struct copy */
 	    seg->seg_out.hit_magic = RT_HIT_MAGIC;
 	    seg->seg_out.hit_vpriv[Z] = 1.0; /* flag as out-hit */
@@ -1159,7 +1142,7 @@ add_seg(struct isect_stuff *isect,
      * don't have a hit segment
      */
     if (NEAR_ZERO(in_hit->hit_point[Z], isect->tol->dist) &&
-	NEAR_ZERO(out_hit->hit_point[Z], isect->tol->dist) ) {
+	NEAR_ZERO(out_hit->hit_point[Z], isect->tol->dist)) {
 	return 0;
     }
 
@@ -1185,13 +1168,6 @@ add_seg(struct isect_stuff *isect,
 
     RT_GET_SEG(seg, isect->ap->a_resource);
 
-#if 0
-    seg->seg_in = *in_hit; /* struct copy */
-    seg->seg_in.hit_magic = RT_HIT_MAGIC;
-    seg->seg_out = *out_hit; /* struct copy */
-    seg->seg_out.hit_magic = RT_HIT_MAGIC;
-
-#else
     seg->seg_in.hit_dist    = in_hit->hit_dist;
     seg->seg_out.hit_dist   = out_hit->hit_dist;
 
@@ -1201,7 +1177,6 @@ add_seg(struct isect_stuff *isect,
     VMOVE(seg->seg_in.hit_normal, in_hit->hit_normal);
     VMOVE(seg->seg_out.hit_normal, out_hit->hit_normal);
 
-#endif
     if (in_hit->hit_surfno >= ZMAX) {
 	seg->seg_in.hit_vpriv[X] = in_hit->hit_vpriv[X];
 	seg->seg_in.hit_vpriv[Y] = in_hit->hit_vpriv[Y];
@@ -1218,18 +1193,18 @@ add_seg(struct isect_stuff *isect,
     seg->seg_stp = isect->stp;
 
 #ifdef FULL_DSP_DEBUGGING
-    if (VDOT(seg->seg_in.hit_normal, isect->r.r_dir) > 0 ) {
+    if (VDOT(seg->seg_in.hit_normal, isect->r.r_dir) > 0) {
 	bu_log("----------------------------------------------------------\n");
-	bu_log("pixel %d,%d bogus seg in, inward normal\nN: %g %g %g\nd: %g %g %g\n",
+	bu_log("pixel %d, %d bogus seg in, inward normal\nN: %g %g %g\nd: %g %g %g\n",
 	       isect->ap->a_x, isect->ap->a_y,
-	       V3ARGS(seg->seg_in.hit_normal), V3ARGS(isect->r.r_dir) );
+	       V3ARGS(seg->seg_in.hit_normal), V3ARGS(isect->r.r_dir));
 	bu_bomb("");
     }
-    if (VDOT(seg->seg_out.hit_normal, isect->r.r_dir) < 0 ) {
+    if (VDOT(seg->seg_out.hit_normal, isect->r.r_dir) < 0) {
 	bu_log("----------------------------------------------------------\n");
-	bu_log("pixel %d,%d bogus seg out, inward normal\nN: %g %g %g\nd: %g %g %g\n",
+	bu_log("pixel %d, %d bogus seg out, inward normal\nN: %g %g %g\nd: %g %g %g\n",
 	       isect->ap->a_x, isect->ap->a_y,
-	       V3ARGS(seg->seg_out.hit_normal), V3ARGS(isect->r.r_dir) );
+	       V3ARGS(seg->seg_out.hit_normal), V3ARGS(isect->r.r_dir));
 	bu_bomb("");
     }
 #endif
@@ -1252,17 +1227,18 @@ add_seg(struct isect_stuff *isect,
 }
 
 
-/**	I S E C T _ R A Y _ T R I A N G L E
+/**
+ * I S E C T _ R A Y _ T R I A N G L E
  *
  * Side Effects:
- *	dist and P may be set
+ * dist and P may be set
  *
  * Return:
- *	1	Ray intersects triangle
- *	0	Ray misses triangle
- *	-1	Ray/plane parallel
+ * 1 Ray intersects triangle
+ * 0 Ray misses triangle
+ * -1 Ray/plane parallel
  */
-static int
+HIDDEN int
 isect_ray_triangle(struct isect_stuff *isect,
 		   point_t A,
 		   point_t B,
@@ -1307,7 +1283,7 @@ isect_ray_triangle(struct isect_stuff *isect,
 
     /* intersect ray with plane */
     NdotDir = VDOT(N, isect->r.r_dir);
-    if ( BN_VECT_ARE_PERP(NdotDir, isect->tol) ) {
+    if (BN_VECT_ARE_PERP(NdotDir, isect->tol)) {
 	/* Ray perpendicular to plane of triangle */
 	return -1;
     }
@@ -1325,12 +1301,12 @@ isect_ray_triangle(struct isect_stuff *isect,
 	fastf_t *stom = &isect->dsp->dsp_i.dsp_stom[0];
 	point_t p1, p2;
 
-	bu_semaphore_acquire( BU_SEM_SYSCALL);
+	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	sprintf(buf, "dsp_tri%03d.pl", plotnum++);
 	fp=fopen(buf, "wb");
-	bu_semaphore_release( BU_SEM_SYSCALL);
+	bu_semaphore_release(BU_SEM_SYSCALL);
 
-	if ( fp == (FILE *)NULL) {
+	if (fp == (FILE *)NULL) {
 	    bu_log("%s:%d error opening \"%s\"\n", __FILE__, __LINE__, buf);
 	    bu_bomb("");
 	} else
@@ -1349,23 +1325,24 @@ isect_ray_triangle(struct isect_stuff *isect,
 	MAT4X3PNT(p2, stom, isect->r.r_pt);
 	pdv_3line(fp, p1, p2);
 
-	bu_semaphore_acquire( BU_SEM_SYSCALL);
+	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	fclose(fp);
-	bu_semaphore_release( BU_SEM_SYSCALL);
+	bu_semaphore_release(BU_SEM_SYSCALL);
 
 	bu_log("  dist:%g plane point: %g %g %g\n", hitdist, V3ARGS(p2));
     }
 #endif
-    /* We project the system into the XY plane at this point to determine
-     * if the ray_plane_isect_pt is within the bounds of the triangle
+    /* We project the system into the XY plane at this point to
+     * determine if the ray_plane_isect_pt is within the bounds of the
+     * triangle
      *
-     * The general idea here is to project the vector AP onto both sides of the
-     * triangle.  The distances along each side can be used to determine if
-     * we are inside/outside the triangle.
+     * The general idea here is to project the vector AP onto both
+     * sides of the triangle.  The distances along each side can be
+     * used to determine if we are inside/outside the triangle.
      *
-     *    VSUB2(AP, P, A);
-     *    alpha = VDOT(AP, AB);
-     *    beta = VDOT(AP, AC);
+     * VSUB2(AP, P, A);
+     * alpha = VDOT(AP, AB);
+     * beta = VDOT(AP, AC);
      *
      *		  C
      *		  |
@@ -1383,7 +1360,7 @@ isect_ray_triangle(struct isect_stuff *isect,
      *		    t
      *		    a
      *
-     *	To save on computation, we do this calculation in 2D.
+     * To save on computation, we do this calculation in 2D.
      *
      * See: "Graphics Gems",  Andrew S. Glassner ed.  PP390-393 for details
      */
@@ -1399,15 +1376,15 @@ isect_ray_triangle(struct isect_stuff *isect,
 	VPRINT("  AC", AC);
     }
 #endif
-    /*	Oridnarily, in 2D we would say:
+
+    /* Oridnarily, in 2D we would say:
      *
-     *    beta = AB[X] * AP[X] + AB[Y] * AP[Y];
-     *    alpha = AC[X] * AP[X] + AC[Y] * AP[Y];
+     * beta = AB[X] * AP[X] + AB[Y] * AP[Y];
+     * alpha = AC[X] * AP[X] + AC[Y] * AP[Y];
      *
-     *	However, in this case, we know that AB and AC will always be
-     *  axis-aligned, so we can short-cut.
-     *  XXX consider: we know that AB and AC
-     *  will be unit length, so only the sign counts.
+     * However, in this case, we know that AB and AC will always be
+     * axis-aligned, so we can short-cut.  XXX consider: we know that
+     * AB and AC will be unit length, so only the sign counts.
      */
 
     if (AB[X] == 0) {
@@ -1427,15 +1404,15 @@ isect_ray_triangle(struct isect_stuff *isect,
     alphabbeta[1] = beta;
 
 #ifdef FULL_DSP_DEBUGGING
-    if (alpha < -toldist ) {
+    if (alpha < -toldist) {
 	dlog("alpha < 0\n");
 	return 0;
     }
-    if (beta < -toldist ) {
+    if (beta < -toldist) {
 	dlog("beta < 0\n");
 	return 0;
     }
-    if ( (alpha+beta) > (1.0 + toldist) ) {
+    if ((alpha+beta) > (1.0 + toldist)) {
 	dlog("alpha+beta > 1\n");
 	return 0;
     }
@@ -1450,13 +1427,16 @@ isect_ray_triangle(struct isect_stuff *isect,
     return 1;
 }
 
-/**	P E R M U T E _ C E L L
+
+/**
+ * P E R M U T E _ C E L L
  *
- *	For adaptive diagonal selection or for Upper-Left to lower right
- *	cell cut, we must permute the verticies of the cell before handing
- *	them to the intersection algorithm.  That's what this function does.
+ * For adaptive diagonal selection or for Upper-Left to lower right
+ * cell cut, we must permute the verticies of the cell before handing
+ * them to the intersection algorithm.  That's what this function
+ * does.
  */
-static int
+HIDDEN int
 permute_cell(point_t A,
 	     point_t B,
 	     point_t C,
@@ -1478,7 +1458,7 @@ permute_cell(point_t A,
 
     switch (dsp->dsp_i.dsp_cuttype) {
 	case DSP_CUT_DIR_llUR:
-	    return  DSP_CUT_DIR_llUR;
+	    return DSP_CUT_DIR_llUR;
 	    break;
 
 	case DSP_CUT_DIR_ADAPT: {
@@ -1488,15 +1468,16 @@ permute_cell(point_t A,
 	    double cAD, cBC;  /* curvature in direction AD, and BC */
 
 	    if (RT_G_DEBUG & DEBUG_HF)
-		bu_log("cell %d,%d adaptive triangulation... ",
+		bu_log("cell %d, %d adaptive triangulation... ",
 		       dsp_rpp->dsp_min[X],
 		       dsp_rpp->dsp_min[Y]);
 
 	    /*
-	     *  We look at the points in the diagonal next cells to determine
-	     *  the curvature along each diagonal of this cell.  This cell is
-	     *  divided into two triangles by cutting across the cell in the
-	     *  direction of least curvature.
+	     * We look at the points in the diagonal next cells to
+	     * determine the curvature along each diagonal of this
+	     * cell.  This cell is divided into two triangles by
+	     * cutting across the cell in the direction of least
+	     * curvature.
 	     *
 	     *	*  *  *	 *
 	     *	 \      /
@@ -1530,7 +1511,7 @@ permute_cell(point_t A,
 	    h3 = D[Z];
 	    h4 = DSP(&dsp->dsp_i, hi[X], hi[Y]);
 
-	    cAD = fabs(h3 + h1 - 2*h2 ) + fabs( h4 + h2 - 2*h3 );
+	    cAD = fabs(h3 + h1 - 2*h2) + fabs(h4 + h2 - 2*h3);
 
 
 	    /* compute curvature along the B->C direction */
@@ -1539,14 +1520,14 @@ permute_cell(point_t A,
 	    h3 = C[Z];
 	    h4 = DSP(&dsp->dsp_i, lo[X], hi[Y]);
 
-	    cBC = fabs(h3 + h1 - 2*h2 ) + fabs( h4 + h2 - 2*h3 );
+	    cBC = fabs(h3 + h1 - 2*h2) + fabs(h4 + h2 - 2*h3);
 
-	    if ( cAD < cBC ) {
+	    if (cAD < cBC) {
 		/* A-D cut is fine, no need to permute */
 		if (RT_G_DEBUG & DEBUG_HF)
 		    bu_log("A-D cut\n");
 
-		return  DSP_CUT_DIR_llUR;
+		return DSP_CUT_DIR_llUR;
 
 	    }
 
@@ -1559,7 +1540,7 @@ permute_cell(point_t A,
 	    if (RT_G_DEBUG & DEBUG_HF)
 		bu_log("B-C cut\n");
 
-	    return  DSP_CUT_DIR_ULlr;
+	    return DSP_CUT_DIR_ULlr;
 
 	    break;
 	}
@@ -1574,16 +1555,16 @@ permute_cell(point_t A,
 	     */
 	    x = dsp_rpp->dsp_min[X];
 	    y = dsp_rpp->dsp_min[Y];
-	    VSET(B, x, y, DSP(&dsp->dsp_i, x, y) );
+	    VSET(B, x, y, DSP(&dsp->dsp_i, x, y));
 
 	    x = dsp_rpp->dsp_max[X];
-	    VSET(A, x, y, DSP(&dsp->dsp_i, x, y) );
+	    VSET(A, x, y, DSP(&dsp->dsp_i, x, y));
 
 	    y = dsp_rpp->dsp_max[Y];
-	    VSET(C, x, y, DSP(&dsp->dsp_i, x, y) );
+	    VSET(C, x, y, DSP(&dsp->dsp_i, x, y));
 
 	    x = dsp_rpp->dsp_min[X];
-	    VSET(D, x, y, DSP(&dsp->dsp_i, x, y) );
+	    VSET(D, x, y, DSP(&dsp->dsp_i, x, y));
 
 	    return DSP_CUT_DIR_ULlr;
 	    break;
@@ -1595,17 +1576,18 @@ permute_cell(point_t A,
     return -1;
 }
 
+
 /**
- *	C H E C K _ B B _ E L E V A T I O N
+ * C H E C K _ B B _ E L E V A T I O N
  *
- *	determine if a point P is above/below the slope line on the
- *	bounding box.  eg:
+ * determine if a point P is above/below the slope line on the
+ * bounding box.  eg:
  *
- *	Bounding box side view:
+ * Bounding box side view:
  *
  *	+-------+
  *	|	|
- *	|	*	Determine if P ( or Q ) is above the
+ *	|	*	Determine if P (or Q) is above the
  *	|      /|	diagonal from the two * points at the corners
  *	| P.  /	|	of the bounding box.
  *	|    /	|
@@ -1617,11 +1599,11 @@ permute_cell(point_t A,
  *	|	|
  *	+-------+
  *
- *	Return
- *		0 if pt above line (such as P in diagram)
- *		1 if pt at/below line (such as Q in diagram)
+ * Return
+ * 0 if pt above line (such as P in diagram)
+ * 1 if pt at/below line (such as Q in diagram)
  */
-static int
+HIDDEN int
 check_bbpt_hit_elev(int i,	/* indicates face of cell */
 		    point_t A,
 		    point_t B,
@@ -1651,8 +1633,8 @@ check_bbpt_hit_elev(int i,	/* indicates face of cell */
 	    break;
 	case XMAX:
 	    /* the maximal YZ plane.   Top view:	*   *
-	     *					    |
-	     *					*   *
+	     *						    |
+	     *						*   *
 	     */
 #ifdef FULL_DSP_DEBUGGING
 	    dlog("XMAX)\n");
@@ -1664,7 +1646,7 @@ check_bbpt_hit_elev(int i,	/* indicates face of cell */
 	case YMIN:
 	    /* the minimal XZ plane.   Top view:	*   *
 	     *
-	     *					* - *
+	     *						* - *
 	     */
 #ifdef FULL_DSP_DEBUGGING
 	    dlog("YMIN)\n");
@@ -1676,7 +1658,7 @@ check_bbpt_hit_elev(int i,	/* indicates face of cell */
 	case YMAX:
 	    /* the maximal XZ plane.   Top view:	* - *
 	     *
-	     *					*   *
+	     *						*   *
 	     */
 #ifdef FULL_DSP_DEBUGGING
 	    dlog("YMAX)\n");
@@ -1703,19 +1685,20 @@ check_bbpt_hit_elev(int i,	/* indicates face of cell */
 	    break;
     }
 
-    if ( (origin + slope * delta) < P[Z] ) return 0;
+    if ((origin + slope * delta) < P[Z]) return 0;
 
     return 1;
 }
 
+
 /*
- *	I S E C T _ R A Y _ C E L L _ T O P
+ * I S E C T _ R A Y _ C E L L _ T O P
  *
- *  Return
- *	0	continue intesection calculations
- *	1	Terminate intesection computation
+ * Return
+ * 0 continue intesection calculations
+ * 1 Terminate intesection computation
  */
-static int
+HIDDEN int
 isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 {
     point_t A, B, C, D, P;
@@ -1743,16 +1726,16 @@ isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
      */
     x = dsp_bb->dspb_rpp.dsp_min[X];
     y = dsp_bb->dspb_rpp.dsp_min[Y];
-    VSET(A, x, y, DSP(&isect->dsp->dsp_i, x, y) );
+    VSET(A, x, y, DSP(&isect->dsp->dsp_i, x, y));
 
     x = dsp_bb->dspb_rpp.dsp_max[X];
-    VSET(B, x, y, DSP(&isect->dsp->dsp_i, x, y) );
+    VSET(B, x, y, DSP(&isect->dsp->dsp_i, x, y));
 
     y = dsp_bb->dspb_rpp.dsp_max[Y];
-    VSET(D, x, y, DSP(&isect->dsp->dsp_i, x, y) );
+    VSET(D, x, y, DSP(&isect->dsp->dsp_i, x, y));
 
     x = dsp_bb->dspb_rpp.dsp_min[X];
-    VSET(C, x, y, DSP(&isect->dsp->dsp_i, x, y) );
+    VSET(C, x, y, DSP(&isect->dsp->dsp_i, x, y));
 
 
 #ifdef DEBUG_FULL
@@ -1776,7 +1759,7 @@ isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
      * bounding box, and fill in any "real" hits in our list
      */
     VJOIN1(P, isect->r.r_pt, isect->r.r_min, isect->r.r_dir);
-    if ( check_bbpt_hit_elev(isect->dmin, A, B, C, D, P) ) {
+    if (check_bbpt_hit_elev(isect->dmin, A, B, C, D, P)) {
 	hits[0].hit_dist = isect->r.r_min;
 	VMOVE(hits[0].hit_point, P);
 	VMOVE(hits[0].hit_normal, dsp_pl[isect->dmin]);
@@ -1802,7 +1785,7 @@ isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 
     /* make sure the point P is below the cell top */
     VJOIN1(P, isect->r.r_pt, isect->r.r_max, isect->r.r_dir);
-    if (check_bbpt_hit_elev(isect->dmax, A, B, C, D, P) ) {
+    if (check_bbpt_hit_elev(isect->dmax, A, B, C, D, P)) {
 	/* P is at or below the top surface */
 	hits[3].hit_dist = isect->r.r_max;
 	VMOVE(hits[3].hit_point, P);
@@ -1894,7 +1877,7 @@ isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 		       i, hits[i].hit_dist, V3ARGS(hits[i].hit_normal));
 
 		if (v > 0.0) bu_log("outbound\n");
-		else if (v < 0.0)  bu_log("inbound\n");
+		else if (v < 0.0) bu_log("inbound\n");
 		else bu_log("perp\n");
 	    }
 	}
@@ -1905,14 +1888,14 @@ isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
     /* fill out the segment structures */
 
     hitp = 0;
-    for (i = 0; i < 4; i++ ) {
+    for (i = 0; i < 4; i++) {
 	if (hitf & (1<<i)) {
 	    if (hitp) {
 
 		dot2 = VDOT(isect->r.r_dir, hits[i].hit_normal);
 
 		/* if we have two entry points then pick the first one */
-		if ( dot2 < 0.0 ) {
+		if (dot2 < 0.0) {
 		    dlog("dot2(%g) < 0.0\n", dot2);
 		    if (hitp->hit_dist > hits[i].hit_dist) {
 			dlog("skipping duplicate entry point at dist %g\n",
@@ -1972,140 +1955,139 @@ isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
     return 0;
 }
 
+
 /**
- *			D S P _ I N _ R P P
+ * D S P _ I N _ R P P
  *
- *  Compute the intersections of a ray with a rectangular parallelpiped (RPP)
- *  that has faces parallel to the coordinate planes
+ * Compute the intersections of a ray with a rectangular parallelpiped
+ * (RPP) that has faces parallel to the coordinate planes
  *
- *  The algorithm here was developed by Gary Kuehl for GIFT.
- *  A good description of the approach used can be found in
- *  "??" by XYZZY and Barsky,
- *  ACM Transactions on Graphics, Vol 3 No 1, January 1984.
+ * The algorithm here was developed by Gary Kuehl for GIFT.  A good
+ * description of the approach used can be found in "??" by XYZZY and
+ * Barsky, ACM Transactions on Graphics, Vol 3 No 1, January 1984.
  *
- * Note -
- *  The computation of entry and exit distance is mandatory, as the final
- *  test catches the majority of misses.
+ * Note - The computation of entry and exit distance is mandatory, as
+ * the final test catches the majority of misses.
  *
- * Note -
- *  A hit is returned if the intersect is behind the start point.
+ * Note - A hit is returned if the intersect is behind the start
+ * point.
  *
- *  Returns -
- *	 0  if ray does not hit RPP,
- *	!0  if ray hits RPP.
+ * Returns -
+ * 0 if ray does not hit RPP,
+ * !0 if ray hits RPP.
  *
- *  Implicit return -
- *	rp->r_min = dist from start of ray to point at which ray ENTERS solid
- *	rp->r_max = dist from start of ray to point at which ray LEAVES solid
- *	isect->dmin
- *	isect->dmax
+ * Implicit return -
+ * rp->r_min = dist from start of ray to point at which ray ENTERS solid
+ * rp->r_max = dist from start of ray to point at which ray LEAVES solid
+ * isect->dmin
+ * isect->dmax
  */
 int
 dsp_in_rpp(struct isect_stuff *isect,
 	   register const fastf_t *min,
 	   register const fastf_t *max)
 {
-    struct xray		*rp = &isect->r;
+    struct xray *rp = &isect->r;
     /* inverses of rp->r_dir[] */
     register const fastf_t *invdir = isect->inv_dir;
-    register const fastf_t	*pt = &rp->r_pt[0];
-    register fastf_t	sv;
-    register fastf_t	rmin = -INFINITY;
-    register fastf_t	rmax =  INFINITY;
+    register const fastf_t *pt = &rp->r_pt[0];
+    register fastf_t sv;
+    register fastf_t rmin = -INFINITY;
+    register fastf_t rmax =  INFINITY;
     int dmin = -1;
     int dmax = -1;
 
     /* Start with infinite ray, and trim it down */
 
     /* X axis */
-    if ( *invdir < 0.0 )  {
+    if (*invdir < 0.0) {
 	/* Heading towards smaller numbers */
-	/* if ( *min > *pt )  miss */
-	if (rmax > (sv = (*min - *pt) * *invdir) ) {
+	/* if (*min > *pt) miss */
+	if (rmax > (sv = (*min - *pt) * *invdir)) {
 	    rmax = sv;
 	    dmax = XMIN;
 	}
-	if ( rmin < (sv = (*max - *pt) * *invdir) ) {
+	if (rmin < (sv = (*max - *pt) * *invdir)) {
 	    rmin = sv;
 	    dmin = XMAX;
 	}
-    }  else if ( *invdir > 0.0 )  {
+    }  else if (*invdir > 0.0) {
 	/* Heading towards larger numbers */
-	/* if ( *max < *pt )  miss */
-	if (rmax > (sv = (*max - *pt) * *invdir) ) {
+	/* if (*max < *pt) miss */
+	if (rmax > (sv = (*max - *pt) * *invdir)) {
 	    rmax = sv;
 	    dmax = XMAX;
 	}
-	if ( rmin < ((sv = (*min - *pt) * *invdir)) ) {
+	if (rmin < ((sv = (*min - *pt) * *invdir))) {
 	    rmin = sv;
 	    dmin = XMIN;
 	}
-    }  else  {
+    } else {
 	/*
-	 *  Direction cosines along this axis is NEAR 0,
-	 *  which implies that the ray is perpendicular to the axis,
-	 *  so merely check position against the boundaries.
+	 * Direction cosines along this axis is NEAR 0, which implies
+	 * that the ray is perpendicular to the axis, so merely check
+	 * position against the boundaries.
 	 */
-	if ( (*min > *pt) || (*max < *pt) )
+	if ((*min > *pt) || (*max < *pt))
 	    return(0);	/* MISS */
     }
 
     /* Y axis */
     pt++; invdir++; max++; min++;
-    if ( *invdir < 0.0 )  {
-	if (rmax > (sv = (*min - *pt) * *invdir) ) {
+    if (*invdir < 0.0) {
+	if (rmax > (sv = (*min - *pt) * *invdir)) {
 	    /* towards smaller */
 	    rmax = sv;
 	    dmax = YMIN;
 	}
-	if (rmin < (sv = (*max - *pt) * *invdir) ) {
+	if (rmin < (sv = (*max - *pt) * *invdir)) {
 	    rmin = sv;
 	    dmin = YMAX;
 	}
-    }  else if ( *invdir > 0.0 )  {
+    }  else if (*invdir > 0.0) {
 	/* towards larger */
-	if (rmax > (sv = (*max - *pt) * *invdir) ) {
+	if (rmax > (sv = (*max - *pt) * *invdir)) {
 	    rmax = sv;
 	    dmax = YMAX;
 	}
-	if ( rmin < ((sv = (*min - *pt) * *invdir)) ) {
+	if (rmin < ((sv = (*min - *pt) * *invdir))) {
 	    rmin = sv;
 	    dmin = YMIN;
 	}
-    }  else  {
-	if ( (*min > *pt) || (*max < *pt) )
+    } else {
+	if ((*min > *pt) || (*max < *pt))
 	    return(0);	/* MISS */
     }
 
     /* Z axis */
     pt++; invdir++; max++; min++;
-    if ( *invdir < 0.0 )  {
+    if (*invdir < 0.0) {
 	/* towards smaller */
-	if (rmax > (sv = (*min - *pt) * *invdir) ) {
+	if (rmax > (sv = (*min - *pt) * *invdir)) {
 	    rmax = sv;
 	    dmax = ZMIN;
 	}
-	if ( rmin < (sv = (*max - *pt) * *invdir) ) {
+	if (rmin < (sv = (*max - *pt) * *invdir)) {
 	    rmin = sv;
 	    dmin = ZMAX;
 	}
-    }  else if ( *invdir > 0.0 )  {
+    }  else if (*invdir > 0.0) {
 	/* towards larger */
-	if (rmax > (sv = (*max - *pt) * *invdir) ) {
+	if (rmax > (sv = (*max - *pt) * *invdir)) {
 	    rmax = sv;
 	    dmax = ZMAX;
 	}
-	if ( rmin < ((sv = (*min - *pt) * *invdir)) ) {
+	if (rmin < ((sv = (*min - *pt) * *invdir))) {
 	    rmin = sv;
 	    dmin = ZMIN;
 	}
-    }  else  {
-	if ( (*min > *pt) || (*max < *pt) )
+    } else {
+	if ((*min > *pt) || (*max < *pt))
 	    return(0);	/* MISS */
     }
 
     /* If equal, RPP is actually a plane */
-    if ( rmin > rmax )
+    if (rmin > rmax)
 	return(0);	/* MISS */
 
     /* HIT.  Only now do rp->r_min and rp->r_max have to be written */
@@ -2116,18 +2098,21 @@ dsp_in_rpp(struct isect_stuff *isect,
     isect->dmax = dmax;
     return(1);		/* HIT */
 }
+
+
 #ifdef ORDERED_ISECT
-static int
+HIDDEN int
 isect_ray_dsp_bb(struct isect_stuff *isect, struct dsp_bb *dsp_bb);
 
+
 /**
- *	R E C U R S E _ D S P _ B B
+ * R E C U R S E _ D S P _ B B
  *
- *  Return
- *	0	continue intesection calculations
- *	1	Terminate intesection computation
+ * Return
+ * 0 continue intesection calculations
+ * 1 Terminate intesection computation
  */
-static int
+HIDDEN int
 recurse_dsp_bb(struct isect_stuff *isect,
 	       struct dsp_bb *dsp_bb,
 	       point_t minpt, /* entry point of dsp_bb */
@@ -2135,15 +2120,15 @@ recurse_dsp_bb(struct isect_stuff *isect,
 	       point_t bbmin, /* min point of bb (Z=0) */
 	       point_t bbmax) /* max point of bb */
 {
-    double	tDX;		/* dist along ray to span 1 cell in X dir */
-    double	tDY;		/* dist along ray to span 1 cell in Y dir */
-    double	tX, tY;		/* dist from hit pt. to next cell boundary */
-    double	curr_dist;
-    short	cX, cY;		/* coordinates of current cell */
-    short	cs;		/* cell X, Y dimension */
-    short	stepX, stepY;	/* dist to step in child array for each dir */
-    short	stepPX, stepPY;
-    double 	out_dist;
+    double tDX;		/* dist along ray to span 1 cell in X dir */
+    double tDY;		/* dist along ray to span 1 cell in Y dir */
+    double tX, tY;	/* dist from hit pt. to next cell boundary */
+    double curr_dist;
+    short cX, cY;	/* coordinates of current cell */
+    short cs;		/* cell X, Y dimension */
+    short stepX, stepY;	/* dist to step in child array for each dir */
+    short stepPX, stepPY;
+    double out_dist;
     struct dsp_bb **p;
     fastf_t *stom = &isect->dsp->dsp_i.dsp_stom[0];
     point_t pt, v;
@@ -2158,8 +2143,8 @@ recurse_dsp_bb(struct isect_stuff *isect,
     cX = (minpt[X] - bbmin[X]) / cs;
     cY = (minpt[Y] - bbmin[Y]) / cs;
 
-    /* a little bounds checking because a hit on XMAX or YMAX looks like
-     * it should be in the next cell outside the box
+    /* a little bounds checking because a hit on XMAX or YMAX looks
+     * like it should be in the next cell outside the box
      */
     if (cX >= dsp_bb->dspb_ch_dim[X]) cX = dsp_bb->dspb_ch_dim[X] - 1;
     if (cY >= dsp_bb->dspb_ch_dim[Y]) cY = dsp_bb->dspb_ch_dim[Y] - 1;
@@ -2175,16 +2160,16 @@ recurse_dsp_bb(struct isect_stuff *isect,
 
     if (isect->r.r_dir[X] < 0.0) {
 	stepPX = stepX = -1;
-	/* tDX is the distance along the ray we have to travel
-	 * to traverse a cell (travel a unit distance) along the
-	 * X axis of the grid
+	/* tDX is the distance along the ray we have to travel to
+	 * traverse a cell (travel a unit distance) along the X axis
+	 * of the grid
 	 */
 	tDX = -cs / isect->r.r_dir[X];
 
-	/* tX is the distance along the ray to the first cell
-	 * boundary in the X direction beyond our hit point (minpt)
+	/* tX is the distance along the ray to the first cell boundary
+	 * in the X direction beyond our hit point (minpt)
 	 */
-	tX += ( (bbmin[X] + (cX * cs)) - minpt[X]) / isect->r.r_dir[X];
+	tX += ((bbmin[X] + (cX * cs)) - minpt[X]) / isect->r.r_dir[X];
     } else {
 	stepPX = stepX = 1;
 	tDX = cs / isect->r.r_dir[X];
@@ -2196,11 +2181,12 @@ recurse_dsp_bb(struct isect_stuff *isect,
     }
 
     if (isect->r.r_dir[Y] < 0) {
-	/* distance in dspb_children we have to move to step in Y dir */
+	/* distance in dspb_children we have to move to step in Y dir
+	 */
 	stepY = -1;
 	stepPY = -dsp_bb->dspb_ch_dim[X];
 	tDY = -cs / isect->r.r_dir[Y];
-	tY += ( (bbmin[Y] + (cY * cs)) - minpt[Y]) / isect->r.r_dir[Y];
+	tY += ((bbmin[Y] + (cY * cs)) - minpt[Y]) / isect->r.r_dir[Y];
     } else {
 	stepY = 1;
 	stepPY = dsp_bb->dspb_ch_dim[X];
@@ -2237,11 +2223,11 @@ recurse_dsp_bb(struct isect_stuff *isect,
 	    bu_log("pt %g %g %g\n", V3ARGS(v));
 	}
 
-	/* get pointer to the current child cell.  Note the extra level
-	 * of indirection.  We want to march p through dspb_children using
-	 * pointer addition, but dspb_children contains pointers.  We need
-	 * to be sure to increment the offset in the array, not the child
-	 * pointer.
+	/* get pointer to the current child cell.  Note the extra
+	 * level of indirection.  We want to march p through
+	 * dspb_children using pointer addition, but dspb_children
+	 * contains pointers.  We need to be sure to increment the
+	 * offset in the array, not the child pointer.
 	 */
 
 	if (RT_G_DEBUG & DEBUG_HF)
@@ -2273,25 +2259,27 @@ recurse_dsp_bb(struct isect_stuff *isect,
 #ifdef FULL_DSP_DEBUGGING
 	dlog("curr_dist %g, out_dist %g\n", curr_dist, out_dist);
 #endif
-    } while ( curr_dist < out_dist &&
-	      cX < dsp_bb->dspb_ch_dim[X] && cX >= 0 &&
-	      cY < dsp_bb->dspb_ch_dim[Y] && cY >= 0 );
+    } while (curr_dist < out_dist &&
+	     cX < dsp_bb->dspb_ch_dim[X] && cX >= 0 &&
+	     cY < dsp_bb->dspb_ch_dim[Y] && cY >= 0);
 
     return 0;
 }
+
+
 #endif
 
 /**
- *	I S E C T _ R A Y _ D S P _ B B
+ * I S E C T _ R A Y _ D S P _ B B
  *
- *  Intersect a ray with a DSP bounding box.  This is the primary child of
- *  rt_dsp_shot()
+ * Intersect a ray with a DSP bounding box.  This is the primary child
+ * of rt_dsp_shot()
  *
- *  Return
- *	0	continue intesection calculations
- *	1	Terminate intesection computation
+ * Return
+ * 0 continue intesection calculations
+ * 1 Terminate intesection computation
  */
-static int
+HIDDEN int
 isect_ray_dsp_bb(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 {
     point_t bbmin, bbmax;
@@ -2313,7 +2301,7 @@ isect_ray_dsp_bb(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
     }
 
     if (RT_G_DEBUG & DEBUG_HF) {
-	bu_log("\nisect_ray_dsp_bb( (%d,%d,%d) (%d,%d,%d))\n",
+	bu_log("\nisect_ray_dsp_bb((%d, %d, %d) (%d, %d, %d))\n",
 	       V3ARGS(dsp_bb->dspb_rpp.dsp_min),
 	       V3ARGS(dsp_bb->dspb_rpp.dsp_max));
     }
@@ -2325,7 +2313,7 @@ isect_ray_dsp_bb(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 	 dsp_bb->dspb_rpp.dsp_min[Y], 0.0);
 
 
-    if ( ! dsp_in_rpp(isect, bbmin, bbmax) ) {
+    if (! dsp_in_rpp(isect, bbmin, bbmax)) {
 	/* missed it all, just return */
 
 	if (RT_G_DEBUG & DEBUG_HF) {
@@ -2336,7 +2324,8 @@ isect_ray_dsp_bb(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 	return 0;
     }
 
-    /* At this point we know that we've hit the overall bounding box */
+    /* At this point we know that we've hit the overall bounding box
+     */
 
     VJOIN1(minpt, r->r_pt, r->r_min, r->r_dir);
     VJOIN1(maxpt, r->r_pt, r->r_max, r->r_dir);
@@ -2362,8 +2351,8 @@ isect_ray_dsp_bb(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
     }
 
 
-    /* if both hits are UNDER the top of the "foundation" pillar, we can
-     * just add a segment for that range and return
+    /* if both hits are UNDER the top of the "foundation" pillar, we
+     * can just add a segment for that range and return
      */
     min_z = dsp_bb->dspb_rpp.dsp_min[Z];
 
@@ -2375,7 +2364,7 @@ isect_ray_dsp_bb(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 	seg_in.hit_dist = r->r_min;
 	VMOVE(seg_in.hit_point, minpt);
 	VMOVE(seg_in.hit_normal, dsp_pl[isect->dmin]);
-	/* hit_priv   */
+	/* hit_priv */
 	/* hit_private */
 	seg_in.hit_surfno = isect->dmin;
 	/* hit_rayp */
@@ -2384,7 +2373,7 @@ isect_ray_dsp_bb(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 
 	VMOVE(seg_out.hit_point, maxpt);
 	VMOVE(seg_out.hit_normal, dsp_pl[isect->dmax]);
-	/* hit_priv   */
+	/* hit_priv */
 	/* hit_private */
 	seg_out.hit_surfno = isect->dmax;
 	/* hit_rayp */
@@ -2432,34 +2421,35 @@ isect_ray_dsp_bb(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 
     /***********************************************************************
      *
-     *	 This section is for level 0 intersections only
+     * This section is for level 0 intersections only
      *
      ***********************************************************************/
 
     /* intersect the DSP grid surface geometry */
 
-    /* Check for a hit on the triangulated zone on top.
-     * This gives us intersections on the triangulated top, and the sides
-     * and bottom of the bounding box for the triangles.
+    /* Check for a hit on the triangulated zone on top.  This gives us
+     * intersections on the triangulated top, and the sides and bottom
+     * of the bounding box for the triangles.
      *
      * We do this first because we already know that the ray does NOT
-     * just pass through the "foundation " pillar underneath (see test above)
+     * just pass through the "foundation " pillar underneath (see test
+     * above)
      */
     bbmin[Z] = dsp_bb->dspb_rpp.dsp_min[Z];
-    if (dsp_in_rpp(isect, bbmin, bbmax) ) {
+    if (dsp_in_rpp(isect, bbmin, bbmax)) {
 	/* hit rpp */
 
 	isect_ray_cell_top(isect, dsp_bb);
     }
 
 
-    /* check for hits on the "foundation" pillar under the top.
-     * The ray may have entered through the top of the pillar, possibly
+    /* check for hits on the "foundation" pillar under the top.  The
+     * ray may have entered through the top of the pillar, possibly
      * after having come down through the triangles above
      */
     bbmax[Z] = dsp_bb->dspb_rpp.dsp_min[Z];
     bbmin[Z] = 0.0;
-    if (dsp_in_rpp(isect, bbmin, bbmax) ) {
+    if (dsp_in_rpp(isect, bbmin, bbmax)) {
 	/* hit rpp */
 	struct hit in_hit, out_hit;
 
@@ -2483,16 +2473,17 @@ isect_ray_dsp_bb(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
     return 0;
 }
 
+
 /**
- *  			R T _ D S P _ S H O T
+ * R T _ D S P _ S H O T
  *
- *  Intersect a ray with a dsp.
- *  If an intersection occurs, a struct seg will be acquired
- *  and filled in.
+ * Intersect a ray with a dsp.
+ * If an intersection occurs, a struct seg will be acquired
+ * and filled in.
  *
- *  Returns -
- *  	0	MISS
- *	>0	HIT
+ * Returns -
+ * 0 MISS
+ * >0 HIT
  */
 int
 rt_dsp_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
@@ -2500,11 +2491,11 @@ rt_dsp_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     register struct dsp_specific *dsp =
 	(struct dsp_specific *)stp->st_specific;
     register struct seg *segp;
-    int	i;
-    vect_t	dir;	/* temp storage */
-    vect_t	v;
+    int i;
+    vect_t dir;	/* temp storage */
+    vect_t v;
     struct isect_stuff isect;
-    double	delta;
+    double delta;
 
     RT_DSP_CK_MAGIC(dsp);
     BU_CK_VLS(&dsp->dsp_i.dsp_name);
@@ -2540,7 +2531,7 @@ rt_dsp_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 
 
     if (RT_G_DEBUG & DEBUG_HF) {
-	bu_log("rt_dsp_shot(pt:(%g %g %g)\n\tdir[%g]:(%g %g %g))\n    pixel(%d,%d)\n",
+	bu_log("rt_dsp_shot(pt:(%g %g %g)\n\tdir[%g]:(%g %g %g))\n    pixel(%d, %d)\n",
 	       V3ARGS(rp->r_pt),
 	       MAGNITUDE(rp->r_dir),
 	       V3ARGS(rp->r_dir),
@@ -2554,8 +2545,8 @@ rt_dsp_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	       V3ARGS(isect.r.r_dir));
     }
 
-    /* We look at the topmost layer of the bounding-box tree and
-     * make sure that it has dimension 1.  Otherwise, something is wrong
+    /* We look at the topmost layer of the bounding-box tree and make
+     * sure that it has dimension 1.  Otherwise, something is wrong
      */
     if (isect.dsp->layer[isect.dsp->layers-1].dim[X] != 1 ||
 	isect.dsp->layer[isect.dsp->layers-1].dim[Y] != 1) {
@@ -2605,16 +2596,6 @@ rt_dsp_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 		   delta);
 	}
 
-#if 0
-	/* transform normals into model space */
-	MAT4X3VEC(v, dsp->dsp_i.dsp_mtos, segp->seg_in.hit_normal);
-	VMOVE(segp->seg_in.hit_normal, v);
-	VUNITIZE( segp->seg_in.hit_normal );
-
-	MAT4X3VEC(v, dsp->dsp_i.dsp_mtos, segp->seg_out.hit_normal);
-	VMOVE(segp->seg_out.hit_normal, v);
-	VUNITIZE( segp->seg_out.hit_normal );
-#endif
 	if (RT_G_DEBUG & DEBUG_HF) {
 	    bu_log("model in:%6g out:%6g\t",
 		   segp->seg_in.hit_dist,
@@ -2628,22 +2609,24 @@ rt_dsp_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	static const plane_t plane = {0.0, 0.0, -1.0, 0.0};
 
 	NdotD = VDOT(plane, rp->r_dir);
-	d = - ( (VDOT(plane, rp->r_pt) - plane[H]) / NdotD);
+	d = - ((VDOT(plane, rp->r_pt) - plane[H]) / NdotD);
 	bu_log("rp -> Z=0 dist: %g\n", d);
     }
 
     /* transfer list of hitpoints */
-    BU_LIST_APPEND_LIST( &(seghead->l), &isect.seglist);
+    BU_LIST_APPEND_LIST(&(seghead->l), &isect.seglist);
 
     return i;
 }
 
+
 #define RT_DSP_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
 
+
 /**
- *			R T _ D S P _ V S H O T
+ * R T _ D S P _ V S H O T
  *
- *  Vectorized version.
+ * Vectorized version.
  */
 void
 rt_dsp_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
@@ -2656,7 +2639,7 @@ rt_dsp_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
     if (RT_G_DEBUG & DEBUG_HF)
 	bu_log("rt_dsp_vshot()\n");
 
-    (void)rt_vstub( stp, rp, segp, n, ap );
+    (void)rt_vstub(stp, rp, segp, n, ap);
 }
 
 
@@ -2665,7 +2648,7 @@ rt_dsp_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
  * Compute the model-space normal at a gridpoint
  *
  */
-static void
+HIDDEN void
 compute_normal_at_gridpoint(vect_t N,
 			    struct dsp_specific *dsp,
 			    int x,
@@ -2674,8 +2657,8 @@ compute_normal_at_gridpoint(vect_t N,
 			    int boolean,
 			    double len)
 {
-    /*  Gridpoint specified is "B" we compute normal by taking the
-     *  cross product of the vectors  A->C, D->E
+    /* Gridpoint specified is "B" we compute normal by taking the
+     * cross product of the vectors  A->C, D->E
      *
      * 		E
      *
@@ -2698,24 +2681,28 @@ compute_normal_at_gridpoint(vect_t N,
     VSET(tmp, x, y, DSP(&dsp->dsp_i, x, y));
 
     if (x == 0) {
- 	VMOVE(A, tmp); }
-    else {
-	VSET(A, x-1, y, DSP(&dsp->dsp_i, x-1, y) );	}
+ 	VMOVE(A, tmp);
+    } else {
+	VSET(A, x-1, y, DSP(&dsp->dsp_i, x-1, y));
+    }
 
     if (x >= XSIZ(dsp)) {
-	VMOVE(C, tmp); }
-    else {
-	VSET(C, x+1, y,  DSP(&dsp->dsp_i, x+1, y) );}
+	VMOVE(C, tmp);
+    } else {
+	VSET(C, x+1, y,  DSP(&dsp->dsp_i, x+1, y));
+    }
 
     if (y == 0) {
- 	VMOVE(D, tmp); }
-    else {
-	VSET(D, x, y-1, DSP(&dsp->dsp_i, x, y-1) );	}
+ 	VMOVE(D, tmp);
+    } else {
+	VSET(D, x, y-1, DSP(&dsp->dsp_i, x, y-1));
+    }
 
     if (y >= YSIZ(dsp)) {
-	VMOVE(E, tmp); }
-    else {
-	VSET(E, x, y+1, DSP(&dsp->dsp_i, x, y+1) );	}
+	VMOVE(E, tmp);
+    } else {
+	VSET(E, x, y+1, DSP(&dsp->dsp_i, x, y+1));
+    }
 
     MAT4X3PNT(pt, dsp->dsp_i.dsp_stom, tmp);
 
@@ -2767,10 +2754,11 @@ compute_normal_at_gridpoint(vect_t N,
 
 }
 
+
 /**
- *  			R T _ D S P _ N O R M
+ * R T _ D S P _ N O R M
  *
- *  Given ONE ray distance, return the normal and entry/exit point.
+ * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
 rt_dsp_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
@@ -2802,37 +2790,37 @@ rt_dsp_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 
     if (RT_G_DEBUG & DEBUG_HF) {
 	bu_log("rt_dsp_norm(%g %g %g)\n", V3ARGS(hitp->hit_normal));
-	VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
+	VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir);
 	VPRINT("\thit point", hitp->hit_point);
 	bu_log("hit dist: %g\n", hitp->hit_dist);
-	bu_log("%s:%d vpriv: %g,%g %g\n",
+	bu_log("%s:%d vpriv: %g, %g %g\n",
 	       __FILE__, __LINE__, V3ARGS(hitp->hit_vpriv));
     }
 
-    if ( hitp->hit_surfno < XMIN || hitp->hit_surfno > ZTOP ) {
+    if (hitp->hit_surfno < XMIN || hitp->hit_surfno > ZTOP) {
 	bu_log("%s:%d bogus surface of DSP %d\n",
 	       __FILE__, __LINE__, hitp->hit_surfno);
 	bu_bomb("");
     }
 
     /* compute hit point */
-    VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
+    VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir);
 
 
-    if ( hitp->hit_surfno != ZTOP || !dsp->dsp_i.dsp_smooth ) {
+    if (hitp->hit_surfno != ZTOP || !dsp->dsp_i.dsp_smooth) {
 	/* We've hit one of the sides or bottom, or the user didn't
-	 * ask for smoothing of the elevation data,
-	 * so there's no interpolation to do.  Just transform the normal to
-	 * model space, and comput the actual hit point
+	 * ask for smoothing of the elevation data, so there's no
+	 * interpolation to do.  Just transform the normal to model
+	 * space, and comput the actual hit point
 	 */
 
 	/* transform normal into model space */
 	MAT4X3VEC(tmp, dsp->dsp_i.dsp_mtos, hitp->hit_normal);
-	VUNITIZE( tmp );
+	VUNITIZE(tmp);
 	VMOVE(hitp->hit_normal, tmp);
 
 	if (RT_G_DEBUG & DEBUG_HF)
-	    bu_log("\tno Interpolation needed.  Normal: %g,%g,%g\n",
+	    bu_log("\tno Interpolation needed.  Normal: %g, %g, %g\n",
 		   V3ARGS(hitp->hit_normal));
 	return;
     }
@@ -2876,7 +2864,9 @@ rt_dsp_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
     compute_normal_at_gridpoint(Dnorm, dsp, x+1, y+1, fd, 0, len);
     compute_normal_at_gridpoint(Cnorm, dsp, x, y+1, fd, 0, len);
 
-    /* transform the hit point into DSP space for determining interpolation */
+    /* transform the hit point into DSP space for determining
+     * interpolation
+     */
     MAT4X3PNT(pt, dsp->dsp_i.dsp_mtos, hitp->hit_point);
 
     Xfrac = (pt[X] - x);
@@ -2892,29 +2882,30 @@ rt_dsp_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 
 
     if (dsp->dsp_i.dsp_smooth == 2) {
-	/* This is an experiment to "flatten" the curvature
-	 * of the dsp near the grid points
+	/* This is an experiment to "flatten" the curvature of the dsp
+	 * near the grid points
 	 */
 #define SMOOTHSTEP(x)  ((x)*(x)*(3 - 2*(x)))
-	Xfrac = SMOOTHSTEP( Xfrac );
-	Yfrac = SMOOTHSTEP( Yfrac );
+	Xfrac = SMOOTHSTEP(Xfrac);
+	Yfrac = SMOOTHSTEP(Yfrac);
 #undef SMOOTHSTEP
     }
 
     /* we compute the normal along the "X edges" of the cell */
-    VSCALE(Anorm, Anorm, (1.0-Xfrac) );
-    VSCALE(Bnorm, Bnorm,      Xfrac  );
+    VSCALE(Anorm, Anorm, (1.0-Xfrac));
+    VSCALE(Bnorm, Bnorm,      Xfrac);
     VADD2(ABnorm, Anorm, Bnorm);
     VUNITIZE(ABnorm);
 
-    VSCALE(Cnorm, Cnorm, (1.0-Xfrac) );
-    VSCALE(Dnorm, Dnorm,      Xfrac  );
+    VSCALE(Cnorm, Cnorm, (1.0-Xfrac));
+    VSCALE(Dnorm, Dnorm,      Xfrac);
     VADD2(CDnorm, Dnorm, Cnorm);
     VUNITIZE(CDnorm);
 
-    /* now we interpolate the two X edge normals to get the final one */
-    VSCALE(ABnorm, ABnorm, (1.0-Yfrac) );
-    VSCALE(CDnorm, CDnorm, Yfrac );
+    /* now we interpolate the two X edge normals to get the final one
+     */
+    VSCALE(ABnorm, ABnorm, (1.0-Yfrac));
+    VSCALE(CDnorm, CDnorm, Yfrac);
     VADD2(N, ABnorm, CDnorm);
 
     VUNITIZE(N);
@@ -2923,10 +2914,10 @@ rt_dsp_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
     if (RT_G_DEBUG & DEBUG_HF)
 	bu_log("interpolated %g %g %g  dot:%g\n", V3ARGS(N), dot);
 
-    if ( (hitp->hit_vpriv[Z] == 0.0 && dot > 0.0)/* in-hit needs fix */ ||
-	 (hitp->hit_vpriv[Z] == 1.0 && dot < 0.0)/* out-hit needs fix */) {
-	/* bring the normal back to being perpindicular
-	 * to the ray to avoid "flipped normal" warnings
+    if ((hitp->hit_vpriv[Z] == 0.0 && dot > 0.0)/* in-hit needs fix */ ||
+	(hitp->hit_vpriv[Z] == 1.0 && dot < 0.0)/* out-hit needs fix */) {
+	/* bring the normal back to being perpindicular to the ray to
+	 * avoid "flipped normal" warnings
 	 */
 	VCROSS(A, rp->r_dir, N);
 	VCROSS(N, A, rp->r_dir);
@@ -2946,16 +2937,17 @@ rt_dsp_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 	VJOIN1(tmp, hitp->hit_point, len, hitp->hit_normal);
 	pdv_3line(fd, hitp->hit_point, tmp);
 
-	bu_semaphore_acquire( BU_SEM_SYSCALL);
+	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	fclose(fd);
-	bu_semaphore_release( BU_SEM_SYSCALL);
+	bu_semaphore_release(BU_SEM_SYSCALL);
     }
 }
 
+
 /**
- *			R T _ D S P _ C U R V E
+ * R T _ D S P _ C U R V E
  *
- *  Return the curvature of the dsp.
+ * Return the curvature of the dsp.
  */
 void
 rt_dsp_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
@@ -2967,16 +2959,17 @@ rt_dsp_curve(register struct curvature *cvp, register struct hit *hitp, struct s
     cvp->crv_c1 = cvp->crv_c2 = 0;
 
     /* any tangent direction */
-    bn_vec_ortho( cvp->crv_pdir, hitp->hit_normal );
+    bn_vec_ortho(cvp->crv_pdir, hitp->hit_normal);
 }
 
+
 /**
- *  			R T _ D S P _ U V
+ * R T _ D S P _ U V
  *
- *  For a hit on the surface of a dsp, return the (u, v) coordinates
- *  of the hit point, 0 <= u, v <= 1.
- *  u = azimuth
- *  v = elevation
+ * For a hit on the surface of a dsp, return the (u, v) coordinates
+ * of the hit point, 0 <= u, v <= 1.
+ * u = azimuth
+ * v = elevation
  */
 void
 rt_dsp_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
@@ -3006,59 +2999,60 @@ rt_dsp_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 
 
     /* du, dv indicate the extent of the ray radius in UV coordinates.
-     * To compute this, transform unit vectors from solid space to model
-     * space.  We remember the length of the resultant vectors and then
-     * unitize them to get u, v directions in model coordinate space.
+     * To compute this, transform unit vectors from solid space to
+     * model space.  We remember the length of the resultant vectors
+     * and then unitize them to get u, v directions in model
+     * coordinate space.
      */
-    VSET( tmp, XSIZ(dsp), 0.0, 0.0 );	/* X direction vector */
-    MAT4X3VEC( U_dir,  dsp->dsp_i.dsp_stom, tmp ); /* into model space */
-    U_len = MAGNITUDE( U_dir );		/* remember model space length */
+    VSET(tmp, XSIZ(dsp), 0.0, 0.0);	/* X direction vector */
+    MAT4X3VEC(U_dir,  dsp->dsp_i.dsp_stom, tmp); /* into model space */
+    U_len = MAGNITUDE(U_dir);		/* remember model space length */
     one_over_len = 1.0/U_len;
-    VSCALE( U_dir, U_dir, one_over_len ); /* scale to unit length in model space */
+    VSCALE(U_dir, U_dir, one_over_len); /* scale to unit length in model space */
 
-    VSET( tmp, 0.0, YSIZ(dsp), 0.0 );	/* Y direction vector */
-    MAT4X3VEC( V_dir,  dsp->dsp_i.dsp_stom, tmp );
-    V_len = MAGNITUDE( V_dir );
+    VSET(tmp, 0.0, YSIZ(dsp), 0.0);	/* Y direction vector */
+    MAT4X3VEC(V_dir,  dsp->dsp_i.dsp_stom, tmp);
+    V_len = MAGNITUDE(V_dir);
     one_over_len = 1.0/V_len;
-    VSCALE( V_dir, V_dir, one_over_len ); /* scale to unit length in model space */
+    VSCALE(V_dir, V_dir, one_over_len); /* scale to unit length in model space */
 
     /* divide the hit-point radius by the U/V unit length distance */
     r = ap->a_rbeam + ap->a_diverge * hitp->hit_dist;
     min_r_U = r / U_len;
     min_r_V = r / V_len;
 
-    /* compute UV_dir, a vector in the plane of the hit point (surface)
-     * which points in the anti-rayward direction
+    /* compute UV_dir, a vector in the plane of the hit point
+     * (surface) which points in the anti-rayward direction
      */
-    VREVERSE( rev_dir, ap->a_ray.r_dir );
-    VMOVE( norm, hitp->hit_normal );
-    dot_N = VDOT( rev_dir, norm );
-    VJOIN1( UV_dir, rev_dir, -dot_N, norm );
-    VUNITIZE( UV_dir );
+    VREVERSE(rev_dir, ap->a_ray.r_dir);
+    VMOVE(norm, hitp->hit_normal);
+    dot_N = VDOT(rev_dir, norm);
+    VJOIN1(UV_dir, rev_dir, -dot_N, norm);
+    VUNITIZE(UV_dir);
 
-    if (NEAR_ZERO( dot_N, SMALL_FASTF ) ) {
+    if (NEAR_ZERO(dot_N, SMALL_FASTF)) {
 	/* ray almost perfectly 90 degrees to surface */
 	uvp->uv_du = min_r_U;
 	uvp->uv_dv = min_r_V;
     } else {
 	/* somehow this computes the extent of U and V in the radius */
-	uvp->uv_du = (r / U_len) * VDOT( UV_dir, U_dir ) / dot_N;
-	uvp->uv_dv = (r / V_len) * VDOT( UV_dir, V_dir ) / dot_N;
+	uvp->uv_du = (r / U_len) * VDOT(UV_dir, U_dir) / dot_N;
+	uvp->uv_dv = (r / V_len) * VDOT(UV_dir, V_dir) / dot_N;
     }
 
 
-    if (uvp->uv_du < 0.0 )
+    if (uvp->uv_du < 0.0)
 	uvp->uv_du = -uvp->uv_du;
-    if (uvp->uv_du < min_r_U )
+    if (uvp->uv_du < min_r_U)
 	uvp->uv_du = min_r_U;
 
-    if (uvp->uv_dv < 0.0 )
+    if (uvp->uv_dv < 0.0)
 	uvp->uv_dv = -uvp->uv_dv;
-    if (uvp->uv_dv < min_r_V )
+    if (uvp->uv_dv < min_r_V)
 	uvp->uv_dv = min_r_V;
 
     if (RT_G_DEBUG & DEBUG_HF)
-	bu_log("rt_dsp_uv(pt:%g,%g siz:%d,%d)\n U_len=%g V_len=%g\n r=%g rbeam=%g diverge=%g dist=%g\n u=%g v=%g du=%g dv=%g\n",
+	bu_log("rt_dsp_uv(pt:%g, %g siz:%d, %d)\n U_len=%g V_len=%g\n r=%g rbeam=%g diverge=%g dist=%g\n u=%g v=%g du=%g dv=%g\n",
 	       pt[X], pt[Y], XSIZ(dsp), YSIZ(dsp),
 	       U_len, V_len,
 	       r, ap->a_rbeam, ap->a_diverge, hitp->hit_dist,
@@ -3066,8 +3060,9 @@ rt_dsp_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 	       uvp->uv_du, uvp->uv_dv);
 }
 
+
 /**
- *		R T _ D S P _ F R E E
+ * R T _ D S P _ F R E E
  */
 void
 rt_dsp_free(register struct soltab *stp)
@@ -3092,11 +3087,12 @@ rt_dsp_free(register struct soltab *stp)
 	    break;
     }
 
-    bu_free( (char *)dsp, "dsp_specific" );
+    bu_free((char *)dsp, "dsp_specific");
 }
 
+
 /**
- *			R T _ D S P _ C L A S S
+ * R T _ D S P _ C L A S S
  */
 int
 rt_dsp_class(void)
@@ -3107,13 +3103,14 @@ rt_dsp_class(void)
     return(0);
 }
 
+
 /**
- *			R T _ D S P _ P L O T
+ * R T _ D S P _ P L O T
  */
 int
 rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
-    struct rt_dsp_internal	*dsp_ip =
+    struct rt_dsp_internal *dsp_ip =
 	(struct rt_dsp_internal *)ip->idb_ptr;
     point_t m_pt;
     point_t s_pt;
@@ -3163,11 +3160,11 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 
 #define MOVE(_pt) \
 	MAT4X3PNT(m_pt, dsp_ip->dsp_stom, _pt); \
-	RT_ADD_VLIST( vhead, m_pt, BN_VLIST_LINE_MOVE )
+	RT_ADD_VLIST(vhead, m_pt, BN_VLIST_LINE_MOVE)
 
 #define DRAW(_pt) \
 	MAT4X3PNT(m_pt, dsp_ip->dsp_stom, _pt); \
-	RT_ADD_VLIST( vhead, m_pt, BN_VLIST_LINE_DRAW )
+	RT_ADD_VLIST(vhead, m_pt, BN_VLIST_LINE_DRAW)
 
 
     /* Draw the Bottom */
@@ -3208,12 +3205,11 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     DRAW(s_pt);
 
 
-    /* Draw the outside line of the top
-     * We draw the four sides of the top at full resolution.
-     * This helps edge matching.
-     * The inside of the top, we draw somewhat coarser
+    /* Draw the outside line of the top We draw the four sides of the
+     * top at full resolution.  This helps edge matching.  The inside
+     * of the top, we draw somewhat coarser
      */
-    for (y=0; y < dsp_ip->dsp_ycnt; y += ylim ) {
+    for (y=0; y < dsp_ip->dsp_ycnt; y += ylim) {
 	VSET(s_pt, 0.0, y, DSP(dsp_ip, 0, y));
 	MOVE(s_pt);
 
@@ -3225,7 +3221,7 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     }
 
 
-    for (x=0; x < dsp_ip->dsp_xcnt; x += xlim ) {
+    for (x=0; x < dsp_ip->dsp_xcnt; x += xlim) {
 	VSET(s_pt, x, 0.0, DSP(dsp_ip, x, 0));
 	MOVE(s_pt);
 
@@ -3237,10 +3233,10 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     }
 
     /* now draw the body of the top */
-    if (ttol->rel )  {
-	int	rstep;
+    if (ttol->rel) {
+	int rstep;
 	rstep = dsp_ip->dsp_xcnt;
-	V_MAX( rstep, dsp_ip->dsp_ycnt );
+	V_MAX(rstep, dsp_ip->dsp_ycnt);
 	step = (int)(ttol->rel * rstep);
     } else {
 	int goal = 10000;
@@ -3251,11 +3247,11 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 
 	/* Compute data stride based upon producing no more than 'goal' vectors */
 	step = ceil(
-	    sqrt( 2*(xlim)*(ylim) /
-		  (double)goal )
+	    sqrt(2*(xlim)*(ylim) /
+		 (double)goal)
 	    );
     }
-    if (step < 1 )  step = 1;
+    if (step < 1) step = 1;
 
 
     xfudge = (dsp_ip->dsp_xcnt % step + step) / 2;
@@ -3265,7 +3261,7 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     if (yfudge < 1) yfudge = 1;
 
     /* draw the horizontal (y==const) lines */
-    for (y=yfudge; y < ylim; y += step ) {
+    for (y=yfudge; y < ylim; y += step) {
 	VSET(s_pt, 0.0, y, DSP(dsp_ip, 0, y));
 	VMOVE(o_pt, s_pt);
 	if (o_pt[Z]) {
@@ -3275,10 +3271,10 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	    drawing = 0;
 	}
 
-	for (x=xfudge; x < xlim; x+=step ) {
+	for (x=xfudge; x < xlim; x+=step) {
 	    s_pt[X] = x;
 
-	    if ( (s_pt[Z] = DSP(dsp_ip, x, y)) ) {
+	    if ((s_pt[Z] = DSP(dsp_ip, x, y))) {
 		if (drawing) {
 		    DRAW(s_pt);
 		} else {
@@ -3297,7 +3293,7 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	}
 
 	s_pt[X] = xlim;
-	if ( (s_pt[Z] = DSP(dsp_ip, xlim, y)) ) {
+	if ((s_pt[Z] = DSP(dsp_ip, xlim, y))) {
 	    if (drawing) {
 		DRAW(s_pt);
 	    } else {
@@ -3314,7 +3310,7 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 
     }
 
-    for (x=xfudge; x < xlim; x += step ) {
+    for (x=xfudge; x < xlim; x += step) {
 	VSET(s_pt, x, 0.0, DSP(dsp_ip, x, 0));
 	VMOVE(o_pt, s_pt);
 	if (o_pt[Z]) {
@@ -3328,7 +3324,7 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	for (y=yfudge; y < ylim; y+=step) {
 	    s_pt[Y] = y;
 
-	    if ( (s_pt[Z] = DSP(dsp_ip, x, y)) ) {
+	    if ((s_pt[Z] = DSP(dsp_ip, x, y))) {
 		if (drawing) {
 		    DRAW(s_pt);
 		} else {
@@ -3347,7 +3343,7 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	}
 
 	s_pt[Y] = ylim;
-	if ( (s_pt[Z] = DSP(dsp_ip, x, ylim)) ) {
+	if ((s_pt[Z] = DSP(dsp_ip, x, ylim))) {
 	    if (drawing) {
 		DRAW(s_pt);
 	    } else {
@@ -3368,37 +3364,39 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     return(0);
 }
 
+
 /*
- *          G E T _ C U T _ D I R
+ * G E T _ C U T _ D I R
  *
  * Determine the cut direction for a DSP cell. This routine is used by
- * rt_dsp_tess(). It somewhat duplicates code from permute_cell(), which
- * is a bad thing, but permute_cell() had other side effects not desired here.
+ * rt_dsp_tess(). It somewhat duplicates code from permute_cell(),
+ * which is a bad thing, but permute_cell() had other side effects not
+ * desired here.
  *
  * inputs:
- *    dsp_ip - pointer to the rt_dsp_internal struct fro thi DSP
- *    x - the DSP cell x-coord of the lower left corner of the cell
- *    y - the DSP cell y-coord of the lower left corner of the cell
- *    xlim - the maximum value of the DSP x coordinates
- *    ylim - the maximum value of the DSP y coordinates
+ * dsp_ip - pointer to the rt_dsp_internal struct fro thi DSP
+ * x - the DSP cell x-coord of the lower left corner of the cell
+ * y - the DSP cell y-coord of the lower left corner of the cell
+ * xlim - the maximum value of the DSP x coordinates
+ * ylim - the maximum value of the DSP y coordinates
  * return:
- *    the direction for cutting this cell.
- *           DSP_CUT_DIR_llUR - lower left to upper right
- *           DSP_CUT_DIR_ULlr - upper right to lower left
+ * the direction for cutting this cell.
+ * DSP_CUT_DIR_llUR - lower left to upper right
+ * DSP_CUT_DIR_ULlr - upper right to lower left
  */
-static int
+HIDDEN int
 get_cut_dir(struct rt_dsp_internal *dsp_ip, int x, int y, int xlim, int ylim)
 {
 /*
  * height array contains DSP values:
- *  height[0] is at (x,y)
- *  height[1] is at (x+1,y)
- *  height[2] is at (x+1,y+1)
- *  height[3] is at (x,y+1)
- *  height[4] is at (x-1,y-1)
- *  height[5] is at (x+2,y-1)
- *  height[6] is at (x+2,y+2)
- *  height[7] is at (x-1,y+2)
+ * height[0] is at (x, y)
+ * height[1] is at (x+1, y)
+ * height[2] is at (x+1, y+1)
+ * height[3] is at (x, y+1)
+ * height[4] is at (x-1, y-1)
+ * height[5] is at (x+2, y-1)
+ * height[6] is at (x+2, y+2)
+ * height[7] is at (x-1, y+2)
  *
  * 7         6
  *  \       /
@@ -3411,14 +3409,14 @@ get_cut_dir(struct rt_dsp_internal *dsp_ip, int x, int y, int xlim, int ylim)
  *  /       \
  * 4         5
  *
- * (0,1,2,3) is the cell of interest.
+ * (0, 1, 2, 3) is the cell of interest.
  */
     int height[8];
     int xx, yy;
     double h1, h2, h3, h4;
     double c02, c13;  /* curvature in direction 0<->2, and 1<->3 */
 
-    if( dsp_ip->dsp_cuttype != DSP_CUT_DIR_ADAPT) {
+    if (dsp_ip->dsp_cuttype != DSP_CUT_DIR_ADAPT) {
 	/* not using adpative cut type, so just return the cut type */
 	return dsp_ip->dsp_cuttype;
     }
@@ -3428,26 +3426,26 @@ get_cut_dir(struct rt_dsp_internal *dsp_ip, int x, int y, int xlim, int ylim)
     yy = y;
     height[0] = DSP(dsp_ip, xx, yy);
     xx = x+1;
-    if(xx > xlim) xx = xlim;
+    if (xx > xlim) xx = xlim;
     height[1] = DSP(dsp_ip, xx, yy);
     yy = y+1;
-    if(yy > ylim) yy = ylim;
+    if (yy > ylim) yy = ylim;
     height[2] = DSP(dsp_ip, xx, yy);
     xx = x;
     height[3] = DSP(dsp_ip, xx, yy);
     xx = x-1;
-    if(xx < 0) xx = 0;
+    if (xx < 0) xx = 0;
     yy = y-1;
-    if(yy < 0) yy = 0;
+    if (yy < 0) yy = 0;
     height[4] = DSP(dsp_ip, xx, yy);
     xx = x+2;
-    if(xx > xlim) xx = xlim;
+    if (xx > xlim) xx = xlim;
     height[5] = DSP(dsp_ip, xx, yy);
     yy = y+2;
-    if(yy > ylim) yy = ylim;
+    if (yy > ylim) yy = ylim;
     height[6] = DSP(dsp_ip, xx, yy);
     xx = x-1;
-    if(xx < 0) xx = 0;
+    if (xx < 0) xx = 0;
     height[7] = DSP(dsp_ip, xx, yy);
     
     /* compute curvature along the 0<->2 direction */
@@ -3457,7 +3455,7 @@ get_cut_dir(struct rt_dsp_internal *dsp_ip, int x, int y, int xlim, int ylim)
     /* compute curvature along the 1<->3 direction */
     c13 = fabs(height[3] + height[5] - 2*height[1]) + fabs(height[7] + height[1] - 2*height[3]);
 
-    if(c02 < c13) {
+    if (c02 < c13) {
 	/* choose the 0<->2 direction */
 	return DSP_CUT_DIR_llUR;
     } else {
@@ -3466,6 +3464,7 @@ get_cut_dir(struct rt_dsp_internal *dsp_ip, int x, int y, int xlim, int ylim)
     }
 }
 
+
 /* a macro to check if these vertices can produce a valid face */
 #define CHECK_VERTS(_v) \
      ((*_v[0] != *_v[1]) || (*_v[0] == NULL)) && \
@@ -3473,11 +3472,11 @@ get_cut_dir(struct rt_dsp_internal *dsp_ip, int x, int y, int xlim, int ylim)
      ((*_v[1] != *_v[2]) || (*_v[1] == NULL))
 
 /**
- *			R T _ D S P _ T E S S
+ * R T _ D S P _ T E S S
  *
- *  Returns -
- *	-1	failure
- *	 0	OK.  *r points to nmgregion that holds this tessellation.
+ * Returns -
+ * -1 failure
+ * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
 int
 rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
@@ -3510,7 +3509,7 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     dsp_ip = (struct rt_dsp_internal *)ip->idb_ptr;
     RT_DSP_CK_MAGIC(dsp_ip);
 
-    switch( dsp_ip->dsp_datasrc ) {
+    switch(dsp_ip->dsp_datasrc) {
         case RT_DSP_SRC_FILE:
         case RT_DSP_SRC_V4_FILE:
 	    if (!dsp_ip->dsp_mp) {
@@ -3547,28 +3546,29 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
      * correctly to create the base face.
      * Cannot simply use the four corners, because that would not
      * create a valid NMG.
-     * base_verts[0] is at (0,0)
-     * base_verts[ylim] is at (0,ylim)
-     * base_verts[ylim+xlim] is at (xlim,ylim)
-     * base_verts[2*ylim+xlim] is at (xlim,0)
-     * base_verts[2*ylim+2*xlim-x] is at (x,0)
+     * base_verts[0] is at (0, 0)
+     * base_verts[ylim] is at (0, ylim)
+     * base_verts[ylim+xlim] is at (xlim, ylim)
+     * base_verts[2*ylim+xlim] is at (xlim, 0)
+     * base_verts[2*ylim+2*xlim-x] is at (x, 0)
      *
      * strip1Verts and strip2Verts are temporary storage for vertices
-     * along the top of the dsp. For each strip of triangles at a given
-     * x value, strip1Verts[y] is the vertex at (x,y,h) and strip2Verts[y]
-     * is the vertex at (x+1,y,h), where h is the DSP value at that point.
-     * After each strip of faces is created, strip2Verts is copied to strip1Verts
-     * and strip2Verts is set to all NULLs.
+     * along the top of the dsp. For each strip of triangles at a
+     * given x value, strip1Verts[y] is the vertex at (x, y, h) and
+     * strip2Verts[y] is the vertex at (x+1, y, h), where h is the DSP
+     * value at that point.  After each strip of faces is created,
+     * strip2Verts is copied to strip1Verts and strip2Verts is set to
+     * all NULLs.
      */
     
     /* malloc space for the vertices */
     base_vert_count = 2*xlim + 2*ylim;
-    base_verts = bu_calloc(base_vert_count, sizeof( struct vertex *), "base verts");
-    strip1Verts = bu_calloc(ylim+1, sizeof( struct vertex *), "strip1Verts");
-    strip2Verts = bu_calloc(ylim+1, sizeof( struct vertex *), "strip2Verts");
+    base_verts = bu_calloc(base_vert_count, sizeof(struct vertex *), "base verts");
+    strip1Verts = bu_calloc(ylim+1, sizeof(struct vertex *), "strip1Verts");
+    strip2Verts = bu_calloc(ylim+1, sizeof(struct vertex *), "strip2Verts");
 
     /* Make region, empty shell, vertex */
-    *r = nmg_mrsv( m );
+    *r = nmg_mrsv(m);
     s = BU_LIST_FIRST(shell, &(*r)->s_hd);
 
     /* make the base face */
@@ -3576,25 +3576,25 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     /* assign geometry to the base_verts */
     /* start with x=0 edge */
-    for(y=0 ; y<=ylim ; y++) {
+    for (y=0 ; y<=ylim ; y++) {
 	VSET(tmp_pt, 0, y, 0);
 	MAT4X3PNT(pt[0], dsp_ip->dsp_stom, tmp_pt);
 	nmg_vertex_gv(base_verts[y], pt[0]);
     }
     /* now do y=ylim edge */
-    for(x=1 ; x<=xlim ; x++) {
+    for (x=1 ; x<=xlim ; x++) {
 	VSET(tmp_pt, x, ylim, 0);
 	MAT4X3PNT(pt[0], dsp_ip->dsp_stom, tmp_pt);
 	nmg_vertex_gv(base_verts[ylim+x], pt[0]);
     }
     /* now do x=xlim edge */
-    for(y=0 ; y<ylim ; y++) {
+    for (y=0 ; y<ylim ; y++) {
 	VSET(tmp_pt, xlim, y, 0);
 	MAT4X3PNT(pt[0], dsp_ip->dsp_stom, tmp_pt);
 	nmg_vertex_gv(base_verts[2*ylim+xlim-y], pt[0]);
     }
     /* now do y=0 edge */
-    for(x=1 ; x<xlim ; x++) {
+    for (x=1 ; x<xlim ; x++) {
 	VSET(tmp_pt, x, 0, 0);
 	MAT4X3PNT(pt[0], dsp_ip->dsp_stom, tmp_pt);
 	nmg_vertex_gv(base_verts[2*(xlim+ylim)-x], pt[0]);
@@ -3607,35 +3607,34 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	return -1; /* FAIL */
     }
 
-    /* if a displacement on the edge (x=0) is zero
-     * then strip1Verts at that point is the corresponding
-     * base_vert
+    /* if a displacement on the edge (x=0) is zero then strip1Verts at
+     * that point is the corresponding base_vert
      */
-    for(y=0 ; y<=ylim ; y++) {
-	if(DSP(dsp_ip, 0, y) == 0) {
+    for (y=0 ; y<=ylim ; y++) {
+	if (DSP(dsp_ip, 0, y) == 0) {
 	    strip1Verts[y] = base_verts[y];
 	}
     }
 
     /* make faces along x=0 plane */
-    for(y=1 ; y<=ylim ; y++) {
+    for (y=1 ; y<=ylim ; y++) {
 	verts[0] = &base_verts[y-1];
 	verts[1] = &strip1Verts[y-1];
 	verts[2] = &strip1Verts[y];
-	if(CHECK_VERTS( verts )) {
+	if (CHECK_VERTS(verts)) {
 	    fu = nmg_cmface(s, verts, 3);
 	    if (y == 1 && strip1Verts[0]->vg_p == NULL) {
 		VSET(tmp_pt, 0, 0, DSP(dsp_ip, 0, 0));
 		MAT4X3PNT(pt[0], dsp_ip->dsp_stom, tmp_pt);
 		nmg_vertex_gv(strip1Verts[0], pt[0]);
 	    }
-	    if(strip1Verts[y]->vg_p == NULL) {
+	    if (strip1Verts[y]->vg_p == NULL) {
 		VSET(tmp_pt, 0, y, DSP(dsp_ip, 0, y));
 		MAT4X3PNT(pt[0], dsp_ip->dsp_stom, tmp_pt);
 		nmg_vertex_gv(strip1Verts[y], pt[0]);
 	    }
 	    if (nmg_fu_planeeqn(fu, tol) < 0) {
-		bu_log( "Failed to make x=0 face at y=%d\n", y );
+		bu_log("Failed to make x=0 face at y=%d\n", y);
 		bu_free(base_verts, "base verts");
 		bu_free(strip1Verts, "strip 1 verts");
 		bu_free(strip2Verts, "strip 2 verts");
@@ -3645,15 +3644,15 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	verts[0] = &base_verts[y-1];
 	verts[1] = &strip1Verts[y];
 	verts[2] = &base_verts[y];
-	if(CHECK_VERTS( verts )) {
+	if (CHECK_VERTS(verts)) {
 	    fu = nmg_cmface(s, verts, 3);
-	    if(strip1Verts[y]->vg_p == NULL) {
+	    if (strip1Verts[y]->vg_p == NULL) {
 		VSET(tmp_pt, 0, y, DSP(dsp_ip, 0, y));
 		MAT4X3PNT(pt[0], dsp_ip->dsp_stom, tmp_pt);
 		nmg_vertex_gv(strip1Verts[y], pt[0]);
 	    }
 	    if (nmg_fu_planeeqn(fu, tol) < 0) {
-		bu_log( "Failed to make x=0 face at y=%d\n", y );
+		bu_log("Failed to make x=0 face at y=%d\n", y);
 		bu_free(base_verts, "base verts");
 		bu_free(strip1Verts, "strip 1 verts");
 		bu_free(strip2Verts, "strip 2 verts");
@@ -3662,31 +3661,31 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	}
     }
 
-    /* make each strip of triangles. Make two triangles for each
-     * cell (x,y)<->(x+1,y+1). Also make the vertical faces at y=0 and y=ylim.
+    /* make each strip of triangles. Make two triangles for each cell
+     * (x, y)<->(x+1, y+1). Also make the vertical faces at y=0 and
+     * y=ylim.
      */
-    for(x=0 ; x<xlim ; x++) {
-	/*
-	 * set strip2Verts to base_verts values where the strip2Vert
+    for (x=0 ; x<xlim ; x++) {
+	/* set strip2Verts to base_verts values where the strip2Vert
          * is above a base_vert and DSP value is 0
 	 */
-	if((x+1) == xlim) {
-	    for(y=0 ; y<=ylim ; y++) {
-		if(DSP(dsp_ip, xlim, y) == 0) {
+	if ((x+1) == xlim) {
+	    for (y=0 ; y<=ylim ; y++) {
+		if (DSP(dsp_ip, xlim, y) == 0) {
 		    strip2Verts[y] = base_verts[2*ylim + xlim - y];
 		}
 	    }
 	} else {
-	    if(DSP(dsp_ip, x+1, 0) == 0 ) {
+	    if (DSP(dsp_ip, x+1, 0) == 0) {
 		strip2Verts[0] = base_verts[2*(ylim+xlim)-(x+1)];
 	    }
-	    if(DSP(dsp_ip, x+1, ylim) == 0 ) {
+	    if (DSP(dsp_ip, x+1, ylim) == 0) {
 		strip2Verts[ylim] = base_verts[ylim+x+1];
 	    }
 	}
 
         /* make the faces at y=0 for this strip */
-	if(x == 0) {
+	if (x == 0) {
 	    base_vert_no1 = 0;
 	    base_vert_no2 = 2*(ylim+xlim)-1;
 	} else {
@@ -3697,13 +3696,13 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	verts[0] = &base_verts[base_vert_no1];
 	verts[1] = &strip2Verts[0];
 	verts[2] = &strip1Verts[0];
-	if(CHECK_VERTS( verts )) {
+	if (CHECK_VERTS(verts)) {
 	    fu = nmg_cmface(s, verts, 3);
 	    VSET(tmp_pt, x+1, 0, DSP(dsp_ip, x+1, 0));
 	    MAT4X3PNT(pt[0], dsp_ip->dsp_stom, tmp_pt);
 	    nmg_vertex_gv(strip2Verts[0], pt[0]);
 	    if (nmg_fu_planeeqn(fu, tol) < 0) {
-		bu_log( "Failed to make first face at x=%d, y=%d\n", x, 0 );
+		bu_log("Failed to make first face at x=%d, y=%d\n", x, 0);
 		bu_free(base_verts, "base verts");
 		bu_free(strip1Verts, "strip 1 verts");
 		bu_free(strip2Verts, "strip 2 verts");
@@ -3714,16 +3713,16 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	verts[0] = &base_verts[base_vert_no1];
 	verts[1] = &base_verts[base_vert_no2];
 	verts[2] = &strip2Verts[0];
-	if(CHECK_VERTS( verts )) {
+	if (CHECK_VERTS(verts)) {
 	    fu = nmg_cmface(s, verts, 3);
 	    if (nmg_fu_planeeqn(fu, tol) < 0) {
-		bu_log( "Failed to make second face at x=%d, y=%d\n", x, 0 );
+		bu_log("Failed to make second face at x=%d, y=%d\n", x, 0);
 		bu_free(base_verts, "base verts");
 		bu_free(strip1Verts, "strip 1 verts");
 		bu_free(strip2Verts, "strip 2 verts");
 		return -1; /* FAIL */
 	    }
-	    if(strip2Verts[0]->vg_p == NULL) {
+	    if (strip2Verts[0]->vg_p == NULL) {
 		VSET(tmp_pt, x+1, 0, DSP(dsp_ip, x+1, 0));
 		MAT4X3PNT(pt[0], dsp_ip->dsp_stom, tmp_pt);
 		nmg_vertex_gv(strip2Verts[0], pt[0]);
@@ -3731,17 +3730,17 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	}
         
         /* make the top faces for this strip */
-        for(y=0 ; y<ylim ; y++) {
+        for (y=0 ; y<ylim ; y++) {
 	    int dir;
 	    /* get the cut direction for this cell */
 	    dir = get_cut_dir(dsp_ip, x, y, xlim, ylim);
 
-	    if(dir == DSP_CUT_DIR_llUR) {
+	    if (dir == DSP_CUT_DIR_llUR) {
 		verts[0] = &strip1Verts[y];
 		verts[1] = &strip2Verts[y];
 		verts[2] = &strip2Verts[y+1];
-		if(CHECK_VERTS( verts )) {
-		    if(DSP(dsp_ip,x,y) == 0 && DSP(dsp_ip,x+1,y) == 0 && DSP(dsp_ip,x+1,y+1) == 0) {
+		if (CHECK_VERTS(verts)) {
+		    if (DSP(dsp_ip, x, y) == 0 && DSP(dsp_ip, x+1, y) == 0 && DSP(dsp_ip, x+1, y+1) == 0) {
 			/* make a hole, instead of a face */
 			hole_verts[0] = strip1Verts[y];
 			hole_verts[1] = strip2Verts[y];
@@ -3758,7 +3757,7 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 			MAT4X3PNT(pt[0], dsp_ip->dsp_stom, tmp_pt);
 			nmg_vertex_gv(strip2Verts[y+1], pt[0]);
 			if (nmg_fu_planeeqn(fu, tol) < 0) {
-			    bu_log( "Failed to make first top face at x=%d, y=%d\n", x, y );
+			    bu_log("Failed to make first top face at x=%d, y=%d\n", x, y);
 			    bu_free(base_verts, "base verts");
 			    bu_free(strip1Verts, "strip 1 verts");
 			    bu_free(strip2Verts, "strip 2 verts");
@@ -3770,8 +3769,8 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		verts[0] = &strip1Verts[y+1];
 		verts[1] = &strip1Verts[y];
 		verts[2] = &strip2Verts[y];
-		if(CHECK_VERTS( verts )) {
-		    if(DSP(dsp_ip,x,y+1) == 0 && DSP(dsp_ip,x,y) == 0 && DSP(dsp_ip,x+1,y) == 0) {
+		if (CHECK_VERTS(verts)) {
+		    if (DSP(dsp_ip, x, y+1) == 0 && DSP(dsp_ip, x, y) == 0 && DSP(dsp_ip, x+1, y) == 0) {
 			/* make a hole, instead of a face */
 			hole_verts[0] = strip1Verts[y+1];
 			hole_verts[1] = strip1Verts[y];
@@ -3781,7 +3780,7 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		    } else {
 			fu = nmg_cmface(s, verts, 3);
 			if (nmg_fu_planeeqn(fu, tol) < 0) {
-			    bu_log( "Failed to make first top face at x=%d, y=%d\n", x, y );
+			    bu_log("Failed to make first top face at x=%d, y=%d\n", x, y);
 			    bu_free(base_verts, "base verts");
 			    bu_free(strip1Verts, "strip 1 verts");
 			    bu_free(strip2Verts, "strip 2 verts");
@@ -3792,12 +3791,12 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    }
 
             
-	    if(dir == DSP_CUT_DIR_llUR) {
+	    if (dir == DSP_CUT_DIR_llUR) {
 		verts[0] = &strip1Verts[y];
 		verts[1] = &strip2Verts[y+1];
 		verts[2] = &strip1Verts[y+1];
-		if(CHECK_VERTS( verts )) {
-		    if(DSP(dsp_ip,x,y) == 0 && DSP(dsp_ip,x+1,y+1) == 0 && DSP(dsp_ip,x,y+1) == 0) {
+		if (CHECK_VERTS(verts)) {
+		    if (DSP(dsp_ip, x, y) == 0 && DSP(dsp_ip, x+1, y+1) == 0 && DSP(dsp_ip, x, y+1) == 0) {
 			/* make a hole, instead of a face */
 			hole_verts[0] = strip1Verts[y];
 			hole_verts[1] = strip2Verts[y+1];
@@ -3814,7 +3813,7 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 			MAT4X3PNT(pt[0], dsp_ip->dsp_stom, tmp_pt);
 			nmg_vertex_gv(strip2Verts[y+1], pt[0]);
 			if (nmg_fu_planeeqn(fu, tol) < 0) {
-			    bu_log( "Failed to make second top face at x=%d, y=%d\n", x, y );
+			    bu_log("Failed to make second top face at x=%d, y=%d\n", x, y);
 			    bu_free(base_verts, "base verts");
 			    bu_free(strip1Verts, "strip 1 verts");
 			    bu_free(strip2Verts, "strip 2 verts");
@@ -3826,8 +3825,8 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		verts[0] = &strip2Verts[y];
 		verts[1] = &strip2Verts[y+1];
 		verts[2] = &strip1Verts[y+1];
-		if(CHECK_VERTS( verts )) {
-		    if(DSP(dsp_ip,x+1,y) == 0 && DSP(dsp_ip,x+1,y+1) == 0 && DSP(dsp_ip,x,y+1) == 0) {
+		if (CHECK_VERTS(verts)) {
+		    if (DSP(dsp_ip, x+1, y) == 0 && DSP(dsp_ip, x+1, y+1) == 0 && DSP(dsp_ip, x, y+1) == 0) {
 			/* make a hole, instead of a face */
 			hole_verts[0] = strip2Verts[y];
 			hole_verts[1] = strip2Verts[y+1];
@@ -3844,7 +3843,7 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 			MAT4X3PNT(pt[0], dsp_ip->dsp_stom, tmp_pt);
 			nmg_vertex_gv(strip2Verts[y+1], pt[0]);
 			if (nmg_fu_planeeqn(fu, tol) < 0) {
-			    bu_log( "Failed to make second top face at x=%d, y=%d\n", x, y );
+			    bu_log("Failed to make second top face at x=%d, y=%d\n", x, y);
 			    bu_free(base_verts, "base verts");
 			    bu_free(strip1Verts, "strip 1 verts");
 			    bu_free(strip2Verts, "strip 2 verts");
@@ -3859,10 +3858,10 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	verts[0] = &strip1Verts[ylim];
 	verts[1] = &strip2Verts[ylim];
 	verts[2] = &base_verts[ylim+x+1];
-	if(CHECK_VERTS( verts )) {
+	if (CHECK_VERTS(verts)) {
 	    fu = nmg_cmface(s, verts, 3);
 	    if (nmg_fu_planeeqn(fu, tol) < 0) {
-		bu_log( "Failed to make first face at x=%d, y=ylim\n", x );
+		bu_log("Failed to make first face at x=%d, y=ylim\n", x);
 		bu_free(base_verts, "base verts");
 		bu_free(strip1Verts, "strip 1 verts");
 		bu_free(strip2Verts, "strip 2 verts");
@@ -3873,10 +3872,10 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	verts[0] = &base_verts[ylim+x+1];
 	verts[1] = &base_verts[ylim+x];
 	verts[2] = &strip1Verts[ylim];
-	if(CHECK_VERTS( verts )) {
+	if (CHECK_VERTS(verts)) {
 	    fu = nmg_cmface(s, verts, 3);
 	    if (nmg_fu_planeeqn(fu, tol) < 0) {
-		bu_log( "Failed to make second face at x=%d, y=ylim\n", x );
+		bu_log("Failed to make second face at x=%d, y=ylim\n", x);
 		bu_free(base_verts, "base verts");
 		bu_free(strip1Verts, "strip 1 verts");
 		bu_free(strip2Verts, "strip 2 verts");
@@ -3885,22 +3884,22 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	}
         
         /* copy strip2 to strip1, set strip2 to all NULLs */
-        for(y=0 ; y<=ylim ; y++) {
+        for (y=0 ; y<=ylim ; y++) {
             strip1Verts[y] = strip2Verts[y];
             strip2Verts[y] = (struct vertex *)NULL;
         }
     }
     
     /* make faces at x=xlim plane */
-    for(y=0 ; y<ylim ; y++) {
+    for (y=0 ; y<ylim ; y++) {
 	base_vert_no1 = 2*ylim+xlim-y;
 	verts[0] = &base_verts[base_vert_no1];
 	verts[1] = &base_verts[base_vert_no1-1];
 	verts[2] = &strip1Verts[y];
-	if(CHECK_VERTS( verts )) {
+	if (CHECK_VERTS(verts)) {
 	    fu = nmg_cmface(s, verts, 3);
 	    if (nmg_fu_planeeqn(fu, tol) < 0) {
-		bu_log( "Failed to make first face at x=xlim, y=%d\n", y );
+		bu_log("Failed to make first face at x=xlim, y=%d\n", y);
 		bu_free(base_verts, "base verts");
 		bu_free(strip1Verts, "strip 1 verts");
 		bu_free(strip2Verts, "strip 2 verts");
@@ -3911,10 +3910,10 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	verts[0] = &strip1Verts[y];
 	verts[1] = &base_verts[base_vert_no1-1];
 	verts[2] = &strip1Verts[y+1];
-	if(CHECK_VERTS( verts )) {
+	if (CHECK_VERTS(verts)) {
 	    fu = nmg_cmface(s, verts, 3);
 	    if (nmg_fu_planeeqn(fu, tol) < 0) {
-		bu_log( "Failed to make second face at x=xlim, y=%d\n", y );
+		bu_log("Failed to make second face at x=xlim, y=%d\n", y);
 		bu_free(base_verts, "base verts");
 		bu_free(strip1Verts, "strip 1 verts");
 		bu_free(strip2Verts, "strip 2 verts");
@@ -3928,34 +3927,34 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     bu_free(strip1Verts, "strip 1 verts");
     bu_free(strip2Verts, "strip 2 verts");
 
-    if(has_holes) {
-	/* do a bunch of joining and splitting of touching loops
-	 * to get the base face in a state that the triangulator
-	 * can handle
+    if (has_holes) {
+	/* do a bunch of joining and splitting of touching loops to
+	 * get the base face in a state that the triangulator can
+	 * handle
 	 */
 	struct loopuse *lu;
-	for ( BU_LIST_FOR( lu, loopuse, &base_fu->lu_hd ) )  {
-	    nmg_join_touchingloops( lu );
+	for (BU_LIST_FOR(lu, loopuse, &base_fu->lu_hd)) {
+	    nmg_join_touchingloops(lu);
 	}
-	for ( BU_LIST_FOR( lu, loopuse, &base_fu->lu_hd ) )  {
-	    if ( lu->orientation != OT_UNSPEC )  continue;
-	    nmg_lu_reorient( lu );
-	}
-	nmg_kill_cracks(s);
-	for ( BU_LIST_FOR( lu, loopuse, &base_fu->lu_hd ) )  {
-	    nmg_split_touchingloops( lu, tol );
-	}
-	for ( BU_LIST_FOR( lu, loopuse, &base_fu->lu_hd ) )  {
-	    if ( lu->orientation != OT_UNSPEC )  continue;
-	    nmg_lu_reorient( lu );
+	for (BU_LIST_FOR(lu, loopuse, &base_fu->lu_hd)) {
+	    if (lu->orientation != OT_UNSPEC) continue;
+	    nmg_lu_reorient(lu);
 	}
 	nmg_kill_cracks(s);
-	for ( BU_LIST_FOR( lu, loopuse, &base_fu->lu_hd ) )  {
-	    nmg_join_touchingloops( lu );
+	for (BU_LIST_FOR(lu, loopuse, &base_fu->lu_hd)) {
+	    nmg_split_touchingloops(lu, tol);
 	}
-	for ( BU_LIST_FOR( lu, loopuse, &base_fu->lu_hd ) )  {
-	    if ( lu->orientation != OT_UNSPEC )  continue;
-	    nmg_lu_reorient( lu );
+	for (BU_LIST_FOR(lu, loopuse, &base_fu->lu_hd)) {
+	    if (lu->orientation != OT_UNSPEC) continue;
+	    nmg_lu_reorient(lu);
+	}
+	nmg_kill_cracks(s);
+	for (BU_LIST_FOR(lu, loopuse, &base_fu->lu_hd)) {
+	    nmg_join_touchingloops(lu);
+	}
+	for (BU_LIST_FOR(lu, loopuse, &base_fu->lu_hd)) {
+	    if (lu->orientation != OT_UNSPEC) continue;
+	    nmg_lu_reorient(lu);
 	}
 	nmg_kill_cracks(s);
     }
@@ -3973,22 +3972,23 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 }
 
 
-/** 	G E T _ F I L E _ D A T A
+/**
+ * G E T _ F I L E _ D A T A
  *
- *	Retrieve data for DSP from external file.
- *	Returns:
- *		0 Success
- *		!0 Failure
+ * Retrieve data for DSP from external file.
+ * Returns:
+ * 0 Success
+ * !0 Failure
  */
-static int
-get_file_data(struct rt_dsp_internal	*dsp_ip,
-	      struct rt_db_internal	*ip,
-	      const struct bu_external	*ep,
-	      register const mat_t	mat,
-	      const struct db_i		*dbip)
+HIDDEN int
+get_file_data(struct rt_dsp_internal *dsp_ip,
+	      struct rt_db_internal *ip,
+	      const struct bu_external *ep,
+	      register const mat_t mat,
+	      const struct db_i *dbip)
 {
-    struct bu_mapped_file		*mf;
-    int				count, in_cookie, out_cookie;
+    struct bu_mapped_file *mf;
+    int count, in_cookie, out_cookie;
 
     RT_DSP_CK_MAGIC(dsp_ip);
     RT_CK_DBI(dbip);
@@ -4011,10 +4011,10 @@ get_file_data(struct rt_dsp_internal	*dsp_ip,
     in_cookie = bu_cv_cookie("nus"); /* data is network unsigned short */
     out_cookie = bu_cv_cookie("hus");
 
-    if ( bu_cv_optimize(in_cookie) != bu_cv_optimize(out_cookie) ) {
+    if (bu_cv_optimize(in_cookie) != bu_cv_optimize(out_cookie)) {
 	int got;
-	/* if we're on a little-endian machine we convert the
-	 * input file from network to host format
+	/* if we're on a little-endian machine we convert the input
+	 * file from network to host format
 	 */
 	count = dsp_ip->dsp_xcnt * dsp_ip->dsp_ycnt;
 	mf->apbuflen = count * sizeof(unsigned short);
@@ -4033,24 +4033,26 @@ get_file_data(struct rt_dsp_internal	*dsp_ip,
     return 0;
 }
 
-/**	G E T _ O B J _ D A T A
+
+/**
+ * G E T _ O B J _ D A T A
  *
- *	Retrieve data for DSP from a database object.
+ * Retrieve data for DSP from a database object.
  */
-static int
-get_obj_data(struct rt_dsp_internal	*dsp_ip,
-	     struct rt_db_internal	*ip,
-	     const struct bu_external	*ep,
-	     register const mat_t	mat,
-	     const struct db_i		*dbip)
+HIDDEN int
+get_obj_data(struct rt_dsp_internal *dsp_ip,
+	     struct rt_db_internal *ip,
+	     const struct bu_external *ep,
+	     register const mat_t mat,
+	     const struct db_i *dbip)
 {
-    struct rt_binunif_internal	*bip;
-    int				in_cookie, out_cookie, got;
+    struct rt_binunif_internal *bip;
+    int in_cookie, out_cookie, got;
 
     BU_GETSTRUCT(dsp_ip->dsp_bip, rt_db_internal);
 
-    if (rt_retrieve_binunif(dsp_ip->dsp_bip, dbip,
-			    bu_vls_addr( &dsp_ip->dsp_name) ))
+    if (rt_retrieve_binunif (dsp_ip->dsp_bip, dbip,
+			     bu_vls_addr(&dsp_ip->dsp_name)))
 	return -1;
 
     if (RT_G_DEBUG & DEBUG_HF)
@@ -4069,9 +4071,9 @@ get_obj_data(struct rt_dsp_internal	*dsp_ip,
     in_cookie = bu_cv_cookie("nus"); /* data is network unsigned short */
     out_cookie = bu_cv_cookie("hus");
 
-    if ( bu_cv_optimize(in_cookie) != bu_cv_optimize(out_cookie) ) {
-	/* if we're on a little-endian machine we convert the
-	 * input file from network to host format
+    if (bu_cv_optimize(in_cookie) != bu_cv_optimize(out_cookie)) {
+	/* if we're on a little-endian machine we convert the input
+	 * file from network to host format
 	 */
 
 	got = bu_cv_w_cookie(bip->u.uint16, out_cookie,
@@ -4088,27 +4090,28 @@ get_obj_data(struct rt_dsp_internal	*dsp_ip,
     return 0;
 }
 
+
 /**
- *	D S P _ G E T _ D A T A
+ * D S P _ G E T _ D A T A
  *
- *  Handle things common to both the v4 and v5 database.
+ * Handle things common to both the v4 and v5 database.
  *
- *  This include applying the modelling transform, and fetching the
- *  actual data.
+ * This include applying the modelling transform, and fetching the
+ * actual data.
  *
- *  Return:
- *	0	success
- *	!0	failure
+ * Return:
+ * 0 success
+ * !0 failure
  */
-static int
-dsp_get_data(struct rt_dsp_internal	*dsp_ip,
-	     struct rt_db_internal	*ip,
-	     const struct bu_external	*ep,
-	     register const mat_t	mat,
-	     const struct db_i		*dbip)
+HIDDEN int
+dsp_get_data(struct rt_dsp_internal *dsp_ip,
+	     struct rt_db_internal *ip,
+	     const struct bu_external *ep,
+	     register const mat_t mat,
+	     const struct db_i *dbip)
 {
-    mat_t	tmp;
-    char	*p;
+    mat_t tmp;
+    char *p;
 
     /* Apply Modeling transform */
     MAT_COPY(tmp, dsp_ip->dsp_stom);
@@ -4139,8 +4142,7 @@ dsp_get_data(struct rt_dsp_internal	*dsp_ip,
 
 	    if (get_obj_data(dsp_ip, ip, ep, mat, dbip) != 0) {
 		p = "object";
-	    }
-	    else {
+	    } else {
 		RT_CK_DB_INTERNAL(dsp_ip->dsp_bip);
 		RT_CK_BINUNIF(dsp_ip->dsp_bip->idb_ptr);
 		return 0;
@@ -4166,17 +4168,17 @@ dsp_get_data(struct rt_dsp_internal	*dsp_ip,
 
 
 /**
- *			R T _ D S P _ I M P O R T
+ * R T _ D S P _ I M P O R T
  *
- *  Import an DSP from the database format to the internal format.
- *  Apply modeling transformations as well.
+ * Import an DSP from the database format to the internal format.
+ * Apply modeling transformations as well.
  */
 int
 rt_dsp_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
-    struct rt_dsp_internal	*dsp_ip;
-    union record			*rp;
-    struct bu_vls			str;
+    struct rt_dsp_internal *dsp_ip;
+    union record *rp;
+    struct bu_vls str;
 
 
     if (RT_G_DEBUG & DEBUG_HF)
@@ -4186,12 +4188,12 @@ rt_dsp_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
 #define IMPORT_FAIL(_s) \
 	bu_log("rt_dsp_import4(%d) '%s' %s\n", __LINE__, \
 	       bu_vls_addr(&dsp_ip->dsp_name), _s);\
-	bu_free( (char *)dsp_ip, "rt_dsp_import4: dsp_ip" ); \
+	bu_free((char *)dsp_ip, "rt_dsp_import4: dsp_ip"); \
 	ip->idb_type = ID_NULL; \
 	ip->idb_ptr = (genptr_t)NULL; \
 	return -2
 
-    BU_CK_EXTERNAL( ep );
+    BU_CK_EXTERNAL(ep);
     rp = (union record *)ep->ext_buf;
 
     if (RT_G_DEBUG & DEBUG_HF)
@@ -4200,16 +4202,16 @@ rt_dsp_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
 
 
     /* Check record type */
-    if (rp->u_id != DBID_STRSOL )  {
+    if (rp->u_id != DBID_STRSOL) {
 	bu_log("rt_dsp_import4: defective record\n");
 	return(-1);
     }
 
-    RT_CK_DB_INTERNAL( ip );
+    RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_DSP;
     ip->idb_meth = &rt_functab[ID_DSP];
-    ip->idb_ptr = bu_malloc( sizeof(struct rt_dsp_internal), "rt_dsp_internal");
+    ip->idb_ptr = bu_malloc(sizeof(struct rt_dsp_internal), "rt_dsp_internal");
     dsp_ip = (struct rt_dsp_internal *)ip->idb_ptr;
     dsp_ip->magic = RT_DSP_INTERNAL_MAGIC;
 
@@ -4224,10 +4226,10 @@ rt_dsp_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     MAT_IDN(dsp_ip->dsp_stom);
     MAT_IDN(dsp_ip->dsp_mtos);
 
-    bu_vls_init( &str );
-    bu_vls_strcpy( &str, rp->ss.ss_args );
-    if (bu_struct_parse( &str, rt_dsp_parse, (char *)dsp_ip ) < 0) {
-	if (BU_VLS_IS_INITIALIZED( &str )) bu_vls_free( &str );
+    bu_vls_init(&str);
+    bu_vls_strcpy(&str, rp->ss.ss_args);
+    if (bu_struct_parse(&str, rt_dsp_parse, (char *)dsp_ip) < 0) {
+	if (BU_VLS_IS_INITIALIZED(&str)) bu_vls_free(&str);
 	IMPORT_FAIL("parse error");
     }
 
@@ -4244,12 +4246,12 @@ rt_dsp_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
 
     if (RT_G_DEBUG & DEBUG_HF) {
 	bu_vls_trunc(&str, 0);
-	bu_vls_struct_print( &str, rt_dsp_ptab, (char *)dsp_ip);
+	bu_vls_struct_print(&str, rt_dsp_ptab, (char *)dsp_ip);
 	bu_log("  imported as(%s)\n", bu_vls_addr(&str));
 
     }
 
-    if (BU_VLS_IS_INITIALIZED( &str )) bu_vls_free( &str );
+    if (BU_VLS_IS_INITIALIZED(&str)) bu_vls_free(&str);
 
     RT_CK_DB_INTERNAL(dsp_ip->dsp_bip);
     RT_CK_BINUNIF(dsp_ip->dsp_bip->idb_ptr);
@@ -4259,21 +4261,21 @@ rt_dsp_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
 
 
 /**
- *			R T _ D S P _ E X P O R T
+ * R T _ D S P _ E X P O R T
  *
- *  The name is added by the caller, in the usual place.
+ * The name is added by the caller, in the usual place.
  */
 int
 rt_dsp_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
-    struct rt_dsp_internal	*dsp_ip;
-    struct rt_dsp_internal	dsp;
-    union record		*rec;
-    struct bu_vls		str;
+    struct rt_dsp_internal *dsp_ip;
+    struct rt_dsp_internal dsp;
+    union record *rec;
+    struct bu_vls str;
 
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_DSP )  return(-1);
+    if (ip->idb_type != ID_DSP) return(-1);
     dsp_ip = (struct rt_dsp_internal *)ip->idb_ptr;
     RT_DSP_CK_MAGIC(dsp_ip);
     BU_CK_VLS(&dsp_ip->dsp_name);
@@ -4281,59 +4283,59 @@ rt_dsp_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = sizeof(union record)*DB_SS_NGRAN;
-    ep->ext_buf = bu_calloc( 1, ep->ext_nbytes, "dsp external");
+    ep->ext_buf = bu_calloc(1, ep->ext_nbytes, "dsp external");
     rec = (union record *)ep->ext_buf;
 
     dsp = *dsp_ip;	/* struct copy */
 
-    /* Since libwdb users may want to operate in units other
-     * than mm, we offer the opportunity to scale the solid
-     * (to get it into mm) on the way out.
+    /* Since libwdb users may want to operate in units other than mm,
+     * we offer the opportunity to scale the solid (to get it into mm)
+     * on the way out.
      */
     dsp.dsp_stom[15] *= local2mm;
 
-    bu_vls_init( &str );
-    bu_vls_struct_print( &str, rt_dsp_ptab, (char *)&dsp);
+    bu_vls_init(&str);
+    bu_vls_struct_print(&str, rt_dsp_ptab, (char *)&dsp);
     if (RT_G_DEBUG & DEBUG_HF)
-	bu_log("rt_dsp_export4_v4(%s)\n", bu_vls_addr(&str) );
+	bu_log("rt_dsp_export4_v4(%s)\n", bu_vls_addr(&str));
 
     rec->ss.ss_id = DBID_STRSOL;
-    bu_strlcpy( rec->ss.ss_keyword, "dsp", sizeof(rec->ss.ss_keyword) );
-    bu_strlcpy( rec->ss.ss_args, bu_vls_addr(&str), DB_SS_LEN );
+    bu_strlcpy(rec->ss.ss_keyword, "dsp", sizeof(rec->ss.ss_keyword));
+    bu_strlcpy(rec->ss.ss_args, bu_vls_addr(&str), DB_SS_LEN);
 
 
-    if (BU_VLS_IS_INITIALIZED( &str )) bu_vls_free( &str );
+    if (BU_VLS_IS_INITIALIZED(&str)) bu_vls_free(&str);
 
     return(0);
 }
 
 
 /**
- *			R T _ D S P _ I M P O R T 5
+ * R T _ D S P _ I M P O R T 5
  *
- *  Import an DSP from the database format to the internal format.
- *  Apply modeling transformations as well.
+ * Import an DSP from the database format to the internal format.
+ * Apply modeling transformations as well.
  */
 int
 rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip, struct resource *resp, const int minor_type)
 {
-    struct rt_dsp_internal	*dsp_ip;
-    unsigned char		*cp;
+    struct rt_dsp_internal *dsp_ip;
+    unsigned char *cp;
 
     if (RT_G_DEBUG & DEBUG_HF)
 	bu_log("rt_dsp_import4_v5()\n");
 
 
-    BU_CK_EXTERNAL( ep );
+    BU_CK_EXTERNAL(ep);
 
-    BU_ASSERT_LONG( ep->ext_nbytes, >, 141 );
+    BU_ASSERT_LONG(ep->ext_nbytes, >, 141);
 
-    RT_CK_DB_INTERNAL( ip );
+    RT_CK_DB_INTERNAL(ip);
 
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_DSP;
     ip->idb_meth = &rt_functab[ID_DSP];
-    dsp_ip = ip->idb_ptr = bu_malloc( sizeof(struct rt_dsp_internal), "rt_dsp_internal");
+    dsp_ip = ip->idb_ptr = bu_malloc(sizeof(struct rt_dsp_internal), "rt_dsp_internal");
     memset(dsp_ip, 0, sizeof(*dsp_ip));
 
     dsp_ip->magic = RT_DSP_INTERNAL_MAGIC;
@@ -4341,7 +4343,7 @@ rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     /* get x, y counts */
     cp = (unsigned char *)ep->ext_buf;
 
-    dsp_ip->dsp_xcnt = (unsigned) bu_glong( cp );
+    dsp_ip->dsp_xcnt = (unsigned) bu_glong(cp);
     cp += SIZEOF_NETWORK_LONG;
     if (dsp_ip->dsp_xcnt < 2) {
 	bu_log("%s:%d DSP X dimension (%d) < 2 \n",
@@ -4350,7 +4352,7 @@ rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     }
 
 
-    dsp_ip->dsp_ycnt = (unsigned) bu_glong( cp );
+    dsp_ip->dsp_ycnt = (unsigned) bu_glong(cp);
     cp += SIZEOF_NETWORK_LONG;
     if (dsp_ip->dsp_ycnt < 2) {
 	bu_log("%s:%d DSP X dimension (%d) < 2 \n",
@@ -4364,7 +4366,7 @@ rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     bn_mat_inv(dsp_ip->dsp_mtos, dsp_ip->dsp_stom);
 
     /* convert smooth flag */
-    dsp_ip->dsp_smooth = bu_gshort( cp );
+    dsp_ip->dsp_smooth = bu_gshort(cp);
     cp += SIZEOF_NETWORK_SHORT;
 
     dsp_ip->dsp_datasrc = *cp;
@@ -4398,9 +4400,9 @@ rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 
 
     /* convert name of data location */
-    bu_vls_init( &dsp_ip->dsp_name );
-    bu_vls_strncpy( &dsp_ip->dsp_name, (char *)cp,
-		    ep->ext_nbytes - (cp - (unsigned char *)ep->ext_buf) );
+    bu_vls_init(&dsp_ip->dsp_name);
+    bu_vls_strncpy(&dsp_ip->dsp_name, (char *)cp,
+		   ep->ext_nbytes - (cp - (unsigned char *)ep->ext_buf));
 
     if (mat == NULL) mat = bn_mat_identity;
     if (dsp_get_data(dsp_ip, ip, ep, mat, dbip)!=0) {
@@ -4410,21 +4412,22 @@ rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     return 0; /* OK */
 }
 
+
 /**
- *			R T _ D S P _ E X P O R T 5
+ * R T _ D S P _ E X P O R T 5
  *
- *  The name is added by the caller, in the usual place.
+ * The name is added by the caller, in the usual place.
  */
 int
 rt_dsp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip, struct resource *resp, const int minor_type)
 {
-    struct rt_dsp_internal	*dsp_ip;
-    unsigned long		name_len;
-    unsigned char		*cp;
+    struct rt_dsp_internal *dsp_ip;
+    unsigned long name_len;
+    unsigned char *cp;
     int rem;
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_DSP )  return(-1);
+    if (ip->idb_type != ID_DSP) return(-1);
     dsp_ip = (struct rt_dsp_internal *)ip->idb_ptr;
     RT_DSP_CK_MAGIC(dsp_ip);
 
@@ -4441,7 +4444,7 @@ rt_dsp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	SIZEOF_NETWORK_SHORT +
 	2 + name_len;
 
-    ep->ext_buf = bu_malloc( ep->ext_nbytes, "dsp external");
+    ep->ext_buf = bu_malloc(ep->ext_nbytes, "dsp external");
     cp = (unsigned char *)ep->ext_buf;
     rem = ep->ext_nbytes;
 
@@ -4451,17 +4454,17 @@ rt_dsp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
      * converted to Big-Endian IEEE
      */
 
-    bu_plong( cp, (unsigned long)dsp_ip->dsp_xcnt );
+    bu_plong(cp, (unsigned long)dsp_ip->dsp_xcnt);
     cp += SIZEOF_NETWORK_LONG;
     rem -= SIZEOF_NETWORK_LONG;
 
-    bu_plong( cp, (unsigned long)dsp_ip->dsp_ycnt );
+    bu_plong(cp, (unsigned long)dsp_ip->dsp_ycnt);
     cp += SIZEOF_NETWORK_LONG;
     rem -= SIZEOF_NETWORK_LONG;
 
-    /* Since libwdb users may want to operate in units other
-     * than mm, we offer the opportunity to scale the solid
-     * (to get it into mm) on the way out.
+    /* Since libwdb users may want to operate in units other than mm,
+     * we offer the opportunity to scale the solid (to get it into mm)
+     * on the way out.
      */
     dsp_ip->dsp_stom[15] *= local2mm;
 
@@ -4469,7 +4472,7 @@ rt_dsp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     cp += SIZEOF_NETWORK_DOUBLE * 16;
     rem -= SIZEOF_NETWORK_DOUBLE * 16;
 
-    bu_pshort( cp, (int)dsp_ip->dsp_smooth );
+    bu_pshort(cp, (int)dsp_ip->dsp_smooth);
     cp += SIZEOF_NETWORK_SHORT;
     rem -= SIZEOF_NETWORK_SHORT;
 
@@ -4506,27 +4509,27 @@ rt_dsp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
 
 /**
- *			R T _ D S P _ D E S C R I B E
+ * R T _ D S P _ D E S C R I B E
  *
- *  Make human-readable formatted presentation of this solid.
- *  First line describes type of solid.
- *  Additional lines are indented one tab, and give parameter values.
+ * Make human-readable formatted presentation of this solid.  First
+ * line describes type of solid.  Additional lines are indented one
+ * tab, and give parameter values.
  */
 int
-rt_dsp_describe(struct bu_vls		*str,
+rt_dsp_describe(struct bu_vls *str,
 		const struct rt_db_internal *ip,
-		int			verbose,
-		double			mm2local,
-		struct resource		*resp,
-		struct db_i		*db_ip)
+		int verbose,
+		double mm2local,
+		struct resource *resp,
+		struct db_i *db_ip)
 {
-    register struct rt_dsp_internal	*dsp_ip =
+    register struct rt_dsp_internal *dsp_ip =
 	(struct rt_dsp_internal *)ip->idb_ptr;
     struct bu_vls vls;
 
     RT_CK_DBI(db_ip);
 
-    bu_vls_init( &vls );
+    bu_vls_init(&vls);
 
     if (RT_G_DEBUG & DEBUG_HF)
 	bu_log("rt_dsp_describe()\n");
@@ -4535,29 +4538,31 @@ rt_dsp_describe(struct bu_vls		*str,
 
     switch (db_ip->dbi_version) {
 	case 4:
-	    dsp_print_v4(&vls, dsp_ip );
+	    dsp_print_v4(&vls, dsp_ip);
 	    break;
 	case 5:
-	    dsp_print_v5(&vls, dsp_ip );
+	    dsp_print_v5(&vls, dsp_ip);
 	    break;
     }
 
-    bu_vls_vlscat( str, &vls );
+    bu_vls_vlscat(str, &vls);
 
-    if (BU_VLS_IS_INITIALIZED( &vls )) bu_vls_free( &vls );
+    if (BU_VLS_IS_INITIALIZED(&vls)) bu_vls_free(&vls);
 
     return(0);
 }
 
+
 /**
- *			R T _ D S P _ I F R E E
+ * R T _ D S P _ I F R E E
  *
- *  Free the storage associated with the rt_db_internal version of this solid.
+ * Free the storage associated with the rt_db_internal version of this
+ * solid.
  */
 void
 rt_dsp_ifree(struct rt_db_internal *ip, struct resource *resp)
 {
-    register struct rt_dsp_internal	*dsp_ip;
+    register struct rt_dsp_internal *dsp_ip;
 
     if (RT_G_DEBUG & DEBUG_HF)
 	bu_log("rt_dsp_ifree()\n");
@@ -4584,20 +4589,21 @@ rt_dsp_ifree(struct rt_db_internal *ip, struct resource *resp)
     dsp_ip->dsp_mp = (struct bu_mapped_file *)0;
 
     if (BU_VLS_IS_INITIALIZED(&dsp_ip->dsp_name))
-	bu_vls_free(  &dsp_ip->dsp_name );
+	bu_vls_free(&dsp_ip->dsp_name);
     else
 	bu_log("Freeing Bogus DSP, VLS string not initialized\n");
 
 
-    bu_free( (char *)dsp_ip, "dsp ifree" );
+    bu_free((char *)dsp_ip, "dsp ifree");
     ip->idb_ptr = GENPTR_NULL;	/* sanity */
 }
 
-static void
-hook_verify(const struct bu_structparse	*ip,
-	    const char 			*sp_name,
-	    genptr_t			base,
-	    char			*p)
+
+HIDDEN void
+hook_verify(const struct bu_structparse *ip,
+	    const char *sp_name,
+	    genptr_t base,
+	    char *p)
 {
     struct rt_dsp_internal *dsp_ip = (struct rt_dsp_internal *)base;
 
@@ -4652,26 +4658,28 @@ const struct bu_structparse fake_dsp_printab[] = {
 
 
 /**
- *			R T _ D S P _ G E T
+ * R T _ D S P _ G E T
  *
- *  This is the generic routine to be listed in rt_functab[].ft_get
- *  for those solid types which are fully described by their ft_parsetab
- *  entry.
+ * This is the generic routine to be listed in rt_functab[].ft_get for
+ * those solid types which are fully described by their ft_parsetab
+ * entry.
  *
- *  'attr' is specified to retrieve only one attribute, rather than all.
- *  Example:  "db get ell.s B" to get only the B vector.
+ * 'attr' is specified to retrieve only one attribute, rather than
+ * all.
+ *
+ * Example:  "db get ell.s B" to get only the B vector.
  */
 int
 rt_dsp_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *attr)
 {
-    register const struct bu_structparse	*sp = NULL;
+    register const struct bu_structparse *sp = NULL;
     const struct rt_dsp_internal *dsp_ip;
 
     /* XXX if dsp_datasrc == RT_DSP_SRC_V4_FILE we have a V4 dsp
      * otherwise, a V5 dsp.  Take advantage of this.
      */
 
-    RT_CK_DB_INTERNAL( intern );
+    RT_CK_DB_INTERNAL(intern);
     dsp_ip = (struct rt_dsp_internal *)intern->idb_ptr;
 
     if (attr == (char *)0) {
@@ -4720,16 +4728,17 @@ rt_dsp_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *
     return BRLCAD_OK;
 }
 
+
 /**
- *			R T _ P A R S E T A B _ T C L A D J U S T
+ * R T _ P A R S E T A B _ T C L A D J U S T
  *
- *  For those solids entirely defined by their parsetab.
- *  Invoked via rt_functab[].ft_adjust()
+ * For those solids entirely defined by their parsetab.  Invoked via
+ * rt_functab[].ft_adjust()
  */
 int
 rt_dsp_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char **argv)
 {
-    register const struct bu_structparse	*sp = NULL;
+    register const struct bu_structparse *sp = NULL;
     const struct rt_dsp_internal *dsp_ip;
 
     RT_CK_DB_INTERNAL(intern);
@@ -4752,6 +4761,7 @@ rt_dsp_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 			       (char *)intern->idb_ptr);
 }
 
+
 void
 rt_dsp_make(const struct rt_functab *ftp, struct rt_db_internal *intern, double diameter)
 {
@@ -4770,11 +4780,12 @@ rt_dsp_make(const struct rt_functab *ftp, struct rt_db_internal *intern, double 
     bu_vls_init(&dsp->dsp_name);
     bu_vls_strcpy(&dsp->dsp_name, "/dev/null");
     dsp->dsp_cuttype = DSP_CUT_DIR_ADAPT;
-    MAT_IDN( dsp->dsp_mtos );
-    MAT_IDN( dsp->dsp_stom );
+    MAT_IDN(dsp->dsp_mtos);
+    MAT_IDN(dsp->dsp_stom);
     dsp->dsp_datasrc = RT_DSP_SRC_FILE;
 
 }
+
 
 /**
  * R T _ D S P _ P A R A M S
@@ -4786,10 +4797,12 @@ rt_dsp_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
     return(0);			/* OK */
 }
 
-/**	S W A P _ C E L L _ P T S
+
+/**
+ * S W A P _ C E L L _ P T S
  *
  */
-static int
+HIDDEN int
 swap_cell_pts(int A[3],
 	      int B[3],
 	      int C[3],
@@ -4799,7 +4812,7 @@ swap_cell_pts(int A[3],
 {
     switch (dsp->dsp_i.dsp_cuttype) {
 	case DSP_CUT_DIR_llUR:
-	    return  0;
+	    return 0;
 	    break;
 
 	case DSP_CUT_DIR_ADAPT: {
@@ -4809,10 +4822,11 @@ swap_cell_pts(int A[3],
 
 
 	    /*
-	     *  We look at the points in the diagonal next cells to determine
-	     *  the curvature along each diagonal of this cell.  This cell is
-	     *  divided into two triangles by cutting across the cell in the
-	     *  direction of least curvature.
+	     * We look at the points in the diagonal next cells to
+	     * determine the curvature along each diagonal of this
+	     * cell.  This cell is divided into two triangles by
+	     * cutting across the cell in the direction of least
+	     * curvature.
 	     *
 	     *	*  *  *	 *
 	     *	 \      /
@@ -4846,7 +4860,7 @@ swap_cell_pts(int A[3],
 	    h3 = D[Z];
 	    h4 = DSP(&dsp->dsp_i, hi[X], hi[Y]);
 
-	    cAD = fabs(h3 + h1 - 2*h2 ) + fabs( h4 + h2 - 2*h3 );
+	    cAD = fabs(h3 + h1 - 2*h2) + fabs(h4 + h2 - 2*h3);
 
 
 	    /* compute curvature along the B->C direction */
@@ -4855,9 +4869,9 @@ swap_cell_pts(int A[3],
 	    h3 = C[Z];
 	    h4 = DSP(&dsp->dsp_i, lo[X], hi[Y]);
 
-	    cBC = fabs(h3 + h1 - 2*h2 ) + fabs( h4 + h2 - 2*h3 );
+	    cBC = fabs(h3 + h1 - 2*h2) + fabs(h4 + h2 - 2*h3);
 
-	    if ( cAD < cBC ) {
+	    if (cAD < cBC) {
 		/* A-D cut is fine, no need to permute */
 		if (RT_G_DEBUG & DEBUG_HF)
 		    bu_log("A-D cut (no swap)\n");
@@ -4868,8 +4882,7 @@ swap_cell_pts(int A[3],
 	    /* fallthrough */
 
 	}
-	case DSP_CUT_DIR_ULlr:
-	{
+	case DSP_CUT_DIR_ULlr: {
 	    /* prefer the B-C cut */
 	    int tmp[3];
 
@@ -4884,8 +4897,8 @@ swap_cell_pts(int A[3],
 	    if (RT_G_DEBUG & DEBUG_HF)
 		bu_log("B-C cut (swap)\n");
 	}
-	return 0;
-	break;
+	    return 0;
+	    break;
     }
     bu_log("%s:%d Unknown DSP cut direction: %d\n",
 	   __FILE__, __LINE__, dsp->dsp_i.dsp_cuttype);
@@ -4895,10 +4908,7 @@ swap_cell_pts(int A[3],
 }
 
 
-/*
- *
- *
- *
+/**
  * triangle with origin at A, X axis along AB, Y axis along AC
  *
  *	B--A	C	A--B	   C
@@ -4961,13 +4971,15 @@ project_pt(point_t out,
 
     return 0;
 }
-/**	D S P _ P O S
+
+
+/**
+ * D S P _ P O S
  *
- *
- *	Given an arbitrary point return the projection of that point onto
- * 	the surface of the DSP.  If the point is outside the bounds of the DSP
- *	then it will be projected to the nearest edge of the DSP.
- *	Return the cell number and the height above/below the plane
+ * Given an arbitrary point return the projection of that point onto
+ * the surface of the DSP.  If the point is outside the bounds of the
+ * DSP then it will be projected to the nearest edge of the DSP.
+ * Return the cell number and the height above/below the plane
  */
 int
 dsp_pos(point_t out, /* return value */
@@ -5006,13 +5018,13 @@ dsp_pos(point_t out, /* return value */
     VSET(dsp_rpp.dsp_min, x, y, 0);
     VSET(dsp_rpp.dsp_max, x+1, y+1, 0);
 
-    VSET(A, x, y, DSP(&dsp->dsp_i, x, y) );
+    VSET(A, x, y, DSP(&dsp->dsp_i, x, y));
     x += 1;
-    VSET(B, x, y, DSP(&dsp->dsp_i, x, y) );
+    VSET(B, x, y, DSP(&dsp->dsp_i, x, y));
     y += 1;
-    VSET(D, x, y, DSP(&dsp->dsp_i, x, y) );
+    VSET(D, x, y, DSP(&dsp->dsp_i, x, y));
     x -= 1;
-    VSET(C, x, y, DSP(&dsp->dsp_i, x, y) );
+    VSET(C, x, y, DSP(&dsp->dsp_i, x, y));
     y -= 1;
 
     if (RT_G_DEBUG & DEBUG_HF) {

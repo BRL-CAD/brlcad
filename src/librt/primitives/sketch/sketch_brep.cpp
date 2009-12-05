@@ -65,7 +65,7 @@ void FindLoops(ON_Brep **b) {
 	}
 	// First, sort through things to assign curves to loops.
 	loop_complete = 0;
-	while ( (loop_complete != 1) && (allcurvesassigned != 1)) {
+	while ((loop_complete != 1) && (allcurvesassigned != 1)) {
 	    curvearray[curvecount] = loopcount;
     	    ON_Curve *currentcurve = allsegments[curvecount];
     	    ptmatch = (*b)->m_C3[curvecount]->PointAtEnd();
@@ -114,14 +114,13 @@ void FindLoops(ON_Brep **b) {
 	currdist = DIST_PT_PT(minpt, maxpt);
 	bu_log("currdist: %f\n", currdist);
 	if (currdist > maxdist) {
-	  maxdist = currdist;
-	  largest_loop_index = i;
+	    maxdist = currdist;
+	    largest_loop_index = i;
 	}
     }
     bu_log("largest_loop_index = %d\n", largest_loop_index);
 
     bu_log("curve_array[%d,%d,%d,%d,%d,%d]\n", curvearray[0], curvearray[1], curvearray[2], curvearray[3], curvearray[4], curvearray[5]);
-
 
     for (int i = 0; i < allsegments.Count(); i++) {
 	if (curvearray[i] == largest_loop_index) loopsegments.Append((*b)->m_C3[i]);
@@ -132,21 +131,20 @@ void FindLoops(ON_Brep **b) {
     loopsegments.Empty();
        
     // If there's anything left, make inner loops out of it
-     for (int i = 0; i <= loopcount; i++) {
+    for (int i = 0; i <= loopcount; i++) {
 	if (i != largest_loop_index) {
 	    for (int j = 0; j < allsegments.Count(); j++) {
-		if (curvearray[j] == i)	loopsegments.Append((*b)->m_C3[j]);
+		if (curvearray[j] == i) loopsegments.Append((*b)->m_C3[j]);
 	    }
 	    (*b)->NewPlanarFaceLoop(0, ON_BrepLoop::inner, loopsegments, false);
 	}
 	loopsegments.Empty();
-     }
-}    
- 
+    }
+}
 
 
 /**
- *			R T _ S K E T C H _ B R E P
+ * R T _ S K E T C H _ B R E P
  */
 extern "C" void
 rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
@@ -204,14 +202,12 @@ rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol
 	    case CURVE_CARC_MAGIC:
 		csg = (struct carc_seg *)lng;
 		if (csg->radius < 0) {
-		    {
-			ON_3dPoint cntrpt = (*b)->m_V[csg->end].Point();
-			ON_3dPoint edgept = (*b)->m_V[csg->start].Point();
-			ON_Circle* c3dcirc = new ON_Circle(cntrpt,cntrpt.DistanceTo(edgept));
-			ON_Curve* c3d = new ON_ArcCurve((const ON_Circle)*c3dcirc);
-			c3d->SetDomain(0.0,1.0);
-			(*b)->m_C3.Append(c3d);
-		    }
+		    ON_3dPoint cntrpt = (*b)->m_V[csg->end].Point();
+		    ON_3dPoint edgept = (*b)->m_V[csg->start].Point();
+		    ON_Circle* c3dcirc = new ON_Circle(cntrpt, cntrpt.DistanceTo(edgept));
+		    ON_Curve* c3d = new ON_ArcCurve((const ON_Circle)*c3dcirc);
+		    c3d->SetDomain(0.0, 1.0);
+		    (*b)->m_C3.Append(c3d);
 		} else {
 		    // need to calculated 3rd point on arc - look to sketch.c around line 581 for
 		    // logic
@@ -229,7 +225,7 @@ rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol
 		    ON_BezierCurve* bez3d = new ON_BezierCurve((const ON_3dPointArray)*bezpoints);
 		    ON_NurbsCurve* beznurb3d = ON_NurbsCurve::New();
 		    bez3d->GetNurbForm(*beznurb3d);
-		    beznurb3d->SetDomain(0.0,1.0);
+		    beznurb3d->SetDomain(0.0, 1.0);
 		    (*b)->m_C3.Append(beznurb3d);
 		}
 		break;
@@ -250,21 +246,22 @@ rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol
     // in the sketch data structures themselves, and thus must be deduced
     FindLoops(b);
     const ON_BrepLoop* tloop = (*b)->m_L.First();
-    sketch_surf->SetDomain(0, tloop->m_pbox.m_min.x, tloop->m_pbox.m_max.x );
-    sketch_surf->SetDomain(1, tloop->m_pbox.m_min.y, tloop->m_pbox.m_max.y );
-    sketch_surf->SetExtents(0,sketch_surf->Domain(0));
-    sketch_surf->SetExtents(1,sketch_surf->Domain(1));
+    sketch_surf->SetDomain(0, tloop->m_pbox.m_min.x, tloop->m_pbox.m_max.x);
+    sketch_surf->SetDomain(1, tloop->m_pbox.m_min.y, tloop->m_pbox.m_max.y);
+    sketch_surf->SetExtents(0, sketch_surf->Domain(0));
+    sketch_surf->SetExtents(1, sketch_surf->Domain(1));
     (*b)->SetTrimIsoFlags(face);
     (*b)->FlipFace(face);
 /*
-    vect_t vo,vh;
-    VSET(vo, 0,0,0);
-    VSET(vh, 0,0,1000);
-    const ON_Curve* extrudepath = new ON_LineCurve(ON_3dPoint(vo), ON_3dPoint(vh));
-    ON_Brep& brep = *(*b);
-    ON_BrepExtrudeFace(brep,0, *extrudepath, true);
-  */  
+  vect_t vo, vh;
+  VSET(vo, 0, 0, 0);
+  VSET(vh, 0, 0, 1000);
+  const ON_Curve* extrudepath = new ON_LineCurve(ON_3dPoint(vo), ON_3dPoint(vh));
+  ON_Brep& brep = *(*b);
+  ON_BrepExtrudeFace(brep, 0, *extrudepath, true);
+*/  
 }
+
 
 // Local Variables:
 // tab-width: 8

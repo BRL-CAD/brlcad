@@ -142,7 +142,11 @@ db_count_refs(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb
 {
     struct directory	*dp;
 
+    if (comb) RT_CK_COMB(comb);
     RT_CK_TREE( comb_leaf );
+    BU_ASSERT(dummy1 == NULL);
+    BU_ASSERT(dummy2 == NULL);
+    BU_ASSERT(dummy3 == NULL);
 
     if ( (dp=db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_QUIET)) != DIR_NULL )
 	++dp->d_nref;

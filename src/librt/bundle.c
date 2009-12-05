@@ -179,7 +179,7 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
 	BU_ASSERT_PTR( BU_PTBL_GET(&rtip->rti_resources, resp->re_cpu), !=, NULL );
     }
 
-    solidbits = get_solidbitv( rtip->nsolids, resp );
+    solidbits = rt_get_solidbitv( rtip->nsolids, resp );
     bu_bitv_clear(solidbits);
 
     if ( BU_LIST_IS_EMPTY( &resp->re_region_ptbl ) )  {

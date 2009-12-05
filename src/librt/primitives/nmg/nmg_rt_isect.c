@@ -71,6 +71,7 @@ nmg_rt_inout_str(int code)
     return("?_?\n");
 }
 
+
 const char *
 nmg_rt_state_str(int code)
 {
@@ -86,6 +87,7 @@ nmg_rt_state_str(int code)
     }
     return "RS_UNKNOWN";
 }
+
 
 /**
  * N M G _ C K _ H I T M I S S _ L I S T
@@ -104,7 +106,7 @@ nmg_ck_hitmiss_list(const struct bu_list *hd)
 	NMG_CK_HITMISS(hmp);
 
 	/* Skip hits on non-3-manifolds */
-	if (hmp->in_out == HMG_HIT_ANY_ANY)  continue;
+	if (hmp->in_out == HMG_HIT_ANY_ANY) continue;
 
 	istate = HMG_INBOUND_STATE(hmp);
 	ostate = HMG_OUTBOUND_STATE(hmp);
@@ -162,6 +164,7 @@ nmg_rt_isect_plfu(struct faceuse *fu, fastf_t *pt, fastf_t *plane_pt)
     fclose(fp);
 }
 
+
 static void
 pleu(struct edgeuse *eu, fastf_t *pt, fastf_t *plane_pt)
 {
@@ -209,6 +212,7 @@ static void
 plvu(struct vertexuse *vu)
 {
 }
+
 
 void
 nmg_rt_print_hitmiss(struct hitmiss *a_hit)
@@ -343,6 +347,7 @@ ray_miss_vertex(struct ray_data *rd, struct vertexuse *vu_p)
 
     return myhit;
 }
+
 
 /**
  * Support routine for vertex_neighborhood()
@@ -568,6 +573,7 @@ get_pole_dist_to_face(struct ray_data *rd, struct vertexuse *vu, fastf_t *Pole, 
 
     return;
 }
+
 
 static void
 plot_neighborhood(fastf_t *North_Pole, fastf_t *North_pl_pt, fastf_t *North_pca, fastf_t *South_Pole, fastf_t *South_pl_pt, fastf_t *South_pca, fastf_t *pointA, fastf_t *pointB, fastf_t *norm, fastf_t *pt, fastf_t *leftA, fastf_t *leftB)
@@ -1011,13 +1017,13 @@ ray_hit_vertex(struct ray_data *rd, struct vertexuse *vu_p, int status)
  * I S E C T _ R A Y _ V E R T E X U S E
  *
  * Called in one of the following situations:
- *   1) Zero length edge
- *   2) Vertexuse child of Loopuse
- *   3) Vertexuse child of Shell
+ * 1) Zero length edge
+ * 2) Vertexuse child of Loopuse
+ * 3) Vertexuse child of Shell
  *
  * return:
- *   1 vertex was hit
- *   0 vertex was missed
+ * 1 vertex was hit
+ * 0 vertex was missed
  */
 static int
 isect_ray_vertexuse(struct ray_data *rd, struct vertexuse *vu_p)
@@ -1127,6 +1133,7 @@ colinear_edge_ray(struct ray_data *rd, struct edgeuse *eu_p)
     return;
 }
 
+
 /**
  * When a vertex at an end of an edge gets hit by the ray, this macro
  * is used to build the hit structures for the vertex and the edge.
@@ -1225,9 +1232,8 @@ edge_hit_ray_state(struct ray_data *rd, struct edgeuse *eu, struct hitmiss *myhi
 
 	    cos_angle = VDOT(edge_left, rd->rp->r_dir);
 
-	    if (rt_g.NMG_debug & DEBUG_RT_ISECT)
-	    {
-		bu_log("left_vect:(%g %g %g)  cos_angle:%g\n",
+	    if (rt_g.NMG_debug & DEBUG_RT_ISECT) {
+		bu_log("left_vect:(%g %g %g) cos_angle:%g\n",
 		       edge_left[0], edge_left[1],
 		       edge_left[2], cos_angle);
 	    }
@@ -1375,6 +1381,7 @@ edge_hit_ray_state(struct ray_data *rd, struct edgeuse *eu, struct hitmiss *myhi
     NMG_CK_HITMISS_LISTS(rd);
 }
 
+
 /**
  * record a hit on an edge.
  */
@@ -1433,10 +1440,12 @@ ray_hit_edge(struct ray_data *rd, struct edgeuse *eu_p, double dist_along_ray, f
     }
 }
 
+
 void
 isect_ray_cnurb(struct ray_data *rd, struct edgeuse *eu_p)
 {
 }
+
 
 void
 isect_ray_lseg(struct ray_data *rd, struct edgeuse *eu_p)
@@ -1530,16 +1539,16 @@ isect_ray_lseg(struct ray_data *rd, struct edgeuse *eu_p)
 	case 2 :
 	    HIT_EDGE_VERTEX(rd, eu_p, eu_p->eumate_p->vu_p);
 	    break;
-	case 3 : /* a hit on an edge */
-	    {
-		point_t pt;
+	case 3 : {
+	    /* a hit on an edge */
+	    point_t pt;
 
-		VJOIN1(pt, rd->rp->r_pt, dist_along_ray, rd->rp->r_dir);
+	    VJOIN1(pt, rd->rp->r_pt, dist_along_ray, rd->rp->r_dir);
 
-		ray_hit_edge(rd, eu_p, dist_along_ray, pt);
+	    ray_hit_edge(rd, eu_p, dist_along_ray, pt);
 
-		break;
-	    }
+	    break;
+	}
     }
 }
 
@@ -1700,6 +1709,7 @@ vu_touch_func(struct vertexuse *vu, fastf_t *pt, char *priv)
     ray_hit_vertex(rd, vu, NMG_VERT_UNKNOWN);
 }
 
+
 static void
 record_face_hit(struct ray_data *rd, struct hitmiss *myhit, fastf_t *plane_pt, double dist, struct faceuse *fu_p, fastf_t *norm, int a_hit)
 {
@@ -1797,6 +1807,7 @@ record_face_hit(struct ray_data *rd, struct hitmiss *myhit, fastf_t *plane_pt, d
     /* sanity check */
     NMG_CK_HITMISS(myhit);
 }
+
 
 /**
  * this is the UV-space tolerance for the NURB intersector, a larger
@@ -2065,6 +2076,7 @@ isect_ray_snurb_face(struct ray_data *rd, struct faceuse *fu, struct face_g_snur
 	rt_nurb_free_snurb(srf, rd->ap->a_resource);
     }
 }
+
 
 void
 isect_ray_planar_face(struct ray_data *rd, struct faceuse *fu_p, struct face_g_plane *fg_p)
@@ -2416,6 +2428,7 @@ nmg_isect_ray_model(struct ray_data *rd)
     NMG_CK_HITMISS_LISTS(rd);
 }
 
+
 /**
  * N M G _ P L _ H I T M I S S _ L I S T
  */
@@ -2457,6 +2470,7 @@ nmg_pl_hitmiss_list(const char *str, int num, const struct bu_list *hd, const st
     bu_log("overlay %s\n", buf);
 }
 
+
 static int
 guess_class_from_hitlist_max(struct ray_data *rd, int *hari_kari, int in_or_out_only)
 {
@@ -2473,8 +2487,7 @@ guess_class_from_hitlist_max(struct ray_data *rd, int *hari_kari, int in_or_out_
     for (BU_LIST_FOR(a_hit, hitmiss, &rd->rd_hit)) {
 	NMG_CK_HITMISS(a_hit);
 
-	if (!in_or_out_only)
-	{
+	if (!in_or_out_only) {
 	    /* if we've got a zero distance hit, that clinches it */
 	    if (a_hit->hit.hit_dist <= rd->tol->dist &&
 		a_hit->hit.hit_dist >= -rd->tol->dist) {
@@ -2486,8 +2499,7 @@ guess_class_from_hitlist_max(struct ray_data *rd, int *hari_kari, int in_or_out_
 
 	    if (a_hit->hit.hit_dist < -rd->tol->dist)
 		continue;
-	}
-	else if (a_hit->hit.hit_dist < 0.0)
+	} else if (a_hit->hit.hit_dist < 0.0)
 	    continue;
 
 	if (a_hit->in_out == HMG_HIT_ANY_ANY)
@@ -2551,6 +2563,7 @@ guess_class_from_hitlist_max(struct ray_data *rd, int *hari_kari, int in_or_out_
     return pt_class;
 }
 
+
 static int
 guess_class_from_hitlist_min(struct ray_data *rd, int *hari_kari, int in_or_out_only)
 {
@@ -2579,8 +2592,7 @@ guess_class_from_hitlist_min(struct ray_data *rd, int *hari_kari, int in_or_out_
 
 	    if (a_hit->hit.hit_dist > rd->tol->dist)
 		continue;
-	}
-	else if (a_hit->hit.hit_dist > 0.0)
+	} else if (a_hit->hit.hit_dist > 0.0)
 	    continue;
 
 	if (a_hit->in_out == HMG_HIT_ANY_ANY)
@@ -2814,6 +2826,7 @@ nmg_class_ray_vs_shell(struct xray *rp, const struct shell *s, const int in_or_o
 
     return plus_class;
 }
+
 
 /*
  * Local Variables:

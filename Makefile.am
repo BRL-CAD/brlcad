@@ -323,7 +323,7 @@ dist-hook:
 	find $(distdir) -type f \( -name '.cvsignore' -or -name 'brlcad_config.h' \) -exec rm -f {} \;
 	find $(distdir) -type d \( -name 'CVS' -or -name '.svn' \) -prune -exec rm -rf {} \;
 	dir="`pwd`" ; cd $(top_srcdir) ; \
-        ${SH} $(top_srcdir)/sh/cmakecheck.sh ; \
+        ${SH} sh/cmakecheck.sh ; \
 	ret=$$? ; \
 	if test "x$$ret" != "x0" ; then \
 		echo "NEED TO SYNC CMAKELISTS.TXT" ; \

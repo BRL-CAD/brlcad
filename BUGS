@@ -15,6 +15,12 @@ on-going issues.
 Recent Bugs
 -----------
 
+* mged-invoked EDITOR locks up mged without a controlling terminal due
+  to lacking knowledge of needing to invoke xterm.
+
+* vdeck truncates the region names in the 'regions' file, probably
+  wrong bu_strlcpy() length.
+
 * hyp tesselation routine creates bot that does not raytrace
 
 * if you attach a display manager in tk-mged, kill the window, then

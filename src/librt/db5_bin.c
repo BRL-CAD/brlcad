@@ -194,14 +194,6 @@ rt_binunif_import5( struct rt_db_internal	*ip,
 	    bip->count = ep->ext_nbytes/2;
 	    bip->u.uint8 = (unsigned char *) bu_malloc( ep->ext_nbytes,
 							"rt_binunif_internal" );
-#if 0
-	    srcp = (unsigned char *) ep->ext_buf;
-	    sdestp = (unsigned short *) bip->u.uint8;
-	    for (i = 0; i < bip->count; ++i, ++sdestp, srcp += 2) {
-		*sdestp = bu_gshort( srcp );
-		bu_log("Just got %d", *sdestp);
-	    }
-#endif
 	    in_cookie = bu_cv_cookie("nus");
 	    out_cookie = bu_cv_cookie("hus");
 	    if (bu_cv_optimize(in_cookie) != bu_cv_optimize(out_cookie)) {

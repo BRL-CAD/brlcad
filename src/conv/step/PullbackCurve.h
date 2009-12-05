@@ -68,6 +68,7 @@ enum seam_direction {
 #define NEAR_EQUAL(_a, _b, _tol) (fabs((_a) - (_b)) <= _tol)
 #define PBC_TOL 0.000001
 #define PBC_FROM_OFFSET 0.001
+#define PBC_SEAM_TOL 0.001
 
 typedef struct pbc_data {
   double tolerance;

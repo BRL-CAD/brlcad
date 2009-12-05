@@ -56,9 +56,11 @@ struct rt_ebm_specific {
     vect_t ebm_large;	/* local coords of XYZ max */
     mat_t ebm_mat;	/* model to ideal space */
 };
+
+
 #define RT_EBM_NULL ((struct rt_ebm_specific *)0)
 
-#define RT_EBM_O(m)	bu_offsetof(struct rt_ebm_internal, m)
+#define RT_EBM_O(m) bu_offsetof(struct rt_ebm_internal, m)
 
 const struct bu_structparse rt_ebm_parse[] = {
     {"%s",	RT_EBM_NAME_LEN, "file", bu_offsetofarray(struct rt_ebm_internal, file), BU_STRUCTPARSE_FUNC_NULL },
@@ -68,6 +70,7 @@ const struct bu_structparse rt_ebm_parse[] = {
     {"%f",	16, "mat", bu_offsetofarray(struct rt_ebm_internal, mat), BU_STRUCTPARSE_FUNC_NULL },
     {"",	0, (char *)0, 0,			BU_STRUCTPARSE_FUNC_NULL }
 };
+
 
 struct ebm_hit_private {
     int x_cell;
@@ -198,6 +201,7 @@ rt_seg_planeclip(struct seg *out_hd, struct seg *in_hd, fastf_t *out_norm, fastf
     }
     return(count);
 }
+
 
 static int rt_ebm_normtab[3] = { NORM_XPOS, NORM_YPOS, NORM_ZPOS };
 
@@ -403,7 +407,7 @@ rt_ebm_dda(register struct xray *rp, struct soltab *stp, struct application *ap,
 					out_index==X ? "X" : "Y", t[X], t[Y]);
 
 
-	if (t1 <= t0)  bu_log("ERROR ebm t1=%g < t0=%g\n", t1, t0);
+	if (t1 <= t0) bu_log("ERROR ebm t1=%g < t0=%g\n", t1, t0);
 	if (!inside) {
 	    if (val > 0) {
 		/* Handle the transition from vacuum to solid */
@@ -630,7 +634,7 @@ rt_ebm_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     struct bu_vls str;
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_EBM)  return(-1);
+    if (ip->idb_type != ID_EBM) return(-1);
     eip = (struct rt_ebm_internal *)ip->idb_ptr;
     RT_EBM_CK_MAGIC(eip);
     ebm = *eip;			/* struct copy */
@@ -773,7 +777,7 @@ rt_ebm_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     struct bu_vls str;
 
     RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_EBM)  return(-1);
+    if (ip->idb_type != ID_EBM) return(-1);
     eip = (struct rt_ebm_internal *)ip->idb_ptr;
     RT_EBM_CK_MAGIC(eip);
     ebm = *eip;			/* struct copy */
@@ -871,7 +875,7 @@ rt_ebm_ifree(struct rt_db_internal *ip, struct resource *resp)
  * R T _ E B M _ P R E P
  *
  * Returns -
- *  0 OK
+ * 0 OK
  * !0 Failure
  *
  * Implicit return -
@@ -957,7 +961,7 @@ rt_ebm_print(register const struct soltab *stp)
  * pointer to a sorted linked list of "struct seg"s will be returned.
  *
  * Returns -
- *  0 MISS
+ * 0 MISS
  * >0 HIT
  */
 int
@@ -976,27 +980,12 @@ rt_ebm_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     MAT4X3PNT(ideal_ray.r_pt, ebmp->ebm_mat, rp->r_pt);
     MAT4X3VEC(ideal_ray.r_dir, ebmp->ebm_mat, rp->r_dir);
 
-#if 0
-    bu_log("%g %g %g %g %g %g\n",
-	   ideal_ray.r_pt[X], ideal_ray.r_pt[Y], ideal_ray.r_pt[Z],
-	   ideal_ray.r_dir[X], ideal_ray.r_dir[Y], ideal_ray.r_dir[Z]);
-#endif
     if (rt_ebm_dda(&ideal_ray, stp, ap, &myhead) <= 0)
 	return(0);
 
     VSET(norm, 0, 0, -1);		/* letters grow in +z, which is "inside" the halfspace */
     i = rt_seg_planeclip(seghead, &myhead, norm, 0.0, ebmp->ebm_i.tallness,
 			 &ideal_ray, ap);
-#if 0
-    if (segp) {
-	vect_t a, b;
-	/* Plot where WE think the ray goes */
-	VJOIN1(a, rp->r_pt, segp->seg_in.hit_dist, rp->r_dir);
-	VJOIN1(b, rp->r_pt, segp->seg_out.hit_dist, rp->r_dir);
-	pl_color(stdout, 0, 0, 255);	/* B */
-	pdv_3line(stdout, a, b);
-    }
-#endif
     return(i);
 }
 
@@ -1187,6 +1176,7 @@ rt_ebm_plate(int x1, int y1, int x2, int y2, double t, register fastf_t *mat, re
     RT_ADD_VLIST(vhead, srot, BN_VLIST_LINE_DRAW);
 }
 
+
 struct ebm_edge
 {
     struct bu_list l;
@@ -1222,6 +1212,7 @@ rt_ebm_edge(int x1, int y1, int x2, int y2, int left, struct ebm_edge *edges)
     new_edge->v = (struct vertex *)NULL;
     BU_LIST_APPEND(&edges->l, &new_edge->l);
 }
+
 
 static int
 rt_ebm_sort_edges(struct ebm_edge *edges)
@@ -1567,11 +1558,11 @@ rt_ebm_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
  * Routine to format the parameters of an EBM for "db get"
  *
  * Legal requested parameters are:
- *	"F" - bitmap file to extrude
- *	"W" - number of cells in X direction
- *	"N" - number of cells in Y direction
- *	"H" - height of each cell (mm)
- *	"M" - matrix to transform EBM solid into model coordinates
+ * "F" - bitmap file to extrude
+ * "W" - number of cells in X direction
+ * "N" - number of cells in Y direction
+ * "H" - height of each cell (mm)
+ * "M" - matrix to transform EBM solid into model coordinates
  *
  * no paramaters requested returns all
  */
@@ -1617,11 +1608,11 @@ rt_ebm_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *
  * Routine to adjust the parameters of an EBM
  *
  * Legal parameters are:
- *	"F" - bitmap file to extrude
- *	"W" - number of cells in X direction
- *	"N" - number of cells in Y direction
- *	"H" - height of each cell (mm)
- *	"M" - matrix to transform EBM solid into model coordinates
+ * "F" - bitmap file to extrude
+ * "W" - number of cells in X direction
+ * "N" - number of cells in Y direction
+ * "H" - height of each cell (mm)
+ * "M" - matrix to transform EBM solid into model coordinates
  */
 int
 rt_ebm_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char **argv)
@@ -1707,6 +1698,7 @@ rt_ebm_make(const struct rt_functab *ftp, struct rt_db_internal *intern, double 
     ebm->tallness = 1.0;
 }
 
+
 /**
  * R T _ E B M _ P A R A M S
  *
@@ -1716,6 +1708,7 @@ rt_ebm_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
 {
     return(0);			/* OK */
 }
+
 
 /** @} */
 /*

@@ -1039,6 +1039,13 @@ previous sync are included and that STABLE matches trunk.
     export PREV=`svn log --xml --stop-on-copy https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/branches/STABLE | grep 'revision=' | head -n 1 | sed 's/.*revision="\([0-9][0-9]*\)".*/\1/g'`
 
     # merge that range of changes into STABLE and make sure it works
+    # NOTE: if using a copy of the subversion repository checked 
+    #       out using the abbreviation "sf" for sourceforge, the svn merge
+    #       command below also needs to use "sf" - subversion will not
+    #       automatically make the substitution.  The error corresponding
+    #       to this is:  
+    #       svn: 'https://brlcad.svn.sf.net/...' isn't in the same repository 
+    #       as 'https://brlcad.svn.sourceforge.net/...'
     svn co https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/branches/STABLE brlcad.STABLE && cd brlcad.STABLE
     svn merge https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/trunk@$PREV https://brlcad.svn.sourceforge.net/svnroot/brlcad/brlcad/trunk@HEAD .
     sh autogen.sh && ./configure --enable-all && make distcheck

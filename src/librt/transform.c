@@ -50,7 +50,7 @@ rt_matrix_transform(struct rt_db_internal *output, const mat_t matrix, struct rt
 
     ret = -1;
     if (rt_functab[input->idb_type].ft_xform) {
-	ret = rt_functab[input->idb_type].ft_xform( output, matrix, input, free, dbip, resource );
+	ret = rt_functab[input->idb_type].ft_xform(output, matrix, input, free, dbip, resource);
     }
 
     return ret;

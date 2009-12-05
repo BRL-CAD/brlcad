@@ -26,10 +26,11 @@
  * "g_bot.c" twice. Each time the macro TRI_TYPE is defined to reflect
  * the desired version of the "tri_specific" structure:
  *
- * TRI_TYPE == float   -> use the "tri_float_specific" struct
- * TRI_TYPE == double     -> use the original "tri_specific" struct
+ * TRI_TYPE == float  -> use the "tri_float_specific" struct
+ * TRI_TYPE == double -> use the original "tri_specific" struct
  *
  */
+
 
 /**
  * R T _ B O T F A C E
@@ -108,6 +109,7 @@ XGLUE(rt_botface_w_normals_, TRI_TYPE)(struct soltab *stp,
     bot->bot_facelist = (genptr_t)trip;
     return(3);				/* OK */
 }
+
 
 /*
  * Do the prep to support pieces for a BOT/ARS
@@ -213,6 +215,7 @@ XGLUE(rt_bot_prep_pieces_, TRI_TYPE)(struct bot_specific *bot,
 
 }
 
+
 /**
  * R T _ B O T _ P R E P
  *
@@ -221,7 +224,7 @@ XGLUE(rt_bot_prep_pieces_, TRI_TYPE)(struct bot_specific *bot,
  * various terms of the formula.
  *
  * Returns -
- *  0 BOT is OK
+ * 0 BOT is OK
  * !0 Error in description
  *
  * Implicit return -
@@ -254,7 +257,7 @@ XGLUE(rt_bot_prep_, TRI_TYPE)(stp, bot_ip, rtip)
     bot->bot_flags = bot_ip->bot_flags;
     if (bot_ip->thickness) {
 	bot->bot_thickness = (fastf_t *)bu_calloc(bot_ip->num_faces, sizeof(fastf_t), "bot_thickness");
-	for (tri_index=0; tri_index <  bot_ip->num_faces; tri_index++)
+	for (tri_index=0; tri_index < bot_ip->num_faces; tri_index++)
 	    bot->bot_thickness[tri_index] = bot_ip->thickness[tri_index];
     }
     if (bot_ip->face_mode)
@@ -300,7 +303,7 @@ XGLUE(rt_bot_prep_, TRI_TYPE)(stp, bot_ip, rtip)
 		}
 	    }
 	    if (default_normal < 0) {
-		if (rt_botface(stp, bot, p1, p2, p3, tri_index, tol) > 0)
+ 		if (rt_botface(stp, bot, p1, p2, p3, tri_index, tol) > 0)
 		    ntri++;
 	    } else {
 		fastf_t normals[9];
@@ -354,9 +357,9 @@ XGLUE(rt_bot_prep_, TRI_TYPE)(stp, bot_ip, rtip)
     dx = (stp->st_max[X] - stp->st_min[X])/2;
     f = dx;
     dy = (stp->st_max[Y] - stp->st_min[Y])/2;
-    if (dy > f)  f = dy;
+    if (dy > f) f = dy;
     dz = (stp->st_max[Z] - stp->st_min[Z])/2;
-    if (dz > f)  f = dz;
+    if (dz > f) f = dz;
     stp->st_aradius = f;
     stp->st_bradius = sqrt(dx*dx + dy*dy + dz*dz);
 
@@ -373,11 +376,12 @@ XGLUE(rt_bot_prep_, TRI_TYPE)(stp, bot_ip, rtip)
      * pieces, the overhead isn't worth it.
      *
      * To disable BoT pieces, on the RT command line specify:
-     *	-c "set rt_bot_minpieces=0"
+     * -c "set rt_bot_minpieces=0"
      */
 
     return 0;
 }
+
 
 static int
 XGLUE(rt_bot_plate_segs_, TRI_TYPE)(struct hit *hits,
@@ -454,6 +458,7 @@ XGLUE(rt_bot_plate_segs_, TRI_TYPE)(struct hit *hits,
     return(nhits*2);
 
 }
+
 
 static int
 XGLUE(rt_bot_unoriented_segs_, TRI_TYPE)(struct hit *hits,
@@ -792,13 +797,6 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, int nhits, struct soltab *st
 	    }
 	}
     }
-#if 0
-    bu_log("nhits = %d\n", nhits);
-    for (i=0; i<nhits; i++) {
-	rt_bot_norm(&hits[i], stp, rp);
-	bu_log("dist=%g, normal = (%g %g %g), %s\n", hits[i].hit_dist, V3ARGS(hits[i].hit_normal), hits[i].hit_vpriv[X] > 0 ? "exit" : "entrance");
-    }
-#endif
 
     /* if first hit is an exit, it is likely due to the "piece" for
      * the corresponding entrance not being processed (this is OK, but
@@ -934,6 +932,7 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, int nhits, struct soltab *st
     return(nhits);			/* HIT */
 }
 
+
 /**
  * R T _ B O T _ S H O T
  *
@@ -945,7 +944,7 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, int nhits, struct soltab *st
  * direction and unit normal from tri_specific.
  *
  * Returns -
- *  0 MISS
+ * 0 MISS
  * >0 HIT
  */
 int
@@ -996,14 +995,14 @@ XGLUE(rt_bot_shot_, TRI_TYPE)(struct soltab *stp, struct xray *rp, struct applic
 
 	/* Check for exceeding along the one side */
 	alpha = VDOT(trip->tri_CA, xp);
-	if (dn < 0.0)  alpha = -alpha;
+	if (dn < 0.0) alpha = -alpha;
 	if (alpha < -toldist || alpha > dn_plus_tol) {
 	    continue;
 	}
 
 	/* Check for exceeding along the other side */
 	beta = VDOT(trip->tri_BA, xp);
-	if (dn > 0.0)  beta = -beta;
+	if (dn > 0.0) beta = -beta;
 	if (beta < -toldist || beta > dn_plus_tol) {
 	    continue;
 	}
@@ -1035,6 +1034,7 @@ XGLUE(rt_bot_shot_, TRI_TYPE)(struct soltab *stp, struct xray *rp, struct applic
     /* build segments */
     return rt_bot_makesegs(hits, nhits, stp, rp, ap, seghead, NULL);
 }
+
 
 /**
  * R T _ B O T _ P I E C E _ S H O T
@@ -1150,14 +1150,14 @@ XGLUE(rt_bot_piece_shot_, TRI_TYPE)(struct rt_piecestate *psp, struct rt_pieceli
 
 	    /* Check for exceeding along the one side */
 	    alpha = VDOT(trip->tri_CA, xp);
-	    if (dn < 0.0)  alpha = -alpha;
+	    if (dn < 0.0) alpha = -alpha;
 	    if (alpha < -toldist || alpha > dn_plus_tol) {
 		continue;
 	    }
 
 	    /* Check for exceeding along the other side */
 	    beta = VDOT(trip->tri_BA, xp);
-	    if (dn > 0.0)  beta = -beta;
+	    if (dn > 0.0) beta = -beta;
 	    if (beta < -toldist || beta > dn_plus_tol) {
 		continue;
 	    }
@@ -1196,6 +1196,7 @@ XGLUE(rt_bot_piece_shot_, TRI_TYPE)(struct rt_piecestate *psp, struct rt_pieceli
     }
     return psp->htab.end - starting_hits;
 }
+
 
 /**
  * R T _ B O T _ N O R M
@@ -1264,6 +1265,7 @@ XGLUE(rt_bot_norm_, TRI_TYPE)(bot, hitp, stp, rp)
     }
 }
 
+
 /**
  * R T _ B O T _ F R E E
  */
@@ -1300,6 +1302,7 @@ XGLUE(rt_bot_free_, TRI_TYPE)(bot)
     bot->bot_facelist = NULL;
     bu_free((char *)bot, "bot_specific");
 }
+
 
 /** @} */
 

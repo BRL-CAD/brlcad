@@ -184,14 +184,6 @@ rt_nurb_add_hit(struct nurb_hit *head, struct nurb_hit *hit, const struct bn_tol
     register struct nurb_hit *h_ptr;
 
     BN_CK_TOL(tol);
-#if 0
-    /* Shouldn't be discarded, because shootray moves start pt around */
-    if (hit->hit_dist < .001) {
-
-	bu_free((char *) hit, "internal_add_hit: hit");
-	return;
-    }
-#endif
 
     /* If this is the only one, nothing to check against */
     if (head->next == (struct nurb_hit *) 0) {

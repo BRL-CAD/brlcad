@@ -23,9 +23,9 @@
  *
  * Intersect a ray with a Superquadratic Ellipsoid.
  *
- *      NOTICE: this primitive is incomplete and should beconsidered
- *              experimental.  this primitive will exhibit several
- *              instabilities in the existing root solver method.
+ * NOTICE: this primitive is incomplete and should beconsidered
+ * experimental.  this primitive will exhibit several
+ * instabilities in the existing root solver method.
  *
  */
 /** @} */
@@ -71,27 +71,28 @@ const struct bu_structparse rt_superell_parse[] = {
  *
  * The transformation from X to X' is accomplished by:
  *
- * X' = S(R( X - V ))
+ * X' = S(R(X - V))
  *
- * where R(X) = ( A/(|A|) )
- * 		(  B/(|B|)  ) . X
- * 		( C/(|C|) )
+ * where R(X) = (A/(|A|))
+ * 		(B/(|B|)) . X
+ * 		(C/(|C|))
  *
- * and S(X) =	(  1/|A|   0     0   )
- * 		(    0    1/|B|   0    ) . X
- * 		(   0      0   1/|C| )
+ * and S(X) =	(1/|A|   0     0)
+ * 		(0     1/|B|   0) . X
+ * 		(0       0   1/|C|)
  *
- * To find the intersection of a line with the superellipsoid, consider
- * the parametric line L:
+ * To find the intersection of a line with the superellipsoid,
+ * consider the parametric line L:
  *
  * 	L : { P(n) | P + t(n) . D }
  *
- * Call W the actual point of intersection between L and the superellipsoid.
- * Let W' be the point of intersection between L' and the unit sphere.
+ * Call W the actual point of intersection between L and the
+ * superellipsoid.  Let W' be the point of intersection between L' and
+ * the unit sphere.
  *
  * 	L' : { P'(n) | P' + t(n) . D' }
  *
- * W = invR( invS( W' ) ) + V
+ * W = invR(invS(W')) + V
  *
  * Where W' = k D' + P'.
  *
@@ -99,16 +100,16 @@ const struct bu_structparse rt_superell_parse[] = {
  * Let dd = D' dot D'
  * Let pp = P' dot P'
  *
- * and k = [ -dp +/- sqrt( dp*dp - dd * (pp - 1) ) ] / dd
+ * and k = [ -dp +/- sqrt(dp*dp - dd * (pp - 1)) ] / dd
  * which is constant.
  *
- * Now, D' = S( R( D ) )
- * and  P' = S( R( P - V ) )
+ * Now, D' = S(R(D))
+ * and  P' = S(R(P - V))
  *
  * Substituting,
  *
- * W = V + invR( invS[ k *( S( R( D ) ) ) + S( R( P - V ) ) ] )
- *   = V + invR( ( k * R( D ) ) + R( P - V ) )
+ * W = V + invR(invS[ k *(S(R(D))) + S(R(P - V)) ])
+ *   = V + invR((k * R(D)) + R(P - V))
  *   = V + k * D + P - V
  *   = k * D + P
  *
@@ -118,7 +119,7 @@ const struct bu_structparse rt_superell_parse[] = {
  * NORMALS.  Given the point W on the superellipsoid, what is the
  * vector normal to the tangent plane at that point?
  *
- * Map W onto the unit sphere, ie:  W' = S( R( W - V ) ).
+ * Map W onto the unit sphere, ie:  W' = S(R(W - V)).
  *
  * Plane on unit sphere at W' has a normal vector of the same value(!).
  * N' = W'
@@ -126,26 +127,26 @@ const struct bu_structparse rt_superell_parse[] = {
  * The plane transforms back to the tangent plane at W, and this new
  * plane (on the superellipsoid) has a normal vector of N, viz:
  *
- * N = inverse[ transpose( inverse[ S o R ] ) ] ( N' )
+ * N = inverse[ transpose(inverse[ S o R ]) ] (N')
  *
- * because if H is perpendicular to plane Q, and matrix M maps from
- * Q to Q', then inverse[ transpose(M) ] (H) is perpendicular to Q'.
- * Here, H and Q are in "prime space" with the unit sphere.
- * [Somehow, the notation here is backwards].
- * So, the mapping matrix M = inverse( S o R ), because
- * S o R maps from normal space to the unit sphere.
+ * because if H is perpendicular to plane Q, and matrix M maps from Q
+ * to Q', then inverse[ transpose(M) ] (H) is perpendicular to Q'.
+ * Here, H and Q are in "prime space" with the unit sphere.  [Somehow,
+ * the notation here is backwards].  So, the mapping matrix M =
+ * inverse(S o R), because S o R maps from normal space to the unit
+ * sphere.
  *
- * N = inverse[ transpose( inverse[ S o R ] ) ] ( N' )
- *   = inverse[ transpose(invR o invS) ] ( N' )
- *   = inverse[ transpose(invS) o transpose(invR) ] ( N' )
- *   = inverse[ inverse(S) o R ] ( N' )
- *   = invR o S ( N' )
+ * N = inverse[ transpose(inverse[ S o R ]) ] (N')
+ *   = inverse[ transpose(invR o invS) ] (N')
+ *   = inverse[ transpose(invS) o transpose(invR) ] (N')
+ *   = inverse[ inverse(S) o R ] (N')
+ *   = invR o S (N')
  *
- *   = invR o S ( W' )
- *   = invR( S( S( R( W - V ) ) ) )
+ *   = invR o S (W')
+ *   = invR(S(S(R(W - V))))
  *
- * because inverse(R) = transpose(R), so R = transpose( invR ),
- * and S = transpose( S ).
+ * because inverse(R) = transpose(R), so R = transpose(invR),
+ * and S = transpose(S).
  *
  * Note that the normal vector N produced above will not have unit
  * length.
@@ -162,11 +163,11 @@ struct superell_specific {
     double superell_invmsBu; /* 1.0 / |Bu|^2 */
     double superell_invmsCu; /* 1.0 / |Cu|^2 */
     vect_t superell_invsq;
-    mat_t	superell_SoR; /* matrix for local cordinate system, Scale(Rotate(V))*/
+    mat_t superell_SoR; /* matrix for local cordinate system, Scale(Rotate(V))*/
     mat_t superell_invRSSR; /* invR(Scale(Scale(Rot(V)))) */
     mat_t superell_invR; /* transposed rotation matrix */
 };
-#define SUPERELL_NULL	((struct superell_specific *)0)
+#define SUPERELL_NULL ((struct superell_specific *)0)
 
 /**
  * R T _ S U P E R E L L _ P R E P
@@ -176,8 +177,8 @@ struct superell_specific {
  * precompute various terms of the formula.
  *
  * Returns -
- * 	0	SUPERELL is OK
- * 	!0	Error in description
+ * 0 SUPERELL is OK
+ * !0 Error in description
  *
  * Implicit return - A struct superell_specific is created, and it's
  * address is stored in stp->st_specific for use by rt_superell_shot()
@@ -187,24 +188,24 @@ rt_superell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 {
 
     register struct superell_specific *superell;
-    struct rt_superell_internal	*eip;
-    fastf_t	magsq_a, magsq_b, magsq_c;
-    mat_t	R, TEMP;
-    vect_t	Au, Bu, Cu;	/* A, B, C with unit length */
-    vect_t	w1, w2, P;	/* used for bounding RPP */
-    fastf_t	f;
+    struct rt_superell_internal *eip;
+    fastf_t magsq_a, magsq_b, magsq_c;
+    mat_t R, TEMP;
+    vect_t Au, Bu, Cu;	/* A, B, C with unit length */
+    vect_t w1, w2, P;	/* used for bounding RPP */
+    fastf_t f;
 
     eip = (struct rt_superell_internal *)ip->idb_ptr;
     RT_SUPERELL_CK_MAGIC(eip);
 
     /* Validate that |A| > 0, |B| > 0, |C| > 0 */
-    magsq_a = MAGSQ( eip->a );
-    magsq_b = MAGSQ( eip->b );
-    magsq_c = MAGSQ( eip->c );
+    magsq_a = MAGSQ(eip->a);
+    magsq_b = MAGSQ(eip->b);
+    magsq_c = MAGSQ(eip->c);
 
-    if ( magsq_a < rtip->rti_tol.dist || magsq_b < rtip->rti_tol.dist || magsq_c < rtip->rti_tol.dist ) {
+    if (magsq_a < rtip->rti_tol.dist || magsq_b < rtip->rti_tol.dist || magsq_c < rtip->rti_tol.dist) {
 	bu_log("superell(%s):  near-zero length A(%g), B(%g), or C(%g) vector\n",
-	       stp->st_name, magsq_a, magsq_b, magsq_c );
+	       stp->st_name, magsq_a, magsq_b, magsq_c);
 	return(1);		/* BAD */
     }
     if (eip->n < rtip->rti_tol.dist || eip->e < rtip->rti_tol.dist) {
@@ -220,43 +221,43 @@ rt_superell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 
     /* Create unit length versions of A, B, C */
     f = 1.0/sqrt(magsq_a);
-    VSCALE( Au, eip->a, f );
+    VSCALE(Au, eip->a, f);
     f = 1.0/sqrt(magsq_b);
-    VSCALE( Bu, eip->b, f );
+    VSCALE(Bu, eip->b, f);
     f = 1.0/sqrt(magsq_c);
-    VSCALE( Cu, eip->c, f );
+    VSCALE(Cu, eip->c, f);
 
     /* Validate that A.B == 0, B.C == 0, A.C == 0 (check dir only) */
-    f = VDOT( Au, Bu );
-    if ( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
+    f = VDOT(Au, Bu);
+    if (! NEAR_ZERO(f, rtip->rti_tol.dist)) {
 	bu_log("superell(%s):  A not perpendicular to B, f=%f\n", stp->st_name, f);
 	return(1);		/* BAD */
     }
-    f = VDOT( Bu, Cu );
-    if ( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
+    f = VDOT(Bu, Cu);
+    if (! NEAR_ZERO(f, rtip->rti_tol.dist)) {
 	bu_log("superell(%s):  B not perpendicular to C, f=%f\n", stp->st_name, f);
 	return(1);		/* BAD */
     }
-    f = VDOT( Au, Cu );
-    if ( ! NEAR_ZERO(f, rtip->rti_tol.dist) )  {
+    f = VDOT(Au, Cu);
+    if (! NEAR_ZERO(f, rtip->rti_tol.dist)) {
 	bu_log("superell(%s):  A not perpendicular to C, f=%f\n", stp->st_name, f);
 	return(1);		/* BAD */
     }
 
     /* Solid is OK, compute constant terms now */
 
-    BU_GETSTRUCT( superell, superell_specific );
+    BU_GETSTRUCT(superell, superell_specific);
     stp->st_specific = (genptr_t)superell;
 
     superell->superell_n = eip->n;
     superell->superell_e = eip->e;
 
-    VMOVE( superell->superell_V, eip->v );
+    VMOVE(superell->superell_V, eip->v);
 
-    VSET( superell->superell_invsq, 1.0/magsq_a, 1.0/magsq_b, 1.0/magsq_c );
-    VMOVE( superell->superell_Au, Au );
-    VMOVE( superell->superell_Bu, Bu );
-    VMOVE( superell->superell_Cu, Cu );
+    VSET(superell->superell_invsq, 1.0/magsq_a, 1.0/magsq_b, 1.0/magsq_c);
+    VMOVE(superell->superell_Au, Au);
+    VMOVE(superell->superell_Bu, Bu);
+    VMOVE(superell->superell_Cu, Cu);
 
     /* compute the inverse magnitude square for equations during shot */
     superell->superell_invmsAu = 1.0 / magsq_a;
@@ -265,10 +266,10 @@ rt_superell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 
     /* compute the rotation matrix */
     MAT_IDN(R);
-    VMOVE( &R[0], Au );
-    VMOVE( &R[4], Bu );
-    VMOVE( &R[8], Cu );
-    bn_mat_trn( superell->superell_invR, R );
+    VMOVE(&R[0], Au);
+    VMOVE(&R[4], Bu);
+    VMOVE(&R[8], Cu);
+    bn_mat_trn(superell->superell_invR, R);
 
     /* computer invRSSR */
     MAT_IDN(superell->superell_invRSSR);
@@ -281,51 +282,52 @@ rt_superell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 
     /* compute Scale(Rotate(vect)) */
     MAT_IDN(superell->superell_SoR);
-    VSCALE( &superell->superell_SoR[0], eip->a, superell->superell_invsq[0]);
-    VSCALE( &superell->superell_SoR[4], eip->b, superell->superell_invsq[1]);
-    VSCALE( &superell->superell_SoR[8], eip->c, superell->superell_invsq[2]);
+    VSCALE(&superell->superell_SoR[0], eip->a, superell->superell_invsq[0]);
+    VSCALE(&superell->superell_SoR[4], eip->b, superell->superell_invsq[1]);
+    VSCALE(&superell->superell_SoR[8], eip->c, superell->superell_invsq[2]);
 
     /* Compute bounding sphere */
-    VMOVE( stp->st_center, eip->v );
+    VMOVE(stp->st_center, eip->v);
     f = magsq_a;
-    if ( magsq_b > f )
+    if (magsq_b > f)
 	f = magsq_b;
-    if ( magsq_c > f )
+    if (magsq_c > f)
 	f = magsq_c;
     stp->st_aradius = stp->st_bradius = sqrt(f);
 
     /* Compute bounding RPP */
-    VSET( w1, magsq_a, magsq_b, magsq_c );
+    VSET(w1, magsq_a, magsq_b, magsq_c);
 
     /* X */
-    VSET( P, 1.0, 0, 0 );		/* bounding plane normal */
-    MAT3X3VEC( w2, R, P );		/* map plane to local coord syst */
-    VELMUL( w2, w2, w2 );		/* square each term */
-    f = VDOT( w1, w2 );
+    VSET(P, 1.0, 0, 0);		/* bounding plane normal */
+    MAT3X3VEC(w2, R, P);		/* map plane to local coord syst */
+    VELMUL(w2, w2, w2);		/* square each term */
+    f = VDOT(w1, w2);
     f = sqrt(f);
     stp->st_min[X] = superell->superell_V[X] - f;	/* V.P +/- f */
     stp->st_max[X] = superell->superell_V[X] + f;
 
     /* Y */
-    VSET( P, 0, 1.0, 0 );		/* bounding plane normal */
-    MAT3X3VEC( w2, R, P );		/* map plane to local coord syst */
-    VELMUL( w2, w2, w2 );		/* square each term */
-    f = VDOT( w1, w2 );
+    VSET(P, 0, 1.0, 0);		/* bounding plane normal */
+    MAT3X3VEC(w2, R, P);		/* map plane to local coord syst */
+    VELMUL(w2, w2, w2);		/* square each term */
+    f = VDOT(w1, w2);
     f = sqrt(f);
     stp->st_min[Y] = superell->superell_V[Y] - f;	/* V.P +/- f */
     stp->st_max[Y] = superell->superell_V[Y] + f;
 
     /* Z */
-    VSET( P, 0, 0, 1.0 );		/* bounding plane normal */
-    MAT3X3VEC( w2, R, P );		/* map plane to local coord syst */
-    VELMUL( w2, w2, w2 );		/* square each term */
-    f = VDOT( w1, w2 );
+    VSET(P, 0, 0, 1.0);		/* bounding plane normal */
+    MAT3X3VEC(w2, R, P);		/* map plane to local coord syst */
+    VELMUL(w2, w2, w2);		/* square each term */
+    f = VDOT(w1, w2);
     f = sqrt(f);
     stp->st_min[Z] = superell->superell_V[Z] - f;	/* V.P +/- f */
     stp->st_max[Z] = superell->superell_V[Z] + f;
 
     return(0);			/* OK */
 }
+
 
 /**
  * R T _ S U P E R E L L _ P R I N T
@@ -338,6 +340,7 @@ rt_superell_print(register const struct soltab *stp)
 
     VPRINT("V", superell->superell_V);
 }
+
 
 /* Equation of a superellipsoid:
  *
@@ -352,8 +355,8 @@ rt_superell_print(register const struct soltab *stp)
  * occurs, a struct seg will be acquired and filled in.
  *
  * Returns -
- * 	0	MISS
- * 	>0	HIT
+ * 0 MISS
+ * >0 HIT
  */
 int
 rt_superell_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
@@ -372,14 +375,14 @@ rt_superell_shot(struct soltab *stp, register struct xray *rp, struct applicatio
     register struct seg *segp;
 
     /* translate ray point */
-    /*  VSUB2(translated, rp->r_pt, superell->superell_V); */
+    /* VSUB2(translated, rp->r_pt, superell->superell_V); */
     (translated)[X] = (rp->r_pt)[X] - (superell->superell_V)[X];
     (translated)[Y] = (rp->r_pt)[Y] - (superell->superell_V)[Y];
     (translated)[Z] = (rp->r_pt)[Z] - (superell->superell_V)[Z];
 
     /* scale and rotate point to get P' */
 
-    /*  MAT4X3VEC(newShotPoint, superell->superell_SoR, translated); */
+    /* MAT4X3VEC(newShotPoint, superell->superell_SoR, translated); */
     newShotPoint[X] = (superell->superell_SoR[0]*translated[X] + superell->superell_SoR[1]*translated[Y] + superell->superell_SoR[ 2]*translated[Z]) * 1.0/(superell->superell_SoR[15]);
     newShotPoint[Y] = (superell->superell_SoR[4]*translated[X] + superell->superell_SoR[5]*translated[Y] + superell->superell_SoR[ 6]*translated[Z]) * 1.0/(superell->superell_SoR[15]);
     newShotPoint[Z] = (superell->superell_SoR[8]*translated[X] + superell->superell_SoR[9]*translated[Y] + superell->superell_SoR[10]*translated[Z]) * 1.0/(superell->superell_SoR[15]);
@@ -394,9 +397,9 @@ rt_superell_shot(struct soltab *stp, register struct xray *rp, struct applicatio
      * along the direction of the ray to the closest point near the
      * primitives center vertex.  New ray origin is hence, normalized.
      */
-    VSCALE( normalizedShotPoint, newShotDir,
-	    VDOT( newShotPoint, newShotDir ));
-    VSUB2( normalizedShotPoint, newShotPoint, normalizedShotPoint );
+    VSCALE(normalizedShotPoint, newShotDir,
+	   VDOT(newShotPoint, newShotDir));
+    VSUB2(normalizedShotPoint, newShotPoint, normalizedShotPoint);
 
     /* Now generate the polynomial equation for passing to the root finder */
 
@@ -407,9 +410,9 @@ rt_superell_shot(struct soltab *stp, register struct xray *rp, struct applicatio
     /* (2xX / A) + (2yY / B) + (2zZ / C) */
     equation.cf[1] = 2 * newShotDir[X] * newShotPoint[X] * superell->superell_invmsAu + 2 * newShotDir[Y] * newShotPoint[Y] * superell->superell_invmsBu + 2 * newShotDir[Z] * newShotPoint[Z] * superell->superell_invmsCu;
     /* (X^2 / A) + (Y^2 / B) + (Z^2 / C) */
-    equation.cf[2] = newShotDir[X] * newShotDir[X] * superell->superell_invmsAu  + newShotDir[Y] * newShotDir[Y] * superell->superell_invmsBu + newShotDir[Z] * newShotDir[Z] * superell->superell_invmsCu;
+    equation.cf[2] = newShotDir[X] * newShotDir[X] * superell->superell_invmsAu + newShotDir[Y] * newShotDir[Y] * superell->superell_invmsBu + newShotDir[Z] * newShotDir[Z] * superell->superell_invmsCu;
 
-    if ( (i = rt_poly_roots( &equation, complexRoot, stp->st_dp->d_namep)) != 2 ) {
+    if ((i = rt_poly_roots(&equation, complexRoot, stp->st_dp->d_namep)) != 2) {
 	if (i > 0) {
 	    bu_log("superell: rt_poly_roots() 2 != %d\n", i);
 	    bn_pr_roots(stp->st_name, complexRoot, i);
@@ -427,61 +430,61 @@ rt_superell_shot(struct soltab *stp, register struct xray *rp, struct applicatio
     }
 
     /* XXX BEGIN CUT */
-    /*  Only real roots indicate an intersection in real space.
+    /* Only real roots indicate an intersection in real space.
      *
-     *  Look at each root returned; if the imaginary part is zero
-     *  or sufficiently close, then use the real part as one value
-     *  of 't' for the intersections
+     * Look at each root returned; if the imaginary part is zero
+     * or sufficiently close, then use the real part as one value
+     * of 't' for the intersections
      */
-    for ( j=0, i=0; j < 2; j++ ) {
-	if ( NEAR_ZERO( complexRoot[j].im, 0.001 ) )
+    for (j=0, i=0; j < 2; j++) {
+	if (NEAR_ZERO(complexRoot[j].im, 0.001))
 	    realRoot[i++] = complexRoot[j].re;
     }
 
     /* reverse above translation by adding distance to all 'k' values. */
-    /*  for ( j = 0; j < i; ++j )
-	realRoot[j] -= VDOT(newShotPoint, newShotDir);
+    /* for (j = 0; j < i; ++j)
+       realRoot[j] -= VDOT(newShotPoint, newShotDir);
     */
 
     /* Here, 'i' is number of points found */
-    switch ( i )  {
+    switch (i) {
 	case 0:
 	    return(0);		/* No hit */
 
 	default:
 	    bu_log("rt_superell_shot: reduced 4 to %d roots\n", i);
-	    bn_pr_roots( stp->st_name, complexRoot, 4 );
+	    bn_pr_roots(stp->st_name, complexRoot, 4);
 	    return(0);		/* No hit */
 
 	case 2:
-	{
-	    /* Sort most distant to least distant. */
-	    fastf_t	u;
-	    if ( (u=realRoot[0]) < realRoot[1] )  {
-		/* bubble larger towards [0] */
-		realRoot[0] = realRoot[1];
-		realRoot[1] = u;
+	    {
+		/* Sort most distant to least distant. */
+		fastf_t u;
+		if ((u=realRoot[0]) < realRoot[1]) {
+		    /* bubble larger towards [0] */
+		    realRoot[0] = realRoot[1];
+		    realRoot[1] = u;
+		}
 	    }
-	}
-	break;
+	    break;
 	case 4:
-	{
-	    register short	n;
-	    register short	lim;
+	    {
+		register short n;
+		register short lim;
 
-	    /*  Inline rt_pt_sort().  Sorts realRoot[] into descending order. */
-	    for ( lim = i-1; lim > 0; lim-- )  {
-		for ( n = 0; n < lim; n++ )  {
-		    fastf_t	u;
-		    if ( (u=realRoot[n]) < realRoot[n+1] )  {
-			/* bubble larger towards [0] */
-			realRoot[n] = realRoot[n+1];
-			realRoot[n+1] = u;
+		/* Inline rt_pt_sort().  Sorts realRoot[] into descending order. */
+		for (lim = i-1; lim > 0; lim--) {
+		    for (n = 0; n < lim; n++) {
+			fastf_t u;
+			if ((u=realRoot[n]) < realRoot[n+1]) {
+			    /* bubble larger towards [0] */
+			    realRoot[n] = realRoot[n+1];
+			    realRoot[n+1] = u;
+			}
 		    }
 		}
 	    }
-	}
-	break;
+	    break;
     }
 
     if (counter > 0) {
@@ -496,13 +499,13 @@ rt_superell_shot(struct soltab *stp, register struct xray *rp, struct applicatio
     segp->seg_stp = stp;
     segp->seg_in.hit_dist = realRoot[1];
     segp->seg_out.hit_dist = realRoot[0];
-    /*  segp->seg_in.hit_surfno = segp->seg_out.hit_surfno = 0; */
+    /* segp->seg_in.hit_surfno = segp->seg_out.hit_surfno = 0; */
     /* Set aside vector for rt_superell_norm() later */
-    /*  VJOIN1( segp->seg_in.hit_vpriv, newShotPoint, realRoot[1], newShotDir ); */
-    /*  VJOIN1( segp->seg_out.hit_vpriv, newShotPoint, realRoot[0], newShotDir ); */
-    BU_LIST_INSERT( &(seghead->l), &(segp->l) );
+    /* VJOIN1(segp->seg_in.hit_vpriv, newShotPoint, realRoot[1], newShotDir); */
+    /* VJOIN1(segp->seg_out.hit_vpriv, newShotPoint, realRoot[0], newShotDir); */
+    BU_LIST_INSERT(&(seghead->l), &(segp->l));
 
-    if ( i == 2 ) {
+    if (i == 2) {
 	return(2);			/* HIT */
     }
 
@@ -513,16 +516,16 @@ rt_superell_shot(struct soltab *stp, register struct xray *rp, struct applicatio
     segp->seg_in.hit_dist = realRoot[3]*superell->superell_e;
     segp->seg_out.hit_dist = realRoot[2]*superell->superell_e;
     segp->seg_in.hit_surfno = segp->seg_out.hit_surfno = 1;
-    VJOIN1( segp->seg_in.hit_vpriv, newShotPoint, realRoot[3], newShotDir );
-    VJOIN1( segp->seg_out.hit_vpriv, newShotPoint, realRoot[2], newShotDir );
-    BU_LIST_INSERT( &(seghead->l), &(segp->l) );
+    VJOIN1(segp->seg_in.hit_vpriv, newShotPoint, realRoot[3], newShotDir);
+    VJOIN1(segp->seg_out.hit_vpriv, newShotPoint, realRoot[2], newShotDir);
+    BU_LIST_INSERT(&(seghead->l), &(segp->l));
     return(4);			/* HIT */
     /* XXX END CUT */
 
     /* Is there any possibility of hitting another segment?  Only when there
      * is a concave curvature (<n, e> > <2.0, 2.0>).
      */
-    if ( (superell->superell_n > 2.0) || (superell->superell_e > 2.0) ) {
+    if ((superell->superell_n > 2.0) || (superell->superell_e > 2.0)) {
 
     }
 
@@ -561,11 +564,11 @@ rt_superell_norm(register struct hit *hitp, struct soltab *stp, register struct 
     vect_t xlated;
     fastf_t scale;
 
-    VJOIN1( hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir );
-    VSUB2( xlated, hitp->hit_point, superell->superell_V );
-    MAT4X3VEC( hitp->hit_normal, superell->superell_invRSSR, xlated );
-    scale = 1.0 / MAGNITUDE( hitp->hit_normal );
-    VSCALE( hitp->hit_normal, hitp->hit_normal, scale );
+    VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir);
+    VSUB2(xlated, hitp->hit_point, superell->superell_V);
+    MAT4X3VEC(hitp->hit_normal, superell->superell_invRSSR, xlated);
+    scale = 1.0 / MAGNITUDE(hitp->hit_normal);
+    VSCALE(hitp->hit_normal, hitp->hit_normal, scale);
 
     return;
 }
@@ -599,6 +602,7 @@ rt_superell_uv(struct application *ap, struct soltab *stp, register struct hit *
     return;
 }
 
+
 /**
  * R T _ S U P E R E L L _ F R E E
  */
@@ -608,7 +612,7 @@ rt_superell_free(register struct soltab *stp)
     register struct superell_specific *superell =
 	(struct superell_specific *)stp->st_specific;
 
-    bu_free( (char *)superell, "superell_specific" );
+    bu_free((char *)superell, "superell_specific");
 }
 
 
@@ -624,7 +628,7 @@ rt_superell_class(void)
  *
  * Also used by the TGC code
  */
-#define SUPERELLOUT(n)	ov+(n-1)*3
+#define SUPERELLOUT(n) ov+(n-1)*3
 void
 rt_superell_16pts(register fastf_t *ov,
 		  register fastf_t *V,
@@ -640,28 +644,29 @@ rt_superell_16pts(register fastf_t *ov,
     /*
      * For angle theta, compute surface point as
      *
-     *	V  +  cos(theta) * A  + sin(theta) * B
+     * V + cos(theta) * A + sin(theta) * B
      *
      * note that sin(theta) is cos(90-theta).
      */
 
-    VADD2( SUPERELLOUT(1), V, A );
-    VJOIN2( SUPERELLOUT(2), V, e, A, f, B );
-    VJOIN2( SUPERELLOUT(3), V, c, A, d, B );
-    VJOIN2( SUPERELLOUT(4), V, g, A, h, B );
-    VADD2( SUPERELLOUT(5), V, B );
-    VJOIN2( SUPERELLOUT(6), V, -g, A, h, B );
-    VJOIN2( SUPERELLOUT(7), V, -c, A, d, B );
-    VJOIN2( SUPERELLOUT(8), V, -e, A, f, B );
-    VSUB2( SUPERELLOUT(9), V, A );
-    VJOIN2( SUPERELLOUT(10), V, -e, A, -f, B );
-    VJOIN2( SUPERELLOUT(11), V, -c, A, -d, B );
-    VJOIN2( SUPERELLOUT(12), V, -g, A, -h, B );
-    VSUB2( SUPERELLOUT(13), V, B );
-    VJOIN2( SUPERELLOUT(14), V, g, A, -h, B );
-    VJOIN2( SUPERELLOUT(15), V, c, A, -d, B );
-    VJOIN2( SUPERELLOUT(16), V, e, A, -f, B );
+    VADD2(SUPERELLOUT(1), V, A);
+    VJOIN2(SUPERELLOUT(2), V, e, A, f, B);
+    VJOIN2(SUPERELLOUT(3), V, c, A, d, B);
+    VJOIN2(SUPERELLOUT(4), V, g, A, h, B);
+    VADD2(SUPERELLOUT(5), V, B);
+    VJOIN2(SUPERELLOUT(6), V, -g, A, h, B);
+    VJOIN2(SUPERELLOUT(7), V, -c, A, d, B);
+    VJOIN2(SUPERELLOUT(8), V, -e, A, f, B);
+    VSUB2(SUPERELLOUT(9), V, A);
+    VJOIN2(SUPERELLOUT(10), V, -e, A, -f, B);
+    VJOIN2(SUPERELLOUT(11), V, -c, A, -d, B);
+    VJOIN2(SUPERELLOUT(12), V, -g, A, -h, B);
+    VSUB2(SUPERELLOUT(13), V, B);
+    VJOIN2(SUPERELLOUT(14), V, g, A, -h, B);
+    VJOIN2(SUPERELLOUT(15), V, c, A, -d, B);
+    VJOIN2(SUPERELLOUT(16), V, e, A, -f, B);
 }
+
 
 /**
  * R T _ S U P E R E L L _ P L O T
@@ -669,8 +674,8 @@ rt_superell_16pts(register fastf_t *ov,
 int
 rt_superell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
-    register int		i;
-    struct rt_superell_internal	*eip;
+    register int i;
+    struct rt_superell_internal *eip;
     fastf_t top[16*3];
     fastf_t middle[16*3];
     fastf_t bottom[16*3];
@@ -679,78 +684,46 @@ rt_superell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
     eip = (struct rt_superell_internal *)ip->idb_ptr;
     RT_SUPERELL_CK_MAGIC(eip);
 
-    rt_superell_16pts( top, eip->v, eip->a, eip->b );
-    rt_superell_16pts( bottom, eip->v, eip->b, eip->c );
-    rt_superell_16pts( middle, eip->v, eip->a, eip->c );
+    rt_superell_16pts(top, eip->v, eip->a, eip->b);
+    rt_superell_16pts(bottom, eip->v, eip->b, eip->c);
+    rt_superell_16pts(middle, eip->v, eip->a, eip->c);
 
-    RT_ADD_VLIST( vhead, &top[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE );
-    for ( i=0; i<16; i++ )  {
-	RT_ADD_VLIST( vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
+    RT_ADD_VLIST(vhead, &top[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+    for (i=0; i<16; i++) {
+	RT_ADD_VLIST(vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
     }
 
-    RT_ADD_VLIST( vhead, &bottom[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE );
-    for ( i=0; i<16; i++ )  {
-	RT_ADD_VLIST( vhead, &bottom[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
+    RT_ADD_VLIST(vhead, &bottom[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+    for (i=0; i<16; i++) {
+	RT_ADD_VLIST(vhead, &bottom[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
     }
 
-    RT_ADD_VLIST( vhead, &middle[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE );
-    for ( i=0; i<16; i++ )  {
-	RT_ADD_VLIST( vhead, &middle[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW );
+    RT_ADD_VLIST(vhead, &middle[15*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+    for (i=0; i<16; i++) {
+	RT_ADD_VLIST(vhead, &middle[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
     }
     return(0);
 }
 
-#if 0
-static point_t	octa_verts[6] = {
-    { 1, 0, 0 },	/* XPLUS */
-    {-1, 0, 0 },	/* XMINUS */
-    { 0, 1, 0 },	/* YPLUS */
-    { 0,-1, 0 },	/* YMINUS */
-    { 0, 0, 1 },	/* ZPLUS */
-    { 0, 0,-1 }	/* ZMINUS */
-};
 
-#define XPLUS 0
-#define XMIN  1
-#define YPLUS 2
-#define YMIN  3
-#define ZPLUS 4
-#define ZMIN  5
-#endif
-
-/* Vertices of a unit octahedron */
-/* These need to be organized properly to give reasonable normals */
-/* static struct usvert {
- * 	int	a;
- * 	int	b;
- * 	int	c;
- * } octahedron[8] = {
- *     { XPLUS, ZPLUS, YPLUS },
- *     { YPLUS, ZPLUS, XMIN  },
- *     { XMIN, ZPLUS, YMIN  },
- *     { YMIN, ZPLUS, XPLUS },
- *     { XPLUS, YPLUS, ZMIN  },
- *     { YPLUS, XMIN, ZMIN  },
- *     { XMIN, YMIN, ZMIN  },
- *     { YMIN, XPLUS, ZMIN  }
- * };
- */
 struct superell_state {
-    struct shell	*s;
-    struct rt_superell_internal	*eip;
-    mat_t		invRinvS;
-    mat_t		invRoS;
-    fastf_t		theta_tol;
+    struct shell *s;
+    struct rt_superell_internal *eip;
+    mat_t invRinvS;
+    mat_t invRoS;
+    fastf_t theta_tol;
 };
+
 
 struct superell_vert_strip {
-    int		nverts_per_strip;
-    int		nverts;
-    struct vertex	**vp;
-    vect_t		*norms;
-    int		nfaces;
-    struct faceuse	**fu;
+    int nverts_per_strip;
+    int nverts;
+    struct vertex **vp;
+    vect_t *norms;
+    int nfaces;
+    struct faceuse **fu;
 };
+
 
 /**
  * R T _ S U P E R E L L _ T E S S
@@ -780,8 +753,8 @@ struct superell_vert_strip {
  * 0      5     2
  *
  * Returns -
- * 	-1	failure
- * 	 0	OK.  *r points to nmgregion that holds this tesssuperellation.
+ * -1 failure
+ * 0 OK.  *r points to nmgregion that holds this tesssuperellation.
  */
 int
 rt_superell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
@@ -789,6 +762,7 @@ rt_superell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
     bu_log("rt_superell_tess called!\n");
     return -1;
 }
+
 
 /**
  * R T _ S U P E R E L L _ I M P O R T
@@ -799,40 +773,41 @@ rt_superell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
 int
 rt_superell_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
-    struct rt_superell_internal	*eip;
-    union record		*rp;
-    fastf_t	vec[3*4 + 2];
+    struct rt_superell_internal *eip;
+    union record *rp;
+    fastf_t vec[3*4 + 2];
 
-    BU_CK_EXTERNAL( ep );
+    BU_CK_EXTERNAL(ep);
     rp = (union record *)ep->ext_buf;
     /* Check record type */
-    if ( rp->u_id != ID_SOLID )  {
+    if (rp->u_id != ID_SOLID) {
 	bu_log("rt_superell_import4: defective record\n");
 	return(-1);
     }
 
-    RT_CK_DB_INTERNAL( ip );
+    RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_SUPERELL;
     ip->idb_meth = &rt_functab[ID_SUPERELL];
-    ip->idb_ptr = bu_malloc( sizeof(struct rt_superell_internal), "rt_superell_internal");
+    ip->idb_ptr = bu_malloc(sizeof(struct rt_superell_internal), "rt_superell_internal");
     eip = (struct rt_superell_internal *)ip->idb_ptr;
     eip->magic = RT_SUPERELL_INTERNAL_MAGIC;
 
     /* Convert from database to internal format */
-    rt_fastf_float( vec, rp->s.s_values, 4 );
+    rt_fastf_float(vec, rp->s.s_values, 4);
 
     /* Apply modeling transformations */
     if (mat == NULL) mat = bn_mat_identity;
-    MAT4X3PNT( eip->v, mat, &vec[0*3] );
-    MAT4X3VEC( eip->a, mat, &vec[1*3] );
-    MAT4X3VEC( eip->b, mat, &vec[2*3] );
-    MAT4X3VEC( eip->c, mat, &vec[3*3] );
+    MAT4X3PNT(eip->v, mat, &vec[0*3]);
+    MAT4X3VEC(eip->a, mat, &vec[1*3]);
+    MAT4X3VEC(eip->b, mat, &vec[2*3]);
+    MAT4X3VEC(eip->c, mat, &vec[3*3]);
     eip->n = rp->s.s_values[12];
     eip->e = rp->s.s_values[13];
 
     return(0);		/* OK */
 }
+
 
 /**
  * R T _ S U P E R E L L _ E X P O R T
@@ -840,27 +815,27 @@ rt_superell_import4(struct rt_db_internal *ip, const struct bu_external *ep, reg
 int
 rt_superell_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
-    struct rt_superell_internal	*tip;
-    union record		*rec;
+    struct rt_superell_internal *tip;
+    union record *rec;
 
     RT_CK_DB_INTERNAL(ip);
-    if ( ip->idb_type != ID_SUPERELL )  return(-1);
+    if (ip->idb_type != ID_SUPERELL) return(-1);
     tip = (struct rt_superell_internal *)ip->idb_ptr;
     RT_SUPERELL_CK_MAGIC(tip);
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = sizeof(union record);
-    ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "superell external");
+    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "superell external");
     rec = (union record *)ep->ext_buf;
 
     rec->s.s_id = ID_SOLID;
     rec->s.s_type = SUPERELL;
 
     /* NOTE: This also converts to dbfloat_t */
-    VSCALE( &rec->s.s_values[0], tip->v, local2mm );
-    VSCALE( &rec->s.s_values[3], tip->a, local2mm );
-    VSCALE( &rec->s.s_values[6], tip->b, local2mm );
-    VSCALE( &rec->s.s_values[9], tip->c, local2mm );
+    VSCALE(&rec->s.s_values[0], tip->v, local2mm);
+    VSCALE(&rec->s.s_values[3], tip->a, local2mm);
+    VSCALE(&rec->s.s_values[6], tip->b, local2mm);
+    VSCALE(&rec->s.s_values[9], tip->c, local2mm);
 
     printf("SUPERELL: %g %g\n", tip->n, tip->e);
 
@@ -869,6 +844,7 @@ rt_superell_export4(struct bu_external *ep, const struct rt_db_internal *ip, dou
 
     return(0);
 }
+
 
 /**
  * R T _ S U P E R E L L _ I M P O R T 5
@@ -879,75 +855,77 @@ rt_superell_export4(struct bu_external *ep, const struct rt_db_internal *ip, dou
 int
 rt_superell_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
-    struct rt_superell_internal	*eip;
-    fastf_t			vec[ELEMENTS_PER_VECT*4 + 2];
+    struct rt_superell_internal *eip;
+    fastf_t vec[ELEMENTS_PER_VECT*4 + 2];
 
-    RT_CK_DB_INTERNAL( ip );
-    BU_CK_EXTERNAL( ep );
+    RT_CK_DB_INTERNAL(ip);
+    BU_CK_EXTERNAL(ep);
 
-    BU_ASSERT_LONG( ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * (ELEMENTS_PER_VECT*4 + 2));
+    BU_ASSERT_LONG(ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * (ELEMENTS_PER_VECT*4 + 2));
 
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_SUPERELL;
     ip->idb_meth = &rt_functab[ID_SUPERELL];
-    ip->idb_ptr = bu_malloc( sizeof(struct rt_superell_internal), "rt_superell_internal");
+    ip->idb_ptr = bu_malloc(sizeof(struct rt_superell_internal), "rt_superell_internal");
 
     eip = (struct rt_superell_internal *)ip->idb_ptr;
     eip->magic = RT_SUPERELL_INTERNAL_MAGIC;
 
     /* Convert from database (network) to internal (host) format */
-    ntohd( (unsigned char *)vec, ep->ext_buf, ELEMENTS_PER_VECT*4 + 2);
+    ntohd((unsigned char *)vec, ep->ext_buf, ELEMENTS_PER_VECT*4 + 2);
 
     /* Apply modeling transformations */
     if (mat == NULL) mat = bn_mat_identity;
-    MAT4X3PNT( eip->v, mat, &vec[0*ELEMENTS_PER_VECT] );
-    MAT4X3VEC( eip->a, mat, &vec[1*ELEMENTS_PER_VECT] );
-    MAT4X3VEC( eip->b, mat, &vec[2*ELEMENTS_PER_VECT] );
-    MAT4X3VEC( eip->c, mat, &vec[3*ELEMENTS_PER_VECT] );
+    MAT4X3PNT(eip->v, mat, &vec[0*ELEMENTS_PER_VECT]);
+    MAT4X3VEC(eip->a, mat, &vec[1*ELEMENTS_PER_VECT]);
+    MAT4X3VEC(eip->b, mat, &vec[2*ELEMENTS_PER_VECT]);
+    MAT4X3VEC(eip->c, mat, &vec[3*ELEMENTS_PER_VECT]);
     eip->n = vec[4*ELEMENTS_PER_VECT];
     eip->e = vec[4*ELEMENTS_PER_VECT + 1];
 
     return 0;		/* OK */
 }
 
+
 /**
  * R T _ S U P E R E L L _ E X P O R T 5
  *
  * The external format is:
- *	V point
- *	A vector
- *	B vector
- *	C vector
+ * V point
+ * A vector
+ * B vector
+ * C vector
  */
 int
 rt_superell_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
-    struct rt_superell_internal	*eip;
-    fastf_t			vec[ELEMENTS_PER_VECT*4 + 2];
+    struct rt_superell_internal *eip;
+    fastf_t vec[ELEMENTS_PER_VECT*4 + 2];
 
     RT_CK_DB_INTERNAL(ip);
-    if ( ip->idb_type != ID_SUPERELL )  return(-1);
+    if (ip->idb_type != ID_SUPERELL) return(-1);
     eip = (struct rt_superell_internal *)ip->idb_ptr;
     RT_SUPERELL_CK_MAGIC(eip);
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * (ELEMENTS_PER_VECT*4 + 2);
-    ep->ext_buf = (genptr_t)bu_malloc( ep->ext_nbytes, "superell external");
+    ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "superell external");
 
     /* scale 'em into local buffer */
-    VSCALE( &vec[0*ELEMENTS_PER_VECT], eip->v, local2mm );
-    VSCALE( &vec[1*ELEMENTS_PER_VECT], eip->a, local2mm );
-    VSCALE( &vec[2*ELEMENTS_PER_VECT], eip->b, local2mm );
-    VSCALE( &vec[3*ELEMENTS_PER_VECT], eip->c, local2mm );
+    VSCALE(&vec[0*ELEMENTS_PER_VECT], eip->v, local2mm);
+    VSCALE(&vec[1*ELEMENTS_PER_VECT], eip->a, local2mm);
+    VSCALE(&vec[2*ELEMENTS_PER_VECT], eip->b, local2mm);
+    VSCALE(&vec[3*ELEMENTS_PER_VECT], eip->c, local2mm);
 
     vec[4*ELEMENTS_PER_VECT] = eip->n;
     vec[4*ELEMENTS_PER_VECT + 1] = eip->e;
 
     /* Convert from internal (host) to database (network) format */
-    htond( ep->ext_buf, (unsigned char *)vec, ELEMENTS_PER_VECT*4 + 2 );
+    htond(ep->ext_buf, (unsigned char *)vec, ELEMENTS_PER_VECT*4 + 2);
 
     return 0;
 }
+
 
 /**
  * R T _ S U P E R E L L _ D E S C R I B E
@@ -959,21 +937,21 @@ rt_superell_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
 int
 rt_superell_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
-    register struct rt_superell_internal	*tip =
+    register struct rt_superell_internal *tip =
 	(struct rt_superell_internal *)ip->idb_ptr;
-    fastf_t	mag_a, mag_b, mag_c;
-    char	buf[256];
-    double	angles[5];
-    vect_t	unitv;
+    fastf_t mag_a, mag_b, mag_c;
+    char buf[256];
+    double angles[5];
+    vect_t unitv;
 
     RT_SUPERELL_CK_MAGIC(tip);
-    bu_vls_strcat( str, "superellipsoid (SUPERELL)\n");
+    bu_vls_strcat(str, "superellipsoid (SUPERELL)\n");
 
     sprintf(buf, "\tV (%g, %g, %g)\n",
 	    INTCLAMP(tip->v[X] * mm2local),
 	    INTCLAMP(tip->v[Y] * mm2local),
-	    INTCLAMP(tip->v[Z] * mm2local) );
-    bu_vls_strcat( str, buf );
+	    INTCLAMP(tip->v[Z] * mm2local));
+    bu_vls_strcat(str, buf);
 
     mag_a = MAGNITUDE(tip->a);
     mag_b = MAGNITUDE(tip->b);
@@ -983,42 +961,43 @@ rt_superell_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ve
 	    INTCLAMP(tip->a[X] * mm2local),
 	    INTCLAMP(tip->a[Y] * mm2local),
 	    INTCLAMP(tip->a[Z] * mm2local),
-	    INTCLAMP(mag_a * mm2local) );
-    bu_vls_strcat( str, buf );
+	    INTCLAMP(mag_a * mm2local));
+    bu_vls_strcat(str, buf);
 
     sprintf(buf, "\tB (%g, %g, %g) mag=%g\n",
 	    INTCLAMP(tip->b[X] * mm2local),
 	    INTCLAMP(tip->b[Y] * mm2local),
 	    INTCLAMP(tip->b[Z] * mm2local),
-	    INTCLAMP(mag_b * mm2local) );
-    bu_vls_strcat( str, buf );
+	    INTCLAMP(mag_b * mm2local));
+    bu_vls_strcat(str, buf);
 
     sprintf(buf, "\tC (%g, %g, %g) mag=%g\n",
 	    INTCLAMP(tip->c[X] * mm2local),
 	    INTCLAMP(tip->c[Y] * mm2local),
 	    INTCLAMP(tip->c[Z] * mm2local),
-	    INTCLAMP(mag_c * mm2local) );
-    bu_vls_strcat( str, buf );
+	    INTCLAMP(mag_c * mm2local));
+    bu_vls_strcat(str, buf);
 
     sprintf(buf, "\t<n, e> (%g, %g)\n", INTCLAMP(tip->n), INTCLAMP(tip->e));
     bu_vls_strcat(str, buf);
 
-    if ( !verbose )  return(0);
+    if (!verbose) return(0);
 
-    VSCALE( unitv, tip->a, 1/mag_a );
-    rt_find_fallback_angle( angles, unitv );
-    rt_pr_fallback_angle( str, "\tA", angles );
+    VSCALE(unitv, tip->a, 1/mag_a);
+    rt_find_fallback_angle(angles, unitv);
+    rt_pr_fallback_angle(str, "\tA", angles);
 
-    VSCALE( unitv, tip->b, 1/mag_b );
-    rt_find_fallback_angle( angles, unitv );
-    rt_pr_fallback_angle( str, "\tB", angles );
+    VSCALE(unitv, tip->b, 1/mag_b);
+    rt_find_fallback_angle(angles, unitv);
+    rt_pr_fallback_angle(str, "\tB", angles);
 
-    VSCALE( unitv, tip->c, 1/mag_c );
-    rt_find_fallback_angle( angles, unitv );
-    rt_pr_fallback_angle( str, "\tC", angles );
+    VSCALE(unitv, tip->c, 1/mag_c);
+    rt_find_fallback_angle(angles, unitv);
+    rt_pr_fallback_angle(str, "\tC", angles);
 
     return(0);
 }
+
 
 /**
  * R T _ S U P E R E L L _ I F R E E
@@ -1035,9 +1014,10 @@ rt_superell_ifree(struct rt_db_internal *ip, struct resource *resp)
 	resp = &rt_uniresource;
     }
 
-    bu_free( ip->idb_ptr, "superell ifree" );
+    bu_free(ip->idb_ptr, "superell ifree");
     ip->idb_ptr = GENPTR_NULL;
 }
+
 
 /* The U parameter runs south to north.  In order to orient loop CCW,
  * need to start with 0, 1-->0, 0 transition at the south pole.
@@ -1050,6 +1030,7 @@ static const fastf_t rt_superell_uvw[5*ELEMENTS_PER_VECT] = {
     0, 1, 0
 };
 
+
 /**
  * R T _ S U P E R E L L _ T N U R B
  */
@@ -1060,6 +1041,7 @@ rt_superell_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *
     return 0;
 }
 
+
 /**
  * R T _ S U P E R E L L _ P A R A M S
  *
@@ -1069,6 +1051,7 @@ rt_superell_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
 {
     return(0);			/* OK */
 }
+
 
 /*
  * Local Variables:

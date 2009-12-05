@@ -48,12 +48,12 @@
 
 
 struct grip_specific {
-    long	grip_magic;
-    vect_t	grip_center;
-    vect_t	grip_normal;
-    fastf_t	grip_mag;
+    long grip_magic;
+    vect_t grip_center;
+    vect_t grip_normal;
+    fastf_t grip_mag;
 };
-#define	GRIP_NULL	((struct grip_specific *)0)
+#define GRIP_NULL ((struct grip_specific *)0)
 
 const struct bu_structparse rt_grp_parse[] = {
     { "%f", 3, "V", bu_offsetof(struct rt_grip_internal, center[X]), BU_STRUCTPARSE_FUNC_NULL },
@@ -75,7 +75,7 @@ rt_grp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     gip = (struct rt_grip_internal *)ip->idb_ptr;
     RT_GRIP_CK_MAGIC(gip);
 
-    BU_GETSTRUCT( gripp, grip_specific);
+    BU_GETSTRUCT(gripp, grip_specific);
     stp->st_specific = (genptr_t)gripp;
 
     VMOVE(gripp->grip_normal, gip->normal);
@@ -83,8 +83,8 @@ rt_grp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     gripp->grip_mag = gip->mag;
 
     /* No bounding sphere or bounding RPP is possible */
-    VSETALL( stp->st_min, 0.0);
-    VSETALL( stp->st_max, 0.0);
+    VSETALL(stp->st_min, 0.0);
+    VSETALL(stp->st_max, 0.0);
 
     stp->st_aradius = 0.0;
     stp->st_bradius = 0.0;
@@ -101,13 +101,13 @@ rt_grp_print(register const struct soltab *stp)
     register const struct grip_specific *gripp =
 	(struct grip_specific *)stp->st_specific;
 
-    if ( gripp == GRIP_NULL )  {
+    if (gripp == GRIP_NULL) {
 	bu_log("grip(%s):  no data?\n", stp->st_name);
 	return;
     }
-    VPRINT( "Center", gripp->grip_center);
-    VPRINT( "Normal", gripp->grip_normal);
-    bu_log( "mag = %f\n", gripp->grip_mag);
+    VPRINT("Center", gripp->grip_center);
+    VPRINT("Normal", gripp->grip_normal);
+    bu_log("mag = %f\n", gripp->grip_mag);
 }
 
 
@@ -115,14 +115,14 @@ rt_grp_print(register const struct soltab *stp)
  * R T _ G R P _ S H O T
  *
  * Function -
- *	Shoot a ray at a GRIP
+ * Shoot a ray at a GRIP
  *
  * Algorithm -
- * 	The intersection distance is computed.
+ * The intersection distance is computed.
  *
  * Returns -
- *	0	MISS
- *	>0	HIT
+ * 0 MISS
+ * >0 HIT
  */
 int
 rt_grp_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
@@ -206,7 +206,7 @@ rt_grp_free(struct soltab *stp)
     register struct grip_specific *gripp =
 	(struct grip_specific *)stp->st_specific;
 
-    bu_free( (char *)gripp, "grip_specific");
+    bu_free((char *)gripp, "grip_specific");
 }
 
 
@@ -232,7 +232,7 @@ rt_grp_class(void)
 int
 rt_grp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
-    struct rt_grip_internal	*gip;
+    struct rt_grip_internal *gip;
     vect_t xbase, ybase;	/* perpendiculars to normal */
     vect_t x1, x2;
     vect_t y1, y2;
@@ -243,35 +243,35 @@ rt_grp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     RT_GRIP_CK_MAGIC(gip);
 
     /* The use of "x" and "y" here is not related to the axis */
-    bn_vec_perp( xbase, gip->normal );
-    VCROSS( ybase, xbase, gip->normal );
+    bn_vec_perp(xbase, gip->normal);
+    VCROSS(ybase, xbase, gip->normal);
 
     /* Arrange for the cross to be 2 meters across */
-    VUNITIZE( xbase );
-    VUNITIZE( ybase);
-    VSCALE( xbase, xbase, gip->mag/4.0 );
-    VSCALE( ybase, ybase, gip->mag/4.0 );
+    VUNITIZE(xbase);
+    VUNITIZE(ybase);
+    VSCALE(xbase, xbase, gip->mag/4.0);
+    VSCALE(ybase, ybase, gip->mag/4.0);
 
-    VADD2( x1, gip->center, xbase );
-    VSUB2( x2, gip->center, xbase );
-    VADD2( y1, gip->center, ybase );
-    VSUB2( y2, gip->center, ybase );
+    VADD2(x1, gip->center, xbase);
+    VSUB2(x2, gip->center, xbase);
+    VADD2(y1, gip->center, ybase);
+    VSUB2(y2, gip->center, ybase);
 
-    RT_ADD_VLIST( vhead, x1, BN_VLIST_LINE_MOVE );	/* the base */
-    RT_ADD_VLIST( vhead, y1, BN_VLIST_LINE_DRAW );
-    RT_ADD_VLIST( vhead, x2, BN_VLIST_LINE_DRAW );
-    RT_ADD_VLIST( vhead, y2, BN_VLIST_LINE_DRAW );
-    RT_ADD_VLIST( vhead, x1, BN_VLIST_LINE_DRAW );
+    RT_ADD_VLIST(vhead, x1, BN_VLIST_LINE_MOVE); /* the base */
+    RT_ADD_VLIST(vhead, y1, BN_VLIST_LINE_DRAW);
+    RT_ADD_VLIST(vhead, x2, BN_VLIST_LINE_DRAW);
+    RT_ADD_VLIST(vhead, y2, BN_VLIST_LINE_DRAW);
+    RT_ADD_VLIST(vhead, x1, BN_VLIST_LINE_DRAW);
 
-    VSCALE( tip, gip->normal, gip->mag );
-    VADD2( tip, gip->center, tip );
+    VSCALE(tip, gip->normal, gip->mag);
+    VADD2(tip, gip->center, tip);
 
-    RT_ADD_VLIST( vhead, x1,  BN_VLIST_LINE_MOVE ); /* the sides */
-    RT_ADD_VLIST( vhead, tip, BN_VLIST_LINE_DRAW );
-    RT_ADD_VLIST( vhead, x2,  BN_VLIST_LINE_DRAW );
-    RT_ADD_VLIST( vhead, y1,  BN_VLIST_LINE_MOVE );
-    RT_ADD_VLIST( vhead, tip, BN_VLIST_LINE_DRAW );
-    RT_ADD_VLIST( vhead, y2,  BN_VLIST_LINE_DRAW );
+    RT_ADD_VLIST(vhead, x1,  BN_VLIST_LINE_MOVE); /* the sides */
+    RT_ADD_VLIST(vhead, tip, BN_VLIST_LINE_DRAW);
+    RT_ADD_VLIST(vhead, x2,  BN_VLIST_LINE_DRAW);
+    RT_ADD_VLIST(vhead, y1,  BN_VLIST_LINE_MOVE);
+    RT_ADD_VLIST(vhead, tip, BN_VLIST_LINE_DRAW);
+    RT_ADD_VLIST(vhead, y2,  BN_VLIST_LINE_DRAW);
     return(0);
 }
 
@@ -280,55 +280,55 @@ rt_grp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
  * R T _ G R P _ I M P O R T
  *
  * Returns -
- *	-1	failure
- *	 0	success
+ * -1 failure
+ * 0 success
  */
 int
 rt_grp_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
-    struct rt_grip_internal	*gip;
-    union record	*rp;
+    struct rt_grip_internal *gip;
+    union record *rp;
 
-    fastf_t		orig_eqn[3*3];
-    register double	f, t;
+    fastf_t orig_eqn[3*3];
+    register double f, t;
 
-    BU_CK_EXTERNAL( ep );
+    BU_CK_EXTERNAL(ep);
     rp = (union record *)ep->ext_buf;
-    if ( rp->u_id != ID_SOLID )  {
+    if (rp->u_id != ID_SOLID) {
 	bu_log("rt_grp_import4: defective record, id=x%x\n", rp->u_id);
 	return(-1);
     }
 
-    RT_CK_DB_INTERNAL( ip );
+    RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_GRIP;
     ip->idb_meth = &rt_functab[ID_GRIP];
-    ip->idb_ptr = bu_malloc( sizeof(struct rt_grip_internal), "rt_grip_internal");
+    ip->idb_ptr = bu_malloc(sizeof(struct rt_grip_internal), "rt_grip_internal");
     gip = (struct rt_grip_internal *)ip->idb_ptr;
     gip->magic = RT_GRIP_INTERNAL_MAGIC;
 
-    rt_fastf_float( orig_eqn, rp->s.s_values, 3 );	/* 2 floats to many */
+    rt_fastf_float(orig_eqn, rp->s.s_values, 3);	/* 2 floats to many */
 
     /* Transform the point, and the normal */
     if (mat == NULL) mat = bn_mat_identity;
-    MAT4X3PNT( gip->center, mat, &orig_eqn[0] );
-    MAT4X3VEC( gip->normal, mat, &orig_eqn[3] );
-    if ( NEAR_ZERO(mat[15], 0.001) ) {
+    MAT4X3PNT(gip->center, mat, &orig_eqn[0]);
+    MAT4X3VEC(gip->normal, mat, &orig_eqn[3]);
+    if (NEAR_ZERO(mat[15], 0.001)) {
 	bu_bomb("rt_grip_import4, scale factor near zero.");
     }
     gip->mag = orig_eqn[6]/mat[15];
 
     /* Verify that normal has unit length */
-    f = MAGNITUDE( gip->normal );
-    if ( f <= SMALL )  {
-	bu_log("rt_grp_import4:  bad normal, len=%g\n", f );
+    f = MAGNITUDE(gip->normal);
+    if (f <= SMALL) {
+	bu_log("rt_grp_import4:  bad normal, len=%g\n", f);
 	return(-1);		/* BAD */
     }
     t = f - 1.0;
-    if ( !NEAR_ZERO( t, 0.001 ) )  {
+    if (!NEAR_ZERO(t, 0.001)) {
 	/* Restore normal to unit length */
 	f = 1/f;
-	VSCALE( gip->normal, gip->normal, f );
+	VSCALE(gip->normal, gip->normal, f);
     }
     return 0;			/* OK */
 }
@@ -340,17 +340,17 @@ rt_grp_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 int
 rt_grp_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
-    struct rt_grip_internal	*gip;
-    union record		*rec;
+    struct rt_grip_internal *gip;
+    union record *rec;
 
     RT_CK_DB_INTERNAL(ip);
-    if ( ip->idb_type != ID_GRIP )  return(-1);
+    if (ip->idb_type != ID_GRIP) return(-1);
     gip = (struct rt_grip_internal *)ip->idb_ptr;
     RT_GRIP_CK_MAGIC(gip);
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = sizeof(union record);
-    ep->ext_buf = (genptr_t)bu_calloc( 1, ep->ext_nbytes, "grip external");
+    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "grip external");
     rec = (union record *)ep->ext_buf;
 
     rec->s.s_id = ID_SOLID;
@@ -362,49 +362,50 @@ rt_grp_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     return(0);
 }
 
+
 int
 rt_grp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_grip_internal *gip;
-    fastf_t			vec[7];
-    register double		f, t;
+    fastf_t vec[7];
+    register double f, t;
 
-    RT_CK_DB_INTERNAL( ip );
-    BU_CK_EXTERNAL( ep );
+    RT_CK_DB_INTERNAL(ip);
+    BU_CK_EXTERNAL(ep);
 
-    BU_ASSERT_LONG( ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * 7 );
+    BU_ASSERT_LONG(ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * 7);
 
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_GRIP;
     ip->idb_meth = &rt_functab[ID_GRIP];
-    ip->idb_ptr = bu_malloc( sizeof(struct rt_grip_internal), "rt_grip_internal");
+    ip->idb_ptr = bu_malloc(sizeof(struct rt_grip_internal), "rt_grip_internal");
 
     gip = (struct rt_grip_internal *)ip->idb_ptr;
     gip->magic = RT_GRIP_INTERNAL_MAGIC;
 
     /* Convert from database (network) to internal (host) format */
-    ntohd( (unsigned char *)vec, ep->ext_buf, 7 );
+    ntohd((unsigned char *)vec, ep->ext_buf, 7);
 
     /* Transform the point, and the normal */
     if (mat == NULL) mat = bn_mat_identity;
-    MAT4X3PNT( gip->center, mat, &vec[0] );
-    MAT4X3VEC( gip->normal, mat, &vec[3] );
-    if ( NEAR_ZERO(mat[15], 0.001) ) {
+    MAT4X3PNT(gip->center, mat, &vec[0]);
+    MAT4X3VEC(gip->normal, mat, &vec[3]);
+    if (NEAR_ZERO(mat[15], 0.001)) {
 	bu_bomb("rt_grip_import5, scale factor near zero.");
     }
     gip->mag = vec[6]/mat[15];
 
     /* Verify that normal has unit length */
-    f = MAGNITUDE( gip->normal );
-    if ( f <= SMALL )  {
-	bu_log("rt_grp_import4:  bad normal, len=%g\n", f );
+    f = MAGNITUDE(gip->normal);
+    if (f <= SMALL) {
+	bu_log("rt_grp_import4:  bad normal, len=%g\n", f);
 	return(-1);		/* BAD */
     }
     t = f - 1.0;
-    if ( !NEAR_ZERO( t, 0.001 ) )  {
+    if (!NEAR_ZERO(t, 0.001)) {
 	/* Restore normal to unit length */
 	f = 1/f;
-	VSCALE( gip->normal, gip->normal, f );
+	VSCALE(gip->normal, gip->normal, f);
     }
     return 0;		/* OK */
 }
@@ -417,23 +418,23 @@ int
 rt_grp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
     struct rt_grip_internal *gip;
-    fastf_t			vec[7];
+    fastf_t vec[7];
 
     RT_CK_DB_INTERNAL(ip);
-    if ( ip->idb_type != ID_GRIP )  return(-1);
+    if (ip->idb_type != ID_GRIP) return(-1);
     gip = (struct rt_grip_internal *)ip->idb_ptr;
     RT_GRIP_CK_MAGIC(gip);
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * 7;
-    ep->ext_buf = (genptr_t)bu_malloc( ep->ext_nbytes, "grip external");
+    ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "grip external");
 
-    VSCALE( &vec[0], gip->center, local2mm );
-    VMOVE( &vec[3], gip->normal );
+    VSCALE(&vec[0], gip->center, local2mm);
+    VMOVE(&vec[3], gip->normal);
     vec[6] = gip->mag * local2mm;
 
     /* Convert from internal (host) to database (network) format */
-    htond( ep->ext_buf, (unsigned char *)vec, 7 );
+    htond(ep->ext_buf, (unsigned char *)vec, 7);
 
     return 0;
 }
@@ -449,25 +450,25 @@ rt_grp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 int
 rt_grp_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
-    register struct rt_grip_internal	*gip =
+    register struct rt_grip_internal *gip =
 	(struct rt_grip_internal *)ip->idb_ptr;
-    char	buf[256];
+    char buf[256];
 
     RT_GRIP_CK_MAGIC(gip);
-    bu_vls_strcat( str, "grip\n");
+    bu_vls_strcat(str, "grip\n");
 
     sprintf(buf, "\tN (%g, %g, %g)\n",
 	    V3INTCLAMPARGS(gip->normal));		/* should have unit length */
 
-    bu_vls_strcat( str, buf );
+    bu_vls_strcat(str, buf);
 
     sprintf(buf, "\tC (%g %g %g) mag=%g\n",
 	    INTCLAMP(gip->center[0]*mm2local),
 	    INTCLAMP(gip->center[1]*mm2local),
 	    INTCLAMP(gip->center[2]*mm2local),
-	    INTCLAMP(gip->mag*mm2local) );
+	    INTCLAMP(gip->mag*mm2local));
 
-    bu_vls_strcat( str, buf);
+    bu_vls_strcat(str, buf);
     return(0);
 }
 
@@ -487,7 +488,7 @@ rt_grp_ifree(struct rt_db_internal *ip, struct resource *resp)
 	resp = &rt_uniresource;
     }
 
-    bu_free( ip->idb_ptr, "grip ifree" );
+    bu_free(ip->idb_ptr, "grip ifree");
     ip->idb_ptr = GENPTR_NULL;
 }
 
@@ -498,7 +499,7 @@ rt_grp_ifree(struct rt_db_internal *ip, struct resource *resp)
 int
 rt_grp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
-    struct rt_grip_internal	*gip;
+    struct rt_grip_internal *gip;
 
     RT_CK_DB_INTERNAL(ip);
     gip = (struct rt_grip_internal *)ip->idb_ptr;
@@ -507,6 +508,7 @@ rt_grp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     /* XXX tess routine needed */
     return(-1);
 }
+
 
 /**
  * R T _ G R P _ P A R A M S
@@ -517,6 +519,7 @@ rt_grp_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
 {
     return(0);			/* OK */
 }
+
 
 /** @} */
 /*

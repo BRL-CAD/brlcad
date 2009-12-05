@@ -32,7 +32,7 @@
 #include "vmath.h"
 
 
-static unsigned char *
+HIDDEN unsigned char *
 pnts_pack_double(unsigned char *buf, unsigned char *data, unsigned int count)
 {
     htond(buf, data, count);
@@ -41,7 +41,7 @@ pnts_pack_double(unsigned char *buf, unsigned char *data, unsigned int count)
 }
 
 
-static unsigned char *
+HIDDEN unsigned char *
 pnts_unpack_double(unsigned char *buf, unsigned char *data, unsigned int count)
 {
     ntohd(data, buf, count);
@@ -931,6 +931,7 @@ rt_pnts_describe(struct bu_vls *str, const struct rt_db_internal *intern, int ve
 
     return(0);
 }
+
 
 /*
  * Local Variables:

@@ -1,5 +1,17 @@
 
+if BUILD_DOCS
+DOCBOOK_DIR = docbook
+else
+DOCBOOK_DIR =
+endif
+
 SUBDIRS = \
+	${DOCBOOK_DIR} \
+	book \
+	html \
+	legal
+
+DIST_SUBDIRS = \
 	book \
 	docbook \
 	html \

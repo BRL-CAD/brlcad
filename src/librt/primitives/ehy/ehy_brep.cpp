@@ -32,7 +32,7 @@
 
 
 /**
- *			R T _ E H Y _ B R E P
+ * R T _ E H Y _ B R E P
  */
 extern "C" void
 rt_ehy_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
@@ -71,26 +71,26 @@ rt_ehy_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     ON_Ellipse* ellipse1 = new ON_Ellipse(*ehy_bottom_plane, eip->ehy_r1, eip->ehy_r2);
     ON_NurbsCurve* ellcurve1 = ON_NurbsCurve::New();
     ellipse1->GetNurbForm((*ellcurve1));
-    ellcurve1->SetDomain(0.0,1.0);
+    ellcurve1->SetDomain(0.0, 1.0);
     
     // Generate the bottom cap 
     ON_SimpleArray<ON_Curve*> boundary;
     boundary.Append(ON_Curve::Cast(ellcurve1)); 
     ON_PlaneSurface* bp = new ON_PlaneSurface();
     bp->m_plane = (*ehy_bottom_plane);
-    bp->SetDomain(0, -100.0, 100.0 );
-    bp->SetDomain(1, -100.0, 100.0 );
-    bp->SetExtents(0, bp->Domain(0) );
-    bp->SetExtents(1, bp->Domain(1) );
+    bp->SetDomain(0, -100.0, 100.0);
+    bp->SetDomain(1, -100.0, 100.0);
+    bp->SetExtents(0, bp->Domain(0));
+    bp->SetExtents(1, bp->Domain(1));
     (*b)->m_S.Append(bp);
     const int bsi = (*b)->m_S.Count() - 1;
     ON_BrepFace& bface = (*b)->NewFace(bsi);
     (*b)->NewPlanarFaceLoop(bface.m_face_index, ON_BrepLoop::outer, boundary, true); 
     const ON_BrepLoop* bloop = (*b)->m_L.Last();
-    bp->SetDomain(0, bloop->m_pbox.m_min.x, bloop->m_pbox.m_max.x );
-    bp->SetDomain(1, bloop->m_pbox.m_min.y, bloop->m_pbox.m_max.y );
-    bp->SetExtents(0,bp->Domain(0));
-    bp->SetExtents(1,bp->Domain(1));
+    bp->SetDomain(0, bloop->m_pbox.m_min.x, bloop->m_pbox.m_max.x);
+    bp->SetDomain(1, bloop->m_pbox.m_min.y, bloop->m_pbox.m_max.y);
+    bp->SetExtents(0, bp->Domain(0));
+    bp->SetExtents(1, bp->Domain(1));
     (*b)->SetTrimIsoFlags(bface);
  
     //  Now, the hard part.  Need an elliptical hyperboloic NURBS surface
@@ -104,9 +104,9 @@ rt_ehy_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     double w = (MX/MP)/(1-MX/MP);
     
     point_t ep1, ep2, ep3, tmppt;
-    VSET(ep1,-eip->ehy_r1,0,0);
-    VSET(ep2,0,0,w*intercept_dist);
-    VSET(ep3,eip->ehy_r1,0,0);
+    VSET(ep1, -eip->ehy_r1, 0, 0);
+    VSET(ep2, 0, 0, w*intercept_dist);
+    VSET(ep3, eip->ehy_r1, 0, 0);
     ON_3dPoint onp1 = ON_3dPoint(ep1);
     ON_3dPoint onp2 = ON_3dPoint(ep2);
     ON_3dPoint onp3 = ON_3dPoint(ep3);
@@ -117,21 +117,21 @@ rt_ehy_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     cpts.Append(onp3);
     ON_BezierCurve *bcurve = new ON_BezierCurve(cpts);
     bcurve->MakeRational();
-    bcurve->SetWeight(1,w);
+    bcurve->SetWeight(1, w);
     
     ON_NurbsCurve* tnurbscurve = ON_NurbsCurve::New();
     bcurve->GetNurbForm(*tnurbscurve);
     ON_NurbsCurve* hypbnurbscurve = ON_NurbsCurve::New();
-    const ON_Interval subinterval = ON_Interval(0,0.5);
-    tnurbscurve->GetNurbForm(*hypbnurbscurve,0.0, &subinterval);
+    const ON_Interval subinterval = ON_Interval(0, 0.5);
+    tnurbscurve->GetNurbForm(*hypbnurbscurve, 0.0, &subinterval);
 
     hypbnurbscurve->Dump(*dump);
     
     // Next, rotate that curve around the height vector.
 
     point_t revpoint1, revpoint2;
-    VSET(revpoint1, 0,0,0);
-    VSET(revpoint2, 0,0,MX);
+    VSET(revpoint1, 0, 0, 0);
+    VSET(revpoint2, 0, 0, MX);
     ON_3dPoint rpnt1 = ON_3dPoint(revpoint1);
     ON_3dPoint rpnt2 = ON_3dPoint(revpoint2);
     
@@ -139,7 +139,7 @@ rt_ehy_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     ON_RevSurface* hyp_surf = ON_RevSurface::New();
     hyp_surf->m_curve = hypbnurbscurve;
     hyp_surf->m_axis = revaxis;
-    hyp_surf->m_angle = ON_Interval(0,2*ON_PI);
+    hyp_surf->m_angle = ON_Interval(0, 2*ON_PI);
     
     // Get the NURBS form of the surface
     ON_NurbsSurface *ehycurvedsurf = ON_NurbsSurface::New();
@@ -149,14 +149,14 @@ rt_ehy_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     // Last but not least, scale the control points of the
     // resulting surface to map to the shorter axis.
 
-    for( int i = 0; i < ehycurvedsurf->CVCount(0); i++ ) {
+    for (int i = 0; i < ehycurvedsurf->CVCount(0); i++) {
 	for (int j = 0; j < ehycurvedsurf->CVCount(1); j++) {
 	    point_t cvpt;
 	    ON_4dPoint ctrlpt;
-	    ehycurvedsurf->GetCV(i,j, ctrlpt);
+	    ehycurvedsurf->GetCV(i, j, ctrlpt);
 	    VSET(cvpt, ctrlpt.x, ctrlpt.y * eip->ehy_r2/eip->ehy_r1, ctrlpt.z);
-	    ON_4dPoint newpt = ON_4dPoint(cvpt[0],cvpt[1],cvpt[2],ctrlpt.w);
-	    ehycurvedsurf->SetCV(i,j, newpt);
+	    ON_4dPoint newpt = ON_4dPoint(cvpt[0], cvpt[1], cvpt[2], ctrlpt.w);
+	    ehycurvedsurf->SetCV(i, j, newpt);
 	}
     }
   
@@ -171,6 +171,7 @@ rt_ehy_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     ON_BrepLoop* outerloop = (*b)->NewOuterLoop(faceindex-1);
     bu_log("Valid brep face: %d\n", face.IsValid(dump));
 }
+
 
 // Local Variables:
 // tab-width: 8

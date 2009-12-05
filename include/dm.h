@@ -77,8 +77,8 @@
 /* +-2048 to +-1 */
 #define GED_TO_PM1(x) (((fastf_t)(x))*INV_GED)
 
-#if IR_KNOBS
-#define NOISE 16		/* Size of dead spot on knob */
+#ifdef IR_KNOBS
+#  define NOISE 16		/* Size of dead spot on knob */
 #endif
 
 /* the font used depends on the size of the window opened */
@@ -348,13 +348,13 @@ DM_EXPORT BU_EXTERN(void dm_draw_adc,
 DM_EXPORT BU_EXTERN(void dm_draw_data_axes,
 		    (struct dm *dmp,
 		     fastf_t viewSize,
-		     mat_t rmat,
+		     const mat_t rmat,
 		     struct ged_axes_state *gasp));
 
 DM_EXPORT BU_EXTERN(void dm_draw_axes,
 		    (struct dm *dmp,
 		     fastf_t viewSize,
-		     mat_t rmat,
+		     const mat_t rmat,
 		     struct ged_axes_state *gasp));
 
 /* clip.c */
