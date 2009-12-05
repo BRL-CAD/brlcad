@@ -15,6 +15,10 @@ on-going issues.
 Recent Bugs
 -----------
 
+* mged crashes during Pick-Edit Primitive if you first B a combination
+  and killall one of the contained primitives.  Dies in db_dirhash()
+  [db_lookup.c:117], where s is NULL.
+
 * mged-invoked EDITOR locks up mged without a controlling terminal.
 
 * vdeck truncates the region names in the 'regions' file, probably
