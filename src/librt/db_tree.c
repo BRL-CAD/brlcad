@@ -377,9 +377,9 @@ db_apply_state_from_memb(struct db_tree_state *tsp, struct db_full_path *pathp, 
 	MAT_IDN(xmat);
     }
 
-    /* If the owning region it above this node in the tree,
-     * it is not possible to animation region-material properties
-     * lower down in the arc.  So note by sending a NULL pointer.
+    /* If the owning region it above this node in the tree, it is not
+     * possible to animation region-material properties lower down in
+     * the arc.  So note by sending a NULL pointer.
      */
     db_apply_anims(pathp, mdp, old_xlate, xmat,
 		   (tsp->ts_sofar & TS_SOFAR_REGION) ?
@@ -571,10 +571,10 @@ db_tree_del_lhs(union tree *tp, struct resource *resp)
 		    tp->tr_b.tb_left = TREE_NULL;	/* sanity */
 		    subtree = tp->tr_b.tb_right;
 		    /*
-		     * Since we don't know what node has the downpointer
-		     * to 'tp', replicate 'subtree' data in 'tp' node,
-		     * then release memory of 'subtree' node
-		     * (but not the actual subtree).
+		     * Since we don't know what node has the
+		     * downpointer to 'tp', replicate 'subtree' data
+		     * in 'tp' node, then release memory of 'subtree'
+		     * node (but not the actual subtree).
 		     */
 		    *tp = *subtree;			/* struct copy */
 		    RT_FREE_TREE(subtree, resp);
@@ -616,10 +616,10 @@ db_tree_del_rhs(union tree *tp, struct resource *resp)
 		    tp->tr_b.tb_right = TREE_NULL;	/* sanity */
 		    subtree = tp->tr_b.tb_left;
 		    /*
-		     * Since we don't know what node has the downpointer
-		     * to 'tp', replicate 'subtree' data in 'tp' node,
-		     * then release memory of 'subtree' node
-		     * (but not the actual subtree).
+		     * Since we don't know what node has the
+		     * downpointer to 'tp', replicate 'subtree' data
+		     * in 'tp' node, then release memory of 'subtree'
+		     * node (but not the actual subtree).
 		     */
 		    *tp = *subtree;			/* struct copy */
 		    RT_FREE_TREE(subtree, resp);
@@ -815,7 +815,7 @@ db_follow_path(
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
     struct directory *comb_dp;	/* combination's dp */
-    struct directory *dp;		/* element's dp */
+    struct directory *dp;	/* element's dp */
     int j;
 
     RT_CK_DBTS(tsp);
@@ -850,7 +850,9 @@ db_follow_path(
 	/* Some path has already been processed */
 	comb_dp = DB_FULL_PATH_CUR_DIR(total_path);
     } else {
-	/* No prior path. Process any animations located at the root */
+	/* No prior path. Process any animations located at the
+	 * root.
+	 */
 	comb_dp = DIR_NULL;
 	dp = new_path->fp_names[0];
 	RT_CK_DIR(dp);
@@ -880,8 +882,8 @@ db_follow_path(
 	comb_dp = dp;
     }
     /*
-     * Process two things at once:
-     * the combination at [j], and it's member at [j+1].
+     * Process two things at once: the combination at [j], and it's
+     * member at [j+1].
      */
     do {
 	/* j == depth is the last one, presumably a leaf */
@@ -912,8 +914,8 @@ db_follow_path(
 	    bu_log("db_follow_path() ERROR: unable to apply member %s state\n", dp->d_namep);
 	    goto fail;
 	}
-	/* Found it, state has been applied, sofar applied,
-	 * member's directory entry pushed onto total_path
+	/* Found it, state has been applied, sofar applied, member's
+	 * directory entry pushed onto total_path
 	 */
 	rt_db_free_internal(&intern, tsp->ts_resp);
 
@@ -1053,7 +1055,9 @@ _db_recurse_subtree(union tree *tp, struct db_tree_state *msp, struct db_full_pa
 		}
 		bu_log("WARNING: skipping the cyclic reference lookup\n");
 
-		/* Lookup of this leaf resulted in a cyclic reference, NOP it out */
+		/* Lookup of this leaf resulted in a cyclic reference,
+		 * NOP it out.
+		 */
 		if (tp->tr_l.tl_mat) {
 		    bu_free((char *)tp->tr_l.tl_mat, "tl_mat");
 		    tp->tr_l.tl_mat = NULL;
@@ -1152,8 +1156,8 @@ db_recurse(struct db_tree_state *tsp, struct db_full_path *pathp, struct combine
     }
 
     /*
-     * Load the entire object into contiguous memory.
-     * Note that this code depends on the d_flags being set properly.
+     * Load the entire object into contiguous memory.  Note that this
+     * code depends on the d_flags being set properly.
      */
     if (dp->d_addr == RT_DIR_PHONY_ADDR) return TREE_NULL;
 
@@ -1186,9 +1190,9 @@ db_recurse(struct db_tree_state *tsp, struct db_full_path *pathp, struct combine
 	    bu_avs_merge(&nts.ts_attrs, &intern.idb_avs);
 
 	    /*
-	     * This is the start of a new region.
-	     * If handler rejects this region, skip on.
-	     * This might be used for ignoring air regions.
+	     * This is the start of a new region.  If handler rejects
+	     * this region, skip on.  This might be used for ignoring
+	     * air regions.
 	     */
 	    if (tsp->ts_region_start_func &&
 		tsp->ts_region_start_func(&nts, pathp, comb, client_data) < 0) {
@@ -1321,8 +1325,8 @@ db_recurse(struct db_tree_state *tsp, struct db_full_path *pathp, struct combine
 	return(curtree);
     }
 out:
-    /* rt_db_get_internal() may not have been called yet, so do not try to free intern unless
-     * we know there is something to free
+    /* rt_db_get_internal() may not have been called yet, so do not
+     * try to free intern unless we know there is something to free
      */
     if (intern.idb_ptr != NULL) {
 	rt_db_free_internal(&intern, tsp->ts_resp);
@@ -1452,14 +1456,14 @@ db_free_tree(register union tree *tp, struct resource *resp)
     RT_CK_RESOURCE(resp);
 
     /*
-     * Before recursion, smash the magic number, so that if
-     * another thread tries to free this same tree, they will fail.
+     * Before recursion, smash the magic number, so that if another
+     * thread tries to free this same tree, they will fail.
      */
     tp->magic = -3;		/* special bad flag */
 
     switch (tp->tr_op) {
 	case OP_FREE :
-	    tp->tr_op = 0;		/* sanity */
+	    tp->tr_op = 0;	/* sanity */
 	    return;
 	case OP_NOP:
 	    break;
@@ -1492,13 +1496,6 @@ db_free_tree(register union tree *tp, struct resource *resp)
 		 * left to someone else.
 		 * It would be rude to zap all the other regions here.
 		 */
-/* if (r->l.magic == (-1L)) { */
-/* bu_log("db_free_tree: OP_NMG_TESS, r = -1, skipping\n"); */
-/* 	    } else if (r->l.magic != NMG_REGION_MAGIC) { */
-/* 		/\* It may have been freed, and the memory re-used *\/ */
-/* bu_log("db_free_tree: OP_NMG_TESS, bad magic x%x (s/b x%x), skipping\n", */
-/* r->l.magic, NMG_REGION_MAGIC); */
-/* 	    } else { */
 		if (r->l.magic == NMG_REGION_MAGIC) {
 		    NMG_CK_REGION(r);
 		    nmg_kr(r);
@@ -2320,10 +2317,10 @@ db_walk_tree(struct db_i *dbip,
 	}
 
 	/*
-	 * Second, walk tree from root to start of all regions.
-	 * Build a boolean tree of all regions.
-	 * Use user function to accept/reject each region here.
-	 * Use internal functions to process regions & leaves.
+	 * Second, walk tree from root to start of all regions.  Build
+	 * a boolean tree of all regions.  Use user function to
+	 * accept/reject each region here.  Use internal functions to
+	 * process regions & leaves.
 	 */
 	ts.ts_stop_at_regions = 1;
 	ts.ts_region_start_func = reg_start_func;
@@ -2377,9 +2374,8 @@ db_walk_tree(struct db_i *dbip,
 	bu_free(str, "rturn from rt_pr_tree_str");
     }
 
-    /*
-     * Build array of sub-tree pointers, one per region,
-     * for parallel processing below.
+    /* Build array of sub-tree pointers, one per region, for parallel
+     * processing below.
      */
     new_reg_count = db_count_subtree_regions(whole_tree);
     reg_trees = (union tree **)bu_calloc(sizeof(union tree *),
@@ -2388,9 +2384,9 @@ db_walk_tree(struct db_i *dbip,
 					     new_reg_count, resp);
 
     /* Release storage for tree from whole_tree to leaves.
-     * db_tally_subtree_regions() duplicated and OP_NOP'ed the original
-     * top of any sub-trees that it wanted to keep, so whole_tree
-     * is just the left-over part now.
+     * db_tally_subtree_regions() duplicated and OP_NOP'ed the
+     * original top of any sub-trees that it wanted to keep, so
+     * whole_tree is just the left-over part now.
      */
     db_free_tree(whole_tree, resp);
 
@@ -2421,8 +2417,8 @@ db_walk_tree(struct db_i *dbip,
 	bu_log("end of waiting regions\n");
     }
 
-    /*
-     * Fourth, in parallel, for each region, walk the tree to the leaves.
+    /* Fourth, in parallel, for each region, walk the tree to the
+     * leaves.
      */
     if (bu_is_parallel() && ncpu != 1) {
 	bu_log("db_walk_tree() recursively invoked while inside parallel section with additional parallelism of ncpu=%d requested.  Running only in one thread.\n",
@@ -2527,10 +2523,9 @@ db_apply_anims(struct db_full_path *pathp, struct directory *dp, mat_t stack, ma
     }
 
     /*
-     * For each of the animations attached to the
-     * mentioned object,  see if the current accumulated
-     * path matches the path specified in the animation.
-     * Comparison is performed right-to-left (from
+     * For each of the animations attached to the mentioned object,
+     * see if the current accumulated path matches the path specified
+     * in the animation.  Comparison is performed right-to-left (from
      * leafward to rootward).
      */
     for (anp = dp->d_animate; anp != ANIM_NULL; anp = anp->an_forw) {
@@ -2652,25 +2647,18 @@ db_shader_mat(
     RT_CK_RESOURCE(resp);
 
     reg_name = bu_basename(rp->reg_name);
-#ifdef DEBUG_SHADER_MAT
-    bu_log("db_shader_mat(%s)\n", rp->reg_name);
-#endif
     /* get model-to-region space mapping */
     if (db_region_mat(model_to_region, rtip->rti_dbip, rp->reg_name, resp) < 0)
 	return -1;
 
-#ifdef DEBUG_SHADER_MAT
-    bn_mat_print("model_to_region", model_to_region);
-#endif
     if (VEQUAL(p_min, p_max)) {
-	/* User/shader did not specify bounding box,
-	 * obtain bounding box for un-transformed region
+	/* User/shader did not specify bounding box, obtain bounding
+	 * box for un-transformed region
 	 */
 
-	/* XXX This should really be handled by a special set of
-	 * tree walker routines which just build up the RPP of the
-	 * region.  For now we just re-use rt_rpp_region() with
-	 * a scratch rtip.
+	/* XXX This should really be handled by a special set of tree
+	 * walker routines which just build up the RPP of the region.
+	 * For now we just re-use rt_rpp_region() with a scratch rtip.
 	 */
 	my_rtip = rt_new_rti(rtip->rti_dbip);
 	my_rtip->useair = rtip->useair;
@@ -2682,10 +2670,7 @@ db_shader_mat(
 	rt_rpp_region(my_rtip, reg_name, p_min, p_max);
 	rt_clean(my_rtip);
     }
-#ifdef DEBUG_SHADER_MAT
-    bu_log("db_shader_mat(%s) min(%g %g %g) max(%g %g %g)\n", reg_name,
-	   V3ARGS(p_min), V3ARGS(p_max));
-#endif
+
     /*
      * Translate bounding box to origin
      */
