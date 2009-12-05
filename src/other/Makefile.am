@@ -17,12 +17,6 @@ else !BUILD_PNG
 PNGDIR=
 endif
 
-if BUILD_JOVE
-JOVEDIR=jove
-else !BUILD_JOVE
-JOVEDIR=
-endif
-
 if BUILD_URT
 URTDIR=URToolkit
 UTAHRLEDIR=libutahrle
@@ -164,7 +158,6 @@ SUBDIRS = \
 	${ITCLDIR} \
 	${IWIDGETSDIR} \
 	${TERMLIBDIR} \
-	${JOVEDIR} \
 	${STEPDIR} \
 	${TKIMGDIR} \
 	${OPENNURBSDIR} \
@@ -200,7 +193,6 @@ DIST_SUBDIRS = \
 	awf \
 	incrTcl \
 	iwidgets \
-	jove \
 	libpng \
 	libregex \
 	libtermlib \
