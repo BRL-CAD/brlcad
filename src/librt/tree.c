@@ -43,11 +43,6 @@
 #include "raytrace.h"
 
 
-BU_EXTERN(void rt_tree_kill_dead_solid_refs, (union tree *tp));
-
-HIDDEN struct region *rt_getregion(struct rt_i *rtip, register const char *reg_name);
-HIDDEN void rt_tree_region_assign(register union tree *tp, register const struct region *regionp);
-
 #define ACQUIRE_SEMAPHORE_TREE(_hash) switch ((_hash)&03) {	\
 	case 0:							\
 	    bu_semaphore_acquire(RT_SEM_TREE0);			\
@@ -79,17 +74,48 @@ HIDDEN void rt_tree_region_assign(register union tree *tp, register const struct
     }
 
 
+HIDDEN void
+_rt_tree_region_assign(register union tree *tp, register const struct region *regionp)
+{
+    RT_CK_TREE(tp);
+    RT_CK_REGION(regionp);
+    switch (tp->tr_op) {
+	case OP_NOP:
+	    return;
+
+	case OP_SOLID:
+	    tp->tr_a.tu_regionp = (struct region *)regionp;
+	    return;
+
+	case OP_NOT:
+	case OP_GUARD:
+	case OP_XNOP:
+	    tp->tr_b.tb_regionp = (struct region *)regionp;
+	    _rt_tree_region_assign(tp->tr_b.tb_left, regionp);
+	    return;
+
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	case OP_XOR:
+	    tp->tr_b.tb_regionp = (struct region *)regionp;
+	    _rt_tree_region_assign(tp->tr_b.tb_left, regionp);
+	    _rt_tree_region_assign(tp->tr_b.tb_right, regionp);
+	    return;
+
+	default:
+	    bu_bomb("_rt_tree_region_assign: bad op\n");
+    }
+}
+
+
 /**
- * R T _ G E T T R E E _ R E G I O N _ S T A R T
+ * _ R T _ G E T T R E E _ R E G I O N _ S T A R T
  *
  * This routine must be prepared to run in parallel.
  */
-/* ARGSUSED */
-HIDDEN int rt_gettree_region_start(struct db_tree_state *tsp, struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
-/*const*/
-/*const*/
-
-
+HIDDEN int
+_rt_gettree_region_start(struct db_tree_state *tsp, struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
 {
     RT_CK_RTI(tsp->ts_rtip);
     RT_CK_RESOURCE(tsp->ts_resp);
@@ -104,7 +130,7 @@ HIDDEN int rt_gettree_region_start(struct db_tree_state *tsp, struct db_full_pat
 
 
 /**
- * R T _ G E T T R E E _ R E G I O N _ E N D
+ * _ R T _ G E T T R E E _ R E G I O N _ E N D
  *
  * This routine will be called by db_walk_tree() once all the solids
  * in this region have been visited.
@@ -114,10 +140,10 @@ HIDDEN int rt_gettree_region_start(struct db_tree_state *tsp, struct db_full_pat
  * pointers in the tree may not be filled in when this routine is
  * called (due to the way multiple instances of solids are handled).
  * Therefore, everything which referred to the tree has been moved out
- * into the serial section.  (rt_tree_region_assign, rt_bound_tree)
+ * into the serial section.  (_rt_tree_region_assign, rt_bound_tree)
  */
 HIDDEN union tree *
-rt_gettree_region_end(register struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+_rt_gettree_region_end(register struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
     struct region *rp;
     struct directory *dp;
@@ -173,7 +199,7 @@ rt_gettree_region_end(register struct db_tree_state *tsp, struct db_full_path *p
     dp = (struct directory *)DB_FULL_PATH_CUR_DIR(pathp);
 
     if (RT_G_DEBUG&DEBUG_TREEWALK) {
-	bu_log("rt_gettree_region_end() %s\n", rp->reg_name);
+	bu_log("_rt_gettree_region_end() %s\n", rp->reg_name);
 	rt_pr_tree(curtree, 0);
     }
 
@@ -287,7 +313,7 @@ rt_gettree_region_end(register struct db_tree_state *tsp, struct db_full_path *p
  * semaphore.
  */
 HIDDEN struct soltab *
-rt_find_identical_solid(register const matp_t mat, register struct directory *dp, struct rt_i *rtip)
+_rt_find_identical_solid(register const matp_t mat, register struct directory *dp, struct rt_i *rtip)
 {
     register struct soltab *stp = RT_SOLTAB_NULL;
     int hash;
@@ -351,8 +377,8 @@ rt_find_identical_solid(register const matp_t mat, register struct directory *dp
 	     */
 	    if (RT_G_DEBUG & DEBUG_SOLIDS) {
 		bu_log(mat ?
-		       "rt_find_identical_solid:  %s re-referenced %d\n" :
-		       "rt_find_identical_solid:  %s re-referenced %d (identity mat)\n",
+		       "%s re-referenced %d\n" :
+		       "%s re-referenced %d (identity mat)\n",
 		       dp->d_namep, stp->st_uses);
 	    }
 
@@ -423,11 +449,7 @@ rt_find_identical_solid(register const matp_t mat, register struct directory *dp
  * This routine must be prepared to run in parallel.
  */
 HIDDEN union tree *
-rt_gettree_leaf(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
-/*const*/
-
-/*const*/
-
+_rt_gettree_leaf(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
 {
     register struct soltab *stp;
     struct directory *dp;
@@ -466,7 +488,7 @@ rt_gettree_leaf(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt
      * become a dead solid, so by testing against -1 (instead of <= 0,
      * like before, oops), it isn't a problem.
      */
-    stp = rt_find_identical_solid(mat, dp, rtip);
+    stp = _rt_find_identical_solid(mat, dp, rtip);
     if (stp->st_id != 0) {
 	/* stp is an instance of a pre-existing solid */
 	if (stp->st_aradius <= -1) {
@@ -506,7 +528,7 @@ rt_gettree_leaf(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt
     if (ret != 0) {
 	int hash;
 	/* Error, solid no good */
-	bu_log("rt_gettree_leaf(%s):  prep failure\n", dp->d_namep);
+	bu_log("_rt_gettree_leaf(%s):  prep failure\n", dp->d_namep);
 	/* Too late to delete soltab entry; mark it as "dead" */
 	hash = db_dirhash(dp->d_namep);
 	ACQUIRE_SEMAPHORE_TREE(hash);
@@ -551,7 +573,7 @@ rt_gettree_leaf(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt
     }
     if (RT_G_DEBUG&DEBUG_TREEWALK && stp->st_path.magic == DB_FULL_PATH_MAGIC) {
 	char *sofar = db_path_to_string(&stp->st_path);
-	bu_log("rt_gettree_leaf() st_path=%s\n", sofar);
+	bu_log("_rt_gettree_leaf() st_path=%s\n", sofar);
 	bu_free(sofar, "path string");
     }
 
@@ -566,7 +588,7 @@ rt_gettree_leaf(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt
 	    ret = stp->st_meth->ft_describe(&str, ip, 1, 1.0, tsp->ts_resp, tsp->ts_dbip);
 	}
 	if (ret < 0) {
-	    bu_log("rt_gettree_leaf(%s):  solid describe failure\n",
+	    bu_log("_rt_gettree_leaf(%s):  solid describe failure\n",
 		   dp->d_namep);
 	}
 	bu_log("%s:  %s", dp->d_namep, bu_vls_addr(&str));
@@ -578,12 +600,12 @@ found_it:
     curtree->magic = RT_TREE_MAGIC;
     curtree->tr_op = OP_SOLID;
     curtree->tr_a.tu_stp = stp;
-    /* regionp will be filled in later by rt_tree_region_assign() */
+    /* regionp will be filled in later by _rt_tree_region_assign() */
     curtree->tr_a.tu_regionp = (struct region *)0;
 
     if (RT_G_DEBUG&DEBUG_TREEWALK) {
 	char *sofar = db_path_to_string(pathp);
-	bu_log("rt_gettree_leaf() %s\n", sofar);
+	bu_log("_rt_gettree_leaf() %s\n", sofar);
 	bu_free(sofar, "path string");
     }
 
@@ -599,7 +621,7 @@ found_it:
  *
  * This routine semaphore protects against other copies of itself
  * running in parallel, and against other routines (such as
- * rt_find_identical_solid()) which might also be modifying the linked
+ * _rt_find_identical_solid()) which might also be modifying the linked
  * list heads.
  *
  * Called by -
@@ -647,6 +669,62 @@ rt_free_soltab(struct soltab *stp)
     }
 
     bu_free((char *)stp, "struct soltab");
+}
+
+
+/**
+ * R T _ T R E E _ K I L L _ D E A D _ S O L I D _ R E F S
+ *
+ * Convert any references to "dead" solids into NOP nodes.
+ */
+void
+_rt_tree_kill_dead_solid_refs(register union tree *tp)
+{
+
+    RT_CK_TREE(tp);
+
+    switch (tp->tr_op) {
+
+	case OP_SOLID:
+	    {
+		register struct soltab *stp;
+
+		stp = tp->tr_a.tu_stp;
+		RT_CK_SOLTAB(stp);
+		if (stp->st_aradius <= 0) {
+		    if (RT_G_DEBUG&DEBUG_TREEWALK)bu_log("encountered dead solid '%s' stp=x%x, tp=x%x\n",
+							 stp->st_dp->d_namep, stp, tp);
+		    rt_free_soltab(stp);
+		    tp->tr_a.tu_stp = SOLTAB_NULL;
+		    tp->tr_op = OP_NOP;	/* Convert to NOP */
+		}
+		return;
+	    }
+
+	default:
+	    bu_log("_rt_tree_kill_dead_solid_refs(x%x): unknown op=x%x\n",
+		   tp, tp->tr_op);
+	    return;
+
+	case OP_XOR:
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	    /* BINARY */
+	    _rt_tree_kill_dead_solid_refs(tp->tr_b.tb_left);
+	    _rt_tree_kill_dead_solid_refs(tp->tr_b.tb_right);
+	    break;
+	case OP_NOT:
+	case OP_GUARD:
+	case OP_XNOP:
+	    /* UNARY tree -- for completeness only, should never be seen */
+	    _rt_tree_kill_dead_solid_refs(tp->tr_b.tb_left);
+	    break;
+	case OP_NOP:
+	    /* This sub-tree has nothing further in it */
+	    return;
+    }
+    return;
 }
 
 
@@ -750,9 +828,9 @@ rt_gettrees_muves(struct rt_i *rtip, const char **attrs, int argc, const char **
 
 	i = db_walk_tree(rtip->rti_dbip, argc, argv, ncpus,
 			 &tree_state,
-			 rt_gettree_region_start,
-			 rt_gettree_region_end,
-			 rt_gettree_leaf, (genptr_t)tbl);
+			 _rt_gettree_region_start,
+			 _rt_gettree_region_end,
+			 _rt_gettree_leaf, (genptr_t)tbl);
 	bu_avs_free(&tree_state.ts_attrs);
     }
 
@@ -769,7 +847,7 @@ rt_gettrees_muves(struct rt_i *rtip, const char **attrs, int argc, const char **
      */
     for (BU_LIST_FOR(regp, region, &(rtip->HeadRegion))) {
 	RT_CK_REGION(regp);
-	rt_tree_kill_dead_solid_refs(regp->reg_treetop);
+	_rt_tree_kill_dead_solid_refs(regp->reg_treetop);
 	(void)rt_tree_elim_nops(regp->reg_treetop, &rt_uniresource);
     }
 again:
@@ -809,7 +887,7 @@ again:
 	RT_CK_REGION(regp);
 
 	/* The region and the entire tree are cross-referenced */
-	rt_tree_region_assign(regp->reg_treetop, regp);
+	_rt_tree_region_assign(regp->reg_treetop, regp);
 
 	/*
 	 * Find region RPP, and update the model maxima and
@@ -998,68 +1076,12 @@ rt_bound_tree(register const union tree *tp, fastf_t *tree_min, fastf_t *tree_ma
 
 
 /**
- * R T _ T R E E _ K I L L _ D E A D _ S O L I D _ R E F S
- *
- * Convert any references to "dead" solids into NOP nodes.
- */
-void
-rt_tree_kill_dead_solid_refs(register union tree *tp)
-{
-
-    RT_CK_TREE(tp);
-
-    switch (tp->tr_op) {
-
-	case OP_SOLID:
-	    {
-		register struct soltab *stp;
-
-		stp = tp->tr_a.tu_stp;
-		RT_CK_SOLTAB(stp);
-		if (stp->st_aradius <= 0) {
-		    if (RT_G_DEBUG&DEBUG_TREEWALK)bu_log("rt_tree_kill_dead_solid_refs: encountered dead solid '%s' stp=x%x, tp=x%x\n",
-							 stp->st_dp->d_namep, stp, tp);
-		    rt_free_soltab(stp);
-		    tp->tr_a.tu_stp = SOLTAB_NULL;
-		    tp->tr_op = OP_NOP;	/* Convert to NOP */
-		}
-		return;
-	    }
-
-	default:
-	    bu_log("rt_tree_kill_dead_solid_refs(x%x): unknown op=x%x\n",
-		   tp, tp->tr_op);
-	    return;
-
-	case OP_XOR:
-	case OP_UNION:
-	case OP_INTERSECT:
-	case OP_SUBTRACT:
-	    /* BINARY */
-	    rt_tree_kill_dead_solid_refs(tp->tr_b.tb_left);
-	    rt_tree_kill_dead_solid_refs(tp->tr_b.tb_right);
-	    break;
-	case OP_NOT:
-	case OP_GUARD:
-	case OP_XNOP:
-	    /* UNARY tree -- for completeness only, should never be seen */
-	    rt_tree_kill_dead_solid_refs(tp->tr_b.tb_left);
-	    break;
-	case OP_NOP:
-	    /* This sub-tree has nothing further in it */
-	    return;
-    }
-    return;
-}
-
-
-/**
  * R T _ T R E E _ E L I M _ N O P S
  *
  * Eliminate any references to NOP nodes from the tree.  It is safe to
  * use db_free_tree() here, because there will not be any dead solids.
  * They will all have been converted to OP_NOP nodes by
- * rt_tree_kill_dead_solid_refs(), previously, so there is no need to
+ * _rt_tree_kill_dead_solid_refs(), previously, so there is no need to
  * worry about multiple db_free_tree()'s repeatedly trying to free one
  * solid that has been instanced multiple times.
  *
@@ -1166,7 +1188,7 @@ top:
  * tree, then this routine will simply return the first one.
  */
 HIDDEN struct region *
-rt_getregion(struct rt_i *rtip, register const char *reg_name)
+_rt_getregion(struct rt_i *rtip, register const char *reg_name)
 {
     register struct region *regp;
     register const char *reg_base = bu_basename(reg_name);
@@ -1191,7 +1213,7 @@ rt_getregion(struct rt_i *rtip, register const char *reg_name)
  * R T _ R P P _ R E G I O N
  *
  * Calculate the bounding RPP for a region given the name of the
- * region node in the database.  See remarks in rt_getregion() above
+ * region node in the database.  See remarks in _rt_getregion() above
  * for name conventions.  Returns 0 for failure (and prints a
  * diagnostic), or 1 for success.
  */
@@ -1202,7 +1224,7 @@ rt_rpp_region(struct rt_i *rtip, const char *reg_name, fastf_t *min_rpp, fastf_t
 
     RT_CHECK_RTI(rtip);
 
-    regp = rt_getregion(rtip, reg_name);
+    regp = _rt_getregion(rtip, reg_name);
     if (regp == REGION_NULL) return(0);
     if (rt_bound_tree(regp->reg_treetop, min_rpp, max_rpp) < 0)
 	return(0);
@@ -1376,44 +1398,6 @@ rt_optim_tree(register union tree *tp, struct resource *resp)
 		bu_log("rt_optim_tree: bad op x%x\n", tp->tr_op);
 		break;
 	}
-    }
-}
-
-
-/**
- * R T _ T R E E _ R E G I O N _ A S S I G N
- */
-HIDDEN void
-rt_tree_region_assign(register union tree *tp, register const struct region *regionp)
-{
-    RT_CK_TREE(tp);
-    RT_CK_REGION(regionp);
-    switch (tp->tr_op) {
-	case OP_NOP:
-	    return;
-
-	case OP_SOLID:
-	    tp->tr_a.tu_regionp = (struct region *)regionp;
-	    return;
-
-	case OP_NOT:
-	case OP_GUARD:
-	case OP_XNOP:
-	    tp->tr_b.tb_regionp = (struct region *)regionp;
-	    rt_tree_region_assign(tp->tr_b.tb_left, regionp);
-	    return;
-
-	case OP_UNION:
-	case OP_INTERSECT:
-	case OP_SUBTRACT:
-	case OP_XOR:
-	    tp->tr_b.tb_regionp = (struct region *)regionp;
-	    rt_tree_region_assign(tp->tr_b.tb_left, regionp);
-	    rt_tree_region_assign(tp->tr_b.tb_right, regionp);
-	    return;
-
-	default:
-	    bu_bomb("rt_tree_region_assign: bad op\n");
     }
 }
 
