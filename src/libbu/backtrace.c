@@ -93,6 +93,7 @@ backtrace_sigchld(int signum)
     }
 }
 
+
 /* SIGINT handler for bu_backtrace() */
 HIDDEN void
 backtrace_sigint(int signum)
@@ -174,7 +175,7 @@ backtrace(char * const *args, int fd)
      * everything up to the "Detaching from process" statement from
      * quit.
      */
-    if(write(input[1], "quit\n", 5) != 5) {
+    if (write(input[1], "quit\n", 5) != 5) {
 	perror("write [quit] failed");
     }
 

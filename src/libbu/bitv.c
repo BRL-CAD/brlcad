@@ -48,6 +48,7 @@ count_ones32(register unsigned int x)
     return x & 0x0000003f;
 }
 
+
 /**
  * private 32-bit recursive reduction using "SIMD Within A Register"
  * (SWAR) to compute a base-2 integer logarithm for a given integer.
@@ -81,9 +82,9 @@ bu_bitv_shift()
 struct bu_bitv *
 bu_bitv_new(unsigned int nbits)
 {
-    struct bu_bitv	*bv;
-    int		bv_bytes;
-    int		total_bytes;
+    struct bu_bitv *bv;
+    int bv_bytes;
+    int total_bytes;
 
     bv_bytes = BU_BITS2BYTES(nbits);
     total_bytes = sizeof(struct bu_bitv) - 2*sizeof(bitv_t) + bv_bytes;
@@ -118,11 +119,11 @@ bu_bitv_clear(struct bu_bitv *bv)
 void
 bu_bitv_or(struct bu_bitv *ov, const struct bu_bitv *iv)
 {
-    register bitv_t		*out;
-    register const bitv_t	*in;
-    register int		words;
+    register bitv_t *out;
+    register const bitv_t *in;
+    register int words;
 
-    if (ov->nbits != iv->nbits)  bu_bomb("bu_bitv_or: length mis-match");
+    if (ov->nbits != iv->nbits) bu_bomb("bu_bitv_or: length mis-match");
     out = ov->bits;
     in = iv->bits;
     words = BU_BITS2WORDS(iv->nbits);
@@ -139,11 +140,11 @@ bu_bitv_or(struct bu_bitv *ov, const struct bu_bitv *iv)
 void
 bu_bitv_and(struct bu_bitv *ov, const struct bu_bitv *iv)
 {
-    register bitv_t		*out;
-    register const bitv_t	*in;
-    register int		words;
+    register bitv_t *out;
+    register const bitv_t *in;
+    register int words;
 
-    if (ov->nbits != iv->nbits)  bu_bomb("bu_bitv_and: length mis-match");
+    if (ov->nbits != iv->nbits) bu_bomb("bu_bitv_and: length mis-match");
     out = ov->bits;
     in = iv->bits;
     words = BU_BITS2WORDS(iv->nbits);
@@ -160,9 +161,9 @@ bu_bitv_and(struct bu_bitv *ov, const struct bu_bitv *iv)
 void
 bu_bitv_vls(struct bu_vls *v, register const struct bu_bitv *bv)
 {
-    int		seen = 0;
-    register int	i;
-    int		len;
+    int seen = 0;
+    register int i;
+    int len;
 
     BU_CK_VLS(v);
     BU_CK_BITV(bv);
@@ -173,8 +174,8 @@ bu_bitv_vls(struct bu_vls *v, register const struct bu_bitv *bv)
 
     /* Visit all the bits in ascending order */
     for (i=0; i<len; i++) {
-	if (BU_BITTEST(bv, i) == 0)  continue;
-	if (seen)  bu_vls_strcat(v, ", ");
+	if (BU_BITTEST(bv, i) == 0) continue;
+	if (seen) bu_vls_strcat(v, ", ");
 	bu_vls_printf(v, "%d", i);
 	seen = 1;
     }
@@ -185,7 +186,7 @@ bu_bitv_vls(struct bu_vls *v, register const struct bu_bitv *bv)
 void
 bu_pr_bitv(const char *str, register const struct bu_bitv *bv)
 {
-    struct bu_vls	v;
+    struct bu_vls v;
 
     BU_CK_BITV(bv)
 	bu_vls_init(&v);
@@ -209,12 +210,9 @@ bu_bitv_to_hex(struct bu_vls *v, register const struct bu_bitv *bv)
     byte_no = sizeof(bitv_t);
 
     bu_vls_extend(v, word_count * (unsigned int)sizeof(bitv_t) * 2 + 1);
-    while (word_count--)
-    {
-	while (byte_no--)
-	{
-	    bu_vls_printf(v, "%02lx",
-			  (unsigned long)((bv->bits[word_count] & ((bitv_t)(0xff)<<(byte_no*8))) >> (byte_no*8)) & (bitv_t)0xff);
+    while (word_count--) {
+	while (byte_no--) {
+	    bu_vls_printf(v, "%02lx", (unsigned long)((bv->bits[word_count] & ((bitv_t)(0xff)<<(byte_no*8))) >> (byte_no*8)) & (bitv_t)0xff);
 	}
 	byte_no = sizeof(bitv_t);
     }
@@ -245,8 +243,7 @@ bu_hex_to_bitv(const char *str)
 
     len = str - str_start;
 
-    if (len < 2 || len%2)
-    {
+    if (len < 2 || len%2) {
 	/* Must be two digits per byte */
 	bu_log("bu_hex_to_bitv: illegal hex bitv (%s)\n", str_start);
 	return ((struct bu_bitv *)NULL);
@@ -263,10 +260,8 @@ bu_hex_to_bitv(const char *str)
 	word_count++;
 
     str = str_start;
-    while (word_count--)
-    {
-	while (byte_no--)
-	{
+    while (word_count--) {
+	while (byte_no--) {
 	    /* get next two hex digits from string */
 	    abyte[0] = *str++;
 	    abyte[1] = *str++;
@@ -295,6 +290,7 @@ bu_bitv_dup(register const struct bu_bitv *bv)
 
     return (bv2);
 }
+
 
 /** @} */
 
