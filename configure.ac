@@ -3564,20 +3564,21 @@ if test "x$bc_build_docs" != "xno" ; then
 	    AC_MSG_ERROR([*** Don't know how to generate documentation without xsltproc ***])
 	fi
     fi
+fi
 
-    if test "x$XSLTPROC" = "x" ; then
-        docbook_processing=no
-	XSLTPROC=:
-    fi
-    if test "x$APACHEFOP" != "x" ; then
-	docbook_pdf_processing=yes
-        docbook_processing="yes (man/html/pdf)"
-		# set FOP_OPTS to avoid dock bounce on osX
-	APACHEFOP="FOP_OPTS=-Djava.awt.headless=true $APACHEFOP"
-    else
-        docbook_processing="yes (man/html only)"
+# test for this outside of bc_build_docs so vars get set properly
+if test "x$XSLTPROC" = "x" ; then
+    XSLTPROC=:
+else
+    if test "x$APACHEFOP" = "x" ; then
+	docbook_processing="yes (man/html only)"
 	docbook_pdf_processing="no"
-	APACHEFOP=""
+	APACHEFOP=:
+    else
+        docbook_processing="yes (man/html/pdf)"
+	docbook_pdf_processing="yes"
+	# set FOP_OPTS to avoid dock bounce on osX
+	APACHEFOP="FOP_OPTS=-Djava.awt.headless=true $APACHEFOP"
     fi
 fi
 AC_SUBST(XSLTPROC)
