@@ -84,7 +84,7 @@ static const char *locate_gdb = NULL;
 
 
 /* SIGCHLD handler for backtrace() */
-static void
+HIDDEN void
 backtrace_sigchld(int signum)
 {
     if (signum) {
@@ -94,7 +94,7 @@ backtrace_sigchld(int signum)
 }
 
 /* SIGINT handler for bu_backtrace() */
-static void
+HIDDEN void
 backtrace_sigint(int signum)
 {
     if (signum) {
@@ -106,8 +106,8 @@ backtrace_sigint(int signum)
 /* actual guts to bu_backtrace() used to invoke gdb and parse out the
  * backtrace from gdb's output.
  */
-static void
-backtrace(char **args, int fd)
+HIDDEN void
+backtrace(char * const *args, int fd)
 {
     /* receiving a SIGCHLD signal indicates something happened to a
      * child process, which should be this backtrace since it is
@@ -123,7 +123,8 @@ backtrace(char **args, int fd)
     if ((pipe(input) == -1) || (pipe(output) == -1)) {
 	perror("unable to open pipe");
 	fflush(stderr);
-	exit(1); /* can't call bu_bomb()/bu_exit() */
+	/* can't call bu_bomb()/bu_exit(), recursive */
+	return;
     }
 
     pid = fork();
@@ -148,11 +149,13 @@ backtrace(char **args, int fd)
 	execvp(args[0], args); /* invoke debugger */
 	perror("exec failed");
 	fflush(stderr);
-	exit(1); /* can't call bu_bomb()/bu_exit() */
+	/* can't call bu_bomb()/bu_exit(), recursive */
+	exit(1);
     } else if (pid == (pid_t) -1) {
 	perror("unable to fork");
 	fflush(stderr);
-	exit(1); /* can't call bu_bomb()/bu_exit() */
+	/* can't call bu_bomb()/bu_exit(), recursive */
+	exit(1);
     }
 
     FD_ZERO(&fdset);
