@@ -39,7 +39,7 @@ gcv_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union tree
     union tree *ret_tree;
     struct bu_list vhead;
     struct nmgregion *r;
-    int NMG_debug_state;
+    int NMG_debug_state=0;
 
     void (*write_region)(struct nmgregion *, struct db_full_path *, int, int, float [3]) = ((struct gcv_data *)client_data)->func;
 
