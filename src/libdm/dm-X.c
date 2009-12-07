@@ -393,7 +393,7 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 #endif
 
     /* must do this before MakeExist */
-4    if ((pubvars->vip = X_choose_visual(dmp)) == NULL) {
+    if ((pubvars->vip = X_choose_visual(dmp)) == NULL) {
 	bu_log("X_open_dm: Can't get an appropriate visual.\n");
 	(void)X_close(dmp);
 	return DM_NULL;
