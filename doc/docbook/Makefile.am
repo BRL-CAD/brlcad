@@ -513,6 +513,7 @@ EXTRA_DIST = \
 	books/README \
 	books/en/tutorial_series_authors.xml \
 	catalog.xml \
+	lessons/es/mged01_creating_primitive_shapes.xml \
 	fop.xconf.in \
 	resources \
 	system/man1/README \
