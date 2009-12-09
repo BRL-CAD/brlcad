@@ -346,17 +346,23 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 	return DM_NULL;
     }
 
+#ifdef HAVE_TK
     screen_number = Tk_ScreenNumber(pubvars->dpy);
+#endif
     if (screen_number <= 0)
 	bu_log("WARNING: screen number is [%d]\n", screen_number);
 
     if (dmp->dm_width == 0) {
+#ifdef HAVE_TK
 	dmp->dm_width = Tk_Width(pubvars->dpy) - 30;
+#endif
 	++make_square;
     }
 
     if (dmp->dm_height == 0) {
+#ifdef HAVE_TK
 	dmp->dm_height = Tk_Height(pubvars->dpy) - 30;
+#endif
 	++make_square;
     }
 
@@ -376,7 +382,10 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 #endif
 
     /* must do this before MakeExist */
+    pubvars->vip = NULL;
+#ifdef HAVE_TK
     pubvars->vip = Tk_Visual(pubvars->xtkwin);
+#endif
     if (pubvars->vip == NULL) {
 	bu_log("X_open_dm: Can't get an appropriate visual.\n");
 	(void)X_close(dmp);
