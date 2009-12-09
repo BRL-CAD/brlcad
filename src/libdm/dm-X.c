@@ -339,7 +339,6 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 #ifdef HAVE_TK
     pubvars->dpy = Tk_Display(pubvars->top);
 #endif
-
     /* make sure there really is a display before proceeding. */
     if (!pubvars->dpy) {
 	bu_log("ERROR: Unable to attach to display (%s)\n", bu_vls_addr(&dmp->dm_pathName));
@@ -347,33 +346,17 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 	return DM_NULL;
     }
 
-    screen = XDefaultScreenOfDisplay(pubvars->dpy);
-
-    if (!screen) {
-#ifdef HAVE_TK
-	/* failed to get a default screen, try harder */
-	screen = Tk_Screen(pubvars->top);
-#endif
-    }
-
-    /* make sure there really is a screen before proceesing. */
-    if (!screen) {
-	bu_log("ERROR: Unable to attach to screen (%s)\n", bu_vls_addr(&dmp->dm_pathName));
-	(void)X_close(dmp);
-	return DM_NULL;
-    }
-
-    screen_number = XScreenNumberOfScreen(screen);
+    screen_number = Tk_ScreenNumber(pubvars->dpy);
     if (screen_number <= 0)
 	bu_log("WARNING: screen number is [%d]\n", screen_number);
 
     if (dmp->dm_width == 0) {
-	dmp->dm_width = XDisplayWidth(pubvars->dpy, screen_number) - 30;
+	dmp->dm_width = Tk_Width(pubvars->dpy) - 30;
 	++make_square;
     }
 
     if (dmp->dm_height == 0) {
-	dmp->dm_height = XDisplayHeight(pubvars->dpy, screen_number) - 30;
+	dmp->dm_height = Tk_Height(pubvars->dpy) - 30;
 	++make_square;
     }
 
@@ -393,7 +376,8 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 #endif
 
     /* must do this before MakeExist */
-    if ((pubvars->vip = X_choose_visual(dmp)) == NULL) {
+    pubvars->vip = Tk_Visual(pubvars->xtkwin);
+    if (pubvars->vip == NULL) {
 	bu_log("X_open_dm: Can't get an appropriate visual.\n");
 	(void)X_close(dmp);
 	return DM_NULL;
