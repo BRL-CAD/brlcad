@@ -28,6 +28,8 @@ include $(srcdir)/specifications/en/Makefile.am
 
 include $(srcdir)/system/man1/en/Makefile.am
 
+include $(srcdir)/lessons/es/Makefile.am
+
 BUILT_SOURCES = \
 	$(BUILTARTICLES_ENHTML) \
 	$(BUILTARTICLES_ENPDF) \
@@ -38,7 +40,9 @@ BUILT_SOURCES = \
 	$(BUILTSPECS_ENHTML) \
 	$(BUILTSPECS_ENPDF) \
 	$(BUILTMAN_ENHTML) \
-	$(BUILTMAN_ENPDF)
+	$(BUILTMAN_ENPDF) \
+        $(BUILTLESSONS_ESHTML) \
+        $(BUILTLESSONS_ESPDF)
 
 BUILTMAN_EN_SOURCES = \
 	${man1DOCBOOK_EN:xml=1}  
@@ -63,13 +67,14 @@ EXTRA_DIST = \
 	${man1DOCBOOK_EN} \
 	${man1INTRO_EN} \
 	${specificationsDOCBOOK_EN} \
+        ${lessonsDOCBOOK_ES} \
+	${lessonsDOCBOOK_ES_IMAGES} \
 	README \
 	articles/en/images/tire_fig12.svg \
 	articles/en/images/tire_fig13.svg \
 	books/README \
 	books/en/tutorial_series_authors.xml \
 	catalog.xml \
-	lessons/es/mged01_creating_primitive_shapes.xml \
 	fop.xconf.in \
 	resources \
 	system/man1/README \

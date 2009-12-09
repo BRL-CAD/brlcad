@@ -144,6 +144,7 @@ AC_MSG_RESULT([*** ${title} ***])
 AC_MSG_RESULT([***${separator}***])
 BC_UNBOLD
 
+
 # necessary for proper file creation on nfs volumes
 umask 022
 
@@ -375,6 +376,9 @@ BC_ARG_WITH([with_wgl], [wgl], [Specify use of or path to WindowsGL], [auto])
 # use pro/engineer
 BC_ARG_WITH([with_proe], [proe], [Specify build of Pro/ENGINEER plugin or path to Pro/ENGINEER installation (optional)], [no])
 
+# set documentation language
+BC_ARG_WITH([with_lang], [language], [Set documentation language], [auto])
+
 ###
 # argument aliases
 # they need to go below here in order for --help to consolidate the
@@ -601,6 +605,10 @@ BC_ARG_WITH_ALIAS([with_opengl], [opengl])
 
 # with wgl aliases (help uses wgl)
 BC_ARG_WITH_ALIAS([with_wgl], [windowsgl])
+
+# with lang aliases
+BC_ARG_WITH_ALIAS([with_lang], [lang])
+
 
 
 ###
@@ -3611,6 +3619,31 @@ fi
 AC_SUBST(ECHO)
 AC_SUBST(ECHO_N)
 
+en_docs="no"
+es_docs="no"
+dnl check for language settings
+dnl for now, just check for a supplied value - need to use saved DOCLANG
+dnl and DOCLC_ALL with an m4 macro here later for environment aware
+dnl locale setting
+if test "x$bc_with_lang" != "xno" ; then
+  if test "x$bc_with_lang_val" != "x" ; then
+     if test "x$bc_with_lang_val" = "xen" ; then
+	en_docs="yes"
+	DOCLANG="English"
+     fi
+     if test "x$bc_with_lang_val" = "xes" ; then
+	es_docs="yes"
+	DOCLANG="Spanish"
+     fi
+  else
+     en_docs="yes"
+     DOCLANG="English"
+  fi
+else
+  en_docs="yes"
+  DOCLANG="English"
+fi
+AC_MSG_RESULT([Documentation language set to: $DOCLANG])
 
 dnl **************************************
 dnl *** Configure Makefiles and output ***
@@ -3666,6 +3699,9 @@ AM_CONDITIONAL(INSTALL_MODELS, [test "x$bc_install_geometry" = "xyes"])
 AM_CONDITIONAL(ONLY_BENCHMARK, [test "x$bc_only_benchmark" != "xno"])
 AM_CONDITIONAL(ONLY_RTS, [test "x$bc_only_rts" != "xno"])
 
+# Language conditionals
+AM_CONDITIONAL(EN_DOCS, [test "x$en_docs" = "xyes"])
+AM_CONDITIONAL(ES_DOCS, [test "x$es_docs" = "xyes"])
 
 
 dnl Any combination of the different optimizations listed below may individually be
