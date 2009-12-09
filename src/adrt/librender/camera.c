@@ -403,6 +403,8 @@ void
     td = (render_camera_thread_data_t *)ptr;
     view_inv = 1.0 / td->camera->view_num;
 
+    td->camera->render.tie = td->tie;
+
     res_ind = 0;
 /* row, vertical */
 /*
