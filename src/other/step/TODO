@@ -1,0 +1,4 @@
+Update code generation to eliminate the need for the manually tweaked copies
+of the NIST tools' output files present in src/conv/step - ideally the step 
+convertor should be using the tools in this directory to generate those files
+at build time.

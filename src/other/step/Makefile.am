@@ -29,7 +29,8 @@ EXTRA_DIST = \
 	config \
 	ChangeLog \
 	libtool \
-	configure.ac
+	configure.ac \
+	TODO
 
 DISTCLEANFILES = \
 	$(CONFIG_CACHE) \

@@ -210,6 +210,7 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
     struct dm *dmp = (struct dm *)NULL;
     Tk_Window tkwin = (Tk_Window)NULL;
     Screen *screen = (Screen *)NULL;
+    int screen_number = -1;
 
     struct dm_xvars *pubvars = NULL;
     struct x_vars *privars = NULL;
@@ -346,7 +347,7 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 	return DM_NULL;
     }
 
-    screen = DefaultScreenOfDisplay(pubvars->dpy);
+    screen = XDefaultScreenOfDisplay(pubvars->dpy);
 
     if (!screen) {
 #ifdef HAVE_TK
@@ -362,17 +363,17 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 	return DM_NULL;
     }
 
+    screen_number = XScreenNumberOfScreen(screen);
+    if (screen_number <= 0)
+	bu_log("WARNING: screen number is [%d]\n", screen_number);
+
     if (dmp->dm_width == 0) {
-	dmp->dm_width =
-	    DisplayWidth(pubvars->dpy,
-			 DefaultScreen(pubvars->dpy)) - 30;
+	dmp->dm_width = XDisplayWidth(pubvars->dpy, screen_number) - 30;
 	++make_square;
     }
 
     if (dmp->dm_height == 0) {
-	dmp->dm_height =
-	    DisplayHeight(pubvars->dpy,
-			  DefaultScreen(pubvars->dpy)) - 30;
+	dmp->dm_height = XDisplayHeight(pubvars->dpy, screen_number) - 30;
 	++make_square;
     }
 

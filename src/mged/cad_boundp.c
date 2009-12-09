@@ -138,6 +138,7 @@ GetArgs(int argc, char **argv)			/* process command arguments */
 #ifdef	DEBUG
     fprintf(stderr, "\n\t\tGetArgs\n" );
 #endif
+    bu_optind = 1;
     while ( (c = bu_getopt( argc, argv, "i:o:t:v" )) != EOF )
 	switch ( c )
 	{

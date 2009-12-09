@@ -148,7 +148,7 @@ bu_open_mapped_file(const char *name, const char *appl)
 
     /* Attempt to access as memory-mapped file */
     bu_semaphore_acquire(BU_SEM_SYSCALL);
-    mp->buf = mmap((caddr_t)0, (size_t)sb.st_size, PROT_READ, MAP_PRIVATE, fd, (off_t)0);
+    mp->buf = mmap(NULL, (size_t)sb.st_size, PROT_READ, MAP_PRIVATE, fd, (off_t)0);
     bu_semaphore_release(BU_SEM_SYSCALL);
 
     if (mp->buf == MAP_FAILED)  perror(name);

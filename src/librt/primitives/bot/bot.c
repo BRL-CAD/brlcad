@@ -567,7 +567,7 @@ rt_bot_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
         VSCALE(center, center, scale);
         fprintf(stderr, "center pt = (%g %g %g)\n", V3ARGS(center));
 
-        // get the faces that use each vertex
+        /* get the faces that use each vertex */
         for (i=0 ; i<bot_ip->num_vertices ; i++) {
             int faceCount = 0;
             int j;
@@ -575,7 +575,7 @@ rt_bot_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
                 int k;
                 for (k=0 ; k<3 ; k++) {
                     if (bot_ip->faces[j*3+k] == i) {
-                        //this face uses vertex i
+                        /* this face uses vertex i */
                         faces[faceCount] = j;
                         faceCount++;
                         break;

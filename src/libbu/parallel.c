@@ -655,7 +655,7 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
 
 #ifndef PARALLEL
 
-    bu_log("bu_parallel(%p, %d., %p):  Not compiled for PARALLEL machine, running single-threaded\n", func, ncpu, arg);
+    bu_log("bu_parallel(%d., %p):  Not compiled for PARALLEL machine, running single-threaded\n", ncpu, arg);
     /* do the work anyways */
     (*func)(0, arg);
 
@@ -696,7 +696,7 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
 #  endif
 
     if (bu_debug & BU_DEBUG_PARALLEL)
-	bu_log("bu_parallel(%p, %d, %p)\n", func, ncpu, arg);
+	bu_log("bu_parallel(%d, %p)\n", ncpu, arg);
 
     if (bu_pid_of_initiating_thread)
 	bu_bomb("bu_parallel() called from within parallel section\n");
@@ -1028,13 +1028,13 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
 			   (void *(*)(void *))_bu_parallel_interface, NULL)) {
 	    fprintf(stderr, "ERROR: bu_parallel: thr_create(0x0, 0x0, 0x%lx, 0x0, 0, 0x%lx) failed on processor %d\n",
 		    (unsigned long int)_bu_parallel_interface, (unsigned long int)&thread, x);
-	    bu_log("ERROR: bu_parallel: thr_create(0x0, 0x0, %p, 0x0, 0, %p) failed on processor %d\n",
-		   _bu_parallel_interface, &thread, x);
+	    bu_log("ERROR: bu_parallel: thr_create(0x0, 0x0, 0x%lx, 0x0, 0, %p) failed on processor %d\n",
+		   (unsigned long int)_bu_parallel_interface, (void *)&thread, x);
 	    /* Not much to do, lump it */
 	} else {
 	    if (bu_debug & BU_DEBUG_PARALLEL) {
 		bu_log("bu_parallel(): created thread: (thread: %p) (loop:%d) (nthreadc:%d)\n",
-		       thread, x, nthreadc);
+		       (void*)thread, x, nthreadc);
 	    }
 
 	    thread_tbl[nthreadc] = thread;
@@ -1046,7 +1046,7 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
     if (bu_debug & BU_DEBUG_PARALLEL) {
 	for (i = 0; i < nthreadc; i++) {
 	    bu_log("bu_parallel(): thread_tbl[%d] = %p\n",
-		   i, thread_tbl[i]);
+		   i, (void *)thread_tbl[i]);
 	}
 #    ifdef SIGINFO
 	/* may be BSD-only (calls _thread_dump_info()) */
@@ -1065,7 +1065,7 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
 
 	if (bu_debug & BU_DEBUG_PARALLEL)
 	    bu_log("bu_parallel(): waiting for thread %p to complete:\t(loop:%d) (nthreadc:%d) (nthreade:%d)\n",
-		   thread_tbl[x], x, nthreadc, nthreade);
+		   (void *)thread_tbl[x], x, nthreadc, nthreade);
 
 	if ((ret = pthread_join(thread_tbl[x], NULL)) != 0) {
 	    /* badness happened */
@@ -1076,7 +1076,7 @@ bu_parallel(void (*func)(int, genptr_t), int ncpu, genptr_t arg)
 
 	if (bu_debug & BU_DEBUG_PARALLEL)
 	    bu_log("bu_parallel(): thread completed: (thread: %p)\t(loop:%d) (nthreadc:%d) (nthreade:%d)\n",
-		   thread, x, nthreadc, nthreade);
+		   (void *)thread, x, nthreadc, nthreade);
     }
 
     if (bu_debug & BU_DEBUG_PARALLEL)

@@ -5376,7 +5376,7 @@ go_rt_gettrees(struct ged *gedp,
     /* Delete previous proc (if any) to release all that memory, first */
     (void)Tcl_DeleteCommand(go_current_gop->go_interp, newprocname);
 
-    while (argv[2][0] == '-') {
+    while (2 < argc && argv[2][0] == '-') {
 	if (strcmp(argv[2], "-i") == 0) {
 	    rtip->rti_dont_instance = 1;
 	    argc--;

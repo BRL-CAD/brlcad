@@ -225,9 +225,10 @@ rtgl_open(Tcl_Interp *interp, int argc, char **argv)
     XInputClassInfo *cip;
     struct bu_vls str;
     struct bu_vls init_proc_vls;
-    Display *tmp_dpy;
+    Display *tmp_dpy = (Display *)NULL;
     struct dm *dmp = (struct dm *)NULL;
-    Tk_Window tkwin;
+    Tk_Window tkwin = (Tk_Window)NULL;
+    int screen_number = -1;
 
     if ((tkwin = Tk_MainWindow(interp)) == NULL) {
 	return DM_NULL;
@@ -323,14 +324,17 @@ rtgl_open(Tcl_Interp *interp, int argc, char **argv)
     }
 #endif
 
+    screen_number = XDefaultScreen(tmp_dpy);
+    if (screen_number <= 0)
+	bu_log("WARNING: screen number is [%d]\n", screen_number);
+
+
     if (dmp->dm_width == 0) {
-	dmp->dm_width =
-	    DisplayWidth(tmp_dpy, DefaultScreen(tmp_dpy)) - 30;
+	dmp->dm_width = XDisplayWidth(tmp_dpy, screen_number) - 30;
 	++make_square;
     }
     if (dmp->dm_height == 0) {
-	dmp->dm_height =
-	    DisplayHeight(tmp_dpy, DefaultScreen(tmp_dpy)) - 30;
+	dmp->dm_height = XDisplayHeight(tmp_dpy, screen_number) - 30;
 	++make_square;
     }
 
