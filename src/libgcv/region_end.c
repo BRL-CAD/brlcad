@@ -39,8 +39,14 @@ gcv_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union tree
 {
     union tree *ret_tree;
     struct bu_list vhead;
-    struct nmgregion *r;
-    int NMG_debug_state=0;
+    struct shell *s;
+
+    /* static just in case setjmp clobbers registers */
+    static struct nmgregion *r;
+    static int empty_region;
+    static int empty_model;
+
+    int NMG_debug_state = 0;
 
     void (*write_region)(struct nmgregion *, struct db_full_path *, int, int, float [3]) = ((struct gcv_data *)client_data)->func;
 
@@ -101,92 +107,93 @@ gcv_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union tree
     /* Relinquish bomb protection */
     BU_UNSETJUMP;
 
+    r = (struct nmgregion *)NULL;
     if (ret_tree) {
 	r = ret_tree->tr_d.td_r;
-    } else {
-	r = (struct nmgregion *)NULL;
     }
 
-    if (r != (struct nmgregion *)NULL) {
-	struct shell *s;
-	int empty_region=0;
-	int empty_model=0;
-
-	/* Kill cracks */
-	s = BU_LIST_FIRST(shell, &r->s_hd);
-	while (BU_LIST_NOT_HEAD(&s->l, &r->s_hd)) {
-	    struct shell *next_s;
-
-	    next_s = BU_LIST_PNEXT(shell, &s->l);
-	    if (nmg_kill_cracks(s)) {
-		if (nmg_ks(s)) {
-		    empty_region = 1;
-		    break;
-		}
-	    }
-	    s = next_s;
-	}
-
-	/* kill zero length edgeuses */
-	if (!empty_region) {
-	    empty_model = nmg_kill_zero_length_edgeuses(*tsp->ts_m);
-	}
-
-	if (!empty_region && !empty_model) {
-	    if (BU_SETJUMP) {
-		char *sofar;
-
-		/* Relinquish bomb protection */
-		BU_UNSETJUMP;
-
-		sofar = db_path_to_string(pathp);
-		bu_log("FAILED in triangulator: %s\n", sofar);
-		bu_free((char *)sofar, "sofar");
-
-		/* restore previous debug state */
-		rt_g.NMG_debug = NMG_debug_state;
-
-		/* Release any intersector 2d tables */
-		nmg_isect2d_final_cleanup();
-
-		/* Get rid of (m)any other intermediate structures */
-		if ((*tsp->ts_m)->magic == NMG_MODEL_MAGIC) {
-		    nmg_km(*tsp->ts_m);
-		} else {
-		    bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
-		}
-
-		/* Now, make a new, clean model structure for next pass. */
-		*tsp->ts_m = nmg_mm();
-		goto out;
-	    }
-
-	    /* Sometimes the NMG library adds debugging bits when it
-	     * detects an internal error, before bombing.  Stash in
-	     * case write_region bombs.
-	     */
-	    NMG_debug_state = rt_g.NMG_debug;
-
-	    /* Write the region out */
-	    write_region(r, pathp, tsp->ts_regionid, tsp->ts_gmater, tsp->ts_mater.ma_color);
-
-	    /* Relinquish bomb protection */
-	    BU_UNSETJUMP;
-	}
-
-	if (!empty_model)
-	    nmg_kr(r);
+    if (r == (struct nmgregion *)NULL) {
+	goto out;
     }
+
+    /* Kill cracks */
+    empty_region = 0;
+    s = BU_LIST_FIRST(shell, &r->s_hd);
+    while (BU_LIST_NOT_HEAD(&s->l, &r->s_hd)) {
+	struct shell *next_s;
+
+	next_s = BU_LIST_PNEXT(shell, &s->l);
+	if (nmg_kill_cracks(s)) {
+	    if (nmg_ks(s)) {
+		empty_region = 1;
+		break;
+	    }
+	}
+	s = next_s;
+    }
+
+    /* kill zero length edgeuses */
+    empty_model = 0;
+    if (!empty_region) {
+	empty_model = nmg_kill_zero_length_edgeuses(*tsp->ts_m);
+    }
+
+    if (empty_region || empty_model) {
+	goto out;
+    }
+
+    if (BU_SETJUMP) {
+	char *sofar;
+
+	/* Relinquish bomb protection */
+	BU_UNSETJUMP;
+
+	sofar = db_path_to_string(pathp);
+	bu_log("FAILED in triangulator: %s\n", sofar);
+	bu_free((char *)sofar, "sofar");
+
+	/* restore previous debug state */
+	rt_g.NMG_debug = NMG_debug_state;
+
+	/* Release any intersector 2d tables */
+	nmg_isect2d_final_cleanup();
+
+	/* Get rid of (m)any other intermediate structures */
+	if ((*tsp->ts_m)->magic == NMG_MODEL_MAGIC) {
+	    nmg_km(*tsp->ts_m);
+	} else {
+	    bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
+	}
+
+	/* Now, make a new, clean model structure for next pass. */
+	*tsp->ts_m = nmg_mm();
+	goto out;
+    }
+
+    /* Sometimes the NMG library adds debugging bits when it
+     * detects an internal error, before bombing.  Stash in
+     * case write_region bombs.
+     */
+    NMG_debug_state = rt_g.NMG_debug;
+
+    /* Write the region out */
+    write_region(r, pathp, tsp->ts_regionid, tsp->ts_gmater, tsp->ts_mater.ma_color);
+
+    /* Relinquish bomb protection */
+    BU_UNSETJUMP;
 
  out:
-    /*
-     * Dispose of original tree, so that all associated dynamic memory
+
+    /* clean up the region we were working with */
+    if (r && !empty_model)
+	nmg_kr(r);
+
+    /* Dispose of original tree, so that all associated dynamic memory
      * is released now, not at the end of all regions.  A return of
      * TREE_NULL from this routine signals an error, and there is no
      * point to adding _another_ message to our output, so we need to
      * cons up an OP_NOP node to return.
      */
-
     db_free_tree(curtree, &rt_uniresource); /* Does an nmg_kr() */
 
     BU_GETUNION(curtree, tree);
