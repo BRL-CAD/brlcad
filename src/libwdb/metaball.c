@@ -38,7 +38,13 @@
 #include "wdb.h"
 
 int
-mk_metaball( struct rt_wdb *fp, const char *name, int method, fastf_t threshold, int num_pts, float *pts)
+mk_metaball( 
+	struct rt_wdb *fp, 
+	const char *name, 
+	const int nctlpt, 
+	const int method, 
+	const fastf_t threshold, 
+	const fastf_t *pts[5])
 {
     struct rt_metaball_internal *mb;
     int i;
@@ -48,7 +54,7 @@ mk_metaball( struct rt_wdb *fp, const char *name, int method, fastf_t threshold,
     mb->method = method;
     mb->threshold = threshold;
 
-    return wdb_export( fp, name, (genptr_t)metaball, ID_METABALL, mk_conv2mm );
+    return wdb_export( fp, name, (genptr_t)mb, ID_METABALL, mk_conv2mm );
 }
 
 /*
