@@ -897,7 +897,6 @@ Face::LoadONBrep(ON_Brep *brep)
     for (i = bounds.rbegin(); i != bounds.rend(); i++) {
 	(*i)->SetFaceIndex(ON_id);
 	if (!(*i)->LoadONBrep(brep)) {
-	    //(*i)->GetONId()
 	    cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << endl;
 	    return false;
 	}
@@ -1137,6 +1136,9 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 	ON_BoundingBox bb = curve->BoundingBox();
 	bool orientWithCurve = (*i)->OrientWithEdge();
 
+	if ((true) && (id == 34193)) {
+		cerr << "Debug:LoadONTrimmingCurves for Path:" << id << endl;
+	}
 	data = pullback_samples(st, curve);
 	if (data == NULL)
 	    continue;
@@ -1288,7 +1290,60 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 		    trim.m_iso = iso;
 		    //trim.Reverse();
 		    trim.IsValid(&tl);
-		}
+		} /*else if ((is = check_pullback_seam_bridge(surf, end_current, start_next)) >= 0) {
+		    // insert trim
+		    // insert singular trim along
+		    // 0 = south, 1 = east, 2 = north, 3 = west
+		    ON_Surface::ISO iso;
+		    switch (is) {
+		    case 0:
+			//south
+			iso = ON_Surface::S_iso;
+			break;
+		    case 1:
+			//east
+			iso = ON_Surface::E_iso;
+			break;
+		    case 2:
+			//north
+			iso = ON_Surface::N_iso;
+			break;
+		    case 3:
+			//west
+			iso = ON_Surface::W_iso;
+		    }
+
+		    ON_Curve* c2d = new ON_LineCurve(end_current, start_next);
+		    trimCurve = brep->m_C2.Count();
+		    brep->m_C2.Append(c2d);
+
+		    int vi;
+		    int vo;
+		    if (data->order_reversed) {
+			vi = data->edge->m_vi[0];
+			vo = data->edge->m_vi[1];
+		    } else {
+			vi = data->edge->m_vi[1];
+			vo = data->edge->m_vi[0];
+		    }
+#ifdef TREATASBOUNDARY
+		    ON_BrepEdge& e = (ON_BrepEdge&)*data->edge;
+		    ON_BrepTrim& trim = brep->NewTrim(e, false, (ON_BrepLoop&) *loop, trimCurve);
+
+		    trim.m_type = ON_BrepTrim::boundary;
+		    trim.m_tolerance[0] = 1e-3; //TODO: need constant tolerance?
+		    trim.m_tolerance[1] = 1e-3;
+#else
+		    ON_BrepTrim& trim = brep->NewSingularTrim(brep->m_V[vi], (ON_BrepLoop&) *loop, iso, trimCurve);
+
+		    trim.m_tolerance[0] = 1e-3; //TODO: need constant tolerance?
+		    trim.m_tolerance[1] = 1e-3;
+		    ON_Interval PD = trim.ProxyCurveDomain();
+		    trim.m_iso = surf->IsIsoparametric(*brep->m_C2[trimCurve], &PD);
+		    trim.m_iso = iso;
+#endif
+		    trim.IsValid(&tl);
+		}*/
 	    }
 	    si++;
 	}
@@ -1391,7 +1446,7 @@ ConicalSurface::LoadONBrep(ON_Brep *brep)
 
     double tan_semi_angle = tan(semi_angle * LocalUnits::planeangle);
     double height = (radius * LocalUnits::length) / tan_semi_angle;
-    double hplus = height * 1.01;
+    double hplus = height * 2.01;
     double r1 = hplus * tan_semi_angle;
 
     origin = origin + norm * (-height);
@@ -2142,10 +2197,6 @@ SurfaceOfLinearExtrusion::LoadONBrep(ON_Brep *brep)
     if (ON_id >= 0)
 	return true; // already loaded
 
-    // use trimming edge bounding box diagonal to make sure extrusion
-    // magnitude is correctly represented
-    double bbdiag = trim_curve_3d_bbox->Diagonal().Length();
-
     // load parent class
     if (!SweptSurface::LoadONBrep(brep)) {
 	cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << endl;
@@ -2154,15 +2205,29 @@ SurfaceOfLinearExtrusion::LoadONBrep(ON_Brep *brep)
 
     ON_Curve *curve = brep->m_C3[swept_curve->GetONId()];
 
+    // use trimming edge bounding box unioned with bounding box of
+    // curve being extruded; calc diagonal to make sure extrusion
+    // magnitude is well represented
+    ON_BoundingBox curvebb = curve->BoundingBox();
+    trim_curve_3d_bbox->Union(curvebb);
+    double bbdiag = trim_curve_3d_bbox->Diagonal().Length(); // already converted to local units;
+
     ON_3dPoint dir = extrusion_axis->Orientation();
     double mag = extrusion_axis->Magnitude() * LocalUnits::length;
     mag = MAX(mag, bbdiag);
 
-    ON_3dPoint startpnt = swept_curve->PointAtStart();
+    ON_3dPoint startpnt;
+    if (swept_curve->PointAtStart() == NULL) {
+	startpnt = curve->PointAtStart();
+    } else {
+	startpnt = swept_curve->PointAtStart();
     startpnt = startpnt * LocalUnits::length;
+    }
 
+    // add a little buffer in the surface extrusion distance
+    // by extruding "+/-mag" distance along "dir"
     ON_3dPoint extrusion_endpnt = startpnt + mag * dir;
-    ON_3dPoint extrusion_startpnt = startpnt;
+    ON_3dPoint extrusion_startpnt = startpnt - mag * dir;
 
     ON_LineCurve *l = new ON_LineCurve(extrusion_startpnt, extrusion_endpnt);
 
@@ -2176,8 +2241,10 @@ SurfaceOfLinearExtrusion::LoadONBrep(ON_Brep *brep)
 
     ON_SumSurface* sum_srf = 0;
 
-    ON_Curve* srf_base_curve = brep->m_C3[swept_curve->GetONId()]->Duplicate();
-    ON_3dPoint sum_basepoint = -ON_3dVector(l->PointAtStart());
+    ON_Curve* srf_base_curve = curve->Duplicate();
+    srf_base_curve->Translate(-mag * dir);
+
+    ON_3dPoint sum_basepoint = ON_origin - l->PointAtStart();
     sum_srf = new ON_SumSurface();
     sum_srf->m_curve[0] = srf_base_curve;
     sum_srf->m_curve[1] = l; //srf_path_curve;

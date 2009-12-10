@@ -2017,10 +2017,18 @@ int
 check_pullback_seam_bridge(const ON_Surface *surf, const ON_2dPoint &p1,const ON_2dPoint &p2) {
 	if (is_closed(surf)) {
 		int is,js;
-		if (((is=IsAtSeam(surf,p1.x,p1.y)) >= 0) && ((js=IsAtSeam(surf,p2.x,p2.y)) >= 0)) {
+		if (((is=IsAtSeam(surf,p1.x,p1.y)) > 0) && ((js=IsAtSeam(surf,p2.x,p2.y)) > 0)) {
 			//create new seam trim
 			if (is == js) {
+			    // need to check if seam 3d points are equal
+			    double endpoint_distance = p1.DistanceTo(p2);
+			    double t0,t1;
+
+			    int dir = is - 1;
+			    surf->GetDomain(dir,&t0,&t1);
+			    if (endpoint_distance > 0.5*(t1-t0)) {
 				return is;
+			    }
 			}
 		}
 	}
