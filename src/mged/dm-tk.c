@@ -28,7 +28,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include <X11/Xutil.h>
 
 #ifdef HAVE_TK
 #  include "tk.h"
@@ -103,19 +102,20 @@ void
 tk_fb_open(void)
 {
     char *Tk_name = "/dev/tk";
-
+/*
     if ((fbp = (FBIO *)calloc(sizeof(FBIO), 1)) == FBIO_NULL) {
 	Tcl_AppendResult(interp, "tk_dm_init: failed to allocate framebuffer memory\n",
 			 (char *)NULL);
 	return;
     }
 
-    *fbp = tk_interface; /* struct copy */
+    *fbp = ogl_interface;*/ /* struct copy */
+    /*
     fbp->if_name = malloc((unsigned)strlen(Tk_name) + 1);
     bu_strlcpy(fbp->if_name, Tk_name, strlen(Tk_name)+1);
-
+*/
     /* Mark OK by filling in magic number */
-    fbp->if_magic = FB_MAGIC;
+  /*  fbp->if_magic = FB_MAGIC;*/
 
 /* XXX TJM implement _tk_open_existing
    _tk_open_existing(fbp,

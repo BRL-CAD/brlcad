@@ -71,7 +71,6 @@
 #  ifdef WITH_TK
 #    include "tk.h"
 #  endif
-#  include <X11/Xutil.h>
 #  include "dm_xvars.h"
 #  include "dm-tk.h"
 #endif /* DM_TK */

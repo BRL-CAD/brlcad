@@ -3661,6 +3661,7 @@ LIBS="`echo $LIBS`"
 AM_CONDITIONAL(BUILD_TCL, [test "x$build_brlcad_tcl" = "xyes"])
 AM_CONDITIONAL(BUILD_TK, [test "x$build_brlcad_tk" = "xyes"])
 AM_CONDITIONAL(BUILD_ITCL, [test "x$build_brlcad_itcl" = "xyes"])
+AM_CONDITIONAL(BUILD_ITK, [test "x$build_brlcad_itcl" = "xyes" && [test "x$build_against_tk" != "xno" || test "x$build_against_x11" != "xno"]])
 AM_CONDITIONAL(BUILD_IWIDGETS, [test "x$build_brlcad_iwidgets" = "xyes"])
 AM_CONDITIONAL(BUILD_TKHTML3, [test "x$build_brlcad_tkhtml3" = "xyes"])
 AM_CONDITIONAL(BUILD_TKIMG, [test "x$build_brlcad_tkimg" = "xyes"])
@@ -3682,8 +3683,8 @@ AM_CONDITIONAL(BUILD_UG, [test "x$bc_build_ug" = "xyes"])
 AM_CONDITIONAL(WITH_X11, [test "x$build_against_x11" != "xno"])
 AM_CONDITIONAL(WITH_OPENGL, [test "x$build_against_opengl" != "xno" && test "x$build_against_x11" != "xno"])
 AM_CONDITIONAL(WITH_WGL, [test "x$build_against_wgl" != "xno"])
-AM_CONDITIONAL(WITH_TK, [test "xyes" = "xno"])
-#AM_CONDITIONAL(WITH_TK, [test "x$build_against_tk" != "xno"])
+#AM_CONDITIONAL(WITH_TK, [test "xyes" = "xno"])
+AM_CONDITIONAL(WITH_TK, [test "x$build_against_tk" != "xno"])
 
 # XXX need to refactor the above fb/dm interfaces to have a better
 # separation of their external 'with' deps and the interfaces
@@ -3807,8 +3808,13 @@ OPTICAL_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${TCL}"
 MULTISPECTRAL_LIBS="${OPTICAL} ${OPTICAL_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 PC_LIBS="${LIBSTDCXX} ${BU} ${BU_LIBS}"
 if test "x$build_against_x11" = "xno" ; then
-    DM_LIBS="${GED} ${GED_LIBS} ${RT} ${RT_LIBS} ${FB} ${FB_LIBS} ${PNG} ${FRAMEWORK_CARBON}"
-    TCLCAD_LIBS="${GED} ${GED_LIBS} ${DM} ${DM_LIBS} ${FB} ${FB_LIBS} ${ITCL} ${TCLSTUB} ${TCL}"
+    if test "x$bc_build_aquatk" = "xyes" ; then
+       DM_LIBS="${GED} ${GED_LIBS} ${RT} ${RT_LIBS} ${FB} ${FB_LIBS} ${PNG} ${FRAMEWORK_CARBON} ${TK}"
+       TCLCAD_LIBS="${GED} ${GED_LIBS} ${DM} ${DM_LIBS} ${FB} ${FB_LIBS} ${ITCL} ${ITK} ${TCLSTUB} ${TCL} ${TK}"
+    else
+       DM_LIBS="${GED} ${GED_LIBS} ${RT} ${RT_LIBS} ${FB} ${FB_LIBS} ${PNG} ${FRAMEWORK_CARBON}"
+       TCLCAD_LIBS="${GED} ${GED_LIBS} ${DM} ${DM_LIBS} ${FB} ${FB_LIBS} ${ITCL} ${TCLSTUB} ${TCL}"
+    fi
 else
     DM_LIBS="${GED} ${GED_LIBS} ${RT} ${RT_LIBS} ${FB} ${FB_LIBS} ${PNG} ${TK} ${X_LIBS} ${FRAMEWORK_CARBON}"
     TCLCAD_LIBS="${GED} ${GED_LIBS} ${DM} ${DM_LIBS} ${FB} ${FB_LIBS} ${ITK} ${ITCL} ${TK} ${TCLSTUB} ${TCL}"

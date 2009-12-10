@@ -23,13 +23,13 @@ IF_OGL_CFLAGS =
 IF_OGL_LIBADD =
 endif
 
-if WITH_TK
-IF_TK_CFLAGS = -DIF_TK $(TK_CPPFLAGS)
-IF_TK_LIBADD = ${LIBTK}
-else
+#if WITH_TK
+#IF_TK_CFLAGS = -DIF_TK $(TK_CPPFLAGS)
+#IF_TK_LIBADD = ${LIBTK}
+#else
 IF_TK_CFLAGS =
 IF_TK_LIBADD =
-endif
+#endif
 
 libfb_la_SOURCES = \
 	asize.c \
