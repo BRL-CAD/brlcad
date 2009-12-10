@@ -23,7 +23,6 @@ libwdb_nil_la_SOURCES = \
 	extr.c \
 	id.c \
 	mater.c \
-	metaball.c \
 	nmg.c \
 	nurb.c \
 	pipe.c \
