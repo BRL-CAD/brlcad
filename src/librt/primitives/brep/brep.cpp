@@ -662,6 +662,11 @@ int
 getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv , BBNode* node) {
     plane_ray pr;
     const ON_Surface *surf = node->m_face->SurfaceOf();
+    double umin, umax;
+    double vmin, vmax;
+    surf->GetDomain(0,&umin, &umax);
+    surf->GetDomain(1,&vmin, &vmax);
+
     ON_3dVector dir = node->m_normal;
     dir.Reverse();
     ON_Ray ray((ON_3dPoint&)pt, dir);
@@ -690,9 +695,30 @@ getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv , BBNode* node) {
 	}
 	brep_newton_iterate(surf, pr, Rcurr, su, sv, nuv, new_uv);
 
+	//Check for closed surface wrap around
+	if (surf->IsClosed(0)) {
+	    if (new_uv[0] < umin) {
+		new_uv[0] = umin;
+	    } else if (new_uv[0] > umax) {
+		new_uv[0] = umax;
+	    }
+	}
+	if (surf->IsClosed(1)) {
+	    if (new_uv[1] < vmin) {
+		new_uv[1] = vmin;
+	    } else if (new_uv[1] > vmax) {
+		new_uv[1] = vmax;
+	    }
+	}
+#ifdef HOOD
 	//push answer back to within node bounds
 	double ufluff = (node->m_u[1] - node->m_u[0])*0.01;
 	double vfluff = (node->m_v[1] - node->m_v[0])*0.01;
+#else
+	//push answer back to within node bounds
+	double ufluff = 0.0;
+	double vfluff = 0.0;
+#endif
 	if (new_uv[0] < node->m_u[0] - ufluff)
 	    new_uv[0] = node->m_u[0];
 	else if (new_uv[0] > node->m_u[1] + ufluff)
