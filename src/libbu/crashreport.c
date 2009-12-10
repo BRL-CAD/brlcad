@@ -104,8 +104,9 @@ bu_crashreport(const char *filename)
 	    bu_log("WARNING: Unable to obtain uname information\n");
 	} else {
 	    fprintf(fp, "\nSystem characteristics:\n");
+	    fflush(fp);
 	    while (bu_fgets(buffer, CR_BUFSIZE, popenfp)) {
-		fprintf(fp, "%s", buffer);
+		fwrite(buffer, 1, strlen(buffer), fp);
 	    }
 	}
 #if defined(HAVE_POPEN) && !defined(STRICT_FLAGS)
@@ -128,11 +129,12 @@ bu_crashreport(const char *filename)
 	    bu_log("WARNING: Unable to obtain sysctl information\n");
 	} else {
 	    fprintf(fp, "\nSystem information:\n");
+	    fflush(fp);
 	    while (bu_fgets(buffer, CR_BUFSIZE, popenfp)) {
 		if ((strlen(buffer) == 0) || ((strlen(buffer) == 1) && (buffer[0] == '\n'))) {
 		    continue;
 		}
-		fprintf(fp, "%s", buffer);
+		fwrite(buffer, 1, strlen(buffer), fp);
 	    }
 	}
 #if defined(HAVE_POPEN) && !defined(STRICT_FLAGS)
