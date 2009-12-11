@@ -2923,17 +2923,14 @@ AC_SUBST(LIBITK)
 AC_MSG_CHECKING(whether to build incrTk)
 build_brlcad_itk="$build_brlcad_itcl"
 if test "x$build_against_tk" = "xno" ; then
-    AC_MSG_RESULT(no)
     build_brlcad_itk=no
 else
     if test "$bc_build_aquatk" = "xno" && test "x$build_against_x11" = "xno" ; then
         AC_MSG_RESULT(no)
         build_brlcad_itk=no
-    else
-        AC_MSG_RESULT($build_brlcad_itk)
     fi
 fi
-
+AC_MSG_RESULT($build_brlcad_itk)
 
 # XXX hack until we can call incrTcl's configure to get the value
 case $host_os in
