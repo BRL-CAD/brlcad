@@ -35,7 +35,57 @@ Geometry Browser                    |    Make sure tree widget duplicates all fu
 Create Primitives                   |                           INCOMPLETE
 View                                |                             DONE  (duplicated elsewhere)
 ViewRing			    |                            UNKNOWN
- 
+Settings -> Mouse Behavior          |    Handled differently in Archer
+Settings -> Transform               |    Angle/Distance Cursor not implemented yet
+Settings -> Constraint Coords.      |                            UNKNOWN
+Settings -> Rotate About            |                           INCOMPLETE?
+Settings -> Active Pane             |                             DONE
+Settings -> Apply To                |                            UNKNOWN
+Settings -> Query Ray Effects       |                           INCOMPLETE
+Settings -> Grid                    |                           INCOMPLETE
+Settings -> Grid Spacing            |                           INCOMPLETE
+Settings -> Framebuffer             |                           INCOMPLETE
+Settings -> View Axes Position      |                             DONE (handled in preferences panel)
+Modes -> Draw Grid                  |                           INCOMPLETE
+Modes -> Snap to Grid               |                           INCOMPLETE
+Modes -> FrameBuffer Active         |    Available, not as conveniently as in MGED
+Modes -> Listen for Clients         |                            UNKNOWN
+Modes -> Persistend Sweep Rect.     |                            UNKNOWN
+Modes -> Angle/Dist. Cursor         |   INCOMPLETE (duplicated in MGED Settings->Transform?)
+Modes -> Faceplate                  |                            UNKNOWN
+Modes -> Axes                       |   View and Model DONE, does Edit apply in Archer?
+Modes -> Display Manager            |   Archer is ogl only at the moment
+Modes -> Multipane                  |                             DONE
+Modes -> Edit Info                  |                            UNKNOWN
+Modes -> Status Bar                 |             DONE (in geometry display area, bottom)
+Modes -> Collaborate                |                            UNKNOWN
+Modes -> Rate Knobs                 |                            UNKNOWN
+Modes -> Display Lists              |                            UNKNOWN
+Misc -> Z Clipping                  |                            UNKNOWN
+Misc -> Perspective                 |                            UNKNOWN
+Misc -> Faceplate                   |                            UNKNOWN
+Misc -> Faceplate GUI               |                            UNKNOWN
+Misc -> Keystroke Forwarding        |                            UNKNOWN
+Tools -> ADC Control Panel          |                          INCOMPLETE
+Tools -> AniMate                    |                          INCOMPLETE                           
+Tools -> Grid Control Panel         |                          INCOMPLETE
+Tools -> Query Ray                  |                          INCOMPLETE
+Tools -> Raytrace Control Panel     |                          INCOMPLETE
+Tools -> Build Pattern Tool         |                          INCOMPLETE
+Tools -> Color Selector             |                          INCOMPLETE
+Tools -> Geometry Browser           |                          INCOMPLETE
+Tools -> Overlap Tool               |                          INCOMPLETE
+Tools -> Upgrade Database...        |                          INCOMPLETE
+Tools -> Command Window             |                            UNKNOWN 
+Tools -> Graphics Window            |                            UNKNOWN
+Help -> Dedication                  |                          INCOMPLETE
+Help -> About MGED                  |   Dialog available, contents need to be merged in
+Help -> Command Manual Pages        |                          INCOMPLETE
+Help -> Shift Grips                 |   Not needed in Archer?
+Help -> Apropos                     |   INCOMPLETE, not working well in MGED either?
+Help -> Manual                      |   INCOMPLETE, even in MGED needs web browser, should use docbook/tkhtml3
+
+
 
 
 Other Issues
