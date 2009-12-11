@@ -109,8 +109,11 @@ Other Issues
 
 * need to "port" archer to the C code startup that MGED uses
 
-* get Undo support fleshed out
+* add ability to undo transaction sets
 
+* handle situation where undo history uses up available memory (delete oldest entries?)
+
+* move undo transaction support to libged level
 
 Tests to Pass
 -------------
@@ -118,3 +121,9 @@ Tests to Pass
 * The merged Archer/MGED app needs to be able to pass all the regression
   tests currently passed by MGED
 
+
+New Features
+------------
+
+* undo ability for selection sequences, other actions currently assumed to not change 
+  the db geometry (may be a natural consequence of transactional libged commands?)
