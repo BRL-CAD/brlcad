@@ -2774,7 +2774,13 @@ else
     else
 	dnl automatic detection
 	if test "x$tk_works" = "xno" ; then
-	    build_brlcad_tk=yes
+	    if test "x$build_against_x11" = "xno" && test "x$bc_build_aquatk" = "xno" ; then
+		AC_MSG_WARN([Neither X11 nor AquaTk are usable, disabling Tk])
+		sleep 1
+		build_brlcad_tk="no (incapable)"
+	    else
+	    	build_brlcad_tk=yes
+	    fi
 	fi
     fi
 fi
@@ -2913,6 +2919,16 @@ AC_SUBST(ITCL_CPPFLAGS)
 AC_SUBST(ITK_CPPFLAGS)
 AC_SUBST(LIBITCL)
 AC_SUBST(LIBITK)
+
+AC_MSG_CHECKING(whether to build incrTk)
+build_brlcad_itk="$build_brlcad_itcl"
+if test "x$build_against_tk" = "xno" || test "x$build_against_x11" = "xno" ; then
+    AC_MSG_RESULT(no)
+    build_brlcad_itk=no
+else
+    AC_MSG_RESULT(yes)
+fi
+
 
 # XXX hack until we can call incrTcl's configure to get the value
 case $host_os in
@@ -3553,7 +3569,7 @@ AC_MSG_RESULT($dials_and_buttons)
 dnl *** MGED GUI ***
 tk_gui=yes
 if test "x$build_against_x11" = "xno" && test "x$build_against_opengl" = "xno" && test "x$build_against_wgl" = "xno" ; then
-    if test "x$build_brlcad_tk" = "xno" ; then
+    if test "x$build_brlcad_tk" != "xyes" ; then
 	tk_gui=no
     fi
 fi
@@ -3661,7 +3677,7 @@ LIBS="`echo $LIBS`"
 AM_CONDITIONAL(BUILD_TCL, [test "x$build_brlcad_tcl" = "xyes"])
 AM_CONDITIONAL(BUILD_TK, [test "x$build_brlcad_tk" = "xyes"])
 AM_CONDITIONAL(BUILD_ITCL, [test "x$build_brlcad_itcl" = "xyes"])
-AM_CONDITIONAL(BUILD_ITK, [test "x$build_brlcad_itcl" = "xyes" && [test "x$build_against_tk" != "xno" || test "x$build_against_x11" != "xno"]])
+AM_CONDITIONAL(BUILD_ITK, [test "x$build_brlcad_itk" = "xyes"])
 AM_CONDITIONAL(BUILD_IWIDGETS, [test "x$build_brlcad_iwidgets" = "xyes"])
 AM_CONDITIONAL(BUILD_TKHTML3, [test "x$build_brlcad_tkhtml3" = "xyes"])
 AM_CONDITIONAL(BUILD_TKIMG, [test "x$build_brlcad_tkimg" = "xyes"])
@@ -3683,7 +3699,6 @@ AM_CONDITIONAL(BUILD_UG, [test "x$bc_build_ug" = "xyes"])
 AM_CONDITIONAL(WITH_X11, [test "x$build_against_x11" != "xno"])
 AM_CONDITIONAL(WITH_OPENGL, [test "x$build_against_opengl" != "xno" && test "x$build_against_x11" != "xno"])
 AM_CONDITIONAL(WITH_WGL, [test "x$build_against_wgl" != "xno"])
-#AM_CONDITIONAL(WITH_TK, [test "xyes" = "xno"])
 AM_CONDITIONAL(WITH_TK, [test "x$build_against_tk" != "xno"])
 
 # XXX need to refactor the above fb/dm interfaces to have a better
