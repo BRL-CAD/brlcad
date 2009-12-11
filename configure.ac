@@ -2926,7 +2926,6 @@ if test "x$build_against_tk" = "xno" ; then
     build_brlcad_itk=no
 else
     if test "$bc_build_aquatk" = "xno" && test "x$build_against_x11" = "xno" ; then
-        AC_MSG_RESULT(no)
         build_brlcad_itk=no
     fi
 fi
