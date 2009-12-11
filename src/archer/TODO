@@ -104,3 +104,17 @@ Other Issues
 
 * archer reports "invalid command" on 'aet' and other commands until a
   database is opened.  it shouldn't.
+
+* archer doesn't have the -c option to run command-line or sans Tk
+
+* need to "port" archer to the C code startup that MGED uses
+
+* get Undo support fleshed out
+
+
+Tests to Pass
+-------------
+
+* The merged Archer/MGED app needs to be able to pass all the regression
+  tests currently passed by MGED
+
