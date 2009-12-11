@@ -73,7 +73,7 @@ void render_cut_init(render_t *render, char *buf) {
     VMOVE(ray.dir.v, ray_dir.v);
     ray.depth = 0;
     while(tie_work(render->tie, &ray, &id, render_cut_hit_cutline, &step))
-	VJOIN1( ray.pos.v, ray.pos.v, step + 0.000001, ray.dir.v );
+	VJOIN1( ray.pos.v, ray.pos.v, step + SMALL_FASTF, ray.dir.v );
 
     /* prepare cut stuff */
     tlist = (TIE_3 **)bu_malloc(sizeof(TIE_3 *) * 6, "cutting plane triangles");
