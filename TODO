@@ -17,7 +17,11 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* fix mged EDITOR invocation bug
+* fix mged EDITOR invocation bug.  have to reconcile src/mged/editit.c
+  and src/libged/editit.c where the latter had the libdm dependency
+  removed.  that refactoring subsequently killed all of the logic used
+  to know when to invoke the editor from within an xterm, which hangs
+  mged since the user can't actually see/access the detached editor.
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
@@ -323,6 +327,10 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   calculate.
 
 * move analyze logic into librt (with their respective primitives).
+
+* fix analyze output formatting, columns are pooched.
+
+* extend analyze output formatting to user-specified formats ala nirt
 
 * implement tessellation support for the new BREP primitive.
 
