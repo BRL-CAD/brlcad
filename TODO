@@ -54,15 +54,18 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
   or simply have an rt_*() for each function (e.g., rt_mirror(),
   rt_shot(), rt_describe(), etc).
 
+* finish obj-g importer.  need to test more inputs and make sure all
+  geometry is preserved on import in some form.
+
+* fix metaball "shelling" but that causes the primitive to invert and
+  just give paper thin surface (something wrong in the intersection).
+
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
 * make fbclear and raytrace control panel obey a -F advanced option,
   i.e., better remote framebuffer support.
-
-* finish obj-g importer.  need to test more inputs and make sure all
-  geometry is preserved on import in some form.
 
 * MINOR: rename bu_ptbl(), nmg_struct_counts()
   (c++ portability, hides struct constructor)
@@ -375,9 +378,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   is predominantly (but not entirely) a complex bot structure in
   itself.  idea is to use some sort of marching cubes/tets to find
   those volumes, perhaps use a libified g_qa.
-
-* fix metaball "shelling" but that causes the primitive to invert and
-  just give paper thin surface (something wrong in the intersection).
 
 * extend metaball control info beyond simple points (e.g., line
   segments)
