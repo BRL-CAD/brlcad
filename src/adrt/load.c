@@ -59,6 +59,8 @@ slave_load_free ()
 int
 slave_load_region (tie_t *tie, char *data)
 {
+    tie = NULL;
+    data = NULL;
     /*
      * data contains a region name and the triangle soup.
      * Meant to be called several times, with slave_load_kdtree called at the
@@ -70,6 +72,8 @@ slave_load_region (tie_t *tie, char *data)
 int
 slave_load_kdtree (tie_t *tie, char *data)
 {
+    tie = NULL;
+    data = NULL;
     /* after slave_load_region calls have filled in all the geometry, this loads
      * a tree or requests a tree generation if data is NULL
      */
