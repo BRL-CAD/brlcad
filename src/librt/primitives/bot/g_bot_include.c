@@ -64,13 +64,16 @@ XGLUE(rt_botface_w_normals_, TRI_TYPE)(struct soltab *stp,
     trip->tri_surfno = face_no;
 
     /* Check to see if this plane is a line or pnt */
-    m1 = MAGNITUDE(trip->tri_BA);
-    m2 = MAGNITUDE(trip->tri_CA);
+    m1 = MAGSQ(trip->tri_BA);
+    m2 = MAGSQ(trip->tri_CA);
     VSUB2(work, bp, cp);
-    m3 = MAGNITUDE(work);
-    m4 = MAGNITUDE(trip->tri_wn);
-    if (m1 < 0.00001 || m2 < 0.00001 ||
-	m3 < 0.00001 || m4 < 0.00001) {
+    m3 = MAGSQ(work);
+    m4 = MAGSQ(trip->tri_wn);
+    if (m1 < tol->dist_sq
+	|| m2 < tol->dist_sq
+	|| m3 < tol->dist_sq
+	|| m4 < tol->dist_sq)
+    {
 	bu_free((char *)trip, "getstruct tri_specific");
 
 	if (RT_G_DEBUG & DEBUG_SHOOT) {
