@@ -876,10 +876,24 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     bip->mode = *cp++;
     bip->bot_flags = *cp++;
 
-    bip->vertices = (fastf_t *)bu_calloc(bip->num_vertices * 3, sizeof(fastf_t), "BOT vertices");
-    bip->faces = (int *)bu_calloc(bip->num_faces * 3, sizeof(int), "BOT faces");
+    if (bip->num_vertices > 0) {
+	bip->vertices = (fastf_t *)bu_calloc(bip->num_vertices * 3, sizeof(fastf_t), "BOT vertices");
+    } else {
+	bip->vertices = (fastf_t *)NULL;
+    }
 
-    if (mat == NULL) mat = bn_mat_identity;
+    if (bip->num_faces > 0) {
+	bip->faces = (int *)bu_calloc(bip->num_faces * 3, sizeof(int), "BOT faces");
+    } else {
+	bip->faces = (fastf_t *)NULL;
+    }
+
+    if (bip->vertices == NULL || bip->faces == NULL)
+	bu_log("WARNING: BoT contains %d vertices, %d faces\n", bip->num_vertices, bip->num_faces);
+
+    if (mat == NULL)
+	mat = bn_mat_identity;
+
     for (i=0; i<bip->num_vertices; i++) {
 	point_t tmp;
 
