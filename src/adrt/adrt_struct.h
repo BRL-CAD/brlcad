@@ -65,7 +65,7 @@ typedef struct adrt_mesh_s {
 
 struct adrt_load_info {
     uint32_t format : 32;
-    char data[];	/* magic fluff */
+    char data[128];	/* magic fluff */
 };
 
 #define ADRT_MESH(_m) ((adrt_mesh_t *)_m)
