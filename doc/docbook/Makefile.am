@@ -30,6 +30,8 @@ include $(srcdir)/system/man1/en/Makefile.am
 
 include $(srcdir)/lessons/es/Makefile.am
 
+if BUILD_DOCS
+
 BUILT_SOURCES = \
 	$(BUILTARTICLES_ENHTML) \
 	$(BUILTARTICLES_ENPDF) \
@@ -49,6 +51,12 @@ BUILTMAN_EN_SOURCES = \
 
 man_MANS = \
          $(BUILTMAN_EN_SOURCES)
+
+else
+BUILT_SOURCES =
+BUILTMAN_EN_SOURCES =
+endif
+
 
 MOSTLYCLEANFILES = \
          $(BUILT_SOURCES) \
