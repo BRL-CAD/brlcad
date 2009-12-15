@@ -12,6 +12,11 @@ XML_CATALOG_FILES=$(top_srcdir)/doc/docbook/catalog.xml
 	mkdir -p system/man1/en/
 	mv '$(@F)' system/man1/en/
 
+.xml.3:
+	XML_CATALOG_FILES=$(XML_CATALOG_FILES) $(XSLTPROC) $(XSLTPROC_FLAGS) $(XSL_MAN_STYLESHEET) $?
+	mkdir -p system/man3/en/
+	mv '$(@F)' system/man3/en/
+
 .fo.pdf: .xml.fo
 	$(APACHEFOP) -c fop.xconf $? -pdf $@
 
@@ -28,6 +33,8 @@ include $(srcdir)/specifications/en/Makefile.am
 
 include $(srcdir)/system/man1/en/Makefile.am
 
+include $(srcdir)/system/man3/en/Makefile.am
+
 include $(srcdir)/lessons/es/Makefile.am
 
 if BUILD_DOCS
@@ -43,11 +50,14 @@ BUILT_SOURCES = \
 	$(BUILTSPECS_ENPDF) \
 	$(BUILTMAN_ENHTML) \
 	$(BUILTMAN_ENPDF) \
+	$(BUILTMAN3_ENHTML) \
+	$(BUILTMAN3_ENPDF) \
         $(BUILTLESSONS_ESHTML) \
         $(BUILTLESSONS_ESPDF)
 
 BUILTMAN_EN_SOURCES = \
-	${man1DOCBOOK_EN:xml=1}  
+	${man1DOCBOOK_EN:xml=1}  \
+	${man3DOCBOOK_EN:xml=3}
 
 man_MANS = \
          $(BUILTMAN_EN_SOURCES)
@@ -64,6 +74,7 @@ MOSTLYCLEANFILES = \
 
 clean-generic: mostlyclean-generic
 	-rmdir -p system/man1/en
+	-rmdir -p system/man3/en
 
 EXTRA_DIST = \
 	${articlesDOCBOOK_EN_IMAGES} \
@@ -85,7 +96,8 @@ EXTRA_DIST = \
 	catalog.xml \
 	fop.xconf.in \
 	resources \
-	system/man1/README \
-	system/man1/mged_cmd_template.xml
+	system/README \
+	system/man1/mged_cmd_template.xml \
+	system/man3/mged_cmd_template.xml
 
 include $(top_srcdir)/misc/Makefile.defs
