@@ -849,6 +849,23 @@ rt_metaball_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
     return 0;			/* OK */
 }
 
+int
+rt_metaball_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *attr)
+{
+    struct rt_metaball_internal *mb=(struct rt_metaball_internal *)intern->idb_ptr;
+    struct wdb_metaballpt *mbpt;
+
+    RT_METABALL_CK_MAGIC(mb);
+
+    /* write crap in */
+    bu_vls_printf(log, "metaball %d %.25G {", mb->method, mb->threshold);
+    for (BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_ctrl_head))
+	    bu_vls_printf(log, " { %.25G %.25G %.25G %.25G %.25G }",
+			    V3ARGS(mbpt->coord), mbpt->fldstr, mbpt->sweat);
+    bu_vls_printf(log, "}");
+
+    return 0;
+}
 
 /*
  * Local Variables:

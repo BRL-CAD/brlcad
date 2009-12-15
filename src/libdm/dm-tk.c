@@ -85,8 +85,11 @@ struct dm dm_tk = {
     tk_loadMatrix,
     tk_drawString2D,
     tk_drawLine2D,
+    tk_drawLine3D,
+    tk_drawLines3D,
     tk_drawPoint2D,
     tk_drawVList,
+    tk_draw,
     tk_setFGColor,
     tk_setBGColor,
     tk_setLineAttr,
@@ -842,6 +845,27 @@ tk_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 }
 
 /*
+ * T K _ D R A W
+ */
+tk_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), genptr_t *data)
+{
+    struct bn_vlist *vp;
+    if (!callback_function) {
+	if (data) {
+	    vp = (struct bn_vlist *)data;
+	    tk_drawVList(dmp,vp);
+	}
+    } else {
+	if (!data) {
+	    return TCL_ERROR;
+	} else {
+	    vp = callback_function(data);
+	}
+    }
+    return TCL_OK;
+}
+
+/*
  *			X _ N O R M A L
  *
  * Restore the display processor to a normal mode of operation
@@ -921,6 +945,18 @@ tk_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2)
 	       ((struct x_vars *)dmp->dm_vars.priv_vars)->gc,
 	       sx1, sy1, sx2, sy2 );
 
+    return TCL_OK;
+}
+
+HIDDEN int
+tk_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2)
+{
+    return TCL_OK;
+}
+
+HIDDEN int
+tk_drawLines3D(struct dm *dmp, int npoints, point_t *points)
+{
     return TCL_OK;
 }
 

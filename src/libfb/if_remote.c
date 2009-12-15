@@ -71,72 +71,6 @@ static struct pkg_switch pkgswitch[] = {
     { 0, NULL, NULL }
 };
 
-HIDDEN int rem_open(register FBIO *ifp, register char *file, int width, int height),
-    rem_close(FBIO *ifp),
-    rem_clear(FBIO *ifp, unsigned char *bgpp),
-    rem_read(register FBIO *ifp, int x, int y, unsigned char *pixelp, int num),
-    rem_write(register FBIO *ifp, int x, int y, const unsigned char *pixelp, int num),
-    rem_rmap(register FBIO *ifp, register ColorMap *cmap),
-    rem_wmap(register FBIO *ifp, const ColorMap *cmap),
-    rem_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom),
-    rem_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom),
-    rem_cursor(FBIO *ifp, int mode, int x, int y),
-    rem_getcursor(FBIO *ifp, int *mode, int *x, int *y),
-    rem_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig),
-    rem_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char *pp),
-    rem_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp),
-    rem_bwreadrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char *pp),
-    rem_bwwriterect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp),
-    rem_poll(FBIO *ifp),
-    rem_flush(FBIO *ifp),
-    rem_free(FBIO *ifp),
-    rem_help(FBIO *ifp);
-
-FBIO remote_interface = {
-    0,
-    rem_open,
-    rem_close,
-    rem_clear,
-    rem_read,
-    rem_write,
-    rem_rmap,
-    rem_wmap,
-    rem_view,
-    rem_getview,
-    rem_setcursor,
-    rem_cursor,
-    rem_getcursor,
-    rem_readrect,
-    rem_writerect,
-    rem_bwreadrect,
-    rem_bwwriterect,
-    rem_poll,
-    rem_flush,
-    rem_free,
-    rem_help,
-    "Remote Device Interface",	/* should be filled in */
-    32*1024,			/* " */
-    32*1024,			/* " */
-    "host:[dev]",
-    512,
-    512,
-    -1,				/* select fd */
-    -1,
-    1, 1,			/* zoom */
-    256, 256,			/* window center */
-    0, 0, 0,			/* cursor */
-    PIXEL_NULL,
-    PIXEL_NULL,
-    PIXEL_NULL,
-    -1,
-    0,
-    0L,
-    0L,
-    0
-};
-
-void pkg_queue(), flush_queue();
-
 
 /* True if the non-null string s is all digits */
 HIDDEN int
@@ -819,6 +753,49 @@ pkgerror(struct pkg_conn *pcpp, char *buf)
     fb_log("%s", buf );
     free(buf);
 }
+
+FBIO remote_interface = {
+    0,
+    rem_open,
+    rem_close,
+    rem_clear,
+    rem_read,
+    rem_write,
+    rem_rmap,
+    rem_wmap,
+    rem_view,
+    rem_getview,
+    rem_setcursor,
+    rem_cursor,
+    rem_getcursor,
+    rem_readrect,
+    rem_writerect,
+    rem_bwreadrect,
+    rem_bwwriterect,
+    rem_poll,
+    rem_flush,
+    rem_free,
+    rem_help,
+    "Remote Device Interface",	/* should be filled in */
+    32*1024,			/* " */
+    32*1024,			/* " */
+    "host:[dev]",
+    512,
+    512,
+    -1,				/* select fd */
+    -1,
+    1, 1,			/* zoom */
+    256, 256,			/* window center */
+    0, 0, 0,			/* cursor */
+    PIXEL_NULL,
+    PIXEL_NULL,
+    PIXEL_NULL,
+    -1,
+    0,
+    0L,
+    0L,
+    0
+};
 
 /*
  * Local Variables:

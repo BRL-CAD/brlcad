@@ -737,6 +737,14 @@ rts_hit( struct application *ap, struct partition *partHeadp, struct seg *segs )
         bu_plong(buffer, regionIndex);
         bu_vlb_write(vlb, buffer, SIZEOF_NETWORK_LONG);
 
+	/* write the ident number to the buffer */
+	bu_plong(buffer, rp->reg_regionid);
+        bu_vlb_write(vlb, buffer, SIZEOF_NETWORK_LONG);
+
+	/* write the aircode number to the buffer */
+	bu_plong(buffer, rp->reg_aircode);
+        bu_vlb_write(vlb, buffer, SIZEOF_NETWORK_LONG);
+
 	if ( verbose ) {
 	    fprintf( stderr, "\tentrance at dist=%g, hit region %s (id = %d)\n",
 		     pp->pt_inhit->hit_dist, rp->reg_name, rp->reg_regionid );

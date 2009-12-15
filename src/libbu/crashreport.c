@@ -42,14 +42,7 @@ static const char *path = NULL;
 int
 bu_crashreport(const char *filename)
 {
-    if (!filename) {
-	return 0;
-    }
-
-    fp = fopen(filename, "ab");
-    if (!fp) {
-	perror("unable to open crash report file");
-	bu_log("ERROR: Unable to open crash report file [%s]\n", filename);
+    if (!filename || strlen(filename) == 0) {
 	return 0;
     }
 
@@ -71,8 +64,20 @@ bu_crashreport(const char *filename)
 	     path ? path : "Unknown",
 	     ctime(&now));
 
+    fp = fopen(filename, "ab");
+    if (!fp || ferror(fp)) {
+	perror("unable to open crash report file");
+	bu_log("ERROR: Unable to open crash report file [%s]\n", filename);
+	return 0;
+    }
+
+    /* make the file stream unbuffered */
+    if (setvbuf(fp, (char *)NULL, _IONBF, 0) != 0) {
+	perror("unable to make stream unbuffered");
+    }
+
     /* print the report header */
-    if (fprintf(fp, (const char *)buffer) <= 0) {
+    if (fwrite(buffer, 1, strlen(buffer), fp) != strlen(buffer)) {
 	/* cannot bomb */
 	bu_log("ERROR: Unable to write to crash report file [%s]\n", filename);
 	(void)fclose(fp);
@@ -99,8 +104,9 @@ bu_crashreport(const char *filename)
 	    bu_log("WARNING: Unable to obtain uname information\n");
 	} else {
 	    fprintf(fp, "\nSystem characteristics:\n");
+	    fflush(fp);
 	    while (bu_fgets(buffer, CR_BUFSIZE, popenfp)) {
-		fprintf(fp, "%s", buffer);
+		fwrite(buffer, 1, strlen(buffer), fp);
 	    }
 	}
 #if defined(HAVE_POPEN) && !defined(STRICT_FLAGS)
@@ -123,11 +129,12 @@ bu_crashreport(const char *filename)
 	    bu_log("WARNING: Unable to obtain sysctl information\n");
 	} else {
 	    fprintf(fp, "\nSystem information:\n");
+	    fflush(fp);
 	    while (bu_fgets(buffer, CR_BUFSIZE, popenfp)) {
 		if ((strlen(buffer) == 0) || ((strlen(buffer) == 1) && (buffer[0] == '\n'))) {
 		    continue;
 		}
-		fprintf(fp, "%s", buffer);
+		fwrite(buffer, 1, strlen(buffer), fp);
 	    }
 	}
 #if defined(HAVE_POPEN) && !defined(STRICT_FLAGS)

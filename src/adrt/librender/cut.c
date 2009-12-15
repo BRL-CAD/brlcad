@@ -44,19 +44,38 @@ typedef struct render_cut_hit_s {
     tfloat mod;
 } render_cut_hit_t;
 
+void* render_cut_hit_cutline(tie_ray_t *ray, tie_id_t *id, tie_tri_t *tri, void *ptr) {
+    ((adrt_mesh_t *)(tri->ptr))->flags |= ADRT_MESH_HIT;
+    *((double *)ptr) = id->dist;
+    return ptr;
+}
 
+extern tie_t *tie;
 void render_cut_init(render_t *render, char *buf) {
     int i;
     render_cut_t *d;
     static TIE_3 list[6];
     TIE_3 **tlist, up, ray_pos, ray_dir;
     fastf_t shot_len = 100, shot_width = .02;
+    tie_id_t id;
+    tie_ray_t ray;
+    double step;
 
     sscanf(buf, "#(%f %f %f) #(%f %f %f)",
 	    ray_pos.v, ray_pos.v+1, ray_pos.v+2,
 	    ray_dir.v, ray_dir.v+1, ray_dir.v+2);
 
+    /* 
+     * fire through the entire geometry, marking each intersected mesh with
+     * ADRT_MESH_HIT 
+     */
+    VMOVE(ray.pos.v, ray_pos.v);
+    VMOVE(ray.dir.v, ray_dir.v);
+    ray.depth = 0;
+    while(tie_work(render->tie, &ray, &id, render_cut_hit_cutline, &step))
+	VJOIN1( ray.pos.v, ray.pos.v, step + SMALL_FASTF, ray.dir.v );
 
+    /* prepare cut stuff */
     tlist = (TIE_3 **)bu_malloc(sizeof(TIE_3 *) * 6, "cutting plane triangles");
 
     render->work = render_cut_work;
@@ -91,21 +110,21 @@ void render_cut_init(render_t *render, char *buf) {
     list[0].v[1] = ray_pos.v[1];
     list[0].v[2] = ray_pos.v[2] - shot_width;
 
-    list[1].v[0] = ray_pos.v[0] - shot_len*ray_dir.v[0];
-    list[1].v[1] = ray_pos.v[1] - shot_len*ray_dir.v[1];
-    list[1].v[2] = ray_pos.v[2] - shot_len*ray_dir.v[2] - shot_width;
+    list[1].v[0] = ray_pos.v[0] + shot_len*ray_dir.v[0];
+    list[1].v[1] = ray_pos.v[1] + shot_len*ray_dir.v[1];
+    list[1].v[2] = ray_pos.v[2] + shot_len*ray_dir.v[2] - shot_width;
 
-    list[2].v[0] = ray_pos.v[0] - shot_len*ray_dir.v[0];
-    list[2].v[1] = ray_pos.v[1] - shot_len*ray_dir.v[1];
-    list[2].v[2] = ray_pos.v[2] - shot_len*ray_dir.v[2] + shot_width;
+    list[2].v[0] = ray_pos.v[0] + shot_len*ray_dir.v[0];
+    list[2].v[1] = ray_pos.v[1] + shot_len*ray_dir.v[1];
+    list[2].v[2] = ray_pos.v[2] + shot_len*ray_dir.v[2] + shot_width;
 
     /* Triangle 2 */
     VMOVE(list[3].v, ray_pos.v);
     list[3].v[2] -= shot_width;
 
-    list[4].v[0] = ray_pos.v[0] - shot_len*ray_dir.v[0];
-    list[4].v[1] = ray_pos.v[1] - shot_len*ray_dir.v[1];
-    list[4].v[2] = ray_pos.v[2] - shot_len*ray_dir.v[2] + shot_width;
+    list[4].v[0] = ray_pos.v[0] + shot_len*ray_dir.v[0];
+    list[4].v[1] = ray_pos.v[1] + shot_len*ray_dir.v[1];
+    list[4].v[2] = ray_pos.v[2] + shot_len*ray_dir.v[2] + shot_width;
 
     VMOVE(list[5].v, ray_pos.v);
     list[5].v[2] += shot_width;

@@ -20,7 +20,59 @@
 /** @file human.c
  *
  * Generator for human models based on height, and other stuff eventually,
- * and for the humanwizard plugin (mostly)
+ * and for the humanwizard plugin (mostly).
+ *
+ * Here is a description of where the bounding boxes should be
+ * pivoting for each joint during articulation:
+ *
+ * head.r and neck.r
+ * - the pivot point is located on the XY center of the top of the
+ *   neck.r.
+ *
+ * neck.r and upperchest.r
+ * - The neck.r pivots from the top XY center of the upperchest.r.
+ *
+ * shoulder*.r
+ * - The shoulder*.r pivots around the X-axis in its XYZ center (half
+ *   the distance in each axis to reach the center of the box).
+ * 
+ * upperchest.r and lowerchest.r
+ * - No movement, but the upperchest.r is specifically centered above
+ *   the lowerchest.r.
+ *
+ * shoulder*.r and lowerchest.r
+ * - No movement, but the shoulder*.r and upperchest.r align
+ *   horizontally (along the X-axis) and are together centered over
+ *   the lowerchest.r.
+ *
+ * lowerchest.r and hips.r
+ * - No movement, but the lowerchest.r is aligned specifically
+ *   centered above the hips.r.
+ *
+ * hips.r and thigh*.r
+ * - There are two pivot points, one for the thighL.r and the other
+ *   for the thighR.r Divide the hips.r box in half in the X
+ *   direction, and find the XY centers of each.  These pivot points
+ *   are at the base of the hips.r.
+ *
+ * thigh*.r and calf*.r
+ * - The pivot point occurs at the XY center of the thigh*.r base.
+ * 
+ * calf*.r and foot*r
+ * - The pivot point of the foot*.r is located in XYZ center of the
+ *   overlap, meaning half way across the X-axis, Y-axis, and Z-axis
+ *   of all area of the foot*.r overlapped by the calf*.r.
+ *
+ * shoulder*.r and upperarm*.r
+ * - The pivot point occurs at the XY center of the top of the
+ *   upperarm*.r.
+ *
+ * upperarm*.r and forearm*.r
+ * - The pivot point occurs at the XY center of the upperarm*.r base.
+ *
+ * forearm*.r and hand*.r
+ * - The pivot point occurs at the XY center of the forearm*.r base.
+ *
  */
 
 #include "common.h"

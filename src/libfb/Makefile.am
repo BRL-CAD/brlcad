@@ -23,13 +23,13 @@ IF_OGL_CFLAGS =
 IF_OGL_LIBADD =
 endif
 
-if WITH_TK
-IF_TK_CFLAGS = -DIF_TK $(TK_CPPFLAGS)
-IF_TK_LIBADD = ${LIBTK}
-else
+#if WITH_TK
+#IF_TK_CFLAGS = -DIF_TK $(TK_CPPFLAGS)
+#IF_TK_LIBADD = ${LIBTK}
+#else
 IF_TK_CFLAGS =
 IF_TK_LIBADD =
-endif
+#endif
 
 libfb_la_SOURCES = \
 	asize.c \
@@ -42,7 +42,6 @@ libfb_la_SOURCES = \
 	fbserv_obj.c \
 	if_X.c \
 	if_X24.c \
-	if_ab.c \
 	if_debug.c \
 	if_disk.c \
 	if_mem.c \
@@ -73,32 +72,15 @@ libfb_la_LIBADD = \
 	${IF_TK_LIBADD}
 
 noinst_HEADERS = \
-	adage.h \
-	adagecursor.h \
-	adageframe.h \
 	dmdfb.h \
 	nilcursor.h \
-	oglcursor.h \
-	sgicursor.h
+	oglcursor.h
 
 dist_man_MANS = libfb.3
 
-# XXX lots of work is needed here to make the other if_ interfaces available.
 EXTRA_DIST = \
-	if_4d.c \
 	if_TEMPLATE.c \
-	if_adage.c \
-	if_ap.c \
-	if_ptty.c \
-	if_rat.c \
-	if_sgi.c \
-	if_sgiw.c \
-	if_sun.c \
-	if_ts.c \
-	if_ug.c \
-	libfb.dsp \
-	sgiselect.s
-
+	libfb.dsp
 
 DEPENDS = src/libpkg
 

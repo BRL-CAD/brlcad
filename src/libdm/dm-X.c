@@ -69,12 +69,16 @@ HIDDEN void draw();
 HIDDEN void x_var_init();
 HIDDEN XVisualInfo *X_choose_visual(struct dm *dmp);
 
+extern void X_allocate_color_cube(Display *, Colormap, long unsigned int *, int, int, int);
+extern unsigned long X_get_pixel(unsigned char, unsigned char, unsigned char, long unsigned int *, int);
+
+
 /* Display Manager package interface */
 
 #define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
 struct dm *X_open_dm(Tcl_Interp *interp, int argc, char **argv);
 
-HIDDEN_DM_FUNCTION_PROTOTYPES(X)
+HIDDEN_DM_FUNCTION_PROTOTYPES(X);
 
 struct dm dm_X = {
     X_close,
@@ -137,6 +141,7 @@ struct dm dm_X = {
     0				/* Tcl interpreter */
 };
 
+
 fastf_t min_short = (fastf_t)SHRT_MIN;
 fastf_t max_short = (fastf_t)SHRT_MAX;
 
@@ -154,18 +159,6 @@ get_color(Display *dpy, Colormap cmap, XColor *color)
     st = XAllocColor(dpy, cmap, color);
     switch (st) {
 	case 1:
-#if 0
-	    if ((color->red & CSCK) != (rgb.red & CSCK) ||
-		(color->green & CSCK) != (rgb.green & CSCK) ||
-		(color->blue & CSCK) != (rgb.blue & CSCK)) {
-		bu_log("\nlooking for fg (%3d, %3d, %3d) %04x, %04x, %04x got \n (%3d, %3d, %3d) %04x, %04x, %04x\n",
-		       (rgb.red >> 8), (rgb.green >> 8), (rgb.blue >> 8),
-		       rgb.red, rgb.green, rgb.blue,
-
-		       (color->red >> 8), (color->green >> 8), (color->blue >> 8),
-		       color->red, color->green, color->blue);
-	    }
-#endif
 	    break;
 	case BadColor:
 	    bu_log("XAllocColor failed (BadColor) for (%3d, %3d, %3d) %04x, %04x, %04x\n",
@@ -182,6 +175,7 @@ get_color(Display *dpy, Colormap cmap, XColor *color)
 #undef CSCK
 
 }
+
 
 /*
  * X _ O P E N
@@ -209,7 +203,7 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
     struct bu_vls init_proc_vls;
     struct dm *dmp = (struct dm *)NULL;
     Tk_Window tkwin = (Tk_Window)NULL;
-    Screen *screen = (Screen *)NULL;
+    int screen_number = -1;
 
     struct dm_xvars *pubvars = NULL;
     struct x_vars *privars = NULL;
@@ -338,7 +332,6 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 #ifdef HAVE_TK
     pubvars->dpy = Tk_Display(pubvars->top);
 #endif
-
     /* make sure there really is a display before proceeding. */
     if (!pubvars->dpy) {
 	bu_log("ERROR: Unable to attach to display (%s)\n", bu_vls_addr(&dmp->dm_pathName));
@@ -346,33 +339,23 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 	return DM_NULL;
     }
 
-    screen = DefaultScreenOfDisplay(pubvars->dpy);
-
-    if (!screen) {
 #ifdef HAVE_TK
-	/* failed to get a default screen, try harder */
-	screen = Tk_Screen(pubvars->top);
+    screen_number = Tk_ScreenNumber(pubvars->dpy);
 #endif
-    }
-
-    /* make sure there really is a screen before proceesing. */
-    if (!screen) {
-	bu_log("ERROR: Unable to attach to screen (%s)\n", bu_vls_addr(&dmp->dm_pathName));
-	(void)X_close(dmp);
-	return DM_NULL;
-    }
+    if (screen_number < 0)
+	bu_log("WARNING: screen number is [%d]\n", screen_number);
 
     if (dmp->dm_width == 0) {
-	dmp->dm_width =
-	    DisplayWidth(pubvars->dpy,
-			 DefaultScreen(pubvars->dpy)) - 30;
+#ifdef HAVE_TK
+	dmp->dm_width = Tk_Width(pubvars->dpy) - 30;
+#endif
 	++make_square;
     }
 
     if (dmp->dm_height == 0) {
-	dmp->dm_height =
-	    DisplayHeight(pubvars->dpy,
-			  DefaultScreen(pubvars->dpy)) - 30;
+#ifdef HAVE_TK
+	dmp->dm_height = Tk_Height(pubvars->dpy) - 30;
+#endif
 	++make_square;
     }
 
@@ -391,20 +374,13 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 		       dmp->dm_height);
 #endif
 
-    /* must do this before MakeExist */
-    if ((pubvars->vip = X_choose_visual(dmp)) == NULL) {
-	bu_log("X_open_dm: Can't get an appropriate visual.\n");
-	(void)X_close(dmp);
-	return DM_NULL;
-    }
-
 #ifdef HAVE_TK
     Tk_MakeWindowExist(pubvars->xtkwin);
     pubvars->win = Tk_WindowId(pubvars->xtkwin);
     dmp->dm_id = pubvars->win;
     privars->pix =
 	Tk_GetPixmap(pubvars->dpy,
-		     DefaultRootWindow(pubvars->dpy),
+		     pubvars->win,
 		     dmp->dm_width,
 		     dmp->dm_height,
 		     Tk_Depth(pubvars->xtkwin));
@@ -470,7 +446,7 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
     }
 
     if (list == (XDeviceInfoPtr)NULL ||
-	list == (XDeviceInfoPtr)1)  goto Done;
+	list == (XDeviceInfoPtr)1) goto Done;
 
     for (j = 0; j < ndevices; ++j, list++) {
 	if (list->use == IsXExtensionDevice) {
@@ -530,6 +506,7 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
     return dmp;
 }
 
+
 /*
  * X _ C L O S E
  *
@@ -561,10 +538,6 @@ X_close(struct dm *dmp)
 	if (pubvars->xtkwin)
 	    Tk_DestroyWindow(pubvars->xtkwin);
 #endif
-
-#if 0
-	XCloseDisplay(pubvars->dpy);
-#endif
     }
 
     bu_vls_free(&dmp->dm_pathName);
@@ -576,6 +549,7 @@ X_close(struct dm *dmp)
 
     return TCL_OK;
 }
+
 
 /*
  * X _ D R A W B E G I N
@@ -906,6 +880,7 @@ X_drawVList(struct dm *dmp, register struct bn_vlist *vp)
     return TCL_OK;
 }
 
+
 /**
  * X _ D R A W
  *
@@ -917,7 +892,7 @@ X_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), g
     if (!callback_function) {
 	if (data) {
 	    vp = (struct bn_vlist *)data;
-	    X_drawVList(dmp,vp);
+	    X_drawVList(dmp, vp);
 	}
     } else {
 	if (!data) {
@@ -927,7 +902,8 @@ X_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), g
 	}
     }
     return TCL_OK;
-} 
+}
+
 
 /**
  * X _ N O R M A L
@@ -981,22 +957,23 @@ X_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int siz
     return TCL_OK;
 }
 
+
 HIDDEN int
-X_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2)
+X_drawLine2D(struct dm *dmp, fastf_t x_1, fastf_t y_1, fastf_t x_2, fastf_t y_2)
 {
     int sx1, sy1, sx2, sy2;
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
     struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
 
-    sx1 = dm_Normal2Xx(dmp, x1);
-    sx2 = dm_Normal2Xx(dmp, x2);
-    sy1 = dm_Normal2Xy(dmp, y1, 0);
-    sy2 = dm_Normal2Xy(dmp, y2, 0);
+    sx1 = dm_Normal2Xx(dmp, x_1);
+    sx2 = dm_Normal2Xx(dmp, x_2);
+    sy1 = dm_Normal2Xy(dmp, y_1, 0);
+    sy2 = dm_Normal2Xy(dmp, y_2, 0);
 
     if (dmp->dm_debugLevel) {
 	bu_log("X_drawLine2D()\n");
-	bu_log("x1 = %g, y1 = %g\n", x1, y1);
-	bu_log("x2 = %g, y2 = %g\n", x2, y2);
+	bu_log("x1 = %g, y1 = %g\n", x_1, y_1);
+	bu_log("x2 = %g, y2 = %g\n", x_2, y_2);
 	bu_log("sx1 = %d, sy1 = %d\n", sx1, sy1);
 	bu_log("sx2 = %d, sy2 = %d\n", sx2, sy2);
     }
@@ -1009,17 +986,31 @@ X_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2)
     return TCL_OK;
 }
 
+
 HIDDEN int
 X_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2)
 {
+    if (!dmp)
+	return TCL_ERROR;
+
+    if (bn_pt3_pt3_equal(pt1, pt2, NULL)) {
+	/* nothing to do for a singular point */
+	return TCL_OK;
+    }
+
     return TCL_OK;
 }
+
 
 HIDDEN int
 X_drawLines3D(struct dm *dmp, int npoints, point_t *points)
 {
+    if (!dmp || npoints < 0 || !points)
+	return TCL_ERROR;
+
     return TCL_OK;
 }
+
 
 HIDDEN int
 X_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
@@ -1044,6 +1035,7 @@ X_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
     return TCL_OK;
 }
 
+
 HIDDEN int
 X_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency)
 {
@@ -1052,7 +1044,7 @@ X_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, 
     struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
 
     if (dmp->dm_debugLevel)
-	bu_log("X_setFGColor()\n");
+	bu_log("X_setFGColor() rgb=[%d, %d, %d] strict=%d transparency=%f\n", r, g, b, strict, transparency);
 
     dmp->dm_fg[0] = r;
     dmp->dm_fg[1] = g;
@@ -1082,6 +1074,7 @@ X_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, 
 
     return TCL_OK;
 }
+
 
 HIDDEN int
 X_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
@@ -1115,6 +1108,7 @@ X_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
 
     return TCL_OK;
 }
+
 
 HIDDEN int
 X_setLineAttr(struct dm *dmp, int width, int style)
@@ -1414,6 +1408,7 @@ X_choose_visual(struct dm *dmp)
     bu_free(good, "dealloc good visuals");
     return (XVisualInfo *)NULL; /* failure */
 }
+
 
 #endif /* DM_X */
 

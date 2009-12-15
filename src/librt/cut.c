@@ -56,7 +56,7 @@ HIDDEN void rt_ct_release_storage BU_ARGS((union cutter *cutp));
 
 HIDDEN void rt_ct_measure BU_ARGS((struct rt_i *rtip, union cutter *cutp, int depth));
 HIDDEN union cutter *rt_ct_get BU_ARGS((struct rt_i *rtip));
-void rt_plot_cut BU_ARGS((FILE *fp, struct rt_i *rtip, union cutter *cutp, int lvl));
+HIDDEN void rt_plot_cut BU_ARGS((FILE *fp, struct rt_i *rtip, union cutter *cutp, int lvl));
 
 BU_EXTERN(void rt_pr_cut_info, (const struct rt_i *rtip, const char *str));
 HIDDEN int rt_ct_old_assess(register union cutter *, register int, double *, double *);

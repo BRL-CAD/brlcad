@@ -346,6 +346,10 @@ BU_EXTERN(int rt_bot_adjust, (struct bu_vls *log,
 			      struct resource *resp));
 BU_EXTERN(int rt_bot_form, (struct bu_vls *log, const struct rt_functab *ftp));
 
+/* METABALL solid */
+BU_EXTERN(int rt_metaball_get, (struct bu_vls *log,
+			   const struct rt_db_internal *intern, const char *attr));
+
 /* SKETCH */
 BU_EXTERN(int rt_sketch_get, (struct bu_vls *log,
 			      const struct rt_db_internal *intern, const char *attr));
@@ -921,7 +925,7 @@ const struct rt_functab rt_functab[] = {
      rt_nul_import4,		rt_nul_export4,	rt_metaball_ifree,
      rt_metaball_describe,	rt_metaball_xform,	rt_nul_parse,
      sizeof(struct rt_metaball_internal),		RT_METABALL_INTERNAL_MAGIC,
-     rt_parsetab_get,	rt_parsetab_adjust,	rt_parsetab_form,
+     rt_metaball_get,	rt_parsetab_adjust,	rt_parsetab_form,
      NULL, rt_metaball_params,
     },
 

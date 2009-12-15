@@ -38,11 +38,7 @@ TCLDIR=
 endif
 
 if BUILD_TK
-if WITH_X11
 TKDIR=tk
-else !WITH_X11
-TKDIR=
-endif
 else !BUILD_TK
 TKDIR=
 endif
