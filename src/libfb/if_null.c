@@ -38,70 +38,6 @@
 #include "fb.h"
 
 
-HIDDEN int	null_open(FBIO *ifp, char *file, int width, int height),
-    null_close(FBIO *ifp),
-    null_clear(FBIO *ifp, unsigned char *pp),
-    null_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count),
-    null_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count),
-    null_rmap(FBIO *ifp, ColorMap *cmp),
-    null_wmap(FBIO *ifp, const ColorMap *cmp),
-    null_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom),
-    null_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom),
-    null_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig),
-    null_cursor(FBIO *ifp, int mode, int x, int y),
-    null_getcursor(FBIO *ifp, int *mode, int *x, int *y),
-    null_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char *pp),
-    null_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp),
-    null_poll(FBIO *ifp),
-    null_flush(FBIO *ifp),
-    null_free(FBIO *ifp),
-    null_help(FBIO *ifp);
-
-/* This is the ONLY thing that we normally "export" */
-FBIO null_interface =  {
-    0,
-    null_open,		/* device_open		*/
-    null_close,		/* device_close		*/
-    null_clear,		/* device_clear		*/
-    null_read,		/* buffer_read		*/
-    null_write,		/* buffer_write		*/
-    null_rmap,		/* colormap_read	*/
-    null_wmap,		/* colormap_write	*/
-    null_view,		/* set view		*/
-    null_getview,		/* get view		*/
-    null_setcursor,		/* define cursor	*/
-    null_cursor,		/* set cursor		*/
-    null_getcursor,		/* get cursor		*/
-    null_readrect,		/* rectangle read	*/
-    null_writerect,		/* rectangle write	*/
-    null_readrect,		/* bw rectangle read	*/
-    null_writerect,		/* bw rectangle write	*/
-    null_poll,		/* handle events	*/
-    null_flush,		/* flush output		*/
-    null_free,		/* free resources	*/
-    null_help,		/* help message		*/
-    "Null Device",		/* device description	*/
-    32*1024,		/* max width		*/
-    32*1024,		/* max height		*/
-    "/dev/null",		/* short device name	*/
-    512,			/* default/current width  */
-    512,			/* default/current height */
-    -1,			/* select fd		*/
-    -1,			/* file descriptor	*/
-    1, 1,			/* zoom			*/
-    256, 256,		/* window center	*/
-    0, 0, 0,		/* cursor		*/
-    PIXEL_NULL,		/* page_base		*/
-    PIXEL_NULL,		/* page_curp		*/
-    PIXEL_NULL,		/* page_endp		*/
-    -1,			/* page_no		*/
-    0,			/* page_dirty		*/
-    0L,			/* page_curpos		*/
-    0L,			/* page_pixels		*/
-    0			/* debug		*/
-};
-
-
 HIDDEN int
 null_open(FBIO *ifp, char *file, int width, int height)
 {
@@ -228,6 +164,50 @@ null_help(FBIO *ifp)
     fb_log( "Useful for Benchmarking/Debugging\n" );
     return(0);
 }
+
+/* This is the ONLY thing that we normally "export" */
+FBIO null_interface =  {
+    0,
+    null_open,		/* device_open		*/
+    null_close,		/* device_close		*/
+    null_clear,		/* device_clear		*/
+    null_read,		/* buffer_read		*/
+    null_write,		/* buffer_write		*/
+    null_rmap,		/* colormap_read	*/
+    null_wmap,		/* colormap_write	*/
+    null_view,		/* set view		*/
+    null_getview,		/* get view		*/
+    null_setcursor,		/* define cursor	*/
+    null_cursor,		/* set cursor		*/
+    null_getcursor,		/* get cursor		*/
+    null_readrect,		/* rectangle read	*/
+    null_writerect,		/* rectangle write	*/
+    null_readrect,		/* bw rectangle read	*/
+    null_writerect,		/* bw rectangle write	*/
+    null_poll,		/* handle events	*/
+    null_flush,		/* flush output		*/
+    null_free,		/* free resources	*/
+    null_help,		/* help message		*/
+    "Null Device",		/* device description	*/
+    32*1024,		/* max width		*/
+    32*1024,		/* max height		*/
+    "/dev/null",		/* short device name	*/
+    512,			/* default/current width  */
+    512,			/* default/current height */
+    -1,			/* select fd		*/
+    -1,			/* file descriptor	*/
+    1, 1,			/* zoom			*/
+    256, 256,		/* window center	*/
+    0, 0, 0,		/* cursor		*/
+    PIXEL_NULL,		/* page_base		*/
+    PIXEL_NULL,		/* page_curp		*/
+    PIXEL_NULL,		/* page_endp		*/
+    -1,			/* page_no		*/
+    0,			/* page_dirty		*/
+    0L,			/* page_curpos		*/
+    0L,			/* page_pixels		*/
+    0			/* debug		*/
+};
 
 /*
  * Local Variables:

@@ -33,73 +33,6 @@
 
 #include "fb.h"
 
-
-HIDDEN int	deb_open(FBIO *ifp, char *file, int width, int height),
-    deb_close(FBIO *ifp),
-    deb_clear(FBIO *ifp, unsigned char *pp),
-    deb_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count),
-    deb_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count),
-    deb_rmap(FBIO *ifp, ColorMap *cmp),
-    deb_wmap(FBIO *ifp, const ColorMap *cmp),
-    deb_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom),
-    deb_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom),
-    deb_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig),
-    deb_cursor(FBIO *ifp, int mode, int x, int y),
-    deb_getcursor(FBIO *ifp, int *mode, int *x, int *y),
-    deb_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char *pp),
-    deb_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp),
-    deb_bwreadrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char *pp),
-    deb_bwwriterect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp),
-    deb_poll(FBIO *ifp),
-    deb_flush(FBIO *ifp),
-    deb_free(FBIO *ifp),
-    deb_help(FBIO *ifp);
-
-/* This is the ONLY thing that we "export" */
-FBIO debug_interface = {
-    0,
-    deb_open,
-    deb_close,
-    deb_clear,
-    deb_read,
-    deb_write,
-    deb_rmap,
-    deb_wmap,
-    deb_view,
-    deb_getview,
-    deb_setcursor,
-    deb_cursor,
-    deb_getcursor,
-    deb_readrect,
-    deb_writerect,
-    deb_bwreadrect,
-    deb_bwwriterect,
-    deb_poll,
-    deb_flush,
-    deb_free,
-    deb_help,
-    "Debugging Interface",
-    32*1024,		/* max width */
-    32*1024,		/* max height */
-    "/dev/debug",
-    512,			/* current/default width */
-    512,			/* current/default height */
-    -1,			/* select fd */
-    -1,			/* file descriptor */
-    1, 1,			/* zoom */
-    256, 256,		/* window center */
-    0, 0, 0,		/* cursor */
-    PIXEL_NULL,		/* page_base */
-    PIXEL_NULL,		/* page_curp */
-    PIXEL_NULL,		/* page_endp */
-    -1,			/* page_no */
-    0,			/* page_ref */
-    0L,			/* page_curpos */
-    0L,			/* page_pixels */
-    0			/* debug */
-};
-
-
 HIDDEN int
 deb_open(FBIO *ifp, char *file, int width, int height)
 {
@@ -366,6 +299,51 @@ Usage: /dev/debug[#]\n\
 
     return	0;
 }
+
+/* This is the ONLY thing that we "export" */
+FBIO debug_interface = {
+    0,
+    deb_open,
+    deb_close,
+    deb_clear,
+    deb_read,
+    deb_write,
+    deb_rmap,
+    deb_wmap,
+    deb_view,
+    deb_getview,
+    deb_setcursor,
+    deb_cursor,
+    deb_getcursor,
+    deb_readrect,
+    deb_writerect,
+    deb_bwreadrect,
+    deb_bwwriterect,
+    deb_poll,
+    deb_flush,
+    deb_free,
+    deb_help,
+    "Debugging Interface",
+    32*1024,		/* max width */
+    32*1024,		/* max height */
+    "/dev/debug",
+    512,			/* current/default width */
+    512,			/* current/default height */
+    -1,			/* select fd */
+    -1,			/* file descriptor */
+    1, 1,			/* zoom */
+    256, 256,		/* window center */
+    0, 0, 0,		/* cursor */
+    PIXEL_NULL,		/* page_base */
+    PIXEL_NULL,		/* page_curp */
+    PIXEL_NULL,		/* page_endp */
+    -1,			/* page_no */
+    0,			/* page_ref */
+    0L,			/* page_curpos */
+    0L,			/* page_pixels */
+    0			/* debug */
+};
+
 
 /*
  * Local Variables:
