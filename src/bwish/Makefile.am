@@ -1,5 +1,5 @@
 
-if WITH_X11
+if WITH_TK
 BWISH=bwish
 blib_LIBS = \
 	${TCLCAD} \
