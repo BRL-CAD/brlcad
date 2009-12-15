@@ -2763,6 +2763,7 @@ build_brlcad_tk="no (using system)"
 build_against_tk=$tk_works
 if test "x$bc_build_tk" = "xyes" ; then
     build_brlcad_tk=yes
+    build_against_tk=yes
 else
     if test "x$bc_build_tk" = "xno" ; then
 	if test "x$tk_works" = "xno" ; then
@@ -2779,50 +2780,63 @@ else
 		sleep 1
 		build_brlcad_tk="no (incapable)"
 	    else
-	    	build_brlcad_tk=yes
+		build_brlcad_tk=yes
+		build_against_tk="yes"
 	    fi
 	fi
     fi
 fi
-AC_MSG_CHECKING(whether to build Tk)
+
 TK=""
 TKSTUB=""
 TK_CPPFLAGS=""
+TK_VERSION="8.5"
 unset ac_cv_c_tkconfig
-if test "x$build_brlcad_tk" = "xyes" ; then
-    TK_VERSION="8.5"
-    build_against_tk="yes"
-    AC_MSG_RESULT(yes)
-    TK='-L${top_builddir}/src/other/tk/unix'" -ltk${TCL_VERSION}"
-    TKSTUB='-L${top_builddir}/src/other/tk/unix'" -ltkstub${TK_VERSION}"
-    TK_CPPFLAGS='-I${top_srcdir}/src/other/tk/generic -I${top_srcdir}/src/other/tk/unix -I${top_srcdir}/src/other/tk/win'
-    if test "x$bc_build_aquatk" = "xyes" ; then
-	TK_CPPFLAGS="$TK_CPPFLAGS "'-I${top_srcdir}/src/other/tk/xlib'
+
+if test "x$build_against_tk" = "xyes" ; then
+    AC_MSG_CHECKING(whether to build Tk)
+    if test "x$build_brlcad_tk" = "xyes" ; then
+	AC_MSG_RESULT(yes)
+	TK='-L${top_builddir}/src/other/tk/unix'" -ltk${TCL_VERSION}"
+	TKSTUB='-L${top_builddir}/src/other/tk/unix'" -ltkstub${TK_VERSION}"
+	TK_CPPFLAGS='-I${top_srcdir}/src/other/tk/generic -I${top_srcdir}/src/other/tk/unix -I${top_srcdir}/src/other/tk/win'
+	if test "x$bc_build_aquatk" = "xyes" ; then
+	    TK_CPPFLAGS="$TK_CPPFLAGS "'-I${top_srcdir}/src/other/tk/xlib'
+	fi
+    else
+	AC_MSG_RESULT(no)
+
+	dnl find tkConfig.sh, add --with-tk option, don't cache result for AC_CONFIG_SUBDIRS
+	SC_PATH_TKCONFIG
+	# keep TK_BIN_DIR, don't keep ac_cv_c_tkconfig
+	unset ac_cv_c_tkconfig
+
+	dnl If we're using the system Tk, then we need to load
+	dnl tkConfig.sh to get the TK_VERSION and other vars.
+	SC_LOAD_TKCONFIG
+
+	if test "x$tk_link_works" = "xyes" ; then
+	    TK="$LIBTK"
+	else
+	    AC_MSG_WARN([Unable to link against a system Tk library])
+	    sleep 1
+	fi
+	if test "x$tkstub_link_works" = "xyes" ; then
+	    TKSTUB="$LIBTKSTUB"
+	else
+	    AC_MSG_WARN([Unable to link against a system Tkstub library])
+	    sleep 1
+        fi
     fi
+    AC_DEFINE(HAVE_TK, 1, [Support for a Tk GUI is enabled])
 else
-    AC_MSG_RESULT(no)
-
-    dnl find tkConfig.sh, add --with-tk option, don't cache result for AC_CONFIG_SUBDIRS
-    SC_PATH_TKCONFIG
-    # keep TK_BIN_DIR, don't keep ac_cv_c_tkconfig
-    unset ac_cv_c_tkconfig
-
-    dnl If we're using the system Tk, then we need to load
-    dnl tkConfig.sh to get the TK_VERSION and other vars.
-    SC_LOAD_TKCONFIG
-
-    if test "x$tk_link_works" = "xyes" ; then
-	TK="$LIBTK"
-    else
-	AC_MSG_WARN([Unable to link against a system Tk library])
-	sleep 1
-    fi
-    if test "x$tkstub_link_works" = "xyes" ; then
-	TKSTUB="$LIBTKSTUB"
-    else
-	AC_MSG_WARN([Unable to link against a system Tkstub library])
-	sleep 1
-    fi
+    dnl *** NO MGED GUI ***
+    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+    AC_MSG_WARN([Support for a BRL-CAD graphical user interface (GUI) will be disabled.])
+    AC_MSG_NOTICE([Try installing X11 development headers or system Tcl/Tk libraries.])
+    AC_MSG_NOTICE([MGED will still work in classic console mode but without a GUI.])
+    AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
+    sleep 5
 fi
 AC_SUBST(TK)
 AC_SUBST(TKSTUB)
@@ -3566,17 +3580,6 @@ if test "x$dials_and_buttons" = "xyes" ; then
 fi
 AC_MSG_RESULT($dials_and_buttons)
 
-
-dnl *** MGED GUI ***
-tk_gui=yes
-if test "x$build_against_x11" = "xno" && test "x$build_against_opengl" = "xno" && test "x$build_against_wgl" = "xno" ; then
-    if test "x$build_brlcad_tk" != "xyes" ; then
-	tk_gui=no
-    fi
-fi
-if test "x$tk_gui" = "xyes" ; then
-    AC_DEFINE(HAVE_TK, 1, [Support for a Tk GUI is enabled])
-fi
 
 dnl *** Docbook functionality ***
 docbook_processing=no
