@@ -30,6 +30,9 @@
 /* rough game plan
  *   [ ] develop/proof metaball primitive tesselation using MC
  *       [ ] asc-g/g-asc of metaballs for regression/comparison testing
+ *           [X] asc-g
+ *           [X] g-asc
+ *	     [ ] regression shtuff
  *       [ ] edge solve cubes
  *       [ ] write compiled table shtuff (use existing table, the hex/index one?)
  *       [ ] produce NMG mesh

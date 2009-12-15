@@ -849,6 +849,11 @@ rt_metaball_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
     return 0;			/* OK */
 }
 
+/**
+ * R T _ M E T A B A L L _ G E T
+ *
+ * db get/g2asc
+ */
 int
 rt_metaball_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *attr)
 {
@@ -860,12 +865,67 @@ rt_metaball_get(struct bu_vls *log, const struct rt_db_internal *intern, const c
     /* write crap in */
     bu_vls_printf(log, "metaball %d %.25G {", mb->method, mb->threshold);
     for (BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_ctrl_head))
-	    bu_vls_printf(log, " { %.25G %.25G %.25G %.25G %.25G }",
+	    bu_vls_printf(log, "{%.25G %.25G %.25G %.25G %.25G}",
 			    V3ARGS(mbpt->coord), mbpt->fldstr, mbpt->sweat);
     bu_vls_printf(log, "}");
 
     return 0;
 }
+
+/**
+ * R T _ M E T A B A L L _ A D J U S T
+ *
+ * used for db put/asc2g
+ */
+int 
+rt_metaball_adjust (struct bu_vls *log, struct rt_db_internal *intern, int argc, char **argv)
+{
+    struct rt_metaball_internal *mb;
+    char *pts, *pend;;
+
+    if(argc != 3)  {
+	bu_vls_printf(log, "Invalid number of arguments: %d\n", argc);
+	return BRLCAD_ERROR;
+    }
+
+    RT_CK_DB_INTERNAL(intern);
+    mb = (struct rt_metaball_internal *)intern->idb_ptr;
+    RT_METABALL_CK_MAGIC(mb);
+
+    if( strlen(*argv) != 1 || (**argv < '0' || **argv > '2') ) {
+	bu_vls_printf(log, "Invalid method type, must be one of 0, 1, or 2.");
+	return BRLCAD_ERROR;
+    }
+    mb->method = *argv[0] - '0';
+    sscanf(argv[1], "%lG", &mb->threshold);
+    BU_LIST_INIT(&mb->metaball_ctrl_head);
+
+    pts = argv[2];
+    pend = pts + strlen(pts);
+
+    while(1) {
+	point_t loc;
+	fastf_t fldstr, goo;
+	int len;
+
+	while( pts < pend && *pts != '{' ) ++pts;
+	if(pts >= pend) break;
+	len = sscanf(pts, "{%lG %lG %lG %lG %lG}", loc+X, loc+Y, loc+Z, &fldstr, &goo);
+	if(len == EOF) break;
+	if(len != 5) {
+	    bu_vls_printf(log, "Failed to parse point information: \"%s\"", pts);
+	    return BRLCAD_ERROR;
+	}
+	pts++;
+	if(rt_metaball_add_point (mb, (const point_t *)&loc, fldstr, goo)) {
+	    bu_vls_printf(log, "Failure adding point: {%f %f %f %f %f}", V3ARGS(loc), fldstr, goo);
+	    return BRLCAD_ERROR;
+	}
+    }
+
+    return BRLCAD_OK;
+}
+
 
 /*
  * Local Variables:
