@@ -60,6 +60,13 @@
 
 #define TMP_FILE	"/tmp/x.cmap"
 
+/*
+ * Note: these return the "lower left corner" of a zoomed pixel
+ */
+#define	xIMG2SCR(x)	(((x)-ifp->if_xcenter)*ifp->if_xzoom+w.width/2)
+#define	yIMG2SCR(y)	(((y)-ifp->if_ycenter)*ifp->if_yzoom+w.height/2)
+
+
 #ifdef USE_PROTOTYPES
 HIDDEN void	Monochrome( unsigned char *bitbuf, unsigned char *bytebuf, int width, int height, int method);
 HIDDEN int	X_do_event( FBIO	*ifp );
@@ -1664,14 +1671,6 @@ HIDDEN void genmap(unsigned char *rmap, unsigned char *gmap, unsigned char *bmap
 	    bmap[r] = primary[r-246];
     }
 }
-
-
-
-/*
- * Note: these return the "lower left corner" of a zoomed pixel
- */
-#define	xIMG2SCR(x)	(((x)-ifp->if_xcenter)*ifp->if_xzoom+w.width/2)
-#define	yIMG2SCR(y)	(((y)-ifp->if_ycenter)*ifp->if_yzoom+w.height/2)
 
 
 /* This is the ONLY thing that we normally "export" */
