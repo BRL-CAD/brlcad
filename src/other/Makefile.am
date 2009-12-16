@@ -228,7 +228,7 @@ DIST_SUBDIRS = \
 	step \
 	tcl \
 	tk \
-	tkimg \
+	tkpng \
 	tnt
 
 include $(top_srcdir)/misc/Makefile.defs
