@@ -199,7 +199,6 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_bot_internal *bot_ip;
 
-
     RT_CK_DB_INTERNAL(ip);
     bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
     RT_BOT_CK_MAGIC(bot_ip);
@@ -216,8 +215,9 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
  * R T _ B O T _ P R I N T
  */
 void
-rt_bot_print(register const struct soltab *stp)
+rt_bot_print(const struct soltab *stp)
 {
+    if (stp) RT_CK_SOLTAB(stp);
 }
 
 
@@ -402,6 +402,8 @@ rt_bot_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 void
 rt_bot_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
 {
+    if (stp) RT_CK_SOLTAB(stp);
+
     cvp->crv_c1 = cvp->crv_c2 = 0;
 
     /* any tangent direction */
@@ -420,8 +422,12 @@ rt_bot_curve(register struct curvature *cvp, register struct hit *hitp, struct s
  * v = elevation
  */
 void
-rt_bot_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
+rt_bot_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
+    if (ap) RT_CK_APPLICATION(ap);
+    if (stp) RT_CK_SOLTAB(stp);
+    if (hitp) RT_CK_HIT(hitp);
+    if (!uvp) return;
 }
 
 
@@ -448,6 +454,11 @@ rt_bot_free(register struct soltab *stp)
 int
 rt_bot_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, const struct bn_tol *tol)
 {
+    if (stp) RT_CK_SOLTAB(stp);
+    if (tol) BN_CK_TOL(tol);
+    if (!min) return 0;
+    if (!max) return 0;
+
     return RT_CLASSIFY_UNIMPLEMENTED;
 }
 
@@ -456,7 +467,7 @@ rt_bot_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, c
  * R T _ B O T _ P L O T
  */
 int
-rt_bot_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_bot_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
 {
     struct rt_bot_internal *bot_ip;
     int i;
@@ -480,7 +491,7 @@ rt_bot_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
  * R T _ B O T _ P L O T _ P O L Y
  */
 int
-rt_bot_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_bot_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
 {
     struct rt_bot_internal *bot_ip;
     int i;
@@ -539,7 +550,7 @@ rt_bot_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_bot_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_bot_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol)
 {
     struct rt_bot_internal *bot_ip;
     struct shell *s;
@@ -589,12 +600,14 @@ rt_bot_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
             if (bot_ip->bot_flags & RT_BOT_HAS_SURFACE_NORMALS)
 		for (i=0 ; i<faceCount ; i++) {
 		    int k;
+		    fastf_t *plane;
 		    for (k=0 ; k<3 ; k++) {
                         int index = faces[i] * 3 + k;
                         VMOVE(planes[i], &bot_ip->normals[bot_ip->face_normals[index]*3]);
                         planes[i][3] = VDOT(planes[i], &bot_ip->vertices[bot_ip->faces[faces[i]*3]*3]);
 		    }
-		    fprintf(stderr, "\tplane #%d = (%g %g %g %g)\n", i, V4ARGS(&planes[i]));
+		    plane = planes[i];
+		    fprintf(stderr, "\tplane #%d = (%g %g %g %g)\n", i, V4ARGS(plane));
 		}
         }
         return -1;
@@ -684,6 +697,7 @@ rt_bot_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     int i;
     int chars_used;
 
+    if (dbip) RT_CK_DBI(dbip);
     BU_CK_EXTERNAL(ep);
     rp = (union record *)ep->ext_buf;
     /* Check record type */
@@ -759,7 +773,7 @@ rt_bot_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     int num_recs;
     struct bu_vls face_mode;
 
-
+    if (dbip) RT_CK_DBI(dbip);
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_BOT) return(-1);
     bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
@@ -857,6 +871,7 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     int i;
 
     BU_CK_EXTERNAL(ep);
+    if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -885,7 +900,7 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     if (bip->num_faces > 0) {
 	bip->faces = (int *)bu_calloc(bip->num_faces * 3, sizeof(int), "BOT faces");
     } else {
-	bip->faces = (fastf_t *)NULL;
+	bip->faces = (int *)NULL;
     }
 
     if (bip->vertices == NULL || bip->faces == NULL)
@@ -982,6 +997,7 @@ rt_bot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     int rem;
 
     RT_CK_DB_INTERNAL(ip);
+    if (dbip) RT_CK_DBI(dbip);
 
     if (ip->idb_type != ID_BOT) return -1;
     bip = (struct rt_bot_internal *)ip->idb_ptr;
@@ -1271,13 +1287,6 @@ rt_bot_ifree(struct rt_db_internal *ip, struct resource *resp)
 
 
 int
-rt_bot_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bn_tol *tol)
-{
-    return(1);
-}
-
-
-int
 rt_bot_xform(struct rt_db_internal *op, const fastf_t *mat, struct rt_db_internal *ip, const int free, struct db_i *dbip)
 {
     struct rt_bot_internal *botip, *botop;
@@ -1287,6 +1296,7 @@ rt_bot_xform(struct rt_db_internal *op, const fastf_t *mat, struct rt_db_interna
     RT_CK_DB_INTERNAL(ip);
     botip = (struct rt_bot_internal *)ip->idb_ptr;
     RT_BOT_CK_MAGIC(botip);
+    if (dbip) RT_CK_DBI(dbip);
 
     if (op != ip && !free) {
 	RT_INIT_DB_INTERNAL(op);
@@ -1833,6 +1843,25 @@ rt_bot_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *
 }
 
 
+int
+bot_check_vertex_indices(struct bu_vls *log, struct rt_bot_internal *bot)
+{
+    int badVertexCount = 0;
+    int i;
+    for (i=0 ; i<bot->num_faces ; i++) {
+	int k;
+	for (k=0 ; k<3 ; k++) {
+	    int vertex_no = bot->faces[i*3+k];
+	    if (vertex_no < 0 || vertex_no >= bot->num_vertices) {
+		bu_vls_printf(log, "WARNING: BOT has illegal vertex index (%d) in face #(%d)\n", vertex_no, i);
+		badVertexCount++;
+	    }
+	}
+    }
+    return badVertexCount;
+}
+
+
 /**
  * R T _ B O T _ A D J U S T
  *
@@ -2347,25 +2376,6 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 
 
 int
-bot_check_vertex_indices(struct bu_vls *log, struct rt_bot_internal *bot)
-{
-    int badVertexCount = 0;
-    int i;
-    for (i=0 ; i<bot->num_faces ; i++) {
-	int k;
-	for (k=0 ; k<3 ; k++) {
-	    int vertex_no = bot->faces[i*3+k];
-	    if (vertex_no < 0 || vertex_no >= bot->num_vertices) {
-		bu_vls_printf(log, "WARNING: BOT has illegal vertex index (%d) in face #(%d)\n", vertex_no, i);
-		badVertexCount++;
-	    }
-	}
-    }
-    return badVertexCount;
-}
-
-
-int
 rt_bot_form(struct bu_vls *log, const struct rt_functab *ftp)
 {
     RT_CK_FUNCTAB(ftp);
@@ -2382,8 +2392,11 @@ rt_bot_form(struct bu_vls *log, const struct rt_functab *ftp)
  *
  */
 int
-rt_bot_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
+rt_bot_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 {
+    if (!ps) return(0);
+    RT_CK_DB_INTERNAL(ip);
+
     return(0);			/* OK */
 }
 
@@ -3624,12 +3637,13 @@ rt_bot_decimate(struct rt_bot_internal *bot,	/* BOT to be decimated */
 HIDDEN int
 bot_smooth_miss(struct application *ap)
 {
+    if (ap) RT_CK_APPLICATION(ap);
     return 0;
 }
 
 
 HIDDEN int
-bot_smooth_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg)
+bot_smooth_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg __attribute__((unused)))
 {
     struct partition *pp;
     struct soltab *stp;

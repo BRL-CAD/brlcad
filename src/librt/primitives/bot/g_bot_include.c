@@ -400,6 +400,7 @@ XGLUE(rt_bot_plate_segs_, TRI_TYPE)(struct hit *hits,
     register fastf_t los;
     int surfno;
 
+    if (rp) RT_CK_RAY(rp);
 
     for (i=0; i < nhits; i++) {
 	XGLUE(tri_specific_, TRI_TYPE) *trip=(XGLUE(tri_specific_, TRI_TYPE) *)hits[i].hit_private;
@@ -480,6 +481,8 @@ XGLUE(rt_bot_unoriented_segs_, TRI_TYPE)(struct hit *hits,
      */
     fastf_t rm_dist=0.0;
     int removed=0;
+
+    if (bot) RT_BOT_CK_MAGIC(bot);
 
     if (nhits == 1) {
 	XGLUE(tri_specific_, TRI_TYPE) *trip=(XGLUE(tri_specific_, TRI_TYPE) *)hits[0].hit_private;
@@ -1065,7 +1068,7 @@ XGLUE(rt_bot_piece_shot_, TRI_TYPE)(struct rt_piecestate *psp, struct rt_pieceli
     const int debug_shoot = RT_G_DEBUG & DEBUG_SHOOT;
     int starting_hits;
     fastf_t toldist, dn_plus_tol;
-    int trinum;
+    size_t trinum;
 
     RT_CK_PIECELIST(plp);
     stp = plp->stp;
@@ -1100,7 +1103,7 @@ XGLUE(rt_bot_piece_shot_, TRI_TYPE)(struct rt_piecestate *psp, struct rt_pieceli
 	vect_t wxb;		/* vertex - ray_start */
 	vect_t xp;		/* wxb cross ray_dir */
 	int face_array_index;
-	int tris_in_piece;
+	size_t tris_in_piece;
 
 	piecenum = *sol_piece_subscr_p;
 
@@ -1213,8 +1216,10 @@ XGLUE(rt_bot_norm_, TRI_TYPE)(bot, hitp, stp, rp)
     struct soltab *stp;
     register struct xray *rp;
 {
-    XGLUE(tri_specific_, TRI_TYPE) *trip=(XGLUE(tri_specific_, TRI_TYPE) *)hitp->hit_private;
     vect_t old_norm;
+    XGLUE(tri_specific_, TRI_TYPE) *trip=(XGLUE(tri_specific_, TRI_TYPE) *)hitp->hit_private;
+
+    if (stp) RT_CK_SOLTAB(stp);
 
     VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir);
     VMOVE(old_norm, hitp->hit_normal);
