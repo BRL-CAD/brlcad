@@ -1568,7 +1568,7 @@ package provide Archer 1.0
     ArcherCore::updateTheme
 
     set dir [file join $mImgDir Themes $mTheme]
-
+    
     if {!$mViewOnly} {
 	# Primary 
 	$itk_component(primaryToolbar) itemconfigure checkpoint \

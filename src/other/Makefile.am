@@ -98,15 +98,38 @@ uninstall-local: tkhtml3-uninstall
 
 .PHONY : tkhtml3-all tkhtml3-install tkhtml3-clean tkhtml3-distclean tkhtml3-uninstall
 
-if BUILD_TKIMG
+if BUILD_TKPNG
 if WITH_TK
-TKIMGDIR=tkimg
-else !WITH_TK
-TKIMGDIR=
+TKPNG_MAKE=$(MAKE)
+else
+TKPNG_MAKE=:
 endif
-else !BUILD_TKIMG
-TKIMGDIR=
+else
+TKPNG_MAKE=:
 endif
+
+tkpng-all:
+	cd tkpng && ${TKPNG_MAKE} $(AM_MAKEFLAGS) LIBTOOL="../../../libtool --mode=link" LIBTOOLDIR=".libs/" LIBS="${TKPNGZLIB}" all
+
+tkpng-install:
+	cd tkpng && ${TKPNG_MAKE} $(AM_MAKEFLAGS) LIBTOOL="../../../libtool --mode=link" LIBTOOLDIR=".libs/" LIBS="${TKPNGZLIB}" install
+
+tkpng-clean:
+	cd tkpng && ${TKPNG_MAKE} $(AM_MAKEFLAGS) clean
+
+tkpng-distclean:
+	cd tkpng && ${TKPNG_MAKE} $(AM_MAKEFLAGS) distclean
+
+tkpng-uninstall:
+	cd tkpng && ${TKPNG_MAKE} $(AM_MAKEFLAGS) uninstall
+
+all-local: tkpng-all
+install-exec-local: tkpng-install
+clean-local: tkpng-clean
+distclean-local: tkpng-distclean
+uninstall-local: tkpng-uninstall
+
+.PHONY : tkpng-all tkpng-install tkpng-clean tkpng-distclean tkpng-uninstall
 
 if BUILD_OPENNURBS
 OPENNURBSDIR=openNURBS
@@ -162,7 +185,6 @@ SUBDIRS = \
 	${TERMLIBDIR} \
 	${JOVEDIR} \
 	${STEPDIR} \
-	${TKIMGDIR} \
 	${OPENNURBSDIR} \
 	${TNTDIR} \
 	awf
