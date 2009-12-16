@@ -350,7 +350,8 @@ BU_EXTERN(int rt_bot_form, (struct bu_vls *log, const struct rt_functab *ftp));
 BU_EXTERN(int rt_metaball_get, (struct bu_vls *log,
 			   const struct rt_db_internal *intern, const char *attr));
 BU_EXTERN(int rt_metaball_adjust, (struct bu_vls *log,
-			      struct rt_db_internal *intern, int argc, char **argv));
+			      struct rt_db_internal *intern, int argc, char **argv,
+			      struct resource *resp));
 
 /* SKETCH */
 BU_EXTERN(int rt_sketch_get, (struct bu_vls *log,

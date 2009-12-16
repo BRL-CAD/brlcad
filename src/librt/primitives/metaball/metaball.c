@@ -867,7 +867,7 @@ rt_metaball_get(struct bu_vls *log, const struct rt_db_internal *intern, const c
  * used for db put/asc2g
  */
 int 
-rt_metaball_adjust (struct bu_vls *log, struct rt_db_internal *intern, int argc, char **argv)
+rt_metaball_adjust (struct bu_vls *log, struct rt_db_internal *intern, int argc, char **argv, struct resource *resp)
 {
     struct rt_metaball_internal *mb;
     char *pts, *pend;;
