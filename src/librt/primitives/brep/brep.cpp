@@ -176,85 +176,6 @@ brep_pt_trimmed(pt2d_t pt, const ON_BrepFace& face) {
 }
 
 
-#define PLOTTING 1
-#if PLOTTING
-
-#include "plot3.h"
-
-static int pcount = 0;
-static FILE* plot = NULL;
-
-HIDDEN FILE*
-_brep_plot_file(const char *pname = NULL)
-{
-    if (plot != NULL) {
-	(void)fclose(plot);
-	plot = NULL;
-    }
-    if (pname == NULL) {
-	pname = "out.pl";
-    }
-    plot = fopen(pname, "w");
-    point_t min, max;
-    VSET(min, -2048, -2048, -2048);
-    VSET(max, 2048, 2048, 2048);
-    pdv_3space(plot, min, max);
-    
-    return plot;
-}
-
-
-#define BLUEVIOLET 138, 43, 226
-#define CADETBLUE 95, 159, 159
-#define CORNFLOWERBLUE 66, 66, 111
-#define LIGHTBLUE 173, 216, 230
-#define DARKGREEN 0, 100, 0
-#define KHAKI 189, 183, 107
-#define FORESTGREEN 34, 139, 34
-#define LIMEGREEN 124, 252, 0
-#define PALEGREEN 152, 251, 152
-#define DARKORANGE 255, 140, 0
-#define DARKSALMON 233, 150, 122
-#define LIGHTCORAL 240, 128, 128
-#define PEACH 255, 218, 185
-#define DEEPPINK 255, 20, 147
-#define HOTPINK 255, 105, 180
-#define INDIANRED 205, 92, 92
-#define DARKVIOLET 148, 0, 211
-#define MAROON 139, 28, 98
-#define GOLDENROD 218, 165, 32
-#define DARKGOLDENROD 184, 134, 11
-#define LIGHTGOLDENROD 238, 221, 130
-#define DARKYELLOW 155, 155, 52
-#define LIGHTYELLOW 255, 255, 224
-#define RED 255, 0, 0
-#define GREEN 0, 255, 0
-#define BLUE 0, 0, 255
-#define YELLOW 255, 255, 0
-#define MAGENTA 255, 0, 255
-#define CYAN 0, 255, 255
-#define BLACK 0, 0, 0
-#define WHITE 255, 255, 255
-
-#define M_COLOR_PLOT(c) pl_color(_brep_plot_file(), c)
-#define COLOR_PLOT(r, g, b) pl_color(_brep_plot_file(), (r), (g), (b))
-#define M_PT_PLOT(p) { 		\
-    point_t pp, ppp;		        \
-    vect_t grow;                        \
-    VSETALL(grow, 0.01);                  \
-    VADD2(pp, p, grow);                 \
-    VSUB2(ppp, p, grow);                \
-    pdv_3box(_brep_plot_file(), pp, ppp); 	\
-}
-#define PT_PLOT(p) { 		\
-    point_t pp; 			\
-    VSCALE(pp, p, 1.001); 		\
-    pdv_3box(_brep_plot_file(), p, pp); 	\
-}
-#define LINE_PLOT(p1, p2) pdv_3move(_brep_plot_file(), p1); pdv_3line(_brep_plot_file(), p1, p2)
-#define BB_PLOT(p1, p2) pdv_3box(_brep_plot_file(), p1, p2)
-#endif /* PLOTTING */
-
 double
 getVerticalTangent(const ON_Curve *curve, double min, double max) {
     double mid;
@@ -326,32 +247,20 @@ split_trims_hv_tangent(const ON_Curve* curve, ON_Interval& t, list<double>& list
     
     if (tan_changed) {
 	if (tanx_changed && tany_changed) {//horz & vert simply split
-#if 1
 	    double midpoint = (t[1]+t[0])/2.0;
 	    ON_Interval left(t[0], midpoint);
 	    ON_Interval right(midpoint, t[1]);
 	    split_trims_hv_tangent(curve, left, list);
 	    split_trims_hv_tangent(curve, right, list);
 	    return true;
-#else
-	    M_COLOR_PLOT(RED);
-#endif
 	} else if (tanx_changed) {//find horz
-#if 1
 	    double x = getVerticalTangent(curve, t[0], t[1]);
-	    M_COLOR_PLOT(DARKORANGE);
 	    list.push_back(x);
-#else	    
 	    M_COLOR_PLOT(DARKORANGE);
-#endif
 	} else { //find vert
-#if 1
 	    double x = getHorizontalTangent(curve, t[0], t[1]);
-	    M_COLOR_PLOT(MAGENTA);
 	    list.push_back(x);
-#else
 	    M_COLOR_PLOT(MAGENTA);
-#endif
 	}
     } else { // check point slope for change
 	bool slopex, slopex_changed;
@@ -370,16 +279,12 @@ split_trims_hv_tangent(const ON_Curve* curve, ON_Interval& t, list<double>& list
 	slope_changed = slopex_changed || slopey_changed;
 			
 	if (slope_changed) {  //2 horz or 2 vert changes simply split
-#if 1
 	    double midpoint = (t[1]+t[0])/2.0;
 	    ON_Interval left(t[0], midpoint);
 	    ON_Interval right(midpoint, t[1]);
 	    split_trims_hv_tangent(curve, left, list);
 	    split_trims_hv_tangent(curve, right, list);
 	    return true;
-#else
-	    M_COLOR_PLOT(BLUE);
-#endif
 	} else {
 	    M_COLOR_PLOT(DARKGREEN);
 	}
@@ -1550,7 +1455,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
     }
 
 #ifdef KDEBUGMISS
-    //(void)fclose(_brep_plot_file());
+    //(void)fclose(_plot_file());
     //	plot = NULL;
 #endif
     HitList hits = all_hits;
@@ -2082,7 +1987,6 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 
 		// draw bounding box
 		BB_PLOT(i->sbv->m_node.m_min, i->sbv->m_node.m_max);
-		fflush(_brep_plot_file());
 	    }
 #endif
 
