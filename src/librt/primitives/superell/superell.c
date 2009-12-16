@@ -1032,17 +1032,6 @@ static const fastf_t rt_superell_uvw[5*ELEMENTS_PER_VECT] = {
 
 
 /**
- * R T _ S U P E R E L L _ T N U R B
- */
-int
-rt_superell_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bn_tol *tol)
-{
-    bu_log("rt_superell_tnurb called!\n");
-    return 0;
-}
-
-
-/**
  * R T _ S U P E R E L L _ P A R A M S
  *
  */

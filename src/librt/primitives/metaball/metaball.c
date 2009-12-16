@@ -808,17 +808,6 @@ rt_metaball_ifree(struct rt_db_internal *ip, struct resource *resp)
 
 
 /**
- * R T _ M E T A B A L L _ T N U R B
- */
-int
-rt_metaball_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bn_tol *tol)
-{
-    bu_log("ERROR: rt_metaball_tnurb() is not implemented\n");
-    return 0;
-}
-
-
-/**
  * R T _ M E T A B A L L _ A D D _ P O I N T
  *
  * Add a single point to an existing metaball.
