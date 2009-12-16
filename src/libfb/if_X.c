@@ -70,9 +70,11 @@
 #ifdef USE_PROTOTYPES
 HIDDEN void	Monochrome( unsigned char *bitbuf, unsigned char *bytebuf, int width, int height, int method);
 HIDDEN int	X_do_event( FBIO	*ifp );
+HIDDEN void	genmap(unsigned char *rmap, unsigned char *gmap, unsigned char *bmap);
 #else
 HIDDEN void	Monochrome();
 HIDDEN int	X_do_event();
+HIDDEN void	genmap();
 #endif
 /*
  * Per window state information.
