@@ -59,7 +59,11 @@ done
 exec $WISH $0 $@
 
 # Set ttk theme
-::ttk::style theme use clam
+if {[tk windowingsystem] eq "aqua"} {
+   ::ttk::style theme use aqua
+} else {
+   ::ttk::style theme use clam
+}
 
 # normalize ARCHER_HOME
 if {[info exists env(ARCHER_HOME)]} {
