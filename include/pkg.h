@@ -50,13 +50,8 @@
  *  It is vital that the argument list given for "args" be enclosed
  *  in parens.
  */
-#if __STDC__ || USE_PROTOTYPES
-#	define	PKG_EXTERN(type_and_name, args)	extern type_and_name args
-#	define	PKG_ARGS(args) args
-#else
-#	define	PKG_EXTERN(type_and_name, args)	extern type_and_name()
-#	define	PKG_ARGS(args) ()
-#endif
+#define PKG_EXTERN(type_and_name, args) extern type_and_name args
+#define PKG_ARGS(args) args
 
 
 #ifdef __cplusplus

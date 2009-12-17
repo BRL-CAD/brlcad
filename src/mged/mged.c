@@ -210,7 +210,6 @@ int mged_bomb_hook(genptr_t clientData, genptr_t str);
 
 void mged_view_obj_callback(genptr_t clientData, struct view_obj *vop);
 
-#ifdef USE_PROTOTYPES
 #if !defined(_WIN32) || defined(__CYGWIN__)
 Tcl_FileProc stdin_input;
 Tcl_FileProc std_out_or_err;
@@ -218,10 +217,7 @@ Tcl_FileProc std_out_or_err;
 void stdin_input(ClientData clientData, int mask);
 void std_out_or_err(ClientData clientData, int mask);
 #endif
-#else
-void stdin_input();
-void std_out_or_err();
-#endif
+
 
 static void
 notify_parent_done(int parent) {

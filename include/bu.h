@@ -128,16 +128,10 @@ __BEGIN_DECLS
 /*
  * Macros for providing function prototypes, regardless of whether
  * the compiler understands them or not.  It is vital that the
- * argument list given for "args" be enclosed in parens.  The setting
- * of USE_PROTOTYPES is determined during configure
+ * argument list given for "args" be enclosed in parens.
  */
-#if __STDC__ || USE_PROTOTYPES
-#  define BU_EXTERN(type_and_name, args)	extern type_and_name args
-#  define BU_ARGS(args)			args
-#else
-#  define BU_EXTERN(type_and_name, args)	extern type_and_name()
-#  define BU_ARGS(args)			()
-#endif
+#define BU_EXTERN(type_and_name, args) extern type_and_name args
+#define BU_ARGS(args) args
 
 /**
  * This is so we can use gcc's "format string vs arguments"-check for

@@ -31,11 +31,7 @@
 #ifndef __FBIO_H__
 #define __FBIO_H__
 
-#if __STDC__ || USE_PROTOTYPES
-#  define	FB_ARGS(args)			args
-#else
-#  define	FB_ARGS(args)			()
-#endif
+#define	FB_ARGS(args) args
 
 #ifndef FB_EXPORT
 #  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)

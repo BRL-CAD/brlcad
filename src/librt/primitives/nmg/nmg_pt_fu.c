@@ -89,14 +89,12 @@ struct fpi {
 #define NMG_FPI_TOUCHED 27
 #define NMG_FPI_MISSED  32768
 
-#ifdef USE_PROTOTYPES
 static int nmg_class_pt_vu(struct fpi *fpi, struct vertexuse *vu);
-
 static struct edge_info *nmg_class_pt_eu(struct fpi *fpi, struct edgeuse *eu, struct edge_info *edge_list, const int in_or_out_only);
 static int compute_loop_class(struct fpi *fpi, const struct loopuse *lu, struct edge_info *edge_list);
 static int nmg_class_pt_lu(struct loopuse *lu, struct fpi *fpi, const int in_or_out_only);
 int nmg_class_pt_fu_except(const point_t pt, const struct faceuse *fu, const struct loopuse *ignore_lu, void (*eu_func)(), void (*vu_func)(), const char *priv, const int call_on_hits, const int in_or_out_only, const struct bn_tol *tol);
-#endif
+
 
 /**
  * B N _ D I S T S Q _ P T 3 _ L S E G 3 _ J R A
