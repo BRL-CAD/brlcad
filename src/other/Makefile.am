@@ -109,10 +109,10 @@ TKPNG_MAKE=:
 endif
 
 tkpng-all:
-	cd tkpng && ${TKPNG_MAKE}  $(AM_MAKEFLAGS) LIBS="${TKPNGZLIB} ${LIBM}" all
+	cd tkpng && ${TKPNG_MAKE} $(AM_MAKEFLAGS) LIBTOOL="../../../libtool --mode=link" LIBTOOLDIR=".libs/" LIBS="${TKPNGZLIB}" all
 
 tkpng-install:
-	cd tkpng && ${TKPNG_MAKE} $(AM_MAKEFLAGS)  LIBS="${TKPNGZLIB} ${LIBM}" all && ${TKPNG_MAKE} $(AM_MAKEFLAGS) LIBS="${TKPNGZLIB} ${LIBM}" install
+	cd tkpng && ${TKPNG_MAKE} $(AM_MAKEFLAGS) LIBTOOL="../../../libtool --mode=link" LIBTOOLDIR=".libs/" LIBS="${TKPNGZLIB}" all && ${TKPNG_MAKE} $(AM_MAKEFLAGS) LIBTOOLDIR=".libs/" LIBS="${TKPNGZLIB}" install
 
 tkpng-clean:
 	cd tkpng && ${TKPNG_MAKE} $(AM_MAKEFLAGS) clean
