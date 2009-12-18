@@ -149,6 +149,7 @@ librt_nil_la_SOURCES = \
 	primitives/hyp/hyp_brep.cpp \
 	primitives/hyp/hyp_mirror.c \
 	primitives/metaball/metaball.c \
+	primitives/metaball/metaball_tri.c \
 	primitives/mirror.c \
 	primitives/nmg/nmg.c \
 	primitives/nmg/nmg_bool.c \
@@ -246,6 +247,7 @@ nurb_example_LDADD = \
 noinst_HEADERS = \
 	primitives/fixpt.h \
 	primitives/brep/brep_debug.h \
+	primitives/metaball/metaball.h \
 	primitives/revolve/revolve.h \
 	primitives/xxx/xxx.h
 
