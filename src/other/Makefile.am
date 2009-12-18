@@ -108,11 +108,15 @@ else
 TKPNG_MAKE=:
 endif
 
+LIBTOOL="../../../libtool --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link"
+
+#LIBTOOL="../../../libtool --mode=link"
+
 tkpng-all:
-	cd tkpng && ${TKPNG_MAKE} $(AM_MAKEFLAGS) LIBTOOL="../../../libtool --mode=link" LIBTOOLDIR=".libs/" LIBS="${TKPNGZLIB} ${LIBM}" all
+	cd tkpng && ${TKPNG_MAKE} $(AM_MAKEFLAGS) LIBTOOL=${LIBTOOL}  LIBTOOLDIR=".libs/" LIBS="${TKPNGZLIB} ${LIBM}" all
 
 tkpng-install:
-	cd tkpng && ${TKPNG_MAKE} $(AM_MAKEFLAGS) LIBTOOL="../../../libtool --mode=link" LIBTOOLDIR=".libs/" LIBS="${TKPNGZLIB} ${LIBM}" all && ${TKPNG_MAKE} $(AM_MAKEFLAGS) LIBTOOLDIR=".libs/" LIBS="${TKPNGZLIB}${LIBM}" install
+	cd tkpng && ${TKPNG_MAKE} $(AM_MAKEFLAGS) LIBTOOL=${LIBTOOL}  LIBTOOLDIR=".libs/" LIBS="${TKPNGZLIB} ${LIBM}" all && ${TKPNG_MAKE} $(AM_MAKEFLAGS) LIBTOOLDIR=".libs/" LIBS="${TKPNGZLIB}${LIBM}" install
 
 tkpng-clean:
 	cd tkpng && ${TKPNG_MAKE} $(AM_MAKEFLAGS) clean
