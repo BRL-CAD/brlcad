@@ -307,8 +307,8 @@ BC_ARG_ENABLE([build_iwidgets], [iwidgets-install], [Install the included iwidge
 # tkhtml3
 BC_ARG_ENABLE([build_tkhtml3], [tkhtml3-build], [Build the included tkhtml3], [yes])
 
-# tkpng
-BC_ARG_ENABLE([build_tkpng], [tkpng-build], [Build the included tkPNG], [auto])
+# tkimg
+BC_ARG_ENABLE([build_tkimg], [tkimg-build], [Build the included tkImg], [auto])
 
 # force enable/disable building of tnt
 BC_ARG_ENABLE([build_tnt], [tnt-install], [Install the included Template Numerical Toolkit], [auto])
@@ -508,10 +508,10 @@ BC_ARG_ALIAS([build_iwidgets], [iwidgets-build])
 # aliases to force building tkhtml3 (help uses tkhtml3-build)
 BC_ARG_ALIAS([build_tkhtml3], [tkhtml3])
 
-# aliases to force building tkpng (help uses tkpng-build)
-BC_ARG_ALIAS([build_tkpng], [tkpng])
-BC_ARG_ALIAS([build_tkpng], [libtkpng])
-BC_ARG_ALIAS([build_tkpng], [libtkpng-build])
+# aliases to force building tkimg (help uses tkimg-build)
+BC_ARG_ALIAS([build_tkimg], [tkimg])
+BC_ARG_ALIAS([build_tkimg], [libtkimg])
+BC_ARG_ALIAS([build_tkimg], [libtkimg-build])
 
 # aliases to force building termlib (help uses termlib-build)
 BC_ARG_ALIAS([build_termlib], [termlib])
@@ -678,8 +678,8 @@ if test "x$set_everything" != "x" ; then
 	if test "x$bc_build_tkhtml3" = "xno" ; then
 		bc_build_tkhtml3="$set_everything"
 	fi
-	if test "x$bc_build_tkpng_set" = "xno" ; then
-		bc_build_tkpng="$set_everything"
+	if test "x$bc_build_tkimg_set" = "xno" ; then
+		bc_build_tkimg="$set_everything"
 	fi
 	if test "x$bc_build_tnt_set" = "xno" ; then
 		bc_build_tnt="$set_everything"
@@ -808,8 +808,8 @@ AC_MSG_RESULT($bc_build_iwidgets)
 AC_MSG_CHECKING(whether to build the tkhtml3 library)
 AC_MSG_RESULT($bc_build_tkhtml3)
 
-AC_MSG_CHECKING(whether to build the tkPNG library)
-AC_MSG_RESULT($bc_build_tkpng)
+AC_MSG_CHECKING(whether to build the tkImg library)
+AC_MSG_RESULT($bc_build_tkimg)
 
 AC_MSG_CHECKING(whether to build the termlib library)
 AC_MSG_RESULT($bc_build_termlib)
@@ -1226,10 +1226,8 @@ AC_CHECK_LIB(c, regcomp, regex_link_works=yes ; LIBREGEX="-lc",
 dnl check if zlib library links
 z_link_works=no
 LIBZLIB=""
-TKPNGZLIB=""
 if test "x$bc_build_zlib" != "xyes" ; then
     AC_CHECK_LIB(z, deflate, z_link_works=yes ; LIBZLIB="-lz")
-    AC_CHECK_LIB(z, deflate, z_link_works=yes ; TKPNGZLIB="-lz")
 fi
 
 dnl check if a png library links
@@ -2393,7 +2391,6 @@ LIBZ_CPPFLAGS=""
 if test "x$build_brlcad_zlib" = "xyes" ; then
     LIBZ='${top_builddir}/src/other/libz/libz.la'
     LIBZ_CPPFLAGS='-I${top_srcdir}/src/other/libz'
-    TKPNGZLIB='../../../src/other/libz/libz.la'
     AC_MSG_RESULT(yes)
 else
     LIBZ="$LIBZLIB"
@@ -2401,7 +2398,7 @@ else
 fi
 AC_SUBST(LIBZ)
 AC_SUBST(LIBZ_CPPFLAGS)
-AC_SUBST(TKPNGZLIB)
+
 
 dnl *** X11 interface compilation ***
 build_against_x11="no"
@@ -3047,28 +3044,34 @@ if test ! "x$bc_build_tkhtml3" = "xno" ; then
     AC_MSG_RESULT(yes)
 else
     build_brlcad_tkhtml3=no
+    TKHTML3=""
     AC_MSG_RESULT(no)
 fi
+AC_SUBST(TKHTML3)
 
 
-dnl *** tkPNG ***
-dnl figure out whether we need to build tkPNG
-TKPNG_VERSION="0.9"
+dnl *** tkImg ***
+dnl figure out whether we need to build tkImg
+TKIMG_VERSION="1.3"
 case $host_os in
      *netbsd-*|*freebsd-[[1-3]]*.*|*openbsd-[[1-3]]*|*sunos4*)
 	 # some OS's don't like dots in the lib name
-	 TKPNG_VERSION="`echo ${TKPNG_VERSION} | tr -d .`"
+	 TKIMG_VERSION="`echo ${TKIMG_VERSION} | tr -d .`"
 	 ;;
 esac
-AC_SUBST(TKPNG_VERSION)
-AC_MSG_CHECKING(whether to build tkpng)
-if test ! "x$bc_build_tkpng" = "xno" ; then
-    build_brlcad_tkpng=yes
+AC_SUBST(TKIMG_VERSION)
+AC_MSG_CHECKING(whether to build tkimg)
+if test ! "x$bc_build_tkimg" = "xno" ; then
+    build_brlcad_tkimg=yes
+    TKIMG='${top_builddir}/src/other/tkimg/tkimg${TKIMG_VERSION}.la'
     AC_MSG_RESULT(yes)
 else
-    build_brlcad_tkpng=no
+    build_brlcad_tkimg=no
+    TKIMG=""
     AC_MSG_RESULT(no)
 fi
+AC_SUBST(TKIMG)
+
 
 dnl *** TNT ***
 dnl See if template numerical toolkit works
@@ -3681,7 +3684,7 @@ AM_CONDITIONAL(BUILD_ITCL, [test "x$build_brlcad_itcl" = "xyes"])
 AM_CONDITIONAL(BUILD_ITK, [test "x$build_brlcad_itk" = "xyes"])
 AM_CONDITIONAL(BUILD_IWIDGETS, [test "x$build_brlcad_iwidgets" = "xyes"])
 AM_CONDITIONAL(BUILD_TKHTML3, [test "x$build_brlcad_tkhtml3" = "xyes"])
-AM_CONDITIONAL(BUILD_TKPNG, [test "x$build_brlcad_tkpng" = "xyes"])
+AM_CONDITIONAL(BUILD_TKIMG, [test "x$build_brlcad_tkimg" = "xyes"])
 AM_CONDITIONAL(BUILD_PNG, [test "x$build_brlcad_png" = "xyes"])
 AM_CONDITIONAL(BUILD_REGEX, [test "x$build_brlcad_regex" = "xyes"])
 AM_CONDITIONAL(BUILD_ZLIB, [test "x$build_brlcad_zlib" = "xyes"])
@@ -3948,13 +3951,6 @@ if test "x$build_brlcad_tkhtml3" = "xyes" ; then
     AC_CONFIG_SUBDIRS([src/other/tkhtml3])
 fi
 
-dnl configure tkpng
-if test "x$build_brlcad_tkpng" = "xyes" ; then
-    ac_configure_args="$ac_configure_args --exec-prefix=\"$bc_prefix\""
-    AC_CONFIG_SUBDIRS([src/other/tkpng])
-fi
-
-
 AC_CONFIG_FILES([
 	Makefile
 	bench/Makefile
@@ -4121,6 +4117,11 @@ AC_CONFIG_FILES([
 	src/other/openNURBS/Makefile
 	src/other/tcl/Makefile
 	src/other/tk/Makefile
+	src/other/tkimg/Makefile
+	src/other/tkimg/base/Makefile
+	src/other/tkimg/png/Makefile
+	src/other/tkimg/pngtcl/Makefile
+	src/other/tkimg/zlibtcl/Makefile
 	src/other/tnt/Makefile
 	src/proc-db/Makefile
 	src/remrt/Makefile
@@ -4251,7 +4252,7 @@ AC_MSG_RESULT([Build Tk .............................: $build_brlcad_tk])
 AC_MSG_RESULT([Build Itcl/Itk .......................: $build_brlcad_itcl])
 AC_MSG_RESULT([Build IWidgets .......................: $build_brlcad_iwidgets])
 AC_MSG_RESULT([Build tkhtml3 ........................: $build_brlcad_tkhtml3])
-AC_MSG_RESULT([Build tkPNG ..........................: $build_brlcad_tkpng])
+AC_MSG_RESULT([Build tkImg ..........................: $build_brlcad_tkimg])
 AC_MSG_RESULT([Build libpng .........................: $build_brlcad_png])
 AC_MSG_RESULT([Build libregex .......................: $build_brlcad_regex])
 AC_MSG_RESULT([Build zlib ...........................: $build_brlcad_zlib])
