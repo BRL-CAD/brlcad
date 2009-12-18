@@ -2393,7 +2393,7 @@ LIBZ_CPPFLAGS=""
 if test "x$build_brlcad_zlib" = "xyes" ; then
     LIBZ='${top_builddir}/src/other/libz/libz.la'
     LIBZ_CPPFLAGS='-I${top_srcdir}/src/other/libz'
-    TKPNGZLIB='../../../src/other/libz/libz.la'
+    TKPNGZLIB='../../../src/other/libz/.libs/libz.so'
     AC_MSG_RESULT(yes)
 else
     LIBZ="$LIBZLIB"
