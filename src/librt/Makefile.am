@@ -247,6 +247,7 @@ nurb_example_LDADD = \
 noinst_HEADERS = \
 	primitives/fixpt.h \
 	primitives/brep/brep_debug.h \
+	primitives/metaball/mc_table.h \
 	primitives/metaball/metaball.h \
 	primitives/revolve/revolve.h \
 	primitives/xxx/xxx.h
