@@ -218,12 +218,12 @@ depend:
 
 $(PKG_LIB_FILE): $(PKG_OBJECTS)
 	-rm -f $(PKG_LIB_FILE)
-	${LIBTOOL} ${MAKE_LIB}
+	${MAKE_LIB}
 	$(RANLIB) $(PKG_LIB_FILE)
 
 $(PKG_STUB_LIB_FILE): $(PKG_STUB_OBJECTS)
 	-rm -f $(PKG_STUB_LIB_FILE)
-	${LIBTOOL} ${MAKE_STUB_LIB}
+	${MAKE_STUB_LIB}
 	$(RANLIB_STUB) $(PKG_STUB_LIB_FILE)
 
 #========================================================================
@@ -323,8 +323,8 @@ install-lib-binaries: binaries
 	@mkdir -p $(DESTDIR)$(pkglibdir)
 	@list='$(lib_BINARIES)'; for p in $$list; do \
 	  if test -f $$p; then \
-	    echo " $(INSTALL_PROGRAM) ${LIBTOOLDIR}$$p $(DESTDIR)$(pkglibdir)/$$p"; \
-	    $(INSTALL_PROGRAM) ${LIBTOOLDIR}$$p $(DESTDIR)$(pkglibdir)/$$p; \
+	    echo " $(INSTALL_PROGRAM) $$p $(DESTDIR)$(pkglibdir)/$$p"; \
+	    $(INSTALL_PROGRAM) $$p $(DESTDIR)$(pkglibdir)/$$p; \
 	    stub=`echo $$p|sed -e "s/.*\(stub\).*/\1/"`; \
 	    if test "x$$stub" = "xstub"; then \
 		echo " $(RANLIB_STUB) $(DESTDIR)$(pkglibdir)/$$p"; \
