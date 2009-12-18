@@ -44,7 +44,7 @@
 
 #include "metaball.h"
 
-static int bitcount(unsigned char w) { if (w==0) return 0; return bitcount(w>>1) + w|1; }
+static int bitcount(unsigned char w) { return (w==0) ? 0 : bitcount(w>>1) + (w|1); }
 
 /**
  * R T _ M E T A B A L L _ T E S S
@@ -58,7 +58,6 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
     fastf_t mtol, radius;
     point_t center, min, max;
     fastf_t i, j, k, finalstep = +INFINITY;
-    int meh;
     struct bu_vls times;
     struct wdb_metaballpt *mbpt;
 

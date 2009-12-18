@@ -48,6 +48,7 @@
 
 #include <stddef.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <math.h>
 #include "bio.h"
@@ -94,7 +95,8 @@ const char *rt_metaball_lookup_type_name(const int id)
 /* compute the bounding sphere for a metaball cluster. center is
  * filled, and the radius is returned.
  */
-fastf_t rt_metaball_get_bounding_sphere(point_t *center, fastf_t threshold, struct rt_metaball_internal *mb)
+fastf_t
+rt_metaball_get_bounding_sphere(point_t *center, fastf_t threshold, struct rt_metaball_internal *mb)
 {
     struct wdb_metaballpt *mbpt, *mbpt2;
     point_t min, max, d;
@@ -176,7 +178,6 @@ rt_metaball_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 {
     struct rt_metaball_internal *mb, *nmb;
     struct wdb_metaballpt *mbpt, *nmbpt;
-    int i;
     fastf_t minfstr = +INFINITY;
 
     mb = ip->idb_ptr;
@@ -378,7 +379,7 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 	distleft -= step;
 	VADD2(p, p, inc);
 	if (stat == 1) {
-	    if (rt_metaball_point_value((const point_t *)&p, mb) < mb->threshold)
+	    if (rt_metaball_point_value((const point_t *)&p, mb) < mb->threshold) {
 		if (step<=mb->finalstep) {
 		    STEPIN(out);
 		    stat = 0;
@@ -386,8 +387,9 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 			return retval;
 		} else
 		    STEPBACK;
+	    }
 	} else
-	    if (rt_metaball_point_value((const point_t *)&p, mb) > mb->threshold)
+	    if (rt_metaball_point_value((const point_t *)&p, mb) > mb->threshold) {
 		if (step<=mb->finalstep) {
 		    RT_GET_SEG(segp, ap->a_resource);
 		    segp->seg_stp = stp;
@@ -405,6 +407,7 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 		    step = mb->initstep;
 		} else
 		    STEPBACK;
+	    }
     }
 #undef STEPBACK
 #undef STEPIN

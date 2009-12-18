@@ -19,6 +19,8 @@
  */
 
 void rt_metaball_set_bbox(point_t center, fastf_t radius, point_t *min, point_t *max);
+fastf_t rt_metaball_get_bounding_sphere(point_t *center, fastf_t threshold, struct rt_metaball_internal *mb);
+int rt_metaball_find_intersection(point_t *intersect, const struct rt_metaball_internal *mb, const point_t *a, const point_t *b, fastf_t step, const fastf_t finalstep);
 
 /*
  * Local Variables:
