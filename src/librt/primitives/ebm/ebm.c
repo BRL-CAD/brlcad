@@ -633,6 +633,8 @@ rt_ebm_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     union record *rec;
     struct bu_vls str;
 
+    if (dbip) RT_CK_DBI(dbip);
+
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_EBM) return(-1);
     eip = (struct rt_ebm_internal *)ip->idb_ptr;
@@ -776,6 +778,8 @@ rt_ebm_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     struct rt_ebm_internal ebm;	/* scaled version */
     struct bu_vls str;
 
+    if (dbip) RT_CK_DBI(dbip);
+
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_EBM) return(-1);
     eip = (struct rt_ebm_internal *)ip->idb_ptr;
@@ -820,17 +824,19 @@ rt_ebm_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
     bu_vls_init(&substr);
     bu_vls_strcat(str, "extruded bitmap (EBM)\n\t");
 
-    bu_vls_printf(&substr, "  file=\"%s\" w=%d n=%d depth=%g\n   mat=",
-		  eip->file, eip->xdim, eip->ydim, INTCLAMP(eip->tallness*mm2local));
-    bu_vls_vlscat(str, &substr);
-    for (i=0; i<15; i++) {
+    if (verbose) {
+	bu_vls_printf(&substr, "  file=\"%s\" w=%d n=%d depth=%g\n   mat=",
+		      eip->file, eip->xdim, eip->ydim, INTCLAMP(eip->tallness*mm2local));
+	bu_vls_vlscat(str, &substr);
+	for (i=0; i<15; i++) {
+	    bu_vls_trunc2(&substr, 0);
+	    bu_vls_printf(&substr, "%g, ", INTCLAMP(eip->mat[i]));
+	    bu_vls_vlscat(str, &substr);
+	}
 	bu_vls_trunc2(&substr, 0);
-	bu_vls_printf(&substr, "%g, ", INTCLAMP(eip->mat[i]));
+	bu_vls_printf(&substr, "%g\n", INTCLAMP(eip->mat[15]));
 	bu_vls_vlscat(str, &substr);
     }
-    bu_vls_trunc2(&substr, 0);
-    bu_vls_printf(&substr, "%g\n", INTCLAMP(eip->mat[15]));
-    bu_vls_vlscat(str, &substr);
 
     bu_vls_free(&substr);
 
@@ -891,6 +897,8 @@ rt_ebm_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     vect_t radvec;
     vect_t diam;
     vect_t small1;
+
+    if (rtip) RT_CK_RTI(rtip);
 
     eip = (struct rt_ebm_internal *)ip->idb_ptr;
     RT_EBM_CK_MAGIC(eip);
@@ -1044,8 +1052,8 @@ rt_ebm_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 void
 rt_ebm_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
 {
-/* register struct rt_ebm_specific *ebmp =
-   (struct rt_ebm_specific *)stp->st_specific; */
+    struct rt_ebm_specific *ebmp = (struct rt_ebm_specific *)stp->st_specific;
+    if (!ebmp) return;
 
     bn_vec_ortho(cvp->crv_pdir, hitp->hit_normal);
     cvp->crv_c1 = cvp->crv_c2 = 0;
@@ -1061,6 +1069,9 @@ rt_ebm_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 void
 rt_ebm_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
 {
+    if (ap) RT_CK_APPLICATION(ap);
+    if (stp) RT_CK_SOLTAB(stp);
+
     uvp->uv_u = hitp->hit_vpriv[X];
     uvp->uv_v = hitp->hit_vpriv[Y];
 
@@ -1097,7 +1108,7 @@ rt_ebm_class(void)
  * R T _ E B M _ P L O T
  */
 int
-rt_ebm_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_ebm_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
 {
     register struct rt_ebm_internal *eip;
     register int x, y;
@@ -1357,7 +1368,7 @@ rt_ebm_sort_edges(struct ebm_edge *edges)
  * R T _ E B M _ T E S S
  */
 int
-rt_ebm_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_ebm_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol)
 {
     struct rt_ebm_internal *eip;
     struct shell *s;
@@ -1704,8 +1715,11 @@ rt_ebm_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
  *
  */
 int
-rt_ebm_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
+rt_ebm_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 {
+    if (!ps) return(0);
+    if (ip) RT_CK_DB_INTERNAL(ip);
+
     return(0);			/* OK */
 }
 

@@ -585,6 +585,8 @@ rt_ehy_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
     vect_t pprime;
     fastf_t len;
 
+    if (ap) RT_CK_APPLICATION(ap);
+
     /*
      * hit_point is on surface; project back to unit ehy, creating a
      * vector from vertex to hit point.
@@ -649,7 +651,7 @@ rt_ehy_class(void)
  * R T _ E H Y _ P L O T
  */
 int
-rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol __attribute__((unused)))
 {
     fastf_t c, dtol, f, mag_a, mag_h, ntol, r1, r2;
     fastf_t **ellipses, theta_prev, theta_new, rt_ell_ang(fastf_t *p1, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol);
@@ -711,12 +713,11 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	/* Convert rel to absolute by scaling by smallest side */
 	dtol = ttol->rel * 2 * r2;
     if (ttol->abs <= 0.0) {
-	if (dtol <= 0.0)
+	if (dtol <= 0.0) {
 	    /* No tolerance given, use a default */
 	    dtol = 2 * 0.10 * r2;	/* 10% */
-	else
-	    /* Use absolute-ized relative tolerance */
-	    ;
+	}
+	/* Use absolute-ized relative tolerance */
     } else {
 	/* Absolute tolerance was given, pick smaller */
 	if (ttol->rel <= 0.0 || dtol > ttol->abs)
@@ -1014,12 +1015,11 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	/* Convert rel to absolute by scaling by smallest side */
 	dtol = ttol->rel * 2 * r2;
     if (ttol->abs <= 0.0) {
-	if (dtol <= 0.0)
+	if (dtol <= 0.0) {
 	    /* No tolerance given, use a default */
 	    dtol = 2 * 0.10 * r2;	/* 10% */
-	else
-	    /* Use absolute-ized relative tolerance */
-	    ;
+	}
+	/* Use absolute-ized relative tolerance */
     } else {
 	/* Absolute tolerance was given, pick smaller */
 	if (ttol->rel <= 0.0 || dtol > ttol->abs)
@@ -1419,6 +1419,8 @@ rt_ehy_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     struct rt_ehy_internal *xip;
     union record *rp;
 
+    if (dbip) RT_CK_DBI(dbip);
+
     BU_CK_EXTERNAL(ep);
     rp = (union record *)ep->ext_buf;
     /* Check record type */
@@ -1465,6 +1467,8 @@ rt_ehy_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 {
     struct rt_ehy_internal *xip;
     union record *ehy;
+
+    if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_EHY) return(-1);
@@ -1528,6 +1532,7 @@ rt_ehy_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     fastf_t vec[3*4];
 
     BU_CK_EXTERNAL(ep);
+    if (dbip) RT_CK_DBI(dbip);
 
     BU_ASSERT_LONG(ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * 3*4);
 
@@ -1573,6 +1578,8 @@ rt_ehy_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 {
     struct rt_ehy_internal *xip;
     fastf_t vec[3*4];
+
+    if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_EHY) return(-1);
@@ -1652,14 +1659,16 @@ rt_ehy_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 	    INTCLAMP(MAGNITUDE(xip->ehy_H) * mm2local));
     bu_vls_strcat(str, buf);
 
-    sprintf(buf, "\tA=%g\n", INTCLAMP(xip->ehy_r1 * mm2local));
-    bu_vls_strcat(str, buf);
+    if (verbose) {
+	sprintf(buf, "\tA=%g\n", INTCLAMP(xip->ehy_r1 * mm2local));
+	bu_vls_strcat(str, buf);
 
-    sprintf(buf, "\tB=%g\n", INTCLAMP(xip->ehy_r2 * mm2local));
-    bu_vls_strcat(str, buf);
-
-    sprintf(buf, "\tc=%g\n", INTCLAMP(xip->ehy_c * mm2local));
-    bu_vls_strcat(str, buf);
+	sprintf(buf, "\tB=%g\n", INTCLAMP(xip->ehy_r2 * mm2local));
+	bu_vls_strcat(str, buf);
+	
+	sprintf(buf, "\tc=%g\n", INTCLAMP(xip->ehy_c * mm2local));
+	bu_vls_strcat(str, buf);
+    }
 
     return(0);
 }
@@ -1693,8 +1702,11 @@ rt_ehy_ifree(struct rt_db_internal *ip, struct resource *resp)
  *
  */
 int
-rt_ehy_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
+rt_ehy_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 {
+    if (!ps) return (0);
+    if (ip) RT_CK_DB_INTERNAL(ip);
+
     return(0);			/* OK */
 }
 

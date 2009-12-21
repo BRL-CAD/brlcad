@@ -571,6 +571,8 @@ rt_epa_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
     vect_t pprime;
     fastf_t len;
 
+    if (ap) RT_CK_APPLICATION(ap);
+
     /* hit_point is on surface; project back to unit epa, creating a
      * vector from vertex to hit point.
      */
@@ -633,7 +635,7 @@ rt_epa_class(void)
  * R T _ E P A _ P L O T
  */
 int
-rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol __attribute__((unused)))
 {
     fastf_t dtol, f, mag_a, mag_h, ntol, r1, r2;
     fastf_t **ellipses, theta_new, theta_prev, rt_ell_ang(fastf_t *p1, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol);
@@ -697,12 +699,11 @@ rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	/* Convert rel to absolute by scaling by smallest side */
 	dtol = ttol->rel * 2 * r2;
     if (ttol->abs <= 0.0) {
-	if (dtol <= 0.0)
+	if (dtol <= 0.0) {
 	    /* No tolerance given, use a default */
 	    dtol = 2 * 0.10 * r2;	/* 10% */
-	else
-	    /* Use absolute-ized relative tolerance */
-	    ;
+	}
+	/* Use absolute-ized relative tolerance */
     } else {
 	/* Absolute tolerance was given, pick smaller */
 	if (ttol->rel <= 0.0 || dtol > ttol->abs)
@@ -1073,12 +1074,11 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	/* Convert rel to absolute by scaling by smallest side */
 	dtol = ttol->rel * 2 * r2;
     if (ttol->abs <= 0.0) {
-	if (dtol <= 0.0)
+	if (dtol <= 0.0) {
 	    /* No tolerance given, use a default */
 	    dtol = 2 * 0.10 * r2;	/* 10% */
-	else
-	    /* Use absolute-ized relative tolerance */
-	    ;
+	}
+	/* Use absolute-ized relative tolerance */
     } else {
 	/* Absolute tolerance was given, pick smaller */
 	if (ttol->rel <= 0.0 || dtol > ttol->abs)
@@ -1461,6 +1461,8 @@ rt_epa_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     struct rt_epa_internal *xip;
     union record *rp;
 
+    if (dbip) RT_CK_DBI(dbip);
+
     BU_CK_EXTERNAL(ep);
     rp = (union record *)ep->ext_buf;
     /* Check record type */
@@ -1507,6 +1509,8 @@ rt_epa_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     struct rt_epa_internal *xip;
     union record *epa;
     fastf_t mag_h;
+
+    if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_EPA) return(-1);
@@ -1568,6 +1572,7 @@ rt_epa_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     struct rt_epa_internal *xip;
     fastf_t vec[11];
 
+    if (dbip) RT_CK_DBI(dbip);
     BU_CK_EXTERNAL(ep);
 
     BU_ASSERT_LONG(ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * 11);
@@ -1614,6 +1619,8 @@ rt_epa_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     struct rt_epa_internal *xip;
     fastf_t vec[11];
     fastf_t mag_h;
+
+    if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_EPA) return(-1);
@@ -1692,11 +1699,13 @@ rt_epa_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 	    INTCLAMP(MAGNITUDE(xip->epa_H) * mm2local));
     bu_vls_strcat(str, buf);
 
-    sprintf(buf, "\tA=%g\n", INTCLAMP(xip->epa_r1 * mm2local));
-    bu_vls_strcat(str, buf);
+    if (verbose) {
+	sprintf(buf, "\tA=%g\n", INTCLAMP(xip->epa_r1 * mm2local));
+	bu_vls_strcat(str, buf);
 
-    sprintf(buf, "\tB=%g\n", INTCLAMP(xip->epa_r2 * mm2local));
-    bu_vls_strcat(str, buf);
+	sprintf(buf, "\tB=%g\n", INTCLAMP(xip->epa_r2 * mm2local));
+	bu_vls_strcat(str, buf);
+    }
 
     return(0);
 }
@@ -1730,8 +1739,11 @@ rt_epa_ifree(struct rt_db_internal *ip, struct resource *resp)
  *
  */
 int
-rt_epa_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
+rt_epa_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 {
+    if (!ps) return(0);
+    if (ip) RT_CK_DB_INTERNAL(ip);
+
     return(0);			/* OK */
 }
 

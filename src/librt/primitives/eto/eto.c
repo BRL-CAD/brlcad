@@ -173,6 +173,8 @@ rt_eto_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     fastf_t ch, cv, dh, f, phi;
     struct rt_eto_internal *tip;
 
+    if (rtip) RT_CK_RTI(rtip);
+
     tip = (struct rt_eto_internal *)ip->idb_ptr;
     RT_ETO_CK_MAGIC(tip);
 
