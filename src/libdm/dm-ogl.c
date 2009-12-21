@@ -95,7 +95,17 @@ static float diffuseColor[4];
 static float backColor[] = {1.0, 1.0, 0.0, 1.0}; /* yellow */
 
 
-HIDDEN void
+#ifdef USE_PROTOTYPES
+HIDDEN int ogl_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int size, int use_aspect);
+HIDDEN int ogl_setLight(struct dm *dmp, int lighting_on);
+HIDDEN int ogl_setZBuffer(struct dm *dmp, int zbuffer_on);
+#else
+HIDDEN int ogl_drawString2D();
+HIDDEN int ogl_setLight();
+HIDDEN int ogl_setZBuffer();
+#endif
+
+void
 ogl_fogHint(struct dm *dmp, int fastfog)
 {
     ((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.fastfog = fastfog;

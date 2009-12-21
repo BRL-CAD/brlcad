@@ -1148,7 +1148,7 @@ get_args(int argc, char **argv)
     return(1);
 }
 
-int cm_help(int argc, char **argv);
+HIDDEN int cm_help(int argc, char **argv);
 
 struct command_tab cmdtab[] = {
     {"file", "filename chan_num(s)", "load channels from file",
