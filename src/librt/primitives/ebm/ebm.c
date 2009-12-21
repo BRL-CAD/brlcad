@@ -1681,7 +1681,7 @@ rt_ebm_form(struct bu_vls *log, const struct rt_functab *ftp)
  * is to initialize the matrix and height to legal values.
  */
 void
-rt_ebm_make(const struct rt_functab *ftp, struct rt_db_internal *intern, double diameter)
+rt_ebm_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 {
     struct rt_ebm_internal *ebm;
 

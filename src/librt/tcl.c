@@ -1384,7 +1384,7 @@ shader {%%s} material {%%s} inherit {%%s} tree {%%s}");
  * rt_functab[ID_COMBINATION].ft_make().
  */
 void
-rt_comb_make(const struct rt_functab *ftp, struct rt_db_internal *intern, double diameter)
+rt_comb_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 {
     struct rt_comb_internal *comb;
 
@@ -1415,11 +1415,9 @@ rt_comb_make(const struct rt_functab *ftp, struct rt_db_internal *intern, double
  * R T _ G E N E R I C _ M A K E
  *
  * This one assumes that making all the parameters null is fine.
- * (More generally, diameter == 0 means make 'em all zero, otherwise
- * build something interesting to look at.)
  */
 void
-rt_generic_make(const struct rt_functab *ftp, struct rt_db_internal *intern, double diameter)
+rt_generic_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 {
     intern->idb_type = ftp - rt_functab;
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;

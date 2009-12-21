@@ -4770,7 +4770,7 @@ rt_dsp_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 
 
 void
-rt_dsp_make(const struct rt_functab *ftp, struct rt_db_internal *intern, double diameter __attribute__((unused)))
+rt_dsp_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 {
     struct rt_dsp_internal *dsp;
 

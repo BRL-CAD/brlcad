@@ -1962,8 +1962,7 @@ struct rt_functab {
     int	(*ft_form) BU_ARGS((struct bu_vls *,
 			    const struct rt_functab *));
 
-    void (*ft_make) BU_ARGS((const struct rt_functab *,
-			     struct rt_db_internal *, double /*diameter*/));
+    void (*ft_make) BU_ARGS((const struct rt_functab *, struct rt_db_internal */*ip*/));
     int (*ft_params) BU_ARGS((struct pc_pc_set *, const struct rt_db_internal */*ip*/));
 };
 
@@ -3567,10 +3566,7 @@ RT_EXPORT BU_EXTERN(int rt_generic_xform,
 		     struct db_i		*dbip,
 		     struct resource		*resp));
 
-RT_EXPORT BU_EXTERN(void rt_nul_make,
-		    (const struct rt_functab *ftp,
-		     struct rt_db_internal *intern,
-		     double diameter));
+RT_EXPORT BU_EXTERN(void rt_nul_make, (const struct rt_functab *ftp, struct rt_db_internal *intern));
 
 /* prep.c */
 RT_EXPORT BU_EXTERN(void rt_plot_all_bboxes,
@@ -4785,10 +4781,7 @@ RT_EXPORT BU_EXTERN(int rt_tcl_import_from_path,
 		     struct rt_db_internal *ip,
 		     const char *path,
 		     struct rt_wdb *wdb));
-RT_EXPORT BU_EXTERN(void rt_generic_make,
-		    (const struct rt_functab *ftp,
-		     struct rt_db_internal *intern,
-		     double diameter));
+RT_EXPORT BU_EXTERN(void rt_generic_make, (const struct rt_functab *ftp, struct rt_db_internal *intern));
 RT_EXPORT BU_EXTERN(void rt_tcl_setup,
 		    (Tcl_Interp *interp));
 RT_EXPORT BU_EXTERN(int Sysv_Init,

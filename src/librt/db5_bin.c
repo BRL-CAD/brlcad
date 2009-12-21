@@ -601,11 +601,9 @@ rt_retrieve_binunif(struct rt_db_internal *intern,
 }
 
 void
-rt_binunif_make(const struct rt_functab *ftp, struct rt_db_internal *intern, double diameter)
+rt_binunif_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 {
     struct rt_binunif_internal *bip;
-
-    diameter = diameter; /* quell */
 
     intern->idb_type = DB5_MINORTYPE_BINU_8BITINT;
     intern->idb_major_type = DB5_MAJORTYPE_BINARY_UNIF;

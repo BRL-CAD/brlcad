@@ -245,9 +245,7 @@ BU_EXTERN(void rt_binunif_ifree, (struct rt_db_internal *ip,
 BU_EXTERN(int rt_binunif_describe, (struct bu_vls *str,
 				    const struct rt_db_internal *ip, int verbose,
 				    double mm2local, struct resource *resp, struct db_i *db_i));
-BU_EXTERN(void rt_binunif_make, (const struct rt_functab *ftp,
-				 struct rt_db_internal *intern,
-				 double diameter));
+BU_EXTERN(void rt_binunif_make, (const struct rt_functab *ftp, struct rt_db_internal *intern));
 BU_EXTERN(int rt_binunif_get, (struct bu_vls *log,
 			       const struct rt_db_internal *intern,
 			       const char *attr));
@@ -264,8 +262,7 @@ BU_EXTERN(int rt_comb_adjust, (struct bu_vls *log,
 			       struct rt_db_internal *intern, int argc, char **argv,
 			       struct resource *resp));
 BU_EXTERN(int rt_comb_form, (struct bu_vls *log, const struct rt_functab *ftp));
-BU_EXTERN(void rt_comb_make, (const struct rt_functab *ftp,
-			      struct rt_db_internal *intern, double diameter));
+BU_EXTERN(void rt_comb_make, (const struct rt_functab *ftp, struct rt_db_internal *intern));
 BU_EXTERN(void rt_comb_ifree, (struct rt_db_internal *ip, struct resource *resp));
 
 /* generics for solid */
@@ -275,8 +272,7 @@ BU_EXTERN(int rt_parsetab_adjust, (struct bu_vls *log,
 				   struct rt_db_internal *intern, int argc, char **argv,
 				   struct resource *));
 BU_EXTERN(int rt_parsetab_form, (struct bu_vls *log, const struct rt_functab *ftp));
-BU_EXTERN(void rt_generic_make, (const struct rt_functab *ftp,
-				 struct rt_db_internal *intern, double diameter));
+BU_EXTERN(void rt_generic_make, (const struct rt_functab *ftp, struct rt_db_internal *intern));
 
 /* EBM solid */
 BU_EXTERN(int rt_ebm_get, (struct bu_vls *log,
@@ -285,8 +281,7 @@ BU_EXTERN(int rt_ebm_adjust, (struct bu_vls *log,
 			      struct rt_db_internal *intern, int argc, char **argv,
 			      struct resource *resp));
 BU_EXTERN(int rt_ebm_form, (struct bu_vls *log, const struct rt_functab *ftp));
-BU_EXTERN(void rt_ebm_make, (const struct rt_functab *,	struct rt_db_internal *,
-			     double /*diameter*/));
+BU_EXTERN(void rt_ebm_make, (const struct rt_functab *,	struct rt_db_internal *));
 
 /* ARBN solid */
 BU_EXTERN(int rt_arbn_get, (struct bu_vls *log,
@@ -312,8 +307,7 @@ extern int rt_dsp_adjust(struct bu_vls *log,
 			 int argc,
 			 char **argv,
 			 struct resource *resp);
-BU_EXTERN(void rt_dsp_make, (const struct rt_functab *,	struct rt_db_internal *,
-			     double /*diameter*/));
+BU_EXTERN(void rt_dsp_make, (const struct rt_functab *,	struct rt_db_internal *));
 
 /* PIPE solid */
 BU_EXTERN(int rt_pipe_get, (struct bu_vls *log,
@@ -335,8 +329,7 @@ BU_EXTERN(int rt_nmg_get, (struct bu_vls *log,
 BU_EXTERN(int rt_nmg_adjust, (struct bu_vls *log,
 			      struct rt_db_internal *intern, int argc, char **argv,
 			      struct resource *resp));
-BU_EXTERN(void rt_nmg_make, (const struct rt_functab *,	struct rt_db_internal *,
-			     double /*diameter*/));
+BU_EXTERN(void rt_nmg_make, (const struct rt_functab *,	struct rt_db_internal *));
 
 /* BOT solid */
 BU_EXTERN(int rt_bot_get, (struct bu_vls *log,
@@ -402,7 +395,7 @@ int rt_nul_form(struct bu_vls *log, const struct rt_functab *ftp) {
     bu_vls_printf(log, "rt_nul_form");
     return BRLCAD_ERROR;
 }
-void rt_nul_make(const struct rt_functab *ftp, struct rt_db_internal *intern, double diameter) {
+void rt_nul_make(const struct rt_functab *ftp, struct rt_db_internal *intern) {
     bu_bomb("rt_nul_make invoked\n");
 }
 
