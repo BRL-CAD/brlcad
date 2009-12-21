@@ -4405,22 +4405,50 @@ cmd_sca(ClientData	clientData,
     if (gedp == GED_NULL)
 	return TCL_OK;
 
-    if ((state == ST_S_EDIT || state == ST_O_EDIT) &&
-	mged_variables->mv_transform == 'e') {
-	fastf_t sf;
+    if ((state == ST_S_EDIT || state == ST_O_EDIT) && mged_variables->mv_transform == 'e') {
+	fastf_t sf1 = 0.0; /* combined xyz scale or x scale */
+	fastf_t sf2 = 0.0; /* y scale */
+	fastf_t sf3 = 0.0; /* z scale */
+        int save_edobj;
+        int ret;
 
-	if (ged_scale_args(gedp, argc, (const char **)argv, &sf) != GED_OK) {
+	if (ged_scale_args(gedp, argc, (const char **)argv, &sf1, &sf2, &sf3) != GED_OK) {
 	    Tcl_DStringInit(&ds);
 	    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
 	    Tcl_DStringResult(interp, &ds);
-
 	    return TCL_ERROR;
 	}
 
-	if (sf <= SMALL_FASTF || INFINITY < sf)
-	    return TCL_OK;
-
-	return mged_escale(sf);
+        /* argc is 2 or 4 because otherwise ged_scale_args fails */
+	if (argc == 2) {
+	    if (sf1 <= SMALL_FASTF || INFINITY < sf1)
+	        return TCL_OK;
+	    return mged_escale(sf1);
+        } else {
+	    if (sf1 <= SMALL_FASTF || INFINITY < sf1)
+	        return TCL_OK;
+	    if (sf2 <= SMALL_FASTF || INFINITY < sf2)
+	        return TCL_OK;
+	    if (sf3 <= SMALL_FASTF || INFINITY < sf3)
+	        return TCL_OK;
+            if (state == ST_O_EDIT) {
+	        save_edobj = edobj;
+	        edobj = BE_O_XSCALE;
+	        if ((ret = mged_escale(sf1)) == TCL_OK) {
+	            edobj = BE_O_YSCALE;
+	            if ((ret = mged_escale(sf2)) == TCL_OK) {
+	                edobj = BE_O_ZSCALE;
+	                ret = mged_escale(sf3);
+	            }
+	        }
+	        edobj = save_edobj;
+	        return ret;
+	    } else {
+                /* argc was 4 but state was ST_S_EDIT so do nothing */
+	        bu_log( "Error: Can only scale xyz independently on an object.\n" );
+	        return TCL_OK;
+            }
+	}
     } else {
 	int ret;
 	fastf_t	f;
@@ -4489,3 +4517,5 @@ cmd_pov(ClientData	clientData,
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+
+

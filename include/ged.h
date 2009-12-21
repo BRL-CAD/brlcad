@@ -2621,7 +2621,7 @@ GED_EXPORT BU_EXTERN(int ged_saveview, (struct ged *gedp, int argc, const char *
  * Usage:
  *     sca sf
  */
-GED_EXPORT BU_EXTERN(int ged_scale_args, (struct ged *gedp, int argc, const char *argv[], fastf_t *sf));
+GED_EXPORT BU_EXTERN(int ged_scale_args, (struct ged *gedp, int argc, const char *argv[], fastf_t *sf1, fastf_t *sf2, fastf_t *sf3));
 GED_EXPORT BU_EXTERN(int ged_scale, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
@@ -3031,3 +3031,4 @@ __END_DECLS
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+
