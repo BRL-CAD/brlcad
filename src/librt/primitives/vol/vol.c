@@ -65,15 +65,15 @@ struct rt_vol_specific {
 #define VOL_O(m) bu_offsetof(struct rt_vol_internal, m)
 
 const struct bu_structparse rt_vol_parse[] = {
-    {"%s",	RT_VOL_NAME_LEN, "file",	bu_offsetofarray(struct rt_vol_internal, file), BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "w",		VOL_O(xdim),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "n",		VOL_O(ydim),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "d",		VOL_O(zdim),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "lo",	VOL_O(lo),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "hi",	VOL_O(hi),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	ELEMENTS_PER_VECT, "size", bu_offsetofarray(struct rt_vol_internal, cellsize), BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	16, "mat", bu_offsetofarray(struct rt_vol_internal, mat), BU_STRUCTPARSE_FUNC_NULL },
-    {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"%s", RT_VOL_NAME_LEN, "file", bu_offsetofarray(struct rt_vol_internal, file), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d", 1, "w", VOL_O(xdim), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d", 1, "n", VOL_O(ydim), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d", 1, "d", VOL_O(zdim), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d", 1, "lo", VOL_O(lo), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d", 1, "hi", VOL_O(hi), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", ELEMENTS_PER_VECT, "size", bu_offsetofarray(struct rt_vol_internal, cellsize), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 16, "mat", bu_offsetofarray(struct rt_vol_internal, mat), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"", 0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 

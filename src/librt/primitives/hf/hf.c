@@ -64,30 +64,30 @@
 
 /* All fields valid in string solid */
 const struct bu_structparse rt_hf_parse[] = {
-    {"%s",	128,	"cfile",	bu_offsetofarray(struct rt_hf_internal, cfile), BU_STRUCTPARSE_FUNC_NULL},
-    {"%s",	128,	"dfile",	bu_offsetofarray(struct rt_hf_internal, dfile), BU_STRUCTPARSE_FUNC_NULL},
-    {"%s",	8,	"fmt",		bu_offsetofarray(struct rt_hf_internal, fmt), BU_STRUCTPARSE_FUNC_NULL},
-    {"%d",	1,	"w",		HF_O(w),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1,	"n",		HF_O(n),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1,	"shorts",	HF_O(shorts),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1,	"file2mm",	HF_O(file2mm),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	3,	"v",		HF_O(v[0]),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	3,	"x",		HF_O(x[0]),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	3,	"y",		HF_O(y[0]),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1,	"xlen",		HF_O(xlen),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1,	"ylen",		HF_O(ylen),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1,	"zscale",	HF_O(zscale),		BU_STRUCTPARSE_FUNC_NULL },
-    {"",	0,	(char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"%s",	128,	"cfile",	bu_offsetofarray(struct rt_hf_internal, cfile), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%s",	128,	"dfile",	bu_offsetofarray(struct rt_hf_internal, dfile), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%s",	8,	"fmt",		bu_offsetofarray(struct rt_hf_internal, fmt), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d",	1,	"w",		HF_O(w),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1,	"n",		HF_O(n),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1,	"shorts",	HF_O(shorts),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1,	"file2mm",	HF_O(file2mm),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	3,	"v",		HF_O(v[0]),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	3,	"x",		HF_O(x[0]),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	3,	"y",		HF_O(y[0]),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1,	"xlen",		HF_O(xlen),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1,	"ylen",		HF_O(ylen),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1,	"zscale",	HF_O(zscale),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",	0,	(char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 /* Subset of fields found in cfile */
 const struct bu_structparse rt_hf_cparse[] = {
-    {"%s",	128,	"dfile",	bu_offsetofarray(struct rt_hf_internal, dfile), BU_STRUCTPARSE_FUNC_NULL},
-    {"%s",	8,	"fmt",		bu_offsetofarray(struct rt_hf_internal, fmt), BU_STRUCTPARSE_FUNC_NULL},
-    {"%d",	1,	"w",		HF_O(w),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1,	"n",		HF_O(n),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1,	"shorts",	HF_O(shorts),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1,	"file2mm",	HF_O(file2mm),		BU_STRUCTPARSE_FUNC_NULL },
-    {"",	0,	(char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"%s",	128,	"dfile",	bu_offsetofarray(struct rt_hf_internal, dfile), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%s",	8,	"fmt",		bu_offsetofarray(struct rt_hf_internal, fmt), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d",	1,	"w",		HF_O(w),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1,	"n",		HF_O(n),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1,	"shorts",	HF_O(shorts),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1,	"file2mm",	HF_O(file2mm),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",	0,	(char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 

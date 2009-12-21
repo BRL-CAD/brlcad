@@ -42,7 +42,7 @@
 
 
 const struct bu_structparse rt_nul_parse[] = {
-    {""}
+    { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 

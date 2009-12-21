@@ -105,8 +105,8 @@ struct dsp_bb {
  */
 #define LAYER(l, x, y) l->p[l->dim[1]*y+x]
 struct dsp_bb_layer {
-    int dim[2];		/* the dimensions of the array at element p */
-    struct dsp_bb *p;	/* array of dsp_bb's for this level */
+    unsigned int dim[2]; /* the dimensions of the array at element p */
+    struct dsp_bb *p; /* array of dsp_bb's for this level */
 };
 
 
@@ -232,9 +232,13 @@ hook_mtos_from_stom(
     const struct bu_structparse *ip,
     const char *sp_name,
     genptr_t base,
-    char *p)
+    char *p __attribute__((unused)))
 {
     struct rt_dsp_internal *dsp_ip = (struct rt_dsp_internal *)base;
+
+    if (ip) RT_CK_DB_INTERNAL(ip);
+    if (!sp_name) return;
+    if (!base) return;
 
     bn_mat_inv(dsp_ip->dsp_mtos, dsp_ip->dsp_stom);
 }
@@ -245,9 +249,13 @@ hook_file(
     const struct bu_structparse *ip,
     const char *sp_name,
     genptr_t base,
-    char *p)
+    char *p __attribute__((unused)))
 {
     struct rt_dsp_internal *dsp_ip = (struct rt_dsp_internal *)base;
+
+    if (ip) RT_CK_DB_INTERNAL(ip);
+    if (!sp_name) return;
+    if (!base) return;
 
     dsp_ip->dsp_datasrc = RT_DSP_SRC_V4_FILE;
     dsp_ip->dsp_bip = (struct rt_db_internal *)NULL;
@@ -259,23 +267,23 @@ hook_file(
 
 /** only used when editing a v4 database */
 const struct bu_structparse rt_dsp_parse[] = {
-    {"%V",	1, "file", DSP_O(dsp_name), hook_file },
-    {"%i",	1, "sm", DSP_O(dsp_smooth), BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "w", DSP_O(dsp_xcnt), BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "n", DSP_O(dsp_ycnt), BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",     16, "stom", DSP_AO(dsp_stom), hook_mtos_from_stom },
-    {"",	0, (char *)0, 0,	BU_STRUCTPARSE_FUNC_NULL }
+    {"%V",	1, "file", DSP_O(dsp_name), hook_file, NULL, NULL },
+    {"%i",	1, "sm", DSP_O(dsp_smooth), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "w", DSP_O(dsp_xcnt), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "n", DSP_O(dsp_ycnt), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",     16, "stom", DSP_AO(dsp_stom), hook_mtos_from_stom, NULL, NULL },
+    {"",	0, (char *)0, 0,	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
 /** only used when editing a v4 database */
 const struct bu_structparse rt_dsp_ptab[] = {
-    {"%V",	1, "file", DSP_O(dsp_name), BU_STRUCTPARSE_FUNC_NULL },
-    {"%i",	1, "sm", DSP_O(dsp_smooth), BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "w", DSP_O(dsp_xcnt), BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "n", DSP_O(dsp_ycnt), BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",     16, "stom", DSP_AO(dsp_stom), BU_STRUCTPARSE_FUNC_NULL },
-    {"",	0, (char *)0, 0,	BU_STRUCTPARSE_FUNC_NULL }
+    {"%V",	1, "file", DSP_O(dsp_name), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%i",	1, "sm", DSP_O(dsp_smooth), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "w", DSP_O(dsp_xcnt), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "n", DSP_O(dsp_ycnt), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",     16, "stom", DSP_AO(dsp_stom), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",	0, (char *)0, 0,	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
@@ -382,7 +390,8 @@ HIDDEN void
 plot_layers(struct dsp_specific *dsp_sp)
 {
     FILE *fp;
-    int l, x, y, n;
+    int l, n;
+    unsigned int x, y;
     char buf[32];
     static int colors[7][3] = {
 	{255, 0, 0},
@@ -672,7 +681,8 @@ rt_dsp_print(register const struct soltab *stp)
 HIDDEN void
 dsp_layers(struct dsp_specific *dsp, unsigned short *d_min, unsigned short *d_max)
 {
-    int idx, i, j, k, curr_layer, x, y, xs, ys, xv, yv, tot;
+    int idx, curr_layer, xs, ys, xv, yv, tot;
+    unsigned int x, y, i, j, k;
     unsigned short dsp_min, dsp_max, cell_min, cell_max;
     unsigned short elev;
     struct dsp_bb *dsp_bb;
@@ -905,6 +915,8 @@ rt_dsp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     if (RT_G_DEBUG & DEBUG_HF)
 	bu_log("rt_dsp_prep()\n");
+
+    if (rtip) RT_CK_RTI(rtip);
 
     RT_CK_DB_INTERNAL(ip);
     dsp_ip = (struct rt_dsp_internal *)ip->idb_ptr;
@@ -2116,9 +2128,9 @@ HIDDEN int
 recurse_dsp_bb(struct isect_stuff *isect,
 	       struct dsp_bb *dsp_bb,
 	       point_t minpt, /* entry point of dsp_bb */
-	       point_t maxpt, /* exit point of dsp_bb */
+	       point_t maxpt __attribute__((unused)), /* exit point of dsp_bb */
 	       point_t bbmin, /* min point of bb (Z=0) */
-	       point_t bbmax) /* max point of bb */
+	       point_t bbmax __attribute__((unused))) /* max point of bb */
 {
     double tDX;		/* dist along ray to span 1 cell in X dir */
     double tDY;		/* dist along ray to span 1 cell in Y dir */
@@ -2651,10 +2663,9 @@ rt_dsp_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 HIDDEN void
 compute_normal_at_gridpoint(vect_t N,
 			    struct dsp_specific *dsp,
-			    int x,
-			    int y,
+			    unsigned int x,
+			    unsigned int y,
 			    FILE *fd,
-			    int boolean,
 			    double len)
 {
     /* Gridpoint specified is "B" we compute normal by taking the
@@ -2858,11 +2869,10 @@ rt_dsp_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
     x = hitp->hit_vpriv[X];
     y = hitp->hit_vpriv[Y];
 
-    compute_normal_at_gridpoint(Anorm, dsp, x, y, fd, 1, len);
-    compute_normal_at_gridpoint(Anorm, dsp, x, y, fd, 0, len);
-    compute_normal_at_gridpoint(Bnorm, dsp, x+1, y, fd, 0, len);
-    compute_normal_at_gridpoint(Dnorm, dsp, x+1, y+1, fd, 0, len);
-    compute_normal_at_gridpoint(Cnorm, dsp, x, y+1, fd, 0, len);
+    compute_normal_at_gridpoint(Anorm, dsp, x, y, fd, len);
+    compute_normal_at_gridpoint(Bnorm, dsp, x+1, y, fd, len);
+    compute_normal_at_gridpoint(Dnorm, dsp, x+1, y+1, fd, len);
+    compute_normal_at_gridpoint(Cnorm, dsp, x, y+1, fd, len);
 
     /* transform the hit point into DSP space for determining
      * interpolation
@@ -2952,6 +2962,7 @@ rt_dsp_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 void
 rt_dsp_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
 {
+    if (stp) RT_CK_SOLTAB(stp);
 
     if (RT_G_DEBUG & DEBUG_HF)
 	bu_log("rt_dsp_curve()\n");
@@ -3108,17 +3119,17 @@ rt_dsp_class(void)
  * R T _ D S P _ P L O T
  */
 int
-rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol __attribute__((unused)))
 {
     struct rt_dsp_internal *dsp_ip =
 	(struct rt_dsp_internal *)ip->idb_ptr;
     point_t m_pt;
     point_t s_pt;
     point_t o_pt;
-    int x, y;
+    unsigned int x, y;
     int step;
-    int xlim = dsp_ip->dsp_xcnt - 1;
-    int ylim = dsp_ip->dsp_ycnt - 1;
+    unsigned int xlim = dsp_ip->dsp_xcnt - 1;
+    unsigned int ylim = dsp_ip->dsp_ycnt - 1;
     int xfudge, yfudge;
     int drawing;
 
@@ -3234,7 +3245,7 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 
     /* now draw the body of the top */
     if (ttol->rel) {
-	int rstep;
+	unsigned int rstep;
 	rstep = dsp_ip->dsp_xcnt;
 	V_MAX(rstep, dsp_ip->dsp_ycnt);
 	step = (int)(ttol->rel * rstep);
@@ -3413,7 +3424,6 @@ get_cut_dir(struct rt_dsp_internal *dsp_ip, int x, int y, int xlim, int ylim)
  */
     int height[8];
     int xx, yy;
-    double h1, h2, h3, h4;
     double c02, c13;  /* curvature in direction 0<->2, and 1<->3 */
 
     if (dsp_ip->dsp_cuttype != DSP_CUT_DIR_ADAPT) {
@@ -3479,7 +3489,7 @@ get_cut_dir(struct rt_dsp_internal *dsp_ip, int x, int y, int xlim, int ylim)
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol)
 {
     struct rt_dsp_internal *dsp_ip;
     struct shell *s;
@@ -3981,11 +3991,7 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
  * !0 Failure
  */
 HIDDEN int
-get_file_data(struct rt_dsp_internal *dsp_ip,
-	      struct rt_db_internal *ip,
-	      const struct bu_external *ep,
-	      register const mat_t mat,
-	      const struct db_i *dbip)
+get_file_data(struct rt_dsp_internal *dsp_ip, const struct db_i *dbip)
 {
     struct bu_mapped_file *mf;
     int count, in_cookie, out_cookie;
@@ -4002,7 +4008,7 @@ get_file_data(struct rt_dsp_internal *dsp_ip,
 	return 0;
     }
 
-    if (dsp_ip->dsp_mp->buflen != dsp_ip->dsp_xcnt*dsp_ip->dsp_ycnt*2) {
+    if ((size_t)dsp_ip->dsp_mp->buflen != (size_t)(dsp_ip->dsp_xcnt*dsp_ip->dsp_ycnt*2)) {
 	bu_log("DSP buffer wrong size: %d s/b %d ",
 	       dsp_ip->dsp_mp->buflen, dsp_ip->dsp_xcnt*dsp_ip->dsp_ycnt*2);
 	return -1;
@@ -4040,11 +4046,7 @@ get_file_data(struct rt_dsp_internal *dsp_ip,
  * Retrieve data for DSP from a database object.
  */
 HIDDEN int
-get_obj_data(struct rt_dsp_internal *dsp_ip,
-	     struct rt_db_internal *ip,
-	     const struct bu_external *ep,
-	     register const mat_t mat,
-	     const struct db_i *dbip)
+get_obj_data(struct rt_dsp_internal *dsp_ip, const struct db_i *dbip)
 {
     struct rt_binunif_internal *bip;
     int in_cookie, out_cookie, got;
@@ -4104,11 +4106,7 @@ get_obj_data(struct rt_dsp_internal *dsp_ip,
  * !0 failure
  */
 HIDDEN int
-dsp_get_data(struct rt_dsp_internal *dsp_ip,
-	     struct rt_db_internal *ip,
-	     const struct bu_external *ep,
-	     register const mat_t mat,
-	     const struct db_i *dbip)
+dsp_get_data(struct rt_dsp_internal *dsp_ip, const mat_t mat, const struct db_i *dbip)
 {
     mat_t tmp;
     char *p;
@@ -4128,7 +4126,7 @@ dsp_get_data(struct rt_dsp_internal *dsp_ip,
 	    if (RT_G_DEBUG & DEBUG_HF)
 		bu_log("getting data from file \"%s\"\n", p);
 
-	    if (get_file_data(dsp_ip, ip, ep, mat, dbip) != 0) {
+	    if (get_file_data(dsp_ip, dbip) != 0) {
 		p = "file";
 	    } else {
 		return 0;
@@ -4140,7 +4138,7 @@ dsp_get_data(struct rt_dsp_internal *dsp_ip,
 	    if (RT_G_DEBUG & DEBUG_HF)
 		bu_log("getting data from object \"%s\"\n", p);
 
-	    if (get_obj_data(dsp_ip, ip, ep, mat, dbip) != 0) {
+	    if (get_obj_data(dsp_ip, dbip) != 0) {
 		p = "object";
 	    } else {
 		RT_CK_DB_INTERNAL(dsp_ip->dsp_bip);
@@ -4240,7 +4238,7 @@ rt_dsp_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     }
 
     if (mat == NULL) mat = bn_mat_identity;
-    if (dsp_get_data(dsp_ip, ip, ep, mat, dbip)!=0) {
+    if (dsp_get_data(dsp_ip, mat, dbip)!=0) {
 	IMPORT_FAIL("unable to load displacement map data");
     }
 
@@ -4273,13 +4271,13 @@ rt_dsp_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     union record *rec;
     struct bu_vls str;
 
+    if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_DSP) return(-1);
     dsp_ip = (struct rt_dsp_internal *)ip->idb_ptr;
     RT_DSP_CK_MAGIC(dsp_ip);
     BU_CK_VLS(&dsp_ip->dsp_name);
-
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = sizeof(union record)*DB_SS_NGRAN;
@@ -4317,10 +4315,12 @@ rt_dsp_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
  * Apply modeling transformations as well.
  */
 int
-rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip, struct resource *resp, const int minor_type)
+rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip, struct resource *resp, const int minor_type __attribute__((unused)))
 {
     struct rt_dsp_internal *dsp_ip;
     unsigned char *cp;
+
+    if (resp) RT_CK_RESOURCE(resp);
 
     if (RT_G_DEBUG & DEBUG_HF)
 	bu_log("rt_dsp_import4_v5()\n");
@@ -4405,7 +4405,7 @@ rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 		   ep->ext_nbytes - (cp - (unsigned char *)ep->ext_buf));
 
     if (mat == NULL) mat = bn_mat_identity;
-    if (dsp_get_data(dsp_ip, ip, ep, mat, dbip)!=0) {
+    if (dsp_get_data(dsp_ip, mat, dbip)!=0) {
 	IMPORT_FAIL("unable to load displacement map data");
     }
 
@@ -4419,12 +4419,15 @@ rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
  * The name is added by the caller, in the usual place.
  */
 int
-rt_dsp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip, struct resource *resp, const int minor_type)
+rt_dsp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip, struct resource *resp, const int minor_type __attribute__((unused)))
 {
     struct rt_dsp_internal *dsp_ip;
     unsigned long name_len;
     unsigned char *cp;
     int rem;
+
+    if (resp) RT_CK_RESOURCE(resp);
+    if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_DSP) return(-1);
@@ -4518,8 +4521,8 @@ rt_dsp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 int
 rt_dsp_describe(struct bu_vls *str,
 		const struct rt_db_internal *ip,
-		int verbose,
-		double mm2local,
+		int verbose __attribute__((unused)),
+		double mm2local __attribute__((unused)),
 		struct resource *resp,
 		struct db_i *db_ip)
 {
@@ -4527,7 +4530,8 @@ rt_dsp_describe(struct bu_vls *str,
 	(struct rt_dsp_internal *)ip->idb_ptr;
     struct bu_vls vls;
 
-    RT_CK_DBI(db_ip);
+    if (resp) RT_CK_RESOURCE(resp);
+    if (db_ip) RT_CK_DBI(db_ip);
 
     bu_vls_init(&vls);
 
@@ -4572,6 +4576,7 @@ rt_dsp_ifree(struct rt_db_internal *ip, struct resource *resp)
     if (!resp) {
 	resp = &rt_uniresource;
     }
+    if (resp) RT_CK_RESOURCE(resp);
 
     dsp_ip = (struct rt_dsp_internal *)ip->idb_ptr;
     RT_DSP_CK_MAGIC(dsp_ip);
@@ -4600,12 +4605,14 @@ rt_dsp_ifree(struct rt_db_internal *ip, struct resource *resp)
 
 
 HIDDEN void
-hook_verify(const struct bu_structparse *ip,
+hook_verify(const struct bu_structparse *sp,
 	    const char *sp_name,
 	    genptr_t base,
-	    char *p)
+	    char *p __attribute__((unused)))
 {
     struct rt_dsp_internal *dsp_ip = (struct rt_dsp_internal *)base;
+
+    if (!sp || !sp_name || !base) return;
 
     if (!strcmp(sp_name, "src")) {
 	switch (dsp_ip->dsp_datasrc) {
@@ -4646,14 +4653,14 @@ hook_verify(const struct bu_structparse *ip,
 
 
 const struct bu_structparse fake_dsp_printab[] = {
-    {"%c",  1, "src", DSP_O(dsp_datasrc), hook_verify },
-    {"%V",  1, "name", DSP_O(dsp_name), BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",  1, "w",  DSP_O(dsp_xcnt),	 hook_verify },
-    {"%d",  1, "n",  DSP_O(dsp_ycnt),	 hook_verify },
-    {"%i",  1, "sm", DSP_O(dsp_smooth), BU_STRUCTPARSE_FUNC_NULL },
-    {"%c",  1, "cut", DSP_O(dsp_cuttype), hook_verify },
-    {"%f", 16, "stom", DSP_AO(dsp_stom), hook_verify },
-    {"",    0, (char *)0, 0,		 BU_STRUCTPARSE_FUNC_NULL }
+    {"%c",  1, "src", DSP_O(dsp_datasrc), hook_verify, NULL, NULL },
+    {"%V",  1, "name", DSP_O(dsp_name), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",  1, "w",  DSP_O(dsp_xcnt), hook_verify, NULL, NULL },
+    {"%d",  1, "n",  DSP_O(dsp_ycnt), hook_verify, NULL, NULL },
+    {"%i",  1, "sm", DSP_O(dsp_smooth), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%c",  1, "cut", DSP_O(dsp_cuttype), hook_verify, NULL, NULL },
+    {"%f", 16, "stom", DSP_AO(dsp_stom), hook_verify, NULL, NULL },
+    {"",    0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
@@ -4763,7 +4770,7 @@ rt_dsp_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 
 
 void
-rt_dsp_make(const struct rt_functab *ftp, struct rt_db_internal *intern, double diameter)
+rt_dsp_make(const struct rt_functab *ftp, struct rt_db_internal *intern, double diameter __attribute__((unused)))
 {
     struct rt_dsp_internal *dsp;
 
@@ -4792,8 +4799,11 @@ rt_dsp_make(const struct rt_functab *ftp, struct rt_db_internal *intern, double 
  *
  */
 int
-rt_dsp_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
+rt_dsp_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 {
+    if (!ps) return(0);
+    RT_CK_DB_INTERNAL(ip);
+
     return(0);			/* OK */
 }
 
@@ -4988,7 +4998,7 @@ dsp_pos(point_t out, /* return value */
 {
     struct dsp_specific *dsp;
     point_t pt, tri_pt;
-    int x, y;
+    unsigned int x, y;
     int A[3], B[3], C[3], D[3];
 
     struct dsp_rpp dsp_rpp;
@@ -5009,8 +5019,8 @@ dsp_pos(point_t out, /* return value */
     x = pt[X];
     y = pt[Y];
 
-    CLAMP(x, 0, XSIZ(dsp)-1);
-    CLAMP(y, 0, YSIZ(dsp)-1);
+    V_MIN(x, XSIZ(dsp)-1);
+    V_MIN(y, YSIZ(dsp)-1);
 
     if (RT_G_DEBUG & DEBUG_HF)
 	bu_log("x:%d y:%d\n", x, y);
