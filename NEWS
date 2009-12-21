@@ -11,9 +11,10 @@ changes made.  See document footer for additional details.
 
 
 ----------------------------------------------------------------------
---- 2009-11-XX  Release 7.16.4                                     ---
+--- 2009-12-XX  Release 7.16.4                                     ---
 ----------------------------------------------------------------------
 
+* independent scaling of x/y/z axes for sca command - Richard Weiss
 * ADRT cut mode now paints intersected regions - Erik Greenwald
 * improved metaball primitive conversion support - Erik Greenwald
 * new data_axes command added to archer - Bob Parker
