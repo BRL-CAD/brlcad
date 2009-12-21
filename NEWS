@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 --- 2009-12-XX  Release 7.16.4                                     ---
 ----------------------------------------------------------------------
 
+* resizable windows in ADRT - Erik Greenwald
 * independent scaling of x/y/z axes for sca command - Richard Weiss
 * ADRT cut mode now paints intersected regions - Erik Greenwald
 * improved metaball primitive conversion support - Erik Greenwald
