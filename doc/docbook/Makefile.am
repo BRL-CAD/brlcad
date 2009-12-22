@@ -82,6 +82,7 @@ EXTRA_DIST = \
 	${lessonsDOCBOOK_EN} \
 	${man1DOCBOOK_EN} \
 	${man1INTRO_EN} \
+	${man3DOCBOOK_EN} \
 	${specificationsDOCBOOK_EN} \
         ${lessonsDOCBOOK_ES} \
 	${lessonsDOCBOOK_ES_IMAGES} \
