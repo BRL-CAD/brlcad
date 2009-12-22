@@ -87,10 +87,10 @@ strip_crlf(char *cdata) {
 #endif
 
 
-/*
- *			F _ N I R T
+/**
+ * F _ N I R T
  *
- *  Invoke nirt with the current view & stuff
+ * Invoke nirt with the current view & stuff
  */
 int
 ged_nirt(struct ged *gedp, int argc, const char *argv[])
@@ -118,7 +118,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     int rem = 2048;
 #endif
     int use_input_orig = 0;
-    vect_t	center_model;
+    vect_t center_model;
     vect_t dir;
     vect_t cml;
     register int i;
@@ -172,32 +172,9 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 	     -gedp->ged_gvp->gv_center[MDY], -gedp->ged_gvp->gv_center[MDZ]);
     }
 
-#if 0
-    if (mged_variables->mv_perspective_mode) {
-	point_t pt, eye;
-
-	/* get eye point */
-	VSET(pt, 0.0, 0.0, 1.0);
-	MAT4X3PNT(eye, gedp->ged_gvp->gv_view2model, pt);
-	VSCALE(eye, eye, base2local);
-
-	/* point passed in is actually the aim point */
-	VSCALE(cml, center_model, base2local);
-	VSUB2(dir, cml, eye);
-	VUNITIZE(dir);
-
-	/* copy eye point to cml (cml is used for the "xyz" command to nirt */
-	VMOVE(cml, eye);
-    } else {
-	VSCALE(cml, center_model, base2local);
-	VMOVEN(dir, gedp->ged_gvp->gv_rotation + 8, 3);
-	VSCALE(dir, dir, -1.0);
-    }
-#else
     VSCALE(cml, center_model, gedp->ged_wdbp->dbip->dbi_base2local);
     VMOVEN(dir, gedp->ged_gvp->gv_rotation + 8, 3);
     VSCALE(dir, dir, -1.0);
-#endif
 
     bu_vls_init(&p_vls);
     bu_vls_printf(&p_vls, "xyz %lf %lf %lf;",
@@ -211,7 +188,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 	*vp++ = "-e";
 	*vp++ = DG_QRAY_FORMAT_NULL;
 
-	/* first ray  ---- returns partitions */
+	/* first ray ---- returns partitions */
 	*vp++ = "-e";
 	*vp++ = DG_QRAY_FORMAT_P;
 
@@ -219,7 +196,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 	*vp++ = "-e";
 	*vp++ = bu_vls_addr(&p_vls);
 
-	/* second ray  ---- returns overlaps */
+	/* second ray ---- returns overlaps */
 	*vp++ = "-e";
 	*vp++ = DG_QRAY_FORMAT_O;
 
@@ -330,11 +307,11 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     if ((pid = fork()) == 0) {
 	/* Redirect stdin, stdout, stderr */
 	(void)close(0);
-	(void)dup( pipe_in[0] );
+	(void)dup(pipe_in[0]);
 	(void)close(1);
-	(void)dup( pipe_out[1] );
+	(void)dup(pipe_out[1]);
 	(void)close(2);
-	(void)dup ( pipe_err[1] );
+	(void)dup (pipe_err[1]);
 
 	/* close pipes */
 	(void)close(pipe_in[0]);
@@ -377,7 +354,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     sa.lpSecurityDescriptor = NULL;
 
     /* Create a pipe for the child process's STDOUT. */
-    CreatePipe( &pipe_out[0], &pipe_out[1], &sa, 0);
+    CreatePipe(&pipe_out[0], &pipe_out[1], &sa, 0);
 
     /* Create noninheritable read handle and close the inheritable read handle. */
     DuplicateHandle(GetCurrentProcess(), pipe_out[0],
@@ -387,7 +364,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     CloseHandle(pipe_out[0]);
 
     /* Create a pipe for the child process's STDERR. */
-    CreatePipe( &pipe_err[0], &pipe_err[1], &sa, 0);
+    CreatePipe(&pipe_err[0], &pipe_err[1], &sa, 0);
 
     /* Create noninheritable read handle and close the inheritable read handle. */
     DuplicateHandle(GetCurrentProcess(), pipe_err[0],
@@ -397,12 +374,12 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     CloseHandle(pipe_err[0]);
 
     /* The steps for redirecting child process's STDIN:
-     *     1.  Save current STDIN, to be restored later.
-     *     2.  Create anonymous pipe to be STDIN for child process.
-     *     3.  Set STDIN of the parent to be the read handle to the
-     *         pipe, so it is inherited by the child process.
-     *     4.  Create a noninheritable duplicate of the write handle,
-     *         and close the inheritable write handle.
+     * 1.  Save current STDIN, to be restored later.
+     * 2.  Create anonymous pipe to be STDIN for child process.
+     * 3.  Set STDIN of the parent to be the read handle to the
+     *     pipe, so it is inherited by the child process.
+     * 4.  Create a noninheritable duplicate of the write handle,
+     *     and close the inheritable write handle.
      */
 
     /* Create a pipe for the child process's STDIN. */
@@ -467,7 +444,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     fp_err = _fdopen(_open_osfhandle((HFILE)pipe_errDup, _O_TEXT), "r");
 
     /* send quit command to nirt */
-    fwrite( "q\n", 1, 2, fp_in );
+    fwrite("q\n", 1, 2, fp_in);
     (void)fclose(fp_in);
 
 #endif
@@ -528,15 +505,6 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 	rt_vlblock_free(vbp);
     }
 
-#if 0
-    /*
-     * Notify observers, if any, before generating textual output since
-     * such an act (observer notification) wipes out whatever gets stuffed
-     * into the result.
-     */
-    gd_notify(gedp->ged_gdp, interp);
-#endif
-
     if (DG_QRAY_TEXT(gedp->ged_gdp)) {
 	bu_vls_free(&t_vls);
 
@@ -569,7 +537,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 	_ged_wait_status(&gedp->ged_result_str, retcode);
 #else
     /* Wait for program to finish */
-    WaitForSingleObject( pi.hProcess, INFINITE );
+    WaitForSingleObject(pi.hProcess, INFINITE);
 
 #endif
 
@@ -585,6 +553,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 
     return GED_OK;
 }
+
 
 int
 ged_vnirt(struct ged *gedp, int argc, const char *argv[])
@@ -620,11 +589,12 @@ ged_vnirt(struct ged *gedp, int argc, const char *argv[])
     }
 
     /*
-     * The last two arguments are expected to be x, y in view coordinates.
-     * It is also assumed that view z will be the front of the viewing cube.
-     * These coordinates are converted to x, y, z in model coordinates and then
-     * converted to local units before being handed to nirt. All other
-     * arguments are passed straight through to nirt.
+     * The last two arguments are expected to be x, y in view
+     * coordinates.  It is also assumed that view z will be the front
+     * of the viewing cube.  These coordinates are converted to x, y,
+     * z in model coordinates and then converted to local units before
+     * being handed to nirt. All other arguments are passed straight
+     * through to nirt.
      */
     if (sscanf(argv[argc-2], "%lf", &view_ray_orig[X]) != 1 ||
 	sscanf(argv[argc-1], "%lf", &view_ray_orig[Y]) != 1) {
@@ -667,7 +637,6 @@ ged_vnirt(struct ged *gedp, int argc, const char *argv[])
 
     return status;
 }
-
 
 
 /*
