@@ -10,13 +10,11 @@ XML_CATALOG_FILES=$(top_srcdir)/doc/docbook/catalog.xml
 
 .xml.1:
 	XML_CATALOG_FILES=$(XML_CATALOG_FILES) $(XSLTPROC) $(XSLTPROC_FLAGS) $(XSL_MAN_STYLESHEET) $?
-	@mkdir -p system/man1/en
-	@mv '$(@F)' system/man1/en/.
+	@dir="$$(dirname $@)" && mkdir -p $$dir && mv '$(@F)' $$dir
 
 .xml.3:
 	XML_CATALOG_FILES=$(XML_CATALOG_FILES) $(XSLTPROC) $(XSLTPROC_FLAGS) $(XSL_MAN_STYLESHEET) $?
-	@mkdir -p system/man3/en
-	@mv '$(@F)' system/man3/en/.
+	@dir="$$(dirname $@)" && mkdir -p $$dir && mv '$(@F)' $$dir
 
 .fo.pdf: .xml.fo
 	$(APACHEFOP) -c fop.xconf $? -pdf $@
