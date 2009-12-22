@@ -35,6 +35,46 @@
 
 
 /**
+ * Stub function which will "similate" a call to a vector shot routine
+ */
+HIDDEN void
+vshot_stub(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
+/* An array of solid pointers */
+/* An array of ray pointers */
+/* array of segs (results returned) */
+/* Number of ray/object pairs */
+/* pointer to an application */
+{
+    register int i;
+    register struct seg *tmp_seg;
+    struct seg seghead;
+    int ret;
+
+    BU_LIST_INIT(&(seghead.l));
+
+    /* go through each ray/solid pair and call a scalar function */
+    for (i = 0; i < n; i++) {
+	if (stp[i] != 0) {
+	    /* skip call if solid table pointer is NULL */
+	    /* do scalar call, place results in segp array */
+	    ret = -1;
+	    if (rt_functab[stp[i]->st_id].ft_shot) {
+		ret = rt_functab[stp[i]->st_id].ft_shot(stp[i], rp[i], ap, &seghead);
+	    }
+	    if (ret <= 0) {
+		segp[i].seg_stp=(struct soltab *) 0;
+	    } else {
+		tmp_seg = BU_LIST_FIRST(seg, &(seghead.l));
+		BU_LIST_DEQUEUE(&(tmp_seg->l));
+		segp[i] = *tmp_seg; /* structure copy */
+		RT_FREE_SEG(tmp_seg, ap->a_resource);
+	    }
+	}
+    }
+}
+
+
+/**
  * R T _ S H O O T R A Y
  *
  * Given a ray, shoot it at all the relevant parts of the model,
@@ -202,8 +242,12 @@ rt_vshootray(struct application *ap)
 	/* bit vector per ray check */
 	/* mark elements to be skipped with ary_stp[] = SOLTAB_NULL */
 	ap->a_rt_i->nshots += nsol;	/* later: skipped ones */
-	if (rt_functab[id].ft_vshot)
+	if (rt_functab[id].ft_vshot) {
 	    rt_functab[id].ft_vshot(ary_stp, ary_rp, ary_seg, nsol, ap);
+	} else {
+	    vshot_stub(ary_stp, ary_rp, ary_seg, nsol, ap);
+	}
+
 
 	/* set bits for all solids shot at for each ray */
 
