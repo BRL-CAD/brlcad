@@ -1157,7 +1157,7 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
     // build surface tree making sure not to remove trimmed subsurfaces
     // since currently building trims and need full tree
     bool removeTrimmed = false;
-    SurfaceTree* st = new SurfaceTree((ON_BrepFace*) face, removeTrimmed);
+    brlcad::SurfaceTree* st = new brlcad::SurfaceTree((ON_BrepFace*) face, removeTrimmed);
 
     //TODO: remove debugging code
     if ((false) && (id == 24894)) {
