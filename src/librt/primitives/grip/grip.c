@@ -134,23 +134,6 @@ rt_grp_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 
 
 /**
- * R T _ G R P _ V S H O T
- *
- * Vectorizing version.
- */
-void
-rt_grp_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
-    /* An array of solid pointers */
-    /* An array of ray pointers */
-    /* array of segs (results returned) */
-    /* Number of ray/object pairs */
-
-{
-    return;
-}
-
-
-/**
  * R T _ G R P _ N O R M
  *
  * Given ONE ray distance, return the normal and entry/exit point.
@@ -173,12 +156,6 @@ rt_grp_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 {
     bu_bomb("rt_grp_curve: nobody should be asking for curve of a grip.\n");
 }
-
-
-/**
- * init solid
- */
-#define RT_HALF_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
 
 
 /**

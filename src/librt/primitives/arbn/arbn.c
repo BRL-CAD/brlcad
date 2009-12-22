@@ -256,21 +256,6 @@ rt_arbn_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 
 
 /**
- * R T _ A R B N _ V S H O T
- */
-void
-rt_arbn_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
-/* An array of solid pointers */
-/* An array of ray pointers */
-/* array of segs (results returned) */
-/* Number of ray/object pairs */
-
-{
-    rt_vstub(stp, rp, segp, n, ap);
-}
-
-
-/**
  * R T _ A R B N _ N O R M
  *
  * Given ONE ray distance, return the normal and entry/exit point.

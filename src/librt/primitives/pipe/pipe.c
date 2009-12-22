@@ -1462,25 +1462,6 @@ rt_pipe_shot(struct soltab *stp, register struct xray *rp, struct application *a
 }
 
 
-#define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;
-
-/**
- * R T_ P I P E _ V S H O T
- *
- * Vectorized version.
- */
-void
-rt_pipe_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
-/* An array of solid pointers */
-/* An array of ray pointers */
-/* array of segs (results returned) */
-/* Number of ray/object pairs */
-
-{
-    rt_vstub(stp, rp, segp, n, ap);
-}
-
-
 /**
  * R T _ P I P E _ C U R V E
  *

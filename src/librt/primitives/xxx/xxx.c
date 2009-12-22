@@ -150,25 +150,6 @@ rt_xxx_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 }
 
 
-#define RT_XXX_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
-
-
-/**
- * R T _ X X X _ V S H O T
- *
- * Vectorized version.
- */
-void
-rt_xxx_vshot(struct soltab *stp[],	/* An array of solid pointers */
-	     struct xray *rp[],		/* An array of ray pointers */
-	     struct seg segp[],		/* array of segs (results returned) */
-	     int n,			/* Number of ray/object pairs */
-	     struct application *ap)
-{
-    rt_vstub(stp, rp, segp, n, ap);
-}
-
-
 /**
  * R T _ X X X _ N O R M
  *

@@ -390,8 +390,6 @@ rt_ell_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 
 
 #define RT_ELL_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
-
-
 /**
  * R T _ E L L _ V S H O T
  *

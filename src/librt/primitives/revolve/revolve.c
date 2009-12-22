@@ -868,25 +868,6 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 }
 
 
-#define RT_REVOLVE_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
-
-
-/**
- * R T _ R E V O L V E _ V S H O T
- *
- * Vectorized version.
- */
-void
-rt_revolve_vshot(struct soltab *stp[],	/* An array of solid pointers */
-		 struct xray *rp[],	/* An array of ray pointers */
-		 struct seg segp[],	/* array of segs (results returned) */
-		 int n,			/* Number of ray/object pairs */
-		 struct application *ap)
-{
-    rt_vstub(stp, rp, segp, n, ap);
-}
-
-
 /**
  * R T _ R E V O L V E _ N O R M
  *

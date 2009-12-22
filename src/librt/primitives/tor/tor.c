@@ -521,9 +521,7 @@ rt_tor_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 }
 
 
-#define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;
-
-
+#define RT_TOR_SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;
 /**
  * R T _ T O R _ V S H O T
  *
@@ -669,7 +667,7 @@ rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 		    reported=1;
 		}
 	    }
-	    SEG_MISS(segp[i]);		/* MISS */
+	    RT_TOR_SEG_MISS(segp[i]);		/* MISS */
 	}
     }
 
@@ -701,9 +699,9 @@ rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 
 	/* Here, 'i' is number of points found */
 	if (num_zero == 0) {
-	    SEG_MISS(segp[i]);		/* MISS */
+	    RT_TOR_SEG_MISS(segp[i]);		/* MISS */
 	} else if (num_zero != 2 && num_zero != 4) {
-	    SEG_MISS(segp[i]);		/* MISS */
+	    RT_TOR_SEG_MISS(segp[i]);		/* MISS */
 	}
     }
 

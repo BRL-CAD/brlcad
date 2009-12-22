@@ -859,9 +859,7 @@ rt_arb_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 }
 
 
-#define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;
-
-
+#define RT_ARB8_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
 /**
  * R T _ A R B _ V S H O T
  *
@@ -922,11 +920,11 @@ rt_arb_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 		/* ray is parallel to plane when dir.N == 0.
 		 * If it is outside the solid, stop now */
 		if (dxbdn > SQRT_SMALL_FASTF) {
-		    SEG_MISS(segp[i]);		/* MISS */
+		    RT_ARB8_SEG_MISS(segp[i]);		/* MISS */
 		}
 	    }
 	    if (segp[i].seg_in.hit_dist > segp[i].seg_out.hit_dist) {
-		SEG_MISS(segp[i]);		/* MISS */
+		RT_ARB8_SEG_MISS(segp[i]);		/* MISS */
 	    }
 	} /* for each ray/arb_face pair */
     } /* for each arb_face */
@@ -942,10 +940,10 @@ rt_arb_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 
 	if (segp[i].seg_in.hit_surfno == -1 ||
 	    segp[i].seg_out.hit_surfno == -1) {
-	    SEG_MISS(segp[i]);		/* MISS */
+	    RT_ARB8_SEG_MISS(segp[i]);		/* MISS */
 	} else if (segp[i].seg_in.hit_dist >= segp[i].seg_out.hit_dist ||
 		 segp[i].seg_out.hit_dist >= INFINITY) {
-	    SEG_MISS(segp[i]);		/* MISS */
+	    RT_ARB8_SEG_MISS(segp[i]);		/* MISS */
 	}
     }
 }

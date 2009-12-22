@@ -538,23 +538,6 @@ rt_eto_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 }
 
 
-#define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;
-/**
- * R T _ E T O _ V S H O T
- *
- * This is the Becker vector version
- */
-void
-rt_eto_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
-    /* An array of solid pointers */
-    /* An array of ray pointers */
-    /* array of segs (results returned) */
-    /* Number of ray/object pairs */
-
-{
-}
-
-
 /**
  * R T _ E T O _ N O R M
  *

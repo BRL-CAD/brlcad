@@ -534,23 +534,6 @@ rt_superell_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 
 
 /**
- * R T _ S U P E R E L L _ V S H O T
- *
- * This is the Becker vector version.
- */
-void
-rt_superell_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
-    /* An array of solid pointers */
-    /* An array of ray pointers */
-    /* array of segs (results returned) */
-    /* Number of ray/object pairs */
-
-{
-    return;
-}
-
-
-/**
  * R T _ S U P E R E L L _ N O R M
  *
  * Given ONE ray distance, return the normal and entry/exit point.

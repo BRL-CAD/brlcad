@@ -229,26 +229,6 @@ rt_nmg_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 }
 
 
-#define RT_NMG_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
-
-
-/**
- * R T _ N M G _ V S H O T
- *
- * Vectorized version.
- */
-void
-rt_nmg_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
-    /* An array of solid pointers */
-    /* An array of ray pointers */
-    /* array of segs (results returned) */
-    /* Number of ray/object pairs */
-
-{
-    rt_vstub(stp, rp, segp, n, ap);
-}
-
-
 /**
  * R T _ N M G _ N O R M
  *

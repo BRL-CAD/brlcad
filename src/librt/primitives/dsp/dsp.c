@@ -2632,29 +2632,6 @@ rt_dsp_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 }
 
 
-#define RT_DSP_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
-
-
-/**
- * R T _ D S P _ V S H O T
- *
- * Vectorized version.
- */
-void
-rt_dsp_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
-    /* An array of solid pointers */
-    /* An array of ray pointers */
-    /* array of segs (results returned) */
-    /* Number of ray/object pairs */
-
-{
-    if (RT_G_DEBUG & DEBUG_HF)
-	bu_log("rt_dsp_vshot()\n");
-
-    (void)rt_vstub(stp, rp, segp, n, ap);
-}
-
-
 /***********************************************************************
  *
  * Compute the model-space normal at a gridpoint

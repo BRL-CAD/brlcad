@@ -263,7 +263,7 @@ rt_sph_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 }
 
 
-#define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;
+#define RT_SPH_SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;
 /**
  * R T _ S P H _ V S H O T
  *
@@ -298,13 +298,13 @@ rt_sph_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	    /* ray origin is outside of sphere */
 	    if (b < 0) {
 		/* ray direction is away from sphere */
-		SEG_MISS(segp[i]);		/* No hit */
+		RT_SPH_SEG_MISS(segp[i]);		/* No hit */
 		continue;
 	    }
 	    root = b*b - magsq_ov + sph->sph_radsq;
 	    if (root <= 0) {
 		/* no real roots */
-		SEG_MISS(segp[i]);		/* No hit */
+		RT_SPH_SEG_MISS(segp[i]);		/* No hit */
 		continue;
 	    }
 	} else {

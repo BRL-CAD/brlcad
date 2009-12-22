@@ -558,7 +558,7 @@ rt_rec_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 }
 
 
-#define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;
+#define RT_REC_SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;
 /**
  * R E C _ V S H O T
  *
@@ -655,7 +655,7 @@ rt_rec_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	}
 
 	if (hitp != &hits[2]) {
-	    SEG_MISS(segp[i]);		/* MISS */
+	    RT_REC_SEG_MISS(segp[i]);		/* MISS */
 	} else {
 	    segp[i].seg_stp = stp[i];
 
