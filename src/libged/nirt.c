@@ -61,31 +61,6 @@
 /* defined in draw.c */
 extern void _ged_cvt_vlblock_to_solids(struct ged *gedp, struct bn_vlblock *vbp, char *name, int copy);
 
-#ifdef _WIN32
-static void
-strip_crlf(char *cdata) {
-    int i = 0;
-
-    if (cdata == (char *)0)
-	return;
-
-    while (cdata[i] != '\0') {
-	if (cdata[i] == '\r' &&
-	    cdata[i+1] == '\n') {
-	    int j = i;
-
-	    /* Slide everything over */
-	    while (cdata[j] != '\0') {
-		cdata[j] = cdata[j+1];
-		++j;
-	    }
-	}
-
-	++i;
-    }
-}
-#endif
-
 
 /**
  * F _ N I R T
@@ -137,6 +112,9 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     const char *bin = NULL;
     char nirt[256] = {0};
 
+    /* for bu_fgets space trimming */
+    struct bu_vls v;
+
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
     GED_CHECK_VIEW(gedp, GED_ERROR);
@@ -148,6 +126,9 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     bin = bu_brlcad_root("bin", 1);
     if (bin) {
 #ifdef _WIN32
+	/* FIXME: is this really necessary? can we wrap command in
+	 * quotes for all platforms?
+	 */
 	snprintf(nirt, 256, "\"%s/%s\"", bin, argv[0]);
 #else
 	snprintf(nirt, 256, "%s/%s", bin, argv[0]);
@@ -451,8 +432,11 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 
 #endif
 
+    bu_vls_init(&v);
+
     bu_vls_free(&p_vls);   /* use to form "partition" part of nirt command above */
     if (DG_QRAY_GRAPHICS(gedp->ged_gdp)) {
+	int ret;
 
 	if (DG_QRAY_TEXT(gedp->ged_gdp))
 	    bu_vls_free(&o_vls); /* used to form "overlap" part of nirt command above */
@@ -461,20 +445,23 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 
 	/* handle partitions */
 	while (bu_fgets(line, RT_MAXLINE, fp_out) != (char *)NULL) {
-#ifdef _WIN32
-	    strip_crlf(line);
-#endif
-	    if (line[0] == '\n') {
-		bu_vls_printf(&gedp->ged_result_str, "%s", line+1);
+	    bu_vls_trunc(&v, 0);
+	    bu_vls_strcpy(&v, line);
+	    bu_vls_trimspace(&v);
+
+	    if (line[0] == '\n' || line[0] == '\r') {
+		bu_vls_printf(&gedp->ged_result_str, "%s", bu_vls_addr(&v));
 		break;
 	    }
 
 	    BU_GETSTRUCT(ndlp, ged_qray_dataList);
 	    BU_LIST_APPEND(HeadQRayData.l.back, &ndlp->l);
 
-	    if (sscanf(line, "%le %le %le %le",
-		       &ndlp->x_in, &ndlp->y_in, &ndlp->z_in, &ndlp->los) != 4)
+	    ret = sscanf(bu_vls_addr(&v), "%le %le %le %le", &ndlp->x_in, &ndlp->y_in, &ndlp->z_in, &ndlp->los);
+	    if (ret != 4) {
+		bu_log("WARNING: Unexpected nirt line [%s]\nExpecting four numbers.\n", bu_vls_addr(&v));
 		break;
+	    }
 	}
 
 	vbp = rt_vlblock_init();
@@ -485,21 +472,27 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 
 	/* handle overlaps */
 	while (bu_fgets(line, RT_MAXLINE, fp_out) != (char *)NULL) {
-#ifdef _WIN32
-	    strip_crlf(line);
-#endif
-	    if (line[0] == '\n') {
-		bu_vls_printf(&gedp->ged_result_str, "%s", line+1);
+	    bu_vls_trunc(&v, 0);
+	    bu_vls_strcpy(&v, line);
+	    bu_vls_trimspace(&v);
+	    
+	    if (line[0] == '\n' || line[0] == '\r') {
+		bu_vls_printf(&gedp->ged_result_str, "%s", bu_vls_addr(&v));
 		break;
 	    }
 
 	    BU_GETSTRUCT(ndlp, ged_qray_dataList);
 	    BU_LIST_APPEND(HeadQRayData.l.back, &ndlp->l);
 
-	    if (sscanf(line, "%le %le %le %le",
-		       &ndlp->x_in, &ndlp->y_in, &ndlp->z_in, &ndlp->los) != 4)
+	    ret = sscanf(bu_vls_addr(&v), "%le %le %le %le",
+			 &ndlp->x_in, &ndlp->y_in, &ndlp->z_in, &ndlp->los);
+	    if (ret != 4) {
+		bu_log("WARNING: Unexpected nirt line [%s]\nExpecting four numbers.\n", bu_vls_addr(&v));
 		break;
+	    }
 	}
+	bu_vls_free(&v);
+
 	vbp = rt_vlblock_init();
 	ged_qray_data_to_vlist(gedp, vbp, &HeadQRayData, dir, 1);
 	bu_list_free(&HeadQRayData.l);
@@ -511,23 +504,24 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_free(&t_vls);
 
 	while (bu_fgets(line, RT_MAXLINE, fp_out) != (char *)NULL) {
-#ifdef _WIN32
-	    strip_crlf(line);
-#endif
-	    bu_vls_printf(&gedp->ged_result_str, "%s", line);
+	    bu_vls_trunc(&v, 0);
+	    bu_vls_strcpy(&v, line);
+	    bu_vls_trimspace(&v);
+	    bu_vls_printf(&gedp->ged_result_str, "%s", bu_vls_addr(&v));
 	}
     }
 
     (void)fclose(fp_out);
 
     while (bu_fgets(line, RT_MAXLINE, fp_err) != (char *)NULL) {
-#ifdef _WIN32
-	strip_crlf(line);
-#endif
-	bu_vls_printf(&gedp->ged_result_str, "%s", line);
+	bu_vls_trunc(&v, 0);
+	bu_vls_strcpy(&v, line);
+	bu_vls_trimspace(&v);
+	bu_vls_printf(&gedp->ged_result_str, "%s", bu_vls_addr(&v));
     }
     (void)fclose(fp_err);
 
+    bu_vls_free(&v);
 
 #ifndef _WIN32
 
