@@ -35,6 +35,7 @@
 #include <string>
 
 /* inteface headers */
+#include "STEPWrapper.h"
 #include "sclprefixes.h"
 
 

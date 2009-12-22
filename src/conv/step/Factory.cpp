@@ -27,7 +27,6 @@
 #include "Factory.h"
 
 /* implementation headers */
-#include "STEPWrapper.h"
 #include "STEPEntity.h"
 
 
