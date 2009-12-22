@@ -224,6 +224,7 @@ librt_nil_la_SOURCES = \
 	tree.c \
 	vers.c \
 	vlist.c \
+	vshoot.c \
 	wdb.c
 
 librt_nil_la_LIBADD = ${BREP_LIBADD}
@@ -272,8 +273,7 @@ EXTRA_DIST = \
 	timer-nt.c \
 	timer52brl.c \
 	timerhep.c \
-	timerunix.c \
-	vshoot.c
+	timerunix.c
 
 if BUILD_REGEX
 DEPADD = src/other/libregex
