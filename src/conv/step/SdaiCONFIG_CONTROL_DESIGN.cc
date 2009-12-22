@@ -4093,7 +4093,7 @@ SdaiReversible_topology_item::cfs_faces_ (const EntityAggregate_ptr x)
    Error( "Mismatch in underlying type." );
 }
 
-const SCLBOOL(Bool)
+const SCLBOOL(Boolean)
 SdaiReversible_topology_item::orientation_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_face_bound )
@@ -4101,12 +4101,12 @@ SdaiReversible_topology_item::orientation_() const
 	return ((SdaiFace_bound_ptr) _app_inst) ->orientation_();
    cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
-   return (SCLBOOL(Bool)) 0;
+   return (SCLBOOL(Boolean)) 0;
 }
 
 
 void
-SdaiReversible_topology_item::orientation_ (const SCLBOOL(Bool) x)
+SdaiReversible_topology_item::orientation_ (const SCLBOOL(Boolean) x)
 
 {
   if( CurrentUnderlyingType () == config_control_designe_face_bound )
@@ -28877,14 +28877,14 @@ SdaiFace_bound::bound_ (const SdaiLoop_ptr x)
     _bound = x;
 }
 
-const SCLBOOL(Bool)
+const SCLBOOL(Boolean)
 SdaiFace_bound::orientation_() const
 {
-    return (SCLBOOL(Bool)) _orientation;
+    return (SCLBOOL(Boolean)) _orientation;
 }
 
 void
-SdaiFace_bound::orientation_ (const SCLBOOL(Bool) x)
+SdaiFace_bound::orientation_ (const SCLBOOL(Boolean) x)
 
 {
     _orientation.put (x);
@@ -29691,14 +29691,14 @@ SdaiOriented_edge::edge_element_ (const SdaiEdge_ptr x)
     _edge_element = x;
 }
 
-const SCLBOOL(Bool)
+const SCLBOOL(Boolean)
 SdaiOriented_edge::orientation_() const
 {
-    return (SCLBOOL(Bool)) _orientation;
+    return (SCLBOOL(Boolean)) _orientation;
 }
 
 void
-SdaiOriented_edge::orientation_ (const SCLBOOL(Bool) x)
+SdaiOriented_edge::orientation_ (const SCLBOOL(Boolean) x)
 
 {
     _orientation.put (x);
@@ -35361,14 +35361,14 @@ SdaiOriented_open_shell::open_shell_element_ (const SdaiOpen_shell_ptr x)
     _open_shell_element = x;
 }
 
-const SCLBOOL(Bool)
+const SCLBOOL(Boolean)
 SdaiOriented_open_shell::orientation_() const
 {
-    return (SCLBOOL(Bool)) _orientation;
+    return (SCLBOOL(Boolean)) _orientation;
 }
 
 void
-SdaiOriented_open_shell::orientation_ (const SCLBOOL(Bool) x)
+SdaiOriented_open_shell::orientation_ (const SCLBOOL(Boolean) x)
 
 {
     _orientation.put (x);
@@ -36572,14 +36572,14 @@ SdaiComposite_curve_segment::transition_ (const SdaiTransition_code_var x)
     _transition.put (x);
 }
 
-const SCLBOOL(Bool)
+const SCLBOOL(Boolean)
 SdaiComposite_curve_segment::same_sense_() const
 {
-    return (SCLBOOL(Bool)) _same_sense;
+    return (SCLBOOL(Boolean)) _same_sense;
 }
 
 void
-SdaiComposite_curve_segment::same_sense_ (const SCLBOOL(Bool) x)
+SdaiComposite_curve_segment::same_sense_ (const SCLBOOL(Boolean) x)
 
 {
     _same_sense.put (x);
@@ -41005,14 +41005,14 @@ SdaiTrimmed_curve::trim_2_ (const SdaiTrimming_selects_ptr x)
 
 	{ _trim_2.ShallowCopy (*x); }
 
-const SCLBOOL(Bool)
+const SCLBOOL(Boolean)
 SdaiTrimmed_curve::sense_agreement_() const
 {
-    return (SCLBOOL(Bool)) _sense_agreement;
+    return (SCLBOOL(Boolean)) _sense_agreement;
 }
 
 void
-SdaiTrimmed_curve::sense_agreement_ (const SCLBOOL(Bool) x)
+SdaiTrimmed_curve::sense_agreement_ (const SCLBOOL(Boolean) x)
 
 {
     _sense_agreement.put (x);
@@ -44905,14 +44905,14 @@ SdaiDegenerate_toroidal_surface::SdaiDegenerate_toroidal_surface (SCLP23(Applica
     MakeDerived ("dim");
 }
 
-const SCLBOOL(Bool)
+const SCLBOOL(Boolean)
 SdaiDegenerate_toroidal_surface::select_outer_() const
 {
-    return (SCLBOOL(Bool)) _select_outer;
+    return (SCLBOOL(Boolean)) _select_outer;
 }
 
 void
-SdaiDegenerate_toroidal_surface::select_outer_ (const SCLBOOL(Bool) x)
+SdaiDegenerate_toroidal_surface::select_outer_ (const SCLBOOL(Boolean) x)
 
 {
     _select_outer.put (x);
@@ -46083,14 +46083,14 @@ SdaiFace_surface::face_geometry_ (const SdaiSurface_ptr x)
     _face_geometry = x;
 }
 
-const SCLBOOL(Bool)
+const SCLBOOL(Boolean)
 SdaiFace_surface::same_sense_() const
 {
-    return (SCLBOOL(Bool)) _same_sense;
+    return (SCLBOOL(Boolean)) _same_sense;
 }
 
 void
-SdaiFace_surface::same_sense_ (const SCLBOOL(Bool) x)
+SdaiFace_surface::same_sense_ (const SCLBOOL(Boolean) x)
 
 {
     _same_sense.put (x);
@@ -46260,14 +46260,14 @@ SdaiOriented_face::face_element_ (const SdaiFace_ptr x)
     _face_element = x;
 }
 
-const SCLBOOL(Bool)
+const SCLBOOL(Boolean)
 SdaiOriented_face::orientation_() const
 {
-    return (SCLBOOL(Bool)) _orientation;
+    return (SCLBOOL(Boolean)) _orientation;
 }
 
 void
-SdaiOriented_face::orientation_ (const SCLBOOL(Bool) x)
+SdaiOriented_face::orientation_ (const SCLBOOL(Boolean) x)
 
 {
     _orientation.put (x);
@@ -46681,14 +46681,14 @@ SdaiEdge_curve::edge_geometry_ (const SdaiCurve_ptr x)
     _edge_geometry = x;
 }
 
-const SCLBOOL(Bool)
+const SCLBOOL(Boolean)
 SdaiEdge_curve::same_sense_() const
 {
-    return (SCLBOOL(Bool)) _same_sense;
+    return (SCLBOOL(Boolean)) _same_sense;
 }
 
 void
-SdaiEdge_curve::same_sense_ (const SCLBOOL(Bool) x)
+SdaiEdge_curve::same_sense_ (const SCLBOOL(Boolean) x)
 
 {
     _same_sense.put (x);
@@ -47722,27 +47722,27 @@ SdaiRectangular_trimmed_surface::v2_ (const SdaiParameter_value x)
     _v2 = x;
 }
 
-const SCLBOOL(Bool)
+const SCLBOOL(Boolean)
 SdaiRectangular_trimmed_surface::usense_() const
 {
-    return (SCLBOOL(Bool)) _usense;
+    return (SCLBOOL(Boolean)) _usense;
 }
 
 void
-SdaiRectangular_trimmed_surface::usense_ (const SCLBOOL(Bool) x)
+SdaiRectangular_trimmed_surface::usense_ (const SCLBOOL(Boolean) x)
 
 {
     _usense.put (x);
 }
 
-const SCLBOOL(Bool)
+const SCLBOOL(Boolean)
 SdaiRectangular_trimmed_surface::vsense_() const
 {
-    return (SCLBOOL(Bool)) _vsense;
+    return (SCLBOOL(Boolean)) _vsense;
 }
 
 void
-SdaiRectangular_trimmed_surface::vsense_ (const SCLBOOL(Bool) x)
+SdaiRectangular_trimmed_surface::vsense_ (const SCLBOOL(Boolean) x)
 
 {
     _vsense.put (x);
@@ -51053,14 +51053,14 @@ SdaiCurve_bounded_surface::boundaries_ (const EntityAggregate_ptr x)
 
 	{ _boundaries.ShallowCopy (*x); }
 
-const SCLBOOL(Bool)
+const SCLBOOL(Boolean)
 SdaiCurve_bounded_surface::implicit_outer_() const
 {
-    return (SCLBOOL(Bool)) _implicit_outer;
+    return (SCLBOOL(Boolean)) _implicit_outer;
 }
 
 void
-SdaiCurve_bounded_surface::implicit_outer_ (const SCLBOOL(Bool) x)
+SdaiCurve_bounded_surface::implicit_outer_ (const SCLBOOL(Boolean) x)
 
 {
     _implicit_outer.put (x);
@@ -54842,14 +54842,14 @@ SdaiOriented_path::path_element_ (const SdaiPath_ptr x)
     _path_element = x;
 }
 
-const SCLBOOL(Bool)
+const SCLBOOL(Boolean)
 SdaiOriented_path::orientation_() const
 {
-    return (SCLBOOL(Bool)) _orientation;
+    return (SCLBOOL(Boolean)) _orientation;
 }
 
 void
-SdaiOriented_path::orientation_ (const SCLBOOL(Bool) x)
+SdaiOriented_path::orientation_ (const SCLBOOL(Boolean) x)
 
 {
     _orientation.put (x);
@@ -56082,27 +56082,27 @@ SdaiSurface_patch::v_transition_ (const SdaiTransition_code_var x)
     _v_transition.put (x);
 }
 
-const SCLBOOL(Bool)
+const SCLBOOL(Boolean)
 SdaiSurface_patch::u_sense_() const
 {
-    return (SCLBOOL(Bool)) _u_sense;
+    return (SCLBOOL(Boolean)) _u_sense;
 }
 
 void
-SdaiSurface_patch::u_sense_ (const SCLBOOL(Bool) x)
+SdaiSurface_patch::u_sense_ (const SCLBOOL(Boolean) x)
 
 {
     _u_sense.put (x);
 }
 
-const SCLBOOL(Bool)
+const SCLBOOL(Boolean)
 SdaiSurface_patch::v_sense_() const
 {
-    return (SCLBOOL(Bool)) _v_sense;
+    return (SCLBOOL(Boolean)) _v_sense;
 }
 
 void
-SdaiSurface_patch::v_sense_ (const SCLBOOL(Bool) x)
+SdaiSurface_patch::v_sense_ (const SCLBOOL(Boolean) x)
 
 {
     _v_sense.put (x);
@@ -58489,14 +58489,14 @@ SdaiOriented_closed_shell::closed_shell_element_ (const SdaiClosed_shell_ptr x)
     _closed_shell_element = x;
 }
 
-const SCLBOOL(Bool)
+const SCLBOOL(Boolean)
 SdaiOriented_closed_shell::orientation_() const
 {
-    return (SCLBOOL(Bool)) _orientation;
+    return (SCLBOOL(Boolean)) _orientation;
 }
 
 void
-SdaiOriented_closed_shell::orientation_ (const SCLBOOL(Bool) x)
+SdaiOriented_closed_shell::orientation_ (const SCLBOOL(Boolean) x)
 
 {
     _orientation.put (x);

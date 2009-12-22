@@ -92,7 +92,7 @@ EdgeCurve::Print(int level) {
 	TAB(level+1); cout << "edge_geometry:" << endl;
 	edge_geometry->Print(level+1);
 
-	TAB(level+1); cout << "same_sense:" << step->getBooleanString((SCLBOOL_H(Bool))same_sense) << endl;
+	TAB(level+1); cout << "same_sense:" << step->getBooleanString((SCLBOOL_H(Boolean))same_sense) << endl;
 
 	TAB(level); cout << "Inherited Attributes:" << endl;
 	Edge::Print(level+1);

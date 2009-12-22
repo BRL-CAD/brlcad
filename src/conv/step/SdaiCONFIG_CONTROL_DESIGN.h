@@ -1580,8 +1580,8 @@ class SdaiReversible_topology_item  :  public SCLP23(Select) {
 	const EntityAggregate_ptr cfs_faces_() const;
 	void cfs_faces_ (const EntityAggregate_ptr x);
 
-	const SCLBOOL(Bool) orientation_() const;
-	void orientation_ (const SCLBOOL(Bool) x);
+	const SCLBOOL(Boolean) orientation_() const;
+	void orientation_ (const SCLBOOL(Boolean) x);
 
 	const SdaiLoop_ptr bound_() const;
 	void bound_ (const SdaiLoop_ptr x);
@@ -8257,7 +8257,7 @@ class SdaiFace_bound  :    public SdaiTopological_representation_item  {
 #endif
   protected:
 	SCLP23(Application_instance_ptr) _bound ;
-	SCLP23(BOOL) _orientation ;
+	SCLP23(BOOLEAN) _orientation ;
   public:
 
 	SdaiFace_bound ( );
@@ -8273,8 +8273,8 @@ class SdaiFace_bound  :    public SdaiTopological_representation_item  {
 	const SdaiLoop_ptr bound_() const;
 	void bound_ (const SdaiLoop_ptr x);
 
-	const SCLBOOL(Bool) orientation_() const;
-	void orientation_ (const SCLBOOL(Bool) x);
+	const SCLBOOL(Boolean) orientation_() const;
+	void orientation_ (const SCLBOOL(Boolean) x);
 
 	/* The first parent's access functions are */
 	/* above or covered by inherited functions. */
@@ -8624,7 +8624,7 @@ class SdaiOriented_edge  :    public SdaiEdge  {
 #endif
   protected:
 	SCLP23(Application_instance_ptr) _edge_element ;
-	SCLP23(BOOL) _orientation ;
+	SCLP23(BOOLEAN) _orientation ;
   public:
 
 	SdaiOriented_edge ( );
@@ -8640,8 +8640,8 @@ class SdaiOriented_edge  :    public SdaiEdge  {
 	const SdaiEdge_ptr edge_element_() const;
 	void edge_element_ (const SdaiEdge_ptr x);
 
-	const SCLBOOL(Bool) orientation_() const;
-	void orientation_ (const SCLBOOL(Bool) x);
+	const SCLBOOL(Boolean) orientation_() const;
+	void orientation_ (const SCLBOOL(Boolean) x);
 
 	/* The first parent's access functions are */
 	/* above or covered by inherited functions. */
@@ -10916,7 +10916,7 @@ class SdaiOriented_open_shell  :    public SdaiOpen_shell  {
 #endif
   protected:
 	SCLP23(Application_instance_ptr) _open_shell_element ;
-	SCLP23(BOOL) _orientation ;
+	SCLP23(BOOLEAN) _orientation ;
   public:
 
 	SdaiOriented_open_shell ( );
@@ -10932,8 +10932,8 @@ class SdaiOriented_open_shell  :    public SdaiOpen_shell  {
 	const SdaiOpen_shell_ptr open_shell_element_() const;
 	void open_shell_element_ (const SdaiOpen_shell_ptr x);
 
-	const SCLBOOL(Bool) orientation_() const;
-	void orientation_ (const SCLBOOL(Bool) x);
+	const SCLBOOL(Boolean) orientation_() const;
+	void orientation_ (const SCLBOOL(Boolean) x);
 
 	/* The first parent's access functions are */
 	/* above or covered by inherited functions. */
@@ -11414,7 +11414,7 @@ class SdaiComposite_curve_segment  :    public SdaiFounded_item  {
 #endif
   protected:
 	SdaiTransition_code_var _transition ;
-	SCLP23(BOOL) _same_sense ;
+	SCLP23(BOOLEAN) _same_sense ;
 	SCLP23(Application_instance_ptr) _parent_curve ;
 	EntityAggregate _using_curves ;	  //  of  composite_curve
 
@@ -11433,8 +11433,8 @@ class SdaiComposite_curve_segment  :    public SdaiFounded_item  {
 	const SdaiTransition_code_var transition_() const;
 	void transition_ (const SdaiTransition_code_var x);
 
-	const SCLBOOL(Bool) same_sense_() const;
-	void same_sense_ (const SCLBOOL(Bool) x);
+	const SCLBOOL(Boolean) same_sense_() const;
+	void same_sense_ (const SCLBOOL(Boolean) x);
 
 	const SdaiCurve_ptr parent_curve_() const;
 	void parent_curve_ (const SdaiCurve_ptr x);
@@ -13283,7 +13283,7 @@ class SdaiTrimmed_curve  :    public SdaiBounded_curve  {
 
 	SdaiTrimming_selects _trim_2 ;	  //  of  trimming_select
 
-	SCLP23(BOOL) _sense_agreement ;
+	SCLP23(BOOLEAN) _sense_agreement ;
 	SdaiTrimming_preference_var _master_representation ;
   public:
 
@@ -13306,8 +13306,8 @@ class SdaiTrimmed_curve  :    public SdaiBounded_curve  {
 	const SdaiTrimming_selects_ptr trim_2_() const;
 	void trim_2_ (const SdaiTrimming_selects_ptr x);
 
-	const SCLBOOL(Bool) sense_agreement_() const;
-	void sense_agreement_ (const SCLBOOL(Bool) x);
+	const SCLBOOL(Boolean) sense_agreement_() const;
+	void sense_agreement_ (const SCLBOOL(Boolean) x);
 
 	const SdaiTrimming_preference_var master_representation_() const;
 	void master_representation_ (const SdaiTrimming_preference_var x);
@@ -14829,7 +14829,7 @@ class SdaiDegenerate_toroidal_surface  :    public SdaiToroidal_surface  {
 	enum os_access_reason, void *, void *, void *);
 #endif
   protected:
-	SCLP23(BOOL) _select_outer ;
+	SCLP23(BOOLEAN) _select_outer ;
   public:
 
 	SdaiDegenerate_toroidal_surface ( );
@@ -14842,8 +14842,8 @@ class SdaiDegenerate_toroidal_surface  :    public SdaiToroidal_surface  {
 #endif
 
 	int opcode ()  { return 149 ; }
-	const SCLBOOL(Bool) select_outer_() const;
-	void select_outer_ (const SCLBOOL(Bool) x);
+	const SCLBOOL(Boolean) select_outer_() const;
+	void select_outer_ (const SCLBOOL(Boolean) x);
 
 	/* The first parent's access functions are */
 	/* above or covered by inherited functions. */
@@ -15368,7 +15368,7 @@ class SdaiFace_surface  :    public SdaiFace  {
 #endif
   protected:
 	SCLP23(Application_instance_ptr) _face_geometry ;
-	SCLP23(BOOL) _same_sense ;
+	SCLP23(BOOLEAN) _same_sense ;
   public:
 
 	SdaiFace_surface ( );
@@ -15384,8 +15384,8 @@ class SdaiFace_surface  :    public SdaiFace  {
 	const SdaiSurface_ptr face_geometry_() const;
 	void face_geometry_ (const SdaiSurface_ptr x);
 
-	const SCLBOOL(Bool) same_sense_() const;
-	void same_sense_ (const SCLBOOL(Bool) x);
+	const SCLBOOL(Boolean) same_sense_() const;
+	void same_sense_ (const SCLBOOL(Boolean) x);
 
 	/* The first parent's access functions are */
 	/* above or covered by inherited functions. */
@@ -15438,7 +15438,7 @@ class SdaiOriented_face  :    public SdaiFace  {
 #endif
   protected:
 	SCLP23(Application_instance_ptr) _face_element ;
-	SCLP23(BOOL) _orientation ;
+	SCLP23(BOOLEAN) _orientation ;
   public:
 
 	SdaiOriented_face ( );
@@ -15454,8 +15454,8 @@ class SdaiOriented_face  :    public SdaiFace  {
 	const SdaiFace_ptr face_element_() const;
 	void face_element_ (const SdaiFace_ptr x);
 
-	const SCLBOOL(Bool) orientation_() const;
-	void orientation_ (const SCLBOOL(Bool) x);
+	const SCLBOOL(Boolean) orientation_() const;
+	void orientation_ (const SCLBOOL(Boolean) x);
 
 	/* The first parent's access functions are */
 	/* above or covered by inherited functions. */
@@ -15619,7 +15619,7 @@ class SdaiEdge_curve  :    public SdaiEdge  {
 #endif
   protected:
 	SCLP23(Application_instance_ptr) _edge_geometry ;
-	SCLP23(BOOL) _same_sense ;
+	SCLP23(BOOLEAN) _same_sense ;
   public:
 
 	SdaiEdge_curve ( );
@@ -15635,8 +15635,8 @@ class SdaiEdge_curve  :    public SdaiEdge  {
 	const SdaiCurve_ptr edge_geometry_() const;
 	void edge_geometry_ (const SdaiCurve_ptr x);
 
-	const SCLBOOL(Bool) same_sense_() const;
-	void same_sense_ (const SCLBOOL(Bool) x);
+	const SCLBOOL(Boolean) same_sense_() const;
+	void same_sense_ (const SCLBOOL(Boolean) x);
 
 	/* The first parent's access functions are */
 	/* above or covered by inherited functions. */
@@ -15909,8 +15909,8 @@ class SdaiRectangular_trimmed_surface  :    public SdaiBounded_surface  {
 	SCLP23(Real) _u2 ;
 	SCLP23(Real) _v1 ;
 	SCLP23(Real) _v2 ;
-	SCLP23(BOOL) _usense ;
-	SCLP23(BOOL) _vsense ;
+	SCLP23(BOOLEAN) _usense ;
+	SCLP23(BOOLEAN) _vsense ;
   public:
 
 	SdaiRectangular_trimmed_surface ( );
@@ -15938,11 +15938,11 @@ class SdaiRectangular_trimmed_surface  :    public SdaiBounded_surface  {
 	const SdaiParameter_value v2_() const;
 	void v2_ (const SdaiParameter_value x);
 
-	const SCLBOOL(Bool) usense_() const;
-	void usense_ (const SCLBOOL(Bool) x);
+	const SCLBOOL(Boolean) usense_() const;
+	void usense_ (const SCLBOOL(Boolean) x);
 
-	const SCLBOOL(Bool) vsense_() const;
-	void vsense_ (const SCLBOOL(Bool) x);
+	const SCLBOOL(Boolean) vsense_() const;
+	void vsense_ (const SCLBOOL(Boolean) x);
 
 	/* The first parent's access functions are */
 	/* above or covered by inherited functions. */
@@ -17344,7 +17344,7 @@ class SdaiCurve_bounded_surface  :    public SdaiBounded_surface  {
 	SCLP23(Application_instance_ptr) _basis_surface ;
 	EntityAggregate _boundaries ;	  //  of  boundary_curve
 
-	SCLP23(BOOL) _implicit_outer ;
+	SCLP23(BOOLEAN) _implicit_outer ;
   public:
 
 	SdaiCurve_bounded_surface ( );
@@ -17363,8 +17363,8 @@ class SdaiCurve_bounded_surface  :    public SdaiBounded_surface  {
 	const EntityAggregate_ptr boundaries_() const;
 	void boundaries_ (const EntityAggregate_ptr x);
 
-	const SCLBOOL(Bool) implicit_outer_() const;
-	void implicit_outer_ (const SCLBOOL(Bool) x);
+	const SCLBOOL(Boolean) implicit_outer_() const;
+	void implicit_outer_ (const SCLBOOL(Boolean) x);
 
 	/* The first parent's access functions are */
 	/* above or covered by inherited functions. */
@@ -19013,7 +19013,7 @@ class SdaiOriented_path  :    public SdaiPath  {
 #endif
   protected:
 	SCLP23(Application_instance_ptr) _path_element ;
-	SCLP23(BOOL) _orientation ;
+	SCLP23(BOOLEAN) _orientation ;
   public:
 
 	SdaiOriented_path ( );
@@ -19029,8 +19029,8 @@ class SdaiOriented_path  :    public SdaiPath  {
 	const SdaiPath_ptr path_element_() const;
 	void path_element_ (const SdaiPath_ptr x);
 
-	const SCLBOOL(Bool) orientation_() const;
-	void orientation_ (const SCLBOOL(Bool) x);
+	const SCLBOOL(Boolean) orientation_() const;
+	void orientation_ (const SCLBOOL(Boolean) x);
 
 	/* The first parent's access functions are */
 	/* above or covered by inherited functions. */
@@ -19509,8 +19509,8 @@ class SdaiSurface_patch  :    public SdaiFounded_item  {
 	SCLP23(Application_instance_ptr) _parent_surface ;
 	SdaiTransition_code_var _u_transition ;
 	SdaiTransition_code_var _v_transition ;
-	SCLP23(BOOL) _u_sense ;
-	SCLP23(BOOL) _v_sense ;
+	SCLP23(BOOLEAN) _u_sense ;
+	SCLP23(BOOLEAN) _v_sense ;
 	EntityAggregate _using_surfaces ;	  //  of  rectangular_composite_surface
 
   public:
@@ -19534,11 +19534,11 @@ class SdaiSurface_patch  :    public SdaiFounded_item  {
 	const SdaiTransition_code_var v_transition_() const;
 	void v_transition_ (const SdaiTransition_code_var x);
 
-	const SCLBOOL(Bool) u_sense_() const;
-	void u_sense_ (const SCLBOOL(Bool) x);
+	const SCLBOOL(Boolean) u_sense_() const;
+	void u_sense_ (const SCLBOOL(Boolean) x);
 
-	const SCLBOOL(Bool) v_sense_() const;
-	void v_sense_ (const SCLBOOL(Bool) x);
+	const SCLBOOL(Boolean) v_sense_() const;
+	void v_sense_ (const SCLBOOL(Boolean) x);
 
 	const EntityAggregate_ptr using_surfaces_() const;
 	void using_surfaces_ (const EntityAggregate_ptr x);
@@ -20520,7 +20520,7 @@ class SdaiOriented_closed_shell  :    public SdaiClosed_shell  {
 #endif
   protected:
 	SCLP23(Application_instance_ptr) _closed_shell_element ;
-	SCLP23(BOOL) _orientation ;
+	SCLP23(BOOLEAN) _orientation ;
   public:
 
 	SdaiOriented_closed_shell ( );
@@ -20536,8 +20536,8 @@ class SdaiOriented_closed_shell  :    public SdaiClosed_shell  {
 	const SdaiClosed_shell_ptr closed_shell_element_() const;
 	void closed_shell_element_ (const SdaiClosed_shell_ptr x);
 
-	const SCLBOOL(Bool) orientation_() const;
-	void orientation_ (const SCLBOOL(Bool) x);
+	const SCLBOOL(Boolean) orientation_() const;
+	void orientation_ (const SCLBOOL(Boolean) x);
 
 	/* The first parent's access functions are */
 	/* above or covered by inherited functions. */

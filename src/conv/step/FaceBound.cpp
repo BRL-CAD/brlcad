@@ -91,7 +91,7 @@ FaceBound::Print(int level) {
 	TAB(level+1); cout << "bound:" << endl;
 	bound->Print(level+1);
 
-	TAB(level+1); cout << "orientation:" << step->getBooleanString((SCLBOOL_H(Bool))orientation) << endl;
+	TAB(level+1); cout << "orientation:" << step->getBooleanString((SCLBOOL_H(Boolean))orientation) << endl;
 
 	TAB(level); cout << "Inherited Attributes:" << endl;
 	TopologicalRepresentationItem::Print(level+1);

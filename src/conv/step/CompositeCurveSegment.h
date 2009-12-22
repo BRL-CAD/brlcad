@@ -38,7 +38,7 @@ private:
 protected:
 	Curve *parent_curve;
 	Transition_code transition;
-	SCLBOOL_H(Bool) same_sense;
+	SCLBOOL_H(Boolean) same_sense;
 
 public:
 	CompositeCurveSegment();

@@ -95,7 +95,7 @@ OrientedEdge::Print(int level) {
 	TAB(level); cout << "Attributes:" << endl;
 	TAB(level+1); cout << "edge_element:" << endl;
 	edge_element->Print(level+1);
-	TAB(level+1); cout << "orientation:" << step->getBooleanString((SCLBOOL_H(Bool))orientation) << endl;
+	TAB(level+1); cout << "orientation:" << step->getBooleanString((SCLBOOL_H(Boolean))orientation) << endl;
 
 }
 
@@ -120,7 +120,7 @@ OrientedEdge::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 
 bool
 OrientedEdge::OrientWithEdge() {
-	if ((SCLBOOL_H(Bool))orientation == SCLBOOL_H(BTrue)) {
+	if ((SCLBOOL_H(Boolean))orientation == SCLBOOL_H(BTrue)) {
 		return true;
 	}
 	return false;

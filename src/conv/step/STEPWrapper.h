@@ -89,12 +89,12 @@ public:
 	SCLP23(Application_instance) *getEntity( int STEPid, const char *name );
 	SCLP23(Application_instance) *getEntity( SCLP23(Application_instance) *, const char *name );
 	string getLogicalString( SCLLOG_H(Logical) v );
-	string getBooleanString( SCLBOOL_H(Bool) v );
+	string getBooleanString( SCLBOOL_H(Boolean) v );
 
 	// helper functions based on STEP id
 	STEPattribute *getAttribute( int STEPid, const char *name );
 	LIST_OF_STRINGS *getAttributes( int STEPid );
-	SCLBOOL_H(Bool) getBooleanAttribute( int STEPid, const char *name );
+	SCLBOOL_H(Boolean) getBooleanAttribute( int STEPid, const char *name );
 	SCLP23(Application_instance) *getEntityAttribute( int STEPid, const char *name );
 	int getEnumAttribute( int STEPid, const char *name );
 	int getIntegerAttribute( int STEPid, const char *name );
@@ -110,7 +110,7 @@ public:
 	//helper functions based on entity instance pointer
 	STEPattribute *getAttribute( SCLP23(Application_instance) *sse, const char *name );
 	LIST_OF_STRINGS *getAttributes( SCLP23(Application_instance) *sse );
-	SCLBOOL_H(Bool) getBooleanAttribute( SCLP23(Application_instance) *sse, const char *name );
+	SCLBOOL_H(Boolean) getBooleanAttribute( SCLP23(Application_instance) *sse, const char *name );
 	SCLP23(Application_instance) *getEntityAttribute( SCLP23(Application_instance) *sse, const char *name );
 	SCLP23(Select) *getSelectAttribute( SCLP23(Application_instance) *sse, const char *name );
 	int getEnumAttribute( SCLP23(Application_instance) *sse, const char *name );

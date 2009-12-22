@@ -43,8 +43,8 @@ protected:
 	double v2;
 	//TODO: Fix all references to YAYA
 #ifdef YAYA
-	SCLBOOL_H(Bool) usense;
-	SCLBOOL_H(Bool) vsense;
+	SCLBOOL_H(Boolean) usense;
+	SCLBOOL_H(Boolean) vsense;
 #else
 	int usense;
 	int vsense;

@@ -112,7 +112,7 @@ CurveBoundedSurface::Print(int level) {
 		(*i)->Print(level+1);
 	}
 
-	TAB(level+1); cout << "implicit_outer:" << step->getBooleanString((SCLBOOL_H(Bool))implicit_outer) << endl;
+	TAB(level+1); cout << "implicit_outer:" << step->getBooleanString((SCLBOOL_H(Boolean))implicit_outer) << endl;
 
 	TAB(level); cout << "Inherited Attributes:" << endl;
 	BoundedSurface::Print(level+1);

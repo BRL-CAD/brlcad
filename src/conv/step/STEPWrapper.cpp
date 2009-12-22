@@ -166,10 +166,10 @@ STEPWrapper::getAttributes(int STEPid)
 }
 
 
-SCLBOOL_H(Bool)
+SCLBOOL_H(Boolean)
 STEPWrapper::getBooleanAttribute(int STEPid, const char *name)
 {
-    SCLBOOL_H(Bool) retValue = SCLBOOL_H(BUnset);
+    SCLBOOL_H(Boolean) retValue = SCLBOOL_H(BUnset);
     SCLP23(Application_instance) *sse = instance_list.FindFileId(STEPid)->GetSTEPentity();
 
     sse->ResetAttributes();
@@ -179,7 +179,7 @@ STEPWrapper::getBooleanAttribute(int STEPid, const char *name)
 	std::string attrname = attr->Name();
 
 	if (attrname.compare(name) == 0) {
-	    retValue = (SCLBOOL_H(Bool))(*attr->ptr.e).asInt();
+	    retValue = (SCLBOOL_H(Boolean))(*attr->ptr.e).asInt();
 	    if (retValue > SCLBOOL_H(BUnset))
 		retValue = SCLBOOL_H(BUnset);
 	    break;
@@ -257,7 +257,7 @@ STEPWrapper::getLogicalString(SCLLOG_H(Logical) v)
 
 
 std::string
-STEPWrapper::getBooleanString(SCLBOOL_H(Bool) v)
+STEPWrapper::getBooleanString(SCLBOOL_H(Boolean) v)
 {
     std::string retValue = "Unknown";
 
@@ -531,10 +531,10 @@ STEPWrapper::getAttributes(SCLP23(Application_instance) *sse) {
 }
 
 
-SCLBOOL_H(Bool)
+SCLBOOL_H(Boolean)
 STEPWrapper::getBooleanAttribute(SCLP23(Application_instance) *sse, const char *name)
 {
-    SCLBOOL_H(Bool) retValue = SCLBOOL_H(BUnset);
+    SCLBOOL_H(Boolean) retValue = SCLBOOL_H(BUnset);
 
     sse->ResetAttributes();
 
@@ -543,7 +543,7 @@ STEPWrapper::getBooleanAttribute(SCLP23(Application_instance) *sse, const char *
 	std::string attrname = attr->Name();
 
 	if (attrname.compare(name) == 0) {
-	    retValue = (SCLBOOL_H(Bool))(*attr->ptr.e).asInt();
+	    retValue = (SCLBOOL_H(Boolean))(*attr->ptr.e).asInt();
 	    if (retValue > SCLBOOL_H(BUnset))
 		retValue = SCLBOOL_H(BUnset);
 	    break;

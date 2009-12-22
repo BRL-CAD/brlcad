@@ -97,8 +97,8 @@ RectangularTrimmedSurface::Print(int level) {
 	TAB(level+1); cout << "v1:" << u1 << endl;
 	TAB(level+1); cout << "v2:" << u2 << endl;
 
-	TAB(level+1); cout << "usense:" << step->getBooleanString((SCLBOOL_H(Bool))usense) << endl;
-	TAB(level+1); cout << "vsense:" << step->getBooleanString((SCLBOOL_H(Bool))vsense) << endl;
+	TAB(level+1); cout << "usense:" << step->getBooleanString((SCLBOOL_H(Boolean))usense) << endl;
+	TAB(level+1); cout << "vsense:" << step->getBooleanString((SCLBOOL_H(Boolean))vsense) << endl;
 
 	TAB(level); cout << "Inherited Attributes:" << endl;
 	BoundedSurface::Print(level+1);

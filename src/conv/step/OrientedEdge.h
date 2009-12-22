@@ -35,7 +35,7 @@ private:
 
 protected:
 #ifdef YAYA
-	SCLBOOL_H(Bool) orientation;
+	SCLBOOL_H(Boolean) orientation;
 #else
 	int orientation;
 #endif

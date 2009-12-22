@@ -38,7 +38,7 @@ private:
 
 protected:
 #ifdef YAYA
-	SCLBOOL_H(Bool) same_sense;
+	SCLBOOL_H(Boolean) same_sense;
 #else
 	int same_sense;
 #endif
