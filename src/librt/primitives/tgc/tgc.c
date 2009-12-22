@@ -842,7 +842,6 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     }
 
     if (npts != 0 && npts != 2 && npts != 4) {
-#ifndef DM_RTGL
 	/* these are printed in 'mm' regardless of local units */
 	bu_log("tgc(%s):  %d intersects != {0, 2, 4}\n", stp->st_name, npts);
 	bu_log("\tray: pt = (%g %g %g), dir = (%g %g %g), units in mm\n", V3ARGS(ap->a_ray.r_pt), V3ARGS(ap->a_ray.r_dir));
@@ -850,7 +849,6 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	    bu_log("\t%g", k[i]*t_scale);
 	}
 	bu_log("\n");
-#endif
 	return(0);			/* No hit */
     }
 
@@ -1134,11 +1132,9 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 	    k[i] -= cor_proj;
 
 	if (npts != 0 && npts != 2 && npts != 4) {
-#ifndef DM_RTGL
 	    bu_log("tgc(%s):  %d intersects != {0, 2, 4}\n",
 		   stp[ix]->st_name, npts);
 	    RT_TGC_SEG_MISS(segp[ix]);		/* No hit */
-#endif
 	    continue;
 	}
 
