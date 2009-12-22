@@ -1127,9 +1127,9 @@ wdb_put_cmd(struct rt_wdb *wdbp,
 
 	    return TCL_ERROR;
 	}
-	ftp->ft_make(ftp, &intern, 0.0);
+	ftp->ft_make(ftp, &intern);
     } else {
-	rt_generic_make(ftp, &intern, 0.0);
+	rt_generic_make(ftp, &intern);
     }
 
     {
@@ -7676,9 +7676,6 @@ wdb_attr_cmd(struct rt_wdb *wdbp,
 		case DB5_MAJORTYPE_ATTRIBUTE_ONLY:
 		    bu_vls_printf(&vls, "%s global:\n", argv[2]);
 		    break;
-		case DB5_MAJORTYPE_BINARY_EXPM:
-		    bu_vls_printf(&vls, "%s binary(expm):\n", argv[2]);
-		    break;
 		case DB5_MAJORTYPE_BINARY_MIME:
 		    bu_vls_printf(&vls, "%s binary(mime):\n", argv[2]);
 		    break;
@@ -9132,9 +9129,6 @@ wdb_vls_long_dpp(struct bu_vls *vls,
 		case DB5_MAJORTYPE_BINARY_UNIF:
 		    len = strlen(binu_types[list_of_names[i]->d_minor_type]);
 		    break;
-		case DB5_MAJORTYPE_BINARY_EXPM:
-		    len = strlen("binary(expm)");
-		    break;
 	    }
 	}
 
@@ -9165,11 +9159,6 @@ wdb_vls_long_dpp(struct bu_vls *vls,
 		case DB5_MAJORTYPE_ATTRIBUTE_ONLY:
 		    isSolid = 0;
 		    type = "global";
-		    break;
-		case DB5_MAJORTYPE_BINARY_EXPM:
-		    isSolid = 0;
-		    isRegion = 0;
-		    type = "binary(expm)";
 		    break;
 		case DB5_MAJORTYPE_BINARY_MIME:
 		    isSolid = 0;
