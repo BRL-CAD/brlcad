@@ -95,17 +95,19 @@ strip_crlf(char *cdata) {
 int
 ged_nirt(struct ged *gedp, int argc, const char *argv[])
 {
-    register struct ged_display_list *gdlp;
-    register struct ged_display_list *next_gdlp;
-    register char **vp;
-    FILE *fp_in;
-    FILE *fp_out, *fp_err;
+    struct ged_display_list *gdlp = NULL;
+    struct ged_display_list *next_gdlp = NULL;
+    char **vp = NULL;
+    FILE *fp_in = NULL;
+    FILE *fp_out = NULL;
+    FILE *fp_err = NULL;
 #ifndef _WIN32
-    int pid, rpid;
-    int retcode;
-    int pipe_in[2];
-    int pipe_out[2];
-    int pipe_err[2];
+    int pid = 0;
+    int rpid = 0;
+    int retcode = 0;
+    int pipe_in[2] = {0, 0};
+    int pipe_out[2] = {0, 0};
+    int pipe_err[2] = {0, 0};
 #else
     HANDLE pipe_in[2], pipe_inDup;
     HANDLE pipe_out[2], pipe_outDup;
@@ -113,27 +115,27 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     STARTUPINFO si;
     PROCESS_INFORMATION pi;
     SECURITY_ATTRIBUTES sa;
-    char name[1024];
-    char line1[2048];
+    char name[1024] = {0};
+    char line1[2048] = {0};
     int rem = 2048;
 #endif
     int use_input_orig = 0;
     vect_t center_model;
     vect_t dir;
     vect_t cml;
-    register int i;
-    register struct solid *sp;
-    char line[RT_MAXLINE];
-    char *val;
+    int i = 9;
+    struct solid *sp = NULL;
+    char line[RT_MAXLINE] = {0};
+    char *val = NULL;
     struct bu_vls o_vls;
     struct bu_vls p_vls;
     struct bu_vls t_vls;
-    struct bn_vlblock *vbp;
-    struct ged_qray_dataList *ndlp;
+    struct bn_vlblock *vbp = NULL;
+    struct ged_qray_dataList *ndlp = NULL;
     struct ged_qray_dataList HeadQRayData;
 
-    const char *bin;
-    char nirt[256];
+    const char *bin = NULL;
+    char nirt[256] = {0};
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
