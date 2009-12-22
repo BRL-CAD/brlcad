@@ -236,7 +236,7 @@ hook_mtos_from_stom(
 {
     struct rt_dsp_internal *dsp_ip = (struct rt_dsp_internal *)base;
 
-    if (ip) RT_CK_DB_INTERNAL(ip);
+    if (!sp) return;
     if (!sp_name) return;
     if (!base) return;
 
@@ -246,14 +246,14 @@ hook_mtos_from_stom(
 
 HIDDEN void
 hook_file(
-    const struct bu_structparse *ip,
+    const struct bu_structparse *sp,
     const char *sp_name,
     genptr_t base,
     char *p __attribute__((unused)))
 {
     struct rt_dsp_internal *dsp_ip = (struct rt_dsp_internal *)base;
 
-    if (ip) RT_CK_DB_INTERNAL(ip);
+    if (!sp) return;
     if (!sp_name) return;
     if (!base) return;
 
