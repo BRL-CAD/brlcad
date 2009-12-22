@@ -659,6 +659,11 @@ THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
 * rename 'part' primitive to 'pill' or remove it entirely in favor of
   a more generalized metaprimitive primitive.
 
+* binary objects need to write out their minor type during export, not
+  relying on the raw wrapper to encode it, so that proper
+  import/export can be performed without relying on minor_type hacks
+  in the API.
+
 
 FUNCTIONALITY NEEDED TO SPEED UP RAYTRACING
 -------------------------------------------
