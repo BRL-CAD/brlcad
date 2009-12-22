@@ -98,11 +98,12 @@ bu_crashreport(const char *filename)
 	snprintf(buffer, CR_BUFSIZE, "%s -a 2>&1", path);
 #if defined(HAVE_POPEN) && !defined(STRICT_FLAGS)
 	popenfp = popen(buffer, "r");
-#endif
 	if (!popenfp) {
 	    perror("unable to popen uname");
 	    bu_log("WARNING: Unable to obtain uname information\n");
-	} else {
+	}
+#endif
+	if (popenfp) {
 	    fprintf(fp, "\nSystem characteristics:\n");
 	    fflush(fp);
 	    while (bu_fgets(buffer, CR_BUFSIZE, popenfp)) {
@@ -123,11 +124,12 @@ bu_crashreport(const char *filename)
 	snprintf(buffer, CR_BUFSIZE, "%s -a 2>&1", path);
 #if defined(HAVE_POPEN) && !defined(STRICT_FLAGS)
 	popenfp = popen(buffer, "r");
-#endif
 	if (popenfp == (FILE *)NULL) {
 	    perror("unable to popen sysctl");
 	    bu_log("WARNING: Unable to obtain sysctl information\n");
-	} else {
+	}
+#endif
+	if (popenfp != (FILE *)NULL) {
 	    fprintf(fp, "\nSystem information:\n");
 	    fflush(fp);
 	    while (bu_fgets(buffer, CR_BUFSIZE, popenfp)) {
