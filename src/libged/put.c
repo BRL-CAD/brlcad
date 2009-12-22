@@ -94,9 +94,9 @@ ged_put(struct ged *gedp, int argc, const char *argv[])
 			  argv[1], type);
 	    return GED_ERROR;
 	}
-	ftp->ft_make(ftp, &intern, 0.0);
+	ftp->ft_make(ftp, &intern);
     } else {
-	rt_generic_make(ftp, &intern, 0.0);
+	rt_generic_make(ftp, &intern);
     }
 
     if (!ftp->ft_adjust || ftp->ft_adjust(&gedp->ged_result_str, &intern, argc-3, (char **)argv+3, &rt_uniresource) == GED_ERROR) {
