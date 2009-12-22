@@ -350,7 +350,7 @@ TYPEget_idl_type (const Type t)
 
     /*    case TYPE_BOOLEAN:	*/
     if (class == Class_Boolean_Type)
-        return ("SCLBOOL(Bool)"); 
+        return ("SCLBOOL(Boolean)"); 
 
     /*      case TYPE_INTEGER:	*/
     if ( class == Class_Integer_Type)
@@ -726,12 +726,12 @@ ATTRsign_access_methods (Variable a, FILE* file)
     if (class == Class_Boolean_Type)  {
 	if(corba_binding)
 	{
-	    fprintf (file, "\tconst SCLBOOL(Bool) %s(", attrnm);
+	    fprintf (file, "\tconst SCLBOOL(Boolean) %s(", attrnm);
 	    fprintf (file, 
 		    "CORBA::Environment &IT_env=CORBA::default_environment) ");
 	    fprintf (file, 
 		     "const throw (CORBA::SystemException);\n");
-	    fprintf (file, "\tvoid %s (SCLBOOL(Bool) x", attrnm  );
+	    fprintf (file, "\tvoid %s (SCLBOOL(Boolean) x", attrnm  );
 	    fprintf (file, 
 		   ", CORBA::Environment &IT_env=CORBA::default_environment)");
 	    fprintf (file, 
@@ -739,8 +739,8 @@ ATTRsign_access_methods (Variable a, FILE* file)
 	}
 	else
 	{
-	    fprintf (file, "\tconst SCLBOOL(Bool) %s() const;\n", attrnm);
-	    fprintf (file, "\tvoid %s (SCLBOOL(Bool) x);\n\n", attrnm  );
+	    fprintf (file, "\tconst SCLBOOL(Boolean) %s() const;\n", attrnm);
+	    fprintf (file, "\tvoid %s (SCLBOOL(Boolean) x);\n\n", attrnm  );
 	}
 	return;
     }    
@@ -1023,13 +1023,13 @@ ATTRprint_access_methods_get_head (const char * classnm, Variable a,
     if (class == Class_Boolean_Type)  {
       if(corba_binding)
       {
-	  fprintf (file, "\nconst SCLBOOL(Bool)\n%s::%s(", classnm, funcnm);
+	  fprintf (file, "\nconst SCLBOOL(Boolean)\n%s::%s(", classnm, funcnm);
 	  fprintf (file, 
 	 "CORBA::Environment &IT_env) const throw (CORBA::SystemException)\n");
       }
       else
 	fprintf (file, 
-		 "\nconst SCLBOOL(Bool)\n%s::%s() const\n", classnm, funcnm);
+		 "\nconst SCLBOOL(Boolean)\n%s::%s() const\n", classnm, funcnm);
 	return;
     }    
 
@@ -1126,7 +1126,7 @@ ATTRprint_access_methods_put_head  (CONST char * entnm, Variable a, FILE* file)
 
   /*    case TYPE_BOOLEAN:	*/
   if (class == Class_Boolean_Type)
-    strcpy (ctype, "SCLBOOL(Bool)");
+    strcpy (ctype, "SCLBOOL(Boolean)");
 
     /*    case TYPE_ENUM:	*/
   if ( class == Class_Enumeration_Type)  
@@ -1306,7 +1306,7 @@ AGGRprint_access_methods(CONST char *entnm, Variable a, FILE* file, Type t,
 	    fprintf (file, "    {\n");
 
 	    fprintf (file, "\t(*seq)[i] = ((EnumNode*)n)->node->asInt();\n");
-	    fprintf (file, "\tcout << \"returning entity %s, attr _%s: aggr enumeration/Bool/Logical element: \" << ((EnumNode*)n)->node->element_at( ((EnumNode*)n)->node->asInt() ) << endl;\n", entnm, attrnm);
+	    fprintf (file, "\tcout << \"returning entity %s, attr _%s: aggr enumeration/Boolean/Logical element: \" << ((EnumNode*)n)->node->element_at( ((EnumNode*)n)->node->asInt() ) << endl;\n", entnm, attrnm);
 /* /////////////////////////////////////////// */
 	    if(print_logging)
 	    {
@@ -1314,7 +1314,7 @@ AGGRprint_access_methods(CONST char *entnm, Variable a, FILE* file, Type t,
 		fprintf (file, "\tif(*logStream)\n\t{\n");
 		fprintf (file, 
 			 "\t    logStream->open(SCLLOGFILE,ios::app);\n");
-		fprintf (file, "\t    *logStream << time(NULL) << \" SDAI returning entity: %s, attr: _%s, aggr enumeration/Bool/Logical element: \" << ((EnumNode*)n)->node->element_at( ((EnumNode*)n)->node->asInt() ) << endl;\n", entnm, attrnm);
+		fprintf (file, "\t    *logStream << time(NULL) << \" SDAI returning entity: %s, attr: _%s, aggr enumeration/Boolean/Logical element: \" << ((EnumNode*)n)->node->element_at( ((EnumNode*)n)->node->asInt() ) << endl;\n", entnm, attrnm);
 		fprintf (file, "\t    logStream->close();\n");
 		fprintf (file, "\t}\n");
 		fprintf (file, "#endif\n");
@@ -1599,7 +1599,7 @@ AGGRprint_access_methods(CONST char *entnm, Variable a, FILE* file, Type t,
 		fprintf (file, "\tif(*logStream)\n\t{\n");
 		fprintf (file, 
 			 "\t    logStream->open(SCLLOGFILE,ios::app);\n");
-		fprintf (file, "\t    *logStream << time(NULL) << \" SDAI assigning entity: %s, attr: _%s, aggr enumeration/Bool/Logical element: \" << ((EnumNode*)n)->node->element_at( ((EnumNode*)n)->node->asInt() ) << endl;\n", entnm, attrnm);
+		fprintf (file, "\t    *logStream << time(NULL) << \" SDAI assigning entity: %s, attr: _%s, aggr enumeration/Boolean/Logical element: \" << ((EnumNode*)n)->node->element_at( ((EnumNode*)n)->node->asInt() ) << endl;\n", entnm, attrnm);
 		fprintf (file, "\t    logStream->close();\n");
 		fprintf (file, "\t}\n");
 		fprintf (file, "#endif\n");
@@ -1916,7 +1916,7 @@ ATTRprint_access_methods  (CONST char * entnm, Variable a, FILE* file)
 	if(corba_binding)
 	{
 	    if (class == Class_Boolean_Type) 
-	      fprintf (file, "    return (SCLBOOL(Bool)) _%s;\n}\n", attrnm);
+	      fprintf (file, "    return (SCLBOOL(Boolean)) _%s;\n}\n", attrnm);
 	    else if ( class == Class_Logical_Type)
 	      fprintf (file, "    return (SCLLOG(Logical)) _%s;\n}\n", attrnm);
 	}
@@ -5228,7 +5228,7 @@ TYPEprint_new (const Type type, FILE *create, Schema schema)
 	    /* fill in it's values	*/
 	    TYPEprint_nm_ft_desc (schema, type, create, ",");
 	    fprintf(create,
-		"\t\t  (EnumCreator) create_BOOL);\t// Creator function\n");
+		"\t\t  (EnumCreator) create_BOOLEAN);\t// Creator function\n");
 	    break;
 
 	  case logical_:

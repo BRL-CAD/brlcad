@@ -1173,7 +1173,7 @@ TYPEselect_lib_print_part_three( const Type type, FILE* f, Schema schema,
 	      break;
 
 	  case boolean_:
-	    fprintf( f, "   return (SCLBOOL(Bool)) 0;\n}\n\n" );
+	    fprintf( f, "   return (SCLBOOL(Boolean)) 0;\n}\n\n" );
 	      break;
 
 	  case logical_:

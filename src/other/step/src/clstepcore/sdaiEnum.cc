@@ -28,9 +28,9 @@
 // are initialized here instead of in the header file in order to avoid
 // multiple inclusions when building SCL applications.
 /*
-const SCLP23(BOOL) SCLP23(TRUE)( SCLBOOL(BTrue) );
-const SCLP23(BOOL) SCLP23(FALSE)( SCLBOOL(BFalse) );
-const SCLP23(BOOL) SCLP23(UNSET)( SCLBOOL(BUnset) );
+const SCLP23(BOOLEAN) SCLP23(TRUE)( SCLBOOL(BTrue) );
+const SCLP23(BOOLEAN) SCLP23(FALSE)( SCLBOOL(BFalse) );
+const SCLP23(BOOLEAN) SCLP23(UNSET)( SCLBOOL(BUnset) );
 const SCLP23(LOGICAL) SCLP23(UNKNOWN)( SCLLOG(LUnknown) );
 */
 //#endif 
@@ -72,7 +72,7 @@ SCLP23(LOGICAL)::SCLP23_NAME(LOGICAL) (int i)
 }
 
 /*
-SCLP23(LOGICAL)::SCLP23_NAME(LOGICAL) (const BOOL& boo) 
+SCLP23(LOGICAL)::SCLP23_NAME(LOGICAL) (const BOOLEAN& boo) 
 {
     v = boo.asInt();
 }
@@ -354,49 +354,49 @@ SCLP23(LOGICAL)::ReadEnum(istream& in, ErrorDescriptor *err, int AssignVal,
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-// class BOOL  Jan 97
+// class BOOLEAN  Jan 97
 ///////////////////////////////////////////////////////////////////////////////
 
 #ifdef __OSTORE__
-SCLP23(BOOL) * 
-create_BOOL(os_database *db) 
+SCLP23(BOOLEAN) * 
+create_BOOLEAN(os_database *db) 
 {
-    return new (db, SCLP23(BOOL)::get_os_typespec()) SCLP23(BOOL); 
+    return new (db, SCLP23(BOOLEAN)::get_os_typespec()) SCLP23(BOOLEAN); 
 }
 #endif
 
 const char * 
-SCLP23(BOOL)::Name() const
+SCLP23(BOOLEAN)::Name() const
 {
     return "Bool";
 }
 
-SCLP23(BOOL)::SCLP23_NAME(BOOL) (char * val)
+SCLP23(BOOLEAN)::SCLP23_NAME(BOOLEAN) (char * val)
 {
     set_value (val);
 }
 
-SCLP23(BOOL)::SCLP23_NAME(BOOL) (SCLBOOL(Bool) state)
+SCLP23(BOOLEAN)::SCLP23_NAME(BOOLEAN) (SCLBOOL(Boolean) state)
 {
     set_value (state);
 }
 
-SCLP23(BOOL)::SCLP23_NAME(BOOL) (const SCLP23_NAME(BOOL)& source)
+SCLP23(BOOLEAN)::SCLP23_NAME(BOOLEAN) (const SCLP23_NAME(BOOLEAN)& source)
 {
     set_value (source.asInt());
 }
 
-SCLP23(BOOL)::~SCLP23_NAME(BOOL)()
+SCLP23(BOOLEAN)::~SCLP23_NAME(BOOLEAN)()
 {
 }
 
 int 
-SCLP23(BOOL)::no_elements () const
+SCLP23(BOOLEAN)::no_elements () const
 {
     return 2;
 }
 
-SCLP23(BOOL)::SCLP23_NAME(BOOL) (int i)
+SCLP23(BOOLEAN)::SCLP23_NAME(BOOLEAN) (int i)
 {
   if (i == 0)
     v =  SCLBOOL(BFalse) ;
@@ -404,7 +404,7 @@ SCLP23(BOOL)::SCLP23_NAME(BOOL) (int i)
     v =  SCLBOOL(BTrue) ;
 }
 
-SCLP23(BOOL)::SCLP23_NAME(BOOL) (const SCLP23(LOGICAL)& val)  {
+SCLP23(BOOLEAN)::SCLP23_NAME(BOOLEAN) (const SCLP23(LOGICAL)& val)  {
   if (val.asInt() == SCLLOG(LUnknown)) 
   { // this should set error code sdaiVT_NVLD i.e. Invalid value type.
       v = SCLBOOL(BUnset); return; 
@@ -414,16 +414,16 @@ SCLP23(BOOL)::SCLP23_NAME(BOOL) (const SCLP23(LOGICAL)& val)  {
 
 #ifdef __OSTORE__
 void 
-SCLP23(BOOL)::Access_hook_in(void *object, 
+SCLP23(BOOLEAN)::Access_hook_in(void *object, 
 				enum os_access_reason reason, void *user_data, 
 				void *start_range, void *end_range)
 {
-    cout << "ObjectStore called BOOL::Access_hook_in()" 
+    cout << "ObjectStore called BOOLEAN::Access_hook_in()" 
       << endl;
 }
 #endif
 
-SCLP23(BOOL)::operator  SCLBOOL(Bool) () const  {
+SCLP23(BOOLEAN)::operator  SCLBOOL(Boolean) () const  {
   switch (v) {
   case  SCLBOOL(BFalse) : return  SCLBOOL(BFalse) ;
   case  SCLBOOL(BTrue) : return  SCLBOOL(BTrue) ;
@@ -431,15 +431,15 @@ SCLP23(BOOL)::operator  SCLBOOL(Bool) () const  {
   default: return  SCLBOOL(BUnset) ;
 }}
 
-SCLP23(BOOL)& 
-SCLP23(BOOL)::operator= (const SCLP23(LOGICAL)& t)
+SCLP23(BOOLEAN)& 
+SCLP23(BOOLEAN)::operator= (const SCLP23(LOGICAL)& t)
 {
     set_value (t.asInt());
     return *this;
 }
 
-SCLP23(BOOL)& 
-SCLP23(BOOL)::operator= (const  SCLBOOL(Bool) t)
+SCLP23(BOOLEAN)& 
+SCLP23(BOOLEAN)::operator= (const  SCLBOOL(Boolean) t)
 {
     v = t;
     return *this;
@@ -447,7 +447,7 @@ SCLP23(BOOL)::operator= (const  SCLBOOL(Bool) t)
 
 #if 0
 
-SCLP23(BOOL)::operator int () const  {
+SCLP23(BOOLEAN)::operator int () const  {
  // anything other than BFalse should return 1 according to Part 23
   switch (v) {
   case  SCLBOOL(BFalse) : return 0;
@@ -457,7 +457,7 @@ SCLP23(BOOL)::operator int () const  {
   default: return 1;
 }}
 
-SCLP23(BOOL)::operator  SCLLOG(Logical) () const  {
+SCLP23(BOOLEAN)::operator  SCLLOG(Logical) () const  {
   switch (v) {
   case  SCLBOOL(BFalse) : return  SCLLOG(LFalse) ;
   case  SCLBOOL(BTrue) : return  SCLLOG(LTrue) ;
@@ -468,7 +468,7 @@ SCLP23(BOOL)::operator  SCLLOG(Logical) () const  {
 #endif
 
 const char * 
-SCLP23(BOOL)::element_at (int n)  const {
+SCLP23(BOOLEAN)::element_at (int n)  const {
   switch (n)  {
   case  SCLBOOL(BFalse) : return "F";
   case  SCLBOOL(BTrue) : return "T";
@@ -476,7 +476,7 @@ SCLP23(BOOL)::element_at (int n)  const {
   }
 }
 
-SCLP23(LOGICAL) SCLP23(BOOL)::operator ==( const SCLP23(LOGICAL)& t ) const
+SCLP23(LOGICAL) SCLP23(BOOLEAN)::operator ==( const SCLP23(LOGICAL)& t ) const
 {
   if( v == t.asInt() )
       return  SCLLOG(LTrue) ;

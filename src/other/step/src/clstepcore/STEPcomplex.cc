@@ -511,7 +511,7 @@ STEPcomplex::BuildAttrs(const char *s )
 		    break;
 
 		  case BOOLEAN_TYPE:
-		    a = new STEPattribute (*ad,  new SCLP23(BOOL));
+		    a = new STEPattribute (*ad,  new SCLP23(BOOLEAN));
 		    break;
 
 		  case LOGICAL_TYPE:
