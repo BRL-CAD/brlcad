@@ -281,9 +281,6 @@ vls_long_dpp(struct bu_vls *vls,
 		case DB5_MAJORTYPE_BINARY_UNIF:
 		    len = strlen(binu_types[list_of_names[i]->d_minor_type]);
 		    break;
-		case DB5_MAJORTYPE_BINARY_EXPM:
-		    len = strlen("binary(expm)");
-		    break;
 	    }
 	}
 
@@ -314,11 +311,6 @@ vls_long_dpp(struct bu_vls *vls,
 		case DB5_MAJORTYPE_ATTRIBUTE_ONLY:
 		    isSolid = 0;
 		    type = "global";
-		    break;
-		case DB5_MAJORTYPE_BINARY_EXPM:
-		    isSolid = 0;
-		    isRegion = 0;
-		    type = "binary(expm)";
 		    break;
 		case DB5_MAJORTYPE_BINARY_MIME:
 		    isSolid = 0;

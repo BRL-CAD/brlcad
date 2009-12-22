@@ -527,7 +527,7 @@ struct soltab {
  * Non-geometric objects
  */
 #define ID_COMBINATION	31	/**< @brief Combination Record */
-#define ID_BINEXPM	32	/**< @brief Experimental binary */
+#define ID_UNUSED1	32	/**< @brief UNUSED (placeholder)  */
 #define ID_BINUNIF	33	/**< @brief Uniform-array binary */
 #define ID_BINMIME	34	/**< @brief MIME-typed binary */
 #define ID_CONSTRAINT   39      /**< @brief Constraint object */

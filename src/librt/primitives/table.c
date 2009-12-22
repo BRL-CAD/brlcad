@@ -67,6 +67,7 @@ const struct bu_structparse rt_nul_parse[] = {
 	BU_EXTERN(int rt_##name##_export4, (struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip, struct resource *resp)); \
 	BU_EXTERN(void rt_##name##_ifree, (struct rt_db_internal *ip, struct resource *resp)); \
 	BU_EXTERN(int rt_##name##_describe, (struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local, struct resource *resp, struct db_i *db_i)); \
+        BU_EXTERN(void rt_##name##_make, (const struct rt_functab *ftp, struct rt_db_internal *intern)); \
 	BU_EXTERN(int rt_##name##_xform, (struct rt_db_internal *op, const mat_t mat, struct rt_db_internal *ip, int free, struct db_i *dbip, struct resource *resp)); \
 	BU_EXTERN(int rt_##name##_params, (struct pc_pc_set *ps, const struct rt_db_internal *ip)); \
 	BU_EXTERN(int rt_##name##_mirror, (struct rt_db_internal *ip, const plane_t *plane)); \
@@ -176,9 +177,6 @@ RT_DECLARE_INTERFACE(constraint);
 /*
   #define rt_binunif_xform rt_generic_xform
   RT_DECLARE_INTERFACE(binunif);
-
-  #define rt_binexpm_xform rt_generic_xform
-  RT_DECLARE_INTERFACE(binexpm);
 */
 
 #define rt_pnts_xform rt_generic_xform
@@ -204,11 +202,6 @@ BU_EXTERN(int rt_comb_import5, (struct rt_db_internal *ip,
 				struct resource *resp));
 
 /* from db5_bin.c */
-BU_EXTERN(int rt_binexpm_import5, (struct rt_db_internal * ip,
-				   const struct bu_external *ep,
-				   const mat_t mat,
-				   const struct db_i *dbip,
-				   struct resource *resp));
 BU_EXTERN(int rt_binunif_import5, (struct rt_db_internal * ip,
 				   const struct bu_external *ep,
 				   const mat_t mat,
@@ -217,12 +210,6 @@ BU_EXTERN(int rt_binunif_import5, (struct rt_db_internal * ip,
 BU_EXTERN(int rt_binmime_import5, (struct rt_db_internal * ip,
 				   const struct bu_external *ep,
 				   const mat_t mat,
-				   const struct db_i *dbip,
-				   struct resource *resp));
-
-BU_EXTERN(int rt_binexpm_export5, (struct bu_external *ep,
-				   const struct rt_db_internal *ip,
-				   double local2mm,
 				   const struct db_i *dbip,
 				   struct resource *resp));
 
@@ -382,9 +369,6 @@ int rt_nul_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, c
 int rt_nul_form(struct bu_vls *log, const struct rt_functab *ftp) {
     bu_vls_printf(log, "rt_nul_form");
     return BRLCAD_ERROR;
-}
-void rt_nul_make(const struct rt_functab *ftp, struct rt_db_internal *intern) {
-    bu_bomb("rt_nul_make invoked\n");
 }
 
 
@@ -841,19 +825,38 @@ const struct rt_functab rt_functab[] = {
      rt_comb_make, NULL
     },
 
-    {RT_FUNCTAB_MAGIC, "ID_BINEXPM", "binexpm",
+    /* placeholder to not offset latter object type indices (was ID_BINEXPM) */
+    {RT_FUNCTAB_MAGIC, "ID_UNUSED1", "unused1",
      0,
-     rt_nul_prep,	rt_nul_shot,	rt_nul_print,	rt_nul_norm,
-     rt_nul_piece_shot, rt_nul_piece_hitsegs,
-     rt_nul_uv,	rt_nul_curve,	rt_nul_class,	rt_nul_free,
-     rt_nul_plot,	rt_nul_vshot,	rt_nul_tess,	rt_nul_tnurb,
-     rt_binexpm_import5,
+     rt_nul_prep,
+     rt_nul_shot,
+     rt_nul_print,
+     rt_nul_norm,
+     rt_nul_piece_shot,
+     rt_nul_piece_hitsegs,
+     rt_nul_uv,
+     rt_nul_curve,
+     rt_nul_class,
+     rt_nul_free,
+     rt_nul_plot,
+     rt_nul_vshot,
+     rt_nul_tess,
+     rt_nul_tnurb,
+     rt_nul_import5,
      rt_nul_export5,
-     rt_nul_import4,	rt_nul_export4,	rt_nul_ifree,
-     rt_nul_describe, rt_generic_xform, NULL,
-     0,				0,
-     rt_nul_get,	rt_nul_adjust, rt_nul_form,
-     rt_nul_make, NULL
+     rt_nul_import4,
+     rt_nul_export4,
+     rt_nul_ifree,
+     rt_nul_describe,
+     rt_generic_xform,
+     NULL,
+     0,
+     0,
+     rt_nul_get,
+     rt_nul_adjust,
+     rt_nul_form,
+     rt_nul_make,
+     NULL
     },
 
     {RT_FUNCTAB_MAGIC, "ID_BINUNIF", "binunif",
@@ -1096,6 +1099,8 @@ int NDEF(rt_nul_xform, (struct rt_db_internal *op,
 			const mat_t mat, struct rt_db_internal *ip,
 			int free, struct db_i *dbip, struct resource *resp));
 int NDEF(rt_nul_params, (struct pc_pc_set * ps, const struct rt_db_internal *op));
+void DEF(rt_nul_make, (const struct rt_functab *ftp, struct rt_db_internal *intern));
+
 
 /* Map for database solidrec objects to internal objects */
 static char idmap[] = {

@@ -69,17 +69,6 @@ static const int binu_sizes[]={
  * XXX these are the interface routines needed for table.c
  */
 int
-rt_bin_expm_export5(struct bu_external *ep __attribute__((unused)),
-		    const struct rt_db_internal *ip __attribute__((unused)),
-		    double local2mm __attribute__((unused)),
-		    const struct db_i *dbip __attribute__((unused)),
-		    struct resource *resp __attribute__((unused)))
-{
-    bu_log("rt_bin_expm_export5() not implemented\n");
-    return -1;
-}
-
-int
 rt_bin_unif_export5(struct bu_external *ep __attribute__((unused)),
 		    const struct rt_db_internal *ip __attribute__((unused)),
 		    double local2mm __attribute__((unused)),
@@ -98,16 +87,6 @@ rt_bin_unif_import5(struct rt_db_internal *ip __attribute__((unused)),
 		    struct resource *resp __attribute__((unused)))
 {
     bu_log("rt_bin_unif_import5() not implemented\n");
-    return -1;
-}
-int
-rt_bin_expm_import5(struct rt_db_internal *ip __attribute__((unused)),
-		    const struct bu_external *ep __attribute__((unused)),
-		    const mat_t mat __attribute__((unused)),
-		    const struct db_i *dbip __attribute__((unused)),
-		    struct resource *resp __attribute__((unused)))
-{
-    bu_log("rt_bin_expm_import5() not implemented\n");
     return -1;
 }
 
@@ -245,22 +224,6 @@ rt_binunif_dump( struct rt_binunif_internal *bip) {
     bu_log("  count = %ld  first = 0x%02x", bip -> count,
 	   bip->u.uint8[0] & 0x0ff);
     bu_log("- - - - -\n");
-}
-
-
-/**
- * R T _ B I N E X P M _ I M P O R T 5
- *
- * Import an experimental binary object from the database format to
- * the internal structure.
- */
-int
-rt_binexpm_import5( struct rt_db_internal	*ip __attribute__((unused)),
-		    const struct bu_external	*ep __attribute__((unused)),
-		    const struct db_i		*dbip __attribute__((unused)))
-{
-    bu_log("rt_binexpm_import5() not implemented yet\n");
-    return -1;
 }
 
 

@@ -204,9 +204,6 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 		case DB5_MAJORTYPE_ATTRIBUTE_ONLY:
 		    bu_vls_printf( &gedp->ged_result_str, "%s global:\n", argv[2] );
 		    break;
-		case DB5_MAJORTYPE_BINARY_EXPM:
-		    bu_vls_printf( &gedp->ged_result_str, "%s binary(expm):\n", argv[2] );
-		    break;
 		case DB5_MAJORTYPE_BINARY_MIME:
 		    bu_vls_printf( &gedp->ged_result_str, "%s binary(mime):\n", argv[2] );
 		    break;
