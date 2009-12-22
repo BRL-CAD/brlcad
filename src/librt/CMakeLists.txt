@@ -183,6 +183,7 @@ set(LIBRT_SOURCES
     tree.c
     vers.c
     vlist.c
+    vshoot.c
     wdb.c
 )
 
