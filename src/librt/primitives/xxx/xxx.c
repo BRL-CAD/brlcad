@@ -88,12 +88,13 @@ int
 rt_xxx_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_xxx_internal *xxx_ip;
-    register struct xxx_specific *xxx;
-    const struct bn_tol *tol = &rtip->rti_tol;
 
+    if (stp) RT_CK_SOLTAB(stp);
     RT_CK_DB_INTERNAL(ip);
     xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
     RT_XXX_CK_MAGIC(xxx_ip);
+
+    return 0;
 }
 
 
@@ -103,8 +104,12 @@ rt_xxx_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 void
 rt_xxx_print(const struct soltab *stp)
 {
-    register const struct xxx_specific *xxx =
-	(struct xxx_specific *)stp->st_specific;
+    const struct xxx_specific *xxx;
+
+    if (!stp) return;
+    xxx = (struct xxx_specific *)stp->st_specific;
+    if (!xxx) return;
+    RT_CK_SOLTAB(stp);
 }
 
 
@@ -121,10 +126,14 @@ rt_xxx_print(const struct soltab *stp)
 int
 rt_xxx_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
-    register struct xxx_specific *xxx =
-	(struct xxx_specific *)stp->st_specific;
-    register struct seg *segp;
-    const struct bn_tol *tol = &ap->a_rt_i->rti_tol;
+    struct xxx_specific *xxx;
+
+    if (!stp) return -1;
+    xxx = (struct xxx_specific *)stp->st_specific;
+    if (!xxx) return -1;
+    RT_CK_SOLTAB(stp);
+
+    if (rp) RT_CK_RAY(rp);
 
 /* the EXAMPLE_NEW_SEGMENT block shows how one might add a new result
  * if the ray did hit the primitive.  the segment values would need to
@@ -158,8 +167,12 @@ rt_xxx_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 void
 rt_xxx_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
-    register struct xxx_specific *xxx =
-	(struct xxx_specific *)stp->st_specific;
+    struct xxx_specific *xxx;
+
+    if (!stp) return;
+    xxx = (struct xxx_specific *)stp->st_specific;
+    if (!xxx) return;
+    RT_CK_SOLTAB(stp);
 
     VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir);
 }
@@ -173,8 +186,12 @@ rt_xxx_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 void
 rt_xxx_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
-    register struct xxx_specific *xxx =
-	(struct xxx_specific *)stp->st_specific;
+    struct xxx_specific *xxx;
+
+    if (!stp) return;
+    xxx = (struct xxx_specific *)stp->st_specific;
+    if (!xxx) return;
+    RT_CK_SOLTAB(stp);
 
     cvp->crv_c1 = cvp->crv_c2 = 0;
 
@@ -194,8 +211,12 @@ rt_xxx_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 void
 rt_xxx_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
-    register struct xxx_specific *xxx =
-	(struct xxx_specific *)stp->st_specific;
+    struct xxx_specific *xxx;
+
+    if (!stp) return;
+    xxx = (struct xxx_specific *)stp->st_specific;
+    if (!xxx) return;
+    RT_CK_SOLTAB(stp);
 }
 
 
@@ -205,8 +226,12 @@ rt_xxx_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 void
 rt_xxx_free(struct soltab *stp)
 {
-    register struct xxx_specific *xxx =
-	(struct xxx_specific *)stp->st_specific;
+    struct xxx_specific *xxx;
+
+    if (!stp) return;
+    xxx = (struct xxx_specific *)stp->st_specific;
+    if (!xxx) return;
+    RT_CK_SOLTAB(stp);
 
     bu_free((char *)xxx, "xxx_specific");
 }
@@ -348,7 +373,7 @@ rt_xxx_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 int
 rt_xxx_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
-    register struct rt_xxx_internal *xxx_ip =
+    struct rt_xxx_internal *xxx_ip =
 	(struct rt_xxx_internal *)ip->idb_ptr;
     char buf[256];
 
@@ -374,7 +399,7 @@ rt_xxx_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 void
 rt_xxx_ifree(struct rt_db_internal *ip, struct resource *resp)
 {
-    register struct rt_xxx_internal *xxx_ip;
+    struct rt_xxx_internal *xxx_ip;
 
     RT_CK_DB_INTERNAL(ip);
 

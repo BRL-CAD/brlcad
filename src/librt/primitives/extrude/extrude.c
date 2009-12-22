@@ -117,6 +117,8 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
     int vert_count;
     int curr_vert;
 
+    if (rtip) RT_CK_RTI(rtip);
+
     eip = (struct rt_extrude_internal *)ip->idb_ptr;
     RT_EXTRUDE_CK_MAGIC(eip);
     skt = eip->skt;
@@ -339,6 +341,13 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
 void
 rt_extrude_print(const struct soltab *stp)
 {
+    struct extrude_specific *extr=(struct extrude_specific *)stp->st_specific;
+
+    VPRINT("u vector", extr->u_vec);
+    VPRINT("v vector", extr->v_vec);
+    VPRINT("h vector", extr->unit_h);
+    bn_mat_print("rotation matrix", extr->rot);
+    bn_mat_print("inverse rotation matrix", extr->irot);
 }
 
 
@@ -1072,21 +1081,6 @@ rt_extrude_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 
 
 /**
- * R T _ E X T R U D E _ U V
- *
- * For a hit on the surface of an extrude, return the (u, v)
- * coordinates of the hit point, 0 <= u, v <= 1.
- *
- * u = azimuth
- * v = elevation
- */
-void
-rt_extrude_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
-{
-}
-
-
-/**
  * R T _ E X T R U D E _ F R E E
  */
 void
@@ -1116,7 +1110,7 @@ rt_extrude_class(void)
  * R T _ E X T R U D E _ P L O T
  */
 int
-rt_extrude_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_extrude_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol __attribute__((unused)))
 {
     struct rt_extrude_internal *extrude_ip;
     struct curve *crv=(struct curve *)NULL;
@@ -2130,6 +2124,8 @@ rt_extrude_export4(struct bu_external *ep, const struct rt_db_internal *ip, doub
     union record *rec;
     unsigned char *ptr;
 
+    if (dbip) RT_CK_DBI(dbip);
+
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_EXTRUDE) return(-1);
     extrude_ip = (struct rt_extrude_internal *)ip->idb_ptr;
@@ -2174,6 +2170,8 @@ rt_extrude_export5(struct bu_external *ep, const struct rt_db_internal *ip, doub
     vect_t tmp_vec[4];
     unsigned char *ptr;
     int rem;
+
+    if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_EXTRUDE) return(-1);
@@ -2221,7 +2219,7 @@ rt_extrude_import5(
     const mat_t mat,
     const struct db_i *dbip,
     struct resource *resp,
-    const int minor_type)
+    const int minor_type __attribute__((unused)))
 {
     struct rt_extrude_internal *extrude_ip;
     struct rt_db_internal tmp_ip;
@@ -2302,8 +2300,11 @@ rt_extrude_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ver
 	    V3INTCLAMPARGS(u),
 	    V3INTCLAMPARGS(v));
     bu_vls_strcat(str, buf);
-    snprintf(buf, 256, "\tsketch name: %s\n", extrude_ip->sketch_name);
-    bu_vls_strcat(str, buf);
+
+    if (verbose) {
+	snprintf(buf, 256, "\tsketch name: %s\n", extrude_ip->sketch_name);
+	bu_vls_strcat(str, buf);
+    }
 
     return(0);
 }
@@ -2357,6 +2358,7 @@ rt_extrude_xform(
     struct rt_extrude_internal *eip, *eop;
     point_t tmp_vec;
 
+    if (dbip) RT_CK_DBI(dbip);
     RT_CK_DB_INTERNAL(ip);
     RT_CK_RESOURCE(resp)
 	eip = (struct rt_extrude_internal *)ip->idb_ptr;
@@ -2527,8 +2529,11 @@ rt_extrude_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, c
  *
  */
 int
-rt_extrude_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
+rt_extrude_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 {
+    if (!ps) return(0);
+    if (ip) RT_CK_DB_INTERNAL(ip);
+
     return(0);			/* OK */
 }
 

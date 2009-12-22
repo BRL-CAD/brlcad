@@ -780,7 +780,7 @@ const struct rt_functab rt_functab[] = {
      1,		/* 27 Solid of extrusion */
      rt_extrude_prep,	rt_extrude_shot,	rt_extrude_print,	rt_extrude_norm,
      rt_nul_piece_shot, rt_nul_piece_hitsegs,
-     rt_extrude_uv,		rt_extrude_curve,	rt_extrude_class,	rt_extrude_free,
+     rt_nul_uv, rt_extrude_curve, rt_extrude_class, rt_extrude_free,
      rt_extrude_plot,	rt_nul_vshot,	rt_extrude_tess,	rt_nul_tnurb,
      rt_extrude_import5, rt_extrude_export5,
      rt_extrude_import4,	rt_extrude_export4,	rt_extrude_ifree,

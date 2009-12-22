@@ -670,6 +670,8 @@ rt_eto_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
     register struct eto_specific *eto =
 	(struct eto_specific *)stp->st_specific;
 
+    if (ap) RT_CK_APPLICATION(ap);
+
     /* take elliptical slice of eto at hit point */
     VSET(Ru, hitp->hit_vpriv[X], hitp->hit_vpriv[Y], 0.);
     VUNITIZE(Ru);
@@ -733,7 +735,7 @@ rt_eto_class(void)
  * eto_rd Semiminor axis length (scalar) of eto cross section
  */
 int
-rt_eto_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_eto_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol __attribute__((unused)))
 {
     fastf_t a, b;	/* axis lengths of ellipse */
     fastf_t ang, ch, cv, dh, dv, ntol, dtol, phi, theta;
@@ -1195,6 +1197,8 @@ rt_eto_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     struct rt_eto_internal *tip;
     union record *rp;
 
+    if (dbip) RT_CK_DBI(dbip);
+
     BU_CK_EXTERNAL(ep);
     rp = (union record *)ep->ext_buf;
     /* Check record type */
@@ -1238,6 +1242,8 @@ rt_eto_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 {
     struct rt_eto_internal *tip;
     union record *eto;
+
+    if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_ETO) return(-1);
@@ -1288,6 +1294,7 @@ rt_eto_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     struct rt_eto_internal *tip;
     fastf_t vec[11];
 
+    if (dbip) RT_CK_DBI(dbip);
     BU_CK_EXTERNAL(ep);
 
     BU_ASSERT_LONG(ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * 11);
@@ -1331,6 +1338,8 @@ rt_eto_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 {
     struct rt_eto_internal *tip;
     fastf_t vec[11];
+
+    if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_ETO) return(-1);
@@ -1404,11 +1413,13 @@ rt_eto_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 	    INTCLAMP(MAGNITUDE(tip->eto_C) * mm2local));
     bu_vls_strcat(str, buf);
 
-    sprintf(buf, "\tr=%g\n", INTCLAMP(tip->eto_r * mm2local));
-    bu_vls_strcat(str, buf);
+    if (verbose) {
+	sprintf(buf, "\tr=%g\n", INTCLAMP(tip->eto_r * mm2local));
+	bu_vls_strcat(str, buf);
 
-    sprintf(buf, "\td=%g\n", INTCLAMP(tip->eto_rd * mm2local));
-    bu_vls_strcat(str, buf);
+	sprintf(buf, "\td=%g\n", INTCLAMP(tip->eto_rd * mm2local));
+	bu_vls_strcat(str, buf);
+    }
 
     return(0);
 }
@@ -1440,8 +1451,11 @@ rt_eto_ifree(struct rt_db_internal *ip, struct resource *resp)
  *
  */
 int
-rt_eto_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
+rt_eto_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 {
+    if (!ps) return(0);
+    if (ip) RT_CK_DB_INTERNAL(ip);
+
     return(0);			/* OK */
 }
 
