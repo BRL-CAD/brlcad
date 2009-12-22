@@ -7,9 +7,8 @@ AM_CPPFLAGS = \
 	${TNT_CPPFLAGS} \
 	${OPENNURBS_CPPFLAGS}
 
-# FIXME: these should be compiled into a noinst_LTLIBRARIES
-# convenience library and linked to step-g instead of being bundled
-# directly as a SOURCES.
+noinst_LTLIBRARIES = libstep2g_nil.la
+
 fedex_srcs = \
 	SdaiAll.cc \
 	SdaiCONFIG_CONTROL_DESIGN.cc \
@@ -17,7 +16,7 @@ fedex_srcs = \
 	compstructs.cc \
 	schema.cc
 
-step_g_SOURCES = \
+libstep2g_nil_la_SOURCES = \
 	$(fedex_srcs) \
 	AdvancedBrepShapeRepresentation.cpp \
 	AdvancedFace.cpp \
@@ -376,23 +375,26 @@ noinst_HEADERS = \
 	VolumeSiUnit.h \
 	VolumeUnit.h 
 
-# per-program CPPFLAGS wasn't added until automake 1.7
-step_g_CXXFLAGS = \
-	${OPENNURBS_CPPFLAGS} \
-	${STEP_CPPFLAGS} \
-	${TCL_CPPFLAGS}
-
 # FIXME: these declarations are required for proper distchecking if
 # the files do not exist before configure is run.
 BUILT_SOURCES = \
 	$(fedex_srcs) \
 	$(fedex_headers)
 
+step_g_SOURCES =
+
 step_g_LDADD = \
 	${BU} \
 	${WDB} \
 	${RT} \
-	${STEP_LIBS}
+	${STEP_LIBS} \
+	libstep2g_nil.la
+
+# per-program CPPFLAGS wasn't added until automake 1.7
+step_g_CXXFLAGS = \
+	${OPENNURBS_CPPFLAGS} \
+	${STEP_CPPFLAGS} \
+	${TCL_CPPFLAGS}
 
 $(fedex_srcs):
 	echo "Building fedex sources: ${fedex_srcs} ${fedex_hdrs}"
