@@ -229,7 +229,7 @@ static const vect_t dsp_pl[BBOX_PLANES] = {
  */
 HIDDEN void
 hook_mtos_from_stom(
-    const struct bu_structparse *ip,
+    const struct bu_structparse *sp,
     const char *sp_name,
     genptr_t base,
     char *p __attribute__((unused)))
