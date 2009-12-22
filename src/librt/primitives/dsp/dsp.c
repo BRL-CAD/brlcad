@@ -4027,18 +4027,20 @@ get_obj_data(struct rt_dsp_internal *dsp_ip, const struct db_i *dbip)
 {
     struct rt_binunif_internal *bip;
     int in_cookie, out_cookie, got;
+    int ret;
 
     BU_GETSTRUCT(dsp_ip->dsp_bip, rt_db_internal);
 
-    if (rt_retrieve_binunif (dsp_ip->dsp_bip, dbip,
-			     bu_vls_addr(&dsp_ip->dsp_name)))
+    ret = rt_retrieve_binunif(dsp_ip->dsp_bip, dbip, bu_vls_addr(&dsp_ip->dsp_name));
+    if (ret)
 	return -1;
 
-    if (RT_G_DEBUG & DEBUG_HF)
-	bu_log("db_internal magic: 0x%08x  major: %d minor:%d\n",
+    if (RT_G_DEBUG & DEBUG_HF) {
+	bu_log("db_internal magic: 0x%08x  major: %d  minor: %d\n",
 	       dsp_ip->dsp_bip->idb_magic,
 	       dsp_ip->dsp_bip->idb_major_type,
 	       dsp_ip->dsp_bip->idb_minor_type);
+    }
 
     bip = dsp_ip->dsp_bip->idb_ptr;
 
@@ -4292,7 +4294,7 @@ rt_dsp_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
  * Apply modeling transformations as well.
  */
 int
-rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip, struct resource *resp, const int minor_type __attribute__((unused)))
+rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip, struct resource *resp)
 {
     struct rt_dsp_internal *dsp_ip;
     unsigned char *cp;
@@ -4396,7 +4398,7 @@ rt_dsp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
  * The name is added by the caller, in the usual place.
  */
 int
-rt_dsp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip, struct resource *resp, const int minor_type __attribute__((unused)))
+rt_dsp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip, struct resource *resp)
 {
     struct rt_dsp_internal *dsp_ip;
     unsigned long name_len;

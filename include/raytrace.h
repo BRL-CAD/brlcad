@@ -1920,14 +1920,12 @@ struct rt_functab {
 			       const struct bu_external * /*ep*/,
 			       const mat_t /*mat*/,
 			       const struct db_i * /*dbip*/,
-			       struct resource * /*resp*/,
-			       const int minor_type));
+			       struct resource * /*resp*/));
     int (*ft_export5) BU_ARGS((struct bu_external * /*ep*/,
 			       const struct rt_db_internal * /*ip*/,
 			       double /*local2mm*/,
 			       const struct db_i * /*dbip*/,
-			       struct resource * /*resp*/,
-			       const int minor_type));
+			       struct resource * /*resp*/));
     int (*ft_import4) BU_ARGS((struct rt_db_internal * /*ip*/,
 			      const struct bu_external * /*ep*/,
 			      const mat_t /*mat*/,
@@ -2973,22 +2971,10 @@ RT_EXPORT BU_EXTERN(int db5_scan,
 		     genptr_t client_data));
 
 /* db5_comb.c */
-RT_EXPORT BU_EXTERN(int rt_comb_import5,
-		    (struct rt_db_internal   *ip,
-		     const struct bu_external *ep,
-		     const mat_t             mat,
-		     const struct db_i       *dbip,
-		     struct resource         *resp,
-		     const int		minor_type));
+RT_EXPORT BU_EXTERN(int rt_comb_import5, (struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp));
 
 /* extrude.c */
-RT_EXPORT BU_EXTERN(int rt_extrude_import5,
-		    (struct rt_db_internal	*ip,
-		     const struct bu_external	*ep,
-		     const mat_t mat,
-		     const struct db_i		*dbip,
-		     struct resource		*resp,
-		     const int			minor_type));
+RT_EXPORT BU_EXTERN(int rt_extrude_import5, (struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp));
 
 
 /* db_inmem.c */

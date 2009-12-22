@@ -61,8 +61,8 @@ const struct bu_structparse rt_nul_parse[] = {
 	BU_EXTERN(void rt_##name##_vshot, (struct soltab *stp[], struct xray *rp[], struct seg segp[], int n, struct application *ap)); \
 	BU_EXTERN(int rt_##name##_tess, (struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)); \
 	BU_EXTERN(int rt_##name##_tnurb, (struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bn_tol *tol)); \
-	BU_EXTERN(int rt_##name##_import5, (struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp, const int minor_type)); \
-	BU_EXTERN(int rt_##name##_export5, (struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip, struct resource *resp, const int minor_type)); \
+	BU_EXTERN(int rt_##name##_import5, (struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp)); \
+	BU_EXTERN(int rt_##name##_export5, (struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip, struct resource *resp)); \
 	BU_EXTERN(int rt_##name##_import4, (struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp)); \
 	BU_EXTERN(int rt_##name##_export4, (struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip, struct resource *resp)); \
 	BU_EXTERN(void rt_##name##_ifree, (struct rt_db_internal *ip, struct resource *resp)); \
@@ -195,49 +195,42 @@ BU_EXTERN(int rt_comb_export5, (struct bu_external *ep,
 				const struct rt_db_internal *ip,
 				double local2mm,
 				const struct db_i *dbip,
-				struct resource *resp,
-				const int minor_type));
+				struct resource *resp));
 
 BU_EXTERN(int rt_comb_import5, (struct rt_db_internal *ip,
 				const struct bu_external *ep,
 				const mat_t mat,
 				const struct db_i *dbip,
-				struct resource *resp,
-				const int minor_type));
+				struct resource *resp));
 
 /* from db5_bin.c */
 BU_EXTERN(int rt_binexpm_import5, (struct rt_db_internal * ip,
 				   const struct bu_external *ep,
 				   const mat_t mat,
 				   const struct db_i *dbip,
-				   struct resource *resp,
-				   const int minor_type));
+				   struct resource *resp));
 BU_EXTERN(int rt_binunif_import5, (struct rt_db_internal * ip,
 				   const struct bu_external *ep,
 				   const mat_t mat,
 				   const struct db_i *dbip,
-				   struct resource *resp,
-				   const int minor_type));
+				   struct resource *resp));
 BU_EXTERN(int rt_binmime_import5, (struct rt_db_internal * ip,
 				   const struct bu_external *ep,
 				   const mat_t mat,
 				   const struct db_i *dbip,
-				   struct resource *resp,
-				   const int minor_type));
+				   struct resource *resp));
 
 BU_EXTERN(int rt_binexpm_export5, (struct bu_external *ep,
 				   const struct rt_db_internal *ip,
 				   double local2mm,
 				   const struct db_i *dbip,
-				   struct resource *resp,
-				   const int minor_type));
+				   struct resource *resp));
 
 BU_EXTERN(int rt_binunif_export5, (struct bu_external *ep,
 				   const struct rt_db_internal *ip,
 				   double local2mm,
 				   const struct db_i *dbip,
-				   struct resource *resp,
-				   const int minor_type));
+				   struct resource *resp));
 
 BU_EXTERN(void rt_binunif_ifree, (struct rt_db_internal *ip,
 				  struct resource *resp));
@@ -869,7 +862,7 @@ const struct rt_functab rt_functab[] = {
      rt_nul_piece_shot, rt_nul_piece_hitsegs,
      rt_nul_uv,	rt_nul_curve,	rt_nul_class,	rt_nul_free,
      rt_nul_plot,	rt_nul_vshot,	rt_nul_tess,	rt_nul_tnurb,
-     rt_binunif_import5,
+     rt_nul_import5,
      rt_binunif_export5,
      rt_nul_import4,	rt_nul_export4,	rt_binunif_ifree,
      rt_binunif_describe, rt_generic_xform, NULL,
@@ -1081,13 +1074,11 @@ int NDEF(rt_nul_tnurb, (struct nmgregion **r,
 int NDEF(rt_nul_import5, (struct rt_db_internal *ip,
 			  const struct bu_external *ep,
 			  const mat_t mat, const struct db_i *dbip,
-			  struct resource *resp,
-			  const int minot_type));
+			  struct resource *resp));
 int NDEF(rt_nul_export5, (struct bu_external *ep,
 			  const struct rt_db_internal *ip,
 			  double local2mm, const struct db_i *dbip,
-			  struct resource *resp,
-			  const int minor_type));
+			  struct resource *resp));
 int NDEF(rt_nul_import4, (struct rt_db_internal *ip,
 			  const struct bu_external *ep,
 			  const mat_t mat, const struct db_i *dbip,
@@ -1304,7 +1295,7 @@ rt_generic_xform(
 	case 5:
 	    avs.magic = -1;
 
-	    if (rt_functab[id].ft_export5(&ext, ip, 1.0, dbip, resp, 0) < 0) {
+	    if (rt_functab[id].ft_export5(&ext, ip, 1.0, dbip, resp) < 0) {
 		bu_log("rt_generic_xform():  %s export failure\n",
 		       rt_functab[id].ft_name);
 		return -1;			/* FAIL */
@@ -1336,7 +1327,7 @@ rt_generic_xform(
 		bu_avs_free(&avs);
 	    }
 
-	    if (rt_functab[id].ft_import5(op, &ext, mat, dbip, resp, 0) < 0) {
+	    if (rt_functab[id].ft_import5(op, &ext, mat, dbip, resp) < 0) {
 		bu_log("rt_generic_xform():  solid import failure\n");
 		return -1;			/* FAIL */
 	    }

@@ -122,21 +122,13 @@ rt_constraint_export5(
  *
  */
 int
-rt_constraint_import5(
-    struct rt_db_internal *ip,
-    const struct bu_external *ep,
-    const mat_t mat,
-    const struct db_i *dbip,
-    struct resource *resp,
-    const int minor_type)
+rt_constraint_import5(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp)
 {
     RT_CK_DB_INTERNAL(ip);
     BU_CK_EXTERNAL(ep);
     mat = mat;
     RT_CK_DBI(dbip);
     if (resp) RT_CK_RESOURCE(resp);
-    if (minor_type != ID_CONSTRAINT)
-	bu_log("unexpected minor type [%d]\n", minor_type);
 
     return 0; /* OK */
 }

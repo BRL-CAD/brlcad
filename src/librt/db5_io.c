@@ -1239,7 +1239,7 @@ rt_db_cvt_to_external5(
     /* Scale change on export is 1.0 -- no change */
     ret = -1;
     if (ip->idb_meth->ft_export5) {
-	ret = ip->idb_meth->ft_export5(&body, ip, conv2mm, dbip, resp, minor);
+	ret = ip->idb_meth->ft_export5(&body, ip, conv2mm, dbip, resp);
     }
     if (ret < 0) {
 	bu_log("rt_db_cvt_to_external5(%s):  ft_export5 failure\n",
@@ -1452,6 +1452,7 @@ rt_db_put_internal5(
     return -2;		/* FAIL */
 }
 
+
 /**
  *			R T _ D B _ E X T E R N A L 5 _ T O _ I N T E R N A L 5
  *
@@ -1475,6 +1476,9 @@ rt_db_external5_to_internal5(
     struct db5_raw_internal raw;
     int ret;
 
+    /* FIXME: goes away with v6.  needed now to pass the minor_type down during read */
+    extern int rt_binunif_import5_minor_type(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp, int minor_type);
+
     BU_CK_EXTERNAL(ep);
     RT_CK_DB_INTERNAL(ip);
     RT_CK_DBI(dbip);
@@ -1492,8 +1496,8 @@ rt_db_external5_to_internal5(
 	/* As a convenience to older ft_import routines */
 	if ( mat == NULL )  mat = bn_mat_identity;
     } else {
-	bu_log("rt_db_external5_to_internal5(%s):  unable to import non-BRL-CAD object, major=%d\n",
-	       name, raw.major_type );
+	bu_log("rt_db_external5_to_internal5(%s):  unable to import non-BRL-CAD object, major=%d minor=%d\n",
+	       name, raw.major_type, raw.minor_type );
 	return -1;		/* FAIL */
     }
 
@@ -1518,8 +1522,10 @@ rt_db_external5_to_internal5(
 	return -4;
     }
 
-    /*
-     *	XXX	This is a kludge, but it works for starters
+    /* FIXME: This is a temporary kludge accommodating dumb binunifs
+     * that don't export their minor type or have table entries for
+     * all their types. (this gets pushed up when a functab wrapper is
+     * created)
      */
     switch ( raw.major_type ) {
 	case DB5_MAJORTYPE_BRLCAD:
@@ -1533,8 +1539,14 @@ rt_db_external5_to_internal5(
 
     /* ip has already been initialized, and should not be re-initted */
     ret = -1;
-    if (rt_functab[id].ft_import5) {
-	ret = rt_functab[id].ft_import5(ip, &raw.body, mat, dbip, resp, raw.minor_type);
+    if (id == ID_BINUNIF) {
+	/* FIXME: binunif export needs to write out minor_type so
+	 * this isn't needed, but breaks compatibility.  slate for
+	 * v6.
+	 */
+	ret = rt_binunif_import5_minor_type(ip, &raw.body, mat, dbip, resp, raw.minor_type);
+    } else if (rt_functab[id].ft_import5) {
+	ret = rt_functab[id].ft_import5(ip, &raw.body, mat, dbip, resp);
     }
     if (ret < 0) {
 	bu_log("rt_db_external5_to_internal5(%s):  import failure\n",

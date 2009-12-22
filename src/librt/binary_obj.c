@@ -129,7 +129,7 @@ rt_mk_binunif(struct rt_wdb *wdbp, const char *obj_name, const char *file_name, 
     /* create body portion of external form */
     ret = -1;
     if (intern.idb_meth->ft_export5) {
-	ret = intern.idb_meth->ft_export5(&body, &intern, 1.0, wdbp->dbip, wdbp->wdb_resp, intern.idb_minor_type);
+	ret = intern.idb_meth->ft_export5(&body, &intern, 1.0, wdbp->dbip, wdbp->wdb_resp);
     }
     if (ret != 0) {
 	bu_log( "Error while attemptimg to export %s\n", obj_name );

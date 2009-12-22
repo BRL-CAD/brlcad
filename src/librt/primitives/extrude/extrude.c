@@ -2213,13 +2213,7 @@ rt_extrude_export5(struct bu_external *ep, const struct rt_db_internal *ip, doub
  * Apply modeling transformations as well.
  */
 int
-rt_extrude_import5(
-    struct rt_db_internal *ip,
-    const struct bu_external *ep,
-    const mat_t mat,
-    const struct db_i *dbip,
-    struct resource *resp,
-    const int minor_type __attribute__((unused)))
+rt_extrude_import5(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp)
 {
     struct rt_extrude_internal *extrude_ip;
     struct rt_db_internal tmp_ip;
