@@ -1,4 +1,3 @@
-if EN_DOCS
 specificationsDOCBOOK_EN = \
 	specifications/en/BRL_CAD_g_format_V5.xml
 
@@ -17,4 +16,3 @@ endif
 
 specificationsDOCBOOK_ENpdfdir = $(BRLCAD_DATA)/pdf/specifications/en
 specificationsDOCBOOK_ENpdf_DATA = $(BUILTSPECS_ENPDF)
-endif

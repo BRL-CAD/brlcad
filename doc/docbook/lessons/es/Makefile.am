@@ -1,4 +1,3 @@
-if ES_DOCS
 lessonsDOCBOOK_ES = \
 	lessons/es/mged01_crear_figuras_primitivas.xml
 	
@@ -26,4 +25,3 @@ endif
 
 lessonsDOCBOOK_ESpdfdir = $(BRLCAD_DATA)/pdf/lessons/es
 lessonsDOCBOOK_ESpdf_DATA = $(BUILTLESSONS_ESPDF)
-endif
