@@ -498,7 +498,7 @@ nmgbld(void)
 
     /* Next, import this disk record into memory */
     RT_INIT_DB_INTERNAL(&intern);
-    if (rt_functab[ID_NMG].ft_import5(&intern, &ext, bn_mat_identity, ofp->dbip, &rt_uniresource, ID_NMG) < 0)
+    if (rt_functab[ID_NMG].ft_import5(&intern, &ext, bn_mat_identity, ofp->dbip, &rt_uniresource) < 0)
 	bu_exit(-1, "ft_import5 failed on NMG %s\n", name);
     bu_free_external(&ext);
 
