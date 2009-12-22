@@ -894,7 +894,7 @@ STEPWrapper::getStringAttribute(SCLP23(Application_instance) *sse, const char *n
 
 	if (attrname.compare(name) == 0) {
 	    const char *str = attr->asStr(attrval);
-	    if (*str != NULL)
+	    if (str != NULL)
 		retValue = str;
 	    break;
 	}
