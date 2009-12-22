@@ -35,8 +35,10 @@ static char *_bu_bomb_failsafe = NULL;
 /* used for tty printing */
 static int fd = -1;
 
+#if defined(DEBUG)
 /* used for crash reporting */
 static char tracefile[512] = {0};
+#endif
 
 /* release memory on application exit */
 static void
