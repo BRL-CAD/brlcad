@@ -22,7 +22,11 @@
  * C++ wrapper to NIST STEP parser/database functions.
  *
  */
-#include "STEPWrapper.h"
+
+/* inteface header */
+#include "./STEPWrapper.h"
+
+/* implemenation headers */
 #include "AdvancedBrepShapeRepresentation.h"
 #include "CartesianPoint.h"
 #include "VertexPoint.h"
@@ -30,977 +34,1073 @@
 #include "LocalUnits.h"
 
 #include <cctype>
-#include <string>
-#include <list>
 #include <algorithm>
 
-STEPWrapper::STEPWrapper() {
-	registry = NULL;
-	sfile = NULL;
+
+STEPWrapper::STEPWrapper()
+{
+    registry = NULL;
+    sfile = NULL;
 }
 
-STEPWrapper::~STEPWrapper() {
-	if (sfile)
-		delete sfile;
-	if (registry)
-		delete registry;
+
+STEPWrapper::~STEPWrapper()
+{
+    if (sfile)
+	delete sfile;
+    if (registry)
+	delete registry;
 }
+
 
 bool
-STEPWrapper::convert(BRLCADWrapper *dotg) {
-	this->dotg = dotg;
+STEPWrapper::convert(BRLCADWrapper *dotg)
+{
+    this->dotg = dotg;
 
-	int num_ents = instance_list.InstanceCount();
-	//cout << "Loaded " << num_ents << "instances from STEP file \"" << stepfile << "\"" << endl;
-	for( int i=0; i < num_ents; i++){
-		SCLP23(Application_instance) *sse = instance_list.GetSTEPentity(i);
-		if (sse == NULL)
-			continue;
-		std::string name = sse->EntityName();
-		std::transform(name.begin(),name.end(),name.begin(),(int(*)(int))std::tolower);
+    int num_ents = instance_list.InstanceCount();
+    //std::cout << "Loaded " << num_ents << "instances from STEP file \"" << stepfile << "\"" << std::endl;
+    for (int i=0; i < num_ents; i++) {
+	SCLP23(Application_instance) *sse = instance_list.GetSTEPentity(i);
+	if (sse == NULL)
+	    continue;
+	std::string name = sse->EntityName();
+	std::transform(name.begin(), name.end(), name.begin(), (int(*)(int))std::tolower);
 
-		if ((sse->STEPfile_id > 0 ) && ( sse->IsA(config_control_designe_advanced_brep_shape_representation))) {
-			AdvancedBrepShapeRepresentation *aBrep = new AdvancedBrepShapeRepresentation();
+	if ((sse->STEPfile_id > 0) && (sse->IsA(config_control_designe_advanced_brep_shape_representation))) {
+	    AdvancedBrepShapeRepresentation *aBrep = new AdvancedBrepShapeRepresentation();
 
-			if ( aBrep->Load(this,sse) ) {
-				string name = aBrep->Name();
-				//aBrep->Print(0);
+	    if (aBrep->Load(this, sse)) {
+		std::string name = aBrep->Name();
+		//aBrep->Print(0);
 
-				LocalUnits::length = aBrep->GetLengthConversionFactor();
-				LocalUnits::planeangle = aBrep->GetPlaneAngleConversionFactor();
-				LocalUnits::solidangle = aBrep->GetSolidAngleConversionFactor();
+		LocalUnits::length = aBrep->GetLengthConversionFactor();
+		LocalUnits::planeangle = aBrep->GetPlaneAngleConversionFactor();
+		LocalUnits::solidangle = aBrep->GetSolidAngleConversionFactor();
 //TODO: remove debugging (used to turn off unit scaling)
 //				LocalUnits::length = 1.0;
 //				LocalUnits::planeangle = 1.0;
 //				LocalUnits::solidangle = 1.0;
-				ON_Brep *onBrep = aBrep->GetONBrep();
+		ON_Brep *onBrep = aBrep->GetONBrep();
 
-				//ON_Brep *tbrep = TightenBrep( onBrep );
+		//ON_Brep *tbrep = TightenBrep(onBrep);
 
-				dotg->WriteBrep(name,onBrep);
+		dotg->WriteBrep(name, onBrep);
 
-				delete onBrep;
-				delete aBrep;
-			}
-		}
+		delete onBrep;
+		delete aBrep;
+	    }
 	}
+    }
 
-	return true;
+    return true;
 }
+
 
 SCLP23(Application_instance) *
-STEPWrapper::getEntity( int STEPid ) {
-	return instance_list.FindFileId(STEPid)->GetSTEPentity();
+STEPWrapper::getEntity(int STEPid)
+{
+    return instance_list.FindFileId(STEPid)->GetSTEPentity();
 }
+
 
 SCLP23(Application_instance) *
-STEPWrapper::getEntity( int STEPid, const char *name ) {
-	SCLP23(Application_instance) *se = getEntity(STEPid);
+STEPWrapper::getEntity(int STEPid, const char *name)
+{
+    SCLP23(Application_instance) *se = getEntity(STEPid);
 
-	if (se->IsComplex()) {
-		se = getSuperType(STEPid,name);
-	}
-	return se;
+    if (se->IsComplex()) {
+	se = getSuperType(STEPid, name);
+    }
+    return se;
 }
+
 
 SCLP23(Application_instance) *
-STEPWrapper::getEntity( SCLP23(Application_instance) *sse, const char *name ) {
-	if (sse->IsComplex()) {
-		sse = getSuperType(sse,name);
-	}
-	return sse;
+STEPWrapper::getEntity(SCLP23(Application_instance) *sse, const char *name)
+{
+    if (sse->IsComplex()) {
+	sse = getSuperType(sse, name);
+    }
+    return sse;
 }
+
 
 STEPattribute *
-STEPWrapper::getAttribute( int STEPid, const char *name ) {
-	STEPattribute *retValue = NULL;
-	SCLP23(Application_instance) *sse = instance_list.FindFileId(STEPid)->GetSTEPentity();
+STEPWrapper::getAttribute(int STEPid, const char *name)
+{
+    STEPattribute *retValue = NULL;
+    SCLP23(Application_instance) *sse = instance_list.FindFileId(STEPid)->GetSTEPentity();
 
-	sse->ResetAttributes();
+    sse->ResetAttributes();
 
-	STEPattribute *attr;
-	while ( (attr = sse->NextAttribute()) != NULL ) {
-		string attrname = attr->Name();
-		if (attrname.compare(name) == 0) {
-			retValue = attr;
-			break;
-		}
+    STEPattribute *attr;
+    while ((attr = sse->NextAttribute()) != NULL) {
+	std::string attrname = attr->Name();
+	if (attrname.compare(name) == 0) {
+	    retValue = attr;
+	    break;
 	}
+    }
 
-	return retValue;
+    return retValue;
 }
+
 
 LIST_OF_STRINGS *
-STEPWrapper::getAttributes( int STEPid ) {
-	LIST_OF_STRINGS *l = new LIST_OF_STRINGS;
-	SCLP23(Application_instance) *sse = instance_list.FindFileId(STEPid)->GetSTEPentity();
+STEPWrapper::getAttributes(int STEPid)
+{
+    LIST_OF_STRINGS *l = new LIST_OF_STRINGS;
+    SCLP23(Application_instance) *sse = instance_list.FindFileId(STEPid)->GetSTEPentity();
 
-	sse->ResetAttributes();
+    sse->ResetAttributes();
 
-	STEPattribute *attr;
-	while ( (attr = sse->NextAttribute()) != NULL ) {
-		string name = attr->Name();
+    STEPattribute *attr;
+    while ((attr = sse->NextAttribute()) != NULL) {
+	std::string name = attr->Name();
 
-		l->push_back(name);
-	}
+	l->push_back(name);
+    }
 
-	return l;
+    return l;
 }
+
 
 SCLBOOL_H(Bool)
-STEPWrapper::getBooleanAttribute( int STEPid, const char *name ) {
-	SCLBOOL_H(Bool) retValue = SCLBOOL_H(BUnset);
-	SCLP23(Application_instance) *sse = instance_list.FindFileId(STEPid)->GetSTEPentity();
+STEPWrapper::getBooleanAttribute(int STEPid, const char *name)
+{
+    SCLBOOL_H(Bool) retValue = SCLBOOL_H(BUnset);
+    SCLP23(Application_instance) *sse = instance_list.FindFileId(STEPid)->GetSTEPentity();
 
-	sse->ResetAttributes();
+    sse->ResetAttributes();
 
-	STEPattribute *attr;
-	while ( (attr = sse->NextAttribute()) != NULL ) {
-		string attrname = attr->Name();
+    STEPattribute *attr;
+    while ((attr = sse->NextAttribute()) != NULL) {
+	std::string attrname = attr->Name();
 
-		if (attrname.compare(name) == 0) {
-			retValue = (SCLBOOL_H(Bool))(*attr->ptr.e).asInt();
-			if (retValue > SCLBOOL_H(BUnset))
-				retValue = SCLBOOL_H(BUnset);
-			break;
-		}
+	if (attrname.compare(name) == 0) {
+	    retValue = (SCLBOOL_H(Bool))(*attr->ptr.e).asInt();
+	    if (retValue > SCLBOOL_H(BUnset))
+		retValue = SCLBOOL_H(BUnset);
+	    break;
 	}
-	return retValue;
+    }
+    return retValue;
 }
+
 
 int
-STEPWrapper::getEnumAttribute( int STEPid, const char *name ) {
-	int retValue = 0;
-	SCLP23(Application_instance) *sse = instance_list.FindFileId(STEPid)->GetSTEPentity();
+STEPWrapper::getEnumAttribute(int STEPid, const char *name)
+{
+    int retValue = 0;
+    SCLP23(Application_instance) *sse = instance_list.FindFileId(STEPid)->GetSTEPentity();
 
-	sse->ResetAttributes();
+    sse->ResetAttributes();
 
-	STEPattribute *attr;
-	while ( (attr = sse->NextAttribute()) != NULL ) {
-		string attrname = attr->Name();
+    STEPattribute *attr;
+    while ((attr = sse->NextAttribute()) != NULL) {
+	std::string attrname = attr->Name();
 
-		if (attrname.compare(name) == 0) {
-			retValue = (*attr->ptr.e).asInt();
-			break;
-		}
+	if (attrname.compare(name) == 0) {
+	    retValue = (*attr->ptr.e).asInt();
+	    break;
 	}
-	return retValue;
+    }
+    return retValue;
 }
+
 
 SCLLOG_H(Logical)
-STEPWrapper::getLogicalAttribute( int STEPid, const char *name ) {
-	SCLLOG_H(Logical) retValue = SCLLOG_H(LUnknown);
-	SCLP23(Application_instance) *sse = instance_list.FindFileId(STEPid)->GetSTEPentity();
+STEPWrapper::getLogicalAttribute(int STEPid, const char *name)
+{
+    SCLLOG_H(Logical) retValue = SCLLOG_H(LUnknown);
+    SCLP23(Application_instance) *sse = instance_list.FindFileId(STEPid)->GetSTEPentity();
 
-	sse->ResetAttributes();
+    sse->ResetAttributes();
 
-	STEPattribute *attr;
-	while ( (attr = sse->NextAttribute()) != NULL ) {
-		string attrname = attr->Name();
+    STEPattribute *attr;
+    while ((attr = sse->NextAttribute()) != NULL) {
+	std::string attrname = attr->Name();
 
-		if (attrname.compare(name) == 0) {
-			retValue = (SCLLOG_H(Logical))(*attr->ptr.e).asInt();
-			if (retValue > SCLLOG_H(LUnknown))
-				retValue = SCLLOG_H(LUnknown);
-			break;
-		}
+	if (attrname.compare(name) == 0) {
+	    retValue = (SCLLOG_H(Logical))(*attr->ptr.e).asInt();
+	    if (retValue > SCLLOG_H(LUnknown))
+		retValue = SCLLOG_H(LUnknown);
+	    break;
 	}
-	return retValue;
+    }
+    return retValue;
 }
 
-string
-STEPWrapper::getLogicalString( SCLLOG_H(Logical) v ) {
-	string retValue = "Unknown";
 
-	switch (v) {
+std::string
+STEPWrapper::getLogicalString(SCLLOG_H(Logical) v)
+{
+    std::string retValue = "Unknown";
+
+    switch (v) {
 	case SCLLOG_H(LFalse):
-		retValue = "LFalse";
-		break;
+	    retValue = "LFalse";
+	    break;
 	case SCLLOG_H(LTrue):
-		retValue = "LTrue";
-		break;
+	    retValue = "LTrue";
+	    break;
 	case SCLLOG_H(LUnset):
-		retValue = "LUnset";
-		break;
+	    retValue = "LUnset";
+	    break;
 	case SCLLOG_H(LUnknown):
-		retValue = "LUnknown";
-		break;
-	}
-	return retValue;
+	    retValue = "LUnknown";
+	    break;
+    }
+    return retValue;
 }
 
-string
-STEPWrapper::getBooleanString( SCLBOOL_H(Bool) v ) {
-	string retValue = "Unknown";
 
-	switch (v) {
+std::string
+STEPWrapper::getBooleanString(SCLBOOL_H(Bool) v)
+{
+    std::string retValue = "Unknown";
+
+    switch (v) {
 	case SCLBOOL_H(BFalse):
-		retValue = "BFalse";
-		break;
+	    retValue = "BFalse";
+	    break;
 	case SCLBOOL_H(BTrue):
-		retValue = "BTrue";
-		break;
+	    retValue = "BTrue";
+	    break;
 	case SCLBOOL_H(BUnset):
-		retValue = "BUnset";
-		break;
-	}
-	return retValue;
+	    retValue = "BUnset";
+	    break;
+    }
+    return retValue;
 }
+
 
 SCLP23(Application_instance) *
-STEPWrapper::getEntityAttribute( int STEPid, const char *name ) {
-	SCLP23(Application_instance) *retValue = NULL;
-	SCLP23(Application_instance) *sse = instance_list.FindFileId(STEPid)->GetSTEPentity();
+STEPWrapper::getEntityAttribute(int STEPid, const char *name)
+{
+    SCLP23(Application_instance) *retValue = NULL;
+    SCLP23(Application_instance) *sse = instance_list.FindFileId(STEPid)->GetSTEPentity();
 
-	sse->ResetAttributes();
+    sse->ResetAttributes();
 
-	STEPattribute *attr;
-	while ( (attr = sse->NextAttribute()) != NULL ) {
-		string attrname = attr->Name();
+    STEPattribute *attr;
+    while ((attr = sse->NextAttribute()) != NULL) {
+	std::string attrname = attr->Name();
 
-		if (attrname.compare(name) == 0) {
-			retValue = (SCLP23(Application_instance) *)*attr->ptr.c;
-			break;
-		}
+	if (attrname.compare(name) == 0) {
+	    retValue = (SCLP23(Application_instance) *)*attr->ptr.c;
+	    break;
 	}
-	return retValue;
+    }
+    return retValue;
 }
+
 
 int
-STEPWrapper::getIntegerAttribute( int STEPid, const char *name ) {
-	int retValue = 0;
-	SCLP23(Application_instance) *sse = instance_list.FindFileId(STEPid)->GetSTEPentity();
+STEPWrapper::getIntegerAttribute(int STEPid, const char *name)
+{
+    int retValue = 0;
+    SCLP23(Application_instance) *sse = instance_list.FindFileId(STEPid)->GetSTEPentity();
 
-	sse->ResetAttributes();
+    sse->ResetAttributes();
 
-	STEPattribute *attr;
-	while ( (attr = sse->NextAttribute()) != NULL ) {
-		string attrname = attr->Name();
+    STEPattribute *attr;
+    while ((attr = sse->NextAttribute()) != NULL) {
+	std::string attrname = attr->Name();
 
-		if (attrname.compare(name) == 0) {
-			retValue = *attr->ptr.i;
-			break;
-		}
+	if (attrname.compare(name) == 0) {
+	    retValue = *attr->ptr.i;
+	    break;
 	}
-	return retValue;
+    }
+    return retValue;
 }
+
 
 double
-STEPWrapper::getRealAttribute( int STEPid, const char *name ) {
-	double retValue = 0.0;
-	SCLP23(Application_instance) *sse = instance_list.FindFileId(STEPid)->GetSTEPentity();
+STEPWrapper::getRealAttribute(int STEPid, const char *name)
+{
+    double retValue = 0.0;
+    SCLP23(Application_instance) *sse = instance_list.FindFileId(STEPid)->GetSTEPentity();
 
-	sse->ResetAttributes();
+    sse->ResetAttributes();
 
-	STEPattribute *attr;
-	while ( (attr = sse->NextAttribute()) != NULL ) {
-		string attrname = attr->Name();
+    STEPattribute *attr;
+    while ((attr = sse->NextAttribute()) != NULL) {
+	std::string attrname = attr->Name();
 
-		if (attrname.compare(name) == 0) {
-			retValue = *attr->ptr.r;
-			break;
-		}
+	if (attrname.compare(name) == 0) {
+	    retValue = *attr->ptr.r;
+	    break;
 	}
-	return retValue;
+    }
+    return retValue;
 }
 
-LIST_OF_ENTITIES *STEPWrapper::getListOfEntities( int STEPid, const char *name) {
-	LIST_OF_ENTITIES *l = new LIST_OF_ENTITIES;
 
-	SCLP23(Application_instance) *sse = instance_list.FindFileId(STEPid)->GetSTEPentity();
-	sse->ResetAttributes();
+LIST_OF_ENTITIES*
+STEPWrapper::getListOfEntities(int STEPid, const char *name)
+{
+    LIST_OF_ENTITIES *l = new LIST_OF_ENTITIES;
 
-	STEPattribute *attr;
-	while ( (attr = sse->NextAttribute()) != NULL ) {
-		SCLstring attrval;
-		string attrname = attr->Name();
+    SCLP23(Application_instance) *sse = instance_list.FindFileId(STEPid)->GetSTEPentity();
+    sse->ResetAttributes();
 
-		if (attrname.compare(name) == 0) {
-			STEPaggregate *sa = (STEPaggregate *)attr->ptr.a;
+    STEPattribute *attr;
+    while ((attr = sse->NextAttribute()) != NULL) {
+	SCLstring attrval;
+	std::string attrname = attr->Name();
 
-			EntityNode *sn = (EntityNode *)sa->GetHead();
-			SCLP23(Application_instance) *sse;
-			while ( sn != NULL) {
-				sse = (SCLP23(Application_instance) *)sn->node;
+	if (attrname.compare(name) == 0) {
+	    STEPaggregate *sa = (STEPaggregate *)attr->ptr.a;
 
-				l->push_back(sse);
-				sn = (EntityNode *)sn->NextNode();
-			}
-			break;
-		}
+	    EntityNode *sn = (EntityNode *)sa->GetHead();
+	    SCLP23(Application_instance) *sse;
+	    while (sn != NULL) {
+		sse = (SCLP23(Application_instance) *)sn->node;
+
+		l->push_back(sse);
+		sn = (EntityNode *)sn->NextNode();
+	    }
+	    break;
 	}
+    }
 
-	return l;
+    return l;
 }
 
-LIST_OF_LIST_OF_POINTS *STEPWrapper::getListOfListOfPoints( int STEPid, const char *attrName) {
-	LIST_OF_LIST_OF_POINTS *l = new LIST_OF_LIST_OF_POINTS;
 
-	SCLP23(Application_instance) *sse = instance_list.FindFileId(STEPid)->GetSTEPentity();
-	sse->ResetAttributes();
+LIST_OF_LIST_OF_POINTS*
+STEPWrapper::getListOfListOfPoints(int STEPid, const char *attrName)
+{
+    LIST_OF_LIST_OF_POINTS *l = new LIST_OF_LIST_OF_POINTS;
 
-	STEPattribute *attr;
-	while ( (attr = sse->NextAttribute()) != NULL ) {
-		SCLstring attrval;
-		string name = attr->Name();
+    SCLP23(Application_instance) *sse = instance_list.FindFileId(STEPid)->GetSTEPentity();
+    sse->ResetAttributes();
 
-		if (name.compare(attrName) == 0) {
-			ErrorDescriptor errdesc;
+    STEPattribute *attr;
+    while ((attr = sse->NextAttribute()) != NULL) {
+	SCLstring attrval;
+	std::string name = attr->Name();
 
-			//cout << attr->asStr(attrval) << endl;
-			//cout << attr->TypeName() << endl;
+	if (name.compare(attrName) == 0) {
+	    ErrorDescriptor errdesc;
 
-
-			GenericAggregate_ptr gp = (GenericAggregate_ptr)attr->ptr.a;
-
-			STEPnode *sn = (STEPnode *)gp->GetHead();
-			//EntityAggregate *ag = new EntityAggregate();
+	    //std::cout << attr->asStr(attrval) << std::endl;
+	    //std::cout << attr->TypeName() << std::endl;
 
 
-			const char *eaStr;
+	    GenericAggregate_ptr gp = (GenericAggregate_ptr)attr->ptr.a;
 
-			LIST_OF_POINTS *points;
-			while ( sn != NULL) {
-				//sn->STEPwrite(cout);
-				//cout << endl;
-				eaStr = sn->asStr(attrval);
-				points = parseListOfPointEntities(eaStr);
-				l->push_back(points);
-				sn = (STEPnode *)sn->NextNode();
-			}
-			break;
-		}
+	    STEPnode *sn = (STEPnode *)gp->GetHead();
+	    //EntityAggregate *ag = new EntityAggregate();
+
+
+	    const char *eaStr;
+
+	    LIST_OF_POINTS *points;
+	    while (sn != NULL) {
+		//sn->STEPwrite(std::cout);
+		//std::cout << std::endl;
+		eaStr = sn->asStr(attrval);
+		points = parseListOfPointEntities(eaStr);
+		l->push_back(points);
+		sn = (STEPnode *)sn->NextNode();
+	    }
+	    break;
 	}
+    }
 
-	return l;
+    return l;
 }
 
-MAP_OF_SUPERTYPES *
-STEPWrapper::getMapOfSuperTypes( int STEPid ) {
-	MAP_OF_SUPERTYPES *m = new MAP_OF_SUPERTYPES;
-	SCLP23(Application_instance) *sse = instance_list.FindFileId(STEPid)->GetSTEPentity();
 
-	if (sse->IsComplex()) {
-		STEPcomplex *sc = ((STEPcomplex *)sse)->head;
-		while(sc) {
-			(*m)[sc->EntityName()] = sc;
-			sc = sc->sc;
-		}
+MAP_OF_SUPERTYPES*
+STEPWrapper::getMapOfSuperTypes(int STEPid)
+{
+    MAP_OF_SUPERTYPES *m = new MAP_OF_SUPERTYPES;
+    SCLP23(Application_instance) *sse = instance_list.FindFileId(STEPid)->GetSTEPentity();
+
+    if (sse->IsComplex()) {
+	STEPcomplex *sc = ((STEPcomplex *)sse)->head;
+	while (sc) {
+	    (*m)[sc->EntityName()] = sc;
+	    sc = sc->sc;
 	}
+    }
 
-	return m;
+    return m;
 }
+
 
 void
-STEPWrapper::getSuperTypes( int STEPid, MAP_OF_SUPERTYPES &m) {
-	SCLP23(Application_instance) *sse = instance_list.FindFileId(STEPid)->GetSTEPentity();
+STEPWrapper::getSuperTypes(int STEPid, MAP_OF_SUPERTYPES &m)
+{
+    SCLP23(Application_instance) *sse = instance_list.FindFileId(STEPid)->GetSTEPentity();
 
-	if (sse->IsComplex()) {
-		STEPcomplex *sc = ((STEPcomplex *)sse)->head;
-		while(sc) {
-			m[sc->EntityName()] = sc;
-			sc = sc->sc;
-		}
+    if (sse->IsComplex()) {
+	STEPcomplex *sc = ((STEPcomplex *)sse)->head;
+	while (sc) {
+	    m[sc->EntityName()] = sc;
+	    sc = sc->sc;
 	}
+    }
 }
+
 
 SCLP23(Application_instance) *
-STEPWrapper::getSuperType(int STEPid, const char *name) {
-	SCLP23(Application_instance) *sse = instance_list.FindFileId(STEPid)->GetSTEPentity();
+STEPWrapper::getSuperType(int STEPid, const char *name)
+{
+    SCLP23(Application_instance) *sse = instance_list.FindFileId(STEPid)->GetSTEPentity();
+    SCLstring attrval;
+
+    if (sse->IsComplex()) {
+	STEPcomplex *sc = ((STEPcomplex *)sse)->head;
+	while (sc) {
+	    std::string ename = sc->EntityName();
+
+	    if (ename.compare(name) == 0) {
+		return sc;
+	    }
+	    sc = sc->sc;
+	}
+    }
+    return NULL;
+}
+
+
+std::string
+STEPWrapper::getStringAttribute(int STEPid, const char *name)
+{
+    std::string retValue = "";
+    SCLP23(Application_instance) *sse = instance_list.FindFileId(STEPid)->GetSTEPentity();
+
+    sse->ResetAttributes();
+
+    STEPattribute *attr;
+    while ((attr = sse->NextAttribute()) != NULL) {
 	SCLstring attrval;
+	std::string attrname = attr->Name();
 
-	if (sse->IsComplex()) {
-		STEPcomplex *sc = ((STEPcomplex *)sse)->head;
-		while(sc) {
-			string ename = sc->EntityName();
-
-			if (ename.compare(name) == 0) {
-				return sc;
-			}
-			sc = sc->sc;
-		}
+	if (attrname.compare(name) == 0) {
+	    retValue = attr->asStr(attrval);
+	    //if (retValue.empty())
+	    //	std::cout << "String retValue:" << retValue << ":" << std::endl;
+	    break;
 	}
-	return NULL;
+    }
+    return retValue;
 }
 
-string
-STEPWrapper::getStringAttribute( int STEPid, const char *name ) {
-	string retValue = "";
-	SCLP23(Application_instance) *sse = instance_list.FindFileId(STEPid)->GetSTEPentity();
 
-	sse->ResetAttributes();
+STEPattribute*
+STEPWrapper::getAttribute(SCLP23(Application_instance) *sse, const char *name)
+{
+    STEPattribute *retValue = NULL;
 
-	STEPattribute *attr;
-	while ( (attr = sse->NextAttribute()) != NULL ) {
-		SCLstring attrval;
-		string attrname = attr->Name();
+    sse->ResetAttributes();
 
-		if (attrname.compare(name) == 0) {
-			retValue = attr->asStr(attrval);
-			//if (retValue.empty())
-			//	cout << "String retValue:" << retValue << ":" << endl;
-			break;
-		}
+    STEPattribute *attr;
+    while ((attr = sse->NextAttribute()) != NULL) {
+	std::string attrname = attr->Name();
+	if (attrname.compare(name) == 0) {
+	    retValue = attr;
+	    break;
 	}
-	return retValue;
+    }
+
+    return retValue;
 }
 
-STEPattribute *
-STEPWrapper::getAttribute( SCLP23(Application_instance) *sse, const char *name ) {
-	STEPattribute *retValue = NULL;
-
-	sse->ResetAttributes();
-
-	STEPattribute *attr;
-	while ( (attr = sse->NextAttribute()) != NULL ) {
-		string attrname = attr->Name();
-		if (attrname.compare(name) == 0) {
-			retValue = attr;
-			break;
-		}
-	}
-
-	return retValue;
-}
 
 LIST_OF_STRINGS *
-STEPWrapper::getAttributes( SCLP23(Application_instance) *sse) {
-	LIST_OF_STRINGS *l = new LIST_OF_STRINGS;
+STEPWrapper::getAttributes(SCLP23(Application_instance) *sse) {
+    LIST_OF_STRINGS *l = new LIST_OF_STRINGS;
 
-	sse->ResetAttributes();
+    sse->ResetAttributes();
 
-	STEPattribute *attr;
-	while ( (attr = sse->NextAttribute()) != NULL ) {
-		string name = attr->Name();
+    STEPattribute *attr;
+    while ((attr = sse->NextAttribute()) != NULL) {
+	std::string name = attr->Name();
 
-		l->push_back(name);
-	}
+	l->push_back(name);
+    }
 
-	return l;
+    return l;
 }
+
 
 SCLBOOL_H(Bool)
-STEPWrapper::getBooleanAttribute( SCLP23(Application_instance) *sse, const char *name ) {
-	SCLBOOL_H(Bool) retValue = SCLBOOL_H(BUnset);
+STEPWrapper::getBooleanAttribute(SCLP23(Application_instance) *sse, const char *name)
+{
+    SCLBOOL_H(Bool) retValue = SCLBOOL_H(BUnset);
 
-	sse->ResetAttributes();
+    sse->ResetAttributes();
 
-	STEPattribute *attr;
-	while ( (attr = sse->NextAttribute()) != NULL ) {
-		string attrname = attr->Name();
+    STEPattribute *attr;
+    while ((attr = sse->NextAttribute()) != NULL) {
+	std::string attrname = attr->Name();
 
-		if (attrname.compare(name) == 0) {
-			retValue = (SCLBOOL_H(Bool))(*attr->ptr.e).asInt();
-			if (retValue > SCLBOOL_H(BUnset))
-				retValue = SCLBOOL_H(BUnset);
-			break;
-		}
+	if (attrname.compare(name) == 0) {
+	    retValue = (SCLBOOL_H(Bool))(*attr->ptr.e).asInt();
+	    if (retValue > SCLBOOL_H(BUnset))
+		retValue = SCLBOOL_H(BUnset);
+	    break;
 	}
-	return retValue;
+    }
+    return retValue;
 }
+
 
 int
-STEPWrapper::getEnumAttribute( SCLP23(Application_instance) *sse, const char *name ) {
-	int retValue = 0;
-	SCLstring attrval;
+STEPWrapper::getEnumAttribute(SCLP23(Application_instance) *sse, const char *name)
+{
+    int retValue = 0;
+    SCLstring attrval;
 
-	sse->ResetAttributes();
+    sse->ResetAttributes();
 
-	STEPattribute *attr;
-	while ( (attr = sse->NextAttribute()) != NULL ) {
-		string attrname = attr->Name();
+    STEPattribute *attr;
+    while ((attr = sse->NextAttribute()) != NULL) {
+	std::string attrname = attr->Name();
 
-		if (attrname.compare(name) == 0) {
-			retValue = (*attr->ptr.e).asInt();
-			//cout << "debug enum: " << (*attr->ptr.e).asStr(attrval) << endl;
-			break;
-		}
+	if (attrname.compare(name) == 0) {
+	    retValue = (*attr->ptr.e).asInt();
+	    //std::cout << "debug enum: " << (*attr->ptr.e).asStr(attrval) << std::endl;
+	    break;
 	}
-	return retValue;
+    }
+    return retValue;
 }
+
 
 SCLP23(Application_instance) *
-STEPWrapper::getEntityAttribute( SCLP23(Application_instance) *sse, const char *name ) {
-	SCLP23(Application_instance) *retValue = NULL;
+STEPWrapper::getEntityAttribute(SCLP23(Application_instance) *sse, const char *name)
+{
+    SCLP23(Application_instance) *retValue = NULL;
 
-	sse->ResetAttributes();
+    sse->ResetAttributes();
 
-	STEPattribute *attr;
-	while ( (attr = sse->NextAttribute()) != NULL ) {
-		string attrname = attr->Name();
+    STEPattribute *attr;
+    while ((attr = sse->NextAttribute()) != NULL) {
+	std::string attrname = attr->Name();
 
-		if (attr->Nullable() && attr->is_null() && !attr->IsDerived()) {
-			continue;
-		}
-		if (attrname.compare(name) == 0) {
-			SCLstring attrval;
-			//cout << "attr:" << name << ":" << attr->TypeName() << ":" << attr->Name() << endl;
-			//cout << "attr:" << attr->asStr(attrval) << endl;
-			retValue = (SCLP23(Application_instance) *)*attr->ptr.c;
-			break;
-		}
+	if (attr->Nullable() && attr->is_null() && !attr->IsDerived()) {
+	    continue;
 	}
-	return retValue;
+	if (attrname.compare(name) == 0) {
+	    SCLstring attrval;
+	    //std::cout << "attr:" << name << ":" << attr->TypeName() << ":" << attr->Name() << std::endl;
+	    //std::cout << "attr:" << attr->asStr(attrval) << std::endl;
+	    retValue = (SCLP23(Application_instance) *)*attr->ptr.c;
+	    break;
+	}
+    }
+    return retValue;
 }
+
 
 SCLLOG_H(Logical)
-STEPWrapper::getLogicalAttribute( SCLP23(Application_instance) *sse, const char *name ) {
-	SCLLOG_H(Logical) retValue = SCLLOG_H(LUnknown);
+STEPWrapper::getLogicalAttribute(SCLP23(Application_instance) *sse, const char *name)
+{
+    SCLLOG_H(Logical) retValue = SCLLOG_H(LUnknown);
 
-	sse->ResetAttributes();
+    sse->ResetAttributes();
 
-	STEPattribute *attr;
-	while ( (attr = sse->NextAttribute()) != NULL ) {
-		string attrname = attr->Name();
+    STEPattribute *attr;
+    while ((attr = sse->NextAttribute()) != NULL) {
+	std::string attrname = attr->Name();
 
-		if (attrname.compare(name) == 0) {
-			retValue = (SCLLOG_H(Logical))(*attr->ptr.e).asInt();
-			if (retValue > SCLLOG_H(LUnknown))
-				retValue = SCLLOG_H(LUnknown);
-			break;
-		}
+	if (attrname.compare(name) == 0) {
+	    retValue = (SCLLOG_H(Logical))(*attr->ptr.e).asInt();
+	    if (retValue > SCLLOG_H(LUnknown))
+		retValue = SCLLOG_H(LUnknown);
+	    break;
 	}
-	return retValue;
+    }
+    return retValue;
 }
+
 
 int
-STEPWrapper::getIntegerAttribute( SCLP23(Application_instance) *sse, const char *name ) {
-	int retValue = 0;
+STEPWrapper::getIntegerAttribute(SCLP23(Application_instance) *sse, const char *name)
+{
+    int retValue = 0;
 
-	sse->ResetAttributes();
+    sse->ResetAttributes();
 
-	STEPattribute *attr;
-	while ( (attr = sse->NextAttribute()) != NULL ) {
-		string attrname = attr->Name();
+    STEPattribute *attr;
+    while ((attr = sse->NextAttribute()) != NULL) {
+	std::string attrname = attr->Name();
 
-		if (attrname.compare(name) == 0) {
-			retValue = *attr->ptr.i;
-			break;
-		}
+	if (attrname.compare(name) == 0) {
+	    retValue = *attr->ptr.i;
+	    break;
 	}
-	return retValue;
+    }
+    return retValue;
 }
+
 
 double
-STEPWrapper::getRealAttribute( SCLP23(Application_instance) *sse, const char *name ) {
-	double retValue = 0.0;
+STEPWrapper::getRealAttribute(SCLP23(Application_instance) *sse, const char *name)
+{
+    double retValue = 0.0;
 
-	sse->ResetAttributes();
+    sse->ResetAttributes();
 
-	STEPattribute *attr;
-	while ( (attr = sse->NextAttribute()) != NULL ) {
-		string attrname = attr->Name();
+    STEPattribute *attr;
+    while ((attr = sse->NextAttribute()) != NULL) {
+	std::string attrname = attr->Name();
 
-		if (attrname.compare(name) == 0) {
-			retValue = *attr->ptr.r;
-			break;
-		}
+	if (attrname.compare(name) == 0) {
+	    retValue = *attr->ptr.r;
+	    break;
 	}
-	return retValue;
+    }
+    return retValue;
 }
+
 
 SCLP23(Select) *
-STEPWrapper::getSelectAttribute( SCLP23(Application_instance) *sse, const char *name ) {
-	SCLP23(Select) *retValue = NULL;
+STEPWrapper::getSelectAttribute(SCLP23(Application_instance) *sse, const char *name)
+{
+    SCLP23(Select) *retValue = NULL;
 
-	sse->ResetAttributes();
+    sse->ResetAttributes();
 
-	STEPattribute *attr;
-	while ( (attr = sse->NextAttribute()) != NULL ) {
-		string attrname = attr->Name();
+    STEPattribute *attr;
+    while ((attr = sse->NextAttribute()) != NULL) {
+	std::string attrname = attr->Name();
 
-		if (attrname.compare(name) == 0) {
-			retValue = (SCLP23(Select) *)attr->ptr.sh;
-			break;
-		}
+	if (attrname.compare(name) == 0) {
+	    retValue = (SCLP23(Select) *)attr->ptr.sh;
+	    break;
 	}
-	return retValue;
+    }
+    return retValue;
 }
 
-LIST_OF_ENTITIES *STEPWrapper::getListOfEntities( SCLP23(Application_instance) *sse, const char *name) {
-	LIST_OF_ENTITIES *l = new LIST_OF_ENTITIES;
 
-	sse->ResetAttributes();
+LIST_OF_ENTITIES*
+STEPWrapper::getListOfEntities(SCLP23(Application_instance) *sse, const char *name)
+{
+    LIST_OF_ENTITIES *l = new LIST_OF_ENTITIES;
 
-	STEPattribute *attr;
-	while ( (attr = sse->NextAttribute()) != NULL ) {
-		SCLstring attrval;
-		string attrname = attr->Name();
+    sse->ResetAttributes();
 
-		if (attrname.compare(name) == 0) {
-			STEPaggregate *sa = (STEPaggregate *)attr->ptr.a;
-
-			EntityNode *sn = (EntityNode *)sa->GetHead();
-			SCLP23(Application_instance) *se;
-			while ( sn != NULL) {
-				se = (SCLP23(Application_instance) *)sn->node;
-
-				l->push_back(se);
-				sn = (EntityNode *)sn->NextNode();
-			}
-			break;
-		}
-	}
-
-	return l;
-}
-
-LIST_OF_SELECTS *STEPWrapper::getListOfSelects( SCLP23(Application_instance) *sse, const char *name) {
-	LIST_OF_SELECTS *l = new LIST_OF_SELECTS;
+    STEPattribute *attr;
+    while ((attr = sse->NextAttribute()) != NULL) {
 	SCLstring attrval;
+	std::string attrname = attr->Name();
 
-	sse->ResetAttributes();
-	STEPattribute *attr;
+	if (attrname.compare(name) == 0) {
+	    STEPaggregate *sa = (STEPaggregate *)attr->ptr.a;
 
-	while ( (attr = sse->NextAttribute()) != NULL ) {
-		string attrname = attr->Name();
+	    EntityNode *sn = (EntityNode *)sa->GetHead();
+	    SCLP23(Application_instance) *se;
+	    while (sn != NULL) {
+		se = (SCLP23(Application_instance) *)sn->node;
 
-		if (attrname.compare(name) == 0) {
-
-			SelectAggregate *sa = (SelectAggregate *)attr->ptr.a;
-			SelectNode *sn = (SelectNode*)sa->GetHead();
-			while(sn) {
-				l->push_back(sn->node);
-				sn = (SelectNode*)sn->NextNode();
-			}
-			break;
-		}
+		l->push_back(se);
+		sn = (EntityNode *)sn->NextNode();
+	    }
+	    break;
 	}
+    }
 
-	return l;
+    return l;
 }
 
-LIST_OF_LIST_OF_PATCHES *STEPWrapper::getListOfListOfPatches( SCLP23(Application_instance) *sse, const char *attrName) {
-	LIST_OF_LIST_OF_PATCHES *l = new LIST_OF_LIST_OF_PATCHES;
 
-	sse->ResetAttributes();
+LIST_OF_SELECTS*
+STEPWrapper::getListOfSelects(SCLP23(Application_instance) *sse, const char *name)
+{
+    LIST_OF_SELECTS *l = new LIST_OF_SELECTS;
+    SCLstring attrval;
 
-	STEPattribute *attr;
-	while ( (attr = sse->NextAttribute()) != NULL ) {
-		SCLstring attrval;
-		string name = attr->Name();
+    sse->ResetAttributes();
+    STEPattribute *attr;
 
-		if (name.compare(attrName) == 0) {
-			ErrorDescriptor errdesc;
+    while ((attr = sse->NextAttribute()) != NULL) {
+	std::string attrname = attr->Name();
 
-			//cout << attr->asStr(attrval) << endl;
-			//cout << attr->TypeName() << endl;
+	if (attrname.compare(name) == 0) {
 
-
-			GenericAggregate_ptr gp = (GenericAggregate_ptr)attr->ptr.a;
-
-			STEPnode *sn = (STEPnode *)gp->GetHead();
-			//EntityAggregate *ag = new EntityAggregate();
-
-
-			const char *eaStr;
-
-			LIST_OF_PATCHES *patches;
-			while ( sn != NULL) {
-				//sn->STEPwrite(cout);
-				//cout << endl;
-				eaStr = sn->asStr(attrval);
-				patches = parseListOfPatchEntities(eaStr);
-				l->push_back(patches);
-				sn = (STEPnode *)sn->NextNode();
-			}
-			break;
-		}
+	    SelectAggregate *sa = (SelectAggregate *)attr->ptr.a;
+	    SelectNode *sn = (SelectNode*)sa->GetHead();
+	    while (sn) {
+		l->push_back(sn->node);
+		sn = (SelectNode*)sn->NextNode();
+	    }
+	    break;
 	}
+    }
 
-	return l;
+    return l;
 }
 
-LIST_OF_LIST_OF_POINTS *STEPWrapper::getListOfListOfPoints( SCLP23(Application_instance) *sse, const char *attrName) {
-	LIST_OF_LIST_OF_POINTS *l = new LIST_OF_LIST_OF_POINTS;
 
-	sse->ResetAttributes();
+LIST_OF_LIST_OF_PATCHES*
+STEPWrapper::getListOfListOfPatches(SCLP23(Application_instance) *sse, const char *attrName)
+{
+    LIST_OF_LIST_OF_PATCHES *l = new LIST_OF_LIST_OF_PATCHES;
 
-	STEPattribute *attr;
-	while ( (attr = sse->NextAttribute()) != NULL ) {
-		SCLstring attrval;
-		string name = attr->Name();
+    sse->ResetAttributes();
 
-		if (name.compare(attrName) == 0) {
-			ErrorDescriptor errdesc;
+    STEPattribute *attr;
+    while ((attr = sse->NextAttribute()) != NULL) {
+	SCLstring attrval;
+	std::string name = attr->Name();
 
-			//cout << attr->asStr(attrval) << endl;
-			//cout << attr->TypeName() << endl;
+	if (name.compare(attrName) == 0) {
+	    ErrorDescriptor errdesc;
 
-
-			GenericAggregate_ptr gp = (GenericAggregate_ptr)attr->ptr.a;
-
-			STEPnode *sn = (STEPnode *)gp->GetHead();
-			//EntityAggregate *ag = new EntityAggregate();
+	    //std::cout << attr->asStr(attrval) << std::endl;
+	    //std::cout << attr->TypeName() << std::endl;
 
 
-			const char *eaStr;
+	    GenericAggregate_ptr gp = (GenericAggregate_ptr)attr->ptr.a;
 
-			LIST_OF_POINTS *points;
-			while ( sn != NULL) {
-				//sn->STEPwrite(cout);
-				//cout << endl;
-				eaStr = sn->asStr(attrval);
-				points = parseListOfPointEntities(eaStr);
-				l->push_back(points);
-				sn = (STEPnode *)sn->NextNode();
-			}
-			break;
-		}
+	    STEPnode *sn = (STEPnode *)gp->GetHead();
+	    //EntityAggregate *ag = new EntityAggregate();
+
+
+	    const char *eaStr;
+
+	    LIST_OF_PATCHES *patches;
+	    while (sn != NULL) {
+		//sn->STEPwrite(std::cout);
+		//std::cout << std::endl;
+		eaStr = sn->asStr(attrval);
+		patches = parseListOfPatchEntities(eaStr);
+		l->push_back(patches);
+		sn = (STEPnode *)sn->NextNode();
+	    }
+	    break;
 	}
+    }
 
-	return l;
+    return l;
 }
 
-MAP_OF_SUPERTYPES *
-STEPWrapper::getMapOfSuperTypes( SCLP23(Application_instance) *sse ) {
-	MAP_OF_SUPERTYPES *m = new MAP_OF_SUPERTYPES;
 
-	if (sse->IsComplex()) {
-		STEPcomplex *sc = ((STEPcomplex *)sse)->head;
-		while(sc) {
-			(*m)[sc->EntityName()] = sc;
-			sc = sc->sc;
-		}
+LIST_OF_LIST_OF_POINTS*
+STEPWrapper::getListOfListOfPoints(SCLP23(Application_instance) *sse, const char *attrName)
+{
+    LIST_OF_LIST_OF_POINTS *l = new LIST_OF_LIST_OF_POINTS;
+
+    sse->ResetAttributes();
+
+    STEPattribute *attr;
+    while ((attr = sse->NextAttribute()) != NULL) {
+	SCLstring attrval;
+	std::string name = attr->Name();
+
+	if (name.compare(attrName) == 0) {
+	    ErrorDescriptor errdesc;
+
+	    //std::cout << attr->asStr(attrval) << std::endl;
+	    //std::cout << attr->TypeName() << std::endl;
+
+
+	    GenericAggregate_ptr gp = (GenericAggregate_ptr)attr->ptr.a;
+
+	    STEPnode *sn = (STEPnode *)gp->GetHead();
+	    //EntityAggregate *ag = new EntityAggregate();
+
+
+	    const char *eaStr;
+
+	    LIST_OF_POINTS *points;
+	    while (sn != NULL) {
+		//sn->STEPwrite(std::cout);
+		//std::cout << std::endl;
+		eaStr = sn->asStr(attrval);
+		points = parseListOfPointEntities(eaStr);
+		l->push_back(points);
+		sn = (STEPnode *)sn->NextNode();
+	    }
+	    break;
 	}
+    }
 
-	return m;
+    return l;
 }
+
+
+MAP_OF_SUPERTYPES*
+STEPWrapper::getMapOfSuperTypes(SCLP23(Application_instance) *sse)
+{
+    MAP_OF_SUPERTYPES *m = new MAP_OF_SUPERTYPES;
+
+    if (sse->IsComplex()) {
+	STEPcomplex *sc = ((STEPcomplex *)sse)->head;
+	while (sc) {
+	    (*m)[sc->EntityName()] = sc;
+	    sc = sc->sc;
+	}
+    }
+
+    return m;
+}
+
 
 void
-STEPWrapper::getSuperTypes( SCLP23(Application_instance) *sse, MAP_OF_SUPERTYPES &m) {
-
-	if (sse->IsComplex()) {
-		STEPcomplex *sc = ((STEPcomplex *)sse)->head;
-		while(sc) {
-			m[sc->EntityName()] = sc;
-			sc = sc->sc;
-		}
+STEPWrapper::getSuperTypes(SCLP23(Application_instance) *sse, MAP_OF_SUPERTYPES &m)
+{
+    if (sse->IsComplex()) {
+	STEPcomplex *sc = ((STEPcomplex *)sse)->head;
+	while (sc) {
+	    m[sc->EntityName()] = sc;
+	    sc = sc->sc;
 	}
+    }
 }
+
 
 SCLP23(Application_instance) *
-STEPWrapper::getSuperType(SCLP23(Application_instance) *sse, const char *name) {
+STEPWrapper::getSuperType(SCLP23(Application_instance) *sse, const char *name)
+{
+    SCLstring attrval;
+
+    if (sse->IsComplex()) {
+	STEPcomplex *sc = ((STEPcomplex *)sse)->head;
+	while (sc) {
+	    std::string ename = sc->EntityName();
+
+	    if (ename.compare(name) == 0) {
+		return sc;
+	    }
+	    sc = sc->sc;
+	}
+    }
+    return NULL;
+}
+
+
+std::string
+STEPWrapper::getStringAttribute(SCLP23(Application_instance) *sse, const char *name)
+{
+    std::string retValue = "";
+
+    sse->ResetAttributes();
+
+    STEPattribute *attr;
+    while ((attr = sse->NextAttribute()) != NULL) {
 	SCLstring attrval;
+	std::string attrname = attr->Name();
 
-	if (sse->IsComplex()) {
-		STEPcomplex *sc = ((STEPcomplex *)sse)->head;
-		while(sc) {
-			string ename = sc->EntityName();
-
-			if (ename.compare(name) == 0) {
-				return sc;
-			}
-			sc = sc->sc;
-		}
+	if (attrname.compare(name) == 0) {
+	    const char *str = attr->asStr(attrval);
+	    if (*str != NULL)
+		retValue = str;
+	    break;
 	}
-	return NULL;
+    }
+    return retValue;
 }
 
-
-string
-STEPWrapper::getStringAttribute( SCLP23(Application_instance) *sse, const char *name ) {
-	string retValue = "";
-
-	sse->ResetAttributes();
-
-	STEPattribute *attr;
-	while ( (attr = sse->NextAttribute()) != NULL ) {
-		SCLstring attrval;
-		string attrname = attr->Name();
-
-		if (attrname.compare(name) == 0) {
-			const char *str = attr->asStr(attrval);
-			if (*str != NULL)
-				retValue = str;
-			break;
-		}
-	}
-	return retValue;
-}
 
 bool
-STEPWrapper::load(string &stepfile) {
-	registry = new Registry(SchemaInit);
-	sfile = new STEPfile(*registry, instance_list);
+STEPWrapper::load(std::string &stepfile)
+{
+    registry = new Registry(SchemaInit);
+    sfile = new STEPfile(*registry, instance_list);
 
-	this->stepfile = stepfile;
-	try {
-		/* load STEP file */
-		sfile->ReadExchangeFile(stepfile.c_str());
+    this->stepfile = stepfile;
+    try {
+	/* load STEP file */
+	sfile->ReadExchangeFile(stepfile.c_str());
 
-	} catch (std::exception& e) {
-		cerr << e.what() << endl;
-		return false;
-	}
-	return true;
+    } catch (std::exception& e) {
+	std::cerr << e.what() << std::endl;
+	return false;
+    }
+    return true;
 
 }
 
-LIST_OF_REALS *STEPWrapper::parseListOfReals( const char *in) {
-	LIST_OF_REALS *l = new LIST_OF_REALS;
-	ErrorDescriptor errdesc;
-	RealAggregate *ra = new RealAggregate();
 
-	//ra->StrToVal(in,&errdesc,SCLP23(Real),&instance_list,0);
-	ra->StrToVal(in,&errdesc,config_control_designt_parameter_value,&instance_list,0);
-	RealNode *rn = (RealNode *)ra->GetHead();
-	while ( rn != NULL) {
-		l->push_back(rn->value);
-		rn = (RealNode *)rn->NextNode();
-	}
-	/*
-	EntityNode *sn = (EntityNode *)ra->GetHead();
+LIST_OF_REALS*
+STEPWrapper::parseListOfReals(const char *in)
+{
+    LIST_OF_REALS *l = new LIST_OF_REALS;
+    ErrorDescriptor errdesc;
+    RealAggregate *ra = new RealAggregate();
 
-	SCLP23(Application_instance) *sse;
-	while ( sn != NULL) {
-		sse = (SCLP23(Application_instance) *)sn->node;
-		CartesianPoint *aCP = new CartesianPoint(this, sse->STEPfile_id);
-		if ( aCP->Load(this,sse)) {
-			l->push_back(aCP);
-		} else {
-			cout << "Error loading Real list." << endl;
-		}
-		sn = (EntityNode *)sn->NextNode();
-	}*/
-	delete ra;
+    //ra->StrToVal(in, &errdesc, SCLP23(Real), &instance_list, 0);
+    ra->StrToVal(in, &errdesc, config_control_designt_parameter_value, &instance_list, 0);
+    RealNode *rn = (RealNode *)ra->GetHead();
+    while (rn != NULL) {
+	l->push_back(rn->value);
+	rn = (RealNode *)rn->NextNode();
+    }
+    /*
+      EntityNode *sn = (EntityNode *)ra->GetHead();
 
-	return l;
+      SCLP23(Application_instance) *sse;
+      while (sn != NULL) {
+      sse = (SCLP23(Application_instance) *)sn->node;
+      CartesianPoint *aCP = new CartesianPoint(this, sse->STEPfile_id);
+      if (aCP->Load(this, sse)) {
+      l->push_back(aCP);
+      } else {
+      std::cout << "Error loading Real list." << std::endl;
+      }
+      sn = (EntityNode *)sn->NextNode();
+      }*/
+    delete ra;
+
+    return l;
 }
 
-LIST_OF_POINTS *STEPWrapper::parseListOfPointEntities( const char *in) {
-	LIST_OF_POINTS *l = new LIST_OF_POINTS;
-	ErrorDescriptor errdesc;
-	EntityAggregate *ag = new EntityAggregate();
 
-	ag->StrToVal(in,&errdesc,config_control_designe_cartesian_point,&instance_list,0);
-	EntityNode *sn = (EntityNode *)ag->GetHead();
+LIST_OF_POINTS*
+STEPWrapper::parseListOfPointEntities(const char *in)
+{
+    LIST_OF_POINTS *l = new LIST_OF_POINTS;
+    ErrorDescriptor errdesc;
+    EntityAggregate *ag = new EntityAggregate();
 
-	SCLP23(Application_instance) *sse;
-	while ( sn != NULL) {
-		sse = (SCLP23(Application_instance) *)sn->node;
-		CartesianPoint *aCP = dynamic_cast<CartesianPoint *>(CartesianPoint::Create(this, sse));
-		if ( aCP != NULL) {
-			l->push_back(aCP);
-		} else {
-			cout << "Error loading CartesianPoint." << endl;
-		}
-		sn = (EntityNode *)sn->NextNode();
+    ag->StrToVal(in, &errdesc, config_control_designe_cartesian_point, &instance_list, 0);
+    EntityNode *sn = (EntityNode *)ag->GetHead();
+
+    SCLP23(Application_instance) *sse;
+    while (sn != NULL) {
+	sse = (SCLP23(Application_instance) *)sn->node;
+	CartesianPoint *aCP = dynamic_cast<CartesianPoint *>(CartesianPoint::Create(this, sse));
+	if (aCP != NULL) {
+	    l->push_back(aCP);
+	} else {
+	    std::cout << "Error loading CartesianPoint." << std::endl;
 	}
-	delete ag;
+	sn = (EntityNode *)sn->NextNode();
+    }
+    delete ag;
 
-	return l;
+    return l;
 }
 
-LIST_OF_PATCHES *STEPWrapper::parseListOfPatchEntities( const char *in) {
-	LIST_OF_PATCHES *l = new LIST_OF_PATCHES;
-	ErrorDescriptor errdesc;
-	EntityAggregate *ag = new EntityAggregate();
 
-	ag->StrToVal(in,&errdesc,config_control_designe_cartesian_point,&instance_list,0);
-	EntityNode *sn = (EntityNode *)ag->GetHead();
+LIST_OF_PATCHES*
+STEPWrapper::parseListOfPatchEntities(const char *in)
+{
+    LIST_OF_PATCHES *l = new LIST_OF_PATCHES;
+    ErrorDescriptor errdesc;
+    EntityAggregate *ag = new EntityAggregate();
 
-	SCLP23(Application_instance) *sse;
-	while ( sn != NULL) {
-		sse = (SCLP23(Application_instance) *)sn->node;
-		SurfacePatch *aCP = dynamic_cast<SurfacePatch *>(SurfacePatch::Create(this, sse));
-		if ( aCP != NULL) {
-			l->push_back(aCP);
-		} else {
-			cout << "Error loading SurfacePatch." << endl;
-		}
-		sn = (EntityNode *)sn->NextNode();
+    ag->StrToVal(in, &errdesc, config_control_designe_cartesian_point, &instance_list, 0);
+    EntityNode *sn = (EntityNode *)ag->GetHead();
+
+    SCLP23(Application_instance) *sse;
+    while (sn != NULL) {
+	sse = (SCLP23(Application_instance) *)sn->node;
+	SurfacePatch *aCP = dynamic_cast<SurfacePatch *>(SurfacePatch::Create(this, sse));
+	if (aCP != NULL) {
+	    l->push_back(aCP);
+	} else {
+	    std::cout << "Error loading SurfacePatch." << std::endl;
 	}
-	delete ag;
+	sn = (EntityNode *)sn->NextNode();
+    }
+    delete ag;
 
-	return l;
+    return l;
 }
+
 
 void
-STEPWrapper::printEntity(SCLP23(Application_instance) *se, int level) {
-	for ( int i=0; i< level; i++)
-		cout << "    ";
-	cout << "Entity:" << se->EntityName() << "(" << se->STEPfile_id << ")" << endl;
-	for ( int i=0; i< level; i++)
-		cout << "    ";
-	cout << "Description:" << se->eDesc->Description() << endl;
-	for ( int i=0; i< level; i++)
-		cout << "    ";
-	cout << "Entity Type:" << se->eDesc->Type() << endl;
-	for ( int i=0; i< level; i++)
-		cout << "    ";
-	cout << "Attributes:" << endl;
+STEPWrapper::printEntity(SCLP23(Application_instance) *se, int level)
+{
+    for (int i=0; i< level; i++)
+	std::cout << "    ";
+    std::cout << "Entity:" << se->EntityName() << "(" << se->STEPfile_id << ")" << std::endl;
+    for (int i=0; i< level; i++)
+	std::cout << "    ";
+    std::cout << "Description:" << se->eDesc->Description() << std::endl;
+    for (int i=0; i< level; i++)
+	std::cout << "    ";
+    std::cout << "Entity Type:" << se->eDesc->Type() << std::endl;
+    for (int i=0; i< level; i++)
+	std::cout << "    ";
+    std::cout << "Attributes:" << std::endl;
 
-	STEPattribute *attr;
-	se->ResetAttributes();
-	while ( (attr = se->NextAttribute()) != NULL ) {
-		SCLstring attrval;
+    STEPattribute *attr;
+    se->ResetAttributes();
+    while ((attr = se->NextAttribute()) != NULL) {
+	SCLstring attrval;
 
-		for ( int i=0; i<= level; i++)
-			cout << "    ";
-		cout << attr->Name() << ": " << attr->asStr(attrval) << " TypeName: " << attr->TypeName() << " Type: " << attr->Type() << endl;
-		if ( attr->Type() == 256 ) {
-			if (attr->IsDerived()) {
-				for ( int i=0; i<= level; i++)
-					cout << "    ";
-				cout << "        ********* DERIVED *********" << endl;
-			} else {
-			    printEntity(*(attr->ptr.c),level+2);
-			}
-		} else if ((attr->Type() == SET_TYPE)||(attr->Type() == LIST_TYPE)) {
-			STEPaggregate *sa = (STEPaggregate *)(attr->ptr.a);
+	for (int i=0; i<= level; i++)
+	    std::cout << "    ";
+	std::cout << attr->Name() << ": " << attr->asStr(attrval) << " TypeName: " << attr->TypeName() << " Type: " << attr->Type() << std::endl;
+	if (attr->Type() == 256) {
+	    if (attr->IsDerived()) {
+		for (int i=0; i<= level; i++)
+		    std::cout << "    ";
+		std::cout << "        ********* DERIVED *********" << std::endl;
+	    } else {
+		printEntity(*(attr->ptr.c), level+2);
+	    }
+	} else if ((attr->Type() == SET_TYPE)||(attr->Type() == LIST_TYPE)) {
+	    STEPaggregate *sa = (STEPaggregate *)(attr->ptr.a);
 
-			// cout << "aggr:" << sa->asStr(attrval) << "  BaseType:" << attr->BaseType() << endl;
+	    // std::cout << "aggr:" << sa->asStr(attrval) << "  BaseType:" << attr->BaseType() << std::endl;
 
-			if ( attr->BaseType() == ENTITY_TYPE ) {
-				printEntityAggregate(sa, level+2);
-			}
-		}
-
+	    if (attr->BaseType() == ENTITY_TYPE) {
+		printEntityAggregate(sa, level+2);
+	    }
 	}
-	//cout << endl << endl;
+
+    }
+    //std::cout << std::endl << std::endl;
 }
 
+
 void
-STEPWrapper::printEntityAggregate(STEPaggregate *sa, int level) {
-	SCLstring strVal;
+STEPWrapper::printEntityAggregate(STEPaggregate *sa, int level)
+{
+    SCLstring strVal;
 
-	for ( int i=0; i< level; i++)
-		cout << "    ";
-	cout << "Aggregate:" << sa->asStr(strVal) << endl;
+    for (int i=0; i< level; i++)
+	std::cout << "    ";
+    std::cout << "Aggregate:" << sa->asStr(strVal) << std::endl;
 
-	EntityNode *sn = (EntityNode *)sa->GetHead();
-	SCLP23(Application_instance) *sse;
-	while ( sn != NULL) {
-		sse = (SCLP23(Application_instance) *)sn->node;
+    EntityNode *sn = (EntityNode *)sa->GetHead();
+    SCLP23(Application_instance) *sse;
+    while (sn != NULL) {
+	sse = (SCLP23(Application_instance) *)sn->node;
 
-		if (((sse->eDesc->Type() == SET_TYPE)||(sse->eDesc->Type() == LIST_TYPE))&&(sse->eDesc->BaseType() == ENTITY_TYPE)) {
-			printEntityAggregate((STEPaggregate *)sse,level+2);
-		} else if ( sse->eDesc->Type() == ENTITY_TYPE ) {
-			printEntity(sse,level+2);
-		} else {
-			cout << "Instance Type not handled:" << endl;
-		}
-		//cout << "sn - " << sn->asStr(attrval) << endl;
-
-		sn = (EntityNode *)sn->NextNode();
+	if (((sse->eDesc->Type() == SET_TYPE)||(sse->eDesc->Type() == LIST_TYPE))&&(sse->eDesc->BaseType() == ENTITY_TYPE)) {
+	    printEntityAggregate((STEPaggregate *)sse, level+2);
+	} else if (sse->eDesc->Type() == ENTITY_TYPE) {
+	    printEntity(sse, level+2);
+	} else {
+	    std::cout << "Instance Type not handled:" << std::endl;
 	}
-	//cout << endl << endl;
+	//std::cout << "sn - " << sn->asStr(attrval) << std::endl;
+
+	sn = (EntityNode *)sn->NextNode();
+    }
+    //std::cout << std::endl << std::endl;
 }
 
+
 void
-STEPWrapper::printLoadStatistics() {
+STEPWrapper::printLoadStatistics()
+{
 
-	int num_ents = instance_list.InstanceCount();
+    int num_ents = instance_list.InstanceCount();
 
-	//cout << "Loaded " << num_ents << "instances from STEP file \"" << stepfile << "\"" << endl;
-	//for( int i=0; i < num_ents; i++){
-	//	SCLP23(Application_instance) *se = instance_list.GetSTEPentity(i);
+    //std::cout << "Loaded " << num_ents << "instances from STEP file \"" << stepfile << "\"" << std::endl;
+    //for (int i=0; i < num_ents; i++) {
+    //	SCLP23(Application_instance) *se = instance_list.GetSTEPentity(i);
 //
-	//	cout << i << ":" << endl;
-	//	printEntity(se,1);
-	//	cout << endl;
-	//}
+    //	std::cout << i << ":" << std::endl;
+    //	printEntity(se, 1);
+    //	std::cout << std::endl;
+    //}
 
     int num_schma_ents = registry->GetEntityCnt();
 
@@ -1017,29 +1117,30 @@ STEPWrapper::printLoadStatistics() {
     // "Loop" through the schema, building one of each entity type.
 
     const EntityDescriptor *ent;   // needs to be declared const...
-    string filler = "....................................................................................";
-	cout << "Loaded " << num_ents << " instances from STEP file \"" << stepfile << "\"" << endl;
+    std::string filler = "....................................................................................";
+    std::cout << "Loaded " << num_ents << " instances from STEP file \"" << stepfile << "\"" << std::endl;
 
-	int numEntitiesUsed=0;
-    for (int i=0; i < num_schma_ents; i++)
-    {
-		ent = registry->NextEntity();
+    int numEntitiesUsed=0;
+    for (int i=0; i < num_schma_ents; i++) {
+	ent = registry->NextEntity();
 
-		int entCount = instance_list.EntityKeywordCount(ent->Name());
-		// fix below with boost string formater when available
-		if ( entCount > 0 ) {
-			cout << "\t" << ent->Name() << filler.substr(0,filler.length() - ((string)ent->Name()).length()) << entCount << endl;
-			numEntitiesUsed++;
-		}
+	int entCount = instance_list.EntityKeywordCount(ent->Name());
+	// fix below with boost string formater when available
+	if (entCount > 0) {
+	    std::cout << "\t" << ent->Name() << filler.substr(0, filler.length() - ((std::string)ent->Name()).length()) << entCount << std::endl;
+	    numEntitiesUsed++;
+	}
     }
-	cout << "Used " << numEntitiesUsed << " entities of the available " << num_schma_ents << " in schema \"" << schema->Name() << endl;
+    std::cout << "Used " << numEntitiesUsed << " entities of the available " << num_schma_ents << " in schema \"" << schema->Name() << std::endl;
 }
-const char *
-STEPWrapper::getBaseType(int type) {
-	const char *retValue = NULL;
 
-    switch(type)
-    {
+
+const char*
+STEPWrapper::getBaseType(int type)
+{
+    const char *retValue = NULL;
+
+    switch(type) {
         case sdaiINSTANCE:
             retValue = "sdaiINSTANCE";
             break;
@@ -1091,9 +1192,10 @@ STEPWrapper::getBaseType(int type) {
         default:
             retValue = "Unknown";
             break;
-      }
+    }
     return retValue;
 }
+
 
 // Local Variables:
 // tab-width: 8

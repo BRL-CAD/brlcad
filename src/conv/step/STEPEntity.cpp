@@ -23,25 +23,35 @@
  *
  */
 
+/* inteface header */
 #include "STEPEntity.h"
 
-STEPEntity::STEPEntity() {
-	step=NULL;
-	id=0;
-	ON_id = -1;
+
+STEPEntity::STEPEntity()
+{
+    step=NULL;
+    id=0;
+    ON_id = -1;
 }
 
-STEPEntity::~STEPEntity() {
+
+STEPEntity::~STEPEntity()
+{
 }
+
 
 int
-STEPEntity::STEPid() {
-	return id;
+STEPEntity::STEPid()
+{
+    return id;
 }
 
-STEPWrapper *STEPEntity::Step() {
-	return step;
+
+STEPWrapper *STEPEntity::Step()
+{
+    return step;
 }
+
 
 // Local Variables:
 // tab-width: 8

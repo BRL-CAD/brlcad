@@ -26,26 +26,35 @@
 #ifndef SHAPEREPRESENTATION_H_
 #define SHAPEREPRESENTATION_H_
 
+#include "common.h"
+
+/* inteface header */
 #include "Representation.h"
+
+/* system headers */
+#include <string>
+
 
 class ON_Brep;
 
-class ShapeRepresentation : public Representation {
-private:
-	static string entityname;
+class ShapeRepresentation : public Representation
+{
+ private:
+    static std::string entityname;
 
-protected:
+ protected:
 
-public:
-	ShapeRepresentation();
-	ShapeRepresentation(STEPWrapper *sw, int STEPid);
-	virtual ~ShapeRepresentation();
-	bool Load(STEPWrapper *sw, SCLP23(Application_instance) *sse);
-	virtual void Print(int level);
+ public:
+    ShapeRepresentation();
+    ShapeRepresentation(STEPWrapper *sw, int STEPid);
+    virtual ~ShapeRepresentation();
+    bool Load(STEPWrapper *sw, SCLP23(Application_instance) *sse);
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SCLP23(Application_instance) *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SCLP23(Application_instance) *sse);
 };
+
 
 #endif /* SHAPEREPRESENTATION_H_ */
 

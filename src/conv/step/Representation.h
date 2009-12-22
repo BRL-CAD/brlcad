@@ -26,38 +26,48 @@
 #ifndef REPRESENTATION_H_
 #define REPRESENTATION_H_
 
+#include "common.h"
+
+/* system headers */
 #include <list>
 
+/* inteface headers */
 #include "STEPEntity.h"
+#include "STEPWrapper.h"
+#include "sclprefixes.h"
+
 
 class RepresentationItem;
 class RepresentationContext;
 
-typedef list<RepresentationItem *> LIST_OF_REPRESENTATION_ITEMS;
-typedef list<RepresentationContext *> LIST_OF_REPRESENTATION_CONTEXT;
+typedef std::list<RepresentationItem *> LIST_OF_REPRESENTATION_ITEMS;
+typedef std::list<RepresentationContext *> LIST_OF_REPRESENTATION_CONTEXT;
 
-class Representation : public STEPEntity {
-private:
-	static string entityname;
 
-protected:
-	string name;
-	LIST_OF_REPRESENTATION_ITEMS items;
-	LIST_OF_REPRESENTATION_CONTEXT context_of_items;
+class Representation : public STEPEntity
+{
+ private:
+    static std::string entityname;
 
-public:
-	Representation();
-	Representation(STEPWrapper *sw, int STEPid);
-	virtual ~Representation();
-	double GetLengthConversionFactor();
-	double GetPlaneAngleConversionFactor();
-	double GetSolidAngleConversionFactor();
-	bool Load(STEPWrapper *sw, SCLP23(Application_instance) *sse);
-	virtual void Print(int level);
+ protected:
+    std::string name;
+    LIST_OF_REPRESENTATION_ITEMS items;
+    LIST_OF_REPRESENTATION_CONTEXT context_of_items;
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SCLP23(Application_instance) *sse);
+ public:
+    Representation();
+    Representation(STEPWrapper *sw, int STEPid);
+    virtual ~Representation();
+    double GetLengthConversionFactor();
+    double GetPlaneAngleConversionFactor();
+    double GetSolidAngleConversionFactor();
+    bool Load(STEPWrapper *sw, SCLP23(Application_instance) *sse);
+    virtual void Print(int level);
+
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SCLP23(Application_instance) *sse);
 };
+
 
 #endif /* REPRESENTATION_H_ */
 

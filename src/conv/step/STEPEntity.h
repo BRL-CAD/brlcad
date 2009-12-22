@@ -26,39 +26,41 @@
 #ifndef STEPENTITY_H_
 #define STEPENTITY_H_
 
-#include <string>
-#include <vector>
-#include <list>
-#include <map>
+#include "common.h"
 
-using namespace std;
+/* system headers */
+#include <iostream>
+
 
 class STEPWrapper;
 class ON_Brep;
 
+
 #define POINT_CLOSENESS_TOLERANCE 1e-6
 #define TAB(j) \
 	{ \
-		for ( int i=0; i< j; i++) \
-			cout << "    "; \
+		for (int i=0; i< j; i++) \
+			std::cout << "    "; \
 	}
 
-class STEPEntity {
-protected:
-	int id;
-	int ON_id;
-	STEPWrapper *step;
+class STEPEntity
+{
+ protected:
+    int id;
+    int ON_id;
+    STEPWrapper* step;
 
-public:
-	STEPEntity();
-	virtual ~STEPEntity();
+ public:
+    STEPEntity();
+    virtual ~STEPEntity();
 
-	int GetId() {return id;}
-	int GetONId() {return ON_id;}
-	void SetONId(int id) {ON_id = id;}
-	int STEPid();
-	STEPWrapper *Step();
+    int GetId() { return id; }
+    int GetONId() { return ON_id; }
+    void SetONId(int id) { ON_id = id; }
+    int STEPid();
+    STEPWrapper* Step();
 };
+
 
 #endif /* STEPENTITY_H_ */
 

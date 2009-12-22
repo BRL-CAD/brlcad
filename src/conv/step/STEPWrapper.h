@@ -25,22 +25,18 @@
 #ifndef STEPWRAPPER_H_
 #define STEPWRAPPER_H_
 
-#define TAB(j) \
-	{ \
-		for ( int i=0; i< j; i++) \
-			cout << "    "; \
-	}
+#include "common.h"
 
 //TODO
 //#define TRACE(s) std::cerr << __FILE__ << ":" << __LINE__ << ":" << __func__ << ":" << s << std::endl;
 #define ERROR(s) std::cerr << __FILE__ << ":" << __LINE__ << ":" << __func__ << ":" << s << std::endl;
 
+/* system headers */
 #include <list>
 #include <map>
 #include <vector>
 
-using namespace std;
-
+/* interface headers */
 #include <sdai.h>
 
 #include <STEPattribute.h>
@@ -58,18 +54,18 @@ class STEPcomplex;
 
 class CartesianPoint;
 class SurfacePatch;
-typedef list<CartesianPoint *> LIST_OF_POINTS;
-typedef list<LIST_OF_POINTS *> LIST_OF_LIST_OF_POINTS;
-typedef list<SurfacePatch *> LIST_OF_PATCHES;
-typedef list<LIST_OF_PATCHES *> LIST_OF_LIST_OF_PATCHES;
-typedef list<string> LIST_OF_STRINGS;
-typedef list<SCLP23(Application_instance) *> LIST_OF_ENTITIES;
-typedef list<SDAI_Select *> LIST_OF_SELECTS;
-typedef map<string,STEPcomplex *> MAP_OF_SUPERTYPES;
-typedef vector<double> VECTOR_OF_REALS;
-typedef list<int> LIST_OF_INTEGERS;
-typedef list<double> LIST_OF_REALS;
-typedef list<LIST_OF_REALS *> LIST_OF_LIST_OF_REALS;
+typedef std::list<CartesianPoint *> LIST_OF_POINTS;
+typedef std::list<LIST_OF_POINTS *> LIST_OF_LIST_OF_POINTS;
+typedef std::list<SurfacePatch *> LIST_OF_PATCHES;
+typedef std::list<LIST_OF_PATCHES *> LIST_OF_LIST_OF_PATCHES;
+typedef std::list<string> LIST_OF_STRINGS;
+typedef std::list<SCLP23(Application_instance) *> LIST_OF_ENTITIES;
+typedef std::list<SDAI_Select *> LIST_OF_SELECTS;
+typedef std::map<string,STEPcomplex *> MAP_OF_SUPERTYPES;
+typedef std::vector<double> VECTOR_OF_REALS;
+typedef std::list<int> LIST_OF_INTEGERS;
+typedef std::list<double> LIST_OF_REALS;
+typedef std::list<LIST_OF_REALS *> LIST_OF_LIST_OF_REALS;
 
 class STEPWrapper {
 private:
