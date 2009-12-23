@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -86,7 +85,7 @@ void ON_Linetype::Default()
   m_segments.Destroy();
 }
 
-BOOL ON_Linetype::IsValid( ON_TextLog* text_log ) const
+ON_BOOL32 ON_Linetype::IsValid( ON_TextLog* text_log ) const
 {
   int i, count = m_segments.Count();
 
@@ -104,14 +103,14 @@ BOOL ON_Linetype::IsValid( ON_TextLog* text_log ) const
     if ( m_segments[0].m_length <= 0.0  )
     {
       if ( text_log )
-	text_log->Print("ON_Linetype bogus single segment linetype - length <= 0.0 (it must be > 0)\n");
+        text_log->Print("ON_Linetype bogus single segment linetype - length <= 0.0 (it must be > 0)\n");
       return false;
     }
 
     if ( ON_LinetypeSegment::stLine != m_segments[0].m_seg_type )
     {
       if ( text_log )
-	text_log->Print("ON_Linetype bogus single segment linetype - type != stLine\n");
+        text_log->Print("ON_Linetype bogus single segment linetype - type != stLine\n");
       return false;
     }
   }
@@ -121,33 +120,33 @@ BOOL ON_Linetype::IsValid( ON_TextLog* text_log ) const
     {
       if ( m_segments[i].m_length < 0.0 )
       {
-	if ( text_log )
-	  text_log->Print("ON_Linetype segment has negative length.\n");
-	return false;
+        if ( text_log )
+          text_log->Print("ON_Linetype segment has negative length.\n");
+        return false;
       }
 
       if ( ON_LinetypeSegment::stLine != m_segments[i].m_seg_type && ON_LinetypeSegment::stSpace != m_segments[i].m_seg_type )
       {
-	if ( text_log )
-	  text_log->Print("ON_Linetype segment has invalid m_seg_type.\n");
-	return false;
+        if ( text_log )
+          text_log->Print("ON_Linetype segment has invalid m_seg_type.\n");
+        return false;
       }
 
       if ( i )
       {
-	if ( m_segments[i].m_seg_type == m_segments[i-1].m_seg_type )
-	{
-	  if ( text_log )
-	    text_log->Print("ON_Linetype consecutive segments have same type.\n");
-	  return false;
-	}
+        if ( m_segments[i].m_seg_type == m_segments[i-1].m_seg_type )
+        {
+          if ( text_log )
+            text_log->Print("ON_Linetype consecutive segments have same type.\n");
+          return false;
+        }
 
-	if ( 0.0 == m_segments[i].m_length && 0.0 == m_segments[i-1].m_length )
-	{
-	  if ( text_log )
-	    text_log->Print("ON_Linetype consecutive segments have length zero.\n");
-	  return false;
-	}
+        if ( 0.0 == m_segments[i].m_length && 0.0 == m_segments[i-1].m_length )
+        {
+          if ( text_log )
+            text_log->Print("ON_Linetype consecutive segments have length zero.\n");
+          return false;
+        }
       }
     }
   }
@@ -184,7 +183,7 @@ void ON_Linetype::Dump( ON_TextLog& dump ) const
   dump.Print(")\n");
 }
 
-BOOL ON_Linetype::Write( ON_BinaryArchive& file) const
+ON_BOOL32 ON_Linetype::Write( ON_BinaryArchive& file) const
 {
   bool rc = file.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK,1,1);
   if (rc)
@@ -214,7 +213,7 @@ BOOL ON_Linetype::Write( ON_BinaryArchive& file) const
   return rc;
 }
 
-BOOL ON_Linetype::Read( ON_BinaryArchive& file)
+ON_BOOL32 ON_Linetype::Read( ON_BinaryArchive& file)
 {
   Default();
   m_linetype_index = -1;
@@ -229,16 +228,16 @@ BOOL ON_Linetype::Read( ON_BinaryArchive& file)
     {
       // chunk version 1.0 fields
       if( rc) 
-	rc = file.ReadInt( &m_linetype_index );
+        rc = file.ReadInt( &m_linetype_index );
       if( rc) 
-	rc = file.ReadString( m_linetype_name );
+        rc = file.ReadString( m_linetype_name );
       if( rc) 
-	rc = file.ReadArray( m_segments );
+        rc = file.ReadArray( m_segments );
 
       if ( minor_version >= 1 )
       {
-	if (rc)
-	  rc = file.ReadUuid( m_linetype_id );
+        if (rc)
+          rc = file.ReadUuid( m_linetype_id );
       }
     }
     else

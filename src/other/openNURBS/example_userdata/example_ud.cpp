@@ -53,24 +53,24 @@ void CExampleWriteUserData::Dump( ON_TextLog& text_log ) const
   text_log.PopIndent();
 }
 
-BOOL CExampleWriteUserData::GetDescription( ON_wString& description )
+ON_BOOL32 CExampleWriteUserData::GetDescription( ON_wString& description )
 {
   description = L"example_write.exe user data";
   return true;
 }
 
 
-BOOL CExampleWriteUserData::Archive() const
+ON_BOOL32 CExampleWriteUserData::Archive() const
 {
   return true;
 }
 
-BOOL CExampleWriteUserData::Write(ON_BinaryArchive& file) const
+ON_BOOL32 CExampleWriteUserData::Write(ON_BinaryArchive& file) const
 {
   return file.WriteString(m_str);
 }
 
-BOOL CExampleWriteUserData::Read(ON_BinaryArchive& file)
+ON_BOOL32 CExampleWriteUserData::Read(ON_BinaryArchive& file)
 {
   return file.ReadString(m_str);
 }

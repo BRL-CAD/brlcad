@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -25,7 +24,10 @@
 class ON_CLASS ON_BoundingBox
 {
 public:
-  ON_BoundingBox();
+  static const ON_BoundingBox EmptyBoundingBox; // ((1.0,0,0,0,0),(-1.0,0.0,0.0))
+
+  ON_BoundingBox(); // creates EmptyBox
+
 	ON_BoundingBox(
     const ON_3dPoint&, // min corner of axis aligned bounding box
     const ON_3dPoint&  // max corner of axis aligned bounding box
@@ -56,6 +58,9 @@ public:
   bool GetCorners( 
     ON_3dPointArray& box_corners // returns list of 8 corner points
     ) const;
+  bool GetCorners( 
+    ON_3dPoint box_corners[8] // returns list of 8 corner points
+    ) const;
 
   bool IsValid() const; // empty boxes are not valid
 
@@ -65,8 +70,8 @@ public:
     in one or more directions.
   Parameters:
     tolerance - [in] Distances <= tolerance will be considered
-	to be zero.  If tolerance is negative (default), then
-	a scale invarient tolerance is used.
+        to be zero.  If tolerance is negative (default), then
+        a scale invarient tolerance is used.
   Returns:
     @untitled table
     0     box is not degenerate
@@ -88,11 +93,11 @@ public:
   bool Transform( const ON_Xform& );
 
   double Tolerance() const; // rough guess at a tolerance to use for comparing
-			    // objects in this bounding box
+                            // objects in this bounding box
 
 
   // All of these Set() functions set or expand a box to enclose the points in the arguments
-  // If bGrowBox is TRUE, the existing box is expanded, otherwise it is only set to the current point list
+  // If bGrowBox is true, the existing box is expanded, otherwise it is only set to the current point list
   bool Set(     
     int dim,
     int is_rat,
@@ -123,12 +128,12 @@ public:
     );
 
 	bool IsPointIn(
-	 const ON_3dPoint& test_point, // point to test
-	 int bStrictlyIn = false 
-		   // TRUE to test for strict ( min < point < max )
-		   // FALSE to test for (min <= point <= max)
-		   //       
-	 ) const;
+         const ON_3dPoint& test_point, // point to test
+         int bStrictlyIn = false 
+                   // true to test for strict ( min < point < max )
+                   // false to test for (min <= point <= max)
+                   //       
+         ) const;
 
   //////////
   // Point on or in the box that is closest to test_point.
@@ -313,8 +318,8 @@ public:
   Parameters:
     d - [in] distance (> 0.0)
     plane_equation - [in] (the first three coefficients 
-			   are assumed to be a unit vector.
-			   If not, adjust your d accordingly.)
+                           are assumed to be a unit vector.
+                           If not, adjust your d accordingly.)
   Returns:
     True if the shortest distance from the plane
     to the bounding box is greater than d, and false
@@ -370,10 +375,10 @@ public:
   // If the boxes intersect, then the point at the centroid of the
   // intersection is returned for both points.
   bool GetClosestPoint( 
-	 const ON_BoundingBox&, // "other" bounding box
-	 ON_3dPoint&, // point on "this" box that is closest to "other" box
-	 ON_3dPoint&  // point on "other" box that is closest to "this" box
-	 )  const;
+         const ON_BoundingBox&, // "other" bounding box
+         ON_3dPoint&, // point on "this" box that is closest to "other" box
+         ON_3dPoint&  // point on "other" box that is closest to "this" box
+         )  const;
 
   //////////
   // Point on the box that is farthest from the test_point.
@@ -384,10 +389,10 @@ public:
   //////////
   // Get points on bounding boxes that are farthest from each other.
   bool GetFarPoint( 
-	 const ON_BoundingBox&, // "other" bounding box
-	 ON_3dPoint&, // point on "this" box that is farthest from "other" box
-	 ON_3dPoint&  // point on "other" box that is farthest from "this" box
-	 )  const;
+         const ON_BoundingBox&, // "other" bounding box
+         ON_3dPoint&, // point on "this" box that is farthest from "other" box
+         ON_3dPoint&  // point on "other" box that is farthest from "this" box
+         )  const;
 
   /* 
   Description:
@@ -403,8 +408,8 @@ public:
     the empty set, and false is returned.
   */
   bool Intersection(
-	 const ON_BoundingBox& other_bbox
-	 );
+         const ON_BoundingBox& other_bbox
+         );
 
   /* 
   Description:
@@ -421,11 +426,11 @@ public:
     the empty set, and false is returned.
   */
   bool Intersection( // this = intersection of two args
-	 const ON_BoundingBox& bbox_A, 
-	 const ON_BoundingBox& bbox_B
-	 );
+         const ON_BoundingBox& bbox_A, 
+         const ON_BoundingBox& bbox_B
+         );
 
-	bool Intersection(				//Returns TRUE when intersect is non-empty. 
+	bool Intersection(				//Returns true when intersect is non-empty. 
 				 const ON_Line&,		//Infinite Line segment to intersect with 
 				 double* =NULL ,			// t0  parameter of first intersection point
 				 double* =NULL       // t1  parameter of last intersection point (t0<=t1)   
@@ -453,17 +458,17 @@ public:
 
   double Area() const;
 
-  // Union() returns TRUE if union is not empty.
+  // Union() returns true if union is not empty.
   // Invalid boxes are treated as the empty set.
   bool Union( // this = this union arg
-	 const ON_BoundingBox&
-	 );
+         const ON_BoundingBox&
+         );
 
   bool Union( // this = union of two args
-	 const ON_BoundingBox&, 
-	 const ON_BoundingBox&
-	 );
-		  
+         const ON_BoundingBox&, 
+         const ON_BoundingBox&
+         );
+                  
   /* 
   Description:
     Test to see if "this" and other_bbox are disjoint (do not intersect).
@@ -584,37 +589,37 @@ ON_BoundingBox ON_PointListBoundingBox( // low level workhorse function
 
 ON_DECL
 bool ON_GetPointGridBoundingBox(
-	int dim,
-	int is_rat,
-	int point_count0, int point_count1,
-	int point_stride0, int point_stride1,
-	const double* point_grid,
-	double* boxmin,       // min[dim]
-	double* boxmax,       // max[dim]
-	int bGrowBox
+        int dim,
+        int is_rat,
+        int point_count0, int point_count1,
+        int point_stride0, int point_stride1,
+        const double* point_grid,
+        double* boxmin,       // min[dim]
+        double* boxmax,       // max[dim]
+        int bGrowBox
     );
 
 ON_DECL
 ON_BoundingBox ON_PointGridBoundingBox(
-	int dim,
-	int is_rat,
-	int point_count0, int point_count1,
-	int point_stride0, int point_stride1,
-	const double* point_grid
+        int dim,
+        int is_rat,
+        int point_count0, int point_count1,
+        int point_stride0, int point_stride1,
+        const double* point_grid
     );
 
 ON_DECL
 double ON_BoundingBoxTolerance(
-	int dim,
-	const double* bboxmin,
-	const double* bboxmax
-	);
+        int dim,
+        const double* bboxmin,
+        const double* bboxmax
+        );
 
 ON_DECL
 bool ON_WorldBBoxIsInTightBBox( 
-	  const ON_BoundingBox& tight_bbox, 
-	  const ON_BoundingBox& world_bbox,
-	  const ON_Xform* xform
-	  );
+          const ON_BoundingBox& tight_bbox, 
+          const ON_BoundingBox& world_bbox,
+          const ON_Xform* xform
+          );
 
 #endif

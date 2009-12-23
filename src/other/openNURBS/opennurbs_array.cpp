@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -20,11 +19,11 @@ ON_2dPointArray::ON_2dPointArray()
 {}
 
 ON_2dPointArray::ON_2dPointArray(int c) 
-		: ON_SimpleArray<ON_2dPoint>(c) 
+                : ON_SimpleArray<ON_2dPoint>(c) 
 {}
 
 ON_2dPointArray::ON_2dPointArray(const ON_2dPointArray& src) 
-		: ON_SimpleArray<ON_2dPoint>(src)
+                : ON_SimpleArray<ON_2dPoint>(src)
 {}
 
 bool ON_2dPointArray::GetBBox( // returns true if successful
@@ -61,7 +60,7 @@ ON_3dPointArray::ON_3dPointArray(int c) : ON_SimpleArray<ON_3dPoint>(c)
 {}
 
 ON_3dPointArray::ON_3dPointArray(const ON_SimpleArray<ON_3dPoint>& src) 
-		: ON_SimpleArray<ON_3dPoint>(src)
+                : ON_SimpleArray<ON_3dPoint>(src)
 {}
 
 ON_3dPointArray::ON_3dPointArray(const ON_SimpleArray<ON_3fPoint>& src) 
@@ -173,8 +172,8 @@ bool ON_3dPointArray::Create(
 {
   bool rc = false;
   if (     point_dimension >= 2 && point_dimension <= 3 
-	&& point_count>0 && points 
-	&& point_stride >= bRational?(point_dimension+1):point_dimension )
+        && point_count>0 && points 
+        && point_stride >= bRational?(point_dimension+1):point_dimension )
   {
     rc = true;
     int i;
@@ -187,25 +186,25 @@ bool ON_3dPointArray::Create(
     {
       for ( i = 0; i < point_count; i++ )
       {
-	h.x = points[0];
-	h.y = points[1];
-	if ( point_dimension == 3 )
-	  h.z = points[2];
-	h.w = points[point_dimension];
-	m_a[i] = h;
-	points += point_stride;
+        h.x = points[0];
+        h.y = points[1];
+        if ( point_dimension == 3 )
+          h.z = points[2];
+        h.w = points[point_dimension];
+        m_a[i] = h;
+        points += point_stride;
       }
     }
     else
     {
       for ( i = 0; i < point_count; i++ )
       {
-	q.x = points[0];
-	q.y = points[1];
-	if ( point_dimension == 3 )
-	  q.z = points[2];
-	m_a[i] = q;
-	points += point_stride;
+        q.x = points[0];
+        q.y = points[1];
+        if ( point_dimension == 3 )
+          q.z = points[2];
+        m_a[i] = q;
+        points += point_stride;
       }
     }
   }
@@ -225,8 +224,8 @@ bool ON_3dPointArray::Create(
 {
   bool rc = false;
   if (     point_dimension >= 2 && point_dimension <= 3 
-	&& point_count>0 && points 
-	&& point_stride >= bRational?(point_dimension+1):point_dimension )
+        && point_count>0 && points 
+        && point_stride >= bRational?(point_dimension+1):point_dimension )
   {
     rc = true;
     int i;
@@ -239,25 +238,25 @@ bool ON_3dPointArray::Create(
     {
       for ( i = 0; i < point_count; i++ )
       {
-	h.x = points[0];
-	h.y = points[1];
-	if ( point_dimension == 3 )
-	  h.z = points[2];
-	h.w = points[point_dimension];
-	m_a[i] = h;
-	points += point_stride;
+        h.x = points[0];
+        h.y = points[1];
+        if ( point_dimension == 3 )
+          h.z = points[2];
+        h.w = points[point_dimension];
+        m_a[i] = h;
+        points += point_stride;
       }
     }
     else
     {
       for ( i = 0; i < point_count; i++ )
       {
-	q.x = points[0];
-	q.y = points[1];
-	if ( point_dimension == 3 )
-	  q.z = points[2];
-	m_a[i] = q;
-	points += point_stride;
+        q.x = points[0];
+        q.y = points[1];
+        if ( point_dimension == 3 )
+          q.z = points[2];
+        m_a[i] = q;
+        points += point_stride;
       }
     }
   }
@@ -374,11 +373,11 @@ ON_2fPointArray::ON_2fPointArray()
 {}
 
 ON_2fPointArray::ON_2fPointArray(int c) 
-		: ON_SimpleArray<ON_2fPoint>(c) 
+                : ON_SimpleArray<ON_2fPoint>(c) 
 {}
 
 ON_2fPointArray::ON_2fPointArray(const ON_2fPointArray& src) 
-		: ON_SimpleArray<ON_2fPoint>(src)
+                : ON_SimpleArray<ON_2fPoint>(src)
 {}
 
 bool ON_2fPointArray::GetBBox( // returns true if successful
@@ -594,16 +593,16 @@ int ON_UuidPair::Compare(const class ON_UuidPair* a,const class ON_UuidPair* b)
 }
 
 ON_UuidList::ON_UuidList() 
-		     : ON_SimpleArray<ON_UUID>(32),
-		       m_sorted_count(0),
-		       m_removed_count(0)
+                     : ON_SimpleArray<ON_UUID>(32),
+                       m_sorted_count(0),
+                       m_removed_count(0)
 {
 }
 
 ON_UuidList::ON_UuidList(int capacity) 
-		     : ON_SimpleArray<ON_UUID>(capacity),
-		       m_sorted_count(0),
-		       m_removed_count(0)
+                     : ON_SimpleArray<ON_UUID>(capacity),
+                       m_sorted_count(0),
+                       m_removed_count(0)
 {
 }
 
@@ -614,9 +613,9 @@ ON_UuidList::~ON_UuidList()
 }
 
 ON_UuidList::ON_UuidList(const ON_UuidList& src) 
-		     : ON_SimpleArray<ON_UUID>(src),
-		       m_sorted_count(src.m_sorted_count),
-		       m_removed_count(src.m_removed_count)
+                     : ON_SimpleArray<ON_UUID>(src),
+                       m_sorted_count(src.m_sorted_count),
+                       m_removed_count(src.m_removed_count)
 {
 }
 
@@ -736,8 +735,8 @@ bool ON_UuidList::Read( class ON_BinaryArchive& archive )
   int major_version = 0;
   int minor_version = 0;
   bool rc = archive.BeginRead3dmChunk( TCODE_ANONYMOUS_CHUNK, 
-				       &major_version, 
-				       &minor_version );
+                                       &major_version, 
+                                       &minor_version );
   if (rc)
   {
     if ( 1 != major_version )
@@ -771,9 +770,9 @@ ON_UUID* ON_UuidList::SearchHelper(const ON_UUID* uuid) const
   }
 
   ON_UUID* p = (m_sorted_count > 0 )
-	     ? (ON_UUID*)bsearch( uuid, m_a, m_sorted_count, sizeof(m_a[0]), 
-				  (int(*)(const void*,const void*))ON_UuidList::CompareUuid ) 
-	     : 0;
+             ? (ON_UUID*)bsearch( uuid, m_a, m_sorted_count, sizeof(m_a[0]), 
+                                  (int(*)(const void*,const void*))ON_UuidList::CompareUuid ) 
+             : 0;
 
   if (0 == p)
   {
@@ -784,8 +783,8 @@ ON_UUID* ON_UuidList::SearchHelper(const ON_UUID* uuid) const
     {
       if ( 0 == ON_UuidList::CompareUuid(uuid,m_a+i) )
       {
-	p = m_a+i;
-	break;
+        p = m_a+i;
+        break;
       }
     }
   }
@@ -796,16 +795,16 @@ ON_UUID* ON_UuidList::SearchHelper(const ON_UUID* uuid) const
 
 
 ON_UuidIndexList::ON_UuidIndexList() 
-		     : ON_SimpleArray<ON_UuidIndex>(32),
-		       m_sorted_count(0),
-		       m_removed_count(0)
+                     : ON_SimpleArray<ON_UuidIndex>(32),
+                       m_sorted_count(0),
+                       m_removed_count(0)
 {
 }
 
 ON_UuidIndexList::ON_UuidIndexList(int capacity) 
-		     : ON_SimpleArray<ON_UuidIndex>(capacity>32?capacity:32),
-		       m_sorted_count(0),
-		       m_removed_count(0)
+                     : ON_SimpleArray<ON_UuidIndex>(capacity>32?capacity:32),
+                       m_sorted_count(0),
+                       m_removed_count(0)
 {
 }
 
@@ -816,9 +815,9 @@ ON_UuidIndexList::~ON_UuidIndexList()
 }
 
 ON_UuidIndexList::ON_UuidIndexList(const ON_UuidIndexList& src) 
-		     : ON_SimpleArray<ON_UuidIndex>(src),
-		       m_sorted_count(src.m_sorted_count),
-		       m_removed_count(src.m_removed_count)
+                     : ON_SimpleArray<ON_UuidIndex>(src),
+                       m_sorted_count(src.m_sorted_count),
+                       m_removed_count(src.m_removed_count)
 {
 }
 
@@ -912,13 +911,13 @@ void ON_UuidList::RemapUuids( const ON_SimpleArray<ON_UuidPair>& uuid_remap )
       j = uuid_remap.BinarySearch( (const ON_UuidPair*)&m_a[i], ON_UuidPair::CompareFirstUuid );
       if ( j >= 0 )
       {
-	if ( ON_max_uuid == m_a[i] )
-	  continue;
-	m_sorted_count = 0;
-	bRemapped = true;
-	m_a[i] = uuid_remap[j].m_uuid[1];
-	if ( ON_max_uuid == m_a[i] )
-	  m_removed_count++;
+        if ( ON_max_uuid == m_a[i] )
+          continue;
+        m_sorted_count = 0;
+        bRemapped = true;
+        m_a[i] = uuid_remap[j].m_uuid[1];
+        if ( ON_max_uuid == m_a[i] )
+          m_removed_count++;
       }
     }
 
@@ -928,11 +927,11 @@ void ON_UuidList::RemapUuids( const ON_SimpleArray<ON_UuidPair>& uuid_remap )
       SortHelper();
       for ( i = m_count-1; i > 0; i-- )
       {
-	if ( m_a[i] == m_a[i-1] )
-	{
-	  Remove(i);
-	  m_sorted_count--;
-	}
+        if ( m_a[i] == m_a[i-1] )
+        {
+          Remove(i);
+          m_sorted_count--;
+        }
       }
     }
   }
@@ -988,7 +987,7 @@ ON_UuidIndex* ON_UuidIndexList::SearchHelper(const ON_UUID* uuid) const
       removed_uuid.m_i = 0;
       while ( p->m_count > 0 && !compar_uuidindex_uuid(&removed_uuid,p->m_a+(p->m_count-1)))
       {
-	p->m_count--;
+        p->m_count--;
       }
       p->m_removed_count = 0;
     }
@@ -996,10 +995,10 @@ ON_UuidIndex* ON_UuidIndexList::SearchHelper(const ON_UUID* uuid) const
   }
 
   ON_UuidIndex* p = (m_sorted_count > 0 )
-		   ? (ON_UuidIndex*)bsearch( uuid, m_a, m_sorted_count, 
-					sizeof(m_a[0]), 
-					(int(*)(const void*,const void*))compar_uuidindex_uuid ) 
-		   : 0;
+                   ? (ON_UuidIndex*)bsearch( uuid, m_a, m_sorted_count, 
+                                        sizeof(m_a[0]), 
+                                        (int(*)(const void*,const void*))compar_uuidindex_uuid ) 
+                   : 0;
   if (0 == p)
   {
     // do a slow search on the last m_count-m_sort_count elements
@@ -1009,8 +1008,8 @@ ON_UuidIndex* ON_UuidIndexList::SearchHelper(const ON_UUID* uuid) const
     {
       if ( 0 == ON_UuidList::CompareUuid(uuid,&m_a[i].m_id) )
       {
-	p = m_a+i;
-	break;
+        p = m_a+i;
+        break;
       }
     }
   }
@@ -1022,8 +1021,8 @@ ON_2dexMap::ON_2dexMap() : m_bSorted(0)
 {}
 
 ON_2dexMap::ON_2dexMap(int capacity) 
-	    : ON_SimpleArray<ON_2dex>(capacity), 
-	    m_bSorted(0)
+            : ON_SimpleArray<ON_2dex>(capacity), 
+            m_bSorted(0)
 {}
 
 ON_2dexMap::~ON_2dexMap()
@@ -1101,17 +1100,17 @@ const ON_2dex* ON_BinarySearch2dexArray( int key_i, const ON_2dex* base, size_t 
       d = key_i - base[i].i;
       if ( d < 0 )
       {
-	nel = i;
+        nel = i;
       }
       else if ( d > 0 )
       {
-	i++;
-	base += i;
-	nel -= i;
+        i++;
+        base += i;
+        nel -= i;
       }
       else
       {
-	return base+i;
+        return base+i;
       }
     }
   }

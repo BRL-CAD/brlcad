@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -70,9 +69,9 @@ public:
     true if object has bounding box and calculation was successful.
   */
   bool GetBoundingBox(
-	 ON_BoundingBox& bbox,
-	 int bGrowBox = false
-	 ) const;
+         ON_BoundingBox& bbox,
+         int bGrowBox = false
+         ) const;
 
   /*
 	Description:
@@ -132,7 +131,7 @@ public:
     Evaluate point on (infinite) line.
   Parameters:
     t - [in] evaluation parameter. t=0 returns line.from
-	     and t=1 returns line.to.
+             and t=1 returns line.to.
   Returns:
     (1-t)*line.from + t*line.to.
   See Also:
@@ -150,7 +149,7 @@ public:
   Parameters:
     test_point - [in]
     t - [out] line.PointAt(*t) is the point on the line 
-	      that is closest to test_point.
+              that is closest to test_point.
   Returns:
     true if successful.
   */
@@ -246,21 +245,21 @@ public:
 
   // rotate line about a point and axis
   bool Rotate(
-	double sin_angle,
-	double cos_angle,
-	const ON_3dVector& axis_of_rotation,
-	const ON_3dPoint& center_of_rotation
-	);
+        double sin_angle,
+        double cos_angle,
+        const ON_3dVector& axis_of_rotation,
+        const ON_3dPoint& center_of_rotation
+        );
 
   bool Rotate(
-	double angle_in_radians,
-	const ON_3dVector& axis_of_rotation,
-	const ON_3dPoint& center_of_rotation
-	);
+        double angle_in_radians,
+        const ON_3dVector& axis_of_rotation,
+        const ON_3dPoint& center_of_rotation
+        );
 
   bool Translate(
-	const ON_3dVector& delta
-	);
+        const ON_3dVector& delta
+        );
 
   /*
   Description:
@@ -288,14 +287,14 @@ public:
     Number of intersection events appended to x.
   */
   int IntersectSurface( 
-	  const class ON_Surface* surfaceB,
-	  ON_SimpleArray<ON_X_EVENT>& x,
-	  double intersection_tolerance = 0.0,
-	  double overlap_tolerance = 0.0,
-	  const ON_Interval* line_domain = 0,
-	  const ON_Interval* surfaceB_udomain = 0,
-	  const ON_Interval* surfaceB_vdomain = 0
-	  ) const;
+          const class ON_Surface* surfaceB,
+          ON_SimpleArray<ON_X_EVENT>& x,
+          double intersection_tolerance = 0.0,
+          double overlap_tolerance = 0.0,
+          const ON_Interval* line_domain = 0,
+          const ON_Interval* surfaceB_udomain = 0,
+          const ON_Interval* surfaceB_vdomain = 0
+          ) const;
 
 
 public:

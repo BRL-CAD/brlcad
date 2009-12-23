@@ -15,10 +15,10 @@ public:
   CExampleWriteUserData& operator=(const CExampleWriteUserData& src);
   ~CExampleWriteUserData();
   void Dump( ON_TextLog& text_log ) const;
-  BOOL GetDescription( ON_wString& description );
-  BOOL Archive() const;
-  BOOL Write(ON_BinaryArchive& file) const;
-  BOOL Read(ON_BinaryArchive& file);
+  ON_BOOL32 GetDescription( ON_wString& description );
+  ON_BOOL32 Archive() const;
+  ON_BOOL32 Write(ON_BinaryArchive& file) const;
+  ON_BOOL32 Read(ON_BinaryArchive& file);
 
   ON_wString m_str;
   int m_sn;

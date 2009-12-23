@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -40,13 +39,13 @@ public:
   ON_HistoryRecord& operator=(const ON_HistoryRecord& src);
 
   // virtual ON_Object::IsValid override
-  BOOL IsValid( ON_TextLog* text_log = NULL ) const;
+  ON_BOOL32 IsValid( ON_TextLog* text_log = NULL ) const;
   // virtual ON_Object::Dump override
   void Dump( ON_TextLog& ) const;
   // virtual ON_Object::Write override
-  BOOL Write(ON_BinaryArchive& binary_archive) const;
+  ON_BOOL32 Write(ON_BinaryArchive& binary_archive) const;
   // virtual ON_Object::Read override
-  BOOL Read(ON_BinaryArchive& binary_archive);
+  ON_BOOL32 Read(ON_BinaryArchive& binary_archive);
   // virtual
   ON_UUID ModelObjectId() const;
 

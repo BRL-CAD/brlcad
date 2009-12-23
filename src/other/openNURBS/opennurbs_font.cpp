@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -32,6 +31,7 @@ void ON_Font::Defaults()
   m_font_name.Empty();
   m_font_weight = 0;
   m_font_italic = false;
+  m_font_underlined = false;
   m_linefeed_ratio = m_default_linefeed_ratio;
   m_font_index = -1;
   memset(&m_font_id,0,sizeof(m_font_id));
@@ -52,13 +52,13 @@ void ON_Font::Defaults()
 //
 // ON_Object overrides
 
-BOOL ON_Font::IsValid( ON_TextLog* text_log ) const
+ON_BOOL32 ON_Font::IsValid( ON_TextLog* text_log ) const
 {
   return ( m_font_name.Length() > 0 
-	   && m_font_index >= 0 
-	   && m_facename[0] > 32 
-	   && m_facename[64] == 0
-	   );
+           && m_font_index >= 0 
+           && m_facename[0] > 32 
+           && m_facename[64] == 0
+           );
 }
 
 void ON_Font::Dump( ON_TextLog& dump ) const
@@ -71,10 +71,11 @@ void ON_Font::Dump( ON_TextLog& dump ) const
   dump.Print("font face name = \"%S\"\n",m_facename);
   dump.Print("font weight = \"%d\"\n",m_font_weight);
   dump.Print("font is italic = \"%d\"\n",m_font_italic);
+  dump.Print("font is underlined = \"%d\"\n",m_font_underlined);
   dump.Print("font linefeed ratio = \"%g\"\n", m_linefeed_ratio);
 }
 
-BOOL ON_Font::Write(
+ON_BOOL32 ON_Font::Write(
        ON_BinaryArchive& file // serialize definition to binary archive
      ) const
 {
@@ -95,7 +96,7 @@ BOOL ON_Font::Write(
       memset(sh,0,sizeof(sh));
       int i;
       for ( i = 0; i < 64 && i < face_name_size-1; i++ )
-	sh[i] = m_facename[i];
+        sh[i] = m_facename[i];
       rc = file.WriteShort(64, sh);
       if  (!rc) break;
     }
@@ -112,13 +113,17 @@ BOOL ON_Font::Write(
     rc = file.WriteUuid( m_font_id);
     if (!rc) break;
 
+    // 1.3 addition
+//    rc = file.WriteInt( m_font_underlined);
+//    if  (!rc) break;
+
     break;
   }
 
   return rc;
 }
 
-BOOL ON_Font::Read(
+ON_BOOL32 ON_Font::Read(
        ON_BinaryArchive& file // restore definition from binary archive
      )
 {
@@ -138,42 +143,48 @@ BOOL ON_Font::Read(
       if  (!rc) break;
 
       {
-	// 18 October 2002 Dale Lear:
-	//   Lowell, wchar_t has different sizes on different OSs.
-	//   When writing a wchar_t string, you should use one
-	//   of the WriteString functions.  This function must continue
-	//   to use ReadShort(64,...) so old files will remain valid.
-	unsigned short sh[64];
-	rc = file.ReadShort(64, sh);
-	if (!rc) break;
+        // 18 October 2002 Dale Lear:
+        //   Lowell, wchar_t has different sizes on different OSs.
+        //   When writing a wchar_t string, you should use one
+        //   of the WriteString functions.  This function must continue
+        //   to use ReadShort(64,...) so old files will remain valid.
+        unsigned short sh[64];
+        rc = file.ReadShort(64, sh);
+        if (!rc) break;
 
-	wchar_t facename[65];
-	for ( i = 0; i < 64; i++ )
-	{
-	  facename[i] = sh[i];
-	}
-	facename[64] = 0;
-	SetFontFaceName(facename);
+        wchar_t facename[65];
+        for ( i = 0; i < 64; i++ )
+        {
+          facename[i] = sh[i];
+        }
+        facename[64] = 0;
+        SetFontFaceName(facename);
       }
 
       if( minor_version >= 1 )
       {
-	rc = file.ReadInt( &i );
-	if (!rc) break;
-	SetFontWeight(i);
+        rc = file.ReadInt( &i );
+        if (!rc) break;
+        SetFontWeight(i);
 
-	rc = file.ReadInt( &i);
-	if (!rc) break;
-	SetIsItalic(i?true:false);
+        rc = file.ReadInt( &i);
+        if (!rc) break;
+        SetIsItalic(i?true:false);
 
-	rc = file.ReadDouble( &m_linefeed_ratio );
-	if (!rc) break;
+        rc = file.ReadDouble( &m_linefeed_ratio );
+        if (!rc) break;
 
-	if ( minor_version >= 2 )
-	{
-	  rc = file.ReadUuid( m_font_id );
-	  if (!rc) break;
-	}
+        if ( minor_version >= 2 )
+        {
+          rc = file.ReadUuid( m_font_id );
+          if (!rc) break;
+        }
+        //if ( minor_version >= 3 )
+        //{
+        //  rc = file.ReadInt( &i);
+        //  if (!rc) break;
+        //  SetUnderlined(i?true:false);
+        //}
       }
 
       break;
@@ -248,12 +259,12 @@ bool ON_Font::IsSymbolFontFaceName( const wchar_t* s)
       int i;
       for ( i = 0; i < LF_FACESIZE && s[i]; i++ )
       {
-	logfont.lfFaceName[i] = s[i];
+        logfont.lfFaceName[i] = s[i];
       }
       logfont.lfCharSet = ON_Font::symbol_charset;
       if( 7 == ::EnumFontFamiliesEx( hdc, &logfont, (FONTENUMPROC)ON__IsSymbolFontFaceNameHelper, 0, 0))
       {
-	rc = true;
+        rc = true;
       }    
       ::ReleaseDC( NULL, hdc);
     }
@@ -286,8 +297,8 @@ bool ON_Font::SetFontFaceName( const wchar_t* s )
   }
 
   m_logfont.lfCharSet = ON_Font::IsSymbolFontFaceName( s)
-		      ? ON_Font::symbol_charset
-		      : ON_Font::default_charset;
+                      ? ((unsigned char)ON_Font::symbol_charset)
+                      : ((unsigned char)ON_Font::default_charset);
 #endif
 
   m_I_height = 0;
@@ -369,6 +380,12 @@ bool ON_Font::IsItalic() const
 
 void ON_Font::SetIsItalic( bool b)
 {
+  SetItalic( b);
+}
+
+
+void ON_Font::SetItalic( bool b)
+{
   if ( m_font_italic != b )
   {
     m_font_italic = b?true:false;
@@ -389,6 +406,24 @@ bool ON_Font::IsBold() const
 void ON_Font::SetBold( bool bBold )
 {
   SetFontWeight( bBold ? bold_weight : normal_weight);
+}
+
+
+bool ON_Font::IsUnderlined() const
+{
+  return m_font_underlined;
+}
+
+
+void ON_Font::SetUnderlined( bool b)
+{
+  if ( m_font_underlined != b )
+  {
+    m_font_underlined = b?true:false;
+#if defined(ON_OS_WINDOWS_GDI)
+    m_logfont.lfUnderline = m_font_underlined;
+#endif
+  }
 }
 
 
@@ -417,51 +452,51 @@ int ON_Font::HeightOfI() const
       HDC hdc = ::GetDC( NULL);
       if (hdc)
       {
-	LOGFONT logfont = m_logfont;
-	logfont.lfHeight = normal_font_height;
-	HFONT font = ::CreateFontIndirect( &logfont);
-	if ( font )
-	{
-	  wchar_t str[2];
-	  str[0] = ON_Font::m_metrics_char;
-	  str[1] = 0;
-	  HFONT oldfont = (HFONT)::SelectObject( hdc, font);
-	  ::SetBkMode( hdc, TRANSPARENT);
-	  ::BeginPath(hdc);
-	  ::ExtTextOut( hdc, 0, 0, 0, NULL, str, 1, NULL);
-	  ::EndPath( hdc);
-	  int numPoints = ::GetPath( hdc, NULL, NULL, 0);
+        LOGFONT logfont = m_logfont;
+        logfont.lfHeight = normal_font_height;
+        HFONT font = ::CreateFontIndirect( &logfont);
+        if ( font )
+        {
+          wchar_t str[2];
+          str[0] = ON_Font::m_metrics_char;
+          str[1] = 0;
+          HFONT oldfont = (HFONT)::SelectObject( hdc, font);
+          ::SetBkMode( hdc, TRANSPARENT);
+          ::BeginPath(hdc);
+          ::ExtTextOut( hdc, 0, 0, 0, NULL, str, 1, NULL);
+          ::EndPath( hdc);
+          int numPoints = ::GetPath( hdc, NULL, NULL, 0);
 
-	  if( numPoints > 2)
-	  {
-	    // Allocate room for the points & point types
-	    LPPOINT pPoints = (LPPOINT)onmalloc( numPoints * sizeof(*pPoints) );
-	    LPBYTE pTypes = (LPBYTE)onmalloc( numPoints * sizeof(*pTypes) );
-	    if ( pTypes && pPoints)
-	    {
-	      // Get the points and types from the current path
-	      numPoints = ::GetPath( hdc, pPoints, pTypes, numPoints);
-	      if( numPoints > 2)
-	      {
-		int ymin = pPoints[0].y;
-		int ymax = ymin;
-		int k;
-		for( k = 1; k < numPoints; k++)
-		{
-		  if( pPoints[k].y < ymin)
-		    ymin = pPoints[k].y;
-		  else if( pPoints[k].y > ymax)
-		    ymax = pPoints[k].y;
-		}
-		I_height = ymax - ymin + 1;
-	      }
-	    }
-	    onfree( pPoints);
-	    onfree( pTypes);
-	  }
-	  ::SelectObject( hdc, oldfont);
-	  ::DeleteObject( font);
-	}
+          if( numPoints > 2)
+          {
+            // Allocate room for the points & point types
+            LPPOINT pPoints = (LPPOINT)onmalloc( numPoints * sizeof(*pPoints) );
+            LPBYTE pTypes = (LPBYTE)onmalloc( numPoints * sizeof(*pTypes) );
+            if ( pTypes && pPoints)
+            {
+              // Get the points and types from the current path
+              numPoints = ::GetPath( hdc, pPoints, pTypes, numPoints);
+              if( numPoints > 2)
+              {
+                int ymin = pPoints[0].y;
+                int ymax = ymin;
+                int k;
+                for( k = 1; k < numPoints; k++)
+                {
+                  if( pPoints[k].y < ymin)
+                    ymin = pPoints[k].y;
+                  else if( pPoints[k].y > ymax)
+                    ymax = pPoints[k].y;
+                }
+                I_height = ymax - ymin + 1;
+              }
+            }
+            onfree( pPoints);
+            onfree( pTypes);
+          }
+          ::SelectObject( hdc, oldfont);
+          ::DeleteObject( font);
+        }
       }
       ::ReleaseDC( NULL, hdc);
     }
@@ -527,6 +562,29 @@ ON_Font& ON_Font::operator=( const LOGFONT& logfont )
     SetLogFont(logfont);
   }
   return *this;
+}
+
+bool ON_Font::CompareFontCharacteristics( ON_Font& other_font, bool bCompareName) const
+{
+  if( bCompareName && m_font_name.CompareNoCase( other_font.m_font_name))
+    return false;
+
+  if( m_font_weight != other_font.m_font_weight)
+    return false;
+  
+  if( m_font_italic != other_font.m_font_italic)
+    return false;
+  
+  if( m_font_underlined != other_font.m_font_underlined)
+    return false;
+  
+  if( m_linefeed_ratio != other_font.m_linefeed_ratio)
+    return false;
+  
+  if( _wcsicmp( m_facename, other_font.m_facename))
+    return false;
+
+  return true;
 }
 
 

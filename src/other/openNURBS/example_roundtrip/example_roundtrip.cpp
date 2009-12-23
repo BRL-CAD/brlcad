@@ -1,4 +1,5 @@
 #include "../opennurbs.h"
+#include "../opennurbs_staticlib_linking_pragmas.h"
 
 int main( int argc, const char *argv[] )
 {
@@ -30,20 +31,20 @@ int main( int argc, const char *argv[] )
 
     // check for -out or /out option
     if ( ( 0 == strncmp(arg,"-out:",5) || 0 == strncmp(arg,"/out:",5) ) 
-	 && arg[5] )
+         && arg[5] )
     {
       // change destination of dump file
       const char* sDumpFilename = arg+5;
       FILE* text_fp = ON::OpenFile(sDumpFilename,"w");
       if ( text_fp )
       {
-	if ( dump_fp )
-	{
-	  delete dump;
-	  ON::CloseFile(dump_fp);
-	}
-	dump_fp = text_fp;
-	dump = new ON_TextLog(dump_fp);
+        if ( dump_fp )
+        {
+          delete dump;
+          ON::CloseFile(dump_fp);
+        }
+        dump_fp = text_fp;
+        dump = new ON_TextLog(dump_fp);
       }
       continue;
     }
@@ -85,11 +86,11 @@ int main( int argc, const char *argv[] )
       model.Polish();
       if ( model.IsValid() )
       {
-	dump->Print("Model is valid after calling Polish().\n");
+        dump->Print("Model is valid after calling Polish().\n");
       }
       else
       {
-	dump->Print("Model is not valid.\n");
+        dump->Print("Model is not valid.\n");
       }
     }
 
@@ -105,7 +106,9 @@ int main( int argc, const char *argv[] )
     */
 
     // create a text dump of the model
-    int version = 4;
+    int version = 4; // File can be read by Rhino 4 and Rhino 5
+    //int version = 5; // File can be read by Rhino 5
+
     ON_String outfile = sFileName;
     int len = outfile.Length() - 4;
     outfile.SetLength(len);
@@ -117,28 +120,28 @@ int main( int argc, const char *argv[] )
       ONX_Model model2;
       if ( model2.Read( outfile, dump ) )
       {
-	dump->Print("model2.Read(%s) succeeded.\n",outfile.Array());
-	if ( model2.IsValid(dump) )
-	{
-	  dump->Print("Model2 is valid.\n");
-	}
-	else
-	{
-	  dump->Print("Model2 is not valid.\n");
-	}
-	/*
-	if ( oi >=0 && oi < model2.m_object_table.Count() )
-	{
-	  dump->Print("m_object_table[%d].m_object:\n",oi);
-	  dump->PushIndent();
-	  model2.m_object_table[oi].m_object->Dump(*dump);
-	  dump->PopIndent();
-	}
-	*/
+        dump->Print("model2.Read(%s) succeeded.\n",outfile.Array());
+        if ( model2.IsValid(dump) )
+        {
+          dump->Print("Model2 is valid.\n");
+        }
+        else
+        {
+          dump->Print("Model2 is not valid.\n");
+        }
+        /*
+        if ( oi >=0 && oi < model2.m_object_table.Count() )
+        {
+          dump->Print("m_object_table[%d].m_object:\n",oi);
+          dump->PushIndent();
+          model2.m_object_table[oi].m_object->Dump(*dump);
+          dump->PopIndent();
+        }
+        */
       }
       else
       {
-	dump->Print("model2.Read(%s) failed.\n",outfile.Array());
+        dump->Print("model2.Read(%s) failed.\n",outfile.Array());
       }
     }
     else

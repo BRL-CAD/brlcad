@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -16,7 +15,18 @@
 
 #include "opennurbs.h"
 
+
+
 #if defined(ON_DLL_EXPORTS)
+
+#if defined(ON_COMPILER_MSC)
+// Force this module to be inited first so the important globals
+// are initialized before there is any possibility they are used.
+#pragma warning( push )
+#pragma warning( disable : 4073 )
+#pragma init_seg(lib)
+#pragma warning( pop )
+#endif
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -38,7 +48,28 @@
 void* ON_Object::operator new(size_t sz)
 {
   // ON_Object new
-  return onmalloc(sz);
+
+  // The else "sz?sz:1" is there because section 3.7.3.1, 
+  // paragraph 2 of the C++ "standard" says something along
+  // the lines of:
+  //
+  //   The function shall return the address of the start of a 
+  //   block of storage whose length in bytes shall be at least
+  //   as large as the requested size. There are no constraints
+  //   on the contents of the allocated storage on return from 
+  //   the allocation function. The order, contiguity, and initial
+  //   value of storage allocated by successive calls to an 
+  //   allocation function is unspecified. The pointer returned 
+  //   shall be suitably aligned so that it can be converted to a 
+  //   pointer of any complete object type and then used to
+  //   access the object or array in the storage allocated (until
+  //   the storage is explicitly deallocated by a call to a 
+  //   corresponding deallocation function). If the size of the 
+  //   space requested is zero, the value returned shall not be a
+  //   null pointer value. The results of dereferencing a pointer
+  //   returned as a request for zero size are undefined.
+  
+  return onmalloc(sz?sz:1);
 }
 
 void ON_Object::operator delete(void* p)
@@ -50,7 +81,28 @@ void ON_Object::operator delete(void* p)
 void* ON_Object::operator new[] (size_t sz)
 {
   // ON_Object array new
-  return onmalloc(sz);
+
+  // The else "sz?sz:1" is there because section 3.7.3.1, 
+  // paragraph 2 of the C++ "standard" says something along
+  // the lines of:
+  //
+  //   The function shall return the address of the start of a 
+  //   block of storage whose length in bytes shall be at least
+  //   as large as the requested size. There are no constraints
+  //   on the contents of the allocated storage on return from 
+  //   the allocation function. The order, contiguity, and initial
+  //   value of storage allocated by successive calls to an 
+  //   allocation function is unspecified. The pointer returned 
+  //   shall be suitably aligned so that it can be converted to a 
+  //   pointer of any complete object type and then used to
+  //   access the object or array in the storage allocated (until
+  //   the storage is explicitly deallocated by a call to a 
+  //   corresponding deallocation function). If the size of the 
+  //   space requested is zero, the value returned shall not be a
+  //   null pointer value. The results of dereferencing a pointer
+  //   returned as a request for zero size are undefined.
+  
+  return onmalloc(sz?sz:1);
 }
 
 void ON_Object::operator delete[] (void* p)
@@ -87,6 +139,15 @@ const ON_UUID ON_rhino3_id = { 0xA7BBFF3C, 0xFF19, 0x4883, { 0x85, 0x8D, 0xB1, 0
 // {E2143A46-BB01-4b0c-AC4D-C34B5652FAE0}
 const ON_UUID ON_rhino4_id = { 0xe2143a46, 0xbb01, 0x4b0c, { 0xac, 0x4d, 0xc3, 0x4b, 0x56, 0x52, 0xfa, 0xe0 } };
 
+// {60515F84-8F7F-41da-801D-1C87E32F88F5}
+const ON_UUID ON_rhino5_id = { 0x60515f84, 0x8f7f, 0x41da, { 0x80, 0x1d, 0x1c, 0x87, 0xe3, 0x2f, 0x88, 0xf5 } };
+
+// ON_rhino_id is always set to the value for the current version
+// of Rhino.  ON_rhino_id is the id that should be used as the
+// userdata application id for userdata class definitions that are
+// in the core Rhino executable.
+const ON_UUID ON_rhino_id = ON_rhino5_id;
+
 // Used to identifiy userdata read from V2 files
 // which were written before userdata had application ids.
 // {132F2340-DB90-494e-BF02-C36F0EA3197C}
@@ -97,7 +158,7 @@ const ON_UUID ON_v2_userdata_id = { 0x132f2340, 0xdb90, 0x494e, { 0xbf, 0x2, 0xc
 // {4307B91D-6A9D-478e-B0A2-7C577997C663}
 const ON_UUID ON_v3_userdata_id = { 0x4307b91d, 0x6a9d, 0x478e, { 0xb0, 0xa2, 0x7c, 0x57, 0x79, 0x97, 0xc6, 0x63 } };
 
-// Used to identifiy userdata read from V3 files
+// Used to identifiy userdata read from V4 files
 // which were written before opennurbs 200609190
 // required application ids.
 // {F73F2953-A244-44c2-B7C2-7E27390D1196}
@@ -106,12 +167,436 @@ const ON_UUID ON_v4_userdata_id = { 0xf73f2953, 0xa244, 0x44c2, { 0xb7, 0xc2, 0x
 // {17B3ECDA-17BA-4e45-9E67-A2B8D9BE520D}
 const ON_UUID ON_opennurbs4_id = { 0x17b3ecda, 0x17ba, 0x4e45, { 0x9e, 0x67, 0xa2, 0xb8, 0xd9, 0xbe, 0x52, 0xd } };
 
+// {C8CDA597-D957-4625-A4B3-A0B510FC30D4}
+const ON_UUID ON_opennurbs5_id = { 0xc8cda597, 0xd957, 0x4625, { 0xa4, 0xb3, 0xa0, 0xb5, 0x10, 0xfc, 0x30, 0xd4 } };
+
+// ON_opennurbs_id is always set to the value for the current version
+// of opennurbs.  ON_opennurbs_id is the id that should be used as
+// the userdata application id for userdata classes definitions that
+// are in the opennurbs library.
+const ON_UUID ON_opennurbs_id = ON_opennurbs5_id;
+
+/*
+IEEE 754
+
+Storage
+           size      sign     exponent         fraction
+  float    4 bytes   bit 31    8 bits (30-23)  23 bits (22-0)
+  double   8 bytes   bit 63   11 bits (62-52)  52 bits (51-0)
+
+sign bit = 1 indicates negative
+sign bit = 0 indicates positive
+
+float  absolute value = 2^(e-127)  * 1+(f/2^23)
+  e = value of the 8 bit number in the exponent field
+  f = value of the 23 bit number in the fraction field
+
+double absolute value = 2^(e-1023) * 1+(f/2^51)
+  e = value of the 11 bit number in the exponent field
+  f = value of the 51 bit number in the fraction field
+
+Exceptions:
+  If all exponent bits are all 0 (e = 0) and the fraction bits
+  are all zero, then the value of the number is zero.
+
+  If all exponent bits are all 0 (e = 0) and at least one fraction
+  bits is not zero, then the representaion is "denormalized".
+  In this case, the float absolute value is 0.f*2^-126 and the
+  double absolute value is 0.f*2^-1022.
+
+  If all exponent bits are 1 (float e = 11111111binary = 255decimal
+  or double e = 11111111111 binary = 2047 decimal) and the fraction
+  bits are all zero, the number is infinity.  The sign bit
+  determines the sign of infinity.
+  
+  If all exponent bits are 1 and at least one fraction bit is
+  not zero, the number is a "NaN" (not a number).  If the most
+  significant fraction bit is 1, the number is a quiet NaN or
+  "QNaN".  If the most significan fraction bit is 0, the number
+  is a signalling NaN or "SNaN".
+  
+  Some authors (SH)   QNaNs are used to indicate
+  indeterminant operations, like sqrt(-1.0).  SNaNs are used
+  to indicate invalid operations.
+
+  SH - http://steve.hollasch.net/cgindex/coding/ieeefloat.html
+  Intel - 
+*/
+static double ON__dblinithelper(int i)
+{
+  // called twice - performance is not important
+  union 
+  {
+    double x;
+    unsigned char b[8];
+  } u;
+  unsigned int i7, i6;
+
+  // different bytes on
+  u.x = 2.0; // sign = 0; fraction = 0; exponent = 100 0000 0000 binary
+
+  if ( 0x40 == u.b[7] && 0 == u.b[0]
+       && 0 == u.b[1] && 0 == u.b[2] && 0 == u.b[3]
+       && 0 == u.b[4] && 0 == u.b[5] && 0 == u.b[6] 
+     )
+  {
+    // little endian doubles
+    i7 = 7; i6 = 6;
+  }
+  else if ( 0x40 == u.b[0]  && 0 == u.b[7]
+            && 0 == u.b[1] && 0 == u.b[2] && 0 == u.b[3]
+            && 0 == u.b[4] && 0 == u.b[5] && 0 == u.b[6] 
+          )
+  {
+    // big endian doubles
+    i7 = 0; i6 = 1;
+  }
+  else
+  {
+    // this sitation is not handled by this algorithm
+    // and that is a bug in the algorithm.
+    ON_ERROR("CPU has unexpected bit pattern in double 2.0.");
+    i7 = 0;
+    i6 = 0;
+    i = 99;
+  }
+
+  if      ( 1 == i ) // positive quiet NaN
+  {
+    // all exponent bits = 1
+    // fraction bits = 100...0
+    u.b[i7]   = 0x7F; // 0111 1111
+    u.b[i6]   = 0xF8; // 1111 1000
+    u.b[5]    = 0;    // 0...
+    u.b[4]    = 0;
+    u.b[3]    = 0;
+    u.b[2]    = 0;
+    u.b[7-i6] = 0;
+    u.b[7-i7] = 0;
+  }
+  else if ( 2 == i ) // positive infinity
+  {
+    // all exponent bits = 1
+    // all fraction bits = 0
+    u.b[i7]   = 0x7F; // 0111 1111
+    u.b[i6]   = 0xF0; // 1111 0000
+    u.b[5]    = 0;    // 0...
+    u.b[4]    = 0;
+    u.b[3]    = 0;
+    u.b[2]    = 0;
+    u.b[7-i6] = 0;
+    u.b[7-i7] = 0;
+  }
+  else
+  {
+    // invalid input 
+    u.b[0] = 0xFF;
+    u.b[1] = 0xFF;
+    u.b[2] = 0xFF;
+    u.b[3] = 0xFF;
+    u.b[4] = 0xFF;
+    u.b[5] = 0xFF;
+    u.b[6] = 0xFF;
+    u.b[7] = 0xFF;
+  }
+
+  return u.x;
+}
+
+
+static float ON__fltinithelper(int i)
+{
+  // called twice - performance is not important
+  union 
+  {
+    float x;
+    unsigned char b[4];
+  } u;
+  unsigned int i3, i2;
+
+  // different bytes on
+  u.x = 2.0f; // sign = 0; mantissa = 0; exponent = 1000 0000
+  if ( 0x40 == u.b[3] && 0 == u.b[0] && 0 == u.b[1] && 0 == u.b[2] )
+  {
+    // little endian doubles
+    i3 = 3; i2 = 2;
+  }
+  else if ( 0x40 == u.b[0] && 0 == u.b[3] && 0 == u.b[1] && 0 == u.b[2] )
+  {
+    // big endian doubles
+    i3 = 0; i2 = 1;
+  }
+  else
+  {
+    // this sitation is not handled by this algorithm
+    // and that is a bug in the algorithm.
+    ON_ERROR("CPU has unexpected bit pattern in float 2.0f.");
+    i3 = 0;
+    i2 = 0;
+    i = 99;
+  }
+
+  if      ( 1 == i ) // positive quiet NaN
+  {
+    // all exponent bits = 1
+    // fraction bits = 100...0
+    u.b[i3]   = 0x7F; // 0111 1111
+    u.b[i2]   = 0xC0; // 1100 0000
+    u.b[3-i2] = 0;    // 0...
+    u.b[3-i3] = 0;
+  }
+  else if ( 2 == i ) // positive infinity
+  {
+    // all exponent bits = 1
+    // all fraction bits = 0
+    u.b[i3]   = 0x7F; // 0111 1111
+    u.b[i2]   = 0x80; // 1000 0000
+    u.b[3-i2] = 0;    // 0...
+    u.b[3-i3] = 0;
+  }
+  else
+  {
+    // invalid input 
+    u.b[0] = 0xFF;
+    u.b[1] = 0xFF;
+    u.b[2] = 0xFF;
+    u.b[3] = 0xFF;
+  }
+
+  return u.x;
+}
+
+const double ON_DBL_QNAN =  ON__dblinithelper(1);
+const double ON_DBL_PINF =  ON__dblinithelper(2);
+const double ON_DBL_NINF = -ON__dblinithelper(2);
+
+const float  ON_FLT_QNAN =  ON__fltinithelper(1);
+const float  ON_FLT_PINF =  ON__fltinithelper(2);
+const float  ON_FLT_NINF = -ON__fltinithelper(2);
+
+void ON_DBL_SNAN( double* x)
+{
+  union 
+  {
+    double x;
+    unsigned char b[8];
+  } u;
+
+#if   defined(ON_LITTLE_ENDIAN)
+#define i7 7
+#define i6 6
+#elif defined(ON_BIG_ENDIAN)
+#define i7 0
+#define i6 1
+#else
+  unsigned int i7, i6;
+
+  u.x = 2.0; // sign = 0; fraction = 0; exponent = 100 0000 0000 binary
+
+  if ( 0x40 == u.b[7] && 0 == u.b[0]
+       && 0 == u.b[1] && 0 == u.b[2] && 0 == u.b[3]
+       && 0 == u.b[4] && 0 == u.b[5] && 0 == u.b[6] 
+     )
+  {
+    // little endian doubles
+    i7 = 7; i6 = 6;
+  }
+  else if ( 0x40 == u.b[0]  && 0 == u.b[7]
+            && 0 == u.b[1] && 0 == u.b[2] && 0 == u.b[3]
+            && 0 == u.b[4] && 0 == u.b[5] && 0 == u.b[6] 
+          )
+  {
+    // big endian doubles
+    i7 = 0; i6 = 1;
+  }
+  else
+  {
+    // this sitation is not handled by this algorithm
+    // and that is a bug in the algorithm.
+    ON_ERROR("CPU has unexpected bit pattern in double 2.0.");
+    i7 = 0;
+    i6 = 0;
+    memset(&x,0xFF,sizeof(*x));
+    return;
+  }
+#endif
+
+  // all exponent bits = 1
+  // fraction bits = 010...0
+  u.b[i7]   = 0x7F; // 0111 1111
+  u.b[i6]   = 0xF4; // 1111 0100
+  u.b[5]    = 0;    // 0...
+  u.b[4]    = 0;
+  u.b[3]    = 0;
+  u.b[2]    = 0;
+  u.b[7-i6] = 0;
+  u.b[7-i7] = 0;
+
+#if defined(i7)
+#undef i7
+#undef i6
+#endif
+
+
+  // must use memcpy().  On Intel FPU, assignment using x = u.x 
+  // will set x to qnan and invalid op exception occures.
+  memcpy(x,&u.x,sizeof(*x));
+}
+
+void ON_FLT_SNAN( float* x)
+{
+  union 
+  {
+    float x;
+    unsigned char b[4];
+  } u;
+
+#if   defined(ON_LITTLE_ENDIAN)
+#define i3 3
+#define i2 2
+#elif defined(ON_BIG_ENDIAN)
+#define i3 0
+#define i2 1
+#else
+  unsigned int i3, i2;
+
+  u.x = 2.0f; // sign = 0; mantissa = 0; exponent = 1000 0000
+
+  if ( 0x40 == u.b[3] && 0 == u.b[0] && 0 == u.b[1] && 0 == u.b[2] )
+  {
+    // little endian doubles
+    i3 = 3; i2 = 2;
+  }
+  else if ( 0x40 == u.b[0] && 0 == u.b[3] && 0 == u.b[1] && 0 == u.b[2] )
+  {
+    // big endian doubles
+    i3 = 0; i2 = 1;
+  }
+  else
+  {
+    // this sitation is not handled by this algorithm
+    // and that is a bug in the algorithm.
+    ON_ERROR("CPU has unexpected bit pattern in float 2.0f.");
+    memset(&x,0xFF,sizeof(*x));
+    return;
+  }
+#endif
+
+  // all exponent bits = 1
+  // fraction bits = 011...1
+  u.b[i3]   = 0x7F; // 0111 1111
+  u.b[i2]   = 0xA0; // 1010 0000
+  u.b[3-i2] = 0;    // 0...
+  u.b[3-i3] = 0;
+
+#if defined(i3)
+#undef i3
+#undef i2
+#endif
+
+  // must use memcpy().  On Intel FPU, assignment using x = u.x 
+  // will set x to qnan and invalid op exception occures.
+  memcpy(x,&u.x,sizeof(*x));
+}
+
 void ON::End()
 {
 }
 
+
+#if 8 == ON_SIZEOF_POINTER
+
+#if !defined(ON_64BIT_POINTER)
+#error 8 = ON_SIZEOF_POINTER and ON_64BIT_POINTER is not defined
+#endif
+#if defined(ON_32BIT_POINTER)
+#error 8 = ON_SIZEOF_POINTER and ON_32BIT_POINTER is defined
+#error
+#endif
+
+#elif 4 == ON_SIZEOF_POINTER
+
+#if !defined(ON_32BIT_POINTER)
+#error 4 = ON_SIZEOF_POINTER and ON_32BIT_POINTER is not defined
+#endif
+#if defined(ON_64BIT_POINTER)
+#error 4 = ON_SIZEOF_POINTER and ON_64BIT_POINTER is defined
+#endif
+
+#else
+
+#error OpenNURBS assumes sizeof(void*) is 4 or 8 bytes
+
+#endif
+
+static void ValidateSizesHelper()
+{
+  static bool bSizedValidated = false;
+  if ( !bSizedValidated )
+  {
+    // Validate int and pointer sizes
+    bSizedValidated = true;
+
+    // These conditional expressions are all constant and should
+    // all be false.  If any are true, then portions of OpenNURBS
+    // code will fail and probably crash.
+
+#if defined(ON_COMPILER_MSC)
+#pragma warning( push )
+// Disable warning C4127: conditional expression is constant
+#pragma warning( disable : 4127 )
+#endif
+
+    if ( ON_SIZEOF_POINTER != sizeof(void*) )
+    {
+      ON_ERROR("ON_SIZEOF_POINTER is not correctly defined.");
+    }
+    if ( ON_SIZEOF_POINTER != sizeof(ON__INT_PTR) )
+    {
+      ON_ERROR("ON_INT_PTR is not correctly defined.");
+    }
+    if ( 1 !=  sizeof(char) )
+    {
+      ON_ERROR("OpenNURBS assumes sizeof(char) = 1.");
+    }
+    if ( 2 !=  sizeof(ON__INT16) )
+    {
+      ON_ERROR("ON__INT16 is not correctly defined.");
+    }
+    if ( 4 !=  sizeof(ON__INT32) )
+    {
+      ON_ERROR("ON__INT32 is not correctly defined.");
+    }
+    if ( 8 !=  sizeof(ON__INT64) )
+    {
+      ON_ERROR("ON__INT32 is not correctly defined.");
+    }
+    if ( sizeof(int) > sizeof(void*) )
+    {
+      ON_ERROR("OpenNURBS assumes sizeof(int) <= sizeof(void*).");
+    }
+    if ( 4 !=  sizeof(float) )
+    {
+      ON_ERROR("OpenNURBS assumes sizeof(float) = 4.");
+    }
+    if ( 8 !=  sizeof(double) )
+    {
+      ON_ERROR("OpenNURBS assumes sizeof(double) = 8.");
+    }
+
+#if defined(ON_COMPILER_MSC)
+#pragma warning( pop )
+#endif
+  }
+}
+
 void ON::Begin()
 {
+  ValidateSizesHelper();
+
+  ON_MemoryManagerBegin();
+
+
 #if !defined(ON_DLL_EXPORTS)
   // Some statically linked library optimization discard
   // object code that is not explicitly referenced.
@@ -182,7 +667,13 @@ void ON::Begin()
 
 
 ON_ClassId* ON_ClassId::m_p0 = 0; // static pointer to first id in list
+ON_ClassId* ON_ClassId::m_p1 = 0; // static pointer to last id in list
 int ON_ClassId::m_mark0 = 0;
+
+int ON_ClassId::CurrentMark()
+{
+  return m_mark0;
+}
 
 int ON_ClassId::IncrementMark()
 {
@@ -202,23 +693,50 @@ int ON_ClassId::Purge( int mark_value )
     {
       next = p->m_pNext;
       if ( (0x7FFFFFFF & p->m_mark) == mark_value ) {
-	purge_count++;
-	if ( prev )
-	  prev->m_pNext = next;
-	else
-	  m_p0 = next;
-	p->m_pNext = 0;
+        purge_count++;
+        if ( prev )
+          prev->m_pNext = next;
+        else
+          m_p0 = next;
+        p->m_pNext = 0;
       }
       else
-	prev = p;
+        prev = p;
     }
   }
   return purge_count;
 }
 
+const ON_ClassId* ON_ClassId::LastClassId()
+{
+  return m_p1;
+}
+
+bool ON_ClassId::PurgeAfter(const ON_ClassId* pClassId)
+{
+  // If you crash in on the p=p->m_pNext iterator in
+  // the for() loop, it is because somebody incorrectly
+  // unloaded a dll that contains an ON_OBJECT_IMPLEMENT 
+  // macro.
+  for (ON_ClassId* p = m_p0; p; p = p->m_pNext)
+  {
+    if (pClassId == p)
+    {
+      // All class ids after pClassId are assumed to
+      // be bad.
+      p->m_pNext = 0;
+      m_p1 = p;
+      return true;
+    }
+  }
+
+  ON_ERROR("ON_ClassId::PurgeAfter pClassId is not active");
+  return false;
+}
+
 //////////////////////////////////////////////////////////////////////////////
 
-static BOOL g_bDisableDemotion = FALSE;
+static ON_BOOL32 g_bDisableDemotion = false;
 
 static void IntToString( int i, char s[7] )
 {
@@ -254,41 +772,41 @@ static void IntToString( int i, char s[7] )
 }
 
 ON_ClassId::ON_ClassId( const char* sClassName, 
-			const char* sBaseClassName, 
-			ON_Object* (*create)(),
-			bool (*copy)( const ON_Object*, ON_Object* ),
-			const char* sUUID // UUID in registry format from guidgen
-			) 
-			: m_pNext(0),
-			  m_pBaseClassId(0),
-			  m_create(create),
-			  m_mark(m_mark0),
-			  m_class_id_version(1),
-			  m_copy(copy),
-			  m_f2(0),
-			  m_f3(0),
-			  m_f4(0),
-			  m_f5(0),
-			  m_f6(0),
-			  m_f7(0),
-			  m_f8(0)
+                        const char* sBaseClassName, 
+                        ON_Object* (*create)(),
+                        bool (*copy)( const ON_Object*, ON_Object* ),
+                        const char* sUUID // UUID in registry format from guidgen
+                        ) 
+                        : m_pNext(0),
+                          m_pBaseClassId(0),
+                          m_create(create),
+                          m_mark(m_mark0),
+                          m_class_id_version(1),
+                          m_copy(copy),
+                          m_f2(0),
+                          m_f3(0),
+                          m_f4(0),
+                          m_f5(0),
+                          m_f6(0),
+                          m_f7(0),
+                          m_f8(0)
 {
   // code compiled on or after opennurbs 200703060 calls this constructor
   ConstructorHelper(sClassName,sBaseClassName,sUUID);
   m_mark |= 0x80000000; // This bit of m_mark is a flag that indicates 
-			// the new constructor was called.
+                        // the new constructor was called.
 }
 
 
 ON_ClassId::ON_ClassId( const char* sClassName, 
-			const char* sBaseClassName, 
-			ON_Object* (*create)(),
-			const char* sUUID // UUID in registry format from guidgen
-			) 
-			: m_pNext(0),
-			  m_pBaseClassId(0),
-			  m_create(create),
-			  m_mark(m_mark0)
+                        const char* sBaseClassName, 
+                        ON_Object* (*create)(),
+                        const char* sUUID // UUID in registry format from guidgen
+                        ) 
+                        : m_pNext(0),
+                          m_pBaseClassId(0),
+                          m_create(create),
+                          m_mark(m_mark0)
 {
   // Code COMPILED before opennurbs 200703060 calls this constructor.
   // DO NOT INITIALIZE m_class_id_version or any ON_ClassId fields
@@ -298,9 +816,9 @@ ON_ClassId::ON_ClassId( const char* sClassName,
 }
 
 void ON_ClassId::ConstructorHelper( const char* sClassName, 
-			const char* sBaseClassName, 
-			const char* sUUID // UUID in registry format from guidgen
-			) 
+                        const char* sBaseClassName, 
+                        const char* sUUID // UUID in registry format from guidgen
+                        ) 
 {
   // Do not initialize "m_class_id_version" or any fields
   // after it in this helper.  See comments in the constructors
@@ -364,14 +882,14 @@ void ON_ClassId::ConstructorHelper( const char* sClassName,
     }
   }
 
-  g_bDisableDemotion = TRUE;
+  g_bDisableDemotion = true;
   if ( ClassId( m_uuid ) ) 
   {
-    g_bDisableDemotion = FALSE;
+    g_bDisableDemotion = false;
     ON_ERROR("ON_ClassId::ON_ClassId() - class uuid already in use.");
     return;
   }
-  g_bDisableDemotion = FALSE;
+  g_bDisableDemotion = false;
 
   if ( ON_UuidIsNil( m_uuid ) ) {
     ON_ERROR("ON_ClassId::ON_ClassId() - class uuid is nill.");
@@ -382,25 +900,46 @@ void ON_ClassId::ConstructorHelper( const char* sClassName,
   // members got initialized first
   if ( m_sClassName[0] ) 
   {
-    this->m_pNext = m_p0;
-    m_p0 = this;
-
-    ON_ClassId* p = this->m_pNext;
-    while ( p ) {
+    for ( ON_ClassId* p = m_p0; p; p = p->m_pNext )
+    {
       if ( !p->m_pBaseClassId && p->m_sBaseClassName ) {
-	if ( !strcmp( m_sClassName, p->m_sBaseClassName ) )
-	  p->m_pBaseClassId = this;
+        if ( !strcmp( m_sClassName, p->m_sBaseClassName ) )
+          p->m_pBaseClassId = this;
       }
-      p = p->m_pNext;
     }
   }
+
+  // Append to the list of class ids
+  if ( m_p0 && m_p1 )
+  {
+    m_p1->m_pNext = this;
+    m_p1 = this;
+  }
+  else
+  {
+    // first class id
+    m_p0 = this;
+  }
+  m_p1 = this;
+  m_p1->m_pNext = 0;
 }
 
 ON_ClassId::~ON_ClassId()
 {}
 
+static ON_UUID s_most_recent_class_id_create_uuid;
+
+ON_UUID ON_GetMostRecentClassIdCreateUuid()
+{
+  return s_most_recent_class_id_create_uuid;
+}
+
 ON_Object* ON_ClassId::Create() const
 {
+  // Save the uuid so that Rhino's .NET SDK
+  // can create approprate class.  The C++
+  // opennurbs toolkit never uses this value.
+  s_most_recent_class_id_create_uuid = m_uuid;
   return m_create ? m_create() : 0;
 }
 
@@ -419,9 +958,9 @@ const ON_ClassId* ON_ClassId::ClassId( const char* sClassName )
     s1 = p->m_sClassName;
     if ( s0 && s1 && *s0 ) {
       while ( *s0 && *s0 == *s1 )
-	{s0++; s1++;}
+        {s0++; s1++;}
       if ( !(*s0) && !(*s1) )
-	break;
+        break;
     }
     else {
       break;
@@ -538,7 +1077,7 @@ int ON__ClassIdDumpNode::CompareClassUuid( const class ON__ClassIdDumpNode& othe
       rc = ON_UuidCompare(a->Uuid(),b->Uuid());
       if ( 0 == rc )
       {
-	rc = CompareClassName(other);
+        rc = CompareClassName(other);
       }
     }
   }
@@ -564,32 +1103,32 @@ int ON__ClassIdDumpNode::CompareClassName( const class ON__ClassIdDumpNode& othe
       const char* b_name = b->ClassName();
       if ( 0 == a_name )
       {
-	if ( 0 == b_name )
-	{
-	  rc = b->Mark() - a->Mark();
-	  if ( 0 == rc )
-	    rc = ON_UuidCompare(a->Uuid(),b->Uuid());
-	}
-	else
-	  rc = -1;
+        if ( 0 == b_name )
+        {
+          rc = b->Mark() - a->Mark();
+          if ( 0 == rc )
+            rc = ON_UuidCompare(a->Uuid(),b->Uuid());
+        }
+        else
+          rc = -1;
       }
       else if ( 0 == b_name )
       {
-	rc = 1;
+        rc = 1;
       }
       else
       {
-	rc = on_stricmp(a_name,b_name);
-	if ( 0 == rc )
-	{
-	  rc = strcmp(a_name,b_name);
-	  if ( 0 == rc )
-	  {
-	    rc = b->Mark() - a->Mark();
-	    if ( 0 == rc )
-	      rc = ON_UuidCompare(a->Uuid(),b->Uuid());
-	  }
-	}
+        rc = on_stricmp(a_name,b_name);
+        if ( 0 == rc )
+        {
+          rc = strcmp(a_name,b_name);
+          if ( 0 == rc )
+          {
+            rc = b->Mark() - a->Mark();
+            if ( 0 == rc )
+              rc = ON_UuidCompare(a->Uuid(),b->Uuid());
+          }
+        }
       }
     }
   }
@@ -660,14 +1199,14 @@ bool ON__ClassIdDumpNode::Dump( int depth, ON_TextLog& text_log )
       text_log.PushIndent();
       for ( i = 0; i < count; i++ )
       {
-	ON__ClassIdDumpNode* child_node = m_child_nodes[i];
-	if ( 0 == child_node )
-	  rc = false;
-	else
-	{
-	  if ( !child_node->Dump(depth+1,text_log) )
-	    rc = false;
-	}
+        ON__ClassIdDumpNode* child_node = m_child_nodes[i];
+        if ( 0 == child_node )
+          rc = false;
+        else
+        {
+          if ( !child_node->Dump(depth+1,text_log) )
+            rc = false;
+        }
       }
       text_log.PopIndent();
     }
@@ -707,14 +1246,14 @@ void ON_ClassId::Dump( ON_TextLog& dump )
       p = node.m_class_id;
       if ( 0 != p )
       {
-	tmp_node.m_class_id = p->BaseClass();
-	j = nodes.BinarySearch(&tmp_node,ON__ClassIdDumpNode_CompareUuid);
-	if ( j >= 0 && i != j)
-	{
-	  ON__ClassIdDumpNode& base_node = nodes[j];
-	  node.m_parent_node = &base_node;
-	  base_node.m_child_nodes.Append(&node);
-	}
+        tmp_node.m_class_id = p->BaseClass();
+        j = nodes.BinarySearch(&tmp_node,ON__ClassIdDumpNode_CompareUuid);
+        if ( j >= 0 && i != j)
+        {
+          ON__ClassIdDumpNode& base_node = nodes[j];
+          node.m_parent_node = &base_node;
+          base_node.m_child_nodes.Append(&node);
+        }
       }      
     }
 
@@ -728,8 +1267,8 @@ void ON_ClassId::Dump( ON_TextLog& dump )
       rc = nodes[i].Dump(1,dump);
       for ( i = 0; i < count && rc; i++ )
       {
-	if ( nodes[i].m_depth <= 0 )
-	  rc = false;
+        if ( nodes[i].m_depth <= 0 )
+          rc = false;
       }
     }
 
@@ -738,10 +1277,10 @@ void ON_ClassId::Dump( ON_TextLog& dump )
       // should never happen
       for(p = m_p0; p; p = p->m_pNext) 
       {
-	dump.Print("%s::ClassId: ",p->m_sClassName);
-	dump.Print( "mark=%d ",p->m_mark );
-	dump.Print( p->m_uuid );
-	dump.Print("  (%08x)\n",p);
+        dump.Print("%s::ClassId: ",p->m_sClassName);
+        dump.Print( "mark=%d ",p->m_mark );
+        dump.Print( p->m_uuid );
+        dump.Print("  (%08x)\n",p);
       }
     }
   }
@@ -778,16 +1317,16 @@ const ON_ClassId* ON_ClassId::BaseClass() const
   return m_pBaseClassId;
 }
 
-BOOL ON_ClassId::IsDerivedFrom( const ON_ClassId* pBaseClassId ) const
+ON_BOOL32 ON_ClassId::IsDerivedFrom( const ON_ClassId* pBaseClassId ) const
 {
   // determine if this is derived from pBaseClassId
-  BOOL b = FALSE;
+  ON_BOOL32 b = false;
   if ( pBaseClassId ) {
     const ON_ClassId* p = this;
     for(;p;) {
       if ( p == pBaseClassId ) {
-	b = TRUE;
-	break;
+        b = true;
+        break;
       }
       p = p->m_pBaseClassId;
     }
@@ -812,10 +1351,10 @@ bool ON_Object::CopyFrom( const ON_Object* src )
   return (cid && cid->ClassIdVersion() >= 1 && cid->m_copy) ? cid->m_copy(src,this) : false;
 }
 
-ON_Object::ON_Object() : m_userdata_list(0)
+ON_Object::ON_Object() : m_mempool(0), m_userdata_list(0)
 {}
 
-ON_Object::ON_Object(const ON_Object& src) : m_userdata_list(0)
+ON_Object::ON_Object(const ON_Object& src) : m_mempool(0), m_userdata_list(0)
 {
   CopyUserData(src);
 }
@@ -835,6 +1374,20 @@ ON_Object::~ON_Object()
   PurgeUserData();
 }
 
+// DO NOT PUT THIS DECL IN A HEADER FILE.
+// THIS FUNCTION IS USED IN SPECIAL CIRCUMSTANCES
+// AND IS NOT INTENDED TO BE CALLED.
+ON_DECL bool ON__EnableLeakUserData(bool bEnable);
+
+static bool g__bLeakUserData = false;
+
+bool ON__EnableLeakUserData(bool bEnable)
+{
+  bool b = bEnable;
+  g__bLeakUserData = bEnable ? true : false;
+  return b;
+}
+
 void ON_Object::PurgeUserData()
 {
   if ( m_userdata_list ) 
@@ -846,16 +1399,17 @@ void ON_Object::PurgeUserData()
       next = p->m_userdata_next;
       p->m_userdata_owner = 0;
       p->m_userdata_next = 0;
-      delete p;
+      if ( !g__bLeakUserData )
+        delete p;
       p = next;
     }
     m_userdata_list = 0;
   }
 }
 
-BOOL ON_Object::AttachUserData( ON_UserData* p )
+ON_BOOL32 ON_Object::AttachUserData( ON_UserData* p )
 {
-  BOOL rc = FALSE;
+  ON_BOOL32 rc = false;
   if ( p 
        && NULL == p->m_userdata_owner
        && ON_UuidCompare( &ON_nil_uuid, &p->m_userdata_uuid) 
@@ -866,13 +1420,13 @@ BOOL ON_Object::AttachUserData( ON_UserData* p )
       // created empty user data.
       ON_UnknownUserData* uud = ON_UnknownUserData::Cast(p);
       if (uud)
-	rc = uud->IsValid();
+        rc = uud->IsValid();
       if ( !rc ) {
-	ON_ERROR("ON_Object::AttachUserData() - attempt to attach invalid UnknownUserData.");
+        ON_ERROR("ON_Object::AttachUserData() - attempt to attach invalid UnknownUserData.");
       }
     }
     else
-      rc = TRUE;
+      rc = true;
     if (rc) 
     {
       p->m_userdata_owner = this;
@@ -883,9 +1437,9 @@ BOOL ON_Object::AttachUserData( ON_UserData* p )
   return rc;
 }
 
-BOOL ON_Object::DetachUserData( ON_UserData* p )
+ON_BOOL32 ON_Object::DetachUserData( ON_UserData* p )
 {
-  BOOL rc = FALSE;
+  ON_BOOL32 rc = false;
   if ( p && p->m_userdata_owner == this ) 
   {
     ON_UserData* prev = 0;
@@ -894,14 +1448,14 @@ BOOL ON_Object::DetachUserData( ON_UserData* p )
     {
       if ( ud == p ) 
       {
-	if ( prev )
-	  prev->m_userdata_next = ud->m_userdata_next;
-	else
-	  m_userdata_list = ud->m_userdata_next;
-	ud->m_userdata_owner = 0;
-	ud->m_userdata_next = 0;
-	rc = TRUE;
-	break;
+        if ( prev )
+          prev->m_userdata_next = ud->m_userdata_next;
+        else
+          m_userdata_list = ud->m_userdata_next;
+        ud->m_userdata_owner = 0;
+        ud->m_userdata_next = 0;
+        rc = true;
+        break;
       }
       prev = ud;
       ud = ud->m_userdata_next;
@@ -921,36 +1475,36 @@ ON_UserData* ON_Object::GetUserData( const ON_UUID& userdata_uuid ) const
     {
       if ( p->IsUnknownUserData() ) 
       {
-	// See if we can convert this unknown user data into something useful.
-	// Unknown user data is created when a 3dm archive is read and
-	// the definition of the specific user data class is not loaded.
-	// If something is getting around to asking for a specific kind
-	// of user data, the class definition has probably be dynamically
-	// loaded.
-	ON_UnknownUserData* uud = ON_UnknownUserData::Cast(p);
-	if ( uud ) {
-	  ON_UserData* realp = uud->Convert();
-	  if ( realp ) 
-	  {
-	    // replace unknown user data with the real thing
-	    if ( prev )
-	      prev->m_userdata_next = realp;
-	    else if ( p == m_userdata_list ) 
-	    {
-	      // little white lie to attach the "real" user
-	      // data to the object in place of the unknown
-	      // user data.
-	      ON_Object* pNotConst = const_cast<ON_Object*>(this);
-	      pNotConst->m_userdata_list = realp;
-	      realp->m_userdata_owner = pNotConst; // Dale Lear added 22 Jan 2004 to fix I/O bug 
-	    }
-	    realp->m_userdata_next = p->m_userdata_next;
-	    p->m_userdata_next = 0;
-	    p->m_userdata_owner = 0;
-	    delete p;
-	    p = realp;
-	  }
-	}
+        // See if we can convert this unknown user data into something useful.
+        // Unknown user data is created when a 3dm archive is read and
+        // the definition of the specific user data class is not loaded.
+        // If something is getting around to asking for a specific kind
+        // of user data, the class definition has probably be dynamically
+        // loaded.
+        ON_UnknownUserData* uud = ON_UnknownUserData::Cast(p);
+        if ( uud ) {
+          ON_UserData* realp = uud->Convert();
+          if ( realp ) 
+          {
+            // replace unknown user data with the real thing
+            if ( prev )
+              prev->m_userdata_next = realp;
+            else if ( p == m_userdata_list ) 
+            {
+              // little white lie to attach the "real" user
+              // data to the object in place of the unknown
+              // user data.
+              ON_Object* pNotConst = const_cast<ON_Object*>(this);
+              pNotConst->m_userdata_list = realp;
+              realp->m_userdata_owner = pNotConst; // Dale Lear added 22 Jan 2004 to fix I/O bug 
+            }
+            realp->m_userdata_next = p->m_userdata_next;
+            p->m_userdata_next = 0;
+            p->m_userdata_owner = 0;
+            delete p;
+            p = realp;
+          }
+        }
       }
       break;
     }
@@ -981,8 +1535,8 @@ void ON_Object::CopyUserData( const ON_Object& src )
     if ( p->m_userdata_copycount ) {
       ON_Object* o = p->Duplicate();
       if ( o ) {
-	if ( !AttachUserData(ON_UserData::Cast(o)) )
-	  delete o;
+        if ( !AttachUserData(ON_UserData::Cast(o)) )
+          delete o;
       }
     }
   }
@@ -1002,7 +1556,7 @@ void ON_Object::MoveUserData( ON_Object& src )
       src.m_userdata_list = 0;
       for ( p = m_userdata_list; p; p = p->m_userdata_next )
       {
-	p->m_userdata_owner = this;
+        p->m_userdata_owner = this;
       }
     }
   }
@@ -1015,7 +1569,7 @@ void ON_Object::MoveUserData( ON_Object& src )
     for ( p = src.m_userdata_list; p; p = next ) {
       next = p->m_userdata_next;
       if ( GetUserData( p->m_userdata_uuid ) )
-	delete p;
+        delete p;
     }
 
     // append source user data to this user data
@@ -1031,7 +1585,7 @@ void ON_Object::MoveUserData( ON_Object& src )
     {
       p = m_userdata_list;
       while ( p->m_userdata_next )
-	p = p->m_userdata_next;
+        p = p->m_userdata_next;
       p->m_userdata_next = next;
     }
   }
@@ -1049,9 +1603,9 @@ void ON_Object::MemoryRelocate()
   }
 }
 
-BOOL ON_Object::IsKindOf( const ON_ClassId* pBaseClassId ) const
+ON_BOOL32 ON_Object::IsKindOf( const ON_ClassId* pBaseClassId ) const
 {
-  BOOL b = FALSE;
+  ON_BOOL32 b = false;
   const ON_ClassId* p = ClassId();
   if ( p )
     b = p->IsDerivedFrom( pBaseClassId );
@@ -1157,18 +1711,18 @@ void ON_Object::Dump( ON_TextLog& dump ) const
   }
 }
 
-BOOL ON_Object::Write(
+ON_BOOL32 ON_Object::Write(
        ON_BinaryArchive&
      ) const
 {
   // default Write() does nothing.
-  return FALSE;
+  return false;
 
   // object derived from ON_Object should have a Write() that looks
   // something like
 
   /*
-  BOOL rc = file.Write3dmChunkVersion(1,0);
+  ON_BOOL32 rc = file.Write3dmChunkVersion(1,0);
   if (rc) {
     // TODO
   }
@@ -1177,12 +1731,12 @@ BOOL ON_Object::Write(
 
 }
 
-BOOL ON_Object::Read(
+ON_BOOL32 ON_Object::Read(
        ON_BinaryArchive&
      )
 {
   // default Read() does nothing.
-  return FALSE;
+  return false;
 
   // object derived from ON_Object should have a Read() that looks
   // something like
@@ -1190,7 +1744,7 @@ BOOL ON_Object::Read(
   /*
   int major_version = 0;
   int minor_version = 0;
-  BOOL rc = file.Read3dmChunkVersion(&major_version,&minor_version);
+  ON_BOOL32 rc = file.Read3dmChunkVersion(&major_version,&minor_version);
   if (rc && major_version==1) {
     // common to all 1.x versions
     // TODO

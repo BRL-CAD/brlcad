@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -63,18 +62,18 @@ public:
   //   union of the input box with the object's bounding box.
   // Parameters:
   //   bbox - [in/out] 3d axis aligned bounding box
-  //   bGrowBox - [in] (default=FALSE) 
-  //     If TRUE, then the union of the input bbox and the 
+  //   bGrowBox - [in] (default=false) 
+  //     If true, then the union of the input bbox and the 
   //     object's bounding box is returned in bbox.  
-  //     If FALSE, the object's bounding box is returned in bbox.
+  //     If false, the object's bounding box is returned in bbox.
   // Returns:
-  //   TRUE if object has bounding box and calculation was successful.
+  //   true if object has bounding box and calculation was successful.
   // Remarks:
   //   Uses virtual GetBBox() function to calculate the result.
-  BOOL GetBoundingBox(
-	 ON_BoundingBox& bbox,
-	 int bGrowBox = false
-	 ) const;
+  ON_BOOL32 GetBoundingBox(
+         ON_BoundingBox& bbox,
+         int bGrowBox = false
+         ) const;
 
   // Description:
   //   Get corners of object's 3d axis aligned bounding box
@@ -83,17 +82,17 @@ public:
   // Parameters:
   //   bbox_min - [in/out] minimum corner of the 3d bounding box
   //   bbox_max - [in/out] maximum corner of the 3d bounding box
-  //   bGrowBox - [in] (default=FALSE) 
-  //     If TRUE, then the union of the input bbox and the 
+  //   bGrowBox - [in] (default=false) 
+  //     If true, then the union of the input bbox and the 
   //     object's bounding box is returned.
-  //     If FALSE, the object's bounding box is returned.
+  //     If false, the object's bounding box is returned.
   // Returns:
-  //   TRUE if successful.
-  BOOL GetBoundingBox(
-	 ON_3dPoint& bbox_min,
-	 ON_3dPoint& bbox_max,
-	 int bGrowBox = false
-	 ) const;
+  //   true if successful.
+  ON_BOOL32 GetBoundingBox(
+         ON_3dPoint& bbox_min,
+         ON_3dPoint& bbox_max,
+         int bGrowBox = false
+         ) const;
 
   // Description:
   //   Rotates the object about the specified axis.  A positive
@@ -105,15 +104,15 @@ public:
   //   rotation_axis - [in] direction of the axis of rotation
   //   rotation_center - [in] point on the axis of rotation
   // Returns:
-  //   TRUE if object successfully rotated
+  //   true if object successfully rotated
   // Remarks:
   //   Uses virtual Transform() function to calculate the result.
-  BOOL Rotate(
-	double sin_angle,
-	double cos_angle,
-	const ON_3dVector& rotation_axis,
-	const ON_3dPoint& rotation_center
-	);
+  ON_BOOL32 Rotate(
+        double sin_angle,
+        double cos_angle,
+        const ON_3dVector& rotation_axis,
+        const ON_3dPoint& rotation_center
+        );
 
   // Description:
   //   Rotates the object about the specified axis.  A positive
@@ -124,24 +123,24 @@ public:
   //   rotation_axis - [in] direction of the axis of rotation
   //   rotation_center - [in] point on the axis of rotation
   // Returns:
-  //   TRUE if object successfully rotated
+  //   true if object successfully rotated
   // Remarks:
   //   Uses virtual Transform() function to calculate the result.
-  BOOL Rotate(
-	double rotation_angle,
-	const ON_3dVector& rotation_axis,
-	const ON_3dPoint& rotation_center
-	);
+  ON_BOOL32 Rotate(
+        double rotation_angle,
+        const ON_3dVector& rotation_axis,
+        const ON_3dPoint& rotation_center
+        );
 
   // Description:
   //   Translates the object along the specified vector.
   // Parameters:
   //   translation_vector - [in] translation vector
   // Returns:
-  //   TRUE if object successfully translated
+  //   true if object successfully translated
   // Remarks:
   //   Uses virtual Transform() function to calculate the result.
-  BOOL Translate( 
+  ON_BOOL32 Translate( 
     const ON_3dVector& translation_vector
     );
 
@@ -151,10 +150,10 @@ public:
   // Parameters:
   //   scale_factor - [in] scale factor
   // Returns:
-  //   TRUE if object successfully scaled
+  //   true if object successfully scaled
   // Remarks:
   //   Uses virtual Transform() function to calculate the result.
-  BOOL Scale( 
+  ON_BOOL32 Scale( 
     double scale_factor
     );
 
@@ -175,18 +174,18 @@ public:
   // Parameters:
   //   boxmin - [in/out] array of Dimension() doubles
   //   boxmax - [in/out] array of Dimension() doubles
-  //   bGrowBox - [in] (default=FALSE) 
-  //     If TRUE, then the union of the input bbox and the 
+  //   bGrowBox - [in] (default=false) 
+  //     If true, then the union of the input bbox and the 
   //     object's bounding box is returned in bbox.  
-  //     If FALSE, the object's bounding box is returned in bbox.
+  //     If false, the object's bounding box is returned in bbox.
   // Returns:
-  //   TRUE if object has bounding box and calculation was successful
+  //   true if object has bounding box and calculation was successful
   virtual
-  BOOL GetBBox(
-	 double* boxmin,
-	 double* boxmax,
-	 int bGrowBox = false
-	 ) const = 0;
+  ON_BOOL32 GetBBox(
+         double* boxmin,
+         double* boxmax,
+         int bGrowBox = false
+         ) const = 0;
 
   /*
 	Description:
@@ -254,9 +253,9 @@ public:
     definition.
   */
   virtual
-  BOOL Transform( 
-	 const ON_Xform& xform
-	 );
+  ON_BOOL32 Transform( 
+         const ON_Xform& xform
+         );
 
   /*
   Returns:
@@ -304,10 +303,10 @@ public:
   //          point.SwapCoordinates(0,2);
   //          // point = (9,8,7)
   virtual
-  BOOL SwapCoordinates(
-	int i,
-	int j
-	);
+  ON_BOOL32 SwapCoordinates(
+        int i,
+        int j
+        );
 
 
   /*
@@ -337,16 +336,16 @@ public:
   Description:
     Query an object to see if it has an ON_Brep form.
   Result:
-    Returns TRUE if the virtual ON_Geometry::BrepForm can compute
+    Returns true if the virtual ON_Geometry::BrepForm can compute
     an ON_Brep representation of this object.
   Remarks:
     The default implementation of ON_Geometry::BrepForm returns 
-    FALSE.
+    false.
   See Also
     ON_Geometry::BrepForm
   */
   virtual
-  BOOL HasBrepForm() const;
+  ON_BOOL32 HasBrepForm() const;
 
   /*
   Description:
@@ -354,7 +353,7 @@ public:
     ON_Geometry. 
   Parameters:
     brep - [in] if not NULL, brep is used to store the brep
-	form of the geometry.
+        form of the geometry.
   Result:
     Returns a pointer to on ON_Brep or NULL.  If the brep
     parameter is not NULL, then brep is returned if the

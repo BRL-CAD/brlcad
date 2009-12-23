@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -49,7 +48,7 @@ public:
     count - [in] number of elements in the summands array.
     summands - [in] array of mass properties to add
     bAddTo - [in] if true, then the summands are added to
-		  the existing mass.
+                  the existing mass.
   Returns:
     True if successful.
   */
@@ -282,21 +281,21 @@ public:
     called the "intertia tensor".
   Parameters:
     martix - [in] If you want to fill in an existing matrix, 
-		  pass a pointer to that matrix.  Otherwise
-		  a matrix will be created and returned.
+                  pass a pointer to that matrix.  Otherwise
+                  a matrix will be created and returned.
     returned.
   Returns:
     The inertia matrix or NULL if the moments are not valid.
 
-	  m_world_xx  m_world_xy  m_world_xz
-	  m_world_xy  m_world_yy  m_world_yz
-	  m_world_xz  m_world_yz  m_world_zz
+          m_world_xx  m_world_xy  m_world_xz
+          m_world_xy  m_world_yy  m_world_yz
+          m_world_xz  m_world_yz  m_world_zz
   See Also:
     CentroidCoordIntertiaMatrix
   */
   ON_Matrix* WorldCoordIntertiaMatrix( 
-		ON_Matrix* matrix = NULL 
-		) const;
+                ON_Matrix* matrix = NULL 
+                ) const;
 
   /*
   Description:
@@ -317,10 +316,10 @@ public:
     CentroidCoordPrincipalMoments
   */
   bool WorldCoordPrincipalMoments( 
-		double* pxx, ON_3dVector& Ax,
-		double* pyy, ON_3dVector& Ay,
-		double* pzz, ON_3dVector& Az
-		) const;
+                double* pxx, ON_3dVector& Ax,
+                double* pyy, ON_3dVector& Ay,
+                double* pzz, ON_3dVector& Az
+                ) const;
 
   /*
   Description:
@@ -387,21 +386,21 @@ public:
     called the "intertia tensor".
   Parameters:
     martix - [in] If you want to fill in an existing matrix, 
-		  pass a pointer to that matrix.  Otherwise
-		  a matrix will be created and returned.
+                  pass a pointer to that matrix.  Otherwise
+                  a matrix will be created and returned.
     returned.
   Returns:
     The inertia matrix or NULL if the moments are not valid.
 
-	  m_ccs_xx  m_ccs_xy  m_ccs_xz
-	  m_ccs_xy  m_ccs_yy  m_ccs_yz
-	  m_ccs_xz  m_ccs_yz  m_ccs_zz
+          m_ccs_xx  m_ccs_xy  m_ccs_xz
+          m_ccs_xy  m_ccs_yy  m_ccs_yz
+          m_ccs_xz  m_ccs_yz  m_ccs_zz
   See Also:
     WorldCoordIntertiaMatrix
   */
   ON_Matrix* CentroidCoordIntertiaMatrix( 
-		ON_Matrix* matrix = NULL 
-		) const;
+                ON_Matrix* matrix = NULL 
+                ) const;
 
   /*
   Description:
@@ -422,10 +421,10 @@ public:
     WorldCoordPrincipalMoments
   */
   bool CentroidCoordPrincipalMoments( 
-		double* pxx, ON_3dVector& Ax,
-		double* pyy, ON_3dVector& Ay,
-		double* pzz, ON_3dVector& Az
-		) const;
+                double* pxx, ON_3dVector& Ax,
+                double* pyy, ON_3dVector& Ay,
+                double* pzz, ON_3dVector& Az
+                ) const;
 
 };
 

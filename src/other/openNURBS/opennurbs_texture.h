@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -40,7 +39,7 @@ public:
 
 
   // overrides virtual ON_Object::IsValid
-  BOOL IsValid( ON_TextLog* text_log = NULL ) const;
+  ON_BOOL32 IsValid( ON_TextLog* text_log = NULL ) const;
 
   // overrides virtual ON_Object::Dump
   void Dump( ON_TextLog& ) const;
@@ -49,13 +48,13 @@ public:
   unsigned int SizeOf() const;
 
   // overrides virtual ON_Object::Write
-  BOOL Write(
-	 ON_BinaryArchive& binary_archive
+  ON_BOOL32 Write(
+         ON_BinaryArchive& binary_archive
        ) const;
 
   // overrides virtual ON_Object::Read
-  BOOL Read(
-	 ON_BinaryArchive& binary_archive
+  ON_BOOL32 Read(
+         ON_BinaryArchive& binary_archive
        );
 
   void Default();
@@ -123,9 +122,9 @@ public:
   enum MAPPING_CHANNEL
   {
     tc_channel      = 0,     // Use the texture coordinate values
-			     // currently on the geometric object.
+                             // currently on the geometric object.
     default_channel = 1,	   // Use either default mapping, or the "Custom"
-								       // mapping applied to the object
+							               // mapping applied to the object
     srfp_channel = 0xFFFFFFFE, // Use surface parameterization.
     emap_channel = 0xFFFFFFFF  // Environment map the geometric object.
   };
@@ -183,8 +182,8 @@ public:
     modulate_texture = 1,  // modulate with material diffuse color
     decal_texture    = 2,  // decal
     blend_texture    = 3,  // blend texture with others in the material
-			   // To "add" a texture, set m_blend_amount = +1
-			   // To "subtract" a texture, set m_blend_amount = -1
+                           // To "add" a texture, set m_blend_amount = +1
+                           // To "subtract" a texture, set m_blend_amount = -1
 
     force_32bit_texture_mode = 0xFFFFFFFF
   };

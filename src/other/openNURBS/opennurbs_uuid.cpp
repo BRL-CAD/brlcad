@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -48,57 +47,74 @@ static const int big_endian_rho[16] = {0,1,2,3, 4,5, 6,7, 8,9, 10,11,12,13,14,15
  
 bool ON_CreateUuid( ON_UUID& new_uuid )
 {
-  //////// During testing on different machines and CPUs,
-  //////// it is sometimes necessary to have repeatable 
-  //////// behavior from ON_CreateUuid().  If that is 
-  //////// the case, uncomment the following code.
-  //////// NEVER release a product with the testing code
+  // See http://www.faqs.org/rfcs/rfc4122.html for uuid details.
 
-  //////static unsigned long counter = 0;
-  //////unsigned long c;
-  //////union
-  //////{
-  //////  unsigned char  c[4];
-  //////  unsigned short s[2];
-  //////  unsigned long  l;
-  //////} u;
-
-  //////counter++;
-  //////c = counter;
-  //////u.c[0] = (unsigned char)(c%256); c /= 256;
-  //////u.c[1] = (unsigned char)(c%256); c /= 256;
-  //////u.c[2] = (unsigned char)(c%256); c /= 256;
-  //////u.c[3] = (unsigned char)(c%256);
-  //////new_uuid.Data1 = u.l;
-
-  //////u.c[0] = 0xee;
-  //////u.c[1] = 0x3a;
-  //////u.c[2] = 0xdc;
-  //////u.c[3] = 0x11;O
-  //////new_uuid.Data2 = u.s[0]; // 0x3aee;
-  //////new_uuid.Data3 = u.s[1]; // 0x11dc;
-
-  //////new_uuid.Data4[0] =	0x98; // 1001 1000
-  //////new_uuid.Data4[1] =	0x4e; // 0100 1110 
-
-  //////new_uuid.Data4[2] =	0x00; // Network MAC Address Bytes
-  //////new_uuid.Data4[3] =	0x13;
-  //////new_uuid.Data4[4] =	0x72;
-  //////new_uuid.Data4[5] =	0xc3;
-  //////new_uuid.Data4[6] =	0x38;
-  //////new_uuid.Data4[7] =	0x78;
-
-  //////return true;
+  ////{
+  ////  // Use this code when testing reqires "repeatable uniqueness".
+  ////  // NEVER check in this code.
+  ////  static ON_UUID blank = {
+  ////    0,                                        // unsigned long  Data1;
+  ////    0,                                        // unsigned short Data2;
+  ////    0x11dc,                                   // unsigned short Data3;
+  ////    {0x98,0x85,0x00,0x13,0x72,0xc3,0x38,0x78} // unsigned char  Data4[8];
+  ////  };
+  ////  if ( 0 == ++blank.Data1)
+  ////    blank.Data2++;
+  ////  new_uuid = blank;
+  ////}
+  ////return true;
 
 #if defined(ON_OS_WINDOWS)
   // Header: Declared in Rpcdce.h.
   // Library: Use Rpcrt4.lib  
   ::UuidCreate(&new_uuid);
-  //::UuidCreateSequential(&new_uuid);
+  //::UuidCreateSequential(&new_uuid); // faster but computer MAC address
+                                       // identifies the user and some
+                                       // customers may object.
   return true;
 #elif defined(ON_COMPILER_XCODE)
   // Header: #include <uuid/uuid.h>
-  uuid_generate((unsigned char*)&new_uuid);
+  if ( ON::little_endian == ON::Endian() )
+  {
+    // Intel cpu mac
+    // The uuid_generate() function returns a UUID in network or 
+    // big-endian order.  The rest of OpenNURBS assumes that a UUID
+    // is stored in native byte order, so we switch the byte order
+    // of the UUID.
+    uuid_t apple_osx_uuid;
+    uuid_generate(apple_osx_uuid);
+    unsigned char* dst = (unsigned char*)&new_uuid;
+    const unsigned char* src = (const unsigned char*)&apple_osx_uuid;
+    *dst++ = src[little_endian_rho[ 0]]; 
+    *dst++ = src[little_endian_rho[ 1]]; 
+    *dst++ = src[little_endian_rho[ 2]]; 
+    *dst++ = src[little_endian_rho[ 3]]; 
+    *dst++ = src[little_endian_rho[ 4]]; 
+    *dst++ = src[little_endian_rho[ 5]]; 
+    *dst++ = src[little_endian_rho[ 6]]; 
+    *dst++ = src[little_endian_rho[ 7]]; 
+    *dst++ = src[little_endian_rho[ 8]]; 
+    *dst++ = src[little_endian_rho[ 9]]; 
+    *dst++ = src[little_endian_rho[10]]; 
+    *dst++ = src[little_endian_rho[11]]; 
+    *dst++ = src[little_endian_rho[12]]; 
+    *dst++ = src[little_endian_rho[13]]; 
+    *dst++ = src[little_endian_rho[14]]; 
+    *dst   = src[little_endian_rho[15]]; 
+  }
+  else
+  {
+    // Motorola cpu mac
+    uuid_generate((unsigned char*)&new_uuid);
+  }
+
+  //#if defined (ON_DEBUG)
+  //  // OS X generates version 4 UUIDs.  Check that this is still true after mangling.
+  //  if ((new_uuid.Data3 & 0xF000) != 0x4000)
+  //    ON_ERROR("ON_CreateUuid() failure 1");
+  //  if (new_uuid.Data4[0] < 0x80 || new_uuid.Data4[0] >= 0xC0)
+  //    ON_ERROR("ON_CreateUuid() failure 2");
+  //#endif
   return true;
 #else
   // You must supply a way to create unique ids or you 
@@ -106,6 +122,7 @@ bool ON_CreateUuid( ON_UUID& new_uuid )
   memset(&new_uuid,0,sizeof(ON_UUID));
   return false;
 #endif
+
 }
 
  
@@ -136,23 +153,24 @@ ON_UUID ON_UuidFromString( const char* sUUID )
 */
 
   static const int* rho = ( ON::big_endian == ON::Endian() ) 
-			? big_endian_rho 
-			: little_endian_rho;
+                        ? big_endian_rho 
+                        : little_endian_rho;
 
   union 
   {
     ON_UUID uuid;
     unsigned char b[16];
   } u;
-  BOOL bFailed;
+  ON_BOOL32 bFailed;
   int bi, ci;
   unsigned char c;
   unsigned char byte_value[2];
 
-  for ( bi = 0; bi < 16; bi++ ) 
-    u.b[bi] = 0;
+  memset(&u,0,sizeof(u));
+  //for ( bi = 0; bi < 16; bi++ ) 
+  //  u.b[bi] = 0;
 
-  bFailed = sUUID ? FALSE : TRUE;
+  bFailed = sUUID ? false : true;
 
   if ( !bFailed ) {
     while ( *sUUID && *sUUID <= ' ' ) // skip leading white space
@@ -164,27 +182,27 @@ ON_UUID ON_UuidFromString( const char* sUUID )
       byte_value[0] = 0;
       byte_value[1] = 0;
       while ( ci < 2 ) {
-	c = *sUUID++;
-	if ( !c ) {
-	  bFailed = TRUE;
-	  break;
-	}
-	if ( c >= 'A' && c <= 'F' ) {
-	  byte_value[ci++] = (c-'A'+10);
-	}
-	else if ( c >= '0' && c <='9' ) {
-	  byte_value[ci++] = (c-'0');
-	}
-	else if ( c >= 'a' && c <= 'f' ) {
-	  byte_value[ci++] = (c-'a'+10);
-	}
-	else if ( c != '-' ) {
-	  bFailed = TRUE;
-	  break;
-	}
+        c = *sUUID++;
+        if ( !c ) {
+          bFailed = true;
+          break;
+        }
+        if ( c >= 'A' && c <= 'F' ) {
+          byte_value[ci++] = (c-'A'+10);
+        }
+        else if ( c >= '0' && c <='9' ) {
+          byte_value[ci++] = (c-'0');
+        }
+        else if ( c >= 'a' && c <= 'f' ) {
+          byte_value[ci++] = (c-'a'+10);
+        }
+        else if ( c != '-' ) {
+          bFailed = true;
+          break;
+        }
       }
       if ( bFailed )
-	break;
+        break;
       u.b[rho[bi]] = 16*byte_value[0] + byte_value[1];
     }
   }
@@ -341,7 +359,6 @@ int ON_UuidCompare( const ON_UUID* a, const ON_UUID* b )
   //            On Windows, ::UuidCompare() must agree 
   //            with this function.
 
-  int rc = 0;
   if ( !a ) 
   {
     return b ? -1 : 0;
@@ -358,8 +375,6 @@ int ON_UuidCompare( const ON_UUID* a, const ON_UUID* b )
   if ( a->Data3 < b->Data3 ) return -1;
   if ( a->Data3 > b->Data3 ) return  1;
   return memcmp(a->Data4,b->Data4,sizeof(a->Data4));
-
-  return rc;
 }
  
 int ON_UuidCompare( const ON_UUID& a, const ON_UUID& b)
@@ -368,8 +383,8 @@ int ON_UuidCompare( const ON_UUID& a, const ON_UUID& b)
 }
 
 bool ON_UuidIsNil( 
-	const ON_UUID& uuid 
-	)
+        const ON_UUID& uuid 
+        )
 {
   const ON__INT32* p = (const ON__INT32*)&uuid;
   return ( p[0] || p[1] || p[2] || p[3] ) ? false : true;
@@ -377,8 +392,8 @@ bool ON_UuidIsNil(
 
 
 bool ON_UuidIsNotNil( 
-	const ON_UUID& uuid 
-	)
+        const ON_UUID& uuid 
+        )
 {
   const ON__INT32* p = (const ON__INT32*)&uuid;
   return ( p[0] || p[1] || p[2] || p[3] ) ? true : false;
@@ -407,8 +422,8 @@ char* ON_UuidToString( const ON_UUID& uuid, char* s)
   int i;
   
   static const int* rho = ( ON::big_endian == ON::Endian() ) 
-			? big_endian_rho 
-			: little_endian_rho;
+                        ? big_endian_rho 
+                        : little_endian_rho;
 
   // 5 December 2002 Dale Lear:
   //   There is either a bug in Purify (likely) or perhaps a bug in the 

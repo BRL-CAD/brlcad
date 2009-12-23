@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -18,16 +17,16 @@
 #define OPENNURBS_OPTIMIZE_INC_
 
 // find a local minimum of a 1 parameter function
-BOOL ON_FindLocalMinimum( // returns 0 - failed to converge, 1 - success, 2 - failed to converge to requested tolerances
-	int (*)(void*,double,double*,double*), // f(void*, double t, double* value, double* derivative );
-	void*, // passed as the void* argument to the above function
-	double, double, double, // ax,bx,cx, 3 abcissa  ax<bx<cx or ax>bx>cx, and
-				// f(bx) < f(ax), and f(bx) < f(cx)
-	double, // tol > 0 (minimum relative step size (use ON_EPSILON when in doubt)
-	double, // zeps > 0 (minimum absolute step size (use 1/2*(desired absolute precision))
-	int,     // maximum number of iterations ( use 100 when in doubt)
-	double*  // abcissa of local minimum returned here
-	);
+ON_BOOL32 ON_FindLocalMinimum( // returns 0 - failed to converge, 1 - success, 2 - failed to converge to requested tolerances
+        int (*)(void*,double,double*,double*), // f(void*, double t, double* value, double* derivative );
+        void*, // passed as the void* argument to the above function
+        double, double, double, // ax,bx,cx, 3 abcissa  ax<bx<cx or ax>bx>cx, and
+                                // f(bx) < f(ax), and f(bx) < f(cx)
+        double, // tol > 0 (minimum relative step size (use ON_EPSILON when in doubt)
+        double, // zeps > 0 (minimum absolute step size (use 1/2*(desired absolute precision))
+        int,     // maximum number of iterations ( use 100 when in doubt)
+        double*  // abcissa of local minimum returned here
+        );
 
 // find a local zero of a 1 parameter function
 class ON_LocalZero1
@@ -37,18 +36,18 @@ public:
   virtual ~ON_LocalZero1();
 
   virtual
-  BOOL Evaluate( // returns TRUE if successful
+  ON_BOOL32 Evaluate( // returns true if successful
      double,  // evaluation parameter
      double*, // f(t) returned here - NULL never passed
      double*, // If not NULL, then f'(t) returned here
      int      // <  0: evaluate from below
-	      // >= 0: evaluate from above
+              // >= 0: evaluate from above
   ) = 0;
 
 
-  BOOL FindZero( double* );  // Searches domain between m_to and m_t1
-			     // domain for a root.  Returns TRUE if
-			     // a root is found.
+  ON_BOOL32 FindZero( double* );  // Searches domain between m_to and m_t1
+                             // domain for a root.  Returns true if
+                             // a root is found.
 
   // m_t0 and m_t1 specify the domain to search and must satisfy 
   //
@@ -58,13 +57,13 @@ public:
   double m_t0, m_t1; 
 
   double m_f_tolerance; // (>= 0.0)  If this value is > 0.0, then
-			// the search is terminated when a parameter
-			// "t" is found where |f(t)| <= m_f_tolerance.
+                        // the search is terminated when a parameter
+                        // "t" is found where |f(t)| <= m_f_tolerance.
 
   double m_t_tolerance; // (>= 0.0)  If this value is > 0.0, then
-			// the search is terminated when a parameter
-			// the root is bracketed in a domain with width
-			// <= m_t_tolerance.
+                        // the search is terminated when a parameter
+                        // the root is bracketed in a domain with width
+                        // <= m_t_tolerance.
 
   // m_k[] is either NULL or monotone increasing array of length m_k_count.
   //
@@ -92,9 +91,9 @@ public:
 
 private:
   double m_s0, m_f0, m_s1, m_f1;
-  BOOL BracketZero(double,double,double,double,int=0);
-  BOOL BracketSpan(double,double,double,double);
-  BOOL NewtonRaphson( double, double, double, double, int, double* );
+  ON_BOOL32 BracketZero(double,double,double,double,int=0);
+  ON_BOOL32 BracketSpan(double,double,double,double);
+  ON_BOOL32 NewtonRaphson( double, double, double, double, int, double* );
 };
 
 #endif

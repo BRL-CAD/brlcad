@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -47,7 +46,7 @@ ON_Ellipse& ON_Ellipse::operator=(const ON_Circle& c)
   return *this;
 }
 
-BOOL ON_Ellipse::Create( const ON_Plane& p, double rx, double ry )
+ON_BOOL32 ON_Ellipse::Create( const ON_Plane& p, double rx, double ry )
 {
   plane = p;
   radius[0] = rx;
@@ -55,17 +54,17 @@ BOOL ON_Ellipse::Create( const ON_Plane& p, double rx, double ry )
   return IsValid();
 }
 
-BOOL ON_Ellipse::Create( const ON_Circle& c )
+ON_BOOL32 ON_Ellipse::Create( const ON_Circle& c )
 {
   return Create( c.Plane(), c.Radius(), c.Radius() );
 }
 
-BOOL ON_Ellipse::IsValid() const
+ON_BOOL32 ON_Ellipse::IsValid() const
 {
   return (plane.IsValid() && radius[0] > ON_ZERO_TOLERANCE && radius[1] > ON_ZERO_TOLERANCE) ? true : false;
 }
 
-BOOL ON_Ellipse::IsCircle() const
+ON_BOOL32 ON_Ellipse::IsCircle() const
 {
   double r0 = radius[0];
   return ( ON_IsValid(r0) && fabs(r0-radius[1]) <= fabs(r0)*ON_ZERO_TOLERANCE && IsValid() ) ? true : false;
@@ -91,9 +90,10 @@ double ON_Ellipse::FocalDistance() const
 
 bool ON_Ellipse::GetFoci( ON_3dPoint& F1, ON_3dPoint& F2 ) const
 {
-  const double f = 0.5*FocalDistance();
-  F1 = plane.origin + f*plane.xaxis;
-  F2 = plane.origin - f*plane.xaxis;
+  const double f = FocalDistance();
+  const ON_3dVector& majorAxis = (radius[0] >= radius[1]) ? plane.xaxis : plane.yaxis;
+  F1 = plane.origin + f*majorAxis;
+  F2 = plane.origin - f*majorAxis;
   return true;
 }
 
@@ -113,9 +113,9 @@ ON_3dPoint ON_Ellipse::PointAt( double t ) const
 }
 
 ON_3dVector ON_Ellipse::DerivativeAt( 
-		 int d, // desired derivative ( >= 0 )
-		 double t // parameter
-		 ) const
+                 int d, // desired derivative ( >= 0 )
+                 double t // parameter
+                 ) const
 {
   double r0 = radius[0];
   double r1 = radius[1];
@@ -141,8 +141,8 @@ ON_3dVector ON_Ellipse::DerivativeAt(
 }
 
 ON_3dVector ON_Ellipse::TangentAt( 
-		 double t // parameter
-		 ) const
+                 double t // parameter
+                 ) const
 {
   ON_3dVector T = DerivativeAt( 1, t );
   T.Unitize();
@@ -150,8 +150,8 @@ ON_3dVector ON_Ellipse::TangentAt(
 }
 
 ON_3dVector ON_Ellipse::CurvatureAt( 
-		 double t // parameter
-		 ) const
+                 double t // parameter
+                 ) const
 {
   ON_3dVector T, K;
   ON_EvCurvature(DerivativeAt( 1, t ),DerivativeAt( 2, t ),T,K);
@@ -179,34 +179,47 @@ static int distSqToEllipse(void* p, double t, double* f, double* df )
   return 0;
 }
 
-BOOL ON_Ellipse::ClosestPointTo( const ON_3dPoint& point, double* t ) const
+#if defined(ON_COMPILER_MSC)
+// Disable the MSC /W4 warning
+//   C4127: conditional expression is constant
+// on the line
+//   for(...; true; ... )
+//
+// This source code is used on many compilers and
+// I do not trust all of them to get for(..;;...)
+// right.
+#pragma warning( push )
+#pragma warning( disable : 4127 ) 
+#endif
+
+ON_BOOL32 ON_Ellipse::ClosestPointTo( const ON_3dPoint& point, double* t ) const
 {
-  BOOL rc = TRUE;
+  ON_BOOL32 rc = true;
   if ( t ) {
     ON_2dPoint uv;
     rc = plane.ClosestPointTo( point, &uv.x, &uv.y );
     if ( uv.x == 0.0 ) {
       if ( uv.y == 0.0 ) {
-	*t = (radius[0] <= radius[1]) ? 0.0 : 0.5*ON_PI;
-	return TRUE;
+        *t = (radius[0] <= radius[1]) ? 0.0 : 0.5*ON_PI;
+        return true;
       }
       if ( uv.y >= radius[1] ) {
-	*t = 0.5*ON_PI;
-	return TRUE;
+        *t = 0.5*ON_PI;
+        return true;
       }
       if ( uv.y <= -radius[1] ) {
-	*t = 1.5*ON_PI;
-	return TRUE;
+        *t = 1.5*ON_PI;
+        return true;
       }
     }
     else if ( uv.y == 0.0 ) {
       if ( uv.x >= radius[0] ) {
-	*t = 0.0;
-	return TRUE;
+        *t = 0.0;
+        return true;
       }
       if ( uv.x <= -radius[0] ) {
-	*t = ON_PI;
-	return TRUE;
+        *t = ON_PI;
+        return true;
       }
     }
     {
@@ -215,121 +228,125 @@ BOOL ON_Ellipse::ClosestPointTo( const ON_3dPoint& point, double* t ) const
       *t = atan2( uv.y, uv.x );
       if ( *t < 0.0 )
       {
-	*t += 2.0*ON_PI;
-	if ( 2.0*ON_PI <= *t)
-	{
-	  // == happens when atan2() <= 0.5*ON_EPSILON*2.0*PI
-	  *t = 0.0;
-	}
+        *t += 2.0*ON_PI;
+        if ( 2.0*ON_PI <= *t)
+        {
+          // == happens when atan2() <= 0.5*ON_EPSILON*2.0*PI
+          *t = 0.0;
+        }
       }
       if ( radius[0] != radius[1] ) {
-	// set limits for search
-	if ( uv.x >= 0.0 ) {
-	  if ( uv.y >= 0.0 ) {
-	    // search quadrant I
-	    t0 = 0.0;
-	    t1 = 0.5*ON_PI;
-	  }
-	  else {
-	    // search quadrant IV
-	    t0 = 1.5*ON_PI;
-	    t1 = 2.0*ON_PI;
-	  }
-	}
-	else {
-	  if ( uv.y >= 0.0 ) {
-	    // search quadrant II
-	    t0 = 0.5*ON_PI;
-	    t1 = ON_PI;
-	  }
-	  else {
-	    // search quadrant III
-	    t0 = ON_PI;
-	    t1 = 1.5*ON_PI;
-	  }
-	}
+        // set limits for search
+        if ( uv.x >= 0.0 ) {
+          if ( uv.y >= 0.0 ) {
+            // search quadrant I
+            t0 = 0.0;
+            t1 = 0.5*ON_PI;
+          }
+          else {
+            // search quadrant IV
+            t0 = 1.5*ON_PI;
+            t1 = 2.0*ON_PI;
+          }
+        }
+        else {
+          if ( uv.y >= 0.0 ) {
+            // search quadrant II
+            t0 = 0.5*ON_PI;
+            t1 = ON_PI;
+          }
+          else {
+            // search quadrant III
+            t0 = ON_PI;
+            t1 = 1.5*ON_PI;
+          }
+        }
 
-	// solve for closest point using Brent's algorithm
-	{
-	  // 6 October 2003 Dale Lear:
-	  //    Fixed several serious bugs here.
-	  // get seed value appropriate for Brent
-	  double p[4], et, d0, d1, dt;
-	  int i;
-	  p[0] = radius[0];
-	  p[1] = radius[1];
-	  p[2] = uv.x;
-	  p[3] = uv.y;
-	  et = *t;
-	  if ( et <= t0 )
-	    et = 0.9*t0 + 0.1*t1;
-	  else if ( et >= t1 )
-	    et = 0.9*t1 + 0.1*t0;
-	  distSqToEllipse( p, t0, &d0, NULL );
-	  distSqToEllipse( p, t1, &d1, NULL );
-	  if ( d0 == 0.0 ) {
-	    *t = (t0 == 2.0*ON_PI) ? 0.0 : t0;
-	    return TRUE;
-	  }
-	  if ( d1 == 0.0 ) {
-	    *t = (t1 == 2.0*ON_PI) ? 0.0 : t1;
-	    return TRUE;
-	  }
-	  if ( d0 > d1 ) {
-	    dt = t0; t0 = t1; t1 = dt;
-	    dt = d0; d0 = d1; d1 = dt;
-	  }
-	  *t = (t0 == 2.0*ON_PI) ? 0.0 : t0;
-	  for ( i = 0; TRUE; i++ ) {
-	    distSqToEllipse( p, et, &dt, NULL );
-	    if ( dt < d0 )
-	    {
-	      *t = (et >= 2.0*ON_PI) ? 0.0 : et;
-	      break;
-	    }
-	    if ( i >= 100 ) 
-	    {
-	      ON_3dPoint E0 = PointAt(t0);
-	      if (    sqrt(d0) <= ON_ZERO_TOLERANCE 
-		   || sqrt(d0) <= ON_SQRT_EPSILON*E0.DistanceTo(Center()) 
-		   )
-	      {
-		// Could not find a seed value for dbrent, 
-		// but t0 is pretty close.
-		return true;
-	      }
-	      ON_3dVector T = TangentAt(t0);
-	      ON_3dVector V = E0 - point;
-	      if ( V.Unitize() )
-	      {
-		// Could not find a seed value for dbrent, 
-		// but V and T are orthoganal, so t0 is 
-		// pretty close.
-		if ( fabs(V*T) <= 0.087155742747658173558064270837474 )
-		  return true;
-	      }
-	      return false; // can't get valid seed - bail out
-	    }
-	    et = (i) ? (0.5*(t0+et)) : 0.5*(t0+t1);
-	    if ( et == t0 )
-	    {
-	      return true;
-	    }
-	  }
+        // solve for closest point using Brent's algorithm
+        {
+          // 6 October 2003 Dale Lear:
+          //    Fixed several serious bugs here.
+          // get seed value appropriate for Brent
+          double p[4], et, d0, d1, dt;
+          int i;
+          p[0] = radius[0];
+          p[1] = radius[1];
+          p[2] = uv.x;
+          p[3] = uv.y;
+          et = *t;
+          if ( et <= t0 )
+            et = 0.9*t0 + 0.1*t1;
+          else if ( et >= t1 )
+            et = 0.9*t1 + 0.1*t0;
+          distSqToEllipse( p, t0, &d0, NULL );
+          distSqToEllipse( p, t1, &d1, NULL );
+          if ( d0 == 0.0 ) {
+            *t = (t0 == 2.0*ON_PI) ? 0.0 : t0;
+            return true;
+          }
+          if ( d1 == 0.0 ) {
+            *t = (t1 == 2.0*ON_PI) ? 0.0 : t1;
+            return true;
+          }
+          if ( d0 > d1 ) {
+            dt = t0; t0 = t1; t1 = dt;
+            dt = d0; d0 = d1; d1 = dt;
+          }
+          *t = (t0 == 2.0*ON_PI) ? 0.0 : t0;
+          for ( i = 0; true; i++ ) {
+            distSqToEllipse( p, et, &dt, NULL );
+            if ( dt < d0 )
+            {
+              *t = (et >= 2.0*ON_PI) ? 0.0 : et;
+              break;
+            }
+            if ( i >= 100 ) 
+            {
+              ON_3dPoint E0 = PointAt(t0);
+              if (    sqrt(d0) <= ON_ZERO_TOLERANCE 
+                   || sqrt(d0) <= ON_SQRT_EPSILON*E0.DistanceTo(Center()) 
+                   )
+              {
+                // Could not find a seed value for dbrent, 
+                // but t0 is pretty close.
+                return true;
+              }
+              ON_3dVector T = TangentAt(t0);
+              ON_3dVector V = E0 - point;
+              if ( V.Unitize() )
+              {
+                // Could not find a seed value for dbrent, 
+                // but V and T are orthoganal, so t0 is 
+                // pretty close.
+                if ( fabs(V*T) <= 0.087155742747658173558064270837474 )
+                  return true;
+              }
+              return false; // can't get valid seed - bail out
+            }
+            et = (i) ? (0.5*(t0+et)) : 0.5*(t0+t1);
+            if ( et == t0 )
+            {
+              return true;
+            }
+          }
 
-	  rc = ON_FindLocalMinimum( distSqToEllipse, p,
-			    t0, et, t1, 
-			    ON_EPSILON,  ON_SQRT_EPSILON, 100,
-			    &et );
-	  rc = (rc > 0) ? true : false;
-	  if ( rc )
-	    *t = (et >= 2.0*ON_PI) ? 0.0 : et;
-	}
+          rc = ON_FindLocalMinimum( distSqToEllipse, p,
+                            t0, et, t1, 
+                            ON_EPSILON,  ON_SQRT_EPSILON, 100,
+                            &et );
+          rc = (rc > 0) ? true : false;
+          if ( rc )
+            *t = (et >= 2.0*ON_PI) ? 0.0 : et;
+        }
       }
     }
   }
   return rc;
 }
+
+#if defined(ON_COMPILER_MSC)
+#pragma warning( pop )
+#endif
 
 ON_3dPoint ON_Ellipse::ClosestPointTo( const ON_3dPoint& point ) const
 {
@@ -339,8 +356,8 @@ ON_3dPoint ON_Ellipse::ClosestPointTo( const ON_3dPoint& point ) const
 }
 
 double ON_Ellipse::EquationAt( 
-		 const ON_2dPoint& p // coordinates in plane
-		 ) const
+                 const ON_2dPoint& p // coordinates in plane
+                 ) const
 {
   double e, x, y;
   if ( radius[0] != 0.0 && radius[1] != 0.0 ) {
@@ -355,8 +372,8 @@ double ON_Ellipse::EquationAt(
 }
 
 ON_2dVector ON_Ellipse::GradientAt( 
-		 const ON_2dPoint& p // coordinates in plane
-		 ) const
+                 const ON_2dPoint& p // coordinates in plane
+                 ) const
 {
   ON_2dVector g;
   if ( radius[0] != 0.0 && radius[1] != 0.0 ) {
@@ -369,53 +386,53 @@ ON_2dVector ON_Ellipse::GradientAt(
   return g;
 }
 
-BOOL ON_Ellipse::Rotate( 
-			  double sin_angle, double cos_angle, 
-			  const ON_3dVector& axis
-			  )
+ON_BOOL32 ON_Ellipse::Rotate( 
+                          double sin_angle, double cos_angle, 
+                          const ON_3dVector& axis
+                          )
 {
   return plane.Rotate( sin_angle, cos_angle, axis );
 }
 
-BOOL ON_Ellipse::Rotate( 
-			  double angle, 
-			  const ON_3dVector& axis
-			  )
+ON_BOOL32 ON_Ellipse::Rotate( 
+                          double angle, 
+                          const ON_3dVector& axis
+                          )
 {
   return plane.Rotate( angle, axis );
 }
 
-BOOL ON_Ellipse::Rotate( 
-			  double sin_angle, double cos_angle, 
-			  const ON_3dVector& axis,
-			  const ON_3dPoint& point
-			  )
+ON_BOOL32 ON_Ellipse::Rotate( 
+                          double sin_angle, double cos_angle, 
+                          const ON_3dVector& axis,
+                          const ON_3dPoint& point
+                          )
 {
   return plane.Rotate( sin_angle, cos_angle, axis, point );
 }
 
-BOOL ON_Ellipse::Rotate( 
-			  double angle, 
-			  const ON_3dVector& axis,
-			  const ON_3dPoint& point
-			  )
+ON_BOOL32 ON_Ellipse::Rotate( 
+                          double angle, 
+                          const ON_3dVector& axis,
+                          const ON_3dPoint& point
+                          )
 {
   return plane.Rotate( angle, axis, point );
 }
 
 
-BOOL ON_Ellipse::Translate(
-			  const ON_3dVector& delta
-			    )
+ON_BOOL32 ON_Ellipse::Translate(
+                          const ON_3dVector& delta
+                            )
 {
   return plane.Translate( delta );
 }
 
-BOOL ON_Ellipse::GetNurbForm( ON_NurbsCurve& nurbscurve ) const
+ON_BOOL32 ON_Ellipse::GetNurbForm( ON_NurbsCurve& nurbscurve ) const
 {
   int rc = 0;
   if ( IsValid() ) {
-    nurbscurve.Create( 3, TRUE, 3, 9 );
+    nurbscurve.Create( 3, true, 3, 9 );
     nurbscurve.m_knot[0] = nurbscurve.m_knot[1] = 0.0;
     nurbscurve.m_knot[2] = nurbscurve.m_knot[3] = 0.5*ON_PI;
     nurbscurve.m_knot[4] = nurbscurve.m_knot[5] = ON_PI;

@@ -15,6 +15,9 @@ ON_INC = \
 	opennurbs_archive.h \
 	opennurbs_array.h \
 	opennurbs_array_defs.h \
+	opennurbs_base32.h \
+	opennurbs_base64.h \
+	opennurbs_beam.h \
 	opennurbs_bezier.h \
 	opennurbs_bitmap.h \
 	opennurbs_box.h \
@@ -51,6 +54,7 @@ ON_INC = \
 	opennurbs_linecurve.h \
 	opennurbs_linestyle.h \
 	opennurbs_linetype.h \
+	opennurbs_lookup.h \
 	opennurbs_mapchan.h \
 	opennurbs_massprop.h \
 	opennurbs_material.h \
@@ -73,11 +77,16 @@ ON_INC = \
 	opennurbs_pointgeometry.h \
 	opennurbs_pointgrid.h \
 	opennurbs_polycurve.h \
+	opennurbs_polyedgecurve.h \
 	opennurbs_polyline.h \
 	opennurbs_polylinecurve.h \
+	opennurbs_quaternion.h \
 	opennurbs_rendering.h \
 	opennurbs_revsurface.h \
+	opennurbs_rand.h \
+	opennurbs_rtree.h \
 	opennurbs_sphere.h \
+	opennurbs_staticlib_linking_pragmas.h \
 	opennurbs_string.h \
 	opennurbs_sumsurface.h \
 	opennurbs_surface.h \
@@ -106,7 +115,11 @@ ON_SRC = \
 	opennurbs_arccurve.cpp \
 	opennurbs_archive.cpp \
 	opennurbs_array.cpp \
+	opennurbs_base32.cpp \
+	opennurbs_base64.cpp \
 	opennurbs_basic.cpp \
+	opennurbs_beam.cpp \
+	opennurbs_brep_region.cpp \
 	opennurbs_bezier.cpp \
 	opennurbs_beziervolume.cpp \
 	opennurbs_bitmap.cpp \
@@ -148,6 +161,7 @@ ON_SRC = \
 	opennurbs_line.cpp \
 	opennurbs_linecurve.cpp \
 	opennurbs_linetype.cpp \
+	opennurbs_lookup.cpp \
 	opennurbs_massprop.cpp \
 	opennurbs_material.cpp \
 	opennurbs_math.cpp \
@@ -155,6 +169,7 @@ ON_SRC = \
 	opennurbs_memory.c \
 	opennurbs_memory_util.c \
 	opennurbs_mesh.cpp \
+	opennurbs_mesh_ngon.cpp \
 	opennurbs_mesh_tools.cpp \
 	opennurbs_morph.cpp \
 	opennurbs_nurbscurve.cpp \
@@ -173,9 +188,14 @@ ON_SRC = \
 	opennurbs_pointgeometry.cpp \
 	opennurbs_pointgrid.cpp \
 	opennurbs_polycurve.cpp \
+	opennurbs_polyedgecurve.cpp \
 	opennurbs_polyline.cpp \
 	opennurbs_polylinecurve.cpp \
+	opennurbs_quaternion.cpp \
+	opennurbs_rand.cpp \
 	opennurbs_revsurface.cpp \
+	opennurbs_rtree.cpp \
+	opennurbs_sort.cpp \
 	opennurbs_sphere.cpp \
 	opennurbs_string.cpp \
 	opennurbs_sum.cpp \
@@ -195,14 +215,9 @@ ON_SRC = \
 nurbincludedir = $(includedir)/openNURBS
 nurbinclude_HEADERS = $(ON_INC)
 
-# FIXME: this is temporary while opennurbs_curve.cpp includes our
-# opennurbs_ext.h header (which needs bu.h which needs tcl.h). be sure
-# to fix CMakeLists.txt when this is no longer necessary too.
-FIXME_HACK = ${TCL_CPPFLAGS}
-
 libopenNURBS_nil_la_SOURCES = $(ON_SRC)
 libopenNURBS_nil_la_CFLAGS = ${LIBZ_CPPFLAGS}
-libopenNURBS_nil_la_CXXFLAGS = -Wall ${LIBZ_CPPFLAGS} ${FIXME_HACK}
+libopenNURBS_nil_la_CXXFLAGS = -Wall ${LIBZ_CPPFLAGS}
 libopenNURBS_nil_la_LIBADD = ${LIBZ}
 
 libopenNURBS_la_SOURCES =

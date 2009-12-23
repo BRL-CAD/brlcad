@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -52,7 +51,7 @@ public:
   int Width() const = 0;
   virtual
   int Height() const = 0; // >0 means it's a bottom-up bitmap with origin at lower right
-			  // <0 means it's a top-down bitmap with origin at upper left
+                          // <0 means it's a top-down bitmap with origin at upper left
   virtual
   int BitsPerPixel() const = 0; // bits per pixel
   virtual
@@ -95,61 +94,61 @@ struct ON_WindowsBITMAPINFOHEADER
   unsigned int   biSize;          // DWORD = sizeof(BITMAPINFOHEADER)
   int            biWidth;         // LONG  = width (in pixels) of (decompressed) bitmap
   int            biHeight;        // LONG  = height (in pixels) of (decompressed) bitmap
-				  //         >0 means it's a bottom-up bitmap with origin
-				  //            in the lower left corner.
-				  //         <0 means it's a top-down bitmap with origin
-				  //            in the upper left corner.
+                                  //         >0 means it's a bottom-up bitmap with origin
+                                  //            in the lower left corner.
+                                  //         <0 means it's a top-down bitmap with origin
+                                  //            in the upper left corner.
   unsigned short biPlanes;        // WORD  = number of planes 
-				  //         (always 1 in current Windows versions)
+                                  //         (always 1 in current Windows versions)
   unsigned short biBitCount;      // WORD  = bits per pixel (0,1,4,8,16,24,32 are valid)
-				  //         1 See http://msdn.microsoft.com/default.asp  
-				  //         4 See http://msdn.microsoft.com/default.asp  
-				  //         8 The bitmap has a maximum of 256 colors, 
-				  //           and the bmiColors member contains up 
-				  //           to 256 entries. In this case, each byte
-				  //           in the array represents a single pixel. 
-				  //        16 See http://msdn.microsoft.com/default.asp  
-				  //        24 If biClrUsed=0 and biCompression=BI_RGB(0),
-				  //           then each 3-byte triplet in the bitmap 
-				  //           array represents the relative intensities
-				  //           of blue, green, and red, respectively, for
-				  //           a pixel. For other possibilities, see
-				  //           http://msdn.microsoft.com/default.asp  
-				  //        32 If biClrUsed=0 and biCompression=BI_RGB(0),
-				  //           then each 4-byte DWORD in the bitmap 
-				  //           array represents the relative intensities
-				  //           of blue, green, and red, respectively, for
-				  //           a pixel. The high byte in each DWORD is not
-				  //           used.  
-				  //           If biClrUsed=3, biCompression=BITFIELDS(3),
-				  //           biColors[0] = red mask (0x00FF0000), 
-				  //           biColors[1] = green mask (0x0000FF00), and
-				  //           biColors[2] = blue mask (0x000000FF),
-				  //           then tese masks are used with each 4-byte
-				  //           DWORD in the bitmap array to determine
-				  //           the pixel's relative intensities.                                 //           
-				  //           For other possibilities, see
-				  //           http://msdn.microsoft.com/default.asp  
+                                  //         1 See http://msdn.microsoft.com/default.asp  
+                                  //         4 See http://msdn.microsoft.com/default.asp  
+                                  //         8 The bitmap has a maximum of 256 colors, 
+                                  //           and the bmiColors member contains up 
+                                  //           to 256 entries. In this case, each byte
+                                  //           in the array represents a single pixel. 
+                                  //        16 See http://msdn.microsoft.com/default.asp  
+                                  //        24 If biClrUsed=0 and biCompression=BI_RGB(0),
+                                  //           then each 3-byte triplet in the bitmap 
+                                  //           array represents the relative intensities
+                                  //           of blue, green, and red, respectively, for
+                                  //           a pixel. For other possibilities, see
+                                  //           http://msdn.microsoft.com/default.asp  
+                                  //        32 If biClrUsed=0 and biCompression=BI_RGB(0),
+                                  //           then each 4-byte DWORD in the bitmap 
+                                  //           array represents the relative intensities
+                                  //           of blue, green, and red, respectively, for
+                                  //           a pixel. The high byte in each DWORD is not
+                                  //           used.  
+                                  //           If biClrUsed=3, biCompression=BITFIELDS(3),
+                                  //           biColors[0] = red mask (0x00FF0000), 
+                                  //           biColors[1] = green mask (0x0000FF00), and
+                                  //           biColors[2] = blue mask (0x000000FF),
+                                  //           then tese masks are used with each 4-byte
+                                  //           DWORD in the bitmap array to determine
+                                  //           the pixel's relative intensities.                                 //           
+                                  //           For other possibilities, see
+                                  //           http://msdn.microsoft.com/default.asp  
   unsigned int   biCompression;   // DWORD   Currently, Windows defines the following
-				  //         types of compression.
-				  //         =0  BI_RGB (no compression)
-				  //         =1  BI_RLE8 (run length encoded used for 8 bpp)
-				  //         =2  BI_RLE4 (run length encoded used for 4 bpp)
-				  //         =3  BI_BITFIELDS  Specifies that the bitmap is
-				  //             not compressed and that the color table 
-				  //             consists of three DWORD color masks that
-				  //             specify the red, green, and blue components,
-				  //             respectively, of each pixel. This is valid
-				  //             when used with 16- and 32-bit-per-pixel
-				  //             bitmaps.
-				  //         =4  BI_JPEG (not supported in Win 95/NT4)
-				  //
+                                  //         types of compression.
+                                  //         =0  BI_RGB (no compression)
+                                  //         =1  BI_RLE8 (run length encoded used for 8 bpp)
+                                  //         =2  BI_RLE4 (run length encoded used for 4 bpp)
+                                  //         =3  BI_BITFIELDS  Specifies that the bitmap is
+                                  //             not compressed and that the color table 
+                                  //             consists of three DWORD color masks that
+                                  //             specify the red, green, and blue components,
+                                  //             respectively, of each pixel. This is valid
+                                  //             when used with 16- and 32-bit-per-pixel
+                                  //             bitmaps.
+                                  //         =4  BI_JPEG (not supported in Win 95/NT4)
+                                  //
   unsigned int   biSizeImage;     // DWORD = bytes in image
   int            biXPelsPerMeter; // LONG
   int            biYPelsPerMeter; // LONG
   unsigned int   biClrUsed;       // DWORD = 0 or true length of bmiColors[] array.  If 0,
-				  //           then the value of biBitCount determines the
-				  //           length of the bmiColors[] array.
+                                  //           then the value of biBitCount determines the
+                                  //           length of the bmiColors[] array.
   unsigned int   biClrImportant;  // DWORD
 };
 
@@ -168,18 +167,18 @@ struct ON_WindowsBITMAPINFO
   // For details searh for "BITMAPINFO" at http://msdn.microsoft.com/default.asp 
   ON_WindowsBITMAPINFOHEADER bmiHeader;
   ON_WindowsRGBQUAD bmiColors[1]; // The "[1]" is for the compiler.  In
-				  // practice this array commonly has
-				  // length 0, 3, or 256 and a BITMAPINFO*
-				  // points to a contiguous piece of memory
-				  // that contains
-				  //
-				  //          BITMAPINFOHEADER
-				  //          RGBQUAD[length determined by flags]
-				  //          unsigned char[biSizeImage]
-				  //
-				  // See the ON_WindowsBITMAPINFOHEADER comments
-				  // and http://msdn.microsoft.com/default.asp
-				  // for more details.
+                                  // practice this array commonly has
+                                  // length 0, 3, or 256 and a BITMAPINFO*
+                                  // points to a contiguous piece of memory
+                                  // that contains
+                                  //
+                                  //          BITMAPINFOHEADER
+                                  //          RGBQUAD[length determined by flags]
+                                  //          unsigned char[biSizeImage]
+                                  //
+                                  // See the ON_WindowsBITMAPINFOHEADER comments
+                                  // and http://msdn.microsoft.com/default.asp
+                                  // for more details.
 };
 
 #endif
@@ -203,10 +202,10 @@ public:
   void Destroy();
 
   bool Create( 
-	 int, // width
-	 int, // height
-	 int  // bits per pixel ( 1, 2, 4, 8, 16, 24, or 32 )
-	 );
+         int, // width
+         int, // height
+         int  // bits per pixel ( 1, 2, 4, 8, 16, 24, or 32 )
+         );
 
   /*
   Description:
@@ -214,23 +213,23 @@ public:
     initialized.
   Parameters:
     text_log - [in] if the object is not valid and text_log
-	is not NULL, then a brief englis description of the
-	reason the object is not valid is appened to the log.
-	The information appended to text_log is suitable for 
-	low-level debugging purposes by programmers and is 
-	not intended to be useful as a high level user 
-	interface tool.
+        is not NULL, then a brief englis description of the
+        reason the object is not valid is appened to the log.
+        The information appended to text_log is suitable for 
+        low-level debugging purposes by programmers and is 
+        not intended to be useful as a high level user 
+        interface tool.
   Returns:
     @untitled table
-    TRUE     object is valid
-    FALSE    object is invalid, uninitialized, etc.
+    true     object is valid
+    false    object is invalid, uninitialized, etc.
   Remarks:
     Overrides virtual ON_Object::IsValid
   */
-  BOOL IsValid( ON_TextLog* text_log = NULL ) const;
+  ON_BOOL32 IsValid( ON_TextLog* text_log = NULL ) const;
 
-  BOOL Write( ON_BinaryArchive& ) const; // writes compressed image
-  BOOL Read( ON_BinaryArchive& );        // reads compressed image
+  ON_BOOL32 Write( ON_BinaryArchive& ) const; // writes compressed image
+  ON_BOOL32 Read( ON_BinaryArchive& );        // reads compressed image
   bool WriteCompressed( ON_BinaryArchive& ) const;
   bool ReadCompressed( ON_BinaryArchive& );
   bool WriteUncompressed( ON_BinaryArchive& ) const;
@@ -238,7 +237,7 @@ public:
 
   int Width() const;
   int Height() const; // >0 means it's a bottom-up bitmap with origin at lower right
-		      // <0 means it's a top-down bitmap with origin at upper left
+                      // <0 means it's a top-down bitmap with origin at upper left
 
   int PaletteColorCount() const; // number of colors in palette
   int SizeofPalette() const;     // number of bytes in palette
@@ -265,7 +264,7 @@ public:
     const unsigned char* // value of Bits( j )
     ) const;
 
-  //BOOL SetColor( // sets entire map to specified color 
+  //ON_BOOL32 SetColor( // sets entire map to specified color 
   //       ON_Color
   //       );
 
@@ -281,8 +280,8 @@ public:
     If the current Windows BITMAPINFO is identical to ON_WindowsBITMAPINFO,
     then the result of this call is identical to
 
-	 int color_count = number of colors in bitmap's palette;
-	 ON_WindowsBitmap::Create( &src, &src.bmiColors[color_count], true ).
+         int color_count = number of colors in bitmap's palette;
+         ON_WindowsBitmap::Create( &src, &src.bmiColors[color_count], true ).
 
   See Also:
     ON_WindowsBitmap::Create    
@@ -331,53 +330,53 @@ public:
     bmi  - [in] valid BITMAPINFO
     bits - [in] bits for BITMAPINFO
     bCopy - [in] If true, the bmi and bits are copied into a contiguous
-		 bitmap that will be deleted by ~ON_WindowsBitmap.
-		 If false, the m_bmi and m_bits pointers on this class
-		 are simply set to bmi and bits.  In this case,
-		 ~ON_WindowsBitmap will not free the bmi or bits
-		 memory.
+                 bitmap that will be deleted by ~ON_WindowsBitmap.
+                 If false, the m_bmi and m_bits pointers on this class
+                 are simply set to bmi and bits.  In this case,
+                 ~ON_WindowsBitmap will not free the bmi or bits
+                 memory.
 
   Example:
 
-	  ON_BinaryArchive archive = ...;
-	  BITMAPINFO* bmi = 0;
-	  unsigned char* bits = 0;
-	  int color_count = ...; // number of colors in palette
+          ON_BinaryArchive archive = ...;
+          BITMAPINFO* bmi = 0;
+          unsigned char* bits = 0;
+          int color_count = ...; // number of colors in palette
 
-	  int sizeof_palette = sizeof(bmi->bmiColors[0]) * color_count;
+          int sizeof_palette = sizeof(bmi->bmiColors[0]) * color_count;
 
-	  BITMAPINFO* bmi = (LPBITMAPINFO)calloc( 1, sizeof(*bmi) + sizeof_palette );
+          BITMAPINFO* bmi = (LPBITMAPINFO)calloc( 1, sizeof(*bmi) + sizeof_palette );
 
-	  bmi->bmiHeader.biSize          = sizeof(bmi->bmiHeader);
-	  bmi->bmiHeader.biWidth         = width;
-	  bmi->bmiHeader.biHeight        = height;
-	  bmi->bmiHeader.biPlanes        = 1;
-	  bmi->bmiHeader.biBitCount      = (USHORT)color_depth;
-	  bmi->bmiHeader.biCompression   = BI_RGB;                  
-	  bmi->bmiHeader.biXPelsPerMeter = 0;
-	  bmi->bmiHeader.biYPelsPerMeter = 0;
-	  bmi->bmiHeader.biClrUsed       = 0;
-	  bmi->bmiHeader.biClrImportant  = 0;
-	  bmi->bmiHeader.biSizeImage     = GetStorageSize();
+          bmi->bmiHeader.biSize          = sizeof(bmi->bmiHeader);
+          bmi->bmiHeader.biWidth         = width;
+          bmi->bmiHeader.biHeight        = height;
+          bmi->bmiHeader.biPlanes        = 1;
+          bmi->bmiHeader.biBitCount      = (USHORT)color_depth;
+          bmi->bmiHeader.biCompression   = BI_RGB;                  
+          bmi->bmiHeader.biXPelsPerMeter = 0;
+          bmi->bmiHeader.biYPelsPerMeter = 0;
+          bmi->bmiHeader.biClrUsed       = 0;
+          bmi->bmiHeader.biClrImportant  = 0;
+          bmi->bmiHeader.biSizeImage     = GetStorageSize();
 
-	  // initialize palette
-	  ...
+          // initialize palette
+          ...
 
-	  HBITMAP hbm = ::CreateDIBSection( NULL, bmi, ..., (LPVOID*)&bits, NULL, 0);
+          HBITMAP hbm = ::CreateDIBSection( NULL, bmi, ..., (LPVOID*)&bits, NULL, 0);
 
-	  {
-	    // Use ON_WindowsBitmap to write a compressed bitmap to 
-	    // archive.  Does not modify bmi or bits.
-	    ON_WindowsBitmap onbm;
-	    onbm.Create(bmi,bit,false);
-	    onbm.Write( arcive );
-	  }
+          {
+            // Use ON_WindowsBitmap to write a compressed bitmap to 
+            // archive.  Does not modify bmi or bits.
+            ON_WindowsBitmap onbm;
+            onbm.Create(bmi,bit,false);
+            onbm.Write( arcive );
+          }
 
   */
   bool Create( const BITMAPINFO* bmi, 
-	       const unsigned char* bits,
-	       bool bCopy
-	     );
+               const unsigned char* bits,
+               bool bCopy
+             );
 
 #endif
 
@@ -399,9 +398,9 @@ public:
 
 private:
   int m_bFreeBMI; // 0 m_bmi and m_bits are not freed by ON_WindowsBitmap::Destroy
-		  // 1 m_bmi  memory is freed by ON_WindowsBitmap::Destroy
-		  // 2 m_bits memory is freed by ON_WindowsBitmap::Destroy
-		  // 3 m_bmi and m_bits memory is freed by ON_WindowsBitmap::Destroy                    
+                  // 1 m_bmi  memory is freed by ON_WindowsBitmap::Destroy
+                  // 2 m_bits memory is freed by ON_WindowsBitmap::Destroy
+                  // 3 m_bmi and m_bits memory is freed by ON_WindowsBitmap::Destroy                    
 };
 
 /*
@@ -415,8 +414,8 @@ class ON_CLASS ON_WindowsBitmapEx : public ON_WindowsBitmap
 public:
   ON_WindowsBitmapEx();
   ~ON_WindowsBitmapEx();
-  BOOL Write( ON_BinaryArchive& ) const; // writes compressed image
-  BOOL Read( ON_BinaryArchive& );        // reads compressed image
+  ON_BOOL32 Write( ON_BinaryArchive& ) const; // writes compressed image
+  ON_BOOL32 Read( ON_BinaryArchive& );        // reads compressed image
 };
 
 class ON_CLASS ON_EmbeddedBitmap : public ON_Bitmap
@@ -429,10 +428,10 @@ public:
   void Destroy();
   void Create( int sizeof_buffer );
 
-  BOOL IsValid( ON_TextLog* text_log = NULL ) const;
+  ON_BOOL32 IsValid( ON_TextLog* text_log = NULL ) const;
 
-  BOOL Write( ON_BinaryArchive& ) const;
-  BOOL Read( ON_BinaryArchive& );
+  ON_BOOL32 Write( ON_BinaryArchive& ) const;
+  ON_BOOL32 Read( ON_BinaryArchive& );
 
   int Width() const;
   int Height() const;

@@ -1,4 +1,5 @@
 #include "../opennurbs.h"
+#include "../opennurbs_staticlib_linking_pragmas.h"
 
 // This example demonstrates how to attach customized "user data"
 // to any class derived from ON_Object.  In particular, you can
@@ -27,20 +28,20 @@ public:
   // override ON_UserData::Archive(), ON_Object::Write() and 
   // ON_Object::Read()
 
-  BOOL Write(
-	 ON_BinaryArchive&  // serialize definition to binary archive
+  ON_BOOL32 Write(
+         ON_BinaryArchive&  // serialize definition to binary archive
        ) const;
 
-  BOOL Read(
-	 ON_BinaryArchive&  // restore definition from binary archive
+  ON_BOOL32 Read(
+         ON_BinaryArchive&  // restore definition from binary archive
        );
 
   // Archive() must return true in order for user data to get saved
   // in a file.
-  BOOL Archive() const;
+  ON_BOOL32 Archive() const;
   
   // You must override ON_UserData::GetDescription().
-  BOOL GetDescription( ON_wString& );
+  ON_BOOL32 GetDescription( ON_wString& );
 
   // If your user data is attached to some type of ON_Geometry and you
   // want the user data to be transformed when the parent ON_Geometry
@@ -51,7 +52,7 @@ public:
   // At appropriate times, you can inspect ON_UserData::m_userdata_xform
   // and reset it to the identity after you've taken whatever actions
   // you deem to be appropriate.
-  BOOL Transform( const ON_Xform& );
+  ON_BOOL32 Transform( const ON_Xform& );
 
   // possible information you might want to attach.
   int       m_my_int;
@@ -93,7 +94,7 @@ MyUserData::MyUserData()
 }
 
 MyUserData::MyUserData(const MyUserData& src) 
-	  : ON_UserData(src) // critical - be sure to call base class copy constructor
+          : ON_UserData(src) // critical - be sure to call base class copy constructor
 {
   // The base class copy constructor copies
   // m_userdata_uuid, m_application_id, m_userdata_copycount, 
@@ -122,15 +123,15 @@ MyUserData::~MyUserData()
 {
 }
 
-BOOL MyUserData::Archive() const
+ON_BOOL32 MyUserData::Archive() const
 {
   return true;
 }
 
 
-BOOL MyUserData::Read( ON_BinaryArchive& file )
+ON_BOOL32 MyUserData::Read( ON_BinaryArchive& file )
 {
-  BOOL rc = TRUE;
+  ON_BOOL32 rc = true;
   if ( rc ) 
     rc = file.ReadInt(&m_my_int);
   if ( rc ) 
@@ -140,9 +141,9 @@ BOOL MyUserData::Read( ON_BinaryArchive& file )
   return rc;
 }
 
-BOOL MyUserData::Write( ON_BinaryArchive& file ) const
+ON_BOOL32 MyUserData::Write( ON_BinaryArchive& file ) const
 {
-  BOOL rc = TRUE;
+  ON_BOOL32 rc = true;
   if ( rc ) 
     rc = file.WriteInt(m_my_int);
   if ( rc ) 
@@ -152,13 +153,13 @@ BOOL MyUserData::Write( ON_BinaryArchive& file ) const
   return rc;
 }
 
-BOOL MyUserData::GetDescription( ON_wString& s )
+ON_BOOL32 MyUserData::GetDescription( ON_wString& s )
 {
   s = L"my user data with point, line, and string";
-  return TRUE;
+  return true;
 }
 
-BOOL MyUserData::Transform( const ON_Xform& xform )
+ON_BOOL32 MyUserData::Transform( const ON_Xform& xform )
 {
   // Optional: call the ON_UserData::Transform() if you want the
   // ON_UserData::m_userdata_xform value to be updated.
@@ -166,7 +167,7 @@ BOOL MyUserData::Transform( const ON_Xform& xform )
 
 
   // Transform any geometry you have in your class.
-  BOOL rc = m_my_line.Transform(xform);
+  ON_BOOL32 rc = m_my_line.Transform(xform);
   return rc;
 }
 
@@ -178,7 +179,9 @@ static void write_file( const char* filename, const ON_Point& point )
   mo.m_object = &point;
   mo.m_bDeleteObject = false;
 
-  int version = 4; // 2, 3 or 4
+  int version = 4; // File can be read by Rhino 4 and Rhino 5
+  //int version = 5; // File can be read by Rhino 5
+
   model.Polish();
   model.Write( filename, version, "example_userdata.cpp file" );
 }

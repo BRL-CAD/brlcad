@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -62,7 +61,7 @@ public:
     Description:
       Tests that name is set and there is at least one non-zero length segment
   */
-  BOOL IsValid( ON_TextLog* text_log = NULL ) const;
+  ON_BOOL32 IsValid( ON_TextLog* text_log = NULL ) const;
 
   void Dump( ON_TextLog& ) const; // for debugging
 
@@ -70,16 +69,16 @@ public:
     Description:
       Write to file
   */
-  BOOL Write(
-	 ON_BinaryArchive&  // serialize definition to binary archive
+  ON_BOOL32 Write(
+         ON_BinaryArchive&  // serialize definition to binary archive
        ) const;
 
   /*
     Description:
       Read from file
   */
-  BOOL Read(
-	 ON_BinaryArchive&  // restore definition from binary archive
+  ON_BOOL32 Read(
+         ON_BinaryArchive&  // restore definition from binary archive
        );
 
   // virtual

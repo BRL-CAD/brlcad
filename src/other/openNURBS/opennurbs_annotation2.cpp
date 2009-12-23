@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -15,6 +14,237 @@
 */
 
 #include "opennurbs.h"
+
+
+// Added for v5 - 4-20-07 LW
+ON_OBJECT_IMPLEMENT(ON_DimensionExtra,ON_UserData,"8AD5B9FC-0D5C-47fb-ADFD-74C28B6F661E");
+
+ON_DimensionExtra::ON_DimensionExtra()
+{
+  m_userdata_uuid = ON_DimensionExtra::m_ON_DimensionExtra_class_id.Uuid();
+  m_application_uuid = ON_opennurbs5_id; // opennurbs.dll reads/writes this userdata
+                                         // The id must be the version 5 id because
+                                         // V6 SaveAs V5 needs to work, but SaveAs
+                                         // V4 should not write this userdata.
+  m_userdata_copycount = 1;
+  SetDefaults();
+}
+
+ON_DimensionExtra::~ON_DimensionExtra()
+{
+}
+
+void ON_DimensionExtra::SetDefaults()
+{
+  m_partent_uuid = ON_nil_uuid;
+  
+  m_arrow_position = 0;
+  m_text_rects = 0;
+}
+
+void ON_DimensionExtra::Dump( ON_TextLog& text_log ) const
+{
+  // do nothing
+}
+
+unsigned int ON_DimensionExtra::SizeOf() const
+{
+  unsigned int sz = ON_UserData::SizeOf();
+  sz += sizeof(*this) - sizeof(ON_UserData);
+  return sz;
+}
+
+ON_BOOL32 ON_DimensionExtra::Write(ON_BinaryArchive& archive) const
+{
+  bool rc = archive.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK,0,0);
+
+  if(rc) rc = archive.WriteUuid( m_partent_uuid);
+  if(rc) rc = archive.WriteInt( m_arrow_position);
+  if(rc)
+  {
+    if( m_text_rects)
+    {
+      rc = archive.WriteInt( 7);
+      rc = archive.WriteInt( 28, (const int*)m_text_rects);
+    }
+    else
+      rc = archive.WriteInt( 0);
+
+  }
+
+  if(!archive.EndWrite3dmChunk())
+    rc = false;
+
+  return rc;
+}
+
+ON_BOOL32 ON_DimensionExtra::Read(ON_BinaryArchive& archive)
+{
+  int major_version = 0;
+  int minor_version = 0;
+  bool rc = archive.BeginRead3dmChunk(TCODE_ANONYMOUS_CHUNK,&major_version,&minor_version);
+  if(!rc)
+    return false;
+  if(major_version != 0)
+    return false;
+
+  if(rc) rc = archive.ReadUuid(m_partent_uuid);
+  if(rc) rc = archive.ReadInt(&m_arrow_position);
+
+  int rect_count = 0;
+  if(rc) rc = archive.ReadInt( &rect_count);
+  if( rc && rect_count)
+    rc = archive.ReadInt( rect_count, (int*)m_text_rects);
+
+  if ( !archive.EndRead3dmChunk() )
+    rc = false;
+
+  return rc;
+}
+
+ON_BOOL32 ON_DimensionExtra::GetDescription( ON_wString& description)
+{
+  description.Format( "Userdata extension of ON_Dimensions");
+  return true;
+}
+
+ON_BOOL32 ON_DimensionExtra::Archive() const
+{
+  // true to write to file
+  return false;
+}
+
+
+ON_UUID ON_DimensionExtra::ParentUUID() const
+{
+  return m_partent_uuid;
+}
+
+void ON_DimensionExtra::SetParentUUID( ON_UUID partent_uuid)
+{
+  m_partent_uuid = partent_uuid;
+}
+
+int ON_DimensionExtra::ArrowPosition() const
+{
+  return m_arrow_position;
+}
+
+void ON_DimensionExtra::SetArrowPosition( int position)
+{
+  if( position > 0)
+    m_arrow_position = 1;
+  else if( position < 0)
+    m_arrow_position = -1;
+  else
+    m_arrow_position = 0;
+}
+/*
+const wchar_t* ON_DimensionExtra::ToleranceUpperString() const
+{
+  return m_upper_string;
+}
+
+ON_wString& ON_DimensionExtra::ToleranceUpperString()
+{
+  return m_upper_string;
+}
+
+void ON_DimensionExtra::SetToleranceUpperString( const wchar_t* upper_string)
+{
+  m_upper_string = upper_string;
+}
+
+void ON_DimensionExtra::SetToleranceUpperString( ON_wString& upper_string)
+{
+  m_upper_string = upper_string;
+}
+
+const wchar_t* ON_DimensionExtra::ToleranceLowerString() const
+{
+  return m_lower_string;
+}
+
+ON_wString& ON_DimensionExtra::ToleranceLowerString()
+{
+  return m_lower_string;
+}
+
+void ON_DimensionExtra::SetToleranceLowerString( const wchar_t* lower_string)
+{
+  m_lower_string = lower_string;
+}
+
+void ON_DimensionExtra::SetToleranceLowerString( ON_wString& lower_string)
+{
+  m_lower_string = lower_string;
+}
+
+
+
+const wchar_t* ON_DimensionExtra::AlternateString() const
+{
+  return m_alt_string;
+}
+
+ON_wString& ON_DimensionExtra::AlternateString()
+{
+  return m_alt_string;
+}
+
+void ON_DimensionExtra::SetAlternateString( const wchar_t* alt_string)
+{
+  m_alt_string = alt_string;
+}
+
+void ON_DimensionExtra::SetAlternateString( ON_wString& alt_string)
+{
+  m_alt_string = alt_string;
+}
+
+const wchar_t* ON_DimensionExtra::AlternateToleranceUpperString() const
+{
+  return m_alt_upper_string;
+}
+
+ON_wString& ON_DimensionExtra::AlternateToleranceUpperString()
+{
+  return m_alt_upper_string;
+}
+
+void ON_DimensionExtra::SetAlternateToleranceUpperString( const wchar_t* upper_string)
+{
+  m_alt_upper_string = upper_string;
+}
+
+void ON_DimensionExtra::SetAlternateToleranceUpperString( ON_wString& upper_string)
+{
+  m_alt_upper_string = upper_string;
+}
+
+const wchar_t* ON_DimensionExtra::AlternateToleranceLowerString() const
+{
+  return m_alt_lower_string;
+}
+
+ON_wString& ON_DimensionExtra::AlternateToleranceLowerString()
+{
+  return m_alt_lower_string;
+}
+
+void ON_DimensionExtra::SetAlternateToleranceLowerString( const wchar_t* lower_string)
+{
+  m_alt_lower_string = lower_string;
+}
+
+void ON_DimensionExtra::SetAlternateToleranceLowerString( ON_wString& lower_string)
+{
+  m_alt_lower_string = lower_string;
+}
+*/
+
+//--------------------
+
 
 ON_VIRTUAL_OBJECT_IMPLEMENT( ON_Annotation2,       ON_Geometry,    "8D820224-BC6C-46b4-9066-BF39CC13AEFB");
 ON_OBJECT_IMPLEMENT( ON_LinearDimension2,  ON_Annotation2, "BD57F33B-A1B2-46e9-9C6E-AF09D30FFDDE");
@@ -48,6 +278,7 @@ void ON_Annotation2::Create()
   m_userpositionedtext = false;
   m_index = -1;
   m_textheight = 1.0;
+  m_justification = 0;
 }
 
 void ON_Annotation2::Destroy()
@@ -58,6 +289,7 @@ void ON_Annotation2::Destroy()
   m_type = ON::dtNothing;
   m_plane = ON_xy_plane;
   m_userpositionedtext = false;
+  m_justification = 0;
 }
 
 void ON_Annotation2::EmergencyDestroy()
@@ -79,11 +311,7 @@ ON_Annotation2::~ON_Annotation2()
 bool ON_Annotation2::EvaluatePoint( const ON_ObjRef& objref, ON_3dPoint& P) const
 {
   bool rc = false;
-
-  // Use int in this switch because lots of cases are not
-  // handled and gcc -Wall complains about each one.
-  int ci_type = objref.m_component_index.m_type;
-  switch( ci_type )
+  switch( objref.m_component_index.m_type )
   {
   case ON_COMPONENT_INDEX::dim_linear_point:
   case ON_COMPONENT_INDEX::dim_radial_point:
@@ -94,14 +322,14 @@ bool ON_Annotation2::EvaluatePoint( const ON_ObjRef& objref, ON_3dPoint& P) cons
       ON_2dPoint uv = Point(objref.m_component_index.m_index);
       if ( uv.IsValid() )
       {
-	P = m_plane.PointAt(uv.x,uv.y);
-	rc = true;
+        P = m_plane.PointAt(uv.x,uv.y);
+        rc = true;
       }
     }
     break;
-    default:
-      /* unsupported */
-      break;
+  default:
+    // other enum values skipped on purpose
+    break;
   }
   if (!rc)
   {
@@ -152,7 +380,7 @@ ON_Annotation2::ON_Annotation2(const ON_Annotation& src)
 }
 
 
-BOOL ON_Annotation2::IsValid( ON_TextLog* text_log ) const
+ON_BOOL32 ON_Annotation2::IsValid( ON_TextLog* text_log ) const
 {
   if ( !m_plane.IsValid() )
   {
@@ -172,7 +400,7 @@ BOOL ON_Annotation2::IsValid( ON_TextLog* text_log ) const
     {
       if ( text_log )
       {
-	text_log->Print("ON_Annotation2 - m_points[%d] is not valid.\n");
+        text_log->Print("ON_Annotation2 - m_points[%d] is not valid.\n");
       }
       return false;
     }
@@ -202,709 +430,15 @@ BOOL ON_Annotation2::IsValid( ON_TextLog* text_log ) const
   return true;
 }
 
-BOOL ON_LinearDimension2::IsValid( ON_TextLog* text_log ) const
-{
-  if ( m_type != ON::dtDimLinear && m_type != ON::dtDimAligned )
-  {
-    if ( text_log )
-    {
-      text_log->Print("ON_LinearDimension2 - m_type !=  ON::dtDimLinear or ON::dtDimAligned.\n");
-    }
-    return false;
-  }
-
-  if ( !ON_Annotation2::IsValid( text_log ))
-  {
-    if ( text_log )
-    {
-      text_log->Print("ON_LinearDimension2 - invalid ON_Annotation2 base class.\n");
-    }
-    return false;
-  }
-
-  if ( m_points.Count() != 5 )
-  {
-    if ( text_log )
-    {
-      text_log->Print("ON_LinearDimension2 - m_points.Count() = %d (should be 5).\n",m_points.Count());
-    }
-    return false;
-  }
-
-  if ( m_points[1].x != m_points[0].x )
-  {
-    if ( text_log )
-    {
-      text_log->Print("ON_LinearDimension2 - m_points[1].x = %g != %g = m_points[0].x (should be equal)\n",
-		      m_points[1].x, m_points[0].x
-		      );
-    }
-    return false;
-  }
-
-  if ( m_points[3].x != m_points[2].x )
-  {
-    if ( text_log )
-    {
-      text_log->Print("ON_LinearDimension2 - m_points[3].x = %g != %g = m_points[2].x\n",
-		      m_points[3].x, m_points[2].x
-		     );
-    }
-    return false;
-  }
-
-  if ( m_points[3].y != m_points[1].y )
-  {
-    if ( text_log )
-    {
-      text_log->Print("ON_LinearDimension2 - m_points[3].y = %g != %g = m_points[1].y\n",
-		      m_points[3].y, m_points[1].y
-		      );
-    }
-    return false;
-  }
-
-  return true;
-}
-
-
-BOOL ON_RadialDimension2::IsValid( ON_TextLog* text_log ) const
-{
-  if ( m_type != ON::dtDimRadius && m_type != ON::dtDimDiameter  )
-  {
-    if ( text_log )
-    {
-      text_log->Print("ON_AngularDimension2 - m_type !=  ON::dtDimRadius or ON::dtDimDiameter\n");
-    }
-    return false;
-  }
-
-  if ( !ON_Annotation2::IsValid( text_log ))
-  {
-    if ( text_log )
-    {
-      text_log->Print("ON_RadialDimension2 - invalid ON_Annotation2 base class.\n");
-    }
-    return false;
-  }
-
-  if ( 4 != m_points.Count() )
-  {
-    if ( text_log )
-    {
-      text_log->Print("ON_RadialDimension2 - m_points.Count() = %d (should be 4 or 5)\n", m_points.Count() );
-    }
-    return false;
-  }
-
-  return true;
-}
-
-
-BOOL ON_AngularDimension2::IsValid( ON_TextLog* text_log ) const
-{
-  if ( m_type != ON::dtDimAngular )
-  {
-    if ( text_log )
-    {
-      text_log->Print("ON_AngularDimension2 - m_type !=  ON::dtDimAngular\n");
-    }
-    return false;
-  }
-
-  if ( !ON_Annotation2::IsValid( text_log ))
-  {
-    if ( text_log )
-    {
-      text_log->Print("ON_AngularDimension2 - invalid ON_Annotation2 base class.\n");
-    }
-    return false;
-  }
-
-  if ( 4 != m_points.Count() )
-  {
-    if ( text_log )
-    {
-      text_log->Print("ON_AngularDimension2 - m_points.Count() = %d (should be 4)\n", m_points.Count() );
-    }
-    return false;
-  }
-
-  if ( !ON_IsValid(m_angle) || m_angle <= 0.0 || m_angle > 2.0*ON_PI )
-  {
-    if ( text_log )
-    {
-      text_log->Print("ON_AngularDimension2 - bogus m_angle = %g\n",m_angle);
-    }
-    return false;
-  }
-
-  if ( !ON_IsValid(m_radius) || m_radius <= 0.0 )
-  {
-    if ( text_log )
-    {
-      text_log->Print("ON_AngularDimension2 - bogus m_radius = %g\n",m_radius);
-    }
-    return false;
-  }
-
-  if ( 0.0 == m_points[1].x && 0.0 == m_points[1].y )
-  {
-    if ( text_log )
-    {
-      text_log->Print("ON_AngularDimension2 - angle dim m_points[1] = center (should be on start ray).\n");
-    }
-    return false;
-  }
-
-  if ( 0.0 == m_points[2].x && 0.0 == m_points[2].y )
-  {
-    if ( text_log )
-    {
-      text_log->Print("ON_AngularDimension2 - angle dim m_points[2] = center (should be on end ray).\n");
-    }
-    return false;
-  }
-
-  if ( 0.0 == m_points[3].x && 0.0 == m_points[3].y )
-  {
-    if ( text_log )
-    {
-      text_log->Print("ON_AngularDimension2 - angle dim m_points[3] = center (should be on interior of arc).\n");
-    }
-    return false;
-  }
-
-  double a1 = atan2(m_points[1].y, m_points[1].x);
-  double a2 = atan2(m_points[2].y, m_points[2].x);
-  double a3 = atan2(m_points[3].y, m_points[3].x);
-  if ( a1 < 0.0 )
-    a1 += 2.0*ON_PI;
-  while ( a2 <= a1 )
-    a2 += 2.0*ON_PI;
-  while ( a3 <= a1 )
-    a3 += 2.0*ON_PI;
-
-  if ( fabs(m_angle - (a2-a1)) > ON_ZERO_TOLERANCE + m_angle*ON_SQRT_EPSILON )
-  {
-    if ( text_log )
-    {
-      text_log->Print("ON_AngularDimension2 - m_angle = %g != %g = (end angle - start angle)\n",m_angle,a2-a1);
-    }
-    return false;
-  }
-
-  double r = ON_2dVector(m_points[3]).Length();
-  if ( fabs(r - m_radius) > ON_ZERO_TOLERANCE + m_radius*ON_SQRT_EPSILON )
-  {
-    if ( text_log )
-    {
-      text_log->Print("ON_AngularDimension2 - m_radius = %g != %g = |m_point[3])|\n",m_radius,r);
-    }
-    return false;
-  }
-  
-
-  if ( a3 >= a2 )
-  {
-    if ( text_log )
-    {
-      text_log->Print("ON_AngularDimension2 - angle dim m_points[3] = not on arc interior.\n");
-    }
-    return false;
-  }
-
-  return true;
-}
-
-
-
-BOOL ON_TextEntity2::IsValid( ON_TextLog* text_log ) const
-{
-  if ( m_type != ON::dtTextBlock )
-  {
-    if ( text_log )
-    {
-      text_log->Print("ON_TextEntity2 - m_type !=  ON::dtTextBlock\n");
-    }
-    return false;
-  }
-
-  if ( !ON_Annotation2::IsValid( text_log ))
-  {
-    if ( text_log )
-    {
-      text_log->Print("ON_TextEntity2 - invalid ON_Annotation2 base class.\n");
-    }
-    return false;
-  }
-
-  if ( 0 != m_points.Count() )
-  {
-    if ( text_log )
-    {
-      text_log->Print("ON_TextEntity2 - m_points.Count() = %d (should be 0)\n", m_points.Count() );
-    }
-    return false;
-  }
-
-  return true;
-}
-
-BOOL ON_Leader2::IsValid( ON_TextLog* text_log ) const
-{
-  if ( m_type != ON::dtLeader )
-  {
-    if ( text_log )
-    {
-      text_log->Print("ON_Leader2 - m_type !=  ON::dtLeader\n");
-    }
-    return false;
-  }
-
-  if ( !ON_Annotation2::IsValid( text_log ))
-  {
-    if ( text_log )
-    {
-      text_log->Print("ON_Leader2 - invalid ON_Annotation2 base class.\n");
-    }
-    return false;
-  }
-
-  if ( m_points.Count() < 2 )
-  {
-    if ( text_log )
-    {
-      text_log->Print("ON_Leader2 - m_points.Count() = %d (should be >= 2)\n", m_points.Count() );
-    }
-    return false;
-  }
-
-  return true;
-}
-
-
-BOOL ON_LinearDimension2::GetBBox(
-	double* boxmax,
-	double* boxmin,
-	BOOL bGrowBox
-	) const
-{
-  ON_BoundingBox bbox;
-  if ( bGrowBox )
-  {
-    bbox.m_min.x = boxmin[0]; 
-    bbox.m_min.y = boxmin[1]; 
-    bbox.m_min.z = boxmin[2];
-    bbox.m_max.x = boxmax[0]; 
-    bbox.m_max.y = boxmax[1]; 
-    bbox.m_max.z = boxmax[2];
-    if ( !bbox.IsValid() )
-    {
-      bbox.Destroy();
-      bGrowBox = false;
-    }
-  }
-
-  if ( 5 == m_points.Count() )
-  {
-    ON_3dPointArray P(5);
-    ON_2dPoint uv;
-    if ( m_userpositionedtext )
-    {
-      uv = m_points[0]; // point someplace in text
-      P.Append( m_plane.PointAt(uv.x,uv.y) );
-    }
-
-    P.Append( m_plane.origin );
-
-    uv.x = 0.0;
-    uv.y = m_points[1].y;
-    P.Append( m_plane.PointAt(uv.x,uv.y) );
-
-    uv = m_points[2];
-    P.Append( m_plane.PointAt(uv.x,uv.y) );
-
-    uv.y = m_points[1].y;
-    P.Append( m_plane.PointAt(uv.x,uv.y) );
-  }
-
-  if ( bGrowBox )
-  {
-    boxmin[0] = bbox.m_min.x; 
-    boxmin[1] = bbox.m_min.y; 
-    boxmin[2] = bbox.m_min.z; 
-    boxmax[0] = bbox.m_max.x; 
-    boxmax[1] = bbox.m_max.y; 
-    boxmax[2] = bbox.m_max.z; 
-  }
-
-  return bGrowBox;
-}
-
-
-
-
-BOOL ON_RadialDimension2::GetBBox(
-	double* boxmax,
-	double* boxmin,
-	BOOL bGrowBox
-	) const
-{
-  ON_BoundingBox bbox;
-  if ( bGrowBox )
-  {
-    bbox.m_min.x = boxmin[0]; 
-    bbox.m_min.y = boxmin[1]; 
-    bbox.m_min.z = boxmin[2];
-    bbox.m_max.x = boxmax[0]; 
-    bbox.m_max.y = boxmax[1]; 
-    bbox.m_max.z = boxmax[2];
-    if ( !bbox.IsValid() )
-    {
-      bbox.Destroy();
-      bGrowBox = false;
-    }
-  }
-
-  if ( 4 == m_points.Count() )
-  {
-    ON_3dPointArray P(4);
-    ON_2dPoint uv;
-    if ( m_userpositionedtext )
-    {
-      uv = m_points[0]; // point someplace in text
-      P.Append( m_plane.PointAt(uv.x,uv.y) );
-    }
-
-    P.Append( m_plane.origin ); // + sign at center of dimension
-
-    uv = m_points[1];
-    P.Append( m_plane.PointAt(uv.x,uv.y) );
-
-    uv = m_points[2];
-    P.Append( m_plane.PointAt(uv.x,uv.y) );
-
-    uv = m_points[3];
-    P.Append( m_plane.PointAt(uv.x,uv.y) );
-  }
-
-  if ( bGrowBox )
-  {
-    boxmin[0] = bbox.m_min.x; 
-    boxmin[1] = bbox.m_min.y; 
-    boxmin[2] = bbox.m_min.z; 
-    boxmax[0] = bbox.m_max.x; 
-    boxmax[1] = bbox.m_max.y; 
-    boxmax[2] = bbox.m_max.z; 
-  }
-
-  return bGrowBox;
-}
-
-
-
-
-
-BOOL ON_AngularDimension2::GetBBox(
-	double* boxmax,
-	double* boxmin,
-	BOOL bGrowBox
-	) const
-{
-  ON_BoundingBox bbox;
-  if ( bGrowBox )
-  {
-    bbox.m_min.x = boxmin[0]; 
-    bbox.m_min.y = boxmin[1]; 
-    bbox.m_min.z = boxmin[2];
-    bbox.m_max.x = boxmax[0]; 
-    bbox.m_max.y = boxmax[1]; 
-    bbox.m_max.z = boxmax[2];
-    if ( !bbox.IsValid() )
-    {
-      bbox.Destroy();
-      bGrowBox = false;
-    }
-  }
-
-  ON_Arc arc;
-  if ( GetArc(arc) )
-  {
-    if ( arc.GetTightBoundingBox(bbox,bGrowBox?true:false,0) )
-      bGrowBox = true;    
-  }
-
-  if ( bGrowBox )
-  {
-    boxmin[0] = bbox.m_min.x; 
-    boxmin[1] = bbox.m_min.y; 
-    boxmin[2] = bbox.m_min.z; 
-    boxmax[0] = bbox.m_max.x; 
-    boxmax[1] = bbox.m_max.y; 
-    boxmax[2] = bbox.m_max.z; 
-  }
-
-  return bGrowBox;
-}
-
-
-
-
-
-BOOL ON_TextEntity2::GetBBox(
-	double* boxmax,
-	double* boxmin,
-	BOOL bGrowBox
-	) const
-{
-  ON_BoundingBox bbox;
-  if ( bGrowBox )
-  {
-    bbox.m_min.x = boxmin[0]; 
-    bbox.m_min.y = boxmin[1]; 
-    bbox.m_min.z = boxmin[2];
-    bbox.m_max.x = boxmax[0]; 
-    bbox.m_max.y = boxmax[1]; 
-    bbox.m_max.z = boxmax[2];
-    if ( !bbox.IsValid() )
-    {
-      bbox.Destroy();
-      bGrowBox = false;
-    }
-  }
-
-  if ( 1 == m_points.Count() )
-  {
-    ON_2dPoint uv = m_points[0];
-    bbox.Set( m_plane.PointAt(uv.x,uv.y), bGrowBox );
-    bGrowBox = true;
-  }
-
-  if ( bGrowBox )
-  {
-    boxmin[0] = bbox.m_min.x; 
-    boxmin[1] = bbox.m_min.y; 
-    boxmin[2] = bbox.m_min.z; 
-    boxmax[0] = bbox.m_max.x; 
-    boxmax[1] = bbox.m_max.y; 
-    boxmax[2] = bbox.m_max.z; 
-  }
-
-  return bGrowBox;
-}
-
-
-
-
-
-BOOL ON_Leader2::GetBBox(
-	double* boxmax,
-	double* boxmin,
-	BOOL bGrowBox
-	) const
-{
-  ON_BoundingBox bbox;
-  if ( bGrowBox )
-  {
-    bbox.m_min.x = boxmin[0]; 
-    bbox.m_min.y = boxmin[1]; 
-    bbox.m_min.z = boxmin[2];
-    bbox.m_max.x = boxmax[0]; 
-    bbox.m_max.y = boxmax[1]; 
-    bbox.m_max.z = boxmax[2];
-    if ( !bbox.IsValid() )
-    {
-      bbox.Destroy();
-      bGrowBox = false;
-    }
-  }
-
-  const int point_count = m_points.Count();
-  if ( point_count > 0 )
-  {
-    ON_3dPointArray P(point_count);
-    int i;
-    for ( i = 0; i < point_count; i++ )
-    {
-      ON_2dPoint uv = m_points[i];
-      P.Append( m_plane.PointAt(uv.x,uv.y));
-    }
-    if ( P.GetBoundingBox(bbox,bGrowBox?true:false) )
-      bGrowBox = true;
-  }
-
-  if ( bGrowBox )
-  {
-    boxmin[0] = bbox.m_min.x; 
-    boxmin[1] = bbox.m_min.y; 
-    boxmin[2] = bbox.m_min.z; 
-    boxmax[0] = bbox.m_max.x; 
-    boxmax[1] = bbox.m_max.y; 
-    boxmax[2] = bbox.m_max.z; 
-  }
-
-  return bGrowBox;
-}
-
-
-
-bool ON_LinearDimension2::GetTightBoundingBox( 
-		ON_BoundingBox& tight_bbox, 
-    int bGrowBox,
-		const ON_Xform* xform
-    ) const
-{
-  if ( 5 == m_points.Count() )
-  {
-    ON_3dPointArray P(5);
-    ON_2dPoint uv;
-    if ( m_userpositionedtext )
-    {
-      uv = m_points[0]; // point someplace in text
-      P.Append( m_plane.PointAt(uv.x,uv.y) );
-    }
-
-    P.Append( m_plane.origin );
-
-    uv.x = 0.0;
-    uv.y = m_points[1].y;
-    P.Append( m_plane.PointAt(uv.x,uv.y) );
-
-    uv = m_points[2];
-    P.Append( m_plane.PointAt(uv.x,uv.y) );
-
-    uv.y = m_points[1].y;
-    P.Append( m_plane.PointAt(uv.x,uv.y) );
-
-    if ( P.GetTightBoundingBox( tight_bbox, bGrowBox, xform ) )
-      bGrowBox = true;
-  }
-  else if ( bGrowBox && !tight_bbox.IsValid() )
-  {
-    tight_bbox.Destroy();
-    bGrowBox = false;
-  }
-
-  return (0!=bGrowBox);
-}
-
-bool ON_RadialDimension2::GetTightBoundingBox( 
-		ON_BoundingBox& tight_bbox, 
-    int bGrowBox,
-		const ON_Xform* xform
-    ) const
-{
-  if ( 5 == m_points.Count() )
-  {
-    ON_3dPointArray P(5);
-    ON_2dPoint uv;
-
-    uv = m_points[0]; // + sign at center of dimension (usually at (0,0)
-    P.Append( m_plane.PointAt(uv.x,uv.y) );
-
-    uv = m_points[1];
-    P.Append( m_plane.PointAt(uv.x,uv.y) );
-
-    uv = m_points[2];
-    P.Append( m_plane.PointAt(uv.x,uv.y) );
-
-    uv = m_points[3];
-    P.Append( m_plane.PointAt(uv.x,uv.y) );
-
-    if ( P.GetTightBoundingBox( tight_bbox, bGrowBox, xform ) )
-      bGrowBox = true;
-  }
-  else if ( bGrowBox && !tight_bbox.IsValid() )
-  {
-    tight_bbox.Destroy();
-    bGrowBox = false;
-  }
-
-  return (0!=bGrowBox);
-}
-
-bool ON_AngularDimension2::GetTightBoundingBox( 
-		ON_BoundingBox& tight_bbox, 
-    int bGrowBox,
-		const ON_Xform* xform
-    ) const
-{
-  ON_Arc arc;
-  if ( GetArc(arc) )
-  {
-    if ( arc.GetTightBoundingBox(tight_bbox,bGrowBox,xform) )
-      bGrowBox = true;    
-  }
-  else if ( bGrowBox && !tight_bbox.IsValid() )
-  {
-    tight_bbox.Destroy();
-    bGrowBox = false;
-  }
-
-  return (0!=bGrowBox);
-
-}
-
-bool ON_TextEntity2::GetTightBoundingBox( 
-		ON_BoundingBox& tight_bbox, 
-    int bGrowBox,
-		const ON_Xform* xform
-    ) const
-{
-  if ( 1 == m_points.Count() )
-  {
-    ON_3dPointArray P(1);
-    P.Append( m_plane.PointAt(m_points[0].x,m_points[0].y) );
-    if ( P.GetTightBoundingBox( tight_bbox, bGrowBox, xform ) )
-      bGrowBox = true;
-  }
-  else if ( bGrowBox && !tight_bbox.IsValid() )
-  {
-    tight_bbox.Destroy();
-    bGrowBox = false;
-  }
-
-  return (0!=bGrowBox);
-}
-
-bool ON_Leader2::GetTightBoundingBox( 
-		ON_BoundingBox& tight_bbox, 
-    int bGrowBox,
-		const ON_Xform* xform
-    ) const
-{
-  const int point_count = m_points.Count();
-  if ( point_count >= 2 )
-  {
-    ON_3dPointArray P(point_count);
-    int i;
-    for ( i = 0; i < point_count; i++ )
-    {
-      ON_2dPoint uv = m_points[i];
-      P.Append( m_plane.PointAt(uv.x,uv.y));
-    }
-    if ( P.GetTightBoundingBox( tight_bbox, bGrowBox, xform ) )
-      bGrowBox = true;
-  }
-  else if ( bGrowBox && !tight_bbox.IsValid() )
-  {
-    tight_bbox.Destroy();
-    bGrowBox = false;
-  }
-
-  return (0!=bGrowBox);
-}
-
 /*
 bool ON_LinearDimension2::GetAnnotationBoundingBox(
-	  const ON_DimStyle* dimstyle,
-	  ON_2dPoint text0,
-	  ON_2dPoint text1,
+          const ON_DimStyle* dimstyle,
+          ON_2dPoint text0,
+          ON_2dPoint text1,
 			    ON_BoundingBox& tight_bbox, 
-	  int bGrowBox,
+          int bGrowBox,
 			    const ON_Xform* xform
-	) const
+        ) const
 {
   if ( 5 == m_points.Count() )
   {
@@ -970,80 +504,134 @@ bool ON_LinearDimension2::GetAnnotationBoundingBox(
 }
 */
 
-BOOL ON_Annotation2::Write( ON_BinaryArchive& file ) const
+ON_BOOL32 ON_Annotation2::Write( ON_BinaryArchive& file ) const
 {
-  // NOTE WELL - If you make any changes to this code,
-  //             you break file IO for some annotation
-  //             objects.  Please discuss all changes
-  //             with Dale Lear BEFORE you check in any
-  //             changes.
-
   int i;
-  BOOL rc = file.Write3dmChunkVersion( 1, 0 );
-
-  i = m_type;
-  if( rc) rc = file.WriteInt( i);
-  i = m_textdisplaymode;
-  if( rc) rc = file.WriteInt( i);
-  if( rc) rc = file.WritePlane( m_plane);
-
-  ON_2dPointArray points = m_points;
-  int bUserPositionedText = m_userpositionedtext?1:0;
-  switch( m_type )
+  bool rc = false;
+  bool bInChunk = (file.Archive3dmVersion() >= 5 );
+  if ( bInChunk )
   {
-  case ON::dtDimAligned:
-  case ON::dtDimLinear:
-    if ( 4 == points.Count() )
+    // 18 October 2007 Dale Lear
+    //   I modified this code so that V5 files can add
+    //   information in ON_Annotation2 chunks without
+    //   breaking past and future file IO.
+    //   The opennurbs version number before this change was
+    //   20071017*.  I changed the version to 20071018* when
+    //   I checked in this IO change.  The reason I can get
+    //   away with this is that nobody except developers has
+    //   a copy of V5 Rhino.
+    rc = file.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK,1,0);
+    if (!rc)
+      return false;
+  }
+  else
+  {
+    // For archives with opennurbs version < 200710180
+    // The code before version 200710180 does not properly
+    // handle new additions to the ON_Annotation2 chunk.  
+    rc = file.Write3dmChunkVersion( 1, 0 );
+  }
+
+  while(rc)
+  {
+    i = m_type;
+    rc = file.WriteInt( i);
+    if ( !rc) break;
+
+    i = m_textdisplaymode;    
+    rc = file.WriteInt( i);
+    if ( !rc) break;
+    
+    rc = file.WritePlane( m_plane);
+    if ( !rc) break;
+
+    ON_2dPointArray points = m_points;
+    int bUserPositionedText = m_userpositionedtext?1:0;
+    switch( m_type )
     {
-      // so old versions will read enough points.
-      points.AppendNew();
-      points[4].Set(0.5*(points[0].x + points[2].x),points[1].y);
+    case ON::dtDimAligned:
+    case ON::dtDimLinear:
+      if ( 4 == points.Count() )
+      {
+        // so old versions will read enough points.
+        points.AppendNew();
+        points[4].Set(0.5*(points[0].x + points[2].x),points[1].y);
+        bUserPositionedText = false;
+      }
+      break;
+
+    case ON::dtDimAngular:
+      //user positioned text is supported.
+      break;
+
+    case ON::dtDimRadius:
+    case ON::dtDimDiameter:
+      // 9 August 2005 Dale Lear - radial dimensions do
+      // not support user postioned text.  The never have
+      // in Rhino, but the old files had 5 points in them.
+      if ( 4 == points.Count() )
+      {
+        // so old versions will read enough points.
+        points.AppendNew();
+      }
+      if ( points.Count() >= 5 )
+      {
+        points[4] = points[2];
+      }
       bUserPositionedText = false;
-    }
-    break;
+      break;
 
-  case ON::dtDimAngular:
-    //user positioned text is supported.
-    break;
-
-  case ON::dtDimRadius:
-  case ON::dtDimDiameter:
-    // 9 August 2005 Dale Lear - radial dimensions do
-    // not support user postioned text.  The never have
-    // in Rhino, but the old files had 5 points in them.
-    if ( 4 == points.Count() )
-    {
-      // so old versions will read enough points.
-      points.AppendNew();
+    default:
+      bUserPositionedText = false;
+      break;
     }
-    if ( points.Count() >= 5 )
-    {
-      points[4] = points[2];
-    }
-    bUserPositionedText = false;
-    break;
+    
+    rc = file.WriteArray( points);
+    if ( !rc) break;
+    
+    rc = file.WriteString( m_usertext);
+    if ( !rc) break;
+    // 7-9-03 lw removed extra text string getting written
+    
+    rc = file.WriteInt( bUserPositionedText );
+    if ( !rc) break;
+    
+    rc = file.WriteInt( m_index);
+    if ( !rc) break;
 
-  default:
-    bUserPositionedText = false;
+    rc = file.WriteDouble( m_textheight);
+    if ( !rc) break;
+
+    if ( !bInChunk )
+      break;
+
+    // NOTE WELL - NEVER change the code in this function
+    //             above this comment.  If you do, you will
+    //             break reading and writing V4 files.
+    //             Ask Dale Lear if you have any questions.
+
+    // 18 October 2007 - Dale Lear added m_justification IO
+    rc = file.WriteInt(m_justification);
+    if ( !rc) break;
+
+    // To write more ON_Annotation2 fields, increment the minor version
+    // number and write the new information here.
+
+
+    // Finished writing ON_Annotation2 information
     break;
   }
-  if( rc) rc = file.WriteArray( points);
-  if( rc) rc = file.WriteString( m_usertext);
-  // 7-9-03 lw removed extra text string getting written
-  if( rc) rc = file.WriteInt( bUserPositionedText );
-  if( rc) rc = file.WriteInt( m_index);
-  if( rc) rc = file.WriteDouble( m_textheight);
 
-  // NOTE WELL - If you make any changes to this code,
-  //             you break file IO for some annotation
-  //             objects.  Please discuss all changes
-  //             with Dale Lear BEFORE you check in any
-  //             changes.
+  if ( bInChunk )
+  {
+    if ( !file.EndWrite3dmChunk() )
+      rc = false;
+  }
 
   return rc;
 }
 
-BOOL ON_Annotation2::Read( ON_BinaryArchive& file )
+ON_BOOL32 ON_Annotation2::Read( ON_BinaryArchive& file )
 {
   // NOTE WELL - If you make any changes to this code,
   //             you break file IO for some annotation
@@ -1054,30 +642,57 @@ BOOL ON_Annotation2::Read( ON_BinaryArchive& file )
   Destroy();
   int major_version = 0;
   int minor_version = 0;
-  BOOL rc = file.Read3dmChunkVersion(&major_version,&minor_version);
-  if ( rc && major_version == 1 )
+  bool rc = false;
+
+  bool bInChunk = (file.Archive3dmVersion() >= 5 && file.ArchiveOpenNURBSVersion() >= 200710180);
+
+  if ( bInChunk )
   {
+    rc = file.BeginRead3dmChunk(TCODE_ANONYMOUS_CHUNK,&major_version,&minor_version);
+    if ( !rc )
+      return false;
+  }
+  else
+  {
+    rc = file.Read3dmChunkVersion(&major_version,&minor_version);
+  }
+
+  while(rc)
+  {
+    if ( 1 != major_version )
+    {
+      rc = false;
+      break;
+    }
+
     int i;
-    if (rc)
-    {
-      rc = file.ReadInt( &i);
-      if( rc) 
-	m_type = ON::AnnotationType( i);
-    }
-    if( rc) 
-    {
-      rc = file.ReadInt( &i);
-      if( rc) 
-	m_textdisplaymode = ON::eTextDisplayMode( i);
-    }
-    if( rc) rc = file.ReadPlane( m_plane);
-    if( rc) rc = file.ReadArray( m_points);
-    if( rc) rc = file.ReadString( m_usertext);
+    rc = file.ReadInt( &i);
+    if (!rc) break;
+    m_type = ON::AnnotationType( i);
+
+    rc = file.ReadInt( &i);
+    if (!rc) break;
+    m_textdisplaymode = ON::eTextDisplayMode( i);
+
+    rc = file.ReadPlane( m_plane);
+    if (!rc) break;
+
+    rc = file.ReadArray( m_points);
+    if (!rc) break;
+    
+    rc = file.ReadString( m_usertext);
+    if (!rc) break;
+    
     i = 0;
-    if( rc) rc = file.ReadInt( &i );
-    if (rc) m_userpositionedtext = i ? true : false;
-    if( rc) rc = file.ReadInt( &m_index);
-    if( rc) rc = file.ReadDouble( &m_textheight);
+    rc = file.ReadInt( &i );
+    if (!rc) break;
+    m_userpositionedtext = i ? true : false;
+
+    rc = file.ReadInt( &m_index);
+    if (!rc) break;
+    
+    rc = file.ReadDouble( &m_textheight);
+    if (!rc) break;
 
     switch( m_type )
     {
@@ -1085,14 +700,14 @@ BOOL ON_Annotation2::Read( ON_BinaryArchive& file )
     case ON::dtDimLinear:
       if ( m_points.Count() < 5 )
       {
-	m_userpositionedtext = false;
+        m_userpositionedtext = false;
       }
       break;
 
     case ON::dtDimAngular:
       if ( m_points.Count() <= 0 )
       {
-	m_userpositionedtext = false;
+        m_userpositionedtext = false;
       }
       break;
 
@@ -1103,7 +718,7 @@ BOOL ON_Annotation2::Read( ON_BinaryArchive& file )
       // in Rhino, but the old files had 5 points in them.
       if ( 5 == m_points.Count() )
       {
-	m_points.SetCount(4);
+        m_points.SetCount(4);
       }
       m_userpositionedtext = false;
       break;
@@ -1113,13 +728,27 @@ BOOL ON_Annotation2::Read( ON_BinaryArchive& file )
       break;
     }
 
+    if ( !bInChunk )
+      break;
+
+    // 18 October 2007 - Dale Lear added m_justification IO
+    rc = file.ReadInt( &m_justification );
+    if (!rc) break;
+
+    if ( minor_version <= 0 )
+      break;
+
+    // Read new additions to ON_Annotation2 here
+
+    break;
   }
 
-  // NOTE WELL - If you make any changes to this code,
-  //             you break file IO for some annotation
-  //             objects.  Please discuss all changes
-  //             with Dale Lear BEFORE you check in any
-  //             changes.
+  if ( bInChunk )
+  {
+    if (!file.EndRead3dmChunk() )
+      rc = false;
+  }
+
 
   return rc;
 }
@@ -1134,7 +763,7 @@ int ON_Annotation2::Dimension() const
   return 3;
 }
 
-BOOL ON_Annotation2::Transform( const ON_Xform& xform )
+ON_BOOL32 ON_Annotation2::Transform( const ON_Xform& xform )
 {
   ON_Geometry::Transform(xform);
 
@@ -1184,17 +813,17 @@ int ON_Plane_Repair(ON_Plane& plane)
     if ( bGoodX )
     {
       if ( fabs(plane.xaxis.Length()-1.0) > ON_SQRT_EPSILON )
-	plane.xaxis.Unitize();
+        plane.xaxis.Unitize();
     }
     if ( bGoodY )
     {
       if ( fabs(plane.yaxis.Length()-1.0) > ON_SQRT_EPSILON )
-	plane.yaxis.Unitize();
+        plane.yaxis.Unitize();
     }
     if ( bGoodZ )
     {
       if ( fabs(plane.zaxis.Length()-1.0) > ON_SQRT_EPSILON )
-	plane.zaxis.Unitize();
+        plane.zaxis.Unitize();
     }
 
     if ( bGoodZ )
@@ -1203,71 +832,71 @@ int ON_Plane_Repair(ON_Plane& plane)
       double y = bGoodX ? fabs(plane.zaxis*plane.yaxis) : 99.0;
       if ( x <= ON_SQRT_EPSILON )
       {
-	if ( y > ON_SQRT_EPSILON )
-	{
-	  plane.yaxis = ON_CrossProduct(plane.zaxis,plane.xaxis);
-	  plane.yaxis.Unitize();
-	}
+        if ( y > ON_SQRT_EPSILON )
+        {
+          plane.yaxis = ON_CrossProduct(plane.zaxis,plane.xaxis);
+          plane.yaxis.Unitize();
+        }
       }
       else if ( y <= ON_SQRT_EPSILON )
       {
-	plane.xaxis = ON_CrossProduct(plane.yaxis,plane.zaxis);
-	plane.xaxis.Unitize();
+        plane.xaxis = ON_CrossProduct(plane.yaxis,plane.zaxis);
+        plane.xaxis.Unitize();
       }
       else if ( x <= y && x < 1.0 )
       {
-	plane.yaxis = ON_CrossProduct(plane.zaxis,plane.xaxis);
-	if( plane.yaxis.Unitize() )
-	{
-	  plane.xaxis = ON_CrossProduct(plane.yaxis,plane.zaxis);
-	  plane.xaxis.Unitize();
-	}
-	else if ( y < 1.0 )
-	{
-	  plane.CreateFromNormal( plane.origin, plane.zaxis );
-	}
+        plane.yaxis = ON_CrossProduct(plane.zaxis,plane.xaxis);
+        if( plane.yaxis.Unitize() )
+        {
+          plane.xaxis = ON_CrossProduct(plane.yaxis,plane.zaxis);
+          plane.xaxis.Unitize();
+        }
+        else if ( y < 1.0 )
+        {
+          plane.CreateFromNormal( plane.origin, plane.zaxis );
+        }
       }
       else if ( y < 1.0 )
       {
-	plane.xaxis = ON_CrossProduct(plane.yaxis,plane.zaxis);
-	if( plane.xaxis.Unitize() )
-	{
-	  plane.yaxis = ON_CrossProduct(plane.zaxis,plane.xaxis);
-	  plane.yaxis.Unitize();
-	}
-	else
-	{
-	  plane.CreateFromNormal( plane.origin, plane.zaxis );
-	}
+        plane.xaxis = ON_CrossProduct(plane.yaxis,plane.zaxis);
+        if( plane.xaxis.Unitize() )
+        {
+          plane.yaxis = ON_CrossProduct(plane.zaxis,plane.xaxis);
+          plane.yaxis.Unitize();
+        }
+        else
+        {
+          plane.CreateFromNormal( plane.origin, plane.zaxis );
+        }
       }
     }
     else if ( bGoodX )
     {
       if ( bGoodY )
       {
-	plane.zaxis = ON_CrossProduct(plane.xaxis,plane.yaxis);
-	if ( plane.zaxis.Unitize() )
-	{
-	  if ( fabs(plane.yaxis*plane.xaxis) > ON_SQRT_EPSILON )
-	  {
-	    plane.yaxis = ON_CrossProduct(plane.zaxis,plane.xaxis);
-	    plane.yaxis.Unitize();
-	  }
-	}
-	else
-	{
-	  plane.yaxis.PerpendicularTo(plane.xaxis);
-	  plane.yaxis.Unitize();
-	  plane.zaxis = ON_CrossProduct(plane.xaxis,plane.yaxis);
-	  plane.zaxis.Unitize();
-	}
+        plane.zaxis = ON_CrossProduct(plane.xaxis,plane.yaxis);
+        if ( plane.zaxis.Unitize() )
+        {
+          if ( fabs(plane.yaxis*plane.xaxis) > ON_SQRT_EPSILON )
+          {
+            plane.yaxis = ON_CrossProduct(plane.zaxis,plane.xaxis);
+            plane.yaxis.Unitize();
+          }
+        }
+        else
+        {
+          plane.yaxis.PerpendicularTo(plane.xaxis);
+          plane.yaxis.Unitize();
+          plane.zaxis = ON_CrossProduct(plane.xaxis,plane.yaxis);
+          plane.zaxis.Unitize();
+        }
       }
       else
       {
-	plane.yaxis.PerpendicularTo(plane.xaxis);
-	plane.yaxis.Unitize();
-	plane.zaxis = ON_CrossProduct(plane.xaxis,plane.yaxis);
-	plane.zaxis.Unitize();
+        plane.yaxis.PerpendicularTo(plane.xaxis);
+        plane.yaxis.Unitize();
+        plane.zaxis = ON_CrossProduct(plane.xaxis,plane.yaxis);
+        plane.zaxis.Unitize();
       }
     }
     else if ( bGoodY )
@@ -1288,207 +917,14 @@ int ON_Plane_Repair(ON_Plane& plane)
   return rc;
 }
 
-int ON_LinearDimension2::Repair()
-{
-  // returns 0 = unable to repair
-  //         1 = in perfect condtion
-  //         2 == repaired.
-
-  const int ext0_pt_index   = ON_LinearDimension2::ext0_pt_index;
-  const int arrow0_pt_index = ON_LinearDimension2::arrow0_pt_index;
-  const int ext1_pt_index   = ON_LinearDimension2::ext1_pt_index;
-  const int arrow1_pt_index = ON_LinearDimension2::arrow1_pt_index;
-  const int userpositionedtext_pt_index = ON_LinearDimension2::userpositionedtext_pt_index;
-  const int dim_pt_count    = ON_LinearDimension2::dim_pt_count;
-
-  int rc = 0;
-  if (    m_points.Count() >= dim_pt_count 
-       && m_points[ext0_pt_index].IsValid() 
-       && m_points[ext1_pt_index].IsValid() )
-  {
-    rc = 1;
-    if ( !m_plane.IsValid() )
-    {
-      rc = ON_Plane_Repair(m_plane);
-    }
-
-    if ( m_points.Count() > dim_pt_count )
-    {
-      rc = 2;
-      m_points.SetCount(dim_pt_count);
-    }
-
-    // m_points[ext0_pt_index] must be at (0,0)
-    ON_2dVector v = m_points[ext0_pt_index];
-    double d;
-    int i;
-    if ( !v.IsZero() )
-    {
-      rc = 2;
-      m_plane.origin = m_plane.PointAt(v.x,v.y);
-      m_plane.UpdateEquation();
-      v.Reverse();
-      for ( i = 0; i < dim_pt_count; i++ )
-      {
-	m_points[i] += v;
-      }
-      m_points[ext0_pt_index].Set(0.0,0.0);
-    }
-
-    if ( ON::dtDimAligned == m_type && (m_points[ext1_pt_index].x < 0.0 || m_points[ext1_pt_index].y != 0.0) )
-    {
-      rc = 2;
-      // Aligned dims must have m_points[ext1_pt_index].x = m_points[ext0_pt_index].x
-      if (   m_points[ext1_pt_index].x > 100.0*ON_SQRT_EPSILON
-	  && fabs(m_points[ext1_pt_index].y) <= ON_SQRT_EPSILON )
-      {
-	m_points[ext1_pt_index].y = 0.0;
-      }
-      else
-      {
-	// Dimension line parallel to point0 -> point2
-	// rotate the plane so p2 is on the x axis
-	v = m_points[ext1_pt_index];
-	d = v.Length();
-	v.Unitize();
-	m_plane.Rotate(v.y,v.x,m_plane.zaxis,m_plane.origin);
-
-	// rotate points in opposite direction
-	v.y = -v.y; 
-	for ( i = 0; i < dim_pt_count; i++ )
-	{
-	  ON_2dPoint p = m_points[i];
-	  m_points[i].Set( v.x*p.x - v.y*p.y, v.y*p.x + v.x*p.y );
-	}
-	m_points[ext0_pt_index].Set(0.0,0.0);
-	m_points[ext1_pt_index].Set(d,0.0);
-      }
-    }
-    else if ( ON::dtDimLinear != m_type )
-    {
-      rc = 2;
-      m_type = ON::dtDimLinear;
-    }
-
-    if ( m_points[arrow0_pt_index].x != m_points[ext0_pt_index].x )
-    {
-      rc = 2;
-      m_points[arrow0_pt_index].x = m_points[ext0_pt_index].x;
-    }
-
-    if ( m_points[arrow1_pt_index].x != m_points[ext1_pt_index].x )
-    {
-      rc = 2;
-      m_points[arrow1_pt_index].x = m_points[ext1_pt_index].x;
-    }
-
-    if ( !ON_IsValid(m_points[arrow0_pt_index].y) )
-    {
-      rc = 2;
-      if ( !ON_IsValid(m_points[arrow1_pt_index].y) )
-	m_points[arrow1_pt_index].y = 0.5*(m_points[ext0_pt_index].y + m_points[ext1_pt_index].y);
-      m_points[arrow0_pt_index].y = m_points[arrow1_pt_index].y;
-    }
-    else if ( !ON_IsValid(m_points[arrow1_pt_index].y) )
-    {
-      rc = 2;
-      m_points[arrow1_pt_index].y = m_points[arrow0_pt_index].y;
-    }
-    else if ( m_points[arrow0_pt_index].y != m_points[arrow1_pt_index].y )
-    {
-      rc = 2;
-      d = 0.5*(m_points[arrow0_pt_index].y + m_points[arrow1_pt_index].y);
-      m_points[arrow0_pt_index].y = d;
-      m_points[arrow1_pt_index].y = d;
-    }
-
-    if ( m_userpositionedtext )
-    {
-      if ( !m_points[userpositionedtext_pt_index].IsValid() )
-      {
-	rc = 2;
-	m_userpositionedtext = false;
-      }
-    }
-    
-    if ( !m_userpositionedtext )
-    {
-      if (    m_points[userpositionedtext_pt_index].y != m_points[arrow0_pt_index].y
-	   || m_points[userpositionedtext_pt_index].x != 0.5*(m_points[arrow0_pt_index].x + m_points[arrow1_pt_index].x) )
-      {
-	rc = 2;
-	m_points[userpositionedtext_pt_index].y = m_points[arrow0_pt_index].y;
-	m_points[userpositionedtext_pt_index].x = 0.5*(m_points[arrow0_pt_index].x + m_points[arrow1_pt_index].x);
-      }
-    }
-
-    if ( !m_plane.IsValid() )
-    {
-      rc = 2;
-      ON_Plane_Repair(m_plane);
-    }
-  }
-  return rc;
-}
-
-BOOL ON_LinearDimension2::Transform( const ON_Xform& xform )
-{
-  // Dale Lear - this override fixes RR 11114 by correctly
-  //             handling non uniform scaling.
-  bool rc = xform.IsIdentity();
-  if ( !rc)
-  {
-    ON_Plane plane = m_plane;
-    if ( dim_pt_count == m_points.Count() && plane.Transform( xform ) )
-    {
-      rc = true;
-      ON_3dPoint P[dim_pt_count], Q[dim_pt_count];
-      ON_2dVector p2[dim_pt_count], q2[dim_pt_count];
-      int i;
-      bool bUpdatePoints = false;
-      for ( i = 0; i < dim_pt_count && rc; i++ )
-      {
-	p2[i] = m_points[i];
-	P[i] = m_plane.PointAt( p2[i].x, p2[i].y );
-	Q[i] = xform*P[i];
-	if( !plane.ClosestPointTo(Q[i],&q2[i].x,&q2[i].y) )
-	  rc = false;
-	if (   fabs(p2[i].x - q2[i].x) > ON_SQRT_EPSILON 
-	    || fabs(p2[i].y - q2[i].y) > ON_SQRT_EPSILON )
-	{
-	  // transformation is not in SL3
-	  bUpdatePoints = true;
-	}
-      }
-
-      if (rc)
-      {
-	ON_Geometry::Transform(xform);
-	m_plane = plane;
-	if ( bUpdatePoints )
-	{
-	  for ( i = 0; i < dim_pt_count && rc; i++ )
-	  {
-	    m_points[i] = q2[i];
-	  }
-	  // Repair() will properly align the arrow points, etc.
-	  Repair();
-	}
-      }
-    }
-  }
-
-  return rc;
-}
-
 // overrides virtual ON_Geometry::Transform()
-BOOL ON_RadialDimension2::Transform( const ON_Xform& xform )
+ON_BOOL32 ON_RadialDimension2::Transform( const ON_Xform& xform )
 {
   // TODO fill in something that works for non-rigid transforms
   return ON_Annotation2::Transform(xform);
 }
 
-BOOL ON_Leader2::Transform( const ON_Xform& xform )
+ON_BOOL32 ON_Leader2::Transform( const ON_Xform& xform )
 {
   bool rc = xform.IsIdentity();
   if ( !rc)
@@ -1505,52 +941,52 @@ BOOL ON_Leader2::Transform( const ON_Xform& xform )
       bool bUpdatePoints = false;
       for ( i = 0; i < point_count && rc; i++ )
       {
-	p2 = m_points[i];
-	P = m_plane.PointAt( p2.x, p2.y );
-	Q = xform*P;
-	if( !plane.ClosestPointTo(Q,&q2.x,&q2.y) )
-	  rc = false;
-	if ( fabs(p2.x - q2.x) <= ON_SQRT_EPSILON )
-	  q2.x = p2.x;
-	else
-	  bUpdatePoints = true;
-	if ( fabs(p2.y - q2.y) <= ON_SQRT_EPSILON )
-	  q2.y = p2.y;
-	else
-	  bUpdatePoints = true;
-	q.Append(q2);
+        p2 = m_points[i];
+        P = m_plane.PointAt( p2.x, p2.y );
+        Q = xform*P;
+        if( !plane.ClosestPointTo(Q,&q2.x,&q2.y) )
+          rc = false;
+        if ( fabs(p2.x - q2.x) <= ON_SQRT_EPSILON )
+          q2.x = p2.x;
+        else
+          bUpdatePoints = true;
+        if ( fabs(p2.y - q2.y) <= ON_SQRT_EPSILON )
+          q2.y = p2.y;
+        else
+          bUpdatePoints = true;
+        q.Append(q2);
       }
 
       if(rc)
       {
-	ON_Geometry::Transform(xform);
-	m_plane = plane;
+        ON_Geometry::Transform(xform);
+        m_plane = plane;
 
-	if ( bUpdatePoints )
-	  m_points = q;
+        if ( bUpdatePoints )
+          m_points = q;
 
-	if ( m_points[0].x != 0.0 || m_points[0].y != 0.0 )
-	{
-	  ON_2dVector v = m_points[0];
-	  if ( !v.IsZero() )
-	  {
-	    m_plane.origin = m_plane.PointAt(v.x,v.y);
-	    m_plane.UpdateEquation();
-	    v.Reverse();
-	    for ( i = 1; i < point_count; i++ )
-	    {
-	      m_points[i] += v;
-	    }
-	    m_points[0].Set(0.0,0.0);
-	  }
-	}
+        if ( m_points[0].x != 0.0 || m_points[0].y != 0.0 )
+        {
+          ON_2dVector v = m_points[0];
+          if ( !v.IsZero() )
+          {
+            m_plane.origin = m_plane.PointAt(v.x,v.y);
+            m_plane.UpdateEquation();
+            v.Reverse();
+            for ( i = 1; i < point_count; i++ )
+            {
+              m_points[i] += v;
+            }
+            m_points[0].Set(0.0,0.0);
+          }
+        }
       }
     }
   }
   return rc;
 }
 
-BOOL ON_AngularDimension2::Transform( const ON_Xform& xform )
+ON_BOOL32 ON_AngularDimension2::Transform( const ON_Xform& xform )
 {
   // Dale Lear - this override fixes RR 11114 by correctly
   //             handling non uniform scaling.
@@ -1573,135 +1009,135 @@ BOOL ON_AngularDimension2::Transform( const ON_Xform& xform )
       a[2].Set( m_radius*cos(a1), m_radius*sin(a1) );
       for ( i = 0; i < dim_pt_count && rc; i++ )
       {
-	p2[i] = m_points[i];
-	P[i] = m_plane.PointAt( p2[i].x, p2[i].y );
-	Q[i] = xform*P[i];
-	if( !plane.ClosestPointTo(Q[i],&q2[i].x,&q2[i].y) )
-	  rc = false;
-	if (   fabs(p2[i].x - q2[i].x) > ON_SQRT_EPSILON 
-	    || fabs(p2[i].y - q2[i].y) > ON_SQRT_EPSILON )
-	{
-	  // transformation is not a rigid motion
-	  bUpdatePoints = true;
-	}
+        p2[i] = m_points[i];
+        P[i] = m_plane.PointAt( p2[i].x, p2[i].y );
+        Q[i] = xform*P[i];
+        if( !plane.ClosestPointTo(Q[i],&q2[i].x,&q2[i].y) )
+          rc = false;
+        if (   fabs(p2[i].x - q2[i].x) > ON_SQRT_EPSILON 
+            || fabs(p2[i].y - q2[i].y) > ON_SQRT_EPSILON )
+        {
+          // transformation is not a rigid motion
+          bUpdatePoints = true;
+        }
       }
 
       for ( i = 0; i < 3 && rc; i++ )
       {
-	A[i] = m_plane.PointAt( a[i].x, a[i].y );
-	B[i] = xform*A[i];
-	if( !plane.ClosestPointTo(B[i],&b[i].x,&b[i].y) )
-	  rc = false;
-	r[i] = B[i].DistanceTo(plane.origin);
-	if (   fabs(a[i].x - b[i].x) > ON_SQRT_EPSILON 
-	    || fabs(a[i].y - b[i].y) > ON_SQRT_EPSILON )
-	{
-	  // transformation is not a rigid motion
-	  bUpdatePoints = true;
-	}
-	if ( r[i] < ON_SQRT_EPSILON )
-	  rc = false;
-	else if ( r[i] > m_radius*(1.0+ON_SQRT_EPSILON) )
-	  bUpdatePoints = true;
-	else if ( r[i] < m_radius*(1.0-ON_SQRT_EPSILON) )
-	  bUpdatePoints = true;
+        A[i] = m_plane.PointAt( a[i].x, a[i].y );
+        B[i] = xform*A[i];
+        if( !plane.ClosestPointTo(B[i],&b[i].x,&b[i].y) )
+          rc = false;
+        r[i] = B[i].DistanceTo(plane.origin);
+        if (   fabs(a[i].x - b[i].x) > ON_SQRT_EPSILON 
+            || fabs(a[i].y - b[i].y) > ON_SQRT_EPSILON )
+        {
+          // transformation is not a rigid motion
+          bUpdatePoints = true;
+        }
+        if ( r[i] < ON_SQRT_EPSILON )
+          rc = false;
+        else if ( r[i] > m_radius*(1.0+ON_SQRT_EPSILON) )
+          bUpdatePoints = true;
+        else if ( r[i] < m_radius*(1.0-ON_SQRT_EPSILON) )
+          bUpdatePoints = true;
       }
 
       if (rc)
       {
-	if ( bUpdatePoints )
-	{
-	  ON_3dVector X = B[0] - plane.origin;
-	  X.Unitize();
+        if ( bUpdatePoints )
+        {
+          ON_3dVector X = B[0] - plane.origin;
+          X.Unitize();
 
-	  ON_3dVector Y1 = B[1] - plane.origin;
-	  Y1.Unitize();
-	  ON_3dVector Z1 = ON_CrossProduct(X,Y1);
-	  double z1 = Z1.Length();
-	  Z1.Unitize();
+          ON_3dVector Y1 = B[1] - plane.origin;
+          Y1.Unitize();
+          ON_3dVector Z1 = ON_CrossProduct(X,Y1);
+          double z1 = Z1.Length();
+          Z1.Unitize();
 
-	  ON_3dVector Y2 = B[2] - plane.origin;
-	  Y2.Unitize();
-	  ON_3dVector Z2 = ON_CrossProduct(X,Y2);
-	  double z2 = Z2.Length();
-	  Z2.Unitize();
+          ON_3dVector Y2 = B[2] - plane.origin;
+          Y2.Unitize();
+          ON_3dVector Z2 = ON_CrossProduct(X,Y2);
+          double z2 = Z2.Length();
+          Z2.Unitize();
 
-	  if ( z2 >= z1 && z2 >= 0.05 )
-	  {
-	    plane.xaxis = X;
-	    plane.zaxis = Z2;
-	    if ( Z1*Z2 < 0.0 )
-	      plane.zaxis.Reverse();
-	    plane.yaxis = ON_CrossProduct(plane.zaxis,plane.xaxis);
-	    plane.yaxis.Unitize();
-	  }
-	  else if ( z1 >= 0.05 )
-	  {
-	    plane.xaxis = X;
-	    plane.zaxis = Z1;
-	    plane.yaxis = ON_CrossProduct(plane.zaxis,plane.xaxis);
-	    plane.yaxis.Unitize();
-	  }
-	  else
-	  {
-	    rc = false;
-	  }
+          if ( z2 >= z1 && z2 >= 0.05 )
+          {
+            plane.xaxis = X;
+            plane.zaxis = Z2;
+            if ( Z1*Z2 < 0.0 )
+              plane.zaxis.Reverse();
+            plane.yaxis = ON_CrossProduct(plane.zaxis,plane.xaxis);
+            plane.yaxis.Unitize();
+          }
+          else if ( z1 >= 0.05 )
+          {
+            plane.xaxis = X;
+            plane.zaxis = Z1;
+            plane.yaxis = ON_CrossProduct(plane.zaxis,plane.xaxis);
+            plane.yaxis.Unitize();
+          }
+          else
+          {
+            rc = false;
+          }
 
-	  if (rc)
-	  {
-	    plane.UpdateEquation();
-	    ON_3dVector V = B[2] - plane.origin;
-	    double x = V*plane.xaxis;
-	    double y = V*plane.yaxis;
-	    double angle = atan2(y,x);
-	    if ( angle < 0.0 )
-	      angle += 2.0*ON_PI;
-	    double radius = (r[0]+r[1]+r[2])/3.0;
+          if (rc)
+          {
+            plane.UpdateEquation();
+            ON_3dVector V = B[2] - plane.origin;
+            double x = V*plane.xaxis;
+            double y = V*plane.yaxis;
+            double angle = atan2(y,x);
+            if ( angle < 0.0 )
+              angle += 2.0*ON_PI;
+            double radius = (r[0]+r[1]+r[2])/3.0;
 
-	    double arc_pt_angle = 1.0/3.0;
-	    if ( m_angle > 0.0 && m_points[arc_pt_index].IsValid() )
-	    {
-	      arc_pt_angle = atan2(m_points[arc_pt_index].y,m_points[arc_pt_index].x);
-	      if ( arc_pt_angle < 0.0 ) arc_pt_angle += 2.0*ON_PI;
-	      if ( arc_pt_angle > m_angle )
-		arc_pt_angle = 1.0/3.0;
-	      else
-		arc_pt_angle /= m_angle;
+            double arc_pt_angle = 1.0/3.0;
+            if ( m_angle > 0.0 && m_points[arc_pt_index].IsValid() )
+            {
+              arc_pt_angle = atan2(m_points[arc_pt_index].y,m_points[arc_pt_index].x);
+              if ( arc_pt_angle < 0.0 ) arc_pt_angle += 2.0*ON_PI;
+              if ( arc_pt_angle > m_angle )
+                arc_pt_angle = 1.0/3.0;
+              else
+                arc_pt_angle /= m_angle;
 
-	      if ( arc_pt_angle < 0.0 ) 
-		arc_pt_angle = 0.0; 
-	      else if ( arc_pt_angle > 1.0 ) 
-		arc_pt_angle = 1.0;
-	    }
-	    arc_pt_angle *= angle;
+              if ( arc_pt_angle < 0.0 ) 
+                arc_pt_angle = 0.0; 
+              else if ( arc_pt_angle > 1.0 ) 
+                arc_pt_angle = 1.0;
+            }
+            arc_pt_angle *= angle;
 
 
-	    ON_Geometry::Transform(xform);
-	    m_plane = plane;
-	    m_radius = radius;
-	    m_angle = angle;
-	    m_points[start_pt_index].Set(m_radius,0.0);
-	    m_points[end_pt_index].Set(m_radius*cos(m_angle),m_radius*sin(m_angle));
-	    m_points[arc_pt_index].Set(m_radius*cos(arc_pt_angle),m_radius*sin(arc_pt_angle));
-	    if ( m_userpositionedtext )
-	    {
-	      m_plane.ClosestPointTo(Q[userpositionedtext_pt_index],
-		&m_points[userpositionedtext_pt_index].x,
-		&m_points[userpositionedtext_pt_index].y
-		);
-	    }
-	    else
-	    {
-	      m_points[userpositionedtext_pt_index].Set(m_radius*cos(0.5*m_angle),m_radius*sin(0.5*m_angle));
-	    }
+            ON_Geometry::Transform(xform);
+            m_plane = plane;
+            m_radius = radius;
+            m_angle = angle;
+            m_points[start_pt_index].Set(m_radius,0.0);
+            m_points[end_pt_index].Set(m_radius*cos(m_angle),m_radius*sin(m_angle));
+            m_points[arc_pt_index].Set(m_radius*cos(arc_pt_angle),m_radius*sin(arc_pt_angle));
+            if ( m_userpositionedtext )
+            {
+              m_plane.ClosestPointTo(Q[userpositionedtext_pt_index],
+                &m_points[userpositionedtext_pt_index].x,
+                &m_points[userpositionedtext_pt_index].y
+                );
+            }
+            else
+            {
+              m_points[userpositionedtext_pt_index].Set(m_radius*cos(0.5*m_angle),m_radius*sin(0.5*m_angle));
+            }
 
-	  }
-	}
-	else
-	{
-	  ON_Geometry::Transform(xform);
-	  m_plane = plane;
-	}
+          }
+        }
+        else
+        {
+          ON_Geometry::Transform(xform);
+          m_plane = plane;
+        }
       }
     }
   }
@@ -1772,8 +1208,8 @@ void ON_Annotation2::SetPoint( int idx, const ON_2dPoint& point )
 ON_2dPoint ON_Annotation2::Point( int idx ) const
 {
   return ( idx >= 0 && idx < m_points.Count() ) 
-	 ? m_points[idx] 
-	 : ON_2dPoint( 0.0, 0.0 );
+         ? m_points[idx] 
+         : ON_2dPoint( 0.0, 0.0 );
 }
 
 void ON_Annotation2::SetUserText( const wchar_t* string ) {m_usertext = string; }
@@ -1786,19 +1222,19 @@ bool ON_Annotation2::UserPositionedText() const
 
 
 // Converts 2d points in annotation to 3d WCS points
-BOOL ON_Annotation2::GetECStoWCSXform( ON_Xform& xform ) const
+ON_BOOL32 ON_Annotation2::GetECStoWCSXform( ON_Xform& xform ) const
 {
   ON_3dVector z = ON_CrossProduct( m_plane.xaxis, m_plane.yaxis );
   return xform.ChangeBasis( m_plane.origin, m_plane.xaxis, m_plane.yaxis, z,
-			    ON_origin, ON_xaxis, ON_yaxis, ON_zaxis );
+                            ON_origin, ON_xaxis, ON_yaxis, ON_zaxis );
 }
 
 // Converts from WCS 3d points to 2d points in annotation
-BOOL ON_Annotation2::GetWCStoECSXform( ON_Xform& xform ) const
+ON_BOOL32 ON_Annotation2::GetWCStoECSXform( ON_Xform& xform ) const
 {
   ON_3dVector z = ON_CrossProduct( m_plane.xaxis, m_plane.yaxis );
   return xform.ChangeBasis( ON_origin, ON_xaxis, ON_yaxis, ON_zaxis,
-			    m_plane.origin, m_plane.xaxis, m_plane.yaxis, z );
+                            m_plane.origin, m_plane.xaxis, m_plane.yaxis, z );
 }
 
 void ON_Annotation2::ReservePoints( int count)
@@ -1845,6 +1281,15 @@ unsigned int ON_Annotation2::Justification()
 //----- ON_LinearDimension2 ------------------------------------------
 ON_LinearDimension2::ON_LinearDimension2()
 {
+  ON_DimensionExtra* pDE = new ON_DimensionExtra;
+  if( pDE)
+  {
+    if( !AttachUserData( pDE))
+      delete pDE;
+    else
+      pDE->SetDefaults();
+  }
+
   m_type = ON::dtDimLinear;
   m_textdisplaymode = ON::dtAboveLine;
   m_plane = ON_xy_plane;
@@ -1858,13 +1303,453 @@ ON_LinearDimension2::~ON_LinearDimension2()
 {
 }
 
+ON_BOOL32 ON_LinearDimension2::IsValid( ON_TextLog* text_log ) const
+{
+  if ( m_type != ON::dtDimLinear && m_type != ON::dtDimAligned )
+  {
+    if ( text_log )
+    {
+      text_log->Print("ON_LinearDimension2 - m_type !=  ON::dtDimLinear or ON::dtDimAligned.\n");
+    }
+    return false;
+  }
+
+  if ( !ON_Annotation2::IsValid( text_log ))
+  {
+    if ( text_log )
+    {
+      text_log->Print("ON_LinearDimension2 - invalid ON_Annotation2 base class.\n");
+    }
+    return false;
+  }
+
+  if ( m_points.Count() != 5 )
+  {
+    if ( text_log )
+    {
+      text_log->Print("ON_LinearDimension2 - m_points.Count() = %d (should be 5).\n",m_points.Count());
+    }
+    return false;
+  }
+
+  if ( m_points[1].x != m_points[0].x )
+  {
+    if ( text_log )
+    {
+      text_log->Print("ON_LinearDimension2 - m_points[1].x = %g != %g = m_points[0].x (should be equal)\n",
+                      m_points[1].x, m_points[0].x
+                      );
+    }
+    return false;
+  }
+
+  if ( m_points[3].x != m_points[2].x )
+  {
+    if ( text_log )
+    {
+      text_log->Print("ON_LinearDimension2 - m_points[3].x = %g != %g = m_points[2].x\n",
+                      m_points[3].x, m_points[2].x
+                     );
+    }
+    return false;
+  }
+
+  if ( m_points[3].y != m_points[1].y )
+  {
+    if ( text_log )
+    {
+      text_log->Print("ON_LinearDimension2 - m_points[3].y = %g != %g = m_points[1].y\n",
+                      m_points[3].y, m_points[1].y
+                      );
+    }
+    return false;
+  }
+
+  return true;
+}
+
+ON_BOOL32 ON_LinearDimension2::Write(ON_BinaryArchive& archive) const
+{
+  // 18 October 2007 Dale Lear
+  //    I added the chunk wrapping so V5 and future versions can
+  //    add IO support for information specific to ON_LinearDimension2
+  //    V4 did not have a ON_LinearDimension2::Write and simply called
+  //    ON_Annotation2::Write.
+  bool rc = false;
+  bool bInChunk = (archive.Archive3dmVersion() >= 5);
+  if ( bInChunk )
+  {
+    rc = archive.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK,1,0);
+    if ( !rc )
+      return false;
+  }
+  else
+  {
+    rc = true;
+  }
+
+  while(rc)
+  {
+    rc = ON_Annotation2::Write(archive)?true:false;
+    if (!rc) break;
+    if ( !bInChunk )
+      break;
+
+    // To write new fields, increment minor version number
+    // and write values here.  Ask Dale Lear for help.
+
+    break;
+  }
+
+  if ( bInChunk )
+  {
+    if (!archive.EndWrite3dmChunk())
+      rc = false;
+  }
+  return rc;
+}
+
+ON_BOOL32 ON_LinearDimension2::Read(ON_BinaryArchive& archive)
+{
+  // 18 October 2007 Dale Lear
+  //    I added the chunk wrapping so V5 and future versions can
+  //    add IO support for information specific to ON_LinearDimension2
+  int major_version = 0;
+  int minor_version = 0;
+  bool rc = false;
+  bool bInChunk = (archive.Archive3dmVersion() >= 5 && archive.ArchiveOpenNURBSVersion() >= 200710180);
+  if ( bInChunk )
+  {
+    rc = archive.BeginRead3dmChunk(TCODE_ANONYMOUS_CHUNK,&major_version,&minor_version);
+    if ( !rc )
+      return false;
+  }
+  else
+  {
+    rc = true;
+  }
+
+  while(rc)
+  {
+    rc = ON_Annotation2::Read(archive)?true:false;
+    if (!rc) break;
+    if ( !bInChunk || minor_version <= 0 )
+      break;
+
+    // read future addition here
+
+    break;
+  }
+
+  if ( bInChunk )
+  {
+    if ( !archive.EndRead3dmChunk() )
+      rc = false;
+  }
+  return rc;
+}
+
+ON_BOOL32 ON_LinearDimension2::GetBBox(
+        double* boxmax,
+        double* boxmin,
+        ON_BOOL32 bGrowBox
+        ) const
+{
+  ON_BoundingBox bbox;
+  if ( bGrowBox )
+  {
+    bbox.m_min.x = boxmin[0]; 
+    bbox.m_min.y = boxmin[1]; 
+    bbox.m_min.z = boxmin[2];
+    bbox.m_max.x = boxmax[0]; 
+    bbox.m_max.y = boxmax[1]; 
+    bbox.m_max.z = boxmax[2];
+    if ( !bbox.IsValid() )
+    {
+      bbox.Destroy();
+      bGrowBox = false;
+    }
+  }
+
+  if ( 5 == m_points.Count() )
+  {
+    ON_3dPointArray P(5);
+    ON_2dPoint uv;
+    if ( m_userpositionedtext )
+    {
+      uv = m_points[0]; // point someplace in text
+      P.Append( m_plane.PointAt(uv.x,uv.y) );
+    }
+
+    P.Append( m_plane.origin );
+
+    uv.x = 0.0;
+    uv.y = m_points[1].y;
+    P.Append( m_plane.PointAt(uv.x,uv.y) );
+
+    uv = m_points[2];
+    P.Append( m_plane.PointAt(uv.x,uv.y) );
+
+    uv.y = m_points[1].y;
+    P.Append( m_plane.PointAt(uv.x,uv.y) );
+  }
+
+  if ( bGrowBox )
+  {
+    boxmin[0] = bbox.m_min.x; 
+    boxmin[1] = bbox.m_min.y; 
+    boxmin[2] = bbox.m_min.z; 
+    boxmax[0] = bbox.m_max.x; 
+    boxmax[1] = bbox.m_max.y; 
+    boxmax[2] = bbox.m_max.z; 
+  }
+
+  return bGrowBox;
+}
+
+
+
+
+bool ON_LinearDimension2::GetTightBoundingBox( 
+		ON_BoundingBox& tight_bbox, 
+    int bGrowBox,
+		const ON_Xform* xform
+    ) const
+{
+  if ( 5 == m_points.Count() )
+  {
+    ON_3dPointArray P(5);
+    ON_2dPoint uv;
+    if ( m_userpositionedtext )
+    {
+      uv = m_points[0]; // point someplace in text
+      P.Append( m_plane.PointAt(uv.x,uv.y) );
+    }
+
+    P.Append( m_plane.origin );
+
+    uv.x = 0.0;
+    uv.y = m_points[1].y;
+    P.Append( m_plane.PointAt(uv.x,uv.y) );
+
+    uv = m_points[2];
+    P.Append( m_plane.PointAt(uv.x,uv.y) );
+
+    uv.y = m_points[1].y;
+    P.Append( m_plane.PointAt(uv.x,uv.y) );
+
+    if ( P.GetTightBoundingBox( tight_bbox, bGrowBox, xform ) )
+      bGrowBox = true;
+  }
+  else if ( bGrowBox && !tight_bbox.IsValid() )
+  {
+    tight_bbox.Destroy();
+    bGrowBox = false;
+  }
+
+  return (0!=bGrowBox);
+}
+
+int ON_LinearDimension2::Repair()
+{
+  // returns 0 = unable to repair
+  //         1 = in perfect condtion
+  //         2 == repaired.
+
+  const int ext0_pt_index   = ON_LinearDimension2::ext0_pt_index;
+  const int arrow0_pt_index = ON_LinearDimension2::arrow0_pt_index;
+  const int ext1_pt_index   = ON_LinearDimension2::ext1_pt_index;
+  const int arrow1_pt_index = ON_LinearDimension2::arrow1_pt_index;
+  const int userpositionedtext_pt_index = ON_LinearDimension2::userpositionedtext_pt_index;
+  const int dim_pt_count    = ON_LinearDimension2::dim_pt_count;
+
+  int rc = 0;
+  if (    m_points.Count() >= dim_pt_count 
+       && m_points[ext0_pt_index].IsValid() 
+       && m_points[ext1_pt_index].IsValid() )
+  {
+    rc = 1;
+    if ( !m_plane.IsValid() )
+    {
+      rc = ON_Plane_Repair(m_plane);
+    }
+
+    if ( m_points.Count() > dim_pt_count )
+    {
+      rc = 2;
+      m_points.SetCount(dim_pt_count);
+    }
+
+    // m_points[ext0_pt_index] must be at (0,0)
+    ON_2dVector v = m_points[ext0_pt_index];
+    double d;
+    int i;
+    if ( !v.IsZero() )
+    {
+      rc = 2;
+      m_plane.origin = m_plane.PointAt(v.x,v.y);
+      m_plane.UpdateEquation();
+      v.Reverse();
+      for ( i = 0; i < dim_pt_count; i++ )
+      {
+        m_points[i] += v;
+      }
+      m_points[ext0_pt_index].Set(0.0,0.0);
+    }
+
+    if ( ON::dtDimAligned == m_type && (m_points[ext1_pt_index].x < 0.0 || m_points[ext1_pt_index].y != 0.0) )
+    {
+      rc = 2;
+      // Aligned dims must have m_points[ext1_pt_index].x = m_points[ext0_pt_index].x
+      if (   m_points[ext1_pt_index].x > 100.0*ON_SQRT_EPSILON
+          && fabs(m_points[ext1_pt_index].y) <= ON_SQRT_EPSILON )
+      {
+        m_points[ext1_pt_index].y = 0.0;
+      }
+      else
+      {
+        // Dimension line parallel to point0 -> point2
+        // rotate the plane so p2 is on the x axis
+        v = m_points[ext1_pt_index];
+        d = v.Length();
+        v.Unitize();
+        m_plane.Rotate(v.y,v.x,m_plane.zaxis,m_plane.origin);
+
+        // rotate points in opposite direction
+        v.y = -v.y; 
+        for ( i = 0; i < dim_pt_count; i++ )
+        {
+          ON_2dPoint p = m_points[i];
+          m_points[i].Set( v.x*p.x - v.y*p.y, v.y*p.x + v.x*p.y );
+        }
+        m_points[ext0_pt_index].Set(0.0,0.0);
+        m_points[ext1_pt_index].Set(d,0.0);
+      }
+    }
+    else if ( ON::dtDimLinear != m_type )
+    {
+      rc = 2;
+      m_type = ON::dtDimLinear;
+    }
+
+    if ( m_points[arrow0_pt_index].x != m_points[ext0_pt_index].x )
+    {
+      rc = 2;
+      m_points[arrow0_pt_index].x = m_points[ext0_pt_index].x;
+    }
+
+    if ( m_points[arrow1_pt_index].x != m_points[ext1_pt_index].x )
+    {
+      rc = 2;
+      m_points[arrow1_pt_index].x = m_points[ext1_pt_index].x;
+    }
+
+    if ( !ON_IsValid(m_points[arrow0_pt_index].y) )
+    {
+      rc = 2;
+      if ( !ON_IsValid(m_points[arrow1_pt_index].y) )
+        m_points[arrow1_pt_index].y = 0.5*(m_points[ext0_pt_index].y + m_points[ext1_pt_index].y);
+      m_points[arrow0_pt_index].y = m_points[arrow1_pt_index].y;
+    }
+    else if ( !ON_IsValid(m_points[arrow1_pt_index].y) )
+    {
+      rc = 2;
+      m_points[arrow1_pt_index].y = m_points[arrow0_pt_index].y;
+    }
+    else if ( m_points[arrow0_pt_index].y != m_points[arrow1_pt_index].y )
+    {
+      rc = 2;
+      d = 0.5*(m_points[arrow0_pt_index].y + m_points[arrow1_pt_index].y);
+      m_points[arrow0_pt_index].y = d;
+      m_points[arrow1_pt_index].y = d;
+    }
+
+    if ( m_userpositionedtext )
+    {
+      if ( !m_points[userpositionedtext_pt_index].IsValid() )
+      {
+        rc = 2;
+        m_userpositionedtext = false;
+      }
+    }
+    
+    if ( !m_userpositionedtext )
+    {
+      if (    m_points[userpositionedtext_pt_index].y != m_points[arrow0_pt_index].y
+           || m_points[userpositionedtext_pt_index].x != 0.5*(m_points[arrow0_pt_index].x + m_points[arrow1_pt_index].x) )
+      {
+        rc = 2;
+        m_points[userpositionedtext_pt_index].y = m_points[arrow0_pt_index].y;
+        m_points[userpositionedtext_pt_index].x = 0.5*(m_points[arrow0_pt_index].x + m_points[arrow1_pt_index].x);
+      }
+    }
+
+    if ( !m_plane.IsValid() )
+    {
+      rc = 2;
+      ON_Plane_Repair(m_plane);
+    }
+  }
+  return rc;
+}
+
+ON_BOOL32 ON_LinearDimension2::Transform( const ON_Xform& xform )
+{
+  // Dale Lear - this override fixes RR 11114 by correctly
+  //             handling non uniform scaling.
+  bool rc = xform.IsIdentity();
+  if ( !rc)
+  {
+    ON_Plane plane = m_plane;
+    if ( dim_pt_count == m_points.Count() && plane.Transform( xform ) )
+    {
+      rc = true;
+      ON_3dPoint P[dim_pt_count], Q[dim_pt_count];
+      ON_2dVector p2[dim_pt_count], q2[dim_pt_count];
+      int i;
+      bool bUpdatePoints = false;
+      for ( i = 0; i < dim_pt_count && rc; i++ )
+      {
+        p2[i] = m_points[i];
+        P[i] = m_plane.PointAt( p2[i].x, p2[i].y );
+        Q[i] = xform*P[i];
+        if( !plane.ClosestPointTo(Q[i],&q2[i].x,&q2[i].y) )
+          rc = false;
+        if (   fabs(p2[i].x - q2[i].x) > ON_SQRT_EPSILON 
+            || fabs(p2[i].y - q2[i].y) > ON_SQRT_EPSILON )
+        {
+          // transformation is not in SL3
+          bUpdatePoints = true;
+        }
+      }
+
+      if (rc)
+      {
+        ON_Geometry::Transform(xform);
+        m_plane = plane;
+        if ( bUpdatePoints )
+        {
+          for ( i = 0; i < dim_pt_count && rc; i++ )
+          {
+            m_points[i] = q2[i];
+          }
+          // Repair() will properly align the arrow points, etc.
+          Repair();
+        }
+      }
+    }
+  }
+
+  return rc;
+}
+
 double ON_LinearDimension2::NumericValue() const
 {
   // Use y coords of ext points instead of 3d distance
   // to reduce noise in the answer.
   return (m_points.Count() >= dim_pt_count) 
-	 ? fabs(m_points[ext0_pt_index].x - m_points[ext1_pt_index].x) 
-	 : 0.0;
+         ? fabs(m_points[ext0_pt_index].x - m_points[ext1_pt_index].x) 
+         : 0.0;
 }
 
 int ON_LinearDimension2::StyleIndex() const
@@ -1983,28 +1868,28 @@ bool ON_LinearDimension2::CreateFromV2(
       switch( settings.m_textalign)
       {
       case 1:
-	m_textdisplaymode =  ON::dtInLine;
-	break;
+        m_textdisplaymode =  ON::dtInLine;
+        break;
       case 2:
-	m_textdisplaymode = ON::dtHorizontal;
-	break;
+        m_textdisplaymode = ON::dtHorizontal;
+        break;
       default:
-	m_textdisplaymode = ON::dtAboveLine;
-	break;
+        m_textdisplaymode = ON::dtAboveLine;
+        break;
       }
 
       ON_2dVector v = m_points[0];
       if ( !v.IsZero() )
       {
-	m_plane.origin = m_plane.PointAt(v.x,v.y);
-	m_plane.UpdateEquation();
-	m_points[0].Set(0.0,0.0);
-	v.Reverse();
-	int i;
-	for ( i = 1; i < ON_LinearDimension2::dim_pt_count; i++ )
-	{
-	  m_points[i] += v;
-	}
+        m_plane.origin = m_plane.PointAt(v.x,v.y);
+        m_plane.UpdateEquation();
+        m_points[0].Set(0.0,0.0);
+        v.Reverse();
+        int i;
+        for ( i = 1; i < ON_LinearDimension2::dim_pt_count; i++ )
+        {
+          m_points[i] += v;
+        }
       }
 
       m_index = dimstyle_index;
@@ -2076,8 +1961,8 @@ int ON_LinearDimension2::GetDimensionLineSegments(
   const double tailwidth           = 0.5*arrowwidth;
   const double dimwidth            = x1 - x0;
   const double mindimwidth         = (ON::dtInLine == textdisplay)
-				   ? (2.0*(arrowwidth + tailwidth + textgap) + textwidth)
-				   : (2.0*arrowwidth + tailwidth);
+                                   ? (2.0*(arrowwidth + tailwidth + textgap) + textwidth)
+                                   : (2.0*arrowwidth + tailwidth);
   const double dimextension        = dimscale*dimstyle.DimExtension();
 
   if ( dimwidth < mindimwidth )
@@ -2107,8 +1992,8 @@ int ON_LinearDimension2::GetDimensionLineSegments(
     ON_Line ray;
 
     ON_3dVector vp_zaxis = (ON::dtHorizontal == textdisplay && vp)
-			 ? vp->CameraZ() 
-			 : m_plane.zaxis;
+                         ? vp->CameraZ() 
+                         : m_plane.zaxis;
 
     const double gdi_gap = fabs(textgap/gdi_to_plane_scale);
 
@@ -2138,21 +2023,21 @@ int ON_LinearDimension2::GetDimensionLineSegments(
       y0 = corners[i].y       - m_points[1].y;
       y1 = corners[(i+1)%4].y - m_points[1].y;
       if ( (y0 > 0.0 && y1 > 0.0) || (y0 < 0.0 && y1 < 0.0) || y0 == y1 )
-	continue;
+        continue;
 
       t = y0/(y0-y1);
       xx = (1.0-t)*corners[i].x + t*corners[(i+1)%4].x;
       if ( ON_UNSET_VALUE == xx0 )
       {
-	xx0 = xx1 = xx;
+        xx0 = xx1 = xx;
       }
       else if ( xx < xx0 )
       {
-	xx0 = xx;
+        xx0 = xx;
       }
       else if ( xx > xx1 )
       {
-	xx1 = xx;
+        xx1 = xx;
       }
     }
 
@@ -2170,8 +2055,8 @@ int ON_LinearDimension2::GetDimensionLineSegments(
       x[5] = x1;
       if( dimextension != 0.0)
       {
-	x[0] -= dimextension;
-	x[3] += dimextension;
+        x[0] -= dimextension;
+        x[3] += dimextension;
       }
       rc = 2;
     }
@@ -2185,8 +2070,8 @@ int ON_LinearDimension2::GetDimensionLineSegments(
       x[5] = x1;
       if( dimextension != 0.0)
       {
-	x[0] += dimextension;
-	x[3] -= dimextension;
+        x[0] += dimextension;
+        x[3] -= dimextension;
       }
       bInside = false;
       rc = 2;
@@ -2251,6 +2136,217 @@ ON_RadialDimension2::~ON_RadialDimension2()
 {
 }
 
+ON_BOOL32 ON_RadialDimension2::IsValid( ON_TextLog* text_log ) const
+{
+  if ( m_type != ON::dtDimRadius && m_type != ON::dtDimDiameter  )
+  {
+    if ( text_log )
+    {
+      text_log->Print("ON_AngularDimension2 - m_type !=  ON::dtDimRadius or ON::dtDimDiameter\n");
+    }
+    return false;
+  }
+
+  if ( !ON_Annotation2::IsValid( text_log ))
+  {
+    if ( text_log )
+    {
+      text_log->Print("ON_RadialDimension2 - invalid ON_Annotation2 base class.\n");
+    }
+    return false;
+  }
+
+  if ( 4 != m_points.Count() )
+  {
+    if ( text_log )
+    {
+      text_log->Print("ON_RadialDimension2 - m_points.Count() = %d (should be 4 or 5)\n", m_points.Count() );
+    }
+    return false;
+  }
+
+  return true;
+}
+
+
+ON_BOOL32 ON_RadialDimension2::Write(ON_BinaryArchive& archive) const
+{
+  // 18 October 2007 Dale Lear
+  //    I added the chunk wrapping so V5 and future versions can
+  //    add IO support for information specific to ON_RadialDimension2
+  //    V4 did not have a ON_RadialDimension2::Write and simply called
+  //    ON_Annotation2::Write.
+  bool rc = false;
+  bool bInChunk = (archive.Archive3dmVersion() >= 5);
+  if ( bInChunk )
+  {
+    rc = archive.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK,1,0);
+    if ( !rc )
+      return false;
+  }
+  else
+  {
+    rc = true;
+  }
+
+  while(rc)
+  {
+    rc = ON_Annotation2::Write(archive)?true:false;
+    if (!rc) break;
+    if ( !bInChunk )
+      break;
+
+    // To write new fields, increment minor version number
+    // and write values here.  Ask Dale Lear for help.
+
+    break;
+  }
+
+  if ( bInChunk )
+  {
+    if (!archive.EndWrite3dmChunk())
+      rc = false;
+  }
+  return rc;
+}
+
+ON_BOOL32 ON_RadialDimension2::Read(ON_BinaryArchive& archive)
+{
+  // 18 October 2007 Dale Lear
+  //    I added the chunk wrapping so V5 and future versions can
+  //    add IO support for information specific to ON_RadialDimension2
+  int major_version = 0;
+  int minor_version = 0;
+  bool rc = false;
+  bool bInChunk = (archive.Archive3dmVersion() >= 5 && archive.ArchiveOpenNURBSVersion() >= 200710180);
+  if ( bInChunk )
+  {
+    rc = archive.BeginRead3dmChunk(TCODE_ANONYMOUS_CHUNK,&major_version,&minor_version);
+    if ( !rc )
+      return false;
+  }
+  else
+  {
+    rc = true;
+  }
+
+  while(rc)
+  {
+    rc = ON_Annotation2::Read(archive)?true:false;
+    if (!rc) break;
+    if ( !bInChunk || minor_version <= 0 )
+      break;
+
+    // read future addition here
+
+    break;
+  }
+
+  if ( bInChunk )
+  {
+    if ( !archive.EndRead3dmChunk() )
+      rc = false;
+  }
+  return rc;
+}
+
+
+ON_BOOL32 ON_RadialDimension2::GetBBox(
+        double* boxmax,
+        double* boxmin,
+        ON_BOOL32 bGrowBox
+        ) const
+{
+  ON_BoundingBox bbox;
+  if ( bGrowBox )
+  {
+    bbox.m_min.x = boxmin[0]; 
+    bbox.m_min.y = boxmin[1]; 
+    bbox.m_min.z = boxmin[2];
+    bbox.m_max.x = boxmax[0]; 
+    bbox.m_max.y = boxmax[1]; 
+    bbox.m_max.z = boxmax[2];
+    if ( !bbox.IsValid() )
+    {
+      bbox.Destroy();
+      bGrowBox = false;
+    }
+  }
+
+  if ( 4 == m_points.Count() )
+  {
+    ON_3dPointArray P(4);
+    ON_2dPoint uv;
+    if ( m_userpositionedtext )
+    {
+      uv = m_points[0]; // point someplace in text
+      P.Append( m_plane.PointAt(uv.x,uv.y) );
+    }
+
+    P.Append( m_plane.origin ); // + sign at center of dimension
+
+    uv = m_points[1];
+    P.Append( m_plane.PointAt(uv.x,uv.y) );
+
+    uv = m_points[2];
+    P.Append( m_plane.PointAt(uv.x,uv.y) );
+
+    uv = m_points[3];
+    P.Append( m_plane.PointAt(uv.x,uv.y) );
+  }
+
+  if ( bGrowBox )
+  {
+    boxmin[0] = bbox.m_min.x; 
+    boxmin[1] = bbox.m_min.y; 
+    boxmin[2] = bbox.m_min.z; 
+    boxmax[0] = bbox.m_max.x; 
+    boxmax[1] = bbox.m_max.y; 
+    boxmax[2] = bbox.m_max.z; 
+  }
+
+  return bGrowBox;
+}
+
+
+
+
+
+bool ON_RadialDimension2::GetTightBoundingBox( 
+		ON_BoundingBox& tight_bbox, 
+    int bGrowBox,
+		const ON_Xform* xform
+    ) const
+{
+  if ( 5 == m_points.Count() )
+  {
+    ON_3dPointArray P(5);
+    ON_2dPoint uv;
+
+    uv = m_points[0]; // + sign at center of dimension (usually at (0,0)
+    P.Append( m_plane.PointAt(uv.x,uv.y) );
+
+    uv = m_points[1];
+    P.Append( m_plane.PointAt(uv.x,uv.y) );
+
+    uv = m_points[2];
+    P.Append( m_plane.PointAt(uv.x,uv.y) );
+
+    uv = m_points[3];
+    P.Append( m_plane.PointAt(uv.x,uv.y) );
+
+    if ( P.GetTightBoundingBox( tight_bbox, bGrowBox, xform ) )
+      bGrowBox = true;
+  }
+  else if ( bGrowBox && !tight_bbox.IsValid() )
+  {
+    tight_bbox.Destroy();
+    bGrowBox = false;
+  }
+
+  return (0!=bGrowBox);
+}
+
 ON_2dPoint ON_RadialDimension2::Dim2dPoint(
       int point_index
       ) const
@@ -2307,30 +2403,30 @@ bool ON_RadialDimension2::CreateFromPoints(
     {
       if ( c <= 0.0 || s != 0.0 )
       {
-	plane.Rotate( s, c, plane.zaxis );
+        plane.Rotate( s, c, plane.zaxis );
       }
       m_plane = plane;
       ON_2dVector tip;
       if ( m_plane.ClosestPointTo(arrowtip,&tip.x,&tip.y) )
       {
-	//double r = tip.Length();
-	m_points.SetCapacity(dim_pt_count);
-	m_points.SetCount(dim_pt_count);
+        //double r = tip.Length();
+        m_points.SetCapacity(dim_pt_count);
+        m_points.SetCount(dim_pt_count);
 
-	m_points[center_pt_index].Set(0.0,0.0);
-	m_points[arrow_pt_index] = tip;
-	tip.Unitize();
+        m_points[center_pt_index].Set(0.0,0.0);
+        m_points[arrow_pt_index] = tip;
+        tip.Unitize();
 
-	m_points[knee_pt_index] = m_points[arrow_pt_index] + offset_distance*tip;
-	m_points[tail_pt_index] = m_points[knee_pt_index];
-	if ( m_points[arrow_pt_index].x < 0.0 )
-	  m_points[tail_pt_index].x -= offset_distance;
-	else
-	  m_points[tail_pt_index].x += offset_distance;
-	m_plane = plane;
-	m_userpositionedtext = false;
+        m_points[knee_pt_index] = m_points[arrow_pt_index] + offset_distance*tip;
+        m_points[tail_pt_index] = m_points[knee_pt_index];
+        if ( m_points[arrow_pt_index].x < 0.0 )
+          m_points[tail_pt_index].x -= offset_distance;
+        else
+          m_points[tail_pt_index].x += offset_distance;
+        m_plane = plane;
+        m_userpositionedtext = false;
 
-	rc = true;
+        rc = true;
       }
     }
   }
@@ -2401,19 +2497,19 @@ bool ON_RadialDimension2::CreateFromV2(
       m_userpositionedtext = false;
       m_type = v2_ann.Type();
       m_textdisplaymode = ( 2 == settings.m_textalign )
-			? ON::dtHorizontal
-			: ON::dtInLine;
+                        ? ON::dtHorizontal
+                        : ON::dtInLine;
       m_index = dimstyle_index;
       ON_2dVector v = m_points[0];
       if ( !v.IsZero() )
       {
-	m_plane.origin = m_plane.PointAt(v.x,v.y);
-	m_plane.UpdateEquation();
-	v.Reverse();
-	m_points[0].Set(0.0,0.0);
-	m_points[1] += v;
-	m_points[2] += v;
-	m_points[3] += v;
+        m_plane.origin = m_plane.PointAt(v.x,v.y);
+        m_plane.UpdateEquation();
+        v.Reverse();
+        m_points[0].Set(0.0,0.0);
+        m_points[1] += v;
+        m_points[2] += v;
+        m_points[3] += v;
       }
 
       rc = true;
@@ -2439,6 +2535,192 @@ ON_AngularDimension2::~ON_AngularDimension2()
 }
 
 
+ON_BOOL32 ON_AngularDimension2::IsValid( ON_TextLog* text_log ) const
+{
+  if ( m_type != ON::dtDimAngular )
+  {
+    if ( text_log )
+    {
+      text_log->Print("ON_AngularDimension2 - m_type !=  ON::dtDimAngular\n");
+    }
+    return false;
+  }
+
+  if ( !ON_Annotation2::IsValid( text_log ))
+  {
+    if ( text_log )
+    {
+      text_log->Print("ON_AngularDimension2 - invalid ON_Annotation2 base class.\n");
+    }
+    return false;
+  }
+
+  if ( 4 != m_points.Count() )
+  {
+    if ( text_log )
+    {
+      text_log->Print("ON_AngularDimension2 - m_points.Count() = %d (should be 4)\n", m_points.Count() );
+    }
+    return false;
+  }
+
+  if ( !ON_IsValid(m_angle) || m_angle <= 0.0 || m_angle > 2.0*ON_PI )
+  {
+    if ( text_log )
+    {
+      text_log->Print("ON_AngularDimension2 - bogus m_angle = %g\n",m_angle);
+    }
+    return false;
+  }
+
+  if ( !ON_IsValid(m_radius) || m_radius <= 0.0 )
+  {
+    if ( text_log )
+    {
+      text_log->Print("ON_AngularDimension2 - bogus m_radius = %g\n",m_radius);
+    }
+    return false;
+  }
+
+  if ( 0.0 == m_points[1].x && 0.0 == m_points[1].y )
+  {
+    if ( text_log )
+    {
+      text_log->Print("ON_AngularDimension2 - angle dim m_points[1] = center (should be on start ray).\n");
+    }
+    return false;
+  }
+
+  if ( 0.0 == m_points[2].x && 0.0 == m_points[2].y )
+  {
+    if ( text_log )
+    {
+      text_log->Print("ON_AngularDimension2 - angle dim m_points[2] = center (should be on end ray).\n");
+    }
+    return false;
+  }
+
+  if ( 0.0 == m_points[3].x && 0.0 == m_points[3].y )
+  {
+    if ( text_log )
+    {
+      text_log->Print("ON_AngularDimension2 - angle dim m_points[3] = center (should be on interior of arc).\n");
+    }
+    return false;
+  }
+
+  double a1 = atan2(m_points[1].y, m_points[1].x);
+  double a2 = atan2(m_points[2].y, m_points[2].x);
+  double a3 = atan2(m_points[3].y, m_points[3].x);
+  if ( a1 < 0.0 )
+    a1 += 2.0*ON_PI;
+  while ( a2 <= a1 )
+    a2 += 2.0*ON_PI;
+  while ( a3 <= a1 )
+    a3 += 2.0*ON_PI;
+
+  if ( fabs(m_angle - (a2-a1)) > ON_ZERO_TOLERANCE + m_angle*ON_SQRT_EPSILON )
+  {
+    if ( text_log )
+    {
+      text_log->Print("ON_AngularDimension2 - m_angle = %g != %g = (end angle - start angle)\n",m_angle,a2-a1);
+    }
+    return false;
+  }
+
+  double r = ON_2dVector(m_points[3]).Length();
+  if ( fabs(r - m_radius) > ON_ZERO_TOLERANCE + m_radius*ON_SQRT_EPSILON )
+  {
+    if ( text_log )
+    {
+      text_log->Print("ON_AngularDimension2 - m_radius = %g != %g = |m_point[3])|\n",m_radius,r);
+    }
+    return false;
+  }
+  
+
+  if ( a3 >= a2 )
+  {
+    if ( text_log )
+    {
+      text_log->Print("ON_AngularDimension2 - angle dim m_points[3] = not on arc interior.\n");
+    }
+    return false;
+  }
+
+  return true;
+}
+
+
+
+ON_BOOL32 ON_AngularDimension2::GetBBox(
+        double* boxmax,
+        double* boxmin,
+        ON_BOOL32 bGrowBox
+        ) const
+{
+  ON_BoundingBox bbox;
+  if ( bGrowBox )
+  {
+    bbox.m_min.x = boxmin[0]; 
+    bbox.m_min.y = boxmin[1]; 
+    bbox.m_min.z = boxmin[2];
+    bbox.m_max.x = boxmax[0]; 
+    bbox.m_max.y = boxmax[1]; 
+    bbox.m_max.z = boxmax[2];
+    if ( !bbox.IsValid() )
+    {
+      bbox.Destroy();
+      bGrowBox = false;
+    }
+  }
+
+  ON_Arc arc;
+  if ( GetArc(arc) )
+  {
+    if ( arc.GetTightBoundingBox(bbox,bGrowBox?true:false,0) )
+      bGrowBox = true;    
+  }
+
+  if ( bGrowBox )
+  {
+    boxmin[0] = bbox.m_min.x; 
+    boxmin[1] = bbox.m_min.y; 
+    boxmin[2] = bbox.m_min.z; 
+    boxmax[0] = bbox.m_max.x; 
+    boxmax[1] = bbox.m_max.y; 
+    boxmax[2] = bbox.m_max.z; 
+  }
+
+  return bGrowBox;
+}
+
+
+
+
+
+bool ON_AngularDimension2::GetTightBoundingBox( 
+		ON_BoundingBox& tight_bbox, 
+    int bGrowBox,
+		const ON_Xform* xform
+    ) const
+{
+  ON_Arc arc;
+  if ( GetArc(arc) )
+  {
+    if ( arc.GetTightBoundingBox(tight_bbox,bGrowBox,xform) )
+      bGrowBox = true;    
+  }
+  else if ( bGrowBox && !tight_bbox.IsValid() )
+  {
+    tight_bbox.Destroy();
+    bGrowBox = false;
+  }
+
+  return (0!=bGrowBox);
+
+}
+
 ON_2dPoint ON_AngularDimension2::Dim2dPoint( int point_index ) const
 {
   ON_2dPoint p2;
@@ -2451,8 +2733,8 @@ ON_2dPoint ON_AngularDimension2::Dim2dPoint( int point_index ) const
     if ( text_pivot_pt == point_index )
     {
       point_index = m_userpositionedtext 
-		  ? userpositionedtext_pt_index
-		  : arcmid_pt;
+                  ? userpositionedtext_pt_index
+                  : arcmid_pt;
     }
     
     if ( point_index < dim_pt_count )
@@ -2464,24 +2746,24 @@ ON_2dPoint ON_AngularDimension2::Dim2dPoint( int point_index ) const
       switch(point_index)
       {
       case arcstart_pt:
-	p2.x = m_radius;
-	p2.y = 0.0;
-	break;
+        p2.x = m_radius;
+        p2.y = 0.0;
+        break;
       case arcend_pt:
-	p2.x = m_radius*cos(m_angle);
-	p2.y = m_radius*sin(m_angle);
-	break;
+        p2.x = m_radius*cos(m_angle);
+        p2.y = m_radius*sin(m_angle);
+        break;
       case arccenter_pt:
-	p2.x = 0.0;
-	p2.y = 0.0;
-	break;
+        p2.x = 0.0;
+        p2.y = 0.0;
+        break;
       case arcmid_pt:
-	p2.x = m_radius*cos(0.5*m_angle);
-	p2.y = m_radius*sin(0.5*m_angle);
-	break;
+        p2.x = m_radius*cos(0.5*m_angle);
+        p2.y = m_radius*sin(0.5*m_angle);
+        break;
       default:
-	p2.x = p2.y = ON_UNSET_VALUE;
-	break;
+        p2.x = p2.y = ON_UNSET_VALUE;
+        break;
       }
     }
   }
@@ -2495,23 +2777,102 @@ ON_3dPoint ON_AngularDimension2::Dim3dPoint( int point_index ) const
 }
 
 
-BOOL ON_AngularDimension2::Write( ON_BinaryArchive& file ) const
+ON_BOOL32 ON_AngularDimension2::Write( ON_BinaryArchive& file ) const
 {
-  BOOL rc = ON_Annotation2::Write( file);
-  if( rc) rc = file.WriteDouble( m_angle);
-  if( rc) rc = file.WriteDouble( m_radius);
+  // 18 October 2007 Dale Lear
+  //    I added the chunk wrapping so V5 and future versions can
+  //    add IO support for information specific to ON_LinearDimension2
+  //    V4 did not have a ON_LinearDimension2::Write and simply called
+  //    ON_Annotation2::Write.
+  bool rc = false;
+  bool bInChunk = (file.Archive3dmVersion() >= 5);
+  if ( bInChunk )
+  {
+    rc = file.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK,1,0);
+    if ( !rc )
+      return false;
+  }
+  else
+  {
+    rc = true;
+  }
+
+  while(rc)
+  {
+    rc = ON_Annotation2::Write(file)?true:false;
+    if (!rc) break;
+    rc = file.WriteDouble( m_angle);
+    if (!rc) break;
+    rc = file.WriteDouble( m_radius);
+    if (!rc) break;
+    if ( !bInChunk )
+      break;
+
+    // to write new V5 fields, increment the minor
+    // version number and write them below
+
+    break;
+  }
+
+  if ( bInChunk )
+  {
+    if (!file.EndWrite3dmChunk())
+      rc = false;
+  }
+
   return rc;
 }
 
-BOOL ON_AngularDimension2::Read( ON_BinaryArchive& file )
+ON_BOOL32 ON_AngularDimension2::Read( ON_BinaryArchive& file )
 {
-  BOOL rc = ON_Annotation2::Read( file);
-  if( rc) rc = file.ReadDouble( &m_angle);
-  if( rc) rc = file.ReadDouble( &m_radius);
+  // 18 October 2007 Dale Lear
+  //    I added the chunk wrapping so V5 and future versions can
+  //    add IO support for information specific to ON_AngularDimension2
+  int major_version = 0;
+  int minor_version = 0;
+  bool rc = false;
+  bool bInChunk = (file.Archive3dmVersion() >= 5 && file.ArchiveOpenNURBSVersion() >= 200710180);
+  if ( bInChunk )
+  {
+    rc = file.BeginRead3dmChunk(TCODE_ANONYMOUS_CHUNK,&major_version,&minor_version);
+    if ( !rc )
+      return false;
+  }
+  else
+  {
+    rc = true;
+  }
+
+  while(rc)
+  {
+    rc = ON_Annotation2::Read(file)?true:false;
+    if (!rc) break;
+    rc = file.ReadDouble( &m_angle);
+    if (!rc) break;
+    rc = file.ReadDouble( &m_radius);
+    if (!rc) break;
+    if ( !bInChunk || minor_version <= 0 )
+      break;
+
+    // Code to read any new ON_AngularDimension2 fields will 
+    // go here.
+
+    break;
+  }
+
+  if ( bInChunk )
+  {
+    // To read new ON_AngularDimension2 specific additions,
+    // examine the minor version number and read the information
+    // here.  Please ask Dale Lear for help.
+
+    if ( !file.EndRead3dmChunk() )
+      rc = false;
+  }
   return rc;
 }
 
-static BOOL VectorAngle( const ON_2dVector& v, double& angle)
+static ON_BOOL32 VectorAngle( const ON_2dVector& v, double& angle)
 {
   if( v.IsTiny())
     return false;
@@ -2677,17 +3038,17 @@ bool ON_AngularDimension2::GetArc( ON_Arc& arc ) const
     {
       if ( fabs(X*m_plane.zaxis) <= ON_SQRT_EPSILON )
       {
-	ON_3dVector Y = ON_CrossProduct( m_plane.zaxis, X );
-	if ( fabs(Y.Length()-1.0) <= ON_SQRT_EPSILON || Y.Unitize() )
-	{
-	  arc.plane = m_plane;
-	  arc.plane.xaxis = X;
-	  arc.plane.yaxis = Y;
-	  arc.plane.UpdateEquation();
-	  arc.SetAngleIntervalRadians( ON_Interval(0.0,m_angle) );
-	  arc.radius = m_radius;
-	  rc = true;
-	}
+        ON_3dVector Y = ON_CrossProduct( m_plane.zaxis, X );
+        if ( fabs(Y.Length()-1.0) <= ON_SQRT_EPSILON || Y.Unitize() )
+        {
+          arc.plane = m_plane;
+          arc.plane.xaxis = X;
+          arc.plane.yaxis = Y;
+          arc.plane.UpdateEquation();
+          arc.SetAngleIntervalRadians( ON_Interval(0.0,m_angle) );
+          arc.radius = m_radius;
+          rc = true;
+        }
       }
     }
   }
@@ -2696,11 +3057,11 @@ bool ON_AngularDimension2::GetArc( ON_Arc& arc ) const
 }
 
 bool ON_AngularDimension2::CreateFromPoints( 
-	    const ON_3dPoint& pc, 
-	    const ON_3dPoint& p0in,
-	    const ON_3dPoint& p1in,
-	    ON_3dPoint& arcpt, 
-	    ON_3dVector& Normal)
+            const ON_3dPoint& pc, 
+            const ON_3dPoint& p0in,
+            const ON_3dPoint& p1in,
+            ON_3dPoint& arcpt, 
+            ON_3dVector& Normal)
 {
   ON_3dPoint p0, p1;
   p0 = p0in;
@@ -2799,13 +3160,12 @@ void ON_AngularDimension2::SetStyleIndex( int i)
 
 const wchar_t* ON_AngularDimension2::DefaultText()
 {
-  static wchar_t defstr[4] = { L'<',L'>',degreesym,0 };
-  return defstr;
+  return L"<>"; // Aug 31, 2009 - Lowell
 }
 
 void ON_AngularDimension2::ConvertBack( 
-	ON_AngularDimension2& // target - formal parameter intentionally ignored in this virtual function
-	)
+        ON_AngularDimension2& // target - formal parameter intentionally ignored in this virtual function
+        )
 {
 }
 
@@ -2978,8 +3338,8 @@ int ON_AngularDimension2::GetDimensionArcSegments(
     const ON_Circle circle(ON_xy_plane,1.0);
 
     ON_3dVector vp_zaxis = (ON::dtHorizontal == textdisplay && vp)
-			 ? vp->CameraZ() 
-			 : m_plane.zaxis;
+                         ? vp->CameraZ() 
+                         : m_plane.zaxis;
 
     const double gdi_gap = fabs(textgap/gdi_to_plane_scale);
 
@@ -3015,16 +3375,16 @@ int ON_AngularDimension2::GetDimensionArcSegments(
       N.x = (corners[i].y-corners[(i+1)%4].y);
       N.y = (corners[(i+1)%4].x-corners[i].x);
       if ( !N.Unitize() )
-	continue;
+        continue;
       if ( (P.x - corners[i].x)*N.x + (P.y - corners[i].y)*N.y  < 0.0 )
       {
-	// end point not in text box
-	aa0 = ON_UNSET_VALUE;
+        // end point not in text box
+        aa0 = ON_UNSET_VALUE;
       }
       if ( (R.x - corners[i].x)*N.x + (R.y - corners[i].y)*N.y  < 0.0 )
       {
-	// start point not in text box
-	aa1 = ON_UNSET_VALUE;
+        // start point not in text box
+        aa1 = ON_UNSET_VALUE;
       }
     }
 
@@ -3044,116 +3404,116 @@ int ON_AngularDimension2::GetDimensionArcSegments(
       ray.to.x = corners[i].x/m_radius; ray.to.y = corners[i].y/m_radius;
       if ( r0 < 0.0 && r1 < 0.0 )
       {
-	continue; // ray is inside circle
+        continue; // ray is inside circle
       }
       if ( r0 > 0.0 && r1 > 0.0 )
       {
-	if ( !ray.ClosestPointTo(ON_2dPoint(0.0,0.0),&t ) )
-	  continue;
-	R = ray.PointAt(t);
-	if ( R.x*R.x + R.y*R.y >= 1.0 )
-	  continue; // ray is outside circle
+        if ( !ray.ClosestPointTo(ON_2dPoint(0.0,0.0),&t ) )
+          continue;
+        R = ray.PointAt(t);
+        if ( R.x*R.x + R.y*R.y >= 1.0 )
+          continue; // ray is outside circle
       }
 
 
       xrc = 0;
       if ( 0.0 == r0 )
-	tt[xrc++] = 0.0;
+        tt[xrc++] = 0.0;
 
       if ( 0.0 == r1 )
-	tt[xrc++] = 1.0;
+        tt[xrc++] = 1.0;
 
       if ( 0 == xrc )
-	xrc = ON_Intersect(ray,circle,&tt[0],c[0],&tt[1],c[1]);
+        xrc = ON_Intersect(ray,circle,&tt[0],c[0],&tt[1],c[1]);
 
       if ( xrc < 1 || xrc > 2 )
-	continue; // ray does not intersect circle;
+        continue; // ray does not intersect circle;
 
       for ( xi = 0; xi < xrc; xi++ )
       {
-	if ( tt[xi] < 0.0 || tt[xi] > 1.0 )
-	  continue; // intersection point not on segment
+        if ( tt[xi] < 0.0 || tt[xi] > 1.0 )
+          continue; // intersection point not on segment
 
-	P = ray.PointAt(tt[xi]);
-	if ( 0.0 == P.x && 0.0 == P.y )
-	  continue; // bogus
+        P = ray.PointAt(tt[xi]);
+        if ( 0.0 == P.x && 0.0 == P.y )
+          continue; // bogus
 
-	aa = atan2(P.y,P.x);
-	if ( aa < a0 ) aa += 2.0*ON_PI; else if ( aa > a1 ) aa -= 2.0*ON_PI;
-	if ( aa < a0 || aa > a1 )
-	{
-	  continue;
-	}
-	if ( ON_UNSET_VALUE == aa0 )
-	  aa0 = aa1 = aa;
-	else if ( aa < aa0 )
-	  aa0 = aa;
-	else if ( aa > aa1 )
-	  aa1 = aa;
+        aa = atan2(P.y,P.x);
+        if ( aa < a0 ) aa += 2.0*ON_PI; else if ( aa > a1 ) aa -= 2.0*ON_PI;
+        if ( aa < a0 || aa > a1 )
+        {
+          continue;
+        }
+        if ( ON_UNSET_VALUE == aa0 )
+          aa0 = aa1 = aa;
+        else if ( aa < aa0 )
+          aa0 = aa;
+        else if ( aa > aa1 )
+          aa1 = aa;
       }
     }
     if ( ON_UNSET_VALUE != aa0 && ON_UNSET_VALUE != aa1 
-	&& a0 <= aa0 && aa0 < aa1 && aa1 <= a1 )
+        && a0 <= aa0 && aa0 < aa1 && aa1 <= a1 )
     {
       t = arrowangle + tailangle;
       if ( aa0 < a0+t && aa1 > a1-t )
       {
-	// text box hits both arrowheads
-	// 2 arc segments, arrowheads outside
-	a[0] = a0;
-	a[1] = a0 - arrowangle - tailangle;
-	a[2] = a1 + arrowangle + tailangle;
-	a[3] = a1;
-	a[4] = a0;
-	a[5] = a1;
-	if( dimextension_angle != 0.0)
-	{
-	  a[0] += dimextension_angle;
-	  a[3] -= dimextension_angle;
-	}
-	bInside = false;
-	rc = 2;
+        // text box hits both arrowheads
+        // 2 arc segments, arrowheads outside
+        a[0] = a0;
+        a[1] = a0 - arrowangle - tailangle;
+        a[2] = a1 + arrowangle + tailangle;
+        a[3] = a1;
+        a[4] = a0;
+        a[5] = a1;
+        if( dimextension_angle != 0.0)
+        {
+          a[0] += dimextension_angle;
+          a[3] -= dimextension_angle;
+        }
+        bInside = false;
+        rc = 2;
       }
       else
       {
-	if ( aa0 < a0+t ) aa0 = a0+t;
-	if ( aa1 > a1-t ) aa1 = a1-t;
-	if ( a0 < aa0 && aa0 < aa1 && aa1 < a1 )
-	{
-	  // clip arc to text rectangle
-	  // 2 arc segments, arrowheads inside
-	  a[0] = a0;
-	  a[1] = aa0;
-	  a[2] = aa1;
-	  a[3] = a1;
-	  a[4] = a0;
-	  a[5] = a1;
-	  if( dimextension_angle != 0.0)
-	  {
-	    a[0] -= dimextension_angle;
-	    a[3] += dimextension_angle;
-	  }
-	  bInside = true;
-	  rc = 2;
-	}
-	else
-	{
-	  // nasty case - don't bother clipping
-	  // 1 segment, arrows inside
-	  a[0] = a0;
-	  a[1] = a1;
-	  a[2] = a0;
-	  a[3] = a1;
-	  a[4] = a0;
-	  a[5] = a1;
-	  if( dimextension_angle != 0.0)
-	  {
-	    a[0] -= dimextension_angle;
-	    a[1] += dimextension_angle;
-	  }
-	  bInside = true;
-	  rc = 1;
-	}
+        if ( aa0 < a0+t ) aa0 = a0+t;
+        if ( aa1 > a1-t ) aa1 = a1-t;
+        if ( a0 < aa0 && aa0 < aa1 && aa1 < a1 )
+        {
+          // clip arc to text rectangle
+          // 2 arc segments, arrowheads inside
+          a[0] = a0;
+          a[1] = aa0;
+          a[2] = aa1;
+          a[3] = a1;
+          a[4] = a0;
+          a[5] = a1;
+          if( dimextension_angle != 0.0)
+          {
+            a[0] -= dimextension_angle;
+            a[3] += dimextension_angle;
+          }
+          bInside = true;
+          rc = 2;
+        }
+        else
+        {
+          // nasty case - don't bother clipping
+          // 1 segment, arrows inside
+          a[0] = a0;
+          a[1] = a1;
+          a[2] = a0;
+          a[3] = a1;
+          a[4] = a0;
+          a[5] = a1;
+          if( dimextension_angle != 0.0)
+          {
+            a[0] -= dimextension_angle;
+            a[1] += dimextension_angle;
+          }
+          bInside = true;
+          rc = 1;
+        }
       }
     }
     else
@@ -3167,8 +3527,8 @@ int ON_AngularDimension2::GetDimensionArcSegments(
       a[5] = a1;
       if( dimextension_angle != 0.0)
       {
-	a[0] -= dimextension_angle;
-	a[1] += dimextension_angle;
+        a[0] -= dimextension_angle;
+        a[1] += dimextension_angle;
       }
       bInside = true;
       rc = 1;
@@ -3231,7 +3591,7 @@ ON_OrdinateDimension2::~ON_OrdinateDimension2()
 {
 }
 
-BOOL ON_OrdinateDimension2::Transform( const ON_Xform& xform )
+ON_BOOL32 ON_OrdinateDimension2::Transform( const ON_Xform& xform )
 {
   bool rc = xform.IsIdentity();
   if ( !rc)
@@ -3248,7 +3608,7 @@ ON_2dPoint ON_OrdinateDimension2::Dim2dPoint( int point_index, double default_of
   if( dir == -1 && ( point_index == offset_pt_0 || point_index == offset_pt_1))
   {
     if( fabs( m_points[definition_pt_index].y - m_points[leader_end_pt_index].y) > 
-	fabs( m_points[definition_pt_index].x - m_points[leader_end_pt_index].x))
+        fabs( m_points[definition_pt_index].x - m_points[leader_end_pt_index].x))
       dir = 0;
     else
       dir = 1;
@@ -3274,17 +3634,17 @@ ON_2dPoint ON_OrdinateDimension2::Dim2dPoint( int point_index, double default_of
     {
       p2 = m_points[leader_end_pt_index];
       if( p2.y > m_points[definition_pt_index].y)
-	p2.y -= offset;
+        p2.y -= offset;
       else
-	p2.y += offset;
+        p2.y += offset;
     }
     else if( dir == y)
     {
       p2 = m_points[leader_end_pt_index];
       if( p2.x > m_points[definition_pt_index].x)
-	p2.x -= offset;
+        p2.x -= offset;
       else
-	p2.x += offset;
+        p2.x += offset;
     }
   }
   else if( point_index == offset_pt_1)
@@ -3305,17 +3665,17 @@ ON_2dPoint ON_OrdinateDimension2::Dim2dPoint( int point_index, double default_of
     {
       p2.x = m_points[definition_pt_index].x;
       if( m_points[leader_end_pt_index].y > m_points[definition_pt_index].y)
-	p2.y = m_points[leader_end_pt_index].y - offset0 - offset1;
+        p2.y = m_points[leader_end_pt_index].y - offset0 - offset1;
       else
-	p2.y = m_points[leader_end_pt_index].y + offset0 + offset1;
+        p2.y = m_points[leader_end_pt_index].y + offset0 + offset1;
     }
     else if( dir == y)
     {
       p2.y = m_points[definition_pt_index].y;
       if( m_points[leader_end_pt_index].x > m_points[definition_pt_index].x)
-	p2.x = m_points[leader_end_pt_index].x - offset0 - offset1;
+        p2.x = m_points[leader_end_pt_index].x - offset0 - offset1;
       else
-	p2.x = m_points[leader_end_pt_index].x + offset0 + offset1;
+        p2.x = m_points[leader_end_pt_index].x + offset0 + offset1;
     }
   }
   return p2;
@@ -3327,7 +3687,7 @@ ON_3dPoint ON_OrdinateDimension2::Dim3dPoint( int point_index, double default_of
   return (ON_UNSET_VALUE == p2.x) ? ON_UNSET_POINT : m_plane.PointAt(p2.x,p2.y);
 }
 
-BOOL ON_OrdinateDimension2::IsValid( ON_TextLog* text_log) const
+ON_BOOL32 ON_OrdinateDimension2::IsValid( ON_TextLog* text_log) const
 {
   if ( m_type != ON::dtDimOrdinate)
   {
@@ -3360,7 +3720,7 @@ BOOL ON_OrdinateDimension2::IsValid( ON_TextLog* text_log) const
 
 }
 
-BOOL ON_OrdinateDimension2::Write( ON_BinaryArchive& file ) const
+ON_BOOL32 ON_OrdinateDimension2::Write( ON_BinaryArchive& file ) const
 {
   // put the entire ON_OrdinateDimension2 in a chunk so we can
   // add fields without breaking the file IO for old product.
@@ -3370,14 +3730,18 @@ BOOL ON_OrdinateDimension2::Write( ON_BinaryArchive& file ) const
     rc = file.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK,1,0);
     if (rc)
     {
-      // The output of ON_Annotation2::Write must be wrapped
-      // in an additional chunk because it does not put 
-      // itself in a chunk.  If you don't put it in a chunk,
-      // the versioning in the ON_Annotation2::Write is useless and
-      // will cause serious IO bugs if fields are ever added.
+      // As of 18 October 2007, the following comment is out of date.
+      // But, we still need to write this "extra" chunk so we don't
+      // break V4 file writing.
+      //
+      //   The output of ON_Annotation2::Write must be wrapped
+      //   in an additional chunk because it does not put 
+      //   itself in a chunk.  If you don't put it in a chunk,
+      //   the versioning in the ON_Annotation2::Write is useless and
+      //   will cause serious IO bugs if fields are ever added.
       rc = ON_Annotation2::Write( file) ? true : false;
       if (!file.EndWrite3dmChunk() )
-	rc = false;
+        rc = false;
     }
     if (rc)
       rc = file.WriteInt( m_direction);
@@ -3395,7 +3759,7 @@ BOOL ON_OrdinateDimension2::Write( ON_BinaryArchive& file ) const
   return rc;
 }
 
-BOOL ON_OrdinateDimension2::Read( ON_BinaryArchive& file )
+ON_BOOL32 ON_OrdinateDimension2::Read( ON_BinaryArchive& file )
 {
   int major_version=0, minor_version=0;
   bool rc = file.BeginRead3dmChunk(TCODE_ANONYMOUS_CHUNK,&major_version,&minor_version);
@@ -3414,25 +3778,25 @@ BOOL ON_OrdinateDimension2::Read( ON_BinaryArchive& file )
       rc = file.BeginRead3dmChunk(TCODE_ANONYMOUS_CHUNK,&submajor_version,&subminor_version);
       if (rc)
       {
-	if ( 1 != submajor_version )
-	  rc = false;
-	else
-	{
-	  rc = ON_Annotation2::Read( file) ? true : false;
-	}
-	if ( !file.EndRead3dmChunk() )
-	  rc = false;
+        if ( 1 != submajor_version )
+          rc = false;
+        else
+        {
+          rc = ON_Annotation2::Read( file) ? true : false;
+        }
+        if ( !file.EndRead3dmChunk() )
+          rc = false;
       }
 
       if( rc) 
-	rc = file.ReadInt( &m_direction);
+        rc = file.ReadInt( &m_direction);
 
       if( minor_version > 0)
       {
-	if( rc) 
-	  rc = file.ReadDouble( &m_kink_offset_0);
-	if( rc) 
-	  rc = file.ReadDouble( &m_kink_offset_1);
+        if( rc) 
+          rc = file.ReadDouble( &m_kink_offset_0);
+        if( rc) 
+          rc = file.ReadDouble( &m_kink_offset_1);
       }
     }
 
@@ -3460,9 +3824,9 @@ void ON_OrdinateDimension2::SetStyleIndex( int i)
   ON_Annotation2::SetIndex( i);
 }
 
-BOOL ON_OrdinateDimension2::GetBBox( double* boxmin,
-				     double* boxmax,
-				     BOOL bGrowBox) const
+ON_BOOL32 ON_OrdinateDimension2::GetBBox( double* boxmin,
+                                     double* boxmax,
+                                     ON_BOOL32 bGrowBox) const
 {
   ON_BoundingBox bbox;
   if ( bGrowBox )
@@ -3502,8 +3866,8 @@ BOOL ON_OrdinateDimension2::GetBBox( double* boxmin,
 }
 
 bool ON_OrdinateDimension2::GetTightBoundingBox( ON_BoundingBox& tight_bbox,
-						 int bGrowBox,
-						 const ON_Xform* xform) const
+                                                 int bGrowBox,
+                                                 const ON_Xform* xform) const
 {
   if( m_points.Count() == 2)
   {
@@ -3568,8 +3932,8 @@ void ON_OrdinateDimension2::SetKinkOffset( int index, double offset)
 }
 
 void ON_OrdinateDimension2::CalcKinkPoints( ON_2dPoint p0, ON_2dPoint p1, 
-					    int direction, double default_offset,
-					    ON_2dPoint& k0, ON_2dPoint& k1) const
+                                            int direction, double default_offset,
+                                            ON_2dPoint& k0, ON_2dPoint& k1) const
 {
   double offset0 = KinkOffset( 0);
   double offset1 = KinkOffset( 1);
@@ -3636,6 +4000,218 @@ ON_TextEntity2::~ON_TextEntity2()
 {
 }
 
+ON_BOOL32 ON_TextEntity2::IsValid( ON_TextLog* text_log ) const
+{
+  if ( m_type != ON::dtTextBlock )
+  {
+    if ( text_log )
+    {
+      text_log->Print("ON_TextEntity2 - m_type !=  ON::dtTextBlock\n");
+    }
+    return false;
+  }
+
+  // 05 March 2009 S. Baer
+  // Text blocks with no "printable" characters are considered invalid. Any
+  // character with a value greater than 32 (the value of space) is "printable."
+  int count = m_usertext.Length();
+  bool bValidText = false;
+  for( int i=0; i<count; i++ )
+  {
+    wchar_t c = m_usertext[i];
+    // all characters <= space are nonprintable
+    if( c > L' ' )
+    {
+      bValidText = true;
+      break;
+    }
+  }
+  if( !bValidText )
+  {
+    if( text_log )
+    {
+      text_log->Print("ON_TextEntity2 - m_usertext does not contain printable characters.\n");
+    }
+    return false;
+  }
+
+
+  if ( !ON_Annotation2::IsValid( text_log ))
+  {
+    if ( text_log )
+    {
+      text_log->Print("ON_TextEntity2 - invalid ON_Annotation2 base class.\n");
+    }
+    return false;
+  }
+
+  if ( 0 != m_points.Count() )
+  {
+    if ( text_log )
+    {
+      text_log->Print("ON_TextEntity2 - m_points.Count() = %d (should be 0)\n", m_points.Count() );
+    }
+    return false;
+  }
+
+  return true;
+}
+
+
+ON_BOOL32 ON_TextEntity2::Write(ON_BinaryArchive& archive) const
+{
+  // 18 October 2007 Dale Lear
+  //    I added the chunk wrapping so V5 and future versions can
+  //    add IO support for information specific to ON_TextEntity2
+  //    V4 did not have a ON_TextEntity2::Write and simply called
+  //    ON_Annotation2::Write.
+  bool rc = false;
+  bool bInChunk = (archive.Archive3dmVersion() >= 5);
+  if ( bInChunk )
+  {
+    rc = archive.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK,1,0);
+    if ( !rc )
+      return false;
+  }
+  else
+  {
+    rc = true;
+  }
+
+  while(rc)
+  {
+    rc = ON_Annotation2::Write(archive)?true:false;
+    if (!rc) break;
+    if ( !bInChunk )
+      break;
+
+    // To write new fields, increment minor version number
+    // and write values here.  Ask Dale Lear for help.
+
+    break;
+  }
+
+  if ( bInChunk )
+  {
+    if (!archive.EndWrite3dmChunk())
+      rc = false;
+  }
+  return rc;
+}
+
+ON_BOOL32 ON_TextEntity2::Read(ON_BinaryArchive& archive)
+{
+  // 18 October 2007 Dale Lear
+  //    I added the chunk wrapping so V5 and future versions can
+  //    add IO support for information specific to ON_TextEntity2
+  int major_version = 0;
+  int minor_version = 0;
+  bool rc = false;
+  bool bInChunk = (archive.Archive3dmVersion() >= 5 && archive.ArchiveOpenNURBSVersion() >= 200710180);
+  if ( bInChunk )
+  {
+    rc = archive.BeginRead3dmChunk(TCODE_ANONYMOUS_CHUNK,&major_version,&minor_version);
+    if ( !rc )
+      return false;
+  }
+  else
+  {
+    rc = true;
+  }
+
+  while(rc)
+  {
+    rc = ON_Annotation2::Read(archive)?true:false;
+    if (!rc) break;
+    if ( !bInChunk || minor_version <= 0 )
+      break;
+
+    // read future addition here
+
+    break;
+  }
+
+  if ( bInChunk )
+  {
+    // To read new ON_TextEntity2 specific additions,
+    // examine the minor version number and read the information
+    // here.  Please ask Dale Lear for help.
+
+    if ( !archive.EndRead3dmChunk() )
+      rc = false;
+  }
+  return rc;
+}
+
+
+ON_BOOL32 ON_TextEntity2::GetBBox(
+        double* boxmax,
+        double* boxmin,
+        ON_BOOL32 bGrowBox
+        ) const
+{
+  ON_BoundingBox bbox;
+  if ( bGrowBox )
+  {
+    bbox.m_min.x = boxmin[0]; 
+    bbox.m_min.y = boxmin[1]; 
+    bbox.m_min.z = boxmin[2];
+    bbox.m_max.x = boxmax[0]; 
+    bbox.m_max.y = boxmax[1]; 
+    bbox.m_max.z = boxmax[2];
+    if ( !bbox.IsValid() )
+    {
+      bbox.Destroy();
+      bGrowBox = false;
+    }
+  }
+
+  if ( 1 == m_points.Count() )
+  {
+    ON_2dPoint uv = m_points[0];
+    bbox.Set( m_plane.PointAt(uv.x,uv.y), bGrowBox );
+    bGrowBox = true;
+  }
+
+  if ( bGrowBox )
+  {
+    boxmin[0] = bbox.m_min.x; 
+    boxmin[1] = bbox.m_min.y; 
+    boxmin[2] = bbox.m_min.z; 
+    boxmax[0] = bbox.m_max.x; 
+    boxmax[1] = bbox.m_max.y; 
+    boxmax[2] = bbox.m_max.z; 
+  }
+
+  return bGrowBox;
+}
+
+
+
+
+
+bool ON_TextEntity2::GetTightBoundingBox( 
+		ON_BoundingBox& tight_bbox, 
+    int bGrowBox,
+		const ON_Xform* xform
+    ) const
+{
+  if ( 1 == m_points.Count() )
+  {
+    ON_3dPointArray P(1);
+    P.Append( m_plane.PointAt(m_points[0].x,m_points[0].y) );
+    if ( P.GetTightBoundingBox( tight_bbox, bGrowBox, xform ) )
+      bGrowBox = true;
+  }
+  else if ( bGrowBox && !tight_bbox.IsValid() )
+  {
+    tight_bbox.Destroy();
+    bGrowBox = false;
+  }
+
+  return (0!=bGrowBox);
+}
+
 int ON_TextEntity2::FontIndex() const
 {
   return m_index;
@@ -3646,13 +4222,16 @@ void ON_TextEntity2::SetFontIndex( int i)
   m_index = i;
 }
 
-BOOL ON_TextEntity2::Transform( const ON_Xform& xform )
+ON_BOOL32 ON_TextEntity2::Transform( const ON_Xform& xform )
 {
   // Dale Lear - this override fixes RR 11114 by correctly
   //             handling non uniform scaling.
   bool rc = xform.IsIdentity();
   if ( !rc)
   {
+    ON_Plane xformed_plane = m_plane;
+    rc = xformed_plane.Transform(xform);
+    if (rc)
     rc = ON_Geometry::Transform(xform)?true:false;
     if (rc)
     {
@@ -3661,15 +4240,15 @@ BOOL ON_TextEntity2::Transform( const ON_Xform& xform )
       double s = P0.DistanceTo(P1);
       if ( s <= ON_ZERO_TOLERANCE )
       {
-	P1 = xform*(m_plane.origin + m_plane.yaxis);
-	s = P0.DistanceTo(P1);
+        P1 = xform*(m_plane.origin + m_plane.yaxis);
+        s = P0.DistanceTo(P1);
       }
-      m_plane.Transform(xform);
+      m_plane = xformed_plane;
       if ( s > ON_ZERO_TOLERANCE && fabs(s-1.0) > ON_SQRT_EPSILON )
       {
-	s *= m_textheight;
-	if ( s > ON_SQRT_EPSILON )
-	  m_textheight = s;
+        s *= m_textheight;
+        if ( s > ON_SQRT_EPSILON )
+          m_textheight = s;
       }
     }
   }
@@ -3691,6 +4270,19 @@ void ON_TextEntity2::GetV2Form( ON_TextEntity& text)
   text.SetPlane( plane);
 }
 
+void ON_TextEntity2::SetJustification( unsigned int justification)
+{
+  m_justification = justification;
+}
+
+unsigned int ON_TextEntity2::Justification()
+{
+  return m_justification;
+}
+
+
+
+
 //----- ON_Leader2 ------------------------------------------
 ON_Leader2::ON_Leader2()
 {
@@ -3700,6 +4292,198 @@ ON_Leader2::ON_Leader2()
 
 ON_Leader2::~ON_Leader2()
 {
+}
+
+ON_BOOL32 ON_Leader2::IsValid( ON_TextLog* text_log ) const
+{
+  if ( m_type != ON::dtLeader )
+  {
+    if ( text_log )
+    {
+      text_log->Print("ON_Leader2 - m_type !=  ON::dtLeader\n");
+    }
+    return false;
+  }
+
+  if ( !ON_Annotation2::IsValid( text_log ))
+  {
+    if ( text_log )
+    {
+      text_log->Print("ON_Leader2 - invalid ON_Annotation2 base class.\n");
+    }
+    return false;
+  }
+
+  if ( m_points.Count() < 2 )
+  {
+    if ( text_log )
+    {
+      text_log->Print("ON_Leader2 - m_points.Count() = %d (should be >= 2)\n", m_points.Count() );
+    }
+    return false;
+  }
+
+  return true;
+}
+
+ON_BOOL32 ON_Leader2::Write(ON_BinaryArchive& archive) const
+{
+  // 18 October 2007 Dale Lear
+  //    I added the chunk wrapping so V5 and future versions can
+  //    add IO support for information specific to ON_Leader2
+  //    V4 did not have a ON_Leader2::Write and simply called
+  //    ON_Leader2::Write.
+  bool rc = false;
+  bool bInChunk = (archive.Archive3dmVersion() >= 5);
+  if ( bInChunk )
+  {
+    rc = archive.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK,1,0);
+    if ( !rc )
+      return false;
+  }
+  else
+  {
+    rc = true;
+  }
+
+  while(rc)
+  {
+    rc = ON_Annotation2::Write(archive)?true:false;
+    if (!rc) break;
+    if ( !bInChunk )
+      break;
+
+    // To write new fields, increment minor version number
+    // and write values here.  Ask Dale Lear for help.
+
+    break;
+  }
+
+  if ( bInChunk )
+  {
+    if (!archive.EndWrite3dmChunk())
+      rc = false;
+  }
+  return rc;
+}
+
+ON_BOOL32 ON_Leader2::Read(ON_BinaryArchive& archive)
+{
+  // 18 October 2007 Dale Lear
+  //    I added the chunk wrapping so V5 and future versions can
+  //    add IO support for information specific to ON_Leader2
+  int major_version = 0;
+  int minor_version = 0;
+  bool rc = false;
+  bool bInChunk = (archive.Archive3dmVersion() >= 5 && archive.ArchiveOpenNURBSVersion() >= 200710180);
+  if ( bInChunk )
+  {
+    rc = archive.BeginRead3dmChunk(TCODE_ANONYMOUS_CHUNK,&major_version,&minor_version);
+    if ( !rc )
+      return false;
+  }
+  else
+  {
+    rc = true;
+  }
+
+  while(rc)
+  {
+    rc = ON_Annotation2::Read(archive)?true:false;
+    if (!rc) break;
+    if ( !bInChunk || minor_version <= 0 )
+      break;
+
+    // read future addition here
+
+    break;
+  }
+
+  if ( bInChunk )
+  {
+    if ( !archive.EndRead3dmChunk() )
+      rc = false;
+  }
+  return rc;
+}
+
+ON_BOOL32 ON_Leader2::GetBBox(
+        double* boxmax,
+        double* boxmin,
+        ON_BOOL32 bGrowBox
+        ) const
+{
+  ON_BoundingBox bbox;
+  if ( bGrowBox )
+  {
+    bbox.m_min.x = boxmin[0]; 
+    bbox.m_min.y = boxmin[1]; 
+    bbox.m_min.z = boxmin[2];
+    bbox.m_max.x = boxmax[0]; 
+    bbox.m_max.y = boxmax[1]; 
+    bbox.m_max.z = boxmax[2];
+    if ( !bbox.IsValid() )
+    {
+      bbox.Destroy();
+      bGrowBox = false;
+    }
+  }
+
+  const int point_count = m_points.Count();
+  if ( point_count > 0 )
+  {
+    ON_3dPointArray P(point_count);
+    int i;
+    for ( i = 0; i < point_count; i++ )
+    {
+      ON_2dPoint uv = m_points[i];
+      P.Append( m_plane.PointAt(uv.x,uv.y));
+    }
+    if ( P.GetBoundingBox(bbox,bGrowBox?true:false) )
+      bGrowBox = true;
+  }
+
+  if ( bGrowBox )
+  {
+    boxmin[0] = bbox.m_min.x; 
+    boxmin[1] = bbox.m_min.y; 
+    boxmin[2] = bbox.m_min.z; 
+    boxmax[0] = bbox.m_max.x; 
+    boxmax[1] = bbox.m_max.y; 
+    boxmax[2] = bbox.m_max.z; 
+  }
+
+  return bGrowBox;
+}
+
+
+
+bool ON_Leader2::GetTightBoundingBox( 
+		ON_BoundingBox& tight_bbox, 
+    int bGrowBox,
+		const ON_Xform* xform
+    ) const
+{
+  const int point_count = m_points.Count();
+  if ( point_count >= 2 )
+  {
+    ON_3dPointArray P(point_count);
+    int i;
+    for ( i = 0; i < point_count; i++ )
+    {
+      ON_2dPoint uv = m_points[i];
+      P.Append( m_plane.PointAt(uv.x,uv.y));
+    }
+    if ( P.GetTightBoundingBox( tight_bbox, bGrowBox, xform ) )
+      bGrowBox = true;
+  }
+  else if ( bGrowBox && !tight_bbox.IsValid() )
+  {
+    tight_bbox.Destroy();
+    bGrowBox = false;
+  }
+
+  return (0!=bGrowBox);
 }
 
 ON_2dPoint ON_Leader2::Dim2dPoint(
@@ -3728,11 +4512,11 @@ ON_2dPoint ON_Leader2::Dim2dPoint(
     default:
       if ( point_index < point_count )
       {
-	p2 = m_points[point_index];
+        p2 = m_points[point_index];
       }
       else
       {
-	p2.x = p2.y = ON_UNSET_VALUE;
+        p2.x = p2.y = ON_UNSET_VALUE;
       }
       break;
     }
@@ -3790,8 +4574,8 @@ bool ON_Leader2::GetArrowHeadDirection( ON_2dVector& arrowhead_dir ) const
       arrowhead_dir = m_points[0] -  m_points[i];
       if ( arrowhead_dir.Unitize() )
       {
-	rc = true;
-	break;
+        rc = true;
+        break;
       }
       arrowhead_dir.Set(-1.0,0.0);
     }
@@ -3830,13 +4614,13 @@ bool ON_RadialDimension2::GetArrowHeadDirection( ON_2dVector& arrowhead_dir ) co
   else
   {
     arrowhead_dir = m_points[1] - m_points[3];
-    if ( !(rc=arrowhead_dir.Unitize()) )
+    if ( 0 == (rc=arrowhead_dir.Unitize()) )
     {
       arrowhead_dir = m_points[1] - m_points[2];
-      if ( !(rc=arrowhead_dir.Unitize()) )
+      if ( 0 == (rc=arrowhead_dir.Unitize()) )
       {
-	arrowhead_dir = m_points[0] - m_points[1];
-	rc = arrowhead_dir.Unitize();
+        arrowhead_dir = m_points[0] - m_points[1];
+        rc = arrowhead_dir.Unitize();
       }
     }
   }
@@ -3884,8 +4668,8 @@ bool ON_Leader2::CreateFromV2(
     m_usertext = v2_ann.UserText();
     m_userpositionedtext = false;
     m_textdisplaymode = ( 2 == settings.m_textalign )
-		      ? ON::dtHorizontal
-		      : ON::dtInLine;
+                      ? ON::dtHorizontal
+                      : ON::dtInLine;
     m_type = ON::dtLeader;
     m_index = dimstyle_index;
 
@@ -3897,7 +4681,7 @@ bool ON_Leader2::CreateFromV2(
       int i;
       for ( i = 1; i < m_points.Count(); i++ )
       {
-	m_points[i] += v;
+        m_points[i] += v;
       }
       m_points[0].Set(0.0,0.0);
     }
@@ -3928,9 +4712,9 @@ void ON_TextDot::EmergencyDestroy()
   m_display = 0;
 }
 
-BOOL ON_TextDot::IsValid( 
-	    ON_TextLog* text_log
-	    ) const
+ON_BOOL32 ON_TextDot::IsValid( 
+            ON_TextLog* text_log
+            ) const
 {
   // 5/6/03 LW made dots with no text valid.
   if ( !m_point.IsValid() )
@@ -3951,9 +4735,9 @@ void ON_TextDot::Dump( ON_TextLog& log) const
   log.Print("\n");
 }
 
-BOOL ON_TextDot::Write( ON_BinaryArchive& file) const
+ON_BOOL32 ON_TextDot::Write( ON_BinaryArchive& file) const
 {
-  BOOL rc = file.Write3dmChunkVersion(1,0);
+  ON_BOOL32 rc = file.Write3dmChunkVersion(1,0);
   if (rc) rc = file.WritePoint( m_point );
   if (rc) rc = file.WriteInt( m_height);
   if (rc) rc = file.WriteString( m_text);
@@ -3963,12 +4747,12 @@ BOOL ON_TextDot::Write( ON_BinaryArchive& file) const
   return rc;
 }
 
-BOOL ON_TextDot::Read( ON_BinaryArchive& file)
+ON_BOOL32 ON_TextDot::Read( ON_BinaryArchive& file)
 {
   m_text.Empty();
   int major_version = 0;
   int minor_version = 0;
-  BOOL rc = file.Read3dmChunkVersion(&major_version,&minor_version);
+  ON_BOOL32 rc = file.Read3dmChunkVersion(&major_version,&minor_version);
   if ( major_version == 1 ) {
     if (rc) rc = file.ReadPoint( m_point);
     if (rc) rc = file.ReadInt( &m_height);
@@ -3992,12 +4776,12 @@ int ON_TextDot::Dimension() const
   return 3;
 }
 
-BOOL ON_TextDot::GetBBox( double* box_min, double* box_max, BOOL grow_box /*= false*/) const
+ON_BOOL32 ON_TextDot::GetBBox( double* box_min, double* box_max, ON_BOOL32 grow_box /*= false*/) const
 {
   return ON_GetPointListBoundingBox( 3, 0, 1, 3, &m_point.x, box_min, box_max, grow_box?true:false );
 }
 
-BOOL ON_TextDot::Transform( const ON_Xform& xform)
+ON_BOOL32 ON_TextDot::Transform( const ON_Xform& xform)
 {
   TransformUserData( xform);
   return ON_TransformPointList( 3, 0, 1, 3, &m_point.x, xform);
@@ -4066,6 +4850,35 @@ void ON_TextDot::SetFontFace( const wchar_t* face)
     m_fontface.Empty();
 }
 
+void ON_TextDot::SetAlwaysOnTop(bool bTop)
+{
+  if(bTop)
+    m_display |= 1;
+  else
+    m_display &= (~1);
+}
+
+bool ON_TextDot::AlwaysOnTop() const
+{
+  return (m_display & 1) == 1;
+}
+
+void ON_TextDot::SetTransparent(bool bTransparent)
+{
+  if(bTransparent)
+    m_display |= 1;
+  else
+    m_display &= (~1);
+}
+
+bool ON_TextDot::Transparent() const
+{
+  return (m_display & 2) == 2;
+}
+
+
+
+
 ON_Annotation2Text::ON_Annotation2Text()
 {
   memset(&m_rect,0,sizeof(m_rect));
@@ -4099,6 +4912,8 @@ void ON_Annotation2Text::SetText(const wchar_t* s)
   memset(&m_rect,0,sizeof(m_rect));
 }
 
+// SDKBREAK Oct 30, 07 - LW
+// This function should not be used any longer
 bool ON_Annotation2::GetTextXform( 
       ON_RECT gdi_text_rect,
       const ON_Font& font,
@@ -4108,13 +4923,21 @@ bool ON_Annotation2::GetTextXform(
       ON_Xform& xform
       ) const
 {
+  ON_ERROR("This function should not be used. Use the version that takes a model transform argument.");
+
   const int gdi_height_of_I = font.HeightOfI();
   const double dimstyle_textheight = dimstyle.TextHeight();
-  const double dimstyle_textgap = dimstyle.TextGap();
+  double dimstyle_textgap = dimstyle.TextGap();
   const ON::eTextDisplayMode dimstyle_textalignment 
-	    =  ON::TextDisplayMode(dimstyle.TextAlignment()) ;
+            =  ON::TextDisplayMode(dimstyle.TextAlignment()) ;
   const ON_3dVector cameraX = (vp) ? vp->CameraX() : m_plane.xaxis;
   const ON_3dVector cameraY = (vp) ? vp->CameraY() : m_plane.yaxis;
+
+  // SDKBREAK - Oct 4, 07 LW Hack to get correct text gap using 
+  // multi-line tolerance text since GetTextXform doesn't do that.
+  if(( dimstyle.ToleranceStyle() == 2 || dimstyle.ToleranceStyle() == 3) &&
+    ( Type() == ON::dtDimLinear || Type() == ON::dtDimAligned))
+    dimstyle_textgap += dimstyle_textheight * 0.5;
 
   return GetTextXform( 
       gdi_text_rect,
@@ -4126,9 +4949,46 @@ bool ON_Annotation2::GetTextXform(
       );
 }
 
+// New function added Oct 30, 07 - LW 
+// To use model xform to draw annotation in blocks correctly
+bool ON_Annotation2::GetTextXform( 
+      ON_RECT gdi_text_rect,
+      const ON_Font& font,
+      const ON_DimStyle& dimstyle,
+      double dimscale,
+      const ON_Viewport* vp,
+      const ON_Xform* model_xform,
+      ON_Xform& xform
+      ) const
+{
+  const int gdi_height_of_I = font.HeightOfI();
+  const double dimstyle_textheight = dimstyle.TextHeight();
+  double dimstyle_textgap = dimstyle.TextGap();
+  const ON::eTextDisplayMode dimstyle_textalignment 
+            =  ON::TextDisplayMode(dimstyle.TextAlignment()) ;
+  const ON_3dVector cameraX = (vp) ? vp->CameraX() : m_plane.xaxis;
+  const ON_3dVector cameraY = (vp) ? vp->CameraY() : m_plane.yaxis;
+
+  // SDKBREAK - Oct 4, 07 LW Hack to get correct text gap using 
+  // multi-line tolerance text since GetTextXform doesn't do that.
+  if(( dimstyle.ToleranceStyle() == 2 || dimstyle.ToleranceStyle() == 3) &&
+    ( Type() == ON::dtDimLinear || Type() == ON::dtDimAligned))
+    dimstyle_textgap += dimstyle_textheight * 0.5;
+
+  return GetTextXform( 
+      gdi_text_rect,
+      gdi_height_of_I,
+      dimstyle_textheight, dimstyle_textgap, dimstyle_textalignment,
+      dimscale,
+      cameraX, cameraY, 
+      model_xform,
+      xform
+      );
+}
+
 static bool GetLeaderEndAndDirection( const ON_Annotation2* pAnn,
-				     ON_2dPoint& E,
-				     ON_2dVector& R )
+                                     ON_2dPoint& E,
+                                     ON_2dVector& R )
 {
   bool rc = false;
 
@@ -4148,11 +5008,11 @@ static bool GetLeaderEndAndDirection( const ON_Annotation2* pAnn,
       R = E - ann_m_points[1];
       if ( !R.Unitize() )
       {
-	R = E - ann_m_points[0];
-	if ( !R.Unitize() )
-	{
-	  R.Set(1.0,0.0);
-	}
+        R = E - ann_m_points[0];
+        if ( !R.Unitize() )
+        {
+          R.Set(1.0,0.0);
+        }
       }
     }
     rc = true;
@@ -4166,7 +5026,7 @@ static bool GetLeaderEndAndDirection( const ON_Annotation2* pAnn,
       R = E - ann_m_points[i];
       if ( R.Unitize() )
       {
-	break;
+        break;
       }
       R.Set(1.0,0.0);
     }
@@ -4181,9 +5041,9 @@ static bool GetLeaderEndAndDirection( const ON_Annotation2* pAnn,
     {
       if( fabs( ann_m_points[1].x - ann_m_points[0].x) 
        <= fabs( ann_m_points[1].y - ann_m_points[0].y))
-	direction = 0;
+        direction = 0;
       else
-	direction = 1;
+        direction = 1;
     }
 
     if( direction == 0)
@@ -4200,6 +5060,8 @@ static bool GetLeaderEndAndDirection( const ON_Annotation2* pAnn,
   return rc;
 }
 
+// SDKBREAK Oct 30, 07 - LW
+// This function should not be used any longer
 bool ON_Annotation2::GetTextXform( 
       ON_RECT gdi_text_rect,
       int gdi_height_of_I,
@@ -4212,6 +5074,7 @@ bool ON_Annotation2::GetTextXform(
       ON_Xform& xform
       ) const
 {
+  ON_ERROR("This function should not be used. Use the version that takes a model transform argument.");
   const ON_Annotation2* ann = this;
 
   const ON::eAnnotationType ann_type = ann->m_type;
@@ -4231,8 +5094,8 @@ bool ON_Annotation2::GetTextXform(
   dimstyle_textgap *= dimscale;
 
   double textheight = ( ON::dtTextBlock == ann_type )
-		    ? m_textheight*dimscale
-		    : dimstyle_textheight;
+                    ? m_textheight*dimscale
+                    : dimstyle_textheight;
   if ( 0.0 == textheight )
     textheight = 1.0;
 
@@ -4317,14 +5180,14 @@ bool ON_Annotation2::GetTextXform(
       switch ( position_style )
       {
       case 1: // ON::dtDimLinear, ON::dtDimAligned, ON::dtDimAngular
-	flip.m_xform[0][0] = -1.0;
-	flip.m_xform[0][3] = gdi_text_rect.left + gdi_text_rect.right;
-	break;
+        flip.m_xform[0][0] = -1.0;
+        flip.m_xform[0][3] = gdi_text_rect.left + gdi_text_rect.right;
+        break;
 
       case 2: // ON::dtDimDiameter, ON::dtDimRadius, ON::dtLeader
-	flip.m_xform[1][1] = -1.0;
-	flip.m_xform[1][3] = gdi_text_rect.top + gdi_text_rect.bottom;
-	break;
+        flip.m_xform[1][1] = -1.0;
+        flip.m_xform[1][3] = gdi_text_rect.top + gdi_text_rect.bottom;
+        break;
       }
       gdi_to_plane = gdi_to_plane*flip;
     }
@@ -4348,18 +5211,18 @@ bool ON_Annotation2::GetTextXform(
     {
       if ( ON::dtAboveLine == dimstyle_textalignment )
       {
-	text_centering_translation.y =  0.5*textheight+dimstyle_textgap;
+        text_centering_translation.y =  0.5*textheight+dimstyle_textgap;
       }
       y =  ann->m_plane.yaxis*cameraY;
       x = -ann->m_plane.yaxis*cameraX;
       if ( fabs(y) <= ON_SQRT_EPSILON && fabs(x) > ON_SQRT_EPSILON )
       {
-	y = x;
+        y = x;
       }
       if ( y < 0.0 )
       {
-	text_centering_translation.Reverse();
-	text_centering_rotation.Reverse(); // rotate 180 degrees
+        text_centering_translation.Reverse();
+        text_centering_rotation.Reverse(); // rotate 180 degrees
       }
     }
     else if ( ON::dtDimAngular == ann_type )
@@ -4368,35 +5231,35 @@ bool ON_Annotation2::GetTextXform(
       const ON_AngularDimension2* angular_dim = ON_AngularDimension2::Cast(ann);
       if ( 0 != angular_dim )
       {
-	double a = 0.5*angular_dim->m_angle;
-	ON_2dVector R(cos(a),sin(a));
-	a -= 0.5*ON_PI;
-	text_centering_rotation.x = cos(a);
-	text_centering_rotation.y = sin(a);
-	ON_3dVector V = R.x*m_plane.xaxis + R.y*m_plane.yaxis;
-	x = V*cameraX;
-	y = V*cameraY;
-	if ( fabs(y) <= ON_SQRT_EPSILON && fabs(x) > ON_SQRT_EPSILON )
-	{
-	  y = -x;
-	}
-	if ( y < 0.0 )
-	{
-	  text_centering_rotation.Reverse(); // add another 180 degrees of rotation
-	}
+        double a = 0.5*angular_dim->m_angle;
+        ON_2dVector R(cos(a),sin(a));
+        a -= 0.5*ON_PI;
+        text_centering_rotation.x = cos(a);
+        text_centering_rotation.y = sin(a);
+        ON_3dVector V = R.x*m_plane.xaxis + R.y*m_plane.yaxis;
+        x = V*cameraX;
+        y = V*cameraY;
+        if ( fabs(y) <= ON_SQRT_EPSILON && fabs(x) > ON_SQRT_EPSILON )
+        {
+          y = -x;
+        }
+        if ( y < 0.0 )
+        {
+          text_centering_rotation.Reverse(); // add another 180 degrees of rotation
+        }
 
-	if ( ON::dtAboveLine == dimstyle_textalignment )
-	{
-	  y = 0.5*textheight + dimstyle_textgap;
-	  text_centering_translation.x = -y*text_centering_rotation.y;
-	  text_centering_translation.y =  y*text_centering_rotation.x;
-	}
+        if ( ON::dtAboveLine == dimstyle_textalignment )
+        {
+          y = 0.5*textheight + dimstyle_textgap;
+          text_centering_translation.x = -y*text_centering_rotation.y;
+          text_centering_translation.y =  y*text_centering_rotation.x;
+        }
       }
     }
     else if (    ON::dtDimDiameter == ann_type 
-	      || ON::dtDimRadius == ann_type 
-	      || ON::dtLeader == ann_type 
-	      || ON::dtDimOrdinate == ann_type)
+              || ON::dtDimRadius == ann_type 
+              || ON::dtLeader == ann_type 
+              || ON::dtDimOrdinate == ann_type)
     {
       ON_2dPoint E(0.0,0.0); // end point
       ON_2dVector R(1.0,0.0); // unit vector from penultimate point to end point
@@ -4411,11 +5274,11 @@ bool ON_Annotation2::GetTextXform(
       y = V*cameraY;
       if ( fabs(x) <= ON_SQRT_EPSILON && fabs(y) > ON_SQRT_EPSILON )
       {
-	x = y;
+        x = y;
       }
       if ( x < 0.0 )
       {
-	text_centering_rotation.Reverse(); // rotate 180 degrees
+        text_centering_rotation.Reverse(); // rotate 180 degrees
       }
     }
   }
@@ -4442,7 +5305,7 @@ bool ON_Annotation2::GetTextXform(
       const ON_LinearDimension2* linear_dim = ON_LinearDimension2::Cast(ann);
       if ( linear_dim )
       {
-	text_offset_translation = linear_dim->Dim2dPoint(ON_LinearDimension2::text_pivot_pt);
+        text_offset_translation = linear_dim->Dim2dPoint(ON_LinearDimension2::text_pivot_pt);
       }
     }
     break;
@@ -4453,7 +5316,7 @@ bool ON_Annotation2::GetTextXform(
       const ON_AngularDimension2* angular_dim = ON_AngularDimension2::Cast(ann);
       if ( angular_dim )
       {
-	text_offset_translation = angular_dim->Dim2dPoint(ON_AngularDimension2::text_pivot_pt);
+        text_offset_translation = angular_dim->Dim2dPoint(ON_AngularDimension2::text_pivot_pt);
       }
     }
     break;
@@ -4501,15 +5364,15 @@ bool ON_Annotation2::GetTextXform(
   {
     ON_3dPoint fixed_point = ann->m_plane.PointAt(text_offset_translation.x,text_offset_translation.y);
     horizonal_xform.Rotation( 
-	fixed_point,
-	ann->m_plane.xaxis,
-	ann->m_plane.yaxis,
-	ann->m_plane.zaxis,
-	fixed_point,
-	cameraX,
-	cameraY,
-	cameraZ
-	);
+        fixed_point,
+        ann->m_plane.xaxis,
+        ann->m_plane.yaxis,
+        ann->m_plane.zaxis,
+        fixed_point,
+        cameraX,
+        cameraY,
+        cameraZ
+        );
 
     if ( 2 == position_style )
     {
@@ -4520,8 +5383,8 @@ bool ON_Annotation2::GetTextXform(
       ON_3dVector V = R.x*m_plane.xaxis + R.y*m_plane.yaxis;
       x = V*cameraX;
       y = ( x > -ON_SQRT_EPSILON )
-	? dimstyle_textgap
-	: -(dimstyle_textgap + text_line_width);
+        ? dimstyle_textgap
+        : -(dimstyle_textgap + text_line_width);
       V = y*cameraX;
       horizonal_xform.m_xform[0][3] += V.x;
       horizonal_xform.m_xform[1][3] += V.y;
@@ -4531,10 +5394,361 @@ bool ON_Annotation2::GetTextXform(
 
   ON_Xform gdi_to_world;
   gdi_to_world = horizonal_xform
-		* plane_to_world
-		* plane_translation
-		* text_centering_xform
-		* gdi_to_plane;
+                * plane_to_world
+                * plane_translation
+                * text_centering_xform
+                * gdi_to_plane;
+
+  xform = gdi_to_world;
+
+  return true;
+}
+
+// New function added Oct 30, 07 - LW 
+// To use model xform to draw annotation in blocks correctly
+bool ON_Annotation2::GetTextXform( 
+      ON_RECT gdi_text_rect,
+      int gdi_height_of_I,
+      double dimstyle_textheight,
+      double dimstyle_textgap,
+      ON::eTextDisplayMode dimstyle_textalignment,
+      double dimscale,
+      ON_3dVector cameraX,
+      ON_3dVector cameraY,
+      const ON_Xform* model_xform,
+      ON_Xform& xform
+      ) const
+{
+  ON_Xform mxi;
+  if( model_xform)
+  {
+    mxi = model_xform->Inverse();
+    cameraX.Transform( mxi);
+    cameraY.Transform( mxi);
+  }
+  const ON_Annotation2* ann = this;
+
+  const ON::eAnnotationType ann_type = ann->m_type;
+
+  if ( 0 == gdi_height_of_I )
+  {
+    // Default to height of Ariel 'I'
+    gdi_height_of_I = (165*ON_Font::normal_font_height)/256;
+  }
+
+  if ( 0.0 == dimscale )
+  {
+    dimscale = 1.0;
+  }
+
+  dimstyle_textheight *= dimscale;
+  dimstyle_textgap *= dimscale;
+
+  double textheight = ( ON::dtTextBlock == ann_type )
+                    ? m_textheight*dimscale
+                    : dimstyle_textheight;
+  if ( 0.0 == textheight )
+    textheight = 1.0;
+
+  ON_3dVector cameraZ = ON_CrossProduct( cameraX, cameraY );
+  if ( fabs( 1.0 - cameraZ.Length() ) > ON_SQRT_EPSILON )
+  {
+    cameraZ.Unitize();
+  }
+
+  // This xform is a scale from Windows gdi coordinates 
+  // to annotation plane coordinates.
+  const double gdi_to_plane_scale = textheight/gdi_height_of_I;
+  ON_Xform gdi_to_plane(1.0);
+  gdi_to_plane.m_xform[0][0] =  gdi_to_plane_scale;
+  gdi_to_plane.m_xform[1][1] = -gdi_to_plane_scale;
+
+  // width and height of text line in Rhino units.
+  const double text_line_width  = gdi_to_plane_scale*(gdi_text_rect.right - gdi_text_rect.left);
+  //const double text_line_height = gdi_to_plane_scale*(gdi_text_rect.bottom - gdi_text_rect.top);
+
+  if ( ON::dtTextBlock == ann_type )
+  {
+    // The orientation of the text is text blocks
+    // does not depend on the view or text alignment
+    // settings.  The position and orientation of 
+    // the text in every other annotation depends on
+    // the view and text alignment settings.  
+    //
+    // It simplifies the code for the rest of the
+    // annotation settings to quickly deal with text
+    // blocks here.
+    ON_Xform plane_to_world(1.0);
+    plane_to_world.Rotation(ON_xy_plane,ann->m_plane);
+    xform = plane_to_world*gdi_to_plane;
+    return true;
+  }
+
+
+  // text_position_mode
+  //   1 = linear, aligned, or anglular dimension
+  //       (dimension definition determines center point of text box)
+  //   2 = radial, diameter, leader
+  //       (dimension definition determined end point of text box)
+  int position_style = 0;
+  switch( ann_type )
+  {
+  case ON::dtDimAligned:
+  case ON::dtDimLinear:
+  case ON::dtDimAngular:
+    // dimension definition determines center point of text box
+    position_style = 1;
+    break;
+
+  case ON::dtLeader:
+  case ON::dtDimRadius:
+  case ON::dtDimDiameter:
+  case ON::dtDimOrdinate:
+    // dimension definition determines end of text box
+    position_style = 2;
+    break;
+
+  case ON::dtTextBlock:
+  case ON::dtNothing:
+    break;
+  }
+
+
+  // This translation puts the center of the fist line of text at
+  // (0,0) in the annotation's plane.
+  if ( ON::dtHorizontal != dimstyle_textalignment || 1 == position_style )
+  {
+    gdi_to_plane.m_xform[0][3] = -0.5*text_line_width;
+  }
+  gdi_to_plane.m_xform[1][3] = -0.5*textheight;
+
+  if ( ON::dtHorizontal != dimstyle_textalignment )
+  {
+    if ( ((cameraZ*m_plane.zaxis) < -ON_SQRT_EPSILON) )
+    {
+      // Viewing dimension from the backside
+      ON_Xform flip(1.0);
+      switch ( position_style )
+      {
+      case 1: // ON::dtDimLinear, ON::dtDimAligned, ON::dtDimAngular
+        flip.m_xform[0][0] = -1.0;
+        flip.m_xform[0][3] = gdi_text_rect.left + gdi_text_rect.right;
+        break;
+
+      case 2: // ON::dtDimDiameter, ON::dtDimRadius, ON::dtLeader
+        flip.m_xform[1][1] = -1.0;
+        flip.m_xform[1][3] = gdi_text_rect.top + gdi_text_rect.bottom;
+        break;
+      }
+      gdi_to_plane = gdi_to_plane*flip;
+    }
+  }
+
+  // text_centering_rotation rotates about the "center".  Angular,
+  // radial, and leader dimensions use this rotation.
+  ON_2dVector text_centering_rotation(1.0,0.0);
+
+  // text_centering_translation is a small translation deals with
+  // text that is above or to the right of the "center" point.  
+  // It is no larger than dimstyle_gap + 1/2 the size of the
+  // text's bounding box.
+  ON_2dVector text_centering_translation(0.0,0.0);
+
+  double x, y;
+
+  if ( ON::dtHorizontal != dimstyle_textalignment )
+  {
+    if ( ON::dtDimLinear  == ann_type || ON::dtDimAligned == ann_type )
+    {
+      if ( ON::dtAboveLine == dimstyle_textalignment )
+      {
+        text_centering_translation.y =  0.5*textheight+dimstyle_textgap;
+      }
+      y =  ann->m_plane.yaxis*cameraY;
+      x = -ann->m_plane.yaxis*cameraX;
+      if ( fabs(y) <= ON_SQRT_EPSILON && fabs(x) > ON_SQRT_EPSILON )
+      {
+        y = x;
+      }
+      if ( y < 0.0 )
+      {
+        text_centering_translation.Reverse();
+        text_centering_rotation.Reverse(); // rotate 180 degrees
+      }
+    }
+    else if ( ON::dtDimAngular == ann_type )
+    {
+      // This transform rotates the text in the annotation plane.
+      const ON_AngularDimension2* angular_dim = ON_AngularDimension2::Cast(ann);
+      if ( 0 != angular_dim )
+      {
+        double a = 0.5*angular_dim->m_angle;
+        ON_2dVector R(cos(a),sin(a));
+        a -= 0.5*ON_PI;
+        text_centering_rotation.x = cos(a);
+        text_centering_rotation.y = sin(a);
+        ON_3dVector V = R.x*m_plane.xaxis + R.y*m_plane.yaxis;
+        x = V*cameraX;
+        y = V*cameraY;
+        if ( fabs(y) <= ON_SQRT_EPSILON && fabs(x) > ON_SQRT_EPSILON )
+        {
+          y = -x;
+        }
+        if ( y < 0.0 )
+        {
+          text_centering_rotation.Reverse(); // add another 180 degrees of rotation
+        }
+
+        if ( ON::dtAboveLine == dimstyle_textalignment )
+        {
+          y = 0.5*textheight + dimstyle_textgap;
+          text_centering_translation.x = -y*text_centering_rotation.y;
+          text_centering_translation.y =  y*text_centering_rotation.x;
+        }
+      }
+    }
+    else if (    ON::dtDimDiameter == ann_type 
+              || ON::dtDimRadius == ann_type 
+              || ON::dtLeader == ann_type 
+              || ON::dtDimOrdinate == ann_type)
+    {
+      ON_2dPoint E(0.0,0.0); // end point
+      ON_2dVector R(1.0,0.0); // unit vector from penultimate point to end point
+      GetLeaderEndAndDirection( this, E, R );
+
+      text_centering_rotation = R;
+
+      text_centering_translation = (dimstyle_textgap + 0.5*text_line_width)*text_centering_rotation;
+
+      ON_3dVector V = text_centering_rotation.x*m_plane.xaxis + text_centering_rotation.y*m_plane.yaxis;
+      x = V*cameraX;
+      y = V*cameraY;
+      if ( fabs(x) <= ON_SQRT_EPSILON && fabs(y) > ON_SQRT_EPSILON )
+      {
+        x = y;
+      }
+      if ( x < 0.0 )
+      {
+        text_centering_rotation.Reverse(); // rotate 180 degrees
+      }
+    }
+  }
+
+  ON_Xform text_centering_xform(1.0);
+  text_centering_xform.m_xform[0][0] =  text_centering_rotation.x;
+  text_centering_xform.m_xform[0][1] = -text_centering_rotation.y;
+  text_centering_xform.m_xform[1][0] =  text_centering_rotation.y;
+  text_centering_xform.m_xform[1][1] =  text_centering_rotation.x;
+  // Since the translation happens after the rotation about (0,0),
+  // we can just tack it on here.
+  text_centering_xform.m_xform[0][3] =  text_centering_translation.x;
+  text_centering_xform.m_xform[1][3] =  text_centering_translation.y;
+
+  // This transform translates the text in the annotation plane
+  // It can be a large translation
+  ON_2dVector text_offset_translation(0.0,0.0); // CRhinoText::Offset() = text->Offset()
+  switch( ann_type )
+  {
+  case ON::dtDimLinear:
+  case ON::dtDimAligned:
+    if ( m_points.Count() >= ON_LinearDimension2::dim_pt_count )
+    {
+      const ON_LinearDimension2* linear_dim = ON_LinearDimension2::Cast(ann);
+      if ( linear_dim )
+      {
+        text_offset_translation = linear_dim->Dim2dPoint(ON_LinearDimension2::text_pivot_pt);
+      }
+    }
+    break;
+
+  case ON::dtDimAngular:
+    if ( m_points.Count() >= ON_AngularDimension2::dim_pt_count )
+    {
+      const ON_AngularDimension2* angular_dim = ON_AngularDimension2::Cast(ann);
+      if ( angular_dim )
+      {
+        text_offset_translation = angular_dim->Dim2dPoint(ON_AngularDimension2::text_pivot_pt);
+      }
+    }
+    break;
+
+  case ON::dtDimDiameter:
+  case ON::dtDimRadius:
+    if ( m_points.Count() >= ON_RadialDimension2::dim_pt_count )
+    {
+      // No user positioned text on radial dimensions.
+      text_offset_translation = m_points[ON_RadialDimension2::tail_pt_index];
+    }
+    break;
+
+  case ON::dtLeader:
+    if ( m_points.Count() > 0 )
+    {
+      // No user positioned text on leaders.
+      text_offset_translation = *m_points.Last();
+    }
+    break;
+
+  case ON::dtDimOrdinate:
+    if ( m_points.Count() == 2 )
+    {
+      // No user positioned text on leaders.
+      text_offset_translation = m_points[1];
+    }
+    break;
+
+  case ON::dtTextBlock:
+  case ON::dtNothing:
+    break;
+  }
+
+  ON_Xform plane_translation(1.0);
+  plane_translation.m_xform[0][3] = text_offset_translation.x;
+  plane_translation.m_xform[1][3] = text_offset_translation.y;
+
+  // this transform maps a point in the annotation plane to world coordinates
+  ON_Xform plane_to_world(1.0);
+  plane_to_world.Rotation(ON_xy_plane,ann->m_plane);
+
+  ON_Xform horizonal_xform(1.0);
+  if ( ON::dtHorizontal == dimstyle_textalignment )
+  {
+    ON_3dPoint fixed_point = ann->m_plane.PointAt(text_offset_translation.x,text_offset_translation.y);
+    horizonal_xform.Rotation( 
+        fixed_point,
+        ann->m_plane.xaxis,
+        ann->m_plane.yaxis,
+        ann->m_plane.zaxis,
+        fixed_point,
+        cameraX,
+        cameraY,
+        cameraZ
+        );
+
+    if ( 2 == position_style )
+    {
+      // leaders, radial, and diameter
+      ON_2dPoint E(0.0,0.0); // end point
+      ON_2dVector R(1.0,0.0); // unit vector from penultimate point to end point
+      GetLeaderEndAndDirection( this, E, R );
+      ON_3dVector V = R.x*m_plane.xaxis + R.y*m_plane.yaxis;
+      x = V*cameraX;
+      y = ( x > -ON_SQRT_EPSILON )
+        ? dimstyle_textgap
+        : -(dimstyle_textgap + text_line_width);
+      V = y*cameraX;
+      horizonal_xform.m_xform[0][3] += V.x;
+      horizonal_xform.m_xform[1][3] += V.y;
+      horizonal_xform.m_xform[2][3] += V.z;
+    }
+  }
+
+  ON_Xform gdi_to_world;
+  gdi_to_world = horizonal_xform
+                * plane_to_world
+                * plane_translation
+                * text_centering_xform
+                * gdi_to_plane;
 
   xform = gdi_to_world;
 
@@ -4558,8 +5772,8 @@ bool ON_Annotation2::GetTextPoint( ON_2dPoint& text_2d_point ) const
     {
       if ( m_points.Count() >= 5 )
       {
-	text_2d_point = m_points[4];
-	rc = true;
+        text_2d_point = m_points[4];
+        rc = true;
       }
     }
     else if ( m_points.Count() >= 3 )
@@ -4583,19 +5797,19 @@ bool ON_Annotation2::GetTextPoint( ON_2dPoint& text_2d_point ) const
       const ON_AngularDimension2* angular_dim = ON_AngularDimension2::Cast(this);
       if ( angular_dim )
       {
-	if ( m_userpositionedtext )
-	{
-	  if ( m_points.Count() >= 0 )
-	  {
-	    text_2d_point = m_points[0];
-	  }
-	}
-	else
-	{
-	  text_2d_point.x = angular_dim->m_radius*cos(angular_dim->m_angle);
-	  text_2d_point.y = angular_dim->m_radius*sin(angular_dim->m_angle);
-	  rc = true;
-	}
+        if ( m_userpositionedtext )
+        {
+          if ( m_points.Count() >= 0 )
+          {
+            text_2d_point = m_points[0];
+          }
+        }
+        else
+        {
+          text_2d_point.x = angular_dim->m_radius*cos(angular_dim->m_angle);
+          text_2d_point.y = angular_dim->m_radius*sin(angular_dim->m_angle);
+          rc = true;
+        }
       }
     }
     break;
@@ -4617,4 +5831,6 @@ bool ON_Annotation2::GetTextPoint( ON_2dPoint& text_2d_point ) const
   }
   return rc;
 }
+
+
 

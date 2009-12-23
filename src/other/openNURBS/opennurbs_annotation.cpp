@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -23,11 +22,11 @@ ON_OBJECT_IMPLEMENT( ON_AngularDimension, ON_Annotation, "5DE6B20F-486B-11d4-801
 ON_OBJECT_IMPLEMENT( ON_TextEntity,       ON_Annotation, "5DE6B210-486B-11d4-8014-0010830122F0" );
 ON_OBJECT_IMPLEMENT( ON_Leader,           ON_Annotation, "5DE6B211-486B-11d4-8014-0010830122F0" );
 
-BOOL ON_LinearDimension::IsRealObject() const {return true;}
-BOOL ON_RadialDimension::IsRealObject() const {return true;}
-BOOL ON_AngularDimension::IsRealObject() const {return true;}
-BOOL ON_TextEntity::IsRealObject() const {return true;}
-BOOL ON_Leader::IsRealObject() const {return true;}
+ON_BOOL32 ON_LinearDimension::IsRealObject() const {return true;}
+ON_BOOL32 ON_RadialDimension::IsRealObject() const {return true;}
+ON_BOOL32 ON_AngularDimension::IsRealObject() const {return true;}
+ON_BOOL32 ON_TextEntity::IsRealObject() const {return true;}
+ON_BOOL32 ON_Leader::IsRealObject() const {return true;}
 
 #define REALLY_BIG_NUMBER 1e150
 
@@ -95,7 +94,7 @@ ON_Annotation::~ON_Annotation()
 
 bool ON_Annotation::IsText() const { return Type() == ON::dtTextBlock; }
 bool ON_Annotation::IsLeader() const { return Type() == ON::dtLeader; }
-bool ON_Annotation::IsDimension() const { if( IsText() || IsLeader()) return FALSE; return TRUE; }
+bool ON_Annotation::IsDimension() const { if( IsText() || IsLeader()) return false; return true; }
 
 //virtual 
 double ON_Annotation::NumericValue() const { return 0.0; }
@@ -138,7 +137,7 @@ ON_Annotation& ON_Annotation::operator=(const ON_Annotation& src)
   return *this;
 }
 
-BOOL ON_Annotation::IsValid( ON_TextLog* text_log ) const
+ON_BOOL32 ON_Annotation::IsValid( ON_TextLog* text_log ) const
 {
   // TODO: quickly inspect object and return true/false
   bool rc = true;
@@ -157,10 +156,10 @@ void ON_Annotation::Dump( ON_TextLog& dump ) const
   dump.Print("ON_Annotation: ....\n");
 }
 
-BOOL ON_Annotation::Write( ON_BinaryArchive& file ) const
+ON_BOOL32 ON_Annotation::Write( ON_BinaryArchive& file ) const
 {
   int i;
-  BOOL rc = file.Write3dmChunkVersion( 1, 0 );
+  ON_BOOL32 rc = file.Write3dmChunkVersion( 1, 0 );
     // TODO: use 
     //    if (rc) rc = file.WritePoint(....);
     //    if (rc) rc = file.WriteString(....);
@@ -182,12 +181,12 @@ BOOL ON_Annotation::Write( ON_BinaryArchive& file ) const
   return rc;
 }
 
-BOOL ON_Annotation::Read( ON_BinaryArchive& file )
+ON_BOOL32 ON_Annotation::Read( ON_BinaryArchive& file )
 {
   Destroy();
   int major_version = 0;
   int minor_version = 0;
-  BOOL rc = file.Read3dmChunkVersion(&major_version,&minor_version);
+  ON_BOOL32 rc = file.Read3dmChunkVersion(&major_version,&minor_version);
   if ( rc && major_version == 1 ) 
   {
     int i;
@@ -195,7 +194,7 @@ BOOL ON_Annotation::Read( ON_BinaryArchive& file )
     {
       rc = file.ReadInt( &i );
       if (rc)
-	m_type = ON::AnnotationType(i);
+        m_type = ON::AnnotationType(i);
     }
     if (rc)
       rc = file.ReadPlane( m_plane );
@@ -237,10 +236,10 @@ int ON_Annotation::Dimension() const
   return 3; 
 }
 
-BOOL ON_Annotation::GetBBox( // returns true if successful
+ON_BOOL32 ON_Annotation::GetBBox( // returns true if successful
        double* boxmin,
        double* boxmax,
-       BOOL bGrowBox // default = false
+       ON_BOOL32 bGrowBox // default = false
        ) const
 {
   // TODO:
@@ -279,7 +278,7 @@ BOOL ON_Annotation::GetBBox( // returns true if successful
   return true;
 }
 
-BOOL ON_Annotation::Transform( const ON_Xform& xform )
+ON_BOOL32 ON_Annotation::Transform( const ON_Xform& xform )
 {
   // TODO: Return false if class is invalid or xform cannot be applied.
   //       Otherwise, apply xform to geometry and return true.
@@ -292,7 +291,7 @@ bool ON_Annotation::GetECStoWCSXform( ON_Xform& xform ) const
 {
   ON_3dVector z = ON_CrossProduct( m_plane.xaxis, m_plane.yaxis );
   return xform.ChangeBasis( m_plane.origin, m_plane.xaxis, m_plane.yaxis, z, 
-			    ON_origin, ON_xaxis, ON_yaxis, ON_zaxis );
+                            ON_origin, ON_xaxis, ON_yaxis, ON_zaxis );
 }
 
 // Converts from WCS 3d points to 2d points in annotation
@@ -300,7 +299,7 @@ bool ON_Annotation::GeWCStoECSXform( ON_Xform& xform ) const
 {
   ON_3dVector z = ON_CrossProduct( m_plane.xaxis, m_plane.yaxis );
   return xform.ChangeBasis( ON_origin, ON_xaxis, ON_yaxis, ON_zaxis,
-			    m_plane.origin, m_plane.xaxis, m_plane.yaxis, z );
+                            m_plane.origin, m_plane.xaxis, m_plane.yaxis, z );
 }
 
 void ON_Annotation::SetPoint( int idx, ON_3dPoint point )
@@ -429,9 +428,9 @@ void ON_AngularDimension::EmergencyDestroy()
   ON_Annotation::EmergencyDestroy();
 }
 
-BOOL ON_AngularDimension::Write( ON_BinaryArchive& file ) const
+ON_BOOL32 ON_AngularDimension::Write( ON_BinaryArchive& file ) const
 {
-  BOOL rc = ON_Annotation::Write( file );
+  ON_BOOL32 rc = ON_Annotation::Write( file );
   if( rc )
     rc = file.WriteDouble( m_angle );
   if( rc )
@@ -439,9 +438,9 @@ BOOL ON_AngularDimension::Write( ON_BinaryArchive& file ) const
   return rc;
 }
 
-BOOL ON_AngularDimension::Read( ON_BinaryArchive& file )
+ON_BOOL32 ON_AngularDimension::Read( ON_BinaryArchive& file )
 {
-  BOOL rc = ON_Annotation::Read( file );
+  ON_BOOL32 rc = ON_Annotation::Read( file );
   if( rc )
     rc = file.ReadDouble( &m_angle );
   if( rc )
@@ -502,9 +501,9 @@ void ON_TextEntity::EmergencyDestroy()
   m_facename.EmergencyDestroy();
 }
 
-BOOL ON_TextEntity::Write( ON_BinaryArchive& file ) const
+ON_BOOL32 ON_TextEntity::Write( ON_BinaryArchive& file ) const
 {
-  BOOL rc = ON_Annotation::Write( file );
+  ON_BOOL32 rc = ON_Annotation::Write( file );
   if( rc )
     rc = file.WriteString( m_facename );
   if( rc )
@@ -514,9 +513,9 @@ BOOL ON_TextEntity::Write( ON_BinaryArchive& file ) const
   return rc;
 }
 
-BOOL ON_TextEntity::Read( ON_BinaryArchive& file )
+ON_BOOL32 ON_TextEntity::Read( ON_BinaryArchive& file )
 {
-  BOOL rc = ON_Annotation::Read( file );
+  ON_BOOL32 rc = ON_Annotation::Read( file );
   if( rc )
     rc = file.ReadString( m_facename );
   if( rc )
@@ -580,7 +579,7 @@ ON_AnnotationTextDot& ON_AnnotationTextDot::operator=(const ON_AnnotationTextDot
   return *this;
 }
 
-BOOL ON_AnnotationTextDot::IsValid( ON_TextLog* text_log ) const
+ON_BOOL32 ON_AnnotationTextDot::IsValid( ON_TextLog* text_log ) const
 {
   bool rc = true;
   if ( m_text.IsEmpty() )
@@ -599,20 +598,20 @@ void ON_AnnotationTextDot::Dump( ON_TextLog& log ) const
   log.Print("\n");
 }
 
-BOOL ON_AnnotationTextDot::Write( ON_BinaryArchive& file ) const
+ON_BOOL32 ON_AnnotationTextDot::Write( ON_BinaryArchive& file ) const
 {
-  BOOL rc = file.Write3dmChunkVersion(1,0);
+  ON_BOOL32 rc = file.Write3dmChunkVersion(1,0);
   if (rc) rc = file.WritePoint( point );
   if (rc) rc = file.WriteString( m_text );
   return rc;
 }
 
-BOOL ON_AnnotationTextDot::Read( ON_BinaryArchive& file )
+ON_BOOL32 ON_AnnotationTextDot::Read( ON_BinaryArchive& file )
 {
   m_text.Destroy();
   int major_version = 0;
   int minor_version = 0;
-  BOOL rc = file.Read3dmChunkVersion(&major_version,&minor_version);
+  ON_BOOL32 rc = file.Read3dmChunkVersion(&major_version,&minor_version);
   if ( major_version == 1 ) {
     if (rc) rc = file.ReadPoint( point );
     if (rc) rc = file.ReadString( m_text );
@@ -644,7 +643,7 @@ ON_AnnotationArrow& ON_AnnotationArrow::operator=(const ON_AnnotationArrow& src)
   return *this;
 }
 
-BOOL ON_AnnotationArrow::IsValid( ON_TextLog* text_log ) const
+ON_BOOL32 ON_AnnotationArrow::IsValid( ON_TextLog* text_log ) const
 {
   bool rc = true;
   if (m_tail == m_head)
@@ -665,19 +664,19 @@ void ON_AnnotationArrow::Dump( ON_TextLog& log ) const
   log.Print("\n");
 }
 
-BOOL ON_AnnotationArrow::Write( ON_BinaryArchive& file ) const
+ON_BOOL32 ON_AnnotationArrow::Write( ON_BinaryArchive& file ) const
 {
-  BOOL rc = file.Write3dmChunkVersion(1,0);
+  ON_BOOL32 rc = file.Write3dmChunkVersion(1,0);
   if (rc) rc = file.WritePoint( m_tail );
   if (rc) rc = file.WritePoint( m_head );
   return rc;
 }
 
-BOOL ON_AnnotationArrow::Read(ON_BinaryArchive& file)
+ON_BOOL32 ON_AnnotationArrow::Read(ON_BinaryArchive& file)
 {
   int major_version = 0;
   int minor_version = 0;
-  BOOL rc = file.Read3dmChunkVersion(&major_version,&minor_version);
+  ON_BOOL32 rc = file.Read3dmChunkVersion(&major_version,&minor_version);
   if ( major_version == 1 ) {
     if (rc) rc = file.ReadPoint( m_tail );
     if (rc) rc = file.ReadPoint( m_head );
@@ -699,15 +698,15 @@ int ON_AnnotationArrow::Dimension() const
   return 3;
 }
 
-BOOL ON_AnnotationArrow::GetBBox( double* boxmin, double* boxmax, BOOL bGrowBox ) const
+ON_BOOL32 ON_AnnotationArrow::GetBBox( double* boxmin, double* boxmax, ON_BOOL32 bGrowBox ) const
 {
-  BOOL rc = ON_GetPointListBoundingBox( 3, false, 1, 3, m_tail, boxmin, boxmax, bGrowBox?true:false );
+  ON_BOOL32 rc = ON_GetPointListBoundingBox( 3, false, 1, 3, m_tail, boxmin, boxmax, bGrowBox?true:false );
   if (rc)
     rc = ON_GetPointListBoundingBox( 3, false, 1, 3, m_head, boxmin, boxmax, true );
   return rc;
 }
 
-BOOL ON_AnnotationArrow::Transform( const ON_Xform& xform )
+ON_BOOL32 ON_AnnotationArrow::Transform( const ON_Xform& xform )
 {
   TransformUserData(xform);
   m_tail = xform*m_tail;

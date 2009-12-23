@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -27,11 +26,11 @@ public:
   // C++ default operator= and copy constructor work fine.
 
   void Default();
-  BOOL IsValid() const;
+  ON_BOOL32 IsValid() const;
   int NewRevision(); // returns updated revision count
 
-  BOOL Read( ON_BinaryArchive& );
-  BOOL Write( ON_BinaryArchive& ) const;
+  ON_BOOL32 Read( ON_BinaryArchive& );
+  ON_BOOL32 Write( ON_BinaryArchive& ) const;
 
   void Dump( ON_TextLog& ) const;
 
@@ -53,10 +52,10 @@ public:
   ON_3dmNotes& operator=(const ON_3dmNotes&);
 
   void Default();
-  BOOL IsValid() const;
+  ON_BOOL32 IsValid() const;
 
-  BOOL Read( ON_BinaryArchive& );
-  BOOL Write( ON_BinaryArchive& ) const;
+  ON_BOOL32 Read( ON_BinaryArchive& );
+  ON_BOOL32 Write( ON_BinaryArchive& ) const;
 
   void Dump(ON_TextLog&) const;
 
@@ -66,8 +65,8 @@ public:
   // may want to derive a runtime class that has additional
   // window and font information.
   ON_wString m_notes; // UNICODE
-  BOOL m_bVisible;    // TRUE if notes window is showing
-  BOOL m_bHTML;       // TRUE if notes are in HTML
+  ON_BOOL32 m_bVisible;    // true if notes window is showing
+  ON_BOOL32 m_bHTML;       // true if notes are in HTML
 
   // last window position
   int m_window_left;
@@ -88,10 +87,10 @@ public:
   ON_3dmApplication& operator=(const ON_3dmApplication&);
 
   void Default();
-  BOOL IsValid() const;
+  ON_BOOL32 IsValid() const;
 
-  BOOL Read( ON_BinaryArchive& );
-  BOOL Write( ON_BinaryArchive& ) const;
+  ON_BOOL32 Read( ON_BinaryArchive& );
+  ON_BOOL32 Write( ON_BinaryArchive& ) const;
 
   void Dump( ON_TextLog& ) const;
 
@@ -112,8 +111,8 @@ public:
 
   void Default();
 
-  BOOL Read(ON_BinaryArchive&);
-  BOOL Write(ON_BinaryArchive&) const;
+  ON_BOOL32 Read(ON_BinaryArchive&);
+  ON_BOOL32 Write(ON_BinaryArchive&) const;
 
   void Dump( ON_TextLog& ) const;
 

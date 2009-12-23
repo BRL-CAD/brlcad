@@ -12,24 +12,25 @@
 
 
 #include "../opennurbs.h"
+#include "../opennurbs_staticlib_linking_pragmas.h"
 
 #include "../example_userdata/example_ud.h"
 
 static bool write_simple_file_example(
-	    FILE* fp,
-	    int version,
-	    ON_TextLog& error_log,
-	    const char* sNotes,
-	    const ON_3dmSettings* settings,
-	    int material_count, const ON_Material* material,  // optional rendering material
-	    int layer_count,    const ON_Layer* layer,        // optional layer definitions
-	    int light_count,
-	    const ON_3dmObjectAttributes* light_attributes, // optional light attributes
-	    ON_Light*                     light,            // lights
-	    int object_count,
-	    const ON_3dmObjectAttributes* object_attributes, // optional object attributes
-	    ON_Object**                   object      // objects
-	    )
+            FILE* fp,
+            int version,
+            ON_TextLog& error_log,
+            const char* sNotes,
+            const ON_3dmSettings* settings,
+            int material_count, const ON_Material* material,  // optional rendering material
+            int layer_count,    const ON_Layer* layer,        // optional layer definitions
+            int light_count,
+            const ON_3dmObjectAttributes* light_attributes, // optional light attributes
+            ON_Light*                     light,            // lights
+            int object_count,
+            const ON_3dmObjectAttributes* object_attributes, // optional object attributes
+            ON_Object**                   object      // objects
+            )
 {
   ONX_Model model;
   int i;
@@ -80,17 +81,17 @@ static bool write_simple_file_example(
       // check that layer index is correct
       if ( layer[i].LayerIndex() != i ) 
       {
-	error_log.Print("error: layer[%d].LayerIndex() == %d\n",i,layer[i].LayerIndex());
-	layer_count = i;
-	break;
+        error_log.Print("error: layer[%d].LayerIndex() == %d\n",i,layer[i].LayerIndex());
+        layer_count = i;
+        break;
       }
       // check that layer's material index is correct
       if (    layer[i].RenderMaterialIndex() < -1 
-	   || layer[i].RenderMaterialIndex() >= material_count ) 
+           || layer[i].RenderMaterialIndex() >= material_count ) 
       {
-	error_log.Print("error: layer[%d].RenderMaterialIndex() == %d\n",i,layer[i].RenderMaterialIndex());
-	layer_count = i;
-	break;
+        error_log.Print("error: layer[%d].RenderMaterialIndex() == %d\n",i,layer[i].RenderMaterialIndex());
+        layer_count = i;
+        break;
       }
       model.m_layer_table.Append(layer[i]);
     }
@@ -103,7 +104,7 @@ static bool write_simple_file_example(
       ONX_Model_RenderLight& mrl = model.m_light_table.AppendNew();
       mrl.m_light = light[i];
       if ( light_attributes )
-	mrl.m_attributes = light_attributes[i];
+        mrl.m_attributes = light_attributes[i];
     }
   }
 
@@ -114,11 +115,11 @@ static bool write_simple_file_example(
       // get object attributes and make sure layer and material indices are legit
       if ( object[i] ) 
       {
-	ONX_Model_Object& mo = model.m_object_table.AppendNew();
-	mo.m_object = object[i];
-	mo.m_bDeleteObject = false;
-	if ( object_attributes )
-	  mo.m_attributes = object_attributes[i];
+        ONX_Model_Object& mo = model.m_object_table.AppendNew();
+        mo.m_object = object[i];
+        mo.m_bDeleteObject = false;
+        if ( object_attributes )
+          mo.m_attributes = object_attributes[i];
       }
     }
   }
@@ -130,9 +131,9 @@ static bool write_simple_file_example(
   model.Polish();
   // writes model to archive
   bool ok = model.Write( archive,
-			 version, 
-			 __FILE__ " write_simple_file_example() " __DATE__, 
-			 &error_log );
+                         version, 
+                         __FILE__ " write_simple_file_example() " __DATE__, 
+                         &error_log );
 
   return ok;
 }
@@ -333,15 +334,15 @@ static bool write_curves_example( FILE* fp, int version, ON_TextLog& error_log )
     {
       // write a wiggly cubic curve on the "green NURBS wiggle" layer
       ON_NurbsCurve* wiggle = new ON_NurbsCurve(
-	3, // dimension
-	false, // true if rational
-	4,     // order = degree+1
-	6      // number of control vertices
-	);
+        3, // dimension
+        false, // true if rational
+        4,     // order = degree+1
+        6      // number of control vertices
+        );
       int i;
       for ( i = 0; i < wiggle->CVCount(); i++ ) {
-	ON_3dPoint pt( 2*i, -i, (i-3)*(i-3) ); // pt = some 3d point
-	wiggle->SetCV( i, pt );
+        ON_3dPoint pt( 2*i, -i, (i-3)*(i-3) ); // pt = some 3d point
+        wiggle->SetCV( i, pt );
       }
 
       // ON_NurbsCurve's have order+cv_count-2 knots.
@@ -357,14 +358,14 @@ static bool write_curves_example( FILE* fp, int version, ON_TextLog& error_log )
       
       if ( wiggle->IsValid() ) 
       {
-	ONX_Model_Object& mo = model.m_object_table.AppendNew();
-	mo.m_object = wiggle;
-	mo.m_bDeleteObject = true;
-	mo.m_attributes.m_layer_index = 1;
-	mo.m_attributes.m_name = "wiggly cubic curve";
+        ONX_Model_Object& mo = model.m_object_table.AppendNew();
+        mo.m_object = wiggle;
+        mo.m_bDeleteObject = true;
+        mo.m_attributes.m_layer_index = 1;
+        mo.m_attributes.m_name = "wiggly cubic curve";
       }
       else
-	delete wiggle;
+        delete wiggle;
     }
 
     {
@@ -398,7 +399,7 @@ static bool write_curves_example( FILE* fp, int version, ON_TextLog& error_log )
 }
 
 
-static bool write_surfaces_example( FILE* fp, int version, ON_TextLog& error_log )
+static bool write_surfaces_example( FILE* fp, int version )
 {
   // example demonstrates how to write a NURBS surface
 
@@ -446,8 +447,8 @@ static bool write_surfaces_example( FILE* fp, int version, ON_TextLog& error_log
 
   // write a line on the default layer
   ON_NurbsSurface nurbs_surface( dim, bIsRational, 
-			u_degree+1, v_degree+1,
-			u_cv_count, v_cv_count );
+                        u_degree+1, v_degree+1,
+                        u_cv_count, v_cv_count );
 
   for ( i = 0; i < nurbs_surface.KnotCount(0); i++ )
     nurbs_surface.SetKnot( 0, i, u_knot[i] );
@@ -472,7 +473,7 @@ static bool write_surfaces_example( FILE* fp, int version, ON_TextLog& error_log
 }
 
 
-static bool write_mesh_example( FILE* fp, int version, ON_TextLog& error_log )
+static bool write_mesh_example( FILE* fp, int version )
 {
   // example demonstrates how to create and write a mesh
 
@@ -634,7 +635,7 @@ static bool write_mesh_with_material_example( FILE* fp, int version, ON_TextLog&
   material.SetSpecular( ON_Color( 180, 180, 180 ) );
 
   material.SetShine( 0.35*ON_Material::MaxShine() ); // 0 = flat
-							// MaxShine() = shiney
+                                                        // MaxShine() = shiney
 
   material.SetTransparency( 0.2 );  // 0 = opaque, 1 = transparent
 
@@ -673,17 +674,17 @@ static bool write_mesh_with_material_example( FILE* fp, int version, ON_TextLog&
     attributes.m_material_index = 0;
     attributes.SetMaterialSource( ON::material_from_object );
     ok = write_simple_file_example( fp, version, error_log,
-	 "OpenNURBS write_mesh_with_material_example()", // notes
-	 NULL,               // default settings
-	 1, &material,       // render material table
-	 0, NULL,            // layer table
-	 0,                  // light count
-	 NULL,               // light attributes
-	 NULL,               // lights
-	 1,                  // object count
-	 &attributes,        // array of object_count attributes
-	 object              // array of object_count objects
-	 );
+         "OpenNURBS write_mesh_with_material_example()", // notes
+         NULL,               // default settings
+         1, &material,       // render material table
+         0, NULL,            // layer table
+         0,                  // light count
+         NULL,               // light attributes
+         NULL,               // lights
+         1,                  // object count
+         &attributes,        // array of object_count attributes
+         object              // array of object_count objects
+         );
   }
 
   return ok;
@@ -703,7 +704,7 @@ static bool write_spot_light_example( FILE* fp, int version, ON_TextLog& error_l
   material.SetEmission( black );
   material.SetSpecular( white );
   material.SetShine( 0.35*ON_Material::MaxShine() ); // 0 = flat
-							// MaxShine() = shiney
+                                                        // MaxShine() = shiney
   material.SetTransparency( 0.0 );  // 0 = opaque, 1 = transparent
   material.SetMaterialName( L"white material" );
 
@@ -828,7 +829,7 @@ static bool write_viewport_example( FILE* fp, int version, ON_TextLog& error_log
     view.m_vp.SetCameraUp( ON_yaxis );
     view.m_vp.SetFrustum( fr_left, fr_right, fr_bottom, fr_top, fr_near, fr_far );
 
-    view.m_target = sphere.Center();
+    view.SetTargetPoint(sphere.Center());
 
     // secondary view "fluff"
     view.m_name = "+X+Y parallel";
@@ -856,7 +857,7 @@ static bool write_viewport_example( FILE* fp, int version, ON_TextLog& error_log
     view.m_vp.SetCameraUp( ON_zaxis );
     view.m_vp.SetFrustum( fr_left, fr_right, fr_bottom, fr_top, fr_near, fr_far );
 
-    view.m_target = sphere.Center();
+    view.SetTargetPoint(sphere.Center());
 
     // secondary view "fluff"
     view.m_name = "+X+Z parallel";
@@ -884,7 +885,7 @@ static bool write_viewport_example( FILE* fp, int version, ON_TextLog& error_log
     view.m_vp.SetCameraUp( ON_zaxis );
     view.m_vp.SetFrustum( fr_left, fr_right, fr_bottom, fr_top, fr_near, fr_far );
 
-    view.m_target = sphere.Center();
+    view.SetTargetPoint(sphere.Center());
 
     // secondary view "fluff"
     view.m_name = "+Y+Z parallel";
@@ -912,7 +913,7 @@ static bool write_viewport_example( FILE* fp, int version, ON_TextLog& error_log
     view.m_vp.SetCameraUp( ON_yaxis );
     view.m_vp.SetFrustum( fr_left, fr_right, fr_bottom, fr_top, fr_near, fr_far );
 
-    view.m_target = sphere.Center();
+    view.SetTargetPoint(sphere.Center());
 
     // secondary view "fluff"
     view.m_name = "-X+Y parallel";
@@ -940,7 +941,7 @@ static bool write_viewport_example( FILE* fp, int version, ON_TextLog& error_log
     view.m_vp.SetCameraUp( ON_zaxis );
     view.m_vp.SetFrustum( fr_left, fr_right, fr_bottom, fr_top, fr_near, fr_far );
 
-    view.m_target = sphere.Center();
+    view.SetTargetPoint(sphere.Center());
 
     // secondary view "fluff"
     view.m_name = "-X+Z parallel";
@@ -968,7 +969,7 @@ static bool write_viewport_example( FILE* fp, int version, ON_TextLog& error_log
     view.m_vp.SetCameraUp( ON_zaxis );
     view.m_vp.SetFrustum( fr_left, fr_right, fr_bottom, fr_top, fr_near, fr_far );
 
-    view.m_target = sphere.Center();
+    view.SetTargetPoint(sphere.Center());
 
     // secondary view "fluff"
     view.m_name = "-Y+Z parallel";
@@ -1006,7 +1007,7 @@ static bool write_viewport_example( FILE* fp, int version, ON_TextLog& error_log
     fr_top    =  d;
     view.m_vp.SetFrustum( fr_left, fr_right, fr_bottom, fr_top, fr_near, fr_far );
 
-    view.m_target = sphere.Center();
+    view.SetTargetPoint(sphere.Center());
 
     // secondary view "fluff"
     view.m_name = "skew perspective";
@@ -1024,27 +1025,27 @@ static bool write_viewport_example( FILE* fp, int version, ON_TextLog& error_log
 
 
   bool ok = write_simple_file_example( fp, version, error_log,
-	 "OpenNURBS write_viewport_example()", // notes
-	 &settings,          // default settings
-	 0, NULL,            // render material table
-	 0, NULL,            // layer table
-	 0,                  // light count
-	 NULL,               // light attributes
-	 NULL,               // lights
-	 0,                  // object count
-	 NULL,               // array of object_count attributes
-	 NULL                // array of object_count objects
-	 );
+         "OpenNURBS write_viewport_example()", // notes
+         &settings,          // default settings
+         0, NULL,            // render material table
+         0, NULL,            // layer table
+         0,                  // light count
+         NULL,               // light attributes
+         NULL,               // lights
+         0,                  // object count
+         NULL,               // array of object_count attributes
+         NULL                // array of object_count objects
+         );
 
   return ok;
 }
 
 static void make_trimming_curves( ON_Brep& brep, 
-				  const ON_2dPoint& A2, // start point in parameter space
-				  const ON_2dPoint& B2, // end point in parameter space
-				  const ON_3dPoint& A3, // start point in parameter space
-				  const ON_3dPoint& B3  // end point in parameter space
-				  )
+                                  const ON_2dPoint& A2, // start point in parameter space
+                                  const ON_2dPoint& B2, // end point in parameter space
+                                  const ON_3dPoint& A3, // start point in parameter space
+                                  const ON_3dPoint& B3  // end point in parameter space
+                                  )
 {
   ON_LineCurve* p2dCurve = new ON_LineCurve( A2, B2 );
   ON_LineCurve* p3dCurve = new ON_LineCurve( A3, B3 );
@@ -1074,8 +1075,8 @@ static bool write_trimmed_surface_example( FILE* fp, int version, ON_TextLog& er
 
   // Create a 10x10 plane surface at z=3 with domain [0,1]x[0,1]
   ON_PlaneSurface* pSurface = new ON_PlaneSurface( ON_Plane( ON_3dPoint( 0, 0,3), 
-							     ON_3dPoint(10,10,3), 
-							     ON_3dPoint(10, 0,3) ) );
+                                                             ON_3dPoint(10,10,3), 
+                                                             ON_3dPoint(10, 0,3) ) );
   pSurface->SetDomain(0,0.0,10.0);
   pSurface->SetDomain(1,0.0,10.0);
 
@@ -1170,7 +1171,8 @@ static bool write_trimmed_surface_example( FILE* fp, int version, ON_TextLog& er
   return ok;
 }
 
-int main ( int argc, const char* argv[] )
+//int main ( int argc, const char* argv[] )
+int main ()
 {
   bool rc;
   const char* filename;
@@ -1187,12 +1189,18 @@ int main ( int argc, const char* argv[] )
   // version 2 is the OpenNURBS format (released 1 July 2000) and is used by Rhino 2.x
   // version 3 is the OpenNURBS format (released 1 November 2002) and is used by Rhino 3.x
   // version 4 is the OpenNURBS format (released September 2006) and is used by Rhino 4.x
+  // version 5 is the OpenNURBS format (released September 2009) and is used by Rhino 5.x
 
   // version to write
-  int version = 4;
+  int version = 4; // File can be read by Rhino 4 and Rhino 5
+  //int version = 5; // File can be read by Rhino 5
+
 
   // errors printed to stdout
   ON_TextLog error_log;
+
+  // messages printed to stdout
+  ON_TextLog message_log;
 
   // errors logged in text file
   //FILE* error_log_fp = ON::OpenFile("error_log.txt","w");
@@ -1203,54 +1211,54 @@ int main ( int argc, const char* argv[] )
   rc = write_points_example( fp, version, error_log );
   ON::CloseFile( fp );
   if (rc)
-    printf("Successfully wrote %s.\n",filename);
+    message_log.Print("Successfully wrote %s.\n",filename);
   else
-    printf("Errors while writing %s.\n",filename);
+    message_log.Print("Errors while writing %s.\n",filename);
 
   filename = "my_curves.3dm";
   fp = ON::OpenFile( filename, "wb" );
   rc = write_curves_example( fp, version, error_log );
   ON::CloseFile( fp );
   if (rc)
-    printf("Successfully wrote %s.\n",filename);
+    message_log.Print("Successfully wrote %s.\n",filename);
   else
-    printf("Errors while writing %s.\n",filename);
+    message_log.Print("Errors while writing %s.\n",filename);
 
   filename = "my_surfaces.3dm";
   fp = ON::OpenFile( filename, "wb" );
-  rc = write_surfaces_example( fp, version, error_log );
+  rc = write_surfaces_example( fp, version );
   ON::CloseFile( fp );
   if (rc)
-    printf("Successfully wrote %s.\n",filename);
+    message_log.Print("Successfully wrote %s.\n",filename);
   else
-    printf("Errors while writing %s.\n",filename);
+    message_log.Print("Errors while writing %s.\n",filename);
 
   filename = "my_mesh.3dm";
   fp = ON::OpenFile( filename, "wb" );
-  rc = write_mesh_example( fp, version, error_log );
+  rc = write_mesh_example( fp, version );
   ON::CloseFile( fp );
   if (rc)
-    printf("Successfully wrote %s.\n",filename);
+    message_log.Print("Successfully wrote %s.\n",filename);
   else
-    printf("Errors while writing %s.\n",filename);
+    message_log.Print("Errors while writing %s.\n",filename);
 
   filename = "my_mesh_with_material.3dm";
   fp = ON::OpenFile( filename, "wb" );
   rc = write_mesh_with_material_example( fp, version, error_log );
   ON::CloseFile( fp );
   if (rc)
-    printf("Successfully wrote %s.\n",filename);
+    message_log.Print("Successfully wrote %s.\n",filename);
   else
-    printf("Errors while writing %s.\n",filename);
+    message_log.Print("Errors while writing %s.\n",filename);
 
   filename = "my_spot_light.3dm";
   fp = ON::OpenFile( filename, "wb" );
   rc = write_spot_light_example( fp, version, error_log );
   ON::CloseFile( fp );
   if (rc)
-    printf("Successfully wrote %s.\n",filename);
+    message_log.Print("Successfully wrote %s.\n",filename);
   else
-    printf("Errors while writing %s.\n",filename);
+    message_log.Print("Errors while writing %s.\n",filename);
 
   filename = "my_viewports.3dm";
   fp = ON::OpenFile( filename, "wb" );
@@ -1259,18 +1267,18 @@ int main ( int argc, const char* argv[] )
   rc = write_viewport_example( fp, version, error_log, sphere );
   ON::CloseFile( fp );
   if (rc)
-    printf("Successfully wrote %s.\n",filename);
+    message_log.Print("Successfully wrote %s.\n",filename);
   else
-    printf("Errors while writing %s.\n",filename);
+    message_log.Print("Errors while writing %s.\n",filename);
 
   filename = "my_trimmed_surface.3dm";
   fp = ON::OpenFile( filename, "wb" );
   rc = write_trimmed_surface_example( fp, version, error_log );
   ON::CloseFile( fp );
   if (rc)
-    printf("Successfully wrote %s.\n",filename);
+    message_log.Print("Successfully wrote %s.\n",filename);
   else
-    printf("Errors while writing %s.\n",filename);
+    message_log.Print("Errors while writing %s.\n",filename);
 
   ON::End();
 

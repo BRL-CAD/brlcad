@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -99,6 +98,14 @@
 
 #endif
 
+
+// ON_DEPRECATED is used to mark deprecated functions.
+#if defined(ON_COMPILER_MSC)
+#define ON_DEPRECATED  __declspec(deprecated)
+#else
+#define ON_DEPRECATED
+#endif
+
 #if defined(PI)
 #define ON_PI           PI
 #else
@@ -145,14 +152,73 @@
 // performed, b-rep tolerances being a notable example,
 // this value is used to indicate the value has not been
 // computed.  This value must be < -1.0e308. and > -ON_DBL_MAX
+//
+// The reasons ON_UNSET_VALUE is a valid finite number are:
+//
+//   1) It needs to round trip through fprintf/sscanf.
+//   2) It needs to persist unchanged through assigment
+/       and not generate exceptions when assigned.
+//   3) ON_UNSET_VALUE == ON_UNSET_VALUE needs to be true.
+//   4) ON_UNSET_VALUE != ON_UNSET_VALUE needs to be false.
+//
+// Ideally, it would also have these SNaN attributes
+//   * When used in a calculation, a floating point exception
+//     occures.
+//   * No possibility of a valid calculation would generate
+//     ON_UNSET_VALUE.
+//   * float f = (float)ON_UNSET_VALUE would create an invalid
+//     float and generate an exception.
 */
 #define ON_UNSET_VALUE -1.23432101234321e+308
 
 /*
-This value is primarily used to indicate a texture coordinate
-cannot be calculated or is not well defined.
+// ON_UNSET_FLOAT is used to indicate a texture coordinate
+// value cannot be calculated or is not well defined.  
+// In hindsight, this value should have been ON_FLT_QNAN
+// because many calculation convert float texture coordinates
+// to doubles and the "unset"ness attribute is lost.
 */
 #define ON_UNSET_FLOAT -1.234321e+38f
+
+
+ON_BEGIN_EXTERNC
+
+// IEEE 754 special values
+extern ON_EXTERN_DECL const double ON_DBL_QNAN;
+extern ON_EXTERN_DECL const double ON_DBL_PINF;
+extern ON_EXTERN_DECL const double ON_DBL_NINF;
+
+extern ON_EXTERN_DECL const float  ON_FLT_QNAN;
+extern ON_EXTERN_DECL const float  ON_FLT_PINF;
+extern ON_EXTERN_DECL const float  ON_FLT_NINF;
+
+/*
+Description:
+Paramters:
+  x - [out] returned value of x is an SNan
+            (signalling not a number).
+Remarks:
+  Any time an SNaN passes through an Intel FPU, the result
+  is a QNaN (quiet nan) and the invalid operation excpetion
+  flag is set.  If this exception is not masked, then the
+  exception handler is invoked.
+ 
+    double x, y;
+    ON_DBL_SNAN(&x);
+    y = x;     // y = QNAN and invalid op exception occurs
+    z = sin(x) // z = QNAN and invalid op exception occurs
+
+  So, if you want to reliably initialize doubles to SNaNs, 
+  you must use memcpy() or some other method that does not
+  use the Intel FPU.
+*/
+ON_DECL
+void ON_DBL_SNAN( double* x );
+
+ON_DECL
+void ON_FLT_SNAN( float* x );
+
+ON_END_EXTERNC
 
 /*
 // In cases where lazy evaluation of a color value is
@@ -238,24 +304,29 @@ public:
   static
   int Version();
 
+  //////////
+  // McNeel subversion revsion used to build opennurbs
+  static
+  const char* Revision();
+
   //// File open/close for DLL use ///////////////////////////////////////////////
 
   static
   FILE* OpenFile( // like fopen() - needed when OpenNURBS is used as a DLL
-	  const char* filename,
-	  const char* filemode
-	  );
+          const char* filename,
+          const char* filemode
+          );
 
   static
   FILE* OpenFile( // like fopen() - needed when OpenNURBS is used as a DLL
-	  const wchar_t* filename,
-	  const wchar_t* filemode
-	  );
+          const wchar_t* filename,
+          const wchar_t* filemode
+          );
 
   static
   int CloseFile( // like fclose() - needed when OpenNURBS is used as a DLL
-	  FILE* // pointer returned by OpenFile()
-	  );
+          FILE* // pointer returned by OpenFile()
+          );
 
   static
   int CloseAllFiles(); // like _fcloseall() - needed when OpenNURBS is used as a DLL
@@ -274,17 +345,17 @@ public:
   */
   static
   bool GetFileStats( const wchar_t* filename,
-		     size_t* filesize,
-		     time_t* create_time,
-		     time_t* lastmodify_time
-		    );
+                     size_t* filesize,
+                     time_t* create_time,
+                     time_t* lastmodify_time
+                    );
 
   static
   bool GetFileStats( FILE* fp,
-		     size_t* filesize,
-		     time_t* create_time,
-		     time_t* lastmodify_time
-		    );
+                     size_t* filesize,
+                     time_t* create_time,
+                     time_t* lastmodify_time
+                    );
 
   //// Dimension Types ///////////////////////////////////////////////////////////
   enum eAnnotationType
@@ -364,22 +435,22 @@ public:
 
     // terrestrial distances
     nautical_mile  = 22, // 1852 meters 
-			 //    Approximately 1 minute of arc on a terrestrial great circle.
-			 //    See http://en.wikipedia.org/wiki/Nautical_mile.
+                         //    Approximately 1 minute of arc on a terrestrial great circle.
+                         //    See http://en.wikipedia.org/wiki/Nautical_mile.
 
     // astronomical distances
     astronomical   = 23, // 1.4959787e+11 // http://en.wikipedia.org/wiki/Astronomical_unit
-			 // 1.495979e+11  // http://units.nist.gov/Pubs/SP811/appenB9.htm  
-			 //    An astronomical unit (au) is the mean distance from the 
-			 //    center of the earth to the center of the sun.
+                         // 1.495979e+11  // http://units.nist.gov/Pubs/SP811/appenB9.htm  
+                         //    An astronomical unit (au) is the mean distance from the 
+                         //    center of the earth to the center of the sun.
     lightyears     = 24, // 9.4607304725808e+15 // http://en.wikipedia.org/wiki/Light_year
-			 // 9.46073e+15 meters  // http://units.nist.gov/Pubs/SP811/appenB9.htm
-			 //    A light year is the distance light travels in one Julian year.
-			 //    The speed of light is exactly 299792458 meters/second.
-			 //    A Julian year is exactly 365.25 * 86400 seconds and is 
-			 //    approximately the time it takes for one earth orbit.
+                         // 9.46073e+15 meters  // http://units.nist.gov/Pubs/SP811/appenB9.htm
+                         //    A light year is the distance light travels in one Julian year.
+                         //    The speed of light is exactly 299792458 meters/second.
+                         //    A Julian year is exactly 365.25 * 86400 seconds and is 
+                         //    approximately the time it takes for one earth orbit.
     parsecs        = 25, // 3.08567758e+16  // http://en.wikipedia.org/wiki/Parsec
-			 // 3.085678e+16    // http://units.nist.gov/Pubs/SP811/appenB9.htm  
+                         // 3.085678e+16    // http://units.nist.gov/Pubs/SP811/appenB9.htm  
 
     // Custom unit systems
     custom_unit_system = 11 // x meters with x defined in ON_3dmUnitsAndTolerances.m_custom_unit_scale
@@ -395,9 +466,9 @@ public:
     us_to - [in] 
   For example:
 
-	  100.0 = ON::UnitScale( ON::meters, ON::centimeters ) 
-	  2.54  = ON::UnitScale( ON::inches, ON::centimeters ) 
-	  12.0  = ON::UnitScale( ON::feet,   ON::inches ) 
+          100.0 = ON::UnitScale( ON::meters, ON::centimeters ) 
+          2.54  = ON::UnitScale( ON::inches, ON::centimeters ) 
+          12.0  = ON::UnitScale( ON::feet,   ON::inches ) 
 
   Remarks:
     If you are using custom unit systems, use the version
@@ -585,6 +656,10 @@ public:
 
   //// view projections ///////////////////////////////////////////////////////////
 
+  // The x/y/z_2pt_perspective_view projections are ordinary perspective
+  // projection. Using these values insures the ON_Viewport member 
+  // fuctions properly constrain the camera up and camera direction vectors
+  // to preserve the specified perspective vantage.
   enum view_projection
   { 
     unknown_view       = 0,
@@ -592,8 +667,34 @@ public:
     perspective_view   = 2
   };
 
-  static view_projection ViewProjection(int); // convert integer to view_projection enum
+  /*
+  Description:
+    Converts integer into ON::view_projection enum value.
+  Parameters:
+    i - [in]
+  Returns:
+    ON::view_projection enum with same value as i.
+    If i is not an ON::view_projection enum value,
+    then ON::unknow_view is returned.
+  */
+  static view_projection ViewProjection(int i);
 
+  /*
+  Parameters:
+    projection - [in]
+  Returns:
+    True if projection is ON::perspective_view.
+  */
+  static bool IsPerspectiveProjection( ON::view_projection projection );
+
+
+  /*
+  Parameters:
+    projection - [in]
+  Returns:
+    True if projection is ON::parallel_view.
+  */
+  static bool IsParallelProjection( ON::view_projection projection );
 
   //// view coordinates ///////////////////////////////////////////////////////////
 
@@ -613,7 +714,7 @@ public:
     unknown_exception = 0,
 		out_of_memory,  
     corrupt_object,               // invalid object encountered - continuing would crash or
-				  // result in corrupt object being saved in archive.
+                                  // result in corrupt object being saved in archive.
 		unable_to_write_archive,      // write operation failed - out of file space/read only mode/...?
 		unable_to_read_archive,       // read operation failed - truncated archive/locked file/... ?
 		unable_to_seek_archive,       // seek operation failed - locked file/size out of bounds/... ?
@@ -640,8 +741,8 @@ public:
     hidden_object    = 1, // not visible, object cannot be selected or changed
     locked_object    = 2, // visible, object cannot be selected or changed
     idef_object      = 3, // object is part of an ON_InstanceDefinition.  The
-			  // ON_InstanceDefinition m_object_uuid[] array will
-			  // contain this object attribute's uuid.
+                          // ON_InstanceDefinition m_object_uuid[] array will
+                          // contain this object attribute's uuid.
     object_mode_count = 4
   };
   static object_mode ObjectMode(int); // convert integer to object_mode enum
@@ -653,7 +754,7 @@ public:
     color_from_object   = 1, // use color assigned to object
     color_from_material = 2, // use diffuse render material color
     color_from_parent   = 3  // for objects with parents (like objects in instance references, use parent linetype)
-			     // if no parent, treat as color_from_layer
+                             // if no parent, treat as color_from_layer
   };
   static object_color_source ObjectColorSource(int); // convert integer to object_color_source enum
 
@@ -664,7 +765,7 @@ public:
     plot_color_from_object  = 1, // use plot color assigned to object
     plot_color_from_display = 2, // use display color
     plot_color_from_parent  = 3  // for objects with parents (like objects in instance references, use parent plot color)
-				 // if no parent, treat as plot_color_from_layer
+                                 // if no parent, treat as plot_color_from_layer
   };
   static plot_color_source PlotColorSource(int); // convert integer to plot_color_source enum
 
@@ -674,7 +775,7 @@ public:
     plot_weight_from_layer   = 0, // use plot color assigned to layer
     plot_weight_from_object  = 1, // use plot color assigned to object
     plot_weight_from_parent  = 3  // for objects with parents (like objects in instance references, use parent plot color)
-				  // if no parent, treat as plot_color_from_layer
+                                  // if no parent, treat as plot_color_from_layer
   };
   static plot_weight_source PlotWeightSource(int); // convert integer to plot_color_source enum
 
@@ -684,7 +785,7 @@ public:
     linetype_from_layer  = 0, // use line style assigned to layer
     linetype_from_object = 1, // use line style assigned to object
     linetype_from_parent = 3  // for objects with parents (like objects in instance references, use parent linetype)
-			      // if not parent, treat as linetype_from_layer.
+                              // if not parent, treat as linetype_from_layer.
   };
   static object_linetype_source ObjectLinetypeSource(int); // convert integer to object_linetype_source enum
 
@@ -694,13 +795,13 @@ public:
     material_from_layer  = 0, // use material assigned to layer
     material_from_object = 1, // use material assigned to object
     material_from_parent = 3  // for objects with parents, like 
-			      // definition geometry in instance
-			      // references and faces in polysurfaces,
-			      // this value indicates the material
-			      // definition should come from the parent.
-			      // If the object does not have an 
-			      // obvious "parent", then treat
-			      // it the same as material_from_layer.
+                              // definition geometry in instance
+                              // references and faces in polysurfaces,
+                              // this value indicates the material
+                              // definition should come from the parent.
+                              // If the object does not have an 
+                              // obvious "parent", then treat
+                              // it the same as material_from_layer.
   };
   static object_material_source ObjectMaterialSource(int); // convert integer to object_color_source enum
 
@@ -749,15 +850,15 @@ public:
 
   enum view_type
   {
-    model_view_type  = 0, // standard model space 3d view
-    page_view_type   = 1, // a.k.a "paper space", "plot view", etc.
-			  // A page view must be orthographic,
-			  // the camera frame x,y,z direction must be
-			  // world x,y,z (which means the camera direction
-			  // is always (0,0,-1)).  
-    nested_view_type = 2  // This view is a "model" view that is nested
-			  // in another view.  The nesting and parent
-			  // information is saved in ON_3dmView.
+    model_view_type  = 0,       // standard model space 3d view
+    page_view_type   = 1,       // a.k.a "paper space", "plot view", etc.
+                                // A page view must be orthographic,
+                                // the camera frame x,y,z direction must be
+                                // world x,y,z (which means the camera direction
+                                // is always (0,0,-1)).  
+    nested_view_type = 2,       // This view is a "model" view that is nested
+                                // in another view.  The nesting and parent
+                                // information is saved in ON_3dmView.
   };
   static view_type ViewType(int); // convert integer to display_mode enum
 
@@ -814,6 +915,7 @@ public:
     cage_object          = 0x08000000, // some type of ON_NurbsCage
     phantom_object       = 0x10000000,
     clipplane_object     = 0x20000000,
+    beam_object          = 0x40000000,
     
     any_object           = 0xFFFFFFFF
 
@@ -866,6 +968,7 @@ public:
     os_near          =          2,
     os_focus         =          8,
     os_center        =       0x20,
+    os_vertex        =       0x40,
     os_knot          =       0x80,
     os_quadrant      =      0x200,
     os_midpoint      =      0x800,
@@ -1104,8 +1207,8 @@ See Also:
 */
 ON_DECL
 unsigned int ON_SetStringConversionWindowsCodePage( 
-		unsigned int code_page 
-		);
+                unsigned int code_page 
+                );
 
 /*
 Description:
@@ -1141,9 +1244,9 @@ Description:
   compares.
 Parameters:
   locale_id - [in] Windows locale id to use in case insensitive
-		 string compares.
+                 string compares.
   bWin9X - [in] True if OS is Windows 95/98/ME (which has
-		poor UNICODE support).
+                poor UNICODE support).
 Returns:
   Previous value of Windows locale id.
 Remarks:
@@ -1154,10 +1257,9 @@ See Also:
 */
 ON_DECL
 unsigned int ON_SetStringConversionWindowsLocaleID( 
-		unsigned int locale_id, 
-		BOOL bWin9X
-		);
-
+                unsigned int locale_id, 
+                ON_BOOL32 bWin9X
+                );
 
 /*
 Description:
@@ -1197,6 +1299,12 @@ wchar_t* on_wcsrev(wchar_t*);
 // depending on OS.
 ON_DECL
 int on_stricmp(const char*, const char*); 
+
+// on_stricmp() is a wrapper for case insensitive string compare
+// and calls one of _strnicmp() or strncasecmp()
+// depending on OS.
+ON_DECL
+int on_strnicmp(const char * s1, const char * s2, int n);
 
 // on_strupr() calls _strupr() or strupr() depending on OS
 ON_DECL

@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -16,10 +15,52 @@
 
 #include "opennurbs.h"
 
+#if defined(ON_DLL_EXPORTS)
+// When compiling a Windows DLL opennurbs, we
+// statically link ./zlib/.../zlib....lib into
+// the opennurbs DLL.
+
+#if defined(WIN64) && defined(_M_X64)
+
+// 64 bit Windows zlib linking instructions
+
+#if defined(NDEBUG)
+
+// release x64 libs
+#pragma comment(lib, "./zlib/x64/Release/zlibx64.lib")
+
+#else // _DEBUG
+
+// debug  x64 libs
+#pragma comment(lib, "./zlib/x64/Debug/zlibx64_d.lib")
+
+#endif // if NDEBUG else _DEBUG
+
+#elif defined(WIN32) && defined(_M_IX86)
+
+// 32 bit Windows zlib linking instructions
+
+#if defined(NDEBUG)
+
+// release 32 bit WIndows libs
+#pragma comment(lib, "./zlib/Release/zlib.lib")
+
+#else // _DEBUG
+
+// debug 32 bit WIndows libs
+#pragma comment(lib, "./zlib/Debug/zlib_d.lib")
+
+#endif // if NDEBUG else _DEBUG
+
+#endif // if WIN64 else WIN32
+
+#endif // ON_DLL_EXPORTS
+
+
 bool ON_BinaryArchive::WriteCompressedBuffer(
-	size_t sizeof__inbuffer,  // sizeof uncompressed input data
-	const void* inbuffer  // uncompressed input data
-	)
+        size_t sizeof__inbuffer,  // sizeof uncompressed input data
+        const void* inbuffer  // uncompressed input data
+        )
 {
   size_t compressed_size = 0;
   bool rc = false;
@@ -127,7 +168,7 @@ bool ON_BinaryArchive::ReadCompressedBuffer( // read and uncompress
     {
       ON_ERROR("ON_BinaryArchive::ReadCompressedBuffer() crc error");
       if ( bFailedCRC )
-	*bFailedCRC = true;
+        *bFailedCRC = true;
     }
   }
 
@@ -135,9 +176,9 @@ bool ON_BinaryArchive::ReadCompressedBuffer( // read and uncompress
 }
 
 size_t ON_BinaryArchive::WriteDeflate( // returns number of bytes written
-	size_t sizeof___inbuffer,  // sizeof uncompressed input data ( > 0 )
-	const void* in___buffer     // uncompressed input data ( != NULL )
-	)
+        size_t sizeof___inbuffer,  // sizeof uncompressed input data ( > 0 )
+        const void* in___buffer     // uncompressed input data ( != NULL )
+        )
 {
   /*
     In "standard" (in 2005) 32 bit code
@@ -179,21 +220,21 @@ size_t ON_BinaryArchive::WriteDeflate( // returns number of bytes written
 
     32. Can zlib work with greater than 4 GB of data?
 
-	Yes. inflate() and deflate() will process any amount of data correctly.
-	Each call of inflate() or deflate() is limited to input and output chunks
-	of the maximum value that can be stored in the compiler's "unsigned int"
-	type, but there is no limit to the number of chunks. Note however that the
-	strm.total_in and strm_total_out counters may be limited to 4 GB. These
-	counters are provided as a convenience and are not used internally by
-	inflate() or deflate(). The application can easily set up its own counters
-	updated after each call of inflate() or deflate() to count beyond 4 GB.
-	compress() and uncompress() may be limited to 4 GB, since they operate in a
-	single call. gzseek() and gztell() may be limited to 4 GB depending on how
-	zlib is compiled. See the zlibCompileFlags() function in zlib.h.
+        Yes. inflate() and deflate() will process any amount of data correctly.
+        Each call of inflate() or deflate() is limited to input and output chunks
+        of the maximum value that can be stored in the compiler's "unsigned int"
+        type, but there is no limit to the number of chunks. Note however that the
+        strm.total_in and strm_total_out counters may be limited to 4 GB. These
+        counters are provided as a convenience and are not used internally by
+        inflate() or deflate(). The application can easily set up its own counters
+        updated after each call of inflate() or deflate() to count beyond 4 GB.
+        compress() and uncompress() may be limited to 4 GB, since they operate in a
+        single call. gzseek() and gztell() may be limited to 4 GB depending on how
+        zlib is compiled. See the zlibCompileFlags() function in zlib.h.
 
-	The word "may" appears several times above since there is a 4 GB limit
-	only if the compiler's "long" type is 32 bits. If the compiler's "long"
-	type is 64 bits, then the limit is 16 exabytes.
+        The word "may" appears several times above since there is a 4 GB limit
+        only if the compiler's "long" type is 32 bits. If the compiler's "long"
+        type is 64 bits, then the limit is 16 exabytes.
   */
 
   const size_t max_avail = 0x7FFFFFF0;
@@ -252,7 +293,7 @@ size_t ON_BinaryArchive::WriteDeflate( // returns number of bytes written
       // this output to the archive.
       rc = WriteChar( deflate_output_count, m_zlib.buffer );
       if ( !rc )
-	break;
+        break;
       out__count += deflate_output_count;
       m_zlib.strm.next_out  = m_zlib.buffer;
       m_zlib.strm.avail_out = m_zlib.sizeof_x_buffer;
@@ -272,23 +313,23 @@ size_t ON_BinaryArchive::WriteDeflate( // returns number of bytes written
       // that the 32 bit integers in the zlib code can handle.
       if ( 0 == m_zlib.strm.avail_in || 0 == m_zlib.strm.next_in )
       {
-	// The call to deflate() used up all the input 
-	// in m_zlib.strm.next_in[].  I can feed it another chunk
-	// from inbuffer[]
-	d = my_avail_in;
-	if ( d > max_avail )
-	  d = max_avail;
-	m_zlib.strm.next_in = my_next_in;
-	m_zlib.strm.avail_in = (unsigned int)d; 
+        // The call to deflate() used up all the input 
+        // in m_zlib.strm.next_in[].  I can feed it another chunk
+        // from inbuffer[]
+        d = my_avail_in;
+        if ( d > max_avail )
+          d = max_avail;
+        m_zlib.strm.next_in = my_next_in;
+        m_zlib.strm.avail_in = (unsigned int)d; 
       }
       else
       {
-	// The call to deflate left some input in m_zlib.strm.next_in[],
-	// but I can increase m_zlib.strm.avail_in.
-	d =  max_avail - m_zlib.strm.avail_in;
-	if ( d > my_avail_in )
-	  d = my_avail_in;
-	m_zlib.strm.avail_in += (unsigned int)d;
+        // The call to deflate left some input in m_zlib.strm.next_in[],
+        // but I can increase m_zlib.strm.avail_in.
+        d =  max_avail - m_zlib.strm.avail_in;
+        if ( d > my_avail_in )
+          d = my_avail_in;
+        m_zlib.strm.avail_in += (unsigned int)d;
       }
 
       my_avail_in -= d;
@@ -321,9 +362,9 @@ size_t ON_BinaryArchive::WriteDeflate( // returns number of bytes written
 
 
 bool ON_BinaryArchive::ReadInflate(
-	size_t sizeof___outbuffer,  // sizeof uncompressed data
-	void* out___buffer          // buffer for uncompressed data
-	)
+        size_t sizeof___outbuffer,  // sizeof uncompressed data
+        void* out___buffer          // buffer for uncompressed data
+        )
 {
   const size_t max_avail = 0x7FFFFFF0; // See max_avail comment in ON_BinaryArchive::WriteInflate
 
@@ -340,24 +381,24 @@ bool ON_BinaryArchive::ReadInflate(
     if (!rc)
     {
       if ( 0 != out___buffer && sizeof___outbuffer > 0 )
-	memset(out___buffer,0,sizeof___outbuffer);
+        memset(out___buffer,0,sizeof___outbuffer);
       return false;
     }
     if (   tcode == TCODE_ANONYMOUS_CHUNK 
-	&& value > 4 
-	&& sizeof___outbuffer > 0 
-	&& 0 != out___buffer )
+        && value > 4 
+        && sizeof___outbuffer > 0 
+        && 0 != out___buffer )
     {
       // read compressed buffer from the archive
       sizeof__inbuffer = value-4; // the last 4 bytes in this chunk are a 32 bit crc
       in___buffer = onmalloc(sizeof__inbuffer);
       if ( !in___buffer )
       {
-	rc = false;
+        rc = false;
       }
       else
       {
-	rc = ReadByte( sizeof__inbuffer, in___buffer );
+        rc = ReadByte( sizeof__inbuffer, in___buffer );
       }
     }
     else
@@ -372,8 +413,8 @@ bool ON_BinaryArchive::ReadInflate(
       rc = false;
     }
     bValidCompressedBuffer = ( m_bad_CRC_count > c0 )
-			   ? false
-			   : rc;
+                           ? false
+                           : rc;
   }
 
   if ( !bValidCompressedBuffer && 0 != out___buffer && sizeof___outbuffer > 0 )
@@ -455,23 +496,23 @@ bool ON_BinaryArchive::ReadInflate(
     {
       if ( 0 == m_zlib.strm.avail_in || 0 == m_zlib.strm.next_in )
       {
-	// The call to inflate() used up all the input 
-	// in m_zlib.strm.next_in[].  I can feed it another chunk
-	// from inbuffer[]
-	d = my_avail_in;
-	if ( d > max_avail )
-	  d = max_avail;
-	m_zlib.strm.next_in  = my_next_in;
-	m_zlib.strm.avail_in = (unsigned int)d; 
+        // The call to inflate() used up all the input 
+        // in m_zlib.strm.next_in[].  I can feed it another chunk
+        // from inbuffer[]
+        d = my_avail_in;
+        if ( d > max_avail )
+          d = max_avail;
+        m_zlib.strm.next_in  = my_next_in;
+        m_zlib.strm.avail_in = (unsigned int)d; 
       }
       else
       {
-	// The call to inflate() left some input in m_zlib.strm.next_in[],
-	// but I can increase m_zlib.strm.avail_in.
-	d =  max_avail - m_zlib.strm.avail_in;
-	if ( d > my_avail_in )
-	  d = my_avail_in;
-	m_zlib.strm.avail_in += (unsigned int)d;
+        // The call to inflate() left some input in m_zlib.strm.next_in[],
+        // but I can increase m_zlib.strm.avail_in.
+        d =  max_avail - m_zlib.strm.avail_in;
+        if ( d > my_avail_in )
+          d = my_avail_in;
+        m_zlib.strm.avail_in += (unsigned int)d;
       }
       my_next_in  += d;
       my_avail_in -= d;
@@ -482,18 +523,18 @@ bool ON_BinaryArchive::ReadInflate(
       // increase m_zlib.strm.next_out[] buffer
       if ( 0 == m_zlib.strm.avail_out || 0 == m_zlib.strm.next_out )
       {
-	d = my_avail_out;
-	if ( d > max_avail )
-	  d = max_avail;
-	m_zlib.strm.next_out  = my_next_out;
-	m_zlib.strm.avail_out = (unsigned int)d;
+        d = my_avail_out;
+        if ( d > max_avail )
+          d = max_avail;
+        m_zlib.strm.next_out  = my_next_out;
+        m_zlib.strm.avail_out = (unsigned int)d;
       }
       else
       {
-	d = max_avail - m_zlib.strm.avail_out;
-	if ( d > my_avail_out )
-	  d = my_avail_out;
-	m_zlib.strm.avail_out += ((unsigned int)d);
+        d = max_avail - m_zlib.strm.avail_out;
+        if ( d > my_avail_out )
+          d = my_avail_out;
+        m_zlib.strm.avail_out += ((unsigned int)d);
       }
       my_next_out  += d;
       my_avail_out -= d;
@@ -528,11 +569,11 @@ bool ON_BinaryArchive::CompressionInit()
     if ( !rc ) {
       CompressionEnd();
       if ( Z_OK == deflateInit( &m_zlib.strm, Z_BEST_COMPRESSION ) ) {
-	m_zlib.mode = ON::write;
-	rc = true;
+        m_zlib.mode = ON::write;
+        rc = true;
       }
       else {
-	memset(&m_zlib.strm,0,sizeof(m_zlib.strm));
+        memset(&m_zlib.strm,0,sizeof(m_zlib.strm));
       }
     }
   }
@@ -541,11 +582,11 @@ bool ON_BinaryArchive::CompressionInit()
     if ( !rc ) {
       CompressionEnd();
       if ( Z_OK == inflateInit( &m_zlib.strm ) ) {
-	m_zlib.mode = ON::read;
-	rc = true;
+        m_zlib.mode = ON::read;
+        rc = true;
       }
       else {
-	memset(&m_zlib.strm,0,sizeof(m_zlib.strm));
+        memset(&m_zlib.strm,0,sizeof(m_zlib.strm));
       }
     }
   }
@@ -589,14 +630,14 @@ struct ON_CompressedBufferHelper
 };
 
 ON_CompressedBuffer::ON_CompressedBuffer()
-		    : m_sizeof_uncompressed(0),
-		      m_sizeof_compressed(0),
-		      m_crc_uncompressed(0),
-		      m_crc_compressed(0),
-		      m_method(0),
-		      m_sizeof_element(0),
-		      m_buffer_compressed_capacity(0),
-		      m_buffer_compressed(0)
+                    : m_sizeof_uncompressed(0),
+                      m_sizeof_compressed(0),
+                      m_crc_uncompressed(0),
+                      m_crc_compressed(0),
+                      m_method(0),
+                      m_sizeof_element(0),
+                      m_buffer_compressed_capacity(0),
+                      m_buffer_compressed(0)
 {
 }
 
@@ -606,14 +647,14 @@ ON_CompressedBuffer::~ON_CompressedBuffer()
 }
 
 ON_CompressedBuffer::ON_CompressedBuffer(const ON_CompressedBuffer& src)
-		    : m_sizeof_uncompressed(0),
-		      m_sizeof_compressed(0),
-		      m_crc_uncompressed(0),
-		      m_crc_compressed(0),
-		      m_method(0),
-		      m_sizeof_element(0),
-		      m_buffer_compressed_capacity(0),
-		      m_buffer_compressed(0)
+                    : m_sizeof_uncompressed(0),
+                      m_sizeof_compressed(0),
+                      m_crc_uncompressed(0),
+                      m_crc_compressed(0),
+                      m_method(0),
+                      m_sizeof_element(0),
+                      m_buffer_compressed_capacity(0),
+                      m_buffer_compressed(0)
 {
   *this = src;
 }
@@ -635,8 +676,8 @@ ON_CompressedBuffer& ON_CompressedBuffer::operator=(const ON_CompressedBuffer& s
       m_buffer_compressed = onmalloc(m_sizeof_compressed);
       if( m_buffer_compressed )
       {
-	m_buffer_compressed_capacity = m_sizeof_compressed;
-	memcpy(m_buffer_compressed,src.m_buffer_compressed,m_sizeof_compressed);
+        m_buffer_compressed_capacity = m_sizeof_compressed;
+        memcpy(m_buffer_compressed,src.m_buffer_compressed,m_sizeof_compressed);
       }
     }
   }
@@ -673,7 +714,7 @@ bool ON_CompressedBuffer::Write( ON_BinaryArchive& binary_archive ) const
     {
       rc = binary_archive.WriteByte(m_sizeof_compressed,m_buffer_compressed);
       if (!rc)
-	break;
+        break;
     }
     break;
   }
@@ -720,15 +761,15 @@ bool ON_CompressedBuffer::Read( ON_BinaryArchive& binary_archive )
       m_buffer_compressed = onmalloc(m_sizeof_compressed);
       if ( m_buffer_compressed )
       {
-	m_buffer_compressed_capacity = m_sizeof_compressed;
-	rc = binary_archive.ReadByte(m_sizeof_compressed,m_buffer_compressed);
+        m_buffer_compressed_capacity = m_sizeof_compressed;
+        rc = binary_archive.ReadByte(m_sizeof_compressed,m_buffer_compressed);
       }
       else
       {
-	m_sizeof_compressed =0;
+        m_sizeof_compressed =0;
       }
       if (!rc)
-	break;
+        break;
     }
 
     break;
@@ -756,10 +797,10 @@ void ON_CompressedBuffer::Destroy()
 }
 
 bool ON_CompressedBuffer::Compress(
-	size_t sizeof__inbuffer,  // sizeof uncompressed input data
-	const void* inbuffer,     // uncompressed input data
-	int sizeof_element
-	)
+        size_t sizeof__inbuffer,  // sizeof uncompressed input data
+        const void* inbuffer,     // uncompressed input data
+        int sizeof_element
+        )
 {
   Destroy();
 
@@ -818,18 +859,18 @@ bool ON_CompressedBuffer::Compress(
       CompressionEnd(&helper);
       if ( sizeof_compressed > 0 && sizeof_compressed == m_sizeof_compressed )
       {
-	rc = true;
-	if ( 2*m_buffer_compressed_capacity > 3*m_sizeof_compressed )
-	{
-	  // release memory we don't need
-	  m_buffer_compressed_capacity = m_sizeof_compressed;
-	  m_buffer_compressed = onrealloc(m_buffer_compressed,m_buffer_compressed_capacity);
-	}
+        rc = true;
+        if ( 2*m_buffer_compressed_capacity > 3*m_sizeof_compressed )
+        {
+          // release memory we don't need
+          m_buffer_compressed_capacity = m_sizeof_compressed;
+          m_buffer_compressed = onrealloc(m_buffer_compressed,m_buffer_compressed_capacity);
+        }
       }
       else
       {
-	Destroy();
-	m_method = 0;
+        Destroy();
+        m_method = 0;
       }
     }
   }
@@ -867,9 +908,9 @@ bool ON_CompressedBuffer::Compress(
 }
 
 bool ON_CompressedBuffer::Uncompress(
-	  void* outbuffer,
-	  int* bFailedCRC
-	  ) const
+          void* outbuffer,
+          int* bFailedCRC
+          ) const
 {
   bool rc = false;
 
@@ -898,8 +939,8 @@ bool ON_CompressedBuffer::Uncompress(
   {
   case 0: // uncompressed
     if (    m_buffer_compressed
-	 && m_sizeof_uncompressed == m_sizeof_compressed
-	 )
+         && m_sizeof_uncompressed == m_sizeof_compressed
+         )
     {
       memcpy(outbuffer,m_buffer_compressed,m_sizeof_uncompressed);
       rc = true;
@@ -914,8 +955,8 @@ bool ON_CompressedBuffer::Uncompress(
       rc = CompressionInit(&helper);
       if (rc)
       {
-	rc = InflateHelper( &helper, m_sizeof_uncompressed, outbuffer );
-	CompressionEnd(&helper);
+        rc = InflateHelper( &helper, m_sizeof_uncompressed, outbuffer );
+        CompressionEnd(&helper);
       }
     }
     break;
@@ -930,12 +971,12 @@ bool ON_CompressedBuffer::Uncompress(
     {
       if ( ON::big_endian == ON::Endian() )
       {
-	ON_BinaryFile::ToggleByteOrder( 
-	  (int)(m_sizeof_uncompressed/m_sizeof_element), 
-	  m_sizeof_element, 
-	  outbuffer, 
-	  outbuffer
-	  );
+        ON_BinaryFile::ToggleByteOrder( 
+          (int)(m_sizeof_uncompressed/m_sizeof_element), 
+          m_sizeof_element, 
+          outbuffer, 
+          outbuffer
+          );
       }
     }
     break;
@@ -949,7 +990,7 @@ bool ON_CompressedBuffer::Uncompress(
     {
       ON_ERROR("ON_CompressedBuffer::Uncompress() crc error");
       if ( bFailedCRC )
-	*bFailedCRC = true;
+        *bFailedCRC = true;
     }
   }
 
@@ -957,8 +998,8 @@ bool ON_CompressedBuffer::Uncompress(
 }
 
 bool ON_CompressedBuffer::WriteChar( 
-	size_t count, const void* buffer         
-	)
+        size_t count, const void* buffer         
+        )
 {
   bool rc = true;
   if ( count > 0 && buffer )
@@ -967,16 +1008,16 @@ bool ON_CompressedBuffer::WriteChar(
     {
       size_t delta = count + m_sizeof_compressed - m_buffer_compressed_capacity;
       if ( delta < 2048 )
-	delta = 2048;
+        delta = 2048;
       if ( delta < m_buffer_compressed_capacity/4 )
-	delta = m_buffer_compressed_capacity/4;
+        delta = m_buffer_compressed_capacity/4;
       m_buffer_compressed_capacity += delta;
       m_buffer_compressed = onrealloc(m_buffer_compressed,m_buffer_compressed_capacity);
       if ( !m_buffer_compressed )
       {
-	m_buffer_compressed_capacity = 0;
-	m_sizeof_compressed = 0;
-	return false;
+        m_buffer_compressed_capacity = 0;
+        m_sizeof_compressed = 0;
+        return false;
       }
     }
     memcpy(((char*)m_buffer_compressed)+m_sizeof_compressed,buffer,count);
@@ -991,10 +1032,10 @@ bool ON_CompressedBuffer::WriteChar(
 
 
 size_t ON_CompressedBuffer::DeflateHelper( // returns number of bytes written
-	ON_CompressedBufferHelper* helper,
-	size_t sizeof___inbuffer,  // sizeof uncompressed input data ( > 0 )
-	const void* in___buffer     // uncompressed input data ( != NULL )
-	)
+        ON_CompressedBufferHelper* helper,
+        size_t sizeof___inbuffer,  // sizeof uncompressed input data ( > 0 )
+        const void* in___buffer     // uncompressed input data ( != NULL )
+        )
 {
   /*
     In "standard" (in 2005) 32 bit code
@@ -1036,21 +1077,21 @@ size_t ON_CompressedBuffer::DeflateHelper( // returns number of bytes written
 
     32. Can zlib work with greater than 4 GB of data?
 
-	Yes. inflate() and deflate() will process any amount of data correctly.
-	Each call of inflate() or deflate() is limited to input and output chunks
-	of the maximum value that can be stored in the compiler's "unsigned int"
-	type, but there is no limit to the number of chunks. Note however that the
-	strm.total_in and strm_total_out counters may be limited to 4 GB. These
-	counters are provided as a convenience and are not used internally by
-	inflate() or deflate(). The application can easily set up its own counters
-	updated after each call of inflate() or deflate() to count beyond 4 GB.
-	compress() and uncompress() may be limited to 4 GB, since they operate in a
-	single call. gzseek() and gztell() may be limited to 4 GB depending on how
-	zlib is compiled. See the zlibCompileFlags() function in zlib.h.
+        Yes. inflate() and deflate() will process any amount of data correctly.
+        Each call of inflate() or deflate() is limited to input and output chunks
+        of the maximum value that can be stored in the compiler's "unsigned int"
+        type, but there is no limit to the number of chunks. Note however that the
+        strm.total_in and strm_total_out counters may be limited to 4 GB. These
+        counters are provided as a convenience and are not used internally by
+        inflate() or deflate(). The application can easily set up its own counters
+        updated after each call of inflate() or deflate() to count beyond 4 GB.
+        compress() and uncompress() may be limited to 4 GB, since they operate in a
+        single call. gzseek() and gztell() may be limited to 4 GB depending on how
+        zlib is compiled. See the zlibCompileFlags() function in zlib.h.
 
-	The word "may" appears several times above since there is a 4 GB limit
-	only if the compiler's "long" type is 32 bits. If the compiler's "long"
-	type is 64 bits, then the limit is 16 exabytes.
+        The word "may" appears several times above since there is a 4 GB limit
+        only if the compiler's "long" type is 32 bits. If the compiler's "long"
+        type is 64 bits, then the limit is 16 exabytes.
   */
 
   const size_t max_avail = 0x7FFFFFF0;
@@ -1110,7 +1151,7 @@ size_t ON_CompressedBuffer::DeflateHelper( // returns number of bytes written
       // this output to the archive.
       rc = WriteChar( deflate_output_count, m_zlib.buffer );
       if ( !rc )
-	break;
+        break;
       out__count += deflate_output_count;
       m_zlib.strm.next_out  = m_zlib.buffer;
       m_zlib.strm.avail_out = m_zlib.sizeof_x_buffer;
@@ -1130,23 +1171,23 @@ size_t ON_CompressedBuffer::DeflateHelper( // returns number of bytes written
       // that the 32 bit integers in the zlib code can handle.
       if ( 0 == m_zlib.strm.avail_in || 0 == m_zlib.strm.next_in )
       {
-	// The call to deflate() used up all the input 
-	// in m_zlib.strm.next_in[].  I can feed it another chunk
-	// from inbuffer[]
-	d = my_avail_in;
-	if ( d > max_avail )
-	  d = max_avail;
-	m_zlib.strm.next_in = my_next_in;
-	m_zlib.strm.avail_in = (unsigned int)d; 
+        // The call to deflate() used up all the input 
+        // in m_zlib.strm.next_in[].  I can feed it another chunk
+        // from inbuffer[]
+        d = my_avail_in;
+        if ( d > max_avail )
+          d = max_avail;
+        m_zlib.strm.next_in = my_next_in;
+        m_zlib.strm.avail_in = (unsigned int)d; 
       }
       else
       {
-	// The call to deflate left some input in m_zlib.strm.next_in[],
-	// but I can increase m_zlib.strm.avail_in.
-	d =  max_avail - m_zlib.strm.avail_in;
-	if ( d > my_avail_in )
-	  d = my_avail_in;
-	m_zlib.strm.avail_in += (unsigned int)d;
+        // The call to deflate left some input in m_zlib.strm.next_in[],
+        // but I can increase m_zlib.strm.avail_in.
+        d =  max_avail - m_zlib.strm.avail_in;
+        if ( d > my_avail_in )
+          d = my_avail_in;
+        m_zlib.strm.avail_in += (unsigned int)d;
       }
 
       my_avail_in -= d;
@@ -1174,10 +1215,10 @@ size_t ON_CompressedBuffer::DeflateHelper( // returns number of bytes written
 
 
 bool ON_CompressedBuffer::InflateHelper(
-	ON_CompressedBufferHelper* helper,
-	size_t sizeof___outbuffer,  // sizeof uncompressed data
-	void* out___buffer          // buffer for uncompressed data
-	) const
+        ON_CompressedBufferHelper* helper,
+        size_t sizeof___outbuffer,  // sizeof uncompressed data
+        void* out___buffer          // buffer for uncompressed data
+        ) const
 {
   const size_t max_avail = 0x7FFFFFF0; // See max_avail comment in ON_CompressedBuffer::InflateHelper
 
@@ -1248,23 +1289,23 @@ bool ON_CompressedBuffer::InflateHelper(
     {
       if ( 0 == m_zlib.strm.avail_in || 0 == m_zlib.strm.next_in )
       {
-	// The call to inflate() used up all the input 
-	// in m_zlib.strm.next_in[].  I can feed it another chunk
-	// from inbuffer[]
-	d = my_avail_in;
-	if ( d > max_avail )
-	  d = max_avail;
-	m_zlib.strm.next_in  = my_next_in;
-	m_zlib.strm.avail_in = (unsigned int)d; 
+        // The call to inflate() used up all the input 
+        // in m_zlib.strm.next_in[].  I can feed it another chunk
+        // from inbuffer[]
+        d = my_avail_in;
+        if ( d > max_avail )
+          d = max_avail;
+        m_zlib.strm.next_in  = my_next_in;
+        m_zlib.strm.avail_in = (unsigned int)d; 
       }
       else
       {
-	// The call to inflate() left some input in m_zlib.strm.next_in[],
-	// but I can increase m_zlib.strm.avail_in.
-	d =  max_avail - m_zlib.strm.avail_in;
-	if ( d > my_avail_in )
-	  d = my_avail_in;
-	m_zlib.strm.avail_in += (unsigned int)d;
+        // The call to inflate() left some input in m_zlib.strm.next_in[],
+        // but I can increase m_zlib.strm.avail_in.
+        d =  max_avail - m_zlib.strm.avail_in;
+        if ( d > my_avail_in )
+          d = my_avail_in;
+        m_zlib.strm.avail_in += (unsigned int)d;
       }
       my_next_in  += d;
       my_avail_in -= d;
@@ -1275,18 +1316,18 @@ bool ON_CompressedBuffer::InflateHelper(
       // increase m_zlib.strm.next_out[] buffer
       if ( 0 == m_zlib.strm.avail_out || 0 == m_zlib.strm.next_out )
       {
-	d = my_avail_out;
-	if ( d > max_avail )
-	  d = max_avail;
-	m_zlib.strm.next_out  = my_next_out;
-	m_zlib.strm.avail_out = (unsigned int)d;
+        d = my_avail_out;
+        if ( d > max_avail )
+          d = max_avail;
+        m_zlib.strm.next_out  = my_next_out;
+        m_zlib.strm.avail_out = (unsigned int)d;
       }
       else
       {
-	d = max_avail - m_zlib.strm.avail_out;
-	if ( d > my_avail_out )
-	  d = my_avail_out;
-	m_zlib.strm.avail_out += ((unsigned int)d);
+        d = max_avail - m_zlib.strm.avail_out;
+        if ( d > my_avail_out )
+          d = my_avail_out;
+        m_zlib.strm.avail_out += ((unsigned int)d);
       }
       my_next_out  += d;
       my_avail_out -= d;
@@ -1318,12 +1359,12 @@ bool ON_CompressedBuffer::CompressionInit( struct ON_CompressedBufferHelper* hel
       // begin compression using zlib's deflate tool
       if ( Z_OK == deflateInit( &helper->strm, Z_BEST_COMPRESSION ) ) 
       {
-	rc = true;
+        rc = true;
       }
       else 
       {
-	memset(&helper->strm,0,sizeof(helper->strm));
-	helper->action = 0;
+        memset(&helper->strm,0,sizeof(helper->strm));
+        helper->action = 0;
       }
     }
     else if ( 2 == helper->action ) 
@@ -1331,12 +1372,12 @@ bool ON_CompressedBuffer::CompressionInit( struct ON_CompressedBufferHelper* hel
       // begin uncompression using zlib's inflate tool
       if ( Z_OK == inflateInit( &helper->strm ) ) 
       {
-	rc = true;
+        rc = true;
       }
       else 
       {
-	memset(&helper->strm,0,sizeof(helper->strm));
-	helper->action = 0;
+        memset(&helper->strm,0,sizeof(helper->strm));
+        helper->action = 0;
       }
     }
   }

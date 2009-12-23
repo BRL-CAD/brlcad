@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -45,7 +44,7 @@ void ON_MassProperties::Dump( ON_TextLog& dump ) const
 
     if ( m_bValidCentroid )
       dump.Print("Centroid = (%g,%g,%g) (+/- %g,%g,%g)\n",
-		 m_x0,m_y0,m_z0,m_x0_err,m_y0_err,m_z0_err);
+                 m_x0,m_y0,m_z0,m_x0_err,m_y0_err,m_z0_err);
 
     if ( m_bValidFirstMoments )
     {
@@ -146,9 +145,9 @@ Description:
   Find the eigen values and eigen vectors of a tri-diagonal
   real symmetric 3x3 matrix
 
-	 A D 0
-	 D B E
-	 0 E C
+         A D 0
+         D B E
+         0 E C
 
 Parameters:
   A - [in] matrix entry
@@ -166,11 +165,11 @@ Returns:
   True if successful.
 */
 bool ON_SymTriDiag3x3EigenSolver( double A, double B, double C,
-			   double D, double E,
-			   double* e1, ON_3dVector E1,
-			   double* e2, ON_3dVector E2,
-			   double* e3, ON_3dVector E3
-			   )
+                           double D, double E,
+                           double* e1, ON_3dVector E1,
+                           double* e2, ON_3dVector E2,
+                           double* e3, ON_3dVector E3
+                           )
 {
   // TODO - do something more stable than using a cubic root zero finder
   return false;
@@ -181,9 +180,9 @@ Description:
   Find the eigen values and eigen vectors of a real symmetric
   3x3 matrix
 
-	 A D F
-	 D B E
-	 F E C
+         A D F
+         D B E
+         F E C
 
 Parameters:
   A - [in] matrix entry
@@ -202,11 +201,11 @@ Returns:
   True if successful.
 */
 bool ON_Sym3x3EigenSolver( double A, double B, double C,
-			   double D, double E, double F,
-			   double* e1, ON_3dVector E1,
-			   double* e2, ON_3dVector E2,
-			   double* e3, ON_3dVector E3
-			   )
+                           double D, double E, double F,
+                           double* e1, ON_3dVector E1,
+                           double* e2, ON_3dVector E2,
+                           double* e3, ON_3dVector E3
+                           )
 {
   // STEP 1: reduce to tri-diagonal form
   double cos_phi = 1.0;
@@ -259,9 +258,9 @@ bool ON_Sym3x3EigenSolver( double A, double B, double C,
   double ee1 = 0.0, ee2 = 0.0, ee3 = 0.0;
   ON_3dVector EE1, EE2, EE3;
   bool rc = ON_SymTriDiag3x3EigenSolver( AA, BB, CC, DD, EE,
-				    &ee1, EE1,
-				    &ee2, EE2,
-				    &ee3, EE3 );
+                                    &ee1, EE1,
+                                    &ee2, EE2,
+                                    &ee3, EE3 );
 
   E1.Set(cos_phi*EE1.x - sin_phi*EE1.z, EE1.y, sin_phi*EE1.x + cos_phi*EE1.z );
   E2.Set(cos_phi*EE2.x - sin_phi*EE2.z, EE2.y, sin_phi*EE2.x + cos_phi*EE2.z );
@@ -346,15 +345,15 @@ ON_3dVector ON_MassProperties::WorldCoordSecondMoments() const
 }
 
 ON_Matrix* ON_MassProperties::WorldCoordIntertiaMatrix( 
-	      ON_Matrix* matrix
-	      ) const
+              ON_Matrix* matrix
+              ) const
 {
   if ( m_bValidSecondMoments && m_bValidProductMoments )
   {
     if ( 0 != matrix )
     {
       if ( 3 != matrix->RowCount() || 3 != matrix->ColCount() )
-	matrix->Create(3,3);
+        matrix->Create(3,3);
     }
     else
     {
@@ -378,17 +377,17 @@ ON_Matrix* ON_MassProperties::WorldCoordIntertiaMatrix(
 }
 
 bool ON_MassProperties::WorldCoordPrincipalMoments( 
-	      double* pxx, ON_3dVector& Ax,
-	      double* pyy, ON_3dVector& Ay,
-	      double* pzz, ON_3dVector& Az
-	      ) const
+              double* pxx, ON_3dVector& Ax,
+              double* pyy, ON_3dVector& Ay,
+              double* pzz, ON_3dVector& Az
+              ) const
 {
   bool rc = false;
   if ( m_bValidSecondMoments && m_bValidProductMoments )
   {
     rc = ON_Sym3x3EigenSolver( m_world_xx, m_world_yy, m_world_zz,
-			       m_world_xy, m_world_yz, m_world_zx,
-			       pxx, Ax, pyy, Ay, pzz, Az );
+                               m_world_xy, m_world_yz, m_world_zx,
+                               pxx, Ax, pyy, Ay, pzz, Az );
   }
   return rc;
 }
@@ -477,15 +476,15 @@ ON_3dVector ON_MassProperties::CentroidCoordRadiiOfGyration() const
 
 
 ON_Matrix* ON_MassProperties::CentroidCoordIntertiaMatrix( 
-	      ON_Matrix* matrix
-	      ) const
+              ON_Matrix* matrix
+              ) const
 {
   if ( m_bValidSecondMoments && m_bValidProductMoments )
   {
     if ( 0 != matrix )
     {
       if ( 3 != matrix->RowCount() || 3 != matrix->ColCount() )
-	matrix->Create(3,3);
+        matrix->Create(3,3);
     }
     else
     {
@@ -509,17 +508,17 @@ ON_Matrix* ON_MassProperties::CentroidCoordIntertiaMatrix(
 }
 
 bool ON_MassProperties::CentroidCoordPrincipalMoments( 
-	      double* pxx, ON_3dVector& Ax,
-	      double* pyy, ON_3dVector& Ay,
-	      double* pzz, ON_3dVector& Az
-	      ) const
+              double* pxx, ON_3dVector& Ax,
+              double* pyy, ON_3dVector& Ay,
+              double* pzz, ON_3dVector& Az
+              ) const
 {
   bool rc = false;
   if ( m_bValidSecondMoments && m_bValidProductMoments )
   {
     rc = ON_Sym3x3EigenSolver( m_ccs_xx, m_ccs_yy, m_ccs_zz,
-			       m_ccs_xy, m_ccs_yz, m_ccs_zx,
-			       pxx, Ax, pyy, Ay, pzz, Az );
+                               m_ccs_xy, m_ccs_yz, m_ccs_zx,
+                               pxx, Ax, pyy, Ay, pzz, Az );
   }
   return rc;
 }
@@ -561,10 +560,10 @@ bool ON_MassProperties::Sum(
     if ( summands[i].m_mass_type != 0 )
     {
       if ( 0 == mass_type )
-	mass_type = summands[i].m_mass_type;
+        mass_type = summands[i].m_mass_type;
       else if ( mass_type != summands[i].m_mass_type )
       {
-	return false;
+        return false;
       }
     }
   }
@@ -577,19 +576,31 @@ bool ON_MassProperties::Sum(
   x.Begin();
   ex.Begin();
 
+  //GBA 13-June-08  TRR#35220
+  //  Cleaned up error handling.  ON_MassProperties::m_mass_type==0 is treated as an empty record not an error.
+  //  If m_bValidMass==false for any of the summands then m_bValidMass==false for the result ( and similary for
+  //  m_bValidFirstMoments, m_bValidSecondMoments and m_bValidProductMoments). 
+
+  m_bValidMass = true;
   for ( i = 0; i < count; i++ )
   {
-    if ( 0 != summands[i].m_mass_type && summands[i].m_bValidMass )
+    if ( 0 == summands[i].m_mass_type)
+      continue;
+
+    if( summands[i].m_bValidMass )
     {
       if ( 0 == mass_type )
-	mass_type = summands[i].m_mass_type;
+        mass_type = summands[i].m_mass_type;
       else if ( mass_type != summands[i].m_mass_type )
       {
-	return false;
+        return false;
       }
       x.Plus(summands[i].m_mass);
       ex.Plus(summands[i].m_mass_err);
     }
+    else 
+      m_bValidMass = false;
+    
   }
 
   const int c = x.SummandCount();
@@ -601,11 +612,16 @@ bool ON_MassProperties::Sum(
   }
 
   m_mass_type = mass_type;
-  m_mass = x.Total(&e);
-  m_mass_err = ex.Total()+e;
-  if ( e > m_mass_err )
-    m_mass_err = e;
-  m_bValidMass = true;
+
+  if(m_bValidMass)
+  {
+    m_mass = x.Total(&e);
+    m_mass_err = ex.Total()+e;
+    if ( e > m_mass_err )
+      m_mass_err = e;
+  }
+  else
+    return true;
 
   // first moments;
   x.Begin();
@@ -615,12 +631,16 @@ bool ON_MassProperties::Sum(
   z.Begin();
   ez.Begin();
   
+  m_bValidFirstMoments = true;
+
   for ( i = 0; i < count; i++ )
   {
-    if ( 0 != summands[i].m_mass_type 
-	 && summands[i].m_bValidMass
-	 && summands[i].m_bValidFirstMoments
-	 )
+    if ( 0 == summands[i].m_mass_type )
+      continue;
+    
+    if( summands[i].m_bValidMass
+        && summands[i].m_bValidFirstMoments
+       )
     {
       x.Plus(summands[i].m_world_x);
       ex.Plus(summands[i].m_world_x_err);
@@ -629,6 +649,8 @@ bool ON_MassProperties::Sum(
       z.Plus(summands[i].m_world_z);
       ez.Plus(summands[i].m_world_z_err);
     }
+    else
+      m_bValidFirstMoments = false;
   }
 
   if ( x.SummandCount() == 0 )
@@ -637,25 +659,30 @@ bool ON_MassProperties::Sum(
   if ( x.SummandCount() != c )
     return false;
 
-  m_world_x = x.Total(&e);
-  m_world_x_err = ex.Total()+e;
-  m_world_y = y.Total(&e);
-  m_world_y_err = ey.Total()+e;
-  m_world_z = z.Total(&e);
-  m_world_z_err = ez.Total()+e;
-  m_bValidFirstMoments = true;
+  if( m_bValidFirstMoments)
+  {
+    m_world_x = x.Total(&e);
+    m_world_x_err = ex.Total()+e;
+    m_world_y = y.Total(&e);
+    m_world_y_err = ey.Total()+e;
+    m_world_z = z.Total(&e);
+    m_world_z_err = ez.Total()+e;
+  }
 
   // centroid
   if ( 0.0 == m_mass )
     return false;
 
-  m_x0 = m_world_x/m_mass;
-  m_x0_err = (m_world_x_err + fabs(m_world_x)*m_mass_err/m_mass)/m_mass;
-  m_y0 = m_world_y/m_mass;
-  m_y0_err = (m_world_y_err + fabs(m_world_y)*m_mass_err/m_mass)/m_mass;
-  m_z0 = m_world_z/m_mass;
-  m_z0_err = (m_world_z_err + fabs(m_world_z)*m_mass_err/m_mass)/m_mass;
-  m_bValidCentroid = true;
+  if( m_bValidFirstMoments)
+  {
+    m_x0 = m_world_x/m_mass;
+    m_x0_err = (m_world_x_err + fabs(m_world_x)*m_mass_err/m_mass)/m_mass;
+    m_y0 = m_world_y/m_mass;
+    m_y0_err = (m_world_y_err + fabs(m_world_y)*m_mass_err/m_mass)/m_mass;
+    m_z0 = m_world_z/m_mass;
+    m_z0_err = (m_world_z_err + fabs(m_world_z)*m_mass_err/m_mass)/m_mass;
+    m_bValidCentroid = true;
+  }
 
   // second moments
   double dx, dy, dz, dx_err, dy_err, dz_err, m, m_err;
@@ -667,13 +694,17 @@ bool ON_MassProperties::Sum(
   z.Begin();
   ez.Begin();
   
+  m_bValidSecondMoments = true;
+
   for ( i = 0; i < count; i++ )
   {
-    if ( 0 != summands[i].m_mass_type 
-	 && summands[i].m_bValidMass
-	 && summands[i].m_bValidCentroid
-	 && summands[i].m_bValidSecondMoments
-	 )
+    if ( 0 == summands[i].m_mass_type )
+      continue;
+    
+    if( summands[i].m_bValidMass
+        && summands[i].m_bValidCentroid
+        && summands[i].m_bValidSecondMoments
+       )
     {
       dx = summands[i].m_x0 - m_x0;
       dx_err = summands[i].m_x0_err + m_x0_err;
@@ -691,27 +722,31 @@ bool ON_MassProperties::Sum(
       z.Plus(summands[i].m_ccs_zz + dz*dz*m);
       ez.Plus(summands[i].m_ccs_zz_err + 2.0*dz_err*fabs(dz)*m + dz*dz*m_err);
     }
+    else
+      m_bValidSecondMoments = false;
+    
   }
 
   if ( x.SummandCount() > 0 )
   {
     if ( x.SummandCount() != c )
       return false;
-    m_ccs_xx = x.Total(&e);
-    m_ccs_xx_err = ex.Total() + e;
-    m_ccs_yy = y.Total(&e);
-    m_ccs_yy_err = ey.Total() + e;
-    m_ccs_zz = z.Total(&e);
-    m_ccs_zz_err = ez.Total() + e;
+    if( m_bValidSecondMoments)
+    {
+      m_ccs_xx = x.Total(&e);
+      m_ccs_xx_err = ex.Total() + e;
+      m_ccs_yy = y.Total(&e);
+      m_ccs_yy_err = ey.Total() + e;
+      m_ccs_zz = z.Total(&e);
+      m_ccs_zz_err = ez.Total() + e;
 
-    m_world_xx = m_ccs_xx + m_x0*m_x0*m_mass;
-    m_world_xx_err = m_ccs_xx_err + 2.0*m_x0_err*fabs(m_x0)*m_mass + m_x0*m_x0*m_mass_err;
-    m_world_yy = m_ccs_yy + m_y0*m_y0*m_mass;
-    m_world_yy_err = m_ccs_yy_err + 2.0*m_y0_err*fabs(m_y0)*m_mass + m_y0*m_y0*m_mass_err;
-    m_world_zz = m_ccs_zz + m_z0*m_z0*m_mass;
-    m_world_zz_err = m_ccs_zz_err + 2.0*m_z0_err*fabs(m_z0)*m_mass + m_z0*m_z0*m_mass_err;
-    
-    m_bValidSecondMoments = true;
+      m_world_xx = m_ccs_xx + m_x0*m_x0*m_mass;
+      m_world_xx_err = m_ccs_xx_err + 2.0*m_x0_err*fabs(m_x0)*m_mass + m_x0*m_x0*m_mass_err;
+      m_world_yy = m_ccs_yy + m_y0*m_y0*m_mass;
+      m_world_yy_err = m_ccs_yy_err + 2.0*m_y0_err*fabs(m_y0)*m_mass + m_y0*m_y0*m_mass_err;
+      m_world_zz = m_ccs_zz + m_z0*m_z0*m_mass;
+      m_world_zz_err = m_ccs_zz_err + 2.0*m_z0_err*fabs(m_z0)*m_mass + m_z0*m_z0*m_mass_err;
+    }  
   }
 
   // product moments
@@ -722,13 +757,17 @@ bool ON_MassProperties::Sum(
   z.Begin();
   ez.Begin();
   
+  m_bValidProductMoments = true;
+
   for ( i = 0; i < count; i++ )
   {
-    if ( 0 != summands[i].m_mass_type 
-	 && summands[i].m_bValidMass
-	 && summands[i].m_bValidCentroid
-	 && summands[i].m_bValidSecondMoments
-	 )
+    if ( 0 == summands[i].m_mass_type )
+      continue;
+    
+    if( summands[i].m_bValidMass
+        && summands[i].m_bValidCentroid
+        && summands[i].m_bValidSecondMoments
+       )
     {
       dx = summands[i].m_x0 - m_x0;
       dx_err = summands[i].m_x0_err + m_x0_err;
@@ -746,27 +785,31 @@ bool ON_MassProperties::Sum(
       z.Plus(summands[i].m_ccs_zx + dz*dx*m);
       ez.Plus(summands[i].m_ccs_zx_err + fabs(dz_err*dx*m) + fabs(dx_err*dz*m) + fabs(dz*dx*m_err));
     }
+    else
+      m_bValidProductMoments = false;
+    
   }
 
   if ( x.SummandCount() > 0 )
   {
     if ( x.SummandCount() != c )
       return false;
-    m_ccs_xy = x.Total(&e);
-    m_ccs_xy_err = ex.Total() + e;
-    m_ccs_yz = y.Total(&e);
-    m_ccs_yz_err = ey.Total() + e;
-    m_ccs_zx = z.Total(&e);
-    m_ccs_zx_err = ez.Total() + e;
+    if( m_bValidProductMoments)
+    {
+      m_ccs_xy = x.Total(&e);
+      m_ccs_xy_err = ex.Total() + e;
+      m_ccs_yz = y.Total(&e);
+      m_ccs_yz_err = ey.Total() + e;
+      m_ccs_zx = z.Total(&e);
+      m_ccs_zx_err = ez.Total() + e;
 
-    m_world_xy = m_ccs_xy + m_x0*m_y0*m_mass;
-    m_world_xy_err = m_ccs_xy_err + fabs(m_x0_err*m_y0*m_mass) + fabs(m_y0_err*m_x0*m_mass) + fabs(m_x0*m_y0*m_mass_err);
-    m_world_yz = m_ccs_yz + m_y0*m_z0*m_mass;
-    m_world_yz_err = m_ccs_yz_err + fabs(m_y0_err*m_z0*m_mass) + fabs(m_z0_err*m_y0*m_mass) + fabs(m_y0*m_z0*m_mass_err);
-    m_world_zx = m_ccs_zx + m_z0*m_x0*m_mass;
-    m_world_zx_err = m_ccs_zx_err + fabs(m_z0_err*m_x0*m_mass) + fabs(m_x0_err*m_z0*m_mass) + fabs(m_z0*m_x0*m_mass_err);
-    
-    m_bValidProductMoments = true;
+      m_world_xy = m_ccs_xy + m_x0*m_y0*m_mass;
+      m_world_xy_err = m_ccs_xy_err + fabs(m_x0_err*m_y0*m_mass) + fabs(m_y0_err*m_x0*m_mass) + fabs(m_x0*m_y0*m_mass_err);
+      m_world_yz = m_ccs_yz + m_y0*m_z0*m_mass;
+      m_world_yz_err = m_ccs_yz_err + fabs(m_y0_err*m_z0*m_mass) + fabs(m_z0_err*m_y0*m_mass) + fabs(m_y0*m_z0*m_mass_err);
+      m_world_zx = m_ccs_zx + m_z0*m_x0*m_mass;
+      m_world_zx_err = m_ccs_zx_err + fabs(m_z0_err*m_x0*m_mass) + fabs(m_x0_err*m_z0*m_mass) + fabs(m_z0*m_x0*m_mass_err);
+    } 
   }
 
   return true;

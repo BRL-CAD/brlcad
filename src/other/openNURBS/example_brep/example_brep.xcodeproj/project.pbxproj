@@ -43,7 +43,7 @@
 /* Begin PBXFileReference section */
 		3629DE6E0C5555FD0093E350 /* example_brep.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = example_brep.cpp; sourceTree = "<group>"; };
 		36ADD8540C555A670022EC02 /* opennurbs.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = opennurbs.xcodeproj; path = ../opennurbs.xcodeproj; sourceTree = SOURCE_ROOT; };
-		8DD76F6C0486A84900D96B5E /* example_brep */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = example_brep; sourceTree = BUILT_PRODUCTS_DIR; };
+		8DD76F6C0486A84900D96B5E /* example_brep */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = "compiled.mach-o.executable"; path = example_brep; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */

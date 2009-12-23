@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -17,25 +16,25 @@
 #include "opennurbs.h"
 
 const ON_Plane ON_xy_plane( ON_3dPoint(0.0,0.0,0.0),
-			      ON_3dVector(1.0,0.0,0.0),
-			      ON_3dVector(0.0,1.0,0.0) 
-			      );
+                              ON_3dVector(1.0,0.0,0.0),
+                              ON_3dVector(0.0,1.0,0.0) 
+                              );
 
 const ON_Plane ON_yz_plane( ON_3dPoint(0.0,0.0,0.0),
-			      ON_3dVector(0.0,1.0,0.0), 
-			      ON_3dVector(0.0,0.0,1.0) 
-			      );
+                              ON_3dVector(0.0,1.0,0.0), 
+                              ON_3dVector(0.0,0.0,1.0) 
+                              );
 
 const ON_Plane ON_zx_plane( ON_3dPoint(0.0,0.0,0.0),
-			      ON_3dVector(0.0,0.0,1.0),
-			      ON_3dVector(1.0,0.0,0.0)
-			      );
+                              ON_3dVector(0.0,0.0,1.0),
+                              ON_3dVector(1.0,0.0,0.0)
+                              );
 
 const ON_Plane ON_Plane::World_xy=ON_xy_plane;
 
 ON_Plane::ON_Plane() 
-	: origin(0.0,0.0,0.0), 
-	  xaxis(1.0,0.0,0.0), yaxis(0.0,1.0,0.0), zaxis(0.0,0.0,1.0)
+        : origin(0.0,0.0,0.0), 
+          xaxis(1.0,0.0,0.0), yaxis(0.0,1.0,0.0), zaxis(0.0,0.0,1.0)
 {
   plane_equation.x = plane_equation.y = plane_equation.d = 0.0;
   plane_equation.z = 1.0;
@@ -90,9 +89,9 @@ ON_3dPoint ON_Plane::PointAt( double s, double t, double c ) const
 
 ON_Line ON_Plane::IsoLine( // iso parametric line
        int dir,              // 0 first parameter varies and second parameter is constant
-			 //   e.g., line(t) = plane(t,c)
-			 // 1 first parameter is constant and second parameter varies
-			 //   e.g., line(t) = plane(c,t)
+                         //   e.g., line(t) = plane(t,c)
+                         // 1 first parameter is constant and second parameter varies
+                         //   e.g., line(t) = plane(c,t)
        double c           // c = value of constant parameter 
        ) const
 {
@@ -116,7 +115,7 @@ double ON_Plane::DistanceTo( const ON_3dPoint& point ) const
 }
 
 bool ON_Plane::GetDistanceToBoundingBox(const ON_BoundingBox& Box,
-								double* min, double* max) const
+				                                double* min, double* max) const
 {
   //min and max signed distance.  Returns false if plane normal has zero length.
 
@@ -133,19 +132,19 @@ bool ON_Plane::GetDistanceToBoundingBox(const ON_BoundingBox& Box,
     {
       for (i2=0;i2<2;i2++) 
       {
-	if (i0||i1||i2) 
-	{
-	  ON_3dPoint P;
-	  P[0]=(i0)?Box.Max()[0]:Box.Min()[0];
-	  P[1]=(i1)?Box.Max()[1]:Box.Min()[1];
-	  P[2]=(i2)?Box.Max()[2]:Box.Min()[2];
-	  double d = (P - Origin())*UnitNormal;
-	  //double dd = P.DistanceTo(ClosestPointTo(P));
-	  if (d < mind) 
-	    mind=d;
-	  else if (d > maxd) 
-	    maxd=d;
-	}
+        if (i0||i1||i2) 
+        {
+          ON_3dPoint P;
+          P[0]=(i0)?Box.Max()[0]:Box.Min()[0];
+          P[1]=(i1)?Box.Max()[1]:Box.Min()[1];
+          P[2]=(i2)?Box.Max()[2]:Box.Min()[2];
+          double d = (P - Origin())*UnitNormal;
+          //double dd = P.DistanceTo(ClosestPointTo(P));
+          if (d < mind) 
+            mind=d;
+          else if (d > maxd) 
+            maxd=d;
+        }
       }
     }
   }
@@ -270,7 +269,7 @@ bool ON_Plane::CreateFromFrame(
     {
       // make sure zaxis is perp to Y
       if ( fabs(Y*zaxis) > ON_SQRT_EPSILON*Y.Length() )
-	b = false;
+        b = false;
     }
   }
   return b;
@@ -304,10 +303,10 @@ bool ON_Plane::CreateFromEquation(
 }
 
 bool ON_Plane::CreateFromPoints(
-	  const ON_3dPoint& P,  // point on the plane
-	  const ON_3dPoint& Q,  // point on the plane
-	  const ON_3dPoint& R   // point on the plane
-	  )
+          const ON_3dPoint& P,  // point on the plane
+          const ON_3dPoint& Q,  // point on the plane
+          const ON_3dPoint& R   // point on the plane
+          )
 {
   origin = P;
   bool rc = zaxis.PerpendicularTo(P,Q,R);
@@ -344,7 +343,7 @@ bool ON_Plane::IsValid() const
       //   places.
       tol *= (ON_EPSILON*10.0);
       if ( fabs(x) > tol )
-	return false;
+        return false;
     }
     else
       return false;
@@ -438,29 +437,29 @@ bool ON_Plane::Morph( const ON_SpaceMorph& morph )
       rc = mp.CreateFromFrame(ON_origin,y,z);
       if ( rc )
       {
-	y = mp.xaxis;
-	z = mp.yaxis;
-	x = mp.zaxis;
+        y = mp.xaxis;
+        z = mp.yaxis;
+        x = mp.zaxis;
       }
       else
       {
-	rc = mp.CreateFromFrame(ON_origin,z,x);
-	if (rc)
-	{
-	  z = mp.xaxis;
-	  x = mp.yaxis;
-	  y = mp.zaxis;
-	}
-	else
-	{
-	  rc = mp.CreateFromNormal(ON_origin,z);
-	  if (rc)
-	  {
-	    x = mp.xaxis;
-	    y = mp.yaxis;
-	    z = mp.zaxis;
-	  }
-	}
+        rc = mp.CreateFromFrame(ON_origin,z,x);
+        if (rc)
+        {
+          z = mp.xaxis;
+          x = mp.yaxis;
+          y = mp.zaxis;
+        }
+        else
+        {
+          rc = mp.CreateFromNormal(ON_origin,z);
+          if (rc)
+          {
+            x = mp.xaxis;
+            y = mp.yaxis;
+            z = mp.zaxis;
+          }
+        }
       }
     }
   }
@@ -576,26 +575,52 @@ bool ON_Plane::Flip()
 
 
 int ON_ArePointsOnPlane( // returns 0=no, 1 = yes, 2 = pointset is (to tolerance) a single point on the line
-	int dim,     // 2 or 3
-	int is_rat,
-	int count, 
-	int stride, const double* point,
-	const ON_BoundingBox& bbox, // if needed, use ON_GetBoundingBox(dim,is_rat,count,stride,point)
-	const ON_Plane& plane,  // line to test
-	double tolerance
-	)
+        int dim,     // 2 or 3
+        int is_rat,
+        int count, 
+        int stride, const double* point,
+        const ON_BoundingBox& bbox, // if needed, use ON_GetBoundingBox(dim,is_rat,count,stride,point)
+        const ON_Plane& plane,  // line to test
+        double tolerance
+        )
 {
   double w;
-  int rc, i, j, k;
+  int i, j, k;
 
-  rc = 0;
-  ON_ASSERT_OR_RETURN( plane.IsValid(), rc ); 
-  ON_ASSERT_OR_RETURN( bbox.IsValid(), rc ); 
-  ON_ASSERT_OR_RETURN( tolerance >= 0.0, rc );
   if ( count < 1 )
-    return rc;
-  ON_ASSERT_OR_RETURN( dim == 2 || dim == 3, rc );
-  ON_ASSERT_OR_RETURN( stride >= (is_rat?(dim+1):dim) && point != NULL, rc );
+    return 0;
+  if ( !plane.IsValid() )
+  {
+    ON_ERROR("plane parameter is not valid");
+    return 0;
+  }
+  if ( !bbox.IsValid() )
+  {
+    ON_ERROR("bbox parameter is not valid");
+    return 0;
+  }
+  if ( !ON_IsValid(tolerance) || tolerance < 0.0 )
+  {
+    ON_ERROR("tolerance must be >= 0.0");
+    return 0;
+  }
+  if ( dim < 2 || dim > 3 )
+  {
+    ON_ERROR("dim must be 2 or 3");
+    return 0;
+  }
+  if ( stride < (is_rat?(dim+1):dim) )
+  {
+    ON_ERROR("stride parameter is too small");
+    return 0;
+  }
+  if ( 0 == point )
+  {
+    ON_ERROR("point parameter is null");
+    return 0;
+  }
+
+  int rc = 0;
 
   if ( tolerance == 0.0 ) {
     tolerance = bbox.Tolerance();
@@ -610,9 +635,9 @@ int ON_ArePointsOnPlane( // returns 0=no, 1 = yes, 2 = pointset is (to tolerance
     for ( j = 0; rc && j < 2; j++) {
       Q.y = bbox[j].y;
       for ( k = 0; rc && k < 2; k++) {
-	Q.z = bbox[k].z;
-	if ( Q.DistanceTo( plane.ClosestPointTo( Q ) ) > tolerance )
-	  rc = 0;
+        Q.z = bbox[k].z;
+        if ( Q.DistanceTo( plane.ClosestPointTo( Q ) ) > tolerance )
+          rc = 0;
       }
     }
   }
@@ -623,27 +648,27 @@ int ON_ArePointsOnPlane( // returns 0=no, 1 = yes, 2 = pointset is (to tolerance
     rc = (count == 1 || bbox.Diagonal().Length() <= tolerance) ? 2 : 1;
     if ( is_rat ) {
       for ( i = 0; i < count; i++ ) {
-	w = point[dim];
-	if ( w == 0.0 ) {
-	  ON_ERROR("rational point has zero weight");
-	  return 0;
-	}
-	ON_ArrayScale( dim, 1.0/w, point, &Q.x );
-	if ( Q.DistanceTo( plane.ClosestPointTo( Q ) ) > tolerance ) {
-	  rc = 0;
-	  break;
-	}
-	point += stride;
+        w = point[dim];
+        if ( w == 0.0 ) {
+          ON_ERROR("rational point has zero weight");
+          return 0;
+        }
+        ON_ArrayScale( dim, 1.0/w, point, &Q.x );
+        if ( Q.DistanceTo( plane.ClosestPointTo( Q ) ) > tolerance ) {
+          rc = 0;
+          break;
+        }
+        point += stride;
       }
     }
     else {
       for ( i = 0; i < count; i++ ) {
-	memcpy( &Q.x, point, dim*sizeof(Q.x) );
-	if ( Q.DistanceTo( plane.ClosestPointTo( Q ) ) > tolerance ) {
-	  rc = 0;
-	  break;
-	}
-	point += stride;
+        memcpy( &Q.x, point, dim*sizeof(Q.x) );
+        if ( Q.DistanceTo( plane.ClosestPointTo( Q ) ) > tolerance ) {
+          rc = 0;
+          break;
+        }
+        point += stride;
       }
     }
   }

@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -53,10 +52,10 @@ public:
   Parameters:
     origin - [in] point on the plane
     x_dir - [in] non-zero vector in the plane that
-	determines the xaxis direction.
+        determines the xaxis direction.
     y_dir - [in] non-zero vector not parallel to x_dir
-	that is used to determine the yaxis direction.
-	y_dir does not have to be perpindicular to x_dir.
+        that is used to determine the yaxis direction.
+        y_dir does not have to be perpindicular to x_dir.
   */
   ON_Plane(
     const ON_3dPoint& origin,
@@ -70,10 +69,10 @@ public:
   Parameters:
     origin - [in] point on the plane
     x_point - [in] second point in the plane.
-	The xaxis will be parallel to x_point-origin.
+        The xaxis will be parallel to x_point-origin.
     y_point - [in] third point on the plane that is
-	not colinear with the first two points.
-	yaxis*(y_point-origin) will be > 0.
+        not colinear with the first two points.
+        yaxis*(y_point-origin) will be > 0.
   */
   ON_Plane(
     const ON_3dPoint& origin,
@@ -108,7 +107,7 @@ public:
     origin = point, zaxis = unitized normal, xaxis
     xaxis set with xaxis.PerpindicularTo(zaxis).
   Returns:
-    TRUE if valid plane is created.
+    true if valid plane is created.
   */
   bool CreateFromNormal(
     const ON_3dPoint& origin,
@@ -122,12 +121,12 @@ public:
   Parameters:
     origin - [in] point on the plane
     x_dir - [in] non-zero vector in the plane that
-	determines the xaxis direction.
+        determines the xaxis direction.
     y_dir - [in] non-zero vector not parallel to x_dir
-	that is used to determine the yaxis direction.
-	y_dir does not have to be perpindicular to x_dir.
+        that is used to determine the yaxis direction.
+        y_dir does not have to be perpindicular to x_dir.
   Returns:
-    TRUE if valid plane is created.
+    true if valid plane is created.
   */
   bool CreateFromFrame(
     const ON_3dPoint& origin,
@@ -141,12 +140,12 @@ public:
   Parameters:
     origin - [in] point on the plane
     point_on_x - [in] second point in the plane.
-	The xaxis will be parallel to x_point-origin.
+        The xaxis will be parallel to x_point-origin.
     point_on - [in] third point on the plane that is
-	not colinear with the first two points.
-	yaxis*(y_point-origin) will be > 0.
+        not colinear with the first two points.
+        yaxis*(y_point-origin) will be > 0.
   Returns:
-    TRUE if valid plane is created.
+    true if valid plane is created.
   */
   bool CreateFromPoints(
     const ON_3dPoint& origin,
@@ -165,7 +164,7 @@ public:
     points on the plane will satisfy 
     x*equation[0] +y*equation[1] + z*equation[2] + equation[3] = 0
   Returns:
-    TRUE if valid plane is created.
+    true if valid plane is created.
   */
   bool CreateFromEquation( 
     const double equation[4]
@@ -175,7 +174,7 @@ public:
   Description:
     Test plane to see if it is valid.
   Returns:
-    TRUE if all fields contain reasonable
+    true if all fields contain reasonable
     information and equation jibes with point and zaxis.
   */
   bool IsValid() const;
@@ -248,18 +247,18 @@ public:
     Get an isoparameteric line on the plane.
   Parameters:
     dir - [in] direction of iso-parametric line
-	0: first parameter varies and second parameter is constant
-	   e.g., line(t) = plane(t,c)
-	1: first parameter is constant and second parameter varies
-	   e.g., line(t) = plane(c,t)
+        0: first parameter varies and second parameter is constant
+           e.g., line(t) = plane(t,c)
+        1: first parameter is constant and second parameter varies
+           e.g., line(t) = plane(c,t)
     c - [in] value of constant parameter 
   Returns:
     iso-parametric line
   */
   ON_Line IsoLine(
-	 int dir,
-	 double c
-	 ) const;
+         int dir,
+         double c
+         ) const;
 
   /*
   Description:
@@ -275,18 +274,18 @@ public:
     The zaxis determines the plane's orientation.
   */
   double DistanceTo( 
-	const ON_3dPoint& point
-	) const;
+        const ON_3dPoint& point
+        ) const;
 
 
   bool GetDistanceToBoundingBox(
-	   //returns false if plane has zero length normal
+           //returns false if plane has zero length normal
 				   const ON_BoundingBox&, // Box
 
-	   //output
+           //output
 				   double* min,    // min signed dist from plane to box 
-	   double* max     //max signed dist from plane to box
-	   ) const;
+           double* max     //max signed dist from plane to box
+           ) const;
 
   // OBSOLETE - use plane_equation.ValueAt()
   //__declspec(deprecated) double EquationAt( 
@@ -303,7 +302,7 @@ public:
     Update the plane equation based on the current values
     of the origin and zaxis.
   Returns:
-    TRUE if successful.  FALSE if zaxis is zero.
+    true if successful.  false if zaxis is zero.
   Remarks:
     If you modify a plane's origin or zaxis, call UpdateEquation()
     to set equation[]. 
@@ -317,15 +316,15 @@ public:
     world_point - [in] 3d point
     u - [out] 
     v - [out] The point ON_Plane::PointAt(*u,*v) is the point
-	      on the plane that is closest to world_point.
+              on the plane that is closest to world_point.
   Returns:
-    TRUE if successful.
+    true if successful.
   */
   bool ClosestPointTo( 
-	 ON_3dPoint world_point,
-	 double* u,
-	 double* v
-	 ) const;
+         ON_3dPoint world_point,
+         double* u,
+         double* v
+         ) const;
 
   /*
   Description:
@@ -336,8 +335,8 @@ public:
     A 3d point on the plane that is closest to world_point.
   */
   ON_3dPoint ClosestPointTo( 
-	 ON_3dPoint point
-	 ) const;
+         ON_3dPoint point
+         ) const;
 
   // For intersections see ON_Intersect();
 
@@ -347,11 +346,11 @@ public:
   Parameters:
     xform - [in] transformation to apply to plane
   Returns:
-    TRUE if successful
+    true if successful
   */
   bool Transform( 
-	const ON_Xform& xform
-	);
+        const ON_Xform& xform
+        );
 
   /*
   Description:
@@ -371,14 +370,14 @@ public:
   Parameters:
     i - [in]
     j - [in] indices of coordinates to swap.
-	0 = x coordinate, 1 = y coordinate, 2 = z coordinate.
+        0 = x coordinate, 1 = y coordinate, 2 = z coordinate.
   Returns:
-    TRUE if successful.
+    true if successful.
   */
   bool SwapCoordinates(
-	int i,
-	int j
-	);
+        int i,
+        int j
+        );
 
   /*
   Description:
@@ -388,13 +387,13 @@ public:
     cos_angle - [in] cosine of rotation angle
     axis - [in] axis of rotation
   Returns:
-    TRUE if successful
+    true if successful
   */
   bool Rotate(
-	double sin_angle,
-	double cos_angle,
-	const ON_3dVector& axis
-	);
+        double sin_angle,
+        double cos_angle,
+        const ON_3dVector& axis
+        );
 
   /*
   Description:
@@ -403,12 +402,12 @@ public:
     angle - [in] rotation angle in radians
     axis - [in] axis of rotation
   Returns:
-    TRUE if successful
+    true if successful
   */
   bool Rotate(
-	double angle,
-	const ON_3dVector& axis
-	);
+        double angle,
+        const ON_3dVector& axis
+        );
 
   /*
   Description:
@@ -419,14 +418,14 @@ public:
     axis - [in] axis of rotation
     center - [in] center of rotation
   Returns:
-    TRUE if successful
+    true if successful
   */
   bool Rotate(
-	double sin_angle,
-	double cos_angle,
-	const ON_3dVector& axis,
-	const ON_3dPoint&  center
-	);
+        double sin_angle,
+        double cos_angle,
+        const ON_3dVector& axis,
+        const ON_3dPoint&  center
+        );
 
   /*
   Description:
@@ -436,13 +435,13 @@ public:
     axis - [in] axis of rotation
     center - [in] center of rotation
   Returns:
-    TRUE if successful
+    true if successful
   */
   bool Rotate(
-	double angle,
-	const ON_3dVector& axis,
-	const ON_3dPoint& center
-	);
+        double angle,
+        const ON_3dVector& axis,
+        const ON_3dPoint& center
+        );
 
   /*
   Description:
@@ -450,18 +449,18 @@ public:
   Parameters:
     delta - [in] translation vector
   Returns:
-    TRUE if successful
+    true if successful
   */
   bool Translate(
-	const ON_3dVector&  delta
-	);
+        const ON_3dVector&  delta
+        );
 
   /*
   Description:
     Flip plane orientation by swapping x and y axes,
     reversing the zaxis, and updating the equation.
   Returns:
-    TRUE if successful
+    true if successful
   */
   bool Flip();
 
@@ -557,8 +556,8 @@ Returns:
 */
 ON_DECL
 int ON_Get3dConvexHull( 
-	  const ON_SimpleArray<ON_3dPoint> & points, 
-	  ON_SimpleArray<ON_PlaneEquation> & hull 
-	  );
+          const ON_SimpleArray<ON_3dPoint> & points, 
+          ON_SimpleArray<ON_PlaneEquation> & hull 
+          );
 
 #endif

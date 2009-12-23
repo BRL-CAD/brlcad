@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -18,31 +17,18 @@
 
 
 void ON_ErrorMessage(
-	int message_type, // 0=warning - serious problem that code is designed to handle
-			  // 1=error - serious problem code will attempt to handle
-			  //           The thing causing the error is a bug that must
-			  //           be fixed.
-			  // 2=assert failed - crash is nearly certain
-	const char* sErrorMessage 
-	)
+        int message_type, // 0=warning - serious problem that code is designed to handle
+                          // 1=error - serious problem code will attempt to handle
+                          //           The thing causing the error is a bug that must
+                          //           be fixed.
+                          // 2=assert failed - crash is nearly certain
+        const char* sErrorMessage 
+        )
 {
   // error/warning/assert message is in sMessage[] buffer.  Modify this function
   // to do whatever you want to with the message.
   if ( sErrorMessage && sErrorMessage[0] ) 
   {
-#if defined(ON_PURIFY_BUILD)
-    // 10 December 2003 Dale Lear
-    //     Make ON_ERROR/ON_WARNING messages show up in Purify
-    if ( 0 == message_type )
-    {
-      PurifyPrintf("%s",sErrorMessage);
-    }
-    else
-    {
-      PurifyPrintf("%s",sErrorMessage);
-    }
-#endif
-
 #if defined(ON_DEBUG)
 #if defined(ON_OS_WINDOWS)
     ::OutputDebugStringA( "\n" );
@@ -53,8 +39,8 @@ void ON_ErrorMessage(
       // in your face message box while debugging
       strcat( sMessage, "\n\nOK = continue  CANCEL = exit" );
       if ( IDCANCEL == MessageBoxA( NULL, sMessage, "openNURBS ON_Assert FAILED", 
-				    MB_OKCANCEL | MB_ICONEXCLAMATION | MB_TASKMODAL | MB_DEFBUTTON1) ) {
-	exit(1);
+                                    MB_OKCANCEL | MB_ICONEXCLAMATION | MB_TASKMODAL | MB_DEFBUTTON1) ) {
+        exit(1);
       }
     }
 #endif
