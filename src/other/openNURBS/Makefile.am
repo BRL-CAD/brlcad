@@ -224,7 +224,6 @@ ON_EXTRA = \
 
 EXTRA_DIST = \
 	${ON_EXTRA} \
-        CMakeLists.txt \
 	example_brep \
 	example_dump \
 	example_gl \
@@ -233,10 +232,12 @@ EXTRA_DIST = \
 	example_userdata \
 	example_write \
 	faq.txt \
+	license.txt \
 	modified_to_orig.diff \
 	opennurbs_memory_new.cpp \
 	opennurbs_zlib_memory.cpp \
-	readme.txt
+	readme.txt \
+        CMakeLists.txt
 
 if BUILD_ZLIB
 DEPADD = src/other/libz
