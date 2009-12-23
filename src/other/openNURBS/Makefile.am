@@ -243,6 +243,7 @@ EXTRA_DIST = \
 	example_roundtrip \
 	example_userdata \
 	example_write \
+	BRL-CAD_changes.txt \
 	faq.txt \
 	license.txt \
 	opennurbs_memory_new.cpp \
