@@ -227,14 +227,11 @@ ON_EXTRA = \
 	opennurbs.sln \
 	opennurbs.vcproj \
 	opennurbs_staticlib.vcproj \
-	opennurbs_vc60.dsw \
 	opennurbs.rc \
 	opennurbs_dll.cpp \
 	opennurbs_dll_resource.h \
 	opennurbs_gl.cpp \
 	opennurbs_precompiledheader.cpp \
-	opennurbs_static_vc60.dsp \
-	opennurbs_vc60.dsp \
 	opennurbs_x.cpp
 
 EXTRA_DIST = \
@@ -248,7 +245,6 @@ EXTRA_DIST = \
 	example_write \
 	faq.txt \
 	license.txt \
-	modified_to_orig.diff \
 	opennurbs_memory_new.cpp \
 	opennurbs_zlib_memory.cpp \
 	readme.txt \
