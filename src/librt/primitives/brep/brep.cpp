@@ -157,7 +157,7 @@ brep_pt_trimmed(pt2d_t pt, const ON_BrepFace& face) {
 	    const ON_Curve* trimCurve = trim.TrimCurveOf();
 	    // intersections += brep_count_intersections(ray, trimCurve);
 	    //ray.IntersectCurve(trimCurve, intersections, 0.0001);
-	    intersections += trimCurve->NumIntersectionsWith(ray);
+	    //intersections += trimCurve->NumIntersectionsWith(ray);
 	}
     }
 
@@ -714,12 +714,12 @@ brep_edge_check(int reason,
 	    //	    if (res.second) {
 	    // only check if its the first time we've seen this edge
 	    const ON_Curve* curve = edge->EdgeCurveOf();
-	    Sample s;
-	    if (curve->CloseTo(ON_3dPoint(hits.back().point), BREP_EDGE_MISS_TOLERANCE, s)) {
+	    //Sample s;
+	    /*if (curve->CloseTo(ON_3dPoint(hits.back().point), BREP_EDGE_MISS_TOLERANCE, s)) {
 		TRACE1("CLOSE TO EDGE");
 		hits.back().closeToEdge = true;
 		return BREP_INTERSECT_FOUND;
-	    }
+	    }*/
 	}
     }
     return BREP_INTERSECT_TRIMMED;

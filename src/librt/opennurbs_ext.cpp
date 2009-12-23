@@ -59,6 +59,11 @@
 
 extern int getSurfacePoint(const ON_3dPoint&, ON_2dPoint&, brlcad::BBNode*);
 
+bool
+ON_NearZero(double x, double tolerance) {
+    return (x > -tolerance) && (x < tolerance);
+}
+
 
 namespace brlcad {
 

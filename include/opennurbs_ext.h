@@ -19,11 +19,8 @@
  */
 /** @file opennurbs_ext.h
  *
- * brep/surface utilities
+ * Extensions to the openNURBS library
  *
- * XXX: these should probably be migrated to openNURBS package proper
- * but there are a lot of dependency issues (e.g. where do the math
- * routines go?)
  */
 
 #ifndef __OPENNURBS_EXT
@@ -34,6 +31,45 @@
 #include <list>
 #include <iostream>
 #include "vmath.h"
+
+/* These definitions were added to opennurbs_curve.h - they are
+ * extensions of openNURBS, so add them here instead.  At some
+ * point a more coherent structure should probably be set up for
+ * organization of openNURBS extensions, since there may be more
+ * to come, but at least try to keep as many as possible out of
+ * the external openNURBS tree - simplifies syncing.
+ */
+class ON_Ray {
+public:
+  ON_3dPoint m_origin;
+  ON_3dVector m_dir;
+
+  ON_Ray(ON_3dPoint& origin, ON_3dVector& dir) : m_origin(origin), m_dir(dir) {}
+  ON_Ray(const ON_Ray& r) : m_origin(r.m_origin), m_dir(r.m_dir)  {}
+  ON_Ray& operator=(const ON_Ray& r) {
+      m_origin = r.m_origin;
+      m_dir = r.m_dir;
+      return *this;
+  }
+  
+  ON_3dPoint PointAt(double t) const {
+      return m_origin + m_dir * t;
+  }
+  
+  double DistanceTo(const ON_3dPoint& pt, double* out_t = NULL) const {
+      ON_3dVector w = pt - m_origin;
+      double c1 = w * m_dir;
+      if (c1 <= 0) return pt.DistanceTo(m_origin);
+      double c2 = m_dir * m_dir;
+      double b = c1 / c2;
+      ON_3dPoint p = m_dir * b + m_origin;
+      if (out_t != NULL) *out_t = b;
+      return p.DistanceTo(pt);
+  }
+}; 
+
+ON_DECL
+bool ON_NearZero(double x, double tolerance = ON_ZERO_TOLERANCE);
 
 /* Maximum per-surface BVH depth */
 #define BREP_MAX_FT_DEPTH 8
