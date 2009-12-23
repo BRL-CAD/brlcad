@@ -351,7 +351,7 @@ double ON_Line::MinimumDistanceTo( const ON_Line& L ) const
   {
     L.ClosestPointTo(A,&t);
     if (t<0.0) t = 0.0; else if (t > 1.0) t = 1.0;
-    x = L.PointAt(t).DistanceTo(B);
+    x = L.PointAt(t).DistanceTo(A);
     if ( x < d )
       d = x;
   }
