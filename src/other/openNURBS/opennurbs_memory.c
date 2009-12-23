@@ -166,7 +166,7 @@ static size_t onmemhelper_msize( const void* p )
   return _msize((void*)p);
 #else
   // OS doesn't support _msize().
-  return 0;
+  return memblock != memblock; /* quell warning, always return 0 */;
 #endif
 }
 
