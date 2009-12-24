@@ -70,8 +70,8 @@ HIDDEN void x_var_init();
 HIDDEN XVisualInfo *X_choose_visual(struct dm *dmp);
 
 extern void X_allocate_color_cube(Display *, Colormap, long unsigned int *, int, int, int);
-extern unsigned long X_get_pixel(unsigned char, unsigned char, unsigned char, long unsigned int *, int);
 
+extern unsigned long X_get_pixel(unsigned char, unsigned char, unsigned char, long unsigned int *, int);
 
 /* Display Manager package interface */
 
@@ -173,7 +173,6 @@ get_color(Display *dpy, Colormap cmap, XColor *color)
 	    break;
     }
 #undef CSCK
-
 }
 
 
@@ -203,7 +202,7 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
     struct bu_vls init_proc_vls;
     struct dm *dmp = (struct dm *)NULL;
     Tk_Window tkwin = (Tk_Window)NULL;
-    int screen_number = -1;
+    Screen *screen = (Screen *)NULL;
 
     struct dm_xvars *pubvars = NULL;
     struct x_vars *privars = NULL;
@@ -332,6 +331,7 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 #ifdef HAVE_TK
     pubvars->dpy = Tk_Display(pubvars->top);
 #endif
+
     /* make sure there really is a display before proceeding. */
     if (!pubvars->dpy) {
 	bu_log("ERROR: Unable to attach to display (%s)\n", bu_vls_addr(&dmp->dm_pathName));
@@ -339,23 +339,33 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 	return DM_NULL;
     }
 
+    screen = DefaultScreenOfDisplay(pubvars->dpy);
+
+    if (!screen) {
 #ifdef HAVE_TK
-    screen_number = Tk_ScreenNumber(pubvars->dpy);
+	/* failed to get a default screen, try harder */
+	screen = Tk_Screen(pubvars->top);
 #endif
-    if (screen_number < 0)
-	bu_log("WARNING: screen number is [%d]\n", screen_number);
+    }
+
+    /* make sure there really is a screen before proceesing. */
+    if (!screen) {
+	bu_log("ERROR: Unable to attach to screen (%s)\n", bu_vls_addr(&dmp->dm_pathName));
+	(void)X_close(dmp);
+	return DM_NULL;
+    }
 
     if (dmp->dm_width == 0) {
-#ifdef HAVE_TK
-	dmp->dm_width = Tk_Width(pubvars->dpy) - 30;
-#endif
+	dmp->dm_width =
+	    DisplayWidth(pubvars->dpy,
+			 DefaultScreen(pubvars->dpy)) - 30;
 	++make_square;
     }
 
     if (dmp->dm_height == 0) {
-#ifdef HAVE_TK
-	dmp->dm_height = Tk_Height(pubvars->dpy) - 30;
-#endif
+	dmp->dm_height =
+	    DisplayHeight(pubvars->dpy,
+			  DefaultScreen(pubvars->dpy)) - 30;
 	++make_square;
     }
 
@@ -373,6 +383,13 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 		       dmp->dm_width,
 		       dmp->dm_height);
 #endif
+
+    /* must do this before MakeExist */
+    if ((pubvars->vip = X_choose_visual(dmp)) == NULL) {
+	bu_log("X_open_dm: Can't get an appropriate visual.\n");
+	(void)X_close(dmp);
+	return DM_NULL;
+    }
 
 #ifdef HAVE_TK
     Tk_MakeWindowExist(pubvars->xtkwin);
@@ -446,7 +463,7 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
     }
 
     if (list == (XDeviceInfoPtr)NULL ||
-	list == (XDeviceInfoPtr)1) goto Done;
+	list == (XDeviceInfoPtr)1)  goto Done;
 
     for (j = 0; j < ndevices; ++j, list++) {
 	if (list->use == IsXExtensionDevice) {
@@ -538,6 +555,7 @@ X_close(struct dm *dmp)
 	if (pubvars->xtkwin)
 	    Tk_DestroyWindow(pubvars->xtkwin);
 #endif
+
     }
 
     bu_vls_free(&dmp->dm_pathName);
@@ -892,7 +910,7 @@ X_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), g
     if (!callback_function) {
 	if (data) {
 	    vp = (struct bn_vlist *)data;
-	    X_drawVList(dmp, vp);
+	    X_drawVList(dmp,vp);
 	}
     } else {
 	if (!data) {
@@ -990,15 +1008,14 @@ X_drawLine2D(struct dm *dmp, fastf_t x_1, fastf_t y_1, fastf_t x_2, fastf_t y_2)
 HIDDEN int
 X_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2)
 {
-    if (!dmp)
-	return TCL_ERROR;
+   if (!dmp)
+      return TCL_ERROR;
 
-    if (bn_pt3_pt3_equal(pt1, pt2, NULL)) {
-	/* nothing to do for a singular point */
-	return TCL_OK;
-    }
-
-    return TCL_OK;
+   if (bn_pt3_pt3_equal(pt1, pt2, NULL)) {
+      /* nothing to do for a singular point */
+      return TCL_OK;
+   }
+   return TCL_OK;
 }
 
 
@@ -1006,7 +1023,7 @@ HIDDEN int
 X_drawLines3D(struct dm *dmp, int npoints, point_t *points)
 {
     if (!dmp || npoints < 0 || !points)
-	return TCL_ERROR;
+       return TCL_ERROR;
 
     return TCL_OK;
 }
@@ -1408,7 +1425,6 @@ X_choose_visual(struct dm *dmp)
     bu_free(good, "dealloc good visuals");
     return (XVisualInfo *)NULL; /* failure */
 }
-
 
 #endif /* DM_X */
 
