@@ -222,9 +222,9 @@ Dec 23 18:07 2009 diff -r -w -B -l opennurbs_vanilla/opennurbs_zlib.h opennurbs_
 
 
 
-#####################################################
-### Quell warning about unused memblock parameter ###
-#####################################################
+############################################
+### Quell warning about unused parameter ###
+############################################
 
 Dec 23 18:25 2009 diff -r -w -B -l opennurbs_vanilla/opennurbs_memory.c opennurbs_minimalchanges/opennurbs_memory.c Page 1
 
@@ -232,6 +232,6 @@ Dec 23 18:25 2009 diff -r -w -B -l opennurbs_vanilla/opennurbs_memory.c opennurb
 169c169
 <   return 0;
 ---
->   return memblock != memblock; /* quell warning, always return 0 */;
+>   return p != p; /* quell warning, always return 0 */;
 
 
