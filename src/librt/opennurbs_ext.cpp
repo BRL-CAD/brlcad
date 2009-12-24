@@ -424,7 +424,7 @@ CurveTree::initialLoopBBox()
     for (int i = 0; i < m_face->LoopCount(); i++) {
 	ON_BrepLoop* loop = m_face->Loop(i);
 	if (loop->m_type == ON_BrepLoop::outer) {
-	    if (loop->GetBBox(bb[0], bb[1], FALSE)) {
+	    if (loop->GetBBox(bb[0], bb[1], 0)) {
 		TRACE("BBox for Loop min<" << bb[0][0] << ", " << bb[0][1] ", " << bb[0][2] << ">");
 		TRACE("BBox for Loop max<" << bb[1][0] << ", " << bb[1][1] ", " << bb[1][2] << ">");
 	    }

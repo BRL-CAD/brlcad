@@ -38,6 +38,8 @@
 #define BN_VMATH_PREFIX_INDICES 1
 #define ROOT_TOL 1.E-7
 
+#include "assert.h"
+
 #include "vmath.h"
 
 #include "brep.h"
