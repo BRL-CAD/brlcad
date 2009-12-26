@@ -72,6 +72,8 @@ rt_grp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     struct rt_grip_internal *gip;
     register struct grip_specific *gripp;
 
+    if (rtip) RT_CK_RTI(rtip);
+
     gip = (struct rt_grip_internal *)ip->idb_ptr;
     RT_GRIP_CK_MAGIC(gip);
 
@@ -125,8 +127,12 @@ rt_grp_print(register const struct soltab *stp)
  * >0 HIT
  */
 int
-rt_grp_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
+rt_grp_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead __attribute__((unused)))
 {
+    if (stp) RT_CK_SOLTAB(stp);
+    if (rp) RT_CK_RAY(rp);
+    if (ap) RT_CK_APPLICATION(ap);
+
     return 0;	/* this has got to be the easiest.. no hit, no surfno,
 		 * no nada.
 		 */
@@ -140,8 +146,12 @@ rt_grp_shot(struct soltab *stp, register struct xray *rp, struct application *ap
  * The normal is already filled in.
  */
 void
-rt_grp_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
+rt_grp_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
+    if (hitp) RT_CK_HIT(hitp);
+    if (stp) RT_CK_SOLTAB(stp);
+    if (rp) RT_CK_RAY(rp);
+
     bu_bomb("rt_grp_norm: grips should never be hit.\n");
 }
 
@@ -152,8 +162,12 @@ rt_grp_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
  * Return the "curvature" of the grip.
  */
 void
-rt_grp_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
+rt_grp_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
+    if (!cvp) return;
+    if (hitp) RT_CK_HIT(hitp);
+    if (stp) RT_CK_SOLTAB(stp);
+
     bu_bomb("rt_grp_curve: nobody should be asking for curve of a grip.\n");
 }
 
@@ -168,8 +182,13 @@ rt_grp_curve(register struct curvature *cvp, register struct hit *hitp, struct s
  * back down to 0 again.
  */
 void
-rt_grp_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
+rt_grp_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
+    if (ap) RT_CK_APPLICATION(ap);
+    if (stp) RT_CK_SOLTAB(stp);
+    if (hitp) RT_CK_HIT(hitp);
+    if (!uvp) return;
+
     bu_bomb("rt_grp_uv: nobody should be asking for UV of a grip.\n");
 }
 
@@ -207,7 +226,7 @@ rt_grp_class(void)
  *
  */
 int
-rt_grp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_grp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
 {
     struct rt_grip_internal *gip;
     vect_t xbase, ybase;	/* perpendiculars to normal */
@@ -267,7 +286,9 @@ rt_grp_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     union record *rp;
 
     fastf_t orig_eqn[3*3];
-    register double f, t;
+    double f, t;
+
+    if (dbip) RT_CK_DBI(dbip);
 
     BU_CK_EXTERNAL(ep);
     rp = (union record *)ep->ext_buf;
@@ -315,10 +336,12 @@ rt_grp_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
  * R T _ G R P _ E X P O R T
  */
 int
-rt_grp_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
+rt_grp_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm __attribute__((unused)), const struct db_i *dbip)
 {
     struct rt_grip_internal *gip;
     union record *rec;
+
+    if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_GRIP) return(-1);
@@ -347,6 +370,7 @@ rt_grp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     fastf_t vec[7];
     register double f, t;
 
+    if (dbip) RT_CK_DBI(dbip);
     RT_CK_DB_INTERNAL(ip);
     BU_CK_EXTERNAL(ep);
 
@@ -397,6 +421,8 @@ rt_grp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     struct rt_grip_internal *gip;
     fastf_t vec[7];
 
+    if (dbip) RT_CK_DBI(dbip);
+
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_GRIP) return(-1);
     gip = (struct rt_grip_internal *)ip->idb_ptr;
@@ -439,13 +465,15 @@ rt_grp_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 
     bu_vls_strcat(str, buf);
 
-    sprintf(buf, "\tC (%g %g %g) mag=%g\n",
-	    INTCLAMP(gip->center[0]*mm2local),
-	    INTCLAMP(gip->center[1]*mm2local),
-	    INTCLAMP(gip->center[2]*mm2local),
-	    INTCLAMP(gip->mag*mm2local));
+    if (verbose) {
+	sprintf(buf, "\tC (%g %g %g) mag=%g\n",
+		INTCLAMP(gip->center[0]*mm2local),
+		INTCLAMP(gip->center[1]*mm2local),
+		INTCLAMP(gip->center[2]*mm2local),
+		INTCLAMP(gip->mag*mm2local));
+	bu_vls_strcat(str, buf);
+    }
 
-    bu_vls_strcat(str, buf);
     return(0);
 }
 
@@ -474,13 +502,16 @@ rt_grp_ifree(struct rt_db_internal *ip, struct resource *resp)
  * R T _ G R P _ T E S S
  */
 int
-rt_grp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_grp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
 {
     struct rt_grip_internal *gip;
 
     RT_CK_DB_INTERNAL(ip);
     gip = (struct rt_grip_internal *)ip->idb_ptr;
     RT_GRIP_CK_MAGIC(gip);
+
+    if (r) *r = NULL;
+    if (m) NMG_CK_MODEL(m);
 
     /* XXX tess routine needed */
     return(-1);
@@ -492,8 +523,11 @@ rt_grp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
  *
  */
 int
-rt_grp_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
+rt_grp_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 {
+    ps = ps; /* quellage */
+    if (ip) RT_CK_DB_INTERNAL(ip);
+
     return(0);			/* OK */
 }
 
