@@ -70,7 +70,7 @@ int
 rt_grp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_grip_internal *gip;
-    register struct grip_specific *gripp;
+    struct grip_specific *gripp;
 
     if (rtip) RT_CK_RTI(rtip);
 
@@ -98,10 +98,9 @@ rt_grp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
  * R T _ G R P _ P R I N T
  */
 void
-rt_grp_print(register const struct soltab *stp)
+rt_grp_print(const struct soltab *stp)
 {
-    register const struct grip_specific *gripp =
-	(struct grip_specific *)stp->st_specific;
+    const struct grip_specific *gripp = (struct grip_specific *)stp->st_specific;
 
     if (gripp == GRIP_NULL) {
 	bu_log("grip(%s):  no data?\n", stp->st_name);
@@ -199,8 +198,7 @@ rt_grp_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 void
 rt_grp_free(struct soltab *stp)
 {
-    register struct grip_specific *gripp =
-	(struct grip_specific *)stp->st_specific;
+    struct grip_specific *gripp = (struct grip_specific *)stp->st_specific;
 
     bu_free((char *)gripp, "grip_specific");
 }
@@ -364,11 +362,11 @@ rt_grp_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
 
 int
-rt_grp_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_grp_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_grip_internal *gip;
     fastf_t vec[7];
-    register double f, t;
+    double f, t;
 
     if (dbip) RT_CK_DBI(dbip);
     RT_CK_DB_INTERNAL(ip);
@@ -453,8 +451,7 @@ rt_grp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 int
 rt_grp_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
-    register struct rt_grip_internal *gip =
-	(struct rt_grip_internal *)ip->idb_ptr;
+    struct rt_grip_internal *gip = (struct rt_grip_internal *)ip->idb_ptr;
     char buf[256];
 
     RT_GRIP_CK_MAGIC(gip);
