@@ -1330,13 +1330,13 @@ if test ! "x$vgr" = "x" ; then
     $ECHO
 
     $ECHO "Here are some other approximated VGR results for perspective:"
-    $ECHO "   120 on a 200MHz R5000 running IRIX 6.5"
-    $ECHO "   250 on a 500 MHz Pentium III running RedHat 7.1"
-    $ECHO "   550 on a dual 450 MHz UltraSPARC II running SunOS 5.8"
-    $ECHO "  1000 on a dual 500 MHz G4 PowerPC running Mac OS X 10.2"
-    $ECHO "  1500 on a dual 1.66 GHz Athlon MP 2000+ running RedHat 7.3"
-    $ECHO "  9000 on an 8 CPU 1.3 GHz Power4 running AIX 5.1"
-    $ECHO " 65000 on a 512 CPU 400 MHz R12000 Running IRIX 6.5"
+    $ECHO "    120 on a 200MHz R5000 running IRIX 6.5"
+    $ECHO "    250 on a 500 MHz Pentium III running RedHat 7.1"
+    $ECHO "    550 on a dual 450 MHz UltraSPARC II running SunOS 5.8"
+    $ECHO "   1000 on a dual 500 MHz G4 PowerPC running Mac OS X 10.2"
+    $ECHO "   1500 on a dual 1.66 GHz Athlon MP 2000+ running RedHat 7.3"
+    $ECHO "  52000 on a 4x4 CPU 2.93 GHz Xeon running RHEL Server 5.4"
+    $ECHO "  65000 on a 512 CPU 400 MHz R12000 Running IRIX 6.5"
     $ECHO
 fi
 
@@ -1393,8 +1393,8 @@ if test "x$encourage_submission" = "xno" ; then
     $ECHO
 else
     # if this was a valid benchmark run, encourage submission of results.
-    $ECHO "You are encouraged to submit your benchmark results and system"
-    $ECHO "configuration information to benchmark@brlcad.org"
+    $ECHO "YOU ARE ENCOURAGED TO SUBMIT YOUR BENCHMARK RESULTS AND SYSTEM"
+    $ECHO "CONFIGURATION INFORMATION TO benchmark@brlcad.org"
     $ECHO
 
     # include information about the kernel, memory, and hardware in the log
