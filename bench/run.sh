@@ -427,7 +427,6 @@ $ECHO "================================="
 $ECHO "Running $THIS on `date`"
 $ECHO "Logging output to $LOGFILE"
 $ECHO "`uname -a 2>&1`"
-$ECHO `sysctl hw 2>&1`
 $ECHO
 
 ########################
@@ -1392,6 +1391,28 @@ if test "x$encourage_submission" = "xno" ; then
     fi
     $ECHO " $options"
     $ECHO
+else
+    # if this was a valid benchmark run, encourage submission of results.
+    $ECHO "You are encouraged to submit your benchmark results and system"
+    $ECHO "configuration information to benchmark@brlcad.org"
+    $ECHO
+
+    # include information about the kernel, memory, and hardware in the log
+    preQUIET="$QUIET"
+    QUIET=1
+    $ECHO "System state information (via sysctl):"
+    $ECHO "`sysctl hw kern kernel vm 2>&1`"
+    $ECHO
+
+    if test -f /proc/cpuinfo ; then
+	$ECHO "System CPU information (via /proc/cpuinfo):"
+	$ECHO "`cat /proc/cpuinfo`"
+	$ECHO
+    fi
+    QUIET="$preQUIET"
+
+    $ECHO "Additional system information is included in the log."
+    $ECHO
 fi
 
 # tell about the benchmark document
@@ -1413,15 +1434,9 @@ else
 fi
 $ECHO
 
-# if this was a valid benchmark run, encourage submission of results.
-if test "x$encourage_submission" = "xyes" ; then
-    $ECHO "You are encouraged to submit your benchmark results and system"
-    $ECHO "configuration information to benchmark@brlcad.org"
-    $ECHO
-fi
-
 $ECHO "Output was saved to $LOGFILE from `pwd`"
 $ECHO "Benchmark testing complete."
+
 
 # Local Variables:
 # mode: sh
