@@ -1318,8 +1318,12 @@ if test ! "x$vgr" = "x" ; then
     $ECHO
     $ECHO "#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#"
     $ECHO "Benchmark results indicate an approximate VGR performance metric of $vgr"
-    ln=`echo $vgr | awk '{printf "%.2f", log($1)}'`
-    lg=`echo $vgr | awk '{printf "%.2f", log($1) / log(10)}'`
+    ln=0
+    lg=0
+    if test $vgr -gt 0 ; then
+	ln=`echo $vgr | awk '{printf "%.2f", log($1)}'`
+	lg=`echo $vgr | awk '{printf "%.2f", log($1) / log(10)}'`
+    fi
     $ECHO "Logarithmic VGR metric is $lg  (natural logarithm is $ln)"
     $ECHO "#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#"
     $ECHO
