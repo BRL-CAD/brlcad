@@ -1393,26 +1393,56 @@ if test "x$encourage_submission" = "xno" ; then
     $ECHO
 else
     # if this was a valid benchmark run, encourage submission of results.
-    $ECHO "YOU ARE ENCOURAGED TO SUBMIT YOUR BENCHMARK RESULTS AND SYSTEM"
-    $ECHO "CONFIGURATION INFORMATION TO benchmark@brlcad.org"
-    $ECHO
+    $ECHO "You are encouraged to submit your benchmark results and system"
+    $ECHO "configuration information to benchmark@brlcad.org"
+    $ECHO "                             ~~~~~~~~~~~~~~~~~~~~"
 
-    # include information about the kernel, memory, and hardware in the log
-    preQUIET="$QUIET"
-    QUIET=1
-    $ECHO "System state information (via sysctl):"
-    $ECHO "`sysctl hw kern kernel vm 2>&1`"
+    # include information about the operating system and hardware in the log
+    $ECHO "Including additional kernel and hardware information in the log."
     $ECHO
+    blankit=no
 
-    if test -f /proc/cpuinfo ; then
-	$ECHO "System CPU information (via /proc/cpuinfo):"
-	$ECHO "`cat /proc/cpuinfo`"
+    look_for executable "a sysctl command" SYSCTL_CMD `echo $PATH | sed 's/:/\/sysctl /g'`
+    if test ! "x$SYSCTL_CMD" = "x" ; then
+	$ECHO "Collecting system state information (via $SYSCTL_CMD)"
+	preQUIET="$QUIET"
+	QUIET=1
+	$ECHO "==============================================================================="
+	$ECHO "`$SYSCTL_CMD hw 2>&1`"
+	$ECHO "`$SYSCTL_CMD kern 2>&1`"
+	$ECHO "`$SYSCTL_CMD kernel 2>&1`"
+	$ECHO
+	QUIET="$preQUIET"
+	blankit=yes
+    fi
+
+    look_for executable "a prtdiag command" PRTDIAG_CMD `echo $PATH | sed 's/:/\/prtdiag /g'`
+    if test ! "x$PRTDIAG_CMD" = "x" ; then
+	$ECHO "Collecting system diagnostics information (via $PRTDIAG_CMD)"
+	preQUIET="$QUIET"
+	QUIET=1
+	$ECHO "==============================================================================="
+	$ECHO "`$PRTDIAG_CMD 2>&1`"
+	$ECHO
+	QUIET="$preQUIET"
+	blankit=yes
+    fi
+
+    look_for file "a /proc/cpuinfo file" CPUINFO_FILE /proc/cpuinfo
+    if test ! "x$CPUINFO_FILE" = "x" ; then
+	$ECHO "Collecting system CPU information (via $CPUINFO_FILE)"
+	preQUIET="$QUIET"
+	QUIET=1
+	$ECHO "==============================================================================="
+	$ECHO "`cat $CPUINFO_FILE 2>&1`"
+	$ECHO
+	QUIET="$preQUIET"
+	blankit=yes
+    fi
+
+    if test "x$blankit" = "xyes" ; then
 	$ECHO
     fi
-    QUIET="$preQUIET"
-
-    $ECHO "Additional system information is included in the log."
-    $ECHO
 fi
 
 # tell about the benchmark document
