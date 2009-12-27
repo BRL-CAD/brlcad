@@ -1400,6 +1400,7 @@ else
     $ECHO
     blankit=no
 
+    # BSD
     look_for executable "a sysctl command" SYSCTL_CMD `echo $PATH | sed 's/:/\/sysctl /g'`
     if test ! "x$SYSCTL_CMD" = "x" ; then
 	$ECHO "Collecting system state information (via $SYSCTL_CMD)"
@@ -1414,6 +1415,7 @@ else
 	blankit=yes
     fi
 
+    # Solaris
     look_for executable "a prtdiag command" PRTDIAG_CMD `echo $PATH | sed 's/:/\/prtdiag /g'`
     if test ! "x$PRTDIAG_CMD" = "x" ; then
 	$ECHO "Collecting system diagnostics information (via $PRTDIAG_CMD)"
@@ -1426,6 +1428,20 @@ else
 	blankit=yes
     fi
 
+    # AIX
+    look_for executable "a prtconf command" PRTCONF_CMD `echo $PATH | sed 's/:/\/prtconf /g'`
+    if test ! "x$PRTCONF_CMD" = "x" ; then
+	$ECHO "Collecting system configuration information (via $PRTCONF_CMD)"
+	preQUIET="$QUIET"
+	QUIET=1
+	$ECHO "==============================================================================="
+	$ECHO "`$PRTCONF_CMD 2>&1`"
+	$ECHO
+	QUIET="$preQUIET"
+	blankit=yes
+    fi
+
+    # Linux
     look_for file "a /proc/cpuinfo file" CPUINFO_FILE /proc/cpuinfo
     if test ! "x$CPUINFO_FILE" = "x" ; then
 	$ECHO "Collecting system CPU information (via $CPUINFO_FILE)"
