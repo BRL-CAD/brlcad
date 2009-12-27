@@ -601,11 +601,11 @@ if test ! "x${ret}" = "x0" ; then
     $ECHO "ERROR:  RT does not seem to work as expected"
     exit 2
 fi
-$PIXCMP /dev/null /dev/null >/dev/null 2>&1
+$CMP /dev/null /dev/null >/dev/null 2>&1
 ret=$?
 if test ! "x${ret}" = "x0" ; then
     $ECHO
-    $ECHO "ERROR:  PIXCMP does not seem to work as expected"
+    $ECHO "ERROR:  CMP does not seem to work as expected"
     exit 2
 fi
 $ELP 0
