@@ -427,6 +427,7 @@ $ECHO "================================="
 $ECHO "Running $THIS on `date`"
 $ECHO "Logging output to $LOGFILE"
 $ECHO "`uname -a 2>&1`"
+$ECHO `sysctl hw 2>&1`
 $ECHO
 
 ########################
@@ -592,6 +593,29 @@ if test "x${ELP}" = "x" ; then
 else
     $ECHO "Using [$ELP] for ELP"
 fi
+
+# more sanity checks, make sure the binaries and scripts run
+$RT -s1 -F/dev/debug ${DB}/moss.g LIGHT > /dev/null 2>&1
+ret=$?
+if test ! "x${ret}" = "x0" ; then
+    $ECHO
+    $ECHO "ERROR:  RT does not seem to work as expected"
+    exit 2
+fi
+$PIXCMP /dev/null /dev/null >/dev/null 2>&1
+ret=$?
+if test ! "x${ret}" = "x0" ; then
+    $ECHO
+    $ECHO "ERROR:  PIXCMP does not seem to work as expected"
+    exit 2
+fi
+$ELP 0
+if test ! "x${ret}" = "x0" ; then
+    $ECHO
+    $ECHO "ERROR:  ELP does not seem to work as expected"
+    exit 2
+fi 
+
 
 # utility function to set a variable if it's not already set to something
 set_if_unset ( ) {
