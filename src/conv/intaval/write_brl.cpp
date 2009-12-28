@@ -116,7 +116,7 @@ void smoothBot
                 rt_db_put_internal(dp, wdbp->dbip, &intern, &rt_uniresource);
         }
 
-        rt_db_free_internal(&intern, &rt_uniresource);
+        rt_db_free_internal(&intern);
     }
 }
 
