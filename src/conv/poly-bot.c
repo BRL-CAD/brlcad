@@ -252,7 +252,7 @@ main(int argc, char **argv)
 		if ( rt_functab[ID_POLY].ft_export4( &ext2, &intern, 1.0, (struct db_i *)NULL, &rt_uniresource ) < 0 )  {
 		    bu_exit(1, "Unable to export v4 BoT %s\n", poly[0].p.p_name );
 		}
-		rt_db_free_internal( &intern, &rt_uniresource );
+		rt_db_free_internal(&intern);
 		if ( db_fwrite_external( ofp, poly[0].p.p_name, &ext2 ) < 0 )  {
 		    bu_exit(1, "Unable to fwrite v4 BoT %s\n", poly[0].p.p_name );
 		}

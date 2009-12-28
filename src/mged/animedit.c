@@ -2216,7 +2216,7 @@ hold_point_location(fastf_t *loc, struct hold_point *hp)
 	    gip = (struct rt_grip_internal *)intern.idb_ptr;
 	    VMOVE(hp->point, gip->center);
 	    hp->flag |= HOLD_PT_GOOD;
-	    rt_db_free_internal( &intern, &rt_uniresource );
+	    rt_db_free_internal(&intern);
 
 	    db_path_to_mat(dbip, &hp->path, mat, hp->path.fp_len-2, &rt_uniresource);
 	    MAT4X3PNT(loc, mat, hp->point);

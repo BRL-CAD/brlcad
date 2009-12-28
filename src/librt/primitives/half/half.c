@@ -519,7 +519,7 @@ rt_hlf_xform(
      * We are done with the input solid so free it if required.
      */
     if (free && ip != op)
-	rt_db_free_internal(ip, resp);
+	rt_db_free_internal(ip);
 
     /*
      * The transformed normal is all that is required.

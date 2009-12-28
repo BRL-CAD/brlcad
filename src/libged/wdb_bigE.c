@@ -149,7 +149,7 @@ wdb_add_solid(const struct directory	*dp,
 	RT_CK_COMB( comb );
 
 	eptr = wdb_build_etree( comb->tree, dgcdp );
-	rt_db_free_internal( &intern, &rt_uniresource );
+	rt_db_free_internal(&intern);
 	return( eptr );
     }
 #if 0
@@ -240,7 +240,7 @@ wdb_add_solid(const struct directory	*dp,
 				     "'\n", (char *)NULL );
 		}
 
-		rt_db_free_internal( &intern2, &rt_uniresource );
+		rt_db_free_internal(&intern2);
 	    }
 	}
 	else
@@ -256,7 +256,7 @@ wdb_add_solid(const struct directory	*dp,
     }
 
     if ( id != ID_NMG )
-	rt_db_free_internal( &intern, &rt_uniresource );
+	rt_db_free_internal(&intern);
 
     /* add this leaf to the leaf list */
     bu_ptbl_ins( &dgcdp->leaf_list, (long *)eptr );
@@ -2227,7 +2227,7 @@ wdb_fix_halfs(struct dg_client_data	*dgcdp)
 				 "'\n", (char *)NULL );
 	    }
 
-	    rt_db_free_internal( &intern2, &rt_uniresource );
+	    rt_db_free_internal(&intern2);
 	}
     }
 }

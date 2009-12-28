@@ -416,7 +416,7 @@ ged_new_tables(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path,
 		bu_vls_free( &tmp_vls );
 	    }
 	    if ( nsoltemp && (sol_dp->d_flags & DIR_SOLID) )
-		rt_db_free_internal( &sol_intern, &rt_uniresource );
+		rt_db_free_internal(&sol_intern);
 	}
     } else if ( dp->d_flags & DIR_COMB ) {
 	int cur_length;

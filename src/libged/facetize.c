@@ -259,7 +259,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     if ( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) < 0 )
     {
 	bu_vls_printf(&gedp->ged_result_str, "Failed to write %s to database\n", newname);
-	rt_db_free_internal( &intern, &rt_uniresource );
+	rt_db_free_internal(&intern);
 	return GED_ERROR;
     }
 

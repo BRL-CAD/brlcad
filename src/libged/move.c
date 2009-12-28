@@ -75,7 +75,7 @@ ged_move(struct ged *gedp, int argc, const char *argv[])
 
     /*  Change object name in the in-memory directory. */
     if (db_rename(gedp->ged_wdbp->dbip, dp, argv[2]) < 0) {
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 	bu_vls_printf(&gedp->ged_result_str, "error in db_rename to %s, aborting", argv[2]);
 	return GED_ERROR;
     }

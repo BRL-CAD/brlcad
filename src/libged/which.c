@@ -172,7 +172,7 @@ ged_which(struct ged *gedp, int argc, const char *argv[])
 		}
 	    }
 
-	    rt_db_free_internal(&intern, &rt_uniresource);
+	    rt_db_free_internal(&intern);
 	}
     }
 

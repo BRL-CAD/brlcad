@@ -931,7 +931,7 @@ db_follow_path(
 	/* Found it, state has been applied, sofar applied, member's
 	 * directory entry pushed onto total_path
 	 */
-	rt_db_free_internal(&intern, tsp->ts_resp);
+	rt_db_free_internal(&intern);
 
 	/* If member is a leaf, handle leaf processing too. */
 	if ((dp->d_flags & DIR_COMB) == 0) {
@@ -1248,7 +1248,7 @@ db_recurse(struct db_tree_state *tsp, struct db_full_path *pathp, struct combine
 	    if (curtree) RT_CK_TREE(curtree);
 
 	    /* Release most of internal form before recursing */
-	    rt_db_free_internal(&intern, tsp->ts_resp);
+	    rt_db_free_internal(&intern);
 	    comb = NULL;
 
 	    _db_recurse_subtree(curtree, &nts, pathp, region_start_statepp, client_data);
@@ -1343,7 +1343,7 @@ out:
      * try to free intern unless we know there is something to free
      */
     if (intern.idb_ptr != NULL) {
-	rt_db_free_internal(&intern, tsp->ts_resp);
+	rt_db_free_internal(&intern);
     }
     if (RT_G_DEBUG&DEBUG_TREEWALK) {
 	char *sofar = db_path_to_string(pathp);

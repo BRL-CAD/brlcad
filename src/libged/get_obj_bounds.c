@@ -273,7 +273,7 @@ _ged_get_obj_bounds2(struct ged			*gedp,
     VMOVE(rpp_max, stp->st_max);
 
     rt_free_rti(rtip);
-    rt_db_free_internal(&intern, &rt_uniresource);
+    rt_db_free_internal(&intern);
     bu_free( (char *)stp, "struct soltab" );
 
     return GED_OK;

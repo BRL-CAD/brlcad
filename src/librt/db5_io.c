@@ -1443,12 +1443,12 @@ rt_db_put_internal5(
     }
  ok:
     bu_free_external( &ext );
-    rt_db_free_internal( ip, resp );
+    rt_db_free_internal(ip);
     return 0;			/* OK */
 
  fail:
     bu_free_external( &ext );
-    rt_db_free_internal( ip, resp );
+    rt_db_free_internal(ip);
     return -2;		/* FAIL */
 }
 
@@ -1551,7 +1551,7 @@ rt_db_external5_to_internal5(
     if (ret < 0) {
 	bu_log("rt_db_external5_to_internal5(%s):  import failure\n",
 	       name );
-	rt_db_free_internal( ip, resp );
+	rt_db_free_internal(ip);
 	return -1;		/* FAIL */
     }
     /* Don't free &raw.body */

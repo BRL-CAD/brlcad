@@ -792,7 +792,7 @@ csg_comb_func( dbip, dp, ptr )
     {
 	bu_log( "Error in combination %s\n", dp->d_namep );
 	bu_free( (char *)de_pointers, "csg_comb_func de_pointers" );
-	rt_db_free_internal( &intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 	return;
     }
 
@@ -817,7 +817,7 @@ csg_comb_func( dbip, dp, ptr )
 	bu_log( "g-iges: combination (%s) not written to iges file\n", dp->d_namep );
     }
 
-    rt_db_free_internal( &intern, &rt_uniresource);
+    rt_db_free_internal(&intern);
     bu_free( (char *)de_pointers, "csg_comb_func de_pointers" );
 
 }
@@ -854,7 +854,7 @@ csg_leaf_func( dbip, dp, ptr )
     else
 	dp->d_nref = 0;
 
-    rt_db_free_internal( &ip, &rt_uniresource );
+    rt_db_free_internal(&ip);
 }
 
 void

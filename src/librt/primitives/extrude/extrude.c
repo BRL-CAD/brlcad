@@ -2389,7 +2389,7 @@ rt_extrude_xform(
     if (free && ip != op) {
 	eop->skt = eip->skt;
 	eip->skt = (struct rt_sketch_internal *)NULL;
-	rt_db_free_internal(ip, resp);
+	rt_db_free_internal(ip);
     } else if (eip->skt) {
 	eop->skt = rt_copy_sketch(eip->skt);
     } else {

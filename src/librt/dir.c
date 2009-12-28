@@ -121,7 +121,7 @@ rt_db_get_internal(
     if (ret < 0) {
 	bu_log("rt_db_get_internal(%s):  import failure\n",
 	       dp->d_namep );
-	rt_db_free_internal( ip, resp );
+	rt_db_free_internal(ip);
 	bu_free_external( &ext );
 	return -1;		/* FAIL */
     }
@@ -171,11 +171,11 @@ rt_db_put_internal(
     if ( ret < 0 )  {
 	bu_log("rt_db_put_internal(%s):  solid export failure\n",
 	       dp->d_namep);
-	rt_db_free_internal( ip, resp );
+	rt_db_free_internal(ip);
 	bu_free_external( &ext );
 	return -2;		/* FAIL */
     }
-    rt_db_free_internal( ip, resp );
+    rt_db_free_internal(ip);
 
     if ( db_put_external( &ext, dp, dbip ) < 0 )  {
 	bu_free_external( &ext );
@@ -239,13 +239,12 @@ rt_fwrite_internal(
  *			R T _ D B _ F R E E _ I N T E R N A L
  */
 void
-rt_db_free_internal( struct rt_db_internal *ip, struct resource *resp )
+rt_db_free_internal( struct rt_db_internal *ip )
 {
     RT_CK_DB_INTERNAL( ip );
 
     /* meth is not required since may be asked to free something that
-     * was never set.  resp is not checked, since most ifree's don't
-     * use it (combinations use it).  leave it up to ft_ifree to check
+     * was never set.
      */
     if (ip->idb_meth) {
 	RT_CK_FUNCTAB(ip->idb_meth);

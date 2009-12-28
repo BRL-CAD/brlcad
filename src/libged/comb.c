@@ -202,7 +202,7 @@ _ged_combadd(struct ged			*gedp,
 	db_non_union_push(comb->tree, &rt_uniresource);
 	if (db_ck_v4gift_tree(comb->tree) < 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "Cannot flatten tree for editing\n");
-	    rt_db_free_internal(&intern, &rt_uniresource);
+	    rt_db_free_internal(&intern);
 	    return DIR_NULL;
 	}
     }

@@ -217,7 +217,7 @@ db_fullpath_traverse( struct ged *gedp,
 
 	    db_fullpath_traverse_subtree( comb->tree, db_fullpath_traverse, gedp, dfp, comb_func, leaf_func, resp, client_data );
 
-	    rt_db_free_internal( &in, resp );
+	    rt_db_free_internal(&in);
 	}
     }
     if ( dp->d_flags & DIR_SOLID || dp->d_major_type & DB5_MAJORTYPE_BINARY_MASK )  {
@@ -514,7 +514,7 @@ db_fullpath_stateful_traverse( struct ged *gedp,
 
 	    state = db_fullpath_stateful_traverse_subtree( comb->tree, db_fullpath_stateful_traverse, gedp, dfp, comb_func, leaf_func, resp, client_data );
 
-	    rt_db_free_internal( &in, resp );
+	    rt_db_free_internal(&in);
 	    if (state == 1) {
 		return 1;
 	    } else {
@@ -562,7 +562,7 @@ f_below(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
 
 	state = db_fullpath_stateful_traverse_subtree( comb->tree, db_fullpath_stateful_traverse, gedp, &belowpath, find_execute_nested_plans, find_execute_nested_plans, gedp->ged_wdbp->wdb_resp, plan->bl_data[0] );
 
-	rt_db_free_internal( &in, gedp->ged_wdbp->wdb_resp );
+	rt_db_free_internal(&in);
     }
     db_free_full_path(&belowpath);
     if (state >= 1) {
@@ -1174,7 +1174,7 @@ f_type(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
 	    break;
     }
 
-    rt_db_free_internal(&intern, &rt_uniresource);
+    rt_db_free_internal(&intern);
     return (type_match);
 }
 
@@ -1321,7 +1321,7 @@ f_nnodes(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
 	} else {
     		node_count = db_tree_nleaves(comb->tree);
 	}
-	rt_db_free_internal( &in, &rt_uniresource );
+	rt_db_free_internal(&in);
     } else {
 	return 0;
     }	

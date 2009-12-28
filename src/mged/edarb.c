@@ -602,14 +602,14 @@ f_arbdef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     if ( (dp=db_diradd( dbip, argv[1], -1L, 0, DIR_SOLID, (genptr_t)&internal.idb_type)) == DIR_NULL )
     {
-	rt_db_free_internal( &internal, &rt_uniresource );
+	rt_db_free_internal(&internal);
 	Tcl_AppendResult(interp, "Cannot add ", argv[1], " to directory\n", (char *)NULL );
 	return TCL_ERROR;
     }
 
     if ( rt_db_put_internal( dp, dbip, &internal, &rt_uniresource ) < 0 )
     {
-	rt_db_free_internal( &internal, &rt_uniresource );
+	rt_db_free_internal(&internal);
 	TCL_WRITE_ERR_return;
     }
 

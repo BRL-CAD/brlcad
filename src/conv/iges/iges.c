@@ -362,14 +362,14 @@ lookup_props( props, name )
 
     if ( id < 0 )
     {
-	rt_db_free_internal( &intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 	bu_log( "Could not get internal form of %s\n", dp->d_namep );
 	return( 1 );
     }
 
     if ( id != ID_COMBINATION )
     {
-	rt_db_free_internal( &intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 	bu_log( "Directory/Database mismatch! is %s a combination or not???\n", dp->d_namep );
 	return( 1 );
     }
@@ -378,7 +378,7 @@ lookup_props( props, name )
     RT_CK_COMB( comb );
 
     get_props( props, comb );
-    rt_db_free_internal( &intern, &rt_uniresource);
+    rt_db_free_internal(&intern);
     return( 0 );
 }
 

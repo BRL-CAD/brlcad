@@ -129,7 +129,7 @@ ged_rcodes(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(&gedp->ged_result_str,
 			      "The in-memory table of contents may not match the status of the on-disk\ndatabase.  The on-disk database should still be intact.  For safety,\nyou should exit now, and resolve the I/O problem, before continuing.\n");
 
-		rt_db_free_internal(&intern, &rt_uniresource);
+		rt_db_free_internal(&intern);
 		return GED_ERROR;
 	    }
 	}

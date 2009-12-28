@@ -348,7 +348,7 @@ csg_comb_func(struct db_i *dbip, struct directory *dp, genptr_t ptr)
     if ( actual_count < 1 ) {
 	bu_log( "Warning: empty combination (%s)\n", dp->d_namep );
 	dp->d_uses = 0;
-	rt_db_free_internal( &intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 	return;
     }
 
@@ -370,7 +370,7 @@ csg_comb_func(struct db_i *dbip, struct directory *dp, genptr_t ptr)
 	    default:
 		bu_log( "Unrecognized Boolean operator in combination (%s)\n", dp->d_namep );
 		bu_free( (char *)tree_list, "tree_list" );
-		rt_db_free_internal( &intern, &rt_uniresource);
+		rt_db_free_internal(&intern);
 		return;
 	}
 	wm = mk_addmember( tree_list[i].tl_tree->tr_l.tl_name, &headp.l, NULL, op );

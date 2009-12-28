@@ -1031,7 +1031,7 @@ rt_arb_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 	}
 	bu_semaphore_release(RT_SEM_MODEL);
 
-	rt_db_free_internal(&intern, ap->a_resource);
+	rt_db_free_internal(&intern);
 
 	if (ret != 0 || arbp->arb_opt == (struct oface *)0) {
 	    bu_log("rt_arb_uv(%s) dyanmic setup failure st_specific=x%x, optp=x%x\n",

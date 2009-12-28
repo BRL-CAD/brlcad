@@ -677,14 +677,14 @@ wrobj(struct rt_wdb	*wdbp,
 
     if ( (tdp = db_diradd( wdbp->dbip, name, -1L, 0, flags, (genptr_t)&intern.idb_type)) == DIR_NULL )
     {
-	rt_db_free_internal( &intern, &rt_uniresource );
+	rt_db_free_internal(&intern);
 	Tcl_AppendResult(interp, "Cannot add '", name, "' to directory, aborting\n", (char *)NULL );
 	return( -1 );
     }
 
     if ( rt_db_put_internal( tdp, wdbp->dbip, &intern, &rt_uniresource ) < 0 )
     {
-	rt_db_free_internal( &intern, &rt_uniresource );
+	rt_db_free_internal(&intern);
 	Tcl_AppendResult(interp, "wrobj(wdbp, interp, ", name, "):  write error\n", (char *)NULL);
 	WDB_TCL_ERROR_RECOVERY_SUGGESTION;
 	return( -1 );

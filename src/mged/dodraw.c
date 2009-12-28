@@ -396,7 +396,7 @@ mged_nmg_region_start(struct db_tree_state *tsp, struct db_full_path *pathp, con
 	default:
 	    break;
     }
-    rt_db_free_internal(&intern, &rt_uniresource);
+    rt_db_free_internal(&intern);
     return 0;
 
  out:
@@ -404,7 +404,7 @@ mged_nmg_region_start(struct db_tree_state *tsp, struct db_full_path *pathp, con
     db_add_node_to_full_path( pathp, dp );
     drawH_part2( 0, &vhead, pathp, tsp, SOLID_NULL );
     DB_FULL_PATH_POP(pathp);
-    rt_db_free_internal(&intern, &rt_uniresource);
+    rt_db_free_internal(&intern);
     mged_fastpath_count++;
     return -1;	/* SKIP THIS REGION */
 }
@@ -1037,10 +1037,10 @@ replot_original_solid( struct solid *sp )
     RT_CK_DB_INTERNAL( &intern );
 
     if ( replot_modified_solid( sp, &intern, bn_mat_identity ) < 0 )  {
-	rt_db_free_internal( &intern, &rt_uniresource );
+	rt_db_free_internal(&intern);
 	return(-1);
     }
-    rt_db_free_internal( &intern, &rt_uniresource );
+    rt_db_free_internal(&intern);
     return(0);
 }
 
@@ -1092,7 +1092,7 @@ replot_modified_solid(
 			 ": re-plot failure\n", (char *)NULL);
 	return(-1);
     }
-    rt_db_free_internal( &intern, &rt_uniresource );
+    rt_db_free_internal(&intern);
 
     /* Write new displaylist */
     drawH_part2( sp->s_soldash, &vhead,
@@ -1491,7 +1491,7 @@ f_facetize(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     if ( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) < 0 )
     {
-	rt_db_free_internal( &intern, &rt_uniresource );
+	rt_db_free_internal(&intern);
 	TCL_WRITE_ERR_return;
     }
 
@@ -1768,7 +1768,7 @@ f_bev(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     if ( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) < 0 )
     {
-	rt_db_free_internal( &intern, &rt_uniresource );
+	rt_db_free_internal(&intern);
 	TCL_WRITE_ERR_return;
     }
 

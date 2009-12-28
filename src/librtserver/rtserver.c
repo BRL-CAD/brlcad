@@ -974,7 +974,7 @@ fillItemTree( jobject parent_node,
 	    if ( (*env)->ExceptionOccurred(env) ) {
 		fprintf( stderr, "Exception thrown while setting the ItemTree MuvesName\n" );
 		(*env)->ExceptionDescribe(env);
-		rt_db_free_internal( &intern, &rt_uniresource );
+		rt_db_free_internal(&intern);
 		return;
 	    }
 	}
@@ -988,7 +988,7 @@ fillItemTree( jobject parent_node,
 	if ( (*env)->ExceptionOccurred(env) ) {
 	    fprintf( stderr, "Exception thrown while setting the ItemTree ident number\n" );
 	    (*env)->ExceptionDescribe(env);
-	    rt_db_free_internal( &intern, &rt_uniresource );
+	    rt_db_free_internal(&intern);
 	    return;
 	}
 
@@ -999,7 +999,7 @@ fillItemTree( jobject parent_node,
 	if ( (*env)->ExceptionOccurred(env) ) {
 	    fprintf( stderr, "Exception thrown while setting the ItemTree los number\n" );
 	    (*env)->ExceptionDescribe(env);
-	    rt_db_free_internal( &intern, &rt_uniresource );
+	    rt_db_free_internal(&intern);
 	    return;
 	}
 
@@ -1010,11 +1010,11 @@ fillItemTree( jobject parent_node,
 	if ( (*env)->ExceptionOccurred(env) ) {
 	    fprintf( stderr, "Exception thrown while setting the ItemTree use count\n" );
 	    (*env)->ExceptionDescribe(env);
-	    rt_db_free_internal( &intern, &rt_uniresource );
+	    rt_db_free_internal(&intern);
 	    return;
 	}
 
-	rt_db_free_internal( &intern, &rt_uniresource );
+	rt_db_free_internal(&intern);
 
 	/* do not recurse into regions */
 	return;
@@ -1053,7 +1053,7 @@ fillItemTree( jobject parent_node,
 	fillItemMembers( node, dbip, env, comb->tree, itemTree_class,
 			 itemTree_constructor_id, itemTree_addcomponent_id, itemTree_setMuvesName_id,
 			 itemTree_setMaterialName_id, itemTree_setIdentNumber_id, itemTree_setLos_id, itemTree_setUseCount_id );
-	rt_db_free_internal( &intern, &rt_uniresource );
+	rt_db_free_internal(&intern);
     }
 }
 

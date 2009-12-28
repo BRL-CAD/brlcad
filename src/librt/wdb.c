@@ -322,7 +322,7 @@ wdb_put_internal(
     ret = wdb_export_external(wdbp, &ext, name, flags, ip->idb_type);
 out:
     bu_free_external(&ext);
-    rt_db_free_internal(ip, &rt_uniresource);
+    rt_db_free_internal(ip);
     return ret;
 }
 

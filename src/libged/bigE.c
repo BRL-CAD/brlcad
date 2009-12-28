@@ -140,7 +140,7 @@ add_solid(const struct directory *dp,
 	RT_CK_COMB(comb);
 
 	eptr = build_etree(comb->tree, dgcdp);
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 	return(eptr);
     }
 #if 0
@@ -222,7 +222,7 @@ add_solid(const struct directory *dp,
 		    bu_vls_printf(&dgcdp->gedp->ged_result_str, "Prep failure for solid '%s'\n", dp->d_namep);
 		}
 
-		rt_db_free_internal(&intern2, &rt_uniresource);
+		rt_db_free_internal(&intern2);
 	    }
 	} else {
 	    /* prep this solid */
@@ -235,7 +235,7 @@ add_solid(const struct directory *dp,
     }
 
     if (id != ID_NMG)
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 
     /* add this leaf to the leaf list */
     bu_ptbl_ins(&dgcdp->leaf_list, (long *)eptr);
@@ -2072,7 +2072,7 @@ fix_halfs(struct _ged_client_data *dgcdp)
 			      tp->l.stp->st_dp->d_namep);
 	    }
 
-	    rt_db_free_internal(&intern2, &rt_uniresource);
+	    rt_db_free_internal(&intern2);
 	}
     }
 }

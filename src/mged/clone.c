@@ -430,7 +430,7 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 	/* write the new matrix to the new object */
 	if (rt_db_put_internal(dp, wdbp->dbip, &intern, &rt_uniresource) < 0)
 	    bu_log("ERROR: clone internal error copying %s\n", proto->d_namep);
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
     } /* end iteration over each copy */
 
     return;
@@ -633,7 +633,7 @@ copy_v5_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
 		return NULL;
 	    }
 	    bu_vls_free(name);
-	    rt_db_free_internal(&dbintern, &rt_uniresource);
+	    rt_db_free_internal(&dbintern);
 	}
 
 	/* done with this name */

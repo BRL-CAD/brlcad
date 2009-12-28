@@ -62,7 +62,7 @@ moveHobj(register struct directory *dp, matp_t xlate)
     {
 	Tcl_AppendResult(interp, "rt_db_get_internal() failed for ", dp->d_namep,
 			 (char *)NULL );
-	rt_db_free_internal( &intern, &rt_uniresource );
+	rt_db_free_internal(&intern);
 	READ_ERR_return;
     }
 
@@ -70,7 +70,7 @@ moveHobj(register struct directory *dp, matp_t xlate)
     {
 	Tcl_AppendResult(interp, "moveHobj(", dp->d_namep,
 			 "):  solid export failure\n", (char *)NULL);
-	rt_db_free_internal( &intern, &rt_uniresource );
+	rt_db_free_internal(&intern);
 	TCL_WRITE_ERR;
 	return;
     }
@@ -115,14 +115,14 @@ moveHinstance(struct directory *cdp, struct directory *dp, matp_t xlate)
 	    {
 		Tcl_AppendResult(interp, "rt_db_put_internal failed for ",
 				 cdp->d_namep, "\n", (char *)NULL );
-		rt_db_free_internal( &intern, &rt_uniresource );
+		rt_db_free_internal(&intern);
 	    }
 	}
 	else
 	{
 	    Tcl_AppendResult(interp, "moveHinst:  couldn't find ", cdp->d_namep,
 			     "/", dp->d_namep, "\n", (char *)NULL);
-	    rt_db_free_internal( &intern, &rt_uniresource );
+	    rt_db_free_internal(&intern);
 	}
     }
 }

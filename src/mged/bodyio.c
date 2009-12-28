@@ -202,7 +202,7 @@ cmd_import_body(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 	    intern.idb_ptr = (genptr_t)bip;
 	    rt_binunif_dump(bip);
 	    rt_db_put_internal5( dp, dbip, &intern, &rt_uniresource, DB5_MAJORTYPE_BINARY_UNIF );
-	    rt_db_free_internal( &intern, &rt_uniresource );
+	    rt_db_free_internal(&intern);
 	    break;
 	default:
 	    bu_vls_printf( &vls,

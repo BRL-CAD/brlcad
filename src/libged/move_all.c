@@ -121,7 +121,7 @@ ged_move_all(struct ged *gedp, int argc, const char *argv[])
 		    if (!strcmp(extrude->sketch_name, argv[1])) {
 			if (nflag) {
 			    bu_vls_printf(&gedp->ged_result_str, "%s ", dirp->d_namep);
-			    rt_db_free_internal(&intern, &rt_uniresource);
+			    rt_db_free_internal(&intern);
 			} else {
 			    bu_free(extrude->sketch_name, "sketch name");
 			    extrude->sketch_name = bu_strdup(argv[2]);
@@ -131,7 +131,7 @@ ged_move_all(struct ged *gedp, int argc, const char *argv[])
 			    }
 			}
 		    } else
-			rt_db_free_internal(&intern, &rt_uniresource);
+			rt_db_free_internal(&intern);
 		}
 	    }
 	}
@@ -214,7 +214,7 @@ ged_move_all(struct ged *gedp, int argc, const char *argv[])
 		}
 	    }
 	    else
-		rt_db_free_internal(&intern, &rt_uniresource);
+		rt_db_free_internal(&intern);
 	}
     }
 

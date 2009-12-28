@@ -419,7 +419,7 @@ copy_v5_solid(struct db_i *dbip, struct directory *proto, struct ged_clone_state
 	/* pull the new name */
 	dp = db_lookup(dbip, bu_vls_addr(name), LOOKUP_QUIET);
 	if (!dp) {
-	    rt_db_free_internal(&intern, &rt_uniresource);
+	    rt_db_free_internal(&intern);
 	    bu_vls_free(name);
 	    continue;
 	}
@@ -634,7 +634,7 @@ copy_v5_comb(struct db_i *dbip, struct directory *proto, struct ged_clone_state 
 	    }
 	    bu_vls_printf(&state->olist, "%V ", name);
 	    bu_vls_free(name);
-	    rt_db_free_internal(&dbintern, &rt_uniresource);
+	    rt_db_free_internal(&dbintern);
 	}
 
 	/* done with this name */

@@ -3254,9 +3254,7 @@ RT_EXPORT BU_EXTERN(int rt_fwrite_internal,
 		     const char *name,
 		     const struct rt_db_internal *ip,
 		     double conv2mm));
-RT_EXPORT BU_EXTERN(void rt_db_free_internal,
-		    (struct rt_db_internal *ip,
-		     struct resource *resp));
+RT_EXPORT BU_EXTERN(void rt_db_free_internal, (struct rt_db_internal *ip));
 RT_EXPORT BU_EXTERN(int rt_db_lookup_internal,
 		    (struct db_i *dbip,
 		     const char *obj_name,

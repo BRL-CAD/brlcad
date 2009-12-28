@@ -285,7 +285,7 @@ f_3ptarb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     if ( rt_db_put_internal( dp, dbip, &internal, &rt_uniresource ) < 0 )
     {
-	rt_db_free_internal( &internal, &rt_uniresource );
+	rt_db_free_internal(&internal);
 	TCL_WRITE_ERR_return;
     }
 
@@ -538,7 +538,7 @@ f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     if ( rt_db_put_internal( dp, dbip, &internal, &rt_uniresource ) < 0 )
     {
-	rt_db_free_internal( &internal, &rt_uniresource );
+	rt_db_free_internal(&internal);
 	TCL_WRITE_ERR_return;
     }
 

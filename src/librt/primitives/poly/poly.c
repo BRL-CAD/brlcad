@@ -980,7 +980,7 @@ rt_pg_to_bot(struct rt_db_internal *ip, const struct bn_tol *tol, struct resourc
 
     ip_bot->faces = (int *)bu_realloc(ip_bot->faces, ip_bot->num_faces * 3 * sizeof(int), "BOT faces");
 
-    rt_db_free_internal(ip, resp);
+    rt_db_free_internal(ip);
 
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_BOT;

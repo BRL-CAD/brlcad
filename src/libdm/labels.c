@@ -681,7 +681,7 @@ dm_draw_labels(struct dm	*dmp,
     }
 
     db_free_full_path(&path);
-    rt_db_free_internal(&intern, &rt_uniresource);
+    rt_db_free_internal(&intern);
 
     return BRLCAD_OK;
 }

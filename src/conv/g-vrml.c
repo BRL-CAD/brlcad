@@ -218,12 +218,12 @@ select_lights(register struct db_tree_state *tsp, struct db_full_path *pathp, co
 
     if ( !strcmp( bu_vls_addr( &comb->shader ), "light" ) )
     {
-	rt_db_free_internal( &intern, &rt_uniresource );
+	rt_db_free_internal(&intern);
 	return( 0 );
     }
     else
     {
-	rt_db_free_internal( &intern, &rt_uniresource );
+	rt_db_free_internal(&intern);
 	return( -1 );
     }
 }

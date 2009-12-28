@@ -85,7 +85,7 @@ ged_wmater(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_addr(&comb->shader) : "-",
 		comb->rgb[0], comb->rgb[1], comb->rgb[2],
 		comb->rgb_valid, comb->inherit);
-	rt_db_free_internal( &intern, &rt_uniresource );
+	rt_db_free_internal(&intern);
     }
 
     (void)fclose(fp);

@@ -166,11 +166,11 @@ main(int argc, char **argv)
 	    bu_log(
 		"%s: wdb_put_internal(%s) failure, skipping\n",
 		argv[0], dp->d_namep);
-	    rt_db_free_internal( &intern, &rt_uniresource );
+	    rt_db_free_internal(&intern);
 	    errors++;
 	    continue;
 	}
-	rt_db_free_internal( &intern, &rt_uniresource );
+	rt_db_free_internal(&intern);
     } FOR_ALL_DIRECTORY_END
 
 	  wdb_close( fp );

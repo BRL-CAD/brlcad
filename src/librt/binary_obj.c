@@ -133,7 +133,7 @@ rt_mk_binunif(struct rt_wdb *wdbp, const char *obj_name, const char *file_name, 
     }
     if (ret != 0) {
 	bu_log( "Error while attemptimg to export %s\n", obj_name );
-	rt_db_free_internal( &intern, wdbp->wdb_resp );
+	rt_db_free_internal(&intern);
 	return -1;
     }
 
@@ -143,7 +143,7 @@ rt_mk_binunif(struct rt_wdb *wdbp, const char *obj_name, const char *file_name, 
 			intern.idb_major_type, intern.idb_minor_type,
 			DB5_ZZZ_UNCOMPRESSED, DB5_ZZZ_UNCOMPRESSED );
 
-    rt_db_free_internal( &intern, wdbp->wdb_resp );
+    rt_db_free_internal(&intern);
     bu_free_external( &body );
 
     /* make sure the database directory is initialized */

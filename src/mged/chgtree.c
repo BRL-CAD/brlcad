@@ -91,7 +91,7 @@ f_copy_inv(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     if (id != ID_TGC) {
 	Tcl_AppendResult(interp, "f_copy_inv: ", argv[1],
 			 " is not a cylinder\n", (char *)NULL);
-	rt_db_free_internal(&internal, &rt_uniresource);
+	rt_db_free_internal(&internal);
 	return TCL_ERROR;
     }
     tgc_ip = (struct rt_tgc_internal *)internal.idb_ptr;

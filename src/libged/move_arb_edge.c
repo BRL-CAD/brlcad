@@ -102,14 +102,14 @@ ged_move_arb_edge(struct ged *gedp, int argc, const char *argv[])
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD ||
 	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_ARB8) {
 	bu_vls_printf(&gedp->ged_result_str, "Object not an ARB");
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 
 	return GED_ERROR;
     }
 
     if (sscanf(argv[2], "%d", &edge) != 1) {
 	bu_vls_printf(&gedp->ged_result_str, "bad edge - %s", argv[2]);
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 
 	return GED_ERROR;
     }
@@ -117,7 +117,7 @@ ged_move_arb_edge(struct ged *gedp, int argc, const char *argv[])
 
     if (sscanf(argv[3], "%lf %lf %lf", &pt[X], &pt[Y], &pt[Z]) != 3) {
 	bu_vls_printf(&gedp->ged_result_str, "bad point - %s", argv[3]);
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 
 	return GED_ERROR;
     }
@@ -156,7 +156,7 @@ ged_move_arb_edge(struct ged *gedp, int argc, const char *argv[])
 	    break;
 	default:
 	    bu_vls_printf(&gedp->ged_result_str, "unrecognized arb type");
-	    rt_db_free_internal(&intern, &rt_uniresource);
+	    rt_db_free_internal(&intern);
 
 	    return GED_ERROR;
     }
@@ -164,13 +164,13 @@ ged_move_arb_edge(struct ged *gedp, int argc, const char *argv[])
     /* check the edge id */
     if (bad_edge_id) {
 	bu_vls_printf(&gedp->ged_result_str, "bad edge - %s", argv[2]);
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 
 	return GED_ERROR;
     }
 
     if (rt_arb_calc_planes(&gedp->ged_result_str, arb, arb_type, planes, &gedp->ged_wdbp->wdb_tol)) {
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 
 	return GED_ERROR;
     }
@@ -182,7 +182,7 @@ ged_move_arb_edge(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (rt_arb_edit(&gedp->ged_result_str, arb, arb_type, edge, pt, planes, &gedp->ged_wdbp->wdb_tol)) {
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 
 	return GED_ERROR;
     }

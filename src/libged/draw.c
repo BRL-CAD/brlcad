@@ -368,7 +368,7 @@ ged_nmg_region_start(struct db_tree_state *tsp, struct db_full_path *pathp, cons
 	default:
 	    break;
     }
-    rt_db_free_internal(&intern, tsp->ts_resp);
+    rt_db_free_internal(&intern);
     return 0;
 
  out:
@@ -376,7 +376,7 @@ ged_nmg_region_start(struct db_tree_state *tsp, struct db_full_path *pathp, cons
     db_add_node_to_full_path(pathp, dp);
     ged_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
     DB_FULL_PATH_POP(pathp);
-    rt_db_free_internal(&intern, tsp->ts_resp);
+    rt_db_free_internal(&intern);
     dgcdp->fastpath_count++;
     return -1;	/* SKIP THIS REGION */
 }

@@ -87,7 +87,7 @@ ged_fracture(struct ged *gedp, int argc, const char *argv[])
 
     if (old_intern.idb_type != ID_NMG) {
 	bu_vls_printf(&gedp->ged_result_str, " is not an NMG solid!!\n");
-	rt_db_free_internal( &old_intern, &rt_uniresource );
+	rt_db_free_internal(&old_intern);
 	return GED_ERROR;
     }
 

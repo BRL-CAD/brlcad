@@ -271,7 +271,7 @@ main(int argc, char **argv)
 
 		bu_vls_init(&log);
 		if (intern.idb_meth->ft_get(&log, &intern, "tree") != TCL_OK) {
-		    rt_db_free_internal( &intern, &rt_uniresource );
+		    rt_db_free_internal(&intern);
 		    bu_log("Unable to export '%s', skipping\n", dp->d_namep);
 		    Tcl_AppendResult(interp, bu_vls_addr(&log), (char *)0);
 		    bu_vls_free(&log);
@@ -293,7 +293,7 @@ main(int argc, char **argv)
 
 		bu_vls_init(&log);
 		if ( (dp->d_minor_type != ID_CONSTRAINT) && (intern.idb_meth->ft_get( &log, &intern, NULL ) != TCL_OK) )  {
-		    rt_db_free_internal( &intern, &rt_uniresource );
+		    rt_db_free_internal(&intern);
 		    bu_log("Unable to export '%s', skipping\n", dp->d_namep );
 		    Tcl_AppendResult(interp, bu_vls_addr(&log), (char *)0);
 		    bu_vls_free(&log);
@@ -320,7 +320,7 @@ main(int argc, char **argv)
 		fprintf( ofp, "\n" );
 	    }
 	    Tcl_ResetResult( interp );
-	    rt_db_free_internal( &intern, &rt_uniresource );
+	    rt_db_free_internal(&intern);
 	} FOR_ALL_DIRECTORY_END;
 	return 0;
     } else {
@@ -614,7 +614,7 @@ cline_dump(void)
     (void)fprintf(ofp, "%26.20e %26.20e", cli->radius, cli->thickness );
     (void)fprintf(ofp, "\n");			/* Terminate w/ a newline */
 
-    rt_db_free_internal( &intern, &rt_uniresource );
+    rt_db_free_internal(&intern);
     db_free_external( &ext );
 }
 
@@ -671,7 +671,7 @@ bot_dump(void)
 	    fprintf(ofp,  "	%d: %d %d %d\n", i, V3ARGS( &bot->faces[i*3] ) );
     }
 
-    rt_db_free_internal( &intern, &rt_uniresource );
+    rt_db_free_internal(&intern);
     db_free_external( &ext );
 }
 
@@ -706,7 +706,7 @@ pipe_dump(void)	/* Print out Pipe record information */
 
     dump_pipe_segs(name, &pipe->pipe_segs_head);
 
-    rt_db_free_internal( &intern, &rt_uniresource );
+    rt_db_free_internal(&intern);
     db_free_external( &ext );
 }
 
@@ -815,7 +815,7 @@ arbn_dump(void)
 		arbn->eqn[i][Z], arbn->eqn[i][3]);
     }
 
-    rt_db_free_internal( &intern, &rt_uniresource );
+    rt_db_free_internal(&intern);
     db_free_external( &ext );
 }
 

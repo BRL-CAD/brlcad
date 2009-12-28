@@ -100,17 +100,17 @@ ged_put(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (!ftp->ft_adjust || ftp->ft_adjust(&gedp->ged_result_str, &intern, argc-3, (char **)argv+3) == GED_ERROR) {
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 	return GED_ERROR;
     }
 
     if (wdb_put_internal(gedp->ged_wdbp, name, &intern, 1.0) < 0) {
 	bu_vls_printf(&gedp->ged_result_str, "wdb_put_internal(%s)", argv[1]);
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 	return GED_ERROR;
     }
 
-    rt_db_free_internal(&intern, &rt_uniresource);
+    rt_db_free_internal(&intern);
 
     return GED_OK;
 }

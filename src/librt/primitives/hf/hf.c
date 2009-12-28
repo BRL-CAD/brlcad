@@ -180,7 +180,7 @@ rt_hf_to_dsp(struct rt_db_internal *db_intern)
 
     dsp->magic = RT_DSP_INTERNAL_MAGIC;
 
-    rt_db_free_internal(db_intern, &rt_uniresource);
+    rt_db_free_internal(db_intern);
 
     db_intern->idb_ptr = (genptr_t)dsp;
     db_intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;

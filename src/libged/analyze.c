@@ -94,7 +94,7 @@ ged_analyze(struct ged *gedp, int argc, const char *argv[])
 
 	_ged_do_list(gedp, ndp, 1);
 	ged_do_anal(gedp, &intern);
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
     }
 
     return GED_OK;

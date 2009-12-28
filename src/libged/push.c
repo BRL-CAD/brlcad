@@ -178,7 +178,7 @@ ged_push(struct ged *gedp, int argc, const char *argv[])
 	if (rt_db_put_internal(gpip->pi_dir, gedp->ged_wdbp->dbip, &es_int, &rt_uniresource) < 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "ged_push(%s): solid export failure\n", gpip->pi_dir->d_namep);
 	}
-	rt_db_free_internal(&es_int, &rt_uniresource);
+	rt_db_free_internal(&es_int);
     }
 
     /*

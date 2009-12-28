@@ -1190,7 +1190,7 @@ rt_generic_xform(
 		       rt_functab[id].ft_name);
 		return -1;			/* FAIL */
 	    }
-	    if ((free || op == ip)) rt_db_free_internal(ip, resp);
+	    if ((free || op == ip)) rt_db_free_internal(ip);
 
 	    RT_INIT_DB_INTERNAL(op);
 	    if (rt_functab[id].ft_import4(op, &ext, mat, dbip, resp) < 0) {
@@ -1215,7 +1215,7 @@ rt_generic_xform(
 		    bu_avs_init(&avs, ip->idb_avs.count, "avs");
 		    bu_avs_merge(&avs, &ip->idb_avs);
 		}
-		rt_db_free_internal(ip, resp);
+		rt_db_free_internal(ip);
 	    }
 
 	    RT_INIT_DB_INTERNAL(op);

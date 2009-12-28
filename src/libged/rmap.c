@@ -112,7 +112,7 @@ ged_rmap(struct ged *gedp, int argc, const char *argv[])
 		BU_LIST_INSERT(&itnp->headName.l, &inp->l);
 	    }
 
-	    rt_db_free_internal(&intern, &rt_uniresource);
+	    rt_db_free_internal(&intern);
 	}
     }
 

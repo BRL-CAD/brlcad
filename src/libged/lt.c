@@ -138,7 +138,7 @@ ged_list_children(struct ged			*gedp,
 	if (rt_tree_array)
 	    bu_free((char *)rt_tree_array, "printnode: rt_tree_array");
     }
-    rt_db_free_internal(&intern, &rt_uniresource);
+    rt_db_free_internal(&intern);
 
     return GED_OK;
 }

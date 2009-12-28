@@ -2439,7 +2439,7 @@ init_sedit(void)
 	Tcl_AppendResult(interp, "init_sedit(",
 			 LAST_SOLID(illump)->d_namep,
 			 "):  solid import failure\n", (char *)NULL);
-	rt_db_free_internal(&es_int, &rt_uniresource);
+	rt_db_free_internal(&es_int);
 	return;				/* FAIL */
     }
     RT_CK_DB_INTERNAL(&es_int);
@@ -2461,7 +2461,7 @@ init_sedit(void)
 	    Tcl_AppendResult(interp, bu_vls_addr(&error_msg),
 			     "\nCannot calculate plane equations for ARB8\n",
 			     (char *)NULL);
-	    rt_db_free_internal(&es_int, &rt_uniresource);
+	    rt_db_free_internal(&es_int);
 	    bu_vls_free(&error_msg);
 	    return;
 	}
@@ -3478,7 +3478,7 @@ sedit(void)
 		tmp_ip.idb_type = ID_SKETCH;
 		tmp_ip.idb_ptr = (genptr_t)extr->skt;
 		tmp_ip.idb_meth = &rt_functab[ID_SKETCH];
-		rt_db_free_internal(&tmp_ip, &rt_uniresource);
+		rt_db_free_internal(&tmp_ip);
 	    }
 
 	    if ((dp = db_lookup(dbip, sketch_name, 0)) == DIR_NULL) {
@@ -6481,7 +6481,7 @@ vls_solid(struct bu_vls *vp, const struct rt_db_internal *ip, const mat_t mat)
 	    rt_vls_pipept(vp, seg_no, &intern, base2local);
     }
 
-    rt_db_free_internal(&intern, &rt_uniresource);
+    rt_db_free_internal(&intern);
 }
 
 /*
@@ -7543,7 +7543,7 @@ init_oedit_guts(void)
 	Tcl_AppendResult(interp, "init_oedit(",
 			 LAST_SOLID(illump)->d_namep,
 			 "):  solid import failure\n", (char *)NULL);
-	rt_db_free_internal(&es_int, &rt_uniresource);
+	rt_db_free_internal(&es_int);
 	button(BE_REJECT);
 	return;				/* FAIL */
     }
@@ -7732,7 +7732,7 @@ oedit_accept(void)
 void
 oedit_reject(void)
 {
-    rt_db_free_internal(&es_int, &rt_uniresource);
+    rt_db_free_internal(&es_int);
 }
 
 /* 			F _ E Q N ()
@@ -7869,7 +7869,7 @@ sedit_apply(int accept_flag)
 	Tcl_AppendResult(interp, "sedit_apply(", dp->d_namep,
 			 "):  solid export failure\n", (char *)NULL);
 	if (accept_flag) {
-	    rt_db_free_internal(&es_int, &rt_uniresource);
+	    rt_db_free_internal(&es_int);
 	}
 	return TCL_ERROR;				/* FAIL */
     }
@@ -7880,7 +7880,7 @@ sedit_apply(int accept_flag)
 	es_edflag = -1;
 	es_edclass = EDIT_CLASS_NULL;
 
-	rt_db_free_internal(&es_int, &rt_uniresource);
+	rt_db_free_internal(&es_int);
     } else {
 	/* XXX hack to restore es_int after rt_db_put_internal blows it away */
 	/* Read solid description into es_int again! Gaak! */
@@ -7889,7 +7889,7 @@ sedit_apply(int accept_flag)
 	    Tcl_AppendResult(interp, "sedit_apply(",
 			     LAST_SOLID(illump)->d_namep,
 			     "):  solid reimport failure\n", (char *)NULL);
-	    rt_db_free_internal(&es_int, &rt_uniresource);
+	    rt_db_free_internal(&es_int);
 	    return TCL_ERROR;
 	}
     }
@@ -7971,7 +7971,7 @@ sedit_reject(void)
     es_edflag = -1;
     es_edclass = EDIT_CLASS_NULL;
 
-    rt_db_free_internal(&es_int, &rt_uniresource);
+    rt_db_free_internal(&es_int);
 }
 
 int
@@ -9249,7 +9249,7 @@ f_get_sedit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     Tcl_SetObjResult(interp, pnto);
 
-    rt_db_free_internal(&ces_int, &rt_uniresource);
+    rt_db_free_internal(&ces_int);
 
     return status;
 }
@@ -9355,7 +9355,7 @@ f_sedit_reset(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     }
 
     /* free old copy */
-    rt_db_free_internal(&es_int, &rt_uniresource);
+    rt_db_free_internal(&es_int);
 
     /* reset */
     es_pipept = (struct wdb_pipept *)NULL;

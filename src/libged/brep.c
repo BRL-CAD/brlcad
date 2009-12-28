@@ -124,7 +124,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
     rt_vlblock_free(vbp);
     vbp = (struct bn_vlblock *)NULL;
 
-    rt_db_free_internal(&intern, &rt_uniresource);
+    rt_db_free_internal(&intern);
     
     return GED_OK;
 }

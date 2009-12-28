@@ -112,7 +112,7 @@ ged_list(struct ged *gedp, int argc, const char *argv[])
 	    if (!rt_functab[id].ft_describe || rt_functab[id].ft_describe(&gedp->ged_result_str, &intern, 99, gedp->ged_wdbp->dbip->dbi_base2local, &rt_uniresource, gedp->ged_wdbp->dbip) < 0)
 		bu_vls_printf(&gedp->ged_result_str, "%s: describe error", dp->d_namep);
 
-	    rt_db_free_internal(&intern, &rt_uniresource);
+	    rt_db_free_internal(&intern);
 	} else {
 	    if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[arg], LOOKUP_NOISY)) == DIR_NULL)
 		continue;
@@ -187,7 +187,7 @@ _ged_do_list(struct ged *gedp, register struct directory *dp, int verbose)
 				       &rt_uniresource,
 				       gedp->ged_wdbp->dbip) < 0)
 	    bu_vls_printf(&gedp->ged_result_str, "%s: describe error\n", dp->d_namep);
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
     }
 }
 

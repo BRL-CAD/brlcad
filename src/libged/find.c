@@ -109,7 +109,7 @@ ged_find(struct ged *gedp, int argc, const char *argv[])
 				 (genptr_t)dp->d_namep,
 				 (genptr_t)gedp);
 
-	    rt_db_free_internal(&intern, &rt_uniresource);
+	    rt_db_free_internal(&intern);
 	}
     }
 

@@ -62,7 +62,7 @@ ged_get_type(struct ged *gedp, int argc, const char *argv[])
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD) {
 	bu_vls_printf(&gedp->ged_result_str, "unknown");
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 
 	return GED_OK;
     }
@@ -194,7 +194,7 @@ ged_get_type(struct ged *gedp, int argc, const char *argv[])
 	    break;
     }
 
-    rt_db_free_internal(&intern, &rt_uniresource);
+    rt_db_free_internal(&intern);
     return GED_OK;
 }
 

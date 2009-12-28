@@ -389,7 +389,7 @@ f_rcodes(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		Tcl_AppendResult(interp, "Database write error, aborting.\n",
 				 (char *)NULL );
 		TCL_ERROR_RECOVERY_SUGGESTION;
-		rt_db_free_internal( &intern, &rt_uniresource );
+		rt_db_free_internal(&intern);
 		return TCL_ERROR;
 	    }
 	}
@@ -748,7 +748,7 @@ new_tables(struct directory *dp, struct bu_ptbl *cur_path, const matp_t old_mat,
 		bu_vls_free( &tmp_vls );
 	    }
 	    if ( nsoltemp && (sol_dp->d_flags & DIR_SOLID) )
-		rt_db_free_internal( &sol_intern, &rt_uniresource );
+		rt_db_free_internal(&sol_intern);
 	}
     } else if ( dp->d_flags & DIR_COMB ) {
 	int cur_length;
