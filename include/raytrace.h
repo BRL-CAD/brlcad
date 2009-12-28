@@ -5833,7 +5833,7 @@ RT_EXPORT BU_EXTERN(int rt_mk_binunif,
 		     const char *obj_name,
 		     const char *file_name,
 		     unsigned int minor_type,
-		     long max_count));
+		     size_t max_count));
 
 /* defined in db5_bin.c */
 RT_EXPORT BU_EXTERN(void rt_binunif_free,
