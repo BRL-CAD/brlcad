@@ -54,13 +54,12 @@ const struct bu_structparse rt_constraint_parse[] = {
  * constraint object.
  */
 void
-rt_constraint_ifree(struct rt_db_internal *ip, struct resource *resp)
+rt_constraint_ifree(struct rt_db_internal *ip)
 {
     register struct rt_constraint_internal *constraint;
 
     RT_CK_DB_INTERNAL(ip);
     constraint = (struct rt_constraint_internal *)ip->idb_ptr;
-    if (!resp) resp = &rt_uniresource;
     
     if (constraint) {
 	constraint->magic = 0;			/* sanity */

@@ -420,12 +420,11 @@ rt_binunif_free( struct rt_binunif_internal *bip) {
  * thing.
  */
 void
-rt_binunif_ifree( struct rt_db_internal	*ip, struct resource *resp )
+rt_binunif_ifree(struct rt_db_internal *ip)
 {
     struct rt_binunif_internal	*bip;
 
     RT_CK_DB_INTERNAL(ip);
-    if (!resp) resp = &rt_uniresource;
     bip = (struct rt_binunif_internal *)ip->idb_ptr;
     RT_CK_BINUNIF(bip);
     bu_free( (genptr_t) bip->u.uint8, "binunif ifree" );
