@@ -110,6 +110,9 @@ void
 db_init_db_tree_state(struct db_tree_state *tsp, struct db_i *dbip, struct resource *resp)
 {
     RT_CK_DBI(dbip);
+    if (!resp) {
+	resp = &rt_uniresource;
+    }
     RT_CK_RESOURCE(resp);
 
     memset((char *)tsp, 0, sizeof(*tsp));
@@ -550,6 +553,10 @@ db_tree_del_lhs(union tree *tp, struct resource *resp)
     union tree *subtree;
 
     RT_CK_TREE(tp);
+    if (!resp) {
+	resp = &rt_uniresource;
+    }
+    RT_CK_RESOURCE(resp);
 
     switch (tp->tr_op) {
 
@@ -595,6 +602,10 @@ db_tree_del_rhs(union tree *tp, struct resource *resp)
     union tree *subtree;
 
     RT_CK_TREE(tp);
+    if (!resp) {
+	resp = &rt_uniresource;
+    }
+    RT_CK_RESOURCE(resp);
 
     switch (tp->tr_op) {
 
@@ -663,6 +674,9 @@ db_tree_del_dbleaf(union tree **tp, const char *cp, struct resource *resp, int n
     if (*tp == TREE_NULL) return -1;
 
     RT_CK_TREE(*tp);
+    if (!resp) {
+	resp = &rt_uniresource;
+    }
     RT_CK_RESOURCE(resp);
 
     if ((parent = db_find_named_leafs_parent(&side, *tp, cp)) == TREE_NULL) {
@@ -1352,6 +1366,9 @@ db_dup_subtree(const union tree *tp, struct resource *resp)
     union tree *new;
 
     RT_CK_TREE(tp);
+    if (!resp) {
+	resp = &rt_uniresource;
+    }
     RT_CK_RESOURCE(resp);
 
     RT_GET_TREE(new, resp);
@@ -1453,6 +1470,9 @@ void
 db_free_tree(union tree *tp, struct resource *resp)
 {
     RT_CK_TREE(tp);
+    if (!resp) {
+	resp = &rt_uniresource;
+    }
     RT_CK_RESOURCE(resp);
 
     /*
@@ -1594,6 +1614,9 @@ db_non_union_push(union tree *tp, struct resource *resp)
     int repush_child=0;
 
     RT_CK_TREE(tp);
+    if (!resp) {
+	resp = &rt_uniresource;
+    }
     RT_CK_RESOURCE(resp);
 
     switch (tp->tr_op) {
@@ -1929,6 +1952,9 @@ db_tally_subtree_regions(
     union tree *new;
 
     RT_CK_TREE(tp);
+    if (!resp) {
+	resp = &rt_uniresource;
+    }
     RT_CK_RESOURCE(resp);
     if (cur >= lim) bu_bomb("db_tally_subtree_regions: array overflow\n");
 

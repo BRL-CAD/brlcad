@@ -743,6 +743,7 @@ db_tree_parse(struct bu_vls *logstr, const char *str, struct resource *resp)
     if (!resp) {
 	resp = &rt_uniresource;
     }
+    RT_CK_RESOURCE(resp);
 
     /* Skip over leading spaces in input */
     while (*str && isspace(*str)) str++;
@@ -902,6 +903,11 @@ db_tcl_tree_parse(Tcl_Interp *interp, const char *str, struct resource *resp)
     struct bu_vls logstr;
     union tree *tp;
 
+    if (!resp) {
+	resp = &rt_uniresource;
+    }
+    RT_CK_RESOURCE(resp);
+
     bu_vls_init(&logstr);
     tp = db_tree_parse(&logstr, str, resp);
     Tcl_AppendResult(interp, bu_vls_addr(&logstr), (char *)NULL);
@@ -1055,7 +1061,6 @@ rt_comb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
     double d;
 
     RT_CK_DB_INTERNAL(intern);
-    RT_CK_RESOURCE(resp);
     comb = (struct rt_comb_internal *)intern->idb_ptr;
     RT_CK_COMB(comb);
 
@@ -1178,17 +1183,17 @@ rt_comb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 
 	    if (*argv[1] == '\0' || strcmp(argv[1], "none") == 0) {
 		if (comb->tree) {
-		    db_free_tree(comb->tree, resp);
+		    db_free_tree(comb->tree, &rt_uniresource);
 		}
 		comb->tree = TREE_NULL;
 	    } else {
-		new = db_tree_parse(logstr, argv[1], resp);
+		new = db_tree_parse(logstr, argv[1], &rt_uniresource);
 		if (new == TREE_NULL) {
 		    bu_vls_printf(logstr, "db adjust tree: bad tree '%s'\n", argv[1]);
 		    return BRLCAD_ERROR;
 		}
 		if (comb->tree)
-		    db_free_tree(comb->tree, resp);
+		    db_free_tree(comb->tree, &rt_uniresource);
 		comb->tree = new;
 	    }
 	} else {
