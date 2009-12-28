@@ -2034,66 +2034,66 @@ curve_to_tcl_list(struct bu_vls *vls, struct curve *crv)
 }
 
 
-int rt_sketch_form(struct bu_vls *log, const struct rt_functab *ftp)
+int rt_sketch_form(struct bu_vls *logstr, const struct rt_functab *ftp)
 {
-    BU_CK_VLS(log);
+    BU_CK_VLS(logstr);
     RT_CK_FUNCTAB(ftp);
 
-    bu_vls_printf(log, "V {%%f %%f %%f} A {%%f %%f %%f} B {%%f %%f %%f} VL {{%%f %%f} {%%f %%f} ...} SL {{segment_data} {segment_data}}");
+    bu_vls_printf(logstr, "V {%%f %%f %%f} A {%%f %%f %%f} B {%%f %%f %%f} VL {{%%f %%f} {%%f %%f} ...} SL {{segment_data} {segment_data}}");
 
     return BRLCAD_OK;
 }
 
 
 int
-rt_sketch_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *attr)
+rt_sketch_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr)
 {
     register struct rt_sketch_internal *skt=(struct rt_sketch_internal *)intern->idb_ptr;
     int i;
     struct curve *crv;
 
-    BU_CK_VLS(log);
+    BU_CK_VLS(logstr);
     RT_SKETCH_CK_MAGIC(skt);
 
     if (attr == (char *)NULL) {
-	bu_vls_strcpy(log, "sketch");
-	bu_vls_printf(log, " V {%.25g %.25g %.25g}", V3ARGS(skt->V));
-	bu_vls_printf(log, " A {%.25g %.25g %.25g}", V3ARGS(skt->u_vec));
-	bu_vls_printf(log, " B {%.25g %.25g %.25g}", V3ARGS(skt->v_vec));
-	bu_vls_strcat(log, " VL {");
+	bu_vls_strcpy(logstr, "sketch");
+	bu_vls_printf(logstr, " V {%.25g %.25g %.25g}", V3ARGS(skt->V));
+	bu_vls_printf(logstr, " A {%.25g %.25g %.25g}", V3ARGS(skt->u_vec));
+	bu_vls_printf(logstr, " B {%.25g %.25g %.25g}", V3ARGS(skt->v_vec));
+	bu_vls_strcat(logstr, " VL {");
 	for (i=0; i<skt->vert_count; i++)
-	    bu_vls_printf(log, " {%.25g %.25g}", V2ARGS(skt->verts[i]));
-	bu_vls_strcat(log, " }");
+	    bu_vls_printf(logstr, " {%.25g %.25g}", V2ARGS(skt->verts[i]));
+	bu_vls_strcat(logstr, " }");
 
 	crv = &skt->skt_curve;
-	if (curve_to_tcl_list(log, crv)) {
+	if (curve_to_tcl_list(logstr, crv)) {
 	    return BRLCAD_ERROR;
 	}
     } else if (!strcmp(attr, "V")) {
-	bu_vls_printf(log, "%.25g %.25g %.25g", V3ARGS(skt->V));
+	bu_vls_printf(logstr, "%.25g %.25g %.25g", V3ARGS(skt->V));
     } else if (!strcmp(attr, "A")) {
-	bu_vls_printf(log, "%.25g %.25g %.25g", V3ARGS(skt->u_vec));
+	bu_vls_printf(logstr, "%.25g %.25g %.25g", V3ARGS(skt->u_vec));
     } else if (!strcmp(attr, "B")) {
-	bu_vls_printf(log, "%.25g %.25g %.25g", V3ARGS(skt->v_vec));
+	bu_vls_printf(logstr, "%.25g %.25g %.25g", V3ARGS(skt->v_vec));
     } else if (!strcmp(attr, "VL")) {
 	for (i=0; i<skt->vert_count; i++)
-	    bu_vls_printf(log, " {%.25g %.25g}", V2ARGS(skt->verts[i]));
+	    bu_vls_printf(logstr, " {%.25g %.25g}", V2ARGS(skt->verts[i]));
     } else if (!strcmp(attr, "SL")) {
 	crv = &skt->skt_curve;
-	if (curve_to_tcl_list(log, crv)) {
+	if (curve_to_tcl_list(logstr, crv)) {
 	    return BRLCAD_ERROR;
 	}
     } else if (*attr == 'V') {
 	i = atoi((attr+1));
 	if (i < 0 || i >= skt->vert_count) {
-	    bu_vls_printf(log, "ERROR: Illegal vertex number\n");
+	    bu_vls_printf(logstr, "ERROR: Illegal vertex number\n");
 	    return BRLCAD_ERROR;
 	}
 
-	bu_vls_printf(log, "%.25g %.25g", V2ARGS(skt->verts[i]));
+	bu_vls_printf(logstr, "%.25g %.25g", V2ARGS(skt->verts[i]));
     } else {
 	/* unrecognized attribute */
-	bu_vls_printf(log, "ERROR: Unknown attribute, choices are V, A, B, VL, SL, or V#\n");
+	bu_vls_printf(logstr, "ERROR: Unknown attribute, choices are V, A, B, VL, SL, or V#\n");
 	return BRLCAD_ERROR;
     }
 
@@ -2273,7 +2273,7 @@ get_tcl_curve(Tcl_Interp *interp, struct curve *crv, Tcl_Obj *seg_list)
 
 
 int
-rt_sketch_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char **argv)
+rt_sketch_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv)
 {
     struct rt_sketch_internal *skt;
     int ret, array_len;
@@ -2289,7 +2289,7 @@ rt_sketch_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, ch
 	    array_len = 3;
 	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &new, &array_len) !=
 		array_len) {
-		bu_vls_printf(log, "ERROR: Incorrect number of coordinates for vertex\n");
+		bu_vls_printf(logstr, "ERROR: Incorrect number of coordinates for vertex\n");
 		return BRLCAD_ERROR;
 	    }
 	} else if (!strcmp(argv[0], "A")) {
@@ -2297,7 +2297,7 @@ rt_sketch_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, ch
 	    array_len = 3;
 	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &new, &array_len) !=
 		array_len) {
-		bu_vls_printf(log, "ERROR: Incorrect number of coordinates for vertex\n");
+		bu_vls_printf(logstr, "ERROR: Incorrect number of coordinates for vertex\n");
 		return BRLCAD_ERROR;
 	    }
 	} else if (!strcmp(argv[0], "B")) {
@@ -2305,7 +2305,7 @@ rt_sketch_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, ch
 	    array_len = 3;
 	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &new, &array_len) !=
 		array_len) {
-		bu_vls_printf(log, "ERROR: Incorrect number of coordinates for vertex\n");
+		bu_vls_printf(logstr, "ERROR: Incorrect number of coordinates for vertex\n");
 		return BRLCAD_ERROR;
 	    }
 	} else if (!strcmp(argv[0], "VL")) {
@@ -2326,7 +2326,7 @@ rt_sketch_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, ch
 	    len = 0;
 	    (void)tcl_list_to_fastf_array(brlcad_interp, argv[1], &new_verts, &len);
 	    if (len%2) {
-		bu_vls_printf(log, "ERROR: Incorrect number of coordinates for vertices\n");
+		bu_vls_printf(logstr, "ERROR: Incorrect number of coordinates for vertices\n");
 		return BRLCAD_ERROR;
 	    }
 
@@ -2357,12 +2357,12 @@ rt_sketch_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, ch
 	    vert_no = atoi(argv[0] + 1);
 	    new_vert = skt->verts[vert_no];
 	    if (vert_no < 0 || vert_no > skt->vert_count) {
-		bu_vls_printf(log, "ERROR: Illegal vertex number\n");
+		bu_vls_printf(logstr, "ERROR: Illegal vertex number\n");
 		return BRLCAD_ERROR;
 	    }
 	    array_len = 2;
 	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &new_vert, &array_len) != array_len) {
-		bu_vls_printf(log, "ERROR: Incorrect number of coordinates for vertex\n");
+		bu_vls_printf(logstr, "ERROR: Incorrect number of coordinates for vertex\n");
 		return BRLCAD_ERROR;
 	    }
 	}

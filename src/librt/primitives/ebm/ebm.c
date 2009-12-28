@@ -1574,7 +1574,7 @@ rt_ebm_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
  * no paramaters requested returns all
  */
 int
-rt_ebm_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *attr)
+rt_ebm_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr)
 {
     register struct rt_ebm_internal *ebm=(struct rt_ebm_internal *)intern->idb_ptr;
     int i;
@@ -1582,26 +1582,26 @@ rt_ebm_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *
     RT_EBM_CK_MAGIC(ebm);
 
     if (attr == (char *)NULL) {
-	bu_vls_strcpy(log, "ebm");
-	bu_vls_printf(log, " F %s W %d N %d H %.25g",
+	bu_vls_strcpy(logstr, "ebm");
+	bu_vls_printf(logstr, " F %s W %d N %d H %.25g",
 		      ebm->file, ebm->xdim, ebm->ydim, ebm->tallness);
-	bu_vls_printf(log, " M {");
+	bu_vls_printf(logstr, " M {");
 	for (i=0; i<16; i++)
-	    bu_vls_printf(log, " %.25g", ebm->mat[i]);
-	bu_vls_printf(log, " }");
+	    bu_vls_printf(logstr, " %.25g", ebm->mat[i]);
+	bu_vls_printf(logstr, " }");
     } else if (!strcmp(attr, "F")) {
-	bu_vls_printf(log, "%s", ebm->file);
+	bu_vls_printf(logstr, "%s", ebm->file);
     } else if (!strcmp(attr, "W")) {
-	bu_vls_printf(log, "%d", ebm->xdim);
+	bu_vls_printf(logstr, "%d", ebm->xdim);
     } else if (!strcmp(attr, "N")) {
-	bu_vls_printf(log, "%d", ebm->ydim);
+	bu_vls_printf(logstr, "%d", ebm->ydim);
     } else if (!strcmp(attr, "H")) {
-	bu_vls_printf(log, "%.25g", ebm->tallness);
+	bu_vls_printf(logstr, "%.25g", ebm->tallness);
     } else if (!strcmp(attr, "M")) {
 	for (i=0; i<16; i++)
-	    bu_vls_printf(log, "%.25g ", ebm->mat[i]);
+	    bu_vls_printf(logstr, "%.25g ", ebm->mat[i]);
     } else {
-	bu_vls_printf(log, "ERROR: Unknown attribute, choices are F, W, N, or H\n");
+	bu_vls_printf(logstr, "ERROR: Unknown attribute, choices are F, W, N, or H\n");
 	return BRLCAD_ERROR;
     }
 
@@ -1622,7 +1622,7 @@ rt_ebm_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *
  * "M" - matrix to transform EBM solid into model coordinates
  */
 int
-rt_ebm_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char **argv)
+rt_ebm_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv)
 {
     struct rt_ebm_internal *ebm;
 
@@ -1634,7 +1634,7 @@ rt_ebm_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
     while (argc >= 2) {
 	if (!strcmp(argv[0], "F")) {
 	    if (strlen(argv[1]) >= RT_EBM_NAME_LEN) {
-		bu_vls_printf(log, "ERROR: File name too long");
+		bu_vls_printf(logstr, "ERROR: File name too long");
 		return BRLCAD_ERROR;
 	    }
 	    bu_strlcpy(ebm->file, argv[1], RT_EBM_NAME_LEN);
@@ -1654,12 +1654,12 @@ rt_ebm_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 
 	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &ar_ptr, &len) !=
 		len) {
-		bu_vls_printf(log, "ERROR: incorrect number of coefficents for matrix\n");
+		bu_vls_printf(logstr, "ERROR: incorrect number of coefficents for matrix\n");
 		return BRLCAD_ERROR;
 	    }
 	    MAT_COPY(ebm->mat, array)
 		} else {
-		    bu_vls_printf(log, "ERROR: illegal argument, choices are F, W, N, or H\n");
+		    bu_vls_printf(logstr, "ERROR: illegal argument, choices are F, W, N, or H\n");
 		    return BRLCAD_ERROR;
 		}
 	argc -= 2;
@@ -1670,11 +1670,11 @@ rt_ebm_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 
 
 int
-rt_ebm_form(struct bu_vls *log, const struct rt_functab *ftp)
+rt_ebm_form(struct bu_vls *logstr, const struct rt_functab *ftp)
 {
     RT_CK_FUNCTAB(ftp);
 
-    bu_vls_printf(log, "F %%s W %%d N %%d H %%f M { %%f %%f %%f %%f %%f %%f %%f %%f %%f %%f %%f %%f %%f %%f %%f %%f }");
+    bu_vls_printf(logstr, "F %%s W %%d N %%d H %%f M { %%f %%f %%f %%f %%f %%f %%f %%f %%f %%f %%f %%f %%f %%f %%f %%f }");
 
     return TCL_OK;
 

@@ -3524,8 +3524,8 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    RT_CK_BINUNIF(dsp_ip->dsp_bip->idb_ptr);
             break;
     }
-    
-    
+
+
     xlim = dsp_ip->dsp_xcnt - 1;
     ylim = dsp_ip->dsp_ycnt - 1;
 
@@ -3777,7 +3777,7 @@ rt_dsp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		}
 	    }
 
-            
+
 	    if (dir == DSP_CUT_DIR_llUR) {
 		verts[0] = &strip1Verts[y];
 		verts[1] = &strip2Verts[y+1];
@@ -4031,7 +4031,7 @@ get_obj_data(struct rt_dsp_internal *dsp_ip, const struct db_i *dbip)
 
     BU_GETSTRUCT(dsp_ip->dsp_bip, rt_db_internal);
 
-    ret = rt_retrieve_binunif(dsp_ip->dsp_bip, dbip, bu_vls_addr(&dsp_ip->dsp_name));
+    ret = rt_retrieve_binunif (dsp_ip->dsp_bip, dbip, bu_vls_addr(&dsp_ip->dsp_name));
     if (ret)
 	return -1;
 
@@ -4651,7 +4651,7 @@ const struct bu_structparse fake_dsp_printab[] = {
  * Example:  "db get ell.s B" to get only the B vector.
  */
 int
-rt_dsp_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *attr)
+rt_dsp_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr)
 {
     register const struct bu_structparse *sp = NULL;
     const struct rt_dsp_internal *dsp_ip;
@@ -4666,7 +4666,7 @@ rt_dsp_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *
     if (attr == (char *)0) {
 	/* Print out solid type and all attributes */
 
-	bu_vls_printf(log, "dsp");
+	bu_vls_printf(logstr, "dsp");
 
 	switch (dsp_ip->dsp_datasrc) {
 	    case RT_DSP_SRC_V4_FILE:
@@ -4679,8 +4679,8 @@ rt_dsp_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *
 	}
 
 	while (sp && sp->sp_name != NULL) {
-	    bu_vls_printf(log, " %s ", sp->sp_name);
-	    bu_vls_struct_item(log, sp, (char *)dsp_ip, ' ');
+	    bu_vls_printf(logstr, " %s ", sp->sp_name);
+	    bu_vls_struct_item(logstr, sp, (char *)dsp_ip, ' ');
 	    ++sp;
 	}
 
@@ -4695,9 +4695,9 @@ rt_dsp_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *
 		break;
 	}
 
-	if (bu_vls_struct_item_named(log, sp, attr,
+	if (bu_vls_struct_item_named(logstr, sp, attr,
 				     (char *)dsp_ip, ' ') < 0) {
-	    bu_vls_printf(log,
+	    bu_vls_printf(logstr,
 			  "Objects of type %s do not have a %s attribute.",
 			  "dsp", attr);
 	    return BRLCAD_ERROR;
@@ -4717,7 +4717,7 @@ rt_dsp_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *
  * rt_functab[].ft_adjust()
  */
 int
-rt_dsp_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char **argv)
+rt_dsp_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv)
 {
     register const struct bu_structparse *sp = NULL;
     const struct rt_dsp_internal *dsp_ip;
@@ -4738,7 +4738,7 @@ rt_dsp_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 
     if (! sp) return BRLCAD_ERROR;
 
-    return bu_structparse_argv(log, argc, argv, sp,
+    return bu_structparse_argv(logstr, argc, argv, sp,
 			       (char *)intern->idb_ptr);
 }
 
@@ -4930,10 +4930,10 @@ project_pt(point_t out,
 	bu_log("alpha:%g beta:%g\n", alpha, beta);
     }
     if (alpha < -SMALL_FASTF) {
-	bu_log ("Alpha negative: %g  x:%g  dx:%d\n", alpha, x, dx);
+	bu_log("Alpha negative: %g  x:%g  dx:%d\n", alpha, x, dx);
     }
     if (beta < -SMALL_FASTF) {
-	bu_log ("Beta negative: %g  x:%g  dx:%d\n", beta, y, dy);
+	bu_log("Beta negative: %g  x:%g  dx:%d\n", beta, y, dy);
     }
     CLAMP(alpha, 0.0, 1.0);
     CLAMP(beta, 0.0, 1.0);

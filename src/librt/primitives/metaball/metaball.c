@@ -812,13 +812,13 @@ rt_metaball_get(struct bu_vls *logstr, const struct rt_db_internal *intern, cons
  * used for db put/asc2g
  */
 int 
-rt_metaball_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char **argv)
+rt_metaball_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv)
 {
     struct rt_metaball_internal *mb;
     char *pts, *pend;;
 
     if(argc != 3)  {
-	bu_vls_printf(log, "Invalid number of arguments: %d\n", argc);
+	bu_vls_printf(logstr, "Invalid number of arguments: %d\n", argc);
 	return BRLCAD_ERROR;
     }
 
@@ -827,7 +827,7 @@ rt_metaball_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, 
     RT_METABALL_CK_MAGIC(mb);
 
     if( strlen(*argv) != 1 || (**argv < '0' || **argv > '2') ) {
-	bu_vls_printf(log, "Invalid method type, must be one of 0, 1, or 2.");
+	bu_vls_printf(logstr, "Invalid method type, must be one of 0, 1, or 2.");
 	return BRLCAD_ERROR;
     }
     mb->method = *argv[0] - '0';
@@ -847,12 +847,12 @@ rt_metaball_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, 
 	len = sscanf(pts, "{%lG %lG %lG %lG %lG}", loc+X, loc+Y, loc+Z, &fldstr, &goo);
 	if(len == EOF) break;
 	if(len != 5) {
-	    bu_vls_printf(log, "Failed to parse point information: \"%s\"", pts);
+	    bu_vls_printf(logstr, "Failed to parse point information: \"%s\"", pts);
 	    return BRLCAD_ERROR;
 	}
 	pts++;
 	if(rt_metaball_add_point (mb, (const point_t *)&loc, fldstr, goo)) {
-	    bu_vls_printf(log, "Failure adding point: {%f %f %f %f %f}", V3ARGS(loc), fldstr, goo);
+	    bu_vls_printf(logstr, "Failure adding point: {%f %f %f %f %f}", V3ARGS(loc), fldstr, goo);
 	    return BRLCAD_ERROR;
 	}
     }

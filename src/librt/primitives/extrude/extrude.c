@@ -2406,42 +2406,42 @@ rt_extrude_xform(
 
 
 int
-rt_extrude_form(struct bu_vls *log, const struct rt_functab *ftp)
+rt_extrude_form(struct bu_vls *logstr, const struct rt_functab *ftp)
 {
     RT_CK_FUNCTAB(ftp);
 
-    bu_vls_printf(log, "V {%%f %%f %%f} H {%%f %%f %%f} A {%%f %%f %%f} B {%%f %%f %%f} S %%s K %%d");
+    bu_vls_printf(logstr, "V {%%f %%f %%f} H {%%f %%f %%f} A {%%f %%f %%f} B {%%f %%f %%f} S %%s K %%d");
 
     return BRLCAD_OK;
 }
 
 
 int
-rt_extrude_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *attr)
+rt_extrude_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr)
 {
     struct rt_extrude_internal *extr=(struct rt_extrude_internal *) intern->idb_ptr;
 
     RT_EXTRUDE_CK_MAGIC(extr);
 
     if (attr == (char *)NULL) {
-	bu_vls_strcpy(log, "extrude");
-	bu_vls_printf(log, " V {%.25g %.25g %.25g}", V3ARGS(extr->V));
-	bu_vls_printf(log, " H {%.25g %.25g %.25g}", V3ARGS(extr->h));
-	bu_vls_printf(log, " A {%.25g %.25g %.25g}", V3ARGS(extr->u_vec));
-	bu_vls_printf(log, " B {%.25g %.25g %.25g}", V3ARGS(extr->v_vec));
-	bu_vls_printf(log, " S %s", extr->sketch_name);
+	bu_vls_strcpy(logstr, "extrude");
+	bu_vls_printf(logstr, " V {%.25g %.25g %.25g}", V3ARGS(extr->V));
+	bu_vls_printf(logstr, " H {%.25g %.25g %.25g}", V3ARGS(extr->h));
+	bu_vls_printf(logstr, " A {%.25g %.25g %.25g}", V3ARGS(extr->u_vec));
+	bu_vls_printf(logstr, " B {%.25g %.25g %.25g}", V3ARGS(extr->v_vec));
+	bu_vls_printf(logstr, " S %s", extr->sketch_name);
     } else if (*attr == 'V')
-	bu_vls_printf(log, "%.25g %.25g %.25g", V3ARGS(extr->V));
+	bu_vls_printf(logstr, "%.25g %.25g %.25g", V3ARGS(extr->V));
     else if (*attr == 'H')
-	bu_vls_printf(log, "%.25g %.25g %.25g", V3ARGS(extr->h));
+	bu_vls_printf(logstr, "%.25g %.25g %.25g", V3ARGS(extr->h));
     else if (*attr == 'A')
-	bu_vls_printf(log, "%.25g %.25g %.25g", V3ARGS(extr->u_vec));
+	bu_vls_printf(logstr, "%.25g %.25g %.25g", V3ARGS(extr->u_vec));
     else if (*attr == 'B')
-	bu_vls_printf(log, "%.25g %.25g %.25g", V3ARGS(extr->v_vec));
+	bu_vls_printf(logstr, "%.25g %.25g %.25g", V3ARGS(extr->v_vec));
     else if (*attr == 'S')
-	bu_vls_printf(log, "%s", extr->sketch_name);
+	bu_vls_printf(logstr, "%s", extr->sketch_name);
     else {
-	bu_vls_strcat(log, "ERROR: unrecognized attribute, must be V, H, A, B, or S!");
+	bu_vls_strcat(logstr, "ERROR: unrecognized attribute, must be V, H, A, B, or S!");
 	return BRLCAD_ERROR;
     }
 
@@ -2450,7 +2450,7 @@ rt_extrude_get(struct bu_vls *log, const struct rt_db_internal *intern, const ch
 
 
 int
-rt_extrude_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char **argv)
+rt_extrude_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv)
 {
     struct rt_extrude_internal *extr;
     fastf_t *new;
@@ -2466,21 +2466,21 @@ rt_extrude_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, c
 	if (*argv[0] == 'V') {
 	    new = extr->V;
 	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &new, &array_len) != array_len) {
-		bu_vls_printf(log, "ERROR: incorrect number of coordinates for vertex\n");
+		bu_vls_printf(logstr, "ERROR: incorrect number of coordinates for vertex\n");
 		return BRLCAD_ERROR;
 	    }
 	} else if (*argv[0] == 'H') {
 	    new = extr->h;
 	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &new, &array_len) !=
 		array_len) {
-		bu_vls_printf(log, "ERROR: incorrect number of coordinates for vector\n");
+		bu_vls_printf(logstr, "ERROR: incorrect number of coordinates for vector\n");
 		return BRLCAD_ERROR;
 	    }
 	} else if (*argv[0] == 'A') {
 	    new = extr->u_vec;
 	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &new, &array_len) !=
 		array_len) {
-		bu_vls_printf(log, "ERROR: incorrect number of coordinates for vector\n");
+		bu_vls_printf(logstr, "ERROR: incorrect number of coordinates for vector\n");
 		return BRLCAD_ERROR;
 	    }
 
@@ -2491,7 +2491,7 @@ rt_extrude_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, c
 	} else if (*argv[0] == 'B') {
 	    new = extr->v_vec;
 	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &new, &array_len) != array_len) {
-		bu_vls_printf(log, "ERROR: incorrect number of coordinates for vector\n");
+		bu_vls_printf(logstr, "ERROR: incorrect number of coordinates for vector\n");
 		return BRLCAD_ERROR;
 	    }
 	    /* insure that u_vec and v_vec are the same length */

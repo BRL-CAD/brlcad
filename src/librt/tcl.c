@@ -1043,12 +1043,7 @@ rt_comb_get(struct bu_vls *log, const struct rt_db_internal *intern, const char 
  * Invoked via rt_functab[ID_COMBINATION].ft_tcladjust()
  */
 int
-rt_comb_adjust(
-    struct bu_vls *log,
-    struct rt_db_internal *intern,
-    int argc,
-    char **argv,
-    struct resource *resp)
+rt_comb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv)
 {
     struct rt_comb_internal *comb;
     char buf[128];
@@ -1137,7 +1132,7 @@ rt_comb_adjust(
 		i = sscanf(argv[1], "%u %u %u",
 			   &r, &g, &b);
 		if (i != 3) {
-		    bu_vls_printf(log, "adjust rgb %s: not valid rgb 3-tuple\n", argv[1]);
+		    bu_vls_printf(logstr, "adjust rgb %s: not valid rgb 3-tuple\n", argv[1]);
 		    return BRLCAD_ERROR;
 		}
 		comb->rgb[0] = (unsigned char)r;
@@ -1183,9 +1178,9 @@ rt_comb_adjust(
 		}
 		comb->tree = TREE_NULL;
 	    } else {
-		new = db_tree_parse(log, argv[1], resp);
+		new = db_tree_parse(logstr, argv[1], resp);
 		if (new == TREE_NULL) {
-		    bu_vls_printf(log, "db adjust tree: bad tree '%s'\n", argv[1]);
+		    bu_vls_printf(logstr, "db adjust tree: bad tree '%s'\n", argv[1]);
 		    return BRLCAD_ERROR;
 		}
 		if (comb->tree)
@@ -1193,7 +1188,7 @@ rt_comb_adjust(
 		comb->tree = new;
 	    }
 	} else {
-	    bu_vls_printf(log, "db adjust %s : no such attribute", buf);
+	    bu_vls_printf(logstr, "db adjust %s : no such attribute", buf);
 	    return BRLCAD_ERROR;
 	}
 	argc -= 2;
@@ -1203,7 +1198,7 @@ rt_comb_adjust(
     return BRLCAD_OK;
 
 not_region:
-    bu_vls_printf(log, "adjusting attribute %s is not valid for a non-region combination.", buf);
+    bu_vls_printf(logstr, "adjusting attribute %s is not valid for a non-region combination.", buf);
     return BRLCAD_ERROR;
 }
 
@@ -1305,7 +1300,7 @@ rt_tcl_import_from_path(Tcl_Interp *interp, struct rt_db_internal *ip, const cha
  * all.  Example: "db get ell.s B" to get only the B vector.
  */
 int
-rt_parsetab_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *attr)
+rt_parsetab_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr)
 {
     register const struct bu_structparse *sp = NULL;
     register const struct rt_functab *ftp;
@@ -1316,7 +1311,7 @@ rt_parsetab_get(struct bu_vls *log, const struct rt_db_internal *intern, const c
 
     sp = ftp->ft_parsetab;
     if (!sp) {
-	bu_vls_printf(log,
+	bu_vls_printf(logstr,
 		      "%s {a Tcl output routine for this type of object has not yet been implemented}",
 		      ftp->ft_label);
 	return BRLCAD_ERROR;
@@ -1328,20 +1323,20 @@ rt_parsetab_get(struct bu_vls *log, const struct rt_db_internal *intern, const c
 	bu_vls_init(&str);
 
 	/* Print out solid type and all attributes */
-	bu_vls_printf(log, "%s", ftp->ft_label);
+	bu_vls_printf(logstr, "%s", ftp->ft_label);
 	while (sp->sp_name != NULL) {
-	    bu_vls_printf(log, " %s", sp->sp_name);
+	    bu_vls_printf(logstr, " %s", sp->sp_name);
 
 	    bu_vls_trunc(&str, 0);
 	    bu_vls_struct_item(&str, sp,
 			       (char *)intern->idb_ptr, ' ');
 
 	    if (sp->sp_count < 2)
-		bu_vls_printf(log, " %V", &str);
+		bu_vls_printf(logstr, " %V", &str);
 	    else {
-		bu_vls_printf(log, " {");
-		bu_vls_printf(log, "%V", &str);
-		bu_vls_printf(log, "} ");
+		bu_vls_printf(logstr, " {");
+		bu_vls_printf(logstr, "%V", &str);
+		bu_vls_printf(logstr, "} ");
 	    }
 
 	    ++sp;
@@ -1349,8 +1344,8 @@ rt_parsetab_get(struct bu_vls *log, const struct rt_db_internal *intern, const c
 
 	bu_vls_free(&str);
     } else {
-	if (bu_vls_struct_item_named(log, sp, attr, (char *)intern->idb_ptr, ' ') < 0) {
-	    bu_vls_printf(log,
+	if (bu_vls_struct_item_named(logstr, sp, attr, (char *)intern->idb_ptr, ' ') < 0) {
+	    bu_vls_printf(logstr,
 			  "Objects of type %s do not have a %s attribute.",
 			  ftp->ft_label, attr);
 	    return BRLCAD_ERROR;
@@ -1365,11 +1360,11 @@ rt_parsetab_get(struct bu_vls *log, const struct rt_db_internal *intern, const c
  * R T _ C O M B _ F O R M
  */
 int
-rt_comb_form(struct bu_vls *log, const struct rt_functab *ftp)
+rt_comb_form(struct bu_vls *logstr, const struct rt_functab *ftp)
 {
     RT_CK_FUNCTAB(ftp);
 
-    bu_vls_printf(log,
+    bu_vls_printf(logstr,
 		  "region {%%s} id {%%d} air {%%d} los {%%d} GIFTmater {%%d} rgb {%%d %%d %%d} \
 shader {%%s} material {%%s} inherit {%%s} tree {%%s}");
 
@@ -1436,7 +1431,7 @@ rt_generic_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
  * rt_functab[].ft_adjust()
  */
 int
-rt_parsetab_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char **argv)
+rt_parsetab_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv)
 {
     const struct rt_functab *ftp;
 
@@ -1445,12 +1440,11 @@ rt_parsetab_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, 
     RT_CK_FUNCTAB(ftp);
 
     if (ftp->ft_parsetab == (struct bu_structparse *)NULL) {
-	bu_vls_printf(log, "%s type objects do not yet have a 'db put' (adjust) handler.", ftp->ft_label);
+	bu_vls_printf(logstr, "%s type objects do not yet have a 'db put' (adjust) handler.", ftp->ft_label);
 	return BRLCAD_ERROR;
     }
 
-    return bu_structparse_argv(log, argc, argv, ftp->ft_parsetab,
-			       (char *)intern->idb_ptr);
+    return bu_structparse_argv(logstr, argc, argv, ftp->ft_parsetab, (char *)intern->idb_ptr);
 }
 
 
@@ -1461,15 +1455,15 @@ rt_parsetab_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, 
  * fully described by their bu_structparse table in ft_parsetab.
  */
 int
-rt_parsetab_form(struct bu_vls *log, const struct rt_functab *ftp)
+rt_parsetab_form(struct bu_vls *logstr, const struct rt_functab *ftp)
 {
     RT_CK_FUNCTAB(ftp);
 
     if (ftp->ft_parsetab) {
-	bu_structparse_get_terse_form(log, ftp->ft_parsetab);
+	bu_structparse_get_terse_form(logstr, ftp->ft_parsetab);
 	return BRLCAD_OK;
     }
-    bu_vls_printf(log,
+    bu_vls_printf(logstr,
 		  "%s is a valid object type, but a 'form' routine has not yet been implemented.",
 		  ftp->ft_label);
 

@@ -3653,7 +3653,7 @@ rt_pipe_ck(const struct bu_list *headp)
  * db get name N ==> get number of vertices
  */
 int
-rt_pipe_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *attr)
+rt_pipe_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr)
 {
     register struct rt_pipe_internal *pipe=(struct rt_pipe_internal *)intern->idb_ptr;
     struct wdb_pipept *ptp;
@@ -3667,11 +3667,11 @@ rt_pipe_get(struct bu_vls *log, const struct rt_db_internal *intern, const char 
         num_segs++;
     
     if (attr == (char *)NULL) {
-        bu_vls_strcat(log, "pipe");
+        bu_vls_strcat(logstr, "pipe");
         
         seg_no = 0;
         for (BU_LIST_FOR(ptp, wdb_pipept, &pipe->pipe_segs_head)) {
-            bu_vls_printf(log, " V%d { %.25G %.25G %.25G } O%d %.25G I%d %.25G R%d %.25G",
+            bu_vls_printf(logstr, " V%d { %.25G %.25G %.25G } O%d %.25G I%d %.25G R%d %.25G",
 			  seg_no, V3ARGS(ptp->pp_coord),
 			  seg_no, ptp->pp_od,
 			  seg_no, ptp->pp_id,
@@ -3679,13 +3679,13 @@ rt_pipe_get(struct bu_vls *log, const struct rt_db_internal *intern, const char 
             seg_no++;
         }
     } else if (attr[0] == 'N') {
-        bu_vls_printf(log, "%d", num_segs);
+        bu_vls_printf(logstr, "%d", num_segs);
     } else {
         int curr_seg=0;
         
         seg_no = atoi(&attr[1]);
         if (seg_no < 0 || seg_no >= num_segs) {
-            bu_vls_printf(log, "segment number out of range (0 - %d)", num_segs-1);
+            bu_vls_printf(logstr, "segment number out of range (0 - %d)", num_segs-1);
             return BRLCAD_ERROR;
         }
         
@@ -3698,26 +3698,26 @@ rt_pipe_get(struct bu_vls *log, const struct rt_db_internal *intern, const char 
         
         switch (attr[0]) {
             case 'V':
-                bu_vls_printf(log, "%.25G %.25G %.25G", V3ARGS(ptp->pp_coord));
+                bu_vls_printf(logstr, "%.25G %.25G %.25G", V3ARGS(ptp->pp_coord));
                 break;
             case 'I':
-                bu_vls_printf(log, "%.25G", ptp->pp_id);
+                bu_vls_printf(logstr, "%.25G", ptp->pp_id);
                 break;
             case 'O':
-                bu_vls_printf(log, "%.25G", ptp->pp_od);
+                bu_vls_printf(logstr, "%.25G", ptp->pp_od);
                 break;
             case 'R':
-                bu_vls_printf(log, "%.25G", ptp->pp_bendradius);
+                bu_vls_printf(logstr, "%.25G", ptp->pp_bendradius);
                 break;
             case 'P':
-                bu_vls_printf(log, " V%d { %.25G %.25G %.25G } I%d %.25G O%d %.25G R%d %.25G",
+                bu_vls_printf(logstr, " V%d { %.25G %.25G %.25G } I%d %.25G O%d %.25G R%d %.25G",
 			      seg_no, V3ARGS(ptp->pp_coord),
 			      seg_no, ptp->pp_id,
 			      seg_no, ptp->pp_od,
 			      seg_no, ptp->pp_bendradius);
                 break;
             default:
-                bu_vls_printf(log, "unrecognized attribute (%c), choices are V, I, O, R, or P", attr[0]);
+                bu_vls_printf(logstr, "unrecognized attribute (%c), choices are V, I, O, R, or P", attr[0]);
                 return BRLCAD_ERROR;
         }
     }
@@ -3727,7 +3727,7 @@ rt_pipe_get(struct bu_vls *log, const struct rt_db_internal *intern, const char 
 
 
 int
-rt_pipe_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char **argv)
+rt_pipe_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv)
 {
     struct rt_pipe_internal *pipe;
     struct wdb_pipept *ptp;
@@ -3755,7 +3755,7 @@ rt_pipe_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char
         }
         
         if (!isdigit(argv[0][1])) {
-            bu_vls_printf(log, "no vertex number specified");
+            bu_vls_printf(logstr, "no vertex number specified");
             return BRLCAD_ERROR;
         }
         
@@ -3780,7 +3780,7 @@ rt_pipe_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char
             num_segs++;
         }
         if (seg_no < 0 || seg_no >= num_segs) {
-            bu_vls_printf(log, "vertex number out of range");
+            bu_vls_printf(logstr, "vertex number out of range");
             return BRLCAD_ERROR;
         }
         
@@ -3801,21 +3801,21 @@ rt_pipe_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char
                 v_str = Tcl_GetStringFromObj(list, NULL);
                 while (isspace(*v_str)) v_str++;
                 if (*v_str == '\0') {
-                    bu_vls_printf(log, "incomplete vertex specification");
+                    bu_vls_printf(logstr, "incomplete vertex specification");
                     Tcl_DecrRefCount(list);
                     return BRLCAD_ERROR;
                 }
                 ptp->pp_coord[0] = atof(v_str);
                 v_str = bu_next_token(v_str);
                 if (*v_str == '\0') {
-                    bu_vls_printf(log, "incomplete vertex specification");
+                    bu_vls_printf(logstr, "incomplete vertex specification");
                     Tcl_DecrRefCount(list);
                     return BRLCAD_ERROR;
                 }
                 ptp->pp_coord[1] = atof(v_str);
                 v_str = bu_next_token(v_str);
                 if (*v_str == '\0') {
-                    bu_vls_printf(log, "incomplete vertex specification");
+                    bu_vls_printf(logstr, "incomplete vertex specification");
                     Tcl_DecrRefCount(list);
                     return BRLCAD_ERROR;
                 }
@@ -3828,7 +3828,7 @@ rt_pipe_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char
             case 'O':
                 tmp = atof(argv[1]);
                 if (tmp <= 0.0) {
-                    bu_vls_printf(log, "outer diameter cannot be 0.0 or less");
+                    bu_vls_printf(logstr, "outer diameter cannot be 0.0 or less");
                     return BRLCAD_ERROR;
                 }
                 ptp->pp_od = tmp;
@@ -3837,7 +3837,7 @@ rt_pipe_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char
                 ptp->pp_bendradius = atof(argv[1]);
                 break;
             default:
-                bu_vls_printf(log, "unrecognized attribute, choices are V, I, O, or R");
+                bu_vls_printf(logstr, "unrecognized attribute, choices are V, I, O, or R");
                 return BRLCAD_ERROR;
         }
         
