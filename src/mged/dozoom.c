@@ -252,7 +252,7 @@ deering_persp_mat(fastf_t *m, const fastf_t *l, const fastf_t *h, const fastf_t 
 }
 
 static void
-drawSolid(register struct solid *sp,
+drawSolid(struct solid *sp,
 	  short r,
 	  short g,
 	  short b) {
@@ -314,9 +314,9 @@ drawSolid(register struct solid *sp,
 void
 dozoom(int which_eye)
 {
-    register struct ged_display_list *gdlp;
-    register struct ged_display_list *next_gdlp;
-    register struct solid	*sp;
+    struct ged_display_list *gdlp;
+    struct ged_display_list *next_gdlp;
+    struct solid	*sp;
     fastf_t		ratio;
     fastf_t			inv_viewsize;
     mat_t			new;
@@ -668,9 +668,9 @@ createDList(struct solid *sp)
 void
 createDLists(struct bu_list *hdlp)
 {
-    register struct ged_display_list *gdlp;
-    register struct ged_display_list *next_gdlp;
-    register struct solid *sp;
+    struct ged_display_list *gdlp;
+    struct ged_display_list *next_gdlp;
+    struct solid *sp;
 
     gdlp = BU_LIST_NEXT(ged_display_list, hdlp);
     while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
@@ -726,9 +726,9 @@ createDListALL(struct solid *sp)
 void
 createDListsAll(struct bu_list *hdlp)
 {
-    register struct ged_display_list *gdlp;
-    register struct ged_display_list *next_gdlp;
-    register struct solid *sp;
+    struct ged_display_list *gdlp;
+    struct ged_display_list *next_gdlp;
+    struct solid *sp;
 
     gdlp = BU_LIST_NEXT(ged_display_list, hdlp);
     while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {

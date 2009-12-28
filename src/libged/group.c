@@ -37,8 +37,8 @@
 int
 ged_group(struct ged *gedp, int argc, const char *argv[])
 {
-    register struct directory *dp;
-    register int i;
+    struct directory *dp;
+    int i;
     static const char *usage = "gname object(s)";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);

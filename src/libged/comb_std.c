@@ -432,7 +432,7 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
     char *comb_name;
     int ch;
     int region_flag = -1;
-    register struct directory *dp = DIR_NULL;
+    struct directory *dp = DIR_NULL;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb = NULL;
     struct tokens tok_hd;

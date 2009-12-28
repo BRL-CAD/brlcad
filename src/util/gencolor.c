@@ -48,8 +48,8 @@ int
 main(int argc, char **argv)
 {
     int	i, len, times;
-    register long	count;
-    register unsigned char *bp;
+    long	count;
+    unsigned char *bp;
 
     if ( argc < 1 || isatty(fileno(stdout)) ) {
 	bu_exit(1, "%s", Usage );

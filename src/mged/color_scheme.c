@@ -251,7 +251,7 @@ cs_set_dirty_flag(void)
 void
 cs_update(void)
 {
-    register struct bu_structparse *sp;
+    struct bu_structparse *sp;
     struct bu_vls vls;
     int offset;
 

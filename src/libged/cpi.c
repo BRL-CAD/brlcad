@@ -38,8 +38,8 @@
 int
 ged_cpi(struct ged *gedp, int argc, const char *argv[])
 {
-    register struct directory *proto;
-    register struct directory *dp;
+    struct directory *proto;
+    struct directory *dp;
     struct rt_db_internal internal;
     struct rt_tgc_internal *tgc_ip;
     int id;

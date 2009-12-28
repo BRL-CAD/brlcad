@@ -43,7 +43,7 @@ ged_rcodes(struct ged *gedp, int argc, const char *argv[])
     char line[LINELEN];
     char *cp;
     FILE *fp;
-    register struct directory *dp;
+    struct directory *dp;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
     static const char *usage = "filename";

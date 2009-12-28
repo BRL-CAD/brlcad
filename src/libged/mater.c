@@ -30,7 +30,7 @@ int
 ged_mater(struct ged *gedp, int argc, const char *argv[])
 {
     int status = GED_OK;
-    register struct directory *dp;
+    struct directory *dp;
     int r=0, g=0, b=0;
     char inherit;
     struct rt_db_internal	intern;

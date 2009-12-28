@@ -37,7 +37,7 @@
 int
 ged_sphgroup(struct ged *gedp, int argc, const char *argv[])
 {
-    register struct directory *dp, *sphdp;
+    struct directory *dp, *sphdp;
     point_t obj_min, obj_max;
     point_t rpp_min, rpp_max;
     point_t testpts[8];

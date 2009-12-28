@@ -90,7 +90,7 @@ REMAPID_FILE	bu_iob[1] = {
 };
 
 
-REMAPID_FILE *remapid_fopen (register char *fname, register char *type)
+REMAPID_FILE *remapid_fopen (char *fname, char *type)
 {
     REMAPID_FILE	*bfp;
     FILE	*fp;
@@ -117,7 +117,7 @@ REMAPID_FILE *remapid_fopen (register char *fname, register char *type)
  *	Close the file and free the associated memory
  */
 int
-remapid_fclose (register REMAPID_FILE *bfp)
+remapid_fclose (REMAPID_FILE *bfp)
 {
     int	close_status;
 
@@ -139,7 +139,7 @@ remapid_fclose (register REMAPID_FILE *bfp)
 
 
 int
-remapid_fgetc (register REMAPID_FILE *bfp)
+remapid_fgetc (REMAPID_FILE *bfp)
 {
     char	*cp = (char *)NULL;
     int		comment_char;	/* The comment character */
@@ -194,7 +194,7 @@ remapid_fgetc (register REMAPID_FILE *bfp)
  *	Diagnostic routine to print out the contents of a struct remapid_file
  */
 static void
-remapid_printfile (register REMAPID_FILE *bfp)
+remapid_printfile (REMAPID_FILE *bfp)
 {
     BU_CK_FILE(bfp);
 
@@ -214,7 +214,7 @@ remapid_printfile (register REMAPID_FILE *bfp)
  *	Print out a syntax error message about a REMAPID_FILE
  */
 void
-remapid_file_err (register REMAPID_FILE *bfp, register char *text1, register char *text2, register int cursor_pos)
+remapid_file_err (REMAPID_FILE *bfp, char *text1, char *text2, int cursor_pos)
 {
     char		*cp;
     int			buflen;

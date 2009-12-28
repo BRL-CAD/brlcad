@@ -37,7 +37,7 @@
 int
 ged_make_bb(struct ged *gedp, int argc, const char *argv[])
 {
-    register int i;
+    int i;
     point_t rpp_min, rpp_max;
     struct directory *dp;
     struct rt_arb_internal *arb;

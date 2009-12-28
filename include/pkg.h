@@ -134,7 +134,7 @@ PKG_EXPORT PKG_EXTERN(void pkg_close, (struct pkg_conn* pc));
 /**
  * 
  */
-PKG_EXPORT PKG_EXTERN(int pkg_process, (register struct pkg_conn *));
+PKG_EXPORT PKG_EXTERN(int pkg_process, (struct pkg_conn *));
 
 /**
  * Suck all data from the operating system into the internal buffer.
@@ -162,7 +162,7 @@ PKG_EXPORT PKG_EXTERN(int pkg_process, (register struct pkg_conn *));
  *	 0 on EOF
  *	 1 success
  */
-PKG_EXPORT PKG_EXTERN(int pkg_suckin, (register struct pkg_conn *));
+PKG_EXPORT PKG_EXTERN(int pkg_suckin, (struct pkg_conn *));
 
 /**
  * Send a message on the connection.

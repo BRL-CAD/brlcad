@@ -296,7 +296,7 @@ static struct gcv_data gcvwriter = {nmg_to_stl};
 int
 main(int argc, char *argv[])
 {
-    register int c;
+    int c;
     double percent;
     int i;
 

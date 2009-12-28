@@ -33,8 +33,8 @@ static int
 ged_logHook(genptr_t clientdata,
 	    genptr_t str)
 {
-    register struct bu_vls *vp = (struct bu_vls *)clientdata;
-    register int len;
+    struct bu_vls *vp = (struct bu_vls *)clientdata;
+    int len;
 
     BU_CK_VLS(vp);
     len = bu_vls_strlen(vp);

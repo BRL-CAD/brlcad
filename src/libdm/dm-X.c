@@ -663,15 +663,15 @@ X_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
  *
  */
 HIDDEN int
-X_drawVList(struct dm *dmp, register struct bn_vlist *vp)
+X_drawVList(struct dm *dmp, struct bn_vlist *vp)
 {
     static vect_t spnt, lpnt, pnt;
-    register struct bn_vlist *tvp;
+    struct bn_vlist *tvp;
     XSegment segbuf[1024];	/* XDrawSegments list */
     XSegment *segp;		/* current segment */
     int nseg;		        /* number of segments */
     fastf_t delta;
-    register point_t *pt_prev = NULL;
+    point_t *pt_prev = NULL;
     fastf_t dist_prev=1.0;
     static int nvectors = 0;
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
@@ -696,10 +696,10 @@ X_drawVList(struct dm *dmp, register struct bn_vlist *vp)
     nseg = 0;
     segp = segbuf;
     for (BU_LIST_FOR(tvp, bn_vlist, &vp->l)) {
-	register int i;
-	register int nused = tvp->nused;
-	register int *cmd = tvp->cmd;
-	register point_t *pt = tvp->pt;
+	int i;
+	int nused = tvp->nused;
+	int *cmd = tvp->cmd;
+	point_t *pt = tvp->pt;
 	fastf_t dist;
 
 	/* Viewing region is from -1.0 to +1.0 */
@@ -946,7 +946,7 @@ X_normal(struct dm *dmp)
  * beam is as specified.
  */
 HIDDEN int
-X_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int size, int use_aspect)
+X_drawString2D(struct dm *dmp, char *str, fastf_t x, fastf_t y, int size, int use_aspect)
 {
     int sx, sy;
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
@@ -1166,7 +1166,7 @@ X_debug(struct dm *dmp, int lvl)
 
 
 HIDDEN int
-X_setWinBounds(struct dm *dmp, register int *w)
+X_setWinBounds(struct dm *dmp, int *w)
 {
     if (dmp->dm_debugLevel)
 	bu_log("X_setWinBounds()\n");

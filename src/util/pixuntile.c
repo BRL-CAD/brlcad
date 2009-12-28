@@ -48,9 +48,9 @@ Usage: pixuntile [-h] [-s squareinsize] [-w in_width] [-n in_height]\n\
 	[-o startframe] basename [file2 ... fileN] <file.pix\n";
 
 int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int c;
+    int c;
 
     while ( (c = bu_getopt( argc, argv, "hs:w:n:S:W:N:o:" )) != EOF )  {
 	switch ( c )  {

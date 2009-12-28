@@ -45,11 +45,11 @@
 int
 ged_plot(struct ged *gedp, int argc, const char *argv[])
 {
-    register struct ged_display_list *gdlp;
-    register struct ged_display_list *next_gdlp;
-    register struct solid		*sp;
-    register struct bn_vlist	*vp;
-    register FILE *fp;
+    struct ged_display_list *gdlp;
+    struct ged_display_list *next_gdlp;
+    struct solid		*sp;
+    struct bn_vlist	*vp;
+    FILE *fp;
     static vect_t clipmin, clipmax;
     static vect_t last;		/* last drawn point */
     static vect_t fin;
@@ -217,10 +217,10 @@ ged_plot(struct ged *gedp, int argc, const char *argv[])
 		Dashing = sp->s_soldash;
 	    }
 	    for (BU_LIST_FOR(vp, bn_vlist, &(sp->s_vlist)))  {
-		register int	i;
-		register int	nused = vp->nused;
-		register int	*cmd = vp->cmd;
-		register point_t *pt = vp->pt;
+		int	i;
+		int	nused = vp->nused;
+		int	*cmd = vp->cmd;
+		point_t *pt = vp->pt;
 		for (i = 0; i < nused; i++, cmd++, pt++)  {
 		    switch (*cmd)  {
 		    case BN_VLIST_POLY_START:

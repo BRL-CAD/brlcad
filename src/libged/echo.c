@@ -36,7 +36,7 @@
 int
 ged_echo(struct ged *gedp, int argc, const char *argv[])
 {
-    register int i;
+    int i;
 
     static const char *usage = "args";
 

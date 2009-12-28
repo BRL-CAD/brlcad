@@ -53,9 +53,9 @@ Usage: fbscanplot [-h] [-v] [-c] [-o] [-r]\n\
 	[-W scr_width] [-F outframebuffer] yline\n";
 
 int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int c;
+    int c;
 
     while ( (c = bu_getopt( argc, argv, "cvhorW:F:" )) != EOF ) {
 	switch ( c )  {
@@ -99,8 +99,8 @@ get_args(int argc, register char **argv)
 int
 main(int argc, char **argv)
 {
-    register unsigned char *ip, *op;
-    register int y;
+    unsigned char *ip, *op;
+    int y;
     int	x;
     int	yoffset;	/* position of plot on screen */
 

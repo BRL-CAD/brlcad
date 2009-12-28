@@ -37,7 +37,7 @@
 int
 ged_who(struct ged *gedp, int argc, const char *argv[])
 {
-    register struct ged_display_list *gdlp;
+    struct ged_display_list *gdlp;
     int skip_real, skip_phony;
     static const char *usage = "[r(eal)|p(hony)|b(oth)]";
 

@@ -74,7 +74,7 @@ loc_Perror(char *msg)
 int
 exec_Shell(char **args)
 {
-    register int child_pid;
+    int child_pid;
     static char error_buf[32];
     void (*intr_sig)(), (*quit_sig)();
     if ( args[0] == NULL ) {
@@ -111,7 +111,7 @@ exec_Shell(char **args)
 	}
 	default :
 	{
-	    register int	pid;
+	    int	pid;
 	    int		stat_loc;
 	    while ((pid = wait( &stat_loc )) != -1 && pid != child_pid)
 		;

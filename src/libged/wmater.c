@@ -32,7 +32,7 @@ ged_wmater(struct ged *gedp, int argc, const char *argv[])
     int i;
     int status = GED_OK;
     FILE *fp;
-    register struct directory *dp;
+    struct directory *dp;
     struct rt_db_internal	intern;
     struct rt_comb_internal	*comb;
 

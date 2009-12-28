@@ -36,8 +36,8 @@
 int
 ged_killrefs(struct ged *gedp, int argc, const char *argv[])
 {
-    register int		k;
-    register struct directory	*dp;
+    int		k;
+    struct directory	*dp;
     struct rt_db_internal	intern;
     struct rt_comb_internal	*comb;
     int				nflag;

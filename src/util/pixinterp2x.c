@@ -41,7 +41,7 @@ int	inbytes;			/* # bytes of one input scanline */
 int	outbytes;			/* # bytes of one output scanline */
 int	outsize;			/* size of output buffer */
 unsigned char	*outbuf;		/* ptr to output image buffer */
-void	widen_line(register unsigned char *cp, int y);
+void	widen_line(unsigned char *cp, int y);
 
 void	interp_lines(int out, int i1, int i2);
 
@@ -53,9 +53,9 @@ Usage: pixinterp2x [-h] [-s squarefilesize]\n\
  *			G E T _ A R G S
  */
 static int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int	c;
+    int	c;
 
     while ( (c = bu_getopt( argc, argv, "hs:w:n:" )) != EOF )  {
 	switch ( c )  {
@@ -98,7 +98,7 @@ get_args(int argc, register char **argv)
 int
 main(int argc, char **argv)
 {
-    register int iny, outy;
+    int iny, outy;
     unsigned char *inbuf;
 
     infp = stdin;
@@ -140,10 +140,10 @@ main(int argc, char **argv)
 }
 
 void
-widen_line(register unsigned char *cp, int y)
+widen_line(unsigned char *cp, int y)
 {
-    register unsigned char *op;
-    register int i;
+    unsigned char *op;
+    int i;
 
     op = (unsigned char *)outbuf + (y * outbytes);
     /* Replicate first pixel */
@@ -169,9 +169,9 @@ widen_line(register unsigned char *cp, int y)
 void
 interp_lines(int out, int i1, int i2)
 {
-    register unsigned char *a, *b;	/* inputs */
-    register unsigned char *op;
-    register int i;
+    unsigned char *a, *b;	/* inputs */
+    unsigned char *op;
+    int i;
 
     a = (unsigned char *)outbuf + (i1 * outbytes);
     b = (unsigned char *)outbuf + (i2 * outbytes);

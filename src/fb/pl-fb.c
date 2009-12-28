@@ -332,10 +332,10 @@ static struct descr	*freep = STROKE_NULL;	/* head of free stroke list */
  *  Returns addr of descriptor, or NULL if none left.
  */
 static stroke *
-Dequeue(register struct band *bp, register stroke **hp)
+Dequeue(struct band *bp, stroke **hp)
     /* *hp -> first descr in list */
 {
-    register stroke *vp;		/* -> descriptor */
+    stroke *vp;		/* -> descriptor */
 
     if ( (vp = *hp) != NULL )
 	*hp = vp->next; 	/* -> next element in list */
@@ -351,7 +351,7 @@ Dequeue(register struct band *bp, register stroke **hp)
  * 	Requeue - enqueue descriptor at END of band list
  */
 static void
-Requeue(register struct band *bp, register stroke *vp)
+Requeue(struct band *bp, stroke *vp)
 {
     CK_STROKE(vp);
     vp->next = NULL;
@@ -377,11 +377,11 @@ Requeue(register struct band *bp, register stroke *vp)
  *	as it is extremely hard to get all aspects just right.
  */
 static void
-Raster(register stroke *vp, register struct band *np)
+Raster(stroke *vp, struct band *np)
     /* -> rasterization descr */
     /* *np -> next band 1st descr */
 {
-    register short	dy;		/* raster within active band */
+    short	dy;		/* raster within active band */
 
     CK_STROKE(vp);
 
@@ -394,7 +394,7 @@ Raster(register stroke *vp, register struct band *np)
 	if ( immediate )  {
 	    fb_write( fbp, vp->pixel.x, dy, vp->col, 1 );
 	}  else  {
-	    register unsigned char *pp;
+	    unsigned char *pp;
 
 	    pp = (unsigned char *)&buffer[((dy*Npixels) + vp->pixel.x)*sizeof(RGBpixel)];
 	    COPYRGB( pp, vp->col );
@@ -433,9 +433,9 @@ Raster(register stroke *vp, register struct band *np)
 static bool
 OutBuild(void)				/* returns true if successful */
 {
-    register struct band *hp;	/* *hp -> head of descr list */
-    register struct band *np;	/* `hp' for next band */
-    register stroke *vp;		/* -> rasterization descr */
+    struct band *hp;	/* *hp -> head of descr list */
+    struct band *np;	/* `hp' for next band */
+    stroke *vp;		/* -> rasterization descr */
 
     if ( single_banded ) {
 	if ( debug ) fprintf(stderr, "OutBuild:  band y=%d\n", ystart);
@@ -489,9 +489,9 @@ OutBuild(void)				/* returns true if successful */
 static void
 get_strokes(void)
 {
-    register stroke	*sp;
-    register char	*cp;
-    register int	bytes;
+    stroke	*sp;
+    char	*cp;
+    int	bytes;
 
     /* ~32 strokes/KB */
     bytes = 640 * sizeof(stroke);
@@ -522,9 +522,9 @@ get_strokes(void)
  *  We assume the machine is twos-compliment.
  */
 long
-sxt16(register long int v)
+sxt16(long int v)
 {
-    register long w;
+    long w;
     if ( v <= 0x7FFF )  return(v);
     w = -1;
     w &= ~0x7FFF;
@@ -532,9 +532,9 @@ sxt16(register long int v)
 }
 
 int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int c;
+    int c;
 
     while ( (c = bu_getopt( argc, argv, "hdoOit:F:s:S:w:W:n:N:" )) != EOF ) {
 	switch ( c ) {
@@ -610,7 +610,7 @@ Usage: pl-fb [-h -d -o -i] [-t thickness] [-F framebuffer]\n\
 static void
 InitDesc(void)
 {
-    register struct band *bp;	/* *bp -> start of descr list */
+    struct band *bp;	/* *bp -> start of descr list */
 
     for ( bp = &band[0]; bp < &band[BANDSLOP]; ++bp )  {
 	bp->first = NULL;		/* nothing in band yet */
@@ -625,8 +625,8 @@ InitDesc(void)
 static void
 FreeUp(void)
 {
-    register struct band *bp;
-    register stroke *vp;		/* -> rasterization descr */
+    struct band *bp;
+    stroke *vp;		/* -> rasterization descr */
 
     for ( bp = &band[0]; bp < bandEnd; ++bp )
 	while ( (vp = Dequeue( bp, &bp->first )) != NULL )
@@ -655,7 +655,7 @@ Foo(int code)				/* returns status code */
  *  Set up multi-band DDA parameters for stroke
  */
 static void
-prep_dda(register stroke *vp, register coords *pt1, register coords *pt2)
+prep_dda(stroke *vp, coords *pt1, coords *pt2)
 {
     CK_STROKE(vp);
     vp->pixel = *pt1;		/* initial pixel */
@@ -668,7 +668,7 @@ prep_dda(register stroke *vp, register coords *pt1, register coords *pt2)
 
     /* if Y is not really major, correct the assignments */
     if ( !(vp->ymajor = vp->minor <= vp->major) )  {
-	register short	temp;	/* temporary for swap */
+	short	temp;	/* temporary for swap */
 
 	temp = vp->minor;
 	vp->minor = vp->major;
@@ -694,12 +694,12 @@ static bool
 BuildStr(coords *pt1, coords *pt2)		/* returns true or dies */
     /* endpoints */
 {
-    register stroke *vp;		/* -> rasterization descr */
-    register int	thick;
+    stroke *vp;		/* -> rasterization descr */
+    int	thick;
 
     /* arrange for pt1 to have the smaller Y-coordinate: */
     if ( pt1->y > pt2->y )  {
-	register coords *temp;	/* temporary for swap */
+	coords *temp;	/* temporary for swap */
 
 	temp = pt1;		/* swap pointers */
 	pt1 = pt2;
@@ -713,7 +713,7 @@ BuildStr(coords *pt1, coords *pt2)		/* returns true or dies */
     thick = line_thickness - 1;	/* number of "extra" pixels */
     if ( thick >= vp->major && vp->major > 0 )  thick = vp->major-1;
     for (; thick >= 0; thick-- )  {
-	register stroke *v2;
+	stroke *v2;
 
 	if ( thick == 0 ) {
 	    /* last pass, use vp */
@@ -744,7 +744,7 @@ BuildStr(coords *pt1, coords *pt2)		/* returns true or dies */
 
 
 static bool
-GetCoords(register coords *coop)
+GetCoords(coords *coop)
     /* -> input coordinates */
 {
     unsigned char buf[4];
@@ -785,10 +785,10 @@ GetCoords(register coords *coop)
 /*
   GetCoords - input x, y coordinates and scale into pixels
 */
-bool Get3Coords(register coords *coop)
+bool Get3Coords(coords *coop)
 {
     char	trash[2];
-    register bool	ret;
+    bool	ret;
 
     ret = GetCoords( coop );
     fread( trash, sizeof(trash), 1, pfin );
@@ -797,11 +797,11 @@ bool Get3Coords(register coords *coop)
 
 
 /* IEEE coordinates */
-bool Get3DCoords(register coords *coop)
+bool Get3DCoords(coords *coop)
 {
     static unsigned char in[3*8];
     static double	out[2];
-    register double	x, y;
+    double	x, y;
 
     /* read coordinates */
     if ( fread( in, sizeof(in), 1, pfin ) != 1 )
@@ -835,12 +835,12 @@ bool Get3DCoords(register coords *coop)
 
 
 bool
-GetDCoords(register coords *coop)
+GetDCoords(coords *coop)
     /* -> input coordinates */
 {
     static unsigned char	in[2*8];
     static double	out[2];
-    register double	x, y;
+    double	x, y;
 
     /* read coordinates */
     if ( fread( in, sizeof(in), 1, pfin ) != 1 )
@@ -879,7 +879,7 @@ GetDCoords(register coords *coop)
  *	Limit generated positions to edges of screen
  */
 void
-edgelimit(register coords *ppos)
+edgelimit(coords *ppos)
 {
     if ( ppos->x >= Npixels )
 	ppos->x = Npixels -1;
@@ -895,11 +895,11 @@ edgelimit(register coords *ppos)
  *	Update position to reflect character width.
  */
 void
-put_vector_char(register char c, register coords *pos)
+put_vector_char(char c, coords *pos)
 {
     static coords	start, end;
-    register struct vectorchar	*vc;
-    register struct relvect		*rv;
+    struct vectorchar	*vc;
+    struct relvect		*rv;
 
     if ( !isascii(c) )
 	c = '?';
@@ -948,8 +948,8 @@ put_vector_char(register char c, register coords *pos)
 static int
 DoFile(void)	/* returns vpl status code */
 {
-    register bool	plotted;	/* false => empty frame image */
-    register int	c;		/* input character */
+    bool	plotted;	/* false => empty frame image */
+    int	c;		/* input character */
     static coords	newpos; 	/* current input coordinates */
     static coords	virpos; 	/* virtual pen position */
     static unsigned char buf3[6*2];
@@ -1318,12 +1318,12 @@ DoFile(void)	/* returns vpl status code */
   Catch - invoked on interrupt
 */
 static void
-Catch(register int sig)
+Catch(int sig)
     /* signal number */
 {
-    register int pid;		/* this process's ID */
-    register int *psig;		/* -> sigs[.] */
-    register int i;
+    int pid;		/* this process's ID */
+    int *psig;		/* -> sigs[.] */
+    int i;
 
     for (i = 0; sigs[i]; ++i)
 	(void)signal(sigs[i], SIG_IGN);
@@ -1349,8 +1349,8 @@ Catch(register int sig)
 static void
 SetSigs(void)
 {
-    register int	*psig;		/* -> sigs[.] */
-    register int i;
+    int	*psig;		/* -> sigs[.] */
+    int i;
 
     for (i = 0; sigs[i]; ++i) {
 	if (signal(sigs[i], SIG_IGN) != SIG_IGN)

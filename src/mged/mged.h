@@ -182,13 +182,13 @@ extern void pr_schain(struct solid *startp, int lvl);
 #ifndef _WIN32
 extern void itoa(int n, char *s, int w);
 #endif
-extern void eraseobj(register struct directory **dpp);
-extern void eraseobjall(register struct directory **dpp);
+extern void eraseobj(struct directory **dpp);
+extern void eraseobjall(struct directory **dpp);
 extern void mged_finish(int exitcode);
 extern void slewview(fastf_t *view_pos);
 extern void mmenu_init(void);
 extern void moveHinstance(struct directory *cdp, struct directory *dp, matp_t xlate);
-extern void moveHobj(register struct directory *dp, matp_t xlate);
+extern void moveHobj(struct directory *dp, matp_t xlate);
 extern void quit(void);
 extern void refresh(void);
 extern void rej_sedit();

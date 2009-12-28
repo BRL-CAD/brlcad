@@ -256,11 +256,11 @@ edit_com(int	argc,
 	 int	kind,
 	 int	catch_sigint)
 {
-    register struct ged_display_list *gdlp;
-    register struct ged_display_list *next_gdlp;
-    register struct dm_list *dmlp;
-    register struct dm_list *save_dmlp;
-    register struct cmd_list *save_cmd_list;
+    struct ged_display_list *gdlp;
+    struct ged_display_list *next_gdlp;
+    struct dm_list *dmlp;
+    struct dm_list *save_dmlp;
+    struct cmd_list *save_cmd_list;
     int	ret;
     int	initial_blank_screen = 1;
 
@@ -538,9 +538,9 @@ emuves_com( int argc, char **argv )
 int
 cmd_autoview(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
-    register struct dm_list *dmlp;
-    register struct dm_list *save_dmlp;
-    register struct cmd_list *save_cmd_list;
+    struct dm_list *dmlp;
+    struct dm_list *save_dmlp;
+    struct cmd_list *save_cmd_list;
 
     if (argc != 1) {
 	struct bu_vls vls;
@@ -647,7 +647,7 @@ f_regdebug(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  *			D O _ L I S T
  */
 void
-do_list(struct bu_vls *outstrp, register struct directory *dp, int verbose)
+do_list(struct bu_vls *outstrp, struct directory *dp, int verbose)
 {
     int			id;
     struct rt_db_internal	intern;
@@ -679,8 +679,8 @@ do_list(struct bu_vls *outstrp, register struct directory *dp, int verbose)
 void
 mged_freemem(void)
 {
-    register struct solid		*sp;
-    register struct bn_vlist	*vp;
+    struct solid		*sp;
+    struct bn_vlist	*vp;
 
     FOR_ALL_SOLIDS(sp, &MGED_FreeSolid.l) {
 	GET_SOLID(sp, &MGED_FreeSolid.l);
@@ -699,8 +699,8 @@ mged_freemem(void)
 int
 cmd_zap(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
-    register struct ged_display_list *gdlp;
-    register struct ged_display_list *next_gdlp;
+    struct ged_display_list *gdlp;
+    struct ged_display_list *next_gdlp;
     char *av[2] = {"zap", (char *)0};
 
     CHECK_DBI_NULL;
@@ -871,8 +871,8 @@ pr_schain(struct solid *startp, int lvl)
 
     /* debug level */
 {
-    register struct solid	*sp;
-    register struct bn_vlist	*vp;
+    struct solid	*sp;
+    struct bn_vlist	*vp;
     int			nvlist;
     int			npts;
     struct bu_vls vls;
@@ -930,10 +930,10 @@ pr_schain(struct solid *startp, int lvl)
 	nvlist = 0;
 	npts = 0;
 	for ( BU_LIST_FOR( vp, bn_vlist, &(sp->s_vlist) ) )  {
-	    register int	i;
-	    register int	nused = vp->nused;
-	    register int	*cmd = vp->cmd;
-	    register point_t *pt = vp->pt;
+	    int	i;
+	    int	nused = vp->nused;
+	    int	*cmd = vp->cmd;
+	    point_t *pt = vp->pt;
 
 	    BN_CK_VLIST( vp );
 	    nvlist++;
@@ -962,12 +962,12 @@ static char ** path_parse (char *path);
 int
 f_ill(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
-    register struct ged_display_list *gdlp;
-    register struct ged_display_list *next_gdlp;
-    register struct directory *dp;
-    register struct solid *sp;
+    struct ged_display_list *gdlp;
+    struct ged_display_list *next_gdlp;
+    struct directory *dp;
+    struct solid *sp;
     struct solid *lastfound = SOLID_NULL;
-    register int i, j;
+    int i, j;
     int nmatch;
     int	c;
     int	ri = 0;
@@ -1198,8 +1198,8 @@ f_ill(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 int
 f_sed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
-    register struct ged_display_list *gdlp;
-    register struct ged_display_list *next_gdlp;
+    struct ged_display_list *gdlp;
+    struct ged_display_list *next_gdlp;
     int is_empty = 1;
 
     CHECK_DBI_NULL;

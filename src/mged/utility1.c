@@ -262,10 +262,10 @@ f_edcodes(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 int
 f_wcodes(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    register int i;
+    int i;
     int status;
     FILE *fp;
-    register struct directory *dp;
+    struct directory *dp;
 
     CHECK_DBI_NULL;
 
@@ -309,7 +309,7 @@ f_rcodes(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     char line[LINELEN];
     char *cp;
     FILE *fp;
-    register struct directory *dp;
+    struct directory *dp;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
 
@@ -478,10 +478,10 @@ printcodes(FILE *fp, struct directory *dp, int pathpos)
 */
 
 int
-check(register char *a, register char *b)
+check(char *a, char *b)
 {
 
-    register int	c= sizeof( struct identt );
+    int	c= sizeof( struct identt );
 
     while ( c-- )	if ( *a++ != *b++ ) return( 0 );	/* no match */
     return( 1 );	/* match */
@@ -506,8 +506,8 @@ struct id_to_names {
 int
 f_which_shader(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    register int	i, j;
-    register struct directory *dp;
+    int	i, j;
+    struct directory *dp;
     struct rt_db_internal	intern;
     struct rt_comb_internal	*comb;
     int sflag;

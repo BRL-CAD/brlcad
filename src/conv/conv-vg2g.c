@@ -232,7 +232,7 @@ main(int argc, char **argv)
 void
 mat_pr(char *title, float *mp)
 {
-    register int i;
+    int i;
 
     printf("MATRIX %s:\n  ", title);
     for (i=0; i<16; i++)  {

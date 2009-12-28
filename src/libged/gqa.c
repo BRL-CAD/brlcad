@@ -998,9 +998,9 @@ overlap(struct application *ap,
 	struct partition *hp)
 {
 
-    register struct xray *rp = &ap->a_ray;
-    register struct hit *ihitp = pp->pt_inhit;
-    register struct hit *ohitp = pp->pt_outhit;
+    struct xray *rp = &ap->a_ray;
+    struct hit *ihitp = pp->pt_inhit;
+    struct hit *ohitp = pp->pt_outhit;
     point_t ihit;
     point_t ohit;
     double depth;
@@ -1110,10 +1110,10 @@ void exposed_air(struct partition *pp,
  * this routine must be prepared to run in parallel
  */
 int
-hit(register struct application *ap, struct partition *PartHeadp, struct seg *segs)
+hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 {
     /* see raytrace.h for all of these guys */
-    register struct partition *pp;
+    struct partition *pp;
     point_t pt, opt, last_out_point;
     int last_air = 0;  /* what was the aircode of the last item */
     int air_first = 1; /* are we in an air before a solid */
@@ -1424,7 +1424,7 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
  * This routine must be prepared to run in parallel
  */
 int
-miss(register struct application *ap)
+miss(struct application *ap)
 {
 #if 0
     bu_semaphore_acquire(GED_SEM_WORKER);

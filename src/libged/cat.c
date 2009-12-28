@@ -36,8 +36,8 @@
 int
 ged_cat(struct ged *gedp, int argc, const char *argv[])
 {
-    register struct directory *dp;
-    register int arg;
+    struct directory *dp;
+    int arg;
     static const char *usage = "<objects>";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);

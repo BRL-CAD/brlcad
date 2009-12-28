@@ -51,9 +51,9 @@
  */
 struct directory **
 _ged_getspace(struct db_i *dbip,
-	      register int num_entries)
+	      int num_entries)
 {
-    register struct directory **dir_basep;
+    struct directory **dir_basep;
 
     if (num_entries < 0) {
 	bu_log("_ged_getspace: was passed %d, used 0\n",
@@ -81,7 +81,7 @@ static int
 cmpdirname(const genptr_t a,
 	   const genptr_t b)
 {
-    register struct directory **dp1, **dp2;
+    struct directory **dp1, **dp2;
 
     dp1 = (struct directory **)a;
     dp2 = (struct directory **)b;
@@ -402,8 +402,8 @@ int
 ged_ls(struct ged *gedp, int argc, const char *argv[])
 {
     struct bu_vls vls;
-    register struct directory *dp;
-    register int i;
+    struct directory *dp;
+    int i;
     int c;
     int aflag = 0;		/* print all objects without formatting */
     int cflag = 0;		/* print combinations */

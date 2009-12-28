@@ -60,9 +60,9 @@ Usage: pix-ps [-e] [-c|-l] [-L] [-h]\n\
 	[-S inches_square] [-W inches_width] [-N inches_height] [file.pix]\n";
 
 int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int c;
+    int c;
 
     while ( (c = bu_getopt( argc, argv, "ehclLs:w:n:S:W:N:" )) != EOF )  {
 	switch ( c )  {

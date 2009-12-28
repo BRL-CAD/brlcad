@@ -137,7 +137,7 @@ Usage: pl-pl [-v] [-S] < unix_plot > unix_plot\n";
 int
 main(int argc, char **argv)
 {
-    register int	c;
+    int	c;
     struct	uplot *up;
 
     while ( argc > 1 ) {
@@ -356,7 +356,7 @@ getstring(void)
 short
 getshort(void)
 {
-    register long	v, w;
+    long	v, w;
 
     v = getchar();
     v |= (getchar()<<8);	/* order is important! */

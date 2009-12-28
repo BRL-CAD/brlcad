@@ -1004,7 +1004,7 @@ _ged_save_comb(struct ged *gedp, struct directory *dpold)
 {
     /* Save a combination under a temporory name */
 
-    register struct directory	*dp;
+    struct directory	*dp;
     struct rt_db_internal		intern;
 
     /* Make a new name */

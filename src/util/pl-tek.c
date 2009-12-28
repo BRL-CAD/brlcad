@@ -50,10 +50,10 @@ double	getieee(void);
 void	doscale(void);
 
 static void	tekmove(int xi, int yi);
-static void	tekcont(register int x, register int y);
+static void	tekcont(int x, int y);
 static void	tekerase(void);
-static void	teklabel(register char *s);
-static void	teklinemod(register char *s);
+static void	teklabel(char *s);
+static void	teklinemod(char *s);
 static void	tekpoint(int xi, int yi);
 
 #define BELL	007
@@ -146,7 +146,7 @@ Usage: pl-tek [-e] [-v] < file.pl > file.tek\n";
 int
 main(int argc, char **argv)
 {
-    register int	c;
+    int	c;
     struct	uplot *up;
 
     while ( argc > 1 ) {
@@ -194,7 +194,7 @@ main(int argc, char **argv)
 	    getargs( up );
 
 	if ( verbose )  {
-	    register int	i;
+	    int	i;
 	    fprintf( stderr, "%s", up->desc );
 	    switch ( up->targ )  {
 		case TCHAR:
@@ -323,7 +323,7 @@ main(int argc, char **argv)
 int
 getshort(void)
 {
-    register long	v, w;
+    long	v, w;
 
     v = getchar();
     v |= (getchar()<<8);	/* order is important! */
@@ -436,7 +436,7 @@ static int oextra = -1;
 
 /* Continue motion from last position */
 static void
-tekcont(register int x, register int y)
+tekcont(int x, int y)
 {
     int hix, hiy, lox, loy, extra;
     int n;
@@ -498,7 +498,7 @@ tekerase(void)
 }
 
 static void
-teklabel(register char *s)
+teklabel(char *s)
 {
     (void)putc(US, stdout);
     for (; *s; s++ )
@@ -507,9 +507,9 @@ teklabel(register char *s)
 }
 
 static void
-teklinemod(register char *s)
+teklinemod(char *s)
 {
-    register int c;				/* DAG -- was char */
+    int c;				/* DAG -- was char */
 
     (void)putc(ESC, stdout);
     switch (s[0]) {

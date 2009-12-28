@@ -124,7 +124,7 @@ static char *usage="Usage: tankill-g [-v] [-p] [-k] [-t tolerance] [-x lvl] [-X 
 int
 main(int argc, char **argv)
 {
-    register int c;
+    int c;
     int i;
     int vert1, vert2;
     int vert_no;

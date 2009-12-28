@@ -52,9 +52,9 @@ Usage: fbclear [-h -c] [-F framebuffer]\n\
 	[-S squarescrsize] [-W scr_width] [-N scr_height] [gray | r g b]\n";
 
 int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int c;
+    int c;
 
     while ( (c = bu_getopt( argc, argv, "hcF:s:w:n:S:W:N:" )) != EOF )  {
 	switch ( c )  {

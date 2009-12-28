@@ -61,9 +61,9 @@ void print_usage (void)
 
 
 int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int ch;
+    int ch;
 
     while ((ch = bu_getopt(argc, argv, OPT_STRING)) != EOF)
     {

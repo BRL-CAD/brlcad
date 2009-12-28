@@ -69,7 +69,7 @@ open_file(FILE **fp, char *name)
 int
 main(int argc, char **argv)
 {
-    register unsigned char *p1, *p2, *op;
+    unsigned char *p1, *p2, *op;
     int	i, n, m;
 
     while ( argc > 3 ) {

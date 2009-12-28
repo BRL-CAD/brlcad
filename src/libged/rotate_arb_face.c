@@ -53,7 +53,7 @@ ged_rotate_arb_face(struct ged *gedp, int argc, const char *argv[])
     int vi;
     point_t pt;
     mat_t mat;
-    register int i;
+    int i;
     int pnt5;		/* special arb7 case */
     char *last;
     struct directory *dp;
@@ -199,7 +199,7 @@ ged_rotate_arb_face(struct ged *gedp, int argc, const char *argv[])
     (void)rt_arb_calc_points(arb, arb_type, planes, &gedp->ged_wdbp->wdb_tol);
 
     {
-	register int i;
+	int i;
 	mat_t invmat;
 
 	bn_mat_inv(invmat, mat);

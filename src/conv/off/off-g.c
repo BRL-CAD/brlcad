@@ -53,7 +53,7 @@ static struct bn_tol tol;
 int read_faces(struct model *m, FILE *fgeom)
 {
     int 		   nverts, nfaces, nedges;
-    register int 	   i, j, fail=0;
+    int 	   i, j, fail=0;
     fastf_t 	  *pts;
     struct vertex 	 **verts;
     struct faceuse 	 **outfaceuses;

@@ -37,7 +37,7 @@
 int
 ged_instance(struct ged *gedp, int argc, const char *argv[])
 {
-    register struct directory *dp;
+    struct directory *dp;
     char oper;
     static const char *usage = "obj comb [op]";
 

@@ -32,7 +32,7 @@
 
 /*
   void	gridRotate( fastf_t azim, fastf_t elev, fastf_t roll,
-  register fastf_t *des_H, register fastf_t *des_V )
+  fastf_t *des_H, fastf_t *des_V )
 
   Creates the unit vectors H and V which are the horizontal
   and vertical components of the grid in target coordinates.

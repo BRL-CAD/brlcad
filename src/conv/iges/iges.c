@@ -1257,7 +1257,7 @@ write_vertex_list( r, vtab, fp_dir, fp_param )
 
     for ( i=0; i<BU_PTBL_END( vtab ); i++ ) {
 	struct vertex                   *v;
-	register struct vertex_g        *vg;
+	struct vertex_g        *vg;
 
 	v = (struct vertex *)BU_PTBL_GET(vtab,i);
 	NMG_CK_VERTEX(v);

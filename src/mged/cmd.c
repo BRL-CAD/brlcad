@@ -94,8 +94,8 @@ static struct bu_vls tcl_output_hook;
 HIDDEN int
 output_catch(genptr_t clientdata, genptr_t str)
 {
-    register struct bu_vls *vp = (struct bu_vls *)clientdata;
-    register int len;
+    struct bu_vls *vp = (struct bu_vls *)clientdata;
+    int len;
 
     BU_CK_VLS(vp);
     len = bu_vls_strlen(vp);
@@ -222,8 +222,8 @@ cmd_ged_erase_wrapper(ClientData clientData, Tcl_Interp *interp, int argc, const
 int
 cmd_ged_gqa(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
-    register char **vp;
-    register int i;
+    char **vp;
+    int i;
     int ret;
     Tcl_DString ds;
     struct cmdtab *ctp = (struct cmdtab *)clientData;
@@ -368,7 +368,7 @@ extern struct rt_db_internal es_int;
 int
 cmd_ged_inside(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
-    register struct directory *dp;
+    struct directory *dp;
     int ret;
     int arg;
     Tcl_DString ds;
@@ -1194,7 +1194,7 @@ mged_cmd(
     char **argv,
     struct funtab in_functions[])
 {
-    register struct funtab *ftp;
+    struct funtab *ftp;
     struct funtab *functions;
 
     if (argc == 0)
@@ -1251,7 +1251,7 @@ mged_cmd(
 int
 f_comm(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
-    register int pid, rpid;
+    int pid, rpid;
     int retcode;
 
     if (argc != 1 || !classic_mged || curr_cmd_list != &head_cmd_list) {
@@ -1315,8 +1315,8 @@ f_quit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 HIDDEN int
 helpcomm(int argc, char **argv, struct funtab *functions)
 {
-    register struct funtab *ftp;
-    register int	i, bad;
+    struct funtab *ftp;
+    int	i, bad;
 
     bad = 0;
 
@@ -1350,7 +1350,7 @@ helpcomm(int argc, char **argv, struct funtab *functions)
 int
 f_help2(int argc, char **argv, struct funtab *functions)
 {
-    register struct funtab *ftp;
+    struct funtab *ftp;
 
     if (argc <= 1) {
 	Tcl_AppendResult(interp, "The following commands are available:\n", (char *)NULL);
@@ -1366,7 +1366,7 @@ f_help2(int argc, char **argv, struct funtab *functions)
 int
 f_fhelp2(int argc, char **argv, struct funtab *functions)
 {
-    register struct funtab *ftp;
+    struct funtab *ftp;
     struct bu_vls		str;
 
     if (argc <= 1) {
@@ -1404,7 +1404,7 @@ f_fhelp2(int argc, char **argv, struct funtab *functions)
 int
 f_tie(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    register int uflag = 0;		/* untie flag */
+    int uflag = 0;		/* untie flag */
     struct cmd_list *clp;
     struct dm_list *dlp;
     struct bu_vls vls;
@@ -1632,7 +1632,7 @@ f_pl(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
 int
 f_winset(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    register struct dm_list *p;
+    struct dm_list *p;
 
     if (argc < 1 || 2 < argc) {
 	struct bu_vls vls;

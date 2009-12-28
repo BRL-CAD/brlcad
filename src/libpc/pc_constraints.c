@@ -54,7 +54,7 @@ pc_isperpendicular(double ** v)
 void
 pc_mk_isperpendicular(struct pc_constrnt ** c,const char * name, const char ** args)
 {
-    register int i;
+    int i;
     
     pc_getconstraint_struct(c,2);
     bu_vls_strcat(&((*c)->name), name);

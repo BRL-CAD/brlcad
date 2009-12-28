@@ -65,7 +65,7 @@ int curcolor = 0;
 void
 get_rgb(unsigned char *rgb)
 {
-    register struct colors *cp;
+    struct colors *cp;
     if (++curcolor >= ncolors)  curcolor = 0;
     cp = &colortab[curcolor];
     rgb[0] = cp->c_pixel[0];

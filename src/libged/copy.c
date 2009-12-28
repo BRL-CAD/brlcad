@@ -36,7 +36,7 @@
 int
 ged_copy(struct ged *gedp, int argc, const char *argv[])
 {
-    register struct directory *from_dp;
+    struct directory *from_dp;
     struct bu_external external;
     int flags;
     static const char *usage = "from to";
@@ -84,7 +84,7 @@ ged_copy(struct ged *gedp, int argc, const char *argv[])
 int
 ged_dbcopy(struct ged *from_gedp, struct ged *to_gedp, const char *from, const char *to, int fflag)
 {
-    register struct directory *from_dp;
+    struct directory *from_dp;
     struct bu_external external;
     int exists;
 
@@ -121,7 +121,7 @@ ged_dbcopy(struct ged *from_gedp, struct ged *to_gedp, const char *from, const c
 
     /* Need to do something extra for _GLOBAL */
     if (to_gedp->ged_wdbp->dbip->dbi_version > 4 && !strcmp(to, DB5_GLOBAL_OBJECT_NAME)) {
-	register struct directory *to_dp;
+	struct directory *to_dp;
 	struct bu_attribute_value_set avs;
 	const char *val;
 

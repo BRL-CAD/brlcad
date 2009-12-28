@@ -44,7 +44,7 @@
 	\	Escapes special characters.
 */
 int
-match(register char *pattern, register char *string)
+match(char *pattern, char *string)
 {
     do
     {
@@ -67,7 +67,7 @@ match(register char *pattern, register char *string)
 			 any character not inside brackets.
 		      */
 	    {
-		register char	*rgtBracket;
+		char	*rgtBracket;
 		static int	negation;
 
 		++pattern; /* Skip over left bracket.		*/

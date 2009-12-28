@@ -114,7 +114,7 @@ char	buf[8*32];
 int
 main(int argc, char **argv)
 {
-    register int	c;
+    int	c;
     struct	uplot *up;
     int	desired_frame = 0;
     int	current_frame = 0;

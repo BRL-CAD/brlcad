@@ -36,8 +36,8 @@
 int
 ged_remove(struct ged *gedp, int argc, const char *argv[])
 {
-    register struct directory	*dp;
-    register int			i;
+    struct directory	*dp;
+    int			i;
     int				num_deleted;
     struct rt_db_internal		intern;
     struct rt_comb_internal		*comb;

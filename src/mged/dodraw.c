@@ -222,7 +222,7 @@ hack_for_lee(void)
  *  This routine must be prepared to run in parallel.
  */
 HIDDEN union tree *
-mged_wireframe_region_end(register struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+mged_wireframe_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
     return( curtree );
 }
@@ -415,7 +415,7 @@ mged_nmg_region_start(struct db_tree_state *tsp, struct db_full_path *pathp, con
  *  This routine must be prepared to run in parallel.
  */
 HIDDEN union tree *
-mged_nmg_region_end(register struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+mged_nmg_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
     struct nmgregion	*r;
     struct bu_list		vhead;
@@ -550,7 +550,7 @@ drawtrees(
     int	kind)
 {
     int		ret = 0;
-    register int	c;
+    int	c;
     int		ncpu;
     int		mged_nmg_use_tnurbs = 0;
 
@@ -618,7 +618,7 @@ drawtrees(
 	    case 'C':
 	    {
 		int		r, g, b;
-		register char	*cp = bu_optarg;
+		char	*cp = bu_optarg;
 
 		r = atoi(cp);
 		while ( (*cp >= '0' && *cp <= '9') )  cp++;
@@ -771,20 +771,20 @@ A production implementation will exist in the maintenance release.\n", (char *)N
  * XXX Should split out a separate bn_vlist_rpp() routine, for librt/vlist.c
  */
 void
-mged_bound_solid(register struct solid *sp)
+mged_bound_solid(struct solid *sp)
 {
-    register struct bn_vlist	*vp;
-    register double			xmax, ymax, zmax;
-    register double			xmin, ymin, zmin;
+    struct bn_vlist	*vp;
+    double			xmax, ymax, zmax;
+    double			xmin, ymin, zmin;
 
     xmax = ymax = zmax = -INFINITY;
     xmin = ymin = zmin =  INFINITY;
     sp->s_vlen = 0;
     for ( BU_LIST_FOR( vp, bn_vlist, &(sp->s_vlist) ) )  {
-	register int	j;
-	register int	nused = vp->nused;
-	register int	*cmd = vp->cmd;
-	register point_t *pt = vp->pt;
+	int	j;
+	int	nused = vp->nused;
+	int	*cmd = vp->cmd;
+	point_t *pt = vp->pt;
 	for ( j = 0; j < nused; j++, cmd++, pt++ )  {
 	    switch ( *cmd )  {
 		case BN_VLIST_POLY_START:
@@ -842,8 +842,8 @@ drawH_part2(
     struct db_tree_state	*tsp,
     struct solid		*existing_sp)
 {
-    register struct ged_display_list *gdlp;
-    register struct solid *sp;
+    struct ged_display_list *gdlp;
+    struct solid *sp;
 
     if ( !existing_sp )  {
 	/* Handling a new solid */
@@ -960,7 +960,7 @@ Do_getmat(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_lea
  */
 void
 pathHmat(
-    register struct solid *sp,
+    struct solid *sp,
     matp_t matp,
     int depth)
 {
@@ -1166,8 +1166,8 @@ invent_solid(
     long		rgb,
     int		copy)
 {
-    register struct ged_display_list *gdlp;
-    register struct solid *sp;
+    struct ged_display_list *gdlp;
+    struct solid *sp;
     struct directory *dp;
     int type = 0;
 
@@ -1234,7 +1234,7 @@ static union tree	*mged_facetize_tree;
  *  This routine must be prepared to run in parallel.
  */
 HIDDEN union tree *
-mged_facetize_region_end(register struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+mged_facetize_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
     struct bu_list		vhead;
 
@@ -1274,7 +1274,7 @@ int
 f_facetize(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
     int			i;
-    register int		c;
+    int		c;
     int			ncpu;
     int			triangulate;
     char			*newname;
@@ -1514,7 +1514,7 @@ int
 f_bev(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
     int			i;
-    register int		c;
+    int		c;
     int			ncpu;
     int			triangulate;
     char			*newname;
@@ -1817,8 +1817,8 @@ add_solid_path_to_result(
 int
 cmd_redraw_vlist(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    register struct ged_display_list *gdlp;
-    register struct ged_display_list *next_gdlp;
+    struct ged_display_list *gdlp;
+    struct ged_display_list *next_gdlp;
     struct directory	*dp;
     int		i;
 
@@ -1835,7 +1835,7 @@ cmd_redraw_vlist(ClientData clientData, Tcl_Interp *interp, int argc, char **arg
     }
 
     for ( i = 1; i < argc; i++ )  {
-	register struct solid	*sp;
+	struct solid	*sp;
 
 	if ( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY )) == NULL )
 	    continue;

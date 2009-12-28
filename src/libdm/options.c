@@ -37,7 +37,7 @@
 int
 dm_processOptions(struct dm *dmp, struct bu_vls *init_proc_vls, int argc, char **argv)
 {
-    register int c;
+    int c;
 
     bu_optind = 0;	 /* re-init bu_getopt */
     bu_opterr = 0;

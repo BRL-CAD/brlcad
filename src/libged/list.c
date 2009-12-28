@@ -34,13 +34,13 @@
 #include "./ged_private.h"
 
 
-void _ged_do_list(struct ged *gedp, register struct directory *dp, int verbose);
+void _ged_do_list(struct ged *gedp, struct directory *dp, int verbose);
 
 int
 ged_list(struct ged *gedp, int argc, const char *argv[])
 {
-    register struct directory	*dp;
-    register int		arg;
+    struct directory	*dp;
+    int		arg;
     int				id;
     int				recurse = 0;
     char			*listeval = "listeval";
@@ -129,7 +129,7 @@ ged_list(struct ged *gedp, int argc, const char *argv[])
  *			G E D _ D O _ L I S T
  */
 void
-_ged_do_list(struct ged *gedp, register struct directory *dp, int verbose)
+_ged_do_list(struct ged *gedp, struct directory *dp, int verbose)
 {
     int			id;
     struct rt_db_internal	intern;

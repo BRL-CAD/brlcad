@@ -36,8 +36,8 @@
 int
 ged_which_shader(struct ged *gedp, int argc, const char *argv[])
 {
-    register int j;
-    register struct directory *dp;
+    int j;
+    struct directory *dp;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
     int sflag;

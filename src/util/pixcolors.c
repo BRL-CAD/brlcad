@@ -59,8 +59,8 @@ void doit(FILE *fd)
 {
     unsigned long pixel, count;
     int bytes;
-    register int mask, i;
-    register unsigned long k;
+    int mask, i;
+    unsigned long k;
 
 
     count = 0;

@@ -40,7 +40,7 @@ static int frac_stat;
 int
 ged_fracture(struct ged *gedp, int argc, const char *argv[])
 {
-    register int i;
+    int i;
     struct directory *old_dp;
     struct rt_db_internal	old_intern;
     struct model	*m, *new_model;

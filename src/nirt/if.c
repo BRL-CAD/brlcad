@@ -279,7 +279,7 @@ if_miss(void)
  *
  */
 int
-if_overlap(register struct application *ap, register struct partition *pp, struct region *reg1, struct region *reg2, struct partition *InputHdp)
+if_overlap(struct application *ap, struct partition *pp, struct region *reg1, struct region *reg2, struct partition *InputHdp)
 {
     overlap *new_ovlp;
 

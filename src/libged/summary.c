@@ -40,7 +40,7 @@ ged_dir_summary(struct ged	*gedp,
 int
 ged_summary(struct ged *gedp, int argc, const char *argv[])
 {
-    register char *cp;
+    char *cp;
     int flags = 0;
     static const char *usage = "[p r g]";
 
@@ -92,8 +92,8 @@ static void
 ged_dir_summary(struct ged	*gedp,
 		int		flag)
 {
-    register struct directory *dp;
-    register int i;
+    struct directory *dp;
+    int i;
     static int sol, comb, reg;
     struct directory **dirp;
     struct directory **dirp0 = (struct directory **)NULL;

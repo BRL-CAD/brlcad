@@ -48,9 +48,9 @@
 
 
 /* defined in read.c */
-extern int get_line(register char *cp, int buflen, char *title);
+extern int get_line(char *cp, int buflen, char *title);
 extern int getint(char *cp, int start, int len);
-extern void namecvt(register int n, register char **cp, int c);
+extern void namecvt(int n, char **cp, int c);
 
 /* defined in cvt.c */
 extern void col_pr(char *str);
@@ -67,7 +67,7 @@ extern int	sol_total, sol_work;
 
 char	scard[132];			/* Solid card buffer area */
 
-void	trim_trail_spaces(register char *cp);
+void	trim_trail_spaces(char *cp);
 void	eat(int count);
 
 /*
@@ -174,9 +174,9 @@ getxsoldata(double *dp, int num, int solid_num)
  *			T R I M _ T R A I L _ S P A C E S
  */
 void
-trim_trail_spaces(register char *cp)
+trim_trail_spaces(char *cp)
 {
-    register char	*ep;
+    char	*ep;
 
     ep = cp + strlen(cp) - 1;
     while ( ep >= cp )  {
@@ -257,8 +257,8 @@ getsolid(void)
 
     /* Reduce solid type to lower case */
     {
-	register char	*cp;
-	register char	c;
+	char	*cp;
+	char	c;
 
 	cp = solid_type;
 	while ( (c = *cp) != '\0' )  {
@@ -734,10 +734,10 @@ read_arbn(char *name)
     plane_t	*eqn = (plane_t *)0;	/* plane equations */
     int	cur_eq = 0;		/* current (free) equation number */
     int	symm = 0;		/* symmetry about Y used */
-    register int	i;
+    int	i;
     int	j;
     int	k;
-    register int	m;
+    int	m;
     point_t	cent;			/* centroid of arbn */
     struct bn_tol	tol;
 
@@ -832,7 +832,7 @@ read_arbn(char *name)
 
     /* Get planes defined by their equation */
     for ( i=0; i < neq; i++ )  {
-	register double	scale;
+	double	scale;
 	if ( get_line( scard, sizeof(scard), "arbn plane equation card" ) == EOF )  {
 	    printf("too few cards for arbn %d\n",
 		   sol_work);

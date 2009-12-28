@@ -188,7 +188,7 @@ ged_move_arb_edge(struct ged *gedp, int argc, const char *argv[])
     }
 
     {
-	register int i;
+	int i;
 	mat_t invmat;
 
 	bn_mat_inv(invmat, mat);

@@ -49,7 +49,7 @@
  *		sin( A )^2  +  cos( A )^2  =  1 .
  */
 void
-grid_Rotate(fastf_t azim, fastf_t elev, fastf_t roll, register fastf_t *des_H, register fastf_t *des_V)
+grid_Rotate(fastf_t azim, fastf_t elev, fastf_t roll, fastf_t *des_H, fastf_t *des_V)
 {
     fastf_t	sn_azm = sin( azim );
     fastf_t	cs_azm = cos( azim );

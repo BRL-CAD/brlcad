@@ -43,7 +43,7 @@
 #define false		0
 #endif
 #define Swap_Integers( i_, j_ ) \
-		{	register int	k_ = i_; \
+		{	int	k_ = i_; \
 		i_ = j_; \
 		j_ = k_; \
 		}

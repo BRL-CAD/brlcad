@@ -50,9 +50,9 @@ Usage: fbgrid [-h -c] [-b | -d | -o] [-F framebuffer]\n\
 	[-S squaresize] [-W width] [-N height]\n";
 
 int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int c;
+    int c;
 
     while ((c = bu_getopt(argc, argv, "hcbdoF:s:w:n:S:W:N:")) != EOF) {
 	switch (c) {
@@ -168,11 +168,11 @@ grid(FBIO *fbiop, unsigned char *line, int spacing)
 void
 oldflavor(void)
 {
-    register FBIO	*fbiop;
-    register int	x, y;
-    register int	middle;
-    register int	mask;
-    register int	fb_sz;
+    FBIO	*fbiop;
+    int	x, y;
+    int	middle;
+    int	mask;
+    int	fb_sz;
     static RGBpixel	black, white, red;
 
     if ((fbiop = fb_open(NULL, fbwidth, fbheight)) == NULL) {

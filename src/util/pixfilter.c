@@ -75,9 +75,9 @@ Usage: pixfilter [-f type] [-v] [-d div] [-o offset]\n\
 	[-s squaresize] [-w width] [-n height] [file.pix] > file.pix\n";
 
 int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int c;
+    int c;
 
     while ( (c = bu_getopt( argc, argv, "vf:d:o:w:n:s:" )) != EOF )  {
 	switch ( c )  {

@@ -554,7 +554,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 int
 ged_vnirt(struct ged *gedp, int argc, const char *argv[])
 {
-    register int i;
+    int i;
     int status;
     fastf_t sf = 1.0 * DG_INV_GED;
     vect_t view_ray_orig;

@@ -121,7 +121,7 @@ main(argc, argv)
     char	*argv[];
 {
     int		i;
-    register int	c;
+    int	c;
     struct db_i	*dbip;
     char		idbuf[132];
     vect_t		h_delta, v_delta;

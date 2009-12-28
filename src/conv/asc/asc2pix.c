@@ -44,8 +44,8 @@ unsigned char line[256];
 int
 main(void)
 {
-    register int	a, b;
-    register int	i;
+    int	a, b;
+    int	i;
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
     setmode(fileno(stdin), O_BINARY);

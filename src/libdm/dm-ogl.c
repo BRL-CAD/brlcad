@@ -96,7 +96,7 @@ static float backColor[] = {1.0, 1.0, 0.0, 1.0}; /* yellow */
 
 
 #ifdef USE_PROTOTYPES
-HIDDEN int ogl_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int size, int use_aspect);
+HIDDEN int ogl_drawString2D(struct dm *dmp, char *str, fastf_t x, fastf_t y, int size, int use_aspect);
 HIDDEN int ogl_setLight(struct dm *dmp, int lighting_on);
 HIDDEN int ogl_setZBuffer(struct dm *dmp, int zbuffer_on);
 #else
@@ -1174,7 +1174,7 @@ ogl_drawEnd(struct dm *dmp)
 HIDDEN int
 ogl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 {
-    register fastf_t *mptr;
+    fastf_t *mptr;
     GLfloat gtmat[16];
     mat_t newm;
 
@@ -1264,9 +1264,9 @@ ogl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
  *
  */
 HIDDEN int
-ogl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
+ogl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 {
-    register struct bn_vlist *tvp;
+    struct bn_vlist *tvp;
     int first;
     int mflag = 1;
     static float black[4] = {0.0, 0.0, 0.0, 0.0};
@@ -1277,10 +1277,10 @@ ogl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
     /* Viewing region is from -1.0 to +1.0 */
     first = 1;
     for (BU_LIST_FOR(tvp, bn_vlist, &vp->l)) {
-	register int i;
-	register int nused = tvp->nused;
-	register int *cmd = tvp->cmd;
-	register point_t *pt = tvp->pt;
+	int i;
+	int nused = tvp->nused;
+	int *cmd = tvp->cmd;
+	point_t *pt = tvp->pt;
 	for (i = 0; i < nused; i++, cmd++, pt++) {
 	    if (dmp->dm_debugLevel > 2)
 		bu_log(" %d (%g %g %g)\n", *cmd, V3ARGS(pt));
@@ -1418,7 +1418,7 @@ ogl_normal(struct dm *dmp)
  * The starting position of the beam is as specified.
  */
 HIDDEN int
-ogl_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int size, int use_aspect)
+ogl_drawString2D(struct dm *dmp, char *str, fastf_t x, fastf_t y, int size, int use_aspect)
 {
     if (dmp->dm_debugLevel)
 	bu_log("ogl_drawString2D()\n");
@@ -1527,7 +1527,7 @@ ogl_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2)
 HIDDEN int
 ogl_drawLines3D(struct dm *dmp, int npoints, point_t *points)
 {
-    register int i;
+    int i;
     static float black[4] = {0.0, 0.0, 0.0, 0.0};
 
     if (dmp->dm_debugLevel)

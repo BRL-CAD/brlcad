@@ -43,8 +43,8 @@ dm_draw_data_axes(struct		dm *dmp,
 		  const mat_t			rmat,     /* view rotation matrix */
 		  struct ged_axes_state *gasp)
 {
-    register int i, j;
-    register fastf_t halfAxesSize;		/* half the length of an axis */
+    int i, j;
+    fastf_t halfAxesSize;		/* half the length of an axis */
     point_t v2;
     point_t rxv1, rxv2;
     point_t ryv1, ryv2;
@@ -202,7 +202,7 @@ dm_draw_data_axes(struct		dm *dmp,
 		  const mat_t		rmat,     /* view rotation matrix */
 		  struct ged_axes_state *gasp)
 {
-    register fastf_t halfAxesSize;		/* half the length of an axis */
+    fastf_t halfAxesSize;		/* half the length of an axis */
     point_t v2;
     point_t rxv1, rxv2;
     point_t ryv1, ryv2;
@@ -266,11 +266,11 @@ dm_draw_axes(struct dm			*dmp,
 	     const mat_t		rmat,       /* view rotation matrix */
 	     struct ged_axes_state 	*gasp)
 {
-    register fastf_t halfAxesSize;		/* half the length of an axis */
-    register fastf_t xlx, xly;			/* X axis label position */
-    register fastf_t ylx, yly;			/* Y axis label position */
-    register fastf_t zlx, zly;			/* Z axis label position */
-    register fastf_t l_offset = 0.0078125;	/* axis label offset from axis endpoints */
+    fastf_t halfAxesSize;		/* half the length of an axis */
+    fastf_t xlx, xly;			/* X axis label position */
+    fastf_t ylx, yly;			/* Y axis label position */
+    fastf_t zlx, zly;			/* Z axis label position */
+    fastf_t l_offset = 0.0078125;	/* axis label offset from axis endpoints */
     point_t v2;
     point_t rxv1, rxv2;
     point_t ryv1, ryv2;

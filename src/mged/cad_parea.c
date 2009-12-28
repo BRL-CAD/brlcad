@@ -40,7 +40,7 @@ typedef struct
     double	y;			/* Y coordinate */
 }	point;			/* polygon vertex */
 
-static int	GetArgs(int argc, char **argv), Input(register point *coop);
+static int	GetArgs(int argc, char **argv), Input(point *coop);
 static void	Output(double result), Usage(void);
 
 
@@ -60,7 +60,7 @@ main(int argc, char **argv)			/* "cad_parea" entry point */
     point		previous;	/* previous point */
     point		current;	/* current point */
     point		first;		/* saved first point */
-    register int	saved;		/* "`first' valid" flag */
+    int	saved;		/* "`first' valid" flag */
     double		sum;		/* accumulator */
 
     if ( !GetArgs( argc, argv ) )	/* process command arguments */
@@ -161,7 +161,7 @@ GetArgs(int argc, char **argv)			/* process command arguments */
 
 
 static int
-Input(register point *coop)				/* input a coordinate record */
+Input(point *coop)				/* input a coordinate record */
     /* -> input coordinates */
 {
     char		inbuf[82];	/* input record buffer */
@@ -169,7 +169,7 @@ Input(register point *coop)				/* input a coordinate record */
     while ( bu_fgets( inbuf, (int)sizeof inbuf, stdin ) != NULL )
     {
 	/* scan input record */
-	register int	cvt;	/* # converted fields */
+	int	cvt;	/* # converted fields */
 
 	cvt = sscanf( inbuf, " %le %le", &coop->x, &coop->y );
 

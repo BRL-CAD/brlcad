@@ -67,7 +67,7 @@ main(int argc, char **argv)
     int	rt, gt, bt;
     int	n;
     int	nby;
-    register unsigned char	*cp;
+    unsigned char	*cp;
 
     if ( argc != 2 )  {
 	bu_exit(1, "Usage: pixsaturate saturation\n");

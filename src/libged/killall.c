@@ -60,7 +60,7 @@ ged_killall(struct ged *gedp, int argc, const char *argv[])
 
     /* Process the -n option */
     if (argc > 1 && argv[1][0] == '-' && argv[1][1] == 'n' && argv[1][2] == '\0') {
-	register int i;
+	int i;
 	nflag = 1;
 
 	/* Objects that would be killed are in the first sublist */

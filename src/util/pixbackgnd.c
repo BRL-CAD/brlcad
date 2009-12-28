@@ -47,7 +47,7 @@ int	title_height = 80;
 int	h_start = 240;
 int	h_end = 50;
 
-void	rgbhsv(register double *rgb, register double *hsv), hsvrgb(register double *hsv, register double *rgb);
+void	rgbhsv(double *rgb, double *hsv), hsvrgb(double *hsv, double *rgb);
 
 char usage[] = "\
 Usage:  pixbackgnd [-h -i] [-s squaresize] [-w width] [-n height]\n\
@@ -57,9 +57,9 @@ or	r g b\n\
 	> file.pix";
 
 int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int c;
+    int c;
 
     while ( (c = bu_getopt( argc, argv, "his:w:n:t:a:b:" )) != EOF )  {
 	switch ( c )  {
@@ -121,11 +121,11 @@ get_args(int argc, register char **argv)
 int
 main(int argc, char **argv)
 {
-    register int i;
-    register int line;
-    register unsigned char *horiz_buf;
+    int i;
+    int line;
+    unsigned char *horiz_buf;
     unsigned char *vert_buf;
-    register unsigned char *vp;
+    unsigned char *vp;
 
     if ( !get_args( argc, argv ) || isatty(fileno(stdout)) )  {
 	(void)fputs(usage, stderr);
@@ -190,7 +190,7 @@ main(int argc, char **argv)
      */
     if ( !invert )  {
 	for ( line = file_height-1; line >= 0; line-- )  {
-	    register unsigned char *op;
+	    unsigned char *op;
 
 	    vp = &vert_buf[line*3];
 	    op = &horiz_buf[(file_width*3)-1];
@@ -204,7 +204,7 @@ main(int argc, char **argv)
     } else {
 	/* Inverted:  top-to-bottom.  Good with cat-fb */
 	for ( line=0; line < file_height; line++ )  {
-	    register unsigned char *op;
+	    unsigned char *op;
 
 	    vp = &vert_buf[line*3];
 	    op = &horiz_buf[(file_width*3)-1];
@@ -224,7 +224,7 @@ main(int argc, char **argv)
  * convert red green blue to hue saturation value
  */
 void
-rgbhsv(register double *rgb, register double *hsv)
+rgbhsv(double *rgb, double *hsv)
 {
     double s, v, r, g, b, x;
     static double h;
@@ -274,7 +274,7 @@ rgbhsv(register double *rgb, register double *hsv)
  */
 
 void
-hsvrgb(register double *hsv, register double *rgb)
+hsvrgb(double *hsv, double *rgb)
 {
     double r, g, b, m, n, k, foo;
     double h, s, v;

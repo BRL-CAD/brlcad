@@ -61,7 +61,7 @@ main(int argc, char **argv)
 {
     int	i;
     int	nr, ng, nb, num;
-    register unsigned char *obufp;
+    unsigned char *obufp;
     FILE	*rfp, *bfp, *gfp;
 
     if ( argc != 4 || isatty(fileno(stdout)) ) {

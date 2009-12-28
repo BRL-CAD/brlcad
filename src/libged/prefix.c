@@ -38,8 +38,8 @@ static void ged_do_prefix(struct db_i *dbip, struct rt_comb_internal *comb, unio
 int
 ged_prefix(struct ged *gedp, int argc, const char *argv[])
 {
-    register int i, k;
-    register struct directory *dp;
+    int i, k;
+    struct directory *dp;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
     char tempstring_v4[NAMESIZE+1];

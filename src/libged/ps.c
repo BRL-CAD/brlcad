@@ -99,11 +99,11 @@ ged_draw_ps_solid(struct ged *gedp, FILE *fp, struct solid *sp, matp_t psmat)
     static vect_t		last;
     point_t			clipmin = {-1.0, -1.0, -MAX_FASTF};
     point_t			clipmax = {1.0, 1.0, MAX_FASTF};
-    register struct bn_vlist	*tvp;
-    register point_t		*pt_prev=NULL;
-    register fastf_t		dist_prev=1.0;
-    register fastf_t		dist;
-    register struct bn_vlist 	*vp = (struct bn_vlist *)&sp->s_vlist;
+    struct bn_vlist	*tvp;
+    point_t		*pt_prev=NULL;
+    fastf_t		dist_prev=1.0;
+    fastf_t		dist;
+    struct bn_vlist 	*vp = (struct bn_vlist *)&sp->s_vlist;
     fastf_t			delta;
     int 			useful = 0;
 
@@ -123,10 +123,10 @@ ged_draw_ps_solid(struct ged *gedp, FILE *fp, struct solid *sp, matp_t psmat)
 	delta = SQRT_SMALL_FASTF;
 
     for ( BU_LIST_FOR( tvp, bn_vlist, &vp->l ) )  {
-	register int	i;
-	register int	nused = tvp->nused;
-	register int	*cmd = tvp->cmd;
-	register point_t *pt = tvp->pt;
+	int	i;
+	int	nused = tvp->nused;
+	int	*cmd = tvp->cmd;
+	point_t *pt = tvp->pt;
 	for ( i = 0; i < nused; i++, cmd++, pt++ )  {
 	    static vect_t	start, fin;
 	    switch ( *cmd )  {
@@ -233,8 +233,8 @@ ged_draw_ps_solid(struct ged *gedp, FILE *fp, struct solid *sp, matp_t psmat)
 static void
 ged_draw_ps_body(struct ged *gedp, FILE *fp)
 {
-    register struct ged_display_list *gdlp;
-    register struct ged_display_list *next_gdlp;
+    struct ged_display_list *gdlp;
+    struct ged_display_list *next_gdlp;
     mat_t new;
     matp_t mat;
     mat_t perspective_mat;

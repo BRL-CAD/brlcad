@@ -784,7 +784,7 @@ static int rpt_ovlp (struct application *ap, struct partition *pp, struct region
 
 void init_plot3 (struct application *ap)
 {
-    register struct rt_i *rtip;
+    struct rt_i *rtip;
     struct g_lint_ctrl *cp;
 
     RT_AP_CHECK(ap);

@@ -36,9 +36,9 @@
 int
 ged_comb(struct ged *gedp, int argc, const char *argv[])
 {
-    register struct directory *dp;
+    struct directory *dp;
     char *comb_name;
-    register int i;
+    int i;
     char oper;
     static const char *usage = "comb_name <operation solid>";
 
@@ -115,14 +115,14 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
  */
 struct directory *
 _ged_combadd(struct ged			*gedp,
-	    register struct directory	*objp,
+	    struct directory	*objp,
 	    char			*combname,
 	    int				region_flag,	/* true if adding region */
 	    int				relation,	/* = UNION, SUBTRACT, INTERSECT */
 	    int				ident,		/* "Region ID" */
 	    int				air		/* Air code */)
 {
-    register struct directory *dp;
+    struct directory *dp;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
     union tree *tp;

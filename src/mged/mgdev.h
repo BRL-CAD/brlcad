@@ -44,8 +44,8 @@
 /*
  * Special Addresses in MEGATEK display list
  */
-#define MDL_CONTROL	0x0000FFF1L	/* Graphics Engine control register */
-#define MDL_COLORMAP	0x0000FEC0L	/* Color Lookup Table register */
+#define MDL_CONTROL	0x0000FFF1L	/* Graphics Engine control */
+#define MDL_COLORMAP	0x0000FEC0L	/* Color Lookup Table */
 #define MDL_LIST_START	0x00000001L	/* display list START address */
 #define MDL_FORG_START	0x00000003L	/* foreground START address */
 #define MDL_FSCD	0x000000C0L	/* first FSCD control block */

@@ -61,9 +61,9 @@ Usage: fb-bw [-h -i] [-F framebuffer]\n\
 	[-s squaresize] [-w width] [-n height] [file.bw]\n";
 
 int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int c;
+    int c;
 
     while ( (c = bu_getopt( argc, argv, "hiF:X:Y:s:w:n:" )) != EOF )  {
 	switch ( c )  {

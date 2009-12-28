@@ -39,9 +39,9 @@
 int
 ged_illum(struct ged *gedp, int argc, const char *argv[])
 {
-    register struct ged_display_list *gdlp;
-    register struct ged_display_list *next_gdlp;
-    register struct solid *sp;
+    struct ged_display_list *gdlp;
+    struct ged_display_list *next_gdlp;
+    struct solid *sp;
     int found = 0;
     int illum = 1;
     static const char *usage = "[-n] obj";
@@ -77,7 +77,7 @@ ged_illum(struct ged *gedp, int argc, const char *argv[])
 	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
-	    register int i;
+	    int i;
 
 	    for (i = 0; i < sp->s_fullpath.fp_len; ++i) {
 		if (*argv[1] == *DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_namep &&

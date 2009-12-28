@@ -36,8 +36,8 @@
 int
 ged_which(struct ged *gedp, int argc, const char *argv[])
 {
-    register int	i, j;
-    register struct directory *dp;
+    int	i, j;
+    struct directory *dp;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
     struct _ged_id_to_names headIdName;

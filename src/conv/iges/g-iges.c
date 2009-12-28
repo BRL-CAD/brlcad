@@ -179,7 +179,7 @@ int
 main(int argc, char *argv[])
 {
     int			i, ret;
-    register int		c;
+    int		c;
     double			percent;
     char			copy_buffer[CP_BUF_SIZE] = {0};
     struct directory	*dp;
@@ -461,7 +461,7 @@ main(int argc, char *argv[])
  */
 union tree *
 do_nmg_region_end(tsp, pathp, curtree, client_data)
-    register struct db_tree_state	*tsp;
+    struct db_tree_state	*tsp;
     struct db_full_path	*pathp;
     union tree		*curtree;
     genptr_t		client_data;

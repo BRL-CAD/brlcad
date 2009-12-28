@@ -1959,10 +1959,10 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 	}
 	case ID_BSPLINE:
 	{
-	    register struct rt_nurb_internal *sip =
+	    struct rt_nurb_internal *sip =
 		(struct rt_nurb_internal *) es_int.idb_ptr;
-	    register struct face_g_snurb	*surf;
-	    register fastf_t *fp;
+	    struct face_g_snurb	*surf;
+	    fastf_t *fp;
 
 	    RT_NURB_CK_MAGIC(sip);
 	    surf = sip->srfs[spl_surfno];
@@ -1985,7 +1985,7 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 	}
 	case ID_ARS:
 	{
-	    register struct rt_ars_internal *ars =
+	    struct rt_ars_internal *ars =
 		(struct rt_ars_internal *)es_int.idb_ptr;
 	    RT_ARS_CK_MAGIC(ars);
 
@@ -2104,7 +2104,7 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 	    struct faceuse *fu;
 	    struct shell *s;
 	    struct nmgregion *r;
-	    register struct model *m =
+	    struct model *m =
 		(struct model *) es_int.idb_ptr;
 	    NMG_CK_MODEL(m);
 	    /* XXX Fall through, for now (How about first vertex?? - JRA) */
@@ -2238,7 +2238,7 @@ set_e_axes_pos(int both)
        set e_axes_pos and curr_e_axes_pos */
 {
     int i;
-    register struct dm_list *dmlp;
+    struct dm_list *dmlp;
 
     update_views = 1;
     switch (es_int.idb_type) {
@@ -2418,7 +2418,7 @@ set_e_axes_pos(int both)
 void
 init_sedit(void)
 {
-    register int type;
+    int type;
     int id;
 
     if (dbip == DBI_NULL || !illump)
@@ -2467,9 +2467,9 @@ init_sedit(void)
 	}
 	bu_vls_free(&error_msg);
     } else if (id == ID_BSPLINE) {
-	register struct rt_nurb_internal *sip =
+	struct rt_nurb_internal *sip =
 	    (struct rt_nurb_internal *) es_int.idb_ptr;
-	register struct face_g_snurb	*surf;
+	struct face_g_snurb	*surf;
 	RT_NURB_CK_MAGIC(sip);
 	spl_surfno = sip->nsrf/2;
 	surf = sip->srfs[spl_surfno];
@@ -2555,10 +2555,10 @@ init_sedit_vars(void)
 void
 replot_editing_solid(void)
 {
-    register struct ged_display_list *gdlp;
-    register struct ged_display_list *next_gdlp;
+    struct ged_display_list *gdlp;
+    struct ged_display_list *next_gdlp;
     mat_t mat;
-    register struct solid *sp;
+    struct solid *sp;
     struct directory *illdp;
 
     if (!illump) {
@@ -2825,7 +2825,7 @@ sedit(void)
     struct rt_arb_internal *arb;
     fastf_t	*eqp;
     static vect_t work;
-    register int i;
+    int i;
     static int pnt5;		/* ECMD_ARB_SETUP_ROTFACE, special arb7 case */
     static float la, lb, lc, ld;	/* TGC: length of vectors */
     mat_t mat;
@@ -3800,10 +3800,10 @@ sedit(void)
 
 		/* Keyboard parameter:  new position in model space.
 		 * XXX for now, splines only here */
-		register struct rt_nurb_internal *sip =
+		struct rt_nurb_internal *sip =
 		    (struct rt_nurb_internal *) es_int.idb_ptr;
-		register struct face_g_snurb	*surf;
-		register fastf_t	*fp;
+		struct face_g_snurb	*surf;
+		fastf_t	*fp;
 
 		RT_NURB_CK_MAGIC(sip);
 		surf = sip->srfs[spl_surfno];
@@ -7625,9 +7625,9 @@ void oedit_reject(void);
 static void
 oedit_apply(int continue_editing)
 {
-    register struct ged_display_list *gdlp;
-    register struct ged_display_list *next_gdlp;
-    register struct solid *sp;
+    struct ged_display_list *gdlp;
+    struct ged_display_list *next_gdlp;
+    struct solid *sp;
     /* matrices used to accept editing done from a depth
      *	>= 2 from the top of the illuminated path
      */
@@ -7695,9 +7695,9 @@ oedit_apply(int continue_editing)
 void
 oedit_accept(void)
 {
-    register struct ged_display_list *gdlp;
-    register struct ged_display_list *next_gdlp;
-    register struct solid *sp;
+    struct ged_display_list *gdlp;
+    struct ged_display_list *next_gdlp;
+    struct solid *sp;
 
     if (dbip == DBI_NULL)
 	return;
@@ -7949,9 +7949,9 @@ sedit_reject(void)
 
     /* Restore the original solid everywhere */
     {
-	register struct ged_display_list *gdlp;
-	register struct ged_display_list *next_gdlp;
-	register struct solid *sp;
+	struct ged_display_list *gdlp;
+	struct ged_display_list *next_gdlp;
+	struct solid *sp;
 
 	gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
 	while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
@@ -7977,7 +7977,7 @@ sedit_reject(void)
 int
 mged_param(Tcl_Interp *interp, int argc, fastf_t *argvect)
 {
-    register int i;
+    int i;
 
     CHECK_DBI_NULL;
 
@@ -8098,7 +8098,7 @@ mged_param(Tcl_Interp *interp, int argc, fastf_t *argvect)
 int
 f_param(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    register int i;
+    int i;
     vect_t argvect;
 
     CHECK_DBI_NULL;
@@ -8136,7 +8136,7 @@ label_edited_solid(
     const mat_t xform,
     struct rt_db_internal	*ip)
 {
-    register int i;
+    int i;
     point_t work;
     point_t pos_view;
     int npl = 0;
@@ -8529,7 +8529,7 @@ label_edited_solid(
 
 	case ID_ARS:
 	{
-	    register struct rt_ars_internal *ars=
+	    struct rt_ars_internal *ars=
 		(struct rt_ars_internal *)es_int.idb_ptr;
 
 	    RT_ARS_CK_MAGIC(ars);
@@ -8550,10 +8550,10 @@ label_edited_solid(
 
 	case ID_BSPLINE:
 	{
-	    register struct rt_nurb_internal *sip =
+	    struct rt_nurb_internal *sip =
 		(struct rt_nurb_internal *) es_int.idb_ptr;
-	    register struct face_g_snurb	*surf;
-	    register fastf_t	*fp;
+	    struct face_g_snurb	*surf;
+	    fastf_t	*fp;
 
 	    RT_NURB_CK_MAGIC(sip);
 	    surf = sip->srfs[spl_surfno];
@@ -8580,7 +8580,7 @@ label_edited_solid(
 	    /* New way only */
 	{
 #ifndef NO_MAGIC_CHECKING
-	    register struct model *m =
+	    struct model *m =
 		(struct model *) es_int.idb_ptr;
 	    NMG_CK_MODEL(m);
 #endif
@@ -8600,7 +8600,7 @@ label_edited_solid(
 	case ID_PIPE:
 	{
 #ifndef NO_MAGIC_CHECKING
-	    register struct rt_pipe_internal *pipe =
+	    struct rt_pipe_internal *pipe =
 		(struct rt_pipe_internal *)es_int.idb_ptr;
 
 	    RT_PIPE_CK_MAGIC(pipe);
@@ -8616,7 +8616,7 @@ label_edited_solid(
 	break;
 	case ID_CLINE:
 	{
-	    register struct rt_cline_internal *cli =
+	    struct rt_cline_internal *cli =
 		(struct rt_cline_internal *)es_int.idb_ptr;
 	    point_t work1;
 
@@ -8632,7 +8632,7 @@ label_edited_solid(
 	break;
 	case ID_BOT:
 	{
-	    register struct rt_bot_internal *bot =
+	    struct rt_bot_internal *bot =
 		(struct rt_bot_internal *)es_int.idb_ptr;
 
 	    RT_BOT_CK_MAGIC(bot);
@@ -8680,7 +8680,7 @@ label_edited_solid(
 	case ID_METABALL:
 	{
 #ifndef NO_MAGIC_CHECKING
-	    register struct rt_metaball_internal *metaball =
+	    struct rt_metaball_internal *metaball =
 		(struct rt_metaball_internal *)es_int.idb_ptr;
 
 	    RT_METABALL_CK_MAGIC(metaball);
@@ -8753,9 +8753,9 @@ rt_vl_closest3d(struct bu_list *vhead, fastf_t *ref_pt, fastf_t *closest_pt)
     c_pt = cur_vp->pt[0];
 
     for (BU_LIST_FOR(cur_vp, bn_vlist, vhead)) {
-	register int i;
-	register int nused = cur_vp->nused;
-	register point_t *cur_pt = cur_vp->pt;
+	int i;
+	int nused = cur_vp->nused;
+	point_t *cur_pt = cur_vp->pt;
 
 	for (i = 0; i < nused; i++) {
 	    cur_dist = DIST3D(ref_pt, cur_pt[i]);
@@ -8799,9 +8799,9 @@ rt_vl_closest2d(struct bu_list *vhead, fastf_t *ref_pt, fastf_t *mat, fastf_t *c
     c_pt = cur_vp->pt[0];
 
     for (BU_LIST_FOR(cur_vp, bn_vlist, vhead)) {
-	register int i;
-	register int nused = cur_vp->nused;
-	register point_t *cur_pt = cur_vp->pt;
+	int i;
+	int nused = cur_vp->nused;
+	point_t *cur_pt = cur_vp->pt;
 
 	for (i = 0; i < nused; i++) {
 	    MAT4X3PNT(cur_pt2d, mat, cur_pt[i]);
@@ -9257,7 +9257,7 @@ f_get_sedit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 int
 f_put_sedit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    register const struct rt_functab *ftp;
+    const struct rt_functab *ftp;
     long save_magic;
     int context;
 

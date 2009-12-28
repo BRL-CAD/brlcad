@@ -57,7 +57,7 @@
 int
 cmd_import_body(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    register struct directory	*dp;
+    struct directory	*dp;
     struct stat			stat_buf;
     int				major_code, minor_code;
     int				majc, minc;
@@ -226,7 +226,7 @@ cmd_import_body(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 int
 cmd_export_body(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    register struct directory	*dp;
+    struct directory	*dp;
     int				fd;
     void			*bufp;
     size_t			nbytes = 0;

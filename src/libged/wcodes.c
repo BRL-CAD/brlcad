@@ -51,10 +51,10 @@ static int printcodes(struct ged *gedp, FILE *fp, struct directory *dp, int path
 int
 ged_wcodes(struct ged *gedp, int argc, const char *argv[])
 {
-    register int i;
+    int i;
     int status;
     FILE *fp;
-    register struct directory *dp;
+    struct directory *dp;
     static const char *usage = "filename object(s)";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);

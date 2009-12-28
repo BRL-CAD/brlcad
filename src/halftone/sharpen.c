@@ -69,8 +69,8 @@ sharpen(unsigned char *buf, int size, int num, FILE *file, unsigned char *Map)
     static unsigned char *last, *cur=0, *next;
     static int linelen;
     int result;
-    register int newvalue;
-    register  int i, value;
+    int newvalue;
+     int i, value;
 
 /*
  *	if no sharpening going on then just read from the file and exit.

@@ -36,7 +36,7 @@ int
 ged_put(struct ged *gedp, int argc, const char *argv[])
 {
     struct rt_db_internal intern;
-    register const struct rt_functab *ftp;
+    const struct rt_functab *ftp;
     int i;
     char *name;
     char type[16];

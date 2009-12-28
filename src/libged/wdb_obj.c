@@ -216,7 +216,7 @@ static int wdb_expand_tcl(ClientData clientData, Tcl_Interp *interp, int argc, c
 static int wdb_kill_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
 static int wdb_killall_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
 static int wdb_killtree_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static void wdb_killtree_callback(struct db_i *dbip, register struct directory *dp, genptr_t ptr);
+static void wdb_killtree_callback(struct db_i *dbip, struct directory *dp, genptr_t ptr);
 static int wdb_copy_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
 static int wdb_move_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
 static int wdb_move_all_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
@@ -269,17 +269,17 @@ void wdb_deleteProc(ClientData clientData);
 static void wdb_deleteProc_rt(ClientData clientData);
 
 int wdb_cmpdirname(const genptr_t a, const genptr_t b);
-void wdb_vls_col_item(struct bu_vls *str, register char *cp, int *ccp, int *clp);
+void wdb_vls_col_item(struct bu_vls *str, char *cp, int *ccp, int *clp);
 void wdb_vls_col_eol(struct bu_vls *str, int *ccp, int *clp);
 void wdb_vls_col_pr4v(struct bu_vls *vls, struct directory **list_of_names, int num_in_list, int no_decorate);
 void wdb_vls_long_dpp(struct bu_vls *vls, struct directory **list_of_names, int num_in_list, int aflag, int cflag, int rflag, int sflag);
 void wdb_vls_line_dpp(struct bu_vls *vls, struct directory **list_of_names, int num_in_list, int aflag, int cflag, int rflag, int sflag);
-void wdb_do_list(struct db_i *dbip, Tcl_Interp *interp, struct bu_vls *outstrp, register struct directory *dp, int verbose);
-struct directory ** wdb_getspace(struct db_i *dbip, register int num_entries);
-struct directory *wdb_combadd(Tcl_Interp *interp, struct db_i *dbip, register struct directory *objp, char *combname, int region_flag, int relation, int ident, int air, struct rt_wdb *wdbp);
+void wdb_do_list(struct db_i *dbip, Tcl_Interp *interp, struct bu_vls *outstrp, struct directory *dp, int verbose);
+struct directory ** wdb_getspace(struct db_i *dbip, int num_entries);
+struct directory *wdb_combadd(Tcl_Interp *interp, struct db_i *dbip, struct directory *objp, char *combname, int region_flag, int relation, int ident, int air, struct rt_wdb *wdbp);
 void wdb_identitize(struct directory *dp, struct db_i *dbip, Tcl_Interp *interp);
 static void wdb_dir_summary(struct db_i *dbip, Tcl_Interp *interp, int flag);
-static struct directory ** wdb_dir_getspace(struct db_i *dbip, register int num_entries);
+static struct directory ** wdb_dir_getspace(struct db_i *dbip, int num_entries);
 static union tree *wdb_pathlist_leaf_func(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data);
 HIDDEN union tree *facetize_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
 int wdb_dir_check(struct db_i *input_dbip, const char *name, long laddr, int len, int flags, genptr_t ptr);
@@ -1075,7 +1075,7 @@ wdb_put_cmd(struct rt_wdb *wdbp,
 	    char *argv[])
 {
     struct rt_db_internal intern;
-    register const struct rt_functab *ftp;
+    const struct rt_functab *ftp;
     int i;
     char *name;
     char type[16];
@@ -1188,7 +1188,7 @@ wdb_adjust_cmd(struct rt_wdb *wdbp,
 	       int argc,
 	       char *argv[])
 {
-    register struct directory *dp;
+    struct directory *dp;
     int status;
     char *name;
     struct rt_db_internal intern;
@@ -1349,8 +1349,8 @@ wdb_tops_cmd(struct rt_wdb *wdbp,
 	     int argc,
 	     char *argv[])
 {
-    register struct directory *dp;
-    register int i;
+    struct directory *dp;
+    int i;
     struct directory **dirp;
     struct directory **dirp0 = (struct directory **)NULL;
     struct bu_vls vls;
@@ -2003,8 +2003,8 @@ wdb_ls_cmd(struct rt_wdb *wdbp,
 	   char *argv[])
 {
     struct bu_vls vls;
-    register struct directory *dp;
-    register int i;
+    struct directory *dp;
+    int i;
     int c;
     int aflag = 0;		/* print all objects without formatting */
     int cflag = 0;		/* print combinations */
@@ -2185,8 +2185,8 @@ wdb_list_cmd(struct rt_wdb *wdbp,
 	     int argc,
 	     char *argv[])
 {
-    register struct directory *dp;
-    register int arg;
+    struct directory *dp;
+    int arg;
     struct bu_vls str;
     int id;
     int recurse = 0;
@@ -2434,9 +2434,9 @@ wdb_expand_cmd(struct rt_wdb *wdbp,
 	       int argc,
 	       char *argv[])
 {
-    register char *pattern;
-    register struct directory *dp;
-    register int i, whicharg;
+    char *pattern;
+    struct directory *dp;
+    int i, whicharg;
     int regexp, nummatch, thismatch, backslashed;
 
     if (argc < 1 || MAXARGS < argc) {
@@ -2534,8 +2534,8 @@ wdb_kill_cmd(struct rt_wdb *wdbp,
 	     int argc,
 	     char *argv[])
 {
-    register struct directory *dp;
-    register int i;
+    struct directory *dp;
+    int i;
     int is_phony;
     int verbose = LOOKUP_NOISY;
 
@@ -2613,8 +2613,8 @@ wdb_killall_cmd(struct rt_wdb *wdbp,
 		int argc,
 		char *argv[])
 {
-    register int i, k;
-    register struct directory *dp;
+    int i, k;
+    struct directory *dp;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
     int ret;
@@ -2719,8 +2719,8 @@ wdb_killtree_cmd(struct rt_wdb *wdbp,
 		 int argc,
 		 char *argv[])
 {
-    register struct directory *dp;
-    register int i;
+    struct directory *dp;
+    int i;
     struct wdb_killtree_data ktd;
 
     WDB_TCL_CHECK_READ_ONLY;
@@ -2783,7 +2783,7 @@ wdb_killtree_tcl(ClientData clientData,
  */
 static void
 wdb_killtree_callback(struct db_i *dbip,
-		      register struct directory *dp,
+		      struct directory *dp,
 		      genptr_t ptr) {
     struct wdb_killtree_data *ktdp = (struct wdb_killtree_data *)ptr;
     Tcl_Interp *interp = ktdp->interp;
@@ -2814,8 +2814,8 @@ wdb_copy_cmd(struct rt_wdb *wdbp,
 	     int argc,
 	     char *argv[])
 {
-    register struct directory *proto;
-    register struct directory *dp;
+    struct directory *proto;
+    struct directory *dp;
     struct bu_external external;
 
     WDB_TCL_CHECK_READ_ONLY;
@@ -2903,7 +2903,7 @@ wdb_move_cmd(struct rt_wdb *wdbp,
 	     int argc,
 	     char *argv[])
 {
-    register struct directory *dp;
+    struct directory *dp;
     struct rt_db_internal intern;
 
     WDB_TCL_CHECK_READ_ONLY;
@@ -2975,8 +2975,8 @@ wdb_move_all_cmd(struct rt_wdb *wdbp,
 		 int argc,
 		 char *argv[])
 {
-    register int i;
-    register struct directory *dp;
+    int i;
+    struct directory *dp;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
     struct bu_ptbl stack;
@@ -3739,7 +3739,7 @@ struct dir_check_stuff {
  *
  */
 void
-wdb_dir_check5(register struct db_i *input_dbip,
+wdb_dir_check5(struct db_i *input_dbip,
 	       const struct db5_raw_internal *rip,
 	       long addr,
 	       genptr_t ptr)
@@ -3804,7 +3804,7 @@ wdb_dir_check5(register struct db_i *input_dbip,
  * Check a name against the global directory.
  */
 int
-wdb_dir_check(register struct db_i *input_dbip, register const char *name, long int laddr, int len, int flags, genptr_t ptr)
+wdb_dir_check(struct db_i *input_dbip, const char *name, long int laddr, int len, int flags, genptr_t ptr)
 {
     struct directory *dupdp;
     struct bu_vls local;
@@ -3960,8 +3960,8 @@ wdb_group_cmd(struct rt_wdb *wdbp,
 	      int argc,
 	      char *argv[])
 {
-    register struct directory *dp;
-    register int i;
+    struct directory *dp;
+    int i;
 
     WDB_TCL_CHECK_READ_ONLY;
 
@@ -4012,8 +4012,8 @@ wdb_remove_cmd(struct rt_wdb *wdbp,
 	       int argc,
 	       char *argv[])
 {
-    register struct directory *dp;
-    register int i;
+    struct directory *dp;
+    int i;
     int num_deleted;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
@@ -4098,7 +4098,7 @@ wdb_region_cmd(struct rt_wdb *wdbp,
 	       int argc,
 	       char *argv[])
 {
-    register struct directory *dp;
+    struct directory *dp;
     int i;
     int ident, air;
     char oper;
@@ -4207,9 +4207,9 @@ wdb_comb_cmd(struct rt_wdb *wdbp,
 	     int argc,
 	     char *argv[])
 {
-    register struct directory *dp;
+    struct directory *dp;
     char *comb_name;
-    register int i;
+    int i;
     char oper;
 
     WDB_TCL_CHECK_READ_ONLY;
@@ -4329,7 +4329,7 @@ wdb_find_ref(struct db_i *dbip,
  */
 HIDDEN union tree *
 facetize_region_end(tsp, pathp, curtree, client_data)
-    register struct db_tree_state *tsp;
+    struct db_tree_state *tsp;
     struct db_full_path *pathp;
     union tree *curtree;
     genptr_t client_data;
@@ -4370,7 +4370,7 @@ wdb_facetize_cmd(struct rt_wdb *wdbp,
 		 char *argv[])
 {
     int i;
-    register int c;
+    int c;
     int triangulate;
     char *newname;
     struct rt_db_internal intern;
@@ -4611,10 +4611,10 @@ wdb_find_cmd(struct rt_wdb *wdbp,
 	     int argc,
 	     char *argv[])
 {
-    register int i, k;
-    register struct directory *dp;
+    int i, k;
+    struct directory *dp;
     struct rt_db_internal intern;
-    register struct rt_comb_internal *comb=(struct rt_comb_internal *)NULL;
+    struct rt_comb_internal *comb=(struct rt_comb_internal *)NULL;
     struct bu_vls vls;
     int c;
     int aflag = 0;		/* look at all objects */
@@ -4727,8 +4727,8 @@ wdb_rmap_cmd(struct rt_wdb *wdbp,
 	     int argc,
 	     char *argv[])
 {
-    register int i;
-    register struct directory *dp;
+    int i;
+    struct directory *dp;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
     struct wdb_id_to_names headIdName;
@@ -4863,8 +4863,8 @@ wdb_which_cmd(struct rt_wdb *wdbp,
 	      int argc,
 	      char *argv[])
 {
-    register int i, j;
-    register struct directory *dp;
+    int i, j;
+    struct directory *dp;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
     struct wdb_id_to_names headIdName;
@@ -5105,9 +5105,9 @@ wdb_title_tcl(ClientData clientData,
 static int
 wdb_list_children(struct rt_wdb *wdbp,
 		  Tcl_Interp *interp,
-		  register struct directory *dp)
+		  struct directory *dp)
 {
-    register int i;
+    int i;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
 
@@ -5190,7 +5190,7 @@ wdb_lt_cmd(struct rt_wdb *wdbp,
 	   int argc,
 	   char *argv[])
 {
-    register struct directory *dp;
+    struct directory *dp;
     struct bu_vls vls;
 
     if (argc != 2)
@@ -5275,7 +5275,7 @@ wdb_version_tcl(ClientData clientData,
 void
 wdb_print_node(struct rt_wdb *wdbp,
 	       Tcl_Interp *interp,
-	       register struct directory *dp,
+	       struct directory *dp,
 	       int pathpos,
 	       int indentSize,
 	       char prefix,
@@ -5283,8 +5283,8 @@ wdb_print_node(struct rt_wdb *wdbp,
 	       int displayDepth,
 	       int currdisplayDepth)
 {
-    register int i;
-    register struct directory *nextdp;
+    int i;
+    struct directory *nextdp;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
 
@@ -5423,7 +5423,7 @@ wdb_track_tcl(ClientData clientData,
  *
  */
 static void
-wdb_pr_mater(register const struct mater *mp,
+wdb_pr_mater(const struct mater *mp,
 	     Tcl_Interp *interp,
 	     int *ccp,
 	     int *clp)
@@ -5453,7 +5453,7 @@ wdb_prcolor_cmd(struct rt_wdb *wdbp,
 		int argc,
 		char *argv[])
 {
-    register const struct mater *mp;
+    const struct mater *mp;
     int col_count = 0;
     int col_len = 0;
 
@@ -5754,7 +5754,7 @@ wdb_push_leaf(struct db_tree_state *tsp,
 {
     union tree *curtree;
     struct directory *dp;
-    register struct wdb_push_id *pip;
+    struct wdb_push_id *pip;
     struct wdb_push_data *wpdp = (struct wdb_push_data *)client_data;
 
     RT_CK_TESS_TOL(tsp->ts_ttol);
@@ -5823,7 +5823,7 @@ wdb_push_leaf(struct db_tree_state *tsp,
  * A null routine that does nothing.
  */
 static union tree *
-wdb_push_region_end(register struct db_tree_state *tsp,
+wdb_push_region_end(struct db_tree_state *tsp,
 		    struct db_full_path *pathp,
 		    union tree *curtree,
 		    genptr_t client_data)
@@ -6674,7 +6674,7 @@ struct wdb_node_data {
  */
 void
 wdb_node_write(struct db_i *dbip,
-	       register struct directory *dp,
+	       struct directory *dp,
 	       genptr_t ptr)
 {
     struct rt_wdb *keepfp = (struct rt_wdb *)ptr;
@@ -6730,9 +6730,9 @@ wdb_keep_cmd(struct rt_wdb *wdbp,
 	     char *argv[])
 {
     struct rt_wdb *keepfp;
-    register struct directory *dp;
+    struct directory *dp;
     struct bu_vls title;
-    register int i;
+    int i;
     struct db_i *new_dbip;
 
     if (argc < 3 || MAXARGS < argc) {
@@ -6838,8 +6838,8 @@ wdb_cat_cmd(struct rt_wdb *wdbp,
 	    int argc,
 	    char *argv[])
 {
-    register struct directory *dp;
-    register int arg;
+    struct directory *dp;
+    int arg;
     struct bu_vls str;
 
     if (argc < 2 || MAXARGS < argc) {
@@ -6891,7 +6891,7 @@ wdb_instance_cmd(struct rt_wdb *wdbp,
 		 int argc,
 		 char *argv[])
 {
-    register struct directory *dp;
+    struct directory *dp;
     char oper;
 
     WDB_TCL_CHECK_READ_ONLY;
@@ -7003,7 +7003,7 @@ wdb_make_bb_cmd(struct rt_wdb *wdbp,
 		int argc,
 		char *argv[])
 {
-    register int i;
+    int i;
     point_t rpp_min, rpp_max;
     struct directory *dp;
     struct rt_arb_internal *arb;
@@ -8209,7 +8209,7 @@ wdb_summary_cmd(struct rt_wdb *wdbp,
 		int argc,
 		char *argv[])
 {
-    register char *cp;
+    char *cp;
     int flags = 0;
     int bad = 0;
 
@@ -8878,7 +8878,7 @@ int
 wdb_cmpdirname(const genptr_t a,
 	       const genptr_t b)
 {
-    register struct directory **dp1, **dp2;
+    struct directory **dp1, **dp2;
 
     dp1 = (struct directory **)a;
     dp2 = (struct directory **)b;
@@ -8893,7 +8893,7 @@ wdb_cmpdirname(const genptr_t a,
  */
 void
 wdb_vls_col_item(struct bu_vls *str,
-		 register char *cp,
+		 char *cp,
 		 int *ccp,		/* column count pointer */
 		 int *clp)		/* column length pointer */
 {
@@ -9253,9 +9253,9 @@ wdb_vls_line_dpp(struct bu_vls *vls,
  */
 struct directory **
 wdb_getspace(struct db_i *dbip,
-	     register int num_entries)
+	     int num_entries)
 {
-    register struct directory **dir_basep;
+    struct directory **dir_basep;
 
     if (num_entries < 0) {
 	bu_log("wdb_getspace: was passed %d, used 0\n",
@@ -9278,7 +9278,7 @@ void
 wdb_do_list(struct db_i *dbip,
 	    Tcl_Interp *interp,
 	    struct bu_vls *outstrp,
-	    register struct directory *dp,
+	    struct directory *dp,
 	    int verbose)
 {
     int id;
@@ -9355,7 +9355,7 @@ wdb_do_list(struct db_i *dbip,
 struct directory *
 wdb_combadd(Tcl_Interp *interp,
 	    struct db_i *dbip,
-	    register struct directory *objp,
+	    struct directory *objp,
 	    char *combname,
 	    int region_flag,	/* true if adding region */
 	    int relation,	/* = UNION, SUBTRACT, INTERSECT */
@@ -9363,7 +9363,7 @@ wdb_combadd(Tcl_Interp *interp,
 	    int air,		/* Air code */
 	    struct rt_wdb *wdbp)
 {
-    register struct directory *dp;
+    struct directory *dp;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
     union tree *tp;
@@ -9581,8 +9581,8 @@ wdb_dir_summary(struct db_i *dbip,
 		Tcl_Interp *interp,
 		int flag)
 {
-    register struct directory *dp;
-    register int i;
+    struct directory *dp;
+    int i;
     static int sol, comb, reg;
     struct directory **dirp;
     struct directory **dirp0 = (struct directory **)NULL;
@@ -9645,11 +9645,11 @@ wdb_dir_summary(struct db_i *dbip,
  */
 static struct directory **
 wdb_dir_getspace(struct db_i *dbip,
-		 register int num_entries)
+		 int num_entries)
 {
-    register struct directory *dp;
-    register int i;
-    register struct directory **dir_basep;
+    struct directory *dp;
+    int i;
+    struct directory **dir_basep;
 
     if (num_entries < 0) {
 	bu_log("dir_getspace: was passed %d, used 0\n",
@@ -9977,7 +9977,7 @@ wdb_move_arb_edge_cmd(struct rt_wdb *wdbp,
     bu_vls_free(&error_msg);
 
     {
-	register int i;
+	int i;
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -10119,7 +10119,7 @@ wdb_move_arb_face_cmd(struct rt_wdb *wdbp,
     (void)rt_arb_calc_points(arb, arb_type, planes, &wdbp->wdb_tol);
 
     {
-	register int i;
+	int i;
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -10180,7 +10180,7 @@ wdb_rotate_arb_face_cmd(struct rt_wdb *wdbp,
     int face;
     int vi;
     point_t pt;
-    register int i;
+    int i;
     int pnt5;		/* special arb7 case */
     struct bu_vls error_msg;
 
@@ -10328,7 +10328,7 @@ wdb_rotate_arb_face_cmd(struct rt_wdb *wdbp,
     (void)rt_arb_calc_points(arb, arb_type, planes, &wdbp->wdb_tol);
 
     {
-	register int i;
+	int i;
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -10372,7 +10372,7 @@ wdb_newcmds_tcl(ClientData clientData,
 		int argc,
 		char *argv[])
 {
-    register struct bu_cmdtab *ctp;
+    struct bu_cmdtab *ctp;
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
     struct ged ged;
     Tcl_DString ds;

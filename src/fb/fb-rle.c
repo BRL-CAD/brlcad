@@ -79,15 +79,15 @@ Usage: fb-rle [-c -h -d] [-F framebuffer] [-C r/g/b]\n\
 \n\
 If omitted, the .rle file is written to stdout\n";
 
-extern void	cmap_crunch(register RGBpixel (*scan_buf), register int pixel_ct, ColorMap *colormap);
+extern void	cmap_crunch(RGBpixel (*scan_buf), int pixel_ct, ColorMap *colormap);
 
 /*
  *			G E T _ A R G S
  */
 static int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int	c;
+    int	c;
 
     while ( (c = bu_getopt( argc, argv, "cF:hds:w:n:S:W:N:X:Y:C:" )) != EOF )  {
 	switch ( c )  {
@@ -128,8 +128,8 @@ get_args(int argc, register char **argv)
 		break;
 	    case 'C':
 	    {
-		register char *cp = bu_optarg;
-		register int *conp = background;
+		char *cp = bu_optarg;
+		int *conp = background;
 
 		/* premature null => atoi gives zeros */
 		for ( c=0; c < 3; c++ )  {
@@ -170,9 +170,9 @@ get_args(int argc, register char **argv)
 int
 main(int argc, char **argv)
 {
-    register FBIO	*fbp;
-    register unsigned char *scan_buf;
-    register int	y;
+    FBIO	*fbp;
+    unsigned char *scan_buf;
+    int	y;
     int		cm_save_needed;
 
     outfp = stdout;
@@ -301,11 +301,11 @@ main(int argc, char **argv)
 
 	/* Grumble, convert to Utah layout */
 	{
-	    register unsigned char	*pp = (unsigned char *)scan_buf;
-	    register rle_pixel	*rp = rows[0];
-	    register rle_pixel	*gp = rows[1];
-	    register rle_pixel	*bp = rows[2];
-	    register int		i;
+	    unsigned char	*pp = (unsigned char *)scan_buf;
+	    rle_pixel	*rp = rows[0];
+	    rle_pixel	*gp = rows[1];
+	    rle_pixel	*bp = rows[2];
+	    int		i;
 
 	    for ( i=0; i<file_width; i++ )  {
 		*rp++ = *pp++;

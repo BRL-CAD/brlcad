@@ -70,7 +70,7 @@ union E_tree *wdb_build_etree(union tree *tp, struct dg_client_data *dgcdp);
 
 /* RT_FREE_SEG_LIST assumed list head is a "struct seg" */
 #define MY_FREE_SEG_LIST( _segheadp, _res )	{ \
-	register struct seg *_a; \
+	struct seg *_a; \
 	while ( BU_LIST_WHILE( _a, seg, (_segheadp) ) )  { \
 		BU_LIST_DEQUEUE( &(_a->l) ); \
 		RT_FREE_SEG( _a, _res ); \
@@ -2238,7 +2238,7 @@ dgo_E_cmd(struct dg_obj	*dgop,
 	  int		argc,
 	  char 		**argv)
 {
-    register int		c;
+    int		c;
     char			perf_message[128];
     struct dg_client_data	*dgcdp;
 
@@ -2268,7 +2268,7 @@ dgo_E_cmd(struct dg_obj	*dgop,
 	    case 'C':
 	    {
 		int		r, g, b;
-		register char	*cp = bu_optarg;
+		char	*cp = bu_optarg;
 
 		r = atoi(cp);
 		while ((*cp >= '0' && *cp <= '9'))  cp++;

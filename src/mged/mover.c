@@ -50,7 +50,7 @@ int	los_default = 100;	/* Line-of-sight estimate */
  * The object itself (solid or "leaf" combination) is relocated.
  */
 void
-moveHobj(register struct directory *dp, matp_t xlate)
+moveHobj(struct directory *dp, matp_t xlate)
 {
     struct rt_db_internal	intern;
 

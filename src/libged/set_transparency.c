@@ -42,12 +42,12 @@
 int
 ged_set_transparency(struct ged *gedp, int argc, const char *argv[])
 {
-    register struct ged_display_list *gdlp;
-    register struct ged_display_list *next_gdlp;
-    register struct solid *sp;
+    struct ged_display_list *gdlp;
+    struct ged_display_list *next_gdlp;
+    struct solid *sp;
     int i;
     struct directory **dpp;
-    register struct directory **tmp_dpp;
+    struct directory **tmp_dpp;
     fastf_t transparency;
     static const char *usage = "node tval";
 

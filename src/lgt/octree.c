@@ -57,14 +57,14 @@
 		(((p) = (PtList *) malloc(sizeof(PtList))) != PTLIST_NULL)
 #define NewOctree( p ) \
 		(((p) = (Octree *) malloc(sizeof(Octree))) != OCTREE_NULL)
-static int	subdivide_Octree(register Octree *parentp, int level);
+static int	subdivide_Octree(Octree *parentp, int level);
 
 Octree	*
 new_Octant(Octree *parentp, Octree **childpp, int bitv, int level)
 {
-    register Octree	*childp;
+    Octree	*childp;
     fastf_t	delta = modl_radius / pow_Of_2( level );
-    register float	*origin = parentp->o_points->c_point;
+    float	*origin = parentp->o_points->c_point;
     /* Create child node, filling in parent's pointer.		*/
     if ( ! NewOctree( *childpp ) )
     {
@@ -110,7 +110,7 @@ new_Octant(Octree *parentp, Octree **childpp, int bitv, int level)
 	Return node's address.
 */
 Octree	*
-find_Octant(register Octree *parentp, register fastf_t *pt, register int *levelp)
+find_Octant(Octree *parentp, fastf_t *pt, int *levelp)
 {
     if ( parentp == OCTREE_NULL )
     {
@@ -119,9 +119,9 @@ find_Octant(register Octree *parentp, register fastf_t *pt, register int *levelp
     }
     do
     {
-	register int	bitv = 0;
-	register Octree	**childpp;
-	register float	*origin = parentp->o_points->c_point;
+	int	bitv = 0;
+	Octree	**childpp;
+	float	*origin = parentp->o_points->c_point;
 	/* Build bit vector to determine target octant.		*/
 	bitv |= (pt[X] > origin[X]) << X;
 	bitv |= (pt[Y] > origin[Y]) << Y;
@@ -246,7 +246,7 @@ append_PtList(fastf_t *pt, PtList *ptlist)
 void
 delete_PtList(PtList **ptlistp)
 {
-    register PtList	*pp = *ptlistp, *np;
+    PtList	*pp = *ptlistp, *np;
     *ptlistp = PTLIST_NULL;
     for (; pp != PTLIST_NULL; pp = np )
     {
@@ -258,7 +258,7 @@ delete_PtList(PtList **ptlistp)
 #define L_MAX_POWER_TWO		31
 
 static int
-subdivide_Octree(register Octree *parentp, int level)
+subdivide_Octree(Octree *parentp, int level)
 {
     PtList		*points = parentp->o_points->c_next;
     Trie		*triep = parentp->o_triep;
@@ -277,7 +277,7 @@ subdivide_Octree(register Octree *parentp, int level)
     /* Delete reference in trie tree to parent node.		*/
     delete_Node_OcList( &triep->l.t_octp, parentp );
     {
-	register PtList	*cp;
+	PtList	*cp;
 	/* Shove data down to sub-levels.				*/
 	for ( cp = points; cp != PTLIST_NULL; cp = cp->c_next )
 	{
@@ -298,9 +298,9 @@ subdivide_Octree(register Octree *parentp, int level)
 }
 
 fastf_t
-pow_Of_2(register int power)
+pow_Of_2(int power)
 {
-    register long	value = 1;
+    long	value = 1;
     for (; power > 0; power-- )
 	value *= 2;
     return	(fastf_t) value;
@@ -309,8 +309,8 @@ pow_Of_2(register int power)
 void
 prnt_Node_Octree(Octree *parentp, int level)
 {
-    register PtList	*ptp;
-    register int ptcount = 0;
+    PtList	*ptp;
+    int ptcount = 0;
     bu_log( "%s[%2d](%8.3f,%8.3f,%8.3f)bits=0%o temp=%04d trie=%p sibling=%p child=%p\n",
 	    parentp->o_child != OCTREE_NULL ? "NODE" : "LEAF",
 	    level,
@@ -340,7 +340,7 @@ prnt_Node_Octree(Octree *parentp, int level)
 void
 prnt_Octree(Octree *parentp, int level)
 {
-    register Octree	*siblingp;
+    Octree	*siblingp;
     /* Print each octant at this level.				*/
     for (	siblingp = parentp;
 		siblingp != OCTREE_NULL;
@@ -359,7 +359,7 @@ prnt_Octree(Octree *parentp, int level)
 int
 write_Octree(Octree *parentp, FILE *fp)
 {
-    register PtList	*ptp;
+    PtList	*ptp;
     F_Hdr_Ptlist	hdr_ptlist;
     long		addr = ftell( fp );
     /* Write temperature and bogus number of points for this leaf.	*/
@@ -408,7 +408,7 @@ write_Octree(Octree *parentp, FILE *fp)
 }
 
 static void
-hit_octant(struct application *ap, register Octree *op, register Octree **lpp, fastf_t *inv_dir, int level)
+hit_octant(struct application *ap, Octree *op, Octree **lpp, fastf_t *inv_dir, int level)
 {
     for (; op != OCTREE_NULL; op = op->o_sibling )
     {

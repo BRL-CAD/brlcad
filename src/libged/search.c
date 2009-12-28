@@ -175,7 +175,7 @@ db_fullpath_traverse( struct ged *gedp,
 		      genptr_t client_data )
 {
     struct directory *dp;
-    register int i;
+    int i;
     RT_CK_FULL_PATH(dfp);
     RT_CK_DBI(gedp->ged_wdbp->dbip);
 
@@ -186,8 +186,8 @@ db_fullpath_traverse( struct ged *gedp,
 	if ( comb_func )
 	    comb_func( gedp, dfp, client_data );
 	if ( gedp->ged_wdbp->dbip->dbi_version < 5 ) {
-	    register union record   *rp;
-	    register struct directory *mdp;
+	    union record   *rp;
+	    struct directory *mdp;
 	    /*
 	     * Load the combination into local record buffer
 	     * This is in external v4 format.
@@ -466,7 +466,7 @@ db_fullpath_stateful_traverse( struct ged *gedp,
 			       genptr_t client_data )
 {
     struct directory *dp;
-    register int i;
+    int i;
     int state = 0;
     RT_CK_FULL_PATH(dfp);
     RT_CK_DBI(gedp->ged_wdbp->dbip);
@@ -478,8 +478,8 @@ db_fullpath_stateful_traverse( struct ged *gedp,
 	if ( comb_func )
 	    if (comb_func( gedp, dfp, client_data )) return 1;
 	if ( gedp->ged_wdbp->dbip->dbi_version < 5 ) {
-	    register union record   *rp;
-	    register struct directory *mdp;
+	    union record   *rp;
+	    struct directory *mdp;
 	    /*
 	     * Load the combination into local record buffer
 	     * This is in external v4 format.
@@ -2024,8 +2024,8 @@ int
 ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 {
     PLAN *dbplan;
-    register int i;
-    register struct directory *dp;
+    int i;
+    struct directory *dp;
     struct db_full_path dfp;
     /* COPY argv_orig to argv; */
     char **argv = bu_dup_argv(argc, argv_orig);

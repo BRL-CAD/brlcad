@@ -88,7 +88,7 @@ char *aliases[] = {
 
 
 char *
-nxt_spc(register char *cp)
+nxt_spc(char *cp)
 {
     while (*cp != ' ' && *cp != '\t' && *cp !='\0') {
 	cp++;
@@ -103,7 +103,7 @@ nxt_spc(register char *cp)
 int
 ngran(int nfloat)
 {
-    register int gran;
+    int gran;
     /* Round up */
     gran = nfloat + ((sizeof(union record)-1) / sizeof(float));
     gran = (gran * sizeof(float)) / sizeof(union record);
@@ -139,7 +139,7 @@ incr_ars_pt(void)
 void
 zap_nl(void)
 {
-    register char *bp;
+    char *bp;
 
     bp = &buf[0];
 
@@ -271,7 +271,7 @@ strsolbld(void)
 void
 sktbld(void)
 {
-    register char *cp, *ptr;
+    char *cp, *ptr;
     int i, j;
     int vert_count, seg_count;
     float fV[3], fu[3], fv[3];
@@ -402,7 +402,7 @@ sktbld(void)
 void
 extrbld(void)
 {
-    register char *cp;
+    char *cp;
     char name[NAME_LEN+1];
     char sketch_name[NAME_LEN+1];
     int keypoint;
@@ -441,7 +441,7 @@ extrbld(void)
 void
 nmgbld(void)
 {
-    register char *cp;
+    char *cp;
     int	version;
     char	*name;
     long	granules;
@@ -524,9 +524,9 @@ nmgbld(void)
 void
 solbld(void)
 {
-    register char *cp;
-    register char *np;
-    register int i;
+    char *cp;
+    char *np;
+    int i;
 
     char	s_type;		/* id for the type of primitive */
     fastf_t	val[24];	/* array of values/parameters for solid */
@@ -705,9 +705,9 @@ solbld(void)
 void
 membbld(struct bu_list *headp)
 {
-    register char 	*cp;
-    register char 	*np;
-    register int 	i;
+    char 	*cp;
+    char 	*np;
+    int 	i;
     char		relation;	/* boolean operation */
     char		inst_name[NAME_LEN+2];
     struct wmember	*memb;
@@ -753,8 +753,8 @@ int
 combbld(void)
 {
     struct bu_list	head;
-    register char 	*cp;
-    register char 	*np;
+    char 	*cp;
+    char 	*np;
     int 		temp_nflag, temp_pflag;
 
     char		override;
@@ -962,8 +962,8 @@ arsbbld(void)
 void
 identbld(void)
 {
-    register char	*cp;
-    register char	*np;
+    char	*cp;
+    char	*np;
     char		units;		/* units code number */
     char		version[6] = {0};
     char		title[255] = {0};
@@ -1092,8 +1092,8 @@ polyhbld(void)
     fseek(ifp, startpos, 0);
 
     for (nlines = 0; nlines < pg->npoly; nlines++) {
-	register struct rt_pg_face_internal	*fp = &pg->poly[nlines];
-	register int	i;
+	struct rt_pg_face_internal	*fp = &pg->poly[nlines];
+	int	i;
 
 	if (bu_fgets(buf, BUFSIZE, ifp) == NULL)  break;
 	if (buf[0] != ID_P_DATA)  bu_exit(1, "mis-count of Q records?\n");
@@ -1157,7 +1157,7 @@ polyhbld(void)
 void
 materbld(void)
 {
-    register char *cp;
+    char *cp;
     int	low, hi;
     int	r, g, b;
 
@@ -1191,8 +1191,8 @@ void
 bsplbld(void)
 {
 #if 0
-    register char	*cp;
-    register char	*np;
+    char	*cp;
+    char	*np;
     short		nsurf;		/* number of surfaces */
     fastf_t		resolution;	/* resolution of flatness */
 
@@ -1230,9 +1230,9 @@ bsurfbld(void)
 
     /* HELP! This involves mk_bsurf(filep, bp) where bp is a ptr to struct */
 
-    register char	*cp;
-    register int	i;
-    register float	*vp;
+    char	*cp;
+    int	i;
+    float	*vp;
     int		nbytes, count;
     float		*fp;
 
@@ -1336,8 +1336,8 @@ clinebld(void)
     fastf_t			radius;
     point_t			V;
     vect_t			height;
-    register char		*cp;
-    register char		*np;
+    char		*cp;
+    char		*np;
 
     cp = buf;
     cp++;
@@ -1464,8 +1464,8 @@ pipebld(void)
 {
 
     char			name[NAME_LEN];
-    register char		*cp;
-    register char		*np;
+    char		*cp;
+    char		*np;
     struct wdb_pipept	*sp;
     struct bu_list		head;
 
@@ -1562,8 +1562,8 @@ arbnbld(void)
     int		i;
     int		neqn;			/* number of eqn expected */
     plane_t		*eqn;		/* pointer to plane equations for faces */
-    register char	*cp;
-    register char	*np;
+    char	*cp;
+    char	*np;
 
     /* Process the first buffer */
 
@@ -1656,7 +1656,7 @@ bracecnt(char *line)
  * command line.
  */
 int
-gettclblock(register struct bu_vls *line, register FILE *fp)
+gettclblock(struct bu_vls *line, FILE *fp)
 {
     int ret = 0;
     struct bu_vls tmp;

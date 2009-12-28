@@ -47,10 +47,10 @@
 int
 f_area(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    register struct ged_display_list *gdlp;
-    register struct ged_display_list *next_gdlp;
-    register struct solid		*sp;
-    register struct bn_vlist	*vp;
+    struct ged_display_list *gdlp;
+    struct ged_display_list *next_gdlp;
+    struct solid		*sp;
+    struct bn_vlist	*vp;
     static vect_t last;
     static vect_t fin;
     FILE *fp_r;
@@ -201,10 +201,10 @@ f_area(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
 	    for ( BU_LIST_FOR( vp, bn_vlist, &(sp->s_vlist) ) )  {
-		register int	i;
-		register int	nused = vp->nused;
-		register int	*cmd = vp->cmd;
-		register point_t *pt = vp->pt;
+		int	i;
+		int	nused = vp->nused;
+		int	*cmd = vp->cmd;
+		point_t *pt = vp->pt;
 		for ( i = 0; i < nused; i++, cmd++, pt++ )  {
 		    switch ( *cmd )  {
 		    case BN_VLIST_POLY_START:

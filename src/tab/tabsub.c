@@ -145,8 +145,8 @@ do_lines(FILE *fp, char *buffer)
 #define TOKLEN	128
     char	token[TOKLEN];
     int	ntokenwords;
-    register char	*cp;
-    register char	*tp;
+    char	*cp;
+    char	*tp;
     int	i;
 
     for ( line=0; /*NIL*/; line++ )  {
@@ -338,7 +338,7 @@ multi_words( char *words[], int	nwords )
 	return(0);
     }
     if ( strcmp( words[0], "orient" ) == 0 )  {
-	register int i;
+	int i;
 	mat_t	mat;
 	double	args[8];
 

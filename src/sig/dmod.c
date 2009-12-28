@@ -53,9 +53,9 @@ double	val[256] = {0.0};		/* arguments to operations */
 double	buf[BUFLEN] = {0.0};		/* working buffer */
 
 int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int c;
+    int c;
     double	d;
 
     while ( (c = bu_getopt( argc, argv, "a:s:m:d:Ae:r:" )) != EOF )  {
@@ -129,10 +129,10 @@ int main(int argc, char **argv)
 #ifdef sgi
     double	*bp;		/* avoid SGI -Zf reg pointer ++ problem */
 #else
-    register double	*bp;
+    double	*bp;
 #endif
-    register double	arg;
-    register int j;
+    double	arg;
+    int j;
 
     if ( !get_args( argc, argv ) || isatty(fileno(infp))
 	 || isatty(fileno(stdout)) ) {

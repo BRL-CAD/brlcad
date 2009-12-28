@@ -1053,7 +1053,7 @@ arbn_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
 static int
 pipe_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *intern, char **prompt)
 {
-    register struct rt_pipe_internal *pipe;
+    struct rt_pipe_internal *pipe;
     int i, num_points;
 
     if ( argc < 4 ) {
@@ -1117,8 +1117,8 @@ pipe_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
 static int
 ars_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *intern, char **prompt)
 {
-    register struct rt_ars_internal	*arip;
-    register int			i;
+    struct rt_ars_internal	*arip;
+    int			i;
     int			total_points;
     int			cv;	/* current curve (waterline) # */
     int			axis;	/* current fastf_t in waterline */
@@ -2746,7 +2746,7 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
 int
 ged_in(struct ged *gedp, int argc, const char *argv[])
 {
-    register struct directory *dp;
+    struct directory *dp;
     char *name;
     struct rt_db_internal internal;
     char **menu;

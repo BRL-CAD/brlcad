@@ -73,7 +73,7 @@ static unsigned char	ordered[4][4] = {
 int
 tone_folly(int pix, int x, int y, int nx, int ny, int new)
 {
-    register int threshold = 16*ordered[ x % 4][ y % 4];
+    int threshold = 16*ordered[ x % 4][ y % 4];
 
     if (RandomFlag) {
 	threshold += BN_UNIF_DOUBLE(RandomFlag)*63;

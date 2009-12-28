@@ -60,7 +60,7 @@ static int numreg;
 static int numsol;
 static FILE *tabptr;
 
-static int ged_check(register char *a, register char *b);
+static int ged_check(char *a, char *b);
 static int ged_sol_number(matp_t matrix, char *name, int *old);
 static void ged_new_tables(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, fastf_t *old_mat, int flag);
 
@@ -234,10 +234,10 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
 }
 
 static int
-ged_check(register char *a, register char *b)
+ged_check(char *a, char *b)
 {
 
-    register int	c= sizeof( struct identt );
+    int	c= sizeof( struct identt );
 
     while ( c-- )	if ( *a++ != *b++ ) return( 0 );	/* no match */
     return( 1 );	/* match */

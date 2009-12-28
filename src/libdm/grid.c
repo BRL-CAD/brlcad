@@ -37,12 +37,12 @@
 void
 dm_draw_grid(struct dm *dmp, struct ged_grid_state *ggsp, struct ged_view *gvp, fastf_t base2local)
 {
-    register int	i, j;
-    register int	nh, nv;
-    register int	nv_dots, nh_dots;
-    register fastf_t	fx, fy;
-    register fastf_t	sf;
-    register fastf_t	inv_sf;
+    int	i, j;
+    int	nh, nv;
+    int	nv_dots, nh_dots;
+    fastf_t	fx, fy;
+    fastf_t	sf;
+    fastf_t	inv_sf;
     point_t		view_grid_anchor;
     point_t		view_lleft_corner;
     point_t 		view_grid_anchor_local;

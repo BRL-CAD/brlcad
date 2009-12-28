@@ -37,7 +37,7 @@
 int
 ged_region(struct ged *gedp, int argc, const char *argv[])
 {
-    register struct directory	*dp;
+    struct directory	*dp;
     int				i;
     int				ident, air;
     char			oper;

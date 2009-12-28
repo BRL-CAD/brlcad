@@ -259,7 +259,7 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
 	}
 
 	if (dbip == DBI_NULL) {
-	    register int i;
+	    int i;
 
 	    BU_GETSTRUCT(dbip, db_i);
 	    dbip->dbi_eof = -1L;
@@ -351,7 +351,7 @@ _ged_open_dbip(const char *filename, int existing_only)
 
 void
 _ged_print_node(struct ged		*gedp,
-	       register struct directory *dp,
+	       struct directory *dp,
 	       int			pathpos,
 	       int			indentSize,
 	       char			prefix,
@@ -359,8 +359,8 @@ _ged_print_node(struct ged		*gedp,
 	       int                      displayDepth,
 	       int                      currdisplayDepth)
 {
-    register int			i;
-    register struct directory	*nextdp;
+    int			i;
+    struct directory	*nextdp;
     struct rt_db_internal		intern;
     struct rt_comb_internal		*comb;
 

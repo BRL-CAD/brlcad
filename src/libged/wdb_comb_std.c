@@ -454,7 +454,7 @@ wdb_comb_std_cmd(struct rt_wdb	*wdbp,
     char				*comb_name;
     int				ch;
     int				region_flag = -1;
-    register struct directory	*dp;
+    struct directory	*dp;
     struct rt_db_internal		intern;
     struct rt_comb_internal		*comb = NULL;
     struct tokens			tok_hd;

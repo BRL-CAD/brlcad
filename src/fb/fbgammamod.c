@@ -187,8 +187,8 @@ main(int argc, char **argv)
     bmul = bm * mul;
 
     for ( i=0; i<256; i++ )  {
-	register double	t;
-	register int	val;
+	double	t;
+	int	val;
 
 	if ( (t = (pow( i/255.0, pre_exp) + radd) * rmul) < 0 )
 	    t = 0;

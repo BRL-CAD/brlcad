@@ -655,7 +655,7 @@ wrobj( char name[], int flags )
 }
 
 void
-tancir(register fastf_t *cir1, register fastf_t *cir2)
+tancir(fastf_t *cir1, fastf_t *cir2)
 {
     static fastf_t mag;
     vect_t	work;

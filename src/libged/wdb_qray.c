@@ -459,8 +459,8 @@ dgo_qray_cmd(struct dg_obj	*dgop,
 void
 dgo_init_qray(struct dg_obj	*dgop)
 {
-    register int i;
-    register int n = 0;
+    int i;
+    int n = 0;
     struct dg_qray_fmt_data *qfdp;
 
     bu_vls_init(&dgop->dgo_qray_basename);
@@ -492,7 +492,7 @@ dgo_init_qray(struct dg_obj	*dgop)
 void
 dgo_free_qray(struct dg_obj     *dgop)
 {
-    register int i;
+    int i;
 
     bu_vls_free(&dgop->dgo_qray_basename);
     bu_vls_free(&dgop->dgo_qray_script);
@@ -508,9 +508,9 @@ dgo_qray_data_to_vlist(struct dg_obj		*dgop,
 		       vect_t			dir,
 		       int			do_overlaps)
 {
-    register int i = 1;			/* start out odd */
-    register struct bu_list *vhead;
-    register struct dg_qray_dataList *ndlp;
+    int i = 1;			/* start out odd */
+    struct bu_list *vhead;
+    struct dg_qray_dataList *ndlp;
     vect_t in_pt, out_pt;
     vect_t last_out_pt;
 

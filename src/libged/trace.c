@@ -79,7 +79,7 @@ ged_do_trace(struct db_i		*dbip,
  *
  */
 void
-_ged_trace(register struct directory	*dp,
+_ged_trace(struct directory	*dp,
 	  int				pathpos,
 	  const mat_t			old_xlate,
 	  struct _ged_trace_data		*gtdp)

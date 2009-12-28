@@ -110,8 +110,8 @@ cmd_rt(ClientData	clientData,
 int
 cmd_rrt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    register char **vp;
-    register int i;
+    char **vp;
+    int i;
     int ret;
     Tcl_DString ds;
 
@@ -150,7 +150,7 @@ cmd_rrt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 HIDDEN int
 rt_read(FILE *fp, fastf_t *scale, fastf_t *eye, fastf_t *mat)
 {
-    register int i;
+    int i;
     double d;
 
     if ( fscanf( fp, "%lf", &d ) != 1 )  return(-1);
@@ -183,11 +183,11 @@ rt_read(FILE *fp, fastf_t *scale, fastf_t *eye, fastf_t *mat)
 int
 f_rmats(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    register struct ged_display_list *gdlp;
-    register struct ged_display_list *next_gdlp;
-    register FILE *fp;
-    register struct directory *dp;
-    register struct solid *sp;
+    struct ged_display_list *gdlp;
+    struct ged_display_list *next_gdlp;
+    FILE *fp;
+    struct directory *dp;
+    struct solid *sp;
     vect_t	eye_model;
     vect_t	xlate;
     vect_t	sav_center;
@@ -195,7 +195,7 @@ f_rmats(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     int	mode;
     fastf_t	scale;
     mat_t	rot;
-    register struct bn_vlist *vp;
+    struct bn_vlist *vp;
 
     CHECK_DBI_NULL;
 
@@ -295,10 +295,10 @@ f_rmats(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		vp = BU_LIST_LAST( bn_vlist, &(sp->s_vlist) );
 		VSUB2( xlate, eye_model, vp->pt[vp->nused-1] );
 		for ( BU_LIST_FOR( vp, bn_vlist, &(sp->s_vlist) ) )  {
-		    register int	i;
-		    register int	nused = vp->nused;
-		    register int	*cmd = vp->cmd;
-		    register point_t *pt = vp->pt;
+		    int	i;
+		    int	nused = vp->nused;
+		    int	*cmd = vp->cmd;
+		    point_t *pt = vp->pt;
 		    for ( i = 0; i < nused; i++, cmd++, pt++ )  {
 			switch ( *cmd )  {
 			    case BN_VLIST_POLY_START:
@@ -325,10 +325,10 @@ f_rmats(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    vp = BU_LIST_LAST( bn_vlist, &(sp->s_vlist) );
 	    VSUB2( xlate, sav_start, vp->pt[vp->nused-1] );
 	    for ( BU_LIST_FOR( vp, bn_vlist, &(sp->s_vlist) ) )  {
-		register int	i;
-		register int	nused = vp->nused;
-		register int	*cmd = vp->cmd;
-		register point_t *pt = vp->pt;
+		int	i;
+		int	nused = vp->nused;
+		int	*cmd = vp->cmd;
+		point_t *pt = vp->pt;
 		for ( i = 0; i < nused; i++, cmd++, pt++ )  {
 		    switch ( *cmd )  {
 			case BN_VLIST_POLY_START:

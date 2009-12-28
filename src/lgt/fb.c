@@ -62,7 +62,7 @@ fb_Setup(char *file, int size)
 void
 fb_Zoom_Window(void)
 {
-    register int	xpos, ypos;
+    int	xpos, ypos;
     zoom = fb_getwidth( fbiop ) / grid_sz;
     xpos = ypos = grid_sz / 2;
     if ( tty )

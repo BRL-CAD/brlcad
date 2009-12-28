@@ -378,7 +378,7 @@ void write_mesh_data()
  */
 int main(int argc, char *argv[])
 {
-    register int	c;
+    int	c;
     struct directory* dp;
 
     /* setup BRL-CAD environment */

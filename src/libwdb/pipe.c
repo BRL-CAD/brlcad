@@ -113,7 +113,7 @@ mk_pipe(struct rt_wdb *fp, const char *name, struct bu_list *headp)
 void
 mk_pipe_free( struct bu_list *headp )
 {
-    register struct wdb_pipept	*wp;
+    struct wdb_pipept	*wp;
 
     while ( BU_LIST_WHILE( wp, wdb_pipept, headp ) )  {
 	BU_LIST_DEQUEUE( &wp->l );

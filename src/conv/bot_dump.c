@@ -39,7 +39,7 @@ Usage: %s [-b] [-n] [-m directory] [-o file] [-t dxf|obj|sat|stl] [-u units] geo
 int
 main(int argc, char *argv[])
 {
-    register int i, j;
+    int i, j;
     int db_index;
     char c;
     const char *av[MAXARGS];

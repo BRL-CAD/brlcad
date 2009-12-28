@@ -257,7 +257,7 @@ unset_var(ClientData clientData, Tcl_Interp *interp, char *name1, char *name2, i
 void
 mged_variable_setup(Tcl_Interp *interp)
 {
-    register struct bu_structparse *sp;
+    struct bu_structparse *sp;
 
     for ( sp = &mged_vparse[0]; sp->sp_name != NULL; sp++ ) {
 	read_var( (ClientData)sp, interp, sp->sp_name, (char *)NULL, 0 );
@@ -401,8 +401,8 @@ set_dlist(void)
 
 		/* these display lists are not being used, so free them */
 		if (BU_LIST_IS_HEAD(dlp2, &head_dm_list.l)) {
-		    register struct ged_display_list *gdlp;
-		    register struct ged_display_list *next_gdlp;
+		    struct ged_display_list *gdlp;
+		    struct ged_display_list *next_gdlp;
 
 		    dlp1->dml_dlist_state->dl_active = 0;
 

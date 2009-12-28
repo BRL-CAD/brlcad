@@ -89,8 +89,8 @@ cmd_overlay(ClientData	clientData,
 int
 f_labelvert(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    register struct ged_display_list *gdlp;
-    register struct ged_display_list *next_gdlp;
+    struct ged_display_list *gdlp;
+    struct ged_display_list *next_gdlp;
     int	i;
     struct bn_vlblock*vbp;
     struct directory	*dp;

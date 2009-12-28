@@ -337,7 +337,7 @@ print_valid_dm(void)
 int
 f_attach(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
 {
-    register struct w_dm *wp;
+    struct w_dm *wp;
 
     if (argc < 2) {
 	struct bu_vls vls;
@@ -448,7 +448,7 @@ gui_setup(char *dstr)
 int
 mged_attach(struct w_dm *wp, int argc, const char *argv[])
 {
-    register struct dm_list *o_dm_list;
+    struct dm_list *o_dm_list;
 
     if (!wp) {
 	return TCL_ERROR;

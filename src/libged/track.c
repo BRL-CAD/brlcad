@@ -672,8 +672,8 @@ wrobj(struct ged	*gedp,
 
 static void
 tancir(struct ged *gedp,
-       register fastf_t cir1[],
-       register fastf_t cir2[]) {
+       fastf_t cir1[],
+       fastf_t cir2[]) {
     static fastf_t mag;
     vect_t	work;
     fastf_t f;
@@ -912,7 +912,7 @@ top( vec1, vec2, t )
 static void
 track_mk_tree_pure( struct rt_comb_internal *comb, struct bu_list *member_hd )
 {
-    register struct wmember *wp;
+    struct wmember *wp;
 
     for ( BU_LIST_FOR( wp, wmember, member_hd ) )  {
 	union tree	*leafp, *nodep;
@@ -1065,7 +1065,7 @@ track_mk_addmember(
     mat_t mat,
     int		op)
 {
-    register struct wmember *wp;
+    struct wmember *wp;
 
     BU_GETSTRUCT( wp, wmember );
     wp->l.magic = WMEMBER_MAGIC;
@@ -1099,7 +1099,7 @@ track_mk_addmember(
 static void
 track_mk_freemembers( struct bu_list *headp )
 {
-    register struct wmember *wp;
+    struct wmember *wp;
 
     while ( BU_LIST_WHILE( wp, wmember, headp ) )  {
 	WDB_CK_WMEMBER(wp);

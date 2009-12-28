@@ -58,7 +58,7 @@ int
 get_args(int argc, char *argv[])
 {
     char *file_name;
-    register int c;
+    int c;
     double d;
 
     while ((c = bu_getopt(argc, argv, "a:s:m:d:Ae:r:")) != EOF) {
@@ -129,8 +129,8 @@ get_args(int argc, char *argv[])
 void
 mk_trans_tbl()
 {
-    register int i, j, k;
-    register double d;
+    int i, j, k;
+    double d;
 
     (void)memset((char *)clip_h, 0, sizeof(clip_h));
     (void)memset((char *)clip_l, 0, sizeof(clip_l));
@@ -166,7 +166,7 @@ mk_trans_tbl()
 int
 main(int argc, char *argv[])
 {
-    register unsigned int j, n;
+    unsigned int j, n;
     unsigned long clip_high, clip_low;
     char *strrchr();
     short iobuf[BUFLEN];		/* input buffer */

@@ -50,8 +50,8 @@ int
 main(int argc, char *argv[])
 {
     FILE *fp;
-    register int	count;
-    register int	tfd;
+    int	count;
+    int	tfd;
 
     if ( (count = bu_mread(0, buf, sizeof(buf))) < sizeof(buf) )  {
 	if ( count < 0 )  {

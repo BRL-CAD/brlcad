@@ -254,7 +254,7 @@ hangten(void)
 int
 ready(int nsecs)
 {
-    register int i;
+    int i;
 
     struct timeval waittime, *timeout;
     timeout = &waittime;

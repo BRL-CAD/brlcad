@@ -663,7 +663,7 @@ fb_server_fb_getview(struct pkg_conn *pcp, char *buf)
 void
 fb_server_fb_rmap(struct pkg_conn *pcp, char *buf)
 {
-    register int	i;
+    int	i;
     char	rbuf[NET_LONG_LEN+1];
     ColorMap map;
     unsigned char	cm[256*2*3];

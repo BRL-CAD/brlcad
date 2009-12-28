@@ -50,16 +50,16 @@ static char usage[] = "\
 Usage: pixhalve [-h] [-a]\n\
 	[-s squaresize] [-w file_width] [-n file_height] [file.pix]\n";
 
-void separate(register int *rop, register int *gop, register int *bop, register unsigned char *cp, long int num);
-void combine(register unsigned char *cp, register int *rip, register int *gip, register int *bip, long int num);
+void separate(int *rop, int *gop, int *bop, unsigned char *cp, long int num);
+void combine(unsigned char *cp, int *rip, int *gip, int *bip, long int num);
 void ripple(int **array, int num);
 void filter3(int *op, int **lines, int num);
 void filter5(int *op, int **lines, int num);
 
 int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int c;
+    int c;
 
     while ( (c = bu_getopt( argc, argv, "ahs:w:n:" )) != EOF )  {
 	switch ( c )  {
@@ -239,15 +239,15 @@ main(int argc, char **argv)
  *  Updated version:  the outputs are Y U V values, not R G B.
  */
 void
-separate(register int *rop, register int *gop, register int *bop, register unsigned char *cp, long int num)
+separate(int *rop, int *gop, int *bop, unsigned char *cp, long int num)
     /* Y */
     /* U */
     /* V */
 
 
 {
-    register long int 	i;
-    register int	r, g, b;
+    long int 	i;
+    int	r, g, b;
 
     r = cp[0];
     g = cp[1];
@@ -291,9 +291,9 @@ separate(register int *rop, register int *gop, register int *bop, register unsig
  *  RGB byte tripples
  */
 void
-combine(register unsigned char *cp, register int *rip, register int *gip, register int *bip, long int num)
+combine(unsigned char *cp, int *rip, int *gip, int *bip, long int num)
 {
-    register long int 	i;
+    long int 	i;
 
 #define RCONV(_y, _u, _v)	(_y + 1.4026 * _v)
 #define GCONV(_y, _u, _v)	(_y - 0.3444 * _u - 0.7144 * _v)
@@ -302,8 +302,8 @@ combine(register unsigned char *cp, register int *rip, register int *gip, regist
 #define CLIP(_v)	( ((_v) <= 0) ? 0 : (((_v) >= 255) ? 255 : (_v)) )
 
     for ( i = num-1; i >= 0; i-- )  {
-	register int	y, u, v;
-	register int	r, g, b;
+	int	y, u, v;
+	int	r, g, b;
 
 	y = *rip++;
 	u = *gip++;
@@ -329,7 +329,7 @@ combine(register unsigned char *cp, register int *rip, register int *gip, regist
 void
 ripple(int **array, int num)
 {
-    register int	i;
+    int	i;
     int		*temp;
 
     temp = array[0];
@@ -349,8 +349,8 @@ ripple(int **array, int num)
 void
 filter5(int *op, int **lines, int num)
 {
-    register int	i;
-    register int	*a, *b, *c, *d, *e;
+    int	i;
+    int	*a, *b, *c, *d, *e;
 
     a = lines[0];
     b = lines[1];
@@ -402,8 +402,8 @@ filter5(int *op, int **lines, int num)
 void
 filter3(int *op, int **lines, int num)
 {
-    register int	i;
-    register int	*b, *c, *d;
+    int	i;
+    int	*b, *c, *d;
 
     b = lines[1];
     c = lines[2];

@@ -73,9 +73,9 @@ struct stroke {
  *	a zero-length stroke.
  */
 static void
-ged_raster(unsigned char **image, register struct stroke *vp, unsigned char *color)
+ged_raster(unsigned char **image, struct stroke *vp, unsigned char *color)
 {
-    register short	dy;		/* raster within active band */
+    short	dy;		/* raster within active band */
 
     /*
      *  Write the color of this vector on all pixels.
@@ -110,11 +110,11 @@ static void
 ged_draw_stroke(unsigned char **image, struct coord *coord1, struct coord *coord2, unsigned char *color)
 {
     struct stroke cur_stroke;
-    register struct stroke *vp = &cur_stroke;
+    struct stroke *vp = &cur_stroke;
 
     /* arrange for pt1 to have the smaller Y-coordinate: */
     if ( coord1->y > coord2->y )  {
-	register struct coord *temp;	/* temporary for swap */
+	struct coord *temp;	/* temporary for swap */
 
 	temp = coord1;		/* swap pointers */
 	coord1 = coord2;
@@ -131,7 +131,7 @@ ged_draw_stroke(unsigned char **image, struct coord *coord1, struct coord *coord
 
     /* if Y is not really major, correct the assignments */
     if ( !(vp->ymajor = vp->minor <= vp->major) )  {
-	register short	temp;	/* temporary for swap */
+	short	temp;	/* temporary for swap */
 
 	temp = vp->minor;
 	vp->minor = vp->major;
@@ -150,11 +150,11 @@ ged_draw_png_solid(struct ged *gedp, unsigned char **image, struct solid *sp, ma
     static vect_t		last;
     point_t			clipmin = {-1.0, -1.0, -MAX_FASTF};
     point_t			clipmax = {1.0, 1.0, MAX_FASTF};
-    register struct bn_vlist	*tvp;
-    register point_t		*pt_prev=NULL;
-    register fastf_t		dist_prev=1.0;
-    register fastf_t		dist;
-    register struct bn_vlist 	*vp = (struct bn_vlist *)&sp->s_vlist;
+    struct bn_vlist	*tvp;
+    point_t		*pt_prev=NULL;
+    fastf_t		dist_prev=1.0;
+    fastf_t		dist;
+    struct bn_vlist 	*vp = (struct bn_vlist *)&sp->s_vlist;
     fastf_t			delta;
     int 			useful = 0;
     struct coord		coord1;
@@ -171,10 +171,10 @@ ged_draw_png_solid(struct ged *gedp, unsigned char **image, struct solid *sp, ma
 	delta = SQRT_SMALL_FASTF;
 
     for ( BU_LIST_FOR( tvp, bn_vlist, &vp->l ) )  {
-	register int	i;
-	register int	nused = tvp->nused;
-	register int	*cmd = tvp->cmd;
-	register point_t *pt = tvp->pt;
+	int	i;
+	int	nused = tvp->nused;
+	int	*cmd = tvp->cmd;
+	point_t *pt = tvp->pt;
 	for ( i = 0; i < nused; i++, cmd++, pt++ )  {
 	    static vect_t	start, fin;
 	    switch ( *cmd )  {
@@ -281,8 +281,8 @@ ged_draw_png_solid(struct ged *gedp, unsigned char **image, struct solid *sp, ma
 static void
 ged_draw_png_body(struct ged *gedp, unsigned char **image)
 {
-    register struct ged_display_list *gdlp;
-    register struct ged_display_list *next_gdlp;
+    struct ged_display_list *gdlp;
+    struct ged_display_list *next_gdlp;
     mat_t new;
     matp_t mat;
     mat_t perspective_mat;
@@ -326,7 +326,7 @@ ged_draw_png_body(struct ged *gedp, unsigned char **image)
 static int
 ged_draw_png(struct ged *gedp, FILE *fp)
 {
-    register int i;
+    int i;
     png_structp png_p;
     png_infop info_p;
     double out_gamma = 1.0;

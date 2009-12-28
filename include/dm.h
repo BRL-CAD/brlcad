@@ -310,17 +310,17 @@ DM_EXPORT BU_EXTERN(int dm_share_dlist,
 		     struct dm *dmp2));
 DM_EXPORT BU_EXTERN(fastf_t dm_Xx2Normal,
 		    (struct dm *dmp,
-		     register int x));
+		     int x));
 DM_EXPORT BU_EXTERN(int dm_Normal2Xx,
 		    (struct dm *dmp,
-		     register fastf_t f));
+		     fastf_t f));
 DM_EXPORT BU_EXTERN(fastf_t dm_Xy2Normal,
 		    (struct dm *dmp,
-		     register int y,
+		     int y,
 		     int use_aspect));
 DM_EXPORT BU_EXTERN(int dm_Normal2Xy,
 		    (struct dm *dmp,
-		     register fastf_t f,
+		     fastf_t f,
 		     int use_aspect));
 DM_EXPORT BU_EXTERN(void dm_fogHint,
 		    (struct dm *dmp,
@@ -369,8 +369,8 @@ DM_EXPORT BU_EXTERN(int clip,
 DM_EXPORT BU_EXTERN(int vclip,
 		    (fastf_t *,
 		     fastf_t *,
-		     register fastf_t *,
-		     register fastf_t *));
+		     fastf_t *,
+		     fastf_t *));
 
 /* focus.c */
 DM_EXPORT BU_EXTERN(void dm_applicationfocus, (void));
@@ -419,12 +419,12 @@ DM_EXPORT BU_EXTERN(const char *dm_version, (void));
    HIDDEN int _dmtype##_drawEnd(struct dm *dmp); \
    HIDDEN int _dmtype##_normal(struct dm *dmp); \
    HIDDEN int _dmtype##_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye); \
-   HIDDEN int _dmtype##_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int size, int use_aspect); \
+   HIDDEN int _dmtype##_drawString2D(struct dm *dmp, char *str, fastf_t x, fastf_t y, int size, int use_aspect); \
    HIDDEN int _dmtype##_drawLine2D(struct dm *dmp, fastf_t x_1, fastf_t y_1, fastf_t x_2, fastf_t y_2); \
    HIDDEN int _dmtype##_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2); \
    HIDDEN int _dmtype##_drawLines3D(struct dm *dmp, int npoints, point_t *points); \
    HIDDEN int _dmtype##_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y); \
-   HIDDEN int _dmtype##_drawVList(struct dm *dmp, register struct bn_vlist *vp); \
+   HIDDEN int _dmtype##_drawVList(struct dm *dmp, struct bn_vlist *vp); \
    HIDDEN int _dmtype##_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), genptr_t *data); \
    HIDDEN int _dmtype##_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency); \
    HIDDEN int _dmtype##_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b); \

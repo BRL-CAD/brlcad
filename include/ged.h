@@ -505,8 +505,8 @@ GED_EXPORT BU_EXTERN(int ged_clip,
 GED_EXPORT BU_EXTERN(int ged_vclip,
 		     (vect_t a,
 		      vect_t b,
-		      register fastf_t *min,
-		      register fastf_t *max));
+		      fastf_t *min,
+		      fastf_t *max));
 
 /* defined in copy.c */
 GED_EXPORT BU_EXTERN(int ged_dbcopy,
@@ -558,7 +558,7 @@ GED_EXPORT BU_EXTERN(int ged_inside_internal,
 GED_EXPORT BU_EXTERN(int ged_build_tops,
 		     (struct ged	*gedp,
 		      char		**start,
-		      register char	**end));
+		      char		**end));
 
 
 /* FIXME: wdb routines do not belong in libged.  need to be

@@ -35,12 +35,12 @@
 
 static int
 ged_list_children(struct ged			*gedp,
-		  register struct directory	*dp);
+		  struct directory	*dp);
 
 int
 ged_lt(struct ged *gedp, int argc, const char *argv[])
 {
-    register struct directory *dp;
+    struct directory *dp;
     static const char *usage = "object";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -70,9 +70,9 @@ ged_lt(struct ged *gedp, int argc, const char *argv[])
 
 static int
 ged_list_children(struct ged			*gedp,
-		  register struct directory	*dp)
+		  struct directory	*dp)
 {
-    register int			i;
+    int			i;
     struct rt_db_internal		intern;
     struct rt_comb_internal		*comb;
 

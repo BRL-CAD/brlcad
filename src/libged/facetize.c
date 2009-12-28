@@ -41,7 +41,7 @@ int
 ged_facetize(struct ged *gedp, int argc, const char *argv[])
 {
     int			i;
-    register int	c;
+    int	c;
     int			triangulate;
     char		*newname;
     struct rt_db_internal	intern;
@@ -273,7 +273,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 }
 
 static union tree *
-facetize_region_end(register struct db_tree_state	*tsp,
+facetize_region_end(struct db_tree_state	*tsp,
 		    struct db_full_path			*pathp,
 		    union tree				*curtree,
 		    genptr_t				client_data)

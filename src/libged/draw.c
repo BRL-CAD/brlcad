@@ -36,7 +36,7 @@
 
 
 /* declare our callbacks used by _ged_drawtrees() */
-static union tree *ged_bot_check_region_end(register struct db_tree_state *tsp,
+static union tree *ged_bot_check_region_end(struct db_tree_state *tsp,
 					    struct db_full_path *pathp,
 					    union tree *curtree,
 					    genptr_t client_data);
@@ -56,20 +56,20 @@ static int _ged_drawtrees_depth = 0;
  * librt/vlist.c
  */
 static void
-ged_bound_solid(struct ged *gedp, register struct solid *sp)
+ged_bound_solid(struct ged *gedp, struct solid *sp)
 {
-    register struct bn_vlist	*vp;
-    register double			xmax, ymax, zmax;
-    register double			xmin, ymin, zmin;
+    struct bn_vlist	*vp;
+    double			xmax, ymax, zmax;
+    double			xmin, ymin, zmin;
 
     xmax = ymax = zmax = -INFINITY;
     xmin = ymin = zmin =  INFINITY;
     sp->s_vlen = 0;
     for (BU_LIST_FOR(vp, bn_vlist, &(sp->s_vlist))) {
-	register int	j;
-	register int	nused = vp->nused;
-	register int	*cmd = vp->cmd;
-	register point_t *pt = vp->pt;
+	int	j;
+	int	nused = vp->nused;
+	int	*cmd = vp->cmd;
+	point_t *pt = vp->pt;
 	for (j = 0; j < nused; j++, cmd++, pt++) {
 	    switch (*cmd) {
 		case BN_VLIST_POLY_START:
@@ -118,7 +118,7 @@ ged_bound_solid(struct ged *gedp, register struct solid *sp)
 void
 ged_drawH_part2(int dashflag, struct bu_list *vhead, struct db_full_path *pathp, struct db_tree_state *tsp, struct solid *existing_sp, struct _ged_client_data *dgcdp)
 {
-    register struct solid *sp;
+    struct solid *sp;
 
     if (!existing_sp) {
 	/* Handling a new solid */
@@ -191,7 +191,7 @@ ged_drawH_part2(int dashflag, struct bu_list *vhead, struct db_full_path *pathp,
 
 
 static union tree *
-ged_wireframe_region_end(register struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+ged_wireframe_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
     return (curtree);
 }
@@ -388,7 +388,7 @@ ged_nmg_region_start(struct db_tree_state *tsp, struct db_full_path *pathp, cons
  * This routine must be prepared to run in parallel.
  */
 static union tree *
-ged_nmg_region_end(register struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+ged_nmg_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
     struct nmgregion	*r;
     struct bu_list		vhead;
@@ -544,13 +544,13 @@ int
 _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct _ged_client_data *_dgcdp)
 {
     int ret = 0;
-    register int c;
+    int c;
     int ncpu = 1;
     int dgo_nmg_use_tnurbs = 0;
     int dgo_enable_fastpath = 0;
     struct model *dgo_nmg_model;
     struct _ged_client_data *dgcdp;
-    register int  i;
+    int  i;
     int  ac = 1;
     char *av[2];
 
@@ -639,7 +639,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		case 'C':
 		{
 		    int		r, g, b;
-		    register char	*cp = bu_optarg;
+		    char	*cp = bu_optarg;
 
 		    r = atoi(cp);
 		    while ( (*cp >= '0' && *cp <= '9') )  cp++;
@@ -825,7 +825,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 
 
 static union tree *
-ged_bot_check_region_end(register struct db_tree_state	*tsp,
+ged_bot_check_region_end(struct db_tree_state	*tsp,
 			 struct db_full_path		*pathp,
 			 union tree			*curtree,
 			 genptr_t			client_data)
@@ -960,8 +960,8 @@ _ged_invent_solid(struct ged	*gedp,
 		 fastf_t	transparency,
 		 int		dmode)
 {
-    register struct directory	*dp;
-    register struct solid	*sp;
+    struct directory	*dp;
+    struct solid	*sp;
     struct ged_display_list	*gdlp;
     unsigned char		type='0';
 
@@ -1039,10 +1039,10 @@ _ged_invent_solid(struct ged	*gedp,
 void
 ged_color_soltab(struct bu_list *hdlp)
 {
-    register struct ged_display_list *gdlp;
-    register struct ged_display_list *next_gdlp;
-    register struct solid *sp;
-    register const struct mater *mp;
+    struct ged_display_list *gdlp;
+    struct ged_display_list *next_gdlp;
+    struct solid *sp;
+    const struct mater *mp;
 
     gdlp = BU_LIST_NEXT(ged_display_list, hdlp);
     while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
@@ -1098,7 +1098,7 @@ ged_color_soltab(struct bu_list *hdlp)
 int
 ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 {
-    register int i;
+    int i;
     int	flag_A_attr=0;
     int	flag_o_nonunique=1;
     int	last_opt=0;
@@ -1268,9 +1268,9 @@ struct ged_display_list *
 ged_addToDisplay(struct ged *gedp,
 		 const char *name)
 {
-    register int i;
+    int i;
     struct directory *dp;
-    register struct ged_display_list *gdlp;
+    struct ged_display_list *gdlp;
     char *cp;
     int found_namepath = 0;
     struct db_full_path namepath;
@@ -1292,8 +1292,8 @@ ged_addToDisplay(struct ged *gedp,
     /* Make sure name is not already in the list */
     gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
     while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
-	register struct solid *sp;
-	register struct solid *nsp;
+	struct solid *sp;
+	struct solid *nsp;
 
 	if (!strcmp(name, bu_vls_addr(&gdlp->gdl_path)))
 	    goto end;

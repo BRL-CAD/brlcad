@@ -495,7 +495,7 @@ Draw_entities( m, view_number, de_list, no_of_des, x, y, ang, local_scale, clip,
 	/* rotate, scale, clip, etc, ect, etc... */
 	for ( BU_LIST_FOR( vp, bn_vlist, &vhead ) )
 	{
-	    register int nused = vp->nused;
+	    int nused = vp->nused;
 
 	    for ( i=0; i<nused; i++ )
 	    {

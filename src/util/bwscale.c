@@ -64,9 +64,9 @@ Usage: bwscale [-h] [-r] [-s squareinsize] [-w inwidth] [-n inheight]\n\
 	[-S squareoutsize] [-W outwidth] [-N outheight] [in.bw] > out.bw\n";
 
 static int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int c;
+    int c;
 
     while ( (c = bu_getopt( argc, argv, "rhs:w:n:S:W:N:" )) != EOF )  {
 	switch ( c )  {

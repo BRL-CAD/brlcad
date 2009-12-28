@@ -60,9 +60,9 @@ Usage: bw-ps [-e] [-c] [-L] [-h]\n\
 	[-S inches_square] [-W inches_width] [-N inches_height] [file.bw]\n";
 
 int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int c;
+    int c;
 
     while ( (c = bu_getopt( argc, argv, "ehcLs:w:n:S:W:N:" )) != EOF )  {
 	switch ( c )  {

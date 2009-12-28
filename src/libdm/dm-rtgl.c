@@ -1559,7 +1559,7 @@ time_t start = 0;
  *
  */
 HIDDEN int
-rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
+rtgl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 {
     int i, j, new, numVisible, numNew, maxPixels, viewSize;
     vect_t span;
@@ -1950,7 +1950,7 @@ rtgl_normal(struct dm *dmp)
  * The starting position of the beam is as specified.
  */
 HIDDEN int
-rtgl_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int size, int use_aspect)
+rtgl_drawString2D(struct dm *dmp, char *str, fastf_t x, fastf_t y, int size, int use_aspect)
 {
     if (dmp->dm_debugLevel)
 	bu_log("rtgl_drawString2D()\n");

@@ -64,7 +64,7 @@ main(int argc, char **argv)
     FILE		*fpin;
     struct rt_wdb	*fpout;
     int		doti;
-    register int	c;
+    int	c;
 
     grp_name = reg_name = NULL;
 

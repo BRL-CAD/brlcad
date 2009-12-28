@@ -43,7 +43,7 @@ int main(int ac, char *av[])
 {
     int i, n;
     long num_values;
-    register double *bp;
+    double *bp;
     double sum, sum2;
     double max, min;
     double mean, var;

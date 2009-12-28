@@ -51,7 +51,7 @@
 #include "bio.h"
 
 #ifndef FD_MOVE
-#  define FD_MOVE(a, b) { register int _i; for (_i = 0; _i < FD_SETSIZE; _i++) \
+#  define FD_MOVE(a, b) { int _i; for (_i = 0; _i < FD_SETSIZE; _i++) \
 		if (FD_ISSET(_i, b)) FD_SET(_i, a); else FD_CLR(_i, a); }
 #endif
 
@@ -190,28 +190,28 @@ void		addclient(struct pkg_conn *pc);
 void		start_servers(struct timeval *nowp);
 void		eat_script(FILE *fp);
 void		interactive_cmd(FILE *fp);
-void		prep_frame(register struct frame *fr);
-void		frame_is_done(register struct frame *fr);
-void		destroy_frame(register struct frame *fr);
+void		prep_frame(struct frame *fr);
+void		frame_is_done(struct frame *fr);
+void		destroy_frame(struct frame *fr);
 void		schedule(struct timeval *nowp);
-void		list_remove(register struct bu_list *lhp, int a, int b);
+void		list_remove(struct bu_list *lhp, int a, int b);
 void		write_fb(unsigned char *pp, struct frame *fr, int a, int b);
-void		repaint_fb(register struct frame *fr);
-void		size_display(register struct frame *fr);
-void		send_dirbuild(register struct servers *sp);
-void		send_gettrees(struct servers *sp, register struct frame *fr);
-void		send_restart(register struct servers *sp);
-void		send_loglvl(register struct servers *sp);
-void		send_matrix(struct servers *sp, register struct frame *fr);
+void		repaint_fb(struct frame *fr);
+void		size_display(struct frame *fr);
+void		send_dirbuild(struct servers *sp);
+void		send_gettrees(struct servers *sp, struct frame *fr);
+void		send_restart(struct servers *sp);
+void		send_loglvl(struct servers *sp);
+void		send_matrix(struct servers *sp, struct frame *fr);
 void		send_to_lines();
-void		pr_list(register struct bu_list *lhp);
+void		pr_list(struct bu_list *lhp);
 void		mathtab_constant(void);
 void		add_host(struct ihost *ihp);
 void		host_helper(FILE *fp);
 void		start_helper(void);
 void		build_start_cmd(int argc, char **argv, int startc);
-void		drop_server(register struct servers *sp, char *why);
-void		send_do_lines(register struct servers *sp, int start, int stop, int framenum);
+void		drop_server(struct servers *sp, char *why);
+void		send_do_lines(struct servers *sp, int start, int stop, int framenum);
 void		do_work(int auto_start);
 void		source(FILE *fp);
 
@@ -227,13 +227,13 @@ int detached = 0;		/* continue after EOF */
 /*
  * Package Handlers.
  */
-void	ph_default(register struct pkg_conn *pc, char *buf);	/* foobar message handler */
-void	ph_pixels(register struct pkg_conn *pc, char *buf);
-void	ph_print(register struct pkg_conn *pc, char *buf);
-void	ph_dirbuild_reply(register struct pkg_conn *pc, char *buf);
-void	ph_gettrees_reply(register struct pkg_conn *pc, char *buf);
-void	ph_version(register struct pkg_conn *pc, char *buf);
-void	ph_cmd(register struct pkg_conn *pc, char *buf);
+void	ph_default(struct pkg_conn *pc, char *buf);	/* foobar message handler */
+void	ph_pixels(struct pkg_conn *pc, char *buf);
+void	ph_print(struct pkg_conn *pc, char *buf);
+void	ph_dirbuild_reply(struct pkg_conn *pc, char *buf);
+void	ph_gettrees_reply(struct pkg_conn *pc, char *buf);
+void	ph_version(struct pkg_conn *pc, char *buf);
+void	ph_cmd(struct pkg_conn *pc, char *buf);
 struct pkg_switch pkgswitch[] = {
     { MSG_DIRBUILD_REPLY,	ph_dirbuild_reply,	"Dirbuild ACK" },
     { MSG_GETTREES_REPLY,	ph_gettrees_reply,	"gettrees ACK" },
@@ -497,7 +497,7 @@ state_to_string(int state)
  *			S T A T E C H A N G E
  */
 void
-statechange(register struct servers *sp, int newstate)
+statechange(struct servers *sp, int newstate)
 {
     if ( rem_debug )  {
 	bu_log("%s %s %s --> %s\n",
@@ -523,8 +523,8 @@ remrt_log(char *msg)
 int
 main(int argc, char **argv)
 {
-    register struct servers *sp;
-    register int i, done;
+    struct servers *sp;
+    int i, done;
 
     /* Random inits */
     our_hostname = get_our_hostname();
@@ -653,7 +653,7 @@ do_work(int auto_start)
     struct timeval	now;
     int		prev_serv;	/* previous # of connected servers */
     int		cur_serv;	/* current # of connected servers */
-    register struct servers	*sp;
+    struct servers	*sp;
 
     /* Compute until no work remains */
     prev_serv = 0;
@@ -730,10 +730,10 @@ void
 check_input(int waittime)
 {
     static fd_set	ifdset;
-    register int	i;
-    register struct pkg_conn *pc;
+    int	i;
+    struct pkg_conn *pc;
     static struct timeval tv;
-    register int	val;
+    int	val;
 
     /* First, handle any packages waiting in internal buffers */
     for ( i=0; i<MAXSERVERS; i++ )  {
@@ -770,7 +770,7 @@ check_input(int waittime)
 
     /* Fourth, get any new traffic off the network into libpkg buffers */
     for ( i=0; i<MAXSERVERS; i++ )  {
-	register struct pkg_conn *pc;
+	struct pkg_conn *pc;
 
 	if ( !feof(stdin) && i == fileno(stdin) )  continue;
 	if ( !FD_ISSET(i, &ifdset) )  continue;
@@ -807,8 +807,8 @@ check_input(int waittime)
 void
 addclient(struct pkg_conn *pc)
 {
-    register struct servers *sp;
-    register struct frame	*fr;
+    struct servers *sp;
+    struct frame	*fr;
     struct ihost	*ihp;
     int		on = 1;
     auto socklen_t	fromlen;
@@ -860,11 +860,11 @@ addclient(struct pkg_conn *pc)
  *  to prevent recursion problems.
  */
 void
-drop_server(register struct servers *sp, char *why)
+drop_server(struct servers *sp, char *why)
 {
-    register struct list	*lp;
-    register struct pkg_conn *pc;
-    register struct frame	*fr;
+    struct list	*lp;
+    struct pkg_conn *pc;
+    struct frame	*fr;
     int fd;
     int	oldstate;
 
@@ -926,8 +926,8 @@ struct timeval	last_server_check_time;
 void
 start_servers(struct timeval *nowp)
 {
-    register struct ihost	*ihp;
-    register struct servers	*sp;
+    struct ihost	*ihp;
+    struct servers	*sp;
     int	hackers_night;
     int	night;
     int	add;
@@ -1193,7 +1193,7 @@ eat_script(FILE *fp)
  *  For general conversion, this is pretty feeble.  Is more needed?
  */
 int
-string2int(register char *str)
+string2int(char *str)
 {
     auto int ret;
     int cnt;
@@ -1214,7 +1214,7 @@ string2int(register char *str)
 struct servers *
 get_server_by_name(char *str)
 {
-    register struct servers *sp;
+    struct servers *sp;
     struct ihost	*ihp;
 
     if ( isdigit( *str ) )  {
@@ -1241,8 +1241,8 @@ void
 interactive_cmd(FILE *fp)
 {
     char buf[BUFSIZ];
-    register char *pos;
-    register int i;
+    char *pos;
+    int i;
 
     pos = buf;
 
@@ -1261,7 +1261,7 @@ interactive_cmd(FILE *fp)
     }
 
     if ( feof(fp) ) {
-	register struct servers *sp;
+	struct servers *sp;
 
 	if ( fp != stdin )  return;
 
@@ -1294,9 +1294,9 @@ interactive_cmd(FILE *fp)
  *  fr_number must have been set by caller.
  */
 void
-prep_frame(register struct frame *fr)
+prep_frame(struct frame *fr)
 {
-    register struct list *lp;
+    struct list *lp;
     char buf[BUFSIZ];
 
     CHECK_FRAME(fr);
@@ -1344,7 +1344,7 @@ prep_frame(register struct frame *fr)
 void
 do_a_frame(void)
 {
-    register struct frame *fr;
+    struct frame *fr;
     if ( running )  {
 	bu_log("already running, please wait or STOP\n");
 	return;
@@ -1380,11 +1380,11 @@ do_a_frame(void)
  *	 0	on success
  */
 int
-scan_frame_for_finished_pixels(register struct frame *fr)
+scan_frame_for_finished_pixels(struct frame *fr)
 {
-    register FILE	*fp;
+    FILE	*fp;
     char		pbuf[8];
-    register int	pno;	/* index of next unread pixel */
+    int	pno;	/* index of next unread pixel */
     int		nspans = 0;
     int		npix = 0;
 
@@ -1399,7 +1399,7 @@ scan_frame_for_finished_pixels(register struct frame *fr)
 
     pno = 0;
     while ( !feof( fp ) )  {
-	register int	first, last;
+	int	first, last;
 
 	/* Read and skip over any black pixels */
 	if ( (int)fread( pbuf, 3, 1, fp ) < 1 )  break;
@@ -1503,7 +1503,7 @@ create_outputfilename( struct frame *fr )
  *			F R A M E _ I S _ D O N E
  */
 void
-frame_is_done(register struct frame *fr)
+frame_is_done(struct frame *fr)
 {
     double	delta;
 
@@ -1568,10 +1568,10 @@ frame_is_done(register struct frame *fr)
  *			D E S T R O Y _ F R A M E
  */
 void
-destroy_frame(register struct frame *fr)
+destroy_frame(struct frame *fr)
 {
-    register struct list	*lp;
-    register struct servers	*sp;
+    struct list	*lp;
+    struct servers	*sp;
 
     CHECK_FRAME(fr);
 
@@ -1609,10 +1609,10 @@ destroy_frame(register struct frame *fr)
  *	!0	all done
  */
 int
-this_frame_done(register struct frame *fr)
+this_frame_done(struct frame *fr)
 {
-    register struct servers	*sp;
-    register struct list	*lp;
+    struct servers	*sp;
+    struct list	*lp;
 
     CHECK_FRAME(fr);
 
@@ -1639,7 +1639,7 @@ this_frame_done(register struct frame *fr)
 int
 all_servers_idle(void)
 {
-    register struct servers	*sp;
+    struct servers	*sp;
 
     for ( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
 	if ( sp->sr_pc == PKC_NULL )  continue;
@@ -1664,7 +1664,7 @@ all_servers_idle(void)
 int
 all_done(void)
 {
-    register struct frame	*fr;
+    struct frame	*fr;
 
     for ( fr = FrameHead.fr_forw; fr != &FrameHead; fr = fr->fr_forw)  {
 	CHECK_FRAME(fr);
@@ -1701,9 +1701,9 @@ all_done(void)
 void
 schedule(struct timeval *nowp)
 {
-    register struct servers *sp;
-    register struct frame *fr;
-    register struct frame *fr2;
+    struct servers *sp;
+    struct frame *fr;
+    struct frame *fr2;
     int		another_pass;
     int		nxt_frame=0;
     static int	scheduler_going = 0;	/* recursion protection */
@@ -1833,8 +1833,8 @@ schedule(struct timeval *nowp)
 int
 number_of_ready_servers(void)
 {
-    register struct servers	*sp;
-    register int		count = 0;
+    struct servers	*sp;
+    int		count = 0;
 
     for ( sp = &servers[0]; sp < &servers[MAXSERVERS]; sp++ )  {
 	if ( sp->sr_pc == PKC_NULL )  continue;
@@ -1882,7 +1882,7 @@ assignment_time(void)
 int
 task_server( struct servers *sp, struct frame *fr, struct timeval *nowp )
 {
-    register struct list	*lp;
+    struct list	*lp;
     int			a, b;
     int			lump;
     int			maxlump;
@@ -1942,7 +1942,7 @@ task_server( struct servers *sp, struct frame *fr, struct timeval *nowp )
     if ( sp->sr_curframe != fr )  {
 	if (sp->sr_curframe != FRAME_NULL ) return 3;
 	if (work_allocate_method==OPT_MOVIE) {
-	    register struct servers *csp;
+	    struct servers *csp;
 	    for (csp = &servers[0]; csp < &servers[MAXSERVERS]; csp++ ) {
 		if (csp->sr_curframe == fr) return 2;
 	    }
@@ -2038,8 +2038,8 @@ task_server( struct servers *sp, struct frame *fr, struct timeval *nowp )
 int
 server_q_len( struct servers *sp )
 {
-    register struct list	*lp;
-    register int		count;
+    struct list	*lp;
+    int		count;
 
     count = 0;
     for ( BU_LIST_FOR( lp, list, &sp->sr_work ) )  {
@@ -2059,9 +2059,9 @@ server_q_len( struct servers *sp )
  *	-1	error, unable to read matrix.
  */
 int
-read_matrix(register FILE *fp, register struct frame *fr)
+read_matrix(FILE *fp, struct frame *fr)
 {
-    register int i;
+    int i;
     char number[128];
     char	cmd[128];
 
@@ -2103,9 +2103,9 @@ read_matrix(register FILE *fp, register struct frame *fr)
  *			P H _ D E F A U L T
  */
 void
-ph_default(register struct pkg_conn *pc, char *buf)
+ph_default(struct pkg_conn *pc, char *buf)
 {
-    register int i;
+    int i;
 
     for ( i=0; pc->pkc_switch[i].pks_handler != NULL; i++ )  {
 	if ( pc->pkc_switch[i].pks_type == pc->pkc_type )  break;
@@ -2124,9 +2124,9 @@ ph_default(register struct pkg_conn *pc, char *buf)
  *  that he is ready to accept work now.
  */
 void
-ph_dirbuild_reply(register struct pkg_conn *pc, char *buf)
+ph_dirbuild_reply(struct pkg_conn *pc, char *buf)
 {
-    register struct servers *sp;
+    struct servers *sp;
 
     sp = &servers[pc->pkc_fd];
     bu_log("%s %s dirbuild OK (%s)\n",
@@ -2154,9 +2154,9 @@ ph_dirbuild_reply(register struct pkg_conn *pc, char *buf)
  *  that he is ready to accept work now.
  */
 void
-ph_gettrees_reply(register struct pkg_conn *pc, char *buf)
+ph_gettrees_reply(struct pkg_conn *pc, char *buf)
 {
-    register struct servers *sp;
+    struct servers *sp;
 
     sp = &servers[pc->pkc_fd];
     bu_log("%s %s gettrees OK (%s)\n",
@@ -2181,7 +2181,7 @@ ph_gettrees_reply(register struct pkg_conn *pc, char *buf)
  *			P H _ P R I N T
  */
 void
-ph_print(register struct pkg_conn *pc, char *buf)
+ph_print(struct pkg_conn *pc, char *buf)
 {
     if (print_on)  {
 	bu_log("%s %s: %s",
@@ -2198,9 +2198,9 @@ ph_print(register struct pkg_conn *pc, char *buf)
  *			P H _ V E R S I O N
  */
 void
-ph_version(register struct pkg_conn *pc, char *buf)
+ph_version(struct pkg_conn *pc, char *buf)
 {
-    register struct servers	*sp;
+    struct servers	*sp;
 
     sp = &servers[pc->pkc_fd];
     if ( strcmp( PROTOCOL_VERSION, buf ) != 0 )  {
@@ -2223,9 +2223,9 @@ ph_version(register struct pkg_conn *pc, char *buf)
  *			P H _ C M D
  */
 void
-ph_cmd(register struct pkg_conn *pc, char *buf)
+ph_cmd(struct pkg_conn *pc, char *buf)
 {
-    register struct servers	*sp;
+    struct servers	*sp;
 
     sp = &servers[pc->pkc_fd];
     bu_log("%s %s: cmd '%s'\n", stamp(), sp->sr_host->ht_name, buf );
@@ -2240,12 +2240,12 @@ ph_cmd(register struct pkg_conn *pc, char *buf)
  *  When a scanline is received from a server, file it away.
  */
 void
-ph_pixels(register struct pkg_conn *pc, char *buf)
+ph_pixels(struct pkg_conn *pc, char *buf)
 {
-    register int		i;
-    register struct servers	*sp;
-    register struct frame	*fr;
-    register struct list	*lp;
+    int		i;
+    struct servers	*sp;
+    struct frame	*fr;
+    struct list	*lp;
     struct line_info	info;
     struct timeval		tvnow;
     int			npix;
@@ -2459,9 +2459,9 @@ ph_pixels(register struct pkg_conn *pc, char *buf)
  * Given pointer to head of list of ranges, remove the range that's done
  */
 void
-list_remove(register struct bu_list *lhp, int a, int b)
+list_remove(struct bu_list *lhp, int a, int b)
 {
-    register struct list *lp;
+    struct list *lp;
 
     for ( BU_LIST_FOR( lp, list, lhp ) )  {
 	if ( lp->li_start == a )  {
@@ -2482,7 +2482,7 @@ list_remove(register struct bu_list *lhp, int a, int b)
 	/* Need to split range into two ranges */
 	/* (start..a-1) and (b+1..stop) */
 	{
-	    register struct list *lp2;
+	    struct list *lp2;
 	    bu_log("splitting range into (%d %d) (%d %d)\n",
 		   lp->li_start, a-1,
 		   b+1, lp->li_stop);
@@ -2506,7 +2506,7 @@ list_remove(register struct bu_list *lhp, int a, int b)
 void
 write_fb(unsigned char *pp, struct frame *fr, int a, int b)
 {
-    register int	x, y;	/* screen coordinates of pixel 'a' */
+    int	x, y;	/* screen coordinates of pixel 'a' */
     int	offset;		/* pixel offset beyond 'pp' */
     int	pixels_todo;	/* # of pixels in buffer to be written */
     int	write_len;	/* # of pixels to write on this scanline */
@@ -2561,9 +2561,9 @@ write_fb(unsigned char *pp, struct frame *fr, int a, int b)
  *  Sort of a cheap "pix-fb", built in.
  */
 void
-repaint_fb(register struct frame *fr)
+repaint_fb(struct frame *fr)
 {
-    register int	y;
+    int	y;
     unsigned char	*line;
     int		nby;
     FILE		*fp;
@@ -2602,7 +2602,7 @@ repaint_fb(register struct frame *fr)
 int
 init_fb(char *name)
 {
-    register int xx, yy;
+    int xx, yy;
 
     if ( fbp != FBIO_NULL )  fb_close(fbp);
 
@@ -2633,7 +2633,7 @@ init_fb(char *name)
  *			S I Z E _ D I S P L A Y
  */
 void
-size_display(register struct frame *fr)
+size_display(struct frame *fr)
 {
     CHECK_FRAME(fr);
     if ( cur_fbwidth == fr->fr_width )
@@ -2659,9 +2659,9 @@ size_display(register struct frame *fr)
  *			S E N D _ D I R B U I L D
  */
 void
-send_dirbuild(register struct servers *sp)
+send_dirbuild(struct servers *sp)
 {
-    register struct ihost	*ihp;
+    struct ihost	*ihp;
 
     if ( sp->sr_pc == PKC_NULL )  return;
     if ( file_fullname[0] == '\0' || sp->sr_state != SRST_VERSOK )  return;
@@ -2696,7 +2696,7 @@ send_dirbuild(register struct servers *sp)
  *			S E N D _ R E S T A R T
  */
 void
-send_restart(register struct servers *sp)
+send_restart(struct servers *sp)
 {
     if ( sp->sr_pc == PKC_NULL )  return;
 
@@ -2709,7 +2709,7 @@ send_restart(register struct servers *sp)
  *			S E N D _ L O G L V L
  */
 void
-send_loglvl(register struct servers *sp)
+send_loglvl(struct servers *sp)
 {
     if ( sp->sr_pc == PKC_NULL )  return;
 
@@ -2723,7 +2723,7 @@ send_loglvl(register struct servers *sp)
  *  Send current options, and the view matrix information.
  */
 void
-send_matrix(struct servers *sp, register struct frame *fr)
+send_matrix(struct servers *sp, struct frame *fr)
 {
     CHECK_FRAME(fr);
     if ( sp->sr_pc == PKC_NULL )  return;
@@ -2739,7 +2739,7 @@ send_matrix(struct servers *sp, register struct frame *fr)
  *  Send args for rt_gettrees.
  */
 void
-send_gettrees(struct servers *sp, register struct frame *fr)
+send_gettrees(struct servers *sp, struct frame *fr)
 {
     CHECK_FRAME(fr);
     if ( sp->sr_pc == PKC_NULL )  return;
@@ -2756,7 +2756,7 @@ send_gettrees(struct servers *sp, register struct frame *fr)
  *			S E N D _ D O _ L I N E S
  */
 void
-send_do_lines(register struct servers *sp, int start, int stop, int framenum)
+send_do_lines(struct servers *sp, int start, int stop, int framenum)
 {
     char obuf[128];
 
@@ -2773,9 +2773,9 @@ send_do_lines(register struct servers *sp, int start, int stop, int framenum)
  *			P R _ L I S T
  */
 void
-pr_list(register struct bu_list *lhp)
+pr_list(struct bu_list *lhp)
 {
-    register struct list *lp;
+    struct list *lp;
 
     for ( BU_LIST_FOR( lp, list, lhp ) )  {
 	if ( lp->li_frame == 0 )  {
@@ -3002,8 +3002,8 @@ start_helper(void)
 void
 build_start_cmd(int argc, char **argv, int startc)
 {
-    register char	*cp;
-    register int	i;
+    char	*cp;
+    int	i;
     int		len;
 
     if ( startc+2 > argc )  {
@@ -3037,7 +3037,7 @@ build_start_cmd(int argc, char **argv, int startc)
 int
 cd_load(int argc, char **argv)
 {
-    register struct servers *sp;
+    struct servers *sp;
 
     if ( running )  {
 	bu_log("Can't load while running!!\n");
@@ -3083,7 +3083,7 @@ cd_debug(int argc, char **argv)
 int
 cd_rdebug(int argc, char **argv)
 {
-    register struct servers *sp;
+    struct servers *sp;
     int		len;
     struct bu_vls	cmd;
 
@@ -3163,7 +3163,7 @@ cd_persp(int argc, char **argv)
 int
 cd_read(int argc, char **argv)
 {
-    register FILE *fp;
+    FILE *fp;
 
     if ( (fp = fopen(argv[1], "r")) == NULL )  {
 	perror(argv[1]);
@@ -3211,8 +3211,8 @@ cd_file(int argc, char **argv)
 int
 cd_mat(int argc, char **argv)
 {
-    register FILE *fp;
-    register struct frame *fr;
+    FILE *fp;
+    struct frame *fr;
     int	i;
 
     GET_FRAME(fr);
@@ -3249,8 +3249,8 @@ cd_mat(int argc, char **argv)
 int
 cd_movie(int argc, char **argv)
 {
-    register FILE	*fp;
-    register struct frame	*fr;
+    FILE	*fp;
+    struct frame	*fr;
     struct frame		dummy_frame;
     int		a, b;
     int		i;
@@ -3303,7 +3303,7 @@ cd_movie(int argc, char **argv)
 int
 cd_add(int argc, char **argv)
 {
-    register int i;
+    int i;
     struct ihost	*ihp;
 
     for ( i=1; i<argc; i++ )  {
@@ -3317,7 +3317,7 @@ cd_add(int argc, char **argv)
 int
 cd_drop(int argc, char **argv)
 {
-    register struct servers *sp;
+    struct servers *sp;
 
     sp = get_server_by_name( argv[1] );
     if ( sp == SERVERS_NULL || sp->sr_pc == PKC_NULL )  return -1;
@@ -3328,8 +3328,8 @@ cd_drop(int argc, char **argv)
 int
 cd_hold(int argc, char **argv)
 {
-    register struct servers *sp;
-    register struct ihost *ihp;
+    struct servers *sp;
+    struct ihost *ihp;
 
     ihp = host_lookup_by_name( argv[1], 0);
     if (ihp == IHOST_NULL) return -1;
@@ -3373,7 +3373,7 @@ cd_allocate(int argc, char **argv)
 int
 cd_restart(int argc, char **argv)
 {
-    register struct servers *sp;
+    struct servers *sp;
 
     if ( argc <= 1 )  {
 	/* Restart all */
@@ -3402,7 +3402,7 @@ cd_stop( int argc, char **argv )
 int
 cd_reset(int argc, char **argv)
 {
-    register struct frame *fr;
+    struct frame *fr;
 
     if ( running )  {
 	bu_log("must STOP before RESET!\n");
@@ -3419,7 +3419,7 @@ cd_reset(int argc, char **argv)
 int
 cd_attach(int argc, char **argv)
 {
-    register struct frame *fr;
+    struct frame *fr;
     char		*name;
 
     if ( argc <= 1 )  {
@@ -3454,7 +3454,7 @@ cd_release(int argc, char **argv)
 int
 cd_frames( int argc, char **argv )
 {
-    register struct frame *fr;
+    struct frame *fr;
 
     bu_log("%s Frames waiting:\n", stamp() );
     for (fr=FrameHead.fr_forw; fr != &FrameHead; fr=fr->fr_forw) {
@@ -3498,7 +3498,7 @@ cd_memprint(int argc, char **argv)
 int
 cd_stat( int argc, char **argv )
 {
-    register struct servers *sp;
+    struct servers *sp;
     int	frame;
     char	*s;
     char	buf[48];
@@ -3552,7 +3552,7 @@ cd_stat( int argc, char **argv )
 int
 cd_status(int argc, char **argv)
 {
-    register struct servers *sp;
+    struct servers *sp;
     int	num;
     char	*s;
 
@@ -3626,7 +3626,7 @@ cd_clear(int argc, char **argv)
 int
 cd_print(int argc, char **argv)
 {
-    register struct servers *sp;
+    struct servers *sp;
 
     if ( argc > 1 )
 	print_on = atoi(argv[1]);
@@ -3689,7 +3689,7 @@ cd_wait(int argc, char **argv)
 int
 cd_help(int argc, char **argv)
 {
-    register struct command_tab	*tp;
+    struct command_tab	*tp;
 
     for ( tp = cmd_tab; tp->ct_cmd != (char *)0; tp++ )  {
 	bu_log("%s %s\t\t%s\n",
@@ -3705,7 +3705,7 @@ cd_help(int argc, char **argv)
 int
 cd_host(int argc, char **argv)
 {
-    register struct ihost	*ihp;
+    struct ihost	*ihp;
     int argpoint = 1;
 
     if ( argc < 5 )  {
@@ -3868,7 +3868,7 @@ struct command_tab cmd_tab[] = {
      cd_status,	1, 1},
     {"detach", "",		"detatch from interactive keyboard",
      cd_detach,	1, 1},
-    {"host", "name always|night|passive|rs[ rays/sec]|passrs[ rays/sec] cd|convert path", "register server host",
+    {"host", "name always|night|passive|rs[ rays/sec]|passrs[ rays/sec] cd|convert path", "server host",
      cd_host,	1, 6},
     {"wait", "",		"wait for current work assignment to finish",
      cd_wait,	1, 1},
