@@ -94,7 +94,7 @@ ged_which_shader(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(&gedp->ged_result_str, " %s", dp->d_namep);
 	    else
 		bu_vls_printf(&gedp->ged_result_str, "   %s\n", dp->d_namep);
-	    intern.idb_meth->ft_ifree( &intern, &rt_uniresource );
+	    intern.idb_meth->ft_ifree(&intern);
 	} FOR_ALL_DIRECTORY_END;
     }
 

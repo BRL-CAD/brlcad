@@ -141,7 +141,7 @@ printcodes(struct ged *gedp, FILE *fp, struct directory *dp, int pathpos)
     }
 
     if (id != ID_COMBINATION) {
-	intern.idb_meth->ft_ifree( &intern, &rt_uniresource );
+	intern.idb_meth->ft_ifree(&intern);
 	return GED_OK;
     }
 
@@ -157,7 +157,7 @@ printcodes(struct ged *gedp, FILE *fp, struct directory *dp, int pathpos)
 	for (i=0; i < pathpos; i++)
 	    fprintf(fp, "/%s", path[i]->d_namep);
 	fprintf(fp, "/%s\n", dp->d_namep);
-	intern.idb_meth->ft_ifree( &intern, &rt_uniresource );
+	intern.idb_meth->ft_ifree(&intern);
 	return GED_OK;
     }
 
@@ -167,7 +167,7 @@ printcodes(struct ged *gedp, FILE *fp, struct directory *dp, int pathpos)
 			 (genptr_t)fp, (genptr_t)&pathpos, (genptr_t)gedp);
     }
 
-    intern.idb_meth->ft_ifree( &intern, &rt_uniresource );
+    intern.idb_meth->ft_ifree(&intern);
     return GED_OK;
 }
 

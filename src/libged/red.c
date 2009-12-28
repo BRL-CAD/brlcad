@@ -133,7 +133,7 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 		/* Do some quick checking on the edited file */
 		bu_vls_printf(&gedp->ged_result_str, "%s: Error in edited region, no changes made\n", *argv);
 		if (comb)
-		    intern.idb_meth->ft_ifree( &intern, &rt_uniresource );
+		    intern.idb_meth->ft_ifree(&intern);
 		(void)unlink(_ged_tmpfil);
 		return GED_ERROR;
 	    }
@@ -142,7 +142,7 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 		if (_ged_save_comb(gedp, dp)) {
 		    /* Save combination to a temp name */
 		    bu_vls_printf(&gedp->ged_result_str, "%s: No changes made\n", *argv);
-		    intern.idb_meth->ft_ifree( &intern, &rt_uniresource );
+		    intern.idb_meth->ft_ifree(&intern);
 		    (void)unlink(_ged_tmpfil);
 		    return GED_OK;
 		}
@@ -153,7 +153,7 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 		if (comb) {
 		    _ged_restore_comb(gedp, dp);
 		    bu_vls_printf(&gedp->ged_result_str, "%s: \toriginal restored\n", *argv);
-		    intern.idb_meth->ft_ifree( &intern, &rt_uniresource );
+		    intern.idb_meth->ft_ifree(&intern);
 		}
 
 		(void)unlink(_ged_tmpfil);
@@ -489,14 +489,14 @@ _ged_make_tree(struct ged *gedp, struct rt_comb_internal *comb, struct directory
 	if (dp != DIR_NULL) {
 	    if (db_delete(gedp->ged_wdbp->dbip, dp) || db_dirdelete(gedp->ged_wdbp->dbip, dp)) {
 		bu_vls_printf(&gedp->ged_result_str, "_ged_make_tree: Unable to delete directory entry for %s\n", old_name);
-		intern.idb_meth->ft_ifree( &intern, &rt_uniresource );
+		intern.idb_meth->ft_ifree(&intern);
 		return GED_ERROR;
 	    }
 	}
 
 	if ((dp=db_diradd(gedp->ged_wdbp->dbip, new_name, -1L, 0, flags, (genptr_t)&intern.idb_type)) == DIR_NULL) {
 	    bu_vls_printf(&gedp->ged_result_str, "_ged_make_tree: Cannot add %s to directory, no changes made\n", new_name);
-	    intern.idb_meth->ft_ifree( &intern, &rt_uniresource );
+	    intern.idb_meth->ft_ifree(&intern);
 	    return(1);
 	}
     } else if ( dp == DIR_NULL ) {
@@ -509,7 +509,7 @@ _ged_make_tree(struct ged *gedp, struct rt_comb_internal *comb, struct directory
 
 	if ((dp=db_diradd(gedp->ged_wdbp->dbip, new_name, -1L, 0, flags, (genptr_t)&intern.idb_type)) == DIR_NULL) {
 	    bu_vls_printf(&gedp->ged_result_str, "_ged_make_tree: Cannot add %s to directory, no changes made\n", new_name);
-	    intern.idb_meth->ft_ifree( &intern, &rt_uniresource );
+	    intern.idb_meth->ft_ifree(&intern);
 	    return GED_ERROR;
 	}
     } else {

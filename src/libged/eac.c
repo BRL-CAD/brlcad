@@ -90,10 +90,10 @@ ged_eac(struct ged *gedp, int argc, const char *argv[])
 	    if ( comb->region_id != 0 ||
 		 comb->aircode != item )
 	    {
-		intern.idb_meth->ft_ifree( &intern, &rt_uniresource );
+		intern.idb_meth->ft_ifree(&intern);
 		continue;
 	    }
-	    intern.idb_meth->ft_ifree( &intern, &rt_uniresource );
+	    intern.idb_meth->ft_ifree(&intern);
 
 	    bu_vls_strcat( &v, " " );
 	    bu_vls_strcat( &v, dp->d_namep );

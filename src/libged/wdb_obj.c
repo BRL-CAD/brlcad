@@ -1137,7 +1137,7 @@ wdb_put_cmd(struct rt_wdb *wdbp,
 
 	bu_vls_init(&log);
 
-	if (!ftp->ft_adjust || ftp->ft_adjust(&log, &intern, argc-3, argv+3, &rt_uniresource) == GED_ERROR) {
+	if (!ftp->ft_adjust || ftp->ft_adjust(&log, &intern, argc-3, argv+3) == GED_ERROR) {
 	    Tcl_AppendResult(interp, bu_vls_addr(&log), (char *)NULL);
 	    bu_vls_free(&log);
 	    rt_db_free_internal(&intern, &rt_uniresource);
@@ -1233,7 +1233,7 @@ wdb_adjust_cmd(struct rt_wdb *wdbp,
 	if (!intern.idb_meth->ft_adjust)
 	    return TCL_ERROR;
 
-	status = intern.idb_meth->ft_adjust(&log, &intern, argc-2, argv+2, &rt_uniresource);
+	status = intern.idb_meth->ft_adjust(&log, &intern, argc-2, argv+2);
 
 	if (status == GED_OK && wdb_put_internal(wdbp, name, &intern, 1.0) < 0) {
 	    Tcl_AppendResult(interp, bu_vls_addr(&log), (char *)NULL);
