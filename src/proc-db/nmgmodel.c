@@ -559,21 +559,6 @@ int main(int ac, char **av)
 
     NMG_CK_MODEL(m);
 
-
-    /* write the database */
-    if ((fdmodel = wdb_fopen(mfilename)) == NULL)
-	perror(mfilename);
-    else {
-	mk_id(fdmodel, "hairy NMG");
-	mk_nmg(fdmodel, "s.NMG",  m);
-
-	/* build a database region mentioning the solid */
-	mk_comb1(fdmodel, "r.NMG", "s.NMG", 1);
-
-	wdb_close(fdmodel);
-    }
-
-
     /* write a plot file */
     if ((fdplot = fopen(plotfilename, "w")) == (FILE *)NULL)
 	perror(plotfilename);
@@ -582,8 +567,19 @@ int main(int ac, char **av)
 	fclose(fdplot);
     }
 
+    /* write the database */
+    if ((fdmodel = wdb_fopen(mfilename)) == NULL)
+	perror(mfilename);
+    else {
+	mk_id(fdmodel, "hairy NMG");
+	mk_nmg(fdmodel, "s.NMG",  m); /* releases m, boo */
 
-    nmg_km(m);	/* destroy the NMG model */
+	/* build a database region mentioning the solid */
+	mk_comb1(fdmodel, "r.NMG", "s.NMG", 1);
+
+	wdb_close(fdmodel);
+    }
+
 
     return(0);
 }
