@@ -3463,9 +3463,7 @@ RT_EXPORT BU_EXTERN(int rt_pg_plot_poly,
 		     const struct bn_tol	*tol));
 
 /* hf.c */
-RT_EXPORT BU_EXTERN(int rt_hf_to_dsp,
-		    (struct rt_db_internal *db_intern,
-		     struct resource *resp));
+RT_EXPORT BU_EXTERN(int rt_hf_to_dsp, (struct rt_db_internal *db_intern));
 
 /* dsp.c */
 RT_EXPORT BU_EXTERN(int dsp_pos,
