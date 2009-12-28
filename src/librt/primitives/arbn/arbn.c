@@ -1044,12 +1044,11 @@ rt_arbn_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbos
  * Free the storage associated with the rt_db_internal version of this solid.
  */
 void
-rt_arbn_ifree(struct rt_db_internal *ip, struct resource *resp)
+rt_arbn_ifree(struct rt_db_internal *ip)
 {
     struct rt_arbn_internal *aip;
 
     RT_CK_DB_INTERNAL(ip);
-    if (!resp) resp = &rt_uniresource;
     aip = (struct rt_arbn_internal *)ip->idb_ptr;
     RT_ARBN_CK_MAGIC(aip);
 

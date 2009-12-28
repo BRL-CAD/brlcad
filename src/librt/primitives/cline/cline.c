@@ -1002,12 +1002,11 @@ rt_cline_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbo
  * solid.
  */
 void
-rt_cline_ifree(struct rt_db_internal *ip, struct resource *resp)
+rt_cline_ifree(struct rt_db_internal *ip)
 {
     register struct rt_cline_internal *cline_ip;
 
     RT_CK_DB_INTERNAL(ip);
-    if (!resp) resp = &rt_uniresource;
 
     cline_ip = (struct rt_cline_internal *)ip->idb_ptr;
     RT_CLINE_CK_MAGIC(cline_ip);

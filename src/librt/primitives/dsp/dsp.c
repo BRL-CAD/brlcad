@@ -4543,7 +4543,7 @@ rt_dsp_describe(struct bu_vls *str,
  * solid.
  */
 void
-rt_dsp_ifree(struct rt_db_internal *ip, struct resource *resp)
+rt_dsp_ifree(struct rt_db_internal *ip)
 {
     register struct rt_dsp_internal *dsp_ip;
 
@@ -4551,11 +4551,6 @@ rt_dsp_ifree(struct rt_db_internal *ip, struct resource *resp)
 	bu_log("rt_dsp_ifree()\n");
 
     RT_CK_DB_INTERNAL(ip);
-
-    if (!resp) {
-	resp = &rt_uniresource;
-    }
-    if (resp) RT_CK_RESOURCE(resp);
 
     dsp_ip = (struct rt_dsp_internal *)ip->idb_ptr;
     RT_DSP_CK_MAGIC(dsp_ip);
@@ -4566,7 +4561,7 @@ rt_dsp_ifree(struct rt_db_internal *ip, struct resource *resp)
     }
 
     if (dsp_ip->dsp_bip) {
-	dsp_ip->dsp_bip->idb_meth->ft_ifree((struct rt_db_internal *) dsp_ip->dsp_bip, resp);
+	dsp_ip->dsp_bip->idb_meth->ft_ifree((struct rt_db_internal *) dsp_ip->dsp_bip);
     }
 
     dsp_ip->magic = 0;			/* sanity */

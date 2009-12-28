@@ -582,16 +582,12 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
  * each point type.
  */
 void
-rt_pnts_ifree(struct rt_db_internal *internal, struct resource *resp)
+rt_pnts_ifree(struct rt_db_internal *internal)
 {
     struct rt_pnts_internal *pnts;
     register struct bu_list *point;
 
     RT_CK_DB_INTERNAL(internal);
-
-    if (!resp) {
-	resp = &rt_uniresource;
-    }
 
     pnts = ((struct rt_pnts_internal *)(internal->idb_ptr));
     RT_PNTS_CK_MAGIC(pnts);

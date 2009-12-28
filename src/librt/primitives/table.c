@@ -65,7 +65,7 @@ const struct bu_structparse rt_nul_parse[] = {
 	BU_EXTERN(int rt_##name##_export5, (struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip, struct resource *resp)); \
 	BU_EXTERN(int rt_##name##_import4, (struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp)); \
 	BU_EXTERN(int rt_##name##_export4, (struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip, struct resource *resp)); \
-	BU_EXTERN(void rt_##name##_ifree, (struct rt_db_internal *ip, struct resource *resp)); \
+	BU_EXTERN(void rt_##name##_ifree, (struct rt_db_internal *ip)); \
         BU_EXTERN(int rt_##name##_get, (struct bu_vls *log, const struct rt_db_internal *intern, const char *attr)); \
         BU_EXTERN(int rt_##name##_adjust, (struct bu_vls *log, struct rt_db_internal *intern, int argc, char **argv)); \
 	BU_EXTERN(int rt_##name##_describe, (struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local, struct resource *resp, struct db_i *db_i)); \
@@ -208,8 +208,7 @@ BU_EXTERN(int rt_binunif_export5, (struct bu_external *ep,
 				   const struct db_i *dbip,
 				   struct resource *resp));
 
-BU_EXTERN(void rt_binunif_ifree, (struct rt_db_internal *ip,
-				  struct resource *resp));
+BU_EXTERN(void rt_binunif_ifree, (struct rt_db_internal *ip));
 BU_EXTERN(int rt_binunif_describe, (struct bu_vls *str,
 				    const struct rt_db_internal *ip, int verbose,
 				    double mm2local, struct resource *resp, struct db_i *db_i));
@@ -224,7 +223,7 @@ BU_EXTERN(int rt_comb_get, (struct bu_vls *log, const struct rt_db_internal *int
 BU_EXTERN(int rt_comb_adjust, (struct bu_vls *log, struct rt_db_internal *intern, int argc, char **argv));
 BU_EXTERN(int rt_comb_form, (struct bu_vls *log, const struct rt_functab *ftp));
 BU_EXTERN(void rt_comb_make, (const struct rt_functab *ftp, struct rt_db_internal *intern));
-BU_EXTERN(void rt_comb_ifree, (struct rt_db_internal *ip, struct resource *resp));
+BU_EXTERN(void rt_comb_ifree, (struct rt_db_internal *ip));
 
 /* generics for solid */
 BU_EXTERN(int rt_parsetab_get, (struct bu_vls *log, const struct rt_db_internal *intern, const char *attr));
@@ -992,7 +991,7 @@ int NDEF(rt_nul_export4, (struct bu_external *ep,
 			  const struct rt_db_internal *ip,
 			  double local2mm, const struct db_i *dbip,
 			  struct resource *resp));
-void DEF(rt_nul_ifree, (struct rt_db_internal *ip, struct resource *resp));
+void DEF(rt_nul_ifree, (struct rt_db_internal *ip));
 int NDEF(rt_nul_describe, (struct bu_vls *str,
 			   const struct rt_db_internal *ip,
 			   int verbose, double mm2local, struct resource *resp,

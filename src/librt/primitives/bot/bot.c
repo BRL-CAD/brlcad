@@ -1242,12 +1242,11 @@ rt_bot_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
  * solid.
  */
 void
-rt_bot_ifree(struct rt_db_internal *ip, struct resource *resp)
+rt_bot_ifree(struct rt_db_internal *ip)
 {
     register struct rt_bot_internal *bot_ip;
 
     RT_CK_DB_INTERNAL(ip);
-    if (!resp) resp = &rt_uniresource;
 
     bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
     RT_BOT_CK_MAGIC(bot_ip);

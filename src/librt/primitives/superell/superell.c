@@ -989,13 +989,9 @@ rt_superell_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ve
  * solid.
  */
 void
-rt_superell_ifree(struct rt_db_internal *ip, struct resource *resp)
+rt_superell_ifree(struct rt_db_internal *ip)
 {
     RT_CK_DB_INTERNAL(ip);
-
-    if (!resp) {
-	resp = &rt_uniresource;
-    }
 
     bu_free(ip->idb_ptr, "superell ifree");
     ip->idb_ptr = GENPTR_NULL;

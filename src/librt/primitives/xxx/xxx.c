@@ -397,15 +397,11 @@ rt_xxx_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
  * solid.
  */
 void
-rt_xxx_ifree(struct rt_db_internal *ip, struct resource *resp)
+rt_xxx_ifree(struct rt_db_internal *ip)
 {
     struct rt_xxx_internal *xxx_ip;
 
     RT_CK_DB_INTERNAL(ip);
-
-    if (!resp) {
-	resp = &rt_uniresource;
-    }
 
     xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
     RT_XXX_CK_MAGIC(xxx_ip);

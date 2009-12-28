@@ -718,15 +718,11 @@ rt_vol_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
  * Free the storage associated with the rt_db_internal version of this solid.
  */
 void
-rt_vol_ifree(struct rt_db_internal *ip, struct resource *resp)
+rt_vol_ifree(struct rt_db_internal *ip)
 {
     register struct rt_vol_internal *vip;
 
     RT_CK_DB_INTERNAL(ip);
-
-    if (!resp) {
-	resp = &rt_uniresource;
-    }
 
     vip = (struct rt_vol_internal *)ip->idb_ptr;
     RT_VOL_CK_MAGIC(vip);

@@ -729,16 +729,12 @@ rt_metaball_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ve
  * solid.  This only effects the in-memory copy.
  */
 void
-rt_metaball_ifree(struct rt_db_internal *ip, struct resource *resp)
+rt_metaball_ifree(struct rt_db_internal *ip)
 {
     register struct rt_metaball_internal *metaball;
     register struct wdb_metaballpt *mbpt;
 
     RT_CK_DB_INTERNAL(ip);
-
-    if (!resp) {
-	resp = &rt_uniresource;
-    }
 
     metaball = (struct rt_metaball_internal*)ip->idb_ptr;
     RT_METABALL_CK_MAGIC(metaball);

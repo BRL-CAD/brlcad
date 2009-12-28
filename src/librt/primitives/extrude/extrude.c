@@ -2311,16 +2311,12 @@ rt_extrude_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ver
  * solid.
  */
 void
-rt_extrude_ifree(struct rt_db_internal *ip, struct resource *resp)
+rt_extrude_ifree(struct rt_db_internal *ip)
 {
     struct rt_extrude_internal *extrude_ip;
     struct rt_db_internal tmp_ip;
 
     RT_CK_DB_INTERNAL(ip);
-
-    if (!resp) {
-	resp = &rt_uniresource;
-    }
 
     extrude_ip = (struct rt_extrude_internal *)ip->idb_ptr;
     RT_EXTRUDE_CK_MAGIC(extrude_ip);
@@ -2330,7 +2326,7 @@ rt_extrude_ifree(struct rt_db_internal *ip, struct resource *resp)
 	tmp_ip.idb_type = ID_SKETCH;
 	tmp_ip.idb_ptr = (genptr_t)extrude_ip->skt;
 	tmp_ip.idb_meth = &rt_functab[ID_SKETCH];
-	tmp_ip.idb_meth->ft_ifree(&tmp_ip, resp);
+	tmp_ip.idb_meth->ft_ifree(&tmp_ip);
     }
     extrude_ip->magic = 0;	/* sanity */
 

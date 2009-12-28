@@ -1936,8 +1936,7 @@ struct rt_functab {
 			      double /*local2mm*/,
 			      const struct db_i * /*dbip*/,
 			      struct resource * /*resp*/));
-    void (*ft_ifree) BU_ARGS((struct rt_db_internal * /*ip*/,
-			      struct resource * /*resp*/));
+    void (*ft_ifree) BU_ARGS((struct rt_db_internal * /*ip*/));
     int	(*ft_describe) BU_ARGS((struct bu_vls * /*str*/,
 				const struct rt_db_internal * /*ip*/,
 				int /*verbose*/,

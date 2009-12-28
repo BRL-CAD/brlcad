@@ -1838,16 +1838,12 @@ rt_curve_free(struct curve *crv)
  * solid.
  */
 void
-rt_sketch_ifree(struct rt_db_internal *ip, struct resource *resp)
+rt_sketch_ifree(struct rt_db_internal *ip)
 {
     register struct rt_sketch_internal *sketch_ip;
     struct curve *crv;
 
     RT_CK_DB_INTERNAL(ip);
-
-    if (!resp) {
-	resp = &rt_uniresource;
-    }
 
     sketch_ip = (struct rt_sketch_internal *)ip->idb_ptr;
     RT_SKETCH_CK_MAGIC(sketch_ip);

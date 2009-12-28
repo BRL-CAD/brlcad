@@ -2665,13 +2665,9 @@ rt_nmg_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
  * solid.
  */
 void
-rt_nmg_ifree(struct rt_db_internal *ip, struct resource *resp)
+rt_nmg_ifree(struct rt_db_internal *ip)
 {
     register struct model *m;
-
-    if (!resp) {
-	resp = &rt_uniresource;
-    }
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_ptr) {

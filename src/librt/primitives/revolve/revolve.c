@@ -1482,15 +1482,11 @@ rt_revolve_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ver
  * solid.
  */
 void
-rt_revolve_ifree(struct rt_db_internal *ip, struct resource *resp)
+rt_revolve_ifree(struct rt_db_internal *ip)
 {
     register struct rt_revolve_internal *revolve_ip;
 
     RT_CK_DB_INTERNAL(ip);
-
-    if (!resp) {
-	resp = &rt_uniresource;
-    }
 
     revolve_ip = (struct rt_revolve_internal *)ip->idb_ptr;
     RT_REVOLVE_CK_MAGIC(revolve_ip);

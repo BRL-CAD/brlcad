@@ -81,7 +81,7 @@ extern "C" {
     int
     rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip);
     void
-    rt_brep_ifree(struct rt_db_internal *ip, struct resource *resp);
+    rt_brep_ifree(struct rt_db_internal *ip);
     int
     rt_brep_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local);
     int
@@ -2793,10 +2793,9 @@ rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
  * R T _ B R E P _ I F R E E
  */
 void
-rt_brep_ifree(struct rt_db_internal *ip, struct resource *resp)
+rt_brep_ifree(struct rt_db_internal *ip)
 {
     struct rt_brep_internal* bi;
-    if (!resp) resp = &rt_uniresource;
     RT_CK_DB_INTERNAL(ip);
 
     TRACE1("rt_brep_ifree");

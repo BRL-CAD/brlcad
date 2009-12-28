@@ -831,16 +831,12 @@ rt_pg_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose,
  * Free the storage associated with the rt_db_internal version of this solid.
  */
 void
-rt_pg_ifree(struct rt_db_internal *ip, struct resource *resp)
+rt_pg_ifree(struct rt_db_internal *ip)
 {
     register struct rt_pg_internal *pgp;
     register int i;
 
     RT_CK_DB_INTERNAL(ip);
-
-    if (!resp) {
-	resp = &rt_uniresource;
-    }
 
     pgp = (struct rt_pg_internal *)ip->idb_ptr;
     RT_PG_CK_MAGIC(pgp);

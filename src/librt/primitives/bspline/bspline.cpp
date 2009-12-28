@@ -1170,13 +1170,12 @@ rt_nurb_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
  * R T _ N U R B _ I F R E E
  */
 void
-rt_nurb_ifree(struct rt_db_internal *ip, struct resource *resp)
+rt_nurb_ifree(struct rt_db_internal *ip)
 {
     register struct rt_nurb_internal *sip;
     register int i;
 
     RT_CK_DB_INTERNAL(ip);
-    if (!resp) resp = &rt_uniresource;
 
     sip = (struct rt_nurb_internal *) ip->idb_ptr;
     RT_NURB_CK_MAGIC(sip);

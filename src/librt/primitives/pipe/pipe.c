@@ -3507,16 +3507,12 @@ rt_pipe_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbos
  * Free the storage associated with the rt_db_internal version of this solid.
  */
 void
-rt_pipe_ifree(struct rt_db_internal *ip, struct resource *resp)
+rt_pipe_ifree(struct rt_db_internal *ip)
 {
     register struct rt_pipe_internal *pipe;
     register struct wdb_pipept *ptp;
     
     RT_CK_DB_INTERNAL(ip);
-
-    if (!resp) {
-	resp = &rt_uniresource;
-    }
 
     pipe = (struct rt_pipe_internal*)ip->idb_ptr;
     RT_PIPE_CK_MAGIC(pipe);

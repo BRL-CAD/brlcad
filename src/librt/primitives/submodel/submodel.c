@@ -1016,15 +1016,11 @@ rt_submodel_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ve
  * Free the storage associated with the rt_db_internal version of this solid.
  */
 void
-rt_submodel_ifree(struct rt_db_internal *ip, struct resource *resp)
+rt_submodel_ifree(struct rt_db_internal *ip)
 {
     register struct rt_submodel_internal *sip;
 
     RT_CK_DB_INTERNAL(ip);
-
-    if (!resp) {
-	resp = &rt_uniresource;
-    }
 
     sip = (struct rt_submodel_internal *)ip->idb_ptr;
     RT_SUBMODEL_CK_MAGIC(sip);

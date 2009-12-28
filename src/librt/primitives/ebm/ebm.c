@@ -851,15 +851,11 @@ rt_ebm_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
  * solid.
  */
 void
-rt_ebm_ifree(struct rt_db_internal *ip, struct resource *resp)
+rt_ebm_ifree(struct rt_db_internal *ip)
 {
     register struct rt_ebm_internal *eip;
 
     RT_CK_DB_INTERNAL(ip);
-
-    if (!resp) {
-	resp = &rt_uniresource;
-    }
 
     eip = (struct rt_ebm_internal *)ip->idb_ptr;
     RT_EBM_CK_MAGIC(eip);

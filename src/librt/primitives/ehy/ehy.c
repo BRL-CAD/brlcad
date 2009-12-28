@@ -1661,12 +1661,11 @@ rt_ehy_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
  * solid.
  */
 void
-rt_ehy_ifree(struct rt_db_internal *ip, struct resource *resp)
+rt_ehy_ifree(struct rt_db_internal *ip)
 {
     register struct rt_ehy_internal *xip;
 
     RT_CK_DB_INTERNAL(ip);
-    if (!resp) resp = &rt_uniresource;
 
     xip = (struct rt_ehy_internal *)ip->idb_ptr;
     RT_EHY_CK_MAGIC(xip);

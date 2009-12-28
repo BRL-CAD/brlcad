@@ -1589,15 +1589,11 @@ rt_tor_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
  * solid.
  */
 void
-rt_tor_ifree(struct rt_db_internal *ip, struct resource *resp)
+rt_tor_ifree(struct rt_db_internal *ip)
 {
     register struct rt_tor_internal *tip;
 
     RT_CK_DB_INTERNAL(ip);
-
-    if (!resp) {
-	resp = &rt_uniresource;
-    }
 
     tip = (struct rt_tor_internal *)ip->idb_ptr;
     RT_TOR_CK_MAGIC(tip);

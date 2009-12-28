@@ -1426,10 +1426,9 @@ rt_arb_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
  * solid.
  */
 void
-rt_arb_ifree(struct rt_db_internal *ip, struct resource *resp)
+rt_arb_ifree(struct rt_db_internal *ip)
 {
     RT_CK_DB_INTERNAL(ip);
-    if (!resp) resp = &rt_uniresource;
     bu_free(ip->idb_ptr, "arb ifree");
     ip->idb_ptr = (genptr_t)NULL;
 }

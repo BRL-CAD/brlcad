@@ -117,14 +117,13 @@ struct hf_specific {
  * V5 database for an HF.
  */
 int
-rt_hf_to_dsp(struct rt_db_internal *db_intern, struct resource *resp)
+rt_hf_to_dsp(struct rt_db_internal *db_intern)
 {
     struct rt_hf_internal *hip = (struct rt_hf_internal *)db_intern->idb_ptr;
     struct rt_dsp_internal *dsp;
     vect_t tmp;
 
     RT_CK_DB_INTERNAL(db_intern);
-    RT_CK_RESOURCE(resp);
     RT_HF_CK_MAGIC(hip);
 
     if (! hip->shorts) {
@@ -181,7 +180,7 @@ rt_hf_to_dsp(struct rt_db_internal *db_intern, struct resource *resp)
 
     dsp->magic = RT_DSP_INTERNAL_MAGIC;
 
-    rt_db_free_internal(db_intern, resp);
+    rt_db_free_internal(db_intern, &rt_uniresource);
 
     db_intern->idb_ptr = (genptr_t)dsp;
     db_intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -2128,13 +2127,9 @@ rt_hf_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose,
  * solid.
  */
 void
-rt_hf_ifree(struct rt_db_internal *ip, struct resource *resp)
+rt_hf_ifree(struct rt_db_internal *ip)
 {
     register struct rt_hf_internal *xip;
-
-    if (!resp) {
-	resp = &rt_uniresource;
-    }
 
     RT_CK_DB_INTERNAL(ip);
     xip = (struct rt_hf_internal *)ip->idb_ptr;
