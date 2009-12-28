@@ -459,7 +459,7 @@ printcodes(FILE *fp, struct directory *dp, int pathpos)
 	for (i=0; i < pathpos; i++)
 	    fprintf(fp, "/%s", path[i]->d_namep);
 	fprintf(fp, "/%s\n", dp->d_namep );
-	intern.idb_meth->ft_ifree(&intern, &rt_uniresource);
+	intern.idb_meth->ft_ifree(&intern);
 	return TCL_OK;
     }
 
@@ -469,7 +469,7 @@ printcodes(FILE *fp, struct directory *dp, int pathpos)
 			  (genptr_t)fp, (genptr_t)&pathpos, (genptr_t)NULL );
     }
 
-    intern.idb_meth->ft_ifree(&intern, &rt_uniresource);
+    intern.idb_meth->ft_ifree(&intern);
     return TCL_OK;
 }
 
@@ -567,7 +567,7 @@ f_which_shader(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    else
 		Tcl_AppendResult(interp, "   ", dp->d_namep,
 				 "\n", (char *)NULL);
-	    intern.idb_meth->ft_ifree(&intern, &rt_uniresource);
+	    intern.idb_meth->ft_ifree(&intern);
 	} FOR_ALL_DIRECTORY_END;
     }
 
@@ -640,14 +640,14 @@ new_tables(struct directory *dp, struct bu_ptbl *cur_path, const matp_t old_mat,
 	db_non_union_push( comb->tree, &rt_uniresource );
 	if ( db_ck_v4gift_tree( comb->tree ) < 0 ) {
 	    Tcl_AppendResult(interp, "Cannot flatten tree for editing\n", (char *)NULL );
-	    intern.idb_meth->ft_ifree(&intern, &rt_uniresource);
+	    intern.idb_meth->ft_ifree(&intern);
 	    return;
 	}
     }
 
     if ( !comb->tree ) {
 	/* empty combination */
-	intern.idb_meth->ft_ifree(&intern, &rt_uniresource);
+	intern.idb_meth->ft_ifree(&intern);
 	return;
     }
 
@@ -783,7 +783,7 @@ new_tables(struct directory *dp, struct bu_ptbl *cur_path, const matp_t old_mat,
 
  out:
     bu_free( (char *)tree_list, "new_tables: tree_list" );
-    intern.idb_meth->ft_ifree(&intern, &rt_uniresource);
+    intern.idb_meth->ft_ifree(&intern);
     return;
 }
 
