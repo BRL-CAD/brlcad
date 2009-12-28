@@ -209,7 +209,6 @@ rt_hyp_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 {
     register struct hyp_specific *hyp =	(struct hyp_specific *)stp->st_specific;
     register struct seg *segp;
-    const struct bn_tol *tol = &ap->a_rt_i->rti_tol;
 
     struct hit hits[5];	/* 4 potential hits (top, bottom, 2 sides) */
     register struct hit *hitp;	/* pointer to hitpoint */
@@ -510,8 +509,9 @@ rt_hyp_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 void
 rt_hyp_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
-    register struct hyp_specific *hyp =
-	(struct hyp_specific *)stp->st_specific;
+    struct hyp_specific *hyp =	(struct hyp_specific *)stp->st_specific;
+
+    if (ap) RT_CK_APPLICATION(ap);
 
     /* u = (angle from semi-major axis on basic hyperboloid) / (2*pi) */
     uvp->uv_u = M_1_PI * 0.5 
@@ -566,20 +566,10 @@ rt_hyp_free(struct soltab *stp)
 
 
 /**
- * R T _ H Y P _ C L A S S
- */
-int
-rt_hyp_class(const struct soltab *stp, const vect_t min, const vect_t max, const struct bn_tol *tol)
-{
-    return(0);
-}
-
-
-/**
  * R T _ H Y P _ P L O T
  */
 int
-rt_hyp_plot(struct bu_list *vhead, struct rt_db_internal *incoming, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_hyp_plot(struct bu_list *vhead, struct rt_db_internal *incoming, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
 {
     register int i, j;		/* loop indices */
     struct rt_hyp_internal *hyp_in;
@@ -754,12 +744,11 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	/* Convert rel to absolute by scaling by smallest side */
 	dtol = ttol->rel * 2 * r2;
     if (ttol->abs <= 0.0) {
-	if (dtol <= 0.0)
+	if (dtol <= 0.0) {
 	    /* No tolerance given, use a default */
 	    dtol = 2 * 0.10 * r2;	/* 10% */
-	else
-	    /* Use absolute-ized relative tolerance */
-	    ;
+	}
+	/* else, use absolute-ized relative tolerance */
     } else {
 	/* Absolute tolerance was given, pick smaller */
 	if (ttol->rel <= 0.0 || dtol > ttol->abs)
@@ -883,7 +872,7 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     i = 0;
     nseg = 0;
     theta_prev = bn_twopi;
-    pos_a = pts_a;	/*->next;	/* skip over apex of hyp */
+    pos_a = pts_a;	/*->next; */	/* skip over apex of hyp */
     pos_b = pts_b;	/*->next; */
     while (pos_a) {
 	VSCALE(A, Au, pos_a->p[X]);	/* semimajor axis */
@@ -1188,6 +1177,7 @@ rt_hyp_import5(struct rt_db_internal *ip, const struct bu_external *ep, const ma
 
     RT_CK_DB_INTERNAL(ip);
     BU_CK_EXTERNAL(ep);
+    if (dbip) RT_CK_DBI(dbip);
 
     BU_ASSERT_LONG(ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * 3 * 4);
 
@@ -1232,6 +1222,8 @@ rt_hyp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 {
     struct rt_hyp_internal *hyp_ip;
     fastf_t vec[ELEMENTS_PER_VECT * 4];
+
+    if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_HYP) return(-1);
@@ -1296,11 +1288,13 @@ rt_hyp_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 	    INTCLAMP(hyp_ip->hyp_A[Z] * mm2local));
     bu_vls_strcat(str, buf);
 
-    sprintf(buf, "\tMag B=%g\n", INTCLAMP(hyp_ip->hyp_b * mm2local));
-    bu_vls_strcat(str, buf);
+    if (verbose) {
+	sprintf(buf, "\tMag B=%g\n", INTCLAMP(hyp_ip->hyp_b * mm2local));
+	bu_vls_strcat(str, buf);
 
-    sprintf(buf, "\tNeck to Base Ratio=%g\n", INTCLAMP(hyp_ip->hyp_bnr * mm2local));
-    bu_vls_strcat(str, buf);
+	sprintf(buf, "\tNeck to Base Ratio=%g\n", INTCLAMP(hyp_ip->hyp_bnr * mm2local));
+	bu_vls_strcat(str, buf);
+    }
 
     return(0);
 }
@@ -1338,6 +1332,9 @@ rt_hyp_ifree(struct rt_db_internal *ip, struct resource *resp)
 int
 rt_hyp_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
 {
+    ps = ps; /* quellage */
+    if (ip) RT_CK_DB_INTERNAL(ip);
+
     return(0);			/* OK */
 }
 

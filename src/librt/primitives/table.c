@@ -950,7 +950,7 @@ const struct rt_functab rt_functab[] = {
      1,		/* 38 but "should" be 34 Hyperboloid */
      rt_hyp_prep,	rt_hyp_shot,	rt_hyp_print,	rt_hyp_norm,
      rt_nul_piece_shot,	rt_nul_piece_hitsegs,
-     rt_hyp_uv,		rt_hyp_curve,	rt_hyp_class,	rt_hyp_free,
+     rt_hyp_uv,		rt_hyp_curve,	rt_nul_class,	rt_hyp_free,
      rt_hyp_plot,	rt_nul_vshot,	rt_hyp_tess,	rt_nul_tnurb,
      rt_hyp_import5,	rt_hyp_export5,
      rt_nul_import4,	rt_nul_export4,	rt_hyp_ifree,

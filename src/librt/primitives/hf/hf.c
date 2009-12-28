@@ -365,7 +365,7 @@ rt_hf_print(register const struct soltab *stp)
 
 
 static int
-rt_hf_cell_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct hit *hitp, int xCell, int yCell)
+hf_cell_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct hit *hitp, int xCell, int yCell)
 {
     register struct hf_specific *hfp =
 	(struct hf_specific *)stp->st_specific;
@@ -379,8 +379,10 @@ rt_hf_cell_shot(struct soltab *stp, register struct xray *rp, struct application
     int fnd1, fnd2;
     register double hf2mm = hfp->hf_file2mm;
 
+    if (ap) RT_CK_APPLICATION(ap);
+
     if (RT_G_DEBUG & DEBUG_HF) {
-	bu_log("rt_hf_cell_shot(%s): %d, %d\n", stp->st_name,
+	bu_log("hf_cell_shot(%s): %d, %d\n", stp->st_name,
 	       xCell, yCell);
     }
     {
@@ -542,7 +544,7 @@ rt_hf_cell_shot(struct soltab *stp, register struct xray *rp, struct application
     if (!fnd1 && !fnd2) return 0;
 
     if (RT_G_DEBUG & DEBUG_HF) {
-	bu_log("rt_hf_cell_shot: hit(%d).\n", fnd1+fnd2);
+	bu_log("hf_cell_shot: hit(%d).\n", fnd1+fnd2);
     }
 
     /*
@@ -906,7 +908,7 @@ rt_hf_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 	VSUB2(tmp, rp->r_pt, hf->hf_V);
 	xCell = tmp[X]/hf->hf_Xlen*hf->hf_w;
 	yCell = tmp[Y]/hf->hf_Ylen*hf->hf_n;
-	if ((r=rt_hf_cell_shot(stp, rp, ap, hp, xCell, yCell))) {
+	if ((r=hf_cell_shot(stp, rp, ap, hp, xCell, yCell))) {
 	    if ((nhits+=r)>MAXHITS) bu_bomb("g_hf.c: too many hits.\n");
 	    hp+=r;
 	}
@@ -1075,7 +1077,7 @@ rt_hf_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 	    if (maxZ+deltaZ > lowest &&
 		minZ-deltaZ < highest) {
 		int r;
-		if ((r=rt_hf_cell_shot(stp, rp, ap, hp, xCell, yCell))) {
+		if ((r=hf_cell_shot(stp, rp, ap, hp, xCell, yCell))) {
 		    if ((nhits+=r)>=MAXHITS) bu_bomb("g_hf.c: too many hits.\n");
 		    hp+=r;
 		}
@@ -1139,7 +1141,7 @@ rt_hf_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 		    minZ-deltaZ < highest) {
 		    int r;
 		    /* DO HIT */
-		    if ((r=rt_hf_cell_shot(stp, rp, ap, hp, xCell, yCell))) {
+		    if ((r=hf_cell_shot(stp, rp, ap, hp, xCell, yCell))) {
 			if ((nhits+=r)>=MAXHITS) bu_bomb("g_hf.c: too many hits.\n");
 			hp+=r;
 		    }
@@ -1316,7 +1318,7 @@ rt_hf_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 	    if (maxZ+deltaZ > lowest &&
 		minZ-deltaZ < highest) {
 		int r;
-		if ((r=rt_hf_cell_shot(stp, rp, ap, hp, xCell, yCell))) {
+		if ((r=hf_cell_shot(stp, rp, ap, hp, xCell, yCell))) {
 		    if ((nhits+=r)>=MAXHITS) bu_bomb("g_hf.c: too many hits.\n");
 		    hp+=r;
 		}
@@ -1380,7 +1382,7 @@ rt_hf_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 		    minZ-deltaZ < highest) {
 		    int r;
 		    /* DO HIT */
-		    if ((r=rt_hf_cell_shot(stp, rp, ap, hp, xCell, yCell))) {
+		    if ((r=hf_cell_shot(stp, rp, ap, hp, xCell, yCell))) {
 			if ((nhits+=r)>=MAXHITS) bu_bomb("g_hf.c: too many hits.\n");
 			hp+=r;
 		    }
@@ -1496,8 +1498,13 @@ rt_hf_norm(register struct hit *hitp, struct soltab *stp, register struct xray *
  * Return the curvature of the hf.
  */
 void
-rt_hf_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
+rt_hf_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
+    struct hf_specific *hf = (struct hf_specific *)stp->st_specific;
+    if (!hf || !cvp || !hitp)
+	return;
+    RT_CK_HIT(hitp);
+
     cvp->crv_c1 = cvp->crv_c2 = 0;
 
     /* any tangent direction */
@@ -1515,12 +1522,16 @@ rt_hf_curve(register struct curvature *cvp, register struct hit *hitp, struct so
  * v = elevation
  */
 void
-rt_hf_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
+rt_hf_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
-    register struct hf_specific *hf =
-	(struct hf_specific *)stp->st_specific;
+    struct hf_specific *hf = (struct hf_specific *)stp->st_specific;
     vect_t delta;
     fastf_t r = 0;
+
+    if (ap) RT_CK_APPLICATION(ap);
+    if (!hf || !hitp || !uvp || !stp)
+	return;
+    RT_CK_HIT(hitp);
 
     VSUB2(delta, hitp->hit_point, hf->hf_V);
     uvp->uv_u = delta[X] / hf->hf_Xlen;
@@ -1567,7 +1578,7 @@ rt_hf_class(void)
  * R T _ H F _ P L O T
  */
 int
-rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol __attribute__((unused)))
 {
     struct rt_hf_internal *xip;
     register unsigned short *sp = (unsigned short *)NULL;
@@ -1821,13 +1832,16 @@ rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tes
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_hf_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_hf_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
 {
     struct rt_hf_internal *xip;
 
     RT_CK_DB_INTERNAL(ip);
     xip = (struct rt_hf_internal *)ip->idb_ptr;
     RT_HF_CK_MAGIC(xip);
+
+    if (r) *r = NULL;
+    if (m) NMG_CK_MODEL(m);
 
     return(-1);
 }
@@ -1840,7 +1854,7 @@ rt_hf_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, con
  * Apply modeling transformations as well.
  */
 int
-rt_hf_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_hf_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_hf_internal *xip;
     union record *rp;
@@ -1852,6 +1866,8 @@ rt_hf_import4(struct rt_db_internal *ip, const struct bu_external *ep, register 
     int out_cookie;
     int count;
     int got;
+
+    if (dbip) RT_CK_DBI(dbip);
 
     BU_CK_EXTERNAL(ep);
     rp = (union record *)ep->ext_buf;
@@ -2018,6 +2034,8 @@ rt_hf_export4(struct bu_external *ep, const struct rt_db_internal *ip, double lo
     union record *rec;
     struct bu_vls str;
 
+    if (dbip) RT_CK_DBI(dbip);
+
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_HF) return(-1);
     xip = (struct rt_hf_internal *)ip->idb_ptr;
@@ -2052,6 +2070,10 @@ rt_hf_export4(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 int
 rt_hf_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
+    if (ip) RT_CK_DB_INTERNAL(ip);
+    if (!ep || !mat) return -1;
+    if (dbip) RT_CK_DBI(dbip);
+
     bu_log("As of release 6.0 the HF primitive is superceded by the DSP primitive.\n");
     bu_log("\tTo convert HF primitives to DSP, use 'dbupgrade'.\n");
     /* The rt_hf_to_dsp() routine can also be used */
@@ -2060,8 +2082,12 @@ rt_hf_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 
 
 int
-rt_hf_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
+rt_hf_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm __attribute__((unused)), const struct db_i *dbip)
 {
+    if (!ep) return -1;
+    if (ip) RT_CK_DB_INTERNAL(ip);
+    if (dbip) RT_CK_DBI(dbip);
+
     bu_log("As of release 6.0 the HF primitive is superceded by the DSP primitive.\n");
     bu_log("\tTo convert HF primitives to DSP, use 'dbupgrade'.\n");
     /* The rt_hf_to_dsp() routine can also be used */
@@ -2086,8 +2112,10 @@ rt_hf_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose,
     RT_HF_CK_MAGIC(xip);
 
     bu_vls_printf(str, "Height Field (HF) mm2local=%g\n", mm2local);
-    bu_vls_struct_print(str, rt_hf_parse, ip->idb_ptr);
-    bu_vls_strcat(str, "\n");
+    if (verbose) {
+	bu_vls_struct_print(str, rt_hf_parse, ip->idb_ptr);
+	bu_vls_strcat(str, "\n");
+    }
 
     return(0);
 }
@@ -2126,8 +2154,11 @@ rt_hf_ifree(struct rt_db_internal *ip, struct resource *resp)
  *
  */
 int
-rt_hf_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
+rt_hf_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 {
+    ps = ps; /* quellage */
+    if (ip) RT_CK_DB_INTERNAL(ip);
+
     return(0);			/* OK */
 }
 

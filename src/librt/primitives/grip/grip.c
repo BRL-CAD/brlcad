@@ -503,12 +503,12 @@ rt_grp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 {
     struct rt_grip_internal *gip;
 
+    if (r) *r = NULL;
+    if (m) NMG_CK_MODEL(m);
+
     RT_CK_DB_INTERNAL(ip);
     gip = (struct rt_grip_internal *)ip->idb_ptr;
     RT_GRIP_CK_MAGIC(gip);
-
-    if (r) *r = NULL;
-    if (m) NMG_CK_MODEL(m);
 
     /* XXX tess routine needed */
     return(-1);

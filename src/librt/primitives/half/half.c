@@ -74,6 +74,8 @@ rt_hlf_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     struct rt_half_internal *hip;
     register struct half_specific *halfp;
 
+    if (rtip) RT_CK_RTI(rtip);
+
     hip = (struct rt_half_internal *)ip->idb_ptr;
     RT_HALF_CK_MAGIC(hip);
 
@@ -211,6 +213,8 @@ rt_hlf_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
     fastf_t slant_factor;	/* Direction dot Normal */
     fastf_t norm_dist;
 
+    if (ap) RT_CK_APPLICATION(ap);
+
     /* for each ray/halfspace pair */
     for (i = 0; i < n; i++) {
 	if (stp[i] == 0) continue; /* indicates "skip this pair" */
@@ -291,10 +295,11 @@ rt_hlf_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
  * direction orthogonal to normal, and indicate no curvature.
  */
 void
-rt_hlf_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
+rt_hlf_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
-    register struct half_specific *halfp =
-	(struct half_specific *)stp->st_specific;
+    struct half_specific *halfp = (struct half_specific *)stp->st_specific;
+
+    if (hitp) RT_CK_HIT(hitp);
 
     bn_vec_ortho(cvp->crv_pdir, halfp->half_eqn);
     cvp->crv_c1 = cvp->crv_c2 = 0;
@@ -313,8 +318,7 @@ rt_hlf_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 void
 rt_hlf_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
 {
-    register struct half_specific *halfp =
-	(struct half_specific *)stp->st_specific;
+    struct half_specific *halfp = (struct half_specific *)stp->st_specific;
 
     vect_t P_A;
     fastf_t f;
@@ -427,7 +431,7 @@ rt_hlf_class(register const struct soltab *stp, const fastf_t *min, const fastf_
  * the plane, with the outward normal drawn shorter.
  */
 int
-rt_hlf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_hlf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
 {
     struct rt_half_internal *hip;
     vect_t cent;		/* some point on the plane */
@@ -495,6 +499,8 @@ rt_hlf_xform(
     point_t orig_pt, pt;
     register double f, t;
 
+    if (dbip) RT_CK_DBI(dbip);
+
     RT_CK_DB_INTERNAL(ip);
     hip = (struct rt_half_internal *)ip->idb_ptr;
     RT_HALF_CK_MAGIC(hip);
@@ -555,6 +561,8 @@ rt_hlf_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     fastf_t orig_eqn[3*2];
     register double f, t;
 
+    if (dbip) RT_CK_DBI(dbip);
+
     BU_CK_EXTERNAL(ep);
     rp = (union record *)ep->ext_buf;
     if (rp->u_id != ID_SOLID) {
@@ -611,6 +619,8 @@ rt_hlf_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     struct rt_half_internal *hip;
     union record *rec;
 
+    if (dbip) RT_CK_DBI(dbip);
+
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_HALF) return(-1);
     hip = (struct rt_half_internal *)ip->idb_ptr;
@@ -640,6 +650,8 @@ rt_hlf_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     point_t tmp_pt, new_pt;
     plane_t tmp_plane;
     register double f, t;
+
+    if (dbip) RT_CK_DBI(dbip);
 
     BU_CK_EXTERNAL(ep);
 
@@ -696,6 +708,8 @@ rt_hlf_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     struct rt_half_internal *hip;
     fastf_t scaled_dist;
 
+    if (dbip) RT_CK_DBI(dbip);
+
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_HALF) return -1;
     hip = (struct rt_half_internal *)ip->idb_ptr;
@@ -736,10 +750,12 @@ rt_hlf_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
     RT_HALF_CK_MAGIC(hip);
     bu_vls_strcat(str, "halfspace\n");
 
-    sprintf(buf, "\tN (%g, %g, %g) d=%g\n",
-	    V3INTCLAMPARGS(hip->eqn),		/* should have unit length */
-	    INTCLAMP(hip->eqn[W] * mm2local));
-    bu_vls_strcat(str, buf);
+    if (verbose) {
+	sprintf(buf, "\tN (%g, %g, %g) d=%g\n",
+		V3INTCLAMPARGS(hip->eqn),		/* should have unit length */
+		INTCLAMP(hip->eqn[W] * mm2local));
+	bu_vls_strcat(str, buf);
+    }
 
     return(0);
 }
@@ -769,13 +785,16 @@ rt_hlf_ifree(struct rt_db_internal *ip, struct resource *resp)
  * R T _ H L F _ T E S S
  */
 int
-rt_hlf_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_hlf_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
 {
     struct rt_half_internal *vip;
 
     RT_CK_DB_INTERNAL(ip);
     vip = (struct rt_half_internal *)ip->idb_ptr;
     RT_HALF_CK_MAGIC(vip);
+
+    if (r) *r = NULL;
+    if (m) NMG_CK_MODEL(m);
 
     /* XXX tess routine needed */
     return(-1);
@@ -787,8 +806,11 @@ rt_hlf_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
  *
  */
 int
-rt_hlf_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
+rt_hlf_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 {
+    ps = ps; /* quellage */
+    if (ip) RT_CK_DB_INTERNAL(ip);
+
     return(0);			/* OK */
 }
 

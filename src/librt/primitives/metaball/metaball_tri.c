@@ -62,6 +62,9 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
     struct bu_vls times;
     struct wdb_metaballpt *mbpt;
 
+    if (r) *r = NULL;
+    if (m) NMG_CK_MODEL(m);
+
     RT_CK_DB_INTERNAL(ip);
     mb = (struct rt_metaball_internal *)ip->idb_ptr;
     RT_METABALL_CK_MAGIC(mb);
