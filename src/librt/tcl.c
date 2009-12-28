@@ -734,11 +734,15 @@ db_tcl_tree_describe(Tcl_DString *dsp, const union tree *tp)
  * that tree.
  */
 union tree *
-db_tree_parse(struct bu_vls *log, const char *str, struct resource *resp)
+db_tree_parse(struct bu_vls *logstr, const char *str, struct resource *resp)
 {
     int argc;
     char **argv;
     union tree *tp = TREE_NULL;
+
+    if (!resp) {
+	resp = &rt_uniresource;
+    }
 
     /* Skip over leading spaces in input */
     while (*str && isspace(*str)) str++;
@@ -748,14 +752,14 @@ db_tree_parse(struct bu_vls *log, const char *str, struct resource *resp)
 	return TREE_NULL;
 
     if (argc <= 0 || argc > 3) {
-	bu_vls_printf(log,
+	bu_vls_printf(logstr,
 		      "db_tree_parse: tree node does not have 1, 2 or 2 elements: %s\n",
 		      str);
 	goto out;
     }
 
     if (argv[0][1] != '\0') {
-	bu_vls_printf(log, "db_tree_parse() operator is not single character: %s", argv[0]);
+	bu_vls_printf(logstr, "db_tree_parse() operator is not single character: %s", argv[0]);
 	goto out;
     }
 
@@ -772,7 +776,7 @@ db_tree_parse(struct bu_vls *log, const char *str, struct resource *resp)
 		mat_t m;
 		/* decode also recognizes "I" notation for identity */
 		if (bn_decode_mat(m, argv[2]) != 16) {
-		    bu_vls_printf(log,
+		    bu_vls_printf(logstr,
 				  "db_tree_parse: unable to parse matrix '%s' using identity",
 				  argv[2]);
 		    break;
@@ -780,7 +784,7 @@ db_tree_parse(struct bu_vls *log, const char *str, struct resource *resp)
 		if (bn_mat_is_identity(m))
 		    break;
 		if (bn_mat_ck("db_tree_parse", m)) {
-		    bu_vls_printf(log,
+		    bu_vls_printf(logstr,
 				  "db_tree_parse: matrix '%s', does not preserve axis perpendicularity, using identity", argv[2]);
 		    break;
 		}
@@ -812,20 +816,20 @@ db_tree_parse(struct bu_vls *log, const char *str, struct resource *resp)
 	binary:
 	    tp->tr_b.magic = RT_TREE_MAGIC;
 	    if (argv[1] == (char *)NULL || argv[2] == (char *)NULL) {
-		bu_vls_printf(log,
+		bu_vls_printf(logstr,
 			      "db_tree_parse: binary operator %s has insufficient operands in %s",
 			      argv[0], str);
 		RT_FREE_TREE(tp, resp);
 		tp = TREE_NULL;
 		goto out;
 	    }
-	    tp->tr_b.tb_left = db_tree_parse(log, argv[1], resp);
+	    tp->tr_b.tb_left = db_tree_parse(logstr, argv[1], resp);
 	    if (tp->tr_b.tb_left == TREE_NULL) {
 		RT_FREE_TREE(tp, resp);
 		tp = TREE_NULL;
 		goto out;
 	    }
-	    tp->tr_b.tb_right = db_tree_parse(log, argv[2], resp);
+	    tp->tr_b.tb_right = db_tree_parse(logstr, argv[2], resp);
 	    if (tp->tr_b.tb_left == TREE_NULL) {
 		db_free_tree(tp->tr_b.tb_left, resp);
 		RT_FREE_TREE(tp, resp);
@@ -852,14 +856,14 @@ db_tree_parse(struct bu_vls *log, const char *str, struct resource *resp)
 	unary:
 	    tp->tr_b.magic = RT_TREE_MAGIC;
 	    if (argv[1] == (char *)NULL) {
-		bu_vls_printf(log,
+		bu_vls_printf(logstr,
 			      "db_tree_parse: unary operator %s has insufficient operands in %s\n",
 			      argv[0], str);
 		bu_free((char *)tp, "union tree");
 		tp = TREE_NULL;
 		goto out;
 	    }
-	    tp->tr_b.tb_left = db_tree_parse(log, argv[1], resp);
+	    tp->tr_b.tb_left = db_tree_parse(logstr, argv[1], resp);
 	    if (tp->tr_b.tb_left == TREE_NULL) {
 		bu_free((char *)tp, "union tree");
 		tp = TREE_NULL;
@@ -875,7 +879,7 @@ db_tree_parse(struct bu_vls *log, const char *str, struct resource *resp)
 	    break;
 
 	default:
-	    bu_vls_printf(log, "db_tree_parse: unable to interpret operator '%s'\n", argv[1]);
+	    bu_vls_printf(logstr, "db_tree_parse: unable to interpret operator '%s'\n", argv[1]);
     }
 
 out:
@@ -895,13 +899,13 @@ out:
 union tree *
 db_tcl_tree_parse(Tcl_Interp *interp, const char *str, struct resource *resp)
 {
-    struct bu_vls log;
+    struct bu_vls logstr;
     union tree *tp;
 
-    bu_vls_init(&log);
-    tp = db_tree_parse(&log, str, resp);
-    Tcl_AppendResult(interp, bu_vls_addr(&log), (char *)NULL);
-    bu_vls_free(&log);
+    bu_vls_init(&logstr);
+    tp = db_tree_parse(&logstr, str, resp);
+    Tcl_AppendResult(interp, bu_vls_addr(&logstr), (char *)NULL);
+    bu_vls_free(&logstr);
 
     return tp;
 }
@@ -914,7 +918,7 @@ db_tcl_tree_parse(Tcl_Interp *interp, const char *str, struct resource *resp)
  * Entered via rt_functab[].ft_get().
  */
 int
-rt_comb_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *item)
+rt_comb_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *item)
 {
     const struct rt_comb_internal *comb;
     char buf[128];
@@ -926,38 +930,38 @@ rt_comb_get(struct bu_vls *log, const struct rt_db_internal *intern, const char 
     if (item==0) {
 	/* Print out the whole combination. */
 
-	bu_vls_printf(log, "comb region ");
+	bu_vls_printf(logstr, "comb region ");
 	if (comb->region_flag) {
-	    bu_vls_printf(log, "yes id %d ", comb->region_id);
+	    bu_vls_printf(logstr, "yes id %d ", comb->region_id);
 
 	    if (comb->aircode) {
-		bu_vls_printf(log, "air %d ", comb->aircode);
+		bu_vls_printf(logstr, "air %d ", comb->aircode);
 	    }
 	    if (comb->los) {
-		bu_vls_printf(log, "los %d ", comb->los);
+		bu_vls_printf(logstr, "los %d ", comb->los);
 	    }
 
 	    if (comb->GIFTmater) {
-		bu_vls_printf(log, "GIFTmater %d ", comb->GIFTmater);
+		bu_vls_printf(logstr, "GIFTmater %d ", comb->GIFTmater);
 	    }
 	} else {
-	    bu_vls_printf(log, "no ");
+	    bu_vls_printf(logstr, "no ");
 	}
 
 	if (comb->rgb_valid) {
-	    bu_vls_printf(log, "rgb {%d %d %d} ", V3ARGS(comb->rgb));
+	    bu_vls_printf(logstr, "rgb {%d %d %d} ", V3ARGS(comb->rgb));
 	}
 
 	if (bu_vls_strlen(&comb->shader) > 0) {
-	    bu_vls_printf(log, "shader {%s} ", bu_vls_addr(&comb->shader));
+	    bu_vls_printf(logstr, "shader {%s} ", bu_vls_addr(&comb->shader));
 	}
 
 	if (bu_vls_strlen(&comb->material) > 0) {
-	    bu_vls_printf(log, "material %s ", bu_vls_addr(&comb->material));
+	    bu_vls_printf(logstr, "material %s ", bu_vls_addr(&comb->material));
 	}
 
 	if (comb->inherit) {
-	    bu_vls_printf(log, "inherit yes ");
+	    bu_vls_printf(logstr, "inherit yes ");
 	}
 
 	{
@@ -965,9 +969,9 @@ rt_comb_get(struct bu_vls *log, const struct rt_db_internal *intern, const char 
 
 	    /*XXX Temporarily using Tcl until a replacement for db_tcl_tree_describe is written */
 	    Tcl_DStringInit(&ds);
-	    bu_vls_printf(log, "tree {");
+	    bu_vls_printf(logstr, "tree {");
 	    db_tcl_tree_describe(&ds, comb->tree);
-	    bu_vls_printf(log, "%s}", Tcl_DStringValue(&ds));
+	    bu_vls_printf(logstr, "%s}", Tcl_DStringValue(&ds));
 	    Tcl_DStringFree(&ds);
 	}
 
@@ -1003,10 +1007,10 @@ rt_comb_get(struct bu_vls *log, const struct rt_db_internal *intern, const char 
 	    else
 		snprintf(buf, 128, "invalid");
 	} else if (strcmp(itemlwr, "shader")==0) {
-	    bu_vls_printf(log, "%s", bu_vls_addr(&comb->shader));
+	    bu_vls_printf(logstr, "%s", bu_vls_addr(&comb->shader));
 	    return BRLCAD_OK;
 	} else if (strcmp(itemlwr, "material")==0) {
-	    bu_vls_printf(log, "%s", bu_vls_addr(&comb->material));
+	    bu_vls_printf(logstr, "%s", bu_vls_addr(&comb->material));
 	    return BRLCAD_OK;
 	} else if (strcmp(itemlwr, "inherit")==0) {
 	    snprintf(buf, 128, "%s", comb->inherit ? "yes" : "no");
@@ -1015,20 +1019,20 @@ rt_comb_get(struct bu_vls *log, const struct rt_db_internal *intern, const char 
 
 	    Tcl_DStringInit(&ds);
 	    db_tcl_tree_describe(&ds, comb->tree);
-	    bu_vls_printf(log, "%s", Tcl_DStringValue(&ds));
+	    bu_vls_printf(logstr, "%s", Tcl_DStringValue(&ds));
 	    Tcl_DStringFree(&ds);
 
 	    return BRLCAD_OK;
 	} else {
-	    bu_vls_printf(log, "no such attribute");
+	    bu_vls_printf(logstr, "no such attribute");
 	    return BRLCAD_ERROR;
 	}
 
-	bu_vls_printf(log, "%s", buf);
+	bu_vls_printf(logstr, "%s", buf);
 	return BRLCAD_OK;
 
     not_region:
-	bu_vls_printf(log, "item not valid for non-region");
+	bu_vls_printf(logstr, "item not valid for non-region");
 	return BRLCAD_ERROR;
     }
 }
