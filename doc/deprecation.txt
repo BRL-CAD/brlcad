@@ -127,6 +127,8 @@ include/raytrace.h
 	RT_HIT_NORM -> RT_HIT_NORMAL [deprecated pre-7.0]
 	struct hit.hit_point -> RT_HIT_POINT [deprecated pre-7.0]
 	struct hit.hit_normal -> RT_HIT_NORMAL [deprecated pre-7.0]
+hf primitive
+	hf -> dsp [deprecated 6.0]
 
 
 ************
