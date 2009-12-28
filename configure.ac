@@ -1524,6 +1524,7 @@ AC_CHECK_HEADERS( \
 	inttypes.h \
 	io.h \
 	libgen.h \
+	malloc.h \
 	memory.h \
 	ncurses.h \
 	netinet/in.h \

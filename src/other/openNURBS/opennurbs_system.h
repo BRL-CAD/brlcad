@@ -24,6 +24,8 @@
 #if !defined(OPENNURBS_SYSTEM_INC_)
 #define OPENNURBS_SYSTEM_INC_
 
+#include "brlcad_config.h"
+
 #if defined(TL_PURIFY_BUILD) || defined(RHINO_PURIFY_BUILD)
 #if !defined(ON_PURIFY_BUILD)
 #define ON_PURIFY_BUILD
@@ -199,7 +201,9 @@ extern "C" {
 #if defined(ON_COMPILER_XCODE)
 #include <malloc/malloc.h>
 #else
+#if defined(HAVE_MALLOC_H)
 #include <malloc.h>
+#endif
 #endif
 #include <string.h>
 #include <math.h>
