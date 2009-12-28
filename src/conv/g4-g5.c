@@ -130,7 +130,7 @@ main(int argc, char **argv)
 	    }
 	}
 	if ( id == ID_HF ) {
-	    if (rt_hf_to_dsp( &intern, &rt_uniresource )) {
+	    if (rt_hf_to_dsp( &intern )) {
 		fprintf(stderr,
 			"%s: Conversion from HF to DSP failed for solid %s\n",
 			argv[0], dp->d_namep );

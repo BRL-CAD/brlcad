@@ -165,7 +165,7 @@ clean_pmp( struct plate_mode *pmp )
 	    intern.idb_type = ID_BOT;
 	    intern.idb_meth = &rt_functab[ID_BOT];
 	    intern.idb_magic = RT_DB_INTERNAL_MAGIC;
-	    intern.idb_meth->ft_ifree( &intern, &rt_uniresource );
+	    intern.idb_meth->ft_ifree( &intern );
 	    pmp->bots[i] = NULL;
 	}
     }

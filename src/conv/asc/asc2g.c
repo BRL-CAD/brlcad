@@ -199,7 +199,7 @@ strsolbld(void)
 		   name, type, args);
 	    ftp = rt_get_functab_by_label("dsp");
 	    if (ftp && ftp->ft_ifree)
-		ftp->ft_ifree((struct rt_db_internal *)dsp, NULL);
+		ftp->ft_ifree((struct rt_db_internal *)dsp);
 	    goto out;
 	}
 	dsp->magic = RT_DSP_INTERNAL_MAGIC;
@@ -222,7 +222,7 @@ strsolbld(void)
 		   name, type, args);
 	    ftp = rt_get_functab_by_label("ebm");
 	    if (ftp && ftp->ft_ifree)
-		ftp->ft_ifree((struct rt_db_internal *)ebm, NULL);
+		ftp->ft_ifree((struct rt_db_internal *)ebm);
 	    return;
 	}
 	ebm->magic = RT_EBM_INTERNAL_MAGIC;
@@ -244,7 +244,7 @@ strsolbld(void)
 		   name, type, args);
 	    ftp = rt_get_functab_by_label("vol");
 	    if (ftp && ftp->ft_ifree)
-		ftp->ft_ifree((struct rt_db_internal *)vol, NULL);
+		ftp->ft_ifree((struct rt_db_internal *)vol);
 	    return;
 	}
 	vol->magic = RT_VOL_INTERNAL_MAGIC;
