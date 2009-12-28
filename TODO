@@ -64,6 +64,9 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* make libwdb routines not free user-allocated memory.  notably
+  mk_nmg() and mk_sketch() but probably others as well.
+
 * libbn's tri_specific structure requires user-provided memory for
   normals.. this certainly saves memory if the triangles don't have
   normals but at a rather expensive malloc cost (which is being seen
