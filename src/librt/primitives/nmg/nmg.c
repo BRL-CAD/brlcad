@@ -2793,7 +2793,7 @@ rt_nmg_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *
 
 
 int
-rt_nmg_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char **argv, struct resource *resp)
+rt_nmg_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char **argv)
 {
     struct model *m;
     struct nmgregion *r=NULL;

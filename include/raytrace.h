@@ -1951,14 +1951,9 @@ struct rt_functab {
     const struct bu_structparse *ft_parsetab;	/**< @brief  rt_xxx_parse */
     size_t ft_internal_size;	/**< @brief  sizeof(struct rt_xxx_internal) */
     unsigned long ft_internal_magic;	/**< @brief  RT_XXX_INTERNAL_MAGIC */
-    int	(*ft_get) BU_ARGS((struct bu_vls *,
-			   const struct rt_db_internal *, const char *item));
-    int	(*ft_adjust) BU_ARGS((struct bu_vls *,
-			      struct rt_db_internal *,
-			      int /*argc*/, char ** /*argv*/,
-			      struct resource * /*resp*/));
-    int	(*ft_form) BU_ARGS((struct bu_vls *,
-			    const struct rt_functab *));
+    int	(*ft_get) BU_ARGS((struct bu_vls *, const struct rt_db_internal *, const char *item));
+    int	(*ft_adjust) BU_ARGS((struct bu_vls *, struct rt_db_internal *, int /*argc*/, char ** /*argv*/));
+    int	(*ft_form) BU_ARGS((struct bu_vls *, const struct rt_functab *));
 
     void (*ft_make) BU_ARGS((const struct rt_functab *, struct rt_db_internal */*ip*/));
     int (*ft_params) BU_ARGS((struct pc_pc_set *, const struct rt_db_internal */*ip*/));
