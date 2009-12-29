@@ -39,7 +39,7 @@ protected:
 
 public:
 	SolidModel();
-	SolidModel(STEPWrapper *sw,int STEPid);
+	SolidModel(STEPWrapper *sw,int step_id);
 	virtual ~SolidModel();
 	bool Load(STEPWrapper *sw,SCLP23(Application_instance) *sse);
 	//virtual void LoadONBrep(ON_Brep *brep);

@@ -26,7 +26,7 @@
 
 /*	**************  TYPES  	*/
 
-#if __OSTORE__
+#ifdef __OSTORE__
 STEPaggregate * create_SdaiSet_of_reversible_topology_item (os_database *db);
 
 #else
@@ -82,7 +82,7 @@ void SdaiKnot_type_var_access_hook_in(void *object,
 	void *start_range, void *end_range);
 #endif
 
-#if __OSTORE__
+#ifdef __OSTORE__
   SCLP23(Enum) * create_SdaiKnot_type_var (os_database *db);
 #else
   SCLP23(Enum) * create_SdaiKnot_type_var ();
@@ -116,7 +116,7 @@ void SdaiKnot_type_vars_access_hook_in(void *object,
 
 typedef SdaiKnot_type_vars * SdaiKnot_type_vars_ptr;
 
-#if __OSTORE__
+#ifdef __OSTORE__
   STEPaggregate * create_SdaiKnot_type_vars (os_database *db);
 #else
   STEPaggregate * create_SdaiKnot_type_vars ();
@@ -173,7 +173,7 @@ void SdaiTransition_code_var_access_hook_in(void *object,
 	void *start_range, void *end_range);
 #endif
 
-#if __OSTORE__
+#ifdef __OSTORE__
   SCLP23(Enum) * create_SdaiTransition_code_var (os_database *db);
 #else
   SCLP23(Enum) * create_SdaiTransition_code_var ();
@@ -207,7 +207,7 @@ void SdaiTransition_code_vars_access_hook_in(void *object,
 
 typedef SdaiTransition_code_vars * SdaiTransition_code_vars_ptr;
 
-#if __OSTORE__
+#ifdef __OSTORE__
   STEPaggregate * create_SdaiTransition_code_vars (os_database *db);
 #else
   STEPaggregate * create_SdaiTransition_code_vars ();
@@ -263,7 +263,7 @@ void SdaiPreferred_surface_curve_representation_var_access_hook_in(void *object,
 	void *start_range, void *end_range);
 #endif
 
-#if __OSTORE__
+#ifdef __OSTORE__
   SCLP23(Enum) * create_SdaiPreferred_surface_curve_representation_var (os_database *db);
 #else
   SCLP23(Enum) * create_SdaiPreferred_surface_curve_representation_var ();
@@ -297,7 +297,7 @@ void SdaiPreferred_surface_curve_representation_vars_access_hook_in(void *object
 
 typedef SdaiPreferred_surface_curve_representation_vars * SdaiPreferred_surface_curve_representation_vars_ptr;
 
-#if __OSTORE__
+#ifdef __OSTORE__
   STEPaggregate * create_SdaiPreferred_surface_curve_representation_vars (os_database *db);
 #else
   STEPaggregate * create_SdaiPreferred_surface_curve_representation_vars ();
@@ -356,7 +356,7 @@ void SdaiB_spline_curve_form_var_access_hook_in(void *object,
 	void *start_range, void *end_range);
 #endif
 
-#if __OSTORE__
+#ifdef __OSTORE__
   SCLP23(Enum) * create_SdaiB_spline_curve_form_var (os_database *db);
 #else
   SCLP23(Enum) * create_SdaiB_spline_curve_form_var ();
@@ -390,7 +390,7 @@ void SdaiB_spline_curve_form_vars_access_hook_in(void *object,
 
 typedef SdaiB_spline_curve_form_vars * SdaiB_spline_curve_form_vars_ptr;
 
-#if __OSTORE__
+#ifdef __OSTORE__
   STEPaggregate * create_SdaiB_spline_curve_form_vars (os_database *db);
 #else
   STEPaggregate * create_SdaiB_spline_curve_form_vars ();
@@ -471,7 +471,7 @@ void SdaiSi_unit_name_var_access_hook_in(void *object,
 	void *start_range, void *end_range);
 #endif
 
-#if __OSTORE__
+#ifdef __OSTORE__
   SCLP23(Enum) * create_SdaiSi_unit_name_var (os_database *db);
 #else
   SCLP23(Enum) * create_SdaiSi_unit_name_var ();
@@ -505,7 +505,7 @@ void SdaiSi_unit_name_vars_access_hook_in(void *object,
 
 typedef SdaiSi_unit_name_vars * SdaiSi_unit_name_vars_ptr;
 
-#if __OSTORE__
+#ifdef __OSTORE__
   STEPaggregate * create_SdaiSi_unit_name_vars (os_database *db);
 #else
   STEPaggregate * create_SdaiSi_unit_name_vars ();
@@ -561,7 +561,7 @@ void SdaiTrimming_preference_var_access_hook_in(void *object,
 	void *start_range, void *end_range);
 #endif
 
-#if __OSTORE__
+#ifdef __OSTORE__
   SCLP23(Enum) * create_SdaiTrimming_preference_var (os_database *db);
 #else
   SCLP23(Enum) * create_SdaiTrimming_preference_var ();
@@ -595,7 +595,7 @@ void SdaiTrimming_preference_vars_access_hook_in(void *object,
 
 typedef SdaiTrimming_preference_vars * SdaiTrimming_preference_vars_ptr;
 
-#if __OSTORE__
+#ifdef __OSTORE__
   STEPaggregate * create_SdaiTrimming_preference_vars (os_database *db);
 #else
   STEPaggregate * create_SdaiTrimming_preference_vars ();
@@ -659,7 +659,7 @@ void SdaiB_spline_surface_form_var_access_hook_in(void *object,
 	void *start_range, void *end_range);
 #endif
 
-#if __OSTORE__
+#ifdef __OSTORE__
   SCLP23(Enum) * create_SdaiB_spline_surface_form_var (os_database *db);
 #else
   SCLP23(Enum) * create_SdaiB_spline_surface_form_var ();
@@ -693,7 +693,7 @@ void SdaiB_spline_surface_form_vars_access_hook_in(void *object,
 
 typedef SdaiB_spline_surface_form_vars * SdaiB_spline_surface_form_vars_ptr;
 
-#if __OSTORE__
+#ifdef __OSTORE__
   STEPaggregate * create_SdaiB_spline_surface_form_vars (os_database *db);
 #else
   STEPaggregate * create_SdaiB_spline_surface_form_vars ();
@@ -748,7 +748,7 @@ void SdaiAhead_or_behind_var_access_hook_in(void *object,
 	void *start_range, void *end_range);
 #endif
 
-#if __OSTORE__
+#ifdef __OSTORE__
   SCLP23(Enum) * create_SdaiAhead_or_behind_var (os_database *db);
 #else
   SCLP23(Enum) * create_SdaiAhead_or_behind_var ();
@@ -782,7 +782,7 @@ void SdaiAhead_or_behind_vars_access_hook_in(void *object,
 
 typedef SdaiAhead_or_behind_vars * SdaiAhead_or_behind_vars_ptr;
 
-#if __OSTORE__
+#ifdef __OSTORE__
   STEPaggregate * create_SdaiAhead_or_behind_vars (os_database *db);
 #else
   STEPaggregate * create_SdaiAhead_or_behind_vars ();
@@ -838,7 +838,7 @@ void SdaiSource_var_access_hook_in(void *object,
 	void *start_range, void *end_range);
 #endif
 
-#if __OSTORE__
+#ifdef __OSTORE__
   SCLP23(Enum) * create_SdaiSource_var (os_database *db);
 #else
   SCLP23(Enum) * create_SdaiSource_var ();
@@ -872,7 +872,7 @@ void SdaiSource_vars_access_hook_in(void *object,
 
 typedef SdaiSource_vars * SdaiSource_vars_ptr;
 
-#if __OSTORE__
+#ifdef __OSTORE__
   STEPaggregate * create_SdaiSource_vars (os_database *db);
 #else
   STEPaggregate * create_SdaiSource_vars ();
@@ -941,7 +941,7 @@ void SdaiSi_prefix_var_access_hook_in(void *object,
 	void *start_range, void *end_range);
 #endif
 
-#if __OSTORE__
+#ifdef __OSTORE__
   SCLP23(Enum) * create_SdaiSi_prefix_var (os_database *db);
 #else
   SCLP23(Enum) * create_SdaiSi_prefix_var ();
@@ -975,7 +975,7 @@ void SdaiSi_prefix_vars_access_hook_in(void *object,
 
 typedef SdaiSi_prefix_vars * SdaiSi_prefix_vars_ptr;
 
-#if __OSTORE__
+#ifdef __OSTORE__
   STEPaggregate * create_SdaiSi_prefix_vars (os_database *db);
 #else
   STEPaggregate * create_SdaiSi_prefix_vars ();
@@ -984,7 +984,7 @@ typedef SdaiSi_prefix_vars * SdaiSi_prefix_vars_ptr;
 //////////  END ENUMERATION si_prefix
 
 
-#if __OSTORE__
+#ifdef __OSTORE__
 STEPaggregate * create_SdaiList_of_reversible_topology_item (os_database *db);
 
 #else
@@ -5431,7 +5431,7 @@ void SdaiRepresentation_item_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiRepresentation_item(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiRepresentation_item () {  return (SCLP23(Application_instance_ptr)) new SdaiRepresentation_item ;  }
 #else
@@ -5486,7 +5486,7 @@ void SdaiGeometric_representation_item_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiGeometric_representation_item(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiGeometric_representation_item () {  return (SCLP23(Application_instance_ptr)) new SdaiGeometric_representation_item ;  }
 #else
@@ -5549,7 +5549,7 @@ void SdaiFunctionally_defined_transformation_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiFunctionally_defined_transformation(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiFunctionally_defined_transformation () {  return (SCLP23(Application_instance_ptr)) new SdaiFunctionally_defined_transformation ;  }
 #else
@@ -5635,7 +5635,7 @@ void SdaiCartesian_transformation_operator_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiCartesian_transformation_operator(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiCartesian_transformation_operator () {  return (SCLP23(Application_instance_ptr)) new SdaiCartesian_transformation_operator ;  }
 #else
@@ -5696,7 +5696,7 @@ void SdaiCartesian_transformation_operator_3d_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiCartesian_transformation_operator_3d(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiCartesian_transformation_operator_3d () {  return (SCLP23(Application_instance_ptr)) new SdaiCartesian_transformation_operator_3d ;  }
 #else
@@ -5769,7 +5769,7 @@ void SdaiVersioned_action_request_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiVersioned_action_request(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiVersioned_action_request () {  return (SCLP23(Application_instance_ptr)) new SdaiVersioned_action_request ;  }
 #else
@@ -5838,7 +5838,7 @@ void SdaiRepresentation_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiRepresentation(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiRepresentation () {  return (SCLP23(Application_instance_ptr)) new SdaiRepresentation ;  }
 #else
@@ -5893,7 +5893,7 @@ void SdaiShape_representation_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiShape_representation(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiShape_representation () {  return (SCLP23(Application_instance_ptr)) new SdaiShape_representation ;  }
 #else
@@ -5948,7 +5948,7 @@ void SdaiManifold_surface_shape_representation_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiManifold_surface_shape_representation(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiManifold_surface_shape_representation () {  return (SCLP23(Application_instance_ptr)) new SdaiManifold_surface_shape_representation ;  }
 #else
@@ -6016,7 +6016,7 @@ void SdaiCertification_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiCertification(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiCertification () {  return (SCLP23(Application_instance_ptr)) new SdaiCertification ;  }
 #else
@@ -6094,7 +6094,7 @@ void SdaiProduct_definition_relationship_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiProduct_definition_relationship(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiProduct_definition_relationship () {  return (SCLP23(Application_instance_ptr)) new SdaiProduct_definition_relationship ;  }
 #else
@@ -6149,7 +6149,7 @@ void SdaiProduct_definition_usage_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiProduct_definition_usage(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiProduct_definition_usage () {  return (SCLP23(Application_instance_ptr)) new SdaiProduct_definition_usage ;  }
 #else
@@ -6209,7 +6209,7 @@ void SdaiAssembly_component_usage_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiAssembly_component_usage(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiAssembly_component_usage () {  return (SCLP23(Application_instance_ptr)) new SdaiAssembly_component_usage ;  }
 #else
@@ -6269,7 +6269,7 @@ void SdaiQuantified_assembly_component_usage_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiQuantified_assembly_component_usage(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiQuantified_assembly_component_usage () {  return (SCLP23(Application_instance_ptr)) new SdaiQuantified_assembly_component_usage ;  }
 #else
@@ -6324,7 +6324,7 @@ void SdaiSolid_model_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiSolid_model(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiSolid_model () {  return (SCLP23(Application_instance_ptr)) new SdaiSolid_model ;  }
 #else
@@ -6384,7 +6384,7 @@ void SdaiManifold_solid_brep_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiManifold_solid_brep(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiManifold_solid_brep () {  return (SCLP23(Application_instance_ptr)) new SdaiManifold_solid_brep ;  }
 #else
@@ -6439,7 +6439,7 @@ void SdaiFaceted_brep_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiFaceted_brep(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiFaceted_brep () {  return (SCLP23(Application_instance_ptr)) new SdaiFaceted_brep ;  }
 #else
@@ -6518,7 +6518,7 @@ void SdaiAction_directive_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiAction_directive(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiAction_directive () {  return (SCLP23(Application_instance_ptr)) new SdaiAction_directive ;  }
 #else
@@ -6576,7 +6576,7 @@ void SdaiNamed_unit_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiNamed_unit(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiNamed_unit () {  return (SCLP23(Application_instance_ptr)) new SdaiNamed_unit ;  }
 #else
@@ -6631,7 +6631,7 @@ void SdaiPlane_angle_unit_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiPlane_angle_unit(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiPlane_angle_unit () {  return (SCLP23(Application_instance_ptr)) new SdaiPlane_angle_unit ;  }
 #else
@@ -6694,7 +6694,7 @@ void SdaiMeasure_with_unit_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiMeasure_with_unit(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiMeasure_with_unit () {  return (SCLP23(Application_instance_ptr)) new SdaiMeasure_with_unit ;  }
 #else
@@ -6749,7 +6749,7 @@ void SdaiArea_measure_with_unit_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiArea_measure_with_unit(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiArea_measure_with_unit () {  return (SCLP23(Application_instance_ptr)) new SdaiArea_measure_with_unit ;  }
 #else
@@ -6807,7 +6807,7 @@ void SdaiEffectivity_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiEffectivity(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiEffectivity () {  return (SCLP23(Application_instance_ptr)) new SdaiEffectivity ;  }
 #else
@@ -6872,7 +6872,7 @@ void SdaiSerial_numbered_effectivity_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiSerial_numbered_effectivity(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiSerial_numbered_effectivity () {  return (SCLP23(Application_instance_ptr)) new SdaiSerial_numbered_effectivity ;  }
 #else
@@ -6927,7 +6927,7 @@ void SdaiSurface_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiSurface(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiSurface () {  return (SCLP23(Application_instance_ptr)) new SdaiSurface ;  }
 #else
@@ -6997,7 +6997,7 @@ void SdaiOffset_surface_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiOffset_surface(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiOffset_surface () {  return (SCLP23(Application_instance_ptr)) new SdaiOffset_surface ;  }
 #else
@@ -7057,7 +7057,7 @@ void SdaiPlacement_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiPlacement(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiPlacement () {  return (SCLP23(Application_instance_ptr)) new SdaiPlacement ;  }
 #else
@@ -7118,7 +7118,7 @@ void SdaiAxis2_placement_2d_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiAxis2_placement_2d(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiAxis2_placement_2d () {  return (SCLP23(Application_instance_ptr)) new SdaiAxis2_placement_2d ;  }
 #else
@@ -7181,7 +7181,7 @@ void SdaiProduct_category_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiProduct_category(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiProduct_category () {  return (SCLP23(Application_instance_ptr)) new SdaiProduct_category ;  }
 #else
@@ -7242,7 +7242,7 @@ void SdaiProduct_related_product_category_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiProduct_related_product_category(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiProduct_related_product_category () {  return (SCLP23(Application_instance_ptr)) new SdaiProduct_related_product_category ;  }
 #else
@@ -7297,7 +7297,7 @@ void SdaiCurve_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiCurve(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiCurve () {  return (SCLP23(Application_instance_ptr)) new SdaiCurve ;  }
 #else
@@ -7357,7 +7357,7 @@ void SdaiConic_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiConic(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiConic () {  return (SCLP23(Application_instance_ptr)) new SdaiConic ;  }
 #else
@@ -7422,7 +7422,7 @@ void SdaiHyperbola_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiHyperbola(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiHyperbola () {  return (SCLP23(Application_instance_ptr)) new SdaiHyperbola ;  }
 #else
@@ -7535,7 +7535,7 @@ void SdaiAddress_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiAddress(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiAddress () {  return (SCLP23(Application_instance_ptr)) new SdaiAddress ;  }
 #else
@@ -7601,7 +7601,7 @@ void SdaiOrganizational_address_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiOrganizational_address(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiOrganizational_address () {  return (SCLP23(Application_instance_ptr)) new SdaiOrganizational_address ;  }
 #else
@@ -7656,7 +7656,7 @@ void SdaiBounded_surface_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiBounded_surface(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiBounded_surface () {  return (SCLP23(Application_instance_ptr)) new SdaiBounded_surface ;  }
 #else
@@ -7750,7 +7750,7 @@ void SdaiB_spline_surface_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiB_spline_surface(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiB_spline_surface () {  return (SCLP23(Application_instance_ptr)) new SdaiB_spline_surface ;  }
 #else
@@ -7805,7 +7805,7 @@ void SdaiUniform_surface_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiUniform_surface(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiUniform_surface () {  return (SCLP23(Application_instance_ptr)) new SdaiUniform_surface ;  }
 #else
@@ -7860,7 +7860,7 @@ void SdaiGeometrically_bounded_surface_shape_representation_access_hook_in(void 
 SCLP23(Application_instance_ptr)
 create_SdaiGeometrically_bounded_surface_shape_representation(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiGeometrically_bounded_surface_shape_representation () {  return (SCLP23(Application_instance_ptr)) new SdaiGeometrically_bounded_surface_shape_representation ;  }
 #else
@@ -7921,7 +7921,7 @@ void SdaiAxis1_placement_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiAxis1_placement(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiAxis1_placement () {  return (SCLP23(Application_instance_ptr)) new SdaiAxis1_placement ;  }
 #else
@@ -7976,7 +7976,7 @@ void SdaiBounded_curve_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiBounded_curve(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiBounded_curve () {  return (SCLP23(Application_instance_ptr)) new SdaiBounded_curve ;  }
 #else
@@ -8059,7 +8059,7 @@ void SdaiB_spline_curve_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiB_spline_curve(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiB_spline_curve () {  return (SCLP23(Application_instance_ptr)) new SdaiB_spline_curve ;  }
 #else
@@ -8120,7 +8120,7 @@ void SdaiRational_b_spline_curve_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiRational_b_spline_curve(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiRational_b_spline_curve () {  return (SCLP23(Application_instance_ptr)) new SdaiRational_b_spline_curve ;  }
 #else
@@ -8178,7 +8178,7 @@ void SdaiAction_request_assignment_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiAction_request_assignment(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiAction_request_assignment () {  return (SCLP23(Application_instance_ptr)) new SdaiAction_request_assignment ;  }
 #else
@@ -8233,7 +8233,7 @@ void SdaiTopological_representation_item_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiTopological_representation_item(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiTopological_representation_item () {  return (SCLP23(Application_instance_ptr)) new SdaiTopological_representation_item ;  }
 #else
@@ -8298,7 +8298,7 @@ void SdaiFace_bound_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiFace_bound(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiFace_bound () {  return (SCLP23(Application_instance_ptr)) new SdaiFace_bound ;  }
 #else
@@ -8353,7 +8353,7 @@ void SdaiLength_measure_with_unit_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiLength_measure_with_unit(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiLength_measure_with_unit () {  return (SCLP23(Application_instance_ptr)) new SdaiLength_measure_with_unit ;  }
 #else
@@ -8418,7 +8418,7 @@ void SdaiDated_effectivity_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiDated_effectivity(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiDated_effectivity () {  return (SCLP23(Application_instance_ptr)) new SdaiDated_effectivity ;  }
 #else
@@ -8478,7 +8478,7 @@ void SdaiDirection_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiDirection(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiDirection () {  return (SCLP23(Application_instance_ptr)) new SdaiDirection ;  }
 #else
@@ -8533,7 +8533,7 @@ void SdaiNext_assembly_usage_occurrence_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiNext_assembly_usage_occurrence(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiNext_assembly_usage_occurrence () {  return (SCLP23(Application_instance_ptr)) new SdaiNext_assembly_usage_occurrence ;  }
 #else
@@ -8598,7 +8598,7 @@ void SdaiEdge_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiEdge(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiEdge () {  return (SCLP23(Application_instance_ptr)) new SdaiEdge ;  }
 #else
@@ -8665,7 +8665,7 @@ void SdaiOriented_edge_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiOriented_edge(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiOriented_edge () {  return (SCLP23(Application_instance_ptr)) new SdaiOriented_edge ;  }
 #else
@@ -8751,7 +8751,7 @@ void SdaiPerson_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiPerson(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiPerson () {  return (SCLP23(Application_instance_ptr)) new SdaiPerson ;  }
 #else
@@ -8824,7 +8824,7 @@ void SdaiDocument_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiDocument(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiDocument () {  return (SCLP23(Application_instance_ptr)) new SdaiDocument ;  }
 #else
@@ -8884,7 +8884,7 @@ void SdaiDocument_with_class_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiDocument_with_class(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiDocument_with_class () {  return (SCLP23(Application_instance_ptr)) new SdaiDocument_with_class ;  }
 #else
@@ -8949,7 +8949,7 @@ void SdaiConversion_based_unit_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiConversion_based_unit(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiConversion_based_unit () {  return (SCLP23(Application_instance_ptr)) new SdaiConversion_based_unit ;  }
 #else
@@ -9004,7 +9004,7 @@ void SdaiPoint_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiPoint(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiPoint () {  return (SCLP23(Application_instance_ptr)) new SdaiPoint ;  }
 #else
@@ -9074,7 +9074,7 @@ void SdaiPoint_on_surface_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiPoint_on_surface(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiPoint_on_surface () {  return (SCLP23(Application_instance_ptr)) new SdaiPoint_on_surface ;  }
 #else
@@ -9142,7 +9142,7 @@ void SdaiProduct_definition_formation_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiProduct_definition_formation(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiProduct_definition_formation () {  return (SCLP23(Application_instance_ptr)) new SdaiProduct_definition_formation ;  }
 #else
@@ -9205,7 +9205,7 @@ void SdaiPerson_and_organization_assignment_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiPerson_and_organization_assignment(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiPerson_and_organization_assignment () {  return (SCLP23(Application_instance_ptr)) new SdaiPerson_and_organization_assignment ;  }
 #else
@@ -9266,7 +9266,7 @@ void SdaiCc_design_person_and_organization_assignment_access_hook_in(void *objec
 SCLP23(Application_instance_ptr)
 create_SdaiCc_design_person_and_organization_assignment(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiCc_design_person_and_organization_assignment () {  return (SCLP23(Application_instance_ptr)) new SdaiCc_design_person_and_organization_assignment ;  }
 #else
@@ -9341,7 +9341,7 @@ void SdaiOffset_curve_3d_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiOffset_curve_3d(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiOffset_curve_3d () {  return (SCLP23(Application_instance_ptr)) new SdaiOffset_curve_3d ;  }
 #else
@@ -9404,7 +9404,7 @@ void SdaiApproval_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiApproval(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiApproval () {  return (SCLP23(Application_instance_ptr)) new SdaiApproval ;  }
 #else
@@ -9472,7 +9472,7 @@ void SdaiComposite_curve_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiComposite_curve(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiComposite_curve () {  return (SCLP23(Application_instance_ptr)) new SdaiComposite_curve ;  }
 #else
@@ -9528,7 +9528,7 @@ void SdaiComposite_curve_on_surface_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiComposite_curve_on_surface(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiComposite_curve_on_surface () {  return (SCLP23(Application_instance_ptr)) new SdaiComposite_curve_on_surface ;  }
 #else
@@ -9583,7 +9583,7 @@ void SdaiBoundary_curve_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiBoundary_curve(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiBoundary_curve () {  return (SCLP23(Application_instance_ptr)) new SdaiBoundary_curve ;  }
 #else
@@ -9652,7 +9652,7 @@ void SdaiRepresentation_context_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiRepresentation_context(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiRepresentation_context () {  return (SCLP23(Application_instance_ptr)) new SdaiRepresentation_context ;  }
 #else
@@ -9712,7 +9712,7 @@ void SdaiGeometric_representation_context_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiGeometric_representation_context(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiGeometric_representation_context () {  return (SCLP23(Application_instance_ptr)) new SdaiGeometric_representation_context ;  }
 #else
@@ -9775,7 +9775,7 @@ void SdaiAction_status_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiAction_status(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiAction_status () {  return (SCLP23(Application_instance_ptr)) new SdaiAction_status ;  }
 #else
@@ -9839,7 +9839,7 @@ void SdaiApplication_context_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiApplication_context(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiApplication_context () {  return (SCLP23(Application_instance_ptr)) new SdaiApplication_context ;  }
 #else
@@ -9900,7 +9900,7 @@ void SdaiChange_request_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiChange_request(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiChange_request () {  return (SCLP23(Application_instance_ptr)) new SdaiChange_request ;  }
 #else
@@ -9963,7 +9963,7 @@ void SdaiDate_and_time_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiDate_and_time(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiDate_and_time () {  return (SCLP23(Application_instance_ptr)) new SdaiDate_and_time ;  }
 #else
@@ -10026,7 +10026,7 @@ void SdaiApproval_date_time_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiApproval_date_time(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiApproval_date_time () {  return (SCLP23(Application_instance_ptr)) new SdaiApproval_date_time ;  }
 #else
@@ -10084,7 +10084,7 @@ void SdaiApproval_role_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiApproval_role(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiApproval_role () {  return (SCLP23(Application_instance_ptr)) new SdaiApproval_role ;  }
 #else
@@ -10147,7 +10147,7 @@ void SdaiApplication_context_element_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiApplication_context_element(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiApplication_context_element () {  return (SCLP23(Application_instance_ptr)) new SdaiApplication_context_element ;  }
 #else
@@ -10207,7 +10207,7 @@ void SdaiProduct_context_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiProduct_context(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiProduct_context () {  return (SCLP23(Application_instance_ptr)) new SdaiProduct_context ;  }
 #else
@@ -10267,7 +10267,7 @@ void SdaiElementary_surface_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiElementary_surface(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiElementary_surface () {  return (SCLP23(Application_instance_ptr)) new SdaiElementary_surface ;  }
 #else
@@ -10327,7 +10327,7 @@ void SdaiSpherical_surface_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiSpherical_surface(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiSpherical_surface () {  return (SCLP23(Application_instance_ptr)) new SdaiSpherical_surface ;  }
 #else
@@ -10400,7 +10400,7 @@ void SdaiApplication_protocol_definition_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiApplication_protocol_definition(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiApplication_protocol_definition () {  return (SCLP23(Application_instance_ptr)) new SdaiApplication_protocol_definition ;  }
 #else
@@ -10465,7 +10465,7 @@ void SdaiSpecified_higher_usage_occurrence_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiSpecified_higher_usage_occurrence(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiSpecified_higher_usage_occurrence () {  return (SCLP23(Application_instance_ptr)) new SdaiSpecified_higher_usage_occurrence ;  }
 #else
@@ -10525,7 +10525,7 @@ void SdaiProduct_definition_formation_with_specified_source_access_hook_in(void 
 SCLP23(Application_instance_ptr)
 create_SdaiProduct_definition_formation_with_specified_source(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiProduct_definition_formation_with_specified_source () {  return (SCLP23(Application_instance_ptr)) new SdaiProduct_definition_formation_with_specified_source ;  }
 #else
@@ -10588,7 +10588,7 @@ void SdaiAction_request_solution_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiAction_request_solution(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiAction_request_solution () {  return (SCLP23(Application_instance_ptr)) new SdaiAction_request_solution ;  }
 #else
@@ -10653,7 +10653,7 @@ void SdaiUncertainty_measure_with_unit_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiUncertainty_measure_with_unit(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiUncertainty_measure_with_unit () {  return (SCLP23(Application_instance_ptr)) new SdaiUncertainty_measure_with_unit ;  }
 #else
@@ -10714,7 +10714,7 @@ void SdaiEdge_based_wireframe_model_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiEdge_based_wireframe_model(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiEdge_based_wireframe_model () {  return (SCLP23(Application_instance_ptr)) new SdaiEdge_based_wireframe_model ;  }
 #else
@@ -10775,7 +10775,7 @@ void SdaiPath_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiPath(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiPath () {  return (SCLP23(Application_instance_ptr)) new SdaiPath ;  }
 #else
@@ -10836,7 +10836,7 @@ void SdaiConnected_face_set_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiConnected_face_set(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiConnected_face_set () {  return (SCLP23(Application_instance_ptr)) new SdaiConnected_face_set ;  }
 #else
@@ -10891,7 +10891,7 @@ void SdaiOpen_shell_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiOpen_shell(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiOpen_shell () {  return (SCLP23(Application_instance_ptr)) new SdaiOpen_shell ;  }
 #else
@@ -10957,7 +10957,7 @@ void SdaiOriented_open_shell_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiOriented_open_shell(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiOriented_open_shell () {  return (SCLP23(Application_instance_ptr)) new SdaiOriented_open_shell ;  }
 #else
@@ -11012,7 +11012,7 @@ void SdaiSolid_angle_unit_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiSolid_angle_unit(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiSolid_angle_unit () {  return (SCLP23(Application_instance_ptr)) new SdaiSolid_angle_unit ;  }
 #else
@@ -11080,7 +11080,7 @@ void SdaiCoordinated_universal_time_offset_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiCoordinated_universal_time_offset(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiCoordinated_universal_time_offset () {  return (SCLP23(Application_instance_ptr)) new SdaiCoordinated_universal_time_offset ;  }
 #else
@@ -11145,7 +11145,7 @@ void SdaiCurve_replica_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiCurve_replica(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiCurve_replica () {  return (SCLP23(Application_instance_ptr)) new SdaiCurve_replica ;  }
 #else
@@ -11200,7 +11200,7 @@ void SdaiQuasi_uniform_surface_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiQuasi_uniform_surface(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiQuasi_uniform_surface () {  return (SCLP23(Application_instance_ptr)) new SdaiQuasi_uniform_surface ;  }
 #else
@@ -11272,7 +11272,7 @@ void SdaiSurface_curve_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiSurface_curve(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiSurface_curve () {  return (SCLP23(Application_instance_ptr)) new SdaiSurface_curve ;  }
 #else
@@ -11335,7 +11335,7 @@ void SdaiAction_request_status_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiAction_request_status(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiAction_request_status () {  return (SCLP23(Application_instance_ptr)) new SdaiAction_request_status ;  }
 #else
@@ -11388,7 +11388,7 @@ void SdaiFounded_item_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiFounded_item(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiFounded_item () {  return (SCLP23(Application_instance_ptr)) new SdaiFounded_item ;  }
 #else
@@ -11464,7 +11464,7 @@ void SdaiComposite_curve_segment_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiComposite_curve_segment(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiComposite_curve_segment () {  return (SCLP23(Application_instance_ptr)) new SdaiComposite_curve_segment ;  }
 #else
@@ -11524,7 +11524,7 @@ void SdaiReparametrised_composite_curve_segment_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiReparametrised_composite_curve_segment(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiReparametrised_composite_curve_segment () {  return (SCLP23(Application_instance_ptr)) new SdaiReparametrised_composite_curve_segment ;  }
 #else
@@ -11597,7 +11597,7 @@ void SdaiRepresentation_relationship_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiRepresentation_relationship(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiRepresentation_relationship () {  return (SCLP23(Application_instance_ptr)) new SdaiRepresentation_relationship ;  }
 #else
@@ -11657,7 +11657,7 @@ void SdaiRepresentation_relationship_with_transformation_access_hook_in(void *ob
 SCLP23(Application_instance_ptr)
 create_SdaiRepresentation_relationship_with_transformation(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiRepresentation_relationship_with_transformation () {  return (SCLP23(Application_instance_ptr)) new SdaiRepresentation_relationship_with_transformation ;  }
 #else
@@ -11715,7 +11715,7 @@ void SdaiPerson_and_organization_role_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiPerson_and_organization_role(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiPerson_and_organization_role () {  return (SCLP23(Application_instance_ptr)) new SdaiPerson_and_organization_role ;  }
 #else
@@ -11770,7 +11770,7 @@ void SdaiQuasi_uniform_curve_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiQuasi_uniform_curve(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiQuasi_uniform_curve () {  return (SCLP23(Application_instance_ptr)) new SdaiQuasi_uniform_curve ;  }
 #else
@@ -11830,7 +11830,7 @@ void SdaiSwept_surface_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiSwept_surface(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiSwept_surface () {  return (SCLP23(Application_instance_ptr)) new SdaiSwept_surface ;  }
 #else
@@ -11898,7 +11898,7 @@ void SdaiProperty_definition_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiProperty_definition(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiProperty_definition () {  return (SCLP23(Application_instance_ptr)) new SdaiProperty_definition ;  }
 #else
@@ -11959,7 +11959,7 @@ void SdaiGlobal_uncertainty_assigned_context_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiGlobal_uncertainty_assigned_context(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiGlobal_uncertainty_assigned_context () {  return (SCLP23(Application_instance_ptr)) new SdaiGlobal_uncertainty_assigned_context ;  }
 #else
@@ -12032,7 +12032,7 @@ void SdaiOrganization_relationship_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiOrganization_relationship(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiOrganization_relationship () {  return (SCLP23(Application_instance_ptr)) new SdaiOrganization_relationship ;  }
 #else
@@ -12092,7 +12092,7 @@ void SdaiParabola_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiParabola(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiParabola () {  return (SCLP23(Application_instance_ptr)) new SdaiParabola ;  }
 #else
@@ -12155,7 +12155,7 @@ void SdaiRectangular_composite_surface_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiRectangular_composite_surface(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiRectangular_composite_surface () {  return (SCLP23(Application_instance_ptr)) new SdaiRectangular_composite_surface ;  }
 #else
@@ -12220,7 +12220,7 @@ void SdaiLot_effectivity_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiLot_effectivity(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiLot_effectivity () {  return (SCLP23(Application_instance_ptr)) new SdaiLot_effectivity ;  }
 #else
@@ -12280,7 +12280,7 @@ void SdaiSurface_of_linear_extrusion_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiSurface_of_linear_extrusion(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiSurface_of_linear_extrusion () {  return (SCLP23(Application_instance_ptr)) new SdaiSurface_of_linear_extrusion ;  }
 #else
@@ -12341,7 +12341,7 @@ void SdaiShell_based_surface_model_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiShell_based_surface_model(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiShell_based_surface_model () {  return (SCLP23(Application_instance_ptr)) new SdaiShell_based_surface_model ;  }
 #else
@@ -12396,7 +12396,7 @@ void SdaiUniform_curve_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiUniform_curve(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiUniform_curve () {  return (SCLP23(Application_instance_ptr)) new SdaiUniform_curve ;  }
 #else
@@ -12451,7 +12451,7 @@ void SdaiBezier_curve_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiBezier_curve(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiBezier_curve () {  return (SCLP23(Application_instance_ptr)) new SdaiBezier_curve ;  }
 #else
@@ -12507,7 +12507,7 @@ void SdaiLoop_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiLoop(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiLoop () {  return (SCLP23(Application_instance_ptr)) new SdaiLoop ;  }
 #else
@@ -12571,7 +12571,7 @@ void SdaiEdge_loop_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiEdge_loop(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiEdge_loop () {  return (SCLP23(Application_instance_ptr)) new SdaiEdge_loop ;  }
 #else
@@ -12629,7 +12629,7 @@ void SdaiDate_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiDate(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiDate () {  return (SCLP23(Application_instance_ptr)) new SdaiDate ;  }
 #else
@@ -12694,7 +12694,7 @@ void SdaiCalendar_date_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiCalendar_date(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiCalendar_date () {  return (SCLP23(Application_instance_ptr)) new SdaiCalendar_date ;  }
 #else
@@ -12759,7 +12759,7 @@ void SdaiToroidal_surface_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiToroidal_surface(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiToroidal_surface () {  return (SCLP23(Application_instance_ptr)) new SdaiToroidal_surface ;  }
 #else
@@ -12814,7 +12814,7 @@ void SdaiPromissory_usage_occurrence_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiPromissory_usage_occurrence(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiPromissory_usage_occurrence () {  return (SCLP23(Application_instance_ptr)) new SdaiPromissory_usage_occurrence ;  }
 #else
@@ -12872,7 +12872,7 @@ void SdaiApproval_assignment_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiApproval_assignment(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiApproval_assignment () {  return (SCLP23(Application_instance_ptr)) new SdaiApproval_assignment ;  }
 #else
@@ -12950,7 +12950,7 @@ void SdaiConfiguration_item_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiConfiguration_item(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiConfiguration_item () {  return (SCLP23(Application_instance_ptr)) new SdaiConfiguration_item ;  }
 #else
@@ -13008,7 +13008,7 @@ void SdaiContract_assignment_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiContract_assignment(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiContract_assignment () {  return (SCLP23(Application_instance_ptr)) new SdaiContract_assignment ;  }
 #else
@@ -13073,7 +13073,7 @@ void SdaiVector_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiVector(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiVector () {  return (SCLP23(Application_instance_ptr)) new SdaiVector ;  }
 #else
@@ -13138,7 +13138,7 @@ void SdaiPcurve_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiPcurve(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiPcurve () {  return (SCLP23(Application_instance_ptr)) new SdaiPcurve ;  }
 #else
@@ -13197,7 +13197,7 @@ void SdaiBounded_pcurve_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiBounded_pcurve(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiBounded_pcurve () {  return (SCLP23(Application_instance_ptr)) new SdaiBounded_pcurve ;  }
 #else
@@ -13252,7 +13252,7 @@ void SdaiIntersection_curve_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiIntersection_curve(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiIntersection_curve () {  return (SCLP23(Application_instance_ptr)) new SdaiIntersection_curve ;  }
 #else
@@ -13334,7 +13334,7 @@ void SdaiTrimmed_curve_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiTrimmed_curve(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiTrimmed_curve () {  return (SCLP23(Application_instance_ptr)) new SdaiTrimmed_curve ;  }
 #else
@@ -13394,7 +13394,7 @@ void SdaiProduct_definition_context_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiProduct_definition_context(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiProduct_definition_context () {  return (SCLP23(Application_instance_ptr)) new SdaiProduct_definition_context ;  }
 #else
@@ -13453,7 +13453,7 @@ void SdaiBounded_surface_curve_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiBounded_surface_curve(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiBounded_surface_curve () {  return (SCLP23(Application_instance_ptr)) new SdaiBounded_surface_curve ;  }
 #else
@@ -13526,7 +13526,7 @@ void SdaiItem_defined_transformation_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiItem_defined_transformation(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiItem_defined_transformation () {  return (SCLP23(Application_instance_ptr)) new SdaiItem_defined_transformation ;  }
 #else
@@ -13599,7 +13599,7 @@ void SdaiAction_method_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiAction_method(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiAction_method () {  return (SCLP23(Application_instance_ptr)) new SdaiAction_method ;  }
 #else
@@ -13672,7 +13672,7 @@ void SdaiProduct_category_relationship_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiProduct_category_relationship(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiProduct_category_relationship () {  return (SCLP23(Application_instance_ptr)) new SdaiProduct_category_relationship ;  }
 #else
@@ -13727,7 +13727,7 @@ void SdaiPlane_angle_measure_with_unit_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiPlane_angle_measure_with_unit(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiPlane_angle_measure_with_unit () {  return (SCLP23(Application_instance_ptr)) new SdaiPlane_angle_measure_with_unit ;  }
 #else
@@ -13782,7 +13782,7 @@ void SdaiVertex_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiVertex(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiVertex () {  return (SCLP23(Application_instance_ptr)) new SdaiVertex ;  }
 #else
@@ -13851,7 +13851,7 @@ void SdaiRepresentation_map_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiRepresentation_map(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiRepresentation_map () {  return (SCLP23(Application_instance_ptr)) new SdaiRepresentation_map ;  }
 #else
@@ -13911,7 +13911,7 @@ void SdaiProduct_definition_effectivity_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiProduct_definition_effectivity(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiProduct_definition_effectivity () {  return (SCLP23(Application_instance_ptr)) new SdaiProduct_definition_effectivity ;  }
 #else
@@ -13971,7 +13971,7 @@ void SdaiConfiguration_effectivity_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiConfiguration_effectivity(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiConfiguration_effectivity () {  return (SCLP23(Application_instance_ptr)) new SdaiConfiguration_effectivity ;  }
 #else
@@ -14036,7 +14036,7 @@ void SdaiEllipse_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiEllipse(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiEllipse () {  return (SCLP23(Application_instance_ptr)) new SdaiEllipse ;  }
 #else
@@ -14096,7 +14096,7 @@ void SdaiContext_dependent_unit_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiContext_dependent_unit(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiContext_dependent_unit () {  return (SCLP23(Application_instance_ptr)) new SdaiContext_dependent_unit ;  }
 #else
@@ -14174,7 +14174,7 @@ void SdaiAlternate_product_relationship_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiAlternate_product_relationship(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiAlternate_product_relationship () {  return (SCLP23(Application_instance_ptr)) new SdaiAlternate_product_relationship ;  }
 #else
@@ -14232,7 +14232,7 @@ void SdaiDocument_type_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiDocument_type(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiDocument_type () {  return (SCLP23(Application_instance_ptr)) new SdaiDocument_type ;  }
 #else
@@ -14295,7 +14295,7 @@ void SdaiDocument_reference_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiDocument_reference(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiDocument_reference () {  return (SCLP23(Application_instance_ptr)) new SdaiDocument_reference ;  }
 #else
@@ -14350,7 +14350,7 @@ void SdaiMechanical_context_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiMechanical_context(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiMechanical_context () {  return (SCLP23(Application_instance_ptr)) new SdaiMechanical_context ;  }
 #else
@@ -14411,7 +14411,7 @@ void SdaiShell_based_wireframe_model_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiShell_based_wireframe_model(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiShell_based_wireframe_model () {  return (SCLP23(Application_instance_ptr)) new SdaiShell_based_wireframe_model ;  }
 #else
@@ -14479,7 +14479,7 @@ void SdaiContract_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiContract(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiContract () {  return (SCLP23(Application_instance_ptr)) new SdaiContract ;  }
 #else
@@ -14567,7 +14567,7 @@ void SdaiDimensional_exponents_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiDimensional_exponents(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiDimensional_exponents () {  return (SCLP23(Application_instance_ptr)) new SdaiDimensional_exponents ;  }
 #else
@@ -14628,7 +14628,7 @@ void SdaiStart_request_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiStart_request(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiStart_request () {  return (SCLP23(Application_instance_ptr)) new SdaiStart_request ;  }
 #else
@@ -14689,7 +14689,7 @@ void SdaiCc_design_specification_reference_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiCc_design_specification_reference(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiCc_design_specification_reference () {  return (SCLP23(Application_instance_ptr)) new SdaiCc_design_specification_reference ;  }
 #else
@@ -14744,7 +14744,7 @@ void SdaiSupplied_part_relationship_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiSupplied_part_relationship(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiSupplied_part_relationship () {  return (SCLP23(Application_instance_ptr)) new SdaiSupplied_part_relationship ;  }
 #else
@@ -14807,7 +14807,7 @@ void SdaiContext_dependent_shape_representation_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiContext_dependent_shape_representation(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiContext_dependent_shape_representation () {  return (SCLP23(Application_instance_ptr)) new SdaiContext_dependent_shape_representation ;  }
 #else
@@ -14867,7 +14867,7 @@ void SdaiDegenerate_toroidal_surface_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiDegenerate_toroidal_surface(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiDegenerate_toroidal_surface () {  return (SCLP23(Application_instance_ptr)) new SdaiDegenerate_toroidal_surface ;  }
 #else
@@ -14927,7 +14927,7 @@ void SdaiOrdinal_date_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiOrdinal_date(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiOrdinal_date () {  return (SCLP23(Application_instance_ptr)) new SdaiOrdinal_date ;  }
 #else
@@ -14982,7 +14982,7 @@ void SdaiFace_outer_bound_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiFace_outer_bound(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiFace_outer_bound () {  return (SCLP23(Application_instance_ptr)) new SdaiFace_outer_bound ;  }
 #else
@@ -15037,7 +15037,7 @@ void SdaiMass_measure_with_unit_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiMass_measure_with_unit(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiMass_measure_with_unit () {  return (SCLP23(Application_instance_ptr)) new SdaiMass_measure_with_unit ;  }
 #else
@@ -15098,7 +15098,7 @@ void SdaiBrep_with_voids_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiBrep_with_voids(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiBrep_with_voids () {  return (SCLP23(Application_instance_ptr)) new SdaiBrep_with_voids ;  }
 #else
@@ -15163,7 +15163,7 @@ void SdaiWeek_of_year_and_day_date_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiWeek_of_year_and_day_date(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiWeek_of_year_and_day_date () {  return (SCLP23(Application_instance_ptr)) new SdaiWeek_of_year_and_day_date ;  }
 #else
@@ -15228,7 +15228,7 @@ void SdaiPoint_on_curve_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiPoint_on_curve(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiPoint_on_curve () {  return (SCLP23(Application_instance_ptr)) new SdaiPoint_on_curve ;  }
 #else
@@ -15283,7 +15283,7 @@ void SdaiShell_based_wireframe_shape_representation_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiShell_based_wireframe_shape_representation(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiShell_based_wireframe_shape_representation () {  return (SCLP23(Application_instance_ptr)) new SdaiShell_based_wireframe_shape_representation ;  }
 #else
@@ -15344,7 +15344,7 @@ void SdaiFace_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiFace(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiFace () {  return (SCLP23(Application_instance_ptr)) new SdaiFace ;  }
 #else
@@ -15413,7 +15413,7 @@ void SdaiFace_surface_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiFace_surface(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiFace_surface () {  return (SCLP23(Application_instance_ptr)) new SdaiFace_surface ;  }
 #else
@@ -15479,7 +15479,7 @@ void SdaiOriented_face_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiOriented_face(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiOriented_face () {  return (SCLP23(Application_instance_ptr)) new SdaiOriented_face ;  }
 #else
@@ -15540,7 +15540,7 @@ void SdaiSurface_of_revolution_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiSurface_of_revolution(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiSurface_of_revolution () {  return (SCLP23(Application_instance_ptr)) new SdaiSurface_of_revolution ;  }
 #else
@@ -15595,7 +15595,7 @@ void SdaiAdvanced_brep_shape_representation_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiAdvanced_brep_shape_representation(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiAdvanced_brep_shape_representation () {  return (SCLP23(Application_instance_ptr)) new SdaiAdvanced_brep_shape_representation ;  }
 #else
@@ -15664,7 +15664,7 @@ void SdaiEdge_curve_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiEdge_curve(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiEdge_curve () {  return (SCLP23(Application_instance_ptr)) new SdaiEdge_curve ;  }
 #else
@@ -15729,7 +15729,7 @@ void SdaiPoint_replica_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiPoint_replica(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiPoint_replica () {  return (SCLP23(Application_instance_ptr)) new SdaiPoint_replica ;  }
 #else
@@ -15803,7 +15803,7 @@ void SdaiProduct_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiProduct(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiProduct () {  return (SCLP23(Application_instance_ptr)) new SdaiProduct ;  }
 #else
@@ -15876,7 +15876,7 @@ void SdaiShape_aspect_relationship_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiShape_aspect_relationship(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiShape_aspect_relationship () {  return (SCLP23(Application_instance_ptr)) new SdaiShape_aspect_relationship ;  }
 #else
@@ -15966,7 +15966,7 @@ void SdaiRectangular_trimmed_surface_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiRectangular_trimmed_surface(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiRectangular_trimmed_surface () {  return (SCLP23(Application_instance_ptr)) new SdaiRectangular_trimmed_surface ;  }
 #else
@@ -16021,7 +16021,7 @@ void SdaiPlane_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiPlane(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiPlane () {  return (SCLP23(Application_instance_ptr)) new SdaiPlane ;  }
 #else
@@ -16079,7 +16079,7 @@ void SdaiAction_assignment_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiAction_assignment(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiAction_assignment () {  return (SCLP23(Application_instance_ptr)) new SdaiAction_assignment ;  }
 #else
@@ -16140,7 +16140,7 @@ void SdaiChange_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiChange(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiChange () {  return (SCLP23(Application_instance_ptr)) new SdaiChange ;  }
 #else
@@ -16200,7 +16200,7 @@ void SdaiCircle_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiCircle(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiCircle () {  return (SCLP23(Application_instance_ptr)) new SdaiCircle ;  }
 #else
@@ -16265,7 +16265,7 @@ void SdaiLine_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiLine(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiLine () {  return (SCLP23(Application_instance_ptr)) new SdaiLine ;  }
 #else
@@ -16328,7 +16328,7 @@ void SdaiProperty_definition_representation_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiProperty_definition_representation(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiProperty_definition_representation () {  return (SCLP23(Application_instance_ptr)) new SdaiProperty_definition_representation ;  }
 #else
@@ -16389,7 +16389,7 @@ void SdaiGeometric_set_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiGeometric_set(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiGeometric_set () {  return (SCLP23(Application_instance_ptr)) new SdaiGeometric_set ;  }
 #else
@@ -16444,7 +16444,7 @@ void SdaiGeometric_curve_set_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiGeometric_curve_set(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiGeometric_curve_set () {  return (SCLP23(Application_instance_ptr)) new SdaiGeometric_curve_set ;  }
 #else
@@ -16510,7 +16510,7 @@ void SdaiPersonal_address_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiPersonal_address(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiPersonal_address () {  return (SCLP23(Application_instance_ptr)) new SdaiPersonal_address ;  }
 #else
@@ -16583,7 +16583,7 @@ void SdaiDocument_relationship_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiDocument_relationship(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiDocument_relationship () {  return (SCLP23(Application_instance_ptr)) new SdaiDocument_relationship ;  }
 #else
@@ -16638,7 +16638,7 @@ void SdaiOuter_boundary_curve_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiOuter_boundary_curve(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiOuter_boundary_curve () {  return (SCLP23(Application_instance_ptr)) new SdaiOuter_boundary_curve ;  }
 #else
@@ -16693,7 +16693,7 @@ void SdaiShape_representation_relationship_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiShape_representation_relationship(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiShape_representation_relationship () {  return (SCLP23(Application_instance_ptr)) new SdaiShape_representation_relationship ;  }
 #else
@@ -16766,7 +16766,7 @@ void SdaiAssembly_component_usage_substitute_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiAssembly_component_usage_substitute(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiAssembly_component_usage_substitute () {  return (SCLP23(Application_instance_ptr)) new SdaiAssembly_component_usage_substitute ;  }
 #else
@@ -16831,7 +16831,7 @@ void SdaiDegenerate_pcurve_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiDegenerate_pcurve(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiDegenerate_pcurve () {  return (SCLP23(Application_instance_ptr)) new SdaiDegenerate_pcurve ;  }
 #else
@@ -16891,7 +16891,7 @@ void SdaiEvaluated_degenerate_pcurve_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiEvaluated_degenerate_pcurve(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiEvaluated_degenerate_pcurve () {  return (SCLP23(Application_instance_ptr)) new SdaiEvaluated_degenerate_pcurve ;  }
 #else
@@ -16946,7 +16946,7 @@ void SdaiSolid_angle_measure_with_unit_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiSolid_angle_measure_with_unit(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiSolid_angle_measure_with_unit () {  return (SCLP23(Application_instance_ptr)) new SdaiSolid_angle_measure_with_unit ;  }
 #else
@@ -17007,7 +17007,7 @@ void SdaiConnected_edge_set_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiConnected_edge_set(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiConnected_edge_set () {  return (SCLP23(Application_instance_ptr)) new SdaiConnected_edge_set ;  }
 #else
@@ -17075,7 +17075,7 @@ void SdaiAction_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiAction(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiAction () {  return (SCLP23(Application_instance_ptr)) new SdaiAction ;  }
 #else
@@ -17130,7 +17130,7 @@ void SdaiExecuted_action_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiExecuted_action(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiExecuted_action () {  return (SCLP23(Application_instance_ptr)) new SdaiExecuted_action ;  }
 #else
@@ -17190,7 +17190,7 @@ void SdaiDirected_action_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiDirected_action(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiDirected_action () {  return (SCLP23(Application_instance_ptr)) new SdaiDirected_action ;  }
 #else
@@ -17259,7 +17259,7 @@ void SdaiOrganizational_project_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiOrganizational_project(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiOrganizational_project () {  return (SCLP23(Application_instance_ptr)) new SdaiOrganizational_project ;  }
 #else
@@ -17317,7 +17317,7 @@ void SdaiDate_time_role_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiDate_time_role(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiDate_time_role () {  return (SCLP23(Application_instance_ptr)) new SdaiDate_time_role ;  }
 #else
@@ -17388,7 +17388,7 @@ void SdaiCurve_bounded_surface_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiCurve_bounded_surface(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiCurve_bounded_surface () {  return (SCLP23(Application_instance_ptr)) new SdaiCurve_bounded_surface ;  }
 #else
@@ -17443,7 +17443,7 @@ void SdaiClosed_shell_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiClosed_shell(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiClosed_shell () {  return (SCLP23(Application_instance_ptr)) new SdaiClosed_shell ;  }
 #else
@@ -17498,7 +17498,7 @@ void SdaiDesign_make_from_relationship_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiDesign_make_from_relationship(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiDesign_make_from_relationship () {  return (SCLP23(Application_instance_ptr)) new SdaiDesign_make_from_relationship ;  }
 #else
@@ -17553,7 +17553,7 @@ void SdaiDefinitional_representation_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiDefinitional_representation(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiDefinitional_representation () {  return (SCLP23(Application_instance_ptr)) new SdaiDefinitional_representation ;  }
 #else
@@ -17608,7 +17608,7 @@ void SdaiProduct_definition_shape_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiProduct_definition_shape(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiProduct_definition_shape () {  return (SCLP23(Application_instance_ptr)) new SdaiProduct_definition_shape ;  }
 #else
@@ -17674,7 +17674,7 @@ void SdaiSi_unit_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiSi_unit(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiSi_unit () {  return (SCLP23(Application_instance_ptr)) new SdaiSi_unit ;  }
 #else
@@ -17729,7 +17729,7 @@ void SdaiBezier_surface_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiBezier_surface(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiBezier_surface () {  return (SCLP23(Application_instance_ptr)) new SdaiBezier_surface ;  }
 #else
@@ -17787,7 +17787,7 @@ void SdaiCertification_assignment_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiCertification_assignment(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiCertification_assignment () {  return (SCLP23(Application_instance_ptr)) new SdaiCertification_assignment ;  }
 #else
@@ -17848,7 +17848,7 @@ void SdaiStart_work_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiStart_work(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiStart_work () {  return (SCLP23(Application_instance_ptr)) new SdaiStart_work ;  }
 #else
@@ -17906,7 +17906,7 @@ void SdaiContract_type_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiContract_type(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiContract_type () {  return (SCLP23(Application_instance_ptr)) new SdaiContract_type ;  }
 #else
@@ -17978,7 +17978,7 @@ void SdaiB_spline_curve_with_knots_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiB_spline_curve_with_knots(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiB_spline_curve_with_knots () {  return (SCLP23(Application_instance_ptr)) new SdaiB_spline_curve_with_knots ;  }
 #else
@@ -18039,7 +18039,7 @@ void SdaiCc_design_approval_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiCc_design_approval(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiCc_design_approval () {  return (SCLP23(Application_instance_ptr)) new SdaiCc_design_approval ;  }
 #else
@@ -18094,7 +18094,7 @@ void SdaiEdge_based_wireframe_shape_representation_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiEdge_based_wireframe_shape_representation(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiEdge_based_wireframe_shape_representation () {  return (SCLP23(Application_instance_ptr)) new SdaiEdge_based_wireframe_shape_representation ;  }
 #else
@@ -18149,7 +18149,7 @@ void SdaiGeometrically_bounded_wireframe_shape_representation_access_hook_in(voi
 SCLP23(Application_instance_ptr)
 create_SdaiGeometrically_bounded_wireframe_shape_representation(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiGeometrically_bounded_wireframe_shape_representation () {  return (SCLP23(Application_instance_ptr)) new SdaiGeometrically_bounded_wireframe_shape_representation ;  }
 #else
@@ -18222,7 +18222,7 @@ void SdaiProduct_concept_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiProduct_concept(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiProduct_concept () {  return (SCLP23(Application_instance_ptr)) new SdaiProduct_concept ;  }
 #else
@@ -18283,7 +18283,7 @@ void SdaiCc_design_contract_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiCc_design_contract(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiCc_design_contract () {  return (SCLP23(Application_instance_ptr)) new SdaiCc_design_contract ;  }
 #else
@@ -18338,7 +18338,7 @@ void SdaiSeam_curve_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiSeam_curve(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiSeam_curve () {  return (SCLP23(Application_instance_ptr)) new SdaiSeam_curve ;  }
 #else
@@ -18404,7 +18404,7 @@ void SdaiAxis2_placement_3d_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiAxis2_placement_3d(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiAxis2_placement_3d () {  return (SCLP23(Application_instance_ptr)) new SdaiAxis2_placement_3d ;  }
 #else
@@ -18465,7 +18465,7 @@ void SdaiRational_b_spline_surface_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiRational_b_spline_surface(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiRational_b_spline_surface () {  return (SCLP23(Application_instance_ptr)) new SdaiRational_b_spline_surface ;  }
 #else
@@ -18528,7 +18528,7 @@ void SdaiConfiguration_design_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiConfiguration_design(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiConfiguration_design () {  return (SCLP23(Application_instance_ptr)) new SdaiConfiguration_design ;  }
 #else
@@ -18583,7 +18583,7 @@ void SdaiDesign_context_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiDesign_context(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiDesign_context () {  return (SCLP23(Application_instance_ptr)) new SdaiDesign_context ;  }
 #else
@@ -18656,7 +18656,7 @@ void SdaiProduct_definition_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiProduct_definition(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiProduct_definition () {  return (SCLP23(Application_instance_ptr)) new SdaiProduct_definition ;  }
 #else
@@ -18717,7 +18717,7 @@ void SdaiProduct_definition_with_associated_documents_access_hook_in(void *objec
 SCLP23(Application_instance_ptr)
 create_SdaiProduct_definition_with_associated_documents(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiProduct_definition_with_associated_documents () {  return (SCLP23(Application_instance_ptr)) new SdaiProduct_definition_with_associated_documents ;  }
 #else
@@ -18785,7 +18785,7 @@ void SdaiOrganization_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiOrganization(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiOrganization () {  return (SCLP23(Application_instance_ptr)) new SdaiOrganization ;  }
 #else
@@ -18846,7 +18846,7 @@ void SdaiCc_design_certification_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiCc_design_certification(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiCc_design_certification () {  return (SCLP23(Application_instance_ptr)) new SdaiCc_design_certification ;  }
 #else
@@ -18930,7 +18930,7 @@ void SdaiB_spline_surface_with_knots_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiB_spline_surface_with_knots(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiB_spline_surface_with_knots () {  return (SCLP23(Application_instance_ptr)) new SdaiB_spline_surface_with_knots ;  }
 #else
@@ -18988,7 +18988,7 @@ void SdaiCertification_type_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiCertification_type(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiCertification_type () {  return (SCLP23(Application_instance_ptr)) new SdaiCertification_type ;  }
 #else
@@ -19054,7 +19054,7 @@ void SdaiOriented_path_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiOriented_path(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiOriented_path () {  return (SCLP23(Application_instance_ptr)) new SdaiOriented_path ;  }
 #else
@@ -19122,7 +19122,7 @@ void SdaiSecurity_classification_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiSecurity_classification(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiSecurity_classification () {  return (SCLP23(Application_instance_ptr)) new SdaiSecurity_classification ;  }
 #else
@@ -19182,7 +19182,7 @@ void SdaiVertex_loop_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiVertex_loop(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiVertex_loop () {  return (SCLP23(Application_instance_ptr)) new SdaiVertex_loop ;  }
 #else
@@ -19240,7 +19240,7 @@ void SdaiApproval_status_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiApproval_status(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiApproval_status () {  return (SCLP23(Application_instance_ptr)) new SdaiApproval_status ;  }
 #else
@@ -19301,7 +19301,7 @@ void SdaiCartesian_point_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiCartesian_point(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiCartesian_point () {  return (SCLP23(Application_instance_ptr)) new SdaiCartesian_point ;  }
 #else
@@ -19364,7 +19364,7 @@ void SdaiDate_and_time_assignment_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiDate_and_time_assignment(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiDate_and_time_assignment () {  return (SCLP23(Application_instance_ptr)) new SdaiDate_and_time_assignment ;  }
 #else
@@ -19419,7 +19419,7 @@ void SdaiParametric_representation_context_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiParametric_representation_context(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiParametric_representation_context () {  return (SCLP23(Application_instance_ptr)) new SdaiParametric_representation_context ;  }
 #else
@@ -19479,7 +19479,7 @@ void SdaiProduct_concept_context_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiProduct_concept_context(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiProduct_concept_context () {  return (SCLP23(Application_instance_ptr)) new SdaiProduct_concept_context ;  }
 #else
@@ -19565,7 +19565,7 @@ void SdaiSurface_patch_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiSurface_patch(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiSurface_patch () {  return (SCLP23(Application_instance_ptr)) new SdaiSurface_patch ;  }
 #else
@@ -19620,7 +19620,7 @@ void SdaiLength_unit_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiLength_unit(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiLength_unit () {  return (SCLP23(Application_instance_ptr)) new SdaiLength_unit ;  }
 #else
@@ -19693,7 +19693,7 @@ void SdaiShape_aspect_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiShape_aspect(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiShape_aspect () {  return (SCLP23(Application_instance_ptr)) new SdaiShape_aspect ;  }
 #else
@@ -19748,7 +19748,7 @@ void SdaiVolume_measure_with_unit_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiVolume_measure_with_unit(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiVolume_measure_with_unit () {  return (SCLP23(Application_instance_ptr)) new SdaiVolume_measure_with_unit ;  }
 #else
@@ -19803,7 +19803,7 @@ void SdaiAdvanced_face_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiAdvanced_face(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiAdvanced_face () {  return (SCLP23(Application_instance_ptr)) new SdaiAdvanced_face ;  }
 #else
@@ -19861,7 +19861,7 @@ void SdaiSecurity_classification_level_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiSecurity_classification_level(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiSecurity_classification_level () {  return (SCLP23(Application_instance_ptr)) new SdaiSecurity_classification_level ;  }
 #else
@@ -19934,7 +19934,7 @@ void SdaiApproval_relationship_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiApproval_relationship(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiApproval_relationship () {  return (SCLP23(Application_instance_ptr)) new SdaiApproval_relationship ;  }
 #else
@@ -19995,7 +19995,7 @@ void SdaiPolyline_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiPolyline(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiPolyline () {  return (SCLP23(Application_instance_ptr)) new SdaiPolyline ;  }
 #else
@@ -20063,7 +20063,7 @@ void SdaiApproval_person_organization_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiApproval_person_organization(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiApproval_person_organization () {  return (SCLP23(Application_instance_ptr)) new SdaiApproval_person_organization ;  }
 #else
@@ -20128,7 +20128,7 @@ void SdaiSurface_replica_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiSurface_replica(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiSurface_replica () {  return (SCLP23(Application_instance_ptr)) new SdaiSurface_replica ;  }
 #else
@@ -20186,7 +20186,7 @@ void SdaiSecurity_classification_assignment_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiSecurity_classification_assignment(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiSecurity_classification_assignment () {  return (SCLP23(Application_instance_ptr)) new SdaiSecurity_classification_assignment ;  }
 #else
@@ -20247,7 +20247,7 @@ void SdaiCc_design_security_classification_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiCc_design_security_classification(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiCc_design_security_classification () {  return (SCLP23(Application_instance_ptr)) new SdaiCc_design_security_classification ;  }
 #else
@@ -20302,7 +20302,7 @@ void SdaiFaceted_brep_shape_representation_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiFaceted_brep_shape_representation(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiFaceted_brep_shape_representation () {  return (SCLP23(Application_instance_ptr)) new SdaiFaceted_brep_shape_representation ;  }
 #else
@@ -20370,7 +20370,7 @@ void SdaiDocument_usage_constraint_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiDocument_usage_constraint(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiDocument_usage_constraint () {  return (SCLP23(Application_instance_ptr)) new SdaiDocument_usage_constraint ;  }
 #else
@@ -20434,7 +20434,7 @@ void SdaiVertex_point_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiVertex_point(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiVertex_point () {  return (SCLP23(Application_instance_ptr)) new SdaiVertex_point ;  }
 #else
@@ -20495,7 +20495,7 @@ void SdaiCc_design_date_and_time_assignment_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiCc_design_date_and_time_assignment(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiCc_design_date_and_time_assignment () {  return (SCLP23(Application_instance_ptr)) new SdaiCc_design_date_and_time_assignment ;  }
 #else
@@ -20561,7 +20561,7 @@ void SdaiOriented_closed_shell_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiOriented_closed_shell(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiOriented_closed_shell () {  return (SCLP23(Application_instance_ptr)) new SdaiOriented_closed_shell ;  }
 #else
@@ -20624,7 +20624,7 @@ void SdaiPerson_and_organization_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiPerson_and_organization(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiPerson_and_organization () {  return (SCLP23(Application_instance_ptr)) new SdaiPerson_and_organization ;  }
 #else
@@ -20684,7 +20684,7 @@ void SdaiCylindrical_surface_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiCylindrical_surface(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiCylindrical_surface () {  return (SCLP23(Application_instance_ptr)) new SdaiCylindrical_surface ;  }
 #else
@@ -20757,7 +20757,7 @@ void SdaiLocal_time_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiLocal_time(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiLocal_time () {  return (SCLP23(Application_instance_ptr)) new SdaiLocal_time ;  }
 #else
@@ -20812,7 +20812,7 @@ void SdaiMass_unit_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiMass_unit(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiMass_unit () {  return (SCLP23(Application_instance_ptr)) new SdaiMass_unit ;  }
 #else
@@ -20872,7 +20872,7 @@ void SdaiVertex_shell_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiVertex_shell(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiVertex_shell () {  return (SCLP23(Application_instance_ptr)) new SdaiVertex_shell ;  }
 #else
@@ -20937,7 +20937,7 @@ void SdaiPoly_loop_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiPoly_loop(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiPoly_loop () {  return (SCLP23(Application_instance_ptr)) new SdaiPoly_loop ;  }
 #else
@@ -20998,7 +20998,7 @@ void SdaiWire_shell_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiWire_shell(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiWire_shell () {  return (SCLP23(Application_instance_ptr)) new SdaiWire_shell ;  }
 #else
@@ -21053,7 +21053,7 @@ void SdaiArea_unit_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiArea_unit(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiArea_unit () {  return (SCLP23(Application_instance_ptr)) new SdaiArea_unit ;  }
 #else
@@ -21118,7 +21118,7 @@ void SdaiMapped_item_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiMapped_item(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiMapped_item () {  return (SCLP23(Application_instance_ptr)) new SdaiMapped_item ;  }
 #else
@@ -21173,7 +21173,7 @@ void SdaiShape_definition_representation_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiShape_definition_representation(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiShape_definition_representation () {  return (SCLP23(Application_instance_ptr)) new SdaiShape_definition_representation ;  }
 #else
@@ -21228,7 +21228,7 @@ void SdaiVolume_unit_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiVolume_unit(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiVolume_unit () {  return (SCLP23(Application_instance_ptr)) new SdaiVolume_unit ;  }
 #else
@@ -21293,7 +21293,7 @@ void SdaiConical_surface_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiConical_surface(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiConical_surface () {  return (SCLP23(Application_instance_ptr)) new SdaiConical_surface ;  }
 #else
@@ -21354,7 +21354,7 @@ void SdaiGlobal_unit_assigned_context_access_hook_in(void *object,
 SCLP23(Application_instance_ptr)
 create_SdaiGlobal_unit_assigned_context(os_database *db);
 
-#elif __O3DB__
+#elif defined(__O3DB__)
 inline SCLP23(Application_instance_ptr)
 create_SdaiGlobal_unit_assigned_context () {  return (SCLP23(Application_instance_ptr)) new SdaiGlobal_unit_assigned_context ;  }
 #else

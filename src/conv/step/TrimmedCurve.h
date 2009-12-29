@@ -46,7 +46,7 @@ protected:
 public:
 	TrimmedCurve();
 	virtual ~TrimmedCurve();
-	TrimmedCurve(STEPWrapper *sw,int STEPid);
+	TrimmedCurve(STEPWrapper *sw,int step_id);
 	bool Load(STEPWrapper *sw,SCLP23(Application_instance) *sse);
 	virtual bool LoadONBrep(ON_Brep *brep);
 	virtual const double *PointAtEnd();

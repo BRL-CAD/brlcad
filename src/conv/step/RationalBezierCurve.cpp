@@ -38,9 +38,9 @@ RationalBezierCurve::RationalBezierCurve() {
 	id = 0;
 }
 
-RationalBezierCurve::RationalBezierCurve(STEPWrapper *sw,int STEPid) {
+RationalBezierCurve::RationalBezierCurve(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 RationalBezierCurve::~RationalBezierCurve() {
@@ -53,7 +53,7 @@ RationalBezierCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 	// load base class attributes
 	if ( !RationalBSplineCurve::Load(sw,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::RationalBSplineCurve." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::RationalBSplineCurve." << std::endl;
 		return false;
 	}
 
@@ -62,8 +62,8 @@ RationalBezierCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 void
 RationalBezierCurve::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << name << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
 	RationalBSplineCurve::Print(level);
 
@@ -77,7 +77,7 @@ RationalBezierCurve::Create(STEPWrapper *sw,SCLP23(Application_instance) *sse){
 		Factory::AddObject(object);
 
 		if (!object->Load(sw,sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

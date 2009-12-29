@@ -27,9 +27,19 @@
 
 #include "common.h"
 
-//TODO
-//#define TRACE(s) std::cerr << __FILE__ << ":" << __LINE__ << ":" << __func__ << ":" << s << std::endl;
-#define ERROR(s) std::cerr << __FILE__ << ":" << __LINE__ << ":" << __func__ << ":" << s << std::endl;
+#if 0
+#ifdef DEBUG
+#define TRACE(arg) sizeof(std::cerr << arg << std::endl)
+#else
+#define TRACE(arg)
+#endif
+#endif
+
+#ifdef DEBUG
+#define ERROR(arg) sizeof(std::cerr << __FILE__ << ":" << __LINE__ << ":" << __func__ << ":" << arg << std::endl)
+#else
+#define ERROR(arg)
+#endif
 
 /* system headers */
 #include <list>
@@ -126,7 +136,7 @@ public:
 	SCLP23(Application_instance) *getSuperType(SCLP23(Application_instance) *sse, const char *name);
 	string getStringAttribute( SCLP23(Application_instance) *sse, const char *name );
 
-	bool load(string &stepfile);
+	bool load(string &step_file);
 	LIST_OF_PATCHES *parseListOfPatchEntities( const char *in);
 	LIST_OF_REALS *parseListOfReals( const char *in);
 	LIST_OF_POINTS *parseListOfPointEntities( const char *in);

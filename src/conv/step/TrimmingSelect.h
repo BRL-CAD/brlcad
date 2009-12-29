@@ -47,7 +47,7 @@ protected:
 public:
 	TrimmingSelect();
 	virtual ~TrimmingSelect();
-	TrimmingSelect(STEPWrapper *sw,int STEPid);
+	TrimmingSelect(STEPWrapper *sw,int step_id);
 	double GetParameterTrim();
 	const double *GetPointTrim();
 	bool IsParameterTrim();

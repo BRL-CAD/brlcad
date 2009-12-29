@@ -41,7 +41,7 @@ protected:
 public:
 	RationalBSplineSurface();
 	virtual ~RationalBSplineSurface();
-	RationalBSplineSurface(STEPWrapper *sw,int STEPid);
+	RationalBSplineSurface(STEPWrapper *sw,int step_id);
 	bool Load(STEPWrapper *sw,SCLP23(Application_instance) *sse);
 	virtual bool LoadONBrep(ON_Brep *brep);
 	virtual void Print(int level);

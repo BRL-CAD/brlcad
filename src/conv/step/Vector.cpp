@@ -40,9 +40,9 @@ Vector::Vector() {
 	orientation = NULL;
 }
 
-Vector::Vector(STEPWrapper *sw,int STEPid) {
+Vector::Vector(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 	orientation = NULL;
 }
 
@@ -55,7 +55,7 @@ Vector::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 	id = sse->STEPfile_id;
 
 	if ( !GeometricRepresentationItem::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::GeometricRepresentationItem." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::GeometricRepresentationItem." << std::endl;
 		return false;
 	}
 
@@ -90,13 +90,13 @@ Vector::Orientation() {
 
 void
 Vector::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << name << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Attributes:" << endl;
-	TAB(level+1);cout << "orientation:" << endl;
+	TAB(level); std::cout << "Attributes:" << std::endl;
+	TAB(level+1);cout << "orientation:" << std::endl;
 	orientation->Print(level+1);
-	TAB(level+1);cout << "magnitude:" << magnitude << endl;
+	TAB(level+1);cout << "magnitude:" << magnitude << std::endl;
 }
 STEPEntity *
 Vector::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
@@ -107,7 +107,7 @@ Vector::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

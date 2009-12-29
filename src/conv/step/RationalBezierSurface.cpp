@@ -38,9 +38,9 @@ RationalBezierSurface::RationalBezierSurface() {
 	id = 0;
 }
 
-RationalBezierSurface::RationalBezierSurface(STEPWrapper *sw,int STEPid) {
+RationalBezierSurface::RationalBezierSurface(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 RationalBezierSurface::~RationalBezierSurface() {
@@ -53,7 +53,7 @@ RationalBezierSurface::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 	// load base class attributes
 	if ( !RationalBSplineSurface::Load(sw,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::RationalBSplineSurface." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::RationalBSplineSurface." << std::endl;
 		return false;
 	}
 
@@ -62,8 +62,8 @@ RationalBezierSurface::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 void
 RationalBezierSurface::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << name << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
 	RationalBSplineSurface::Print(level);
 
@@ -77,7 +77,7 @@ RationalBezierSurface::Create(STEPWrapper *sw,SCLP23(Application_instance) *sse)
 		Factory::AddObject(object);
 
 		if (!object->Load(sw,sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

@@ -39,26 +39,26 @@ class ON_Brep;
 #define POINT_CLOSENESS_TOLERANCE 1e-6
 #define TAB(j) \
 	{ \
-		for (int i=0; i< j; i++) \
+		for ( int tab_index=0; tab_index< j; tab_index++) \
 			std::cout << "    "; \
 	}
 
 class STEPEntity
 {
- protected:
-    int id;
-    int ON_id;
-    STEPWrapper* step;
+protected:
+	int id;
+	int ON_id;
+	STEPWrapper *step;
 
- public:
-    STEPEntity();
-    virtual ~STEPEntity();
+public:
+	STEPEntity();
+	virtual ~STEPEntity();
 
-    int GetId() { return id; }
-    int GetONId() { return ON_id; }
-    void SetONId(int id) { ON_id = id; }
-    int STEPid();
-    STEPWrapper* Step();
+	int GetId() {return id;}
+	int GetONId() {return ON_id;}
+	void SetONId(int on_id) {ON_id = on_id;}
+	int STEPid();
+	STEPWrapper *Step();
 };
 
 

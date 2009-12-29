@@ -46,26 +46,26 @@ typedef std::list<RepresentationContext *> LIST_OF_REPRESENTATION_CONTEXT;
 
 class Representation : public STEPEntity
 {
- private:
+private:
     static std::string entityname;
 
- protected:
+protected:
     std::string name;
-    LIST_OF_REPRESENTATION_ITEMS items;
-    LIST_OF_REPRESENTATION_CONTEXT context_of_items;
+	LIST_OF_REPRESENTATION_ITEMS items;
+	LIST_OF_REPRESENTATION_CONTEXT context_of_items;
 
- public:
-    Representation();
-    Representation(STEPWrapper *sw, int STEPid);
-    virtual ~Representation();
-    double GetLengthConversionFactor();
-    double GetPlaneAngleConversionFactor();
-    double GetSolidAngleConversionFactor();
-    bool Load(STEPWrapper *sw, SCLP23(Application_instance) *sse);
-    virtual void Print(int level);
+public:
+	Representation();
+	Representation(STEPWrapper *sw,int step_id);
+	virtual ~Representation();
+	double GetLengthConversionFactor();
+	double GetPlaneAngleConversionFactor();
+	double GetSolidAngleConversionFactor();
+	bool Load(STEPWrapper *sw, SCLP23(Application_instance) *sse);
+	virtual void Print(int level);
 
-    //static methods
-    static STEPEntity *Create(STEPWrapper *sw, SCLP23(Application_instance) *sse);
+	//static methods
+	static STEPEntity *Create(STEPWrapper *sw,SCLP23(Application_instance) *sse);
 };
 
 

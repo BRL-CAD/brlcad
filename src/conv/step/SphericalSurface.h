@@ -39,7 +39,7 @@ protected:
 public:
 	SphericalSurface();
 	virtual ~SphericalSurface();
-	SphericalSurface(STEPWrapper *sw,int STEPid);
+	SphericalSurface(STEPWrapper *sw,int step_id);
 	const double *GetOrigin();
 	const double *GetNormal();
 	const double *GetXAxis();
