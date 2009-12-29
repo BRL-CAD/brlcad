@@ -61,9 +61,10 @@ int manifold[4] = { 1, 1, 1, 1 };
 /*
  * U S A G E --- tell user how to invoke this program, then exit
  */
-void usage(char *s)
+void
+usage(char *str)
 {
-    if (s) (void)fputs(s, stderr);
+    if (str) (void)fputs(str, stderr);
 
     (void) fprintf(stderr, "Usage: %s [ -0123 ] \n%s\"%s\"\n%s\"%s\"\n",
 		   progname,
@@ -74,10 +75,12 @@ void usage(char *s)
     bu_exit(1, NULL);
 }
 
+
 /*
  * P A R S E _ A R G S --- Parse through command line flags
  */
-int parse_args(int ac, char **av)
+int
+parse_args(int ac, char **av)
 {
     int c;
 
@@ -109,6 +112,7 @@ int parse_args(int ac, char **av)
 
     return(bu_optind);
 }
+
 
 void
 make_3manifold_bits(struct bn_tol *tol)
@@ -431,6 +435,7 @@ make_3manifold_bits(struct bn_tol *tol)
 
 }
 
+
 void
 make_2manifold_bits(struct bn_tol *tol)
 {
@@ -483,8 +488,9 @@ make_2manifold_bits(struct bn_tol *tol)
 
 }
 
+
 void
-make_1manifold_bits(struct bn_tol *tol)
+make_1manifold_bits()
 {
     struct edgeuse *eu;
 
@@ -499,8 +505,9 @@ make_1manifold_bits(struct bn_tol *tol)
 
 }
 
+
 void
-make_0manifold_bits(struct bn_tol *tol)
+make_0manifold_bits()
 {
 #if 0
     struct nmgregion *lrp;
@@ -531,7 +538,8 @@ make_0manifold_bits(struct bn_tol *tol)
  * Call parse_args to handle command line arguments first, then
  * process input.
  */
-int main(int ac, char **av)
+int
+main(int ac, char *av[])
 {
     struct bn_tol tol;
     FILE *fdplot;
@@ -554,8 +562,8 @@ int main(int ac, char **av)
 
     if (manifold[3]) make_3manifold_bits(&tol);
     if (manifold[2]) make_2manifold_bits(&tol);
-    if (manifold[1]) make_1manifold_bits(&tol);
-    if (manifold[0]) make_0manifold_bits(&tol);
+    if (manifold[1]) make_1manifold_bits();
+    if (manifold[0]) make_0manifold_bits();
 
     NMG_CK_MODEL(m);
 
@@ -583,6 +591,7 @@ int main(int ac, char **av)
 
     return(0);
 }
+
 
 /*
  * Local Variables:
