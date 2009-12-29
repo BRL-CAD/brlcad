@@ -25,7 +25,7 @@
 #include <sdai.h>
 //class SCLP23(Application_instance);
 
-#if __OSTORE__
+#ifdef __OSTORE__
 typedef  SCLP23(Application_instance) * (* Creator) (os_database *) ;
 #else
 typedef  SCLP23(Application_instance) * (* Creator) () ;
