@@ -45,9 +45,9 @@ Line::Line() {
 	dir = NULL;
 }
 
-Line::Line(STEPWrapper *sw,int STEPid) {
+Line::Line(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 	pnt = NULL;
 	dir = NULL;
 }
@@ -78,7 +78,7 @@ Line::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 	id = sse->STEPfile_id;
 
 	if ( !Curve::Load(sw,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::Curve." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::Curve." << std::endl;
 		return false;
 	}
 
@@ -100,27 +100,27 @@ Line::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 const double *
 Line::PointAtEnd() {
-	cerr << CLASSNAME << ": Error: virtual function PointAtEnd() not implemented for this type of curve.";
+	std::cerr << CLASSNAME << ": Error: virtual function PointAtEnd() not implemented for this type of curve.";
 	return NULL;
 }
 
 const double *
 Line::PointAtStart() {
-	cerr << CLASSNAME << ": Error: virtual function PointAtStart() not implemented for this type of curve.";
+	std::cerr << CLASSNAME << ": Error: virtual function PointAtStart() not implemented for this type of curve.";
 	return NULL;
 }
 */
 
 void
 Line::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << name << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Attributes:" << endl;
+	TAB(level); std::cout << "Attributes:" << std::endl;
 	pnt->Print(level+1);
 	dir->Print(level+1);
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	Curve::Print(level+1);
 }
 STEPEntity *
@@ -132,7 +132,7 @@ Line::Create(STEPWrapper *sw,SCLP23(Application_instance) *sse){
 		Factory::AddObject(object);
 
 		if (!object->Load(sw,sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

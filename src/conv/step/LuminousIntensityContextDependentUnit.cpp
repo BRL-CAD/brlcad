@@ -38,9 +38,9 @@ LuminousIntensityContextDependentUnit::LuminousIntensityContextDependentUnit() {
 	id = 0;
 }
 
-LuminousIntensityContextDependentUnit::LuminousIntensityContextDependentUnit(STEPWrapper *sw,int STEPid) {
+LuminousIntensityContextDependentUnit::LuminousIntensityContextDependentUnit(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 LuminousIntensityContextDependentUnit::~LuminousIntensityContextDependentUnit() {
@@ -54,11 +54,11 @@ LuminousIntensityContextDependentUnit::Load(STEPWrapper *sw,SCLP23(Application_i
 
 	// load base class attributes
 	if ( !LuminousIntensityUnit::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::Unit." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 		return false;
 	}
 	if ( !ContextDependentUnit::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::Unit." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 		return false;
 	}
 
@@ -67,10 +67,10 @@ LuminousIntensityContextDependentUnit::Load(STEPWrapper *sw,SCLP23(Application_i
 
 void
 LuminousIntensityContextDependentUnit::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	LuminousIntensityUnit::Print(level+1);
 	ContextDependentUnit::Print(level+1);
 
@@ -84,7 +84,7 @@ LuminousIntensityContextDependentUnit::Create(STEPWrapper *sw, SCLP23(Applicatio
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}
