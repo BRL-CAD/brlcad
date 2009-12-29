@@ -38,9 +38,9 @@ MassUnit::MassUnit() {
 	id = 0;
 }
 
-MassUnit::MassUnit(STEPWrapper *sw,int STEPid) {
+MassUnit::MassUnit(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 MassUnit::~MassUnit() {
@@ -63,10 +63,10 @@ MassUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 void
 MassUnit::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	NamedUnit::Print(level+1);
 
 }
@@ -79,7 +79,7 @@ MassUnit::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

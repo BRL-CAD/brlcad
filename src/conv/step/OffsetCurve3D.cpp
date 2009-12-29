@@ -41,9 +41,9 @@ OffsetCurve3D::OffsetCurve3D() {
 	id = 0;
 }
 
-OffsetCurve3D::OffsetCurve3D(STEPWrapper *sw,int STEPid) {
+OffsetCurve3D::OffsetCurve3D(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 OffsetCurve3D::~OffsetCurve3D() {
@@ -57,7 +57,7 @@ OffsetCurve3D::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 	id = sse->STEPfile_id;
 
 	if ( !Curve::Load(sw,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::Curve." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::Curve." << std::endl;
 		return false;
 	}
 
@@ -70,7 +70,7 @@ OffsetCurve3D::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 		if (entity) {
 			basis_curve = dynamic_cast<Curve *>(Factory::CreateObject(sw,entity)); //CreateCurveObject(sw,entity));
 		} else {
-			cerr << CLASSNAME << ": Error loading entity attribute 'basis_curve'." << endl;
+			std::cerr << CLASSNAME << ": Error loading entity attribute 'basis_curve'." << std::endl;
 			return false;
 		}
 	}
@@ -83,7 +83,7 @@ OffsetCurve3D::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 		if (entity) {
 			ref_direction = dynamic_cast<Direction *>(Factory::CreateObject(sw,entity));
 		} else {
-			cerr << CLASSNAME << ": Error loading entity attribute 'ref_direction'." << endl;
+			std::cerr << CLASSNAME << ": Error loading entity attribute 'ref_direction'." << std::endl;
 			return false;
 		}
 	}
@@ -93,25 +93,25 @@ OffsetCurve3D::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 const double *
 OffsetCurve3D::PointAtEnd() {
-	cerr << CLASSNAME << ": Error: virtual function PointAtEnd() not implemented for this type of curve.";
+	std::cerr << CLASSNAME << ": Error: virtual function PointAtEnd() not implemented for this type of curve.";
 	return NULL;
 }
 
 const double *
 OffsetCurve3D::PointAtStart() {
-	cerr << CLASSNAME << ": Error: virtual function PointAtStart() not implemented for this type of curve.";
+	std::cerr << CLASSNAME << ": Error: virtual function PointAtStart() not implemented for this type of curve.";
 	return NULL;
 }
 
 void
 OffsetCurve3D::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << name << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Attributes:" << endl;
+	TAB(level); std::cout << "Attributes:" << std::endl;
 	basis_curve->Print(level+1);
-	TAB(level+1); cout << "distance:" << distance << endl;
-	TAB(level+1); cout << "self_intersect:" << step->getLogicalString(self_intersect) << endl;
+	TAB(level+1); std::cout << "distance:" << distance << std::endl;
+	TAB(level+1); std::cout << "self_intersect:" << step->getLogicalString(self_intersect) << std::endl;
 	ref_direction->Print(level+1);
 }
 STEPEntity *
@@ -123,7 +123,7 @@ OffsetCurve3D::Create(STEPWrapper *sw,SCLP23(Application_instance) *sse){
 		Factory::AddObject(object);
 
 		if (!object->Load(sw,sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

@@ -40,9 +40,9 @@ ManifoldSolidBrep::ManifoldSolidBrep() {
 	outer = NULL;
 }
 
-ManifoldSolidBrep::ManifoldSolidBrep(STEPWrapper *sw,int STEPid) {
+ManifoldSolidBrep::ManifoldSolidBrep(STEPWrapper *sw,int step_id) {
 	step=sw;
-	id = STEPid;
+	id = step_id;
 	outer = NULL;
 }
 
@@ -57,7 +57,7 @@ ManifoldSolidBrep::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 	// load base class attributes
 	if ( !SolidModel::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::SolidModel." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::SolidModel." << std::endl;
 		return false;
 	}
 
@@ -71,7 +71,7 @@ ManifoldSolidBrep::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 			//outer = dynamic_cast<ClosedShell *>(Factory::CreateTopologicalObject(sw,entity));
 			outer = dynamic_cast<ClosedShell *>(Factory::CreateObject(sw,entity));
 		} else {
-			cout << CLASSNAME << ":Error loading entity attribute 'outer'." << endl;
+			std::cout << CLASSNAME << ":Error loading entity attribute 'outer'." << std::endl;
 			return false;
 		}
 	}
@@ -80,14 +80,14 @@ ManifoldSolidBrep::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 void
 ManifoldSolidBrep::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << name << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Attributes:" << endl;
-	TAB(level+1); cout << "outer:" << endl;
+	TAB(level); std::cout << "Attributes:" << std::endl;
+	TAB(level+1); std::cout << "outer:" << std::endl;
 	outer->Print(level+1);
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	SolidModel::Print(level+1);
 }
 
@@ -100,7 +100,7 @@ ManifoldSolidBrep::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}
@@ -114,7 +114,7 @@ bool
 ManifoldSolidBrep::LoadONBrep(ON_Brep *brep)
 {
 	if ( !outer->LoadONBrep(brep) ) {
-		cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << endl;
+		std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
 		return false;
 	}
 	return true;

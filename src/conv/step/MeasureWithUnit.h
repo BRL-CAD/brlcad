@@ -43,7 +43,7 @@ protected:
 public:
 	MeasureWithUnit();
 	virtual ~MeasureWithUnit();
-	MeasureWithUnit(STEPWrapper *sw,int STEPid);
+	MeasureWithUnit(STEPWrapper *sw,int step_id);
 	double GetLengthConversionFactor();
 	double GetPlaneAngleConversionFactor();
 	double GetSolidAngleConversionFactor();

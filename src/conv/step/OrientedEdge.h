@@ -44,7 +44,7 @@ protected:
 public:
 	OrientedEdge();
 	virtual ~OrientedEdge();
-	OrientedEdge(STEPWrapper *sw,int STEPid);
+	OrientedEdge(STEPWrapper *sw,int step_id);
 	bool Load(STEPWrapper *sw,SCLP23(Application_instance) *sse);
 	virtual bool LoadONBrep(ON_Brep *brep);
 	bool OrientWithEdge();

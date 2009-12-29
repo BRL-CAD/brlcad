@@ -43,9 +43,9 @@ MeasureWithUnit::MeasureWithUnit() {
 	unit_component = NULL;
 }
 
-MeasureWithUnit::MeasureWithUnit(STEPWrapper *sw,int STEPid) {
+MeasureWithUnit::MeasureWithUnit(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 	unit_component = NULL;
 }
 
@@ -107,7 +107,7 @@ MeasureWithUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 	SCLP23(Select) *select = step->getSelectAttribute(sse,"value_component");
 	if (select) {
 		if (!value_component.Load(step,select)) {
-			cout << CLASSNAME << ":Error loading MeasureValue." << endl;
+			std::cout << CLASSNAME << ":Error loading MeasureValue." << std::endl;
 			return false;
 		}
 	} else {
@@ -128,7 +128,7 @@ MeasureWithUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 				unit_component = (Unit*)Factory::CreateObject(sw,(SCLP23(Application_instance) *)du);
 	#endif
 			} else {
-				cerr << CLASSNAME << ": Unknown 'Unit' type from select." << endl;
+				std::cerr << CLASSNAME << ": Unknown 'Unit' type from select." << std::endl;
 				return false;
 			}
 		} else {
@@ -140,14 +140,14 @@ MeasureWithUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 void
 MeasureWithUnit::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Attributes:" << endl;
-	TAB(level+1); cout << "value_component:" << endl;
+	TAB(level); std::cout << "Attributes:" << std::endl;
+	TAB(level+1); std::cout << "value_component:" << std::endl;
 	value_component.Print(level+1);
 
-	TAB(level+1); cout << "unit_component:" << endl;
+	TAB(level+1); std::cout << "unit_component:" << std::endl;
 	unit_component->Print(level+1);
 }
 
@@ -160,7 +160,7 @@ MeasureWithUnit::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

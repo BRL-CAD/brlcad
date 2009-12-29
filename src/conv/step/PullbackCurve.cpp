@@ -187,62 +187,6 @@ toUV(PBCData& data, ON_2dPoint& out_pt, double t, double knudge=0.0)
     } else {
 	return false;
     }
-
-    ON_3dVector dt;
-    data.curve->Ev1Der(t, pointOnCurve, dt);
-    ON_3dVector tangent = data.curve->TangentAt(t);
-    //data.surf->GetClosestPoint(pointOnCurve, &a, &b, 0.0001);
-    ON_Ray r(pointOnCurve, tangent);
-    plane_ray pr;
-    brep_get_plane_ray(r, pr);
-    ON_3dVector p1;
-    double p1d;
-    ON_3dVector p2;
-    double p2d;
-
-    utah_ray_planes(r, p1, p1d, p2, p2d);
-
-    VMOVE(pr.n1, p1);
-    pr.d1 = p1d;
-    VMOVE(pr.n2, p2);
-    pr.d2 = p2d;
-
-    try {
-	const ON_Surface *surf = data.surftree->getSurface();
-	ON_2dPoint uv = data.surftree->getClosestPointEstimate(knudgedPointOnCurve);
-	ON_3dVector dir = surf->NormalAt(uv.x, uv.y);
-	dir.Reverse();
-	ON_Ray ray(pointOnCurve, dir);
-	brep_get_plane_ray(ray, pr);
-	//now use this as guess to iterate to closer solution
-	pt2d_t Rcurr;
-	pt2d_t new_uv;
-	ON_3dPoint pt;
-	ON_3dVector su, sv;
-	bool found=false;
-	fastf_t Dlast = MAX_FASTF;
-	for (int i = 0; i < 10; i++) {
-	    brep_r(surf, pr, uv, pt, su, sv, Rcurr);
-	    fastf_t d = v2mag(Rcurr);
-	    if (d < BREP_INTERSECTION_ROOT_EPSILON) {
-		TRACE1("R:"<<ON_PRINT2(Rcurr));
-		found = true; break;
-	    } else if (d > Dlast) {
-		found = false; //break;
-		break;
-		//return brep_edge_check(found, sbv, face, surf, ray, hits);
-	    }
-	    brep_newton_iterate(surf, pr, Rcurr, su, sv, uv, new_uv);
-	    move(uv, new_uv);
-	    Dlast = d;
-	}
-
-///////////////////////////////////////
-	out_pt.Set(uv.x, uv.y);
-	return true;
-    } catch(...) {
-	return false;
-    }
 }
 
 
@@ -373,10 +317,10 @@ getCoefficients(BSpline& bspline, Array1D<double>& N, double u)
     // evaluate the b-spline basis function for the given parameter u
     // place the results in N[]
     N = 0.0;
-    if (u == bspline.knots[0]) {
+  if (NEAR_EQUAL(u,bspline.knots[0],PBC_TOL)) {
 	N[0] = 1.0;
 	return 0;
-    } else if (u == bspline.knots[bspline.m]) {
+  } else if (NEAR_EQUAL(u,bspline.knots[bspline.m],PBC_TOL)) {
 	N[bspline.n] = 1.0;
 	return bspline.n;
     }
@@ -477,17 +421,17 @@ interpolateLocalCubicCurve(ON_2dPointArray &Q)
     q[num_samples+2] = 2*q[num_samples+1] - q[num_samples];
 
     ON_2dVector T[num_samples];
-    double a[num_samples];
+	double A[num_samples];
     for (int k=0; k < num_samples; k++) {
 	ON_3dVector a = ON_CrossProduct(q[k-1], q[k]);
 	ON_3dVector b = ON_CrossProduct(q[k+1], q[k+2]);
 	double alength = a.Length();
 	if (NEAR_ZERO(alength, PBC_TOL)) {
-	    a[k] = 1.0;
+			A[k] = 1.0;
 	} else {
-	    a[k] = (a.Length())/(a.Length() + b.Length());
+			A[k] = (a.Length())/(a.Length() + b.Length());
 	}
-	T[k] = (1.0 - a[k])*q[k] + a[k]*q[k+1];
+		T[k] = (1.0 - A[k])*q[k] + A[k]*q[k+1];
 	T[k].Unitize();
     }
     ON_2dPointArray P[num_samples-1];
@@ -550,8 +494,8 @@ interpolateLocalCubicCurve(ON_2dPointArray &Q)
 
     // insert the control points
     for (int i = 0; i < n; i++) {
-	ON_3dPoint p = control_points[i];
-	c->SetCV(i, p);
+		ON_3dPoint pnt = control_points[i];
+		c->SetCV(i,pnt);
     }
     return c;
 }
@@ -577,17 +521,17 @@ interpolateLocalCubicCurve(ON_3dPointArray &Q)
     q[num_samples + 2] = 2 * q[num_samples + 1] - q[num_samples];
 
     ON_3dVector T[num_samples];
-    double a[num_samples];
+    double A[num_samples];
     for (int k = 0; k < num_samples; k++) {
-	ON_3dVector a = ON_CrossProduct(q[k - 1], q[k]);
-	ON_3dVector b = ON_CrossProduct(q[k + 1], q[k + 2]);
-	double alength = a.Length();
+	ON_3dVector avec = ON_CrossProduct(q[k - 1], q[k]);
+	ON_3dVector bvec = ON_CrossProduct(q[k + 1], q[k + 2]);
+	double alength = avec.Length();
 	if (NEAR_ZERO(alength, PBC_TOL)) {
-	    a[k] = 1.0;
+	    A[k] = 1.0;
 	} else {
-	    a[k] = (a.Length()) / (a.Length() + b.Length());
+	    A[k] = (avec.Length()) / (avec.Length() + bvec.Length());
 	}
-	T[k] = (1.0 - a[k]) * q[k] + a[k] * q[k + 1];
+	T[k] = (1.0 - A[k]) * q[k] + A[k] * q[k + 1];
 	T[k].Unitize();
     }
     ON_3dPointArray P[num_samples - 1];
@@ -647,8 +591,8 @@ interpolateLocalCubicCurve(ON_3dPointArray &Q)
 
     // insert the control points
     for (int i = 0; i < n; i++) {
-	ON_3dPoint p = control_points[i];
-	c->SetCV(i, p);
+	ON_3dPoint pnt = control_points[i];
+	c->SetCV(i, pnt);
     }
     return c;
 }
@@ -696,7 +640,7 @@ newNURBSCurve(BSpline& spline, int dimension=3)
 					  spline.p+1,
 					  spline.n+1);
     c->ReserveKnotCapacity(spline.knots.size()-2);
-    for (int i = 1; i < spline.knots.size()-1; i++) {
+  for (unsigned int i = 1; i < spline.knots.size()-1; i++) {
 	c->m_knot[i-1] = spline.knots[i];
     }
 
@@ -976,14 +920,14 @@ pullback_samples(PBCData* data,
 		    if (toUV(*data, pt, knots[i-1]+j*delta, PBC_FROM_OFFSET)) {
 			samples->Append(pt);
 		    } else {
-			//cout << "didn't find point on surface" << std::endl;
+			//std::cout << "didn't find point on surface" << std::endl;
 		    }
 		}
 	    }
 	    if (toUV(*data, pt, knots[i], PBC_FROM_OFFSET)) {
 		samples->Append(pt);
 	    } else {
-		//cout << "didn't find point on surface" << std::endl;
+		//std::cout << "didn't find point on surface" << std::endl;
 	    }
 	} else {
 	    if (i>0) {
@@ -992,13 +936,13 @@ pullback_samples(PBCData* data,
 		    if (toUV(*data, pt, knots[i-1]+j*delta, -PBC_FROM_OFFSET)) {
 			samples->Append(pt);
 		    } else {
-			//cout << "didn't find point on surface" << std::endl;
+			//std::cout << "didn't find point on surface" << std::endl;
 		    }
 		}
 		if (toUV(*data, pt, knots[i], -PBC_FROM_OFFSET)) {
 		    samples->Append(pt);
 		} else {
-		    //cout << "didn't find point on surface" << std::endl;
+		    //std::cout << "didn't find point on surface" << std::endl;
 		}
 	    }
 	}
@@ -1587,6 +1531,7 @@ resolve_seam_segment_from_prev(const ON_Surface *surface, ON_2dPointArray &segme
 	    prev = NULL;
 	}
     }
+    return complete;
 }
 
 
@@ -1649,6 +1594,7 @@ resolve_seam_segment_from_next(const ON_Surface *surface, ON_2dPointArray &segme
 	    }
 	}
     }
+    return complete;
 }
 
 

@@ -46,7 +46,7 @@ protected:
 public:
 	OffsetCurve3D();
 	virtual ~OffsetCurve3D();
-	OffsetCurve3D(STEPWrapper *sw,int STEPid);
+	OffsetCurve3D(STEPWrapper *sw,int step_id);
 	virtual curve_type CurveType() { return OFFSET_CURVE_3D; };
 	bool Load(STEPWrapper *sw,SCLP23(Application_instance) *sse);
 	virtual const double *PointAtEnd();
