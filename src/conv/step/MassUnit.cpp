@@ -54,7 +54,7 @@ MassUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 	// load base class attributes
 	if ( !NamedUnit::Load(step,sse) ) {
-		ERROR( CLASSNAME << ":Error loading base class ::Unit." )
+		ERROR( CLASSNAME << ":Error loading base class ::Unit." );
 		return false;
 	}
 
