@@ -1410,11 +1410,11 @@ SdaiCharacterized_product_definition::AssignEntity (SCLP23(Application_instance)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << std::endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -1444,7 +1444,7 @@ SdaiCharacterized_product_definition::STEPwrite_content (ostream& out, const cha
   else if (CurrentUnderlyingType () == config_control_designe_product_definition_relationship)
 	_app_inst -> STEPwrite_reference (out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -1458,7 +1458,7 @@ SdaiCharacterized_product_definition::ValueType() const
   else if (CurrentUnderlyingType() == config_control_designe_product_definition_relationship)
     return sdaiINSTANCE;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -1488,7 +1488,7 @@ SdaiCharacterized_product_definition::STEPwrite_verbose (ostream& out, const cha
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -1526,11 +1526,11 @@ SdaiCharacterized_product_definition::STEPread_content (istream& in, InstMgr * i
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << std::endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -1543,11 +1543,11 @@ SdaiCharacterized_product_definition::StrToVal_content (const char * str, InstMg
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << std::endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -1694,7 +1694,7 @@ SdaiCharacterized_product_definition::operator SdaiProduct_definition_ptr()
       return ((SdaiProduct_definition_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -1706,7 +1706,7 @@ SdaiCharacterized_product_definition::operator SdaiProduct_definition_relationsh
       return ((SdaiProduct_definition_relationship_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -1721,7 +1721,7 @@ SdaiCharacterized_product_definition::related_product_definition_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition_relationship )
 	//  PRODUCT_DEFINITION_RELATIONSHIP
 	return ((SdaiProduct_definition_relationship_ptr) _app_inst) ->related_product_definition_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -1738,7 +1738,7 @@ SdaiCharacterized_product_definition::related_product_definition_ (const SdaiPro
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -1749,7 +1749,7 @@ SdaiCharacterized_product_definition::relating_product_definition_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition_relationship )
 	//  PRODUCT_DEFINITION_RELATIONSHIP
 	return ((SdaiProduct_definition_relationship_ptr) _app_inst) ->relating_product_definition_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -1766,7 +1766,7 @@ SdaiCharacterized_product_definition::relating_product_definition_ (const SdaiPr
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -1777,7 +1777,7 @@ SdaiCharacterized_product_definition::name_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition_relationship )
 	//  PRODUCT_DEFINITION_RELATIONSHIP
 	return ((SdaiProduct_definition_relationship_ptr) _app_inst) ->name_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -1794,7 +1794,7 @@ SdaiCharacterized_product_definition::name_ (const SdaiLabel x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -1805,7 +1805,7 @@ SdaiCharacterized_product_definition::frame_of_reference_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition )
 	//  PRODUCT_DEFINITION
 	return ((SdaiProduct_definition_ptr) _app_inst) ->frame_of_reference_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -1822,7 +1822,7 @@ SdaiCharacterized_product_definition::frame_of_reference_ (const SdaiProduct_def
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -1833,7 +1833,7 @@ SdaiCharacterized_product_definition::formation_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition )
 	//  PRODUCT_DEFINITION
 	return ((SdaiProduct_definition_ptr) _app_inst) ->formation_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -1850,7 +1850,7 @@ SdaiCharacterized_product_definition::formation_ (const SdaiProduct_definition_f
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -1864,7 +1864,7 @@ SdaiCharacterized_product_definition::description_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition_relationship )
 	//  PRODUCT_DEFINITION_RELATIONSHIP
 	return ((SdaiProduct_definition_relationship_ptr) _app_inst) ->description_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -1886,7 +1886,7 @@ SdaiCharacterized_product_definition::description_ (const SdaiText x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -1900,7 +1900,7 @@ SdaiCharacterized_product_definition::id_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition_relationship )
 	//  PRODUCT_DEFINITION_RELATIONSHIP
 	return ((SdaiProduct_definition_relationship_ptr) _app_inst) ->id_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -1922,7 +1922,7 @@ SdaiCharacterized_product_definition::id_ (const SdaiIdentifier x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -2024,11 +2024,11 @@ SdaiShape_definition::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << std::endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -2060,7 +2060,7 @@ SdaiShape_definition::STEPwrite_content (ostream& out, const char * currSch) con
   else if (CurrentUnderlyingType () == config_control_designe_shape_aspect_relationship)
 	_app_inst -> STEPwrite_reference (out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -2076,7 +2076,7 @@ SdaiShape_definition::ValueType() const
   else if (CurrentUnderlyingType() == config_control_designe_shape_aspect_relationship)
     return sdaiINSTANCE;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -2112,7 +2112,7 @@ SdaiShape_definition::STEPwrite_verbose (ostream& out, const char *currSch) cons
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -2163,11 +2163,11 @@ SdaiShape_definition::STEPread_content (istream& in, InstMgr * instances,
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << std::endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -2180,11 +2180,11 @@ SdaiShape_definition::StrToVal_content (const char * str, InstMgr * instances)
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << std::endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -2350,7 +2350,7 @@ SdaiShape_definition::operator SdaiProduct_definition_shape_ptr()
       return ((SdaiProduct_definition_shape_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -2362,7 +2362,7 @@ SdaiShape_definition::operator SdaiShape_aspect_ptr()
       return ((SdaiShape_aspect_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -2374,7 +2374,7 @@ SdaiShape_definition::operator SdaiShape_aspect_relationship_ptr()
       return ((SdaiShape_aspect_relationship_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -2389,7 +2389,7 @@ SdaiShape_definition::related_shape_aspect_() const
   if( CurrentUnderlyingType () == config_control_designe_shape_aspect_relationship )
 	//  SHAPE_ASPECT_RELATIONSHIP
 	return ((SdaiShape_aspect_relationship_ptr) _app_inst) ->related_shape_aspect_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -2406,7 +2406,7 @@ SdaiShape_definition::related_shape_aspect_ (const SdaiShape_aspect_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -2417,7 +2417,7 @@ SdaiShape_definition::relating_shape_aspect_() const
   if( CurrentUnderlyingType () == config_control_designe_shape_aspect_relationship )
 	//  SHAPE_ASPECT_RELATIONSHIP
 	return ((SdaiShape_aspect_relationship_ptr) _app_inst) ->relating_shape_aspect_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -2434,7 +2434,7 @@ SdaiShape_definition::relating_shape_aspect_ (const SdaiShape_aspect_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -2445,7 +2445,7 @@ SdaiShape_definition::product_definitional_() const
   if( CurrentUnderlyingType () == config_control_designe_shape_aspect )
 	//  SHAPE_ASPECT
 	return ((SdaiShape_aspect_ptr) _app_inst) ->product_definitional_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return (SCLLOG(Logical)) 0;
 }
@@ -2462,7 +2462,7 @@ SdaiShape_definition::product_definitional_ (const SCLLOG(Logical) x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -2473,7 +2473,7 @@ SdaiShape_definition::of_shape_() const
   if( CurrentUnderlyingType () == config_control_designe_shape_aspect )
 	//  SHAPE_ASPECT
 	return ((SdaiShape_aspect_ptr) _app_inst) ->of_shape_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -2490,7 +2490,7 @@ SdaiShape_definition::of_shape_ (const SdaiProduct_definition_shape_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -2501,7 +2501,7 @@ SdaiShape_definition::definition_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition_shape )
 	//  PRODUCT_DEFINITION_SHAPE
 	return ((SdaiProduct_definition_shape_ptr) _app_inst) ->definition_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -2518,7 +2518,7 @@ SdaiShape_definition::definition_ (const SdaiCharacterized_definition_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -2535,7 +2535,7 @@ SdaiShape_definition::description_() const
   if( CurrentUnderlyingType () == config_control_designe_shape_aspect_relationship )
 	//  SHAPE_ASPECT_RELATIONSHIP
 	return ((SdaiShape_aspect_relationship_ptr) _app_inst) ->description_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -2562,7 +2562,7 @@ SdaiShape_definition::description_ (const SdaiText x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -2579,7 +2579,7 @@ SdaiShape_definition::name_() const
   if( CurrentUnderlyingType () == config_control_designe_shape_aspect_relationship )
 	//  SHAPE_ASPECT_RELATIONSHIP
 	return ((SdaiShape_aspect_relationship_ptr) _app_inst) ->name_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -2606,7 +2606,7 @@ SdaiShape_definition::name_ (const SdaiLabel x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -2723,11 +2723,11 @@ SdaiCharacterized_definition::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << std::endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -2757,7 +2757,7 @@ SdaiCharacterized_definition::STEPwrite_content (ostream& out, const char * curr
   else if (CurrentUnderlyingType () == config_control_designt_shape_definition)
 	_sdaishape_definition.STEPwrite (out, currSch);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -2771,7 +2771,7 @@ SdaiCharacterized_definition::ValueType() const
   else if (CurrentUnderlyingType() == config_control_designt_shape_definition)
     return _sdaishape_definition.ValueType();
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -2801,7 +2801,7 @@ SdaiCharacterized_definition::STEPwrite_verbose (ostream& out, const char *currS
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -2821,11 +2821,11 @@ SdaiCharacterized_definition::STEPread_content (istream& in, InstMgr * instances
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << std::endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -2838,11 +2838,11 @@ SdaiCharacterized_definition::StrToVal_content (const char * str, InstMgr * inst
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << std::endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -2998,7 +2998,7 @@ SdaiCharacterized_definition::operator SdaiCharacterized_product_definition_ptr(
    Error( "Underlying type is not SdaiCharacterized_product_definition_ptr" );
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return 0;
@@ -3013,7 +3013,7 @@ SdaiCharacterized_definition::operator SdaiShape_definition_ptr()
    Error( "Underlying type is not SdaiShape_definition_ptr" );
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return 0;
@@ -3107,11 +3107,11 @@ SdaiChange_request_item::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << std::endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -3139,7 +3139,7 @@ SdaiChange_request_item::STEPwrite_content (ostream& out, const char * currSch) 
   if (CurrentUnderlyingType () == config_control_designe_product_definition_formation)
 	_app_inst -> STEPwrite_reference (out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -3151,7 +3151,7 @@ SdaiChange_request_item::ValueType() const
   if (CurrentUnderlyingType() == config_control_designe_product_definition_formation)
     return sdaiINSTANCE;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -3175,7 +3175,7 @@ SdaiChange_request_item::STEPwrite_verbose (ostream& out, const char *currSch) c
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -3200,11 +3200,11 @@ SdaiChange_request_item::STEPread_content (istream& in, InstMgr * instances,
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << std::endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -3217,11 +3217,11 @@ SdaiChange_request_item::StrToVal_content (const char * str, InstMgr * instances
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << std::endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -3349,7 +3349,7 @@ SdaiChange_request_item::operator SdaiProduct_definition_formation_ptr()
       return ((SdaiProduct_definition_formation_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -3364,7 +3364,7 @@ SdaiChange_request_item::of_product_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition_formation )
 	//  PRODUCT_DEFINITION_FORMATION
 	return ((SdaiProduct_definition_formation_ptr) _app_inst) ->of_product_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -3381,7 +3381,7 @@ SdaiChange_request_item::of_product_ (const SdaiProduct_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -3392,7 +3392,7 @@ SdaiChange_request_item::description_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition_formation )
 	//  PRODUCT_DEFINITION_FORMATION
 	return ((SdaiProduct_definition_formation_ptr) _app_inst) ->description_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -3409,7 +3409,7 @@ SdaiChange_request_item::description_ (const SdaiText x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -3420,7 +3420,7 @@ SdaiChange_request_item::id_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition_formation )
 	//  PRODUCT_DEFINITION_FORMATION
 	return ((SdaiProduct_definition_formation_ptr) _app_inst) ->id_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -3437,7 +3437,7 @@ SdaiChange_request_item::id_ (const SdaiIdentifier x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -3536,11 +3536,11 @@ SdaiReversible_topology_item::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << std::endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -3578,7 +3578,7 @@ SdaiReversible_topology_item::STEPwrite_content (ostream& out, const char * curr
   else if (CurrentUnderlyingType () == config_control_designe_open_shell)
 	_app_inst -> STEPwrite_reference (out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -3600,7 +3600,7 @@ SdaiReversible_topology_item::ValueType() const
   else if (CurrentUnderlyingType() == config_control_designe_open_shell)
     return sdaiINSTANCE;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -3654,7 +3654,7 @@ SdaiReversible_topology_item::STEPwrite_verbose (ostream& out, const char *currS
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -3744,11 +3744,11 @@ SdaiReversible_topology_item::STEPread_content (istream& in, InstMgr * instances
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << std::endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -3761,11 +3761,11 @@ SdaiReversible_topology_item::StrToVal_content (const char * str, InstMgr * inst
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << std::endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -3988,7 +3988,7 @@ SdaiReversible_topology_item::operator SdaiEdge_ptr()
       return ((SdaiEdge_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -4000,7 +4000,7 @@ SdaiReversible_topology_item::operator SdaiPath_ptr()
       return ((SdaiPath_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -4012,7 +4012,7 @@ SdaiReversible_topology_item::operator SdaiFace_ptr()
       return ((SdaiFace_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -4024,7 +4024,7 @@ SdaiReversible_topology_item::operator SdaiFace_bound_ptr()
       return ((SdaiFace_bound_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -4036,7 +4036,7 @@ SdaiReversible_topology_item::operator SdaiClosed_shell_ptr()
       return ((SdaiClosed_shell_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -4048,7 +4048,7 @@ SdaiReversible_topology_item::operator SdaiOpen_shell_ptr()
       return ((SdaiOpen_shell_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -4066,7 +4066,7 @@ SdaiReversible_topology_item::cfs_faces_() const
   if( CurrentUnderlyingType () == config_control_designe_open_shell )
 	//  OPEN_SHELL
 	return ((SdaiOpen_shell_ptr) _app_inst) ->cfs_faces_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -4088,7 +4088,7 @@ SdaiReversible_topology_item::cfs_faces_ (const EntityAggregate_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -4099,7 +4099,7 @@ SdaiReversible_topology_item::orientation_() const
   if( CurrentUnderlyingType () == config_control_designe_face_bound )
 	//  FACE_BOUND
 	return ((SdaiFace_bound_ptr) _app_inst) ->orientation_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return (SCLBOOL(Boolean)) 0;
 }
@@ -4116,7 +4116,7 @@ SdaiReversible_topology_item::orientation_ (const SCLBOOL(Boolean) x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -4127,7 +4127,7 @@ SdaiReversible_topology_item::bound_() const
   if( CurrentUnderlyingType () == config_control_designe_face_bound )
 	//  FACE_BOUND
 	return ((SdaiFace_bound_ptr) _app_inst) ->bound_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -4144,7 +4144,7 @@ SdaiReversible_topology_item::bound_ (const SdaiLoop_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -4155,7 +4155,7 @@ SdaiReversible_topology_item::bounds_() const
   if( CurrentUnderlyingType () == config_control_designe_face )
 	//  FACE
 	return ((SdaiFace_ptr) _app_inst) ->bounds_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -4172,7 +4172,7 @@ SdaiReversible_topology_item::bounds_ (const EntityAggregate_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -4183,7 +4183,7 @@ SdaiReversible_topology_item::edge_list_() const
   if( CurrentUnderlyingType () == config_control_designe_path )
 	//  PATH
 	return ((SdaiPath_ptr) _app_inst) ->edge_list_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -4200,7 +4200,7 @@ SdaiReversible_topology_item::edge_list_ (const EntityAggregate_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -4211,7 +4211,7 @@ SdaiReversible_topology_item::edge_end_() const
   if( CurrentUnderlyingType () == config_control_designe_edge )
 	//  EDGE
 	return ((SdaiEdge_ptr) _app_inst) ->edge_end_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -4228,7 +4228,7 @@ SdaiReversible_topology_item::edge_end_ (const SdaiVertex_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -4239,7 +4239,7 @@ SdaiReversible_topology_item::edge_start_() const
   if( CurrentUnderlyingType () == config_control_designe_edge )
 	//  EDGE
 	return ((SdaiEdge_ptr) _app_inst) ->edge_start_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -4256,7 +4256,7 @@ SdaiReversible_topology_item::edge_start_ (const SdaiVertex_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -4282,7 +4282,7 @@ SdaiReversible_topology_item::name_() const
   if( CurrentUnderlyingType () == config_control_designe_open_shell )
 	//  OPEN_SHELL
 	return ((SdaiOpen_shell_ptr) _app_inst) ->name_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -4324,7 +4324,7 @@ SdaiReversible_topology_item::name_ (const SdaiLabel x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -4504,11 +4504,11 @@ SdaiAxis2_placement::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << std::endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -4538,7 +4538,7 @@ SdaiAxis2_placement::STEPwrite_content (ostream& out, const char * currSch) cons
   else if (CurrentUnderlyingType () == config_control_designe_axis2_placement_3d)
 	_app_inst -> STEPwrite_reference (out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -4552,7 +4552,7 @@ SdaiAxis2_placement::ValueType() const
   else if (CurrentUnderlyingType() == config_control_designe_axis2_placement_3d)
     return sdaiINSTANCE;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -4582,7 +4582,7 @@ SdaiAxis2_placement::STEPwrite_verbose (ostream& out, const char *currSch) const
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -4620,11 +4620,11 @@ SdaiAxis2_placement::STEPread_content (istream& in, InstMgr * instances,
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << std::endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -4637,11 +4637,11 @@ SdaiAxis2_placement::StrToVal_content (const char * str, InstMgr * instances)
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << std::endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -4788,7 +4788,7 @@ SdaiAxis2_placement::operator SdaiAxis2_placement_2d_ptr()
       return ((SdaiAxis2_placement_2d_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -4800,7 +4800,7 @@ SdaiAxis2_placement::operator SdaiAxis2_placement_3d_ptr()
       return ((SdaiAxis2_placement_3d_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -4815,7 +4815,7 @@ SdaiAxis2_placement::axis_() const
   if( CurrentUnderlyingType () == config_control_designe_axis2_placement_3d )
 	//  AXIS2_PLACEMENT_3D
 	return ((SdaiAxis2_placement_3d_ptr) _app_inst) ->axis_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -4832,7 +4832,7 @@ SdaiAxis2_placement::axis_ (const SdaiDirection_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -4846,7 +4846,7 @@ SdaiAxis2_placement::ref_direction_() const
   if( CurrentUnderlyingType () == config_control_designe_axis2_placement_3d )
 	//  AXIS2_PLACEMENT_3D
 	return ((SdaiAxis2_placement_3d_ptr) _app_inst) ->ref_direction_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -4868,7 +4868,7 @@ SdaiAxis2_placement::ref_direction_ (const SdaiDirection_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -4882,7 +4882,7 @@ SdaiAxis2_placement::location_() const
   if( CurrentUnderlyingType () == config_control_designe_axis2_placement_3d )
 	//  AXIS2_PLACEMENT_3D
 	return ((SdaiAxis2_placement_3d_ptr) _app_inst) ->location_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -4904,7 +4904,7 @@ SdaiAxis2_placement::location_ (const SdaiCartesian_point_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -4918,7 +4918,7 @@ SdaiAxis2_placement::name_() const
   if( CurrentUnderlyingType () == config_control_designe_axis2_placement_3d )
 	//  AXIS2_PLACEMENT_3D
 	return ((SdaiAxis2_placement_3d_ptr) _app_inst) ->name_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -4940,7 +4940,7 @@ SdaiAxis2_placement::name_ (const SdaiLabel x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -5036,11 +5036,11 @@ SdaiSpecified_item::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << std::endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -5070,7 +5070,7 @@ SdaiSpecified_item::STEPwrite_content (ostream& out, const char * currSch) const
   else if (CurrentUnderlyingType () == config_control_designe_shape_aspect)
 	_app_inst -> STEPwrite_reference (out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -5084,7 +5084,7 @@ SdaiSpecified_item::ValueType() const
   else if (CurrentUnderlyingType() == config_control_designe_shape_aspect)
     return sdaiINSTANCE;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -5114,7 +5114,7 @@ SdaiSpecified_item::STEPwrite_verbose (ostream& out, const char *currSch) const
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -5152,11 +5152,11 @@ SdaiSpecified_item::STEPread_content (istream& in, InstMgr * instances,
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << std::endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -5169,11 +5169,11 @@ SdaiSpecified_item::StrToVal_content (const char * str, InstMgr * instances)
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << std::endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -5320,7 +5320,7 @@ SdaiSpecified_item::operator SdaiProduct_definition_ptr()
       return ((SdaiProduct_definition_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -5332,7 +5332,7 @@ SdaiSpecified_item::operator SdaiShape_aspect_ptr()
       return ((SdaiShape_aspect_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -5347,7 +5347,7 @@ SdaiSpecified_item::product_definitional_() const
   if( CurrentUnderlyingType () == config_control_designe_shape_aspect )
 	//  SHAPE_ASPECT
 	return ((SdaiShape_aspect_ptr) _app_inst) ->product_definitional_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return (SCLLOG(Logical)) 0;
 }
@@ -5364,7 +5364,7 @@ SdaiSpecified_item::product_definitional_ (const SCLLOG(Logical) x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -5375,7 +5375,7 @@ SdaiSpecified_item::of_shape_() const
   if( CurrentUnderlyingType () == config_control_designe_shape_aspect )
 	//  SHAPE_ASPECT
 	return ((SdaiShape_aspect_ptr) _app_inst) ->of_shape_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -5392,7 +5392,7 @@ SdaiSpecified_item::of_shape_ (const SdaiProduct_definition_shape_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -5403,7 +5403,7 @@ SdaiSpecified_item::name_() const
   if( CurrentUnderlyingType () == config_control_designe_shape_aspect )
 	//  SHAPE_ASPECT
 	return ((SdaiShape_aspect_ptr) _app_inst) ->name_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -5420,7 +5420,7 @@ SdaiSpecified_item::name_ (const SdaiLabel x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -5431,7 +5431,7 @@ SdaiSpecified_item::frame_of_reference_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition )
 	//  PRODUCT_DEFINITION
 	return ((SdaiProduct_definition_ptr) _app_inst) ->frame_of_reference_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -5448,7 +5448,7 @@ SdaiSpecified_item::frame_of_reference_ (const SdaiProduct_definition_context_pt
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -5459,7 +5459,7 @@ SdaiSpecified_item::formation_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition )
 	//  PRODUCT_DEFINITION
 	return ((SdaiProduct_definition_ptr) _app_inst) ->formation_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -5476,7 +5476,7 @@ SdaiSpecified_item::formation_ (const SdaiProduct_definition_formation_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -5490,7 +5490,7 @@ SdaiSpecified_item::description_() const
   if( CurrentUnderlyingType () == config_control_designe_shape_aspect )
 	//  SHAPE_ASPECT
 	return ((SdaiShape_aspect_ptr) _app_inst) ->description_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -5512,7 +5512,7 @@ SdaiSpecified_item::description_ (const SdaiText x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -5523,7 +5523,7 @@ SdaiSpecified_item::id_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition )
 	//  PRODUCT_DEFINITION
 	return ((SdaiProduct_definition_ptr) _app_inst) ->id_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -5540,7 +5540,7 @@ SdaiSpecified_item::id_ (const SdaiIdentifier x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -5624,11 +5624,11 @@ SdaiMeasure_value::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << std::endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -5678,7 +5678,7 @@ SdaiMeasure_value::STEPwrite_content (ostream& out, const char * currSch) const
   else if (CurrentUnderlyingType () == config_control_designt_count_measure)
 	WriteReal(_real,out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -5712,7 +5712,7 @@ SdaiMeasure_value::ValueType() const
   else if (CurrentUnderlyingType() == config_control_designt_count_measure)
     return sdaiNUMBER;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -5802,7 +5802,7 @@ SdaiMeasure_value::STEPwrite_verbose (ostream& out, const char *currSch) const
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -5862,11 +5862,11 @@ SdaiMeasure_value::STEPread_content (istream& in, InstMgr * instances,
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << std::endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -5881,11 +5881,11 @@ SdaiMeasure_value::StrToVal_content (const char * str, InstMgr * instances)
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << std::endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -6030,7 +6030,7 @@ SdaiMeasure_value::operator SdaiDescriptive_measure()
    Error( "Underlying type is not SdaiDescriptive_measure" );
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return 0;
@@ -6065,7 +6065,7 @@ SdaiMeasure_value::operator SCLP23(Real)()
    Error( "Underlying type is not SCLP23(Real)" );
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return (SCLP23(Real))0;
@@ -6310,11 +6310,11 @@ SdaiPerson_organization_select::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << std::endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -6346,7 +6346,7 @@ SdaiPerson_organization_select::STEPwrite_content (ostream& out, const char * cu
   else if (CurrentUnderlyingType () == config_control_designe_person_and_organization)
 	_app_inst -> STEPwrite_reference (out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -6362,7 +6362,7 @@ SdaiPerson_organization_select::ValueType() const
   else if (CurrentUnderlyingType() == config_control_designe_person_and_organization)
     return sdaiINSTANCE;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -6398,7 +6398,7 @@ SdaiPerson_organization_select::STEPwrite_verbose (ostream& out, const char *cur
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -6449,11 +6449,11 @@ SdaiPerson_organization_select::STEPread_content (istream& in, InstMgr * instanc
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << std::endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -6466,11 +6466,11 @@ SdaiPerson_organization_select::StrToVal_content (const char * str, InstMgr * in
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << std::endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -6636,7 +6636,7 @@ SdaiPerson_organization_select::operator SdaiPerson_ptr()
       return ((SdaiPerson_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -6648,7 +6648,7 @@ SdaiPerson_organization_select::operator SdaiOrganization_ptr()
       return ((SdaiOrganization_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -6660,7 +6660,7 @@ SdaiPerson_organization_select::operator SdaiPerson_and_organization_ptr()
       return ((SdaiPerson_and_organization_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -6675,7 +6675,7 @@ SdaiPerson_organization_select::the_organization_() const
   if( CurrentUnderlyingType () == config_control_designe_person_and_organization )
 	//  PERSON_AND_ORGANIZATION
 	return ((SdaiPerson_and_organization_ptr) _app_inst) ->the_organization_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -6692,7 +6692,7 @@ SdaiPerson_organization_select::the_organization_ (const SdaiOrganization_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -6703,7 +6703,7 @@ SdaiPerson_organization_select::the_person_() const
   if( CurrentUnderlyingType () == config_control_designe_person_and_organization )
 	//  PERSON_AND_ORGANIZATION
 	return ((SdaiPerson_and_organization_ptr) _app_inst) ->the_person_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -6720,7 +6720,7 @@ SdaiPerson_organization_select::the_person_ (const SdaiPerson_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -6731,7 +6731,7 @@ SdaiPerson_organization_select::description_() const
   if( CurrentUnderlyingType () == config_control_designe_organization )
 	//  ORGANIZATION
 	return ((SdaiOrganization_ptr) _app_inst) ->description_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -6748,7 +6748,7 @@ SdaiPerson_organization_select::description_ (const SdaiText x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -6759,7 +6759,7 @@ SdaiPerson_organization_select::name_() const
   if( CurrentUnderlyingType () == config_control_designe_organization )
 	//  ORGANIZATION
 	return ((SdaiOrganization_ptr) _app_inst) ->name_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -6776,7 +6776,7 @@ SdaiPerson_organization_select::name_ (const SdaiLabel x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -6787,7 +6787,7 @@ SdaiPerson_organization_select::suffix_titles_() const
   if( CurrentUnderlyingType () == config_control_designe_person )
 	//  PERSON
 	return ((SdaiPerson_ptr) _app_inst) ->suffix_titles_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -6804,7 +6804,7 @@ SdaiPerson_organization_select::suffix_titles_ (const StringAggregate_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -6815,7 +6815,7 @@ SdaiPerson_organization_select::prefix_titles_() const
   if( CurrentUnderlyingType () == config_control_designe_person )
 	//  PERSON
 	return ((SdaiPerson_ptr) _app_inst) ->prefix_titles_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -6832,7 +6832,7 @@ SdaiPerson_organization_select::prefix_titles_ (const StringAggregate_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -6843,7 +6843,7 @@ SdaiPerson_organization_select::middle_names_() const
   if( CurrentUnderlyingType () == config_control_designe_person )
 	//  PERSON
 	return ((SdaiPerson_ptr) _app_inst) ->middle_names_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -6860,7 +6860,7 @@ SdaiPerson_organization_select::middle_names_ (const StringAggregate_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -6871,7 +6871,7 @@ SdaiPerson_organization_select::first_name_() const
   if( CurrentUnderlyingType () == config_control_designe_person )
 	//  PERSON
 	return ((SdaiPerson_ptr) _app_inst) ->first_name_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -6888,7 +6888,7 @@ SdaiPerson_organization_select::first_name_ (const SdaiLabel x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -6899,7 +6899,7 @@ SdaiPerson_organization_select::last_name_() const
   if( CurrentUnderlyingType () == config_control_designe_person )
 	//  PERSON
 	return ((SdaiPerson_ptr) _app_inst) ->last_name_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -6916,7 +6916,7 @@ SdaiPerson_organization_select::last_name_ (const SdaiLabel x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -6930,7 +6930,7 @@ SdaiPerson_organization_select::id_() const
   if( CurrentUnderlyingType () == config_control_designe_organization )
 	//  ORGANIZATION
 	return ((SdaiOrganization_ptr) _app_inst) ->id_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -6952,7 +6952,7 @@ SdaiPerson_organization_select::id_ (const SdaiIdentifier x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -7069,11 +7069,11 @@ SdaiPcurve_or_surface::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << std::endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -7103,7 +7103,7 @@ SdaiPcurve_or_surface::STEPwrite_content (ostream& out, const char * currSch) co
   else if (CurrentUnderlyingType () == config_control_designe_surface)
 	_app_inst -> STEPwrite_reference (out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -7117,7 +7117,7 @@ SdaiPcurve_or_surface::ValueType() const
   else if (CurrentUnderlyingType() == config_control_designe_surface)
     return sdaiINSTANCE;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -7147,7 +7147,7 @@ SdaiPcurve_or_surface::STEPwrite_verbose (ostream& out, const char *currSch) con
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -7185,11 +7185,11 @@ SdaiPcurve_or_surface::STEPread_content (istream& in, InstMgr * instances,
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << std::endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -7202,11 +7202,11 @@ SdaiPcurve_or_surface::StrToVal_content (const char * str, InstMgr * instances)
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << std::endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -7353,7 +7353,7 @@ SdaiPcurve_or_surface::operator SdaiPcurve_ptr()
       return ((SdaiPcurve_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -7365,7 +7365,7 @@ SdaiPcurve_or_surface::operator SdaiSurface_ptr()
       return ((SdaiSurface_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -7380,7 +7380,7 @@ SdaiPcurve_or_surface::reference_to_curve_() const
   if( CurrentUnderlyingType () == config_control_designe_pcurve )
 	//  PCURVE
 	return ((SdaiPcurve_ptr) _app_inst) ->reference_to_curve_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -7397,7 +7397,7 @@ SdaiPcurve_or_surface::reference_to_curve_ (const SdaiDefinitional_representatio
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -7408,7 +7408,7 @@ SdaiPcurve_or_surface::basis_surface_() const
   if( CurrentUnderlyingType () == config_control_designe_pcurve )
 	//  PCURVE
 	return ((SdaiPcurve_ptr) _app_inst) ->basis_surface_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -7425,7 +7425,7 @@ SdaiPcurve_or_surface::basis_surface_ (const SdaiSurface_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -7439,7 +7439,7 @@ SdaiPcurve_or_surface::name_() const
   if( CurrentUnderlyingType () == config_control_designe_surface )
 	//  SURFACE
 	return ((SdaiSurface_ptr) _app_inst) ->name_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -7461,7 +7461,7 @@ SdaiPcurve_or_surface::name_ (const SdaiLabel x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -7557,11 +7557,11 @@ SdaiClassified_item::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << std::endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -7591,7 +7591,7 @@ SdaiClassified_item::STEPwrite_content (ostream& out, const char * currSch) cons
   else if (CurrentUnderlyingType () == config_control_designe_assembly_component_usage)
 	_app_inst -> STEPwrite_reference (out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -7605,7 +7605,7 @@ SdaiClassified_item::ValueType() const
   else if (CurrentUnderlyingType() == config_control_designe_assembly_component_usage)
     return sdaiINSTANCE;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -7635,7 +7635,7 @@ SdaiClassified_item::STEPwrite_verbose (ostream& out, const char *currSch) const
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -7673,11 +7673,11 @@ SdaiClassified_item::STEPread_content (istream& in, InstMgr * instances,
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << std::endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -7690,11 +7690,11 @@ SdaiClassified_item::StrToVal_content (const char * str, InstMgr * instances)
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << std::endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -7841,7 +7841,7 @@ SdaiClassified_item::operator SdaiProduct_definition_formation_ptr()
       return ((SdaiProduct_definition_formation_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -7853,7 +7853,7 @@ SdaiClassified_item::operator SdaiAssembly_component_usage_ptr()
       return ((SdaiAssembly_component_usage_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -7868,7 +7868,7 @@ SdaiClassified_item::reference_designator_() const
   if( CurrentUnderlyingType () == config_control_designe_assembly_component_usage )
 	//  ASSEMBLY_COMPONENT_USAGE
 	return ((SdaiAssembly_component_usage_ptr) _app_inst) ->reference_designator_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -7885,7 +7885,7 @@ SdaiClassified_item::reference_designator_ (const SdaiIdentifier x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -7896,7 +7896,7 @@ SdaiClassified_item::related_product_definition_() const
   if( CurrentUnderlyingType () == config_control_designe_assembly_component_usage )
 	//  ASSEMBLY_COMPONENT_USAGE
 	return ((SdaiAssembly_component_usage_ptr) _app_inst) ->related_product_definition_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -7913,7 +7913,7 @@ SdaiClassified_item::related_product_definition_ (const SdaiProduct_definition_p
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -7924,7 +7924,7 @@ SdaiClassified_item::relating_product_definition_() const
   if( CurrentUnderlyingType () == config_control_designe_assembly_component_usage )
 	//  ASSEMBLY_COMPONENT_USAGE
 	return ((SdaiAssembly_component_usage_ptr) _app_inst) ->relating_product_definition_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -7941,7 +7941,7 @@ SdaiClassified_item::relating_product_definition_ (const SdaiProduct_definition_
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -7952,7 +7952,7 @@ SdaiClassified_item::name_() const
   if( CurrentUnderlyingType () == config_control_designe_assembly_component_usage )
 	//  ASSEMBLY_COMPONENT_USAGE
 	return ((SdaiAssembly_component_usage_ptr) _app_inst) ->name_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -7969,7 +7969,7 @@ SdaiClassified_item::name_ (const SdaiLabel x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -7980,7 +7980,7 @@ SdaiClassified_item::of_product_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition_formation )
 	//  PRODUCT_DEFINITION_FORMATION
 	return ((SdaiProduct_definition_formation_ptr) _app_inst) ->of_product_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -7997,7 +7997,7 @@ SdaiClassified_item::of_product_ (const SdaiProduct_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -8011,7 +8011,7 @@ SdaiClassified_item::description_() const
   if( CurrentUnderlyingType () == config_control_designe_assembly_component_usage )
 	//  ASSEMBLY_COMPONENT_USAGE
 	return ((SdaiAssembly_component_usage_ptr) _app_inst) ->description_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -8033,7 +8033,7 @@ SdaiClassified_item::description_ (const SdaiText x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -8047,7 +8047,7 @@ SdaiClassified_item::id_() const
   if( CurrentUnderlyingType () == config_control_designe_assembly_component_usage )
 	//  ASSEMBLY_COMPONENT_USAGE
 	return ((SdaiAssembly_component_usage_ptr) _app_inst) ->id_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -8069,7 +8069,7 @@ SdaiClassified_item::id_ (const SdaiIdentifier x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -8165,11 +8165,11 @@ SdaiFounded_item_select::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << std::endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -8199,7 +8199,7 @@ SdaiFounded_item_select::STEPwrite_content (ostream& out, const char * currSch) 
   else if (CurrentUnderlyingType () == config_control_designe_representation_item)
 	_app_inst -> STEPwrite_reference (out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -8213,7 +8213,7 @@ SdaiFounded_item_select::ValueType() const
   else if (CurrentUnderlyingType() == config_control_designe_representation_item)
     return sdaiINSTANCE;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -8243,7 +8243,7 @@ SdaiFounded_item_select::STEPwrite_verbose (ostream& out, const char *currSch) c
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -8281,11 +8281,11 @@ SdaiFounded_item_select::STEPread_content (istream& in, InstMgr * instances,
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << std::endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -8298,11 +8298,11 @@ SdaiFounded_item_select::StrToVal_content (const char * str, InstMgr * instances
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << std::endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -8449,7 +8449,7 @@ SdaiFounded_item_select::operator SdaiFounded_item_ptr()
       return ((SdaiFounded_item_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -8461,7 +8461,7 @@ SdaiFounded_item_select::operator SdaiRepresentation_item_ptr()
       return ((SdaiRepresentation_item_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -8476,7 +8476,7 @@ SdaiFounded_item_select::name_() const
   if( CurrentUnderlyingType () == config_control_designe_representation_item )
 	//  REPRESENTATION_ITEM
 	return ((SdaiRepresentation_item_ptr) _app_inst) ->name_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -8493,7 +8493,7 @@ SdaiFounded_item_select::name_ (const SdaiLabel x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -8589,11 +8589,11 @@ SdaiVector_or_direction::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << std::endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -8623,7 +8623,7 @@ SdaiVector_or_direction::STEPwrite_content (ostream& out, const char * currSch) 
   else if (CurrentUnderlyingType () == config_control_designe_direction)
 	_app_inst -> STEPwrite_reference (out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -8637,7 +8637,7 @@ SdaiVector_or_direction::ValueType() const
   else if (CurrentUnderlyingType() == config_control_designe_direction)
     return sdaiINSTANCE;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -8667,7 +8667,7 @@ SdaiVector_or_direction::STEPwrite_verbose (ostream& out, const char *currSch) c
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -8705,11 +8705,11 @@ SdaiVector_or_direction::STEPread_content (istream& in, InstMgr * instances,
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << std::endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -8722,11 +8722,11 @@ SdaiVector_or_direction::StrToVal_content (const char * str, InstMgr * instances
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << std::endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -8873,7 +8873,7 @@ SdaiVector_or_direction::operator SdaiVector_ptr()
       return ((SdaiVector_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -8885,7 +8885,7 @@ SdaiVector_or_direction::operator SdaiDirection_ptr()
       return ((SdaiDirection_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -8900,7 +8900,7 @@ SdaiVector_or_direction::direction_ratios_() const
   if( CurrentUnderlyingType () == config_control_designe_direction )
 	//  DIRECTION
 	return ((SdaiDirection_ptr) _app_inst) ->direction_ratios_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -8917,7 +8917,7 @@ SdaiVector_or_direction::direction_ratios_ (const RealAggregate_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -8928,7 +8928,7 @@ SdaiVector_or_direction::magnitude_() const
   if( CurrentUnderlyingType () == config_control_designe_vector )
 	//  VECTOR
 	return ((SdaiVector_ptr) _app_inst) ->magnitude_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -8945,7 +8945,7 @@ SdaiVector_or_direction::magnitude_ (const SdaiLength_measure x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -8956,7 +8956,7 @@ SdaiVector_or_direction::orientation_() const
   if( CurrentUnderlyingType () == config_control_designe_vector )
 	//  VECTOR
 	return ((SdaiVector_ptr) _app_inst) ->orientation_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -8973,7 +8973,7 @@ SdaiVector_or_direction::orientation_ (const SdaiDirection_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -8987,7 +8987,7 @@ SdaiVector_or_direction::name_() const
   if( CurrentUnderlyingType () == config_control_designe_direction )
 	//  DIRECTION
 	return ((SdaiDirection_ptr) _app_inst) ->name_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -9009,7 +9009,7 @@ SdaiVector_or_direction::name_ (const SdaiLabel x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -9105,11 +9105,11 @@ SdaiWireframe_model::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << std::endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -9139,7 +9139,7 @@ SdaiWireframe_model::STEPwrite_content (ostream& out, const char * currSch) cons
   else if (CurrentUnderlyingType () == config_control_designe_edge_based_wireframe_model)
 	_app_inst -> STEPwrite_reference (out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -9153,7 +9153,7 @@ SdaiWireframe_model::ValueType() const
   else if (CurrentUnderlyingType() == config_control_designe_edge_based_wireframe_model)
     return sdaiINSTANCE;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -9183,7 +9183,7 @@ SdaiWireframe_model::STEPwrite_verbose (ostream& out, const char *currSch) const
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -9221,11 +9221,11 @@ SdaiWireframe_model::STEPread_content (istream& in, InstMgr * instances,
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << std::endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -9238,11 +9238,11 @@ SdaiWireframe_model::StrToVal_content (const char * str, InstMgr * instances)
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << std::endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -9389,7 +9389,7 @@ SdaiWireframe_model::operator SdaiShell_based_wireframe_model_ptr()
       return ((SdaiShell_based_wireframe_model_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -9401,7 +9401,7 @@ SdaiWireframe_model::operator SdaiEdge_based_wireframe_model_ptr()
       return ((SdaiEdge_based_wireframe_model_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -9416,7 +9416,7 @@ SdaiWireframe_model::ebwm_boundary_() const
   if( CurrentUnderlyingType () == config_control_designe_edge_based_wireframe_model )
 	//  EDGE_BASED_WIREFRAME_MODEL
 	return ((SdaiEdge_based_wireframe_model_ptr) _app_inst) ->ebwm_boundary_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -9433,7 +9433,7 @@ SdaiWireframe_model::ebwm_boundary_ (const EntityAggregate_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -9444,7 +9444,7 @@ SdaiWireframe_model::sbwm_boundary_() const
   if( CurrentUnderlyingType () == config_control_designe_shell_based_wireframe_model )
 	//  SHELL_BASED_WIREFRAME_MODEL
 	return ((SdaiShell_based_wireframe_model_ptr) _app_inst) ->sbwm_boundary_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -9461,7 +9461,7 @@ SdaiWireframe_model::sbwm_boundary_ (const SdaiShells_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -9475,7 +9475,7 @@ SdaiWireframe_model::name_() const
   if( CurrentUnderlyingType () == config_control_designe_edge_based_wireframe_model )
 	//  EDGE_BASED_WIREFRAME_MODEL
 	return ((SdaiEdge_based_wireframe_model_ptr) _app_inst) ->name_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -9497,7 +9497,7 @@ SdaiWireframe_model::name_ (const SdaiLabel x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -9599,11 +9599,11 @@ SdaiGeometric_set_select::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << std::endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -9635,7 +9635,7 @@ SdaiGeometric_set_select::STEPwrite_content (ostream& out, const char * currSch)
   else if (CurrentUnderlyingType () == config_control_designe_surface)
 	_app_inst -> STEPwrite_reference (out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -9651,7 +9651,7 @@ SdaiGeometric_set_select::ValueType() const
   else if (CurrentUnderlyingType() == config_control_designe_surface)
     return sdaiINSTANCE;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -9687,7 +9687,7 @@ SdaiGeometric_set_select::STEPwrite_verbose (ostream& out, const char *currSch) 
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -9738,11 +9738,11 @@ SdaiGeometric_set_select::STEPread_content (istream& in, InstMgr * instances,
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << std::endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -9755,11 +9755,11 @@ SdaiGeometric_set_select::StrToVal_content (const char * str, InstMgr * instance
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << std::endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -9925,7 +9925,7 @@ SdaiGeometric_set_select::operator SdaiPoint_ptr()
       return ((SdaiPoint_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -9937,7 +9937,7 @@ SdaiGeometric_set_select::operator SdaiCurve_ptr()
       return ((SdaiCurve_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -9949,7 +9949,7 @@ SdaiGeometric_set_select::operator SdaiSurface_ptr()
       return ((SdaiSurface_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -9970,7 +9970,7 @@ SdaiGeometric_set_select::name_() const
   if( CurrentUnderlyingType () == config_control_designe_surface )
 	//  SURFACE
 	return ((SdaiSurface_ptr) _app_inst) ->name_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -9997,7 +9997,7 @@ SdaiGeometric_set_select::name_ (const SdaiLabel x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -10108,11 +10108,11 @@ SdaiStart_request_item::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << std::endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -10140,7 +10140,7 @@ SdaiStart_request_item::STEPwrite_content (ostream& out, const char * currSch) c
   if (CurrentUnderlyingType () == config_control_designe_product_definition_formation)
 	_app_inst -> STEPwrite_reference (out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -10152,7 +10152,7 @@ SdaiStart_request_item::ValueType() const
   if (CurrentUnderlyingType() == config_control_designe_product_definition_formation)
     return sdaiINSTANCE;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -10176,7 +10176,7 @@ SdaiStart_request_item::STEPwrite_verbose (ostream& out, const char *currSch) co
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -10201,11 +10201,11 @@ SdaiStart_request_item::STEPread_content (istream& in, InstMgr * instances,
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << std::endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -10218,11 +10218,11 @@ SdaiStart_request_item::StrToVal_content (const char * str, InstMgr * instances)
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << std::endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -10350,7 +10350,7 @@ SdaiStart_request_item::operator SdaiProduct_definition_formation_ptr()
       return ((SdaiProduct_definition_formation_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -10365,7 +10365,7 @@ SdaiStart_request_item::of_product_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition_formation )
 	//  PRODUCT_DEFINITION_FORMATION
 	return ((SdaiProduct_definition_formation_ptr) _app_inst) ->of_product_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -10382,7 +10382,7 @@ SdaiStart_request_item::of_product_ (const SdaiProduct_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -10393,7 +10393,7 @@ SdaiStart_request_item::description_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition_formation )
 	//  PRODUCT_DEFINITION_FORMATION
 	return ((SdaiProduct_definition_formation_ptr) _app_inst) ->description_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -10410,7 +10410,7 @@ SdaiStart_request_item::description_ (const SdaiText x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -10421,7 +10421,7 @@ SdaiStart_request_item::id_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition_formation )
 	//  PRODUCT_DEFINITION_FORMATION
 	return ((SdaiProduct_definition_formation_ptr) _app_inst) ->id_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -10438,7 +10438,7 @@ SdaiStart_request_item::id_ (const SdaiIdentifier x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -10561,11 +10561,11 @@ SdaiPerson_organization_item::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << std::endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -10611,7 +10611,7 @@ SdaiPerson_organization_item::STEPwrite_content (ostream& out, const char * curr
   else if (CurrentUnderlyingType () == config_control_designe_security_classification)
 	_app_inst -> STEPwrite_reference (out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -10641,7 +10641,7 @@ SdaiPerson_organization_item::ValueType() const
   else if (CurrentUnderlyingType() == config_control_designe_security_classification)
     return sdaiINSTANCE;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -10719,7 +10719,7 @@ SdaiPerson_organization_item::STEPwrite_verbose (ostream& out, const char *currS
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -10861,11 +10861,11 @@ SdaiPerson_organization_item::STEPread_content (istream& in, InstMgr * instances
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << std::endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -10878,11 +10878,11 @@ SdaiPerson_organization_item::StrToVal_content (const char * str, InstMgr * inst
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << std::endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -11181,7 +11181,7 @@ SdaiPerson_organization_item::operator SdaiChange_ptr()
       return ((SdaiChange_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -11193,7 +11193,7 @@ SdaiPerson_organization_item::operator SdaiStart_work_ptr()
       return ((SdaiStart_work_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -11205,7 +11205,7 @@ SdaiPerson_organization_item::operator SdaiChange_request_ptr()
       return ((SdaiChange_request_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -11217,7 +11217,7 @@ SdaiPerson_organization_item::operator SdaiStart_request_ptr()
       return ((SdaiStart_request_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -11229,7 +11229,7 @@ SdaiPerson_organization_item::operator SdaiConfiguration_item_ptr()
       return ((SdaiConfiguration_item_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -11241,7 +11241,7 @@ SdaiPerson_organization_item::operator SdaiProduct_ptr()
       return ((SdaiProduct_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -11253,7 +11253,7 @@ SdaiPerson_organization_item::operator SdaiProduct_definition_formation_ptr()
       return ((SdaiProduct_definition_formation_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -11265,7 +11265,7 @@ SdaiPerson_organization_item::operator SdaiProduct_definition_ptr()
       return ((SdaiProduct_definition_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -11277,7 +11277,7 @@ SdaiPerson_organization_item::operator SdaiContract_ptr()
       return ((SdaiContract_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -11289,7 +11289,7 @@ SdaiPerson_organization_item::operator SdaiSecurity_classification_ptr()
       return ((SdaiSecurity_classification_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -11304,7 +11304,7 @@ SdaiPerson_organization_item::security_level_() const
   if( CurrentUnderlyingType () == config_control_designe_security_classification )
 	//  SECURITY_CLASSIFICATION
 	return ((SdaiSecurity_classification_ptr) _app_inst) ->security_level_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -11321,7 +11321,7 @@ SdaiPerson_organization_item::security_level_ (const SdaiSecurity_classification
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -11332,7 +11332,7 @@ SdaiPerson_organization_item::kind_() const
   if( CurrentUnderlyingType () == config_control_designe_contract )
 	//  CONTRACT
 	return ((SdaiContract_ptr) _app_inst) ->kind_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -11349,7 +11349,7 @@ SdaiPerson_organization_item::kind_ (const SdaiContract_type_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -11360,7 +11360,7 @@ SdaiPerson_organization_item::formation_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition )
 	//  PRODUCT_DEFINITION
 	return ((SdaiProduct_definition_ptr) _app_inst) ->formation_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -11377,7 +11377,7 @@ SdaiPerson_organization_item::formation_ (const SdaiProduct_definition_formation
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -11388,7 +11388,7 @@ SdaiPerson_organization_item::of_product_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition_formation )
 	//  PRODUCT_DEFINITION_FORMATION
 	return ((SdaiProduct_definition_formation_ptr) _app_inst) ->of_product_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -11405,7 +11405,7 @@ SdaiPerson_organization_item::of_product_ (const SdaiProduct_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -11418,7 +11418,7 @@ SdaiPerson_organization_item::frame_of_reference_() const
 	return ((SdaiProduct_ptr) _app_inst) ->frame_of_reference_();
   //  PRODUCT_DEFINITION
 	//  attribute access function has a different return type
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -11436,7 +11436,7 @@ SdaiPerson_organization_item::frame_of_reference_ (const EntityAggregate_ptr x)
   //  for PRODUCT_DEFINITION  attribute access function has a different argument type
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -11453,7 +11453,7 @@ SdaiPerson_organization_item::purpose_() const
   if( CurrentUnderlyingType () == config_control_designe_security_classification )
 	//  SECURITY_CLASSIFICATION
 	return ((SdaiSecurity_classification_ptr) _app_inst) ->purpose_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -11480,7 +11480,7 @@ SdaiPerson_organization_item::purpose_ (const SdaiLabel x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -11491,7 +11491,7 @@ SdaiPerson_organization_item::item_concept_() const
   if( CurrentUnderlyingType () == config_control_designe_configuration_item )
 	//  CONFIGURATION_ITEM
 	return ((SdaiConfiguration_item_ptr) _app_inst) ->item_concept_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -11508,7 +11508,7 @@ SdaiPerson_organization_item::item_concept_ (const SdaiProduct_concept_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -11528,7 +11528,7 @@ SdaiPerson_organization_item::description_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition )
 	//  PRODUCT_DEFINITION
 	return ((SdaiProduct_definition_ptr) _app_inst) ->description_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -11560,7 +11560,7 @@ SdaiPerson_organization_item::description_ (const SdaiText x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -11580,7 +11580,7 @@ SdaiPerson_organization_item::name_() const
   if( CurrentUnderlyingType () == config_control_designe_security_classification )
 	//  SECURITY_CLASSIFICATION
 	return ((SdaiSecurity_classification_ptr) _app_inst) ->name_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -11612,7 +11612,7 @@ SdaiPerson_organization_item::name_ (const SdaiLabel x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -11632,7 +11632,7 @@ SdaiPerson_organization_item::id_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition )
 	//  PRODUCT_DEFINITION
 	return ((SdaiProduct_definition_ptr) _app_inst) ->id_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -11664,7 +11664,7 @@ SdaiPerson_organization_item::id_ (const SdaiIdentifier x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -11678,7 +11678,7 @@ SdaiPerson_organization_item::assigned_action_request_() const
   if( CurrentUnderlyingType () == config_control_designe_start_request )
 	//  START_REQUEST
 	return ((SdaiStart_request_ptr) _app_inst) ->assigned_action_request_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -11700,7 +11700,7 @@ SdaiPerson_organization_item::assigned_action_request_ (const SdaiVersioned_acti
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -11718,7 +11718,7 @@ SdaiPerson_organization_item::items_() const
 	//  attribute access function has a different return type
   //  START_REQUEST
 	//  attribute access function has a different return type
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -11742,7 +11742,7 @@ SdaiPerson_organization_item::items_ (const SdaiWork_items_ptr x)
   //  for START_REQUEST  attribute access function has a different argument type
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -11756,7 +11756,7 @@ SdaiPerson_organization_item::assigned_action_() const
   if( CurrentUnderlyingType () == config_control_designe_start_work )
 	//  START_WORK
 	return ((SdaiStart_work_ptr) _app_inst) ->assigned_action_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -11778,7 +11778,7 @@ SdaiPerson_organization_item::assigned_action_ (const SdaiAction_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -12084,11 +12084,11 @@ SdaiDate_time_item::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << std::endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -12132,7 +12132,7 @@ SdaiDate_time_item::STEPwrite_content (ostream& out, const char * currSch) const
   else if (CurrentUnderlyingType () == config_control_designe_certification)
 	_app_inst -> STEPwrite_reference (out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -12160,7 +12160,7 @@ SdaiDate_time_item::ValueType() const
   else if (CurrentUnderlyingType() == config_control_designe_certification)
     return sdaiINSTANCE;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -12232,7 +12232,7 @@ SdaiDate_time_item::STEPwrite_verbose (ostream& out, const char *currSch) const
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -12361,11 +12361,11 @@ SdaiDate_time_item::STEPread_content (istream& in, InstMgr * instances,
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << std::endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -12378,11 +12378,11 @@ SdaiDate_time_item::StrToVal_content (const char * str, InstMgr * instances)
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << std::endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -12662,7 +12662,7 @@ SdaiDate_time_item::operator SdaiProduct_definition_ptr()
       return ((SdaiProduct_definition_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -12674,7 +12674,7 @@ SdaiDate_time_item::operator SdaiChange_request_ptr()
       return ((SdaiChange_request_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -12686,7 +12686,7 @@ SdaiDate_time_item::operator SdaiStart_request_ptr()
       return ((SdaiStart_request_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -12698,7 +12698,7 @@ SdaiDate_time_item::operator SdaiChange_ptr()
       return ((SdaiChange_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -12710,7 +12710,7 @@ SdaiDate_time_item::operator SdaiStart_work_ptr()
       return ((SdaiStart_work_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -12722,7 +12722,7 @@ SdaiDate_time_item::operator SdaiApproval_person_organization_ptr()
       return ((SdaiApproval_person_organization_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -12734,7 +12734,7 @@ SdaiDate_time_item::operator SdaiContract_ptr()
       return ((SdaiContract_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -12746,7 +12746,7 @@ SdaiDate_time_item::operator SdaiSecurity_classification_ptr()
       return ((SdaiSecurity_classification_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -12758,7 +12758,7 @@ SdaiDate_time_item::operator SdaiCertification_ptr()
       return ((SdaiCertification_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -12773,7 +12773,7 @@ SdaiDate_time_item::security_level_() const
   if( CurrentUnderlyingType () == config_control_designe_security_classification )
 	//  SECURITY_CLASSIFICATION
 	return ((SdaiSecurity_classification_ptr) _app_inst) ->security_level_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -12790,7 +12790,7 @@ SdaiDate_time_item::security_level_ (const SdaiSecurity_classification_level_ptr
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -12803,7 +12803,7 @@ SdaiDate_time_item::kind_() const
 	return ((SdaiContract_ptr) _app_inst) ->kind_();
   //  CERTIFICATION
 	//  attribute access function has a different return type
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -12821,7 +12821,7 @@ SdaiDate_time_item::kind_ (const SdaiContract_type_ptr x)
   //  for CERTIFICATION  attribute access function has a different argument type
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -12838,7 +12838,7 @@ SdaiDate_time_item::purpose_() const
   if( CurrentUnderlyingType () == config_control_designe_certification )
 	//  CERTIFICATION
 	return ((SdaiCertification_ptr) _app_inst) ->purpose_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -12865,7 +12865,7 @@ SdaiDate_time_item::purpose_ (const SdaiText x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -12882,7 +12882,7 @@ SdaiDate_time_item::name_() const
   if( CurrentUnderlyingType () == config_control_designe_certification )
 	//  CERTIFICATION
 	return ((SdaiCertification_ptr) _app_inst) ->name_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -12909,7 +12909,7 @@ SdaiDate_time_item::name_ (const SdaiLabel x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -12920,7 +12920,7 @@ SdaiDate_time_item::role_() const
   if( CurrentUnderlyingType () == config_control_designe_approval_person_organization )
 	//  APPROVAL_PERSON_ORGANIZATION
 	return ((SdaiApproval_person_organization_ptr) _app_inst) ->role_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -12937,7 +12937,7 @@ SdaiDate_time_item::role_ (const SdaiApproval_role_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -12948,7 +12948,7 @@ SdaiDate_time_item::authorized_approval_() const
   if( CurrentUnderlyingType () == config_control_designe_approval_person_organization )
 	//  APPROVAL_PERSON_ORGANIZATION
 	return ((SdaiApproval_person_organization_ptr) _app_inst) ->authorized_approval_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -12965,7 +12965,7 @@ SdaiDate_time_item::authorized_approval_ (const SdaiApproval_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -12976,7 +12976,7 @@ SdaiDate_time_item::person_organization_() const
   if( CurrentUnderlyingType () == config_control_designe_approval_person_organization )
 	//  APPROVAL_PERSON_ORGANIZATION
 	return ((SdaiApproval_person_organization_ptr) _app_inst) ->person_organization_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -12993,7 +12993,7 @@ SdaiDate_time_item::person_organization_ (const SdaiPerson_organization_select_p
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -13007,7 +13007,7 @@ SdaiDate_time_item::assigned_action_() const
   if( CurrentUnderlyingType () == config_control_designe_start_work )
 	//  START_WORK
 	return ((SdaiStart_work_ptr) _app_inst) ->assigned_action_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -13029,7 +13029,7 @@ SdaiDate_time_item::assigned_action_ (const SdaiAction_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -13046,7 +13046,7 @@ SdaiDate_time_item::items_() const
 	//  attribute access function has a different return type
   //  START_WORK
 	//  attribute access function has a different return type
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -13066,7 +13066,7 @@ SdaiDate_time_item::items_ (const SdaiChange_request_items_ptr x)
   //  for START_WORK  attribute access function has a different argument type
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -13080,7 +13080,7 @@ SdaiDate_time_item::assigned_action_request_() const
   if( CurrentUnderlyingType () == config_control_designe_start_request )
 	//  START_REQUEST
 	return ((SdaiStart_request_ptr) _app_inst) ->assigned_action_request_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -13102,7 +13102,7 @@ SdaiDate_time_item::assigned_action_request_ (const SdaiVersioned_action_request
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -13113,7 +13113,7 @@ SdaiDate_time_item::frame_of_reference_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition )
 	//  PRODUCT_DEFINITION
 	return ((SdaiProduct_definition_ptr) _app_inst) ->frame_of_reference_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -13130,7 +13130,7 @@ SdaiDate_time_item::frame_of_reference_ (const SdaiProduct_definition_context_pt
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -13141,7 +13141,7 @@ SdaiDate_time_item::formation_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition )
 	//  PRODUCT_DEFINITION
 	return ((SdaiProduct_definition_ptr) _app_inst) ->formation_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -13158,7 +13158,7 @@ SdaiDate_time_item::formation_ (const SdaiProduct_definition_formation_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -13169,7 +13169,7 @@ SdaiDate_time_item::description_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition )
 	//  PRODUCT_DEFINITION
 	return ((SdaiProduct_definition_ptr) _app_inst) ->description_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -13186,7 +13186,7 @@ SdaiDate_time_item::description_ (const SdaiText x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -13197,7 +13197,7 @@ SdaiDate_time_item::id_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition )
 	//  PRODUCT_DEFINITION
 	return ((SdaiProduct_definition_ptr) _app_inst) ->id_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -13214,7 +13214,7 @@ SdaiDate_time_item::id_ (const SdaiIdentifier x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -13469,11 +13469,11 @@ SdaiShell::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << std::endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -13507,7 +13507,7 @@ SdaiShell::STEPwrite_content (ostream& out, const char * currSch) const
   else if (CurrentUnderlyingType () == config_control_designe_closed_shell)
 	_app_inst -> STEPwrite_reference (out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -13525,7 +13525,7 @@ SdaiShell::ValueType() const
   else if (CurrentUnderlyingType() == config_control_designe_closed_shell)
     return sdaiINSTANCE;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -13567,7 +13567,7 @@ SdaiShell::STEPwrite_verbose (ostream& out, const char *currSch) const
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -13631,11 +13631,11 @@ SdaiShell::STEPread_content (istream& in, InstMgr * instances,
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << std::endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -13648,11 +13648,11 @@ SdaiShell::StrToVal_content (const char * str, InstMgr * instances)
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << std::endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -13837,7 +13837,7 @@ SdaiShell::operator SdaiVertex_shell_ptr()
       return ((SdaiVertex_shell_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -13849,7 +13849,7 @@ SdaiShell::operator SdaiWire_shell_ptr()
       return ((SdaiWire_shell_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -13861,7 +13861,7 @@ SdaiShell::operator SdaiOpen_shell_ptr()
       return ((SdaiOpen_shell_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -13873,7 +13873,7 @@ SdaiShell::operator SdaiClosed_shell_ptr()
       return ((SdaiClosed_shell_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -13891,7 +13891,7 @@ SdaiShell::cfs_faces_() const
   if( CurrentUnderlyingType () == config_control_designe_closed_shell )
 	//  CLOSED_SHELL
 	return ((SdaiClosed_shell_ptr) _app_inst) ->cfs_faces_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -13913,7 +13913,7 @@ SdaiShell::cfs_faces_ (const EntityAggregate_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -13924,7 +13924,7 @@ SdaiShell::wire_shell_extent_() const
   if( CurrentUnderlyingType () == config_control_designe_wire_shell )
 	//  WIRE_SHELL
 	return ((SdaiWire_shell_ptr) _app_inst) ->wire_shell_extent_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -13941,7 +13941,7 @@ SdaiShell::wire_shell_extent_ (const EntityAggregate_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -13952,7 +13952,7 @@ SdaiShell::vertex_shell_extent_() const
   if( CurrentUnderlyingType () == config_control_designe_vertex_shell )
 	//  VERTEX_SHELL
 	return ((SdaiVertex_shell_ptr) _app_inst) ->vertex_shell_extent_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -13969,7 +13969,7 @@ SdaiShell::vertex_shell_extent_ (const SdaiVertex_loop_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -13989,7 +13989,7 @@ SdaiShell::name_() const
   if( CurrentUnderlyingType () == config_control_designe_closed_shell )
 	//  CLOSED_SHELL
 	return ((SdaiClosed_shell_ptr) _app_inst) ->name_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -14021,7 +14021,7 @@ SdaiShell::name_ (const SdaiLabel x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -14159,11 +14159,11 @@ SdaiTransformation::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << std::endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -14193,7 +14193,7 @@ SdaiTransformation::STEPwrite_content (ostream& out, const char * currSch) const
   else if (CurrentUnderlyingType () == config_control_designe_functionally_defined_transformation)
 	_app_inst -> STEPwrite_reference (out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -14207,7 +14207,7 @@ SdaiTransformation::ValueType() const
   else if (CurrentUnderlyingType() == config_control_designe_functionally_defined_transformation)
     return sdaiINSTANCE;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -14237,7 +14237,7 @@ SdaiTransformation::STEPwrite_verbose (ostream& out, const char *currSch) const
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -14275,11 +14275,11 @@ SdaiTransformation::STEPread_content (istream& in, InstMgr * instances,
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << std::endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -14292,11 +14292,11 @@ SdaiTransformation::StrToVal_content (const char * str, InstMgr * instances)
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << std::endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -14443,7 +14443,7 @@ SdaiTransformation::operator SdaiItem_defined_transformation_ptr()
       return ((SdaiItem_defined_transformation_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -14455,7 +14455,7 @@ SdaiTransformation::operator SdaiFunctionally_defined_transformation_ptr()
       return ((SdaiFunctionally_defined_transformation_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -14470,7 +14470,7 @@ SdaiTransformation::transform_item_2_() const
   if( CurrentUnderlyingType () == config_control_designe_item_defined_transformation )
 	//  ITEM_DEFINED_TRANSFORMATION
 	return ((SdaiItem_defined_transformation_ptr) _app_inst) ->transform_item_2_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -14487,7 +14487,7 @@ SdaiTransformation::transform_item_2_ (const SdaiRepresentation_item_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -14498,7 +14498,7 @@ SdaiTransformation::transform_item_1_() const
   if( CurrentUnderlyingType () == config_control_designe_item_defined_transformation )
 	//  ITEM_DEFINED_TRANSFORMATION
 	return ((SdaiItem_defined_transformation_ptr) _app_inst) ->transform_item_1_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -14515,7 +14515,7 @@ SdaiTransformation::transform_item_1_ (const SdaiRepresentation_item_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -14529,7 +14529,7 @@ SdaiTransformation::description_() const
   if( CurrentUnderlyingType () == config_control_designe_functionally_defined_transformation )
 	//  FUNCTIONALLY_DEFINED_TRANSFORMATION
 	return ((SdaiFunctionally_defined_transformation_ptr) _app_inst) ->description_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -14551,7 +14551,7 @@ SdaiTransformation::description_ (const SdaiText x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -14565,7 +14565,7 @@ SdaiTransformation::name_() const
   if( CurrentUnderlyingType () == config_control_designe_functionally_defined_transformation )
 	//  FUNCTIONALLY_DEFINED_TRANSFORMATION
 	return ((SdaiFunctionally_defined_transformation_ptr) _app_inst) ->name_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -14587,7 +14587,7 @@ SdaiTransformation::name_ (const SdaiLabel x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -14677,11 +14677,11 @@ SdaiBoolean_operand::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << std::endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -14709,7 +14709,7 @@ SdaiBoolean_operand::STEPwrite_content (ostream& out, const char * currSch) cons
   if (CurrentUnderlyingType () == config_control_designe_solid_model)
 	_app_inst -> STEPwrite_reference (out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -14721,7 +14721,7 @@ SdaiBoolean_operand::ValueType() const
   if (CurrentUnderlyingType() == config_control_designe_solid_model)
     return sdaiINSTANCE;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -14745,7 +14745,7 @@ SdaiBoolean_operand::STEPwrite_verbose (ostream& out, const char *currSch) const
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -14770,11 +14770,11 @@ SdaiBoolean_operand::STEPread_content (istream& in, InstMgr * instances,
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << std::endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -14787,11 +14787,11 @@ SdaiBoolean_operand::StrToVal_content (const char * str, InstMgr * instances)
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << std::endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -14919,7 +14919,7 @@ SdaiBoolean_operand::operator SdaiSolid_model_ptr()
       return ((SdaiSolid_model_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -14934,7 +14934,7 @@ SdaiBoolean_operand::name_() const
   if( CurrentUnderlyingType () == config_control_designe_solid_model )
 	//  SOLID_MODEL
 	return ((SdaiSolid_model_ptr) _app_inst) ->name_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -14951,7 +14951,7 @@ SdaiBoolean_operand::name_ (const SdaiLabel x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -15020,11 +15020,11 @@ SdaiCertified_item::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << std::endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -15052,7 +15052,7 @@ SdaiCertified_item::STEPwrite_content (ostream& out, const char * currSch) const
   if (CurrentUnderlyingType () == config_control_designe_supplied_part_relationship)
 	_app_inst -> STEPwrite_reference (out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -15064,7 +15064,7 @@ SdaiCertified_item::ValueType() const
   if (CurrentUnderlyingType() == config_control_designe_supplied_part_relationship)
     return sdaiINSTANCE;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -15088,7 +15088,7 @@ SdaiCertified_item::STEPwrite_verbose (ostream& out, const char *currSch) const
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -15113,11 +15113,11 @@ SdaiCertified_item::STEPread_content (istream& in, InstMgr * instances,
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << std::endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -15130,11 +15130,11 @@ SdaiCertified_item::StrToVal_content (const char * str, InstMgr * instances)
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << std::endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -15262,7 +15262,7 @@ SdaiCertified_item::operator SdaiSupplied_part_relationship_ptr()
       return ((SdaiSupplied_part_relationship_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -15277,7 +15277,7 @@ SdaiCertified_item::related_product_definition_() const
   if( CurrentUnderlyingType () == config_control_designe_supplied_part_relationship )
 	//  SUPPLIED_PART_RELATIONSHIP
 	return ((SdaiSupplied_part_relationship_ptr) _app_inst) ->related_product_definition_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -15294,7 +15294,7 @@ SdaiCertified_item::related_product_definition_ (const SdaiProduct_definition_pt
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -15305,7 +15305,7 @@ SdaiCertified_item::relating_product_definition_() const
   if( CurrentUnderlyingType () == config_control_designe_supplied_part_relationship )
 	//  SUPPLIED_PART_RELATIONSHIP
 	return ((SdaiSupplied_part_relationship_ptr) _app_inst) ->relating_product_definition_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -15322,7 +15322,7 @@ SdaiCertified_item::relating_product_definition_ (const SdaiProduct_definition_p
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -15333,7 +15333,7 @@ SdaiCertified_item::description_() const
   if( CurrentUnderlyingType () == config_control_designe_supplied_part_relationship )
 	//  SUPPLIED_PART_RELATIONSHIP
 	return ((SdaiSupplied_part_relationship_ptr) _app_inst) ->description_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -15350,7 +15350,7 @@ SdaiCertified_item::description_ (const SdaiText x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -15361,7 +15361,7 @@ SdaiCertified_item::name_() const
   if( CurrentUnderlyingType () == config_control_designe_supplied_part_relationship )
 	//  SUPPLIED_PART_RELATIONSHIP
 	return ((SdaiSupplied_part_relationship_ptr) _app_inst) ->name_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -15378,7 +15378,7 @@ SdaiCertified_item::name_ (const SdaiLabel x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -15389,7 +15389,7 @@ SdaiCertified_item::id_() const
   if( CurrentUnderlyingType () == config_control_designe_supplied_part_relationship )
 	//  SUPPLIED_PART_RELATIONSHIP
 	return ((SdaiSupplied_part_relationship_ptr) _app_inst) ->id_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -15406,7 +15406,7 @@ SdaiCertified_item::id_ (const SdaiIdentifier x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -15487,11 +15487,11 @@ SdaiDate_time_select::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << std::endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -15523,7 +15523,7 @@ SdaiDate_time_select::STEPwrite_content (ostream& out, const char * currSch) con
   else if (CurrentUnderlyingType () == config_control_designe_date_and_time)
 	_app_inst -> STEPwrite_reference (out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -15539,7 +15539,7 @@ SdaiDate_time_select::ValueType() const
   else if (CurrentUnderlyingType() == config_control_designe_date_and_time)
     return sdaiINSTANCE;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -15575,7 +15575,7 @@ SdaiDate_time_select::STEPwrite_verbose (ostream& out, const char *currSch) cons
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -15626,11 +15626,11 @@ SdaiDate_time_select::STEPread_content (istream& in, InstMgr * instances,
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << std::endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -15643,11 +15643,11 @@ SdaiDate_time_select::StrToVal_content (const char * str, InstMgr * instances)
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << std::endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -15813,7 +15813,7 @@ SdaiDate_time_select::operator SdaiDate_ptr()
       return ((SdaiDate_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -15825,7 +15825,7 @@ SdaiDate_time_select::operator SdaiLocal_time_ptr()
       return ((SdaiLocal_time_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -15837,7 +15837,7 @@ SdaiDate_time_select::operator SdaiDate_and_time_ptr()
       return ((SdaiDate_and_time_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -15852,7 +15852,7 @@ SdaiDate_time_select::time_component_() const
   if( CurrentUnderlyingType () == config_control_designe_date_and_time )
 	//  DATE_AND_TIME
 	return ((SdaiDate_and_time_ptr) _app_inst) ->time_component_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -15869,7 +15869,7 @@ SdaiDate_time_select::time_component_ (const SdaiLocal_time_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -15880,7 +15880,7 @@ SdaiDate_time_select::date_component_() const
   if( CurrentUnderlyingType () == config_control_designe_date_and_time )
 	//  DATE_AND_TIME
 	return ((SdaiDate_and_time_ptr) _app_inst) ->date_component_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -15897,7 +15897,7 @@ SdaiDate_time_select::date_component_ (const SdaiDate_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -15908,7 +15908,7 @@ SdaiDate_time_select::zone_() const
   if( CurrentUnderlyingType () == config_control_designe_local_time )
 	//  LOCAL_TIME
 	return ((SdaiLocal_time_ptr) _app_inst) ->zone_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -15925,7 +15925,7 @@ SdaiDate_time_select::zone_ (const SdaiCoordinated_universal_time_offset_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -15936,7 +15936,7 @@ SdaiDate_time_select::second_component_() const
   if( CurrentUnderlyingType () == config_control_designe_local_time )
 	//  LOCAL_TIME
 	return ((SdaiLocal_time_ptr) _app_inst) ->second_component_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -15953,7 +15953,7 @@ SdaiDate_time_select::second_component_ (const SdaiSecond_in_minute x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -15964,7 +15964,7 @@ SdaiDate_time_select::minute_component_() const
   if( CurrentUnderlyingType () == config_control_designe_local_time )
 	//  LOCAL_TIME
 	return ((SdaiLocal_time_ptr) _app_inst) ->minute_component_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -15981,7 +15981,7 @@ SdaiDate_time_select::minute_component_ (const SdaiMinute_in_hour x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -15992,7 +15992,7 @@ SdaiDate_time_select::hour_component_() const
   if( CurrentUnderlyingType () == config_control_designe_local_time )
 	//  LOCAL_TIME
 	return ((SdaiLocal_time_ptr) _app_inst) ->hour_component_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -16009,7 +16009,7 @@ SdaiDate_time_select::hour_component_ (const SdaiHour_in_day x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -16020,7 +16020,7 @@ SdaiDate_time_select::year_component_() const
   if( CurrentUnderlyingType () == config_control_designe_date )
 	//  DATE
 	return ((SdaiDate_ptr) _app_inst) ->year_component_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -16037,7 +16037,7 @@ SdaiDate_time_select::year_component_ (const SdaiYear_number x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -16160,11 +16160,11 @@ SdaiCurve_on_surface::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << std::endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -16196,7 +16196,7 @@ SdaiCurve_on_surface::STEPwrite_content (ostream& out, const char * currSch) con
   else if (CurrentUnderlyingType () == config_control_designe_composite_curve_on_surface)
 	_app_inst -> STEPwrite_reference (out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -16212,7 +16212,7 @@ SdaiCurve_on_surface::ValueType() const
   else if (CurrentUnderlyingType() == config_control_designe_composite_curve_on_surface)
     return sdaiINSTANCE;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -16248,7 +16248,7 @@ SdaiCurve_on_surface::STEPwrite_verbose (ostream& out, const char *currSch) cons
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -16299,11 +16299,11 @@ SdaiCurve_on_surface::STEPread_content (istream& in, InstMgr * instances,
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << std::endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -16316,11 +16316,11 @@ SdaiCurve_on_surface::StrToVal_content (const char * str, InstMgr * instances)
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << std::endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -16486,7 +16486,7 @@ SdaiCurve_on_surface::operator SdaiPcurve_ptr()
       return ((SdaiPcurve_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -16498,7 +16498,7 @@ SdaiCurve_on_surface::operator SdaiSurface_curve_ptr()
       return ((SdaiSurface_curve_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -16510,7 +16510,7 @@ SdaiCurve_on_surface::operator SdaiComposite_curve_on_surface_ptr()
       return ((SdaiComposite_curve_on_surface_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -16525,7 +16525,7 @@ SdaiCurve_on_surface::self_intersect_() const
   if( CurrentUnderlyingType () == config_control_designe_composite_curve_on_surface )
 	//  COMPOSITE_CURVE_ON_SURFACE
 	return ((SdaiComposite_curve_on_surface_ptr) _app_inst) ->self_intersect_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return (SCLLOG(Logical)) 0;
 }
@@ -16542,7 +16542,7 @@ SdaiCurve_on_surface::self_intersect_ (const SCLLOG(Logical) x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -16553,7 +16553,7 @@ SdaiCurve_on_surface::segments_() const
   if( CurrentUnderlyingType () == config_control_designe_composite_curve_on_surface )
 	//  COMPOSITE_CURVE_ON_SURFACE
 	return ((SdaiComposite_curve_on_surface_ptr) _app_inst) ->segments_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -16570,7 +16570,7 @@ SdaiCurve_on_surface::segments_ (const EntityAggregate_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -16581,7 +16581,7 @@ SdaiCurve_on_surface::master_representation_() const
   if( CurrentUnderlyingType () == config_control_designe_surface_curve )
 	//  SURFACE_CURVE
 	return ((SdaiSurface_curve_ptr) _app_inst) ->master_representation_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return (Preferred_surface_curve_representation) 0;
 }
@@ -16598,7 +16598,7 @@ SdaiCurve_on_surface::master_representation_ (const SdaiPreferred_surface_curve_
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -16609,7 +16609,7 @@ SdaiCurve_on_surface::associated_geometry_() const
   if( CurrentUnderlyingType () == config_control_designe_surface_curve )
 	//  SURFACE_CURVE
 	return ((SdaiSurface_curve_ptr) _app_inst) ->associated_geometry_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -16626,7 +16626,7 @@ SdaiCurve_on_surface::associated_geometry_ (const SdaiPcurve_or_surfaces_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -16637,7 +16637,7 @@ SdaiCurve_on_surface::curve_3d_() const
   if( CurrentUnderlyingType () == config_control_designe_surface_curve )
 	//  SURFACE_CURVE
 	return ((SdaiSurface_curve_ptr) _app_inst) ->curve_3d_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -16654,7 +16654,7 @@ SdaiCurve_on_surface::curve_3d_ (const SdaiCurve_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -16665,7 +16665,7 @@ SdaiCurve_on_surface::reference_to_curve_() const
   if( CurrentUnderlyingType () == config_control_designe_pcurve )
 	//  PCURVE
 	return ((SdaiPcurve_ptr) _app_inst) ->reference_to_curve_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -16682,7 +16682,7 @@ SdaiCurve_on_surface::reference_to_curve_ (const SdaiDefinitional_representation
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -16695,7 +16695,7 @@ SdaiCurve_on_surface::basis_surface_() const
 	return ((SdaiPcurve_ptr) _app_inst) ->basis_surface_();
   //  for SURFACE_CURVE  attribute is derived
   //  for COMPOSITE_CURVE_ON_SURFACE  attribute is derived
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -16714,7 +16714,7 @@ SdaiCurve_on_surface::basis_surface_ (const SdaiSurface_ptr x)
   //  for COMPOSITE_CURVE_ON_SURFACE  attribute is derived
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -16731,7 +16731,7 @@ SdaiCurve_on_surface::name_() const
   if( CurrentUnderlyingType () == config_control_designe_composite_curve_on_surface )
 	//  COMPOSITE_CURVE_ON_SURFACE
 	return ((SdaiComposite_curve_on_surface_ptr) _app_inst) ->name_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -16758,7 +16758,7 @@ SdaiCurve_on_surface::name_ (const SdaiLabel x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -16869,11 +16869,11 @@ SdaiTrimming_select::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << std::endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -16903,7 +16903,7 @@ SdaiTrimming_select::STEPwrite_content (ostream& out, const char * currSch) cons
   else if (CurrentUnderlyingType () == config_control_designt_parameter_value)
 	WriteReal(_real,out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -16917,7 +16917,7 @@ SdaiTrimming_select::ValueType() const
   else if (CurrentUnderlyingType() == config_control_designt_parameter_value)
     return sdaiREAL;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -16947,7 +16947,7 @@ SdaiTrimming_select::STEPwrite_verbose (ostream& out, const char *currSch) const
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -16976,11 +16976,11 @@ SdaiTrimming_select::STEPread_content (istream& in, InstMgr * instances,
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << std::endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -16993,11 +16993,11 @@ SdaiTrimming_select::StrToVal_content (const char * str, InstMgr * instances)
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << std::endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -17144,7 +17144,7 @@ SdaiTrimming_select::operator SdaiCartesian_point_ptr()
       return ((SdaiCartesian_point_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -17159,7 +17159,7 @@ SdaiTrimming_select::operator SdaiParameter_value()
    Error( "Underlying type is not SdaiParameter_value" );
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return 0;
@@ -17174,7 +17174,7 @@ SdaiTrimming_select::coordinates_() const
   if( CurrentUnderlyingType () == config_control_designe_cartesian_point )
 	//  CARTESIAN_POINT
 	return ((SdaiCartesian_point_ptr) _app_inst) ->coordinates_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -17191,7 +17191,7 @@ SdaiTrimming_select::coordinates_ (const RealAggregate_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -17202,7 +17202,7 @@ SdaiTrimming_select::name_() const
   if( CurrentUnderlyingType () == config_control_designe_cartesian_point )
 	//  CARTESIAN_POINT
 	return ((SdaiCartesian_point_ptr) _app_inst) ->name_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -17219,7 +17219,7 @@ SdaiTrimming_select::name_ (const SdaiLabel x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -17309,11 +17309,11 @@ SdaiContracted_item::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << std::endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -17341,7 +17341,7 @@ SdaiContracted_item::STEPwrite_content (ostream& out, const char * currSch) cons
   if (CurrentUnderlyingType () == config_control_designe_product_definition_formation)
 	_app_inst -> STEPwrite_reference (out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -17353,7 +17353,7 @@ SdaiContracted_item::ValueType() const
   if (CurrentUnderlyingType() == config_control_designe_product_definition_formation)
     return sdaiINSTANCE;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -17377,7 +17377,7 @@ SdaiContracted_item::STEPwrite_verbose (ostream& out, const char *currSch) const
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -17402,11 +17402,11 @@ SdaiContracted_item::STEPread_content (istream& in, InstMgr * instances,
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << std::endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -17419,11 +17419,11 @@ SdaiContracted_item::StrToVal_content (const char * str, InstMgr * instances)
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << std::endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -17551,7 +17551,7 @@ SdaiContracted_item::operator SdaiProduct_definition_formation_ptr()
       return ((SdaiProduct_definition_formation_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -17566,7 +17566,7 @@ SdaiContracted_item::of_product_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition_formation )
 	//  PRODUCT_DEFINITION_FORMATION
 	return ((SdaiProduct_definition_formation_ptr) _app_inst) ->of_product_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -17583,7 +17583,7 @@ SdaiContracted_item::of_product_ (const SdaiProduct_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -17594,7 +17594,7 @@ SdaiContracted_item::description_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition_formation )
 	//  PRODUCT_DEFINITION_FORMATION
 	return ((SdaiProduct_definition_formation_ptr) _app_inst) ->description_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -17611,7 +17611,7 @@ SdaiContracted_item::description_ (const SdaiText x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -17622,7 +17622,7 @@ SdaiContracted_item::id_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition_formation )
 	//  PRODUCT_DEFINITION_FORMATION
 	return ((SdaiProduct_definition_formation_ptr) _app_inst) ->id_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -17639,7 +17639,7 @@ SdaiContracted_item::id_ (const SdaiIdentifier x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -17708,11 +17708,11 @@ SdaiUnit::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << std::endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -17740,7 +17740,7 @@ SdaiUnit::STEPwrite_content (ostream& out, const char * currSch) const
   if (CurrentUnderlyingType () == config_control_designe_named_unit)
 	_app_inst -> STEPwrite_reference (out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -17752,7 +17752,7 @@ SdaiUnit::ValueType() const
   if (CurrentUnderlyingType() == config_control_designe_named_unit)
     return sdaiINSTANCE;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -17776,7 +17776,7 @@ SdaiUnit::STEPwrite_verbose (ostream& out, const char *currSch) const
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -17801,11 +17801,11 @@ SdaiUnit::STEPread_content (istream& in, InstMgr * instances,
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << std::endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -17818,11 +17818,11 @@ SdaiUnit::StrToVal_content (const char * str, InstMgr * instances)
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << std::endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -17950,7 +17950,7 @@ SdaiUnit::operator SdaiNamed_unit_ptr()
       return ((SdaiNamed_unit_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -17965,7 +17965,7 @@ SdaiUnit::dimensions_() const
   if( CurrentUnderlyingType () == config_control_designe_named_unit )
 	//  NAMED_UNIT
 	return ((SdaiNamed_unit_ptr) _app_inst) ->dimensions_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -17982,7 +17982,7 @@ SdaiUnit::dimensions_ (const SdaiDimensional_exponents_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -18051,11 +18051,11 @@ SdaiReversible_topology::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << std::endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -18087,7 +18087,7 @@ SdaiReversible_topology::STEPwrite_content (ostream& out, const char * currSch) 
   else if (CurrentUnderlyingType () == config_control_designt_set_of_reversible_topology_item)
 	_sdaireversible_topology_items.STEPwrite (out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -18103,7 +18103,7 @@ SdaiReversible_topology::ValueType() const
   else if (CurrentUnderlyingType() == config_control_designt_set_of_reversible_topology_item)
     return SET_TYPE;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -18139,7 +18139,7 @@ SdaiReversible_topology::STEPwrite_verbose (ostream& out, const char *currSch) c
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -18167,11 +18167,11 @@ SdaiReversible_topology::STEPread_content (istream& in, InstMgr * instances,
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << std::endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -18186,11 +18186,11 @@ SdaiReversible_topology::StrToVal_content (const char * str, InstMgr * instances
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << std::endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -18344,7 +18344,7 @@ SdaiReversible_topology::operator SdaiReversible_topology_item_ptr()
    Error( "Underlying type is not SdaiReversible_topology_item_ptr" );
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return 0;
@@ -18361,7 +18361,7 @@ SdaiReversible_topology::operator SdaiSet_of_reversible_topology_item_ptr()
    Error( "Underlying type is not SdaiSet_of_reversible_topology_item_ptr" );
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return (SdaiSet_of_reversible_topology_item_ptr)0;
@@ -18477,11 +18477,11 @@ SdaiWork_item::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << std::endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -18509,7 +18509,7 @@ SdaiWork_item::STEPwrite_content (ostream& out, const char * currSch) const
   if (CurrentUnderlyingType () == config_control_designe_product_definition_formation)
 	_app_inst -> STEPwrite_reference (out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -18521,7 +18521,7 @@ SdaiWork_item::ValueType() const
   if (CurrentUnderlyingType() == config_control_designe_product_definition_formation)
     return sdaiINSTANCE;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -18545,7 +18545,7 @@ SdaiWork_item::STEPwrite_verbose (ostream& out, const char *currSch) const
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -18570,11 +18570,11 @@ SdaiWork_item::STEPread_content (istream& in, InstMgr * instances,
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << std::endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -18587,11 +18587,11 @@ SdaiWork_item::StrToVal_content (const char * str, InstMgr * instances)
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << std::endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -18719,7 +18719,7 @@ SdaiWork_item::operator SdaiProduct_definition_formation_ptr()
       return ((SdaiProduct_definition_formation_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -18734,7 +18734,7 @@ SdaiWork_item::of_product_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition_formation )
 	//  PRODUCT_DEFINITION_FORMATION
 	return ((SdaiProduct_definition_formation_ptr) _app_inst) ->of_product_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -18751,7 +18751,7 @@ SdaiWork_item::of_product_ (const SdaiProduct_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -18762,7 +18762,7 @@ SdaiWork_item::description_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition_formation )
 	//  PRODUCT_DEFINITION_FORMATION
 	return ((SdaiProduct_definition_formation_ptr) _app_inst) ->description_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -18779,7 +18779,7 @@ SdaiWork_item::description_ (const SdaiText x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -18790,7 +18790,7 @@ SdaiWork_item::id_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition_formation )
 	//  PRODUCT_DEFINITION_FORMATION
 	return ((SdaiProduct_definition_formation_ptr) _app_inst) ->id_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -18807,7 +18807,7 @@ SdaiWork_item::id_ (const SdaiIdentifier x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -18888,11 +18888,11 @@ SdaiSupported_item::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << std::endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -18924,7 +18924,7 @@ SdaiSupported_item::STEPwrite_content (ostream& out, const char * currSch) const
   else if (CurrentUnderlyingType () == config_control_designe_action_method)
 	_app_inst -> STEPwrite_reference (out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -18940,7 +18940,7 @@ SdaiSupported_item::ValueType() const
   else if (CurrentUnderlyingType() == config_control_designe_action_method)
     return sdaiINSTANCE;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -18976,7 +18976,7 @@ SdaiSupported_item::STEPwrite_verbose (ostream& out, const char *currSch) const
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -19027,11 +19027,11 @@ SdaiSupported_item::STEPread_content (istream& in, InstMgr * instances,
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << std::endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -19044,11 +19044,11 @@ SdaiSupported_item::StrToVal_content (const char * str, InstMgr * instances)
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << std::endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -19214,7 +19214,7 @@ SdaiSupported_item::operator SdaiAction_directive_ptr()
       return ((SdaiAction_directive_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -19226,7 +19226,7 @@ SdaiSupported_item::operator SdaiAction_ptr()
       return ((SdaiAction_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -19238,7 +19238,7 @@ SdaiSupported_item::operator SdaiAction_method_ptr()
       return ((SdaiAction_method_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -19253,7 +19253,7 @@ SdaiSupported_item::purpose_() const
   if( CurrentUnderlyingType () == config_control_designe_action_method )
 	//  ACTION_METHOD
 	return ((SdaiAction_method_ptr) _app_inst) ->purpose_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -19270,7 +19270,7 @@ SdaiSupported_item::purpose_ (const SdaiText x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -19281,7 +19281,7 @@ SdaiSupported_item::consequence_() const
   if( CurrentUnderlyingType () == config_control_designe_action_method )
 	//  ACTION_METHOD
 	return ((SdaiAction_method_ptr) _app_inst) ->consequence_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -19298,7 +19298,7 @@ SdaiSupported_item::consequence_ (const SdaiText x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -19309,7 +19309,7 @@ SdaiSupported_item::chosen_method_() const
   if( CurrentUnderlyingType () == config_control_designe_action )
 	//  ACTION
 	return ((SdaiAction_ptr) _app_inst) ->chosen_method_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -19326,7 +19326,7 @@ SdaiSupported_item::chosen_method_ (const SdaiAction_method_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -19337,7 +19337,7 @@ SdaiSupported_item::requests_() const
   if( CurrentUnderlyingType () == config_control_designe_action_directive )
 	//  ACTION_DIRECTIVE
 	return ((SdaiAction_directive_ptr) _app_inst) ->requests_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -19354,7 +19354,7 @@ SdaiSupported_item::requests_ (const EntityAggregate_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -19365,7 +19365,7 @@ SdaiSupported_item::comment_() const
   if( CurrentUnderlyingType () == config_control_designe_action_directive )
 	//  ACTION_DIRECTIVE
 	return ((SdaiAction_directive_ptr) _app_inst) ->comment_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -19382,7 +19382,7 @@ SdaiSupported_item::comment_ (const SdaiText x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -19393,7 +19393,7 @@ SdaiSupported_item::analysis_() const
   if( CurrentUnderlyingType () == config_control_designe_action_directive )
 	//  ACTION_DIRECTIVE
 	return ((SdaiAction_directive_ptr) _app_inst) ->analysis_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -19410,7 +19410,7 @@ SdaiSupported_item::analysis_ (const SdaiText x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -19427,7 +19427,7 @@ SdaiSupported_item::description_() const
   if( CurrentUnderlyingType () == config_control_designe_action_method )
 	//  ACTION_METHOD
 	return ((SdaiAction_method_ptr) _app_inst) ->description_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -19454,7 +19454,7 @@ SdaiSupported_item::description_ (const SdaiText x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -19471,7 +19471,7 @@ SdaiSupported_item::name_() const
   if( CurrentUnderlyingType () == config_control_designe_action_method )
 	//  ACTION_METHOD
 	return ((SdaiAction_method_ptr) _app_inst) ->name_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -19498,7 +19498,7 @@ SdaiSupported_item::name_ (const SdaiLabel x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -19669,11 +19669,11 @@ SdaiApproved_item::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << std::endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -19721,7 +19721,7 @@ SdaiApproved_item::STEPwrite_content (ostream& out, const char * currSch) const
   else if (CurrentUnderlyingType () == config_control_designe_contract)
 	_app_inst -> STEPwrite_reference (out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -19753,7 +19753,7 @@ SdaiApproved_item::ValueType() const
   else if (CurrentUnderlyingType() == config_control_designe_contract)
     return sdaiINSTANCE;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -19837,7 +19837,7 @@ SdaiApproved_item::STEPwrite_verbose (ostream& out, const char *currSch) const
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -19992,11 +19992,11 @@ SdaiApproved_item::STEPread_content (istream& in, InstMgr * instances,
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << std::endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -20009,11 +20009,11 @@ SdaiApproved_item::StrToVal_content (const char * str, InstMgr * instances)
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << std::endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -20331,7 +20331,7 @@ SdaiApproved_item::operator SdaiProduct_definition_formation_ptr()
       return ((SdaiProduct_definition_formation_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -20343,7 +20343,7 @@ SdaiApproved_item::operator SdaiProduct_definition_ptr()
       return ((SdaiProduct_definition_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -20355,7 +20355,7 @@ SdaiApproved_item::operator SdaiConfiguration_effectivity_ptr()
       return ((SdaiConfiguration_effectivity_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -20367,7 +20367,7 @@ SdaiApproved_item::operator SdaiConfiguration_item_ptr()
       return ((SdaiConfiguration_item_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -20379,7 +20379,7 @@ SdaiApproved_item::operator SdaiSecurity_classification_ptr()
       return ((SdaiSecurity_classification_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -20391,7 +20391,7 @@ SdaiApproved_item::operator SdaiChange_request_ptr()
       return ((SdaiChange_request_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -20403,7 +20403,7 @@ SdaiApproved_item::operator SdaiChange_ptr()
       return ((SdaiChange_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -20415,7 +20415,7 @@ SdaiApproved_item::operator SdaiStart_request_ptr()
       return ((SdaiStart_request_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -20427,7 +20427,7 @@ SdaiApproved_item::operator SdaiStart_work_ptr()
       return ((SdaiStart_work_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -20439,7 +20439,7 @@ SdaiApproved_item::operator SdaiCertification_ptr()
       return ((SdaiCertification_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -20451,7 +20451,7 @@ SdaiApproved_item::operator SdaiContract_ptr()
       return ((SdaiContract_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -20468,7 +20468,7 @@ SdaiApproved_item::kind_() const
 	return ((SdaiCertification_ptr) _app_inst) ->kind_();
   //  CONTRACT
 	//  attribute access function has a different return type
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -20486,7 +20486,7 @@ SdaiApproved_item::kind_ (const SdaiCertification_type_ptr x)
   //  for CONTRACT  attribute access function has a different argument type
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -20500,7 +20500,7 @@ SdaiApproved_item::assigned_action_() const
   if( CurrentUnderlyingType () == config_control_designe_start_work )
 	//  START_WORK
 	return ((SdaiStart_work_ptr) _app_inst) ->assigned_action_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -20522,7 +20522,7 @@ SdaiApproved_item::assigned_action_ (const SdaiAction_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -20539,7 +20539,7 @@ SdaiApproved_item::items_() const
 	//  attribute access function has a different return type
   //  START_WORK
 	//  attribute access function has a different return type
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -20559,7 +20559,7 @@ SdaiApproved_item::items_ (const SdaiChange_request_items_ptr x)
   //  for START_WORK  attribute access function has a different argument type
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -20573,7 +20573,7 @@ SdaiApproved_item::assigned_action_request_() const
   if( CurrentUnderlyingType () == config_control_designe_start_request )
 	//  START_REQUEST
 	return ((SdaiStart_request_ptr) _app_inst) ->assigned_action_request_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -20595,7 +20595,7 @@ SdaiApproved_item::assigned_action_request_ (const SdaiVersioned_action_request_
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -20606,7 +20606,7 @@ SdaiApproved_item::security_level_() const
   if( CurrentUnderlyingType () == config_control_designe_security_classification )
 	//  SECURITY_CLASSIFICATION
 	return ((SdaiSecurity_classification_ptr) _app_inst) ->security_level_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -20623,7 +20623,7 @@ SdaiApproved_item::security_level_ (const SdaiSecurity_classification_level_ptr 
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -20643,7 +20643,7 @@ SdaiApproved_item::purpose_() const
   if( CurrentUnderlyingType () == config_control_designe_contract )
 	//  CONTRACT
 	return ((SdaiContract_ptr) _app_inst) ->purpose_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -20675,7 +20675,7 @@ SdaiApproved_item::purpose_ (const SdaiLabel x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -20686,7 +20686,7 @@ SdaiApproved_item::item_concept_() const
   if( CurrentUnderlyingType () == config_control_designe_configuration_item )
 	//  CONFIGURATION_ITEM
 	return ((SdaiConfiguration_item_ptr) _app_inst) ->item_concept_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -20703,7 +20703,7 @@ SdaiApproved_item::item_concept_ (const SdaiProduct_concept_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -20723,7 +20723,7 @@ SdaiApproved_item::name_() const
   if( CurrentUnderlyingType () == config_control_designe_contract )
 	//  CONTRACT
 	return ((SdaiContract_ptr) _app_inst) ->name_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -20755,7 +20755,7 @@ SdaiApproved_item::name_ (const SdaiLabel x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -20766,7 +20766,7 @@ SdaiApproved_item::configuration_() const
   if( CurrentUnderlyingType () == config_control_designe_configuration_effectivity )
 	//  CONFIGURATION_EFFECTIVITY
 	return ((SdaiConfiguration_effectivity_ptr) _app_inst) ->configuration_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -20783,7 +20783,7 @@ SdaiApproved_item::configuration_ (const SdaiConfiguration_design_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -20794,7 +20794,7 @@ SdaiApproved_item::usage_() const
   if( CurrentUnderlyingType () == config_control_designe_configuration_effectivity )
 	//  CONFIGURATION_EFFECTIVITY
 	return ((SdaiConfiguration_effectivity_ptr) _app_inst) ->usage_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -20811,7 +20811,7 @@ SdaiApproved_item::usage_ (const SdaiProduct_definition_relationship_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -20822,7 +20822,7 @@ SdaiApproved_item::frame_of_reference_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition )
 	//  PRODUCT_DEFINITION
 	return ((SdaiProduct_definition_ptr) _app_inst) ->frame_of_reference_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -20839,7 +20839,7 @@ SdaiApproved_item::frame_of_reference_ (const SdaiProduct_definition_context_ptr
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -20850,7 +20850,7 @@ SdaiApproved_item::formation_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition )
 	//  PRODUCT_DEFINITION
 	return ((SdaiProduct_definition_ptr) _app_inst) ->formation_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -20867,7 +20867,7 @@ SdaiApproved_item::formation_ (const SdaiProduct_definition_formation_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -20878,7 +20878,7 @@ SdaiApproved_item::of_product_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition_formation )
 	//  PRODUCT_DEFINITION_FORMATION
 	return ((SdaiProduct_definition_formation_ptr) _app_inst) ->of_product_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -20895,7 +20895,7 @@ SdaiApproved_item::of_product_ (const SdaiProduct_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -20912,7 +20912,7 @@ SdaiApproved_item::description_() const
   if( CurrentUnderlyingType () == config_control_designe_configuration_item )
 	//  CONFIGURATION_ITEM
 	return ((SdaiConfiguration_item_ptr) _app_inst) ->description_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -20939,7 +20939,7 @@ SdaiApproved_item::description_ (const SdaiText x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -20959,7 +20959,7 @@ SdaiApproved_item::id_() const
   if( CurrentUnderlyingType () == config_control_designe_configuration_item )
 	//  CONFIGURATION_ITEM
 	return ((SdaiConfiguration_item_ptr) _app_inst) ->id_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -20991,7 +20991,7 @@ SdaiApproved_item::id_ (const SdaiIdentifier x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -21270,11 +21270,11 @@ SdaiSurface_model::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << std::endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -21302,7 +21302,7 @@ SdaiSurface_model::STEPwrite_content (ostream& out, const char * currSch) const
   if (CurrentUnderlyingType () == config_control_designe_shell_based_surface_model)
 	_app_inst -> STEPwrite_reference (out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -21314,7 +21314,7 @@ SdaiSurface_model::ValueType() const
   if (CurrentUnderlyingType() == config_control_designe_shell_based_surface_model)
     return sdaiINSTANCE;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -21338,7 +21338,7 @@ SdaiSurface_model::STEPwrite_verbose (ostream& out, const char *currSch) const
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -21363,11 +21363,11 @@ SdaiSurface_model::STEPread_content (istream& in, InstMgr * instances,
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << std::endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -21380,11 +21380,11 @@ SdaiSurface_model::StrToVal_content (const char * str, InstMgr * instances)
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << std::endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -21512,7 +21512,7 @@ SdaiSurface_model::operator SdaiShell_based_surface_model_ptr()
       return ((SdaiShell_based_surface_model_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -21527,7 +21527,7 @@ SdaiSurface_model::sbsm_boundary_() const
   if( CurrentUnderlyingType () == config_control_designe_shell_based_surface_model )
 	//  SHELL_BASED_SURFACE_MODEL
 	return ((SdaiShell_based_surface_model_ptr) _app_inst) ->sbsm_boundary_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -21544,7 +21544,7 @@ SdaiSurface_model::sbsm_boundary_ (const SdaiShells_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -21555,7 +21555,7 @@ SdaiSurface_model::name_() const
   if( CurrentUnderlyingType () == config_control_designe_shell_based_surface_model )
 	//  SHELL_BASED_SURFACE_MODEL
 	return ((SdaiShell_based_surface_model_ptr) _app_inst) ->name_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -21572,7 +21572,7 @@ SdaiSurface_model::name_ (const SdaiLabel x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }

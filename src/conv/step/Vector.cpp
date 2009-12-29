@@ -94,9 +94,9 @@ Vector::Print(int level) {
 	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
 	TAB(level); std::cout << "Attributes:" << std::endl;
-	TAB(level+1);cout << "orientation:" << std::endl;
+	TAB(level+1);std::cout << "orientation:" << std::endl;
 	orientation->Print(level+1);
-	TAB(level+1);cout << "magnitude:" << magnitude << std::endl;
+	TAB(level+1);std::cout << "magnitude:" << magnitude << std::endl;
 }
 STEPEntity *
 Vector::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
