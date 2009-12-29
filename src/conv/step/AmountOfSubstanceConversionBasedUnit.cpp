@@ -41,9 +41,9 @@ AmountOfSubstanceConversionBasedUnit::AmountOfSubstanceConversionBasedUnit() {
 	id = 0;
 }
 
-AmountOfSubstanceConversionBasedUnit::AmountOfSubstanceConversionBasedUnit(STEPWrapper *sw,int STEPid) {
+AmountOfSubstanceConversionBasedUnit::AmountOfSubstanceConversionBasedUnit(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 AmountOfSubstanceConversionBasedUnit::~AmountOfSubstanceConversionBasedUnit() {
@@ -57,11 +57,11 @@ AmountOfSubstanceConversionBasedUnit::Load(STEPWrapper *sw,SCLP23(Application_in
 
 	// load base class attributes
 	if ( !AmountOfSubstanceUnit::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::Unit." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 		return false;
 	}
 	if ( !ConversionBasedUnit::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::Unit." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 		return false;
 	}
 
@@ -70,10 +70,10 @@ AmountOfSubstanceConversionBasedUnit::Load(STEPWrapper *sw,SCLP23(Application_in
 
 void
 AmountOfSubstanceConversionBasedUnit::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	AmountOfSubstanceUnit::Print(level+1);
 	ConversionBasedUnit::Print(level+1);
 
@@ -87,7 +87,7 @@ AmountOfSubstanceConversionBasedUnit::Create(STEPWrapper *sw, SCLP23(Application
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

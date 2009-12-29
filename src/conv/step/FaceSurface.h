@@ -48,7 +48,7 @@ protected:
 public:
 	FaceSurface();
 	virtual ~FaceSurface();
-	FaceSurface(STEPWrapper *sw, int STEPid);
+	FaceSurface(STEPWrapper *sw,int step_id);
 	void AddFace(ON_Brep *brep);
 	bool Load(STEPWrapper *sw, SCLP23(Application_instance) *sse);
 	virtual bool LoadONBrep(ON_Brep *brep);

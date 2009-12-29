@@ -36,7 +36,7 @@ protected:
 
 public:
 	DefinitionalRepresentation();
-	DefinitionalRepresentation(STEPWrapper *sw, int STEPid);
+	DefinitionalRepresentation(STEPWrapper *sw,int step_id);
 	virtual ~DefinitionalRepresentation();
 	bool Load(STEPWrapper *sw, SCLP23(Application_instance) *sse);
 	virtual void Print(int level);

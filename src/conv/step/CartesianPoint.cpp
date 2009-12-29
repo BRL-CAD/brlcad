@@ -37,9 +37,9 @@ CartesianPoint::CartesianPoint() {
 	vertex_index = -1;
 }
 
-CartesianPoint::CartesianPoint(STEPWrapper *sw, int STEPid) {
+CartesianPoint::CartesianPoint(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 	vertex_index = -1;
 }
 
@@ -54,7 +54,7 @@ CartesianPoint::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 	// load base class attributes
 	if ( !Point::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::Point." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::Point." << std::endl;
 		return false;
 	}
 
@@ -72,23 +72,23 @@ CartesianPoint::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 			rn = (RealNode *)rn->NextNode();
 		}
 	} else {
-		cout << CLASSNAME << ": error loading 'coordinate' attribute." << endl;
+		std::cout << CLASSNAME << ": error loading 'coordinate' attribute." << std::endl;
 	}
 	return true;
 }
 
 void
 CartesianPoint::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << name << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Attributes:" << endl;
-	TAB(level+1); cout << "coordinate:";
-	cout << "(" << coordinates[0] << ",";
-	cout << coordinates[1] << ",";
-	cout << coordinates[2] << ")" << endl;
+	TAB(level); std::cout << "Attributes:" << std::endl;
+	TAB(level+1); std::cout << "coordinate:";
+	std::cout << "(" << coordinates[0] << ",";
+	std::cout << coordinates[1] << ",";
+	std::cout << coordinates[2] << ")" << std::endl;
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	Point::Print(level+1);
 }
 
@@ -101,7 +101,7 @@ CartesianPoint::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

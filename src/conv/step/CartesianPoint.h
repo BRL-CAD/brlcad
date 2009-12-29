@@ -39,7 +39,7 @@ protected:
 public:
 	CartesianPoint();
 	virtual ~CartesianPoint();
-	CartesianPoint(STEPWrapper *sw,int STEPid);
+	CartesianPoint(STEPWrapper *sw,int step_id);
 	bool Load(STEPWrapper *sw,SCLP23(Application_instance) *sse);
 	virtual bool LoadONBrep(ON_Brep *brep);
 	virtual void AddVertex(ON_Brep *brep);

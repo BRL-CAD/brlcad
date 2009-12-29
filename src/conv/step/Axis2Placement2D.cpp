@@ -42,9 +42,9 @@ Axis2Placement2D::Axis2Placement2D() {
 	ref_direction = NULL;
 }
 
-Axis2Placement2D::Axis2Placement2D(STEPWrapper *sw,int STEPid) {
+Axis2Placement2D::Axis2Placement2D(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 	ref_direction = NULL;
 }
 
@@ -116,7 +116,7 @@ Axis2Placement2D::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 	id = sse->STEPfile_id;
 
 	if ( !Placement::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::Placement." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::Placement." << std::endl;
 		return false;
 	}
 
@@ -140,14 +140,14 @@ Axis2Placement2D::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 void
 Axis2Placement2D::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << std::endl;
 
-	TAB(level); cout << "Attributes:" << endl;
-	TAB(level+1); cout << "ref_direction:" << endl;
+	TAB(level); std::cout << "Attributes:" << std::endl;
+	TAB(level+1); std::cout << "ref_direction:" << std::endl;
 	if (ref_direction)
 		ref_direction->Print(level+1);
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	Placement::Print(level+1);
 
 }
@@ -161,7 +161,7 @@ Axis2Placement2D::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}
@@ -174,7 +174,7 @@ Axis2Placement2D::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 bool
 Axis2Placement2D::LoadONBrep(ON_Brep *brep)
 {
-	cerr << "Error: ::LoadONBrep(ON_Brep *brep) not implemented for " << entityname << endl;
+	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implemented for " << entityname << std::endl;
 	return false;
 }
 

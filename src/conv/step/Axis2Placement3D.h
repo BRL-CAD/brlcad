@@ -47,7 +47,7 @@ protected:
 public:
 	Axis2Placement3D();
 	virtual ~Axis2Placement3D();
-	Axis2Placement3D(STEPWrapper *sw,int STEPid);
+	Axis2Placement3D(STEPWrapper *sw,int step_id);
 	const double *GetAxis(int i);
 	virtual const double *GetOrigin();
 	virtual const double *GetNormal();

@@ -39,7 +39,7 @@ protected:
 public:
 	AreaConversionBasedUnit();
 	virtual ~AreaConversionBasedUnit();
-	AreaConversionBasedUnit(STEPWrapper *sw,int STEPid);
+	AreaConversionBasedUnit(STEPWrapper *sw,int step_id);
 	bool Load(STEPWrapper *sw,SCLP23(Application_instance) *sse);
 	virtual void Print(int level);
 

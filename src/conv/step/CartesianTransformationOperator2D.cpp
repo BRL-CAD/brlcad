@@ -38,9 +38,9 @@ CartesianTransformationOperator2D::CartesianTransformationOperator2D() {
 	id = 0;
 }
 
-CartesianTransformationOperator2D::CartesianTransformationOperator2D(STEPWrapper *sw,int STEPid) {
+CartesianTransformationOperator2D::CartesianTransformationOperator2D(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 CartesianTransformationOperator2D::~CartesianTransformationOperator2D() {
@@ -52,7 +52,7 @@ CartesianTransformationOperator2D::Load(STEPWrapper *sw,SCLP23(Application_insta
 	id = sse->STEPfile_id;
 
 	if ( !CartesianTransformationOperator::Load(sw,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::CartesianTransformationOperator." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::CartesianTransformationOperator." << std::endl;
 		return false;
 	}
 
@@ -61,10 +61,10 @@ CartesianTransformationOperator2D::Load(STEPWrapper *sw,SCLP23(Application_insta
 
 void
 CartesianTransformationOperator2D::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << GeometricRepresentationItem::name << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << GeometricRepresentationItem::name << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	CartesianTransformationOperator::Print(level+1);
 }
 
@@ -77,7 +77,7 @@ CartesianTransformationOperator2D::Create(STEPWrapper *sw, SCLP23(Application_in
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}
@@ -90,7 +90,7 @@ CartesianTransformationOperator2D::Create(STEPWrapper *sw, SCLP23(Application_in
 bool
 CartesianTransformationOperator2D::LoadONBrep(ON_Brep *brep)
 {
-	cerr << "Error: ::LoadONBrep(ON_Brep *brep) not implemented for " << entityname << endl;
+	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implemented for " << entityname << std::endl;
 	return false;
 }
 

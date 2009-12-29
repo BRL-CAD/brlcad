@@ -43,7 +43,7 @@ protected:
 public:
 	Edge();
 	virtual ~Edge();
-	Edge(STEPWrapper *sw,int STEPid);
+	Edge(STEPWrapper *sw,int step_id);
 	Vertex *GetEdgeStart() { return edge_start; };
 	Vertex *GetEdgeEnd() { return edge_end; };
 	bool Load(STEPWrapper *sw,SCLP23(Application_instance) *sse);

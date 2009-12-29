@@ -42,7 +42,7 @@ protected:
 public:
 	ConversionBasedUnit();
 	virtual ~ConversionBasedUnit();
-	ConversionBasedUnit(STEPWrapper *sw,int STEPid);
+	ConversionBasedUnit(STEPWrapper *sw,int step_id);
 	double GetLengthConversionFactor();
 	double GetPlaneAngleConversionFactor();
 	double GetSolidAngleConversionFactor();

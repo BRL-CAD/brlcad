@@ -46,7 +46,7 @@ protected:
 public:
 	Axis2Placement2D();
 	virtual ~Axis2Placement2D();
-	Axis2Placement2D(STEPWrapper *sw,int STEPid);
+	Axis2Placement2D(STEPWrapper *sw,int step_id);
 	const double *GetAxis(int i);
 	virtual const double *GetOrigin();
 	virtual const double *GetNormal();

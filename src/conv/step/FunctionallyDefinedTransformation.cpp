@@ -38,9 +38,9 @@ FunctionallyDefinedTransformation::FunctionallyDefinedTransformation() {
 	id = 0;
 }
 
-FunctionallyDefinedTransformation::FunctionallyDefinedTransformation(STEPWrapper *sw,int STEPid) {
+FunctionallyDefinedTransformation::FunctionallyDefinedTransformation(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 FunctionallyDefinedTransformation::~FunctionallyDefinedTransformation() {
@@ -64,11 +64,11 @@ FunctionallyDefinedTransformation::Load(STEPWrapper *sw,SCLP23(Application_insta
 
 void
 FunctionallyDefinedTransformation::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Attributes:" << endl;
-	TAB(level+1); cout << "name:" << name << endl;
+	TAB(level); std::cout << "Attributes:" << std::endl;
+	TAB(level+1); std::cout << "name:" << name << std::endl;
 }
 STEPEntity *
 FunctionallyDefinedTransformation::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
@@ -79,7 +79,7 @@ FunctionallyDefinedTransformation::Create(STEPWrapper *sw, SCLP23(Application_in
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

@@ -51,7 +51,7 @@ protected:
 public:
 	FaceBound();
 	virtual ~FaceBound();
-	FaceBound(STEPWrapper *sw,int STEPid);
+	FaceBound(STEPWrapper *sw,int step_id);
 	void SetInner() { inner = true; };
 	void SetOuter() { inner = false; };
 	bool IsInner() {return inner;}

@@ -46,7 +46,7 @@ protected:
 public:
 	Face();
 	virtual ~Face();
-	Face(STEPWrapper *sw, int STEPid);
+	Face(STEPWrapper *sw,int step_id);
 	ON_BoundingBox *GetEdgeBounds(ON_Brep *brep);
 	bool Load(STEPWrapper *sw, SCLP23(Application_instance) *sse);
 	virtual bool LoadONBrep(ON_Brep *brep);

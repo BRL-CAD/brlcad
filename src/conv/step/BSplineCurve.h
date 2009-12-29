@@ -52,7 +52,7 @@ protected:
 public:
 	BSplineCurve();
 	virtual ~BSplineCurve();
-	BSplineCurve(STEPWrapper *sw,int STEPid);
+	BSplineCurve(STEPWrapper *sw,int step_id);
 	void AddPolyLine(ON_Brep *brep);
 	bool Load(STEPWrapper *sw,SCLP23(Application_instance) *sse);
 	virtual bool LoadONBrep(ON_Brep *brep);

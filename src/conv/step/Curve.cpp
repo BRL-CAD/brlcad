@@ -45,9 +45,9 @@ Curve::Curve() {
 	}
 }
 
-Curve::Curve(STEPWrapper *sw,int STEPid) {
+Curve::Curve(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 	trimmed = false;
 	parameter_trim = false;
 	for(int i =0; i<3; i++) {
@@ -65,7 +65,7 @@ Curve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 	id = sse->STEPfile_id;
 
 	if ( !GeometricRepresentationItem::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::GeometricRepresentationItem." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::GeometricRepresentationItem." << std::endl;
 		return false;
 	}
 
@@ -79,7 +79,7 @@ Curve::PointAtEnd() {
 	} else if ((start != NULL) && (end != NULL)){ //not explicit let's try edge vertices
 		return end->Point3d();
 	} else {
-		//cerr << "Error: endpoints not specified for curve " << entityname << endl;
+		//cerr << "Error: endpoints not specified for curve " << entityname << std::endl;
 		return NULL;
 	}
 }
@@ -91,35 +91,35 @@ Curve::PointAtStart() {
 	} else if ((start != NULL) && (end != NULL)){ //not explicit let's try edge vertices
 		return start->Point3d();
 	} else {
-		//cerr << "Error: endpoints not specified for curve " << entityname << endl;
+		//cerr << "Error: endpoints not specified for curve " << entityname << std::endl;
 		return NULL;
 	}
 }
 
 void
 Curve::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << name << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	GeometricRepresentationItem::Print(level+1);
 }
 
 void
-Curve::SetParameterTrim(double start, double end) {
+Curve::SetParameterTrim(double start_param, double end_param) {
 	trimmed = true;
 	parameter_trim = true;
-	t = start;
-	s = end;
+	t = start_param;
+	s = end_param;
 }
 
 void
-Curve::SetPointTrim(const double *start, const double *end) {
+Curve::SetPointTrim(const double *start_point, const double *end_point) {
 	trimmed = true;
 	parameter_trim = false;
 	for (int i=0;i<3;i++) {
-		trim_startpoint[i] = start[i];
-		trim_endpoint[i] = end[i];
+		trim_startpoint[i] = start_point[i];
+		trim_endpoint[i] = end_point[i];
 	}
 }
 
@@ -144,7 +144,7 @@ Curve::Create(STEPWrapper *sw,SCLP23(Application_instance) *sse){
 		Factory::AddObject(object);
 
 		if (!object->Load(sw,sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}
@@ -157,7 +157,7 @@ Curve::Create(STEPWrapper *sw,SCLP23(Application_instance) *sse){
 bool
 Curve::LoadONBrep(ON_Brep *brep)
 {
-	cerr << "Error: ::LoadONBrep(ON_Brep *brep) not implemented for " << entityname << endl;
+	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implemented for " << entityname << std::endl;
 	return false;
 }
 

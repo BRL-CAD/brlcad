@@ -39,9 +39,9 @@ BezierCurve::BezierCurve() {
 	id = 0;
 }
 
-BezierCurve::BezierCurve(STEPWrapper *sw,int STEPid) {
+BezierCurve::BezierCurve(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 BezierCurve::~BezierCurve() {
@@ -54,7 +54,7 @@ BezierCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 	// load base class attributes
 	if ( !BSplineCurve::Load(sw,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::BSplineCurve." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::BSplineCurve." << std::endl;
 		return false;
 	}
 
@@ -63,10 +63,10 @@ BezierCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 void
 BezierCurve::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << name << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	BSplineCurve::Print(level+1);
 
 
@@ -80,7 +80,7 @@ BezierCurve::Create(STEPWrapper *sw,SCLP23(Application_instance) *sse){
 		Factory::AddObject(object);
 
 		if (!object->Load(sw,sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

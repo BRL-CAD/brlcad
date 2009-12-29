@@ -42,9 +42,9 @@ FaceBound::FaceBound() {
 	inner = true;
 }
 
-FaceBound::FaceBound(STEPWrapper *sw,int STEPid) {
+FaceBound::FaceBound(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 	bound = NULL;
 	inner = true;
 }
@@ -60,7 +60,7 @@ FaceBound::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 	// load base class attributes
 	if ( !TopologicalRepresentationItem::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::TopologicalRepresentationItem." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::TopologicalRepresentationItem." << std::endl;
 		return false;
 	}
 
@@ -73,7 +73,7 @@ FaceBound::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 		if (entity) {
 			bound = dynamic_cast<Loop*>(Factory::CreateObject(sw,entity));
 		} else {
-			cerr << CLASSNAME << ": Error loading 'bound' entity." << endl;
+			std::cerr << CLASSNAME << ": Error loading 'bound' entity." << std::endl;
 			return false;
 		}
 	}
@@ -84,16 +84,16 @@ FaceBound::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 void
 FaceBound::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << name << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Attributes:" << endl;
-	TAB(level+1); cout << "bound:" << endl;
+	TAB(level); std::cout << "Attributes:" << std::endl;
+	TAB(level+1); std::cout << "bound:" << std::endl;
 	bound->Print(level+1);
 
-	TAB(level+1); cout << "orientation:" << step->getBooleanString((SCLBOOL_H(Boolean))orientation) << endl;
+	TAB(level+1); std::cout << "orientation:" << step->getBooleanString((SCLBOOL_H(Boolean))orientation) << std::endl;
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	TopologicalRepresentationItem::Print(level+1);
 }
 
@@ -114,7 +114,7 @@ FaceBound::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

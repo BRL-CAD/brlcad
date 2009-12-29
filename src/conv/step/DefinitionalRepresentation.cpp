@@ -38,9 +38,9 @@ DefinitionalRepresentation::DefinitionalRepresentation() {
 	id = 0;
 }
 
-DefinitionalRepresentation::DefinitionalRepresentation(STEPWrapper *sw, int STEPid) {
+DefinitionalRepresentation::DefinitionalRepresentation(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 DefinitionalRepresentation::~DefinitionalRepresentation() {
@@ -52,7 +52,7 @@ DefinitionalRepresentation::Load(STEPWrapper *sw, SCLP23(Application_instance) *
 	id = sse->STEPfile_id;
 
 	if ( !Representation::Load(sw,sse) ) {
-		cout << CLASSNAME << ":Error loading baseclass Representation." << endl;
+		std::cout << CLASSNAME << ":Error loading baseclass Representation." << std::endl;
 		return false;
 	}
 
@@ -61,10 +61,10 @@ DefinitionalRepresentation::Load(STEPWrapper *sw, SCLP23(Application_instance) *
 
 void
 DefinitionalRepresentation::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << name << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	Representation::Print(level+1);
 }
 STEPEntity *
@@ -76,7 +76,7 @@ DefinitionalRepresentation::Create(STEPWrapper *sw, SCLP23(Application_instance)
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

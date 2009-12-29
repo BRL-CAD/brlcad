@@ -42,7 +42,7 @@ protected:
 public:
 	CurveReplica();
 	virtual ~CurveReplica();
-	CurveReplica(STEPWrapper *sw,int STEPid);
+	CurveReplica(STEPWrapper *sw,int step_id);
 	virtual curve_type CurveType() { return CURVE_REPLICA; };
 	bool Load(STEPWrapper *sw,SCLP23(Application_instance) *sse);
 	virtual bool LoadONBrep(ON_Brep *brep);

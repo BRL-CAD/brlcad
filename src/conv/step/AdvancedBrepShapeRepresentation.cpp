@@ -47,9 +47,9 @@ AdvancedBrepShapeRepresentation::AdvancedBrepShapeRepresentation() {
 }
 
 
-AdvancedBrepShapeRepresentation::AdvancedBrepShapeRepresentation(STEPWrapper *sw, int STEPid) {
+AdvancedBrepShapeRepresentation::AdvancedBrepShapeRepresentation(STEPWrapper *sw, int step_id) {
     step = sw;
-    id = STEPid;
+	id = step_id;
 }
 
 
