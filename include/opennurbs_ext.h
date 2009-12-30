@@ -249,7 +249,7 @@ inline
 BANode<BA>::BANode(const BA& node) : m_node(node) {
     for (int i = 0; i < 3; i++) {
 	double d = m_node.m_max[i] - m_node.m_min[i];
-	if (ON_NearZero(d, ON_ZERO_TOLERANCE)) {
+	if (NEAR_ZERO(d, ON_ZERO_TOLERANCE)) {
 	    m_node.m_min[i] -= 0.001;
 	    m_node.m_max[i] += 0.001;
 	}
@@ -958,7 +958,6 @@ int
 BVNode<BV>::isTrimmed(const ON_2dPoint& uv, BRNode* closest, fastf_t &closesttrim) {
     BRNode* br;
     list<BRNode*> trims;
-    point_t bmin, bmax;
 	    
     closesttrim = -1.0;
     if (m_checkTrim) {
@@ -971,7 +970,6 @@ BVNode<BV>::isTrimmed(const ON_2dPoint& uv, BRNode* closest, fastf_t &closesttri
 	    BRNode* uclosest = NULL;
 	    fastf_t currHeight;
 	    bool currTrimStatus;
-	    point_t min, max;
 	    bool verticalTrim = false;
 	    bool underTrim = false;
 	    double vdist;
