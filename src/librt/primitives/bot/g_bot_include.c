@@ -399,6 +399,8 @@ XGLUE(rt_bot_plate_segs_, TRI_TYPE)(struct hit *hits,
     register int i;
     register fastf_t los;
     int surfno;
+    static const int IN = 0;
+    static const int OUT = 1;
 
     if (rp) RT_CK_RAY(rp);
 
@@ -423,13 +425,13 @@ XGLUE(rt_bot_plate_segs_, TRI_TYPE)(struct hit *hits,
 
 	    /* set in hit */
 	    segp->seg_in = hits[i];
-	    BOT_UNORIENTED_NORM(&segp->seg_in, 0);
+	    BOT_UNORIENTED_NORM(&segp->seg_in, IN);
 
 	    /* set out hit */
 	    segp->seg_out.hit_surfno = surfno;
 	    segp->seg_out.hit_dist = segp->seg_in.hit_dist + los;
 	    VMOVE(segp->seg_out.hit_vpriv, hits[i].hit_vpriv);
-	    BOT_UNORIENTED_NORM(&segp->seg_out, 1);
+	    BOT_UNORIENTED_NORM(&segp->seg_out, OUT);
 	    segp->seg_out.hit_private = segp->seg_in.hit_private;
 	    segp->seg_out.hit_rayp = &ap->a_ray;
 
@@ -442,7 +444,7 @@ XGLUE(rt_bot_plate_segs_, TRI_TYPE)(struct hit *hits,
 	    /* set in hit */
 	    segp->seg_in.hit_surfno = surfno;
 	    VMOVE(segp->seg_in.hit_vpriv, hits[i].hit_vpriv);
-	    BOT_UNORIENTED_NORM(&segp->seg_in, 0);
+	    BOT_UNORIENTED_NORM(&segp->seg_in, IN);
 	    segp->seg_in.hit_private = hits[i].hit_private;
 	    segp->seg_in.hit_dist = hits[i].hit_dist - (los*0.5);
 	    segp->seg_in.hit_rayp = &ap->a_ray;
@@ -451,7 +453,7 @@ XGLUE(rt_bot_plate_segs_, TRI_TYPE)(struct hit *hits,
 	    segp->seg_out.hit_surfno = surfno;
 	    segp->seg_out.hit_dist = segp->seg_in.hit_dist + los;
 	    VMOVE(segp->seg_out.hit_vpriv, hits[i].hit_vpriv);
-	    BOT_UNORIENTED_NORM(&segp->seg_out, 1);
+	    BOT_UNORIENTED_NORM(&segp->seg_out, OUT);
 	    segp->seg_out.hit_private = hits[i].hit_private;
 	    segp->seg_out.hit_rayp = &ap->a_ray;
 
@@ -481,6 +483,8 @@ XGLUE(rt_bot_unoriented_segs_, TRI_TYPE)(struct hit *hits,
      */
     fastf_t rm_dist=0.0;
     int removed=0;
+    static const int IN = 0;
+    static const int OUT = 1;
 
     if (bot) RT_BOT_CK_MAGIC(bot);
 
@@ -493,11 +497,11 @@ XGLUE(rt_bot_unoriented_segs_, TRI_TYPE)(struct hit *hits,
 
 	/* set in hit */
 	segp->seg_in = hits[0];
-	BOT_UNORIENTED_NORM(&segp->seg_in, 0);
+	BOT_UNORIENTED_NORM(&segp->seg_in, IN);
 
 	/* set out hit */
 	segp->seg_out = hits[0];
-	BOT_UNORIENTED_NORM(&segp->seg_out, 1);
+	BOT_UNORIENTED_NORM(&segp->seg_out, OUT);
 
 	BU_LIST_INSERT(&(seghead->l), &(segp->l));
 	return(1);
@@ -527,10 +531,8 @@ XGLUE(rt_bot_unoriented_segs_, TRI_TYPE)(struct hit *hits,
 	 * duplicate, then it was likely on an edge, so remove the one
 	 * we left.
 	 */
-	register int j;
-
 	for (i=0; i<nhits; i++) {
-	    if (hits[i].hit_dist == rm_dist) {
+	    if (NEAR_ZERO(hits[i].hit_dist - rm_dist, SMALL_FASTF)) {
 		for (j=i; j<nhits-1; j++)
 		    hits[j] = hits[j+1];
 		nhits--;
@@ -549,12 +551,12 @@ XGLUE(rt_bot_unoriented_segs_, TRI_TYPE)(struct hit *hits,
 	/* set in hit */
 	segp->seg_in = hits[i];
 	trip = (XGLUE(tri_specific_, TRI_TYPE) *)hits[i].hit_private;
-	BOT_UNORIENTED_NORM(&segp->seg_in, 0);
+	BOT_UNORIENTED_NORM(&segp->seg_in, IN);
 
 	/* set out hit */
 	segp->seg_out = hits[i+1];
 	trip = (XGLUE(tri_specific_, TRI_TYPE) *)hits[i+1].hit_private;
-	BOT_UNORIENTED_NORM(&segp->seg_out, 1);
+	BOT_UNORIENTED_NORM(&segp->seg_out, OUT);
 
 	BU_LIST_INSERT(&(seghead->l), &(segp->l));
     }
@@ -585,6 +587,8 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, int nhits, struct soltab *st
     struct bot_specific *bot = (struct bot_specific *)stp->st_specific;
     register struct seg *segp;
     register int i;
+    static const int IN = 0;
+    static const int OUT = 1;
 
     RT_CK_SOLTAB(stp);
 
@@ -597,11 +601,11 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, int nhits, struct soltab *st
 
 	    /* set in hit */
 	    segp->seg_in = hits[i];
-	    BOT_UNORIENTED_NORM(&segp->seg_in, 0);
+	    BOT_UNORIENTED_NORM(&segp->seg_in, IN);
 
 	    /* set out hit */
 	    segp->seg_out = hits[i];
-	    BOT_UNORIENTED_NORM(&segp->seg_out, 1);
+	    BOT_UNORIENTED_NORM(&segp->seg_out, OUT);
 	    BU_LIST_INSERT(&(seghead->l), &(segp->l));
 	}
 	/* Every hit turns into two, and makes a seg.  No leftovers */
@@ -686,7 +690,6 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, int nhits, struct soltab *st
 		    int changed=0;
 
 		    for (j=i; j<k; j++) {
-			int l;
 
 			if (j%2) {
 			    if (hits[j].hit_vpriv[X] > 0) {
@@ -823,7 +826,6 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, int nhits, struct soltab *st
     }
 
     if ((nhits&1)) {
-	register int i;
 	/*
 	 * If this condition exists, it is almost certainly due to the
 	 * dn==0 check above.  Thus, we will make the last surface
@@ -928,10 +930,10 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, int nhits, struct soltab *st
 	segp->seg_stp = stp;
 	segp->seg_in = hits[i];	/* struct copy */
 	trip = (XGLUE(tri_specific_, TRI_TYPE) *)hits[i].hit_private;
-	BOT_UNORIENTED_NORM(&segp->seg_in, 0);
+	BOT_UNORIENTED_NORM(&segp->seg_in, IN);
 	segp->seg_out = hits[i+1];	/* struct copy */
 	trip = (XGLUE(tri_specific_, TRI_TYPE) *)hits[i+1].hit_private;
-	BOT_UNORIENTED_NORM(&segp->seg_out, 1);
+	BOT_UNORIENTED_NORM(&segp->seg_out, OUT);
 	BU_LIST_INSERT(&(seghead->l), &(segp->l));
     }
 
