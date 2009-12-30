@@ -15,9 +15,11 @@ on-going issues.
 Recent Bugs
 -----------
 
-* Windows build is not generating tclIndex files with all entries.
-  notably the pattern_gui.tcl file is not getting included as well as
-  a variety of others.  see missing entries in
+* reported that fbclear is not working on Windows build in mged.
+
+* Windows mged build is not generating tclIndex files with all
+  entries.  notably the pattern_gui.tcl file is not getting included
+  as well as a variety of others.  see missing entries in
   tclscripts/mged/tclIndex for examples:
   https://sourceforge.net/tracker/?func=detail&atid=640802&aid=2923199&group_id=105292
 
