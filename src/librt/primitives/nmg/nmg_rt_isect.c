@@ -1933,7 +1933,7 @@ isect_ray_snurb_face(struct ray_data *rd, struct faceuse *fu, struct face_g_snur
 		rt_nurb_free_snurb(srf, rd->ap->a_resource);
 		continue;
 	    }
-	    hp = rt_nurb_intersect(srf, pl1, pl2, UV_TOL, rd->ap->a_resource);
+	    hp = rt_nurb_intersect(srf, pl1, pl2, UV_TOL, rd->ap->a_resource, NULL);
 	}
 
 	/* process each hit point */
