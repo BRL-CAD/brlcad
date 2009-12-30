@@ -15,6 +15,12 @@ on-going issues.
 Recent Bugs
 -----------
 
+* Windows build is not generating tclIndex files with all entries.
+  notably the pattern_gui.tcl file is not getting included as well as
+  a variety of others.  see missing entries in
+  tclscripts/mged/tclIndex for examples:
+  https://sourceforge.net/tracker/?func=detail&atid=640802&aid=2923199&group_id=105292
+
 * mged-invoked EDITOR locks up mged without a controlling terminal due
   to lacking knowledge of needing to invoke xterm.
 
