@@ -50,8 +50,8 @@
 
 #define BOT_MIN_DN 1.0e-9
 
-#define RT_BOT_UNORIENTED_NORM(_hitp, _in_or_out) { \
-	if (_in_or_out < 0) {	/* this is an exit */ \
+#define BOT_UNORIENTED_NORM(_hitp, _out) { \
+	if (_out) {	/* this is an exit */ \
 		if ((_hitp)->hit_vpriv[X] < 0.0) { \
 			VREVERSE((_hitp)->hit_normal, trip->tri_N); \
 		} else { \
