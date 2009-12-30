@@ -63,9 +63,9 @@ rt_nurb_s_norm(struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *norm)
 	    {
 		p = srf->u.knots[i];
 
-		if (u == p)
+		if (NEAR_ZERO(u - p, SMALL_FASTF))
 		    p = srf->u.knots[i+1];
-		if ( u == p && i > 1)
+		if ( NEAR_ZERO(u - p, SMALL_FASTF) && i > 1)
 		    p = srf->u.knots[i-1];
 	    }
 	}
@@ -76,12 +76,12 @@ rt_nurb_s_norm(struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *norm)
 	for ( i = 0; i < srf->v.k_size -1; i++)
 	{
 	    if ( srf->v.knots[i] < v
-		 && srf->v.knots[i+1] )
+		 && !NEAR_ZERO(srf->v.knots[i+1], SMALL_FASTF) )
 	    {
 		p = srf->v.knots[i];
-		if (v == p)
+		if (NEAR_ZERO(v - p, SMALL_FASTF))
 		    p = srf->v.knots[i+1];
-		if ( v == p && i > 1)
+		if ( NEAR_ZERO(v - p, SMALL_FASTF) && i > 1)
 		    p = srf->v.knots[i-1];
 	    }
 	}
@@ -126,9 +126,9 @@ rt_nurb_s_norm(struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *norm)
 	    {
 		p = srf->u.knots[i];
 
-		if (u == p)
+		if (NEAR_ZERO(u - p, SMALL_FASTF))
 		    p = srf->u.knots[i+1];
-		if ( u == p && i > 1)
+		if ( NEAR_ZERO(u - p, SMALL_FASTF) && i > 1)
 		    p = srf->u.knots[i-1];
 	    }
 	}
@@ -184,9 +184,9 @@ rt_nurb_s_norm(struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *norm)
 	    {
 		p = srf->v.knots[i];
 
-		if (v == p)
+		if (NEAR_ZERO(v - p, SMALL_FASTF))
 		    p = srf->u.knots[i+1];
-		if ( v == p && i > 1)
+		if (NEAR_ZERO(v - p, SMALL_FASTF) && i > 1)
 		    p = srf->v.knots[i-1];
 	    }
 	}
@@ -255,7 +255,6 @@ rt_nurb_s_norm(struct face_g_snurb *srf, fastf_t u, fastf_t v, fastf_t *norm)
     {
 	fastf_t w, inv_w;
 	vect_t unorm, vnorm;
-	int i;
 
 	rt_nurb_s_eval(srf, u, v, se);
 

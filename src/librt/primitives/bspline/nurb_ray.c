@@ -376,7 +376,7 @@ rt_nurb_intersect(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *plan
 
 	while (!flat)
 	{
-	    fastf_t smin, smax;
+	    fastf_t smin = 0.0, smax = 0.0;
 
 	    sub++;
 	    dir = (dir == 0)?1:0;	/* change direction */

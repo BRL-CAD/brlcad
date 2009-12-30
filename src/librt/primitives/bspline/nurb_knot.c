@@ -178,7 +178,7 @@ rt_nurb_kvcheck(fastf_t val, register const struct knot_vector *kv)
     register int	i;
 
     for ( i = 0; i < kv->k_size; i++) {
-	if ( val == kv->knots[i] )
+	if ( NEAR_ZERO(val - kv->knots[i], SMALL_FASTF) )
 	    kv_num++;
     }
 
@@ -281,9 +281,9 @@ rt_nurb_knot_index(const struct knot_vector *kv, fastf_t k_value, int order)
 	    return - 1;
     }
 
-    if ( k_value == kv->knots[ kv->k_size - order + 1] )
+    if ( NEAR_ZERO(k_value - kv->knots[ kv->k_size - order + 1], SMALL_FASTF) )
 	k_index = kv->k_size - order - 1;
-    else if ( k_value == kv->knots[ order - 1] )
+    else if ( NEAR_ZERO(k_value - kv->knots[ order - 1], SMALL_FASTF) )
 	k_index = order - 1;
     else
     {
