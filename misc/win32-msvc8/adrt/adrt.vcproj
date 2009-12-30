@@ -3,7 +3,7 @@
 	ProjectType="Visual C++"
 	Version="8.00"
 	Name="libadrt"
-	ProjectGUID="{D2A218BF-FAB3-4BEA-B288-E357FE003E29}"
+	ProjectGUID="{43DF8660-74E7-4371-BEC3-602E2E6481B5}"
 	>
 	<Platforms>
 		<Platform
