@@ -421,7 +421,7 @@ rt_nurb_shot(struct soltab *stp, register struct xray *rp, struct application *a
 
 #define UV_TOL 1.0e-6	/* Paper says 1.0e-4 is reasonable for 1k images, not close up */
 	    hp = rt_nurb_intersect(
-		s, plane1, plane2, UV_TOL, (struct resource *)ap->a_resource);
+		s, plane1, plane2, UV_TOL, (struct resource *)ap->a_resource, NULL);
 	    while (hp != (struct rt_nurb_uv_hit *)0) {
 		struct rt_nurb_uv_hit * o;
 
