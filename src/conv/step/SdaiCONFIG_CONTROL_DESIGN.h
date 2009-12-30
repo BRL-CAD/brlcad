@@ -1019,9 +1019,9 @@ class SdaiCharacterized_product_definition  :  public SCLP23(Select) {
 
 
 // STEP Part 21
-	virtual void STEPwrite_content (ostream& out =cout,
+	virtual void STEPwrite_content (ostream& out =std::cout,
 					const char *currSch =0) const;
-	virtual void STEPwrite_verbose (ostream& out =cout,
+	virtual void STEPwrite_verbose (ostream& out =std::cout,
 					const char *currSch =0) const;
 	virtual Severity STEPread_content (istream& in =cin,
 		InstMgr * instances =0, const char *utype =0,
@@ -1157,9 +1157,9 @@ class SdaiShape_definition  :  public SCLP23(Select) {
 
 
 // STEP Part 21
-	virtual void STEPwrite_content (ostream& out =cout,
+	virtual void STEPwrite_content (ostream& out =std::cout,
 					const char *currSch =0) const;
-	virtual void STEPwrite_verbose (ostream& out =cout,
+	virtual void STEPwrite_verbose (ostream& out =std::cout,
 					const char *currSch =0) const;
 	virtual Severity STEPread_content (istream& in =cin,
 		InstMgr * instances =0, const char *utype =0,
@@ -1300,9 +1300,9 @@ class SdaiCharacterized_definition  :  public SCLP23(Select) {
 
 
 // STEP Part 21
-	virtual void STEPwrite_content (ostream& out =cout,
+	virtual void STEPwrite_content (ostream& out =std::cout,
 					const char *currSch =0) const;
-	virtual void STEPwrite_verbose (ostream& out =cout,
+	virtual void STEPwrite_verbose (ostream& out =std::cout,
 					const char *currSch =0) const;
 	virtual Severity STEPread_content (istream& in =cin,
 		InstMgr * instances =0, const char *utype =0,
@@ -1415,9 +1415,9 @@ class SdaiChange_request_item  :  public SCLP23(Select) {
 
 
 // STEP Part 21
-	virtual void STEPwrite_content (ostream& out =cout,
+	virtual void STEPwrite_content (ostream& out =std::cout,
 					const char *currSch =0) const;
-	virtual void STEPwrite_verbose (ostream& out =cout,
+	virtual void STEPwrite_verbose (ostream& out =std::cout,
 					const char *currSch =0) const;
 	virtual Severity STEPread_content (istream& in =cin,
 		InstMgr * instances =0, const char *utype =0,
@@ -1539,9 +1539,9 @@ class SdaiReversible_topology_item  :  public SCLP23(Select) {
 
 
 // STEP Part 21
-	virtual void STEPwrite_content (ostream& out =cout,
+	virtual void STEPwrite_content (ostream& out =std::cout,
 					const char *currSch =0) const;
-	virtual void STEPwrite_verbose (ostream& out =cout,
+	virtual void STEPwrite_verbose (ostream& out =std::cout,
 					const char *currSch =0) const;
 	virtual Severity STEPread_content (istream& in =cin,
 		InstMgr * instances =0, const char *utype =0,
@@ -1699,9 +1699,9 @@ class SdaiAxis2_placement  :  public SCLP23(Select) {
 
 
 // STEP Part 21
-	virtual void STEPwrite_content (ostream& out =cout,
+	virtual void STEPwrite_content (ostream& out =std::cout,
 					const char *currSch =0) const;
-	virtual void STEPwrite_verbose (ostream& out =cout,
+	virtual void STEPwrite_verbose (ostream& out =std::cout,
 					const char *currSch =0) const;
 	virtual Severity STEPread_content (istream& in =cin,
 		InstMgr * instances =0, const char *utype =0,
@@ -1827,9 +1827,9 @@ class SdaiSpecified_item  :  public SCLP23(Select) {
 
 
 // STEP Part 21
-	virtual void STEPwrite_content (ostream& out =cout,
+	virtual void STEPwrite_content (ostream& out =std::cout,
 					const char *currSch =0) const;
-	virtual void STEPwrite_verbose (ostream& out =cout,
+	virtual void STEPwrite_verbose (ostream& out =std::cout,
 					const char *currSch =0) const;
 	virtual Severity STEPread_content (istream& in =cin,
 		InstMgr * instances =0, const char *utype =0,
@@ -1975,9 +1975,9 @@ class SdaiMeasure_value  :  public SCLP23(Select) {
 
 
 // STEP Part 21
-	virtual void STEPwrite_content (ostream& out =cout,
+	virtual void STEPwrite_content (ostream& out =std::cout,
 					const char *currSch =0) const;
-	virtual void STEPwrite_verbose (ostream& out =cout,
+	virtual void STEPwrite_verbose (ostream& out =std::cout,
 					const char *currSch =0) const;
 	virtual Severity STEPread_content (istream& in =cin,
 		InstMgr * instances =0, const char *utype =0,
@@ -2103,9 +2103,9 @@ class SdaiPerson_organization_select  :  public SCLP23(Select) {
 
 
 // STEP Part 21
-	virtual void STEPwrite_content (ostream& out =cout,
+	virtual void STEPwrite_content (ostream& out =std::cout,
 					const char *currSch =0) const;
-	virtual void STEPwrite_verbose (ostream& out =cout,
+	virtual void STEPwrite_verbose (ostream& out =std::cout,
 					const char *currSch =0) const;
 	virtual Severity STEPread_content (istream& in =cin,
 		InstMgr * instances =0, const char *utype =0,
@@ -2254,9 +2254,9 @@ class SdaiPcurve_or_surface  :  public SCLP23(Select) {
 
 
 // STEP Part 21
-	virtual void STEPwrite_content (ostream& out =cout,
+	virtual void STEPwrite_content (ostream& out =std::cout,
 					const char *currSch =0) const;
-	virtual void STEPwrite_verbose (ostream& out =cout,
+	virtual void STEPwrite_verbose (ostream& out =std::cout,
 					const char *currSch =0) const;
 	virtual Severity STEPread_content (istream& in =cin,
 		InstMgr * instances =0, const char *utype =0,
@@ -2379,9 +2379,9 @@ class SdaiClassified_item  :  public SCLP23(Select) {
 
 
 // STEP Part 21
-	virtual void STEPwrite_content (ostream& out =cout,
+	virtual void STEPwrite_content (ostream& out =std::cout,
 					const char *currSch =0) const;
-	virtual void STEPwrite_verbose (ostream& out =cout,
+	virtual void STEPwrite_verbose (ostream& out =std::cout,
 					const char *currSch =0) const;
 	virtual Severity STEPread_content (istream& in =cin,
 		InstMgr * instances =0, const char *utype =0,
@@ -2516,9 +2516,9 @@ class SdaiFounded_item_select  :  public SCLP23(Select) {
 
 
 // STEP Part 21
-	virtual void STEPwrite_content (ostream& out =cout,
+	virtual void STEPwrite_content (ostream& out =std::cout,
 					const char *currSch =0) const;
-	virtual void STEPwrite_verbose (ostream& out =cout,
+	virtual void STEPwrite_verbose (ostream& out =std::cout,
 					const char *currSch =0) const;
 	virtual Severity STEPread_content (istream& in =cin,
 		InstMgr * instances =0, const char *utype =0,
@@ -2635,9 +2635,9 @@ class SdaiVector_or_direction  :  public SCLP23(Select) {
 
 
 // STEP Part 21
-	virtual void STEPwrite_content (ostream& out =cout,
+	virtual void STEPwrite_content (ostream& out =std::cout,
 					const char *currSch =0) const;
-	virtual void STEPwrite_verbose (ostream& out =cout,
+	virtual void STEPwrite_verbose (ostream& out =std::cout,
 					const char *currSch =0) const;
 	virtual Severity STEPread_content (istream& in =cin,
 		InstMgr * instances =0, const char *utype =0,
@@ -2763,9 +2763,9 @@ class SdaiWireframe_model  :  public SCLP23(Select) {
 
 
 // STEP Part 21
-	virtual void STEPwrite_content (ostream& out =cout,
+	virtual void STEPwrite_content (ostream& out =std::cout,
 					const char *currSch =0) const;
-	virtual void STEPwrite_verbose (ostream& out =cout,
+	virtual void STEPwrite_verbose (ostream& out =std::cout,
 					const char *currSch =0) const;
 	virtual Severity STEPread_content (istream& in =cin,
 		InstMgr * instances =0, const char *utype =0,
@@ -2889,9 +2889,9 @@ class SdaiGeometric_set_select  :  public SCLP23(Select) {
 
 
 // STEP Part 21
-	virtual void STEPwrite_content (ostream& out =cout,
+	virtual void STEPwrite_content (ostream& out =std::cout,
 					const char *currSch =0) const;
-	virtual void STEPwrite_verbose (ostream& out =cout,
+	virtual void STEPwrite_verbose (ostream& out =std::cout,
 					const char *currSch =0) const;
 	virtual Severity STEPread_content (istream& in =cin,
 		InstMgr * instances =0, const char *utype =0,
@@ -3012,9 +3012,9 @@ class SdaiStart_request_item  :  public SCLP23(Select) {
 
 
 // STEP Part 21
-	virtual void STEPwrite_content (ostream& out =cout,
+	virtual void STEPwrite_content (ostream& out =std::cout,
 					const char *currSch =0) const;
-	virtual void STEPwrite_verbose (ostream& out =cout,
+	virtual void STEPwrite_verbose (ostream& out =std::cout,
 					const char *currSch =0) const;
 	virtual Severity STEPread_content (istream& in =cin,
 		InstMgr * instances =0, const char *utype =0,
@@ -3140,9 +3140,9 @@ class SdaiPerson_organization_item  :  public SCLP23(Select) {
 
 
 // STEP Part 21
-	virtual void STEPwrite_content (ostream& out =cout,
+	virtual void STEPwrite_content (ostream& out =std::cout,
 					const char *currSch =0) const;
-	virtual void STEPwrite_verbose (ostream& out =cout,
+	virtual void STEPwrite_verbose (ostream& out =std::cout,
 					const char *currSch =0) const;
 	virtual Severity STEPread_content (istream& in =cin,
 		InstMgr * instances =0, const char *utype =0,
@@ -3342,9 +3342,9 @@ class SdaiDate_time_item  :  public SCLP23(Select) {
 
 
 // STEP Part 21
-	virtual void STEPwrite_content (ostream& out =cout,
+	virtual void STEPwrite_content (ostream& out =std::cout,
 					const char *currSch =0) const;
-	virtual void STEPwrite_verbose (ostream& out =cout,
+	virtual void STEPwrite_verbose (ostream& out =std::cout,
 					const char *currSch =0) const;
 	virtual Severity STEPread_content (istream& in =cin,
 		InstMgr * instances =0, const char *utype =0,
@@ -3537,9 +3537,9 @@ class SdaiShell  :  public SCLP23(Select) {
 
 
 // STEP Part 21
-	virtual void STEPwrite_content (ostream& out =cout,
+	virtual void STEPwrite_content (ostream& out =std::cout,
 					const char *currSch =0) const;
-	virtual void STEPwrite_verbose (ostream& out =cout,
+	virtual void STEPwrite_verbose (ostream& out =std::cout,
 					const char *currSch =0) const;
 	virtual Severity STEPread_content (istream& in =cin,
 		InstMgr * instances =0, const char *utype =0,
@@ -3675,9 +3675,9 @@ class SdaiTransformation  :  public SCLP23(Select) {
 
 
 // STEP Part 21
-	virtual void STEPwrite_content (ostream& out =cout,
+	virtual void STEPwrite_content (ostream& out =std::cout,
 					const char *currSch =0) const;
-	virtual void STEPwrite_verbose (ostream& out =cout,
+	virtual void STEPwrite_verbose (ostream& out =std::cout,
 					const char *currSch =0) const;
 	virtual Severity STEPread_content (istream& in =cin,
 		InstMgr * instances =0, const char *utype =0,
@@ -3802,9 +3802,9 @@ class SdaiBoolean_operand  :  public SCLP23(Select) {
 
 
 // STEP Part 21
-	virtual void STEPwrite_content (ostream& out =cout,
+	virtual void STEPwrite_content (ostream& out =std::cout,
 					const char *currSch =0) const;
-	virtual void STEPwrite_verbose (ostream& out =cout,
+	virtual void STEPwrite_verbose (ostream& out =std::cout,
 					const char *currSch =0) const;
 	virtual Severity STEPread_content (istream& in =cin,
 		InstMgr * instances =0, const char *utype =0,
@@ -3915,9 +3915,9 @@ class SdaiCertified_item  :  public SCLP23(Select) {
 
 
 // STEP Part 21
-	virtual void STEPwrite_content (ostream& out =cout,
+	virtual void STEPwrite_content (ostream& out =std::cout,
 					const char *currSch =0) const;
-	virtual void STEPwrite_verbose (ostream& out =cout,
+	virtual void STEPwrite_verbose (ostream& out =std::cout,
 					const char *currSch =0) const;
 	virtual Severity STEPread_content (istream& in =cin,
 		InstMgr * instances =0, const char *utype =0,
@@ -4042,9 +4042,9 @@ class SdaiDate_time_select  :  public SCLP23(Select) {
 
 
 // STEP Part 21
-	virtual void STEPwrite_content (ostream& out =cout,
+	virtual void STEPwrite_content (ostream& out =std::cout,
 					const char *currSch =0) const;
-	virtual void STEPwrite_verbose (ostream& out =cout,
+	virtual void STEPwrite_verbose (ostream& out =std::cout,
 					const char *currSch =0) const;
 	virtual Severity STEPread_content (istream& in =cin,
 		InstMgr * instances =0, const char *utype =0,
@@ -4185,9 +4185,9 @@ class SdaiCurve_on_surface  :  public SCLP23(Select) {
 
 
 // STEP Part 21
-	virtual void STEPwrite_content (ostream& out =cout,
+	virtual void STEPwrite_content (ostream& out =std::cout,
 					const char *currSch =0) const;
-	virtual void STEPwrite_verbose (ostream& out =cout,
+	virtual void STEPwrite_verbose (ostream& out =std::cout,
 					const char *currSch =0) const;
 	virtual Severity STEPread_content (istream& in =cin,
 		InstMgr * instances =0, const char *utype =0,
@@ -4331,9 +4331,9 @@ class SdaiTrimming_select  :  public SCLP23(Select) {
 
 
 // STEP Part 21
-	virtual void STEPwrite_content (ostream& out =cout,
+	virtual void STEPwrite_content (ostream& out =std::cout,
 					const char *currSch =0) const;
-	virtual void STEPwrite_verbose (ostream& out =cout,
+	virtual void STEPwrite_verbose (ostream& out =std::cout,
 					const char *currSch =0) const;
 	virtual Severity STEPread_content (istream& in =cin,
 		InstMgr * instances =0, const char *utype =0,
@@ -4452,9 +4452,9 @@ class SdaiContracted_item  :  public SCLP23(Select) {
 
 
 // STEP Part 21
-	virtual void STEPwrite_content (ostream& out =cout,
+	virtual void STEPwrite_content (ostream& out =std::cout,
 					const char *currSch =0) const;
-	virtual void STEPwrite_verbose (ostream& out =cout,
+	virtual void STEPwrite_verbose (ostream& out =std::cout,
 					const char *currSch =0) const;
 	virtual Severity STEPread_content (istream& in =cin,
 		InstMgr * instances =0, const char *utype =0,
@@ -4571,9 +4571,9 @@ class SdaiUnit  :  public SCLP23(Select) {
 
 
 // STEP Part 21
-	virtual void STEPwrite_content (ostream& out =cout,
+	virtual void STEPwrite_content (ostream& out =std::cout,
 					const char *currSch =0) const;
-	virtual void STEPwrite_verbose (ostream& out =cout,
+	virtual void STEPwrite_verbose (ostream& out =std::cout,
 					const char *currSch =0) const;
 	virtual Severity STEPread_content (istream& in =cin,
 		InstMgr * instances =0, const char *utype =0,
@@ -4687,9 +4687,9 @@ class SdaiReversible_topology  :  public SCLP23(Select) {
 
 
 // STEP Part 21
-	virtual void STEPwrite_content (ostream& out =cout,
+	virtual void STEPwrite_content (ostream& out =std::cout,
 					const char *currSch =0) const;
-	virtual void STEPwrite_verbose (ostream& out =cout,
+	virtual void STEPwrite_verbose (ostream& out =std::cout,
 					const char *currSch =0) const;
 	virtual Severity STEPread_content (istream& in =cin,
 		InstMgr * instances =0, const char *utype =0,
@@ -4804,9 +4804,9 @@ class SdaiWork_item  :  public SCLP23(Select) {
 
 
 // STEP Part 21
-	virtual void STEPwrite_content (ostream& out =cout,
+	virtual void STEPwrite_content (ostream& out =std::cout,
 					const char *currSch =0) const;
-	virtual void STEPwrite_verbose (ostream& out =cout,
+	virtual void STEPwrite_verbose (ostream& out =std::cout,
 					const char *currSch =0) const;
 	virtual Severity STEPread_content (istream& in =cin,
 		InstMgr * instances =0, const char *utype =0,
@@ -4925,9 +4925,9 @@ class SdaiSupported_item  :  public SCLP23(Select) {
 
 
 // STEP Part 21
-	virtual void STEPwrite_content (ostream& out =cout,
+	virtual void STEPwrite_content (ostream& out =std::cout,
 					const char *currSch =0) const;
-	virtual void STEPwrite_verbose (ostream& out =cout,
+	virtual void STEPwrite_verbose (ostream& out =std::cout,
 					const char *currSch =0) const;
 	virtual Severity STEPread_content (istream& in =cin,
 		InstMgr * instances =0, const char *utype =0,
@@ -5079,9 +5079,9 @@ class SdaiApproved_item  :  public SCLP23(Select) {
 
 
 // STEP Part 21
-	virtual void STEPwrite_content (ostream& out =cout,
+	virtual void STEPwrite_content (ostream& out =std::cout,
 					const char *currSch =0) const;
-	virtual void STEPwrite_verbose (ostream& out =cout,
+	virtual void STEPwrite_verbose (ostream& out =std::cout,
 					const char *currSch =0) const;
 	virtual Severity STEPread_content (istream& in =cin,
 		InstMgr * instances =0, const char *utype =0,
@@ -5284,9 +5284,9 @@ class SdaiSurface_model  :  public SCLP23(Select) {
 
 
 // STEP Part 21
-	virtual void STEPwrite_content (ostream& out =cout,
+	virtual void STEPwrite_content (ostream& out =std::cout,
 					const char *currSch =0) const;
-	virtual void STEPwrite_verbose (ostream& out =cout,
+	virtual void STEPwrite_verbose (ostream& out =std::cout,
 					const char *currSch =0) const;
 	virtual Severity STEPread_content (istream& in =cin,
 		InstMgr * instances =0, const char *utype =0,

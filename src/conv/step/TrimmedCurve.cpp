@@ -201,8 +201,8 @@ TrimmedCurve::LoadONBrep(ON_Brep *brep)
 		return true; // already loaded
 
 	//TODO: pass down trimmings(protected curve attributes
-	LIST_OF_TRIMMING_SELECT::iterator i = trim_1.begin();
-	TrimmingSelect *ts = (*i);
+	LIST_OF_TRIMMING_SELECT::iterator iter = trim_1.begin();
+	TrimmingSelect *ts = (*iter);
 	if (ts->IsParameterTrim()) {
 		trimmed = true;
 		parameter_trim = true;
@@ -216,8 +216,8 @@ TrimmedCurve::LoadONBrep(ON_Brep *brep)
 		for(int i=0;i<3;i++)
 			trim_startpoint[i] = point[i] * LocalUnits::length;
 	}
-	i = trim_2.begin();
-	TrimmingSelect *te = (*i);
+	iter = trim_2.begin();
+	TrimmingSelect *te = (*iter);
 	if (te->IsParameterTrim()) {
 		trimmed = true;
 		parameter_trim = true;

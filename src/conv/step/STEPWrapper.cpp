@@ -53,10 +53,9 @@ STEPWrapper::~STEPWrapper()
 }
 
 
-bool
-STEPWrapper::convert(BRLCADWrapper *dotg)
+bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 {
-	this->dotg = dotg;
+    this->dotg = dot_g;
 
 	int num_ents = instance_list.InstanceCount();
     //std::cout << "Loaded " << num_ents << "instances from STEP file \"" << stepfile << "\"" << std::endl;
@@ -71,7 +70,7 @@ STEPWrapper::convert(BRLCADWrapper *dotg)
 			AdvancedBrepShapeRepresentation *aBrep = new AdvancedBrepShapeRepresentation();
 
 			if ( aBrep->Load(this,sse) ) {
-		std::string name = aBrep->Name();
+		name = aBrep->Name();
 				//aBrep->Print(0);
 
 				LocalUnits::length = aBrep->GetLengthConversionFactor();
@@ -360,11 +359,11 @@ STEPWrapper::getListOfEntities(int STEPid, const char *name)
 			STEPaggregate *sa = (STEPaggregate *)attr->ptr.a;
 
 			EntityNode *sn = (EntityNode *)sa->GetHead();
-			SCLP23(Application_instance) *sse;
+			SCLP23(Application_instance) *se;
 			while ( sn != NULL) {
-				sse = (SCLP23(Application_instance) *)sn->node;
+				se = (SCLP23(Application_instance) *)sn->node;
 
-				l->push_back(sse);
+				l->push_back(se);
 				sn = (EntityNode *)sn->NextNode();
 			}
 			break;

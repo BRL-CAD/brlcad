@@ -1441,7 +1441,6 @@ print_pullback_data(string str, list<PBCData*> &pbcs, bool justendpoints)
 	    while (si != data->segments.end()) {
 		ON_2dPointArray *samples = (*si);
 		std::cerr << std::endl << "  Segment:" << ++segcnt << std::endl;
-		int ilast = samples->Count() - 1;
 		std::cerr << "    T:" << ++trimcnt << std::endl;
 		for (int i = 0; i < samples->Count(); i++) {
 		    int singularity=IsAtSingularity(surf, (*samples)[i].x, (*samples)[i].y);
@@ -1847,10 +1846,8 @@ resolve_pullback_singularities(list<PBCData*> &pbcs)
 	    PBCData *data = (*cs);
 	    const ON_Surface *surf = data->surftree->getSurface();
 	    list<ON_2dPointArray *>::iterator si = data->segments.begin();
-	    int segcnt = 0;
 	    while (si != data->segments.end()) {
 		ON_2dPointArray *samples = (*si);
-		int last = samples->Count() - 1;
 		for (int i = 0; i < samples->Count(); i++) {
 		    // 0 = south, 1 = east, 2 = north, 3 = west
 		    if ((singularity=IsAtSingularity(surf, (*samples)[i].x, (*samples)[i].y)) >= 0) {
@@ -2081,8 +2078,6 @@ pullback_curve(const brlcad::SurfaceTree* surfacetree,
     }
 
     ON_2dPoint p1, p2;
-    double psize = tmax - tmin;
-
     const ON_Surface *surf = (data.surftree)->getSurface();
 
     toUV(data, p1, tmin, PBC_TOL);
@@ -2130,7 +2125,6 @@ pullback_seam_curve(enum seam_direction seam_dir,
     if (!toUV(data, start, tmin, 0.001)) { return NULL; } // fails if first point is out of tolerance!
 
     ON_2dPoint p1, p2;
-    double psize = tmax - tmin;
 
     toUV(data, p1, tmin, PBC_TOL);
     toUV(data, p2, tmax, -PBC_TOL);

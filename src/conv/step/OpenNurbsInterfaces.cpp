@@ -1223,7 +1223,7 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 	next_cs++;
 	if (next_cs == curve_pullback_samples.end())
 	    next_cs = curve_pullback_samples.begin();
-	PBCData *data = (*cs);
+	data = (*cs);
 	list<ON_2dPointArray*>::iterator si;
 	si = data->segments.begin();
 	PBCData *ndata = (*next_cs);
@@ -1235,8 +1235,8 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 	    nsi = si;
 	    nsi++;
 	    if (nsi == data->segments.end()) {
-		PBCData *ndata = (*next_cs);
-		nsi = ndata->segments.begin();
+		PBCData *nsidata = (*next_cs);
+		nsi = nsidata->segments.begin();
 	    }
 	    ON_2dPointArray* samples = (*si);
 	    nsamples = (*nsi);
@@ -1321,15 +1321,15 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 		    else
 			vi = data->edge->m_vi[1];
 
-		    ON_BrepTrim& trim = brep->NewSingularTrim(brep->m_V[vi], (ON_BrepLoop&) *loop, iso, trimCurve);
+		    ON_BrepTrim& sing_trim = brep->NewSingularTrim(brep->m_V[vi], (ON_BrepLoop&) *loop, iso, trimCurve);
 
-		    trim.m_tolerance[0] = 1e-3; //TODO: need constant tolerance?
-		    trim.m_tolerance[1] = 1e-3;
-		    ON_Interval PD = trim.ProxyCurveDomain();
-		    trim.m_iso = surf->IsIsoparametric(*brep->m_C2[trimCurve], &PD);
-		    trim.m_iso = iso;
+		    sing_trim.m_tolerance[0] = 1e-3; //TODO: need constant tolerance?
+		    sing_trim.m_tolerance[1] = 1e-3;
+		    ON_Interval sing_PD = sing_trim.ProxyCurveDomain();
+		    sing_trim.m_iso = surf->IsIsoparametric(*brep->m_C2[trimCurve], &sing_PD);
+		    sing_trim.m_iso = iso;
 		    //trim.Reverse();
-		    trim.IsValid(&tl);
+		    sing_trim.IsValid(&tl);
 		} /*else if ((is = check_pullback_seam_bridge(surf, end_current, start_next)) >= 0) {
 		  // insert trim
 		  // insert singular trim along
