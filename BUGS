@@ -97,9 +97,6 @@ Recent Bugs
 * running 'keep' on too many objects (hundreds is causing a usage
   statement (and not doing the keep)
 
-* Windows MSVC build files seem to have the project dependencies all
-  jacked up as it doesn't seem to compile things in the right order.
-
 * rtwizard won't display a line overlay if you line object is obscured
   by another.  Example being to display a vehicle as ghost, crew as
   solid, and crew as line.  confirmed even when using the other line
