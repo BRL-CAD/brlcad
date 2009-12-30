@@ -1018,7 +1018,7 @@ rt_cline_ifree(struct rt_db_internal *ip)
 
 
 int
-rt_cline_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *attr)
+rt_cline_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr)
 {
     register struct rt_cline_internal *cli =
 	(struct rt_cline_internal *)intern->idb_ptr;
@@ -1026,20 +1026,20 @@ rt_cline_get(struct bu_vls *log, const struct rt_db_internal *intern, const char
     RT_CLINE_CK_MAGIC(cli);
 
     if (attr == (char *)NULL) {
-	bu_vls_strcpy(log, "cline");
-	bu_vls_printf(log, " V {%.25G %.25G %.25G}", V3ARGS(cli->v));
-	bu_vls_printf(log, " H {%.25G %.25G %.25G}", V3ARGS(cli->h));
-	bu_vls_printf(log, " R %.25G T %.25G", cli->radius, cli->thickness);
+	bu_vls_strcpy(logstr, "cline");
+	bu_vls_printf(logstr, " V {%.25G %.25G %.25G}", V3ARGS(cli->v));
+	bu_vls_printf(logstr, " H {%.25G %.25G %.25G}", V3ARGS(cli->h));
+	bu_vls_printf(logstr, " R %.25G T %.25G", cli->radius, cli->thickness);
     } else if (*attr == 'V')
-	bu_vls_printf(log, "%.25G %.25G %.25G", V3ARGS(cli->v));
+	bu_vls_printf(logstr, "%.25G %.25G %.25G", V3ARGS(cli->v));
     else if (*attr == 'H')
-	bu_vls_printf(log, "%.25G %.25G %.25G", V3ARGS(cli->h));
+	bu_vls_printf(logstr, "%.25G %.25G %.25G", V3ARGS(cli->h));
     else if (*attr == 'R')
-	bu_vls_printf(log, "%.25G", cli->radius);
+	bu_vls_printf(logstr, "%.25G", cli->radius);
     else if (*attr == 'T')
-	bu_vls_printf(log, "%.25G", cli->thickness);
+	bu_vls_printf(logstr, "%.25G", cli->thickness);
     else {
-	bu_vls_strcat(log, "ERROR: unrecognized attribute, must be V, H, R, or T!!!");
+	bu_vls_strcat(logstr, "ERROR: unrecognized attribute, must be V, H, R, or T!!!");
 	return BRLCAD_ERROR;
     }
 
@@ -1048,7 +1048,7 @@ rt_cline_get(struct bu_vls *log, const struct rt_db_internal *intern, const char
 
 
 int
-rt_cline_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char **argv)
+rt_cline_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv)
 {
     struct rt_cline_internal *cli =
 	(struct rt_cline_internal *)intern->idb_ptr;
@@ -1064,14 +1064,14 @@ rt_cline_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, cha
 	    new = cli->v;
 	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &new, &array_len) !=
 		array_len) {
-		bu_vls_printf(log, "ERROR: Incorrect number of coordinates for vector\n");
+		bu_vls_printf(logstr, "ERROR: Incorrect number of coordinates for vector\n");
 		return BRLCAD_ERROR;
 	    }
 	} else if (*argv[0] == 'H') {
 	    new = cli->h;
 	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &new, &array_len) !=
 		array_len) {
-		bu_vls_printf(log, "ERROR: Incorrect number of coordinates for point\n");
+		bu_vls_printf(logstr, "ERROR: Incorrect number of coordinates for point\n");
 		return BRLCAD_ERROR;
 	    }
 	} else if (*argv[0] == 'R')
@@ -1088,11 +1088,11 @@ rt_cline_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, cha
 
 
 int
-rt_cline_form(struct bu_vls *log, const struct rt_functab *ftp)
+rt_cline_form(struct bu_vls *logstr, const struct rt_functab *ftp)
 {
     RT_CK_FUNCTAB(ftp);
 
-    bu_vls_printf(log,
+    bu_vls_printf(logstr,
 		  "V {%%f %%f %%f} H {%%f %%f %%f} R %%f T %%f");
 
     return BRLCAD_OK;

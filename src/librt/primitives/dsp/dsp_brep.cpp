@@ -35,7 +35,7 @@
  * R T _ D S P _ B R E P
  */
 extern "C" void
-rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
+rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 {
     struct rt_dsp_internal *dsp_ip;
     struct bu_mapped_file *mf;
@@ -54,9 +54,6 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     dsp_ip->dsp_buf = (short unsigned int*)mf->apbuf;
     
     *b = ON_Brep::New();
-
-    ON_TextLog dump_to_stdout;
-    ON_TextLog* dump = &dump_to_stdout;
 
     switch (dsp_ip->dsp_datasrc) {
   	case RT_DSP_SRC_V4_FILE:
@@ -113,7 +110,7 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
    
     // Step 1 - create the bottom face.
     
-    point_t p_origin, p2, p3, p4;
+    point_t p_origin, p2, p3;
     ON_3dPoint plane_origin, plane_x_dir, plane_y_dir, pt2, pt3, pt4;
     
     VSETALL(p_origin, 0.0);
@@ -137,7 +134,6 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     // Second step, the "walls"
 
     ON_SimpleArray<ON_Curve *> boundary;
-    ON_3dPointArray *bezpoints = new ON_3dPointArray(256);
 	
     // side 1
     
@@ -247,7 +243,7 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     boundary.Append(s3c1);
     ON_Curve *s3c2 = new ON_LineCurve(s3pt2, s3pt3);
     boundary.Append(s3c2);
-    for (int x = 0; x < (dsp_ip->dsp_xcnt); x++) {
+    for (unsigned int x = 0; x < (dsp_ip->dsp_xcnt); x++) {
 	ON_3dPoint *ctrlpt = new ON_3dPoint(x*1000, (dsp_ip->dsp_ycnt - 1)*1000, DSP(dsp_ip, x, dsp_ip->dsp_ycnt - 1));
 	bezpoints3->Append(*ctrlpt);
     }
@@ -290,7 +286,7 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     boundary.Append(s4c1);
     ON_Curve *s4c2 = new ON_LineCurve(s4pt2, s4pt3);
     boundary.Append(s4c2);
-    for (int y=0; y < (dsp_ip->dsp_ycnt); y++) {
+    for (unsigned int y=0; y < (dsp_ip->dsp_ycnt); y++) {
 	ON_3dPoint *ctrlpt = new ON_3dPoint((dsp_ip->dsp_xcnt - 1)*1000, y*1000, DSP(dsp_ip, dsp_ip->dsp_xcnt - 1, y));
 	bezpoints4->Append(*ctrlpt);
     }
@@ -316,8 +312,8 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 
     ON_BezierSurface *bezsurf = new ON_BezierSurface(3, false, dsp_ip->dsp_xcnt, dsp_ip->dsp_ycnt);
       
-    for (int y=0; y < (dsp_ip->dsp_ycnt); y++) {
-	for (int x=0; x < (dsp_ip->dsp_xcnt); x++) {
+    for (unsigned int y=0; y < (dsp_ip->dsp_ycnt); y++) {
+	for (unsigned int x=0; x < (dsp_ip->dsp_xcnt); x++) {
 	    ON_3dPoint *ctrlpt = new ON_3dPoint(x*1000, y*1000, DSP(dsp_ip, x, y));
 	    bezsurf->SetCV(x, y, *ctrlpt);
 	}
