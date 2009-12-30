@@ -70,7 +70,7 @@ const struct bu_structparse rt_nul_parse[] = {
         BU_EXTERN(int rt_##name##_adjust, (struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv)); \
 	BU_EXTERN(int rt_##name##_describe, (struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local, struct resource *resp, struct db_i *db_i)); \
         BU_EXTERN(void rt_##name##_make, (const struct rt_functab *ftp, struct rt_db_internal *intern)); \
-	BU_EXTERN(int rt_##name##_xform, (struct rt_db_internal *op, const mat_t mat, struct rt_db_internal *ip, int free, struct db_i *dbip, struct resource *resp)); \
+	BU_EXTERN(int rt_##name##_xform, (struct rt_db_internal *op, const mat_t mat, struct rt_db_internal *ip, int release, struct db_i *dbip, struct resource *resp)); \
 	BU_EXTERN(int rt_##name##_params, (struct pc_pc_set *ps, const struct rt_db_internal *ip)); \
 	BU_EXTERN(int rt_##name##_mirror, (struct rt_db_internal *ip, const plane_t *plane)); \
 	extern const struct bu_structparse rt_##name##_parse[]
@@ -256,7 +256,7 @@ BU_EXTERN(int rt_extrude_form, (struct bu_vls *logstr, const struct rt_functab *
 /* PNTS */
 
 /* From here in table.c */
-BU_EXTERN(int rt_generic_xform, (struct rt_db_internal *op, const mat_t mat, struct rt_db_internal *ip, int free, struct db_i *dbip, struct resource *resp));
+BU_EXTERN(int rt_generic_xform, (struct rt_db_internal *op, const mat_t mat, struct rt_db_internal *ip, int release, struct db_i *dbip, struct resource *resp));
 
 /* Stub Tcl interfaces */
 int rt_nul_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr) {
@@ -998,7 +998,7 @@ int NDEF(rt_nul_describe, (struct bu_vls *str,
 			   struct db_i *db_i));
 int NDEF(rt_nul_xform, (struct rt_db_internal *op,
 			const mat_t mat, struct rt_db_internal *ip,
-			int free, struct db_i *dbip, struct resource *resp));
+			int release, struct db_i *dbip, struct resource *resp));
 int NDEF(rt_nul_params, (struct pc_pc_set * ps, const struct rt_db_internal *op));
 void DEF(rt_nul_make, (const struct rt_functab *ftp, struct rt_db_internal *intern));
 
@@ -1167,7 +1167,7 @@ rt_generic_xform(
     struct rt_db_internal *op,
     const mat_t mat,
     struct rt_db_internal *ip,
-    int free,
+    int release,
     struct db_i *dbip,
     struct resource *resp)
 {
@@ -1190,7 +1190,7 @@ rt_generic_xform(
 		       rt_functab[id].ft_name);
 		return -1;			/* FAIL */
 	    }
-	    if ((free || op == ip)) rt_db_free_internal(ip);
+	    if ((release || op == ip)) rt_db_free_internal(ip);
 
 	    RT_INIT_DB_INTERNAL(op);
 	    if (rt_functab[id].ft_import4(op, &ext, mat, dbip, resp) < 0) {
@@ -1207,7 +1207,7 @@ rt_generic_xform(
 		return -1;			/* FAIL */
 	    }
 
-	    if ((free || op == ip)) {
+	    if ((release || op == ip)) {
 		if (ip->idb_avs.magic == BU_AVS_MAGIC) {
 		    /* grab the attributes before they are lost
 		     * by rt_db_free_internal or RT_INIT_DB_INTERNAL
@@ -1220,7 +1220,7 @@ rt_generic_xform(
 
 	    RT_INIT_DB_INTERNAL(op);
 
-	    if (!free && op != ip) {
+	    if (!release && op != ip) {
 		/* just copy the attributes from ip to op */
 		if (ip->idb_avs.magic == BU_AVS_MAGIC) {
 		    bu_avs_init(&op->idb_avs, ip->idb_avs.count, "avs");

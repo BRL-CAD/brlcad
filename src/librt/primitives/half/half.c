@@ -491,7 +491,7 @@ rt_hlf_xform(
     struct rt_db_internal *op,
     const mat_t mat,
     struct rt_db_internal *ip,
-    int free,
+    int release,
     struct db_i *dbip,
     struct resource *resp)
 {
@@ -518,7 +518,7 @@ rt_hlf_xform(
     /*
      * We are done with the input solid so free it if required.
      */
-    if (free && ip != op)
+    if (release && ip != op)
 	rt_db_free_internal(ip);
 
     /*

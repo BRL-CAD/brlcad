@@ -2339,7 +2339,7 @@ rt_extrude_xform(
     struct rt_db_internal *op,
     const mat_t mat,
     struct rt_db_internal *ip,
-    int free,
+    int release,
     struct db_i *dbip,
     struct resource *resp)
 {
