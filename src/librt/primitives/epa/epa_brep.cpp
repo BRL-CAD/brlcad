@@ -35,7 +35,7 @@
  * R T _ E P A _ B R E P
  */
 extern "C" void
-rt_epa_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
+rt_epa_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 {
     struct rt_epa_internal *eip;
 
@@ -48,13 +48,13 @@ rt_epa_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     ON_TextLog dump_to_stdout;
     ON_TextLog* dump = &dump_to_stdout;
     
-    point_t p1_origin, p2_origin;
+    point_t p1_origin;
     ON_3dPoint plane1_origin, plane2_origin;
     ON_3dVector plane_x_dir, plane_y_dir;
     
     //  First, find plane in 3 space corresponding to the bottom face of the EPA.
    
-    vect_t tmp, x_dir, y_dir;
+    vect_t x_dir, y_dir;
     
     VMOVE(x_dir, eip->epa_Au);
     VCROSS(y_dir, eip->epa_Au, eip->epa_H);
@@ -183,9 +183,9 @@ rt_epa_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 
     (*b)->m_S.Append(epacurvedsurf);
     int surfindex = (*b)->m_S.Count();
-    ON_BrepFace& face = (*b)->NewFace(surfindex - 1);
+    (*b)->NewFace(surfindex - 1);
     int faceindex = (*b)->m_F.Count();
-    ON_BrepLoop* outerloop = (*b)->NewOuterLoop(faceindex-1);
+    (*b)->NewOuterLoop(faceindex-1);
 }
 
 

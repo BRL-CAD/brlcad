@@ -577,7 +577,7 @@ rt_ehy_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
     switch (hitp->hit_surfno) {
 	case EHY_NORM_BODY:
 	    /* top plate, polar coords */
-	    if (pprime[Z] == -1.0) {
+	    if (NEAR_ZERO(pprime[Z] + 1.0, SMALL_FASTF)) { /* i.e., == -1.0 */
 		/* bottom pt of body */
 		uvp->uv_u = 0;
 	    } else {
@@ -634,15 +634,18 @@ int
 rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol __attribute__((unused)))
 {
     fastf_t c, dtol, f, mag_a, mag_h, ntol, r1, r2;
-    fastf_t **ellipses, theta_prev, theta_new, rt_ell_ang(fastf_t *p1, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol);
+    fastf_t **ellipses, theta_prev, theta_new;
     int *pts_dbl, i, j, nseg;
     int jj, na, nb, nell, recalc_b;
     mat_t R;
     mat_t invR;
     point_t p1;
-    struct rt_pt_node *pos_a, *pos_b, *pts_a, *pts_b, *rt_ptalloc(void);
+    struct rt_pt_node *pos_a, *pos_b, *pts_a, *pts_b;
     struct rt_ehy_internal *xip;
     vect_t A, Au, B, Bu, Hu, V, Work;
+
+    struct rt_pt_node *rt_ptalloc(void);
+    fastf_t rt_ell_ang(fastf_t *, fastf_t, fastf_t, fastf_t, fastf_t);
 
     RT_CK_DB_INTERNAL(ip);
     xip = (struct rt_ehy_internal *)ip->idb_ptr;
@@ -914,7 +917,7 @@ int
 rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
     fastf_t c, dtol, f, mag_a, mag_h, ntol, r1, r2, cprime;
-    fastf_t **ellipses, theta_prev, theta_new, rt_ell_ang(fastf_t *p1, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol);
+    fastf_t **ellipses, theta_prev, theta_new;
     int *pts_dbl, face, i, j, nseg;
     int jj, na, nb, nell, recalc_b;
     mat_t R;
@@ -924,7 +927,7 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     mat_t SoR;
     struct rt_ehy_internal *xip;
     point_t p1;
-    struct rt_pt_node *pos_a, *pos_b, *pts_a, *pts_b, *rt_ptalloc(void);
+    struct rt_pt_node *pos_a, *pos_b, *pts_a, *pts_b;
     struct shell *s;
     struct faceuse **outfaceuses = NULL;
     struct faceuse *fu_top;
@@ -934,6 +937,9 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     struct vertex ***vells = (struct vertex ***)NULL;
     vect_t A, Au, B, Bu, Hu, V;
     struct bu_ptbl vert_tab;
+
+    struct rt_pt_node *rt_ptalloc(void);
+    fastf_t rt_ell_ang(fastf_t *, fastf_t, fastf_t, fastf_t, fastf_t);
 
     RT_CK_DB_INTERNAL(ip);
     xip = (struct rt_ehy_internal *)ip->idb_ptr;

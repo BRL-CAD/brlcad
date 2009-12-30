@@ -562,7 +562,7 @@ rt_epa_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
     switch (hitp->hit_surfno) {
 	case EPA_NORM_BODY:
 	    /* top plate, polar coords */
-	    if (pprime[Z] == -1.0) {
+	    if (NEAR_ZERO(pprime[Z] + 1.0, SMALL_FASTF)) { /* i.e., == -1.0 */
 		/* bottom pt of body */
 		uvp->uv_u = 0;
 	    } else {
@@ -618,15 +618,18 @@ int
 rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol __attribute__((unused)))
 {
     fastf_t dtol, f, mag_a, mag_h, ntol, r1, r2;
-    fastf_t **ellipses, theta_new, theta_prev, rt_ell_ang(fastf_t *p1, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol);
+    fastf_t **ellipses, theta_new, theta_prev;
     int *pts_dbl, i, j, nseg;
     int jj, na, nb, nell, recalc_b;
     mat_t R;
     mat_t invR;
     struct rt_epa_internal *xip;
     point_t p1;
-    struct rt_pt_node *pos_a, *pos_b, *pts_a, *pts_b, *rt_ptalloc(void);
+    struct rt_pt_node *pos_a, *pos_b, *pts_a, *pts_b;
     vect_t A, Au, B, Bu, Hu, V, Work;
+
+    struct rt_pt_node *rt_ptalloc(void);
+    fastf_t rt_ell_ang(fastf_t *, fastf_t, fastf_t, fastf_t, fastf_t);
 
 #ifndef NO_MAGIC_CHECKING
     RT_CK_DB_INTERNAL(ip);

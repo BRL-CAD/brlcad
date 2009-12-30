@@ -1793,7 +1793,6 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
 	get_indices(cur_seg, &loop_start, &loop_end);
 
 	while (loop_end != loop_start) {
-	    int j;
 	    int added_seg;
 
 	    added_seg = 0;
@@ -1839,7 +1838,6 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
 
     for (i=0; i<BU_PTBL_END(&loops); i++) {
 	struct bu_ptbl *loopa;
-	int j;
 
 	loopa = (struct bu_ptbl *)BU_PTBL_GET(&loops, i);
 	for (j=i+1; j<BU_PTBL_END(&loops); j++) {

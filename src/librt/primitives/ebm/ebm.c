@@ -83,8 +83,6 @@ BU_EXTERN(int rt_ebm_dda, (struct xray *rp, struct soltab *stp,
 BU_EXTERN(int rt_seg_planeclip, (struct seg *out_hd, struct seg *in_hd,
 				 vect_t out_norm, fastf_t in, fastf_t out,
 				 struct xray *rp, struct application *ap));
-BU_EXTERN(void rt_ebm_plate, (int x1, int y1, int x2, int y2,
-			      double t, mat_t mat, struct bu_list *vhead));
 
 /*
  * Codes to represent surface normals.  In a bitmap, there are only 4
@@ -280,7 +278,7 @@ rt_ebm_dda(register struct xray *rp, struct soltab *stp, struct application *ap,
     }
     if (RT_G_DEBUG&DEBUG_EBM)bu_log("g[X] = %d, g[Y] = %d\n", igrid[X], igrid[Y]);
 
-    if (rp->r_dir[X] == 0.0 && rp->r_dir[Y] == 0.0) {
+    if (NEAR_ZERO(rp->r_dir[X], SMALL_FASTF) && NEAR_ZERO(rp->r_dir[Y], SMALL_FASTF)) {
 	register struct seg *segp;
 
 	/* Ray is traveling exactly along Z axis.  Just check the one
@@ -316,7 +314,7 @@ rt_ebm_dda(register struct xray *rp, struct soltab *stp, struct application *ap,
     }
 
     /* X setup */
-    if (rp->r_dir[X] == 0.0) {
+    if (NEAR_ZERO(rp->r_dir[X], SMALL_FASTF)) {
 	t[X] = INFINITY;
 	delta[X] = 0;
     } else {
@@ -327,7 +325,7 @@ rt_ebm_dda(register struct xray *rp, struct soltab *stp, struct application *ap,
 	delta[X] = ebmp->ebm_cellsize[X] * fabs(invdir[X]);
     }
     /* Y setup */
-    if (rp->r_dir[Y] == 0.0) {
+    if (NEAR_ZERO(rp->r_dir[Y], SMALL_FASTF)) {
 	t[Y] = INFINITY;
 	delta[Y] = 0;
     } else {
@@ -339,7 +337,7 @@ rt_ebm_dda(register struct xray *rp, struct soltab *stp, struct application *ap,
     }
 #if 0
     /* Z setup */
-    if (rp->r_dir[Z] == 0.0) {
+    if (NEAR_ZERO(rp->r_dir[Z], SMALL_FASTF)) {
 	t[Z] = INFINITY;
     } else {
 	/* Consider igrid[Z] to be either 0 or 1 */
@@ -357,10 +355,10 @@ rt_ebm_dda(register struct xray *rp, struct soltab *stp, struct application *ap,
     if (RT_G_DEBUG&DEBUG_EBM)bu_log("t[Y] = %g, delta[Y] = %g\n", t[Y], delta[Y]);
 
     /* Find face of entry into first cell -- max initial t value */
-    if (t[X] == INFINITY) {
+    if (NEAR_ZERO(t[X] - INFINITY, SMALL_FASTF)) {
 	in_index = Y;
 	t0 = t[Y];
-    } else if (t[Y] == INFINITY) {
+    } else if (NEAR_ZERO(t[Y] - INFINITY, SMALL_FASTF)) {
 	in_index = X;
 	t0 = t[X];
     } else if (t[X] >= t[Y]) {
@@ -1100,6 +1098,33 @@ rt_ebm_class(void)
 }
 
 
+/* either x1==x2, or y1==y2 */
+void
+rt_ebm_plate(int x_1, int y_1, int x_2, int y_2, double t, register fastf_t *mat, register struct bu_list *vhead)
+{
+    point_t s, p;
+    point_t srot, prot;
+
+    VSET(s, x_1, y_1, 0.0);
+    MAT4X3PNT(srot, mat, s);
+    RT_ADD_VLIST(vhead, srot, BN_VLIST_LINE_MOVE);
+
+    VSET(p, x_1, y_1, t);
+    MAT4X3PNT(prot, mat, p);
+    RT_ADD_VLIST(vhead, prot, BN_VLIST_LINE_DRAW);
+
+    VSET(p, x_2, y_2, t);
+    MAT4X3PNT(prot, mat, p);
+    RT_ADD_VLIST(vhead, prot, BN_VLIST_LINE_DRAW);
+
+    p[Z] = 0;
+    MAT4X3PNT(prot, mat, p);
+    RT_ADD_VLIST(vhead, prot, BN_VLIST_LINE_DRAW);
+
+    RT_ADD_VLIST(vhead, srot, BN_VLIST_LINE_DRAW);
+}
+
+
 /**
  * R T _ E B M _ P L O T
  */
@@ -1157,33 +1182,6 @@ rt_ebm_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 }
 
 
-/* either x1==x2, or y1==y2 */
-void
-rt_ebm_plate(int x1, int y1, int x2, int y2, double t, register fastf_t *mat, register struct bu_list *vhead)
-{
-    point_t s, p;
-    point_t srot, prot;
-
-    VSET(s, x1, y1, 0.0);
-    MAT4X3PNT(srot, mat, s);
-    RT_ADD_VLIST(vhead, srot, BN_VLIST_LINE_MOVE);
-
-    VSET(p, x1, y1, t);
-    MAT4X3PNT(prot, mat, p);
-    RT_ADD_VLIST(vhead, prot, BN_VLIST_LINE_DRAW);
-
-    VSET(p, x2, y2, t);
-    MAT4X3PNT(prot, mat, p);
-    RT_ADD_VLIST(vhead, prot, BN_VLIST_LINE_DRAW);
-
-    p[Z] = 0;
-    MAT4X3PNT(prot, mat, p);
-    RT_ADD_VLIST(vhead, prot, BN_VLIST_LINE_DRAW);
-
-    RT_ADD_VLIST(vhead, srot, BN_VLIST_LINE_DRAW);
-}
-
-
 struct ebm_edge
 {
     struct bu_list l;
@@ -1196,24 +1194,24 @@ struct ebm_edge
 
 /* either x1==x2, or y1==y2 */
 static void
-rt_ebm_edge(int x1, int y1, int x2, int y2, int left, struct ebm_edge *edges)
+rt_ebm_edge(int x_1, int y_1, int x_2, int y_2, int left, struct ebm_edge *edges)
 {
     struct ebm_edge *new_edge;
 
     new_edge = (struct ebm_edge *)bu_malloc(sizeof(struct ebm_edge), "rt_ebm_tess: new_edge");
 
     /* make all edges go from lower values to larger */
-    if (y1 < y2 || x1 < x2) {
-	new_edge->x1 = x1;
-	new_edge->y1 = y1;
-	new_edge->x2 = x2;
-	new_edge->y2 = y2;
+    if (y_1 < y_2 || x_1 < x_2) {
+	new_edge->x1 = x_1;
+	new_edge->y1 = y_1;
+	new_edge->x2 = x_2;
+	new_edge->y2 = y_2;
 	new_edge->left = left;
     } else {
-	new_edge->x1 = x2;
-	new_edge->y1 = y2;
-	new_edge->x2 = x1;
-	new_edge->y2 = y1;
+	new_edge->x1 = x_2;
+	new_edge->y1 = y_2;
+	new_edge->x2 = x_1;
+	new_edge->y2 = y_1;
 	new_edge->left = (!left);
     }
     new_edge->v = (struct vertex *)NULL;
