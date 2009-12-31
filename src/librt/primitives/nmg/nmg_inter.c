@@ -4202,6 +4202,7 @@ nmg_isect_line2_face2pNEW(struct nmg_inter_struct *is, struct faceuse *fu1, stru
     int eu1_index;
     int eu2_index;
     int class;
+    fastf_t distance;
 
     NMG_CK_INTER_STRUCT(is);
     NMG_CK_FACEUSE(fu1);
@@ -4293,32 +4294,32 @@ nmg_isect_line2_face2pNEW(struct nmg_inter_struct *is, struct faceuse *fu1, stru
 
 		vg = eu1->vu_p->v_p->vg_p;
 		NMG_CK_VERTEX_G(vg);
-		(void)rt_dist_pt3_line3(&dist, pca, is->pt, is->dir, vg->coord, &(is->tol));
-		if (dist <= is->tol.dist) {
+		(void)rt_dist_pt3_line3(&distance, pca, is->pt, is->dir, vg->coord, &(is->tol));
+		if (distance <= is->tol.dist) {
 		    /* vertex is on intersection line */
 
 		    if (DIST_PT_PLANE(vg->coord, pl2) <= is->tol.dist) {
 			/* and in plane of fu2 */
 			if (nmg_class_pt_fu_except(vg->coord, fu2, (struct loopuse *)NULL, NULL, NULL, (char *)NULL, 0, 0, &(is->tol)) != NMG_CLASS_AoutB) {
 			    /* and within fu2 */
-			    dist = VDIST(is->pt, vg->coord);
-			    nmg_enlist_vu(is, eu1->vu_p, 0, dist);
+			    distance = VDIST(is->pt, vg->coord);
+			    nmg_enlist_vu(is, eu1->vu_p, 0, distance);
 			}
 		    }
 		}
 		eu_end = BU_LIST_PNEXT_CIRC(edgeuse, &eu1->l);
 		vg = eu_end->vu_p->v_p->vg_p;
 		NMG_CK_VERTEX_G(vg);
-		code = rt_dist_pt3_line3(&dist, pca, is->pt, is->dir, eu_end->vu_p->v_p->vg_p->coord, &(is->tol));
-		if (dist <= is->tol.dist) {
+		code = rt_dist_pt3_line3(&distance, pca, is->pt, is->dir, eu_end->vu_p->v_p->vg_p->coord, &(is->tol));
+		if (distance <= is->tol.dist) {
 		    /* vertex is on intersection line */
 
 		    if (DIST_PT_PLANE(vg->coord, pl2) <= is->tol.dist) {
 			/* and in plane of fu2 */
 			if (nmg_class_pt_fu_except(vg->coord, fu2, (struct loopuse *)NULL, NULL, NULL, (char *)NULL, 0, 0, &(is->tol)) != NMG_CLASS_AoutB) {
 			    /* and within fu2 */
-			    dist = VDIST(is->pt, vg->coord);
-			    nmg_enlist_vu(is, eu_end->vu_p, 0, dist);
+			    distance = VDIST(is->pt, vg->coord);
+			    nmg_enlist_vu(is, eu_end->vu_p, 0, distance);
 			}
 		    }
 		}
@@ -4333,32 +4334,32 @@ nmg_isect_line2_face2pNEW(struct nmg_inter_struct *is, struct faceuse *fu1, stru
 
 		vg = eu2->vu_p->v_p->vg_p;
 		NMG_CK_VERTEX_G(vg);
-		code = rt_dist_pt3_line3(&dist, pca, is->pt, is->dir, vg->coord, &(is->tol));
-		if (dist <= is->tol.dist) {
+		code = rt_dist_pt3_line3(&distance, pca, is->pt, is->dir, vg->coord, &(is->tol));
+		if (distance <= is->tol.dist) {
 		    /* vertex is on intersection line */
 
 		    if (DIST_PT_PLANE(vg->coord, pl1) <= is->tol.dist) {
 			/* and in plane of fu1 */
 			if (nmg_class_pt_fu_except(vg->coord, fu1, (struct loopuse *)NULL, NULL, NULL, (char *)NULL, 0, 0, &(is->tol)) != NMG_CLASS_AoutB) {
 			    /* and within fu1 */
-			    dist = VDIST(is->pt, vg->coord);
-			    nmg_enlist_vu(is, eu2->vu_p, 0, dist);
+			    distance = VDIST(is->pt, vg->coord);
+			    nmg_enlist_vu(is, eu2->vu_p, 0, distance);
 			}
 		    }
 		}
 		eu_end = BU_LIST_PNEXT_CIRC(edgeuse, &eu2->l);
 		vg = eu_end->vu_p->v_p->vg_p;
 		NMG_CK_VERTEX_G(vg);
-		code = rt_dist_pt3_line3(&dist, pca, is->pt, is->dir, eu_end->vu_p->v_p->vg_p->coord, &(is->tol));
-		if (dist <= is->tol.dist) {
+		code = rt_dist_pt3_line3(&distance, pca, is->pt, is->dir, eu_end->vu_p->v_p->vg_p->coord, &(is->tol));
+		if (distance <= is->tol.dist) {
 		    /* vertex is on intersection line */
 
 		    if (DIST_PT_PLANE(vg->coord, pl1) <= is->tol.dist) {
 			/* and in plane of fu1 */
 			if (nmg_class_pt_fu_except(vg->coord, fu1, (struct loopuse *)NULL, NULL, NULL, (char *)NULL, 0, 0, &(is->tol)) != NMG_CLASS_AoutB) {
 			    /* and within fu1 */
-			    dist = VDIST(is->pt, vg->coord);
-			    nmg_enlist_vu(is, eu_end->vu_p, 0, dist);
+			    distance = VDIST(is->pt, vg->coord);
+			    nmg_enlist_vu(is, eu_end->vu_p, 0, distance);
 			}
 		    }
 		}
@@ -7434,7 +7435,7 @@ nmg_isect_edge3p_edge3p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
 	    /* Hit is at vu2a */
 	    nmg_jv(vu1b->v_p, vu2a->v_p);
 	    return;
-	} else if (NEAR_ZERO(dist[1] - 1.0, SMALL_FASTF)`) {
+	} else if (NEAR_ZERO(dist[1] - 1.0, SMALL_FASTF)) {
 	    /* Hit is at vu2b */
 	    nmg_jv(vu1b->v_p, vu2b->v_p);
 	    return;
