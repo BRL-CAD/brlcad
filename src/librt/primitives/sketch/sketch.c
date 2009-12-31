@@ -142,7 +142,7 @@ rt_sketch_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
  * R T _ S K E T C H _ P R I N T
  */
 void
-rt_sketch_print(register const struct soltab *stp)
+rt_sketch_print(const struct soltab *stp)
 {
 }
 
@@ -158,13 +158,20 @@ rt_sketch_print(register const struct soltab *stp)
  * >0 HIT
  */
 int
-rt_sketch_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
+rt_sketch_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
+    if (!stp || !rp || !ap)
+	return 0;
+
+    RT_CK_SOLTAB(stp);
+    RT_CK_RAY(rp);
+    RT_CK_APPLICATION(ap);
+
     /* can't hit 'em as they're not solid geometry, so no surfno, not
      * hit point, nada.
      */
 
-    return(0);			/* MISS */
+    return 0;			/* MISS */
 }
 
 
@@ -174,8 +181,14 @@ rt_sketch_shot(struct soltab *stp, register struct xray *rp, struct application 
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
-rt_sketch_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
+rt_sketch_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
+    if (!hitp || !rp)
+	return;
+
+    RT_CK_HIT(hitp);
+    if (stp) RT_CK_SOLTAB(stp);
+    RT_CK_RAY(rp);
 
     VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir);
 }
@@ -187,8 +200,14 @@ rt_sketch_norm(register struct hit *hitp, struct soltab *stp, register struct xr
  * Return the curvature of the sketch.
  */
 void
-rt_sketch_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
+rt_sketch_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
+    if (!cvp || !hitp)
+	return;
+
+    RT_CK_HITP(hitp);
+    if (stp) RT_CK_SOLTAB(stp);
+
     cvp->crv_c1 = cvp->crv_c2 = 0;
 
     /* any tangent direction */
@@ -205,7 +224,7 @@ rt_sketch_curve(register struct curvature *cvp, register struct hit *hitp, struc
  * u = azimuth,  v = elevation
  */
 void
-rt_sketch_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
+rt_sketch_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
 }
 
@@ -214,7 +233,7 @@ rt_sketch_uv(struct application *ap, struct soltab *stp, register struct hit *hi
  * R T _ S K E T C H _ F R E E
  */
 void
-rt_sketch_free(register struct soltab *stp)
+rt_sketch_free(struct soltab *stp)
 {
 }
 
@@ -916,7 +935,7 @@ rt_sketch_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip,
  * Apply modeling transformations as well.
  */
 int
-rt_sketch_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_sketch_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_sketch_internal *sketch_ip;
     union record *rp;
@@ -1254,7 +1273,7 @@ rt_sketch_export4(struct bu_external *ep, const struct rt_db_internal *ip, doubl
  * Apply modeling transformations as well.
  */
 int
-rt_sketch_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_sketch_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_sketch_internal *sketch_ip;
     vect_t v;
@@ -1595,7 +1614,7 @@ rt_sketch_export5(struct bu_external *ep, const struct rt_db_internal *ip, doubl
 int
 rt_sketch_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
-    register struct rt_sketch_internal *sketch_ip =
+    struct rt_sketch_internal *sketch_ip =
 	(struct rt_sketch_internal *)ip->idb_ptr;
     int i;
     int seg_no;
@@ -1840,7 +1859,7 @@ rt_curve_free(struct curve *crv)
 void
 rt_sketch_ifree(struct rt_db_internal *ip)
 {
-    register struct rt_sketch_internal *sketch_ip;
+    struct rt_sketch_internal *sketch_ip;
     struct curve *crv;
 
     RT_CK_DB_INTERNAL(ip);
@@ -2048,7 +2067,7 @@ int rt_sketch_form(struct bu_vls *logstr, const struct rt_functab *ftp)
 int
 rt_sketch_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr)
 {
-    register struct rt_sketch_internal *skt=(struct rt_sketch_internal *)intern->idb_ptr;
+    struct rt_sketch_internal *skt=(struct rt_sketch_internal *)intern->idb_ptr;
     int i;
     struct curve *crv;
 

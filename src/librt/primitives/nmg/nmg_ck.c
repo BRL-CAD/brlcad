@@ -465,8 +465,7 @@ nmg_vfg(const struct face_g_plane *fg)
     NMG_CK_FACE_G_EITHER(fg);
 
     if (fg->magic == NMG_FACE_G_PLANE_MAGIC) {
-	if (fg->N[X]==0.0 && fg->N[Y]==0.0 && fg->N[Z]==0.0 &&
-	    fg->N[H]!=0.0) {
+	if (VNEAR_ZERO(fg->N, SMALL_FASTF) && !NEAR_ZERO(fg->N[H], SMALL_FASTF)) {
 	    bu_log("bad NMG plane equation %fX + %fY + %fZ = %f\n",
 		   fg->N[X], fg->N[Y], fg->N[Z], fg->N[H]);
 	    bu_bomb("nmg_vfg() Bad NMG geometry\n");
@@ -942,7 +941,7 @@ nmg_ck_fg(const struct face *f, const struct face_g_plane *fg, const char *str)
     snprintf(errstr, len, "%sFace_g %8lx\n", str, (unsigned long)f);
 
     NMG_CK_FACE_G_PLANE(fg);
-    if (fg->N[X]==0.0 && fg->N[Y]==0.0 && fg->N[Z]==0.0 && fg->N[H]!=0.0) {
+    if (VNEAR_ZERO(fg->N, SMALL_FASTF) && !NEAR_ZERO(fg->N[H], SMALL_FASTF)) {
 	snprintf(&errstr[strlen(errstr)], len-strlen(errstr),
 		 "nmg_ck_fg() bad NMG plane equation %fX + %fY + %fZ = %f\n",
 		 fg->N[X], fg->N[Y], fg->N[Z], fg->N[H]);
@@ -1661,7 +1660,7 @@ struct v_ck_state {
 
 
 HIDDEN void
-nmg_ck_v_in_fus(long *vp, genptr_t state, int first)
+nmg_ck_v_in_fus(long *vp, genptr_t state, int unused __attribute__((unused)))
 {
     register struct v_ck_state *sp = (struct v_ck_state *)state;
     register struct vertex *v = (struct vertex *)vp;

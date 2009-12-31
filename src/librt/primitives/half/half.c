@@ -261,8 +261,7 @@ rt_hlf_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 void
 rt_hlf_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
-    register struct half_specific *halfp =
-	(struct half_specific *)stp->st_specific;
+    struct half_specific *halfp = (struct half_specific *)stp->st_specific;
     fastf_t f;
 
     RT_CK_SOLTAB(stp);
@@ -436,8 +435,8 @@ rt_hlf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     struct rt_half_internal *hip;
     vect_t cent;		/* some point on the plane */
     vect_t xbase, ybase;	/* perpendiculars to normal */
-    vect_t x1, x2;
-    vect_t y1, y2;
+    vect_t x_1, x_2;
+    vect_t y_1, y_2;
     vect_t tip;
 
     RT_CK_DB_INTERNAL(ip);
@@ -457,19 +456,19 @@ rt_hlf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     VSCALE(xbase, xbase, 1000);
     VSCALE(ybase, ybase, 1000);
 
-    VADD2(x1, cent, xbase);
-    VSUB2(x2, cent, xbase);
-    VADD2(y1, cent, ybase);
-    VSUB2(y2, cent, ybase);
+    VADD2(x_1, cent, xbase);
+    VSUB2(x_2, cent, xbase);
+    VADD2(y_1, cent, ybase);
+    VSUB2(y_2, cent, ybase);
 
-    RT_ADD_VLIST(vhead, x1, BN_VLIST_LINE_MOVE);	/* the cross */
-    RT_ADD_VLIST(vhead, x2, BN_VLIST_LINE_DRAW);
-    RT_ADD_VLIST(vhead, y1, BN_VLIST_LINE_MOVE);
-    RT_ADD_VLIST(vhead, y2, BN_VLIST_LINE_DRAW);
-    RT_ADD_VLIST(vhead, x2, BN_VLIST_LINE_DRAW);	/* the box */
-    RT_ADD_VLIST(vhead, y1, BN_VLIST_LINE_DRAW);
-    RT_ADD_VLIST(vhead, x1, BN_VLIST_LINE_DRAW);
-    RT_ADD_VLIST(vhead, y2, BN_VLIST_LINE_DRAW);
+    RT_ADD_VLIST(vhead, x_1, BN_VLIST_LINE_MOVE);	/* the cross */
+    RT_ADD_VLIST(vhead, x_2, BN_VLIST_LINE_DRAW);
+    RT_ADD_VLIST(vhead, y_1, BN_VLIST_LINE_MOVE);
+    RT_ADD_VLIST(vhead, y_2, BN_VLIST_LINE_DRAW);
+    RT_ADD_VLIST(vhead, x_2, BN_VLIST_LINE_DRAW);	/* the box */
+    RT_ADD_VLIST(vhead, y_1, BN_VLIST_LINE_DRAW);
+    RT_ADD_VLIST(vhead, x_1, BN_VLIST_LINE_DRAW);
+    RT_ADD_VLIST(vhead, y_2, BN_VLIST_LINE_DRAW);
 
     VSCALE(tip, hip->eqn, 500);
     VADD2(tip, cent, tip);
@@ -502,6 +501,7 @@ rt_hlf_xform(
     if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
+    RT_CK_RESOURCE(resp)
     hip = (struct rt_half_internal *)ip->idb_ptr;
     RT_HALF_CK_MAGIC(hip);
     RT_CK_DB_INTERNAL(op);

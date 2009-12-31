@@ -57,7 +57,7 @@ struct dangling_faceuse_state {
 int debug_file_count=0;
 
 static void
-nmg_dangling_handler(long int *longp, genptr_t state, int first)
+nmg_dangling_handler(long int *longp, genptr_t state, int unused __attribute__((unused)))
 {
     register struct faceuse *fu = (struct faceuse *)longp;
     register struct dangling_faceuse_state *sp =
@@ -569,27 +569,11 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 
     debug_file_count++;
     if (rt_g.NMG_debug & DEBUG_VERIFY) {
-#if 0
-	nmg_vshell(&rA->s_hd, rA);
-	nmg_vshell(&rB->s_hd, rB);
-#else
 	/* Sometimes the tessllations of non-participating regions
 	 * are damaged during a boolean operation.  Check everything.
 	 */
 	nmg_vmodel(m);
-#endif
-#if VERBOSE_VERIFY
-	bu_log("\n==================== Shell A:\n");
-	nmg_pr_s_briefly(sA, 0);
-	bu_log("\n==================== Shell B:\n");
-	nmg_pr_s_briefly(sB, 0);
-	bu_log("\n====================\n");
-#endif
     }
-#if 0
-    nmg_s_radial_check(sA, tol);
-    nmg_s_radial_check(sB, tol);
-#endif
 
     nmg_shell_coplanar_face_merge(sA, tol, 1);
     nmg_shell_coplanar_face_merge(sB, tol, 1);
@@ -645,32 +629,18 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
     }
 
     if (rt_g.NMG_debug & DEBUG_VERIFY) {
-#if 0
-	nmg_vshell(&rA->s_hd, rA);
-	nmg_vshell(&rB->s_hd, rB);
-#else
 	/* Sometimes the tessllations of non-participating regions
 	 * are damaged during a boolean operation.  Check everything.
 	 */
 	nmg_vmodel(m);
-#endif
-#if VERBOSE_VERIFY
-	bu_log("\n==================== Shell A: ====== before crackshells\n");
-	nmg_pr_s_briefly(sA, 0);
-	bu_log("\n==================== Shell B:\n");
-	nmg_pr_s_briefly(sB, 0);
-	bu_log("\n====================\n");
-#endif
     }
 
-#if 1
     if (rt_g.NMG_debug & DEBUG_BOOL) {
 	char file_name[256];
 
 	sprintf(file_name, "before%d.g", debug_file_count);
 	nmg_stash_model_to_file(file_name, m, "Before crackshells");
     }
-#endif
 
     /* Perform shell/shell intersections */
     nmg_crackshells(sA, sB, tol);
@@ -736,28 +706,16 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
     (void)nmg_model_edge_fuse(m, tol);
 
     if (rt_g.NMG_debug & DEBUG_VERIFY) {
-#if 0
-	nmg_vshell(&rA->s_hd, rA);
-	nmg_vshell(&rB->s_hd, rB);
-#else
 	/* Sometimes the tessllations of non-participating regions
 	 * are damaged during a boolean operation.  Check everything.
 	 */
 	nmg_vmodel(m);
-#endif
-#if VERBOSE_VERIFY
-	bu_log("\n==================== Shell A: ====== before mesh_shell_shell\n");
-	nmg_pr_s_briefly(sA, 0);
-	bu_log("\n==================== Shell B:\n");
-	nmg_pr_s_briefly(sB, 0);
-	bu_log("\n====================\n");
-#endif
 	if ((i = nmg_model_fuse(m, tol)) > 0) {
 	    bu_log("NOTICE: nmg_bool: fused %d entities while cracking shells\n", i);
 	    bu_bomb("nmg_bool() entities unfused after nmg_crackshells()\n");
 	}
     }
-#if 1
+
     /* Temporary search */
     if (nmg_has_dangling_faces((unsigned long *)rA, (char *)NULL))
 	bu_log("Dangling faces detected in rA before classification\n");
@@ -765,30 +723,14 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 	bu_log("Dangling faces detected in rB before classification\n");
     if (nmg_has_dangling_faces((unsigned long *)m, (char *)NULL))
 	bu_log("Dangling faces detected in model before classification\n");
-#endif
 
     if (rt_g.NMG_debug & DEBUG_VERIFY) {
-#if 0
-	nmg_vshell(&rA->s_hd, rA);
-	nmg_vshell(&rB->s_hd, rB);
-#else
 	/* Sometimes the tessllations of non-participating regions
 	 * are damaged during a boolean operation.  Check everything.
 	 */
 	nmg_vmodel(m);
-#endif
-#if VERBOSE_VERIFY
-	bu_log("\n==================== Shell A: ====== after mesh_shell_shell\n");
-	nmg_pr_s_briefly(sA, 0);
-	bu_log("\n==================== Shell B:\n");
-	nmg_pr_s_briefly(sB, 0);
-	bu_log("\n====================\n");
-#endif
+
     }
-#if 0
-    nmg_s_radial_check(sA, tol);
-    nmg_s_radial_check(sB, tol);
-#endif
 
     /*
      * Before splitting, join up small loop fragments into large
@@ -801,16 +743,6 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 	sprintf(file_name, "notjoined%d.g", debug_file_count);
 	nmg_stash_model_to_file(file_name, m, "Before s_join_touchingloops");
     }
-#if 0
-    nmg_s_join_touchingloops(sA, tol);
-    nmg_s_join_touchingloops(sB, tol);
-    if (rt_g.NMG_debug & DEBUG_BOOL) {
-	char file_name[256];
-
-	sprintf(file_name, "joined%d.g", debug_file_count);
-	nmg_stash_model_to_file(file_name, m, "After s_join_touchingloops");
-    }
-#endif
 
     /* Re-build bounding boxes, edge geometry, as needed. */
     nmg_shell_a(sA, tol);
@@ -858,38 +790,12 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 	bu_log("nmg_bool() WARNING: sB unclosed before classification.  Boldly pressing on.\n");
 
     if (rt_g.NMG_debug & DEBUG_VERIFY) {
-#if 0
-	nmg_vshell(&rA->s_hd, rA);
-	nmg_vshell(&rB->s_hd, rB);
-#else
 	/* Sometimes the tessllations of non-participating regions
 	 * are damaged during a boolean operation.  Check everything.
 	 */
 	nmg_vmodel(m);
-#endif
     }
 
-#if 0
-    /* Reindex structures before classification or evaluation. */
-    nmg_m_reindex(m, 0);
-
-    /*
-     * Allocate storage for classlist[].
-     * Get all 8 lists at once, and just build pointers for the rest.
-     * XXX In some cases, number of items may grow
-     * XXX (e.g. added vu's, loops) as things are demoted, etc.
-     * XXX Try to accomodate here by reserving some extra table space.
-     *
-     * XXX The classlist really only needs to be an unsigned char,
-     * XXX not a long*.
-     */
-    nelem = (m->maxindex)*4+1;		/* includes extra space */
-    classlist[0] = (long *)bu_calloc(8 * nelem + 1,
-				     sizeof(long), "nmg_bool classlist[8]");
-    for (i = 1; i < 8; i++) {
-	classlist[i] = classlist[0] + i * nelem;
-    }
-#endif
     nmg_class_nothing_broken = 1;
     if (rt_g.NMG_debug & (DEBUG_GRAPHCL|DEBUG_PL_LOOP)) {
 	nmg_show_broken_classifier_stuff((unsigned long *)sA, &classlist[0],
@@ -924,26 +830,24 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 	nmg_show_broken_classifier_stuff((unsigned long *)sA, &classlist[0], 1, 0, "sA classed");
 	nmg_show_broken_classifier_stuff((unsigned long *)sB, &classlist[4], 1, 0, "sB classed");
     }
-#if 1
+
     if (rt_g.NMG_debug & DEBUG_BOOL) {
 	bu_log("Just before nmg_evaluate_boolean:\nShell A:\n");
 	nmg_pr_s_briefly(sA, 0);
 	bu_log("Shell B:\n");
 	nmg_pr_s_briefly(sB, 0);
     }
-#endif
+
     nmg_s_radial_check(sA, tol);
     nmg_s_radial_check(sB, tol);
     nmg_evaluate_boolean(sA, sB, oper, classlist, tol);
 
-#if 1
     if (rt_g.NMG_debug & DEBUG_BOOL) {
 	bu_log("Just after nmg_evaluate_boolean:\nShell A:\n");
 	nmg_pr_s_briefly(sA, 0);
 	bu_log("Shell B:\n");
 	nmg_pr_s_briefly(sB, 0);
     }
-#endif
 
     if (rt_g.NMG_debug & DEBUG_VERIFY) {
 	nmg_vmodel(m);
@@ -989,14 +893,13 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 
 	(void) nmg_unbreak_region_edges(&sA->l.magic);
 
-#if 1
 	if (rt_g.NMG_debug & DEBUG_BOOL) {
 	    bu_log("Just after nmg_simplify_shell:\nShell A:\n");
 	    nmg_pr_s_briefly(sA, 0);
 	    bu_log("Shell B:\n");
 	    nmg_pr_s_briefly(sB, 0);
 	}
-#endif
+
 	/* Bounding boxes may have changed */
 	nmg_shell_a(sA, tol);
 
@@ -1021,14 +924,10 @@ static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int ope
 	bu_log("Returning from NMG_BOOL\n");
     }
     if (rt_g.NMG_debug & DEBUG_VERIFY) {
-#if 0
-	nmg_vshell(&rA->s_hd, rA);
-#else
 	/* Sometimes the tessllations of non-participating regions
 	 * are damaged during a boolean operation.  Check everything.
 	 */
 	nmg_vmodel(m);
-#endif
     }
 
     nmg_kill_wire_edges(sA);
@@ -1051,10 +950,8 @@ nmg_do_bool(struct nmgregion *rA, struct nmgregion *rB, const int oper, const st
     NMG_CK_REGION(rA);
     NMG_CK_REGION(rB);
 
-#if 1
     nmg_region_v_unique(rA, tol);
     nmg_region_v_unique(rB, tol);
-#endif
 
     s = nmg_bool(BU_LIST_FIRST(shell, &rA->s_hd),
 		 BU_LIST_FIRST(shell, &rB->s_hd),
@@ -1103,7 +1000,7 @@ nmg_do_bool(struct nmgregion *rA, struct nmgregion *rB, const int oper, const st
  * This routine must be prepared to run in parallel.
  */
 union tree *
-nmg_booltree_leaf_tess(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
+nmg_booltree_leaf_tess(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data __attribute__((unused)))
 {
     struct model *m;
     struct nmgregion *r1;
@@ -1165,7 +1062,7 @@ nmg_booltree_leaf_tess(struct db_tree_state *tsp, struct db_full_path *pathp, st
  * This routine must be prepared to run in parallel.
  */
 union tree *
-nmg_booltree_leaf_tnurb(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
+nmg_booltree_leaf_tnurb(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data __attribute__((unused)))
 {
     struct nmgregion *r1;
     union tree *curtree;

@@ -2384,7 +2384,7 @@ rt_extrude_xform(
     VMOVE(eop->v_vec, tmp_vec);
     eop->keypoint = eip->keypoint;
 
-    if (free && ip != op) {
+    if (release && ip != op) {
 	eop->skt = eip->skt;
 	eip->skt = (struct rt_sketch_internal *)NULL;
 	rt_db_free_internal(ip);

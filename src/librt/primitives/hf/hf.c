@@ -273,10 +273,10 @@ rt_hf_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
      * bounding boxes et so forth.
      */
     if (hf->hf_shorts) {
-	register int max, min;
-	register int len;
-	register unsigned short *sp;
-	register int i;
+	int max, min;
+	int len;
+	unsigned short *sp;
+	int i;
 
 	sp = (unsigned short *)hf->hf_mp->apbuf;
 	min = max = *sp++;
@@ -289,8 +289,8 @@ rt_hf_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	hf->hf_max = max * hf->hf_file2mm;
     } else {
 	fastf_t max, min;
-	register int len;
-	register int i;
+	int len;
+	int i;
 	fastf_t *fp;
 
 	fp = (fastf_t *) hf->hf_mp->apbuf;
@@ -376,7 +376,7 @@ hf_cell_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
     vect_t tri_CA1st, tri_CA2nd;
     vect_t xvect, yvect, tri_A, tri_B, tri_C;
     int fnd1, fnd2;
-    register double hf2mm = hfp->hf_file2mm;
+    double hf2mm = hfp->hf_file2mm;
 
     if (ap) RT_CK_APPLICATION(ap);
 
@@ -385,7 +385,7 @@ hf_cell_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 	       xCell, yCell);
     }
     {
-	register fastf_t scale;
+	fastf_t scale;
 	scale = hfp->hf_Xlen/((double)hfp->hf_w-1);
 	VSCALE(xvect, hfp->hf_X, scale);
 	scale = hfp->hf_Ylen/((double)hfp->hf_n-1);
@@ -424,7 +424,7 @@ hf_cell_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 	VSUB2(tri_BA2nd, tri_B, tri_A);
 	VCROSS(tri_wn2nd, tri_BA2nd, tri_CA2nd);
     } else {
-	register double *fp;
+	double *fp;
 	fp = (double *)hfp->hf_mp->apbuf +
 	    yCell * hfp->hf_w + xCell;
 	/* 0, 0 -> A */
@@ -667,7 +667,7 @@ axis_plane_isect(int plane, fastf_t inout, struct xray *rp, struct hf_specific *
 #endif
 
     if (hf->hf_shorts) {
-	register unsigned short *sp;
+	unsigned short *sp;
 	sp = (unsigned short *)hf->hf_mp->apbuf +
 	    CellY * hf->hf_w + CellX;
 	left = *sp;
@@ -678,7 +678,7 @@ axis_plane_isect(int plane, fastf_t inout, struct xray *rp, struct hf_specific *
 	}
 	right = *sp;
     } else {
-	register double *fp;
+	double *fp;
 	fp = (double *) hf->hf_mp->apbuf +
 	    CellY * hf->hf_w + CellX;
 	left = *fp;
@@ -913,7 +913,7 @@ rt_hf_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 	}
     } else if (cosine*cosine > 0.5) {
 	double tmp;
-	register double farZ, minZ, maxZ;
+	double farZ, minZ, maxZ;
 	int xCell, yCell, signX, signY;
 	double highest, lowest, error, delta;
 	double deltaZ;
@@ -1045,7 +1045,7 @@ rt_hf_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 		lowest *= hf->hf_file2mm;
 		highest *= hf->hf_file2mm;
 	    } else {
-		register double *fp;
+		double *fp;
 		fp = (double *)hf->hf_mp->apbuf +
 		    yCell * hf->hf_w + xCell;
 		/* 0, 0 */
@@ -1117,7 +1117,7 @@ rt_hf_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 		    lowest *= hf->hf_file2mm;
 		    highest *= hf->hf_file2mm;
 		} else {
-		    register double *fp;
+		    double *fp;
 		    fp = (double *)hf->hf_mp->apbuf +
 			yCell * hf->hf_w + xCell;
 		    /* 0, 0 */
@@ -1163,7 +1163,7 @@ rt_hf_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 	/* OTHER HALF */
 
 	double tmp;
-	register double farZ, minZ, maxZ;
+	double farZ, minZ, maxZ;
 	double deltaZ;
 	int xCell, yCell, signX, signY;
 	double highest, lowest, error, delta;
@@ -1285,7 +1285,7 @@ rt_hf_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 		lowest *= hf->hf_file2mm;
 		highest *= hf->hf_file2mm;
 	    } else {
-		register double *fp;
+		double *fp;
 		fp = (double *)hf->hf_mp->apbuf +
 		    yCell * hf->hf_w + xCell;
 		/* 0, 0 */
@@ -1358,7 +1358,7 @@ rt_hf_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 		    lowest *= hf->hf_file2mm;
 		    highest *= hf->hf_file2mm;
 		} else {
-		    register double *fp;
+		    double *fp;
 		    fp = (double *)hf->hf_mp->apbuf +
 			yCell * hf->hf_w + xCell;
 		    /* 0, 0 */
@@ -1403,7 +1403,7 @@ rt_hf_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 
     /* Sort hits, near to Far */
     {
-	register int i, j;
+	int i;
 	struct hit tmp;
 	for (i=0; i< nhits-1; i++) {
 	    for (j=i+1; j<nhits; j++) {
@@ -1416,7 +1416,7 @@ rt_hf_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
     }
 
     if (nhits & 1) {
-	register int i;
+	int i;
 	static int nerrors = 0;
 	hits[nhits] = hits[nhits-1];	/* struct copy*/
 	VREVERSE(hits[nhits].hit_normal, hits[nhits-1].hit_normal);
@@ -1432,8 +1432,8 @@ rt_hf_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 
     /* nhits is even, build segments */
     {
-	register struct seg *segp;
-	register int i;
+	struct seg *segp;
+	int i;
 	for (i=0; i< nhits; i+=2) {
 	    RT_GET_SEG(segp, ap->a_resource);
 	    segp->seg_stp = stp;
@@ -1456,7 +1456,7 @@ rt_hf_norm(register struct hit *hitp, struct soltab *stp, register struct xray *
 {
     register struct hf_specific *hf =
 	(struct hf_specific *)stp->st_specific;
-    register int j;
+    int j;
 
     j = hitp->hit_surfno;
 
@@ -1580,8 +1580,8 @@ int
 rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol __attribute__((unused)))
 {
     struct rt_hf_internal *xip;
-    register unsigned short *sp = (unsigned short *)NULL;
-    register double *dp;
+    unsigned short *sp = (unsigned short *)NULL;
+    double *dp;
     vect_t xbasis;
     vect_t ybasis;
     vect_t zbasis;
@@ -1719,7 +1719,7 @@ rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tes
     goal -= 4 + 2 * (xip->w + xip->n);
 
     /* Apply relative tolerance, if specified */
-    if (ttol->rel) {
+    if (!NEAR_ZERO(ttol->rel, SMALL_FASTF)) {
 	int rstep;
 	rstep = xip->w;
 	V_MAX(rstep, xip->n);
