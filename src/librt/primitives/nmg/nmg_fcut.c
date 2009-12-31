@@ -211,16 +211,17 @@ nmg_face_state_transition(struct nmg_ray_state *rs,
 /**
  * P T B L _ V S O R T
  *
- * Sort list of hit points (vertexuse's) in fu1 on plane of fu2,
- * by increasing distance, vertex ptr, and vu ptr.
- * Eliminate duplications of vu at same distance.
- * (Actually, a given vu should show up at exactly 1 distance!)
- * The line of intersection is pt + t * dir.
+ * Sort list of hit points (vertexuse's) in fu1 (bu_ptbl 'b') on plane
+ * of fu2 (defined by pt+dir), by increasing distance, vertex ptr, and
+ * vu ptr.  Eliminate duplications of vu at same distance.  (Actually,
+ * a given vu should show up at exactly 1 distance!)  The line of
+ * intersection is pt + t * dir.
  *
  * For now, a bubble-sort is used, because the list should not have more
  * than a few hundred entries on it.
  */
-static void ptbl_vsort(struct bu_ptbl *b, struct faceuse *fu1, struct faceuse *fu2, fastf_t *pt, fastf_t *dir, fastf_t *mag, fastf_t dist_tol)
+HIDDEN void
+ptbl_vsort(struct bu_ptbl *b, fastf_t *pt, fastf_t *dir, fastf_t *mag, fastf_t dist_tol)
     /* table of vertexuses on intercept line */
     /* unused? */
     /* unused? */
@@ -262,7 +263,7 @@ static void ptbl_vsort(struct bu_ptbl *b, struct faceuse *fu1, struct faceuse *f
 	vect_t vect;
 	NMG_CK_VERTEXUSE(vu[i]);
 
-	if (mag[i] == MAX_FASTF) {
+	if (mag[i] > MAX_FASTF - SMALL_FASTF) {
 	    VSUB2(vect, vu[i]->v_p->vg_p->coord, pt);
 	    mag[i] = VDOT(vect, dir);
 	}
@@ -275,8 +276,9 @@ static void ptbl_vsort(struct bu_ptbl *b, struct faceuse *fu1, struct faceuse *f
 	    if (tmag < -dist_tol) continue;
 	    if (tmag > dist_tol) continue;
 	    /* Nearly equal at same vertex */
-	    if (mag[i] != mag[j] &&
-		vu[i]->v_p == vu[j]->v_p) {
+	    if (!NEAR_ZERO(mag[i] - mag[j], SMALL_FASTF)
+		&& vu[i]->v_p == vu[j]->v_p)
+	    {
 		bu_log("ptbl_vsort: forcing vu=x%x & vu=x%x mag equal\n", vu[i], vu[j]);
 		mag[j] = mag[i]; /* force equal */
 	    }
@@ -287,7 +289,7 @@ static void ptbl_vsort(struct bu_ptbl *b, struct faceuse *fu1, struct faceuse *f
 	for (j=i+1; j < b->end; ++j) {
 
 	    if (mag[i] < mag[j]) continue;
-	    if (mag[i] == mag[j]) {
+	    if (NEAR_ZERO(mag[i] - mag[j], SMALL_FASTF)) {
 		if (vu[i]->v_p < vu[j]->v_p) continue;
 		if (vu[i]->v_p == vu[j]->v_p) {
 		    if (vu[i] < vu[j]) continue;
@@ -445,7 +447,7 @@ nmg_vu_angle_measure(struct vertexuse *vu, fastf_t *x_dir, fastf_t *y_dir, int a
     else
 	this_ass = NMG_V_ASSESSMENT_NEXT(assessment);
     if (this_ass == NMG_E_ASSESSMENT_ON_FORW) {
-	if (in) ang = 0;	/* zero angle */
+	if (in) ang = 0.0;	/* zero angle */
 	else ang = bn_pi;	/* 180 degrees */
 	if (rt_g.NMG_debug&DEBUG_VU_SORT)
 	    bu_log("nmg_vu_angle_measure:  NMG_E_ASSESSMENT_ON_FORW, ang=%g\n", ang);
@@ -453,7 +455,7 @@ nmg_vu_angle_measure(struct vertexuse *vu, fastf_t *x_dir, fastf_t *y_dir, int a
     }
     if (this_ass == NMG_E_ASSESSMENT_ON_REV) {
 	if (in) ang = bn_pi;	/* 180 degrees */
-	else ang = 0;	/* zero angle */
+	else ang = 0.0;	/* zero angle */
 	if (rt_g.NMG_debug&DEBUG_VU_SORT)
 	    bu_log("nmg_vu_angle_measure:  NMG_E_ASSESSMENT_ON_REV, ang=%g\n", ang);
 	return ang;
@@ -490,14 +492,14 @@ nmg_vu_angle_measure(struct vertexuse *vu, fastf_t *x_dir, fastf_t *y_dir, int a
      * angles are not exactly 0 or pi.
      */
 #define RADIAN_TWEEK 1.0e-14	/* low bits of double prec., re: 6.28... */
-    if (ang == 0) {
+    if (NEAR_ZERO(ang, SMALL_FASTF)) {
 	if (this_ass == NMG_E_ASSESSMENT_RIGHT) {
 	    ang = RADIAN_TWEEK;
 	} else {
 	    /* Assuming NMG_E_ASSESSMENT_LEFT */
 	    ang = bn_twopi - RADIAN_TWEEK;
 	}
-    } else if (ang == bn_pi) {
+    } else if (NEAR_ZERO(ang - bn_pi, SMALL_FASTF)) {
 	if (this_ass == NMG_E_ASSESSMENT_RIGHT) {
 	    ang = bn_pi - RADIAN_TWEEK;
 	} else {
@@ -1685,7 +1687,7 @@ nmg_face_coincident_vu_sort(struct nmg_ray_state *rs, int start, int end)
     struct nmg_loop_stuff *ls;
     int nloop;
     unsigned nvu;
-    int i;
+    unsigned i;
     struct loopuse *lu;
     int ass;
     int l;
@@ -1707,7 +1709,9 @@ nmg_face_coincident_vu_sort(struct nmg_ray_state *rs, int start, int end)
     /* Assess each vu, create list of loopuses, find max angles */
     nloop = 0;
     nvu = 0;
-    for (i = end-1; i >= start; i--) {
+    if (start < 0 || end < 0)
+	bu_log("%s:%d Internal Error\n", __FILE__, __LINE__);
+    for (i = (unsigned)end-1; i >= (unsigned)start; i--) {
 	lu = nmg_find_lu_of_vu(rs->vu[i]);
 	NMG_CK_LOOPUSE(lu);
 	ass = nmg_assess_vu(rs, i);
@@ -1718,7 +1722,10 @@ nmg_face_coincident_vu_sort(struct nmg_ray_state *rs, int start, int end)
 	 * in which case, let just one through.  (return 'start+1');
 	 */
 	if (*(rs->vu[i]->up.magic_p) == NMG_LOOPUSE_MAGIC) {
-	    if (nvu > 0 || i > start) {
+	    if (start < 0)
+		bu_log("%s:%d Internal Error\n", __FILE__, __LINE__);
+
+	    if (nvu > 0 || i > (unsigned)start) {
 		/* Drop this loop of a single vertex in sanitize() */
 		lu->orientation =
 		    lu->lumate_p->orientation = OT_BOOLPLACE;
@@ -2028,7 +2035,7 @@ nmg_face_next_vu_interval(struct nmg_ray_state *rs, int cur, fastf_t *mag, int o
     BN_CK_TOL(rs->tol);
     if (rs->eg_p) NMG_CK_EDGE_G_LSEG(rs->eg_p);
 
-    if (cur == rs->nvu-1 || mag[cur+1] != mag[cur]) {
+    if (cur == rs->nvu-1 || !NEAR_ZERO(mag[cur+1] - mag[cur], SMALL_FASTF)) {
 	/* Single vertexuse at this dist */
 	if (rt_g.NMG_debug&DEBUG_FCUT)
 	    bu_log("nmg_face_next_vu_interval() fu=x%x, single vertexuse at index %d\n", rs->fu1, cur);
@@ -2045,7 +2052,7 @@ nmg_face_next_vu_interval(struct nmg_ray_state *rs, int cur, fastf_t *mag, int o
     v = rs->vu[cur]->v_p;
     for (j = cur+1; j < rs->nvu; j++) {
 	/* If distance along the ray changes, start a new interval */
-	if (mag[j] != mag[cur]) break;
+	if (!NEAR_ZERO(mag[j] - mag[cur], SMALL_FASTF)) break;
     }
 
     /* vu Interval runs from [cur] to [j-1] inclusive */
@@ -2654,7 +2661,6 @@ find_best_vu(int start, int end, struct vertex *other_vp, struct nmg_ray_state *
 		}
 	    }
 	} else {
-	    struct edgeuse *eu;
 	    fastf_t angle;
 	    /* need to choose based on eu directions */
 
@@ -3025,15 +3031,6 @@ nmg_fcut_face(struct nmg_ray_state *rs)
 }
 
 
-HIDDEN void
-nmg_face_combine_jra(struct nmg_ray_state *rs1, fastf_t *mag1, struct nmg_ray_state *rs2, fastf_t *mag2)
-{
-    nmg_fcut_face(rs1);
-    nmg_fcut_face(rs2);
-
-}
-
-
 /**
  * N M G _ F A C E _ C O M B I N E
  *
@@ -3329,8 +3326,8 @@ nmg_face_cutjoin(struct bu_ptbl *b1, struct bu_ptbl *b2, fastf_t *mag1, fastf_t 
      * Sort hit points by increasing distance, vertex ptr, vu ptr,
      * and eliminate any duplicate vu's.
      */
-    ptbl_vsort(b1, fu1, fu2, pt, dir, mag1, tol->dist);
-    ptbl_vsort(b2, fu2, fu1, pt, dir, mag2, tol->dist);
+    ptbl_vsort(b1, pt, dir, mag1, tol->dist);
+    ptbl_vsort(b2, pt, dir, mag2, tol->dist);
 
     vu1 = (struct vertexuse **)b1->buffer;
     vu2 = (struct vertexuse **)b2->buffer;
@@ -3399,7 +3396,8 @@ nmg_face_cutjoin(struct bu_ptbl *b1, struct bu_ptbl *b2, fastf_t *mag1, fastf_t 
 
     nmg_face_rs_init(&rs1, b1, fu1, fu2, pt, dir, eg, tol);
     nmg_face_rs_init(&rs2, b2, fu2, fu1, pt, dir, eg, tol);
-    nmg_face_combine_jra(&rs1, mag1, &rs2, mag2);
+    nmg_fcut_face(&rs1);
+    nmg_fcut_face(&rs2);
 
     /* Can't do simplifications here,
      * because the caller's linked lists & pointers might get disrupted.
@@ -3420,7 +3418,7 @@ nmg_face_cutjoin(struct bu_ptbl *b1, struct bu_ptbl *b2, fastf_t *mag1, fastf_t 
 
 
 void
-nmg_fcut_face_2d(struct bu_ptbl *vu_list, fastf_t *mag, struct faceuse *fu1, struct faceuse *fu2, struct bn_tol *tol)
+nmg_fcut_face_2d(struct bu_ptbl *vu_list, fastf_t *mag __attribute__((unused)), struct faceuse *fu1, struct faceuse *fu2, struct bn_tol *tol)
 {
     struct nmg_ray_state rs;
     point_t pt;
@@ -3634,7 +3632,7 @@ nmg_insert_vu_if_on_edge(struct vertexuse *vu1, struct vertexuse *vu2, struct ed
 	    if (dist_to_loop_sq < eu_len_sq) {
 		if (rt_g.NMG_debug&DEBUG_FCUT)
 		    bu_log("\tvu1 is on vu2's eu, creating new edge (MAGSQ=%g, tol->dist_sq=%g)\n", dist_to_loop_sq, tol->dist_sq);
-		(void) nmg_ebreaker(vu1->v_p, vu2->up.eu_p, tol);
+		new_eu = nmg_ebreaker(vu1->v_p, vu2->up.eu_p, tol);
 		nmg_klu(vu1->up.lu_p);
 		return(1);
 	    }
@@ -3654,7 +3652,7 @@ nmg_insert_vu_if_on_edge(struct vertexuse *vu1, struct vertexuse *vu2, struct ed
 
 		if (rt_g.NMG_debug&DEBUG_FCUT)
 		    bu_log("\tvu1 is on eu that ends at vu2, creating new edge (MAGSQ=%g, tol->dist_sq=%g)\n", dist_to_loop_sq, tol->dist_sq);
-		(void) nmg_ebreaker(vu1->v_p, eu_to, tol);
+		new_eu = nmg_ebreaker(vu1->v_p, eu_to, tol);
 		nmg_klu(vu1->up.lu_p);
 		return(1);
 	    }
