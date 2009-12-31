@@ -1552,7 +1552,7 @@ nmg_special_wedge_processing(struct nmg_vu_stuff *vs, int start, int end, double
 	    struct loopuse *lu;
 	    lu = nmg_find_lu_of_vu(vs[i].vu);
 	    bu_log("\tvu[%d]=x%x, lu=x%x\n", i, vs[i].vu, lu);
-	    nmg_vlblock_lu(vbp, lu, b, 255, 0, 0, 0, 0);
+	    nmg_vlblock_lu(vbp, lu, b, 255, 0, 0, 0);
 	}
 	for (i=start; i < end; i++) {
 	    struct loopuse *lu;

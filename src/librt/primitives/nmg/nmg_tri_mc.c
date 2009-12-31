@@ -63,10 +63,6 @@
 void
 nmg_triangulate_model_mc(struct model *m, const struct bn_tol *tol)
 {
-    struct nmgregion *r;
-    struct shell *s;
-    struct faceuse *fu;
-
     BN_CK_TOL(tol);
     NMG_CK_MODEL(m);
     nmg_vmodel(m);

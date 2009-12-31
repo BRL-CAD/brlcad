@@ -1139,8 +1139,8 @@ map_new_vertexuse(struct bu_list *tbl2d, struct vertexuse *vu_p)
  * departing edges have the min/max dot product with the direction vector.
  *
  */
-static void
-pick_edges(struct vertex *v, struct vertexuse **vu_first, int *min_dir, struct vertexuse **vu_last, int *max_dir, struct faceuse *fu, const struct bn_tol *tol, fastf_t *dir)
+HIDDEN void
+pick_edges(struct vertex *v, struct vertexuse **vu_first, int *min_dir, struct vertexuse **vu_last, int *max_dir, struct faceuse *fu, fastf_t *dir)
 
 
     /* 1: forward -1 reverse */
@@ -1403,7 +1403,7 @@ pick_eu(struct edgeuse *eu_p, struct faceuse *fu, fastf_t *dir, int find_max)
  * that should be the parameters to nmg_cut_loop() and nmg_join_loop().
  */
 void
-nmg_find_first_last_use_of_v_in_fu(struct vertex *v, struct vertexuse **first_vu, struct vertexuse **last_vu, fastf_t *dir, struct faceuse *fu, const struct bn_tol *tol)
+nmg_find_first_last_use_of_v_in_fu(struct vertex *v, struct vertexuse **first_vu, struct vertexuse **last_vu, fastf_t *dir, struct faceuse *fu, const struct bn_tol *tol __attribute__((unused)))
 {
     struct vertexuse *vu_first, *vu_last;
     int max_dir, min_dir;	/* 1: forward -1 reverse */
@@ -1427,7 +1427,7 @@ nmg_find_first_last_use_of_v_in_fu(struct vertex *v, struct vertexuse **first_vu
 	       V3ARGS(v->vg_p->coord), V3ARGS(dir));
 
     /* go find the edges which are "closest" to the direction vector */
-    pick_edges(v, &vu_first, &min_dir, &vu_last, &max_dir, fu, tol, dir);
+    pick_edges(v, &vu_first, &min_dir, &vu_last, &max_dir, fu, dir);
 
 
     /* Now we know which 2 edges are most important to look at.
@@ -2256,8 +2256,8 @@ cut_diagonals(struct bu_list *tbl2d, struct bu_list *tlist, const struct faceuse
  *
  * Given a unimonotone loopuse, triangulate it into multiple loopuses
  */
-static void
-cut_unimonotone(struct bu_list *tbl2d, struct bu_list *tlist, struct loopuse *lu, const struct bn_tol *tol)
+HIDDEN void
+cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, const struct bn_tol *tol)
 {
     struct pt2d *min, *max, *new, *first=NULL, *prev, *next, *current;
     struct edgeuse *eu;
@@ -2517,9 +2517,9 @@ nmg_triangulate_fu(struct faceuse *fu, const struct bn_tol *tol)
 
  triangulate:
     if (rt_g.NMG_debug & DEBUG_TRI) {
-	vect_t N;
-	NMG_GET_FU_NORMAL(N, fu);
-	bu_log("---------------- proceeding to triangulate face %g %g %g\n", V3ARGS(N));
+	vect_t normal;
+	NMG_GET_FU_NORMAL(normal, fu);
+	bu_log("---------------- proceeding to triangulate face %g %g %g\n", V3ARGS(normal));
     }
 
 
@@ -2546,11 +2546,11 @@ nmg_triangulate_fu(struct faceuse *fu, const struct bn_tol *tol)
     }
 
     if (rt_g.NMG_debug & DEBUG_TRI) {
-	struct pt2d *pt;
+	struct pt2d *point;
 	bu_log("Face Flattened\n");
 	bu_log("Vertex list:\n");
-	for (BU_LIST_FOR(pt, pt2d, tbl2d)) {
-	    bu_log("\tpt2d %26.20e %26.20e\n", pt->coord[0], pt->coord[1]);
+	for (BU_LIST_FOR(point, pt2d, tbl2d)) {
+	    bu_log("\tpt2d %26.20e %26.20e\n", point->coord[0], point->coord[1]);
 	}
 
 	nmg_tri_plfu(fu, tbl2d);
@@ -2615,7 +2615,7 @@ nmg_triangulate_fu(struct faceuse *fu, const struct bn_tol *tol)
 	    vert_count = 0;
 	    for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
 		if (++vert_count > 3) {
-		    cut_unimonotone(tbl2d, &tlist, lu, tol);
+		    cut_unimonotone(tbl2d, lu, tol);
 
 		    if (rt_g.NMG_debug & DEBUG_TRI) {
 			sprintf(db_name, "uni_mono%d.g", monotone++);

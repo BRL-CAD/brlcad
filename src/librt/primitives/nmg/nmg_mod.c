@@ -374,7 +374,6 @@ nmg_rm_redundancies(struct shell *s, const struct bn_tol *tol)
 	while (BU_LIST_NOT_HEAD(&lu->l, &fu->lu_hd)) {
 	    struct loopuse *next_lu;
 	    struct loopuse *lu1;
-	    struct edgeuse *eu;
 
 	    NMG_CK_LOOPUSE(lu);
 
@@ -1407,7 +1406,7 @@ nmg_fu_planeeqn(struct faceuse *fu, const struct bn_tol *tol)
 	HPRINT("plane", plane);
 	return(-1);
     }
-    if (plane[0] == 0.0 && plane[1] == 0.0 && plane[2] == 0.0) {
+    if (VNEAR_ZERO(plane, SMALL_FASTF)) {
 	bu_log("nmg_fu_planeeqn():  Bad plane equation from bn_mk_plane_3pts\n");
 	HPRINT("plane", plane);
 	return(-1);
@@ -3423,13 +3422,8 @@ nmg_simplify_loop(struct loopuse *lu)
 	     */
 	    eu = tmpeu;
 
-	    if (rt_g.NMG_debug &(DEBUG_PLOTEM|DEBUG_PL_ANIM) &&
-		*lu->up.magic_p == NMG_FACEUSE_MAGIC) {
-		static int fno=0;
-
-		nmg_pl_2fu("After_joinloop%d.pl", fno++,
-			   lu->up.fu_p, lu->up.fu_p->fumate_p, 0);
-
+	    if (rt_g.NMG_debug &(DEBUG_PLOTEM|DEBUG_PL_ANIM) && *lu->up.magic_p == NMG_FACEUSE_MAGIC) {
+		nmg_pl_2fu("After_joinloop%d.pl", lu->up.fu_p, lu->up.fu_p->fumate_p, 0);
 	    }
 	}
 	eu = BU_LIST_PNEXT(edgeuse, eu);
@@ -3497,12 +3491,9 @@ nmg_kill_snakes(struct loopuse *lu)
 		    return 1;	/* loopuse is empty */
 		eu = BU_LIST_FIRST(edgeuse, &lu->down_hd);
 
-		if (rt_g.NMG_debug &(DEBUG_PLOTEM|DEBUG_PL_ANIM) &&
-		    *lu->up.magic_p == NMG_FACEUSE_MAGIC) {
-		    static int fno=0;
+		if (rt_g.NMG_debug &(DEBUG_PLOTEM|DEBUG_PL_ANIM) && *lu->up.magic_p == NMG_FACEUSE_MAGIC) {
 
-		    nmg_pl_2fu("After_joinloop%d.pl", fno++,
-			       lu->up.fu_p, lu->up.fu_p->fumate_p, 0);
+		    nmg_pl_2fu("After_joinloop%d.pl", lu->up.fu_p, lu->up.fu_p->fumate_p, 0);
 
 		}
 

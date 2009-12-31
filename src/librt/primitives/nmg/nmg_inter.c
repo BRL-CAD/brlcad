@@ -2230,7 +2230,7 @@ nmg_isect_edge2p_face2p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
 
     if (fu1 && rt_g.NMG_debug & (DEBUG_POLYSECT|DEBUG_FCUT|DEBUG_MESH)
 	&& rt_g.NMG_debug & DEBUG_PLOTEM) {
-	nmg_pl_2fu("Iface%d.pl", 0, fu2, fu1, 0);
+	nmg_pl_2fu("Iface%d.pl", fu2, fu1, 0);
     }
 
     vu1 = eu1->vu_p;
@@ -5169,7 +5169,7 @@ nmg_isect_two_face3p(struct nmg_inter_struct *is, struct faceuse *fu1, struct fa
 
     if (rt_g.NMG_debug & (DEBUG_POLYSECT|DEBUG_FCUT|DEBUG_MESH)
 	&& rt_g.NMG_debug & DEBUG_PLOTEM) {
-	nmg_pl_2fu("Iface%d.pl", 0, fu1, fu2, 0);
+	nmg_pl_2fu("Iface%d.pl", fu1, fu2, 0);
     }
 #if 0
     /* Topology search */
@@ -7285,7 +7285,7 @@ nmg_isect_two_generic_faces(struct faceuse *fu1, struct faceuse *fu2, const stru
 
 
 	/* Both at once */
-	nmg_pl_2fu("Iface%d.pl", 0, fu2, fu1, 0);
+	nmg_pl_2fu("Iface%d.pl", fu2, fu1, 0);
 
 	/* Each in it's own file */
 	nmg_face_plot(fu1);

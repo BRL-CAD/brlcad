@@ -4217,38 +4217,14 @@ RT_EXPORT BU_EXTERN(int nmg_2edgeuse_g_coincident,
 		     const struct bn_tol	*tol));
 
 /* From nmg_extrude.c */
-RT_EXPORT BU_EXTERN(void nmg_translate_face,
-		    (struct faceuse *fu,
-		     const vect_t Vec,
-		     const struct bn_tol *tol));
-RT_EXPORT BU_EXTERN(int nmg_extrude_face,
-		    (struct faceuse *fu,
-		     const vect_t Vec,
-		     const struct bn_tol *tol));
-RT_EXPORT BU_EXTERN(struct vertexuse *nmg_find_vertex_in_lu,
-		    (const struct vertex *v,
-		     const struct loopuse *lu));
-RT_EXPORT BU_EXTERN(void nmg_fix_overlapping_loops,
-		    (struct shell *s,
-		     const struct bn_tol *tol));
-RT_EXPORT BU_EXTERN(void nmg_break_crossed_loops,
-		    (struct shell *is,
-		     const struct bn_tol *tol));
-RT_EXPORT BU_EXTERN(struct shell *nmg_extrude_cleanup,
-		    (struct shell *is,
-		     const int is_void,
-		     const struct bn_tol *tol));
-RT_EXPORT BU_EXTERN(void nmg_hollow_shell,
-		    (struct shell *s,
-		     const fastf_t thick,
-		     const int approximate,
-		     const struct bn_tol *tol));
-RT_EXPORT BU_EXTERN(struct shell *nmg_extrude_shell,
-		    (struct shell *s,
-		     const fastf_t dist,
-		     const int normal_ward,
-		     const int approximate,
-		     const struct bn_tol *tol));
+RT_EXPORT BU_EXTERN(void nmg_translate_face, (struct faceuse *fu, const vect_t Vec));
+RT_EXPORT BU_EXTERN(int nmg_extrude_face, (struct faceuse *fu, const vect_t Vec, const struct bn_tol *tol));
+RT_EXPORT BU_EXTERN(struct vertexuse *nmg_find_vertex_in_lu, (const struct vertex *v, const struct loopuse *lu));
+RT_EXPORT BU_EXTERN(void nmg_fix_overlapping_loops, (struct shell *s, const struct bn_tol *tol));
+RT_EXPORT BU_EXTERN(void nmg_break_crossed_loops, (struct shell *is, const struct bn_tol *tol));
+RT_EXPORT BU_EXTERN(struct shell *nmg_extrude_cleanup, (struct shell *is, const int is_void, const struct bn_tol *tol));
+RT_EXPORT BU_EXTERN(void nmg_hollow_shell, (struct shell *s, const fastf_t thick, const int approximate, const struct bn_tol *tol));
+RT_EXPORT BU_EXTERN(struct shell *nmg_extrude_shell, (struct shell *s, const fastf_t dist, const int normal_ward, const int approximate, const struct bn_tol *tol));
 
 /* From nmg_pr.c */
 RT_EXPORT BU_EXTERN(char *nmg_orientation,
@@ -4939,8 +4915,7 @@ RT_EXPORT BU_EXTERN(void nmg_vlblock_e,
 		     long *tab,
 		     int red,
 		     int green,
-		     int blue,
-		     int fancy));
+		     int blue));
 RT_EXPORT BU_EXTERN(void nmg_vlblock_eu,
 		    (struct bn_vlblock *vbp,
 		     const struct edgeuse *eu,
@@ -4948,8 +4923,7 @@ RT_EXPORT BU_EXTERN(void nmg_vlblock_eu,
 		     int red,
 		     int green,
 		     int blue,
-		     int fancy,
-		     int loopnum));
+		     int fancy));
 RT_EXPORT BU_EXTERN(void nmg_vlblock_euleft,
 		    (struct bu_list			*vh,
 		     const struct edgeuse		*eu,
@@ -4972,8 +4946,7 @@ RT_EXPORT BU_EXTERN(void nmg_vlblock_lu,
 		     int red,
 		     int green,
 		     int blue,
-		     int fancy,
-		     int loopnum));
+		     int fancy));
 RT_EXPORT BU_EXTERN(void nmg_vlblock_fu,
 		    (struct bn_vlblock *vbp,
 		     const struct faceuse *fu,
@@ -5007,7 +4980,6 @@ RT_EXPORT BU_EXTERN(void nmg_pl_comb_fu,
 		     const struct faceuse *fu1));
 RT_EXPORT BU_EXTERN(void nmg_pl_2fu,
 		    (const char *str,
-		     int num,
 		     const struct faceuse *fu1,
 		     const struct faceuse *fu2,
 		     int show_mates));
@@ -5722,10 +5694,6 @@ RT_EXPORT BU_EXTERN(void nmg_radial_exchange_marked,
 		     const struct bn_tol	*tol));
 RT_EXPORT BU_EXTERN(void nmg_s_radial_harmonize,
 		    (struct shell		*s,
-		     const struct bn_tol	*tol));
-RT_EXPORT BU_EXTERN(int nmg_eu_radial_check,
-		    (const struct edgeuse	*eu,
-		     const struct shell	*s,
 		     const struct bn_tol	*tol));
 RT_EXPORT BU_EXTERN(void nmg_s_radial_check,
 		    (struct shell		*s,
