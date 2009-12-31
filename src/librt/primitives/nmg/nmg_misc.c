@@ -9252,6 +9252,14 @@ rt_arc2d_to_cnurb(fastf_t *i_center, fastf_t *i_start, fastf_t *i_end, int point
 }
 
 
+/**
+ * n m g _ b r e a k _ e d g e _ a t _ v e r t s
+ *
+ * split an edge into multiple edges at specified vertices iff they
+ * are within tolerance distance.
+ *
+ * Returns the number of additional edges that were created.
+ */
 int
 nmg_break_edge_at_verts(struct edge *e, struct bu_ptbl *verts, const struct bn_tol *tol)
 {
@@ -9267,22 +9275,29 @@ nmg_break_edge_at_verts(struct edge *e, struct bu_ptbl *verts, const struct bn_t
     bu_ptbl_init(&edges, 64, " &edges");
     bu_ptbl_ins(&edges, (long *)e);
 
- start:
-
+    /* iterate over remaining edges (starting with just one) */
     while (BU_PTBL_END(&edges)) {
 	struct edge *e1;
 	struct edgeuse *eu;
 
+	/* get the last edge */
 	e1 = (struct edge *)BU_PTBL_GET(&edges, BU_PTBL_END(&edges)-1);
 	NMG_CK_EDGE(e1);
 	eu = e1->eu_p;
 	NMG_CK_EDGEUSE(eu);
 
+	/* get the last edge's vertices */
 	va = eu->vu_p->v_p;
 	NMG_CK_VERTEX(va);
 	vb = eu->eumate_p->vu_p->v_p;
 	NMG_CK_VERTEX(vb);
 
+	/* go ahead and remove it from our list so we can fall through
+	 * after checking verts.
+	 */
+	bu_ptbl_rm(&edges, (long *)e1);
+
+	/* iterate over all verts, seeing if one will split our edge */
 	for (j=0; j<BU_PTBL_END(verts); j++) {
 	    struct edgeuse *eu_new;
 	    struct vertex *v;
@@ -9292,23 +9307,27 @@ nmg_break_edge_at_verts(struct edge *e, struct bu_ptbl *verts, const struct bn_t
 	    v = (struct vertex *)BU_PTBL_GET(verts, j);
 	    NMG_CK_VERTEX(v);
 
+	    /* same vertex as our edge, nothing to do */
 	    if (v == va || v == vb)
 		continue;
 
-	    if (bn_dist_pt3_lseg3(&dist, pca, va->vg_p->coord, vb->vg_p->coord, v->vg_p->coord, tol))
+	    if (bn_dist_pt3_lseg3(&dist, pca, va->vg_p->coord, vb->vg_p->coord, v->vg_p->coord, tol)) {
+		/* non-zero means we're not within tol distance of the edge */
 		continue;
+	    }
 
+	    /* spit it! */
 	    eu_new = nmg_esplit(v, eu, 1);
 	    break_count++;
 
-	    bu_ptbl_rm(&edges, (long *)e1);
+	    /* insert our two new edges */
 	    bu_ptbl_ins(&edges, (long *)eu->e_p);
 	    bu_ptbl_ins(&edges, (long *)eu_new->e_p);
 
-	    goto start;
+	    break;
 	}
-	bu_ptbl_rm(&edges, (long *)e1);
     }
+
     bu_ptbl_free(&edges);
     return(break_count);
 }
