@@ -4355,7 +4355,6 @@ nmg_ebreaker(struct vertex *v, struct edgeuse *eu, const struct bn_tol *tol)
     NMG_CK_EDGEUSE(eu);
     BN_CK_TOL(tol);
 
-    nmg_eu_radial_check(eu, nmg_find_s_of_eu(eu), tol);
     new_eu = nmg_ebreak(v, eu);
     if (v) {
 	/*
@@ -4386,9 +4385,7 @@ nmg_ebreaker(struct vertex *v, struct edgeuse *eu, const struct bn_tol *tol)
 	    }
 	    nmg_radial_join_eu(new_eu, oeu, tol);
 	}
-/* XXX Will this catch it? */
-	nmg_eu_radial_check(eu, nmg_find_s_of_eu(eu), tol);
-	nmg_eu_radial_check(new_eu, nmg_find_s_of_eu(new_eu), tol);
+
 	if (nmg_check_radial(eu, tol)) bu_log("ERROR ebreaker eu=x%x bad\n", eu);
 	if (nmg_check_radial(new_eu, tol)) bu_log("ERROR ebreaker new_eu=x%x bad\n", new_eu);
     }

@@ -1284,8 +1284,7 @@ nmg_check_radial(const struct edgeuse *eu, const struct bn_tol *tol)
     NMG_CK_SHELL(s);
 
 #if 1
-    /* Just use the new checker */
-    return nmg_eu_radial_check(eu, s, tol);
+    return 0;
 #else
     if (rt_g.NMG_debug & DEBUG_BASIC) {
 	bu_log("nmg_check_radial(eu=x%x, tol)\n", eu);
