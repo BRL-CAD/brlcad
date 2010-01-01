@@ -205,7 +205,7 @@ rt_sketch_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
     if (!cvp || !hitp)
 	return;
 
-    RT_CK_HITP(hitp);
+    RT_CK_HIT(hitp);
     if (stp) RT_CK_SOLTAB(stp);
 
     cvp->crv_c1 = cvp->crv_c2 = 0;
