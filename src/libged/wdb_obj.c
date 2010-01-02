@@ -1121,12 +1121,6 @@ wdb_put_cmd(struct rt_wdb *wdbp,
     RT_CK_FUNCTAB(ftp);
 
     if (ftp->ft_make) {
-	if (ftp->ft_make == rt_nul_make) {
-	    Tcl_AppendResult(interp, "wdb_put_internal(", argv[1],
-			     ") cannot put a ", type, (char *)NULL);
-
-	    return TCL_ERROR;
-	}
 	ftp->ft_make(ftp, &intern);
     } else {
 	rt_generic_make(ftp, &intern);

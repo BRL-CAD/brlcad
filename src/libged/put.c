@@ -88,12 +88,6 @@ ged_put(struct ged *gedp, int argc, const char *argv[])
     RT_CK_FUNCTAB(ftp);
 
     if (ftp->ft_make) {
-	if (ftp->ft_make == rt_nul_make) {
-	    bu_vls_printf(&gedp->ged_result_str,
-			  "wdb_put_internal(%s) cannot put a %s",
-			  argv[1], type);
-	    return GED_ERROR;
-	}
 	ftp->ft_make(ftp, &intern);
     } else {
 	rt_generic_make(ftp, &intern);

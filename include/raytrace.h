@@ -3542,7 +3542,6 @@ RT_EXPORT BU_EXTERN(int rt_generic_xform,
 		     struct db_i		*dbip,
 		     struct resource		*resp));
 
-RT_EXPORT BU_EXTERN(void rt_nul_make, (const struct rt_functab *ftp, struct rt_db_internal *intern));
 
 /* prep.c */
 RT_EXPORT BU_EXTERN(void rt_plot_all_bboxes,
