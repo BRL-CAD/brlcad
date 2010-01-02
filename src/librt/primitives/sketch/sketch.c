@@ -133,6 +133,12 @@ rt_check_curve(const struct curve *crv, const struct rt_sketch_internal *skt, in
 int
 rt_sketch_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
+    if (!stp)
+	return -1;
+    RT_CK_SOLTAB(stp);
+    if (ip) RT_CK_DB_INTERNAL(ip);
+    if (rtip) RT_CK_RTI(rtip);
+
     stp->st_specific = (genptr_t)NULL;
     return(0);
 }
@@ -144,6 +150,7 @@ rt_sketch_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 void
 rt_sketch_print(const struct soltab *stp)
 {
+    if (stp) RT_CK_SOLTAB(stp);
 }
 
 
@@ -160,7 +167,7 @@ rt_sketch_print(const struct soltab *stp)
 int
 rt_sketch_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
-    if (!stp || !rp || !ap)
+    if (!stp || !rp || !ap || !seghead)
 	return 0;
 
     RT_CK_SOLTAB(stp);
@@ -226,6 +233,11 @@ rt_sketch_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 void
 rt_sketch_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
+    if (ap) RT_CK_APPLICATION(ap);
+    if (stp) RT_CK_SOLTAB(stp);
+    if (hitp) RT_CK_HIT(hitp);
+    if (!uvp)
+	return;
 }
 
 
@@ -235,6 +247,7 @@ rt_sketch_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struc
 void
 rt_sketch_free(struct soltab *stp)
 {
+    if (stp) RT_CK_SOLTAB(stp);
 }
 
 
@@ -261,14 +274,12 @@ rt_sketch_class(void)
 int
 rt_sketch_contains(struct rt_sketch_internal *sk, point2d_t pt)
 {
-    fastf_t nseg, radius;
-    int i, j, hits;
+    fastf_t nseg;
+    int i, hits;
 
     long *lng;
     struct line_seg *lsg;
     struct carc_seg *csg;
-    struct nurb_seg *nsg;
-    struct bezier_seg *bsg;
 
     point2d_t pt1, pt2, isec;
     vect2d_t one, two;
@@ -366,7 +377,6 @@ void
 rt_sketch_bounds(struct rt_sketch_internal *sk, fastf_t *bounds)
 {
     fastf_t nseg, radius;
-    fastf_t xmin, xmax, ymin, ymax;
     int i, j;
 
     long *lng;
@@ -556,11 +566,11 @@ seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
 			delta = tmp_delta;
 		}
 		if (ttol->norm > 0.0) {
-		    fastf_t norm;
+		    fastf_t normal;
 
-		    norm = ttol->norm * M_PI / 180.0;
-		    if (norm < delta)
-			delta = norm;
+		    normal = ttol->norm * M_PI / 180.0;
+		    if (normal < delta)
+			delta = normal;
 		}
 		if (csg->radius <= 0.0) {
 		    /* this is a full circle */
@@ -894,7 +904,7 @@ curve_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V
  * R T _ S K E T C H _ P L O T
  */
 int
-rt_sketch_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_sketch_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol __attribute__((unused)))
 {
     struct rt_sketch_internal *sketch_ip;
     int ret;
@@ -922,8 +932,12 @@ rt_sketch_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_sketch_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_sketch_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
 {
+    if (r) NMG_CK_REGION(*r);
+    if (m) NMG_CK_MODEL(m);
+    if (ip) RT_CK_DB_INTERNAL(ip);
+
     return(-1);
 }
 
@@ -944,6 +958,8 @@ rt_sketch_import4(struct rt_db_internal *ip, const struct bu_external *ep, const
     unsigned char *ptr;
     struct curve *crv;
     int i;
+
+    if (dbip) RT_CK_DBI(dbip);
 
     BU_CK_EXTERNAL(ep);
     rp = (union record *)ep->ext_buf;
@@ -993,7 +1009,6 @@ rt_sketch_import4(struct rt_db_internal *ip, const struct bu_external *ep, const
 	struct carc_seg *csg;
 	struct nurb_seg *nsg;
 	struct bezier_seg *bsg;
-	int i;
 
 	magic = bu_glong(ptr);
 	ptr += 4;
@@ -1098,6 +1113,8 @@ rt_sketch_export4(struct bu_external *ep, const struct rt_db_internal *ip, doubl
     int i, seg_no, nbytes=0, ngran;
     vect_t tmp_vec;
     unsigned char *ptr;
+
+    if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_SKETCH) return(-1);
@@ -1282,12 +1299,13 @@ rt_sketch_import5(struct rt_db_internal *ip, const struct bu_external *ep, const
     struct curve *crv;
     int i;
 
-    BU_CK_EXTERNAL(ep);
-
     if (bu_debug&BU_DEBUG_MEM_CHECK) {
 	bu_log("Barrier check at start of sketch_import5():\n");
 	bu_mem_barriercheck();
     }
+
+    if (dbip) RT_CK_DBI(dbip);
+    BU_CK_EXTERNAL(ep);
 
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -1328,7 +1346,6 @@ rt_sketch_import5(struct rt_db_internal *ip, const struct bu_external *ep, const
 	struct carc_seg *csg;
 	struct nurb_seg *nsg;
 	struct bezier_seg *bsg;
-	int i;
 
 	magic = bu_glong(ptr);
 	ptr += SIZEOF_NETWORK_LONG;
@@ -1440,6 +1457,8 @@ rt_sketch_export5(struct bu_external *ep, const struct rt_db_internal *ip, doubl
 	bu_log("Barrier check at start of sketch_export5():\n");
 	bu_mem_barriercheck();
     }
+
+    if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_SKETCH) return(-1);
@@ -2399,8 +2418,11 @@ rt_sketch_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc,
  *
  */
 int
-rt_sketch_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
+rt_sketch_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 {
+    ps = ps; /* quellage */
+    if (ip) RT_CK_DB_INTERNAL(ip);
+
     return(0);			/* OK */
 }
 

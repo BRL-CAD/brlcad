@@ -285,6 +285,8 @@ rt_sph_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
     fastf_t b;		/* second term of quadratic eqn */
     fastf_t root;		/* root of radical */
 
+    if (ap) RT_CK_APPLICATION(ap);
+
     /* for each ray/sphere pair */
     for (i = 0; i < n; i++) {
 	if (stp[i] == 0) continue; /* stp[i] == 0 signals skip ray */
@@ -427,8 +429,11 @@ rt_sph_class(void)
  *
  */
 int
-rt_sph_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
+rt_sph_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 {
+    ps = ps; /* quellage */
+    if (ip) RT_CK_DB_INTERNAL(ip);
+
     return(0);			/* OK */
 }
 

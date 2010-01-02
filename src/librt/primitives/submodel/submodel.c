@@ -281,6 +281,8 @@ rt_submodel_print(register const struct soltab *stp)
 int
 rt_submodel_a_miss(struct application *ap)
 {
+    if (ap) RT_CK_APPLICATION(ap);
+
     return 0;
 }
 
