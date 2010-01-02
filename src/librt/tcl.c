@@ -257,7 +257,7 @@ rt_tcl_rt_cutter(ClientData clientData, Tcl_Interp *interp, int argc, const char
  * user more precision.
  */
 void
-rt_tcl_pr_hit(Tcl_Interp *interp, struct hit *hitp, const struct seg *segp, const struct xray *rayp, int flipflag)
+rt_tcl_pr_hit(Tcl_Interp *interp, struct hit *hitp, const struct seg *segp, int flipflag)
 {
     struct bu_vls str;
     vect_t norm;
@@ -303,7 +303,7 @@ rt_tcl_pr_hit(Tcl_Interp *interp, struct hit *hitp, const struct seg *segp, cons
 int
 rt_tcl_a_hit(struct application *ap,
 	     struct partition *PartHeadp,
-	     struct seg *segHeadp)
+	     struct seg *segHeadp __attribute__((unused)))
 {
     Tcl_Interp *interp = (Tcl_Interp *)ap->a_uptr;
     register struct partition *pp;
@@ -313,11 +313,9 @@ rt_tcl_a_hit(struct application *ap,
     for (pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw) {
 	RT_CK_PT(pp);
 	Tcl_AppendResult(interp, "{in", (char *)NULL);
-	rt_tcl_pr_hit(interp, pp->pt_inhit, pp->pt_inseg,
-		      &ap->a_ray, pp->pt_inflip);
+	rt_tcl_pr_hit(interp, pp->pt_inhit, pp->pt_inseg, pp->pt_inflip);
 	Tcl_AppendResult(interp, "\nout", (char *)NULL);
-	rt_tcl_pr_hit(interp, pp->pt_outhit, pp->pt_outseg,
-		      &ap->a_ray, pp->pt_outflip);
+	rt_tcl_pr_hit(interp, pp->pt_outhit, pp->pt_outseg, pp->pt_outflip);
 	Tcl_AppendResult(interp,
 			 "\nregion ",
 			 pp->pt_regionp->reg_name,
@@ -335,6 +333,7 @@ rt_tcl_a_hit(struct application *ap,
 int
 rt_tcl_a_miss(struct application *ap)
 {
+    if (ap) RT_CK_APPLICATION(ap);
     return 0;
 }
 
@@ -369,7 +368,7 @@ rt_tcl_rt_shootray(ClientData clientData, Tcl_Interp *interp, int argc, const ch
 {
     struct application *ap = (struct application *)clientData;
     struct rt_i *rtip;
-    int index;
+    int idx;
 
     if ((argc != 5 && argc != 6) || (argc == 6 && strcmp(argv[2], "-R"))) {
 	Tcl_AppendResult(interp,
@@ -381,16 +380,16 @@ rt_tcl_rt_shootray(ClientData clientData, Tcl_Interp *interp, int argc, const ch
 
     if (argc == 6) {
 	ap->a_logoverlap = rt_silent_logoverlap;
-	index = 3;
+	idx = 3;
     } else {
-	index = 2;
+	idx = 2;
     }
 
     RT_CK_AP_TCL(interp, ap);
     rtip = ap->a_rt_i;
     RT_CK_RTI_TCL(interp, rtip);
 
-    if (rt_tcl_parse_ray(interp, &ap->a_ray, &argv[index]) == TCL_ERROR)
+    if (rt_tcl_parse_ray(interp, &ap->a_ray, &argv[idx]) == TCL_ERROR)
 	return TCL_ERROR;
     ap->a_hit = rt_tcl_a_hit;
     ap->a_miss = rt_tcl_a_miss;
@@ -997,16 +996,16 @@ rt_comb_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const ch
 	    snprintf(buf, 128, "%s", comb->region_flag ? "yes" : "no");
 	} else if (strcmp(itemlwr, "id")==0) {
 	    if (!comb->region_flag) goto not_region;
-	    snprintf(buf, 128, "%d", comb->region_id);
+	    snprintf(buf, 128, "%ld", comb->region_id);
 	} else if (strcmp(itemlwr, "air")==0) {
 	    if (!comb->region_flag) goto not_region;
-	    snprintf(buf, 128, "%d", comb->aircode);
+	    snprintf(buf, 128, "%ld", comb->aircode);
 	} else if (strcmp(itemlwr, "los")==0) {
 	    if (!comb->region_flag) goto not_region;
-	    snprintf(buf, 128, "%d", comb->los);
+	    snprintf(buf, 128, "%ld", comb->los);
 	} else if (strcmp(itemlwr, "giftmater")==0) {
 	    if (!comb->region_flag) goto not_region;
-	    snprintf(buf, 128, "%d", comb->GIFTmater);
+	    snprintf(buf, 128, "%ld", comb->GIFTmater);
 	} else if (strcmp(itemlwr, "rgb")==0) {
 	    if (comb->rgb_valid)
 		snprintf(buf, 128, "%d %d %d", V3ARGS(comb->rgb));
@@ -1388,7 +1387,7 @@ shader {%%s} material {%%s} inherit {%%s} tree {%%s}");
  * rt_functab[ID_COMBINATION].ft_make().
  */
 void
-rt_comb_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
+rt_comb_make(const struct rt_functab *ftp __attribute__((unused)), struct rt_db_internal *intern)
 {
     struct rt_comb_internal *comb;
 

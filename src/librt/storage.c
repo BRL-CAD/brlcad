@@ -50,7 +50,7 @@ void
 rt_get_seg(register struct resource *res)
 {
     register struct seg *sp;
-    register int bytes;
+    size_t bytes;
 
     RT_CK_RESOURCE(res);
 

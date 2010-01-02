@@ -4716,12 +4716,7 @@ RT_EXPORT BU_EXTERN(int rt_tcl_cutter,
 		     Tcl_Interp *interp,
 		     int argc,
 		     const char *const*argv));
-RT_EXPORT BU_EXTERN(void rt_tcl_pr_hit,
-		    (Tcl_Interp *interp,
-		     struct hit *hitp,
-		     const struct seg *segp,
-		     const struct xray *rayp,
-		     int flipflag));
+RT_EXPORT BU_EXTERN(void rt_tcl_pr_hit, (Tcl_Interp *interp, struct hit *hitp, const struct seg *segp, int flipflag));
 RT_EXPORT BU_EXTERN(int rt_tcl_rt,
 		    (ClientData clientData,
 		     Tcl_Interp *interp,
