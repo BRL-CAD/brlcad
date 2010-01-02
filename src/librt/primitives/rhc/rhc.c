@@ -220,7 +220,7 @@ int
 rt_rhc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_rhc_internal *xip;
-    register struct rhc_specific *rhc;
+    struct rhc_specific *rhc;
     fastf_t magsq_b, magsq_h, magsq_r;
     fastf_t mag_b, mag_h, mag_r;
     fastf_t f;
@@ -318,9 +318,9 @@ rt_rhc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
  * R T _ R H C _ P R I N T
  */
 void
-rt_rhc_print(register const struct soltab *stp)
+rt_rhc_print(const struct soltab *stp)
 {
-    register const struct rhc_specific *rhc =
+    const struct rhc_specific *rhc =
 	(struct rhc_specific *)stp->st_specific;
 
     VPRINT("V", rhc->rhc_V);
@@ -350,9 +350,9 @@ rt_rhc_print(register const struct soltab *stp)
  * >0 HIT
  */
 int
-rt_rhc_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
+rt_rhc_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
-    register struct rhc_specific *rhc =
+    struct rhc_specific *rhc =
 	(struct rhc_specific *)stp->st_specific;
     vect_t dprime;		/* D' */
     vect_t pprime;		/* P' */
@@ -360,7 +360,7 @@ rt_rhc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     fastf_t x;
     vect_t xlated;		/* translated vector */
     struct hit hits[3];	/* 2 potential hit points */
-    register struct hit *hitp;	/* pointer to hit point */
+    struct hit *hitp;	/* pointer to hit point */
 
     hitp = &hits[0];
 
@@ -492,7 +492,7 @@ rt_rhc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 
     if (hits[0].hit_dist < hits[1].hit_dist) {
 	/* entry is [0], exit is [1] */
-	register struct seg *segp;
+	struct seg *segp;
 
 	RT_GET_SEG(segp, ap->a_resource);
 	segp->seg_stp = stp;
@@ -501,7 +501,7 @@ rt_rhc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	BU_LIST_INSERT(&(seghead->l), &(segp->l));
     } else {
 	/* entry is [1], exit is [0] */
-	register struct seg *segp;
+	struct seg *segp;
 
 	RT_GET_SEG(segp, ap->a_resource);
 	segp->seg_stp = stp;
@@ -519,11 +519,11 @@ rt_rhc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
-rt_rhc_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
+rt_rhc_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
     fastf_t c;
     vect_t can_normal;	/* normal to canonical rhc */
-    register struct rhc_specific *rhc =
+    struct rhc_specific *rhc =
 	(struct rhc_specific *)stp->st_specific;
 
     VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir);
@@ -559,11 +559,11 @@ rt_rhc_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
  * Return the curvature of the rhc.
  */
 void
-rt_rhc_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
+rt_rhc_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
     fastf_t b, c, rsq, y;
     fastf_t zp1_sq, zp2;	/* 1st deriv sqr, 2nd deriv */
-    register struct rhc_specific *rhc =
+    struct rhc_specific *rhc =
 	(struct rhc_specific *)stp->st_specific;
 
     switch (hitp->hit_surfno) {
@@ -601,14 +601,15 @@ rt_rhc_curve(register struct curvature *cvp, register struct hit *hitp, struct s
  * v = elevation
  */
 void
-rt_rhc_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
+rt_rhc_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
-    register struct rhc_specific *rhc =
-	(struct rhc_specific *)stp->st_specific;
+    struct rhc_specific *rhc = (struct rhc_specific *)stp->st_specific;
 
     vect_t work;
     vect_t pprime;
     fastf_t len;
+
+    if (ap) RT_CK_APPLICATION(ap);
 
     /*
      * hit_point is on surface;  project back to unit rhc,
@@ -646,9 +647,9 @@ rt_rhc_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
  * R T _ R H C _ F R E E
  */
 void
-rt_rhc_free(register struct soltab *stp)
+rt_rhc_free(struct soltab *stp)
 {
-    register struct rhc_specific *rhc =
+    struct rhc_specific *rhc =
 	(struct rhc_specific *)stp->st_specific;
 
     bu_free((char *)rhc, "rhc_specific");
@@ -669,7 +670,7 @@ rt_rhc_class(void)
  * R T _ R H C _ P L O T
  */
 int
-rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol __attribute__((unused)))
 {
     int i, n;
     fastf_t b, c, *back, f, *front, h, rh;
@@ -1167,10 +1168,12 @@ rt_rhc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
  * Apply modeling transformations as well.
  */
 int
-rt_rhc_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_rhc_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_rhc_internal *xip;
     union record *rp;
+
+    if (dbip) RT_CK_DBI(dbip);
 
     BU_CK_EXTERNAL(ep);
     rp = (union record *)ep->ext_buf;
@@ -1216,6 +1219,8 @@ rt_rhc_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 {
     struct rt_rhc_internal *xip;
     union record *rhc;
+
+    if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_RHC) return(-1);
@@ -1269,13 +1274,14 @@ rt_rhc_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
  * Apply modeling transformations as well.
  */
 int
-rt_rhc_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_rhc_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_rhc_internal *xip;
     fastf_t vec[11];
 
-    BU_CK_EXTERNAL(ep);
+    if (dbip) RT_CK_DBI(dbip);
 
+    BU_CK_EXTERNAL(ep);
     BU_ASSERT_LONG(ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * 11);
 
     RT_CK_DB_INTERNAL(ip);
@@ -1318,6 +1324,8 @@ rt_rhc_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 {
     struct rt_rhc_internal *xip;
     fastf_t vec[11];
+
+    if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_RHC) return(-1);
@@ -1373,12 +1381,15 @@ rt_rhc_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 int
 rt_rhc_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
-    register struct rt_rhc_internal *xip =
+    struct rt_rhc_internal *xip =
 	(struct rt_rhc_internal *)ip->idb_ptr;
     char buf[256];
 
     RT_RHC_CK_MAGIC(xip);
     bu_vls_strcat(str, "Right Hyperbolic Cylinder (RHC)\n");
+
+    if (!verbose)
+	return 0;
 
     sprintf(buf, "\tV (%g, %g, %g)\n",
 	    INTCLAMP(xip->rhc_V[X] * mm2local),
@@ -1406,7 +1417,7 @@ rt_rhc_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
     sprintf(buf, "\tc=%g\n", INTCLAMP(xip->rhc_c * mm2local));
     bu_vls_strcat(str, buf);
 
-    return(0);
+    return 0;
 }
 
 
@@ -1418,7 +1429,7 @@ rt_rhc_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 void
 rt_rhc_ifree(struct rt_db_internal *ip)
 {
-    register struct rt_rhc_internal *xip;
+    struct rt_rhc_internal *xip;
 
     RT_CK_DB_INTERNAL(ip);
 
@@ -1436,8 +1447,11 @@ rt_rhc_ifree(struct rt_db_internal *ip)
  *
  */
 int
-rt_rhc_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
+rt_rhc_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 {
+    ps = ps; /* quellage */
+    if (ip) RT_CK_DB_INTERNAL(ip);
+
     return(0);			/* OK */
 }
 
