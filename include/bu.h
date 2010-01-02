@@ -398,8 +398,7 @@ typedef void *genptr_t;
  * @n char | short | integer | long | double | number of bits of integer
  * @n Normalize | Clip | low-order
  */
-BU_EXPORT BU_EXTERN(int bu_cv_cookie,
-		    (char *in));
+BU_EXPORT BU_EXTERN(int bu_cv_cookie, (const char *in));
 
 /**
  * C V _ O P T I M I Z E
@@ -408,16 +407,14 @@ BU_EXPORT BU_EXTERN(int bu_cv_cookie,
  * network.  If host and network formats are the same, and the request
  * was for network format, modify the cookie to request host format.
  */
-BU_EXPORT BU_EXTERN(int bu_cv_optimize,
-		    (int cookie));
+BU_EXPORT BU_EXTERN(int bu_cv_optimize, (int cookie));
 
 /**
  * C V _ I T E M L E N
  *
  * Returns the number of bytes each "item" of type "cookie" occupies.
  */
-BU_EXPORT BU_EXTERN(int bu_cv_itemlen,
-		    (int cookie));
+BU_EXPORT BU_EXTERN(int bu_cv_itemlen, (int cookie));
 
 /**
  * bu_cv_w_cookie
@@ -512,13 +509,7 @@ BU_EXPORT BU_EXTERN(int bu_cv_itemlen,
  *	done
  @endcode
 */
-BU_EXPORT BU_EXTERN(int bu_cv_w_cookie,
-		    (genptr_t,
-		     int,
-		     size_t,
-		     genptr_t,
-		     int,
-		     int));
+BU_EXPORT BU_EXTERN(int bu_cv_w_cookie, (genptr_t, int, size_t, genptr_t, int, int));
 
 /**
  * bu_cv_ntohss
@@ -1605,7 +1596,7 @@ struct bu_vls  {
 };
 #define BU_CK_VLS(_vp)		BU_CKMAG(_vp, BU_VLS_MAGIC, "bu_vls")
 #define BU_VLS_IS_INITIALIZED(_vp)	\
-	(!((unsigned long)(_vp) == 0) && ((_vp)->vls_magic == BU_VLS_MAGIC))
+	(((unsigned long)(_vp) != 0) && ((_vp)->vls_magic == BU_VLS_MAGIC))
 
 /** @} */
 
