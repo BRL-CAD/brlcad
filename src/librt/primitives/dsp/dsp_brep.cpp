@@ -44,8 +44,8 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     dsp_ip = (struct rt_dsp_internal *)ip->idb_ptr;
     RT_DSP_CK_MAGIC(dsp_ip);
 
-    int in_cookie = bu_cv_cookie("nus");
-    int out_cookie = bu_cv_cookie("hus");
+    int in_cookie = bu_cv_cookie((char *)"nus");
+    int out_cookie = bu_cv_cookie((char *)"hus");
     mf = dsp_ip->dsp_mp = bu_open_mapped_file(bu_vls_addr(&dsp_ip->dsp_name), "dsp");
     int count = dsp_ip->dsp_xcnt * dsp_ip->dsp_ycnt;
     mf->apbuflen = count * sizeof(unsigned short);
