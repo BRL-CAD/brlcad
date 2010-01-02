@@ -449,7 +449,7 @@ wdb_close(struct rt_wdb *wdbp)
  * BRLCAD_ERROR
  */
 int
-wdb_import_from_path2(struct bu_vls *log, struct rt_db_internal *ip, const char *path, struct rt_wdb *wdb, matp_t matp)
+wdb_import_from_path2(struct bu_vls *logstr, struct rt_db_internal *ip, const char *path, struct rt_wdb *wdb, matp_t matp)
 {
     struct db_i *dbip;
     int status;
@@ -472,7 +472,7 @@ wdb_import_from_path2(struct bu_vls *log, struct rt_db_internal *ip, const char 
 	db_full_path_init(&new_path);
 
 	if (db_string_to_path(&new_path, dbip, path) < 0) {
-	    bu_vls_printf(log, "wdb_import_from_path: '%s' contains unknown object names\n", path);
+	    bu_vls_printf(logstr, "wdb_import_from_path: '%s' contains unknown object names\n", path);
 	    return BRLCAD_ERROR;
 	}
 
@@ -484,17 +484,17 @@ wdb_import_from_path2(struct bu_vls *log, struct rt_db_internal *ip, const char 
 	MAT_COPY(matp, ts.ts_mat);
 
 	if (ret < 0) {
-	    bu_vls_printf(log, "wdb_import_from_path: '%s' is a bad path\n", path);
+	    bu_vls_printf(logstr, "wdb_import_from_path: '%s' is a bad path\n", path);
 	    return BRLCAD_ERROR;
 	}
 
 	status = wdb_import(wdb, ip, dp_curr->d_namep, ts.ts_mat);
 	if (status == -4) {
-	    bu_vls_printf(log, "%s not found in path %s\n", dp_curr->d_namep, path);
+	    bu_vls_printf(logstr, "%s not found in path %s\n", dp_curr->d_namep, path);
 	    return BRLCAD_ERROR;
 	}
 	if (status < 0) {
-	    bu_vls_printf(log, "wdb_import failure: %s", dp_curr->d_namep);
+	    bu_vls_printf(logstr, "wdb_import failure: %s", dp_curr->d_namep);
 	    return BRLCAD_ERROR;
 	}
     } else {
@@ -502,11 +502,11 @@ wdb_import_from_path2(struct bu_vls *log, struct rt_db_internal *ip, const char 
 
 	status = wdb_import(wdb, ip, path, (matp_t)NULL);
 	if (status == -4) {
-	    bu_vls_printf(log, "%s: not found\n", path);
+	    bu_vls_printf(logstr, "%s: not found\n", path);
 	    return BRLCAD_ERROR;
 	}
 	if (status < 0) {
-	    bu_vls_printf(log, "wdb_import failure: %s", path);
+	    bu_vls_printf(logstr, "wdb_import failure: %s", path);
 	    return BRLCAD_ERROR;
 	}
     }
@@ -527,11 +527,11 @@ wdb_import_from_path2(struct bu_vls *log, struct rt_db_internal *ip, const char 
  * BRLCAD_ERROR
  */
 int
-wdb_import_from_path(struct bu_vls *log, struct rt_db_internal *ip, const char *path, struct rt_wdb *wdb)
+wdb_import_from_path(struct bu_vls *logstr, struct rt_db_internal *ip, const char *path, struct rt_wdb *wdb)
 {
     mat_t mat;
 
-    return wdb_import_from_path2(log, ip, path, wdb, mat);
+    return wdb_import_from_path2(logstr, ip, path, wdb, mat);
 }
 
 
@@ -567,7 +567,7 @@ wdb_import_from_path(struct bu_vls *log, struct rt_db_internal *ip, const char *
  * Notice that in most cases, this tree will be grossly unbalanced.
  */
 void
-wdb_tree_describe(struct bu_vls *log, const union tree *tp)
+wdb_tree_describe(struct bu_vls *logstr, const union tree *tp)
 {
     if (!tp) return;
 

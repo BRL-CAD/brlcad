@@ -47,36 +47,41 @@ interpolate_data()
     struct face_g_snurb *srf2, *srf3;
     struct knot_vector new_kv;
 
-    rt_nurb_sinterp( &srf, 4, (const fastf_t *)grid, 10, 10 );
+    rt_nurb_sinterp(&srf, 4, (const fastf_t *)grid, 10, 10);
 
 #if 0
     /* Draw control mesh in blue */
-    pl_color( stdout, 145, 145, 255 );
-    rt_nurb_plot_snurb( stdout, &srf );
+    pl_color(stdout, 145, 145, 255);
+    rt_nurb_plot_snurb(stdout, &srf);
 #endif
 
 #if 0
-    rt_nurb_reverse_srf( &srf );
-    rt_nurb_kvnorm( &srf.u );
-    rt_nurb_kvnorm( &srf.v );
+    rt_nurb_reverse_srf(&srf);
+    rt_nurb_kvnorm(&srf.u);
+    rt_nurb_kvnorm(&srf.v);
 #endif
 
     /* lets take a look at it.  Refine to 100 points in both directions. */
-    rt_nurb_kvknot( &new_kv, srf.order[0], 0.0, 1.0, 100, (struct resource *)NULL);
-    srf2 = (struct face_g_snurb *) rt_nurb_s_refine( &srf, 0, &new_kv, (struct resource *)NULL);
-    srf3 = (struct face_g_snurb *) rt_nurb_s_refine( srf2, 1, &new_kv, (struct resource *)NULL);
+    rt_nurb_kvknot(&new_kv, srf.order[0], 0.0, 1.0, 100, (struct resource *)NULL);
+    srf2 = (struct face_g_snurb *) rt_nurb_s_refine(&srf, 0, &new_kv, (struct resource *)NULL);
+    srf3 = (struct face_g_snurb *) rt_nurb_s_refine(srf2, 1, &new_kv, (struct resource *)NULL);
 
     /* Draw refined mesh in yellow */
-    pl_color( stdout, 200, 200, 50 );
-    rt_nurb_plot_snurb( stdout, srf3 );
+    pl_color(stdout, 200, 200, 50);
+    rt_nurb_plot_snurb(stdout, srf3);
 }
 
-int main(int argc, char *argv[])
+
+int
+main(int argc, char *argv[])
 {
 
     fastf_t hscale;
     fastf_t v;
     int i, j;
+
+    if (argc > 1)
+	printf("Usage: %s\n", argv[0]);
 
     hscale = 2.5;
 
@@ -84,32 +89,36 @@ int main(int argc, char *argv[])
 
     pl_color(stdout, 155, 55, 55);
 
-    for ( i = 0; i < 10; i++)
-	for ( j = 0; j < 10; j++)
-	{
+    for (i = 0; i < 10; i++) {
+	for (j = 0; j < 10; j++) {
 	    v = hscale * drand48() + 10.0;
 	    grid[i][j][0] = i;
 	    grid[i][j][1] = j;
 	    grid[i][j][2] = v;
 
-	    pd_3move( stdout,
-		      grid[i][j][0],  grid[i][j][1], grid[i][j][2] - .14);
-	    pd_3cont( stdout,
-		      grid[i][j][0], grid[i][j][1], grid[i][j][2] + .14);
+	    pd_3move(stdout,
+		     grid[i][j][0],  grid[i][j][1], grid[i][j][2] - .14);
+	    pd_3cont(stdout,
+		     grid[i][j][0], grid[i][j][1], grid[i][j][2] + .14);
 
-	    pd_3move( stdout,
-		      grid[i][j][0] - .14, grid[i][j][1], grid[i][j][2]);
-	    pd_3cont( stdout,
-		      grid[i][j][0] + .14, grid[i][j][1], grid[i][j][2] );
+	    pd_3move(stdout,
+		     grid[i][j][0] - .14, grid[i][j][1], grid[i][j][2]);
+	    pd_3cont(stdout,
+		     grid[i][j][0] + .14, grid[i][j][1], grid[i][j][2]);
 
-	    pd_3move( stdout,
-		      grid[i][j][0], grid[i][j][1]-.14, grid[i][j][2]);
-	    pd_3cont( stdout,
-		      grid[i][j][0], grid[i][j][1]+.14, grid[i][j][2]);
+	    pd_3move(stdout,
+		     grid[i][j][0], grid[i][j][1]-.14, grid[i][j][2]);
+	    pd_3cont(stdout,
+		     grid[i][j][0], grid[i][j][1]+.14, grid[i][j][2]);
 	}
+    }
+
 
     interpolate_data();
+
+    return 0;
 }
+
 
 /*
  * Local Variables:

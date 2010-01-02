@@ -91,6 +91,8 @@ rt_xxx_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     if (stp) RT_CK_SOLTAB(stp);
     RT_CK_DB_INTERNAL(ip);
+    if (rtip) RT_CK_RTI(rtip);
+
     xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
     RT_XXX_CK_MAGIC(xxx_ip);
 
@@ -129,11 +131,12 @@ rt_xxx_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     struct xxx_specific *xxx;
 
     if (!stp) return -1;
+    RT_CK_SOLTAB(stp);
     xxx = (struct xxx_specific *)stp->st_specific;
     if (!xxx) return -1;
-    RT_CK_SOLTAB(stp);
-
     if (rp) RT_CK_RAY(rp);
+    if (ap) RT_CK_APPLICATION(ap);
+    if (!seghead) return -1;
 
 /* the EXAMPLE_NEW_SEGMENT block shows how one might add a new result
  * if the ray did hit the primitive.  the segment values would need to
@@ -213,10 +216,13 @@ rt_xxx_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 {
     struct xxx_specific *xxx;
 
-    if (!stp) return;
+    if (ap) RT_CK_APPLICATION(ap);
+    if (!stp || !uvp) return;
+    RT_CK_SOLTAB(stp);
+    if (hitp) RT_CK_HIT(hitp);
+
     xxx = (struct xxx_specific *)stp->st_specific;
     if (!xxx) return;
-    RT_CK_SOLTAB(stp);
 }
 
 
@@ -229,21 +235,11 @@ rt_xxx_free(struct soltab *stp)
     struct xxx_specific *xxx;
 
     if (!stp) return;
+    RT_CK_SOLTAB(stp);
     xxx = (struct xxx_specific *)stp->st_specific;
     if (!xxx) return;
-    RT_CK_SOLTAB(stp);
 
     bu_free((char *)xxx, "xxx_specific");
-}
-
-
-/**
- * R T _ X X X _ C L A S S
- */
-int
-rt_xxx_class(const struct soltab *stp, const vect_t min, const vect_t max, const struct bn_tol *tol)
-{
-    return RT_CLASSIFY_UNIMPLEMENTED;
 }
 
 
@@ -251,10 +247,11 @@ rt_xxx_class(const struct soltab *stp, const vect_t min, const vect_t max, const
  * R T _ X X X _ P L O T
  */
 int
-rt_xxx_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_xxx_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
 {
     struct rt_xxx_internal *xxx_ip;
 
+    if (!vhead) return -1;
     RT_CK_DB_INTERNAL(ip);
     xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
     RT_XXX_CK_MAGIC(xxx_ip);
@@ -271,10 +268,12 @@ rt_xxx_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_xxx_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_xxx_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
 {
     struct rt_xxx_internal *xxx_ip;
 
+    if (r) NMG_CK_REGION(*r);
+    if (m) NMG_CK_MODEL(m);
     RT_CK_DB_INTERNAL(ip);
     xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
     RT_XXX_CK_MAGIC(xxx_ip);
@@ -298,8 +297,9 @@ rt_xxx_import5(struct rt_db_internal *ip, const struct bu_external *ep, const ma
     struct rt_xxx_internal *xxx_ip;
     fastf_t vv[ELEMENTS_PER_VECT*1];
 
-    RT_CK_DB_INTERNAL(ip)
-	BU_CK_EXTERNAL(ep);
+    RT_CK_DB_INTERNAL(ip);
+    BU_CK_EXTERNAL(ep);
+    if (dbip) RT_CK_DBI(dbip);
 
     BU_ASSERT_LONG(ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * 3*4);
 
@@ -344,6 +344,7 @@ rt_xxx_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     if (ip->idb_type != ID_XXX) return(-1);
     xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
     RT_XXX_CK_MAGIC(xxx_ip);
+    if (dbip) RT_CK_DBI(dbip);
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT;
@@ -380,13 +381,16 @@ rt_xxx_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
     RT_XXX_CK_MAGIC(xxx_ip);
     bu_vls_strcat(str, "truncated general xxx (XXX)\n");
 
+    if (!verbose)
+	return 0;
+
     sprintf(buf, "\tV (%g, %g, %g)\n",
 	    INTCLAMP(xxx_ip->v[X] * mm2local),
 	    INTCLAMP(xxx_ip->v[Y] * mm2local),
 	    INTCLAMP(xxx_ip->v[Z] * mm2local));
     bu_vls_strcat(str, buf);
 
-    return(0);
+    return 0;
 }
 
 
@@ -409,19 +413,6 @@ rt_xxx_ifree(struct rt_db_internal *ip)
 
     bu_free((char *)xxx_ip, "xxx ifree");
     ip->idb_ptr = GENPTR_NULL;	/* sanity */
-}
-
-
-/**
- * R T _ X X X _ X F O R M
- *
- * Create transformed version of internal form.  Free *ip if
- * requested.  Implement this if it's faster than doing an
- * export/import4 cycle.
- */
-int
-rt_xxx_xform(struct rt_db_internal *op, const mat_t mat, struct rt_db_internal *ip, int free)
-{
 }
 
 
