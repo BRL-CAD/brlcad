@@ -215,14 +215,6 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 	return CUTTER_NULL;
     }
 
-#if EXTRA_SAFETY
-    if (curcut == CUTTER_NULL) {
-	bu_log(
-	    "rt_advance_to_next_cell: warning: ssp->curcut not set\n");
-	ssp->curcut = curcut = &ap->a_rt_i->rti_CutHead;
-    }
-#endif
-
     for (;;) {
 	/* Set cutp to CUTTER_NULL.  If it fails to become set in the
 	 * following switch statement, we know that we have exited the
@@ -535,8 +527,8 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 			rt_pr_cut(cutp, 0);
 		    }
 
-		    /* Advance 1mm, or smallest value that hardware
-		     * floating point resolution will allow.
+		    /* Advance 1mm, or (square of) smallest value that
+		     * hardware floating point resolution will allow.
 		     */
 		    fraction = frexp(ssp->box_end,
 				     &exponent);
@@ -546,10 +538,7 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 			    "exp=%d, fraction=%.20e\n",
 			    exponent, fraction);
 		    }
-		    if (sizeof(fastf_t) <= 4)
-			fraction += 1.0e-5;
-		    else
-			fraction += 1.0e-14;
+		    fraction += SQRT_SMALL_FASTF;
 		    delta = ldexp(fraction, exponent);
 		    if (RT_G_DEBUG & DEBUG_ADVANCE) {
 			bu_log(
@@ -615,12 +604,6 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 		}
 
 	    done_return_cutp:	ssp->lastcut = cutp;
-#if EXTRA_SAFETY
-		/* Diagnostic purposes only */
-		ssp->odist_corr = ssp->dist_corr;
-		ssp->obox_start = ssp->box_start;
-		ssp->obox_end = ssp->box_end;
-#endif
 		ssp->dist_corr = t0;
 		ssp->box_start = t0 + ssp->newray.r_min;
 		ssp->box_end = t0 + ssp->newray.r_max;
