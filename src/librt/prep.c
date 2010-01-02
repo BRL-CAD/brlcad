@@ -515,25 +515,25 @@ rt_vlist_solid(
     const struct soltab *stp,
     struct resource *resp)
 {
-    struct rt_db_internal *intern;
+    struct rt_db_internal intern;
     int ret;
 
-    if (rt_db_get_internal(intern, stp->st_dp, rtip->rti_dbip, stp->st_matp, resp) < 0) {
+    if (rt_db_get_internal(&intern, stp->st_dp, rtip->rti_dbip, stp->st_matp, resp) < 0) {
 	bu_log("rt_vlist_solid(%s): rt_db_get_internal() failed\n", stp->st_name);
 	return(-1);			/* FAIL */
     }
-    RT_CK_DB_INTERNAL(intern);
+    RT_CK_DB_INTERNAL(&intern);
 
     ret = -1;
-    if (rt_functab[intern->idb_type].ft_plot) {
-	ret = rt_functab[intern->idb_type].ft_plot(vhead, intern, &rtip->rti_ttol, &rtip->rti_tol);
+    if (rt_functab[intern.idb_type].ft_plot) {
+	ret = rt_functab[intern.idb_type].ft_plot(vhead, &intern, &rtip->rti_ttol, &rtip->rti_tol);
     }
     if (ret < 0) {
 	bu_log("rt_vlist_solid(%s): ft_plot() failure\n", stp->st_name);
-	rt_db_free_internal(intern);
+	rt_db_free_internal(&intern);
 	return(-2);
     }
-    rt_db_free_internal(intern);
+    rt_db_free_internal(&intern);
 
     return 0;
 }
@@ -557,21 +557,21 @@ rt_plot_solid(
     const struct soltab *stp,
     struct resource *resp)
 {
-    struct bu_list *vhead;
+    struct bu_list vhead;
     struct region *regp;
 
     RT_CK_RTI(rtip);
     RT_CK_SOLTAB(stp);
 
-    BU_LIST_INIT(vhead);
+    BU_LIST_INIT(&vhead);
 
-    if (rt_vlist_solid(vhead, rtip, stp, resp) < 0) {
+    if (rt_vlist_solid(&vhead, rtip, stp, resp) < 0) {
 	bu_log("rt_plot_solid(%s): rt_vlist_solid() failed\n",
 	       stp->st_name);
 	return(-1);			/* FAIL */
     }
 
-    if (BU_LIST_IS_EMPTY(vhead)) {
+    if (BU_LIST_IS_EMPTY(&vhead)) {
 	bu_log("rt_plot_solid(%s): no vectors to plot?\n",
 	       stp->st_name);
 	return(-3);		/* FAIL */
@@ -585,9 +585,9 @@ rt_plot_solid(
 		 (int)(255*regp->reg_mater.ma_color[2]));
     }
 
-    rt_vlist_to_uplot(fp, vhead);
+    rt_vlist_to_uplot(fp, &vhead);
 
-    RT_FREE_VLIST(vhead);
+    RT_FREE_VLIST(&vhead);
     return(0);			/* OK */
 }
 

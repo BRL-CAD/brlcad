@@ -1224,47 +1224,47 @@ rt_db_cvt_to_external5(
     struct resource *resp,
     const int major)
 {
-    struct bu_external	*attributes;
-    struct bu_external	*body;
+    struct bu_external	attributes;
+    struct bu_external	body;
     int	minor;
     int ret;
 
     RT_CK_DB_INTERNAL( ip );
     if (dbip) RT_CK_DBI(dbip);	/* may be null */
     RT_CK_RESOURCE(resp);
-    BU_INIT_EXTERNAL( body );
+    BU_INIT_EXTERNAL( &body );
 
     minor = ip->idb_type;	/* XXX not necessarily v5 numbers. */
 
     /* Scale change on export is 1.0 -- no change */
     ret = -1;
     if (ip->idb_meth->ft_export5) {
-	ret = ip->idb_meth->ft_export5(body, ip, conv2mm, dbip, resp);
+	ret = ip->idb_meth->ft_export5(&body, ip, conv2mm, dbip, resp);
     }
     if (ret < 0) {
 	bu_log("rt_db_cvt_to_external5(%s):  ft_export5 failure\n",
 	       name);
-	bu_free_external( body );
+	bu_free_external( &body );
 	BU_INIT_EXTERNAL(ext);
 	return -1;		/* FAIL */
     }
-    BU_CK_EXTERNAL( body );
+    BU_CK_EXTERNAL( &body );
 
     /* If present, convert attributes to on-disk format. */
     if ( ip->idb_avs.magic == BU_AVS_MAGIC )  {
-	db5_export_attributes( attributes, &ip->idb_avs );
-	BU_CK_EXTERNAL( attributes );
+	db5_export_attributes( &attributes, &ip->idb_avs );
+	BU_CK_EXTERNAL( &attributes );
     } else {
-	BU_INIT_EXTERNAL(attributes);
+	BU_INIT_EXTERNAL(&attributes);
     }
 
     db5_export_object3( ext, DB5HDR_HFLAGS_DLI_APPLICATION_DATA_OBJECT,
-			name, 0, attributes, body,
+			name, 0, &attributes, &body,
 			major, minor,
 			DB5_ZZZ_UNCOMPRESSED, DB5_ZZZ_UNCOMPRESSED );
     BU_CK_EXTERNAL( ext );
-    bu_free_external( body );
-    bu_free_external( attributes );
+    bu_free_external( &body );
+    bu_free_external( &attributes );
 
     return 0;		/* OK */
 }
@@ -1409,7 +1409,7 @@ rt_db_put_internal5(
     struct resource		*resp,
     const int		major)
 {
-    struct bu_external	*ext;
+    struct bu_external	ext;
 
     RT_CK_DIR(dp);
     RT_CK_DBI(dbip);
@@ -1418,37 +1418,36 @@ rt_db_put_internal5(
 
     BU_ASSERT_LONG( dbip->dbi_version, ==, 5 );
 
-    if ( rt_db_cvt_to_external5( ext, dp->d_namep, ip, 1.0, dbip, resp, major ) < 0 )  {
+    if ( rt_db_cvt_to_external5( &ext, dp->d_namep, ip, 1.0, dbip, resp, major ) < 0 )  {
 	bu_log("rt_db_put_internal5(%s):  export failure\n",
 	       dp->d_namep);
 	goto fail;
     }
-    BU_INIT_EXTERNAL( ext );
-    BU_CK_EXTERNAL( ext );
+    BU_CK_EXTERNAL( &ext );
 
-    if ( ext->ext_nbytes != dp->d_len || dp->d_addr == RT_DIR_PHONY_ADDR )  {
-	if ( db5_realloc( dbip, dp, ext ) < 0 )  {
+    if ( ext.ext_nbytes != dp->d_len || dp->d_addr == RT_DIR_PHONY_ADDR )  {
+	if ( db5_realloc( dbip, dp, &ext ) < 0 )  {
 	    bu_log("rt_db_put_internal5(%s) db_realloc5() failed\n", dp->d_namep);
 	    goto fail;
 	}
     }
-    BU_ASSERT_LONG( ext->ext_nbytes, ==, dp->d_len );
+    BU_ASSERT_LONG( ext.ext_nbytes, ==, dp->d_len );
 
     if ( dp->d_flags & RT_DIR_INMEM )  {
-	memcpy(dp->d_un.ptr, ext->ext_buf, ext->ext_nbytes);
+	memcpy(dp->d_un.ptr, ext.ext_buf, ext.ext_nbytes);
 	goto ok;
     }
 
-    if ( db_write( dbip, (char *)ext->ext_buf, ext->ext_nbytes, dp->d_addr ) < 0 )  {
+    if ( db_write( dbip, (char *)ext.ext_buf, ext.ext_nbytes, dp->d_addr ) < 0 )  {
 	goto fail;
     }
  ok:
-    bu_free_external( ext );
+    bu_free_external( &ext );
     rt_db_free_internal(ip);
     return 0;			/* OK */
 
  fail:
-    bu_free_external( ext );
+    bu_free_external( &ext );
     rt_db_free_internal(ip);
     return -2;		/* FAIL */
 }

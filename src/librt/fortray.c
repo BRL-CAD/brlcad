@@ -292,22 +292,21 @@ BU_FORTRAN(frnorm, FRNORM)(double		*normal,	/* output only */
 			   double		*dir __attribute__((unused)))
 {
     register struct context	*ctp;
-    struct hit *hit = HIT_NULL;
+    struct hit	hit;
     struct soltab	*stp;
     register int	i;
 
     i = *idx - 1; /* Selects which inhit is used */
 
     /* Reconstruct the hit structure */
-    hit->hit_dist = indist[i];
+    hit.hit_dist = indist[i];
     ctp = &context[i];
     stp = ctp->co_stp;
-    VMOVE( hit->hit_vpriv, ctp->co_vpriv );
-    hit->hit_private = ctp->co_priv;
+    VMOVE( hit.hit_vpriv, ctp->co_vpriv );
+    hit.hit_private = ctp->co_priv;
 
     /* The new macro doesn't use ray argument */
-    RT_HIT_NORMAL( normal, hit, stp, NULL, ctp->co_inflip );
-    bu_free(hit, "free hit struct");
+    RT_HIT_NORMAL( normal, &hit, stp, NULL, ctp->co_inflip );
 }
 
 
