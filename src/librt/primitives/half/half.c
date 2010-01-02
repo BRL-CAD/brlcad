@@ -743,21 +743,22 @@ rt_hlf_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 int
 rt_hlf_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
-    register struct rt_half_internal *hip =
-	(struct rt_half_internal *)ip->idb_ptr;
+    struct rt_half_internal *hip;
     char buf[256];
 
+    hip = (struct rt_half_internal *)ip->idb_ptr;
     RT_HALF_CK_MAGIC(hip);
     bu_vls_strcat(str, "halfspace\n");
 
-    if (verbose) {
-	sprintf(buf, "\tN (%g, %g, %g) d=%g\n",
-		V3INTCLAMPARGS(hip->eqn),		/* should have unit length */
-		INTCLAMP(hip->eqn[W] * mm2local));
-	bu_vls_strcat(str, buf);
-    }
+    if (!verbose)
+	return 0;
 
-    return(0);
+    sprintf(buf, "\tN (%g, %g, %g) d=%g\n",
+	    V3INTCLAMPARGS(hip->eqn),		/* should have unit length */
+	    INTCLAMP(hip->eqn[W] * mm2local));
+    bu_vls_strcat(str, buf);
+
+    return 0;
 }
 
 

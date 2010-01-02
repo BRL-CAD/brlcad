@@ -819,26 +819,27 @@ rt_ebm_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 
     RT_EBM_CK_MAGIC(eip);
 
-    bu_vls_init(&substr);
     bu_vls_strcat(str, "extruded bitmap (EBM)\n\t");
 
-    if (verbose) {
-	bu_vls_printf(&substr, "  file=\"%s\" w=%d n=%d depth=%g\n   mat=",
-		      eip->file, eip->xdim, eip->ydim, INTCLAMP(eip->tallness*mm2local));
-	bu_vls_vlscat(str, &substr);
-	for (i=0; i<15; i++) {
-	    bu_vls_trunc2(&substr, 0);
-	    bu_vls_printf(&substr, "%g, ", INTCLAMP(eip->mat[i]));
-	    bu_vls_vlscat(str, &substr);
-	}
+    if (!verbose)
+	return 0;
+
+    bu_vls_init(&substr);
+    bu_vls_printf(&substr, "  file=\"%s\" w=%d n=%d depth=%g\n   mat=",
+		  eip->file, eip->xdim, eip->ydim, INTCLAMP(eip->tallness*mm2local));
+    bu_vls_vlscat(str, &substr);
+    for (i=0; i<15; i++) {
 	bu_vls_trunc2(&substr, 0);
-	bu_vls_printf(&substr, "%g\n", INTCLAMP(eip->mat[15]));
+	bu_vls_printf(&substr, "%g, ", INTCLAMP(eip->mat[i]));
 	bu_vls_vlscat(str, &substr);
     }
+    bu_vls_trunc2(&substr, 0);
+    bu_vls_printf(&substr, "%g\n", INTCLAMP(eip->mat[15]));
+    bu_vls_vlscat(str, &substr);
 
     bu_vls_free(&substr);
 
-    return(0);
+    return 0;
 }
 
 

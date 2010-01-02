@@ -1126,6 +1126,8 @@ rt_bot_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
     char *orientation, *mode;
     int i;
 
+    int badVertexCount = 0;
+
     RT_BOT_CK_MAGIC(bot_ip);
     bu_vls_strcat(str, "Bag of triangles (BOT)\n");
 
@@ -1175,60 +1177,60 @@ rt_bot_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 	}
     }
 
-    if (verbose) {
-	int badVertexCount = 0;
-	for (i=0; i<bot_ip->num_faces; i++) {
-	    int j, k;
-	    point_t pt[3];
+    if (!verbose)
+	return 0;
+	
+    for (i=0; i<bot_ip->num_faces; i++) {
+	int j, k;
+	point_t pt[3];
 
-	    snprintf(buf, 256, "\tface %d:", i);
-	    bu_vls_strcat(str, buf);
+	snprintf(buf, 256, "\tface %d:", i);
+	bu_vls_strcat(str, buf);
 
-	    for (j=0; j<3; j++) {
-		int ptnum;
+	for (j=0; j<3; j++) {
+	    int ptnum;
 
-		ptnum = bot_ip->faces[i*3+j];
-		if (ptnum < 0 || ptnum >= bot_ip->num_vertices) {
-		    bu_vls_strcat(str, " (\?\?\? \?\?\? \?\?\?)");
-		    badVertexCount++;
-		} else {
-		    VSCALE(pt[j], &bot_ip->vertices[ptnum*3], mm2local);
-		    snprintf(buf, 256, " (%g %g %g)", V3INTCLAMPARGS(pt[j]));
-		    bu_vls_strcat(str, buf);
-		}
-	    }
-	    if ((bot_ip->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) && bot_ip->num_normals > 0) {
-		bu_vls_strcat(str, " normals: ");
-		for (k=0; k<3; k++) {
-		    int idx;
-
-		    idx = i*3 + k;
-		    if (bot_ip->face_normals[idx] < 0 ||  bot_ip->face_normals[idx] >= bot_ip->num_normals) {
-			bu_vls_strcat(str, "none ");
-		    } else {
-			snprintf(buf, 256, "(%g %g %g) ", V3INTCLAMPARGS(&bot_ip->normals[bot_ip->face_normals[idx]*3]));
-			bu_vls_strcat(str, buf);
-		    }
-		}
-		bu_vls_strcat(str, "\n");
+	    ptnum = bot_ip->faces[i*3+j];
+	    if (ptnum < 0 || ptnum >= bot_ip->num_vertices) {
+		bu_vls_strcat(str, " (\?\?\? \?\?\? \?\?\?)");
+		badVertexCount++;
 	    } else {
-		bu_vls_strcat(str, "\n");
-	    }
-	    if (bot_ip->mode == RT_BOT_PLATE || bot_ip->mode == RT_BOT_PLATE_NOCOS) {
-		char *face_mode;
-
-		if (BU_BITTEST(bot_ip->face_mode, i))
-		    face_mode = "appended to hit point";
-		else
-		    face_mode = "centered about hit point";
-		snprintf(buf, 256, "\t\tthickness = %g, %s\n", INTCLAMP(mm2local*bot_ip->thickness[i]), face_mode);
+		VSCALE(pt[j], &bot_ip->vertices[ptnum*3], mm2local);
+		snprintf(buf, 256, " (%g %g %g)", V3INTCLAMPARGS(pt[j]));
 		bu_vls_strcat(str, buf);
 	    }
 	}
-	if (badVertexCount > 0) {
-	    snprintf(buf, 256, "\tThis BOT has %d invalid references to vertices\n", badVertexCount);
+	if ((bot_ip->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) && bot_ip->num_normals > 0) {
+	    bu_vls_strcat(str, " normals: ");
+	    for (k=0; k<3; k++) {
+		int idx;
+
+		idx = i*3 + k;
+		if (bot_ip->face_normals[idx] < 0 ||  bot_ip->face_normals[idx] >= bot_ip->num_normals) {
+		    bu_vls_strcat(str, "none ");
+		} else {
+		    snprintf(buf, 256, "(%g %g %g) ", V3INTCLAMPARGS(&bot_ip->normals[bot_ip->face_normals[idx]*3]));
+		    bu_vls_strcat(str, buf);
+		}
+	    }
+	    bu_vls_strcat(str, "\n");
+	} else {
+	    bu_vls_strcat(str, "\n");
+	}
+	if (bot_ip->mode == RT_BOT_PLATE || bot_ip->mode == RT_BOT_PLATE_NOCOS) {
+	    char *face_mode;
+
+	    if (BU_BITTEST(bot_ip->face_mode, i))
+		face_mode = "appended to hit point";
+	    else
+		face_mode = "centered about hit point";
+	    snprintf(buf, 256, "\t\tthickness = %g, %s\n", INTCLAMP(mm2local*bot_ip->thickness[i]), face_mode);
 	    bu_vls_strcat(str, buf);
 	}
+    }
+    if (badVertexCount > 0) {
+	snprintf(buf, 256, "\tThis BOT has %d invalid references to vertices\n", badVertexCount);
+	bu_vls_strcat(str, buf);
     }
 
     return(0);

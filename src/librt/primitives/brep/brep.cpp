@@ -153,15 +153,15 @@ brep_pt_trimmed(pt2d_t pt, const ON_BrepFace& face) {
     ON_Line ray(from, to);
     int intersections = 0;
     // for (int i = 0; i < face.LoopCount(); i++) {
-	// ON_BrepLoop* loop = face.Loop(i);
-	// for each trim
-	// for (int j = 0; j < loop->m_ti.Count(); j++) {
-	    // ON_BrepTrim& trim = face.Brep()->m_T[loop->m_ti[j]];
-	    // const ON_Curve* trimCurve = trim.TrimCurveOf();
-	    // intersections += brep_count_intersections(ray, trimCurve);
-	    // ray.IntersectCurve(trimCurve, intersections, 0.0001);
-	    // intersections += trimCurve->NumIntersectionsWith(ray);
-	// }
+    // ON_BrepLoop* loop = face.Loop(i);
+    // for each trim
+    // for (int j = 0; j < loop->m_ti.Count(); j++) {
+    // ON_BrepTrim& trim = face.Brep()->m_T[loop->m_ti[j]];
+    // const ON_Curve* trimCurve = trim.TrimCurveOf();
+    // intersections += brep_count_intersections(ray, trimCurve);
+    // ray.IntersectCurve(trimCurve, intersections, 0.0001);
+    // intersections += trimCurve->NumIntersectionsWith(ray);
+    // }
     // }
 
     /* If we base trimming on the number of intersections with, rhino
@@ -494,52 +494,52 @@ public:
     brep_hit(const ON_BrepFace& f, const point_t orig, const point_t p, const vect_t n, const pt2d_t _uv)
 	: face(f), trimmed(false), closeToEdge(false), oob(false), sbv(NULL)
     {
-	    VMOVE(origin, orig);
-	    VMOVE(point, p);
-	    VMOVE(normal, n);
-	    move(uv, _uv);
+	VMOVE(origin, orig);
+	VMOVE(point, p);
+	VMOVE(normal, n);
+	move(uv, _uv);
     }
 
     brep_hit(const brep_hit& h)
 	: face(h.face), trimmed(h.trimmed), closeToEdge(h.closeToEdge), oob(h.oob), sbv(h.sbv)
     {
-	    VMOVE(origin, h.origin);
-	    VMOVE(point, h.point);
-	    VMOVE(normal, h.normal);
-	    move(uv, h.uv);
-	    trimmed = h.trimmed;
-	    closeToEdge = h.closeToEdge;
-	    oob = h.oob;
-	    sbv = h.sbv;
-	    hit = h.hit;
-	    direction = h.direction;
+	VMOVE(origin, h.origin);
+	VMOVE(point, h.point);
+	VMOVE(normal, h.normal);
+	move(uv, h.uv);
+	trimmed = h.trimmed;
+	closeToEdge = h.closeToEdge;
+	oob = h.oob;
+	sbv = h.sbv;
+	hit = h.hit;
+	direction = h.direction;
     }
 
     brep_hit& operator=(const brep_hit& h)
     {
-	    const_cast<ON_BrepFace&>(face) = h.face;
-	    VMOVE(origin, h.origin);
-	    VMOVE(point, h.point);
-	    VMOVE(normal, h.normal);
-	    move(uv, h.uv);
-	    trimmed = h.trimmed;
-	    closeToEdge = h.closeToEdge;
-	    oob = h.oob;
-	    sbv = h.sbv;
-	    hit = h.hit;
-	    direction = h.direction;
+	const_cast<ON_BrepFace&>(face) = h.face;
+	VMOVE(origin, h.origin);
+	VMOVE(point, h.point);
+	VMOVE(normal, h.normal);
+	move(uv, h.uv);
+	trimmed = h.trimmed;
+	closeToEdge = h.closeToEdge;
+	oob = h.oob;
+	sbv = h.sbv;
+	hit = h.hit;
+	direction = h.direction;
 
-	    return *this;
+	return *this;
     }
 
     bool operator==(const brep_hit& h)
     {
-	    return NEAR_ZERO(DIST_PT_PT(point, h.point), BREP_SAME_POINT_TOLERANCE);
+	return NEAR_ZERO(DIST_PT_PT(point, h.point), BREP_SAME_POINT_TOLERANCE);
     }
 
     bool operator<(const brep_hit& h)
     {
-	    return DIST_PT_PT(point, origin) < DIST_PT_PT(h.point, origin);
+	return DIST_PT_PT(point, origin) < DIST_PT_PT(h.point, origin);
     }
 };
 
@@ -580,8 +580,8 @@ getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv , BBNode* node) {
     const ON_Surface *surf = node->m_face->SurfaceOf();
     double umin, umax;
     double vmin, vmax;
-    surf->GetDomain(0,&umin, &umax);
-    surf->GetDomain(1,&vmin, &vmax);
+    surf->GetDomain(0, &umin, &umax);
+    surf->GetDomain(1, &vmin, &vmax);
 
     ON_3dVector dir = node->m_normal;
     dir.Reverse();
@@ -2816,17 +2816,18 @@ rt_brep_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbos
     ON_String onstr = ON_String(wonstr);
     bu_vls_strcat(str, "Boundary Representation (BREP) object\n");
 
-    if (verbose) {
-	const char *description = onstr.Array();
-	// skip the first "ON_Brep:" line
-	while (description && description[0] && description[0] != '\n') {
-	    description++;
-	}
-	if (description && description[0] && description[0] == '\n') {
-	    description++;
-	}
-	bu_vls_strcat(str, description);
+    if (!verbose)
+	return 0;
+
+    const char *description = onstr.Array();
+    // skip the first "ON_Brep:" line
+    while (description && description[0] && description[0] != '\n') {
+	description++;
     }
+    if (description && description[0] && description[0] == '\n') {
+	description++;
+    }
+    bu_vls_strcat(str, description);
 
     return 0;
 }

@@ -1262,12 +1262,15 @@ rt_hyp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 int
 rt_hyp_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
-    struct rt_hyp_internal *hyp_ip =
-	(struct rt_hyp_internal *)ip->idb_ptr;
+    struct rt_hyp_internal *hyp_ip;
     char buf[256];
 
+    hyp_ip = (struct rt_hyp_internal *)ip->idb_ptr;
     RT_HYP_CK_MAGIC(hyp_ip);
     bu_vls_strcat(str, "truncated general hyp (HYP)\n");
+
+    if (!verbose)
+	return 0;
 
     sprintf(buf, "\tV (%g, %g, %g)\n",
 	    INTCLAMP(hyp_ip->hyp_Vi[X] * mm2local),
@@ -1288,15 +1291,13 @@ rt_hyp_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 	    INTCLAMP(hyp_ip->hyp_A[Z] * mm2local));
     bu_vls_strcat(str, buf);
 
-    if (verbose) {
-	sprintf(buf, "\tMag B=%g\n", INTCLAMP(hyp_ip->hyp_b * mm2local));
-	bu_vls_strcat(str, buf);
+    sprintf(buf, "\tMag B=%g\n", INTCLAMP(hyp_ip->hyp_b * mm2local));
+    bu_vls_strcat(str, buf);
 
-	sprintf(buf, "\tNeck to Base Ratio=%g\n", INTCLAMP(hyp_ip->hyp_bnr * mm2local));
-	bu_vls_strcat(str, buf);
-    }
+    sprintf(buf, "\tNeck to Base Ratio=%g\n", INTCLAMP(hyp_ip->hyp_bnr * mm2local));
+    bu_vls_strcat(str, buf);
 
-    return(0);
+    return 0;
 }
 
 

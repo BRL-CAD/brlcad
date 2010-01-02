@@ -977,21 +977,22 @@ rt_cline_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbo
     RT_CLINE_CK_MAGIC(cline_ip);
     bu_vls_strcat(str, "cline solid (CLINE)\n");
 
-    if (verbose) {
-	VSCALE(local_v, cline_ip->v, mm2local);
-	VSCALE(local_h, cline_ip->h, mm2local);
+    if (!verbose)
+	return 0;
 
-	if (cline_ip->thickness > 0.0) {
-	    sprintf(buf, "\tV (%g %g %g)\n\tH (%g %g %g)\n\tradius %g\n\tplate mode thickness %g",
-		    V3INTCLAMPARGS(local_v), V3INTCLAMPARGS(local_h), INTCLAMP(cline_ip->radius*mm2local), INTCLAMP(cline_ip->thickness*mm2local));
-	} else {
-	    sprintf(buf, "\tV (%g %g %g)\n\tH (%g %g %g)\n\tradius %g\n\tVolume mode\n",
-		    V3INTCLAMPARGS(local_v), V3INTCLAMPARGS(local_h), INTCLAMP(cline_ip->radius*mm2local));
-	}
-	bu_vls_strcat(str, buf);
+    VSCALE(local_v, cline_ip->v, mm2local);
+    VSCALE(local_h, cline_ip->h, mm2local);
+
+    if (cline_ip->thickness > 0.0) {
+	sprintf(buf, "\tV (%g %g %g)\n\tH (%g %g %g)\n\tradius %g\n\tplate mode thickness %g",
+		V3INTCLAMPARGS(local_v), V3INTCLAMPARGS(local_h), INTCLAMP(cline_ip->radius*mm2local), INTCLAMP(cline_ip->thickness*mm2local));
+    } else {
+	sprintf(buf, "\tV (%g %g %g)\n\tH (%g %g %g)\n\tradius %g\n\tVolume mode\n",
+		V3INTCLAMPARGS(local_v), V3INTCLAMPARGS(local_h), INTCLAMP(cline_ip->radius*mm2local));
     }
+    bu_vls_strcat(str, buf);
 
-    return(0);
+    return 0;
 }
 
 

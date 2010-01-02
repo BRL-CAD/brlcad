@@ -1373,7 +1373,7 @@ rt_rpc_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
     bu_vls_strcat(str, "Right Parabolic Cylinder (RPC)\n");
 
     if (!verbose)
-	return;
+	return 0;
 
     sprintf(buf, "\tV (%g, %g, %g)\n",
 	    INTCLAMP(xip->rpc_V[X] * mm2local),

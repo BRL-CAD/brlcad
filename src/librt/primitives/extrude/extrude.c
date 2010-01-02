@@ -2274,13 +2274,14 @@ rt_extrude_import5(struct rt_db_internal *ip, const struct bu_external *ep, cons
 int
 rt_extrude_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
-    struct rt_extrude_internal *extrude_ip =
-	(struct rt_extrude_internal *)ip->idb_ptr;
+    struct rt_extrude_internal *extrude_ip;
     char buf[256];
     point_t V;
     vect_t h, u, v;
 
+    extrude_ip = (struct rt_extrude_internal *)ip->idb_ptr;
     RT_EXTRUDE_CK_MAGIC(extrude_ip);
+
     bu_vls_strcat(str, "2D extrude (EXTRUDE)\n");
     VSCALE(V, extrude_ip->V, mm2local);
     VSCALE(h, extrude_ip->h, mm2local);
@@ -2293,12 +2294,13 @@ rt_extrude_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ver
 	    V3INTCLAMPARGS(v));
     bu_vls_strcat(str, buf);
 
-    if (verbose) {
-	snprintf(buf, 256, "\tsketch name: %s\n", extrude_ip->sketch_name);
-	bu_vls_strcat(str, buf);
-    }
+    if (!verbose)
+	return 0;
 
-    return(0);
+    snprintf(buf, 256, "\tsketch name: %s\n", extrude_ip->sketch_name);
+    bu_vls_strcat(str, buf);
+
+    return 0;
 }
 
 

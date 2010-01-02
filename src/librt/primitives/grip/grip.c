@@ -462,16 +462,17 @@ rt_grp_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 
     bu_vls_strcat(str, buf);
 
-    if (verbose) {
-	sprintf(buf, "\tC (%g %g %g) mag=%g\n",
-		INTCLAMP(gip->center[0]*mm2local),
-		INTCLAMP(gip->center[1]*mm2local),
-		INTCLAMP(gip->center[2]*mm2local),
-		INTCLAMP(gip->mag*mm2local));
-	bu_vls_strcat(str, buf);
-    }
+    if (!verbose)
+	return 0;
 
-    return(0);
+    sprintf(buf, "\tC (%g %g %g) mag=%g\n",
+	    INTCLAMP(gip->center[0]*mm2local),
+	    INTCLAMP(gip->center[1]*mm2local),
+	    INTCLAMP(gip->center[2]*mm2local),
+	    INTCLAMP(gip->mag*mm2local));
+    bu_vls_strcat(str, buf);
+
+    return 0;
 }
 
 

@@ -1710,55 +1710,57 @@ rt_part_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbos
     switch (pip->part_type) {
 	case RT_PARTICLE_TYPE_SPHERE:
 	    bu_vls_strcat(str, "spherical particle\n");
-	    if (verbose) {
-		sprintf(buf, "\tV (%g, %g, %g)\n",
-			INTCLAMP(pip->part_V[X] * mm2local),
-			INTCLAMP(pip->part_V[Y] * mm2local),
-			INTCLAMP(pip->part_V[Z] * mm2local));
-		bu_vls_strcat(str, buf);
-		sprintf(buf, "\tradius = %g\n",
-			INTCLAMP(pip->part_vrad * mm2local));
-		bu_vls_strcat(str, buf);
-	    }
+	    if (!verbose)
+		return 0;
+	    sprintf(buf, "\tV (%g, %g, %g)\n",
+		    INTCLAMP(pip->part_V[X] * mm2local),
+		    INTCLAMP(pip->part_V[Y] * mm2local),
+		    INTCLAMP(pip->part_V[Z] * mm2local));
+	    bu_vls_strcat(str, buf);
+	    sprintf(buf, "\tradius = %g\n",
+		    INTCLAMP(pip->part_vrad * mm2local));
+	    bu_vls_strcat(str, buf);
+
 	    break;
 	case RT_PARTICLE_TYPE_CYLINDER:
 	    bu_vls_strcat(str, "cylindrical particle (lozenge)\n");
-	    if (verbose) {
-		sprintf(buf, "\tV (%g, %g, %g)\n",
-			INTCLAMP(pip->part_V[X] * mm2local),
-			INTCLAMP(pip->part_V[Y] * mm2local),
-			INTCLAMP(pip->part_V[Z] * mm2local));
-		bu_vls_strcat(str, buf);
-		sprintf(buf, "\tH (%g, %g, %g)\n",
-			INTCLAMP(pip->part_H[X] * mm2local),
-			INTCLAMP(pip->part_H[Y] * mm2local),
-			INTCLAMP(pip->part_H[Z] * mm2local));
-		bu_vls_strcat(str, buf);
-		sprintf(buf, "\tradius = %g\n",
-			INTCLAMP(pip->part_vrad * mm2local));
-		bu_vls_strcat(str, buf);
-	    }
+	    if (!verbose)
+		return 0;
+	    sprintf(buf, "\tV (%g, %g, %g)\n",
+		    INTCLAMP(pip->part_V[X] * mm2local),
+		    INTCLAMP(pip->part_V[Y] * mm2local),
+		    INTCLAMP(pip->part_V[Z] * mm2local));
+	    bu_vls_strcat(str, buf);
+	    sprintf(buf, "\tH (%g, %g, %g)\n",
+		    INTCLAMP(pip->part_H[X] * mm2local),
+		    INTCLAMP(pip->part_H[Y] * mm2local),
+		    INTCLAMP(pip->part_H[Z] * mm2local));
+	    bu_vls_strcat(str, buf);
+	    sprintf(buf, "\tradius = %g\n",
+		    INTCLAMP(pip->part_vrad * mm2local));
+	    bu_vls_strcat(str, buf);
+
 	    break;
 	case RT_PARTICLE_TYPE_CONE:
 	    bu_vls_strcat(str, "conical particle\n");
-	    if (verbose) {
-		sprintf(buf, "\tV (%g, %g, %g)\n",
-			INTCLAMP(pip->part_V[X] * mm2local),
-			INTCLAMP(pip->part_V[Y] * mm2local),
-			INTCLAMP(pip->part_V[Z] * mm2local));
-		bu_vls_strcat(str, buf);
-		sprintf(buf, "\tH (%g, %g, %g)\n",
-			INTCLAMP(pip->part_H[X] * mm2local),
-			INTCLAMP(pip->part_H[Y] * mm2local),
-			INTCLAMP(pip->part_H[Z] * mm2local));
-		bu_vls_strcat(str, buf);
-		sprintf(buf, "\tv end radius = %g\n",
-			INTCLAMP(pip->part_vrad * mm2local));
-		bu_vls_strcat(str, buf);
-		sprintf(buf, "\th end radius = %g\n",
-			INTCLAMP(pip->part_hrad * mm2local));
-		bu_vls_strcat(str, buf);
-	    }
+	    if (!verbose)
+		return 0;
+	    sprintf(buf, "\tV (%g, %g, %g)\n",
+		    INTCLAMP(pip->part_V[X] * mm2local),
+		    INTCLAMP(pip->part_V[Y] * mm2local),
+		    INTCLAMP(pip->part_V[Z] * mm2local));
+	    bu_vls_strcat(str, buf);
+	    sprintf(buf, "\tH (%g, %g, %g)\n",
+		    INTCLAMP(pip->part_H[X] * mm2local),
+		    INTCLAMP(pip->part_H[Y] * mm2local),
+		    INTCLAMP(pip->part_H[Z] * mm2local));
+	    bu_vls_strcat(str, buf);
+	    sprintf(buf, "\tv end radius = %g\n",
+		    INTCLAMP(pip->part_vrad * mm2local));
+	    bu_vls_strcat(str, buf);
+	    sprintf(buf, "\th end radius = %g\n",
+		    INTCLAMP(pip->part_hrad * mm2local));
+	    bu_vls_strcat(str, buf);
 	    break;
 	default:
 	    bu_vls_strcat(str, "Unknown particle type\n");

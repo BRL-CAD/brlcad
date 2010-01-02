@@ -203,7 +203,7 @@ int
 rt_ehy_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_ehy_internal *xip;
-    register struct ehy_specific *ehy;
+    struct ehy_specific *ehy;
 #ifndef NO_MAGIC_CHECKING
     const struct bn_tol *tol = &rtip->rti_tol;
 #endif
@@ -299,9 +299,9 @@ rt_ehy_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
  * R T _ E H Y _ P R I N T
  */
 void
-rt_ehy_print(register const struct soltab *stp)
+rt_ehy_print(const struct soltab *stp)
 {
-    register const struct ehy_specific *ehy =
+    const struct ehy_specific *ehy =
 	(struct ehy_specific *)stp->st_specific;
 
     VPRINT("V", ehy->ehy_V);
@@ -330,9 +330,9 @@ rt_ehy_print(register const struct soltab *stp)
  * >0 HIT
  */
 int
-rt_ehy_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
+rt_ehy_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
-    register struct ehy_specific *ehy =
+    struct ehy_specific *ehy =
 	(struct ehy_specific *)stp->st_specific;
     vect_t dp;		/* D' */
     vect_t pp;		/* P' */
@@ -340,7 +340,7 @@ rt_ehy_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     fastf_t cp;		/* c' */
     vect_t xlated;	/* translated vector */
     struct hit hits[3];	/* 2 potential hit points */
-    register struct hit *hitp;	/* pointer to hit point */
+    struct hit *hitp;	/* pointer to hit point */
 
     /* for finding roots */
     fastf_t a, b, c;	/* coeffs of polynomial */
@@ -431,7 +431,7 @@ rt_ehy_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 
     if (hits[0].hit_dist < hits[1].hit_dist) {
 	/* entry is [0], exit is [1] */
-	register struct seg *segp;
+	struct seg *segp;
 
 	RT_GET_SEG(segp, ap->a_resource);
 	segp->seg_stp = stp;
@@ -440,7 +440,7 @@ rt_ehy_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	BU_LIST_INSERT(&(seghead->l), &(segp->l));
     } else {
 	/* entry is [1], exit is [0] */
-	register struct seg *segp;
+	struct seg *segp;
 
 	RT_GET_SEG(segp, ap->a_resource);
 	segp->seg_stp = stp;
@@ -458,11 +458,11 @@ rt_ehy_shot(struct soltab *stp, register struct xray *rp, struct application *ap
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
-rt_ehy_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
+rt_ehy_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
     vect_t can_normal;	/* normal to canonical ehy */
     fastf_t cp, scale;
-    register struct ehy_specific *ehy =
+    struct ehy_specific *ehy =
 	(struct ehy_specific *)stp->st_specific;
 
     VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir);
@@ -496,11 +496,11 @@ rt_ehy_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
  * Return the curvature of the ehy.
  */
 void
-rt_ehy_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
+rt_ehy_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
     fastf_t a, b, c, scale;
     mat_t M1, M2;
-    register struct ehy_specific *ehy =
+    struct ehy_specific *ehy =
 	(struct ehy_specific *)stp->st_specific;
     vect_t u, v;			/* basis vectors (with normal) */
     vect_t vec1, vec2;		/* eigen vectors */
@@ -557,9 +557,9 @@ rt_ehy_curve(register struct curvature *cvp, register struct hit *hitp, struct s
  * v = elevation
  */
 void
-rt_ehy_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
+rt_ehy_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
-    register struct ehy_specific *ehy =
+    struct ehy_specific *ehy =
 	(struct ehy_specific *)stp->st_specific;
     vect_t work;
     vect_t pprime;
@@ -607,9 +607,9 @@ rt_ehy_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
  * R T _ E H Y _ F R E E
  */
 void
-rt_ehy_free(register struct soltab *stp)
+rt_ehy_free(struct soltab *stp)
 {
-    register struct ehy_specific *ehy =
+    struct ehy_specific *ehy =
 	(struct ehy_specific *)stp->st_specific;
 
 
@@ -1400,7 +1400,7 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
  * Apply modeling transformations as well.
  */
 int
-rt_ehy_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_ehy_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_ehy_internal *xip;
     union record *rp;
@@ -1512,7 +1512,7 @@ rt_ehy_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
  * Apply modeling transformations as well.
  */
 int
-rt_ehy_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_ehy_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_ehy_internal *xip;
     fastf_t vec[3*4];
@@ -1625,8 +1625,7 @@ rt_ehy_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 int
 rt_ehy_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
-    register struct rt_ehy_internal *xip =
-	(struct rt_ehy_internal *)ip->idb_ptr;
+    struct rt_ehy_internal *xip = (struct rt_ehy_internal *)ip->idb_ptr;
     char buf[256];
 
     RT_EHY_CK_MAGIC(xip);
@@ -1645,18 +1644,19 @@ rt_ehy_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 	    INTCLAMP(MAGNITUDE(xip->ehy_H) * mm2local));
     bu_vls_strcat(str, buf);
 
-    if (verbose) {
-	sprintf(buf, "\tA=%g\n", INTCLAMP(xip->ehy_r1 * mm2local));
-	bu_vls_strcat(str, buf);
+    if (!verbose)
+	return 0;
 
-	sprintf(buf, "\tB=%g\n", INTCLAMP(xip->ehy_r2 * mm2local));
-	bu_vls_strcat(str, buf);
+    sprintf(buf, "\tA=%g\n", INTCLAMP(xip->ehy_r1 * mm2local));
+    bu_vls_strcat(str, buf);
+
+    sprintf(buf, "\tB=%g\n", INTCLAMP(xip->ehy_r2 * mm2local));
+    bu_vls_strcat(str, buf);
 	
-	sprintf(buf, "\tc=%g\n", INTCLAMP(xip->ehy_c * mm2local));
-	bu_vls_strcat(str, buf);
-    }
+    sprintf(buf, "\tc=%g\n", INTCLAMP(xip->ehy_c * mm2local));
+    bu_vls_strcat(str, buf);
 
-    return(0);
+    return 0;
 }
 
 
@@ -1669,7 +1669,7 @@ rt_ehy_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 void
 rt_ehy_ifree(struct rt_db_internal *ip)
 {
-    register struct rt_ehy_internal *xip;
+    struct rt_ehy_internal *xip;
 
     RT_CK_DB_INTERNAL(ip);
 
