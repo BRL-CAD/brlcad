@@ -1008,16 +1008,16 @@ rt_arb_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 
     if (arbp->arb_opt == (struct oface *)0) {
 	register int ret = 0;
-	struct rt_db_internal intern;
+	struct rt_db_internal *intern;
 	struct rt_arb_internal *aip;
 
-	if (rt_db_get_internal(&intern, stp->st_dp, ap->a_rt_i->rti_dbip, stp->st_matp, ap->a_resource) < 0) {
+	if (rt_db_get_internal(intern, stp->st_dp, ap->a_rt_i->rti_dbip, stp->st_matp, ap->a_resource) < 0) {
 	    bu_log("rt_arb_uv(%s) rt_db_get_internal failure\n",
 		   stp->st_name);
 	    return;
 	}
-	RT_CK_DB_INTERNAL(&intern);
-	aip = (struct rt_arb_internal *)intern.idb_ptr;
+	RT_CK_DB_INTERNAL(intern);
+	aip = (struct rt_arb_internal *)intern->idb_ptr;
 	RT_ARB_CK_MAGIC(aip);
 
 	/*
@@ -1031,7 +1031,7 @@ rt_arb_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 	}
 	bu_semaphore_release(RT_SEM_MODEL);
 
-	rt_db_free_internal(&intern);
+	rt_db_free_internal(intern);
 
 	if (ret != 0 || arbp->arb_opt == (struct oface *)0) {
 	    bu_log("rt_arb_uv(%s) dyanmic setup failure st_specific=x%x, optp=x%x\n",

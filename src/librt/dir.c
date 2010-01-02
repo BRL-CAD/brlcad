@@ -205,32 +205,32 @@ rt_fwrite_internal(
     const struct rt_db_internal *ip,
     double conv2mm )
 {
-    struct bu_external	ext;
+    struct bu_external *ext;
     int ret;
 
     RT_CK_DB_INTERNAL(ip);
     RT_CK_FUNCTAB( ip->idb_meth );
-    BU_INIT_EXTERNAL( &ext );
+    BU_INIT_EXTERNAL( ext );
 
     ret = -1;
     if (ip->idb_meth->ft_export4) {
-	ret = ip->idb_meth->ft_export4(&ext, ip, conv2mm, NULL /*dbip*/, &rt_uniresource);
+	ret = ip->idb_meth->ft_export4(ext, ip, conv2mm, NULL /*dbip*/, &rt_uniresource);
     }
     if (ret < 0) {
 	bu_log("rt_file_put_internal(%s): solid export failure\n",
 	       name );
-	bu_free_external( &ext );
+	bu_free_external( ext );
 	return(-2);				/* FAIL */
     }
-    BU_CK_EXTERNAL( &ext );
+    BU_CK_EXTERNAL( ext );
 
-    if ( db_fwrite_external( fp, name, &ext ) < 0 )  {
+    if ( db_fwrite_external( fp, name, ext ) < 0 )  {
 	bu_log("rt_fwrite_internal(%s): db_fwrite_external() error\n",
 	       name );
-	bu_free_external( &ext );
+	bu_free_external( ext );
 	return(-3);
     }
-    bu_free_external( &ext );
+    bu_free_external( ext );
     return(0);
 
 }

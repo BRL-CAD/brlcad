@@ -356,10 +356,10 @@ db_dirbuild(struct db_i *dbip)
 	struct directory *dp;
 	struct bu_external ext;
 	struct db5_raw_internal raw;
-	struct bu_attribute_value_set avs;
+	struct bu_attribute_value_set *avs;
 	const char *cp;
 
-	bu_avs_init_empty(&avs);
+	bu_avs_init_empty(avs);
 
 	/* File is v5 format */
 	dbip->dbi_version = 5;
@@ -390,21 +390,21 @@ db_dirbuild(struct db_i *dbip)
 	    dbip->dbi_title = bu_strdup(DB5_GLOBAL_OBJECT_NAME);
 	    return 0;	/* not a fatal error, need to let user proceed to fix it */
 	}
-	if (db5_import_attributes(&avs, &raw.attributes) < 0) {
+	if (db5_import_attributes(avs, &raw.attributes) < 0) {
 	    bu_log("db_dirbuild(%s): improper database, corrupted attribute-only %s object\n",
 		   dbip->dbi_filename, DB5_GLOBAL_OBJECT_NAME);
 	    bu_free_external(&ext);
 	    return -1;	/* this is fatal */
 	}
-	BU_CK_AVS(&avs);
+	BU_CK_AVS(avs);
 
 	/* Parse out the attributes */
-	if ((cp = bu_avs_get(&avs, "title")) != NULL) {
+	if ((cp = bu_avs_get(avs, "title")) != NULL) {
 	    dbip->dbi_title = bu_strdup(cp);
 	} else {
 	    dbip->dbi_title = bu_strdup("Untitled BRL-CAD database");
 	}
-	if ((cp = bu_avs_get(&avs, "units")) != NULL) {
+	if ((cp = bu_avs_get(avs, "units")) != NULL) {
 	    double dd;
 	    if (sscanf(cp, "%lf", &dd) != 1 || NEAR_ZERO(dd, VUNITIZE_TOL)) {
 		bu_log("db_dirbuild(%s): improper database, %s object attribute 'units'=%s is invalid\n",
@@ -415,11 +415,11 @@ db_dirbuild(struct db_i *dbip)
 		dbip->dbi_base2local = 1/dd;
 	    }
 	}
-	if ((cp = bu_avs_get(&avs, "regionid_colortable")) != NULL) {
+	if ((cp = bu_avs_get(avs, "regionid_colortable")) != NULL) {
 	    /* Import the region-id coloring table */
 	    db5_import_color_table((char *)cp);
 	}
-	bu_avs_free(&avs);
+	bu_avs_free(avs);
 	bu_free_external(&ext);	/* not until after done with avs! */
 	return 0;
     }
