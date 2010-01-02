@@ -921,6 +921,8 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
     bn_poly_t Xsqr, Ysqr;
     bn_poly_t R, Rsqr;
 
+    if (ap) RT_CK_APPLICATION(ap);
+
     /* Allocate space for polys and roots */
     C = (bn_poly_t *)bu_malloc(n * sizeof(bn_poly_t), "tor bn_poly_t");
 
@@ -1211,7 +1213,7 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 	     * plane (in the standard coordinate system), and test
 	     * whether this lies within the governing ellipse.
 	     */
-	    if (dprime[Z] == 0.0) {
+	    if (NEAR_ZERO(dprime[Z], SMALL_FASTF)) {
 		RT_TGC_SEG_MISS(segp[ix]);
 		continue;
 	    }
@@ -1268,7 +1270,7 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 	     * to the planes, it (obviously) won't intersect either of
 	     * them.
 	     */
-	    if (dprime[Z] == 0.0) {
+	    if (NEAR_ZERO(dprime[Z], SMALL_FASTF)) {
 		RT_TGC_SEG_MISS(segp[ix]);
 		continue;
 	    }
@@ -1447,12 +1449,13 @@ rt_tgc_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 void
 rt_tgc_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
 {
-    register struct tgc_specific *tgc =
-	(struct tgc_specific *)stp->st_specific;
+    struct tgc_specific *tgc = (struct tgc_specific *)stp->st_specific;
 
     vect_t work;
     vect_t pprime;
     fastf_t len;
+
+    if (ap) RT_CK_APPLICATION(ap);
 
     /* hit_point is on surface;  project back to unit cylinder,
      * creating a vector from vertex to hit point.
@@ -1532,6 +1535,8 @@ rt_tgc_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     union record *rp;
     fastf_t vec[3*6];
 
+    if (dbip) RT_CK_DBI(dbip);
+
     BU_CK_EXTERNAL(ep);
     rp = (union record *)ep->ext_buf;
     /* Check record type */
@@ -1573,6 +1578,8 @@ rt_tgc_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     struct rt_tgc_internal *tip;
     union record *rec;
 
+    if (dbip) RT_CK_DBI(dbip);
+
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_TGC && ip->idb_type != ID_REC) return(-1);
     tip = (struct rt_tgc_internal *)ip->idb_ptr;
@@ -1610,8 +1617,9 @@ rt_tgc_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     struct rt_tgc_internal *tip;
     fastf_t vec[3*6];
 
-    BU_CK_EXTERNAL(ep);
+    if (dbip) RT_CK_DBI(dbip);
 
+    BU_CK_EXTERNAL(ep);
     BU_ASSERT_LONG(ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * 3*6);
 
     RT_CK_DB_INTERNAL(ip);
@@ -1648,6 +1656,8 @@ rt_tgc_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     struct rt_tgc_internal *tip;
     fastf_t vec[3*6];
 
+    if (dbip) RT_CK_DBI(dbip);
+
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_TGC && ip->idb_type != ID_REC) return(-1);
     tip = (struct rt_tgc_internal *)ip->idb_ptr;
@@ -1682,8 +1692,7 @@ rt_tgc_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 int
 rt_tgc_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
-    register struct rt_tgc_internal *tip =
-	(struct rt_tgc_internal *)ip->idb_ptr;
+    struct rt_tgc_internal *tip = (struct rt_tgc_internal *)ip->idb_ptr;
     char buf[256];
     double angles[5];
     vect_t unitv;
@@ -1691,6 +1700,9 @@ rt_tgc_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 
     RT_TGC_CK_MAGIC(tip);
     bu_vls_strcat(str, "truncated general cone (TGC)\n");
+
+    if (!verbose)
+	return 0;
 
     sprintf(buf, "\tV (%g, %g, %g)\n",
 	    INTCLAMP(tip->v[X] * mm2local),
@@ -1753,7 +1765,7 @@ rt_tgc_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
     rt_find_fallback_angle(angles, unitv);
     rt_pr_fallback_angle(str, "\tAxB", angles);
 
-    return(0);
+    return 0;
 }
 
 
@@ -1776,7 +1788,7 @@ rt_tgc_ifree(struct rt_db_internal *ip)
  * R T _ T G C _ P L O T
  */
 int
-rt_tgc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_tgc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
 {
     struct rt_tgc_internal *tip;
     register int i;
@@ -1968,10 +1980,10 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     if (2.0*d <= tol->dist)
 	d = 0.0;
 
-    if (a == 0.0 && b == 0.0 && (c == 0.0 || d == 0.0)) {
+    if (NEAR_ZERO(a, SMALL_FASTF) && NEAR_ZERO(b, SMALL_FASTF) && (NEAR_ZERO(c, SMALL_FASTF) || NEAR_ZERO(d, SMALL_FASTF))) {
 	bu_log("Illegal TGC a, b, and c or d less than tolerance\n");
 	return(-1);
-    } else if (c == 0.0 && d == 0.0 && (a == 0.0 || b == 0.0)) {
+    } else if (NEAR_ZERO(c, SMALL_FASTF) && NEAR_ZERO(d, SMALL_FASTF) && (NEAR_ZERO(a, SMALL_FASTF) || NEAR_ZERO(b, SMALL_FASTF))) {
 	bu_log("Illegal TGC c, d, and a or b less than tolerance\n");
 	return(-1);
     }
@@ -2139,7 +2151,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		len_D = 0.0;
 
 	    if ((len_B > 0.0 && len_D > 0.0) ||
-		(len_B > 0.0 && (len_D == 0.0 && len_C == 0.0)))
+		(len_B > 0.0 && (NEAR_ZERO(len_D, SMALL_FASTF) && NEAR_ZERO(len_C, SMALL_FASTF))))
 	    {
 		tri_width = sqrt(cos_m_1_sq*len_A*len_A + sin_sq*len_B*len_B);
 		ratios[0] = (factors[top_ell] - factors[bot_ell])*len_ha
@@ -2148,7 +2160,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		ratios[0] = 0.0;
 
 	    if ((len_A > 0.0 && len_C > 0.0) ||
-		(len_A > 0.0 && (len_C == 0.0 && len_D == 0.0)))
+		(len_A > 0.0 && (NEAR_ZERO(len_C, SMALL_FASTF) && NEAR_ZERO(len_D, SMALL_FASTF))))
 	    {
 		tri_width = sqrt(sin_sq*len_A*len_A + cos_m_1_sq*len_B*len_B);
 		ratios[1] = (factors[top_ell] - factors[bot_ell])*len_hb
@@ -2157,7 +2169,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		ratios[1] = 0.0;
 
 	    if ((len_D > 0.0 && len_B > 0.0) ||
-		(len_D > 0.0 && (len_A == 0.0 && len_B == 0.0)))
+		(len_D > 0.0 && (NEAR_ZERO(len_A, SMALL_FASTF) && NEAR_ZERO(len_B, SMALL_FASTF))))
 	    {
 		tri_width = sqrt(cos_m_1_sq*len_C*len_C + sin_sq*len_D*len_D);
 		ratios[2] = (factors[top_ell] - factors[bot_ell])*len_ha
@@ -2166,7 +2178,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		ratios[2] = 0.0;
 
 	    if ((len_C > 0.0 && len_A > 0.0) ||
-		(len_C > 0.0 && (len_A == 0.0 && len_B == 0.0)))
+		(len_C > 0.0 && (NEAR_ZERO(len_A, SMALL_FASTF) && NEAR_ZERO(len_B, SMALL_FASTF))))
 	    {
 		tri_width = sqrt(sin_sq*len_C*len_C + cos_m_1_sq*len_D*len_D);
 		ratios[3] = (factors[top_ell] - factors[bot_ell])*len_hb
@@ -2184,7 +2196,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		}
 	    }
 
-	    if (len_A == 0.0 && len_B == 0.0 && len_C == 0.0 && len_D == 0.0) {
+	    if (NEAR_ZERO(len_A, SMALL_FASTF) && NEAR_ZERO(len_B, SMALL_FASTF) && NEAR_ZERO(len_C, SMALL_FASTF) && NEAR_ZERO(len_D, SMALL_FASTF)) {
 		if (top_ell == nells - 1) {
 		    VMOVE(A[top_ell-1], A[top_ell]);
 		    VMOVE(B[top_ell-1], A[top_ell]);
@@ -2269,18 +2281,18 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    cos_alpha = cos(alpha);
 
 	    /* vertex geometry */
-	    if (i == 0 && a == 0.0 && b == 0.0) {
+	    if (i == 0 && NEAR_ZERO(a, SMALL_FASTF) && NEAR_ZERO(b, SMALL_FASTF)) {
 		VMOVE(pts[i][j].pt, tip->v);
-	    } else if (i == nells-1 && c == 0.0 && d == 0.0) {
+	    } else if (i == nells-1 && NEAR_ZERO(c, SMALL_FASTF) && NEAR_ZERO(d, SMALL_FASTF)) {
 		VADD2(pts[i][j].pt, tip->v, tip->h);
 	    } else {
 		VJOIN3(pts[i][j].pt, tip->v, h_factor, tip->h, cos_alpha, A[i], sin_alpha, B[i]);
 	    }
 
 	    /* Storing the tangent here while sines and cosines are available */
-	    if (i == 0 && a == 0.0 && b == 0.0) {
+	    if (i == 0 && NEAR_ZERO(a, SMALL_FASTF) && NEAR_ZERO(b, SMALL_FASTF)) {
 		VCOMB2(pts[0][j].tan_axb, -sin_alpha, unit_c, cos_alpha, unit_d);
-	    } else if (i == nells-1 && c == 0.0 && d == 0.0) {
+	    } else if (i == nells-1 && NEAR_ZERO(c, SMALL_FASTF) && NEAR_ZERO(d, SMALL_FASTF)) {
 		VCOMB2(pts[i][j].tan_axb, -sin_alpha, unit_a, cos_alpha, unit_b);
 	    } else {
 		VCOMB2(pts[i][j].tan_axb, -sin_alpha, A[i], cos_alpha, B[i]);
@@ -2294,9 +2306,9 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	point_t curr_pt;
 	vect_t edge_vect;
 
-	if (i == 0 && (a == 0.0 || b == 0.0))
+	if (i == 0 && (NEAR_ZERO(a, SMALL_FASTF) || NEAR_ZERO(b, SMALL_FASTF)))
 	    continue;
-	else if (i == nells-1 && (c == 0.0 || d == 0.0))
+	else if (i == nells-1 && (NEAR_ZERO(c, SMALL_FASTF) || NEAR_ZERO(d, SMALL_FASTF)))
 	    continue;
 
 	VMOVE(curr_pt, pts[i][0].pt);
@@ -2374,7 +2386,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		if (!pts[i][k].dont_use) {
 		    v[0] = curr_bot;
 		    v[1] = &pts[i][k].v;
-		    if (i+1 == nells-1 && c == 0.0 && d == 0.0)
+		    if (i+1 == nells-1 && NEAR_ZERO(c, SMALL_FASTF) && NEAR_ZERO(d, SMALL_FASTF))
 			v[2] = &pts[i+1][0].v;
 		    else
 			v[2] = curr_top;
@@ -2388,7 +2400,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		if (!pts[i+1][k].dont_use) {
 		    v[0] = &pts[i+1][k].v;
 		    v[1] = curr_top;
-		    if (i == 0 && a == 0.0 && b == 0.0)
+		    if (i == 0 && NEAR_ZERO(a, SMALL_FASTF) && NEAR_ZERO(b, SMALL_FASTF))
 			v[2] = &pts[i][0].v;
 		    else
 			v[2] = curr_bot;
@@ -2414,10 +2426,10 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    cos_alpha = cos(alpha);
 
 	    /* vertex geometry */
-	    if (i == 0 && a == 0.0 && b == 0.0) {
+	    if (i == 0 && NEAR_ZERO(a, SMALL_FASTF) && NEAR_ZERO(b, SMALL_FASTF)) {
 		if (j == 0)
 		    nmg_vertex_gv(pts[0][0].v, tip->v);
-	    } else if (i == nells-1 && c == 0.0 && d == 0.0) {
+	    } else if (i == nells-1 && NEAR_ZERO(c, SMALL_FASTF) && NEAR_ZERO(d, SMALL_FASTF)) {
 		if (j == 0) {
 		    VADD2(pt_geom, tip->v, tip->h);
 		    nmg_vertex_gv(pts[i][0].v, pt_geom);
@@ -2426,9 +2438,9 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		nmg_vertex_gv(pts[i][j].v, pts[i][j].pt);
 
 	    /* Storing the tangent here while sines and cosines are available */
-	    if (i == 0 && a == 0.0 && b == 0.0) {
+	    if (i == 0 && NEAR_ZERO(a, SMALL_FASTF) && NEAR_ZERO(b, SMALL_FASTF)) {
 		VCOMB2(pts[0][j].tan_axb, -sin_alpha, unit_c, cos_alpha, unit_d);
-	    } else if (i == nells-1 && c == 0.0 && d == 0.0) {
+	    } else if (i == nells-1 && NEAR_ZERO(c, SMALL_FASTF) && NEAR_ZERO(d, SMALL_FASTF)) {
 		VCOMB2(pts[i][j].tan_axb, -sin_alpha, unit_a, cos_alpha, unit_b);
 	    } else {
 		VCOMB2(pts[i][j].tan_axb, -sin_alpha, A[i], cos_alpha, B[i]);
@@ -2463,24 +2475,24 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 	    /* normal at vertex */
 	    if (i == nells - 1) {
-		if (c == 0.0 && d == 0.0) {
+		if (NEAR_ZERO(c, SMALL_FASTF) && NEAR_ZERO(d, SMALL_FASTF)) {
 		    VSUB2(tan_h, pts[i][0].pt, pts[k][j].pt);
-		} else if (k == 0 && c == 0.0 && d == 0.0) {
+		} else if (k == 0 && NEAR_ZERO(c, SMALL_FASTF) && NEAR_ZERO(d, SMALL_FASTF)) {
 		    VSUB2(tan_h, pts[i][j].pt, pts[k][0].pt);
 		} else {
 		    VSUB2(tan_h, pts[i][j].pt, pts[k][j].pt);
 		}
 	    } else if (i == 0) {
-		if (a == 0.0 && b == 0.0) {
+		if (NEAR_ZERO(a, SMALL_FASTF) && NEAR_ZERO(b, SMALL_FASTF)) {
 		    VSUB2(tan_h, pts[k][j].pt, pts[i][0].pt);
-		} else if (k == nells-1 && c == 0.0 && d == 0.0) {
+		} else if (k == nells-1 && NEAR_ZERO(c, SMALL_FASTF) && NEAR_ZERO(d, SMALL_FASTF)) {
 		    VSUB2(tan_h, pts[k][0].pt, pts[i][j].pt);
 		} else {
 		    VSUB2(tan_h, pts[k][j].pt, pts[i][j].pt);
 		}
-	    } else if (k == 0 && a == 0.0 && b == 0.0) {
+	    } else if (k == 0 && NEAR_ZERO(a, SMALL_FASTF) && NEAR_ZERO(b, SMALL_FASTF)) {
 		VSUB2(tan_h, pts[k][0].pt, pts[i][j].pt);
-	    } else if (k == nells-1 && c == 0.0 && d == 0.0) {
+	    } else if (k == nells-1 && NEAR_ZERO(c, SMALL_FASTF) && NEAR_ZERO(d, SMALL_FASTF)) {
 		VSUB2(tan_h, pts[k][0].pt, pts[i][j].pt);
 	    } else {
 		VSUB2(tan_h, pts[k][j].pt, pts[i][j].pt);
@@ -2490,8 +2502,8 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    VUNITIZE(normal);
 	    VREVERSE(rev_norm, normal);
 
-	    if (!(i == 0 && a == 0.0 && b == 0.0) &&
-		!(i == nells-1 && c == 0.0 && d == 0.0) &&
+	    if (!(i == 0 && NEAR_ZERO(a, SMALL_FASTF) && NEAR_ZERO(b, SMALL_FASTF)) &&
+		!(i == nells-1 && NEAR_ZERO(c, SMALL_FASTF) && NEAR_ZERO(d, SMALL_FASTF)) &&
 		pts[i][j].v)
 	    {
 		for (BU_LIST_FOR(vu, vertexuse, &pts[i][j].v->vu_hd)) {
@@ -3033,8 +3045,11 @@ nmg_tgc_nurb_cyl(struct faceuse *fu, fastf_t *top_mat, fastf_t *bot_mat)
  *
  */
 int
-rt_tgc_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
+rt_tgc_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 {
+    ps = ps; /* quellage */
+    if (ip) RT_CK_DB_INTERNAL(ip);
+
     return(0);			/* OK */
 }
 
