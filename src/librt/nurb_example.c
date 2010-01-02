@@ -35,6 +35,8 @@
 #include "plot3.h"
 
 
+extern double drand48(void);
+
 fastf_t grid[10][10][3];
 fastf_t ngrid[10][10][3];
 
