@@ -1305,7 +1305,7 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_revolve_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute((unused)), const struct bn_tol *tol __attribute((unused)))
+rt_revolve_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
 {
     struct rt_revolve_internal *rip;
 
