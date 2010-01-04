@@ -92,6 +92,10 @@ main(int argc, char *argv[])
 	bu_exit(1, NULL);
     }
 
+    if (bu_file_exists(output_file)) {
+	bu_exit(1, "ERROR - refusing to overwrite existing %s.", output_file);
+    }
+    
     argc -= bu_optind;
     argv += bu_optind;
 
