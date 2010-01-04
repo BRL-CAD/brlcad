@@ -15,47 +15,6 @@
 
 #include "opennurbs.h"
 
-#if defined(ON_DLL_EXPORTS)
-// When compiling a Windows DLL opennurbs, we
-// statically link ./zlib/.../zlib....lib into
-// the opennurbs DLL.
-
-#if defined(WIN64) && defined(_M_X64)
-
-// 64 bit Windows zlib linking instructions
-
-#if defined(NDEBUG)
-
-// release x64 libs
-#pragma comment(lib, "./zlib/x64/Release/zlibx64.lib")
-
-#else // _DEBUG
-
-// debug  x64 libs
-#pragma comment(lib, "./zlib/x64/Debug/zlibx64_d.lib")
-
-#endif // if NDEBUG else _DEBUG
-
-#elif defined(WIN32) && defined(_M_IX86)
-
-// 32 bit Windows zlib linking instructions
-
-#if defined(NDEBUG)
-
-// release 32 bit WIndows libs
-#pragma comment(lib, "./zlib/Release/zlib.lib")
-
-#else // _DEBUG
-
-// debug 32 bit WIndows libs
-#pragma comment(lib, "./zlib/Debug/zlib_d.lib")
-
-#endif // if NDEBUG else _DEBUG
-
-#endif // if WIN64 else WIN32
-
-#endif // ON_DLL_EXPORTS
-
 
 bool ON_BinaryArchive::WriteCompressedBuffer(
         size_t sizeof__inbuffer,  // sizeof uncompressed input data
