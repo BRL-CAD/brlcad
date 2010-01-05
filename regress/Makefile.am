@@ -23,7 +23,7 @@ lights: $(top_srcdir)/regress/lights.sh
 	@${ECHO} +++ $@ test complete.
 
 solids: $(top_srcdir)/regress/solids.sh
-	-${SH} $(top_srcdir)/regress/solids.sh $(top_srcdir)
+	-${SH} $(top_srcdir)/regress/solids.sh $(top_srcdir) $(top_builddir)
 	@${ECHO} +++ $@ test complete.
 
 shaders: $(top_srcdir)/regress/shaders.sh

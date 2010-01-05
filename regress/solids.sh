@@ -1,5 +1,5 @@
 #!/bin/sh
-
+set -x
 # Ensure /bin/sh
 export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 
@@ -13,8 +13,11 @@ MGED="$1/src/mged/mged"
 if test ! -f "$MGED" ; then
     MGED="$PATH_TO_THIS/../src/mged/mged"
     if test ! -f "$MGED" ; then
-	echo "Unable to find mged, aborting"
-	exit 1
+	MGED="$2/src/mged/mged"
+	if test ! -f "$MGED" ; then
+	    echo "Unable to find mged, aborting"
+	    exit 1
+	fi
     fi
 fi
 
@@ -916,11 +919,11 @@ if [ ! -f solids.rt.pix ] ; then
 	echo raytrace failed
 	exit 1
 fi
-if [ ! -f solidspix.asc ] ; then
+if [ ! -f $PATH_TO_THIS/solidspix.asc ] ; then
 	echo No reference file for solids.rt.pix
 	exit 1
 fi
-../src/conv/asc2pix < solidspix.asc > solids_ref.pix
+../src/conv/asc2pix < $1/regress/solidspix.asc > solids_ref.pix
 ../src/util/pixdiff solids.rt.pix solids_ref.pix > solids.pix.diff \
     2> solids-diff.log
 
