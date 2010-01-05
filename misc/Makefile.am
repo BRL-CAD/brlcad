@@ -16,6 +16,7 @@ bin_SCRIPTS = brlcad-config
 man_MANS = brlcad-config.1
 
 DATAFILES = \
+	GQA_SAMPLE_DENSITIES \
 	NIST_DENSITIES
 
 EXTRA_DIST = \
