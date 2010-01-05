@@ -236,7 +236,7 @@ static const char   *mon_nam[] =
 static struct locrec	gp_locs;
 
 static bool	get_OK(void);
-static bool	pars_Argv(register int argc, register char **argv);
+static bool	pars_Argv(int argc, char **argv);
 static long	read_Cell_Data(void);
 static void	init_Globs(void);
 static void	prnt_Usage(void);
@@ -307,9 +307,9 @@ static long read_Cell_Data(void)
     static char		linebuf[MAX_LINE];
     static char		*lbp = NULL;
     static char		format[MAX_LINE];
-    register int	state = STATE_VIEW_TOP;
+    int	state = STATE_VIEW_TOP;
     int			i;
-    register Cell	*gp = grid;
+    Cell	*gp = grid;
     int			view_ct = 1;
 
     /*
@@ -447,13 +447,13 @@ static void init_Globs(void)
 
 static bool display_Cells (long int ncells)
 {
-    register Cell	*gp, *ep = &grid[ncells];
+    Cell	*gp, *ep = &grid[ncells];
     static int		zoom;
     unsigned char	*buf;
     static RGBpixel	pixel;
     double		lasty = NEG_INFINITY;
     double		dx, dy;
-    register int	y0 = 0, y1;
+    int	y0 = 0, y1;
 
     if (compute_fb_height)
     {
@@ -501,7 +501,7 @@ static bool display_Cells (long int ncells)
 
     for (gp = grid; gp < ep; gp++)
     {
-	register int	x0, x1;
+	int	x0, x1;
 
 	/* Whenever Y changes, write out row of cells. */
 	if (lasty != gp->c_y)
@@ -569,7 +569,7 @@ static bool display_Cells (long int ncells)
 	       (10 + 1) * wid, fb_width);
     else if (key_flag)
     {
-	register int	i, j;
+	int	i, j;
 	double		base;
 	int		scr_min, scr_max;
 	int		scr_center;	/* screen coord of center of view */
@@ -612,7 +612,7 @@ static bool display_Cells (long int ncells)
 	    val_To_RGB(cv, pixel);
 	    for (j = 0; j < wid; j++)
 	    {
-		register int index = base + j;
+		int index = base + j;
 		COPYRGB(&buf[3*index], pixel);
 	    }
 	}
@@ -699,9 +699,9 @@ static struct locrec *mk_locrec (fastf_t h, fastf_t v)
     return (lrp);
 }
 
-static bool pars_Argv (register int argc, register char **argv)
+static bool pars_Argv (int argc, char **argv)
 {
-    register int	c;
+    int	c;
     extern int		bu_optind;
     extern char		*bu_optarg;
 
@@ -964,7 +964,7 @@ static bool pars_Argv (register int argc, register char **argv)
 /*	prnt_Usage() --	Print usage message. */
 static void prnt_Usage(void)
 {
-    register char	**p = usage;
+    char	**p = usage;
 
     while (*p)
 	bu_log("%s\n", *p++);

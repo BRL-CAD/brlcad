@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -32,7 +31,7 @@ public:
   //   circle - [in]
   //   side_count - [in] (>=3) number of sides
   // Returns:
-  //   TRUE if successful.  FALSE if circle is invalid or
+  //   true if successful.  false if circle is invalid or
   //   side_count < 3.
   bool CreateInscribedPolygon(
     const ON_Circle& circle,
@@ -47,7 +46,7 @@ public:
   //   circle - [in]
   //   side_count - [in] (>=3) number of sides
   // Returns:
-  //   TRUE if successful.  FALSE if circle is invalid or
+  //   true if successful.  false if circle is invalid or
   //   side_count < 3.
   bool CreateCircumscribedPolygon(
     const ON_Circle& circle,
@@ -66,7 +65,7 @@ public:
   //      There will be 2*corner_count sides and 2*corner_count
   //      vertices.
   // Returns:
-  //   TRUE if successful.  FALSE if circle is invalid, other_radius < 0.0,
+  //   true if successful.  false if circle is invalid, other_radius < 0.0,
   //   or side_count < 3.
   bool CreateStarPolygon(
     const ON_Circle& circle,
@@ -82,7 +81,7 @@ public:
   // Parameters:
   //   tolerance - [in] tolerance used to check for duplicate points.
   // Returns:
-  //   TRUE if polyline is valid.
+  //   true if polyline is valid.
   // See Also:
   //   ON_Polyline::Clean.
   bool IsValid(
@@ -113,7 +112,7 @@ public:
   // Description:
   //   Test a polyline to see if it is closed.
   // Returns:
-  //   TRUE if polyline has 4 or more points, the distance between the
+  //   true if polyline has 4 or more points, the distance between the
   //   start and end points is <= tolerance, and there is a
   //   point in the polyline whose distance from the start and end
   //   points is > tolerance.
@@ -169,11 +168,11 @@ public:
   //             is closest to test_point.  If mulitple solutions
   //             exist, then the smallest solution is returned.
   // Returns:
-  //   TRUE if successful.
+  //   true if successful.
   bool ClosestPointTo( 
-	const ON_3dPoint& test_point, 
-	double* t
-	) const;
+        const ON_3dPoint& test_point, 
+        double* t
+        ) const;
 
   // Description:
   //   Find a point on the polyline that is closest 
@@ -191,13 +190,13 @@ public:
   //   double t;
   //   ClosestPointTo( ON_3dPoint(0,0,0), &t, 3, 6 );
   // Returns:
-  //   TRUE if successful.
+  //   true if successful.
   bool ClosestPointTo( 
-	const ON_3dPoint& test_point, 
-	double* t, 
-	int segment_index0, // index of segment where search begins
-	int segment_index1 // index + 1 of segment where search stops
-	) const;
+        const ON_3dPoint& test_point, 
+        double* t, 
+        int segment_index0, // index of segment where search begins
+        int segment_index1 // index + 1 of segment where search stops
+        ) const;
 
   // Description:
   //   Find a point on the polyline that is closest 

@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -36,25 +35,25 @@ ON_Geometry::~ON_Geometry()
 ON_BoundingBox ON_Geometry::BoundingBox() const
 {
   ON_BoundingBox bbox;
-  if ( !GetBoundingBox( bbox.m_min, bbox.m_max, FALSE ) )
+  if ( !GetBoundingBox( bbox.m_min, bbox.m_max, false ) )
     bbox.Destroy();
   return bbox;
 }
 
-BOOL 
-ON_Geometry::GetBoundingBox( // returns TRUE if successful
+ON_BOOL32 
+ON_Geometry::GetBoundingBox( // returns true if successful
        ON_BoundingBox& bbox,
-       BOOL bGrowBox
+       ON_BOOL32 bGrowBox
        ) const
 {
   return GetBoundingBox( bbox.m_min, bbox.m_max, bGrowBox );
 }
 
-BOOL 
-ON_Geometry::GetBoundingBox( // returns TRUE if successful
+ON_BOOL32 
+ON_Geometry::GetBoundingBox( // returns true if successful
        ON_3dPoint& boxmin,
        ON_3dPoint& boxmax,
-       BOOL bGrowBox
+       ON_BOOL32 bGrowBox
        ) const
 {
   ON_Workspace ws;
@@ -80,7 +79,7 @@ ON_Geometry::GetBoundingBox( // returns TRUE if successful
 	if(bGrowBox && invalid)
 		bGrowBox=false;
 
-  const BOOL rc = GetBBox( bmin, bmax, bGrowBox );
+  const ON_BOOL32 rc = GetBBox( bmin, bmax, bGrowBox );
   if ( dim > 3 ) {
     boxmin.x = bmin[0]; boxmin.y = bmin[1]; boxmin.z = bmin[2];
     boxmax.x = bmax[0]; boxmax.y = bmax[1]; boxmax.z = bmax[2];
@@ -121,7 +120,7 @@ bool ON_Geometry::GetTightBoundingBox(
     {
       world_bbox.GetCorners(corners);
       if ( corners.GetTightBoundingBox(tight_bbox,bGrowBox,xform) )
-	bGrowBox = true;
+        bGrowBox = true;
     }
   }
   else
@@ -133,26 +132,26 @@ bool ON_Geometry::GetTightBoundingBox(
   return bGrowBox?true:false;
 }
 
-BOOL ON_Geometry::SwapCoordinates(
+ON_BOOL32 ON_Geometry::SwapCoordinates(
       int i, int j        // indices of coords to swap
       )
 {
-  BOOL rc = FALSE;
+  ON_BOOL32 rc = false;
   const int dim = Dimension();
   if ( dim > 0 && dim <= 3 && i >= 0 && i < 3 && j >= 0 && j < 3 ) {
     if ( i == j ) {
-      rc = TRUE;
+      rc = true;
     }
     else {
       int k;
       ON_Xform swapij(0.0);
       for ( k = 0; k < 4; k++ ) {
-	if ( i == k )
-	  swapij[k][j] = 1.0;
-	else if ( j == k )
-	  swapij[k][i] = 1.0;
-	else
-	  swapij[k][k] = 1.0;
+        if ( i == k )
+          swapij[k][j] = 1.0;
+        else if ( j == k )
+          swapij[k][i] = 1.0;
+        else
+          swapij[k][k] = 1.0;
       }
       rc = Transform( swapij );
     }
@@ -160,7 +159,7 @@ BOOL ON_Geometry::SwapCoordinates(
   return rc;
 }
 
-BOOL ON_Geometry::Rotate(
+ON_BOOL32 ON_Geometry::Rotate(
       double sin_angle,          // sin(angle)
       double cos_angle,          // cos(angle)
       const ON_3dVector& axis, // axis of rotation
@@ -174,7 +173,7 @@ BOOL ON_Geometry::Rotate(
   return Transform( rot );
 }
 
-BOOL ON_Geometry::Rotate(
+ON_BOOL32 ON_Geometry::Rotate(
       double angle,              // angle in radians
       const ON_3dVector& axis, // axis of rotation
       const ON_3dPoint& center // center of rotation
@@ -185,7 +184,7 @@ BOOL ON_Geometry::Rotate(
   return Rotate( sin(angle), cos(angle), axis, center );
 }
 
-BOOL ON_Geometry::Translate( const ON_3dVector& delta )
+ON_BOOL32 ON_Geometry::Translate( const ON_3dVector& delta )
 {
   if ( delta.IsZero() )
     return true;
@@ -194,7 +193,7 @@ BOOL ON_Geometry::Translate( const ON_3dVector& delta )
   return Transform( tr );
 }
 
-BOOL ON_Geometry::Scale( double x )
+ON_BOOL32 ON_Geometry::Scale( double x )
 {
   if ( x == 1.0 )
     return true;
@@ -218,16 +217,16 @@ void ON_Geometry::ClearBoundingBox()
   // default implementation does nothing
 }
 
-BOOL ON_Geometry::Transform( const ON_Xform& xform )
+ON_BOOL32 ON_Geometry::Transform( const ON_Xform& xform )
 {
   TransformUserData(xform);
   return true;
 }
 
-BOOL ON_Geometry::HasBrepForm() const
+ON_BOOL32 ON_Geometry::HasBrepForm() const
 {
   // override if specific geoemtry has brep form
-  return FALSE;
+  return false;
 }
 
 ON_Brep* ON_Geometry::BrepForm( ON_Brep* brep ) const

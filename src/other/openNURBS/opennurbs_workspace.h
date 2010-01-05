@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -53,7 +52,7 @@ public:
     before returning.
   Parameters:
     sz - [in] (>0) size of memory block in bytes. 
-	      If sz <= 0, then NULL is returned.
+              If sz <= 0, then NULL is returned.
   Returns:
     A pointer to the memory block.
   Remarks.
@@ -81,7 +80,7 @@ public:
     having to worry about cleaning up before returning.
   Parameters:
     count - [in] (>0) number of integers in memory block.
-	      If count <= 0, then NULL is returned.
+              If count <= 0, then NULL is returned.
   Returns:
     A pointer to the array of integers.
   Remarks.
@@ -121,7 +120,7 @@ public:
     having to worry about cleaning up before returning.
   Parameters:
     count - [in] (>0) number of doubles in memory block.
-	      If count <= 0, then NULL is returned.
+              If count <= 0, then NULL is returned.
   Returns:
     A pointer to the array of doubles.
   Remarks.
@@ -161,7 +160,7 @@ public:
     having to worry about cleaning up before returning.
   Parameters:
     count - [in] (>0) number of points in memory block.
-	      If count <= 0, then NULL is returned.
+              If count <= 0, then NULL is returned.
   Returns:
     A pointer to the memory block.
   Remarks.
@@ -184,7 +183,7 @@ public:
     having to worry about cleaning up before returning.
   Parameters:
     count - [in] (>0) number of Vectors in memory block.
-	      If count <= 0, then NULL is returned.
+              If count <= 0, then NULL is returned.
   Returns:
     A pointer to the memory block.
   Remarks.
@@ -205,12 +204,12 @@ public:
     ON_Workspace::GetMemory.
   Parameters:
     ptr - [in] pointer returned by an earlier call to
-	       GetMemory or GrowMemory.
+               GetMemory or GrowMemory.
     sz - [in] (>0) size of memory block in bytes. 
-	      If sz <= 0, then NULL is returned.
-	      If ptr is not NULL and was not allocated by an 
-	      earlier call to GetMemory or GrowMemory, then
-	      NULL is returned.
+              If sz <= 0, then NULL is returned.
+              If ptr is not NULL and was not allocated by an 
+              earlier call to GetMemory or GrowMemory, then
+              NULL is returned.
   Returns:
     A pointer to the memory block.
   Remarks.
@@ -235,11 +234,11 @@ public:
     GetIntMemory or GrowIntMemory.
   Parameters:
     ptr - [in] pointer returned by an earlier call to
-	       GetIntMemory or GrowIntMemory.
+               GetIntMemory or GrowIntMemory.
     count - [in] (>0) number of integers in memory block.
-	      If count <= 0, then NULL is returned.
-	      If ptr was not allocated by this ON_Workspace
-	      class, then NULL is returned.
+              If count <= 0, then NULL is returned.
+              If ptr was not allocated by this ON_Workspace
+              class, then NULL is returned.
   Returns:
     A pointer to the integer array.
   Remarks.
@@ -260,11 +259,11 @@ public:
     GetDoubleMemory or GrowDoubleMemory.
   Parameters:
     ptr - [in] pointer returned by an earlier call to
-	       GetDoubleMemory or GrowDoubleMemory.
+               GetDoubleMemory or GrowDoubleMemory.
     count - [in] (>0) number of doubles in memory block.
-	      If count <= 0, then NULL is returned.
-	      If ptr was not allocated by this ON_Workspace
-	      class, then NULL is returned.
+              If count <= 0, then NULL is returned.
+              If ptr was not allocated by this ON_Workspace
+              class, then NULL is returned.
   Returns:
     A pointer to the double array.
   Remarks.
@@ -285,11 +284,11 @@ public:
     GetPointMemory or GrowPointMemory.
   Parameters:
     ptr - [in] pointer returned by an earlier call to
-	       GetPointMemory or GrowPointMemory.
+               GetPointMemory or GrowPointMemory.
     count - [in] (>0) number of points in memory block.
-	      If count <= 0, then NULL is returned.
-	      If ptr was not allocated by this ON_Workspace
-	      class, then NULL is returned.
+              If count <= 0, then NULL is returned.
+              If ptr was not allocated by this ON_Workspace
+              class, then NULL is returned.
   Returns:
     A pointer to the point array.
   Remarks.
@@ -310,11 +309,11 @@ public:
     GetVectorMemory or GrowVectorMemory.
   Parameters:
     ptr - [in] pointer returned by an earlier call to
-	       GetVectorMemory or GrowVectorMemory.
+               GetVectorMemory or GrowVectorMemory.
     count - [in] (>0) number of vectors in memory block.
-	      If count <= 0, then NULL is returned.
-	      If ptr was not allocated by this ON_Workspace
-	      class, then NULL is returned.
+              If count <= 0, then NULL is returned.
+              If ptr was not allocated by this ON_Workspace
+              class, then NULL is returned.
   Returns:
     A pointer to the vector array.
   Remarks.
@@ -340,7 +339,7 @@ public:
     longer needed.
   Parameters:
     ptr - [in] pointer returned by a Get...() or Grow()
-	       call to this ON_Workspace.
+               call to this ON_Workspace.
   Returns:
     True if the pointer was successfully freed.
   See Also:
@@ -348,7 +347,7 @@ public:
     ON_Workspace::GetMemory
     ON_Workspace::GrowMemory
   */
-  BOOL KeepMemory( void* ptr );
+  ON_BOOL32 KeepMemory( void* ptr );
 
   /*
   Description:
@@ -367,9 +366,9 @@ public:
     ON::OpenFile
   */
   FILE* OpenFile(
-	  const char* filename, 
-	  const char* filemode
-	  );
+          const char* filename, 
+          const char* filemode
+          );
 
   /*
   Description:
@@ -388,9 +387,9 @@ public:
     ON::OpenFile
   */
   FILE* OpenFile(
-	  const wchar_t* filename, 
-	  const wchar_t* filemode
-	  );
+          const wchar_t* filename, 
+          const wchar_t* filemode
+          );
 
   /*
   Description:

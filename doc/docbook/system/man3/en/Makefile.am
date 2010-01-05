@@ -1,4 +1,3 @@
-if EN_DOCS
 man3DOCBOOK_EN = \
 	system/man3/en/libfb.xml
 
@@ -16,4 +15,3 @@ endif
 
 man3DOCBOOK_ENpdfdir = $(BRLCAD_DATA)/pdf/man3/en
 man3DOCBOOK_ENpdf_DATA = $(BUILTMAN3_ENPDF)
-endif

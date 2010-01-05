@@ -38,9 +38,9 @@ TopologicalRepresentationItem::TopologicalRepresentationItem() {
 	id = 0;
 }
 
-TopologicalRepresentationItem::TopologicalRepresentationItem(STEPWrapper *sw,int STEPid) {
+TopologicalRepresentationItem::TopologicalRepresentationItem(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 TopologicalRepresentationItem::~TopologicalRepresentationItem() {
@@ -53,7 +53,7 @@ TopologicalRepresentationItem::Load(STEPWrapper *sw,SCLP23(Application_instance)
 
 	// load base class attributes
 	if ( !RepresentationItem::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::RepresentationItem." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::RepresentationItem." << std::endl;
 		return false;
 	}
 
@@ -62,10 +62,10 @@ TopologicalRepresentationItem::Load(STEPWrapper *sw,SCLP23(Application_instance)
 
 void
 TopologicalRepresentationItem::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	RepresentationItem::Print(level+1);
 }
 
@@ -78,7 +78,7 @@ TopologicalRepresentationItem::Create(STEPWrapper *sw, SCLP23(Application_instan
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}
@@ -91,7 +91,7 @@ TopologicalRepresentationItem::Create(STEPWrapper *sw, SCLP23(Application_instan
 bool
 TopologicalRepresentationItem::LoadONBrep(ON_Brep *brep)
 {
-	cerr << "Error: ::LoadONBrep(ON_Brep *brep) not implemented for " << entityname << endl;
+	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implemented for " << entityname << std::endl;
 	return false;
 }
 

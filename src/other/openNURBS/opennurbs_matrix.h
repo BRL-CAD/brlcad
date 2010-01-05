@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -65,9 +64,9 @@ public:
      );
 
   bool Create( // E.g., Create(1,5,1,7) creates a 5x7 sized matrix that with
-	       // "top" row = m[1][1],...,m[1][7] and "bottom" row
-	       // = m[5][1],...,m[5][7].  The result of Create(0,m,0,n) is
-	       // identical to the result of Create(m+1,n+1).
+               // "top" row = m[1][1],...,m[1][7] and "bottom" row
+               // = m[5][1],...,m[5][7].  The result of Create(0,m,0,n) is
+               // identical to the result of Create(m+1,n+1).
      int, // first valid row index
      int, // last valid row index
      int, // first valid column index
@@ -88,8 +87,8 @@ public:
   bool SwapRows( int, int ); // ints are row indices to swap
   bool SwapCols( int, int ); // ints are col indices to swap
   bool Invert( 
-	  double // zero tolerance
-	  );
+          double // zero tolerance
+          );
 
   // safe arithmetic
   bool Multiply( const ON_Matrix&, const ON_Matrix& );
@@ -293,8 +292,8 @@ public:
   bool IsColOrthoNormal() const;
 
   double** m; // m[i][j] = value at row i and column j
-	      //           0 <= i < RowCount()
-	      //           0 <= j < ColCount()
+              //           0 <= i < RowCount()
+              //           0 <= j < ColCount()
 private:
   int m_row_count;
   int m_col_count;
@@ -335,12 +334,12 @@ Returns:
 */
 ON_DECL
 int ON_RowReduce( 
-	  int row_count, 
-	  int col_count,
-	  double zero_pivot,
-	  double** A, 
-	  double** B, 
-	  double pivots[2] 
-	  );
+          int row_count, 
+          int col_count,
+          double zero_pivot,
+          double** A, 
+          double** B, 
+          double pivots[2] 
+          );
 
 #endif

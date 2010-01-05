@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -34,7 +33,7 @@ ON_InstanceDefinition::~ON_InstanceDefinition()
 {
 }
 
-BOOL ON_InstanceDefinition::IsValid( ON_TextLog* text_log ) const
+ON_BOOL32 ON_InstanceDefinition::IsValid( ON_TextLog* text_log ) const
 {
   if ( 0 == ON_UuidCompare( m_uuid, ON_nil_uuid) )
   {
@@ -59,11 +58,11 @@ BOOL ON_InstanceDefinition::IsValid( ON_TextLog* text_log ) const
     case linked_and_embedded_def:
       if( m_source_archive.IsEmpty())
       {
-	if (text_log)
-	{
-	  text_log->Print("ON_InstanceDefinition is linked or embedded but m_source_archive is empty.\n");
-	}
-	return false;
+        if (text_log)
+        {
+          text_log->Print("ON_InstanceDefinition is linked or embedded but m_source_archive is empty.\n");
+        }
+        return false;
       }
       break;
     default:
@@ -75,7 +74,22 @@ BOOL ON_InstanceDefinition::IsValid( ON_TextLog* text_log ) const
   return true;
 }
 
-BOOL ON_InstanceDefinition::Write(
+
+unsigned int ON_InstanceDefinition::SizeOf() const
+{
+  unsigned int sz = sizeof(*this) - sizeof(ON_Geometry);
+  sz += ON_Geometry::SizeOf();
+  sz += this->m_object_uuid.SizeOfArray();
+  sz += this->m_name.SizeOf();
+  sz += this->m_description.SizeOf();
+  sz += this->m_url.SizeOf();
+  sz += this->m_url_tag.SizeOf();
+  sz += this->m_source_archive.SizeOf();
+  return sz;
+}
+
+
+ON_BOOL32 ON_InstanceDefinition::Write(
        ON_BinaryArchive& binary_archive
      ) const
 {
@@ -87,7 +101,7 @@ BOOL ON_InstanceDefinition::Write(
   if ( rc )
   {
     if (    binary_archive.Archive3dmVersion() >= 4
-	 && ON_InstanceDefinition::linked_def == m_idef_update_type )
+         && ON_InstanceDefinition::linked_def == m_idef_update_type )
     {
       // linked instance definition geometry is never in the file
       ON_SimpleArray<ON_UUID> empty_uuid_list;
@@ -167,7 +181,7 @@ ON_InstanceDefinition::IDEF_UPDATE_TYPE ON_InstanceDefinition::IdefUpdateType(in
 }
 
 
-BOOL ON_InstanceDefinition::Read(
+ON_BOOL32 ON_InstanceDefinition::Read(
        ON_BinaryArchive& binary_archive
      )
 {
@@ -214,7 +228,7 @@ BOOL ON_InstanceDefinition::Read(
     if ( minor_version >= 1 )
     {
       if ( rc )
-	rc = m_source_archive_checksum.Read( binary_archive );
+        rc = m_source_archive_checksum.Read( binary_archive );
     }
 
     // version 1.2 fields
@@ -222,33 +236,33 @@ BOOL ON_InstanceDefinition::Read(
     {
       int us = ON::no_unit_system;
       if ( rc )
-	rc = binary_archive.ReadInt( &us );
+        rc = binary_archive.ReadInt( &us );
       m_us.m_unit_system = ON::UnitSystem(us);
       if ( ON::custom_unit_system != m_us.m_unit_system && ON::no_unit_system != m_us.m_unit_system )
       {
-	m_us.m_custom_unit_scale = ON::UnitScale( m_us.m_unit_system, ON::meters );
+        m_us.m_custom_unit_scale = ON::UnitScale( m_us.m_unit_system, ON::meters );
       }
       else
       {
-	m_us.m_custom_unit_scale = 0.0;
+        m_us.m_custom_unit_scale = 0.0;
       }
 
       if ( minor_version >= 3 )
       {
-	// version 1.3 fields - added 6 March 2006
-	//int us = ON::no_unit_system;
-	if ( rc )
-	  rc = binary_archive.ReadDouble( &m_us.m_custom_unit_scale );
-	if ( rc )
-	  rc = binary_archive.ReadBool( &m_source_bRelativePath );
-	if ( rc && minor_version >= 4 )
-	{
-	  rc = m_us.Read(binary_archive);
-	  if (rc && minor_version >= 5 )
-	  {
-	    rc = binary_archive.ReadInt(&m_idef_update_depth);
-	  }
-	}
+        // version 1.3 fields - added 6 March 2006
+        //int us = ON::no_unit_system;
+        if ( rc )
+          rc = binary_archive.ReadDouble( &m_us.m_custom_unit_scale );
+        if ( rc )
+          rc = binary_archive.ReadBool( &m_source_bRelativePath );
+        if ( rc && minor_version >= 4 )
+        {
+          rc = m_us.Read(binary_archive);
+          if (rc && minor_version >= 5 )
+          {
+            rc = binary_archive.ReadInt(&m_idef_update_depth);
+          }
+        }
       }
     }
   }
@@ -267,10 +281,10 @@ int ON_InstanceDefinition::Dimension() const
   return 3;
 }
 
-BOOL ON_InstanceDefinition::GetBBox(
+ON_BOOL32 ON_InstanceDefinition::GetBBox(
        double* boxmin,
        double* boxmax,
-       BOOL bGrowBox
+       ON_BOOL32 bGrowBox
        ) const
 {
   if ( boxmin )
@@ -288,7 +302,7 @@ BOOL ON_InstanceDefinition::GetBBox(
   return m_bbox.IsValid();
 }
 
-BOOL ON_InstanceDefinition::Transform( 
+ON_BOOL32 ON_InstanceDefinition::Transform( 
        const ON_Xform& xform
        )
 {
@@ -361,8 +375,8 @@ void ON_InstanceDefinition::SetBoundingBox( ON_BoundingBox bbox )
 }
 
 void ON_InstanceDefinition::SetSourceArchive( const wchar_t* source_archive, 
-					      ON_CheckSum checksum,
-					      ON_InstanceDefinition::IDEF_UPDATE_TYPE idef_update_type)
+                                              ON_CheckSum checksum,
+                                              ON_InstanceDefinition::IDEF_UPDATE_TYPE idef_update_type)
 {
   ON_wString s = source_archive;
   s.TrimLeftAndRight();
@@ -398,8 +412,8 @@ void ON_InstanceDefinition::SetUnitSystem( ON::unit_system us )
     if ( ON::custom_unit_system != m_us.m_unit_system )
     {
       m_us.m_custom_unit_scale = ( ON::no_unit_system == m_us.m_unit_system )
-			       ? 0.0
-			       : ON::UnitScale(ON::meters,m_us.m_unit_system);
+                               ? 0.0
+                               : ON::UnitScale(ON::meters,m_us.m_unit_system);
     }
   }
 }
@@ -413,13 +427,15 @@ void ON_InstanceDefinition::SetUnitSystem( const ON_UnitSystem& us )
     if ( ON::custom_unit_system != m_us.m_unit_system )
     {
       m_us.m_custom_unit_scale = ( ON::no_unit_system == m_us.m_unit_system )
-			       ? 0.0
-			       : ON::UnitScale(ON::meters,m_us.m_unit_system);
+                               ? 0.0
+                               : ON::UnitScale(ON::meters,m_us.m_unit_system);
     }
   }
 }
 
 ON_OBJECT_IMPLEMENT( ON_InstanceRef, ON_Geometry, "F9CFB638-B9D4-4340-87E3-C56E7865D96A" );
+
+const double ON_InstanceRef::m_singular_xform_tol = 1.0e-6;
 
 ON_InstanceRef::ON_InstanceRef()
 {
@@ -427,7 +443,7 @@ ON_InstanceRef::ON_InstanceRef()
   m_xform.Identity();
 }
 
-BOOL ON_InstanceRef::IsValid( ON_TextLog* text_log ) const
+ON_BOOL32 ON_InstanceRef::IsValid( ON_TextLog* text_log ) const
 {
   if ( 0 == ON_UuidCompare( m_instance_definition_uuid, ON_nil_uuid) )
   {
@@ -437,7 +453,7 @@ BOOL ON_InstanceRef::IsValid( ON_TextLog* text_log ) const
   }
 
   ON_Xform tmp = m_xform.Inverse()*m_xform;
-  if ( !tmp.IsIdentity( ON_SQRT_EPSILON ) )
+  if ( !tmp.IsIdentity( ON_InstanceRef::m_singular_xform_tol ) )
   {
     if ( text_log )
       text_log->Print("ON_InstanceRef has singular m_xform.\n");
@@ -446,7 +462,7 @@ BOOL ON_InstanceRef::IsValid( ON_TextLog* text_log ) const
   return true;
 }
 
-BOOL ON_InstanceRef::Write(
+ON_BOOL32 ON_InstanceRef::Write(
        ON_BinaryArchive& binary_archive
      ) const
 {
@@ -460,7 +476,7 @@ BOOL ON_InstanceRef::Write(
   return rc;
 }
 
-BOOL ON_InstanceRef::Read(
+ON_BOOL32 ON_InstanceRef::Read(
        ON_BinaryArchive& binary_archive
      )
 {
@@ -493,10 +509,10 @@ int ON_InstanceRef::Dimension() const
   return 3;
 }
 
-BOOL ON_InstanceRef::GetBBox(
+ON_BOOL32 ON_InstanceRef::GetBBox(
        double* boxmin,
        double* boxmax,
-       BOOL bGrowBox
+       ON_BOOL32 bGrowBox
        ) const
 {
   if ( !boxmin || !boxmax )
@@ -524,15 +540,15 @@ BOOL ON_InstanceRef::GetBBox(
     {
       if( boxmin )
       {
-	boxmin[0] = m_bbox.m_min.x;
-	boxmin[1] = m_bbox.m_min.y;
-	boxmin[2] = m_bbox.m_min.z;
+        boxmin[0] = m_bbox.m_min.x;
+        boxmin[1] = m_bbox.m_min.y;
+        boxmin[2] = m_bbox.m_min.z;
       }
       if( boxmax )
       {
-	boxmax[0] = m_bbox.m_max.x;
-	boxmax[1] = m_bbox.m_max.y;
-	boxmax[2] = m_bbox.m_max.z;
+        boxmax[0] = m_bbox.m_max.x;
+        boxmax[1] = m_bbox.m_max.y;
+        boxmax[2] = m_bbox.m_max.z;
       }
       bGrowBox = true;
     }
@@ -541,7 +557,7 @@ BOOL ON_InstanceRef::GetBBox(
   return bGrowBox;
 }
 
-BOOL ON_InstanceRef::Transform( 
+ON_BOOL32 ON_InstanceRef::Transform( 
        const ON_Xform& xform
        )
 {

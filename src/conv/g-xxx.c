@@ -77,7 +77,7 @@ main(int argc, char *argv[])
     } user_data;
 
     int		i;
-    register int	c;
+    int	c;
     char idbuf[132];
 
     struct rt_i *rtip;

@@ -43,9 +43,9 @@
 static int
 _ged_edcolor(struct ged *gedp, int argc, const char *argv[])
 {
-    register struct mater *mp;
-    register struct mater *zot;
-    register FILE *fp;
+    struct mater *mp;
+    struct mater *zot;
+    FILE *fp;
     char line[128];
     static char hdr[] = "LOW\tHIGH\tRed\tGreen\tBlue\n";
     char tmpfil[MAXPATHLEN];
@@ -159,9 +159,9 @@ _ged_edcolor(struct ged *gedp, int argc, const char *argv[])
 int
 ged_edcolor(struct ged *gedp, int argc, const char *argv[])
 {
-    register struct mater *newp;
-    register struct mater *mp;
-    register struct mater *next_mater;
+    struct mater *newp;
+    struct mater *mp;
+    struct mater *next_mater;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -181,9 +181,9 @@ ged_edcolor(struct ged *gedp, int argc, const char *argv[])
 int
 ged_color(struct ged *gedp, int argc, const char *argv[])
 {
-    register struct mater *newp;
-    register struct mater *mp;
-    register struct mater *next_mater;
+    struct mater *newp;
+    struct mater *mp;
+    struct mater *next_mater;
     static const char *usage = "[-e] [low high r g b]";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -280,7 +280,7 @@ ged_color(struct ged *gedp, int argc, const char *argv[])
  */
 void
 _ged_color_putrec(struct ged		*gedp,
-		 register struct mater	*mp)
+		 struct mater	*mp)
 		 
 {
     struct directory dir;
@@ -325,7 +325,7 @@ _ged_color_putrec(struct ged		*gedp,
  */
 void
 _ged_color_zaprec(struct ged		*gedp,
-		 register struct mater	*mp)
+		 struct mater	*mp)
 		 
 {
     struct directory dir;

@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -128,9 +127,9 @@ bool ON_Sphere::ClosestPointTo(
     if ( longitude ) {
       *longitude = atan2(y,x);
       if ( *longitude < 0.0 )
-	*longitude += 2.0*ON_PI;
+        *longitude += 2.0*ON_PI;
       if ( *longitude < 0.0 || *longitude >= 2.0*ON_PI)
-	*longitude = 0.0;
+        *longitude = 0.0;
     }
     if ( latitude )
       *latitude = atan(h/r);
@@ -241,14 +240,14 @@ int ON_Sphere::GetNurbForm( ON_NurbsSurface& s ) const
     const ON_3dVector z = radius*plane.zaxis;
 
     ON_3dPoint p[9] = {plane.origin+x,
-		       plane.origin+x+y,
-		       plane.origin+y,
-		       plane.origin-x+y,
-		       plane.origin-x,
-		       plane.origin-x-y,
-		       plane.origin-y,
-		       plane.origin+x-y,
-		       plane.origin+x};
+                       plane.origin+x+y,
+                       plane.origin+y,
+                       plane.origin-x+y,
+                       plane.origin-x,
+                       plane.origin-x-y,
+                       plane.origin-y,
+                       plane.origin+x-y,
+                       plane.origin+x};
 
     const double w = 1.0/sqrt(2.0);
     double w13;
@@ -263,22 +262,22 @@ int ON_Sphere::GetNurbForm( ON_NurbsSurface& s ) const
       CV[5*i+4] = northpole;
 
       if ( i%2) {
-	CV[5*i  ].x *= w;
-	CV[5*i  ].y *= w;
-	CV[5*i  ].z *= w;
-	CV[5*i  ].w = w;
-	CV[5*i+2].x *= w;
-	CV[5*i+2].y *= w;
-	CV[5*i+2].z *= w;
-	CV[5*i+2].w = w;
-	CV[5*i+4].x *= w;
-	CV[5*i+4].y *= w;
-	CV[5*i+4].z *= w;
-	CV[5*i+4].w = w;
-	w13 = 0.5;
+        CV[5*i  ].x *= w;
+        CV[5*i  ].y *= w;
+        CV[5*i  ].z *= w;
+        CV[5*i  ].w = w;
+        CV[5*i+2].x *= w;
+        CV[5*i+2].y *= w;
+        CV[5*i+2].z *= w;
+        CV[5*i+2].w = w;
+        CV[5*i+4].x *= w;
+        CV[5*i+4].y *= w;
+        CV[5*i+4].z *= w;
+        CV[5*i+4].w = w;
+        w13 = 0.5;
       }
       else {
-	w13 = w;
+        w13 = w;
       }
       CV[5*i+1].x *= w13;
       CV[5*i+1].y *= w13;

@@ -45,7 +45,7 @@ void ged_splitGDL(struct ged *gedp, struct ged_display_list *gdlp, struct db_ful
 int
 ged_erase(struct ged *gedp, int argc, const char *argv[])
 {
-    register int i;
+    int i;
     int	flag_A_attr=0;
     int	flag_o_nonunique=1;
     int	last_opt=0;
@@ -196,8 +196,8 @@ ged_splitGDL(struct ged			*gedp,
 	     struct ged_display_list	*gdlp,
 	     struct db_full_path	*path)
 {
-    register struct solid *sp;
-    register struct solid *nsp;
+    struct solid *sp;
+    struct solid *nsp;
     struct ged_display_list *new_gdlp;
     char *pathname;
     int savelen;
@@ -252,10 +252,10 @@ ged_erasePathFromDisplay(struct ged *gedp,
 			 const char *path,
 			 int allow_split)
 {
-    register struct ged_display_list *gdlp;
-    register struct ged_display_list *next_gdlp;
-    register struct ged_display_list *last_gdlp;
-    register struct solid *sp;
+    struct ged_display_list *gdlp;
+    struct ged_display_list *next_gdlp;
+    struct ged_display_list *last_gdlp;
+    struct solid *sp;
     struct directory *dp;
     struct db_full_path subpath;
     int found_subpath;
@@ -291,8 +291,8 @@ ged_erasePathFromDisplay(struct ged *gedp,
 
 	    break;
 	} else if (found_subpath) {
-	    register int need_split = 0;
-	    register struct solid *nsp;
+	    int need_split = 0;
+	    struct solid *nsp;
 
 	    sp = BU_LIST_NEXT(solid, &gdlp->gdl_headSolid);
 	    while (BU_LIST_NOT_HEAD(sp, &gdlp->gdl_headSolid)) {
@@ -346,8 +346,8 @@ _ged_eraseAllNamesFromDisplay(struct ged *gedp,
 			     const char *name,
 			     const int skip_first)
 {
-    register struct ged_display_list *gdlp;
-    register struct ged_display_list *next_gdlp;
+    struct ged_display_list *gdlp;
+    struct ged_display_list *next_gdlp;
 
     gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
     while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
@@ -403,8 +403,8 @@ _ged_eraseAllPathsFromDisplay(struct ged *gedp,
 			     const char *path,
 			     const int skip_first)
 {
-    register struct ged_display_list *gdlp;
-    register struct ged_display_list *next_gdlp;
+    struct ged_display_list *gdlp;
+    struct ged_display_list *next_gdlp;
     struct db_full_path fullpath, subpath;
 
     if (db_string_to_path(&subpath, gedp->ged_wdbp->dbip, path) == 0) {
@@ -435,8 +435,8 @@ _ged_eraseAllSubpathsFromSolidList(struct ged *gedp,
 				  struct db_full_path *subpath,
 				  const int skip_first)
 {
-    register struct solid *sp;
-    register struct solid *nsp;
+    struct solid *sp;
+    struct solid *nsp;
 
     sp = BU_LIST_NEXT(solid, &gdlp->gdl_headSolid);
     while (BU_LIST_NOT_HEAD(sp, &gdlp->gdl_headSolid)) {
@@ -453,7 +453,7 @@ void
 _ged_freeDisplayListItem (struct ged *gedp,
 			 struct ged_display_list *gdlp)
 {
-    register struct solid *sp;
+    struct solid *sp;
     struct directory *dp;
 
     /* Free up the solids list associated with this display list */

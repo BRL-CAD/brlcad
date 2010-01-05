@@ -84,7 +84,7 @@ togl-uninstall:
 
 if BUILD_DOCS
 if BUILD_TKHTML3
-if WITH_X11
+if WITH_TK
 TKHTML3_MAKE=$(MAKE)
 else
 TKHTML3_MAKE=:
@@ -122,9 +122,9 @@ uninstall-local: tkhtml3-uninstall togl-uninstall
 
 
 if BUILD_TKIMG
-if WITH_X11
+if WITH_TK
 TKIMGDIR=tkimg
-else !WITH_X11
+else !WITH_TK
 TKIMGDIR=
 endif
 else !BUILD_TKIMG

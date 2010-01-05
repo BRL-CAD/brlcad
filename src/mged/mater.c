@@ -46,7 +46,7 @@
  */
 
 void color_soltab(void);
-void color_putrec(register struct mater *mp), color_zaprec(register struct mater *mp);
+void color_putrec(struct mater *mp), color_zaprec(struct mater *mp);
 
 static char	tmpfil[MAXPATHLEN];
 
@@ -58,7 +58,7 @@ static char	tmpfil[MAXPATHLEN];
  *  In some cases, storage will need to be allocated. v4 db only.
  */
 void
-color_putrec(register struct mater *mp)
+color_putrec(struct mater *mp)
 {
     struct directory dir;
     union record rec;
@@ -102,7 +102,7 @@ color_putrec(register struct mater *mp)
  *  Used to release database resources occupied by a material record.
  */
 void
-color_zaprec(register struct mater *mp)
+color_zaprec(struct mater *mp)
 {
     struct directory dir;
 

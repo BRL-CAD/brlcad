@@ -118,7 +118,7 @@ nurb_crv_is_bezier(const struct edge_g_cnurb *crv)
 
     for ( i=1; i<crv->k.k_size-1; i++ )
     {
-	if ( crv->k.knots[i] != knot_min && crv->k.knots[i] != knot_max )
+	if ( !NEAR_ZERO(crv->k.knots[i] - knot_min, SMALL_FASTF) && !NEAR_ZERO(crv->k.knots[i] - knot_max, SMALL_FASTF) )
 	{
 	    bezier = 0;
 	    break;
@@ -158,14 +158,14 @@ nurb_c_to_bezier(struct bu_list *clist, struct edge_g_cnurb *crv)
 	split = MAX_FASTF;
 	for ( i=1; i<crv_copy->k.k_size-1; i++ )
 	{
-	    if ( crv_copy->k.knots[i] != knot_min && crv_copy->k.knots[i] != knot_max )
+	    if ( !NEAR_ZERO(crv_copy->k.knots[i] - knot_min, SMALL_FASTF) && !NEAR_ZERO(crv_copy->k.knots[i] - knot_max, SMALL_FASTF) )
 	    {
 		split = crv_copy->k.knots[i];
 		break;
 	    }
 	}
 
-	if ( split == MAX_FASTF )
+	if ( NEAR_ZERO(split - MAX_FASTF, SMALL_FASTF) )
 	{
 	    done = 1;
 	    BU_LIST_APPEND( clist, &crv_copy->l );

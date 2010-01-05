@@ -42,9 +42,9 @@ PCurve::PCurve() {
 	reference_to_curve = NULL;
 }
 
-PCurve::PCurve(STEPWrapper *sw,int STEPid) {
+PCurve::PCurve(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 	basis_surface = NULL;
 	reference_to_curve = NULL;
 }
@@ -60,7 +60,7 @@ PCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 	id = sse->STEPfile_id;
 
 	if ( !Curve::Load(sw,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::Curve." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::Curve." << std::endl;
 		return false;
 	}
 
@@ -74,8 +74,8 @@ PCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 		if (entity) {
 			basis_surface = dynamic_cast<Surface *>(Factory::CreateObject(sw, entity)); // CreateSurfaceObject(sw, entity));
 		} else {
-			cerr << CLASSNAME
-					<< ": Error loading entity attribute 'basis_curve'" << endl;
+			std::cerr << CLASSNAME
+					<< ": Error loading entity attribute 'basis_curve'" << std::endl;
 			return false;
 		}
 	}
@@ -85,7 +85,7 @@ PCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 		if (entity) {
 			reference_to_curve = (DefinitionalRepresentation*) Factory::CreateObject(sw, entity);
 		} else {
-			cerr << CLASSNAME << ": Error loading entity attribute 'reference_to_curve'" << endl;
+			std::cerr << CLASSNAME << ": Error loading entity attribute 'reference_to_curve'" << std::endl;
 			return false;
 		}
 	}
@@ -96,26 +96,26 @@ PCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 const double *
 PCurve::PointAtEnd() {
 	//TODO: complete pcurve support
-	cerr << CLASSNAME << ": Error: virtual function PointAtEnd() not implemented for this type of curve.";
+	std::cerr << CLASSNAME << ": Error: virtual function PointAtEnd() not implemented for this type of curve.";
 	return NULL;
 }
 
 const double *
 PCurve::PointAtStart() {
 	//TODO: complete pcurve support
-	cerr << CLASSNAME << ": Error: virtual function PointAtStart() not implemented for this type of curve.";
+	std::cerr << CLASSNAME << ": Error: virtual function PointAtStart() not implemented for this type of curve.";
 	return NULL;
 }
 
 void
 PCurve::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << name << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Attributes:" << endl;
-	TAB(level+1); cout << "basis_surface:" << endl;
+	TAB(level); std::cout << "Attributes:" << std::endl;
+	TAB(level+1); std::cout << "basis_surface:" << std::endl;
 	basis_surface->Print(level+1);
-	TAB(level+1); cout << "reference_to_curve:" << endl;
+	TAB(level+1); std::cout << "reference_to_curve:" << std::endl;
 	reference_to_curve->Print(level+1);
 }
 STEPEntity *
@@ -127,7 +127,7 @@ PCurve::Create(STEPWrapper *sw,SCLP23(Application_instance) *sse){
 		Factory::AddObject(object);
 
 		if (!object->Load(sw,sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

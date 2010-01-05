@@ -57,9 +57,9 @@ Usage: dunnsnap [-h] [-F framebuffer]\n\
 	[num_frames]\n";
 
 int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int c;
+    int c;
 
     while ( (c = bu_getopt( argc, argv, "hF:s:S:w:W:n:N:" )) != EOF )  {
 	switch ( c )  {
@@ -100,7 +100,7 @@ get_args(int argc, register char **argv)
 int
 main(int argc, char **argv)
 {
-    register FBIO *fbp = FBIO_NULL;
+    FBIO *fbp = FBIO_NULL;
 
     if ( !get_args( argc, argv ) )  {
 	(void)fputs(usage, stderr);

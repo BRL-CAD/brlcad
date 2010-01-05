@@ -859,9 +859,7 @@ rt_arb_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 }
 
 
-#define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;
-
-
+#define RT_ARB8_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
 /**
  * R T _ A R B _ V S H O T
  *
@@ -922,11 +920,11 @@ rt_arb_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 		/* ray is parallel to plane when dir.N == 0.
 		 * If it is outside the solid, stop now */
 		if (dxbdn > SQRT_SMALL_FASTF) {
-		    SEG_MISS(segp[i]);		/* MISS */
+		    RT_ARB8_SEG_MISS(segp[i]);		/* MISS */
 		}
 	    }
 	    if (segp[i].seg_in.hit_dist > segp[i].seg_out.hit_dist) {
-		SEG_MISS(segp[i]);		/* MISS */
+		RT_ARB8_SEG_MISS(segp[i]);		/* MISS */
 	    }
 	} /* for each ray/arb_face pair */
     } /* for each arb_face */
@@ -942,10 +940,10 @@ rt_arb_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 
 	if (segp[i].seg_in.hit_surfno == -1 ||
 	    segp[i].seg_out.hit_surfno == -1) {
-	    SEG_MISS(segp[i]);		/* MISS */
+	    RT_ARB8_SEG_MISS(segp[i]);		/* MISS */
 	} else if (segp[i].seg_in.hit_dist >= segp[i].seg_out.hit_dist ||
 		 segp[i].seg_out.hit_dist >= INFINITY) {
-	    SEG_MISS(segp[i]);		/* MISS */
+	    RT_ARB8_SEG_MISS(segp[i]);		/* MISS */
 	}
     }
 }
@@ -1033,7 +1031,7 @@ rt_arb_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 	}
 	bu_semaphore_release(RT_SEM_MODEL);
 
-	rt_db_free_internal(&intern, ap->a_resource);
+	rt_db_free_internal(&intern);
 
 	if (ret != 0 || arbp->arb_opt == (struct oface *)0) {
 	    bu_log("rt_arb_uv(%s) dyanmic setup failure st_specific=x%x, optp=x%x\n",
@@ -1428,10 +1426,9 @@ rt_arb_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
  * solid.
  */
 void
-rt_arb_ifree(struct rt_db_internal *ip, struct resource *resp)
+rt_arb_ifree(struct rt_db_internal *ip)
 {
     RT_CK_DB_INTERNAL(ip);
-    if (!resp) resp = &rt_uniresource;
     bu_free(ip->idb_ptr, "arb ifree");
     ip->idb_ptr = (genptr_t)NULL;
 }

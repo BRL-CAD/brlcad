@@ -51,36 +51,35 @@
 #include "opennurbs.h"
 
 
-/*                  p u l l b a c k _ c u r v e
-*
-
-*
-*/
+/**
+ * p u l l b a c k _ c u r v e
+ */
 
 enum seam_direction {
-	NORTH_SEAM,
-	EAST_SEAM,
-	SOUTH_SEAM,
-	WEST_SEAM,
-	UNKNOWN_SEAM_DIRECTION
+    NORTH_SEAM,
+    EAST_SEAM,
+    SOUTH_SEAM,
+    WEST_SEAM,
+    UNKNOWN_SEAM_DIRECTION
 };
+
 
 #define NEAR_EQUAL(_a, _b, _tol) (fabs((_a) - (_b)) <= _tol)
 #define PBC_TOL 0.000001
 #define PBC_FROM_OFFSET 0.001
-#define PBC_SEAM_TOL 0.001
+#define PBC_SEAM_TOL 0.01
 
 typedef struct pbc_data {
-  double tolerance;
-  double flatness;
-  const ON_Curve* curve;
-  brlcad::SurfaceTree* surftree;
-  list<ON_2dPointArray *> segments;
-  const ON_BrepEdge* edge;
-  bool order_reversed;
+    double tolerance;
+    double flatness;
+    const ON_Curve* curve;
+    brlcad::SurfaceTree* surftree;
+    std::list<ON_2dPointArray *> segments;
+    const ON_BrepEdge* edge;
+    bool order_reversed;
 } PBCData;
 
-extern enum seam_direction seam_direction(ON_2dPoint uv1,ON_2dPoint uv2);
+extern enum seam_direction seam_direction(ON_2dPoint uv1, ON_2dPoint uv2);
 
 extern ON_Curve*
 interpolateCurve(ON_2dPointArray& samples);
@@ -88,47 +87,47 @@ interpolateCurve(ON_2dPointArray& samples);
 
 extern ON_Curve*
 refit_edge(const ON_BrepEdge* edge,
-		double tolerance);
+	   double tolerance);
 
 extern ON_Curve*
 test1_pullback_curve(const brlcad::SurfaceTree* surfacetree,
-		const ON_Curve* curve,
-		double tolerance = 1.0e-6,
-		double flatness = 1.0e-3);
+		     const ON_Curve* curve,
+		     double tolerance = 1.0e-6,
+		     double flatness = 1.0e-3);
 
 extern ON_Curve*
 test2_pullback_curve(const brlcad::SurfaceTree* surfacetree,
-		const ON_Curve* curve,
-		double tolerance = 1.0e-6,
-		double flatness = 1.0e-3);
+		     const ON_Curve* curve,
+		     double tolerance = 1.0e-6,
+		     double flatness = 1.0e-3);
 
 extern PBCData *
 pullback_samples(const brlcad::SurfaceTree* surfacetree,
-		const ON_Curve* curve,
-		double tolerance = 1.0e-6,
-		double flatness = 1.0e-3);
+		 const ON_Curve* curve,
+		 double tolerance = 1.0e-6,
+		 double flatness = 1.0e-3);
 
 extern bool
-check_pullback_data( list<PBCData*> &pbcs);
+check_pullback_data(std::list<PBCData*> &pbcs);
 
 extern int
-check_pullback_singularity_bridge(const ON_Surface *surf,const ON_2dPoint &p1,const ON_2dPoint &p2);
+check_pullback_singularity_bridge(const ON_Surface *surf, const ON_2dPoint &p1, const ON_2dPoint &p2);
 
 extern int
-check_pullback_seam_bridge(const ON_Surface *surf,const ON_2dPoint &p1,const ON_2dPoint &p2);
+check_pullback_seam_bridge(const ON_Surface *surf, const ON_2dPoint &p1, const ON_2dPoint &p2);
 
 extern ON_Curve*
 pullback_curve(const brlcad::SurfaceTree* surfacetree,
-const ON_Curve* curve,
-double tolerance = 1.0e-6,
-double flatness = 1.0e-3);
+	       const ON_Curve* curve,
+	       double tolerance = 1.0e-6,
+	       double flatness = 1.0e-3);
 
 extern ON_Curve*
 pullback_seam_curve(enum seam_direction seam_dir,
-		const brlcad::SurfaceTree* surfacetree,
-		const ON_Curve* curve,
-		double tolerance = 1.0e-6,
-		double flatness = 1.0e-3);
+		    const brlcad::SurfaceTree* surfacetree,
+		    const ON_Curve* curve,
+		    double tolerance = 1.0e-6,
+		    double flatness = 1.0e-3);
 
 extern bool
 toUV(brlcad::SurfaceTree *surftree, const ON_Curve *curve,  ON_2dPoint& out_pt, double t, double knudge);

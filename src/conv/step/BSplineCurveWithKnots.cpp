@@ -47,9 +47,9 @@ BSplineCurveWithKnots::BSplineCurveWithKnots() {
 	id = 0;
 }
 
-BSplineCurveWithKnots::BSplineCurveWithKnots(STEPWrapper *sw,int STEPid) {
+BSplineCurveWithKnots::BSplineCurveWithKnots(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 BSplineCurveWithKnots::~BSplineCurveWithKnots() {
@@ -62,7 +62,7 @@ BSplineCurveWithKnots::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 	// load base class attributes
 	if ( !BSplineCurve::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::BSplineCurve." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::BSplineCurve." << std::endl;
 		return false;
 	}
 
@@ -82,7 +82,7 @@ BSplineCurveWithKnots::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 				in = (IntNode *)in->NextNode();
 			}
 		} else {
-			cout << CLASSNAME << ": Error loading BSplineCurveWithKnots(knot_multiplicities)." << endl;
+			std::cout << CLASSNAME << ": Error loading BSplineCurveWithKnots(knot_multiplicities)." << std::endl;
 			return false;
 		}
 	}
@@ -98,7 +98,7 @@ BSplineCurveWithKnots::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 				rn = (RealNode *)rn->NextNode();
 			}
 		} else {
-			cout << CLASSNAME << ": Error loading BSplineCurveWithKnots(knots)." << endl;
+			std::cout << CLASSNAME << ": Error loading BSplineCurveWithKnots(knots)." << std::endl;
 			return false;
 		}
 	}
@@ -112,27 +112,27 @@ BSplineCurveWithKnots::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 void
 BSplineCurveWithKnots::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << name << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Attributes:" << endl;
-	TAB(level+1); cout << "knot_multiplicities:";
+	TAB(level); std::cout << "Attributes:" << std::endl;
+	TAB(level+1); std::cout << "knot_multiplicities:";
 	LIST_OF_INTEGERS::iterator ii;
 	for(ii=knot_multiplicities.begin();ii!=knot_multiplicities.end();ii++) {
-		cout << " " << (*ii);
+		std::cout << " " << (*ii);
 	}
-	cout << endl;
+	std::cout << std::endl;
 
-	TAB(level+1); cout << "knots:";
+	TAB(level+1); std::cout << "knots:";
 	LIST_OF_REALS::iterator ir;
 	for(ir=knots.begin();ir!=knots.end();ir++) {
-		cout << " " << (*ir);
+		std::cout << " " << (*ir);
 	}
-	cout << endl;
+	std::cout << std::endl;
 
-	TAB(level+1); cout << "knot_spec:" << Knot_type_string[knot_spec] << endl;
+	TAB(level+1); std::cout << "knot_spec:" << Knot_type_string[knot_spec] << std::endl;
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	BSplineCurve::Print(level+1);
 }
 
@@ -145,7 +145,7 @@ BSplineCurveWithKnots::Create(STEPWrapper *sw,SCLP23(Application_instance) *sse)
 		Factory::AddObject(object);
 
 		if (!object->Load(sw,sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -25,6 +24,11 @@
 #if !defined(OPENNURBS_SYSTEM_INC_)
 #define OPENNURBS_SYSTEM_INC_
 
+#if defined(TL_PURIFY_BUILD) || defined(RHINO_PURIFY_BUILD)
+#if !defined(ON_PURIFY_BUILD)
+#define ON_PURIFY_BUILD
+#endif
+#endif
 
 /* compiler choice */
 #if defined(_MSC_VER)
@@ -41,6 +45,16 @@
 
 #if _MSC_VER >= 1400
 #define ON_COMPILER_MSC1400
+
+// We are using /W4 wrning levels and disable
+// these warnings.  I would prefer to use
+// /W3 and enable the level 4 warnings we want,
+// but microsoft does not have a way to use pragmas
+// to enable specific warnings.
+
+#if defined(ON_COMPILING_OPENNURBS)
+#pragma warning(disable:4100) // C4100: 'identifier' : unreferenced formal parameter
+#endif
 
 #if !defined(_CRT_SECURE_NO_DEPRECATE)
 #define _CRT_SECURE_NO_DEPRECATE
@@ -101,9 +115,25 @@
 */
 #if defined(_WIN32) || defined(WIN32) || defined(_WIN64) || defined(WIN64)
 
+#if defined(_M_X64) && defined(WIN32) && defined(WIN64)
+// 23 August 2007 Dale Lear
+
+#if defined(_INC_WINDOWS)
+// The user has included Microsoft's windows.h before opennurbs.h,
+// and windows.h has nested includes that unconditionally define WIN32.
+// Just undo the damage here or everybody that includes opennurbs.h after
+// windows.h has to fight with this Microsoft bug.
+#undef WIN32
+#else
+#error do not define WIN32 for x64 builds
+#endif
+
+// NOTE _WIN32 is defined for any type of Windows build
+#endif
+
 /*
-// From windows.h openNURBS only needs definitions of BOOL, TRUE,
-// and FALSE, and a declarations of OutputDebugString(), and
+// From windows.h openNURBS only needs definitions of ON_BOOL32, true,
+// and false, and a declarations of OutputDebugString(), and
 // WideCharToMultiByte().  These 
 // defines disable the inclusion of most of the Windows garbage.
 */
@@ -112,6 +142,13 @@
 /* windows.h has not been read - read just what we need */
 #define WIN32_LEAN_AND_MEAN  /* Exclude rarely-used stuff from Windows headers */
 #include <windows.h>
+#endif
+
+#if defined(_M_X64) && defined(WIN32) && defined(WIN64)
+// 23 August 2007 Dale Lear
+//   windows.h unconditionally defines WIN32  This is a bug
+//   and the hope is this simple undef will let us continue.
+#undef WIN32
 #endif
 
 /*
@@ -130,13 +167,28 @@
 #endif
 
 #if defined(_MSC_VER)
-/* Microsoft's Visual C/C++ requires functions that use vargs to be declared with __cdecl */
-#define ON_VARG_CDECL __cdecl
-#endif
+/* 
+  Microsoft's Visual C/C++ requires some functions, including those that
+  use vargs to be declared with __cdecl 
+  Since this code must also compile with non-Micorosoft compilers, 
+  the ON_MSC_CDECL macro is used to insert __cdecl when needed.
+*/
+#define ON_MSC_CDECL __cdecl
 
 #endif
 
 #endif
+
+#endif
+
+// NOTE: Do not use rand_s() - it crashes Win2000.
+//
+//#if defined(_MSC_VER) && !defined(_CRT_RAND_S)
+//// In order to get high quality random numbers out of
+//// Microsoft Visual Studio, you have to define _CRT_RAND_S
+//// before including system header files.
+//#define _CRT_RAND_S
+//#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -144,11 +196,6 @@ extern "C" {
 
 #include <stdlib.h>
 #include <memory.h>
-#if defined(ON_COMPILER_XCODE)
-#include <malloc/malloc.h>
-#else
-//#include <malloc.h>
-#endif
 #include <string.h>
 #include <math.h>
 #include <stdio.h>
@@ -171,9 +218,6 @@ extern "C" {
 #include <sys\stat.h>
 #include <tchar.h>
 
-// alloca
-#include <malloc.h>
-
 // ON_CreateUuid calls Windows's ::UuidCreate() which
 // is declared in Rpcdce.h and defined in Rpcrt4.lib.
 #include <Rpc.h>
@@ -192,7 +236,7 @@ extern "C" {
 #ifdef __cplusplus
 } /* extern "C" */
 #endif
-
+  
 #if defined (cplusplus) || defined(_cplusplus) || defined(__cplusplus)
 // C++ system includes
 
@@ -204,24 +248,20 @@ extern "C" {
 
 #endif
 
-#if !defined(ON_VARG_CDECL)
-#define ON_VARG_CDECL
+#if !defined(ON_MSC_CDECL)
+#define ON_MSC_CDECL
 #endif
 
 #if !defined(ON_OS_WINDOWS)
 
-/* define wchar_t, BOOL, TRUE, FALSE, NULL */
+/* define wchar_t, true, false, NULL */
 
-#if !defined(BOOL) && !defined(_WINDEF_)
-typedef int BOOL;
+#if !defined(true)
+#define true true
 #endif
 
-#if !defined(TRUE)
-#define TRUE true
-#endif
-
-#if !defined(FALSE)
-#define FALSE false
+#if !defined(false)
+#define false false
 #endif
 
 #if !defined(NULL)
@@ -246,16 +286,6 @@ typedef unsigned short wchar_t;
 #endif
 
 
-#if defined(ON_PURIFY_BUILD)
-// ON_PURIFY_BUILD is defined in the DebugPurify and ReleasePurify
-// build configurations.  pure.h contains delclarations of the 
-// Purify API functions.  The file \src4\PurifyAPI\pure_api.c
-// contains the definitions.
-#pragma message(" --- OpenNURBS Purify build.")
-#include "../PurifyAPI/pure.h"
-#endif
-
-
 // As 64 bit compilers become more common, the definitions
 // of the next 6 typedefs may need to vary with compiler.
 // As much as possible, the size of runtime types is left 
@@ -265,13 +295,14 @@ typedef unsigned short wchar_t;
 // or 64 bits, the ON__INT16, ON__INT32, and ON__INT64
 // typedefs are used.
 
-
-#if defined(_WIN64) || defined(WIN64) || defined(__LP64__)
+#if defined(_M_X64) || defined(_WIN64) || defined(__LP64__)
 // 64 bit (8 byte) pointers
 #define ON_SIZEOF_POINTER 8
+#define ON_64BIT_POINTER
 #else
 // 32 bit (4 byte) pointers
 #define ON_SIZEOF_POINTER 4
+#define ON_32BIT_POINTER
 #endif
 
 // 16 bit integer
@@ -285,6 +316,11 @@ typedef int ON__INT32;
 
 // 32 bit unsigned integer
 typedef unsigned int ON__UINT32;
+
+// 32 bit boolean (true/false) value
+// When we can break the SDK, this will be replaced with "bool", which is 1 byte on windows.
+typedef int ON_BOOL32;
+
 
 #if defined(ON_COMPILER_GNU)
 
@@ -306,6 +342,62 @@ typedef __int64 ON__INT64;
 // 64 bit unsigned integer
 typedef unsigned __int64 ON__UINT64;
 
+#endif
+
+
+// ON_INT_PTR must be an integer type with sizeof(ON_INT_PTR) = sizeof(void*).
+#if 8 == ON_SIZEOF_POINTER
+
+#if defined(ON_COMPILER_GNU)
+typedef long long ON__INT_PTR;
+typedef unsigned long long ON__UINT_PTR;
+#else
+typedef __int64 ON__INT_PTR;
+typedef unsigned __int64 ON__UINT_PTR;
+#endif
+
+#elif 4 == ON_SIZEOF_POINTER
+
+typedef int ON__INT_PTR;
+typedef unsigned int ON__UINT_PTR;
+
+#else
+#error Update OpenNURBS to work with new pointer size.
+#endif
+
+
+
+// In some functions, performance is slightly increased 
+// when the endianess of the CPU is known at compile time.
+// If the endianness is not known, it is quickly detected
+// at runtime and all opennurbs code still works.
+//
+// If ON_LITTLE_ENDIAN is defined, then the code will
+// is compiled assuming little endian byte order.
+//
+// If ON_BIG_ENDIAN is defined, then the code will
+// is compiled assuming big endian byte order.
+//
+// If neither is defined, the endianess is determined at
+// runtime.
+//
+// If both are defined, a compile error occures.
+
+#if defined(ON_OS_WINDOWS) && defined(ON_COMPILER_MSC)
+
+#if defined(_M_X64) || defined(_M_IX86)
+#if !defined(ON_LITTLE_ENDIAN)
+#define ON_LITTLE_ENDIAN
+#endif
+#endif
+
+#endif
+
+
+
+
+#if defined(ON_LITTLE_ENDIAN) && defined(ON_BIG_ENDIAN)
+#error At most one of ON_LITTLE_ENDIAN and ON_BIG_ENDIAN can be defined.
 #endif
 
 

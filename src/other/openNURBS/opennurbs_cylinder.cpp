@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -222,12 +221,12 @@ int ON_Cylinder::GetNurbForm( ON_NurbsSurface& s ) const
     }
 
     if (    n0.m_dim != n1.m_dim 
-	 || n0.m_is_rat != n1.m_is_rat
-	 || n0.m_order != n1.m_order 
-	 || n0.m_cv_count != n1.m_cv_count )
+         || n0.m_is_rat != n1.m_is_rat
+         || n0.m_order != n1.m_order 
+         || n0.m_cv_count != n1.m_cv_count )
       return 0;
 
-    s.Create(3,TRUE, n0.m_order, 2, n0.m_cv_count, 2 );
+    s.Create(3,true, n0.m_order, 2, n0.m_cv_count, 2 );
     if ( height[0] <= height[1] ) {
       s.m_knot[1][0] = height[0];
       s.m_knot[1][1] = height[1]; 
@@ -272,7 +271,7 @@ ON_RevSurface* ON_Cylinder::RevSurfaceForm( ON_RevSurface* srf ) const
     pRevSurface->m_curve = line_curve;
     pRevSurface->m_axis.from = circle.plane.origin;
     pRevSurface->m_axis.to = circle.plane.origin + circle.plane.zaxis;
-    pRevSurface->m_bTransposed = FALSE;
+    pRevSurface->m_bTransposed = false;
     ON_Circle c0(circle);
     c0.Translate(height[0]*circle.plane.zaxis);
     ON_Circle c1(circle);
@@ -300,12 +299,12 @@ ON_Brep* ON_Cylinder::BrepForm( ON_Brep* brep ) const
     if ( !pBrep->Create(pRevSurface) ) 
     {
       if ( !brep )
-	delete pBrep;
+        delete pBrep;
       pBrep = 0;
       if (pRevSurface)
       {
-	delete pRevSurface;
-	pRevSurface = 0;
+        delete pRevSurface;
+        pRevSurface = 0;
       }
     }
     else 
@@ -313,53 +312,53 @@ ON_Brep* ON_Cylinder::BrepForm( ON_Brep* brep ) const
       // add caps
       for ( int capcount = 0; capcount < 2; capcount++ )
       {
-	// capcount = 0 for bottom cap and 1 for top cap
-	ON_Circle circle = CircleAt(height[capcount]);
-	if ( capcount == 0 )
-	  circle.Reverse();
-	double radius = circle.radius;
-	ON_NurbsSurface* pCapSurface = ON_NurbsSurfaceQuadrilateral( 
-	  circle.plane.PointAt(-radius,-radius),
-	  circle.plane.PointAt(+radius,-radius),
-	  circle.plane.PointAt(+radius,+radius),
-	  circle.plane.PointAt(-radius,+radius)
-	  );
-	pCapSurface->m_knot[0][0] = -fabs(radius);
-	pCapSurface->m_knot[0][1] =  fabs(radius);
-	pCapSurface->m_knot[1][0] = pCapSurface->m_knot[0][0];
-	pCapSurface->m_knot[1][1] = pCapSurface->m_knot[0][1];
-	circle.Create( ON_xy_plane, ON_origin, radius );
-	ON_NurbsCurve* c2 = new ON_NurbsCurve();
-	circle.GetNurbForm(*c2);
-	c2->ChangeDimension(2);
+        // capcount = 0 for bottom cap and 1 for top cap
+        ON_Circle circle = CircleAt(height[capcount]);
+        if ( capcount == 0 )
+          circle.Reverse();
+        double radius = circle.radius;
+        ON_NurbsSurface* pCapSurface = ON_NurbsSurfaceQuadrilateral( 
+          circle.plane.PointAt(-radius,-radius),
+          circle.plane.PointAt(+radius,-radius),
+          circle.plane.PointAt(+radius,+radius),
+          circle.plane.PointAt(-radius,+radius)
+          );
+        pCapSurface->m_knot[0][0] = -fabs(radius);
+        pCapSurface->m_knot[0][1] =  fabs(radius);
+        pCapSurface->m_knot[1][0] = pCapSurface->m_knot[0][0];
+        pCapSurface->m_knot[1][1] = pCapSurface->m_knot[0][1];
+        circle.Create( ON_xy_plane, ON_origin, radius );
+        ON_NurbsCurve* c2 = new ON_NurbsCurve();
+        circle.GetNurbForm(*c2);
+        c2->ChangeDimension(2);
 
-	pBrep->m_S.Append(pCapSurface);
-	pBrep->m_C2.Append(c2);
-	ON_BrepFace& cap = pBrep->NewFace( pBrep->m_S.Count()-1 );
-	ON_BrepLoop& loop = pBrep->NewLoop( ON_BrepLoop::outer, cap );
-	ON_BrepEdge& edge = pBrep->m_E[capcount?0:2];
-	ON_BrepTrim& trim = pBrep->NewTrim( edge, TRUE, loop, pBrep->m_C2.Count()-1 );
-	for ( int eti = 0; eti < edge.m_ti.Count(); eti++ )
-	  pBrep->m_T[ edge.m_ti[eti] ].m_type = ON_BrepTrim::mated;
-	trim.m_tolerance[0] = 0.0;
-	trim.m_tolerance[1] = 0.0;
-	trim.m_pbox.m_min.x = -radius;
-	trim.m_pbox.m_min.y = -radius;
-	trim.m_pbox.m_min.z = 0.0;
-	trim.m_pbox.m_max.x = radius;
-	trim.m_pbox.m_max.y = radius;
-	trim.m_pbox.m_max.z = 0.0;
-	loop.m_pbox = trim.m_pbox;
-	pBrep->SetTrimTypeFlags(trim);
-	pBrep->SetTrimIsoFlags(trim);
+        pBrep->m_S.Append(pCapSurface);
+        pBrep->m_C2.Append(c2);
+        ON_BrepFace& cap = pBrep->NewFace( pBrep->m_S.Count()-1 );
+        ON_BrepLoop& loop = pBrep->NewLoop( ON_BrepLoop::outer, cap );
+        ON_BrepEdge& edge = pBrep->m_E[capcount?0:2];
+        ON_BrepTrim& trim = pBrep->NewTrim( edge, true, loop, pBrep->m_C2.Count()-1 );
+        for ( int eti = 0; eti < edge.m_ti.Count(); eti++ )
+          pBrep->m_T[ edge.m_ti[eti] ].m_type = ON_BrepTrim::mated;
+        trim.m_tolerance[0] = 0.0;
+        trim.m_tolerance[1] = 0.0;
+        trim.m_pbox.m_min.x = -radius;
+        trim.m_pbox.m_min.y = -radius;
+        trim.m_pbox.m_min.z = 0.0;
+        trim.m_pbox.m_max.x = radius;
+        trim.m_pbox.m_max.y = radius;
+        trim.m_pbox.m_max.z = 0.0;
+        loop.m_pbox = trim.m_pbox;
+        pBrep->SetTrimTypeFlags(trim);
+        pBrep->SetTrimIsoFlags(trim);
       }
       if ( !pBrep->IsValid() )
       {
-	if (brep)
-	  brep->Destroy();
-	else
-	  delete pBrep;
-	pBrep = 0;
+        if (brep)
+          brep->Destroy();
+        else
+          delete pBrep;
+        pBrep = 0;
       }
     }
   }

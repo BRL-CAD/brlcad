@@ -577,7 +577,7 @@ nmg_uv_in_lu(const fastf_t u, const fastf_t v, const struct loopuse *lu)
 		continue;
 	    if ( uv1[0] <= u && uv2[0] <= u )
 		continue;
-	    if ( uv1[0] == uv2[0] )
+	    if ( NEAR_ZERO(uv1[0] - uv2[0], SMALL_FASTF) )
 	    {
 		if ( (uv1[1] <= v && uv2[1] >= v) ||
 		     (uv2[1] <= v && uv1[1] >= v) )

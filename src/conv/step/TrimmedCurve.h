@@ -40,13 +40,13 @@ protected:
 	Curve *basis_curve;
 	LIST_OF_TRIMMING_SELECT trim_1;
 	LIST_OF_TRIMMING_SELECT trim_2;
-	SCLBOOL_H(Bool) sense_agreement;
+	SCLBOOL_H(Boolean) sense_agreement;
 	Trimming_preference master_representation;
 
 public:
 	TrimmedCurve();
 	virtual ~TrimmedCurve();
-	TrimmedCurve(STEPWrapper *sw,int STEPid);
+	TrimmedCurve(STEPWrapper *sw,int step_id);
 	bool Load(STEPWrapper *sw,SCLP23(Application_instance) *sse);
 	virtual bool LoadONBrep(ON_Brep *brep);
 	virtual const double *PointAtEnd();

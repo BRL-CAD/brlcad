@@ -54,7 +54,7 @@ char	*input_basename;		/* basename of input file(s) */
 int	framenumber = 0;	/* starting frame number (default is 0) */
 int	fps = 8;		/* frames/second */
 
-void		showframe(register int i);
+void		showframe(int i);
 
 FBIO	*fbp;
 int	verbose = 0;
@@ -74,9 +74,9 @@ Usage: pixflip-fb [-h]\n\
 	[-o startframe] basename [file2 ... fileN]\n";
 
 int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int c;
+    int c;
 
     while ( (c = bu_getopt( argc, argv, "hs:w:n:S:W:N:o:f:p:rzv" )) != EOF )  {
 	switch ( c )  {
@@ -138,7 +138,7 @@ get_args(int argc, register char **argv)
 int
 main(int argc, char **argv)
 {
-    register int i;
+    int i;
     unsigned char	*obuf;
     int	scanbytes;		/* bytes per input image */
     int	islist = 0;		/* set if a list, zero if basename */
@@ -261,7 +261,7 @@ main(int argc, char **argv)
 }
 
 void
-showframe(register int i)
+showframe(int i)
 {
     if ( verbose )  {
 	fprintf(stderr, " %d", i);

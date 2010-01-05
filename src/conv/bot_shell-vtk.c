@@ -85,8 +85,8 @@ static char *usage="Usage:\n\
  */
 static int
 a_overlap( ap, pp, reg1, reg2, pheadp )
-    register struct application     *ap;
-    register struct partition       *pp;
+    struct application     *ap;
+    struct partition       *pp;
     struct region                   *reg1;
     struct region                   *reg2;
     struct partition                *pheadp;
@@ -97,7 +97,7 @@ a_overlap( ap, pp, reg1, reg2, pheadp )
 
 static int
 miss( ap )
-    register struct application *ap;
+    struct application *ap;
 {
     return(0);
 }

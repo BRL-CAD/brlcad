@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -36,20 +35,20 @@ public:
     initialized.
   Parameters:
     text_log - [in] if the object is not valid and text_log
-	is not NULL, then a brief englis description of the
-	reason the object is not valid is appened to the log.
-	The information appended to text_log is suitable for 
-	low-level debugging purposes by programmers and is 
-	not intended to be useful as a high level user 
-	interface tool.
+        is not NULL, then a brief englis description of the
+        reason the object is not valid is appened to the log.
+        The information appended to text_log is suitable for 
+        low-level debugging purposes by programmers and is 
+        not intended to be useful as a high level user 
+        interface tool.
   Returns:
     @untitled table
-    TRUE     object is valid
-    FALSE    object is invalid, uninitialized, etc.
+    true     object is valid
+    false    object is invalid, uninitialized, etc.
   Remarks:
     Overrides virtual ON_Object::IsValid
   */
-  BOOL IsValid( ON_TextLog* text_log = NULL ) const;
+  ON_BOOL32 IsValid( ON_TextLog* text_log = NULL ) const;
 
   /*
   Description:
@@ -84,7 +83,7 @@ public:
   ON_UUID UserDataClassUuid() const; 
 
   //////////
-  // Returns TRUE if the user data is anonymous.  This happens
+  // Returns true if the user data is anonymous.  This happens
   // when the user data class is not defined at the time the
   // user data is read from an archive.  For example, if a class
   // derived from ON_UserData is defined in application A
@@ -95,30 +94,30 @@ public:
   // by application B.  If application B saves the parent
   // object in an archive, the unknown user data is resaved in
   // a form that can be read by application A.
-  BOOL IsUnknownUserData() const;
+  ON_BOOL32 IsUnknownUserData() const;
 
   /*
   Parameters:
     description - [out] description of user data shown in 
-			object properties dump.
+                        object properties dump.
   Returns:
     True if user data class is ready.
   */
   virtual 
-  BOOL GetDescription( ON_wString& description );
+  ON_BOOL32 GetDescription( ON_wString& description );
 
   /*
   Description:
     User will persist in binary archives if Archive() returns
-    TRUE, m_application_uuid is not nil, and the virtual Read() 
+    true, m_application_uuid is not nil, and the virtual Read() 
     and Write() are functions are overridden.
 
   Returns:
-    TRUE if user data should persist in binary archives.
-    FALSE if the user data should not be save in binary archives.
+    true if user data should persist in binary archives.
+    false if the user data should not be save in binary archives.
 
   Remarks:
-    The default implementation returns FALSE.  If you override
+    The default implementation returns false.  If you override
     ON_UserData::Archive so that it returns true, then your 
     constructor must set m_application_uuid, you must override
     the virtual ON_Object::Read and ON_Object::Write functions and
@@ -130,17 +129,17 @@ public:
     HEADER FILE IN BEFORE ATTEMPTING TO USE ON_UserData.
   */
   virtual 
-  BOOL Archive() const; 
+  ON_BOOL32 Archive() const; 
 
   /*
   Description:
-    If Transform() return FALSE, then the userdata is destroyed when 
+    If Transform() return false, then the userdata is destroyed when 
     its parent object is transformed.  The default Transform() 
-    updates m_userdata_xform and returns TRUE. 
+    updates m_userdata_xform and returns true. 
     Carefully read the comments above m_userdata_xform
   */
   virtual 
-  BOOL Transform( const ON_Xform& ); 
+  ON_BOOL32 Transform( const ON_Xform& ); 
 
   /*
   Description:
@@ -207,28 +206,28 @@ public:
     initialized.
   Parameters:
     text_log - [in] if the object is not valid and text_log
-	is not NULL, then a brief englis description of the
-	reason the object is not valid is appened to the log.
-	The information appended to text_log is suitable for 
-	low-level debugging purposes by programmers and is 
-	not intended to be useful as a high level user 
-	interface tool.
+        is not NULL, then a brief englis description of the
+        reason the object is not valid is appened to the log.
+        The information appended to text_log is suitable for 
+        low-level debugging purposes by programmers and is 
+        not intended to be useful as a high level user 
+        interface tool.
   Returns:
     @untitled table
-    TRUE     object is valid
-    FALSE    object is invalid, uninitialized, etc.
+    true     object is valid
+    false    object is invalid, uninitialized, etc.
   Remarks:
     Overrides virtual ON_Object::IsValid
   */
-  BOOL IsValid( ON_TextLog* text_log = NULL ) const;
+  ON_BOOL32 IsValid( ON_TextLog* text_log = NULL ) const;
 
   void Dump( ON_TextLog& ) const;
-  BOOL Write( ON_BinaryArchive& ) const;
-  BOOL Read( ON_BinaryArchive& );
+  ON_BOOL32 Write( ON_BinaryArchive& ) const;
+  ON_BOOL32 Read( ON_BinaryArchive& );
 
   unsigned int SizeOf() const; // return amount of memory used by user data
-  BOOL GetDescription( ON_wString& ); // description of user data
-  BOOL Archive() const; 
+  ON_BOOL32 GetDescription( ON_wString& ); // description of user data
+  ON_BOOL32 Archive() const; 
 
   // Convert unknown user data to actual user data.  Useful if
   // definition of actual user data is dynamically linked after
@@ -262,16 +261,16 @@ public:
   unsigned int SizeOf() const;
 
   // override virtual ON_Object::Write function
-  BOOL Write(ON_BinaryArchive& binary_archive) const;
+  ON_BOOL32 Write(ON_BinaryArchive& binary_archive) const;
 
   // override virtual ON_Object::Read function
-  BOOL Read(ON_BinaryArchive& binary_archive);
+  ON_BOOL32 Read(ON_BinaryArchive& binary_archive);
 
   // override virtual ON_UserData::GetDescription function
-  BOOL GetDescription( ON_wString& description );
+  ON_BOOL32 GetDescription( ON_wString& description );
 
   // override virtual ON_UserData::Archive function
-  BOOL Archive() const; 
+  ON_BOOL32 Archive() const; 
 
   bool SetUserString( const wchar_t* key, const wchar_t* string_value );
 
@@ -321,7 +320,7 @@ public:
   */
   bool MoveUserDataTo(  const ON_Object& source_object, bool bAppend );
 
-  BOOL IsValid( ON_TextLog* text_log = NULL ) const;
+  ON_BOOL32 IsValid( ON_TextLog* text_log = NULL ) const;
 };
 
 #endif

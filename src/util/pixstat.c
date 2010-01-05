@@ -80,7 +80,7 @@ main(int argc, char **argv)
     int	i, n, num;
     double	d;
     long	num_pixels;
-    register unsigned char *bp;
+    unsigned char *bp;
     FILE	*fp;
 
     /* check for verbose flag */

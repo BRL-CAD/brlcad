@@ -87,9 +87,9 @@ Usage: pix3filter [-f<type>] [-v] [-d#] [-o#]\n\
 	file.pix.n | file.pix1 file.pix2 file.pix3  > file.pix\n";
 
 int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int c;
+    int c;
 
     while ( (c = bu_getopt( argc, argv, "vf:d:o:w:n:s:" )) != EOF )  {
 	switch ( c )  {

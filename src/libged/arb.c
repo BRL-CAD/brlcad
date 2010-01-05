@@ -37,7 +37,7 @@
 int
 ged_arb(struct ged *gedp, int argc, const char *argv[])
 {
-    register struct directory *dp;
+    struct directory *dp;
     struct rt_db_internal	internal;
     struct rt_arb_internal	*arb;
     int i, j;

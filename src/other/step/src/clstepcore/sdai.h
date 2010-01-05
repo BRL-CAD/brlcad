@@ -394,9 +394,9 @@ AGGREGATE TYPES
 ******************************************************************************/
 
 #ifdef __OSTORE__
-SCLP23(BOOL) *create_BOOL(os_database *db);
+SCLP23(BOOLEAN) *create_BOOLEAN(os_database *db);
 #else
-inline SCLP23(BOOL) *create_BOOL() { return new SCLP23(BOOL) ; }
+inline SCLP23(BOOLEAN) *create_BOOLEAN() { return new SCLP23(BOOLEAN) ; }
 #endif
 
 #ifdef __OSTORE__

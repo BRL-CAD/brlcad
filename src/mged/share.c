@@ -99,7 +99,7 @@ void free_all_resources(struct dm_list *dlp);
 int
 f_share(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    register int uflag = 0;		/* unshare flag */
+    int uflag = 0;		/* unshare flag */
     struct dm_list *dlp1 = (struct dm_list *)NULL;
     struct dm_list *dlp2 = (struct dm_list *)NULL;
     struct bu_vls vls;

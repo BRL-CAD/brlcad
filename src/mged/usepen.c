@@ -119,7 +119,7 @@ f_mouse(
 	 * divert this mouse press.
 	 */
 	if ( (xpos >= MENUXLIM) || scroll_active )  {
-	    register int i;
+	    int i;
 
 	    if (scroll_active)
 		ypos = scroll_y;
@@ -146,7 +146,7 @@ f_mouse(
 	 * divert this mouse press for menu purposes.
 	 */
 	if ( xpos < MENUXLIM )  {
-	    register int i;
+	    int i;
 
 	    if ( (i = mmenu_select( ypos, 1 )) < 0 )  {
 		Tcl_AppendResult(interp,
@@ -275,10 +275,10 @@ f_mouse(
  */
 static void
 illuminate(int y) {
-    register struct ged_display_list *gdlp;
-    register struct ged_display_list *next_gdlp;
-    register int count;
-    register struct solid *sp;
+    struct ged_display_list *gdlp;
+    struct ged_display_list *next_gdlp;
+    int count;
+    struct solid *sp;
 
     /*
      * Divide the mouse into 'ndrawn' VERTICAL zones, and use the
@@ -323,8 +323,8 @@ f_aip(
     int argc,
     char **argv)
 {
-    register struct ged_display_list *gdlp;
-    register struct solid *sp;
+    struct ged_display_list *gdlp;
+    struct solid *sp;
 
     if (argc < 1 || 2 < argc) {
 	struct bu_vls vls;
@@ -499,11 +499,11 @@ f_matpick(
     int	argc,
     char	**argv)
 {
-    register struct ged_display_list *gdlp;
-    register struct ged_display_list *next_gdlp;
-    register struct solid	*sp;
+    struct ged_display_list *gdlp;
+    struct ged_display_list *next_gdlp;
+    struct solid	*sp;
     char			*cp;
-    register int		j;
+    int		j;
     int			illum_only = 0;
 
     CHECK_DBI_NULL;

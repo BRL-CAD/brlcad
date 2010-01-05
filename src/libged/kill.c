@@ -36,8 +36,8 @@
 int
 ged_kill(struct ged *gedp, int argc, const char *argv[])
 {
-    register struct directory *dp;
-    register int i;
+    struct directory *dp;
+    int i;
     int c;
     int	is_phony;
     int	verbose = LOOKUP_NOISY;

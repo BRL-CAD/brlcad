@@ -65,7 +65,7 @@ gridToFb( gx, gy, fxp, fyp )
 void
 paintGridFb()
 {
-    register int	fx, fy;
+    int	fx, fy;
     int		fxbeg, fybeg;
     int		fxfin, fyfin;
     int		fxorg, fyorg;
@@ -110,14 +110,14 @@ paintGridFb()
 
 void
 paintCellFb( ap, pixpaint, pixexpendable )
-    register struct application	*ap;
+    struct application	*ap;
     unsigned char			*pixpaint;
     unsigned char			*pixexpendable;
 {
     int		gx, gy;
-    register int	gyfin, gxfin;
-    register int	gxorg, gyorg;
-    register int	x, y;
+    int	gyfin, gxfin;
+    int	gxorg, gyorg;
+    int	x, y;
     int		cnt;
 #if DEBUG_CELLFB
     brst_log( "paintCellFb: expendable {%d,%d,%d}\n",
@@ -173,7 +173,7 @@ paintCellFb( ap, pixpaint, pixexpendable )
 
 void
 paintSpallFb( ap )
-    register struct application	*ap;
+    struct application	*ap;
 {
     unsigned char pixel[3];
     int x, y;

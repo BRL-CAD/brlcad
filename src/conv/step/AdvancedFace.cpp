@@ -40,9 +40,9 @@ AdvancedFace::AdvancedFace() {
 	id = 0;
 }
 
-AdvancedFace::AdvancedFace(STEPWrapper *sw, int STEPid) {
+AdvancedFace::AdvancedFace(STEPWrapper *sw, int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 AdvancedFace::~AdvancedFace() {
@@ -54,7 +54,7 @@ AdvancedFace::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 	id = sse->STEPfile_id;
 
 	if ( !FaceSurface::Load(sw,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::FaceSurface." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::FaceSurface." << std::endl;
 		return false;
 	}
 	return true;
@@ -62,10 +62,10 @@ AdvancedFace::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 
 void
 AdvancedFace::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << name << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	FaceSurface::Print(level+1);
 }
 
@@ -78,7 +78,7 @@ AdvancedFace::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}
@@ -92,7 +92,7 @@ bool
 AdvancedFace::LoadONBrep(ON_Brep *brep)
 {
 	if (!FaceSurface::LoadONBrep(brep)) {
-		cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << endl;
+		std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
 		return false;
 	}
 	return true;

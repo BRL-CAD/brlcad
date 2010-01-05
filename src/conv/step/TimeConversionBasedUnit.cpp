@@ -41,9 +41,9 @@ TimeConversionBasedUnit::TimeConversionBasedUnit() {
 	id = 0;
 }
 
-TimeConversionBasedUnit::TimeConversionBasedUnit(STEPWrapper *sw,int STEPid) {
+TimeConversionBasedUnit::TimeConversionBasedUnit(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 TimeConversionBasedUnit::~TimeConversionBasedUnit() {
@@ -57,11 +57,11 @@ TimeConversionBasedUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse)
 
 	// load base class attributes
 	if ( !TimeUnit::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::Unit." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 		return false;
 	}
 	if ( !ConversionBasedUnit::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::Unit." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 		return false;
 	}
 
@@ -70,10 +70,10 @@ TimeConversionBasedUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse)
 
 void
 TimeConversionBasedUnit::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	TimeUnit::Print(level+1);
 	ConversionBasedUnit::Print(level+1);
 
@@ -87,7 +87,7 @@ TimeConversionBasedUnit::Create(STEPWrapper *sw, SCLP23(Application_instance) *s
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

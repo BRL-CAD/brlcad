@@ -34,7 +34,7 @@
  * R T _ T G C _ B R E P
  */
 extern "C" void
-rt_tgc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
+rt_tgc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol __attribute__((unused)))
 {
     struct rt_tgc_internal *eip;
 
@@ -157,7 +157,7 @@ rt_tgc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     topedge.m_tolerance = 0.0;
     int tei = (*b)->m_E.Count() - 1;
 
-    ON_BrepFace *sidefce = (*b)->NewRuledFace((*b)->m_E[bei], false, (*b)->m_E[tei], false); 
+    (*b)->NewRuledFace((*b)->m_E[bei], false, (*b)->m_E[tei], false); 
 }
 
 

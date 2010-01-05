@@ -45,12 +45,12 @@ static char *Usage = "usage: bwhist [-v] [file.bw]\n";
 int
 main(int argc, char **argv)
 {
-    register int i;
+    int i;
     int	n;
-    register long	max;
+    long	max;
     static double scale;
     unsigned char buf[512];
-    register unsigned char *bp;
+    unsigned char *bp;
     unsigned char white[3*512];
     FILE *fp;
 
@@ -100,7 +100,7 @@ main(int argc, char **argv)
 
     /* Display them */
     for ( i = 0; i < 256; i++ ) {
-	register int	value;
+	int	value;
 	value = bin[i]*scale;
 	if ( value == 0 && bin[i] != 0 ) value = 1;
 	fb_write( fbp, 0, 2*i, white, value );

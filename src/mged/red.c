@@ -1347,7 +1347,7 @@ int save_comb(struct directory *dpold)
 {
     /* Save a combination under a temporory name */
 
-    register struct directory	*dp;
+    struct directory	*dp;
     struct rt_db_internal		intern;
 
     if (dbip == DBI_NULL)

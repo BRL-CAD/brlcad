@@ -68,11 +68,19 @@
 
 
 #ifdef USE_PROTOTYPES
-HIDDEN void	Monochrome( unsigned char *bitbuf, unsigned char *bytebuf, int width, int height, int method);
-HIDDEN int	X_do_event( FBIO	*ifp );
+HIDDEN void Monochrome(unsigned char *bitbuf, unsigned char *bytebuf, int width, int height, int method);
+HIDDEN int X_do_event(FBIO *ifp);
+HIDDEN void genmap(unsigned char *rmap, unsigned char *gmap, unsigned char *bmap);
+
+
+HIDDEN int X_scanwrite(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count, int save);
+HIDDEN int X_wmap(FBIO *ifp, const ColorMap *cmp);
 #else
 HIDDEN void	Monochrome();
 HIDDEN int	X_do_event();
+HIDDEN void	genmap();
+HIDDEN int X_scanwrite();
+HIDDEN int X_wmap();
 #endif
 /*
  * Per window state information.

@@ -446,13 +446,7 @@ rt_comb_export5(
  *	-1	FAIL
  */
 int
-rt_comb_import5(
-    struct rt_db_internal	*ip,
-    const struct bu_external *ep,
-    const mat_t		mat,
-    const struct db_i	*dbip,
-    struct resource		*resp,
-    const int		minor_type __attribute__((unused)))
+rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp)
 {
     struct rt_comb_internal	*comb;
     unsigned char	*cp;

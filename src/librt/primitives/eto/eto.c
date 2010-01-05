@@ -139,12 +139,12 @@ struct eto_specific {
 
 
 const struct bu_structparse rt_eto_parse[] = {
-    { "%f", 3, "V",   bu_offsetof(struct rt_eto_internal, eto_V[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "N",   bu_offsetof(struct rt_eto_internal, eto_N[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "C",   bu_offsetof(struct rt_eto_internal, eto_C[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 1, "r",   bu_offsetof(struct rt_eto_internal, eto_r),    BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 1, "r_d", bu_offsetof(struct rt_eto_internal, eto_rd),   BU_STRUCTPARSE_FUNC_NULL },
-    { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
+    { "%f", 3, "V",   bu_offsetof(struct rt_eto_internal, eto_V[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "N",   bu_offsetof(struct rt_eto_internal, eto_N[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "C",   bu_offsetof(struct rt_eto_internal, eto_C[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 1, "r",   bu_offsetof(struct rt_eto_internal, eto_r),    BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 1, "r_d", bu_offsetof(struct rt_eto_internal, eto_rd),   BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
@@ -166,12 +166,14 @@ const struct bu_structparse rt_eto_parse[] = {
 int
 rt_eto_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
-    register struct eto_specific *eto;
+    struct eto_specific *eto;
 
     vect_t P, w1;	/* for RPP calculation */
     vect_t Au, Bu, Cu, Nu;
     fastf_t ch, cv, dh, f, phi;
     struct rt_eto_internal *tip;
+
+    if (rtip) RT_CK_RTI(rtip);
 
     tip = (struct rt_eto_internal *)ip->idb_ptr;
     RT_ETO_CK_MAGIC(tip);
@@ -270,9 +272,9 @@ rt_eto_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
  * R T _ E T O _ P R I N T
  */
 void
-rt_eto_print(register const struct soltab *stp)
+rt_eto_print(const struct soltab *stp)
 {
-    register const struct eto_specific *eto =
+    const struct eto_specific *eto =
 	(struct eto_specific *)stp->st_specific;
 
     VPRINT("V", eto->eto_V);
@@ -319,18 +321,18 @@ rt_eto_print(register const struct soltab *stp)
  * >0 HIT
  */
 int
-rt_eto_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
+rt_eto_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
-    register struct eto_specific *eto =
+    struct eto_specific *eto =
 	(struct eto_specific *)stp->st_specific;
-    register struct seg *segp;
+    struct seg *segp;
     vect_t dprime;		/* D' */
     vect_t pprime;		/* P' */
     vect_t work;		/* temporary vector */
     bn_poly_t C;		/* The final equation */
     bn_complex_t val[4];	/* The complex roots */
     double k[4];		/* The real roots */
-    register int i;
+    int i;
     int j;
     vect_t cor_pprime;	/* new ray origin */
     fastf_t cor_proj;
@@ -487,8 +489,8 @@ rt_eto_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	}
 	    break;
 	case 4: {
-	    register short n;
-	    register short lim;
+	    short n;
+	    short lim;
 
 	    /* Inline rt_pt_sort().  Sorts k[] into descending order. */
 	    for (lim = i-1; lim > 0; lim--) {
@@ -536,23 +538,6 @@ rt_eto_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 }
 
 
-#define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;
-/**
- * R T _ E T O _ V S H O T
- *
- * This is the Becker vector version
- */
-void
-rt_eto_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
-    /* An array of solid pointers */
-    /* An array of ray pointers */
-    /* array of segs (results returned) */
-    /* Number of ray/object pairs */
-
-{
-}
-
-
 /**
  * R T _ E T O _ N O R M
  *
@@ -575,9 +560,9 @@ rt_eto_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
  * (df/dx, df/dy, df/dz)
  */
 void
-rt_eto_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
+rt_eto_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
-    register struct eto_specific *eto =
+    struct eto_specific *eto =
 	(struct eto_specific *)stp->st_specific;
     fastf_t sqrt_x2y2, efact, ffact, xcomp, ycomp, zcomp;
     vect_t normp;
@@ -611,11 +596,11 @@ rt_eto_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
  * Return the curvature of the eto.
  */
 void
-rt_eto_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
+rt_eto_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
     fastf_t a, b, ch, cv, dh, dv, k_circ, k_ell, phi, rad, xp,
 	yp1, yp2, work;
-    register struct eto_specific *eto =
+    struct eto_specific *eto =
 	(struct eto_specific *)stp->st_specific;
     vect_t Cp, Dp, Hit_Ell, Nu, Radius, Ru;
 
@@ -677,13 +662,15 @@ rt_eto_curve(register struct curvature *cvp, register struct hit *hitp, struct s
  * R T _ E T O _ U V
  */
 void
-rt_eto_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
+rt_eto_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
     fastf_t horz, theta_u, theta_v, vert;
     vect_t Hit_Ell, Nu, Radius, Ru;
 
-    register struct eto_specific *eto =
+    struct eto_specific *eto =
 	(struct eto_specific *)stp->st_specific;
+
+    if (ap) RT_CK_APPLICATION(ap);
 
     /* take elliptical slice of eto at hit point */
     VSET(Ru, hitp->hit_vpriv[X], hitp->hit_vpriv[Y], 0.);
@@ -722,7 +709,7 @@ rt_eto_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 void
 rt_eto_free(struct soltab *stp)
 {
-    register struct eto_specific *eto =
+    struct eto_specific *eto =
 	(struct eto_specific *)stp->st_specific;
 
     bu_free((char *)eto, "eto_specific");
@@ -748,7 +735,7 @@ rt_eto_class(void)
  * eto_rd Semiminor axis length (scalar) of eto cross section
  */
 int
-rt_eto_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_eto_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol __attribute__((unused)))
 {
     fastf_t a, b;	/* axis lengths of ellipse */
     fastf_t ang, ch, cv, dh, dv, ntol, dtol, phi, theta;
@@ -1205,10 +1192,12 @@ rt_eto_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
  * Apply modeling transformations at the same time.
  */
 int
-rt_eto_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_eto_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_eto_internal *tip;
     union record *rp;
+
+    if (dbip) RT_CK_DBI(dbip);
 
     BU_CK_EXTERNAL(ep);
     rp = (union record *)ep->ext_buf;
@@ -1254,6 +1243,8 @@ rt_eto_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     struct rt_eto_internal *tip;
     union record *eto;
 
+    if (dbip) RT_CK_DBI(dbip);
+
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_ETO) return(-1);
     tip = (struct rt_eto_internal *)ip->idb_ptr;
@@ -1298,11 +1289,12 @@ rt_eto_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
  * Apply modeling transformations at the same time.
  */
 int
-rt_eto_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_eto_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_eto_internal *tip;
     fastf_t vec[11];
 
+    if (dbip) RT_CK_DBI(dbip);
     BU_CK_EXTERNAL(ep);
 
     BU_ASSERT_LONG(ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * 11);
@@ -1346,6 +1338,8 @@ rt_eto_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 {
     struct rt_eto_internal *tip;
     fastf_t vec[11];
+
+    if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_ETO) return(-1);
@@ -1393,7 +1387,7 @@ rt_eto_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 int
 rt_eto_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
-    register struct rt_eto_internal *tip =
+    struct rt_eto_internal *tip =
 	(struct rt_eto_internal *)ip->idb_ptr;
     char buf[256];
 
@@ -1419,13 +1413,16 @@ rt_eto_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 	    INTCLAMP(MAGNITUDE(tip->eto_C) * mm2local));
     bu_vls_strcat(str, buf);
 
+    if (!verbose)
+	return 0;
+
     sprintf(buf, "\tr=%g\n", INTCLAMP(tip->eto_r * mm2local));
     bu_vls_strcat(str, buf);
 
     sprintf(buf, "\td=%g\n", INTCLAMP(tip->eto_rd * mm2local));
     bu_vls_strcat(str, buf);
 
-    return(0);
+    return 0;
 }
 
 
@@ -1435,12 +1432,11 @@ rt_eto_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
  * Free the storage associated with the rt_db_internal version of this solid.
  */
 void
-rt_eto_ifree(struct rt_db_internal *ip, struct resource *resp)
+rt_eto_ifree(struct rt_db_internal *ip)
 {
-    register struct rt_eto_internal *tip;
+    struct rt_eto_internal *tip;
 
     RT_CK_DB_INTERNAL(ip);
-    if (!resp) resp = &rt_uniresource;
 
     tip = (struct rt_eto_internal *)ip->idb_ptr;
     RT_ETO_CK_MAGIC(tip);
@@ -1455,8 +1451,11 @@ rt_eto_ifree(struct rt_db_internal *ip, struct resource *resp)
  *
  */
 int
-rt_eto_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
+rt_eto_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 {
+    if (!ps) return(0);
+    if (ip) RT_CK_DB_INTERNAL(ip);
+
     return(0);			/* OK */
 }
 

@@ -59,7 +59,6 @@ new names should be listed for reference.
 mged
 	make_bb -> bb [deprecated 7.16]
 
-
 7.14
 ----
 include/dm_color.h
@@ -127,6 +126,8 @@ include/raytrace.h
 	RT_HIT_NORM -> RT_HIT_NORMAL [deprecated pre-7.0]
 	struct hit.hit_point -> RT_HIT_POINT [deprecated pre-7.0]
 	struct hit.hit_normal -> RT_HIT_NORMAL [deprecated pre-7.0]
+hf primitive
+	hf -> dsp [deprecated 6.0]
 
 
 ************
@@ -218,7 +219,6 @@ src/librt/wdb_obj.c -> src/librt/db_obj.c
 mged
 	dbbinary -> binary [rename]
 
-
 7.10.4
 ------
 include/msr.h [pre 7.0]
@@ -236,3 +236,10 @@ include/raytrace.h
 	rt_version -> rt_version() [private]
 include/[library].h (several)
 	[library]_version -> [library]_version() [private]
+
+
+***********************************
+* MINIMALLY IMPACTING API CHANGES *
+***********************************
+s/rt_db_free_internal(\([^,]+\),[^)]*)/rt_db_free_internal(\1)/g
+	struct resource pointer parameter removed [7.14]

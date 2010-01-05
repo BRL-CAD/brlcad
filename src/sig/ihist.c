@@ -40,7 +40,7 @@ Usage: ihist [-v] < shorts\n";
 
 int main(int argc, char **argv)
 {
-    register long i, bit;
+    long i, bit;
     int	n;
     int	max, min;
     long	num, levels=0;

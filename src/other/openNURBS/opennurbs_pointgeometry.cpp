@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -18,7 +17,7 @@
 
 ON_OBJECT_IMPLEMENT( ON_Point, ON_Geometry, "C3101A1D-F157-11d3-BFE7-0010830122F0" );
 
-BOOL ON_Point::IsValid( ON_TextLog* text_log ) const 
+ON_BOOL32 ON_Point::IsValid( ON_TextLog* text_log ) const 
 {
   bool rc = point.IsValid();
   if ( !rc && text_log )
@@ -35,18 +34,18 @@ void ON_Point::Dump( ON_TextLog& dump ) const
   dump.Print("\n");
 }
 
-BOOL ON_Point::Write( ON_BinaryArchive& file ) const
+ON_BOOL32 ON_Point::Write( ON_BinaryArchive& file ) const
 {
-  BOOL rc = file.Write3dmChunkVersion(1,0);
+  ON_BOOL32 rc = file.Write3dmChunkVersion(1,0);
   if (rc) rc = file.WritePoint( point );
   return rc;
 }
 
-BOOL ON_Point::Read( ON_BinaryArchive& file )
+ON_BOOL32 ON_Point::Read( ON_BinaryArchive& file )
 {
   int major_version = 0;
   int minor_version = 0;
-  BOOL rc = file.Read3dmChunkVersion(&major_version,&minor_version);
+  ON_BOOL32 rc = file.Read3dmChunkVersion(&major_version,&minor_version);
   if (rc && major_version==1) {
     // common to all 1.x versions
     rc = file.ReadPoint(point);
@@ -64,7 +63,7 @@ int ON_Point::Dimension() const
   return 3;
 }
 
-BOOL ON_Point::GetBBox( double* boxmin, double* boxmax, BOOL bGrowBox ) const
+ON_BOOL32 ON_Point::GetBBox( double* boxmin, double* boxmax, ON_BOOL32 bGrowBox ) const
 {
   return ON_GetPointListBoundingBox( 3, 0, 1, 3, &point.x, boxmin, boxmax, bGrowBox?true:false );
 }
@@ -79,13 +78,13 @@ bool ON_Point::MakeDeformable()
   return true;
 }
 
-BOOL ON_Point::Transform( const ON_Xform& xform )
+ON_BOOL32 ON_Point::Transform( const ON_Xform& xform )
 {
   TransformUserData(xform);
   return ON_TransformPointList(3,0,1,3,&point.x,xform);
 }
 
-BOOL ON_Point::SwapCoordinates( int i, int j )
+ON_BOOL32 ON_Point::SwapCoordinates( int i, int j )
 {
   return ON_SwapPointListCoordinates( 1, 3, &point.x, i, j );
 }

@@ -60,7 +60,7 @@ static int numreg;
 static int numsol;
 static FILE *tabptr;
 
-static int ged_check(register char *a, register char *b);
+static int ged_check(char *a, char *b);
 static int ged_sol_number(matp_t matrix, char *name, int *old);
 static void ged_new_tables(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, fastf_t *old_mat, int flag);
 
@@ -234,10 +234,10 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
 }
 
 static int
-ged_check(register char *a, register char *b)
+ged_check(char *a, char *b)
 {
 
-    register int	c= sizeof( struct identt );
+    int	c= sizeof( struct identt );
 
     while ( c-- )	if ( *a++ != *b++ ) return( 0 );	/* no match */
     return( 1 );	/* match */
@@ -308,14 +308,14 @@ ged_new_tables(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path,
 	db_non_union_push( comb->tree, &rt_uniresource );
 	if ( db_ck_v4gift_tree( comb->tree ) < 0 ) {
 	    bu_vls_printf(&gedp->ged_result_str, "Cannot flatten tree for editing\n");
-	    intern.idb_meth->ft_ifree( &intern, &rt_uniresource );
+	    intern.idb_meth->ft_ifree(&intern);
 	    return;
 	}
     }
 
     if (!comb->tree) {
 	/* empty combination */
-	intern.idb_meth->ft_ifree( &intern, &rt_uniresource );
+	intern.idb_meth->ft_ifree(&intern);
 	return;
     }
 
@@ -416,7 +416,7 @@ ged_new_tables(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path,
 		bu_vls_free( &tmp_vls );
 	    }
 	    if ( nsoltemp && (sol_dp->d_flags & DIR_SOLID) )
-		rt_db_free_internal( &sol_intern, &rt_uniresource );
+		rt_db_free_internal(&sol_intern);
 	}
     } else if ( dp->d_flags & DIR_COMB ) {
 	int cur_length;
@@ -450,7 +450,7 @@ ged_new_tables(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path,
 
  out:
     bu_free( (char *)tree_list, "new_tables: tree_list" );
-    intern.idb_meth->ft_ifree( &intern, &rt_uniresource );
+    intern.idb_meth->ft_ifree(&intern);
     return;
 }
 

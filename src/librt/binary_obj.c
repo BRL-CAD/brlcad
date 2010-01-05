@@ -51,24 +51,15 @@
 #include "raytrace.h"
 #include "wdb.h"
 
-#ifndef __LONG_MAX__
-#  define __LONG_MAX__ 2147483647L
-#endif
-
 
 int
-rt_mk_binunif(struct rt_wdb *wdbp, const char *obj_name, const char *file_name, unsigned int minor_type, long max_count)
+rt_mk_binunif(struct rt_wdb *wdbp, const char *obj_name, const char *file_name, unsigned int minor_type, size_t max_count)
 {
     struct stat st;
     unsigned int major_type=DB5_MAJORTYPE_BINARY_UNIF;
-#if defined(_WIN32) && !defined(__CYGWIN__)
-    __int64 num_items=-1;
-    __int64 obj_length=-1;
-#else
-    long long num_items=-1;
-    long long obj_length=-1;
-#endif
-    int item_length=0;
+    size_t num_items=-1;
+    size_t obj_length=-1;
+    size_t item_length=0;
     struct bu_mapped_file *bu_fd;
     struct rt_binunif_internal *bip;
     struct rt_db_internal intern;
@@ -98,7 +89,11 @@ rt_mk_binunif(struct rt_wdb *wdbp, const char *obj_name, const char *file_name, 
     bip->magic = RT_BINUNIF_INTERNAL_MAGIC;
     bip->type = minor_type;
 
-    num_items = (long)(st.st_size / item_length);
+    if (item_length != 0) {
+	num_items = (size_t)(st.st_size / item_length);
+    } else {
+	num_items = 0;
+    }
 
     /* maybe only a partial file read */
     if (max_count > 0 && max_count < num_items) {
@@ -106,10 +101,8 @@ rt_mk_binunif(struct rt_wdb *wdbp, const char *obj_name, const char *file_name, 
     }
 
     obj_length = num_items * item_length;
-
-    if (obj_length > __LONG_MAX__) {
-	bu_log("Unable to create binary objects larger than %ld bytes\n", __LONG_MAX__);
-	return -1;
+    if (obj_length < 1) {
+	obj_length = 1;
     }
 
     /* just copy the bytes */
@@ -129,11 +122,11 @@ rt_mk_binunif(struct rt_wdb *wdbp, const char *obj_name, const char *file_name, 
     /* create body portion of external form */
     ret = -1;
     if (intern.idb_meth->ft_export5) {
-	ret = intern.idb_meth->ft_export5(&body, &intern, 1.0, wdbp->dbip, wdbp->wdb_resp, intern.idb_minor_type);
+	ret = intern.idb_meth->ft_export5(&body, &intern, 1.0, wdbp->dbip, wdbp->wdb_resp);
     }
     if (ret != 0) {
 	bu_log( "Error while attemptimg to export %s\n", obj_name );
-	rt_db_free_internal( &intern, wdbp->wdb_resp );
+	rt_db_free_internal(&intern);
 	return -1;
     }
 
@@ -143,7 +136,7 @@ rt_mk_binunif(struct rt_wdb *wdbp, const char *obj_name, const char *file_name, 
 			intern.idb_major_type, intern.idb_minor_type,
 			DB5_ZZZ_UNCOMPRESSED, DB5_ZZZ_UNCOMPRESSED );
 
-    rt_db_free_internal( &intern, wdbp->wdb_resp );
+    rt_db_free_internal(&intern);
     bu_free_external( &body );
 
     /* make sure the database directory is initialized */

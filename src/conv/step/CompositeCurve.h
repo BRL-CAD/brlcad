@@ -43,7 +43,7 @@ protected:
 public:
 	CompositeCurve();
 	virtual ~CompositeCurve();
-	CompositeCurve(STEPWrapper *sw,int STEPid);
+	CompositeCurve(STEPWrapper *sw,int step_id);
 	bool Load(STEPWrapper *sw,SCLP23(Application_instance) *sse);
 	virtual const double *PointAtEnd();
 	virtual const double *PointAtStart();

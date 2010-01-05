@@ -26,23 +26,35 @@
 #ifndef BRLCADWRAPPER_H_
 #define BRLCADWRAPPER_H_
 
+#include "common.h"
+
+#include <string>
+
+extern "C" {
+/* brlcad headers */
+#include <bu.h>
+#include <wdb.h>
+}
+
+
 class ON_Brep;
 
 class BRLCADWrapper {
-private:
-	string filename;
-	struct rt_wdb *outfp;
-	static int sol_reg_cnt;
+ private:
+    std::string filename;
+    struct rt_wdb *outfp;
+    static int sol_reg_cnt;
 
-public:
-	BRLCADWrapper();
-	virtual ~BRLCADWrapper();
-	bool OpenFile( const char * flnm);
-	bool WriteHeader();
-	bool WriteSphere(double *center, double radius);
-	bool WriteBrep(string name,ON_Brep *brep);
-	bool Close();
+ public:
+    BRLCADWrapper();
+    virtual ~BRLCADWrapper();
+    bool OpenFile(const char *filename);
+    bool WriteHeader();
+    bool WriteSphere(double *center, double radius);
+    bool WriteBrep(std::string name, ON_Brep *brep);
+    bool Close();
 };
+
 
 #endif /* BRLCADWRAPPER_H_ */
 

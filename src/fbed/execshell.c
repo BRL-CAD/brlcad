@@ -56,7 +56,7 @@
 int
 exec_Shell(char **args)
 {
-    register int child_pid;
+    int child_pid;
 
     if ( args[0] == NULL )
     {
@@ -81,9 +81,9 @@ exec_Shell(char **args)
 	    bu_exit( 1, NULL );
 	default :
 	{
-	    register int pid;
+	    int pid;
 	    int stat_loc;
-	    register void (*istat)(), (*qstat)(), (*cstat)();
+	    void (*istat)(), (*qstat)(), (*cstat)();
 	    istat = signal(SIGINT, SIG_IGN);
 	    qstat = signal(SIGQUIT, SIG_IGN);
 	    cstat = signal(SIGCLD, SIG_DFL);

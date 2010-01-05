@@ -40,7 +40,7 @@ private:
 protected:
 	Surface *face_geometry;
 #ifdef YAYA
-	SCLBOOL_H(Bool) same_sense;
+	SCLBOOL_H(Boolean) same_sense;
 #else
 	int same_sense;
 #endif
@@ -48,7 +48,7 @@ protected:
 public:
 	FaceSurface();
 	virtual ~FaceSurface();
-	FaceSurface(STEPWrapper *sw, int STEPid);
+	FaceSurface(STEPWrapper *sw,int step_id);
 	void AddFace(ON_Brep *brep);
 	bool Load(STEPWrapper *sw, SCLP23(Application_instance) *sse);
 	virtual bool LoadONBrep(ON_Brep *brep);

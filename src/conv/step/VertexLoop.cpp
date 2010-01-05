@@ -40,9 +40,9 @@ VertexLoop::VertexLoop() {
 	loop_vertex = NULL;
 }
 
-VertexLoop::VertexLoop(STEPWrapper *sw,int STEPid) {
+VertexLoop::VertexLoop(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 	loop_vertex = NULL;
 }
 
@@ -55,7 +55,7 @@ VertexLoop::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 	id = sse->STEPfile_id;
 
 	if ( !Loop::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::Path." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::Path." << std::endl;
 		return false;
 	}
 
@@ -68,7 +68,7 @@ VertexLoop::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 		if (entity) {
 			loop_vertex = dynamic_cast<Vertex *>(Factory::CreateObject(sw,entity)); //CreateCurveObject(sw,entity));
 		} else {
-			cerr << CLASSNAME << ": Error loading entity attribute 'loop_vertex'." << endl;
+			std::cerr << CLASSNAME << ": Error loading entity attribute 'loop_vertex'." << std::endl;
 			return false;
 		}
 	}
@@ -78,13 +78,13 @@ VertexLoop::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 void
 VertexLoop::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Local Attributes:" << endl;
+	TAB(level); std::cout << "Local Attributes:" << std::endl;
 	loop_vertex->Print(level+1);
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	Loop::Print(level+1);
 }
 
@@ -97,7 +97,7 @@ VertexLoop::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

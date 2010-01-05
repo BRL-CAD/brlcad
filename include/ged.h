@@ -505,8 +505,8 @@ GED_EXPORT BU_EXTERN(int ged_clip,
 GED_EXPORT BU_EXTERN(int ged_vclip,
 		     (vect_t a,
 		      vect_t b,
-		      register fastf_t *min,
-		      register fastf_t *max));
+		      fastf_t *min,
+		      fastf_t *max));
 
 /* defined in copy.c */
 GED_EXPORT BU_EXTERN(int ged_dbcopy,
@@ -558,7 +558,7 @@ GED_EXPORT BU_EXTERN(int ged_inside_internal,
 GED_EXPORT BU_EXTERN(int ged_build_tops,
 		     (struct ged	*gedp,
 		      char		**start,
-		      register char	**end));
+		      char		**end));
 
 
 /* FIXME: wdb routines do not belong in libged.  need to be
@@ -2621,7 +2621,7 @@ GED_EXPORT BU_EXTERN(int ged_saveview, (struct ged *gedp, int argc, const char *
  * Usage:
  *     sca sf
  */
-GED_EXPORT BU_EXTERN(int ged_scale_args, (struct ged *gedp, int argc, const char *argv[], fastf_t *sf));
+GED_EXPORT BU_EXTERN(int ged_scale_args, (struct ged *gedp, int argc, const char *argv[], fastf_t *sf1, fastf_t *sf2, fastf_t *sf3));
 GED_EXPORT BU_EXTERN(int ged_scale, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
@@ -3031,3 +3031,4 @@ __END_DECLS
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+

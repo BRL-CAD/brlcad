@@ -104,7 +104,7 @@ insert_id(int id)
 
 /* routine used in tree walker to select regions with the current ident number */
 static int
-select_region(register struct db_tree_state *tsp, struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
+select_region(struct db_tree_state *tsp, struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
 {
     if ( tsp->ts_regionid == curr_id )
 	return( 0 );
@@ -114,7 +114,7 @@ select_region(register struct db_tree_state *tsp, struct db_full_path *pathp, co
 
 /* routine used in tree walker to collect region ident numbers */
 static int
-get_reg_id(register struct db_tree_state *tsp, struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
+get_reg_id(struct db_tree_state *tsp, struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
 {
     insert_id( tsp->ts_regionid );
     return( -1 );
@@ -122,7 +122,7 @@ get_reg_id(register struct db_tree_state *tsp, struct db_full_path *pathp, const
 
 /* stubs to warn of the unexpected */
 static union tree *
-region_stub(register struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+region_stub(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
     struct directory *fp_name;	/* name from pathp */
 
@@ -631,7 +631,7 @@ int
 main(int argc, char **argv)
 {
     int		j;
-    register int	c;
+    int	c;
     double		percent;
 
     bu_setlinebuf( stderr );
@@ -826,7 +826,7 @@ main(int argc, char **argv)
  *
  *  This routine must be prepared to run in parallel.
  */
-union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+union tree *do_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
     struct nmgregion	*r;
     struct bu_list		vhead;

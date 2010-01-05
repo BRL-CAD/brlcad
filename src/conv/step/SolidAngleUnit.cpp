@@ -38,9 +38,9 @@ SolidAngleUnit::SolidAngleUnit() {
 	id = 0;
 }
 
-SolidAngleUnit::SolidAngleUnit(STEPWrapper *sw,int STEPid) {
+SolidAngleUnit::SolidAngleUnit(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 SolidAngleUnit::~SolidAngleUnit() {
@@ -54,7 +54,7 @@ SolidAngleUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 	// load base class attributes
 	if ( !NamedUnit::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::Unit." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 		return false;
 	}
 
@@ -63,10 +63,10 @@ SolidAngleUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 void
 SolidAngleUnit::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	NamedUnit::Print(level+1);
 
 }
@@ -79,7 +79,7 @@ SolidAngleUnit::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

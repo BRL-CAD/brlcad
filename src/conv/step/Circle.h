@@ -37,7 +37,7 @@ protected:
 	double radius;
 
 	Circle();
-	Circle(STEPWrapper *sw,int STEPid);
+	Circle(STEPWrapper *sw,int step_id);
 
 public:
 	virtual ~Circle();

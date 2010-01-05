@@ -42,7 +42,7 @@ protected:
 public:
 	Polyline();
 	virtual ~Polyline();
-	Polyline(STEPWrapper *sw,int STEPid);
+	Polyline(STEPWrapper *sw,int step_id);
 	bool Load(STEPWrapper *sw,SCLP23(Application_instance) *sse);
 	virtual const double *PointAtEnd();
 	virtual const double *PointAtStart();

@@ -117,6 +117,8 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
     int vert_count;
     int curr_vert;
 
+    if (rtip) RT_CK_RTI(rtip);
+
     eip = (struct rt_extrude_internal *)ip->idb_ptr;
     RT_EXTRUDE_CK_MAGIC(eip);
     skt = eip->skt;
@@ -339,6 +341,13 @@ rt_extrude_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip
 void
 rt_extrude_print(const struct soltab *stp)
 {
+    struct extrude_specific *extr=(struct extrude_specific *)stp->st_specific;
+
+    VPRINT("u vector", extr->u_vec);
+    VPRINT("v vector", extr->v_vec);
+    VPRINT("h vector", extr->unit_h);
+    bn_mat_print("rotation matrix", extr->rot);
+    bn_mat_print("inverse rotation matrix", extr->irot);
 }
 
 
@@ -953,25 +962,6 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 }
 
 
-#define RT_EXTRUDE_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
-
-/**
- * R T _ E X T R U D E _ V S H O T
- *
- * Vectorized version.
- */
-void
-rt_extrude_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
-    /* An array of solid pointers */
-    /* An array of ray pointers */
-    /* array of segs (results returned) */
-    /* Number of ray/object pairs */
-
-{
-    rt_vstub(stp, rp, segp, n, ap);
-}
-
-
 /**
  * R T _ E X T R U D E _ N O R M
  *
@@ -1091,21 +1081,6 @@ rt_extrude_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 
 
 /**
- * R T _ E X T R U D E _ U V
- *
- * For a hit on the surface of an extrude, return the (u, v)
- * coordinates of the hit point, 0 <= u, v <= 1.
- *
- * u = azimuth
- * v = elevation
- */
-void
-rt_extrude_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
-{
-}
-
-
-/**
  * R T _ E X T R U D E _ F R E E
  */
 void
@@ -1135,7 +1110,7 @@ rt_extrude_class(void)
  * R T _ E X T R U D E _ P L O T
  */
 int
-rt_extrude_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_extrude_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol __attribute__((unused)))
 {
     struct rt_extrude_internal *extrude_ip;
     struct curve *crv=(struct curve *)NULL;
@@ -1818,7 +1793,6 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
 	get_indices(cur_seg, &loop_start, &loop_end);
 
 	while (loop_end != loop_start) {
-	    int j;
 	    int added_seg;
 
 	    added_seg = 0;
@@ -1864,7 +1838,6 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
 
     for (i=0; i<BU_PTBL_END(&loops); i++) {
 	struct bu_ptbl *loopa;
-	int j;
 
 	loopa = (struct bu_ptbl *)BU_PTBL_GET(&loops, i);
 	for (j=i+1; j<BU_PTBL_END(&loops); j++) {
@@ -2149,6 +2122,8 @@ rt_extrude_export4(struct bu_external *ep, const struct rt_db_internal *ip, doub
     union record *rec;
     unsigned char *ptr;
 
+    if (dbip) RT_CK_DBI(dbip);
+
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_EXTRUDE) return(-1);
     extrude_ip = (struct rt_extrude_internal *)ip->idb_ptr;
@@ -2194,6 +2169,8 @@ rt_extrude_export5(struct bu_external *ep, const struct rt_db_internal *ip, doub
     unsigned char *ptr;
     int rem;
 
+    if (dbip) RT_CK_DBI(dbip);
+
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_EXTRUDE) return(-1);
 
@@ -2234,13 +2211,7 @@ rt_extrude_export5(struct bu_external *ep, const struct rt_db_internal *ip, doub
  * Apply modeling transformations as well.
  */
 int
-rt_extrude_import5(
-    struct rt_db_internal *ip,
-    const struct bu_external *ep,
-    const mat_t mat,
-    const struct db_i *dbip,
-    struct resource *resp,
-    const int minor_type)
+rt_extrude_import5(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp)
 {
     struct rt_extrude_internal *extrude_ip;
     struct rt_db_internal tmp_ip;
@@ -2303,13 +2274,14 @@ rt_extrude_import5(
 int
 rt_extrude_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
-    struct rt_extrude_internal *extrude_ip =
-	(struct rt_extrude_internal *)ip->idb_ptr;
+    struct rt_extrude_internal *extrude_ip;
     char buf[256];
     point_t V;
     vect_t h, u, v;
 
+    extrude_ip = (struct rt_extrude_internal *)ip->idb_ptr;
     RT_EXTRUDE_CK_MAGIC(extrude_ip);
+
     bu_vls_strcat(str, "2D extrude (EXTRUDE)\n");
     VSCALE(V, extrude_ip->V, mm2local);
     VSCALE(h, extrude_ip->h, mm2local);
@@ -2321,10 +2293,14 @@ rt_extrude_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ver
 	    V3INTCLAMPARGS(u),
 	    V3INTCLAMPARGS(v));
     bu_vls_strcat(str, buf);
+
+    if (!verbose)
+	return 0;
+
     snprintf(buf, 256, "\tsketch name: %s\n", extrude_ip->sketch_name);
     bu_vls_strcat(str, buf);
 
-    return(0);
+    return 0;
 }
 
 
@@ -2335,16 +2311,12 @@ rt_extrude_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ver
  * solid.
  */
 void
-rt_extrude_ifree(struct rt_db_internal *ip, struct resource *resp)
+rt_extrude_ifree(struct rt_db_internal *ip)
 {
     struct rt_extrude_internal *extrude_ip;
     struct rt_db_internal tmp_ip;
 
     RT_CK_DB_INTERNAL(ip);
-
-    if (!resp) {
-	resp = &rt_uniresource;
-    }
 
     extrude_ip = (struct rt_extrude_internal *)ip->idb_ptr;
     RT_EXTRUDE_CK_MAGIC(extrude_ip);
@@ -2354,7 +2326,7 @@ rt_extrude_ifree(struct rt_db_internal *ip, struct resource *resp)
 	tmp_ip.idb_type = ID_SKETCH;
 	tmp_ip.idb_ptr = (genptr_t)extrude_ip->skt;
 	tmp_ip.idb_meth = &rt_functab[ID_SKETCH];
-	tmp_ip.idb_meth->ft_ifree(&tmp_ip, resp);
+	tmp_ip.idb_meth->ft_ifree(&tmp_ip);
     }
     extrude_ip->magic = 0;	/* sanity */
 
@@ -2369,13 +2341,14 @@ rt_extrude_xform(
     struct rt_db_internal *op,
     const mat_t mat,
     struct rt_db_internal *ip,
-    int free,
+    int release,
     struct db_i *dbip,
     struct resource *resp)
 {
     struct rt_extrude_internal *eip, *eop;
     point_t tmp_vec;
 
+    if (dbip) RT_CK_DBI(dbip);
     RT_CK_DB_INTERNAL(ip);
     RT_CK_RESOURCE(resp)
 	eip = (struct rt_extrude_internal *)ip->idb_ptr;
@@ -2413,10 +2386,10 @@ rt_extrude_xform(
     VMOVE(eop->v_vec, tmp_vec);
     eop->keypoint = eip->keypoint;
 
-    if (free && ip != op) {
+    if (release && ip != op) {
 	eop->skt = eip->skt;
 	eip->skt = (struct rt_sketch_internal *)NULL;
-	rt_db_free_internal(ip, resp);
+	rt_db_free_internal(ip);
     } else if (eip->skt) {
 	eop->skt = rt_copy_sketch(eip->skt);
     } else {
@@ -2433,42 +2406,42 @@ rt_extrude_xform(
 
 
 int
-rt_extrude_form(struct bu_vls *log, const struct rt_functab *ftp)
+rt_extrude_form(struct bu_vls *logstr, const struct rt_functab *ftp)
 {
     RT_CK_FUNCTAB(ftp);
 
-    bu_vls_printf(log, "V {%%f %%f %%f} H {%%f %%f %%f} A {%%f %%f %%f} B {%%f %%f %%f} S %%s K %%d");
+    bu_vls_printf(logstr, "V {%%f %%f %%f} H {%%f %%f %%f} A {%%f %%f %%f} B {%%f %%f %%f} S %%s K %%d");
 
     return BRLCAD_OK;
 }
 
 
 int
-rt_extrude_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *attr)
+rt_extrude_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr)
 {
     struct rt_extrude_internal *extr=(struct rt_extrude_internal *) intern->idb_ptr;
 
     RT_EXTRUDE_CK_MAGIC(extr);
 
     if (attr == (char *)NULL) {
-	bu_vls_strcpy(log, "extrude");
-	bu_vls_printf(log, " V {%.25g %.25g %.25g}", V3ARGS(extr->V));
-	bu_vls_printf(log, " H {%.25g %.25g %.25g}", V3ARGS(extr->h));
-	bu_vls_printf(log, " A {%.25g %.25g %.25g}", V3ARGS(extr->u_vec));
-	bu_vls_printf(log, " B {%.25g %.25g %.25g}", V3ARGS(extr->v_vec));
-	bu_vls_printf(log, " S %s", extr->sketch_name);
+	bu_vls_strcpy(logstr, "extrude");
+	bu_vls_printf(logstr, " V {%.25g %.25g %.25g}", V3ARGS(extr->V));
+	bu_vls_printf(logstr, " H {%.25g %.25g %.25g}", V3ARGS(extr->h));
+	bu_vls_printf(logstr, " A {%.25g %.25g %.25g}", V3ARGS(extr->u_vec));
+	bu_vls_printf(logstr, " B {%.25g %.25g %.25g}", V3ARGS(extr->v_vec));
+	bu_vls_printf(logstr, " S %s", extr->sketch_name);
     } else if (*attr == 'V')
-	bu_vls_printf(log, "%.25g %.25g %.25g", V3ARGS(extr->V));
+	bu_vls_printf(logstr, "%.25g %.25g %.25g", V3ARGS(extr->V));
     else if (*attr == 'H')
-	bu_vls_printf(log, "%.25g %.25g %.25g", V3ARGS(extr->h));
+	bu_vls_printf(logstr, "%.25g %.25g %.25g", V3ARGS(extr->h));
     else if (*attr == 'A')
-	bu_vls_printf(log, "%.25g %.25g %.25g", V3ARGS(extr->u_vec));
+	bu_vls_printf(logstr, "%.25g %.25g %.25g", V3ARGS(extr->u_vec));
     else if (*attr == 'B')
-	bu_vls_printf(log, "%.25g %.25g %.25g", V3ARGS(extr->v_vec));
+	bu_vls_printf(logstr, "%.25g %.25g %.25g", V3ARGS(extr->v_vec));
     else if (*attr == 'S')
-	bu_vls_printf(log, "%s", extr->sketch_name);
+	bu_vls_printf(logstr, "%s", extr->sketch_name);
     else {
-	bu_vls_strcat(log, "ERROR: unrecognized attribute, must be V, H, A, B, or S!");
+	bu_vls_strcat(logstr, "ERROR: unrecognized attribute, must be V, H, A, B, or S!");
 	return BRLCAD_ERROR;
     }
 
@@ -2477,7 +2450,7 @@ rt_extrude_get(struct bu_vls *log, const struct rt_db_internal *intern, const ch
 
 
 int
-rt_extrude_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char **argv)
+rt_extrude_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv)
 {
     struct rt_extrude_internal *extr;
     fastf_t *new;
@@ -2493,21 +2466,21 @@ rt_extrude_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, c
 	if (*argv[0] == 'V') {
 	    new = extr->V;
 	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &new, &array_len) != array_len) {
-		bu_vls_printf(log, "ERROR: incorrect number of coordinates for vertex\n");
+		bu_vls_printf(logstr, "ERROR: incorrect number of coordinates for vertex\n");
 		return BRLCAD_ERROR;
 	    }
 	} else if (*argv[0] == 'H') {
 	    new = extr->h;
 	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &new, &array_len) !=
 		array_len) {
-		bu_vls_printf(log, "ERROR: incorrect number of coordinates for vector\n");
+		bu_vls_printf(logstr, "ERROR: incorrect number of coordinates for vector\n");
 		return BRLCAD_ERROR;
 	    }
 	} else if (*argv[0] == 'A') {
 	    new = extr->u_vec;
 	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &new, &array_len) !=
 		array_len) {
-		bu_vls_printf(log, "ERROR: incorrect number of coordinates for vector\n");
+		bu_vls_printf(logstr, "ERROR: incorrect number of coordinates for vector\n");
 		return BRLCAD_ERROR;
 	    }
 
@@ -2518,7 +2491,7 @@ rt_extrude_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, c
 	} else if (*argv[0] == 'B') {
 	    new = extr->v_vec;
 	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &new, &array_len) != array_len) {
-		bu_vls_printf(log, "ERROR: incorrect number of coordinates for vector\n");
+		bu_vls_printf(logstr, "ERROR: incorrect number of coordinates for vector\n");
 		return BRLCAD_ERROR;
 	    }
 	    /* insure that u_vec and v_vec are the same length */
@@ -2546,8 +2519,11 @@ rt_extrude_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, c
  *
  */
 int
-rt_extrude_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
+rt_extrude_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 {
+    if (!ps) return(0);
+    if (ip) RT_CK_DB_INTERNAL(ip);
+
     return(0);			/* OK */
 }
 

@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -17,7 +16,7 @@
 #include "opennurbs.h"
 
 ON_Circle::ON_Circle() 
-		  : radius(1.0)
+                  : radius(1.0)
 {
   //m_point[0].Zero();
   //m_point[1].Zero();
@@ -122,14 +121,14 @@ bool ON_Circle::Transform( const ON_Xform& xform )
       r1 = fabs(a);
       if ( r1 > 0.0)
       {
-	a = (a>0.0) ? 1.0 : -1.0;
-	b /= r1;
-	if ( fabs(b) <= ztol )
-	{
-	  b = 0.0;
-	  if ( fabs(1.0-r1) <= ztol )
-	    r1 = 1.0;
-	}
+        a = (a>0.0) ? 1.0 : -1.0;
+        b /= r1;
+        if ( fabs(b) <= ztol )
+        {
+          b = 0.0;
+          if ( fabs(1.0-r1) <= ztol )
+            r1 = 1.0;
+        }
       }
     }
     else
@@ -139,9 +138,9 @@ bool ON_Circle::Transform( const ON_Xform& xform )
       a /= r1;
       if ( fabs(a) <= ztol )
       {
-	a = 0.0;
-	if ( fabs(1.0-r1) <= ztol )
-	  r1 = 1.0;
+        a = 0.0;
+        if ( fabs(1.0-r1) <= ztol )
+          r1 = 1.0;
       }
     }
     V = xform*plane0.yaxis;
@@ -152,14 +151,14 @@ bool ON_Circle::Transform( const ON_Xform& xform )
       r2 = fabs(d);
       if (r2 > 0.0)
       {
-	d = (d>0.0) ? 1.0 : -1.0;
-	c /= r2;
-	if ( fabs(c) <= ztol )
-	{
-	  c = 0.0;
-	  if ( fabs(1.0-r2) <= ztol )
-	    r2 = 1.0;
-	}
+        d = (d>0.0) ? 1.0 : -1.0;
+        c /= r2;
+        if ( fabs(c) <= ztol )
+        {
+          c = 0.0;
+          if ( fabs(1.0-r2) <= ztol )
+            r2 = 1.0;
+        }
       }
     }
     else
@@ -169,14 +168,14 @@ bool ON_Circle::Transform( const ON_Xform& xform )
       d /= r2;
       if ( fabs(d) <= ztol )
       {
-	d = 0.0;
-	if ( fabs(1.0-r2) <= ztol )
-	  r2 = 1.0;
+        d = 0.0;
+        if ( fabs(1.0-r2) <= ztol )
+          r2 = 1.0;
       }
     }
     if (    0.0 == b 
-	 && 0.0 == c 
-	 && fabs(r1-r1) <= ON_SQRT_EPSILON*(r1+r2) 
+         && 0.0 == c 
+         && fabs(r1-r1) <= ON_SQRT_EPSILON*(r1+r2) 
        )
     {
       // transform is a similarity
@@ -191,19 +190,19 @@ bool ON_Circle::Transform( const ON_Xform& xform )
 
     if ( s > 0.0 )
     {
-#if defined(ON_DEBUG) && !defined(ON_COMPILER_GNU)
-      double det = fabs(xform.Determinant());
-      double s0 = pow(det,1.0/3.0);
-      if ( fabs(s-s0) > ON_SQRT_EPSILON*s0 )
-      {
-	// non-uniform scale or a bug
-	// In the non-uniform scal case, b and c should be
-	// "zero".
-	int breakpointhere = 0; // (generates gcc warning)
-      }
-#endif
+      //#if defined(ON_DEBUG) && !defined(ON_COMPILER_GNU)
+      //double det = fabs(xform.Determinant());
+      //double s0 = pow(det,1.0/3.0);
+      //if ( fabs(s-s0) > ON_SQRT_EPSILON*s0 )
+      //{
+      //  // non-uniform scale or a bug
+      //  // In the non-uniform scal case, b and c should be
+      //  // "zero".
+      //  int breakpointhere = 0; // (generates gcc warning)
+      //}
+      //#endif
       if ( fabs(s-1.0) > ON_SQRT_EPSILON )
-	radius *= s;
+        radius *= s;
     }
   }
 
@@ -237,9 +236,9 @@ bool ON_Circle::Create( const ON_3dPoint& C, double r )
 }
 
 bool ON_Circle::Create( const ON_Plane& pln,
-			  const ON_3dPoint& C,
-			  double r 
-			  )
+                          const ON_3dPoint& C,
+                          double r 
+                          )
 {
   ON_Plane p = pln;
   p.origin = C;
@@ -337,21 +336,21 @@ bool ON_Circle::Create(
       X = P-C;
       radius = C.DistanceTo(P);
       if ( X.Unitize() ) {
-	Y = ON_CrossProduct( Z, X );
-	if ( Y*Pdir < 0.0 ) {
-	  Z.Reverse();
-	  Y.Reverse();
-	  RM.Reverse();
-	}
-	plane.origin = C;
-	plane.xaxis = X;
-	plane.yaxis = Y;
-	plane.zaxis = Z;
-	plane.UpdateEquation();
-	//m_point[0] = P;
-	//m_point[1] = C + radius*RM/RM.Length();
-	//m_point[2] = Q;
-	rc = IsValid();
+        Y = ON_CrossProduct( Z, X );
+        if ( Y*Pdir < 0.0 ) {
+          Z.Reverse();
+          Y.Reverse();
+          RM.Reverse();
+        }
+        plane.origin = C;
+        plane.xaxis = X;
+        plane.yaxis = Y;
+        plane.zaxis = Z;
+        plane.UpdateEquation();
+        //m_point[0] = P;
+        //m_point[1] = C + radius*RM/RM.Length();
+        //m_point[2] = Q;
+        rc = IsValid();
       }
     }
   }
@@ -362,9 +361,9 @@ bool ON_Circle::Create(
 bool ON_Circle::IsValid() const
 {
   bool rc = (    ON_IsValid(radius) 
-	      && radius > 0.0
-	      && plane.IsValid()
-	    );
+              && radius > 0.0
+              && plane.IsValid()
+            );
   return rc;
 }
 
@@ -386,9 +385,9 @@ ON_3dPoint ON_Circle::PointAt( double t ) const
 }
 
 ON_3dVector ON_Circle::DerivativeAt( 
-		 int d, // desired derivative ( >= 0 )
-		 double t // parameter
-		 ) const
+                 int d, // desired derivative ( >= 0 )
+                 double t // parameter
+                 ) const
 {
   double r0 = radius;
   double r1 = radius;
@@ -432,7 +431,7 @@ bool ON_Circle::ClosestPointTo( const ON_3dPoint& point, double* t ) const
     else {
       *t = atan2( v, u );
       if ( *t < 0.0 )
-	*t += 2.0*ON_PI;
+        *t += 2.0*ON_PI;
     }
   }
   return rc;
@@ -453,8 +452,8 @@ ON_3dPoint ON_Circle::ClosestPointTo( const ON_3dPoint& point ) const
 }
 
 double ON_Circle::EquationAt( 
-		 const ON_2dPoint& p // coordinates in plane
-		 ) const
+                 const ON_2dPoint& p // coordinates in plane
+                 ) const
 {
   double e, x, y;
   if ( radius != 0.0 ) {
@@ -469,8 +468,8 @@ double ON_Circle::EquationAt(
 }
 
 ON_2dVector ON_Circle::GradientAt( 
-		 const ON_2dPoint& p // coordinates in plane
-		 ) const
+                 const ON_2dPoint& p // coordinates in plane
+                 ) const
 {
   ON_2dVector g;
   if ( radius != 0.0 ) {
@@ -485,43 +484,43 @@ ON_2dVector ON_Circle::GradientAt(
 }
 
 bool ON_Circle::Rotate( 
-			  double sin_angle, double cos_angle, 
-			  const ON_3dVector& axis
-			  )
+                          double sin_angle, double cos_angle, 
+                          const ON_3dVector& axis
+                          )
 {
   return plane.Rotate( sin_angle, cos_angle, axis );
 }
 
 bool ON_Circle::Rotate( 
-			  double angle, 
-			  const ON_3dVector& axis
-			  )
+                          double angle, 
+                          const ON_3dVector& axis
+                          )
 {
   return plane.Rotate( angle, axis );
 }
 
 bool ON_Circle::Rotate( 
-			  double sin_angle, double cos_angle, 
-			  const ON_3dVector& axis,
-			  const ON_3dPoint& point
-			  )
+                          double sin_angle, double cos_angle, 
+                          const ON_3dVector& axis,
+                          const ON_3dPoint& point
+                          )
 {
   return plane.Rotate( sin_angle, cos_angle, axis, point );
 }
 
 bool ON_Circle::Rotate( 
-			  double angle, 
-			  const ON_3dVector& axis,
-			  const ON_3dPoint& point
-			  )
+                          double angle, 
+                          const ON_3dVector& axis,
+                          const ON_3dPoint& point
+                          )
 {
   return plane.Rotate( angle, axis, point );
 }
 
 
 bool ON_Circle::Translate(
-			  const ON_3dVector& delta
-			    )
+                          const ON_3dVector& delta
+                            )
 {
   //m_point[0] += delta;
   //m_point[1] += delta;

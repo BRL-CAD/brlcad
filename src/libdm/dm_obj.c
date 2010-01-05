@@ -1498,7 +1498,7 @@ dmo_drawGeom_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char **arg
     struct dm_obj *dmop = (struct dm_obj *)clientData;
     struct dg_obj *dgop;
     struct bu_vls vls;
-    register int i;
+    int i;
 
     if (argc < 3) {
 	bu_vls_init(&vls);
@@ -1538,7 +1538,7 @@ dmo_drawLabels_tcl(ClientData clientData,
     struct dm_obj *dmop = (struct dm_obj *)clientData;
     struct dg_obj *dgop;
     struct bu_vls vls;
-    register int i;
+    int i;
     int labelColor[3];
 
     if (argc < 5) {

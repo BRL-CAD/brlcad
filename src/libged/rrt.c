@@ -37,8 +37,8 @@
 int
 ged_rrt(struct ged *gedp, int argc, const char *argv[])
 {
-    register char **vp;
-    register int i;
+    char **vp;
+    int i;
     static const char *usage = "options";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);

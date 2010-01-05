@@ -40,7 +40,7 @@ protected:
 public:
 	UncertaintyMeasureWithUnit();
 	virtual ~UncertaintyMeasureWithUnit();
-	UncertaintyMeasureWithUnit(STEPWrapper *sw,int STEPid);
+	UncertaintyMeasureWithUnit(STEPWrapper *sw,int step_id);
 	bool Load(STEPWrapper *sw,SCLP23(Application_instance) *sse);
 	virtual void Print(int level);
 

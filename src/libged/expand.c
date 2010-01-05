@@ -40,9 +40,9 @@ ged_scrape_escapes_AppendResult(struct bu_vls	*result,
 int
 ged_expand(struct ged *gedp, int argc, const char *argv[])
 {
-    register char *pattern;
-    register struct directory *dp;
-    register int i, whicharg;
+    char *pattern;
+    struct directory *dp;
+    int i, whicharg;
     int regexp, nummatch, thismatch, backslashed;
     static const char *usage = "expression";
 

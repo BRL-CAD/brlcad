@@ -34,7 +34,7 @@
  * R T _ R P C _ B R E P
  */
 extern "C" void
-rt_rpc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
+rt_rpc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol __attribute__((unused)))
 {
     struct rt_rpc_internal *eip;
 
@@ -47,14 +47,14 @@ rt_rpc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     ON_TextLog dump_to_stdout;
     ON_TextLog* dump = &dump_to_stdout;
     
-    point_t p1_origin, p2_origin;
+    point_t p1_origin;
     ON_3dPoint plane1_origin, plane2_origin;
     ON_3dVector plane_x_dir, plane_y_dir;
     
     // First, find plane in 3 space corresponding to the bottom face
     // of the RPC.
    
-    vect_t tmp, x_dir, y_dir;
+    vect_t x_dir, y_dir;
     
     VCROSS(x_dir, eip->rpc_H, eip->rpc_B);
     VUNITIZE(x_dir);

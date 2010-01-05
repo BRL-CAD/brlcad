@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -17,6 +16,11 @@
 #if !defined(OPENNURBS_ZLIB_INC_)
 #define OPENNURBS_ZLIB_INC_
 
+// If you are using opennurbs as a statically linked library, then
+// you may make calls to the same zlib that opennurbs uses.  This
+// zlib is compiled with z_ symbol projectection.  All the necessary
+// header files are included by opennurbs.h.
+// 
 // If you are using opennurbs as a DLL or writing a Rhino plug-in
 // and you want to use the same zlib that opennurbs uses, then
 // compile opennurbs_zlib_memory.cpp into your application
@@ -66,10 +70,10 @@ public:
     True if inbuffer is successfully compressed.
   */
   bool Compress(
-	  size_t sizeof__inbuffer,  // sizeof uncompressed input data
-	  const void* inbuffer,     // uncompressed input data
-	  int sizeof_element
-	  );
+          size_t sizeof__inbuffer,  // sizeof uncompressed input data
+          const void* inbuffer,     // uncompressed input data
+          int sizeof_element
+          );
 
   /*
   Returns:
@@ -92,9 +96,9 @@ public:
     True if uncompressed information is returned in outbuffer.
   */
   bool Uncompress( // read and uncompress
-	  void* outbuffer,           // uncompressed output data returned here
-	  int* bFailedCRC
-	  ) const;
+          void* outbuffer,           // uncompressed output data returned here
+          int* bFailedCRC
+          ) const;
 
   /*
   Description:
@@ -113,19 +117,19 @@ public:
   bool CompressionInit( struct ON_CompressedBufferHelper* ) const;
   bool CompressionEnd( struct ON_CompressedBufferHelper* ) const;
   size_t DeflateHelper( // returns number of bytes written
-	struct ON_CompressedBufferHelper*,
-	size_t sizeof___inbuffer,  // sizeof uncompressed input data ( > 0 )
-	const void* in___buffer     // uncompressed input data ( != NULL )
-	);
+        struct ON_CompressedBufferHelper*,
+        size_t sizeof___inbuffer,  // sizeof uncompressed input data ( > 0 )
+        const void* in___buffer     // uncompressed input data ( != NULL )
+        );
   bool InflateHelper(
-	struct ON_CompressedBufferHelper*,
-	size_t sizeof___outbuffer,  // sizeof uncompressed data
-	void* out___buffer          // buffer for uncompressed data
-	) const;
+        struct ON_CompressedBufferHelper*,
+        size_t sizeof___outbuffer,  // sizeof uncompressed data
+        void* out___buffer          // buffer for uncompressed data
+        ) const;
   bool WriteChar( 
-	size_t count, 
-	const void* buffer 
-	);
+        size_t count, 
+        const void* buffer 
+        );
 
   size_t     m_sizeof_uncompressed;
   size_t     m_sizeof_compressed;

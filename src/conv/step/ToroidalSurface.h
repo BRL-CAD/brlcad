@@ -40,7 +40,7 @@ protected:
 public:
 	ToroidalSurface();
 	virtual ~ToroidalSurface();
-	ToroidalSurface(STEPWrapper *sw,int STEPid);
+	ToroidalSurface(STEPWrapper *sw,int step_id);
 	const double *GetOrigin();
 	const double *GetNormal();
 	const double *GetXAxis();

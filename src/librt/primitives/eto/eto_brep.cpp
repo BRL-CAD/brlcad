@@ -34,10 +34,8 @@
  * R T _ E T O _ B R E P
  */
 extern "C" void
-rt_eto_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
+rt_eto_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 {
-    mat_t R;
-    mat_t S;
     struct rt_eto_internal *eip;
 
     *b = NULL; 
@@ -47,7 +45,7 @@ rt_eto_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     RT_ETO_CK_MAGIC(eip);
 
     point_t p_origin;
-    vect_t v1, v1a, x_dir, y_dir, halfx, halfy;
+    vect_t v1, v1a, x_dir, y_dir;
     ON_3dPoint plane_origin;
     ON_3dVector plane_x_dir, plane_y_dir;
 

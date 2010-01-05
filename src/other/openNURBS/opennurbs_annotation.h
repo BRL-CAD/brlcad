@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -39,29 +38,29 @@ public:
     initialized.
   Parameters:
     text_log - [in] if the object is not valid and text_log
-	is not NULL, then a brief englis description of the
-	reason the object is not valid is appened to the log.
-	The information appended to text_log is suitable for 
-	low-level debugging purposes by programmers and is 
-	not intended to be useful as a high level user 
-	interface tool.
+        is not NULL, then a brief englis description of the
+        reason the object is not valid is appened to the log.
+        The information appended to text_log is suitable for 
+        low-level debugging purposes by programmers and is 
+        not intended to be useful as a high level user 
+        interface tool.
   Returns:
     @untitled table
-    TRUE     object is valid
-    FALSE    object is invalid, uninitialized, etc.
+    true     object is valid
+    false    object is invalid, uninitialized, etc.
   Remarks:
     Overrides virtual ON_Object::IsValid
   */
-  BOOL IsValid( ON_TextLog* text_log = NULL ) const;
+  ON_BOOL32 IsValid( ON_TextLog* text_log = NULL ) const;
 
   void Dump( ON_TextLog& ) const; // for debugging
 
-  BOOL Write(
-	 ON_BinaryArchive&  // serialize definition to binary archive
+  ON_BOOL32 Write(
+         ON_BinaryArchive&  // serialize definition to binary archive
        ) const;
 
-  BOOL Read(
-	 ON_BinaryArchive&  // restore definition from binary archive
+  ON_BOOL32 Read(
+         ON_BinaryArchive&  // restore definition from binary archive
        );
 
   ON_wString m_text;
@@ -88,29 +87,29 @@ public:
     initialized.
   Parameters:
     text_log - [in] if the object is not valid and text_log
-	is not NULL, then a brief englis description of the
-	reason the object is not valid is appened to the log.
-	The information appended to text_log is suitable for 
-	low-level debugging purposes by programmers and is 
-	not intended to be useful as a high level user 
-	interface tool.
+        is not NULL, then a brief englis description of the
+        reason the object is not valid is appened to the log.
+        The information appended to text_log is suitable for 
+        low-level debugging purposes by programmers and is 
+        not intended to be useful as a high level user 
+        interface tool.
   Returns:
     @untitled table
-    TRUE     object is valid
-    FALSE    object is invalid, uninitialized, etc.
+    true     object is valid
+    false    object is invalid, uninitialized, etc.
   Remarks:
     Overrides virtual ON_Object::IsValid
   */
-  BOOL IsValid( ON_TextLog* text_log = NULL ) const;
+  ON_BOOL32 IsValid( ON_TextLog* text_log = NULL ) const;
 
   void Dump( ON_TextLog& ) const; // for debugging
 
-  BOOL Write(
-	 ON_BinaryArchive&  // serialize definition to binary archive
+  ON_BOOL32 Write(
+         ON_BinaryArchive&  // serialize definition to binary archive
        ) const;
 
-  BOOL Read(
-	 ON_BinaryArchive&  // restore definition from binary archive
+  ON_BOOL32 Read(
+         ON_BinaryArchive&  // restore definition from binary archive
        );
 
   ON::object_type ObjectType() const;
@@ -123,15 +122,15 @@ public:
   int Dimension() const;
 
   // work horse bounding box getter
-  BOOL GetBBox( // returns TRUE if successful
-	 double*,    // boxmin[dim]
-	 double*,    // boxmax[dim]
-	 BOOL = FALSE  // TRUE means grow box
-	 ) const;
+  ON_BOOL32 GetBBox( // returns true if successful
+         double*,    // boxmin[dim]
+         double*,    // boxmax[dim]
+         ON_BOOL32 = false  // true means grow box
+         ) const;
 
-  BOOL Transform( 
-	 const ON_Xform&
-	 );
+  ON_BOOL32 Transform( 
+         const ON_Xform&
+         );
 
   /////////////////////////////////////////////////////////////////
   //
@@ -167,7 +166,7 @@ class ON_CLASS ON_Annotation : public ON_Geometry
 
 public:
 
-  virtual BOOL IsRealObject() const = 0;
+  virtual ON_BOOL32 IsRealObject() const = 0;
 
   ON_Annotation();
   ON_Annotation(const ON_Annotation&);
@@ -175,7 +174,7 @@ public:
   ON_Annotation& operator=(const ON_Annotation&);
 
   void Create();  // initialize class's fields assuming
-		  // memory is uninitialized
+                  // memory is uninitialized
   void Destroy();
   void EmergencyDestroy();
 
@@ -190,29 +189,29 @@ public:
     initialized.
   Parameters:
     text_log - [in] if the object is not valid and text_log
-	is not NULL, then a brief englis description of the
-	reason the object is not valid is appened to the log.
-	The information appended to text_log is suitable for 
-	low-level debugging purposes by programmers and is 
-	not intended to be useful as a high level user 
-	interface tool.
+        is not NULL, then a brief englis description of the
+        reason the object is not valid is appened to the log.
+        The information appended to text_log is suitable for 
+        low-level debugging purposes by programmers and is 
+        not intended to be useful as a high level user 
+        interface tool.
   Returns:
     @untitled table
-    TRUE     object is valid
-    FALSE    object is invalid, uninitialized, etc.
+    true     object is valid
+    false    object is invalid, uninitialized, etc.
   Remarks:
     Overrides virtual ON_Object::IsValid
   */
-  BOOL IsValid( ON_TextLog* text_log = NULL ) const;
+  ON_BOOL32 IsValid( ON_TextLog* text_log = NULL ) const;
 
   void Dump( ON_TextLog& ) const; // for debugging
 
-  BOOL Write(
-	 ON_BinaryArchive&  // serialize definition to binary archive
+  ON_BOOL32 Write(
+         ON_BinaryArchive&  // serialize definition to binary archive
        ) const;
 
-  BOOL Read(
-	 ON_BinaryArchive&  // restore definition from binary archive
+  ON_BOOL32 Read(
+         ON_BinaryArchive&  // restore definition from binary archive
        );
 
   ON::object_type ObjectType() const;
@@ -224,15 +223,15 @@ public:
 
   int Dimension() const;
 
-  BOOL GetBBox( // returns TRUE if successful
-	 double*,    // boxmin[dim]
-	 double*,    // boxmax[dim]
-	 BOOL = FALSE  // TRUE means grow box
-	 ) const;
+  ON_BOOL32 GetBBox( // returns true if successful
+         double*,    // boxmin[dim]
+         double*,    // boxmax[dim]
+         ON_BOOL32 = false  // true means grow box
+         ) const;
 
-  BOOL Transform( 
-	 const ON_Xform&
-	 );
+  ON_BOOL32 Transform( 
+         const ON_Xform&
+         );
 
   /////////////////////////////////////////////////////////////////
   //
@@ -274,10 +273,10 @@ public:
   bool GeWCStoECSXform( ON_Xform& xform ) const;
 
   ON::eAnnotationType m_type;          // enum for type of annotation
-				       // DimLinear, DimRadius, etc.
+                                       // DimLinear, DimRadius, etc.
 
   ON::eTextDisplayMode m_textdisplaymode; // how the text is displayed
-				       // Horizontal, InLine, AboveLine
+                                       // Horizontal, InLine, AboveLine
 
   ON_Plane m_plane;                    // ECS reference plane in WCS coordinates
   ON_SimpleArray<ON_2dPoint> m_points; // Definition points for the dimension
@@ -285,8 +284,8 @@ public:
   ON_wString m_usertext;               // "<>", or user override
   ON_wString m_defaulttext;            // The displayed text string
 
-  bool m_userpositionedtext;           // TRUE: User has positioned text 
-				       // FALSE: use default location
+  bool m_userpositionedtext;           // true: User has positioned text 
+                                       // false: use default location
 };
 
 
@@ -295,7 +294,7 @@ class ON_CLASS ON_LinearDimension : public ON_Annotation
   ON_OBJECT_DECLARE(ON_LinearDimension);
 
 public:
-  BOOL IsRealObject() const;
+  ON_BOOL32 IsRealObject() const;
   ON_LinearDimension();
   ON_LinearDimension(const ON_LinearDimension&);
   ~ON_LinearDimension();
@@ -311,7 +310,7 @@ class ON_CLASS ON_RadialDimension : public ON_Annotation
   ON_OBJECT_DECLARE(ON_RadialDimension);
 
 public:
-  BOOL IsRealObject() const;
+  ON_BOOL32 IsRealObject() const;
   ON_RadialDimension();
   ON_RadialDimension(const ON_RadialDimension&);
   ~ON_RadialDimension();
@@ -328,7 +327,7 @@ class ON_CLASS ON_AngularDimension : public ON_Annotation
   ON_OBJECT_DECLARE(ON_AngularDimension);
 
 public:
-  BOOL IsRealObject() const;
+  ON_BOOL32 IsRealObject() const;
 
   ON_AngularDimension();
   ON_AngularDimension(const ON_AngularDimension&);
@@ -337,8 +336,8 @@ public:
 
   void EmergencyDestroy();
 
-  BOOL Write( ON_BinaryArchive& file ) const;
-  BOOL Read( ON_BinaryArchive& file );
+  ON_BOOL32 Write( ON_BinaryArchive& file ) const;
+  ON_BOOL32 Read( ON_BinaryArchive& file );
 
   void SetAngle( double angle ) { m_angle = angle; }
   double Angle() const { return m_angle; }
@@ -359,7 +358,7 @@ class ON_CLASS ON_TextEntity : public ON_Annotation
   ON_OBJECT_DECLARE(ON_TextEntity);
 
 public:
-  BOOL IsRealObject() const;
+  ON_BOOL32 IsRealObject() const;
   ON_TextEntity();
   ON_TextEntity(const ON_TextEntity&);
   ~ON_TextEntity();
@@ -367,8 +366,8 @@ public:
 
   void EmergencyDestroy();
 
-  BOOL Write( ON_BinaryArchive& file ) const;
-  BOOL Read( ON_BinaryArchive& file );
+  ON_BOOL32 Write( ON_BinaryArchive& file ) const;
+  ON_BOOL32 Read( ON_BinaryArchive& file );
 
   void SetFaceName( ON_wString string ) { m_facename = string; }
   ON_wString FaceName() const { return m_facename; }
@@ -388,7 +387,7 @@ class ON_CLASS ON_Leader : public ON_Annotation
   ON_OBJECT_DECLARE(ON_Leader);
 
 public:
-  BOOL IsRealObject() const;
+  ON_BOOL32 IsRealObject() const;
   ON_Leader();
   ON_Leader(const ON_Leader&);
   ~ON_Leader();

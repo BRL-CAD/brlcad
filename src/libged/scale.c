@@ -34,9 +34,10 @@
 
 
 int
-ged_scale_args(struct ged *gedp, int argc, const char *argv[], fastf_t *sf)
+ged_scale_args(struct ged *gedp, int argc, const char *argv[], fastf_t *sf1, fastf_t *sf2, fastf_t *sf3)
 {
-    static const char *usage = "sf";
+    static const char *usage = "sf (or) sfx sfy sfz";
+    int ret = GED_OK;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_VIEW(gedp, GED_ERROR);
@@ -51,33 +52,54 @@ ged_scale_args(struct ged *gedp, int argc, const char *argv[], fastf_t *sf)
 	return GED_HELP;
     }
 
-    if (argc != 2) {
+    if (argc != 2 && argc != 4) {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
-    if (sscanf(argv[1], "%lf", sf) != 1) {
-	bu_vls_printf(&gedp->ged_result_str, "bad scale factor - %s", argv[1]);
-	return GED_ERROR;
+    if (argc == 2) {
+        if (sscanf(argv[1], "%lf", sf1) != 1) {
+            bu_vls_printf(&gedp->ged_result_str, "\nbad scale factor '%s'", argv[1]);
+	    return GED_ERROR;
+        }
+    } else {
+        if (sscanf(argv[1], "%lf", sf1) != 1) {
+            bu_vls_printf(&gedp->ged_result_str, "\nbad x scale factor '%s'", argv[1]);
+	    ret = GED_ERROR;
+        }
+        if (sscanf(argv[2], "%lf", sf2) != 1) {
+            bu_vls_printf(&gedp->ged_result_str, "\nbad y scale factor '%s'", argv[2]);
+	    ret = GED_ERROR;
+        }
+        if (sscanf(argv[3], "%lf", sf3) != 1) {
+            bu_vls_printf(&gedp->ged_result_str, "\nbad z scale factor '%s'", argv[3]);
+	    ret = GED_ERROR;
+        }
     }
-
-    return GED_OK;
+    return ret;
 }
 
 int
 ged_scale(struct ged *gedp, int argc, const char *argv[])
 {
     int ret;
-    fastf_t sf;
+    fastf_t sf1;
+    fastf_t sf2;
+    fastf_t sf3;
 
-    if ((ret = ged_scale_args(gedp, argc, argv, &sf)) != GED_OK)
+    if ((ret = ged_scale_args(gedp, argc, argv, &sf1, &sf2, &sf3)) != GED_OK)
 	return ret;
 
-    if (sf <= SMALL_FASTF || INFINITY < sf)
+    if (argc != 2) {
+	bu_vls_printf(&gedp->ged_result_str, "Can not scale xyz independently on a view.");
+	return GED_ERROR;
+    }
+
+    if (sf1 <= SMALL_FASTF || INFINITY < sf1)
 	return GED_OK;
 
     /* scale the view */
-    gedp->ged_gvp->gv_scale *= sf;
+    gedp->ged_gvp->gv_scale *= sf1;
 
     if (gedp->ged_gvp->gv_scale < RT_MINVIEWSIZE)
 	gedp->ged_gvp->gv_scale = RT_MINVIEWSIZE;
@@ -98,3 +120,4 @@ ged_scale(struct ged *gedp, int argc, const char *argv[])
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+

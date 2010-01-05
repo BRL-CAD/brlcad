@@ -123,12 +123,12 @@ set_grid_res(void)
 void
 draw_grid(void)
 {
-    register int		i, j;
-    register int		nh, nv;
-    register int		nv_dots, nh_dots;
-    register fastf_t	fx, fy;
-    register fastf_t	sf;
-    register fastf_t	inv_sf;
+    int		i, j;
+    int		nh, nv;
+    int		nv_dots, nh_dots;
+    fastf_t	fx, fy;
+    fastf_t	sf;
+    fastf_t	inv_sf;
     point_t			model_grid_anchor;
     point_t			view_grid_anchor;
     point_t			view_lleft_corner;
@@ -217,14 +217,14 @@ snap_to_grid(
     fastf_t *mx,		/* input and return values */
     fastf_t *my)		/* input and return values */
 {
-    register int nh, nv;		/* whole grid units */
+    int nh, nv;		/* whole grid units */
     point_t view_pt;
     point_t view_grid_anchor;
     point_t model_grid_anchor;
     fastf_t grid_units_h;		/* eventually holds only fractional horizontal grid units */
     fastf_t grid_units_v;		/* eventually holds only fractional vertical grid units */
-    register fastf_t sf;
-    register fastf_t inv_sf;
+    fastf_t sf;
+    fastf_t inv_sf;
 
     if (dbip == DBI_NULL ||
 	NEAR_ZERO(grid_state->gr_res_h, (fastf_t)SMALL_FASTF) ||
@@ -402,7 +402,7 @@ snap_view_to_grid(fastf_t view_dx, fastf_t view_dy)
 void
 update_grids(fastf_t sf)
 {
-    register struct dm_list *dlp;
+    struct dm_list *dlp;
     struct bu_vls save_result;
     struct bu_vls cmd;
 

@@ -188,11 +188,11 @@ struct rpc_specific {
 
 
 const struct bu_structparse rt_rpc_parse[] = {
-    { "%f", 3, "V", bu_offsetof(struct rt_rpc_internal, rpc_V[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "H", bu_offsetof(struct rt_rpc_internal, rpc_H[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "B", bu_offsetof(struct rt_rpc_internal, rpc_B[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 1, "r", bu_offsetof(struct rt_rpc_internal, rpc_r),    BU_STRUCTPARSE_FUNC_NULL },
-    { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
+    { "%f", 3, "V", bu_offsetof(struct rt_rpc_internal, rpc_V[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "H", bu_offsetof(struct rt_rpc_internal, rpc_H[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "B", bu_offsetof(struct rt_rpc_internal, rpc_B[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 1, "r", bu_offsetof(struct rt_rpc_internal, rpc_r),    BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
@@ -215,7 +215,7 @@ int
 rt_rpc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_rpc_internal *xip;
-    register struct rpc_specific *rpc;
+    struct rpc_specific *rpc;
 #ifndef NO_BOMBING_MACROS
     const struct bn_tol *tol = &rtip->rti_tol;  /* only used to check a if tolerance is valid */
 #endif
@@ -314,9 +314,9 @@ rt_rpc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
  * R T _ R P C _ P R I N T
  */
 void
-rt_rpc_print(register const struct soltab *stp)
+rt_rpc_print(const struct soltab *stp)
 {
-    register const struct rpc_specific *rpc =
+    const struct rpc_specific *rpc =
 	(struct rpc_specific *)stp->st_specific;
 
     VPRINT("V", rpc->rpc_V);
@@ -346,16 +346,16 @@ rt_rpc_print(register const struct soltab *stp)
  * >0 HIT
  */
 int
-rt_rpc_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
+rt_rpc_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
-    register struct rpc_specific *rpc =
+    struct rpc_specific *rpc =
 	(struct rpc_specific *)stp->st_specific;
     vect_t dprime;		/* D' */
     vect_t pprime;		/* P' */
     fastf_t k1, k2;		/* distance constants of solution */
     vect_t xlated;		/* translated vector */
     struct hit hits[3];	/* 2 potential hit points */
-    register struct hit *hitp;	/* pointer to hit point */
+    struct hit *hitp;	/* pointer to hit point */
 /*?????	const struct bn_tol *tol = &rtip->rti_tol; ?????*/
 
     hitp = &hits[0];
@@ -467,7 +467,7 @@ rt_rpc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 
     if (hits[0].hit_dist < hits[1].hit_dist) {
 	/* entry is [0], exit is [1] */
-	register struct seg *segp;
+	struct seg *segp;
 
 	RT_GET_SEG(segp, ap->a_resource);
 	segp->seg_stp = stp;
@@ -476,7 +476,7 @@ rt_rpc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	BU_LIST_INSERT(&(seghead->l), &(segp->l));
     } else {
 	/* entry is [1], exit is [0] */
-	register struct seg *segp;
+	struct seg *segp;
 
 	RT_GET_SEG(segp, ap->a_resource);
 	segp->seg_stp = stp;
@@ -488,35 +488,16 @@ rt_rpc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 }
 
 
-#define RT_RPC_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
-
-/**
- * R T _ R P C _ V S H O T
- *
- * Vectorized version.
- */
-void
-rt_rpc_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
-    /* An array of solid pointers */
-    /* An array of ray pointers */
-    /* array of segs (results returned) */
-    /* Number of ray/object pairs */
-
-{
-    rt_vstub(stp, rp, segp, n, ap);
-}
-
-
 /**
  * R T _ R P C _ N O R M
  *
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
-rt_rpc_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
+rt_rpc_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
     vect_t can_normal;	/* normal to canonical rpc */
-    register struct rpc_specific *rpc =
+    struct rpc_specific *rpc =
 	(struct rpc_specific *)stp->st_specific;
 
     VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir);
@@ -548,10 +529,10 @@ rt_rpc_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
  * Return the curvature of the rpc.
  */
 void
-rt_rpc_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
+rt_rpc_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
     fastf_t zp1, zp2;	/* 1st & 2nd derivatives */
-    register struct rpc_specific *rpc =
+    struct rpc_specific *rpc =
 	(struct rpc_specific *)stp->st_specific;
 
     switch (hitp->hit_surfno) {
@@ -584,14 +565,15 @@ rt_rpc_curve(register struct curvature *cvp, register struct hit *hitp, struct s
  * v = elevation
  */
 void
-rt_rpc_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
+rt_rpc_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
-    register struct rpc_specific *rpc =
-	(struct rpc_specific *)stp->st_specific;
+    struct rpc_specific *rpc = (struct rpc_specific *)stp->st_specific;
 
     vect_t work;
     vect_t pprime;
     fastf_t len;
+
+    if (ap) RT_CK_APPLICATION(ap);
 
     /*
      * hit_point is on surface;  project back to unit rpc,
@@ -629,9 +611,9 @@ rt_rpc_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
  * R T _ R P C _ F R E E
  */
 void
-rt_rpc_free(register struct soltab *stp)
+rt_rpc_free(struct soltab *stp)
 {
-    register struct rpc_specific *rpc =
+    struct rpc_specific *rpc =
 	(struct rpc_specific *)stp->st_specific;
 
     bu_free((char *)rpc, "rpc_specific");
@@ -652,7 +634,7 @@ rt_rpc_class(void)
  * R T _ R P C _ P L O T
  */
 int
-rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_rpc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol __attribute__((unused)))
 {
     struct rt_rpc_internal *xip;
     fastf_t *front;
@@ -1186,10 +1168,12 @@ rt_rpc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
  * Apply modeling transformations as well.
  */
 int
-rt_rpc_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_rpc_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_rpc_internal *xip;
     union record *rp;
+
+    if (dbip) RT_CK_DBI(dbip);
 
     BU_CK_EXTERNAL(ep);
     rp = (union record *)ep->ext_buf;
@@ -1236,6 +1220,8 @@ rt_rpc_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     union record *rpc;
     fastf_t f, mag_b, mag_h;
 
+    if (dbip) RT_CK_DBI(dbip);
+
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_RPC) return(-1);
     xip = (struct rt_rpc_internal *)ip->idb_ptr;
@@ -1280,13 +1266,14 @@ rt_rpc_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
  * Apply modeling transformations as well.
  */
 int
-rt_rpc_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_rpc_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_rpc_internal *xip;
     fastf_t vec[10];
 
-    BU_CK_EXTERNAL(ep);
+    if (dbip) RT_CK_DBI(dbip);
 
+    BU_CK_EXTERNAL(ep);
     BU_ASSERT_LONG(ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * 10);
 
     RT_CK_DB_INTERNAL(ip);
@@ -1329,6 +1316,8 @@ rt_rpc_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     struct rt_rpc_internal *xip;
     fastf_t vec[10];
     fastf_t f, mag_b, mag_h;
+
+    if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_RPC) return(-1);
@@ -1376,12 +1365,15 @@ rt_rpc_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 int
 rt_rpc_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
-    register struct rt_rpc_internal *xip =
+    struct rt_rpc_internal *xip =
 	(struct rt_rpc_internal *)ip->idb_ptr;
     char buf[256];
 
     RT_RPC_CK_MAGIC(xip);
     bu_vls_strcat(str, "Right Parabolic Cylinder (RPC)\n");
+
+    if (!verbose)
+	return 0;
 
     sprintf(buf, "\tV (%g, %g, %g)\n",
 	    INTCLAMP(xip->rpc_V[X] * mm2local),
@@ -1416,15 +1408,11 @@ rt_rpc_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
  * Free the storage associated with the rt_db_internal version of this solid.
  */
 void
-rt_rpc_ifree(struct rt_db_internal *ip, struct resource *resp)
+rt_rpc_ifree(struct rt_db_internal *ip)
 {
-    register struct rt_rpc_internal *xip;
+    struct rt_rpc_internal *xip;
 
     RT_CK_DB_INTERNAL(ip);
-
-    if (!resp) {
-	resp = &rt_uniresource;
-    }
 
     xip = (struct rt_rpc_internal *)ip->idb_ptr;
     RT_RPC_CK_MAGIC(xip);
@@ -1440,8 +1428,11 @@ rt_rpc_ifree(struct rt_db_internal *ip, struct resource *resp)
  *
  */
 int
-rt_rpc_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
+rt_rpc_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 {
+    ps = ps; /* quellage */
+    if (ip) RT_CK_DB_INTERNAL(ip);
+
     return(0);			/* OK */
 }
 

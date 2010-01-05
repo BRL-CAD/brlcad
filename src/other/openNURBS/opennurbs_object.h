@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -54,19 +53,19 @@ public:
   //   copy - [in] function to copy
   //   sUUID - [in] UUID in registry format from Windows guidgen.exe
   ON_ClassId( 
-	  const char* sClassName,
-	  const char* sBaseClassName,
-	  ON_Object* (*create)(),
-	  const char* sUUID
-	   );
+          const char* sClassName,
+          const char* sBaseClassName,
+          ON_Object* (*create)(),
+          const char* sUUID
+           );
 
   ON_ClassId( 
-	  const char* sClassName,
-	  const char* sBaseClassName,
-	  ON_Object* (*create)(),
-	  bool (*copy)(const ON_Object*,ON_Object* ),
-	  const char* sUUID
-	   );
+          const char* sClassName,
+          const char* sBaseClassName,
+          ON_Object* (*create)(),
+          bool (*copy)(const ON_Object*,ON_Object* ),
+          const char* sUUID
+           );
 
   ~ON_ClassId();
 
@@ -79,8 +78,8 @@ public:
   // Example:
   //   const ON_ClassId* brep_id = ON_CLassId::ClassId("ON_Brep");
   static const ON_ClassId* ClassId( 
-	  const char* sClassName
-	  );
+          const char* sClassName
+          );
 
   // Description: 
   //   Gets a class's ON_ClassId from the class's uuid.
@@ -92,8 +91,8 @@ public:
   //   ON_UUID brep_uuid = ON_UuidFromString("60B5DBC5-E660-11d3-BFE4-0010830122F0");
   //   const ON_ClassId* brep_id = ON_CLassId::ClassId(brep_uuid);
   static const ON_ClassId* ClassId( 
-	  ON_UUID class_uuid
-	  );
+          ON_UUID class_uuid
+          );
 
   // Description:
   //   Each class derived from ON_Object has a corresponding ON_ClassId
@@ -103,6 +102,8 @@ public:
   // Returns:
   //   Value that will be used to mark all future ON_ClassIds.
   static int IncrementMark();
+  static int CurrentMark();
+  static const ON_ClassId* LastClassId();
 
   // Description:
   //   Each class derived from ON_Object has a corresponding
@@ -126,9 +127,8 @@ public:
   //   // Call ON_ClassId::Purge() BEFORE unloading MY.DLL.
   //   ON_ClassId::Purge( my_dll_classid_mark );
   //   unload MY.DLL
-  static int Purge( 
-    int mark
-    );
+  static int Purge(int mark);
+  static bool PurgeAfter(const ON_ClassId* pClassId);
 
   // Description:
   //   Dumps the ON_ClassId list
@@ -137,13 +137,6 @@ public:
   static void Dump( 
     ON_TextLog& dump
     );
-
-  // Description:
-  //   OnExitMemoryCleanup() releases all internal memory used by the
-  //   openNURBS classes for Cast() and serialization construction.
-  //   ON_ClassId::OnExitMemoryCleanup() should only be called when
-  //   the application is finished using the openNURBS library.
-  static void OnExitMemoryCleanup();
 
   // Returns:
   //   class name
@@ -163,8 +156,8 @@ public:
   // Parameters:
   //   potential_parent - [in] Class to test as parent.
   // Returns:
-  //   TRUE if this is derived from potential_parent.
-	BOOL IsDerivedFrom( 
+  //   true if this is derived from potential_parent.
+	ON_BOOL32 IsDerivedFrom( 
     const ON_ClassId* potential_parent
     ) const;
 
@@ -192,7 +185,8 @@ public:
   unsigned int ClassIdVersion() const;
 
 private:
-  static ON_ClassId* m_p0;     // first in the linked list of class ids
+  static ON_ClassId* m_p0;     // first id in the linked list of class ids
+  static ON_ClassId* m_p1;     // last id in the linked list of class ids
   static int m_mark0;  // current mark value
   ON_ClassId* m_pNext;         // next in the linked list of class ids
   const ON_ClassId* m_pBaseClassId;  // base class id
@@ -209,10 +203,10 @@ private:
   ON_ClassId& operator=( const ON_ClassId&);
 
   void ConstructorHelper( 
-	  const char* sClassName, 
-	  const char* sBaseClassName, 
-	  const char* sUUID
-	  );
+          const char* sClassName, 
+          const char* sBaseClassName, 
+          const char* sUUID
+          );
 
   // This is a temporary way to add simple virtual functions
   // to ON_Object without breaking the SDK.  At V6 these will
@@ -239,6 +233,19 @@ private:
 //
 #define ON_CLASS_ID( cls ) ON_ClassId::ClassId( #cls )
 
+/*
+Description:
+  Expert user function to get the value of ON_ClassId::m_uuid
+  of the last instance of ON_ClassId to call ON_ClassId::Create().
+  This function was created to support Rhino's .NET SDK.
+  This function returns the value of a static id in
+  opennurbs_object.cpp and is NOT thread safe.
+Returns:
+  Value of ON_ClassId::m_uuid of the instance of ON_ClassId that
+  most recently called ON_ClassId::Create().
+*/
+ON_DECL
+ON_UUID ON_GetMostRecentClassIdCreateUuid();
 
 typedef int (*ON_Vtable_func)(void);
 
@@ -290,27 +297,27 @@ in a .CPP file.
   public:                                                       \
     static const ON_ClassId m_##cls##_class_id;                 \
     /*record used for ON_Object runtime type information*/      \
-								\
+                                                                \
     static cls * Cast( ON_Object* );                            \
     /*Description: Similar to C++ dynamic_cast*/                \
     /*Returns: object on success. NULL on failure*/             \
-								\
+                                                                \
     static const cls * Cast( const ON_Object* );                \
     /*Description: Similar to C++ dynamic_cast*/                \
     /*Returns: object on success. NULL on failure*/             \
-								\
+                                                                \
     virtual const ON_ClassId* ClassId() const;                  \
     /*Description:*/                                            \
-								\
+                                                                \
   private:                                                      \
     virtual ON_Object* DuplicateObject() const;                 \
     /*used by Duplicate to create copy of an object.*/          \
-								\
+                                                                \
     static bool Copy##cls( const ON_Object*, ON_Object* );      \
     /* used by ON_Object::CopyFrom copy object into this. */    \
     /* In V6 Copy##cls will vanish and be replaced with   */    \
     /* virtual bool CopyFrom( const ON_Object* src )      */    \
-								\
+                                                                \
   public:                                                       \
     cls * Duplicate() const;                                    \
     /*Description: Expert level tool - no support available.*/  \
@@ -347,7 +354,7 @@ in a .CPP file.
   const cls * cls::Cast( const ON_Object* p) {return(p&&p->IsKindOf(&cls::m_##cls##_class_id))?(const cls *)p:0;} \
   const ON_ClassId* cls::ClassId() const {return &cls::m_##cls##_class_id;} \
   ON_Object* cls::DuplicateObject() const {cls* p = new cls(); if (p) *p=*this; return p;} \
-  bool cls::Copy##cls( const ON_Object* src, ON_Object* dst ){cls* d;const cls* s;if ((s=cls::Cast(src))&&(d=cls::Cast(dst))){d->cls::operator=(*s);return true;}return false;} \
+  bool cls::Copy##cls( const ON_Object* src, ON_Object* dst ){cls* d;const cls* s;if (0!=(s=cls::Cast(src))&&0!=(d=cls::Cast(dst))) {d->cls::operator=(*s);return true;}return false;} \
   cls * cls::Duplicate() const {return static_cast<cls *>(DuplicateObject());}
 
 #define ON__SET__THIS__PTR(ptr) if (ptr) *((void**)this) = ptr
@@ -465,15 +472,15 @@ public:
   Parameters:
     pClassId - [in] use classname::ClassId()
   Returns:
-    TRUE if the instantiated object is derived from the
+    true if the instantiated object is derived from the
     class whose id is passed as the argument.
   Example:
 
-	  ON_Object* p = ....;
-	  if ( p->IsKindOf( ON_NurbsCurve::ClassId() ) )
-	  {
-	    it's a NURBS curve
-	  }
+          ON_Object* p = ....;
+          if ( p->IsKindOf( ON_NurbsCurve::ClassId() ) )
+          {
+            it's a NURBS curve
+          }
 
   Remarks:
     The primary reason for IsKindOf() is to support the
@@ -486,9 +493,9 @@ public:
     ON_SomeClassName::Cast(mystery pointer) and check for 
     a non-null return.
   */
-  BOOL IsKindOf( 
-	const ON_ClassId* pClassId
-	) const;
+  ON_BOOL32 IsKindOf( 
+        const ON_ClassId* pClassId
+        ) const;
 
   /*
   Description:
@@ -496,19 +503,19 @@ public:
     initialized.
   Parameters:
     text_log - [in] if the object is not valid and text_log
-	is not NULL, then a brief englis description of the
-	reason the object is not valid is appened to the log.
-	The information appended to text_log is suitable for 
-	low-level debugging purposes by programmers and is 
-	not intended to be useful as a high level user 
-	interface tool.
+        is not NULL, then a brief englis description of the
+        reason the object is not valid is appened to the log.
+        The information appended to text_log is suitable for 
+        low-level debugging purposes by programmers and is 
+        not intended to be useful as a high level user 
+        interface tool.
   Returns:
     @untitled table
-    TRUE     object is valid
-    FALSE    object is invalid, uninitialized, etc.
+    true     object is valid
+    false    object is invalid, uninitialized, etc.
   */
   virtual
-  BOOL IsValid( ON_TextLog* text_log = NULL ) const = 0;
+  ON_BOOL32 IsValid( ON_TextLog* text_log = NULL ) const = 0;
 
   /*
   Description:
@@ -550,7 +557,7 @@ public:
   Parameters:
     binary_archive - archive to write to
   Returns:
-    Returns TRUE if the write is successful.
+    Returns true if the write is successful.
   Remarks:
     Use ON_BinaryArchive::WriteObject() to write objects.
     This Write() function should just write the specific definition of
@@ -558,11 +565,11 @@ public:
     information.  
 
     The default implementation of this virtual function returns 
-    FALSE and does nothing.
+    false and does nothing.
   */
   virtual
-  BOOL Write(
-	 ON_BinaryArchive& binary_archive
+  ON_BOOL32 Write(
+         ON_BinaryArchive& binary_archive
        ) const;
 
   /*
@@ -571,18 +578,18 @@ public:
   Parameters:
     binary_archive - archive to read from
   Returns:
-    Returns TRUE if the read is successful.
+    Returns true if the read is successful.
   Remarks:
     Use ON_BinaryArchive::ReadObject() to read objects.
     This Read() function should read the objects definition back into
     its data members.
 
     The default implementation of this virtual function returns 
-    FALSE and does nothing.
+    false and does nothing.
   */
   virtual
-  BOOL Read(
-	 ON_BinaryArchive& binary_archive
+  ON_BOOL32 Read(
+         ON_BinaryArchive& binary_archive
        );
 
   /*
@@ -601,6 +608,7 @@ public:
     ON::curve_object             derived from ON_Curve
     ON::surface_object           derived from ON_Surface
     ON::brep_object              derived from ON_Brep
+    ON::beam_object              derived from ON_Beam
     ON::mesh_object              derived from ON_Mesh
     ON::layer_object             derived from ON_Layer
     ON::material_object          derived from ON_Material
@@ -700,40 +708,40 @@ public:
     Attach user data to an object.
   Parameters:
     pUserData - [in] user data to attach to object.
-	The ON_UserData pointer passed to AttachUserData()
-	must be created with new.  
+        The ON_UserData pointer passed to AttachUserData()
+        must be created with new.  
   Returns:
-    If TRUE is returned, then ON_Object will delete the user
-    data when appropriate.  If FALSE is returned, then data 
+    If true is returned, then ON_Object will delete the user
+    data when appropriate.  If false is returned, then data 
     could not be attached and caller must delete.  
   Remarks:
     AttachUserData() will fail if the user data's m_userdata_uuid
     field is nil or not unique.
   */
-  BOOL AttachUserData( 
-	  ON_UserData* pUserData 
-	  );
+  ON_BOOL32 AttachUserData( 
+          ON_UserData* pUserData 
+          );
 
   /*
   Description:
     Remove user data from an object.
   Parameters:
     pUserData - [in] user data to attach to object.
-	The ON_UserData pointer passed to DetachUserData()
-	must have been previously attached using 
-	AttachUserData().  
+        The ON_UserData pointer passed to DetachUserData()
+        must have been previously attached using 
+        AttachUserData().  
   Returns:
-    If TRUE is returned, then the user data was
-    attached to this object and it was detached.  If FALSE
+    If true is returned, then the user data was
+    attached to this object and it was detached.  If false
     is returned, then the user data was not attached to this
     object to begin with.  In all cases, you can be assured
     that the user data is no longer attached to "this".
   Remarks:
     Call delete pUserData if you want to destroy the user data.
   */
-  BOOL DetachUserData(
-	  ON_UserData* pUserData 
-	  );
+  ON_BOOL32 DetachUserData(
+          ON_UserData* pUserData 
+          );
 
 
   /*
@@ -748,8 +756,8 @@ public:
     the user data from the object.
   */
   ON_UserData* GetUserData( 
-	  const ON_UUID& userdata_uuid
-	  ) const;
+          const ON_UUID& userdata_uuid
+          ) const;
 
   /*
   Description:
@@ -826,15 +834,16 @@ public:
     This function will destroy all runtime information.
   Parameters:
     bDelete - [in] if true, any cached information is properly
-		   deleted.  If false, any cached information
-		   is simply discarded.  This is useful when
-		   the cached information may be in alternate
-		   memory pools that are managed in nonstandard
-		   ways.
+                   deleted.  If false, any cached information
+                   is simply discarded.  This is useful when
+                   the cached information may be in alternate
+                   memory pools that are managed in nonstandard
+                   ways.
   */
   virtual
   void DestroyRuntimeCache( bool bDelete = true );
 
+  ON_MEMORY_POOL* m_mempool; // memory pool for this object (typically null)
 private:
   friend int ON_BinaryArchive::ReadObject( ON_Object** );
   friend bool ON_BinaryArchive::WriteObject( const ON_Object& );

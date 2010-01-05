@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -26,7 +25,13 @@
 ///////////////////////////////////////////////////////////////////////////////
 //
 // Class ON_TextureMapping
-// 
+//
+class ON_Line;
+class ON_BrepFace;
+class ON_3dPoint;
+
+typedef int  ( *TEXMAP_INTERSECT_LINE_SURFACE )( const ON_Line*, const ON_BrepFace*, ON_SimpleArray<ON_X_EVENT>& );
+typedef bool ( *TEXMAP_BREP_FACE_CLOSEST_POINT )( const ON_BrepFace*, const ON_3dPoint*, ON_3dPoint& );
 
 class ON_CLASS ON_TextureMapping : public ON_Object
 {
@@ -42,7 +47,7 @@ public:
 	ON_TextureMapping& operator=(const ON_TextureMapping& src);
 
   // overrides virtual ON_Object::IsValid
-  BOOL IsValid( ON_TextLog* text_log = NULL ) const;
+  ON_BOOL32 IsValid( ON_TextLog* text_log = NULL ) const;
 
   // overrides virtual ON_Object::Dump
   void Dump( ON_TextLog& ) const;
@@ -51,13 +56,13 @@ public:
   unsigned int SizeOf() const;
 
   // overrides virtual ON_Object::Write
-  BOOL Write(
-	 ON_BinaryArchive& binary_archive
+  ON_BOOL32 Write(
+         ON_BinaryArchive& binary_archive
        ) const;
 
   // overrides virtual ON_Object::Read
-  BOOL Read(
-	 ON_BinaryArchive& binary_archive
+  ON_BOOL32 Read(
+         ON_BinaryArchive& binary_archive
        );
 
   void Default();
@@ -85,58 +90,58 @@ public:
   Parameters:
     plane - [in]
     dx - [in]  portion of the plane's x axis that is mapped to [0,1]
-	       (can be a decreasing interval)               
+               (can be a decreasing interval)               
     dy - [in]  portion of the plane's x axis that is mapped to [0,1]
-	       (can be a decreasing interval)               
+               (can be a decreasing interval)               
     dz - [in]  portion of the plane's x axis that is mapped to [0,1]
-	       (can be a decreasing interval)       
+               (can be a decreasing interval)       
     projection_method - [in] 
-	1: Closest point mapping.
-	  A target point P is mapped to the point on the plane
-	  that is closest to P.  The target normal is ignored.
-	2: Target line mapping.  A target point-vector pair
-	  (P, N), are mapped to the point on the plane
-	  where the line through P, parallel to N, intersects
-	  the plane.  If the line is parallel to the plane,
-	  the closest point mapping is used.
+        1: Closest point mapping.
+          A target point P is mapped to the point on the plane
+          that is closest to P.  The target normal is ignored.
+        2: Target line mapping.  A target point-vector pair
+          (P, N), are mapped to the point on the plane
+          where the line through P, parallel to N, intersects
+          the plane.  If the line is parallel to the plane,
+          the closest point mapping is used.
   Example:
     Create a mapping that maps the world axis aligned rectangle in
     the world yz plane with corners at (0,3,5) and (0,7,19) to the
     texture coordinate unit square.
 
-	  ON_3dVector plane_xaxis(0.0,1.0,0.0);
-	  ON_3dVector plane_yaxis(0.0,0,0,1.0);
-	  ON_3dPoint plane_origin(0.0,2.0,4.0);
-	  ON_Plane plane(plane_origin,plane_xaxis,plane_yaxis);
-	  ON_Interval dx( 0.0, 7.0 - 3.0);
-	  ON_Interval dy( 0.0, 19.0 - 5.0);
-	  ON_Interval dz( 0.0, 1.0 );
-	  ON_TextureMapping mapping;
-	  mapping.CreatePlaneMapping(plane,dx,dy,dz);
+          ON_3dVector plane_xaxis(0.0,1.0,0.0);
+          ON_3dVector plane_yaxis(0.0,0,0,1.0);
+          ON_3dPoint plane_origin(0.0,2.0,4.0);
+          ON_Plane plane(plane_origin,plane_xaxis,plane_yaxis);
+          ON_Interval dx( 0.0, 7.0 - 3.0);
+          ON_Interval dy( 0.0, 19.0 - 5.0);
+          ON_Interval dz( 0.0, 1.0 );
+          ON_TextureMapping mapping;
+          mapping.CreatePlaneMapping(plane,dx,dy,dz);
 
   Returns:
     True if input is valid.
   */
   bool SetPlaneMapping(
-	    const ON_Plane& plane,
-	    const ON_Interval& dx,
-	    const ON_Interval& dy,
-	    const ON_Interval& dz
-	    );
+            const ON_Plane& plane,
+            const ON_Interval& dx,
+            const ON_Interval& dy,
+            const ON_Interval& dz
+            );
 
   /*
   Description:
     Create a cylindrical projection texture mapping.
   Parameters:
     cylinder - [in]  
-	cylinder in world space used to define a cylindrical
-	coordinate system.  The angular parameter maps (0,2pi)
-	to texture "u" (0,1), The height parameter maps 
-	(height[0],height[1]) to texture "v" (0,1), and 
-	the radial parameter maps (0,r) to texture "w" (0,1).
+        cylinder in world space used to define a cylindrical
+        coordinate system.  The angular parameter maps (0,2pi)
+        to texture "u" (0,1), The height parameter maps 
+        (height[0],height[1]) to texture "v" (0,1), and 
+        the radial parameter maps (0,r) to texture "w" (0,1).
     bIsCapped - [in]
-	If true, the cylinder is treated as a finite
-	capped cylinder.          
+        If true, the cylinder is treated as a finite
+        capped cylinder.          
   Returns:
     True if input is valid.
   Remarks:
@@ -157,11 +162,11 @@ public:
     Create a spherical projection texture mapping.
   Parameters:
     sphere - [in]  
-	sphere in world space used to define a spherical
-	coordinate system. The longitude parameter maps
-	(0,2pi) to texture "u" (0,1).  The latitude paramter
-	maps (-pi/2,+pi/2) to texture "v" (0,1).
-	The radial parameter maps (0,r) to texture "w" (0,1).
+        sphere in world space used to define a spherical
+        coordinate system. The longitude parameter maps
+        (0,2pi) to texture "u" (0,1).  The latitude paramter
+        maps (-pi/2,+pi/2) to texture "v" (0,1).
+        The radial parameter maps (0,r) to texture "w" (0,1).
   Returns:
     True if input is valid.
   */
@@ -174,9 +179,9 @@ public:
     Create a box projection texture mapping.
   Parameters:
     plane - [in]  
-	The sides of the box the box are parallel to the 
-	plane's coordinate planes.  The dx, dy, dz intervals
-	determine the location of the sides.
+        The sides of the box the box are parallel to the 
+        plane's coordinate planes.  The dx, dy, dz intervals
+        determine the location of the sides.
     dx - [in]
        Determines the location of the front and back planes.
        The vector plane.xaxis is perpindicular to these planes
@@ -193,8 +198,8 @@ public:
        and they pass through plane.PointAt(0,0,dz[0]) and
        plane.PointAt(0,0,dz[1]), respectivly.
     bIsCapped - [in]
-	If true, the box is treated as a finite
-	capped box.          
+        If true, the box is treated as a finite
+        capped box.          
   Returns:
     True if input is valid.
   Remarks:
@@ -203,21 +208,21 @@ public:
 
     If the box is not capped, then each side maps to 1/4 of the texture map.
 
-	  v=1+---------+---------+---------+---------+
-	     | x=dx[1] | y=dy[1] | x=dx[0] | y=dy[0] |
-	     | Front   | Right   | Back    | Left    |
-	     | --y->   | <-x--   | <-y--   | --x->   |
-	  v=0+---------+---------+---------+---------+
-	    0/4 <=u<= 1/4 <=u<= 2/4 <=u<= 3/4 <=u<= 4/4
+          v=1+---------+---------+---------+---------+
+             | x=dx[1] | y=dy[1] | x=dx[0] | y=dy[0] |
+             | Front   | Right   | Back    | Left    |
+             | --y->   | <-x--   | <-y--   | --x->   |
+          v=0+---------+---------+---------+---------+
+            0/4 <=u<= 1/4 <=u<= 2/4 <=u<= 3/4 <=u<= 4/4
 
     If the box is capped, then each side and cap gets 1/6 of the texture map.
 
-	  v=1+---------+---------+---------+---------+---------+---------+
-	     | x=dx[1] | y=dy[1] | x=dx[0] | y=dy[0] | z=dx[1] | z=dz[0] |
-	     | Front   | Right   | Back    | Left    | Top     |  Bottom |
-	     | --y->   | <-x--   | <-y--   | --x->   | --x->   | --x->   |
-	  v=0+---------+---------+---------+---------+---------+---------+
-	    0/6 <=u<= 1/6 <=u<= 2/6 <=u<= 3/6 <=u<= 4/6 <=u<= 5/6 <=u<= 6/6 
+          v=1+---------+---------+---------+---------+---------+---------+
+             | x=dx[1] | y=dy[1] | x=dx[0] | y=dy[0] | z=dx[1] | z=dz[0] |
+             | Front   | Right   | Back    | Left    | Top     |  Bottom |
+             | --y->   | <-x--   | <-y--   | --x->   | --x->   | --x->   |
+          v=0+---------+---------+---------+---------+---------+---------+
+            0/6 <=u<= 1/6 <=u<= 2/6 <=u<= 3/6 <=u<= 4/6 <=u<= 5/6 <=u<= 6/6 
   */
 	bool SetBoxMapping( 
 		 const ON_Plane& plane,
@@ -372,8 +377,8 @@ public:
   Parameters:
     P - [in] Vertex location
     N - [in] If the mapping projection is ray_projection,
-	     then this is the vertex unit normal.  Otherwise
-	     N is ignored.
+             then this is the vertex unit normal.  Otherwise
+             N is ignored.
     T - [out] Texture coordinate (u,v,w)
 
     P_xform -[in] 
@@ -390,14 +395,14 @@ public:
     which side was evaluated.
 
       Cylinder mapping:
-	1 = cylinder wall, 2 = bottom cap, 3 = top cap
+        1 = cylinder wall, 2 = bottom cap, 3 = top cap
       Box mapping:
-	1 = front
-	2 = right
-	3 = back
-	4 = left
-	5 = bottom
-	6 = top        
+        1 = front
+        2 = right
+        3 = back
+        4 = left
+        5 = bottom
+        6 = top        
 
   See Also:
     ON_TextureMapping::GetTextureCoordinates
@@ -443,27 +448,6 @@ public:
     ON_3dPoint* T
     ) const;
 
-  int EvaluateMeshMapping( 
-    const ON_3dPoint& P,
-    const ON_3dVector& N,
-    const ON_Mesh* mesh,
-    ON_3dPoint* T
-    ) const;
-
-  int EvaluateSurfaceMapping( 
-    const ON_3dPoint& P,
-    const ON_3dVector& N,
-    const ON_Surface* srf,
-    ON_3dPoint* T
-    ) const;
-
-  int EvaluateBrepMapping( 
-    const ON_3dPoint& P,
-    const ON_3dVector& N,
-    const ON_Brep* brep,
-    ON_3dPoint* T
-    ) const;
-
   /*
   Description:
     Quickly check to see if a mesh or tag has texture coordinates
@@ -482,13 +466,13 @@ public:
     mapping.
   */
   bool HasMatchingTextureCoordinates( 
-	 const ON_Mesh& mesh,
-	 const ON_Xform* object_xform = 0
-	 ) const; 
+         const ON_Mesh& mesh,
+         const ON_Xform* object_xform = 0
+         ) const; 
   bool HasMatchingTextureCoordinates( 
-	 const class ON_MappingTag& tag,
-	 const ON_Xform* object_xform = 0
-	 ) const; 
+         const class ON_MappingTag& tag,
+         const ON_Xform* object_xform = 0
+         ) const; 
 
   /*
   Description:
@@ -514,23 +498,23 @@ public:
       here if a lazy mapping is not done.  Otherwise Tside->Count()
       will be zero.
       Cylinder mapping:
-	1 = cylinder wall, 2 = bottom cap, 3 = top cap
+        1 = cylinder wall, 2 = bottom cap, 3 = top cap
       Box mapping:
-	1 = front
-	2 = right
-	3 = back
-	4 = left
-	5 = bottom
-	6 = top        
+        1 = front
+        2 = right
+        3 = back
+        4 = left
+        5 = bottom
+        6 = top        
   Example:
     
-	  ON_TextureMapping mapping = ...;
-	  const ON_Mesh* mesh = ...;
-	  bool bLazy = true;
-	  ON_SimpleArray<ON_3dPoint> T(mesh->VertexCount());
-	  T.SetCount(mesh->m_VertexCount());
-	  if ( !mapping.GetTextureCoordinates(mesh,3,3,&T[0].x,bLazy) )
-	    T.SetCount(0).
+          ON_TextureMapping mapping = ...;
+          const ON_Mesh* mesh = ...;
+          bool bLazy = true;
+          ON_SimpleArray<ON_3dPoint> T(mesh->VertexCount());
+          T.SetCount(mesh->m_VertexCount());
+          if ( !mapping.GetTextureCoordinates(mesh,3,3,&T[0].x,bLazy) )
+            T.SetCount(0).
 
   Returns:
     True if successful.
@@ -645,10 +629,10 @@ public:
   {
     single  = 0, // sides and caps map to same texture space
     divided = 1, // sides and caps map to distinct vertical
-		 // regions of texture space.
-		 // (0, 1/4, 2/4, 3/4, 1) for uncapped boxes.
-		 // (0, 1/6, 2/6, 3/6, 4/6, 5/6, 1) for capped boxes.
-		 // (0, 4/6, 5/6, 1) for capped cylinders.
+                 // regions of texture space.
+                 // (0, 1/4, 2/4, 3/4, 1) for uncapped boxes.
+                 // (0, 1/6, 2/6, 3/6, 4/6, 5/6, 1) for capped boxes.
+                 // (0, 4/6, 5/6, 1) for capped cylinders.
     force_32bit_texture_space = 0xFFFFFFFF
   };
   

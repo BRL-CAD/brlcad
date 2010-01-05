@@ -39,7 +39,7 @@ protected:
 public:
 	AmountOfSubstanceSiUnit();
 	virtual ~AmountOfSubstanceSiUnit();
-	AmountOfSubstanceSiUnit(STEPWrapper *sw,int STEPid);
+	AmountOfSubstanceSiUnit(STEPWrapper *sw,int step_id);
 	bool Load(STEPWrapper *sw,SCLP23(Application_instance) *sse);
 	virtual void Print(int level);
 

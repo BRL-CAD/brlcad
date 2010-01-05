@@ -210,7 +210,6 @@ int mged_bomb_hook(genptr_t clientData, genptr_t str);
 
 void mged_view_obj_callback(genptr_t clientData, struct view_obj *vop);
 
-#ifdef USE_PROTOTYPES
 #if !defined(_WIN32) || defined(__CYGWIN__)
 Tcl_FileProc stdin_input;
 Tcl_FileProc std_out_or_err;
@@ -218,10 +217,7 @@ Tcl_FileProc std_out_or_err;
 void stdin_input(ClientData clientData, int mask);
 void std_out_or_err(ClientData clientData, int mask);
 #endif
-#else
-void stdin_input();
-void std_out_or_err();
-#endif
+
 
 static void
 notify_parent_done(int parent) {
@@ -1686,7 +1682,7 @@ std_out_or_err(ClientData clientData, int mask)
 int
 event_check(int non_blocking)
 {
-    register struct dm_list *p;
+    struct dm_list *p;
     struct dm_list *save_dm_list;
     int save_edflag;
     int handled = 0;
@@ -2024,7 +2020,7 @@ refresh(void)
     struct dm_list *save_dm_list;
     struct bu_vls overlay_vls;
     struct bu_vls tmp_vls;
-    register int do_overlay = 1;
+    int do_overlay = 1;
     double elapsed_time;
     int do_time = 0;
 
@@ -2262,8 +2258,8 @@ void
 mged_finish(int exitcode)
 {
     char place[64];
-    register struct dm_list *p;
-    register struct cmd_list *c;
+    struct dm_list *p;
+    struct cmd_list *c;
 
     (void)sprintf(place, "exit_status=%d", exitcode);
     log_event("CEASE", place);
@@ -2391,7 +2387,7 @@ new_mats(void)
 void
 new_edit_mats(void)
 {
-    register struct dm_list *p;
+    struct dm_list *p;
     struct dm_list *save_dm_list;
 
     save_dm_list = curr_dm_list;

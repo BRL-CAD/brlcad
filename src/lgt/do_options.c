@@ -374,7 +374,7 @@ HMenu	quit_hmenu = { quit_items, 0, 0, 0, 0, 0 };
 int
 user_Cmd(char **ar)
 {
-    register int ret = (*func_tab[(int)*ar[0]].func)( (HMitem *) 0, ar );
+    int ret = (*func_tab[(int)*ar[0]].func)( (HMitem *) 0, ar );
     return	ret;
 }
 
@@ -382,7 +382,7 @@ static int
 user_Opt(int opt, char *arg)
 {
     char	buf[2], *local_argv[MAX_ARGS];
-    register int	i;
+    int	i;
     buf[0] = (char)opt;
     buf[1] = '\0';
     /* Set up argument vector for function. */
@@ -754,7 +754,7 @@ f_Batch()
 #define QUIT	'q'
 
 void
-pt_Select(register int x, register int y, register int *xp, register int *yp, register int *originp)
+pt_Select(int x, int y, int *xp, int *yp, int *originp)
 {
     char		*args[3];
     char		buf1[5], buf2[5];
@@ -859,7 +859,7 @@ static int
 f_Cursor_Module()
 {
     static int	x = -1, y = -1;
-    register int	c;
+    int	c;
     int		origin = TRUE;
     int		xx0, yy0;
 
@@ -1107,7 +1107,7 @@ f_Cursor_Module()
 			    else
 				if ( in_windowing || out_windowing )
 				{
-				    register int	dx, dy, dw;
+				    int	dx, dy, dw;
 				    fastf_t		scale;
 				    fastf_t		x_translate, y_translate;
 				    static char	buf[5];
@@ -1250,7 +1250,7 @@ f_Animate()
 	for ( frame_no = 0; ! user_interrupt; frame_no++ )
 	{
 	    FBIO	*movie_fbiop;
-	    register int	y;
+	    int	y;
 	    if ( frame_no == noframes )
 		frame_no = 0;
 	    (void) sprintf( suffixptr, ".%04d", frame_no );
@@ -1454,7 +1454,7 @@ f_GridConfig(char **args)
 static int
 f_Wrt_Fb(char **args)
 {
-    register int y;
+    int y;
     static char save_fb_file[MAX_LN] = { 0 };
     FBIO *save_fbiop;
     if ( args != NULL && args[1] != NULL )
@@ -1524,7 +1524,7 @@ f_Wrt_Fb(char **args)
 static int
 f_Rd_Fb(char **args)
 {
-    register int y;
+    int y;
     static char save_fb_file[MAX_LN] = { 0 };
     FBIO *save_fbiop;
     if ( args != NULL && args[1] != NULL )
@@ -1725,7 +1725,7 @@ f_Rd_Raw_IR(char **args)
 static int
 read_Frame(FILE *fp)
 {
-    register int	i;
+    int	i;
     if ( fscanf( fp, "%le", &view_size ) != 1 )
     {
 	bu_log( "Failed to read view size.\n" );
@@ -1837,7 +1837,7 @@ f_Movie()
 	movie.m_keys = input_ln[0] != 'n';
     if ( movie.m_keys )
     {
-	register int	i;
+	int	i;
 	(void) snprintf( prompt, MAX_LN,
 			 "Name of key frame file ? (%s) ",
 			 svkey_file[0] == '\0' ? "STDIN" : svkey_file
@@ -2027,7 +2027,7 @@ f_Prnt_Regions()
 static int
 f_Set_Region_IR()
 {
-    register OcList	*ocp;
+    OcList	*ocp;
     OcList		*oclist;
     static char	reg_name[MAX_LN];
     static int	temperature = 0;
@@ -3082,7 +3082,7 @@ f_Fbclear()
 static int
 f_Exec_Shell(char **args)
 {
-    register int	i;
+    int	i;
     int	exit_status;
     if ( args == NULL )
     {
@@ -3209,7 +3209,7 @@ void
 user_Interaction(void)
 {
     static char	*local_argv[MAX_ARGS];
-    register int	ret;
+    int	ret;
     local_argv[1] = NULL; /* Truncate argument list initially. */
     /* Set up user options. */
 #if defined(HAS_SGIGL)
@@ -3252,7 +3252,7 @@ static fastf_t	neg_z_axis[3] = { 0.0, 0.0, -1.0 };
 int
 setup_Lgts(int frame)
 {
-    register int i;
+    int i;
     struct soltab *eye_stp = NULL;  /* Initialize to shut up the */
     struct soltab *grid_stp = NULL; /* stupid Cray compiler. */
     prnt_Event( "Setting up light sources..." );
@@ -3481,7 +3481,7 @@ void
 user_Input(char **args)
 {
     static int first_time_through = TRUE;
-    register int i;
+    int i;
     if ( get_Input( input_ln, BUFSIZ, ": " ) == NULL )
     {
 	/* If detached, and at EOF, do atleast 1 picture. */
@@ -3645,9 +3645,9 @@ make_Script(char *file)
 
 /*	p a r s _ A r g v ( ) */
 int
-pars_Argv(int argc, register char **argv)
+pars_Argv(int argc, char **argv)
 {
-    register int	c;
+    int	c;
     extern int	bu_optind;
     extern char	*bu_optarg;
     prog_id = argv[0];
@@ -3714,7 +3714,7 @@ pars_Argv(int argc, register char **argv)
     /* Load the desired portion of the model. */
     objects = &argv[bu_optind];
     {
-	register int	ok = 0;
+	int	ok = 0;
 	while ( argv[bu_optind] != NULL )
 	{
 	    if ( tty )
@@ -3824,7 +3824,7 @@ hm_getchar(void)
 	return	sgi_Getchar();
 #endif
     {
-	register int	c;
+	int	c;
 	while ( (c = getchar()) == EOF )
 	    ;
 	return	c;

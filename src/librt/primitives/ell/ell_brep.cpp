@@ -33,7 +33,7 @@
  * R T _ E L L _ B R E P
  */
 extern "C" void
-rt_ell_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
+rt_ell_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 {
     struct rt_ell_internal *eip;
 
@@ -74,9 +74,9 @@ rt_ell_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     // Make final BREP structure   
     (*b)->m_S.Append(ellcurvedsurf);   
     int surfindex = (*b)->m_S.Count();
-    ON_BrepFace& face = (*b)->NewFace(surfindex - 1);
+    (*b)->NewFace(surfindex - 1);
     int faceindex = (*b)->m_F.Count();
-    ON_BrepLoop* outerloop = (*b)->NewOuterLoop(faceindex-1);
+    (*b)->NewOuterLoop(faceindex-1);
 }
 
 

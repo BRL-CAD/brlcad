@@ -79,7 +79,7 @@ main(argc, argv)
     int	argc;
     char	*argv[];
 {
-    register int	c;
+    int	c;
     double		percent;
     int		i;
 
@@ -304,7 +304,7 @@ output_nmg( r, pathp, region_id, material_id )
  *  This routine must be prepared to run in parallel.
  */
 union tree *do_region_end(tsp, pathp, curtree, client_data)
-    register struct db_tree_state	*tsp;
+    struct db_tree_state	*tsp;
     struct db_full_path	*pathp;
     union tree		*curtree;
     genptr_t		client_data;

@@ -64,8 +64,8 @@
 
 
 extern int viewshade(struct application *ap,
-		     register const struct partition *pp,
-		     register struct shadework *swp);
+		     const struct partition *pp,
+		     struct shadework *swp);
 
 extern void multispectral_shader_init(struct mfuncs **headp);
 
@@ -143,9 +143,9 @@ struct bu_structparse view_parse[] = {
  *  Ensure that a_spectrum points to a valid spectral curve.
  */
 void
-curve_attach(register struct application *ap)
+curve_attach(struct application *ap)
 {
-    register struct scanline	*slp;
+    struct scanline	*slp;
 
     RT_AP_CHECK(ap);
     RT_CK_RTI(ap->a_rt_i);
@@ -204,10 +204,10 @@ background_radiation(struct application *ap)
  *  When a scaline is completed (possibly not in sequence), write it to file.
  */
 void
-view_pixel(register struct application *ap)
+view_pixel(struct application *ap)
 {
-    register struct scanline	*slp;
-    register int	do_eol = 0;
+    struct scanline	*slp;
+    int	do_eol = 0;
 
     RT_AP_CHECK(ap);
     RT_CK_RTI(ap->a_rt_i);
@@ -261,7 +261,7 @@ view_pixel(register struct application *ap)
 	{
 	    double lo = INFINITY, hi = -INFINITY;
 	    for ( i=0; i<width; i++ )  {
-		register double tmp;
+		double tmp;
 		sp = (struct bn_tabdata *)(line + i * BN_SIZEOF_TABDATA(spectrum));
 		tmp = sp->y[filter_freq_index];
 		if ( tmp < lo ) lo = tmp;
@@ -276,7 +276,7 @@ view_pixel(register struct application *ap)
 	BU_ASSERT( width < sizeof(obuf) );
 	/* A variety of filters could be used here, eventually */
 	for ( i=0; i<width; i++ )  {
-	    register double tmp;
+	    double tmp;
 	    sp = (struct bn_tabdata *)(line + i * BN_SIZEOF_TABDATA(spectrum));
 	    tmp = filter_gain *
 		(sp->y[filter_freq_index] - filter_bias);
@@ -303,7 +303,7 @@ view_pixel(register struct application *ap)
  *  pixel of a scanline is really done, for parallel considerations.
  */
 void
-view_eol(register struct application *ap)
+view_eol(struct application *ap)
 {
     return;
 }
@@ -325,7 +325,7 @@ view_end(struct application *ap)
 void
 view_setup(struct rt_i *rtip)
 {
-    register struct region *regp;
+    struct region *regp;
 
     RT_CHECK_RTI(rtip);
     /*
@@ -375,7 +375,7 @@ view_setup(struct rt_i *rtip)
 void
 view_cleanup(struct rt_i *rtip)
 {
-    register struct region	*regp;
+    struct region	*regp;
 
     RT_CHECK_RTI(rtip);
 
@@ -399,7 +399,7 @@ view_cleanup(struct rt_i *rtip)
  *  For now, return a pleasant dark blue.
  */
 static int
-hit_nothing(register struct application *ap)
+hit_nothing(struct application *ap)
 {
     if ( rdebug&RDEBUG_MISSPLOT )  {
 	vect_t	out;
@@ -475,10 +475,10 @@ hit_nothing(register struct application *ap)
  *  This can be a recursive procedure.
  */
 int
-colorview(register struct application *ap, struct partition *PartHeadp, struct seg *finished_segs)
+colorview(struct application *ap, struct partition *PartHeadp, struct seg *finished_segs)
 {
-    register struct partition *pp;
-    register struct hit *hitp;
+    struct partition *pp;
+    struct hit *hitp;
     struct shadework sw;
 
     sw.msw_color = BN_TABDATA_NULL;
@@ -565,7 +565,7 @@ colorview(register struct application *ap, struct partition *PartHeadp, struct s
 	 *  and inhit to outhit (grey).
 	 */
 	if ( hitp->hit_dist > 0.0001 )  {
-	    register int i, lvl;
+	    int i, lvl;
 	    fastf_t out;
 	    vect_t inhit, outhit;
 
@@ -643,7 +643,7 @@ colorview(register struct application *ap, struct partition *PartHeadp, struct s
 void
 free_scanlines(void)
 {
-    register int	y;
+    int	y;
 
     for ( y=0; y<height; y++ )  {
 	if ( scanline[y].sl_buf )  {
@@ -661,7 +661,7 @@ free_scanlines(void)
  *  Called once, early on in RT setup, before view size is set.
  */
 int
-view_init(register struct application *ap, char *file, char *obj, int minus_o)
+view_init(struct application *ap, char *file, char *obj, int minus_o)
 {
     bu_log("%s", brlcad_ident(title));
 
@@ -688,9 +688,9 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
  *  Called each time a new image is about to be done.
  */
 void
-view_2init(register struct application *ap, char *framename)
+view_2init(struct application *ap, char *framename)
 {
-    register int i;
+    int i;
     struct bu_vls	name;
 
     ap->a_refrac_index = 1.0;	/* RI_AIR -- might be water? */

@@ -49,7 +49,7 @@ protected:
 public:
 	PCurveOrSurface();
 	virtual ~PCurveOrSurface();
-	PCurveOrSurface(STEPWrapper *sw,int STEPid);
+	PCurveOrSurface(STEPWrapper *sw,int step_id);
 	bool Load(STEPWrapper *sw,SCLP23(Select) *sse);
 	virtual void Print(int level);
 

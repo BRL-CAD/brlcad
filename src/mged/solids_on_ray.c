@@ -447,7 +447,7 @@ rpt_solids(struct application *ap, struct partition *ph, struct seg *finished_se
 static int
 rpt_hits_mike(struct application *ap, struct partition *PartHeadp, struct seg *segp)
 {
-    register struct partition	*pp;
+    struct partition	*pp;
     int		len;
     char		**list;
     int		i;

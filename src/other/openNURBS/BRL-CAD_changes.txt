@@ -1,0 +1,237 @@
+BRL-CAD makes some modifications to the vanilla tarball obtained from the openNURBS developers.
+This document attempts to identify these changes and the reasons for them, up to a BRL-CAD
+subversion revision number.  (Changes after that number will be found using svn log and svn diff).
+
+
+Files Added:
+
+BRL_CAD_changes.txt - this file
+CmakeLists.txt - supports building openNURBS using CMake
+Makefile.am - supports building openNURBS using GNU Autotools
+faq.txt - adds some basic information from the openNURBS website
+license.txt - include a copy of the license information with the source code
+
+
+
+Files and Directories Removed:
+
+makefile - replaced in BRL-CAD with Makefile.am
+opennurbs.xcodeproj - BRL-CAD is not currently set up to build with XCode
+zlib - BRL-CAD uses either the system zlib or its own external copy - don't
+       need to include another copy
+
+
+Annotated list of other differences between BRL-CAD openNURBS and vanilla tarball as of 
+revision 37009
+
+
+
+######################################################################################
+### Attempt at porting forward the change from r32977, relating to pointer casting ###
+######################################################################################
+
+Dec 23 18:07 2009 diff -r -w -B -l opennurbs_vanilla/opennurbs_array_defs.h opennurbs_minimalchanges/opennurbs_array_defs.h Page 1
+
+1065c1065,1067
+<   return found ? ((int)((((ON__UINT_PTR)found) - ((ON__UINT_PTR)m_a))/sizeof(T))) : -1;
+---
+>   // (``Erik used size_t instead of unsigned int in previous version - swap size_t for int for now
+>   // in this version as well - need to evaluate impact of ON__UINT_PTR if any...)
+>   return found ? ((size_t)((((ON__UINT_PTR)found) - ((ON__UINT_PTR)m_a))/sizeof(T))) : -1;
+
+
+
+##########################################################################################
+### Alternative method for validating trimming loop ending points - see                ###
+### http://news2.mcneel.com/scripts/dnewsweb.exe?cmd=article&group=opennurbs&item=2208 ###
+##########################################################################################
+
+Dec 23 18:07 2009 diff -r -w -B -l opennurbs_vanilla/opennurbs_brep.cpp opennurbs_minimalchanges/opennurbs_brep.cpp Page 1
+
+
+3299a3300,3302
+>   const ON_Surface *surf = loop.Face()->SurfaceOf();
+>   double urange = surf->Domain(0)[1] - surf->Domain(0)[0];
+>   double vrange = surf->Domain(1)[1] - surf->Domain(1)[0];
+3326,3327c3329,3335
+<       double xtol = (fabs(P0.x) + fabs(P1.x))*1.0e-10;
+<       double ytol = (fabs(P0.y) + fabs(P1.y))*1.0e-10;
+---
+>       //double xtol = (fabs(P0.x) + fabs(P1.x))*1.0e-10;
+>       //double ytol = (fabs(P0.y) + fabs(P1.y))*1.0e-10;
+>       // 
+>       // Oct 12 2009 Rather than using the above check, BRL-CAD uses
+>       // relative uv size
+>       double xtol = (urange) * trim0.m_tolerance[0];
+>       double ytol = (vrange) * trim0.m_tolerance[1];
+
+
+#######################################
+### Fix typo in source code comment ###
+#######################################
+
+Dec 23 18:07 2009 diff -r -w -B -l opennurbs_vanilla/opennurbs_brep.h opennurbs_minimalchanges/opennurbs_brep.h Page 1
+
+
+416c416
+<   m_C2[trim.m_c2i] and the trin as a curve may not
+---
+>   m_C2[trim.m_c2i] and the trim as a curve may not
+
+
+
+#############################################################################
+### Work around for a compiler optimization bug in gcc 4.0.1 - see r36510 ###
+#############################################################################
+
+Dec 23 18:07 2009 diff -r -w -B -l opennurbs_vanilla/opennurbs_font.cpp opennurbs_minimalchanges/opennurbs_font.cpp Page 1
+
+
+45c45,47
+<   SetFontFaceName(L"Arial");
+---
+>   ON_wString wstr("Arial");
+>   const wchar_t* w = wstr;
+>   SetFontFaceName(w);
+
+
+
+################################################
+### Quell uninitialized warning - see r33619 ###
+################################################
+
+Dec 23 18:07 2009 diff -r -w -B -l opennurbs_vanilla/opennurbs_massprop.cpp opennurbs_minimalchanges/opennurbs_massprop.cpp Page 1
+
+
+258c258
+<   double ee1, ee2, ee3;
+---
+>   double ee1 = 0.0, ee2 = 0.0, ee3 = 0.0;
+
+
+
+######################################################################
+### Comment identifying type of string defined in opennurbs_string ###
+######################################################################
+
+Dec 23 18:07 2009 diff -r -w -B -l opennurbs_vanilla/opennurbs_string.cpp opennurbs_minimalchanges/opennurbs_string.cpp Page 1
+
+
+15a16
+> // ASCII (single byte "char*" style) string
+
+
+
+##############################################
+### Various compiler specific conditionals ###
+##############################################
+
+Dec 23 18:07 2009 diff -r -w -B -l opennurbs_vanilla/opennurbs_system.h opennurbs_minimalchanges/opennurbs_system.h Page 1
+
+
+83a84,90
+> #if defined(sgi) || defined(__sgi)
+> #define ON_COMPILER_IRIX
+> #endif
+> 
+> #if defined(sun) || defined(__sun)
+> #define ON_COMPILER_SUN
+> #endif
+185a193,196
+> #ifdef __cplusplus
+> extern "C" {
+> #endif
+> 
+202c213
+< #if defined(ON_COMPILER_IRIX)
+---
+> #if defined(ON_COMPILER_IRIX) || defined(ON_COMPILER_SUN)
+219c230
+< #endif
+---
+> #endif /* ON_OS_WINDOWS */
+229a241,244
+> #ifdef __cplusplus
+> } /* extern "C" */
+> #endif
+>   
+269c284
+< #if !defined(_WCHAR_T)
+---
+> #if !defined(ON_COMPILER_MSC) && !defined(ON_COMPILER_GNU)
+
+
+################################################
+### Have openNURBS use external zlib library ###
+################################################
+
+Dec 23 18:07 2009 diff -r -w -B -l opennurbs_vanilla/opennurbs_zlib.cpp opennurbs_minimalchanges/opennurbs_zlib.cpp Page 1
+
+
+280c280
+<     zrc = z_deflate( &m_zlib.strm, flush ); 
+---
+>     zrc = deflate( &m_zlib.strm, flush ); 
+284c284
+<       ON_ERROR("ON_BinaryArchive::WriteDeflate - z_deflate failure");
+---
+>       ON_ERROR("ON_BinaryArchive::WriteDeflate - deflate failure");
+478c478
+<     zrc = z_inflate( &m_zlib.strm, flush );
+---
+>     zrc = inflate( &m_zlib.strm, flush );
+482c482
+<       ON_ERROR("ON_BinaryArchive::ReadInflate - z_inflate failure");
+---
+>       ON_ERROR("ON_BinaryArchive::ReadInflate - inflate failure");
+1138c1138
+<     zrc = z_deflate( &m_zlib.strm, flush ); 
+---
+>     zrc = deflate( &m_zlib.strm, flush ); 
+1142c1142
+<       ON_ERROR("ON_CompressedBuffer::DeflateHelper - z_deflate failure");
+---
+>       ON_ERROR("ON_CompressedBuffer::DeflateHelper - deflate failure");
+1271c1271
+<     zrc = z_inflate( &m_zlib.strm, flush );
+---
+>     zrc = inflate( &m_zlib.strm, flush );
+1275c1275
+<       ON_ERROR("ON_CompressedBuffer::InflateHelper - z_inflate failure");
+---
+>       ON_ERROR("ON_CompressedBuffer::InflateHelper - inflate failure");
+
+
+Dec 23 18:07 2009 diff -r -w -B -l opennurbs_vanilla/opennurbs_zlib.h opennurbs_minimalchanges/opennurbs_zlib.h Page 1
+
+
+31c31
+< #if !defined(Z_PREFIX)
+---
+> /*#if !defined(Z_PREFIX)*/
+33,34c33,34
+< #define Z_PREFIX
+< #endif
+---
+> /*#define Z_PREFIX*/
+> /*#endif*/
+41c41
+< #include "./zlib/zlib.h"
+---
+> #include <zlib.h>
+
+
+
+############################################
+### Quell warning about unused parameter ###
+############################################
+
+Dec 23 18:25 2009 diff -r -w -B -l opennurbs_vanilla/opennurbs_memory.c opennurbs_minimalchanges/opennurbs_memory.c Page 1
+
+
+169c169
+<   return 0;
+---
+>   return p != p; /* quell warning, always return 0 */;
+
+

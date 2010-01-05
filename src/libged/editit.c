@@ -49,8 +49,8 @@
 int
 ged_editit(const char *file)
 {
-    register int pid = 0;
-    register int xpid = 0;
+    int pid = 0;
+    int xpid = 0;
     char buffer[RT_MAXLINE] = {0};
     const char *editor = (char *)NULL;
     int stat = 0;

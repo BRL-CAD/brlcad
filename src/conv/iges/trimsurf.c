@@ -1207,7 +1207,7 @@ find_intersections( fu, mid_pt, ray_dir, hit_list )
 	srf = BU_LIST_FIRST( face_g_snurb,  &bezier );
 	BU_LIST_DEQUEUE( &srf->l );
 
-	hp = rt_nurb_intersect( srf, pl1, pl2, UV_TOL, (struct resource *)NULL );
+	hp = rt_nurb_intersect( srf, pl1, pl2, UV_TOL, (struct resource *)NULL, NULL );
 	/* process each hit point */
 	while ( hp != (struct rt_nurb_uv_hit *)NULL )
 	{

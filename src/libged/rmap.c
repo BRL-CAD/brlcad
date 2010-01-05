@@ -36,8 +36,8 @@
 int
 ged_rmap(struct ged *gedp, int argc, const char *argv[])
 {
-    register int i;
-    register struct directory *dp;
+    int i;
+    struct directory *dp;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
     struct _ged_id_to_names headIdName;
@@ -112,7 +112,7 @@ ged_rmap(struct ged *gedp, int argc, const char *argv[])
 		BU_LIST_INSERT(&itnp->headName.l, &inp->l);
 	    }
 
-	    rt_db_free_internal(&intern, &rt_uniresource);
+	    rt_db_free_internal(&intern);
 	}
     }
 

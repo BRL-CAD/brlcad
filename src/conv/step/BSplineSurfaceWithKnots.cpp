@@ -47,9 +47,9 @@ BSplineSurfaceWithKnots::BSplineSurfaceWithKnots() {
 	id = 0;
 }
 
-BSplineSurfaceWithKnots::BSplineSurfaceWithKnots(STEPWrapper *sw,int STEPid) {
+BSplineSurfaceWithKnots::BSplineSurfaceWithKnots(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 BSplineSurfaceWithKnots::~BSplineSurfaceWithKnots() {
@@ -62,7 +62,7 @@ BSplineSurfaceWithKnots::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse)
 
 	// load base class attributes
 	if ( !BSplineSurface::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::BSplineCurve." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::BSplineCurve." << std::endl;
 		return false;
 	}
 
@@ -81,7 +81,7 @@ BSplineSurfaceWithKnots::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse)
 				in = (IntNode *)in->NextNode();
 			}
 		} else {
-			cout << CLASSNAME << ": Error loading BSplineSurfaceWithKnots(u_multiplicities)." << endl;
+			std::cout << CLASSNAME << ": Error loading BSplineSurfaceWithKnots(u_multiplicities)." << std::endl;
 			return false;
 		}
 	}
@@ -96,7 +96,7 @@ BSplineSurfaceWithKnots::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse)
 				in = (IntNode *)in->NextNode();
 			}
 		} else {
-			cout << CLASSNAME << ": Error loading BSplineSurfaceWithKnots(v_multiplicities)." << endl;
+			std::cout << CLASSNAME << ": Error loading BSplineSurfaceWithKnots(v_multiplicities)." << std::endl;
 			return false;
 		}
 	}
@@ -111,7 +111,7 @@ BSplineSurfaceWithKnots::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse)
 				rn = (RealNode *)rn->NextNode();
 			}
 		} else {
-			cout << CLASSNAME << ": Error loading BSplineSurfaceWithKnots(knots)." << endl;
+			std::cout << CLASSNAME << ": Error loading BSplineSurfaceWithKnots(knots)." << std::endl;
 			return false;
 		}
 	}
@@ -126,7 +126,7 @@ BSplineSurfaceWithKnots::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse)
 				rn = (RealNode *)rn->NextNode();
 			}
 		} else {
-			cout << CLASSNAME << ": Error loading BSplineSurfaceWithKnots(knots)." << endl;
+			std::cout << CLASSNAME << ": Error loading BSplineSurfaceWithKnots(knots)." << std::endl;
 			return false;
 		}
 	}
@@ -140,37 +140,37 @@ BSplineSurfaceWithKnots::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse)
 
 void
 BSplineSurfaceWithKnots::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << name << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Attributes:" << endl;
-	TAB(level+1); cout << "u_multiplicities:";
+	TAB(level); std::cout << "Attributes:" << std::endl;
+	TAB(level+1); std::cout << "u_multiplicities:";
 	LIST_OF_INTEGERS::iterator ii;
 	for(ii=u_multiplicities.begin();ii!=u_multiplicities.end();ii++) {
-		cout << " " << (*ii);
+		std::cout << " " << (*ii);
 	}
-	cout << endl;
-	TAB(level+1); cout << "v_multiplicities:";
+	std::cout << std::endl;
+	TAB(level+1); std::cout << "v_multiplicities:";
 	for(ii=v_multiplicities.begin();ii!=v_multiplicities.end();ii++) {
-		cout << " " << (*ii);
+		std::cout << " " << (*ii);
 	}
-	cout << endl;
+	std::cout << std::endl;
 
-	TAB(level+1); cout << "u_knots:";
+	TAB(level+1); std::cout << "u_knots:";
 	LIST_OF_REALS::iterator ir;
 	for(ir=u_knots.begin();ir!=u_knots.end();ir++) {
-		cout << " " << (*ir);
+		std::cout << " " << (*ir);
 	}
-	cout << endl;
-	TAB(level+1); cout << "v_knots:";
+	std::cout << std::endl;
+	TAB(level+1); std::cout << "v_knots:";
 	for(ir=v_knots.begin();ir!=v_knots.end();ir++) {
-		cout << " " << (*ir);
+		std::cout << " " << (*ir);
 	}
-	cout << endl;
+	std::cout << std::endl;
 
-	TAB(level+1); cout << "knot_spec:" << Knot_type_string[knot_spec] << endl;
+	TAB(level+1); std::cout << "knot_spec:" << Knot_type_string[knot_spec] << std::endl;
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	BSplineSurface::Print(level+1);
 }
 STEPEntity *
@@ -182,7 +182,7 @@ BSplineSurfaceWithKnots::Create(STEPWrapper *sw,SCLP23(Application_instance) *ss
 		Factory::AddObject(object);
 
 		if (!object->Load(sw,sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

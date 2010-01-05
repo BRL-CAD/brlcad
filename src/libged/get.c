@@ -71,7 +71,7 @@ ged_get(struct ged *gedp, int argc, const char *argv[])
     }
 
     status = intern.idb_meth->ft_get(&gedp->ged_result_str, &intern, argv[2]);
-    rt_db_free_internal(&intern, &rt_uniresource);
+    rt_db_free_internal(&intern);
 
     return status;
 }

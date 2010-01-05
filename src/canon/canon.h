@@ -78,11 +78,8 @@ extern int	ipu_debug;
 #endif
 
 
-#ifdef USE_PROTOTYPES
-#  define	FUNC_EXTERN(type_and_name, args)	extern type_and_name args
-#else
-#  define	FUNC_EXTERN(type_and_name, args)	extern type_and_name()
-#endif
+#define FUNC_EXTERN(type_and_name, args) extern type_and_name args
+
 
 #ifdef IPU_FULL_LIB
 FUNC_EXTERN(int ipu_not_ready, (struct dsreq *dsp));

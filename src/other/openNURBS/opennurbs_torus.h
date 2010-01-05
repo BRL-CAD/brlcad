@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -43,10 +42,10 @@ public:
   ON_Torus( const ON_Circle& major__circle, double minor__radius );
   ~ON_Torus();
 
-  BOOL IsValid( ON_TextLog* text_log = NULL ) const;
+  ON_BOOL32 IsValid( ON_TextLog* text_log = NULL ) const;
 
-  BOOL Create( const ON_Plane& major__plane, double major__radius, double minor__radius );
-  BOOL Create( const ON_Circle& major__circle, double minor__radius);
+  ON_BOOL32 Create( const ON_Plane& major__plane, double major__radius, double minor__radius );
+  ON_BOOL32 Create( const ON_Circle& major__circle, double minor__radius);
 
   /*
   Description:
@@ -134,48 +133,48 @@ public:
     ) const;
 
   // returns parameters of point on torus that is closest to test_point.
-  BOOL ClosestPointTo( 
-	 ON_3dPoint test_point, 
-	 double* major_angle_radians, 
-	 double* minor_angle_radians
-	 ) const;
+  ON_BOOL32 ClosestPointTo( 
+         ON_3dPoint test_point, 
+         double* major_angle_radians, 
+         double* minor_angle_radians
+         ) const;
 
   // returns point on torus that is closest to test_point
   ON_3dPoint ClosestPointTo( 
-	 ON_3dPoint test_point
-	 ) const;
+         ON_3dPoint test_point
+         ) const;
 
   // rotate torus about its origin
-  BOOL Rotate(
-	double sin_angle,               // sin(angle)
-	double cos_angle,               // cos(angle)
-	const ON_3dVector& axis_of_rotation // axis of rotation
-	);
+  ON_BOOL32 Rotate(
+        double sin_angle,               // sin(angle)
+        double cos_angle,               // cos(angle)
+        const ON_3dVector& axis_of_rotation // axis of rotation
+        );
 
-  BOOL Rotate(
-	double angle_radians,               // angle in radians
-	const ON_3dVector& axis_of_rotation // axis of rotation
-	);
+  ON_BOOL32 Rotate(
+        double angle_radians,               // angle in radians
+        const ON_3dVector& axis_of_rotation // axis of rotation
+        );
 
   // rotate torus about a point and axis
-  BOOL Rotate(
-	double sin_angle,               // sin(angle)
-	double cos_angle,               // cos(angle)
-	const ON_3dVector& axis_of_rotation, // axis of rotation
-	const ON_3dPoint& center_of_rotation  // center of rotation
-	);
+  ON_BOOL32 Rotate(
+        double sin_angle,               // sin(angle)
+        double cos_angle,               // cos(angle)
+        const ON_3dVector& axis_of_rotation, // axis of rotation
+        const ON_3dPoint& center_of_rotation  // center of rotation
+        );
 
-  BOOL Rotate(
-	double angle_radians,               // angle in radians
-	const ON_3dVector& axis_of_rotation, // axis of rotation
-	const ON_3dPoint& center_of_rotation  // center of rotation
-	);
+  ON_BOOL32 Rotate(
+        double angle_radians,               // angle in radians
+        const ON_3dVector& axis_of_rotation, // axis of rotation
+        const ON_3dPoint& center_of_rotation  // center of rotation
+        );
 
-  BOOL Translate(
-	const ON_3dVector&
-	);
+  ON_BOOL32 Translate(
+        const ON_3dVector&
+        );
 
-  BOOL Transform( const ON_Xform& );
+  ON_BOOL32 Transform( const ON_Xform& );
 
   // parameterization of NURBS surface does not match torus's transcendental paramaterization
   int GetNurbForm( ON_NurbsSurface& ) const; // returns 0=failure, 2=success

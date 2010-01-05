@@ -38,9 +38,9 @@ double	buf[4096] = {0};
 
 
 void
-skip(register int num)
+skip(int num)
 {
-    register int	n, m;
+    int	n, m;
 
     while ( num > 0 ) {
 	n = num > 1024 ? 1024 : num;
@@ -51,9 +51,9 @@ skip(register int num)
 }
 
 void
-keep(register int num)
+keep(int num)
 {
-    register int	n, m;
+    int	n, m;
 
     while ( num > 0 ) {
 	n = num > 1024 ? 1024 : num;

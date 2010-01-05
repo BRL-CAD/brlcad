@@ -54,9 +54,9 @@ BSplineSurface::BSplineSurface() {
 	control_points_list = NULL;
 }
 
-BSplineSurface::BSplineSurface(STEPWrapper *sw,int STEPid) {
+BSplineSurface::BSplineSurface(STEPWrapper *sw,int step_id) {
 	step=sw;
-	id = STEPid;
+	id = step_id;
 	control_points_list = NULL;
 }
 
@@ -80,7 +80,7 @@ BSplineSurface::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 	id = sse->STEPfile_id;
 
 	if ( !BoundedSurface::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::BoundedSurface." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::BoundedSurface." << std::endl;
 		return false;
 	}
 
@@ -104,31 +104,31 @@ BSplineSurface::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 
 void
 BSplineSurface::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << name << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Attributes:" << endl;
-	TAB(level+1); cout << "control_points:" << endl;
+	TAB(level); std::cout << "Attributes:" << std::endl;
+	TAB(level+1); std::cout << "control_points:" << std::endl;
 	LIST_OF_LIST_OF_POINTS::iterator i;
 	int cnt=0;
 	for(i=control_points_list->begin(); i != control_points_list->end(); ++i) {
 		LIST_OF_POINTS::iterator j;
 		LIST_OF_POINTS *p = *i;
-		TAB(level+1); cout << "line " << cnt++ << ":" << endl;
+		TAB(level+1); std::cout << "line " << cnt++ << ":" << std::endl;
 		for(j=p->begin(); j != p->end(); ++j) {
 			(*j)->Print(level+1);
 		}
 	}
 
-	TAB(level+1); cout << "u_degree:" << u_degree << endl;
-	TAB(level+1); cout << "v_degree:" << v_degree << endl;
+	TAB(level+1); std::cout << "u_degree:" << u_degree << std::endl;
+	TAB(level+1); std::cout << "v_degree:" << v_degree << std::endl;
 
-	TAB(level+1); cout << "u_closed:" << step->getLogicalString((SCLLOG_H(Logical))u_closed) << endl;
-	TAB(level+1); cout << "v_closed:" << step->getLogicalString((SCLLOG_H(Logical))v_closed) << endl;
-	TAB(level+1); cout << "self_intersect:" << step->getLogicalString((SCLLOG_H(Logical))self_intersect) << endl;
-	TAB(level+1); cout << "surface_form:" << B_spline_surface_form_string[surface_form] << endl;
+	TAB(level+1); std::cout << "u_closed:" << step->getLogicalString((SCLLOG_H(Logical))u_closed) << std::endl;
+	TAB(level+1); std::cout << "v_closed:" << step->getLogicalString((SCLLOG_H(Logical))v_closed) << std::endl;
+	TAB(level+1); std::cout << "self_intersect:" << step->getLogicalString((SCLLOG_H(Logical))self_intersect) << std::endl;
+	TAB(level+1); std::cout << "surface_form:" << B_spline_surface_form_string[surface_form] << std::endl;
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	BoundedSurface::Print(level+1);
 }
 
@@ -141,7 +141,7 @@ BSplineSurface::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

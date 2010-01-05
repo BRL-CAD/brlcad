@@ -38,9 +38,9 @@ VolumeContextDependentUnit::VolumeContextDependentUnit() {
 	id = 0;
 }
 
-VolumeContextDependentUnit::VolumeContextDependentUnit(STEPWrapper *sw,int STEPid) {
+VolumeContextDependentUnit::VolumeContextDependentUnit(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 VolumeContextDependentUnit::~VolumeContextDependentUnit() {
@@ -54,11 +54,11 @@ VolumeContextDependentUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *s
 
 	// load base class attributes
 	if ( !VolumeUnit::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::Unit." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 		return false;
 	}
 	if ( !ContextDependentUnit::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::Unit." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 		return false;
 	}
 
@@ -67,10 +67,10 @@ VolumeContextDependentUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *s
 
 void
 VolumeContextDependentUnit::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	VolumeUnit::Print(level+1);
 	ContextDependentUnit::Print(level+1);
 
@@ -84,7 +84,7 @@ VolumeContextDependentUnit::Create(STEPWrapper *sw, SCLP23(Application_instance)
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

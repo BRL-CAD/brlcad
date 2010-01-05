@@ -1,8 +1,7 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2009 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Assoicates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
@@ -24,9 +23,7 @@
 #if !defined(OPENNURBS_INC_)
 #define OPENNURBS_INC_
 
-#include <iostream>
-//#define ON_TRACE(m) std::cout << m << std::endl
-#define ON_TRACE(m)
+#define OPENNURBS_PLUS
 
 #include "opennurbs_system.h"       /* system headers used by openNURBS code */
 
@@ -35,21 +32,25 @@
 #include "opennurbs_defines.h"      /* openNURBS defines and enums */
 #include "opennurbs_error.h"        /* error handling */
 #include "opennurbs_memory.h"       /* memory managment (onmalloc(), onrealloc(), onfree(), ...) */
+#include "opennurbs_rand.h"         /* random number generator */
 #include "opennurbs_crc.h"          /* cyclic redundancy check tool */
 #include "opennurbs_uuid.h"         /* universally unique identifiers (UUID, a.k.a, GUID) */
 
 #if defined(ON_CPLUSPLUS)
 
 #include "opennurbs_string.h"         // dynamic string classes (single and double byte)
+#include "opennurbs_base64.h"         // base64 encodeing and decoding
 #include "opennurbs_color.h"          // R G B color
 #include "opennurbs_linestyle.h"      // line pattern, scale, and width
 #include "opennurbs_point.h"          // double precision 2d, 3d, 4d points and 2d, 3d vectors
 #include "opennurbs_fpoint.h"         // float precision 2d, 3d, 4d points and 2d, 3d vectors
 #include "opennurbs_array.h"          // dynamic array templates
+#include "opennurbs_base32.h"         // base32 encodeing and decoding
 #include "opennurbs_pluginlist.h"
 #include "opennurbs_bounding_box.h"   // simple 3d axis aligned bounding box
 #include "opennurbs_matrix.h"         // general m X n matrix
 #include "opennurbs_xform.h"          // 4 X 4 transformation matrix
+#include "opennurbs_quaternion.h"
 #include "opennurbs_workspace.h"      // workspace memory allocation
 #include "opennurbs_plane.h"          // simple 3d plane
 #include "opennurbs_circle.h"         // simple 3d circle
@@ -70,6 +71,7 @@
 #include "opennurbs_evaluate_nurbs.h" // utilities for evaluating Beziers and NURBS
 #include "opennurbs_textlog.h"        // text log for dumps, error logs, etc.
 #include "opennurbs_zlib.h"           // ON_BinaryArchive needs z_stream definition.
+#include "opennurbs_rtree.h"          // ON_RTree spatial search utility.
 #include "opennurbs_mapchan.h"
 #include "opennurbs_rendering.h"
 #include "opennurbs_archive.h"        // binary arcive objects for serialization to file, memory blocks, etc.
@@ -106,6 +108,7 @@
 #include "opennurbs_revsurface.h"     // surface of revolution
 #include "opennurbs_sumsurface.h"     // sum surface
 #include "opennurbs_brep.h"           // boundary rep
+#include "opennurbs_beam.h"           // lightweight extrusion object
 #include "opennurbs_bitmap.h"         // Windows and OpenGL bitmaps
 #include "opennurbs_instance.h"       // instance definitions and references
 #include "opennurbs_3dm_properties.h"
@@ -120,8 +123,11 @@
 #include "opennurbs_objref.h"         // ON_ObjRef definition
 #include "opennurbs_offsetsurface.h"  // ON_OffsetSurface definition
 #include "opennurbs_detail.h"         // ON_Detail definition
+#include "opennurbs_lookup.h"         // ON_SerialNumberTable
 #include "opennurbs_object_history.h"
+
 #include "opennurbs_extensions.h"
+
 
 #endif
 

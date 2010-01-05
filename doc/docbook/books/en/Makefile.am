@@ -1,4 +1,3 @@
-if EN_DOCS
 booksDOCBOOK_EN = \
 	books/en/BRL-CAD_Tutorial_Series-VolumeII.xml \
 	books/en/BRL-CAD_Tutorial_Series-VolumeIII.xml
@@ -53,4 +52,3 @@ endif
 
 booksDOCBOOK_ENpdfdir = $(BRLCAD_DATA)/pdf/books/en
 booksDOCBOOK_ENpdf_DATA = $(BUILTBOOKS_ENPDF)
-endif

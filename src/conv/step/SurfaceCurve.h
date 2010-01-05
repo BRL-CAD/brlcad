@@ -47,7 +47,7 @@ protected:
 public:
 	SurfaceCurve();
 	virtual ~SurfaceCurve();
-	SurfaceCurve(STEPWrapper *sw,int STEPid);
+	SurfaceCurve(STEPWrapper *sw,int step_id);
 	//TODO: check for ANDOR types of SURFACE_CURVE
 	virtual curve_type CurveType() { return SURFACE_CURVE; };
 	bool Load(STEPWrapper *sw,SCLP23(Application_instance) *sse);

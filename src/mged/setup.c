@@ -399,7 +399,7 @@ mged_rtCmdNotify()
 HIDDEN void
 cmd_setup(void)
 {
-    register struct cmdtab *ctp;
+    struct cmdtab *ctp;
     struct bu_vls temp;
     struct bu_vls	vls;
     const char *pathname;

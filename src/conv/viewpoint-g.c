@@ -65,7 +65,7 @@ static char *usage="viewpoint-g [-t tol] -c coord_file_name -e elements_file_nam
 int
 main(int argc, char **argv)
 {
-    register int c;
+    int c;
     FILE *coords, *elems;		/* input file pointers */
     struct rt_wdb *out_fp;		/* output file pointers */
     char *output_file = "viewpoint.g";

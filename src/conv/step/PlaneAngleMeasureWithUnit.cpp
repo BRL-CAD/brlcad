@@ -42,9 +42,9 @@ PlaneAngleMeasureWithUnit::PlaneAngleMeasureWithUnit() {
 	id = 0;
 }
 
-PlaneAngleMeasureWithUnit::PlaneAngleMeasureWithUnit(STEPWrapper *sw,int STEPid) {
+PlaneAngleMeasureWithUnit::PlaneAngleMeasureWithUnit(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 PlaneAngleMeasureWithUnit::~PlaneAngleMeasureWithUnit() {
@@ -58,7 +58,7 @@ PlaneAngleMeasureWithUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *ss
 
 	// load base class attributes
 	if ( !MeasureWithUnit::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::" << CLASSNAME << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::" << CLASSNAME << std::endl;
 		return false;
 	}
 	return true;
@@ -66,11 +66,11 @@ PlaneAngleMeasureWithUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *ss
 
 void
 PlaneAngleMeasureWithUnit::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	MeasureWithUnit::Print(level+1);
 }
 
@@ -83,7 +83,7 @@ PlaneAngleMeasureWithUnit::Create(STEPWrapper *sw, SCLP23(Application_instance) 
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

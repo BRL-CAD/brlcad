@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -31,7 +30,7 @@ ON_Group::~ON_Group()
 //
 // ON_Object overrides
 
-BOOL ON_Group::IsValid( ON_TextLog* text_log ) const
+ON_BOOL32 ON_Group::IsValid( ON_TextLog* text_log ) const
 {
   return ( m_group_name.Length() > 0 && m_group_index >= 0 );
 }
@@ -45,11 +44,11 @@ void ON_Group::Dump( ON_TextLog& dump ) const
   dump.Print("group name = \"%S\"\n",name);
 }
 
-BOOL ON_Group::Write(
+ON_BOOL32 ON_Group::Write(
        ON_BinaryArchive& file // serialize definition to binary archive
      ) const
 {
-  BOOL rc = file.Write3dmChunkVersion(1,1);
+  ON_BOOL32 rc = file.Write3dmChunkVersion(1,1);
   // version 1.0 fields
   if (rc) rc = file.WriteInt(m_group_index);
   if (rc) rc = file.WriteString(m_group_name);
@@ -58,7 +57,7 @@ BOOL ON_Group::Write(
   return rc;
 }
 
-BOOL ON_Group::Read(
+ON_BOOL32 ON_Group::Read(
        ON_BinaryArchive& file // restore definition from binary archive
      )
 {
@@ -67,7 +66,7 @@ BOOL ON_Group::Read(
   memset(&m_group_id,0,sizeof(m_group_id));
   int major_version = 0;
   int minor_version = 0;
-  BOOL rc = file.Read3dmChunkVersion(&major_version,&minor_version);
+  ON_BOOL32 rc = file.Read3dmChunkVersion(&major_version,&minor_version);
   if ( major_version == 1 ) 
   {
     if (rc) rc = file.ReadInt( &m_group_index );
@@ -78,7 +77,7 @@ BOOL ON_Group::Read(
     }
   }
   else
-    rc = FALSE;
+    rc = false;
   return rc;
 }
 

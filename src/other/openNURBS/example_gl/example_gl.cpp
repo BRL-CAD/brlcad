@@ -12,6 +12,7 @@
 
 #include "../opennurbs.h"
 #include "../opennurbs_gl.h"
+#include "../opennurbs_staticlib_linking_pragmas.h"
 
 #if defined(ON_COMPILER_MSC)
 
@@ -75,9 +76,9 @@ public:
 };
 
 void CModel::GetObjectMaterial( 
-	  int object_index,
-	  ON_Material& material 
-	  ) const
+          int object_index,
+          ON_Material& material 
+          ) const
 {
   material.Default();
   //const ON_Geometry* geo = 0;
@@ -93,20 +94,20 @@ void CModel::GetObjectMaterial(
       case ON::brep_object:
       case ON::mesh_object:
       case ON::instance_reference:
-	GetRenderMaterial( mo.m_attributes, material );
-	break;
+        GetRenderMaterial( mo.m_attributes, material );
+        break;
       default:
-	{
-	  // use emmissive object color for curve objects
-	  ON_Color c = WireframeColor( mo.m_attributes );
-	  ON_Color black(0,0,0);
-	  material.Default();
-	  material.SetAmbient(black);
-	  material.SetDiffuse(black);
-	  material.SetSpecular(black);
-	  material.SetEmission(c);
-	}
-	break;
+        {
+          // use emmissive object color for curve objects
+          ON_Color c = WireframeColor( mo.m_attributes );
+          ON_Color black(0,0,0);
+          material.Default();
+          material.SetAmbient(black);
+          material.SetDiffuse(black);
+          material.SetSpecular(black);
+          material.SetEmission(c);
+        }
+        break;
       }
     }
   }
@@ -172,7 +173,7 @@ CModel* glb_model = 0;
 //
 //////////////////////////////////////////////////////////////////////
 
-BOOL myInitGL( const ON_Viewport&, GLUnurbsObj*& );
+ON_BOOL32 myInitGL( const ON_Viewport&, GLUnurbsObj*& );
 
 void myBuildDisplayList( 
       GLuint,                  // display_list_number,
@@ -209,7 +210,14 @@ void MY_GL_CALLBACK myGLUT_MouseEvent( int button, int state, int x, int y );
 void MY_GL_CALLBACK myGLUT_KeyboardEvent( unsigned char ch, int x, int y );
 void MY_GL_CALLBACK myGLUT_SpecialKeyEvent( int ch, int x, int y );    // for auxKeyFunc();
 
+// If you are using Apple's Xcode and you get a compile error
+// on the typedef below, then try using the commented out typedef.
+//
+// Apple's Xcode 2.4 likes this typedef witht the (...)
 typedef void (CALLBACK* RHINO_GL_NURBS_ERROR)(...);
+//
+// Apple's Xcode 3.2 likes this typedef witht the (...)
+//typedef void (CALLBACK* RHINO_GL_NURBS_ERROR)();
 #endif
 
 }
@@ -229,7 +237,7 @@ int main( int argc, const char *argv[] )
 
   ON_TextLog error_log;
 
-  BOOL bOK;
+  ON_BOOL32 bOK;
   int window_width  = 500;
   int window_height = 500;
   //double port_aspect = ((double)window_width)/((double)window_height);
@@ -300,7 +308,7 @@ int main( int argc, const char *argv[] )
     {
       int i;
       for ( i = 0; i < 254 && argv[0][i]; i++ )
-	sWindowTitleString[i] = argv[0][i];
+        sWindowTitleString[i] = argv[0][i];
       sWindowTitleString[i] = 0;
     }
 
@@ -351,8 +359,8 @@ int main( int argc, const char *argv[] )
     if ( bOK ) {
       // build display list
       myBuildDisplayList( glb_display_list_number,
-			  pTheGLNURBSRender,
-			  model );
+                          pTheGLNURBSRender,
+                          model );
 
       // look at it
 #if defined(ON_EXAMPLE_GL_USE_GLAUX)
@@ -393,7 +401,7 @@ void SetGLProjectionMatrix( ON_Viewport& viewport )
   ON_GL( viewport, pl, pr, pb, pt ); // updates GL projection matrix
 }
 
-BOOL myInitGL( const ON_Viewport& viewport, GLUnurbsObj*& nobj )
+ON_BOOL32 myInitGL( const ON_Viewport& viewport, GLUnurbsObj*& nobj )
 {
   // set the model view transform
   SetGLModelViewMatrix( viewport );
@@ -404,10 +412,10 @@ BOOL myInitGL( const ON_Viewport& viewport, GLUnurbsObj*& nobj )
   ON_Color background_color(0,63,127);
   //background_color = glb_model->m_settings.m_RenderSettings.m_background_color;
   glClearColor( (float)background_color.FractionRed(), 
-		(float)background_color.FractionGreen(), 
-		(float)background_color.FractionBlue(), 
-		1.0f
-		);
+                (float)background_color.FractionGreen(), 
+                (float)background_color.FractionBlue(), 
+                1.0f
+                );
 
   glLightModeli( GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE );
   glDisable( GL_CULL_FACE );
@@ -486,9 +494,9 @@ void MY_GL_CALLBACK myGLUT_Reshape( int w, int h )
 
 ///////////////////////////////////////////////////////////////////////
 static void myRotateView( ON_Viewport& viewport,
-			  const ON_3dVector& axis,
-			  const ON_3dPoint& center,
-			  double angle )
+                          const ON_3dVector& axis,
+                          const ON_3dPoint& center,
+                          double angle )
 {
   ON_Xform rot;
   ON_3dPoint camLoc;
@@ -576,7 +584,7 @@ void MY_GL_CALLBACK myKeyViewExtents( void )
 
 static void myGLAUX_MouseEvent( GLint button, const AUX_EVENTREC* event )
 {
-  static BOOL bMouseActive = false;
+  static ON_BOOL32 bMouseActive = false;
   static int mx0, my0;
   int mx, my;
 
@@ -619,7 +627,7 @@ static void myGLAUX_MouseEvent( GLint button, const AUX_EVENTREC* event )
       glb_model->m_view.m_vp.GetCameraFrame( camLoc, NULL, NULL, camZ );
       d = (camLoc-glb_model->m_view.m_target)*camZ;
       if ( glb_model->m_view.m_vp.GetDollyCameraVector(mx0,my0,mx,my,d,dolly_vector) ) {
-	glb_model->m_view.m_vp.DollyCamera( dolly_vector );
+        glb_model->m_view.m_vp.DollyCamera( dolly_vector );
       }
     }
     break;
@@ -790,9 +798,9 @@ void myDisplayObject( const ON_Object& geometry, const ON_Material& material, GL
 
 ///////////////////////////////////////////////////////////////////////
 
-void MY_GL_CALLBACK myDisplayLighting( const ON_Viewport& viewport,
-				       const CModel& model
-				     )
+void MY_GL_CALLBACK myDisplayLighting( const ON_Viewport&, // viewport, // unreferenced
+                                       const CModel& model
+                                     )
 {
   int light_count = model.m_light_table.Count();
   if ( light_count > 0 ) {
@@ -847,7 +855,6 @@ static void myDrawAxesSprite( const ON_Viewport& viewport, HDC hdc )
 #define LOFF 3
 
   // draw 3 axes from back to front
-  COLORREF c[3] = { RGB(255,0,0), RGB(0,255,0), RGB(0,0,255) };
   HPEN axis_pen[3];
   axis_pen[0] = CreatePen( PS_SOLID, 2, RGB(255,0,0) );
   axis_pen[1] = CreatePen( PS_SOLID, 2, RGB(0,255,0) );
@@ -926,9 +933,9 @@ static void myDrawAxesSprite( const ON_Viewport& viewport, HDC hdc )
 ///////////////////////////////////////////////////////////////////////
 
 void myBuildDisplayList( GLuint display_list_number,
-			 GLUnurbsObj* pTheGLNurbsRender,
-			 const CModel& model
-			 )
+                         GLUnurbsObj* pTheGLNurbsRender,
+                         const CModel& model
+                         )
 {
   ON_Material material;
   glNewList( display_list_number, GL_COMPILE );
@@ -956,7 +963,7 @@ void MY_GL_CALLBACK myDisplay( void )
   // Uses globals glb_* because the GL aux tools don't provide an
   // easy way to pass information into this callback.
   int bUseRhinoSpotlights = false; // I like to use a simple headlight
-				   // for a basic preview.
+                                   // for a basic preview.
 
   glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 

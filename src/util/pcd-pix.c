@@ -860,7 +860,7 @@ static void ycctorgb(dim w, dim h, implane *l, implane *c1, implane *c2)
     static int init=0;
     static long XL[256], XC1[256], XC2[256], XC1g[256], XC2g[256];
     static uBYTE BUF[own_BUsize];
-    register uBYTE	*BUptr;
+    uBYTE	*BUptr;
     int   BUcount;
 
     melde("ycctorgb\n");
@@ -1084,11 +1084,11 @@ static void decode(dim w, dim h, implane *f, implane *f1, implane *f2, int autos
 {
     int i, htlen, sum;
     unsigned long maxwidth;
-    register unsigned long sreg;
+    unsigned long sreg;
     unsigned int inh, n, zeile, segment, ident;
     struct myhqt *htptr, *hp;
 
-    register uBYTE *nptr;
+    uBYTE *nptr;
     uBYTE *lptr;
 
     melde("decode\n");
@@ -1190,7 +1190,7 @@ static void decode(dim w, dim h, implane *f, implane *f1, implane *f2, int autos
 	}
 	else
 	{
-	    register int	key;
+	    int	key;
 	    /*      if ((!lptr) || (n>maxwidth)) error(E_SEQ4);*/
 	    if (!lptr)      error(E_SEQ6);
 	    if (n>maxwidth) error(E_SEQ4);

@@ -38,9 +38,9 @@ ThermodynamicTemperatureUnit::ThermodynamicTemperatureUnit() {
 	id = 0;
 }
 
-ThermodynamicTemperatureUnit::ThermodynamicTemperatureUnit(STEPWrapper *sw,int STEPid) {
+ThermodynamicTemperatureUnit::ThermodynamicTemperatureUnit(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 ThermodynamicTemperatureUnit::~ThermodynamicTemperatureUnit() {
@@ -54,7 +54,7 @@ ThermodynamicTemperatureUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) 
 
 	// load base class attributes
 	if ( !NamedUnit::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::Unit." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 		return false;
 	}
 
@@ -63,10 +63,10 @@ ThermodynamicTemperatureUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) 
 
 void
 ThermodynamicTemperatureUnit::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	NamedUnit::Print(level+1);
 
 }
@@ -79,7 +79,7 @@ ThermodynamicTemperatureUnit::Create(STEPWrapper *sw, SCLP23(Application_instanc
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

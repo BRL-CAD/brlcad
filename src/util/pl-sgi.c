@@ -181,7 +181,7 @@ Usage: pl-sgi [options] [-t thickness] [-{s|S} shellcmd] [file.plot]\n\
 int
 get_args( int argc, char *argv[] )
 {
-    register int c;
+    int c;
 
     while ( (c = bu_getopt( argc, argv, "aft:ns:S:1" )) != EOF )  {
 	switch ( c )  {
@@ -808,7 +808,7 @@ getieee( FILE *fp, double out[], int n )
 void
 uplot( FILE *fp, Coord max[3], Coord min[3] )
 {
-    register int	c;
+    int	c;
     int	x, y, z, x1, y1, z1, x2, y2, z2;
     int	r, g, b;
     char	str[180];

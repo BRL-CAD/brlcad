@@ -37,7 +37,7 @@ protected:
 	double focal_dist;
 
 	Parabola();
-	Parabola(STEPWrapper *sw,int STEPid);
+	Parabola(STEPWrapper *sw,int step_id);
 
 public:
 	virtual ~Parabola();

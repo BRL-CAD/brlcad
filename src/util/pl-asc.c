@@ -122,7 +122,7 @@ Usage: pl-asc [-v] [unix_plot]\n";
 int
 main(int argc, char **argv)
 {
-    register int	c;
+    int	c;
     struct	uplot *up;
     int	i;
 
@@ -226,7 +226,7 @@ outstring(int n)
 short
 getshort(void)
 {
-    register long	v, w;
+    long	v, w;
 
     v = getc(fp);
     v |= (getc(fp)<<8);	/* order is important! */

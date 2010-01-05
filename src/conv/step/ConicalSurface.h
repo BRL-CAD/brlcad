@@ -40,7 +40,7 @@ protected:
 public:
 	ConicalSurface();
 	virtual ~ConicalSurface();
-	ConicalSurface(STEPWrapper *sw,int STEPid);
+	ConicalSurface(STEPWrapper *sw,int step_id);
 	const double *GetOrigin();
 	const double *GetNormal();
 	const double *GetXAxis();

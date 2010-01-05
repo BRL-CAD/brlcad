@@ -89,7 +89,7 @@ struct dg_rt_client_data {
 #define DGO_SHADED_MODE_ALL 2
 #define DGO_BOOL_EVAL 3
 static union tree *
-dgo_bot_check_region_end(register struct db_tree_state *tsp,
+dgo_bot_check_region_end(struct db_tree_state *tsp,
 			 struct db_full_path	*pathp,
 			 union tree		*curtree,
 			 genptr_t		client_data);
@@ -119,7 +119,7 @@ extern void	dgo_init_qray(struct dg_obj *dgop);
 extern void	dgo_free_qray(struct dg_obj *dgop);
 
 /* in wdb_obj.c */
-void wdb_print_node(struct rt_wdb *wdbp, Tcl_Interp *interp, register struct directory *dp, int pathpos, int indentSize, char prefix, int cflag, int displayDepth, int currdisplayDepth);
+void wdb_print_node(struct rt_wdb *wdbp, Tcl_Interp *interp, struct directory *dp, int pathpos, int indentSize, char prefix, int cflag, int displayDepth, int currdisplayDepth);
 
 static int dgo_open_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
 static int dgo_headSolid_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
@@ -149,21 +149,21 @@ static int dgo_vnirt_tcl(ClientData clientData, Tcl_Interp *interp, int argc, ch
 static int dgo_vdraw_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
 static int dgo_tree_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
 
-static union tree *dgo_wireframe_region_end(register struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
+static union tree *dgo_wireframe_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
 static union tree *dgo_wireframe_leaf(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data);
 static int dgo_drawtrees(struct dg_obj *dgop, Tcl_Interp *interp, int argc, char *argv[], int kind, struct dg_client_data *_dgcdp);
 int dgo_invent_solid(struct dg_obj *dgop, Tcl_Interp *interp, char *name, struct bu_list *vhead, long int rgb, int copy, fastf_t transparency, int dmode);
-static void dgo_bound_solid(Tcl_Interp *interp, register struct solid *sp);
+static void dgo_bound_solid(Tcl_Interp *interp, struct solid *sp);
 void dgo_drawH_part2(int dashflag, struct bu_list *vhead, struct db_full_path *pathp, struct db_tree_state *tsp, struct solid *existing_sp, struct dg_client_data *dgcdp);
 void dgo_eraseobjpath(struct dg_obj *dgop, Tcl_Interp *interp, int argc, char *argv[], int noisy, int all);
-static void dgo_eraseobjall(struct dg_obj *dgop, Tcl_Interp *interp, register struct directory **dpp);
-static void dgo_eraseobj(struct dg_obj *dgop, Tcl_Interp *interp, register struct directory **dpp);
+static void dgo_eraseobjall(struct dg_obj *dgop, Tcl_Interp *interp, struct directory **dpp);
+static void dgo_eraseobj(struct dg_obj *dgop, Tcl_Interp *interp, struct directory **dpp);
 void dgo_color_soltab(struct solid *hsp);
 static int dgo_run_rt(struct dg_obj *dgop, struct view_obj *vop);
 static void dgo_rt_write(struct dg_obj *dgop, struct view_obj *vop, FILE *fp, fastf_t *eye_model);
 static void dgo_rt_set_eye_model(struct dg_obj *dgop, struct view_obj *vop, fastf_t *eye_model);
 void dgo_cvt_vlblock_to_solids(struct dg_obj *dgop, Tcl_Interp *interp, struct bn_vlblock *vbp, char *name, int copy);
-int dgo_build_tops(Tcl_Interp *interp, struct solid *hsp, char **start, register char **end);
+int dgo_build_tops(Tcl_Interp *interp, struct solid *hsp, char **start, char **end);
 void dgo_pr_wait_status(Tcl_Interp *interp, int status);
 
 static void dgo_print_schain(struct dg_obj *dgop, Tcl_Interp *interp, int lvl);
@@ -404,7 +404,7 @@ dgo_illum_cmd(struct dg_obj	*dgop,
 	      int		argc,
 	      char 		*argv[])
 {
-    register struct solid *sp;
+    struct solid *sp;
     struct bu_vls vls;
     int found = 0;
     int illum = 1;
@@ -423,7 +423,7 @@ dgo_illum_cmd(struct dg_obj	*dgop,
 	goto bad;
 
     FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid) {
-	register int i;
+	int i;
 
 	for (i = 0; i < sp->s_fullpath.fp_len; ++i) {
 	    if (*argv[1] == *DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_namep &&
@@ -703,7 +703,7 @@ struct directory **
 dgo_build_dpp(struct dg_obj	*dgop,
 	      Tcl_Interp        *interp,
 	      char              *path) {
-    register struct directory *dp;
+    struct directory *dp;
     struct directory **dpp;
     int i;
     char *begin;
@@ -782,11 +782,11 @@ dgo_how_cmd(struct dg_obj	*dgop,
 	    int			argc,
 	    char 		*argv[])
 {
-    register struct solid *sp;
+    struct solid *sp;
     struct bu_vls vls;
     int i;
     struct directory **dpp;
-    register struct directory **tmp_dpp;
+    struct directory **tmp_dpp;
     int both = 0;
 
     bu_vls_init(&vls);
@@ -867,7 +867,7 @@ dgo_who_cmd(struct dg_obj	*dgop,
 	    int			argc,
 	    char 		*argv[])
 {
-    register struct solid *sp;
+    struct solid *sp;
     int skip_real, skip_phony;
 
     if (argc < 1 || 2 < argc) {
@@ -909,7 +909,7 @@ dgo_who_cmd(struct dg_obj	*dgop,
     FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid)
 	sp->s_flag = DOWN;
     FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid) {
-	register struct solid *forw;	/* XXX */
+	struct solid *forw;	/* XXX */
 
 	if (sp->s_flag == UP)
 	    continue;
@@ -1031,7 +1031,7 @@ dgo_autoview(struct dg_obj	*dgop,
 	     struct view_obj	*vop,
 	     Tcl_Interp		*interp)
 {
-    register struct solid	*sp;
+    struct solid	*sp;
     vect_t		min, max;
     vect_t		minus, plus;
     vect_t		center;
@@ -1150,13 +1150,13 @@ dgo_get_autoview_cmd(struct dg_obj	*dgop,
 		     char		*argv[])
 {
     struct bu_vls vls;
-    register struct solid	*sp;
+    struct solid	*sp;
     vect_t		min, max;
     vect_t		minus, plus;
     vect_t		center;
     vect_t		radial;
     int pflag = 0;
-    register int	c;
+    int	c;
 
     if (argc < 1 || 2 < argc) {
 	struct bu_vls vls;
@@ -1327,8 +1327,8 @@ dgo_rt_cmd(struct dg_obj	*dgop,
 	   int			argc,
 	   char 		*argv[])
 {
-    register char **vp;
-    register int i;
+    char **vp;
+    int i;
     char	pstring[32];
 
     if (argc < 1 || MAXARGS < argc) {
@@ -1440,8 +1440,8 @@ void
 dgo_zap_cmd(struct dg_obj	*dgop,
 	    Tcl_Interp		*interp)
 {
-    register struct solid *sp;
-    register struct solid *nsp;
+    struct solid *sp;
+    struct solid *nsp;
     struct directory *dp;
 
     sp = BU_LIST_NEXT(solid, &dgop->dgo_headSolid);
@@ -1770,8 +1770,8 @@ dgo_rtcheck_cmd(struct dg_obj	*dgop,
 		int		argc,
 		char 		*argv[])
 {
-    register char **vp;
-    register int i;
+    char **vp;
+    int i;
 #ifndef _WIN32
     int	pid;
     int	i_pipe[2];	/* object reads results for building vectors */
@@ -1881,7 +1881,7 @@ dgo_rtcheck_cmd(struct dg_obj	*dgop,
     rtcp->dgop = dgop;
     rtcp->interp = interp;
 
-    /* register file handlers */
+    /* file handlers */
     Tcl_CreateFileHandler(i_pipe[0], TCL_READABLE,
 			  dgo_rtcheck_vector_handler, (ClientData)rtcp);
 
@@ -2461,10 +2461,10 @@ dgo_set_transparency_cmd(struct dg_obj	*dgop,
 			 int		argc,
 			 char 		*argv[])
 {
-    register struct solid *sp;
+    struct solid *sp;
     int i;
     struct directory **dpp;
-    register struct directory **tmp_dpp;
+    struct directory **tmp_dpp;
     fastf_t transparency;
 
 
@@ -2614,7 +2614,7 @@ dgo__tcl(ClientData	clientData,
 /****************** Utility Routines ********************/
 
 static union tree *
-dgo_wireframe_region_end(register struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+dgo_wireframe_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
     return (curtree);
 }
@@ -2789,7 +2789,7 @@ dgo_nmg_region_start(struct db_tree_state *tsp, struct db_full_path *pathp, cons
 	default:
 	    break;
     }
-    rt_db_free_internal(&intern, tsp->ts_resp);
+    rt_db_free_internal(&intern);
     return 0;
 
  out:
@@ -2797,7 +2797,7 @@ dgo_nmg_region_start(struct db_tree_state *tsp, struct db_full_path *pathp, cons
     db_add_node_to_full_path(pathp, dp);
     dgo_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
     DB_FULL_PATH_POP(pathp);
-    rt_db_free_internal(&intern, tsp->ts_resp);
+    rt_db_free_internal(&intern);
     dgcdp->fastpath_count++;
     return -1;	/* SKIP THIS REGION */
 }
@@ -2808,7 +2808,7 @@ dgo_nmg_region_start(struct db_tree_state *tsp, struct db_full_path *pathp, cons
  *  This routine must be prepared to run in parallel.
  */
 static union tree *
-dgo_nmg_region_end(register struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+dgo_nmg_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
     struct nmgregion	*r;
     struct bu_list		vhead;
@@ -2946,7 +2946,7 @@ static int
 dgo_drawtrees(struct dg_obj *dgop, Tcl_Interp *interp, int argc, char *argv[], int kind, struct dg_client_data *_dgcdp)
 {
     int		ret = 0;
-    register int	c;
+    int	c;
     int		ncpu = 1;
     int		dgo_nmg_use_tnurbs = 0;
     int		dgo_enable_fastpath = 0;
@@ -3035,7 +3035,7 @@ dgo_drawtrees(struct dg_obj *dgop, Tcl_Interp *interp, int argc, char *argv[], i
 		case 'C':
 		    {
 			int		r, g, b;
-			register char	*cp = bu_optarg;
+			char	*cp = bu_optarg;
 
 			r = atoi(cp);
 			while ((*cp >= '0' && *cp <= '9'))  cp++;
@@ -3251,9 +3251,9 @@ dgo_invent_solid(struct dg_obj	*dgop,
 		 fastf_t	transparency,
 		 int		dmode)
 {
-    register struct directory	*dp;
+    struct directory	*dp;
     struct directory		*dpp[2] = {DIR_NULL, DIR_NULL};
-    register struct solid		*sp;
+    struct solid		*sp;
     unsigned char			type='0';
 
     if (dgop->dgo_wdbp->dbip == DBI_NULL)
@@ -3327,20 +3327,20 @@ dgo_invent_solid(struct dg_obj	*dgop,
  * librt/vlist.c
  */
 static void
-dgo_bound_solid(Tcl_Interp *interp, register struct solid *sp)
+dgo_bound_solid(Tcl_Interp *interp, struct solid *sp)
 {
-    register struct bn_vlist	*vp;
-    register double			xmax, ymax, zmax;
-    register double			xmin, ymin, zmin;
+    struct bn_vlist	*vp;
+    double			xmax, ymax, zmax;
+    double			xmin, ymin, zmin;
 
     xmax = ymax = zmax = -INFINITY;
     xmin = ymin = zmin =  INFINITY;
     sp->s_vlen = 0;
     for (BU_LIST_FOR (vp, bn_vlist, &(sp->s_vlist))) {
-	register int	j;
-	register int	nused = vp->nused;
-	register int	*cmd = vp->cmd;
-	register point_t *pt = vp->pt;
+	int	j;
+	int	nused = vp->nused;
+	int	*cmd = vp->cmd;
+	point_t *pt = vp->pt;
 	for (j = 0; j < nused; j++, cmd++, pt++) {
 	    switch (*cmd) {
 		case BN_VLIST_POLY_START:
@@ -3393,7 +3393,7 @@ dgo_bound_solid(Tcl_Interp *interp, register struct solid *sp)
 void
 dgo_drawH_part2(int dashflag, struct bu_list *vhead, struct db_full_path *pathp, struct db_tree_state *tsp, struct solid *existing_sp, struct dg_client_data *dgcdp)
 {
-    register struct solid *sp;
+    struct solid *sp;
 
     if (!existing_sp) {
 	/* Handling a new solid */
@@ -3515,8 +3515,8 @@ dgo_eraseobjpath(struct dg_obj	*dgop,
 		 int		noisy,
 		 int		all)
 {
-    register struct directory *dp;
-    register int i;
+    struct directory *dp;
+    int i;
     struct bu_vls vls;
 #if 0
     Tcl_Obj *save_result;
@@ -3615,11 +3615,11 @@ dgo_eraseobjpath(struct dg_obj	*dgop,
 static void
 dgo_eraseobjall(struct dg_obj			*dgop,
 		Tcl_Interp			*interp,
-		register struct directory	**dpp)
+		struct directory	**dpp)
 {
-    register struct directory **tmp_dpp;
-    register struct solid *sp;
-    register struct solid *nsp;
+    struct directory **tmp_dpp;
+    struct solid *sp;
+    struct solid *nsp;
     struct db_full_path	subpath;
 
     if (dgop->dgo_wdbp->dbip == DBI_NULL)
@@ -3662,17 +3662,17 @@ dgo_eraseobjall(struct dg_obj			*dgop,
 static void
 dgo_eraseobj(struct dg_obj		*dgop,
 	     Tcl_Interp			*interp,
-	     register struct directory	**dpp)
+	     struct directory	**dpp)
 {
 #if 1
     /*XXX
      * Temporarily put back the old behavior (as seen in Brlcad5.3),
      * as the behavior after the #else is identical to dgo_eraseobjall.
      */
-    register struct directory **tmp_dpp;
-    register struct solid *sp;
-    register struct solid *nsp;
-    register int i;
+    struct directory **tmp_dpp;
+    struct solid *sp;
+    struct solid *nsp;
+    int i;
 
     if (dgop->dgo_wdbp->dbip == DBI_NULL)
 	return;
@@ -3707,9 +3707,9 @@ dgo_eraseobj(struct dg_obj		*dgop,
 	}
     }
 #else
-    register struct directory **tmp_dpp;
-    register struct solid *sp;
-    register struct solid *nsp;
+    struct directory **tmp_dpp;
+    struct solid *sp;
+    struct solid *nsp;
     struct db_full_path	subpath;
 
     if (dgop->dgo_wdbp->dbip == DBI_NULL)
@@ -3752,8 +3752,8 @@ dgo_eraseobj(struct dg_obj		*dgop,
 void
 dgo_color_soltab(struct solid *hsp)
 {
-    register struct solid *sp;
-    register const struct mater *mp;
+    struct solid *sp;
+    const struct mater *mp;
 
     FOR_ALL_SOLIDS(sp, &hsp->l) {
 	sp->s_cflag = 0;
@@ -3804,10 +3804,10 @@ int
 dgo_build_tops(Tcl_Interp	*interp,
 	       struct solid	*hsp,
 	       char		**start,
-	       register char	**end)
+	       char	**end)
 {
-    register char **vp = start;
-    register struct solid *sp;
+    char **vp = start;
+    struct solid *sp;
 
     /*
      * Find all unique top-level entries.
@@ -3816,7 +3816,7 @@ dgo_build_tops(Tcl_Interp	*interp,
     FOR_ALL_SOLIDS(sp, &hsp->l)
 	sp->s_flag = DOWN;
     FOR_ALL_SOLIDS(sp, &hsp->l) {
-	register struct solid *forw;
+	struct solid *forw;
 	struct directory *dp = FIRST_SOLID(sp);
 
 	if (sp->s_flag == UP)
@@ -3854,9 +3854,9 @@ dgo_rt_write(struct dg_obj	*dgop,
 	     FILE		*fp,
 	     vect_t		eye_model)
 {
-    register int	i;
+    int	i;
     quat_t		quat;
-    register struct solid *sp;
+    struct solid *sp;
 
     (void)fprintf(fp, "viewsize %.15e;\n", vop->vo_size);
     quat_mat2quat(quat, vop->vo_rotation);
@@ -3873,7 +3873,7 @@ dgo_rt_write(struct dg_obj	*dgop,
     FOR_ALL_SOLIDS(sp, &dgop->dgo_headSolid) {
 	for (i=0; i<sp->s_fullpath.fp_len; i++) {
 	    if (!(DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags & DIR_USED)) {
-		register struct animate *anp;
+		struct animate *anp;
 		for (anp = DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_animate; anp;
 		     anp=anp->an_forw) {
 		    db_write_anim(fp, anp);
@@ -4093,8 +4093,8 @@ dgo_rt_set_eye_model(struct dg_obj *dgop,
 	MAT4X3PNT(eye_model, vop->vo_view2model, temp);
     } else {
 	/* not doing zclipping, so back out of geometry */
-	register struct solid *sp;
-	register int i;
+	struct solid *sp;
+	int i;
 	vect_t  direction;
 	vect_t  extremum[2];
 	vect_t  minus, plus;    /* vers of this solid's bounding box */
@@ -4144,7 +4144,7 @@ static int
 dgo_run_rt(struct dg_obj *dgop,
 	   struct view_obj *vop)
 {
-    register int	i;
+    int	i;
     FILE		*fp_in;
 #ifndef _WIN32
     int		pipe_in[2];
@@ -4358,8 +4358,8 @@ dgo_print_schain(struct dg_obj *dgop, Tcl_Interp *interp, int lvl)
 
 /* debug level */
 {
-    register struct solid		*sp;
-    register struct bn_vlist	*vp;
+    struct solid		*sp;
+    struct bn_vlist	*vp;
     int				nvlist;
     int				npts;
     struct bu_vls 		vls;
@@ -4411,10 +4411,10 @@ dgo_print_schain(struct dg_obj *dgop, Tcl_Interp *interp, int lvl)
 	nvlist = 0;
 	npts = 0;
 	for (BU_LIST_FOR (vp, bn_vlist, &(sp->s_vlist))) {
-	    register int	i;
-	    register int	nused = vp->nused;
-	    register int	*cmd = vp->cmd;
-	    register point_t *pt = vp->pt;
+	    int	i;
+	    int	nused = vp->nused;
+	    int	*cmd = vp->cmd;
+	    point_t *pt = vp->pt;
 
 	    BN_CK_VLIST(vp);
 	    nvlist++;
@@ -4448,8 +4448,8 @@ dgo_print_schain(struct dg_obj *dgop, Tcl_Interp *interp, int lvl)
 static void
 dgo_print_schain_vlcmds(struct dg_obj *dgop, Tcl_Interp *interp)
 {
-    register struct solid		*sp;
-    register struct bn_vlist	*vp;
+    struct solid		*sp;
+    struct bn_vlist	*vp;
     struct bu_vls 		vls;
 
     if (dgop->dgo_wdbp->dbip == DBI_NULL)
@@ -4465,10 +4465,10 @@ dgo_print_schain_vlcmds(struct dg_obj *dgop, Tcl_Interp *interp)
 
 	/* Print the actual vector list */
 	for (BU_LIST_FOR (vp, bn_vlist, &(sp->s_vlist))) {
-	    register int	i;
-	    register int	nused = vp->nused;
-	    register int	*cmd = vp->cmd;
-	    register point_t *pt = vp->pt;
+	    int	i;
+	    int	nused = vp->nused;
+	    int	*cmd = vp->cmd;
+	    point_t *pt = vp->pt;
 
 	    BN_CK_VLIST(vp);
 
@@ -4519,7 +4519,7 @@ dgo_pr_wait_status(Tcl_Interp	*interp,
 }
 
 static union tree *
-dgo_bot_check_region_end(register struct db_tree_state	*tsp,
+dgo_bot_check_region_end(struct db_tree_state	*tsp,
 			 struct db_full_path		*pathp,
 			 union tree			*curtree,
 			 genptr_t			client_data)
@@ -4644,8 +4644,8 @@ dgo_tree_cmd(struct dg_obj	*dgop,
 	     int		argc,
 	     char 		*argv[])
 {
-    register struct directory	*dp;
-    register int			j;
+    struct directory	*dp;
+    int			j;
     int				cflag = 0;
     int				indentSize = -1;
     int                         displayDepth = INT_MAX;

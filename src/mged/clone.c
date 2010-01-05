@@ -266,7 +266,7 @@ get_name(struct db_i *_dbip, struct directory *dp, struct clone_state *state, in
 static void
 copy_v4_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *state, int idx)
 {
-    register struct directory *dp = (struct directory *)NULL;
+    struct directory *dp = (struct directory *)NULL;
     union record *rp = (union record *)NULL;
     int i, j;
 
@@ -390,7 +390,7 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 	char *argv[6] = {"wdb_copy", (char *)NULL, (char *)NULL, (char *)NULL, (char *)NULL, (char *)NULL};
 	struct bu_vls *name;
 	int ret;
-	register struct directory *dp = (struct directory *)NULL;
+	struct directory *dp = (struct directory *)NULL;
 	struct rt_db_internal intern;
 
 	if (i==0)
@@ -430,7 +430,7 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 	/* write the new matrix to the new object */
 	if (rt_db_put_internal(dp, wdbp->dbip, &intern, &rt_uniresource) < 0)
 	    bu_log("ERROR: clone internal error copying %s\n", proto->d_namep);
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
     } /* end iteration over each copy */
 
     return;
@@ -472,7 +472,7 @@ copy_solid(struct db_i *_dbip, struct directory *proto, genptr_t state)
 static struct directory *
 copy_v4_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *state, int idx)
 {
-    register struct directory *dp = (struct directory *)NULL;
+    struct directory *dp = (struct directory *)NULL;
     union record *rp = (union record *)NULL;
     int i, j;
 
@@ -576,7 +576,7 @@ copy_v5_comb_tree(union tree *tree, int idx)
 static struct directory *
 copy_v5_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *state, int idx)
 {
-    register struct directory *dp = (struct directory *)NULL;
+    struct directory *dp = (struct directory *)NULL;
     struct bu_vls *name;
     int i;
 
@@ -633,7 +633,7 @@ copy_v5_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
 		return NULL;
 	    }
 	    bu_vls_free(name);
-	    rt_db_free_internal(&dbintern, &rt_uniresource);
+	    rt_db_free_internal(&dbintern);
 	}
 
 	/* done with this name */
@@ -680,10 +680,10 @@ copy_comb(struct db_i *_dbip, struct directory *proto, genptr_t state)
 static struct directory *
 copy_tree(struct db_i *_dbip, struct directory *dp, struct resource *resp, struct clone_state *state)
 {
-    register int i;
-    register union record   *rp = (union record *)NULL;
-    register struct directory *mdp = (struct directory *)NULL;
-    register struct directory *copy = (struct directory *)NULL;
+    int i;
+    union record   *rp = (union record *)NULL;
+    struct directory *mdp = (struct directory *)NULL;
+    struct directory *copy = (struct directory *)NULL;
 
     struct bu_vls *copyname;
     struct bu_vls *nextname;

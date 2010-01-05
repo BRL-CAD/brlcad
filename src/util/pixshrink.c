@@ -137,7 +137,7 @@ shrink_image(int scanlen, int Width, int Height, unsigned char *buffer, int Fact
 void
 usample_image(int scanlen, int Width, int Height, unsigned char *buffer, int Factor)
 {
-    register int t, x, y;
+    int t, x, y;
 
     UCHAR *p;
 

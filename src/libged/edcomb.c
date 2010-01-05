@@ -29,7 +29,7 @@
 int
 ged_edcomb(struct ged *gedp, int argc, const char *argv[])
 {
-    register struct directory *dp;
+    struct directory *dp;
     int regionid, air, mat, los;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;

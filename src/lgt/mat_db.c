@@ -65,7 +65,7 @@ Mat_Db_Entry		mat_nul_entry =
     MF_NULL,	/* Mode flag.		*/
     "(null)"	/* Material name.	*/
 };
-static int	get_Mat_Entry(register Mat_Db_Entry *entry, FILE *fp), put_Mat_Entry(register Mat_Db_Entry *entry, register FILE *fp);
+static int	get_Mat_Entry(Mat_Db_Entry *entry, FILE *fp), put_Mat_Entry(Mat_Db_Entry *entry, FILE *fp);
 
 /*	m a t _ R d _ D b ( )
 	Open material database and read entries into table,
@@ -74,8 +74,8 @@ static int	get_Mat_Entry(register Mat_Db_Entry *entry, FILE *fp), put_Mat_Entry(
 int
 mat_Rd_Db(char *file)
 {
-    register Mat_Db_Entry	*entry;
-    register FILE		*fp;
+    Mat_Db_Entry	*entry;
+    FILE		*fp;
     if ( (fp = fopen( file, "rb" )) == NULL )
 	return	0;
     /* Mark all entries as NULL.					*/
@@ -98,9 +98,9 @@ mat_Rd_Db(char *file)
 int
 mat_Print_Db(int material_id)
 {
-    register Mat_Db_Entry	*entry;
-    register int		stop;
-    register int		success = 0;
+    Mat_Db_Entry	*entry;
+    int		stop;
+    int		success = 0;
     int			lines =	(PROMPT_LINE-TOP_SCROLL_WIN);
     if ( material_id >= MAX_MAT_DB )
     {
@@ -175,8 +175,8 @@ mat_Print_Db(int material_id)
 int
 mat_Save_Db(char *file)
 {
-    register Mat_Db_Entry	*entry;
-    register FILE		*fp;
+    Mat_Db_Entry	*entry;
+    FILE		*fp;
     if ( (fp = fopen( file, "wb" )) == NULL )
 	return	0;
     setbuf( fp, bu_malloc( BUFSIZ, "buffer" ) );
@@ -199,7 +199,7 @@ mat_Save_Db(char *file)
 int
 mat_Edit_Db_Entry(int id)
 {
-    register Mat_Db_Entry	*entry;
+    Mat_Db_Entry	*entry;
     char			input_buf[MAX_LN];
     char			editprompt[MAX_LN];
     int			red, grn, blu;
@@ -292,9 +292,9 @@ mat_Get_Db_Entry(int id)
 }
 
 static int
-get_Mat_Entry(register Mat_Db_Entry *entry, FILE *fp)
+get_Mat_Entry(Mat_Db_Entry *entry, FILE *fp)
 {
-    register char	*ptr;
+    char	*ptr;
     int		items;
     int		red, grn, blu, mode;
     if ( bu_fgets( entry->name, MAX_MAT_NM, fp ) == NULL )
@@ -346,7 +346,7 @@ get_Mat_Entry(register Mat_Db_Entry *entry, FILE *fp)
 }
 
 static int
-put_Mat_Entry(register Mat_Db_Entry *entry, register FILE *fp)
+put_Mat_Entry(Mat_Db_Entry *entry, FILE *fp)
 {
     if ( entry->mode_flag == MF_NULL )
 	entry = &mat_nul_entry;

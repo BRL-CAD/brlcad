@@ -379,9 +379,6 @@ BC_ARG_WITH([with_wgl], [wgl], [Specify use of or path to WindowsGL], [auto])
 # use pro/engineer
 BC_ARG_WITH([with_proe], [proe], [Specify build of Pro/ENGINEER plugin or path to Pro/ENGINEER installation (optional)], [no])
 
-# set documentation language
-BC_ARG_WITH([with_lang], [language], [Set documentation language], [auto])
-
 ###
 # argument aliases
 # they need to go below here in order for --help to consolidate the
@@ -611,10 +608,6 @@ BC_ARG_WITH_ALIAS([with_opengl], [opengl])
 
 # with wgl aliases (help uses wgl)
 BC_ARG_WITH_ALIAS([with_wgl], [windowsgl])
-
-# with lang aliases
-BC_ARG_WITH_ALIAS([with_lang], [lang])
-
 
 
 ###
@@ -3673,32 +3666,6 @@ if test "x$ECHO" = "x" ; then
 fi
 AC_SUBST(ECHO)
 AC_SUBST(ECHO_N)
-
-en_docs="no"
-es_docs="no"
-dnl check for language settings
-dnl for now, just check for a supplied value - need to use saved DOCLANG
-dnl and DOCLC_ALL with an m4 macro here later for environment aware
-dnl locale setting
-if test "x$bc_with_lang" != "xno" ; then
-  if test "x$bc_with_lang_val" != "x" ; then
-     if test "x$bc_with_lang_val" = "xen" ; then
-	en_docs="yes"
-	DOCLANG="English"
-     fi
-     if test "x$bc_with_lang_val" = "xes" ; then
-	es_docs="yes"
-	DOCLANG="Spanish"
-     fi
-  else
-     en_docs="yes"
-     DOCLANG="English"
-  fi
-else
-  en_docs="yes"
-  DOCLANG="English"
-fi
-AC_MSG_RESULT([Documentation language set to: $DOCLANG])
 
 dnl **************************************
 dnl *** Configure Makefiles and output ***

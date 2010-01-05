@@ -26,7 +26,7 @@ class InstMgr;
 class STEPaggregate;
 #ifndef _ODI_OSSG_
 class LOGICAL;
-class BOOL;
+class BOOLEAN;
 #endif
 class TypeDescriptor;
 
@@ -278,27 +278,27 @@ LOGICALS * create_LOGICALS();
 #endif
 
 
-class BOOLS  : public EnumAggregate  
+class BOOLEANS  : public EnumAggregate  
 {
   public:
     virtual SingleLinkNode * NewNode ();  
 
-    BOOLS();
-    virtual ~BOOLS();
+    BOOLEANS();
+    virtual ~BOOLEANS();
 
 #ifdef __OSTORE__
     static os_typespec* get_os_typespec();
 #endif
 };
 
-//typedef  BOOLS *  BooleansH;
-typedef  BOOLS *  BOOLS_ptr;
-typedef  BOOLS_ptr BOOLS_var;
+//typedef  BOOLEANS *  BooleansH;
+typedef  BOOLEANS *  BOOLEANS_ptr;
+typedef  BOOLEANS_ptr BOOLEANS_var;
 
 #ifdef __OSTORE__
-BOOLS * create_BOOLS(os_database *db);
+BOOLEANS * create_BOOLEANS(os_database *db);
 #else
-BOOLS * create_BOOLS();
+BOOLEANS * create_BOOLEANS();
 #endif
 
 class RealAggregate  : public STEPaggregate  {

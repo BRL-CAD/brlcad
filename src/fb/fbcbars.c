@@ -162,9 +162,9 @@ Usage: fbcbars [-fs] [-h] [-F framebuffer]\n\
 int	mode = M_SMPTE;
 
 int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int c;
+    int c;
 
     while ( (c = bu_getopt( argc, argv, "efshF:S:W:N:" )) != EOF )  {
 	switch ( c )  {
@@ -208,8 +208,8 @@ get_args(int argc, register char **argv)
 int
 main(int argc, char **argv)
 {
-    register int x, y;
-    register FBIO *fbp;
+    int x, y;
+    FBIO *fbp;
 
     if ( !get_args( argc, argv ) )  {
 	(void)fputs(usage, stderr);

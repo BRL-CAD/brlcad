@@ -45,10 +45,10 @@
  * position.
  */
 void
-fill_buf(register int wid, register int *buf)
+fill_buf(int wid, int *buf)
 {
     char    bitrow[FONTBUFSZ];
-    register int     j;
+    int     j;
 
     if ( font.ffdes == NULL )
 	return;
@@ -85,9 +85,9 @@ fill_buf(register int wid, register int *buf)
 	the edges of the character definition.
 */
 void
-clear_buf(int wid, register int *buf)
+clear_buf(int wid, int *buf)
 {
-    register int     i, w = wid + 4;
+    int     i, w = wid + 4;
 
     /* Clear each value in the row. */
     for ( i = 0; i < w; i++ )

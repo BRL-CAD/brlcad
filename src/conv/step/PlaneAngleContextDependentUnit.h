@@ -39,7 +39,7 @@ protected:
 public:
 	PlaneAngleContextDependentUnit();
 	virtual ~PlaneAngleContextDependentUnit();
-	PlaneAngleContextDependentUnit(STEPWrapper *sw,int STEPid);
+	PlaneAngleContextDependentUnit(STEPWrapper *sw,int step_id);
 	bool Load(STEPWrapper *sw,SCLP23(Application_instance) *sse);
 	virtual void Print(int level);
 

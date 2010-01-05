@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -97,7 +96,7 @@ public:
   Parameters:
     circle - [in]
     angle_interval_in_radians - [in] increasing angle interval in radians
-	      with angle_interval_in_radians.Length() <= 2.0*ON_PI
+              with angle_interval_in_radians.Length() <= 2.0*ON_PI
   Returns:
     true if input is valid and a valid arc is created.
   */
@@ -206,9 +205,9 @@ public:
   // Returns:
   //   true if arc has bounding box and calculation was successful.
   bool GetBoundingBox(
-	 ON_BoundingBox& bbox,
-	 int bGrowBox = false
-	 ) const;
+         ON_BoundingBox& bbox,
+         int bGrowBox = false
+         ) const;
 
   /*
 	Description:
@@ -275,8 +274,8 @@ public:
     Set arc's angle interval in radians.
   Parameters:
     angle_in_radians - [in] increasing interval with 
-			    start and end angle in radians.
-			    Length of the interval <= 2.0*ON_PI.
+                            start and end angle in radians.
+                            Length of the interval <= 2.0*ON_PI.
   Returns:
     true if successful. 
   */
@@ -323,9 +322,9 @@ public:
   //       of the arc, then the starting point of the arc is
   //       (arc.Domain()[0]) returned.
   bool ClosestPointTo( 
-	 const ON_3dPoint& test_point, 
-	 double* t
-	 ) const;
+         const ON_3dPoint& test_point, 
+         double* t
+         ) const;
 
   // Description:
   //   Get the point on the arc that is closest to test_point.
@@ -336,8 +335,8 @@ public:
   //   If test_point is the center of the arc, then the 
   //   starting point of the arc is returned.
   ON_3dPoint ClosestPointTo( 
-	 const ON_3dPoint& test_point
-	 ) const;
+         const ON_3dPoint& test_point
+         ) const;
 
   // Returns:
   //   Length of the arc = radius*(subtended angle in radians).
@@ -360,8 +359,8 @@ public:
   // Returns:
   //   0 for failure and 2 for success.
   int GetNurbForm(
-	ON_NurbsCurve& nurbs_curve
-	) const; 
+        ON_NurbsCurve& nurbs_curve
+        ) const; 
 
   /*
   Description:
@@ -371,16 +370,16 @@ public:
     arc_radians_parameter - [out]
   Example:
 
-	  ON_Arc arc = ...;
-	  double nurbs_t = 1.2345; // some number in interval (0,2.0*ON_PI).
-	  double arc_t;
-	  arc.GetRadianFromNurbFormParameter( nurbs_t, &arc_t );
+          ON_Arc arc = ...;
+          double nurbs_t = 1.2345; // some number in interval (0,2.0*ON_PI).
+          double arc_t;
+          arc.GetRadianFromNurbFormParameter( nurbs_t, &arc_t );
 
-	  ON_NurbsCurve nurbs_curve;
-	  arc.GetNurbsForm( nurbs_curve );
-	  arc_pt = arc.PointAt(arc_t);
-	  nurbs_pt = nurbs_curve.PointAt(nurbs_t);
-	  // arc_pt and nurbs_pt will be the same
+          ON_NurbsCurve nurbs_curve;
+          arc.GetNurbsForm( nurbs_curve );
+          arc_pt = arc.PointAt(arc_t);
+          nurbs_pt = nurbs_curve.PointAt(nurbs_t);
+          // arc_pt and nurbs_pt will be the same
 
   Remarks:
     The NURBS curve parameter is with respect to the NURBS curve
@@ -392,9 +391,9 @@ public:
     ON_Arc::GetNurbFormParameterFromRadian
   */
   bool GetRadianFromNurbFormParameter(
-	double nurbs_parameter,
-	double* arc_radians_parameter
-	) const;
+        double nurbs_parameter,
+        double* arc_radians_parameter
+        ) const;
 
   /*
   Description:
@@ -404,16 +403,16 @@ public:
     nurbs_parameter - [out]
   Example:
 
-	  ON_Arc arc = ...;
-	  double arc_t = 1.2345; // some number in interval (0,2.0*ON_PI).
-	  double nurbs_t;
-	  arc.GetNurbFormParameterFromRadian( arc_t, &nurbs_t );
+          ON_Arc arc = ...;
+          double arc_t = 1.2345; // some number in interval (0,2.0*ON_PI).
+          double nurbs_t;
+          arc.GetNurbFormParameterFromRadian( arc_t, &nurbs_t );
 
-	  ON_NurbsCurve nurbs_curve;
-	  arc.GetNurbsForm( nurbs_curve );
-	  arc_pt = arc.PointAt(arc_t);
-	  nurbs_pt = nurbs_curve.PointAt(nurbs_t);
-	  // arc_pt and nurbs_pt will be the same
+          ON_NurbsCurve nurbs_curve;
+          arc.GetNurbsForm( nurbs_curve );
+          arc_pt = arc.PointAt(arc_t);
+          nurbs_pt = nurbs_curve.PointAt(nurbs_t);
+          // arc_pt and nurbs_pt will be the same
 
   Remarks:
     The NURBS curve parameter is with respect to the NURBS curve
@@ -425,9 +424,9 @@ public:
     ON_Arc::GetNurbFormParameterFromRadian
   */
   bool GetNurbFormParameterFromRadian(
-	double arc_radians_parameter,
-	double* nurbs_parameter
-	) const;
+        double arc_radians_parameter,
+        double* nurbs_parameter
+        ) const;
 
 private:
   friend bool ON_BinaryArchive::ReadArc( ON_Arc& );

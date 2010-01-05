@@ -584,8 +584,7 @@ nmg_mesh_faces(struct faceuse *fu1, struct faceuse *fu2, const struct bn_tol *to
     BN_CK_TOL(tol);
 
     if (rt_g.NMG_debug & DEBUG_MESH_EU && rt_g.NMG_debug & DEBUG_PLOTEM) {
-	static int fnum=1;
-	nmg_pl_2fu("Before_mesh%d.pl", fnum++, fu1, fu2, 1);
+	nmg_pl_2fu("Before_mesh%d.pl", fu1, fu2, 1);
     }
 
     if (rt_g.NMG_debug & DEBUG_MESH_EU)
@@ -601,8 +600,7 @@ nmg_mesh_faces(struct faceuse *fu1, struct faceuse *fu2, const struct bn_tol *to
     count += nmg_mesh_two_faces(fu1, fu2, tol);
 
     if (rt_g.NMG_debug & DEBUG_MESH_EU && rt_g.NMG_debug & DEBUG_PLOTEM) {
-	static int fno=1;
-	nmg_pl_2fu("After_mesh%d.pl", fno++, fu1, fu2, 1);
+	nmg_pl_2fu("After_mesh%d.pl", fu1, fu2, 1);
     }
 }
 

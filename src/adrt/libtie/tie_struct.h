@@ -27,7 +27,6 @@
 #define _TIE_STRUCT_H
 
 #include "tie_define.h"
-#include <inttypes.h>
 
 typedef struct TIE_3_s {
     tfloat v[3];

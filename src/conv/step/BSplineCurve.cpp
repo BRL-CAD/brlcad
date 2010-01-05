@@ -49,9 +49,9 @@ BSplineCurve::BSplineCurve() {
 	id = 0;
 }
 
-BSplineCurve::BSplineCurve(STEPWrapper *sw,int STEPid) {
+BSplineCurve::BSplineCurve(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 BSplineCurve::~BSplineCurve() {
@@ -74,7 +74,7 @@ BSplineCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 	id = sse->STEPfile_id;
 
 	if ( !BoundedCurve::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::BoundedCurve." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::BoundedCurve." << std::endl;
 		return false;
 	}
 
@@ -92,7 +92,7 @@ BSplineCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 				control_points_list.push_back(aCP);
 			} else {
-				cerr << CLASSNAME  << ": Unhandled entity in attribute 'control_points_list'." << endl;
+				std::cerr << CLASSNAME  << ": Unhandled entity in attribute 'control_points_list'." << std::endl;
 				return false;
 			}
 		}
@@ -113,35 +113,35 @@ BSplineCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 const double *
 BSplineCurve::PointAtEnd() {
-	cerr << CLASSNAME << ": Error: virtual function PointAtEnd() not implemented for this type of curve.";
+	std::cerr << CLASSNAME << ": Error: virtual function PointAtEnd() not implemented for this type of curve.";
 	return NULL;
 }
 
 const double *
 BSplineCurve::PointAtStart() {
-	cerr << CLASSNAME << ": Error: virtual function PointAtStart() not implemented for this type of curve.";
+	std::cerr << CLASSNAME << ": Error: virtual function PointAtStart() not implemented for this type of curve.";
 	return NULL;
 }
 */
 
 void
 BSplineCurve::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << name << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Attributes:" << endl;
-	TAB(level+1); cout << "control_points_list:" << endl;
+	TAB(level); std::cout << "Attributes:" << std::endl;
+	TAB(level+1); std::cout << "control_points_list:" << std::endl;
 	LIST_OF_POINTS::iterator i;
 	for(i=control_points_list.begin();i!=control_points_list.end();i++) {
 		(*i)->Print(level+1);
 	}
 
-	TAB(level+1); cout << "closed_curve:" << step->getLogicalString((SCLLOG_H(Logical))closed_curve) << endl;
-	TAB(level+1); cout << "self_intersect:" << step->getLogicalString((SCLLOG_H(Logical))self_intersect) << endl;
-	TAB(level+1); cout << "degree:" << degree << endl;
-	TAB(level+1); cout << "curve_form:" << B_spline_curve_form_string[curve_form] << endl;
+	TAB(level+1); std::cout << "closed_curve:" << step->getLogicalString((SCLLOG_H(Logical))closed_curve) << std::endl;
+	TAB(level+1); std::cout << "self_intersect:" << step->getLogicalString((SCLLOG_H(Logical))self_intersect) << std::endl;
+	TAB(level+1); std::cout << "degree:" << degree << std::endl;
+	TAB(level+1); std::cout << "curve_form:" << B_spline_curve_form_string[curve_form] << std::endl;
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	BoundedCurve::Print(level+1);
 }
 
@@ -154,7 +154,7 @@ BSplineCurve::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}
@@ -173,24 +173,24 @@ BSplineCurve::LoadONBrep(ON_Brep *brep)
 			AddPolyLine(brep);
 			return true;
 		} else if ( curve_form == B_spline_curve_form__circular_arc ) {
-			cerr << "Error: ::LoadONBrep(ON_Brep *brep) not implemented for " << entityname << endl;
+			std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implemented for " << entityname << std::endl;
 			return false;
 		} else if ( curve_form == B_spline_curve_form__elliptic_arc ) {
-			cerr << "Error: ::LoadONBrep(ON_Brep *brep) not implemented for " << entityname << endl;
+			std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implemented for " << entityname << std::endl;
 			return false;
 		} else if ( curve_form == B_spline_curve_form__parabolic_arc ) {
-			cerr << "Error: ::LoadONBrep(ON_Brep *brep) not implemented for " << entityname << endl;
+			std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implemented for " << entityname << std::endl;
 			return false;
 		} else if ( curve_form == B_spline_curve_form__hyperbolic_arc ) {
-			cerr << "Error: ::LoadONBrep(ON_Brep *brep) not implemented for " << entityname << endl;
+			std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implemented for " << entityname << std::endl;
 			return false;
 		} else {
-			cerr << "Error: ::LoadONBrep(ON_Brep *brep) not implemented for " << entityname << endl;
+			std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implemented for " << entityname << std::endl;
 			return false;
 		}
 	}
 
-	cerr << "Error: ::LoadONBrep(ON_Brep *brep) not implemented for " << entityname << " id: " << id << endl;
+	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implemented for " << entityname << " id: " << id << std::endl;
 	return false;
 }
 */

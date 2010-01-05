@@ -196,7 +196,7 @@ ged_decompose(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    rt_db_free_internal( &nmg_intern, &rt_uniresource );
+    rt_db_free_internal(&nmg_intern);
     bu_vls_free( &solid_name );
 
     return GED_OK;

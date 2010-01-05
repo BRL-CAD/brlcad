@@ -81,9 +81,9 @@ Usage: mac-pix [-c -l -b]\n\
 	[-C r/g/b] [file.mac]\n";
 
 int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int c;
+    int c;
 
     while ( (c = bu_getopt( argc, argv, "clbs:w:n:x:y:X:Y:S:W:N:C:" )) != EOF )  {
 	switch ( c )  {
@@ -132,8 +132,8 @@ get_args(int argc, register char **argv)
 		break;
 	    case 'C':
 	    {
-		register char *cp = bu_optarg;
-		register unsigned char *conp
+		char *cp = bu_optarg;
+		unsigned char *conp
 		    = (unsigned char *)color;
 
 		/* premature null => atoi gives zeros */
@@ -182,10 +182,10 @@ get_args(int argc, register char **argv)
 }
 
 int
-getbits(register FILE *fp)
+getbits(FILE *fp)
 {
     static int count, rep, chr;
-    register int c;
+    int c;
 
     if (rep) {
 	rep--;
@@ -212,8 +212,8 @@ getbits(register FILE *fp)
 int
 main(int argc, char **argv)
 {
-    register int c;
-    register int x, y;
+    int c;
+    int x, y;
     int x1, x2, x3;		/* x zone widths */
     int y1, y2, y3;		/* y zone widths */
     int first_x;		/* x: first pixel to be output in pix[] */
@@ -238,8 +238,8 @@ main(int argc, char **argv)
     y = file_height-1;
 
     while ((c = getbits(infp)) != EOF) {
-	register int mask;
-	register unsigned char *cp;
+	int mask;
+	unsigned char *cp;
 
 	cp = &pix[(file_width*y)+x];
 
@@ -309,7 +309,7 @@ main(int argc, char **argv)
 	for ( y = 0; y < y1; y++ )
 	    fwrite( black, scr_width, 3, stdout );
 	for ( y = 0; y < y2; y++ )  {
-	    register unsigned char *cp;
+	    unsigned char *cp;
 
 	    fwrite( black, x1, 3, stdout );
 	    cp = &pix[(file_width*(y+first_y))+first_x];

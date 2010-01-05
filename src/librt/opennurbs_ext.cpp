@@ -59,6 +59,11 @@
 
 extern int getSurfacePoint(const ON_3dPoint&, ON_2dPoint&, brlcad::BBNode*);
 
+bool
+ON_NearZero(double x, double tolerance) {
+    return (x > -tolerance) && (x < tolerance);
+}
+
 
 namespace brlcad {
 
@@ -75,91 +80,89 @@ distribute(const int count, const ON_3dVector* v, double x[], double y[], double
 
 //--------------------------------------------------------------------------------
 // CurveTree
-CurveTree::CurveTree(ON_BrepFace* face)
-    : m_face(face)
+CurveTree::CurveTree(ON_BrepFace* face) :
+    m_face(face)
 {
-    int i, j;
     m_root = initialLoopBBox();
-		
-    for (i = 0; i < face->LoopCount(); i++) {
-	bool innerLoop = (i > 0) ? true : false;
-	ON_BrepLoop* loop = face->Loop(i);
-	// for each trim
-	for (j = 0; j < loop->m_ti.Count(); j++) {
-	    int adj_face_index = -99;
-	    ON_BrepTrim& trim = face->Brep()->m_T[loop->m_ti[j]];
 
-	    if (trim.m_ei != - 1) { // does not lie on a portion of a singular surface side
+    for (int li = 0; li < face->LoopCount(); li++) {
+	bool innerLoop = (li > 0) ? true : false;
+	ON_BrepLoop* loop = face->Loop(li);
+	// for each trim
+	for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
+	    int adj_face_index = -99;
+	    ON_BrepTrim& trim = face->Brep()->m_T[loop->m_ti[ti]];
+
+	    if (trim.m_ei != -1) { // does not lie on a portion of a singular surface side
 		ON_BrepEdge& edge = face->Brep()->m_E[trim.m_ei];
 		switch (trim.m_type) {
-		    case ON_BrepTrim::unknown:
-			bu_log("ON_BrepTrim::unknown on Face:%d\n", face->m_face_index);
-			break;
-		    case ON_BrepTrim::boundary:
-			bu_log("ON_BrepTrim::boundary on Face:%d\n", face->m_face_index);
-			break;
-		    case ON_BrepTrim::mated:
-			if (edge.m_ti.Count() == 2) {
-			    if (face->m_face_index == face->Brep()->m_T[edge.m_ti[0]].FaceIndexOf()) {
-				adj_face_index = face->Brep()->m_T[edge.m_ti[1]].FaceIndexOf();
-			    } else {
-				adj_face_index = face->Brep()->m_T[edge.m_ti[0]].FaceIndexOf();
-			    }
+		case ON_BrepTrim::unknown:
+		    bu_log("ON_BrepTrim::unknown on Face:%d\n", face->m_face_index);
+		    break;
+		case ON_BrepTrim::boundary:
+		    bu_log("ON_BrepTrim::boundary on Face:%d\n", face->m_face_index);
+		    break;
+		case ON_BrepTrim::mated:
+		    if (edge.m_ti.Count() == 2) {
+			if (face->m_face_index == face->Brep()->m_T[edge.m_ti[0]].FaceIndexOf()) {
+			    adj_face_index = face->Brep()->m_T[edge.m_ti[1]].FaceIndexOf();
 			} else {
-			    bu_log("Mated Edge should have 2 adjacent faces, right?  Face(%d) has %d trim indexes\n", face->m_face_index, edge.m_ti.Count());
+			    adj_face_index = face->Brep()->m_T[edge.m_ti[0]].FaceIndexOf();
 			}
-			break;
-		    case ON_BrepTrim::seam:
-			if (edge.m_ti.Count() == 2) {
-			    if ((face->m_face_index == face->Brep()->m_T[edge.m_ti[0]].FaceIndexOf()) && 
-				(face->m_face_index == face->Brep()->m_T[edge.m_ti[1]].FaceIndexOf())) {
-				adj_face_index = face->m_face_index;
-			    } else {
-				bu_log("Seamed Edge should have 1 faces sharing the trim so trim index should be one, right? Face(%d) has %d trim indexes\n", face->m_face_index, edge.m_ti.Count());
-				bu_log("Face(%d) has %d, %d trim indexes\n", face->m_face_index, face->Brep()->m_T[edge.m_ti[0]].FaceIndexOf(), face->Brep()->m_T[edge.m_ti[1]].FaceIndexOf());
-			    }
-			} else if (edge.m_ti.Count() == 1) {
+		    } else {
+			bu_log("Mated Edge should have 2 adjacent faces, right?  Face(%d) has %d trim indexes\n", face->m_face_index, edge.m_ti.Count());
+		    }
+		    break;
+		case ON_BrepTrim::seam:
+		    if (edge.m_ti.Count() == 2) {
+			if ((face->m_face_index == face->Brep()->m_T[edge.m_ti[0]].FaceIndexOf()) && (face->m_face_index == face->Brep()->m_T[edge.m_ti[1]].FaceIndexOf())) {
 			    adj_face_index = face->m_face_index;
 			} else {
 			    bu_log("Seamed Edge should have 1 faces sharing the trim so trim index should be one, right? Face(%d) has %d trim indexes\n", face->m_face_index, edge.m_ti.Count());
+			    bu_log("Face(%d) has %d, %d trim indexes\n", face->m_face_index, face->Brep()->m_T[edge.m_ti[0]].FaceIndexOf(), face->Brep()->m_T[edge.m_ti[1]].FaceIndexOf());
 			}
-			break;
-		    case ON_BrepTrim::singular:
-			bu_log("ON_BrepTrim::singular on Face:%d\n", face->m_face_index);
-			break;
-		    case ON_BrepTrim::crvonsrf:
-			bu_log("ON_BrepTrim::crvonsrf on Face:%d\n", face->m_face_index);
-			break;
-		    case ON_BrepTrim::ptonsrf:
-			bu_log("ON_BrepTrim::ptonsrf on Face:%d\n", face->m_face_index);
-			break;
-		    case ON_BrepTrim::slit:
-			bu_log("ON_BrepTrim::slit on Face:%d\n", face->m_face_index);
-			break;
-		    default:
-			bu_log("ON_BrepTrim::default on Face:%d\n", face->m_face_index);
-		} 
+		    } else if (edge.m_ti.Count() == 1) {
+			adj_face_index = face->m_face_index;
+		    } else {
+			bu_log("Seamed Edge should have 1 faces sharing the trim so trim index should be one, right? Face(%d) has %d trim indexes\n", face->m_face_index, edge.m_ti.Count());
+		    }
+		    break;
+		case ON_BrepTrim::singular:
+		    bu_log("ON_BrepTrim::singular on Face:%d\n", face->m_face_index);
+		    break;
+		case ON_BrepTrim::crvonsrf:
+		    bu_log("ON_BrepTrim::crvonsrf on Face:%d\n", face->m_face_index);
+		    break;
+		case ON_BrepTrim::ptonsrf:
+		    bu_log("ON_BrepTrim::ptonsrf on Face:%d\n", face->m_face_index);
+		    break;
+		case ON_BrepTrim::slit:
+		    bu_log("ON_BrepTrim::slit on Face:%d\n", face->m_face_index);
+		    break;
+		default:
+		    bu_log("ON_BrepTrim::default on Face:%d\n", face->m_face_index);
+		}
 	    }
 	    const ON_Curve* trimCurve = trim.TrimCurveOf();
 	    double min, max;
-	    (void)trimCurve->GetDomain(&min, &max);
+	    (void) trimCurve->GetDomain(&min, &max);
 	    ON_Interval t(min, max);
-				
+
 	    TRACE("need to subdivide");
 	    // divide on param interval
 
 	    if (!trimCurve->IsLinear()) {
 		int knotcnt = trimCurve->SpanCount();
-		double *knots = new double[knotcnt+1];
+		double *knots = new double[knotcnt + 1];
 
 		trimCurve->GetSpanVector(knots);
 		list<double> splitlist;
-		for (i=1;i<=knotcnt;i++) {
-		    ON_Interval range(knots[i-1], knots[i]);
+		for (int knot_index = 1; knot_index <= knotcnt; knot_index++) {
+		    ON_Interval range(knots[knot_index - 1], knots[knot_index]);
 
 		    getHVTangents(trimCurve, range, splitlist);
 		}
-		for (list<double>::iterator l=splitlist.begin();l != splitlist.end();l++) {
+		for (list<double>::iterator l = splitlist.begin(); l != splitlist.end(); l++) {
 		    double xmax = *l;
 		    if (!NEAR_ZERO(xmax-min, TOL)) {
 			m_root->addChild(subdivideCurve(trimCurve, adj_face_index, min, xmax, innerLoop, 0));
@@ -169,11 +172,11 @@ CurveTree::CurveTree(ON_BrepFace* face)
 		delete knots;
 	    } else {
 		int knotcnt = trimCurve->SpanCount();
-		double *knots = new double[knotcnt+1];
+		double *knots = new double[knotcnt + 1];
 
 		trimCurve->GetSpanVector(knots);
-		for (i=1;i<=knotcnt;i++) {
-		    double xmax = knots[i];
+		for (int knot_index = 1; knot_index <= knotcnt; knot_index++) {
+		    double xmax = knots[knot_index];
 		    if (!NEAR_ZERO(xmax-min, TOL)) {
 			m_root->addChild(subdivideCurve(trimCurve, adj_face_index, min, xmax, innerLoop, 0));
 		    }
@@ -191,7 +194,7 @@ CurveTree::CurveTree(ON_BrepFace* face)
     m_sortedX.sort(sortX);
     getLeaves(m_sortedY);
     m_sortedY.sort(sortY);
-		
+
     return;
 }
 
@@ -421,7 +424,7 @@ CurveTree::initialLoopBBox()
     for (int i = 0; i < m_face->LoopCount(); i++) {
 	ON_BrepLoop* loop = m_face->Loop(i);
 	if (loop->m_type == ON_BrepLoop::outer) {
-	    if (loop->GetBBox(bb[0], bb[1], FALSE)) {
+	    if (loop->GetBBox(bb[0], bb[1], 0)) {
 		TRACE("BBox for Loop min<" << bb[0][0] << ", " << bb[0][1] ", " << bb[0][2] << ">");
 		TRACE("BBox for Loop max<" << bb[1][0] << ", " << bb[1][1] ", " << bb[1][2] << ">");
 	    }

@@ -50,9 +50,9 @@ void	get_tape_position(void);
  *			G E T _ A R G S
  */
 int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int c;
+    int c;
 
     while ( (c = bu_getopt( argc, argv, "dhF:s:S:w:W:n:N:" )) != EOF )  {
 	switch ( c )  {
@@ -98,7 +98,7 @@ get_args(int argc, register char **argv)
 int
 main(int argc, char **argv)
 {
-    register FBIO	*fbp = FBIO_NULL;
+    FBIO	*fbp = FBIO_NULL;
     int scene_number = 1;
     int start_frame = 1;
     int number_of_frames=0;
@@ -450,7 +450,7 @@ record_add_to_scene(int number_of_frames)
 void
 do_record(int wait)
 {
-    register int c;
+    int c;
 
     vas_putc(C_RECORD);
     for (;;)  {

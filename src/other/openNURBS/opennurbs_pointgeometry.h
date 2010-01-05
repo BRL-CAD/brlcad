@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -52,29 +51,29 @@ public:
     initialized.
   Parameters:
     text_log - [in] if the object is not valid and text_log
-	is not NULL, then a brief englis description of the
-	reason the object is not valid is appened to the log.
-	The information appended to text_log is suitable for 
-	low-level debugging purposes by programmers and is 
-	not intended to be useful as a high level user 
-	interface tool.
+        is not NULL, then a brief englis description of the
+        reason the object is not valid is appened to the log.
+        The information appended to text_log is suitable for 
+        low-level debugging purposes by programmers and is 
+        not intended to be useful as a high level user 
+        interface tool.
   Returns:
     @untitled table
-    TRUE     object is valid
-    FALSE    object is invalid, uninitialized, etc.
+    true     object is valid
+    false    object is invalid, uninitialized, etc.
   Remarks:
     Overrides virtual ON_Object::IsValid
   */
-  BOOL IsValid( ON_TextLog* text_log = NULL ) const;
+  ON_BOOL32 IsValid( ON_TextLog* text_log = NULL ) const;
 
   void Dump( ON_TextLog& ) const; // for debugging
 
-  BOOL Write(
-	 ON_BinaryArchive&  // serialize definition to binary archive
+  ON_BOOL32 Write(
+         ON_BinaryArchive&  // serialize definition to binary archive
        ) const;
 
-  BOOL Read(
-	 ON_BinaryArchive&  // restore definition from binary archive
+  ON_BOOL32 Read(
+         ON_BinaryArchive&  // restore definition from binary archive
        );
 
   ON::object_type ObjectType() const;
@@ -86,15 +85,15 @@ public:
 
   int Dimension() const;
 
-  BOOL GetBBox( // returns TRUE if successful
-	 double*,    // boxmin[dim]
-	 double*,    // boxmax[dim]
-	 BOOL = FALSE  // TRUE means grow box
-	 ) const;
+  ON_BOOL32 GetBBox( // returns true if successful
+         double*,    // boxmin[dim]
+         double*,    // boxmax[dim]
+         ON_BOOL32 = false  // true means grow box
+         ) const;
 
-  BOOL Transform( 
-	 const ON_Xform&
-	 );
+  ON_BOOL32 Transform( 
+         const ON_Xform&
+         );
 
   // virtual ON_Geometry::IsDeformable() override
   bool IsDeformable() const;
@@ -102,9 +101,9 @@ public:
   // virtual ON_Geometry::MakeDeformable() override
   bool MakeDeformable();
 
-  BOOL SwapCoordinates(
-	int, int        // indices of coords to swap
-	);
+  ON_BOOL32 SwapCoordinates(
+        int, int        // indices of coords to swap
+        );
 
   // virtual ON_Geometry override
   bool Morph( const ON_SpaceMorph& morph );

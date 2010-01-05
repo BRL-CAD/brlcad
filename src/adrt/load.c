@@ -93,7 +93,8 @@ slave_load (tie_t *tie, void *data, uint32_t dlen)
 	case ADRT_LOAD_FORMAT_G:	/* given a filename and 1 toplevel region, recursively load from a .g file */
 	    {
 		const char *db = NULL; /* FIXME */
-		return load_g ( tie, db, (int *)(meh + 1), (char *)(meh+1+sizeof(int)));
+		const char *ugh[2] = { (char *)(meh + 1 + sizeof(int)), NULL };
+		return load_g ( tie, db, *(int *)(meh + 1), ugh);
 	    }
 	case ADRT_LOAD_FORMAT_REG:	/* special magic for catching data on the pipe */
 	    return slave_load_region (tie, meh + 1);

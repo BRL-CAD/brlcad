@@ -38,12 +38,12 @@
 
 static void
 ged_pr_mater(struct ged				*gedp,
-	     register const struct mater	*mp,
+	     const struct mater	*mp,
 	     int				*ccp,
 	     int				*clp);
 static void
 ged_vls_col_item(struct bu_vls	*str,
-		 register char	*cp,
+		 char	*cp,
 		 int		*ccp,
 		 int		*clp);
 static void
@@ -55,7 +55,7 @@ ged_vls_col_eol(struct bu_vls	*str,
 int
 ged_prcolor(struct ged *gedp, int argc, const char *argv[])
 {
-    register const struct mater *mp;
+    const struct mater *mp;
     int col_count = 0;
     int col_len = 0;
 
@@ -84,7 +84,7 @@ ged_prcolor(struct ged *gedp, int argc, const char *argv[])
 
 static void
 ged_pr_mater(struct ged				*gedp,
-	     register const struct mater	*mp,
+	     const struct mater	*mp,
 	     int				*ccp,
 	     int				*clp)
 {
@@ -102,7 +102,7 @@ ged_pr_mater(struct ged				*gedp,
  */
 static void
 ged_vls_col_item(struct bu_vls	*str,
-		 register char	*cp,
+		 char	*cp,
 		 int		*ccp,		/* column count pointer */
 		 int		*clp)		/* column length pointer */
 {

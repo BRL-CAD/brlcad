@@ -171,7 +171,7 @@ model_rpp(const fastf_t *min, const fastf_t *max)
 int
 getshort(FILE *fp)
 {
-    register long	v, w;
+    long	v, w;
 
     v = getc(fp);
     v |= (getc(fp)<<8);	/* order is important! */
@@ -185,9 +185,9 @@ getshort(FILE *fp)
 
 
 int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int c;
+    int c;
     mat_t	tmp, m;
     int	i, num;
     double	mtmp[16];
@@ -357,7 +357,7 @@ main(int argc, char **argv)
 void
 dofile(FILE *fp)
 {
-    register int	c;
+    int	c;
 
     while ( (c = getc(fp)) != EOF ) {
 	switch ( c ) {

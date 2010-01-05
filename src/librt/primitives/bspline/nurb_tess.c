@@ -211,7 +211,7 @@ rt_cnurb_par_edge(const struct edge_g_cnurb *crv, fastf_t epsilon)
 	    final_t = t;
     }
 
-    if ( final_t == MAX_FASTF )
+    if ( NEAR_ZERO(final_t - MAX_FASTF, SMALL_FASTF) )
 	return( -1.0 );
     else
 	return( final_t/2.0 );

@@ -48,6 +48,7 @@
 
 #include <stddef.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <math.h>
 #include "bio.h"
@@ -60,6 +61,7 @@
 #include "nurb.h"
 #include "wdb.h"
 
+#include "metaball.h"
 
 #define SQ(a) ((a)*(a))
 
@@ -93,7 +95,8 @@ const char *rt_metaball_lookup_type_name(const int id)
 /* compute the bounding sphere for a metaball cluster. center is
  * filled, and the radius is returned.
  */
-fastf_t rt_metaball_get_bounding_sphere(point_t *center, fastf_t threshold, struct rt_metaball_internal *mb)
+fastf_t
+rt_metaball_get_bounding_sphere(point_t *center, fastf_t threshold, struct rt_metaball_internal *mb)
 {
     struct wdb_metaballpt *mbpt, *mbpt2;
     point_t min, max, d;
@@ -114,7 +117,7 @@ fastf_t rt_metaball_get_bounding_sphere(point_t *center, fastf_t threshold, stru
 		max[i] = mbpt->coord[i];
 	}
     /* return -1 if no points are defined. */
-    if (min[X] == +INFINITY)
+    if (NEAR_ZERO(min[X] - INFINITY, SMALL_FASTF) || min[X] > INFINITY)
 	return -1;
 
     /* compute the center of the generated box, call that the center */
@@ -155,7 +158,7 @@ fastf_t rt_metaball_get_bounding_sphere(point_t *center, fastf_t threshold, stru
 }
 
 
-static void
+void
 rt_metaball_set_bbox(point_t center, fastf_t radius, point_t *min, point_t *max)
 {
     VSET(*min, center[X] - radius, center[Y] - radius, center[Z] - radius);
@@ -175,8 +178,9 @@ rt_metaball_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 {
     struct rt_metaball_internal *mb, *nmb;
     struct wdb_metaballpt *mbpt, *nmbpt;
-    int i;
     fastf_t minfstr = +INFINITY;
+
+    if (rtip) RT_CK_RTI(rtip);
 
     mb = ip->idb_ptr;
     RT_METABALL_CK_MAGIC(mb);
@@ -257,6 +261,8 @@ rt_metaballpt_print(const struct wdb_metaballpt *metaball, double mm2local)
 fastf_t
 rt_metaball_point_value_metaball(const point_t *p, const struct bu_list *points)
 {
+    if (!p || !points) bu_bomb("oops");
+
     bu_log("ERROR: rt_metaball_point_value_metaball() is not implemented");
 
     /* Makes the compiler happy */
@@ -377,7 +383,7 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 	distleft -= step;
 	VADD2(p, p, inc);
 	if (stat == 1) {
-	    if (rt_metaball_point_value((const point_t *)&p, mb) < mb->threshold)
+	    if (rt_metaball_point_value((const point_t *)&p, mb) < mb->threshold) {
 		if (step<=mb->finalstep) {
 		    STEPIN(out);
 		    stat = 0;
@@ -385,8 +391,9 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 			return retval;
 		} else
 		    STEPBACK;
+	    }
 	} else
-	    if (rt_metaball_point_value((const point_t *)&p, mb) > mb->threshold)
+	    if (rt_metaball_point_value((const point_t *)&p, mb) > mb->threshold) {
 		if (step<=mb->finalstep) {
 		    RT_GET_SEG(segp, ap->a_resource);
 		    segp->seg_stp = stp;
@@ -404,6 +411,7 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 		    step = mb->initstep;
 		} else
 		    STEPBACK;
+	    }
     }
 #undef STEPBACK
 #undef STEPIN
@@ -423,6 +431,8 @@ rt_metaball_norm(register struct hit *hitp, struct soltab *stp, register struct 
     struct wdb_metaballpt *mbpt;
     vect_t v;
     fastf_t a;
+
+    if (rp) RT_CK_RAY(rp);
 
     VSETALL(hitp->hit_normal, 0.0);
 
@@ -456,8 +466,13 @@ rt_metaball_norm(register struct hit *hitp, struct soltab *stp, register struct 
  * Return the curvature of the metaball.
  */
 void
-rt_metaball_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
+rt_metaball_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
+    struct rt_metaball_internal *metaball = (struct rt_metaball_internal *)stp->st_specific;
+
+    if (!metaball || !cvp) return;
+    if (hitp) RT_CK_HIT(hitp);
+
     bu_log("ERROR: rt_metaball_curve() is not implemented\n");
     return;
 }
@@ -473,8 +488,16 @@ rt_metaball_curve(register struct curvature *cvp, register struct hit *hitp, str
  * v = elevation
  */
 void
-rt_metaball_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
+rt_metaball_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
+    struct rt_metaball_internal *metaball = (struct rt_metaball_internal *)stp->st_specific;
+
+    if (ap) RT_CK_APPLICATION(ap);
+    if (stp) RT_CK_SOLTAB(stp);
+    if (hitp) RT_CK_HIT(hitp);
+    if (!uvp) return;
+    if (!metaball) return;
+
     bu_log("ERROR: rt_metaball_uv() is not implemented\n");
     return;
 }
@@ -486,8 +509,7 @@ rt_metaball_uv(struct application *ap, struct soltab *stp, register struct hit *
 void
 rt_metaball_free(register struct soltab *stp)
 {
-    register struct rt_metaball_internal *metaball =
-	(struct rt_metaball_internal *)stp->st_specific;
+    struct rt_metaball_internal *metaball = (struct rt_metaball_internal *)stp->st_specific;
 
     bu_free((char *)metaball, "rt_metaball_internal");
 }
@@ -527,7 +549,7 @@ rt_metaball_plot_sph(struct bu_list *vhead, point_t *center, fastf_t radius)
  * R T _ M E T A B A L L _ P L O T
  */
 int
-rt_metaball_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_metaball_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
 {
     struct rt_metaball_internal *mb;
     struct wdb_metaballpt *mbpt;
@@ -549,86 +571,6 @@ rt_metaball_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
     return 0;
 }
 
-
-static int bitcount(unsigned char w) { if (w==0) return 0; return bitcount(w>>1) + w|1; }
-
-/**
- * R T _ M E T A B A L L _ T E S S
- *
- * Tessellate a metaball.
- */
-int
-rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
-{
-    struct rt_metaball_internal *mb;
-    fastf_t mtol, radius;
-    point_t center, min, max;
-    fastf_t i, j, k, finalstep = +INFINITY;
-    int meh;
-    struct bu_vls times;
-    struct wdb_metaballpt *mbpt;
-
-    RT_CK_DB_INTERNAL(ip);
-    mb = (struct rt_metaball_internal *)ip->idb_ptr;
-    RT_METABALL_CK_MAGIC(mb);
-
-    bu_vls_init(&times);
-    rt_prep_timer();
-
-    /* since this geometry isn't necessarily prepped, we have to figure out the
-     * finalstep and bounding box manually. */
-    for (BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_ctrl_head))
-	V_MIN(finalstep, mbpt->fldstr);
-    finalstep /= (fastf_t)1e5;
-
-    radius = rt_metaball_get_bounding_sphere(&center, mb->threshold, mb);
-    rt_metaball_set_bbox(center, radius, &min, &max);
-
-    /* TODO: get better sampling tolerance, unless this is "good enough" */
-    mtol = ttol->abs;
-    V_MAX(mtol, ttol->rel * radius);
-    V_MAX(mtol, tol->dist);
-
-    /* the incredibly naïve approach. Time could be cut in half by simply
-     * caching 4 point values, more by actually marching or doing active
-     * refinement. This is the simplest pattern for now.
-     */
-    for (i = min[X]; i<max[X]; i+=mtol)
-	for (j = min[Y]; j<max[Y]; j+=mtol)
-	    for (k = min[Z]; k<max[Z]; k+=mtol) {
-		point_t p;
-		int pv = 0;
-		int pvbc;	/* bit count */
-		VSET(p, i,      j,      k);		pv |= rt_metaball_point_inside((const point_t *)&p, mb) << 0;
-		VSET(p, i,      j,      k+mtol);	pv |= rt_metaball_point_inside((const point_t *)&p, mb) << 1;
-		VSET(p, i,      j+mtol, k);		pv |= rt_metaball_point_inside((const point_t *)&p, mb) << 2;
-		VSET(p, i,      j+mtol, k+mtol);	pv |= rt_metaball_point_inside((const point_t *)&p, mb) << 3;
-		VSET(p, i+mtol, j,      k);		pv |= rt_metaball_point_inside((const point_t *)&p, mb) << 4;
-		VSET(p, i+mtol, j,      k+mtol);	pv |= rt_metaball_point_inside((const point_t *)&p, mb) << 5;
-		VSET(p, i+mtol, j+mtol, k);		pv |= rt_metaball_point_inside((const point_t *)&p, mb) << 6;
-		VSET(p, i+mtol, j+mtol, k+mtol);	pv |= rt_metaball_point_inside((const point_t *)&p, mb) << 7;
-		pvbc = bitcount(pv);
-		if (pvbc==1) {
-		    point_t a, b, mid;
-		    VSET(a, i, j, k);
-		    VSET(b, i, j, k+mtol);
-		    rt_metaball_find_intersection(&mid, mb, (const point_t *)&a, (const point_t *)&*b, mtol, finalstep);
-		    bu_log("Intersect between %f, %f, %f and %f, %f, %f is at %f, %f, %f\n", V3ARGS(a), V3ARGS(b), V3ARGS(mid));
-		}
-		/* should the actual surface intersection be searched for, or
-		 * just say the mid point is good enough? */
-		/* needs to be stitched into a triangle style NMG. Then
-		 * decimated, perhaps? */
-	    }
-
-    rt_get_timer(&times, NULL);
-    bu_log("metaball tesselate: %s\n", bu_vls_addr(&times));
-
-    bu_log("ERROR: rt_metaball_tess called() is not implemented\n");
-    return -1;
-}
-
-
 /**
  * R T _ M E T A B A L L _ I M P O R T 5
  *
@@ -642,6 +584,8 @@ rt_metaball_import5(struct rt_db_internal *ip, const struct bu_external *ep, reg
     struct rt_metaball_internal *mb;
     fastf_t *buf;
     int metaball_count = 0, i;
+
+    if (dbip) RT_CK_DBI(dbip);
 
     BU_CK_EXTERNAL(ep);
     metaball_count = bu_glong((unsigned char *)ep->ext_buf);
@@ -697,6 +641,8 @@ rt_metaball_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
     int metaball_count = 0, i = 1;
     fastf_t *buf = NULL;
 
+    if (dbip) RT_CK_DBI(dbip);
+
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_METABALL)
 	return(-1);
@@ -737,7 +683,7 @@ rt_metaball_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
  * tab, and give parameter values.
  */
 int
-rt_metaball_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
+rt_metaball_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local __attribute__((unused)))
 {
     int metaball_count = 0;
     char buf[BUFSIZ];
@@ -783,16 +729,12 @@ rt_metaball_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ve
  * solid.  This only effects the in-memory copy.
  */
 void
-rt_metaball_ifree(struct rt_db_internal *ip, struct resource *resp)
+rt_metaball_ifree(struct rt_db_internal *ip)
 {
     register struct rt_metaball_internal *metaball;
     register struct wdb_metaballpt *mbpt;
 
     RT_CK_DB_INTERNAL(ip);
-
-    if (!resp) {
-	resp = &rt_uniresource;
-    }
 
     metaball = (struct rt_metaball_internal*)ip->idb_ptr;
     RT_METABALL_CK_MAGIC(metaball);
@@ -804,17 +746,6 @@ rt_metaball_ifree(struct rt_db_internal *ip, struct resource *resp)
 	}
     bu_free(ip->idb_ptr, "metaball ifree");
     ip->idb_ptr = GENPTR_NULL;
-}
-
-
-/**
- * R T _ M E T A B A L L _ T N U R B
- */
-int
-rt_metaball_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bn_tol *tol)
-{
-    bu_log("ERROR: rt_metaball_tnurb() is not implemented\n");
-    return 0;
 }
 
 
@@ -844,28 +775,91 @@ rt_metaball_add_point (struct rt_metaball_internal *mb, const point_t *loc, cons
  *
  */
 int
-rt_metaball_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
+rt_metaball_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 {
+    ps = ps; /* quellage */
+    if (ip) RT_CK_DB_INTERNAL(ip);
+
     return 0;			/* OK */
 }
 
+/**
+ * R T _ M E T A B A L L _ G E T
+ *
+ * db get/g2asc
+ */
 int
-rt_metaball_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *attr)
+rt_metaball_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr __attribute__((unused)))
 {
-    struct rt_metaball_internal *mb=(struct rt_metaball_internal *)intern->idb_ptr;
-    struct wdb_metaballpt *mbpt;
+    struct rt_metaball_internal *mb = (struct rt_metaball_internal *)intern->idb_ptr;
+    struct wdb_metaballpt *mbpt = NULL;
 
     RT_METABALL_CK_MAGIC(mb);
 
     /* write crap in */
-    bu_vls_printf(log, "metaball %d %.25G {", mb->method, mb->threshold);
+    bu_vls_printf(logstr, "metaball %d %.25G {", mb->method, mb->threshold);
     for (BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_ctrl_head))
-	    bu_vls_printf(log, " { %.25G %.25G %.25G %.25G %.25G }",
+	    bu_vls_printf(logstr, "{%.25G %.25G %.25G %.25G %.25G}",
 			    V3ARGS(mbpt->coord), mbpt->fldstr, mbpt->sweat);
-    bu_vls_printf(log, "}");
+    bu_vls_printf(logstr, "}");
 
     return 0;
 }
+
+/**
+ * R T _ M E T A B A L L _ A D J U S T
+ *
+ * used for db put/asc2g
+ */
+int 
+rt_metaball_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv)
+{
+    struct rt_metaball_internal *mb;
+    char *pts, *pend;;
+
+    if(argc != 3)  {
+	bu_vls_printf(logstr, "Invalid number of arguments: %d\n", argc);
+	return BRLCAD_ERROR;
+    }
+
+    RT_CK_DB_INTERNAL(intern);
+    mb = (struct rt_metaball_internal *)intern->idb_ptr;
+    RT_METABALL_CK_MAGIC(mb);
+
+    if( strlen(*argv) != 1 || (**argv < '0' || **argv > '2') ) {
+	bu_vls_printf(logstr, "Invalid method type, must be one of 0, 1, or 2.");
+	return BRLCAD_ERROR;
+    }
+    mb->method = *argv[0] - '0';
+    sscanf(argv[1], "%lG", &mb->threshold);
+    BU_LIST_INIT(&mb->metaball_ctrl_head);
+
+    pts = argv[2];
+    pend = pts + strlen(pts);
+
+    while(1) {
+	point_t loc;
+	fastf_t fldstr, goo;
+	int len;
+
+	while( pts < pend && *pts != '{' ) ++pts;
+	if(pts >= pend) break;
+	len = sscanf(pts, "{%lG %lG %lG %lG %lG}", loc+X, loc+Y, loc+Z, &fldstr, &goo);
+	if(len == EOF) break;
+	if(len != 5) {
+	    bu_vls_printf(logstr, "Failed to parse point information: \"%s\"", pts);
+	    return BRLCAD_ERROR;
+	}
+	pts++;
+	if(rt_metaball_add_point (mb, (const point_t *)&loc, fldstr, goo)) {
+	    bu_vls_printf(logstr, "Failure adding point: {%f %f %f %f %f}", V3ARGS(loc), fldstr, goo);
+	    return BRLCAD_ERROR;
+	}
+    }
+
+    return BRLCAD_OK;
+}
+
 
 /*
  * Local Variables:

@@ -49,7 +49,7 @@ protected:
 	Axis2Placement *position;
 
 	Conic();
-	Conic(STEPWrapper *sw,int STEPid);
+	Conic(STEPWrapper *sw,int step_id);
 
 public:
 	virtual ~Conic();

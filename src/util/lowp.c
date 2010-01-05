@@ -116,8 +116,8 @@ main(int argc, char **argv)
 
 	/* do (width-2)*3 times, borders are black */
 	for ( x=3; x < (pix_line-2)*3; x++ )  {
-	    register int i;
-	    register unsigned char *a, *b, *c;
+	    int i;
+	    unsigned char *a, *b, *c;
 
 	    i = (y*pix_line)*3+x;
 	    a = in1+i;

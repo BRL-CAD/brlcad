@@ -39,7 +39,7 @@ protected:
 public:
 	MassContextDependentUnit();
 	virtual ~MassContextDependentUnit();
-	MassContextDependentUnit(STEPWrapper *sw,int STEPid);
+	MassContextDependentUnit(STEPWrapper *sw,int step_id);
 	bool Load(STEPWrapper *sw,SCLP23(Application_instance) *sse);
 	virtual void Print(int level);
 

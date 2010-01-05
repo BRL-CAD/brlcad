@@ -38,7 +38,7 @@ protected:
 	double semi_axis_2;
 
 	Ellipse();
-	Ellipse(STEPWrapper *sw,int STEPid);
+	Ellipse(STEPWrapper *sw,int step_id);
 
 public:
 	virtual ~Ellipse();

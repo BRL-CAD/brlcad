@@ -49,9 +49,9 @@ CompositeCurveSegment::CompositeCurveSegment() {
 	parent_curve = NULL;
 }
 
-CompositeCurveSegment::CompositeCurveSegment(STEPWrapper *sw,int STEPid) {
+CompositeCurveSegment::CompositeCurveSegment(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 	parent_curve = NULL;
 }
 
@@ -64,7 +64,7 @@ CompositeCurveSegment::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 	id = sse->STEPfile_id;
 
 	if ( !FoundedItem::Load(sw,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::Curve." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::Curve." << std::endl;
 		return false;
 	}
 
@@ -88,16 +88,16 @@ CompositeCurveSegment::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 void
 CompositeCurveSegment::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Attributes:" << endl;
-	TAB(level+1); cout << "parent_curve:" << endl;
+	TAB(level); std::cout << "Attributes:" << std::endl;
+	TAB(level+1); std::cout << "parent_curve:" << std::endl;
 	parent_curve->Print(level+1);
-	TAB(level+1); cout << "transition:" << Transition_code_string[transition] << endl;
-	TAB(level+1); cout << "same_sense:" << step->getBooleanString(same_sense) << endl;
+	TAB(level+1); std::cout << "transition:" << Transition_code_string[transition] << std::endl;
+	TAB(level+1); std::cout << "same_sense:" << step->getBooleanString(same_sense) << std::endl;
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	FoundedItem::Print(level+1);
 }
 STEPEntity *
@@ -109,7 +109,7 @@ CompositeCurveSegment::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

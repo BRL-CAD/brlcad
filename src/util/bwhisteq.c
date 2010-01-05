@@ -50,7 +50,7 @@ main(int argc, char **argv)
     int	n, i;
     unsigned char buf[512];
     unsigned char obuf[512];
-    register unsigned char *bp;
+    unsigned char *bp;
     int	left[256], right[256];
     double	hint, havg;
     long	r;

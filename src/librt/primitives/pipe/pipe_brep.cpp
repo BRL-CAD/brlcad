@@ -100,7 +100,7 @@ make_linear_surfaces(ON_Brep **b, ON_SimpleArray<ON_Curve*> *startoutercurves, O
 void
 make_curved_surfaces(ON_Brep **b, ON_SimpleArray<ON_Curve*> *startoutercurves, ON_SimpleArray<ON_Curve*> *startinnercurves, fastf_t angle, point_t bend_center, vect_t norm)
 {
-    point_t rev, raxis;
+    point_t rev;
     VADD2(rev, bend_center, norm);
     
     ON_Line *revaxis = new ON_Line(ON_3dPoint(bend_center), ON_3dPoint(rev));
@@ -121,7 +121,7 @@ make_curved_surfaces(ON_Brep **b, ON_SimpleArray<ON_Curve*> *startoutercurves, O
 
 
 extern "C" void
-rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
+rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol __attribute__((unused)))
 {
     struct rt_pipe_internal *pip;
 

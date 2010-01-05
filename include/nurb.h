@@ -228,7 +228,7 @@ RT_EXPORT BU_EXTERN(void rt_nurb_clip_srf, (const struct face_g_snurb *srf,
 RT_EXPORT BU_EXTERN(struct face_g_snurb *rt_nurb_region_from_srf, (const struct face_g_snurb *srf,
 								   int dir, fastf_t param1, fastf_t param2, struct resource *res));
 RT_EXPORT BU_EXTERN(struct rt_nurb_uv_hit *rt_nurb_intersect, (const struct face_g_snurb * srf,
-							       plane_t plane1, plane_t plane2, double uv_tol, struct resource *res));
+							       plane_t plane1, plane_t plane2, double uv_tol, struct resource *res, struct bu_list *plist));
 
 /* nurb_refine.c */
 RT_EXPORT BU_EXTERN(struct face_g_snurb *rt_nurb_s_refine, (const struct face_g_snurb *srf,

@@ -62,7 +62,7 @@ int
 rt_pg_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_pg_internal *pgp;
-    register int i;
+    int i;
     int p;
 
     pgp = (struct rt_pg_internal *)ip->idb_ptr;
@@ -127,7 +127,7 @@ rt_pg_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 HIDDEN int
 rt_pgface(struct soltab *stp, fastf_t *ap, fastf_t *bp, fastf_t *cp, const struct bn_tol *tol)
 {
-    register struct tri_specific *trip;
+    struct tri_specific *trip;
     vect_t work;
     fastf_t m1, m2, m3, m4;
 
@@ -169,9 +169,9 @@ rt_pgface(struct soltab *stp, fastf_t *ap, fastf_t *bp, fastf_t *cp, const struc
  * R T _ P G _ P R I N T
  */
 void
-rt_pg_print(register const struct soltab *stp)
+rt_pg_print(const struct soltab *stp)
 {
-    register const struct tri_specific *trip =
+    const struct tri_specific *trip =
 	(struct tri_specific *)stp->st_specific;
 
     if (trip == TRI_NULL) {
@@ -200,13 +200,13 @@ rt_pg_print(register const struct soltab *stp)
  * >0 HIT
  */
 int
-rt_pg_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
+rt_pg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
-    register struct tri_specific *trip =
+    struct tri_specific *trip =
 	(struct tri_specific *)stp->st_specific;
 #define MAXHITS 128		/* # surfaces hit, must be even */
     struct hit hits[MAXHITS];
-    register struct hit *hp;
+    struct hit *hp;
     int nhits;
 
     nhits = 0;
@@ -289,7 +289,7 @@ rt_pg_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
        in the hit list. */
 
     {
-	register int i, j;
+	int i, j;
 
 	for (i=0; i<nhits-1; i++) {
 	    fastf_t dist;
@@ -312,7 +312,7 @@ rt_pg_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 	nhits = 0;
 
     if (nhits&1) {
-	register int i;
+	int i;
 	static int nerrors = 0;		/* message counter */
 	/*
 	 * If this condition exists, it is almost certainly due to
@@ -399,8 +399,8 @@ rt_pg_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 
     /* nhits is even, build segments */
     {
-	register struct seg *segp;
-	register int i;
+	struct seg *segp;
+	int i;
 	for (i=0; i < nhits; i += 2) {
 	    RT_GET_SEG(segp, ap->a_resource);
 	    segp->seg_stp = stp;
@@ -419,11 +419,11 @@ rt_pg_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 void
 rt_pg_free(struct soltab *stp)
 {
-    register struct tri_specific *trip =
+    struct tri_specific *trip =
 	(struct tri_specific *)stp->st_specific;
 
     while (trip != TRI_NULL) {
-	register struct tri_specific *nexttri = trip->tri_forw;
+	struct tri_specific *nexttri = trip->tri_forw;
 
 	bu_free((char *)trip, "pg tri_specific");
 	trip = nexttri;
@@ -435,8 +435,14 @@ rt_pg_free(struct soltab *stp)
  * R T _ P G _ N O R M
  */
 void
-rt_pg_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
+rt_pg_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
+    if (!hitp || !stp || !rp)
+	return;
+    RT_CK_HIT(hitp);
+    RT_CK_SOLTAB(stp);
+    RT_CK_RAY(rp);
+
     /* Normals computed in rt_pg_shot, nothing to do here */
 }
 
@@ -445,8 +451,14 @@ rt_pg_norm(register struct hit *hitp, struct soltab *stp, register struct xray *
  * R T _ P G _ U V
  */
 void
-rt_pg_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
+rt_pg_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
+    if (ap) RT_CK_APPLICATION(ap);
+    if (stp) RT_CK_SOLTAB(stp);
+    if (hitp) RT_CK_HIT(hitp);
+    if (!uvp)
+	return;
+
     /* Do nothing.  Really, should do what ARB does. */
     uvp->uv_u = uvp->uv_v = 0;
     uvp->uv_du = uvp->uv_dv = 0;
@@ -467,10 +479,10 @@ rt_pg_class(void)
  * R T _ P G _ P L O T
  */
 int
-rt_pg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_pg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
 {
-    register int i;
-    register int p;	/* current polygon number */
+    int i;
+    int p;	/* current polygon number */
     struct rt_pg_internal *pgp;
 
     RT_CK_DB_INTERNAL(ip);
@@ -478,7 +490,7 @@ rt_pg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tes
     RT_PG_CK_MAGIC(pgp);
 
     for (p = 0; p < pgp->npoly; p++) {
-	register struct rt_pg_face_internal *pp;
+	struct rt_pg_face_internal *pp;
 
 	pp = &pgp->poly[p];
 	RT_ADD_VLIST(vhead, &pp->verts[3*(pp->npts-1)],
@@ -498,10 +510,10 @@ rt_pg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tes
  * Convert to vlist, draw as polygons.
  */
 int
-rt_pg_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_pg_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
 {
-    register int i;
-    register int p;	/* current polygon number */
+    int i;
+    int p;	/* current polygon number */
     struct rt_pg_internal *pgp;
 
     RT_CK_DB_INTERNAL(ip);
@@ -509,7 +521,7 @@ rt_pg_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
     RT_PG_CK_MAGIC(pgp);
 
     for (p = 0; p < pgp->npoly; p++) {
-	register struct rt_pg_face_internal *pp;
+	struct rt_pg_face_internal *pp;
 	vect_t aa, bb, norm;
 
 	pp = &pgp->poly[p];
@@ -535,8 +547,13 @@ rt_pg_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
  * R T _ P G _ C U R V E
  */
 void
-rt_pg_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
+rt_pg_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
+    if (!cvp || !hitp)
+	return;
+    RT_CK_HIT(hitp);
+    if (stp) RT_CK_SOLTAB(stp);
+
     bn_vec_ortho(cvp->crv_pdir, hitp->hit_normal);
     cvp->crv_c1 = cvp->crv_c2 = 0;
 }
@@ -546,14 +563,14 @@ rt_pg_curve(register struct curvature *cvp, register struct hit *hitp, struct so
  * R T _ P G _ T E S S
  */
 int
-rt_pg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_pg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol)
 {
-    register int i;
+    int i;
     struct shell *s;
     struct vertex **verts;	/* dynamic array of pointers */
     struct vertex ***vertp;/* dynamic array of ptrs to pointers */
     struct faceuse *fu;
-    register int p;	/* current polygon number */
+    int p;	/* current polygon number */
     struct rt_pg_internal *pgp;
 
     RT_CK_DB_INTERNAL(ip);
@@ -571,7 +588,7 @@ rt_pg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, con
 	vertp[i] = &verts[i];
 
     for (p = 0; p < pgp->npoly; p++) {
-	register struct rt_pg_face_internal *pp;
+	struct rt_pg_face_internal *pp;
 
 	pp = &pgp->poly[p];
 
@@ -628,9 +645,11 @@ rt_pg_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 {
     struct rt_pg_internal *pgp;
     union record *rp;
-    register int i;
+    int i;
     int rno;		/* current record number */
     int p;		/* current polygon index */
+
+    if (dbip) RT_CK_DBI(dbip);
 
     BU_CK_EXTERNAL(ep);
     rp = (union record *)ep->ext_buf;
@@ -660,7 +679,7 @@ rt_pg_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 
     if (mat == NULL) mat = bn_mat_identity;
     for (p=0; p < pgp->npoly; p++) {
-	register struct rt_pg_face_internal *pp;
+	struct rt_pg_face_internal *pp;
 
 	pp = &pgp->poly[p];
 	rno = p+1;
@@ -702,9 +721,11 @@ rt_pg_export4(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 {
     struct rt_pg_internal *pgp;
     union record *rec;
-    register int i;
+    int i;
     int rno;		/* current record number */
     int p;		/* current polygon index */
+
+    if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_POLY) return(-1);
@@ -719,7 +740,7 @@ rt_pg_export4(struct bu_external *ep, const struct rt_db_internal *ip, double lo
     rec[0].p.p_id = ID_P_HEAD;
 
     for (p=0; p < pgp->npoly; p++) {
-	register struct rt_pg_face_internal *pp;
+	struct rt_pg_face_internal *pp;
 
 	rno = p+1;
 	pp = &pgp->poly[p];
@@ -745,6 +766,11 @@ rt_pg_export4(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 int
 rt_pg_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
+    if (ip) RT_CK_DB_INTERNAL(ip);
+    if (!ep || !mat)
+	return -1;
+    if (dbip) RT_CK_DBI(dbip);
+
     bu_log("As of release 6.0 the polysolid is superceded by the BOT primitive.\n");
     bu_log("\tTo convert polysolids to BOT primitives, use 'dbupgrade'.\n");
     /* The rt_pg_to_bot() routine can also be used. */
@@ -753,8 +779,13 @@ rt_pg_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 
 
 int
-rt_pg_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
+rt_pg_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm __attribute__((unused)), const struct db_i *dbip)
 {
+    if (!ep)
+	return -1;
+    if (ip) RT_CK_DB_INTERNAL(ip);
+    if (dbip) RT_CK_DBI(dbip);
+
     bu_log("As of release 6.0 the polysolid is superceded by the BOT primitive.\n");
     bu_log("\tTo convert polysolids to BOT primitives, use 'dbupgrade'.\n");
     /* The rt_pg_to_bot() routine can also be used. */
@@ -772,8 +803,8 @@ rt_pg_export5(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 int
 rt_pg_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
-    register int j;
-    register struct rt_pg_internal *pgp =
+    int j;
+    struct rt_pg_internal *pgp =
 	(struct rt_pg_internal *)ip->idb_ptr;
     char buf[256];
     int i;
@@ -801,8 +832,8 @@ rt_pg_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose,
 
     /* Print out all the vertices of all the faces */
     for (i=0; i < pgp->npoly; i++) {
-	register fastf_t *v = pgp->poly[i].verts;
-	register fastf_t *n = pgp->poly[i].norms;
+	fastf_t *v = pgp->poly[i].verts;
+	fastf_t *n = pgp->poly[i].norms;
 
 	sprintf(buf, "\tPolygon %d: (%d pts)\n",
 		i, pgp->poly[i].npts);
@@ -831,16 +862,12 @@ rt_pg_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose,
  * Free the storage associated with the rt_db_internal version of this solid.
  */
 void
-rt_pg_ifree(struct rt_db_internal *ip, struct resource *resp)
+rt_pg_ifree(struct rt_db_internal *ip)
 {
-    register struct rt_pg_internal *pgp;
-    register int i;
+    struct rt_pg_internal *pgp;
+    int i;
 
     RT_CK_DB_INTERNAL(ip);
-
-    if (!resp) {
-	resp = &rt_uniresource;
-    }
 
     pgp = (struct rt_pg_internal *)ip->idb_ptr;
     RT_PG_CK_MAGIC(pgp);
@@ -864,8 +891,11 @@ rt_pg_ifree(struct rt_db_internal *ip, struct resource *resp)
  *
  */
 int
-rt_pg_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
+rt_pg_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 {
+    ps = ps; /* quellage */
+    if (ip) RT_CK_DB_INTERNAL(ip);
+
     return(0);			/* OK */
 }
 
@@ -984,7 +1014,7 @@ rt_pg_to_bot(struct rt_db_internal *ip, const struct bn_tol *tol, struct resourc
 
     ip_bot->faces = (int *)bu_realloc(ip_bot->faces, ip_bot->num_faces * 3 * sizeof(int), "BOT faces");
 
-    rt_db_free_internal(ip, resp);
+    rt_db_free_internal(ip);
 
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     ip->idb_type = ID_BOT;

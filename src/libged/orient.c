@@ -64,7 +64,7 @@ ged_orient(struct ged *gedp, int argc, const char *argv[])
 	    return GED_ERROR;
 	}
     } else {
-	register int i;
+	int i;
 
 	for (i = 1; i < 5; ++i)
 	    if (sscanf(argv[i], "%lf", &quat[i-1]) != 1) {

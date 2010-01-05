@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -15,16 +14,13 @@
 */
 
 #include "opennurbs.h"
-#include <assert.h>
-#include <float.h>
-#include <list>
 
 ON_PolynomialCurve::ON_PolynomialCurve()
-		   : m_dim(0), m_is_rat(0), m_order(0), m_domain(0.0,1.0)
+                   : m_dim(0), m_is_rat(0), m_order(0), m_domain(0.0,1.0)
 {}
 
-ON_PolynomialCurve::ON_PolynomialCurve( int dim, BOOL is_rat, int order )
-		   : m_dim(0), m_is_rat(0), m_order(0), m_domain(0.0,1.0)
+ON_PolynomialCurve::ON_PolynomialCurve( int dim, ON_BOOL32 is_rat, int order )
+                   : m_dim(0), m_is_rat(0), m_order(0), m_domain(0.0,1.0)
 {
   Create( dim, is_rat, order );
 }
@@ -35,20 +31,20 @@ ON_PolynomialCurve::~ON_PolynomialCurve()
 }
 
 ON_PolynomialCurve::ON_PolynomialCurve(const ON_PolynomialCurve& src)
-		   : m_dim(0), m_is_rat(0), m_order(0), m_domain(0.0,1.0)
+                   : m_dim(0), m_is_rat(0), m_order(0), m_domain(0.0,1.0)
 {
   *this = src;
 }
 
 ON_PolynomialCurve::ON_PolynomialCurve(const ON_BezierCurve& src)
-		   : m_dim(0), m_is_rat(0), m_order(0), m_domain(0.0,1.0)
+                   : m_dim(0), m_is_rat(0), m_order(0), m_domain(0.0,1.0)
 {
   *this = src;
 }
 
-BOOL ON_PolynomialCurve::Create( int dim, BOOL is_rat, int order )
+ON_BOOL32 ON_PolynomialCurve::Create( int dim, ON_BOOL32 is_rat, int order )
 {
-  BOOL rc = true;
+  ON_BOOL32 rc = true;
   if ( dim > 0 ) m_dim = dim; else {m_dim = 0; rc = false;}
   m_is_rat = is_rat?1:0;
   if ( order >= 1 ) m_order = order; else {m_order = 0; rc = false;}
@@ -103,24 +99,24 @@ ON_PolynomialCurve& ON_PolynomialCurve::operator=(const ON_BezierCurve& src)
     //s.m_domain.m_t[1] = 1.0;
     if ( s.Evaluate( 0.0, m_order-1, 4, &m_cv[0].x ) ) {
       if ( m_is_rat ) {
-	if ( m_dim < 3 ) {
-	  for ( i = 0; i < m_order; i++ ) {
-	    ON_4dPoint& cv = m_cv[i];
-	    cv.w = cv[m_dim];
-	    cv[m_dim] = 0.0;
-	  }
-	}
+        if ( m_dim < 3 ) {
+          for ( i = 0; i < m_order; i++ ) {
+            ON_4dPoint& cv = m_cv[i];
+            cv.w = cv[m_dim];
+            cv[m_dim] = 0.0;
+          }
+        }
       }
       else {
-	m_cv[0].w = 1.0;
+        m_cv[0].w = 1.0;
       }
       for ( i = 2; i < m_order; i++ ) {
-	d = 1.0/i;
-	ON_4dPoint& cv = m_cv[i];
-	cv.x *= d;
-	cv.y *= d;
-	cv.z *= d;
-	cv.w *= d;
+        d = 1.0/i;
+        ON_4dPoint& cv = m_cv[i];
+        cv.x *= d;
+        cv.y *= d;
+        cv.z *= d;
+        cv.w *= d;
       }
     }
     else {
@@ -133,14 +129,14 @@ ON_PolynomialCurve& ON_PolynomialCurve::operator=(const ON_BezierCurve& src)
   return *this;
 }
 
-BOOL ON_PolynomialCurve::Evaluate( // returns false if unable to evaluate
+ON_BOOL32 ON_PolynomialCurve::Evaluate( // returns false if unable to evaluate
        double t,         // evaluation parameter
        int der_count,    // number of derivatives (>=0)
        int v_stride,     // array stride (>=Dimension())
        double* v         // array of length stride*(ndir+1)
        ) const
 {
-  BOOL rc = false;
+  ON_BOOL32 rc = false;
   if ( m_order >= 1 && m_cv.Count() == m_order )
   {
     if ( m_domain.m_t[0] != 0.0 || m_domain.m_t[1] != 1.0 ) 
@@ -161,27 +157,27 @@ BOOL ON_PolynomialCurve::Evaluate( // returns false if unable to evaluate
     }
     if ( der_count >= 1 ) {
       for ( i = m_order-1; i >= 1; i-- ) {
-	c = m_cv[i];
-	p[1].x = t*p[1].x + i*c.x;
-	p[1].y = t*p[1].y + i*c.y;
-	p[1].z = t*p[1].z + i*c.z;
-	p[1].w = t*p[1].w + i*c.w;
+        c = m_cv[i];
+        p[1].x = t*p[1].x + i*c.x;
+        p[1].y = t*p[1].y + i*c.y;
+        p[1].z = t*p[1].z + i*c.z;
+        p[1].w = t*p[1].w + i*c.w;
       }
       for ( der = 2; der <= der_count; der++ ) {
-	for ( i = m_order-1; i >= der; i-- ) {
-	  s = i;
-	  for ( j = 1; j < der; j++ ) {
-	    s *= (i-j);
-	  }
-	  c = m_cv[i];
-	  p[der].x = t*p[der].x + s*c.x;
-	  p[der].y = t*p[der].y + s*c.y;
-	  p[der].z = t*p[der].z + s*c.z;
-	  p[der].w = t*p[der].w + s*c.w;
-	}
+        for ( i = m_order-1; i >= der; i-- ) {
+          s = i;
+          for ( j = 1; j < der; j++ ) {
+            s *= (i-j);
+          }
+          c = m_cv[i];
+          p[der].x = t*p[der].x + s*c.x;
+          p[der].y = t*p[der].y + s*c.y;
+          p[der].z = t*p[der].z + s*c.z;
+          p[der].w = t*p[der].w + s*c.w;
+        }
       }
       if ( m_is_rat ) {
-	ON_EvaluateQuotientRule( 3, der_count, 4, &p[0].x );
+        ON_EvaluateQuotientRule( 3, der_count, 4, &p[0].x );
       }
     }
     const int sz = m_dim*sizeof(v[0]);
@@ -204,7 +200,7 @@ ON_PolynomialSurface::ON_PolynomialSurface() : m_dim(0), m_is_rat(0)
   m_domain[1].m_t[1] = 1.0;
 }
 
-ON_PolynomialSurface::ON_PolynomialSurface( int dim, BOOL is_rat, int order0, int order1 )
+ON_PolynomialSurface::ON_PolynomialSurface( int dim, ON_BOOL32 is_rat, int order0, int order1 )
 {
   Create( dim, is_rat, order0, order1 );
 }
@@ -258,9 +254,9 @@ ON_PolynomialSurface& ON_PolynomialSurface::operator=(const ON_BezierSurface& sr
   return *this;
 }
 
-BOOL ON_PolynomialSurface::Create( int dim, int is_rat, int order0, int order1 )
+ON_BOOL32 ON_PolynomialSurface::Create( int dim, int is_rat, int order0, int order1 )
 {
-  BOOL rc = true;
+  ON_BOOL32 rc = true;
   if ( dim > 0 ) m_dim = dim; else {m_dim = 0; rc = false;};
   m_is_rat = is_rat?1:0;
   if ( order0 > 0 ) m_order[0] = order0; else { m_order[0] = 0; rc = false;}
@@ -282,7 +278,7 @@ void ON_PolynomialSurface::Destroy()
   m_cv.Destroy();
 }
 
-BOOL ON_PolynomialSurface::Evaluate( // returns false if unable to evaluate
+ON_BOOL32 ON_PolynomialSurface::Evaluate( // returns false if unable to evaluate
        double s, 
        double t,           // evaluation parameter
        int der_count,      // number of derivatives (>=0)
@@ -295,25 +291,25 @@ BOOL ON_PolynomialSurface::Evaluate( // returns false if unable to evaluate
 }
 
 ON_BezierCurve::ON_BezierCurve()
-	       : m_dim(0), 
-		 m_is_rat(0), 
-		 m_order(0), 
-		 m_cv_stride(0), 
-		 m_cv(0), 
-		 m_cv_capacity(0)
+               : m_dim(0), 
+                 m_is_rat(0), 
+                 m_order(0), 
+                 m_cv_stride(0), 
+                 m_cv(0), 
+                 m_cv_capacity(0)
 {
 #if 8 == ON_SIZEOF_POINTER
   m_reserved_ON_BezierCurve = 0;
 #endif
 }
 
-ON_BezierCurve::ON_BezierCurve( int dim, BOOL is_rat, int order )
-	       : m_dim(0), 
-		 m_is_rat(0), 
-		 m_order(0), 
-		 m_cv_stride(0), 
-		 m_cv(0),
-		 m_cv_capacity(0)
+ON_BezierCurve::ON_BezierCurve( int dim, ON_BOOL32 is_rat, int order )
+               : m_dim(0), 
+                 m_is_rat(0), 
+                 m_order(0), 
+                 m_cv_stride(0), 
+                 m_cv(0),
+                 m_cv_capacity(0)
 {
 #if 8 == ON_SIZEOF_POINTER
   m_reserved_ON_BezierCurve = 0;
@@ -327,12 +323,12 @@ ON_BezierCurve::~ON_BezierCurve()
 }
 
 ON_BezierCurve::ON_BezierCurve(const ON_BezierCurve& src)
-	       : m_dim(0), 
-		 m_is_rat(0), 
-		 m_order(0), 
-		 m_cv_stride(0), 
-		 m_cv(0),
-		 m_cv_capacity(0)
+               : m_dim(0), 
+                 m_is_rat(0), 
+                 m_order(0), 
+                 m_cv_stride(0), 
+                 m_cv(0),
+                 m_cv_capacity(0)
 {
 #if 8 == ON_SIZEOF_POINTER
   m_reserved_ON_BezierCurve = 0;
@@ -341,12 +337,12 @@ ON_BezierCurve::ON_BezierCurve(const ON_BezierCurve& src)
 }
 
 ON_BezierCurve::ON_BezierCurve(const ON_PolynomialCurve& src)
-	       : m_dim(0), 
-		 m_is_rat(0), 
-		 m_order(0), 
-		 m_cv_stride(0), 
-		 m_cv(0),
-		 m_cv_capacity(0)
+               : m_dim(0), 
+                 m_is_rat(0), 
+                 m_order(0), 
+                 m_cv_stride(0), 
+                 m_cv(0),
+                 m_cv_capacity(0)
 {
 #if 8 == ON_SIZEOF_POINTER
   m_reserved_ON_BezierCurve = 0;
@@ -355,12 +351,12 @@ ON_BezierCurve::ON_BezierCurve(const ON_PolynomialCurve& src)
 }
 
 ON_BezierCurve::ON_BezierCurve(const ON_2dPointArray& cv)
-	       : m_dim(0), 
-		 m_is_rat(0), 
-		 m_order(0), 
-		 m_cv_stride(0), 
-		 m_cv(0),
-		 m_cv_capacity(0)
+               : m_dim(0), 
+                 m_is_rat(0), 
+                 m_order(0), 
+                 m_cv_stride(0), 
+                 m_cv(0),
+                 m_cv_capacity(0)
 {
 #if 8 == ON_SIZEOF_POINTER
   m_reserved_ON_BezierCurve = 0;
@@ -369,12 +365,12 @@ ON_BezierCurve::ON_BezierCurve(const ON_2dPointArray& cv)
 }
 
 ON_BezierCurve::ON_BezierCurve(const ON_3dPointArray& cv)
-	       : m_dim(0), 
-		 m_is_rat(0), 
-		 m_order(0), 
-		 m_cv_stride(0), 
-		 m_cv(0),
-		 m_cv_capacity(0)
+               : m_dim(0), 
+                 m_is_rat(0), 
+                 m_order(0), 
+                 m_cv_stride(0), 
+                 m_cv(0),
+                 m_cv_capacity(0)
 {
 #if 8 == ON_SIZEOF_POINTER
   m_reserved_ON_BezierCurve = 0;
@@ -383,12 +379,12 @@ ON_BezierCurve::ON_BezierCurve(const ON_3dPointArray& cv)
 }
 
 ON_BezierCurve::ON_BezierCurve(const ON_4dPointArray& cv)
-	       : m_dim(0), 
-		 m_is_rat(0), 
-		 m_order(0), 
-		 m_cv_stride(0), 
-		 m_cv(0),
-		 m_cv_capacity(0)
+               : m_dim(0), 
+                 m_is_rat(0), 
+                 m_order(0), 
+                 m_cv_stride(0), 
+                 m_cv(0),
+                 m_cv_capacity(0)
 {
 #if 8 == ON_SIZEOF_POINTER
   m_reserved_ON_BezierCurve = 0;
@@ -438,7 +434,7 @@ ON_BezierCurve& ON_BezierCurve::operator=(const ON_BezierCurve& src)
     if ( Create( src.m_dim, src.m_is_rat, src.m_order ) ) {
       const int sizeof_cv = CVSize()*sizeof(m_cv[0]);
       for ( i = 0; i < m_order; i++ ) {
-	memcpy( CV(i), src.CV(i), sizeof_cv );
+        memcpy( CV(i), src.CV(i), sizeof_cv );
       }
     }
   }
@@ -471,17 +467,17 @@ ON_BezierCurve& ON_BezierCurve::operator=(const ON_PolynomialCurve& src)
     for ( i = 0; i < src.m_order; i++ ) 
     {
       if ( i == 0 )
-	t = 0.0;
+        t = 0.0;
       else if ( i < degree )
-	t = i*d;
+        t = i*d;
       else
-	t = 1.0;
+        t = 1.0;
       s.Evaluate( t, 0, 4, pt[i] );
     }
     s.m_cv = 0;
     if ( src.m_is_rat && src.m_dim < 3 ) {
       for ( i = 0; i < src.m_order; i++ )
-	pt[i][src.m_dim] = pt[i].w;
+        pt[i][src.m_dim] = pt[i].w;
     }
     Loft( src.m_is_rat ? src.m_dim+1 : src.m_dim, src.m_order, 4, &pt[0].x, 0, NULL );
     if ( IsValid() && src.m_is_rat ) {
@@ -504,7 +500,7 @@ bool ON_BezierCurve::Loft( const ON_3dPointArray& pt )
 
 
 bool ON_BezierCurve::Loft( int pt_dim, int pt_count, int pt_stride, const double* pt,
-			   int t_stride, const double* t )
+                           int t_stride, const double* t )
 {
   bool rc = false;
   if ( pt_dim >= 1 && pt_count >= 2 && pt_stride >= pt_dim && pt != NULL && (t_stride >= 1 || t == 0) ) {
@@ -515,7 +511,7 @@ bool ON_BezierCurve::Loft( int pt_dim, int pt_count, int pt_stride, const double
       uniform_t.Reserve(pt_count);
       s = 1.0/(pt_count-1);
       for ( i = 0; i < pt_count; i++ ) {
-	uniform_t.Append(i*s);
+        uniform_t.Append(i*s);
       }
       uniform_t[0] = 0.0;
       uniform_t[pt_count-1] = 1.0;
@@ -534,21 +530,21 @@ bool ON_BezierCurve::Loft( int pt_dim, int pt_count, int pt_stride, const double
     ON_Matrix M( m_order, m_order );
     for ( i = 0; i < m_order; i++ ) {
       if ( t[i] <= tm ) {
-	s = (t[i] - t[0])*d;
+        s = (t[i] - t[0])*d;
       }
       else {
-	s = 1.0 - (t1 - t[i])*d;
+        s = 1.0 - (t1 - t[i])*d;
       }
       for ( j = 0; j < m_order; j++ ) {
-	M.m[i][j] = ON_EvaluateBernsteinBasis( degree, j, s );
+        M.m[i][j] = ON_EvaluateBernsteinBasis( degree, j, s );
       }
       memcpy( m_cv + i*m_cv_stride, pt + i*pt_stride, sizeof_cv );
     }  
 
     int rank = M.RowReduce( ON_EPSILON, m_dim, m_cv_stride, m_cv );
     M.BackSolve( ON_EPSILON, m_dim, m_order, 
-		 m_cv_stride, m_cv, 
-		 m_cv_stride, m_cv );
+                 m_cv_stride, m_cv, 
+                 m_cv_stride, m_cv );
     if ( rank == m_order )
       rc = true;
   }
@@ -575,20 +571,20 @@ bool ON_BezierCurve::IsValid() const
 void ON_BezierCurve::Dump( ON_TextLog& dump ) const
 {
   dump.Print( "ON_BezierCurve dim = %d is_rat = %d\n"
-	       "        order = %d \n",
-	       m_dim, m_is_rat, m_order );
+               "        order = %d \n",
+               m_dim, m_is_rat, m_order );
   dump.Print( "Control Points  %d %s points\n"
-	       "  index               value\n",
-	       m_order, 
-	       (m_is_rat) ? "rational" : "non-rational" );
+               "  index               value\n",
+               m_order, 
+               (m_is_rat) ? "rational" : "non-rational" );
   if ( !m_cv ) {
     dump.Print("  NULL cv array\n");
   }
   else {
     dump.PrintPointList( m_dim, m_is_rat, 
-		      m_order, m_cv_stride,
-		      m_cv, 
-		      "  CV" );
+                      m_order, m_cv_stride,
+                      m_cv, 
+                      "  CV" );
   }
 }
 
@@ -687,16 +683,16 @@ bool ON_BezierCurve::GetTightBoundingBox(
     ) const
 {
   return m__GetBezierCurveTightBoundingBox 
-	? m__GetBezierCurveTightBoundingBox(this,&tight_bbox,bGrowBox?true:false,xform) 
-	: false;
+        ? m__GetBezierCurveTightBoundingBox(this,&tight_bbox,bGrowBox?true:false,xform) 
+        : false;
 }
 
 
 bool ON_WorldBBoxIsInTightBBox( 
-		    const ON_BoundingBox& tight_bbox, 
-		    const ON_BoundingBox& world_bbox,
-		    const ON_Xform* xform
-		    )
+                    const ON_BoundingBox& tight_bbox, 
+                    const ON_BoundingBox& world_bbox,
+                    const ON_Xform* xform
+                    )
 {
   if ( xform && !xform->IsIdentity() )
   {
@@ -707,16 +703,16 @@ bool ON_WorldBBoxIsInTightBBox(
       P.x = (i) ? world_bbox.m_min.x : world_bbox.m_max.x;
       for ( j = 0; j < 2; j++ )
       {
-	P.y = (j) ? world_bbox.m_min.y : world_bbox.m_max.y;
-	for ( k = 0; k < 2; k++ )
-	{
-	  P.z = (k) ? world_bbox.m_min.z : world_bbox.m_max.z;
-	  Q = (*xform)*P;
-	  if ( !tight_bbox.IsPointIn(Q) )
-	  {
-	    return false;
-	  }
-	}
+        P.y = (j) ? world_bbox.m_min.y : world_bbox.m_max.y;
+        for ( k = 0; k < 2; k++ )
+        {
+          P.z = (k) ? world_bbox.m_min.z : world_bbox.m_max.z;
+          Q = (*xform)*P;
+          if ( !tight_bbox.IsPointIn(Q) )
+          {
+            return false;
+          }
+        }
       }
     }
     return true;
@@ -791,8 +787,8 @@ bool ON_Arc::GetTightBoundingBox(
     {
       if ( nurbs_arc.m_knot[i] < nurbs_arc.m_knot[i+1] )
       {
-	if ( bez_arc.GetTightBoundingBox( tight_bbox, bGrowBox, 0 ) )
-	  bGrowBox = true;
+        if ( bez_arc.GetTightBoundingBox( tight_bbox, bGrowBox, 0 ) )
+          bGrowBox = true;
       }
     }
     bez_arc.m_cv = 0;
@@ -876,8 +872,8 @@ bool ON_CurveArray::GetTightBoundingBox(
     {
       if ( m_a[i] )
       {
-	P.Append( m_a[i]->PointAtStart() );
-	P.Append( m_a[i]->PointAtEnd() );
+        P.Append( m_a[i]->PointAtStart() );
+        P.Append( m_a[i]->PointAtEnd() );
       }
     }
     if ( P.GetTightBoundingBox(tight_bbox,bGrowBox,xform) )
@@ -889,10 +885,10 @@ bool ON_CurveArray::GetTightBoundingBox(
     {
       if ( m_a[i] )
       {
-	if ( m_a[i]->GetTightBoundingBox(tight_bbox,bGrowBox,xform) )
-	{
-	  bGrowBox = true;
-	}
+        if ( m_a[i]->GetTightBoundingBox(tight_bbox,bGrowBox,xform) )
+        {
+          bGrowBox = true;
+        }
       }
     }
   }
@@ -925,10 +921,10 @@ bool ON_3dPointArray::GetTightBoundingBox(
       int i;
       for ( i = 1; i < m_count; i++ )
       {
-	P = (*xform)*m_a[i];
-	if ( P.x < points_bbox.m_min.x ) points_bbox.m_min.x = P.x; else if ( P.x > points_bbox.m_max.x ) points_bbox.m_max.x = P.x;
-	if ( P.y < points_bbox.m_min.y ) points_bbox.m_min.y = P.y; else if ( P.y > points_bbox.m_max.y ) points_bbox.m_max.y = P.y;
-	if ( P.z < points_bbox.m_min.z ) points_bbox.m_min.z = P.z; else if ( P.z > points_bbox.m_max.z ) points_bbox.m_max.z = P.z;
+        P = (*xform)*m_a[i];
+        if ( P.x < points_bbox.m_min.x ) points_bbox.m_min.x = P.x; else if ( P.x > points_bbox.m_max.x ) points_bbox.m_max.x = P.x;
+        if ( P.y < points_bbox.m_min.y ) points_bbox.m_min.y = P.y; else if ( P.y > points_bbox.m_max.y ) points_bbox.m_max.y = P.y;
+        if ( P.z < points_bbox.m_min.z ) points_bbox.m_min.z = P.z; else if ( P.z > points_bbox.m_max.z ) points_bbox.m_max.z = P.z;
       }
     }
     else
@@ -963,13 +959,13 @@ bool ON_PointCloud::GetTightBoundingBox(
     if ( bGrowBox )
     {
       if ( ON_WorldBBoxIsInTightBBox( tight_bbox, pc_bbox, xform ) )
-	return true;
+        return true;
     }
 
     if ( xform && !xform->IsIdentity() )
     {
       if ( m_P.GetTightBoundingBox(tight_bbox,bGrowBox,xform) )
-	bGrowBox = true;
+        bGrowBox = true;
     }
     else
     {
@@ -1001,20 +997,22 @@ bool ON_Mesh::GetTightBoundingBox(
       return true;
     }
 
-    // calculate bbox of transformed mesh
-    ON_3dPoint P;
-    P = m_V[0];
-    mesh_bbox.m_min = (*xform)*P;
-    mesh_bbox.m_max = mesh_bbox.m_min;
-    int i;
     const int vcount = m_V.Count();
-    for ( i = 1; i < vcount; i++ )
+    if ( vcount > 0 )
     {
-      P = m_V[i];
-      P = (*xform)*P;
-      if ( P.x < mesh_bbox.m_min.x ) mesh_bbox.m_min.x = P.x; else if (P.x > mesh_bbox.m_max.x) mesh_bbox.m_max.x = P.x;
-      if ( P.y < mesh_bbox.m_min.y ) mesh_bbox.m_min.y = P.y; else if (P.y > mesh_bbox.m_max.y) mesh_bbox.m_max.y = P.y;
-      if ( P.z < mesh_bbox.m_min.z ) mesh_bbox.m_min.z = P.z; else if (P.z > mesh_bbox.m_max.z) mesh_bbox.m_max.z = P.z;
+      // calculate bbox of transformed mesh
+      ON_3dPoint P(m_V[0]);
+      mesh_bbox.m_min = (*xform)*P;
+      mesh_bbox.m_max = mesh_bbox.m_min;
+      int i;
+      for ( i = 1; i < vcount; i++ )
+      {
+        P = m_V[i];
+        P = (*xform)*P;
+        if ( P.x < mesh_bbox.m_min.x ) mesh_bbox.m_min.x = P.x; else if (P.x > mesh_bbox.m_max.x) mesh_bbox.m_max.x = P.x;
+        if ( P.y < mesh_bbox.m_min.y ) mesh_bbox.m_min.y = P.y; else if (P.y > mesh_bbox.m_max.y) mesh_bbox.m_max.y = P.y;
+        if ( P.z < mesh_bbox.m_min.z ) mesh_bbox.m_min.z = P.z; else if (P.z > mesh_bbox.m_max.z) mesh_bbox.m_max.z = P.z;
+      }
     }
   }
 
@@ -1105,148 +1103,8 @@ bool ON_BezierCurve::Evaluate( // returns false if unable to evaluate
        ) const
 {
   return ON_EvaluateBezier( m_dim, m_is_rat, m_order, m_cv_stride, m_cv, 
-			    0.0, 1.0, //m_domain[0], m_domain[1], 
-			    der_count, t, v_stride, v )?true:false;
-}
-
-#define QUAD1 0
-#define QUAD2 1
-#define QUAD3 2
-#define QUAD4 3
-
-#define CASE_A 		0
-#define CASE_B 		2
-#define CASE_C 		3
-
-int case_table[16]  = {		/* A = 0, B = 2, C = 3 */
-  0,0,0,0,0,3,0,3,0,2,3,3,0,3,3,3
-};
-
-inline
-int quadrant(const ON_3dPoint& axis, double* pt, double weight = 1.0) {
-  double u = axis.x;
-  double v = axis.y;
-  if (pt[0] / weight > u)
-    return (pt[1] / weight >= v) ? QUAD1 : QUAD4;
-  else
-    return (pt[1] / weight >= v) ? QUAD2 : QUAD3;
-}
-
-inline
-int sign(double num) {
-  return (num >= 0) ? 1 : -1;
-}
-
-
-int ON_BezierCurve::NumIntersectionsWith(const ON_Line& segment) const
-{
-  ON_TRACE("ON_BezierCurve::NumIntersectionsWith");
-  // XXX - assumes the segment is horizontal and to the "right"
-  std::list<ON_BezierCurve> stack;
-
-  int num_isect = 0;
-  stack.push_back(*this);
-  while (stack.size() > 0) {
-    ON_BezierCurve crv = stack.back();
-
-// The assertion below does not allow rhino converted structures to raytrace.  
-// Need to figure out why, and what it means for CVCount to be 0. djg 4/15/08
-if (crv.CVCount() < 1 ) {
-  return 0;
-}
-    stack.pop_back();
-
-    int qstats = 0;
-    ON_Interval dom = crv.Domain();
-    assert(crv.CVCount() > 0);
-    // determine the case (a la Nishita bezier intersection algorithm)
-    for (int i1 = 0; i1 < crv.CVCount(); i1++) {
-      qstats |= (1 << quadrant(segment[0], crv.CV(i1), crv.IsRational() ? crv.Weight(i1) : 1.0));
-    }
-    assert(qstats >= 0);
-    int curve_case = case_table[qstats];
-
-    // handle the specific cases
-    switch (curve_case) {
-    case CASE_A: // there is no possibility of intersection
-      ON_TRACE("\tCASE A");
-      break;
-    case CASE_B: // there is either an even or odd number of intersections
-      {
-	ON_TRACE("\tCASE B");
-	// check the endpoints of the curve to determine if they are in
-	// the same or different quadrants
-	int quad1 = quadrant(segment[0], crv.PointAt(dom.Min()));
-	int quad2 = quadrant(segment[0], crv.PointAt(dom.Max()));
-	// if they are in the same quadrant, then the num intersections is even
-	// otherwise the number of intersections is odd
-	num_isect += (quad1 == quad2) ? 0 : 1;
-	break;
-      }
-    case CASE_C:
-      {
-	ON_TRACE("\tCASE C");
-	// use Bezier clipping to eliminate segments of the curve that
-	// cannot intersect the segment
-	ON_2dPoint* d = static_cast<ON_2dPoint*>(alloca(crv.m_order * sizeof(ON_2dPoint))); // control points for the explicit Bezier curve
-	for (int i = 0; i < crv.m_order; i++) {
-	  d[i].x = ((double)i)/(double)(crv.m_order-1);
-	  d[i].y = crv.CV(i)[1] - segment[0].y; // dist from the segment
-	  ON_TRACE("d[" << i << "]: " << d[i].x << "," << d[i].y);
-	}
-
-	// calculate the trimming points
-	// XXX - ack - make sure this handles all cases
-	double tmin = DBL_MAX;
-	double tmax = -DBL_MAX;
-	for (int i2 = 0; i2 < (crv.m_order-1); i2++) {
-	  for (int j = i2+1; j < crv.m_order; j++) {
-	    int a = i2;
-	    int b = j;
-	    if (sign(d[a].y) != sign(d[b].y)) {
-	      double t = d[a].x - d[a].y * (d[b].x - d[a].x) / (d[b].y - d[a].y);
-	      if (t < tmin) tmin = t; // XXX why offsets?
-	      if (t > tmax) tmax = t;
-	    }
-	  }
-	}
-
-	double tleft = tmin;
-	double tright = tmax;
-	ON_TRACE("tleft : " << tleft);
-	ON_TRACE("tright: " << tright);
-	//assert( tleft <= tright );
-	if (fabs(tleft-tright) < 0.2) {
-	  // XXX the tleft/tright calc doesn't seem to be working, otherwise
-	  // why would we need this case?
-	  tleft = .33;
-	  tright = .66;
-	  ON_BezierCurve left(crv), middle(crv), right(crv);
-	  //Split(tleft, left, middle);
-	  //middle.Split((tright-tleft)/(1.0-tleft), middle, right);
-	  left.Trim(ON_Interval(0.0,tleft));
-	  middle.Trim(ON_Interval(tleft, tright));
-	  right.Trim(ON_Interval(tright,1.0));
-	  stack.push_back(left);
-	  stack.push_back(middle);
-	  stack.push_back(right);
-	} else {
-	  ON_BezierCurve middle(crv);
-	  middle.Trim(ON_Interval(tleft,tright));
-	  ON_TRACE("After trim:");
-	  ON_TRACE("middle domain: " << middle.Domain().Min() << " --> " << middle.Domain().Max());
-
-	  // since we are limited to horizontal segments for now
-	  // we know that left and right are CASE_A...
-	  stack.push_back(middle);
-	}
-	break;
-      }
-    default:
-      assert(false);
-    }
-  }
-  return num_isect;
+                            0.0, 1.0, //m_domain[0], m_domain[1], 
+                            der_count, t, v_stride, v )?true:false;
 }
 
 bool ON_BezierCurve::GetNurbForm( ON_NurbsCurve& n ) const
@@ -1347,7 +1205,7 @@ bool ON_BezierCurve::SetCV( int i, ON::point_style style, const double* Point )
       // NURBS curve is not rational
       w = (Point[m_dim] != 0.0) ? 1.0/Point[m_dim] : 1.0;
       for ( k = 0; k < m_dim; k++ ) {
-	cv[k] = w*Point[k];
+        cv[k] = w*Point[k];
       }
     }
     break;
@@ -1357,7 +1215,7 @@ bool ON_BezierCurve::SetCV( int i, ON::point_style style, const double* Point )
       // NURBS curve is rational - convert euclean point to homogeneous form
       w = Point[m_dim];
       for ( k = 0; k < m_dim; k++ )
-	cv[k] = w*Point[k];
+        cv[k] = w*Point[k];
       cv[m_dim] = w;
     }
     else {
@@ -1388,9 +1246,9 @@ bool ON_BezierCurve::SetCV( int i, const ON_3dPoint& point )
     if ( m_dim > 1 ) {
       cv[1] = point.y;
       if ( m_dim > 2 )
-	cv[2] = point.z;
+        cv[2] = point.z;
       if ( m_dim > 3 ) {
-	memset( &cv[3], 0, (m_dim-3)*sizeof(*cv) );
+        memset( &cv[3], 0, (m_dim-3)*sizeof(*cv) );
       }
     }
     if ( m_is_rat ) {
@@ -1409,12 +1267,12 @@ bool ON_BezierCurve::SetCV( int i, const ON_4dPoint& point )
     if ( m_is_rat ) {
       cv[0] = point.x;
       if ( m_dim > 1 ) {
-	cv[1] = point.y;
-	if ( m_dim > 2 )
-	  cv[2] = point.z;
-	if ( m_dim > 3 ) {
-	  memset( &cv[3], 0, (m_dim-3)*sizeof(*cv) );
-	}
+        cv[1] = point.y;
+        if ( m_dim > 2 )
+          cv[2] = point.z;
+        if ( m_dim > 3 ) {
+          memset( &cv[3], 0, (m_dim-3)*sizeof(*cv) );
+        }
       }
       cv[m_dim] = point.w;
       rc = true;
@@ -1422,21 +1280,21 @@ bool ON_BezierCurve::SetCV( int i, const ON_4dPoint& point )
     else {
       double w;
       if ( point.w != 0.0 ) {
-	w = 1.0/point.w;
-	rc = true;
+        w = 1.0/point.w;
+        rc = true;
       }
       else {
-	w = 1.0;
+        w = 1.0;
       }
       cv[0] = w*point.x;
       if ( m_dim > 1 ) {
-	cv[1] = w*point.y;
-	if ( m_dim > 2 ) {
-	  cv[2] = w*point.z;
-	}
-	if ( m_dim > 3 ) {
-	  memset( &cv[3], 0, (m_dim-3)*sizeof(*cv) );
-	}
+        cv[1] = w*point.y;
+        if ( m_dim > 2 ) {
+          cv[2] = w*point.z;
+        }
+        if ( m_dim > 3 ) {
+          memset( &cv[3], 0, (m_dim-3)*sizeof(*cv) );
+        }
       }
     }
   }
@@ -1477,11 +1335,11 @@ bool ON_BezierCurve::GetCV( int i, ON_3dPoint& point ) const
   if ( cv ) {
     if ( m_is_rat ) {
       if (cv[m_dim] != 0.0) {
-	const double w = 1.0/cv[m_dim];
-	point.x = cv[0]*w;
-	point.y = (m_dim>1)? cv[1]*w : 0.0;
-	point.z = (m_dim>2)? cv[2]*w : 0.0;
-	rc = true;
+        const double w = 1.0/cv[m_dim];
+        point.x = cv[0]*w;
+        point.y = (m_dim>1)? cv[1]*w : 0.0;
+        point.z = (m_dim>2)? cv[2]*w : 0.0;
+        rc = true;
       }
     }
     else {
@@ -1517,9 +1375,9 @@ bool ON_BezierCurve::ZeroCVs()
     if ( m_cv_capacity > 0 ) {
       memset( m_cv, 0, m_cv_capacity*sizeof(*m_cv) );
       if ( m_is_rat ) {
-	for ( i = 0; i < m_order; i++ ) {
-	  SetWeight( i, 1.0 );
-	}
+        for ( i = 0; i < m_order; i++ ) {
+          SetWeight( i, 1.0 );
+        }
       }
       rc = true;
     }
@@ -1527,10 +1385,10 @@ bool ON_BezierCurve::ZeroCVs()
       double* cv;
       int s = CVSize()*sizeof(*cv);
       for ( i = 0; i < m_order; i++ ) {
-	cv = CV(i);
-	memset(cv,0,s);
-	if ( m_is_rat )
-	  cv[m_dim] = 1.0;
+        cv = CV(i);
+        memset(cv,0,s);
+        if ( m_is_rat )
+          cv[m_dim] = 1.0;
       }
       rc = (i>0) ? true : false;
     }
@@ -1555,12 +1413,12 @@ bool ON_BezierCurve::MakeRational()
       double* new_cv;
       int cvi, j;
       for ( cvi = cv_count-1; cvi>=0; cvi-- ) {
-	old_cv = CV(cvi);
-	new_cv = m_cv+(cvi*new_stride);
-	for ( j = dim-1; j >= 0; j-- ) {
-	  new_cv[j] = old_cv[j];
-	}
-	new_cv[dim] = 1.0;
+        old_cv = CV(cvi);
+        new_cv = m_cv+(cvi*new_stride);
+        for ( j = dim-1; j >= 0; j-- ) {
+          new_cv[j] = old_cv[j];
+        }
+        new_cv[dim] = 1.0;
       }
       m_cv_stride = new_stride;
       m_is_rat = 1;
@@ -1580,12 +1438,12 @@ bool ON_BezierCurve::MakeNonRational()
       double* new_cv = m_cv;
       int cvi, j;
       for ( cvi = 0; cvi < cv_count; cvi++ ) {
-	old_cv = CV(cvi);
-	w = old_cv[dim];
-	w = ( w != 0.0 ) ? 1.0/w : 1.0;
-	for ( j = 0; j < dim; j++ ) {
-	  *new_cv++ = w*(*old_cv++);
-	}
+        old_cv = CV(cvi);
+        w = old_cv[dim];
+        w = ( w != 0.0 ) ? 1.0/w : 1.0;
+        for ( j = 0; j < dim; j++ ) {
+          *new_cv++ = w*(*old_cv++);
+        }
       }
       m_is_rat = 0;
       m_cv_stride = dim;
@@ -1603,10 +1461,10 @@ bool ON_BezierCurve::IncreaseDegree( int desired_degree )
     else if ( desired_degree >= m_order ) {
       ReserveCVCapacity( m_cv_stride*(desired_degree+1) );
       while ( m_order <= desired_degree ) {
-	rc = ON_IncreaseBezierDegree( m_dim, m_is_rat, m_order, m_cv_stride, m_cv )?true:false;
-	if ( !rc )
-	  break;
-	m_order++;
+        rc = ON_IncreaseBezierDegree( m_dim, m_is_rat, m_order, m_cv_stride, m_cv )?true:false;
+        if ( !rc )
+          break;
+        m_order++;
       }
     }
   }
@@ -1691,9 +1549,9 @@ bool ON_BezierCurve::Trim( const ON_Interval& n )
       ON_EvaluatedeCasteljau( cvdim, m_order, -1, m_cv_stride, m_cv, t1 );
       if ( t0 != 0.0 )
       {
-	// 9/9/03 fix add != 0 test to avoid divide by zero bug
-	double s0 = t1/t0;
-	ON_EvaluatedeCasteljau( cvdim, m_order, +1, m_cv_stride, m_cv, s0 );
+        // 9/9/03 fix add != 0 test to avoid divide by zero bug
+        double s0 = t1/t0;
+        ON_EvaluatedeCasteljau( cvdim, m_order, +1, m_cv_stride, m_cv, s0 );
       }
     }
   }
@@ -1718,14 +1576,14 @@ bool ON_BezierCurve::Split(
     {
       if ( !left_bez.m_cv || (0 < left_bez.m_cv_capacity && left_bez.m_cv_capacity < cvdim*m_order) )
       {
-	left_bez.Create( m_dim, m_is_rat, m_order );
+        left_bez.Create( m_dim, m_is_rat, m_order );
       }
       else if ( left_bez.m_dim != m_dim && left_bez.m_is_rat != m_is_rat && left_bez.m_order != m_order || left_bez.m_cv_stride < cvdim )
       {
-	left_bez.m_dim       = m_dim;
-	left_bez.m_is_rat    = m_is_rat?1:0;
-	left_bez.m_order     = m_order;
-	left_bez.m_cv_stride = cvdim;
+        left_bez.m_dim       = m_dim;
+        left_bez.m_is_rat    = m_is_rat?1:0;
+        left_bez.m_order     = m_order;
+        left_bez.m_cv_stride = cvdim;
       }
     }
 
@@ -1733,14 +1591,14 @@ bool ON_BezierCurve::Split(
     {
       if ( !right_bez.m_cv || (0 < right_bez.m_cv_capacity && right_bez.m_cv_capacity < cvdim*m_order) )
       {
-	right_bez.Create( m_dim, m_is_rat, m_order );
+        right_bez.Create( m_dim, m_is_rat, m_order );
       }
       else if ( right_bez.m_dim != m_dim && right_bez.m_is_rat != m_is_rat && right_bez.m_order != m_order || right_bez.m_cv_stride < cvdim )
       {
-	right_bez.m_dim       = m_dim;
-	right_bez.m_is_rat    = m_is_rat?1:0;
-	right_bez.m_order     = m_order;
-	right_bez.m_cv_stride = cvdim;
+        right_bez.m_dim       = m_dim;
+        right_bez.m_is_rat    = m_is_rat?1:0;
+        right_bez.m_order     = m_order;
+        right_bez.m_cv_stride = cvdim;
       }
     }
 
@@ -1754,19 +1612,19 @@ bool ON_BezierCurve::Split(
     if (m_cv == left_bez.m_cv) {
       // copy from back to front
       for (i = 2*m_order-2; i >= 0; i -= 2) {
-	p = b[i]+cvdim;
-	q = CV(i/2)+cvdim;
-	k = cvdim;
-	while(k--) *(--p) = *(--q);
+        p = b[i]+cvdim;
+        q = CV(i/2)+cvdim;
+        k = cvdim;
+        while(k--) *(--p) = *(--q);
       }
     }
     else {
       // copy from front to back
       for (i = 0; i < 2*m_order; i += 2) {
-	p = b[i];
-	q = CV(i/2);
-	k = cvdim;
-	while(k--) *p++ = *q++;
+        p = b[i];
+        q = CV(i/2);
+        k = cvdim;
+        while(k--) *p++ = *q++;
       }      
     }
     
@@ -1784,27 +1642,27 @@ bool ON_BezierCurve::Split(
     if (t == 0.5) {
       // use faster aritmetic for this common case
       for (i = 1, k = 2*m_order-2; i < k; i++, k--) {
-	for (j = i; j < k; j++,j++)  {
-	  p = b[j-1];
-	  q = b[j+1];
-	  r = b[j];
-	  n = cvdim;
-	  while(n--) 
-	    *r++ = 0.5*(*p++ + *q++);
-	}
+        for (j = i; j < k; j++,j++)  {
+          p = b[j-1];
+          q = b[j+1];
+          r = b[j];
+          n = cvdim;
+          while(n--) 
+            *r++ = 0.5*(*p++ + *q++);
+        }
       }
     }
     else {
       s = 1.0-t;
       for (i = 1, k = 2*m_order-2; i < k; i++, k--) {
-	for (j = i; j < k; j++,j++) {
-	  p = b[j-1];
-	  q = b[j+1];
-	  r = b[j];
-	  n = cvdim;
-	  while(n--) 
-	    *r++ = (*p++ * s + *q++ * t);
-	}
+        for (j = i; j < k; j++,j++) {
+          p = b[j-1];
+          q = b[j+1];
+          r = b[j];
+          n = cvdim;
+          while(n--) 
+            *r++ = (*p++ * s + *q++ * t);
+        }
       }
     }
     
@@ -1820,10 +1678,10 @@ bool ON_BezierCurve::Split(
 }
 
 ON_BezierSurface::ON_BezierSurface()
-		 : m_dim(0),
-		   m_is_rat(0),
-		   m_cv(0),
-		   m_cv_capacity(0)
+                 : m_dim(0),
+                   m_is_rat(0),
+                   m_cv(0),
+                   m_cv_capacity(0)
 {
   m_order[0] = 0;
   m_order[1] = 0;
@@ -1834,11 +1692,11 @@ ON_BezierSurface::ON_BezierSurface()
 #endif
 }
 
-ON_BezierSurface::ON_BezierSurface( int dim, BOOL is_rat, int order0, int order1 )
-		 : m_dim(0),
-		   m_is_rat(0),
-		   m_cv(0),
-		   m_cv_capacity(0)
+ON_BezierSurface::ON_BezierSurface( int dim, ON_BOOL32 is_rat, int order0, int order1 )
+                 : m_dim(0),
+                   m_is_rat(0),
+                   m_cv(0),
+                   m_cv_capacity(0)
 {
   m_order[0] = 0;
   m_order[1] = 0;
@@ -1856,10 +1714,10 @@ ON_BezierSurface::~ON_BezierSurface()
 }
   
 ON_BezierSurface::ON_BezierSurface(const ON_BezierSurface& src)
-		 : m_dim(0),
-		   m_is_rat(0),
-		   m_cv(0),
-		   m_cv_capacity(0)
+                 : m_dim(0),
+                   m_is_rat(0),
+                   m_cv(0),
+                   m_cv_capacity(0)
 {
   m_order[0] = 0;
   m_order[1] = 0;
@@ -1872,10 +1730,10 @@ ON_BezierSurface::ON_BezierSurface(const ON_BezierSurface& src)
 }
 
 ON_BezierSurface::ON_BezierSurface(const ON_PolynomialSurface& src)
-		 : m_dim(0),
-		   m_is_rat(0),
-		   m_cv(0),
-		   m_cv_capacity(0)
+                 : m_dim(0),
+                   m_is_rat(0),
+                   m_cv(0),
+                   m_cv_capacity(0)
 {
   m_order[0] = 0;
   m_order[1] = 0;
@@ -1894,7 +1752,7 @@ ON_BezierSurface& ON_BezierSurface::operator=(const ON_BezierSurface& src)
       const int sizeof_cv = src.CVSize()*sizeof(m_cv[0]);
       int i, j;
       for ( i = 0; i < m_order[0]; i++ ) for ( j = 0; j < m_order[1]; j++ ) {
-	memcpy( CV(i,j), src.CV(i,j), sizeof_cv );
+        memcpy( CV(i,j), src.CV(i,j), sizeof_cv );
       }
     }
     else {
@@ -1940,12 +1798,12 @@ bool ON_BezierSurface::IsValid() const
 void ON_BezierSurface::Dump( ON_TextLog& dump ) const
 {
   dump.Print( "ON_BezierSurface dim = %d is_rat = %d\n"
-	       "        order = (%d, %d) \n",
-	       m_dim, m_is_rat, m_order[0], m_order[1] );
+               "        order = (%d, %d) \n",
+               m_dim, m_is_rat, m_order[0], m_order[1] );
   dump.Print( "Control Points  %d %s points\n"
-	       "  index               value\n",
-	       m_order[0]*m_order[1], 
-	       (m_is_rat) ? "rational" : "non-rational" );
+               "  index               value\n",
+               m_order[0]*m_order[1], 
+               (m_is_rat) ? "rational" : "non-rational" );
   if ( !m_cv ) {
     dump.Print("  NULL cv array\n");
   }
@@ -1956,13 +1814,13 @@ void ON_BezierSurface::Dump( ON_TextLog& dump ) const
     for ( i = 0; i < m_order[0]; i++ )
     {
       if ( i > 0 )
-	dump.Print("\n");
+        dump.Print("\n");
       sPreamble[0] = 0;
       sprintf(sPreamble,"  CV[%2d]",i);
       dump.PrintPointList( m_dim, m_is_rat, 
-			m_order[1], m_cv_stride[1],
-			CV(i,0), 
-			sPreamble );
+                        m_order[1], m_cv_stride[1],
+                        CV(i,0), 
+                        sPreamble );
     }
   }
 }
@@ -1972,7 +1830,7 @@ int ON_BezierSurface::Dimension() const
   return m_dim;
 }
 
-bool ON_BezierSurface::Create( int dim, BOOL is_rat, int order0, int order1 )
+bool ON_BezierSurface::Create( int dim, ON_BOOL32 is_rat, int order0, int order1 )
 {
   if ( m_cv_capacity < 1 )
     m_cv = 0;
@@ -2027,9 +1885,9 @@ bool ON_BezierSurface::Loft( const ON_ClassArray<ON_BezierCurve>& curve_list )
 }
 
 bool ON_BezierSurface::Loft( 
-	int curve_count,
-	const ON_BezierCurve* const* curve_list
-	)
+        int curve_count,
+        const ON_BezierCurve* const* curve_list
+        )
 {
   // 06-06-06 Dale Fugier - tested
   bool rc = false;
@@ -2045,13 +1903,13 @@ bool ON_BezierSurface::Loft(
     for ( i = 0; i < curve_count; i++ )
     {
       if ( curve_list[i]->m_order < 2 || curve_list[i]->m_dim < 1 || 0 == curve_list[i]->m_cv)
-	return false;
+        return false;
       if ( curve_list[i]->m_dim != shape_dim )
-	return false;
+        return false;
       if ( curve_list[i]->m_order > shape_order )
-	shape_order = curve_list[i]->m_order;
+        shape_order = curve_list[i]->m_order;
       if ( 0 != curve_list[i]->m_is_rat )
-	shape_is_rat = 1;
+        shape_is_rat = 1;
     }
 
     // build a list of compatible shape curves
@@ -2062,29 +1920,29 @@ bool ON_BezierSurface::Loft(
     {
       const ON_BezierCurve* shape = curve_list[i];
       if (    shape->m_order != shape_order 
-	   || shape->m_is_rat != shape_is_rat
-	   || shape->m_cv_stride != shape_cv_stride )
+           || shape->m_is_rat != shape_is_rat
+           || shape->m_cv_stride != shape_cv_stride )
       {
-	if ( 0 == temp_shape )
-	  temp_shape = new ON_BezierCurve();
-	temp_shape->operator=(*shape);
-	if ( shape_is_rat )
-	  temp_shape->MakeRational();
-	temp_shape->IncreaseDegree(shape_order-1);
-	if ( temp_shape->m_dim != shape_dim 
-	      || temp_shape->m_is_rat != shape_is_rat 
-	      || temp_shape->m_order != shape_order 
-	      || temp_shape->m_cv_stride != shape_cv_stride )
-	{
-	  break;
-	}
-	shape = temp_shape;
+        if ( 0 == temp_shape )
+          temp_shape = new ON_BezierCurve();
+        temp_shape->operator=(*shape);
+        if ( shape_is_rat )
+          temp_shape->MakeRational();
+        temp_shape->IncreaseDegree(shape_order-1);
+        if ( temp_shape->m_dim != shape_dim 
+              || temp_shape->m_is_rat != shape_is_rat 
+              || temp_shape->m_order != shape_order 
+              || temp_shape->m_cv_stride != shape_cv_stride )
+        {
+          break;
+        }
+        shape = temp_shape;
       }
       for ( int j = 0; j < shape->m_order; j++ )
       {
-	const double* cv = shape->CV(j);
-	for ( int k = 0; k < shape_cv_stride; k++ )
-	  meta_point.Append(cv[k]);
+        const double* cv = shape->CV(j);
+        for ( int k = 0; k < shape_cv_stride; k++ )
+          meta_point.Append(cv[k]);
       }
     }
     if ( 0 != temp_shape )
@@ -2099,26 +1957,26 @@ bool ON_BezierSurface::Loft(
       double dt = 1.0/((double)curve_count);
       for ( i = 0; i < curve_count; i++ )
       {
-	t.Append( i*dt );
+        t.Append( i*dt );
       }
       t[curve_count-1] = 1.0;
       // use high dimensional curve loft trick
       rc = bez.Loft( shape_cv_stride*shape_dim, curve_count, shape_cv_stride*shape_dim, meta_point.Array(), 1, t.Array() )
-	 ? true : false;
+         ? true : false;
       if (rc)
       {
-	Create(shape_dim,shape_is_rat,curve_count,shape_order);
-	// fill in surface CVs
-	for ( i = 0; i < curve_count; i++ )
-	{
-	  const double* bez_cv = bez.CV(i);
-	  for ( j = 0; j < shape_order; j++ )
-	  {
-	    double* srf_cv = CV(i,j);
-	    for ( k = 0; k < shape_cv_stride; k++ )
-	      srf_cv[k] = *bez_cv++;
-	  }
-	}
+        Create(shape_dim,shape_is_rat,curve_count,shape_order);
+        // fill in surface CVs
+        for ( i = 0; i < curve_count; i++ )
+        {
+          const double* bez_cv = bez.CV(i);
+          for ( j = 0; j < shape_order; j++ )
+          {
+            double* srf_cv = CV(i,j);
+            for ( k = 0; k < shape_cv_stride; k++ )
+              srf_cv[k] = *bez_cv++;
+          }
+        }
       }
     }
   }
@@ -2135,7 +1993,7 @@ bool ON_BezierSurface::GetBBox( // returns true if successful
   bool rc = (m_order[0] > 0 && m_order[1] > 0) ? true : false;
   for ( i = 0; rc && i < m_order[0]; i++ ) {
     rc = ON_GetPointListBoundingBox( m_dim, m_is_rat, m_order[1], m_cv_stride[1],
-				    CV(i,0), boxmin, boxmax, bGrowBox );
+                                    CV(i,0), boxmin, boxmax, bGrowBox );
     bGrowBox = true;
   }
   return rc;
@@ -2191,15 +2049,15 @@ bool ON_BezierSurface::Transform( const ON_Xform& xform )
     {
       if ( xform.m_xform[3][0] != 0.0 || xform.m_xform[3][1] != 0.0 || xform.m_xform[3][2] != 0.0 )
       {
-	MakeRational();
+        MakeRational();
       }
     }
   
     for ( i = 0; rc && i < m_order[0]; i++ ) 
     {
       rc = ON_TransformPointList( m_dim, m_is_rat, 
-				  m_order[1], m_cv_stride[1], 
-				  CV(i,0), xform );
+                                  m_order[1], m_cv_stride[1], 
+                                  CV(i,0), xform );
     }
   }
   return rc;
@@ -2302,18 +2160,18 @@ bool ON_BezierSurface::Evaluate( // returns false if unable to evaluate
   }
 
   return ON_EvaluateNurbsSurfaceSpan(
-	m_dim,                          // dimension
-	m_is_rat,                       // true if NURBS is rational
-	m_order[0], m_order[1],         // order0, order1
-	knot0,                          // knot0[] array of (2*order0-2) doubles
-	knot1,                          // knot1[] array of (2*order1-2) doubles
-	m_cv_stride[0], m_cv_stride[1], // cv_stride0, cv_stride1
-	m_cv,                          // cv at "lower left" of bispan
-	der_count,                      // number of derivatives to compute (>=0)
-	s,t,                            // evaluation parameters ("s" and "t")
-	v_stride,                       // answer_stride (>=dimension)
-	v                               // answer[] array of length (ndir+1)*answer_stride
-	);
+        m_dim,                          // dimension
+        m_is_rat,                       // true if NURBS is rational
+        m_order[0], m_order[1],         // order0, order1
+        knot0,                          // knot0[] array of (2*order0-2) doubles
+        knot1,                          // knot1[] array of (2*order1-2) doubles
+        m_cv_stride[0], m_cv_stride[1], // cv_stride0, cv_stride1
+        m_cv,                          // cv at "lower left" of bispan
+        der_count,                      // number of derivatives to compute (>=0)
+        s,t,                            // evaluation parameters ("s" and "t")
+        v_stride,                       // answer_stride (>=dimension)
+        v                               // answer[] array of length (ndir+1)*answer_stride
+        );
 }
 
 ON_3dPoint ON_BezierSurface::PointAt(double s, double t) const
@@ -2390,7 +2248,7 @@ bool ON_BezierSurface::GetNurbForm( ON_NurbsSurface& n ) const
       const int sizeof_cv = CVSize()*sizeof(m_cv[0]);
       int i,j;
       for ( i = 0; i < m_order[0]; i++ ) for ( j = 0; j < m_order[1]; j++ ) {
-	memcpy( n.CV(i,j), CV(i,j), sizeof_cv );
+        memcpy( n.CV(i,j), CV(i,j), sizeof_cv );
       }
     }
     n.m_knot[0][m_order[0]-2] = 0.0;  //m_domain[0].Min();
@@ -2485,7 +2343,7 @@ bool ON_BezierSurface::SetCV( int i, int j, ON::point_style style, const double*
       // NURBS surface is not rational
       w = (Point[m_dim] != 0.0) ? 1.0/Point[m_dim] : 1.0;
       for ( k = 0; k < m_dim; k++ ) {
-	cv[k] = w*Point[k];
+        cv[k] = w*Point[k];
       }
     }
     break;
@@ -2495,7 +2353,7 @@ bool ON_BezierSurface::SetCV( int i, int j, ON::point_style style, const double*
       // NURBS surface is rational - convert euclean point to homogeneous form
       w = Point[m_dim];
       for ( k = 0; k < m_dim; k++ )
-	cv[i] = w*Point[i];
+        cv[i] = w*Point[i];
       cv[m_dim] = w;
     }
     else {
@@ -2525,7 +2383,7 @@ bool ON_BezierSurface::SetCV( int i, int j, const ON_3dPoint& point )
     if ( m_dim > 1 ) {
       cv[1] = point.y;
       if ( m_dim > 2 )
-	cv[2] = point.z;
+        cv[2] = point.z;
     }
     if ( m_is_rat ) {
       cv[m_dim] = 1.0;
@@ -2543,9 +2401,9 @@ bool ON_BezierSurface::SetCV( int i, int j, const ON_4dPoint& point )
     if ( m_is_rat ) {
       cv[0] = point.x;
       if ( m_dim > 1 ) {
-	cv[1] = point.y;
-	if ( m_dim > 2 )
-	  cv[2] = point.z;
+        cv[1] = point.y;
+        if ( m_dim > 2 )
+          cv[2] = point.z;
       }
       cv[m_dim] = point.w;
       rc = true;
@@ -2553,18 +2411,18 @@ bool ON_BezierSurface::SetCV( int i, int j, const ON_4dPoint& point )
     else {
       double w;
       if ( point.w != 0.0 ) {
-	w = 1.0/point.w;
-	rc = true;
+        w = 1.0/point.w;
+        rc = true;
       }
       else {
-	w = 1.0;
+        w = 1.0;
       }
       cv[0] = w*point.x;
       if ( m_dim > 1 ) {
-	cv[1] = w*point.y;
-	if ( m_dim > 2 ) {
-	  cv[2] = w*point.z;
-	}
+        cv[1] = w*point.y;
+        if ( m_dim > 2 ) {
+          cv[2] = w*point.z;
+        }
       }
     }
   }
@@ -2605,11 +2463,11 @@ bool ON_BezierSurface::GetCV( int i, int j, ON_3dPoint& point ) const
   if ( cv ) {
     if ( m_is_rat ) {
       if (cv[m_dim] != 0.0) {
-	const double w = 1.0/cv[m_dim];
-	point.x = cv[0]*w;
-	point.y = (m_dim>1)? cv[1]*w : 0.0;
-	point.z = (m_dim>2)? cv[2]*w : 0.0;
-	rc = true;
+        const double w = 1.0/cv[m_dim];
+        point.x = cv[0]*w;
+        point.y = (m_dim>1)? cv[1]*w : 0.0;
+        point.z = (m_dim>2)? cv[2]*w : 0.0;
+        rc = true;
       }
     }
     else {
@@ -2645,11 +2503,11 @@ bool ON_BezierSurface::ZeroCVs()
     if ( m_cv_capacity > 0 ) {
       memset( m_cv, 0, m_cv_capacity*sizeof(*m_cv) );
       if ( m_is_rat ) {
-	for ( i = 0; i < m_order[0]; i++ ) {
-	  for ( j = 0; j < m_order[1]; j++ ) {
-	    SetWeight( i,j, 1.0 );
-	  }
-	}
+        for ( i = 0; i < m_order[0]; i++ ) {
+          for ( j = 0; j < m_order[1]; j++ ) {
+            SetWeight( i,j, 1.0 );
+          }
+        }
       }
       rc = true;
     }
@@ -2657,12 +2515,12 @@ bool ON_BezierSurface::ZeroCVs()
       double* cv;
       int s = CVSize()*sizeof(*cv);
       for ( i = 0; i < m_order[0]; i++ ) {
-	for ( j = 0; j < m_order[1]; j++ ) {
-	  cv = CV(i,j);
-	  memset(cv,0,s);
-	  if ( m_is_rat )
-	    cv[m_dim] = 1.0;
-	}
+        for ( j = 0; j < m_order[1]; j++ ) {
+          cv = CV(i,j);
+          memset(cv,0,s);
+          if ( m_is_rat )
+            cv[m_dim] = 1.0;
+        }
       }
       rc = (i>0) ? true : false;
     }
@@ -2679,36 +2537,36 @@ bool ON_BezierSurface::MakeRational()
       double* new_cv;
       int cvi, cvj, j, cvstride;
       if ( m_cv_stride[0] < m_cv_stride[1] ) {
-	cvstride = m_cv_stride[0] > dim ? m_cv_stride[0] : dim+1;
-	ReserveCVCapacity( cvstride*m_order[0]*m_order[1] );
-	new_cv = m_cv + cvstride*m_order[0]*m_order[1]-1;
+        cvstride = m_cv_stride[0] > dim ? m_cv_stride[0] : dim+1;
+        ReserveCVCapacity( cvstride*m_order[0]*m_order[1] );
+        new_cv = m_cv + cvstride*m_order[0]*m_order[1]-1;
 				for ( cvj = m_order[1]-1; cvj >= 0; cvj-- ) {
-	  for ( cvi = m_order[0]-1; cvi >= 0; cvi-- ) {
-	    old_cv = CV(cvi,cvj)+dim-1;
-	    *new_cv-- = 1.0;
-	    for ( j = 0; j < dim; j++ ) {
-	      *new_cv-- = *old_cv--;
-	    }
-	  }
-	}
-	m_cv_stride[0] = dim+1;
-	m_cv_stride[1] = (dim+1)*m_order[0];
+          for ( cvi = m_order[0]-1; cvi >= 0; cvi-- ) {
+            old_cv = CV(cvi,cvj)+dim-1;
+            *new_cv-- = 1.0;
+            for ( j = 0; j < dim; j++ ) {
+              *new_cv-- = *old_cv--;
+            }
+          }
+        }
+        m_cv_stride[0] = dim+1;
+        m_cv_stride[1] = (dim+1)*m_order[0];
       }
       else {
-	cvstride = m_cv_stride[1] > dim ? m_cv_stride[1] : dim+1;
-	ReserveCVCapacity( cvstride*m_order[0]*m_order[1] );
-	new_cv = m_cv + cvstride*m_order[0]*m_order[1]-1;
-	for ( cvi = m_order[0]-1; cvi >= 0; cvi-- ) {
-	  for ( cvj = m_order[1]-1; cvj >= 0; cvj-- ) {
-	    old_cv = CV(cvi,cvj)+dim-1;
-	    *new_cv-- = 1.0;
-	    for ( j = 0; j < dim; j++ ) {
-	      *new_cv-- = *old_cv--;
-	    }
-	  }
-	}
-	m_cv_stride[1] = dim+1;
-	m_cv_stride[0] = (dim+1)*m_order[1];
+        cvstride = m_cv_stride[1] > dim ? m_cv_stride[1] : dim+1;
+        ReserveCVCapacity( cvstride*m_order[0]*m_order[1] );
+        new_cv = m_cv + cvstride*m_order[0]*m_order[1]-1;
+        for ( cvi = m_order[0]-1; cvi >= 0; cvi-- ) {
+          for ( cvj = m_order[1]-1; cvj >= 0; cvj-- ) {
+            old_cv = CV(cvi,cvj)+dim-1;
+            *new_cv-- = 1.0;
+            for ( j = 0; j < dim; j++ ) {
+              *new_cv-- = *old_cv--;
+            }
+          }
+        }
+        m_cv_stride[1] = dim+1;
+        m_cv_stride[0] = (dim+1)*m_order[1];
       }
       m_is_rat = 1;
     }
@@ -2726,32 +2584,32 @@ bool ON_BezierSurface::MakeNonRational()
       double* new_cv = m_cv;
       int cvi, cvj, j;
       if ( m_cv_stride[0] < m_cv_stride[1] ) {
-	for ( cvj = 0; cvj < m_order[1]; cvj++ ) {
-	  for ( cvi = 0; cvi < m_order[0]; cvi++ ) {
-	    old_cv = CV(cvi,cvj);
-	    w = old_cv[dim];
-	    w = ( w != 0.0 ) ? 1.0/w : 1.0;
-	    for ( j = 0; j < dim; j++ ) {
-	      *new_cv++ = w*(*old_cv++);
-	    }
-	  }
-	}
-	m_cv_stride[0] = dim;
-	m_cv_stride[1] = dim*m_order[0];
+        for ( cvj = 0; cvj < m_order[1]; cvj++ ) {
+          for ( cvi = 0; cvi < m_order[0]; cvi++ ) {
+            old_cv = CV(cvi,cvj);
+            w = old_cv[dim];
+            w = ( w != 0.0 ) ? 1.0/w : 1.0;
+            for ( j = 0; j < dim; j++ ) {
+              *new_cv++ = w*(*old_cv++);
+            }
+          }
+        }
+        m_cv_stride[0] = dim;
+        m_cv_stride[1] = dim*m_order[0];
       }
       else {
-	for ( cvi = 0; cvi < m_order[0]; cvi++ ) {
-	  for ( cvj = 0; cvj < m_order[1]; cvj++ ) {
-	    old_cv = CV(cvi,cvj);
-	    w = old_cv[dim];
-	    w = ( w != 0.0 ) ? 1.0/w : 1.0;
-	    for ( j = 0; j < dim; j++ ) {
-	      *new_cv++ = w*(*old_cv++);
-	    }
-	  }
-	}
-	m_cv_stride[1] = dim;
-	m_cv_stride[0] = dim*m_order[1];
+        for ( cvi = 0; cvi < m_order[0]; cvi++ ) {
+          for ( cvj = 0; cvj < m_order[1]; cvj++ ) {
+            old_cv = CV(cvi,cvj);
+            w = old_cv[dim];
+            w = ( w != 0.0 ) ? 1.0/w : 1.0;
+            for ( j = 0; j < dim; j++ ) {
+              *new_cv++ = w*(*old_cv++);
+            }
+          }
+        }
+        m_cv_stride[1] = dim;
+        m_cv_stride[0] = dim*m_order[1];
       }
       m_is_rat = 0;
     }
@@ -2768,8 +2626,8 @@ bool ON_BezierSurface::ReserveCVCapacity(
   if ( m_cv_capacity < capacity ) {
     if ( m_cv ) {
       if ( m_cv_capacity ) {
-	m_cv = (double*)onrealloc( m_cv, capacity*sizeof(*m_cv) );
-	m_cv_capacity = (m_cv) ? capacity : 0;
+        m_cv = (double*)onrealloc( m_cv, capacity*sizeof(*m_cv) );
+        m_cv_capacity = (m_cv) ? capacity : 0;
       }
       // else user supplied m_cv[] array
     }
@@ -2788,58 +2646,62 @@ bool ON_BezierSurface::Trim(
 {
   bool rc = false;
   ON_BezierCurve crv;
-  int i, j;
   const double* cv;
   const int k = m_is_rat ? (m_dim+1) : m_dim;
   const int sizeofcv = k*sizeof(*cv);
-  if ( 0 == dir )
+  
+  // GBA 5-Dec-2007.  Rewrote this function.  The previous implementation
+  // would never work if dir==0.
+   
+  if( m_cv_stride[dir] > m_cv_stride[1-dir])
   {
-    crv.Create(k*m_order[1],false,m_order[0]);
+    // cv's are layed out in the right direction so we can interpret the 
+    // them as the cv's of a high dim'l curve.
+    crv.m_cv = m_cv;
+    crv.m_dim = crv.m_cv_stride = m_cv_stride[dir]; 
+    crv.m_is_rat = false;
+    crv.m_order = m_order[0];
+
     rc = crv.Trim(domain);
-    if (rc)
+
+    crv.m_cv = NULL;
+    crv.m_dim = crv.m_order = crv.m_cv_stride = 0;
+  }
+
+  else
+  {
+    // cv's are layed out in the wrong direction so make a curve
+    // and copy the cv's into the curve.
+
+    crv.Create(k*m_order[1-dir],false,m_order[dir]);
+    int ind[2];
+    int& i= ind[dir];
+    int& j= ind[1-dir];
+    for( i=0; i<m_order[dir]; i++)
     {
-      if ( k == m_cv_stride[1] && m_cv_stride[0] == k*m_order[1] && crv.m_cv_stride == m_cv_stride[0] )
-      {
-	memcpy( m_cv, crv.m_cv, m_order[0]*m_order[1]*k*sizeof(*m_cv) );
-      }
-      else
-      {
-	for (i = 0; i < m_order[0]; i++ )
-	{
-	  cv = crv.CV(i);
-	  for ( j = 0; j < m_order[1]; j++ )
-	  {
-	    memcpy( CV(i,j), cv, sizeofcv );
-	    cv += k;
-	  }
-	}
+      double* cv = crv.CV(i);
+      for( j=0; j<m_order[1-dir]; j++){
+        memcpy( cv, CV( ind[0],ind[1]), sizeofcv);
+        cv += k;
       }
     }
-  }
-  else if ( 1 == dir )
-  {
-    crv.Create(k*m_order[0],false,m_order[1]);
+
     rc = crv.Trim(domain);
+
     if (rc)
     {
-      if ( k == m_cv_stride[0] && m_cv_stride[1] == k*m_order[0] && crv.m_cv_stride == m_cv_stride[1] )
+      for( i=0; i<m_order[dir]; i++)
       {
-	memcpy( m_cv, crv.m_cv, m_order[0]*m_order[1]*k*sizeof(*m_cv) );
-      }
-      else
-      {
-	for ( j = 0; j < m_order[1]; j++ )
-	{
-	  cv = crv.CV(j);
-	  for (i = 0; i < m_order[0]; i++ )
-	  {
-	    memcpy( CV(i,j), cv, sizeofcv );
-	    cv += k;
-	  }
-	}
-      }
+        double* cv = crv.CV(i);
+        for( j=0; j<m_order[1-dir]; j++){
+          memcpy( CV( ind[0],ind[1]), cv, sizeofcv);
+          cv += k;
+        }
+      }      
     }
   }
+
+
   return rc;
 }
 
@@ -2861,20 +2723,20 @@ bool ON_BezierSurface::Split(
     ON_BezierCurve crv(crvdim,0,m_order[dir?1:0]);
     if (dir) {
       for ( j = 0; j < m_order[1]; j++ ) {
-	crvcv = crv.CV(j);
-	for ( i = 0; i < m_order[0]; i++) {
-	  memcpy( crvcv, CV(i,j), hdim*sizeof(crvcv[0]) );
-	  crvcv += hdim;
-	}
+        crvcv = crv.CV(j);
+        for ( i = 0; i < m_order[0]; i++) {
+          memcpy( crvcv, CV(i,j), hdim*sizeof(crvcv[0]) );
+          crvcv += hdim;
+        }
       }
     }
     else {
       for ( i = 0; i < m_order[0]; i++) {
-	crvcv = crv.CV(i);
-	for ( j = 0; j < m_order[1]; j++ ) {
-	  memcpy( crvcv, CV(i,j), hdim*sizeof(crvcv[0]) );
-	  crvcv += hdim;
-	}
+        crvcv = crv.CV(i);
+        for ( j = 0; j < m_order[1]; j++ ) {
+          memcpy( crvcv, CV(i,j), hdim*sizeof(crvcv[0]) );
+          crvcv += hdim;
+        }
       }
     }
 
@@ -2972,29 +2834,57 @@ bool ON_BezierSurface::IsSingular(		 // true if surface side is collapsed to a p
   return true;
 }
 
-bool ON_BezierCurve::Reparametrize( double c )
+bool ON_ReparameterizeRationalBezierCurve(
+          double c,
+          int dim,
+          int order,
+          int cvstride,
+          double* cv
+          )
 {
-  if ( 1.0 == c )
-    return true;
-  if ( ON_UNSET_VALUE == c )
+  double d;
+  int j;
+
+  if ( !ON_IsValid(c) || 0.0 == c )
     return false;
 
-  MakeRational();
+  if (c == 1.0) 
+    return true;
 
-  int i, j;
-  double* cv;
-  int cvdim = CVSize();
-  double d = c;
-  for ( i = 1; i < m_order; i++ )
+  d = c;
+  cv += cvstride;
+  dim++;
+  cvstride -= dim; 
+  while(--order) 
   {
-    cv = CV(i);
-    j = cvdim;
+    j = dim;
     while(j--) 
       *cv++ *= d;
+    cv += cvstride;
     d *= c;
   }
 
   return true;
+}
+
+bool ON_BezierCurve::Reparametrize( double c )
+{
+  return Reparameterize(c);
+}
+
+bool ON_BezierCurve::Reparameterize( double c )
+{
+  if ( !ON_IsValid(c) || 0.0 == c )
+    return false;
+
+  if (c == 1.0) 
+    return true;
+
+  MakeRational();
+
+  return ON_ReparameterizeRationalBezierCurve(c,m_dim,m_order,m_cv_stride,m_cv);
+
+  //return true;
 }
 
 bool ON_BezierCurve::ScaleConrolPoints( int i, double w )
@@ -3027,8 +2917,83 @@ bool ON_BezierCurve::ScaleConrolPoints( int i, double w )
   return true;
 }
 
+bool ON_ChangeRationalBezierCurveWeights(
+          int dim, int order, int cvstride, double* cv,
+          int i0, double w0, 
+          int i1, double w1
+          )
+{
+  // Reference - Farauki
+  double r, s, v0, v1;
+  int i, j;
+
+  if ( !ON_IsValid(w0) || !ON_IsValid(w1) || 0.0 == w0 || 0.0 == w1 )
+    return false;
+  if ( i0 < 0 || i1 >= order )
+    return false;
+  if ( i0 == i1 && w0 != w1 )
+    return false;
+  if ( (w0 < 0.0 && w1 > 0.0) || (w0 > 0.0 && w0 < 0.0) )
+    return false;
+  if (i0 > i1) 
+  {
+    i = i0; i0 = i1; i1 = i; r = w0; w0 = w1; w1 = r;
+  }
+
+  v0 = cv[cvstride*i0 + dim];
+  v1 = cv[cvstride*i1 + dim];
+  if (!ON_IsValid(v0) || !ON_IsValid(v1) || v0 == 0.0 || v1 == 0.0)
+    return false;
+  if (v0 < 0.0 && v1 > 0.0)
+    return false;
+  if ( v0 > 0.0 && v1 < 0.0)
+    return false;
+
+  if (i0 == 0 || i0 == i1) 
+  {
+    s = w0/v0;
+    r = (i0 != i1) ? pow( (w1/v1)/s, 1.0/((double)i1)) : 1.0;
+  }
+  else 
+  {
+    r = pow( (w1/v1)*(v0/w0), 1.0/((double)(i1-i0)) );
+    s = (w0/v0)/pow(r,(double)i0);
+  }
+  if ( !ON_IsValid(r) || r <= 0.0 ) 
+    return false;
+  if ( !ON_IsValid(s) || 0.0 == s ) 
+    return false;
+
+  if (s != 1.0) 
+  {
+    dim++;
+    cvstride -= dim;
+    for ( i = 0; i < order; i++ )
+    {
+      j = dim;
+      while(j--)
+        *cv++ *= s;
+      cv += cvstride;
+    }
+    cvstride += dim;
+    dim--;
+    cv -= (cvstride*order);
+  } 
+  if (r != 1.0)
+    ON_ReparameterizeRationalBezierCurve(r,dim,order,cvstride,cv);
+
+  // make sure weights agree to the last bit! 
+  cv[cvstride*i0+dim] = w0;
+  cv[cvstride*i1+dim] = w1;
+
+  return true;
+}
+
 bool ON_BezierCurve::ChangeWeights( int i0, double w0, int i1, double w1 )
 {
+  //double r, s, v0, v1;
+  double v0, v1;
+  int i;
   // 2 June 2003 Dale Lear bug fixes made this function work
 
   if ( i0 < 0 || i0 >= m_order || i1 < 0 || i1 >= m_order )
@@ -3042,11 +3007,9 @@ bool ON_BezierCurve::ChangeWeights( int i0, double w0, int i1, double w1 )
   if ( i0 == i1 && w0 != w1 )
     return false;
 
-  double r, s, v0, v1;
-  int i;
   if (i0 > i1) 
   {
-    i = i0; i0 = i1; i1 = i; r = w0; w0 = w1; w1 = r;
+    i = i0; i0 = i1; i1 = i; v0 = w0; w0 = w1; w1 = v0;
   }
 
   v0 = Weight(i0);
@@ -3054,6 +3017,10 @@ bool ON_BezierCurve::ChangeWeights( int i0, double w0, int i1, double w1 )
   if ( w0 == v0 && w1 == v1 ) 
     return true;
 
+  MakeRational();
+  return ON_ChangeRationalBezierCurveWeights(m_dim,m_order,m_cv_stride,m_cv,i0,w0,i1,w1);
+
+  /*
   if ( 0.0 == v0 || !ON_IsValid(v0) || 0.0 == v1 || !ON_IsValid(v1) )
     return false;
   if ( v0 < 0.0 && v1 > 0.0 )
@@ -3094,6 +3061,7 @@ bool ON_BezierCurve::ChangeWeights( int i0, double w0, int i1, double w1 )
   CV(i1)[m_dim] = w1;
 
   return true;
+  */
 }
 
 //////////////////////////////////////
@@ -3153,56 +3121,56 @@ bool ON_BezierCurve::EvTangent(
       rc = tangent.Unitize();
       if ( rc )
       {
-	ON_Interval domain = Domain();
-	double tminus = 0.0;
-	double tplus = 0.0;
-	if ( domain.IsIncreasing() && ON_GetParameterTolerance( domain[0], domain[1], t, &tminus, &tplus ) )
-	{
-	  ON_3dPoint p;
-	  ON_3dVector d1, d2;
-	  double eps = 0.0;
-	  double d1od2tol = 0.0; //1.0e-10; // 1e-5 is too big
-	  double d1od2;
-	  double tt = t;
-	  //double dt = 0.0;
+        ON_Interval domain = Domain();
+        double tminus = 0.0;
+        double tplus = 0.0;
+        if ( domain.IsIncreasing() && ON_GetParameterTolerance( domain[0], domain[1], t, &tminus, &tplus ) )
+        {
+          ON_3dPoint p;
+          ON_3dVector d1, d2;
+          double eps = 0.0;
+          double d1od2tol = 0.0; //1.0e-10; // 1e-5 is too big
+          double d1od2;
+          double tt = t;
+          //double dt = 0.0;
 
-	  if ( t < domain[1] )
-	  {
-	    eps = tplus-t;
-	    if ( eps <= 0.0 || t+eps > domain.ParameterAt(0.1) )
-	      return rc;
-	  }
-	  else 
-	  {
-	    eps = tminus - t;
-	    if ( eps >= 0.0 || t+eps < domain.ParameterAt(0.9) )
-	      return rc;
-	  }
+          if ( t < domain[1] )
+          {
+            eps = tplus-t;
+            if ( eps <= 0.0 || t+eps > domain.ParameterAt(0.1) )
+              return rc;
+          }
+          else 
+          {
+            eps = tminus - t;
+            if ( eps >= 0.0 || t+eps < domain.ParameterAt(0.9) )
+              return rc;
+          }
 
-	  int i, negative_count=0, zero_count=0;
-	  int test_count = 3;
-	  for ( i = 0; i < test_count; i++, eps *= 0.5 )
-	  {
-	    tt = t + eps;
-	    if ( tt == t )
-	      break;
-	    if (!Ev2Der( tt, p, d1, d2 ))
-	      break;
-	    d1od2 = d1*d2;
-	    if ( d1od2 > d1od2tol )
-	      break;
-	    if ( d1od2 < d1od2tol )
-	      negative_count++;
-	    else
-	      zero_count++;
-	  }
-	  if ( negative_count > 0 && test_count == negative_count+zero_count )
-	  {
-	    // all sampled d1od2 values were <= 0 
-	    // and at least one was strictly < 0.
-	    tangent.Reverse();
-	  }
-	}
+          int i, negative_count=0, zero_count=0;
+          int test_count = 3;
+          for ( i = 0; i < test_count; i++, eps *= 0.5 )
+          {
+            tt = t + eps;
+            if ( tt == t )
+              break;
+            if (!Ev2Der( tt, p, d1, d2 ))
+              break;
+            d1od2 = d1*d2;
+            if ( d1od2 > d1od2tol )
+              break;
+            if ( d1od2 < d1od2tol )
+              negative_count++;
+            else
+              zero_count++;
+          }
+          if ( negative_count > 0 && test_count == negative_count+zero_count )
+          {
+            // all sampled d1od2 values were <= 0 
+            // and at least one was strictly < 0.
+            tangent.Reverse();
+          }
+        }
       }
     }
   }
@@ -3289,7 +3257,7 @@ bool ON_BezierCurve::Ev1Der( // returns false if unable to evaluate
       point.z = v[2];
       derivative.z = v[dim+2];
       if ( dim > 64 )
-	onfree(v);
+        onfree(v);
     }
   }
 
@@ -3335,7 +3303,7 @@ bool ON_BezierCurve::Ev2Der( // returns false if unable to evaluate
       firstDervative.z = v[dim+2];
       secondDervative.z = v[2*dim+2];
       if ( dim > 64 )
-	onfree(v);
+        onfree(v);
     }
   }
 

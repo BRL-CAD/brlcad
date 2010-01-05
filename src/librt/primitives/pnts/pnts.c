@@ -57,11 +57,13 @@ pnts_unpack_double(unsigned char *buf, unsigned char *data, unsigned int count)
  * database format
  */
 int
-rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *internal, double local2mm, const struct db_i *db)
+rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *internal, double local2mm, const struct db_i *dbip)
 {
     struct rt_pnts_internal *pnts = NULL;
     unsigned long pointDataSize;
     unsigned char *buf = NULL;
+
+    if (dbip) RT_CK_DBI(dbip);
 
     /* acquire internal pnts structure */
     RT_CK_DB_INTERNAL(internal);
@@ -287,12 +289,14 @@ rt_pnts_export5(struct bu_external *external, const struct rt_db_internal *inter
  * structure and apply modeling transformations.
  */
 int
-rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *external, const fastf_t *mat, const struct db_i *db)
+rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *external, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_pnts_internal *pnts = NULL;
     struct bu_list *head = NULL;
     unsigned char *buf = NULL;
-    int i;
+    unsigned long i;
+
+    if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(internal);
     BU_CK_EXTERNAL(external);
@@ -582,16 +586,12 @@ rt_pnts_import5(struct rt_db_internal *internal, const struct bu_external *exter
  * each point type.
  */
 void
-rt_pnts_ifree(struct rt_db_internal *internal, struct resource *resp)
+rt_pnts_ifree(struct rt_db_internal *internal)
 {
     struct rt_pnts_internal *pnts;
     register struct bu_list *point;
 
     RT_CK_DB_INTERNAL(internal);
-
-    if (!resp) {
-	resp = &rt_uniresource;
-    }
 
     pnts = ((struct rt_pnts_internal *)(internal->idb_ptr));
     RT_PNTS_CK_MAGIC(pnts);
@@ -779,7 +779,11 @@ rt_pnts_describe(struct bu_vls *str, const struct rt_db_internal *intern, int ve
 
     bu_vls_strcat(str, "Point Cloud (PNTS)\n");
 
-    snprintf(buf, BUF_SZ, "Total number of points: %lu\nDefault scale: %lf\n", pnts->count, pnts->scale);
+    if (!verbose) {
+	return 1;
+    }
+
+    snprintf(buf, BUF_SZ, "Total number of points: %lu\nDefault scale: %f\n", pnts->count, pnts->scale);
     bu_vls_strcat(str, buf);
 
     loop_counter = 1;
@@ -788,7 +792,7 @@ rt_pnts_describe(struct bu_vls *str, const struct rt_db_internal *intern, int ve
 	    register struct pnt *point;
             bu_vls_strcat(str, "point#, (point)\n");
             for (BU_LIST_FOR(point, pnt, &(((struct pnt *)pnts->point)->l))) {
-		snprintf(buf, BUF_SZ, "%lu, \t (%lf %lf %lf)\n",
+		snprintf(buf, BUF_SZ, "%lu, \t (%f %f %f)\n",
 			 loop_counter,
 			 point->v[X] * mm2local,
 			 point->v[Y] * mm2local,
@@ -802,7 +806,7 @@ rt_pnts_describe(struct bu_vls *str, const struct rt_db_internal *intern, int ve
 	    register struct pnt_color *point;
             bu_vls_strcat(str, "point#, (point), (color)\n");
             for (BU_LIST_FOR(point, pnt_color, &(((struct pnt_color *)pnts->point)->l))) {
-		snprintf(buf, BUF_SZ, "%lu, \t (%lf %lf %lf), (%lf %lf %lf)\n",
+		snprintf(buf, BUF_SZ, "%lu, \t (%f %f %f), (%f %f %f)\n",
 			 loop_counter,
 			 point->v[X] * mm2local,
 			 point->v[Y] * mm2local,
@@ -819,7 +823,7 @@ rt_pnts_describe(struct bu_vls *str, const struct rt_db_internal *intern, int ve
 	    register struct pnt_scale *point;
             bu_vls_strcat(str, "point#, (point), (scale)\n");
             for (BU_LIST_FOR(point, pnt_scale, &(((struct pnt_scale *)pnts->point)->l))) {
-		snprintf(buf, BUF_SZ, "%lu, \t (%lf %lf %lf), (%lf)\n",
+		snprintf(buf, BUF_SZ, "%lu, \t (%f %f %f), (%f)\n",
 			 loop_counter,
 			 point->v[X] * mm2local,
 			 point->v[Y] * mm2local,
@@ -834,7 +838,7 @@ rt_pnts_describe(struct bu_vls *str, const struct rt_db_internal *intern, int ve
 	    register struct pnt_normal *point;
             bu_vls_strcat(str, "point#, (point), (normal)\n");
             for (BU_LIST_FOR(point, pnt_normal, &(((struct pnt_normal *)pnts->point)->l))) {
-		snprintf(buf, BUF_SZ, "%lu, \t (%lf %lf %lf), (%lf %lf %lf)\n",
+		snprintf(buf, BUF_SZ, "%lu, \t (%f %f %f), (%f %f %f)\n",
 			 loop_counter,
 			 point->v[X] * mm2local,
 			 point->v[Y] * mm2local,
@@ -851,7 +855,7 @@ rt_pnts_describe(struct bu_vls *str, const struct rt_db_internal *intern, int ve
 	    register struct pnt_color_scale *point;
             bu_vls_strcat(str, "point#, (point), (color), (scale)\n");
             for (BU_LIST_FOR(point, pnt_color_scale, &(((struct pnt_color_scale *)pnts->point)->l))) {
-		snprintf(buf, BUF_SZ, "%lu, \t (%lf %lf %lf), (%lf %lf %lf), (%lf)\n",
+		snprintf(buf, BUF_SZ, "%lu, \t (%f %f %f), (%f %f %f), (%f)\n",
 			 loop_counter,
 			 point->v[X] * mm2local,
 			 point->v[Y] * mm2local,
@@ -869,7 +873,7 @@ rt_pnts_describe(struct bu_vls *str, const struct rt_db_internal *intern, int ve
 	    register struct pnt_color_normal *point;
             bu_vls_strcat(str, "point#, (point), (color), (normal)\n");
             for (BU_LIST_FOR(point, pnt_color_normal, &(((struct pnt_color_normal *)pnts->point)->l))) {
-		snprintf(buf, BUF_SZ, "%lu, \t (%lf %lf %lf), (%lf %lf %lf), (%lf %lf %lf)\n",
+		snprintf(buf, BUF_SZ, "%lu, \t (%f %f %f), (%f %f %f), (%f %f %f)\n",
 			 loop_counter,
 			 point->v[X] * mm2local,
 			 point->v[Y] * mm2local,
@@ -889,7 +893,7 @@ rt_pnts_describe(struct bu_vls *str, const struct rt_db_internal *intern, int ve
 	    register struct pnt_scale_normal *point;
             bu_vls_strcat(str, "point#, (point), (scale), (normal)\n");
             for (BU_LIST_FOR(point, pnt_scale_normal, &(((struct pnt_scale_normal *)pnts->point)->l))) {
-		snprintf(buf, BUF_SZ, "%lu, \t (%lf %lf %lf), (%lf), (%lf %lf %lf)\n",
+		snprintf(buf, BUF_SZ, "%lu, \t (%f %f %f), (%f), (%f %f %f)\n",
 			 loop_counter,
 			 point->v[X] * mm2local,
 			 point->v[Y] * mm2local,
@@ -907,7 +911,7 @@ rt_pnts_describe(struct bu_vls *str, const struct rt_db_internal *intern, int ve
 	    register struct pnt_color_scale_normal *point;
             bu_vls_strcat(str, "point#, (point), (color), (scale), (normal)\n");
             for (BU_LIST_FOR(point, pnt_color_scale_normal, &(((struct pnt_color_scale_normal *)pnts->point)->l))) {
-		snprintf(buf, BUF_SZ, "%lu, \t (%lf %lf %lf), (%lf %lf %lf), (%lf), (%lf %lf %lf)\n",
+		snprintf(buf, BUF_SZ, "%lu, \t (%f %f %f), (%f %f %f), (%f), (%f %f %f)\n",
 			 loop_counter,
 			 point->v[X] * mm2local,
 			 point->v[Y] * mm2local,
@@ -926,10 +930,10 @@ rt_pnts_describe(struct bu_vls *str, const struct rt_db_internal *intern, int ve
 	}
 	default:
             bu_log("ERROR: unknown points primitive type (type=%d)\n", pnts->type);
-            return 0;
+            return 1;
     }
 
-    return(0);
+    return 0;
 }
 
 

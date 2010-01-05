@@ -39,9 +39,9 @@ VertexPoint::VertexPoint() {
 	vertex_geometry = NULL;
 }
 
-VertexPoint::VertexPoint(STEPWrapper *sw,int STEPid) {
+VertexPoint::VertexPoint(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 	vertex_geometry = NULL;
 }
 
@@ -56,11 +56,11 @@ VertexPoint::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 	// load base class attributes
 	if ( !Vertex::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::Vertex." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::Vertex." << std::endl;
 		return false;
 	}
 	if ( !GeometricRepresentationItem::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::GeometricRepresentationItem." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::GeometricRepresentationItem." << std::endl;
 		return false;
 	}
 
@@ -73,7 +73,7 @@ VertexPoint::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 		if (entity) {
 			vertex_geometry = dynamic_cast<Point *>(Factory::CreateObject(sw,entity));
 		} else {
-			cout << CLASSNAME << ":Error loading attribute 'vertex_geometry'." << endl;
+			std::cout << CLASSNAME << ":Error loading attribute 'vertex_geometry'." << std::endl;
 			return false;
 		}
 	}
@@ -82,14 +82,14 @@ VertexPoint::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 void
 VertexPoint::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << name << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "vertex_geometry:" << endl;
+	TAB(level); std::cout << "vertex_geometry:" << std::endl;
 	if (vertex_geometry) {
 		vertex_geometry->Print(level+1);
 	} else {
-		TAB(level); cout << "vertex_geometry:NULL" << endl;
+		TAB(level); std::cout << "vertex_geometry:NULL" << std::endl;
 	}
 }
 
@@ -103,8 +103,8 @@ VertexPoint::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		Factory::AddVertex(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method."
-					<< endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method."
+					<< std::endl;
 			delete object;
 			return NULL;
 		}
@@ -118,7 +118,7 @@ bool
 VertexPoint::LoadONBrep(ON_Brep *brep)
 {
 	if ( !vertex_geometry->LoadONBrep(brep)) {
-		cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << endl;
+		std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
 		return false;
 	}
 	ON_id = vertex_geometry->GetONId();

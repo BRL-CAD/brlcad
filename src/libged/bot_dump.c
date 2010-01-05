@@ -88,7 +88,7 @@ lswap(unsigned int *v)
 static void
 write_bot_sat(struct rt_bot_internal *bot, FILE *fp, char *name)
 {
-    register int i, j;
+    int i, j;
     fastf_t *vertices;
     int *faces;
     int first_vertex;
@@ -292,7 +292,7 @@ write_bot_dxf(struct rt_bot_internal *bot, FILE *fp, char *name)
     point_t A;
     point_t B;
     point_t C;
-    register int i, vi;
+    int i, vi;
 
     num_vertices = bot->num_vertices;
     vertices = bot->vertices;
@@ -336,7 +336,7 @@ write_bot_obj(struct rt_bot_internal *bot, FILE *fp, char *name)
     vect_t BmA;
     vect_t CmA;
     vect_t norm;
-    register int i,vi;
+    int i,vi;
 
     num_vertices = bot->num_vertices;
     vertices = bot->vertices;
@@ -396,7 +396,7 @@ write_bot_stl(struct rt_bot_internal *bot, FILE *fp, char *name)
     vect_t BmA;
     vect_t CmA;
     vect_t norm;
-    register int i, vi;
+    int i, vi;
 
     num_vertices = bot->num_vertices;
     vertices = bot->vertices;
@@ -444,7 +444,7 @@ write_bot_stl_binary(struct rt_bot_internal *bot, int fd, char *name)
     vect_t BmA;
     vect_t CmA;
     vect_t norm;
-    register unsigned long i, j, vi;
+    unsigned long i, j, vi;
 
     num_vertices = bot->num_vertices;
     vertices = bot->vertices;
@@ -627,7 +627,7 @@ ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
     int fd = -1;
     char c;
     mat_t mat;
-    register int i;
+    int i;
     const char *cmd_name;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);

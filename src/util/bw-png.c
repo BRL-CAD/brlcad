@@ -52,9 +52,9 @@ Usage: bw-png [-a] [-w file_width] [-n file_height]\n\
 	[-s square_file_size] [file.bw]\n";
 
 int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int c;
+    int c;
 
     while ( (c = bu_getopt( argc, argv, "as:w:n:" )) != EOF )  {
 	switch ( c )  {

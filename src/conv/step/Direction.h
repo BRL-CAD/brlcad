@@ -39,7 +39,7 @@ protected:
 public:
 	Direction();
 	virtual ~Direction();
-	Direction(STEPWrapper *sw,int STEPid);
+	Direction(STEPWrapper *sw,int step_id);
 	double *DirectionRatios() { return direction_ratios; };
 	bool Load(STEPWrapper *sw,SCLP23(Application_instance) *sse);
 	virtual bool LoadONBrep(ON_Brep *brep);

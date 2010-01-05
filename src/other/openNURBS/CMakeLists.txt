@@ -8,9 +8,13 @@ set(OPENNURBS_SOURCES
     opennurbs_arccurve.cpp
     opennurbs_archive.cpp
     opennurbs_array.cpp
+    opennurbs_base32.cpp
+    opennurbs_base64.cpp
     opennurbs_basic.cpp
+    opennurbs_beam.cpp
     opennurbs_bezier.cpp
     opennurbs_beziervolume.cpp
+    opennurbs_brep_region.cpp
     opennurbs_bitmap.cpp
     opennurbs_box.cpp
     opennurbs_bounding_box.cpp
@@ -50,6 +54,7 @@ set(OPENNURBS_SOURCES
     opennurbs_line.cpp
     opennurbs_linecurve.cpp
     opennurbs_linetype.cpp
+    opennurbs_lookup.cpp
     opennurbs_massprop.cpp
     opennurbs_material.cpp
     opennurbs_math.cpp
@@ -57,6 +62,7 @@ set(OPENNURBS_SOURCES
     opennurbs_memory.c
     opennurbs_memory_util.c
     opennurbs_mesh.cpp
+    opennurbs_mesh_ngon.cpp
     opennurbs_mesh_tools.cpp
     opennurbs_morph.cpp
     opennurbs_nurbscurve.cpp
@@ -75,9 +81,14 @@ set(OPENNURBS_SOURCES
     opennurbs_pointgeometry.cpp
     opennurbs_pointgrid.cpp
     opennurbs_polycurve.cpp
+    opennurbs_polyedgecurve.cpp
     opennurbs_polyline.cpp
     opennurbs_polylinecurve.cpp
+    opennurbs_quaternion.cpp
+    opennurbs_rand.cpp
     opennurbs_revsurface.cpp
+    opennurbs_rtree.cpp
+    opennurbs_sort.cpp
     opennurbs_sphere.cpp
     opennurbs_string.cpp
     opennurbs_sum.cpp
@@ -104,7 +115,6 @@ set(OPENNURBS_LINKLIBRARIES
 include_directories(
     ../../../include
     ../libz
-    ../tcl/generic
 )
 
 add_definitions(

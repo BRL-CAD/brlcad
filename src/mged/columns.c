@@ -48,7 +48,7 @@ static int	col_len;		/* length of previous name */
 void
 vls_col_item(
     struct bu_vls		*str,
-    register const char	*cp)
+    const char	*cp)
 {
     /* Output newline if last column printed. */
     if ( col_count >= COLUMNS || (col_len+NAMESIZE-1) >= TERMINAL_WIDTH )  {
@@ -93,7 +93,7 @@ vls_col_eol( struct bu_vls *str )
 int
 cmpdirname(const genptr_t a, const genptr_t b)
 {
-    register struct directory **dp1, **dp2;
+    struct directory **dp1, **dp2;
 
     dp1 = (struct directory **)a;
     dp2 = (struct directory **)b;

@@ -666,7 +666,7 @@ verify_region_attrs(struct directory *dp, struct db_i *dbip, Tcl_Obj *obj)
 	    }
 	}
     }
-    rt_db_free_internal(&intern, &rt_uniresource);
+    rt_db_free_internal(&intern);
 }
 
 static char *region_attrs[] = { "region",

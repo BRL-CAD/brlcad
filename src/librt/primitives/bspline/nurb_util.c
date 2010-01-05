@@ -44,6 +44,8 @@ rt_nurb_new_snurb(int u_order, int v_order, int n_u, int n_v, int n_rows, int n_
     register struct face_g_snurb * srf;
     int pnum;
 
+    if (res) RT_CK_RESOURCE(res);
+
     GET_SNURB(srf);
     srf->order[0] = u_order;
     srf->order[1] = v_order;
@@ -104,6 +106,8 @@ rt_nurb_clean_snurb(struct face_g_snurb *srf, struct resource *res)
 {
     NMG_CK_SNURB(srf);
 
+    if (res) RT_CK_RESOURCE(res);
+
     bu_free( (char *)srf->u.knots, "rt_nurb_clean_snurb() u.knots" );
     bu_free( (char *)srf->v.knots, "rt_nurb_free_snurb() v.knots" );
     bu_free( (char *)srf->ctl_points, "rt_nurb_free_snurb() ctl_points");
@@ -123,6 +127,8 @@ void
 rt_nurb_free_snurb(struct face_g_snurb *srf, struct resource *res)
 {
     NMG_CK_SNURB(srf);
+
+    if (res) RT_CK_RESOURCE(res);
 
     /* assume that links to other surface and curves are already deleted */
 

@@ -33,9 +33,9 @@
 #include "bu.h"
 
 fastf_t brlabs( a )
-    register const fastf_t a;
+    const fastf_t a;
 {
-    register fastf_t b;
+    fastf_t b;
 
     if ( a > 0 )
 	b = a;

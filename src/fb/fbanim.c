@@ -42,7 +42,7 @@
 int		sec;
 int		usec;
 
-void		newframe(register int i);
+void		newframe(int i);
 
 FBIO	*fbp;
 int	screen_width;		/* Number of pixels/line in frame buffer */
@@ -65,9 +65,9 @@ Usage: fbanim [-h -i -r -v] [-p passes]\n\
 	subimage_width nframes [fps]\n";
 
 int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int c;
+    int c;
 
     while ( (c = bu_getopt( argc, argv, "s:w:n:hirvp:S:W:N:" )) != EOF )  {
 	switch ( c )  {
@@ -120,7 +120,7 @@ get_args(int argc, register char **argv)
 int
 main(int argc, char **argv)
 {
-    register int i;
+    int i;
 
     if ( !get_args( argc, argv ) )  {
 	(void)fputs(Usage, stderr);
@@ -178,9 +178,9 @@ main(int argc, char **argv)
 }
 
 void
-newframe(register int i)
+newframe(int i)
 {
-    register int	xPan, yPan;		/* Pan Location */
+    int	xPan, yPan;		/* Pan Location */
     struct timeval tv;
     fd_set fds;
 

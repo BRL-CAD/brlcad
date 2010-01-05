@@ -58,7 +58,7 @@ ged_push_leaf(struct db_tree_state	*tsp,
 	      struct rt_db_internal	*ip,
 	      genptr_t			client_data);
 static union tree *
-ged_push_region_end(register struct db_tree_state	*tsp,
+ged_push_region_end(struct db_tree_state	*tsp,
 		    struct db_full_path			*pathp,
 		    union tree				*curtree,
 		    genptr_t				client_data);
@@ -178,7 +178,7 @@ ged_push(struct ged *gedp, int argc, const char *argv[])
 	if (rt_db_put_internal(gpip->pi_dir, gedp->ged_wdbp->dbip, &es_int, &rt_uniresource) < 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "ged_push(%s): solid export failure\n", gpip->pi_dir->d_namep);
 	}
-	rt_db_free_internal(&es_int, &rt_uniresource);
+	rt_db_free_internal(&es_int);
     }
 
     /*
@@ -235,7 +235,7 @@ ged_push_leaf(struct db_tree_state	*tsp,
 {
     union tree	*curtree;
     struct directory *dp;
-    register struct ged_push_id *gpip;
+    struct ged_push_id *gpip;
     struct ged_push_data *gpdp = (struct ged_push_data *)client_data;
 
     RT_CK_TESS_TOL(tsp->ts_ttol);
@@ -301,7 +301,7 @@ ged_push_leaf(struct db_tree_state	*tsp,
  * A null routine that does nothing.
  */
 static union tree *
-ged_push_region_end(register struct db_tree_state	*tsp,
+ged_push_region_end(struct db_tree_state	*tsp,
 		    struct db_full_path			*pathp,
 		    union tree				*curtree,
 		    genptr_t				client_data)

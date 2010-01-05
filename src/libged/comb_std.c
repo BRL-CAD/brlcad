@@ -432,7 +432,7 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
     char *comb_name;
     int ch;
     int region_flag = -1;
-    register struct directory *dp = DIR_NULL;
+    struct directory *dp = DIR_NULL;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb = NULL;
     struct tokens tok_hd;
@@ -563,7 +563,7 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 		if (ged_add_operator(gedp, &tok_hd.l, *ptr, &last_tok) == GED_ERROR) {
 		    ged_free_tokens(&tok_hd.l);
 		    if (dp != DIR_NULL)
-			rt_db_free_internal(&intern, &rt_uniresource);
+			rt_db_free_internal(&intern);
 		    return GED_ERROR;
 		}
 		ptr++;
@@ -575,7 +575,7 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 		if (name_len < 1) {
 		    ged_free_tokens(&tok_hd.l);
 		    if (dp != DIR_NULL)
-			rt_db_free_internal(&intern, &rt_uniresource);
+			rt_db_free_internal(&intern);
 		    return GED_ERROR;
 		}
 		last_tok = GED_TOK_TREE;
@@ -585,7 +585,7 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 		if (ged_add_operator(gedp, &tok_hd.l, *ptr, &last_tok) == GED_ERROR) {
 		    ged_free_tokens(&tok_hd.l);
 		    if (dp != DIR_NULL)
-			rt_db_free_internal(&intern, &rt_uniresource);
+			rt_db_free_internal(&intern);
 		    return GED_ERROR;
 		}
 		ptr++;
@@ -599,7 +599,7 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 		if (name_len < 1) {
 		    ged_free_tokens(&tok_hd.l);
 		    if (dp != DIR_NULL)
-			rt_db_free_internal(&intern, &rt_uniresource);
+			rt_db_free_internal(&intern);
 		    return GED_ERROR;
 		}
 		last_tok = GED_TOK_TREE;
@@ -635,7 +635,7 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 
 			tok->tp = comb1->tree;
 			comb1->tree = (union tree *)NULL;
-			rt_db_free_internal(&intern1, &rt_uniresource);
+			rt_db_free_internal(&intern1);
 		    }
 		    break;
 		default:

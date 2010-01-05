@@ -44,9 +44,9 @@
 int
 ged_zap(struct ged *gedp, int argc, const char *argv[])
 {
-    register struct solid *sp;
-    register struct solid *nsp;
-    register struct ged_display_list *gdlp;
+    struct solid *sp;
+    struct solid *nsp;
+    struct ged_display_list *gdlp;
     struct directory *dp;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);

@@ -50,9 +50,9 @@ Usage: pixfields [-v]\n\
 	 field1.pix field2.pix > file.pix\n";
 
 int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int c;
+    int c;
 
     while ( (c = bu_getopt( argc, argv, "vw:n:s:" )) != EOF )  {
 	switch ( c )  {

@@ -41,9 +41,9 @@ ElectricCurrentConversionBasedUnit::ElectricCurrentConversionBasedUnit() {
 	id = 0;
 }
 
-ElectricCurrentConversionBasedUnit::ElectricCurrentConversionBasedUnit(STEPWrapper *sw,int STEPid) {
+ElectricCurrentConversionBasedUnit::ElectricCurrentConversionBasedUnit(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 ElectricCurrentConversionBasedUnit::~ElectricCurrentConversionBasedUnit() {
@@ -57,7 +57,7 @@ ElectricCurrentConversionBasedUnit::Load(STEPWrapper *sw,SCLP23(Application_inst
 
 	// load base class attributes
 	if ( !ElectricCurrentConversionBasedUnit::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::Unit." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 		return false;
 	}
 
@@ -66,10 +66,10 @@ ElectricCurrentConversionBasedUnit::Load(STEPWrapper *sw,SCLP23(Application_inst
 
 void
 ElectricCurrentConversionBasedUnit::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	ElectricCurrentUnit::Print(level+1);
 	ConversionBasedUnit::Print(level+1);
 
@@ -83,7 +83,7 @@ ElectricCurrentConversionBasedUnit::Create(STEPWrapper *sw, SCLP23(Application_i
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

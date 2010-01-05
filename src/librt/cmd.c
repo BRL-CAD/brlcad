@@ -82,8 +82,6 @@ rt_read_cmd(register FILE *fp)
 	     *  pass will detect it.
 	     */
 	    c = fgetc(fp);
-	} else if ( !isascii(c) )  {
-	    c = '?';
 	}
 	if ( c != '\0' && curpos == 0 && isspace(c) )  {
 	    /*  Dispose of leading white space.

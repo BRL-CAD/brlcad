@@ -40,9 +40,9 @@ DerivedUnitElement::DerivedUnitElement() {
 	unit = NULL;
 }
 
-DerivedUnitElement::DerivedUnitElement(STEPWrapper *sw,int STEPid) {
+DerivedUnitElement::DerivedUnitElement(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 	unit = NULL;
 }
 
@@ -71,13 +71,13 @@ DerivedUnitElement::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 void
 DerivedUnitElement::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Attributes:" << endl;
-	TAB(level+1); cout << "unit:" << endl;
+	TAB(level); std::cout << "Attributes:" << std::endl;
+	TAB(level+1); std::cout << "unit:" << std::endl;
 	unit->Print(level+1);
-	TAB(level+1); cout << "exponent:" << exponent << endl;
+	TAB(level+1); std::cout << "exponent:" << exponent << std::endl;
 }
 STEPEntity *
 DerivedUnitElement::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
@@ -88,7 +88,7 @@ DerivedUnitElement::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

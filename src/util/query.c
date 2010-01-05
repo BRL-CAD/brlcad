@@ -57,9 +57,9 @@ static const char usage[] = "\
 Usage: %s [-v] [-t seconds] [-r response ] [-l]\n";
 
 int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int c;
+    int c;
 
     while ( (c = bu_getopt( argc, argv, "t:r:vl" )) != EOF )  {
 	switch ( c )  {

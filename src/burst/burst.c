@@ -84,7 +84,7 @@ getCommand(char *name, char *buf, int len, FILE *fp)
 static void
 setupSigs(void)
 {
-    register int i;
+    int i;
     for (i = 0; i < NSIG; i++)
 	switch (i) {
 	    case SIGINT :
@@ -117,7 +117,7 @@ setupSigs(void)
 static int
 parsArgv(int argc, char **argv)
 {
-    register int c;
+    int c;
 /* Parse options.						*/
     while ((c = bu_getopt(argc, argv, "b")) != EOF) {
 	switch (c) {
@@ -144,7 +144,7 @@ readBatchInput(FILE *fp)
     while (getCommand(cmdname, cmdbuf, LNBUFSZ, fp)) {
 	Func	*cmdfunc;
 	if ((cmdfunc = getTrie(cmdname, cmdtrie)) == NULL) {
-	    register int i, len = strlen(cmdname);
+	    int i, len = strlen(cmdname);
 	    brst_log("ERROR -- command syntax:\n");
 	    brst_log("\t%s\n", cmdbuf);
 	    brst_log("\t");

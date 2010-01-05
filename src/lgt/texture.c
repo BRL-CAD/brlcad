@@ -70,9 +70,9 @@ struct fb_texture
 *fbs = NULL;
 
 static char	*
-suffix(register char *str)
+suffix(char *str)
 {
-    register char	*p = str + strlen( str ) - 1;
+    char	*p = str + strlen( str ) - 1;
     while ( *p != '.' && p != str )
 	p--;
     if ( *p == '.' )
@@ -102,7 +102,7 @@ static struct icon_texture	*
 init_Icon_Texture(char *file, Mat_Db_Entry *entry)
 {
     FILE	*iconfp;
-    register struct icon_texture	*iconp;
+    struct icon_texture	*iconp;
     icon_t	*iconmap;
     int	wid = entry->df_rgb[0] << 3;
     int	hgt = entry->df_rgb[1] << 3;
@@ -135,7 +135,7 @@ init_Icon_Texture(char *file, Mat_Db_Entry *entry)
     icons = iconp;
 #if DEBUG_TEXTURE
     {
-	register int	u, v;
+	int	u, v;
 	for ( v = 0; v < hgt; v++ )
 	    for ( u = 0; u < wid; u++ )
 	    {
@@ -153,7 +153,7 @@ static struct fb_texture	*
 init_Fb_Texture(char *file, Mat_Db_Entry *entry)
 {
     FBIO		*txfbiop;
-    register struct fb_texture	*fbp;
+    struct fb_texture	*fbp;
     RGBpixel	*fbmap;
     int		wid = entry->df_rgb[0] << 3;
     int		hgt = entry->df_rgb[1] << 3;
@@ -180,7 +180,7 @@ init_Fb_Texture(char *file, Mat_Db_Entry *entry)
     fbs = fbp;
 #if DEBUG_TEXTURE
     {
-	register int	u, v;
+	int	u, v;
 	for ( v = 0; v < hgt; v++ )
 	    for ( u = 0; u < wid; u++ )
 	    {
@@ -211,8 +211,8 @@ icon_Entry(struct uvcoord *uvp, Mat_Db_Entry *entry)
 {
     int	ui;
     int	vi;
-    register RGBpixel		*pixel;
-    register struct icon_texture	*iconp;
+    RGBpixel		*pixel;
+    struct icon_texture	*iconp;
     char				*file = entry->name + TEX_KEYLEN;
     bu_semaphore_acquire( RT_SEM_RESULTS );
     for (	iconp = icons;
@@ -248,8 +248,8 @@ fb_Entry(struct uvcoord *uvp, Mat_Db_Entry *entry)
 {
     int				ui;
     int				vi;
-    register RGBpixel		*pixel;
-    register struct fb_texture	*fbp;
+    RGBpixel		*pixel;
+    struct fb_texture	*fbp;
     char				*file = entry->name + TEX_KEYLEN;
     bu_semaphore_acquire( RT_SEM_RESULTS );
     for (	fbp = fbs;

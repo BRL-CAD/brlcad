@@ -54,9 +54,9 @@ short iobuf[BUFLEN];		/* input buffer */
 int mapbuf[65536];		/* translation buffer/lookup table */
 
 int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int c;
+    int c;
     double	d;
 
     while ( (c = bu_getopt( argc, argv, "a:s:m:d:Ae:r:" )) != EOF )  {
@@ -125,8 +125,8 @@ get_args(int argc, register char **argv)
 
 void mk_trans_tbl(void)
 {
-    register int i, j;
-    register double d;
+    int i, j;
+    double d;
 
     /* create translation map */
     for (j = -32768; j < 32768; ++j) {
@@ -155,9 +155,9 @@ void mk_trans_tbl(void)
 
 int main(int argc, char **argv)
 {
-    register short *p, *q;
-    register int i;
-    register unsigned int	n;
+    short *p, *q;
+    int i;
+    unsigned int	n;
     unsigned long clip_high, clip_low;
 
     if (!(progname=strrchr(*argv, '/')))

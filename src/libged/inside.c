@@ -283,7 +283,7 @@ arbin(struct ged		*gedp,
 	if (!rt_functab[ip->idb_type].ft_tessellate || rt_functab[ip->idb_type].ft_tessellate( &r, m, ip, &ttol, &gedp->ged_wdbp->wdb_tol ) )
 	{
 	    bu_vls_printf(&gedp->ged_result_str, "Cannot tessellate arb7\n");
-	    rt_db_free_internal( ip, &rt_uniresource );
+	    rt_db_free_internal(ip);
 	    return GED_ERROR;
 	}
 
@@ -356,7 +356,7 @@ arbin(struct ged		*gedp,
 	nmg_extrude_cleanup( s, 0, &gedp->ged_wdbp->wdb_tol );
 
 	/* free old ip pointer */
-	rt_db_free_internal( ip, &rt_uniresource );
+	rt_db_free_internal(ip);
 
 	/* convert the NMG to a BOT */
 	bot = (struct rt_bot_internal *)nmg_bot( s, &gedp->ged_wdbp->wdb_tol );
@@ -908,7 +908,7 @@ nmgin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick)
 int
 ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const char *argv[], int arg, char *o_name)
 {
-    register int i;
+    int i;
     struct directory	*dp;
     int	cgtype;		/* cgtype ARB 4..8 */
     int	nface;

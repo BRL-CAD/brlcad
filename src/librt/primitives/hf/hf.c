@@ -64,30 +64,30 @@
 
 /* All fields valid in string solid */
 const struct bu_structparse rt_hf_parse[] = {
-    {"%s",	128,	"cfile",	bu_offsetofarray(struct rt_hf_internal, cfile), BU_STRUCTPARSE_FUNC_NULL},
-    {"%s",	128,	"dfile",	bu_offsetofarray(struct rt_hf_internal, dfile), BU_STRUCTPARSE_FUNC_NULL},
-    {"%s",	8,	"fmt",		bu_offsetofarray(struct rt_hf_internal, fmt), BU_STRUCTPARSE_FUNC_NULL},
-    {"%d",	1,	"w",		HF_O(w),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1,	"n",		HF_O(n),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1,	"shorts",	HF_O(shorts),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1,	"file2mm",	HF_O(file2mm),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	3,	"v",		HF_O(v[0]),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	3,	"x",		HF_O(x[0]),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	3,	"y",		HF_O(y[0]),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1,	"xlen",		HF_O(xlen),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1,	"ylen",		HF_O(ylen),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1,	"zscale",	HF_O(zscale),		BU_STRUCTPARSE_FUNC_NULL },
-    {"",	0,	(char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"%s",	128,	"cfile",	bu_offsetofarray(struct rt_hf_internal, cfile), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%s",	128,	"dfile",	bu_offsetofarray(struct rt_hf_internal, dfile), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%s",	8,	"fmt",		bu_offsetofarray(struct rt_hf_internal, fmt), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d",	1,	"w",		HF_O(w),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1,	"n",		HF_O(n),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1,	"shorts",	HF_O(shorts),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1,	"file2mm",	HF_O(file2mm),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	3,	"v",		HF_O(v[0]),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	3,	"x",		HF_O(x[0]),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	3,	"y",		HF_O(y[0]),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1,	"xlen",		HF_O(xlen),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1,	"ylen",		HF_O(ylen),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1,	"zscale",	HF_O(zscale),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",	0,	(char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 /* Subset of fields found in cfile */
 const struct bu_structparse rt_hf_cparse[] = {
-    {"%s",	128,	"dfile",	bu_offsetofarray(struct rt_hf_internal, dfile), BU_STRUCTPARSE_FUNC_NULL},
-    {"%s",	8,	"fmt",		bu_offsetofarray(struct rt_hf_internal, fmt), BU_STRUCTPARSE_FUNC_NULL},
-    {"%d",	1,	"w",		HF_O(w),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1,	"n",		HF_O(n),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1,	"shorts",	HF_O(shorts),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1,	"file2mm",	HF_O(file2mm),		BU_STRUCTPARSE_FUNC_NULL },
-    {"",	0,	(char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"%s",	128,	"dfile",	bu_offsetofarray(struct rt_hf_internal, dfile), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%s",	8,	"fmt",		bu_offsetofarray(struct rt_hf_internal, fmt), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d",	1,	"w",		HF_O(w),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1,	"n",		HF_O(n),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1,	"shorts",	HF_O(shorts),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1,	"file2mm",	HF_O(file2mm),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",	0,	(char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
@@ -117,14 +117,13 @@ struct hf_specific {
  * V5 database for an HF.
  */
 int
-rt_hf_to_dsp(struct rt_db_internal *db_intern, struct resource *resp)
+rt_hf_to_dsp(struct rt_db_internal *db_intern)
 {
     struct rt_hf_internal *hip = (struct rt_hf_internal *)db_intern->idb_ptr;
     struct rt_dsp_internal *dsp;
     vect_t tmp;
 
     RT_CK_DB_INTERNAL(db_intern);
-    RT_CK_RESOURCE(resp);
     RT_HF_CK_MAGIC(hip);
 
     if (! hip->shorts) {
@@ -181,7 +180,7 @@ rt_hf_to_dsp(struct rt_db_internal *db_intern, struct resource *resp)
 
     dsp->magic = RT_DSP_INTERNAL_MAGIC;
 
-    rt_db_free_internal(db_intern, resp);
+    rt_db_free_internal(db_intern);
 
     db_intern->idb_ptr = (genptr_t)dsp;
     db_intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -212,7 +211,7 @@ int
 rt_hf_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_hf_internal *hip;
-    register struct hf_specific *hf;
+    struct hf_specific *hf;
     const struct bn_tol *tol = &rtip->rti_tol;
     double dot;
     vect_t height, work;
@@ -274,10 +273,10 @@ rt_hf_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
      * bounding boxes et so forth.
      */
     if (hf->hf_shorts) {
-	register int max, min;
-	register int len;
-	register unsigned short *sp;
-	register int i;
+	int max, min;
+	int len;
+	unsigned short *sp;
+	int i;
 
 	sp = (unsigned short *)hf->hf_mp->apbuf;
 	min = max = *sp++;
@@ -290,8 +289,8 @@ rt_hf_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	hf->hf_max = max * hf->hf_file2mm;
     } else {
 	fastf_t max, min;
-	register int len;
-	register int i;
+	int len;
+	int i;
 	fastf_t *fp;
 
 	fp = (fastf_t *) hf->hf_mp->apbuf;
@@ -351,9 +350,9 @@ rt_hf_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
  * R T _ H F _ P R I N T
  */
 void
-rt_hf_print(register const struct soltab *stp)
+rt_hf_print(const struct soltab *stp)
 {
-    register const struct hf_specific *hf =
+    const struct hf_specific *hf =
 	(struct hf_specific *)stp->st_specific;
     VPRINT("V", hf->hf_V);
     VPRINT("X", hf->hf_X);
@@ -365,9 +364,9 @@ rt_hf_print(register const struct soltab *stp)
 
 
 static int
-rt_hf_cell_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct hit *hitp, int xCell, int yCell)
+hf_cell_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct hit *hitp, int xCell, int yCell)
 {
-    register struct hf_specific *hfp =
+    struct hf_specific *hfp =
 	(struct hf_specific *)stp->st_specific;
 
     fastf_t dn, abs_dn, k1st=0, k2nd=0, alpha, beta;
@@ -377,21 +376,23 @@ rt_hf_cell_shot(struct soltab *stp, register struct xray *rp, struct application
     vect_t tri_CA1st, tri_CA2nd;
     vect_t xvect, yvect, tri_A, tri_B, tri_C;
     int fnd1, fnd2;
-    register double hf2mm = hfp->hf_file2mm;
+    double hf2mm = hfp->hf_file2mm;
+
+    if (ap) RT_CK_APPLICATION(ap);
 
     if (RT_G_DEBUG & DEBUG_HF) {
-	bu_log("rt_hf_cell_shot(%s): %d, %d\n", stp->st_name,
+	bu_log("hf_cell_shot(%s): %d, %d\n", stp->st_name,
 	       xCell, yCell);
     }
     {
-	register fastf_t scale;
+	fastf_t scale;
 	scale = hfp->hf_Xlen/((double)hfp->hf_w-1);
 	VSCALE(xvect, hfp->hf_X, scale);
 	scale = hfp->hf_Ylen/((double)hfp->hf_n-1);
 	VSCALE(yvect, hfp->hf_Y, scale);
     }
     if (hfp->hf_shorts) {
-	register unsigned short *sp;
+	unsigned short *sp;
 	sp = (unsigned short *)hfp->hf_mp->apbuf +
 	    yCell * hfp->hf_w + xCell;
 
@@ -423,7 +424,7 @@ rt_hf_cell_shot(struct soltab *stp, register struct xray *rp, struct application
 	VSUB2(tri_BA2nd, tri_B, tri_A);
 	VCROSS(tri_wn2nd, tri_BA2nd, tri_CA2nd);
     } else {
-	register double *fp;
+	double *fp;
 	fp = (double *)hfp->hf_mp->apbuf +
 	    yCell * hfp->hf_w + xCell;
 	/* 0, 0 -> A */
@@ -542,7 +543,7 @@ rt_hf_cell_shot(struct soltab *stp, register struct xray *rp, struct application
     if (!fnd1 && !fnd2) return 0;
 
     if (RT_G_DEBUG & DEBUG_HF) {
-	bu_log("rt_hf_cell_shot: hit(%d).\n", fnd1+fnd2);
+	bu_log("hf_cell_shot: hit(%d).\n", fnd1+fnd2);
     }
 
     /*
@@ -666,7 +667,7 @@ axis_plane_isect(int plane, fastf_t inout, struct xray *rp, struct hf_specific *
 #endif
 
     if (hf->hf_shorts) {
-	register unsigned short *sp;
+	unsigned short *sp;
 	sp = (unsigned short *)hf->hf_mp->apbuf +
 	    CellY * hf->hf_w + CellX;
 	left = *sp;
@@ -677,7 +678,7 @@ axis_plane_isect(int plane, fastf_t inout, struct xray *rp, struct hf_specific *
 	}
 	right = *sp;
     } else {
-	register double *fp;
+	double *fp;
 	fp = (double *) hf->hf_mp->apbuf +
 	    CellY * hf->hf_w + CellX;
 	left = *fp;
@@ -714,9 +715,9 @@ axis_plane_isect(int plane, fastf_t inout, struct xray *rp, struct hf_specific *
  * >0 HIT
  */
 int
-rt_hf_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
+rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
-    register struct hf_specific *hf =
+    struct hf_specific *hf =
 	(struct hf_specific *)stp->st_specific;
 
     struct hit hits[MAXHITS];
@@ -906,13 +907,13 @@ rt_hf_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 	VSUB2(tmp, rp->r_pt, hf->hf_V);
 	xCell = tmp[X]/hf->hf_Xlen*hf->hf_w;
 	yCell = tmp[Y]/hf->hf_Ylen*hf->hf_n;
-	if ((r=rt_hf_cell_shot(stp, rp, ap, hp, xCell, yCell))) {
+	if ((r=hf_cell_shot(stp, rp, ap, hp, xCell, yCell))) {
 	    if ((nhits+=r)>MAXHITS) bu_bomb("g_hf.c: too many hits.\n");
 	    hp+=r;
 	}
     } else if (cosine*cosine > 0.5) {
 	double tmp;
-	register double farZ, minZ, maxZ;
+	double farZ, minZ, maxZ;
 	int xCell, yCell, signX, signY;
 	double highest, lowest, error, delta;
 	double deltaZ;
@@ -1025,7 +1026,7 @@ rt_hf_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 	     * correctly.
 	     */
 	    if (hf->hf_shorts) {
-		register unsigned short *sp;
+		unsigned short *sp;
 		sp = (unsigned short *)hf->hf_mp->apbuf +
 		    yCell * hf->hf_w + xCell;
 		/* 0, 0 */
@@ -1044,7 +1045,7 @@ rt_hf_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 		lowest *= hf->hf_file2mm;
 		highest *= hf->hf_file2mm;
 	    } else {
-		register double *fp;
+		double *fp;
 		fp = (double *)hf->hf_mp->apbuf +
 		    yCell * hf->hf_w + xCell;
 		/* 0, 0 */
@@ -1075,7 +1076,7 @@ rt_hf_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 	    if (maxZ+deltaZ > lowest &&
 		minZ-deltaZ < highest) {
 		int r;
-		if ((r=rt_hf_cell_shot(stp, rp, ap, hp, xCell, yCell))) {
+		if ((r=hf_cell_shot(stp, rp, ap, hp, xCell, yCell))) {
 		    if ((nhits+=r)>=MAXHITS) bu_bomb("g_hf.c: too many hits.\n");
 		    hp+=r;
 		}
@@ -1097,7 +1098,7 @@ rt_hf_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 		    continue;
 		}
 		if (hf->hf_shorts) {
-		    register unsigned short *sp;
+		    unsigned short *sp;
 		    sp = (unsigned short *)hf->hf_mp->apbuf +
 			yCell * hf->hf_w + xCell;
 		    /* 0, 0 */
@@ -1116,7 +1117,7 @@ rt_hf_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 		    lowest *= hf->hf_file2mm;
 		    highest *= hf->hf_file2mm;
 		} else {
-		    register double *fp;
+		    double *fp;
 		    fp = (double *)hf->hf_mp->apbuf +
 			yCell * hf->hf_w + xCell;
 		    /* 0, 0 */
@@ -1139,7 +1140,7 @@ rt_hf_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 		    minZ-deltaZ < highest) {
 		    int r;
 		    /* DO HIT */
-		    if ((r=rt_hf_cell_shot(stp, rp, ap, hp, xCell, yCell))) {
+		    if ((r=hf_cell_shot(stp, rp, ap, hp, xCell, yCell))) {
 			if ((nhits+=r)>=MAXHITS) bu_bomb("g_hf.c: too many hits.\n");
 			hp+=r;
 		    }
@@ -1162,7 +1163,7 @@ rt_hf_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 	/* OTHER HALF */
 
 	double tmp;
-	register double farZ, minZ, maxZ;
+	double farZ, minZ, maxZ;
 	double deltaZ;
 	int xCell, yCell, signX, signY;
 	double highest, lowest, error, delta;
@@ -1265,7 +1266,7 @@ rt_hf_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 	    }
 
 	    if (hf->hf_shorts) {
-		register unsigned short *sp;
+		unsigned short *sp;
 		sp = (unsigned short *)hf->hf_mp->apbuf +
 		    yCell * hf->hf_w + xCell;
 		/* 0, 0 */
@@ -1284,7 +1285,7 @@ rt_hf_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 		lowest *= hf->hf_file2mm;
 		highest *= hf->hf_file2mm;
 	    } else {
-		register double *fp;
+		double *fp;
 		fp = (double *)hf->hf_mp->apbuf +
 		    yCell * hf->hf_w + xCell;
 		/* 0, 0 */
@@ -1316,7 +1317,7 @@ rt_hf_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 	    if (maxZ+deltaZ > lowest &&
 		minZ-deltaZ < highest) {
 		int r;
-		if ((r=rt_hf_cell_shot(stp, rp, ap, hp, xCell, yCell))) {
+		if ((r=hf_cell_shot(stp, rp, ap, hp, xCell, yCell))) {
 		    if ((nhits+=r)>=MAXHITS) bu_bomb("g_hf.c: too many hits.\n");
 		    hp+=r;
 		}
@@ -1338,7 +1339,7 @@ rt_hf_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 		    continue;
 		}
 		if (hf->hf_shorts) {
-		    register unsigned short *sp;
+		    unsigned short *sp;
 		    sp = (unsigned short *)hf->hf_mp->apbuf +
 			yCell * hf->hf_w + xCell;
 		    /* 0, 0 */
@@ -1357,7 +1358,7 @@ rt_hf_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 		    lowest *= hf->hf_file2mm;
 		    highest *= hf->hf_file2mm;
 		} else {
-		    register double *fp;
+		    double *fp;
 		    fp = (double *)hf->hf_mp->apbuf +
 			yCell * hf->hf_w + xCell;
 		    /* 0, 0 */
@@ -1380,7 +1381,7 @@ rt_hf_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 		    minZ-deltaZ < highest) {
 		    int r;
 		    /* DO HIT */
-		    if ((r=rt_hf_cell_shot(stp, rp, ap, hp, xCell, yCell))) {
+		    if ((r=hf_cell_shot(stp, rp, ap, hp, xCell, yCell))) {
 			if ((nhits+=r)>=MAXHITS) bu_bomb("g_hf.c: too many hits.\n");
 			hp+=r;
 		    }
@@ -1402,7 +1403,7 @@ rt_hf_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 
     /* Sort hits, near to Far */
     {
-	register int i, j;
+	int i;
 	struct hit tmp;
 	for (i=0; i< nhits-1; i++) {
 	    for (j=i+1; j<nhits; j++) {
@@ -1415,7 +1416,7 @@ rt_hf_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
     }
 
     if (nhits & 1) {
-	register int i;
+	int i;
 	static int nerrors = 0;
 	hits[nhits] = hits[nhits-1];	/* struct copy*/
 	VREVERSE(hits[nhits].hit_normal, hits[nhits-1].hit_normal);
@@ -1431,8 +1432,8 @@ rt_hf_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
 
     /* nhits is even, build segments */
     {
-	register struct seg *segp;
-	register int i;
+	struct seg *segp;
+	int i;
 	for (i=0; i< nhits; i+=2) {
 	    RT_GET_SEG(segp, ap->a_resource);
 	    segp->seg_stp = stp;
@@ -1451,11 +1452,11 @@ rt_hf_shot(struct soltab *stp, register struct xray *rp, struct application *ap,
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
-rt_hf_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
+rt_hf_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
-    register struct hf_specific *hf =
+    struct hf_specific *hf =
 	(struct hf_specific *)stp->st_specific;
-    register int j;
+    int j;
 
     j = hitp->hit_surfno;
 
@@ -1496,8 +1497,13 @@ rt_hf_norm(register struct hit *hitp, struct soltab *stp, register struct xray *
  * Return the curvature of the hf.
  */
 void
-rt_hf_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
+rt_hf_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
+    struct hf_specific *hf = (struct hf_specific *)stp->st_specific;
+    if (!hf || !cvp || !hitp)
+	return;
+    RT_CK_HIT(hitp);
+
     cvp->crv_c1 = cvp->crv_c2 = 0;
 
     /* any tangent direction */
@@ -1515,12 +1521,16 @@ rt_hf_curve(register struct curvature *cvp, register struct hit *hitp, struct so
  * v = elevation
  */
 void
-rt_hf_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
+rt_hf_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
-    register struct hf_specific *hf =
-	(struct hf_specific *)stp->st_specific;
+    struct hf_specific *hf = (struct hf_specific *)stp->st_specific;
     vect_t delta;
     fastf_t r = 0;
+
+    if (ap) RT_CK_APPLICATION(ap);
+    if (!hf || !hitp || !uvp || !stp)
+	return;
+    RT_CK_HIT(hitp);
 
     VSUB2(delta, hitp->hit_point, hf->hf_V);
     uvp->uv_u = delta[X] / hf->hf_Xlen;
@@ -1540,9 +1550,9 @@ rt_hf_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, 
  * R T _ H F _ F R E E
  */
 void
-rt_hf_free(register struct soltab *stp)
+rt_hf_free(struct soltab *stp)
 {
-    register struct hf_specific *hf =
+    struct hf_specific *hf =
 	(struct hf_specific *)stp->st_specific;
 
     if (hf->hf_mp) {
@@ -1567,11 +1577,11 @@ rt_hf_class(void)
  * R T _ H F _ P L O T
  */
 int
-rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol __attribute__((unused)))
 {
     struct rt_hf_internal *xip;
-    register unsigned short *sp = (unsigned short *)NULL;
-    register double *dp;
+    unsigned short *sp = (unsigned short *)NULL;
+    double *dp;
     vect_t xbasis;
     vect_t ybasis;
     vect_t zbasis;
@@ -1709,7 +1719,7 @@ rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tes
     goal -= 4 + 2 * (xip->w + xip->n);
 
     /* Apply relative tolerance, if specified */
-    if (ttol->rel) {
+    if (!NEAR_ZERO(ttol->rel, SMALL_FASTF)) {
 	int rstep;
 	rstep = xip->w;
 	V_MAX(rstep, xip->n);
@@ -1821,13 +1831,16 @@ rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tes
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_hf_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_hf_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
 {
     struct rt_hf_internal *xip;
 
     RT_CK_DB_INTERNAL(ip);
     xip = (struct rt_hf_internal *)ip->idb_ptr;
     RT_HF_CK_MAGIC(xip);
+
+    if (r) *r = NULL;
+    if (m) NMG_CK_MODEL(m);
 
     return(-1);
 }
@@ -1840,7 +1853,7 @@ rt_hf_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, con
  * Apply modeling transformations as well.
  */
 int
-rt_hf_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_hf_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_hf_internal *xip;
     union record *rp;
@@ -1852,6 +1865,8 @@ rt_hf_import4(struct rt_db_internal *ip, const struct bu_external *ep, register 
     int out_cookie;
     int count;
     int got;
+
+    if (dbip) RT_CK_DBI(dbip);
 
     BU_CK_EXTERNAL(ep);
     rp = (union record *)ep->ext_buf;
@@ -2018,6 +2033,8 @@ rt_hf_export4(struct bu_external *ep, const struct rt_db_internal *ip, double lo
     union record *rec;
     struct bu_vls str;
 
+    if (dbip) RT_CK_DBI(dbip);
+
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_HF) return(-1);
     xip = (struct rt_hf_internal *)ip->idb_ptr;
@@ -2052,6 +2069,10 @@ rt_hf_export4(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 int
 rt_hf_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
+    if (ip) RT_CK_DB_INTERNAL(ip);
+    if (!ep || !mat) return -1;
+    if (dbip) RT_CK_DBI(dbip);
+
     bu_log("As of release 6.0 the HF primitive is superceded by the DSP primitive.\n");
     bu_log("\tTo convert HF primitives to DSP, use 'dbupgrade'.\n");
     /* The rt_hf_to_dsp() routine can also be used */
@@ -2060,8 +2081,12 @@ rt_hf_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 
 
 int
-rt_hf_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
+rt_hf_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm __attribute__((unused)), const struct db_i *dbip)
 {
+    if (!ep) return -1;
+    if (ip) RT_CK_DB_INTERNAL(ip);
+    if (dbip) RT_CK_DBI(dbip);
+
     bu_log("As of release 6.0 the HF primitive is superceded by the DSP primitive.\n");
     bu_log("\tTo convert HF primitives to DSP, use 'dbupgrade'.\n");
     /* The rt_hf_to_dsp() routine can also be used */
@@ -2079,17 +2104,21 @@ rt_hf_export5(struct bu_external *ep, const struct rt_db_internal *ip, double lo
 int
 rt_hf_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
-    register struct rt_hf_internal *xip =
-	(struct rt_hf_internal *)ip->idb_ptr;
+    struct rt_hf_internal *xip;
 
     BU_CK_VLS(str);
+
+    xip = (struct rt_hf_internal *)ip->idb_ptr;
     RT_HF_CK_MAGIC(xip);
 
     bu_vls_printf(str, "Height Field (HF) mm2local=%g\n", mm2local);
+    if (!verbose)
+	return 0;
+
     bu_vls_struct_print(str, rt_hf_parse, ip->idb_ptr);
     bu_vls_strcat(str, "\n");
 
-    return(0);
+    return 0;
 }
 
 
@@ -2100,13 +2129,9 @@ rt_hf_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose,
  * solid.
  */
 void
-rt_hf_ifree(struct rt_db_internal *ip, struct resource *resp)
+rt_hf_ifree(struct rt_db_internal *ip)
 {
-    register struct rt_hf_internal *xip;
-
-    if (!resp) {
-	resp = &rt_uniresource;
-    }
+    struct rt_hf_internal *xip;
 
     RT_CK_DB_INTERNAL(ip);
     xip = (struct rt_hf_internal *)ip->idb_ptr;
@@ -2126,8 +2151,11 @@ rt_hf_ifree(struct rt_db_internal *ip, struct resource *resp)
  *
  */
 int
-rt_hf_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
+rt_hf_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 {
+    ps = ps; /* quellage */
+    if (ip) RT_CK_DB_INTERNAL(ip);
+
     return(0);			/* OK */
 }
 

@@ -43,7 +43,7 @@
 int
 ged_erase_all(struct ged *gedp, int argc, const char *argv[])
 {
-    register int i;
+    int i;
     static const char *usage = "objects(s)";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);

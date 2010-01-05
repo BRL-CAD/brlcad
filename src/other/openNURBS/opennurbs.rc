@@ -53,8 +53,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 4,0,2007,0718
- PRODUCTVERSION 4,0,2007,0718
+ FILEVERSION 4,0,2006,1206
+ PRODUCTVERSION 4,0,2006,1206
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -70,8 +70,8 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "CompanyName", "Robert McNeel & Associates"
-            VALUE "FileDescription", "Public openNURBS Dynamic Link Library"
-            VALUE "FileVersion", "4, 0, 2007, 0718"
+            VALUE "FileDescription", "openNURBS Dynamic Link Library"
+            VALUE "FileVersion", "4, 0, 2006, 1206"
             VALUE "InternalName", "openNURBS"
             VALUE "LegalCopyright", "Copyright 1993-2007 Robert McNeel & Associates. All Rights Reserved."
             VALUE "LegalTrademarks", "openNURBS is a trademark of Robert McNeel & Associates."
@@ -89,11 +89,11 @@ BEGIN
 #endif
 #endif
             VALUE "ProductName", "openNURBS"
-            VALUE "ProductVersion", "4, 0, 2007, 0718"
+            VALUE "ProductVersion", "4, 0, 2006, 1206"
 #ifdef _DEBUG
-            VALUE "openNURBSVersion", "200707189"
+            VALUE "openNURBSVersion", "200612069"
 #else
-            VALUE "openNURBSVersion", "200707180"
+            VALUE "openNURBSVersion", "200612060"
 #endif
         END
     END

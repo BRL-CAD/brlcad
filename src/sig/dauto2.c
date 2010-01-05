@@ -43,7 +43,7 @@ Usage: dauto2 [window_size (512)] < doubles\n";
 int main(int argc, char **argv)
 {
     int	i, j, n, L;
-    register int *dp1, *dp2;
+    int *dp1, *dp2;
     double	max1, max2, m, m2;
 
     if ( isatty(fileno(stdin)) || isatty(fileno(stdout)) ) {

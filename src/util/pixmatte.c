@@ -98,9 +98,9 @@ open_file(int i, char *name)
 {
     if ( name[0] == '=' )  {
 	/* Parse constant */
-	register char		*cp = name+1;
-	register unsigned char	*conp = &f_const[i][0];
-	register int		j;
+	char		*cp = name+1;
+	unsigned char	*conp = &f_const[i][0];
+	int		j;
 
 	/* premature null => atoi gives zeros */
 	for ( j=0; j < width; j++ )  {
@@ -143,11 +143,11 @@ open_file(int i, char *name)
  *			G E T _ A R G S
  */
 void
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int	c;
-    register int	seen_formula = 0;
-    register int	i;
+    int	c;
+    int	seen_formula = 0;
+    int	i;
 
     while ( (c = bu_getopt( argc, argv, "glenaw:" )) != EOF )  {
 	switch ( c )  {
@@ -248,14 +248,14 @@ main(int argc, char **argv)
     while (1)  {
 	unsigned char	*cb0, *cb1;	/* current input buf ptrs */
 	unsigned char	*cb2, *cb3;
-	register unsigned char	*obp; 	/* current output buf ptr */
+	unsigned char	*obp; 	/* current output buf ptr */
 	unsigned char	*ebuf;		/* end ptr in buf[0] */
 	int		len;
-	register int	i;
+	int	i;
 
 	len = CHUNK;
 	for ( i=0; i<NFILES; i++ )  {
-	    register int	got;
+	    int	got;
 
 	    if ( fp[i] == NULL )  continue;
 	    got = fread( buf[i], width, CHUNK, fp[i] );
@@ -276,8 +276,8 @@ main(int argc, char **argv)
 	     * Stated condition must hold for all input bytes
 	     * to select the foreground for output
 	     */
-	    register unsigned char	*ap, *bp;
-	    register unsigned char	*ep;		/* end ptr */
+	    unsigned char	*ap, *bp;
+	    unsigned char	*ep;		/* end ptr */
 
 	    if ( buf[0] != NULL )
 		ap = cb0;

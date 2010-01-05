@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -18,10 +17,10 @@
 
 static 
 void ON_BrepExtrudeHelper_ReserveSpace( 
-	  ON_Brep& brep, 
-	  int extruded_trim_count, 
-	  int cap_count 
-	  )
+          ON_Brep& brep, 
+          int extruded_trim_count, 
+          int cap_count 
+          )
 {
   if ( extruded_trim_count >= 0 && cap_count >= 0 )
   {
@@ -49,7 +48,7 @@ void ON_BrepExtrudeHelper_ReserveSpace(
 
 static
 ON_SumSurface* ON_BrepExtrudeHelper_MakeSumSrf( const ON_Curve& path_curve,
-						 const ON_BrepEdge& base_edge, BOOL bRev )
+                                                 const ON_BrepEdge& base_edge, ON_BOOL32 bRev )
 {
   ON_SumSurface* sum_srf = 0;
   // create side surface
@@ -71,7 +70,7 @@ ON_SumSurface* ON_BrepExtrudeHelper_MakeSumSrf( const ON_Curve& path_curve,
 
 static
 ON_NurbsSurface* ON_BrepExtrudeHelper_MakeConeSrf( const ON_3dPoint& apex_point,
-						 const ON_BrepEdge& edge, BOOL bRev )
+                                                 const ON_BrepEdge& edge, ON_BOOL32 bRev )
 {
   // The "s" parameter runs along the edge.
   // The "t" parameter is the ruling parameter;
@@ -94,9 +93,9 @@ ON_NurbsSurface* ON_BrepExtrudeHelper_MakeConeSrf( const ON_3dPoint& apex_point,
     for ( i = 0; i <= 16; i++ )
     {
       if ( !edge.EvPoint( edom.ParameterAt(i/16.0), pt, 0, &hint ) )
-	continue;
+        continue;
       if ( pt.DistanceTo(apex_point) > d )
-	d = pt.DistanceTo(apex_point);
+        d = pt.DistanceTo(apex_point);
     }
     if ( d > ON_SQRT_EPSILON )
       cone_srf->SetDomain(1,0.0,d);
@@ -110,13 +109,13 @@ ON_NurbsSurface* ON_BrepExtrudeHelper_MakeConeSrf( const ON_3dPoint& apex_point,
 }
 
 static
-BOOL ON_BrepExtrudeHelper_MakeSides(
-	  ON_Brep& brep,
-	  int loop_index,
-	  const ON_Curve& path_curve,
-	  BOOL bCap,
-	  ON_SimpleArray<int>& side_face_index
-	  )
+ON_BOOL32 ON_BrepExtrudeHelper_MakeSides(
+          ON_Brep& brep,
+          int loop_index,
+          const ON_Curve& path_curve,
+          ON_BOOL32 bCap,
+          ON_SimpleArray<int>& side_face_index
+          )
 {
   int lti, ti, i, vid[4], eid[4], bRev3d[4];
 
@@ -162,22 +161,22 @@ BOOL ON_BrepExtrudeHelper_MakeSides(
       ON_BrepTrim& trim = brep.m_T[ti];
       if ( trim.m_ei >= 0 &&  trim.m_ei < edge_count0 )
       {
-	const ON_BrepEdge& base_edge = brep.m_E[trim.m_ei];
+        const ON_BrepEdge& base_edge = brep.m_E[trim.m_ei];
 
-	// 5 September, 2003 Dale Lear
-	//   do not extrude seams - fixes rectangle slabe bug
-	if ( trim.m_type == ON_BrepTrim::seam )
-	{
-	  prev_face_index = -1;
-	  continue;
-	}
+        // 5 September, 2003 Dale Lear
+        //   do not extrude seams - fixes rectangle slabe bug
+        if ( trim.m_type == ON_BrepTrim::seam )
+        {
+          prev_face_index = -1;
+          continue;
+        }
 
-	// connect new face to existing topology on trim
-	vid[0] = trim.m_vi[1];
-	vid[1] = trim.m_vi[0];
-	eid[0] = base_edge.m_edge_index;
-	bRev3d[0] = (trim.m_bRev3d?false:true);
-	sum_srf = ON_BrepExtrudeHelper_MakeSumSrf( path_curve, base_edge, trim.m_bRev3d );
+        // connect new face to existing topology on trim
+        vid[0] = trim.m_vi[1];
+        vid[1] = trim.m_vi[0];
+        eid[0] = base_edge.m_edge_index;
+        bRev3d[0] = (trim.m_bRev3d?false:true);
+        sum_srf = ON_BrepExtrudeHelper_MakeSumSrf( path_curve, base_edge, trim.m_bRev3d );
       }
     }
     if ( !sum_srf )
@@ -203,7 +202,7 @@ BOOL ON_BrepExtrudeHelper_MakeSides(
       *side_face_index.Last() = side_face->m_face_index;
       prev_face_index = side_face->m_face_index;
       if ( first_face_east_trim_index < 0 )
-	first_face_east_trim_index = brep.m_L[ side_face->m_li[0] ].m_ti[1];
+        first_face_east_trim_index = brep.m_L[ side_face->m_li[0] ].m_ti[1];
     }
   }
 
@@ -222,12 +221,12 @@ bool ON_BrepExtrudeHelper_CheckPathCurve( const ON_Curve& path_curve, ON_3dVecto
 
 static 
 bool ON_BrepExtrudeHelper_MakeTopLoop( 
-	  ON_Brep& brep, 
-	  ON_BrepFace& top_face,
-	  int bottom_loop_index,
-	  const ON_3dVector path_vector,
-	  const int* side_face_index // array of brep.m_L[bottom_loop_index].m_ti.Count() face indices
-	  )
+          ON_Brep& brep, 
+          ON_BrepFace& top_face,
+          int bottom_loop_index,
+          const ON_3dVector path_vector,
+          const int* side_face_index // array of brep.m_L[bottom_loop_index].m_ti.Count() face indices
+          )
 {
   bool rc = true;
 
@@ -276,37 +275,37 @@ bool ON_BrepExtrudeHelper_MakeTopLoop(
       int lti_prev = (lti+loop_trim_count-1)%loop_trim_count;
       int lti_next = (lti+1)%loop_trim_count;
       if (   side_face_index[lti_prev] < 0 
-	   && side_face_index[lti_next] < 0 
-	   && top_vertex_index[lti] < 0
-	   && top_vertex_index[lti_next] < 0
-	   )
+           && side_face_index[lti_next] < 0 
+           && top_vertex_index[lti] < 0
+           && top_vertex_index[lti_next] < 0
+           )
       {
-	int bottom_ti_prev = bottom_loop.m_ti[lti_prev];
-	int bottom_ti      = bottom_loop.m_ti[lti];
-	int bottom_ti_next = bottom_loop.m_ti[lti_next];
-	if (    bottom_ti >= 0      && bottom_ti < brep.m_T.Count() 
-	     && bottom_ti_prev >= 0 && bottom_ti_prev < brep.m_T.Count() 
-	     && bottom_ti_next >= 0 && bottom_ti_next < brep.m_T.Count() 
-	   )
-	{
-	  const ON_BrepTrim& bottom_trim_prev = brep.m_T[bottom_ti_prev];
-	  const ON_BrepTrim& bottom_trim = brep.m_T[bottom_ti];
-	  const ON_BrepTrim& bottom_trim_next = brep.m_T[bottom_ti_next];
-	  if (    ON_BrepTrim::seam == bottom_trim_prev.m_type
-	       && ON_BrepTrim::singular == bottom_trim.m_type
-	       && ON_BrepTrim::seam == bottom_trim_next.m_type 
-	       && bottom_trim.m_vi[0] == bottom_trim.m_vi[1]
-	       )
-	  {
-	    int vi = bottom_trim.m_vi[0];
-	    if ( vi >= 0 && vi < brep.m_V.Count() )
-	    {
-	      ON_BrepVertex& top_vertex = brep.NewVertex(brep.m_V[vi].point+path_vector,0.0);
-	      top_vertex_index[lti] = top_vertex.m_vertex_index;
-	      top_vertex_index[lti_next] = top_vertex_index[lti];
-	    }
-	  }
-	}
+        int bottom_ti_prev = bottom_loop.m_ti[lti_prev];
+        int bottom_ti      = bottom_loop.m_ti[lti];
+        int bottom_ti_next = bottom_loop.m_ti[lti_next];
+        if (    bottom_ti >= 0      && bottom_ti < brep.m_T.Count() 
+             && bottom_ti_prev >= 0 && bottom_ti_prev < brep.m_T.Count() 
+             && bottom_ti_next >= 0 && bottom_ti_next < brep.m_T.Count() 
+           )
+        {
+          const ON_BrepTrim& bottom_trim_prev = brep.m_T[bottom_ti_prev];
+          const ON_BrepTrim& bottom_trim = brep.m_T[bottom_ti];
+          const ON_BrepTrim& bottom_trim_next = brep.m_T[bottom_ti_next];
+          if (    ON_BrepTrim::seam == bottom_trim_prev.m_type
+               && ON_BrepTrim::singular == bottom_trim.m_type
+               && ON_BrepTrim::seam == bottom_trim_next.m_type 
+               && bottom_trim.m_vi[0] == bottom_trim.m_vi[1]
+               )
+          {
+            int vi = bottom_trim.m_vi[0];
+            if ( vi >= 0 && vi < brep.m_V.Count() )
+            {
+              ON_BrepVertex& top_vertex = brep.NewVertex(brep.m_V[vi].point+path_vector,0.0);
+              top_vertex_index[lti] = top_vertex.m_vertex_index;
+              top_vertex_index[lti_next] = top_vertex_index[lti];
+            }
+          }
+        }
       }
     }
   }
@@ -324,35 +323,35 @@ bool ON_BrepExtrudeHelper_MakeTopLoop(
 
       for ( lti = 0; lti < loop_trim_count; lti++ )
       {
-	if ( top_vertex_index[lti] == -1 )
-	{
-	  for ( i = lti+1; i < loop_trim_count; i++ )
-	  {
-	    if ( ON_BrepTrim::singular != brep.m_T[bottom_loop.m_ti[i-1]].m_type )
-	      break;
-	    if ( top_vertex_index[i] >= 0 )
-	    {
-	      top_vertex_index[lti] = top_vertex_index[i];
-	      bKeepChecking = true; 
-	      break;
-	    }
-	  }
-	}
+        if ( top_vertex_index[lti] == -1 )
+        {
+          for ( i = lti+1; i < loop_trim_count; i++ )
+          {
+            if ( ON_BrepTrim::singular != brep.m_T[bottom_loop.m_ti[i-1]].m_type )
+              break;
+            if ( top_vertex_index[i] >= 0 )
+            {
+              top_vertex_index[lti] = top_vertex_index[i];
+              bKeepChecking = true; 
+              break;
+            }
+          }
+        }
 
-	if ( top_vertex_index[lti] == -1 )
-	{
-	  for ( i = lti-1; i >= 0; i-- )
-	  {
-	    if ( ON_BrepTrim::singular != brep.m_T[bottom_loop.m_ti[i+1]].m_type )
-	      break;
-	    if ( top_vertex_index[i] >= 0 )
-	    {
-	      top_vertex_index[lti] = top_vertex_index[i];
-	      bKeepChecking = true; 
-	      break;
-	    }
-	  }
-	}
+        if ( top_vertex_index[lti] == -1 )
+        {
+          for ( i = lti-1; i >= 0; i-- )
+          {
+            if ( ON_BrepTrim::singular != brep.m_T[bottom_loop.m_ti[i+1]].m_type )
+              break;
+            if ( top_vertex_index[i] >= 0 )
+            {
+              top_vertex_index[lti] = top_vertex_index[i];
+              bKeepChecking = true; 
+              break;
+            }
+          }
+        }
       }
     }
   }
@@ -418,15 +417,15 @@ bool ON_BrepExtrudeHelper_MakeTopLoop(
     for( mate_lti = lti+1; mate_lti < loop_trim_count; mate_lti++ )
     {
       if ( top_edge_index[mate_lti] != -1  )
-	continue;
+        continue;
       int bottom_mate_ti = bottom_loop.m_ti[mate_lti];
       if ( bottom_mate_ti < 0 || bottom_mate_ti >= brep.m_T.Count() )
-	continue;
+        continue;
       const ON_BrepTrim& bottom_mate_trim = brep.m_T[bottom_mate_ti];
       if ( bottom_mate_trim.m_type != ON_BrepTrim::seam )
-	continue;
+        continue;
       if ( bottom_mate_trim.m_ei != bottom_trim.m_ei )
-	continue;
+        continue;
       top_edge_index[mate_lti] = top_edge.m_edge_index;
       top_trim_bRev3d[mate_lti] = bottom_mate_trim.m_bRev3d?true:false;
       break;
@@ -488,11 +487,11 @@ bool ON_BrepExtrudeHelper_CheckLoop( const ON_Brep& brep, int loop_index )
 
 static
 bool ON_BrepExtrudeHelper_MakeCap(
-	  ON_Brep& brep,
-	  int bottom_loop_index,
-	  const ON_3dVector path_vector,
-	  const int* side_face_index
-	  )
+          ON_Brep& brep,
+          int bottom_loop_index,
+          const ON_3dVector path_vector,
+          const int* side_face_index
+          )
 {
   bool bCap = true;
   // make cap
@@ -538,11 +537,11 @@ bool ON_BrepExtrudeHelper_MakeCap(
 
 
 int ON_BrepExtrudeFace( 
-	  ON_Brep& brep,
-	  int face_index,
-	  const ON_Curve& path_curve,
-	  bool bCap
-	  )
+          ON_Brep& brep,
+          int face_index,
+          const ON_Curve& path_curve,
+          bool bCap
+          )
 {
   int rc = 0; // returns 1 for success with no cap, 2 for success with a cap
 
@@ -579,9 +578,9 @@ int ON_BrepExtrudeFace(
     {
       li = brep.m_F[face_index].m_li[fli];
       if ( li < 0 || li >= loop_count0 )
-	return false;
+        return false;
       if ( !ON_BrepExtrudeHelper_CheckLoop( brep, li ) )
-	continue;
+        continue;
       new_side_trim_count += brep.m_L[li].m_ti.Count();
     }
     if ( new_side_trim_count == 0 )
@@ -601,17 +600,17 @@ int ON_BrepExtrudeFace(
       side_face_index_loop_mark.Append( side_face_index.Count() );
       li = face.m_li[fli];
       if ( !ON_BrepExtrudeHelper_CheckLoop( brep, li ) )
-	continue;
+        continue;
       ON_BrepLoop& loop = brep.m_L[li];
       if ( bCap && loop.m_type == ON_BrepLoop::outer )
       {
-	if ( outer_loop_index >= 0 )
-	  bCap = false;
-	else 
-	{
-	  outer_loop_index = li;
-	  outer_fli = fli;
-	}
+        if ( outer_loop_index >= 0 )
+          bCap = false;
+        else 
+        {
+          outer_loop_index = li;
+          outer_fli = fli;
+        }
       }
       rc = ON_BrepExtrudeHelper_MakeSides( brep, li, path_curve, bCap, side_face_index );
     }
@@ -620,34 +619,34 @@ int ON_BrepExtrudeFace(
     {
       const int face_count1 = brep.m_F.Count();
       bCap = ON_BrepExtrudeHelper_MakeCap( 
-		  brep, 
-		  outer_loop_index, 
-		  path_vector, 
-		  side_face_index.Array() + side_face_index_loop_mark[outer_fli] );
+                  brep, 
+                  outer_loop_index, 
+                  path_vector, 
+                  side_face_index.Array() + side_face_index_loop_mark[outer_fli] );
       if ( bCap && brep.m_F.Count() > face_count1)
       {
-	// put inner bondaries on the cap
-	rc = 2;
+        // put inner bondaries on the cap
+        rc = 2;
 
-	ON_BrepFace& cap_face = brep.m_F[brep.m_F.Count()-1];
-	for ( fli = 0; fli < face_loop_count && rc; fli++ )
-	{
-	  li = face.m_li[fli];
-	  if ( li == outer_loop_index )
-	    continue;
-	  if ( !ON_BrepExtrudeHelper_CheckLoop( brep, li ) )
-	    continue;
-	  if ( ON_BrepExtrudeHelper_MakeTopLoop( 
-		      brep, 
-		      cap_face, 
-		      li, 
-		      path_vector,
-		      side_face_index.Array() + side_face_index_loop_mark[fli] ) )
-	  {
-	    ON_BrepLoop& top_loop = brep.m_L[brep.m_L.Count()-1];
-	    top_loop.m_type = brep.m_L[li].m_type;
-	  }
-	}
+        ON_BrepFace& cap_face = brep.m_F[brep.m_F.Count()-1];
+        for ( fli = 0; fli < face_loop_count && rc; fli++ )
+        {
+          li = face.m_li[fli];
+          if ( li == outer_loop_index )
+            continue;
+          if ( !ON_BrepExtrudeHelper_CheckLoop( brep, li ) )
+            continue;
+          if ( ON_BrepExtrudeHelper_MakeTopLoop( 
+                      brep, 
+                      cap_face, 
+                      li, 
+                      path_vector,
+                      side_face_index.Array() + side_face_index_loop_mark[fli] ) )
+          {
+            ON_BrepLoop& top_loop = brep.m_L[brep.m_L.Count()-1];
+            top_loop.m_type = brep.m_L[li].m_type;
+          }
+        }
       }
     }
 
@@ -655,7 +654,7 @@ int ON_BrepExtrudeFace(
     {
       for ( int fi = face_count0; fi < brep.m_F.Count(); fi++ )
       {
-	brep.FlipFace(brep.m_F[fi]);
+        brep.FlipFace(brep.m_F[fi]);
       }
     }
   }
@@ -665,11 +664,11 @@ int ON_BrepExtrudeFace(
 
 
 int ON_BrepExtrudeLoop( 
-	  ON_Brep& brep,
-	  int loop_index,
-	  const ON_Curve& path_curve,
-	  bool bCap
-	  )
+          ON_Brep& brep,
+          int loop_index,
+          const ON_Curve& path_curve,
+          bool bCap
+          )
 {
   ON_SimpleArray<int> side_face_index; // index of new face above brep.m_L[loop_index].m_ti[lti]
   ON_3dVector path_vector;
@@ -709,10 +708,10 @@ int ON_BrepExtrudeLoop(
 
 
 int ON_BrepExtrudeEdge( 
-	  ON_Brep& brep,
-	  int edge_index,
-	  const ON_Curve& path_curve
-	  )
+          ON_Brep& brep,
+          int edge_index,
+          const ON_Curve& path_curve
+          )
 {
   ON_3dVector path_vector;
 
@@ -724,7 +723,7 @@ int ON_BrepExtrudeEdge(
 
   // make sides
   ON_SumSurface* sum_srf = ON_BrepExtrudeHelper_MakeSumSrf( 
-			      path_curve, brep.m_E[edge_index], false );
+                              path_curve, brep.m_E[edge_index], false );
 
   if ( !sum_srf )
     return false;
@@ -751,10 +750,10 @@ int ON_BrepExtrudeEdge(
 
 
 bool ON_BrepExtrude( 
-	  ON_Brep& brep,
-	  const ON_Curve& path_curve,
-	  bool bCap
-	  )
+          ON_Brep& brep,
+          const ON_Curve& path_curve,
+          bool bCap
+          )
 {
   ON_Workspace ws;
   const int vcount0 = brep.m_V.Count();
@@ -824,31 +823,31 @@ bool ON_BrepExtrude(
     {
       if ( bSideEdge[ei] )
       {
-	const ON_BrepEdge& bottome = brep.m_E[ei];
-	int bottomvi0 = bottome.m_vi[0];
-	if ( bottomvi0 < 0 || bottomvi0 >= vcount0 )
-	{
-	  bOK = false;
-	  break;
-	}
-	int bottomvi1 = bottome.m_vi[1];
-	if ( bottomvi1 < 0 || bottomvi1 >= vcount0 )
-	{
-	  bOK = false;
-	  break;
-	}
-	if ( !topvimap[bottomvi0] )
-	{
-	  const ON_BrepVertex& bottomv = brep.m_V[bottomvi0];
-	  ON_BrepVertex& topv = brep.NewVertex(bottomv.point+height,bottomv.m_tolerance);
-	  topvimap[bottomvi0] = topv.m_vertex_index;
-	}
-	if ( !topvimap[bottomvi1] )
-	{
-	  const ON_BrepVertex& bottomv = brep.m_V[bottomvi1];
-	  ON_BrepVertex& topv = brep.NewVertex(bottomv.point+height,bottomv.m_tolerance);
-	  topvimap[bottomvi1] = topv.m_vertex_index;
-	}
+        const ON_BrepEdge& bottome = brep.m_E[ei];
+        int bottomvi0 = bottome.m_vi[0];
+        if ( bottomvi0 < 0 || bottomvi0 >= vcount0 )
+        {
+          bOK = false;
+          break;
+        }
+        int bottomvi1 = bottome.m_vi[1];
+        if ( bottomvi1 < 0 || bottomvi1 >= vcount0 )
+        {
+          bOK = false;
+          break;
+        }
+        if ( !topvimap[bottomvi0] )
+        {
+          const ON_BrepVertex& bottomv = brep.m_V[bottomvi0];
+          ON_BrepVertex& topv = brep.NewVertex(bottomv.point+height,bottomv.m_tolerance);
+          topvimap[bottomvi0] = topv.m_vertex_index;
+        }
+        if ( !topvimap[bottomvi1] )
+        {
+          const ON_BrepVertex& bottomv = brep.m_V[bottomvi1];
+          ON_BrepVertex& topv = brep.NewVertex(bottomv.point+height,bottomv.m_tolerance);
+          topvimap[bottomvi1] = topv.m_vertex_index;
+        }
       }
     }
   }
@@ -866,8 +865,8 @@ bool ON_BrepExtrude(
       ON_Curve* c3 = bottome.DuplicateCurve();
       if ( !c3 )
       {
-	bOK = false;
-	break;
+        bOK = false;
+        break;
       }
       c3->Transform(tr);
       int c3i = brep.AddEdgeCurve(c3);
@@ -886,21 +885,21 @@ bool ON_BrepExtrude(
     {
       if ( bSideEdge[bottomv.m_ei[vei]] && topvimap[vi] )
       {
-	ON_BrepVertex& topv = brep.m_V[topvimap[vi]];
-	ON_Curve* c3 = path_curve.DuplicateCurve();
-	if ( !c3 )
-	{
-	  bOK = false;
-	}
-	else
-	{
-	  ON_3dVector D = bottomv.point - PathStart;
-	  c3->Translate(D);
-	  int c3i = brep.AddEdgeCurve(c3);
-	  const ON_BrepEdge& e = brep.NewEdge(bottomv,topv,c3i,0,0.0);
-	  sideveimap[vi] = e.m_edge_index;
-	}
-	break;
+        ON_BrepVertex& topv = brep.m_V[topvimap[vi]];
+        ON_Curve* c3 = path_curve.DuplicateCurve();
+        if ( !c3 )
+        {
+          bOK = false;
+        }
+        else
+        {
+          ON_3dVector D = bottomv.point - PathStart;
+          c3->Translate(D);
+          int c3i = brep.AddEdgeCurve(c3);
+          const ON_BrepEdge& e = brep.NewEdge(bottomv,topv,c3i,0,0.0);
+          sideveimap[vi] = e.m_edge_index;
+        }
+        break;
       }
     }
   }
@@ -914,8 +913,8 @@ bool ON_BrepExtrude(
       ON_Surface* srf = bottomf.DuplicateSurface();
       if ( !srf )
       {
-	bOK = false;
-	break;
+        bOK = false;
+        break;
       }
       srf->Transform(tr);
       int si = brep.AddSurface(srf);
@@ -925,40 +924,40 @@ bool ON_BrepExtrude(
       topf.m_li.Reserve(loop_count);
       for ( int fli = 0; fli < loop_count; fli++ )
       {
-	const ON_BrepLoop& bottoml = brep.m_L[bottomf.m_li[fli]];
-	ON_BrepLoop& topl = brep.NewLoop(bottoml.m_type,topf);
-	const int loop_trim_count = bottoml.m_ti.Count();
-	topl.m_ti.Reserve(loop_trim_count);
-	for ( int lti = 0; lti < loop_trim_count; lti++ )
-	{
-	  const ON_BrepTrim& bottomt = brep.m_T[bottoml.m_ti[lti]];
-	  ON_NurbsCurve* c2 = ON_NurbsCurve::New();
-	  if ( !bottomt.GetNurbForm(*c2) )
-	  {
-	    delete c2;
-	    bOK = false;
-	    break;
-	  }
-	  int c2i = brep.AddTrimCurve(c2);
-	  ON_BrepTrim* topt = 0;
-	  if ( bottomt.m_ei >= 0 )
-	  {
-	    ON_BrepEdge& tope = brep.m_E[topeimap[bottomt.m_ei]];
-	    topt = &brep.NewTrim(tope,bottomt.m_bRev3d,topl,c2i);
-	  }
-	  else
-	  {
-	    // singular trim
-	    ON_BrepVertex& topv = brep.m_V[topvimap[bottomt.m_vi[0]]];
-	    topt = &brep.NewSingularTrim(topv,topl,bottomt.m_iso,c2i);
-	  }
-	  topt->m_tolerance[0] = bottomt.m_tolerance[0];
-	  topt->m_tolerance[1] = bottomt.m_tolerance[1];
-	  topt->m_pbox = bottomt.m_pbox;
-	  topt->m_type = bottomt.m_type;
-	  topt->m_iso = bottomt.m_iso;
-	}
-	topl.m_pbox = bottoml.m_pbox;
+        const ON_BrepLoop& bottoml = brep.m_L[bottomf.m_li[fli]];
+        ON_BrepLoop& topl = brep.NewLoop(bottoml.m_type,topf);
+        const int loop_trim_count = bottoml.m_ti.Count();
+        topl.m_ti.Reserve(loop_trim_count);
+        for ( int lti = 0; lti < loop_trim_count; lti++ )
+        {
+          const ON_BrepTrim& bottomt = brep.m_T[bottoml.m_ti[lti]];
+          ON_NurbsCurve* c2 = ON_NurbsCurve::New();
+          if ( !bottomt.GetNurbForm(*c2) )
+          {
+            delete c2;
+            bOK = false;
+            break;
+          }
+          int c2i = brep.AddTrimCurve(c2);
+          ON_BrepTrim* topt = 0;
+          if ( bottomt.m_ei >= 0 )
+          {
+            ON_BrepEdge& tope = brep.m_E[topeimap[bottomt.m_ei]];
+            topt = &brep.NewTrim(tope,bottomt.m_bRev3d,topl,c2i);
+          }
+          else
+          {
+            // singular trim
+            ON_BrepVertex& topv = brep.m_V[topvimap[bottomt.m_vi[0]]];
+            topt = &brep.NewSingularTrim(topv,topl,bottomt.m_iso,c2i);
+          }
+          topt->m_tolerance[0] = bottomt.m_tolerance[0];
+          topt->m_tolerance[1] = bottomt.m_tolerance[1];
+          topt->m_pbox = bottomt.m_pbox;
+          topt->m_type = bottomt.m_type;
+          topt->m_iso = bottomt.m_iso;
+        }
+        topl.m_pbox = bottoml.m_pbox;
       }
     }
   }
@@ -978,47 +977,47 @@ bool ON_BrepExtrude(
       vid[3] = topvimap[vid[0]];
       if ( sideveimap[vid[0]] && sideveimap[vid[1]] )
       {
-	ON_BrepEdge& leftedge = brep.m_E[sideveimap[vid[0]]];
-	ON_BrepEdge& rightedge = brep.m_E[sideveimap[vid[1]]];
-	ON_Curve* cx = bottome.DuplicateCurve();
-	if ( !cx )
-	{
-	  bOK = false;
-	  break;
-	}
-	ON_Curve* cy = leftedge.DuplicateCurve();
-	if ( !cy )
-	{
-	  delete cx;
-	  bOK = false;
-	  break;
-	}
-	ON_SumSurface* srf = new ON_SumSurface();
-	srf->m_curve[0] = cx;
-	srf->m_curve[1] = cy;
-	srf->m_basepoint = srf->m_curve[1]->PointAtStart();
-	srf->m_basepoint.x = -srf->m_basepoint.x;
-	srf->m_basepoint.y = -srf->m_basepoint.y;
-	srf->m_basepoint.z = -srf->m_basepoint.z;
-	eid[0] = bottome.m_edge_index;
-	eid[1] = rightedge.m_edge_index;
-	eid[2] = tope.m_edge_index;
-	eid[3] = leftedge.m_edge_index;
-	ON_BrepFace* face = brep.NewFace(srf,vid,eid,bRev3d);
-	if ( !face )
-	{
-	  bOK = false;
-	  break;
-	}
-	else if ( bottome.m_ti.Count() == 2 )
-	{
-	  const ON_BrepTrim& trim0 = brep.m_T[bottome.m_ti[0]];
-	  const ON_BrepTrim& trim1 = brep.m_T[bottome.m_ti[1]];
-	  if ( trim0.m_bRev3d == trim1.m_bRev3d )
-	  {
-	    face->m_bRev = true;
-	  }          
-	}
+        ON_BrepEdge& leftedge = brep.m_E[sideveimap[vid[0]]];
+        ON_BrepEdge& rightedge = brep.m_E[sideveimap[vid[1]]];
+        ON_Curve* cx = bottome.DuplicateCurve();
+        if ( !cx )
+        {
+          bOK = false;
+          break;
+        }
+        ON_Curve* cy = leftedge.DuplicateCurve();
+        if ( !cy )
+        {
+          delete cx;
+          bOK = false;
+          break;
+        }
+        ON_SumSurface* srf = new ON_SumSurface();
+        srf->m_curve[0] = cx;
+        srf->m_curve[1] = cy;
+        srf->m_basepoint = srf->m_curve[1]->PointAtStart();
+        srf->m_basepoint.x = -srf->m_basepoint.x;
+        srf->m_basepoint.y = -srf->m_basepoint.y;
+        srf->m_basepoint.z = -srf->m_basepoint.z;
+        eid[0] = bottome.m_edge_index;
+        eid[1] = rightedge.m_edge_index;
+        eid[2] = tope.m_edge_index;
+        eid[3] = leftedge.m_edge_index;
+        ON_BrepFace* face = brep.NewFace(srf,vid,eid,bRev3d);
+        if ( !face )
+        {
+          bOK = false;
+          break;
+        }
+        else if ( bottome.m_ti.Count() == 2 )
+        {
+          const ON_BrepTrim& trim0 = brep.m_T[bottome.m_ti[0]];
+          const ON_BrepTrim& trim1 = brep.m_T[bottome.m_ti[1]];
+          if ( trim0.m_bRev3d == trim1.m_bRev3d )
+          {
+            face->m_bRev = true;
+          }          
+        }
       }
     }
   }
@@ -1037,10 +1036,10 @@ bool ON_BrepExtrude(
 
 
 int ON_BrepExtrudeVertex( 
-	  ON_Brep& brep,
-	  int vertex_index,
-	  const ON_Curve& path_curve
-	  )
+          ON_Brep& brep,
+          int vertex_index,
+          const ON_Curve& path_curve
+          )
 {
   ON_3dVector path_vector;
   if ( vertex_index < 0 && vertex_index >= brep.m_V.Count() )
@@ -1060,10 +1059,10 @@ int ON_BrepExtrudeVertex(
 
 
 int ON_BrepConeFace( 
-	  ON_Brep& brep,
-	  int face_index,
-	  ON_3dPoint apex_point
-	  )
+          ON_Brep& brep,
+          int face_index,
+          ON_3dPoint apex_point
+          )
 {
   int rc = 0; // returns 1 for success with no cap, 2 for success with a cap
 
@@ -1093,9 +1092,9 @@ int ON_BrepConeFace(
     {
       li = brep.m_F[face_index].m_li[fli];
       if ( li < 0 || li >= loop_count0 )
-	return false;
+        return false;
       if ( !ON_BrepExtrudeHelper_CheckLoop( brep, li ) )
-	continue;
+        continue;
       new_side_trim_count += brep.m_L[li].m_ti.Count();
     }
     if ( new_side_trim_count == 0 )
@@ -1112,7 +1111,7 @@ int ON_BrepConeFace(
     {
       li = face.m_li[fli];
       if ( !ON_BrepExtrudeHelper_CheckLoop( brep, li ) )
-	continue;
+        continue;
 
       rc = ON_BrepConeLoop( brep, li, apex_point );
     }
@@ -1123,10 +1122,10 @@ int ON_BrepConeFace(
 
 
 bool ON_BrepConeLoop( 
-	  ON_Brep& brep,
-	  int loop_index,
-	  ON_3dPoint apex_point
-	  )
+          ON_Brep& brep,
+          int loop_index,
+          ON_3dPoint apex_point
+          )
 {
   if ( loop_index < 0 && loop_index >= brep.m_L.Count() )
     return false;
@@ -1176,14 +1175,14 @@ bool ON_BrepConeLoop(
       ON_BrepTrim& trim = brep.m_T[ti];
       if ( trim.m_ei >= 0 &&  trim.m_ei < edge_count0 )
       {
-	const ON_BrepEdge& base_edge = brep.m_E[trim.m_ei];
+        const ON_BrepEdge& base_edge = brep.m_E[trim.m_ei];
 
-	// connect new face to existing topology on trim
-	vid[0] = trim.m_vi[1];
-	vid[1] = trim.m_vi[0];
-	eid[0] = base_edge.m_edge_index;
-	bRev3d[0] = (trim.m_bRev3d?false:true);
-	cone_srf = ON_BrepExtrudeHelper_MakeConeSrf( apex_point, base_edge, bRev3d[0] );
+        // connect new face to existing topology on trim
+        vid[0] = trim.m_vi[1];
+        vid[1] = trim.m_vi[0];
+        eid[0] = base_edge.m_edge_index;
+        bRev3d[0] = (trim.m_bRev3d?false:true);
+        cone_srf = ON_BrepExtrudeHelper_MakeConeSrf( apex_point, base_edge, bRev3d[0] );
       }
     }
     if ( !cone_srf )
@@ -1210,7 +1209,7 @@ bool ON_BrepConeLoop(
     {
       prev_face_index = side_face->m_face_index;
       if ( first_face_east_trim_index < 0 )
-	first_face_east_trim_index = brep.m_L[ side_face->m_li[0] ].m_ti[1];
+        first_face_east_trim_index = brep.m_L[ side_face->m_li[0] ].m_ti[1];
     }
   }
 
@@ -1220,10 +1219,10 @@ bool ON_BrepConeLoop(
 
 
 int ON_BrepConeEdge( 
-	  ON_Brep& brep,
-	  int edge_index,
-	  ON_3dPoint apex_point
-	  )
+          ON_Brep& brep,
+          int edge_index,
+          ON_3dPoint apex_point
+          )
 {
   //ON_3dVector path_vector;
 
@@ -1232,7 +1231,7 @@ int ON_BrepConeEdge(
 
   // make sides
   ON_NurbsSurface* cone_srf = ON_BrepExtrudeHelper_MakeConeSrf( 
-			      apex_point, brep.m_E[edge_index], false );
+                              apex_point, brep.m_E[edge_index], false );
 
   if ( !cone_srf )
     return false;

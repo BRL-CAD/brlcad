@@ -530,10 +530,10 @@ rt_vlist_solid(
     }
     if (ret < 0) {
 	bu_log("rt_vlist_solid(%s): ft_plot() failure\n", stp->st_name);
-	rt_db_free_internal(&intern, resp);
+	rt_db_free_internal(&intern);
 	return(-2);
     }
-    rt_db_free_internal(&intern, resp);
+    rt_db_free_internal(&intern);
 
     return 0;
 }
@@ -1339,7 +1339,7 @@ rt_find_path(struct db_i *dbip,
 		}
 		comb = (struct rt_comb_internal *)intern.idb_ptr;
 		rt_find_path(dbip, comb->tree, end, paths, curr_path, resp);
-		rt_db_free_internal(&intern, resp);
+		rt_db_free_internal(&intern);
 	    }
 	    break;
 	case OP_UNION:
@@ -1404,7 +1404,7 @@ rt_find_paths(struct db_i *dbip,
 
     comb = (struct rt_comb_internal *)intern.idb_ptr;
     rt_find_path(dbip, comb->tree, end, paths, &path, resp);
-    rt_db_free_internal(&intern, resp);
+    rt_db_free_internal(&intern);
 
     return(0);
 }

@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -38,19 +37,19 @@ public:
 
   ON_Ellipse& operator=(const ON_Circle&);
 
-  BOOL Create(
+  ON_BOOL32 Create(
     const ON_Plane&,  // point on the plane
     double, double     // radii for x and y vectors
     );
 
-  BOOL Create(
+  ON_BOOL32 Create(
     const ON_Circle&
     );
 
-  BOOL IsValid() const; // returns TRUE if all fields contain reasonable
-			// information and equation jibes with point and Z.
+  ON_BOOL32 IsValid() const; // returns true if all fields contain reasonable
+                        // information and equation jibes with point and Z.
 
-  BOOL IsCircle() const; // returns TRUE is ellipse is a circle
+  ON_BOOL32 IsCircle() const; // returns true is ellipse is a circle
 
   double Radius( 
     int // 0 = x axis radius, 1 = y axis radius
@@ -61,7 +60,7 @@ public:
 
   /*
   Returns:
-    Distance between foci, commanly called "2c".
+    Distance from the center to a focus, commonly called "c".
   */
   double FocalDistance() const;
 
@@ -72,54 +71,54 @@ public:
   // evaluate parameters and return point
   ON_3dPoint  PointAt( double ) const;
   ON_3dVector DerivativeAt( 
-		 int, // desired derivative ( >= 0 )
-		 double // parameter
-		 ) const;
+                 int, // desired derivative ( >= 0 )
+                 double // parameter
+                 ) const;
 
   ON_3dVector TangentAt( double ) const;  // returns unit tangent
   ON_3dVector CurvatureAt( double ) const;  // returns curvature vector
 
   // returns parameters of point on ellipse that is closest to given point
-  BOOL ClosestPointTo( 
-	 const ON_3dPoint&, 
-	 double*
-	 ) const;
+  ON_BOOL32 ClosestPointTo( 
+         const ON_3dPoint&, 
+         double*
+         ) const;
   // returns point on ellipse that is closest to given point
   ON_3dPoint ClosestPointTo( 
-	 const ON_3dPoint& 
-	 ) const;
+         const ON_3dPoint& 
+         ) const;
 
   // evaluate ellipse's implicit equation in plane
   double EquationAt( const ON_2dPoint& ) const;
   ON_2dVector GradientAt( const ON_2dPoint& ) const;
 
   // rotate ellipse about its center
-  BOOL Rotate(
-	double,              // sin(angle)
-	double,              // cos(angle)
-	const ON_3dVector&  // axis of rotation
-	);
-  BOOL Rotate(
-	double,              // angle in radians
-	const ON_3dVector&  // axis of rotation
-	);
+  ON_BOOL32 Rotate(
+        double,              // sin(angle)
+        double,              // cos(angle)
+        const ON_3dVector&  // axis of rotation
+        );
+  ON_BOOL32 Rotate(
+        double,              // angle in radians
+        const ON_3dVector&  // axis of rotation
+        );
 
   // rotate ellipse about a point and axis
-  BOOL Rotate(
-	double,              // sin(angle)
-	double,              // cos(angle)
-	const ON_3dVector&, // axis of rotation
-	const ON_3dPoint&   // center of rotation
-	);
-  BOOL Rotate(
-	double,              // angle in radians
-	const ON_3dVector&, // axis of rotation
-	const ON_3dPoint&   // center of rotation
-	);
+  ON_BOOL32 Rotate(
+        double,              // sin(angle)
+        double,              // cos(angle)
+        const ON_3dVector&, // axis of rotation
+        const ON_3dPoint&   // center of rotation
+        );
+  ON_BOOL32 Rotate(
+        double,              // angle in radians
+        const ON_3dVector&, // axis of rotation
+        const ON_3dPoint&   // center of rotation
+        );
 
-  BOOL Translate(
-	const ON_3dVector&
-	);
+  ON_BOOL32 Translate(
+        const ON_3dVector&
+        );
 
   // parameterization of NURBS curve does not match ellipse's transcendental paramaterization
   int GetNurbForm( ON_NurbsCurve& ) const; // returns 0=failure, 2=success

@@ -39,9 +39,9 @@ RationalBSplineSurface::RationalBSplineSurface() {
 	id = 0;
 }
 
-RationalBSplineSurface::RationalBSplineSurface(STEPWrapper *sw,int STEPid) {
+RationalBSplineSurface::RationalBSplineSurface(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 RationalBSplineSurface::~RationalBSplineSurface() {
@@ -59,7 +59,7 @@ RationalBSplineSurface::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) 
 
 	// load base class attributes
 	if ( !BSplineSurface::Load(sw,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::BSplineSurface." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::BSplineSurface." << std::endl;
 		return false;
 	}
 
@@ -93,7 +93,7 @@ RationalBSplineSurface::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) 
 			}
 			*/
 		} else {
-			cout << CLASSNAME << ": Error loading RationalBSplineSurface(weights_data)." << endl;
+			std::cout << CLASSNAME << ": Error loading RationalBSplineSurface(weights_data)." << std::endl;
 			return false;
 		}
 	}
@@ -103,21 +103,21 @@ RationalBSplineSurface::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) 
 
 void
 RationalBSplineSurface::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << name << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	BSplineSurface::Print(level);
 
-	TAB(level); cout << "weights_data:" << endl;
+	TAB(level); std::cout << "weights_data:" << std::endl;
 	LIST_OF_LIST_OF_REALS::iterator i;
 	for(i=weights_data.begin();i!=weights_data.end();i++) {
 		LIST_OF_REALS::iterator j;
 		TAB(level);
 		for(j=(*i)->begin();j!=(*i)->end();j++) {
-			cout << " " << (*j);
+			std::cout << " " << (*j);
 		}
-		cout << endl;
+		std::cout << std::endl;
 	}
 }
 STEPEntity *
@@ -129,7 +129,7 @@ RationalBSplineSurface::Create(STEPWrapper *sw,SCLP23(Application_instance) *sse
 		Factory::AddObject(object);
 
 		if (!object->Load(sw,sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

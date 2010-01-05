@@ -89,14 +89,12 @@ struct fpi {
 #define NMG_FPI_TOUCHED 27
 #define NMG_FPI_MISSED  32768
 
-#ifdef USE_PROTOTYPES
 static int nmg_class_pt_vu(struct fpi *fpi, struct vertexuse *vu);
-
 static struct edge_info *nmg_class_pt_eu(struct fpi *fpi, struct edgeuse *eu, struct edge_info *edge_list, const int in_or_out_only);
 static int compute_loop_class(struct fpi *fpi, const struct loopuse *lu, struct edge_info *edge_list);
 static int nmg_class_pt_lu(struct loopuse *lu, struct fpi *fpi, const int in_or_out_only);
 int nmg_class_pt_fu_except(const point_t pt, const struct faceuse *fu, const struct loopuse *ignore_lu, void (*eu_func)(), void (*vu_func)(), const char *priv, const int call_on_hits, const int in_or_out_only, const struct bn_tol *tol);
-#endif
+
 
 /**
  * B N _ D I S T S Q _ P T 3 _ L S E G 3 _ J R A
@@ -693,10 +691,12 @@ nmg_class_pt_eu(struct fpi *fpi, struct edgeuse *eu, struct edge_info *edge_list
 	 * if the distance is the same & the edge is the same
 	 * Insert edge_info struct here in list
 	 */
-	if (ved->dist < ei_p->ved_p->dist ||
-	    (ved->dist == ei_p->ved_p->dist &&
-	     ei_p->ved_p->magic_p == ved->magic_p))
+	if (ved->dist < ei_p->ved_p->dist
+	    || (NEAR_ZERO(ved->dist - ei_p->ved_p->dist, SMALL_FASTF)
+		&& ei_p->ved_p->magic_p == ved->magic_p))
+	{
 	    break;
+	}
     }
 
     BU_LIST_INSERT(&ei_p->l, &ei->l);
@@ -772,7 +772,7 @@ HIDDEN void make_near_list(struct edge_info *edge_list, struct bu_list *near1)
     for (BU_LIST_FOR(ei, edge_info, &edge_list->l)) {
 	NMG_CK_EI(ei);
 	NMG_CK_VED(ei->ved_p);
-	if (ei->ved_p->dist == dist) {
+	if (NEAR_ZERO(ei->ved_p->dist - dist, SMALL_FASTF)) {
 	    ei_p = BU_LIST_PLAST(edge_info, &ei->l);
 	    BU_LIST_DEQUEUE(&ei->l);
 	    BU_LIST_APPEND(near1, &ei->l);
@@ -880,7 +880,6 @@ compute_loop_class(struct fpi *fpi,
 		   struct edge_info *edge_list)
 {
     struct edge_info *ei;
-    struct edge_info *ei_vdot_max;
     struct bu_list near1;
     int lu_class = NMG_CLASS_Unknown;
 
@@ -919,23 +918,23 @@ compute_loop_class(struct fpi *fpi,
 	    bu_log("list was empty, so class is %s\n",
 		   nmg_class_name(lu_class));
 	}
-	goto departure;
+
+	return lu_class;
     }
 
-
-    ei_vdot_max = (struct edge_info *)NULL;
-
     for (BU_LIST_FOR(ei, edge_info, &near1)) {
+	int done = 0;
 	NMG_CK_EI(ei);
 	NMG_CK_VED(ei->ved_p);
 	switch (ei->ved_p->status) {
 	    case 0: /* pt is on edge */
 	    case 1: /* pt is on ei->ved_p->v1 */
-	    case 2:	/* pt is on ei->ved_p->v2 */
+	    case 2: /* pt is on ei->ved_p->v2 */
 		lu_class = NMG_CLASS_AonBshared;
 		if (rt_g.NMG_debug & DEBUG_PT_FU)
 		    pl_pt_lu(fpi, lu, ei);
-		goto departure;
+		done = 1;
+		break;
 	    case 3: /* pt pca is v1 */
 	    case 4: /* pt pca is v2 */
 	    case 5: /* pt pca between v1 and v2 */
@@ -946,23 +945,18 @@ compute_loop_class(struct fpi *fpi,
 		}
 		if (rt_g.NMG_debug & DEBUG_PT_FU)
 		    pl_pt_lu(fpi, lu, ei);
-		goto departure;
+		done = 1;
+		break;
 	    default:
 		bu_log("%s:%d status = %d\n",
 		       __FILE__, __LINE__, ei->ved_p->status);
 		bu_bomb("Why did this happen?");
 		break;
 	}
+	if (done) {
+	    break;
+	}
     }
-    if (ei_vdot_max) {
-	if (rt_g.NMG_debug & DEBUG_PT_FU)
-	    pl_pt_lu(fpi, lu, ei_vdot_max);
-    } else {
-	bu_log("%s:%d ei_vdot_max not set\n",
-	       __FILE__, __LINE__);
-	bu_bomb("How does this happen?\n");
-    }
- departure:
 
     /* the caller will get whatever is left of the edge_list, but
      * we need to free up the "near" list

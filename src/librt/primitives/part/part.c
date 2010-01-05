@@ -212,11 +212,11 @@ struct part_specific {
 #define RT_PARTICLE_SURF_HSPHERE 3
 
 const struct bu_structparse rt_part_parse[] = {
-    { "%f", 3, "V",  bu_offsetof(struct rt_part_internal, part_V[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "H",  bu_offsetof(struct rt_part_internal, part_H[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 1, "r_v", bu_offsetof(struct rt_part_internal, part_vrad), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 1, "r_h", bu_offsetof(struct rt_part_internal, part_hrad), BU_STRUCTPARSE_FUNC_NULL },
-    { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
+    { "%f", 3, "V",  bu_offsetof(struct rt_part_internal, part_V[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "H",  bu_offsetof(struct rt_part_internal, part_H[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 1, "r_v", bu_offsetof(struct rt_part_internal, part_vrad), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 1, "r_h", bu_offsetof(struct rt_part_internal, part_hrad), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
@@ -254,6 +254,7 @@ rt_part_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     fastf_t sin_theta;
     fastf_t cos_theta;
 
+    if (rtip) RT_CK_RTI(rtip);
     RT_CK_DB_INTERNAL(ip);
     pip = (struct rt_part_internal *)ip->idb_ptr;
     RT_PART_CK_MAGIC(pip);
@@ -443,7 +444,7 @@ rt_part_shot(struct soltab *stp, register struct xray *rp, struct application *a
 {
     register struct part_specific *part =
 	(struct part_specific *)stp->st_specific;
-    register struct seg *segp;
+    struct seg *segp;
     vect_t dprime;		/* D' */
     point_t pprime;		/* P' */
     point_t xlated;		/* translated ray start point */
@@ -709,8 +710,6 @@ rt_part_shot(struct soltab *stp, register struct xray *rp, struct application *a
 
     if (hits[0].hit_dist < hits[1].hit_dist) {
 	/* entry is [0], exit is [1] */
-	register struct seg *segp;
-
 	RT_GET_SEG(segp, ap->a_resource);
 	segp->seg_stp = stp;
 	segp->seg_in = hits[0];		/* struct copy */
@@ -718,8 +717,6 @@ rt_part_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	BU_LIST_INSERT(&(seghead->l), &(segp->l));
     } else {
 	/* entry is [1], exit is [0] */
-	register struct seg *segp;
-
 	RT_GET_SEG(segp, ap->a_resource);
 	segp->seg_stp = stp;
 	segp->seg_in = hits[1];		/* struct copy */
@@ -727,25 +724,6 @@ rt_part_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	BU_LIST_INSERT(&(seghead->l), &(segp->l));
     }
     return(2);			/* HIT */
-}
-
-
-#define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;
-
-/**
- * R T _ P A R T _ V S H O T
- *
- * Vectorized version.
- */
-void
-rt_part_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
-    /* An array of solid pointers */
-    /* An array of ray pointers */
-    /* array of segs (results returned) */
-    /* Number of ray/object pairs */
-
-{
-    rt_vstub(stp, rp, segp, n, ap);
 }
 
 
@@ -958,7 +936,7 @@ rt_part_hemisphere(register point_t (*ov), register fastf_t *v, fastf_t *a, fast
  * R T _ P A R T _ P L O T
  */
 int
-rt_part_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_part_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
 {
     struct rt_part_internal *pip;
     point_t tail;
@@ -1483,6 +1461,8 @@ rt_part_import4(struct rt_db_internal *ip, const struct bu_external *ep, registe
     union record *rp;
     struct rt_part_internal *part;
 
+    if (dbip) RT_CK_DBI(dbip);
+
     BU_CK_EXTERNAL(ep);
     rp = (union record *)ep->ext_buf;
     /* Check record type */
@@ -1569,6 +1549,8 @@ rt_part_export4(struct bu_external *ep, const struct rt_db_internal *ip, double 
     fastf_t vrad;
     fastf_t hrad;
 
+    if (dbip) RT_CK_DBI(dbip);
+
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_PARTICLE) return(-1);
     pip = (struct rt_part_internal *)ip->idb_ptr;
@@ -1605,6 +1587,8 @@ rt_part_import5(struct rt_db_internal *ip, const struct bu_external *ep, registe
     fastf_t maxrad, minrad;
     struct rt_part_internal *part;
     fastf_t vec[8];
+
+    if (dbip) RT_CK_DBI(dbip);
 
     BU_CK_EXTERNAL(ep);
 
@@ -1682,6 +1666,8 @@ rt_part_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
     struct rt_part_internal *pip;
     fastf_t vec[8];
 
+    if (dbip) RT_CK_DBI(dbip);
+
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_PARTICLE) return(-1);
     pip = (struct rt_part_internal *)ip->idb_ptr;
@@ -1724,6 +1710,8 @@ rt_part_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbos
     switch (pip->part_type) {
 	case RT_PARTICLE_TYPE_SPHERE:
 	    bu_vls_strcat(str, "spherical particle\n");
+	    if (!verbose)
+		return 0;
 	    sprintf(buf, "\tV (%g, %g, %g)\n",
 		    INTCLAMP(pip->part_V[X] * mm2local),
 		    INTCLAMP(pip->part_V[Y] * mm2local),
@@ -1732,9 +1720,12 @@ rt_part_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbos
 	    sprintf(buf, "\tradius = %g\n",
 		    INTCLAMP(pip->part_vrad * mm2local));
 	    bu_vls_strcat(str, buf);
+
 	    break;
 	case RT_PARTICLE_TYPE_CYLINDER:
 	    bu_vls_strcat(str, "cylindrical particle (lozenge)\n");
+	    if (!verbose)
+		return 0;
 	    sprintf(buf, "\tV (%g, %g, %g)\n",
 		    INTCLAMP(pip->part_V[X] * mm2local),
 		    INTCLAMP(pip->part_V[Y] * mm2local),
@@ -1748,9 +1739,12 @@ rt_part_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbos
 	    sprintf(buf, "\tradius = %g\n",
 		    INTCLAMP(pip->part_vrad * mm2local));
 	    bu_vls_strcat(str, buf);
+
 	    break;
 	case RT_PARTICLE_TYPE_CONE:
 	    bu_vls_strcat(str, "conical particle\n");
+	    if (!verbose)
+		return 0;
 	    sprintf(buf, "\tV (%g, %g, %g)\n",
 		    INTCLAMP(pip->part_V[X] * mm2local),
 		    INTCLAMP(pip->part_V[Y] * mm2local),
@@ -1782,13 +1776,9 @@ rt_part_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbos
  * Free the storage associated with the rt_db_internal version of this solid.
  */
 void
-rt_part_ifree(struct rt_db_internal *ip, struct resource *resp)
+rt_part_ifree(struct rt_db_internal *ip)
 {
     RT_CK_DB_INTERNAL(ip);
-
-    if (!resp) {
-	resp = &rt_uniresource;
-    }
 
     bu_free(ip->idb_ptr, "particle ifree");
     ip->idb_ptr = GENPTR_NULL;
@@ -1800,8 +1790,11 @@ rt_part_ifree(struct rt_db_internal *ip, struct resource *resp)
  *
  */
 int
-rt_part_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
+rt_part_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 {
+    ps = ps; /* quellage */
+    if (ip) RT_CK_DB_INTERNAL(ip);
+
     return(0);			/* OK */
 }
 

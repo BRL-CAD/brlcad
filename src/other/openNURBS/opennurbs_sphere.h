@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -59,47 +58,47 @@ public:
 
   // returns parameters of point on sphere that is closest to given point
   bool ClosestPointTo( 
-	 ON_3dPoint test_point, 
-	 double* longitude_radians, // longitude  [0,2pi)
-	 double* latitude_radians // latitude   [-pi/2,pi/2]
-	 ) const;
+         ON_3dPoint test_point, 
+         double* longitude_radians, // longitude  [0,2pi)
+         double* latitude_radians // latitude   [-pi/2,pi/2]
+         ) const;
 
   // returns point on sphere that is closest to given point
   ON_3dPoint ClosestPointTo( 
-	 ON_3dPoint test_point
-	 ) const;
+         ON_3dPoint test_point
+         ) const;
 
   // For intersections see ON_Intersect();
 
   // rotate sphere about its origin
   bool Rotate(
-	double sin_angle,               // sin(angle)
-	double cos_angle,               // cos(angle)
-	const ON_3dVector& axis_of_rotation // axis of rotation
-	);
+        double sin_angle,               // sin(angle)
+        double cos_angle,               // cos(angle)
+        const ON_3dVector& axis_of_rotation // axis of rotation
+        );
 
   bool Rotate(
-	double angle_radians,               // angle in radians
-	const ON_3dVector& axis_of_rotation // axis of rotation
-	);
+        double angle_radians,               // angle in radians
+        const ON_3dVector& axis_of_rotation // axis of rotation
+        );
 
   // rotate sphere about a point and axis
   bool Rotate(
-	double sin_angle,               // sin(angle)
-	double cos_angle,               // cos(angle)
-	const ON_3dVector& axis_of_rotation, // axis of rotation
-	const ON_3dPoint& center_of_rotation  // center of rotation
-	);
+        double sin_angle,               // sin(angle)
+        double cos_angle,               // cos(angle)
+        const ON_3dVector& axis_of_rotation, // axis of rotation
+        const ON_3dPoint& center_of_rotation  // center of rotation
+        );
 
   bool Rotate(
-	double angle_radians,               // angle in radians
-	const ON_3dVector& axis_of_rotation, // axis of rotation
-	const ON_3dPoint& center_of_rotation  // center of rotation
-	);
+        double angle_radians,               // angle in radians
+        const ON_3dVector& axis_of_rotation, // axis of rotation
+        const ON_3dPoint& center_of_rotation  // center of rotation
+        );
 
   bool Translate(
-	const ON_3dVector&
-	);
+        const ON_3dVector&
+        );
 
   bool Transform( const ON_Xform& );
 

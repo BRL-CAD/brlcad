@@ -63,12 +63,12 @@ struct rt_ebm_specific {
 #define RT_EBM_O(m) bu_offsetof(struct rt_ebm_internal, m)
 
 const struct bu_structparse rt_ebm_parse[] = {
-    {"%s",	RT_EBM_NAME_LEN, "file", bu_offsetofarray(struct rt_ebm_internal, file), BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "w",		RT_EBM_O(xdim),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "n",		RT_EBM_O(ydim),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	1, "d",		RT_EBM_O(tallness),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	16, "mat", bu_offsetofarray(struct rt_ebm_internal, mat), BU_STRUCTPARSE_FUNC_NULL },
-    {"",	0, (char *)0, 0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"%s",	RT_EBM_NAME_LEN, "file", bu_offsetofarray(struct rt_ebm_internal, file), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "w",		RT_EBM_O(xdim),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",	1, "n",		RT_EBM_O(ydim),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	1, "d",		RT_EBM_O(tallness),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",	16, "mat", bu_offsetofarray(struct rt_ebm_internal, mat), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",	0, (char *)0, 0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
@@ -83,8 +83,6 @@ BU_EXTERN(int rt_ebm_dda, (struct xray *rp, struct soltab *stp,
 BU_EXTERN(int rt_seg_planeclip, (struct seg *out_hd, struct seg *in_hd,
 				 vect_t out_norm, fastf_t in, fastf_t out,
 				 struct xray *rp, struct application *ap));
-BU_EXTERN(void rt_ebm_plate, (int x1, int y1, int x2, int y2,
-			      double t, mat_t mat, struct bu_list *vhead));
 
 /*
  * Codes to represent surface normals.  In a bitmap, there are only 4
@@ -280,7 +278,7 @@ rt_ebm_dda(register struct xray *rp, struct soltab *stp, struct application *ap,
     }
     if (RT_G_DEBUG&DEBUG_EBM)bu_log("g[X] = %d, g[Y] = %d\n", igrid[X], igrid[Y]);
 
-    if (rp->r_dir[X] == 0.0 && rp->r_dir[Y] == 0.0) {
+    if (NEAR_ZERO(rp->r_dir[X], SMALL_FASTF) && NEAR_ZERO(rp->r_dir[Y], SMALL_FASTF)) {
 	register struct seg *segp;
 
 	/* Ray is traveling exactly along Z axis.  Just check the one
@@ -316,7 +314,7 @@ rt_ebm_dda(register struct xray *rp, struct soltab *stp, struct application *ap,
     }
 
     /* X setup */
-    if (rp->r_dir[X] == 0.0) {
+    if (NEAR_ZERO(rp->r_dir[X], SMALL_FASTF)) {
 	t[X] = INFINITY;
 	delta[X] = 0;
     } else {
@@ -327,7 +325,7 @@ rt_ebm_dda(register struct xray *rp, struct soltab *stp, struct application *ap,
 	delta[X] = ebmp->ebm_cellsize[X] * fabs(invdir[X]);
     }
     /* Y setup */
-    if (rp->r_dir[Y] == 0.0) {
+    if (NEAR_ZERO(rp->r_dir[Y], SMALL_FASTF)) {
 	t[Y] = INFINITY;
 	delta[Y] = 0;
     } else {
@@ -339,7 +337,7 @@ rt_ebm_dda(register struct xray *rp, struct soltab *stp, struct application *ap,
     }
 #if 0
     /* Z setup */
-    if (rp->r_dir[Z] == 0.0) {
+    if (NEAR_ZERO(rp->r_dir[Z], SMALL_FASTF)) {
 	t[Z] = INFINITY;
     } else {
 	/* Consider igrid[Z] to be either 0 or 1 */
@@ -357,10 +355,10 @@ rt_ebm_dda(register struct xray *rp, struct soltab *stp, struct application *ap,
     if (RT_G_DEBUG&DEBUG_EBM)bu_log("t[Y] = %g, delta[Y] = %g\n", t[Y], delta[Y]);
 
     /* Find face of entry into first cell -- max initial t value */
-    if (t[X] == INFINITY) {
+    if (NEAR_ZERO(t[X] - INFINITY, SMALL_FASTF)) {
 	in_index = Y;
 	t0 = t[Y];
-    } else if (t[Y] == INFINITY) {
+    } else if (NEAR_ZERO(t[Y] - INFINITY, SMALL_FASTF)) {
 	in_index = X;
 	t0 = t[X];
     } else if (t[X] >= t[Y]) {
@@ -633,6 +631,8 @@ rt_ebm_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     union record *rec;
     struct bu_vls str;
 
+    if (dbip) RT_CK_DBI(dbip);
+
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_EBM) return(-1);
     eip = (struct rt_ebm_internal *)ip->idb_ptr;
@@ -776,6 +776,8 @@ rt_ebm_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     struct rt_ebm_internal ebm;	/* scaled version */
     struct bu_vls str;
 
+    if (dbip) RT_CK_DBI(dbip);
+
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_EBM) return(-1);
     eip = (struct rt_ebm_internal *)ip->idb_ptr;
@@ -817,9 +819,12 @@ rt_ebm_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 
     RT_EBM_CK_MAGIC(eip);
 
-    bu_vls_init(&substr);
     bu_vls_strcat(str, "extruded bitmap (EBM)\n\t");
 
+    if (!verbose)
+	return 0;
+
+    bu_vls_init(&substr);
     bu_vls_printf(&substr, "  file=\"%s\" w=%d n=%d depth=%g\n   mat=",
 		  eip->file, eip->xdim, eip->ydim, INTCLAMP(eip->tallness*mm2local));
     bu_vls_vlscat(str, &substr);
@@ -834,7 +839,7 @@ rt_ebm_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 
     bu_vls_free(&substr);
 
-    return(0);
+    return 0;
 }
 
 
@@ -845,15 +850,11 @@ rt_ebm_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
  * solid.
  */
 void
-rt_ebm_ifree(struct rt_db_internal *ip, struct resource *resp)
+rt_ebm_ifree(struct rt_db_internal *ip)
 {
     register struct rt_ebm_internal *eip;
 
     RT_CK_DB_INTERNAL(ip);
-
-    if (!resp) {
-	resp = &rt_uniresource;
-    }
 
     eip = (struct rt_ebm_internal *)ip->idb_ptr;
     RT_EBM_CK_MAGIC(eip);
@@ -891,6 +892,8 @@ rt_ebm_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     vect_t radvec;
     vect_t diam;
     vect_t small1;
+
+    if (rtip) RT_CK_RTI(rtip);
 
     eip = (struct rt_ebm_internal *)ip->idb_ptr;
     RT_EBM_CK_MAGIC(eip);
@@ -1044,8 +1047,8 @@ rt_ebm_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 void
 rt_ebm_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
 {
-/* register struct rt_ebm_specific *ebmp =
-   (struct rt_ebm_specific *)stp->st_specific; */
+    struct rt_ebm_specific *ebmp = (struct rt_ebm_specific *)stp->st_specific;
+    if (!ebmp) return;
 
     bn_vec_ortho(cvp->crv_pdir, hitp->hit_normal);
     cvp->crv_c1 = cvp->crv_c2 = 0;
@@ -1061,6 +1064,9 @@ rt_ebm_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 void
 rt_ebm_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
 {
+    if (ap) RT_CK_APPLICATION(ap);
+    if (stp) RT_CK_SOLTAB(stp);
+
     uvp->uv_u = hitp->hit_vpriv[X];
     uvp->uv_v = hitp->hit_vpriv[Y];
 
@@ -1093,11 +1099,38 @@ rt_ebm_class(void)
 }
 
 
+/* either x1==x2, or y1==y2 */
+void
+rt_ebm_plate(int x_1, int y_1, int x_2, int y_2, double t, register fastf_t *mat, register struct bu_list *vhead)
+{
+    point_t s, p;
+    point_t srot, prot;
+
+    VSET(s, x_1, y_1, 0.0);
+    MAT4X3PNT(srot, mat, s);
+    RT_ADD_VLIST(vhead, srot, BN_VLIST_LINE_MOVE);
+
+    VSET(p, x_1, y_1, t);
+    MAT4X3PNT(prot, mat, p);
+    RT_ADD_VLIST(vhead, prot, BN_VLIST_LINE_DRAW);
+
+    VSET(p, x_2, y_2, t);
+    MAT4X3PNT(prot, mat, p);
+    RT_ADD_VLIST(vhead, prot, BN_VLIST_LINE_DRAW);
+
+    p[Z] = 0;
+    MAT4X3PNT(prot, mat, p);
+    RT_ADD_VLIST(vhead, prot, BN_VLIST_LINE_DRAW);
+
+    RT_ADD_VLIST(vhead, srot, BN_VLIST_LINE_DRAW);
+}
+
+
 /**
  * R T _ E B M _ P L O T
  */
 int
-rt_ebm_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_ebm_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
 {
     register struct rt_ebm_internal *eip;
     register int x, y;
@@ -1150,33 +1183,6 @@ rt_ebm_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 }
 
 
-/* either x1==x2, or y1==y2 */
-void
-rt_ebm_plate(int x1, int y1, int x2, int y2, double t, register fastf_t *mat, register struct bu_list *vhead)
-{
-    point_t s, p;
-    point_t srot, prot;
-
-    VSET(s, x1, y1, 0.0);
-    MAT4X3PNT(srot, mat, s);
-    RT_ADD_VLIST(vhead, srot, BN_VLIST_LINE_MOVE);
-
-    VSET(p, x1, y1, t);
-    MAT4X3PNT(prot, mat, p);
-    RT_ADD_VLIST(vhead, prot, BN_VLIST_LINE_DRAW);
-
-    VSET(p, x2, y2, t);
-    MAT4X3PNT(prot, mat, p);
-    RT_ADD_VLIST(vhead, prot, BN_VLIST_LINE_DRAW);
-
-    p[Z] = 0;
-    MAT4X3PNT(prot, mat, p);
-    RT_ADD_VLIST(vhead, prot, BN_VLIST_LINE_DRAW);
-
-    RT_ADD_VLIST(vhead, srot, BN_VLIST_LINE_DRAW);
-}
-
-
 struct ebm_edge
 {
     struct bu_list l;
@@ -1189,24 +1195,24 @@ struct ebm_edge
 
 /* either x1==x2, or y1==y2 */
 static void
-rt_ebm_edge(int x1, int y1, int x2, int y2, int left, struct ebm_edge *edges)
+rt_ebm_edge(int x_1, int y_1, int x_2, int y_2, int left, struct ebm_edge *edges)
 {
     struct ebm_edge *new_edge;
 
     new_edge = (struct ebm_edge *)bu_malloc(sizeof(struct ebm_edge), "rt_ebm_tess: new_edge");
 
     /* make all edges go from lower values to larger */
-    if (y1 < y2 || x1 < x2) {
-	new_edge->x1 = x1;
-	new_edge->y1 = y1;
-	new_edge->x2 = x2;
-	new_edge->y2 = y2;
+    if (y_1 < y_2 || x_1 < x_2) {
+	new_edge->x1 = x_1;
+	new_edge->y1 = y_1;
+	new_edge->x2 = x_2;
+	new_edge->y2 = y_2;
 	new_edge->left = left;
     } else {
-	new_edge->x1 = x2;
-	new_edge->y1 = y2;
-	new_edge->x2 = x1;
-	new_edge->y2 = y1;
+	new_edge->x1 = x_2;
+	new_edge->y1 = y_2;
+	new_edge->x2 = x_1;
+	new_edge->y2 = y_1;
 	new_edge->left = (!left);
     }
     new_edge->v = (struct vertex *)NULL;
@@ -1357,7 +1363,7 @@ rt_ebm_sort_edges(struct ebm_edge *edges)
  * R T _ E B M _ T E S S
  */
 int
-rt_ebm_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_ebm_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol)
 {
     struct rt_ebm_internal *eip;
     struct shell *s;
@@ -1567,7 +1573,7 @@ rt_ebm_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
  * no paramaters requested returns all
  */
 int
-rt_ebm_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *attr)
+rt_ebm_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr)
 {
     register struct rt_ebm_internal *ebm=(struct rt_ebm_internal *)intern->idb_ptr;
     int i;
@@ -1575,26 +1581,26 @@ rt_ebm_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *
     RT_EBM_CK_MAGIC(ebm);
 
     if (attr == (char *)NULL) {
-	bu_vls_strcpy(log, "ebm");
-	bu_vls_printf(log, " F %s W %d N %d H %.25g",
+	bu_vls_strcpy(logstr, "ebm");
+	bu_vls_printf(logstr, " F %s W %d N %d H %.25g",
 		      ebm->file, ebm->xdim, ebm->ydim, ebm->tallness);
-	bu_vls_printf(log, " M {");
+	bu_vls_printf(logstr, " M {");
 	for (i=0; i<16; i++)
-	    bu_vls_printf(log, " %.25g", ebm->mat[i]);
-	bu_vls_printf(log, " }");
+	    bu_vls_printf(logstr, " %.25g", ebm->mat[i]);
+	bu_vls_printf(logstr, " }");
     } else if (!strcmp(attr, "F")) {
-	bu_vls_printf(log, "%s", ebm->file);
+	bu_vls_printf(logstr, "%s", ebm->file);
     } else if (!strcmp(attr, "W")) {
-	bu_vls_printf(log, "%d", ebm->xdim);
+	bu_vls_printf(logstr, "%d", ebm->xdim);
     } else if (!strcmp(attr, "N")) {
-	bu_vls_printf(log, "%d", ebm->ydim);
+	bu_vls_printf(logstr, "%d", ebm->ydim);
     } else if (!strcmp(attr, "H")) {
-	bu_vls_printf(log, "%.25g", ebm->tallness);
+	bu_vls_printf(logstr, "%.25g", ebm->tallness);
     } else if (!strcmp(attr, "M")) {
 	for (i=0; i<16; i++)
-	    bu_vls_printf(log, "%.25g ", ebm->mat[i]);
+	    bu_vls_printf(logstr, "%.25g ", ebm->mat[i]);
     } else {
-	bu_vls_printf(log, "ERROR: Unknown attribute, choices are F, W, N, or H\n");
+	bu_vls_printf(logstr, "ERROR: Unknown attribute, choices are F, W, N, or H\n");
 	return BRLCAD_ERROR;
     }
 
@@ -1615,7 +1621,7 @@ rt_ebm_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *
  * "M" - matrix to transform EBM solid into model coordinates
  */
 int
-rt_ebm_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char **argv)
+rt_ebm_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv)
 {
     struct rt_ebm_internal *ebm;
 
@@ -1627,7 +1633,7 @@ rt_ebm_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
     while (argc >= 2) {
 	if (!strcmp(argv[0], "F")) {
 	    if (strlen(argv[1]) >= RT_EBM_NAME_LEN) {
-		bu_vls_printf(log, "ERROR: File name too long");
+		bu_vls_printf(logstr, "ERROR: File name too long");
 		return BRLCAD_ERROR;
 	    }
 	    bu_strlcpy(ebm->file, argv[1], RT_EBM_NAME_LEN);
@@ -1647,12 +1653,12 @@ rt_ebm_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 
 	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &ar_ptr, &len) !=
 		len) {
-		bu_vls_printf(log, "ERROR: incorrect number of coefficents for matrix\n");
+		bu_vls_printf(logstr, "ERROR: incorrect number of coefficents for matrix\n");
 		return BRLCAD_ERROR;
 	    }
 	    MAT_COPY(ebm->mat, array)
 		} else {
-		    bu_vls_printf(log, "ERROR: illegal argument, choices are F, W, N, or H\n");
+		    bu_vls_printf(logstr, "ERROR: illegal argument, choices are F, W, N, or H\n");
 		    return BRLCAD_ERROR;
 		}
 	argc -= 2;
@@ -1663,11 +1669,11 @@ rt_ebm_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 
 
 int
-rt_ebm_form(struct bu_vls *log, const struct rt_functab *ftp)
+rt_ebm_form(struct bu_vls *logstr, const struct rt_functab *ftp)
 {
     RT_CK_FUNCTAB(ftp);
 
-    bu_vls_printf(log, "F %%s W %%d N %%d H %%f M { %%f %%f %%f %%f %%f %%f %%f %%f %%f %%f %%f %%f %%f %%f %%f %%f }");
+    bu_vls_printf(logstr, "F %%s W %%d N %%d H %%f M { %%f %%f %%f %%f %%f %%f %%f %%f %%f %%f %%f %%f %%f %%f %%f %%f }");
 
     return TCL_OK;
 
@@ -1681,7 +1687,7 @@ rt_ebm_form(struct bu_vls *log, const struct rt_functab *ftp)
  * is to initialize the matrix and height to legal values.
  */
 void
-rt_ebm_make(const struct rt_functab *ftp, struct rt_db_internal *intern, double diameter)
+rt_ebm_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 {
     struct rt_ebm_internal *ebm;
 
@@ -1704,8 +1710,11 @@ rt_ebm_make(const struct rt_functab *ftp, struct rt_db_internal *intern, double 
  *
  */
 int
-rt_ebm_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
+rt_ebm_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 {
+    if (!ps) return(0);
+    if (ip) RT_CK_DB_INTERNAL(ip);
+
     return(0);			/* OK */
 }
 

@@ -43,7 +43,7 @@ protected:
 	int ON_face_index;
 	bool inner;
 #ifdef YAYA
-	SCLBOOL_H(Bool) orientation;
+	SCLBOOL_H(Boolean) orientation;
 #else
 	int orientation;
 #endif
@@ -51,7 +51,7 @@ protected:
 public:
 	FaceBound();
 	virtual ~FaceBound();
-	FaceBound(STEPWrapper *sw,int STEPid);
+	FaceBound(STEPWrapper *sw,int step_id);
 	void SetInner() { inner = true; };
 	void SetOuter() { inner = false; };
 	bool IsInner() {return inner;}

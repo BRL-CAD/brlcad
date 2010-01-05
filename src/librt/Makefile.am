@@ -4,12 +4,6 @@ noinst_LTLIBRARIES = \
 	librt_nil.la \
 	librt_xxx.la
 
-if BUILD_RTGL
-DM_RTGL_CPPFLAGS = -DDM_RTGL -DIF_RTGL $(GL_CPPFLAGS)
-else
-DM_RTGL_CPPFLAGS =
-endif
-
 BREP_TEST = brep_test
 BREP_CPPFLAGS = ${SSE} -DOBJ_BREP=1 ${TNT_CPPFLAGS} ${OPENNURBS_CPPFLAGS}
 BREP_LIBADD = ${OPENNURBS}
@@ -25,10 +19,9 @@ brep_test_LDADD = \
 AM_CPPFLAGS = \
 	${REGEX_CPPFLAGS} \
 	${TCL_CPPFLAGS} \
-	${BREP_CPPFLAGS} \
-	${DM_RTGL_CPPFLAGS}
+	${BREP_CPPFLAGS}
 
-# AM_CFLAGS = ${STRICT_FLAGS}
+AM_CFLAGS = ${STRICT_FLAGS}
 
 noinst_PROGRAMS = \
 	comb \
@@ -149,6 +142,7 @@ librt_nil_la_SOURCES = \
 	primitives/hyp/hyp_brep.cpp \
 	primitives/hyp/hyp_mirror.c \
 	primitives/metaball/metaball.c \
+	primitives/metaball/metaball_tri.c \
 	primitives/mirror.c \
 	primitives/nmg/nmg.c \
 	primitives/nmg/nmg_bool.c \
@@ -223,6 +217,7 @@ librt_nil_la_SOURCES = \
 	tree.c \
 	vers.c \
 	vlist.c \
+	vshoot.c \
 	wdb.c
 
 librt_nil_la_LIBADD = ${BREP_LIBADD}
@@ -246,6 +241,8 @@ nurb_example_LDADD = \
 noinst_HEADERS = \
 	primitives/fixpt.h \
 	primitives/brep/brep_debug.h \
+	primitives/metaball/mc_table.h \
+	primitives/metaball/metaball.h \
 	primitives/revolve/revolve.h \
 	primitives/xxx/xxx.h
 
@@ -269,8 +266,7 @@ EXTRA_DIST = \
 	timer-nt.c \
 	timer52brl.c \
 	timerhep.c \
-	timerunix.c \
-	vshoot.c
+	timerunix.c
 
 if BUILD_REGEX
 DEPADD = src/other/libregex

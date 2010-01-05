@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -15,6 +14,8 @@
 */
 
 #include "opennurbs.h"
+
+const ON_Color ON_Color::UnsetColor(ON_UNSET_COLOR);
 
 ON_Color::ON_Color() : m_color(0) 
 {}
@@ -139,7 +140,7 @@ double ON_Color::Hue() const
     if ( r == maxrgb) {
       h = (g - b)*d;
       if ( h < 0.0 )
-	h += 6.0;
+        h += 6.0;
     }
     else if ( g == maxrgb)
       h = 2.0 + (b - r)*d;
@@ -199,7 +200,7 @@ void ON_Color::SetHSV(
     if ( i < 0 || i > 5 ) {
       hue = fmod(hue,6.0);
       if ( hue < 0.0 )
-	hue += 6.0;
+        hue += 6.0;
       i = (int)floor(hue);
     }    
     f = hue - i;    

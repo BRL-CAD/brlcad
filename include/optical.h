@@ -62,7 +62,7 @@ OPTICAL_EXPORT extern void mlib_void();
 
 /* defined in refract.c */
 OPTICAL_EXPORT extern int
-rr_render(register struct application *ap, struct partition *pp, struct shadework *swp);
+rr_render(struct application *ap, struct partition *pp, struct shadework *swp);
 
 /* defined in shade.c */
 OPTICAL_EXPORT extern void
@@ -70,7 +70,7 @@ shade_inputs(struct application	*ap, const struct partition *pp, struct shadewor
 
 /* defined in wray.c */
 OPTICAL_EXPORT extern void
-wray(register struct partition *pp, register struct application *ap, FILE *fp, const vect_t inormal);
+wray(struct partition *pp, struct application *ap, FILE *fp, const vect_t inormal);
 
 OPTICAL_EXPORT extern void
 wraypts(vect_t in, vect_t inorm, vect_t out, int id, struct application *ap, FILE *fp);
@@ -80,7 +80,7 @@ wraypaint(vect_t start, vect_t norm, int paint, struct application *ap, FILE *fp
 
 /* defined in shade.c */
 OPTICAL_EXPORT extern int
-viewshade(struct application *ap, register const struct partition *pp, register struct shadework *swp);
+viewshade(struct application *ap, const struct partition *pp, struct shadework *swp);
 
 /* defined in vers.c */
 OPTICAL_EXPORT extern const char *optical_version(void);

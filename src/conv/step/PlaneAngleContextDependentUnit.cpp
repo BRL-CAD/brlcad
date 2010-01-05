@@ -38,9 +38,9 @@ PlaneAngleContextDependentUnit::PlaneAngleContextDependentUnit() {
 	id = 0;
 }
 
-PlaneAngleContextDependentUnit::PlaneAngleContextDependentUnit(STEPWrapper *sw,int STEPid) {
+PlaneAngleContextDependentUnit::PlaneAngleContextDependentUnit(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 PlaneAngleContextDependentUnit::~PlaneAngleContextDependentUnit() {
@@ -54,11 +54,11 @@ PlaneAngleContextDependentUnit::Load(STEPWrapper *sw,SCLP23(Application_instance
 
 	// load base class attributes
 	if ( !PlaneAngleUnit::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::Unit." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 		return false;
 	}
 	if ( !ContextDependentUnit::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::Unit." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 		return false;
 	}
 
@@ -67,10 +67,10 @@ PlaneAngleContextDependentUnit::Load(STEPWrapper *sw,SCLP23(Application_instance
 
 void
 PlaneAngleContextDependentUnit::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	PlaneAngleUnit::Print(level+1);
 	ContextDependentUnit::Print(level+1);
 
@@ -84,7 +84,7 @@ PlaneAngleContextDependentUnit::Create(STEPWrapper *sw, SCLP23(Application_insta
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

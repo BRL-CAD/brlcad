@@ -192,7 +192,7 @@ ged_bb(struct ged *gedp, int argc, const char *argv[])
    	}
        	
    	if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &new_intern, gedp->ged_wdbp->wdb_resp) < 0) {
-   	    rt_db_free_internal(&new_intern, gedp->ged_wdbp->wdb_resp);
+   	    rt_db_free_internal(&new_intern);
    	    bu_vls_printf(&gedp->ged_result_str, "Database write error, aborting.\n");
 	}
     }

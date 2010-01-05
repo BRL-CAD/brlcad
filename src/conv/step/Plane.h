@@ -37,7 +37,7 @@ protected:
 public:
 	Plane();
 	virtual ~Plane();
-	Plane(STEPWrapper *sw,int STEPid);
+	Plane(STEPWrapper *sw,int step_id);
 
 	const double *GetOrigin();
 	const double *GetNormal();

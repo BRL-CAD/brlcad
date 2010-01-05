@@ -106,22 +106,22 @@ HIDDEN bool drawRectangle(Rectangle *rectp, unsigned char *pixelp);
 HIDDEN bool getColor(unsigned char *pixelp, char *prompt, char *buffer);
 HIDDEN bool paintNonBorder(unsigned char *borderpix, Point *pt);
 HIDDEN bool paintSolidRegion(unsigned char *regionpix, Point *pt);
-HIDDEN bool popPoint(Point *pt, register PtStack **spp);
-HIDDEN int do_Bitpad(register Point *pointp);
+HIDDEN bool popPoint(Point *pt, PtStack **spp);
+HIDDEN int do_Bitpad(Point *pointp);
 HIDDEN int fb_Setup(void);
-HIDDEN int pars_Argv(int argc, register char **argv);
+HIDDEN int pars_Argv(int argc, char **argv);
 HIDDEN int push_Macro(char *buf);
 HIDDEN void general_Handler(int sig);
 HIDDEN void init_Try(void);
-HIDDEN void fb_Paint(register int x0, register int y0, register int x1, register int y1, RGBpixel (*color));
+HIDDEN void fb_Paint(int x0, int y0, int x1, int y1, RGBpixel (*color));
 HIDDEN void fb_Wind(void);
-HIDDEN void get_Point(char *msg, register Point *pointp);
-HIDDEN void clip_Rectangle(register Rectangle *rectp);
-HIDDEN void get_Rectangle(char *name, register Rectangle *rectp);
-HIDDEN void fillRectangle(register Rectangle *rectp, register RGBpixel (*pixelp));
-HIDDEN void fix_Rectangle(register Rectangle *rectp);
+HIDDEN void get_Point(char *msg, Point *pointp);
+HIDDEN void clip_Rectangle(Rectangle *rectp);
+HIDDEN void get_Rectangle(char *name, Rectangle *rectp);
+HIDDEN void fillRectangle(Rectangle *rectp, RGBpixel (*pixelp));
+HIDDEN void fix_Rectangle(Rectangle *rectp);
 HIDDEN void pushPoint(Point *pt, PtStack **spp);
-HIDDEN void put_Fb_Panel(register Rectangle *, register RGBpixel *);
+HIDDEN void put_Fb_Panel(Rectangle *, RGBpixel *);
 
 HIDDEN int 
     /* ^X  */ f_Exec_Function(),
@@ -368,7 +368,7 @@ main(int argc, char **argv)
 #define CBREAK_MODE		/* Signals are generated from keyboard. */
 #if defined( CBREAK_MODE )
     {
-	register int sig;
+	int sig;
 	for ( sig = 0; sig < NSIG; sig++ )
 	    if ( signal( sig, general_Handler ) == SIG_IGN )
 		(void) signal( sig, SIG_IGN );
@@ -378,7 +378,7 @@ main(int argc, char **argv)
     prnt_Prompt( "" );
     for ( cread_buf[0] = NUL;;)
     {
-	register int status_change = false;
+	int status_change = false;
 	for (; *cptr != NUL; )
 	{
 	    do_Key_Cmd( (int) *cptr++, 1 );
@@ -430,7 +430,7 @@ main(int argc, char **argv)
 HIDDEN bool
 drawRectangle(Rectangle *rectp, unsigned char *pixelp)
 {	
-    register int x, y;
+    int x, y;
     y = rectp->r_origin.p_y;
     x = rectp->r_origin.p_x;
     for (; x < rectp->r_corner.p_x; x++ )
@@ -449,11 +449,11 @@ drawRectangle(Rectangle *rectp, unsigned char *pixelp)
 }
 
 HIDDEN void
-fillRectangle(register Rectangle *rectp, register RGBpixel (*pixelp))
+fillRectangle(Rectangle *rectp, RGBpixel (*pixelp))
 {
-    register int btm = rectp->r_origin.p_y;
-    register int top = rectp->r_corner.p_y;
-    register int rgt = rectp->r_corner.p_x;
+    int btm = rectp->r_origin.p_y;
+    int top = rectp->r_corner.p_y;
+    int rgt = rectp->r_corner.p_x;
     int lft = rectp->r_origin.p_x;
     if ( isSGI )
     {
@@ -462,7 +462,7 @@ fillRectangle(register Rectangle *rectp, register RGBpixel (*pixelp))
 	{
 	    for (; btm <= top; btm++ )
 	    {
-		register int x;
+		int x;
 		for ( x = lft; x <= rgt; x++ )
 		    (void) fb_write( fbp, x, btm,
 				     (unsigned char *)pixelp, 1 );
@@ -473,7 +473,7 @@ fillRectangle(register Rectangle *rectp, register RGBpixel (*pixelp))
     {
 	for (; btm <= top; btm++ )
 	{	
-	    register int x = lft;
+	    int x = lft;
 	    (void) fb_seek( fbp, x, btm );
 	    for (; x <= rgt; x++ )
 		fb_wpixel( fbp, *pixelp );
@@ -524,7 +524,7 @@ paintSolidRegion(unsigned char *regionpix, Point *pt)
 HIDDEN void
 pushPoint(Point *pt, PtStack **spp)
 {	
-    register PtStack *new;
+    PtStack *new;
     if ( (new = (PtStack *) malloc( sizeof(PtStack) )) == NULL )
     {
 	fb_log(	"\"%s\"(%d) Malloc() no more space.\n",
@@ -537,9 +537,9 @@ pushPoint(Point *pt, PtStack **spp)
 }
 
 HIDDEN bool
-popPoint(Point *pt, register PtStack **spp)
+popPoint(Point *pt, PtStack **spp)
 {
-    register PtStack *next;
+    PtStack *next;
     if ( (*spp) == NULL )
 	return false;
     *pt = (*spp)->pt;	/* struct copy */
@@ -555,8 +555,8 @@ popPoint(Point *pt, register PtStack **spp)
 HIDDEN void
 init_Try(void)
 {
-    register int key;
-    register int nop_key = EOF;
+    int key;
+    int nop_key = EOF;
     /* Add all functions except NOP to tree. */
     for ( key = NUL; key <= DEL; key++ )
     {
@@ -578,8 +578,8 @@ init_Try(void)
 HIDDEN int
 push_Macro(char *buf)
 {
-    register int curlen = strlen( cptr );
-    register int buflen = strlen( buf );
+    int curlen = strlen( cptr );
+    int buflen = strlen( buf );
     if ( curlen + buflen > MACROBUFSZ - 1 ) {
 	fb_log( "Macro buffer would overflow.\n" );
 	return 0;
@@ -592,7 +592,7 @@ push_Macro(char *buf)
 
 /*	d o _ K e y _ C m d ( ) */
 void
-do_Key_Cmd(register int key, register int n)
+do_Key_Cmd(int key, int n)
 {
     last_key = key;
     if ( *cptr == NUL )
@@ -681,8 +681,8 @@ f_ChngRegionColor()
 	return 0;
     while ( popPoint( &pivot, &regionsp ) )
     {
-	register int i;
-	register int length = sizeof(xoff1)/sizeof(int);
+	int i;
+	int length = sizeof(xoff1)/sizeof(int);
 	for ( i = 0; i < length; i++ )
 	{
 	    Point neighbor;
@@ -713,8 +713,8 @@ f_FillRegion()
 	return 0;
     while ( popPoint( &pivot, &regionsp ) )
     {
-	register int i;
-	register int length = sizeof(xoff1)/sizeof(int);
+	int i;
+	int length = sizeof(xoff1)/sizeof(int);
 	for ( i = 0; i < length; i++ )
 	{
 	    Point neighbor;
@@ -858,7 +858,7 @@ f_Iterations() /* Specify number of iterations of next command. */
 {
     char iterate_buf[MAX_DIGITS+1];
     int iterate;
-    register int c=0, i;
+    int c=0, i;
     if ( remembering )
 	/* Clobber "f_Iterations()" key-stroke. */
 	*--macro_ptr = NUL;
@@ -924,12 +924,12 @@ HIDDEN int
 /*ARGSUSED*/
 f_Menu() /* Print menu. */
 {
-    register int lines = (PROMPT_LINE-BOTTOM_STATUS_AREA)-1;
-    register int done = false;
-    register int key;
+    int lines = (PROMPT_LINE-BOTTOM_STATUS_AREA)-1;
+    int done = false;
+    int key;
     for ( key = NUL; key <= DEL && ! done; )
     {
-	register int j;
+	int j;
 	for ( j = 0; key <= DEL && j < lines; key++ )
 	{
 	    if ( bindings[key]->f_func != f_Nop )
@@ -1000,8 +1000,8 @@ HIDDEN int
 /*ARGSUSED*/
 f_Rd_Macros_From_File(char *buf)
 {
-    register FILE	*macro_fp;
-    register int nread = 1;
+    FILE	*macro_fp;
+    int nread = 1;
     size_t room;
     char scratch[MAX_LN];
     if ( buf != NULL )
@@ -1039,8 +1039,8 @@ HIDDEN int
 f_Write_Macros_To_File()
 {
     static char macro_file[MAX_LN];
-    register FILE	*macro_fp;
-    register int key;
+    FILE	*macro_fp;
+    int key;
     if ( ! get_Input( macro_file, MAX_LN, "Write macros to file : " ) )
 	return 0;
     if ( (macro_fp = fopen( macro_file, "wb" )) == NULL )
@@ -1167,8 +1167,8 @@ f_Crunch_Image() /* Average image to half its size. */
 
 {
     char answer[2];
-    register int x, y;
-    register RGBpixel *p1, *p2;
+    int x, y;
+    RGBpixel *p1, *p2;
     if ( ! get_Input( answer, 2, "Crunch image [n=no] ? " ) )
 	return 0;
     if ( answer[0] == 'n' )
@@ -1187,7 +1187,7 @@ f_Crunch_Image() /* Average image to half its size. */
     }
     for ( y = 0; y < fb_getheight(fbp); y += 2 )
     {
-	register RGBpixel *p_avg;
+	RGBpixel *p_avg;
 	fb_read( fbp, 0, y, (unsigned char *)p1, fb_getwidth(fbp));
 	fb_read( fbp, 0, y+1, (unsigned char *)p2, fb_getwidth(fbp) );
 	for ( x = 0; x < fb_getwidth(fbp); x +=2 )
@@ -1211,13 +1211,13 @@ HIDDEN int
 f_DrawLine()
 {
     Rectangle lineseg;
-    register int majdelta;
-    register int mindelta;
-    register int xsign;
-    register int ysign;
-    register int error;
-    register int x;
-    register int de;
+    int majdelta;
+    int mindelta;
+    int xsign;
+    int ysign;
+    int error;
+    int x;
+    int de;
     int xmajor;
 
     get_Point( "Pick starting point of line", &lineseg.r_origin );
@@ -1245,7 +1245,7 @@ f_DrawLine()
     /* If X is not really major, correct the assignments. */
     if ( ! (xmajor = mindelta <= majdelta) )
     {
-	register int temp = mindelta;
+	int temp = mindelta;
 	mindelta = majdelta;
 	majdelta = temp;
     }
@@ -1560,8 +1560,8 @@ f_Transliterate() /* Transliterate pixels of color1 to target color2.*/
     RGBpixel old, new, cur;
     static char oldbuf[CLR_LEN];
     static char newbuf[CLR_LEN];
-    register int x, y;
-    register int lft, rgt, top, btm;
+    int x, y;
+    int lft, rgt, top, btm;
     lft = current.r_origin.p_x;
     rgt = current.r_corner.p_x;
     top = current.r_origin.p_y;
@@ -1625,7 +1625,7 @@ HIDDEN int
 /*ARGSUSED*/
 f_Enter_Macro_Definition()
 {
-    register int interactive = *cptr == NUL;
+    int interactive = *cptr == NUL;
     macro_ptr = macro_buf;
     *macro_ptr = NUL;
     if ( interactive )
@@ -1817,7 +1817,7 @@ f_Rd_Fb() /* Read frame buffer image from file. */
     (void) fb_cursor( fbp, 0, 0, 0 );	/* off */
     reposition_cursor = true;
     {
-	register int y;
+	int y;
 	unsigned char *scanbuf;
 	if ( (scanbuf = (unsigned char *)malloc((size_t)fb_getwidth(imp)*3)) == RGBPIXEL_NULL ) {
 	    fb_log(	"malloc failure\n");
@@ -1856,7 +1856,7 @@ HIDDEN int
 /*ARGSUSED*/
 f_Put_Pixel() /* Put pixel. */
 {
-    register int rectwid = brush_sz / 2;
+    int rectwid = brush_sz / 2;
     /* If brush size is 2 or more, fill rectangle. */
     if ( rectwid == 0 )
     {
@@ -1936,9 +1936,9 @@ f_Set_Y_Pos() /* Move cursor's Y location (image space). */
 
 /*	p a r s _ A r g v ( ) */
 HIDDEN int
-pars_Argv(int argc, register char **argv)
+pars_Argv(int argc, char **argv)
 {
-    register int c;
+    int c;
     extern int bu_optind;
 
     /* Parse options. */
@@ -2004,7 +2004,7 @@ fb_Wind(void)
 
 /*	f b _ P a i n t ( ) */
 HIDDEN void
-fb_Paint(register int x0, register int y0, register int x1, register int y1, RGBpixel (*color))
+fb_Paint(int x0, int y0, int x1, int y1, RGBpixel (*color))
 {
     Rectangle clipped_rect;
     clipped_rect.r_origin.p_x = x0;
@@ -2148,10 +2148,10 @@ fb_Get_Pixel(unsigned char *pixel)
 /*	g e t _ F b _ P a n e l ( ) */
 RGBpixel *
 get_Fb_Panel( rectp )
-    register Rectangle *rectp;
+    Rectangle *rectp;
 {
-    register int top;
-    register int rectwid;
+    int top;
+    int rectwid;
     int recthgt;
     int btm, lft, rgt;
     RGBpixel *rgbpanel;
@@ -2177,7 +2177,7 @@ get_Fb_Panel( rectp )
 		u, rectwid, recthgt
 	    );
     else {
-	register int y = btm;
+	int y = btm;
 	RGBpixel *pixelp = rgbpanel;
 	for (; y <= top; y++, pixelp += rectwid ) {
 	    if ( fb_read( fbp, lft, y, (unsigned char *)pixelp, rectwid ) == -1 ) {
@@ -2193,9 +2193,9 @@ get_Fb_Panel( rectp )
 
 /*	p u t _ F b _ P a n e l ( ) */
 HIDDEN void
-put_Fb_Panel(register Rectangle *rectp, register RGBpixel *rgbpanel)
+put_Fb_Panel(Rectangle *rectp, RGBpixel *rgbpanel)
 {
-    register int top, rectwid, y;
+    int top, rectwid, y;
     int lft, rgt, btm;
     rectwid = rectp->r_corner.p_x - rectp->r_origin.p_x + 1;
     clip_Rectangle( rectp );
@@ -2216,15 +2216,15 @@ put_Fb_Panel(register Rectangle *rectp, register RGBpixel *rgbpanel)
 
 /*	g e t _ P o i n t ( ) */
 HIDDEN void
-get_Point(char *msg, register Point *pointp)
+get_Point(char *msg, Point *pointp)
 {
-    register int tag_point = -1;
-    register int c = NUL;
+    int tag_point = -1;
+    int c = NUL;
     prnt_Prompt( msg );
     pointpicked = false;
     for (; tag_point != 1 && !pointpicked; )
     {
-	register int status_change = false;
+	int status_change = false;
 	if ( *cptr != NUL ) {
 	    c = *cptr++;
 	    do_Key_Cmd( c, 1 );
@@ -2268,7 +2268,7 @@ get_Point(char *msg, register Point *pointp)
 
 /*	g e t _ R e c t a n g l e ( ) */
 HIDDEN void
-get_Rectangle(char *name, register Rectangle *rectp)
+get_Rectangle(char *name, Rectangle *rectp)
 {
     char buf[MAX_LN];
     (void) snprintf( buf, MAX_LN, "Pick lower-left corner of %s.", name );
@@ -2280,9 +2280,9 @@ get_Rectangle(char *name, register Rectangle *rectp)
 }
 
 HIDDEN void
-fix_Rectangle(register Rectangle *rectp)
+fix_Rectangle(Rectangle *rectp)
 {
-    register int i;
+    int i;
     if ( rectp->r_origin.p_x > rectp->r_corner.p_x ) {
 	i = rectp->r_origin.p_x;
 	rectp->r_origin.p_x = rectp->r_corner.p_x;
@@ -2297,7 +2297,7 @@ fix_Rectangle(register Rectangle *rectp)
 }
 
 HIDDEN void
-clip_Rectangle(register Rectangle *rectp)
+clip_Rectangle(Rectangle *rectp)
 {
     rectp->r_origin.p_x = rectp->r_origin.p_x < 0 ? 0 : rectp->r_origin.p_x;
     rectp->r_corner.p_x = rectp->r_corner.p_x >= fb_getwidth(fbp) ? fb_getwidth(fbp) - 1 : rectp->r_corner.p_x;
@@ -2352,7 +2352,7 @@ get_Mouse_Pos(Point *pointp)
 
 /*	d o _ B i t p a d ( ) */
 HIDDEN int
-do_Bitpad(register Point *pointp)
+do_Bitpad(Point *pointp)
 {
     int press;
     if ( ! pad_flag )

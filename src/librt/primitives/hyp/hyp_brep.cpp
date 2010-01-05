@@ -34,7 +34,7 @@
  * R T _ H Y P _ B R E P
  */
 extern "C" void
-rt_hyp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
+rt_hyp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 {
     struct rt_hyp_internal *eip;
 
@@ -44,9 +44,6 @@ rt_hyp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
 
     *b = ON_Brep::New();
 
-    ON_TextLog dump_to_stdout;
-    ON_TextLog* dump = &dump_to_stdout;
-
     point_t p1_origin, p2_origin;
     ON_3dPoint plane1_origin, plane2_origin;
     ON_3dVector plane_x_dir, plane_y_dir;
@@ -54,7 +51,7 @@ rt_hyp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     //  First, find planes corresponding to the top and bottom faces - initially
     //  the hyp must be centered around the origin.
 
-    vect_t tmp, x_dir, y_dir;
+    vect_t x_dir, y_dir;
     VSET(x_dir, 1, 0, 0);
     VSET(y_dir, 0, 1, 0);
 
@@ -133,7 +130,7 @@ rt_hyp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     double MP = MX + intercept_length;
     double w = (MX/MP)/(1-MX/MP);
 
-    point_t ep1, ep2, ep3, tmppt;
+    point_t ep1, ep2, ep3;
     VSET(ep1, -eip->hyp_b, 0, 0.5*MAGNITUDE(eip->hyp_Hi));
     VSET(ep2, -MX, 0, 0);
     VSET(ep3, -eip->hyp_b, 0, -0.5*MAGNITUDE(eip->hyp_Hi));
@@ -186,7 +183,7 @@ rt_hyp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     ON_BrepFace& face = (*b)->NewFace(surfindex - 1);
     (*b)->FlipFace(face);
     int faceindex = (*b)->m_F.Count();
-    ON_BrepLoop* outerloop = (*b)->NewOuterLoop(faceindex-1);
+    (*b)->NewOuterLoop(faceindex-1);
     
 }
 

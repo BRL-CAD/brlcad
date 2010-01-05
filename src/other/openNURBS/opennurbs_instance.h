@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -36,32 +35,32 @@ public:
   enum IDEF_UPDATE_TYPE
   {
     static_def = 0,   // This instance definition is never updated.
-		      // If m_source_archive is set, it records the
-		      // origin of the instance definition geometry
-		      // and, but m_source_archive is never used
-		      // to update the instance definition
+                      // If m_source_archive is set, it records the
+                      // origin of the instance definition geometry
+                      // and, but m_source_archive is never used
+                      // to update the instance definition
     embedded_def = 1, // This instance definition geometry was
-		      // imported from another archive (m_source_archive)
-		      // and is embedded. If m_source_archive changes,
-		      // the user is asked if they want to update
-		      // the instance definition.
+                      // imported from another archive (m_source_archive)
+                      // and is embedded. If m_source_archive changes,
+                      // the user is asked if they want to update
+                      // the instance definition.
     linked_and_embedded_def = 2,
-		      // This instance definition geometry was
-		      // imported from another archive (m_source_archive)
-		      // and is embedded. If m_source_archive changes,
-		      // the instance definition is automatically updated.
-		      // If m_source_archive is not available, the
-		      // instance definition is still valid.
+                      // This instance definition geometry was
+                      // imported from another archive (m_source_archive)
+                      // and is embedded. If m_source_archive changes,
+                      // the instance definition is automatically updated.
+                      // If m_source_archive is not available, the
+                      // instance definition is still valid.
     linked_def = 3,   // This instance definition geometry was
-		      // imported from another archive (m_source_archive)
-		      // and is not embedded. If m_source_archive changes,
-		      // the instance definition is automatically updated.
-		      // If m_source_archive is not available, the
-		      // instance definition is not valid.
-		      // This does not save runtime memory.  It may
-		      // save a little disk space, but it is a 
-		      // foolish option requested by people who do not 
-		      // understand all the issues.
+                      // imported from another archive (m_source_archive)
+                      // and is not embedded. If m_source_archive changes,
+                      // the instance definition is automatically updated.
+                      // If m_source_archive is not available, the
+                      // instance definition is not valid.
+                      // This does not save runtime memory.  It may
+                      // save a little disk space, but it is a 
+                      // foolish option requested by people who do not 
+                      // understand all the issues.
     force_32bit_idef_update_type = 0xFFFFFFFF
   };
 
@@ -88,25 +87,26 @@ public:
   ~ON_InstanceDefinition();
 
   // virtual ON_Object overrides
-  BOOL IsValid( ON_TextLog* text_log = NULL ) const;
-  BOOL Write(
-	 ON_BinaryArchive& binary_archive
+  ON_BOOL32 IsValid( ON_TextLog* text_log = NULL ) const;
+  ON_BOOL32 Write(
+         ON_BinaryArchive& binary_archive
        ) const;
-  BOOL Read(
-	 ON_BinaryArchive& binary_archive
+  ON_BOOL32 Read(
+         ON_BinaryArchive& binary_archive
        );
   ON::object_type ObjectType() const;
+  unsigned int SizeOf() const;
 
   // virtual ON_Geometry overrides
   int Dimension() const;
-  BOOL GetBBox(
-	 double* boxmin,
-	 double* boxmax,
-	 int bGrowBox = false
-	 ) const;
-  BOOL Transform( 
-	 const ON_Xform& xform
-	 );
+  ON_BOOL32 GetBBox(
+         double* boxmin,
+         double* boxmax,
+         int bGrowBox = false
+         ) const;
+  ON_BOOL32 Transform( 
+         const ON_Xform& xform
+         );
 
   // virtual
   ON_UUID ModelObjectId() const;
@@ -148,10 +148,10 @@ public:
     The checksum can be used to detect changed files.
   */
   void SetSourceArchive( 
-	const wchar_t* source_archive, 
-	ON_CheckSum checksum,
-	IDEF_UPDATE_TYPE update_type
-	);
+        const wchar_t* source_archive, 
+        ON_CheckSum checksum,
+        IDEF_UPDATE_TYPE update_type
+        );
 
   /*
   Returns:
@@ -178,9 +178,9 @@ public:
 
   ON_UUID m_uuid;     // unique id for this instance definition
   ON_wString m_name;  // The "name" is for human comfort.  
-		      // It can be empty and duplicates
-		      // may exist. Instance reference use
-		      // m_uuid to find instance definitions.
+                      // It can be empty and duplicates
+                      // may exist. Instance reference use
+                      // m_uuid to find instance definitions.
   ON_wString m_description; 
 
   ON_wString m_url;
@@ -193,18 +193,18 @@ public:
   IDEF_UPDATE_TYPE m_idef_update_type; 
 
   int m_idef_update_depth; // Controls how much geometry is read when
-			   // a linked idef is updated.
-			   //   0: read everything, included nested linked idefs
-			   //   1: skip nested linked idefs.
+                           // a linked idef is updated.
+                           //   0: read everything, included nested linked idefs
+                           //   1: skip nested linked idefs.
 
   ON_wString m_source_archive;   // filename used to update idef 
-				 // (it can be empty or relative)
+                                 // (it can be empty or relative)
   bool m_source_bRelativePath;  // True if the filename in m_source_archive is
-				 // a relative the location of the 3dm file
-				 // containing this instance definition.
+                                 // a relative the location of the 3dm file
+                                 // containing this instance definition.
 
   ON_CheckSum m_source_archive_checksum; // used to detect when idef is out of
-					 // synch with source archive.
+                                         // synch with source archive.
 };
 
 
@@ -226,12 +226,12 @@ public:
   //
   // virtual ON_Object overrides
   //
-  BOOL IsValid( ON_TextLog* text_log = NULL ) const;
-  BOOL Write(
-	 ON_BinaryArchive& binary_archive
+  ON_BOOL32 IsValid( ON_TextLog* text_log = NULL ) const;
+  ON_BOOL32 Write(
+         ON_BinaryArchive& binary_archive
        ) const;
-  BOOL Read(
-	 ON_BinaryArchive& binary_archive
+  ON_BOOL32 Read(
+         ON_BinaryArchive& binary_archive
        );
   ON::object_type ObjectType() const;
 
@@ -240,14 +240,14 @@ public:
   // virtual ON_Geometry overrides
   //
   int Dimension() const;
-  BOOL GetBBox(
-	 double* boxmin,
-	 double* boxmax,
-	 int bGrowBox = false
-	 ) const;
-  BOOL Transform( 
-	 const ON_Xform& xform
-	 );
+  ON_BOOL32 GetBBox(
+         double* boxmin,
+         double* boxmax,
+         int bGrowBox = false
+         ) const;
+  ON_BOOL32 Transform( 
+         const ON_Xform& xform
+         );
 
   // virtual ON_Geometry::IsDeformable() override
   bool IsDeformable() const;
@@ -268,6 +268,10 @@ public:
 
   // Bounding box for this reference.
   ON_BoundingBox m_bbox;
+
+  // Tolerance to use for flagging instance xforms
+  // as singular.
+  static const double m_singular_xform_tol;
 };
 
 #endif

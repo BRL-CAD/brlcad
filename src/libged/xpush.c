@@ -397,7 +397,7 @@ Copy_comb(struct ged *gedp,
 
     if (rt_db_put_internal(found, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
 	bu_vls_printf(&gedp->ged_result_str, "rt_db_put_internal failed for %s\n", dp->d_namep);
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 	return(DIR_NULL);
     }
 
@@ -528,7 +528,7 @@ ged_xpush(struct ged *gedp, int argc, const char *argv[])
 	    if (comb->tree)
 		db_tree_funcleaf(gedp->ged_wdbp->dbip, comb, comb->tree, Do_ref_incr,
 				 (genptr_t)NULL, (genptr_t)NULL, (genptr_t)NULL);
-	    rt_db_free_internal(&intern, &rt_uniresource);
+	    rt_db_free_internal(&intern);
 	}
     }
 
@@ -596,7 +596,7 @@ ged_xpush(struct ged *gedp, int argc, const char *argv[])
 
     if (rt_db_put_internal(old_dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
 	bu_vls_printf(&gedp->ged_result_str, "rt_db_put_internal failed for %s\n", old_dp->d_namep);
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 	Free_uses(gedp->ged_wdbp->dbip);
 	return GED_ERROR;
     }

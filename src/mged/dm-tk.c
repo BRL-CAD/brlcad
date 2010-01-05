@@ -53,11 +53,7 @@ static int tk_dm(int argc, char **argv);
 static void dirty_hook(void);
 static void zclip_hook(void);
 
-#ifdef USE_PROTOTYPES
 static Tk_GenericProc tk_doevent;
-#else
-static int tk_doevent();
-#endif
 
 struct bu_structparse tk_vparse[] = {
     {"%f",  1, "bound",		 DM_O(dm_bound),	dirty_hook},

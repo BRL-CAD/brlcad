@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -53,10 +52,18 @@ extern ON_EXTERN_DECL const ON_UUID ON_nil_uuid;
 extern ON_EXTERN_DECL const ON_UUID ON_max_uuid;
 
 // Application ids for the versions of Rhino that
-// write 3dm files.
+// write 3dm files.  All userdata classed defined
+// in the core Rhino.exe should use these ids
+// as the application id.
+// In situations where you want to use the id
+// for the current version of Rhino, use
+// ON_rhino_id and you won't have to update
+// your code when Rhino versions roll.
 extern ON_EXTERN_DECL const ON_UUID ON_rhino2_id;
 extern ON_EXTERN_DECL const ON_UUID ON_rhino3_id;
 extern ON_EXTERN_DECL const ON_UUID ON_rhino4_id;
+extern ON_EXTERN_DECL const ON_UUID ON_rhino5_id;
+extern ON_EXTERN_DECL const ON_UUID ON_rhino_id;
 
 // Application ids for usedata written by versions
 // of opennurbs before userdata had application ids.
@@ -64,8 +71,17 @@ extern ON_EXTERN_DECL const ON_UUID ON_v2_userdata_id;
 extern ON_EXTERN_DECL const ON_UUID ON_v3_userdata_id;
 extern ON_EXTERN_DECL const ON_UUID ON_v4_userdata_id;
 
-// Application id of version 4 of openNURBS
+// Application id for the versions of openNURBS that
+// write userdata in 3dm files.  User data whose class
+// definition is in opennurbs should use these
+// ids as the user data application id.
+// In situations where you want to use the id
+// for the current version of opennurbs, use
+// ON_opennurbs_id and you won't have to update
+// your code when opennurbs versions roll.
 extern ON_EXTERN_DECL const ON_UUID ON_opennurbs4_id;
+extern ON_EXTERN_DECL const ON_UUID ON_opennurbs5_id;
+extern ON_EXTERN_DECL const ON_UUID ON_opennurbs_id;
 
 ON_END_EXTERNC
 
@@ -142,9 +158,9 @@ Remarks:
 */
 ON_DECL 
 int ON_UuidCompare( 
-	const ON_UUID* a, 
-	const ON_UUID* b 
-	);
+        const ON_UUID* a, 
+        const ON_UUID* b 
+        );
 
 /*
 Description:
@@ -160,9 +176,9 @@ Returns:
 */
 ON_DECL 
 int ON_UuidCompare( 
-	const ON_UUID& a, 
-	const ON_UUID& b
-	);
+        const ON_UUID& a, 
+        const ON_UUID& b
+        );
 
 /*
 Description:
@@ -174,8 +190,8 @@ Returns:
 */
 ON_DECL
 bool ON_UuidIsNil( 
-	const ON_UUID& uuid 
-	);
+        const ON_UUID& uuid 
+        );
 
 /*
 Description:
@@ -187,8 +203,8 @@ Returns:
 */
 ON_DECL
 bool ON_UuidIsNotNil( 
-	const ON_UUID& uuid 
-	);
+        const ON_UUID& uuid 
+        );
 
 /*
 Description:
@@ -231,8 +247,8 @@ Description:
 Parameters:
   uuid - [in]
   s - [out]  The s[] char array must have length >= 37.  
-	     The returned char array will have a 36 
-	     character uuid in s[0..35] and a null in s[36].
+             The returned char array will have a 36 
+             character uuid in s[0..35] and a null in s[36].
 Returns:
   The pointer to the array is returned.
 */
@@ -247,8 +263,8 @@ Description:
 Parameters:
   uuid - [in]
   s - [out]  The s[] wchar_t array must have length >= 37.  
-	     The returned char array will have a 36 
-	     character uuid in s[0..35] and a null in s[36].
+             The returned char array will have a 36 
+             character uuid in s[0..35] and a null in s[36].
 Returns:
   The pointer to the array is returned.
 */

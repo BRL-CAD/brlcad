@@ -42,13 +42,13 @@ char *Usage="[-h] [-F framebuffer]\n\
 int
 main(int argc, char **argv)
 {
-    register int c;
-    register int	x;
+    int c;
+    int	x;
     FBIO		*fbp;
     int	xsize, ysize;
     int		 len;
     char	*framebuffer = (char *)NULL;
-    register unsigned char *line;
+    unsigned char *line;
     static RGBpixel white = { 255, 255, 255 };
     static RGBpixel red = { 255, 0, 0 };
     static RGBpixel green = { 0, 255, 0 };

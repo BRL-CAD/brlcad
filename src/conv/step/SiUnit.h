@@ -41,7 +41,7 @@ protected:
 public:
 	SiUnit();
 	virtual ~SiUnit();
-	SiUnit(STEPWrapper *sw,int STEPid);
+	SiUnit(STEPWrapper *sw,int step_id);
 	double GetLengthConversionFactor();
 	double GetPlaneAngleConversionFactor();
 	double GetSolidAngleConversionFactor();

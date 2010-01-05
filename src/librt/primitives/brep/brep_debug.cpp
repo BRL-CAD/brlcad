@@ -36,7 +36,9 @@
 
 #include "vmath.h"
 
+#include "plot3.h"
 #include "brep.h"
+#include "brep_debug.h"
 #include "dvec.h"
 
 #include "raytrace.h"
@@ -53,32 +55,18 @@ extern "C" {
 }
 #endif
 
-/* FIXME: fugly */
-static int hit_count = 0;
-
-//debugging
-static int icount = 0;
 
 /********************************************************************************
  * Auxiliary functions
  ********************************************************************************/
 
-
 using namespace brlcad;
 
-extern void brep_preprocess_trims(ON_BrepFace& face, SurfaceTree* tree);
-extern void brep_bvh_subdivide(BBNode* parent, const std::list<SurfaceTree*>& face_trees);
-
-#define PLOTTING 1
-#if PLOTTING
-
-#include "plot3.h"
-
-static int pcount = 0;
-static FILE* plot = NULL;
-HIDDEN FILE*
-_plot_file(const char *pname = NULL)
+FILE*
+brep_plot_file(const char *pname)
 {
+    static FILE* plot = NULL;
+
     if (plot != NULL) {
 	(void)fclose(plot);
 	plot = NULL;
@@ -94,57 +82,6 @@ _plot_file(const char *pname = NULL)
     
     return plot;
 }
-
-
-#define BLUEVIOLET 138, 43, 226
-#define CADETBLUE 95, 159, 159
-#define CORNFLOWERBLUE 66, 66, 111
-#define LIGHTBLUE 173, 216, 230
-#define DARKGREEN 0, 100, 0
-#define KHAKI 189, 183, 107
-#define FORESTGREEN 34, 139, 34
-#define LIMEGREEN 124, 252, 0
-#define PALEGREEN 152, 251, 152
-#define DARKORANGE 255, 140, 0
-#define DARKSALMON 233, 150, 122
-#define LIGHTCORAL 240, 128, 128
-#define PEACH 255, 218, 185
-#define DEEPPINK 255, 20, 147
-#define HOTPINK 255, 105, 180
-#define INDIANRED 205, 92, 92
-#define DARKVIOLET 148, 0, 211
-#define MAROON 139, 28, 98
-#define GOLDENROD 218, 165, 32
-#define DARKGOLDENROD 184, 134, 11
-#define LIGHTGOLDENROD 238, 221, 130
-#define DARKYELLOW 155, 155, 52
-#define LIGHTYELLOW 255, 255, 224
-#define RED 255, 0, 0
-#define GREEN 0, 255, 0
-#define BLUE 0, 0, 255
-#define YELLOW 255, 255, 0
-#define MAGENTA 255, 0, 255
-#define CYAN 0, 255, 255
-#define BLACK 0, 0, 0
-#define WHITE 255, 255, 255
-
-#define M_COLOR_PLOT(c) pl_color(_plot_file(), c)
-#define COLOR_PLOT(r, g, b) pl_color(_plot_file(), (r), (g), (b))
-#define M_PT_PLOT(p) {				\
-	point_t pp, ppp;		        \
-	vect_t grow;				\
-	VSETALL(grow, 0.01);			\
-	VADD2(pp, p, grow);			\
-	VSUB2(ppp, p, grow);			\
-	pdv_3box(_plot_file(), pp, ppp); 	\
-    }
-#define PT_PLOT(p) {				\
-	point_t pp;				\
-	VSCALE(pp, p, 1.001);			\
-	pdv_3box(_plot_file(), p, pp);		\
-    }
-#define LINE_PLOT(p1, p2) pdv_3move(_plot_file(), p1); pdv_3line(_plot_file(), p1, p2)
-#define BB_PLOT(p1, p2) pdv_3box(_plot_file(), p1, p2)
 
 #define ARB_FACE(valp, a, b, c, d)			\
     RT_ADD_VLIST(vhead, valp[a], BN_VLIST_LINE_MOVE);	\
@@ -196,7 +133,7 @@ plotsurfaceleafs(SurfaceTree* surf) {
 	*/
 	//if ((!bb->m_trimmed) && (!bb->m_checkTrim)) {
 	if (false) {
-	    bb->GetBBox(min, max);
+	    //bb->GetBBox(min, max);
 	} else {
 	    VSET(min, bb->m_u[0]+0.001, bb->m_v[0]+0.001, 0.0);
 	    VSET(max, bb->m_u[1]-0.001, bb->m_v[1]-0.001, 0.0);
@@ -307,13 +244,12 @@ plotleaf3d(BBNode* bb)
     if (true) {
 	bb->GetBBox(min, max);
     } else {
-	VSET(min, bb->m_u[0]+0.001, bb->m_v[0]+0.001, 0.0);
-	VSET(max, bb->m_u[1]-0.001, bb->m_v[1]-0.001, 0.0);
+	// VSET(min, bb->m_u[0]+0.001, bb->m_v[0]+0.001, 0.0);
+	// VSET(max, bb->m_u[1]-0.001, bb->m_v[1]-0.001, 0.0);
     }
     BB_PLOT(min, max);
 	
     M_COLOR_PLOT(YELLOW);
-    bool start=true;
     point_t a, b;
     ON_3dPoint p;
     BRNode* trimBR = NULL;
@@ -359,7 +295,7 @@ plotleafuv(BBNode* bb)
     }
 	
     if (false) {
-	bb->GetBBox(min, max);
+	// bb->GetBBox(min, max);
     } else {
 	VSET(min, bb->m_u[0]+0.001, bb->m_v[0]+0.001, 0.0);
 	VSET(max, bb->m_u[1]-0.001, bb->m_v[1]-0.001, 0.0);
@@ -451,7 +387,7 @@ plottrim2d(ON_BrepFace &face, struct bn_vlblock *vbp, int plotres)
 
 
 void
-plotUVDomain2d(ON_BrepFace &face, struct bn_vlblock *vbp, int plotres)
+plotUVDomain2d(ON_BrepFace &face, struct bn_vlblock *vbp)
 {
     register struct bu_list *vhead;
     const ON_Surface* surf = face.SurfaceOf();
@@ -598,8 +534,6 @@ void
 plotsurface(ON_Surface &surf, struct bn_vlblock *vbp, int isocurveres, int gridres)
 {
     register struct bu_list *vhead;
-    double umin, umax;
-    double vmin, vmax;
     double pt1[3], pt2[3];
     ON_2dPoint from, to;
 	
@@ -637,8 +571,6 @@ void
 plotsurfacenormals(ON_Surface &surf, struct bn_vlblock *vbp, int gridres)
 {
     register struct bu_list *vhead;
-    double umin, umax;
-    double vmin, vmax;
     double pt1[3], pt2[3];
     ON_2dPoint from, to;
 
@@ -667,7 +599,6 @@ void
 plotcurve(ON_Curve &curve, struct bn_vlblock *vbp, int plotres)
 {
     register struct bu_list *vhead;
-    double umin, umax;
     double pt1[3], pt2[3];
     ON_2dPoint from, to;
 
@@ -932,11 +863,8 @@ brep_face_info(struct brep_specific* bs, struct bu_vls *vls, int fi)
 
 
 int
-brep_facetrim_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int index, int plotres, bool dim3d)
+brep_facetrim_plot(struct bu_vls *, struct brep_specific* bs, struct rt_brep_internal*, struct bn_vlblock *vbp, int index, int plotres, bool dim3d)
 {
-    register struct bu_list *vhead;
-    struct bn_vlblock *surface_leafs_vbp;
-	
     ON_TextLog tl(stderr);
     ON_Brep* brep = bs->brep;
     if (brep == NULL || !brep->IsValid(&tl)) {
@@ -947,7 +875,7 @@ brep_facetrim_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_
 	for (index = 0; index < brep->m_F.Count(); index++) {
 	    ON_BrepFace& face = brep->m_F[index];
 	    if (!dim3d)
-		plotUVDomain2d(face, vbp, plotres);
+		plotUVDomain2d(face, vbp);
 	    plottrim(face, vbp, plotres, dim3d);
 	}
     } else if (index < brep->m_S.Count()) {
@@ -956,7 +884,7 @@ brep_facetrim_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_
 	    ON_BrepFace& face = faces[index];
 	    face.Dump(tl);
 	    if (!dim3d)
-		plotUVDomain2d(face, vbp, plotres);
+		plotUVDomain2d(face, vbp);
 	    plottrim(face, vbp, plotres, dim3d);
 	}
     }
@@ -965,11 +893,8 @@ brep_facetrim_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_
 
 
 int
-brep_trim_direction_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int index, int plotres)
+brep_trim_direction_plot(struct bu_vls *, struct brep_specific* bs, struct rt_brep_internal*, struct bn_vlblock *vbp, int index, int plotres)
 {
-    register struct bu_list *vhead;
-    struct bn_vlblock *surface_leafs_vbp;
-
     ON_TextLog tl(stderr);
     ON_Brep* brep = bs->brep;
     if (brep == NULL || !brep->IsValid(&tl)) {
@@ -994,11 +919,8 @@ brep_trim_direction_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt
 
 
 int
-brep_surface_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int index, int plotres)
+brep_surface_plot(struct bu_vls *, struct brep_specific* bs, struct rt_brep_internal*, struct bn_vlblock *vbp, int index, int plotres)
 {
-    register struct bu_list *vhead;
-    struct bn_vlblock *surface_leafs_vbp;
-	
     ON_TextLog tl(stderr);
     ON_Brep* brep = bs->brep;
     if (brep == NULL || !brep->IsValid(&tl)) {
@@ -1021,11 +943,8 @@ brep_surface_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_i
 
 
 int
-brep_surface_normal_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int index, int plotres)
+brep_surface_normal_plot(struct bu_vls *, struct brep_specific* bs, struct rt_brep_internal*, struct bn_vlblock *vbp, int index, int)
 {
-    register struct bu_list *vhead;
-    struct bn_vlblock *surface_leafs_vbp;
-
     ON_TextLog tl(stderr);
     ON_Brep* brep = bs->brep;
     if (brep == NULL || !brep->IsValid(&tl)) {
@@ -1048,11 +967,8 @@ brep_surface_normal_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt
 
 
 int
-brep_edge3d_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int index, int plotres)
+brep_edge3d_plot(struct bu_vls *, struct brep_specific* bs, struct rt_brep_internal*, struct bn_vlblock *vbp, int index, int plotres)
 {
-    register struct bu_list *vhead;
-    struct bn_vlblock *surface_leafs_vbp;
-
     ON_TextLog tl(stderr);
     ON_Brep* brep = bs->brep;
     if (brep == NULL || !brep->IsValid(&tl)) {
@@ -1076,11 +992,8 @@ brep_edge3d_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_in
 
 
 int
-brep_trim_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int index, int plotres, bool dim3d)
+brep_trim_plot(struct bu_vls *, struct brep_specific* bs, struct rt_brep_internal*, struct bn_vlblock *vbp, int index, int plotres, bool dim3d)
 {
-    register struct bu_list *vhead;
-    struct bn_vlblock *surface_leafs_vbp;
-
     ON_TextLog tl(stderr);
     ON_Brep* brep = bs->brep;
     if (brep == NULL || !brep->IsValid(&tl)) {
@@ -1103,11 +1016,8 @@ brep_trim_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_inte
 
 
 int
-brep_surfaceleafs_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, bool dim3d, int index, int plotres)
+brep_surfaceleafs_plot(struct bu_vls *, struct brep_specific* bs, struct rt_brep_internal*, struct bn_vlblock *vbp, bool dim3d, int index, int)
 {
-    register struct bu_list *vhead;
-    struct bn_vlblock *surface_leafs_vbp;
-
     ON_TextLog tl(stderr);
     ON_Brep* brep = bs->brep;
     if (brep == NULL || !brep->IsValid(&tl)) {
@@ -1133,11 +1043,8 @@ brep_surfaceleafs_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_b
 
 
 int
-brep_trimleafs_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, bool dim3d, int index, int plotres)
+brep_trimleafs_plot(struct bu_vls *, struct brep_specific* bs, struct rt_brep_internal*, struct bn_vlblock *vbp, bool dim3d, int index, int)
 {
-    register struct bu_list *vhead;
-    struct bn_vlblock *surface_leafs_vbp;
-
     ON_TextLog tl(stderr);
     ON_Brep* brep = bs->brep;
     if (brep == NULL || !brep->IsValid(&tl)) {
@@ -1276,7 +1183,6 @@ brep_command(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_intern
     }
     return ret;
 }
-#endif /* PLOTTING */
 
 /** @} */
 

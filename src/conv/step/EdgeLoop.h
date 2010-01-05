@@ -42,7 +42,7 @@ protected:
 public:
 	EdgeLoop();
 	virtual ~EdgeLoop();
-	EdgeLoop(STEPWrapper *sw,int STEPid);
+	EdgeLoop(STEPWrapper *sw,int step_id);
 	ON_BoundingBox *GetEdgeBounds(ON_Brep *brep);
 	bool Load(STEPWrapper *sw,SCLP23(Application_instance) *sse);
 	virtual bool LoadONBrep(ON_Brep *brep);

@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -34,18 +33,18 @@ public:
   //
   void MemoryRelocate();
 
-  BOOL IsValid( ON_TextLog* text_log = NULL ) const;
+  ON_BOOL32 IsValid( ON_TextLog* text_log = NULL ) const;
 
   void Dump( ON_TextLog& ) const;
 
   unsigned int SizeOf() const;
 
-  BOOL Write(
-	 ON_BinaryArchive& binary_archive
+  ON_BOOL32 Write(
+         ON_BinaryArchive& binary_archive
        ) const;
 
-  BOOL Read(
-	 ON_BinaryArchive& binary_archive
+  ON_BOOL32 Read(
+         ON_BinaryArchive& binary_archive
        );
 
   ON::object_type ObjectType() const; // returns ON::detail_object
@@ -57,11 +56,11 @@ public:
   //
   int Dimension() const;
 
-  BOOL GetBBox(
-	 double* boxmin,
-	 double* boxmax,
-	 int bGrowBox = false
-	 ) const;
+  ON_BOOL32 GetBBox(
+         double* boxmin,
+         double* boxmax,
+         int bGrowBox = false
+         ) const;
 
 	bool GetTightBoundingBox( 
 			ON_BoundingBox& tight_bbox, 
@@ -69,7 +68,7 @@ public:
 			const ON_Xform* xform = 0
       ) const;
 
-  BOOL Transform( const ON_Xform& xform );
+  ON_BOOL32 Transform( const ON_Xform& xform );
 
   // m_page_per_model_ratio is the ratio of page length / model length
   // where both lengths are in the same unit system
