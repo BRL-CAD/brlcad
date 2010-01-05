@@ -6441,6 +6441,8 @@ nmg_dist_to_cross(const struct intersect_fus *i_fus, const struct intersect_fus 
     vect_t i_dir, j_dir;
     fastf_t dist[2];
 
+    VSETALLN(pl, 0, 4);
+
     BN_CK_TOL(tol);
 
     if (i_fus->fu[1])
@@ -7189,6 +7191,8 @@ nmg_move_edge_thru_pt(struct edgeuse *mv_eu, const fastf_t *pt, const struct bn_
     struct bu_ptbl faces;
     int count;
     long *flags;
+
+    VSETALL(e_dir, 0);
 
     if (rt_g.NMG_debug & DEBUG_BASIC)
 	bu_log("nmg_move_edge_thru_pt(mv_eu=x%x, pt=(%f %f %f))\n", mv_eu, V3ARGS(pt));
@@ -9088,6 +9092,9 @@ rt_arc2d_to_cnurb(fastf_t *i_center, fastf_t *i_start, fastf_t *i_end, int point
     int ncoords = 0;
     int i;
 
+    VSETALL(v1, 0);
+    VSETALL(v2, 0);
+
     BN_CK_TOL(tol);
 
     VMOVE(start, i_start)
@@ -9823,6 +9830,8 @@ nmg_to_tgc(
     plane_t top_pl;
     plane_t base_pl;
     vect_t plv_1, plv_2;
+
+    VSETALL(base_pl, 0);
 
     NMG_CK_MODEL(m);
 

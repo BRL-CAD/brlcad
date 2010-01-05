@@ -365,6 +365,9 @@ rt_arbn_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 	    point_t a, b;		/* start and end points */
 	    vect_t dist;
 
+	    VSETALL(a, 0);
+	    VSETALL(b, 0);
+
 	    /* If normals are parallel, no intersection */
 	    dot = VDOT(aip->eqn[i], aip->eqn[j]);
 	    if (BN_VECT_ARE_PARALLEL(dot, tol)) continue;

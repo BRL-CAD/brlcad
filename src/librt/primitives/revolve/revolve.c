@@ -710,7 +710,7 @@ rt_revolve_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 		    bn_poly_t answer;		/* {f(y) + g(y)/(2cx)}^2 - g(y) */
 		    bn_complex_t roots[4];
 		
-		    fastf_t cx, cy, crsq;	/* carc's (x, y) coords and radius^2 */
+		    fastf_t cx, cy, crsq = 0;	/* carc's (x, y) coords and radius^2 */
 		    point2d_t center, radius;
 		
 		    /* calculate circle parameters */

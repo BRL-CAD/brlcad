@@ -67,11 +67,13 @@ rt_metaball_realize_cube(struct shell *s, struct rt_metaball_internal *mb, fastf
      * decimated, perhaps? */
 
     /* convert intersect to vertices */
+    p = p;
 
     if ((fu=nmg_cmface(s, corners, 3)) == (struct faceuse *)NULL) {
 	bu_log("rt_metaball_tess() nmg_cmface() failed\n");
 	return -1;
     }
+    return -1;
 }
 
 /**
@@ -130,8 +132,6 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
 	    for (k = min[Z]; k<max[Z]; k+=mtol) {
 		point_t p[8];
 		int pv = 0;
-		int pvbc;	/* bit count */
-		struct faceuse *fu;
 
 #define MEH(c,di,dj,dk) VSET(p[c], i+di, j+dj, k+dk); pv |= rt_metaball_point_inside((const point_t *)&p[c], mb) << c;
 		MEH(0, 0, 0, 0);
@@ -144,7 +144,10 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
 		MEH(7, mtol, mtol, mtol);
 #undef MET
 		if ( pv != 0 && pv != 255 )
-		rt_metaball_realize_cube(s, mb, finalstep, pv, (point_t **)&p, mtol);
+		    if(rt_metaball_realize_cube(s, mb, finalstep, pv, (point_t **)&p, mtol) == -1) {
+			bu_log("Error attempting to realize a cube O.o\n");
+			return -1;
+		    }
 	    }
 
     rt_get_timer(&times, NULL);

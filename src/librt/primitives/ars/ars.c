@@ -152,6 +152,8 @@ rt_ars_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     vect_t base_vect;
     int currec;
 
+    VSETALL(base_vect, 0);
+
     if (dbip) RT_CK_DBI(dbip);
 
     BU_CK_EXTERNAL(ep);

@@ -1926,7 +1926,7 @@ rt_arb_edit(struct bu_vls *error_msg_ret,
 	    plane_t planes[6],
 	    const struct bn_tol *tol)
 {
-    int pt1, pt2, bp1, bp2, newp, p1, p2, p3;
+    int pt1 = 0, pt2 = 0, bp1, bp2, newp, p1, p2, p3;
     short *edptr;		/* pointer to arb edit array */
     short *final;		/* location of points to redo */
     int i;

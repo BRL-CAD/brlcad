@@ -609,7 +609,7 @@ bend_pipe_shot(struct soltab *stp, struct xray *rp, struct bend_pipe *bp, struct
     fastf_t or2_sq;		/* outside radius squared (from adjacent seg) */
     fastf_t ir2_sq;		/* inside radius squared (from adjacent seg) */
     int parallel;		/* set to one when ray is parallel to plane of bend */
-    fastf_t dist;		/* distance between ray and plane of bend */
+    fastf_t dist = 0;		/* distance between ray and plane of bend */
     fastf_t tmp;
     struct id_pipe *prev;
     struct id_pipe *next;

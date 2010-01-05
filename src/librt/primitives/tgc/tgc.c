@@ -921,6 +921,9 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
     bn_poly_t Xsqr, Ysqr;
     bn_poly_t R, Rsqr;
 
+    VSETALLN(k, 0, 4);
+    VSETALLN(pt, 0, 2);
+
     if (ap) RT_CK_APPLICATION(ap);
 
     /* Allocate space for polys and roots */
@@ -1952,6 +1955,11 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     struct vertex **v[3];		/* array for making triangular faces */
 
     int i;
+
+    VSETALL(unit_a, 0);
+    VSETALL(unit_b, 0);
+    VSETALL(unit_c, 0);
+    VSETALL(unit_d, 0);
 
     RT_CK_DB_INTERNAL(ip);
     tip = (struct rt_tgc_internal *)ip->idb_ptr;

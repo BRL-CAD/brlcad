@@ -628,7 +628,7 @@ nmg_class_pt_s(const fastf_t *pt, const struct shell *s, const int in_or_out_onl
     long *faces_seen = NULL;
     vect_t region_diagonal;
     fastf_t region_diameter;
-    int class;
+    int class = 0;
     vect_t projection_dir;
     int try=0;
     struct xray rp;

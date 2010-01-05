@@ -133,7 +133,7 @@ rt_metaball_get_bounding_sphere(point_t *center, fastf_t threshold, struct rt_me
 	/* and add all the contribution */
 	for (BU_LIST_FOR(mbpt2, wdb_metaballpt, points))
 	    if (mbpt2 != mbpt) {
-		fastf_t additive;
+		fastf_t additive = 0.0;
 		VSUB2(d, mbpt2->coord, mbpt->coord);
 		mag = MAGNITUDE(d) + dist;
 

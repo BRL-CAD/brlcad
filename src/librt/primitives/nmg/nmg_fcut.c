@@ -568,6 +568,8 @@ nmg_assess_eu(struct edgeuse *eu, int forw, struct nmg_ray_state *rs, int pos)
     int ret;
     register int i;
 
+    VSETALL(heading, 0);
+
     NMG_CK_EDGEUSE(eu);
     NMG_CK_RAYSTATE(rs);
     BN_CK_TOL(rs->tol);
@@ -2738,7 +2740,7 @@ nmg_fcut_face(struct nmg_ray_state *rs)
 	int prior_end;
 	int next_start, next_end;
 	int i;
-	int index1, index2;
+	int index1 = 0, index2 = 0;
 
 	while (rs->vu[prior_start]->v_p == prev_v)
 	    prior_start++;

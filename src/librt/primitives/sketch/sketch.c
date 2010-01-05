@@ -504,6 +504,10 @@ seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
     fastf_t radius;
     vect_t norm;
 
+    VSETALL(semi_a, 0);
+    VSETALL(semi_b, 0);
+    VSETALL(center, 0);
+
     lng = (long *)seg;
     switch (*lng) {
 	case CURVE_LSEG_MAGIC:
