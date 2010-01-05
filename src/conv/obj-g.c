@@ -1,7 +1,7 @@
 /*
  *                            O B J - G . C BRL-CAD
  *
- * Copyright (c) 2002-2009 United States Government as represented by the U.S.
+ * Copyright (c) 2002-2010 United States Government as represented by the U.S.
  * Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or modify it under
