@@ -40,9 +40,9 @@ CompositeCurve::CompositeCurve() {
 	id = 0;
 }
 
-CompositeCurve::CompositeCurve(STEPWrapper *sw,int STEPid) {
+CompositeCurve::CompositeCurve(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 CompositeCurve::~CompositeCurve() {
@@ -63,7 +63,7 @@ CompositeCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 	id = sse->STEPfile_id;
 
 	if ( !BoundedCurve::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::BoundedCurve." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::BoundedCurve." << std::endl;
 		return false;
 	}
 
@@ -81,7 +81,7 @@ CompositeCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 				segments.push_back(aCCS);
 			} else {
-				cerr << CLASSNAME  << ": Unhandled entity in attribute 'segments'." << endl;
+				std::cerr << CLASSNAME  << ": Unhandled entity in attribute 'segments'." << std::endl;
 				return false;
 			}
 		}
@@ -95,30 +95,30 @@ CompositeCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 const double *
 CompositeCurve::PointAtEnd() {
-	cerr << CLASSNAME << ": Error: virtual function PointAtEnd() not implemented for this type of curve.";
+	std::cerr << CLASSNAME << ": Error: virtual function PointAtEnd() not implemented for this type of curve.";
 	return NULL;
 }
 
 const double *
 CompositeCurve::PointAtStart() {
-	cerr << CLASSNAME << ": Error: virtual function PointAtStart() not implemented for this type of curve.";
+	std::cerr << CLASSNAME << ": Error: virtual function PointAtStart() not implemented for this type of curve.";
 	return NULL;
 }
 
 void
 CompositeCurve::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << name << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Attributes:" << endl;
-	TAB(level); cout << "segments:" << endl;
+	TAB(level); std::cout << "Attributes:" << std::endl;
+	TAB(level); std::cout << "segments:" << std::endl;
 	LIST_OF_SEGMENTS::iterator i;
 	for(i=segments.begin();i!=segments.end();i++) {
 		(*i)->Print(level+1);
 	}
-	TAB(level); cout << "self_intersect:" << step->getLogicalString(self_intersect) << endl;
+	TAB(level); std::cout << "self_intersect:" << step->getLogicalString(self_intersect) << std::endl;
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	BoundedCurve::Print(level+1);
 }
 STEPEntity *
@@ -130,7 +130,7 @@ CompositeCurve::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

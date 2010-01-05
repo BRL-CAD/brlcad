@@ -215,7 +215,7 @@ ged_bo(struct ged *gedp, int argc, const char *argv[])
 	if (bip->count < 1) {
 	    bu_vls_printf(&gedp->ged_result_str, "%s has no contents", obj_name);
 	    fclose(fp);
-	    rt_db_free_internal( &intern, &rt_uniresource );
+	    rt_db_free_internal(&intern);
 	    return GED_ERROR;
 	}
 
@@ -223,12 +223,12 @@ ged_bo(struct ged *gedp, int argc, const char *argv[])
 		     1, fp) != 1 ) {
 	    bu_vls_printf(&gedp->ged_result_str, "Error writing contents to file");
 	    fclose( fp );
-	    rt_db_free_internal( &intern, &rt_uniresource );
+	    rt_db_free_internal(&intern);
 	    return GED_ERROR;
 	}
 
 	fclose( fp );
-	rt_db_free_internal( &intern, &rt_uniresource );
+	rt_db_free_internal(&intern);
 	return GED_OK;
     } else {
 	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);

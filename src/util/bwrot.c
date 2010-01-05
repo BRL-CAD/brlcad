@@ -74,9 +74,9 @@ static char	*file_name;
 FILE	*ifp, *ofp;
 
 int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int c;
+    int c;
 
     while ( (c = bu_getopt( argc, argv, "fbrihs:w:n:S:W:N:a:" )) != EOF )  {
 	switch ( c )  {

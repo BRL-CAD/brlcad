@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -243,10 +242,10 @@ ON_3dPoint ON_Arc::EndPoint() const
 bool ON_Arc::IsValid() const
 {
   return (    ON_Circle::IsValid() 
-	   && m_angle.IsValid()
-	   && AngleRadians() > ON_ZERO_TOLERANCE 
-	   && AngleRadians() <= 2.0*ON_PI+ON_ZERO_TOLERANCE) 
-	 ? true : false;
+           && m_angle.IsValid()
+           && AngleRadians() > ON_ZERO_TOLERANCE 
+           && AngleRadians() <= 2.0*ON_PI+ON_ZERO_TOLERANCE) 
+         ? true : false;
 }
 
 ON_BoundingBox ON_Arc::BoundingBox() const
@@ -283,7 +282,7 @@ bool ON_Arc::GetBoundingBox(
 bool ON_Arc::IsCircle() const
 {
   return (fabs(fabs(AngleRadians()) - 2.0*ON_PI) <= ON_ZERO_TOLERANCE) 
-	 ? true : false;
+         ? true : false;
 }
 
 double ON_Arc::AngleRadians() const
@@ -333,7 +332,7 @@ bool ON_Arc::SetAngleRadians( double a )
 bool ON_Arc::SetAngleIntervalRadians( ON_Interval angle_in_radians )
 {
   bool rc = angle_in_radians.IsIncreasing() 
-	    && angle_in_radians.Length() < (1.0+ON_SQRT_EPSILON)*2.0*ON_PI;
+            && angle_in_radians.Length() < (1.0+ON_SQRT_EPSILON)*2.0*ON_PI;
   if (rc)
   {
     m_angle = angle_in_radians;
@@ -398,7 +397,7 @@ bool ON_ArcCurve::IsContinuous(
       // By convention (see ON::continuity comments) it
       // is locus continuous at start parameter.
       if ( t >= Domain()[1] )
-	rc = false;
+        rc = false;
       break;
 
     case ON::Cinfinity_continuous:
@@ -440,33 +439,33 @@ int ON_Arc::GetNurbForm( ON_NurbsCurve& nurbscurve ) const
       angle = m_angle.Length();
       if (angle <= 0.5*ON_PI + ON_ZERO_TOLERANCE) {
 		    span_count = 1;
-	dt = 0.5;
+        dt = 0.5;
       }
       else if (angle <= ON_PI + ON_ZERO_TOLERANCE) {
 		    span_count = 2;
-		  angle *= 0.5;
-	dt = 0.25;
+  		  angle *= 0.5;
+        dt = 0.25;
       }
       else if (angle <= 1.5*ON_PI + ON_ZERO_TOLERANCE) {
 		    span_count = 3;
-		  angle /= 3.0;
-	dt = 1.0/6.0;
+  		  angle /= 3.0;
+        dt = 1.0/6.0;
       }
       else {
 		    span_count = 4;
-		  angle *= 0.25;
-	dt = 0.125;
+  		  angle *= 0.25;
+        dt = 0.125;
       }
       nurbscurve.Create( 3, true, 3, 2*span_count+1 );
       ON_4dPoint* CV = (ON_4dPoint*)nurbscurve.m_cv;
       t = m_angle[0];
       for ( i = 0; i < span_count; i++ ) {
-	nurbscurve.m_knot[2*i] = t;
-	nurbscurve.m_knot[2*i+1] = t;
-	CV[2*i] = PointAt(m_angle.ParameterAt(t));
-	t += dt;
-	CV[2*i+1] = PointAt(m_angle.ParameterAt(t));
-	t += dt;
+        nurbscurve.m_knot[2*i] = t;
+        nurbscurve.m_knot[2*i+1] = t;
+        CV[2*i] = PointAt(m_angle.ParameterAt(t));
+        t += dt;
+        CV[2*i+1] = PointAt(m_angle.ParameterAt(t));
+        t += dt;
       }
 
       span_count *= 2;
@@ -510,21 +509,21 @@ bool ON_Arc::ClosestPointTo(
   double tt, a;
   if ( !t )
     t =&tt;
-  BOOL rc = ON_Circle::ClosestPointTo(pt,t);
+  ON_BOOL32 rc = ON_Circle::ClosestPointTo(pt,t);
   if (rc) {
     if ( *t < m_angle[0] ) {
       a = 0.5*(m_angle[0] + m_angle[1] - 2.0*ON_PI);
       if ( *t < a )
-	*t = m_angle[1];
+        *t = m_angle[1];
       else 
-	*t = m_angle[0];
+        *t = m_angle[0];
     }
     else if ( *t > m_angle[1] ) {
       a = 0.5*(m_angle[0] + m_angle[1] + 2.0*ON_PI);
       if ( *t > a )
-	*t = m_angle[0];
+        *t = m_angle[0];
       else 
-	*t = m_angle[1];
+        *t = m_angle[1];
     }
   }
   */
@@ -544,9 +543,9 @@ bool ON_Arc::ClosestPointTo(
     if (s < 0.0) s = 0.0;//shouldn't happen
     if (s > s1){
       if (s > 0.5*s1 + ON_PI)
-	s = 0.0;
+        s = 0.0;
       else
-	s = s1;
+        s = s1;
     }
 
     if (t)

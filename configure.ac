@@ -144,6 +144,7 @@ AC_MSG_RESULT([*** ${title} ***])
 AC_MSG_RESULT([***${separator}***])
 BC_UNBOLD
 
+
 # necessary for proper file creation on nfs volumes
 umask 022
 
@@ -2732,6 +2733,7 @@ build_brlcad_tk="no (using system)"
 build_against_tk=$tk_works
 if test "x$bc_build_tk" = "xyes" ; then
     build_brlcad_tk=yes
+    build_against_tk=yes
 else
     if test "x$bc_build_tk" = "xno" ; then
 	if test "x$tk_works" = "xno" ; then
@@ -2743,49 +2745,68 @@ else
     else
 	dnl automatic detection
 	if test "x$tk_works" = "xno" ; then
-	    build_brlcad_tk=yes
+	    if test "x$build_against_x11" = "xno" && test "x$bc_build_aquatk" = "xno" ; then
+		AC_MSG_WARN([Neither X11 nor AquaTk are usable, disabling Tk])
+		sleep 1
+		build_brlcad_tk="no (incapable)"
+	    else
+		build_brlcad_tk=yes
+		build_against_tk="yes"
+	    fi
 	fi
     fi
 fi
-AC_MSG_CHECKING(whether to build Tk)
+
 TK=""
 TKSTUB=""
 TK_CPPFLAGS=""
+TK_VERSION="8.5"
 unset ac_cv_c_tkconfig
-if test "x$build_brlcad_tk" = "xyes" ; then
-    TK_VERSION="8.5"
-    build_against_tk="yes"
-    AC_MSG_RESULT(yes)
-    TK='-L${top_builddir}/src/other/tk/unix'" -ltk${TCL_VERSION}"
-    TKSTUB='-L${top_builddir}/src/other/tk/unix'" -ltkstub${TK_VERSION}"
-    TK_CPPFLAGS='-I${top_srcdir}/src/other/tk/generic -I${top_srcdir}/src/other/tk/unix -I${top_srcdir}/src/other/tk/win'
-    if test "x$bc_build_aquatk" = "xyes" ; then
-	TK_CPPFLAGS="$TK_CPPFLAGS "'-I${top_srcdir}/src/other/tk/xlib'
+
+if test "x$build_against_tk" = "xyes" ; then
+    AC_MSG_CHECKING(whether to build Tk)
+    if test "x$build_brlcad_tk" = "xyes" ; then
+	AC_MSG_RESULT(yes)
+	TK='-L${top_builddir}/src/other/tk/unix'" -ltk${TCL_VERSION}"
+	TKSTUB='-L${top_builddir}/src/other/tk/unix'" -ltkstub${TK_VERSION}"
+	TK_CPPFLAGS='-I${top_srcdir}/src/other/tk/generic -I${top_srcdir}/src/other/tk/unix -I${top_srcdir}/src/other/tk/win'
+	if test "x$bc_build_aquatk" = "xyes" ; then
+	    TK_CPPFLAGS="$TK_CPPFLAGS "'-I${top_srcdir}/src/other/tk/xlib'
+	fi
+    else
+	AC_MSG_RESULT(no)
+
+	dnl find tkConfig.sh, add --with-tk option, don't cache result for AC_CONFIG_SUBDIRS
+	SC_PATH_TKCONFIG
+	# keep TK_BIN_DIR, don't keep ac_cv_c_tkconfig
+	unset ac_cv_c_tkconfig
+
+	dnl If we're using the system Tk, then we need to load
+	dnl tkConfig.sh to get the TK_VERSION and other vars.
+	SC_LOAD_TKCONFIG
+
+	if test "x$tk_link_works" = "xyes" ; then
+	    TK="$LIBTK"
+	else
+	    AC_MSG_WARN([Unable to link against a system Tk library])
+	    sleep 1
+	fi
+	if test "x$tkstub_link_works" = "xyes" ; then
+	    TKSTUB="$LIBTKSTUB"
+	else
+	    AC_MSG_WARN([Unable to link against a system Tkstub library])
+	    sleep 1
+        fi
     fi
+    AC_DEFINE(HAVE_TK, 1, [Support for a Tk GUI is enabled])
 else
-    AC_MSG_RESULT(no)
-
-    dnl find tkConfig.sh, add --with-tk option, don't cache result for AC_CONFIG_SUBDIRS
-    SC_PATH_TKCONFIG
-    # keep TK_BIN_DIR, don't keep ac_cv_c_tkconfig
-    unset ac_cv_c_tkconfig
-
-    dnl If we're using the system Tk, then we need to load
-    dnl tkConfig.sh to get the TK_VERSION and other vars.
-    SC_LOAD_TKCONFIG
-
-    if test "x$tk_link_works" = "xyes" ; then
-	TK="$LIBTK"
-    else
-	AC_MSG_WARN([Unable to link against a system Tk library])
-	sleep 1
-    fi
-    if test "x$tkstub_link_works" = "xyes" ; then
-	TKSTUB="$LIBTKSTUB"
-    else
-	AC_MSG_WARN([Unable to link against a system Tkstub library])
-	sleep 1
-    fi
+    dnl *** NO MGED GUI ***
+    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+    AC_MSG_WARN([Support for a BRL-CAD graphical user interface (GUI) will be disabled.])
+    AC_MSG_NOTICE([Try installing X11 development headers or system Tcl/Tk libraries.])
+    AC_MSG_NOTICE([MGED will still work in classic console mode but without a GUI.])
+    AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
+    sleep 5
 fi
 AC_SUBST(TK)
 AC_SUBST(TKSTUB)
@@ -2882,6 +2903,17 @@ AC_SUBST(ITCL_CPPFLAGS)
 AC_SUBST(ITK_CPPFLAGS)
 AC_SUBST(LIBITCL)
 AC_SUBST(LIBITK)
+
+AC_MSG_CHECKING(whether to build incrTk)
+build_brlcad_itk="$build_brlcad_itcl"
+if test "x$build_against_tk" = "xno" ; then
+    build_brlcad_itk=no
+else
+    if test "$bc_build_aquatk" = "xno" && test "x$build_against_x11" = "xno" ; then
+        build_brlcad_itk=no
+    fi
+fi
+AC_MSG_RESULT($build_brlcad_itk)
 
 # XXX hack until we can call incrTcl's configure to get the value
 case $host_os in
@@ -3504,17 +3536,6 @@ fi
 AC_MSG_RESULT($dials_and_buttons)
 
 
-dnl *** MGED GUI ***
-tk_gui=yes
-if test "x$build_against_x11" = "xno" && test "x$build_against_opengl" = "xno" && test "x$build_against_wgl" = "xno" ; then
-    if test "x$build_brlcad_tk" = "xno" ; then
-	tk_gui=no
-    fi
-fi
-if test "x$tk_gui" = "xyes" ; then
-    AC_DEFINE(HAVE_TK, 1, [Support for a Tk GUI is enabled])
-fi
-
 dnl *** Docbook functionality ***
 docbook_processing=no
 docbook_pdf_processing=no
@@ -3526,20 +3547,21 @@ if test "x$bc_build_docs" != "xno" ; then
 	    AC_MSG_ERROR([*** Don't know how to generate documentation without xsltproc ***])
 	fi
     fi
+fi
 
-    if test "x$XSLTPROC" = "x" ; then
-        docbook_processing=no
-	XSLTPROC=:
-    fi
-    if test "x$APACHEFOP" != "x" ; then
-	docbook_pdf_processing=yes
-        docbook_processing="yes (man/html/pdf)"
-		# set FOP_OPTS to avoid dock bounce on osX
-	APACHEFOP="FOP_OPTS=-Djava.awt.headless=true $APACHEFOP"
-    else
-        docbook_processing="yes (man/html only)"
+# test for this outside of bc_build_docs so vars get set properly
+if test "x$XSLTPROC" = "x" ; then
+    XSLTPROC=:
+else
+    if test "x$APACHEFOP" = "x" ; then
+	docbook_processing="yes (man/html only)"
 	docbook_pdf_processing="no"
-	APACHEFOP=""
+	APACHEFOP=:
+    else
+        docbook_processing="yes (man/html/pdf)"
+	docbook_pdf_processing="yes"
+	# set FOP_OPTS to avoid dock bounce on osX
+	APACHEFOP="FOP_OPTS=-Djava.awt.headless=true $APACHEFOP"
     fi
 fi
 AC_SUBST(XSLTPROC)
@@ -3572,7 +3594,6 @@ fi
 AC_SUBST(ECHO)
 AC_SUBST(ECHO_N)
 
-
 dnl **************************************
 dnl *** Configure Makefiles and output ***
 dnl **************************************
@@ -3589,6 +3610,7 @@ LIBS="`echo $LIBS`"
 AM_CONDITIONAL(BUILD_TCL, [test "x$build_brlcad_tcl" = "xyes"])
 AM_CONDITIONAL(BUILD_TK, [test "x$build_brlcad_tk" = "xyes"])
 AM_CONDITIONAL(BUILD_ITCL, [test "x$build_brlcad_itcl" = "xyes"])
+AM_CONDITIONAL(BUILD_ITK, [test "x$build_brlcad_itk" = "xyes"])
 AM_CONDITIONAL(BUILD_IWIDGETS, [test "x$build_brlcad_iwidgets" = "xyes"])
 AM_CONDITIONAL(BUILD_TKHTML3, [test "x$build_brlcad_tkhtml3" = "xyes"])
 AM_CONDITIONAL(BUILD_TKIMG, [test "x$build_brlcad_tkimg" = "xyes"])
@@ -3609,8 +3631,7 @@ AM_CONDITIONAL(BUILD_UG, [test "x$bc_build_ug" = "xyes"])
 AM_CONDITIONAL(WITH_X11, [test "x$build_against_x11" != "xno"])
 AM_CONDITIONAL(WITH_OPENGL, [test "x$build_against_opengl" != "xno" && test "x$build_against_x11" != "xno"])
 AM_CONDITIONAL(WITH_WGL, [test "x$build_against_wgl" != "xno"])
-AM_CONDITIONAL(WITH_TK, [test "xyes" = "xno"])
-#AM_CONDITIONAL(WITH_TK, [test "x$build_against_tk" != "xno"])
+AM_CONDITIONAL(WITH_TK, [test "x$build_against_tk" != "xno"])
 
 # XXX need to refactor the above fb/dm interfaces to have a better
 # separation of their external 'with' deps and the interfaces
@@ -3626,6 +3647,9 @@ AM_CONDITIONAL(INSTALL_MODELS, [test "x$bc_install_geometry" = "xyes"])
 AM_CONDITIONAL(ONLY_BENCHMARK, [test "x$bc_only_benchmark" != "xno"])
 AM_CONDITIONAL(ONLY_RTS, [test "x$bc_only_rts" != "xno"])
 
+# Language conditionals
+AM_CONDITIONAL(EN_DOCS, [test "x$en_docs" = "xyes"])
+AM_CONDITIONAL(ES_DOCS, [test "x$es_docs" = "xyes"])
 
 
 dnl Any combination of the different optimizations listed below may individually be
@@ -3731,8 +3755,13 @@ OPTICAL_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${TCL}"
 MULTISPECTRAL_LIBS="${OPTICAL} ${OPTICAL_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 PC_LIBS="${LIBSTDCXX} ${BU} ${BU_LIBS}"
 if test "x$build_against_x11" = "xno" ; then
-    DM_LIBS="${GED} ${GED_LIBS} ${RT} ${RT_LIBS} ${FB} ${FB_LIBS} ${PNG} ${FRAMEWORK_CARBON}"
-    TCLCAD_LIBS="${GED} ${GED_LIBS} ${DM} ${DM_LIBS} ${FB} ${FB_LIBS} ${ITCL} ${TCLSTUB} ${TCL}"
+    if test "x$bc_build_aquatk" = "xyes" ; then
+       DM_LIBS="${GED} ${GED_LIBS} ${RT} ${RT_LIBS} ${FB} ${FB_LIBS} ${PNG} ${FRAMEWORK_CARBON} ${TK}"
+       TCLCAD_LIBS="${GED} ${GED_LIBS} ${DM} ${DM_LIBS} ${FB} ${FB_LIBS} ${ITCL} ${ITK} ${TCLSTUB} ${TCL} ${TK}"
+    else
+       DM_LIBS="${GED} ${GED_LIBS} ${RT} ${RT_LIBS} ${FB} ${FB_LIBS} ${PNG} ${FRAMEWORK_CARBON}"
+       TCLCAD_LIBS="${GED} ${GED_LIBS} ${DM} ${DM_LIBS} ${FB} ${FB_LIBS} ${ITCL} ${TCLSTUB} ${TCL}"
+    fi
 else
     DM_LIBS="${GED} ${GED_LIBS} ${RT} ${RT_LIBS} ${FB} ${FB_LIBS} ${PNG} ${TK} ${X_LIBS} ${FRAMEWORK_CARBON}"
     TCLCAD_LIBS="${GED} ${GED_LIBS} ${DM} ${DM_LIBS} ${FB} ${FB_LIBS} ${ITK} ${ITCL} ${TK} ${TCLSTUB} ${TCL}"

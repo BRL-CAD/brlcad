@@ -372,7 +372,7 @@ main(int argc, char *argv[])
     extern outval ValTab[];
 
     /* from if.c, callback functions for overlap, hit, and miss shots */
-    int if_overlap(register struct application *, register struct partition *, struct region *, struct region *, struct partition *);
+    int if_overlap(struct application *, struct partition *, struct region *, struct region *, struct partition *);
     int if_hit(struct application *, struct partition *, struct seg *);
     int if_miss(struct application *);
 

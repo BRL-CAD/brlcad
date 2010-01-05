@@ -80,7 +80,7 @@ q Q cr	QUIT\r\n\
 void
 SimpleInput(void)	/* ==== get keyboard input.	*/
 {
-    register char ch;
+    char ch;
     static char c;
 
     if ( read( 0, &c, 1) <= 0 ) {

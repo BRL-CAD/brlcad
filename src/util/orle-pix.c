@@ -42,7 +42,7 @@ static char	*usage[] =
 static FILE	*fp;
 static RGBpixel	bgpixel;
 static int	bgflag = 0;
-static int	pars_Argv(int argc, register char **argv);
+static int	pars_Argv(int argc, char **argv);
 static int	xpos, ypos;
 static int	xlen = -1, ylen = -1;
 static void	prnt_Cmap(ColorMap *cmap);
@@ -53,8 +53,8 @@ static int	non_linear_cmap = 0;
 int
 main(int argc, char **argv)
 {
-    register int	scan_ln;
-    register int	fb_size = 512;
+    int	scan_ln;
+    int	fb_size = 512;
     static RGBpixel	scanbuf[1025];
     static RGBpixel	bg_scan[1025];
     static ColorMap	cmap;
@@ -112,8 +112,8 @@ main(int argc, char **argv)
 
     /* Fill buffer with background.	*/
     if ( (get_flags & NO_BOX_SAVE) )  {
-	register int	i;
-	register RGBpixel	*to;
+	int	i;
+	RGBpixel	*to;
 
 	to = bg_scan;
 	for ( i = 0; i < fb_size; i++, to++ )  {
@@ -124,7 +124,7 @@ main(int argc, char **argv)
     {
 	for ( scan_ln = fb_size-1; scan_ln >= 0; scan_ln-- )  {
 	    static int	touched = 1;
-	    register int	pix;
+	    int	pix;
 	    if ( touched && (get_flags & NO_BOX_SAVE) )  {
 		memcpy((char *)scanbuf, (char *)bg_scan, scan_bytes);
 	    }
@@ -147,9 +147,9 @@ main(int argc, char **argv)
 
 /*	p a r s _ A r g v ( )						*/
 static int
-pars_Argv(int argc, register char **argv)
+pars_Argv(int argc, char **argv)
 {
-    register int	c;
+    int	c;
     extern int	bu_optind;
     extern char	*bu_optarg;
     /* Parse options.						*/
@@ -225,7 +225,7 @@ pars_Argv(int argc, register char **argv)
 static void
 prnt_Usage(void)
 {
-    register char	**p = usage;
+    char	**p = usage;
     while ( *p )
 	(void) fprintf( stderr, "%s\n", *p++ );
     return;
@@ -234,8 +234,8 @@ prnt_Usage(void)
 static void
 prnt_Cmap(ColorMap *cmap)
 {
-    register unsigned short	*cp;
-    register int	i;
+    unsigned short	*cp;
+    int	i;
     (void) fprintf( stderr, "\t\t\t_________ Color map __________\n" );
     (void) fprintf( stderr, "Red segment :\n" );
     for ( i = 0, cp = cmap->cm_red; i < 16; ++i, cp += 16 )

@@ -26,18 +26,31 @@
 #ifndef FACTORY_H_
 #define FACTORY_H_
 
+#include "common.h"
+
+/* system interface headers */
+#include <map>
+#include <list>
+#include <vector>
+#include <string>
+
+/* inteface headers */
+#include "STEPWrapper.h"
+#include "sclprefixes.h"
+
+
 class STEPEntity;
 typedef STEPEntity* (*FactoryMethod)(STEPWrapper*,SCLP23(Application_instance)*);
 typedef std::map<std::string,FactoryMethod> FACTORYMAP;
-typedef vector<STEPEntity *> VECTOR_OF_OBJECTS;
+typedef std::vector<STEPEntity *> VECTOR_OF_OBJECTS;
 
 
 class Factory {
 public:
-	typedef map<int,STEPEntity *> OBJECTS;
-	typedef map<int,int> ID_TO_INDEX_MAP;
-	typedef map<int,int> INDEX_TO_ID_MAP;
-	typedef list<STEPEntity *> UNMAPPED_OBJECTS;
+    typedef std::map<int, STEPEntity *> OBJECTS;
+    typedef std::map<int, int> ID_TO_INDEX_MAP;
+    typedef std::map<int, int> INDEX_TO_ID_MAP;
+    typedef std::list<STEPEntity *> UNMAPPED_OBJECTS;
 	static OBJECTS objects;
 	static UNMAPPED_OBJECTS unmapped_objects;
 
@@ -60,7 +73,7 @@ public:
 	static STEPEntity *CreateObject(STEPWrapper *sw,SCLP23(Application_instance) *sse);
 	static FACTORYMAP &GetMap();
 	static void Print();
-	static string RegisterClass(string name, FactoryMethod f);
+    static std::string RegisterClass(std::string name, FactoryMethod f);
 	static void DeleteObjects();
 	static OBJECTS::iterator FindObject(int id);
 	static void AddObject(STEPEntity *se);
@@ -69,6 +82,7 @@ public:
 	static int GetVertexIndex(int id);
 	static STEPEntity *GetVertexByIndex(int index);
 };
+
 
 #endif /* FACTORY_H_ */
 

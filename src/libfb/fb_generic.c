@@ -83,27 +83,11 @@ FBIO *_if_list[] = {
 #ifdef IF_TK
     &tk_interface,
 #endif
-#ifdef IF_ADAGE
-    &adage_interface,
-#endif
-#ifdef IF_SUN
-    &sun_interface,
-#endif
-#if defined(IF_SGI)
-    &sgi_interface,
-#endif
-
 #ifdef IF_WGL
     &wgl_interface,
 #endif
 #ifdef IF_OGL
     &ogl_interface,
-#endif
-#ifdef IF_RAT
-    &rat_interface,
-#endif
-#ifdef IF_UG
-    &ug_interface,
 #endif
 #ifdef IF_X
     &X24_interface,
@@ -112,16 +96,7 @@ FBIO *_if_list[] = {
 
     &debug_interface,
 /* never get any of the following by default */
-#ifdef IF_AB
-    &abekas_interface,
-#endif
-#ifdef IF_TS
-    &ts_interface,
-#endif
-#ifdef IF_PTTY
-    &ptty_interface,
-#endif
-    &stk_interface,
+   &stk_interface,
     &memory_interface,
     &null_interface,
     (FBIO *) 0

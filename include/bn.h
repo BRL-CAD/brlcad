@@ -369,12 +369,12 @@ BN_EXPORT BU_EXTERN(double bn_atan2,
 
 
 BN_EXPORT BU_EXTERN(void bn_mat_mul,
-		    (register mat_t o,
-		     register const mat_t a,
-		     register const mat_t b));
+		    (mat_t o,
+		     const mat_t a,
+		     const mat_t b));
 BN_EXPORT BU_EXTERN(void bn_mat_mul2,
-		    (register const mat_t i,
-		     register mat_t o));
+		    (const mat_t i,
+		     mat_t o));
 BN_EXPORT BU_EXTERN(void bn_mat_mul3,
 		    (mat_t o,
 		     const mat_t a,
@@ -387,26 +387,26 @@ BN_EXPORT BU_EXTERN(void bn_mat_mul4,
 		     const mat_t c,
 		     const mat_t d));
 BN_EXPORT BU_EXTERN(void bn_matXvec,
-		    (register hvect_t ov,
-		     register const mat_t im,
-		     register const hvect_t iv));
+		    (hvect_t ov,
+		     const mat_t im,
+		     const hvect_t iv));
 BN_EXPORT BU_EXTERN(void bn_mat_inv,
-		    (register mat_t output,
+		    (mat_t output,
 		     const mat_t input));
 BN_EXPORT BU_EXTERN(int bn_mat_inverse,
-		    (register mat_t output,
+		    (mat_t output,
 		     const mat_t input));
 BN_EXPORT BU_EXTERN(void bn_vtoh_move,
-		    (register vect_t h,
-		     register const vect_t v));
+		    (vect_t h,
+		     const vect_t v));
 BN_EXPORT BU_EXTERN(void bn_htov_move,
-		    (register vect_t v,
-		     register const vect_t h));
+		    (vect_t v,
+		     const vect_t h));
 BN_EXPORT BU_EXTERN(void bn_mat_trn,
 		    (mat_t om,
-		     register const mat_t im));
+		     const mat_t im));
 BN_EXPORT BU_EXTERN(void bn_mat_ae,
-		    (register mat_t m,
+		    (mat_t m,
 		     double azimuth,
 		     double elev));
 BN_EXPORT BU_EXTERN(void bn_ae_vec,
@@ -431,11 +431,11 @@ BN_EXPORT BU_EXTERN(void bn_vec_aed,
 		     fastf_t dist));
 
 BN_EXPORT BU_EXTERN(void bn_mat_angles,
-		    (register mat_t mat,
+		    (mat_t mat,
 		     double alpha,
 		     double beta, double ggamma));
 BN_EXPORT BU_EXTERN(void bn_mat_angles_rad,
-		    (register mat_t mat,
+		    (mat_t mat,
 		     double alpha,
 		     double beta,
 		     double ggamma));
@@ -473,8 +473,8 @@ BN_EXPORT BU_EXTERN(void bn_mat_lookat,
 		     const vect_t dir,
 		     int yflip));
 BN_EXPORT BU_EXTERN(void bn_vec_ortho,
-		    (register vect_t out,
-		     register const vect_t in));
+		    (vect_t out,
+		     const vect_t in));
 BN_EXPORT BU_EXTERN(int bn_mat_scale_about_pt,
 		    (mat_t mat,
 		     const point_t pt,

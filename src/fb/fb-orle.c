@@ -57,12 +57,12 @@ static int	ncolors = 3;
 static int	cmflag = 1;
 static int	crunch = 0;
 static int	xpos = 0, ypos = 0, xlen = 0, ylen = 0;
-static int	parsArgv(int argc, register char **argv);
+static int	parsArgv(int argc, char **argv);
 static void	prntUsage(void);
 static int	width = 512;
 static char	*fb_file = (char *)NULL;
 
-extern void	cmap_crunch(register RGBpixel (*scan_buf), register int pixel_ct, ColorMap *cmap);
+extern void	cmap_crunch(RGBpixel (*scan_buf), int pixel_ct, ColorMap *cmap);
 
 /*	m a i n ( )							*/
 int
@@ -70,8 +70,8 @@ main(int argc, char **argv)
 {
     static RGBpixel	scan_buf[1024];
     static ColorMap	cmap;
-    register int	y;
-    register int	y_end;
+    int	y;
+    int	y_end;
 
     if ( ! parsArgv( argc, argv ) )
     {
@@ -155,9 +155,9 @@ main(int argc, char **argv)
 
 /*	p a r s A r g v ( )						*/
 static int
-parsArgv(int argc, register char **argv)
+parsArgv(int argc, char **argv)
 {
-    register int	c;
+    int	c;
     extern int	bu_optind;
     extern char	*bu_optarg;
 
@@ -252,7 +252,7 @@ parsArgv(int argc, register char **argv)
 static void
 prntUsage(void)
 {
-    register char	**p = usage;
+    char	**p = usage;
 
     while ( *p )
     {

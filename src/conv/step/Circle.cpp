@@ -38,9 +38,9 @@ Circle::Circle() {
 	id = 0;
 }
 
-Circle::Circle(STEPWrapper *sw,int STEPid) {
+Circle::Circle(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 Circle::~Circle() {
@@ -52,7 +52,7 @@ Circle::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 	id = sse->STEPfile_id;
 
 	if ( !Conic::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::Conic." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::Conic." << std::endl;
 		return false;
 	}
 
@@ -67,13 +67,13 @@ Circle::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 void
 Circle::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << name << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Attributes:" << endl;
-	TAB(level+1); cout << "radius:" << radius << endl;
+	TAB(level); std::cout << "Attributes:" << std::endl;
+	TAB(level+1); std::cout << "radius:" << radius << std::endl;
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	Conic::Print(level+1);
 }
 
@@ -86,7 +86,7 @@ Circle::Create(STEPWrapper *sw,SCLP23(Application_instance) *sse){
 		Factory::AddObject(object);
 
 		if (!object->Load(sw,sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

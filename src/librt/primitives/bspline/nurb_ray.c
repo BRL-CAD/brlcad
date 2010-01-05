@@ -333,7 +333,7 @@ rt_nurb_region_from_srf(const struct face_g_snurb *srf, int dir, fastf_t param1,
  *			R T _ N U R B _ I N T E R S E C T
  */
 struct rt_nurb_uv_hit *
-rt_nurb_intersect(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *plane2, double uv_tol, struct resource *res)
+rt_nurb_intersect(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *plane2, double uv_tol, struct resource *res, struct bu_list *plist)
 {
     struct rt_nurb_uv_hit * h;
     struct face_g_snurb 	* psrf,
@@ -345,18 +345,21 @@ rt_nurb_intersect(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *plan
 	vmax;
     fastf_t 	u[2],
 	v[2];
-    struct bu_list	plist;
+    struct bu_list rni_plist;
 
     NMG_CK_SNURB(srf);
 
     h = (struct rt_nurb_uv_hit *) 0;
-    BU_LIST_INIT( &plist );
+    if (plist == NULL) {
+	plist = &rni_plist;
+	BU_LIST_INIT( plist );
+    }
 
     /* project the surface to a 2 dimensional problem */
     /* NOTE that this gives a single snurb back, NOT a list */
     psrf = rt_nurb_project_srf( srf, plane2, plane1, res );
     psrf->dir = 1;
-    BU_LIST_APPEND( &plist, &psrf->l );
+    BU_LIST_APPEND( plist, &psrf->l );
 
     if ( RT_G_DEBUG & DEBUG_SPLINE )
 	rt_nurb_s_print("srf", psrf);
@@ -364,8 +367,7 @@ rt_nurb_intersect(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *plan
     /* This list starts out with only a single snurb,
      * but more may be added on as work progresses.
      */
- top:
-    while ( BU_LIST_WHILE( psrf, face_g_snurb, &plist ) )  {
+    while ( BU_LIST_WHILE( psrf, face_g_snurb, plist ) )  {
 	int flat;
 
 	BU_LIST_DEQUEUE( &psrf->l );
@@ -376,7 +378,7 @@ rt_nurb_intersect(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *plan
 
 	while (!flat)
 	{
-	    fastf_t smin, smax;
+	    fastf_t smin = 0.0, smax = 0.0;
 
 	    sub++;
 	    dir = (dir == 0)?1:0;	/* change direction */
@@ -400,13 +402,17 @@ rt_nurb_intersect(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *plan
 	    rt_nurb_clip_srf( psrf, dir, &smin, &smax);
 
 	    if ( (smax - smin) > .8)  {
+		struct rt_nurb_uv_hit *hp;
+
 		/* Split surf, requeue both sub-surfs at head */
 		/* New surfs will have same dir as arg, here */
 		if ( RT_G_DEBUG & DEBUG_SPLINE )
 		    bu_log( "splitting this surface\n" );
-		rt_nurb_s_split( &plist, psrf, dir, res );
+		rt_nurb_s_split( plist, psrf, dir, res );
 		rt_nurb_free_snurb( psrf, res );
-		goto top;
+
+		hp = rt_nurb_intersect(srf, plane1, plane2, uv_tol, res, plist);
+		return hp;
 	    }
 	    if ( smin > 1.0 || smax < 0.0 )
 	    {

@@ -38,9 +38,9 @@ ConnectedFaceSet::ConnectedFaceSet() {
 	id = 0;
 }
 
-ConnectedFaceSet::ConnectedFaceSet(STEPWrapper *sw,int STEPid) {
+ConnectedFaceSet::ConnectedFaceSet(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 ConnectedFaceSet::~ConnectedFaceSet() {
@@ -61,7 +61,7 @@ ConnectedFaceSet::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 	id = sse->STEPfile_id;
 
 	if ( !TopologicalRepresentationItem::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::TopologicalRepresentationItem." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::TopologicalRepresentationItem." << std::endl;
 		return false;
 	}
 
@@ -79,7 +79,7 @@ ConnectedFaceSet::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 				cfs_faces.push_back(aAF);
 			} else {
-				cerr << CLASSNAME  << ": Unhandled entity in attribute 'cfs_faces'." << endl;
+				std::cerr << CLASSNAME  << ": Unhandled entity in attribute 'cfs_faces'." << std::endl;
 				return false;
 			}
 		}
@@ -92,17 +92,17 @@ ConnectedFaceSet::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 void
 ConnectedFaceSet::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << name << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Attributes:" << endl;
-	TAB(level+1); cout << "cfs_faces:" << endl;
+	TAB(level); std::cout << "Attributes:" << std::endl;
+	TAB(level+1); std::cout << "cfs_faces:" << std::endl;
 	LIST_OF_FACES::iterator i;
 	for(i=cfs_faces.begin(); i != cfs_faces.end(); ++i) {
 		(*i)->Print(level+1);
 	}
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	TopologicalRepresentationItem::Print(level+1);
 }
 
@@ -115,7 +115,7 @@ ConnectedFaceSet::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}
@@ -131,7 +131,7 @@ ConnectedFaceSet::LoadONBrep(ON_Brep *brep)
 	LIST_OF_FACES::iterator i;
 	for(i=cfs_faces.begin(); i != cfs_faces.end(); ++i) {
 		if ( !(*i)->LoadONBrep(brep) ) {
-			cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << endl;
+			std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
 			return false;
 		}
 	}

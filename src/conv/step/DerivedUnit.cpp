@@ -40,9 +40,9 @@ DerivedUnit::DerivedUnit() {
 	id = 0;
 }
 
-DerivedUnit::DerivedUnit(STEPWrapper *sw,int STEPid) {
+DerivedUnit::DerivedUnit(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 DerivedUnit::~DerivedUnit() {
@@ -55,7 +55,7 @@ DerivedUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 	id = sse->STEPfile_id;
 
 	if ( !Unit::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::Unit." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 		return false;
 	}
 
@@ -85,17 +85,17 @@ DerivedUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 void
 DerivedUnit::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Attributes:" << endl;
-	TAB(level+1); cout << "elements:" << endl;
+	TAB(level); std::cout << "Attributes:" << std::endl;
+	TAB(level+1); std::cout << "elements:" << std::endl;
 	LIST_OF_DERIVED_UNIT_ELEMENTS::iterator i;
 	for(i=elements.begin();i!=elements.end();i++) {
 		(*i)->Print(level+1);
 	}
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	Unit::Print(level+1);
 }
 STEPEntity *
@@ -107,7 +107,7 @@ DerivedUnit::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

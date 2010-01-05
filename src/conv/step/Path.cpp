@@ -38,9 +38,9 @@ Path::Path() {
 	id = 0;
 }
 
-Path::Path(STEPWrapper *sw,int STEPid) {
+Path::Path(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 Path::~Path() {
@@ -93,7 +93,7 @@ Path::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 	id = sse->STEPfile_id;
 
 	if ( !TopologicalRepresentationItem::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::TopologicalRepresentationItem." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::TopologicalRepresentationItem." << std::endl;
 		return false;
 	}
 
@@ -110,9 +110,9 @@ Path::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 				OrientedEdge *aOE =dynamic_cast<OrientedEdge *>(Factory::CreateObject(sw, entity));
 				edge_list.push_back(aOE);
 			} else {
-				cerr << CLASSNAME
+				std::cerr << CLASSNAME
 						<< ": Unhandled entity in attribute 'edge_list'."
-						<< endl;
+						<< std::endl;
 				return false;
 			}
 		}
@@ -125,17 +125,17 @@ Path::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 void
 Path::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << name << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Attributes:" << endl;
-	TAB(level+1); cout << "edge_list:" << endl;
+	TAB(level); std::cout << "Attributes:" << std::endl;
+	TAB(level+1); std::cout << "edge_list:" << std::endl;
 	LIST_OF_ORIENTED_EDGES::iterator i;
 	for(i=edge_list.begin();i!=edge_list.end();i++) {
 		(*i)->Print(level+1);
 	}
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	TopologicalRepresentationItem::Print(level+1);
 }
 
@@ -148,7 +148,7 @@ Path::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

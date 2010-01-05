@@ -38,72 +38,6 @@
 #include "fb.h"
 
 
-HIDDEN int	stk_open(FBIO *ifp, char *file, int width, int height),
-    stk_close(FBIO *ifp),
-    stk_clear(FBIO *ifp, unsigned char *pp),
-    stk_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count),
-    stk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count),
-    stk_rmap(FBIO *ifp, ColorMap *cmp),
-    stk_wmap(FBIO *ifp, const ColorMap *cmp),
-    stk_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom),
-    stk_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom),
-    stk_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig),
-    stk_cursor(FBIO *ifp, int mode, int x, int y),
-    stk_getcursor(FBIO *ifp, int *mode, int *x, int *y),
-    stk_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char *pp),
-    stk_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp),
-    stk_bwreadrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char *pp),
-    stk_bwwriterect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp),
-    stk_poll(FBIO *ifp),
-    stk_flush(FBIO *ifp),
-    stk_free(FBIO *ifp),
-    stk_help(FBIO *ifp);
-
-
-/* This is the ONLY thing that we normally "export" */
-FBIO stk_interface =  {
-    0,
-    stk_open,		/* device_open		*/
-    stk_close,		/* device_close		*/
-    stk_clear,		/* device_clear		*/
-    stk_read,		/* buffer_read		*/
-    stk_write,		/* buffer_write		*/
-    stk_rmap,		/* colormap_read	*/
-    stk_wmap,		/* colormap_write	*/
-    stk_view,		/* set view		*/
-    stk_getview,		/* get view		*/
-    stk_setcursor,		/* define cursor	*/
-    stk_cursor,		/* set cursor		*/
-    stk_getcursor,		/* get cursor		*/
-    stk_readrect,		/* read rectangle	*/
-    stk_writerect,		/* write rectangle	*/
-    stk_bwreadrect,		/* read bw rectangle	*/
-    stk_bwwriterect,	/* write bw rectangle	*/
-    stk_poll,		/* handle events	*/
-    stk_flush,		/* flush output		*/
-    stk_free,		/* free resources	*/
-    stk_help,		/* help function	*/
-    "Multiple Device Stacker", /* device description */
-    32*1024,		/* max width		*/
-    32*1024,		/* max height		*/
-    "/dev/stack",		/* short device name	*/
-    4,			/* default/current width  */
-    4,			/* default/current height */
-    -1,			/* select fd		*/
-    -1,			/* file descriptor	*/
-    1, 1,			/* zoom			*/
-    2, 2,			/* window center	*/
-    0, 0, 0,		/* cursor		*/
-    PIXEL_NULL,		/* page_base		*/
-    PIXEL_NULL,		/* page_curp		*/
-    PIXEL_NULL,		/* page_endp		*/
-    -1,			/* page_no		*/
-    0,			/* page_dirty		*/
-    0L,			/* page_curpos		*/
-    0L,			/* page_pixels		*/
-    0			/* debug		*/
-};
-
 /* List of interface struct pointers, one per dev */
 #define	MAXIF	32
 struct	stkinfo {
@@ -446,6 +380,50 @@ stk_help(FBIO *ifp)
 
     return(0);
 }
+
+/* This is the ONLY thing that we normally "export" */
+FBIO stk_interface =  {
+    0,
+    stk_open,		/* device_open		*/
+    stk_close,		/* device_close		*/
+    stk_clear,		/* device_clear		*/
+    stk_read,		/* buffer_read		*/
+    stk_write,		/* buffer_write		*/
+    stk_rmap,		/* colormap_read	*/
+    stk_wmap,		/* colormap_write	*/
+    stk_view,		/* set view		*/
+    stk_getview,		/* get view		*/
+    stk_setcursor,		/* define cursor	*/
+    stk_cursor,		/* set cursor		*/
+    stk_getcursor,		/* get cursor		*/
+    stk_readrect,		/* read rectangle	*/
+    stk_writerect,		/* write rectangle	*/
+    stk_bwreadrect,		/* read bw rectangle	*/
+    stk_bwwriterect,	/* write bw rectangle	*/
+    stk_poll,		/* handle events	*/
+    stk_flush,		/* flush output		*/
+    stk_free,		/* free resources	*/
+    stk_help,		/* help function	*/
+    "Multiple Device Stacker", /* device description */
+    32*1024,		/* max width		*/
+    32*1024,		/* max height		*/
+    "/dev/stack",		/* short device name	*/
+    4,			/* default/current width  */
+    4,			/* default/current height */
+    -1,			/* select fd		*/
+    -1,			/* file descriptor	*/
+    1, 1,			/* zoom			*/
+    2, 2,			/* window center	*/
+    0, 0, 0,		/* cursor		*/
+    PIXEL_NULL,		/* page_base		*/
+    PIXEL_NULL,		/* page_curp		*/
+    PIXEL_NULL,		/* page_endp		*/
+    -1,			/* page_no		*/
+    0,			/* page_dirty		*/
+    0L,			/* page_curpos		*/
+    0L,			/* page_pixels		*/
+    0			/* debug		*/
+};
 
 /*
  * Local Variables:

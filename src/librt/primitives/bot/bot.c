@@ -50,8 +50,8 @@
 
 #define BOT_MIN_DN 1.0e-9
 
-#define RT_BOT_UNORIENTED_NORM(_hitp, _in_or_out) { \
-	if (_in_or_out < 0) {	/* this is an exit */ \
+#define BOT_UNORIENTED_NORM(_hitp, _out) { \
+	if (_out) {	/* this is an exit */ \
 		if ((_hitp)->hit_vpriv[X] < 0.0) { \
 			VREVERSE((_hitp)->hit_normal, trip->tri_N); \
 		} else { \
@@ -199,7 +199,6 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_bot_internal *bot_ip;
 
-
     RT_CK_DB_INTERNAL(ip);
     bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
     RT_BOT_CK_MAGIC(bot_ip);
@@ -216,8 +215,9 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
  * R T _ B O T _ P R I N T
  */
 void
-rt_bot_print(register const struct soltab *stp)
+rt_bot_print(const struct soltab *stp)
 {
+    if (stp) RT_CK_SOLTAB(stp);
 }
 
 
@@ -356,26 +356,6 @@ rt_bot_piece_hitsegs(struct rt_piecestate *psp, struct seg *seghead, struct appl
 }
 
 
-#define RT_BOT_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
-
-
-/**
- * R T _ B O T _ V S H O T
- *
- * Vectorized version.
- */
-void
-rt_bot_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
-    /* An array of solid pointers */
-    /* An array of ray pointers */
-    /* array of segs (results returned) */
-    /* Number of ray/object pairs */
-
-{
-    rt_vstub(stp, rp, segp, n, ap);
-}
-
-
 /**
  * R T _ B O T _ N O R M
  *
@@ -402,6 +382,8 @@ rt_bot_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 void
 rt_bot_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
 {
+    if (stp) RT_CK_SOLTAB(stp);
+
     cvp->crv_c1 = cvp->crv_c2 = 0;
 
     /* any tangent direction */
@@ -420,8 +402,12 @@ rt_bot_curve(register struct curvature *cvp, register struct hit *hitp, struct s
  * v = elevation
  */
 void
-rt_bot_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
+rt_bot_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
+    if (ap) RT_CK_APPLICATION(ap);
+    if (stp) RT_CK_SOLTAB(stp);
+    if (hitp) RT_CK_HIT(hitp);
+    if (!uvp) return;
 }
 
 
@@ -448,6 +434,11 @@ rt_bot_free(register struct soltab *stp)
 int
 rt_bot_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, const struct bn_tol *tol)
 {
+    if (stp) RT_CK_SOLTAB(stp);
+    if (tol) BN_CK_TOL(tol);
+    if (!min) return 0;
+    if (!max) return 0;
+
     return RT_CLASSIFY_UNIMPLEMENTED;
 }
 
@@ -456,7 +447,7 @@ rt_bot_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, c
  * R T _ B O T _ P L O T
  */
 int
-rt_bot_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_bot_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
 {
     struct rt_bot_internal *bot_ip;
     int i;
@@ -480,7 +471,7 @@ rt_bot_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
  * R T _ B O T _ P L O T _ P O L Y
  */
 int
-rt_bot_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_bot_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
 {
     struct rt_bot_internal *bot_ip;
     int i;
@@ -539,7 +530,7 @@ rt_bot_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_bot_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_bot_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol)
 {
     struct rt_bot_internal *bot_ip;
     struct shell *s;
@@ -589,12 +580,14 @@ rt_bot_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
             if (bot_ip->bot_flags & RT_BOT_HAS_SURFACE_NORMALS)
 		for (i=0 ; i<faceCount ; i++) {
 		    int k;
+		    fastf_t *plane;
 		    for (k=0 ; k<3 ; k++) {
-                        int index = faces[i] * 3 + k;
-                        VMOVE(planes[i], &bot_ip->normals[bot_ip->face_normals[index]*3]);
+                        int idx = faces[i] * 3 + k;
+                        VMOVE(planes[i], &bot_ip->normals[bot_ip->face_normals[idx]*3]);
                         planes[i][3] = VDOT(planes[i], &bot_ip->vertices[bot_ip->faces[faces[i]*3]*3]);
 		    }
-		    fprintf(stderr, "\tplane #%d = (%g %g %g %g)\n", i, V4ARGS(&planes[i]));
+		    plane = planes[i];
+		    fprintf(stderr, "\tplane #%d = (%g %g %g %g)\n", i, V4ARGS(plane));
 		}
         }
         return -1;
@@ -684,6 +677,7 @@ rt_bot_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     int i;
     int chars_used;
 
+    if (dbip) RT_CK_DBI(dbip);
     BU_CK_EXTERNAL(ep);
     rp = (union record *)ep->ext_buf;
     /* Check record type */
@@ -720,11 +714,11 @@ rt_bot_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     chars_used = bot_ip->num_vertices * 3 * 8;
 
     for (i=0; i<bot_ip->num_faces; i++) {
-	int index=chars_used + i * 12;
+	int idx=chars_used + i * 12;
 
-	bot_ip->faces[i*3] = bu_glong((const unsigned char *)&rp->bot.bot_data[index]);
-	bot_ip->faces[i*3 + 1] = bu_glong((const unsigned char *)&rp->bot.bot_data[index + 4]);
-	bot_ip->faces[i*3 + 2] = bu_glong((const unsigned char *)&rp->bot.bot_data[index + 8]);
+	bot_ip->faces[i*3] = bu_glong((const unsigned char *)&rp->bot.bot_data[idx]);
+	bot_ip->faces[i*3 + 1] = bu_glong((const unsigned char *)&rp->bot.bot_data[idx + 4]);
+	bot_ip->faces[i*3 + 2] = bu_glong((const unsigned char *)&rp->bot.bot_data[idx + 8]);
     }
 
     if (bot_ip->mode == RT_BOT_PLATE || bot_ip->mode == RT_BOT_PLATE_NOCOS) {
@@ -759,7 +753,7 @@ rt_bot_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     int num_recs;
     struct bu_vls face_mode;
 
-
+    if (dbip) RT_CK_DBI(dbip);
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_BOT) return(-1);
     bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
@@ -822,11 +816,11 @@ rt_bot_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     chars_used = bot_ip->num_vertices * 24;
 
     for (i=0; i<bot_ip->num_faces; i++) {
-	int index=chars_used + i * 12;
+	int idx=chars_used + i * 12;
 
-	bu_plong((unsigned char *)(&rec->bot.bot_data[index]), bot_ip->faces[i*3]);
-	bu_plong((unsigned char *)(&rec->bot.bot_data[index + 4]), bot_ip->faces[i*3+1]);
-	bu_plong((unsigned char *)(&rec->bot.bot_data[index + 8]), bot_ip->faces[i*3+2]);
+	bu_plong((unsigned char *)(&rec->bot.bot_data[idx]), bot_ip->faces[i*3]);
+	bu_plong((unsigned char *)(&rec->bot.bot_data[idx + 4]), bot_ip->faces[i*3+1]);
+	bu_plong((unsigned char *)(&rec->bot.bot_data[idx + 8]), bot_ip->faces[i*3+2]);
     }
 
     chars_used += bot_ip->num_faces * 12;
@@ -857,6 +851,7 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     int i;
 
     BU_CK_EXTERNAL(ep);
+    if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -876,10 +871,24 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     bip->mode = *cp++;
     bip->bot_flags = *cp++;
 
-    bip->vertices = (fastf_t *)bu_calloc(bip->num_vertices * 3, sizeof(fastf_t), "BOT vertices");
-    bip->faces = (int *)bu_calloc(bip->num_faces * 3, sizeof(int), "BOT faces");
+    if (bip->num_vertices > 0) {
+	bip->vertices = (fastf_t *)bu_calloc(bip->num_vertices * 3, sizeof(fastf_t), "BOT vertices");
+    } else {
+	bip->vertices = (fastf_t *)NULL;
+    }
 
-    if (mat == NULL) mat = bn_mat_identity;
+    if (bip->num_faces > 0) {
+	bip->faces = (int *)bu_calloc(bip->num_faces * 3, sizeof(int), "BOT faces");
+    } else {
+	bip->faces = (int *)NULL;
+    }
+
+    if (bip->vertices == NULL || bip->faces == NULL)
+	bu_log("WARNING: BoT contains %d vertices, %d faces\n", bip->num_vertices, bip->num_faces);
+
+    if (mat == NULL)
+	mat = bn_mat_identity;
+
     for (i=0; i<bip->num_vertices; i++) {
 	point_t tmp;
 
@@ -968,6 +977,7 @@ rt_bot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     int rem;
 
     RT_CK_DB_INTERNAL(ip);
+    if (dbip) RT_CK_DBI(dbip);
 
     if (ip->idb_type != ID_BOT) return -1;
     bip = (struct rt_bot_internal *)ip->idb_ptr;
@@ -1116,6 +1126,8 @@ rt_bot_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
     char *orientation, *mode;
     int i;
 
+    int badVertexCount = 0;
+
     RT_BOT_CK_MAGIC(bot_ip);
     bu_vls_strcat(str, "Bag of triangles (BOT)\n");
 
@@ -1165,60 +1177,60 @@ rt_bot_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 	}
     }
 
-    if (verbose) {
-	int badVertexCount = 0;
-	for (i=0; i<bot_ip->num_faces; i++) {
-	    int j, k;
-	    point_t pt[3];
+    if (!verbose)
+	return 0;
+	
+    for (i=0; i<bot_ip->num_faces; i++) {
+	int j, k;
+	point_t pt[3];
 
-	    snprintf(buf, 256, "\tface %d:", i);
-	    bu_vls_strcat(str, buf);
+	snprintf(buf, 256, "\tface %d:", i);
+	bu_vls_strcat(str, buf);
 
-	    for (j=0; j<3; j++) {
-		int ptnum;
+	for (j=0; j<3; j++) {
+	    int ptnum;
 
-		ptnum = bot_ip->faces[i*3+j];
-		if (ptnum < 0 || ptnum >= bot_ip->num_vertices) {
-		    bu_vls_strcat(str, " (\?\?\? \?\?\? \?\?\?)");
-		    badVertexCount++;
-		} else {
-		    VSCALE(pt[j], &bot_ip->vertices[ptnum*3], mm2local);
-		    snprintf(buf, 256, " (%g %g %g)", V3INTCLAMPARGS(pt[j]));
-		    bu_vls_strcat(str, buf);
-		}
-	    }
-	    if ((bot_ip->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) && bot_ip->num_normals > 0) {
-		bu_vls_strcat(str, " normals: ");
-		for (k=0; k<3; k++) {
-		    int index;
-
-		    index = i*3 + k;
-		    if (bot_ip->face_normals[index] < 0 ||  bot_ip->face_normals[index] >= bot_ip->num_normals) {
-			bu_vls_strcat(str, "none ");
-		    } else {
-			snprintf(buf, 256, "(%g %g %g) ", V3INTCLAMPARGS(&bot_ip->normals[bot_ip->face_normals[index]*3]));
-			bu_vls_strcat(str, buf);
-		    }
-		}
-		bu_vls_strcat(str, "\n");
+	    ptnum = bot_ip->faces[i*3+j];
+	    if (ptnum < 0 || ptnum >= bot_ip->num_vertices) {
+		bu_vls_strcat(str, " (\?\?\? \?\?\? \?\?\?)");
+		badVertexCount++;
 	    } else {
-		bu_vls_strcat(str, "\n");
-	    }
-	    if (bot_ip->mode == RT_BOT_PLATE || bot_ip->mode == RT_BOT_PLATE_NOCOS) {
-		char *face_mode;
-
-		if (BU_BITTEST(bot_ip->face_mode, i))
-		    face_mode = "appended to hit point";
-		else
-		    face_mode = "centered about hit point";
-		snprintf(buf, 256, "\t\tthickness = %g, %s\n", INTCLAMP(mm2local*bot_ip->thickness[i]), face_mode);
+		VSCALE(pt[j], &bot_ip->vertices[ptnum*3], mm2local);
+		snprintf(buf, 256, " (%g %g %g)", V3INTCLAMPARGS(pt[j]));
 		bu_vls_strcat(str, buf);
 	    }
 	}
-	if (badVertexCount > 0) {
-	    snprintf(buf, 256, "\tThis BOT has %d invalid references to vertices\n", badVertexCount);
+	if ((bot_ip->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) && bot_ip->num_normals > 0) {
+	    bu_vls_strcat(str, " normals: ");
+	    for (k=0; k<3; k++) {
+		int idx;
+
+		idx = i*3 + k;
+		if (bot_ip->face_normals[idx] < 0 ||  bot_ip->face_normals[idx] >= bot_ip->num_normals) {
+		    bu_vls_strcat(str, "none ");
+		} else {
+		    snprintf(buf, 256, "(%g %g %g) ", V3INTCLAMPARGS(&bot_ip->normals[bot_ip->face_normals[idx]*3]));
+		    bu_vls_strcat(str, buf);
+		}
+	    }
+	    bu_vls_strcat(str, "\n");
+	} else {
+	    bu_vls_strcat(str, "\n");
+	}
+	if (bot_ip->mode == RT_BOT_PLATE || bot_ip->mode == RT_BOT_PLATE_NOCOS) {
+	    char *face_mode;
+
+	    if (BU_BITTEST(bot_ip->face_mode, i))
+		face_mode = "appended to hit point";
+	    else
+		face_mode = "centered about hit point";
+	    snprintf(buf, 256, "\t\tthickness = %g, %s\n", INTCLAMP(mm2local*bot_ip->thickness[i]), face_mode);
 	    bu_vls_strcat(str, buf);
 	}
+    }
+    if (badVertexCount > 0) {
+	snprintf(buf, 256, "\tThis BOT has %d invalid references to vertices\n", badVertexCount);
+	bu_vls_strcat(str, buf);
     }
 
     return(0);
@@ -1232,12 +1244,11 @@ rt_bot_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
  * solid.
  */
 void
-rt_bot_ifree(struct rt_db_internal *ip, struct resource *resp)
+rt_bot_ifree(struct rt_db_internal *ip)
 {
     register struct rt_bot_internal *bot_ip;
 
     RT_CK_DB_INTERNAL(ip);
-    if (!resp) resp = &rt_uniresource;
 
     bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
     RT_BOT_CK_MAGIC(bot_ip);
@@ -1257,14 +1268,7 @@ rt_bot_ifree(struct rt_db_internal *ip, struct resource *resp)
 
 
 int
-rt_bot_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bn_tol *tol)
-{
-    return(1);
-}
-
-
-int
-rt_bot_xform(struct rt_db_internal *op, const fastf_t *mat, struct rt_db_internal *ip, const int free, struct db_i *dbip)
+rt_bot_xform(struct rt_db_internal *op, const fastf_t *mat, struct rt_db_internal *ip, const int release, struct db_i *dbip)
 {
     struct rt_bot_internal *botip, *botop;
     register int i;
@@ -1273,8 +1277,9 @@ rt_bot_xform(struct rt_db_internal *op, const fastf_t *mat, struct rt_db_interna
     RT_CK_DB_INTERNAL(ip);
     botip = (struct rt_bot_internal *)ip->idb_ptr;
     RT_BOT_CK_MAGIC(botip);
+    if (dbip) RT_CK_DBI(dbip);
 
-    if (op != ip && !free) {
+    if (op != ip && !release) {
 	RT_INIT_DB_INTERNAL(op);
 	BU_GETSTRUCT(botop, rt_bot_internal);
 	botop->magic = RT_BOT_INTERNAL_MAGIC;
@@ -1332,8 +1337,8 @@ rt_bot_xform(struct rt_db_internal *op, const fastf_t *mat, struct rt_db_interna
 	VMOVE(&botop->normals[i*3], pt);
     }
 
-    if (free && op != ip) {
-	rt_bot_ifree(ip, NULL);
+    if (release && op != ip) {
+	rt_bot_ifree(ip);
     }
 
     return(0);
@@ -1347,23 +1352,23 @@ rt_bot_find_v_nearest_pt2(
     const mat_t mat)
 {
     point_t v;
-    int index;
+    int idx;
     fastf_t dist=MAX_FASTF;
     int closest=-1;
 
     RT_BOT_CK_MAGIC(bot);
 
-    for (index=0; index < bot->num_vertices; index++) {
+    for (idx=0; idx < bot->num_vertices; idx++) {
 	fastf_t tmp_dist;
 	fastf_t tmpx, tmpy;
 
-	MAT4X3PNT(v, mat, &bot->vertices[index*3])
+	MAT4X3PNT(v, mat, &bot->vertices[idx*3])
 	    tmpx = v[X] - pt2[X];
 	tmpy = v[Y] - pt2[Y];
 	tmp_dist = tmpx * tmpx + tmpy * tmpy;
 	if (tmp_dist < dist) {
 	    dist = tmp_dist;
-	    closest = index;
+	    closest = idx;
 	}
     }
 
@@ -1562,7 +1567,7 @@ static char *los[]={
  * db get name flags	get BOT flags
  */
 int
-rt_bot_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *attr)
+rt_bot_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr)
 {
     register struct rt_bot_internal *bot=(struct rt_bot_internal *)intern->idb_ptr;
     int status;
@@ -1571,113 +1576,113 @@ rt_bot_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *
     RT_BOT_CK_MAGIC(bot);
 
     if (attr == (char *)NULL) {
-	bu_vls_strcpy(log, "bot");
-	bu_vls_printf(log, " mode %s orient %s",
+	bu_vls_strcpy(logstr, "bot");
+	bu_vls_printf(logstr, " mode %s orient %s",
 		      modes[bot->mode], orientation[bot->orientation]);
-	bu_vls_printf(log, " flags {");
+	bu_vls_printf(logstr, " flags {");
 	if (bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) {
-	    bu_vls_printf(log, " has_normals");
+	    bu_vls_printf(logstr, " has_normals");
 	}
 	if (bot->bot_flags & RT_BOT_USE_NORMALS) {
-	    bu_vls_printf(log, " use_normals");
+	    bu_vls_printf(logstr, " use_normals");
 	}
 	if (bot->bot_flags & RT_BOT_USE_FLOATS) {
-	    bu_vls_printf(log, " use_floats");
+	    bu_vls_printf(logstr, " use_floats");
 	}
-	bu_vls_printf(log, "} V {");
+	bu_vls_printf(logstr, "} V {");
 	for (i=0; i<bot->num_vertices; i++)
-	    bu_vls_printf(log, " { %.25G %.25G %.25G }",
+	    bu_vls_printf(logstr, " { %.25G %.25G %.25G }",
 			  V3ARGS(&bot->vertices[i*3]));
-	bu_vls_strcat(log, "} F {");
+	bu_vls_strcat(logstr, "} F {");
 	for (i=0; i<bot->num_faces; i++)
-	    bu_vls_printf(log, " { %d %d %d }",
+	    bu_vls_printf(logstr, " { %d %d %d }",
 			  V3ARGS(&bot->faces[i*3]));
-	bu_vls_strcat(log, "}");
+	bu_vls_strcat(logstr, "}");
 	if (bot->mode == RT_BOT_PLATE || bot->mode == RT_BOT_PLATE_NOCOS) {
-	    bu_vls_strcat(log, " T {");
+	    bu_vls_strcat(logstr, " T {");
 	    for (i=0; i<bot->num_faces; i++)
-		bu_vls_printf(log, " %.25G", bot->thickness[i]);
-	    bu_vls_strcat(log, "} fm ");
-	    bu_bitv_to_hex(log, bot->face_mode);
+		bu_vls_printf(logstr, " %.25G", bot->thickness[i]);
+	    bu_vls_strcat(logstr, "} fm ");
+	    bu_bitv_to_hex(logstr, bot->face_mode);
 	}
 	if (bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) {
-	    bu_vls_printf(log, " N {");
+	    bu_vls_printf(logstr, " N {");
 	    for (i=0; i<bot->num_normals; i++) {
-		bu_vls_printf(log, " { %.25G %.25G %.25G }", V3ARGS(&bot->normals[i*3]));
+		bu_vls_printf(logstr, " { %.25G %.25G %.25G }", V3ARGS(&bot->normals[i*3]));
 	    }
-	    bu_vls_printf(log, "} fn {");
+	    bu_vls_printf(logstr, "} fn {");
 	    for (i=0; i<bot->num_faces; i++) {
-		bu_vls_printf(log, " { %d %d %d }", V3ARGS(&bot->face_normals[i*3]));
+		bu_vls_printf(logstr, " { %d %d %d }", V3ARGS(&bot->face_normals[i*3]));
 	    }
-	    bu_vls_printf(log, "}");
+	    bu_vls_printf(logstr, "}");
 	}
 	status = BRLCAD_OK;
     } else {
 	if (attr[0] == 'N') {
 	    if (attr[1] == '\0') {
 		if (!(bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) || bot->num_normals < 1) {
-		    bu_vls_strcat(log, "{}");
+		    bu_vls_strcat(logstr, "{}");
 		} else {
 		    for (i=0; i<bot->num_normals; i++) {
-			bu_vls_printf(log, " { %.25G %.25G %.25G }", V3ARGS(&bot->normals[i*3]));
+			bu_vls_printf(logstr, " { %.25G %.25G %.25G }", V3ARGS(&bot->normals[i*3]));
 		    }
 		}
 		status = BRLCAD_OK;
 	    } else {
 		i = atoi(&attr[1]);
 		if (i < 0 || i >= bot->num_normals) {
-		    bu_vls_strcat(log, "Specified normal index is out of range");
+		    bu_vls_strcat(logstr, "Specified normal index is out of range");
 		    status = BRLCAD_ERROR;
 		} else {
-		    bu_vls_printf(log, "%.25G %.25G %.25G", V3ARGS(&bot->normals[i*3]));
+		    bu_vls_printf(logstr, "%.25G %.25G %.25G", V3ARGS(&bot->normals[i*3]));
 		    status = BRLCAD_OK;
 		}
 	    }
 	} else if (!strncmp(attr, "fn", 2)) {
 	    if (attr[2] == '\0') {
 		for (i=0; i<bot->num_faces; i++) {
-		    bu_vls_printf(log, " { %d %d %d }", V3ARGS(&bot->face_normals[i*3]));
+		    bu_vls_printf(logstr, " { %d %d %d }", V3ARGS(&bot->face_normals[i*3]));
 		}
 		status = BRLCAD_OK;
 	    } else {
 		i = atoi(&attr[2]);
 		if (i < 0 || i >= bot->num_faces) {
-		    bu_vls_strcat(log, "Specified face index is out of range");
+		    bu_vls_strcat(logstr, "Specified face index is out of range");
 		    status = BRLCAD_ERROR;
 		} else {
-		    bu_vls_printf(log, "%d %d %d", V3ARGS(&bot->face_normals[i*3]));
+		    bu_vls_printf(logstr, "%d %d %d", V3ARGS(&bot->face_normals[i*3]));
 		    status = BRLCAD_OK;
 		}
 	    }
 	} else if (!strcmp(attr, "nn")) {
 	    if (!(bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) || bot->num_normals < 1) {
-		bu_vls_strcat(log, "0");
+		bu_vls_strcat(logstr, "0");
 	    } else {
-		bu_vls_printf(log, "%d", bot->num_normals);
+		bu_vls_printf(logstr, "%d", bot->num_normals);
 	    }
 	    status = BRLCAD_OK;
 	} else if (!strcmp(attr, "nfn")) {
 	    if (!(bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) || bot->num_face_normals < 1) {
-		bu_vls_strcat(log, "0");
+		bu_vls_strcat(logstr, "0");
 	    } else {
-		bu_vls_printf(log, "%d", bot->num_face_normals);
+		bu_vls_printf(logstr, "%d", bot->num_face_normals);
 	    }
 	    status = BRLCAD_OK;
 	} else if (!strncmp(attr, "fm", 2)) {
 	    if (bot->mode != RT_BOT_PLATE && bot->mode != RT_BOT_PLATE_NOCOS) {
-		bu_vls_strcat(log, "Only plate mode BOTs have face_modes");
+		bu_vls_strcat(logstr, "Only plate mode BOTs have face_modes");
 		status = BRLCAD_ERROR;
 	    } else {
 		if (attr[2] == '\0') {
-		    bu_bitv_to_hex(log, bot->face_mode);
+		    bu_bitv_to_hex(logstr, bot->face_mode);
 		    status = BRLCAD_OK;
 		} else {
 		    i = atoi(&attr[2]);
 		    if (i < 0 || i >=bot->num_faces) {
-			bu_vls_printf(log, "face number %d out of range (0..%d)", i, bot->num_faces-1);
+			bu_vls_printf(logstr, "face number %d out of range (0..%d)", i, bot->num_faces-1);
 			status = BRLCAD_ERROR;
 		    } else {
-			bu_vls_printf(log, "%s",
+			bu_vls_printf(logstr, "%s",
 				      los[BU_BITTEST(bot->face_mode, i)?1:0]);
 			status = BRLCAD_OK;
 		    }
@@ -1687,16 +1692,16 @@ rt_bot_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *
 	    if (attr[1] != '\0') {
 		i = atoi(&attr[1]);
 		if (i < 0 || i >=bot->num_vertices) {
-		    bu_vls_printf(log, "vertex number %d out of range (0..%d)", i, bot->num_vertices-1);
+		    bu_vls_printf(logstr, "vertex number %d out of range (0..%d)", i, bot->num_vertices-1);
 		    status = BRLCAD_ERROR;
 		} else {
-		    bu_vls_printf(log, "%.25G %.25G %.25G",
+		    bu_vls_printf(logstr, "%.25G %.25G %.25G",
 				  V3ARGS(&bot->vertices[i*3]));
 		    status = BRLCAD_OK;
 		}
 	    } else {
 		for (i=0; i<bot->num_vertices; i++)
-		    bu_vls_printf(log, " { %.25G %.25G %.25G }",
+		    bu_vls_printf(logstr, " { %.25G %.25G %.25G }",
 				  V3ARGS(&bot->vertices[i*3]));
 		status = BRLCAD_OK;
 	    }
@@ -1704,32 +1709,32 @@ rt_bot_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *
 	    /* Retrieve one face, as vertex indices */
 	    if (attr[1] == '\0') {
 		for (i=0; i<bot->num_faces; i++)
-		    bu_vls_printf(log, " { %d %d %d }",
+		    bu_vls_printf(logstr, " { %d %d %d }",
 				  V3ARGS(&bot->faces[i*3]));
 		status = BRLCAD_OK;
 	    } else {
 		i = atoi(&attr[1]);
 		if (i < 0 || i >=bot->num_faces) {
-		    bu_vls_printf(log, "face number %d out of range (0..%d)", i, bot->num_faces-1);
+		    bu_vls_printf(logstr, "face number %d out of range (0..%d)", i, bot->num_faces-1);
 		    status = BRLCAD_ERROR;
 		} else {
-		    bu_vls_printf(log, "%d %d %d",
+		    bu_vls_printf(logstr, "%d %d %d",
 				  V3ARGS(&bot->faces[i*3]));
 		    status = BRLCAD_OK;
 		}
 	    }
 	} else if (!strcmp(attr, "flags")) {
-	    bu_vls_printf(log, "{");
+	    bu_vls_printf(logstr, "{");
 	    if (bot->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) {
-		bu_vls_printf(log, " has_normals");
+		bu_vls_printf(logstr, " has_normals");
 	    }
 	    if (bot->bot_flags & RT_BOT_USE_NORMALS) {
-		bu_vls_printf(log, " use_normals");
+		bu_vls_printf(logstr, " use_normals");
 	    }
 	    if (bot->bot_flags & RT_BOT_USE_FLOATS) {
-		bu_vls_printf(log, " use_floats");
+		bu_vls_printf(logstr, " use_floats");
 	    }
-	    bu_vls_printf(log, "}");
+	    bu_vls_printf(logstr, "}");
 	    status = BRLCAD_OK;
 	} else if (attr[0] == 'f') {
 	    int indx;
@@ -1737,17 +1742,17 @@ rt_bot_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *
 	    if (attr[1] == '\0') {
 		for (i=0; i<bot->num_faces; i++) {
 		    indx = bot->faces[i*3];
-		    bu_vls_printf(log, " { %.25G %.25G %.25G }",
+		    bu_vls_printf(logstr, " { %.25G %.25G %.25G }",
 				  bot->vertices[indx*3],
 				  bot->vertices[indx*3+1],
 				  bot->vertices[indx*3+2]);
 		    indx = bot->faces[i*3+1];
-		    bu_vls_printf(log, " { %.25G %.25G %.25G }",
+		    bu_vls_printf(logstr, " { %.25G %.25G %.25G }",
 				  bot->vertices[indx*3],
 				  bot->vertices[indx*3+1],
 				  bot->vertices[indx*3+2]);
 		    indx = bot->faces[i*3+2];
-		    bu_vls_printf(log, " { %.25G %.25G %.25G }",
+		    bu_vls_printf(logstr, " { %.25G %.25G %.25G }",
 				  bot->vertices[indx*3],
 				  bot->vertices[indx*3+1],
 				  bot->vertices[indx*3+2]);
@@ -1756,21 +1761,21 @@ rt_bot_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *
 	    } else {
 		i = atoi(&attr[1]);
 		if (i < 0 || i >=bot->num_faces) {
-		    bu_vls_printf(log, "face number %d out of range (0..%d)", i, bot->num_faces-1);
+		    bu_vls_printf(logstr, "face number %d out of range (0..%d)", i, bot->num_faces-1);
 		    status = BRLCAD_ERROR;
 		} else {
 		    indx = bot->faces[i*3];
-		    bu_vls_printf(log, " { %.25G %.25G %.25G }",
+		    bu_vls_printf(logstr, " { %.25G %.25G %.25G }",
 				  bot->vertices[indx*3],
 				  bot->vertices[indx*3+1],
 				  bot->vertices[indx*3+2]);
 		    indx = bot->faces[i*3+1];
-		    bu_vls_printf(log, " { %.25G %.25G %.25G }",
+		    bu_vls_printf(logstr, " { %.25G %.25G %.25G }",
 				  bot->vertices[indx*3],
 				  bot->vertices[indx*3+1],
 				  bot->vertices[indx*3+2]);
 		    indx = bot->faces[i*3+2];
-		    bu_vls_printf(log, " { %.25G %.25G %.25G }",
+		    bu_vls_printf(logstr, " { %.25G %.25G %.25G }",
 				  bot->vertices[indx*3],
 				  bot->vertices[indx*3+1],
 				  bot->vertices[indx*3+2]);
@@ -1779,43 +1784,62 @@ rt_bot_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *
 	    }
 	} else if (attr[0] == 'T') {
 	    if (bot->mode != RT_BOT_PLATE && bot->mode != RT_BOT_PLATE_NOCOS) {
-		bu_vls_strcat(log, "Only plate mode BOTs have thicknesses");
+		bu_vls_strcat(logstr, "Only plate mode BOTs have thicknesses");
 		status = BRLCAD_ERROR;
 	    } else {
 		if (attr[1] == '\0') {
 		    for (i=0; i<bot->num_faces; i++)
-			bu_vls_printf(log, " %.25G", bot->thickness[i]);
+			bu_vls_printf(logstr, " %.25G", bot->thickness[i]);
 		    status = BRLCAD_OK;
 		} else {
 		    i = atoi(&attr[1]);
 		    if (i < 0 || i >=bot->num_faces) {
-			bu_vls_printf(log, "face number %d out of range (0..%d)", i, bot->num_faces-1);
+			bu_vls_printf(logstr, "face number %d out of range (0..%d)", i, bot->num_faces-1);
 			status = BRLCAD_ERROR;
 		    } else {
-			bu_vls_printf(log, " %.25G", bot->thickness[i]);
+			bu_vls_printf(logstr, " %.25G", bot->thickness[i]);
 			status = BRLCAD_OK;
 		    }
 		}
 	    }
 	} else if (!strcmp(attr, "nv")) {
-	    bu_vls_printf(log, "%d", bot->num_vertices);
+	    bu_vls_printf(logstr, "%d", bot->num_vertices);
 	    status = BRLCAD_OK;
 	} else if (!strcmp(attr, "nt")) {
-	    bu_vls_printf(log, "%d", bot->num_faces);
+	    bu_vls_printf(logstr, "%d", bot->num_faces);
 	    status = BRLCAD_OK;
 	} else if (!strcmp(attr, "mode")) {
-	    bu_vls_printf(log, "%s", modes[bot->mode]);
+	    bu_vls_printf(logstr, "%s", modes[bot->mode]);
 	    status = BRLCAD_OK;
 	} else if (!strcmp(attr, "orient")) {
-	    bu_vls_printf(log, "%s", orientation[bot->orientation]);
+	    bu_vls_printf(logstr, "%s", orientation[bot->orientation]);
 	    status = BRLCAD_OK;
 	} else {
-	    bu_vls_printf(log, "BoT has no attribute '%s'", attr);
+	    bu_vls_printf(logstr, "BoT has no attribute '%s'", attr);
 	    status = BRLCAD_ERROR;
 	}
     }
 
     return status;
+}
+
+
+int
+bot_check_vertex_indices(struct bu_vls *logstr, struct rt_bot_internal *bot)
+{
+    int badVertexCount = 0;
+    int i;
+    for (i=0 ; i<bot->num_faces ; i++) {
+	int k;
+	for (k=0 ; k<3 ; k++) {
+	    int vertex_no = bot->faces[i*3+k];
+	    if (vertex_no < 0 || vertex_no >= bot->num_vertices) {
+		bu_vls_printf(logstr, "WARNING: BOT has illegal vertex index (%d) in face #(%d)\n", vertex_no, i);
+		badVertexCount++;
+	    }
+	}
+    }
+    return badVertexCount;
 }
 
 
@@ -1841,7 +1865,7 @@ rt_bot_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *
  * db adjust name flags		set flags
  */
 int
-rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char **argv)
+rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv)
 {
     struct rt_bot_internal *bot;
     Tcl_Obj *obj, **obj_array;
@@ -1863,7 +1887,7 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 	    } else {
 		i = atoi(&(argv[0][2]));
 		if (i < 0 || i >= bot->num_faces) {
-		    bu_vls_printf(log, "Face number out of range");
+		    bu_vls_printf(logstr, "Face number out of range");
 		    Tcl_DecrRefCount(obj);
 		    return(BRLCAD_ERROR);
 		}
@@ -1884,7 +1908,7 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 
 	    new_num = atoi(Tcl_GetStringFromObj(obj, NULL));
 	    if (new_num < 0) {
-		bu_vls_printf(log, "Number of normals may not be less than 0");
+		bu_vls_printf(logstr, "Number of normals may not be less than 0");
 		Tcl_DecrRefCount(obj);
 		return(BRLCAD_ERROR);
 	    }
@@ -1921,7 +1945,7 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 	    if (argv[0][2] == '\0') {
 		(void)Tcl_ListObjGetElements(brlcad_interp, obj, &len, &obj_array);
 		if (len != bot->num_faces || len <= 0) {
-		    bu_vls_printf(log, "Must provide normals for all faces!!!");
+		    bu_vls_printf(logstr, "Must provide normals for all faces!!!");
 		    Tcl_DecrRefCount(obj);
 		    return(BRLCAD_ERROR);
 		}
@@ -1934,21 +1958,21 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 		    while (isspace(*f_str)) f_str++;
 
 		    if (*f_str == '\0') {
-			bu_vls_printf(log, "incomplete list of face_normals");
+			bu_vls_printf(logstr, "incomplete list of face_normals");
 			Tcl_DecrRefCount(obj);
 			return(BRLCAD_ERROR);
 		    }
 		    bot->face_normals[i*3] = atoi(f_str);
 		    f_str = bu_next_token(f_str);
 		    if (*f_str == '\0') {
-			bu_vls_printf(log, "incomplete list of face_normals");
+			bu_vls_printf(logstr, "incomplete list of face_normals");
 			Tcl_DecrRefCount(obj);
 			return(BRLCAD_ERROR);
 		    }
 		    bot->face_normals[i*3+1] = atoi(f_str);
 		    f_str = bu_next_token(f_str);
 		    if (*f_str == '\0') {
-			bu_vls_printf(log, "incomplete list of face_normals");
+			bu_vls_printf(logstr, "incomplete list of face_normals");
 			Tcl_DecrRefCount(obj);
 			return(BRLCAD_ERROR);
 		    }
@@ -1958,7 +1982,7 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 	    } else {
 		i = atoi(&argv[0][2]);
 		if (i < 0 || i >= bot->num_faces) {
-		    bu_vls_printf(log, "face_normal number out of range!!!");
+		    bu_vls_printf(logstr, "face_normal number out of range!!!");
 		    Tcl_DecrRefCount(obj);
 		    return(BRLCAD_ERROR);
 		}
@@ -1967,14 +1991,14 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 		bot->face_normals[i*3] = atoi(f_str);
 		f_str = bu_next_token(f_str);
 		if (*f_str == '\0') {
-		    bu_vls_printf(log, "incomplete vertex");
+		    bu_vls_printf(logstr, "incomplete vertex");
 		    Tcl_DecrRefCount(obj);
 		    return(BRLCAD_ERROR);
 		}
 		bot->face_normals[i*3+1] = atoi(f_str);
 		f_str = bu_next_token(f_str);
 		if (*f_str == '\0') {
-		    bu_vls_printf(log, "incomplete vertex");
+		    bu_vls_printf(logstr, "incomplete vertex");
 		    Tcl_DecrRefCount(obj);
 		    return(BRLCAD_ERROR);
 		}
@@ -1986,7 +2010,7 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 	    if (argv[0][1] == '\0') {
 		(void)Tcl_ListObjGetElements(brlcad_interp, obj, &len, &obj_array);
 		if (len <= 0) {
-		    bu_vls_printf(log, "Must provide at least one normal!!!");
+		    bu_vls_printf(logstr, "Must provide at least one normal!!!");
 		    Tcl_DecrRefCount(obj);
 		    return(BRLCAD_ERROR);
 		}
@@ -1998,21 +2022,21 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 		    v_str = Tcl_GetStringFromObj(obj_array[i], NULL);
 		    while (isspace(*v_str)) v_str++;
 		    if (*v_str == '\0') {
-			bu_vls_printf(log, "incomplete list of normals");
+			bu_vls_printf(logstr, "incomplete list of normals");
 			Tcl_DecrRefCount(obj);
 			return(BRLCAD_ERROR);
 		    }
 		    bot->normals[i*3] = atof(v_str);
 		    v_str = bu_next_token(v_str);
 		    if (*v_str == '\0') {
-			bu_vls_printf(log, "incomplete list of normals");
+			bu_vls_printf(logstr, "incomplete list of normals");
 			Tcl_DecrRefCount(obj);
 			return(BRLCAD_ERROR);
 		    }
 		    bot->normals[i*3+1] = atof(v_str);
 		    v_str = bu_next_token(v_str);
 		    if (*v_str == '\0') {
-			bu_vls_printf(log, "incomplete list of normals");
+			bu_vls_printf(logstr, "incomplete list of normals");
 			Tcl_DecrRefCount(obj);
 			return(BRLCAD_ERROR);
 		    }
@@ -2022,7 +2046,7 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 	    } else {
 		i = atoi(&argv[0][1]);
 		if (i < 0 || i >= bot->num_normals) {
-		    bu_vls_printf(log, "normal number out of range!!!");
+		    bu_vls_printf(logstr, "normal number out of range!!!");
 		    Tcl_DecrRefCount(obj);
 		    return(BRLCAD_ERROR);
 		}
@@ -2032,14 +2056,14 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 		bot->normals[i*3] = atof(v_str);
 		v_str = bu_next_token(v_str);
 		if (*v_str == '\0') {
-		    bu_vls_printf(log, "incomplete normal");
+		    bu_vls_printf(logstr, "incomplete normal");
 		    Tcl_DecrRefCount(obj);
 		    return(BRLCAD_ERROR);
 		}
 		bot->normals[i*3+1] = atof(v_str);
 		v_str = bu_next_token(v_str);
 		if (*v_str == '\0') {
-		    bu_vls_printf(log, "incomplete normal");
+		    bu_vls_printf(logstr, "incomplete normal");
 		    Tcl_DecrRefCount(obj);
 		    return(BRLCAD_ERROR);
 		}
@@ -2051,7 +2075,7 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 	    if (argv[0][1] == '\0') {
 		(void)Tcl_ListObjGetElements(brlcad_interp, obj, &len, &obj_array);
 		if (len <= 0) {
-		    bu_vls_printf(log, "Must provide at least one vertex!!!");
+		    bu_vls_printf(logstr, "Must provide at least one vertex!!!");
 		    Tcl_DecrRefCount(obj);
 		    return(BRLCAD_ERROR);
 		}
@@ -2063,21 +2087,21 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 		    v_str = Tcl_GetStringFromObj(obj_array[i], NULL);
 		    while (isspace(*v_str)) v_str++;
 		    if (*v_str == '\0') {
-			bu_vls_printf(log, "incomplete list of vertices");
+			bu_vls_printf(logstr, "incomplete list of vertices");
 			Tcl_DecrRefCount(obj);
 			return(BRLCAD_ERROR);
 		    }
 		    bot->vertices[i*3] = atof(v_str);
 		    v_str = bu_next_token(v_str);
 		    if (*v_str == '\0') {
-			bu_vls_printf(log, "incomplete list of vertices");
+			bu_vls_printf(logstr, "incomplete list of vertices");
 			Tcl_DecrRefCount(obj);
 			return(BRLCAD_ERROR);
 		    }
 		    bot->vertices[i*3+1] = atof(v_str);
 		    v_str = bu_next_token(v_str);
 		    if (*v_str == '\0') {
-			bu_vls_printf(log, "incomplete list of vertices");
+			bu_vls_printf(logstr, "incomplete list of vertices");
 			Tcl_DecrRefCount(obj);
 			return(BRLCAD_ERROR);
 		    }
@@ -2086,7 +2110,7 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 	    } else {
 		i = atoi(&argv[0][1]);
 		if (i < 0 || i >= bot->num_vertices) {
-		    bu_vls_printf(log, "vertex number out of range!!!");
+		    bu_vls_printf(logstr, "vertex number out of range!!!");
 		    Tcl_DecrRefCount(obj);
 		    return(BRLCAD_ERROR);
 		}
@@ -2096,14 +2120,14 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 		bot->vertices[i*3] = atof(v_str);
 		v_str = bu_next_token(v_str);
 		if (*v_str == '\0') {
-		    bu_vls_printf(log, "incomplete vertex");
+		    bu_vls_printf(logstr, "incomplete vertex");
 		    Tcl_DecrRefCount(obj);
 		    return(BRLCAD_ERROR);
 		}
 		bot->vertices[i*3+1] = atof(v_str);
 		v_str = bu_next_token(v_str);
 		if (*v_str == '\0') {
-		    bu_vls_printf(log, "incomplete vertex");
+		    bu_vls_printf(logstr, "incomplete vertex");
 		    Tcl_DecrRefCount(obj);
 		    return(BRLCAD_ERROR);
 		}
@@ -2115,7 +2139,7 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 	    if (argv[0][1] == '\0') {
 		(void)Tcl_ListObjGetElements(brlcad_interp, obj, &len, &obj_array);
 		if (len <= 0) {
-		    bu_vls_printf(log, "Must provide at least one face!!!");
+		    bu_vls_printf(logstr, "Must provide at least one face!!!");
 		    Tcl_DecrRefCount(obj);
 		    return(BRLCAD_ERROR);
 		}
@@ -2145,21 +2169,21 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 		    while (isspace(*f_str)) f_str++;
 
 		    if (*f_str == '\0') {
-			bu_vls_printf(log, "incomplete list of faces");
+			bu_vls_printf(logstr, "incomplete list of faces");
 			Tcl_DecrRefCount(obj);
 			return(BRLCAD_ERROR);
 		    }
 		    bot->faces[i*3] = atoi(f_str);
 		    f_str = bu_next_token(f_str);
 		    if (*f_str == '\0') {
-			bu_vls_printf(log, "incomplete list of faces");
+			bu_vls_printf(logstr, "incomplete list of faces");
 			Tcl_DecrRefCount(obj);
 			return(BRLCAD_ERROR);
 		    }
 		    bot->faces[i*3+1] = atoi(f_str);
 		    f_str = bu_next_token(f_str);
 		    if (*f_str == '\0') {
-			bu_vls_printf(log, "incomplete list of faces");
+			bu_vls_printf(logstr, "incomplete list of faces");
 			Tcl_DecrRefCount(obj);
 			return(BRLCAD_ERROR);
 		    }
@@ -2168,7 +2192,7 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 	    } else {
 		i = atoi(&argv[0][1]);
 		if (i < 0 || i >= bot->num_faces) {
-		    bu_vls_printf(log, "face number out of range!!!");
+		    bu_vls_printf(logstr, "face number out of range!!!");
 		    Tcl_DecrRefCount(obj);
 		    return(BRLCAD_ERROR);
 		}
@@ -2177,32 +2201,32 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 		bot->faces[i*3] = atoi(f_str);
 		f_str = bu_next_token(f_str);
 		if (*f_str == '\0') {
-		    bu_vls_printf(log, "incomplete vertex");
+		    bu_vls_printf(logstr, "incomplete vertex");
 		    Tcl_DecrRefCount(obj);
 		    return(BRLCAD_ERROR);
 		}
 		bot->faces[i*3+1] = atoi(f_str);
 		f_str = bu_next_token(f_str);
 		if (*f_str == '\0') {
-		    bu_vls_printf(log, "incomplete vertex");
+		    bu_vls_printf(logstr, "incomplete vertex");
 		    Tcl_DecrRefCount(obj);
 		    return(BRLCAD_ERROR);
 		}
 		bot->faces[i*3+2] = atoi(f_str);
 	    }
-	    bot_check_vertex_indices(log, bot);
+	    bot_check_vertex_indices(logstr, bot);
 	} else if (argv[0][0] ==  'T') {
 	    char *t_str;
 
 	    if (argv[0][1] == '\0') {
 		(void)Tcl_ListObjGetElements(brlcad_interp, obj, &len, &obj_array);
 		if (len <= 0) {
-		    bu_vls_printf(log, "Must provide at least one thickness!!!");
+		    bu_vls_printf(logstr, "Must provide at least one thickness!!!");
 		    Tcl_DecrRefCount(obj);
 		    return(BRLCAD_ERROR);
 		}
 		if (len > bot->num_faces) {
-		    bu_vls_printf(log, "Too many thicknesses (there are not that many faces)!!!");
+		    bu_vls_printf(logstr, "Too many thicknesses (there are not that many faces)!!!");
 		    Tcl_DecrRefCount(obj);
 		    return(BRLCAD_ERROR);
 		}
@@ -2216,7 +2240,7 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 	    } else {
 		i = atoi(&argv[0][1]);
 		if (i < 0 || i >= bot->num_faces) {
-		    bu_vls_printf(log, "face number out of range!!!");
+		    bu_vls_printf(logstr, "face number out of range!!!");
 		    Tcl_DecrRefCount(obj);
 		    return(BRLCAD_ERROR);
 		}
@@ -2236,7 +2260,7 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 
 		mode = atoi(m_str);
 		if (mode < RT_BOT_SURFACE || mode > RT_BOT_PLATE_NOCOS) {
-		    bu_vls_printf(log, "unrecognized mode!!!");
+		    bu_vls_printf(logstr, "unrecognized mode!!!");
 		    Tcl_DecrRefCount(obj);
 		    return(BRLCAD_ERROR);
 		}
@@ -2251,7 +2275,7 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 		else if (!strcmp(m_str, modes[RT_BOT_PLATE_NOCOS]))
 		    bot->mode = RT_BOT_PLATE_NOCOS;
 		else {
-		    bu_vls_printf(log, "unrecognized mode!!!");
+		    bu_vls_printf(logstr, "unrecognized mode!!!");
 		    Tcl_DecrRefCount(obj);
 		    return(BRLCAD_ERROR);
 		}
@@ -2261,15 +2285,15 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 
 	    o_str = Tcl_GetStringFromObj(obj, NULL);
 	    if (isdigit(*o_str)) {
-		int orientation;
+		int orient;
 
-		orientation = atoi(o_str);
-		if (orientation < RT_BOT_UNORIENTED || orientation > RT_BOT_CW) {
-		    bu_vls_printf(log, "unrecognized orientation!!!");
+		orient = atoi(o_str);
+		if (orient < RT_BOT_UNORIENTED || orient > RT_BOT_CW) {
+		    bu_vls_printf(logstr, "unrecognized orientation!!!");
 		    Tcl_DecrRefCount(obj);
 		    return(BRLCAD_ERROR);
 		}
-		bot->orientation = orientation;
+		bot->orientation = orient;
 	    } else {
 		if (!strcmp(o_str, orientation[RT_BOT_UNORIENTED]))
 		    bot->orientation = RT_BOT_UNORIENTED;
@@ -2278,7 +2302,7 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 		else if (!strcmp(o_str, orientation[RT_BOT_CW]))
 		    bot->orientation = RT_BOT_CW;
 		else {
-		    bu_vls_printf(log, "unrecognized orientation!!!");
+		    bu_vls_printf(logstr, "unrecognized orientation!!!");
 		    Tcl_DecrRefCount(obj);
 		    return(BRLCAD_ERROR);
 		}
@@ -2297,7 +2321,7 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 		} else if (!strcmp(str, "use_floats")) {
 		    bot->bot_flags |= RT_BOT_USE_FLOATS;
 		} else {
-		    bu_vls_printf(log, "unrecognized flag (must be \"has_normals\", \"use_normals\", or \"use_floats\"!!!");
+		    bu_vls_printf(logstr, "unrecognized flag (must be \"has_normals\", \"use_normals\", or \"use_floats\"!!!");
 		    Tcl_DecrRefCount(obj);
 		    return(BRLCAD_ERROR);
 		}
@@ -2333,30 +2357,11 @@ rt_bot_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 
 
 int
-bot_check_vertex_indices(struct bu_vls *log, struct rt_bot_internal *bot)
-{
-    int badVertexCount = 0;
-    int i;
-    for (i=0 ; i<bot->num_faces ; i++) {
-	int k;
-	for (k=0 ; k<3 ; k++) {
-	    int vertex_no = bot->faces[i*3+k];
-	    if (vertex_no < 0 || vertex_no >= bot->num_vertices) {
-		bu_vls_printf(log, "WARNING: BOT has illegal vertex index (%d) in face #(%d)\n", vertex_no, i);
-		badVertexCount++;
-	    }
-	}
-    }
-    return badVertexCount;
-}
-
-
-int
-rt_bot_form(struct bu_vls *log, const struct rt_functab *ftp)
+rt_bot_form(struct bu_vls *logstr, const struct rt_functab *ftp)
 {
     RT_CK_FUNCTAB(ftp);
 
-    bu_vls_printf(log,
+    bu_vls_printf(logstr,
 		  "mode {%%s} orient {%%s} V { {%%f %%f %%f} {%%f %%f %%f} ...} F { {%%d %%d %%d} {%%d %%d %%d} ...} T { %%f %%f %%f ... } fm %%s");
 
     return BRLCAD_OK;
@@ -2368,8 +2373,11 @@ rt_bot_form(struct bu_vls *log, const struct rt_functab *ftp)
  *
  */
 int
-rt_bot_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
+rt_bot_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 {
+    if (!ps) return(0);
+    RT_CK_DB_INTERNAL(ip);
+
     return(0);			/* OK */
 }
 
@@ -2480,7 +2488,7 @@ rt_bot_face_fuse(struct rt_bot_internal *bot)
 		case RT_BOT_PLATE:
 		case RT_BOT_PLATE_NOCOS:
 		    /* check the face thickness and face mode */
-		    if (bot->thickness[i] != bot->thickness[j] ||
+		    if (!NEAR_ZERO(bot->thickness[i] - bot->thickness[j], SMALL_FASTF) ||
 			(BU_BITTEST(bot->face_mode, i)?1:0) != (BU_BITTEST(bot->face_mode, j)?1:0))
 			break;
 		case RT_BOT_SOLID:
@@ -3610,12 +3618,13 @@ rt_bot_decimate(struct rt_bot_internal *bot,	/* BOT to be decimated */
 HIDDEN int
 bot_smooth_miss(struct application *ap)
 {
+    if (ap) RT_CK_APPLICATION(ap);
     return 0;
 }
 
 
 HIDDEN int
-bot_smooth_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg)
+bot_smooth_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg __attribute__((unused)))
 {
     struct partition *pp;
     struct soltab *stp;

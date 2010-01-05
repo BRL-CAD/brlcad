@@ -35,7 +35,7 @@ SelectTypeDescriptor 	*config_control_designt_reversible_topology_item;
 SelectTypeDescriptor 	*config_control_designt_axis2_placement;
 SetTypeDescriptor 	*config_control_designt_set_of_reversible_topology_item;
 
-#if __OSTORE__
+#ifdef __OSTORE__
 STEPaggregate *
 create_SdaiSet_of_reversible_topology_item (os_database *db) { return create_SdaiReversible_topology_items(db);  }
 #else
@@ -70,7 +70,7 @@ SdaiKnot_type_var::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiKnot_type_var: virtual access function." << endl;
+        std::cout << "SdaiKnot_type_var: virtual access function." << std::endl;
     SdaiKnot_type_var_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -193,7 +193,7 @@ SdaiTransition_code_var::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiTransition_code_var: virtual access function." << endl;
+        std::cout << "SdaiTransition_code_var: virtual access function." << std::endl;
     SdaiTransition_code_var_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -316,7 +316,7 @@ SdaiPreferred_surface_curve_representation_var::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiPreferred_surface_curve_representation_var: virtual access function." << endl;
+        std::cout << "SdaiPreferred_surface_curve_representation_var: virtual access function." << std::endl;
     SdaiPreferred_surface_curve_representation_var_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -441,7 +441,7 @@ SdaiB_spline_curve_form_var::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiB_spline_curve_form_var: virtual access function." << endl;
+        std::cout << "SdaiB_spline_curve_form_var: virtual access function." << std::endl;
     SdaiB_spline_curve_form_var_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -590,7 +590,7 @@ SdaiSi_unit_name_var::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiSi_unit_name_var: virtual access function." << endl;
+        std::cout << "SdaiSi_unit_name_var: virtual access function." << std::endl;
     SdaiSi_unit_name_var_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -736,7 +736,7 @@ SdaiTrimming_preference_var::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiTrimming_preference_var: virtual access function." << endl;
+        std::cout << "SdaiTrimming_preference_var: virtual access function." << std::endl;
     SdaiTrimming_preference_var_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -869,7 +869,7 @@ SdaiB_spline_surface_form_var::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiB_spline_surface_form_var: virtual access function." << endl;
+        std::cout << "SdaiB_spline_surface_form_var: virtual access function." << std::endl;
     SdaiB_spline_surface_form_var_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -1006,7 +1006,7 @@ SdaiAhead_or_behind_var::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiAhead_or_behind_var: virtual access function." << endl;
+        std::cout << "SdaiAhead_or_behind_var: virtual access function." << std::endl;
     SdaiAhead_or_behind_var_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -1130,7 +1130,7 @@ SdaiSource_var::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiSource_var: virtual access function." << endl;
+        std::cout << "SdaiSource_var: virtual access function." << std::endl;
     SdaiSource_var_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -1270,7 +1270,7 @@ SdaiSi_prefix_var::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiSi_prefix_var: virtual access function." << endl;
+        std::cout << "SdaiSi_prefix_var: virtual access function." << std::endl;
     SdaiSi_prefix_var_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -1382,7 +1382,7 @@ TypeDescriptor 	*config_control_designt_count_measure;
 SelectTypeDescriptor 	*config_control_designt_surface_model;
 ListTypeDescriptor 	*config_control_designt_list_of_reversible_topology_item;
 
-#if __OSTORE__
+#ifdef __OSTORE__
 STEPaggregate *
 create_SdaiList_of_reversible_topology_item (os_database *db) { return create_SdaiReversible_topology_items(db);  }
 #else
@@ -1410,11 +1410,11 @@ SdaiCharacterized_product_definition::AssignEntity (SCLP23(Application_instance)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -1444,7 +1444,7 @@ SdaiCharacterized_product_definition::STEPwrite_content (ostream& out, const cha
   else if (CurrentUnderlyingType () == config_control_designe_product_definition_relationship)
 	_app_inst -> STEPwrite_reference (out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -1458,7 +1458,7 @@ SdaiCharacterized_product_definition::ValueType() const
   else if (CurrentUnderlyingType() == config_control_designe_product_definition_relationship)
     return sdaiINSTANCE;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -1488,7 +1488,7 @@ SdaiCharacterized_product_definition::STEPwrite_verbose (ostream& out, const cha
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -1526,11 +1526,11 @@ SdaiCharacterized_product_definition::STEPread_content (istream& in, InstMgr * i
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -1543,11 +1543,11 @@ SdaiCharacterized_product_definition::StrToVal_content (const char * str, InstMg
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -1573,7 +1573,7 @@ SdaiCharacterized_product_definition_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "SdaiCharacterized_product_definition access hook funct called." << endl;
+	*logStream << "SdaiCharacterized_product_definition access hook funct called." << std::endl;
     }
 #endif
     SdaiCharacterized_product_definition *s = (SdaiCharacterized_product_definition *) object;
@@ -1581,14 +1581,14 @@ SdaiCharacterized_product_definition_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "underlying type set to " << s->UnderlyingTypeName() << endl << endl;
+	*logStream << "underlying type set to " << s->UnderlyingTypeName() << std::endl << std::endl;
     }
 #endif
     const TypeDescriptor *td = s->CanBe(s->UnderlyingTypeName());
     s->SetUnderlyingType(td);
     if(!td)
-	cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
-	     << endl;
+	std::cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
+	     << std::endl;
 }
 #endif
 
@@ -1612,14 +1612,14 @@ SdaiCharacterized_product_definition::SdaiCharacterized_product_definition( cons
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiCharacterized_product_definition constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiCharacterized_product_definition constructor." << std::endl;
     }
 #endif
    nullify();
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiCharacterized_product_definition constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiCharacterized_product_definition constructor." << std::endl;
     }
 #endif
 }
@@ -1632,14 +1632,14 @@ SdaiCharacterized_product_definition::SdaiCharacterized_product_definition( cons
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiCharacterized_product_definition constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiCharacterized_product_definition constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiCharacterized_product_definition constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiCharacterized_product_definition constructor." << std::endl;
     }
 #endif
 }
@@ -1651,14 +1651,14 @@ SdaiCharacterized_product_definition::SdaiCharacterized_product_definition( cons
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiCharacterized_product_definition constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiCharacterized_product_definition constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiCharacterized_product_definition constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiCharacterized_product_definition constructor." << std::endl;
     }
 #endif
 }
@@ -1694,7 +1694,7 @@ SdaiCharacterized_product_definition::operator SdaiProduct_definition_ptr()
       return ((SdaiProduct_definition_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -1706,7 +1706,7 @@ SdaiCharacterized_product_definition::operator SdaiProduct_definition_relationsh
       return ((SdaiProduct_definition_relationship_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -1721,7 +1721,7 @@ SdaiCharacterized_product_definition::related_product_definition_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition_relationship )
 	//  PRODUCT_DEFINITION_RELATIONSHIP
 	return ((SdaiProduct_definition_relationship_ptr) _app_inst) ->related_product_definition_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -1738,7 +1738,7 @@ SdaiCharacterized_product_definition::related_product_definition_ (const SdaiPro
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -1749,7 +1749,7 @@ SdaiCharacterized_product_definition::relating_product_definition_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition_relationship )
 	//  PRODUCT_DEFINITION_RELATIONSHIP
 	return ((SdaiProduct_definition_relationship_ptr) _app_inst) ->relating_product_definition_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -1766,7 +1766,7 @@ SdaiCharacterized_product_definition::relating_product_definition_ (const SdaiPr
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -1777,7 +1777,7 @@ SdaiCharacterized_product_definition::name_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition_relationship )
 	//  PRODUCT_DEFINITION_RELATIONSHIP
 	return ((SdaiProduct_definition_relationship_ptr) _app_inst) ->name_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -1794,7 +1794,7 @@ SdaiCharacterized_product_definition::name_ (const SdaiLabel x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -1805,7 +1805,7 @@ SdaiCharacterized_product_definition::frame_of_reference_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition )
 	//  PRODUCT_DEFINITION
 	return ((SdaiProduct_definition_ptr) _app_inst) ->frame_of_reference_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -1822,7 +1822,7 @@ SdaiCharacterized_product_definition::frame_of_reference_ (const SdaiProduct_def
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -1833,7 +1833,7 @@ SdaiCharacterized_product_definition::formation_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition )
 	//  PRODUCT_DEFINITION
 	return ((SdaiProduct_definition_ptr) _app_inst) ->formation_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -1850,7 +1850,7 @@ SdaiCharacterized_product_definition::formation_ (const SdaiProduct_definition_f
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -1864,7 +1864,7 @@ SdaiCharacterized_product_definition::description_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition_relationship )
 	//  PRODUCT_DEFINITION_RELATIONSHIP
 	return ((SdaiProduct_definition_relationship_ptr) _app_inst) ->description_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -1886,7 +1886,7 @@ SdaiCharacterized_product_definition::description_ (const SdaiText x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -1900,7 +1900,7 @@ SdaiCharacterized_product_definition::id_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition_relationship )
 	//  PRODUCT_DEFINITION_RELATIONSHIP
 	return ((SdaiProduct_definition_relationship_ptr) _app_inst) ->id_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -1922,7 +1922,7 @@ SdaiCharacterized_product_definition::id_ (const SdaiIdentifier x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -2024,11 +2024,11 @@ SdaiShape_definition::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -2060,7 +2060,7 @@ SdaiShape_definition::STEPwrite_content (ostream& out, const char * currSch) con
   else if (CurrentUnderlyingType () == config_control_designe_shape_aspect_relationship)
 	_app_inst -> STEPwrite_reference (out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -2076,7 +2076,7 @@ SdaiShape_definition::ValueType() const
   else if (CurrentUnderlyingType() == config_control_designe_shape_aspect_relationship)
     return sdaiINSTANCE;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -2112,7 +2112,7 @@ SdaiShape_definition::STEPwrite_verbose (ostream& out, const char *currSch) cons
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -2163,11 +2163,11 @@ SdaiShape_definition::STEPread_content (istream& in, InstMgr * instances,
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -2180,11 +2180,11 @@ SdaiShape_definition::StrToVal_content (const char * str, InstMgr * instances)
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -2210,7 +2210,7 @@ SdaiShape_definition_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "SdaiShape_definition access hook funct called." << endl;
+	*logStream << "SdaiShape_definition access hook funct called." << std::endl;
     }
 #endif
     SdaiShape_definition *s = (SdaiShape_definition *) object;
@@ -2218,14 +2218,14 @@ SdaiShape_definition_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "underlying type set to " << s->UnderlyingTypeName() << endl << endl;
+	*logStream << "underlying type set to " << s->UnderlyingTypeName() << std::endl << std::endl;
     }
 #endif
     const TypeDescriptor *td = s->CanBe(s->UnderlyingTypeName());
     s->SetUnderlyingType(td);
     if(!td)
-	cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
-	     << endl;
+	std::cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
+	     << std::endl;
 }
 #endif
 
@@ -2249,14 +2249,14 @@ SdaiShape_definition::SdaiShape_definition( const SelectTypeDescriptor *typedesc
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiShape_definition constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiShape_definition constructor." << std::endl;
     }
 #endif
    nullify();
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiShape_definition constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiShape_definition constructor." << std::endl;
     }
 #endif
 }
@@ -2269,14 +2269,14 @@ SdaiShape_definition::SdaiShape_definition( const SdaiProduct_definition_shape_p
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiShape_definition constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiShape_definition constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiShape_definition constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiShape_definition constructor." << std::endl;
     }
 #endif
 }
@@ -2288,14 +2288,14 @@ SdaiShape_definition::SdaiShape_definition( const SdaiShape_aspect_ptr& o,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiShape_definition constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiShape_definition constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiShape_definition constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiShape_definition constructor." << std::endl;
     }
 #endif
 }
@@ -2307,14 +2307,14 @@ SdaiShape_definition::SdaiShape_definition( const SdaiShape_aspect_relationship_
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiShape_definition constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiShape_definition constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiShape_definition constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiShape_definition constructor." << std::endl;
     }
 #endif
 }
@@ -2350,7 +2350,7 @@ SdaiShape_definition::operator SdaiProduct_definition_shape_ptr()
       return ((SdaiProduct_definition_shape_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -2362,7 +2362,7 @@ SdaiShape_definition::operator SdaiShape_aspect_ptr()
       return ((SdaiShape_aspect_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -2374,7 +2374,7 @@ SdaiShape_definition::operator SdaiShape_aspect_relationship_ptr()
       return ((SdaiShape_aspect_relationship_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -2389,7 +2389,7 @@ SdaiShape_definition::related_shape_aspect_() const
   if( CurrentUnderlyingType () == config_control_designe_shape_aspect_relationship )
 	//  SHAPE_ASPECT_RELATIONSHIP
 	return ((SdaiShape_aspect_relationship_ptr) _app_inst) ->related_shape_aspect_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -2406,7 +2406,7 @@ SdaiShape_definition::related_shape_aspect_ (const SdaiShape_aspect_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -2417,7 +2417,7 @@ SdaiShape_definition::relating_shape_aspect_() const
   if( CurrentUnderlyingType () == config_control_designe_shape_aspect_relationship )
 	//  SHAPE_ASPECT_RELATIONSHIP
 	return ((SdaiShape_aspect_relationship_ptr) _app_inst) ->relating_shape_aspect_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -2434,7 +2434,7 @@ SdaiShape_definition::relating_shape_aspect_ (const SdaiShape_aspect_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -2445,7 +2445,7 @@ SdaiShape_definition::product_definitional_() const
   if( CurrentUnderlyingType () == config_control_designe_shape_aspect )
 	//  SHAPE_ASPECT
 	return ((SdaiShape_aspect_ptr) _app_inst) ->product_definitional_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return (SCLLOG(Logical)) 0;
 }
@@ -2462,7 +2462,7 @@ SdaiShape_definition::product_definitional_ (const SCLLOG(Logical) x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -2473,7 +2473,7 @@ SdaiShape_definition::of_shape_() const
   if( CurrentUnderlyingType () == config_control_designe_shape_aspect )
 	//  SHAPE_ASPECT
 	return ((SdaiShape_aspect_ptr) _app_inst) ->of_shape_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -2490,7 +2490,7 @@ SdaiShape_definition::of_shape_ (const SdaiProduct_definition_shape_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -2501,7 +2501,7 @@ SdaiShape_definition::definition_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition_shape )
 	//  PRODUCT_DEFINITION_SHAPE
 	return ((SdaiProduct_definition_shape_ptr) _app_inst) ->definition_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -2518,7 +2518,7 @@ SdaiShape_definition::definition_ (const SdaiCharacterized_definition_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -2535,7 +2535,7 @@ SdaiShape_definition::description_() const
   if( CurrentUnderlyingType () == config_control_designe_shape_aspect_relationship )
 	//  SHAPE_ASPECT_RELATIONSHIP
 	return ((SdaiShape_aspect_relationship_ptr) _app_inst) ->description_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -2562,7 +2562,7 @@ SdaiShape_definition::description_ (const SdaiText x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -2579,7 +2579,7 @@ SdaiShape_definition::name_() const
   if( CurrentUnderlyingType () == config_control_designe_shape_aspect_relationship )
 	//  SHAPE_ASPECT_RELATIONSHIP
 	return ((SdaiShape_aspect_relationship_ptr) _app_inst) ->name_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -2606,7 +2606,7 @@ SdaiShape_definition::name_ (const SdaiLabel x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -2723,11 +2723,11 @@ SdaiCharacterized_definition::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -2757,7 +2757,7 @@ SdaiCharacterized_definition::STEPwrite_content (ostream& out, const char * curr
   else if (CurrentUnderlyingType () == config_control_designt_shape_definition)
 	_sdaishape_definition.STEPwrite (out, currSch);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -2771,7 +2771,7 @@ SdaiCharacterized_definition::ValueType() const
   else if (CurrentUnderlyingType() == config_control_designt_shape_definition)
     return _sdaishape_definition.ValueType();
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -2801,7 +2801,7 @@ SdaiCharacterized_definition::STEPwrite_verbose (ostream& out, const char *currS
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -2821,11 +2821,11 @@ SdaiCharacterized_definition::STEPread_content (istream& in, InstMgr * instances
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -2838,11 +2838,11 @@ SdaiCharacterized_definition::StrToVal_content (const char * str, InstMgr * inst
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -2868,7 +2868,7 @@ SdaiCharacterized_definition_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "SdaiCharacterized_definition access hook funct called." << endl;
+	*logStream << "SdaiCharacterized_definition access hook funct called." << std::endl;
     }
 #endif
     SdaiCharacterized_definition *s = (SdaiCharacterized_definition *) object;
@@ -2876,14 +2876,14 @@ SdaiCharacterized_definition_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "underlying type set to " << s->UnderlyingTypeName() << endl << endl;
+	*logStream << "underlying type set to " << s->UnderlyingTypeName() << std::endl << std::endl;
     }
 #endif
     const TypeDescriptor *td = s->CanBe(s->UnderlyingTypeName());
     s->SetUnderlyingType(td);
     if(!td)
-	cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
-	     << endl;
+	std::cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
+	     << std::endl;
 }
 #endif
 
@@ -2909,14 +2909,14 @@ SdaiCharacterized_definition::SdaiCharacterized_definition( const SelectTypeDesc
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiCharacterized_definition constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiCharacterized_definition constructor." << std::endl;
     }
 #endif
    nullify();
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiCharacterized_definition constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiCharacterized_definition constructor." << std::endl;
     }
 #endif
 }
@@ -2931,14 +2931,14 @@ SdaiCharacterized_definition::SdaiCharacterized_definition( const SdaiCharacteri
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiCharacterized_definition constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiCharacterized_definition constructor." << std::endl;
     }
 #endif
    _sdaicharacterized_product_definition = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiCharacterized_definition constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiCharacterized_definition constructor." << std::endl;
     }
 #endif
 }
@@ -2952,14 +2952,14 @@ SdaiCharacterized_definition::SdaiCharacterized_definition( const SdaiShape_defi
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiCharacterized_definition constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiCharacterized_definition constructor." << std::endl;
     }
 #endif
    _sdaishape_definition = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiCharacterized_definition constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiCharacterized_definition constructor." << std::endl;
     }
 #endif
 }
@@ -2998,7 +2998,7 @@ SdaiCharacterized_definition::operator SdaiCharacterized_product_definition_ptr(
    Error( "Underlying type is not SdaiCharacterized_product_definition_ptr" );
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return 0;
@@ -3013,7 +3013,7 @@ SdaiCharacterized_definition::operator SdaiShape_definition_ptr()
    Error( "Underlying type is not SdaiShape_definition_ptr" );
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return 0;
@@ -3107,11 +3107,11 @@ SdaiChange_request_item::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -3139,7 +3139,7 @@ SdaiChange_request_item::STEPwrite_content (ostream& out, const char * currSch) 
   if (CurrentUnderlyingType () == config_control_designe_product_definition_formation)
 	_app_inst -> STEPwrite_reference (out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -3151,7 +3151,7 @@ SdaiChange_request_item::ValueType() const
   if (CurrentUnderlyingType() == config_control_designe_product_definition_formation)
     return sdaiINSTANCE;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -3175,7 +3175,7 @@ SdaiChange_request_item::STEPwrite_verbose (ostream& out, const char *currSch) c
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -3200,11 +3200,11 @@ SdaiChange_request_item::STEPread_content (istream& in, InstMgr * instances,
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -3217,11 +3217,11 @@ SdaiChange_request_item::StrToVal_content (const char * str, InstMgr * instances
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -3247,7 +3247,7 @@ SdaiChange_request_item_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "SdaiChange_request_item access hook funct called." << endl;
+	*logStream << "SdaiChange_request_item access hook funct called." << std::endl;
     }
 #endif
     SdaiChange_request_item *s = (SdaiChange_request_item *) object;
@@ -3255,14 +3255,14 @@ SdaiChange_request_item_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "underlying type set to " << s->UnderlyingTypeName() << endl << endl;
+	*logStream << "underlying type set to " << s->UnderlyingTypeName() << std::endl << std::endl;
     }
 #endif
     const TypeDescriptor *td = s->CanBe(s->UnderlyingTypeName());
     s->SetUnderlyingType(td);
     if(!td)
-	cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
-	     << endl;
+	std::cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
+	     << std::endl;
 }
 #endif
 
@@ -3286,14 +3286,14 @@ SdaiChange_request_item::SdaiChange_request_item( const SelectTypeDescriptor *ty
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiChange_request_item constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiChange_request_item constructor." << std::endl;
     }
 #endif
    nullify();
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiChange_request_item constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiChange_request_item constructor." << std::endl;
     }
 #endif
 }
@@ -3306,14 +3306,14 @@ SdaiChange_request_item::SdaiChange_request_item( const SdaiProduct_definition_f
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiChange_request_item constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiChange_request_item constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiChange_request_item constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiChange_request_item constructor." << std::endl;
     }
 #endif
 }
@@ -3349,7 +3349,7 @@ SdaiChange_request_item::operator SdaiProduct_definition_formation_ptr()
       return ((SdaiProduct_definition_formation_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -3364,7 +3364,7 @@ SdaiChange_request_item::of_product_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition_formation )
 	//  PRODUCT_DEFINITION_FORMATION
 	return ((SdaiProduct_definition_formation_ptr) _app_inst) ->of_product_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -3381,7 +3381,7 @@ SdaiChange_request_item::of_product_ (const SdaiProduct_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -3392,7 +3392,7 @@ SdaiChange_request_item::description_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition_formation )
 	//  PRODUCT_DEFINITION_FORMATION
 	return ((SdaiProduct_definition_formation_ptr) _app_inst) ->description_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -3409,7 +3409,7 @@ SdaiChange_request_item::description_ (const SdaiText x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -3420,7 +3420,7 @@ SdaiChange_request_item::id_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition_formation )
 	//  PRODUCT_DEFINITION_FORMATION
 	return ((SdaiProduct_definition_formation_ptr) _app_inst) ->id_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -3437,7 +3437,7 @@ SdaiChange_request_item::id_ (const SdaiIdentifier x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -3536,11 +3536,11 @@ SdaiReversible_topology_item::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -3578,7 +3578,7 @@ SdaiReversible_topology_item::STEPwrite_content (ostream& out, const char * curr
   else if (CurrentUnderlyingType () == config_control_designe_open_shell)
 	_app_inst -> STEPwrite_reference (out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -3600,7 +3600,7 @@ SdaiReversible_topology_item::ValueType() const
   else if (CurrentUnderlyingType() == config_control_designe_open_shell)
     return sdaiINSTANCE;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -3654,7 +3654,7 @@ SdaiReversible_topology_item::STEPwrite_verbose (ostream& out, const char *currS
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -3744,11 +3744,11 @@ SdaiReversible_topology_item::STEPread_content (istream& in, InstMgr * instances
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -3761,11 +3761,11 @@ SdaiReversible_topology_item::StrToVal_content (const char * str, InstMgr * inst
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -3791,7 +3791,7 @@ SdaiReversible_topology_item_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "SdaiReversible_topology_item access hook funct called." << endl;
+	*logStream << "SdaiReversible_topology_item access hook funct called." << std::endl;
     }
 #endif
     SdaiReversible_topology_item *s = (SdaiReversible_topology_item *) object;
@@ -3799,14 +3799,14 @@ SdaiReversible_topology_item_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "underlying type set to " << s->UnderlyingTypeName() << endl << endl;
+	*logStream << "underlying type set to " << s->UnderlyingTypeName() << std::endl << std::endl;
     }
 #endif
     const TypeDescriptor *td = s->CanBe(s->UnderlyingTypeName());
     s->SetUnderlyingType(td);
     if(!td)
-	cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
-	     << endl;
+	std::cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
+	     << std::endl;
 }
 #endif
 
@@ -3830,14 +3830,14 @@ SdaiReversible_topology_item::SdaiReversible_topology_item( const SelectTypeDesc
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiReversible_topology_item constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiReversible_topology_item constructor." << std::endl;
     }
 #endif
    nullify();
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiReversible_topology_item constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiReversible_topology_item constructor." << std::endl;
     }
 #endif
 }
@@ -3850,14 +3850,14 @@ SdaiReversible_topology_item::SdaiReversible_topology_item( const SdaiEdge_ptr& 
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiReversible_topology_item constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiReversible_topology_item constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiReversible_topology_item constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiReversible_topology_item constructor." << std::endl;
     }
 #endif
 }
@@ -3869,14 +3869,14 @@ SdaiReversible_topology_item::SdaiReversible_topology_item( const SdaiPath_ptr& 
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiReversible_topology_item constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiReversible_topology_item constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiReversible_topology_item constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiReversible_topology_item constructor." << std::endl;
     }
 #endif
 }
@@ -3888,14 +3888,14 @@ SdaiReversible_topology_item::SdaiReversible_topology_item( const SdaiFace_ptr& 
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiReversible_topology_item constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiReversible_topology_item constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiReversible_topology_item constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiReversible_topology_item constructor." << std::endl;
     }
 #endif
 }
@@ -3907,14 +3907,14 @@ SdaiReversible_topology_item::SdaiReversible_topology_item( const SdaiFace_bound
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiReversible_topology_item constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiReversible_topology_item constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiReversible_topology_item constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiReversible_topology_item constructor." << std::endl;
     }
 #endif
 }
@@ -3926,14 +3926,14 @@ SdaiReversible_topology_item::SdaiReversible_topology_item( const SdaiClosed_she
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiReversible_topology_item constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiReversible_topology_item constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiReversible_topology_item constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiReversible_topology_item constructor." << std::endl;
     }
 #endif
 }
@@ -3945,14 +3945,14 @@ SdaiReversible_topology_item::SdaiReversible_topology_item( const SdaiOpen_shell
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiReversible_topology_item constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiReversible_topology_item constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiReversible_topology_item constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiReversible_topology_item constructor." << std::endl;
     }
 #endif
 }
@@ -3988,7 +3988,7 @@ SdaiReversible_topology_item::operator SdaiEdge_ptr()
       return ((SdaiEdge_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -4000,7 +4000,7 @@ SdaiReversible_topology_item::operator SdaiPath_ptr()
       return ((SdaiPath_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -4012,7 +4012,7 @@ SdaiReversible_topology_item::operator SdaiFace_ptr()
       return ((SdaiFace_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -4024,7 +4024,7 @@ SdaiReversible_topology_item::operator SdaiFace_bound_ptr()
       return ((SdaiFace_bound_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -4036,7 +4036,7 @@ SdaiReversible_topology_item::operator SdaiClosed_shell_ptr()
       return ((SdaiClosed_shell_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -4048,7 +4048,7 @@ SdaiReversible_topology_item::operator SdaiOpen_shell_ptr()
       return ((SdaiOpen_shell_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -4066,7 +4066,7 @@ SdaiReversible_topology_item::cfs_faces_() const
   if( CurrentUnderlyingType () == config_control_designe_open_shell )
 	//  OPEN_SHELL
 	return ((SdaiOpen_shell_ptr) _app_inst) ->cfs_faces_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -4088,25 +4088,25 @@ SdaiReversible_topology_item::cfs_faces_ (const EntityAggregate_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
 
-const SCLBOOL(Bool)
+const SCLBOOL(Boolean)
 SdaiReversible_topology_item::orientation_() const
 {
   if( CurrentUnderlyingType () == config_control_designe_face_bound )
 	//  FACE_BOUND
 	return ((SdaiFace_bound_ptr) _app_inst) ->orientation_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
-   return (SCLBOOL(Bool)) 0;
+   return (SCLBOOL(Boolean)) 0;
 }
 
 
 void
-SdaiReversible_topology_item::orientation_ (const SCLBOOL(Bool) x)
+SdaiReversible_topology_item::orientation_ (const SCLBOOL(Boolean) x)
 
 {
   if( CurrentUnderlyingType () == config_control_designe_face_bound )
@@ -4116,7 +4116,7 @@ SdaiReversible_topology_item::orientation_ (const SCLBOOL(Bool) x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -4127,7 +4127,7 @@ SdaiReversible_topology_item::bound_() const
   if( CurrentUnderlyingType () == config_control_designe_face_bound )
 	//  FACE_BOUND
 	return ((SdaiFace_bound_ptr) _app_inst) ->bound_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -4144,7 +4144,7 @@ SdaiReversible_topology_item::bound_ (const SdaiLoop_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -4155,7 +4155,7 @@ SdaiReversible_topology_item::bounds_() const
   if( CurrentUnderlyingType () == config_control_designe_face )
 	//  FACE
 	return ((SdaiFace_ptr) _app_inst) ->bounds_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -4172,7 +4172,7 @@ SdaiReversible_topology_item::bounds_ (const EntityAggregate_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -4183,7 +4183,7 @@ SdaiReversible_topology_item::edge_list_() const
   if( CurrentUnderlyingType () == config_control_designe_path )
 	//  PATH
 	return ((SdaiPath_ptr) _app_inst) ->edge_list_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -4200,7 +4200,7 @@ SdaiReversible_topology_item::edge_list_ (const EntityAggregate_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -4211,7 +4211,7 @@ SdaiReversible_topology_item::edge_end_() const
   if( CurrentUnderlyingType () == config_control_designe_edge )
 	//  EDGE
 	return ((SdaiEdge_ptr) _app_inst) ->edge_end_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -4228,7 +4228,7 @@ SdaiReversible_topology_item::edge_end_ (const SdaiVertex_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -4239,7 +4239,7 @@ SdaiReversible_topology_item::edge_start_() const
   if( CurrentUnderlyingType () == config_control_designe_edge )
 	//  EDGE
 	return ((SdaiEdge_ptr) _app_inst) ->edge_start_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -4256,7 +4256,7 @@ SdaiReversible_topology_item::edge_start_ (const SdaiVertex_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -4282,7 +4282,7 @@ SdaiReversible_topology_item::name_() const
   if( CurrentUnderlyingType () == config_control_designe_open_shell )
 	//  OPEN_SHELL
 	return ((SdaiOpen_shell_ptr) _app_inst) ->name_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -4324,7 +4324,7 @@ SdaiReversible_topology_item::name_ (const SdaiLabel x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -4504,11 +4504,11 @@ SdaiAxis2_placement::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -4538,7 +4538,7 @@ SdaiAxis2_placement::STEPwrite_content (ostream& out, const char * currSch) cons
   else if (CurrentUnderlyingType () == config_control_designe_axis2_placement_3d)
 	_app_inst -> STEPwrite_reference (out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -4552,7 +4552,7 @@ SdaiAxis2_placement::ValueType() const
   else if (CurrentUnderlyingType() == config_control_designe_axis2_placement_3d)
     return sdaiINSTANCE;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -4582,7 +4582,7 @@ SdaiAxis2_placement::STEPwrite_verbose (ostream& out, const char *currSch) const
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -4620,11 +4620,11 @@ SdaiAxis2_placement::STEPread_content (istream& in, InstMgr * instances,
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -4637,11 +4637,11 @@ SdaiAxis2_placement::StrToVal_content (const char * str, InstMgr * instances)
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -4667,7 +4667,7 @@ SdaiAxis2_placement_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "SdaiAxis2_placement access hook funct called." << endl;
+	*logStream << "SdaiAxis2_placement access hook funct called." << std::endl;
     }
 #endif
     SdaiAxis2_placement *s = (SdaiAxis2_placement *) object;
@@ -4675,14 +4675,14 @@ SdaiAxis2_placement_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "underlying type set to " << s->UnderlyingTypeName() << endl << endl;
+	*logStream << "underlying type set to " << s->UnderlyingTypeName() << std::endl << std::endl;
     }
 #endif
     const TypeDescriptor *td = s->CanBe(s->UnderlyingTypeName());
     s->SetUnderlyingType(td);
     if(!td)
-	cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
-	     << endl;
+	std::cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
+	     << std::endl;
 }
 #endif
 
@@ -4706,14 +4706,14 @@ SdaiAxis2_placement::SdaiAxis2_placement( const SelectTypeDescriptor *typedescri
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiAxis2_placement constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiAxis2_placement constructor." << std::endl;
     }
 #endif
    nullify();
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiAxis2_placement constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiAxis2_placement constructor." << std::endl;
     }
 #endif
 }
@@ -4726,14 +4726,14 @@ SdaiAxis2_placement::SdaiAxis2_placement( const SdaiAxis2_placement_2d_ptr& o,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiAxis2_placement constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiAxis2_placement constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiAxis2_placement constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiAxis2_placement constructor." << std::endl;
     }
 #endif
 }
@@ -4745,14 +4745,14 @@ SdaiAxis2_placement::SdaiAxis2_placement( const SdaiAxis2_placement_3d_ptr& o,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiAxis2_placement constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiAxis2_placement constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiAxis2_placement constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiAxis2_placement constructor." << std::endl;
     }
 #endif
 }
@@ -4788,7 +4788,7 @@ SdaiAxis2_placement::operator SdaiAxis2_placement_2d_ptr()
       return ((SdaiAxis2_placement_2d_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -4800,7 +4800,7 @@ SdaiAxis2_placement::operator SdaiAxis2_placement_3d_ptr()
       return ((SdaiAxis2_placement_3d_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -4815,7 +4815,7 @@ SdaiAxis2_placement::axis_() const
   if( CurrentUnderlyingType () == config_control_designe_axis2_placement_3d )
 	//  AXIS2_PLACEMENT_3D
 	return ((SdaiAxis2_placement_3d_ptr) _app_inst) ->axis_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -4832,7 +4832,7 @@ SdaiAxis2_placement::axis_ (const SdaiDirection_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -4846,7 +4846,7 @@ SdaiAxis2_placement::ref_direction_() const
   if( CurrentUnderlyingType () == config_control_designe_axis2_placement_3d )
 	//  AXIS2_PLACEMENT_3D
 	return ((SdaiAxis2_placement_3d_ptr) _app_inst) ->ref_direction_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -4868,7 +4868,7 @@ SdaiAxis2_placement::ref_direction_ (const SdaiDirection_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -4882,7 +4882,7 @@ SdaiAxis2_placement::location_() const
   if( CurrentUnderlyingType () == config_control_designe_axis2_placement_3d )
 	//  AXIS2_PLACEMENT_3D
 	return ((SdaiAxis2_placement_3d_ptr) _app_inst) ->location_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -4904,7 +4904,7 @@ SdaiAxis2_placement::location_ (const SdaiCartesian_point_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -4918,7 +4918,7 @@ SdaiAxis2_placement::name_() const
   if( CurrentUnderlyingType () == config_control_designe_axis2_placement_3d )
 	//  AXIS2_PLACEMENT_3D
 	return ((SdaiAxis2_placement_3d_ptr) _app_inst) ->name_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -4940,7 +4940,7 @@ SdaiAxis2_placement::name_ (const SdaiLabel x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -5036,11 +5036,11 @@ SdaiSpecified_item::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -5070,7 +5070,7 @@ SdaiSpecified_item::STEPwrite_content (ostream& out, const char * currSch) const
   else if (CurrentUnderlyingType () == config_control_designe_shape_aspect)
 	_app_inst -> STEPwrite_reference (out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -5084,7 +5084,7 @@ SdaiSpecified_item::ValueType() const
   else if (CurrentUnderlyingType() == config_control_designe_shape_aspect)
     return sdaiINSTANCE;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -5114,7 +5114,7 @@ SdaiSpecified_item::STEPwrite_verbose (ostream& out, const char *currSch) const
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -5152,11 +5152,11 @@ SdaiSpecified_item::STEPread_content (istream& in, InstMgr * instances,
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -5169,11 +5169,11 @@ SdaiSpecified_item::StrToVal_content (const char * str, InstMgr * instances)
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -5199,7 +5199,7 @@ SdaiSpecified_item_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "SdaiSpecified_item access hook funct called." << endl;
+	*logStream << "SdaiSpecified_item access hook funct called." << std::endl;
     }
 #endif
     SdaiSpecified_item *s = (SdaiSpecified_item *) object;
@@ -5207,14 +5207,14 @@ SdaiSpecified_item_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "underlying type set to " << s->UnderlyingTypeName() << endl << endl;
+	*logStream << "underlying type set to " << s->UnderlyingTypeName() << std::endl << std::endl;
     }
 #endif
     const TypeDescriptor *td = s->CanBe(s->UnderlyingTypeName());
     s->SetUnderlyingType(td);
     if(!td)
-	cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
-	     << endl;
+	std::cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
+	     << std::endl;
 }
 #endif
 
@@ -5238,14 +5238,14 @@ SdaiSpecified_item::SdaiSpecified_item( const SelectTypeDescriptor *typedescript
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiSpecified_item constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiSpecified_item constructor." << std::endl;
     }
 #endif
    nullify();
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiSpecified_item constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiSpecified_item constructor." << std::endl;
     }
 #endif
 }
@@ -5258,14 +5258,14 @@ SdaiSpecified_item::SdaiSpecified_item( const SdaiProduct_definition_ptr& o,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiSpecified_item constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiSpecified_item constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiSpecified_item constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiSpecified_item constructor." << std::endl;
     }
 #endif
 }
@@ -5277,14 +5277,14 @@ SdaiSpecified_item::SdaiSpecified_item( const SdaiShape_aspect_ptr& o,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiSpecified_item constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiSpecified_item constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiSpecified_item constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiSpecified_item constructor." << std::endl;
     }
 #endif
 }
@@ -5320,7 +5320,7 @@ SdaiSpecified_item::operator SdaiProduct_definition_ptr()
       return ((SdaiProduct_definition_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -5332,7 +5332,7 @@ SdaiSpecified_item::operator SdaiShape_aspect_ptr()
       return ((SdaiShape_aspect_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -5347,7 +5347,7 @@ SdaiSpecified_item::product_definitional_() const
   if( CurrentUnderlyingType () == config_control_designe_shape_aspect )
 	//  SHAPE_ASPECT
 	return ((SdaiShape_aspect_ptr) _app_inst) ->product_definitional_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return (SCLLOG(Logical)) 0;
 }
@@ -5364,7 +5364,7 @@ SdaiSpecified_item::product_definitional_ (const SCLLOG(Logical) x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -5375,7 +5375,7 @@ SdaiSpecified_item::of_shape_() const
   if( CurrentUnderlyingType () == config_control_designe_shape_aspect )
 	//  SHAPE_ASPECT
 	return ((SdaiShape_aspect_ptr) _app_inst) ->of_shape_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -5392,7 +5392,7 @@ SdaiSpecified_item::of_shape_ (const SdaiProduct_definition_shape_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -5403,7 +5403,7 @@ SdaiSpecified_item::name_() const
   if( CurrentUnderlyingType () == config_control_designe_shape_aspect )
 	//  SHAPE_ASPECT
 	return ((SdaiShape_aspect_ptr) _app_inst) ->name_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -5420,7 +5420,7 @@ SdaiSpecified_item::name_ (const SdaiLabel x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -5431,7 +5431,7 @@ SdaiSpecified_item::frame_of_reference_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition )
 	//  PRODUCT_DEFINITION
 	return ((SdaiProduct_definition_ptr) _app_inst) ->frame_of_reference_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -5448,7 +5448,7 @@ SdaiSpecified_item::frame_of_reference_ (const SdaiProduct_definition_context_pt
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -5459,7 +5459,7 @@ SdaiSpecified_item::formation_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition )
 	//  PRODUCT_DEFINITION
 	return ((SdaiProduct_definition_ptr) _app_inst) ->formation_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -5476,7 +5476,7 @@ SdaiSpecified_item::formation_ (const SdaiProduct_definition_formation_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -5490,7 +5490,7 @@ SdaiSpecified_item::description_() const
   if( CurrentUnderlyingType () == config_control_designe_shape_aspect )
 	//  SHAPE_ASPECT
 	return ((SdaiShape_aspect_ptr) _app_inst) ->description_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -5512,7 +5512,7 @@ SdaiSpecified_item::description_ (const SdaiText x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -5523,7 +5523,7 @@ SdaiSpecified_item::id_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition )
 	//  PRODUCT_DEFINITION
 	return ((SdaiProduct_definition_ptr) _app_inst) ->id_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -5540,7 +5540,7 @@ SdaiSpecified_item::id_ (const SdaiIdentifier x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -5624,11 +5624,11 @@ SdaiMeasure_value::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -5678,7 +5678,7 @@ SdaiMeasure_value::STEPwrite_content (ostream& out, const char * currSch) const
   else if (CurrentUnderlyingType () == config_control_designt_count_measure)
 	WriteReal(_real,out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -5712,7 +5712,7 @@ SdaiMeasure_value::ValueType() const
   else if (CurrentUnderlyingType() == config_control_designt_count_measure)
     return sdaiNUMBER;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -5802,7 +5802,7 @@ SdaiMeasure_value::STEPwrite_verbose (ostream& out, const char *currSch) const
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -5862,11 +5862,11 @@ SdaiMeasure_value::STEPread_content (istream& in, InstMgr * instances,
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -5881,11 +5881,11 @@ SdaiMeasure_value::StrToVal_content (const char * str, InstMgr * instances)
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -5911,7 +5911,7 @@ SdaiMeasure_value_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "SdaiMeasure_value access hook funct called." << endl;
+	*logStream << "SdaiMeasure_value access hook funct called." << std::endl;
     }
 #endif
     SdaiMeasure_value *s = (SdaiMeasure_value *) object;
@@ -5919,14 +5919,14 @@ SdaiMeasure_value_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "underlying type set to " << s->UnderlyingTypeName() << endl << endl;
+	*logStream << "underlying type set to " << s->UnderlyingTypeName() << std::endl << std::endl;
     }
 #endif
     const TypeDescriptor *td = s->CanBe(s->UnderlyingTypeName());
     s->SetUnderlyingType(td);
     if(!td)
-	cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
-	     << endl;
+	std::cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
+	     << std::endl;
 }
 #endif
 
@@ -5950,14 +5950,14 @@ SdaiMeasure_value::SdaiMeasure_value( const SelectTypeDescriptor *typedescript )
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiMeasure_value constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiMeasure_value constructor." << std::endl;
     }
 #endif
    nullify();
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiMeasure_value constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiMeasure_value constructor." << std::endl;
     }
 #endif
 }
@@ -5970,14 +5970,14 @@ SdaiMeasure_value::SdaiMeasure_value( const SdaiDescriptive_measure& o,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiMeasure_value constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiMeasure_value constructor." << std::endl;
     }
 #endif
    _string = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiMeasure_value constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiMeasure_value constructor." << std::endl;
     }
 #endif
 }
@@ -5991,7 +5991,7 @@ SdaiMeasure_value::SdaiMeasure_value( const SCLP23(Real)& o,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiMeasure_value constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiMeasure_value constructor." << std::endl;
     }
 #endif
 }
@@ -6030,7 +6030,7 @@ SdaiMeasure_value::operator SdaiDescriptive_measure()
    Error( "Underlying type is not SdaiDescriptive_measure" );
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return 0;
@@ -6065,7 +6065,7 @@ SdaiMeasure_value::operator SCLP23(Real)()
    Error( "Underlying type is not SCLP23(Real)" );
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return (SCLP23(Real))0;
@@ -6310,11 +6310,11 @@ SdaiPerson_organization_select::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -6346,7 +6346,7 @@ SdaiPerson_organization_select::STEPwrite_content (ostream& out, const char * cu
   else if (CurrentUnderlyingType () == config_control_designe_person_and_organization)
 	_app_inst -> STEPwrite_reference (out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -6362,7 +6362,7 @@ SdaiPerson_organization_select::ValueType() const
   else if (CurrentUnderlyingType() == config_control_designe_person_and_organization)
     return sdaiINSTANCE;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -6398,7 +6398,7 @@ SdaiPerson_organization_select::STEPwrite_verbose (ostream& out, const char *cur
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -6449,11 +6449,11 @@ SdaiPerson_organization_select::STEPread_content (istream& in, InstMgr * instanc
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -6466,11 +6466,11 @@ SdaiPerson_organization_select::StrToVal_content (const char * str, InstMgr * in
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -6496,7 +6496,7 @@ SdaiPerson_organization_select_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "SdaiPerson_organization_select access hook funct called." << endl;
+	*logStream << "SdaiPerson_organization_select access hook funct called." << std::endl;
     }
 #endif
     SdaiPerson_organization_select *s = (SdaiPerson_organization_select *) object;
@@ -6504,14 +6504,14 @@ SdaiPerson_organization_select_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "underlying type set to " << s->UnderlyingTypeName() << endl << endl;
+	*logStream << "underlying type set to " << s->UnderlyingTypeName() << std::endl << std::endl;
     }
 #endif
     const TypeDescriptor *td = s->CanBe(s->UnderlyingTypeName());
     s->SetUnderlyingType(td);
     if(!td)
-	cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
-	     << endl;
+	std::cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
+	     << std::endl;
 }
 #endif
 
@@ -6535,14 +6535,14 @@ SdaiPerson_organization_select::SdaiPerson_organization_select( const SelectType
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiPerson_organization_select constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiPerson_organization_select constructor." << std::endl;
     }
 #endif
    nullify();
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiPerson_organization_select constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiPerson_organization_select constructor." << std::endl;
     }
 #endif
 }
@@ -6555,14 +6555,14 @@ SdaiPerson_organization_select::SdaiPerson_organization_select( const SdaiPerson
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiPerson_organization_select constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiPerson_organization_select constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiPerson_organization_select constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiPerson_organization_select constructor." << std::endl;
     }
 #endif
 }
@@ -6574,14 +6574,14 @@ SdaiPerson_organization_select::SdaiPerson_organization_select( const SdaiOrgani
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiPerson_organization_select constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiPerson_organization_select constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiPerson_organization_select constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiPerson_organization_select constructor." << std::endl;
     }
 #endif
 }
@@ -6593,14 +6593,14 @@ SdaiPerson_organization_select::SdaiPerson_organization_select( const SdaiPerson
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiPerson_organization_select constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiPerson_organization_select constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiPerson_organization_select constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiPerson_organization_select constructor." << std::endl;
     }
 #endif
 }
@@ -6636,7 +6636,7 @@ SdaiPerson_organization_select::operator SdaiPerson_ptr()
       return ((SdaiPerson_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -6648,7 +6648,7 @@ SdaiPerson_organization_select::operator SdaiOrganization_ptr()
       return ((SdaiOrganization_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -6660,7 +6660,7 @@ SdaiPerson_organization_select::operator SdaiPerson_and_organization_ptr()
       return ((SdaiPerson_and_organization_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -6675,7 +6675,7 @@ SdaiPerson_organization_select::the_organization_() const
   if( CurrentUnderlyingType () == config_control_designe_person_and_organization )
 	//  PERSON_AND_ORGANIZATION
 	return ((SdaiPerson_and_organization_ptr) _app_inst) ->the_organization_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -6692,7 +6692,7 @@ SdaiPerson_organization_select::the_organization_ (const SdaiOrganization_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -6703,7 +6703,7 @@ SdaiPerson_organization_select::the_person_() const
   if( CurrentUnderlyingType () == config_control_designe_person_and_organization )
 	//  PERSON_AND_ORGANIZATION
 	return ((SdaiPerson_and_organization_ptr) _app_inst) ->the_person_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -6720,7 +6720,7 @@ SdaiPerson_organization_select::the_person_ (const SdaiPerson_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -6731,7 +6731,7 @@ SdaiPerson_organization_select::description_() const
   if( CurrentUnderlyingType () == config_control_designe_organization )
 	//  ORGANIZATION
 	return ((SdaiOrganization_ptr) _app_inst) ->description_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -6748,7 +6748,7 @@ SdaiPerson_organization_select::description_ (const SdaiText x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -6759,7 +6759,7 @@ SdaiPerson_organization_select::name_() const
   if( CurrentUnderlyingType () == config_control_designe_organization )
 	//  ORGANIZATION
 	return ((SdaiOrganization_ptr) _app_inst) ->name_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -6776,7 +6776,7 @@ SdaiPerson_organization_select::name_ (const SdaiLabel x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -6787,7 +6787,7 @@ SdaiPerson_organization_select::suffix_titles_() const
   if( CurrentUnderlyingType () == config_control_designe_person )
 	//  PERSON
 	return ((SdaiPerson_ptr) _app_inst) ->suffix_titles_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -6804,7 +6804,7 @@ SdaiPerson_organization_select::suffix_titles_ (const StringAggregate_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -6815,7 +6815,7 @@ SdaiPerson_organization_select::prefix_titles_() const
   if( CurrentUnderlyingType () == config_control_designe_person )
 	//  PERSON
 	return ((SdaiPerson_ptr) _app_inst) ->prefix_titles_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -6832,7 +6832,7 @@ SdaiPerson_organization_select::prefix_titles_ (const StringAggregate_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -6843,7 +6843,7 @@ SdaiPerson_organization_select::middle_names_() const
   if( CurrentUnderlyingType () == config_control_designe_person )
 	//  PERSON
 	return ((SdaiPerson_ptr) _app_inst) ->middle_names_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -6860,7 +6860,7 @@ SdaiPerson_organization_select::middle_names_ (const StringAggregate_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -6871,7 +6871,7 @@ SdaiPerson_organization_select::first_name_() const
   if( CurrentUnderlyingType () == config_control_designe_person )
 	//  PERSON
 	return ((SdaiPerson_ptr) _app_inst) ->first_name_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -6888,7 +6888,7 @@ SdaiPerson_organization_select::first_name_ (const SdaiLabel x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -6899,7 +6899,7 @@ SdaiPerson_organization_select::last_name_() const
   if( CurrentUnderlyingType () == config_control_designe_person )
 	//  PERSON
 	return ((SdaiPerson_ptr) _app_inst) ->last_name_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -6916,7 +6916,7 @@ SdaiPerson_organization_select::last_name_ (const SdaiLabel x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -6930,7 +6930,7 @@ SdaiPerson_organization_select::id_() const
   if( CurrentUnderlyingType () == config_control_designe_organization )
 	//  ORGANIZATION
 	return ((SdaiOrganization_ptr) _app_inst) ->id_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -6952,7 +6952,7 @@ SdaiPerson_organization_select::id_ (const SdaiIdentifier x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -7069,11 +7069,11 @@ SdaiPcurve_or_surface::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -7103,7 +7103,7 @@ SdaiPcurve_or_surface::STEPwrite_content (ostream& out, const char * currSch) co
   else if (CurrentUnderlyingType () == config_control_designe_surface)
 	_app_inst -> STEPwrite_reference (out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -7117,7 +7117,7 @@ SdaiPcurve_or_surface::ValueType() const
   else if (CurrentUnderlyingType() == config_control_designe_surface)
     return sdaiINSTANCE;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -7147,7 +7147,7 @@ SdaiPcurve_or_surface::STEPwrite_verbose (ostream& out, const char *currSch) con
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -7185,11 +7185,11 @@ SdaiPcurve_or_surface::STEPread_content (istream& in, InstMgr * instances,
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -7202,11 +7202,11 @@ SdaiPcurve_or_surface::StrToVal_content (const char * str, InstMgr * instances)
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -7232,7 +7232,7 @@ SdaiPcurve_or_surface_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "SdaiPcurve_or_surface access hook funct called." << endl;
+	*logStream << "SdaiPcurve_or_surface access hook funct called." << std::endl;
     }
 #endif
     SdaiPcurve_or_surface *s = (SdaiPcurve_or_surface *) object;
@@ -7240,14 +7240,14 @@ SdaiPcurve_or_surface_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "underlying type set to " << s->UnderlyingTypeName() << endl << endl;
+	*logStream << "underlying type set to " << s->UnderlyingTypeName() << std::endl << std::endl;
     }
 #endif
     const TypeDescriptor *td = s->CanBe(s->UnderlyingTypeName());
     s->SetUnderlyingType(td);
     if(!td)
-	cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
-	     << endl;
+	std::cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
+	     << std::endl;
 }
 #endif
 
@@ -7271,14 +7271,14 @@ SdaiPcurve_or_surface::SdaiPcurve_or_surface( const SelectTypeDescriptor *typede
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiPcurve_or_surface constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiPcurve_or_surface constructor." << std::endl;
     }
 #endif
    nullify();
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiPcurve_or_surface constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiPcurve_or_surface constructor." << std::endl;
     }
 #endif
 }
@@ -7291,14 +7291,14 @@ SdaiPcurve_or_surface::SdaiPcurve_or_surface( const SdaiPcurve_ptr& o,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiPcurve_or_surface constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiPcurve_or_surface constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiPcurve_or_surface constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiPcurve_or_surface constructor." << std::endl;
     }
 #endif
 }
@@ -7310,14 +7310,14 @@ SdaiPcurve_or_surface::SdaiPcurve_or_surface( const SdaiSurface_ptr& o,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiPcurve_or_surface constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiPcurve_or_surface constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiPcurve_or_surface constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiPcurve_or_surface constructor." << std::endl;
     }
 #endif
 }
@@ -7353,7 +7353,7 @@ SdaiPcurve_or_surface::operator SdaiPcurve_ptr()
       return ((SdaiPcurve_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -7365,7 +7365,7 @@ SdaiPcurve_or_surface::operator SdaiSurface_ptr()
       return ((SdaiSurface_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -7380,7 +7380,7 @@ SdaiPcurve_or_surface::reference_to_curve_() const
   if( CurrentUnderlyingType () == config_control_designe_pcurve )
 	//  PCURVE
 	return ((SdaiPcurve_ptr) _app_inst) ->reference_to_curve_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -7397,7 +7397,7 @@ SdaiPcurve_or_surface::reference_to_curve_ (const SdaiDefinitional_representatio
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -7408,7 +7408,7 @@ SdaiPcurve_or_surface::basis_surface_() const
   if( CurrentUnderlyingType () == config_control_designe_pcurve )
 	//  PCURVE
 	return ((SdaiPcurve_ptr) _app_inst) ->basis_surface_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -7425,7 +7425,7 @@ SdaiPcurve_or_surface::basis_surface_ (const SdaiSurface_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -7439,7 +7439,7 @@ SdaiPcurve_or_surface::name_() const
   if( CurrentUnderlyingType () == config_control_designe_surface )
 	//  SURFACE
 	return ((SdaiSurface_ptr) _app_inst) ->name_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -7461,7 +7461,7 @@ SdaiPcurve_or_surface::name_ (const SdaiLabel x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -7557,11 +7557,11 @@ SdaiClassified_item::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -7591,7 +7591,7 @@ SdaiClassified_item::STEPwrite_content (ostream& out, const char * currSch) cons
   else if (CurrentUnderlyingType () == config_control_designe_assembly_component_usage)
 	_app_inst -> STEPwrite_reference (out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -7605,7 +7605,7 @@ SdaiClassified_item::ValueType() const
   else if (CurrentUnderlyingType() == config_control_designe_assembly_component_usage)
     return sdaiINSTANCE;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -7635,7 +7635,7 @@ SdaiClassified_item::STEPwrite_verbose (ostream& out, const char *currSch) const
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -7673,11 +7673,11 @@ SdaiClassified_item::STEPread_content (istream& in, InstMgr * instances,
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -7690,11 +7690,11 @@ SdaiClassified_item::StrToVal_content (const char * str, InstMgr * instances)
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -7720,7 +7720,7 @@ SdaiClassified_item_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "SdaiClassified_item access hook funct called." << endl;
+	*logStream << "SdaiClassified_item access hook funct called." << std::endl;
     }
 #endif
     SdaiClassified_item *s = (SdaiClassified_item *) object;
@@ -7728,14 +7728,14 @@ SdaiClassified_item_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "underlying type set to " << s->UnderlyingTypeName() << endl << endl;
+	*logStream << "underlying type set to " << s->UnderlyingTypeName() << std::endl << std::endl;
     }
 #endif
     const TypeDescriptor *td = s->CanBe(s->UnderlyingTypeName());
     s->SetUnderlyingType(td);
     if(!td)
-	cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
-	     << endl;
+	std::cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
+	     << std::endl;
 }
 #endif
 
@@ -7759,14 +7759,14 @@ SdaiClassified_item::SdaiClassified_item( const SelectTypeDescriptor *typedescri
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiClassified_item constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiClassified_item constructor." << std::endl;
     }
 #endif
    nullify();
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiClassified_item constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiClassified_item constructor." << std::endl;
     }
 #endif
 }
@@ -7779,14 +7779,14 @@ SdaiClassified_item::SdaiClassified_item( const SdaiProduct_definition_formation
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiClassified_item constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiClassified_item constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiClassified_item constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiClassified_item constructor." << std::endl;
     }
 #endif
 }
@@ -7798,14 +7798,14 @@ SdaiClassified_item::SdaiClassified_item( const SdaiAssembly_component_usage_ptr
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiClassified_item constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiClassified_item constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiClassified_item constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiClassified_item constructor." << std::endl;
     }
 #endif
 }
@@ -7841,7 +7841,7 @@ SdaiClassified_item::operator SdaiProduct_definition_formation_ptr()
       return ((SdaiProduct_definition_formation_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -7853,7 +7853,7 @@ SdaiClassified_item::operator SdaiAssembly_component_usage_ptr()
       return ((SdaiAssembly_component_usage_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -7868,7 +7868,7 @@ SdaiClassified_item::reference_designator_() const
   if( CurrentUnderlyingType () == config_control_designe_assembly_component_usage )
 	//  ASSEMBLY_COMPONENT_USAGE
 	return ((SdaiAssembly_component_usage_ptr) _app_inst) ->reference_designator_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -7885,7 +7885,7 @@ SdaiClassified_item::reference_designator_ (const SdaiIdentifier x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -7896,7 +7896,7 @@ SdaiClassified_item::related_product_definition_() const
   if( CurrentUnderlyingType () == config_control_designe_assembly_component_usage )
 	//  ASSEMBLY_COMPONENT_USAGE
 	return ((SdaiAssembly_component_usage_ptr) _app_inst) ->related_product_definition_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -7913,7 +7913,7 @@ SdaiClassified_item::related_product_definition_ (const SdaiProduct_definition_p
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -7924,7 +7924,7 @@ SdaiClassified_item::relating_product_definition_() const
   if( CurrentUnderlyingType () == config_control_designe_assembly_component_usage )
 	//  ASSEMBLY_COMPONENT_USAGE
 	return ((SdaiAssembly_component_usage_ptr) _app_inst) ->relating_product_definition_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -7941,7 +7941,7 @@ SdaiClassified_item::relating_product_definition_ (const SdaiProduct_definition_
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -7952,7 +7952,7 @@ SdaiClassified_item::name_() const
   if( CurrentUnderlyingType () == config_control_designe_assembly_component_usage )
 	//  ASSEMBLY_COMPONENT_USAGE
 	return ((SdaiAssembly_component_usage_ptr) _app_inst) ->name_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -7969,7 +7969,7 @@ SdaiClassified_item::name_ (const SdaiLabel x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -7980,7 +7980,7 @@ SdaiClassified_item::of_product_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition_formation )
 	//  PRODUCT_DEFINITION_FORMATION
 	return ((SdaiProduct_definition_formation_ptr) _app_inst) ->of_product_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -7997,7 +7997,7 @@ SdaiClassified_item::of_product_ (const SdaiProduct_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -8011,7 +8011,7 @@ SdaiClassified_item::description_() const
   if( CurrentUnderlyingType () == config_control_designe_assembly_component_usage )
 	//  ASSEMBLY_COMPONENT_USAGE
 	return ((SdaiAssembly_component_usage_ptr) _app_inst) ->description_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -8033,7 +8033,7 @@ SdaiClassified_item::description_ (const SdaiText x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -8047,7 +8047,7 @@ SdaiClassified_item::id_() const
   if( CurrentUnderlyingType () == config_control_designe_assembly_component_usage )
 	//  ASSEMBLY_COMPONENT_USAGE
 	return ((SdaiAssembly_component_usage_ptr) _app_inst) ->id_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -8069,7 +8069,7 @@ SdaiClassified_item::id_ (const SdaiIdentifier x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -8165,11 +8165,11 @@ SdaiFounded_item_select::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -8199,7 +8199,7 @@ SdaiFounded_item_select::STEPwrite_content (ostream& out, const char * currSch) 
   else if (CurrentUnderlyingType () == config_control_designe_representation_item)
 	_app_inst -> STEPwrite_reference (out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -8213,7 +8213,7 @@ SdaiFounded_item_select::ValueType() const
   else if (CurrentUnderlyingType() == config_control_designe_representation_item)
     return sdaiINSTANCE;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -8243,7 +8243,7 @@ SdaiFounded_item_select::STEPwrite_verbose (ostream& out, const char *currSch) c
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -8281,11 +8281,11 @@ SdaiFounded_item_select::STEPread_content (istream& in, InstMgr * instances,
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -8298,11 +8298,11 @@ SdaiFounded_item_select::StrToVal_content (const char * str, InstMgr * instances
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -8328,7 +8328,7 @@ SdaiFounded_item_select_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "SdaiFounded_item_select access hook funct called." << endl;
+	*logStream << "SdaiFounded_item_select access hook funct called." << std::endl;
     }
 #endif
     SdaiFounded_item_select *s = (SdaiFounded_item_select *) object;
@@ -8336,14 +8336,14 @@ SdaiFounded_item_select_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "underlying type set to " << s->UnderlyingTypeName() << endl << endl;
+	*logStream << "underlying type set to " << s->UnderlyingTypeName() << std::endl << std::endl;
     }
 #endif
     const TypeDescriptor *td = s->CanBe(s->UnderlyingTypeName());
     s->SetUnderlyingType(td);
     if(!td)
-	cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
-	     << endl;
+	std::cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
+	     << std::endl;
 }
 #endif
 
@@ -8367,14 +8367,14 @@ SdaiFounded_item_select::SdaiFounded_item_select( const SelectTypeDescriptor *ty
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiFounded_item_select constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiFounded_item_select constructor." << std::endl;
     }
 #endif
    nullify();
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiFounded_item_select constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiFounded_item_select constructor." << std::endl;
     }
 #endif
 }
@@ -8387,14 +8387,14 @@ SdaiFounded_item_select::SdaiFounded_item_select( const SdaiFounded_item_ptr& o,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiFounded_item_select constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiFounded_item_select constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiFounded_item_select constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiFounded_item_select constructor." << std::endl;
     }
 #endif
 }
@@ -8406,14 +8406,14 @@ SdaiFounded_item_select::SdaiFounded_item_select( const SdaiRepresentation_item_
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiFounded_item_select constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiFounded_item_select constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiFounded_item_select constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiFounded_item_select constructor." << std::endl;
     }
 #endif
 }
@@ -8449,7 +8449,7 @@ SdaiFounded_item_select::operator SdaiFounded_item_ptr()
       return ((SdaiFounded_item_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -8461,7 +8461,7 @@ SdaiFounded_item_select::operator SdaiRepresentation_item_ptr()
       return ((SdaiRepresentation_item_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -8476,7 +8476,7 @@ SdaiFounded_item_select::name_() const
   if( CurrentUnderlyingType () == config_control_designe_representation_item )
 	//  REPRESENTATION_ITEM
 	return ((SdaiRepresentation_item_ptr) _app_inst) ->name_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -8493,7 +8493,7 @@ SdaiFounded_item_select::name_ (const SdaiLabel x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -8589,11 +8589,11 @@ SdaiVector_or_direction::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -8623,7 +8623,7 @@ SdaiVector_or_direction::STEPwrite_content (ostream& out, const char * currSch) 
   else if (CurrentUnderlyingType () == config_control_designe_direction)
 	_app_inst -> STEPwrite_reference (out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -8637,7 +8637,7 @@ SdaiVector_or_direction::ValueType() const
   else if (CurrentUnderlyingType() == config_control_designe_direction)
     return sdaiINSTANCE;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -8667,7 +8667,7 @@ SdaiVector_or_direction::STEPwrite_verbose (ostream& out, const char *currSch) c
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -8705,11 +8705,11 @@ SdaiVector_or_direction::STEPread_content (istream& in, InstMgr * instances,
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -8722,11 +8722,11 @@ SdaiVector_or_direction::StrToVal_content (const char * str, InstMgr * instances
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -8752,7 +8752,7 @@ SdaiVector_or_direction_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "SdaiVector_or_direction access hook funct called." << endl;
+	*logStream << "SdaiVector_or_direction access hook funct called." << std::endl;
     }
 #endif
     SdaiVector_or_direction *s = (SdaiVector_or_direction *) object;
@@ -8760,14 +8760,14 @@ SdaiVector_or_direction_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "underlying type set to " << s->UnderlyingTypeName() << endl << endl;
+	*logStream << "underlying type set to " << s->UnderlyingTypeName() << std::endl << std::endl;
     }
 #endif
     const TypeDescriptor *td = s->CanBe(s->UnderlyingTypeName());
     s->SetUnderlyingType(td);
     if(!td)
-	cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
-	     << endl;
+	std::cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
+	     << std::endl;
 }
 #endif
 
@@ -8791,14 +8791,14 @@ SdaiVector_or_direction::SdaiVector_or_direction( const SelectTypeDescriptor *ty
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiVector_or_direction constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiVector_or_direction constructor." << std::endl;
     }
 #endif
    nullify();
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiVector_or_direction constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiVector_or_direction constructor." << std::endl;
     }
 #endif
 }
@@ -8811,14 +8811,14 @@ SdaiVector_or_direction::SdaiVector_or_direction( const SdaiVector_ptr& o,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiVector_or_direction constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiVector_or_direction constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiVector_or_direction constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiVector_or_direction constructor." << std::endl;
     }
 #endif
 }
@@ -8830,14 +8830,14 @@ SdaiVector_or_direction::SdaiVector_or_direction( const SdaiDirection_ptr& o,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiVector_or_direction constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiVector_or_direction constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiVector_or_direction constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiVector_or_direction constructor." << std::endl;
     }
 #endif
 }
@@ -8873,7 +8873,7 @@ SdaiVector_or_direction::operator SdaiVector_ptr()
       return ((SdaiVector_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -8885,7 +8885,7 @@ SdaiVector_or_direction::operator SdaiDirection_ptr()
       return ((SdaiDirection_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -8900,7 +8900,7 @@ SdaiVector_or_direction::direction_ratios_() const
   if( CurrentUnderlyingType () == config_control_designe_direction )
 	//  DIRECTION
 	return ((SdaiDirection_ptr) _app_inst) ->direction_ratios_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -8917,7 +8917,7 @@ SdaiVector_or_direction::direction_ratios_ (const RealAggregate_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -8928,7 +8928,7 @@ SdaiVector_or_direction::magnitude_() const
   if( CurrentUnderlyingType () == config_control_designe_vector )
 	//  VECTOR
 	return ((SdaiVector_ptr) _app_inst) ->magnitude_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -8945,7 +8945,7 @@ SdaiVector_or_direction::magnitude_ (const SdaiLength_measure x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -8956,7 +8956,7 @@ SdaiVector_or_direction::orientation_() const
   if( CurrentUnderlyingType () == config_control_designe_vector )
 	//  VECTOR
 	return ((SdaiVector_ptr) _app_inst) ->orientation_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -8973,7 +8973,7 @@ SdaiVector_or_direction::orientation_ (const SdaiDirection_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -8987,7 +8987,7 @@ SdaiVector_or_direction::name_() const
   if( CurrentUnderlyingType () == config_control_designe_direction )
 	//  DIRECTION
 	return ((SdaiDirection_ptr) _app_inst) ->name_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -9009,7 +9009,7 @@ SdaiVector_or_direction::name_ (const SdaiLabel x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -9105,11 +9105,11 @@ SdaiWireframe_model::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -9139,7 +9139,7 @@ SdaiWireframe_model::STEPwrite_content (ostream& out, const char * currSch) cons
   else if (CurrentUnderlyingType () == config_control_designe_edge_based_wireframe_model)
 	_app_inst -> STEPwrite_reference (out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -9153,7 +9153,7 @@ SdaiWireframe_model::ValueType() const
   else if (CurrentUnderlyingType() == config_control_designe_edge_based_wireframe_model)
     return sdaiINSTANCE;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -9183,7 +9183,7 @@ SdaiWireframe_model::STEPwrite_verbose (ostream& out, const char *currSch) const
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -9221,11 +9221,11 @@ SdaiWireframe_model::STEPread_content (istream& in, InstMgr * instances,
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -9238,11 +9238,11 @@ SdaiWireframe_model::StrToVal_content (const char * str, InstMgr * instances)
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -9268,7 +9268,7 @@ SdaiWireframe_model_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "SdaiWireframe_model access hook funct called." << endl;
+	*logStream << "SdaiWireframe_model access hook funct called." << std::endl;
     }
 #endif
     SdaiWireframe_model *s = (SdaiWireframe_model *) object;
@@ -9276,14 +9276,14 @@ SdaiWireframe_model_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "underlying type set to " << s->UnderlyingTypeName() << endl << endl;
+	*logStream << "underlying type set to " << s->UnderlyingTypeName() << std::endl << std::endl;
     }
 #endif
     const TypeDescriptor *td = s->CanBe(s->UnderlyingTypeName());
     s->SetUnderlyingType(td);
     if(!td)
-	cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
-	     << endl;
+	std::cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
+	     << std::endl;
 }
 #endif
 
@@ -9307,14 +9307,14 @@ SdaiWireframe_model::SdaiWireframe_model( const SelectTypeDescriptor *typedescri
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiWireframe_model constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiWireframe_model constructor." << std::endl;
     }
 #endif
    nullify();
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiWireframe_model constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiWireframe_model constructor." << std::endl;
     }
 #endif
 }
@@ -9327,14 +9327,14 @@ SdaiWireframe_model::SdaiWireframe_model( const SdaiShell_based_wireframe_model_
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiWireframe_model constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiWireframe_model constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiWireframe_model constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiWireframe_model constructor." << std::endl;
     }
 #endif
 }
@@ -9346,14 +9346,14 @@ SdaiWireframe_model::SdaiWireframe_model( const SdaiEdge_based_wireframe_model_p
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiWireframe_model constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiWireframe_model constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiWireframe_model constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiWireframe_model constructor." << std::endl;
     }
 #endif
 }
@@ -9389,7 +9389,7 @@ SdaiWireframe_model::operator SdaiShell_based_wireframe_model_ptr()
       return ((SdaiShell_based_wireframe_model_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -9401,7 +9401,7 @@ SdaiWireframe_model::operator SdaiEdge_based_wireframe_model_ptr()
       return ((SdaiEdge_based_wireframe_model_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -9416,7 +9416,7 @@ SdaiWireframe_model::ebwm_boundary_() const
   if( CurrentUnderlyingType () == config_control_designe_edge_based_wireframe_model )
 	//  EDGE_BASED_WIREFRAME_MODEL
 	return ((SdaiEdge_based_wireframe_model_ptr) _app_inst) ->ebwm_boundary_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -9433,7 +9433,7 @@ SdaiWireframe_model::ebwm_boundary_ (const EntityAggregate_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -9444,7 +9444,7 @@ SdaiWireframe_model::sbwm_boundary_() const
   if( CurrentUnderlyingType () == config_control_designe_shell_based_wireframe_model )
 	//  SHELL_BASED_WIREFRAME_MODEL
 	return ((SdaiShell_based_wireframe_model_ptr) _app_inst) ->sbwm_boundary_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -9461,7 +9461,7 @@ SdaiWireframe_model::sbwm_boundary_ (const SdaiShells_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -9475,7 +9475,7 @@ SdaiWireframe_model::name_() const
   if( CurrentUnderlyingType () == config_control_designe_edge_based_wireframe_model )
 	//  EDGE_BASED_WIREFRAME_MODEL
 	return ((SdaiEdge_based_wireframe_model_ptr) _app_inst) ->name_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -9497,7 +9497,7 @@ SdaiWireframe_model::name_ (const SdaiLabel x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -9599,11 +9599,11 @@ SdaiGeometric_set_select::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -9635,7 +9635,7 @@ SdaiGeometric_set_select::STEPwrite_content (ostream& out, const char * currSch)
   else if (CurrentUnderlyingType () == config_control_designe_surface)
 	_app_inst -> STEPwrite_reference (out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -9651,7 +9651,7 @@ SdaiGeometric_set_select::ValueType() const
   else if (CurrentUnderlyingType() == config_control_designe_surface)
     return sdaiINSTANCE;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -9687,7 +9687,7 @@ SdaiGeometric_set_select::STEPwrite_verbose (ostream& out, const char *currSch) 
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -9738,11 +9738,11 @@ SdaiGeometric_set_select::STEPread_content (istream& in, InstMgr * instances,
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -9755,11 +9755,11 @@ SdaiGeometric_set_select::StrToVal_content (const char * str, InstMgr * instance
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -9785,7 +9785,7 @@ SdaiGeometric_set_select_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "SdaiGeometric_set_select access hook funct called." << endl;
+	*logStream << "SdaiGeometric_set_select access hook funct called." << std::endl;
     }
 #endif
     SdaiGeometric_set_select *s = (SdaiGeometric_set_select *) object;
@@ -9793,14 +9793,14 @@ SdaiGeometric_set_select_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "underlying type set to " << s->UnderlyingTypeName() << endl << endl;
+	*logStream << "underlying type set to " << s->UnderlyingTypeName() << std::endl << std::endl;
     }
 #endif
     const TypeDescriptor *td = s->CanBe(s->UnderlyingTypeName());
     s->SetUnderlyingType(td);
     if(!td)
-	cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
-	     << endl;
+	std::cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
+	     << std::endl;
 }
 #endif
 
@@ -9824,14 +9824,14 @@ SdaiGeometric_set_select::SdaiGeometric_set_select( const SelectTypeDescriptor *
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiGeometric_set_select constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiGeometric_set_select constructor." << std::endl;
     }
 #endif
    nullify();
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiGeometric_set_select constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiGeometric_set_select constructor." << std::endl;
     }
 #endif
 }
@@ -9844,14 +9844,14 @@ SdaiGeometric_set_select::SdaiGeometric_set_select( const SdaiPoint_ptr& o,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiGeometric_set_select constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiGeometric_set_select constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiGeometric_set_select constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiGeometric_set_select constructor." << std::endl;
     }
 #endif
 }
@@ -9863,14 +9863,14 @@ SdaiGeometric_set_select::SdaiGeometric_set_select( const SdaiCurve_ptr& o,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiGeometric_set_select constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiGeometric_set_select constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiGeometric_set_select constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiGeometric_set_select constructor." << std::endl;
     }
 #endif
 }
@@ -9882,14 +9882,14 @@ SdaiGeometric_set_select::SdaiGeometric_set_select( const SdaiSurface_ptr& o,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiGeometric_set_select constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiGeometric_set_select constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiGeometric_set_select constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiGeometric_set_select constructor." << std::endl;
     }
 #endif
 }
@@ -9925,7 +9925,7 @@ SdaiGeometric_set_select::operator SdaiPoint_ptr()
       return ((SdaiPoint_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -9937,7 +9937,7 @@ SdaiGeometric_set_select::operator SdaiCurve_ptr()
       return ((SdaiCurve_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -9949,7 +9949,7 @@ SdaiGeometric_set_select::operator SdaiSurface_ptr()
       return ((SdaiSurface_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -9970,7 +9970,7 @@ SdaiGeometric_set_select::name_() const
   if( CurrentUnderlyingType () == config_control_designe_surface )
 	//  SURFACE
 	return ((SdaiSurface_ptr) _app_inst) ->name_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -9997,7 +9997,7 @@ SdaiGeometric_set_select::name_ (const SdaiLabel x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -10108,11 +10108,11 @@ SdaiStart_request_item::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -10140,7 +10140,7 @@ SdaiStart_request_item::STEPwrite_content (ostream& out, const char * currSch) c
   if (CurrentUnderlyingType () == config_control_designe_product_definition_formation)
 	_app_inst -> STEPwrite_reference (out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -10152,7 +10152,7 @@ SdaiStart_request_item::ValueType() const
   if (CurrentUnderlyingType() == config_control_designe_product_definition_formation)
     return sdaiINSTANCE;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -10176,7 +10176,7 @@ SdaiStart_request_item::STEPwrite_verbose (ostream& out, const char *currSch) co
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -10201,11 +10201,11 @@ SdaiStart_request_item::STEPread_content (istream& in, InstMgr * instances,
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -10218,11 +10218,11 @@ SdaiStart_request_item::StrToVal_content (const char * str, InstMgr * instances)
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -10248,7 +10248,7 @@ SdaiStart_request_item_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "SdaiStart_request_item access hook funct called." << endl;
+	*logStream << "SdaiStart_request_item access hook funct called." << std::endl;
     }
 #endif
     SdaiStart_request_item *s = (SdaiStart_request_item *) object;
@@ -10256,14 +10256,14 @@ SdaiStart_request_item_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "underlying type set to " << s->UnderlyingTypeName() << endl << endl;
+	*logStream << "underlying type set to " << s->UnderlyingTypeName() << std::endl << std::endl;
     }
 #endif
     const TypeDescriptor *td = s->CanBe(s->UnderlyingTypeName());
     s->SetUnderlyingType(td);
     if(!td)
-	cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
-	     << endl;
+	std::cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
+	     << std::endl;
 }
 #endif
 
@@ -10287,14 +10287,14 @@ SdaiStart_request_item::SdaiStart_request_item( const SelectTypeDescriptor *type
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiStart_request_item constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiStart_request_item constructor." << std::endl;
     }
 #endif
    nullify();
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiStart_request_item constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiStart_request_item constructor." << std::endl;
     }
 #endif
 }
@@ -10307,14 +10307,14 @@ SdaiStart_request_item::SdaiStart_request_item( const SdaiProduct_definition_for
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiStart_request_item constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiStart_request_item constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiStart_request_item constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiStart_request_item constructor." << std::endl;
     }
 #endif
 }
@@ -10350,7 +10350,7 @@ SdaiStart_request_item::operator SdaiProduct_definition_formation_ptr()
       return ((SdaiProduct_definition_formation_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -10365,7 +10365,7 @@ SdaiStart_request_item::of_product_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition_formation )
 	//  PRODUCT_DEFINITION_FORMATION
 	return ((SdaiProduct_definition_formation_ptr) _app_inst) ->of_product_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -10382,7 +10382,7 @@ SdaiStart_request_item::of_product_ (const SdaiProduct_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -10393,7 +10393,7 @@ SdaiStart_request_item::description_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition_formation )
 	//  PRODUCT_DEFINITION_FORMATION
 	return ((SdaiProduct_definition_formation_ptr) _app_inst) ->description_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -10410,7 +10410,7 @@ SdaiStart_request_item::description_ (const SdaiText x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -10421,7 +10421,7 @@ SdaiStart_request_item::id_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition_formation )
 	//  PRODUCT_DEFINITION_FORMATION
 	return ((SdaiProduct_definition_formation_ptr) _app_inst) ->id_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -10438,7 +10438,7 @@ SdaiStart_request_item::id_ (const SdaiIdentifier x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -10561,11 +10561,11 @@ SdaiPerson_organization_item::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -10611,7 +10611,7 @@ SdaiPerson_organization_item::STEPwrite_content (ostream& out, const char * curr
   else if (CurrentUnderlyingType () == config_control_designe_security_classification)
 	_app_inst -> STEPwrite_reference (out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -10641,7 +10641,7 @@ SdaiPerson_organization_item::ValueType() const
   else if (CurrentUnderlyingType() == config_control_designe_security_classification)
     return sdaiINSTANCE;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -10719,7 +10719,7 @@ SdaiPerson_organization_item::STEPwrite_verbose (ostream& out, const char *currS
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -10861,11 +10861,11 @@ SdaiPerson_organization_item::STEPread_content (istream& in, InstMgr * instances
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -10878,11 +10878,11 @@ SdaiPerson_organization_item::StrToVal_content (const char * str, InstMgr * inst
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -10908,7 +10908,7 @@ SdaiPerson_organization_item_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "SdaiPerson_organization_item access hook funct called." << endl;
+	*logStream << "SdaiPerson_organization_item access hook funct called." << std::endl;
     }
 #endif
     SdaiPerson_organization_item *s = (SdaiPerson_organization_item *) object;
@@ -10916,14 +10916,14 @@ SdaiPerson_organization_item_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "underlying type set to " << s->UnderlyingTypeName() << endl << endl;
+	*logStream << "underlying type set to " << s->UnderlyingTypeName() << std::endl << std::endl;
     }
 #endif
     const TypeDescriptor *td = s->CanBe(s->UnderlyingTypeName());
     s->SetUnderlyingType(td);
     if(!td)
-	cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
-	     << endl;
+	std::cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
+	     << std::endl;
 }
 #endif
 
@@ -10947,14 +10947,14 @@ SdaiPerson_organization_item::SdaiPerson_organization_item( const SelectTypeDesc
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiPerson_organization_item constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiPerson_organization_item constructor." << std::endl;
     }
 #endif
    nullify();
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiPerson_organization_item constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiPerson_organization_item constructor." << std::endl;
     }
 #endif
 }
@@ -10967,14 +10967,14 @@ SdaiPerson_organization_item::SdaiPerson_organization_item( const SdaiChange_ptr
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiPerson_organization_item constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiPerson_organization_item constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiPerson_organization_item constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiPerson_organization_item constructor." << std::endl;
     }
 #endif
 }
@@ -10986,14 +10986,14 @@ SdaiPerson_organization_item::SdaiPerson_organization_item( const SdaiStart_work
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiPerson_organization_item constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiPerson_organization_item constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiPerson_organization_item constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiPerson_organization_item constructor." << std::endl;
     }
 #endif
 }
@@ -11005,14 +11005,14 @@ SdaiPerson_organization_item::SdaiPerson_organization_item( const SdaiChange_req
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiPerson_organization_item constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiPerson_organization_item constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiPerson_organization_item constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiPerson_organization_item constructor." << std::endl;
     }
 #endif
 }
@@ -11024,14 +11024,14 @@ SdaiPerson_organization_item::SdaiPerson_organization_item( const SdaiStart_requ
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiPerson_organization_item constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiPerson_organization_item constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiPerson_organization_item constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiPerson_organization_item constructor." << std::endl;
     }
 #endif
 }
@@ -11043,14 +11043,14 @@ SdaiPerson_organization_item::SdaiPerson_organization_item( const SdaiConfigurat
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiPerson_organization_item constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiPerson_organization_item constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiPerson_organization_item constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiPerson_organization_item constructor." << std::endl;
     }
 #endif
 }
@@ -11062,14 +11062,14 @@ SdaiPerson_organization_item::SdaiPerson_organization_item( const SdaiProduct_pt
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiPerson_organization_item constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiPerson_organization_item constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiPerson_organization_item constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiPerson_organization_item constructor." << std::endl;
     }
 #endif
 }
@@ -11081,14 +11081,14 @@ SdaiPerson_organization_item::SdaiPerson_organization_item( const SdaiProduct_de
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiPerson_organization_item constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiPerson_organization_item constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiPerson_organization_item constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiPerson_organization_item constructor." << std::endl;
     }
 #endif
 }
@@ -11100,14 +11100,14 @@ SdaiPerson_organization_item::SdaiPerson_organization_item( const SdaiProduct_de
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiPerson_organization_item constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiPerson_organization_item constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiPerson_organization_item constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiPerson_organization_item constructor." << std::endl;
     }
 #endif
 }
@@ -11119,14 +11119,14 @@ SdaiPerson_organization_item::SdaiPerson_organization_item( const SdaiContract_p
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiPerson_organization_item constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiPerson_organization_item constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiPerson_organization_item constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiPerson_organization_item constructor." << std::endl;
     }
 #endif
 }
@@ -11138,14 +11138,14 @@ SdaiPerson_organization_item::SdaiPerson_organization_item( const SdaiSecurity_c
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiPerson_organization_item constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiPerson_organization_item constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiPerson_organization_item constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiPerson_organization_item constructor." << std::endl;
     }
 #endif
 }
@@ -11181,7 +11181,7 @@ SdaiPerson_organization_item::operator SdaiChange_ptr()
       return ((SdaiChange_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -11193,7 +11193,7 @@ SdaiPerson_organization_item::operator SdaiStart_work_ptr()
       return ((SdaiStart_work_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -11205,7 +11205,7 @@ SdaiPerson_organization_item::operator SdaiChange_request_ptr()
       return ((SdaiChange_request_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -11217,7 +11217,7 @@ SdaiPerson_organization_item::operator SdaiStart_request_ptr()
       return ((SdaiStart_request_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -11229,7 +11229,7 @@ SdaiPerson_organization_item::operator SdaiConfiguration_item_ptr()
       return ((SdaiConfiguration_item_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -11241,7 +11241,7 @@ SdaiPerson_organization_item::operator SdaiProduct_ptr()
       return ((SdaiProduct_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -11253,7 +11253,7 @@ SdaiPerson_organization_item::operator SdaiProduct_definition_formation_ptr()
       return ((SdaiProduct_definition_formation_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -11265,7 +11265,7 @@ SdaiPerson_organization_item::operator SdaiProduct_definition_ptr()
       return ((SdaiProduct_definition_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -11277,7 +11277,7 @@ SdaiPerson_organization_item::operator SdaiContract_ptr()
       return ((SdaiContract_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -11289,7 +11289,7 @@ SdaiPerson_organization_item::operator SdaiSecurity_classification_ptr()
       return ((SdaiSecurity_classification_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -11304,7 +11304,7 @@ SdaiPerson_organization_item::security_level_() const
   if( CurrentUnderlyingType () == config_control_designe_security_classification )
 	//  SECURITY_CLASSIFICATION
 	return ((SdaiSecurity_classification_ptr) _app_inst) ->security_level_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -11321,7 +11321,7 @@ SdaiPerson_organization_item::security_level_ (const SdaiSecurity_classification
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -11332,7 +11332,7 @@ SdaiPerson_organization_item::kind_() const
   if( CurrentUnderlyingType () == config_control_designe_contract )
 	//  CONTRACT
 	return ((SdaiContract_ptr) _app_inst) ->kind_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -11349,7 +11349,7 @@ SdaiPerson_organization_item::kind_ (const SdaiContract_type_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -11360,7 +11360,7 @@ SdaiPerson_organization_item::formation_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition )
 	//  PRODUCT_DEFINITION
 	return ((SdaiProduct_definition_ptr) _app_inst) ->formation_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -11377,7 +11377,7 @@ SdaiPerson_organization_item::formation_ (const SdaiProduct_definition_formation
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -11388,7 +11388,7 @@ SdaiPerson_organization_item::of_product_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition_formation )
 	//  PRODUCT_DEFINITION_FORMATION
 	return ((SdaiProduct_definition_formation_ptr) _app_inst) ->of_product_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -11405,7 +11405,7 @@ SdaiPerson_organization_item::of_product_ (const SdaiProduct_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -11418,7 +11418,7 @@ SdaiPerson_organization_item::frame_of_reference_() const
 	return ((SdaiProduct_ptr) _app_inst) ->frame_of_reference_();
   //  PRODUCT_DEFINITION
 	//  attribute access function has a different return type
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -11436,7 +11436,7 @@ SdaiPerson_organization_item::frame_of_reference_ (const EntityAggregate_ptr x)
   //  for PRODUCT_DEFINITION  attribute access function has a different argument type
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -11453,7 +11453,7 @@ SdaiPerson_organization_item::purpose_() const
   if( CurrentUnderlyingType () == config_control_designe_security_classification )
 	//  SECURITY_CLASSIFICATION
 	return ((SdaiSecurity_classification_ptr) _app_inst) ->purpose_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -11480,7 +11480,7 @@ SdaiPerson_organization_item::purpose_ (const SdaiLabel x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -11491,7 +11491,7 @@ SdaiPerson_organization_item::item_concept_() const
   if( CurrentUnderlyingType () == config_control_designe_configuration_item )
 	//  CONFIGURATION_ITEM
 	return ((SdaiConfiguration_item_ptr) _app_inst) ->item_concept_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -11508,7 +11508,7 @@ SdaiPerson_organization_item::item_concept_ (const SdaiProduct_concept_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -11528,7 +11528,7 @@ SdaiPerson_organization_item::description_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition )
 	//  PRODUCT_DEFINITION
 	return ((SdaiProduct_definition_ptr) _app_inst) ->description_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -11560,7 +11560,7 @@ SdaiPerson_organization_item::description_ (const SdaiText x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -11580,7 +11580,7 @@ SdaiPerson_organization_item::name_() const
   if( CurrentUnderlyingType () == config_control_designe_security_classification )
 	//  SECURITY_CLASSIFICATION
 	return ((SdaiSecurity_classification_ptr) _app_inst) ->name_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -11612,7 +11612,7 @@ SdaiPerson_organization_item::name_ (const SdaiLabel x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -11632,7 +11632,7 @@ SdaiPerson_organization_item::id_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition )
 	//  PRODUCT_DEFINITION
 	return ((SdaiProduct_definition_ptr) _app_inst) ->id_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -11664,7 +11664,7 @@ SdaiPerson_organization_item::id_ (const SdaiIdentifier x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -11678,7 +11678,7 @@ SdaiPerson_organization_item::assigned_action_request_() const
   if( CurrentUnderlyingType () == config_control_designe_start_request )
 	//  START_REQUEST
 	return ((SdaiStart_request_ptr) _app_inst) ->assigned_action_request_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -11700,7 +11700,7 @@ SdaiPerson_organization_item::assigned_action_request_ (const SdaiVersioned_acti
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -11718,7 +11718,7 @@ SdaiPerson_organization_item::items_() const
 	//  attribute access function has a different return type
   //  START_REQUEST
 	//  attribute access function has a different return type
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -11742,7 +11742,7 @@ SdaiPerson_organization_item::items_ (const SdaiWork_items_ptr x)
   //  for START_REQUEST  attribute access function has a different argument type
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -11756,7 +11756,7 @@ SdaiPerson_organization_item::assigned_action_() const
   if( CurrentUnderlyingType () == config_control_designe_start_work )
 	//  START_WORK
 	return ((SdaiStart_work_ptr) _app_inst) ->assigned_action_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -11778,7 +11778,7 @@ SdaiPerson_organization_item::assigned_action_ (const SdaiAction_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -12084,11 +12084,11 @@ SdaiDate_time_item::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -12132,7 +12132,7 @@ SdaiDate_time_item::STEPwrite_content (ostream& out, const char * currSch) const
   else if (CurrentUnderlyingType () == config_control_designe_certification)
 	_app_inst -> STEPwrite_reference (out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -12160,7 +12160,7 @@ SdaiDate_time_item::ValueType() const
   else if (CurrentUnderlyingType() == config_control_designe_certification)
     return sdaiINSTANCE;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -12232,7 +12232,7 @@ SdaiDate_time_item::STEPwrite_verbose (ostream& out, const char *currSch) const
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -12361,11 +12361,11 @@ SdaiDate_time_item::STEPread_content (istream& in, InstMgr * instances,
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -12378,11 +12378,11 @@ SdaiDate_time_item::StrToVal_content (const char * str, InstMgr * instances)
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -12408,7 +12408,7 @@ SdaiDate_time_item_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "SdaiDate_time_item access hook funct called." << endl;
+	*logStream << "SdaiDate_time_item access hook funct called." << std::endl;
     }
 #endif
     SdaiDate_time_item *s = (SdaiDate_time_item *) object;
@@ -12416,14 +12416,14 @@ SdaiDate_time_item_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "underlying type set to " << s->UnderlyingTypeName() << endl << endl;
+	*logStream << "underlying type set to " << s->UnderlyingTypeName() << std::endl << std::endl;
     }
 #endif
     const TypeDescriptor *td = s->CanBe(s->UnderlyingTypeName());
     s->SetUnderlyingType(td);
     if(!td)
-	cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
-	     << endl;
+	std::cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
+	     << std::endl;
 }
 #endif
 
@@ -12447,14 +12447,14 @@ SdaiDate_time_item::SdaiDate_time_item( const SelectTypeDescriptor *typedescript
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiDate_time_item constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiDate_time_item constructor." << std::endl;
     }
 #endif
    nullify();
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiDate_time_item constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiDate_time_item constructor." << std::endl;
     }
 #endif
 }
@@ -12467,14 +12467,14 @@ SdaiDate_time_item::SdaiDate_time_item( const SdaiProduct_definition_ptr& o,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiDate_time_item constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiDate_time_item constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiDate_time_item constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiDate_time_item constructor." << std::endl;
     }
 #endif
 }
@@ -12486,14 +12486,14 @@ SdaiDate_time_item::SdaiDate_time_item( const SdaiChange_request_ptr& o,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiDate_time_item constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiDate_time_item constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiDate_time_item constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiDate_time_item constructor." << std::endl;
     }
 #endif
 }
@@ -12505,14 +12505,14 @@ SdaiDate_time_item::SdaiDate_time_item( const SdaiStart_request_ptr& o,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiDate_time_item constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiDate_time_item constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiDate_time_item constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiDate_time_item constructor." << std::endl;
     }
 #endif
 }
@@ -12524,14 +12524,14 @@ SdaiDate_time_item::SdaiDate_time_item( const SdaiChange_ptr& o,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiDate_time_item constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiDate_time_item constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiDate_time_item constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiDate_time_item constructor." << std::endl;
     }
 #endif
 }
@@ -12543,14 +12543,14 @@ SdaiDate_time_item::SdaiDate_time_item( const SdaiStart_work_ptr& o,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiDate_time_item constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiDate_time_item constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiDate_time_item constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiDate_time_item constructor." << std::endl;
     }
 #endif
 }
@@ -12562,14 +12562,14 @@ SdaiDate_time_item::SdaiDate_time_item( const SdaiApproval_person_organization_p
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiDate_time_item constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiDate_time_item constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiDate_time_item constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiDate_time_item constructor." << std::endl;
     }
 #endif
 }
@@ -12581,14 +12581,14 @@ SdaiDate_time_item::SdaiDate_time_item( const SdaiContract_ptr& o,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiDate_time_item constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiDate_time_item constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiDate_time_item constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiDate_time_item constructor." << std::endl;
     }
 #endif
 }
@@ -12600,14 +12600,14 @@ SdaiDate_time_item::SdaiDate_time_item( const SdaiSecurity_classification_ptr& o
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiDate_time_item constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiDate_time_item constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiDate_time_item constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiDate_time_item constructor." << std::endl;
     }
 #endif
 }
@@ -12619,14 +12619,14 @@ SdaiDate_time_item::SdaiDate_time_item( const SdaiCertification_ptr& o,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiDate_time_item constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiDate_time_item constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiDate_time_item constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiDate_time_item constructor." << std::endl;
     }
 #endif
 }
@@ -12662,7 +12662,7 @@ SdaiDate_time_item::operator SdaiProduct_definition_ptr()
       return ((SdaiProduct_definition_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -12674,7 +12674,7 @@ SdaiDate_time_item::operator SdaiChange_request_ptr()
       return ((SdaiChange_request_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -12686,7 +12686,7 @@ SdaiDate_time_item::operator SdaiStart_request_ptr()
       return ((SdaiStart_request_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -12698,7 +12698,7 @@ SdaiDate_time_item::operator SdaiChange_ptr()
       return ((SdaiChange_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -12710,7 +12710,7 @@ SdaiDate_time_item::operator SdaiStart_work_ptr()
       return ((SdaiStart_work_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -12722,7 +12722,7 @@ SdaiDate_time_item::operator SdaiApproval_person_organization_ptr()
       return ((SdaiApproval_person_organization_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -12734,7 +12734,7 @@ SdaiDate_time_item::operator SdaiContract_ptr()
       return ((SdaiContract_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -12746,7 +12746,7 @@ SdaiDate_time_item::operator SdaiSecurity_classification_ptr()
       return ((SdaiSecurity_classification_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -12758,7 +12758,7 @@ SdaiDate_time_item::operator SdaiCertification_ptr()
       return ((SdaiCertification_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -12773,7 +12773,7 @@ SdaiDate_time_item::security_level_() const
   if( CurrentUnderlyingType () == config_control_designe_security_classification )
 	//  SECURITY_CLASSIFICATION
 	return ((SdaiSecurity_classification_ptr) _app_inst) ->security_level_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -12790,7 +12790,7 @@ SdaiDate_time_item::security_level_ (const SdaiSecurity_classification_level_ptr
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -12803,7 +12803,7 @@ SdaiDate_time_item::kind_() const
 	return ((SdaiContract_ptr) _app_inst) ->kind_();
   //  CERTIFICATION
 	//  attribute access function has a different return type
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -12821,7 +12821,7 @@ SdaiDate_time_item::kind_ (const SdaiContract_type_ptr x)
   //  for CERTIFICATION  attribute access function has a different argument type
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -12838,7 +12838,7 @@ SdaiDate_time_item::purpose_() const
   if( CurrentUnderlyingType () == config_control_designe_certification )
 	//  CERTIFICATION
 	return ((SdaiCertification_ptr) _app_inst) ->purpose_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -12865,7 +12865,7 @@ SdaiDate_time_item::purpose_ (const SdaiText x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -12882,7 +12882,7 @@ SdaiDate_time_item::name_() const
   if( CurrentUnderlyingType () == config_control_designe_certification )
 	//  CERTIFICATION
 	return ((SdaiCertification_ptr) _app_inst) ->name_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -12909,7 +12909,7 @@ SdaiDate_time_item::name_ (const SdaiLabel x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -12920,7 +12920,7 @@ SdaiDate_time_item::role_() const
   if( CurrentUnderlyingType () == config_control_designe_approval_person_organization )
 	//  APPROVAL_PERSON_ORGANIZATION
 	return ((SdaiApproval_person_organization_ptr) _app_inst) ->role_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -12937,7 +12937,7 @@ SdaiDate_time_item::role_ (const SdaiApproval_role_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -12948,7 +12948,7 @@ SdaiDate_time_item::authorized_approval_() const
   if( CurrentUnderlyingType () == config_control_designe_approval_person_organization )
 	//  APPROVAL_PERSON_ORGANIZATION
 	return ((SdaiApproval_person_organization_ptr) _app_inst) ->authorized_approval_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -12965,7 +12965,7 @@ SdaiDate_time_item::authorized_approval_ (const SdaiApproval_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -12976,7 +12976,7 @@ SdaiDate_time_item::person_organization_() const
   if( CurrentUnderlyingType () == config_control_designe_approval_person_organization )
 	//  APPROVAL_PERSON_ORGANIZATION
 	return ((SdaiApproval_person_organization_ptr) _app_inst) ->person_organization_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -12993,7 +12993,7 @@ SdaiDate_time_item::person_organization_ (const SdaiPerson_organization_select_p
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -13007,7 +13007,7 @@ SdaiDate_time_item::assigned_action_() const
   if( CurrentUnderlyingType () == config_control_designe_start_work )
 	//  START_WORK
 	return ((SdaiStart_work_ptr) _app_inst) ->assigned_action_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -13029,7 +13029,7 @@ SdaiDate_time_item::assigned_action_ (const SdaiAction_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -13046,7 +13046,7 @@ SdaiDate_time_item::items_() const
 	//  attribute access function has a different return type
   //  START_WORK
 	//  attribute access function has a different return type
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -13066,7 +13066,7 @@ SdaiDate_time_item::items_ (const SdaiChange_request_items_ptr x)
   //  for START_WORK  attribute access function has a different argument type
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -13080,7 +13080,7 @@ SdaiDate_time_item::assigned_action_request_() const
   if( CurrentUnderlyingType () == config_control_designe_start_request )
 	//  START_REQUEST
 	return ((SdaiStart_request_ptr) _app_inst) ->assigned_action_request_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -13102,7 +13102,7 @@ SdaiDate_time_item::assigned_action_request_ (const SdaiVersioned_action_request
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -13113,7 +13113,7 @@ SdaiDate_time_item::frame_of_reference_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition )
 	//  PRODUCT_DEFINITION
 	return ((SdaiProduct_definition_ptr) _app_inst) ->frame_of_reference_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -13130,7 +13130,7 @@ SdaiDate_time_item::frame_of_reference_ (const SdaiProduct_definition_context_pt
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -13141,7 +13141,7 @@ SdaiDate_time_item::formation_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition )
 	//  PRODUCT_DEFINITION
 	return ((SdaiProduct_definition_ptr) _app_inst) ->formation_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -13158,7 +13158,7 @@ SdaiDate_time_item::formation_ (const SdaiProduct_definition_formation_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -13169,7 +13169,7 @@ SdaiDate_time_item::description_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition )
 	//  PRODUCT_DEFINITION
 	return ((SdaiProduct_definition_ptr) _app_inst) ->description_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -13186,7 +13186,7 @@ SdaiDate_time_item::description_ (const SdaiText x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -13197,7 +13197,7 @@ SdaiDate_time_item::id_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition )
 	//  PRODUCT_DEFINITION
 	return ((SdaiProduct_definition_ptr) _app_inst) ->id_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -13214,7 +13214,7 @@ SdaiDate_time_item::id_ (const SdaiIdentifier x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -13469,11 +13469,11 @@ SdaiShell::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -13507,7 +13507,7 @@ SdaiShell::STEPwrite_content (ostream& out, const char * currSch) const
   else if (CurrentUnderlyingType () == config_control_designe_closed_shell)
 	_app_inst -> STEPwrite_reference (out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -13525,7 +13525,7 @@ SdaiShell::ValueType() const
   else if (CurrentUnderlyingType() == config_control_designe_closed_shell)
     return sdaiINSTANCE;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -13567,7 +13567,7 @@ SdaiShell::STEPwrite_verbose (ostream& out, const char *currSch) const
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -13631,11 +13631,11 @@ SdaiShell::STEPread_content (istream& in, InstMgr * instances,
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -13648,11 +13648,11 @@ SdaiShell::StrToVal_content (const char * str, InstMgr * instances)
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -13678,7 +13678,7 @@ SdaiShell_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "SdaiShell access hook funct called." << endl;
+	*logStream << "SdaiShell access hook funct called." << std::endl;
     }
 #endif
     SdaiShell *s = (SdaiShell *) object;
@@ -13686,14 +13686,14 @@ SdaiShell_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "underlying type set to " << s->UnderlyingTypeName() << endl << endl;
+	*logStream << "underlying type set to " << s->UnderlyingTypeName() << std::endl << std::endl;
     }
 #endif
     const TypeDescriptor *td = s->CanBe(s->UnderlyingTypeName());
     s->SetUnderlyingType(td);
     if(!td)
-	cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
-	     << endl;
+	std::cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
+	     << std::endl;
 }
 #endif
 
@@ -13717,14 +13717,14 @@ SdaiShell::SdaiShell( const SelectTypeDescriptor *typedescript )
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiShell constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiShell constructor." << std::endl;
     }
 #endif
    nullify();
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiShell constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiShell constructor." << std::endl;
     }
 #endif
 }
@@ -13737,14 +13737,14 @@ SdaiShell::SdaiShell( const SdaiVertex_shell_ptr& o,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiShell constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiShell constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiShell constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiShell constructor." << std::endl;
     }
 #endif
 }
@@ -13756,14 +13756,14 @@ SdaiShell::SdaiShell( const SdaiWire_shell_ptr& o,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiShell constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiShell constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiShell constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiShell constructor." << std::endl;
     }
 #endif
 }
@@ -13775,14 +13775,14 @@ SdaiShell::SdaiShell( const SdaiOpen_shell_ptr& o,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiShell constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiShell constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiShell constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiShell constructor." << std::endl;
     }
 #endif
 }
@@ -13794,14 +13794,14 @@ SdaiShell::SdaiShell( const SdaiClosed_shell_ptr& o,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiShell constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiShell constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiShell constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiShell constructor." << std::endl;
     }
 #endif
 }
@@ -13837,7 +13837,7 @@ SdaiShell::operator SdaiVertex_shell_ptr()
       return ((SdaiVertex_shell_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -13849,7 +13849,7 @@ SdaiShell::operator SdaiWire_shell_ptr()
       return ((SdaiWire_shell_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -13861,7 +13861,7 @@ SdaiShell::operator SdaiOpen_shell_ptr()
       return ((SdaiOpen_shell_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -13873,7 +13873,7 @@ SdaiShell::operator SdaiClosed_shell_ptr()
       return ((SdaiClosed_shell_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -13891,7 +13891,7 @@ SdaiShell::cfs_faces_() const
   if( CurrentUnderlyingType () == config_control_designe_closed_shell )
 	//  CLOSED_SHELL
 	return ((SdaiClosed_shell_ptr) _app_inst) ->cfs_faces_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -13913,7 +13913,7 @@ SdaiShell::cfs_faces_ (const EntityAggregate_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -13924,7 +13924,7 @@ SdaiShell::wire_shell_extent_() const
   if( CurrentUnderlyingType () == config_control_designe_wire_shell )
 	//  WIRE_SHELL
 	return ((SdaiWire_shell_ptr) _app_inst) ->wire_shell_extent_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -13941,7 +13941,7 @@ SdaiShell::wire_shell_extent_ (const EntityAggregate_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -13952,7 +13952,7 @@ SdaiShell::vertex_shell_extent_() const
   if( CurrentUnderlyingType () == config_control_designe_vertex_shell )
 	//  VERTEX_SHELL
 	return ((SdaiVertex_shell_ptr) _app_inst) ->vertex_shell_extent_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -13969,7 +13969,7 @@ SdaiShell::vertex_shell_extent_ (const SdaiVertex_loop_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -13989,7 +13989,7 @@ SdaiShell::name_() const
   if( CurrentUnderlyingType () == config_control_designe_closed_shell )
 	//  CLOSED_SHELL
 	return ((SdaiClosed_shell_ptr) _app_inst) ->name_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -14021,7 +14021,7 @@ SdaiShell::name_ (const SdaiLabel x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -14159,11 +14159,11 @@ SdaiTransformation::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -14193,7 +14193,7 @@ SdaiTransformation::STEPwrite_content (ostream& out, const char * currSch) const
   else if (CurrentUnderlyingType () == config_control_designe_functionally_defined_transformation)
 	_app_inst -> STEPwrite_reference (out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -14207,7 +14207,7 @@ SdaiTransformation::ValueType() const
   else if (CurrentUnderlyingType() == config_control_designe_functionally_defined_transformation)
     return sdaiINSTANCE;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -14237,7 +14237,7 @@ SdaiTransformation::STEPwrite_verbose (ostream& out, const char *currSch) const
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -14275,11 +14275,11 @@ SdaiTransformation::STEPread_content (istream& in, InstMgr * instances,
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -14292,11 +14292,11 @@ SdaiTransformation::StrToVal_content (const char * str, InstMgr * instances)
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -14322,7 +14322,7 @@ SdaiTransformation_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "SdaiTransformation access hook funct called." << endl;
+	*logStream << "SdaiTransformation access hook funct called." << std::endl;
     }
 #endif
     SdaiTransformation *s = (SdaiTransformation *) object;
@@ -14330,14 +14330,14 @@ SdaiTransformation_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "underlying type set to " << s->UnderlyingTypeName() << endl << endl;
+	*logStream << "underlying type set to " << s->UnderlyingTypeName() << std::endl << std::endl;
     }
 #endif
     const TypeDescriptor *td = s->CanBe(s->UnderlyingTypeName());
     s->SetUnderlyingType(td);
     if(!td)
-	cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
-	     << endl;
+	std::cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
+	     << std::endl;
 }
 #endif
 
@@ -14361,14 +14361,14 @@ SdaiTransformation::SdaiTransformation( const SelectTypeDescriptor *typedescript
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiTransformation constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiTransformation constructor." << std::endl;
     }
 #endif
    nullify();
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiTransformation constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiTransformation constructor." << std::endl;
     }
 #endif
 }
@@ -14381,14 +14381,14 @@ SdaiTransformation::SdaiTransformation( const SdaiItem_defined_transformation_pt
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiTransformation constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiTransformation constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiTransformation constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiTransformation constructor." << std::endl;
     }
 #endif
 }
@@ -14400,14 +14400,14 @@ SdaiTransformation::SdaiTransformation( const SdaiFunctionally_defined_transform
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiTransformation constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiTransformation constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiTransformation constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiTransformation constructor." << std::endl;
     }
 #endif
 }
@@ -14443,7 +14443,7 @@ SdaiTransformation::operator SdaiItem_defined_transformation_ptr()
       return ((SdaiItem_defined_transformation_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -14455,7 +14455,7 @@ SdaiTransformation::operator SdaiFunctionally_defined_transformation_ptr()
       return ((SdaiFunctionally_defined_transformation_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -14470,7 +14470,7 @@ SdaiTransformation::transform_item_2_() const
   if( CurrentUnderlyingType () == config_control_designe_item_defined_transformation )
 	//  ITEM_DEFINED_TRANSFORMATION
 	return ((SdaiItem_defined_transformation_ptr) _app_inst) ->transform_item_2_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -14487,7 +14487,7 @@ SdaiTransformation::transform_item_2_ (const SdaiRepresentation_item_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -14498,7 +14498,7 @@ SdaiTransformation::transform_item_1_() const
   if( CurrentUnderlyingType () == config_control_designe_item_defined_transformation )
 	//  ITEM_DEFINED_TRANSFORMATION
 	return ((SdaiItem_defined_transformation_ptr) _app_inst) ->transform_item_1_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -14515,7 +14515,7 @@ SdaiTransformation::transform_item_1_ (const SdaiRepresentation_item_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -14529,7 +14529,7 @@ SdaiTransformation::description_() const
   if( CurrentUnderlyingType () == config_control_designe_functionally_defined_transformation )
 	//  FUNCTIONALLY_DEFINED_TRANSFORMATION
 	return ((SdaiFunctionally_defined_transformation_ptr) _app_inst) ->description_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -14551,7 +14551,7 @@ SdaiTransformation::description_ (const SdaiText x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -14565,7 +14565,7 @@ SdaiTransformation::name_() const
   if( CurrentUnderlyingType () == config_control_designe_functionally_defined_transformation )
 	//  FUNCTIONALLY_DEFINED_TRANSFORMATION
 	return ((SdaiFunctionally_defined_transformation_ptr) _app_inst) ->name_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -14587,7 +14587,7 @@ SdaiTransformation::name_ (const SdaiLabel x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -14677,11 +14677,11 @@ SdaiBoolean_operand::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -14709,7 +14709,7 @@ SdaiBoolean_operand::STEPwrite_content (ostream& out, const char * currSch) cons
   if (CurrentUnderlyingType () == config_control_designe_solid_model)
 	_app_inst -> STEPwrite_reference (out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -14721,7 +14721,7 @@ SdaiBoolean_operand::ValueType() const
   if (CurrentUnderlyingType() == config_control_designe_solid_model)
     return sdaiINSTANCE;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -14745,7 +14745,7 @@ SdaiBoolean_operand::STEPwrite_verbose (ostream& out, const char *currSch) const
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -14770,11 +14770,11 @@ SdaiBoolean_operand::STEPread_content (istream& in, InstMgr * instances,
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -14787,11 +14787,11 @@ SdaiBoolean_operand::StrToVal_content (const char * str, InstMgr * instances)
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -14817,7 +14817,7 @@ SdaiBoolean_operand_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "SdaiBoolean_operand access hook funct called." << endl;
+	*logStream << "SdaiBoolean_operand access hook funct called." << std::endl;
     }
 #endif
     SdaiBoolean_operand *s = (SdaiBoolean_operand *) object;
@@ -14825,14 +14825,14 @@ SdaiBoolean_operand_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "underlying type set to " << s->UnderlyingTypeName() << endl << endl;
+	*logStream << "underlying type set to " << s->UnderlyingTypeName() << std::endl << std::endl;
     }
 #endif
     const TypeDescriptor *td = s->CanBe(s->UnderlyingTypeName());
     s->SetUnderlyingType(td);
     if(!td)
-	cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
-	     << endl;
+	std::cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
+	     << std::endl;
 }
 #endif
 
@@ -14856,14 +14856,14 @@ SdaiBoolean_operand::SdaiBoolean_operand( const SelectTypeDescriptor *typedescri
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiBoolean_operand constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiBoolean_operand constructor." << std::endl;
     }
 #endif
    nullify();
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiBoolean_operand constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiBoolean_operand constructor." << std::endl;
     }
 #endif
 }
@@ -14876,14 +14876,14 @@ SdaiBoolean_operand::SdaiBoolean_operand( const SdaiSolid_model_ptr& o,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiBoolean_operand constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiBoolean_operand constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiBoolean_operand constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiBoolean_operand constructor." << std::endl;
     }
 #endif
 }
@@ -14919,7 +14919,7 @@ SdaiBoolean_operand::operator SdaiSolid_model_ptr()
       return ((SdaiSolid_model_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -14934,7 +14934,7 @@ SdaiBoolean_operand::name_() const
   if( CurrentUnderlyingType () == config_control_designe_solid_model )
 	//  SOLID_MODEL
 	return ((SdaiSolid_model_ptr) _app_inst) ->name_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -14951,7 +14951,7 @@ SdaiBoolean_operand::name_ (const SdaiLabel x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -15020,11 +15020,11 @@ SdaiCertified_item::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -15052,7 +15052,7 @@ SdaiCertified_item::STEPwrite_content (ostream& out, const char * currSch) const
   if (CurrentUnderlyingType () == config_control_designe_supplied_part_relationship)
 	_app_inst -> STEPwrite_reference (out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -15064,7 +15064,7 @@ SdaiCertified_item::ValueType() const
   if (CurrentUnderlyingType() == config_control_designe_supplied_part_relationship)
     return sdaiINSTANCE;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -15088,7 +15088,7 @@ SdaiCertified_item::STEPwrite_verbose (ostream& out, const char *currSch) const
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -15113,11 +15113,11 @@ SdaiCertified_item::STEPread_content (istream& in, InstMgr * instances,
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -15130,11 +15130,11 @@ SdaiCertified_item::StrToVal_content (const char * str, InstMgr * instances)
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -15160,7 +15160,7 @@ SdaiCertified_item_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "SdaiCertified_item access hook funct called." << endl;
+	*logStream << "SdaiCertified_item access hook funct called." << std::endl;
     }
 #endif
     SdaiCertified_item *s = (SdaiCertified_item *) object;
@@ -15168,14 +15168,14 @@ SdaiCertified_item_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "underlying type set to " << s->UnderlyingTypeName() << endl << endl;
+	*logStream << "underlying type set to " << s->UnderlyingTypeName() << std::endl << std::endl;
     }
 #endif
     const TypeDescriptor *td = s->CanBe(s->UnderlyingTypeName());
     s->SetUnderlyingType(td);
     if(!td)
-	cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
-	     << endl;
+	std::cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
+	     << std::endl;
 }
 #endif
 
@@ -15199,14 +15199,14 @@ SdaiCertified_item::SdaiCertified_item( const SelectTypeDescriptor *typedescript
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiCertified_item constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiCertified_item constructor." << std::endl;
     }
 #endif
    nullify();
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiCertified_item constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiCertified_item constructor." << std::endl;
     }
 #endif
 }
@@ -15219,14 +15219,14 @@ SdaiCertified_item::SdaiCertified_item( const SdaiSupplied_part_relationship_ptr
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiCertified_item constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiCertified_item constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiCertified_item constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiCertified_item constructor." << std::endl;
     }
 #endif
 }
@@ -15262,7 +15262,7 @@ SdaiCertified_item::operator SdaiSupplied_part_relationship_ptr()
       return ((SdaiSupplied_part_relationship_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -15277,7 +15277,7 @@ SdaiCertified_item::related_product_definition_() const
   if( CurrentUnderlyingType () == config_control_designe_supplied_part_relationship )
 	//  SUPPLIED_PART_RELATIONSHIP
 	return ((SdaiSupplied_part_relationship_ptr) _app_inst) ->related_product_definition_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -15294,7 +15294,7 @@ SdaiCertified_item::related_product_definition_ (const SdaiProduct_definition_pt
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -15305,7 +15305,7 @@ SdaiCertified_item::relating_product_definition_() const
   if( CurrentUnderlyingType () == config_control_designe_supplied_part_relationship )
 	//  SUPPLIED_PART_RELATIONSHIP
 	return ((SdaiSupplied_part_relationship_ptr) _app_inst) ->relating_product_definition_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -15322,7 +15322,7 @@ SdaiCertified_item::relating_product_definition_ (const SdaiProduct_definition_p
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -15333,7 +15333,7 @@ SdaiCertified_item::description_() const
   if( CurrentUnderlyingType () == config_control_designe_supplied_part_relationship )
 	//  SUPPLIED_PART_RELATIONSHIP
 	return ((SdaiSupplied_part_relationship_ptr) _app_inst) ->description_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -15350,7 +15350,7 @@ SdaiCertified_item::description_ (const SdaiText x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -15361,7 +15361,7 @@ SdaiCertified_item::name_() const
   if( CurrentUnderlyingType () == config_control_designe_supplied_part_relationship )
 	//  SUPPLIED_PART_RELATIONSHIP
 	return ((SdaiSupplied_part_relationship_ptr) _app_inst) ->name_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -15378,7 +15378,7 @@ SdaiCertified_item::name_ (const SdaiLabel x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -15389,7 +15389,7 @@ SdaiCertified_item::id_() const
   if( CurrentUnderlyingType () == config_control_designe_supplied_part_relationship )
 	//  SUPPLIED_PART_RELATIONSHIP
 	return ((SdaiSupplied_part_relationship_ptr) _app_inst) ->id_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -15406,7 +15406,7 @@ SdaiCertified_item::id_ (const SdaiIdentifier x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -15487,11 +15487,11 @@ SdaiDate_time_select::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -15523,7 +15523,7 @@ SdaiDate_time_select::STEPwrite_content (ostream& out, const char * currSch) con
   else if (CurrentUnderlyingType () == config_control_designe_date_and_time)
 	_app_inst -> STEPwrite_reference (out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -15539,7 +15539,7 @@ SdaiDate_time_select::ValueType() const
   else if (CurrentUnderlyingType() == config_control_designe_date_and_time)
     return sdaiINSTANCE;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -15575,7 +15575,7 @@ SdaiDate_time_select::STEPwrite_verbose (ostream& out, const char *currSch) cons
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -15626,11 +15626,11 @@ SdaiDate_time_select::STEPread_content (istream& in, InstMgr * instances,
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -15643,11 +15643,11 @@ SdaiDate_time_select::StrToVal_content (const char * str, InstMgr * instances)
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -15673,7 +15673,7 @@ SdaiDate_time_select_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "SdaiDate_time_select access hook funct called." << endl;
+	*logStream << "SdaiDate_time_select access hook funct called." << std::endl;
     }
 #endif
     SdaiDate_time_select *s = (SdaiDate_time_select *) object;
@@ -15681,14 +15681,14 @@ SdaiDate_time_select_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "underlying type set to " << s->UnderlyingTypeName() << endl << endl;
+	*logStream << "underlying type set to " << s->UnderlyingTypeName() << std::endl << std::endl;
     }
 #endif
     const TypeDescriptor *td = s->CanBe(s->UnderlyingTypeName());
     s->SetUnderlyingType(td);
     if(!td)
-	cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
-	     << endl;
+	std::cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
+	     << std::endl;
 }
 #endif
 
@@ -15712,14 +15712,14 @@ SdaiDate_time_select::SdaiDate_time_select( const SelectTypeDescriptor *typedesc
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiDate_time_select constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiDate_time_select constructor." << std::endl;
     }
 #endif
    nullify();
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiDate_time_select constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiDate_time_select constructor." << std::endl;
     }
 #endif
 }
@@ -15732,14 +15732,14 @@ SdaiDate_time_select::SdaiDate_time_select( const SdaiDate_ptr& o,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiDate_time_select constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiDate_time_select constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiDate_time_select constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiDate_time_select constructor." << std::endl;
     }
 #endif
 }
@@ -15751,14 +15751,14 @@ SdaiDate_time_select::SdaiDate_time_select( const SdaiLocal_time_ptr& o,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiDate_time_select constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiDate_time_select constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiDate_time_select constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiDate_time_select constructor." << std::endl;
     }
 #endif
 }
@@ -15770,14 +15770,14 @@ SdaiDate_time_select::SdaiDate_time_select( const SdaiDate_and_time_ptr& o,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiDate_time_select constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiDate_time_select constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiDate_time_select constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiDate_time_select constructor." << std::endl;
     }
 #endif
 }
@@ -15813,7 +15813,7 @@ SdaiDate_time_select::operator SdaiDate_ptr()
       return ((SdaiDate_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -15825,7 +15825,7 @@ SdaiDate_time_select::operator SdaiLocal_time_ptr()
       return ((SdaiLocal_time_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -15837,7 +15837,7 @@ SdaiDate_time_select::operator SdaiDate_and_time_ptr()
       return ((SdaiDate_and_time_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -15852,7 +15852,7 @@ SdaiDate_time_select::time_component_() const
   if( CurrentUnderlyingType () == config_control_designe_date_and_time )
 	//  DATE_AND_TIME
 	return ((SdaiDate_and_time_ptr) _app_inst) ->time_component_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -15869,7 +15869,7 @@ SdaiDate_time_select::time_component_ (const SdaiLocal_time_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -15880,7 +15880,7 @@ SdaiDate_time_select::date_component_() const
   if( CurrentUnderlyingType () == config_control_designe_date_and_time )
 	//  DATE_AND_TIME
 	return ((SdaiDate_and_time_ptr) _app_inst) ->date_component_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -15897,7 +15897,7 @@ SdaiDate_time_select::date_component_ (const SdaiDate_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -15908,7 +15908,7 @@ SdaiDate_time_select::zone_() const
   if( CurrentUnderlyingType () == config_control_designe_local_time )
 	//  LOCAL_TIME
 	return ((SdaiLocal_time_ptr) _app_inst) ->zone_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -15925,7 +15925,7 @@ SdaiDate_time_select::zone_ (const SdaiCoordinated_universal_time_offset_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -15936,7 +15936,7 @@ SdaiDate_time_select::second_component_() const
   if( CurrentUnderlyingType () == config_control_designe_local_time )
 	//  LOCAL_TIME
 	return ((SdaiLocal_time_ptr) _app_inst) ->second_component_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -15953,7 +15953,7 @@ SdaiDate_time_select::second_component_ (const SdaiSecond_in_minute x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -15964,7 +15964,7 @@ SdaiDate_time_select::minute_component_() const
   if( CurrentUnderlyingType () == config_control_designe_local_time )
 	//  LOCAL_TIME
 	return ((SdaiLocal_time_ptr) _app_inst) ->minute_component_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -15981,7 +15981,7 @@ SdaiDate_time_select::minute_component_ (const SdaiMinute_in_hour x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -15992,7 +15992,7 @@ SdaiDate_time_select::hour_component_() const
   if( CurrentUnderlyingType () == config_control_designe_local_time )
 	//  LOCAL_TIME
 	return ((SdaiLocal_time_ptr) _app_inst) ->hour_component_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -16009,7 +16009,7 @@ SdaiDate_time_select::hour_component_ (const SdaiHour_in_day x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -16020,7 +16020,7 @@ SdaiDate_time_select::year_component_() const
   if( CurrentUnderlyingType () == config_control_designe_date )
 	//  DATE
 	return ((SdaiDate_ptr) _app_inst) ->year_component_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -16037,7 +16037,7 @@ SdaiDate_time_select::year_component_ (const SdaiYear_number x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -16160,11 +16160,11 @@ SdaiCurve_on_surface::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -16196,7 +16196,7 @@ SdaiCurve_on_surface::STEPwrite_content (ostream& out, const char * currSch) con
   else if (CurrentUnderlyingType () == config_control_designe_composite_curve_on_surface)
 	_app_inst -> STEPwrite_reference (out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -16212,7 +16212,7 @@ SdaiCurve_on_surface::ValueType() const
   else if (CurrentUnderlyingType() == config_control_designe_composite_curve_on_surface)
     return sdaiINSTANCE;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -16248,7 +16248,7 @@ SdaiCurve_on_surface::STEPwrite_verbose (ostream& out, const char *currSch) cons
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -16299,11 +16299,11 @@ SdaiCurve_on_surface::STEPread_content (istream& in, InstMgr * instances,
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -16316,11 +16316,11 @@ SdaiCurve_on_surface::StrToVal_content (const char * str, InstMgr * instances)
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -16346,7 +16346,7 @@ SdaiCurve_on_surface_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "SdaiCurve_on_surface access hook funct called." << endl;
+	*logStream << "SdaiCurve_on_surface access hook funct called." << std::endl;
     }
 #endif
     SdaiCurve_on_surface *s = (SdaiCurve_on_surface *) object;
@@ -16354,14 +16354,14 @@ SdaiCurve_on_surface_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "underlying type set to " << s->UnderlyingTypeName() << endl << endl;
+	*logStream << "underlying type set to " << s->UnderlyingTypeName() << std::endl << std::endl;
     }
 #endif
     const TypeDescriptor *td = s->CanBe(s->UnderlyingTypeName());
     s->SetUnderlyingType(td);
     if(!td)
-	cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
-	     << endl;
+	std::cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
+	     << std::endl;
 }
 #endif
 
@@ -16385,14 +16385,14 @@ SdaiCurve_on_surface::SdaiCurve_on_surface( const SelectTypeDescriptor *typedesc
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiCurve_on_surface constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiCurve_on_surface constructor." << std::endl;
     }
 #endif
    nullify();
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiCurve_on_surface constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiCurve_on_surface constructor." << std::endl;
     }
 #endif
 }
@@ -16405,14 +16405,14 @@ SdaiCurve_on_surface::SdaiCurve_on_surface( const SdaiPcurve_ptr& o,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiCurve_on_surface constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiCurve_on_surface constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiCurve_on_surface constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiCurve_on_surface constructor." << std::endl;
     }
 #endif
 }
@@ -16424,14 +16424,14 @@ SdaiCurve_on_surface::SdaiCurve_on_surface( const SdaiSurface_curve_ptr& o,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiCurve_on_surface constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiCurve_on_surface constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiCurve_on_surface constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiCurve_on_surface constructor." << std::endl;
     }
 #endif
 }
@@ -16443,14 +16443,14 @@ SdaiCurve_on_surface::SdaiCurve_on_surface( const SdaiComposite_curve_on_surface
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiCurve_on_surface constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiCurve_on_surface constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiCurve_on_surface constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiCurve_on_surface constructor." << std::endl;
     }
 #endif
 }
@@ -16486,7 +16486,7 @@ SdaiCurve_on_surface::operator SdaiPcurve_ptr()
       return ((SdaiPcurve_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -16498,7 +16498,7 @@ SdaiCurve_on_surface::operator SdaiSurface_curve_ptr()
       return ((SdaiSurface_curve_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -16510,7 +16510,7 @@ SdaiCurve_on_surface::operator SdaiComposite_curve_on_surface_ptr()
       return ((SdaiComposite_curve_on_surface_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -16525,7 +16525,7 @@ SdaiCurve_on_surface::self_intersect_() const
   if( CurrentUnderlyingType () == config_control_designe_composite_curve_on_surface )
 	//  COMPOSITE_CURVE_ON_SURFACE
 	return ((SdaiComposite_curve_on_surface_ptr) _app_inst) ->self_intersect_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return (SCLLOG(Logical)) 0;
 }
@@ -16542,7 +16542,7 @@ SdaiCurve_on_surface::self_intersect_ (const SCLLOG(Logical) x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -16553,7 +16553,7 @@ SdaiCurve_on_surface::segments_() const
   if( CurrentUnderlyingType () == config_control_designe_composite_curve_on_surface )
 	//  COMPOSITE_CURVE_ON_SURFACE
 	return ((SdaiComposite_curve_on_surface_ptr) _app_inst) ->segments_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -16570,7 +16570,7 @@ SdaiCurve_on_surface::segments_ (const EntityAggregate_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -16581,7 +16581,7 @@ SdaiCurve_on_surface::master_representation_() const
   if( CurrentUnderlyingType () == config_control_designe_surface_curve )
 	//  SURFACE_CURVE
 	return ((SdaiSurface_curve_ptr) _app_inst) ->master_representation_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return (Preferred_surface_curve_representation) 0;
 }
@@ -16598,7 +16598,7 @@ SdaiCurve_on_surface::master_representation_ (const SdaiPreferred_surface_curve_
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -16609,7 +16609,7 @@ SdaiCurve_on_surface::associated_geometry_() const
   if( CurrentUnderlyingType () == config_control_designe_surface_curve )
 	//  SURFACE_CURVE
 	return ((SdaiSurface_curve_ptr) _app_inst) ->associated_geometry_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -16626,7 +16626,7 @@ SdaiCurve_on_surface::associated_geometry_ (const SdaiPcurve_or_surfaces_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -16637,7 +16637,7 @@ SdaiCurve_on_surface::curve_3d_() const
   if( CurrentUnderlyingType () == config_control_designe_surface_curve )
 	//  SURFACE_CURVE
 	return ((SdaiSurface_curve_ptr) _app_inst) ->curve_3d_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -16654,7 +16654,7 @@ SdaiCurve_on_surface::curve_3d_ (const SdaiCurve_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -16665,7 +16665,7 @@ SdaiCurve_on_surface::reference_to_curve_() const
   if( CurrentUnderlyingType () == config_control_designe_pcurve )
 	//  PCURVE
 	return ((SdaiPcurve_ptr) _app_inst) ->reference_to_curve_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -16682,7 +16682,7 @@ SdaiCurve_on_surface::reference_to_curve_ (const SdaiDefinitional_representation
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -16695,7 +16695,7 @@ SdaiCurve_on_surface::basis_surface_() const
 	return ((SdaiPcurve_ptr) _app_inst) ->basis_surface_();
   //  for SURFACE_CURVE  attribute is derived
   //  for COMPOSITE_CURVE_ON_SURFACE  attribute is derived
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -16714,7 +16714,7 @@ SdaiCurve_on_surface::basis_surface_ (const SdaiSurface_ptr x)
   //  for COMPOSITE_CURVE_ON_SURFACE  attribute is derived
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -16731,7 +16731,7 @@ SdaiCurve_on_surface::name_() const
   if( CurrentUnderlyingType () == config_control_designe_composite_curve_on_surface )
 	//  COMPOSITE_CURVE_ON_SURFACE
 	return ((SdaiComposite_curve_on_surface_ptr) _app_inst) ->name_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -16758,7 +16758,7 @@ SdaiCurve_on_surface::name_ (const SdaiLabel x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -16869,11 +16869,11 @@ SdaiTrimming_select::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -16903,7 +16903,7 @@ SdaiTrimming_select::STEPwrite_content (ostream& out, const char * currSch) cons
   else if (CurrentUnderlyingType () == config_control_designt_parameter_value)
 	WriteReal(_real,out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -16917,7 +16917,7 @@ SdaiTrimming_select::ValueType() const
   else if (CurrentUnderlyingType() == config_control_designt_parameter_value)
     return sdaiREAL;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -16947,7 +16947,7 @@ SdaiTrimming_select::STEPwrite_verbose (ostream& out, const char *currSch) const
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -16976,11 +16976,11 @@ SdaiTrimming_select::STEPread_content (istream& in, InstMgr * instances,
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -16993,11 +16993,11 @@ SdaiTrimming_select::StrToVal_content (const char * str, InstMgr * instances)
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -17023,7 +17023,7 @@ SdaiTrimming_select_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "SdaiTrimming_select access hook funct called." << endl;
+	*logStream << "SdaiTrimming_select access hook funct called." << std::endl;
     }
 #endif
     SdaiTrimming_select *s = (SdaiTrimming_select *) object;
@@ -17031,14 +17031,14 @@ SdaiTrimming_select_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "underlying type set to " << s->UnderlyingTypeName() << endl << endl;
+	*logStream << "underlying type set to " << s->UnderlyingTypeName() << std::endl << std::endl;
     }
 #endif
     const TypeDescriptor *td = s->CanBe(s->UnderlyingTypeName());
     s->SetUnderlyingType(td);
     if(!td)
-	cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
-	     << endl;
+	std::cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
+	     << std::endl;
 }
 #endif
 
@@ -17062,14 +17062,14 @@ SdaiTrimming_select::SdaiTrimming_select( const SelectTypeDescriptor *typedescri
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiTrimming_select constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiTrimming_select constructor." << std::endl;
     }
 #endif
    nullify();
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiTrimming_select constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiTrimming_select constructor." << std::endl;
     }
 #endif
 }
@@ -17082,14 +17082,14 @@ SdaiTrimming_select::SdaiTrimming_select( const SdaiCartesian_point_ptr& o,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiTrimming_select constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiTrimming_select constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiTrimming_select constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiTrimming_select constructor." << std::endl;
     }
 #endif
 }
@@ -17101,14 +17101,14 @@ SdaiTrimming_select::SdaiTrimming_select( const SdaiParameter_value& o,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiTrimming_select constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiTrimming_select constructor." << std::endl;
     }
 #endif
    _real = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiTrimming_select constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiTrimming_select constructor." << std::endl;
     }
 #endif
 }
@@ -17144,7 +17144,7 @@ SdaiTrimming_select::operator SdaiCartesian_point_ptr()
       return ((SdaiCartesian_point_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -17159,7 +17159,7 @@ SdaiTrimming_select::operator SdaiParameter_value()
    Error( "Underlying type is not SdaiParameter_value" );
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return 0;
@@ -17174,7 +17174,7 @@ SdaiTrimming_select::coordinates_() const
   if( CurrentUnderlyingType () == config_control_designe_cartesian_point )
 	//  CARTESIAN_POINT
 	return ((SdaiCartesian_point_ptr) _app_inst) ->coordinates_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -17191,7 +17191,7 @@ SdaiTrimming_select::coordinates_ (const RealAggregate_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -17202,7 +17202,7 @@ SdaiTrimming_select::name_() const
   if( CurrentUnderlyingType () == config_control_designe_cartesian_point )
 	//  CARTESIAN_POINT
 	return ((SdaiCartesian_point_ptr) _app_inst) ->name_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -17219,7 +17219,7 @@ SdaiTrimming_select::name_ (const SdaiLabel x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -17309,11 +17309,11 @@ SdaiContracted_item::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -17341,7 +17341,7 @@ SdaiContracted_item::STEPwrite_content (ostream& out, const char * currSch) cons
   if (CurrentUnderlyingType () == config_control_designe_product_definition_formation)
 	_app_inst -> STEPwrite_reference (out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -17353,7 +17353,7 @@ SdaiContracted_item::ValueType() const
   if (CurrentUnderlyingType() == config_control_designe_product_definition_formation)
     return sdaiINSTANCE;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -17377,7 +17377,7 @@ SdaiContracted_item::STEPwrite_verbose (ostream& out, const char *currSch) const
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -17402,11 +17402,11 @@ SdaiContracted_item::STEPread_content (istream& in, InstMgr * instances,
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -17419,11 +17419,11 @@ SdaiContracted_item::StrToVal_content (const char * str, InstMgr * instances)
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -17449,7 +17449,7 @@ SdaiContracted_item_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "SdaiContracted_item access hook funct called." << endl;
+	*logStream << "SdaiContracted_item access hook funct called." << std::endl;
     }
 #endif
     SdaiContracted_item *s = (SdaiContracted_item *) object;
@@ -17457,14 +17457,14 @@ SdaiContracted_item_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "underlying type set to " << s->UnderlyingTypeName() << endl << endl;
+	*logStream << "underlying type set to " << s->UnderlyingTypeName() << std::endl << std::endl;
     }
 #endif
     const TypeDescriptor *td = s->CanBe(s->UnderlyingTypeName());
     s->SetUnderlyingType(td);
     if(!td)
-	cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
-	     << endl;
+	std::cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
+	     << std::endl;
 }
 #endif
 
@@ -17488,14 +17488,14 @@ SdaiContracted_item::SdaiContracted_item( const SelectTypeDescriptor *typedescri
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiContracted_item constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiContracted_item constructor." << std::endl;
     }
 #endif
    nullify();
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiContracted_item constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiContracted_item constructor." << std::endl;
     }
 #endif
 }
@@ -17508,14 +17508,14 @@ SdaiContracted_item::SdaiContracted_item( const SdaiProduct_definition_formation
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiContracted_item constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiContracted_item constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiContracted_item constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiContracted_item constructor." << std::endl;
     }
 #endif
 }
@@ -17551,7 +17551,7 @@ SdaiContracted_item::operator SdaiProduct_definition_formation_ptr()
       return ((SdaiProduct_definition_formation_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -17566,7 +17566,7 @@ SdaiContracted_item::of_product_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition_formation )
 	//  PRODUCT_DEFINITION_FORMATION
 	return ((SdaiProduct_definition_formation_ptr) _app_inst) ->of_product_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -17583,7 +17583,7 @@ SdaiContracted_item::of_product_ (const SdaiProduct_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -17594,7 +17594,7 @@ SdaiContracted_item::description_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition_formation )
 	//  PRODUCT_DEFINITION_FORMATION
 	return ((SdaiProduct_definition_formation_ptr) _app_inst) ->description_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -17611,7 +17611,7 @@ SdaiContracted_item::description_ (const SdaiText x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -17622,7 +17622,7 @@ SdaiContracted_item::id_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition_formation )
 	//  PRODUCT_DEFINITION_FORMATION
 	return ((SdaiProduct_definition_formation_ptr) _app_inst) ->id_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -17639,7 +17639,7 @@ SdaiContracted_item::id_ (const SdaiIdentifier x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -17708,11 +17708,11 @@ SdaiUnit::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -17740,7 +17740,7 @@ SdaiUnit::STEPwrite_content (ostream& out, const char * currSch) const
   if (CurrentUnderlyingType () == config_control_designe_named_unit)
 	_app_inst -> STEPwrite_reference (out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -17752,7 +17752,7 @@ SdaiUnit::ValueType() const
   if (CurrentUnderlyingType() == config_control_designe_named_unit)
     return sdaiINSTANCE;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -17776,7 +17776,7 @@ SdaiUnit::STEPwrite_verbose (ostream& out, const char *currSch) const
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -17801,11 +17801,11 @@ SdaiUnit::STEPread_content (istream& in, InstMgr * instances,
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -17818,11 +17818,11 @@ SdaiUnit::StrToVal_content (const char * str, InstMgr * instances)
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -17848,7 +17848,7 @@ SdaiUnit_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "SdaiUnit access hook funct called." << endl;
+	*logStream << "SdaiUnit access hook funct called." << std::endl;
     }
 #endif
     SdaiUnit *s = (SdaiUnit *) object;
@@ -17856,14 +17856,14 @@ SdaiUnit_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "underlying type set to " << s->UnderlyingTypeName() << endl << endl;
+	*logStream << "underlying type set to " << s->UnderlyingTypeName() << std::endl << std::endl;
     }
 #endif
     const TypeDescriptor *td = s->CanBe(s->UnderlyingTypeName());
     s->SetUnderlyingType(td);
     if(!td)
-	cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
-	     << endl;
+	std::cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
+	     << std::endl;
 }
 #endif
 
@@ -17887,14 +17887,14 @@ SdaiUnit::SdaiUnit( const SelectTypeDescriptor *typedescript )
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiUnit constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiUnit constructor." << std::endl;
     }
 #endif
    nullify();
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiUnit constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiUnit constructor." << std::endl;
     }
 #endif
 }
@@ -17907,14 +17907,14 @@ SdaiUnit::SdaiUnit( const SdaiNamed_unit_ptr& o,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiUnit constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiUnit constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiUnit constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiUnit constructor." << std::endl;
     }
 #endif
 }
@@ -17950,7 +17950,7 @@ SdaiUnit::operator SdaiNamed_unit_ptr()
       return ((SdaiNamed_unit_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -17965,7 +17965,7 @@ SdaiUnit::dimensions_() const
   if( CurrentUnderlyingType () == config_control_designe_named_unit )
 	//  NAMED_UNIT
 	return ((SdaiNamed_unit_ptr) _app_inst) ->dimensions_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -17982,7 +17982,7 @@ SdaiUnit::dimensions_ (const SdaiDimensional_exponents_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -18051,11 +18051,11 @@ SdaiReversible_topology::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -18087,7 +18087,7 @@ SdaiReversible_topology::STEPwrite_content (ostream& out, const char * currSch) 
   else if (CurrentUnderlyingType () == config_control_designt_set_of_reversible_topology_item)
 	_sdaireversible_topology_items.STEPwrite (out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -18103,7 +18103,7 @@ SdaiReversible_topology::ValueType() const
   else if (CurrentUnderlyingType() == config_control_designt_set_of_reversible_topology_item)
     return SET_TYPE;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -18139,7 +18139,7 @@ SdaiReversible_topology::STEPwrite_verbose (ostream& out, const char *currSch) c
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -18167,11 +18167,11 @@ SdaiReversible_topology::STEPread_content (istream& in, InstMgr * instances,
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -18186,11 +18186,11 @@ SdaiReversible_topology::StrToVal_content (const char * str, InstMgr * instances
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -18216,7 +18216,7 @@ SdaiReversible_topology_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "SdaiReversible_topology access hook funct called." << endl;
+	*logStream << "SdaiReversible_topology access hook funct called." << std::endl;
     }
 #endif
     SdaiReversible_topology *s = (SdaiReversible_topology *) object;
@@ -18224,14 +18224,14 @@ SdaiReversible_topology_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "underlying type set to " << s->UnderlyingTypeName() << endl << endl;
+	*logStream << "underlying type set to " << s->UnderlyingTypeName() << std::endl << std::endl;
     }
 #endif
     const TypeDescriptor *td = s->CanBe(s->UnderlyingTypeName());
     s->SetUnderlyingType(td);
     if(!td)
-	cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
-	     << endl;
+	std::cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
+	     << std::endl;
 }
 #endif
 
@@ -18256,14 +18256,14 @@ SdaiReversible_topology::SdaiReversible_topology( const SelectTypeDescriptor *ty
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiReversible_topology constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiReversible_topology constructor." << std::endl;
     }
 #endif
    nullify();
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiReversible_topology constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiReversible_topology constructor." << std::endl;
     }
 #endif
 }
@@ -18277,14 +18277,14 @@ SdaiReversible_topology::SdaiReversible_topology( const SdaiReversible_topology_
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiReversible_topology constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiReversible_topology constructor." << std::endl;
     }
 #endif
    _sdaireversible_topology_item = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiReversible_topology constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiReversible_topology constructor." << std::endl;
     }
 #endif
 }
@@ -18297,7 +18297,7 @@ SdaiReversible_topology::SdaiReversible_topology( const SdaiSet_of_reversible_to
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiReversible_topology constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiReversible_topology constructor." << std::endl;
     }
 #endif
    _sdaireversible_topology_items.ShallowCopy (*o);
@@ -18305,7 +18305,7 @@ SdaiReversible_topology::SdaiReversible_topology( const SdaiSet_of_reversible_to
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiReversible_topology constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiReversible_topology constructor." << std::endl;
     }
 #endif
 }
@@ -18344,7 +18344,7 @@ SdaiReversible_topology::operator SdaiReversible_topology_item_ptr()
    Error( "Underlying type is not SdaiReversible_topology_item_ptr" );
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return 0;
@@ -18361,7 +18361,7 @@ SdaiReversible_topology::operator SdaiSet_of_reversible_topology_item_ptr()
    Error( "Underlying type is not SdaiSet_of_reversible_topology_item_ptr" );
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return (SdaiSet_of_reversible_topology_item_ptr)0;
@@ -18477,11 +18477,11 @@ SdaiWork_item::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -18509,7 +18509,7 @@ SdaiWork_item::STEPwrite_content (ostream& out, const char * currSch) const
   if (CurrentUnderlyingType () == config_control_designe_product_definition_formation)
 	_app_inst -> STEPwrite_reference (out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -18521,7 +18521,7 @@ SdaiWork_item::ValueType() const
   if (CurrentUnderlyingType() == config_control_designe_product_definition_formation)
     return sdaiINSTANCE;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -18545,7 +18545,7 @@ SdaiWork_item::STEPwrite_verbose (ostream& out, const char *currSch) const
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -18570,11 +18570,11 @@ SdaiWork_item::STEPread_content (istream& in, InstMgr * instances,
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -18587,11 +18587,11 @@ SdaiWork_item::StrToVal_content (const char * str, InstMgr * instances)
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -18617,7 +18617,7 @@ SdaiWork_item_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "SdaiWork_item access hook funct called." << endl;
+	*logStream << "SdaiWork_item access hook funct called." << std::endl;
     }
 #endif
     SdaiWork_item *s = (SdaiWork_item *) object;
@@ -18625,14 +18625,14 @@ SdaiWork_item_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "underlying type set to " << s->UnderlyingTypeName() << endl << endl;
+	*logStream << "underlying type set to " << s->UnderlyingTypeName() << std::endl << std::endl;
     }
 #endif
     const TypeDescriptor *td = s->CanBe(s->UnderlyingTypeName());
     s->SetUnderlyingType(td);
     if(!td)
-	cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
-	     << endl;
+	std::cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
+	     << std::endl;
 }
 #endif
 
@@ -18656,14 +18656,14 @@ SdaiWork_item::SdaiWork_item( const SelectTypeDescriptor *typedescript )
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiWork_item constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiWork_item constructor." << std::endl;
     }
 #endif
    nullify();
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiWork_item constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiWork_item constructor." << std::endl;
     }
 #endif
 }
@@ -18676,14 +18676,14 @@ SdaiWork_item::SdaiWork_item( const SdaiProduct_definition_formation_ptr& o,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiWork_item constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiWork_item constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiWork_item constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiWork_item constructor." << std::endl;
     }
 #endif
 }
@@ -18719,7 +18719,7 @@ SdaiWork_item::operator SdaiProduct_definition_formation_ptr()
       return ((SdaiProduct_definition_formation_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -18734,7 +18734,7 @@ SdaiWork_item::of_product_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition_formation )
 	//  PRODUCT_DEFINITION_FORMATION
 	return ((SdaiProduct_definition_formation_ptr) _app_inst) ->of_product_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -18751,7 +18751,7 @@ SdaiWork_item::of_product_ (const SdaiProduct_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -18762,7 +18762,7 @@ SdaiWork_item::description_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition_formation )
 	//  PRODUCT_DEFINITION_FORMATION
 	return ((SdaiProduct_definition_formation_ptr) _app_inst) ->description_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -18779,7 +18779,7 @@ SdaiWork_item::description_ (const SdaiText x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -18790,7 +18790,7 @@ SdaiWork_item::id_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition_formation )
 	//  PRODUCT_DEFINITION_FORMATION
 	return ((SdaiProduct_definition_formation_ptr) _app_inst) ->id_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -18807,7 +18807,7 @@ SdaiWork_item::id_ (const SdaiIdentifier x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -18888,11 +18888,11 @@ SdaiSupported_item::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -18924,7 +18924,7 @@ SdaiSupported_item::STEPwrite_content (ostream& out, const char * currSch) const
   else if (CurrentUnderlyingType () == config_control_designe_action_method)
 	_app_inst -> STEPwrite_reference (out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -18940,7 +18940,7 @@ SdaiSupported_item::ValueType() const
   else if (CurrentUnderlyingType() == config_control_designe_action_method)
     return sdaiINSTANCE;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -18976,7 +18976,7 @@ SdaiSupported_item::STEPwrite_verbose (ostream& out, const char *currSch) const
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -19027,11 +19027,11 @@ SdaiSupported_item::STEPread_content (istream& in, InstMgr * instances,
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -19044,11 +19044,11 @@ SdaiSupported_item::StrToVal_content (const char * str, InstMgr * instances)
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -19074,7 +19074,7 @@ SdaiSupported_item_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "SdaiSupported_item access hook funct called." << endl;
+	*logStream << "SdaiSupported_item access hook funct called." << std::endl;
     }
 #endif
     SdaiSupported_item *s = (SdaiSupported_item *) object;
@@ -19082,14 +19082,14 @@ SdaiSupported_item_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "underlying type set to " << s->UnderlyingTypeName() << endl << endl;
+	*logStream << "underlying type set to " << s->UnderlyingTypeName() << std::endl << std::endl;
     }
 #endif
     const TypeDescriptor *td = s->CanBe(s->UnderlyingTypeName());
     s->SetUnderlyingType(td);
     if(!td)
-	cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
-	     << endl;
+	std::cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
+	     << std::endl;
 }
 #endif
 
@@ -19113,14 +19113,14 @@ SdaiSupported_item::SdaiSupported_item( const SelectTypeDescriptor *typedescript
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiSupported_item constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiSupported_item constructor." << std::endl;
     }
 #endif
    nullify();
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiSupported_item constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiSupported_item constructor." << std::endl;
     }
 #endif
 }
@@ -19133,14 +19133,14 @@ SdaiSupported_item::SdaiSupported_item( const SdaiAction_directive_ptr& o,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiSupported_item constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiSupported_item constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiSupported_item constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiSupported_item constructor." << std::endl;
     }
 #endif
 }
@@ -19152,14 +19152,14 @@ SdaiSupported_item::SdaiSupported_item( const SdaiAction_ptr& o,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiSupported_item constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiSupported_item constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiSupported_item constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiSupported_item constructor." << std::endl;
     }
 #endif
 }
@@ -19171,14 +19171,14 @@ SdaiSupported_item::SdaiSupported_item( const SdaiAction_method_ptr& o,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiSupported_item constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiSupported_item constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiSupported_item constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiSupported_item constructor." << std::endl;
     }
 #endif
 }
@@ -19214,7 +19214,7 @@ SdaiSupported_item::operator SdaiAction_directive_ptr()
       return ((SdaiAction_directive_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -19226,7 +19226,7 @@ SdaiSupported_item::operator SdaiAction_ptr()
       return ((SdaiAction_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -19238,7 +19238,7 @@ SdaiSupported_item::operator SdaiAction_method_ptr()
       return ((SdaiAction_method_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -19253,7 +19253,7 @@ SdaiSupported_item::purpose_() const
   if( CurrentUnderlyingType () == config_control_designe_action_method )
 	//  ACTION_METHOD
 	return ((SdaiAction_method_ptr) _app_inst) ->purpose_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -19270,7 +19270,7 @@ SdaiSupported_item::purpose_ (const SdaiText x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -19281,7 +19281,7 @@ SdaiSupported_item::consequence_() const
   if( CurrentUnderlyingType () == config_control_designe_action_method )
 	//  ACTION_METHOD
 	return ((SdaiAction_method_ptr) _app_inst) ->consequence_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -19298,7 +19298,7 @@ SdaiSupported_item::consequence_ (const SdaiText x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -19309,7 +19309,7 @@ SdaiSupported_item::chosen_method_() const
   if( CurrentUnderlyingType () == config_control_designe_action )
 	//  ACTION
 	return ((SdaiAction_ptr) _app_inst) ->chosen_method_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -19326,7 +19326,7 @@ SdaiSupported_item::chosen_method_ (const SdaiAction_method_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -19337,7 +19337,7 @@ SdaiSupported_item::requests_() const
   if( CurrentUnderlyingType () == config_control_designe_action_directive )
 	//  ACTION_DIRECTIVE
 	return ((SdaiAction_directive_ptr) _app_inst) ->requests_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -19354,7 +19354,7 @@ SdaiSupported_item::requests_ (const EntityAggregate_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -19365,7 +19365,7 @@ SdaiSupported_item::comment_() const
   if( CurrentUnderlyingType () == config_control_designe_action_directive )
 	//  ACTION_DIRECTIVE
 	return ((SdaiAction_directive_ptr) _app_inst) ->comment_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -19382,7 +19382,7 @@ SdaiSupported_item::comment_ (const SdaiText x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -19393,7 +19393,7 @@ SdaiSupported_item::analysis_() const
   if( CurrentUnderlyingType () == config_control_designe_action_directive )
 	//  ACTION_DIRECTIVE
 	return ((SdaiAction_directive_ptr) _app_inst) ->analysis_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -19410,7 +19410,7 @@ SdaiSupported_item::analysis_ (const SdaiText x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -19427,7 +19427,7 @@ SdaiSupported_item::description_() const
   if( CurrentUnderlyingType () == config_control_designe_action_method )
 	//  ACTION_METHOD
 	return ((SdaiAction_method_ptr) _app_inst) ->description_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -19454,7 +19454,7 @@ SdaiSupported_item::description_ (const SdaiText x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -19471,7 +19471,7 @@ SdaiSupported_item::name_() const
   if( CurrentUnderlyingType () == config_control_designe_action_method )
 	//  ACTION_METHOD
 	return ((SdaiAction_method_ptr) _app_inst) ->name_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -19498,7 +19498,7 @@ SdaiSupported_item::name_ (const SdaiLabel x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -19669,11 +19669,11 @@ SdaiApproved_item::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -19721,7 +19721,7 @@ SdaiApproved_item::STEPwrite_content (ostream& out, const char * currSch) const
   else if (CurrentUnderlyingType () == config_control_designe_contract)
 	_app_inst -> STEPwrite_reference (out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -19753,7 +19753,7 @@ SdaiApproved_item::ValueType() const
   else if (CurrentUnderlyingType() == config_control_designe_contract)
     return sdaiINSTANCE;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -19837,7 +19837,7 @@ SdaiApproved_item::STEPwrite_verbose (ostream& out, const char *currSch) const
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -19992,11 +19992,11 @@ SdaiApproved_item::STEPread_content (istream& in, InstMgr * instances,
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -20009,11 +20009,11 @@ SdaiApproved_item::StrToVal_content (const char * str, InstMgr * instances)
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -20039,7 +20039,7 @@ SdaiApproved_item_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "SdaiApproved_item access hook funct called." << endl;
+	*logStream << "SdaiApproved_item access hook funct called." << std::endl;
     }
 #endif
     SdaiApproved_item *s = (SdaiApproved_item *) object;
@@ -20047,14 +20047,14 @@ SdaiApproved_item_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "underlying type set to " << s->UnderlyingTypeName() << endl << endl;
+	*logStream << "underlying type set to " << s->UnderlyingTypeName() << std::endl << std::endl;
     }
 #endif
     const TypeDescriptor *td = s->CanBe(s->UnderlyingTypeName());
     s->SetUnderlyingType(td);
     if(!td)
-	cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
-	     << endl;
+	std::cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
+	     << std::endl;
 }
 #endif
 
@@ -20078,14 +20078,14 @@ SdaiApproved_item::SdaiApproved_item( const SelectTypeDescriptor *typedescript )
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiApproved_item constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiApproved_item constructor." << std::endl;
     }
 #endif
    nullify();
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiApproved_item constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiApproved_item constructor." << std::endl;
     }
 #endif
 }
@@ -20098,14 +20098,14 @@ SdaiApproved_item::SdaiApproved_item( const SdaiProduct_definition_formation_ptr
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiApproved_item constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiApproved_item constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiApproved_item constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiApproved_item constructor." << std::endl;
     }
 #endif
 }
@@ -20117,14 +20117,14 @@ SdaiApproved_item::SdaiApproved_item( const SdaiProduct_definition_ptr& o,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiApproved_item constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiApproved_item constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiApproved_item constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiApproved_item constructor." << std::endl;
     }
 #endif
 }
@@ -20136,14 +20136,14 @@ SdaiApproved_item::SdaiApproved_item( const SdaiConfiguration_effectivity_ptr& o
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiApproved_item constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiApproved_item constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiApproved_item constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiApproved_item constructor." << std::endl;
     }
 #endif
 }
@@ -20155,14 +20155,14 @@ SdaiApproved_item::SdaiApproved_item( const SdaiConfiguration_item_ptr& o,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiApproved_item constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiApproved_item constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiApproved_item constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiApproved_item constructor." << std::endl;
     }
 #endif
 }
@@ -20174,14 +20174,14 @@ SdaiApproved_item::SdaiApproved_item( const SdaiSecurity_classification_ptr& o,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiApproved_item constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiApproved_item constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiApproved_item constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiApproved_item constructor." << std::endl;
     }
 #endif
 }
@@ -20193,14 +20193,14 @@ SdaiApproved_item::SdaiApproved_item( const SdaiChange_request_ptr& o,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiApproved_item constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiApproved_item constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiApproved_item constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiApproved_item constructor." << std::endl;
     }
 #endif
 }
@@ -20212,14 +20212,14 @@ SdaiApproved_item::SdaiApproved_item( const SdaiChange_ptr& o,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiApproved_item constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiApproved_item constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiApproved_item constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiApproved_item constructor." << std::endl;
     }
 #endif
 }
@@ -20231,14 +20231,14 @@ SdaiApproved_item::SdaiApproved_item( const SdaiStart_request_ptr& o,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiApproved_item constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiApproved_item constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiApproved_item constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiApproved_item constructor." << std::endl;
     }
 #endif
 }
@@ -20250,14 +20250,14 @@ SdaiApproved_item::SdaiApproved_item( const SdaiStart_work_ptr& o,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiApproved_item constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiApproved_item constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiApproved_item constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiApproved_item constructor." << std::endl;
     }
 #endif
 }
@@ -20269,14 +20269,14 @@ SdaiApproved_item::SdaiApproved_item( const SdaiCertification_ptr& o,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiApproved_item constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiApproved_item constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiApproved_item constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiApproved_item constructor." << std::endl;
     }
 #endif
 }
@@ -20288,14 +20288,14 @@ SdaiApproved_item::SdaiApproved_item( const SdaiContract_ptr& o,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiApproved_item constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiApproved_item constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiApproved_item constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiApproved_item constructor." << std::endl;
     }
 #endif
 }
@@ -20331,7 +20331,7 @@ SdaiApproved_item::operator SdaiProduct_definition_formation_ptr()
       return ((SdaiProduct_definition_formation_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -20343,7 +20343,7 @@ SdaiApproved_item::operator SdaiProduct_definition_ptr()
       return ((SdaiProduct_definition_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -20355,7 +20355,7 @@ SdaiApproved_item::operator SdaiConfiguration_effectivity_ptr()
       return ((SdaiConfiguration_effectivity_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -20367,7 +20367,7 @@ SdaiApproved_item::operator SdaiConfiguration_item_ptr()
       return ((SdaiConfiguration_item_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -20379,7 +20379,7 @@ SdaiApproved_item::operator SdaiSecurity_classification_ptr()
       return ((SdaiSecurity_classification_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -20391,7 +20391,7 @@ SdaiApproved_item::operator SdaiChange_request_ptr()
       return ((SdaiChange_request_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -20403,7 +20403,7 @@ SdaiApproved_item::operator SdaiChange_ptr()
       return ((SdaiChange_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -20415,7 +20415,7 @@ SdaiApproved_item::operator SdaiStart_request_ptr()
       return ((SdaiStart_request_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -20427,7 +20427,7 @@ SdaiApproved_item::operator SdaiStart_work_ptr()
       return ((SdaiStart_work_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -20439,7 +20439,7 @@ SdaiApproved_item::operator SdaiCertification_ptr()
       return ((SdaiCertification_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -20451,7 +20451,7 @@ SdaiApproved_item::operator SdaiContract_ptr()
       return ((SdaiContract_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -20468,7 +20468,7 @@ SdaiApproved_item::kind_() const
 	return ((SdaiCertification_ptr) _app_inst) ->kind_();
   //  CONTRACT
 	//  attribute access function has a different return type
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -20486,7 +20486,7 @@ SdaiApproved_item::kind_ (const SdaiCertification_type_ptr x)
   //  for CONTRACT  attribute access function has a different argument type
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -20500,7 +20500,7 @@ SdaiApproved_item::assigned_action_() const
   if( CurrentUnderlyingType () == config_control_designe_start_work )
 	//  START_WORK
 	return ((SdaiStart_work_ptr) _app_inst) ->assigned_action_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -20522,7 +20522,7 @@ SdaiApproved_item::assigned_action_ (const SdaiAction_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -20539,7 +20539,7 @@ SdaiApproved_item::items_() const
 	//  attribute access function has a different return type
   //  START_WORK
 	//  attribute access function has a different return type
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -20559,7 +20559,7 @@ SdaiApproved_item::items_ (const SdaiChange_request_items_ptr x)
   //  for START_WORK  attribute access function has a different argument type
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -20573,7 +20573,7 @@ SdaiApproved_item::assigned_action_request_() const
   if( CurrentUnderlyingType () == config_control_designe_start_request )
 	//  START_REQUEST
 	return ((SdaiStart_request_ptr) _app_inst) ->assigned_action_request_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -20595,7 +20595,7 @@ SdaiApproved_item::assigned_action_request_ (const SdaiVersioned_action_request_
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -20606,7 +20606,7 @@ SdaiApproved_item::security_level_() const
   if( CurrentUnderlyingType () == config_control_designe_security_classification )
 	//  SECURITY_CLASSIFICATION
 	return ((SdaiSecurity_classification_ptr) _app_inst) ->security_level_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -20623,7 +20623,7 @@ SdaiApproved_item::security_level_ (const SdaiSecurity_classification_level_ptr 
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -20643,7 +20643,7 @@ SdaiApproved_item::purpose_() const
   if( CurrentUnderlyingType () == config_control_designe_contract )
 	//  CONTRACT
 	return ((SdaiContract_ptr) _app_inst) ->purpose_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -20675,7 +20675,7 @@ SdaiApproved_item::purpose_ (const SdaiLabel x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -20686,7 +20686,7 @@ SdaiApproved_item::item_concept_() const
   if( CurrentUnderlyingType () == config_control_designe_configuration_item )
 	//  CONFIGURATION_ITEM
 	return ((SdaiConfiguration_item_ptr) _app_inst) ->item_concept_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -20703,7 +20703,7 @@ SdaiApproved_item::item_concept_ (const SdaiProduct_concept_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -20723,7 +20723,7 @@ SdaiApproved_item::name_() const
   if( CurrentUnderlyingType () == config_control_designe_contract )
 	//  CONTRACT
 	return ((SdaiContract_ptr) _app_inst) ->name_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -20755,7 +20755,7 @@ SdaiApproved_item::name_ (const SdaiLabel x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -20766,7 +20766,7 @@ SdaiApproved_item::configuration_() const
   if( CurrentUnderlyingType () == config_control_designe_configuration_effectivity )
 	//  CONFIGURATION_EFFECTIVITY
 	return ((SdaiConfiguration_effectivity_ptr) _app_inst) ->configuration_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -20783,7 +20783,7 @@ SdaiApproved_item::configuration_ (const SdaiConfiguration_design_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -20794,7 +20794,7 @@ SdaiApproved_item::usage_() const
   if( CurrentUnderlyingType () == config_control_designe_configuration_effectivity )
 	//  CONFIGURATION_EFFECTIVITY
 	return ((SdaiConfiguration_effectivity_ptr) _app_inst) ->usage_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -20811,7 +20811,7 @@ SdaiApproved_item::usage_ (const SdaiProduct_definition_relationship_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -20822,7 +20822,7 @@ SdaiApproved_item::frame_of_reference_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition )
 	//  PRODUCT_DEFINITION
 	return ((SdaiProduct_definition_ptr) _app_inst) ->frame_of_reference_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -20839,7 +20839,7 @@ SdaiApproved_item::frame_of_reference_ (const SdaiProduct_definition_context_ptr
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -20850,7 +20850,7 @@ SdaiApproved_item::formation_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition )
 	//  PRODUCT_DEFINITION
 	return ((SdaiProduct_definition_ptr) _app_inst) ->formation_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -20867,7 +20867,7 @@ SdaiApproved_item::formation_ (const SdaiProduct_definition_formation_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -20878,7 +20878,7 @@ SdaiApproved_item::of_product_() const
   if( CurrentUnderlyingType () == config_control_designe_product_definition_formation )
 	//  PRODUCT_DEFINITION_FORMATION
 	return ((SdaiProduct_definition_formation_ptr) _app_inst) ->of_product_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -20895,7 +20895,7 @@ SdaiApproved_item::of_product_ (const SdaiProduct_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -20912,7 +20912,7 @@ SdaiApproved_item::description_() const
   if( CurrentUnderlyingType () == config_control_designe_configuration_item )
 	//  CONFIGURATION_ITEM
 	return ((SdaiConfiguration_item_ptr) _app_inst) ->description_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -20939,7 +20939,7 @@ SdaiApproved_item::description_ (const SdaiText x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -20959,7 +20959,7 @@ SdaiApproved_item::id_() const
   if( CurrentUnderlyingType () == config_control_designe_configuration_item )
 	//  CONFIGURATION_ITEM
 	return ((SdaiConfiguration_item_ptr) _app_inst) ->id_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -20991,7 +20991,7 @@ SdaiApproved_item::id_ (const SdaiIdentifier x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -21270,11 +21270,11 @@ SdaiSurface_model::AssignEntity (SCLP23(Application_instance) * se)
   // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-  cerr << se -> EntityName () << endl;
+  std::cerr << se -> EntityName () << std::endl;
 #endif
   return 0;
 }
@@ -21302,7 +21302,7 @@ SdaiSurface_model::STEPwrite_content (ostream& out, const char * currSch) const
   if (CurrentUnderlyingType () == config_control_designe_shell_based_surface_model)
 	_app_inst -> STEPwrite_reference (out);
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -21314,7 +21314,7 @@ SdaiSurface_model::ValueType() const
   if (CurrentUnderlyingType() == config_control_designe_shell_based_surface_model)
     return sdaiINSTANCE;
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return (BASE_TYPE)0;
@@ -21338,7 +21338,7 @@ SdaiSurface_model::STEPwrite_verbose (ostream& out, const char *currSch) const
     out << ")";
   }
   else   {
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
   }
   return;
@@ -21363,11 +21363,11 @@ SdaiSurface_model::STEPread_content (istream& in, InstMgr * instances,
   }
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << instances << "  " << addFileId << endl;
+std::cerr << instances << "  " << addFileId << std::endl;
 #endif
 
   return severity ();
@@ -21380,11 +21380,11 @@ SdaiSurface_model::StrToVal_content (const char * str, InstMgr * instances)
   default:  // should never be here - done in Select class
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 #ifdef __SUNCPLUSPLUS__
-cerr << str << "  " << instances << endl;
+std::cerr << str << "  " << instances << std::endl;
 #endif
 	return SEVERITY_WARNING;
   }
@@ -21410,7 +21410,7 @@ SdaiSurface_model_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "SdaiSurface_model access hook funct called." << endl;
+	*logStream << "SdaiSurface_model access hook funct called." << std::endl;
     }
 #endif
     SdaiSurface_model *s = (SdaiSurface_model *) object;
@@ -21418,14 +21418,14 @@ SdaiSurface_model_access_hook_in(void *object,
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "underlying type set to " << s->UnderlyingTypeName() << endl << endl;
+	*logStream << "underlying type set to " << s->UnderlyingTypeName() << std::endl << std::endl;
     }
 #endif
     const TypeDescriptor *td = s->CanBe(s->UnderlyingTypeName());
     s->SetUnderlyingType(td);
     if(!td)
-	cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
-	     << endl;
+	std::cerr << "ERROR: can't reinitialize underlying select TypeDescriptor."
+	     << std::endl;
 }
 #endif
 
@@ -21449,14 +21449,14 @@ SdaiSurface_model::SdaiSurface_model( const SelectTypeDescriptor *typedescript )
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiSurface_model constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiSurface_model constructor." << std::endl;
     }
 #endif
    nullify();
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiSurface_model constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiSurface_model constructor." << std::endl;
     }
 #endif
 }
@@ -21469,14 +21469,14 @@ SdaiSurface_model::SdaiSurface_model( const SdaiShell_based_surface_model_ptr& o
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-	*logStream << "DAVE ERR entering SdaiSurface_model constructor." << endl;
+	*logStream << "DAVE ERR entering SdaiSurface_model constructor." << std::endl;
     }
 #endif
    _app_inst = o;
 #ifdef SCL_LOGGING
     if( *logStream )
     {
-//	*logStream << "DAVE ERR exiting SdaiSurface_model constructor." << endl;
+//	*logStream << "DAVE ERR exiting SdaiSurface_model constructor." << std::endl;
     }
 #endif
 }
@@ -21512,7 +21512,7 @@ SdaiSurface_model::operator SdaiShell_based_surface_model_ptr()
       return ((SdaiShell_based_surface_model_ptr) _app_inst);
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
    return NULL;
@@ -21527,7 +21527,7 @@ SdaiSurface_model::sbsm_boundary_() const
   if( CurrentUnderlyingType () == config_control_designe_shell_based_surface_model )
 	//  SHELL_BASED_SURFACE_MODEL
 	return ((SdaiShell_based_surface_model_ptr) _app_inst) ->sbsm_boundary_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -21544,7 +21544,7 @@ SdaiSurface_model::sbsm_boundary_ (const SdaiShells_ptr x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -21555,7 +21555,7 @@ SdaiSurface_model::name_() const
   if( CurrentUnderlyingType () == config_control_designe_shell_based_surface_model )
 	//  SHELL_BASED_SURFACE_MODEL
 	return ((SdaiShell_based_surface_model_ptr) _app_inst) ->name_();
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  ERROR in schema library:  \n"
 	<< _POC_ << "\n\n";
    return 0;
 }
@@ -21572,7 +21572,7 @@ SdaiSurface_model::name_ (const SdaiLabel x)
 	}
 
    severity( SEVERITY_WARNING );
-   cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
+   std::cerr << __FILE__ << ":" << __LINE__ <<  ":  WARNING:  possible misuse of"
         << " SELECT TYPE from schema library.\n";
    Error( "Mismatch in underlying type." );
 }
@@ -21649,7 +21649,7 @@ SdaiRepresentation_item::SdaiRepresentation_item( )
 #endif
     a -> set_null ();
     attributes.push (a);
-    //cout << "Representation_item" << endl;
+    //std::cout << "Representation_item" << std::endl;
     //PrintSTEPattributes ();
 }
 SdaiRepresentation_item::SdaiRepresentation_item (SdaiRepresentation_item& e )
@@ -21664,7 +21664,7 @@ SdaiRepresentation_item::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiRepresentation_item: virtual access function." << endl;
+        std::cout << "SdaiRepresentation_item: virtual access function." << std::endl;
     SdaiRepresentation_item_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -21674,10 +21674,10 @@ SdaiRepresentation_item_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiRepresentation_item: non-virtual access function." << endl;
+        std::cout << "SdaiRepresentation_item: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiRepresentation_item *ent = (SdaiRepresentation_item *)sent;
 //    SdaiRepresentation_item *ent = (SdaiRepresentation_item *)object;
     if(ent->eDesc == 0)
@@ -21772,7 +21772,7 @@ SdaiGeometric_representation_item::SdaiGeometric_representation_item( )
 SdaiGeometric_representation_item::SdaiGeometric_representation_item (SdaiGeometric_representation_item& e )
 	{  CopyAs((SCLP23(Application_instance_ptr)) &e);	}
 SdaiGeometric_representation_item::~SdaiGeometric_representation_item () {
-	cout << "Bye bye - " << this << endl;
+	std::cout << "Bye bye - " << this << std::endl;
 }
 
 #ifdef __OSTORE__
@@ -21783,7 +21783,7 @@ SdaiGeometric_representation_item::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiGeometric_representation_item: virtual access function." << endl;
+        std::cout << "SdaiGeometric_representation_item: virtual access function." << std::endl;
     SdaiGeometric_representation_item_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -21793,10 +21793,10 @@ SdaiGeometric_representation_item_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiGeometric_representation_item: non-virtual access function." << endl;
+        std::cout << "SdaiGeometric_representation_item: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiGeometric_representation_item *ent = (SdaiGeometric_representation_item *)sent;
 //    SdaiGeometric_representation_item *ent = (SdaiGeometric_representation_item *)object;
     if(ent->eDesc == 0)
@@ -21888,7 +21888,7 @@ SdaiFunctionally_defined_transformation::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiFunctionally_defined_transformation: virtual access function." << endl;
+        std::cout << "SdaiFunctionally_defined_transformation: virtual access function." << std::endl;
     SdaiFunctionally_defined_transformation_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -21898,10 +21898,10 @@ SdaiFunctionally_defined_transformation_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiFunctionally_defined_transformation: non-virtual access function." << endl;
+        std::cout << "SdaiFunctionally_defined_transformation: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiFunctionally_defined_transformation *ent = (SdaiFunctionally_defined_transformation *)sent;
 //    SdaiFunctionally_defined_transformation *ent = (SdaiFunctionally_defined_transformation *)object;
     if(ent->eDesc == 0)
@@ -22093,7 +22093,7 @@ SdaiCartesian_transformation_operator::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiCartesian_transformation_operator: virtual access function." << endl;
+        std::cout << "SdaiCartesian_transformation_operator: virtual access function." << std::endl;
     SdaiCartesian_transformation_operator_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -22103,10 +22103,10 @@ SdaiCartesian_transformation_operator_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiCartesian_transformation_operator: non-virtual access function." << endl;
+        std::cout << "SdaiCartesian_transformation_operator: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiCartesian_transformation_operator *ent = (SdaiCartesian_transformation_operator *)sent;
 //    SdaiCartesian_transformation_operator *ent = (SdaiCartesian_transformation_operator *)object;
     if(ent->eDesc == 0)
@@ -22369,7 +22369,7 @@ SdaiCartesian_transformation_operator_3d::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiCartesian_transformation_operator_3d: virtual access function." << endl;
+        std::cout << "SdaiCartesian_transformation_operator_3d: virtual access function." << std::endl;
     SdaiCartesian_transformation_operator_3d_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -22379,10 +22379,10 @@ SdaiCartesian_transformation_operator_3d_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiCartesian_transformation_operator_3d: non-virtual access function." << endl;
+        std::cout << "SdaiCartesian_transformation_operator_3d: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiCartesian_transformation_operator_3d *ent = (SdaiCartesian_transformation_operator_3d *)sent;
 //    SdaiCartesian_transformation_operator_3d *ent = (SdaiCartesian_transformation_operator_3d *)object;
     if(ent->eDesc == 0)
@@ -22531,7 +22531,7 @@ SdaiVersioned_action_request::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiVersioned_action_request: virtual access function." << endl;
+        std::cout << "SdaiVersioned_action_request: virtual access function." << std::endl;
     SdaiVersioned_action_request_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -22541,10 +22541,10 @@ SdaiVersioned_action_request_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiVersioned_action_request: non-virtual access function." << endl;
+        std::cout << "SdaiVersioned_action_request: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiVersioned_action_request *ent = (SdaiVersioned_action_request *)sent;
 //    SdaiVersioned_action_request *ent = (SdaiVersioned_action_request *)object;
     if(ent->eDesc == 0)
@@ -22766,7 +22766,7 @@ SdaiRepresentation::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiRepresentation: virtual access function." << endl;
+        std::cout << "SdaiRepresentation: virtual access function." << std::endl;
     SdaiRepresentation_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -22776,10 +22776,10 @@ SdaiRepresentation_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiRepresentation: non-virtual access function." << endl;
+        std::cout << "SdaiRepresentation: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiRepresentation *ent = (SdaiRepresentation *)sent;
 //    SdaiRepresentation *ent = (SdaiRepresentation *)object;
     if(ent->eDesc == 0)
@@ -22939,7 +22939,7 @@ SdaiShape_representation::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiShape_representation: virtual access function." << endl;
+        std::cout << "SdaiShape_representation: virtual access function." << std::endl;
     SdaiShape_representation_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -22949,10 +22949,10 @@ SdaiShape_representation_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiShape_representation: non-virtual access function." << endl;
+        std::cout << "SdaiShape_representation: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiShape_representation *ent = (SdaiShape_representation *)sent;
 //    SdaiShape_representation *ent = (SdaiShape_representation *)object;
     if(ent->eDesc == 0)
@@ -23023,7 +23023,7 @@ SdaiManifold_surface_shape_representation::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiManifold_surface_shape_representation: virtual access function." << endl;
+        std::cout << "SdaiManifold_surface_shape_representation: virtual access function." << std::endl;
     SdaiManifold_surface_shape_representation_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -23033,10 +23033,10 @@ SdaiManifold_surface_shape_representation_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiManifold_surface_shape_representation: non-virtual access function." << endl;
+        std::cout << "SdaiManifold_surface_shape_representation: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiManifold_surface_shape_representation *ent = (SdaiManifold_surface_shape_representation *)sent;
 //    SdaiManifold_surface_shape_representation *ent = (SdaiManifold_surface_shape_representation *)object;
     if(ent->eDesc == 0)
@@ -23138,7 +23138,7 @@ SdaiCertification::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiCertification: virtual access function." << endl;
+        std::cout << "SdaiCertification: virtual access function." << std::endl;
     SdaiCertification_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -23148,10 +23148,10 @@ SdaiCertification_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiCertification: non-virtual access function." << endl;
+        std::cout << "SdaiCertification: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiCertification *ent = (SdaiCertification *)sent;
 //    SdaiCertification *ent = (SdaiCertification *)object;
     if(ent->eDesc == 0)
@@ -23366,7 +23366,7 @@ SdaiProduct_definition_relationship::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiProduct_definition_relationship: virtual access function." << endl;
+        std::cout << "SdaiProduct_definition_relationship: virtual access function." << std::endl;
     SdaiProduct_definition_relationship_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -23376,10 +23376,10 @@ SdaiProduct_definition_relationship_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiProduct_definition_relationship: non-virtual access function." << endl;
+        std::cout << "SdaiProduct_definition_relationship: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiProduct_definition_relationship *ent = (SdaiProduct_definition_relationship *)sent;
 //    SdaiProduct_definition_relationship *ent = (SdaiProduct_definition_relationship *)object;
     if(ent->eDesc == 0)
@@ -23605,7 +23605,7 @@ SdaiProduct_definition_usage::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiProduct_definition_usage: virtual access function." << endl;
+        std::cout << "SdaiProduct_definition_usage: virtual access function." << std::endl;
     SdaiProduct_definition_usage_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -23615,10 +23615,10 @@ SdaiProduct_definition_usage_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiProduct_definition_usage: non-virtual access function." << endl;
+        std::cout << "SdaiProduct_definition_usage: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiProduct_definition_usage *ent = (SdaiProduct_definition_usage *)sent;
 //    SdaiProduct_definition_usage *ent = (SdaiProduct_definition_usage *)object;
     if(ent->eDesc == 0)
@@ -23700,7 +23700,7 @@ SdaiAssembly_component_usage::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiAssembly_component_usage: virtual access function." << endl;
+        std::cout << "SdaiAssembly_component_usage: virtual access function." << std::endl;
     SdaiAssembly_component_usage_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -23710,10 +23710,10 @@ SdaiAssembly_component_usage_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiAssembly_component_usage: non-virtual access function." << endl;
+        std::cout << "SdaiAssembly_component_usage: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiAssembly_component_usage *ent = (SdaiAssembly_component_usage *)sent;
 //    SdaiAssembly_component_usage *ent = (SdaiAssembly_component_usage *)object;
     if(ent->eDesc == 0)
@@ -23826,7 +23826,7 @@ SdaiQuantified_assembly_component_usage::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiQuantified_assembly_component_usage: virtual access function." << endl;
+        std::cout << "SdaiQuantified_assembly_component_usage: virtual access function." << std::endl;
     SdaiQuantified_assembly_component_usage_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -23836,10 +23836,10 @@ SdaiQuantified_assembly_component_usage_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiQuantified_assembly_component_usage: non-virtual access function." << endl;
+        std::cout << "SdaiQuantified_assembly_component_usage: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiQuantified_assembly_component_usage *ent = (SdaiQuantified_assembly_component_usage *)sent;
 //    SdaiQuantified_assembly_component_usage *ent = (SdaiQuantified_assembly_component_usage *)object;
     if(ent->eDesc == 0)
@@ -23944,7 +23944,7 @@ SdaiSolid_model::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiSolid_model: virtual access function." << endl;
+        std::cout << "SdaiSolid_model: virtual access function." << std::endl;
     SdaiSolid_model_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -23954,10 +23954,10 @@ SdaiSolid_model_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiSolid_model: non-virtual access function." << endl;
+        std::cout << "SdaiSolid_model: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiSolid_model *ent = (SdaiSolid_model *)sent;
 //    SdaiSolid_model *ent = (SdaiSolid_model *)object;
     if(ent->eDesc == 0)
@@ -24041,7 +24041,7 @@ SdaiManifold_solid_brep::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiManifold_solid_brep: virtual access function." << endl;
+        std::cout << "SdaiManifold_solid_brep: virtual access function." << std::endl;
     SdaiManifold_solid_brep_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -24051,10 +24051,10 @@ SdaiManifold_solid_brep_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiManifold_solid_brep: non-virtual access function." << endl;
+        std::cout << "SdaiManifold_solid_brep: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiManifold_solid_brep *ent = (SdaiManifold_solid_brep *)sent;
 //    SdaiManifold_solid_brep *ent = (SdaiManifold_solid_brep *)object;
     if(ent->eDesc == 0)
@@ -24160,7 +24160,7 @@ SdaiFaceted_brep::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiFaceted_brep: virtual access function." << endl;
+        std::cout << "SdaiFaceted_brep: virtual access function." << std::endl;
     SdaiFaceted_brep_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -24170,10 +24170,10 @@ SdaiFaceted_brep_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiFaceted_brep: non-virtual access function." << endl;
+        std::cout << "SdaiFaceted_brep: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiFaceted_brep *ent = (SdaiFaceted_brep *)sent;
 //    SdaiFaceted_brep *ent = (SdaiFaceted_brep *)object;
     if(ent->eDesc == 0)
@@ -24298,7 +24298,7 @@ SdaiAction_directive::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiAction_directive: virtual access function." << endl;
+        std::cout << "SdaiAction_directive: virtual access function." << std::endl;
     SdaiAction_directive_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -24308,10 +24308,10 @@ SdaiAction_directive_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiAction_directive: non-virtual access function." << endl;
+        std::cout << "SdaiAction_directive: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiAction_directive *ent = (SdaiAction_directive *)sent;
 //    SdaiAction_directive *ent = (SdaiAction_directive *)object;
     if(ent->eDesc == 0)
@@ -24540,7 +24540,7 @@ SdaiNamed_unit::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiNamed_unit: virtual access function." << endl;
+        std::cout << "SdaiNamed_unit: virtual access function." << std::endl;
     SdaiNamed_unit_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -24550,10 +24550,10 @@ SdaiNamed_unit_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiNamed_unit: non-virtual access function." << endl;
+        std::cout << "SdaiNamed_unit: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiNamed_unit *ent = (SdaiNamed_unit *)sent;
 //    SdaiNamed_unit *ent = (SdaiNamed_unit *)object;
     if(ent->eDesc == 0)
@@ -24653,7 +24653,7 @@ SdaiPlane_angle_unit::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiPlane_angle_unit: virtual access function." << endl;
+        std::cout << "SdaiPlane_angle_unit: virtual access function." << std::endl;
     SdaiPlane_angle_unit_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -24663,10 +24663,10 @@ SdaiPlane_angle_unit_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiPlane_angle_unit: non-virtual access function." << endl;
+        std::cout << "SdaiPlane_angle_unit: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiPlane_angle_unit *ent = (SdaiPlane_angle_unit *)sent;
 //    SdaiPlane_angle_unit *ent = (SdaiPlane_angle_unit *)object;
     if(ent->eDesc == 0)
@@ -24757,7 +24757,7 @@ SdaiMeasure_with_unit::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiMeasure_with_unit: virtual access function." << endl;
+        std::cout << "SdaiMeasure_with_unit: virtual access function." << std::endl;
     SdaiMeasure_with_unit_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -24767,10 +24767,10 @@ SdaiMeasure_with_unit_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiMeasure_with_unit: non-virtual access function." << endl;
+        std::cout << "SdaiMeasure_with_unit: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiMeasure_with_unit *ent = (SdaiMeasure_with_unit *)sent;
 //    SdaiMeasure_with_unit *ent = (SdaiMeasure_with_unit *)object;
     if(ent->eDesc == 0)
@@ -24891,7 +24891,7 @@ SdaiArea_measure_with_unit::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiArea_measure_with_unit: virtual access function." << endl;
+        std::cout << "SdaiArea_measure_with_unit: virtual access function." << std::endl;
     SdaiArea_measure_with_unit_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -24901,10 +24901,10 @@ SdaiArea_measure_with_unit_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiArea_measure_with_unit: non-virtual access function." << endl;
+        std::cout << "SdaiArea_measure_with_unit: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiArea_measure_with_unit *ent = (SdaiArea_measure_with_unit *)sent;
 //    SdaiArea_measure_with_unit *ent = (SdaiArea_measure_with_unit *)object;
     if(ent->eDesc == 0)
@@ -24984,7 +24984,7 @@ SdaiEffectivity::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiEffectivity: virtual access function." << endl;
+        std::cout << "SdaiEffectivity: virtual access function." << std::endl;
     SdaiEffectivity_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -24994,10 +24994,10 @@ SdaiEffectivity_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiEffectivity: non-virtual access function." << endl;
+        std::cout << "SdaiEffectivity: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiEffectivity *ent = (SdaiEffectivity *)sent;
 //    SdaiEffectivity *ent = (SdaiEffectivity *)object;
     if(ent->eDesc == 0)
@@ -25117,7 +25117,7 @@ SdaiSerial_numbered_effectivity::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiSerial_numbered_effectivity: virtual access function." << endl;
+        std::cout << "SdaiSerial_numbered_effectivity: virtual access function." << std::endl;
     SdaiSerial_numbered_effectivity_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -25127,10 +25127,10 @@ SdaiSerial_numbered_effectivity_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiSerial_numbered_effectivity: non-virtual access function." << endl;
+        std::cout << "SdaiSerial_numbered_effectivity: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiSerial_numbered_effectivity *ent = (SdaiSerial_numbered_effectivity *)sent;
 //    SdaiSerial_numbered_effectivity *ent = (SdaiSerial_numbered_effectivity *)object;
     if(ent->eDesc == 0)
@@ -25264,7 +25264,7 @@ SdaiSurface::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiSurface: virtual access function." << endl;
+        std::cout << "SdaiSurface: virtual access function." << std::endl;
     SdaiSurface_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -25274,10 +25274,10 @@ SdaiSurface_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiSurface: non-virtual access function." << endl;
+        std::cout << "SdaiSurface: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiSurface *ent = (SdaiSurface *)sent;
 //    SdaiSurface *ent = (SdaiSurface *)object;
     if(ent->eDesc == 0)
@@ -25383,7 +25383,7 @@ SdaiOffset_surface::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiOffset_surface: virtual access function." << endl;
+        std::cout << "SdaiOffset_surface: virtual access function." << std::endl;
     SdaiOffset_surface_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -25393,10 +25393,10 @@ SdaiOffset_surface_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiOffset_surface: non-virtual access function." << endl;
+        std::cout << "SdaiOffset_surface: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiOffset_surface *ent = (SdaiOffset_surface *)sent;
 //    SdaiOffset_surface *ent = (SdaiOffset_surface *)object;
     if(ent->eDesc == 0)
@@ -25575,7 +25575,7 @@ SdaiPlacement::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiPlacement: virtual access function." << endl;
+        std::cout << "SdaiPlacement: virtual access function." << std::endl;
     SdaiPlacement_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -25585,10 +25585,10 @@ SdaiPlacement_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiPlacement: non-virtual access function." << endl;
+        std::cout << "SdaiPlacement: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiPlacement *ent = (SdaiPlacement *)sent;
 //    SdaiPlacement *ent = (SdaiPlacement *)object;
     if(ent->eDesc == 0)
@@ -25707,7 +25707,7 @@ SdaiAxis2_placement_2d::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiAxis2_placement_2d: virtual access function." << endl;
+        std::cout << "SdaiAxis2_placement_2d: virtual access function." << std::endl;
     SdaiAxis2_placement_2d_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -25717,10 +25717,10 @@ SdaiAxis2_placement_2d_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiAxis2_placement_2d: non-virtual access function." << endl;
+        std::cout << "SdaiAxis2_placement_2d: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiAxis2_placement_2d *ent = (SdaiAxis2_placement_2d *)sent;
 //    SdaiAxis2_placement_2d *ent = (SdaiAxis2_placement_2d *)object;
     if(ent->eDesc == 0)
@@ -25846,7 +25846,7 @@ SdaiProduct_category::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiProduct_category: virtual access function." << endl;
+        std::cout << "SdaiProduct_category: virtual access function." << std::endl;
     SdaiProduct_category_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -25856,10 +25856,10 @@ SdaiProduct_category_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiProduct_category: non-virtual access function." << endl;
+        std::cout << "SdaiProduct_category: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiProduct_category *ent = (SdaiProduct_category *)sent;
 //    SdaiProduct_category *ent = (SdaiProduct_category *)object;
     if(ent->eDesc == 0)
@@ -25999,7 +25999,7 @@ SdaiProduct_related_product_category::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiProduct_related_product_category: virtual access function." << endl;
+        std::cout << "SdaiProduct_related_product_category: virtual access function." << std::endl;
     SdaiProduct_related_product_category_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -26009,10 +26009,10 @@ SdaiProduct_related_product_category_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiProduct_related_product_category: non-virtual access function." << endl;
+        std::cout << "SdaiProduct_related_product_category: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiProduct_related_product_category *ent = (SdaiProduct_related_product_category *)sent;
 //    SdaiProduct_related_product_category *ent = (SdaiProduct_related_product_category *)object;
     if(ent->eDesc == 0)
@@ -26113,7 +26113,7 @@ SdaiCurve::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiCurve: virtual access function." << endl;
+        std::cout << "SdaiCurve: virtual access function." << std::endl;
     SdaiCurve_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -26123,10 +26123,10 @@ SdaiCurve_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiCurve: non-virtual access function." << endl;
+        std::cout << "SdaiCurve: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiCurve *ent = (SdaiCurve *)sent;
 //    SdaiCurve *ent = (SdaiCurve *)object;
     if(ent->eDesc == 0)
@@ -26210,7 +26210,7 @@ SdaiConic::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiConic: virtual access function." << endl;
+        std::cout << "SdaiConic: virtual access function." << std::endl;
     SdaiConic_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -26220,10 +26220,10 @@ SdaiConic_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiConic: non-virtual access function." << endl;
+        std::cout << "SdaiConic: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiConic *ent = (SdaiConic *)sent;
 //    SdaiConic *ent = (SdaiConic *)object;
     if(ent->eDesc == 0)
@@ -26345,7 +26345,7 @@ SdaiHyperbola::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiHyperbola: virtual access function." << endl;
+        std::cout << "SdaiHyperbola: virtual access function." << std::endl;
     SdaiHyperbola_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -26355,10 +26355,10 @@ SdaiHyperbola_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiHyperbola: non-virtual access function." << endl;
+        std::cout << "SdaiHyperbola: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiHyperbola *ent = (SdaiHyperbola *)sent;
 //    SdaiHyperbola *ent = (SdaiHyperbola *)object;
     if(ent->eDesc == 0)
@@ -26622,7 +26622,7 @@ SdaiAddress::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiAddress: virtual access function." << endl;
+        std::cout << "SdaiAddress: virtual access function." << std::endl;
     SdaiAddress_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -26632,10 +26632,10 @@ SdaiAddress_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiAddress: non-virtual access function." << endl;
+        std::cout << "SdaiAddress: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiAddress *ent = (SdaiAddress *)sent;
 //    SdaiAddress *ent = (SdaiAddress *)object;
     if(ent->eDesc == 0)
@@ -27096,7 +27096,7 @@ SdaiOrganizational_address::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiOrganizational_address: virtual access function." << endl;
+        std::cout << "SdaiOrganizational_address: virtual access function." << std::endl;
     SdaiOrganizational_address_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -27106,10 +27106,10 @@ SdaiOrganizational_address_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiOrganizational_address: non-virtual access function." << endl;
+        std::cout << "SdaiOrganizational_address: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiOrganizational_address *ent = (SdaiOrganizational_address *)sent;
 //    SdaiOrganizational_address *ent = (SdaiOrganizational_address *)object;
     if(ent->eDesc == 0)
@@ -27241,7 +27241,7 @@ SdaiBounded_surface::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiBounded_surface: virtual access function." << endl;
+        std::cout << "SdaiBounded_surface: virtual access function." << std::endl;
     SdaiBounded_surface_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -27251,10 +27251,10 @@ SdaiBounded_surface_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiBounded_surface: non-virtual access function." << endl;
+        std::cout << "SdaiBounded_surface: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiBounded_surface *ent = (SdaiBounded_surface *)sent;
 //    SdaiBounded_surface *ent = (SdaiBounded_surface *)object;
     if(ent->eDesc == 0)
@@ -27410,7 +27410,7 @@ SdaiB_spline_surface::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiB_spline_surface: virtual access function." << endl;
+        std::cout << "SdaiB_spline_surface: virtual access function." << std::endl;
     SdaiB_spline_surface_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -27420,10 +27420,10 @@ SdaiB_spline_surface_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiB_spline_surface: non-virtual access function." << endl;
+        std::cout << "SdaiB_spline_surface: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiB_spline_surface *ent = (SdaiB_spline_surface *)sent;
 //    SdaiB_spline_surface *ent = (SdaiB_spline_surface *)object;
     if(ent->eDesc == 0)
@@ -27717,7 +27717,7 @@ SdaiUniform_surface::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiUniform_surface: virtual access function." << endl;
+        std::cout << "SdaiUniform_surface: virtual access function." << std::endl;
     SdaiUniform_surface_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -27727,10 +27727,10 @@ SdaiUniform_surface_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiUniform_surface: non-virtual access function." << endl;
+        std::cout << "SdaiUniform_surface: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiUniform_surface *ent = (SdaiUniform_surface *)sent;
 //    SdaiUniform_surface *ent = (SdaiUniform_surface *)object;
     if(ent->eDesc == 0)
@@ -27805,7 +27805,7 @@ SdaiGeometrically_bounded_surface_shape_representation::Access_hook_in(void *obj
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiGeometrically_bounded_surface_shape_representation: virtual access function." << endl;
+        std::cout << "SdaiGeometrically_bounded_surface_shape_representation: virtual access function." << std::endl;
     SdaiGeometrically_bounded_surface_shape_representation_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -27815,10 +27815,10 @@ SdaiGeometrically_bounded_surface_shape_representation_access_hook_in(void *obje
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiGeometrically_bounded_surface_shape_representation: non-virtual access function." << endl;
+        std::cout << "SdaiGeometrically_bounded_surface_shape_representation: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiGeometrically_bounded_surface_shape_representation *ent = (SdaiGeometrically_bounded_surface_shape_representation *)sent;
 //    SdaiGeometrically_bounded_surface_shape_representation *ent = (SdaiGeometrically_bounded_surface_shape_representation *)object;
     if(ent->eDesc == 0)
@@ -27903,7 +27903,7 @@ SdaiAxis1_placement::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiAxis1_placement: virtual access function." << endl;
+        std::cout << "SdaiAxis1_placement: virtual access function." << std::endl;
     SdaiAxis1_placement_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -27913,10 +27913,10 @@ SdaiAxis1_placement_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiAxis1_placement: non-virtual access function." << endl;
+        std::cout << "SdaiAxis1_placement: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiAxis1_placement *ent = (SdaiAxis1_placement *)sent;
 //    SdaiAxis1_placement *ent = (SdaiAxis1_placement *)object;
     if(ent->eDesc == 0)
@@ -28023,7 +28023,7 @@ SdaiBounded_curve::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiBounded_curve: virtual access function." << endl;
+        std::cout << "SdaiBounded_curve: virtual access function." << std::endl;
     SdaiBounded_curve_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -28033,10 +28033,10 @@ SdaiBounded_curve_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiBounded_curve: non-virtual access function." << endl;
+        std::cout << "SdaiBounded_curve: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiBounded_curve *ent = (SdaiBounded_curve *)sent;
 //    SdaiBounded_curve *ent = (SdaiBounded_curve *)object;
     if(ent->eDesc == 0)
@@ -28168,7 +28168,7 @@ SdaiB_spline_curve::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiB_spline_curve: virtual access function." << endl;
+        std::cout << "SdaiB_spline_curve: virtual access function." << std::endl;
     SdaiB_spline_curve_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -28178,10 +28178,10 @@ SdaiB_spline_curve_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiB_spline_curve: non-virtual access function." << endl;
+        std::cout << "SdaiB_spline_curve: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiB_spline_curve *ent = (SdaiB_spline_curve *)sent;
 //    SdaiB_spline_curve *ent = (SdaiB_spline_curve *)object;
     if(ent->eDesc == 0)
@@ -28424,7 +28424,7 @@ SdaiRational_b_spline_curve::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiRational_b_spline_curve: virtual access function." << endl;
+        std::cout << "SdaiRational_b_spline_curve: virtual access function." << std::endl;
     SdaiRational_b_spline_curve_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -28434,10 +28434,10 @@ SdaiRational_b_spline_curve_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiRational_b_spline_curve: non-virtual access function." << endl;
+        std::cout << "SdaiRational_b_spline_curve: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiRational_b_spline_curve *ent = (SdaiRational_b_spline_curve *)sent;
 //    SdaiRational_b_spline_curve *ent = (SdaiRational_b_spline_curve *)object;
     if(ent->eDesc == 0)
@@ -28550,7 +28550,7 @@ SdaiAction_request_assignment::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiAction_request_assignment: virtual access function." << endl;
+        std::cout << "SdaiAction_request_assignment: virtual access function." << std::endl;
     SdaiAction_request_assignment_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -28560,10 +28560,10 @@ SdaiAction_request_assignment_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiAction_request_assignment: non-virtual access function." << endl;
+        std::cout << "SdaiAction_request_assignment: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiAction_request_assignment *ent = (SdaiAction_request_assignment *)sent;
 //    SdaiAction_request_assignment *ent = (SdaiAction_request_assignment *)object;
     if(ent->eDesc == 0)
@@ -28650,7 +28650,7 @@ SdaiTopological_representation_item::SdaiTopological_representation_item( )
  	/* part of the main inheritance hierarchy */
 
     eDesc = config_control_designe_topological_representation_item;
-    //cout << "Topological_representation_item" << endl;
+    //std::cout << "Topological_representation_item" << std::endl;
     //PrintSTEPattributes ();
 }
 SdaiTopological_representation_item::SdaiTopological_representation_item (SdaiTopological_representation_item& e )
@@ -28665,7 +28665,7 @@ SdaiTopological_representation_item::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiTopological_representation_item: virtual access function." << endl;
+        std::cout << "SdaiTopological_representation_item: virtual access function." << std::endl;
     SdaiTopological_representation_item_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -28675,10 +28675,10 @@ SdaiTopological_representation_item_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiTopological_representation_item: non-virtual access function." << endl;
+        std::cout << "SdaiTopological_representation_item: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiTopological_representation_item *ent = (SdaiTopological_representation_item *)sent;
 //    SdaiTopological_representation_item *ent = (SdaiTopological_representation_item *)object;
     if(ent->eDesc == 0)
@@ -28771,7 +28771,7 @@ SdaiFace_bound::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiFace_bound: virtual access function." << endl;
+        std::cout << "SdaiFace_bound: virtual access function." << std::endl;
     SdaiFace_bound_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -28781,10 +28781,10 @@ SdaiFace_bound_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiFace_bound: non-virtual access function." << endl;
+        std::cout << "SdaiFace_bound: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiFace_bound *ent = (SdaiFace_bound *)sent;
 //    SdaiFace_bound *ent = (SdaiFace_bound *)object;
     if(ent->eDesc == 0)
@@ -28877,14 +28877,14 @@ SdaiFace_bound::bound_ (const SdaiLoop_ptr x)
     _bound = x;
 }
 
-const SCLBOOL(Bool)
+const SCLBOOL(Boolean)
 SdaiFace_bound::orientation_() const
 {
-    return (SCLBOOL(Bool)) _orientation;
+    return (SCLBOOL(Boolean)) _orientation;
 }
 
 void
-SdaiFace_bound::orientation_ (const SCLBOOL(Bool) x)
+SdaiFace_bound::orientation_ (const SCLBOOL(Boolean) x)
 
 {
     _orientation.put (x);
@@ -28919,7 +28919,7 @@ SdaiLength_measure_with_unit::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiLength_measure_with_unit: virtual access function." << endl;
+        std::cout << "SdaiLength_measure_with_unit: virtual access function." << std::endl;
     SdaiLength_measure_with_unit_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -28929,10 +28929,10 @@ SdaiLength_measure_with_unit_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiLength_measure_with_unit: non-virtual access function." << endl;
+        std::cout << "SdaiLength_measure_with_unit: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiLength_measure_with_unit *ent = (SdaiLength_measure_with_unit *)sent;
 //    SdaiLength_measure_with_unit *ent = (SdaiLength_measure_with_unit *)object;
     if(ent->eDesc == 0)
@@ -29025,7 +29025,7 @@ SdaiDated_effectivity::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiDated_effectivity: virtual access function." << endl;
+        std::cout << "SdaiDated_effectivity: virtual access function." << std::endl;
     SdaiDated_effectivity_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -29035,10 +29035,10 @@ SdaiDated_effectivity_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiDated_effectivity: non-virtual access function." << endl;
+        std::cout << "SdaiDated_effectivity: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiDated_effectivity *ent = (SdaiDated_effectivity *)sent;
 //    SdaiDated_effectivity *ent = (SdaiDated_effectivity *)object;
     if(ent->eDesc == 0)
@@ -29187,7 +29187,7 @@ SdaiDirection::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiDirection: virtual access function." << endl;
+        std::cout << "SdaiDirection: virtual access function." << std::endl;
     SdaiDirection_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -29197,10 +29197,10 @@ SdaiDirection_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiDirection: non-virtual access function." << endl;
+        std::cout << "SdaiDirection: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiDirection *ent = (SdaiDirection *)sent;
 //    SdaiDirection *ent = (SdaiDirection *)object;
     if(ent->eDesc == 0)
@@ -29301,7 +29301,7 @@ SdaiNext_assembly_usage_occurrence::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiNext_assembly_usage_occurrence: virtual access function." << endl;
+        std::cout << "SdaiNext_assembly_usage_occurrence: virtual access function." << std::endl;
     SdaiNext_assembly_usage_occurrence_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -29311,10 +29311,10 @@ SdaiNext_assembly_usage_occurrence_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiNext_assembly_usage_occurrence: non-virtual access function." << endl;
+        std::cout << "SdaiNext_assembly_usage_occurrence: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiNext_assembly_usage_occurrence *ent = (SdaiNext_assembly_usage_occurrence *)sent;
 //    SdaiNext_assembly_usage_occurrence *ent = (SdaiNext_assembly_usage_occurrence *)object;
     if(ent->eDesc == 0)
@@ -29407,7 +29407,7 @@ SdaiEdge::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiEdge: virtual access function." << endl;
+        std::cout << "SdaiEdge: virtual access function." << std::endl;
     SdaiEdge_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -29417,10 +29417,10 @@ SdaiEdge_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiEdge: non-virtual access function." << endl;
+        std::cout << "SdaiEdge: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiEdge *ent = (SdaiEdge *)sent;
 //    SdaiEdge *ent = (SdaiEdge *)object;
     if(ent->eDesc == 0)
@@ -29583,7 +29583,7 @@ SdaiOriented_edge::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiOriented_edge: virtual access function." << endl;
+        std::cout << "SdaiOriented_edge: virtual access function." << std::endl;
     SdaiOriented_edge_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -29593,10 +29593,10 @@ SdaiOriented_edge_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiOriented_edge: non-virtual access function." << endl;
+        std::cout << "SdaiOriented_edge: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiOriented_edge *ent = (SdaiOriented_edge *)sent;
 //    SdaiOriented_edge *ent = (SdaiOriented_edge *)object;
     if(ent->eDesc == 0)
@@ -29691,14 +29691,14 @@ SdaiOriented_edge::edge_element_ (const SdaiEdge_ptr x)
     _edge_element = x;
 }
 
-const SCLBOOL(Bool)
+const SCLBOOL(Boolean)
 SdaiOriented_edge::orientation_() const
 {
-    return (SCLBOOL(Bool)) _orientation;
+    return (SCLBOOL(Boolean)) _orientation;
 }
 
 void
-SdaiOriented_edge::orientation_ (const SCLBOOL(Bool) x)
+SdaiOriented_edge::orientation_ (const SCLBOOL(Boolean) x)
 
 {
     _orientation.put (x);
@@ -29797,7 +29797,7 @@ SdaiPerson::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiPerson: virtual access function." << endl;
+        std::cout << "SdaiPerson: virtual access function." << std::endl;
     SdaiPerson_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -29807,10 +29807,10 @@ SdaiPerson_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiPerson: non-virtual access function." << endl;
+        std::cout << "SdaiPerson: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiPerson *ent = (SdaiPerson *)sent;
 //    SdaiPerson *ent = (SdaiPerson *)object;
     if(ent->eDesc == 0)
@@ -30099,7 +30099,7 @@ SdaiDocument::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiDocument: virtual access function." << endl;
+        std::cout << "SdaiDocument: virtual access function." << std::endl;
     SdaiDocument_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -30109,10 +30109,10 @@ SdaiDocument_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiDocument: non-virtual access function." << endl;
+        std::cout << "SdaiDocument: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiDocument *ent = (SdaiDocument *)sent;
 //    SdaiDocument *ent = (SdaiDocument *)object;
     if(ent->eDesc == 0)
@@ -30316,7 +30316,7 @@ SdaiDocument_with_class::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiDocument_with_class: virtual access function." << endl;
+        std::cout << "SdaiDocument_with_class: virtual access function." << std::endl;
     SdaiDocument_with_class_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -30326,10 +30326,10 @@ SdaiDocument_with_class_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiDocument_with_class: non-virtual access function." << endl;
+        std::cout << "SdaiDocument_with_class: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiDocument_with_class *ent = (SdaiDocument_with_class *)sent;
 //    SdaiDocument_with_class *ent = (SdaiDocument_with_class *)object;
     if(ent->eDesc == 0)
@@ -30453,7 +30453,7 @@ SdaiConversion_based_unit::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiConversion_based_unit: virtual access function." << endl;
+        std::cout << "SdaiConversion_based_unit: virtual access function." << std::endl;
     SdaiConversion_based_unit_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -30463,10 +30463,10 @@ SdaiConversion_based_unit_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiConversion_based_unit: non-virtual access function." << endl;
+        std::cout << "SdaiConversion_based_unit: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiConversion_based_unit *ent = (SdaiConversion_based_unit *)sent;
 //    SdaiConversion_based_unit *ent = (SdaiConversion_based_unit *)object;
     if(ent->eDesc == 0)
@@ -30602,7 +30602,7 @@ SdaiPoint::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiPoint: virtual access function." << endl;
+        std::cout << "SdaiPoint: virtual access function." << std::endl;
     SdaiPoint_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -30612,10 +30612,10 @@ SdaiPoint_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiPoint: non-virtual access function." << endl;
+        std::cout << "SdaiPoint: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiPoint *ent = (SdaiPoint *)sent;
 //    SdaiPoint *ent = (SdaiPoint *)object;
     if(ent->eDesc == 0)
@@ -30721,7 +30721,7 @@ SdaiPoint_on_surface::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiPoint_on_surface: virtual access function." << endl;
+        std::cout << "SdaiPoint_on_surface: virtual access function." << std::endl;
     SdaiPoint_on_surface_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -30731,10 +30731,10 @@ SdaiPoint_on_surface_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiPoint_on_surface: non-virtual access function." << endl;
+        std::cout << "SdaiPoint_on_surface: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiPoint_on_surface *ent = (SdaiPoint_on_surface *)sent;
 //    SdaiPoint_on_surface *ent = (SdaiPoint_on_surface *)object;
     if(ent->eDesc == 0)
@@ -30932,7 +30932,7 @@ SdaiProduct_definition_formation::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiProduct_definition_formation: virtual access function." << endl;
+        std::cout << "SdaiProduct_definition_formation: virtual access function." << std::endl;
     SdaiProduct_definition_formation_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -30942,10 +30942,10 @@ SdaiProduct_definition_formation_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiProduct_definition_formation: non-virtual access function." << endl;
+        std::cout << "SdaiProduct_definition_formation: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiProduct_definition_formation *ent = (SdaiProduct_definition_formation *)sent;
 //    SdaiProduct_definition_formation *ent = (SdaiProduct_definition_formation *)object;
     if(ent->eDesc == 0)
@@ -31127,7 +31127,7 @@ SdaiPerson_and_organization_assignment::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiPerson_and_organization_assignment: virtual access function." << endl;
+        std::cout << "SdaiPerson_and_organization_assignment: virtual access function." << std::endl;
     SdaiPerson_and_organization_assignment_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -31137,10 +31137,10 @@ SdaiPerson_and_organization_assignment_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiPerson_and_organization_assignment: non-virtual access function." << endl;
+        std::cout << "SdaiPerson_and_organization_assignment: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiPerson_and_organization_assignment *ent = (SdaiPerson_and_organization_assignment *)sent;
 //    SdaiPerson_and_organization_assignment *ent = (SdaiPerson_and_organization_assignment *)object;
     if(ent->eDesc == 0)
@@ -31284,7 +31284,7 @@ SdaiCc_design_person_and_organization_assignment::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiCc_design_person_and_organization_assignment: virtual access function." << endl;
+        std::cout << "SdaiCc_design_person_and_organization_assignment: virtual access function." << std::endl;
     SdaiCc_design_person_and_organization_assignment_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -31294,10 +31294,10 @@ SdaiCc_design_person_and_organization_assignment_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiCc_design_person_and_organization_assignment: non-virtual access function." << endl;
+        std::cout << "SdaiCc_design_person_and_organization_assignment: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiCc_design_person_and_organization_assignment *ent = (SdaiCc_design_person_and_organization_assignment *)sent;
 //    SdaiCc_design_person_and_organization_assignment *ent = (SdaiCc_design_person_and_organization_assignment *)object;
     if(ent->eDesc == 0)
@@ -31442,7 +31442,7 @@ SdaiOffset_curve_3d::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiOffset_curve_3d: virtual access function." << endl;
+        std::cout << "SdaiOffset_curve_3d: virtual access function." << std::endl;
     SdaiOffset_curve_3d_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -31452,10 +31452,10 @@ SdaiOffset_curve_3d_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiOffset_curve_3d: non-virtual access function." << endl;
+        std::cout << "SdaiOffset_curve_3d: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiOffset_curve_3d *ent = (SdaiOffset_curve_3d *)sent;
 //    SdaiOffset_curve_3d *ent = (SdaiOffset_curve_3d *)object;
     if(ent->eDesc == 0)
@@ -31675,7 +31675,7 @@ SdaiApproval::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiApproval: virtual access function." << endl;
+        std::cout << "SdaiApproval: virtual access function." << std::endl;
     SdaiApproval_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -31685,10 +31685,10 @@ SdaiApproval_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiApproval: non-virtual access function." << endl;
+        std::cout << "SdaiApproval: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiApproval *ent = (SdaiApproval *)sent;
 //    SdaiApproval *ent = (SdaiApproval *)object;
     if(ent->eDesc == 0)
@@ -31846,7 +31846,7 @@ SdaiComposite_curve::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiComposite_curve: virtual access function." << endl;
+        std::cout << "SdaiComposite_curve: virtual access function." << std::endl;
     SdaiComposite_curve_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -31856,10 +31856,10 @@ SdaiComposite_curve_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiComposite_curve: non-virtual access function." << endl;
+        std::cout << "SdaiComposite_curve: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiComposite_curve *ent = (SdaiComposite_curve *)sent;
 //    SdaiComposite_curve *ent = (SdaiComposite_curve *)object;
     if(ent->eDesc == 0)
@@ -31998,7 +31998,7 @@ SdaiComposite_curve_on_surface::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiComposite_curve_on_surface: virtual access function." << endl;
+        std::cout << "SdaiComposite_curve_on_surface: virtual access function." << std::endl;
     SdaiComposite_curve_on_surface_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -32008,10 +32008,10 @@ SdaiComposite_curve_on_surface_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiComposite_curve_on_surface: non-virtual access function." << endl;
+        std::cout << "SdaiComposite_curve_on_surface: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiComposite_curve_on_surface *ent = (SdaiComposite_curve_on_surface *)sent;
 //    SdaiComposite_curve_on_surface *ent = (SdaiComposite_curve_on_surface *)object;
     if(ent->eDesc == 0)
@@ -32090,7 +32090,7 @@ SdaiBoundary_curve::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiBoundary_curve: virtual access function." << endl;
+        std::cout << "SdaiBoundary_curve: virtual access function." << std::endl;
     SdaiBoundary_curve_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -32100,10 +32100,10 @@ SdaiBoundary_curve_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiBoundary_curve: non-virtual access function." << endl;
+        std::cout << "SdaiBoundary_curve: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiBoundary_curve *ent = (SdaiBoundary_curve *)sent;
 //    SdaiBoundary_curve *ent = (SdaiBoundary_curve *)object;
     if(ent->eDesc == 0)
@@ -32199,7 +32199,7 @@ SdaiRepresentation_context::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiRepresentation_context: virtual access function." << endl;
+        std::cout << "SdaiRepresentation_context: virtual access function." << std::endl;
     SdaiRepresentation_context_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -32209,10 +32209,10 @@ SdaiRepresentation_context_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiRepresentation_context: non-virtual access function." << endl;
+        std::cout << "SdaiRepresentation_context: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiRepresentation_context *ent = (SdaiRepresentation_context *)sent;
 //    SdaiRepresentation_context *ent = (SdaiRepresentation_context *)object;
     if(ent->eDesc == 0)
@@ -32363,7 +32363,7 @@ SdaiGeometric_representation_context::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiGeometric_representation_context: virtual access function." << endl;
+        std::cout << "SdaiGeometric_representation_context: virtual access function." << std::endl;
     SdaiGeometric_representation_context_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -32373,10 +32373,10 @@ SdaiGeometric_representation_context_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiGeometric_representation_context: non-virtual access function." << endl;
+        std::cout << "SdaiGeometric_representation_context: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiGeometric_representation_context *ent = (SdaiGeometric_representation_context *)sent;
 //    SdaiGeometric_representation_context *ent = (SdaiGeometric_representation_context *)object;
     if(ent->eDesc == 0)
@@ -32498,7 +32498,7 @@ SdaiAction_status::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiAction_status: virtual access function." << endl;
+        std::cout << "SdaiAction_status: virtual access function." << std::endl;
     SdaiAction_status_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -32508,10 +32508,10 @@ SdaiAction_status_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiAction_status: non-virtual access function." << endl;
+        std::cout << "SdaiAction_status: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiAction_status *ent = (SdaiAction_status *)sent;
 //    SdaiAction_status *ent = (SdaiAction_status *)object;
     if(ent->eDesc == 0)
@@ -32652,7 +32652,7 @@ SdaiApplication_context::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiApplication_context: virtual access function." << endl;
+        std::cout << "SdaiApplication_context: virtual access function." << std::endl;
     SdaiApplication_context_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -32662,10 +32662,10 @@ SdaiApplication_context_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiApplication_context: non-virtual access function." << endl;
+        std::cout << "SdaiApplication_context: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiApplication_context *ent = (SdaiApplication_context *)sent;
 //    SdaiApplication_context *ent = (SdaiApplication_context *)object;
     if(ent->eDesc == 0)
@@ -32785,7 +32785,7 @@ SdaiChange_request::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiChange_request: virtual access function." << endl;
+        std::cout << "SdaiChange_request: virtual access function." << std::endl;
     SdaiChange_request_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -32795,10 +32795,10 @@ SdaiChange_request_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiChange_request: non-virtual access function." << endl;
+        std::cout << "SdaiChange_request: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiChange_request *ent = (SdaiChange_request *)sent;
 //    SdaiChange_request *ent = (SdaiChange_request *)object;
     if(ent->eDesc == 0)
@@ -32918,7 +32918,7 @@ SdaiDate_and_time::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiDate_and_time: virtual access function." << endl;
+        std::cout << "SdaiDate_and_time: virtual access function." << std::endl;
     SdaiDate_and_time_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -32928,10 +32928,10 @@ SdaiDate_and_time_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiDate_and_time: non-virtual access function." << endl;
+        std::cout << "SdaiDate_and_time: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiDate_and_time *ent = (SdaiDate_and_time *)sent;
 //    SdaiDate_and_time *ent = (SdaiDate_and_time *)object;
     if(ent->eDesc == 0)
@@ -33084,7 +33084,7 @@ SdaiApproval_date_time::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiApproval_date_time: virtual access function." << endl;
+        std::cout << "SdaiApproval_date_time: virtual access function." << std::endl;
     SdaiApproval_date_time_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -33094,10 +33094,10 @@ SdaiApproval_date_time_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiApproval_date_time: non-virtual access function." << endl;
+        std::cout << "SdaiApproval_date_time: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiApproval_date_time *ent = (SdaiApproval_date_time *)sent;
 //    SdaiApproval_date_time *ent = (SdaiApproval_date_time *)object;
     if(ent->eDesc == 0)
@@ -33233,7 +33233,7 @@ SdaiApproval_role::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiApproval_role: virtual access function." << endl;
+        std::cout << "SdaiApproval_role: virtual access function." << std::endl;
     SdaiApproval_role_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -33243,10 +33243,10 @@ SdaiApproval_role_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiApproval_role: non-virtual access function." << endl;
+        std::cout << "SdaiApproval_role: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiApproval_role *ent = (SdaiApproval_role *)sent;
 //    SdaiApproval_role *ent = (SdaiApproval_role *)object;
     if(ent->eDesc == 0)
@@ -33364,7 +33364,7 @@ SdaiApplication_context_element::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiApplication_context_element: virtual access function." << endl;
+        std::cout << "SdaiApplication_context_element: virtual access function." << std::endl;
     SdaiApplication_context_element_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -33374,10 +33374,10 @@ SdaiApplication_context_element_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiApplication_context_element: non-virtual access function." << endl;
+        std::cout << "SdaiApplication_context_element: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiApplication_context_element *ent = (SdaiApplication_context_element *)sent;
 //    SdaiApplication_context_element *ent = (SdaiApplication_context_element *)object;
     if(ent->eDesc == 0)
@@ -33519,7 +33519,7 @@ SdaiProduct_context::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiProduct_context: virtual access function." << endl;
+        std::cout << "SdaiProduct_context: virtual access function." << std::endl;
     SdaiProduct_context_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -33529,10 +33529,10 @@ SdaiProduct_context_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiProduct_context: non-virtual access function." << endl;
+        std::cout << "SdaiProduct_context: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiProduct_context *ent = (SdaiProduct_context *)sent;
 //    SdaiProduct_context *ent = (SdaiProduct_context *)object;
     if(ent->eDesc == 0)
@@ -33646,7 +33646,7 @@ SdaiElementary_surface::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiElementary_surface: virtual access function." << endl;
+        std::cout << "SdaiElementary_surface: virtual access function." << std::endl;
     SdaiElementary_surface_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -33656,10 +33656,10 @@ SdaiElementary_surface_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiElementary_surface: non-virtual access function." << endl;
+        std::cout << "SdaiElementary_surface: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiElementary_surface *ent = (SdaiElementary_surface *)sent;
 //    SdaiElementary_surface *ent = (SdaiElementary_surface *)object;
     if(ent->eDesc == 0)
@@ -33776,7 +33776,7 @@ SdaiSpherical_surface::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiSpherical_surface: virtual access function." << endl;
+        std::cout << "SdaiSpherical_surface: virtual access function." << std::endl;
     SdaiSpherical_surface_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -33786,10 +33786,10 @@ SdaiSpherical_surface_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiSpherical_surface: non-virtual access function." << endl;
+        std::cout << "SdaiSpherical_surface: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiSpherical_surface *ent = (SdaiSpherical_surface *)sent;
 //    SdaiSpherical_surface *ent = (SdaiSpherical_surface *)object;
     if(ent->eDesc == 0)
@@ -33934,7 +33934,7 @@ SdaiApplication_protocol_definition::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiApplication_protocol_definition: virtual access function." << endl;
+        std::cout << "SdaiApplication_protocol_definition: virtual access function." << std::endl;
     SdaiApplication_protocol_definition_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -33944,10 +33944,10 @@ SdaiApplication_protocol_definition_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiApplication_protocol_definition: non-virtual access function." << endl;
+        std::cout << "SdaiApplication_protocol_definition: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiApplication_protocol_definition *ent = (SdaiApplication_protocol_definition *)sent;
 //    SdaiApplication_protocol_definition *ent = (SdaiApplication_protocol_definition *)object;
     if(ent->eDesc == 0)
@@ -34162,7 +34162,7 @@ SdaiSpecified_higher_usage_occurrence::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiSpecified_higher_usage_occurrence: virtual access function." << endl;
+        std::cout << "SdaiSpecified_higher_usage_occurrence: virtual access function." << std::endl;
     SdaiSpecified_higher_usage_occurrence_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -34172,10 +34172,10 @@ SdaiSpecified_higher_usage_occurrence_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiSpecified_higher_usage_occurrence: non-virtual access function." << endl;
+        std::cout << "SdaiSpecified_higher_usage_occurrence: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiSpecified_higher_usage_occurrence *ent = (SdaiSpecified_higher_usage_occurrence *)sent;
 //    SdaiSpecified_higher_usage_occurrence *ent = (SdaiSpecified_higher_usage_occurrence *)object;
     if(ent->eDesc == 0)
@@ -34323,7 +34323,7 @@ SdaiProduct_definition_formation_with_specified_source::Access_hook_in(void *obj
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiProduct_definition_formation_with_specified_source: virtual access function." << endl;
+        std::cout << "SdaiProduct_definition_formation_with_specified_source: virtual access function." << std::endl;
     SdaiProduct_definition_formation_with_specified_source_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -34333,10 +34333,10 @@ SdaiProduct_definition_formation_with_specified_source_access_hook_in(void *obje
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiProduct_definition_formation_with_specified_source: non-virtual access function." << endl;
+        std::cout << "SdaiProduct_definition_formation_with_specified_source: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiProduct_definition_formation_with_specified_source *ent = (SdaiProduct_definition_formation_with_specified_source *)sent;
 //    SdaiProduct_definition_formation_with_specified_source *ent = (SdaiProduct_definition_formation_with_specified_source *)object;
     if(ent->eDesc == 0)
@@ -34458,7 +34458,7 @@ SdaiAction_request_solution::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiAction_request_solution: virtual access function." << endl;
+        std::cout << "SdaiAction_request_solution: virtual access function." << std::endl;
     SdaiAction_request_solution_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -34468,10 +34468,10 @@ SdaiAction_request_solution_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiAction_request_solution: non-virtual access function." << endl;
+        std::cout << "SdaiAction_request_solution: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiAction_request_solution *ent = (SdaiAction_request_solution *)sent;
 //    SdaiAction_request_solution *ent = (SdaiAction_request_solution *)object;
     if(ent->eDesc == 0)
@@ -34626,7 +34626,7 @@ SdaiUncertainty_measure_with_unit::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiUncertainty_measure_with_unit: virtual access function." << endl;
+        std::cout << "SdaiUncertainty_measure_with_unit: virtual access function." << std::endl;
     SdaiUncertainty_measure_with_unit_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -34636,10 +34636,10 @@ SdaiUncertainty_measure_with_unit_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiUncertainty_measure_with_unit: non-virtual access function." << endl;
+        std::cout << "SdaiUncertainty_measure_with_unit: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiUncertainty_measure_with_unit *ent = (SdaiUncertainty_measure_with_unit *)sent;
 //    SdaiUncertainty_measure_with_unit *ent = (SdaiUncertainty_measure_with_unit *)object;
     if(ent->eDesc == 0)
@@ -34784,7 +34784,7 @@ SdaiEdge_based_wireframe_model::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiEdge_based_wireframe_model: virtual access function." << endl;
+        std::cout << "SdaiEdge_based_wireframe_model: virtual access function." << std::endl;
     SdaiEdge_based_wireframe_model_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -34794,10 +34794,10 @@ SdaiEdge_based_wireframe_model_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiEdge_based_wireframe_model: non-virtual access function." << endl;
+        std::cout << "SdaiEdge_based_wireframe_model: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiEdge_based_wireframe_model *ent = (SdaiEdge_based_wireframe_model *)sent;
 //    SdaiEdge_based_wireframe_model *ent = (SdaiEdge_based_wireframe_model *)object;
     if(ent->eDesc == 0)
@@ -34909,7 +34909,7 @@ SdaiPath::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiPath: virtual access function." << endl;
+        std::cout << "SdaiPath: virtual access function." << std::endl;
     SdaiPath_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -34919,10 +34919,10 @@ SdaiPath_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiPath: non-virtual access function." << endl;
+        std::cout << "SdaiPath: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiPath *ent = (SdaiPath *)sent;
 //    SdaiPath *ent = (SdaiPath *)object;
     if(ent->eDesc == 0)
@@ -35033,7 +35033,7 @@ SdaiConnected_face_set::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiConnected_face_set: virtual access function." << endl;
+        std::cout << "SdaiConnected_face_set: virtual access function." << std::endl;
     SdaiConnected_face_set_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -35043,10 +35043,10 @@ SdaiConnected_face_set_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiConnected_face_set: non-virtual access function." << endl;
+        std::cout << "SdaiConnected_face_set: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiConnected_face_set *ent = (SdaiConnected_face_set *)sent;
 //    SdaiConnected_face_set *ent = (SdaiConnected_face_set *)object;
     if(ent->eDesc == 0)
@@ -35146,7 +35146,7 @@ SdaiOpen_shell::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiOpen_shell: virtual access function." << endl;
+        std::cout << "SdaiOpen_shell: virtual access function." << std::endl;
     SdaiOpen_shell_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -35156,10 +35156,10 @@ SdaiOpen_shell_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiOpen_shell: non-virtual access function." << endl;
+        std::cout << "SdaiOpen_shell: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiOpen_shell *ent = (SdaiOpen_shell *)sent;
 //    SdaiOpen_shell *ent = (SdaiOpen_shell *)object;
     if(ent->eDesc == 0)
@@ -35254,7 +35254,7 @@ SdaiOriented_open_shell::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiOriented_open_shell: virtual access function." << endl;
+        std::cout << "SdaiOriented_open_shell: virtual access function." << std::endl;
     SdaiOriented_open_shell_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -35264,10 +35264,10 @@ SdaiOriented_open_shell_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiOriented_open_shell: non-virtual access function." << endl;
+        std::cout << "SdaiOriented_open_shell: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiOriented_open_shell *ent = (SdaiOriented_open_shell *)sent;
 //    SdaiOriented_open_shell *ent = (SdaiOriented_open_shell *)object;
     if(ent->eDesc == 0)
@@ -35361,14 +35361,14 @@ SdaiOriented_open_shell::open_shell_element_ (const SdaiOpen_shell_ptr x)
     _open_shell_element = x;
 }
 
-const SCLBOOL(Bool)
+const SCLBOOL(Boolean)
 SdaiOriented_open_shell::orientation_() const
 {
-    return (SCLBOOL(Bool)) _orientation;
+    return (SCLBOOL(Boolean)) _orientation;
 }
 
 void
-SdaiOriented_open_shell::orientation_ (const SCLBOOL(Bool) x)
+SdaiOriented_open_shell::orientation_ (const SCLBOOL(Boolean) x)
 
 {
     _orientation.put (x);
@@ -35403,7 +35403,7 @@ SdaiSolid_angle_unit::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiSolid_angle_unit: virtual access function." << endl;
+        std::cout << "SdaiSolid_angle_unit: virtual access function." << std::endl;
     SdaiSolid_angle_unit_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -35413,10 +35413,10 @@ SdaiSolid_angle_unit_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiSolid_angle_unit: non-virtual access function." << endl;
+        std::cout << "SdaiSolid_angle_unit: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiSolid_angle_unit *ent = (SdaiSolid_angle_unit *)sent;
 //    SdaiSolid_angle_unit *ent = (SdaiSolid_angle_unit *)object;
     if(ent->eDesc == 0)
@@ -35518,7 +35518,7 @@ SdaiCoordinated_universal_time_offset::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiCoordinated_universal_time_offset: virtual access function." << endl;
+        std::cout << "SdaiCoordinated_universal_time_offset: virtual access function." << std::endl;
     SdaiCoordinated_universal_time_offset_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -35528,10 +35528,10 @@ SdaiCoordinated_universal_time_offset_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiCoordinated_universal_time_offset: non-virtual access function." << endl;
+        std::cout << "SdaiCoordinated_universal_time_offset: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiCoordinated_universal_time_offset *ent = (SdaiCoordinated_universal_time_offset *)sent;
 //    SdaiCoordinated_universal_time_offset *ent = (SdaiCoordinated_universal_time_offset *)object;
     if(ent->eDesc == 0)
@@ -35714,7 +35714,7 @@ SdaiCurve_replica::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiCurve_replica: virtual access function." << endl;
+        std::cout << "SdaiCurve_replica: virtual access function." << std::endl;
     SdaiCurve_replica_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -35724,10 +35724,10 @@ SdaiCurve_replica_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiCurve_replica: non-virtual access function." << endl;
+        std::cout << "SdaiCurve_replica: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiCurve_replica *ent = (SdaiCurve_replica *)sent;
 //    SdaiCurve_replica *ent = (SdaiCurve_replica *)object;
     if(ent->eDesc == 0)
@@ -35869,7 +35869,7 @@ SdaiQuasi_uniform_surface::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiQuasi_uniform_surface: virtual access function." << endl;
+        std::cout << "SdaiQuasi_uniform_surface: virtual access function." << std::endl;
     SdaiQuasi_uniform_surface_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -35879,10 +35879,10 @@ SdaiQuasi_uniform_surface_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiQuasi_uniform_surface: non-virtual access function." << endl;
+        std::cout << "SdaiQuasi_uniform_surface: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiQuasi_uniform_surface *ent = (SdaiQuasi_uniform_surface *)sent;
 //    SdaiQuasi_uniform_surface *ent = (SdaiQuasi_uniform_surface *)object;
     if(ent->eDesc == 0)
@@ -35993,7 +35993,7 @@ SdaiSurface_curve::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiSurface_curve: virtual access function." << endl;
+        std::cout << "SdaiSurface_curve: virtual access function." << std::endl;
     SdaiSurface_curve_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -36003,10 +36003,10 @@ SdaiSurface_curve_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiSurface_curve: non-virtual access function." << endl;
+        std::cout << "SdaiSurface_curve: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiSurface_curve *ent = (SdaiSurface_curve *)sent;
 //    SdaiSurface_curve *ent = (SdaiSurface_curve *)object;
     if(ent->eDesc == 0)
@@ -36192,7 +36192,7 @@ SdaiAction_request_status::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiAction_request_status: virtual access function." << endl;
+        std::cout << "SdaiAction_request_status: virtual access function." << std::endl;
     SdaiAction_request_status_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -36202,10 +36202,10 @@ SdaiAction_request_status_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiAction_request_status: non-virtual access function." << endl;
+        std::cout << "SdaiAction_request_status: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiAction_request_status *ent = (SdaiAction_request_status *)sent;
 //    SdaiAction_request_status *ent = (SdaiAction_request_status *)object;
     if(ent->eDesc == 0)
@@ -36334,7 +36334,7 @@ SdaiFounded_item::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiFounded_item: virtual access function." << endl;
+        std::cout << "SdaiFounded_item: virtual access function." << std::endl;
     SdaiFounded_item_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -36344,10 +36344,10 @@ SdaiFounded_item_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiFounded_item: non-virtual access function." << endl;
+        std::cout << "SdaiFounded_item: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiFounded_item *ent = (SdaiFounded_item *)sent;
 //    SdaiFounded_item *ent = (SdaiFounded_item *)object;
     if(ent->eDesc == 0)
@@ -36448,7 +36448,7 @@ SdaiComposite_curve_segment::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiComposite_curve_segment: virtual access function." << endl;
+        std::cout << "SdaiComposite_curve_segment: virtual access function." << std::endl;
     SdaiComposite_curve_segment_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -36458,10 +36458,10 @@ SdaiComposite_curve_segment_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiComposite_curve_segment: non-virtual access function." << endl;
+        std::cout << "SdaiComposite_curve_segment: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiComposite_curve_segment *ent = (SdaiComposite_curve_segment *)sent;
 //    SdaiComposite_curve_segment *ent = (SdaiComposite_curve_segment *)object;
     if(ent->eDesc == 0)
@@ -36572,14 +36572,14 @@ SdaiComposite_curve_segment::transition_ (const SdaiTransition_code_var x)
     _transition.put (x);
 }
 
-const SCLBOOL(Bool)
+const SCLBOOL(Boolean)
 SdaiComposite_curve_segment::same_sense_() const
 {
-    return (SCLBOOL(Bool)) _same_sense;
+    return (SCLBOOL(Boolean)) _same_sense;
 }
 
 void
-SdaiComposite_curve_segment::same_sense_ (const SCLBOOL(Bool) x)
+SdaiComposite_curve_segment::same_sense_ (const SCLBOOL(Boolean) x)
 
 {
     _same_sense.put (x);
@@ -36649,7 +36649,7 @@ SdaiReparametrised_composite_curve_segment::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiReparametrised_composite_curve_segment: virtual access function." << endl;
+        std::cout << "SdaiReparametrised_composite_curve_segment: virtual access function." << std::endl;
     SdaiReparametrised_composite_curve_segment_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -36659,10 +36659,10 @@ SdaiReparametrised_composite_curve_segment_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiReparametrised_composite_curve_segment: non-virtual access function." << endl;
+        std::cout << "SdaiReparametrised_composite_curve_segment: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiReparametrised_composite_curve_segment *ent = (SdaiReparametrised_composite_curve_segment *)sent;
 //    SdaiReparametrised_composite_curve_segment *ent = (SdaiReparametrised_composite_curve_segment *)object;
     if(ent->eDesc == 0)
@@ -36806,7 +36806,7 @@ SdaiRepresentation_relationship::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiRepresentation_relationship: virtual access function." << endl;
+        std::cout << "SdaiRepresentation_relationship: virtual access function." << std::endl;
     SdaiRepresentation_relationship_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -36816,10 +36816,10 @@ SdaiRepresentation_relationship_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiRepresentation_relationship: non-virtual access function." << endl;
+        std::cout << "SdaiRepresentation_relationship: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiRepresentation_relationship *ent = (SdaiRepresentation_relationship *)sent;
 //    SdaiRepresentation_relationship *ent = (SdaiRepresentation_relationship *)object;
     if(ent->eDesc == 0)
@@ -37025,7 +37025,7 @@ SdaiRepresentation_relationship_with_transformation::Access_hook_in(void *object
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiRepresentation_relationship_with_transformation: virtual access function." << endl;
+        std::cout << "SdaiRepresentation_relationship_with_transformation: virtual access function." << std::endl;
     SdaiRepresentation_relationship_with_transformation_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -37035,10 +37035,10 @@ SdaiRepresentation_relationship_with_transformation_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiRepresentation_relationship_with_transformation: non-virtual access function." << endl;
+        std::cout << "SdaiRepresentation_relationship_with_transformation: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiRepresentation_relationship_with_transformation *ent = (SdaiRepresentation_relationship_with_transformation *)sent;
 //    SdaiRepresentation_relationship_with_transformation *ent = (SdaiRepresentation_relationship_with_transformation *)object;
     if(ent->eDesc == 0)
@@ -37145,7 +37145,7 @@ SdaiPerson_and_organization_role::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiPerson_and_organization_role: virtual access function." << endl;
+        std::cout << "SdaiPerson_and_organization_role: virtual access function." << std::endl;
     SdaiPerson_and_organization_role_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -37155,10 +37155,10 @@ SdaiPerson_and_organization_role_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiPerson_and_organization_role: non-virtual access function." << endl;
+        std::cout << "SdaiPerson_and_organization_role: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiPerson_and_organization_role *ent = (SdaiPerson_and_organization_role *)sent;
 //    SdaiPerson_and_organization_role *ent = (SdaiPerson_and_organization_role *)object;
     if(ent->eDesc == 0)
@@ -37259,7 +37259,7 @@ SdaiQuasi_uniform_curve::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiQuasi_uniform_curve: virtual access function." << endl;
+        std::cout << "SdaiQuasi_uniform_curve: virtual access function." << std::endl;
     SdaiQuasi_uniform_curve_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -37269,10 +37269,10 @@ SdaiQuasi_uniform_curve_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiQuasi_uniform_curve: non-virtual access function." << endl;
+        std::cout << "SdaiQuasi_uniform_curve: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiQuasi_uniform_curve *ent = (SdaiQuasi_uniform_curve *)sent;
 //    SdaiQuasi_uniform_curve *ent = (SdaiQuasi_uniform_curve *)object;
     if(ent->eDesc == 0)
@@ -37358,7 +37358,7 @@ SdaiSwept_surface::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiSwept_surface: virtual access function." << endl;
+        std::cout << "SdaiSwept_surface: virtual access function." << std::endl;
     SdaiSwept_surface_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -37368,10 +37368,10 @@ SdaiSwept_surface_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiSwept_surface: non-virtual access function." << endl;
+        std::cout << "SdaiSwept_surface: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiSwept_surface *ent = (SdaiSwept_surface *)sent;
 //    SdaiSwept_surface *ent = (SdaiSwept_surface *)object;
     if(ent->eDesc == 0)
@@ -37507,7 +37507,7 @@ SdaiProperty_definition::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiProperty_definition: virtual access function." << endl;
+        std::cout << "SdaiProperty_definition: virtual access function." << std::endl;
     SdaiProperty_definition_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -37517,10 +37517,10 @@ SdaiProperty_definition_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiProperty_definition: non-virtual access function." << endl;
+        std::cout << "SdaiProperty_definition: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiProperty_definition *ent = (SdaiProperty_definition *)sent;
 //    SdaiProperty_definition *ent = (SdaiProperty_definition *)object;
     if(ent->eDesc == 0)
@@ -37687,7 +37687,7 @@ SdaiGlobal_uncertainty_assigned_context::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiGlobal_uncertainty_assigned_context: virtual access function." << endl;
+        std::cout << "SdaiGlobal_uncertainty_assigned_context: virtual access function." << std::endl;
     SdaiGlobal_uncertainty_assigned_context_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -37697,10 +37697,10 @@ SdaiGlobal_uncertainty_assigned_context_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiGlobal_uncertainty_assigned_context: non-virtual access function." << endl;
+        std::cout << "SdaiGlobal_uncertainty_assigned_context: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiGlobal_uncertainty_assigned_context *ent = (SdaiGlobal_uncertainty_assigned_context *)sent;
 //    SdaiGlobal_uncertainty_assigned_context *ent = (SdaiGlobal_uncertainty_assigned_context *)object;
     if(ent->eDesc == 0)
@@ -37842,7 +37842,7 @@ SdaiOrganization_relationship::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiOrganization_relationship: virtual access function." << endl;
+        std::cout << "SdaiOrganization_relationship: virtual access function." << std::endl;
     SdaiOrganization_relationship_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -37852,10 +37852,10 @@ SdaiOrganization_relationship_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiOrganization_relationship: non-virtual access function." << endl;
+        std::cout << "SdaiOrganization_relationship: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiOrganization_relationship *ent = (SdaiOrganization_relationship *)sent;
 //    SdaiOrganization_relationship *ent = (SdaiOrganization_relationship *)object;
     if(ent->eDesc == 0)
@@ -38062,7 +38062,7 @@ SdaiParabola::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiParabola: virtual access function." << endl;
+        std::cout << "SdaiParabola: virtual access function." << std::endl;
     SdaiParabola_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -38072,10 +38072,10 @@ SdaiParabola_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiParabola: non-virtual access function." << endl;
+        std::cout << "SdaiParabola: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiParabola *ent = (SdaiParabola *)sent;
 //    SdaiParabola *ent = (SdaiParabola *)object;
     if(ent->eDesc == 0)
@@ -38194,7 +38194,7 @@ SdaiRectangular_composite_surface::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiRectangular_composite_surface: virtual access function." << endl;
+        std::cout << "SdaiRectangular_composite_surface: virtual access function." << std::endl;
     SdaiRectangular_composite_surface_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -38204,10 +38204,10 @@ SdaiRectangular_composite_surface_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiRectangular_composite_surface: non-virtual access function." << endl;
+        std::cout << "SdaiRectangular_composite_surface: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiRectangular_composite_surface *ent = (SdaiRectangular_composite_surface *)sent;
 //    SdaiRectangular_composite_surface *ent = (SdaiRectangular_composite_surface *)object;
     if(ent->eDesc == 0)
@@ -38332,7 +38332,7 @@ SdaiLot_effectivity::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiLot_effectivity: virtual access function." << endl;
+        std::cout << "SdaiLot_effectivity: virtual access function." << std::endl;
     SdaiLot_effectivity_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -38342,10 +38342,10 @@ SdaiLot_effectivity_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiLot_effectivity: non-virtual access function." << endl;
+        std::cout << "SdaiLot_effectivity: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiLot_effectivity *ent = (SdaiLot_effectivity *)sent;
 //    SdaiLot_effectivity *ent = (SdaiLot_effectivity *)object;
     if(ent->eDesc == 0)
@@ -38492,7 +38492,7 @@ SdaiSurface_of_linear_extrusion::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiSurface_of_linear_extrusion: virtual access function." << endl;
+        std::cout << "SdaiSurface_of_linear_extrusion: virtual access function." << std::endl;
     SdaiSurface_of_linear_extrusion_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -38502,10 +38502,10 @@ SdaiSurface_of_linear_extrusion_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiSurface_of_linear_extrusion: non-virtual access function." << endl;
+        std::cout << "SdaiSurface_of_linear_extrusion: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiSurface_of_linear_extrusion *ent = (SdaiSurface_of_linear_extrusion *)sent;
 //    SdaiSurface_of_linear_extrusion *ent = (SdaiSurface_of_linear_extrusion *)object;
     if(ent->eDesc == 0)
@@ -38622,7 +38622,7 @@ SdaiShell_based_surface_model::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiShell_based_surface_model: virtual access function." << endl;
+        std::cout << "SdaiShell_based_surface_model: virtual access function." << std::endl;
     SdaiShell_based_surface_model_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -38632,10 +38632,10 @@ SdaiShell_based_surface_model_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiShell_based_surface_model: non-virtual access function." << endl;
+        std::cout << "SdaiShell_based_surface_model: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiShell_based_surface_model *ent = (SdaiShell_based_surface_model *)sent;
 //    SdaiShell_based_surface_model *ent = (SdaiShell_based_surface_model *)object;
     if(ent->eDesc == 0)
@@ -38739,7 +38739,7 @@ SdaiUniform_curve::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiUniform_curve: virtual access function." << endl;
+        std::cout << "SdaiUniform_curve: virtual access function." << std::endl;
     SdaiUniform_curve_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -38749,10 +38749,10 @@ SdaiUniform_curve_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiUniform_curve: non-virtual access function." << endl;
+        std::cout << "SdaiUniform_curve: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiUniform_curve *ent = (SdaiUniform_curve *)sent;
 //    SdaiUniform_curve *ent = (SdaiUniform_curve *)object;
     if(ent->eDesc == 0)
@@ -38829,7 +38829,7 @@ SdaiBezier_curve::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiBezier_curve: virtual access function." << endl;
+        std::cout << "SdaiBezier_curve: virtual access function." << std::endl;
     SdaiBezier_curve_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -38839,10 +38839,10 @@ SdaiBezier_curve_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiBezier_curve: non-virtual access function." << endl;
+        std::cout << "SdaiBezier_curve: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiBezier_curve *ent = (SdaiBezier_curve *)sent;
 //    SdaiBezier_curve *ent = (SdaiBezier_curve *)object;
     if(ent->eDesc == 0)
@@ -38916,7 +38916,7 @@ SdaiLoop::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiLoop: virtual access function." << endl;
+        std::cout << "SdaiLoop: virtual access function." << std::endl;
     SdaiLoop_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -38926,10 +38926,10 @@ SdaiLoop_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiLoop: non-virtual access function." << endl;
+        std::cout << "SdaiLoop: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiLoop *ent = (SdaiLoop *)sent;
 //    SdaiLoop *ent = (SdaiLoop *)object;
     if(ent->eDesc == 0)
@@ -39018,7 +39018,7 @@ SdaiEdge_loop::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiEdge_loop: virtual access function." << endl;
+        std::cout << "SdaiEdge_loop: virtual access function." << std::endl;
     SdaiEdge_loop_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -39028,10 +39028,10 @@ SdaiEdge_loop_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiEdge_loop: non-virtual access function." << endl;
+        std::cout << "SdaiEdge_loop: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiEdge_loop *ent = (SdaiEdge_loop *)sent;
 //    SdaiEdge_loop *ent = (SdaiEdge_loop *)object;
     if(ent->eDesc == 0)
@@ -39142,7 +39142,7 @@ SdaiDate::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiDate: virtual access function." << endl;
+        std::cout << "SdaiDate: virtual access function." << std::endl;
     SdaiDate_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -39152,10 +39152,10 @@ SdaiDate_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiDate: non-virtual access function." << endl;
+        std::cout << "SdaiDate: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiDate *ent = (SdaiDate *)sent;
 //    SdaiDate *ent = (SdaiDate *)object;
     if(ent->eDesc == 0)
@@ -39275,7 +39275,7 @@ SdaiCalendar_date::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiCalendar_date: virtual access function." << endl;
+        std::cout << "SdaiCalendar_date: virtual access function." << std::endl;
     SdaiCalendar_date_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -39285,10 +39285,10 @@ SdaiCalendar_date_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiCalendar_date: non-virtual access function." << endl;
+        std::cout << "SdaiCalendar_date: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiCalendar_date *ent = (SdaiCalendar_date *)sent;
 //    SdaiCalendar_date *ent = (SdaiCalendar_date *)object;
     if(ent->eDesc == 0)
@@ -39444,7 +39444,7 @@ SdaiToroidal_surface::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiToroidal_surface: virtual access function." << endl;
+        std::cout << "SdaiToroidal_surface: virtual access function." << std::endl;
     SdaiToroidal_surface_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -39454,10 +39454,10 @@ SdaiToroidal_surface_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiToroidal_surface: non-virtual access function." << endl;
+        std::cout << "SdaiToroidal_surface: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiToroidal_surface *ent = (SdaiToroidal_surface *)sent;
 //    SdaiToroidal_surface *ent = (SdaiToroidal_surface *)object;
     if(ent->eDesc == 0)
@@ -39591,7 +39591,7 @@ SdaiPromissory_usage_occurrence::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiPromissory_usage_occurrence: virtual access function." << endl;
+        std::cout << "SdaiPromissory_usage_occurrence: virtual access function." << std::endl;
     SdaiPromissory_usage_occurrence_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -39601,10 +39601,10 @@ SdaiPromissory_usage_occurrence_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiPromissory_usage_occurrence: non-virtual access function." << endl;
+        std::cout << "SdaiPromissory_usage_occurrence: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiPromissory_usage_occurrence *ent = (SdaiPromissory_usage_occurrence *)sent;
 //    SdaiPromissory_usage_occurrence *ent = (SdaiPromissory_usage_occurrence *)object;
     if(ent->eDesc == 0)
@@ -39684,7 +39684,7 @@ SdaiApproval_assignment::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiApproval_assignment: virtual access function." << endl;
+        std::cout << "SdaiApproval_assignment: virtual access function." << std::endl;
     SdaiApproval_assignment_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -39694,10 +39694,10 @@ SdaiApproval_assignment_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiApproval_assignment: non-virtual access function." << endl;
+        std::cout << "SdaiApproval_assignment: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiApproval_assignment *ent = (SdaiApproval_assignment *)sent;
 //    SdaiApproval_assignment *ent = (SdaiApproval_assignment *)object;
     if(ent->eDesc == 0)
@@ -39850,7 +39850,7 @@ SdaiConfiguration_item::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiConfiguration_item: virtual access function." << endl;
+        std::cout << "SdaiConfiguration_item: virtual access function." << std::endl;
     SdaiConfiguration_item_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -39860,10 +39860,10 @@ SdaiConfiguration_item_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiConfiguration_item: non-virtual access function." << endl;
+        std::cout << "SdaiConfiguration_item: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiConfiguration_item *ent = (SdaiConfiguration_item *)sent;
 //    SdaiConfiguration_item *ent = (SdaiConfiguration_item *)object;
     if(ent->eDesc == 0)
@@ -40096,7 +40096,7 @@ SdaiContract_assignment::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiContract_assignment: virtual access function." << endl;
+        std::cout << "SdaiContract_assignment: virtual access function." << std::endl;
     SdaiContract_assignment_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -40106,10 +40106,10 @@ SdaiContract_assignment_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiContract_assignment: non-virtual access function." << endl;
+        std::cout << "SdaiContract_assignment: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiContract_assignment *ent = (SdaiContract_assignment *)sent;
 //    SdaiContract_assignment *ent = (SdaiContract_assignment *)object;
     if(ent->eDesc == 0)
@@ -40232,7 +40232,7 @@ SdaiVector::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiVector: virtual access function." << endl;
+        std::cout << "SdaiVector: virtual access function." << std::endl;
     SdaiVector_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -40242,10 +40242,10 @@ SdaiVector_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiVector: non-virtual access function." << endl;
+        std::cout << "SdaiVector: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiVector *ent = (SdaiVector *)sent;
 //    SdaiVector *ent = (SdaiVector *)object;
     if(ent->eDesc == 0)
@@ -40404,7 +40404,7 @@ SdaiPcurve::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiPcurve: virtual access function." << endl;
+        std::cout << "SdaiPcurve: virtual access function." << std::endl;
     SdaiPcurve_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -40414,10 +40414,10 @@ SdaiPcurve_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiPcurve: non-virtual access function." << endl;
+        std::cout << "SdaiPcurve: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiPcurve *ent = (SdaiPcurve *)sent;
 //    SdaiPcurve *ent = (SdaiPcurve *)object;
     if(ent->eDesc == 0)
@@ -40573,7 +40573,7 @@ SdaiBounded_pcurve::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiBounded_pcurve: virtual access function." << endl;
+        std::cout << "SdaiBounded_pcurve: virtual access function." << std::endl;
     SdaiBounded_pcurve_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -40583,10 +40583,10 @@ SdaiBounded_pcurve_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiBounded_pcurve: non-virtual access function." << endl;
+        std::cout << "SdaiBounded_pcurve: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiBounded_pcurve *ent = (SdaiBounded_pcurve *)sent;
 //    SdaiBounded_pcurve *ent = (SdaiBounded_pcurve *)object;
     if(ent->eDesc == 0)
@@ -40680,7 +40680,7 @@ SdaiIntersection_curve::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiIntersection_curve: virtual access function." << endl;
+        std::cout << "SdaiIntersection_curve: virtual access function." << std::endl;
     SdaiIntersection_curve_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -40690,10 +40690,10 @@ SdaiIntersection_curve_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiIntersection_curve: non-virtual access function." << endl;
+        std::cout << "SdaiIntersection_curve: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiIntersection_curve *ent = (SdaiIntersection_curve *)sent;
 //    SdaiIntersection_curve *ent = (SdaiIntersection_curve *)object;
     if(ent->eDesc == 0)
@@ -40822,7 +40822,7 @@ SdaiTrimmed_curve::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiTrimmed_curve: virtual access function." << endl;
+        std::cout << "SdaiTrimmed_curve: virtual access function." << std::endl;
     SdaiTrimmed_curve_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -40832,10 +40832,10 @@ SdaiTrimmed_curve_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiTrimmed_curve: non-virtual access function." << endl;
+        std::cout << "SdaiTrimmed_curve: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiTrimmed_curve *ent = (SdaiTrimmed_curve *)sent;
 //    SdaiTrimmed_curve *ent = (SdaiTrimmed_curve *)object;
     if(ent->eDesc == 0)
@@ -41005,14 +41005,14 @@ SdaiTrimmed_curve::trim_2_ (const SdaiTrimming_selects_ptr x)
 
 	{ _trim_2.ShallowCopy (*x); }
 
-const SCLBOOL(Bool)
+const SCLBOOL(Boolean)
 SdaiTrimmed_curve::sense_agreement_() const
 {
-    return (SCLBOOL(Bool)) _sense_agreement;
+    return (SCLBOOL(Boolean)) _sense_agreement;
 }
 
 void
-SdaiTrimmed_curve::sense_agreement_ (const SCLBOOL(Bool) x)
+SdaiTrimmed_curve::sense_agreement_ (const SCLBOOL(Boolean) x)
 
 {
     _sense_agreement.put (x);
@@ -41071,7 +41071,7 @@ SdaiProduct_definition_context::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiProduct_definition_context: virtual access function." << endl;
+        std::cout << "SdaiProduct_definition_context: virtual access function." << std::endl;
     SdaiProduct_definition_context_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -41081,10 +41081,10 @@ SdaiProduct_definition_context_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiProduct_definition_context: non-virtual access function." << endl;
+        std::cout << "SdaiProduct_definition_context: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiProduct_definition_context *ent = (SdaiProduct_definition_context *)sent;
 //    SdaiProduct_definition_context *ent = (SdaiProduct_definition_context *)object;
     if(ent->eDesc == 0)
@@ -41205,7 +41205,7 @@ SdaiBounded_surface_curve::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiBounded_surface_curve: virtual access function." << endl;
+        std::cout << "SdaiBounded_surface_curve: virtual access function." << std::endl;
     SdaiBounded_surface_curve_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -41215,10 +41215,10 @@ SdaiBounded_surface_curve_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiBounded_surface_curve: non-virtual access function." << endl;
+        std::cout << "SdaiBounded_surface_curve: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiBounded_surface_curve *ent = (SdaiBounded_surface_curve *)sent;
 //    SdaiBounded_surface_curve *ent = (SdaiBounded_surface_curve *)object;
     if(ent->eDesc == 0)
@@ -41353,7 +41353,7 @@ SdaiItem_defined_transformation::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiItem_defined_transformation: virtual access function." << endl;
+        std::cout << "SdaiItem_defined_transformation: virtual access function." << std::endl;
     SdaiItem_defined_transformation_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -41363,10 +41363,10 @@ SdaiItem_defined_transformation_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiItem_defined_transformation: non-virtual access function." << endl;
+        std::cout << "SdaiItem_defined_transformation: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiItem_defined_transformation *ent = (SdaiItem_defined_transformation *)sent;
 //    SdaiItem_defined_transformation *ent = (SdaiItem_defined_transformation *)object;
     if(ent->eDesc == 0)
@@ -41603,7 +41603,7 @@ SdaiAction_method::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiAction_method: virtual access function." << endl;
+        std::cout << "SdaiAction_method: virtual access function." << std::endl;
     SdaiAction_method_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -41613,10 +41613,10 @@ SdaiAction_method_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiAction_method: non-virtual access function." << endl;
+        std::cout << "SdaiAction_method: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiAction_method *ent = (SdaiAction_method *)sent;
 //    SdaiAction_method *ent = (SdaiAction_method *)object;
     if(ent->eDesc == 0)
@@ -41849,7 +41849,7 @@ SdaiProduct_category_relationship::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiProduct_category_relationship: virtual access function." << endl;
+        std::cout << "SdaiProduct_category_relationship: virtual access function." << std::endl;
     SdaiProduct_category_relationship_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -41859,10 +41859,10 @@ SdaiProduct_category_relationship_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiProduct_category_relationship: non-virtual access function." << endl;
+        std::cout << "SdaiProduct_category_relationship: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiProduct_category_relationship *ent = (SdaiProduct_category_relationship *)sent;
 //    SdaiProduct_category_relationship *ent = (SdaiProduct_category_relationship *)object;
     if(ent->eDesc == 0)
@@ -42057,7 +42057,7 @@ SdaiPlane_angle_measure_with_unit::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiPlane_angle_measure_with_unit: virtual access function." << endl;
+        std::cout << "SdaiPlane_angle_measure_with_unit: virtual access function." << std::endl;
     SdaiPlane_angle_measure_with_unit_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -42067,10 +42067,10 @@ SdaiPlane_angle_measure_with_unit_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiPlane_angle_measure_with_unit: non-virtual access function." << endl;
+        std::cout << "SdaiPlane_angle_measure_with_unit: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiPlane_angle_measure_with_unit *ent = (SdaiPlane_angle_measure_with_unit *)sent;
 //    SdaiPlane_angle_measure_with_unit *ent = (SdaiPlane_angle_measure_with_unit *)object;
     if(ent->eDesc == 0)
@@ -42128,7 +42128,7 @@ SdaiVertex::SdaiVertex( )
  	/* part of the main inheritance hierarchy */
 
     eDesc = config_control_designe_vertex;
-    //cout << "Vertex" << endl;
+    //std::cout << "Vertex" << std::endl;
     //PrintSTEPattributes ();
 }
 SdaiVertex::SdaiVertex (SdaiVertex& e )
@@ -42143,7 +42143,7 @@ SdaiVertex::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiVertex: virtual access function." << endl;
+        std::cout << "SdaiVertex: virtual access function." << std::endl;
     SdaiVertex_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -42153,10 +42153,10 @@ SdaiVertex_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiVertex: non-virtual access function." << endl;
+        std::cout << "SdaiVertex: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiVertex *ent = (SdaiVertex *)sent;
 //    SdaiVertex *ent = (SdaiVertex *)object;
     if(ent->eDesc == 0)
@@ -42248,7 +42248,7 @@ SdaiRepresentation_map::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiRepresentation_map: virtual access function." << endl;
+        std::cout << "SdaiRepresentation_map: virtual access function." << std::endl;
     SdaiRepresentation_map_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -42258,10 +42258,10 @@ SdaiRepresentation_map_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiRepresentation_map: non-virtual access function." << endl;
+        std::cout << "SdaiRepresentation_map: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiRepresentation_map *ent = (SdaiRepresentation_map *)sent;
 //    SdaiRepresentation_map *ent = (SdaiRepresentation_map *)object;
     if(ent->eDesc == 0)
@@ -42416,7 +42416,7 @@ SdaiProduct_definition_effectivity::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiProduct_definition_effectivity: virtual access function." << endl;
+        std::cout << "SdaiProduct_definition_effectivity: virtual access function." << std::endl;
     SdaiProduct_definition_effectivity_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -42426,10 +42426,10 @@ SdaiProduct_definition_effectivity_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiProduct_definition_effectivity: non-virtual access function." << endl;
+        std::cout << "SdaiProduct_definition_effectivity: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiProduct_definition_effectivity *ent = (SdaiProduct_definition_effectivity *)sent;
 //    SdaiProduct_definition_effectivity *ent = (SdaiProduct_definition_effectivity *)object;
     if(ent->eDesc == 0)
@@ -42544,7 +42544,7 @@ SdaiConfiguration_effectivity::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiConfiguration_effectivity: virtual access function." << endl;
+        std::cout << "SdaiConfiguration_effectivity: virtual access function." << std::endl;
     SdaiConfiguration_effectivity_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -42554,10 +42554,10 @@ SdaiConfiguration_effectivity_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiConfiguration_effectivity: non-virtual access function." << endl;
+        std::cout << "SdaiConfiguration_effectivity: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiConfiguration_effectivity *ent = (SdaiConfiguration_effectivity *)sent;
 //    SdaiConfiguration_effectivity *ent = (SdaiConfiguration_effectivity *)object;
     if(ent->eDesc == 0)
@@ -42684,7 +42684,7 @@ SdaiEllipse::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiEllipse: virtual access function." << endl;
+        std::cout << "SdaiEllipse: virtual access function." << std::endl;
     SdaiEllipse_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -42694,10 +42694,10 @@ SdaiEllipse_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiEllipse: non-virtual access function." << endl;
+        std::cout << "SdaiEllipse: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiEllipse *ent = (SdaiEllipse *)sent;
 //    SdaiEllipse *ent = (SdaiEllipse *)object;
     if(ent->eDesc == 0)
@@ -42842,7 +42842,7 @@ SdaiContext_dependent_unit::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiContext_dependent_unit: virtual access function." << endl;
+        std::cout << "SdaiContext_dependent_unit: virtual access function." << std::endl;
     SdaiContext_dependent_unit_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -42852,10 +42852,10 @@ SdaiContext_dependent_unit_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiContext_dependent_unit: non-virtual access function." << endl;
+        std::cout << "SdaiContext_dependent_unit: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiContext_dependent_unit *ent = (SdaiContext_dependent_unit *)sent;
 //    SdaiContext_dependent_unit *ent = (SdaiContext_dependent_unit *)object;
     if(ent->eDesc == 0)
@@ -43010,7 +43010,7 @@ SdaiAlternate_product_relationship::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiAlternate_product_relationship: virtual access function." << endl;
+        std::cout << "SdaiAlternate_product_relationship: virtual access function." << std::endl;
     SdaiAlternate_product_relationship_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -43020,10 +43020,10 @@ SdaiAlternate_product_relationship_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiAlternate_product_relationship: non-virtual access function." << endl;
+        std::cout << "SdaiAlternate_product_relationship: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiAlternate_product_relationship *ent = (SdaiAlternate_product_relationship *)sent;
 //    SdaiAlternate_product_relationship *ent = (SdaiAlternate_product_relationship *)object;
     if(ent->eDesc == 0)
@@ -43258,7 +43258,7 @@ SdaiDocument_type::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiDocument_type: virtual access function." << endl;
+        std::cout << "SdaiDocument_type: virtual access function." << std::endl;
     SdaiDocument_type_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -43268,10 +43268,10 @@ SdaiDocument_type_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiDocument_type: non-virtual access function." << endl;
+        std::cout << "SdaiDocument_type: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiDocument_type *ent = (SdaiDocument_type *)sent;
 //    SdaiDocument_type *ent = (SdaiDocument_type *)object;
     if(ent->eDesc == 0)
@@ -43389,7 +43389,7 @@ SdaiDocument_reference::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiDocument_reference: virtual access function." << endl;
+        std::cout << "SdaiDocument_reference: virtual access function." << std::endl;
     SdaiDocument_reference_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -43399,10 +43399,10 @@ SdaiDocument_reference_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiDocument_reference: non-virtual access function." << endl;
+        std::cout << "SdaiDocument_reference: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiDocument_reference *ent = (SdaiDocument_reference *)sent;
 //    SdaiDocument_reference *ent = (SdaiDocument_reference *)object;
     if(ent->eDesc == 0)
@@ -43533,7 +43533,7 @@ SdaiMechanical_context::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiMechanical_context: virtual access function." << endl;
+        std::cout << "SdaiMechanical_context: virtual access function." << std::endl;
     SdaiMechanical_context_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -43543,10 +43543,10 @@ SdaiMechanical_context_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiMechanical_context: non-virtual access function." << endl;
+        std::cout << "SdaiMechanical_context: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiMechanical_context *ent = (SdaiMechanical_context *)sent;
 //    SdaiMechanical_context *ent = (SdaiMechanical_context *)object;
     if(ent->eDesc == 0)
@@ -43629,7 +43629,7 @@ SdaiShell_based_wireframe_model::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiShell_based_wireframe_model: virtual access function." << endl;
+        std::cout << "SdaiShell_based_wireframe_model: virtual access function." << std::endl;
     SdaiShell_based_wireframe_model_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -43639,10 +43639,10 @@ SdaiShell_based_wireframe_model_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiShell_based_wireframe_model: non-virtual access function." << endl;
+        std::cout << "SdaiShell_based_wireframe_model: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiShell_based_wireframe_model *ent = (SdaiShell_based_wireframe_model *)sent;
 //    SdaiShell_based_wireframe_model *ent = (SdaiShell_based_wireframe_model *)object;
     if(ent->eDesc == 0)
@@ -43774,7 +43774,7 @@ SdaiContract::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiContract: virtual access function." << endl;
+        std::cout << "SdaiContract: virtual access function." << std::endl;
     SdaiContract_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -43784,10 +43784,10 @@ SdaiContract_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiContract: non-virtual access function." << endl;
+        std::cout << "SdaiContract: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiContract *ent = (SdaiContract *)sent;
 //    SdaiContract *ent = (SdaiContract *)object;
     if(ent->eDesc == 0)
@@ -44024,7 +44024,7 @@ SdaiDimensional_exponents::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiDimensional_exponents: virtual access function." << endl;
+        std::cout << "SdaiDimensional_exponents: virtual access function." << std::endl;
     SdaiDimensional_exponents_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -44034,10 +44034,10 @@ SdaiDimensional_exponents_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiDimensional_exponents: non-virtual access function." << endl;
+        std::cout << "SdaiDimensional_exponents: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiDimensional_exponents *ent = (SdaiDimensional_exponents *)sent;
 //    SdaiDimensional_exponents *ent = (SdaiDimensional_exponents *)object;
     if(ent->eDesc == 0)
@@ -44332,7 +44332,7 @@ SdaiStart_request::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiStart_request: virtual access function." << endl;
+        std::cout << "SdaiStart_request: virtual access function." << std::endl;
     SdaiStart_request_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -44342,10 +44342,10 @@ SdaiStart_request_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiStart_request: non-virtual access function." << endl;
+        std::cout << "SdaiStart_request: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiStart_request *ent = (SdaiStart_request *)sent;
 //    SdaiStart_request *ent = (SdaiStart_request *)object;
     if(ent->eDesc == 0)
@@ -44456,7 +44456,7 @@ SdaiCc_design_specification_reference::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiCc_design_specification_reference: virtual access function." << endl;
+        std::cout << "SdaiCc_design_specification_reference: virtual access function." << std::endl;
     SdaiCc_design_specification_reference_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -44466,10 +44466,10 @@ SdaiCc_design_specification_reference_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiCc_design_specification_reference: non-virtual access function." << endl;
+        std::cout << "SdaiCc_design_specification_reference: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiCc_design_specification_reference *ent = (SdaiCc_design_specification_reference *)sent;
 //    SdaiCc_design_specification_reference *ent = (SdaiCc_design_specification_reference *)object;
     if(ent->eDesc == 0)
@@ -44569,7 +44569,7 @@ SdaiSupplied_part_relationship::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiSupplied_part_relationship: virtual access function." << endl;
+        std::cout << "SdaiSupplied_part_relationship: virtual access function." << std::endl;
     SdaiSupplied_part_relationship_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -44579,10 +44579,10 @@ SdaiSupplied_part_relationship_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiSupplied_part_relationship: non-virtual access function." << endl;
+        std::cout << "SdaiSupplied_part_relationship: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiSupplied_part_relationship *ent = (SdaiSupplied_part_relationship *)sent;
 //    SdaiSupplied_part_relationship *ent = (SdaiSupplied_part_relationship *)object;
     if(ent->eDesc == 0)
@@ -44673,7 +44673,7 @@ SdaiContext_dependent_shape_representation::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiContext_dependent_shape_representation: virtual access function." << endl;
+        std::cout << "SdaiContext_dependent_shape_representation: virtual access function." << std::endl;
     SdaiContext_dependent_shape_representation_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -44683,10 +44683,10 @@ SdaiContext_dependent_shape_representation_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiContext_dependent_shape_representation: non-virtual access function." << endl;
+        std::cout << "SdaiContext_dependent_shape_representation: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiContext_dependent_shape_representation *ent = (SdaiContext_dependent_shape_representation *)sent;
 //    SdaiContext_dependent_shape_representation *ent = (SdaiContext_dependent_shape_representation *)object;
     if(ent->eDesc == 0)
@@ -44831,7 +44831,7 @@ SdaiDegenerate_toroidal_surface::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiDegenerate_toroidal_surface: virtual access function." << endl;
+        std::cout << "SdaiDegenerate_toroidal_surface: virtual access function." << std::endl;
     SdaiDegenerate_toroidal_surface_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -44841,10 +44841,10 @@ SdaiDegenerate_toroidal_surface_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiDegenerate_toroidal_surface: non-virtual access function." << endl;
+        std::cout << "SdaiDegenerate_toroidal_surface: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiDegenerate_toroidal_surface *ent = (SdaiDegenerate_toroidal_surface *)sent;
 //    SdaiDegenerate_toroidal_surface *ent = (SdaiDegenerate_toroidal_surface *)object;
     if(ent->eDesc == 0)
@@ -44905,14 +44905,14 @@ SdaiDegenerate_toroidal_surface::SdaiDegenerate_toroidal_surface (SCLP23(Applica
     MakeDerived ("dim");
 }
 
-const SCLBOOL(Bool)
+const SCLBOOL(Boolean)
 SdaiDegenerate_toroidal_surface::select_outer_() const
 {
-    return (SCLBOOL(Bool)) _select_outer;
+    return (SCLBOOL(Boolean)) _select_outer;
 }
 
 void
-SdaiDegenerate_toroidal_surface::select_outer_ (const SCLBOOL(Bool) x)
+SdaiDegenerate_toroidal_surface::select_outer_ (const SCLBOOL(Boolean) x)
 
 {
     _select_outer.put (x);
@@ -44958,7 +44958,7 @@ SdaiOrdinal_date::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiOrdinal_date: virtual access function." << endl;
+        std::cout << "SdaiOrdinal_date: virtual access function." << std::endl;
     SdaiOrdinal_date_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -44968,10 +44968,10 @@ SdaiOrdinal_date_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiOrdinal_date: non-virtual access function." << endl;
+        std::cout << "SdaiOrdinal_date: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiOrdinal_date *ent = (SdaiOrdinal_date *)sent;
 //    SdaiOrdinal_date *ent = (SdaiOrdinal_date *)object;
     if(ent->eDesc == 0)
@@ -45073,7 +45073,7 @@ SdaiFace_outer_bound::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiFace_outer_bound: virtual access function." << endl;
+        std::cout << "SdaiFace_outer_bound: virtual access function." << std::endl;
     SdaiFace_outer_bound_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -45083,10 +45083,10 @@ SdaiFace_outer_bound_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiFace_outer_bound: non-virtual access function." << endl;
+        std::cout << "SdaiFace_outer_bound: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiFace_outer_bound *ent = (SdaiFace_outer_bound *)sent;
 //    SdaiFace_outer_bound *ent = (SdaiFace_outer_bound *)object;
     if(ent->eDesc == 0)
@@ -45157,7 +45157,7 @@ SdaiMass_measure_with_unit::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiMass_measure_with_unit: virtual access function." << endl;
+        std::cout << "SdaiMass_measure_with_unit: virtual access function." << std::endl;
     SdaiMass_measure_with_unit_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -45167,10 +45167,10 @@ SdaiMass_measure_with_unit_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiMass_measure_with_unit: non-virtual access function." << endl;
+        std::cout << "SdaiMass_measure_with_unit: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiMass_measure_with_unit *ent = (SdaiMass_measure_with_unit *)sent;
 //    SdaiMass_measure_with_unit *ent = (SdaiMass_measure_with_unit *)object;
     if(ent->eDesc == 0)
@@ -45253,7 +45253,7 @@ SdaiBrep_with_voids::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiBrep_with_voids: virtual access function." << endl;
+        std::cout << "SdaiBrep_with_voids: virtual access function." << std::endl;
     SdaiBrep_with_voids_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -45263,10 +45263,10 @@ SdaiBrep_with_voids_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiBrep_with_voids: non-virtual access function." << endl;
+        std::cout << "SdaiBrep_with_voids: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiBrep_with_voids *ent = (SdaiBrep_with_voids *)sent;
 //    SdaiBrep_with_voids *ent = (SdaiBrep_with_voids *)object;
     if(ent->eDesc == 0)
@@ -45389,7 +45389,7 @@ SdaiWeek_of_year_and_day_date::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiWeek_of_year_and_day_date: virtual access function." << endl;
+        std::cout << "SdaiWeek_of_year_and_day_date: virtual access function." << std::endl;
     SdaiWeek_of_year_and_day_date_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -45399,10 +45399,10 @@ SdaiWeek_of_year_and_day_date_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiWeek_of_year_and_day_date: non-virtual access function." << endl;
+        std::cout << "SdaiWeek_of_year_and_day_date: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiWeek_of_year_and_day_date *ent = (SdaiWeek_of_year_and_day_date *)sent;
 //    SdaiWeek_of_year_and_day_date *ent = (SdaiWeek_of_year_and_day_date *)object;
     if(ent->eDesc == 0)
@@ -45558,7 +45558,7 @@ SdaiPoint_on_curve::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiPoint_on_curve: virtual access function." << endl;
+        std::cout << "SdaiPoint_on_curve: virtual access function." << std::endl;
     SdaiPoint_on_curve_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -45568,10 +45568,10 @@ SdaiPoint_on_curve_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiPoint_on_curve: non-virtual access function." << endl;
+        std::cout << "SdaiPoint_on_curve: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiPoint_on_curve *ent = (SdaiPoint_on_curve *)sent;
 //    SdaiPoint_on_curve *ent = (SdaiPoint_on_curve *)object;
     if(ent->eDesc == 0)
@@ -45707,7 +45707,7 @@ SdaiShell_based_wireframe_shape_representation::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiShell_based_wireframe_shape_representation: virtual access function." << endl;
+        std::cout << "SdaiShell_based_wireframe_shape_representation: virtual access function." << std::endl;
     SdaiShell_based_wireframe_shape_representation_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -45717,10 +45717,10 @@ SdaiShell_based_wireframe_shape_representation_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiShell_based_wireframe_shape_representation: non-virtual access function." << endl;
+        std::cout << "SdaiShell_based_wireframe_shape_representation: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiShell_based_wireframe_shape_representation *ent = (SdaiShell_based_wireframe_shape_representation *)sent;
 //    SdaiShell_based_wireframe_shape_representation *ent = (SdaiShell_based_wireframe_shape_representation *)object;
     if(ent->eDesc == 0)
@@ -45802,7 +45802,7 @@ SdaiFace::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiFace: virtual access function." << endl;
+        std::cout << "SdaiFace: virtual access function." << std::endl;
     SdaiFace_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -45812,10 +45812,10 @@ SdaiFace_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiFace: non-virtual access function." << endl;
+        std::cout << "SdaiFace: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiFace *ent = (SdaiFace *)sent;
 //    SdaiFace *ent = (SdaiFace *)object;
     if(ent->eDesc == 0)
@@ -45904,7 +45904,7 @@ SdaiFace_surface::SdaiFace_surface( )
  	/* part of the main inheritance hierarchy */
 	/*  parent: SdaiGeometric_representation_item  */
     HeadEntity(this);
-//    cout << "**** face_surface ****" << endl;
+//    std::cout << "**** face_surface ****" << std::endl;
 //    PrintSTEPattributes();
 #if 1
 	/* Optionally use the following to replace the line following
@@ -45921,7 +45921,7 @@ SdaiFace_surface::SdaiFace_surface( )
 #else
     AppendMultInstance(new SdaiGeometric_representation_item(this));
 #endif
-//    cout << "**** face_surface - after append****" << endl;
+//    std::cout << "**** face_surface - after append****" << std::endl;
 //    PrintSTEPattributes();
 
     eDesc = config_control_designe_face_surface;
@@ -45946,7 +45946,7 @@ SdaiFace_surface::SdaiFace_surface( )
     a -> set_null ();
     attributes.push (a);
     MakeDerived ("dim");
-//    cout << "**** face_surface - at end ****" << endl;
+//    std::cout << "**** face_surface - at end ****" << std::endl;
 //    PrintSTEPattributes();
 }
 SdaiFace_surface::SdaiFace_surface (SdaiFace_surface& e )
@@ -45961,7 +45961,7 @@ SdaiFace_surface::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiFace_surface: virtual access function." << endl;
+        std::cout << "SdaiFace_surface: virtual access function." << std::endl;
     SdaiFace_surface_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -45971,10 +45971,10 @@ SdaiFace_surface_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiFace_surface: non-virtual access function." << endl;
+        std::cout << "SdaiFace_surface: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiFace_surface *ent = (SdaiFace_surface *)sent;
 //    SdaiFace_surface *ent = (SdaiFace_surface *)object;
     if(ent->eDesc == 0)
@@ -46083,14 +46083,14 @@ SdaiFace_surface::face_geometry_ (const SdaiSurface_ptr x)
     _face_geometry = x;
 }
 
-const SCLBOOL(Bool)
+const SCLBOOL(Boolean)
 SdaiFace_surface::same_sense_() const
 {
-    return (SCLBOOL(Bool)) _same_sense;
+    return (SCLBOOL(Boolean)) _same_sense;
 }
 
 void
-SdaiFace_surface::same_sense_ (const SCLBOOL(Bool) x)
+SdaiFace_surface::same_sense_ (const SCLBOOL(Boolean) x)
 
 {
     _same_sense.put (x);
@@ -46153,7 +46153,7 @@ SdaiOriented_face::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiOriented_face: virtual access function." << endl;
+        std::cout << "SdaiOriented_face: virtual access function." << std::endl;
     SdaiOriented_face_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -46163,10 +46163,10 @@ SdaiOriented_face_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiOriented_face: non-virtual access function." << endl;
+        std::cout << "SdaiOriented_face: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiOriented_face *ent = (SdaiOriented_face *)sent;
 //    SdaiOriented_face *ent = (SdaiOriented_face *)object;
     if(ent->eDesc == 0)
@@ -46260,14 +46260,14 @@ SdaiOriented_face::face_element_ (const SdaiFace_ptr x)
     _face_element = x;
 }
 
-const SCLBOOL(Bool)
+const SCLBOOL(Boolean)
 SdaiOriented_face::orientation_() const
 {
-    return (SCLBOOL(Bool)) _orientation;
+    return (SCLBOOL(Boolean)) _orientation;
 }
 
 void
-SdaiOriented_face::orientation_ (const SCLBOOL(Bool) x)
+SdaiOriented_face::orientation_ (const SCLBOOL(Boolean) x)
 
 {
     _orientation.put (x);
@@ -46316,7 +46316,7 @@ SdaiSurface_of_revolution::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiSurface_of_revolution: virtual access function." << endl;
+        std::cout << "SdaiSurface_of_revolution: virtual access function." << std::endl;
     SdaiSurface_of_revolution_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -46326,10 +46326,10 @@ SdaiSurface_of_revolution_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiSurface_of_revolution: non-virtual access function." << endl;
+        std::cout << "SdaiSurface_of_revolution: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiSurface_of_revolution *ent = (SdaiSurface_of_revolution *)sent;
 //    SdaiSurface_of_revolution *ent = (SdaiSurface_of_revolution *)object;
     if(ent->eDesc == 0)
@@ -46435,7 +46435,7 @@ SdaiAdvanced_brep_shape_representation::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiAdvanced_brep_shape_representation: virtual access function." << endl;
+        std::cout << "SdaiAdvanced_brep_shape_representation: virtual access function." << std::endl;
     SdaiAdvanced_brep_shape_representation_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -46445,10 +46445,10 @@ SdaiAdvanced_brep_shape_representation_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiAdvanced_brep_shape_representation: non-virtual access function." << endl;
+        std::cout << "SdaiAdvanced_brep_shape_representation: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiAdvanced_brep_shape_representation *ent = (SdaiAdvanced_brep_shape_representation *)sent;
 //    SdaiAdvanced_brep_shape_representation *ent = (SdaiAdvanced_brep_shape_representation *)object;
     if(ent->eDesc == 0)
@@ -46559,7 +46559,7 @@ SdaiEdge_curve::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiEdge_curve: virtual access function." << endl;
+        std::cout << "SdaiEdge_curve: virtual access function." << std::endl;
     SdaiEdge_curve_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -46569,10 +46569,10 @@ SdaiEdge_curve_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiEdge_curve: non-virtual access function." << endl;
+        std::cout << "SdaiEdge_curve: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiEdge_curve *ent = (SdaiEdge_curve *)sent;
 //    SdaiEdge_curve *ent = (SdaiEdge_curve *)object;
     if(ent->eDesc == 0)
@@ -46681,14 +46681,14 @@ SdaiEdge_curve::edge_geometry_ (const SdaiCurve_ptr x)
     _edge_geometry = x;
 }
 
-const SCLBOOL(Bool)
+const SCLBOOL(Boolean)
 SdaiEdge_curve::same_sense_() const
 {
-    return (SCLBOOL(Bool)) _same_sense;
+    return (SCLBOOL(Boolean)) _same_sense;
 }
 
 void
-SdaiEdge_curve::same_sense_ (const SCLBOOL(Bool) x)
+SdaiEdge_curve::same_sense_ (const SCLBOOL(Boolean) x)
 
 {
     _same_sense.put (x);
@@ -46750,7 +46750,7 @@ SdaiPoint_replica::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiPoint_replica: virtual access function." << endl;
+        std::cout << "SdaiPoint_replica: virtual access function." << std::endl;
     SdaiPoint_replica_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -46760,10 +46760,10 @@ SdaiPoint_replica_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiPoint_replica: non-virtual access function." << endl;
+        std::cout << "SdaiPoint_replica: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiPoint_replica *ent = (SdaiPoint_replica *)sent;
 //    SdaiPoint_replica *ent = (SdaiPoint_replica *)object;
     if(ent->eDesc == 0)
@@ -46943,7 +46943,7 @@ SdaiProduct::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiProduct: virtual access function." << endl;
+        std::cout << "SdaiProduct: virtual access function." << std::endl;
     SdaiProduct_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -46953,10 +46953,10 @@ SdaiProduct_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiProduct: non-virtual access function." << endl;
+        std::cout << "SdaiProduct: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiProduct *ent = (SdaiProduct *)sent;
 //    SdaiProduct *ent = (SdaiProduct *)object;
     if(ent->eDesc == 0)
@@ -47187,7 +47187,7 @@ SdaiShape_aspect_relationship::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiShape_aspect_relationship: virtual access function." << endl;
+        std::cout << "SdaiShape_aspect_relationship: virtual access function." << std::endl;
     SdaiShape_aspect_relationship_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -47197,10 +47197,10 @@ SdaiShape_aspect_relationship_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiShape_aspect_relationship: non-virtual access function." << endl;
+        std::cout << "SdaiShape_aspect_relationship: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiShape_aspect_relationship *ent = (SdaiShape_aspect_relationship *)sent;
 //    SdaiShape_aspect_relationship *ent = (SdaiShape_aspect_relationship *)object;
     if(ent->eDesc == 0)
@@ -47473,7 +47473,7 @@ SdaiRectangular_trimmed_surface::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiRectangular_trimmed_surface: virtual access function." << endl;
+        std::cout << "SdaiRectangular_trimmed_surface: virtual access function." << std::endl;
     SdaiRectangular_trimmed_surface_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -47483,10 +47483,10 @@ SdaiRectangular_trimmed_surface_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiRectangular_trimmed_surface: non-virtual access function." << endl;
+        std::cout << "SdaiRectangular_trimmed_surface: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiRectangular_trimmed_surface *ent = (SdaiRectangular_trimmed_surface *)sent;
 //    SdaiRectangular_trimmed_surface *ent = (SdaiRectangular_trimmed_surface *)object;
     if(ent->eDesc == 0)
@@ -47722,27 +47722,27 @@ SdaiRectangular_trimmed_surface::v2_ (const SdaiParameter_value x)
     _v2 = x;
 }
 
-const SCLBOOL(Bool)
+const SCLBOOL(Boolean)
 SdaiRectangular_trimmed_surface::usense_() const
 {
-    return (SCLBOOL(Bool)) _usense;
+    return (SCLBOOL(Boolean)) _usense;
 }
 
 void
-SdaiRectangular_trimmed_surface::usense_ (const SCLBOOL(Bool) x)
+SdaiRectangular_trimmed_surface::usense_ (const SCLBOOL(Boolean) x)
 
 {
     _usense.put (x);
 }
 
-const SCLBOOL(Bool)
+const SCLBOOL(Boolean)
 SdaiRectangular_trimmed_surface::vsense_() const
 {
-    return (SCLBOOL(Bool)) _vsense;
+    return (SCLBOOL(Boolean)) _vsense;
 }
 
 void
-SdaiRectangular_trimmed_surface::vsense_ (const SCLBOOL(Bool) x)
+SdaiRectangular_trimmed_surface::vsense_ (const SCLBOOL(Boolean) x)
 
 {
     _vsense.put (x);
@@ -47778,7 +47778,7 @@ SdaiPlane::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiPlane: virtual access function." << endl;
+        std::cout << "SdaiPlane: virtual access function." << std::endl;
     SdaiPlane_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -47788,10 +47788,10 @@ SdaiPlane_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiPlane: non-virtual access function." << endl;
+        std::cout << "SdaiPlane: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiPlane *ent = (SdaiPlane *)sent;
 //    SdaiPlane *ent = (SdaiPlane *)object;
     if(ent->eDesc == 0)
@@ -47872,7 +47872,7 @@ SdaiAction_assignment::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiAction_assignment: virtual access function." << endl;
+        std::cout << "SdaiAction_assignment: virtual access function." << std::endl;
     SdaiAction_assignment_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -47882,10 +47882,10 @@ SdaiAction_assignment_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiAction_assignment: non-virtual access function." << endl;
+        std::cout << "SdaiAction_assignment: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiAction_assignment *ent = (SdaiAction_assignment *)sent;
 //    SdaiAction_assignment *ent = (SdaiAction_assignment *)object;
     if(ent->eDesc == 0)
@@ -47996,7 +47996,7 @@ SdaiChange::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiChange: virtual access function." << endl;
+        std::cout << "SdaiChange: virtual access function." << std::endl;
     SdaiChange_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -48006,10 +48006,10 @@ SdaiChange_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiChange: non-virtual access function." << endl;
+        std::cout << "SdaiChange: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiChange *ent = (SdaiChange *)sent;
 //    SdaiChange *ent = (SdaiChange *)object;
     if(ent->eDesc == 0)
@@ -48121,7 +48121,7 @@ SdaiCircle::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiCircle: virtual access function." << endl;
+        std::cout << "SdaiCircle: virtual access function." << std::endl;
     SdaiCircle_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -48131,10 +48131,10 @@ SdaiCircle_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiCircle: non-virtual access function." << endl;
+        std::cout << "SdaiCircle: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiCircle *ent = (SdaiCircle *)sent;
 //    SdaiCircle *ent = (SdaiCircle *)object;
     if(ent->eDesc == 0)
@@ -48260,7 +48260,7 @@ SdaiLine::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiLine: virtual access function." << endl;
+        std::cout << "SdaiLine: virtual access function." << std::endl;
     SdaiLine_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -48270,10 +48270,10 @@ SdaiLine_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiLine: non-virtual access function." << endl;
+        std::cout << "SdaiLine: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiLine *ent = (SdaiLine *)sent;
 //    SdaiLine *ent = (SdaiLine *)object;
     if(ent->eDesc == 0)
@@ -48431,7 +48431,7 @@ SdaiProperty_definition_representation::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiProperty_definition_representation: virtual access function." << endl;
+        std::cout << "SdaiProperty_definition_representation: virtual access function." << std::endl;
     SdaiProperty_definition_representation_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -48441,10 +48441,10 @@ SdaiProperty_definition_representation_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiProperty_definition_representation: non-virtual access function." << endl;
+        std::cout << "SdaiProperty_definition_representation: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiProperty_definition_representation *ent = (SdaiProperty_definition_representation *)sent;
 //    SdaiProperty_definition_representation *ent = (SdaiProperty_definition_representation *)object;
     if(ent->eDesc == 0)
@@ -48589,7 +48589,7 @@ SdaiGeometric_set::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiGeometric_set: virtual access function." << endl;
+        std::cout << "SdaiGeometric_set: virtual access function." << std::endl;
     SdaiGeometric_set_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -48599,10 +48599,10 @@ SdaiGeometric_set_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiGeometric_set: non-virtual access function." << endl;
+        std::cout << "SdaiGeometric_set: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiGeometric_set *ent = (SdaiGeometric_set *)sent;
 //    SdaiGeometric_set *ent = (SdaiGeometric_set *)object;
     if(ent->eDesc == 0)
@@ -48704,7 +48704,7 @@ SdaiGeometric_curve_set::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiGeometric_curve_set: virtual access function." << endl;
+        std::cout << "SdaiGeometric_curve_set: virtual access function." << std::endl;
     SdaiGeometric_curve_set_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -48714,10 +48714,10 @@ SdaiGeometric_curve_set_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiGeometric_curve_set: non-virtual access function." << endl;
+        std::cout << "SdaiGeometric_curve_set: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiGeometric_curve_set *ent = (SdaiGeometric_curve_set *)sent;
 //    SdaiGeometric_curve_set *ent = (SdaiGeometric_curve_set *)object;
     if(ent->eDesc == 0)
@@ -48811,7 +48811,7 @@ SdaiPersonal_address::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiPersonal_address: virtual access function." << endl;
+        std::cout << "SdaiPersonal_address: virtual access function." << std::endl;
     SdaiPersonal_address_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -48821,10 +48821,10 @@ SdaiPersonal_address_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiPersonal_address: non-virtual access function." << endl;
+        std::cout << "SdaiPersonal_address: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiPersonal_address *ent = (SdaiPersonal_address *)sent;
 //    SdaiPersonal_address *ent = (SdaiPersonal_address *)object;
     if(ent->eDesc == 0)
@@ -48997,7 +48997,7 @@ SdaiDocument_relationship::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiDocument_relationship: virtual access function." << endl;
+        std::cout << "SdaiDocument_relationship: virtual access function." << std::endl;
     SdaiDocument_relationship_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -49007,10 +49007,10 @@ SdaiDocument_relationship_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiDocument_relationship: non-virtual access function." << endl;
+        std::cout << "SdaiDocument_relationship: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiDocument_relationship *ent = (SdaiDocument_relationship *)sent;
 //    SdaiDocument_relationship *ent = (SdaiDocument_relationship *)object;
     if(ent->eDesc == 0)
@@ -49209,7 +49209,7 @@ SdaiOuter_boundary_curve::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiOuter_boundary_curve: virtual access function." << endl;
+        std::cout << "SdaiOuter_boundary_curve: virtual access function." << std::endl;
     SdaiOuter_boundary_curve_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -49219,10 +49219,10 @@ SdaiOuter_boundary_curve_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiOuter_boundary_curve: non-virtual access function." << endl;
+        std::cout << "SdaiOuter_boundary_curve: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiOuter_boundary_curve *ent = (SdaiOuter_boundary_curve *)sent;
 //    SdaiOuter_boundary_curve *ent = (SdaiOuter_boundary_curve *)object;
     if(ent->eDesc == 0)
@@ -49297,7 +49297,7 @@ SdaiShape_representation_relationship::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiShape_representation_relationship: virtual access function." << endl;
+        std::cout << "SdaiShape_representation_relationship: virtual access function." << std::endl;
     SdaiShape_representation_relationship_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -49307,10 +49307,10 @@ SdaiShape_representation_relationship_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiShape_representation_relationship: non-virtual access function." << endl;
+        std::cout << "SdaiShape_representation_relationship: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiShape_representation_relationship *ent = (SdaiShape_representation_relationship *)sent;
 //    SdaiShape_representation_relationship *ent = (SdaiShape_representation_relationship *)object;
     if(ent->eDesc == 0)
@@ -49423,7 +49423,7 @@ SdaiAssembly_component_usage_substitute::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiAssembly_component_usage_substitute: virtual access function." << endl;
+        std::cout << "SdaiAssembly_component_usage_substitute: virtual access function." << std::endl;
     SdaiAssembly_component_usage_substitute_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -49433,10 +49433,10 @@ SdaiAssembly_component_usage_substitute_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiAssembly_component_usage_substitute: non-virtual access function." << endl;
+        std::cout << "SdaiAssembly_component_usage_substitute: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiAssembly_component_usage_substitute *ent = (SdaiAssembly_component_usage_substitute *)sent;
 //    SdaiAssembly_component_usage_substitute *ent = (SdaiAssembly_component_usage_substitute *)object;
     if(ent->eDesc == 0)
@@ -49654,7 +49654,7 @@ SdaiDegenerate_pcurve::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiDegenerate_pcurve: virtual access function." << endl;
+        std::cout << "SdaiDegenerate_pcurve: virtual access function." << std::endl;
     SdaiDegenerate_pcurve_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -49664,10 +49664,10 @@ SdaiDegenerate_pcurve_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiDegenerate_pcurve: non-virtual access function." << endl;
+        std::cout << "SdaiDegenerate_pcurve: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiDegenerate_pcurve *ent = (SdaiDegenerate_pcurve *)sent;
 //    SdaiDegenerate_pcurve *ent = (SdaiDegenerate_pcurve *)object;
     if(ent->eDesc == 0)
@@ -49817,7 +49817,7 @@ SdaiEvaluated_degenerate_pcurve::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiEvaluated_degenerate_pcurve: virtual access function." << endl;
+        std::cout << "SdaiEvaluated_degenerate_pcurve: virtual access function." << std::endl;
     SdaiEvaluated_degenerate_pcurve_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -49827,10 +49827,10 @@ SdaiEvaluated_degenerate_pcurve_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiEvaluated_degenerate_pcurve: non-virtual access function." << endl;
+        std::cout << "SdaiEvaluated_degenerate_pcurve: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiEvaluated_degenerate_pcurve *ent = (SdaiEvaluated_degenerate_pcurve *)sent;
 //    SdaiEvaluated_degenerate_pcurve *ent = (SdaiEvaluated_degenerate_pcurve *)object;
     if(ent->eDesc == 0)
@@ -49935,7 +49935,7 @@ SdaiSolid_angle_measure_with_unit::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiSolid_angle_measure_with_unit: virtual access function." << endl;
+        std::cout << "SdaiSolid_angle_measure_with_unit: virtual access function." << std::endl;
     SdaiSolid_angle_measure_with_unit_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -49945,10 +49945,10 @@ SdaiSolid_angle_measure_with_unit_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiSolid_angle_measure_with_unit: non-virtual access function." << endl;
+        std::cout << "SdaiSolid_angle_measure_with_unit: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiSolid_angle_measure_with_unit *ent = (SdaiSolid_angle_measure_with_unit *)sent;
 //    SdaiSolid_angle_measure_with_unit *ent = (SdaiSolid_angle_measure_with_unit *)object;
     if(ent->eDesc == 0)
@@ -50030,7 +50030,7 @@ SdaiConnected_edge_set::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiConnected_edge_set: virtual access function." << endl;
+        std::cout << "SdaiConnected_edge_set: virtual access function." << std::endl;
     SdaiConnected_edge_set_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -50040,10 +50040,10 @@ SdaiConnected_edge_set_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiConnected_edge_set: non-virtual access function." << endl;
+        std::cout << "SdaiConnected_edge_set: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiConnected_edge_set *ent = (SdaiConnected_edge_set *)sent;
 //    SdaiConnected_edge_set *ent = (SdaiConnected_edge_set *)object;
     if(ent->eDesc == 0)
@@ -50174,7 +50174,7 @@ SdaiAction::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiAction: virtual access function." << endl;
+        std::cout << "SdaiAction: virtual access function." << std::endl;
     SdaiAction_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -50184,10 +50184,10 @@ SdaiAction_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiAction: non-virtual access function." << endl;
+        std::cout << "SdaiAction: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiAction *ent = (SdaiAction *)sent;
 //    SdaiAction *ent = (SdaiAction *)object;
     if(ent->eDesc == 0)
@@ -50349,7 +50349,7 @@ SdaiExecuted_action::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiExecuted_action: virtual access function." << endl;
+        std::cout << "SdaiExecuted_action: virtual access function." << std::endl;
     SdaiExecuted_action_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -50359,10 +50359,10 @@ SdaiExecuted_action_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiExecuted_action: non-virtual access function." << endl;
+        std::cout << "SdaiExecuted_action: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiExecuted_action *ent = (SdaiExecuted_action *)sent;
 //    SdaiExecuted_action *ent = (SdaiExecuted_action *)object;
     if(ent->eDesc == 0)
@@ -50444,7 +50444,7 @@ SdaiDirected_action::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiDirected_action: virtual access function." << endl;
+        std::cout << "SdaiDirected_action: virtual access function." << std::endl;
     SdaiDirected_action_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -50454,10 +50454,10 @@ SdaiDirected_action_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiDirected_action: non-virtual access function." << endl;
+        std::cout << "SdaiDirected_action: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiDirected_action *ent = (SdaiDirected_action *)sent;
 //    SdaiDirected_action *ent = (SdaiDirected_action *)object;
     if(ent->eDesc == 0)
@@ -50592,7 +50592,7 @@ SdaiOrganizational_project::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiOrganizational_project: virtual access function." << endl;
+        std::cout << "SdaiOrganizational_project: virtual access function." << std::endl;
     SdaiOrganizational_project_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -50602,10 +50602,10 @@ SdaiOrganizational_project_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiOrganizational_project: non-virtual access function." << endl;
+        std::cout << "SdaiOrganizational_project: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiOrganizational_project *ent = (SdaiOrganizational_project *)sent;
 //    SdaiOrganizational_project *ent = (SdaiOrganizational_project *)object;
     if(ent->eDesc == 0)
@@ -50772,7 +50772,7 @@ SdaiDate_time_role::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiDate_time_role: virtual access function." << endl;
+        std::cout << "SdaiDate_time_role: virtual access function." << std::endl;
     SdaiDate_time_role_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -50782,10 +50782,10 @@ SdaiDate_time_role_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiDate_time_role: non-virtual access function." << endl;
+        std::cout << "SdaiDate_time_role: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiDate_time_role *ent = (SdaiDate_time_role *)sent;
 //    SdaiDate_time_role *ent = (SdaiDate_time_role *)object;
     if(ent->eDesc == 0)
@@ -50917,7 +50917,7 @@ SdaiCurve_bounded_surface::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiCurve_bounded_surface: virtual access function." << endl;
+        std::cout << "SdaiCurve_bounded_surface: virtual access function." << std::endl;
     SdaiCurve_bounded_surface_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -50927,10 +50927,10 @@ SdaiCurve_bounded_surface_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiCurve_bounded_surface: non-virtual access function." << endl;
+        std::cout << "SdaiCurve_bounded_surface: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiCurve_bounded_surface *ent = (SdaiCurve_bounded_surface *)sent;
 //    SdaiCurve_bounded_surface *ent = (SdaiCurve_bounded_surface *)object;
     if(ent->eDesc == 0)
@@ -51053,14 +51053,14 @@ SdaiCurve_bounded_surface::boundaries_ (const EntityAggregate_ptr x)
 
 	{ _boundaries.ShallowCopy (*x); }
 
-const SCLBOOL(Bool)
+const SCLBOOL(Boolean)
 SdaiCurve_bounded_surface::implicit_outer_() const
 {
-    return (SCLBOOL(Bool)) _implicit_outer;
+    return (SCLBOOL(Boolean)) _implicit_outer;
 }
 
 void
-SdaiCurve_bounded_surface::implicit_outer_ (const SCLBOOL(Bool) x)
+SdaiCurve_bounded_surface::implicit_outer_ (const SCLBOOL(Boolean) x)
 
 {
     _implicit_outer.put (x);
@@ -51095,7 +51095,7 @@ SdaiClosed_shell::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiClosed_shell: virtual access function." << endl;
+        std::cout << "SdaiClosed_shell: virtual access function." << std::endl;
     SdaiClosed_shell_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -51105,10 +51105,10 @@ SdaiClosed_shell_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiClosed_shell: non-virtual access function." << endl;
+        std::cout << "SdaiClosed_shell: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiClosed_shell *ent = (SdaiClosed_shell *)sent;
 //    SdaiClosed_shell *ent = (SdaiClosed_shell *)object;
     if(ent->eDesc == 0)
@@ -51179,7 +51179,7 @@ SdaiDesign_make_from_relationship::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiDesign_make_from_relationship: virtual access function." << endl;
+        std::cout << "SdaiDesign_make_from_relationship: virtual access function." << std::endl;
     SdaiDesign_make_from_relationship_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -51189,10 +51189,10 @@ SdaiDesign_make_from_relationship_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiDesign_make_from_relationship: non-virtual access function." << endl;
+        std::cout << "SdaiDesign_make_from_relationship: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiDesign_make_from_relationship *ent = (SdaiDesign_make_from_relationship *)sent;
 //    SdaiDesign_make_from_relationship *ent = (SdaiDesign_make_from_relationship *)object;
     if(ent->eDesc == 0)
@@ -51263,7 +51263,7 @@ SdaiDefinitional_representation::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiDefinitional_representation: virtual access function." << endl;
+        std::cout << "SdaiDefinitional_representation: virtual access function." << std::endl;
     SdaiDefinitional_representation_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -51273,10 +51273,10 @@ SdaiDefinitional_representation_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiDefinitional_representation: non-virtual access function." << endl;
+        std::cout << "SdaiDefinitional_representation: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiDefinitional_representation *ent = (SdaiDefinitional_representation *)sent;
 //    SdaiDefinitional_representation *ent = (SdaiDefinitional_representation *)object;
     if(ent->eDesc == 0)
@@ -51347,7 +51347,7 @@ SdaiProduct_definition_shape::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiProduct_definition_shape: virtual access function." << endl;
+        std::cout << "SdaiProduct_definition_shape: virtual access function." << std::endl;
     SdaiProduct_definition_shape_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -51357,10 +51357,10 @@ SdaiProduct_definition_shape_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiProduct_definition_shape: non-virtual access function." << endl;
+        std::cout << "SdaiProduct_definition_shape: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiProduct_definition_shape *ent = (SdaiProduct_definition_shape *)sent;
 //    SdaiProduct_definition_shape *ent = (SdaiProduct_definition_shape *)object;
     if(ent->eDesc == 0)
@@ -51455,7 +51455,7 @@ SdaiSi_unit::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiSi_unit: virtual access function." << endl;
+        std::cout << "SdaiSi_unit: virtual access function." << std::endl;
     SdaiSi_unit_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -51465,10 +51465,10 @@ SdaiSi_unit_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiSi_unit: non-virtual access function." << endl;
+        std::cout << "SdaiSi_unit: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiSi_unit *ent = (SdaiSi_unit *)sent;
 //    SdaiSi_unit *ent = (SdaiSi_unit *)object;
     if(ent->eDesc == 0)
@@ -51606,7 +51606,7 @@ SdaiBezier_surface::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiBezier_surface: virtual access function." << endl;
+        std::cout << "SdaiBezier_surface: virtual access function." << std::endl;
     SdaiBezier_surface_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -51616,10 +51616,10 @@ SdaiBezier_surface_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiBezier_surface: non-virtual access function." << endl;
+        std::cout << "SdaiBezier_surface: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiBezier_surface *ent = (SdaiBezier_surface *)sent;
 //    SdaiBezier_surface *ent = (SdaiBezier_surface *)object;
     if(ent->eDesc == 0)
@@ -51703,7 +51703,7 @@ SdaiCertification_assignment::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiCertification_assignment: virtual access function." << endl;
+        std::cout << "SdaiCertification_assignment: virtual access function." << std::endl;
     SdaiCertification_assignment_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -51713,10 +51713,10 @@ SdaiCertification_assignment_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiCertification_assignment: non-virtual access function." << endl;
+        std::cout << "SdaiCertification_assignment: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiCertification_assignment *ent = (SdaiCertification_assignment *)sent;
 //    SdaiCertification_assignment *ent = (SdaiCertification_assignment *)object;
     if(ent->eDesc == 0)
@@ -51827,7 +51827,7 @@ SdaiStart_work::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiStart_work: virtual access function." << endl;
+        std::cout << "SdaiStart_work: virtual access function." << std::endl;
     SdaiStart_work_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -51837,10 +51837,10 @@ SdaiStart_work_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiStart_work: non-virtual access function." << endl;
+        std::cout << "SdaiStart_work: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiStart_work *ent = (SdaiStart_work *)sent;
 //    SdaiStart_work *ent = (SdaiStart_work *)object;
     if(ent->eDesc == 0)
@@ -51949,7 +51949,7 @@ SdaiContract_type::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiContract_type: virtual access function." << endl;
+        std::cout << "SdaiContract_type: virtual access function." << std::endl;
     SdaiContract_type_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -51959,10 +51959,10 @@ SdaiContract_type_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiContract_type: non-virtual access function." << endl;
+        std::cout << "SdaiContract_type: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiContract_type *ent = (SdaiContract_type *)sent;
 //    SdaiContract_type *ent = (SdaiContract_type *)object;
     if(ent->eDesc == 0)
@@ -52098,7 +52098,7 @@ SdaiB_spline_curve_with_knots::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiB_spline_curve_with_knots: virtual access function." << endl;
+        std::cout << "SdaiB_spline_curve_with_knots: virtual access function." << std::endl;
     SdaiB_spline_curve_with_knots_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -52108,10 +52108,10 @@ SdaiB_spline_curve_with_knots_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiB_spline_curve_with_knots: non-virtual access function." << endl;
+        std::cout << "SdaiB_spline_curve_with_knots: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiB_spline_curve_with_knots *ent = (SdaiB_spline_curve_with_knots *)sent;
 //    SdaiB_spline_curve_with_knots *ent = (SdaiB_spline_curve_with_knots *)object;
     if(ent->eDesc == 0)
@@ -52286,7 +52286,7 @@ SdaiCc_design_approval::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiCc_design_approval: virtual access function." << endl;
+        std::cout << "SdaiCc_design_approval: virtual access function." << std::endl;
     SdaiCc_design_approval_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -52296,10 +52296,10 @@ SdaiCc_design_approval_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiCc_design_approval: non-virtual access function." << endl;
+        std::cout << "SdaiCc_design_approval: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiCc_design_approval *ent = (SdaiCc_design_approval *)sent;
 //    SdaiCc_design_approval *ent = (SdaiCc_design_approval *)object;
     if(ent->eDesc == 0)
@@ -52399,7 +52399,7 @@ SdaiEdge_based_wireframe_shape_representation::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiEdge_based_wireframe_shape_representation: virtual access function." << endl;
+        std::cout << "SdaiEdge_based_wireframe_shape_representation: virtual access function." << std::endl;
     SdaiEdge_based_wireframe_shape_representation_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -52409,10 +52409,10 @@ SdaiEdge_based_wireframe_shape_representation_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiEdge_based_wireframe_shape_representation: non-virtual access function." << endl;
+        std::cout << "SdaiEdge_based_wireframe_shape_representation: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiEdge_based_wireframe_shape_representation *ent = (SdaiEdge_based_wireframe_shape_representation *)sent;
 //    SdaiEdge_based_wireframe_shape_representation *ent = (SdaiEdge_based_wireframe_shape_representation *)object;
     if(ent->eDesc == 0)
@@ -52483,7 +52483,7 @@ SdaiGeometrically_bounded_wireframe_shape_representation::Access_hook_in(void *o
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiGeometrically_bounded_wireframe_shape_representation: virtual access function." << endl;
+        std::cout << "SdaiGeometrically_bounded_wireframe_shape_representation: virtual access function." << std::endl;
     SdaiGeometrically_bounded_wireframe_shape_representation_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -52493,10 +52493,10 @@ SdaiGeometrically_bounded_wireframe_shape_representation_access_hook_in(void *ob
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiGeometrically_bounded_wireframe_shape_representation: non-virtual access function." << endl;
+        std::cout << "SdaiGeometrically_bounded_wireframe_shape_representation: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiGeometrically_bounded_wireframe_shape_representation *ent = (SdaiGeometrically_bounded_wireframe_shape_representation *)sent;
 //    SdaiGeometrically_bounded_wireframe_shape_representation *ent = (SdaiGeometrically_bounded_wireframe_shape_representation *)object;
     if(ent->eDesc == 0)
@@ -52609,7 +52609,7 @@ SdaiProduct_concept::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiProduct_concept: virtual access function." << endl;
+        std::cout << "SdaiProduct_concept: virtual access function." << std::endl;
     SdaiProduct_concept_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -52619,10 +52619,10 @@ SdaiProduct_concept_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiProduct_concept: non-virtual access function." << endl;
+        std::cout << "SdaiProduct_concept: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiProduct_concept *ent = (SdaiProduct_concept *)sent;
 //    SdaiProduct_concept *ent = (SdaiProduct_concept *)object;
     if(ent->eDesc == 0)
@@ -52826,7 +52826,7 @@ SdaiCc_design_contract::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiCc_design_contract: virtual access function." << endl;
+        std::cout << "SdaiCc_design_contract: virtual access function." << std::endl;
     SdaiCc_design_contract_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -52836,10 +52836,10 @@ SdaiCc_design_contract_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiCc_design_contract: non-virtual access function." << endl;
+        std::cout << "SdaiCc_design_contract: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiCc_design_contract *ent = (SdaiCc_design_contract *)sent;
 //    SdaiCc_design_contract *ent = (SdaiCc_design_contract *)object;
     if(ent->eDesc == 0)
@@ -52941,7 +52941,7 @@ SdaiSeam_curve::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiSeam_curve: virtual access function." << endl;
+        std::cout << "SdaiSeam_curve: virtual access function." << std::endl;
     SdaiSeam_curve_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -52951,10 +52951,10 @@ SdaiSeam_curve_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiSeam_curve: non-virtual access function." << endl;
+        std::cout << "SdaiSeam_curve: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiSeam_curve *ent = (SdaiSeam_curve *)sent;
 //    SdaiSeam_curve *ent = (SdaiSeam_curve *)object;
     if(ent->eDesc == 0)
@@ -53052,7 +53052,7 @@ SdaiAxis2_placement_3d::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiAxis2_placement_3d: virtual access function." << endl;
+        std::cout << "SdaiAxis2_placement_3d: virtual access function." << std::endl;
     SdaiAxis2_placement_3d_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -53062,10 +53062,10 @@ SdaiAxis2_placement_3d_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiAxis2_placement_3d: non-virtual access function." << endl;
+        std::cout << "SdaiAxis2_placement_3d: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiAxis2_placement_3d *ent = (SdaiAxis2_placement_3d *)sent;
 //    SdaiAxis2_placement_3d *ent = (SdaiAxis2_placement_3d *)object;
     if(ent->eDesc == 0)
@@ -53221,7 +53221,7 @@ SdaiRational_b_spline_surface::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiRational_b_spline_surface: virtual access function." << endl;
+        std::cout << "SdaiRational_b_spline_surface: virtual access function." << std::endl;
     SdaiRational_b_spline_surface_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -53231,10 +53231,10 @@ SdaiRational_b_spline_surface_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiRational_b_spline_surface: non-virtual access function." << endl;
+        std::cout << "SdaiRational_b_spline_surface: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiRational_b_spline_surface *ent = (SdaiRational_b_spline_surface *)sent;
 //    SdaiRational_b_spline_surface *ent = (SdaiRational_b_spline_surface *)object;
     if(ent->eDesc == 0)
@@ -53359,7 +53359,7 @@ SdaiConfiguration_design::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiConfiguration_design: virtual access function." << endl;
+        std::cout << "SdaiConfiguration_design: virtual access function." << std::endl;
     SdaiConfiguration_design_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -53369,10 +53369,10 @@ SdaiConfiguration_design_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiConfiguration_design: non-virtual access function." << endl;
+        std::cout << "SdaiConfiguration_design: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiConfiguration_design *ent = (SdaiConfiguration_design *)sent;
 //    SdaiConfiguration_design *ent = (SdaiConfiguration_design *)object;
     if(ent->eDesc == 0)
@@ -53505,7 +53505,7 @@ SdaiDesign_context::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiDesign_context: virtual access function." << endl;
+        std::cout << "SdaiDesign_context: virtual access function." << std::endl;
     SdaiDesign_context_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -53515,10 +53515,10 @@ SdaiDesign_context_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiDesign_context: non-virtual access function." << endl;
+        std::cout << "SdaiDesign_context: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiDesign_context *ent = (SdaiDesign_context *)sent;
 //    SdaiDesign_context *ent = (SdaiDesign_context *)object;
     if(ent->eDesc == 0)
@@ -53631,7 +53631,7 @@ SdaiProduct_definition::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiProduct_definition: virtual access function." << endl;
+        std::cout << "SdaiProduct_definition: virtual access function." << std::endl;
     SdaiProduct_definition_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -53641,10 +53641,10 @@ SdaiProduct_definition_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiProduct_definition: non-virtual access function." << endl;
+        std::cout << "SdaiProduct_definition: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiProduct_definition *ent = (SdaiProduct_definition *)sent;
 //    SdaiProduct_definition *ent = (SdaiProduct_definition *)object;
     if(ent->eDesc == 0)
@@ -53850,7 +53850,7 @@ SdaiProduct_definition_with_associated_documents::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiProduct_definition_with_associated_documents: virtual access function." << endl;
+        std::cout << "SdaiProduct_definition_with_associated_documents: virtual access function." << std::endl;
     SdaiProduct_definition_with_associated_documents_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -53860,10 +53860,10 @@ SdaiProduct_definition_with_associated_documents_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiProduct_definition_with_associated_documents: non-virtual access function." << endl;
+        std::cout << "SdaiProduct_definition_with_associated_documents: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiProduct_definition_with_associated_documents *ent = (SdaiProduct_definition_with_associated_documents *)sent;
 //    SdaiProduct_definition_with_associated_documents *ent = (SdaiProduct_definition_with_associated_documents *)object;
     if(ent->eDesc == 0)
@@ -53994,7 +53994,7 @@ SdaiOrganization::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiOrganization: virtual access function." << endl;
+        std::cout << "SdaiOrganization: virtual access function." << std::endl;
     SdaiOrganization_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -54004,10 +54004,10 @@ SdaiOrganization_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiOrganization: non-virtual access function." << endl;
+        std::cout << "SdaiOrganization: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiOrganization *ent = (SdaiOrganization *)sent;
 //    SdaiOrganization *ent = (SdaiOrganization *)object;
     if(ent->eDesc == 0)
@@ -54178,7 +54178,7 @@ SdaiCc_design_certification::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiCc_design_certification: virtual access function." << endl;
+        std::cout << "SdaiCc_design_certification: virtual access function." << std::endl;
     SdaiCc_design_certification_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -54188,10 +54188,10 @@ SdaiCc_design_certification_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiCc_design_certification: non-virtual access function." << endl;
+        std::cout << "SdaiCc_design_certification: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiCc_design_certification *ent = (SdaiCc_design_certification *)sent;
 //    SdaiCc_design_certification *ent = (SdaiCc_design_certification *)object;
     if(ent->eDesc == 0)
@@ -54354,7 +54354,7 @@ SdaiB_spline_surface_with_knots::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiB_spline_surface_with_knots: virtual access function." << endl;
+        std::cout << "SdaiB_spline_surface_with_knots: virtual access function." << std::endl;
     SdaiB_spline_surface_with_knots_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -54364,10 +54364,10 @@ SdaiB_spline_surface_with_knots_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiB_spline_surface_with_knots: non-virtual access function." << endl;
+        std::cout << "SdaiB_spline_surface_with_knots: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiB_spline_surface_with_knots *ent = (SdaiB_spline_surface_with_knots *)sent;
 //    SdaiB_spline_surface_with_knots *ent = (SdaiB_spline_surface_with_knots *)object;
     if(ent->eDesc == 0)
@@ -54600,7 +54600,7 @@ SdaiCertification_type::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiCertification_type: virtual access function." << endl;
+        std::cout << "SdaiCertification_type: virtual access function." << std::endl;
     SdaiCertification_type_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -54610,10 +54610,10 @@ SdaiCertification_type_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiCertification_type: non-virtual access function." << endl;
+        std::cout << "SdaiCertification_type: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiCertification_type *ent = (SdaiCertification_type *)sent;
 //    SdaiCertification_type *ent = (SdaiCertification_type *)object;
     if(ent->eDesc == 0)
@@ -54735,7 +54735,7 @@ SdaiOriented_path::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiOriented_path: virtual access function." << endl;
+        std::cout << "SdaiOriented_path: virtual access function." << std::endl;
     SdaiOriented_path_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -54745,10 +54745,10 @@ SdaiOriented_path_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiOriented_path: non-virtual access function." << endl;
+        std::cout << "SdaiOriented_path: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiOriented_path *ent = (SdaiOriented_path *)sent;
 //    SdaiOriented_path *ent = (SdaiOriented_path *)object;
     if(ent->eDesc == 0)
@@ -54842,14 +54842,14 @@ SdaiOriented_path::path_element_ (const SdaiPath_ptr x)
     _path_element = x;
 }
 
-const SCLBOOL(Bool)
+const SCLBOOL(Boolean)
 SdaiOriented_path::orientation_() const
 {
-    return (SCLBOOL(Bool)) _orientation;
+    return (SCLBOOL(Boolean)) _orientation;
 }
 
 void
-SdaiOriented_path::orientation_ (const SCLBOOL(Bool) x)
+SdaiOriented_path::orientation_ (const SCLBOOL(Boolean) x)
 
 {
     _orientation.put (x);
@@ -54915,7 +54915,7 @@ SdaiSecurity_classification::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiSecurity_classification: virtual access function." << endl;
+        std::cout << "SdaiSecurity_classification: virtual access function." << std::endl;
     SdaiSecurity_classification_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -54925,10 +54925,10 @@ SdaiSecurity_classification_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiSecurity_classification: non-virtual access function." << endl;
+        std::cout << "SdaiSecurity_classification: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiSecurity_classification *ent = (SdaiSecurity_classification *)sent;
 //    SdaiSecurity_classification *ent = (SdaiSecurity_classification *)object;
     if(ent->eDesc == 0)
@@ -55101,7 +55101,7 @@ SdaiVertex_loop::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiVertex_loop: virtual access function." << endl;
+        std::cout << "SdaiVertex_loop: virtual access function." << std::endl;
     SdaiVertex_loop_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -55111,10 +55111,10 @@ SdaiVertex_loop_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiVertex_loop: non-virtual access function." << endl;
+        std::cout << "SdaiVertex_loop: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiVertex_loop *ent = (SdaiVertex_loop *)sent;
 //    SdaiVertex_loop *ent = (SdaiVertex_loop *)object;
     if(ent->eDesc == 0)
@@ -55227,7 +55227,7 @@ SdaiApproval_status::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiApproval_status: virtual access function." << endl;
+        std::cout << "SdaiApproval_status: virtual access function." << std::endl;
     SdaiApproval_status_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -55237,10 +55237,10 @@ SdaiApproval_status_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiApproval_status: non-virtual access function." << endl;
+        std::cout << "SdaiApproval_status: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiApproval_status *ent = (SdaiApproval_status *)sent;
 //    SdaiApproval_status *ent = (SdaiApproval_status *)object;
     if(ent->eDesc == 0)
@@ -55350,7 +55350,7 @@ SdaiCartesian_point::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiCartesian_point: virtual access function." << endl;
+        std::cout << "SdaiCartesian_point: virtual access function." << std::endl;
     SdaiCartesian_point_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -55360,10 +55360,10 @@ SdaiCartesian_point_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiCartesian_point: non-virtual access function." << endl;
+        std::cout << "SdaiCartesian_point: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiCartesian_point *ent = (SdaiCartesian_point *)sent;
 //    SdaiCartesian_point *ent = (SdaiCartesian_point *)object;
     if(ent->eDesc == 0)
@@ -55484,7 +55484,7 @@ SdaiDate_and_time_assignment::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiDate_and_time_assignment: virtual access function." << endl;
+        std::cout << "SdaiDate_and_time_assignment: virtual access function." << std::endl;
     SdaiDate_and_time_assignment_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -55494,10 +55494,10 @@ SdaiDate_and_time_assignment_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiDate_and_time_assignment: non-virtual access function." << endl;
+        std::cout << "SdaiDate_and_time_assignment: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiDate_and_time_assignment *ent = (SdaiDate_and_time_assignment *)sent;
 //    SdaiDate_and_time_assignment *ent = (SdaiDate_and_time_assignment *)object;
     if(ent->eDesc == 0)
@@ -55630,7 +55630,7 @@ SdaiParametric_representation_context::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiParametric_representation_context: virtual access function." << endl;
+        std::cout << "SdaiParametric_representation_context: virtual access function." << std::endl;
     SdaiParametric_representation_context_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -55640,10 +55640,10 @@ SdaiParametric_representation_context_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiParametric_representation_context: non-virtual access function." << endl;
+        std::cout << "SdaiParametric_representation_context: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiParametric_representation_context *ent = (SdaiParametric_representation_context *)sent;
 //    SdaiParametric_representation_context *ent = (SdaiParametric_representation_context *)object;
     if(ent->eDesc == 0)
@@ -55725,7 +55725,7 @@ SdaiProduct_concept_context::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiProduct_concept_context: virtual access function." << endl;
+        std::cout << "SdaiProduct_concept_context: virtual access function." << std::endl;
     SdaiProduct_concept_context_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -55735,10 +55735,10 @@ SdaiProduct_concept_context_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiProduct_concept_context: non-virtual access function." << endl;
+        std::cout << "SdaiProduct_concept_context: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiProduct_concept_context *ent = (SdaiProduct_concept_context *)sent;
 //    SdaiProduct_concept_context *ent = (SdaiProduct_concept_context *)object;
     if(ent->eDesc == 0)
@@ -55896,7 +55896,7 @@ SdaiSurface_patch::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiSurface_patch: virtual access function." << endl;
+        std::cout << "SdaiSurface_patch: virtual access function." << std::endl;
     SdaiSurface_patch_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -55906,10 +55906,10 @@ SdaiSurface_patch_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiSurface_patch: non-virtual access function." << endl;
+        std::cout << "SdaiSurface_patch: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiSurface_patch *ent = (SdaiSurface_patch *)sent;
 //    SdaiSurface_patch *ent = (SdaiSurface_patch *)object;
     if(ent->eDesc == 0)
@@ -56082,27 +56082,27 @@ SdaiSurface_patch::v_transition_ (const SdaiTransition_code_var x)
     _v_transition.put (x);
 }
 
-const SCLBOOL(Bool)
+const SCLBOOL(Boolean)
 SdaiSurface_patch::u_sense_() const
 {
-    return (SCLBOOL(Bool)) _u_sense;
+    return (SCLBOOL(Boolean)) _u_sense;
 }
 
 void
-SdaiSurface_patch::u_sense_ (const SCLBOOL(Bool) x)
+SdaiSurface_patch::u_sense_ (const SCLBOOL(Boolean) x)
 
 {
     _u_sense.put (x);
 }
 
-const SCLBOOL(Bool)
+const SCLBOOL(Boolean)
 SdaiSurface_patch::v_sense_() const
 {
-    return (SCLBOOL(Bool)) _v_sense;
+    return (SCLBOOL(Boolean)) _v_sense;
 }
 
 void
-SdaiSurface_patch::v_sense_ (const SCLBOOL(Bool) x)
+SdaiSurface_patch::v_sense_ (const SCLBOOL(Boolean) x)
 
 {
     _v_sense.put (x);
@@ -56148,7 +56148,7 @@ SdaiLength_unit::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiLength_unit: virtual access function." << endl;
+        std::cout << "SdaiLength_unit: virtual access function." << std::endl;
     SdaiLength_unit_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -56158,10 +56158,10 @@ SdaiLength_unit_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiLength_unit: non-virtual access function." << endl;
+        std::cout << "SdaiLength_unit: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiLength_unit *ent = (SdaiLength_unit *)sent;
 //    SdaiLength_unit *ent = (SdaiLength_unit *)object;
     if(ent->eDesc == 0)
@@ -56274,7 +56274,7 @@ SdaiShape_aspect::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiShape_aspect: virtual access function." << endl;
+        std::cout << "SdaiShape_aspect: virtual access function." << std::endl;
     SdaiShape_aspect_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -56284,10 +56284,10 @@ SdaiShape_aspect_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiShape_aspect: non-virtual access function." << endl;
+        std::cout << "SdaiShape_aspect: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiShape_aspect *ent = (SdaiShape_aspect *)sent;
 //    SdaiShape_aspect *ent = (SdaiShape_aspect *)object;
     if(ent->eDesc == 0)
@@ -56480,7 +56480,7 @@ SdaiVolume_measure_with_unit::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiVolume_measure_with_unit: virtual access function." << endl;
+        std::cout << "SdaiVolume_measure_with_unit: virtual access function." << std::endl;
     SdaiVolume_measure_with_unit_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -56490,10 +56490,10 @@ SdaiVolume_measure_with_unit_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiVolume_measure_with_unit: non-virtual access function." << endl;
+        std::cout << "SdaiVolume_measure_with_unit: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiVolume_measure_with_unit *ent = (SdaiVolume_measure_with_unit *)sent;
 //    SdaiVolume_measure_with_unit *ent = (SdaiVolume_measure_with_unit *)object;
     if(ent->eDesc == 0)
@@ -56552,7 +56552,7 @@ SdaiAdvanced_face::SdaiAdvanced_face( )
 
     eDesc = config_control_designe_advanced_face;
     MakeDerived ("dim");
-    //cout << "***** Advanced Face *****" << endl;
+    //std::cout << "***** Advanced Face *****" << std::endl;
     //PrintSTEPattributes();
 }
 SdaiAdvanced_face::SdaiAdvanced_face (SdaiAdvanced_face& e )
@@ -56567,7 +56567,7 @@ SdaiAdvanced_face::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiAdvanced_face: virtual access function." << endl;
+        std::cout << "SdaiAdvanced_face: virtual access function." << std::endl;
     SdaiAdvanced_face_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -56577,10 +56577,10 @@ SdaiAdvanced_face_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiAdvanced_face: non-virtual access function." << endl;
+        std::cout << "SdaiAdvanced_face: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiAdvanced_face *ent = (SdaiAdvanced_face *)sent;
 //    SdaiAdvanced_face *ent = (SdaiAdvanced_face *)object;
     if(ent->eDesc == 0)
@@ -56661,7 +56661,7 @@ SdaiSecurity_classification_level::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiSecurity_classification_level: virtual access function." << endl;
+        std::cout << "SdaiSecurity_classification_level: virtual access function." << std::endl;
     SdaiSecurity_classification_level_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -56671,10 +56671,10 @@ SdaiSecurity_classification_level_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiSecurity_classification_level: non-virtual access function." << endl;
+        std::cout << "SdaiSecurity_classification_level: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiSecurity_classification_level *ent = (SdaiSecurity_classification_level *)sent;
 //    SdaiSecurity_classification_level *ent = (SdaiSecurity_classification_level *)object;
     if(ent->eDesc == 0)
@@ -56814,7 +56814,7 @@ SdaiApproval_relationship::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiApproval_relationship: virtual access function." << endl;
+        std::cout << "SdaiApproval_relationship: virtual access function." << std::endl;
     SdaiApproval_relationship_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -56824,10 +56824,10 @@ SdaiApproval_relationship_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiApproval_relationship: non-virtual access function." << endl;
+        std::cout << "SdaiApproval_relationship: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiApproval_relationship *ent = (SdaiApproval_relationship *)sent;
 //    SdaiApproval_relationship *ent = (SdaiApproval_relationship *)object;
     if(ent->eDesc == 0)
@@ -57034,7 +57034,7 @@ SdaiPolyline::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiPolyline: virtual access function." << endl;
+        std::cout << "SdaiPolyline: virtual access function." << std::endl;
     SdaiPolyline_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -57044,10 +57044,10 @@ SdaiPolyline_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiPolyline: non-virtual access function." << endl;
+        std::cout << "SdaiPolyline: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiPolyline *ent = (SdaiPolyline *)sent;
 //    SdaiPolyline *ent = (SdaiPolyline *)object;
     if(ent->eDesc == 0)
@@ -57179,7 +57179,7 @@ SdaiApproval_person_organization::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiApproval_person_organization: virtual access function." << endl;
+        std::cout << "SdaiApproval_person_organization: virtual access function." << std::endl;
     SdaiApproval_person_organization_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -57189,10 +57189,10 @@ SdaiApproval_person_organization_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiApproval_person_organization: non-virtual access function." << endl;
+        std::cout << "SdaiApproval_person_organization: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiApproval_person_organization *ent = (SdaiApproval_person_organization *)sent;
 //    SdaiApproval_person_organization *ent = (SdaiApproval_person_organization *)object;
     if(ent->eDesc == 0)
@@ -57375,7 +57375,7 @@ SdaiSurface_replica::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiSurface_replica: virtual access function." << endl;
+        std::cout << "SdaiSurface_replica: virtual access function." << std::endl;
     SdaiSurface_replica_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -57385,10 +57385,10 @@ SdaiSurface_replica_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiSurface_replica: non-virtual access function." << endl;
+        std::cout << "SdaiSurface_replica: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiSurface_replica *ent = (SdaiSurface_replica *)sent;
 //    SdaiSurface_replica *ent = (SdaiSurface_replica *)object;
     if(ent->eDesc == 0)
@@ -57535,7 +57535,7 @@ SdaiSecurity_classification_assignment::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiSecurity_classification_assignment: virtual access function." << endl;
+        std::cout << "SdaiSecurity_classification_assignment: virtual access function." << std::endl;
     SdaiSecurity_classification_assignment_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -57545,10 +57545,10 @@ SdaiSecurity_classification_assignment_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiSecurity_classification_assignment: non-virtual access function." << endl;
+        std::cout << "SdaiSecurity_classification_assignment: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiSecurity_classification_assignment *ent = (SdaiSecurity_classification_assignment *)sent;
 //    SdaiSecurity_classification_assignment *ent = (SdaiSecurity_classification_assignment *)object;
     if(ent->eDesc == 0)
@@ -57659,7 +57659,7 @@ SdaiCc_design_security_classification::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiCc_design_security_classification: virtual access function." << endl;
+        std::cout << "SdaiCc_design_security_classification: virtual access function." << std::endl;
     SdaiCc_design_security_classification_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -57669,10 +57669,10 @@ SdaiCc_design_security_classification_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiCc_design_security_classification: non-virtual access function." << endl;
+        std::cout << "SdaiCc_design_security_classification: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiCc_design_security_classification *ent = (SdaiCc_design_security_classification *)sent;
 //    SdaiCc_design_security_classification *ent = (SdaiCc_design_security_classification *)object;
     if(ent->eDesc == 0)
@@ -57772,7 +57772,7 @@ SdaiFaceted_brep_shape_representation::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiFaceted_brep_shape_representation: virtual access function." << endl;
+        std::cout << "SdaiFaceted_brep_shape_representation: virtual access function." << std::endl;
     SdaiFaceted_brep_shape_representation_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -57782,10 +57782,10 @@ SdaiFaceted_brep_shape_representation_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiFaceted_brep_shape_representation: non-virtual access function." << endl;
+        std::cout << "SdaiFaceted_brep_shape_representation: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiFaceted_brep_shape_representation *ent = (SdaiFaceted_brep_shape_representation *)sent;
 //    SdaiFaceted_brep_shape_representation *ent = (SdaiFaceted_brep_shape_representation *)object;
     if(ent->eDesc == 0)
@@ -57887,7 +57887,7 @@ SdaiDocument_usage_constraint::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiDocument_usage_constraint: virtual access function." << endl;
+        std::cout << "SdaiDocument_usage_constraint: virtual access function." << std::endl;
     SdaiDocument_usage_constraint_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -57897,10 +57897,10 @@ SdaiDocument_usage_constraint_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiDocument_usage_constraint: non-virtual access function." << endl;
+        std::cout << "SdaiDocument_usage_constraint: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiDocument_usage_constraint *ent = (SdaiDocument_usage_constraint *)sent;
 //    SdaiDocument_usage_constraint *ent = (SdaiDocument_usage_constraint *)object;
     if(ent->eDesc == 0)
@@ -58050,7 +58050,7 @@ SdaiVertex_point::SdaiVertex_point( )
  	/* part of the main inheritance hierarchy */
 	/*  parent: SdaiGeometric_representation_item  */
     HeadEntity(this);
-    //cout << "vertex_point - head" << endl;
+    //std::cout << "vertex_point - head" << std::endl;
     //PrintSTEPattributes ();
 #if 1
 	/* Optionally use the following to replace the line following
@@ -58067,7 +58067,7 @@ SdaiVertex_point::SdaiVertex_point( )
 #else
     AppendMultInstance(new SdaiGeometric_representation_item(this));
 #endif
-    //cout << "vertex_point - after AppendMultInstance" << endl;
+    //std::cout << "vertex_point - after AppendMultInstance" << std::endl;
     //PrintSTEPattributes ();
 
     eDesc = config_control_designe_vertex_point;
@@ -58082,7 +58082,7 @@ SdaiVertex_point::SdaiVertex_point( )
     a -> set_null ();
     attributes.push (a);
     MakeDerived ("dim");
-    //cout << "vertex_point - after MakeDerived" << endl;
+    //std::cout << "vertex_point - after MakeDerived" << std::endl;
     //PrintSTEPattributes ();
 }
 SdaiVertex_point::SdaiVertex_point (SdaiVertex_point& e )
@@ -58097,7 +58097,7 @@ SdaiVertex_point::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiVertex_point: virtual access function." << endl;
+        std::cout << "SdaiVertex_point: virtual access function." << std::endl;
     SdaiVertex_point_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -58107,10 +58107,10 @@ SdaiVertex_point_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiVertex_point: non-virtual access function." << endl;
+        std::cout << "SdaiVertex_point: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiVertex_point *ent = (SdaiVertex_point *)sent;
 //    SdaiVertex_point *ent = (SdaiVertex_point *)object;
     if(ent->eDesc == 0)
@@ -58245,7 +58245,7 @@ SdaiCc_design_date_and_time_assignment::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiCc_design_date_and_time_assignment: virtual access function." << endl;
+        std::cout << "SdaiCc_design_date_and_time_assignment: virtual access function." << std::endl;
     SdaiCc_design_date_and_time_assignment_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -58255,10 +58255,10 @@ SdaiCc_design_date_and_time_assignment_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiCc_design_date_and_time_assignment: non-virtual access function." << endl;
+        std::cout << "SdaiCc_design_date_and_time_assignment: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiCc_design_date_and_time_assignment *ent = (SdaiCc_design_date_and_time_assignment *)sent;
 //    SdaiCc_design_date_and_time_assignment *ent = (SdaiCc_design_date_and_time_assignment *)object;
     if(ent->eDesc == 0)
@@ -58382,7 +58382,7 @@ SdaiOriented_closed_shell::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiOriented_closed_shell: virtual access function." << endl;
+        std::cout << "SdaiOriented_closed_shell: virtual access function." << std::endl;
     SdaiOriented_closed_shell_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -58392,10 +58392,10 @@ SdaiOriented_closed_shell_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiOriented_closed_shell: non-virtual access function." << endl;
+        std::cout << "SdaiOriented_closed_shell: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiOriented_closed_shell *ent = (SdaiOriented_closed_shell *)sent;
 //    SdaiOriented_closed_shell *ent = (SdaiOriented_closed_shell *)object;
     if(ent->eDesc == 0)
@@ -58489,14 +58489,14 @@ SdaiOriented_closed_shell::closed_shell_element_ (const SdaiClosed_shell_ptr x)
     _closed_shell_element = x;
 }
 
-const SCLBOOL(Bool)
+const SCLBOOL(Boolean)
 SdaiOriented_closed_shell::orientation_() const
 {
-    return (SCLBOOL(Bool)) _orientation;
+    return (SCLBOOL(Boolean)) _orientation;
 }
 
 void
-SdaiOriented_closed_shell::orientation_ (const SCLBOOL(Bool) x)
+SdaiOriented_closed_shell::orientation_ (const SCLBOOL(Boolean) x)
 
 {
     _orientation.put (x);
@@ -58551,7 +58551,7 @@ SdaiPerson_and_organization::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiPerson_and_organization: virtual access function." << endl;
+        std::cout << "SdaiPerson_and_organization: virtual access function." << std::endl;
     SdaiPerson_and_organization_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -58561,10 +58561,10 @@ SdaiPerson_and_organization_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiPerson_and_organization: non-virtual access function." << endl;
+        std::cout << "SdaiPerson_and_organization: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiPerson_and_organization *ent = (SdaiPerson_and_organization *)sent;
 //    SdaiPerson_and_organization *ent = (SdaiPerson_and_organization *)object;
     if(ent->eDesc == 0)
@@ -58709,7 +58709,7 @@ SdaiCylindrical_surface::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiCylindrical_surface: virtual access function." << endl;
+        std::cout << "SdaiCylindrical_surface: virtual access function." << std::endl;
     SdaiCylindrical_surface_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -58719,10 +58719,10 @@ SdaiCylindrical_surface_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiCylindrical_surface: non-virtual access function." << endl;
+        std::cout << "SdaiCylindrical_surface: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiCylindrical_surface *ent = (SdaiCylindrical_surface *)sent;
 //    SdaiCylindrical_surface *ent = (SdaiCylindrical_surface *)object;
     if(ent->eDesc == 0)
@@ -58867,7 +58867,7 @@ SdaiLocal_time::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiLocal_time: virtual access function." << endl;
+        std::cout << "SdaiLocal_time: virtual access function." << std::endl;
     SdaiLocal_time_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -58877,10 +58877,10 @@ SdaiLocal_time_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiLocal_time: non-virtual access function." << endl;
+        std::cout << "SdaiLocal_time: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiLocal_time *ent = (SdaiLocal_time *)sent;
 //    SdaiLocal_time *ent = (SdaiLocal_time *)object;
     if(ent->eDesc == 0)
@@ -59073,7 +59073,7 @@ SdaiMass_unit::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiMass_unit: virtual access function." << endl;
+        std::cout << "SdaiMass_unit: virtual access function." << std::endl;
     SdaiMass_unit_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -59083,10 +59083,10 @@ SdaiMass_unit_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiMass_unit: non-virtual access function." << endl;
+        std::cout << "SdaiMass_unit: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiMass_unit *ent = (SdaiMass_unit *)sent;
 //    SdaiMass_unit *ent = (SdaiMass_unit *)object;
     if(ent->eDesc == 0)
@@ -59168,7 +59168,7 @@ SdaiVertex_shell::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiVertex_shell: virtual access function." << endl;
+        std::cout << "SdaiVertex_shell: virtual access function." << std::endl;
     SdaiVertex_shell_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -59178,10 +59178,10 @@ SdaiVertex_shell_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiVertex_shell: non-virtual access function." << endl;
+        std::cout << "SdaiVertex_shell: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiVertex_shell *ent = (SdaiVertex_shell *)sent;
 //    SdaiVertex_shell *ent = (SdaiVertex_shell *)object;
     if(ent->eDesc == 0)
@@ -59313,7 +59313,7 @@ SdaiPoly_loop::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiPoly_loop: virtual access function." << endl;
+        std::cout << "SdaiPoly_loop: virtual access function." << std::endl;
     SdaiPoly_loop_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -59323,10 +59323,10 @@ SdaiPoly_loop_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiPoly_loop: non-virtual access function." << endl;
+        std::cout << "SdaiPoly_loop: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiPoly_loop *ent = (SdaiPoly_loop *)sent;
 //    SdaiPoly_loop *ent = (SdaiPoly_loop *)object;
     if(ent->eDesc == 0)
@@ -59457,7 +59457,7 @@ SdaiWire_shell::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiWire_shell: virtual access function." << endl;
+        std::cout << "SdaiWire_shell: virtual access function." << std::endl;
     SdaiWire_shell_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -59467,10 +59467,10 @@ SdaiWire_shell_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiWire_shell: non-virtual access function." << endl;
+        std::cout << "SdaiWire_shell: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiWire_shell *ent = (SdaiWire_shell *)sent;
 //    SdaiWire_shell *ent = (SdaiWire_shell *)object;
     if(ent->eDesc == 0)
@@ -59570,7 +59570,7 @@ SdaiArea_unit::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiArea_unit: virtual access function." << endl;
+        std::cout << "SdaiArea_unit: virtual access function." << std::endl;
     SdaiArea_unit_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -59580,10 +59580,10 @@ SdaiArea_unit_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiArea_unit: non-virtual access function." << endl;
+        std::cout << "SdaiArea_unit: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiArea_unit *ent = (SdaiArea_unit *)sent;
 //    SdaiArea_unit *ent = (SdaiArea_unit *)object;
     if(ent->eDesc == 0)
@@ -59676,7 +59676,7 @@ SdaiMapped_item::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiMapped_item: virtual access function." << endl;
+        std::cout << "SdaiMapped_item: virtual access function." << std::endl;
     SdaiMapped_item_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -59686,10 +59686,10 @@ SdaiMapped_item_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiMapped_item: non-virtual access function." << endl;
+        std::cout << "SdaiMapped_item: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiMapped_item *ent = (SdaiMapped_item *)sent;
 //    SdaiMapped_item *ent = (SdaiMapped_item *)object;
     if(ent->eDesc == 0)
@@ -59826,7 +59826,7 @@ SdaiShape_definition_representation::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiShape_definition_representation: virtual access function." << endl;
+        std::cout << "SdaiShape_definition_representation: virtual access function." << std::endl;
     SdaiShape_definition_representation_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -59836,10 +59836,10 @@ SdaiShape_definition_representation_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiShape_definition_representation: non-virtual access function." << endl;
+        std::cout << "SdaiShape_definition_representation: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiShape_definition_representation *ent = (SdaiShape_definition_representation *)sent;
 //    SdaiShape_definition_representation *ent = (SdaiShape_definition_representation *)object;
     if(ent->eDesc == 0)
@@ -59910,7 +59910,7 @@ SdaiVolume_unit::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiVolume_unit: virtual access function." << endl;
+        std::cout << "SdaiVolume_unit: virtual access function." << std::endl;
     SdaiVolume_unit_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -59920,10 +59920,10 @@ SdaiVolume_unit_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiVolume_unit: non-virtual access function." << endl;
+        std::cout << "SdaiVolume_unit: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiVolume_unit *ent = (SdaiVolume_unit *)sent;
 //    SdaiVolume_unit *ent = (SdaiVolume_unit *)object;
     if(ent->eDesc == 0)
@@ -60017,7 +60017,7 @@ SdaiConical_surface::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiConical_surface: virtual access function." << endl;
+        std::cout << "SdaiConical_surface: virtual access function." << std::endl;
     SdaiConical_surface_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -60027,10 +60027,10 @@ SdaiConical_surface_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiConical_surface: non-virtual access function." << endl;
+        std::cout << "SdaiConical_surface: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiConical_surface *ent = (SdaiConical_surface *)sent;
 //    SdaiConical_surface *ent = (SdaiConical_surface *)object;
     if(ent->eDesc == 0)
@@ -60175,7 +60175,7 @@ SdaiGlobal_unit_assigned_context::Access_hook_in(void *object,
 				void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiGlobal_unit_assigned_context: virtual access function." << endl;
+        std::cout << "SdaiGlobal_unit_assigned_context: virtual access function." << std::endl;
     SdaiGlobal_unit_assigned_context_access_hook_in(object, reason, user_data, start_range, end_range);
 }
 
@@ -60185,10 +60185,10 @@ SdaiGlobal_unit_assigned_context_access_hook_in(void *object,
 	void *start_range, void *end_range)
 {
     if(debug_access_hooks)
-        cout << "SdaiGlobal_unit_assigned_context: non-virtual access function." << endl;
+        std::cout << "SdaiGlobal_unit_assigned_context: non-virtual access function." << std::endl;
     SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;
     if(debug_access_hooks)
-        cout << "STEPfile_id: " << sent->STEPfile_id << endl;
+        std::cout << "STEPfile_id: " << sent->STEPfile_id << std::endl;
     SdaiGlobal_unit_assigned_context *ent = (SdaiGlobal_unit_assigned_context *)sent;
 //    SdaiGlobal_unit_assigned_context *ent = (SdaiGlobal_unit_assigned_context *)object;
     if(ent->eDesc == 0)

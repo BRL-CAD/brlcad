@@ -837,7 +837,7 @@ wgl_loadMatrix(dmp, mat, which_eye)
     mat_t mat;
     int which_eye;
 {
-    register fastf_t *mptr;
+    fastf_t *mptr;
     GLfloat gtmat[16];
     mat_t	newm;
 
@@ -928,9 +928,9 @@ wgl_loadMatrix(dmp, mat, which_eye)
 HIDDEN int
 wgl_drawVList(dmp, vp)
     struct dm			*dmp;
-    register struct bn_vlist	*vp;
+    struct bn_vlist	*vp;
 {
-    register struct bn_vlist	*tvp;
+    struct bn_vlist	*tvp;
     int				first;
 #if USE_VECTOR_THRESHHOLD
     static int			nvectors = 0;
@@ -944,10 +944,10 @@ wgl_drawVList(dmp, vp)
     /* Viewing region is from -1.0 to +1.0 */
     first = 1;
     for (BU_LIST_FOR(tvp, bn_vlist, &vp->l)) {
-	register int	i;
-	register int	nused = tvp->nused;
-	register int	*cmd = tvp->cmd;
-	register point_t *pt = tvp->pt;
+	int	i;
+	int	nused = tvp->nused;
+	int	*cmd = tvp->cmd;
+	point_t *pt = tvp->pt;
 	for (i = 0; i < nused; i++, cmd++, pt++) {
 	    if (dmp->dm_debugLevel > 2)
 		bu_log(" %d (%g %g %g)\n", *cmd, V3ARGS(pt));
@@ -1083,7 +1083,7 @@ wgl_normal(dmp)
 HIDDEN int
 wgl_drawString2D( dmp, str, x, y, size, use_aspect )
     struct dm *dmp;
-    register char *str;
+    char *str;
     fastf_t x, y;
     int size;
     int use_aspect;

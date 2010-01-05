@@ -283,7 +283,7 @@ main( int argc, char *argv[] )
 		break;
 	    case LIST :
 	    {
-		register int	i;
+		int	i;
 		if ( arg_list[1] == 0 )
 		{
 		    (void) col_prt( curr_list, curr_ct );
@@ -427,7 +427,7 @@ flatten_tree( struct bu_vls *vls, union tree *tp, char *op, int neg )
  * in this region have been visited.
  */
 union tree *
-region_end( register struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data )
+region_end( struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data )
 {
     struct directory	*dp;
     char			*fullname;
@@ -481,7 +481,7 @@ region_end( register struct db_tree_state *tsp, struct db_full_path *pathp, unio
     first = 1;
 
     do  {
-	register char	*op;
+	char	*op;
 
 	op = obuf;
 	if ( first )  {
@@ -525,7 +525,7 @@ region_end( register struct db_tree_state *tsp, struct db_full_path *pathp, unio
 
     length = strlen( fullname );
     if ( length > 50 )  {
-	register char	*bp;
+	char	*bp;
 
 	bp = fullname + (length - 50);
 	*bp = '*';
@@ -561,13 +561,13 @@ region_end( register struct db_tree_state *tsp, struct db_full_path *pathp, unio
 union tree *
 gettree_leaf( struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data )
 {
-    register fastf_t	f;
-    register struct soltab	*stp;
+    fastf_t	f;
+    struct soltab	*stp;
     union tree		*curtree;
     struct directory	*dp;
     struct bu_vls		sol;
-    register int		i;
-    register matp_t		mat;
+    int		i;
+    matp_t		mat;
 
     bu_vls_init( &sol );
 
@@ -731,7 +731,7 @@ swap_vec( vect_t v1, vect_t v2 )
 
 
 void
-swap_dbl( register double *d1, register double *d2 )
+swap_dbl( double *d1, double *d2 )
 {
     double	t;
     t = *d1;
@@ -796,7 +796,7 @@ addhalf(struct bu_vls *v, struct rt_half_internal *gp, char *name, int num )
 void
 addarbn(struct bu_vls *v, struct rt_arbn_internal *gp, char *name, int num )
 {
-    register int	i;
+    int	i;
 
     BU_CK_VLS(v);
     RT_ARBN_CK_MAGIC(gp);
@@ -827,7 +827,7 @@ addarbn(struct bu_vls *v, struct rt_arbn_internal *gp, char *name, int num )
 static void
 vls_solid_pts(struct bu_vls *v, const point_t pts[], int npts, const char *name, int num, const char *kind )
 {
-    register int	i;
+    int	i;
 
     for ( i = 0; i < npts; )  {
 	vls_itoa( v, num, 5 );
@@ -856,7 +856,7 @@ vls_solid_pts(struct bu_vls *v, const point_t pts[], int npts, const char *name,
 void
 addarb(struct bu_vls *v, struct rt_arb_internal *gp, char *name, int num )
 {
-    register int	i;
+    int	i;
     int	uniq_pts[8];
     int	samevecs[11];
     int	cgtype;
@@ -1200,7 +1200,7 @@ ars_curve_out(struct bu_vls *v, fastf_t *fp, int todo, int curveno, int num )
 void
 addars(struct bu_vls *v, struct rt_ars_internal *gp, char *name, int num )
 {
-    register int	i;
+    int	i;
 
     RT_ARS_CK_MAGIC(gp);
 
@@ -1243,7 +1243,7 @@ ewrite(FILE *fp, const char *buf, unsigned bytes )
  * make a COMGEOM deck for current list of objects
  */
 void
-deck( register char *prefix )
+deck( char *prefix )
 {
     nns = nnr = 0;
 
@@ -1358,10 +1358,10 @@ deck( register char *prefix )
 int
 shell(char *args[])
 {
-    register char	*from, *to;
+    char	*from, *to;
     char		*argv[4], cmdbuf[MAXLN];
     int		pid, ret, status;
-    register int	i;
+    int	i;
 
     (void) signal( SIGINT, SIG_IGN );
 
@@ -1417,8 +1417,8 @@ shell(char *args[])
 void
 toc()
 {
-    register struct directory *dp;
-    register int		count;
+    struct directory *dp;
+    int		count;
 
     /* Determine necessary table size */
     count = 0;
@@ -1448,7 +1448,7 @@ toc()
 void
 list_toc( char *args[] )
 {
-    register int	i, j;
+    int	i, j;
     (void) fflush( stdout );
     for ( tmp_ct = 0, i = 1; args[i] != NULL; i++ )
     {
@@ -1481,10 +1481,10 @@ list_toc( char *args[] )
  * Print list of names in tabular columns.
  */
 int
-col_prt( register char *list[], register int ct )
+col_prt( char *list[], int ct )
 {
     char		buf[MAX_COL+2];
-    register int	i, column, spaces;
+    int	i, column, spaces;
 
     for ( i = 0, column = 0; i < ct; i++ )
     {
@@ -1517,9 +1517,9 @@ col_prt( register char *list[], register int ct )
  * matches one of the arguments into the current list 'curr_list'.
  */
 int
-insert(char *args[], register int ct)
+insert(char *args[], int ct)
 {
-    register int	i, j, nomatch;
+    int	i, j, nomatch;
 
     /* For each argument (does not include args[0]).			*/
     for ( i = 1; i < ct; i++ )
@@ -1551,13 +1551,13 @@ insert(char *args[], register int ct)
 int
 delete(char *args[])
 {
-    register int	i;
-    register int	nomatch;
+    int	i;
+    int	nomatch;
 
     /* for each object in arg list
      */
     for ( i = 1; i < arg_ct; i++ ) {
-	register int	j;
+	int	j;
 	nomatch = YES;
 
 	/* traverse list to find string
@@ -1565,7 +1565,7 @@ delete(char *args[])
 	for ( j = 0; j < curr_ct; )
 	    if ( match( args[i], curr_list[j] ) )
 	    {
-		register int	k;
+		int	k;
 
 		nomatch = NO;
 		bu_free( curr_list[j], "curr_list" );
@@ -1594,7 +1594,7 @@ delete(char *args[])
  * Convert integer to ascii  wd format.
  */
 void
-itoa( register int n, register char *s, register int w )
+itoa( int n, char *s, int w )
 {
     int	 c, i, j, sign;
 
@@ -1640,7 +1640,7 @@ void
 vls_itoa(struct bu_vls *v, int n, int w )
 {
     int	 c, i, j, sign;
-    register char	*s;
+    char	*s;
 
     BU_CK_VLS(v);
     bu_vls_strncat( v, "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", w);
@@ -1702,8 +1702,8 @@ vls_ftoa_cvt(struct bu_vls *v, double f, int w, int d)
 void
 vls_ftoa( struct bu_vls *v, double f, int w, int d )
 {
-    register char	*s;
-    register int	c, i, j;
+    char	*s;
+    int	c, i, j;
     long	n, sign;
 
     BU_CK_VLS(v);
@@ -1770,7 +1770,7 @@ vls_ftoa( struct bu_vls *v, double f, int w, int d )
  * args[0] and arguments into args[1]...args[n].
  */
 char
-getcmd(char *args[], register int ct)
+getcmd(char *args[], int ct)
 {
     /* Get arguments.						 */
     if ( ct == 0 )
@@ -1802,7 +1802,7 @@ getcmd(char *args[], register int ct)
  * Return 1 otherwise.
  */
 char
-getarg( register char *str )
+getarg( char *str )
 {
     do {
 	*str = getchar();
@@ -1828,7 +1828,7 @@ getarg( register char *str )
 void
 menu( char **addr )
 {
-    register char	**sbuf = addr;
+    char	**sbuf = addr;
     while ( *sbuf )
 	(void) printf( "%s\n", *sbuf++ );
     (void) fflush( stdout );
@@ -1842,7 +1842,7 @@ menu( char **addr )
  * Write count blanks to fildes.
  */
 void
-blank_fill(FILE *fp, register int count)
+blank_fill(FILE *fp, int count)
 {
     ewrite( fp, BLANKS, (unsigned) count );
 }

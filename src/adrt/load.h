@@ -24,7 +24,6 @@
 #ifndef _SLAVE_LOAD_H
 #define _SLAVE_LOAD_H
 
-#include <inttypes.h>
 #include "adrt.h"
 #include "adrt_struct.h"
 

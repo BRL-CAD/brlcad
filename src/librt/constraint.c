@@ -54,13 +54,12 @@ const struct bu_structparse rt_constraint_parse[] = {
  * constraint object.
  */
 void
-rt_constraint_ifree(struct rt_db_internal *ip, struct resource *resp)
+rt_constraint_ifree(struct rt_db_internal *ip)
 {
     register struct rt_constraint_internal *constraint;
 
     RT_CK_DB_INTERNAL(ip);
     constraint = (struct rt_constraint_internal *)ip->idb_ptr;
-    if (!resp) resp = &rt_uniresource;
     
     if (constraint) {
 	constraint->magic = 0;			/* sanity */
@@ -122,21 +121,13 @@ rt_constraint_export5(
  *
  */
 int
-rt_constraint_import5(
-    struct rt_db_internal *ip,
-    const struct bu_external *ep,
-    const mat_t mat,
-    const struct db_i *dbip,
-    struct resource *resp,
-    const int minor_type)
+rt_constraint_import5(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp)
 {
     RT_CK_DB_INTERNAL(ip);
     BU_CK_EXTERNAL(ep);
     mat = mat;
     RT_CK_DBI(dbip);
     if (resp) RT_CK_RESOURCE(resp);
-    if (minor_type != ID_CONSTRAINT)
-	bu_log("unexpected minor type [%d]\n", minor_type);
 
     return 0; /* OK */
 }

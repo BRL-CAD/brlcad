@@ -143,7 +143,7 @@ mged_CFLAGS = \
 	-I$(top_srcdir)/src/other/tk/generic \
 	-I$(top_srcdir)/src/other/tk/unix
 
-if WITH_X11
+if WITH_TK
 mged_tk_libs = \
 	${ITK} \
 	${TK}

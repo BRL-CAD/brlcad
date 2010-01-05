@@ -38,7 +38,7 @@ private:
 
 protected:
 #ifdef YAYA
-	SCLBOOL_H(Bool) same_sense;
+	SCLBOOL_H(Boolean) same_sense;
 #else
 	int same_sense;
 #endif
@@ -47,7 +47,7 @@ protected:
 public:
 	EdgeCurve();
 	virtual ~EdgeCurve();
-	EdgeCurve(STEPWrapper *sw,int STEPid);
+	EdgeCurve(STEPWrapper *sw,int step_id);
 	bool Load(STEPWrapper *sw,SCLP23(Application_instance) *sse);
 	virtual bool LoadONBrep(ON_Brep *brep);
 	virtual void Print(int level);

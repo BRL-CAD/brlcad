@@ -300,7 +300,7 @@ bbd_setup( struct region *rp,
 	img_num++;
     }
 
-    rt_db_free_internal(&intern, &rt_uniresource);
+    rt_db_free_internal(&intern);
 
     if (rdebug&RDEBUG_SHADE) {
 	bu_struct_print( " Parameters:", bbd_print_tab, (char *)bbd_sp );

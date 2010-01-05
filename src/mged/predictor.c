@@ -156,7 +156,7 @@ poly_trail(struct bu_list *vhead, struct trail *t1, struct trail *t2)
 void
 predictor_init(void)
 {
-    register int i;
+    int i;
 
     for (i = 0; i < NUM_TRAILS; ++i)
 	init_trail(&curr_dm_list->dml_trails[i]);

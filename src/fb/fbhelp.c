@@ -42,7 +42,7 @@ Usage: fbhelp [-F framebuffer]\n";
 int
 main(int argc, char **argv)
 {
-    register int c;
+    int c;
     FBIO	*fbp;
 
     while ( (c = bu_getopt( argc, argv, "F:" )) != EOF ) {

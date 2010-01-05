@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -47,29 +46,29 @@ public:
     initialized.
   Parameters:
     text_log - [in] if the object is not valid and text_log
-	is not NULL, then a brief englis description of the
-	reason the object is not valid is appened to the log.
-	The information appended to text_log is suitable for 
-	low-level debugging purposes by programmers and is 
-	not intended to be useful as a high level user 
-	interface tool.
+        is not NULL, then a brief englis description of the
+        reason the object is not valid is appened to the log.
+        The information appended to text_log is suitable for 
+        low-level debugging purposes by programmers and is 
+        not intended to be useful as a high level user 
+        interface tool.
   Returns:
     @untitled table
-    TRUE     object is valid
-    FALSE    object is invalid, uninitialized, etc.
+    true     object is valid
+    false    object is invalid, uninitialized, etc.
   Remarks:
     Overrides virtual ON_Object::IsValid
   */
-  BOOL IsValid( ON_TextLog* text_log = NULL ) const;
+  ON_BOOL32 IsValid( ON_TextLog* text_log = NULL ) const;
 
   void Dump( ON_TextLog& ) const; // for debugging
 
-  BOOL Write(
-	 ON_BinaryArchive&  // open binary file
+  ON_BOOL32 Write(
+         ON_BinaryArchive&  // open binary file
        ) const;
 
-  BOOL Read(
-	 ON_BinaryArchive&  // open binary file
+  ON_BOOL32 Read(
+         ON_BinaryArchive&  // open binary file
        );
 
   ON::object_type ObjectType() const;
@@ -142,7 +141,7 @@ public:
   ON_wString m_material_name;  // For user comfort - duplicates permitted
   
   ON_wString m_flamingo_library; // Legacy information from V3.
-				 // Will vanish in V5.
+                                 // Will vanish in V5.
 
   ON_Color   m_ambient;
   ON_Color   m_diffuse;
@@ -156,11 +155,11 @@ public:
   double     m_transparency; // 0.0 = opaque to 1.0 = transparent (1.0-alpha)
 
   bool       m_bShared;  // True means this material can be shared.  When an
-			 // object that uses this material is copied,
-			 // the new object will share the material.
-			 // False means this material is not shared.
-			 // When an object that uses this material is
-			 // duplicated.
+                         // object that uses this material is copied,
+                         // the new object will share the material.
+                         // False means this material is not shared.
+                         // When an object that uses this material is
+                         // duplicated.
 
   /*
   Description:
@@ -185,36 +184,36 @@ public:
   Parameters:
     filename - [in]  If NULL, then any filename matches.
     type - [in] If ON_Texture::no_texture_type, then
-		any texture type matches.
+                any texture type matches.
     i0 - [in] If i0 is < 0, the search begins at 
-	      m_textures[0], if i0 >= m_textures.Count(),
-	      -1 is returnd, otherwise, the search begins
-	      at m_textures[i0+1].
+              m_textures[0], if i0 >= m_textures.Count(),
+              -1 is returnd, otherwise, the search begins
+              at m_textures[i0+1].
   Example:
     Iterate through all the the bitmap textures on 
     a material.
 
-	  ON_Material& mat = ...;
-	  int ti = -1;
-	  int bitmap_texture_count = 0;
-	  for(;;)
-	  {
-	    ti = mat.FindTexture( 
-			NULL, 
-			ON_Texture::bitmap_texture, 
-			ti );
+          ON_Material& mat = ...;
+          int ti = -1;
+          int bitmap_texture_count = 0;
+          for(;;)
+          {
+            ti = mat.FindTexture( 
+                        NULL, 
+                        ON_Texture::bitmap_texture, 
+                        ti );
 
-	    if ( ti < 0 )
-	    {
-	      // no more bitmap textures
-	      break;
-	    }
+            if ( ti < 0 )
+            {
+              // no more bitmap textures
+              break;
+            }
 
-	    // we have a bitmap texture
-	    bitmap_texture_count++;
-	    const ON_Texture& bitmap_texture = mat.m_textures[ti];
-	    ...
-	  }
+            // we have a bitmap texture
+            bitmap_texture_count++;
+            const ON_Texture& bitmap_texture = mat.m_textures[ti];
+            ...
+          }
 
   Returns:
     >=0 m_textures[] index of matching texture
@@ -270,7 +269,7 @@ public:
   Parameters:
     filename - [in]  If NULL, then any filename matches.
     type - [in] If ON_Texture::no_texture_type, then
-		any texture type matches.
+                any texture type matches.
   Returns:
     Number of textures deleted.
   */

@@ -36,7 +36,7 @@
 int
 ged_oscale(struct ged *gedp, int argc, const char *argv[])
 {
-    register struct directory *dp;
+    struct directory *dp;
     struct _ged_trace_data gtd;
     struct rt_db_internal intern;
     mat_t smat;

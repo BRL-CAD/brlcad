@@ -37,9 +37,6 @@
  * system installed RLE reports a re-define, so undef it to quell the
  * warning
  */
-#ifdef USE_PROTOTYPES
-# undef USE_PROTOTYPES
-#endif
 #include "rle.h"
 
 static rle_hdr	outrle;
@@ -72,9 +69,9 @@ and the .rle file is written to stdout\n";
  *			G E T _ A R G S
  */
 static int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int	c;
+    int	c;
 
     while ( (c = bu_getopt( argc, argv, "hs:w:n:C:" )) != EOF )  {
 	switch ( c )  {
@@ -94,8 +91,8 @@ get_args(int argc, register char **argv)
 		break;
 	    case 'C':
 	    {
-		register char *cp = bu_optarg;
-		register int *conp = background;
+		char *cp = bu_optarg;
+		int *conp = background;
 
 		/* premature null => atoi gives zeros */
 		for ( c=0; c < 3; c++ )  {
@@ -145,8 +142,8 @@ get_args(int argc, register char **argv)
 int
 main(int argc, char **argv)
 {
-    register unsigned char *scan_buf;
-    register int	y;
+    unsigned char *scan_buf;
+    int	y;
 
     infp = stdin;
     outfp = stdout;
@@ -204,9 +201,9 @@ main(int argc, char **argv)
 
 	/* Grumble, convert to Utah layout */
 	{
-	    register unsigned char	*pp = scan_buf;
-	    register rle_pixel	*rp = rows[0];
-	    register int		i;
+	    unsigned char	*pp = scan_buf;
+	    rle_pixel	*rp = rows[0];
+	    int		i;
 
 	    for ( i=0; i<file_width; i++ )  {
 		*rp++ = *pp++;

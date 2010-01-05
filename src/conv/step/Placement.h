@@ -41,7 +41,7 @@ protected:
 public:
 	Placement();
 	virtual ~Placement();
-	Placement(STEPWrapper *sw,int STEPid);
+	Placement(STEPWrapper *sw,int step_id);
 	virtual const double *GetOrigin();
 	virtual const double *GetNormal();
 	virtual const double *GetXAxis();

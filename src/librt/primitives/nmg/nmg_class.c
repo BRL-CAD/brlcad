@@ -73,9 +73,6 @@ struct neighbor {
 };
 
 
-static void joint_hitmiss2 BU_ARGS((struct neighbor *closest,
-				    const struct edgeuse *eu, const point_t pt,
-				    int code));
 static void nmg_class_pt_e BU_ARGS((struct neighbor *closest,
 				    const point_t pt, const struct edgeuse *eu,
 				    const struct bn_tol *tol));
@@ -134,7 +131,7 @@ nmg_pr_class_status(char *prefix, int status)
  * nmg_class_pt_e
  */
 static void
-joint_hitmiss2(struct neighbor *closest, const struct edgeuse *eu, const fastf_t *pt, int code)
+joint_hitmiss2(struct neighbor *closest, const struct edgeuse *eu, int code)
 {
     const struct edgeuse *eu_rinf;
 
@@ -322,7 +319,7 @@ nmg_class_pt_e(struct neighbor *closest, const fastf_t *pt, const struct edgeuse
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
 	    bu_log("\t\tThe point is ON the edge, calling joint_hitmiss2()\n");
 	}
-	joint_hitmiss2(closest, eu, pt, code);
+	joint_hitmiss2(closest, eu, code);
 	return;
     } else {
 	if (rt_g.NMG_debug & DEBUG_CLASSIFY) {
@@ -1457,7 +1454,7 @@ class_lu_vs_s(struct loopuse *lu, struct shell *s, long int **classlist, const s
     struct edgeuse *eu, *p;
     struct loopuse *q_lu;
     struct vertexuse *vu;
-    long magic1;
+    unsigned long magic1;
     char *reason = "Unknown";
     int seen_error = 0;
     int status = 0;

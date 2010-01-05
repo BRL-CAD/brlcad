@@ -132,7 +132,7 @@ db_preorder_traverse( struct directory *dp,
 
 	    db_traverse_subtree( comb->tree, db_preorder_traverse, dtp );
 
-	    rt_db_free_internal( &in, dtp->resp );
+	    rt_db_free_internal(&in);
 	}
 	/* exiting region */
 	if ( dtp->comb_exit_func )
@@ -249,7 +249,7 @@ db_functree(struct db_i *dbip,
 
 	    comb = (struct rt_comb_internal *)in.idb_ptr;
 	    db_functree_subtree( dbip, comb->tree, comb_func, leaf_func, resp, client_data );
-	    rt_db_free_internal( &in, resp );
+	    rt_db_free_internal(&in);
 	}
 
 	/* Finally, the combination itself */

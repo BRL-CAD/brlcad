@@ -544,7 +544,7 @@ struct dm_list {
 	for (BU_LIST_FOR(p, dm_list, hp))
 
 #define GET_DM_LIST(p, id) { \
-		register struct dm_list *tp; \
+		struct dm_list *tp; \
 \
 		FOR_ALL_DISPLAYS(tp, &head_dm_list.l) { \
 			if ((id) == tp->dml_dmp->dm_id) { \

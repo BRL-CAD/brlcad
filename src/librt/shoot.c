@@ -215,14 +215,6 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 	return CUTTER_NULL;
     }
 
-#if EXTRA_SAFETY
-    if (curcut == CUTTER_NULL) {
-	bu_log(
-	    "rt_advance_to_next_cell: warning: ssp->curcut not set\n");
-	ssp->curcut = curcut = &ap->a_rt_i->rti_CutHead;
-    }
-#endif
-
     for (;;) {
 	/* Set cutp to CUTTER_NULL.  If it fails to become set in the
 	 * following switch statement, we know that we have exited the
@@ -535,8 +527,8 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 			rt_pr_cut(cutp, 0);
 		    }
 
-		    /* Advance 1mm, or smallest value that hardware
-		     * floating point resolution will allow.
+		    /* Advance 1mm, or (square of) smallest value that
+		     * hardware floating point resolution will allow.
 		     */
 		    fraction = frexp(ssp->box_end,
 				     &exponent);
@@ -546,10 +538,7 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 			    "exp=%d, fraction=%.20e\n",
 			    exponent, fraction);
 		    }
-		    if (sizeof(fastf_t) <= 4)
-			fraction += 1.0e-5;
-		    else
-			fraction += 1.0e-14;
+		    fraction += SQRT_SMALL_FASTF;
 		    delta = ldexp(fraction, exponent);
 		    if (RT_G_DEBUG & DEBUG_ADVANCE) {
 			bu_log(
@@ -615,12 +604,6 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 		}
 
 	    done_return_cutp:	ssp->lastcut = cutp;
-#if EXTRA_SAFETY
-		/* Diagnostic purposes only */
-		ssp->odist_corr = ssp->dist_corr;
-		ssp->obox_start = ssp->box_start;
-		ssp->obox_end = ssp->box_end;
-#endif
 		ssp->dist_corr = t0;
 		ssp->box_start = t0 + ssp->newray.r_min;
 		ssp->box_end = t0 + ssp->newray.r_max;
@@ -2069,51 +2052,6 @@ rt_DB_rpp(register struct xray *rp, register const fastf_t *invdir, register con
 miss:
     bu_log("MISS\n");
     return(0);		/* MISS */
-}
-
-
-#undef st
-
-
-#define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;
-
-/**
- * Stub function which will "similate" a call to a vector shot routine
- */
-void
-rt_vstub(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
-/* An array of solid pointers */
-/* An array of ray pointers */
-/* array of segs (results returned) */
-/* Number of ray/object pairs */
-/* pointer to an application */
-{
-    register int i;
-    register struct seg *tmp_seg;
-    struct seg seghead;
-    int ret;
-
-    BU_LIST_INIT(&(seghead.l));
-
-    /* go through each ray/solid pair and call a scalar function */
-    for (i = 0; i < n; i++) {
-	if (stp[i] != 0) {
-	    /* skip call if solid table pointer is NULL */
-	    /* do scalar call, place results in segp array */
-	    ret = -1;
-	    if (rt_functab[stp[i]->st_id].ft_shot) {
-		ret = rt_functab[stp[i]->st_id].ft_shot(stp[i], rp[i], ap, &seghead);
-	    }
-	    if (ret <= 0) {
-		SEG_MISS(segp[i]);
-	    } else {
-		tmp_seg = BU_LIST_FIRST(seg, &(seghead.l));
-		BU_LIST_DEQUEUE(&(tmp_seg->l));
-		segp[i] = *tmp_seg; /* structure copy */
-		RT_FREE_SEG(tmp_seg, ap->a_resource);
-	    }
-	}
-    }
 }
 
 

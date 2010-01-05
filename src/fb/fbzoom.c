@@ -35,7 +35,7 @@
 #include "libtermio.h"
 
 
-int pars_Argv(int argc, register char **argv);
+int pars_Argv(int argc, char **argv);
 int doKeyPad(void);
 
 /* Zoom rate and limits */
@@ -173,7 +173,7 @@ RETURN	Exit\r\n";
 int
 doKeyPad(void)
 {
-    register int ch;
+    int ch;
 
     if ( (ch = getchar()) == EOF )
 	return	0;		/* done */
@@ -298,9 +298,9 @@ doKeyPad(void)
 /*	p a r s _ A r g v ( )
  */
 int
-pars_Argv(int argc, register char **argv)
+pars_Argv(int argc, char **argv)
 {
-    register int	c;
+    int	c;
 
     while ( (c = bu_getopt( argc, argv, "hTF:s:S:w:W:n:N:" )) != EOF )  {
 	switch ( c )  {

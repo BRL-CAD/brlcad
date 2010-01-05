@@ -122,7 +122,7 @@ namespace {
     TwistedCubeSideSurface(const ON_3dPoint& SW, const ON_3dPoint& SE, const ON_3dPoint& NE, const ON_3dPoint& NW)
     {
 	ON_NurbsSurface* pNurbsSurface = new ON_NurbsSurface(3, // dimension
-							     FALSE, // not rational
+							     0, // not rational
 							     2, // u order
 							     2, // v order,
 							     2, // number of control vertices in u

@@ -48,9 +48,9 @@ TrimmedCurve::TrimmedCurve() {
 	basis_curve = NULL;
 }
 
-TrimmedCurve::TrimmedCurve(STEPWrapper *sw,int STEPid) {
+TrimmedCurve::TrimmedCurve(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 	basis_curve = NULL;
 }
 
@@ -79,7 +79,7 @@ TrimmedCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 	id = sse->STEPfile_id;
 
 	if ( !BoundedCurve::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::BoundedCurve." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::BoundedCurve." << std::endl;
 		return false;
 	}
 
@@ -92,7 +92,7 @@ TrimmedCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 		if (entity) {
 			basis_curve = dynamic_cast<Curve *>(Factory::CreateObject(sw,entity)); //CreateCurveObject(sw,entity));
 		} else {
-			cerr << CLASSNAME << ": Error loading entity attribute 'basis_curve'." << endl;
+			std::cerr << CLASSNAME << ": Error loading entity attribute 'basis_curve'." << std::endl;
 			return false;
 		}
 	}
@@ -109,7 +109,7 @@ TrimmedCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 				trim_1.push_back(aTS);
 
 				if (!aTS->Load(step, p)) {
-					cout << CLASSNAME << ":Error loading TrimmingSelect from list." << endl;
+					std::cout << CLASSNAME << ":Error loading TrimmingSelect from list." << std::endl;
 					return false;
 				}
 
@@ -130,7 +130,7 @@ TrimmedCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 				trim_2.push_back(aTS);
 
 				if (!aTS->Load(step, p)) {
-					cout << CLASSNAME << ":Error loading TrimmingSelect from list." << endl;
+					std::cout << CLASSNAME << ":Error loading TrimmingSelect from list." << std::endl;
 					return false;
 				}
 				sn = (EntityNode *) sn->NextNode();
@@ -156,23 +156,23 @@ TrimmedCurve::PointAtStart() {
 
 void
 TrimmedCurve::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << name << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Attributes:" << endl;
+	TAB(level); std::cout << "Attributes:" << std::endl;
 	basis_curve->Print(level+1);
-	TAB(level); cout << "trim_1:" << endl;
+	TAB(level); std::cout << "trim_1:" << std::endl;
 	LIST_OF_TRIMMING_SELECT::iterator i;
 	for(i=trim_1.begin();i!=trim_1.end();i++) {
 		(*i)->Print(level+1);
 	}
 
-	TAB(level); cout << "trim_2:" << endl;
+	TAB(level); std::cout << "trim_2:" << std::endl;
 	for(i=trim_2.begin();i!=trim_2.end();i++) {
 		(*i)->Print(level+1);
 	}
-	TAB(level); cout << "sense_agreement:" << step->getBooleanString(sense_agreement) << endl;
-	TAB(level); cout << "master_representation:" << Trimming_preference_string[master_representation] << endl;
+	TAB(level); std::cout << "sense_agreement:" << step->getBooleanString(sense_agreement) << std::endl;
+	TAB(level); std::cout << "master_representation:" << Trimming_preference_string[master_representation] << std::endl;
 }
 STEPEntity *
 TrimmedCurve::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
@@ -183,7 +183,7 @@ TrimmedCurve::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}
@@ -201,8 +201,8 @@ TrimmedCurve::LoadONBrep(ON_Brep *brep)
 		return true; // already loaded
 
 	//TODO: pass down trimmings(protected curve attributes
-	LIST_OF_TRIMMING_SELECT::iterator i = trim_1.begin();
-	TrimmingSelect *ts = (*i);
+	LIST_OF_TRIMMING_SELECT::iterator iter = trim_1.begin();
+	TrimmingSelect *ts = (*iter);
 	if (ts->IsParameterTrim()) {
 		trimmed = true;
 		parameter_trim = true;
@@ -216,8 +216,8 @@ TrimmedCurve::LoadONBrep(ON_Brep *brep)
 		for(int i=0;i<3;i++)
 			trim_startpoint[i] = point[i] * LocalUnits::length;
 	}
-	i = trim_2.begin();
-	TrimmingSelect *te = (*i);
+	iter = trim_2.begin();
+	TrimmingSelect *te = (*iter);
 	if (te->IsParameterTrim()) {
 		trimmed = true;
 		parameter_trim = true;

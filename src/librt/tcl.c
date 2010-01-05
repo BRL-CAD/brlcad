@@ -257,7 +257,7 @@ rt_tcl_rt_cutter(ClientData clientData, Tcl_Interp *interp, int argc, const char
  * user more precision.
  */
 void
-rt_tcl_pr_hit(Tcl_Interp *interp, struct hit *hitp, const struct seg *segp, const struct xray *rayp, int flipflag)
+rt_tcl_pr_hit(Tcl_Interp *interp, struct hit *hitp, const struct seg *segp, int flipflag)
 {
     struct bu_vls str;
     vect_t norm;
@@ -303,7 +303,7 @@ rt_tcl_pr_hit(Tcl_Interp *interp, struct hit *hitp, const struct seg *segp, cons
 int
 rt_tcl_a_hit(struct application *ap,
 	     struct partition *PartHeadp,
-	     struct seg *segHeadp)
+	     struct seg *segHeadp __attribute__((unused)))
 {
     Tcl_Interp *interp = (Tcl_Interp *)ap->a_uptr;
     register struct partition *pp;
@@ -313,11 +313,9 @@ rt_tcl_a_hit(struct application *ap,
     for (pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw) {
 	RT_CK_PT(pp);
 	Tcl_AppendResult(interp, "{in", (char *)NULL);
-	rt_tcl_pr_hit(interp, pp->pt_inhit, pp->pt_inseg,
-		      &ap->a_ray, pp->pt_inflip);
+	rt_tcl_pr_hit(interp, pp->pt_inhit, pp->pt_inseg, pp->pt_inflip);
 	Tcl_AppendResult(interp, "\nout", (char *)NULL);
-	rt_tcl_pr_hit(interp, pp->pt_outhit, pp->pt_outseg,
-		      &ap->a_ray, pp->pt_outflip);
+	rt_tcl_pr_hit(interp, pp->pt_outhit, pp->pt_outseg, pp->pt_outflip);
 	Tcl_AppendResult(interp,
 			 "\nregion ",
 			 pp->pt_regionp->reg_name,
@@ -335,6 +333,7 @@ rt_tcl_a_hit(struct application *ap,
 int
 rt_tcl_a_miss(struct application *ap)
 {
+    if (ap) RT_CK_APPLICATION(ap);
     return 0;
 }
 
@@ -369,7 +368,7 @@ rt_tcl_rt_shootray(ClientData clientData, Tcl_Interp *interp, int argc, const ch
 {
     struct application *ap = (struct application *)clientData;
     struct rt_i *rtip;
-    int index;
+    int idx;
 
     if ((argc != 5 && argc != 6) || (argc == 6 && strcmp(argv[2], "-R"))) {
 	Tcl_AppendResult(interp,
@@ -381,16 +380,16 @@ rt_tcl_rt_shootray(ClientData clientData, Tcl_Interp *interp, int argc, const ch
 
     if (argc == 6) {
 	ap->a_logoverlap = rt_silent_logoverlap;
-	index = 3;
+	idx = 3;
     } else {
-	index = 2;
+	idx = 2;
     }
 
     RT_CK_AP_TCL(interp, ap);
     rtip = ap->a_rt_i;
     RT_CK_RTI_TCL(interp, rtip);
 
-    if (rt_tcl_parse_ray(interp, &ap->a_ray, &argv[index]) == TCL_ERROR)
+    if (rt_tcl_parse_ray(interp, &ap->a_ray, &argv[idx]) == TCL_ERROR)
 	return TCL_ERROR;
     ap->a_hit = rt_tcl_a_hit;
     ap->a_miss = rt_tcl_a_miss;
@@ -734,11 +733,16 @@ db_tcl_tree_describe(Tcl_DString *dsp, const union tree *tp)
  * that tree.
  */
 union tree *
-db_tree_parse(struct bu_vls *log, const char *str, struct resource *resp)
+db_tree_parse(struct bu_vls *logstr, const char *str, struct resource *resp)
 {
     int argc;
     char **argv;
     union tree *tp = TREE_NULL;
+
+    if (!resp) {
+	resp = &rt_uniresource;
+    }
+    RT_CK_RESOURCE(resp);
 
     /* Skip over leading spaces in input */
     while (*str && isspace(*str)) str++;
@@ -748,14 +752,14 @@ db_tree_parse(struct bu_vls *log, const char *str, struct resource *resp)
 	return TREE_NULL;
 
     if (argc <= 0 || argc > 3) {
-	bu_vls_printf(log,
+	bu_vls_printf(logstr,
 		      "db_tree_parse: tree node does not have 1, 2 or 2 elements: %s\n",
 		      str);
 	goto out;
     }
 
     if (argv[0][1] != '\0') {
-	bu_vls_printf(log, "db_tree_parse() operator is not single character: %s", argv[0]);
+	bu_vls_printf(logstr, "db_tree_parse() operator is not single character: %s", argv[0]);
 	goto out;
     }
 
@@ -772,7 +776,7 @@ db_tree_parse(struct bu_vls *log, const char *str, struct resource *resp)
 		mat_t m;
 		/* decode also recognizes "I" notation for identity */
 		if (bn_decode_mat(m, argv[2]) != 16) {
-		    bu_vls_printf(log,
+		    bu_vls_printf(logstr,
 				  "db_tree_parse: unable to parse matrix '%s' using identity",
 				  argv[2]);
 		    break;
@@ -780,7 +784,7 @@ db_tree_parse(struct bu_vls *log, const char *str, struct resource *resp)
 		if (bn_mat_is_identity(m))
 		    break;
 		if (bn_mat_ck("db_tree_parse", m)) {
-		    bu_vls_printf(log,
+		    bu_vls_printf(logstr,
 				  "db_tree_parse: matrix '%s', does not preserve axis perpendicularity, using identity", argv[2]);
 		    break;
 		}
@@ -812,20 +816,20 @@ db_tree_parse(struct bu_vls *log, const char *str, struct resource *resp)
 	binary:
 	    tp->tr_b.magic = RT_TREE_MAGIC;
 	    if (argv[1] == (char *)NULL || argv[2] == (char *)NULL) {
-		bu_vls_printf(log,
+		bu_vls_printf(logstr,
 			      "db_tree_parse: binary operator %s has insufficient operands in %s",
 			      argv[0], str);
 		RT_FREE_TREE(tp, resp);
 		tp = TREE_NULL;
 		goto out;
 	    }
-	    tp->tr_b.tb_left = db_tree_parse(log, argv[1], resp);
+	    tp->tr_b.tb_left = db_tree_parse(logstr, argv[1], resp);
 	    if (tp->tr_b.tb_left == TREE_NULL) {
 		RT_FREE_TREE(tp, resp);
 		tp = TREE_NULL;
 		goto out;
 	    }
-	    tp->tr_b.tb_right = db_tree_parse(log, argv[2], resp);
+	    tp->tr_b.tb_right = db_tree_parse(logstr, argv[2], resp);
 	    if (tp->tr_b.tb_left == TREE_NULL) {
 		db_free_tree(tp->tr_b.tb_left, resp);
 		RT_FREE_TREE(tp, resp);
@@ -852,14 +856,14 @@ db_tree_parse(struct bu_vls *log, const char *str, struct resource *resp)
 	unary:
 	    tp->tr_b.magic = RT_TREE_MAGIC;
 	    if (argv[1] == (char *)NULL) {
-		bu_vls_printf(log,
+		bu_vls_printf(logstr,
 			      "db_tree_parse: unary operator %s has insufficient operands in %s\n",
 			      argv[0], str);
 		bu_free((char *)tp, "union tree");
 		tp = TREE_NULL;
 		goto out;
 	    }
-	    tp->tr_b.tb_left = db_tree_parse(log, argv[1], resp);
+	    tp->tr_b.tb_left = db_tree_parse(logstr, argv[1], resp);
 	    if (tp->tr_b.tb_left == TREE_NULL) {
 		bu_free((char *)tp, "union tree");
 		tp = TREE_NULL;
@@ -875,7 +879,7 @@ db_tree_parse(struct bu_vls *log, const char *str, struct resource *resp)
 	    break;
 
 	default:
-	    bu_vls_printf(log, "db_tree_parse: unable to interpret operator '%s'\n", argv[1]);
+	    bu_vls_printf(logstr, "db_tree_parse: unable to interpret operator '%s'\n", argv[1]);
     }
 
 out:
@@ -895,13 +899,18 @@ out:
 union tree *
 db_tcl_tree_parse(Tcl_Interp *interp, const char *str, struct resource *resp)
 {
-    struct bu_vls log;
+    struct bu_vls logstr;
     union tree *tp;
 
-    bu_vls_init(&log);
-    tp = db_tree_parse(&log, str, resp);
-    Tcl_AppendResult(interp, bu_vls_addr(&log), (char *)NULL);
-    bu_vls_free(&log);
+    if (!resp) {
+	resp = &rt_uniresource;
+    }
+    RT_CK_RESOURCE(resp);
+
+    bu_vls_init(&logstr);
+    tp = db_tree_parse(&logstr, str, resp);
+    Tcl_AppendResult(interp, bu_vls_addr(&logstr), (char *)NULL);
+    bu_vls_free(&logstr);
 
     return tp;
 }
@@ -914,7 +923,7 @@ db_tcl_tree_parse(Tcl_Interp *interp, const char *str, struct resource *resp)
  * Entered via rt_functab[].ft_get().
  */
 int
-rt_comb_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *item)
+rt_comb_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *item)
 {
     const struct rt_comb_internal *comb;
     char buf[128];
@@ -926,38 +935,38 @@ rt_comb_get(struct bu_vls *log, const struct rt_db_internal *intern, const char 
     if (item==0) {
 	/* Print out the whole combination. */
 
-	bu_vls_printf(log, "comb region ");
+	bu_vls_printf(logstr, "comb region ");
 	if (comb->region_flag) {
-	    bu_vls_printf(log, "yes id %d ", comb->region_id);
+	    bu_vls_printf(logstr, "yes id %d ", comb->region_id);
 
 	    if (comb->aircode) {
-		bu_vls_printf(log, "air %d ", comb->aircode);
+		bu_vls_printf(logstr, "air %d ", comb->aircode);
 	    }
 	    if (comb->los) {
-		bu_vls_printf(log, "los %d ", comb->los);
+		bu_vls_printf(logstr, "los %d ", comb->los);
 	    }
 
 	    if (comb->GIFTmater) {
-		bu_vls_printf(log, "GIFTmater %d ", comb->GIFTmater);
+		bu_vls_printf(logstr, "GIFTmater %d ", comb->GIFTmater);
 	    }
 	} else {
-	    bu_vls_printf(log, "no ");
+	    bu_vls_printf(logstr, "no ");
 	}
 
 	if (comb->rgb_valid) {
-	    bu_vls_printf(log, "rgb {%d %d %d} ", V3ARGS(comb->rgb));
+	    bu_vls_printf(logstr, "rgb {%d %d %d} ", V3ARGS(comb->rgb));
 	}
 
 	if (bu_vls_strlen(&comb->shader) > 0) {
-	    bu_vls_printf(log, "shader {%s} ", bu_vls_addr(&comb->shader));
+	    bu_vls_printf(logstr, "shader {%s} ", bu_vls_addr(&comb->shader));
 	}
 
 	if (bu_vls_strlen(&comb->material) > 0) {
-	    bu_vls_printf(log, "material %s ", bu_vls_addr(&comb->material));
+	    bu_vls_printf(logstr, "material %s ", bu_vls_addr(&comb->material));
 	}
 
 	if (comb->inherit) {
-	    bu_vls_printf(log, "inherit yes ");
+	    bu_vls_printf(logstr, "inherit yes ");
 	}
 
 	{
@@ -965,9 +974,9 @@ rt_comb_get(struct bu_vls *log, const struct rt_db_internal *intern, const char 
 
 	    /*XXX Temporarily using Tcl until a replacement for db_tcl_tree_describe is written */
 	    Tcl_DStringInit(&ds);
-	    bu_vls_printf(log, "tree {");
+	    bu_vls_printf(logstr, "tree {");
 	    db_tcl_tree_describe(&ds, comb->tree);
-	    bu_vls_printf(log, "%s}", Tcl_DStringValue(&ds));
+	    bu_vls_printf(logstr, "%s}", Tcl_DStringValue(&ds));
 	    Tcl_DStringFree(&ds);
 	}
 
@@ -987,26 +996,26 @@ rt_comb_get(struct bu_vls *log, const struct rt_db_internal *intern, const char 
 	    snprintf(buf, 128, "%s", comb->region_flag ? "yes" : "no");
 	} else if (strcmp(itemlwr, "id")==0) {
 	    if (!comb->region_flag) goto not_region;
-	    snprintf(buf, 128, "%d", comb->region_id);
+	    snprintf(buf, 128, "%ld", comb->region_id);
 	} else if (strcmp(itemlwr, "air")==0) {
 	    if (!comb->region_flag) goto not_region;
-	    snprintf(buf, 128, "%d", comb->aircode);
+	    snprintf(buf, 128, "%ld", comb->aircode);
 	} else if (strcmp(itemlwr, "los")==0) {
 	    if (!comb->region_flag) goto not_region;
-	    snprintf(buf, 128, "%d", comb->los);
+	    snprintf(buf, 128, "%ld", comb->los);
 	} else if (strcmp(itemlwr, "giftmater")==0) {
 	    if (!comb->region_flag) goto not_region;
-	    snprintf(buf, 128, "%d", comb->GIFTmater);
+	    snprintf(buf, 128, "%ld", comb->GIFTmater);
 	} else if (strcmp(itemlwr, "rgb")==0) {
 	    if (comb->rgb_valid)
 		snprintf(buf, 128, "%d %d %d", V3ARGS(comb->rgb));
 	    else
 		snprintf(buf, 128, "invalid");
 	} else if (strcmp(itemlwr, "shader")==0) {
-	    bu_vls_printf(log, "%s", bu_vls_addr(&comb->shader));
+	    bu_vls_printf(logstr, "%s", bu_vls_addr(&comb->shader));
 	    return BRLCAD_OK;
 	} else if (strcmp(itemlwr, "material")==0) {
-	    bu_vls_printf(log, "%s", bu_vls_addr(&comb->material));
+	    bu_vls_printf(logstr, "%s", bu_vls_addr(&comb->material));
 	    return BRLCAD_OK;
 	} else if (strcmp(itemlwr, "inherit")==0) {
 	    snprintf(buf, 128, "%s", comb->inherit ? "yes" : "no");
@@ -1015,20 +1024,20 @@ rt_comb_get(struct bu_vls *log, const struct rt_db_internal *intern, const char 
 
 	    Tcl_DStringInit(&ds);
 	    db_tcl_tree_describe(&ds, comb->tree);
-	    bu_vls_printf(log, "%s", Tcl_DStringValue(&ds));
+	    bu_vls_printf(logstr, "%s", Tcl_DStringValue(&ds));
 	    Tcl_DStringFree(&ds);
 
 	    return BRLCAD_OK;
 	} else {
-	    bu_vls_printf(log, "no such attribute");
+	    bu_vls_printf(logstr, "no such attribute");
 	    return BRLCAD_ERROR;
 	}
 
-	bu_vls_printf(log, "%s", buf);
+	bu_vls_printf(logstr, "%s", buf);
 	return BRLCAD_OK;
 
     not_region:
-	bu_vls_printf(log, "item not valid for non-region");
+	bu_vls_printf(logstr, "item not valid for non-region");
 	return BRLCAD_ERROR;
     }
 }
@@ -1043,12 +1052,7 @@ rt_comb_get(struct bu_vls *log, const struct rt_db_internal *intern, const char 
  * Invoked via rt_functab[ID_COMBINATION].ft_tcladjust()
  */
 int
-rt_comb_adjust(
-    struct bu_vls *log,
-    struct rt_db_internal *intern,
-    int argc,
-    char **argv,
-    struct resource *resp)
+rt_comb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv)
 {
     struct rt_comb_internal *comb;
     char buf[128];
@@ -1056,7 +1060,6 @@ rt_comb_adjust(
     double d;
 
     RT_CK_DB_INTERNAL(intern);
-    RT_CK_RESOURCE(resp);
     comb = (struct rt_comb_internal *)intern->idb_ptr;
     RT_CK_COMB(comb);
 
@@ -1137,7 +1140,7 @@ rt_comb_adjust(
 		i = sscanf(argv[1], "%u %u %u",
 			   &r, &g, &b);
 		if (i != 3) {
-		    bu_vls_printf(log, "adjust rgb %s: not valid rgb 3-tuple\n", argv[1]);
+		    bu_vls_printf(logstr, "adjust rgb %s: not valid rgb 3-tuple\n", argv[1]);
 		    return BRLCAD_ERROR;
 		}
 		comb->rgb[0] = (unsigned char)r;
@@ -1179,21 +1182,21 @@ rt_comb_adjust(
 
 	    if (*argv[1] == '\0' || strcmp(argv[1], "none") == 0) {
 		if (comb->tree) {
-		    db_free_tree(comb->tree, resp);
+		    db_free_tree(comb->tree, &rt_uniresource);
 		}
 		comb->tree = TREE_NULL;
 	    } else {
-		new = db_tree_parse(log, argv[1], resp);
+		new = db_tree_parse(logstr, argv[1], &rt_uniresource);
 		if (new == TREE_NULL) {
-		    bu_vls_printf(log, "db adjust tree: bad tree '%s'\n", argv[1]);
+		    bu_vls_printf(logstr, "db adjust tree: bad tree '%s'\n", argv[1]);
 		    return BRLCAD_ERROR;
 		}
 		if (comb->tree)
-		    db_free_tree(comb->tree, resp);
+		    db_free_tree(comb->tree, &rt_uniresource);
 		comb->tree = new;
 	    }
 	} else {
-	    bu_vls_printf(log, "db adjust %s : no such attribute", buf);
+	    bu_vls_printf(logstr, "db adjust %s : no such attribute", buf);
 	    return BRLCAD_ERROR;
 	}
 	argc -= 2;
@@ -1203,7 +1206,7 @@ rt_comb_adjust(
     return BRLCAD_OK;
 
 not_region:
-    bu_vls_printf(log, "adjusting attribute %s is not valid for a non-region combination.", buf);
+    bu_vls_printf(logstr, "adjusting attribute %s is not valid for a non-region combination.", buf);
     return BRLCAD_ERROR;
 }
 
@@ -1305,7 +1308,7 @@ rt_tcl_import_from_path(Tcl_Interp *interp, struct rt_db_internal *ip, const cha
  * all.  Example: "db get ell.s B" to get only the B vector.
  */
 int
-rt_parsetab_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *attr)
+rt_parsetab_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr)
 {
     register const struct bu_structparse *sp = NULL;
     register const struct rt_functab *ftp;
@@ -1316,7 +1319,7 @@ rt_parsetab_get(struct bu_vls *log, const struct rt_db_internal *intern, const c
 
     sp = ftp->ft_parsetab;
     if (!sp) {
-	bu_vls_printf(log,
+	bu_vls_printf(logstr,
 		      "%s {a Tcl output routine for this type of object has not yet been implemented}",
 		      ftp->ft_label);
 	return BRLCAD_ERROR;
@@ -1328,20 +1331,20 @@ rt_parsetab_get(struct bu_vls *log, const struct rt_db_internal *intern, const c
 	bu_vls_init(&str);
 
 	/* Print out solid type and all attributes */
-	bu_vls_printf(log, "%s", ftp->ft_label);
+	bu_vls_printf(logstr, "%s", ftp->ft_label);
 	while (sp->sp_name != NULL) {
-	    bu_vls_printf(log, " %s", sp->sp_name);
+	    bu_vls_printf(logstr, " %s", sp->sp_name);
 
 	    bu_vls_trunc(&str, 0);
 	    bu_vls_struct_item(&str, sp,
 			       (char *)intern->idb_ptr, ' ');
 
 	    if (sp->sp_count < 2)
-		bu_vls_printf(log, " %V", &str);
+		bu_vls_printf(logstr, " %V", &str);
 	    else {
-		bu_vls_printf(log, " {");
-		bu_vls_printf(log, "%V", &str);
-		bu_vls_printf(log, "} ");
+		bu_vls_printf(logstr, " {");
+		bu_vls_printf(logstr, "%V", &str);
+		bu_vls_printf(logstr, "} ");
 	    }
 
 	    ++sp;
@@ -1349,8 +1352,8 @@ rt_parsetab_get(struct bu_vls *log, const struct rt_db_internal *intern, const c
 
 	bu_vls_free(&str);
     } else {
-	if (bu_vls_struct_item_named(log, sp, attr, (char *)intern->idb_ptr, ' ') < 0) {
-	    bu_vls_printf(log,
+	if (bu_vls_struct_item_named(logstr, sp, attr, (char *)intern->idb_ptr, ' ') < 0) {
+	    bu_vls_printf(logstr,
 			  "Objects of type %s do not have a %s attribute.",
 			  ftp->ft_label, attr);
 	    return BRLCAD_ERROR;
@@ -1365,11 +1368,11 @@ rt_parsetab_get(struct bu_vls *log, const struct rt_db_internal *intern, const c
  * R T _ C O M B _ F O R M
  */
 int
-rt_comb_form(struct bu_vls *log, const struct rt_functab *ftp)
+rt_comb_form(struct bu_vls *logstr, const struct rt_functab *ftp)
 {
     RT_CK_FUNCTAB(ftp);
 
-    bu_vls_printf(log,
+    bu_vls_printf(logstr,
 		  "region {%%s} id {%%d} air {%%d} los {%%d} GIFTmater {%%d} rgb {%%d %%d %%d} \
 shader {%%s} material {%%s} inherit {%%s} tree {%%s}");
 
@@ -1384,7 +1387,7 @@ shader {%%s} material {%%s} inherit {%%s} tree {%%s}");
  * rt_functab[ID_COMBINATION].ft_make().
  */
 void
-rt_comb_make(const struct rt_functab *ftp, struct rt_db_internal *intern, double diameter)
+rt_comb_make(const struct rt_functab *ftp __attribute__((unused)), struct rt_db_internal *intern)
 {
     struct rt_comb_internal *comb;
 
@@ -1415,11 +1418,9 @@ rt_comb_make(const struct rt_functab *ftp, struct rt_db_internal *intern, double
  * R T _ G E N E R I C _ M A K E
  *
  * This one assumes that making all the parameters null is fine.
- * (More generally, diameter == 0 means make 'em all zero, otherwise
- * build something interesting to look at.)
  */
 void
-rt_generic_make(const struct rt_functab *ftp, struct rt_db_internal *intern, double diameter)
+rt_generic_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 {
     intern->idb_type = ftp - rt_functab;
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -1438,7 +1439,7 @@ rt_generic_make(const struct rt_functab *ftp, struct rt_db_internal *intern, dou
  * rt_functab[].ft_adjust()
  */
 int
-rt_parsetab_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char **argv)
+rt_parsetab_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv)
 {
     const struct rt_functab *ftp;
 
@@ -1447,12 +1448,11 @@ rt_parsetab_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, 
     RT_CK_FUNCTAB(ftp);
 
     if (ftp->ft_parsetab == (struct bu_structparse *)NULL) {
-	bu_vls_printf(log, "%s type objects do not yet have a 'db put' (adjust) handler.", ftp->ft_label);
+	bu_vls_printf(logstr, "%s type objects do not yet have a 'db put' (adjust) handler.", ftp->ft_label);
 	return BRLCAD_ERROR;
     }
 
-    return bu_structparse_argv(log, argc, argv, ftp->ft_parsetab,
-			       (char *)intern->idb_ptr);
+    return bu_structparse_argv(logstr, argc, argv, ftp->ft_parsetab, (char *)intern->idb_ptr);
 }
 
 
@@ -1463,15 +1463,15 @@ rt_parsetab_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, 
  * fully described by their bu_structparse table in ft_parsetab.
  */
 int
-rt_parsetab_form(struct bu_vls *log, const struct rt_functab *ftp)
+rt_parsetab_form(struct bu_vls *logstr, const struct rt_functab *ftp)
 {
     RT_CK_FUNCTAB(ftp);
 
     if (ftp->ft_parsetab) {
-	bu_structparse_get_terse_form(log, ftp->ft_parsetab);
+	bu_structparse_get_terse_form(logstr, ftp->ft_parsetab);
 	return BRLCAD_OK;
     }
-    bu_vls_printf(log,
+    bu_vls_printf(logstr,
 		  "%s is a valid object type, but a 'form' routine has not yet been implemented.",
 		  ftp->ft_label);
 

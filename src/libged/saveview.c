@@ -35,17 +35,17 @@
 #include "./ged_private.h"
 
 
-static char *ged_basename_without_suffix(register const char *p1, register const char *suff);
+static char *ged_basename_without_suffix(const char *p1, const char *suff);
 
 
 int
 ged_saveview(struct ged *gedp, int argc, const char *argv[])
 {
-    register struct ged_display_list *gdlp;
-    register struct ged_display_list *next_gdlp;
-    register struct solid *sp;
-    register int i;
-    register FILE *fp;
+    struct ged_display_list *gdlp;
+    struct ged_display_list *next_gdlp;
+    struct solid *sp;
+    int i;
+    FILE *fp;
     char *base;
     int c;
     char rtcmd[255] = {'r', 't', 0};
@@ -163,9 +163,9 @@ ged_saveview(struct ged *gedp, int argc, const char *argv[])
  *  Return basename of path, removing leading slashes and trailing suffix.
  */
 static char *
-ged_basename_without_suffix(register const char *p1, register const char *suff)
+ged_basename_without_suffix(const char *p1, const char *suff)
 {
-    register char *p2, *p3;
+    char *p2, *p3;
     static char buf[128];
 
     /* find the basename */

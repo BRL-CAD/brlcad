@@ -48,7 +48,7 @@ protected:
 public:
 	VertexPoint();
 	virtual ~VertexPoint();
-	VertexPoint(STEPWrapper *sw,int STEPid);
+	VertexPoint(STEPWrapper *sw,int step_id);
 	bool Load(STEPWrapper *sw,SCLP23(Application_instance) *sse);
 	virtual bool LoadONBrep(ON_Brep *brep);
 	virtual const double *Point3d() { return vertex_geometry->Point3d(); };

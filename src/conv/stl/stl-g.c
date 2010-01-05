@@ -565,7 +565,7 @@ Convert_input()
 int
 main(int argc, char *argv[])
 {
-    register int c;
+    int c;
 
     tol.magic = BN_TOL_MAGIC;
 

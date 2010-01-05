@@ -68,9 +68,9 @@
 #define GAMMA 35.	/*  Rotation about x-axis.  */
 
 
-extern int hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *segp);	/*  User defined hit function.  */
-extern int miss(register struct application *ap_p);	/*  User defined miss function.  */
-extern int ovrlap(register struct application *ap_p, struct partition *PartHeadp, struct region *reg1, struct region *reg2, struct partition *hp);	/*  User defined overlap function.  */
+extern int hit(struct application *ap_p, struct partition *PartHeadp, struct seg *segp);	/*  User defined hit function.  */
+extern int miss(struct application *ap_p);	/*  User defined miss function.  */
+extern int ovrlap(struct application *ap_p, struct partition *PartHeadp, struct region *reg1, struct region *reg2, struct partition *hp);	/*  User defined overlap function.  */
 extern void rotate(double *p, double *a, double *np);	/*  Subroutine to rotate a point.  */
 extern double radians(double a);/*  Subroutine to put an angle into radians.  */
 
@@ -1169,13 +1169,13 @@ int main(int argc, char **argv)
 
 /*  User supplied hit function.  */
 int
-hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *segp)
+hit(struct application *ap_p, struct partition *PartHeadp, struct seg *segp)
 {
     /*  START # 1H  */
 
-    register struct partition *pp;
-    register struct hit *hitp;
-    register struct soltab *stp;
+    struct partition *pp;
+    struct hit *hitp;
+    struct soltab *stp;
 
     double d[3];		/*  used for checking tolerance of  */
     /*  adjacent regions  */
@@ -1321,7 +1321,7 @@ hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *
 
 /*  User supplied miss function.  */
 int
-miss(register struct application *ap_p)
+miss(struct application *ap_p)
 {
     /*  START # 1M  */
 
@@ -1335,7 +1335,7 @@ miss(register struct application *ap_p)
 
 /*  User supplied overlap function that does nothing.  */
 int
-ovrlap(register struct application *ap_p, struct partition *PartHeadp, struct region *reg1, struct region *reg2, struct partition *hp)
+ovrlap(struct application *ap_p, struct partition *PartHeadp, struct region *reg1, struct region *reg2, struct partition *hp)
 {
     return(1);
 }

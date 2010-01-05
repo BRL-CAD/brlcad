@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -153,9 +152,9 @@ static int Inv( const double* src, double dst[4][4], double* determinant, double
 	  x = fabs(M[1][1]);
     for ( i = 1; i < 4; i++ ) for ( j = 1; j < 4; j++ ) {
       if ( fabs(M[i][j]) > x ) {
-	ix = i;
-	jx = j;
-	x = fabs(M[i][j]);
+        ix = i;
+        jx = j;
+        x = fabs(M[i][j]);
       }
     }
     if ( x < *pivot )
@@ -180,91 +179,91 @@ static int Inv( const double* src, double dst[4][4], double* determinant, double
 
       x *= ON_EPSILON;
       if (fabs(M[0][1]) >  x) {
-	c = -M[0][1];
-	M[0][2] += c*M[1][2]; M[0][3] += c*M[1][3];
-	AddCxRow( I, c, 1, 0 );
+        c = -M[0][1];
+        M[0][2] += c*M[1][2]; M[0][3] += c*M[1][3];
+        AddCxRow( I, c, 1, 0 );
       }
       if (fabs(M[2][1]) >  x) {
-	c = -M[2][1];
-	M[2][2] += c*M[1][2]; M[2][3] += c*M[1][3];
-	AddCxRow( I, c, 1, 2 );
+        c = -M[2][1];
+        M[2][2] += c*M[1][2]; M[2][3] += c*M[1][3];
+        AddCxRow( I, c, 1, 2 );
       }
       if (fabs(M[3][1]) >  x) {
-	c = -M[3][1];
-	M[3][2] += c*M[1][2]; M[3][3] += c*M[1][3];
-	AddCxRow( I, c, 1, 3 );
+        c = -M[3][1];
+        M[3][2] += c*M[1][2]; M[3][3] += c*M[1][3];
+        AddCxRow( I, c, 1, 3 );
       }
 
       ix = jx = 2;
 	    x = fabs(M[2][2]);
       for ( i = 2; i < 4; i++ ) for ( j = 2; j < 4; j++ ) {
-	if ( fabs(M[i][j]) > x ) {
-	  ix = i;
-	  jx = j;
-	  x = fabs(M[i][j]);
-	}
+        if ( fabs(M[i][j]) > x ) {
+          ix = i;
+          jx = j;
+          x = fabs(M[i][j]);
+        }
       }
       if ( x < *pivot )
-	*pivot = x;
+        *pivot = x;
       if ( ix != 2 ) {
-	SwapRow( M, 2, ix );
-	SwapRow( I, 2, ix );
-	swapcount++;
+        SwapRow( M, 2, ix );
+        SwapRow( I, 2, ix );
+        swapcount++;
       }
       if ( jx != 2 ) {
-	SwapCol( M, 2, jx );
-	col[2] = jx;
-	swapcount++;
+        SwapCol( M, 2, jx );
+        col[2] = jx;
+        swapcount++;
       }
       if ( x > 0.0 ) {
-	rank++;
+        rank++;
 
-	c = 1.0/M[2][2];
-	d *= c;
-	M[2][3] *= c;
-	ScaleRow( I, c, 2 );
+        c = 1.0/M[2][2];
+        d *= c;
+        M[2][3] *= c;
+        ScaleRow( I, c, 2 );
 
-	x *= ON_EPSILON;
-	if (fabs(M[0][2]) >  x) {
-	  c = -M[0][2];
-	  M[0][3] += c*M[2][3];
-	  AddCxRow( I, c, 2, 0 );
-	}
-	if (fabs(M[1][2]) >  x) {
-	  c = -M[1][2];
-	  M[1][3] += c*M[2][3];
-	  AddCxRow( I, c, 2, 1 );
-	}
-	if (fabs(M[3][2]) >  x) {
-	  c = -M[3][2];
-	  M[3][3] += c*M[2][3];
-	  AddCxRow( I, c, 2, 3 );
-	}
+        x *= ON_EPSILON;
+        if (fabs(M[0][2]) >  x) {
+          c = -M[0][2];
+          M[0][3] += c*M[2][3];
+          AddCxRow( I, c, 2, 0 );
+        }
+        if (fabs(M[1][2]) >  x) {
+          c = -M[1][2];
+          M[1][3] += c*M[2][3];
+          AddCxRow( I, c, 2, 1 );
+        }
+        if (fabs(M[3][2]) >  x) {
+          c = -M[3][2];
+          M[3][3] += c*M[2][3];
+          AddCxRow( I, c, 2, 3 );
+        }
 
-	x = fabs(M[3][3]);
-	if ( x < *pivot )
-	  *pivot = x;
+        x = fabs(M[3][3]);
+        if ( x < *pivot )
+          *pivot = x;
 
-	if ( x > 0.0 ) {
-	  rank++;
+        if ( x > 0.0 ) {
+          rank++;
 
-	  c = 1.0/M[3][3];
-	  d *= c;
-	  ScaleRow( I, c, 3 );
+          c = 1.0/M[3][3];
+          d *= c;
+          ScaleRow( I, c, 3 );
 
-	  x *= ON_EPSILON;
-	  if (fabs(M[0][3]) >  x) {
-	    AddCxRow( I, -M[0][3], 3, 0 );
-	  }
-	  if (fabs(M[1][3]) >  x) {
-	    AddCxRow( I, -M[1][3], 3, 1 );
-	  }
-	  if (fabs(M[2][3]) >  x) {
-	    AddCxRow( I, -M[2][3], 3, 2 );
-	  }
+          x *= ON_EPSILON;
+          if (fabs(M[0][3]) >  x) {
+            AddCxRow( I, -M[0][3], 3, 0 );
+          }
+          if (fabs(M[1][3]) >  x) {
+            AddCxRow( I, -M[1][3], 3, 1 );
+          }
+          if (fabs(M[2][3]) >  x) {
+            AddCxRow( I, -M[2][3], 3, 2 );
+          }
 
-	  *determinant = (swapcount%2) ? -d : d;
-	}
+          *determinant = (swapcount%2) ? -d : d;
+        }
       }
     }
   }
@@ -479,81 +478,86 @@ ON_Xform& ON_Xform::operator=( double d )
 // argument as right hand side.
 ON_Xform ON_Xform::operator*( const ON_Xform& rhs ) const
 {
-  ON_Xform m;
-  m[0][0] = m_xform[0][0]*rhs[0][0] + m_xform[0][1]*rhs[1][0] + m_xform[0][2]*rhs[2][0] + m_xform[0][3]*rhs[3][0];
-  m[0][1] = m_xform[0][0]*rhs[0][1] + m_xform[0][1]*rhs[1][1] + m_xform[0][2]*rhs[2][1] + m_xform[0][3]*rhs[3][1];
-  m[0][2] = m_xform[0][0]*rhs[0][2] + m_xform[0][1]*rhs[1][2] + m_xform[0][2]*rhs[2][2] + m_xform[0][3]*rhs[3][2];
-  m[0][3] = m_xform[0][0]*rhs[0][3] + m_xform[0][1]*rhs[1][3] + m_xform[0][2]*rhs[2][3] + m_xform[0][3]*rhs[3][3];
+  double m[4][4];
+  const double* p = &rhs.m_xform[0][0];
 
-  m[1][0] = m_xform[1][0]*rhs[0][0] + m_xform[1][1]*rhs[1][0] + m_xform[1][2]*rhs[2][0] + m_xform[1][3]*rhs[3][0];
-  m[1][1] = m_xform[1][0]*rhs[0][1] + m_xform[1][1]*rhs[1][1] + m_xform[1][2]*rhs[2][1] + m_xform[1][3]*rhs[3][1];
-  m[1][2] = m_xform[1][0]*rhs[0][2] + m_xform[1][1]*rhs[1][2] + m_xform[1][2]*rhs[2][2] + m_xform[1][3]*rhs[3][2];
-  m[1][3] = m_xform[1][0]*rhs[0][3] + m_xform[1][1]*rhs[1][3] + m_xform[1][2]*rhs[2][3] + m_xform[1][3]*rhs[3][3];
+  m[0][0] = m_xform[0][0]*p[0] + m_xform[0][1]*p[4] + m_xform[0][2]*p[ 8] + m_xform[0][3]*p[12];
+  m[0][1] = m_xform[0][0]*p[1] + m_xform[0][1]*p[5] + m_xform[0][2]*p[ 9] + m_xform[0][3]*p[13];
+  m[0][2] = m_xform[0][0]*p[2] + m_xform[0][1]*p[6] + m_xform[0][2]*p[10] + m_xform[0][3]*p[14];
+  m[0][3] = m_xform[0][0]*p[3] + m_xform[0][1]*p[7] + m_xform[0][2]*p[11] + m_xform[0][3]*p[15];
 
-  m[2][0] = m_xform[2][0]*rhs[0][0] + m_xform[2][1]*rhs[1][0] + m_xform[2][2]*rhs[2][0] + m_xform[2][3]*rhs[3][0];
-  m[2][1] = m_xform[2][0]*rhs[0][1] + m_xform[2][1]*rhs[1][1] + m_xform[2][2]*rhs[2][1] + m_xform[2][3]*rhs[3][1];
-  m[2][2] = m_xform[2][0]*rhs[0][2] + m_xform[2][1]*rhs[1][2] + m_xform[2][2]*rhs[2][2] + m_xform[2][3]*rhs[3][2];
-  m[2][3] = m_xform[2][0]*rhs[0][3] + m_xform[2][1]*rhs[1][3] + m_xform[2][2]*rhs[2][3] + m_xform[2][3]*rhs[3][3];
+  m[1][0] = m_xform[1][0]*p[0] + m_xform[1][1]*p[4] + m_xform[1][2]*p[ 8] + m_xform[1][3]*p[12];
+  m[1][1] = m_xform[1][0]*p[1] + m_xform[1][1]*p[5] + m_xform[1][2]*p[ 9] + m_xform[1][3]*p[13];
+  m[1][2] = m_xform[1][0]*p[2] + m_xform[1][1]*p[6] + m_xform[1][2]*p[10] + m_xform[1][3]*p[14];
+  m[1][3] = m_xform[1][0]*p[3] + m_xform[1][1]*p[7] + m_xform[1][2]*p[11] + m_xform[1][3]*p[15];
 
-  m[3][0] = m_xform[3][0]*rhs[0][0] + m_xform[3][1]*rhs[1][0] + m_xform[3][2]*rhs[2][0] + m_xform[3][3]*rhs[3][0];
-  m[3][1] = m_xform[3][0]*rhs[0][1] + m_xform[3][1]*rhs[1][1] + m_xform[3][2]*rhs[2][1] + m_xform[3][3]*rhs[3][1];
-  m[3][2] = m_xform[3][0]*rhs[0][2] + m_xform[3][1]*rhs[1][2] + m_xform[3][2]*rhs[2][2] + m_xform[3][3]*rhs[3][2];
-  m[3][3] = m_xform[3][0]*rhs[0][3] + m_xform[3][1]*rhs[1][3] + m_xform[3][2]*rhs[2][3] + m_xform[3][3]*rhs[3][3];
-  return m;
+  m[2][0] = m_xform[2][0]*p[0] + m_xform[2][1]*p[4] + m_xform[2][2]*p[ 8] + m_xform[2][3]*p[12];
+  m[2][1] = m_xform[2][0]*p[1] + m_xform[2][1]*p[5] + m_xform[2][2]*p[ 9] + m_xform[2][3]*p[13];
+  m[2][2] = m_xform[2][0]*p[2] + m_xform[2][1]*p[6] + m_xform[2][2]*p[10] + m_xform[2][3]*p[14];
+  m[2][3] = m_xform[2][0]*p[3] + m_xform[2][1]*p[7] + m_xform[2][2]*p[11] + m_xform[2][3]*p[15];
+
+  m[3][0] = m_xform[3][0]*p[0] + m_xform[3][1]*p[4] + m_xform[3][2]*p[ 8] + m_xform[3][3]*p[12];
+  m[3][1] = m_xform[3][0]*p[1] + m_xform[3][1]*p[5] + m_xform[3][2]*p[ 9] + m_xform[3][3]*p[13];
+  m[3][2] = m_xform[3][0]*p[2] + m_xform[3][1]*p[6] + m_xform[3][2]*p[10] + m_xform[3][3]*p[14];
+  m[3][3] = m_xform[3][0]*p[3] + m_xform[3][1]*p[7] + m_xform[3][2]*p[11] + m_xform[3][3]*p[15];
+
+  return ON_Xform(m);
 }
 
 ON_Xform ON_Xform::operator+( const ON_Xform& rhs ) const
 {
-  ON_Xform m;
+  double m[4][4];
+  const double* p = &rhs.m_xform[0][0];
 
-  m[0][0] = m_xform[0][0] + rhs[0][0];
-  m[0][1] = m_xform[0][1] + rhs[0][1];
-  m[0][2] = m_xform[0][2] + rhs[0][2];
-  m[0][3] = m_xform[0][3] + rhs[0][3];
+  m[0][0] = m_xform[0][0] + p[0];
+  m[0][1] = m_xform[0][1] + p[1];
+  m[0][2] = m_xform[0][2] + p[2];
+  m[0][3] = m_xform[0][3] + p[3];
 
-  m[1][0] = m_xform[1][0] + rhs[1][0];
-  m[1][1] = m_xform[1][1] + rhs[1][1];
-  m[1][2] = m_xform[1][2] + rhs[1][2];
-  m[1][3] = m_xform[1][3] + rhs[1][3];
+  m[1][0] = m_xform[1][0] + p[4];
+  m[1][1] = m_xform[1][1] + p[5];
+  m[1][2] = m_xform[1][2] + p[6];
+  m[1][3] = m_xform[1][3] + p[7];
 
-  m[2][0] = m_xform[2][0] + rhs[2][0];
-  m[2][1] = m_xform[2][1] + rhs[2][1];
-  m[2][2] = m_xform[2][2] + rhs[2][2];
-  m[2][3] = m_xform[2][3] + rhs[2][3];
+  m[2][0] = m_xform[2][0] + p[ 8];
+  m[2][1] = m_xform[2][1] + p[ 9];
+  m[2][2] = m_xform[2][2] + p[10];
+  m[2][3] = m_xform[2][3] + p[11];
 
-  m[3][0] = m_xform[3][0] + rhs[3][0];
-  m[3][1] = m_xform[3][1] + rhs[3][1];
-  m[3][2] = m_xform[3][2] + rhs[3][2];
-  m[3][3] = m_xform[3][3] + rhs[3][3];
+  m[3][0] = m_xform[3][0] + p[12];
+  m[3][1] = m_xform[3][1] + p[13];
+  m[3][2] = m_xform[3][2] + p[14];
+  m[3][3] = m_xform[3][3] + p[15];
 
-  return m;
+  return ON_Xform(m);
 }
 
 ON_Xform ON_Xform::operator-( const ON_Xform& rhs ) const
 {
-  ON_Xform m;
+  double m[4][4];
+  const double* p = &rhs.m_xform[0][0];
 
-  m[0][0] = m_xform[0][0] - rhs[0][0];
-  m[0][1] = m_xform[0][1] - rhs[0][1];
-  m[0][2] = m_xform[0][2] - rhs[0][2];
-  m[0][3] = m_xform[0][3] - rhs[0][3];
+  m[0][0] = m_xform[0][0] - p[0];
+  m[0][1] = m_xform[0][1] - p[1];
+  m[0][2] = m_xform[0][2] - p[2];
+  m[0][3] = m_xform[0][3] - p[3];
 
-  m[1][0] = m_xform[1][0] - rhs[1][0];
-  m[1][1] = m_xform[1][1] - rhs[1][1];
-  m[1][2] = m_xform[1][2] - rhs[1][2];
-  m[1][3] = m_xform[1][3] - rhs[1][3];
+  m[1][0] = m_xform[1][0] - p[4];
+  m[1][1] = m_xform[1][1] - p[5];
+  m[1][2] = m_xform[1][2] - p[6];
+  m[1][3] = m_xform[1][3] - p[7];
 
-  m[2][0] = m_xform[2][0] - rhs[2][0];
-  m[2][1] = m_xform[2][1] - rhs[2][1];
-  m[2][2] = m_xform[2][2] - rhs[2][2];
-  m[2][3] = m_xform[2][3] - rhs[2][3];
+  m[2][0] = m_xform[2][0] - p[ 8];
+  m[2][1] = m_xform[2][1] - p[ 9];
+  m[2][2] = m_xform[2][2] - p[10];
+  m[2][3] = m_xform[2][3] - p[11];
 
-  m[3][0] = m_xform[3][0] - rhs[3][0];
-  m[3][1] = m_xform[3][1] - rhs[3][1];
-  m[3][2] = m_xform[3][2] - rhs[3][2];
-  m[3][3] = m_xform[3][3] - rhs[3][3];
+  m[3][0] = m_xform[3][0] - p[12];
+  m[3][1] = m_xform[3][1] - p[13];
+  m[3][2] = m_xform[3][2] - p[14];
+  m[3][3] = m_xform[3][3] - p[15];
 
-  return m;
+  return ON_Xform(m);
 }
   
 ///////////////////////////////////////////////////////////////
@@ -709,7 +713,8 @@ void ON_Xform::PlanarProjection( const ON_Plane& plane )
 
 void ON_Xform::ActOnLeft(double x,double y,double z,double w,double v[4]) const
 {
-  if ( v ) {
+  if ( v )
+  {
     v[0] = m_xform[0][0]*x + m_xform[0][1]*y + m_xform[0][2]*z + m_xform[0][3]*w;
     v[1] = m_xform[1][0]*x + m_xform[1][1]*y + m_xform[1][2]*z + m_xform[1][3]*w;
     v[2] = m_xform[2][0]*x + m_xform[2][1]*y + m_xform[2][2]*z + m_xform[2][3]*w;
@@ -719,7 +724,8 @@ void ON_Xform::ActOnLeft(double x,double y,double z,double w,double v[4]) const
 
 void ON_Xform::ActOnRight(double x,double y,double z,double w,double v[4]) const
 {
-  if ( v ) {
+  if ( v )
+  {
     v[0] = m_xform[0][0]*x + m_xform[1][0]*y + m_xform[2][0]*z + m_xform[3][0]*w;
     v[1] = m_xform[0][1]*x + m_xform[1][1]*y + m_xform[2][1]*z + m_xform[3][1]*w;
     v[2] = m_xform[0][2]*x + m_xform[1][2]*y + m_xform[2][2]*z + m_xform[3][2]*w;
@@ -729,38 +735,68 @@ void ON_Xform::ActOnRight(double x,double y,double z,double w,double v[4]) const
 
 ON_2dPoint ON_Xform::operator*( const ON_2dPoint& p ) const
 {
-  double xh[4], w;
-  ActOnLeft(p.x,p.y,0.0,1.0,xh);
-  w = (xh[3] != 0.0) ? 1.0/xh[3] : 1.0;
+  const double x = p.x; // optimizer should put x,y in registers
+  const double y = p.y;
+  double xh[2], w;
+  const double* m = &m_xform[0][0];
+  xh[0] = m[ 0]*x + m[ 1]*y + m[ 3];
+  xh[1] = m[ 4]*x + m[ 5]*y + m[ 7];
+  w     = m[12]*x + m[13]*y + m[15];
+  w = (w != 0.0) ? 1.0/w : 1.0;
   return ON_2dPoint( w*xh[0], w*xh[1] );
 }
 
 ON_3dPoint ON_Xform::operator*( const ON_3dPoint& p ) const
 {
-  double xh[4], w;
-  ActOnLeft(p.x,p.y,p.z,1.0,xh);
-  w = (xh[3] != 0.0) ? 1.0/xh[3] : 1.0;
+  const double x = p.x; // optimizer should put x,y,z in registers
+  const double y = p.y;
+  const double z = p.z;
+  double xh[3], w;
+  const double* m = &m_xform[0][0];
+  xh[0] = m[ 0]*x + m[ 1]*y + m[ 2]*z + m[ 3];
+  xh[1] = m[ 4]*x + m[ 5]*y + m[ 6]*z + m[ 7];
+  xh[2] = m[ 8]*x + m[ 9]*y + m[10]*z + m[11];
+  w     = m[12]*x + m[13]*y + m[14]*z + m[15];
+  w = (w != 0.0) ? 1.0/w : 1.0;
   return ON_3dPoint( w*xh[0], w*xh[1], w*xh[2] );
 }
 
 ON_4dPoint ON_Xform::operator*( const ON_4dPoint& h ) const
 {
+  const double x = h.x; // optimizer should put x,y,z,w in registers
+  const double y = h.y;
+  const double z = h.z;
+  const double w = h.w;
   double xh[4];
-  ActOnLeft(h.x,h.y,h.z,h.w,xh);
+  const double* m = &m_xform[0][0];
+  xh[0] = m[ 0]*x + m[ 1]*y + m[ 2]*z + m[ 3]*w;
+  xh[1] = m[ 4]*x + m[ 5]*y + m[ 6]*z + m[ 7]*w;
+  xh[2] = m[ 8]*x + m[ 9]*y + m[10]*z + m[11]*w;
+  xh[3] = m[12]*x + m[13]*y + m[14]*z + m[15]*w;
   return ON_4dPoint( xh[0],xh[1],xh[2],xh[3] );
 }
 
 ON_2dVector ON_Xform::operator*( const ON_2dVector& v ) const
 {
-  double xh[4];
-  ActOnLeft(v.x,v.y,0.0,0.0,xh);
+  const double x = v.x; // optimizer should put x,y in registers
+  const double y = v.y;
+  double xh[2];
+  const double* m = &m_xform[0][0];
+  xh[0] = m[0]*x + m[1]*y;
+  xh[1] = m[4]*x + m[5]*y;
   return ON_2dVector( xh[0],xh[1] );
 }
 
 ON_3dVector ON_Xform::operator*( const ON_3dVector& v ) const
 {
-  double xh[4];
-  ActOnLeft(v.x,v.y,v.z,0.0,xh);
+  const double x = v.x; // optimizer should put x,y,z in registers
+  const double y = v.y;
+  const double z = v.z;
+  double xh[3];
+  const double* m = &m_xform[0][0];
+  xh[0] = m[0]*x + m[1]*y + m[ 2]*z;
+  xh[1] = m[4]*x + m[5]*y + m[ 6]*z;
+  xh[2] = m[8]*x + m[9]*y + m[10]*z;
   return ON_3dVector( xh[0],xh[1],xh[2] );
 }
 
@@ -796,6 +832,42 @@ bool ON_Xform::IsIdentity( double zero_tolerance ) const
     return false;
   return true;
 }
+
+bool ON_Xform::IsTranslation( double zero_tolerance ) const
+{
+  const double* v = &m_xform[0][0];
+  if ( fabs(1.0 - *v++) > zero_tolerance )
+    return false;
+  if ( fabs(*v++) >  zero_tolerance )
+    return false;
+  if ( fabs(*v++) >  zero_tolerance )
+    return false;
+  v++;
+  if ( fabs(*v++) >  zero_tolerance )
+    return false;
+  if ( fabs(1.0 - *v++) > zero_tolerance )
+    return false;
+  if ( fabs(*v++) >  zero_tolerance )
+    return false;
+  v++;
+  if ( fabs(*v++) >  zero_tolerance )
+    return false;
+  if ( fabs(*v++) >  zero_tolerance )
+    return false;
+  if ( fabs(1.0 - *v++) > zero_tolerance )
+    return false;
+  v++;
+  if ( fabs(*v++) >  zero_tolerance )
+    return false;
+  if ( fabs(*v++) >  zero_tolerance )
+    return false;
+  if ( fabs(*v++) >  zero_tolerance )
+    return false;
+  if ( fabs( 1.0 - *v ) > zero_tolerance )
+    return false;
+  return true;
+}
+
 
 int ON_Xform::Compare( const ON_Xform& other ) const
 {
@@ -843,25 +915,25 @@ int ON_Xform::IsSimilarity() const
       double sy = Y.Length();
       double sz = Z.Length();
       if (   sz == 0.0 || sy == 0.0 || sz == 0.0 
-	  || fabs(sx-sy) > tol || fabs(sy-sz) > tol || fabs(sz-sx) > tol )
+          || fabs(sx-sy) > tol || fabs(sy-sz) > tol || fabs(sz-sx) > tol )
       {
-	// non-uniform scale or worse
-	rc = 0;
+        // non-uniform scale or worse
+        rc = 0;
       }
       else
       {
-	double xy = (X*Y)/(sx*sy);
-	double yz = (Y*Z)/(sy*sz);
-	double zx = (Z*X)/(sz*sx);
-	if ( fabs(xy) > dottol || fabs(yz) > dottol || fabs(zx) > dottol )
-	{
-	  // shear or worse
-	  rc = 0;
-	}
-	else
-	{
-	  rc = (det > 0.0) ? 1 : -1;
-	}
+        double xy = (X*Y)/(sx*sy);
+        double yz = (Y*Z)/(sy*sz);
+        double zx = (Z*X)/(sz*sx);
+        if ( fabs(xy) > dottol || fabs(yz) > dottol || fabs(zx) > dottol )
+        {
+          // shear or worse
+          rc = 0;
+        }
+        else
+        {
+          rc = (det > 0.0) ? 1 : -1;
+        }
       }
     }
   }
@@ -1019,10 +1091,10 @@ double ON_Xform::GetMappingXforms( ON_Xform& P_xform, ON_Xform& N_xform ) const
 
 
 void ON_Xform::Rotation( 
-	double angle,
-	ON_3dVector axis,  // 3d nonzero axis of rotation
-	ON_3dPoint center  // 3d center of rotation
-	)
+        double angle,
+        ON_3dVector axis,  // 3d nonzero axis of rotation
+        ON_3dPoint center  // 3d center of rotation
+        )
 {
   Rotation( sin(angle), cos(angle), axis, center );
 }
@@ -1051,11 +1123,11 @@ void ON_Xform::Rotation(
 }
 
 void ON_Xform::Rotation(  
-	double sin_angle,
-	double cos_angle,
-	ON_3dVector axis,
-	ON_3dPoint center
-	)
+        double sin_angle,
+        double cos_angle,
+        ON_3dVector axis,
+        ON_3dPoint center
+        )
 {
   Identity();
 
@@ -1156,7 +1228,7 @@ void ON_Xform::Rotation(
 
 
 void ON_Xform::Rotation(   // (not strictly a rotation)
-			    // transformation maps P0 to P1, P0+X0 to P1+X1, ...
+                            // transformation maps P0 to P1, P0+X0 to P1+X1, ...
   const ON_3dPoint&   P0,  // initial frame center
   const ON_3dVector&  X0, // initial frame X
   const ON_3dVector&  Y0, // initial frame Y
@@ -1254,8 +1326,8 @@ bool ON_Xform::ChangeBasis(
   b = X1*Z1;
   c = Y1*Z1;
   double R[3][6] = {{X1*X1,      a,      b,       X1*X0, X1*Y0, X1*Z0},
-		    {    a,  Y1*Y1,      c,       Y1*X0, Y1*Y0, Y1*Z0},
-		    {    b,      c,  Z1*Z1,       Z1*X0, Z1*Y0, Z1*Z0}};
+                    {    a,  Y1*Y1,      c,       Y1*X0, Y1*Y0, Y1*Z0},
+                    {    b,      c,  Z1*Z1,       Z1*X0, Z1*Y0, Z1*Z0}};
   //double R[3][6] = {{X1*X1,      a,      b,       X0*X1, X0*Y1, X0*Z1},
   //                  {    a,  Y1*Y1,      c,       Y0*X1, Y0*Y1, Y0*Z1},
   //                  {    b,      c,  Z1*Z1,       Z0*X1, Z0*Y1, Z0*Z1}};
@@ -1406,11 +1478,11 @@ bool ON_Xform::ChangeBasis(
 }
 
 void ON_Xform::WorldToCamera( 
-	 const ON_3dPoint& cameraLocation,
-	 const ON_3dVector& cameraX,
-	 const ON_3dVector& cameraY,
-	 const ON_3dVector& cameraZ
-	 )
+         const ON_3dPoint& cameraLocation,
+         const ON_3dVector& cameraX,
+         const ON_3dVector& cameraY,
+         const ON_3dVector& cameraZ
+         )
 {
   // see comments in tl2_xform.h for details.
   /* compute world to camera coordinate xform */
@@ -1424,11 +1496,11 @@ void ON_Xform::WorldToCamera(
 }
   
 void ON_Xform::CameraToWorld(
-	 const ON_3dPoint& cameraLocation,
-	 const ON_3dVector& cameraX,
-	 const ON_3dVector& cameraY,
-	 const ON_3dVector& cameraZ
-	 )
+         const ON_3dPoint& cameraLocation,
+         const ON_3dVector& cameraX,
+         const ON_3dVector& cameraY,
+         const ON_3dVector& cameraZ
+         )
 {
   // see comments in tl2_xform.h for details.
   /* compute camera to world coordinate m_xform */
@@ -1442,7 +1514,7 @@ void ON_Xform::CameraToWorld(
 }
 
 bool ON_Xform::CameraToClip(
-      BOOL bPerspective,
+      ON_BOOL32 bPerspective,
       double left,      double right,
       double bottom,    double top,
       double near_dist, double far_dist
@@ -1505,7 +1577,7 @@ bool ON_Xform::CameraToClip(
 }
 
 bool ON_Xform::ClipToCamera(
-      BOOL bPerspective,
+      ON_BOOL32 bPerspective,
       double left,      double right,
       double bottom,    double top,
       double near_dist, double far_dist
@@ -1661,7 +1733,7 @@ int ON_Xform::ClipFlag3d( const double* point ) const
 }
 
 int ON_Xform::ClipFlag4d( int count, int stride, const double* point, 
-			    BOOL bTestZ ) const
+                            ON_BOOL32 bTestZ ) const
 {
   int clip = 1|2|4|8;
   if ( bTestZ)
@@ -1675,7 +1747,7 @@ int ON_Xform::ClipFlag4d( int count, int stride, const double* point,
 }
 
 int ON_Xform::ClipFlag3d( int count, int stride, const double* point, 
-			    BOOL bTestZ ) const
+                            ON_BOOL32 bTestZ ) const
 {
   int clip = 1|2|4|8;
   if ( bTestZ)
@@ -1697,13 +1769,13 @@ int ON_Xform::ClipFlag3dBox( const double* boxmin, const double* boxmax ) const
     for (i=0;i<2;i++) {
       point[0] = (i)?boxmax[0]:boxmin[0];
       for (j=0;j<2;j++) {
-	point[1] = (j)?boxmax[1]:boxmin[1];
-	for (k=0;k<2;k++) {
-	  point[2] = (k)?boxmax[2]:boxmin[2];
-	  clip &= ClipFlag3d(point);
-	  if ( !clip )
-	    return 0;
-	}
+        point[1] = (j)?boxmax[1]:boxmin[1];
+        for (k=0;k<2;k++) {
+          point[2] = (k)?boxmax[2]:boxmin[2];
+          clip &= ClipFlag3d(point);
+          if ( !clip )
+            return 0;
+        }
       }
     }
   }

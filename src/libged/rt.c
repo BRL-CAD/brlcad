@@ -47,8 +47,8 @@
 int
 ged_rt(struct ged *gedp, int argc, const char *argv[])
 {
-    register char **vp;
-    register int i;
+    char **vp;
+    int i;
     char pstring[32];
     static const char *usage = "options";
 
@@ -135,7 +135,7 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
 int
 _ged_run_rt(struct ged *gedp)
 {
-    register int i;
+    int i;
     FILE *fp_in;
 #ifndef _WIN32
     int	pipe_in[2];
@@ -294,11 +294,11 @@ _ged_rt_write(struct ged *gedp,
 	     FILE	*fp,
 	     vect_t	eye_model)
 {
-    register struct ged_display_list *gdlp;
-    register struct ged_display_list *next_gdlp;
-    register int	i;
+    struct ged_display_list *gdlp;
+    struct ged_display_list *next_gdlp;
+    int	i;
     quat_t		quat;
-    register struct solid *sp;
+    struct solid *sp;
 
     (void)fprintf(fp, "viewsize %.15e;\n", gedp->ged_gvp->gv_size);
     quat_mat2quat(quat, gedp->ged_gvp->gv_rotation );
@@ -328,7 +328,7 @@ _ged_rt_write(struct ged *gedp,
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
 	    for (i=0; i<sp->s_fullpath.fp_len; i++ ) {
 		if (!(DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_flags & DIR_USED)) {
-		    register struct animate *anp;
+		    struct animate *anp;
 		    for (anp = DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_animate; anp;
 			 anp=anp->an_forw) {
 			db_write_anim(fp, anp);
@@ -468,10 +468,10 @@ _ged_rt_output_handler(ClientData	clientData,
 int
 ged_build_tops(struct ged	*gedp,
 	       char		**start,
-	       register char	**end)
+	       char	**end)
 {
     struct ged_display_list *gdlp;
-    register char **vp = start;
+    char **vp = start;
 
     for (BU_LIST_FOR(gdlp, ged_display_list, &gedp->ged_gdp->gd_headDisplay)) {
 	if (gdlp->gdl_dp->d_addr == RT_DIR_PHONY_ADDR)
@@ -501,10 +501,10 @@ _ged_rt_set_eye_model(struct ged *gedp,
 	MAT4X3PNT(eye_model, gedp->ged_gvp->gv_view2model, temp);
     } else {
 	/* not doing zclipping, so back out of geometry */
-	register struct ged_display_list *gdlp;
-	register struct ged_display_list *next_gdlp;
-	register struct solid *sp;
-	register int i;
+	struct ged_display_list *gdlp;
+	struct ged_display_list *next_gdlp;
+	struct solid *sp;
+	int i;
 	vect_t  direction;
 	vect_t  extremum[2];
 	vect_t  minus, plus;    /* vers of this solid's bounding box */

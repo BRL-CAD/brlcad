@@ -28,7 +28,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include <X11/Xutil.h>
 
 #ifdef HAVE_TK
 #  include "tk.h"
@@ -54,11 +53,7 @@ static int tk_dm(int argc, char **argv);
 static void dirty_hook(void);
 static void zclip_hook(void);
 
-#ifdef USE_PROTOTYPES
 static Tk_GenericProc tk_doevent;
-#else
-static int tk_doevent();
-#endif
 
 struct bu_structparse tk_vparse[] = {
     {"%f",  1, "bound",		 DM_O(dm_bound),	dirty_hook},
@@ -103,21 +98,21 @@ void
 tk_fb_open(void)
 {
     char *Tk_name = "/dev/tk";
-
     if ((fbp = (FBIO *)calloc(sizeof(FBIO), 1)) == FBIO_NULL) {
 	Tcl_AppendResult(interp, "tk_dm_init: failed to allocate framebuffer memory\n",
 			 (char *)NULL);
 	return;
     }
 
+#if 0
     *fbp = tk_interface; /* struct copy */
+    
     fbp->if_name = malloc((unsigned)strlen(Tk_name) + 1);
     bu_strlcpy(fbp->if_name, Tk_name, strlen(Tk_name)+1);
-
+    
     /* Mark OK by filling in magic number */
     fbp->if_magic = FB_MAGIC;
-
-/* XXX TJM implement _tk_open_existing
+/* XXX TJM implement _tk_open_existing */
    _tk_open_existing(fbp,
    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
    ((struct x_vars *)dmp->dm_vars.priv_vars)->pix,
@@ -126,7 +121,7 @@ tk_fb_open(void)
    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->vip,
    dmp->dm_width, dmp->dm_height,
    ((struct x_vars *)dmp->dm_vars.priv_vars)->gc);
-*/
+#endif
 }
 
 /*

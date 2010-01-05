@@ -284,7 +284,7 @@ mk_arb8(struct rt_wdb *wdbp, const char *name, const fastf_t *pts)
 
     /* [24] */
 {
-    register int i;
+    int i;
     struct rt_arb_internal	*arb;
 
     BU_GETSTRUCT( arb, rt_arb_internal );

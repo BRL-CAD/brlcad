@@ -38,9 +38,9 @@ MassContextDependentUnit::MassContextDependentUnit() {
 	id = 0;
 }
 
-MassContextDependentUnit::MassContextDependentUnit(STEPWrapper *sw,int STEPid) {
+MassContextDependentUnit::MassContextDependentUnit(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 MassContextDependentUnit::~MassContextDependentUnit() {
@@ -54,11 +54,11 @@ MassContextDependentUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse
 
 	// load base class attributes
 	if ( !MassUnit::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::Unit." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 		return false;
 	}
 	if ( !ContextDependentUnit::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::Unit." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 		return false;
 	}
 
@@ -67,10 +67,10 @@ MassContextDependentUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse
 
 void
 MassContextDependentUnit::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	MassUnit::Print(level+1);
 	ContextDependentUnit::Print(level+1);
 
@@ -84,7 +84,7 @@ MassContextDependentUnit::Create(STEPWrapper *sw, SCLP23(Application_instance) *
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

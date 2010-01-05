@@ -30,6 +30,9 @@
 /* rough game plan
  *   [ ] develop/proof metaball primitive tesselation using MC
  *       [ ] asc-g/g-asc of metaballs for regression/comparison testing
+ *           [X] asc-g
+ *           [X] g-asc
+ *	     [ ] regression shtuff
  *       [ ] edge solve cubes
  *       [ ] write compiled table shtuff (use existing table, the hex/index one?)
  *       [ ] produce NMG mesh
@@ -60,10 +63,6 @@
 void
 nmg_triangulate_model_mc(struct model *m, const struct bn_tol *tol)
 {
-    struct nmgregion *r;
-    struct shell *s;
-    struct faceuse *fu;
-
     BN_CK_TOL(tol);
     NMG_CK_MODEL(m);
     nmg_vmodel(m);

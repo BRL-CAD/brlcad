@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -46,8 +45,11 @@ class ON_Interval;
 class ON_CLASS ON_Interval
 {
 public:
+
+  static const ON_Interval EmptyInterval; // (ON_UNSET_VALUE,ON_UNSET_VALUE)
+
   ////////
-  // The default constructor creates the empty set interval (ON_UNSET_VALUE,ON_UNSET_VALUE)
+  // The default constructor creates an empty interval (ON_UNSET_VALUE,ON_UNSET_VALUE)
   ON_Interval();
 
   ON_Interval(double t0,double t1);
@@ -130,8 +132,11 @@ public:
   bool IsDecreasing() const; // returns true if m_t[0] > m_t[0];
   bool IsInterval() const;   // returns truc if m_t[0] != m_t[1]
   bool IsSingleton() const;  // returns true if m_t[0] == m_t[1] != ON_UNSET_VALUE
-  bool IsEmptySet() const;   // returns true if m_t[0] == m_t[1] == ON_UNSET_VALUE
+  bool IsEmptyInterval() const;   // returns true if m_t[0] == m_t[1] == ON_UNSET_VALUE
   bool IsValid() const;      // returns ON_IsValid(m_t[0]) && ON_IsValid(m_t[1])
+
+  // OBSOLETE - Use IsEmptyInterval()
+  bool IsEmptySet() const;   // returns true if m_t[0] == m_t[1] == ON_UNSET_VALUE
 
 	bool MakeIncreasing();		// returns true if resulting interval IsIncreasing() 
 
@@ -152,8 +157,8 @@ public:
   Parameters:
     t - [in] value to test
     bTestOpenInterval - [in] 
-	If false, t is tested to see if it satisfies min <= t <= max.
-	If true, t is tested to see if it satisfies min < t < max.
+        If false, t is tested to see if it satisfies min <= t <= max.
+        If true, t is tested to see if it satisfies min < t < max.
   Returns:
     true if t is in the interval and false if t is not
     in the interval.
@@ -201,8 +206,8 @@ public:
   // the empty set interval.  The result of any intersection involving an
   // empty set interval or disjoint intervals is the empty set interval.
   bool Intersection( // this = this intersect arg
-	 const ON_Interval&
-	 );
+         const ON_Interval&
+         );
 
   //////////
   // If the intersection is not empty, then 
@@ -212,9 +217,9 @@ public:
   // the empty set interval.  The result of any intersection involving an
   // empty set interval or disjoint intervals is the empty set interval.
   bool Intersection( // this = intersection of two args
-	 const ON_Interval&, 
-	 const ON_Interval&
-	 );
+         const ON_Interval&, 
+         const ON_Interval&
+         );
 
   //////////
   // The union of an empty set and an increasing interval is the increasing
@@ -224,8 +229,8 @@ public:
   // union = [min(this.Min(),arg.Min()), max(this.Max(),arg.Max()),]
   // Union() returns true if the union is not empty.
   bool Union( // this = this union arg
-	 const ON_Interval&
-	 );
+         const ON_Interval&
+         );
 
   //////////
   // The union of an empty set and an increasing interval is the increasing
@@ -235,12 +240,9 @@ public:
   // union = [min(argA.Min(),argB.Min()), max(argA.Max(),argB.Max()),]
   // Union() returns true if the union is not empty.
   bool Union( // this = union of two args
-	 const ON_Interval&, 
-	 const ON_Interval&
-	 );
-
-  void Bound(double& val) const;
-
+         const ON_Interval&, 
+         const ON_Interval&
+         );
 };
 
 ////////////////////////////////////////////////////////////////
@@ -252,39 +254,76 @@ class ON_CLASS ON_2dPoint
 public:
   double x, y;
 
+  static const ON_2dPoint Origin;     // (0.0,0.0)
+  static const ON_2dPoint UnsetPoint; // (ON_UNSET_VALUE,ON_UNSET_VALUE)
+
   // use implicit destructor, copy constructor
-  ON_2dPoint();                         // not initialized
-  ON_2dPoint(const float*);             // from array of 2 floats
-  ON_2dPoint(const double*);            // from array of 2 doubles
+  ON_2dPoint();                         // x,y not initialized
   ON_2dPoint(double x,double y);
-  ON_2dPoint(const ON_3dPoint& );     // from 3d point
-  ON_2dPoint(const ON_4dPoint& );     // from homogeneous 4d point
-  ON_2dPoint(const ON_2dVector& );    // from 2d vector
+  ON_2dPoint(const ON_3dPoint& );       // from 3d point
+  ON_2dPoint(const ON_4dPoint& );       // from 4d point
+  ON_2dPoint(const ON_2dVector& );      // from 2d vector
+  ON_2dPoint(const ON_3dVector& );      // from 3d vector
+  ON_2dPoint(const double*);            // from double[2] array
+
+  ON_2dPoint(const class ON_2fPoint&);  // from 2f point
+  ON_2dPoint(const class ON_3fPoint&);  // from 3f point
+  ON_2dPoint(const class ON_4fPoint&);  // from 4f point
+  ON_2dPoint(const class ON_2fVector&); // from 2f point
+  ON_2dPoint(const class ON_3fVector&); // from 3f point
+  ON_2dPoint(const float*);             // from float[2] array
 
   // (double*) conversion operators
   operator double*();
   operator const double*() const;
 
   // use implicit operator=(const ON_2dPoint&)
-  ON_2dPoint& operator=(const float*);  // point = float[2] support
-  ON_2dPoint& operator=(const double*); // point = double[2] support
   ON_2dPoint& operator=(const ON_3dPoint&);
   ON_2dPoint& operator=(const ON_4dPoint&);
   ON_2dPoint& operator=(const ON_2dVector&);
+  ON_2dPoint& operator=(const ON_3dVector&);
+  ON_2dPoint& operator=(const double*); // point = double[2] support
+
+  ON_2dPoint& operator=(const ON_2fPoint&);
+  ON_2dPoint& operator=(const ON_3fPoint&);
+  ON_2dPoint& operator=(const ON_4fPoint&);
+  ON_2dPoint& operator=(const ON_2fVector&);
+  ON_2dPoint& operator=(const ON_3fVector&);
+  ON_2dPoint& operator=(const float*);  // point = float[2] support
 
   ON_2dPoint& operator*=(double);
   ON_2dPoint& operator/=(double);
-  ON_2dPoint& operator+=(const ON_2dPoint&);
+  ON_2dPoint& operator+=(const ON_2dPoint&);  // Adding this was a mistake - cannot remove without breaking SDK
   ON_2dPoint& operator+=(const ON_2dVector&);
-  ON_2dPoint& operator-=(const ON_2dPoint&);
+  ON_2dPoint& operator+=(const ON_3dVector&); // Adding this was a mistake - cannot remove without breaking SDK
+  ON_2dPoint& operator-=(const ON_2dPoint&);  // Adding this was a mistake - cannot remove without breaking SDK
   ON_2dPoint& operator-=(const ON_2dVector&);
+  ON_2dPoint& operator-=(const ON_3dVector&); // Adding this was a mistake - cannot remove without breaking SDK
 
+  ON_2dPoint  operator*(int) const;
+  ON_2dPoint  operator/(int) const;
+  ON_2dPoint  operator*(float) const;
+  ON_2dPoint  operator/(float) const;
   ON_2dPoint  operator*(double) const;
   ON_2dPoint  operator/(double) const;
+
   ON_2dPoint  operator+(const ON_2dPoint&) const;
   ON_2dPoint  operator+(const ON_2dVector&) const;
   ON_2dVector operator-(const ON_2dPoint&) const;
   ON_2dPoint  operator-(const ON_2dVector&) const;
+  ON_3dPoint  operator+(const ON_3dPoint&) const;
+  ON_3dPoint  operator+(const ON_3dVector&) const;
+  ON_3dVector operator-(const ON_3dPoint&) const;
+  ON_3dPoint  operator-(const ON_3dVector&) const;
+
+  ON_2dPoint  operator+(const ON_2fPoint&) const;
+  ON_2dPoint  operator+(const ON_2fVector&) const;
+  ON_2dVector operator-(const ON_2fPoint&) const;
+  ON_2dPoint  operator-(const ON_2fVector&) const;
+  ON_3dPoint  operator+(const ON_3fPoint&) const;
+  ON_3dPoint  operator+(const ON_3fVector&) const;
+  ON_3dVector operator-(const ON_3fPoint&) const;
+  ON_3dPoint  operator-(const ON_3fVector&) const;
 
   double operator*(const ON_2dPoint&) const; // dot product for points acting as vectors
   double operator*(const ON_2dVector&) const; // dot product for points acting as vectors
@@ -305,13 +344,16 @@ public:
   double operator[](int) const;
 
   /*
-  Description
-    If any coordinate of a point is ON_UNSET_VALUE,
-    then the point is not valid.
   Returns:
-    true if the point is valid.
+    False if any coordinate is infinte, a nan, or ON_UNSET_VALUE.
   */
   bool IsValid() const;
+
+  /*
+  Returns:
+    True if every coordinate is ON_UNSET_VALUE.
+  */
+  bool IsUnsetPoint() const;
 
   // set 2d point value
   void Set(double x,double y);
@@ -329,20 +371,26 @@ public:
   // These transform the point in place. The transformation matrix acts on
   // the left of the point; i.e., result = transformation*point
   void Transform( 
-	const ON_Xform&
-	);
+        const ON_Xform&
+        );
 
   void Rotate( // rotatation in XY plane
-	double angle,              // angle in radians
-	const ON_2dPoint& center   // center of rotation
-	);
+        double angle,              // angle in radians
+        const ON_2dPoint& center   // center of rotation
+        );
 
   void Rotate( // rotatation in XY plane
-	double sin_angle,          // sin(angle)
-	double cos_angle,          // cos(angle)
-	const ON_2dPoint& center   // center of rotation
-	);
+        double sin_angle,          // sin(angle)
+        double cos_angle,          // cos(angle)
+        const ON_2dPoint& center   // center of rotation
+        );
 };
+
+ON_DECL
+ON_2dPoint operator*(int, const ON_2dPoint&);
+
+ON_DECL
+ON_2dPoint operator*(float, const ON_2dPoint&);
 
 ON_DECL
 ON_2dPoint operator*(double, const ON_2dPoint&);
@@ -356,39 +404,74 @@ class ON_CLASS ON_3dPoint
 public:
   double x, y, z;
 
+  static const ON_3dPoint Origin;     // (0.0,0.0,0.0)
+  static const ON_3dPoint UnsetPoint; // (ON_UNSET_VALUE,ON_UNSET_VALUE,ON_UNSET_VALUE)
+
   // use implicit destructor, copy constructor
-  ON_3dPoint();                        // not initialized
-  ON_3dPoint(const float*);            // from array of 3 floats
-  ON_3dPoint(const double*);           // from array of 3 doubles
+  ON_3dPoint();                         // x,y,z not initialized
   ON_3dPoint(double x,double y,double z);
-  ON_3dPoint(const ON_2dPoint& );     // from 2d point
-  ON_3dPoint(const ON_4dPoint& );     // from homogeneous 4d point
-  ON_3dPoint(const ON_3dVector& );    // from 3d vector
+  ON_3dPoint(const ON_2dPoint& );       // from 2d point
+  ON_3dPoint(const ON_4dPoint& );       // from 4d point
+  ON_3dPoint(const ON_2dVector& );      // from 2d vector
+  ON_3dPoint(const ON_3dVector& );      // from 3d vector
+  ON_3dPoint(const double*);            // from double[3] array
+
+  ON_3dPoint(const class ON_2fPoint&);  // from 2f point
+  ON_3dPoint(const class ON_3fPoint&);  // from 3f point
+  ON_3dPoint(const class ON_4fPoint&);  // from 4f point
+  ON_3dPoint(const class ON_2fVector&); // from 2f point
+  ON_3dPoint(const class ON_3fVector&); // from 3f point
+  ON_3dPoint(const float*);             // from float[3] array
 
   // (double*) conversion operators
   operator double*();
   operator const double*() const;
 
   // use implicit operator=(const ON_3dPoint&)
-  ON_3dPoint& operator=(const float*);  // point = float[3] support
-  ON_3dPoint& operator=(const double*); // point = double[3] support
   ON_3dPoint& operator=(const ON_2dPoint&);
   ON_3dPoint& operator=(const ON_4dPoint&);
+  ON_3dPoint& operator=(const ON_2dVector&);
   ON_3dPoint& operator=(const ON_3dVector&);
+  ON_3dPoint& operator=(const double*); // point = double[3] support
+
+  ON_3dPoint& operator=(const class ON_2fPoint&);
+  ON_3dPoint& operator=(const class ON_3fPoint&);
+  ON_3dPoint& operator=(const class ON_4fPoint&);
+  ON_3dPoint& operator=(const class ON_2fVector&);
+  ON_3dPoint& operator=(const class ON_3fVector&);
+  ON_3dPoint& operator=(const float*);  // point = float[3] support
 
   ON_3dPoint& operator*=(double);
   ON_3dPoint& operator/=(double);
-  ON_3dPoint& operator+=(const ON_3dPoint&);
+  ON_3dPoint& operator+=(const ON_3dPoint&);  // Adding this was a mistake - cannot remove without breaking SDK
   ON_3dPoint& operator+=(const ON_3dVector&);
-  ON_3dPoint& operator-=(const ON_3dPoint&);
+  ON_3dPoint& operator-=(const ON_3dPoint&);  // Adding this was a mistake - cannot remove without breaking SDK
   ON_3dPoint& operator-=(const ON_3dVector&);
 
+  ON_3dPoint  operator*(int) const;
+  ON_3dPoint  operator/(int) const;
+  ON_3dPoint  operator*(float) const;
+  ON_3dPoint  operator/(float) const;
   ON_3dPoint  operator*(double) const;
   ON_3dPoint  operator/(double) const;
+
   ON_3dPoint  operator+(const ON_3dPoint&) const;
   ON_3dPoint  operator+(const ON_3dVector&) const;
   ON_3dVector operator-(const ON_3dPoint&) const;
   ON_3dPoint  operator-(const ON_3dVector&) const;
+  ON_3dPoint  operator+(const ON_2dPoint&) const;
+  ON_3dPoint  operator+(const ON_2dVector&) const;
+  ON_3dVector operator-(const ON_2dPoint&) const;
+  ON_3dPoint  operator-(const ON_2dVector&) const;
+
+  ON_3dPoint  operator+(const ON_3fPoint&) const;
+  ON_3dPoint  operator+(const ON_3fVector&) const;
+  ON_3dVector operator-(const ON_3fPoint&) const;
+  ON_3dPoint  operator-(const ON_3fVector&) const;
+  ON_3dPoint  operator+(const ON_2fPoint&) const;
+  ON_3dPoint  operator+(const ON_2fVector&) const;
+  ON_3dVector operator-(const ON_2fPoint&) const;
+  ON_3dPoint  operator-(const ON_2fVector&) const;
 
   double operator*(const ON_3dPoint&) const; // dot product for points acting as vectors
   double operator*(const ON_3dVector&) const; // dot product for points acting as vectors
@@ -409,13 +492,16 @@ public:
   double operator[](int) const;
 
   /*
-  Description
-    If any coordinate of a point is ON_UNSET_VALUE,
-    then the point is not valid.
   Returns:
-    true if the point is valid.
+    False if any coordinate is infinte, a nan, or ON_UNSET_VALUE.
   */
   bool IsValid() const;
+
+  /*
+  Returns:
+    True if every coordinate is ON_UNSET_VALUE.
+  */
+  bool IsUnsetPoint() const;
 
   // set 3d point value
   void Set(double x,double y,double z);
@@ -435,22 +521,28 @@ public:
   // These transform the point in place. The transformation matrix acts on
   // the left of the point; i.e., result = transformation*point
   void Transform( 
-	const ON_Xform&
-	);
+        const ON_Xform&
+        );
 
   void Rotate( 
-	double angle,             // angle in radians
-	const ON_3dVector& axis,  // axis of rotation
-	const ON_3dPoint& center  // center of rotation
-	);
+        double angle,             // angle in radians
+        const ON_3dVector& axis,  // axis of rotation
+        const ON_3dPoint& center  // center of rotation
+        );
 
   void Rotate( 
-	double sin_angle,         // sin(angle)
-	double cos_angle,         // cos(angle)
-	const ON_3dVector& axis,  // axis of rotation
-	const ON_3dPoint& center  // center of rotation
-	);
+        double sin_angle,         // sin(angle)
+        double cos_angle,         // cos(angle)
+        const ON_3dVector& axis,  // axis of rotation
+        const ON_3dPoint& center  // center of rotation
+        );
 };
+
+ON_DECL
+ON_3dPoint operator*(int, const ON_3dPoint&);
+
+ON_DECL
+ON_3dPoint operator*(float, const ON_3dPoint&);
 
 ON_DECL
 ON_3dPoint operator*(double, const ON_3dPoint&);
@@ -463,33 +555,41 @@ class ON_CLASS ON_4dPoint
 {
 public:
   double x, y, z, w;
-
+  
   // use implicit destructor, copy constructor
-  ON_4dPoint();                         // not initialized
-  ON_4dPoint(const float*);             // from array of 4 doubles
-  ON_4dPoint(const double*);            // from array of 4 doubles
+  ON_4dPoint();                       // x,y,z,w not initialized
   ON_4dPoint(double x,double y,double z,double w);
+
   ON_4dPoint(const ON_2dPoint& );     // from 2d point
   ON_4dPoint(const ON_3dPoint& );     // from 3d point
   ON_4dPoint(const ON_2dVector& );    // from 2d vector
   ON_4dPoint(const ON_3dVector& );    // from 3d vector
+  ON_4dPoint(const double*);          // from double[4] array
+
+  ON_4dPoint(const ON_2fPoint& );     // from 2f point
+  ON_4dPoint(const ON_3fPoint& );     // from 3f point
+  ON_4dPoint(const ON_4fPoint& );     // from 3f point
+  ON_4dPoint(const ON_2fVector& );    // from 2f vector
+  ON_4dPoint(const ON_3fVector& );    // from 3f vector
+  ON_4dPoint(const float*);           // from float[4] array
 
   // (double*) conversion operators
   operator double*();
   operator const double*() const;
 
   // use implicit operator=(const ON_4dPoint&)
-  ON_4dPoint& operator=(const float*);  // point = float[4] support
-  ON_4dPoint& operator=(const class ON_2fPoint&);
-  ON_4dPoint& operator=(const class ON_3fPoint&);
-  ON_4dPoint& operator=(const class ON_2fVector&);
-  ON_4dPoint& operator=(const class ON_3fVector&);
-
-  ON_4dPoint& operator=(const double*); // point = double[4] support
   ON_4dPoint& operator=(const ON_2dPoint&);
   ON_4dPoint& operator=(const ON_3dPoint&);
   ON_4dPoint& operator=(const ON_2dVector&);
   ON_4dPoint& operator=(const ON_3dVector&);
+  ON_4dPoint& operator=(const double*); // point = double[4] support
+
+  ON_4dPoint& operator=(const class ON_2fPoint&);
+  ON_4dPoint& operator=(const class ON_3fPoint&);
+  ON_4dPoint& operator=(const class ON_4fPoint&);
+  ON_4dPoint& operator=(const class ON_2fVector&);
+  ON_4dPoint& operator=(const class ON_3fVector&);
+  ON_4dPoint& operator=(const float*);  // point = float[4] support
 
   ON_4dPoint& operator*=(double);
   ON_4dPoint& operator/=(double);
@@ -514,13 +614,16 @@ public:
   double operator[](int) const;
 
   /*
-  Description
-    If any coordinate of a point is ON_UNSET_VALUE,
-    then the point is not valid.
   Returns:
-    true if the point is valid.
+    False if any coordinate is infinte, a nan, or ON_UNSET_VALUE.
   */
   bool IsValid() const;
+
+  /*
+  Returns:
+    True if every coordinate is ON_UNSET_VALUE.
+  */
+  bool IsUnsetPoint() const;
 
   // set 4d point value
   void Set(double x,double y,double z,double w);
@@ -537,8 +640,8 @@ public:
   // These transform the point in place. The transformation matrix acts on
   // the left of the point; i.e., result = transformation*point
   void Transform( 
-	const ON_Xform&
-	);
+        const ON_Xform&
+        );
 };
 
 ON_DECL
@@ -553,6 +656,11 @@ class ON_CLASS ON_2dVector
 public:
   double x, y;
 
+  static const ON_2dVector ZeroVector;  // (0.0,0.0)
+  static const ON_2dVector XAxis;       // (1.0,0.0)
+  static const ON_2dVector YAxis;       // (0.0,1.0)
+  static const ON_2dVector UnsetVector; // (ON_UNSET_VALUE,ON_UNSET_VALUE)
+
   // Description:
   //   A index driven function to get unit axis vectors.
   // Parameters:
@@ -564,22 +672,35 @@ public:
     );
 
   // use implicit destructor, copy constructor
-  ON_2dVector();                     // not initialized
-  ON_2dVector(const float*);         // from array of 2 floats
-  ON_2dVector(const double*);        // from array of 2 doubles
+  ON_2dVector();                     // x,y not initialized
   ON_2dVector(double x,double y);
+
   ON_2dVector(const ON_3dVector& ); // from 3d vector
   ON_2dVector(const ON_2dPoint& );  // from 2d point
+  ON_2dVector(const ON_3dPoint& );  // from 3d point
+  ON_2dVector(const double*);       // from double[2] array
+
+  ON_2dVector(const ON_2fVector& ); // from 2f vector
+  ON_2dVector(const ON_3fVector& ); // from 3f vector
+  ON_2dVector(const ON_2fPoint& );  // from 2f point
+  ON_2dVector(const ON_3fPoint& );  // from 3f point
+  ON_2dVector(const float*);        // from double[2] array
 
   // (double*) conversion operators
   operator double*();
   operator const double*() const;
 
   // use implicit operator=(const ON_2dVector&)
-  ON_2dVector& operator=(const float*);  // vector = float[2] support
-  ON_2dVector& operator=(const double*); // vector = double[2] support
   ON_2dVector& operator=(const ON_3dVector&);
   ON_2dVector& operator=(const ON_2dPoint&);
+  ON_2dVector& operator=(const ON_3dPoint&);
+  ON_2dVector& operator=(const double*); // vector = double[2] support
+
+  ON_2dVector& operator=(const ON_2fVector&);
+  ON_2dVector& operator=(const ON_3fVector&);
+  ON_2dVector& operator=(const ON_2fPoint&);
+  ON_2dVector& operator=(const ON_3fPoint&);
+  ON_2dVector& operator=(const float*);  // vector = float[2] support
 
   ON_2dVector  operator-() const;
 
@@ -587,15 +708,36 @@ public:
   ON_2dVector& operator/=(double);
   ON_2dVector& operator+=(const ON_2dVector&);
   ON_2dVector& operator-=(const ON_2dVector&);
+  // DO NOT ADD ANY MORE overrides of += or -=
 
-  ON_2dVector  operator*(double) const;
   double operator*(const ON_2dVector&) const; // inner (dot) product
   double operator*(const ON_2dPoint&) const; // inner (dot) product (point acting as vector)
   double operator*(const ON_2fVector&) const; // inner (dot) product	
-	ON_2dVector  operator/(double) const;
+
+  ON_2dVector  operator*(int) const;
+  ON_2dVector  operator/(int) const;
+  ON_2dVector  operator*(float) const;
+  ON_2dVector  operator/(float) const;
+  ON_2dVector  operator*(double) const;
+  ON_2dVector  operator/(double) const;
+
   ON_2dVector  operator+(const ON_2dVector&) const;
   ON_2dPoint   operator+(const ON_2dPoint&) const;
   ON_2dVector  operator-(const ON_2dVector&) const;
+  ON_2dPoint   operator-(const ON_2dPoint&) const;
+  ON_3dVector  operator+(const ON_3dVector&) const;
+  ON_3dPoint   operator+(const ON_3dPoint&) const;
+  ON_3dVector  operator-(const ON_3dVector&) const;
+  ON_3dPoint   operator-(const ON_3dPoint&) const;
+
+  ON_2dVector  operator+(const ON_2fVector&) const;
+  ON_2dPoint   operator+(const ON_2fPoint&) const;
+  ON_2dVector  operator-(const ON_2fVector&) const;
+  ON_2dPoint   operator-(const ON_2fPoint&) const;
+  ON_3dVector  operator+(const ON_3fVector&) const;
+  ON_3dPoint   operator+(const ON_3fPoint&) const;
+  ON_3dVector  operator-(const ON_3fVector&) const;
+  ON_3dPoint   operator-(const ON_3fPoint&) const;
 
   double operator*(const ON_4dPoint&) const;
   ON_2dVector operator*(const ON_Xform&) const;
@@ -614,13 +756,16 @@ public:
   double operator[](int) const;
 
   /*
-  Description
-    If any coordinate of a point is ON_UNSET_VALUE,
-    then the point is not valid.
   Returns:
-    true if the point is valid.
+    False if any coordinate is infinte, a nan, or ON_UNSET_VALUE.
   */
   bool IsValid() const;
+
+  /*
+  Returns:
+    True if every coordinate is ON_UNSET_VALUE.
+  */
+  bool IsUnsetVector() const;
 
   // set 2d vector value
   void Set(double x,double y);
@@ -639,34 +784,34 @@ public:
 	double WedgeProduct(const ON_2dVector& B) const;
 
   bool Decompose( // Computes a, b such that this vector = a*X + b*Y
-	 // Returns false if unable to solve for a,b.  This happens
-	 // when X,Y is not really a basis.
-	 //
-	 // If X,Y is known to be an orthonormal frame,
-	 // then a = V*X, b = V*Y will compute
-	 // the same result more quickly.
-	 const ON_2dVector&, // X
-	 const ON_2dVector&, // Y
-	 double*, // a
-	 double*  // b
-	 ) const;
+         // Returns false if unable to solve for a,b.  This happens
+         // when X,Y is not really a basis.
+         //
+         // If X,Y is known to be an orthonormal frame,
+         // then a = V*X, b = V*Y will compute
+         // the same result more quickly.
+         const ON_2dVector&, // X
+         const ON_2dVector&, // Y
+         double*, // a
+         double*  // b
+         ) const;
 
   int IsParallelTo( 
-	// returns  1: this and other vectors are parallel
-	//         -1: this and other vectors are anti-parallel
-	//          0: this and other vectors are not parallel
-	//             or at least one of the vectors is zero
-	const ON_2dVector& other,                           // other vector     
-	double angle_tolerance = ON_DEFAULT_ANGLE_TOLERANCE // optional angle tolerance (radians)
-	) const;
+        // returns  1: this and other vectors are parallel
+        //         -1: this and other vectors are anti-parallel
+        //          0: this and other vectors are not parallel
+        //             or at least one of the vectors is zero
+        const ON_2dVector& other,                           // other vector     
+        double angle_tolerance = ON_DEFAULT_ANGLE_TOLERANCE // optional angle tolerance (radians)
+        ) const;
 
   bool IsPerpendicularTo(
-	// returns true:  this and other vectors are perpendicular
-	//         false: this and other vectors are not perpendicular
-	//                or at least one of the vectors is zero
-	const ON_2dVector& other,                           // other vector     
-	double angle_tolerance = ON_DEFAULT_ANGLE_TOLERANCE // optional angle tolerance (radians)
-	) const;
+        // returns true:  this and other vectors are perpendicular
+        //         false: this and other vectors are not perpendicular
+        //                or at least one of the vectors is zero
+        const ON_2dVector& other,                           // other vector     
+        double angle_tolerance = ON_DEFAULT_ANGLE_TOLERANCE // optional angle tolerance (radians)
+        ) const;
 
   void Zero(); // set all coordinates to zero;
   void Reverse(); // negate all coordinates
@@ -683,40 +828,50 @@ public:
   //   ( fabs(x) <= tiny_tol && fabs(y) <= tiny_tol )
   //
   bool IsTiny(
-	 double tiny_tol = ON_ZERO_TOLERANCE // tiny_tol
-	 ) const;
+         double tiny_tol = ON_ZERO_TOLERANCE // tiny_tol
+         ) const;
 
   // Returns:
   //   true if vector is the zero vector.
   bool IsZero() const;
 
+  // Returns:
+  //   true if vector is valid and has length 1.
+  bool IsUnitVector() const;
+
   // set this vector to be perpendicular to another vector
   bool PerpendicularTo( // Result is not unitized. 
-			// returns false if input vector is zero
-	const ON_2dVector& 
-	);
+                        // returns false if input vector is zero
+        const ON_2dVector& 
+        );
 
   // set this vector to be perpendicular to a line defined by 2 points
   bool PerpendicularTo( 
-	const ON_2dPoint&, 
-	const ON_2dPoint& 
-	);
+        const ON_2dPoint&, 
+        const ON_2dPoint& 
+        );
 
   // These transform the vector in place. The transformation matrix acts on
   // the left of the vector; i.e., result = transformation*vector
   void Transform( 
-	const ON_Xform& // can use ON_Xform here
-	);
+        const ON_Xform& // can use ON_Xform here
+        );
 
   void Rotate( 
-	double angle            // angle in radians
-	);
+        double angle            // angle in radians
+        );
 
   void Rotate( 
-	double sin_angle,       // sin(angle)
-	double cos_angle        // cos(angle)
-	);
+        double sin_angle,       // sin(angle)
+        double cos_angle        // cos(angle)
+        );
 };
+
+ON_DECL
+ON_2dVector operator*(int, const ON_2dVector&);
+
+ON_DECL
+ON_2dVector operator*(float, const ON_2dVector&);
 
 ON_DECL
 ON_2dVector operator*(double, const ON_2dVector&);
@@ -777,6 +932,12 @@ class ON_CLASS ON_3dVector
 public:
   double x, y, z;
 
+  static const ON_3dVector ZeroVector;  // (0.0,0.0,0.0)
+  static const ON_3dVector XAxis;       // (1.0,0.0,0.0)
+  static const ON_3dVector YAxis;       // (0.0,1.0,0.0)
+  static const ON_3dVector ZAxis;       // (0.0,0.0,1.0)
+  static const ON_3dVector UnsetVector; // (ON_UNSET_VALUE,ON_UNSET_VALUE,ON_UNSET_VALUE)
+
   // Description:
   //   A index driven function to get unit axis vectors.
   // Parameters:
@@ -789,38 +950,71 @@ public:
     );
 
   // use implicit destructor, copy constructor
-  ON_3dVector();                     // not initialized
-  ON_3dVector(const float*);         // from array of 3 floats
-  ON_3dVector(const double*);        // from array of 3 doubles
+  ON_3dVector();                     // x,y,z not initialized
   ON_3dVector(double x,double y,double z);
-  ON_3dVector(const ON_2dVector& ); // from 2d vector
-  ON_3dVector(const ON_3dPoint& );  // from 3d point
+  ON_3dVector(const ON_2dVector& );  // from 2d vector
+  ON_3dVector(const ON_2dPoint& );   // from 2d point
+  ON_3dVector(const ON_3dPoint& );   // from 3d point
+  ON_3dVector(const double*);        // from double[3] array
+
+  ON_3dVector(const ON_2fVector& );  // from 2f vector
+  ON_3dVector(const ON_3fVector& );  // from 3f vector
+  ON_3dVector(const ON_2fPoint& );   // from 2f point
+  ON_3dVector(const ON_3fPoint& );   // from 3f point
+  ON_3dVector(const float*);         // from float[3] array
 
   // (double*) conversion operators
   operator double*();
   operator const double*() const;
 
   // use implicit operator=(const ON_3dVector&)
-  ON_3dVector& operator=(const float*);  // vector = float[3] support
-  ON_3dVector& operator=(const double*); // vector = double[3] support
   ON_3dVector& operator=(const ON_2dVector&);
+  ON_3dVector& operator=(const ON_2dPoint&);
   ON_3dVector& operator=(const ON_3dPoint&);
+  ON_3dVector& operator=(const double*); // vector = double[3] support
   
+  ON_3dVector& operator=(const ON_2fVector&);
+  ON_3dVector& operator=(const ON_3fVector&);
+  ON_3dVector& operator=(const ON_2fPoint&);
+  ON_3dVector& operator=(const ON_3fPoint&);
+  ON_3dVector& operator=(const float*);  // vector = float[3] support
+
   ON_3dVector  operator-() const;
 
   ON_3dVector& operator*=(double);
   ON_3dVector& operator/=(double);
   ON_3dVector& operator+=(const ON_3dVector&);
   ON_3dVector& operator-=(const ON_3dVector&);
+  // DO NOT ADD ANY MORE overrides of += or -=
 
-  ON_3dVector  operator*(double) const;
   double operator*(const ON_3dVector&) const; // inner (dot) product
   double operator*(const ON_3dPoint&) const; // inner (dot) product
   double operator*(const ON_3fVector&) const; // inner (dot) product
+
+  ON_3dVector  operator*(int) const;
+  ON_3dVector  operator/(int) const;
+  ON_3dVector  operator*(float) const;
+  ON_3dVector  operator/(float) const;
+  ON_3dVector  operator*(double) const;
   ON_3dVector  operator/(double) const;
+
   ON_3dVector  operator+(const ON_3dVector&) const;
   ON_3dPoint   operator+(const ON_3dPoint&) const;
   ON_3dVector  operator-(const ON_3dVector&) const;
+  ON_3dPoint   operator-(const ON_3dPoint&) const;
+  ON_3dVector  operator+(const ON_2dVector&) const;
+  ON_3dPoint   operator+(const ON_2dPoint&) const;
+  ON_3dVector  operator-(const ON_2dVector&) const;
+  ON_3dPoint   operator-(const ON_2dPoint&) const;
+
+  ON_3dVector  operator+(const ON_3fVector&) const;
+  ON_3dPoint   operator+(const ON_3fPoint&) const;
+  ON_3dVector  operator-(const ON_3fVector&) const;
+  ON_3dPoint   operator-(const ON_3fPoint&) const;
+  ON_3dVector  operator+(const ON_2fVector&) const;
+  ON_3dPoint   operator+(const ON_2fPoint&) const;
+  ON_3dVector  operator-(const ON_2fVector&) const;
+  ON_3dPoint   operator-(const ON_2fPoint&) const;
 
   double operator*(const ON_4dPoint&) const;
   ON_3dVector operator*(const ON_Xform&) const;
@@ -839,13 +1033,16 @@ public:
   double operator[](int) const;
 
   /*
-  Description
-    If any coordinate of a point is ON_UNSET_VALUE,
-    then the point is not valid.
   Returns:
-    true if the point is valid.
+    False if any coordinate is infinte, a nan, or ON_UNSET_VALUE.
   */
   bool IsValid() const;
+
+  /*
+  Returns:
+    True if every coordinate is ON_UNSET_VALUE.
+  */
+  bool IsUnsetVector() const;
 
   // set 3d vector value
   void Set(double x,double y,double z);
@@ -860,42 +1057,43 @@ public:
   double Length() const;
 
   bool Decompose( // Computes a, b, c such that this vector = a*X + b*Y + c*Z
-	 // Returns false if unable to solve for a,b,c.  This happens
-	 // when X,Y,Z is not really a basis.
-	 //
-	 // If X,Y,Z is known to be an orthonormal frame,
-	 // then a = V*X, b = V*Y, c = V*Z will compute
-	 // the same result more quickly.
-	 const ON_3dVector&, // X
-	 const ON_3dVector&, // Y
-	 const ON_3dVector&, // Z
-	 double*, // a
-	 double*, // b
-	 double*  // c
-	 ) const;
+         // Returns false if unable to solve for a,b,c.  This happens
+         // when X,Y,Z is not really a basis.
+         //
+         // If X,Y,Z is known to be an orthonormal frame,
+         // then a = V*X, b = V*Y, c = V*Z will compute
+         // the same result more quickly.
+         const ON_3dVector&, // X
+         const ON_3dVector&, // Y
+         const ON_3dVector&, // Z
+         double*, // a
+         double*, // b
+         double*  // c
+         ) const;
 
   int IsParallelTo( 
-	// returns  1: this and other vectors are parallel
-	//         -1: this and other vectors are anti-parallel
-	//          0: this and other vectors are not parallel
-	//             or at least one of the vectors is zero
-	const ON_3dVector& other,                           // other vector     
-	double angle_tolerance = ON_DEFAULT_ANGLE_TOLERANCE // optional angle tolerance (radians)
-	) const;
+        // returns  1: this and other vectors are parallel
+        //         -1: this and other vectors are anti-parallel
+        //          0: this and other vectors are not parallel
+        //             or at least one of the vectors is zero
+        const ON_3dVector& other,                           // other vector     
+        double angle_tolerance = ON_DEFAULT_ANGLE_TOLERANCE // optional angle tolerance (radians)
+        ) const;
 
   bool IsPerpendicularTo(
-	// returns true:  this and other vectors are perpendicular
-	//         false: this and other vectors are not perpendicular
-	//                or at least one of the vectors is zero
-	const ON_3dVector& other,                           // other vector     
-	double angle_tolerance = ON_DEFAULT_ANGLE_TOLERANCE // optional angle tolerance (radians)
-	) const;
+        // returns true:  this and other vectors are perpendicular
+        //         false: this and other vectors are not perpendicular
+        //                or at least one of the vectors is zero
+        const ON_3dVector& other,                           // other vector     
+        double angle_tolerance = ON_DEFAULT_ANGLE_TOLERANCE // optional angle tolerance (radians)
+        ) const;
 
   double Fuzz( double tolerance = ON_ZERO_TOLERANCE ) const; // tolerance to use when comparing 3d vectors
 
   void Zero(); // set all coordinates to zero;
   void Reverse(); // negate all coordinates
   bool Unitize();  // returns false if vector has zero length
+  double LengthAndUnitize(); // unitizes and returns initial length
 
   // Description:
   //   Test a vector to see if it is very short
@@ -908,44 +1106,48 @@ public:
   //   ( fabs(x) <= tiny_tol && fabs(y) <= tiny_tol && fabs(z) <= tiny_tol )
   //
   bool IsTiny(
-	 double tiny_tol = ON_ZERO_TOLERANCE // tiny_tol
-	 ) const;
+         double tiny_tol = ON_ZERO_TOLERANCE // tiny_tol
+         ) const;
 
   // Returns:
   //   true if vector is the zero vector.
   bool IsZero() const;
 
+  // Returns:
+  //   true if vector is valid and has length 1.
+  bool IsUnitVector() const;
+
   // set this vector to be perpendicular to another vector
   bool PerpendicularTo( // Result is not unitized. 
-			// returns false if input vector is zero
-	const ON_3dVector& 
-	);
+                        // returns false if input vector is zero
+        const ON_3dVector& 
+        );
 
   // set this vector to be perpendicular to a plane defined by 3 points
   bool PerpendicularTo(
-	       // about 3 times slower than
-	       //    ON_3dVector N = ON_CrossProduct(P1-P0,P2-P0); 
-	       //    N.Unitize();
-	       // returns false if points are coincident or colinear
-	 const ON_3dPoint&, const ON_3dPoint&, const ON_3dPoint& 
-	 );
+               // about 3 times slower than
+               //    ON_3dVector N = ON_CrossProduct(P1-P0,P2-P0); 
+               //    N.Unitize();
+               // returns false if points are coincident or colinear
+         const ON_3dPoint&, const ON_3dPoint&, const ON_3dPoint& 
+         );
 
   // These transform the vector in place. The transformation matrix acts on
   // the left of the vector; i.e., result = transformation*vector
   void Transform( 
-	const ON_Xform& // can use ON_Xform here
-	);
+        const ON_Xform& // can use ON_Xform here
+        );
 
   void Rotate( 
-	double angle,           // angle in radians
-	const ON_3dVector& axis // axis of rotation
-	);
+        double angle,           // angle in radians
+        const ON_3dVector& axis // axis of rotation
+        );
 
   void Rotate( 
-	double sin_angle,        // sin(angle)
-	double cos_angle,        // cos(angle)
-	const ON_3dVector& axis  // axis of rotation
-	);
+        double sin_angle,        // sin(angle)
+        double cos_angle,        // cos(angle)
+        const ON_3dVector& axis  // axis of rotation
+        );
 };
 
 class ON_CLASS ON_3dRay
@@ -1103,35 +1305,41 @@ public:
     s0 - [in]
     s1 - [in] the interval from s0 to s1 is tested (s0 < s1)
     sample_count - [in] number of interior points to test.  
-		Numbers like 1, 3, 7, 15, ... work best.
+                Numbers like 1, 3, 7, 15, ... work best.
     endpoint_tolerance - [in] If >= 0, then the end points are 
-	      tested to see if the distance from the endpoints 
-	      is <= endpoint_tolerance.
+              tested to see if the distance from the endpoints 
+              is <= endpoint_tolerance.
     interior_tolerance - [in] (>=0 and >=endpoint_tolerance) 
-	      This tolerance is used to test the interior sample points.
+              This tolerance is used to test the interior sample points.
     smin - [put]  If not NULL, *smin = bezier parameter of nearest
-		  test point.
+                  test point.
     smax - [put]  If not NULL, *smax = bezier parameter of farthest
-		  test point.  If false is returned, this is the
-		  parameter of the test point that failed.
+                  test point.  If false is returned, this is the
+                  parameter of the test point that failed.
   Returns:
     True if all the tested points passed the tolerance test.
     False if at least one tested point failed the tolerance test.
     (The test terminates when the first failure is encountered.)
   */
   bool IsNearerThan( 
-	  const class ON_BezierCurve& bezcrv,
-	  double s0,
-	  double s1,
-	  int sample_count,
-	  double endpoint_tolerance,
-	  double interior_tolerance,
-	  double* smin,
-	  double* smax
-	  ) const;
+          const class ON_BezierCurve& bezcrv,
+          double s0,
+          double s1,
+          int sample_count,
+          double endpoint_tolerance,
+          double interior_tolerance,
+          double* smin,
+          double* smax
+          ) const;
 
   double d; // 4th coefficient of the plane equation.
 };
+
+ON_DECL
+ON_3dVector operator*(int, const ON_3dVector&);
+
+ON_DECL
+ON_3dVector operator*(float, const ON_3dVector&);
 
 ON_DECL
 ON_3dVector operator*(double, const ON_3dVector&);
@@ -1207,14 +1415,25 @@ ON_IsRightHandFrame( // true if X, Y, Z are orthonormal and right handed
 //
 // common points and vectors
 //
-// ON_unset_point is obsolete - use ON_UNSET_POINT
+// ON_unset_point is obsolete - use ON_3dPoint::UnsetPoint
 #define ON_unset_point ON_UNSET_POINT
 
+// ON_UNSET_POINT is OBSOLETE - use ON_3dPoint::UnsetPoint
 extern ON_EXTERN_DECL const ON_3dPoint  ON_UNSET_POINT; // (ON_UNSET_VALUE,ON_UNSET_VALUE,ON_UNSET_VALUE)
+
+// ON_UNSET_VECTOR is OBSOLETE - use ON_3dPoint::UnsetVector
 extern ON_EXTERN_DECL const ON_3dVector ON_UNSET_VECTOR; // (ON_UNSET_VALUE,ON_UNSET_VALUE,ON_UNSET_VALUE)
+
+// ON_origin is OBSOLETE - use ON_3dPoint::Origin
 extern ON_EXTERN_DECL const ON_3dPoint  ON_origin; // (0.0, 0.0, 0.0)
+
+// ON_xaxis is OBSOLETE - use ON_3dPoint::XAxis
 extern ON_EXTERN_DECL const ON_3dVector ON_xaxis; // (1.0, 0.0, 0.0)
+
+// ON_yaxis is OBSOLETE - use ON_3dPoint::YAxis
 extern ON_EXTERN_DECL const ON_3dVector ON_yaxis; // (0.0, 1.0, 0.0)
+
+// ON_zaxis is OBSOLETE - use ON_3dPoint::ZAxis
 extern ON_EXTERN_DECL const ON_3dVector ON_zaxis; // (0.0, 0.0, 1.0)
 
 #include "opennurbs_fpoint.h"

@@ -38,9 +38,9 @@ RepresentationContext::RepresentationContext() {
 	id = 0;
 }
 
-RepresentationContext::RepresentationContext(STEPWrapper *sw,int STEPid) {
+RepresentationContext::RepresentationContext(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 RepresentationContext::~RepresentationContext() {
@@ -59,12 +59,12 @@ RepresentationContext::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 void
 RepresentationContext::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Local Attributes:" << endl;
-	TAB(level+1); cout << "context_identifier:" << context_identifier << endl;
-	TAB(level+1); cout << "context_type:" << context_type << endl;
+	TAB(level); std::cout << "Local Attributes:" << std::endl;
+	TAB(level+1); std::cout << "context_identifier:" << context_identifier << std::endl;
+	TAB(level+1); std::cout << "context_type:" << context_type << std::endl;
 
 }
 STEPEntity *
@@ -76,7 +76,7 @@ RepresentationContext::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

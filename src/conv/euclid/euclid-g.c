@@ -128,7 +128,7 @@ main(int argc, char **argv)
     FILE		*fpin;
     struct rt_wdb	*fpout;
     char		title[BRLCAD_TITLE_LENGTH];	/* BRL-CAD database title */
-    register int	c;
+    int	c;
     int i;
 
     fpin = stdin;

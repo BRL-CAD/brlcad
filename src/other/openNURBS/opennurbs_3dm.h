@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -47,7 +46,7 @@
    |                     _100 0000 0000 0000  User information   TCODE_USER
    | 
    +-- format: 0 - data size in header  - data block follows    TCODE_SHORT
-	       1 - data in header - no data block follows
+               1 - data in header - no data block follows
 
 */
 
@@ -66,12 +65,12 @@
 #define TCODE_COMMENTBLOCK        0x00000001
 #define TCODE_ENDOFFILE           0x00007FFF
 #define TCODE_ENDOFFILE_GOO       0x00007FFE /*
-					     // this typecode is returned when
-					     // a rogue eof marker is found
-					     // Some v1 3dm file writers put
-					     // these markers in a "goo". 
-					     // Simply skip these chunks and continue.
-					     */
+                                             // this typecode is returned when
+                                             // a rogue eof marker is found
+                                             // Some v1 3dm file writers put
+                                             // these markers in a "goo". 
+                                             // Simply skip these chunks and continue.
+                                             */
 #define TCODE_LEGACY_GEOMETRY     0x00010000
 #define TCODE_OPENNURBS_OBJECT    0x00020000
 #define TCODE_GEOMETRY            0x00100000
@@ -101,21 +100,21 @@
 #define TCODE_LIGHT_TABLE      (TCODE_TABLE | 0x0012) /* rendering lights */
 #define TCODE_OBJECT_TABLE     (TCODE_TABLE | 0x0013) /* geometry and annotation */
 #define TCODE_PROPERTIES_TABLE (TCODE_TABLE | 0x0014) /* model properties:
-						      //   revision history
-						      //   notes
-						      //   preview image
-						      */
+                                                      //   revision history
+                                                      //   notes
+                                                      //   preview image
+                                                      */
 #define TCODE_SETTINGS_TABLE   (TCODE_TABLE | 0x0015) /* file properties including,
-						      // units, tolerancess, 
-						      // annotation defaults, 
-						      // render mesh defaults, 
-						      // current layer, 
-						      // current material,
-						      // current color,
-						      // named construction planes,
-						      // named viewports,
-						      // current viewports,
-						      */
+                                                      // units, tolerancess, 
+                                                      // annotation defaults, 
+                                                      // render mesh defaults, 
+                                                      // current layer, 
+                                                      // current material,
+                                                      // current color,
+                                                      // named construction planes,
+                                                      // named viewports,
+                                                      // current viewports,
+                                                      */
 #define TCODE_BITMAP_TABLE    (TCODE_TABLE | 0x0016) /* embedded bitmaps */
 #define TCODE_USER_TABLE      (TCODE_TABLE | 0x0017) /* user table */
 
@@ -188,6 +187,9 @@
 /* added 29 October 2002 as a chunk to hold new and future ON_3dmView information */
 #define TCODE_VIEW_ATTRIBUTES        (TCODE_TABLEREC | TCODE_CRC   | 0x0C3B)
 
+/* added 27 June 2008 as a chunk to hold userdata on ON_Viewports saved in named view list */
+#define TCODE_VIEW_VIEWPORT_USERDATA (TCODE_TABLEREC | TCODE_CRC   | 0x0D3B)
+
 /* records in bitmap table */
 #define TCODE_BITMAP_RECORD (TCODE_TABLEREC | TCODE_CRC | 0x0090) /* material table record derived from ON_Bitmap */
 
@@ -198,8 +200,10 @@
 #define TCODE_LAYER_RECORD    (TCODE_TABLEREC | TCODE_CRC | 0x0050) /* layer table record derived from ON_Layer */
 
 /* records in light table */
-#define TCODE_LIGHT_RECORD            (TCODE_TABLEREC | TCODE_CRC | 0x0060) /* light table record derived from ON_Light */
+#define TCODE_LIGHT_RECORD            (TCODE_TABLEREC | TCODE_CRC | 0x0060)    /* light table record derived from ON_Light */
 #define TCODE_LIGHT_RECORD_ATTRIBUTES (TCODE_INTERFACE | TCODE_CRC   | 0x0061) /* ON_3dmObjectAttributes chunk */
+#define TCODE_LIGHT_RECORD_ATTRIBUTES_USERDATA (TCODE_INTERFACE | 0x0062)      /* ON_3dmObjectAttributes userdata chunk */
+
 #define TCODE_LIGHT_RECORD_END        (TCODE_INTERFACE | TCODE_SHORT | 0x006F)
 
 /* records in user table */
@@ -499,5 +503,10 @@
 
 #define TCODE_LEGACY_TOL_FIT      (TCODE_TOLERANCE | 0x0001)
 #define TCODE_LEGACY_TOL_ANGLE    (TCODE_TOLERANCE | 0x0002)
+
+#define TCODE_DICTIONARY          (TCODE_USER | TCODE_CRC   | 0x0010)
+#define TCODE_DICTIONARY_ID       (TCODE_USER | TCODE_CRC   | 0x0011)
+#define TCODE_DICTIONARY_ENTRY    (TCODE_USER | TCODE_CRC   | 0x0012)
+#define TCODE_DICTIONARY_END      (TCODE_USER | TCODE_SHORT | 0x0013)
 
 #endif

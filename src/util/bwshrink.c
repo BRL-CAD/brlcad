@@ -79,8 +79,8 @@ shrink_image(int w, int h, unsigned char *buffer, int Factor)
 void
 usample_image(int w, int h, unsigned char *buffer, int Factor)
 {
-    register int x, y;
-    register unsigned char *p;
+    int x, y;
+    unsigned char *p;
 
     p = buffer;
 
@@ -173,7 +173,7 @@ int main(int ac, char **av)
     unsigned char *buffer = (unsigned char *)NULL;
     int	size;
     int	c = 0;
-    register int t;
+    int t;
 
     (void)parse_args(ac, av);
     if (isatty(fileno(stdin))) usage();

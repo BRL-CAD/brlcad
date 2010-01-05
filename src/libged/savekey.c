@@ -38,7 +38,7 @@ static void ged_rt_oldwrite(struct ged *gedp, FILE *fp, fastf_t *eye_model);
 int
 ged_savekey(struct ged *gedp, int argc, const char *argv[])
 {
-    register FILE *fp;
+    FILE *fp;
     fastf_t	time;
     vect_t	eye_model;
     vect_t temp;
@@ -93,7 +93,7 @@ ged_savekey(struct ged *gedp, int argc, const char *argv[])
 static void
 ged_rt_oldwrite(struct ged *gedp, FILE *fp, fastf_t *eye_model)
 {
-    register int i;
+    int i;
 
     (void)fprintf(fp, "%.9e\n", gedp->ged_gvp->gv_size);
     (void)fprintf(fp, "%.9e %.9e %.9e\n",

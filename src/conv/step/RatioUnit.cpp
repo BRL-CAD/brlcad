@@ -38,9 +38,9 @@ RatioUnit::RatioUnit() {
 	id = 0;
 }
 
-RatioUnit::RatioUnit(STEPWrapper *sw,int STEPid) {
+RatioUnit::RatioUnit(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 RatioUnit::~RatioUnit() {
@@ -54,7 +54,7 @@ RatioUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 	// load base class attributes
 	if ( !NamedUnit::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::Unit." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 		return false;
 	}
 
@@ -63,10 +63,10 @@ RatioUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 void
 RatioUnit::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	NamedUnit::Print(level+1);
 
 }
@@ -79,7 +79,7 @@ RatioUnit::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

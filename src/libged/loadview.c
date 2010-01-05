@@ -92,7 +92,7 @@ struct command_tab ged_loadview_cmdtab[] = {
 int
 ged_loadview(struct ged *gedp, int argc, const char *argv[])
 {
-    register FILE *fp;
+    FILE *fp;
     char buffer[512] = {0};
 
     /* data pulled from script file */
@@ -311,7 +311,7 @@ _ged_cm_lookat_pt(int argc, char **argv)
 int
 _ged_cm_vrot(int argc, char **argv)
 {
-    register int	i;
+    int	i;
 
     if ( argc < 17 )
 	return(-1);
@@ -324,7 +324,7 @@ _ged_cm_vrot(int argc, char **argv)
 int
 _ged_cm_orientation(int argc, char **argv)
 {
-    register int	i;
+    int	i;
     quat_t		quat;
 
     for ( i=0; i<4; i++ )

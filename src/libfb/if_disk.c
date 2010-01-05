@@ -44,62 +44,8 @@
 #define	DISK_DMA_BYTES	(16*1024/sizeof(RGBpixel)*sizeof(RGBpixel))
 #define	DISK_DMA_PIXELS	(DISK_DMA_BYTES/sizeof(RGBpixel))
 
-HIDDEN int	dsk_open(FBIO *ifp, char *file, int width, int height),
-    dsk_close(FBIO *ifp),
-    dsk_clear(FBIO *ifp, unsigned char *bgpp),
-    dsk_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count),
-    dsk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count),
-    dsk_rmap(FBIO *ifp, ColorMap *cmap),
-    dsk_wmap(FBIO *ifp, const ColorMap *cmap),
-    dsk_free(FBIO *ifp),
-    dsk_help(FBIO *ifp);
-
-FBIO disk_interface = {
-    0,
-    dsk_open,
-    dsk_close,
-    dsk_clear,
-    dsk_read,
-    dsk_write,
-    dsk_rmap,
-    dsk_wmap,
-    fb_sim_view,		/* set view */
-    fb_sim_getview,		/* get view */
-    fb_null_setcursor,		/* define cursor */
-    fb_sim_cursor,		/* set cursor */
-    fb_sim_getcursor,	/* get cursor */
-    fb_sim_readrect,
-    fb_sim_writerect,
-    fb_sim_bwreadrect,
-    fb_sim_bwwriterect,
-    fb_null,		/* poll */
-    fb_null,		/* flush */
-    dsk_free,
-    dsk_help,
-    "Disk File Interface",
-    32*1024,		/* the sky's really the limit here */
-    32*1024,
-    "filename",		/* not in list so name is safe */
-    512,
-    512,
-    -1,			/* select fd */
-    -1,
-    1, 1,			/* zoom */
-    256, 256,		/* window center */
-    0, 0, 0,		/* cursor */
-    PIXEL_NULL,
-    PIXEL_NULL,
-    PIXEL_NULL,
-    -1,
-    0,
-    0L,
-    0L,
-    0
-};
-
 #define if_seekpos	u5.l	/* stored seek position */
 
-HIDDEN int	disk_color_clear(FBIO *ifp, register unsigned char *bpp);
 
 HIDDEN int
 dsk_open(FBIO *ifp, char *file, int width, int height)
@@ -169,6 +115,46 @@ dsk_free(FBIO *ifp)
     close( ifp->if_fd );
     return unlink(ifp->if_name);
 }
+
+/*
+ *		D I S K _ C O L O R _ C L E A R
+ *
+ *  Clear the disk file to the given color.
+ */
+HIDDEN int
+disk_color_clear(FBIO *ifp, register unsigned char *bpp)
+{
+    static unsigned char	pix_buf[DISK_DMA_BYTES] = {0};
+    register unsigned char *pix_to;
+    register long	i;
+    int	fd, pixelstodo;
+
+    /* Fill buffer with background color. */
+    for ( i = DISK_DMA_PIXELS, pix_to = pix_buf; i > 0; i-- ) {
+	COPYRGB( pix_to, bpp );
+	pix_to += sizeof(RGBpixel);
+    }
+
+    /* Set start of framebuffer */
+    fd = ifp->if_fd;
+    if ( ifp->if_seekpos != 0L && lseek( fd, (off_t)0L, 0 ) == -1 ) {
+	fb_log( "disk_color_clear : seek failed.\n" );
+	return	-1;
+    }
+
+    /* Send until frame buffer is full. */
+    pixelstodo = ifp->if_height * ifp->if_width;
+    while ( pixelstodo > 0 ) {
+	i = pixelstodo > DISK_DMA_PIXELS ? DISK_DMA_PIXELS : pixelstodo;
+	if ( write( fd, pix_buf, i * sizeof(RGBpixel) ) == -1 )
+	    return	-1;
+	pixelstodo -= i;
+	ifp->if_seekpos += i * sizeof(RGBpixel);
+    }
+
+    return	0;
+}
+
 
 HIDDEN int
 dsk_clear(FBIO *ifp, unsigned char *bgpp)
@@ -303,44 +289,6 @@ dsk_wmap(FBIO *ifp, const ColorMap *cmap)
     return	0;
 }
 
-/*
- *		D I S K _ C O L O R _ C L E A R
- *
- *  Clear the disk file to the given color.
- */
-HIDDEN int
-disk_color_clear(FBIO *ifp, register unsigned char *bpp)
-{
-    static unsigned char	pix_buf[DISK_DMA_BYTES] = {0};
-    register unsigned char *pix_to;
-    register long	i;
-    int	fd, pixelstodo;
-
-    /* Fill buffer with background color. */
-    for ( i = DISK_DMA_PIXELS, pix_to = pix_buf; i > 0; i-- ) {
-	COPYRGB( pix_to, bpp );
-	pix_to += sizeof(RGBpixel);
-    }
-
-    /* Set start of framebuffer */
-    fd = ifp->if_fd;
-    if ( ifp->if_seekpos != 0L && lseek( fd, (off_t)0L, 0 ) == -1 ) {
-	fb_log( "disk_color_clear : seek failed.\n" );
-	return	-1;
-    }
-
-    /* Send until frame buffer is full. */
-    pixelstodo = ifp->if_height * ifp->if_width;
-    while ( pixelstodo > 0 ) {
-	i = pixelstodo > DISK_DMA_PIXELS ? DISK_DMA_PIXELS : pixelstodo;
-	if ( write( fd, pix_buf, i * sizeof(RGBpixel) ) == -1 )
-	    return	-1;
-	pixelstodo -= i;
-	ifp->if_seekpos += i * sizeof(RGBpixel);
-    }
-
-    return	0;
-}
 
 HIDDEN int
 dsk_help(FBIO *ifp)
@@ -362,6 +310,49 @@ dsk_help(FBIO *ifp)
 
     return(0);
 }
+
+FBIO disk_interface = {
+    0,
+    dsk_open,
+    dsk_close,
+    dsk_clear,
+    dsk_read,
+    dsk_write,
+    dsk_rmap,
+    dsk_wmap,
+    fb_sim_view,		/* set view */
+    fb_sim_getview,		/* get view */
+    fb_null_setcursor,		/* define cursor */
+    fb_sim_cursor,		/* set cursor */
+    fb_sim_getcursor,	/* get cursor */
+    fb_sim_readrect,
+    fb_sim_writerect,
+    fb_sim_bwreadrect,
+    fb_sim_bwwriterect,
+    fb_null,		/* poll */
+    fb_null,		/* flush */
+    dsk_free,
+    dsk_help,
+    "Disk File Interface",
+    32*1024,		/* the sky's really the limit here */
+    32*1024,
+    "filename",		/* not in list so name is safe */
+    512,
+    512,
+    -1,			/* select fd */
+    -1,
+    1, 1,			/* zoom */
+    256, 256,		/* window center */
+    0, 0, 0,		/* cursor */
+    PIXEL_NULL,
+    PIXEL_NULL,
+    PIXEL_NULL,
+    -1,
+    0,
+    0L,
+    0L,
+    0
+};
 
 /*
  * Local Variables:

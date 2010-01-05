@@ -225,9 +225,10 @@ rtgl_open(Tcl_Interp *interp, int argc, char **argv)
     XInputClassInfo *cip;
     struct bu_vls str;
     struct bu_vls init_proc_vls;
-    Display *tmp_dpy;
+    Display *tmp_dpy = (Display *)NULL;
     struct dm *dmp = (struct dm *)NULL;
-    Tk_Window tkwin;
+    Tk_Window tkwin = (Tk_Window)NULL;
+    int screen_number = -1;
 
     if ((tkwin = Tk_MainWindow(interp)) == NULL) {
 	return DM_NULL;
@@ -323,14 +324,17 @@ rtgl_open(Tcl_Interp *interp, int argc, char **argv)
     }
 #endif
 
+    screen_number = XDefaultScreen(tmp_dpy);
+    if (screen_number <= 0)
+	bu_log("WARNING: screen number is [%d]\n", screen_number);
+
+
     if (dmp->dm_width == 0) {
-	dmp->dm_width =
-	    DisplayWidth(tmp_dpy, DefaultScreen(tmp_dpy)) - 30;
+	dmp->dm_width = XDisplayWidth(tmp_dpy, screen_number) - 30;
 	++make_square;
     }
     if (dmp->dm_height == 0) {
-	dmp->dm_height =
-	    DisplayHeight(tmp_dpy, DefaultScreen(tmp_dpy)) - 30;
+	dmp->dm_height = XDisplayHeight(tmp_dpy, screen_number) - 30;
 	++make_square;
     }
 
@@ -1555,7 +1559,7 @@ time_t start = 0;
  *
  */
 HIDDEN int
-rtgl_drawVList(struct dm *dmp, register struct bn_vlist *vp)
+rtgl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 {
     int i, j, new, numVisible, numNew, maxPixels, viewSize;
     vect_t span;
@@ -1946,7 +1950,7 @@ rtgl_normal(struct dm *dmp)
  * The starting position of the beam is as specified.
  */
 HIDDEN int
-rtgl_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int size, int use_aspect)
+rtgl_drawString2D(struct dm *dmp, char *str, fastf_t x, fastf_t y, int size, int use_aspect)
 {
     if (dmp->dm_debugLevel)
 	bu_log("rtgl_drawString2D()\n");

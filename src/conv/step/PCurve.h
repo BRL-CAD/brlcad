@@ -43,7 +43,7 @@ protected:
 public:
 	PCurve();
 	virtual ~PCurve();
-	PCurve(STEPWrapper *sw,int STEPid);
+	PCurve(STEPWrapper *sw,int step_id);
 	virtual curve_type CurveType() { return PCURVE; };
 	bool Load(STEPWrapper *sw,SCLP23(Application_instance) *sse);
 	virtual const double *PointAtEnd();

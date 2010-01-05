@@ -38,9 +38,9 @@ VolumeSiUnit::VolumeSiUnit() {
 	id = 0;
 }
 
-VolumeSiUnit::VolumeSiUnit(STEPWrapper *sw,int STEPid) {
+VolumeSiUnit::VolumeSiUnit(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 VolumeSiUnit::~VolumeSiUnit() {
@@ -54,11 +54,11 @@ VolumeSiUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 	// load base class attributes
 	if ( !VolumeUnit::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::Unit." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 		return false;
 	}
 	if ( !SiUnit::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::Unit." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 		return false;
 	}
 
@@ -67,10 +67,10 @@ VolumeSiUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 void
 VolumeSiUnit::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	VolumeUnit::Print(level+1);
 	SiUnit::Print(level+1);
 
@@ -84,7 +84,7 @@ VolumeSiUnit::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

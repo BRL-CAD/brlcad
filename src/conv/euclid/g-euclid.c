@@ -132,7 +132,7 @@ insert_id(int id)
 }
 
 static int
-select_region(register struct db_tree_state *tsp, struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
+select_region(struct db_tree_state *tsp, struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
 {
     if (verbose )
 	bu_log( "select_region: curr_id = %d, tsp->ts_regionid = %d\n", curr_id, tsp->ts_regionid);
@@ -144,7 +144,7 @@ select_region(register struct db_tree_state *tsp, struct db_full_path *pathp, co
 }
 
 static int
-get_reg_id(register struct db_tree_state *tsp, struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
+get_reg_id(struct db_tree_state *tsp, struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
 {
     if ( verbose )
 	bu_log( "get_reg_id: Adding id %d to list\n", tsp->ts_regionid );
@@ -153,7 +153,7 @@ get_reg_id(register struct db_tree_state *tsp, struct db_full_path *pathp, const
 }
 
 static union tree *
-region_stub(register struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+region_stub(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
     bu_exit(1, "ERROR; region stub called, this shouldn't happen\n" );
     return( (union tree *)NULL ); /* just to keep the compilers happy */
@@ -473,7 +473,7 @@ int
 main(int argc, char **argv)
 {
     int		i, j;
-    register int	c;
+    int	c;
     double		percent;
 
     bu_setlinebuf( stderr );
@@ -659,7 +659,7 @@ main(int argc, char **argv)
  *
  *  This routine must be prepared to run in parallel.
  */
-union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+union tree *do_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
     struct nmgregion	*r;
     struct bu_list		vhead;

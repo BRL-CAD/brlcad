@@ -271,7 +271,7 @@ main(int argc, char **argv)
 
 		bu_vls_init(&log);
 		if (intern.idb_meth->ft_get(&log, &intern, "tree") != TCL_OK) {
-		    rt_db_free_internal( &intern, &rt_uniresource );
+		    rt_db_free_internal(&intern);
 		    bu_log("Unable to export '%s', skipping\n", dp->d_namep);
 		    Tcl_AppendResult(interp, bu_vls_addr(&log), (char *)0);
 		    bu_vls_free(&log);
@@ -293,7 +293,7 @@ main(int argc, char **argv)
 
 		bu_vls_init(&log);
 		if ( (dp->d_minor_type != ID_CONSTRAINT) && (intern.idb_meth->ft_get( &log, &intern, NULL ) != TCL_OK) )  {
-		    rt_db_free_internal( &intern, &rt_uniresource );
+		    rt_db_free_internal(&intern);
 		    bu_log("Unable to export '%s', skipping\n", dp->d_namep );
 		    Tcl_AppendResult(interp, bu_vls_addr(&log), (char *)0);
 		    bu_vls_free(&log);
@@ -320,7 +320,7 @@ main(int argc, char **argv)
 		fprintf( ofp, "\n" );
 	    }
 	    Tcl_ResetResult( interp );
-	    rt_db_free_internal( &intern, &rt_uniresource );
+	    rt_db_free_internal(&intern);
 	} FOR_ALL_DIRECTORY_END;
 	return 0;
     } else {
@@ -550,7 +550,7 @@ polyhead(void)	/* Print out Polyhead record information */
 void
 polydata(void)	/* Print out Polydata record information */
 {
-    register int i, j;
+    int i, j;
 
     (void)fprintf(ofp, "%c ", record.q.q_id );		/* Q */
     (void)fprintf(ofp, "%d", record.q.q_count );		/* # of vertices <= 5 */
@@ -572,7 +572,7 @@ polydata(void)	/* Print out Polydata record information */
 void
 soldump(void)	/* Print out Solid record information */
 {
-    register int i;
+    int i;
 
     (void)fprintf(ofp, "%c ", record.s.s_id );	/* S */
     (void)fprintf(ofp, "%d ", record.s.s_type );	/* GED primitive type */
@@ -614,7 +614,7 @@ cline_dump(void)
     (void)fprintf(ofp, "%26.20e %26.20e", cli->radius, cli->thickness );
     (void)fprintf(ofp, "\n");			/* Terminate w/ a newline */
 
-    rt_db_free_internal( &intern, &rt_uniresource );
+    rt_db_free_internal(&intern);
     db_free_external( &ext );
 }
 
@@ -671,7 +671,7 @@ bot_dump(void)
 	    fprintf(ofp,  "	%d: %d %d %d\n", i, V3ARGS( &bot->faces[i*3] ) );
     }
 
-    rt_db_free_internal( &intern, &rt_uniresource );
+    rt_db_free_internal(&intern);
     db_free_external( &ext );
 }
 
@@ -706,7 +706,7 @@ pipe_dump(void)	/* Print out Pipe record information */
 
     dump_pipe_segs(name, &pipe->pipe_segs_head);
 
-    rt_db_free_internal( &intern, &rt_uniresource );
+    rt_db_free_internal(&intern);
     db_free_external( &ext );
 }
 
@@ -815,7 +815,7 @@ arbn_dump(void)
 		arbn->eqn[i][Z], arbn->eqn[i][3]);
     }
 
-    rt_db_free_internal( &intern, &rt_uniresource );
+    rt_db_free_internal(&intern);
     db_free_external( &ext );
 }
 
@@ -947,7 +947,7 @@ combdump(void)	/* Print out Combination record information */
 void
 membdump(union record *rp)
 {
-    register int i;
+    int i;
 
     (void)fprintf(ofp, "%c ", rp->M.m_id );		/* M */
     (void)fprintf(ofp, "%c ", rp->M.m_relation );	/* Boolean oper. */
@@ -961,8 +961,8 @@ membdump(union record *rp)
 void
 arsadump(void)	/* Print out ARS record information */
 {
-    register int i;
-    register int length;	/* Keep track of number of ARS B records */
+    int i;
+    int length;	/* Keep track of number of ARS B records */
 
     (void)fprintf(ofp, "%c ", record.a.a_id );	/* A */
     (void)fprintf(ofp, "%d ", record.a.a_type );	/* primitive type */
@@ -989,7 +989,7 @@ arsadump(void)	/* Print out ARS record information */
 void
 arsbdump(void)	/* Print out ARS B record information */
 {
-    register int i;
+    int i;
 
     /* Read in a member record for processing */
     (void)fread( (char *)&record, sizeof record, 1, ifp );
@@ -1030,8 +1030,8 @@ bspldump(void)	/* Print out B-spline solid description record information */
 void
 bsurfdump(void)	/* Print d-spline surface description record information */
 {
-    register int i;
-    register float *vp;
+    int i;
+    float *vp;
     int nbytes, count;
     float *fp;
 
@@ -1108,9 +1108,9 @@ bsurfdump(void)	/* Print d-spline surface description record information */
 char *name(char *str)
 {
     static char buf[NAMESIZE+1];
-    register char *ip = str;
-    register char *op = buf;
-    register int warn = 0;
+    char *ip = str;
+    char *op = buf;
+    int warn = 0;
 
     while ( op < &buf[NAMESIZE] )  {
 	if ( *ip == '\0' )  break;
@@ -1146,9 +1146,9 @@ char *name(char *str)
 char *strchop(char *str, int len)
 {
     static char buf[10000] = {0};
-    register char *ip = str;
-    register char *op = buf;
-    register int warn = 0;
+    char *ip = str;
+    char *op = buf;
+    int warn = 0;
     char *ep;
 
     if ( len > sizeof(buf)-2 )  len=sizeof(buf)-2;

@@ -38,9 +38,9 @@ Unit::Unit() {
 	id = 0;
 }
 
-Unit::Unit(STEPWrapper *sw,int STEPid) {
+Unit::Unit(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 Unit::~Unit() {
@@ -56,8 +56,8 @@ Unit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 void
 Unit::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 }
 STEPEntity *
 Unit::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
@@ -68,7 +68,7 @@ Unit::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

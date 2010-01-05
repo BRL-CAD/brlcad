@@ -41,7 +41,7 @@ protected:
 public:
 	SweptSurface();
 	virtual ~SweptSurface();
-	SweptSurface(STEPWrapper *sw,int STEPid);
+	SweptSurface(STEPWrapper *sw,int step_id);
 	int GetSweptEdgeONId() { return swept_edge_ON_id; };
 	bool Load(STEPWrapper *sw,SCLP23(Application_instance) *sse);
 	virtual bool LoadONBrep(ON_Brep *brep);

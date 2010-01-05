@@ -42,7 +42,7 @@ protected:
 	LIST_OF_BOUNDARIES boundaries;
 	//TODO: Fix all references to YAYA
 #ifdef YAYA
-	SCLBOOL_H(Bool) implicit_outer;
+	SCLBOOL_H(Boolean) implicit_outer;
 #else
 	int implicit_outer;
 #endif
@@ -50,7 +50,7 @@ protected:
 public:
 	CurveBoundedSurface();
 	virtual ~CurveBoundedSurface();
-	CurveBoundedSurface(STEPWrapper *sw,int STEPid);
+	CurveBoundedSurface(STEPWrapper *sw,int step_id);
 	bool Load(STEPWrapper *sw,SCLP23(Application_instance) *sse);
 	virtual bool LoadONBrep(ON_Brep *brep);
 	virtual void Print(int level);

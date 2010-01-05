@@ -263,7 +263,7 @@ rt_sph_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 }
 
 
-#define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;
+#define RT_SPH_SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;
 /**
  * R T _ S P H _ V S H O T
  *
@@ -285,6 +285,8 @@ rt_sph_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
     fastf_t b;		/* second term of quadratic eqn */
     fastf_t root;		/* root of radical */
 
+    if (ap) RT_CK_APPLICATION(ap);
+
     /* for each ray/sphere pair */
     for (i = 0; i < n; i++) {
 	if (stp[i] == 0) continue; /* stp[i] == 0 signals skip ray */
@@ -298,13 +300,13 @@ rt_sph_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	    /* ray origin is outside of sphere */
 	    if (b < 0) {
 		/* ray direction is away from sphere */
-		SEG_MISS(segp[i]);		/* No hit */
+		RT_SPH_SEG_MISS(segp[i]);		/* No hit */
 		continue;
 	    }
 	    root = b*b - magsq_ov + sph->sph_radsq;
 	    if (root <= 0) {
 		/* no real roots */
-		SEG_MISS(segp[i]);		/* No hit */
+		RT_SPH_SEG_MISS(segp[i]);		/* No hit */
 		continue;
 	    }
 	} else {
@@ -427,8 +429,11 @@ rt_sph_class(void)
  *
  */
 int
-rt_sph_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
+rt_sph_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 {
+    ps = ps; /* quellage */
+    if (ip) RT_CK_DB_INTERNAL(ip);
+
     return(0);			/* OK */
 }
 

@@ -38,7 +38,7 @@ protected:
 public:
 	ThermodynamicTemperatureUnit();
 	virtual ~ThermodynamicTemperatureUnit();
-	ThermodynamicTemperatureUnit(STEPWrapper *sw,int STEPid);
+	ThermodynamicTemperatureUnit(STEPWrapper *sw,int step_id);
 	bool Load(STEPWrapper *sw,SCLP23(Application_instance) *sse);
 	virtual void Print(int level);
 

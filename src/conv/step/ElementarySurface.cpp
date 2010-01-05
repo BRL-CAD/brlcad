@@ -39,9 +39,9 @@ ElementarySurface::ElementarySurface() {
 	position = NULL;
 }
 
-ElementarySurface::ElementarySurface(STEPWrapper *sw,int STEPid) {
+ElementarySurface::ElementarySurface(STEPWrapper *sw,int step_id) {
 	step=sw;
-	id = STEPid;
+	id = step_id;
 	position = NULL;
 }
 
@@ -54,7 +54,7 @@ ElementarySurface::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 	id = sse->STEPfile_id;
 
 	if ( !Surface::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::Surface." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::Surface." << std::endl;
 		return false;
 	}
 
@@ -67,7 +67,7 @@ ElementarySurface::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		if (entity) {
 			position = dynamic_cast<Axis2Placement3D *>(Factory::CreateObject(sw,entity));
 		} else {
-			cerr << CLASSNAME << ": error loading 'position' attribute." << endl;
+			std::cerr << CLASSNAME << ": error loading 'position' attribute." << std::endl;
 			return false;
 		}
 	}
@@ -77,8 +77,8 @@ ElementarySurface::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 
 void
 ElementarySurface::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << name << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
 	if (position != NULL) {
 		position->Print(level+1);
@@ -94,7 +94,7 @@ ElementarySurface::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}
@@ -107,7 +107,7 @@ ElementarySurface::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 bool
 ElementarySurface::LoadONBrep(ON_Brep *brep)
 {
-	cerr << "Error: ::LoadONBrep(ON_Brep *brep) not implemented for " << entityname << endl;
+	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implemented for " << entityname << std::endl;
 	return false;
 }
 

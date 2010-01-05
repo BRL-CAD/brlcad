@@ -167,7 +167,7 @@ do_bending(struct rt_wdb *fp, char *name, point_t (*pts), int npts, double bend,
 void
 pr_pipe(const char *name, struct wdb_pipept *head)
 {
-    register struct wdb_pipept *psp;
+    struct wdb_pipept *psp;
 
     fprintf(stderr, "\n--- %s:\n", name);
     for (BU_LIST_FOR(psp, wdb_pipept, &head->l)) {

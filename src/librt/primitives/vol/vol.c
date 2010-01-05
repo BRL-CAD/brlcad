@@ -65,15 +65,15 @@ struct rt_vol_specific {
 #define VOL_O(m) bu_offsetof(struct rt_vol_internal, m)
 
 const struct bu_structparse rt_vol_parse[] = {
-    {"%s",	RT_VOL_NAME_LEN, "file",	bu_offsetofarray(struct rt_vol_internal, file), BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "w",		VOL_O(xdim),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "n",		VOL_O(ydim),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "d",		VOL_O(zdim),	BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "lo",	VOL_O(lo),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "hi",	VOL_O(hi),		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	ELEMENTS_PER_VECT, "size", bu_offsetofarray(struct rt_vol_internal, cellsize), BU_STRUCTPARSE_FUNC_NULL },
-    {"%f",	16, "mat", bu_offsetofarray(struct rt_vol_internal, mat), BU_STRUCTPARSE_FUNC_NULL },
-    {"",	0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"%s", RT_VOL_NAME_LEN, "file", bu_offsetofarray(struct rt_vol_internal, file), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d", 1, "w", VOL_O(xdim), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d", 1, "n", VOL_O(ydim), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d", 1, "d", VOL_O(zdim), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d", 1, "lo", VOL_O(lo), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d", 1, "hi", VOL_O(hi), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", ELEMENTS_PER_VECT, "size", bu_offsetofarray(struct rt_vol_internal, cellsize), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f", 16, "mat", bu_offsetofarray(struct rt_vol_internal, mat), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"", 0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
@@ -200,7 +200,7 @@ rt_vol_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     if (RT_G_DEBUG&DEBUG_VOL)bu_log("igrid=(%d, %d, %d)\n", igrid[X], igrid[Y], igrid[Z]);
 
     /* X setup */
-    if (rp->r_dir[X] == 0.0) {
+    if (NEAR_ZERO(rp->r_dir[X], SMALL_FASTF)) {
 	t[X] = INFINITY;
 	delta[X] = 0;
     } else {
@@ -211,7 +211,7 @@ rt_vol_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	delta[X] = volp->vol_i.cellsize[X] * fabs(invdir[X]);
     }
     /* Y setup */
-    if (rp->r_dir[Y] == 0.0) {
+    if (NEAR_ZERO(rp->r_dir[Y], SMALL_FASTF)) {
 	t[Y] = INFINITY;
 	delta[Y] = 0;
     } else {
@@ -222,7 +222,7 @@ rt_vol_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	delta[Y] = volp->vol_i.cellsize[Y] * fabs(invdir[Y]);
     }
     /* Z setup */
-    if (rp->r_dir[Z] == 0.0) {
+    if (NEAR_ZERO(rp->r_dir[Z], SMALL_FASTF)) {
 	t[Z] = INFINITY;
 	delta[Z] = 0;
     } else {
@@ -416,6 +416,8 @@ rt_vol_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     mat_t tmat;
     int ret;
 
+    if (dbip) RT_CK_DBI(dbip);
+
     BU_CK_EXTERNAL(ep);
     rp = (union record *)ep->ext_buf;
     if (rp->u_id != DBID_STRSOL) {
@@ -511,6 +513,8 @@ rt_vol_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     union record *rec;
     struct bu_vls str;
 
+    if (dbip) RT_CK_DBI(dbip);
+
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_VOL) return(-1);
     vip = (struct rt_vol_internal *)ip->idb_ptr;
@@ -555,6 +559,8 @@ rt_vol_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     register int z;
     mat_t tmat;
     int ret;
+
+    if (dbip) RT_CK_DBI(dbip);
 
     BU_CK_EXTERNAL(ep);
 
@@ -645,6 +651,8 @@ rt_vol_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     struct rt_vol_internal vol;	/* scaled version */
     struct bu_vls str;
 
+    if (dbip) RT_CK_DBI(dbip);
+
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_VOL) return(-1);
     vip = (struct rt_vol_internal *)ip->idb_ptr;
@@ -678,16 +686,18 @@ rt_vol_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 int
 rt_vol_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
-    register struct rt_vol_internal *vip =
-	(struct rt_vol_internal *)ip->idb_ptr;
+    struct rt_vol_internal *vip = (struct rt_vol_internal *)ip->idb_ptr;
     register int i;
     struct bu_vls substr;
     vect_t local;
 
     RT_VOL_CK_MAGIC(vip);
 
-    VSCALE(local, vip->cellsize, mm2local)
-	bu_vls_strcat(str, "thresholded volumetric solid (VOL)\n\t");
+    VSCALE(local, vip->cellsize, mm2local);
+    bu_vls_strcat(str, "thresholded volumetric solid (VOL)\n\t");
+
+    if (!verbose)
+	return 0;
 
 /* bu_vls_struct_print(str, rt_vol_parse, (char *)vip);
    bu_vls_strcat(str, "\n"); */
@@ -708,7 +718,7 @@ rt_vol_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 
     bu_vls_free(&substr);
 
-    return(0);
+    return 0;
 }
 
 
@@ -718,15 +728,11 @@ rt_vol_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
  * Free the storage associated with the rt_db_internal version of this solid.
  */
 void
-rt_vol_ifree(struct rt_db_internal *ip, struct resource *resp)
+rt_vol_ifree(struct rt_db_internal *ip)
 {
     register struct rt_vol_internal *vip;
 
     RT_CK_DB_INTERNAL(ip);
-
-    if (!resp) {
-	resp = &rt_uniresource;
-    }
 
     vip = (struct rt_vol_internal *)ip->idb_ptr;
     RT_VOL_CK_MAGIC(vip);
@@ -761,6 +767,9 @@ rt_vol_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     vect_t diam;
     vect_t small1;
 
+    RT_CK_SOLTAB(stp);
+    RT_CK_DB_INTERNAL(ip);
+    if (rtip) RT_CK_RTI(rtip);
 
     vip = (struct rt_vol_internal *)ip->idb_ptr;
     RT_VOL_CK_MAGIC(vip);
@@ -875,8 +884,10 @@ rt_vol_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 void
 rt_vol_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
 {
-/* register struct rt_vol_specific *volp =
-   (struct rt_vol_specific *)stp->st_specific; */
+    if (!cvp || !hitp)
+	return;
+    RT_CK_HIT(hitp);
+    if (stp) RT_CK_SOLTAB(stp);
 
     bn_vec_ortho(cvp->crv_pdir, hitp->hit_normal);
     cvp->crv_c1 = cvp->crv_c2 = 0;
@@ -892,8 +903,11 @@ rt_vol_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 void
 rt_vol_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
 {
-/* register struct rt_vol_specific *volp =
-   (struct rt_vol_specific *)stp->st_specific;*/
+    if (ap) RT_CK_APPLICATION(ap);
+    if (stp) RT_CK_SOLTAB(stp);
+    if (hitp) RT_CK_SOLTAB(stp);
+    if (!uvp)
+	return;
 
     /* XXX uv should be xy in ideal space */
 }
@@ -924,7 +938,7 @@ rt_vol_class(void)
  * R T _ V O L _ P L O T
  */
 int
-rt_vol_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_vol_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
 {
     register struct rt_vol_internal *vip;
     register short x, y, z;
@@ -1299,8 +1313,11 @@ rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
  *
  */
 int
-rt_vol_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
+rt_vol_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 {
+    ps = ps; /* quellage */
+    if (ip) RT_CK_DB_INTERNAL(ip);
+
     return(0);			/* OK */
 }
 

@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -81,11 +80,13 @@ public:
   virtual int  GetStrings( ON_ClassArray<ON_wString>& ) const;
 
 private:
-  ON_Value(); // no implementation
+  // no implementation
+  ON_Value(); 
+  ON_Value& operator=(const ON_Value&);
 };
 
 ON_Value::ON_Value( ON_Value::VALUE_TYPE value_type )
-	 : m_value_type(value_type)
+         : m_value_type(value_type)
 {
   m_value_id = -1;
 }
@@ -164,7 +165,7 @@ public:
 };
 
 ON_BoolValue::ON_BoolValue() 
-	     : ON_Value(ON_Value::bool_value) 
+             : ON_Value(ON_Value::bool_value) 
 {
 }
 
@@ -251,7 +252,7 @@ public:
 };
 
 ON_IntValue::ON_IntValue() 
-	     : ON_Value(ON_Value::int_value) 
+             : ON_Value(ON_Value::int_value) 
 {
 }
 
@@ -338,7 +339,7 @@ public:
 };
 
 ON_DoubleValue::ON_DoubleValue() 
-	     : ON_Value(ON_Value::double_value) 
+             : ON_Value(ON_Value::double_value) 
 {
 }
 
@@ -424,7 +425,7 @@ public:
 };
 
 ON_PointValue::ON_PointValue() 
-	     : ON_Value(ON_Value::point_value) 
+             : ON_Value(ON_Value::point_value) 
 {
 }
 
@@ -511,7 +512,7 @@ public:
 };
 
 ON_VectorValue::ON_VectorValue() 
-	     : ON_Value(ON_Value::vector_value) 
+             : ON_Value(ON_Value::vector_value) 
 {
 }
 
@@ -598,7 +599,7 @@ public:
 };
 
 ON_XformValue::ON_XformValue() 
-	     : ON_Value(ON_Value::xform_value) 
+             : ON_Value(ON_Value::xform_value) 
 {
 }
 
@@ -685,7 +686,7 @@ public:
 };
 
 ON_ColorValue::ON_ColorValue() 
-	     : ON_Value(ON_Value::color_value) 
+             : ON_Value(ON_Value::color_value) 
 {
 }
 
@@ -774,7 +775,7 @@ public:
 };
 
 ON_UuidValue::ON_UuidValue() 
-	     : ON_Value(ON_Value::uuid_value) 
+             : ON_Value(ON_Value::uuid_value) 
 {
 }
 
@@ -860,7 +861,7 @@ public:
 };
 
 ON_StringValue::ON_StringValue() 
-	     : ON_Value(ON_Value::string_value) 
+             : ON_Value(ON_Value::string_value) 
 {
 }
 
@@ -947,7 +948,7 @@ public:
 };
 
 ON_ObjRefValue::ON_ObjRefValue() 
-	     : ON_Value(ON_Value::objref_value) 
+             : ON_Value(ON_Value::objref_value) 
 {
 }
 
@@ -1038,7 +1039,7 @@ public:
 };
 
 ON_GeometryValue::ON_GeometryValue() 
-	     : ON_Value(ON_Value::geometry_value) 
+             : ON_Value(ON_Value::geometry_value) 
 {
 }
 
@@ -1072,7 +1073,7 @@ ON_GeometryValue& ON_GeometryValue::operator=(const ON_GeometryValue& src)
       m_value[i] = 0;
       if (p)
       {
-	delete p;
+        delete p;
       }
     }
     m_value.Destroy();
@@ -1085,10 +1086,10 @@ ON_GeometryValue& ON_GeometryValue::operator=(const ON_GeometryValue& src)
     {
       const ON_Geometry* src_ptr = src.m_value[i];
       if ( !src_ptr )
-	continue;
+        continue;
       ON_Geometry* ptr = src_ptr->Duplicate();
       if ( ptr )
-	m_value.Append(ptr);
+        m_value.Append(ptr);
     }
   }
   return *this;
@@ -1134,15 +1135,15 @@ bool ON_GeometryValue::ReadHelper(ON_BinaryArchive& archive )
       rc = archive.ReadObject(&p) > 0;
       if (rc)
       {
-	ON_Geometry* g = ON_Geometry::Cast(p);
-	if (g)
-	{
-	  p = 0;
-	  m_value.Append(g);
-	}
+        ON_Geometry* g = ON_Geometry::Cast(p);
+        if (g)
+        {
+          p = 0;
+          m_value.Append(g);
+        }
       }
       if ( p )
-	delete p;
+        delete p;
     }
     if (!rc) break;
 
@@ -1265,8 +1266,8 @@ ON_Value* ON_Value::CreateValue( int value_type )
 ON_OBJECT_IMPLEMENT(ON_HistoryRecord,ON_Object,"ECD0FD2F-2088-49dc-9641-9CF7A28FFA6B");
 
 ON_HistoryRecord::ON_HistoryRecord() 
-		 : m_antecedents(2),
-		   m_descendants(1)                   
+                 : m_antecedents(2),
+                   m_descendants(1)                   
 {
   m_command_id    = ON_nil_uuid;
   m_version       = 0;
@@ -1309,10 +1310,10 @@ void  ON_HistoryRecord::CopyHelper(const ON_HistoryRecord& src)
       ON_Value* v = src_v->Duplicate();
       if ( v )
       {
-	m_value.Append(v);
-	if ( m_bValuesSorted && prev_v && prev_v->m_value_id > v->m_value_id )
-	  m_bValuesSorted = false;
-	prev_v = v;
+        m_value.Append(v);
+        if ( m_bValuesSorted && prev_v && prev_v->m_value_id > v->m_value_id )
+          m_bValuesSorted = false;
+        prev_v = v;
       }
     }
   }
@@ -1334,7 +1335,7 @@ ON_HistoryRecord& ON_HistoryRecord::operator=(const ON_HistoryRecord& src)
   return *this;
 }
 
-BOOL ON_HistoryRecord::IsValid( ON_TextLog* text_log ) const
+ON_BOOL32 ON_HistoryRecord::IsValid( ON_TextLog* text_log ) const
 {
   return true;
 }
@@ -1361,8 +1362,8 @@ void ON_HistoryRecord::Destroy()
 ON_HistoryRecord::RECORD_TYPE ON_HistoryRecord::RecordType(int i)
 {
   RECORD_TYPE rc = ( ON_HistoryRecord::feature_parameters == i )
-		 ? ON_HistoryRecord::feature_parameters
-		 : ON_HistoryRecord::history_parameters;
+                 ? ON_HistoryRecord::feature_parameters
+                 : ON_HistoryRecord::history_parameters;
   return rc;
 }
 
@@ -1480,21 +1481,21 @@ ON_Value* ON_HistoryRecord::FindValueHelper( int value_id, int value_type, bool 
 
       if ( value_type == ((int)m_value[i]->m_value_type) )
       {
-	// type matches
-	return m_value[i];
+        // type matches
+        return m_value[i];
       }
 
       if ( bCreateOne )
       {
-	// type does not match - replace the existing one
-	ON_Value* new_value = ON_Value::CreateValue(value_type);
-	if ( new_value )
-	{
-	  new_value->m_value_id = value_id;
-	  delete m_value[i];
-	  vp->m_value[i] = new_value;
-	  return new_value;
-	}
+        // type does not match - replace the existing one
+        ON_Value* new_value = ON_Value::CreateValue(value_type);
+        if ( new_value )
+        {
+          new_value->m_value_id = value_id;
+          delete m_value[i];
+          vp->m_value[i] = new_value;
+          return new_value;
+        }
       }
     }
     else if ( bCreateOne )
@@ -1503,11 +1504,11 @@ ON_Value* ON_HistoryRecord::FindValueHelper( int value_id, int value_type, bool 
       ON_Value* new_value = ON_Value::CreateValue(value_type);
       if ( new_value )
       {
-	new_value->m_value_id = value_id;
-	if ( m_bValuesSorted && (*m_value.Last())->m_value_id > value_id )
-	  vp->m_bValuesSorted = false;
-	vp->m_value.Append(new_value);
-	return new_value;
+        new_value->m_value_id = value_id;
+        if ( m_bValuesSorted && (*m_value.Last())->m_value_id > value_id )
+          vp->m_bValuesSorted = false;
+        vp->m_value.Append(new_value);
+        return new_value;
       }
     }
   }
@@ -1681,7 +1682,7 @@ bool ON_HistoryRecord::SetObjRefValues( int value_id, int count, const ON_ObjRef
       ON_UUID object_id = v->m_value[i].m_uuid;
       if ( !ON_UuidIsNil(object_id) )
       {
-	m_antecedents.AddUuid(object_id);
+        m_antecedents.AddUuid(object_id);
       }
     }
   }
@@ -2051,8 +2052,8 @@ void ON_HistoryRecord::Dump( ON_TextLog& text_log ) const
   text_log.Print("\n");
 
   text_log.Print("Record type: %s\n",
-		 (m_record_type == ON_HistoryRecord::feature_parameters) 
-		 ? "feature parameters" : "history parameters");
+                 (m_record_type == ON_HistoryRecord::feature_parameters) 
+                 ? "feature parameters" : "history parameters");
 
   // list antededents
   uuid_list.SetCount(0);
@@ -2124,7 +2125,7 @@ void ON_HistoryRecord::DestroyValue( int value_id )
   }
 }
 
-BOOL ON_HistoryRecord::Read( ON_BinaryArchive& archive )
+ON_BOOL32 ON_HistoryRecord::Read( ON_BinaryArchive& archive )
 {
   Destroy();
 
@@ -2164,53 +2165,53 @@ BOOL ON_HistoryRecord::Read( ON_BinaryArchive& archive )
 
       int i, count = 0;
       if (rc) 
-	rc = archive.ReadInt(&count);
+        rc = archive.ReadInt(&count);
 
       if (rc)
-	m_value.Reserve(count);
+        m_value.Reserve(count);
 
       for ( i = 0; i < count && rc; i++ )
       {
-	int mjv=0,mnv=0;
-	rc = archive.BeginRead3dmChunk(TCODE_ANONYMOUS_CHUNK,&mjv,&mnv);
-	if ( !rc)
-	  break;
-	for(;;)
-	{
-	  rc = ( 1 == mjv);
-	  if (!rc) break;
-	  int value_type = ON_Value::no_value_type;
-	  rc = archive.ReadInt(&value_type);
-	  if (!rc) 
-	    break;
+        int mjv=0,mnv=0;
+        rc = archive.BeginRead3dmChunk(TCODE_ANONYMOUS_CHUNK,&mjv,&mnv);
+        if ( !rc)
+          break;
+        for(;;)
+        {
+          rc = ( 1 == mjv);
+          if (!rc) break;
+          int value_type = ON_Value::no_value_type;
+          rc = archive.ReadInt(&value_type);
+          if (!rc) 
+            break;
 
-	  int value_id = 0;
-	  rc = archive.ReadInt(&value_id);
-	  if (!rc) 
-	    break;
+          int value_id = 0;
+          rc = archive.ReadInt(&value_id);
+          if (!rc) 
+            break;
 
-	  ON_Value* value = ON_Value::CreateValue(value_type);
-	  if ( value )
-	  {        
-	    value->m_value_id = value_id;
-	    rc = value->ReadHelper(archive);
-	    if (!rc) 
-	    {
-	      delete value;
-	      break;
-	    }
-	    m_value.Append(value);
-	  }
+          ON_Value* value = ON_Value::CreateValue(value_type);
+          if ( value )
+          {        
+            value->m_value_id = value_id;
+            rc = value->ReadHelper(archive);
+            if (!rc) 
+            {
+              delete value;
+              break;
+            }
+            m_value.Append(value);
+          }
 
-	  break;
-	}
-	if (!archive.EndRead3dmChunk())
-	  rc = false;
+          break;
+        }
+        if (!archive.EndRead3dmChunk())
+          rc = false;
       }
 
       // end of all values
       if (!archive.EndRead3dmChunk())
-	rc = false;
+        rc = false;
     }
 
     if ( rc && minor_version >= 1 )
@@ -2218,9 +2219,9 @@ BOOL ON_HistoryRecord::Read( ON_BinaryArchive& archive )
       // 1.1 fields added to opennurbs version 200603200
       int rec_type = ON_HistoryRecord::history_parameters;
       if (rc)
-	rc = archive.ReadInt( &rec_type );
+        rc = archive.ReadInt( &rec_type );
       if (rc )
-	m_record_type = RecordType(rec_type);
+        m_record_type = RecordType(rec_type);
 
     }
 
@@ -2233,7 +2234,7 @@ BOOL ON_HistoryRecord::Read( ON_BinaryArchive& archive )
   return rc;
 }
 
-BOOL ON_HistoryRecord::Write( ON_BinaryArchive& archive ) const
+ON_BOOL32 ON_HistoryRecord::Write( ON_BinaryArchive& archive ) const
 {
   bool rc = archive.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK,1,1);
   if (!rc)
@@ -2267,33 +2268,33 @@ BOOL ON_HistoryRecord::Write( ON_BinaryArchive& archive ) const
 
       for ( i = 0; i < count && rc; i++ )
       {
-	// put individual value in its own chunk
-	rc = archive.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK,1,0);
-	if ( !rc)
-	  break;
-	for(;;)
-	{
-	  const ON_Value* value = m_value[i];
-	  rc = archive.WriteInt(value ? value->m_value_type : ON_Value::no_value_type );
-	  if (!rc) break;
+        // put individual value in its own chunk
+        rc = archive.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK,1,0);
+        if ( !rc)
+          break;
+        for(;;)
+        {
+          const ON_Value* value = m_value[i];
+          rc = archive.WriteInt(value ? value->m_value_type : ON_Value::no_value_type );
+          if (!rc) break;
 
-	  rc = archive.WriteInt(value ? value->m_value_id : 0 );
-	  if (!rc) break;
-	  
-	  if ( value && value->m_value_type != ON_Value::no_value_type )
-	    rc = value->WriteHelper(archive);
-	  if (!rc) break;
+          rc = archive.WriteInt(value ? value->m_value_id : 0 );
+          if (!rc) break;
+          
+          if ( value && value->m_value_type != ON_Value::no_value_type )
+            rc = value->WriteHelper(archive);
+          if (!rc) break;
 
-	  break;
-	}
-	// end of individual value chunk
-	if (!archive.EndWrite3dmChunk())
-	  rc = false;
+          break;
+        }
+        // end of individual value chunk
+        if (!archive.EndWrite3dmChunk())
+          rc = false;
       }
 
       // end of all values chunk
       if ( !archive.EndWrite3dmChunk() )
-	rc = false;
+        rc = false;
 
     }
 
@@ -2326,11 +2327,11 @@ void ON_HistoryRecord::RemapObjectIds( const ON_SimpleArray<ON_UuidPair>& id_rem
       ON_Value* v = m_value[i];
       if ( v && ON_Value::objref_value == v->m_value_type )
       {
-	ON_ObjRefValue* objrev_v = static_cast<ON_ObjRefValue*>(v);
-	for ( j = 0; j < objrev_v->m_value.Count(); j++ )
-	{
-	  objrev_v->m_value[j].RemapObjectId(id_remap);
-	}
+        ON_ObjRefValue* objrev_v = static_cast<ON_ObjRefValue*>(v);
+        for ( j = 0; j < objrev_v->m_value.Count(); j++ )
+        {
+          objrev_v->m_value[j].RemapObjectId(id_remap);
+        }
       }
     }
   }

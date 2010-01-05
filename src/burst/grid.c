@@ -87,7 +87,7 @@ static void view_pix();
 static void spallVec();
 
 /*
-  void colorPartition(register struct region *regp, int type)
+  void colorPartition(struct region *regp, int type)
 
   If user has asked for a UNIX plot write a color command to
   the output stream plotfp which represents the region specified
@@ -95,7 +95,7 @@ static void spallVec();
 */
 void
 colorPartition(regp, type)
-    register struct region *regp;
+    struct region *regp;
     int type;
 {
     Colors	*colorp;
@@ -187,21 +187,21 @@ doBursts()
 }
 
 /*
-  void enforceLOS(register struct application *ap,
-  register struct partition *pt_headp)
+  void enforceLOS(struct application *ap,
+  struct partition *pt_headp)
 
   Enforce the line-of-sight tolerance by deleting partitions that are
   too thin.
 */
 static void
 enforceLOS(ap, pt_headp)
-    register struct application	*ap;
-    register struct partition	*pt_headp;
+    struct application	*ap;
+    struct partition	*pt_headp;
 {
-    register struct partition	*pp;
+    struct partition	*pp;
     for (pp = pt_headp->pt_forw; pp != pt_headp;)
     {
-	register struct partition *nextpp = pp->pt_forw;
+	struct partition *nextpp = pp->pt_forw;
 	if (pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist
 	    <= LOS_TOL)
 	{
@@ -230,9 +230,9 @@ f_BurstHit(ap, pt_headp, segp)
     struct seg *segp;
 {
     Pt_Queue *qshield = PT_Q_NULL;
-    register struct partition *cpp, *spp;
-    register int nbar;
-    register int ncrit = 0;
+    struct partition *cpp, *spp;
+    int nbar;
+    int ncrit = 0;
 #ifdef VDEBUG
     prntDbgPartitions(ap, pt_headp, "f_BurstHit: initial partitions");
 #endif
@@ -248,7 +248,7 @@ f_BurstHit(ap, pt_headp, segp)
 		cpp = cpp->pt_forw
 	)
     {
-	register struct region *regp = cpp->pt_regionp;
+	struct region *regp = cpp->pt_regionp;
 	struct xray *rayp = &ap->a_ray;
 	if (Air(regp))
 	    continue; /* Air doesn't matter here. */
@@ -423,7 +423,7 @@ f_ShotHit(ap, pt_headp, segp)
     struct partition *pt_headp;
     struct seg *segp;
 {
-    register struct partition *pp;
+    struct partition *pp;
     struct partition *bp = PT_NULL;
     fastf_t burstnorm[3]; /* normal at burst point */
 #if DEBUG_GRID
@@ -459,15 +459,15 @@ f_ShotHit(ap, pt_headp, segp)
     {
 	fastf_t	los = 0.0;
 	int	voidflag = 0;
-	register struct partition *np = pp->pt_forw;
-	register struct partition *cp;
-	register struct region *regp = pp->pt_regionp;
-	register struct region *nregp = pp->pt_forw->pt_regionp;
+	struct partition *np = pp->pt_forw;
+	struct partition *cp;
+	struct region *regp = pp->pt_regionp;
+	struct region *nregp = pp->pt_forw->pt_regionp;
 	/* Fill in entry and exit points into hit structures. */
 	{
-	    register struct hit *ihitp = pp->pt_inhit;
-	    register struct hit *ohitp = pp->pt_outhit;
-	    register struct xray *rayp = &ap->a_ray;
+	    struct hit *ihitp = pp->pt_inhit;
+	    struct hit *ohitp = pp->pt_outhit;
+	    struct xray *rayp = &ap->a_ray;
 	    VJOIN1(ihitp->hit_point, rayp->r_pt, ihitp->hit_dist,
 		   rayp->r_dir);
 	    VJOIN1(ohitp->hit_point, rayp->r_pt, ohitp->hit_dist,
@@ -600,7 +600,7 @@ f_ShotHit(ap, pt_headp, segp)
 		   component will cause a burst point. */
 		if (bp == PT_NULL && bdist > 0.0)
 		{
-		    bp = pp;	/* register exterior burst */
+		    bp = pp;	/* exterior burst */
 		    VMOVE(burstnorm, exitnorm);
 		}
 
@@ -638,7 +638,7 @@ f_ShotHit(ap, pt_headp, segp)
 						   &airids))
 			    )
 			{
-			    bp = pp; /* register interior burst */
+			    bp = pp; /* interior burst */
 			    VMOVE(burstnorm, exitnorm);
 			}
 			prntSeg(ap, pp, nregp->reg_aircode,
@@ -893,7 +893,7 @@ chkExitNorm(pp, rayp, normvec, purpose)
 }
 
 /*
-  int f_ShotMiss(register struct application *ap)
+  int f_ShotMiss(struct application *ap)
 
   Shot missed the model; if ground bursting is enabled, intersect with
   ground plane, else just arrange for appropriate background color for
@@ -901,7 +901,7 @@ chkExitNorm(pp, rayp, normvec, purpose)
 */
 static int
 f_ShotMiss(ap)
-    register struct application *ap;
+    struct application *ap;
 {
     if (groundburst)
     {
@@ -966,20 +966,20 @@ f_ShotMiss(ap)
 }
 
 /*
-  int f_BurstMiss(register struct application *ap)
+  int f_BurstMiss(struct application *ap)
 
   Burst ray missed the model, so do nothing.
 */
 static int
 f_BurstMiss(ap)
-    register struct application *ap;
+    struct application *ap;
 {
     VSETALL(ap->a_color, 0.0); /* All misses black. */
     return	0;
 }
 
 /*
-  int getRayOrigin(register struct application *ap)
+  int getRayOrigin(struct application *ap)
 
   This routine fills in the ray origin ap->a_ray.r_pt by folding
   together firing mode and dithering options. By-products of this
@@ -991,9 +991,9 @@ f_BurstMiss(ap)
 */
 static int
 getRayOrigin(ap)
-    register struct application	*ap;
+    struct application	*ap;
 {
-    register fastf_t	*vec = ap->a_uvec;
+    fastf_t	*vec = ap->a_uvec;
     fastf_t			gridyinc[3], gridxinc[3];
     fastf_t			scalecx, scalecy;
     if (TSTBIT(firemode, FM_SHOT))
@@ -1390,7 +1390,7 @@ gridShot()
 }
 
 /*
-  void lgtModel(register struct application *ap, struct partition *pp,
+  void lgtModel(struct application *ap, struct partition *pp,
   struct hit *hitp, struct xray *rayp,
   fastf_t surfnorm[3])
 
@@ -1403,7 +1403,7 @@ gridShot()
 */
 static void
 lgtModel(ap, pp, hitp, rayp, surfnorm)
-    register struct application *ap;
+    struct application *ap;
     struct partition *pp;
     struct hit *hitp;
     struct xray *rayp;
@@ -1458,7 +1458,7 @@ min(a, b)
 }
 
 /*
-  int readBurst(register fastf_t *vec)
+  int readBurst(fastf_t *vec)
 
   This routine reads the next set of burst point coordinates from the
   input stream burstfp.  Returns 1 for success, 0 for a format
@@ -1466,7 +1466,7 @@ min(a, b)
   fatalerror will be set to 1.
 */
 static int
-readBurst(register fastf_t *vec)
+readBurst(fastf_t *vec)
 {
     int	items;
     assert(burstfp != (FILE *) NULL);
@@ -1493,7 +1493,7 @@ readBurst(register fastf_t *vec)
 }
 
 /*
-  int readShot(register fastf_t *vec)
+  int readShot(fastf_t *vec)
 
   This routine reads the next set of firing coordinates from the
   input stream shotfp, using the format selected by the firemode
@@ -1503,7 +1503,7 @@ readBurst(register fastf_t *vec)
 */
 static int
 readShot(vec)
-    register fastf_t	*vec;
+    fastf_t	*vec;
 {
     assert(shotfp != (FILE *) NULL);
     if (! TSTBIT(firemode, FM_3DIM)) /* absence of 3D flag means 2D */
@@ -1566,7 +1566,7 @@ readShot(vec)
 */
 int roundToInt(fastf_t f)
 {
-    register int a;
+    int a;
     a = f;
     if (f - a >= 0.5)
 	return	a + 1;
@@ -1641,17 +1641,17 @@ spallInit()
 static struct application	a_burst; /* prototype spall ray */
 
 /*
-  int burstPoint(register struct application *ap,
-  register fastf_t *normal, register fastf_t *bpt)
+  int burstPoint(struct application *ap,
+  fastf_t *normal, fastf_t *bpt)
 
   This routine dispatches the burst point ray tracing task burstRay().
   RETURN CODES:	0 for fatal ray tracing error, 1 otherwise.
 */
 static boolean
 burstPoint(ap, normal, bpt)
-    register struct application *ap;
-    register fastf_t *normal;
-    register fastf_t *bpt; /* burst point coordinates */
+    struct application *ap;
+    fastf_t *normal;
+    fastf_t *bpt; /* burst point coordinates */
 {
     a_burst = *ap;
     a_burst.a_miss = f_BurstMiss;
@@ -1699,7 +1699,7 @@ burstRay()
     {
 	fastf_t	sinphi;
 	fastf_t	gammaval, gammainc, gammalast;
-	register int done;
+	int done;
 	int m;
 	bu_semaphore_acquire(RT_SEM_WORKER);
 	phi = comphi;
@@ -1715,7 +1715,7 @@ burstRay()
 	gammalast = TWO_PI - gammainc + EPSILON;
 	for (gammaval = 0.0; gammaval <= gammalast; gammaval += gammainc)
 	{
-	    register int	ncrit;
+	    int	ncrit;
 	    spallVec(a_burst.a_ray.r_dir, a_spall.a_ray.r_dir,
 		     phi, gammaval);
 	    plotRay(&a_spall.a_ray);
@@ -1754,7 +1754,7 @@ burstRay()
 
 static void
 spallVec(dvec, s_rdir, phi, gammaval)
-    register fastf_t	*dvec, *s_rdir;
+    fastf_t	*dvec, *s_rdir;
     fastf_t			phi, gammaval;
 {
     fastf_t			cosphi = cos(phi);
@@ -1791,7 +1791,7 @@ spallVec(dvec, s_rdir, phi, gammaval)
 */
 static void
 consVector(vec, azim, elev)
-    register fastf_t	*vec;
+    fastf_t	*vec;
     fastf_t	azim, elev;
 {
     /* Store cosine of the elevation to save calculating twice. */
@@ -1818,10 +1818,10 @@ abort_RT(int sig)
 */
 static fastf_t
 ipow(d, n)
-    register fastf_t	d;
-    register int	n;
+    fastf_t	d;
+    int	n;
 {
-    register fastf_t	result = 1.0;
+    fastf_t	result = 1.0;
     if (d == 0.0)
 	return	0.0;
     while (n-- > 0)
@@ -1833,7 +1833,7 @@ ipow(d, n)
 /*	v i e w _ p i x () */
 static void
 view_pix(ap)
-    register struct application	*ap;
+    struct application	*ap;
 {
     bu_semaphore_acquire(BU_SEM_SYSCALL);
     if (! TSTBIT(firemode, FM_BURST))

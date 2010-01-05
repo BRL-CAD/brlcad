@@ -39,9 +39,9 @@ Face::Face() {
 	id = 0;
 }
 
-Face::Face(STEPWrapper *sw, int STEPid) {
+Face::Face(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 Face::~Face() {
@@ -63,7 +63,7 @@ Face::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 
 	// load base class attributes
 	if ( !TopologicalRepresentationItem::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::TopologicalRepresentationItem." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::TopologicalRepresentationItem." << std::endl;
 		return false;
 	}
 
@@ -81,7 +81,7 @@ Face::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 
 				bounds.push_back(aFB);
 			} else {
-				cerr << CLASSNAME  << ": Unhandled entity in attribute 'bounds'." << endl;
+				std::cerr << CLASSNAME  << ": Unhandled entity in attribute 'bounds'." << std::endl;
 				return false;
 			}
 		}
@@ -93,17 +93,17 @@ Face::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 
 void
 Face::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << name << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Attributes:" << endl;
-	TAB(level+1); cout << "bounds:" << endl;
+	TAB(level); std::cout << "Attributes:" << std::endl;
+	TAB(level+1); std::cout << "bounds:" << std::endl;
 	LIST_OF_FACE_BOUNDS::iterator i;
 	for(i=bounds.begin();i!=bounds.end();i++){
 		(*i)->Print(level+1);
 	}
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	TopologicalRepresentationItem::Print(level+1);
 }
 
@@ -116,7 +116,7 @@ Face::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

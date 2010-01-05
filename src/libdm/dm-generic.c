@@ -142,19 +142,19 @@ dm_share_dlist(struct dm *dmp1, struct dm *dmp2)
 }
 
 fastf_t
-dm_Xx2Normal(struct dm *dmp, register int x)
+dm_Xx2Normal(struct dm *dmp, int x)
 {
     return ((x / (fastf_t)dmp->dm_width - 0.5) * 2.0);
 }
 
 int
-dm_Normal2Xx(struct dm *dmp, register fastf_t f)
+dm_Normal2Xx(struct dm *dmp, fastf_t f)
 {
     return (f * 0.5 + 0.5) * dmp->dm_width;
 }
 
 fastf_t
-dm_Xy2Normal(struct dm *dmp, register int y, int use_aspect)
+dm_Xy2Normal(struct dm *dmp, int y, int use_aspect)
 {
     if (use_aspect)
 	return ((0.5 - y / (fastf_t)dmp->dm_height) / dmp->dm_aspect * 2.0);
@@ -163,7 +163,7 @@ dm_Xy2Normal(struct dm *dmp, register int y, int use_aspect)
 }
 
 int
-dm_Normal2Xy(struct dm *dmp, register fastf_t f, int use_aspect)
+dm_Normal2Xy(struct dm *dmp, fastf_t f, int use_aspect)
 {
     if (use_aspect)
 	return (0.5 - f * 0.5 * dmp->dm_aspect) * dmp->dm_height;

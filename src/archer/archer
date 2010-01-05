@@ -59,7 +59,11 @@ done
 exec $WISH $0 $@
 
 # Set ttk theme
-::ttk::style theme use clam
+if {[tk windowingsystem] eq "aqua"} {
+   ::ttk::style theme use aqua
+} else {
+   ::ttk::style theme use clam
+}
 
 # normalize ARCHER_HOME
 if {[info exists env(ARCHER_HOME)]} {
@@ -110,7 +114,10 @@ initBgerror
 #
 proc showMainWindow {} {
     if {$::ArcherCore::inheritFromToplevel} {
+	set initx 0
+	set inity 22
 	wm deiconify $::ArcherCore::application
+	wm geometry $::ArcherCore::application +$initx+$inity
 	raise $::ArcherCore::application
 	focus -force $::ArcherCore::application
     } else {

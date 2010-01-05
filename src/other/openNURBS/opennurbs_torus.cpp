@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -32,7 +31,7 @@ ON_Torus::ON_Torus( const ON_Circle& major__circle, double minor__radius )
 ON_Torus::~ON_Torus()
 {}
 
-BOOL ON_Torus::IsValid( ON_TextLog* text_log ) const
+ON_BOOL32 ON_Torus::IsValid( ON_TextLog* text_log ) const
 {
   bool rc=false;
   if ( minor_radius <= 0.0 )
@@ -55,7 +54,7 @@ BOOL ON_Torus::IsValid( ON_TextLog* text_log ) const
   return rc;
 }
 
-BOOL ON_Torus::Create( const ON_Plane& major_plane, double major__radius, double minor__radius )
+ON_BOOL32 ON_Torus::Create( const ON_Plane& major_plane, double major__radius, double minor__radius )
 {
   plane = major_plane;
   major_radius = major__radius;
@@ -63,7 +62,7 @@ BOOL ON_Torus::Create( const ON_Plane& major_plane, double major__radius, double
   return IsValid();
 }
 
-BOOL ON_Torus::Create( const ON_Circle& major__circle, double minor__radius )
+ON_BOOL32 ON_Torus::Create( const ON_Circle& major__circle, double minor__radius )
 {
   return Create( major__circle.plane, major__circle.radius, minor__radius );
 }
@@ -144,15 +143,15 @@ double ON_Torus::MinorRadius() const
   return minor_radius;
 }
 
-BOOL ON_Torus::ClosestPointTo( 
-	 ON_3dPoint test_point, 
-	 double* major__angle_radians, 
-	 double* minor__angle_radians
+ON_BOOL32 ON_Torus::ClosestPointTo( 
+         ON_3dPoint test_point, 
+         double* major__angle_radians, 
+         double* minor__angle_radians
        ) const
 {
   double major_angle_radians, minor_angle_radians;
   const ON_Circle major_circle(plane,major_radius);
-  BOOL rc = major_circle.ClosestPointTo( test_point, &major_angle_radians );
+  ON_BOOL32 rc = major_circle.ClosestPointTo( test_point, &major_angle_radians );
   if ( rc && minor__angle_radians )
   {
     EVAL_SETUP_MAJOR;
@@ -164,7 +163,7 @@ BOOL ON_Torus::ClosestPointTo(
       double cma = v*raxis;
       minor_angle_radians = atan2(sma,cma);
       if ( minor_angle_radians < 0.0 )
-	minor_angle_radians += 2.0*ON_PI;
+        minor_angle_radians += 2.0*ON_PI;
     }
     else
       minor_angle_radians = 0.0;
@@ -190,7 +189,7 @@ ON_3dPoint ON_Torus::ClosestPointTo( ON_3dPoint test_point ) const
 
 
 // rotate cylinder about its origin
-BOOL ON_Torus::Rotate(
+ON_BOOL32 ON_Torus::Rotate(
       double sin_angle,
       double cos_angle,
       const ON_3dVector& axis // axis of rotation
@@ -199,7 +198,7 @@ BOOL ON_Torus::Rotate(
   return Rotate(sin_angle, cos_angle, axis, plane.origin );
 }
 
-BOOL ON_Torus::Rotate(
+ON_BOOL32 ON_Torus::Rotate(
       double angle,            // angle in radians
       const ON_3dVector& axis // axis of rotation
       )
@@ -207,7 +206,7 @@ BOOL ON_Torus::Rotate(
   return Rotate(sin(angle), cos(angle), axis, plane.origin );
 }
 
-BOOL ON_Torus::Rotate(
+ON_BOOL32 ON_Torus::Rotate(
       double sin_angle,
       double cos_angle,
       const ON_3dVector& axis, // axis of rotation
@@ -217,7 +216,7 @@ BOOL ON_Torus::Rotate(
   return plane.Rotate( sin_angle, cos_angle, axis, point );
 }
 
-BOOL ON_Torus::Rotate(
+ON_BOOL32 ON_Torus::Rotate(
       double angle,             // angle in radians
       const ON_3dVector& axis,  // axis of rotation
       const ON_3dPoint&  point  // center of rotation
@@ -226,15 +225,15 @@ BOOL ON_Torus::Rotate(
   return Rotate(sin(angle),cos(angle),axis,point);
 }
 
-BOOL ON_Torus::Translate( const ON_3dVector& delta )
+ON_BOOL32 ON_Torus::Translate( const ON_3dVector& delta )
 {
   return plane.Translate(delta);
 }
 
-BOOL ON_Torus::Transform( const ON_Xform& xform )
+ON_BOOL32 ON_Torus::Transform( const ON_Xform& xform )
 {
   ON_Circle major_c(plane,major_radius);
-  BOOL rc = major_c.Transform(xform);
+  ON_BOOL32 rc = major_c.Transform(xform);
   if (rc)
   {
     double s = (0.0==major_radius) ? 1.0 : major_c.radius/major_radius;
@@ -289,10 +288,10 @@ ON_RevSurface* ON_Torus::RevSurfaceForm( ON_RevSurface* srf ) const
     {
       for (j=0;j<2;j++)
       {
-	for (k=0;k<2;k++)
-	{
-	  pt[n++] = plane.PointAt( r[i], r[j], h[k] );
-	}
+        for (k=0;k<2;k++)
+        {
+          pt[n++] = plane.PointAt( r[i], r[j], h[k] );
+        }
       }
     }
     pRevSurface->m_bbox.Set( 3, 0, 8, 3, &pt[0].x );

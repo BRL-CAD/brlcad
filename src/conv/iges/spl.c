@@ -85,10 +85,10 @@ spl_kvknot(order, lower, upper, num)
     int order, num;
     fastf_t lower, upper;
 {
-    register int i;
+    int i;
     int total;
     fastf_t knot_step;
-    register struct knot_vec *new_knots;
+    struct knot_vec *new_knots;
 
     total = order * 2 + num;
 

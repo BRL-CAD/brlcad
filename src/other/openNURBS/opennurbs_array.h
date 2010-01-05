@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -65,10 +64,10 @@ public:
   
   // emergency bailout ///////////////////////////////////////////////////
   void EmergencyDestroy(void); // call only when memory used by this array
-			       // may have become invalid for reasons beyond
-			       // your control. EmergencyDestroy() zeros
-			       // anything that could possibly cause
-			       // ~ON_SimpleArray() to crash.
+                               // may have become invalid for reasons beyond
+                               // your control. EmergencyDestroy() zeros
+                               // anything that could possibly cause
+                               // ~ON_SimpleArray() to crash.
 
   // query ///////////////////////////////////////////////////////////////
   
@@ -83,13 +82,13 @@ public:
   T& operator[]( int );              // grows array if index >= Capacity()
 
   const T& operator[]( int ) const;  // The const operator[] does not
-				     // check for a valid index.  Caller
-				     // is responsible for making sure
-				     // that the index is > 0 and < Capacity().
+                                     // check for a valid index.  Caller
+                                     // is responsible for making sure
+                                     // that the index is > 0 and < Capacity().
 
   operator T*();                     // The cast operators return a pointer
   operator const T*() const;         // to the array.  If Count() is zero,
-				     // this pointer is NULL.
+                                     // this pointer is NULL.
 
   T* First();
   const T* First() const;             // returns NULL if count = 0
@@ -104,27 +103,27 @@ public:
   // array operations ////////////////////////////////////////////////////
 
   T& AppendNew();                    // Most efficient way to add a new element 
-				     // to the array.  Increases count by 1.
+                                     // to the array.  Increases count by 1.
 
   void Append( const T& );           // Append copy of element.
-				     // Increments count by 1.
+                                     // Increments count by 1.
 
   void Append( int, const T* );      // Append copy of an array T[count]
 
 
   void Insert( int, const T& );      // Insert copy of element. Uses
-				     // memmove() to perform any
-				     // necessary moving.
-				     // Increases count by 1.
+                                     // memmove() to perform any
+                                     // necessary moving.
+                                     // Increases count by 1.
 
   void Remove();                     // Removes last element.  Decrements
-				     // count by 1.  Does not change capacity.
+                                     // count by 1.  Does not change capacity.
 
   virtual
   void Remove( int );                // Removes element. Uses memmove() to
-				     // perform any necessary shifting.
-				     // Decrements count by 1.  Does not change
-				     // capacity
+                                     // perform any necessary shifting.
+                                     // Decrements count by 1.  Does not change
+                                     // capacity
 
   void Empty();           // Sets count to 0, leaves capacity untouched.
 
@@ -188,9 +187,9 @@ public:
   Parameters:
     sa - [in] ON::heap_sort or  ON::quick_sort
     index - [out] an array of length Count() that is returned with
-	some permutation of (0,1,...,Count()-1). 
+        some permutation of (0,1,...,Count()-1). 
     compare - [in] compare function compare(a,b,p) should return
-	<0 if a<b, 0, if a==b, and >0 if a>b.
+        <0 if a<b, 0, if a==b, and >0 if a>b.
     p - [in] pointer passed as third argument to compare.
 
   Returns:
@@ -255,12 +254,12 @@ public:
   const T* Array() const;             // m_a pointer value.
 
   void SetCount( int );               // If value is <= Capacity(), then
-				      // sets count to specified value.
+                                      // sets count to specified value.
 
   void SetCapacity( int );            // Shrink/grows capacity.  If value
-				      // is < current Count(), then count
-				      // is reduced to value.
-				      //
+                                      // is < current Count(), then count
+                                      // is reduced to value.
+                                      //
 
   /*
   Returns:
@@ -358,10 +357,10 @@ public:
   ON_2dPointArray& operator=( const ON_2dPointArray& );
 
   bool GetBBox( // returns true if successful
-	 double boxmin[2],
-	 double boxmax[2],
-	 int bGrowBox = false  // true means grow box
-	 ) const;
+         double boxmin[2],
+         double boxmax[2],
+         int bGrowBox = false  // true means grow box
+         ) const;
 
   bool Transform( const ON_Xform& );
   bool SwapCoordinates(int,int);
@@ -381,10 +380,10 @@ public:
   ON_2fPointArray& operator=( const ON_2fPointArray& );
 
   bool GetBBox( // returns true if successful
-	 float boxmin[2],
-	 float boxmax[2],
-	 int bGrowBox = false  // true means grow box
-	 ) const;
+         float boxmin[2],
+         float boxmax[2],
+         int bGrowBox = false  // true means grow box
+         ) const;
   bool Transform( const ON_Xform& );
   bool SwapCoordinates(int,int);
 };
@@ -470,10 +469,10 @@ public:
   // Returns:
   //   true if object has bounding box and calculation was successful
   bool GetBBox(
-	 double boxmin[3],
-	 double boxmax[3],
-	 int bGrowBox = false
-	 ) const;
+         double boxmin[3],
+         double boxmax[3],
+         int bGrowBox = false
+         ) const;
 
   /*
 	Description:
@@ -534,11 +533,11 @@ public:
   // Returns:
   //   true if successful.
   bool Rotate(
-	double sin_angle,
-	double cos_angle,
-	const ON_3dVector& axis_of_rotation,
-	const ON_3dPoint& center_of_rotation
-	);
+        double sin_angle,
+        double cos_angle,
+        const ON_3dVector& axis_of_rotation,
+        const ON_3dPoint& center_of_rotation
+        );
 
   // Description:
   //   Rotate points about a center and axis.  A positive angle
@@ -552,10 +551,10 @@ public:
   // Returns:
   //   true if successful.
   bool Rotate(
-	double angle_in_radians,
-	const ON_3dVector& axis_of_rotation,
-	const ON_3dPoint& center_of_rotation
-	);
+        double angle_in_radians,
+        const ON_3dVector& axis_of_rotation,
+        const ON_3dPoint& center_of_rotation
+        );
 
   // Description:
   //   Translate a polyline
@@ -564,8 +563,8 @@ public:
   // Returns:
   //   true if successful.
   bool Translate(
-	const ON_3dVector& delta
-	);
+        const ON_3dVector& delta
+        );
 
   /*
   Description:
@@ -575,8 +574,8 @@ public:
     P - [in]
     closest_point_index - [out]
     maximum_distance - [in] optional distance constraint.
-	If maximum_distance > 0, then only points Q with
-	|P-Q| <= maximum_distance are returned.
+        If maximum_distance > 0, then only points Q with
+        |P-Q| <= maximum_distance are returned.
   Returns:
     True if a point is found; in which case *closest_point_index
     is the index of the point.  False if no point is found
@@ -586,10 +585,10 @@ public:
     ON_PointCloud::GetClosestPoint
   */
   bool GetClosestPoint( 
-	  ON_3dPoint P,
-	  int* closest_point_index,
-	  double maximum_distance = 0.0
-	  ) const;
+          ON_3dPoint P,
+          int* closest_point_index,
+          double maximum_distance = 0.0
+          ) const;
 
 };
 
@@ -607,10 +606,10 @@ public:
   ON_3fPointArray& operator=( const ON_3fPointArray& );
 
   bool GetBBox(
-	 float boxmin[3],
-	 float boxmax[3],
-	 int bGrowBox = false
-	 ) const;
+         float boxmin[3],
+         float boxmax[3],
+         int bGrowBox = false
+         ) const;
 
   bool Transform( const ON_Xform& );
 
@@ -665,10 +664,10 @@ public:
   ON_2dVectorArray& operator=( const ON_2dVectorArray& );
 
   bool GetBBox(
-	 double boxmin[2],
-	 double boxmax[2],
-	 int bGrowBox = false
-	 ) const;
+         double boxmin[2],
+         double boxmax[2],
+         int bGrowBox = false
+         ) const;
 
   bool Transform( const ON_Xform& );
   bool SwapCoordinates(int,int);
@@ -688,10 +687,10 @@ public:
   ON_2fVectorArray& operator=( const ON_2fVectorArray& );
 
   bool GetBBox(
-	 float boxmin[2],
-	 float boxmax[2],
-	 bool = false
-	 ) const;
+         float boxmin[2],
+         float boxmax[2],
+         bool = false
+         ) const;
 
   bool Transform( const ON_Xform& );
   bool SwapCoordinates(int,int);
@@ -710,10 +709,10 @@ public:
   ON_3dVectorArray& operator=( const ON_3dVectorArray& );
 
   bool GetBBox(
-	 double boxmin[3],
-	 double boxmax[3],
-	 bool bGrowBow = false
-	 ) const;
+         double boxmin[3],
+         double boxmax[3],
+         bool bGrowBow = false
+         ) const;
 
   bool Transform( const ON_Xform& );
   bool SwapCoordinates(int,int);
@@ -731,10 +730,10 @@ public:
   ON_3fVectorArray& operator=( const ON_3fVectorArray& );
 
   bool GetBBox(
-	 float boxmin[3],
-	 float boxmax[3],
-	 int bGrowBox = false
-	 ) const;
+         float boxmin[3],
+         float boxmax[3],
+         int bGrowBox = false
+         ) const;
 
   bool Transform( const ON_Xform& );
   bool SwapCoordinates(int,int);
@@ -773,10 +772,10 @@ public:
   
   // emergency bailout ///////////////////////////////////////////////////
   void EmergencyDestroy(void); // call only when memory used by this array
-			       // may have become invalid for reasons beyond
-			       // your control. EmergencyDestroy() zeros
-			       // anything that could possibly cause
-			       // ~ON_ClassArray() to crash.
+                               // may have become invalid for reasons beyond
+                               // your control. EmergencyDestroy() zeros
+                               // anything that could possibly cause
+                               // ~ON_ClassArray() to crash.
 
   // query ///////////////////////////////////////////////////////////////
   
@@ -789,13 +788,13 @@ public:
   T& operator[]( int );              // grows array if index >= Capacity()
 
   const T& operator[]( int ) const;  // The const operator[] does not
-				     // check for a valid index.  Caller
-				     // is responsible for making sure
-				     // that the index is > 0 and < Capacity().
+                                     // check for a valid index.  Caller
+                                     // is responsible for making sure
+                                     // that the index is > 0 and < Capacity().
 
   operator T*();                     // The cast operators return a pointer
   operator const T*() const;         // to the array.  If Count() is zero,
-				     // this pointer is NULL.
+                                     // this pointer is NULL.
   T* First();
   const T* First() const;             // returns NULL if count = 0
 
@@ -809,25 +808,25 @@ public:
   // array operations ////////////////////////////////////////////////////
 
   T& AppendNew();                    // Most efficient way to add a new class 
-				     // to the array.  Increases count by 1.
+                                     // to the array.  Increases count by 1.
 
   void Append( const T& );           // Append copy of element.
-				     // Increments count by 1.
+                                     // Increments count by 1.
 
   void Append( int, const T*);       // Append copy of an array T[count]
 
   void Insert( int, const T& );      // Insert copy of element. Uses
-				     // memmove() to perform any
-				     // necessary moving.
-				     // Increases count by 1.
+                                     // memmove() to perform any
+                                     // necessary moving.
+                                     // Increases count by 1.
 
   void Remove();                     // Removes last element.  Decrements
-				     // count by 1.  Does not change capacity.
+                                     // count by 1.  Does not change capacity.
 
   void Remove( int );                // Removes element. Uses memmove() to
-				     // perform any necessary shifting.
-				     // Decrements count by 1.  Does not change
-				     // capacity
+                                     // perform any necessary shifting.
+                                     // Decrements count by 1.  Does not change
+                                     // capacity
 
   void Empty();           // Sets count to 0, leaves capacity untouched.
 
@@ -880,9 +879,9 @@ public:
   Parameters:
     sa - [in] ON::heap_sort or  ON::quick_sort
     index - [out] an array of length Count() that is returned with
-	some permutation of (0,1,...,Count()-1). 
+        some permutation of (0,1,...,Count()-1). 
     compare - [in] compare function compare(a,b,p) should return
-	<0 if a<b, 0, if a==b, and >0 if a>b.
+        <0 if a<b, 0, if a==b, and >0 if a>b.
     p - [in] pointer passed as third argument to compare.
 
   Returns:
@@ -943,22 +942,22 @@ public:
   const T* Array() const;             // m_a pointer value.
 
   void SetCount( int );               // If value is <= Capacity(), then
-				      // sets count to specified value.
+                                      // sets count to specified value.
 
   void SetCapacity( int );            // Shrink/grows capacity.  If value
-				      // is < current Count(), then count
-				      // is reduced to value.
+                                      // is < current Count(), then count
+                                      // is reduced to value.
 
   T* KeepArray();                     // returns pointer to array and zeros
-				      // out this class.  Caller is responsible
-				      // for calling destructor on each element
-				      // and then using onfree() to release array
-				      // memory.  E.g.,
-				      //
-				      //   for (int i=capacity;i>=0;i--) {
-				      //     array[i].~T();
-				      //   }
-				      //   onfree(array);
+                                      // out this class.  Caller is responsible
+                                      // for calling destructor on each element
+                                      // and then using onfree() to release array
+                                      // memory.  E.g.,
+                                      //
+                                      //   for (int i=capacity;i>=0;i--) {
+                                      //     array[i].~T();
+                                      //   }
+                                      //   onfree(array);
 
   /*
   Description:
@@ -1409,9 +1408,9 @@ public:
     j value
   */
   int FindIndex( 
-	  int i, 
-	  int not_found_rc
-	  ) const;
+          int i, 
+          int not_found_rc
+          ) const;
 
   /*
   Description:
@@ -1424,9 +1423,9 @@ public:
     True if and element it added.
   */
   bool AddIndex( 
-	  int i, 
-	  int j
-	  );
+          int i, 
+          int j
+          );
 
   /*
   Description:
@@ -1440,9 +1439,9 @@ public:
     True if and element exists and was set.
   */
   bool SetIndex( 
-	  int i, 
-	  int j
-	  );
+          int i, 
+          int j
+          );
 
   /*
   Description:
@@ -1453,9 +1452,9 @@ public:
     j - [in]
   */
   void SetOrAddIndex( 
-	  int i, 
-	  int j
-	  );
+          int i, 
+          int j
+          );
 
   /*
   Description:
@@ -1468,8 +1467,8 @@ public:
     True if the element was removed
   */
   bool RemoveIndex( 
-	  int i
-	  );
+          int i
+          );
 
   const ON_2dex* Find2dex(int i) const;
 
@@ -1492,10 +1491,10 @@ Details:
   int and pointers.
 Example:
 
-	  ON_SimpleArray<int> A;
-	  A = ...;
-	  // Sort A in increasing order
-	  A.QuickSort( ON_CompareIncreasing<double> );		
+          ON_SimpleArray<int> A;
+          A = ...;
+          // Sort A in increasing order
+          A.QuickSort( ON_CompareIncreasing<double> );		
 
 See Also:
   ON_CompareDecreasing
@@ -1518,17 +1517,17 @@ Details:
   int and pointers.
 Example:
 
-	  class C
-	  {
-	  public:
-	    ...
-	    bool operator<(const C&) const;
-	  };
-	  ...
-	  ON_ClassArray<C> A;
-	  A = ...;
-	  // Sort A in descrasing order
-	  A.QuickSort( ON_CompareDecreasing<C> );		
+          class C
+          {
+          public:
+            ...
+            bool operator<(const C&) const;
+          };
+          ...
+          ON_ClassArray<C> A;
+          A = ...;
+          // Sort A in descrasing order
+          A.QuickSort( ON_CompareDecreasing<C> );		
 
 See Also:
   ON_CompareIncreasing

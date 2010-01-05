@@ -52,9 +52,9 @@ static char usage[] = "\
 Usage: fbcmrot [-h] [-i increment] steps_per_second\n";
 
 int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int c;
+    int c;
 
     while ((c = bu_getopt(argc, argv, "hi:")) != EOF) {
 	switch (c) {
@@ -90,7 +90,7 @@ get_args(int argc, register char **argv)
 int
 main(int argc, char **argv)
 {
-    register int i;
+    int i;
     struct timeval tv;
 
     if (!get_args(argc, argv)) {
@@ -113,7 +113,7 @@ main(int argc, char **argv)
     fb_rmap(fbp, local_inp);
 
     while (1) {
-	register int from;
+	int from;
 	ColorMap *tp;
 
 	/* Build color map for current value */

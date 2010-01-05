@@ -73,7 +73,7 @@ main(int argc, char **argv)
     int	i, n;
     double	d;
     long	num_pixels;
-    register unsigned char *bp;
+    unsigned char *bp;
     long	sum, partial_sum;
     int	max, min, mode, median;
     double	mean, var, skew;

@@ -176,7 +176,7 @@ int
 rt_rec_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_tgc_internal *tip;
-    register struct rec_specific *rec;
+    struct rec_specific *rec;
     double magsq_h, magsq_a, magsq_b, magsq_c, magsq_d;
     double mag_h, mag_a, mag_b;
     mat_t R;
@@ -185,6 +185,12 @@ rt_rec_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     vect_t invsq;	/* [ 1/(|A|**2), 1/(|B|**2), 1/(|Hv|**2) ] */
     vect_t work;
     fastf_t f;
+
+    if (!stp || !ip)
+	return -1;
+    RT_CK_SOLTAB(stp);
+    RT_CK_DB_INTERNAL(ip);
+    if (rtip) RT_CK_RTI(rtip);
 
     tip = (struct rt_tgc_internal *)ip->idb_ptr;
     RT_TGC_CK_MAGIC(tip);
@@ -272,7 +278,7 @@ rt_rec_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     {
 	fastf_t dx, dy, dz;	/* For bounding sphere */
 	vect_t P, w1;
-	fastf_t f, tmp, z;
+	fastf_t tmp, z;
 
 	/* X */
 	VSET(P, 1.0, 0, 0);		/* bounding plane normal */
@@ -365,9 +371,9 @@ rt_rec_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
  * R E C _ P R I N T
  */
 void
-rt_rec_print(register const struct soltab *stp)
+rt_rec_print(const struct soltab *stp)
 {
-    register const struct rec_specific *rec =
+    const struct rec_specific *rec =
 	(struct rec_specific *)stp->st_specific;
 
     VPRINT("V", rec->rec_V);
@@ -396,16 +402,16 @@ rt_rec_print(register const struct soltab *stp)
  * >0 HIT
  */
 int
-rt_rec_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
+rt_rec_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
-    register struct rec_specific *rec =
+    struct rec_specific *rec =
 	(struct rec_specific *)stp->st_specific;
     vect_t dprime;		/* D' */
     vect_t pprime;		/* P' */
     fastf_t k1, k2;		/* distance constants of solution */
     vect_t xlated;		/* translated vector */
     struct hit hits[4];	/* 4 potential hit points */
-    register struct hit *hitp;	/* pointer to hit point */
+    struct hit *hitp;	/* pointer to hit point */
     int nhits = 0;	/* Number of hit points */
 
     hitp = &hits[0];
@@ -487,7 +493,7 @@ rt_rec_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     hit:
 	if (hits[0].hit_dist < hits[1].hit_dist) {
 	    /* entry is [0], exit is [1] */
-	    register struct seg *segp;
+	    struct seg *segp;
 
 	    RT_GET_SEG(segp, ap->a_resource);
 	    segp->seg_stp = stp;
@@ -496,7 +502,7 @@ rt_rec_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	    BU_LIST_INSERT(&(seghead->l), &(segp->l));
 	} else {
 	    /* entry is [1], exit is [0] */
-	    register struct seg *segp;
+	    struct seg *segp;
 
 	    RT_GET_SEG(segp, ap->a_resource);
 	    segp->seg_stp = stp;
@@ -558,7 +564,7 @@ rt_rec_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 }
 
 
-#define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;
+#define RT_REC_SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;
 /**
  * R E C _ V S H O T
  *
@@ -572,17 +578,19 @@ rt_rec_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
     /* Number of ray/object pairs */
 
 {
-    register int i;
-    register struct rec_specific *rec;
+    int i;
+    struct rec_specific *rec;
     vect_t dprime;		/* D' */
     vect_t pprime;		/* P' */
     fastf_t k1, k2;		/* distance constants of solution */
     vect_t xlated;		/* translated vector */
     struct hit hits[3];	/* 4 potential hit points */
-    register struct hit *hitp;	/* pointer to hit point */
+    struct hit *hitp;	/* pointer to hit point */
     fastf_t b;		/* coeff of polynomial */
     fastf_t root;		/* root of radical */
     fastf_t dx2dy2;
+
+    if (ap) RT_CK_APPLICATION(ap);
 
     /* for each ray/right_eliptical_cylinder pair */
     for (i = 0; i < n; i++) {
@@ -655,7 +663,7 @@ rt_rec_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	}
 
 	if (hitp != &hits[2]) {
-	    SEG_MISS(segp[i]);		/* MISS */
+	    RT_REC_SEG_MISS(segp[i]);		/* MISS */
 	} else {
 	    segp[i].seg_stp = stp[i];
 
@@ -688,9 +696,9 @@ rt_rec_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
  * hit_surfno is a flag indicating if normal needs to be computed or not.
  */
 void
-rt_rec_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
+rt_rec_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
-    register struct rec_specific *rec =
+    struct rec_specific *rec =
 	(struct rec_specific *)stp->st_specific;
 
     VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir);
@@ -724,9 +732,9 @@ rt_rec_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
  * Normal must have been computed before calling this routine.
  */
 void
-rt_rec_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
+rt_rec_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
-    register struct rec_specific *rec =
+    struct rec_specific *rec =
 	(struct rec_specific *)stp->st_specific;
     vect_t uu;
     fastf_t ax, bx, q;
@@ -766,15 +774,17 @@ rt_rec_curve(register struct curvature *cvp, register struct hit *hitp, struct s
  * v is the displacement along H.
  */
 void
-rt_rec_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
+rt_rec_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
-    register struct rec_specific *rec =
+    struct rec_specific *rec =
 	(struct rec_specific *)stp->st_specific;
 
     vect_t work;
     vect_t pprime;
     fastf_t len;
     fastf_t ratio;
+
+    if (ap) RT_CK_APPLICATION(ap);
 
     /* hit_point is on surface;  project back to unit cylinder,
      * creating a vector from vertex to hit point.
@@ -835,8 +845,11 @@ rt_rec_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
  *
  */
 int
-rt_rec_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
+rt_rec_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 {
+    ps = ps; /* quellage */
+    if (ip) RT_CK_DB_INTERNAL(ip);
+
     return(0);			/* OK */
 }
 
@@ -847,7 +860,7 @@ rt_rec_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
 void
 rt_rec_free(struct soltab *stp)
 {
-    register struct rec_specific *rec =
+    struct rec_specific *rec =
 	(struct rec_specific *)stp->st_specific;
 
     bu_free((char *)rec, "rec_specific");

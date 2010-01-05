@@ -1,0 +1,23 @@
+The files in these directories represent per-topic Docbook files in
+the style of UNIX man pages, and uses standard man1, man3, etc. 
+directory layouts for toplevel directory structure.
+
+man1: executable programs and shell commands
+man2: system calls (provided by kernel; avoid)
+man3: library functions
+man4: special files and networking interfaces (e.g., /dev/* devices; avoid)
+man5: file formats and conventions (e.g., /etc/passwd)
+man6: games and demos
+man7: standards and miscellaneous (e.g., environments, charsets, formatting macros; avoid)
+man8: system administration commands (usually require root; avoid)
+man9: kernel and windowing system routines (non-standard; avoid)
+manl: local commands (non-standard; avoid)
+mann: "new" (non-standard, primarily Tcl/Tk commands, ncurses API)
+
+The file mged_cmd_template.xml represents a blank template for 
+converting existing MGED command documentation such as that found
+in the mged_cmd_index.html file or Volume II Appendix.  It is not
+required to use this precise template for all MGED commands - see
+search.xml for a more elaborate example - but it should provide
+a convenient "container" for what has been the common documentation
+format in previous work.

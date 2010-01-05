@@ -39,9 +39,9 @@ Point::Point() {
 	id = 0;
 }
 
-Point::Point(STEPWrapper *sw,int STEPid) {
+Point::Point(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 Point::~Point() {
@@ -53,7 +53,7 @@ Point::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 	id = sse->STEPfile_id;
 
 	if ( !GeometricRepresentationItem::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::GeometricRepresentationItem." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::GeometricRepresentationItem." << std::endl;
 		return false;
 	}
 	return true;
@@ -61,10 +61,10 @@ Point::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 void
 Point::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << name << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	GeometricRepresentationItem::Print(level+1);
 }
 STEPEntity *
@@ -76,7 +76,7 @@ Point::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

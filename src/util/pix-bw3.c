@@ -42,7 +42,7 @@ main(int argc, char **argv)
 {
     int	i, num;
     FILE	*rfp, *bfp, *gfp;
-    register unsigned char *ibufp;
+    unsigned char *ibufp;
 
     if ( argc != 4 || isatty(fileno(stdin)) ) {
 	bu_exit(1, "usage: pix-bw3 redout greenout blueout < file.pix\n");

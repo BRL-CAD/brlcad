@@ -1053,7 +1053,7 @@ arbn_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
 static int
 pipe_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *intern, char **prompt)
 {
-    register struct rt_pipe_internal *pipe;
+    struct rt_pipe_internal *pipe;
     int i, num_points;
 
     if ( argc < 4 ) {
@@ -1117,8 +1117,8 @@ pipe_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
 static int
 ars_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *intern, char **prompt)
 {
-    register struct rt_ars_internal	*arip;
-    register int			i;
+    struct rt_ars_internal	*arip;
+    int			i;
     int			total_points;
     int			cv;	/* current curve (waterline) # */
     int			axis;	/* current fastf_t in waterline */
@@ -2746,7 +2746,7 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
 int
 ged_in(struct ged *gedp, int argc, const char *argv[])
 {
-    register struct directory *dp;
+    struct directory *dp;
     char *name;
     struct rt_db_internal internal;
     char **menu;
@@ -2797,7 +2797,7 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 	switch ( arbn_in(gedp, argc, argv, &internal, &p_arbn[0]) ) {
 	    case GED_ERROR:
 		bu_vls_printf(&gedp->ged_result_str, "%s: ERROR, ARBN not made!\n", argv[0]);
-		rt_db_free_internal( &internal, &rt_uniresource );
+		rt_db_free_internal(&internal);
 		return GED_ERROR;
 	    case GED_MORE:
 		return GED_MORE;
@@ -2807,7 +2807,7 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 	switch ( bot_in(gedp, argc, argv, &internal, &p_bot[0]) ) {
 	    case GED_ERROR:
 		bu_vls_printf(&gedp->ged_result_str, "%s: ERROR, BOT not made!\n", argv[0]);
-		rt_db_free_internal( &internal, &rt_uniresource );
+		rt_db_free_internal(&internal);
 		return GED_ERROR;
 	    case GED_MORE:
 		return GED_MORE;
@@ -2850,7 +2850,7 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 	switch ( pipe_in(gedp, argc, argv, &internal, &p_pipe[0]) ) {
 	    case GED_ERROR:
 		bu_vls_printf(&gedp->ged_result_str, "%s: ERROR, pipe not made!\n", argv[0]);
-		rt_db_free_internal( &internal, &rt_uniresource );
+		rt_db_free_internal(&internal);
 		return GED_ERROR;
 	    case GED_MORE:
 		return GED_MORE;
@@ -2860,7 +2860,7 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 	switch ( metaball_in(gedp, argc, argv, &internal, &p_metaball[0]) ) {
 	    case GED_ERROR:
 		bu_vls_printf(&gedp->ged_result_str, "%s: ERROR, metaball not made!\n", argv[0]);
-		rt_db_free_internal( &internal, &rt_uniresource );
+		rt_db_free_internal(&internal);
 		return GED_ERROR;
 	    case GED_MORE:
 		return GED_MORE;
@@ -2870,7 +2870,7 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 	switch ( ars_in(gedp, argc, argv, &internal, &p_ars[0]) ) {
 	    case GED_ERROR:
 		bu_vls_printf(&gedp->ged_result_str, "%s: ERROR, ars not made!\n", argv[0]);
-		rt_db_free_internal( &internal, &rt_uniresource );
+		rt_db_free_internal(&internal);
 		return GED_ERROR;
 	    case GED_MORE:
 		return GED_MORE;
@@ -3005,7 +3005,7 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 	switch (pnts_in(gedp, argc, argv, &internal, p_pnts)) {
 	case GED_ERROR:
 	    bu_vls_printf(&gedp->ged_result_str, "%s: ERROR, pnts not made!\n", argv[0]);
-	    rt_db_free_internal(&internal, &rt_uniresource);
+	    rt_db_free_internal(&internal);
 	    return GED_ERROR;
 	case GED_MORE:
 	    return GED_MORE;
@@ -3037,7 +3037,7 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 	    /* a few input functions do not use the internal pointer
 	     * only free it, if it has been used
 	     */
-	    rt_db_free_internal( &internal, &rt_uniresource );
+	    rt_db_free_internal(&internal);
 	}
 	return GED_ERROR;
     }
@@ -3046,12 +3046,12 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
     /* The function may have already written via LIBWDB */
     if ( internal.idb_ptr != NULL )  {
 	if ( (dp=db_diradd( gedp->ged_wdbp->dbip, name, -1L, 0, DIR_SOLID, (genptr_t)&internal.idb_type)) == DIR_NULL ) {
-	    rt_db_free_internal( &internal, &rt_uniresource );
+	    rt_db_free_internal(&internal);
 	    bu_vls_printf(&gedp->ged_result_str, "%s: Cannot add '%s' to directory\n", argv[0], name);
 	    return GED_ERROR;
 	}
 	if ( rt_db_put_internal( dp, gedp->ged_wdbp->dbip, &internal, &rt_uniresource ) < 0 ) {
-	    rt_db_free_internal( &internal, &rt_uniresource );
+	    rt_db_free_internal(&internal);
 	    bu_vls_printf(&gedp->ged_result_str, "%s: Database write error, aborting\n", argv[0]);
 	    return GED_ERROR;
 	}

@@ -35,14 +35,14 @@ ged_mirror(struct ged *gedp, int argc, const char *argv[])
 												   * not
 												   * documented
 												   */
-    register int k;
+    int k;
     point_t mirror_pt = {0.0, 0.0, 0.0};
     vect_t mirror_dir = {1.0, 0.0, 0.0};
     fastf_t mirror_offset = 0.0;
     int ret;
     struct rt_db_internal *ip;
     struct rt_db_internal internal;
-    register struct directory *dp;
+    struct directory *dp;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);

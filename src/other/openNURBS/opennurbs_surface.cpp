@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -71,7 +70,7 @@ ON::object_type ON_Surface::ObjectType() const
   return ON::surface_object;
 }
 
-BOOL ON_Surface::GetDomain( int dir, double* t0, double* t1 ) const
+ON_BOOL32 ON_Surface::GetDomain( int dir, double* t0, double* t1 ) const
 {
   ON_Interval d = Domain(dir);
   if ( t0 ) *t0 = d[0];
@@ -79,7 +78,7 @@ BOOL ON_Surface::GetDomain( int dir, double* t0, double* t1 ) const
   return d.IsIncreasing();
 }
 
-BOOL ON_Surface::GetSurfaceSize( 
+ON_BOOL32 ON_Surface::GetSurfaceSize( 
     double* width, 
     double* height 
     ) const
@@ -94,12 +93,12 @@ BOOL ON_Surface::GetSurfaceSize(
 bool ON_Surface::SetDomain( int dir, ON_Interval domain )
 {
   return ( dir >= 0 
-	   && dir <= 1 
-	   && domain.IsIncreasing() 
-	   && SetDomain( dir, domain[0], domain[1] )) ? true : false;
+           && dir <= 1 
+           && domain.IsIncreasing() 
+           && SetDomain( dir, domain[0], domain[1] )) ? true : false;
 }
 
-BOOL ON_Surface::SetDomain( 
+ON_BOOL32 ON_Surface::SetDomain( 
   int, // 0 sets first parameter's domain, 1 gets second parameter's domain
   double, double 
   )
@@ -115,7 +114,7 @@ BOOL ON_Surface::SetDomain(
 // end of a span.
 //
 //virtual
-BOOL ON_Surface::GetSpanVectorIndex(
+ON_BOOL32 ON_Surface::GetSpanVectorIndex(
       int dir, // 0 gets first parameter's domain, 1 gets second parameter's domain
       double t,      // [IN] t = evaluation parameter
       int side,         // [IN] side 0 = default, -1 = from below, +1 = from above
@@ -123,7 +122,7 @@ BOOL ON_Surface::GetSpanVectorIndex(
       ON_Interval* span_domain // [OUT] domain of the span containing "t"
       ) const
 {
-  BOOL rc = false;
+  ON_BOOL32 rc = false;
   int i;
   int span_count = SpanCount(dir);
   if ( span_count > 0 ) {
@@ -132,27 +131,27 @@ BOOL ON_Surface::GetSpanVectorIndex(
     if (rc) {
       i = ON_NurbsSpanIndex( 2, span_count, span_vector, t, side, 0 );
       if ( i >= 0 && i <= span_count ) {
-	if ( span_vector_i )
-	  *span_vector_i = i;
-	if ( span_domain )
-	  span_domain->Set( span_vector[i], span_vector[i+1] );
+        if ( span_vector_i )
+          *span_vector_i = i;
+        if ( span_domain )
+          span_domain->Set( span_vector[i], span_vector[i+1] );
       }
       else
-	rc = false;
+        rc = false;
     }
     onfree(span_vector);
   }
   return rc;
 }
 
-BOOL ON_Surface::GetParameterTolerance( // returns tminus < tplus: parameters tminus <= s <= tplus
+ON_BOOL32 ON_Surface::GetParameterTolerance( // returns tminus < tplus: parameters tminus <= s <= tplus
        int dir,
        double t,       // t = parameter in domain
        double* tminus, // tminus
        double* tplus   // tplus
        ) const
 {
-  BOOL rc = false;
+  ON_BOOL32 rc = false;
   ON_Interval d = Domain( dir );
   if ( d.IsIncreasing() )
     rc = ON_GetParameterTolerance( d.Min(), d.Max(), t, tminus, tplus );
@@ -173,15 +172,15 @@ ON_Surface::IsIsoparametric( const ON_Curve& curve, const ON_Interval* subdomain
     {
       if ( (t0 > ON_SQRT_EPSILON && t0 < 1.0-ON_SQRT_EPSILON) || (t1 > ON_SQRT_EPSILON && t1 < 1.0-ON_SQRT_EPSILON) )
       {
-	cdom.Intersection(*subdomain);
-	if ( cdom.IsIncreasing() )
-	{
-	  ON_NurbsCurve nurbs_curve;
-	  if ( curve.GetNurbForm( nurbs_curve, 0.0,&cdom) )
-	  {
-	    return IsIsoparametric( nurbs_curve, 0 );
-	  }
-	}
+        cdom.Intersection(*subdomain);
+        if ( cdom.IsIncreasing() )
+        {
+          ON_NurbsCurve nurbs_curve;
+          if ( curve.GetNurbForm( nurbs_curve, 0.0,&cdom) )
+          {
+            return IsIsoparametric( nurbs_curve, 0 );
+          }
+        }
       }
     }
   }
@@ -202,15 +201,15 @@ ON_Surface::IsIsoparametric( const ON_Curve& curve, const ON_Interval* subdomain
       tolerance = bbox.m_max.x - bbox.m_min.x;
       if ( tolerance < ON_ZERO_TOLERANCE && ON_ZERO_TOLERANCE*1024.0 <= (bbox.m_max.y-bbox.m_min.y) )
       {
-	// 26 March 2007 Dale Lear
-	//    If tolerance is tiny, then use ON_ZERO_TOLERANCE
-	//    This fixes cases where iso curves where not getting
-	//    the correct flag because tol=1e-16 and the closest
-	//    point to line had calculation errors of 1e-15.
-	tolerance = ON_ZERO_TOLERANCE;
+        // 26 March 2007 Dale Lear
+        //    If tolerance is tiny, then use ON_ZERO_TOLERANCE
+        //    This fixes cases where iso curves where not getting
+        //    the correct flag because tol=1e-16 and the closest
+        //    point to line had calculation errors of 1e-15.
+        tolerance = ON_ZERO_TOLERANCE;
       }
       if ( !curve.IsLinear( tolerance ) )
-	iso = not_iso;
+        iso = not_iso;
       break;
     case y_iso:
     case S_iso:
@@ -220,15 +219,15 @@ ON_Surface::IsIsoparametric( const ON_Curve& curve, const ON_Interval* subdomain
       tolerance = bbox.m_max.y - bbox.m_min.y;
       if ( tolerance < ON_ZERO_TOLERANCE && ON_ZERO_TOLERANCE*1024.0 <= (bbox.m_max.x-bbox.m_min.x) )
       {
-	// 26 March 2007 Dale Lear
-	//    If tolerance is tiny, then use ON_ZERO_TOLERANCE
-	//    This fixes cases where iso curves where not getting
-	//    the correct flag because tol=1e-16 and the closest
-	//    point to line had calculation errors of 1e-15.
-	tolerance = ON_ZERO_TOLERANCE;
+        // 26 March 2007 Dale Lear
+        //    If tolerance is tiny, then use ON_ZERO_TOLERANCE
+        //    This fixes cases where iso curves where not getting
+        //    the correct flag because tol=1e-16 and the closest
+        //    point to line had calculation errors of 1e-15.
+        tolerance = ON_ZERO_TOLERANCE;
       }
       if ( !curve.IsLinear( tolerance ) )
-	iso = not_iso;
+        iso = not_iso;
       break;
     default:
       // nothing here
@@ -258,55 +257,55 @@ ON_Surface::IsIsoparametric( const ON_BoundingBox& bbox ) const
     {
       if ( ds*(t1-t0) <= dt*(s1-s0) ) 
       {
-	// check for s = constant iso
-	if ( bbox.m_max.x <= s0+stol ) 
-	{
-	  // check for west side iso
-	  GetParameterTolerance( 0, s0, &a, &b);
-	  if ( a <= bbox.m_min.x && bbox.m_max.x <= b  ) 
-	    iso = W_iso;
-	}
-	else if ( bbox.m_min.x >= s1-stol ) 
-	{
-	  // check for east side iso
-	  GetParameterTolerance( 0, s1, &a, &b);
-	  if ( a <= bbox.m_min.x && bbox.m_max.x <= b  )
-	    iso = E_iso;
-	}
+        // check for s = constant iso
+        if ( bbox.m_max.x <= s0+stol ) 
+        {
+          // check for west side iso
+          GetParameterTolerance( 0, s0, &a, &b);
+          if ( a <= bbox.m_min.x && bbox.m_max.x <= b  ) 
+            iso = W_iso;
+        }
+        else if ( bbox.m_min.x >= s1-stol ) 
+        {
+          // check for east side iso
+          GetParameterTolerance( 0, s1, &a, &b);
+          if ( a <= bbox.m_min.x && bbox.m_max.x <= b  )
+            iso = E_iso;
+        }
 
-	if ( iso == not_iso && (s0 < bbox.m_max.x || bbox.m_min.x < s1) )
-	{
-	  // check for interior "u = constant" iso
-	  GetParameterTolerance( 0, 0.5*(bbox.m_min.x+bbox.m_max.x), &a, &b);
-	  if ( a <= bbox.m_min.x && bbox.m_max.x <= b  )
-	    iso = x_iso;
-	}
+        if ( iso == not_iso && (s0 < bbox.m_max.x || bbox.m_min.x < s1) )
+        {
+          // check for interior "u = constant" iso
+          GetParameterTolerance( 0, 0.5*(bbox.m_min.x+bbox.m_max.x), &a, &b);
+          if ( a <= bbox.m_min.x && bbox.m_max.x <= b  )
+            iso = x_iso;
+        }
       }
       else
       {
-	// check for t = constant iso
-	if ( bbox.m_max.y <= t0+ttol ) 
-	{
-	  // check for south side iso
-	  GetParameterTolerance( 1, t0, &a, &b);
-	  if ( a < bbox.m_min.y && bbox.m_max.y <= b  )
-	    iso = S_iso;
-	}
-	else if ( bbox.m_min.y >= t1-ttol ) 
-	{
-	  // check for north side iso
-	  GetParameterTolerance( 1, t1, &a, &b);
-	  if ( a < bbox.m_min.y && bbox.m_max.y <= b  )
-	    iso = N_iso;
-	}
+        // check for t = constant iso
+        if ( bbox.m_max.y <= t0+ttol ) 
+        {
+          // check for south side iso
+          GetParameterTolerance( 1, t0, &a, &b);
+          if ( a < bbox.m_min.y && bbox.m_max.y <= b  )
+            iso = S_iso;
+        }
+        else if ( bbox.m_min.y >= t1-ttol ) 
+        {
+          // check for north side iso
+          GetParameterTolerance( 1, t1, &a, &b);
+          if ( a < bbox.m_min.y && bbox.m_max.y <= b  )
+            iso = N_iso;
+        }
 
-	if ( iso == not_iso && (t0 < bbox.m_max.x || bbox.m_min.x < t1) )
-	{
-	  // check for interior "t = constant" iso
-	  GetParameterTolerance( 1, 0.5*(bbox.m_min.y+bbox.m_max.y), &a, &b);
-	  if ( a < bbox.m_min.y && bbox.m_max.y <= b  )
-	    iso = y_iso;
-	}
+        if ( iso == not_iso && (t0 < bbox.m_max.x || bbox.m_min.x < t1) )
+        {
+          // check for interior "t = constant" iso
+          GetParameterTolerance( 1, 0.5*(bbox.m_min.y+bbox.m_max.y), &a, &b);
+          if ( a < bbox.m_min.y && bbox.m_max.y <= b  )
+            iso = y_iso;
+        }
       }
     }
   }
@@ -314,12 +313,12 @@ ON_Surface::IsIsoparametric( const ON_BoundingBox& bbox ) const
 }
 
 
-BOOL ON_Surface::IsPlanar( ON_Plane* plane, double tolerance ) const
+ON_BOOL32 ON_Surface::IsPlanar( ON_Plane* plane, double tolerance ) const
 {
   return false;
 }
 
-BOOL 
+ON_BOOL32 
 ON_Surface::IsClosed(int dir) const
 {
   ON_Interval d = Domain(dir);
@@ -340,53 +339,53 @@ ON_Surface::IsClosed(int dir) const
       double t;
       ON_Interval sp;
       if ( dir ) {
-	v0 = &d.m_t[0];
-	v1 = &d.m_t[1];
-	u0 = &t;
-	u1 = &t;
+        v0 = &d.m_t[0];
+        v1 = &d.m_t[1];
+        u0 = &t;
+        u1 = &t;
       }
       else {
-	u0 = &d.m_t[0];
-	u1 = &d.m_t[1];
-	v0 = &t;
-	v1 = &t;
+        u0 = &d.m_t[0];
+        u1 = &d.m_t[1];
+        v0 = &t;
+        v1 = &t;
       }
       if ( GetSpanVector( dir?0:1, s.Array() ) ) {
-	int span_index, i;
-	for ( span_index = 0; span_index < span_count; span_index++ ) {
-	  sp.Set(s[span_index],s[span_index+1]);
-	  for ( i = 0; i < n; i++ ) {
-	    t = sp.ParameterAt(i*delta);
-	    if ( !Evaluate( *u0, *v0, 1, 3, P, 0, hintP ) )
-	      return false;
-	    if ( !Evaluate( *u1, *v1, 2, 3, Q, 0, hintQ ) )
-	      return false;
-	    if ( ON_ComparePoint( 3, 0, &P.x, &Q.x ) )
-	      return false;
-	  }
-	}
+        int span_index, i;
+        for ( span_index = 0; span_index < span_count; span_index++ ) {
+          sp.Set(s[span_index],s[span_index+1]);
+          for ( i = 0; i < n; i++ ) {
+            t = sp.ParameterAt(i*delta);
+            if ( !Evaluate( *u0, *v0, 1, 3, P, 0, hintP ) )
+              return false;
+            if ( !Evaluate( *u1, *v1, 2, 3, Q, 0, hintQ ) )
+              return false;
+            if ( ON_ComparePoint( 3, 0, &P.x, &Q.x ) )
+              return false;
+          }
+        }
       }
     }
   }
   return false;
 }
 
-BOOL ON_Surface::IsPeriodic(int dir) const
+ON_BOOL32 ON_Surface::IsPeriodic(int dir) const
 {
   return false;
 }
 
 bool ON_Surface::GetNextDiscontinuity( 
-		int dir,
-		ON::continuity c,
-		double t0,
-		double t1,
-		double* t,
-		int* hint,
-		int* dtype,
-		double cos_angle_tolerance,
-		double curvature_tolerance
-		) const
+                int dir,
+                ON::continuity c,
+                double t0,
+                double t1,
+                double* t,
+                int* hint,
+                int* dtype,
+                double cos_angle_tolerance,
+                double curvature_tolerance
+                ) const
 {
   // 28 Jan 2005 - untested code
 
@@ -455,89 +454,89 @@ bool ON_Surface::GetNextDiscontinuity(
       ON_3dVector& D2b = Db[3+2*dir];
 
       if ( t0 < domain[1] && t1 >= domain[1] )
-	t1 = domain[1];
+        t1 = domain[1];
       else if ( t0 > domain[0] && t1 <= domain[0] )
-	t1 = domain[0];
+        t1 = domain[0];
 
       if ( (t0 < domain[1] && t1 >= domain[1]) || (t0 > domain[0] && t1 <= domain[0]) )
       {
-	if ( IsClosed(dir) )
-	{
-	  int span_count = SpanCount(1-dir);
-	  double* span_vector = (span_count>0) ? ((double*)onmalloc((span_count+1)*sizeof(*span_vector))) : 0;
-	  if (!GetSpanVector(1-dir,span_vector))
-	    span_count = 0;
-	  st0[dir] = domain[0];
-	  st1[dir] = domain[1];
+        if ( IsClosed(dir) )
+        {
+          int span_count = SpanCount(1-dir);
+          double* span_vector = (span_count>0) ? ((double*)onmalloc((span_count+1)*sizeof(*span_vector))) : 0;
+          if (!GetSpanVector(1-dir,span_vector))
+            span_count = 0;
+          st0[dir] = domain[0];
+          st1[dir] = domain[1];
 
-	  for ( span_index = 0; span_index < span_count && 1 != *dtype; span_index++ )
-	  {
-	    span_domain.Set(span_vector[span_index],span_vector[span_index+1]);
-	    for ( j = (span_index?1:0); j <= 2 && 1 != *dtype; j++ )
-	    {
-	      st0[1-dir] = span_domain.ParameterAt(0.5*j);
-	      st1[1-dir] = st0[1-dir];
-	      if ( bTestD1 || bTestT )
-	      {
-		// need to check locus continuity at start/end of closed surface.
-		if (    Evaluate(st0.x,st0.y,2,3,&Da[0].x,1,hinta) 
-		     && Evaluate(st1.x,st1.y,2,3,&Db[0].x,2,hintb) )
-		{
-		  if ( bTestD1 )
-		  {
-		    if ( !(D1a-D1b).IsTiny(D1b.MaximumCoordinate()*ON_SQRT_EPSILON ) )
-		    {
-		      if ( dtype )
-			*dtype = 1;
-		      *t = t1;
-		      rc = true;
-		    }
-		    else if ( bTestD2 && !(D2a-D2b).IsTiny(D2b.MaximumCoordinate()*ON_SQRT_EPSILON) )
-		    {
-		      if ( dtype )
-			*dtype = 2;
-		      *t = t1;
-		      rc = true;
-		    }
+          for ( span_index = 0; span_index < span_count && 1 != *dtype; span_index++ )
+          {
+            span_domain.Set(span_vector[span_index],span_vector[span_index+1]);
+            for ( j = (span_index?1:0); j <= 2 && 1 != *dtype; j++ )
+            {
+              st0[1-dir] = span_domain.ParameterAt(0.5*j);
+              st1[1-dir] = st0[1-dir];
+              if ( bTestD1 || bTestT )
+              {
+                // need to check locus continuity at start/end of closed surface.
+                if (    Evaluate(st0.x,st0.y,2,3,&Da[0].x,1,hinta) 
+                     && Evaluate(st1.x,st1.y,2,3,&Db[0].x,2,hintb) )
+                {
+                  if ( bTestD1 )
+                  {
+                    if ( !(D1a-D1b).IsTiny(D1b.MaximumCoordinate()*ON_SQRT_EPSILON ) )
+                    {
+                      if ( dtype )
+                        *dtype = 1;
+                      *t = t1;
+                      rc = true;
+                    }
+                    else if ( bTestD2 && !(D2a-D2b).IsTiny(D2b.MaximumCoordinate()*ON_SQRT_EPSILON) )
+                    {
+                      if ( dtype )
+                        *dtype = 2;
+                      *t = t1;
+                      rc = true;
+                    }
 
-		  }
-		  else if ( bTestT )
-		  {
-		    ON_3dVector Ta, Tb, Ka, Kb;
-		    ON_EvCurvature( D1a, D2a, Ta, Ka );
-		    ON_EvCurvature( D1b, D2b, Tb, Kb );
-		    if ( Ta*Tb < cos_angle_tolerance )
-		    {
-		      if ( dtype )
-			*dtype = 1;
-		      *t = t1;
-		      rc = true;
-		    }
-		    else if ( bTestK && (Ka-Kb).Length() > curvature_tolerance )
-		    {
-		      if ( dtype )
-			*dtype = 2;
-		      *t = t1;
-		      rc = true;
-		    }
-		  }
-		}
-	      }
-	    }
-	  }
+                  }
+                  else if ( bTestT )
+                  {
+                    ON_3dVector Ta, Tb, Ka, Kb;
+                    ON_EvCurvature( D1a, D2a, Ta, Ka );
+                    ON_EvCurvature( D1b, D2b, Tb, Kb );
+                    if ( Ta*Tb < cos_angle_tolerance )
+                    {
+                      if ( dtype )
+                        *dtype = 1;
+                      *t = t1;
+                      rc = true;
+                    }
+                    else if ( bTestK && (Ka-Kb).Length() > curvature_tolerance )
+                    {
+                      if ( dtype )
+                        *dtype = 2;
+                      *t = t1;
+                      rc = true;
+                    }
+                  }
+                }
+              }
+            }
+          }
 
-	  if ( span_vector)
-	  {
-	    onfree(span_vector);
-	  }
-	}
-	else
-	{
-	  // open curves are not locus continuous at ends.
-	  *dtype = 0; // locus C0 discontinuity
-	  *t = t1;
-	  rc = true;
-	}
+          if ( span_vector)
+          {
+            onfree(span_vector);
+          }
+        }
+        else
+        {
+          // open curves are not locus continuous at ends.
+          *dtype = 0; // locus C0 discontinuity
+          *t = t1;
+          rc = true;
+        }
       }
     }
   }
@@ -590,8 +589,8 @@ bool ON_Surface::IsContinuous(
       ON_Interval d = Domain(0);
       if ( s == d[1] )
       {
-	sq[0] = sq[1] = d[0];
-	sq[2] = sq[3] = d[1];
+        sq[0] = sq[1] = d[0];
+        sq[2] = sq[3] = d[1];
       }
       else
       {
@@ -606,8 +605,8 @@ bool ON_Surface::IsContinuous(
       // the answer to any locus query is false.
       if ( t == d[1] )
       {
-	tq[0] = tq[3] = d[0];
-	tq[1] = tq[2] = d[1];
+        tq[0] = tq[3] = d[0];
+        tq[1] = tq[2] = d[1];
       }
       else
       {
@@ -634,11 +633,11 @@ bool ON_Surface::IsContinuous(
     for ( qi = 0; qi < 4; qi++ )
     {
       if ( !EvPoint( sq[qi], tq[qi], P[qi], qi+1 ) )
-	return false;
+        return false;
       if ( qi )
       {
-	if ( !(P[qi]-P[qi-1]).IsTiny(point_tolerance) )
-	  return false;
+        if ( !(P[qi]-P[qi-1]).IsTiny(point_tolerance) )
+          return false;
       }
     }
     if ( !(P[3]-P[0]).IsTiny(point_tolerance) )
@@ -649,15 +648,15 @@ bool ON_Surface::IsContinuous(
     for ( qi = 0; qi < 4; qi++ )
     {
       if ( !Ev1Der( sq[qi], tq[qi], P[qi], Ds[qi], Dt[qi], qi+1, hint ) )
-	return false;
+        return false;
       if ( qi )
       {
-	if ( !(P[qi]-P[qi-1]).IsTiny(point_tolerance) )
-	  return false;
-	if ( !(Ds[qi]-Ds[qi-1]).IsTiny(d1_tolerance) )
-	  return false;
-	if ( !(Dt[qi]-Dt[qi-1]).IsTiny(d1_tolerance) )
-	  return false;
+        if ( !(P[qi]-P[qi-1]).IsTiny(point_tolerance) )
+          return false;
+        if ( !(Ds[qi]-Ds[qi-1]).IsTiny(d1_tolerance) )
+          return false;
+        if ( !(Dt[qi]-Dt[qi-1]).IsTiny(d1_tolerance) )
+          return false;
       }
     }
     if ( !(P[3]-P[0]).IsTiny(point_tolerance) )
@@ -672,23 +671,23 @@ bool ON_Surface::IsContinuous(
     for ( qi = 0; qi < 4; qi++ )
     {
       if ( !Ev2Der( sq[qi], tq[qi], P[qi], Ds[qi], Dt[qi], 
-		    Dss[qi], Dst[qi], Dtt[qi], 
-		    qi+1, hint ) )
-	return false;
+                    Dss[qi], Dst[qi], Dtt[qi], 
+                    qi+1, hint ) )
+        return false;
       if ( qi )
       {
-	if ( !(P[qi]-P[qi-1]).IsTiny(point_tolerance) )
-	  return false;
-	if ( !(Ds[qi]-Ds[qi-1]).IsTiny(d1_tolerance) )
-	  return false;
-	if ( !(Dt[qi]-Dt[qi-1]).IsTiny(d1_tolerance) )
-	  return false;
-	if ( !(Dss[qi]-Dss[qi-1]).IsTiny(d2_tolerance) )
-	  return false;
-	if ( !(Dst[qi]-Dst[qi-1]).IsTiny(d2_tolerance) )
-	  return false;
-	if ( !(Dtt[qi]-Dtt[qi-1]).IsTiny(d2_tolerance) )
-	  return false;
+        if ( !(P[qi]-P[qi-1]).IsTiny(point_tolerance) )
+          return false;
+        if ( !(Ds[qi]-Ds[qi-1]).IsTiny(d1_tolerance) )
+          return false;
+        if ( !(Dt[qi]-Dt[qi-1]).IsTiny(d1_tolerance) )
+          return false;
+        if ( !(Dss[qi]-Dss[qi-1]).IsTiny(d2_tolerance) )
+          return false;
+        if ( !(Dst[qi]-Dst[qi-1]).IsTiny(d2_tolerance) )
+          return false;
+        if ( !(Dtt[qi]-Dtt[qi-1]).IsTiny(d2_tolerance) )
+          return false;
       }
     }
     if ( !(P[3]-P[0]).IsTiny(point_tolerance) )
@@ -709,13 +708,13 @@ bool ON_Surface::IsContinuous(
     for ( qi = 0; qi < 4; qi++ )
     {
       if ( !EvNormal( sq[qi], tq[qi], P[qi], N[qi], qi+1 ) )
-	return false;
+        return false;
       if ( qi )
       {
-	if ( !(P[qi]-P[qi-1]).IsTiny(point_tolerance) )
-	  return false;
-	if ( N[qi]*N[qi-1] < cos_angle_tolerance )
-	  return false;
+        if ( !(P[qi]-P[qi-1]).IsTiny(point_tolerance) )
+          return false;
+        if ( N[qi]*N[qi-1] < cos_angle_tolerance )
+          return false;
       }
     }
     if ( !(P[3]-P[0]).IsTiny(point_tolerance) )
@@ -728,31 +727,31 @@ bool ON_Surface::IsContinuous(
     for ( qi = 0; qi < 4; qi++ )
     {
       if ( !Ev2Der( sq[qi], tq[qi], P[qi], Ds[qi], Dt[qi], 
-		    Dss[qi], Dst[qi], Dtt[qi], 
-		    qi+1, hint ) )
-	return false;
+                    Dss[qi], Dst[qi], Dtt[qi], 
+                    qi+1, hint ) )
+        return false;
       ON_EvPrincipalCurvatures( Ds[qi], Dt[qi], Dss[qi], Dst[qi], Dtt[qi], N[qi],
-				&gauss[qi], &mean[qi], &kappa1[qi], &kappa2[qi], 
-				K1[qi], K2[qi] );
+                                &gauss[qi], &mean[qi], &kappa1[qi], &kappa2[qi], 
+                                K1[qi], K2[qi] );
       if ( qi )
       {
-	if ( !(P[qi]-P[qi-1]).IsTiny(point_tolerance) )
-	  return false;
-	if ( N[qi]*N[qi-1] < cos_angle_tolerance )
-	  return false;
-	if ( fabs(kappa1[qi] - kappa1[qi-1]) > curvature_tolerance )
-	  return false;
-	if ( fabs(kappa2[qi] - kappa2[qi-1]) > curvature_tolerance )
-	  return false;
+        if ( !(P[qi]-P[qi-1]).IsTiny(point_tolerance) )
+          return false;
+        if ( N[qi]*N[qi-1] < cos_angle_tolerance )
+          return false;
+        if ( fabs(kappa1[qi] - kappa1[qi-1]) > curvature_tolerance )
+          return false;
+        if ( fabs(kappa2[qi] - kappa2[qi-1]) > curvature_tolerance )
+          return false;
       }
       if ( !(P[3]-P[0]).IsTiny(point_tolerance) )
-	return false;
+        return false;
       if ( N[3]*N[0] < cos_angle_tolerance )
-	return false;
+        return false;
       if ( fabs(kappa1[3] - kappa1[0]) > curvature_tolerance )
-	return false;
+        return false;
       if ( fabs(kappa2[3] - kappa2[0]) > curvature_tolerance )
-	return false;
+        return false;
     }
     break;
 
@@ -765,7 +764,7 @@ bool ON_Surface::IsContinuous(
   return true;
 }
 
-BOOL 
+ON_BOOL32 
 ON_Surface::IsSingular(int side) const
 {
   return false;
@@ -773,26 +772,26 @@ ON_Surface::IsSingular(int side) const
 
 bool 
 ON_Surface::IsAtSingularity(double s, double t,
-			    bool bExact //true by default
-			    ) const
+                            bool bExact //true by default
+                            ) const
 
 {
   if (bExact){
     if (s == Domain(0)[0]){
       if (IsSingular(3))
-	return true;
+        return true;
     }
     else if (s == Domain(0)[1]){
       if (IsSingular(1))
-	return true;
+        return true;
     }
     if (t == Domain(1)[0]){
       if (IsSingular(0))
-	return true;
+        return true;
     }
     else if (t == Domain(1)[1]){
       if (IsSingular(2))
-	return true;
+        return true;
     }
     return false;
   }
@@ -817,11 +816,11 @@ ON_Surface::IsAtSingularity(double s, double t,
   if (!bCheckPartials[0] && !bCheckPartials[1]){
     if (t < m[1]){
       if (IsSingular(0))
-	bCheckPartials[0] = true;
+        bCheckPartials[0] = true;
     }
     else {
       if (IsSingular(2))
-	bCheckPartials[0] = true;
+        bCheckPartials[0] = true;
     }
   }
 
@@ -879,9 +878,9 @@ ON_Surface::NormalAt( double s, double t ) const
   return N;
 }
 
-BOOL ON_Surface::FrameAt( double u, double v, ON_Plane& frame) const
+ON_BOOL32 ON_Surface::FrameAt( double u, double v, ON_Plane& frame) const
 {
-  BOOL rc = false;
+  ON_BOOL32 rc = false;
   ON_3dPoint origin;
   ON_3dVector udir, vdir, normal;
   if( EvNormal( u, v, origin, udir, vdir, normal))
@@ -898,21 +897,21 @@ BOOL ON_Surface::FrameAt( double u, double v, ON_Plane& frame) const
 
 
 
-BOOL 
+ON_BOOL32 
 ON_Surface::EvPoint( // returns false if unable to evaluate
        double s, double t, // evaluation parameters
        ON_3dPoint& point,
        int side,        // optional - determines which side to evaluate from
-		       //         0 = default
-		       //         1 from NE quadrant
-		       //         2 from NW quadrant
-		       //         3 from SW quadrant
-		       //         4 from SE quadrant
+                       //         0 = default
+                       //         1 from NE quadrant
+                       //         2 from NW quadrant
+                       //         3 from SW quadrant
+                       //         4 from SE quadrant
        int* hint       // optional - evaluation hint (int[2]) used to speed
-		       //            repeated evaluations
+                       //            repeated evaluations
        ) const
 {
-  BOOL rc = false;
+  ON_BOOL32 rc = false;
   double ws[128];
   double* v;
   if ( Dimension() <= 3 ) {
@@ -938,23 +937,23 @@ ON_Surface::EvPoint( // returns false if unable to evaluate
   return rc;
 }
 
-BOOL
+ON_BOOL32
 ON_Surface::Ev1Der( // returns false if unable to evaluate
        double s, double t, // evaluation parameters
        ON_3dPoint& point,
        ON_3dVector& ds,
        ON_3dVector& dt,
        int side,        // optional - determines which side to evaluate from
-		       //         0 = default
-		       //         1 from NE quadrant
-		       //         2 from NW quadrant
-		       //         3 from SW quadrant
-		       //         4 from SE quadrant
+                       //         0 = default
+                       //         1 from NE quadrant
+                       //         2 from NW quadrant
+                       //         3 from SW quadrant
+                       //         4 from SE quadrant
        int* hint       // optional - evaluation hint (int[2]) used to speed
-		       //            repeated evaluations
+                       //            repeated evaluations
        ) const
 {
-  BOOL rc = false;
+  ON_BOOL32 rc = false;
   const int dim = Dimension();
   double ws[3*32];
   double* v;
@@ -986,14 +985,14 @@ ON_Surface::Ev1Der( // returns false if unable to evaluate
       ds.z = v[dim+2];
       dt.z = v[2*dim+2];
       if ( dim > 32 )
-	onfree(v);
+        onfree(v);
     }
   }
 
   return rc;
 }
 
-BOOL 
+ON_BOOL32 
 ON_Surface::Ev2Der( // returns false if unable to evaluate
        double s, double t, // evaluation parameters
        ON_3dPoint& point,
@@ -1003,16 +1002,16 @@ ON_Surface::Ev2Der( // returns false if unable to evaluate
        ON_3dVector& dst,
        ON_3dVector& dtt,
        int side,        // optional - determines which side to evaluate from
-		       //         0 = default
-		       //         1 from NE quadrant
-		       //         2 from NW quadrant
-		       //         3 from SW quadrant
-		       //         4 from SE quadrant
+                       //         0 = default
+                       //         1 from NE quadrant
+                       //         2 from NW quadrant
+                       //         3 from SW quadrant
+                       //         4 from SE quadrant
        int* hint       // optional - evaluation hint (int[2]) used to speed
-		       //            repeated evaluations
+                       //            repeated evaluations
        ) const
 {
-  BOOL rc = false;
+  ON_BOOL32 rc = false;
   const int dim = Dimension();
   double ws[6*16];
   double* v;
@@ -1062,7 +1061,7 @@ ON_Surface::Ev2Der( // returns false if unable to evaluate
       dst.z = v[4*dim+2];
       dtt.z = v[5*dim+2];
       if ( dim > 16 )
-	onfree(v);
+        onfree(v);
     }
   }
 
@@ -1070,63 +1069,63 @@ ON_Surface::Ev2Der( // returns false if unable to evaluate
 }
 
 
-BOOL
+ON_BOOL32
 ON_Surface::EvNormal( // returns false if unable to evaluate
-	 double s, double t, // evaluation parameters (s,t)
-	 ON_3dVector& normal, // unit normal
-	 int side,       // optional - determines which side to evaluate from
-			 //         0 = default
-			 //         1 from NE quadrant
-			 //         2 from NW quadrant
-			 //         3 from SW quadrant
-			 //         4 from SE quadrant
-	 int* hint       // optional - evaluation hint (int[2]) used to speed
-			 //            repeated evaluations
-	 ) const
+         double s, double t, // evaluation parameters (s,t)
+         ON_3dVector& normal, // unit normal
+         int side,       // optional - determines which side to evaluate from
+                         //         0 = default
+                         //         1 from NE quadrant
+                         //         2 from NW quadrant
+                         //         3 from SW quadrant
+                         //         4 from SE quadrant
+         int* hint       // optional - evaluation hint (int[2]) used to speed
+                         //            repeated evaluations
+         ) const
 {
   ON_3dPoint point;
   ON_3dVector ds, dt;
   return EvNormal( s, t, point, ds, dt, normal, side, hint );
 }
 
-BOOL
+ON_BOOL32
 ON_Surface::EvNormal( // returns false if unable to evaluate
-	 double s, double t, // evaluation parameters (s,t)
-	 ON_3dPoint& point,  // returns value of surface
-	 ON_3dVector& normal, // unit normal
-	 int side,       // optional - determines which side to evaluate from
-			 //         0 = default
-			 //         1 from NE quadrant
-			 //         2 from NW quadrant
-			 //         3 from SW quadrant
-			 //         4 from SE quadrant
-	 int* hint       // optional - evaluation hint (int[2]) used to speed
-			 //            repeated evaluations
-	 ) const
+         double s, double t, // evaluation parameters (s,t)
+         ON_3dPoint& point,  // returns value of surface
+         ON_3dVector& normal, // unit normal
+         int side,       // optional - determines which side to evaluate from
+                         //         0 = default
+                         //         1 from NE quadrant
+                         //         2 from NW quadrant
+                         //         3 from SW quadrant
+                         //         4 from SE quadrant
+         int* hint       // optional - evaluation hint (int[2]) used to speed
+                         //            repeated evaluations
+         ) const
 {
   ON_3dVector ds, dt;
   return EvNormal( s, t, point, ds, dt, normal, side, hint );
 }
 
-BOOL
+ON_BOOL32
 ON_Surface::EvNormal( // returns false if unable to evaluate
-	 double s, double t, // evaluation parameters (s,t)
-	 ON_3dPoint& point,  // returns value of surface
-	 ON_3dVector& ds, // first partial derivatives (Ds)
-	 ON_3dVector& dt, // (Dt)
-	 ON_3dVector& normal, // unit normal
-	 int side,       // optional - determines which side to evaluate from
-			 //         0 = default
-			 //         1 from NE quadrant
-			 //         2 from NW quadrant
-			 //         3 from SW quadrant
-			 //         4 from SE quadrant
-	 int* hint       // optional - evaluation hint (int[2]) used to speed
-			 //            repeated evaluations
-	 ) const
+         double s, double t, // evaluation parameters (s,t)
+         ON_3dPoint& point,  // returns value of surface
+         ON_3dVector& ds, // first partial derivatives (Ds)
+         ON_3dVector& dt, // (Dt)
+         ON_3dVector& normal, // unit normal
+         int side,       // optional - determines which side to evaluate from
+                         //         0 = default
+                         //         1 from NE quadrant
+                         //         2 from NW quadrant
+                         //         3 from SW quadrant
+                         //         4 from SE quadrant
+         int* hint       // optional - evaluation hint (int[2]) used to speed
+                         //            repeated evaluations
+         ) const
 {
   // simple cross product normal - override to support singular surfaces
-  BOOL rc = Ev1Der( s, t, point, ds, dt, side, hint );
+  ON_BOOL32 rc = Ev1Der( s, t, point, ds, dt, side, hint );
   if ( rc ) {
     const double len_ds = ds.Length();
     const double len_dt = dt.Length();
@@ -1145,46 +1144,46 @@ ON_Surface::EvNormal( // returns false if unable to evaluate
       // see if we have a singular point 
       double v[6][3];
       int normal_side = side;
-      BOOL bOnSide = false;
+      ON_BOOL32 bOnSide = false;
       ON_Interval sdom = Domain(0);
       ON_Interval tdom = Domain(1);
 		  if (s == sdom.Min()) {
 			  normal_side = (normal_side >= 3) ? 4 : 1;
-	bOnSide = true;
+        bOnSide = true;
 		  }
 		  else if (s == sdom.Max()) {
 			  normal_side = (normal_side >= 3) ? 3 : 2;
-	bOnSide = true;
+        bOnSide = true;
 		  }
 		  if (t == tdom.Min()) {
 			  normal_side = (normal_side == 2 || normal_side == 3) ? 2 : 1;
-	bOnSide = true;
+        bOnSide = true;
 		  }
 		  else if (t == tdom.Max()) {
 			  normal_side = (normal_side == 2 || normal_side == 3) ? 3 : 4;
-	bOnSide = true;
+        bOnSide = true;
 		  }
       if ( !bOnSide )
       {
-	// 2004 November 11 Dale Lear 
-	//  Added a retry again with a more generous tolerance
-	if ( len_ds >  ON_EPSILON*len_dt && len_dt >  ON_EPSILON*len_ds ) 
-	{
-	  ON_3dVector a = ds/len_ds;
-	  ON_3dVector b = dt/len_dt;
-	  normal = ON_CrossProduct( a, b );
-	  rc = normal.Unitize();
-	}
-	else
-	{
-	  rc = false;
-	}
+        // 2004 November 11 Dale Lear 
+        //  Added a retry again with a more generous tolerance
+        if ( len_ds >  ON_EPSILON*len_dt && len_dt >  ON_EPSILON*len_ds ) 
+        {
+          ON_3dVector a = ds/len_ds;
+          ON_3dVector b = dt/len_dt;
+          normal = ON_CrossProduct( a, b );
+          rc = normal.Unitize();
+        }
+        else
+        {
+          rc = false;
+        }
       }
       else {
-	rc = Evaluate( s, t, 2, 3, &v[0][0], normal_side, hint );
-	if ( rc ) {
-		rc = ON_EvNormal( normal_side, v[1], v[2], v[3], v[4], v[5], normal);
-	}
+        rc = Evaluate( s, t, 2, 3, &v[0][0], normal_side, hint );
+        if ( rc ) {
+	        rc = ON_EvNormal( normal_side, v[1], v[2], v[3], v[4], v[5], normal);
+        }
       }
     }
   }
@@ -1197,9 +1196,9 @@ ON_Surface::EvNormal( // returns false if unable to evaluate
 //virtual
 ON_Curve* ON_Surface::IsoCurve(
        int dir,    // 0 first parameter varies and second parameter is constant
-		   //   e.g., point on IsoCurve(0,c) at t is srf(t,c)
-		   // 1 first parameter is constant and second parameter varies
-		   //   e.g., point on IsoCurve(1,c) at t is srf(c,t)
+                   //   e.g., point on IsoCurve(0,c) at t is srf(t,c)
+                   // 1 first parameter is constant and second parameter varies
+                   //   e.g., point on IsoCurve(1,c) at t is srf(c,t)
        double c    // value of constant parameter 
        ) const
 {
@@ -1207,9 +1206,9 @@ ON_Curve* ON_Surface::IsoCurve(
 }
 
 ON_Curve* ON_Surface::Pushup( const ON_Curve& curve_2d,
-		  double tolerance,
-		  const ON_Interval* curve_2d_subdomain
-		  ) const
+                  double tolerance,
+                  const ON_Interval* curve_2d_subdomain
+                  ) const
 {
   // virtual overrides do the real work
 
@@ -1244,28 +1243,28 @@ ON_Curve* ON_Surface::Pushup( const ON_Curve& curve_2d,
     ON_3dPoint p0 = curve_2d.PointAt( curve_2d_subdomain->Min() );
     ON_3dPoint p1 = curve_2d.PointAt( curve_2d_subdomain->Max() );
     ON_Interval c3_dom( p0[dir], p1[dir] );
-    BOOL bRev = c3_dom.IsDecreasing();
+    ON_BOOL32 bRev = c3_dom.IsDecreasing();
     if ( bRev )
       c3_dom.Swap();
     if ( c3_dom.IsIncreasing() )
     {
       if ( p0[1-dir] == p1[1-dir] )
-	c = p0[1-dir];
+        c = p0[1-dir];
       else
-	c = 0.5*(p0[1-dir] + p1[1-dir]);
+        c = 0.5*(p0[1-dir] + p1[1-dir]);
       curve = IsoCurve( dir, c );
       if ( curve && curve->Domain() != c3_dom )
       {
-	if ( !curve->Trim( c3_dom ) )
-	{
-	  delete curve;
-	  curve = 0;
-	}
+        if ( !curve->Trim( c3_dom ) )
+        {
+          delete curve;
+          curve = 0;
+        }
       }
       if ( curve ) {
-	if ( bRev )
-	  curve->Reverse();
-	curve->SetDomain( curve_2d_subdomain->Min(), curve_2d_subdomain->Max() );
+        if ( bRev )
+          curve->Reverse();
+        curve->SetDomain( curve_2d_subdomain->Min(), curve_2d_subdomain->Max() );
       }
     }
   }
@@ -1273,16 +1272,16 @@ ON_Curve* ON_Surface::Pushup( const ON_Curve& curve_2d,
 } 
 
 static bool CheckPullbackPoint( 
-			const ON_Surface* srf,
-			double u, double v, 
-			int* srf_hint, // array of 2 ints
-			const ON_Curve& curve_3d,
-			double t, 
-			int* crv_hint, // pointer to 1 int
-			const ON_3dVector& lineDir,
-			int* check_hint, // pointer to 1 int
-			double tolerance,
-			double* point_dist)
+                        const ON_Surface* srf,
+                        double u, double v, 
+                        int* srf_hint, // array of 2 ints
+                        const ON_Curve& curve_3d,
+                        double t, 
+                        int* crv_hint, // pointer to 1 int
+                        const ON_3dVector& lineDir,
+                        int* check_hint, // pointer to 1 int
+                        double tolerance,
+                        double* point_dist)
 {
   // returns true if the point srf(u,v) is a valid pullback
   // of the point crv(t).  The value of the returned
@@ -1345,14 +1344,14 @@ static bool CheckPullbackPoint(
 }
 
 static bool CheckPullbackLineEnds( const ON_Surface* srf, 
-			       const ON_3dPoint& start_uv,
-			       const ON_3dPoint& end_uv,
-			       const ON_Curve& curve_3d,
-			       ON_Interval crv_dom,
-			       double tolerance,
-			       bool bTestMidPoint,
-			       double* dist
-			     )
+                               const ON_3dPoint& start_uv,
+                               const ON_3dPoint& end_uv,
+                               const ON_Curve& curve_3d,
+                               ON_Interval crv_dom,
+                               double tolerance,
+                               bool bTestMidPoint,
+                               double* dist
+                             )
 {
   // Used to check a pullback candidate when the surface
   // is closed or singular.
@@ -1384,17 +1383,17 @@ static bool CheckPullbackLineEnds( const ON_Surface* srf,
   double dist0=0.0, dist1=0.0, dist2 = 0.0;
 
   if ( !CheckPullbackPoint( srf,
-	  start_uv.x, start_uv.y, srf_hint,
-	  curve_3d, crv_dom[0], &crv_hint,
-	  lineT, &check_hint, tolerance, &dist0 ) )
+          start_uv.x, start_uv.y, srf_hint,
+          curve_3d, crv_dom[0], &crv_hint,
+          lineT, &check_hint, tolerance, &dist0 ) )
   {
     return false;
   }
 
   if ( !CheckPullbackPoint( srf,
-	  end_uv.x, end_uv.y, srf_hint,
-	  curve_3d, crv_dom[1], &crv_hint,
-	  lineT, &check_hint, tolerance, &dist1 ))
+          end_uv.x, end_uv.y, srf_hint,
+          curve_3d, crv_dom[1], &crv_hint,
+          lineT, &check_hint, tolerance, &dist1 ))
   {
     return false;
   }
@@ -1406,9 +1405,9 @@ static bool CheckPullbackLineEnds( const ON_Surface* srf,
     // connecting the wrong corners.
     ON_3dPoint uv = ON_Line( start_uv,end_uv).PointAt(0.5);
     if ( !CheckPullbackPoint( srf,
-	    uv.x, uv.y, srf_hint,
-	    curve_3d, crv_dom.ParameterAt(0.5), &crv_hint,
-	    lineT, &check_hint, tolerance, &dist2 ))
+            uv.x, uv.y, srf_hint,
+            curve_3d, crv_dom.ParameterAt(0.5), &crv_hint,
+            lineT, &check_hint, tolerance, &dist2 ))
     {
       return false;
     }
@@ -1424,11 +1423,11 @@ static bool CheckPullbackLineEnds( const ON_Surface* srf,
 }
 
 ON_Curve* ON_Surface::Pullback( const ON_Curve& curve_3d,
-		  double tolerance,
-		  const ON_Interval* curve_3d_subdomain,
-		  ON_3dPoint start_uv,
-		  ON_3dPoint end_uv
-		  ) const
+                  double tolerance,
+                  const ON_Interval* curve_3d_subdomain,
+                  ON_3dPoint start_uv,
+                  ON_3dPoint end_uv
+                  ) const
 {
   // 3 April 2003 Dale Lear:
   //    The virtual overrides to the real work. This
@@ -1488,13 +1487,13 @@ ON_Curve* ON_Surface::Pullback( const ON_Curve& curve_3d,
     // parameter ambiguities that happen at seams 
     // and singular points.
 
-    BOOL bClosedU = IsClosed(0);
-    BOOL bClosedV = IsClosed(1);
+    ON_BOOL32 bClosedU = IsClosed(0);
+    ON_BOOL32 bClosedV = IsClosed(1);
     const double reltol = 0.001;
-    BOOL bSingS = false;
-    BOOL bSingE = false;
-    BOOL bSingN = false;
-    BOOL bSingW = false;
+    ON_BOOL32 bSingS = false;
+    ON_BOOL32 bSingE = false;
+    ON_BOOL32 bSingN = false;
+    ON_BOOL32 bSingW = false;
     int sing_start = 0; // 1 = S, 2 = E, 3 = N, 4 = W;
     int sing_end   = 0; // 1 = S, 2 = E, 3 = N, 4 = W;
     double s, e;
@@ -1508,39 +1507,39 @@ ON_Curve* ON_Surface::Pullback( const ON_Curve& curve_3d,
       bSingE = IsSingular(1);
       if ( bSingW )
       {
-	if ( s <= reltol )
-	  sing_start = 4;
-	if ( e <= reltol )
-	  sing_end = 4;
+        if ( s <= reltol )
+          sing_start = 4;
+        if ( e <= reltol )
+          sing_end = 4;
       }
       if ( bSingE )
       {
-	if ( s >= 1.0-reltol )
-	  sing_start = 2;
-	if ( e >= 1.0-reltol )
-	  sing_end = 2;
+        if ( s >= 1.0-reltol )
+          sing_start = 2;
+        if ( e >= 1.0-reltol )
+          sing_end = 2;
       }
 
       if ( sing_start && sing_end && sing_start != sing_end && !bStartFixed && !bEndFixed )
       {
-	double xx = ON_UNSET_VALUE;
-	double yy = ON_UNSET_VALUE;
-	if ( GetClosestPoint( curve_3d.PointAt(crv_dom.ParameterAt(0.5)), &xx, &yy ) )
-	{
-	  if ( yy != ON_UNSET_VALUE )
-	  {
-	    start_uv.y = yy;
-	    end_uv.y = yy;
-	  }
-	}
+        double xx = ON_UNSET_VALUE;
+        double yy = ON_UNSET_VALUE;
+        if ( GetClosestPoint( curve_3d.PointAt(crv_dom.ParameterAt(0.5)), &xx, &yy ) )
+        {
+          if ( yy != ON_UNSET_VALUE )
+          {
+            start_uv.y = yy;
+            end_uv.y = yy;
+          }
+        }
       }
       else if ( sing_start && !bStartFixed && (!sing_end || bEndFixed) )
       {
-	start_uv.y = end_uv.y;
+        start_uv.y = end_uv.y;
       }
       else if ( sing_end && !bEndFixed && (!sing_start || bStartFixed) )
       {
-	end_uv.y = start_uv.y;
+        end_uv.y = start_uv.y;
       }
     }
 
@@ -1552,39 +1551,39 @@ ON_Curve* ON_Surface::Pullback( const ON_Curve& curve_3d,
       bSingN = IsSingular(2);
       if ( bSingS )
       {
-	if ( s <= reltol )
-	  sing_start = 1;
-	if ( e <= reltol )
-	  sing_end = 1;
+        if ( s <= reltol )
+          sing_start = 1;
+        if ( e <= reltol )
+          sing_end = 1;
       }
       if ( bSingN )
       {
-	if ( s >= 1.0-reltol )
-	  sing_start = 3;
-	if ( e >= 1.0-reltol )
-	  sing_end = 3;
+        if ( s >= 1.0-reltol )
+          sing_start = 3;
+        if ( e >= 1.0-reltol )
+          sing_end = 3;
       }
 
       if ( sing_start && sing_end && sing_start != sing_end && !bStartFixed && !bEndFixed )
       {
-	double xx = ON_UNSET_VALUE;
-	double yy = ON_UNSET_VALUE;
-	if ( GetClosestPoint( curve_3d.PointAt(crv_dom.ParameterAt(0.5)), &xx, &yy ) )
-	{
-	  if (xx != ON_UNSET_VALUE )
-	  {
-	    start_uv.x = xx;
-	    end_uv.x = xx;
-	  }
-	}
+        double xx = ON_UNSET_VALUE;
+        double yy = ON_UNSET_VALUE;
+        if ( GetClosestPoint( curve_3d.PointAt(crv_dom.ParameterAt(0.5)), &xx, &yy ) )
+        {
+          if (xx != ON_UNSET_VALUE )
+          {
+            start_uv.x = xx;
+            end_uv.x = xx;
+          }
+        }
       }
       else if ( sing_start && !bStartFixed && (!sing_end || bEndFixed) )
       {
-	start_uv.x = end_uv.x;
+        start_uv.x = end_uv.x;
       }
       else if ( sing_end && !bEndFixed && (!sing_start || bStartFixed) )
       {
-	end_uv.x = start_uv.x;
+        end_uv.x = start_uv.x;
       }
 
     }
@@ -1609,103 +1608,103 @@ ON_Curve* ON_Surface::Pullback( const ON_Curve& curve_3d,
 
       if ( bClosedU )
       {
-	if ( !bStartFixed )
-	{
-	  s = udom.NormalizedParameterAt(start_uv.x);
-	  if ( s <= reltol )
-	    start_u[start_u_count++] = udom[1];
-	  else if ( s >= 1.0-reltol )
-	    start_u[start_u_count++] = udom[0];
-	}
-	if ( !bEndFixed )
-	{
-	  e = udom.NormalizedParameterAt(end_uv.x);
-	  if ( e <= reltol )
-	    end_u[end_u_count++] = udom[1];
-	  else if ( e >= 1.0-reltol )
-	    end_u[end_u_count++] = udom[0];
-	}
+        if ( !bStartFixed )
+        {
+          s = udom.NormalizedParameterAt(start_uv.x);
+          if ( s <= reltol )
+            start_u[start_u_count++] = udom[1];
+          else if ( s >= 1.0-reltol )
+            start_u[start_u_count++] = udom[0];
+        }
+        if ( !bEndFixed )
+        {
+          e = udom.NormalizedParameterAt(end_uv.x);
+          if ( e <= reltol )
+            end_u[end_u_count++] = udom[1];
+          else if ( e >= 1.0-reltol )
+            end_u[end_u_count++] = udom[0];
+        }
       }
 
       if ( bClosedV )
       {
-	if ( !bStartFixed )
-	{
-	  s = vdom.NormalizedParameterAt(start_uv.y);
-	  if ( s <= 0.001 )
-	    start_v[start_v_count++] = vdom[1];
-	  else if ( s >= .999 )
-	    start_v[start_v_count++] = vdom[0];
-	}
-	if ( !bEndFixed )
-	{
-	  e = vdom.NormalizedParameterAt(end_uv.y);
-	  if ( e <= 0.001 )
-	    end_v[end_v_count++] = vdom[1];
-	  else if ( e >= .999 )
-	    end_v[end_v_count++] = vdom[0];
-	}
+        if ( !bStartFixed )
+        {
+          s = vdom.NormalizedParameterAt(start_uv.y);
+          if ( s <= 0.001 )
+            start_v[start_v_count++] = vdom[1];
+          else if ( s >= .999 )
+            start_v[start_v_count++] = vdom[0];
+        }
+        if ( !bEndFixed )
+        {
+          e = vdom.NormalizedParameterAt(end_uv.y);
+          if ( e <= 0.001 )
+            end_v[end_v_count++] = vdom[1];
+          else if ( e >= .999 )
+            end_v[end_v_count++] = vdom[0];
+        }
       }
 
       // check all posibilities and choose the best
       {
-	int sx0 = 0;
-	int sy0 = 0;
-	int ex0 = 0;
-	int ey0 = 0;
-	int si, sj, ei, ej;
-	ON_3dPoint suv, euv;
-	double dist0 = 1.0e300, dist;
+        int sx0 = 0;
+        int sy0 = 0;
+        int ex0 = 0;
+        int ey0 = 0;
+        int si, sj, ei, ej;
+        ON_3dPoint suv, euv;
+        double dist0 = 1.0e300, dist;
 
-	bool bTestMidPoint = ((bClosedU&&bClosedV)
-			      || start_u_count>1 
-			      || start_v_count>1 
-			      || end_u_count>1 
-			      || end_v_count>1
-			      );
+        bool bTestMidPoint = ((bClosedU&&bClosedV)
+                              || start_u_count>1 
+                              || start_v_count>1 
+                              || end_u_count>1 
+                              || end_v_count>1
+                              );
 
-	bool bHaveCandidate = CheckPullbackLineEnds( this, start_uv, end_uv, curve_3d, crv_dom,
-						     tolerance, bTestMidPoint,  &dist0 );
-	suv.z = 0.0;
-	euv.z = 0.0;
-	for ( si = 0; si < start_u_count; si++ )
-	{
-	  suv.x = start_u[si];
-	  for ( sj = 0; sj < start_v_count; sj++ )
-	  {
-	    suv.y = start_v[sj];
-	    for ( ei = 0; ei < end_u_count; ei++ )
-	    {
-	      euv.x = end_u[ei];
-	      for ( ej = 0; ej < end_v_count; ej++ )
-	      {
-		if ( si || sj || ei || ej )
-		{
-		  euv.y = end_v[ej];
-		  dist = dist0;
-		  if ( CheckPullbackLineEnds( this, suv, euv, curve_3d, crv_dom, 
-					      tolerance, bTestMidPoint, &dist ) )
-		  {
-		    if ( dist < dist0 || !bHaveCandidate )
-		    {
-		      sx0 = si;
-		      sy0 = sj;
-		      ex0 = ei;
-		      ey0 = ej;
-		      dist0 = dist;
-		      bHaveCandidate = true;
-		    }
-		  }
-		}
-	      }
-	    }
-	  }
-	}
+        bool bHaveCandidate = CheckPullbackLineEnds( this, start_uv, end_uv, curve_3d, crv_dom,
+                                                     tolerance, bTestMidPoint,  &dist0 );
+        suv.z = 0.0;
+        euv.z = 0.0;
+        for ( si = 0; si < start_u_count; si++ )
+        {
+          suv.x = start_u[si];
+          for ( sj = 0; sj < start_v_count; sj++ )
+          {
+            suv.y = start_v[sj];
+            for ( ei = 0; ei < end_u_count; ei++ )
+            {
+              euv.x = end_u[ei];
+              for ( ej = 0; ej < end_v_count; ej++ )
+              {
+                if ( si || sj || ei || ej )
+                {
+                  euv.y = end_v[ej];
+                  dist = dist0;
+                  if ( CheckPullbackLineEnds( this, suv, euv, curve_3d, crv_dom, 
+                                              tolerance, bTestMidPoint, &dist ) )
+                  {
+                    if ( dist < dist0 || !bHaveCandidate )
+                    {
+                      sx0 = si;
+                      sy0 = sj;
+                      ex0 = ei;
+                      ey0 = ej;
+                      dist0 = dist;
+                      bHaveCandidate = true;
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
 
-	start_uv.x = start_u[sx0];
-	start_uv.y = start_v[sy0];
-	end_uv.x = end_u[ex0];
-	end_uv.y = end_v[ey0];
+        start_uv.x = start_u[sx0];
+        start_uv.y = start_v[sy0];
+        end_uv.x = end_u[ex0];
+        end_uv.y = end_v[ey0];
       }
 
     }
@@ -1796,16 +1795,16 @@ ON_Curve* ON_Surface::Pullback( const ON_Curve& curve_3d,
 
     // check start
     if ( !CheckPullbackPoint( this, line.from.x, line.from.y, srf_hint,
-			      curve_3d, crv_dom[0], &crv_hint,
-			      lineDir, &check_hint, tolerance, &d ) )
+                              curve_3d, crv_dom[0], &crv_hint,
+                              lineDir, &check_hint, tolerance, &d ) )
     {
       return NULL;
     }
 
     // check end
     if ( !CheckPullbackPoint( this, line.to.x, line.to.y, srf_hint,
-			      curve_3d, crv_dom[1], &crv_hint,
-			      lineDir, &check_hint, tolerance, &d ) )
+                              curve_3d, crv_dom[1], &crv_hint,
+                              lineDir, &check_hint, tolerance, &d ) )
     {
       return NULL;
     }
@@ -1818,51 +1817,51 @@ ON_Curve* ON_Surface::Pullback( const ON_Curve& curve_3d,
       i2 = 0;
       for ( j = 1; j < i; j += 2 )
       {
-	i0 = i2;
-	i2 += k;
-	i1 = (i0+i2)/2;
-	s = ((double)j)/((double)i);
-	srf_uv = line.PointAt(s);
-	Evaluate( srf_uv.x, srf_uv.y, 0, 3, &srfP.x, 0, srf_hint );
-	in.Set(t[i0],t[i2]);
+        i0 = i2;
+        i2 += k;
+        i1 = (i0+i2)/2;
+        s = ((double)j)/((double)i);
+        srf_uv = line.PointAt(s);
+        Evaluate( srf_uv.x, srf_uv.y, 0, 3, &srfP.x, 0, srf_hint );
+        in.Set(t[i0],t[i2]);
 
-	// get point on curve_3d that is closest to srfP
-	if ( i > 8 )
-	{
-	  // faster local search
-	  if ( !curve_3d.GetLocalClosestPoint( srfP, in.ParameterAt(0.5), 
-					       &t[i1], &in ) )
-	    return NULL;
-	}
-	else
-	{
-	  // slower but more robust global search
-	  if ( !curve_3d.GetClosestPoint( srfP, &t[i1], 0.0, &in ) )
-	    return NULL;
-	}
+        // get point on curve_3d that is closest to srfP
+        if ( i > 8 )
+        {
+          // faster local search
+          if ( !curve_3d.GetLocalClosestPoint( srfP, in.ParameterAt(0.5), 
+                                               &t[i1], &in ) )
+            return NULL;
+        }
+        else
+        {
+          // slower but more robust global search
+          if ( !curve_3d.GetClosestPoint( srfP, &t[i1], 0.0, &in ) )
+            return NULL;
+        }
 
-	if ( !CheckPullbackPoint( this, srf_uv.x, srf_uv.y, srf_hint,
-				  curve_3d, t[i1], &crv_hint,
-				  lineDir, &check_hint, tolerance, &d ) )
-	{
-	  if ( i > 8 )
-	  {
-	    // global double check to make sure local solution
-	    // was the best possible
-	    if ( !curve_3d.GetClosestPoint( srfP, &t[i1], 0.0, &in ) )
-	      return NULL;
-	    if ( !CheckPullbackPoint( this, srf_uv.x, srf_uv.y, srf_hint,
-				      curve_3d, t[i1], &crv_hint,
-				      lineDir, &check_hint, tolerance, &d ) )
-	    {
-	      return NULL;
-	    }
-	  }
-	  else
-	  {
-	    return NULL;
-	  }
-	}
+        if ( !CheckPullbackPoint( this, srf_uv.x, srf_uv.y, srf_hint,
+                                  curve_3d, t[i1], &crv_hint,
+                                  lineDir, &check_hint, tolerance, &d ) )
+        {
+          if ( i > 8 )
+          {
+            // global double check to make sure local solution
+            // was the best possible
+            if ( !curve_3d.GetClosestPoint( srfP, &t[i1], 0.0, &in ) )
+              return NULL;
+            if ( !CheckPullbackPoint( this, srf_uv.x, srf_uv.y, srf_hint,
+                                      curve_3d, t[i1], &crv_hint,
+                                      lineDir, &check_hint, tolerance, &d ) )
+            {
+              return NULL;
+            }
+          }
+          else
+          {
+            return NULL;
+          }
+        }
       }
     }
 
@@ -1872,7 +1871,7 @@ ON_Curve* ON_Surface::Pullback( const ON_Curve& curve_3d,
     for ( i = 0; i < test_count; i++ )
     {
       if ( t[i] < t[i+1] )
-	pcnt++;
+        pcnt++;
     }
     if ( 2*pcnt <  test_count )
       return NULL;
@@ -1885,26 +1884,26 @@ ON_Curve* ON_Surface::Pullback( const ON_Curve& curve_3d,
       // call.  The cases when we get this far are rare so this
       // test should be quick.
       ON_3dPoint crvP, isoP, iso_uv;
-      d = 0.0;
+      d = 1.0;
 
       for ( k = 2; k <= 8; k *= 2 )
       {
-	d *= 0.5;
-	crv_hint = 0;
-	for ( i = 1; i < k; i += 2 )
-	{
-	  curve_3d.Evaluate( crv_dom.ParameterAt(i*d), 0, 3, &crvP.x, 0, &crv_hint );
-	  if ( !GetClosestPoint( crvP, &srf_uv.x, &srf_uv.y ) )
-	    return NULL;
-	  Evaluate( srf_uv.x, srf_uv.y, 0, 3, &srfP.x, 0, srf_hint );
-	  s = 0.5;
-	  line.ClosestPointTo(srf_uv,&s);
-	  if ( s < 0.0 ) s = 0.0; else if (s > 1.0) s = 1.0;
-	  iso_uv = line.PointAt(s);
-	  Evaluate( iso_uv.x, iso_uv.y, 0, 3, &isoP.x, 0, srf_hint );
-	  if ( isoP.DistanceTo(srfP) > tolerance )
-	    return NULL;
-	}
+        d *= 0.5;
+        crv_hint = 0;
+        for ( i = 1; i < k; i += 2 )
+        {
+          curve_3d.Evaluate( crv_dom.ParameterAt(i*d), 0, 3, &crvP.x, 0, &crv_hint );
+          if ( !GetClosestPoint( crvP, &srf_uv.x, &srf_uv.y ) )
+            return NULL;
+          Evaluate( srf_uv.x, srf_uv.y, 0, 3, &srfP.x, 0, srf_hint );
+          s = 0.5;
+          line.ClosestPointTo(srf_uv,&s);
+          if ( s < 0.0 ) s = 0.0; else if (s > 1.0) s = 1.0;
+          iso_uv = line.PointAt(s);
+          Evaluate( iso_uv.x, iso_uv.y, 0, 3, &isoP.x, 0, srf_hint );
+          if ( isoP.DistanceTo(srfP) > tolerance )
+            return NULL;
+        }
       }
     }
   }
@@ -1920,7 +1919,7 @@ ON_Curve* ON_Surface::Pullback( const ON_Curve& curve_3d,
 
 
 //virtual
-BOOL ON_Surface::Trim(
+ON_BOOL32 ON_Surface::Trim(
        int dir,
        const ON_Interval& domain
        )
@@ -1938,7 +1937,7 @@ bool ON_Surface::Extend(
 }
 
 //virtual
-BOOL ON_Surface::Split(
+ON_BOOL32 ON_Surface::Split(
        int dir,
        double c,
        ON_Surface*& west_or_south_side,
@@ -1950,13 +1949,13 @@ BOOL ON_Surface::Split(
 
 
 bool ON_Surface::GetClosestPoint( 
-	const ON_3dPoint& P,
-	double* s,
-	double* t,
-	double maximum_distance,
-	const ON_Interval* sdomain,
-	const ON_Interval* tdomain
-	) const
+        const ON_3dPoint& P,
+        double* s,
+        double* t,
+        double maximum_distance,
+        const ON_Interval* sdomain,
+        const ON_Interval* tdomain
+        ) const
 {
   bool rc = false;
 
@@ -1978,15 +1977,15 @@ bool ON_Surface::GetClosestPoint(
       tempdom[0] = sdomain ? *sdomain : Domain(0);
       tempdom[1] = tdomain ? *tdomain : Domain(1);
       if ( !GetNurbFormParameterFromSurfaceParameter(tempdom[0][0],tempdom[1][0],&tempdom[0].m_t[0],&tempdom[1].m_t[0]) )
-	break;
+        break;
       if ( !GetNurbFormParameterFromSurfaceParameter(tempdom[0][1],tempdom[1][1],&tempdom[0].m_t[1],&tempdom[1].m_t[1]) )
-	break;
+        break;
       if ( sdom )
-	sdom = &tempdom[0];
+        sdom = &tempdom[0];
       if ( tdom )
-	tdom = &tempdom[1];
+        tdom = &tempdom[1];
     }
-	
+  	
     // NOTE: ON_SurfaceTreeNode::ON_SurfaceTreeNode works in Rhino but not in free opennurbs.
 	  node = tree->m_root->GetClosestPoint( P, s, t, &Q, maximum_distance, sdom, tdom );
 
@@ -1999,28 +1998,28 @@ bool ON_Surface::GetClosestPoint(
       u = *s;
       v = *t;
       if ( !GetSurfaceParameterFromNurbFormParameter(u,v,s,t) )
-	break;
+        break;
 
       // With all the parameterization juggling, make sure conversion
       // is exact on the boundaries of any domain restrictions.
       if ( sdomain )
       {
-	if ( u <= sdom->m_t[0] || u >= sdom->m_t[1] )
-	  *s = sdomain->m_t[(u <= sdom->m_t[0])?0:1];
-	else if ( *s < sdomain->m_t[0] ) 
-	  *s = sdomain->m_t[0]; 
-	else if (*s > sdomain->m_t[1]) 
-	  *s = sdomain->m_t[1];
+        if ( u <= sdom->m_t[0] || u >= sdom->m_t[1] )
+          *s = sdomain->m_t[(u <= sdom->m_t[0])?0:1];
+        else if ( *s < sdomain->m_t[0] ) 
+          *s = sdomain->m_t[0]; 
+        else if (*s > sdomain->m_t[1]) 
+          *s = sdomain->m_t[1];
       }
 
       if ( tdomain )
       {
-	if ( v <= tdom->m_t[0] || v >= tdom->m_t[1] )
-	  *t = tdomain->m_t[(v <= tdom->m_t[0])?0:1];
+        if ( v <= tdom->m_t[0] || v >= tdom->m_t[1] )
+          *t = tdomain->m_t[(v <= tdom->m_t[0])?0:1];
 		    else if ( *t < tdomain->m_t[0] )
-	  *t = tdomain->m_t[0]; 
-	else if (*t > tdomain->m_t[1]) 
-	  *t = tdomain->m_t[1];
+          *t = tdomain->m_t[0]; 
+        else if (*t > tdomain->m_t[1]) 
+          *t = tdomain->m_t[1];
       }
     }
 
@@ -2035,23 +2034,23 @@ bool ON_Surface::GetClosestPoint(
 }
 
 //virtual
-BOOL ON_Surface::GetLocalClosestPoint( const ON_3dPoint&, // test_point
-	double,double,     // seed_parameters
-	double*,double*,   // parameters of local closest point returned here
-	const ON_Interval*, // first parameter sub_domain
-	const ON_Interval*  // second parameter sub_domain
-	) const
+ON_BOOL32 ON_Surface::GetLocalClosestPoint( const ON_3dPoint&, // test_point
+        double,double,     // seed_parameters
+        double*,double*,   // parameters of local closest point returned here
+        const ON_Interval*, // first parameter sub_domain
+        const ON_Interval*  // second parameter sub_domain
+        ) const
 {
   return false;
 }
 
 /*
 static ON_Surface* ON_Surface_OffsetHelper( 
-	  const ON_Surface* base_surface,
-	  double offset_distance, 
-	  double tolerance, 
-	  double* max_deviation
-	  )
+          const ON_Surface* base_surface,
+          double offset_distance, 
+          double tolerance, 
+          double* max_deviation
+          )
 {
   // This returns NULL in for users of the free OpenNURBS toolkit
   // and works for Rhino plug-ins.
@@ -2082,7 +2081,7 @@ ON_Surface* ON_Surface::Offset(
     {
       proxy = &ns;
       if ( rc >= 3 )
-	tolerance *= 0.75; // ns locus is approximation
+        tolerance *= 0.75; // ns locus is approximation
     }
     // MUST call Offset() via proxy pointer
     if ( proxy )
@@ -2153,7 +2152,7 @@ ON_NurbsSurface* ON_Surface::NurbsSurface(
 
 
 ON_SurfaceArray::ON_SurfaceArray( int initial_capacity )
-		   : ON_SimpleArray<ON_Surface*>(initial_capacity)
+                   : ON_SimpleArray<ON_Surface*>(initial_capacity)
 {}
 
 ON_SurfaceArray::~ON_SurfaceArray()
@@ -2173,7 +2172,7 @@ void ON_SurfaceArray::Destroy()
   Empty();
 }
 
-BOOL ON_SurfaceArray::Duplicate( ON_SurfaceArray& dst ) const
+ON_BOOL32 ON_SurfaceArray::Duplicate( ON_SurfaceArray& dst ) const
 {
   dst.Destroy();
   dst.SetCapacity( Capacity() );
@@ -2193,22 +2192,22 @@ BOOL ON_SurfaceArray::Duplicate( ON_SurfaceArray& dst ) const
   return true;
 }
 
-BOOL ON_SurfaceArray::Write( ON_BinaryArchive& file ) const
+ON_BOOL32 ON_SurfaceArray::Write( ON_BinaryArchive& file ) const
 {
-  BOOL rc = file.BeginWrite3dmChunk( TCODE_ANONYMOUS_CHUNK, 0 );
+  ON_BOOL32 rc = file.BeginWrite3dmChunk( TCODE_ANONYMOUS_CHUNK, 0 );
   if (rc) rc = file.Write3dmChunkVersion(1,0);
   if (rc ) {
     int i;
     rc = file.WriteInt( Count() );
     for ( i = 0; rc && i < Count(); i++ ) {
       if ( m_a[i] ) {
-	rc = file.WriteInt(1);
-	if ( rc ) 
-	  rc = file.WriteObject( *m_a[i] ); // polymorphic surfaces
+        rc = file.WriteInt(1);
+        if ( rc ) 
+          rc = file.WriteObject( *m_a[i] ); // polymorphic surfaces
       }
       else {
-	// NULL surface
-	rc = file.WriteInt(0);
+        // NULL surface
+        rc = file.WriteInt(0);
       }
     }
     if ( !file.EndWrite3dmChunk() )
@@ -2218,37 +2217,37 @@ BOOL ON_SurfaceArray::Write( ON_BinaryArchive& file ) const
 }
 
 
-BOOL ON_SurfaceArray::Read( ON_BinaryArchive& file )
+ON_BOOL32 ON_SurfaceArray::Read( ON_BinaryArchive& file )
 {
   int major_version = 0;
   int minor_version = 0;
   unsigned int tcode;
   int i, flag;
   Destroy();
-  BOOL rc = file.BeginRead3dmChunk( &tcode, &i );
+  ON_BOOL32 rc = file.BeginRead3dmChunk( &tcode, &i );
   if (rc) {
     rc = ( tcode == TCODE_ANONYMOUS_CHUNK );
     if (rc) rc = file.Read3dmChunkVersion(&major_version,&minor_version);
     if (rc && major_version == 1) {
       ON_Object* p;
       int count;
-      BOOL rc = file.ReadInt( &count );
+      ON_BOOL32 rc = file.ReadInt( &count );
       if (rc) {
-	SetCapacity(count);
-	SetCount(count);
-	Zero();
-	int i;
-	for ( i = 0; rc && i < count && rc; i++ ) {
-	  flag = 0;
-	  rc = file.ReadInt(&flag);
-	  if (rc && flag==1) {
-	    p = 0;
-	    rc = file.ReadObject( &p ); // polymorphic surfaces
-	    m_a[i] = ON_Surface::Cast(p);
-	    if ( !m_a[i] )
-	      delete p;
-	  }
-	}
+        SetCapacity(count);
+        SetCount(count);
+        Zero();
+        int i;
+        for ( i = 0; rc && i < count && rc; i++ ) {
+          flag = 0;
+          rc = file.ReadInt(&flag);
+          if (rc && flag==1) {
+            p = 0;
+            rc = file.ReadObject( &p ); // polymorphic surfaces
+            m_a[i] = ON_Surface::Cast(p);
+            if ( !m_a[i] )
+              delete p;
+          }
+        }
       }
     }
     else {
@@ -2260,7 +2259,7 @@ BOOL ON_SurfaceArray::Read( ON_BinaryArchive& file )
   return rc;
 }
 
-BOOL ON_Surface::HasBrepForm() const
+ON_BOOL32 ON_Surface::HasBrepForm() const
 {
   return true;
 }
@@ -2270,7 +2269,10 @@ ON_Brep* ON_Surface::BrepForm( ON_Brep* brep ) const
   ON_Brep* pBrep = NULL;
   if ( brep )
     brep->Destroy();
-  ON_Surface* pSurface = Duplicate();
+  // 26 August 2008 Dale Lear - fixed bug
+  //    When this function was called on an ON_SurfaceProxy
+  //ON_Surface* pSurface = Duplicate();
+  ON_Surface* pSurface = DuplicateSurface();
   if ( pSurface )
   {
     if ( brep )
@@ -2281,11 +2283,11 @@ ON_Brep* ON_Surface::BrepForm( ON_Brep* brep ) const
     {
       if ( pSurface )
       {
-	delete pSurface;
-	pSurface = NULL;
+        delete pSurface;
+        pSurface = NULL;
       }
       if ( !brep )
-	delete pBrep;
+        delete pBrep;
       pBrep = NULL;
     }
   }

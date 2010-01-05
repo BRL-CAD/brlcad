@@ -95,9 +95,9 @@ int
 cmd_glob(int *argcp, char **argv, int maxargs)
 {
     static char word[64];
-    register char *pattern;
-    register struct directory	*dp;
-    register int i;
+    char *pattern;
+    struct directory	*dp;
+    int i;
     int escaped = 0;
     int orig_numargs = *argcp;
 
@@ -213,8 +213,8 @@ Do_prefix(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_lea
 int
 f_prefix(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    register int	i, k;
-    register struct directory *dp;
+    int	i, k;
+    struct directory *dp;
     struct rt_db_internal	intern;
     struct rt_comb_internal *comb;
     char tempstring_v4[NAMESIZE+1];

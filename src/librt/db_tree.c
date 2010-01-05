@@ -110,6 +110,9 @@ void
 db_init_db_tree_state(struct db_tree_state *tsp, struct db_i *dbip, struct resource *resp)
 {
     RT_CK_DBI(dbip);
+    if (!resp) {
+	resp = &rt_uniresource;
+    }
     RT_CK_RESOURCE(resp);
 
     memset((char *)tsp, 0, sizeof(*tsp));
@@ -550,6 +553,10 @@ db_tree_del_lhs(union tree *tp, struct resource *resp)
     union tree *subtree;
 
     RT_CK_TREE(tp);
+    if (!resp) {
+	resp = &rt_uniresource;
+    }
+    RT_CK_RESOURCE(resp);
 
     switch (tp->tr_op) {
 
@@ -595,6 +602,10 @@ db_tree_del_rhs(union tree *tp, struct resource *resp)
     union tree *subtree;
 
     RT_CK_TREE(tp);
+    if (!resp) {
+	resp = &rt_uniresource;
+    }
+    RT_CK_RESOURCE(resp);
 
     switch (tp->tr_op) {
 
@@ -663,6 +674,9 @@ db_tree_del_dbleaf(union tree **tp, const char *cp, struct resource *resp, int n
     if (*tp == TREE_NULL) return -1;
 
     RT_CK_TREE(*tp);
+    if (!resp) {
+	resp = &rt_uniresource;
+    }
     RT_CK_RESOURCE(resp);
 
     if ((parent = db_find_named_leafs_parent(&side, *tp, cp)) == TREE_NULL) {
@@ -917,7 +931,7 @@ db_follow_path(
 	/* Found it, state has been applied, sofar applied, member's
 	 * directory entry pushed onto total_path
 	 */
-	rt_db_free_internal(&intern, tsp->ts_resp);
+	rt_db_free_internal(&intern);
 
 	/* If member is a leaf, handle leaf processing too. */
 	if ((dp->d_flags & DIR_COMB) == 0) {
@@ -1234,7 +1248,7 @@ db_recurse(struct db_tree_state *tsp, struct db_full_path *pathp, struct combine
 	    if (curtree) RT_CK_TREE(curtree);
 
 	    /* Release most of internal form before recursing */
-	    rt_db_free_internal(&intern, tsp->ts_resp);
+	    rt_db_free_internal(&intern);
 	    comb = NULL;
 
 	    _db_recurse_subtree(curtree, &nts, pathp, region_start_statepp, client_data);
@@ -1329,7 +1343,7 @@ out:
      * try to free intern unless we know there is something to free
      */
     if (intern.idb_ptr != NULL) {
-	rt_db_free_internal(&intern, tsp->ts_resp);
+	rt_db_free_internal(&intern);
     }
     if (RT_G_DEBUG&DEBUG_TREEWALK) {
 	char *sofar = db_path_to_string(pathp);
@@ -1352,6 +1366,9 @@ db_dup_subtree(const union tree *tp, struct resource *resp)
     union tree *new;
 
     RT_CK_TREE(tp);
+    if (!resp) {
+	resp = &rt_uniresource;
+    }
     RT_CK_RESOURCE(resp);
 
     RT_GET_TREE(new, resp);
@@ -1453,6 +1470,9 @@ void
 db_free_tree(union tree *tp, struct resource *resp)
 {
     RT_CK_TREE(tp);
+    if (!resp) {
+	resp = &rt_uniresource;
+    }
     RT_CK_RESOURCE(resp);
 
     /*
@@ -1594,6 +1614,9 @@ db_non_union_push(union tree *tp, struct resource *resp)
     int repush_child=0;
 
     RT_CK_TREE(tp);
+    if (!resp) {
+	resp = &rt_uniresource;
+    }
     RT_CK_RESOURCE(resp);
 
     switch (tp->tr_op) {
@@ -1929,6 +1952,9 @@ db_tally_subtree_regions(
     union tree *new;
 
     RT_CK_TREE(tp);
+    if (!resp) {
+	resp = &rt_uniresource;
+    }
     RT_CK_RESOURCE(resp);
     if (cur >= lim) bu_bomb("db_tally_subtree_regions: array overflow\n");
 

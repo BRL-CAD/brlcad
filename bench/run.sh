@@ -593,6 +593,29 @@ else
     $ECHO "Using [$ELP] for ELP"
 fi
 
+# more sanity checks, make sure the binaries and scripts run
+$RT -s1 -F/dev/debug ${DB}/moss.g LIGHT > /dev/null 2>&1
+ret=$?
+if test ! "x${ret}" = "x0" ; then
+    $ECHO
+    $ECHO "ERROR:  RT does not seem to work as expected"
+    exit 2
+fi
+$CMP /dev/null /dev/null >/dev/null 2>&1
+ret=$?
+if test ! "x${ret}" = "x0" ; then
+    $ECHO
+    $ECHO "ERROR:  CMP does not seem to work as expected"
+    exit 2
+fi
+$ELP 0
+if test ! "x${ret}" = "x0" ; then
+    $ECHO
+    $ECHO "ERROR:  ELP does not seem to work as expected"
+    exit 2
+fi 
+
+
 # utility function to set a variable if it's not already set to something
 set_if_unset ( ) {
     set_if_unset_name="$1" ; shift
@@ -1281,22 +1304,20 @@ $ECHO "Run '$0 clean' to remove generated pix files."
 $ECHO
 
 $ECHO "Summary:"
-cat <<EOF
-$performance
-EOF
+$ECHO "$performance"
 
-### this confuses /bin/sh on solaris
-#vgr="`cat <<EOF | grep vgr | awk '{print int($9+0.5)}'
-#$performance
-#EOF`"
-vgr="`echo "$performance" | grep vgr | awk '{print int($9+0.5)}'`"
+vgr="`echo \"$performance\" | grep vgr | awk '{print int($9+0.5)}'`"
 
 if test ! "x$vgr" = "x" ; then
     $ECHO
     $ECHO "#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#"
     $ECHO "Benchmark results indicate an approximate VGR performance metric of $vgr"
-    ln=`echo $vgr | awk '{printf "%.2f", log($1)}'`
-    lg=`echo $vgr | awk '{printf "%.2f", log($1) / log(10)}'`
+    ln=0
+    lg=0
+    if test $vgr -gt 0 ; then
+	ln=`echo $vgr | awk '{printf "%.2f", log($1)}'`
+	lg=`echo $vgr | awk '{printf "%.2f", log($1) / log(10)}'`
+    fi
     $ECHO "Logarithmic VGR metric is $lg  (natural logarithm is $ln)"
     $ECHO "#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#*#"
     $ECHO
@@ -1307,13 +1328,13 @@ if test ! "x$vgr" = "x" ; then
     $ECHO
 
     $ECHO "Here are some other approximated VGR results for perspective:"
-    $ECHO "   120 on a 200MHz R5000 running IRIX 6.5"
-    $ECHO "   250 on a 500 MHz Pentium III running RedHat 7.1"
-    $ECHO "   550 on a dual 450 MHz UltraSPARC II running SunOS 5.8"
-    $ECHO "  1000 on a dual 500 MHz G4 PowerPC running Mac OS X 10.2"
-    $ECHO "  1500 on a dual 1.66 GHz Athlon MP 2000+ running RedHat 7.3"
-    $ECHO "  9000 on an 8 CPU 1.3 GHz Power4 running AIX 5.1"
-    $ECHO " 65000 on a 512 CPU 400 MHz R12000 Running IRIX 6.5"
+    $ECHO "    120 on a 200MHz R5000 running IRIX 6.5"
+    $ECHO "    250 on a 500 MHz Pentium III running RedHat 7.1"
+    $ECHO "    550 on a dual 450 MHz UltraSPARC II running SunOS 5.8"
+    $ECHO "   1000 on a dual 500 MHz G4 PowerPC running Mac OS X 10.2"
+    $ECHO "   1500 on a dual 1.66 GHz Athlon MP 2000+ running RedHat 7.3"
+    $ECHO "  52000 on a 4x4 CPU 2.93 GHz Xeon running RHEL Server 5.4"
+    $ECHO "  65000 on a 512 CPU 400 MHz R12000 Running IRIX 6.5"
     $ECHO
 fi
 
@@ -1368,6 +1389,74 @@ if test "x$encourage_submission" = "xno" ; then
     fi
     $ECHO " $options"
     $ECHO
+else
+    # if this was a valid benchmark run, encourage submission of results.
+    $ECHO "You are encouraged to submit your benchmark results and system"
+    $ECHO "configuration information to benchmark@brlcad.org"
+    $ECHO "                             ~~~~~~~~~~~~~~~~~~~~"
+
+    # include information about the operating system and hardware in the log
+    $ECHO "Including additional kernel and hardware information in the log."
+    $ECHO
+    blankit=no
+
+    # BSD
+    look_for executable "a sysctl command" SYSCTL_CMD `echo $PATH | sed 's/:/\/sysctl /g'`
+    if test ! "x$SYSCTL_CMD" = "x" ; then
+	$ECHO "Collecting system state information (via $SYSCTL_CMD)"
+	preQUIET="$QUIET"
+	QUIET=1
+	$ECHO "==============================================================================="
+	$ECHO "`$SYSCTL_CMD hw 2>&1`"
+	$ECHO "`$SYSCTL_CMD kern 2>&1`"
+	$ECHO "`$SYSCTL_CMD kernel 2>&1`"
+	$ECHO
+	QUIET="$preQUIET"
+	blankit=yes
+    fi
+
+    # Solaris
+    look_for executable "a prtdiag command" PRTDIAG_CMD `echo $PATH | sed 's/:/\/prtdiag /g'`
+    if test ! "x$PRTDIAG_CMD" = "x" ; then
+	$ECHO "Collecting system diagnostics information (via $PRTDIAG_CMD)"
+	preQUIET="$QUIET"
+	QUIET=1
+	$ECHO "==============================================================================="
+	$ECHO "`$PRTDIAG_CMD 2>&1`"
+	$ECHO
+	QUIET="$preQUIET"
+	blankit=yes
+    fi
+
+    # AIX
+    look_for executable "a prtconf command" PRTCONF_CMD `echo $PATH | sed 's/:/\/prtconf /g'`
+    if test ! "x$PRTCONF_CMD" = "x" ; then
+	$ECHO "Collecting system configuration information (via $PRTCONF_CMD)"
+	preQUIET="$QUIET"
+	QUIET=1
+	$ECHO "==============================================================================="
+	$ECHO "`$PRTCONF_CMD 2>&1`"
+	$ECHO
+	QUIET="$preQUIET"
+	blankit=yes
+    fi
+
+    # Linux
+    look_for file "a /proc/cpuinfo file" CPUINFO_FILE /proc/cpuinfo
+    if test ! "x$CPUINFO_FILE" = "x" ; then
+	$ECHO "Collecting system CPU information (via $CPUINFO_FILE)"
+	preQUIET="$QUIET"
+	QUIET=1
+	$ECHO "==============================================================================="
+	$ECHO "`cat $CPUINFO_FILE 2>&1`"
+	$ECHO
+	QUIET="$preQUIET"
+	blankit=yes
+    fi
+
+    if test "x$blankit" = "xyes" ; then
+	$ECHO
+    fi
 fi
 
 # tell about the benchmark document
@@ -1389,15 +1478,9 @@ else
 fi
 $ECHO
 
-# if this was a valid benchmark run, encourage submission of results.
-if test "x$encourage_submission" = "xyes" ; then
-    $ECHO "You are encouraged to submit your benchmark results and system"
-    $ECHO "configuration information to benchmark@brlcad.org"
-    $ECHO
-fi
-
 $ECHO "Output was saved to $LOGFILE from `pwd`"
 $ECHO "Benchmark testing complete."
+
 
 # Local Variables:
 # mode: sh

@@ -39,9 +39,9 @@ FaceOuterBound::FaceOuterBound() {
 	id = 0;
 }
 
-FaceOuterBound::FaceOuterBound(STEPWrapper *sw,int STEPid) {
+FaceOuterBound::FaceOuterBound(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 FaceOuterBound::~FaceOuterBound() {
@@ -55,7 +55,7 @@ FaceOuterBound::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 	id = sse->STEPfile_id;
 
 	if ( !FaceBound::Load(step,sse)) {
-		cout << CLASSNAME << ":Error loading base class 'FaceBound'." << endl;
+		std::cout << CLASSNAME << ":Error loading base class 'FaceBound'." << std::endl;
 		retValue = false;
 	}
 	return retValue;
@@ -63,10 +63,10 @@ FaceOuterBound::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 void
 FaceOuterBound::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << name << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	FaceBound::Print(level+1);
 }
 
@@ -79,7 +79,7 @@ FaceOuterBound::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

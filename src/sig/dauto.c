@@ -46,7 +46,7 @@ Usage: dauto [window_size (512)] < doubles\n";
 int main(int argc, char **argv)
 {
     int	i, j, n, L;
-    register double *dp1, *dp2;
+    double *dp1, *dp2;
 
     if ( isatty(fileno(stdin)) || isatty(fileno(stdout)) ) {
 	bu_exit(1, "%s", usage );

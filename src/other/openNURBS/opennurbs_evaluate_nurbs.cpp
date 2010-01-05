@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -31,7 +30,7 @@ INPUT:
 OUTPUT:
   TL_EvBernsteinBasis()
 
-	 degree!
+         degree!
      ---------------- * (1-t)^(degree-i) * t^i, if 0 <= i <= degree
      (degree-i)! * i!
 
@@ -50,8 +49,8 @@ COMMENTS:
   For 9 <= degree, the value is computed using the formula
 
     B(d,i,t) = TL_EvBinomial(degree-i,i)
-	       *((degree==i) ? 1.0 : pow(1.0-t,(double)(degree-i)))
-	       *((i)         ? pow(t,(double)i) : 1.0);
+               *((degree==i) ? 1.0 : pow(1.0-t,(double)(degree-i)))
+               *((i)         ? pow(t,(double)i) : 1.0);
 
   The value of a degree d Bezier at t with control vertices
   {P_0, ..., P_d} is equal to B(d,0,t)*P_0 + ... + B(d,d,t)*P_d.   
@@ -142,7 +141,7 @@ RELATED FUNCTIONS:
      */
     if (degree < 9)
       return (t*ON_EvaluateBernsteinBasis(degree-1,i-1,t)
-	      + (1-t)*ON_EvaluateBernsteinBasis(degree-1,i,t));
+              + (1-t)*ON_EvaluateBernsteinBasis(degree-1,i,t));
     else
       return ON_BinomialCoefficient(degree-i,i)*((degree==i)?1.0:pow(1.0-t,(double)(degree-i)))*((i)?pow(t,(double)i):1.0);
   }
@@ -157,48 +156,48 @@ INPUT:
   dim    ( >= 1)
   order  ( >= 2)
   side   <= 0  return left side of bezier in cv array
-	 >  0  return right side of bezier in cv array
+         >  0  return right side of bezier in cv array
   cv     array of order*cv_stride doubles that specify the Bezier's control
-	 vertices.
+         vertices.
   cv_stride ( >= dim) number of doubles between cv's (typically a multiple of dim).
   t      If side <= 0, then t must be > 0.0.
-	 If side >  0, then t must be < 1.0.
+         If side >  0, then t must be < 1.0.
 OUTPUT:
   cv
-	 If side <= 0, the input cv's are replaced with the cv's for
-	 the bezier trimmed/extended to [0,t].  In particular,
-	 {cv[(order-1)*cv_stride], ..., cv[order*cv_stride - 1]} is the value of 
-	 the Bezier at t.
-	 If side > 0, the input cv's are replaced with the cv's for
-	 the Bezier trimmed/extended to [t,1].  In particular,
-	 {cv[0], ..., cv[dim-1]} is the value of the Bezier at t.
+         If side <= 0, the input cv's are replaced with the cv's for
+         the bezier trimmed/extended to [0,t].  In particular,
+         {cv[(order-1)*cv_stride], ..., cv[order*cv_stride - 1]} is the value of 
+         the Bezier at t.
+         If side > 0, the input cv's are replaced with the cv's for
+         the Bezier trimmed/extended to [t,1].  In particular,
+         {cv[0], ..., cv[dim-1]} is the value of the Bezier at t.
 COMMENTS:
   Set C[i,j] = {cv[j*cv_stride], ..., cv[(j+1)*cv_stride-1]}, if i = 0
-		(1-t)*C[i-1,j-1] + t*C[i-1,j], if 0 < i <= d = degree
+                (1-t)*C[i-1,j-1] + t*C[i-1,j], if 0 < i <= d = degree
 
   The collection of C[i,j]'s is typically drawn in a triangular array:
 
   C[0,0]
-	   C[1,1]
+           C[1,1]
   C[0,1]              C[2,2]
-	   C[1,2]             ...
+           C[1,2]             ...
   C[0,2]
        
   ...                                  C[d,d]
-			      ...
+                              ...
   C[0,d-1]            C[2,d]
-	   C[1,d]
+           C[1,d]
   C[0,d]
       
   The value of the Bezier at t is equal to C[d,d].
       
   When side < 0, the input cv's are replaced with
-	  C[0,0], C[1,2], ..., C[d,d].  
+          C[0,0], C[1,2], ..., C[d,d].  
   If the output cv's are used as control vertices for a Bezier, 
   then output_bezier(s) = input_bezier(t*s).
       
   When side >= 0, the input cv's are replace with
-	  C[d,d], C[d-1,d], ..., C[0,d].
+          C[d,d], C[d-1,d], ..., C[0,d].
   If the output cv's are used as control vertices for a Bezier, 
   then output_bezier(s) = input_bezier((1-s)*t + s).
 
@@ -251,49 +250,49 @@ RELATED FUNCTIONS:
     if (side > 0) {
       /* output cv's = bezier trimmed to [t,1] */
       while (--order) {
-	P0 = cv;                /* first cv */
-	P1 = P0 + cv_stride;       /* next cv */
-	j = order;
-	while (j--) {
-	  d = dim;
-	  while (d--) {*P0 = (*P0 * s) + (*P1 * t); P0++; P1++;}
-	  P0 += off_minus_dim; P1 += off_minus_dim;}}
+        P0 = cv;                /* first cv */
+        P1 = P0 + cv_stride;       /* next cv */
+        j = order;
+        while (j--) {
+          d = dim;
+          while (d--) {*P0 = (*P0 * s) + (*P1 * t); P0++; P1++;}
+          P0 += off_minus_dim; P1 += off_minus_dim;}}
     }
     else {
       /* side <= 0, so output cv's = bezier trimmed to [0,t] */
       cv += order*dim;          /* now cv = last control vertex */
       while (--order) {
-	P1 = cv;                /* last cv */
-	P0 = P1 - cv_stride;       /* next to last cv */
-	j = order;
-	while (j--) {
-	  d = dim;
-	  while (d--) {P0--; P1--; *P1 = (*P0 * s) + (*P1 * t);}
-	  P0 -= off_minus_dim; P1 -= off_minus_dim;}}
+        P1 = cv;                /* last cv */
+        P0 = P1 - cv_stride;       /* next to last cv */
+        j = order;
+        while (j--) {
+          d = dim;
+          while (d--) {P0--; P1--; *P1 = (*P0 * s) + (*P1 * t);}
+          P0 -= off_minus_dim; P1 -= off_minus_dim;}}
     }
   }
   else {
     if (side > 0) {
       /* output cv's = bezier trimmed to [t,1] */
       while (--order) {
-	P0 = cv;                /* first cv */
-	P1 = P0 + dim;          /* next cv */
-	j = order;
-	while (j--) {
-	  d = dim;
-	  while (d--) {*P0 = (*P0 * s) + (*P1 * t); P0++; P1++;}}
+        P0 = cv;                /* first cv */
+        P1 = P0 + dim;          /* next cv */
+        j = order;
+        while (j--) {
+          d = dim;
+          while (d--) {*P0 = (*P0 * s) + (*P1 * t); P0++; P1++;}}
       }
     }
     else {
       /* side <= 0, so output cv's = bezier trimmed to [0,t] */
       cv += order*dim;          /* now cv = last control vertex */
       while (--order) {
-	P1 = cv;                /* last cv */
-	P0 = P1 - dim;          /* next to last cv */
-	j = order;
-	while (j--) {
-	  d = dim;
-	  while (d--) {P0--; P1--; *P1 = (*P0 * s) + (*P1 * t);}}
+        P1 = cv;                /* last cv */
+        P0 = P1 - dim;          /* next to last cv */
+        j = order;
+        while (j--) {
+          d = dim;
+          while (d--) {P0--; P1--; *P1 = (*P0 * s) + (*P1 * t);}}
       }
     }
   }
@@ -302,12 +301,12 @@ RELATED FUNCTIONS:
 
 
 bool ON_IncreaseBezierDegree(
-	int     dim, 
-	BOOL    is_rat, 
-	int     order, 
-	int     cv_stride,
-	double* cv 
-	)
+        int     dim, 
+        ON_BOOL32    is_rat, 
+        int     order, 
+        int     cv_stride,
+        double* cv 
+        )
 /*****************************************************************************
 Increase the degree of a Bezier
  
@@ -321,7 +320,7 @@ INPUT:
     array of cvdim*(order+1) doubles (The cv and newcv pointers may be equal.)
 OUTPUT:
   newcv  Control vertices of an Bezier with order (order+1).  The new Bezier
-	 and the old Bezier evaluate to the same point.  
+         and the old Bezier evaluate to the same point.  
 COMMENTS:
   If {B_0, ... B_d} are the control vertices of the input Bezier, then
   {C_0, ..., C_{d+1}} are the control vertices of the returned Bezier, 
@@ -381,11 +380,11 @@ RELATED FUNCTIONS:
 
 
 bool ON_RemoveBezierSingAt0(
-		  int dim, 
-		  int order, 
-		  int cv_stride,
-		  double* cv
-		  )
+                  int dim, 
+                  int order, 
+                  int cv_stride,
+                  double* cv
+                  )
 {
   const int cvdim = dim+1;
   int j,k,ord0;
@@ -397,11 +396,11 @@ bool ON_RemoveBezierSingAt0(
     j = dim; 
     while(j--) {
       if (cv[j] != 0.0) 
-	return false;
+        return false;
     }
     for (j=0;  j<order;  j++) {
       for (k=0;  k<cvdim;  k++) 
-	cv[j*cv_stride+k] = (order*cv[(j+1)*cv_stride+k])/(j+1);
+        cv[j*cv_stride+k] = (order*cv[(j+1)*cv_stride+k])/(j+1);
     }
   }
   while (order < ord0)
@@ -411,11 +410,11 @@ bool ON_RemoveBezierSingAt0(
 
 
 bool ON_RemoveBezierSingAt1(
-		  int dim, 
-		  int order, 
-		  int cv_stride,
-		  double* cv
-		  )
+                  int dim, 
+                  int order, 
+                  int cv_stride,
+                  double* cv
+                  )
 {
   const int cvdim = dim+1;
   int i,k,ord0,CVlen;
@@ -428,11 +427,11 @@ bool ON_RemoveBezierSingAt1(
     i = dim; 
     while(i--) {
       if (cv[CVlen-1-i] != 0.0)
-	return false;
+        return false;
     }
     for (i=0;  i<order;  i++) {
       for (k=0;  k<cvdim;  k++) 
-	cv[i*cv_stride+k] = (order*cv[i*cv_stride+k])/(order-i);
+        cv[i*cv_stride+k] = (order*cv[i*cv_stride+k])/(order-i);
     }
     CVlen -= cvdim;
   }
@@ -443,17 +442,17 @@ bool ON_RemoveBezierSingAt1(
 
 
 bool ON_EvaluateBezier(
-		int dim,              // dimension
-		BOOL is_rat,          // true if NURBS is rational
-		int order,            // order
-		int cv_stride,        // cv_stride >= (is_rat)?dim+1:dim
-		const double* cv,     // cv[order*cv_stride] array
-		double t0, double t1, // domain
-		int der_count,        // number of derivatives to compute
-		double t,             // evaluation parameter
-		int v_stride,         // v_stride (>=dimension)
-		double* v             // v[(der_count+1)*v_stride] array
-		)
+                int dim,              // dimension
+                ON_BOOL32 is_rat,          // true if NURBS is rational
+                int order,            // order
+                int cv_stride,        // cv_stride >= (is_rat)?dim+1:dim
+                const double* cv,     // cv[order*cv_stride] array
+                double t0, double t1, // domain
+                int der_count,        // number of derivatives to compute
+                double t,             // evaluation parameter
+                int v_stride,         // v_stride (>=dimension)
+                double* v             // v[(der_count+1)*v_stride] array
+                )
 /*****************************************************************************
 Evaluate a Bezier
  
@@ -483,12 +482,12 @@ OUTPUT:
   ON_EvBezier()
     0: successful
    -1: failure - rational function had nonzero numerator and zero
-		 denominator
+                 denominator
   answer
      bez(t)   = answer[0]
      bez'(t)  = answer[1]
-	      ...
-	(n)
+              ...
+        (n)
      bez  (t) = answer[n]
 COMMENTS:
   Use de Casteljau's algorithm.  Rational fuctions with removable singularities
@@ -507,6 +506,7 @@ RELATED FUNCTIONS:
   ON_onvertNurbToBezier
 *****************************************************************************/
 {
+  unsigned char stack_buffer[4*64*sizeof(double)];
   double delta_t;
   register double alpha0;
   register double alpha1;
@@ -541,7 +541,8 @@ RELATED FUNCTIONS:
   size_t sizeofCV = (i+j)*sizeof(*CV);
 
 
-  CV = (double*)( (sizeofCV < 4096) ? alloca( sizeofCV ) : (free_me=onmalloc(sizeofCV)) );
+  // 21 November 2007 Dale Lear RR 29005 - remove call to alloca()
+  CV = (double*)( (sizeofCV <= sizeof(stack_buffer)) ? stack_buffer : (free_me=onmalloc(sizeofCV)) );
   if (j) {
     memset( CV+i, 0, j*sizeof(*CV) );
   }
@@ -584,12 +585,12 @@ RELATED FUNCTIONS:
       cv0 = CV;
       cv1 = cv0 + cvdim;
       i = j; while (i--) {
-	k = cvdim; 
-	while (k--) {
-	  *cv0 = *cv0 * alpha0 + *cv1 * alpha1; 
-	  cv0++; 
-	  cv1++;
-	}
+        k = cvdim; 
+        while (k--) {
+          *cv0 = *cv0 * alpha0 + *cv1 * alpha1; 
+          cv0++; 
+          cv1++;
+        }
       }
     }
   }
@@ -600,7 +601,7 @@ RELATED FUNCTIONS:
     if ( !ON_RemoveBezierSingAt0(dim,order,cvdim,CV) )
     {
       if ( free_me )
-	onfree(free_me);  
+        onfree(free_me);  
       return false;
     }
   }
@@ -613,12 +614,12 @@ RELATED FUNCTIONS:
     CV += cvdim*j; while(--j) {
       alpha0 -= 1.0; cv1 = CV; cv0 = cv1-cvdim;
       i=j; while(i--) {
-	alpha1 = alpha0 * delta_t;
-	k=cvdim; while(k--) {
-	  cv0--; 
-	  cv1--; 
-	  *cv1 = alpha1*(*cv1 - *cv0);
-	}
+        alpha1 = alpha0 * delta_t;
+        k=cvdim; while(k--) {
+          cv0--; 
+          cv1--; 
+          *cv1 = alpha1*(*cv1 - *cv0);
+        }
       }
     }
     CV=tmp;
@@ -634,7 +635,7 @@ RELATED FUNCTIONS:
     {
       if ( cv[i] == cv[j] )
       {
-	CV[i] = cv[i];
+        CV[i] = cv[i];
       }
     }
   }
@@ -657,7 +658,7 @@ RELATED FUNCTIONS:
 
 
 bool ON_EvaluateNurbsBasis( int order, const double* knot, 
-				       double t, double* N )
+                                       double t, double* N )
 {
 /*****************************************************************************
 Evaluate B-spline basis functions
@@ -674,9 +675,9 @@ INPUT:
 OUTPUT:
   If "N" were declared as double N[order][order], then
 
-		 k
+                 k
     N[d-k][i] = N (t) = value of i-th degree k basis function.
-		 i
+                 i
   where 0 <= k <= d and k <= i <= d.
 
 	In particular, N[0], ..., N[d] - values of degree d basis functions.
@@ -711,9 +712,9 @@ COMMENTS:
 
   If d-1 <= k < n-1 and knot[k] <= t < knot[k+1], then 
   N_{i}(t) = 0 if i <= k-d
-	   = 0 if i >= k+2
-	   = B[i-k+d-1] if k-d+1 <= i <= k+1, where B[] is computed by the call
-	     TL_EvNurbBasis( d+1, knot+k-d+1, t, B );
+           = 0 if i >= k+2
+           = B[i-k+d-1] if k-d+1 <= i <= k+1, where B[] is computed by the call
+             TL_EvNurbBasis( d+1, knot+k-d+1, t, B );
 
   If 0 <= j < n-d, 0 <= m <= d, knot[j+d-1] <= t < knot[j+d], and B[] is 
   computed by the call
@@ -783,11 +784,11 @@ RELATED FUNCTIONS:
       r = 1;
       for ( j = 1; j <= d && r; j++ )
       {
-	if ( N[j] != 0.0 )
-	  r = 0;
+        if ( N[j] != 0.0 )
+          r = 0;
       }
       if (r)
-	N[0] = 1.0;
+        N[0] = 1.0;
     }
   }
   else if ( N[d] > x )
@@ -797,11 +798,11 @@ RELATED FUNCTIONS:
       r = 1;
       for ( j = 0; j < d && r; j++ )
       {
-	if ( N[j] != 0.0 )
-	  r = 0;
+        if ( N[j] != 0.0 )
+          r = 0;
       }
       if (r)
-	N[d] = 1.0;
+        N[d] = 1.0;
     }
   }
 
@@ -810,7 +811,7 @@ RELATED FUNCTIONS:
 
 
 bool ON_EvaluateNurbsBasisDerivatives( int order, const double* knot, 
-		       int der_count, double* N )
+                       int der_count, double* N )
 {
 	/* INPUT:
 	 *   Results of the call
@@ -938,16 +939,16 @@ bool ON_EvaluateNurbsBasisDerivatives( int order, const double* knot,
 
 static
 bool ON_EvaluateNurbsNonRationalSpan( 
-		  int dim,             // dimension
-		  int order,           // order
-		  const double* knot,  // knot[] array of (2*order-2) doubles
-		  int cv_stride,       // cv_stride >= (is_rat)?dim+1:dim
-		  const double* cv,    // cv[order*cv_stride] array
-		  int der_count,       // number of derivatives to compute
-		  double t,            // evaluation parameter
-		  int v_stride,        // v_stride (>=dimension)
-		  double* v            // v[(der_count+1)*v_stride] array
-		  )
+                  int dim,             // dimension
+                  int order,           // order
+                  const double* knot,  // knot[] array of (2*order-2) doubles
+                  int cv_stride,       // cv_stride >= (is_rat)?dim+1:dim
+                  const double* cv,    // cv[order*cv_stride] array
+                  int der_count,       // number of derivatives to compute
+                  double t,            // evaluation parameter
+                  int v_stride,        // v_stride (>=dimension)
+                  double* v            // v[(der_count+1)*v_stride] array
+                  )
 {
   const int stride_minus_dim = cv_stride - dim;
   const int cv_len = cv_stride*order;
@@ -985,7 +986,7 @@ bool ON_EvaluateNurbsNonRationalSpan(
     for ( j = 0; j < order; j++ ) {
       a = N[j];
       for ( k = 0; k < dim; k++ ) {
-	*v++ += a* *cv++;
+        *v++ += a* *cv++;
       }
       v -= dim;
       cv += stride_minus_dim;
@@ -1003,7 +1004,7 @@ bool ON_EvaluateNurbsNonRationalSpan(
     for ( i = 0; i < dim; i++, j++ )
     {
       if (cv[i] == cv[j] )
-	v[i] = cv[i];
+        v[i] = cv[i];
     }
   }
 		
@@ -1012,16 +1013,16 @@ bool ON_EvaluateNurbsNonRationalSpan(
 
 static
 bool ON_EvaluateNurbsRationalSpan( 
-		  int dim,             // dimension
-		  int order,           // order
-		  const double* knot,  // knot[] array of (2*order-2) doubles
-		  int cv_stride,       // cv_stride >= (is_rat)?dim+1:dim
-		  const double* cv,    // cv[order*cv_stride] array
-		  int der_count,       // number of derivatives to compute
-		  double t,            // evaluation parameter
-		  int v_stride,        // v_stride (>=dimension)
-		  double* v            // v[(der_count+1)*v_stride] array
-		  )
+                  int dim,             // dimension
+                  int order,           // order
+                  const double* knot,  // knot[] array of (2*order-2) doubles
+                  int cv_stride,       // cv_stride >= (is_rat)?dim+1:dim
+                  const double* cv,    // cv[order*cv_stride] array
+                  int der_count,       // number of derivatives to compute
+                  double t,            // evaluation parameter
+                  int v_stride,        // v_stride (>=dimension)
+                  double* v            // v[(der_count+1)*v_stride] array
+                  )
 {
   const int hv_stride = dim+1;
   double *hv;
@@ -1031,7 +1032,7 @@ bool ON_EvaluateNurbsRationalSpan(
   hv = (double*)alloca( (der_count+1)*hv_stride*sizeof(*hv) );
   
   rc = ON_EvaluateNurbsNonRationalSpan( dim+1, order, knot, 
-	  cv_stride, cv, der_count, t, hv_stride, hv );
+          cv_stride, cv, der_count, t, hv_stride, hv );
   if (rc) {
     rc = ON_EvaluateQuotientRule(dim, der_count, hv_stride, hv);
   }
@@ -1048,52 +1049,52 @@ bool ON_EvaluateNurbsRationalSpan(
 
 
 bool ON_EvaluateNurbsSpan( 
-		  int dim,             // dimension
-		  BOOL is_rat,         // true if NURBS is rational
-		  int order,           // order
-		  const double* knot,  // knot[] array of (2*order-2) doubles
-		  int cv_stride,       // cv_stride >= (is_rat)?dim+1:dim
-		  const double* cv,    // cv[order*cv_stride] array
-		  int der_count,       // number of derivatives to compute
-		  double t,            // evaluation parameter
-		  int v_stride,        // v_stride (>=dimension)
-		  double* v            // v[(der_count+1)*v_stride] array
-		  )
+                  int dim,             // dimension
+                  ON_BOOL32 is_rat,         // true if NURBS is rational
+                  int order,           // order
+                  const double* knot,  // knot[] array of (2*order-2) doubles
+                  int cv_stride,       // cv_stride >= (is_rat)?dim+1:dim
+                  const double* cv,    // cv[order*cv_stride] array
+                  int der_count,       // number of derivatives to compute
+                  double t,            // evaluation parameter
+                  int v_stride,        // v_stride (>=dimension)
+                  double* v            // v[(der_count+1)*v_stride] array
+                  )
 {
   bool rc = false;
   if ( knot[0] == knot[order-2] && knot[order-1] == knot[2*order-3] ) {
     // Bezier span - use faster Bezier evaluator
     rc = ON_EvaluateBezier(dim, is_rat, order, cv_stride, cv,
-			    knot[order-2], knot[order-1],
-			    der_count, t, v_stride, v);
+                            knot[order-2], knot[order-1],
+                            der_count, t, v_stride, v);
   }
   else {
     // generic NURBS span evaluation
     rc = (is_rat)
-	 ? ON_EvaluateNurbsRationalSpan( 
-	      dim, order, knot, cv_stride, cv,
-	      der_count, t, v_stride, v )
-	 : ON_EvaluateNurbsNonRationalSpan( 
-	      dim, order, knot, cv_stride, cv,
-	      der_count, t, v_stride, v );
+         ? ON_EvaluateNurbsRationalSpan( 
+              dim, order, knot, cv_stride, cv,
+              der_count, t, v_stride, v )
+         : ON_EvaluateNurbsNonRationalSpan( 
+              dim, order, knot, cv_stride, cv,
+              der_count, t, v_stride, v );
   }
   return rc;
 }
 
 
 bool ON_EvaluateNurbsSurfaceSpan(
-	int dim,
-	BOOL is_rat,
-	int order0, int order1,
-	const double* knot0,
-	const double* knot1,
-	int cv_stride0, int cv_stride1,
-	const double* cv0, // cv at "lower left" of bispan
-	int der_count,
-	double t0, double t1,
-	int v_stride, 
-	double* v      // returns values
-	)
+        int dim,
+        ON_BOOL32 is_rat,
+        int order0, int order1,
+        const double* knot0,
+        const double* knot1,
+        int cv_stride0, int cv_stride1,
+        const double* cv0, // cv at "lower left" of bispan
+        int der_count,
+        double t0, double t1,
+        int v_stride, 
+        double* v      // returns values
+        )
 {
 	const int der_count0 = (der_count >= order0) ? order0-1 : der_count;
 	const int der_count1 = (der_count >= order1) ? order1-1 : der_count;
@@ -1141,18 +1142,18 @@ bool ON_EvaluateNurbsSurfaceSpan(
 
   if ( der_count > 0 ) {
     // compute first derivatives
-	P += cvdim; // step over point
+  	P += cvdim; // step over point
 		for ( j0 = 0; j0 < order0; j0++) {
       cv = cv0 + j0*cv_stride0;
 			for ( j1 = 0; j1 < order1; j1++ ) {
-	// "Ds"
+        // "Ds"
 				c = N_0[j0+order0]*N_1[j1];
 				j = cvdim;
 				while (j--) 
 					*P++ += c* *cv++;
-	cv -= cvdim;
+        cv -= cvdim;
 
-	// "Dt"
+        // "Dt"
 				c = N_0[j0]*N_1[j1+order1];
 				j = cvdim;
 				while (j--) 
@@ -1160,7 +1161,7 @@ bool ON_EvaluateNurbsSurfaceSpan(
 				P -= cvdim;
 				P -= cvdim;
 
-	cv += dcv1;
+        cv += dcv1;
 			}
 		}
 
@@ -1169,83 +1170,83 @@ bool ON_EvaluateNurbsSurfaceSpan(
       P += cvdim; // step over "Ds"
       P += cvdim; // step over "Dt"
       if ( der_count0+der_count1 > 1 ) {
-	// compute "Dss"
+        // compute "Dss"
 		    for ( j0 = 0; j0 < order0; j0++) {
-	  // P points to first coordinate of Dss
-	  cv = cv0 + j0*cv_stride0;
+          // P points to first coordinate of Dss
+          cv = cv0 + j0*cv_stride0;
 			    for ( j1 = 0; j1 < order1; j1++ ) {
-	    if ( der_count0 > 1 ) {
-	      // "Dss"
+            if ( der_count0 > 1 ) {
+              // "Dss"
 				      c = N_0[j0+2*order0]*N_1[j1];
 				      j = cvdim;
 				      while (j--) 
 					      *P++ += c* *cv++;
-	      cv -= cvdim;
-	    }
-	    else {
-	      P += cvdim; // Dss = 0
-	    }
+              cv -= cvdim;
+            }
+            else {
+              P += cvdim; // Dss = 0
+            }
 
-	    // "Dst"
+            // "Dst"
 				    c = N_0[j0+order0]*N_1[j1+order1];
 				    j = cvdim;
 				    while (j--) 
 					    *P++ += c* *cv++;
-	    cv -= cvdim;
+            cv -= cvdim;
 
-	    if ( der_count1 > 1 ) {
-	      // "Dtt"
+            if ( der_count1 > 1 ) {
+              // "Dtt"
 				      c = N_0[j0]*N_1[j1+2*order1];
 				      j = cvdim;
 				      while (j--) 
 					      *P++ += c* *cv++;
-	      cv -= cvdim;
-				    P -= cvdim;
-	    }
+              cv -= cvdim;
+  				    P -= cvdim;
+            }
 
 				    P -= cvdim;
 				    P -= cvdim;
-	    cv += cv_stride1;
+            cv += cv_stride1;
 			    }
 		    }
       }
 
       if ( der_count > 2 ) 
       {
-	// 12 February 2004 Dale Lear
-	//     Bug fix for d^n/ds^n when n >= 3
-	// compute higher derivatives in slower generic loop
-	for ( d = 3; d <= der_count; d++ ) 
-	{
-	  P += d*cvdim; // step over (d-1)th derivatives
-	  d1max = (d > der_count1) ? der_count1 : d;
+        // 12 February 2004 Dale Lear
+        //     Bug fix for d^n/ds^n when n >= 3
+        // compute higher derivatives in slower generic loop
+        for ( d = 3; d <= der_count; d++ ) 
+        {
+          P += d*cvdim; // step over (d-1)th derivatives
+          d1max = (d > der_count1) ? der_count1 : d;
 			    for ( j0 = 0; j0 < order0; j0++) 
-	  {
-	    cv = cv0 + j0*cv_stride0;
+          {
+            cv = cv0 + j0*cv_stride0;
 				    for ( j1 = 0; j1 < order1; j1++ ) 
-	    {
-	      for (d0 = d, d1 = 0; 
-		   d0 > der_count0 && d1 <= d1max; 
-		   d0--, d1++ ) 
-	      {
-		// partial with respect to "s" is zero
-		P += cvdim;
-	      }
-	      for ( /*empty*/; d1 <= d1max; d0--, d1++ ) 
-	      {
-		c = N_0[j0 + d0*order0]*N_1[j1 + d1*order1];
+            {
+              for (d0 = d, d1 = 0; 
+                   d0 > der_count0 && d1 <= d1max; 
+                   d0--, d1++ ) 
+              {
+                // partial with respect to "s" is zero
+                P += cvdim;
+              }
+              for ( /*empty*/; d1 <= d1max; d0--, d1++ ) 
+              {
+                c = N_0[j0 + d0*order0]*N_1[j1 + d1*order1];
 					      j = cvdim;
 					      while (j--) 
 						      *P++ += c* *cv++;
-		cv -= cvdim;
-	      }
-	      // remaining partials with respect to "t" are zero
-	      // - reset and add contribution from the next cv
-	      P -= d1*cvdim;
-	      cv += cv_stride1;
+                cv -= cvdim;
+              }
+              // remaining partials with respect to "t" are zero
+              // - reset and add contribution from the next cv
+              P -= d1*cvdim;
+              cv += cv_stride1;
 				    }
 			    }
-	}
+        }
       }
 
     }
@@ -1266,15 +1267,15 @@ bool ON_EvaluateNurbsSurfaceSpan(
 
 
 bool ON_EvaluateNurbsDeBoor(
-			   int cv_dim,
-			   int order, 
-			   int cv_stride,
-			   double *cv,
-			   const double *knots, 
-			   int side,
-			   double mult_k, 
-			   double t
-			   )
+                           int cv_dim,
+                           int order, 
+                           int cv_stride,
+                           double *cv,
+                           const double *knots, 
+                           int side,
+                           double mult_k, 
+                           double t
+                           )
 /*
  * Evaluate a B-spline span using the de Boor algorithm
  *
@@ -1428,7 +1429,7 @@ bool ON_EvaluateNurbsDeBoor(
     else {
       side = -1;
       if (degree > 21)
-	delta_t = free_delta_t = (double*)onmalloc(degree*sizeof(*delta_t));
+        delta_t = free_delta_t = (double*)onmalloc(degree*sizeof(*delta_t));
     }
     /* delta_t = {t - knot[order-2], t - knot[order-1], ... , t - knot[0]} */
     knots += degree-1;
@@ -1436,19 +1437,19 @@ bool ON_EvaluateNurbsDeBoor(
       k0=knots; k=degree; while(k--) *delta_t++ = t - *k0--; delta_t -= degree;
       cv += order*cv_stride;
       k = order; while (--k) { 
-	cv1 = cv;
-	cv0 = cv1 - cv_stride;
-	k0 = knots;             /* *k0 = input_knots[d-1]          */
-	k1 = k0+k;              /* *k1 = input_knots[d-1+k]        */ 
-	i = k; while(i--) {
-	  alpha1 = *delta_t++/(*k1-- - *k0--); 
-	  alpha0 = 1.0 - alpha1;
-	  cv0 -= cv_inc;
-	  cv1 -= cv_inc;
-	  j = cv_dim;
-	  while (j--) {cv0--; cv1--; *cv1 = *cv0 * alpha0 + *cv1 * alpha1;} 
-	}
-	delta_t -= k;
+        cv1 = cv;
+        cv0 = cv1 - cv_stride;
+        k0 = knots;             /* *k0 = input_knots[d-1]          */
+        k1 = k0+k;              /* *k1 = input_knots[d-1+k]        */ 
+        i = k; while(i--) {
+          alpha1 = *delta_t++/(*k1-- - *k0--); 
+          alpha0 = 1.0 - alpha1;
+          cv0 -= cv_inc;
+          cv1 -= cv_inc;
+          j = cv_dim;
+          while (j--) {cv0--; cv1--; *cv1 = *cv0 * alpha0 + *cv1 * alpha1;} 
+        }
+        delta_t -= k;
       }
     }
     else {
@@ -1456,17 +1457,17 @@ bool ON_EvaluateNurbsDeBoor(
       // cv += order*cv_dim; // Chuck-n-Dale 21 Sep bug fix change cv_dim to cv_stride
       cv += order*cv_stride;
       k = order; while (--k) { 
-	cv1 = cv;
-	cv0 = cv1 - cv_stride;
-	k1 = knots+k;
-	i = k; while(i--) {
-	  alpha1 = dt/(*k1-- - t0); 
-	  alpha0 = 1.0 - alpha1;
-	  cv0 -= cv_inc;
-	  cv1 -= cv_inc;
-	  j = cv_dim;
-	  while (j--) {cv0--; cv1--; *cv1 = *cv0 * alpha0 + *cv1 * alpha1;} 
-	}
+        cv1 = cv;
+        cv0 = cv1 - cv_stride;
+        k1 = knots+k;
+        i = k; while(i--) {
+          alpha1 = dt/(*k1-- - t0); 
+          alpha0 = 1.0 - alpha1;
+          cv0 -= cv_inc;
+          cv1 -= cv_inc;
+          j = cv_dim;
+          while (j--) {cv0--; cv1--; *cv1 = *cv0 * alpha0 + *cv1 * alpha1;} 
+        }
       }
     }
   }
@@ -1484,7 +1485,7 @@ bool ON_EvaluateNurbsDeBoor(
     else {
       side = 1;
       if (degree > 21)
-	delta_t = free_delta_t = (double*)onmalloc(degree*sizeof(*delta_t));
+        delta_t = free_delta_t = (double*)onmalloc(degree*sizeof(*delta_t));
     }
     knots += degree;
     if (side == 1) {
@@ -1493,36 +1494,36 @@ bool ON_EvaluateNurbsDeBoor(
        */
       k1=knots; k = degree; while (k--) *delta_t++ = *k1++ - t; delta_t -= degree;
       k = order; while (--k) {
-	cv0 = cv;
-	cv1 = cv0 + cv_stride;
-	k1 = knots;
-	k0 = k1 - k;
-	i = k; while(i--) {
-	  alpha0 = *delta_t++/(*k1++ - *k0++);
-	  alpha1 = 1.0 - alpha0;
-	  j = cv_dim;
-	  while(j--) {*cv0 = *cv0 * alpha0 + *cv1 * alpha1; cv0++; cv1++;}
-	  cv0 += cv_inc;
-	  cv1 += cv_inc;
-	}
-	delta_t -= k;
+        cv0 = cv;
+        cv1 = cv0 + cv_stride;
+        k1 = knots;
+        k0 = k1 - k;
+        i = k; while(i--) {
+          alpha0 = *delta_t++/(*k1++ - *k0++);
+          alpha1 = 1.0 - alpha0;
+          j = cv_dim;
+          while(j--) {*cv0 = *cv0 * alpha0 + *cv1 * alpha1; cv0++; cv1++;}
+          cv0 += cv_inc;
+          cv1 += cv_inc;
+        }
+        delta_t -= k;
       }
     }
     else {
       /* all right end knots = t1  delta_t = t1 - t */
       dt = t1 - t;
       k = order; while (--k) {
-	cv0 = cv;
-	cv1 = cv0 + cv_stride;
-	k0 = knots - k;         /* *knots = input_knots[d]       */ 
-	i = k; while(i--) {
-	  alpha0 = dt/(t1 - *k0++);
-	  alpha1 = 1.0 - alpha0;
-	  j = cv_dim;
-	  while(j--) {*cv0 = *cv0 * alpha0 + *cv1 * alpha1; cv0++; cv1++;}
-	  cv0 += cv_inc;
-	  cv1 += cv_inc;
-	}
+        cv0 = cv;
+        cv1 = cv0 + cv_stride;
+        k0 = knots - k;         /* *knots = input_knots[d]       */ 
+        i = k; while(i--) {
+          alpha0 = dt/(t1 - *k0++);
+          alpha1 = 1.0 - alpha0;
+          j = cv_dim;
+          while(j--) {*cv0 = *cv0 * alpha0 + *cv1 * alpha1; cv0++; cv1++;}
+          cv0 += cv_inc;
+          cv1 += cv_inc;
+        }
       }
     }
   }
@@ -1535,14 +1536,14 @@ bool ON_EvaluateNurbsDeBoor(
 
 
 bool ON_EvaluateNurbsBlossom(int cvdim,
-			     int order, 
-			     int cv_stride,
-			     const double *CV,//size cv_stride*order
-			     const double *knot, //nondecreasing, size 2*(order-1)
-			     // knot[order-2] != knot[order-1]
-			     const double *t, //input parameters size order-1
-			     double* P
-			    )
+                             int order, 
+                             int cv_stride,
+                             const double *CV,//size cv_stride*order
+                             const double *knot, //nondecreasing, size 2*(order-1)
+                             // knot[order-2] != knot[order-1]
+                             const double *t, //input parameters size order-1
+                             double* P
+                            )
 
 {
 
@@ -1578,8 +1579,8 @@ bool ON_EvaluateNurbsBlossom(int cvdim,
 
     for (j=1; j<order; j++){
       for (k=j; k<order; k++){//djk
-	space[k-j] = (knot[degree+k-j]-t[j-1])/(knot[degree+k-j]-knot[k-1])*space[k-j] +
-	  (t[j-1]-knot[k-1])/(knot[degree+k-j]-knot[k-1])*space[k-j+1];
+        space[k-j] = (knot[degree+k-j]-t[j-1])/(knot[degree+k-j]-knot[k-1])*space[k-j] +
+          (t[j-1]-knot[k-1])/(knot[degree+k-j]-knot[k-1])*space[k-j+1];
       }
     }
 
@@ -1592,8 +1593,8 @@ bool ON_EvaluateNurbsBlossom(int cvdim,
 
 
 void ON_ConvertNurbSpanToBezier(int cvdim, int order, 
-				int cvstride, double *cv, 
-				const double *knot, double t0, double t1)
+                                int cvstride, double *cv, 
+                                const double *knot, double t0, double t1)
 /* 
  * Convert a Nurb span to a Bezier
  *

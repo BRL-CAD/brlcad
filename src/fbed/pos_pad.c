@@ -73,9 +73,9 @@ getpos(Point *pos)
     static char str[1024] = {0};
     int buttons = -1;
     static int nread = 0;
-    register int just_read = 0;
-    register char *cp = (char *)NULL;
-    register char *cend = (char *)NULL;
+    int just_read = 0;
+    char *cp = (char *)NULL;
+    char *cend = (char *)NULL;
     char *last = (char *)NULL;
 
     while ( nread < 9 ) {

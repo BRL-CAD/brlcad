@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -24,13 +23,17 @@
 
 #define ON_ERROR(msg) ON_Error(__FILE__,__LINE__,msg)
 #define ON_WARNING(msg) ON_Warning(__FILE__,__LINE__,msg)
-#if defined(ON_DEBUG)
-#define ON_ASSERT(cond) ON_Assert(cond,__FILE__,__LINE__, #cond " is FALSE")
-#define ON_ASSERT_OR_RETURN(cond,returncode) do{if (!(cond)) {ON_Assert(FALSE,__FILE__,__LINE__, #cond " is FALSE");return(returncode);}}while(0)
-#else
-#define ON_ASSERT(cond)
-#define ON_ASSERT_OR_RETURN(cond,returncode) do{if (!(cond)) return(returncode);}while(0)
-#endif
+
+// 15 May 2008 Dale Lear
+// Never, ever, make system error handling macros that work
+// differently in release and debug builds.
+//#if defined(ON_DEBUG)
+#define ON_ASSERT(cond) ON_Assert(cond,__FILE__,__LINE__, #cond " is false")
+#define ON_ASSERT_OR_RETURN(cond,returncode) do{if (!(cond)) {ON_Assert(false,__FILE__,__LINE__, #cond " is false");return(returncode);}}while(0)
+//#else
+//#define ON_ASSERT(cond)
+//#define ON_ASSERT_OR_RETURN(cond,returncode) do{if (!(cond)) return(returncode);}while(0)
+//#endif
 
 ON_BEGIN_EXTERNC
 
@@ -79,45 +82,29 @@ void    ON_EnableDebugErrorMessage( int bEnableDebugErrorMessage );
 
 ON_DECL
 void    ON_Error( const char*, /* sFileName:   __FILE__ will do fine */
-		  int,         /* line number: __LINE__ will do fine */
-		  const char*, /* printf() style format string */
-		  ...          /* printf() style ags */
-		  );
+                  int,         /* line number: __LINE__ will do fine */
+                  const char*, /* printf() style format string */
+                  ...          /* printf() style ags */
+                  );
 ON_DECL
 void    ON_Warning( const char*, /* sFileName:   __FILE__ will do fine */
-		    int,         /* line number: __LINE__ will do fine */
-		    const char*, /* printf() style format string */
-		    ...          /* printf() style ags */
-		  );
+                    int,         /* line number: __LINE__ will do fine */
+                    const char*, /* printf() style format string */
+                    ...          /* printf() style ags */
+                  );
 ON_DECL
-void    ON_Assert( int,         /* if FALSE, execution is halted in debugged code */
-		   const char*, /* sFileName:   __FILE__ will do fine */
-		   int,         /* line number: __LINE__ will do fine */
-		   const char*, /* printf() style format string */
-		   ...          /* printf() style ags */
-		  );
+void    ON_Assert( int,         /* if false, execution is halted in debugged code */
+                   const char*, /* sFileName:   __FILE__ will do fine */
+                   int,         /* line number: __LINE__ will do fine */
+                   const char*, /* printf() style format string */
+                   ...          /* printf() style ags */
+                  );
 ON_DECL
 void    ON_MathError( 
-	const char*, /* sModuleName */
-	const char*, /* sErrorType */
-	const char*  /* sFunctionName */
-	);
-
-// IEEE 754 Quiet NaN (symantically indeterminant result)
-extern ON_EXTERN_DECL const double ON_DBL_QNAN;
-extern ON_EXTERN_DECL const float  ON_FLT_QNAN;
-
-// IEEE 754 Signalling NaN (symantically invalid result)
-extern ON_EXTERN_DECL const double ON_DBL_SNAN;
-extern ON_EXTERN_DECL const float  ON_FLT_SNAN;
-
-// IEEE 754 Positive infinity
-extern ON_EXTERN_DECL const double ON_DBL_PINF;
-extern ON_EXTERN_DECL const float  ON_FLT_PINF;
-
-// IEEE 754 Negative infinity
-extern ON_EXTERN_DECL const double ON_DBL_NINF;
-extern ON_EXTERN_DECL const float  ON_FLT_NINF;
+        const char*, /* sModuleName */
+        const char*, /* sErrorType */
+        const char*  /* sFunctionName */
+        );
 
 ON_END_EXTERNC
 

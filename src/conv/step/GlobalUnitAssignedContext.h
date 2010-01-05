@@ -42,7 +42,7 @@ protected:
 public:
 	GlobalUnitAssignedContext();
 	virtual ~GlobalUnitAssignedContext();
-	GlobalUnitAssignedContext(STEPWrapper *sw,int STEPid);
+	GlobalUnitAssignedContext(STEPWrapper *sw,int step_id);
 	double GetLengthConversionFactor();
 	double GetPlaneAngleConversionFactor();
 	double GetSolidAngleConversionFactor();

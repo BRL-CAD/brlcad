@@ -65,7 +65,7 @@ mk_id(struct rt_wdb *fp, const char *title)
  *	0	success
  */
 int
-mk_id_units(struct rt_wdb *fp, const char *title, register const char *units)
+mk_id_units(struct rt_wdb *fp, const char *title, const char *units)
 {
     return mk_id_editunits( fp, title, bu_units_conversion(units) );
 }

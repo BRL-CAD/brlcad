@@ -272,7 +272,7 @@ collect_regnames(struct ged *gedp, struct directory *dp, int pathpos)
     }
 
     if (id != ID_COMBINATION) {
-	intern.idb_meth->ft_ifree(&intern, &rt_uniresource);
+	intern.idb_meth->ft_ifree(&intern);
 	return GED_OK;
     }
 
@@ -281,7 +281,7 @@ collect_regnames(struct ged *gedp, struct directory *dp, int pathpos)
 
     if (comb->region_flag) {
 	bu_vls_printf(&gedp->ged_result_str, " %s", dp->d_namep);
-	intern.idb_meth->ft_ifree(&intern, &rt_uniresource);
+	intern.idb_meth->ft_ifree(&intern);
 	return GED_OK;
     }
 
@@ -289,7 +289,7 @@ collect_regnames(struct ged *gedp, struct directory *dp, int pathpos)
 	db_tree_funcleaf(gedp->ged_wdbp->dbip, comb, comb->tree, traverse_node,
 			 (genptr_t)0, (genptr_t)&pathpos, (genptr_t)gedp);
 
-    intern.idb_meth->ft_ifree(&intern, &rt_uniresource);
+    intern.idb_meth->ft_ifree(&intern);
     return GED_OK;
 }
 

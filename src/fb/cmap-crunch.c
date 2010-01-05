@@ -35,11 +35,11 @@
 #include "fb.h"
 
 void
-cmap_crunch(register RGBpixel (*scan_buf), register int pixel_ct, ColorMap *cmap)
+cmap_crunch(RGBpixel (*scan_buf), int pixel_ct, ColorMap *cmap)
 {
-    register unsigned short	*rp = cmap->cm_red;
-    register unsigned short	*gp = cmap->cm_green;
-    register unsigned short	*bp = cmap->cm_blue;
+    unsigned short	*rp = cmap->cm_red;
+    unsigned short	*gp = cmap->cm_green;
+    unsigned short	*bp = cmap->cm_blue;
 
     /* noalias ? */
     for (; pixel_ct > 0; pixel_ct--, scan_buf++ )  {

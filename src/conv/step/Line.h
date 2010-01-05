@@ -43,7 +43,7 @@ protected:
 public:
 	Line();
 	virtual ~Line();
-	Line(STEPWrapper *sw,int STEPid);
+	Line(STEPWrapper *sw,int step_id);
 	virtual curve_type CurveType() { return LINE; };
 	void StartPoint(double *p);
 	void EndPoint(double *p);

@@ -35,7 +35,7 @@
 ###
 #
 # Script for automatically preparing the sources for compilation by
-# performing the myrid of necessary steps.  The script attempts to
+# performing the myriad of necessary steps.  The script attempts to
 # detect proper version support, and outputs warnings about particular
 # systems that have autotool peculiarities.
 #
@@ -77,15 +77,15 @@
 #
 ######################################################################
 
-# set to minimum acceptible version of autoconf
+# set to minimum acceptable version of autoconf
 if [ "x$AUTOCONF_VERSION" = "x" ] ; then
     AUTOCONF_VERSION=2.52
 fi
-# set to minimum acceptible version of automake
+# set to minimum acceptable version of automake
 if [ "x$AUTOMAKE_VERSION" = "x" ] ; then
     AUTOMAKE_VERSION=1.6.0
 fi
-# set to minimum acceptible version of libtool
+# set to minimum acceptable version of libtool
 if [ "x$LIBTOOL_VERSION" = "x" ] ; then
     LIBTOOL_VERSION=1.4.2
 fi

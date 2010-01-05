@@ -303,7 +303,7 @@ cmd_hist(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    bu_vls_putc(&vls, '\n');
 
 	zero.tv_sec = zero.tv_usec = 0L;
-	history_record(&vls, &zero, &zero, TCL_OK);
+	history_record_priv(&vls, &zero, &zero, TCL_OK);
 
 	bu_vls_free(&vls);
 	return TCL_OK;

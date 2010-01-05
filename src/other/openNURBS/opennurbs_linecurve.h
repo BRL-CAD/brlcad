@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -28,8 +27,8 @@ public:
   ON_LineCurve(const ON_3dPoint&,const ON_3dPoint&); // creates a 3d line curve
   ON_LineCurve(const ON_Line&);
   ON_LineCurve(const ON_Line&,
-		double,double    // domain
-		);
+                double,double    // domain
+                );
   ON_LineCurve(const ON_LineCurve&);
 
   virtual ~ON_LineCurve();
@@ -52,29 +51,29 @@ public:
     initialized.
   Parameters:
     text_log - [in] if the object is not valid and text_log
-	is not NULL, then a brief englis description of the
-	reason the object is not valid is appened to the log.
-	The information appended to text_log is suitable for 
-	low-level debugging purposes by programmers and is 
-	not intended to be useful as a high level user 
-	interface tool.
+        is not NULL, then a brief englis description of the
+        reason the object is not valid is appened to the log.
+        The information appended to text_log is suitable for 
+        low-level debugging purposes by programmers and is 
+        not intended to be useful as a high level user 
+        interface tool.
   Returns:
     @untitled table
-    TRUE     object is valid
-    FALSE    object is invalid, uninitialized, etc.
+    true     object is valid
+    false    object is invalid, uninitialized, etc.
   Remarks:
     Overrides virtual ON_Object::IsValid
   */
-  BOOL IsValid( ON_TextLog* text_log = NULL ) const;
+  ON_BOOL32 IsValid( ON_TextLog* text_log = NULL ) const;
 
   void Dump( ON_TextLog& ) const; // for debugging
 
-  BOOL Write(
-	 ON_BinaryArchive&  // open binary file
+  ON_BOOL32 Write(
+         ON_BinaryArchive&  // open binary file
        ) const;
 
-  BOOL Read(
-	 ON_BinaryArchive&  // open binary file
+  ON_BOOL32 Read(
+         ON_BinaryArchive&  // open binary file
        );
 
   /////////////////////////////////////////////////////////////////
@@ -82,11 +81,11 @@ public:
 
   int Dimension() const;
 
-  BOOL GetBBox( // returns TRUE if successful
-	 double*,    // minimum
-	 double*,    // maximum
-	 BOOL = FALSE  // TRUE means grow box
-	 ) const;
+  ON_BOOL32 GetBBox( // returns true if successful
+         double*,    // minimum
+         double*,    // maximum
+         ON_BOOL32 = false  // true means grow box
+         ) const;
 
   /*
 	Description:
@@ -110,9 +109,9 @@ public:
 			const ON_Xform* xform = 0
       ) const;
 
-  BOOL Transform( 
-	 const ON_Xform&
-	 );
+  ON_BOOL32 Transform( 
+         const ON_Xform&
+         );
 
   // virtual ON_Geometry::IsDeformable() override
   bool IsDeformable() const;
@@ -120,9 +119,9 @@ public:
   // virtual ON_Geometry::MakeDeformable() override
   bool MakeDeformable();
 
-  BOOL SwapCoordinates(
-	int, int        // indices of coords to swap
-	);
+  ON_BOOL32 SwapCoordinates(
+        int, int        // indices of coords to swap
+        );
 
   // virtual ON_Geometry override
   bool Morph( const ON_SpaceMorph& morph );
@@ -141,30 +140,30 @@ public:
   //   t0 - [in]
   //   t1 - [in] new domain will be [t0,t1]
   // Returns:
-  //   TRUE if successful.
-  BOOL SetDomain( 
-	double t0, 
-	double t1 
-	);
+  //   true if successful.
+  ON_BOOL32 SetDomain( 
+        double t0, 
+        double t1 
+        );
 
   bool ChangeDimension(
-	  int desired_dimension
-	  );
+          int desired_dimension
+          );
 
   int SpanCount() const; // number of smooth spans in curve
 
-  BOOL GetSpanVector( // span "knots" 
-	 double* // array of length SpanCount() + 1 
-	 ) const; // 
+  ON_BOOL32 GetSpanVector( // span "knots" 
+         double* // array of length SpanCount() + 1 
+         ) const; // 
 
   int Degree( // returns maximum algebraic degree of any span 
-		  // ( or a good estimate if curve spans are not algebraic )
+                  // ( or a good estimate if curve spans are not algebraic )
     ) const; 
 
-  BOOL IsLinear( // TRUE if curve locus is a line segment between
-		 // between specified points
-	double = ON_ZERO_TOLERANCE // tolerance to use when checking linearity
-	) const;
+  ON_BOOL32 IsLinear( // true if curve locus is a line segment between
+                 // between specified points
+        double = ON_ZERO_TOLERANCE // tolerance to use when checking linearity
+        ) const;
 
   /*
   Description:
@@ -173,10 +172,10 @@ public:
     all of whose segments are some form of polyline.  IsPolyline tests
     a curve to see if it can be represented as a polyline.
   Parameters:
-    pline_points - [out] if not NULL and TRUE is returned, then the
-	points of the polyline form are returned here.
-    t - [out] if not NULL and TRUE is returned, then the parameters of
-	the polyline points are returned here.
+    pline_points - [out] if not NULL and true is returned, then the
+        points of the polyline form are returned here.
+    t - [out] if not NULL and true is returned, then the parameters of
+        the polyline points are returned here.
   Returns:
     @untitled table
     0        curve is not some form of a polyline
@@ -184,37 +183,37 @@ public:
   */
   virtual
   int IsPolyline(
-	ON_SimpleArray<ON_3dPoint>* pline_points = NULL,
-	ON_SimpleArray<double>* pline_t = NULL
-	) const;
+        ON_SimpleArray<ON_3dPoint>* pline_points = NULL,
+        ON_SimpleArray<double>* pline_t = NULL
+        ) const;
 
-  BOOL IsArc( // ON_Arc.m_angle > 0 if curve locus is an arc between
-	      // specified points
-	const ON_Plane* = NULL, // if not NULL, test is performed in this plane
-	ON_Arc* = NULL, // if not NULL and TRUE is returned, then arc parameters
-			 // are filled in
-	double = ON_ZERO_TOLERANCE    // tolerance to use when checking
-	) const;
+  ON_BOOL32 IsArc( // ON_Arc.m_angle > 0 if curve locus is an arc between
+              // specified points
+        const ON_Plane* = NULL, // if not NULL, test is performed in this plane
+        ON_Arc* = NULL, // if not NULL and true is returned, then arc parameters
+                         // are filled in
+        double = ON_ZERO_TOLERANCE    // tolerance to use when checking
+        ) const;
 
-  BOOL IsPlanar(
-	ON_Plane* = NULL, // if not NULL and TRUE is returned, then plane parameters
-			   // are filled in
-	double = ON_ZERO_TOLERANCE    // tolerance to use when checking
-	) const;
+  ON_BOOL32 IsPlanar(
+        ON_Plane* = NULL, // if not NULL and true is returned, then plane parameters
+                           // are filled in
+        double = ON_ZERO_TOLERANCE    // tolerance to use when checking
+        ) const;
 
-  BOOL IsInPlane(
-	const ON_Plane&, // plane to test
-	double = ON_ZERO_TOLERANCE    // tolerance to use when checking
-	) const;
+  ON_BOOL32 IsInPlane(
+        const ON_Plane&, // plane to test
+        double = ON_ZERO_TOLERANCE    // tolerance to use when checking
+        ) const;
 
-  BOOL IsClosed(  // TRUE if curve is closed (either curve has
-	void      // clamped end knots and euclidean location of start
-	) const;  // CV = euclidean location of end CV, or curve is
-		  // periodic.)
+  ON_BOOL32 IsClosed(  // true if curve is closed (either curve has
+        void      // clamped end knots and euclidean location of start
+        ) const;  // CV = euclidean location of end CV, or curve is
+                  // periodic.)
 
-  BOOL IsPeriodic(  // TRUE if curve is a single periodic segment
-	void 
-	) const;
+  ON_BOOL32 IsPeriodic(  // true if curve is a single periodic segment
+        void 
+        ) const;
   
   /*
   Description:
@@ -222,7 +221,7 @@ public:
   Parameters:
     start_point - [in]
   Returns:
-    TRUE if successful.
+    true if successful.
   Remarks:
     Some end points cannot be moved.  Be sure to check return
     code.
@@ -231,9 +230,9 @@ public:
     ON_Curve::PointAtStart
     ON_Curve::PointAtEnd
   */
-  BOOL SetStartPoint(
-	  ON_3dPoint start_point
-	  );
+  ON_BOOL32 SetStartPoint(
+          ON_3dPoint start_point
+          );
 
   /*
   Description:
@@ -241,7 +240,7 @@ public:
   Parameters:
     end_point - [in]
   Returns:
-    TRUE if successful.
+    true if successful.
   Remarks:
     Some end points cannot be moved.  Be sure to check return
     code.
@@ -250,25 +249,25 @@ public:
     ON_Curve::PointAtStart
     ON_Curve::PointAtEnd
   */
-  BOOL SetEndPoint(
-	  ON_3dPoint end_point
-	  );
+  ON_BOOL32 SetEndPoint(
+          ON_3dPoint end_point
+          );
 
-  BOOL Reverse();       // reverse parameterizatrion
-			// Domain changes from [a,b] to [-b,-a]
+  ON_BOOL32 Reverse();       // reverse parameterizatrion
+                        // Domain changes from [a,b] to [-b,-a]
 
-  BOOL Evaluate( // returns FALSE if unable to evaluate
-	 double,         // evaluation parameter
-	 int,            // number of derivatives (>=0)
-	 int,            // array stride (>=Dimension())
-	 double*,        // array of length stride*(ndir+1)
-	 int = 0,        // optional - determines which side to evaluate from
-			 //         0 = default
-			 //      <  0 to evaluate from below, 
-			 //      >  0 to evaluate from above
-	 int* = 0        // optional - evaluation hint (int) used to speed
-			 //            repeated evaluations
-	 ) const;
+  ON_BOOL32 Evaluate( // returns false if unable to evaluate
+         double,         // evaluation parameter
+         int,            // number of derivatives (>=0)
+         int,            // array stride (>=Dimension())
+         double*,        // array of length stride*(ndir+1)
+         int = 0,        // optional - determines which side to evaluate from
+                         //         0 = default
+                         //      <  0 to evaluate from below, 
+                         //      >  0 to evaluate from above
+         int* = 0        // optional - evaluation hint (int) used to speed
+                         //            repeated evaluations
+         ) const;
 
   //////////
   // Find parameter of the point on a curve that is closest to test_point.
@@ -278,13 +277,13 @@ public:
   // If the sub_domain parameter is not NULL, then the search is restricted
   // to the specified portion of the curve.
   //
-  // TRUE if returned if the search is successful.  FALSE is returned if
+  // true if returned if the search is successful.  false is returned if
   // the search fails.
   bool GetClosestPoint( const ON_3dPoint&, // test_point
-	  double*,       // parameter of local closest point returned here
-	  double = 0.0,  // maximum_distance
-	  const ON_Interval* = NULL // sub_domain
-	  ) const;
+          double*,       // parameter of local closest point returned here
+          double = 0.0,  // maximum_distance
+          const ON_Interval* = NULL // sub_domain
+          ) const;
 
   //////////
   // Find parameter of the point on a curve that is locally closest to 
@@ -292,24 +291,21 @@ public:
   // seed_parameter. If the sub_domain parameter is not NULL, then
   // the search is restricted to the specified portion of the curve.
   //
-  // TRUE if returned if the search is successful.  FALSE is returned if
+  // true if returned if the search is successful.  false is returned if
   // the search fails.
-  BOOL GetLocalClosestPoint( const ON_3dPoint&, // test_point
-	  double,    // seed_parameter
-	  double*,   // parameter of local closest point returned here
-	  const ON_Interval* = NULL // sub_domain
-	  ) const;
+  ON_BOOL32 GetLocalClosestPoint( const ON_3dPoint&, // test_point
+          double,    // seed_parameter
+          double*,   // parameter of local closest point returned here
+          const ON_Interval* = NULL // sub_domain
+          ) const;
 
   // virtual ON_Curve override
   int IntersectSelf( 
-	  ON_SimpleArray<ON_X_EVENT>& x,
-	  double intersection_tolerance = 0.0,
-	  const ON_Interval* curve_domain = 0
-	  ) const;
+          ON_SimpleArray<ON_X_EVENT>& x,
+          double intersection_tolerance = 0.0,
+          const ON_Interval* curve_domain = 0
+          ) const;
 
-  // virtual ON_Curve override
-  int NumIntersectionsWith(const ON_Line& segment) const;
-  
   // Description:
   //   virtual ON_Curve::GetLength override.
   //   Get the length of the line.
@@ -322,12 +318,12 @@ public:
   //   sub_domain - [in] If not NULL, the calculation is performed on
   //       the specified sub-domain of the curve.
   // Returns:
-  //   TRUE if returned if the length calculation is successful.
-  BOOL GetLength(
-	  double* length,
-	  double fractional_tolerance = 1.0e-8,
-	  const ON_Interval* sub_domain = NULL
-	  ) const;
+  //   true if returned if the length calculation is successful.
+  ON_BOOL32 GetLength(
+          double* length,
+          double fractional_tolerance = 1.0e-8,
+          const ON_Interval* sub_domain = NULL
+          ) const;
 
   /*
   Description:
@@ -362,13 +358,13 @@ public:
   //   sub_domain - [in] If not NULL, the calculation is performed on
   //       the specified sub-domain of the curve.
   // Returns:
-  //   TRUE if successful
-  BOOL GetNormalizedArcLengthPoint(
-	  double s,
-	  double* t,
-	  double fractional_tolerance = 1.0e-8,
-	  const ON_Interval* sub_domain = NULL
-	  ) const;
+  //   true if successful
+  ON_BOOL32 GetNormalizedArcLengthPoint(
+          double s,
+          double* t,
+          double fractional_tolerance = 1.0e-8,
+          const ON_Interval* sub_domain = NULL
+          ) const;
 
   /*
   Description:
@@ -378,28 +374,28 @@ public:
   Parameters:
     count - [in] number of parameters in s.
     s - [in] array of normalized arc length parameters. E.g., 0 = start
-	 of curve, 1/2 = midpoint of curve, 1 = end of curve.
+         of curve, 1/2 = midpoint of curve, 1 = end of curve.
     t - [out] array of curve parameters such that the length of the 
        curve from its start to t[i] is s[i]*curve_length.
     absolute_tolerance - [in] if absolute_tolerance > 0, then the difference
-	between (s[i+1]-s[i])*curve_length and the length of the curve
-	segment from t[i] to t[i+1] will be <= absolute_tolerance.
+        between (s[i+1]-s[i])*curve_length and the length of the curve
+        segment from t[i] to t[i+1] will be <= absolute_tolerance.
     fractional_tolerance - [in] desired fractional precision for each segment.
-	fabs("true" length - actual length)/(actual length) <= fractional_tolerance
+        fabs("true" length - actual length)/(actual length) <= fractional_tolerance
     sub_domain - [in] If not NULL, the calculation is performed on
-	the specified sub-domain of the curve.  A 0.0 s value corresponds to
-	sub_domain->Min() and a 1.0 s value corresponds to sub_domain->Max().
+        the specified sub-domain of the curve.  A 0.0 s value corresponds to
+        sub_domain->Min() and a 1.0 s value corresponds to sub_domain->Max().
   Returns:
-    TRUE if successful
+    true if successful
   */
-  BOOL GetNormalizedArcLengthPoints(
-	  int count,
-	  const double* s,
-	  double* t,
-	  double absolute_tolerance = 0.0,
-	  double fractional_tolerance = 1.0e-8,
-	  const ON_Interval* sub_domain = NULL
-	  ) const;
+  ON_BOOL32 GetNormalizedArcLengthPoints(
+          int count,
+          const double* s,
+          double* t,
+          double absolute_tolerance = 0.0,
+          double fractional_tolerance = 1.0e-8,
+          const ON_Interval* sub_domain = NULL
+          ) const;
 
   // Description:
   //   virtual ON_Curve::Trim override.
@@ -409,8 +405,8 @@ public:
   //      curve before curve(domain[0]) and after curve(domain[1]) are
   //      removed.
   // Returns:
-  //   TRUE if successful.
-  BOOL Trim(
+  //   true if successful.
+  ON_BOOL32 Trim(
     const ON_Interval& domain
     );
 
@@ -447,7 +443,7 @@ public:
   //
   //   would split crv at the parametric midpoint, put the left side
   //   in crv, and return the right side in right_side.
-  BOOL Split(
+  ON_BOOL32 Split(
       double t,    // t = curve parameter to split curve at
       ON_Curve*& left_side, // left portion returned here
       ON_Curve*& right_side // right portion returned here
@@ -474,10 +470,10 @@ public:
   //       parameterization may not match to the 
   //       desired accuracy.
   int GetNurbForm(
-	ON_NurbsCurve&,
-	double = 0.0,
-	const ON_Interval* = NULL
-	) const;
+        ON_NurbsCurve&,
+        double = 0.0,
+        const ON_Interval* = NULL
+        ) const;
 
   // Description:
   //   virtual ON_Curve::HasNurbForm override.
@@ -495,7 +491,7 @@ public:
   //       parameterization may not match to the 
   //       desired accuracy.
   int HasNurbForm(
-	) const;
+        ) const;
 
   // Description:
   //   virtual ON_Curve::GetCurveParameterFromNurbFormParameter override.
@@ -512,10 +508,10 @@ public:
   // See Also:
   //   ON_Curve::GetNurbForm, ON_Curve::GetNurbFormParameterFromCurveParameter
   virtual
-  BOOL GetCurveParameterFromNurbFormParameter(
-	double nurbs_t,
-	double* curve_t
-	) const;
+  ON_BOOL32 GetCurveParameterFromNurbFormParameter(
+        double nurbs_t,
+        double* curve_t
+        ) const;
 
   // Description:
   //   virtual ON_Curve::GetNurbFormParameterFromCurveParameter override.
@@ -532,10 +528,10 @@ public:
   // See Also:
   //   ON_Curve::GetNurbForm, ON_Curve::GetCurveParameterFromNurbFormParameter
   virtual
-  BOOL GetNurbFormParameterFromCurveParameter(
-	double curve_t,
-	double* nurbs_t
-	) const;
+  ON_BOOL32 GetNurbFormParameterFromCurveParameter(
+        double curve_t,
+        double* nurbs_t
+        ) const;
 
   /////////////////////////////////////////////////////////////////
   // Interface

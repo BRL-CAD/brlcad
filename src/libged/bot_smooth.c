@@ -104,7 +104,7 @@ ged_bot_smooth(struct ged *gedp, int argc, const char *argv[])
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
 	bu_vls_printf(&gedp->ged_result_str, "%s is not a BOT primitive\n", old_bot_name);
-	rt_db_free_internal( &intern, gedp->ged_wdbp->wdb_resp );
+	rt_db_free_internal(&intern);
 	return GED_ERROR;
     }
 
@@ -113,7 +113,7 @@ ged_bot_smooth(struct ged *gedp, int argc, const char *argv[])
 
     if ( rt_bot_smooth( old_bot, old_bot_name, gedp->ged_wdbp->dbip, tolerance_angle*M_PI/180.0 ) ) {
 	bu_vls_printf(&gedp->ged_result_str, "Failed to smooth %s\n", old_bot_name);
-	rt_db_free_internal( &intern, gedp->ged_wdbp->wdb_resp );
+	rt_db_free_internal(&intern);
 	return GED_ERROR;
     }
 
@@ -122,7 +122,7 @@ ged_bot_smooth(struct ged *gedp, int argc, const char *argv[])
     }
 
     GED_DB_PUT_INTERNAL(gedp, dp_new, &intern, gedp->ged_wdbp->wdb_resp, GED_ERROR);
-    rt_db_free_internal( &intern, gedp->ged_wdbp->wdb_resp );
+    rt_db_free_internal(&intern);
 
     return GED_OK;
 }

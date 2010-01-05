@@ -42,7 +42,7 @@ protected:
 public:
 	DerivedUnitElement();
 	virtual ~DerivedUnitElement();
-	DerivedUnitElement(STEPWrapper *sw,int STEPid);
+	DerivedUnitElement(STEPWrapper *sw,int step_id);
 	bool Load(STEPWrapper *sw,SCLP23(Application_instance) *sse);
 	virtual void Print(int level);
 

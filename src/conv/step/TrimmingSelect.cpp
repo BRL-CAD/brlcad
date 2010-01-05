@@ -46,9 +46,9 @@ TrimmingSelect::TrimmingSelect() {
 	cartesian_point = NULL;
 }
 
-TrimmingSelect::TrimmingSelect(STEPWrapper *sw,int STEPid) {
+TrimmingSelect::TrimmingSelect(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 	cartesian_point = NULL;
 }
 
@@ -77,7 +77,7 @@ bool
 TrimmingSelect::Load(STEPWrapper *sw,SCLP23(Select) *sse) {
 	step=sw;
 
-	//cout << sse->UnderlyingTypeName() << endl;
+	//std::cout << sse->UnderlyingTypeName() << std::endl;
 	SdaiTrimming_select *v = (SdaiTrimming_select *)sse;
 
 	if ( v->IsCartesian_point()) {
@@ -94,12 +94,12 @@ TrimmingSelect::Load(STEPWrapper *sw,SCLP23(Select) *sse) {
 
 void
 TrimmingSelect::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << std::endl;
 	if (type == CARTESIAN_POINT) {
-		TAB(level); cout << "Type:" << trimming_select_type_strings[type] << " Value:" << endl;
+		TAB(level); std::cout << "Type:" << trimming_select_type_strings[type] << " Value:" << std::endl;
 		cartesian_point->Print(level+1);
 	} else if (type == PARAMETER_VALUE) {
-		TAB(level); cout << "Type:" << trimming_select_type_strings[type] << " Value:" << parameter_value << endl;
+		TAB(level); std::cout << "Type:" << trimming_select_type_strings[type] << " Value:" << parameter_value << std::endl;
 	}
 }
 STEPEntity *
@@ -111,7 +111,7 @@ TrimmingSelect::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, (SCLP23(Select) *)sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

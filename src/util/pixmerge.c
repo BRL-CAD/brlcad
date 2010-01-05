@@ -69,9 +69,9 @@ Usage: pixmerge [-g -l -e -n] [-w bytes_wide] [-C r/g/b]\n\
 	foreground.pix background.pix > out.pix\n";
 
 int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int c;
+    int c;
 
     while ( (c = bu_getopt( argc, argv, "glenw:C:c:" )) != EOF )  {
 	switch ( c )  {
@@ -99,8 +99,8 @@ get_args(int argc, register char **argv)
 	    case 'C':
 	    case 'c':	/* backword compatability */
 	    {
-		register char *cp = bu_optarg;
-		register unsigned char *conp = pconst;
+		char *cp = bu_optarg;
+		unsigned char *conp = pconst;
 
 		/* premature null => atoi gives zeros */
 		for ( c=0; c < width; c++ )  {
@@ -167,7 +167,7 @@ main(int argc, char **argv)
     if ( wanted & GT )  putc( '>', stderr );
     if ( wanted & NE )  fprintf( stderr, "!=" );
     if ( seen_const )  {
-	register int i;
+	int i;
 
 	putc( ' ', stderr );
 	for ( i = 0; i < width; i++ )  {
@@ -189,7 +189,7 @@ main(int argc, char **argv)
 
     while (1)  {
 	unsigned char	*cb1, *cb2;	/* current input buf ptrs */
-	register unsigned char	*cb3; 	/* current output buf ptr */
+	unsigned char	*cb3; 	/* current output buf ptr */
 	unsigned char	*ebuf;		/* end ptr in b1 */
 	int r1, r2, len;
 
@@ -210,8 +210,8 @@ main(int argc, char **argv)
 	     * Stated condition must hold for all input bytes
 	     * to select the foreground for output
 	     */
-	    register unsigned char	*ap, *bp;
-	    register unsigned char	*ep;		/* end ptr */
+	    unsigned char	*ap, *bp;
+	    unsigned char	*ep;		/* end ptr */
 
 	    ap = cb1;
 	    if ( seen_const )
@@ -237,7 +237,7 @@ main(int argc, char **argv)
 	    }
 	success:
 	    {
-		register int i;
+		int i;
 		ap = cb1;
 		for ( i=0; i<width; i++ )
 		    *cb3++ = *ap++;
@@ -246,7 +246,7 @@ main(int argc, char **argv)
 	    continue;
 	fail:
 	    {
-		register int i;
+		int i;
 		bp = cb2;
 		for ( i=0; i<width; i++ )
 		    *cb3++ = *bp++;

@@ -53,7 +53,8 @@ librender_la_SOURCES = \
 
 librender_la_LIBADD = \
 	libtie.la \
-	${GCV}
+	${GCV} \
+	${GCV_LIBS}
 
 adrt_master_SOURCES = \
 	master/compnet.c \

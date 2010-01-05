@@ -55,7 +55,7 @@ main(int argc, char *argv[])
     int i;
     int nr, ni, num;
     double obuf[2*1024];
-    register double *obufp;
+    double *obufp;
     FILE *rfp, *ifp;
     double real[1024], imag[1024];
 

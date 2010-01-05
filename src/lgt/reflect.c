@@ -195,36 +195,36 @@ static unsigned short *hl_dstmap = NULL;
 
 static bool hi_Obliq(RGBpixel (*pix));
 
-static fastf_t myIpow(register fastf_t d, register int n);
-static fastf_t correct_Lgt(register struct application *ap, register struct partition *pp, register Lgt_Source *lgt_entry);
+static fastf_t myIpow(fastf_t d, int n);
+static fastf_t correct_Lgt(struct application *ap, struct partition *pp, Lgt_Source *lgt_entry);
 
 /* "Hit" application routines to pass to "rt_shootray()". */
-static int f_Model(register struct application *ap, struct partition *pt_headp, struct seg *unused);
-static int f_Probe(register struct application *ap, struct partition *pt_headp, struct seg *unused);
-static int f_Shadow(register struct application *ap, struct partition *pt_headp, struct seg *unused);
-static int f_HL_Hit(register struct application *ap, struct partition *pt_headp, struct seg *unused);
-static int f_Region(register struct application *ap, struct partition *pt_headp, struct seg *unused);
+static int f_Model(struct application *ap, struct partition *pt_headp, struct seg *unused);
+static int f_Probe(struct application *ap, struct partition *pt_headp, struct seg *unused);
+static int f_Shadow(struct application *ap, struct partition *pt_headp, struct seg *unused);
+static int f_HL_Hit(struct application *ap, struct partition *pt_headp, struct seg *unused);
+static int f_Region(struct application *ap, struct partition *pt_headp, struct seg *unused);
 
 /* "Miss" application routines to pass to "rt_shootray()". */
-static int f_Backgr(register struct application *ap);
-static int f_Error(register struct application *ap);
-static int f_Lit(register struct application *ap);
-static int f_HL_Miss(register struct application *ap);
-static int f_R_Miss(register struct application *ap);
+static int f_Backgr(struct application *ap);
+static int f_Error(struct application *ap);
+static int f_Lit(struct application *ap);
+static int f_HL_Miss(struct application *ap);
+static int f_R_Miss(struct application *ap);
 
 /* "Overlap" application routines to pass to "rt_shootray()". */
-static int f_Overlap(register struct application *ap, register struct partition *pp, struct region *reg1, struct region *reg2, struct partition *hp);
+static int f_Overlap(struct application *ap, struct partition *pp, struct region *reg1, struct region *reg2, struct partition *hp);
 static int f_NulOverlap(struct application *ap, struct partition *pp, struct region *reg1, struct region *reg2, struct partition *hp);
 
-static int refract(register fastf_t *v_1, register fastf_t *norml, fastf_t ri_1, fastf_t ri_2, register fastf_t *v_2);
+static int refract(fastf_t *v_1, fastf_t *norml, fastf_t ri_1, fastf_t ri_2, fastf_t *v_2);
 
 static void hl_Postprocess(void);
-static void mirror_Reflect(register struct application *ap, register struct partition *pp, register fastf_t *mirror_coefs, fastf_t *normal);
-static void model_Reflectance(register struct application *ap, struct partition *pp, Mat_Db_Entry *mdb_entry, register Lgt_Source *lgt_entry, fastf_t *view_dir, register fastf_t *norml);
-static void glass_Refract(register struct application *ap, register struct partition *pp, register Mat_Db_Entry *entry, fastf_t *normal);
-static void view_pix(register struct application *ap, RGBpixel (*scanbuf), vect_t (*aliasbuf)), view_bol(register struct application *ap), view_eol(register struct application *ap, RGBpixel (*scanbuf)), view_end(void);
+static void mirror_Reflect(struct application *ap, struct partition *pp, fastf_t *mirror_coefs, fastf_t *normal);
+static void model_Reflectance(struct application *ap, struct partition *pp, Mat_Db_Entry *mdb_entry, Lgt_Source *lgt_entry, fastf_t *view_dir, fastf_t *norml);
+static void glass_Refract(struct application *ap, struct partition *pp, Mat_Db_Entry *entry, fastf_t *normal);
+static void view_pix(struct application *ap, RGBpixel (*scanbuf), vect_t (*aliasbuf)), view_bol(struct application *ap), view_eol(struct application *ap, RGBpixel (*scanbuf)), view_end(void);
 
-void cons_Vector(register fastf_t *vec, fastf_t azim, fastf_t elev);
+void cons_Vector(fastf_t *vec, fastf_t azim, fastf_t elev);
 void render_Model(int frame);
 void render_Scan(int cpu, void *data);
 
@@ -414,7 +414,7 @@ render_Scan(int cpu, void *data)
     fastf_t grid_y_inc[3], grid_x_inc[3];
     RGBpixel scanbuf[MAX_SCANSIZE];	/* private to CPU */
     vect_t aliasbuf[MAX_SCANSIZE];	/* private to CPU */
-    register int com;
+    int com;
 
     data = data; /* quell warning */
 
@@ -530,7 +530,7 @@ render_Scan(int cpu, void *data)
 
 /*ARGSUSED*/
 static int
-f_R_Miss(register struct application *ap)
+f_R_Miss(struct application *ap)
 {
     ap = ap;
     prnt_Scroll( "Missed model.\n" );
@@ -538,13 +538,13 @@ f_R_Miss(register struct application *ap)
 }
 
 static int
-f_Region(register struct application *ap, struct partition *pt_headp, struct seg *unused)
+f_Region(struct application *ap, struct partition *pt_headp, struct seg *unused)
 {
-    register struct partition *pp;
-    register struct region *regp;
-    register struct soltab *stp;
-    register struct xray *rp;
-    register struct hit *ihitp;
+    struct partition *pp;
+    struct region *regp;
+    struct soltab *stp;
+    struct xray *rp;
+    struct hit *ihitp;
     point_t	normal;
 
     unused = unused; /* quell warning */
@@ -598,7 +598,7 @@ f_Region(register struct application *ap, struct partition *pt_headp, struct seg
 }
 
 static int
-f_HL_Miss(register struct application *ap)
+f_HL_Miss(struct application *ap)
 {
     VSETALL( ap->a_color, 0.0 );
     if ( hl_normap != NULL )
@@ -615,11 +615,11 @@ f_HL_Miss(register struct application *ap)
 }
 
 static int
-f_HL_Hit(register struct application *ap, struct partition *pt_headp, struct seg *unused)
+f_HL_Hit(struct application *ap, struct partition *pt_headp, struct seg *unused)
 {
-    register struct partition *pp;
-    register struct soltab *stp;
-    register struct hit *ihitp;
+    struct partition *pp;
+    struct soltab *stp;
+    struct hit *ihitp;
     point_t normal;
 
     unused = unused; /* quell warning */
@@ -669,7 +669,7 @@ static bool
 getMaMID(struct mater_info *map, int *id)
 {
     char *copy;
-    register char *p;
+    char *p;
     int len;
     int i;
     int mid_len;
@@ -737,7 +737,7 @@ getMaMID(struct mater_info *map, int *id)
 
 
 /*
-  int f_Model( register struct application *ap,
+  int f_Model( struct application *ap,
   struct partition *pt_headp, struct seg *unused )
 
   'Hit' application specific routine for 'rt_shootray()' from
@@ -745,13 +745,13 @@ getMaMID(struct mater_info *map, int *id)
 
 */
 static int
-f_Model(register struct application *ap, struct partition *pt_headp, struct seg *unused)
+f_Model(struct application *ap, struct partition *pt_headp, struct seg *unused)
 {
-    register struct partition *pp;
-    register Mat_Db_Entry *entry;
-    register struct soltab *stp;
-    register struct hit *ihitp;
-    register struct xray *rp = &ap->a_ray;
+    struct partition *pp;
+    Mat_Db_Entry *entry;
+    struct soltab *stp;
+    struct hit *ihitp;
+    struct xray *rp = &ap->a_ray;
     int material_id;
     fastf_t rgb_coefs[3];
     vect_t normal;
@@ -775,7 +775,7 @@ f_Model(register struct application *ap, struct partition *pt_headp, struct seg 
 
     /* See if we hit a light source. */
     {
-	register int i;
+	int i;
 	for (	i = 1;
 		i < lgt_db_size && stp != lgts[i].stp;
 		i++
@@ -867,7 +867,7 @@ f_Model(register struct application *ap, struct partition *pt_headp, struct seg 
 	    }
 	if ( octreep != OCTREE_NULL )
 	{
-	    register int oindex;
+	    int oindex;
 	    oindex = octreep->o_temp - ir_min;
 	    oindex = oindex < 0 ? 0 : oindex;
 	    COPYRGB( entry->df_rgb, ir_table[oindex] );
@@ -907,7 +907,7 @@ f_Model(register struct application *ap, struct partition *pt_headp, struct seg 
     /* Compute contribution from this surface. */
     {
 	fastf_t	f;
-	register int i;
+	int i;
 	auto fastf_t view_dir[3];
 
 	/* Calculate view direction. */
@@ -988,15 +988,15 @@ f_Model(register struct application *ap, struct partition *pt_headp, struct seg 
 }
 
 /*
-  fastf_t correct_Lgt( register struct application *ap,
-  register struct partition *pp,
-  register Lgt_Source *lgt_entry )
+  fastf_t correct_Lgt( struct application *ap,
+  struct partition *pp,
+  Lgt_Source *lgt_entry )
 
   Shoot a ray to the light source to determine if surface
   is shadowed, return corrected light source intensity.
 */
 static fastf_t
-correct_Lgt(register struct application *ap, register struct partition *pp, register Lgt_Source *lgt_entry)
+correct_Lgt(struct application *ap, struct partition *pp, Lgt_Source *lgt_entry)
 {
     fastf_t	energy_attenuation = 1.0;
     fastf_t	lgt_dir[3];
@@ -1087,12 +1087,12 @@ correct_Lgt(register struct application *ap, register struct partition *pp, regi
 }
 
 /*
-  void mirror_Reflect( register struct application *ap,
-  register struct partition *pp,
-  register fastf_t *mirror_coefs )
+  void mirror_Reflect( struct application *ap,
+  struct partition *pp,
+  fastf_t *mirror_coefs )
 */
 static void
-mirror_Reflect(register struct application *ap, register struct partition *pp, register fastf_t *mirror_coefs, fastf_t *normal)
+mirror_Reflect(struct application *ap, struct partition *pp, fastf_t *mirror_coefs, fastf_t *normal)
 {
     fastf_t r_dir[3];
     struct application ap_hit;
@@ -1126,12 +1126,12 @@ mirror_Reflect(register struct application *ap, register struct partition *pp, r
 }
 
 /*
-  void glass_Refract( register struct application	*ap,
-  register struct partition *pp,
-  register Mat_Db_Entry *entry )
+  void glass_Refract( struct application	*ap,
+  struct partition *pp,
+  Mat_Db_Entry *entry )
 */
 static void
-glass_Refract(register struct application *ap, register struct partition *pp, register Mat_Db_Entry *entry, fastf_t *normal)
+glass_Refract(struct application *ap, struct partition *pp, Mat_Db_Entry *entry, fastf_t *normal)
 {
     struct application ap_hit;	/* To shoot ray beyond. */
     struct application ap_ref;	/* For getting thru. */
@@ -1313,15 +1313,15 @@ glass_Refract(register struct application *ap, register struct partition *pp, re
 }
 
 /*
-  int f_Backgr( register struct application *ap )
+  int f_Backgr( struct application *ap )
 
   'Miss' application specific routine for 'rt_shootray()' from
   observer or a bounced ray.
 */
 static int
-f_Backgr(register struct application *ap)
+f_Backgr(struct application *ap)
 {
-    register int i;
+    int i;
     /* Base-line color is same as background. */
     VMOVE( ap->a_color, bg_coefs );
 
@@ -1343,7 +1343,7 @@ f_Backgr(register struct application *ap)
 	for ( i = 1; i < lgt_db_size; i++ )
 	{
 	    auto fastf_t real_l_1[3];
-	    register fastf_t specular;
+	    fastf_t specular;
 	    fastf_t cos_s;
 	    if ( lgts[i].energy <= 0.0 )
 		continue;
@@ -1373,11 +1373,11 @@ f_Backgr(register struct application *ap)
 }
 
 /*
-  int f_Error( register struct application *ap )
+  int f_Error( struct application *ap )
 */
 /*ARGSUSED*/
 static int
-f_Error(register struct application *ap)
+f_Error(struct application *ap)
 {
     if ( RT_G_DEBUG & DEBUG_RGB )
 	bu_log( "f_Error() ap=%p\n", ap );
@@ -1385,13 +1385,13 @@ f_Error(register struct application *ap)
 }
 
 /*
-  int f_Lit( register struct application *ap )
+  int f_Lit( struct application *ap )
 
   'Miss' application specific routine for 'rt_shootray()' to
   light source for shadowing.  Return full intensity in "ap->a_diverge".
 */
 static int
-f_Lit(register struct application *ap)
+f_Lit(struct application *ap)
 {
     if ( RT_G_DEBUG & DEBUG_SHADOW )
 	bu_log( "\t\tSurface is illuminated.\n" );
@@ -1401,15 +1401,15 @@ f_Lit(register struct application *ap)
 }
 
 /*
-  int f_Probe( register struct application *ap,
+  int f_Probe( struct application *ap,
   struct partition *pt_headp, struct seg *unused )
 */
 static int
-f_Probe(register struct application *ap, struct partition *pt_headp, struct seg *unused)
+f_Probe(struct application *ap, struct partition *pt_headp, struct seg *unused)
 {
-    register struct partition *pp;
-    register struct hit *hitp;
-    register struct soltab *stp;
+    struct partition *pp;
+    struct hit *hitp;
+    struct soltab *stp;
 
     unused = unused; /* quell warning */
 
@@ -1424,9 +1424,9 @@ f_Probe(register struct application *ap, struct partition *pt_headp, struct seg 
 }
 
 /*
-  int refract( register fastf_t *v_1, register fastf_t *norml,
+  int refract( fastf_t *v_1, fastf_t *norml,
   fastf_t ri_1, fastf_t ri_2,
-  register fastf_t *v_2 )
+  fastf_t *v_2 )
 
   Compute the refracted ray 'v_2' from the incident ray 'v_1' with
   the refractive indices 'ri_2' and 'ri_1' respectively.
@@ -1445,7 +1445,7 @@ f_Probe(register struct application *ap, struct partition *pt_headp, struct seg 
   ri_1/ri_2 * sin( theta_1 ) equals 1.
 */
 static int
-refract(register fastf_t *v_1, register fastf_t *norml, fastf_t ri_1, fastf_t ri_2, register fastf_t *v_2)
+refract(fastf_t *v_1, fastf_t *norml, fastf_t ri_1, fastf_t ri_2, fastf_t *v_2)
 {
     fastf_t	w[3], u[3];	/* Intermediate vectors. */
     fastf_t	beta;		/* Intermediate scalar. */
@@ -1503,7 +1503,7 @@ refract(register fastf_t *v_1, register fastf_t *norml, fastf_t ri_1, fastf_t ri
 }
 
 /*
-  int f_Shadow( register struct application *ap,
+  int f_Shadow( struct application *ap,
   struct partition *pt_headp, struct seg * unused )
 
   'Hit' application specific routine for 'rt_shootray()' to
@@ -1511,18 +1511,18 @@ refract(register fastf_t *v_1, register fastf_t *norml, fastf_t ri_1, fastf_t ri
   "ap->a_diverge".
 */
 static int
-f_Shadow(register struct application *ap, struct partition *pt_headp, struct seg * unused)
+f_Shadow(struct application *ap, struct partition *pt_headp, struct seg * unused)
 {
-    register struct partition *pp;
-    register Mat_Db_Entry *entry;
+    struct partition *pp;
+    Mat_Db_Entry *entry;
 
     unused = unused; /* quell warning */
 
     Get_Partition( ap, pp, pt_headp, "f_Shadow" );
     if ( RT_G_DEBUG & DEBUG_SHADOW )
     {
-	register struct hit *ihitp, *ohitp;
-	register struct soltab *istp;
+	struct hit *ihitp, *ohitp;
+	struct soltab *istp;
 	point_t inormal;
 	bu_log( "Shadowed by :\n" );
 	istp = pp->pt_inseg->seg_stp;
@@ -1584,10 +1584,10 @@ f_Shadow(register struct application *ap, struct partition *pt_headp, struct seg
 
 /*
 
-void model_Reflectance( register struct application *ap,
+void model_Reflectance( struct application *ap,
 struct partition *pp,
 Mat_Db_Entry *mdb_entry,
-register Lgt_Source *lgt_entry,
+Lgt_Source *lgt_entry,
 fastf_t *view_dir )
 
 This is the heart of the lighting model which is based on a model
@@ -1618,10 +1618,10 @@ n	'Shininess' of the material,  range 1 to 10.
 The RGB result is returned implicitly in "ap->a_color".
 */
 static void
-model_Reflectance(register struct application *ap, struct partition *pp, Mat_Db_Entry *mdb_entry, register Lgt_Source *lgt_entry, fastf_t *view_dir, register fastf_t *norml)
+model_Reflectance(struct application *ap, struct partition *pp, Mat_Db_Entry *mdb_entry, Lgt_Source *lgt_entry, fastf_t *view_dir, fastf_t *norml)
 {
     /* Compute attenuation of light source intensity. */
-    register fastf_t ff;		/* temporary */
+    fastf_t ff;		/* temporary */
     fastf_t lgt_energy;
     fastf_t cos_il; 	/* cosine incident angle */
     auto fastf_t lgt_dir[3];
@@ -1682,7 +1682,7 @@ model_Reflectance(register struct application *ap, struct partition *pp, Mat_Db_
 	*/
     {
 	auto fastf_t lgt_reflect[3], tmp_dir[3];
-	register fastf_t specular;
+	fastf_t specular;
 	fastf_t cos_s;
 	ff = 2.0 * cos_il;
 	VSCALE( tmp_dir, norml, ff );
@@ -1726,13 +1726,13 @@ model_Reflectance(register struct application *ap, struct partition *pp, Mat_Db_
 }
 
 /*
-  void cons_Vector( register fastf_t *vec, fastf_t azim, fastf_t elev )
+  void cons_Vector( fastf_t *vec, fastf_t azim, fastf_t elev )
 
   Construct a direction vector out of azimuth and elevation angles
   in radians, allocating storage for it and returning its address.
 */
 void
-cons_Vector(register fastf_t *vec, fastf_t azim, fastf_t elev)
+cons_Vector(fastf_t *vec, fastf_t azim, fastf_t elev)
 {
     /* Store cosine of the elevation to save calculating twice. */
     fastf_t	cosE;
@@ -1759,15 +1759,15 @@ abort_RT(int sig)
 }
 
 /*
-  fastf_t myIpow( register fastf_t d, register int n )
+  fastf_t myIpow( fastf_t d, int n )
 
   Integer exponent pow() function.
   Returns 'd' to the 'n'th power.
 */
 static fastf_t
-myIpow(register fastf_t d, register int n)
+myIpow(fastf_t d, int n)
 {
-    register fastf_t result = 1.0;
+    fastf_t result = 1.0;
     if ( NEAR_ZERO(d, SMALL_FASTF) )
 	return	0.0;
     while ( n-- > 0 )
@@ -1775,7 +1775,7 @@ myIpow(register fastf_t d, register int n)
     return	result;
 }
 int
-hl_Dst_Diff(register int dx0, register int dy0, register int dx1, register int dy1, register unsigned int maxdist)
+hl_Dst_Diff(int dx0, int dy0, int dx1, int dy1, unsigned int maxdist)
 {
     short distance;
     distance = hl_dstmap[dy0*a_gridsz+dx0] - hl_dstmap[dy1*a_gridsz+dx1];
@@ -1783,12 +1783,12 @@ hl_Dst_Diff(register int dx0, register int dy0, register int dx1, register int d
     return (unsigned short)(distance) > (unsigned short)maxdist;
 }
 int
-hl_Reg_Diff(register int dx0, register int dy0, register int dx1, register int dy1)
+hl_Reg_Diff(int dx0, int dy0, int dx1, int dy1)
 {
     return	hl_regmap[dy0*a_gridsz+dx0] != hl_regmap[dy1*a_gridsz+dx1];
 }
 int
-hl_Norm_Diff(register RGBpixel (*pix1), register RGBpixel (*pix2))
+hl_Norm_Diff(RGBpixel (*pix1), RGBpixel (*pix2))
 {
     fastf_t	dir1[3], dir2[3];
     static fastf_t conv = 2.0/255.0;
@@ -1819,7 +1819,7 @@ hl_Norm_Diff(register RGBpixel (*pix1), register RGBpixel (*pix2))
 
 
 void
-prnt_Pixel(register RGBpixel (*pixelp), int x, int y)
+prnt_Pixel(RGBpixel (*pixelp), int x, int y)
 {
     bu_log( "Pixel:<%3d,%3d,%3d>(%4d,%4d)\n",
 	    (*pixelp)[RED],
@@ -1849,8 +1849,8 @@ hi_Obliq(RGBpixel (*pix))
 static void
 hl_Postprocess(void)
 {
-    register int yc; /* frame buffer space indices */
-    register int xi, yi; /* bitmap/array space indices */
+    int yc; /* frame buffer space indices */
+    int xi, yi; /* bitmap/array space indices */
     unsigned int maxdist = (cell_sz*ARCTAN_87)+2;
     prnt_Event( "Making hidden-line drawing..." );
     /* Build bitmap from normal, region and distance maps. */
@@ -1896,9 +1896,9 @@ hl_Postprocess(void)
     {
 	static RGBpixel black_pixel = { 0, 0, 0 };
 	static RGBpixel white_pixel = { 255, 255, 255 };
-	register RGBpixel *bgp = (RGBpixel *)
+	RGBpixel *bgp = (RGBpixel *)
 	    (reverse_video ? black_pixel : white_pixel);
-	register RGBpixel *fgp = (RGBpixel *)
+	RGBpixel *fgp = (RGBpixel *)
 	    (reverse_video ? white_pixel : black_pixel);
 
 	(void) fb_seek( fbiop, x_fb_origin, yc );
@@ -1906,14 +1906,14 @@ hl_Postprocess(void)
 		xi < grid_sz && ! user_interrupt;
 		xi++ )
 	{
-	    register bool on = false;
+	    bool on = false;
 	    /* Output pixel based on bitmap value.  If bit is
 	       ON, pixel should be ON. */
 	    if ( anti_aliasing )
 	    {
 		/* NOTE: the 3030 compiler barfs on
 		   HL_TSTBIT if we use registers here. */
-		register int rxa, rya, rxn, ryn;
+		int rxa, rya, rxn, ryn;
 		/* Anti-aliasing, map square matrix to pixel.
 		   If one bit is ON, turn pixel ON. */
 		for (	rya = 0, ryn = yi*aperture_sz;
@@ -1941,11 +1941,11 @@ hl_Postprocess(void)
 }
 
 /*
-  void view_pix( register struct application *ap,
+  void view_pix( struct application *ap,
   RGBpixel scanbuf[], vect_t aliasbuf[] )
 */
 static void
-view_pix(register struct application *ap, RGBpixel (*scanbuf), vect_t (*aliasbuf))
+view_pix(struct application *ap, RGBpixel (*scanbuf), vect_t (*aliasbuf))
 {
     RGBpixel pixel;
     int x;
@@ -1966,7 +1966,7 @@ view_pix(register struct application *ap, RGBpixel (*scanbuf), vect_t (*aliasbuf
     {
 	int xmod = ap->a_x % aperture_sz;
 	int ymod = ap->a_y % aperture_sz;
-	register vectp_t aliasp;
+	vectp_t aliasp;
 	/* translate to image coords */
 	x = ap->a_x / aperture_sz;
 	y = ap->a_y / aperture_sz;
@@ -2053,10 +2053,10 @@ view_pix(register struct application *ap, RGBpixel (*scanbuf), vect_t (*aliasbuf
 }
 
 /*
-  void view_bol( register struct application *ap )
+  void view_bol( struct application *ap )
 */
 static void
-view_bol(register struct application *ap)
+view_bol(struct application *ap)
 {
     int x = grid_x_org + x_fb_origin;
     int y = ap->a_y/aperture_sz + y_fb_origin;
@@ -2078,10 +2078,10 @@ view_bol(register struct application *ap)
 }
 
 /*
-  void view_eol( register struct application *ap, RGBpixel scanbuf[] )
+  void view_eol( struct application *ap, RGBpixel scanbuf[] )
 */
 static void
-view_eol(register struct application *ap, RGBpixel (*scanbuf))
+view_eol(struct application *ap, RGBpixel (*scanbuf))
 {
     int x = grid_x_org + x_fb_origin;
     int y = ap->a_y/aperture_sz + y_fb_origin;
@@ -2216,7 +2216,7 @@ gauss_Wgt_Func(fastf_t R)
 }
 
 static int
-f_Overlap(register struct application *ap, register struct partition *pp, struct region *reg1, struct region *reg2, struct partition *hp)
+f_Overlap(struct application *ap, struct partition *pp, struct region *reg1, struct region *reg2, struct partition *hp)
 {
     point_t	pt;
     fastf_t	depth = pp->pt_outhit->hit_dist-pp->pt_inhit->hit_dist;

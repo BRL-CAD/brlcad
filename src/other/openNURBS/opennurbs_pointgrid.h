@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -23,16 +22,16 @@ public:
   ON_PointGrid();
   ON_PointGrid(const ON_PointGrid&);
   ON_PointGrid(
-	  int,  // point count0 (>=1)
-	  int   // point count1 (>=1)
-	  );
+          int,  // point count0 (>=1)
+          int   // point count1 (>=1)
+          );
 
   void Initialize(void);  // zeros all fields
 
-  BOOL Create( 
-	  int,  // point count0 (>=1)
-	  int   // point count1 (>=1)
-	  );
+  ON_BOOL32 Create( 
+          int,  // point count0 (>=1)
+          int   // point count1 (>=1)
+          );
 
   void Destroy();
 
@@ -54,29 +53,29 @@ public:
     initialized.
   Parameters:
     text_log - [in] if the object is not valid and text_log
-	is not NULL, then a brief englis description of the
-	reason the object is not valid is appened to the log.
-	The information appended to text_log is suitable for 
-	low-level debugging purposes by programmers and is 
-	not intended to be useful as a high level user 
-	interface tool.
+        is not NULL, then a brief englis description of the
+        reason the object is not valid is appened to the log.
+        The information appended to text_log is suitable for 
+        low-level debugging purposes by programmers and is 
+        not intended to be useful as a high level user 
+        interface tool.
   Returns:
     @untitled table
-    TRUE     object is valid
-    FALSE    object is invalid, uninitialized, etc.
+    true     object is valid
+    false    object is invalid, uninitialized, etc.
   Remarks:
     Overrides virtual ON_Object::IsValid
   */
-  BOOL IsValid( ON_TextLog* text_log = NULL ) const;
+  ON_BOOL32 IsValid( ON_TextLog* text_log = NULL ) const;
 
   void Dump( ON_TextLog& ) const; // for debugging
 
-  BOOL Write(
-	 ON_BinaryArchive&  // open binary file
+  ON_BOOL32 Write(
+         ON_BinaryArchive&  // open binary file
        ) const;
 
-  BOOL Read(
-	 ON_BinaryArchive&  // open binary file
+  ON_BOOL32 Read(
+         ON_BinaryArchive&  // open binary file
        );
 
   ON::object_type ObjectType() const;
@@ -86,11 +85,11 @@ public:
 
   int Dimension() const;
 
-  BOOL GetBBox( // returns TRUE if successful
-	 double*,    // minimum
-	 double*,    // maximum
-	 BOOL = FALSE  // TRUE means grow box
-	 ) const;
+  ON_BOOL32 GetBBox( // returns true if successful
+         double*,    // minimum
+         double*,    // maximum
+         ON_BOOL32 = false  // true means grow box
+         ) const;
 
   /*
 	Description:
@@ -114,9 +113,9 @@ public:
 			const ON_Xform* xform = 0
       ) const;
 
-  BOOL Transform( 
-	 const ON_Xform&
-	 );
+  ON_BOOL32 Transform( 
+         const ON_Xform&
+         );
 
   // virtual ON_Geometry::IsDeformable() override
   bool IsDeformable() const;
@@ -124,56 +123,56 @@ public:
   // virtual ON_Geometry::MakeDeformable() override
   bool MakeDeformable();
 
-  BOOL SwapCoordinates(
-	int, int        // indices of coords to swap
-	);
+  ON_BOOL32 SwapCoordinates(
+        int, int        // indices of coords to swap
+        );
 
   /////////////////////////////////////////////////////////////////
   // Interface
 
-  BOOL IsClosed( 
-	int // dir
-	) const;
+  ON_BOOL32 IsClosed( 
+        int // dir
+        ) const;
 
   int PointCount(   // number of points in grid direction
-	int         // dir 0 = "s", 1 = "t"
-	) const;
+        int         // dir 0 = "s", 1 = "t"
+        ) const;
 
   int PointCount(   // total number of points in grid
-	void
-	) const;
+        void
+        ) const;
 
   ON_3dPoint& Point(
-	int, int // point index ( 0 <= i <= PointCount(0), 0 <= j <= PointCount(1)
-	);
+        int, int // point index ( 0 <= i <= PointCount(0), 0 <= j <= PointCount(1)
+        );
 
   ON_3dPoint Point(
-	int, int // point index ( 0 <= i <= PointCount(0), 0 <= j <= PointCount(1)
-	) const;
+        int, int // point index ( 0 <= i <= PointCount(0), 0 <= j <= PointCount(1)
+        ) const;
 
   double* PointArray();
 
   const double* PointArray() const;
 
   int PointArrayStride(  // point stride in grid direction
-	int         // dir 0 = "s", 1 = "t"
-	) const;
+        int         // dir 0 = "s", 1 = "t"
+        ) const;
 
-  BOOL SetPoint(      // set a single point
-	int, int, // point index ( 0 <= i <= PointCount(0), 0 <= j <= PointCount(1)
-	const ON_3dPoint& // value of point
-	);
+  ON_BOOL32 SetPoint(      // set a single point
+        int, int, // point index ( 0 <= i <= PointCount(0), 0 <= j <= PointCount(1)
+        const ON_3dPoint& // value of point
+        );
 
-  BOOL GetPoint(              // get a single control vertex
-	int, int,   // CV index ( 0 <= i <= CVCount(0), 0 <= j <= CVCount(1)
-	ON_3dPoint&      // gets euclidean cv when NURBS is rational
-	) const;
+  ON_BOOL32 GetPoint(              // get a single control vertex
+        int, int,   // CV index ( 0 <= i <= CVCount(0), 0 <= j <= CVCount(1)
+        ON_3dPoint&      // gets euclidean cv when NURBS is rational
+        ) const;
 
-  BOOL Reverse(  // reverse grid order
+  ON_BOOL32 Reverse(  // reverse grid order
     int // dir  0 = "s", 1 = "t"
     );
 
-  BOOL Transpose(); // transpose grid points
+  ON_BOOL32 Transpose(); // transpose grid points
 
   /////////////////////////////////////////////////////////////////
   // Implementation

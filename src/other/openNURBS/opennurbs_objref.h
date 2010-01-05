@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -91,7 +90,7 @@ public:
   double m_t[4];
   ON_Interval m_s[3]; // curve/surface/cage domains
   ON_COMPONENT_INDEX m_t_ci; // Not necesarily the same as m_component_index
-			     // See comment above for details.
+                             // See comment above for details.
 };
 
 class ON_CLASS ON_ObjRef_IRefID
@@ -213,6 +212,15 @@ public:
   ON_COMPONENT_INDEX m_component_index;
   int m_geometry_type;
 
+  // If m_runtime_sn > 0, then it is the value of a Rhino object's
+  // CRhinoObject::m_runtime_object_serial_number field.
+  // The serial number is used instead of the pointer to
+  // prevent crashes in cases when the CRhinoObject is deleted
+  // but an ON_ObjRef continues to reference the Rhino object.
+  // The value of m_runtime_sn is not saved in archives because
+  // it generally changes if you save and reload an archive.
+  unsigned int m_runtime_sn;
+
   // If m_point != ON_UNSET_POINT, then the ObjRef resolves to 
   // a point location.  The point location is saved here so the
   // information can persist if the object itself vanishes.
@@ -250,15 +258,15 @@ public:
     m__proxy1, m__proxy2, and m__proxy_ref_count fields.
   */
   void SetProxy( 
-	  ON_Object* proxy1, 
-	  ON_Object* proxy2, 
-	  bool bCountReferences 
-	  );
+          ON_Object* proxy1, 
+          ON_Object* proxy2, 
+          bool bCountReferences 
+          );
 
   bool SetParentIRef( const ON_InstanceRef& iref,
-		      ON_UUID iref_id,
-		      int idef_geometry_index
-		      );
+                      ON_UUID iref_id,
+                      int idef_geometry_index
+                      );
 
   /*
   Returns:
@@ -266,6 +274,14 @@ public:
     >0:  Number of references.
   */
   int ProxyReferenceCount() const;
+
+  /*
+  Parameters:
+    proxy_object_index - [in] 1 or 2.
+  Returns:
+    A pointer to the requested proxy object.
+  */
+  const ON_Object* ProxyObject(int proxy_object_index) const;
 
   /*
   Description:

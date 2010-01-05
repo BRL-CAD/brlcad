@@ -64,9 +64,9 @@ double out_gamma = -1.0;
 
 
 int
-get_args(int argc, register char **argv, long *width, long *height)
+get_args(int argc, char **argv, long *width, long *height)
 {
-    register int c;
+    int c;
 
     while ((c = bu_getopt(argc, argv, "ag:s:w:n:o:h?")) != EOF) {
 	switch (c) {

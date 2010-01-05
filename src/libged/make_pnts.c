@@ -417,7 +417,7 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
         bu_vls_printf(&gedp->ged_result_str, "Make '%s' failed. ", argv[1]);
         bu_vls_printf(&gedp->ged_result_str, "Could not open file '%s'.\n", argv[2]);
         bu_vls_free(&format_string);
-        rt_db_free_internal(&internal, &rt_uniresource);
+        rt_db_free_internal(&internal);
         return GED_ERROR;
     }
 
@@ -467,7 +467,7 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
                         bu_vls_printf(&gedp->ged_result_str, "Make '%s' failed. ", argv[1]);
                         bu_vls_printf(&gedp->ged_result_str, "Unable to read file at byte '%lu'.\n", num_characters_read_from_file);
 			bu_vls_free(&format_string);
-                        rt_db_free_internal(&internal, &rt_uniresource);
+                        rt_db_free_internal(&internal);
                         return GED_ERROR;
                     } else {
                         found_eof = 1;
@@ -481,7 +481,7 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
                         bu_vls_printf(&gedp->ged_result_str, "Make '%s' failed. ", argv[1]);
                         bu_vls_printf(&gedp->ged_result_str, "No data in file '%s'.\n", argv[2]);
 			bu_vls_free(&format_string);
-                        rt_db_free_internal(&internal, &rt_uniresource);
+                        rt_db_free_internal(&internal);
                         return GED_ERROR;
                     }
                 } else {
@@ -500,7 +500,7 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
                         report_import_error_location(num_doubles_read, num_doubles_per_point, start_offset_of_current_double,
                                                      format, &gedp->ged_result_str);
 			bu_vls_free(&format_string);
-                        rt_db_free_internal(&internal, &rt_uniresource);
+                        rt_db_free_internal(&internal);
                         return GED_ERROR;
                     }
                     temp_string[temp_string_index] = (char)buf;
@@ -514,7 +514,7 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
                         report_import_error_location(num_doubles_read, num_doubles_per_point, start_offset_of_current_double,
                                                      format, &gedp->ged_result_str);
 			bu_vls_free(&format_string);
-                        rt_db_free_internal(&internal, &rt_uniresource);
+                        rt_db_free_internal(&internal);
                         return GED_ERROR;
                     }
                     temp_string[temp_string_index] = '\0';
@@ -528,7 +528,7 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
                             report_import_error_location(num_doubles_read, num_doubles_per_point, start_offset_of_current_double,
                                                          format, &gedp->ged_result_str);
 			    bu_vls_free(&format_string);
-                            rt_db_free_internal(&internal, &rt_uniresource);
+                            rt_db_free_internal(&internal);
                             return GED_ERROR;
                         }
                         num_doubles_read++;
@@ -647,7 +647,7 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
         bu_vls_printf(&gedp->ged_result_str, "defined by format string '%V'. The number of values read must be an even ", format_string);
         bu_vls_printf(&gedp->ged_result_str, "multiple of %d but read %lu values.\n", num_doubles_per_point, num_doubles_read);
         bu_vls_free(&format_string);
-        rt_db_free_internal(&internal, &rt_uniresource);
+        rt_db_free_internal(&internal);
         return GED_ERROR;
     }
 
@@ -656,7 +656,7 @@ ged_make_pnts(struct ged *gedp, int argc, const char *argv[])
         bu_vls_printf(&gedp->ged_result_str, "defined by format string '%V'. The number of values read must be an even ", format_string);
         bu_vls_printf(&gedp->ged_result_str, "multiple of %d but read %lu values.\n", num_doubles_per_point, num_doubles_read);
         bu_vls_free(&format_string);
-        rt_db_free_internal(&internal, &rt_uniresource);
+        rt_db_free_internal(&internal);
         return GED_ERROR;
     }
 

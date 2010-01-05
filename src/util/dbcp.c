@@ -67,9 +67,9 @@ Usage:  dbcp [-v] blocksize < input > output\n\
 int
 main(int argc, char **argv)
 {
-    register char	*buffer;
-    register unsigned int	size;
-    register unsigned int	nread;
+    char	*buffer;
+    unsigned int	size;
+    unsigned int	nread;
     int	rfd;		/* pipe to read message from */
     int	wfd;		/* pipe to write message to */
     int	exitval=0;

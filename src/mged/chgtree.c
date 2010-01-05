@@ -57,8 +57,8 @@
 int
 f_copy_inv(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    register struct directory *proto;
-    register struct directory *dp;
+    struct directory *proto;
+    struct directory *dp;
     struct rt_db_internal internal;
     struct rt_tgc_internal *tgc_ip;
     int id;
@@ -91,7 +91,7 @@ f_copy_inv(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     if (id != ID_TGC) {
 	Tcl_AppendResult(interp, "f_copy_inv: ", argv[1],
 			 " is not a cylinder\n", (char *)NULL);
-	rt_db_free_internal(&internal, &rt_uniresource);
+	rt_db_free_internal(&internal);
 	return TCL_ERROR;
     }
     tgc_ip = (struct rt_tgc_internal *)internal.idb_ptr;
@@ -140,11 +140,11 @@ f_copy_inv(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  * F I N D _ S O L I D _ W I T H _ P A T H
  */
 struct solid *
-find_solid_with_path(register struct db_full_path *pathp)
+find_solid_with_path(struct db_full_path *pathp)
 {
-    register struct ged_display_list *gdlp;
-    register struct ged_display_list *next_gdlp;
-    register struct solid *sp;
+    struct ged_display_list *gdlp;
+    struct ged_display_list *next_gdlp;
+    struct solid *sp;
     int count = 0;
     struct solid *ret = (struct solid *)NULL;
 
@@ -194,8 +194,8 @@ find_solid_with_path(register struct db_full_path *pathp)
 int
 cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    register struct ged_display_list *gdlp;
-    register struct ged_display_list *next_gdlp;
+    struct ged_display_list *gdlp;
+    struct ged_display_list *next_gdlp;
     struct db_full_path lhs;
     struct db_full_path rhs;
     struct db_full_path both;

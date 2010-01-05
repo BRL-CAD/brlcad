@@ -438,11 +438,11 @@ nmg_snurb_is_planar(const struct face_g_snurb *srf, const struct bn_tol *tol)
 	 * component.
 	 */
 	for (i=1; i<srf->s_size[0]*srf->s_size[1]; i++) {
-	    if (srf->ctl_points[i*coords+X] != srf->ctl_points[X])
+	    if (!NEAR_ZERO(srf->ctl_points[i*coords+X] - srf->ctl_points[X], SMALL_FASTF))
 		x_same = 0;
-	    if (srf->ctl_points[i*coords+Y] != srf->ctl_points[Y])
+	    if (!NEAR_ZERO(srf->ctl_points[i*coords+Y] - srf->ctl_points[Y], SMALL_FASTF))
 		y_same = 0;
-	    if (srf->ctl_points[i*coords+Z] != srf->ctl_points[Z])
+	    if (!NEAR_ZERO(srf->ctl_points[i*coords+Z] - srf->ctl_points[Z], SMALL_FASTF))
 		z_same = 0;
 
 	    if (!x_same && !y_same && !z_same)
@@ -632,7 +632,7 @@ nmg_eval_trim_to_tol(const struct edge_g_cnurb *cnrb, const struct face_g_snurb 
 
 
 void
-nmg_split_linear_trim(const struct face_g_snurb *snrb, const fastf_t *uvw1, const fastf_t *uvw, const fastf_t *uvw2, struct pt_list *pt0, struct pt_list *pt1, const struct bn_tol *tol)
+nmg_split_linear_trim(const struct face_g_snurb *snrb, const fastf_t *uvw1, const fastf_t *uvw2, struct pt_list *pt0, struct pt_list *pt1, const struct bn_tol *tol)
 {
     struct pt_list *pt_new;
     fastf_t t_sub;
@@ -654,14 +654,14 @@ nmg_split_linear_trim(const struct face_g_snurb *snrb, const fastf_t *uvw1, cons
     if (MAGSQ(seg) > tol->dist_sq) {
 	t_sub = (pt0->t + pt_new->t)/2.0;
 	VBLEND2(uvw_sub, 1.0 - t_sub, uvw1, t_sub, uvw2);
-	nmg_split_linear_trim(snrb, uvw1, uvw_sub, uvw2, pt0, pt_new, tol);
+	nmg_split_linear_trim(snrb, uvw1, uvw2, pt0, pt_new, tol);
     }
 
     VSUB2(seg, pt_new->xyz, pt1->xyz);
     if (MAGSQ(seg) > tol->dist_sq) {
 	t_sub = (pt_new->t + pt1->t)/2.0;
 	VBLEND2(uvw_sub, 1.0 - t_sub, uvw1, t_sub, uvw2);
-	nmg_split_linear_trim(snrb, uvw1, uvw_sub, uvw2, pt0, pt_new, tol);
+	nmg_split_linear_trim(snrb, uvw1, uvw2, pt0, pt_new, tol);
     }
 }
 
@@ -696,7 +696,7 @@ nmg_eval_linear_trim_to_tol(const struct edge_g_cnurb *cnrb, const struct face_g
 
 
     VBLEND2(uvw, 0.5, uvw1, 0.5, uvw2)
-	nmg_split_linear_trim(snrb, uvw1, uvw, uvw2, pt0, pt1, tol);
+	nmg_split_linear_trim(snrb, uvw1, uvw2, pt0, pt1, tol);
 
     if (rt_g.NMG_debug & DEBUG_MESH)
 	bu_log("nmg_eval_linear_trim_to_tol(cnrb=x%x, snrb=x%x) END\n",
@@ -1879,7 +1879,7 @@ nmg_insure_radial_list_is_increasing(struct bu_list *hd, fastf_t amin, fastf_t a
 	}
 
 	/* angle decreases, is it going from max to min?? */
-	if (rad->ang == amin && cur_value == amax) {
+	if (NEAR_ZERO(rad->ang - amin, SMALL_FASTF) && NEAR_ZERO(cur_value - amax, SMALL_FASTF)) {
 	    /* O.K., just went from max to min */
 	    cur_value = rad->ang;
 	    continue;
@@ -2792,7 +2792,7 @@ nmg_do_radial_flips(struct bu_list *hd)
 	}
 
 	end_same = BU_LIST_PNEXT_CIRC(nmg_radial, &start_same->l);
-	while ((end_same->ang == start_same->ang && end_same != start_same)
+	while ((NEAR_ZERO(end_same->ang - start_same->ang, SMALL_FASTF) && !NEAR_ZERO(end_same - start_same, SMALL_FASTF))
 	       || !end_same->fu)
 	    end_same = BU_LIST_PNEXT_CIRC(nmg_radial, &end_same->l);
 	end_same = BU_LIST_PPREV_CIRC(nmg_radial, &end_same->l);
@@ -3200,76 +3200,6 @@ nmg_s_radial_harmonize(struct shell *s, const struct bn_tol *tol)
 
 
 /**
- * N M G _ E U _ R A D I A L _ C H E C K
- *
- * Where the radial edgeuse parity has become disrupted, note it.
- *
- * Returns -
- * 0 OK
- * !0 Radial parity problem detected
- */
-int
-nmg_eu_radial_check(const struct edgeuse *eu, const struct shell *s, const struct bn_tol *tol)
-{
-#if 1
-    return(0);
-#else
-    struct bu_list list;
-    vect_t xvec, yvec, zvec;
-    struct nmg_radial *rad;
-    int nflip;
-
-    NMG_CK_EDGEUSE(eu);
-    BN_CK_TOL(tol);
-
-    if (rt_g.NMG_debug & DEBUG_BASIC) {
-	bu_log("nmg_eu_radial_check(eu=x%x, s=x%x)\n", eu, s);
-    }
-
-    fu = nmg_find_fu_of_eu(eu);
-    if (fu && fu->orientation != OT_SAME) eu = eu->eumate_p;
-    nmg_eu_2vecs_perp(xvec, yvec, zvec, eu, tol);
-
-    BU_LIST_INIT(&list);
-
-    /* In bad cases, this routine may bu_bomb() */
-    nmg_radial_build_list(&list, NULL, 1, eu, xvec, yvec, zvec, tol);
-
-    nmg_radial_mark_cracks(&list, eu->e_p, NULL, tol);
-
-    nflip = nmg_radial_mark_flips(&list, s, tol);
-    if (nflip) {
-	struct nmg_radial *rad;
-	bu_log("nmg_eu_radial_check(x%x) %d flips needed\n  %g %g %g --- %g %g %g\n",
-	       s, nflip,
-	       V3ARGS(eu->vu_p->v_p->vg_p->coord),
-	       V3ARGS(eu->eumate_p->vu_p->v_p->vg_p->coord));
-	nmg_pr_radial_list(&list, tol);
-	if (rt_g.NMG_debug & DEBUG_MESH_EU) {
-	    nmg_pr_fu_around_eu_vecs(eu, xvec, yvec, zvec, tol);
-	}
-
-	if (rt_g.NMG_debug) {
-	    char tmp_name[256];
-
-	    sprintf(tmp_name, "radial_check_%d.g", debug_file_count);
-	    nmg_stash_model_to_file(tmp_name, nmg_find_model(&eu->l.magic), "error");
-	    for (BU_LIST_FOR(rad, nmg_radial, &list))
-		nmg_pr_fu_briefly(rad->fu, "");
-	}
-    }
-
-    /* Release the storage */
-    while (BU_LIST_WHILE(rad, nmg_radial, &list)) {
-	BU_LIST_DEQUEUE(&rad->l);
-	bu_free((char *)rad, "nmg_radial");
-    }
-    return nflip;
-#endif
-}
-
-
-/**
  * N M G _ S _ R A D I A L _ C H E C K
  *
  * Visit each edge in this shell exactly once, and check it.
@@ -3293,7 +3223,6 @@ nmg_s_radial_check(struct shell *s, const struct bn_tol *tol)
 	) {
 	NMG_CK_EDGE(*ep);
 	eu = nmg_find_ot_same_eu_of_e(*ep);
-	nmg_eu_radial_check(eu, s, tol);
     }
 
     bu_ptbl_free(&edges);

@@ -49,6 +49,8 @@ rt_nurb_kvknot(register struct knot_vector *new_knots, int order, fastf_t lower,
     int	total;
     fastf_t knot_step;
 
+    if (res) RT_CK_RESOURCE(res);
+
     total = order * 2 + num;
 
     knot_step = (upper - lower) / ( num + 1 );
@@ -80,6 +82,8 @@ rt_nurb_kvmult(struct knot_vector *new_kv, const struct knot_vector *kv, int num
     int	n;
     register int	i;
     struct knot_vector check;
+
+    if (res) RT_CK_RESOURCE(res);
 
     n = rt_nurb_kvcheck( val, kv );
 
@@ -115,6 +119,8 @@ rt_nurb_kvgen(register struct knot_vector *kv, fastf_t lower, fastf_t upper, int
     register int	i;
     register fastf_t inc;
 
+    if (res) RT_CK_RESOURCE(res);
+
     inc = (upper - lower) / ( num + 1 );
 
     kv->k_size = num;
@@ -138,6 +144,8 @@ rt_nurb_kvmerge(struct knot_vector *new_knots, const struct knot_vector *kv1, co
     int	kv1_ptr = 0;
     int	kv2_ptr = 0;
     int	new_ptr;
+
+    if (res) RT_CK_RESOURCE(res);
 
     new_knots->k_size = kv1->k_size + kv2->k_size;
 
@@ -170,7 +178,7 @@ rt_nurb_kvcheck(fastf_t val, register const struct knot_vector *kv)
     register int	i;
 
     for ( i = 0; i < kv->k_size; i++) {
-	if ( val == kv->knots[i] )
+	if ( NEAR_ZERO(val - kv->knots[i], SMALL_FASTF) )
 	    kv_num++;
     }
 
@@ -188,6 +196,8 @@ rt_nurb_kvextract(struct knot_vector *new_kv, register const struct knot_vector 
 {
     register int	i;
     register fastf_t *ptr;
+
+    if (res) RT_CK_RESOURCE(res);
 
     new_kv->knots = (fastf_t * ) bu_malloc (
 	sizeof (fastf_t) * (upper - lower),
@@ -209,6 +219,8 @@ void
 rt_nurb_kvcopy(struct knot_vector *new_kv, register const struct knot_vector *old_kv, struct resource *res)
 {
     register int	i;
+
+    if (res) RT_CK_RESOURCE(res);
 
     new_kv->k_size = old_kv->k_size;
 
@@ -269,9 +281,9 @@ rt_nurb_knot_index(const struct knot_vector *kv, fastf_t k_value, int order)
 	    return - 1;
     }
 
-    if ( k_value == kv->knots[ kv->k_size - order + 1] )
+    if ( NEAR_ZERO(k_value - kv->knots[ kv->k_size - order + 1], SMALL_FASTF) )
 	k_index = kv->k_size - order - 1;
-    else if ( k_value == kv->knots[ order - 1] )
+    else if ( NEAR_ZERO(k_value - kv->knots[ order - 1], SMALL_FASTF) )
 	k_index = order - 1;
     else
     {
@@ -296,6 +308,8 @@ rt_nurb_gen_knot_vector(register struct knot_vector *new_knots, int order, fastf
 {
     register int i;
     int total;
+
+    if (res) RT_CK_RESOURCE(res);
 
     total = order * 2;
 

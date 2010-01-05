@@ -45,9 +45,9 @@ CartesianTransformationOperator::CartesianTransformationOperator() {
 	scale = 1.0;
 }
 
-CartesianTransformationOperator::CartesianTransformationOperator(STEPWrapper *sw,int STEPid) {
+CartesianTransformationOperator::CartesianTransformationOperator(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 	axis1 = NULL;
 	axis2 = NULL;
 	local_origin = NULL;
@@ -63,7 +63,7 @@ CartesianTransformationOperator::Load(STEPWrapper *sw,SCLP23(Application_instanc
 	id = sse->STEPfile_id;
 
 	if ( !GeometricRepresentationItem::Load(sw,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::Curve." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::Curve." << std::endl;
 		return false;
 	}
 
@@ -90,7 +90,7 @@ CartesianTransformationOperator::Load(STEPWrapper *sw,SCLP23(Application_instanc
 		if (entity) {
 			local_origin = dynamic_cast<CartesianPoint *>(Factory::CreateObject(sw,entity));
 		} else {
-			cerr << CLASSNAME << ": error loading 'local_origin' attribute." << endl;
+			std::cerr << CLASSNAME << ": error loading 'local_origin' attribute." << std::endl;
 			return false;
 		}
 	}
@@ -107,24 +107,24 @@ CartesianTransformationOperator::Load(STEPWrapper *sw,SCLP23(Application_instanc
 
 void
 CartesianTransformationOperator::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << GeometricRepresentationItem::name << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << GeometricRepresentationItem::name << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Attributes:" << endl;
+	TAB(level); std::cout << "Attributes:" << std::endl;
 	if (axis1) {
-		TAB(level+1); cout << "axis1:" << endl;
+		TAB(level+1); std::cout << "axis1:" << std::endl;
 		axis1->Print(level+1);
 	}
 	if (axis2) {
-		TAB(level+1); cout << "axis2:" << endl;
+		TAB(level+1); std::cout << "axis2:" << std::endl;
 		axis2->Print(level+1);
 	}
-	TAB(level+1); cout << "local_origin:" << endl;
+	TAB(level+1); std::cout << "local_origin:" << std::endl;
 	local_origin->Print(level+1);
 
-	TAB(level+1); cout << "scale: " << scale << endl;
+	TAB(level+1); std::cout << "scale: " << scale << std::endl;
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	GeometricRepresentationItem::Print(level+1);
 }
 
@@ -137,7 +137,7 @@ CartesianTransformationOperator::Create(STEPWrapper *sw, SCLP23(Application_inst
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}
@@ -150,7 +150,7 @@ CartesianTransformationOperator::Create(STEPWrapper *sw, SCLP23(Application_inst
 bool
 CartesianTransformationOperator::LoadONBrep(ON_Brep *brep)
 {
-	cerr << "Error: ::LoadONBrep(ON_Brep *brep) not implemented for " << entityname << endl;
+	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implemented for " << entityname << std::endl;
 	return false;
 }
 

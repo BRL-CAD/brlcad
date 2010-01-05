@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -32,8 +31,8 @@ public:
     Create a text log that dumps to an ASCII file.
   Parameters:
     fp - [in] Pointer to an open ASCII text file.  The file
-	      pointer must remain valid as long as the text
-	      log is in use.
+              pointer must remain valid as long as the text
+              log is in use.
   */
   ON_TextLog( FILE* fp); // dump to open ASCII text file
 
@@ -42,7 +41,7 @@ public:
     Create a text log that dumps to a string.
   Parameters:
     s - [in] String that must exist as long as
-	     the text log is in use.
+             the text log is in use.
   */
   ON_TextLog( ON_wString& s );
 
@@ -57,7 +56,7 @@ public:
   void PushIndent();
   void PopIndent();
   int IndentSize() const; //  0: one tab per indent
-			  // >0: number of spaces per indent
+                          // >0: number of spaces per indent
   void SetIndentSize(int);
   
   void PrintWrappedText( const char*, int = 60 );    // last arg is maximum line length
@@ -118,9 +117,9 @@ public:
 
   void Print( const ON_3dPointArray&, const char* = NULL );
   void Print( 
-	 const ON_Matrix&, 
-	 const char* = NULL, // optional preamble
-	 int = 0             // optional number precision
+         const ON_Matrix&, 
+         const char* = NULL, // optional preamble
+         int = 0             // optional number precision
     );
 
   // printing utilities
@@ -147,7 +146,7 @@ public:
 
   void PrintPointList( 
     int,               // dim
-    BOOL,              // TRUE for rational points
+    ON_BOOL32,              // true for rational points
     int,               // count
     int,               // stride
     const double*,     // point[] array
@@ -156,7 +155,7 @@ public:
 
   void PrintPointGrid( 
     int,               // dim
-    BOOL,              // TRUE for rational points
+    ON_BOOL32,              // true for rational points
     int, int,          // point_count0, point_count1
     int, int,          // point_stride0, point_stride1
     const double*,     // point[] array
@@ -198,8 +197,8 @@ protected:
   */
   virtual
   void AppendText(
-	const char* s
-	);
+        const char* s
+        );
 
   /*
   Description:
@@ -212,9 +211,9 @@ protected:
   */
   virtual
   void AppendText(
-	const wchar_t* s
-	);
-		  
+        const wchar_t* s
+        );
+                  
 private:
   ON_String m_indent;
   ON_String m_double_format;
@@ -238,7 +237,7 @@ private:
 
 };
 
-//ON_DECL
-//int ON_CrashTest( int crash_type, ON_TextLog& text_log );
+ON_DECL
+int ON_CrashTest( int crash_type, ON_TextLog& text_log );
 
 #endif

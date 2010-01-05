@@ -38,7 +38,7 @@ protected:
 	double semi_imag_axis;
 
 	Hyperbola();
-	Hyperbola(STEPWrapper *sw,int STEPid);
+	Hyperbola(STEPWrapper *sw,int step_id);
 
 public:
 	virtual ~Hyperbola();

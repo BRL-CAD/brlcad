@@ -38,7 +38,7 @@ protected:
 public:
 	SolidAngleUnit();
 	virtual ~SolidAngleUnit();
-	SolidAngleUnit(STEPWrapper *sw,int STEPid);
+	SolidAngleUnit(STEPWrapper *sw,int step_id);
 	bool Load(STEPWrapper *sw,SCLP23(Application_instance) *sse);
 	virtual void Print(int level);
 

@@ -92,7 +92,7 @@ int parse_args(int ac, char *av[])
 void
 swap_bytes(unsigned short *buf, unsigned long count)
 {
-    register unsigned short *p;
+    unsigned short *p;
 
     for (p = &buf[count-1]; p >= buf; p--)
 	*p = ((*p << 8) & 0x0ff00) | (*p >> 8);
@@ -108,8 +108,8 @@ swap_bytes(unsigned short *buf, unsigned long count)
 void
 add_float(unsigned short *buf1, unsigned short *buf2, unsigned long count)
 {
-    register unsigned short *p, *q, *e;
-    register double *dbuf, *d;
+    unsigned short *p, *q, *e;
+    double *dbuf, *d;
     double min, max, k;
 
     dbuf = bu_malloc(sizeof(double) * count, "buffer of double");
@@ -148,7 +148,7 @@ add_float(unsigned short *buf1, unsigned short *buf2, unsigned long count)
 void
 add_int(unsigned short *buf1, unsigned short *buf2, unsigned long count)
 {
-    register int int_value;
+    int int_value;
     int i;
     unsigned short s;
 

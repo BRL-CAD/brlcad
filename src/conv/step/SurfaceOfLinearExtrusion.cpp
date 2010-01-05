@@ -39,9 +39,9 @@ SurfaceOfLinearExtrusion::SurfaceOfLinearExtrusion() {
 	extrusion_axis = NULL;
 }
 
-SurfaceOfLinearExtrusion::SurfaceOfLinearExtrusion(STEPWrapper *sw,int STEPid) {
+SurfaceOfLinearExtrusion::SurfaceOfLinearExtrusion(STEPWrapper *sw,int step_id) {
 	step=sw;
-	id = STEPid;
+	id = step_id;
 	extrusion_axis = NULL;
 }
 
@@ -54,7 +54,7 @@ SurfaceOfLinearExtrusion::Load(STEPWrapper *sw, SCLP23(Application_instance) *ss
 	id = sse->STEPfile_id;
 
 	if ( !SweptSurface::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::Surface." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::Surface." << std::endl;
 		return false;
 	}
 
@@ -67,7 +67,7 @@ SurfaceOfLinearExtrusion::Load(STEPWrapper *sw, SCLP23(Application_instance) *ss
 		if (entity) {
 			extrusion_axis = dynamic_cast<Vector *>(Factory::CreateObject(sw,entity));
 		} else {
-			cerr << CLASSNAME << ": error loading 'extrusion_axis' attribute." << endl;
+			std::cerr << CLASSNAME << ": error loading 'extrusion_axis' attribute." << std::endl;
 			return false;
 		}
 	}
@@ -77,8 +77,8 @@ SurfaceOfLinearExtrusion::Load(STEPWrapper *sw, SCLP23(Application_instance) *ss
 
 void
 SurfaceOfLinearExtrusion::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << name << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
 	if (extrusion_axis != NULL)
 		extrusion_axis->Print(level+1);
@@ -95,7 +95,7 @@ SurfaceOfLinearExtrusion::Create(STEPWrapper *sw, SCLP23(Application_instance) *
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

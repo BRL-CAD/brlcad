@@ -350,7 +350,7 @@ TYPEget_idl_type (const Type t)
 
     /*    case TYPE_BOOLEAN:	*/
     if (class == Class_Boolean_Type)
-        return ("SCLBOOL(Bool)"); 
+        return ("SCLBOOL(Boolean)"); 
 
     /*      case TYPE_INTEGER:	*/
     if ( class == Class_Integer_Type)
@@ -726,12 +726,12 @@ ATTRsign_access_methods (Variable a, FILE* file)
     if (class == Class_Boolean_Type)  {
 	if(corba_binding)
 	{
-	    fprintf (file, "\tconst SCLBOOL(Bool) %s(", attrnm);
+	    fprintf (file, "\tconst SCLBOOL(Boolean) %s(", attrnm);
 	    fprintf (file, 
 		    "CORBA::Environment &IT_env=CORBA::default_environment) ");
 	    fprintf (file, 
 		     "const throw (CORBA::SystemException);\n");
-	    fprintf (file, "\tvoid %s (SCLBOOL(Bool) x", attrnm  );
+	    fprintf (file, "\tvoid %s (SCLBOOL(Boolean) x", attrnm  );
 	    fprintf (file, 
 		   ", CORBA::Environment &IT_env=CORBA::default_environment)");
 	    fprintf (file, 
@@ -739,8 +739,8 @@ ATTRsign_access_methods (Variable a, FILE* file)
 	}
 	else
 	{
-	    fprintf (file, "\tconst SCLBOOL(Bool) %s() const;\n", attrnm);
-	    fprintf (file, "\tvoid %s (SCLBOOL(Bool) x);\n\n", attrnm  );
+	    fprintf (file, "\tconst SCLBOOL(Boolean) %s() const;\n", attrnm);
+	    fprintf (file, "\tvoid %s (SCLBOOL(Boolean) x);\n\n", attrnm  );
 	}
 	return;
     }    
@@ -1023,13 +1023,13 @@ ATTRprint_access_methods_get_head (const char * classnm, Variable a,
     if (class == Class_Boolean_Type)  {
       if(corba_binding)
       {
-	  fprintf (file, "\nconst SCLBOOL(Bool)\n%s::%s(", classnm, funcnm);
+	  fprintf (file, "\nconst SCLBOOL(Boolean)\n%s::%s(", classnm, funcnm);
 	  fprintf (file, 
 	 "CORBA::Environment &IT_env) const throw (CORBA::SystemException)\n");
       }
       else
 	fprintf (file, 
-		 "\nconst SCLBOOL(Bool)\n%s::%s() const\n", classnm, funcnm);
+		 "\nconst SCLBOOL(Boolean)\n%s::%s() const\n", classnm, funcnm);
 	return;
     }    
 
@@ -1126,7 +1126,7 @@ ATTRprint_access_methods_put_head  (CONST char * entnm, Variable a, FILE* file)
 
   /*    case TYPE_BOOLEAN:	*/
   if (class == Class_Boolean_Type)
-    strcpy (ctype, "SCLBOOL(Bool)");
+    strcpy (ctype, "SCLBOOL(Boolean)");
 
     /*    case TYPE_ENUM:	*/
   if ( class == Class_Enumeration_Type)  
@@ -1199,7 +1199,7 @@ AGGRprint_access_methods(CONST char *entnm, Variable a, FILE* file, Type t,
 	    fprintf (file, "    {\n");
 
 	    fprintf (file, "\t(*seq)[i] = ((IntNode*)n)->value;\n");
-	    fprintf (file, "\tcout << \"returning entity %s, attr _%s: aggr integer element: \" << ((IntNode*)n)->value << endl;\n", entnm, attrnm);
+	    fprintf (file, "\tstd::cout << \"returning entity %s, attr _%s: aggr integer element: \" << ((IntNode*)n)->value << std::endl;\n", entnm, attrnm);
 /* /////////////////////////////////////////// */
 	    if(print_logging)
 	    {
@@ -1207,7 +1207,7 @@ AGGRprint_access_methods(CONST char *entnm, Variable a, FILE* file, Type t,
 		fprintf (file, "\tif(*logStream)\n\t{\n");
 		fprintf (file, 
 			 "\t    logStream->open(SCLLOGFILE,ios::app);\n");
-		fprintf (file, "\t    *logStream << time(NULL) << \" SDAI returning entity: %s, attr: _%s, aggr integer element: \" << ((IntNode*)n)->value << endl;\n", entnm, attrnm);
+		fprintf (file, "\t    *logStream << time(NULL) << \" SDAI returning entity: %s, attr: _%s, aggr integer element: \" << ((IntNode*)n)->value << std::endl;\n", entnm, attrnm);
 		fprintf (file, "\t    logStream->close();\n");
 		fprintf (file, "\t}\n");
 		fprintf (file, "#endif\n");
@@ -1228,7 +1228,7 @@ AGGRprint_access_methods(CONST char *entnm, Variable a, FILE* file, Type t,
 	    fprintf (file, "    {\n");
 
 	    fprintf (file, "\t(*seq)[i] = ((RealNode*)n)->value;\n");
-	    fprintf (file, "\tcout << \"returning entity %s, attr _%s: aggr real element: \" << ((RealNode*)n)->value << endl;\n", entnm, attrnm);
+	    fprintf (file, "\tstd::cout << \"returning entity %s, attr _%s: aggr real element: \" << ((RealNode*)n)->value << std::endl;\n", entnm, attrnm);
 /* /////////////////////////////////////////// */
 	    if(print_logging)
 	    {
@@ -1237,7 +1237,7 @@ AGGRprint_access_methods(CONST char *entnm, Variable a, FILE* file, Type t,
 		fprintf (file, 
 			 "\t    logStream->open(SCLLOGFILE,ios::app);\n");
 
-		fprintf (file, "\t    *logStream << time(NULL) << \" SDAI returning entity: %s, attr: _%s, aggr real element: \" << ((RealNode*)n)->value << endl;\n", entnm, attrnm);
+		fprintf (file, "\t    *logStream << time(NULL) << \" SDAI returning entity: %s, attr: _%s, aggr real element: \" << ((RealNode*)n)->value << std::endl;\n", entnm, attrnm);
 		fprintf (file, "\t    logStream->close();\n");
 		fprintf (file, "\t}\n");
 		fprintf (file, "#endif\n");
@@ -1259,11 +1259,11 @@ AGGRprint_access_methods(CONST char *entnm, Variable a, FILE* file, Type t,
 	    fprintf (file, "    while(n)\n");
 	    fprintf (file, "    {\n");
 	    fprintf (file, "\tfile_id = ((EntityNode*)n)->node->STEPfile_id;\n");
-	    fprintf (file, "\tcout << \"StepFileId: \" << file_id;\n");
+	    fprintf (file, "\tstd::cout << \"StepFileId: \" << file_id;\n");
 
 	    fprintf (file, "\t// the marker:server is used\n");
 	    fprintf (file, "\tsprintf(markerServer, \"%%d:%%s\", file_id, serverName);\n");
-	    fprintf (file, "\tcout << \" markerServer: \" << markerServer << endl;\n");
+	    fprintf (file, "\tstd::cout << \" markerServer: \" << markerServer << std::endl;\n");
 /* /////////////////////////////////////////// */
 	    if(print_logging)
 	    {
@@ -1272,7 +1272,7 @@ AGGRprint_access_methods(CONST char *entnm, Variable a, FILE* file, Type t,
 
 		fprintf (file, 
 			 "\t    logStream->open(SCLLOGFILE,ios::app);\n");
-		fprintf (file, "\t    *logStream << time(NULL) << \" SDAI returning entity: %s, attr: _%s, aggr entity element w/file_id: \" << file_id << \" markerServer: \" << markerServer << endl;\n", entnm, attrnm);
+		fprintf (file, "\t    *logStream << time(NULL) << \" SDAI returning entity: %s, attr: _%s, aggr entity element w/file_id: \" << file_id << \" markerServer: \" << markerServer << std::endl;\n", entnm, attrnm);
 		fprintf (file, "\t    logStream->close();\n");
 		fprintf (file, "\t}\n");
 		fprintf (file, "#endif\n");
@@ -1306,7 +1306,7 @@ AGGRprint_access_methods(CONST char *entnm, Variable a, FILE* file, Type t,
 	    fprintf (file, "    {\n");
 
 	    fprintf (file, "\t(*seq)[i] = ((EnumNode*)n)->node->asInt();\n");
-	    fprintf (file, "\tcout << \"returning entity %s, attr _%s: aggr enumeration/Bool/Logical element: \" << ((EnumNode*)n)->node->element_at( ((EnumNode*)n)->node->asInt() ) << endl;\n", entnm, attrnm);
+	    fprintf (file, "\tstd::cout << \"returning entity %s, attr _%s: aggr enumeration/Boolean/Logical element: \" << ((EnumNode*)n)->node->element_at( ((EnumNode*)n)->node->asInt() ) << std::endl;\n", entnm, attrnm);
 /* /////////////////////////////////////////// */
 	    if(print_logging)
 	    {
@@ -1314,7 +1314,7 @@ AGGRprint_access_methods(CONST char *entnm, Variable a, FILE* file, Type t,
 		fprintf (file, "\tif(*logStream)\n\t{\n");
 		fprintf (file, 
 			 "\t    logStream->open(SCLLOGFILE,ios::app);\n");
-		fprintf (file, "\t    *logStream << time(NULL) << \" SDAI returning entity: %s, attr: _%s, aggr enumeration/Bool/Logical element: \" << ((EnumNode*)n)->node->element_at( ((EnumNode*)n)->node->asInt() ) << endl;\n", entnm, attrnm);
+		fprintf (file, "\t    *logStream << time(NULL) << \" SDAI returning entity: %s, attr: _%s, aggr enumeration/Boolean/Logical element: \" << ((EnumNode*)n)->node->element_at( ((EnumNode*)n)->node->asInt() ) << std::endl;\n", entnm, attrnm);
 		fprintf (file, "\t    logStream->close();\n");
 		fprintf (file, "\t}\n");
 		fprintf (file, "#endif\n");
@@ -1331,7 +1331,7 @@ AGGRprint_access_methods(CONST char *entnm, Variable a, FILE* file, Type t,
 	if (class == Class_Select_Type)
 	{
 	    strcpy(aggrnode_name,"SelectNode");
-	    fprintf (file, "    cout << \"ERROR function not implemented: entity %s, attr _%s: aggr select element: \" << endl;\n", entnm, attrnm);
+	    fprintf (file, "    std::cout << \"ERROR function not implemented: entity %s, attr _%s: aggr select element: \" << std::endl;\n", entnm, attrnm);
 	    fprintf (file, "    return 0;\n");
 	    fprintf (file, "}\n");
 	}
@@ -1343,7 +1343,7 @@ AGGRprint_access_methods(CONST char *entnm, Variable a, FILE* file, Type t,
 	    fprintf (file, "    {\n");
 
 	    fprintf (file, "\t(*seq)[i] = CORBA::string_dupl( ((StringNode*)n)->value.chars() );\n");
-	    fprintf (file, "\tcout << \"returning entity %s, attr _%s: aggr string element: \" << ((StringNode*)n)->value.chars() << endl;\n", entnm, attrnm);
+	    fprintf (file, "\tstd::cout << \"returning entity %s, attr _%s: aggr string element: \" << ((StringNode*)n)->value.chars() << std::endl;\n", entnm, attrnm);
 /* /////////////////////////////////////////// */
 	    if(print_logging)
 	    {
@@ -1351,7 +1351,7 @@ AGGRprint_access_methods(CONST char *entnm, Variable a, FILE* file, Type t,
 		fprintf (file, "\tif(*logStream)\n\t{\n");
 		fprintf (file, 
 			 "\t    logStream->open(SCLLOGFILE,ios::app);\n");
-		fprintf (file, "\t    *logStream << time(NULL) << \" SDAI returning entity: %s, attr: _%s, aggr string element: \" << ((StringNode*)n)->value.chars() << endl;\n", entnm, attrnm);
+		fprintf (file, "\t    *logStream << time(NULL) << \" SDAI returning entity: %s, attr: _%s, aggr string element: \" << ((StringNode*)n)->value.chars() << std::endl;\n", entnm, attrnm);
 		fprintf (file, "\t    logStream->close();\n");
 		fprintf (file, "\t}\n");
 		fprintf (file, "#endif\n");
@@ -1367,7 +1367,7 @@ AGGRprint_access_methods(CONST char *entnm, Variable a, FILE* file, Type t,
 	if (class == Class_Binary_Type) /* return("BinaryAggregate");*/
 	{
 	    strcpy(aggrnode_name,"BinaryNode");
-	    fprintf (file, "    cout << \"ERROR function not implemented: entity %s, attr _%s: aggr binary element: \" << endl;\n", entnm, attrnm);
+	    fprintf (file, "    std::cout << \"ERROR function not implemented: entity %s, attr _%s: aggr binary element: \" << std::endl;\n", entnm, attrnm);
 	    fprintf (file, "    return 0;\n");
 	    fprintf (file, "}\n");
 	}
@@ -1409,7 +1409,7 @@ AGGRprint_access_methods(CONST char *entnm, Variable a, FILE* file, Type t,
 	    fprintf (file, "\t    _%s.AppendNode( (IntNode*)n );\n", attrnm);
 	    fprintf (file, "\t}\n");
 	    fprintf (file, "\t((IntNode*)n)->value = x[i];\n", nm);
-	    fprintf (file, "\tcout << \"Assigning aggr int element: \" << ((IntNode*)n)->value;\n");
+	    fprintf (file, "\tstd::cout << \"Assigning aggr int element: \" << ((IntNode*)n)->value;\n");
 /* /////////////////////////////////////////// */
 	    if(print_logging)
 	    {
@@ -1417,7 +1417,7 @@ AGGRprint_access_methods(CONST char *entnm, Variable a, FILE* file, Type t,
 		fprintf (file, "\tif(*logStream)\n\t{\n");
 		fprintf (file, 
 			 "\t    logStream->open(SCLLOGFILE,ios::app);\n");
-		fprintf (file, "\t    *logStream << time(NULL) << \" SDAI assigning entity: %s, attr: _%s, aggr integer element: \" << ((IntNode*)n)->value << endl;\n", entnm, attrnm);
+		fprintf (file, "\t    *logStream << time(NULL) << \" SDAI assigning entity: %s, attr: _%s, aggr integer element: \" << ((IntNode*)n)->value << std::endl;\n", entnm, attrnm);
 
 		fprintf (file, "\t    logStream->close();\n");
 		fprintf (file, "\t}\n");
@@ -1465,7 +1465,7 @@ AGGRprint_access_methods(CONST char *entnm, Variable a, FILE* file, Type t,
 	    fprintf (file, "\t    _%s.AppendNode( (RealNode*)n );\n", attrnm);
 	    fprintf (file, "\t}\n");
 	    fprintf (file, "\t((RealNode*)n)->value = x[i];\n", nm);
-	    fprintf (file, "\tcout << \"Assigning aggr real element: \" << ((RealNode*)n)->value;\n");
+	    fprintf (file, "\tstd::cout << \"Assigning aggr real element: \" << ((RealNode*)n)->value;\n");
 /* /////////////////////////////////////////// */
 	    if(print_logging)
 	    {
@@ -1474,7 +1474,7 @@ AGGRprint_access_methods(CONST char *entnm, Variable a, FILE* file, Type t,
 
 		fprintf (file, 
 			 "\t    logStream->open(SCLLOGFILE,ios::app);\n");
-		fprintf (file, "\t    *logStream << time(NULL) << \" SDAI assigning entity: %s, attr: _%s, aggr real element: \" << ((RealNode*)n)->value << endl;\n", entnm, attrnm);
+		fprintf (file, "\t    *logStream << time(NULL) << \" SDAI assigning entity: %s, attr: _%s, aggr real element: \" << ((RealNode*)n)->value << std::endl;\n", entnm, attrnm);
 		fprintf (file, "\t    logStream->close();\n");
 		fprintf (file, "\t}\n");
 		fprintf (file, "#endif\n");
@@ -1532,7 +1532,7 @@ AGGRprint_access_methods(CONST char *entnm, Variable a, FILE* file, Type t,
 	    fprintf (file, "\t    _%s.AppendNode( (EntityNode*)n );\n", attrnm);
 	    fprintf (file, "\t}\n");
 	    fprintf (file, "\t((EntityNode*)n)->node = (%s*)DEREF( x[i] );\n", nm);
-	    fprintf (file, "\tcout << \"Assigning entity w/StepFileId: \" << ((EntityNode*)n)->node->STEPfile_id;\n");
+	    fprintf (file, "\tstd::cout << \"Assigning entity w/StepFileId: \" << ((EntityNode*)n)->node->STEPfile_id;\n");
 /* /////////////////////////////////////////// */
 	    if(print_logging)
 	    {
@@ -1541,7 +1541,7 @@ AGGRprint_access_methods(CONST char *entnm, Variable a, FILE* file, Type t,
 
 		fprintf (file, 
 			 "\t    logStream->open(SCLLOGFILE,ios::app);\n");
-		fprintf (file, "\t    *logStream << time(NULL) << \" SDAI assigning entity: %s, attr: _%s, aggr entity element w/file_id: \" << ((EntityNode*)n)->node->STEPfile_id << endl;\n", entnm, attrnm);
+		fprintf (file, "\t    *logStream << time(NULL) << \" SDAI assigning entity: %s, attr: _%s, aggr entity element w/file_id: \" << ((EntityNode*)n)->node->STEPfile_id << std::endl;\n", entnm, attrnm);
 		fprintf (file, "\t    logStream->close();\n");
 		fprintf (file, "\t}\n");
 		fprintf (file, "#endif\n");
@@ -1591,7 +1591,7 @@ AGGRprint_access_methods(CONST char *entnm, Variable a, FILE* file, Type t,
 	    fprintf (file, "\t    _%s.AppendNode( (EnumNode*)n );\n", attrnm);
 	    fprintf (file, "\t}\n");
 	    fprintf (file, "\t((EnumNode*)n)->node->put( (int)x[i] );\n", nm);
-	    fprintf (file, "\tcout << \"Assigning aggr enum element: \" << ((EnumNode*)n)->node->element_at( ((EnumNode*)n)->node->asInt() );\n");
+	    fprintf (file, "\tstd::cout << \"Assigning aggr enum element: \" << ((EnumNode*)n)->node->element_at( ((EnumNode*)n)->node->asInt() );\n");
 /* /////////////////////////////////////////// */
 	    if(print_logging)
 	    {
@@ -1599,7 +1599,7 @@ AGGRprint_access_methods(CONST char *entnm, Variable a, FILE* file, Type t,
 		fprintf (file, "\tif(*logStream)\n\t{\n");
 		fprintf (file, 
 			 "\t    logStream->open(SCLLOGFILE,ios::app);\n");
-		fprintf (file, "\t    *logStream << time(NULL) << \" SDAI assigning entity: %s, attr: _%s, aggr enumeration/Bool/Logical element: \" << ((EnumNode*)n)->node->element_at( ((EnumNode*)n)->node->asInt() ) << endl;\n", entnm, attrnm);
+		fprintf (file, "\t    *logStream << time(NULL) << \" SDAI assigning entity: %s, attr: _%s, aggr enumeration/Boolean/Logical element: \" << ((EnumNode*)n)->node->element_at( ((EnumNode*)n)->node->asInt() ) << std::endl;\n", entnm, attrnm);
 		fprintf (file, "\t    logStream->close();\n");
 		fprintf (file, "\t}\n");
 		fprintf (file, "#endif\n");
@@ -1651,7 +1651,7 @@ AGGRprint_access_methods(CONST char *entnm, Variable a, FILE* file, Type t,
 	    fprintf (file, "\t    _%s.AppendNode( (StringNode*)n );\n", attrnm);
 	    fprintf (file, "\t}\n");
 	    fprintf (file, "\t((StringNode*)n)->value = x[i];\n", nm);
-	    fprintf (file, "\tcout << \"Assigning aggr string element: \" << ((StringNode*)n)->value.chars();\n");
+	    fprintf (file, "\tstd::cout << \"Assigning aggr string element: \" << ((StringNode*)n)->value.chars();\n");
 /* /////////////////////////////////////////// */
 	    if(print_logging)
 	    {
@@ -1659,7 +1659,7 @@ AGGRprint_access_methods(CONST char *entnm, Variable a, FILE* file, Type t,
 		fprintf (file, "\tif(*logStream)\n\t{\n");
 		fprintf (file, 
 			 "\t    logStream->open(SCLLOGFILE,ios::app);\n");
-		fprintf (file, "\t    *logStream << time(NULL) << \" SDAI assigning entity: %s, attr: _%s, aggr string element: \" << ((StringNode*)n)->value.chars() << endl;\n", entnm, attrnm);
+		fprintf (file, "\t    *logStream << time(NULL) << \" SDAI assigning entity: %s, attr: _%s, aggr string element: \" << ((StringNode*)n)->value.chars() << std::endl;\n", entnm, attrnm);
 		fprintf (file, "\t    logStream->close();\n");
 		fprintf (file, "\t}\n");
 		fprintf (file, "#endif\n");
@@ -1753,14 +1753,14 @@ ATTRprint_access_methods  (CONST char * entnm, Variable a, FILE* file)
 	    fprintf (file, "\t    *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n", 
 		     entnm, funcnm);
 	    fprintf (file,
-		     "\t    *logStream << \"reference to Sdai%s entity #\" << _%s->STEPfile_id << endl;\n",
+		     "\t    *logStream << \"reference to Sdai%s entity #\" << _%s->STEPfile_id << std::endl;\n",
 		     nm, attrnm);
 /*		     funcnm, attrnm);*/
 	    fprintf (file, "\t}\n\telse\n\t{\n");
 	    fprintf (file, "\t    *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n", 
 		     entnm, funcnm);
 	    fprintf (file, 
-		     "\t    *logStream << \"null entity\" << endl;\n\t}\n");
+		     "\t    *logStream << \"null entity\" << std::endl;\n\t}\n");
 	    fprintf (file, "\tlogStream->close();\n");
 	    fprintf (file, "    }\n");
 	    fprintf (file, "#endif\n");
@@ -1782,39 +1782,39 @@ ATTRprint_access_methods  (CONST char * entnm, Variable a, FILE* file)
 		     "\t    sprintf(markerServer, \"%%d:%%s\", _%s->"
 		     "STEPfile_id, serverName);\n\n", attrnm);
 	    fprintf (file, 
-		     "\t    cout << \"*****\" << markerServer << endl;\n\n");
+		     "\t    std::cout << \"*****\" << markerServer << std::endl;\n\n");
 	    fprintf (file, 
 		     "\t    %s_var x = %s::_bind((const char *)markerServer,"
 		     "hostName);\n", nm, nm);
 	    fprintf (file, 
 		     "\t    %s::_duplicate(x);\n\n", nm);
 	    fprintf (file, 
-		     "\t    cout << endl << \"x->_refCount(): \" << x->"
+		     "\t    std::cout << std::endl << \"x->_refCount(): \" << x->"
 		     "_refCount();\n");
 	    fprintf (file, 
-		     "\t    cout << endl << \"STEPfile id inside _%s's get "
+		     "\t    std::cout << std::endl << \"STEPfile id inside _%s's get "
 		     "function is: \" \n", attrnm);
 	    fprintf (file, 
-		     "\t\t << _%s->STEPfile_id << endl;\n", attrnm);
+		     "\t\t << _%s->STEPfile_id << std::endl;\n", attrnm);
 	    fprintf (file, 
-		     "\t    cout << \"x's marker name in server's "
+		     "\t    std::cout << \"x's marker name in server's "
 		     "implementation object's attr _%s's get function is: "
 		     "'\" \n", attrnm);
 	    fprintf (file, 
-		     "\t\t << x->_marker() << \"'\" << endl << endl;\n");
+		     "\t\t << x->_marker() << \"'\" << std::endl << std::endl;\n");
 	    fprintf (file, "\t    return x;\n\t}\n");
 	    fprintf (file, 
 		     "\tcatch (CORBA::SystemException &se) {\n");
 	    fprintf (file, 
-		     "\t    cerr << \"Unexpected system exception in _%s's "
+		     "\t    std::cerr << \"Unexpected system exception in _%s's "
 		     "get funct: \" << &se;\n", attrnm);
 	    fprintf (file, 
 		     "\t    throw;\n");
 	    fprintf (file, 
 		     "\t}\n\tcatch(...) {\n");
 	    fprintf (file, 
-		     "\t    cerr << \"Caught Unknown Exception in _%s's get "
-		     "funct!\" << endl;\n", attrnm);
+		     "\t    std::cerr << \"Caught Unknown Exception in _%s's get "
+		     "funct!\" << std::endl;\n", attrnm);
 	    fprintf (file, 
 		     "\t    throw;\n\t}\n");
 
@@ -1822,12 +1822,12 @@ ATTRprint_access_methods  (CONST char * entnm, Variable a, FILE* file)
 	    fprintf (file, "\t%s_ptr x = new TIE_%s(Sdai%s) ((Sdai%s*)_%s);\n",
 		     nm, nm, nm, nm, attrnm);
 	    fprintf (file, "\t%s::_duplicate(x);\n", nm);
-	    fprintf (file, "\tcout << \"STEPfile id is: \" << _%s->STEPfile_id << endl;\n", attrnm);
+	    fprintf (file, "\tstd::cout << \"STEPfile id is: \" << _%s->STEPfile_id << std::endl;\n", attrnm);
 */
 	    fprintf (file, "    }\n");
 	    fprintf (file, "    else\n");
-	    fprintf (file, "\tcout << \"nil object ref in attr _%s's put "
-		     "funct\" << endl;\n", attrnm);
+	    fprintf (file, "\tstd::cout << \"nil object ref in attr _%s's put "
+		     "funct\" << std::endl;\n", attrnm);
 	    fprintf (file, "    return %s::_nil();\n}\n", nm);
 	  }
 	  else
@@ -1854,18 +1854,18 @@ ATTRprint_access_methods  (CONST char * entnm, Variable a, FILE* file)
 
 	if(corba_binding)
 	    fprintf (file,
-		     "\t    *logStream << \"reference to Sdai%s entity #\" << ((Sdai%s*)(DEREF(x)))->STEPfile_id << endl;\n",
+		     "\t    *logStream << \"reference to Sdai%s entity #\" << ((Sdai%s*)(DEREF(x)))->STEPfile_id << std::endl;\n",
 		     nm, nm);
 	else
 	    fprintf (file,
-		     "\t    *logStream << \"reference to Sdai%s entity #\" << x->STEPfile_id << endl;\n",
+		     "\t    *logStream << \"reference to Sdai%s entity #\" << x->STEPfile_id << std::endl;\n",
 		     nm);
 
 	    fprintf (file, "\t}\n\telse\n\t{\n");
 	    fprintf (file, "\t    *logStream << time(NULL) << \" SDAI %s::%s() assigned: \";\n", 
 		     entnm, funcnm);
 	    fprintf (file, 
-		     "\t    *logStream << \"null entity\" << endl;\n\t}\n");
+		     "\t    *logStream << \"null entity\" << std::endl;\n\t}\n");
 	    fprintf (file, "\tlogStream->close();\n");
 	    fprintf (file, "    }\n");
 	    fprintf (file, "#endif\n");
@@ -1876,10 +1876,10 @@ ATTRprint_access_methods  (CONST char * entnm, Variable a, FILE* file)
 	  fprintf (file, "\n");
 	  fprintf (file, "    _%s = (Sdai%s*)(DEREF(x)); \n", attrnm, nm  );
 	  fprintf (file, "    if(_%s)\n    {\n", attrnm  );
-	  fprintf (file, "\tcout << \"STEPfile id inside _%s's put function is: \"\n", attrnm);
-	  fprintf (file, "\t     << _%s->STEPfile_id << endl;\n", attrnm);
+	  fprintf (file, "\tstd::cout << \"STEPfile id inside _%s's put function is: \"\n", attrnm);
+	  fprintf (file, "\t     << _%s->STEPfile_id << std::endl;\n", attrnm);
 	  fprintf (file, "    }\n    else\n");
-	  fprintf (file, "\tcout << \"nil object ref in _%s's put funct\" << endl;\n", attrnm);
+	  fprintf (file, "\tstd::cout << \"nil object ref in _%s's put funct\" << std::endl;\n", attrnm);
 	  fprintf (file, "}\n");
 	}
 	else
@@ -1901,13 +1901,13 @@ ATTRprint_access_methods  (CONST char * entnm, Variable a, FILE* file)
 	    fprintf (file, "\t    *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n", 
 		     entnm, funcnm);
 	    fprintf (file,
-		     "\t    *logStream << _%s.element_at(_%s.asInt()) << endl;\n",
+		     "\t    *logStream << _%s.element_at(_%s.asInt()) << std::endl;\n",
 		     attrnm, attrnm);
 	    fprintf (file, "\t}\n\telse\n\t{\n");
 	    fprintf (file, "\t    *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n", 
 		     entnm, funcnm);
 	    fprintf (file, 
-		     "\t    *logStream << \"unset\" << endl;\n\t}\n");
+		     "\t    *logStream << \"unset\" << std::endl;\n\t}\n");
 	    fprintf (file, "\t    logStream->close();\n");
 	    fprintf (file, "    }\n");
 	    fprintf (file, "#endif\n");
@@ -1916,7 +1916,7 @@ ATTRprint_access_methods  (CONST char * entnm, Variable a, FILE* file)
 	if(corba_binding)
 	{
 	    if (class == Class_Boolean_Type) 
-	      fprintf (file, "    return (SCLBOOL(Bool)) _%s;\n}\n", attrnm);
+	      fprintf (file, "    return (SCLBOOL(Boolean)) _%s;\n}\n", attrnm);
 	    else if ( class == Class_Logical_Type)
 	      fprintf (file, "    return (SCLLOG(Logical)) _%s;\n}\n", attrnm);
 	}
@@ -1932,7 +1932,7 @@ ATTRprint_access_methods  (CONST char * entnm, Variable a, FILE* file)
 	    fprintf (file, "\t*logStream << time(NULL) << \" SDAI %s::%s() assigned: \";\n", 
 		     entnm, funcnm);
 	    fprintf (file,
-		     "\t*logStream << _%s.element_at(x) << endl;\n",attrnm);
+		     "\t*logStream << _%s.element_at(x) << std::endl;\n",attrnm);
 	    fprintf (file, "    }\n");
 	    fprintf (file, "#endif\n");
 
@@ -1953,13 +1953,13 @@ ATTRprint_access_methods  (CONST char * entnm, Variable a, FILE* file)
 	    fprintf (file, "\t    *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n", 
 		     entnm, funcnm);
 	    fprintf (file,
-		     "\t    *logStream << _%s.element_at(_%s.asInt()) << endl;\n",
+		     "\t    *logStream << _%s.element_at(_%s.asInt()) << std::endl;\n",
 		     attrnm, attrnm);
 	    fprintf (file, "\t}\n\telse\n\t{\n");
 	    fprintf (file, "\t    *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n", 
 		     entnm, funcnm);
 	    fprintf (file, 
-		     "\t    *logStream << \"unset\" << endl;\n\t}\n    }\n");
+		     "\t    *logStream << \"unset\" << std::endl;\n\t}\n    }\n");
 	    fprintf (file, "#endif\n");
 /*	fprintf (file, "\t{ return (const %s&) _%s; }\n", ctype, attrnm);*/
 /*	    fprintf (file, "    return (%s) _%s; \n}\n",  */
@@ -1977,7 +1977,7 @@ ATTRprint_access_methods  (CONST char * entnm, Variable a, FILE* file)
 	    fprintf (file, "\t*logStream << time(NULL) << \" SDAI %s::%s() assigned: \";\n", 
 		     entnm, funcnm);
 	    fprintf (file,
-		     "\t*logStream << _%s.element_at(x) << endl;\n",attrnm);
+		     "\t*logStream << _%s.element_at(x) << std::endl;\n",attrnm);
 	    fprintf (file, "    }\n");
 	    fprintf (file, "#endif\n");
 
@@ -2010,12 +2010,12 @@ ATTRprint_access_methods  (CONST char * entnm, Variable a, FILE* file)
 	    fprintf (file, "\t    *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n", 
 		     entnm, funcnm);
 	    fprintf (file,
-		     "\t    *logStream << _%s.chars() << endl;\n", attrnm);
+		     "\t    *logStream << _%s.chars() << std::endl;\n", attrnm);
 	    fprintf (file, "\t}\n\telse\n\t{\n");
 	    fprintf (file, "\t    *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n", 
 		     entnm, funcnm);
 	    fprintf (file, 
-		     "\t    *logStream << \"unset\" << endl;\n\t}\n    }\n");
+		     "\t    *logStream << \"unset\" << std::endl;\n\t}\n    }\n");
 	    fprintf (file, "#endif\n");
 
 /*	    fprintf (file, "\t{ return (%s) _%s; }\n", ctype, attrnm);*/
@@ -2040,12 +2040,12 @@ ATTRprint_access_methods  (CONST char * entnm, Variable a, FILE* file)
 	    fprintf (file, "\t    *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n", 
 		     entnm, funcnm);
 	    fprintf (file,
-		     "\t    *logStream << x << endl;\n");
+		     "\t    *logStream << x << std::endl;\n");
 	    fprintf (file, "\t}\n\telse\n\t{\n");
 	    fprintf (file, "\t    *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n", 
 		     entnm, funcnm);
 	    fprintf (file, 
-		     "\t    *logStream << \"unset\" << endl;\n\t}\n    }\n");
+		     "\t    *logStream << \"unset\" << std::endl;\n\t}\n    }\n");
 	    fprintf (file, "#endif\n");
 
 /*	    fprintf (file, "    _%s = x; \n}\n", attrnm  ); */
@@ -2065,12 +2065,12 @@ ATTRprint_access_methods  (CONST char * entnm, Variable a, FILE* file)
 	    fprintf (file, "\t    *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n", 
 		     entnm, funcnm);
 	    fprintf (file,
-		     "\t    *logStream << _%s << endl;\n", attrnm);
+		     "\t    *logStream << _%s << std::endl;\n", attrnm);
 	    fprintf (file, "\t}\n\telse\n\t{\n");
 	    fprintf (file, "\t    *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n", 
 		     entnm, funcnm);
 	    fprintf (file, 
-		     "\t    *logStream << \"unset\" << endl;\n\t}\n    }\n");
+		     "\t    *logStream << \"unset\" << std::endl;\n\t}\n    }\n");
 	    fprintf (file, "#endif\n");
 	}
     /*  default:  INTEGER	*/
@@ -2086,12 +2086,12 @@ ATTRprint_access_methods  (CONST char * entnm, Variable a, FILE* file)
 	    fprintf (file, "\t    *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n", 
 		     entnm, funcnm);
 	    fprintf (file,
-		     "\t    *logStream << x << endl;\n");
+		     "\t    *logStream << x << std::endl;\n");
 	    fprintf (file, "\t}\n\telse\n\t{\n");
 	    fprintf (file, "\t    *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n", 
 		     entnm, funcnm);
 	    fprintf (file, 
-		     "\t    *logStream << \"unset\" << endl;\n\t}\n    }\n");
+		     "\t    *logStream << \"unset\" << std::endl;\n\t}\n    }\n");
 	    fprintf (file, "#endif\n");
     /*  default:  INTEGER	*/
       /*  is the same type as the data member  */
@@ -2112,12 +2112,12 @@ ATTRprint_access_methods  (CONST char * entnm, Variable a, FILE* file)
 	    fprintf (file, "\t    *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n", 
 		     entnm, funcnm);
 	    fprintf (file,
-		     "\t    *logStream << _%s << endl;\n", attrnm);
+		     "\t    *logStream << _%s << std::endl;\n", attrnm);
 	    fprintf (file, "\t}\n\telse\n\t{\n");
 	    fprintf (file, "\t    *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n", 
 		     entnm, funcnm);
 	    fprintf (file, 
-		     "\t    *logStream << \"unset\" << endl;\n\t}\n    }\n");
+		     "\t    *logStream << \"unset\" << std::endl;\n\t}\n    }\n");
 	    fprintf (file, "#endif\n");
 	}
 	fprintf (file, "    return (const %s) _%s; \n}\n", ctype, attrnm);
@@ -2131,12 +2131,12 @@ ATTRprint_access_methods  (CONST char * entnm, Variable a, FILE* file)
 	    fprintf (file, "\t    *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n", 
 		     entnm, funcnm);
 	    fprintf (file,
-		     "\t    *logStream << _%s << endl;\n", attrnm);
+		     "\t    *logStream << _%s << std::endl;\n", attrnm);
 	    fprintf (file, "\t}\n\telse\n\t{\n");
 	    fprintf (file, "\t    *logStream << time(NULL) << \" SDAI %s::%s() returned: \";\n", 
 		     entnm, funcnm);
 	    fprintf (file, 
-		     "\t    *logStream << \"unset\" << endl;\n\t}\n    }\n");
+		     "\t    *logStream << \"unset\" << std::endl;\n\t}\n    }\n");
 	    fprintf (file, "#endif\n");
 	}
 	fprintf (file, "    _%s = x; \n}\n", attrnm  );
@@ -2460,7 +2460,7 @@ MemberFunctionSign (Entity entity, FILE* file)
     /*  print creation function for class	*/
     fprintf(file,"\n#ifdef __OSTORE__\n");
     fprintf (file, "SCLP23(Application_instance_ptr) \ncreate_%s(os_database *db);\n", entnm);
-    fprintf(file,"\n#elif __O3DB__\n");
+    fprintf(file,"\n#elif defined(__O3DB__)\n");
     fprintf (file, "inline SCLP23(Application_instance_ptr) \ncreate_%s () {  return (SCLP23(Application_instance_ptr)) new %s ;  }\n",
 	 entnm, entnm);
     fprintf (file, "#else\n");
@@ -2945,7 +2945,7 @@ LIBstructor_print (Entity entity, FILE* file, Schema schema)
 
     /*  copy constructor  */
     /*  LIBcopy_constructor (entity, file);	*/
-    entnm = ENTITYget_classname (entity),
+    entnm = ENTITYget_classname (entity);
     fprintf (file, "%s::%s (%s& e ) \n",entnm,entnm,entnm);
     fprintf (file, "\t{  CopyAs((SCLP23(Application_instance_ptr)) &e);\t}\n");
 
@@ -2953,7 +2953,7 @@ LIBstructor_print (Entity entity, FILE* file, Schema schema)
     /*  currently empty, but should check to see if any attributes need
 	to be deleted -- attributes will need reference count  */
 
-    entnm = ENTITYget_classname (entity),
+    entnm = ENTITYget_classname (entity);
     fprintf (file, "%s::~%s () {  }\n", entnm, entnm);
 
     /*  print ObjectStore Access Hook function  */
@@ -2964,7 +2964,7 @@ LIBstructor_print (Entity entity, FILE* file, Schema schema)
     fprintf (file, "\t\t\t\tvoid *start_range, void *end_range)\n{\n");
     fprintf (file, "    if(debug_access_hooks)\n");
     fprintf (file, 
-	     "        cout << \"%s: virtual access function.\" << endl;\n",
+	     "        std::cout << \"%s: virtual access function.\" << std::endl;\n",
 	     entnm);
     fprintf (file, "    %s_access_hook_in(object, reason, user_data, start_range, end_range);\n", entnm);
     fprintf (file, "}\n\n");
@@ -2972,11 +2972,11 @@ LIBstructor_print (Entity entity, FILE* file, Schema schema)
     fprintf (file, "void \n%s_access_hook_in(void *object, \n\tenum os_access_reason reason, void *user_data, \n\tvoid *start_range, void *end_range)\n{\n", entnm);
 
     fprintf (file, "    if(debug_access_hooks)\n");
-    fprintf (file, "        cout << \"%s: non-virtual access function.\" << endl;\n",
+    fprintf (file, "        std::cout << \"%s: non-virtual access function.\" << std::endl;\n",
 	     entnm);
     fprintf(file, "    SCLP23(Application_instance) *sent = (SCLP23(Application_instance) *)object;\n");
     fprintf (file, "    if(debug_access_hooks)\n");
-    fprintf (file, "        cout << \"STEPfile_id: \" << sent->STEPfile_id << endl;\n");
+    fprintf (file, "        std::cout << \"STEPfile_id: \" << sent->STEPfile_id << std::endl;\n");
     fprintf(file, "    %s *ent = (%s *)sent;\n", entnm, entnm);
     fprintf(file, "//    %s *ent = (%s *)object;\n", entnm, entnm);
     fprintf(file, "    if(ent->eDesc == 0)\n");
@@ -3011,7 +3011,7 @@ LIBstructor_print (Entity entity, FILE* file, Schema schema)
 	fprintf(file, "#ifdef SCL_LOGGING\n");
 	fprintf(file,"    if( *logStream )\n    {\n");
 	    fprintf (file, "\tlogStream->open(SCLLOGFILE,ios::app);\n");
-	fprintf(file, "\t*logStream << time(NULL) << \" SDAI %s #\" << ent->STEPfile_id \n\t    << \" accessed.\" << endl;\n",
+	fprintf(file, "\t*logStream << time(NULL) << \" SDAI %s #\" << ent->STEPfile_id \n\t    << \" accessed.\" << std::endl;\n",
 		entnm);
 	fprintf (file, "\tlogStream->close();\n");
 	fprintf(file,"    }\n");
@@ -3035,9 +3035,9 @@ LIBstructor_print (Entity entity, FILE* file, Schema schema)
       fprintf (file, "    char markerName[16];\n");
       fprintf (file, "    sprintf(markerName, \"%%d\", StepFileId());\n");
       fprintf (file,
-	       "    cout << \"Server creating entity: \" << markerName ");
+	       "    std::cout << \"Server creating entity: \" << markerName ");
       fprintf (file,
-	       "<< \" TIE object.\" << endl;\n");
+	       "<< \" TIE object.\" << std::endl;\n");
       fprintf (file, "    return new TIE_%s(%s) (this, markerName);\n",
 	       ENTITYget_CORBAname(entity), entnm);
       fprintf (file, "}\n");
@@ -4415,7 +4415,7 @@ TYPEenum_lib_print (const Type type, FILE* f)
     fprintf (f, "\t\t\t\tvoid *start_range, void *end_range)\n{\n");
     fprintf (f, "    if(debug_access_hooks)\n");
     fprintf (f, 
-	     "        cout << \"%s: virtual access function.\" << endl;\n",
+	     "        std::cout << \"%s: virtual access function.\" << std::endl;\n",
 	     n);
     fprintf (f, "    %s_access_hook_in(object, reason, user_data, start_range, end_range);\n", n);
     fprintf (f, "}\n\n");
@@ -4884,7 +4884,7 @@ TYPEprint_descriptions (const Type type, FILES* files, Schema schema)
     if(isAggregateType(type)) {
       const char * ctype = TYPEget_ctype (type);
 
-      fprintf(files->inc, "\n#if __OSTORE__\n");
+      fprintf(files->inc, "\n#ifdef __OSTORE__\n");
       fprintf(files->inc, "STEPaggregate * create_%s (os_database *db);\n\n", 
 	      ClassName(TYPEget_name(type)));
       fprintf(files->inc, "#else\n");
@@ -4892,7 +4892,7 @@ TYPEprint_descriptions (const Type type, FILES* files, Schema schema)
 	      ClassName(TYPEget_name(type)));
       fprintf(files->inc, "#endif\n");
 
-      fprintf(files->lib, "\n#if __OSTORE__\n");
+      fprintf(files->lib, "\n#ifdef __OSTORE__\n");
       fprintf(files->lib, 
 	      "STEPaggregate *\ncreate_%s (os_database *db) { "
 	      "return create_%s(db);  }\n",
@@ -4973,7 +4973,7 @@ printEnumCreateHdr( FILE *inc, const Type type )
 {
     const char *nm = TYPEget_ctype (type);
 
-    fprintf (inc, "\n#if __OSTORE__\n");
+    fprintf (inc, "\n#ifdef __OSTORE__\n");
     fprintf (inc, "  SCLP23(Enum) * create_%s (os_database *db);\n", nm);
     fprintf (inc, "#else\n");
     fprintf (inc, "  SCLP23(Enum) * create_%s ();\n", nm);
@@ -5012,7 +5012,7 @@ printEnumAggrCrHdr( FILE *inc, const Type type )
     const char *n = TYPEget_ctype (type);
 /*    const char *n = ClassName( TYPEget_name(type) ));*/
 
-    fprintf (inc, "\n#if __OSTORE__\n");
+    fprintf (inc, "\n#ifdef __OSTORE__\n");
     fprintf (inc, "  STEPaggregate * create_%ss (os_database *db);\n", n);
     fprintf (inc, "#else\n");
     fprintf (inc, "  STEPaggregate * create_%ss ();\n", n);
@@ -5147,14 +5147,14 @@ TYPEprint_nm_ft_desc (Schema schema, const Type type, FILE* f, char *endChars)
 		case bag_:
 		case set_:
 		case list_:
-		    fprintf(files->inc, "\n#if __OSTORE__\n");
+		    fprintf(files->inc, "\n#ifdef __OSTORE__\n");
 		    fprintf(files->inc, "STEPaggregate * create_%s (os_database *db);\n\n", 
 			    ClassName(TYPEget_name(type)));
 		    fprintf(files->inc, "#else\n");
 		    fprintf(files->inc, "STEPaggregate * create_%s ();\n\n", 
 			    ClassName(TYPEget_name(type)));
 		    fprintf(files->inc, "#endif\n");
-		    fprintf(files->lib, "\n#if __OSTORE__\n");
+		    fprintf(files->lib, "\n#ifdef __OSTORE__\n");
 		    fprintf(files->lib, 
 		   "STEPaggregate *\ncreate_%s (os_database *db) {  return create_%s(db);  }\n",
 			ClassName(TYPEget_name(type)), 
@@ -5228,7 +5228,7 @@ TYPEprint_new (const Type type, FILE *create, Schema schema)
 	    /* fill in it's values	*/
 	    TYPEprint_nm_ft_desc (schema, type, create, ",");
 	    fprintf(create,
-		"\t\t  (EnumCreator) create_BOOL);\t// Creator function\n");
+		"\t\t  (EnumCreator) create_BOOLEAN);\t// Creator function\n");
 	    break;
 
 	  case logical_:

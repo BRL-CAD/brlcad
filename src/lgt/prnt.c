@@ -139,7 +139,7 @@ char	screen[TOP_SCROLL_WIN+1][TEMPLATE_COLS+1];
 	destination buffer, but pads it with blanks.
 */
 static void
-pad_Strcpy(register char *des, register char *src, register int len)
+pad_Strcpy(char *des, char *src, int len)
 {
     while ( len > 0 && *src != '\0' )
     {
@@ -155,7 +155,7 @@ pad_Strcpy(register char *des, register char *src, register int len)
 void
 init_Status(void)
 {
-    register int	row, col;
+    int	row, col;
     for ( row = 0; row <= TOP_SCROLL_WIN; row++ )
 	for ( col = 0; col <= TEMPLATE_COLS; col++ )
 	    screen[row][col] = '\0';
@@ -219,11 +219,11 @@ prnt_Status(void)
 void
 update_Screen(void)
 {
-    register int	tem_co, row, col;
+    int	tem_co, row, col;
     tem_co = FMIN(co, TEMPLATE_COLS);
     for ( row = 0; template[row][0] != '\0'; row++ )
     {
-	register int	lastcol = -2;
+	int	lastcol = -2;
 	if ( template[row+1] == NULL )
 	    SetStandout();
 	for ( col = 0; col < tem_co; col++ )
@@ -244,9 +244,9 @@ update_Screen(void)
 
 /*	p r n t _ P a g e d _ M e n u ( )				*/
 void
-prnt_Paged_Menu(register char **menu)
+prnt_Paged_Menu(char **menu)
 {
-    register int	done = FALSE;
+    int	done = FALSE;
     int		lines =	(PROMPT_LINE-TOP_SCROLL_WIN);
     if ( ! tty )
     {
@@ -269,7 +269,7 @@ prnt_Paged_Menu(register char **menu)
 int
 do_More(int *linesp)
 {
-    register int	ret = TRUE;
+    int	ret = TRUE;
     if ( ! tty )
 	return	TRUE;
     save_Tty( 0 );
@@ -347,13 +347,13 @@ void
 prnt_Event(const char* s)
 {
     static int	lastlen = 0;
-    register int	i;
+    int	i;
     if ( ! tty )
 	return;
     EVENT_MOVE();
     if ( s != NULL )
     {
-	register int len = strlen( s );
+	int len = strlen( s );
 	(void) fputs( s, stdout );
 	/* Erase last message. */
 	for ( i = len; i < lastlen; i++ )
@@ -387,7 +387,7 @@ prnt_Title(const char* titleptr)
 void
 prnt_Usage(void)
 {
-    register char	**p = (char **)usage;
+    char	**p = (char **)usage;
     while ( *p != NULL )
 	(void) fprintf( stderr, "%s\n", *p++ );
     return;

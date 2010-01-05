@@ -171,9 +171,9 @@ struct menu_item oed_menu[] = {
  *			B U T T O N
  */
 void
-button(register int bnum)
+button(int bnum)
 {
-    register struct buttons *bp;
+    struct buttons *bp;
 
     if ( edsol && edobj )
 	bu_log("WARNING: State error: edsol=%x, edobj=%x\n", edsol, edobj);
@@ -206,7 +206,7 @@ f_press(ClientData clientData,
 	int	argc,
 	char	**argv)
 {
-    register int i;
+    int i;
 
     if (argc < 2) {
 	struct bu_vls vls;
@@ -220,10 +220,10 @@ f_press(ClientData clientData,
 
     for ( i = 1; i < argc; i++ )  {
 	char *str = argv[i];
-	register struct buttons *bp;
+	struct buttons *bp;
 	struct menu_item	**m;
 	int menu, item;
-	register struct menu_item	*mptr;
+	struct menu_item	*mptr;
 
 	if ( edsol && edobj ) {
 	    struct bu_vls tmp_vls;
@@ -294,7 +294,7 @@ f_press(ClientData clientData,
 char *
 label_button(int bnum)
 {
-    register struct buttons *bp;
+    struct buttons *bp;
 
     /* Process the button function requested. */
     for ( bp = button_table; bp->bu_code >= 0; bp++ )  {
@@ -466,8 +466,8 @@ bv_35_25(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
 /* returns 0 if error, !0 if success */
 static int
 ill_common(void) {
-    register struct ged_display_list *gdlp;
-    register struct ged_display_list *next_gdlp;
+    struct ged_display_list *gdlp;
+    struct ged_display_list *next_gdlp;
     int is_empty = 1;
 
     /* Common part of illumination */
@@ -641,10 +641,10 @@ be_o_rotate(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
 
 int
 be_accept(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
-    register struct ged_display_list *gdlp;
-    register struct ged_display_list *next_gdlp;
-    register struct solid *sp;
-    register struct dm_list *dmlp;
+    struct ged_display_list *gdlp;
+    struct ged_display_list *next_gdlp;
+    struct solid *sp;
+    struct dm_list *dmlp;
 
     if ( state == ST_S_EDIT )  {
 	/* Accept a solid edit */
@@ -705,10 +705,10 @@ be_accept(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
 
 int
 be_reject(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
-    register struct ged_display_list *gdlp;
-    register struct ged_display_list *next_gdlp;
-    register struct solid *sp;
-    register struct dm_list *dmlp;
+    struct ged_display_list *gdlp;
+    struct ged_display_list *next_gdlp;
+    struct solid *sp;
+    struct dm_list *dmlp;
 
     update_views = 1;
 
@@ -859,7 +859,7 @@ not_state(int desired, char *str)
 int
 chg_state(int from, int to, char *str)
 {
-    register struct dm_list *p;
+    struct dm_list *p;
     struct dm_list *save_dm_list;
     struct bu_vls vls;
 

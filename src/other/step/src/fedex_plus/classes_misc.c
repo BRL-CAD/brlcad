@@ -290,7 +290,7 @@ TYPEget_ctype (const Type t)
 
         /*	case TYPE_BOOLEAN:	*/
 	if (class == Class_Boolean_Type)
-	    return ("BOOLS"); 
+	    return ("BOOLEANS"); 
 
         /*	case TYPE_STRING:	*/
 	if (class == Class_String_Type) return("StringAggregate");
@@ -309,7 +309,7 @@ TYPEget_ctype (const Type t)
 
     /*    case TYPE_BOOLEAN:	*/
     if (class == Class_Boolean_Type)
-        return ("SCLP23(BOOL)"); 
+        return ("SCLP23(BOOLEAN)"); 
 
     /*      case TYPE_INTEGER:	*/
     if ( class == Class_Integer_Type)
@@ -413,7 +413,7 @@ AccessType (Type t)
 
     /*    case TYPE_BOOLEAN:	*/
     if (class == Class_Boolean_Type)
-        strncpy (nm, "SCLBOOL(Bool)", BUFSIZ -2);
+        strncpy (nm, "SCLBOOL(Boolean)", BUFSIZ -2);
     return nm;
 }
 

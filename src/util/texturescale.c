@@ -96,9 +96,9 @@ static int read_row (char *rp, long int width, FILE *infp)
  *		    G E T _ A R G S ( )
  */
 static int
-get_args (int argc, register char **argv)
+get_args (int argc, char **argv)
 {
-    register int c;
+    int c;
 
     while ((c = bu_getopt( argc, argv, OPT_STRING)) != EOF)
     {

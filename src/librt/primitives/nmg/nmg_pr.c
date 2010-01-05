@@ -447,7 +447,7 @@ nmg_pr_lu(const struct loopuse *lu, char *h)
 {
     const struct edgeuse *eu;
     const struct vertexuse *vu;
-    long magic1;
+    unsigned long magic1;
 
     MKPAD(h);
     NMG_CK_LOOPUSE(lu);
@@ -500,7 +500,7 @@ nmg_pr_lu_briefly(const struct loopuse *lu, char *h)
 {
     const struct edgeuse *eu;
     const struct vertexuse *vu;
-    long magic1;
+    unsigned long magic1;
 
     MKPAD(h);
     NMG_CK_LOOPUSE(lu);
@@ -938,7 +938,7 @@ nmg_pr_ptbl_vert_list(const char *str, const struct bu_ptbl *tbl, const fastf_t 
  * Does not mind wire edges.
  */
 void
-nmg_pr_one_eu_vecs(const struct edgeuse *eu, const fastf_t *xvec, const fastf_t *yvec, const fastf_t *zvec, const struct bn_tol *tol)
+nmg_pr_one_eu_vecs(const struct edgeuse *eu, const fastf_t *xvec, const fastf_t *yvec, const fastf_t *zvec, const struct bn_tol *tol __attribute__((unused)))
 {
     const struct loopuse *lu;
     const struct faceuse *fu;

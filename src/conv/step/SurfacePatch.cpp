@@ -49,9 +49,9 @@ SurfacePatch::SurfacePatch() {
 	parent_surface = NULL;
 }
 
-SurfacePatch::SurfacePatch(STEPWrapper *sw,int STEPid) {
+SurfacePatch::SurfacePatch(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 	parent_surface = NULL;
 }
 
@@ -64,7 +64,7 @@ SurfacePatch::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 	id = sse->STEPfile_id;
 
 	if ( !FoundedItem::Load(sw,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::Curve." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::Curve." << std::endl;
 		return false;
 	}
 
@@ -92,18 +92,18 @@ SurfacePatch::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 void
 SurfacePatch::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Attributes:" << endl;
-	TAB(level+1); cout << "parent_surface:" << endl;
+	TAB(level); std::cout << "Attributes:" << std::endl;
+	TAB(level+1); std::cout << "parent_surface:" << std::endl;
 	parent_surface->Print(level+1);
-	TAB(level+1); cout << "u_transition:" << Transition_code_string[u_transition] << endl;
-	TAB(level+1); cout << "v_transition:" << Transition_code_string[v_transition] << endl;
-	TAB(level+1); cout << "u_sense:" << step->getBooleanString(u_sense) << endl;
-	TAB(level+1); cout << "v_sense:" << step->getBooleanString(v_sense) << endl;
+	TAB(level+1); std::cout << "u_transition:" << Transition_code_string[u_transition] << std::endl;
+	TAB(level+1); std::cout << "v_transition:" << Transition_code_string[v_transition] << std::endl;
+	TAB(level+1); std::cout << "u_sense:" << step->getBooleanString(u_sense) << std::endl;
+	TAB(level+1); std::cout << "v_sense:" << step->getBooleanString(v_sense) << std::endl;
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	FoundedItem::Print(level+1);
 }
 
@@ -116,7 +116,7 @@ SurfacePatch::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}
@@ -129,7 +129,7 @@ SurfacePatch::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 bool
 SurfacePatch::LoadONBrep(ON_Brep *brep)
 {
-	cerr << "Error: ::LoadONBrep(ON_Brep *brep) not implemented for " << entityname << endl;
+	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implemented for " << entityname << std::endl;
 	return false;
 }
 

@@ -61,13 +61,8 @@ __BEGIN_DECLS
  *  It is vital that the argument list given for "args" be enclosed
  *  in parens.
  */
-#if __STDC__ || USE_PROTOTYPES
-#  define WDB_EXTERN(type_and_name, args)	extern type_and_name args
-#  define WDB_ARGS(args)			args
-#else
-#  define WDB_EXTERN(type_and_name, args)	extern type_and_name()
-#  define WDB_ARGS(args)			()
-#endif
+#define WDB_EXTERN(type_and_name, args) extern type_and_name args
+#define WDB_ARGS(args) args
 
 /*
  *  In-memory form of database combinations

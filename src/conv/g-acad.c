@@ -78,7 +78,7 @@ static long	tot_polygons = 0;
 int
 main(int argc, char **argv)
 {
-    register int	c;
+    int	c;
     double		percent;
     int		i;
 
@@ -483,7 +483,7 @@ nmg_to_acad(struct nmgregion *r, struct db_full_path *pathp, int region_id, int 
  *
  *  This routine must be prepared to run in parallel.
  */
-union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+union tree *do_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
     union tree		*ret_tree;
     struct bu_list		vhead;

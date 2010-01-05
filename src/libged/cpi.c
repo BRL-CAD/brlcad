@@ -38,8 +38,8 @@
 int
 ged_cpi(struct ged *gedp, int argc, const char *argv[])
 {
-    register struct directory *proto;
-    register struct directory *dp;
+    struct directory *proto;
+    struct directory *dp;
     struct rt_db_internal internal;
     struct rt_tgc_internal *tgc_ip;
     int id;
@@ -81,7 +81,7 @@ ged_cpi(struct ged *gedp, int argc, const char *argv[])
     if ( id != ID_TGC )
     {
 	bu_vls_printf(&gedp->ged_result_str, "%s: %s is not a cylinder\n", argv[0], argv[1]);
-	rt_db_free_internal( &internal, &rt_uniresource );
+	rt_db_free_internal(&internal);
 	return GED_ERROR;
     }
     tgc_ip = (struct rt_tgc_internal *)internal.idb_ptr;

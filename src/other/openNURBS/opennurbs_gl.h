@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -106,30 +105,30 @@ void ON_GL(
 //   ? GL_MAP1_VERTEX_4 
 //   : GL_MAP1_VERTEX_3;
 void ON_GL( 
-      const ON_NurbsCurve&,   // 
-      GLUnurbsObj*,              // created with gluNewNurbsRenderer
-      GLenum = 0,                // type of curve (if 0, type is automatically set)
-      int = 1,           // bPermitKnotScaling - If TRUE, curve knots may
-			 // be rescaled to avoid knot vectors GL cannot handle.
-      double* = NULL,    // knot_scale[2] - If not NULL and bPermitKnotScaling,
-			 // the scaling applied to the knot vector is
-			 // returned here.
-      double[][4] = NULL // optional transformation applied to curve
+      const ON_NurbsCurve&, // 
+      GLUnurbsObj*,         // created with gluNewNurbsRenderer
+      GLenum = 0,           // type of curve (if 0, type is automatically set)
+      int = 1,              // bPermitKnotScaling - If true, curve knots may
+                            // be rescaled to avoid knot vectors GL cannot handle.
+      double* = NULL,       // knot_scale[2] - If not NULL and bPermitKnotScaling,
+                            // the scaling applied to the knot vector is
+                            // returned here.
+      double[][4] = NULL    // optional transformation applied to curve
       );
 
-void ON_GL( // low level NURBS curve render
+void ON_GL( // low level NURBS curve renderer
       int, int, int, int, // dim, is_rat, cv_count, order
       const double*,      // knot_vector[]
       int,                // cv_stride
       const double*,      // cv
-      GLUnurbsObj*,              // created with gluNewNurbsRenderer
-      GLenum = 0,                // type of curve (if 0, type is automatically set)
-      int = 1,           // bPermitKnotScaling - If TRUE, curve knots may
-			 // be rescaled to avoid knot vectors GL cannot handle.
-      double* = NULL,    // knot_scale[2] - If not NULL and bPermitKnotScaling,
-			 // the scaling applied to the knot vector is
-			 // returned here.
-      double[][4] = NULL // optional transformation applied to curve
+      GLUnurbsObj*,       // created with gluNewNurbsRenderer
+      GLenum = 0,         // type of curve (if 0, type is automatically set)
+      int = 1,            // bPermitKnotScaling - If true, curve knots may
+                          // be rescaled to avoid knot vectors GL cannot handle.
+      double* = NULL,     // knot_scale[2] - If not NULL and bPermitKnotScaling,
+                          // the scaling applied to the knot vector is
+                          // returned here.
+      double[][4] = NULL  // optional transformation applied to curve
       );
 
 
@@ -146,15 +145,15 @@ void ON_GL(
       const ON_NurbsSurface&, // 
       GLUnurbsObj*,              // created with gluNewNurbsRenderer
       GLenum = 0,                // type of surface 
-				 // (if 0, type is automatically set)
-      int = 1,           // bPermitKnotScaling - If TRUE, surface knots may
-			 // be rescaled to avoid knot vectors GL cannot handle.
+                                 // (if 0, type is automatically set)
+      int = 1,           // bPermitKnotScaling - If true, surface knots may
+                         // be rescaled to avoid knot vectors GL cannot handle.
       double* = NULL,    // knot_scale0[2] - If not NULL and bPermitKnotScaling,
-			 // the scaleing applied to the first parameter is
-			 // returned here.
+                         // the scaleing applied to the first parameter is
+                         // returned here.
       double* = NULL     // knot_scale0[2] - If not NULL and bPermitKnotScaling,
-			 // the scaleing applied to the second parameter is
-			 // returned here.
+                         // the scaleing applied to the second parameter is
+                         // returned here.
       );
 
 
@@ -170,12 +169,12 @@ void ON_GL(
 
 // Use ON_GL( const ON_Color ...) to set GL color to OpenNURBS color
 void ON_GL( const ON_Color&,
-	      GLfloat[4] 
-	      );
+              GLfloat[4] 
+              );
 void ON_GL( const ON_Color&,
-	      double, // alpha
-	      GLfloat[4] 
-	      );
+              double, // alpha
+              GLfloat[4] 
+              );
 
 // Use ON_GL( const ON_Material ...) to set GL material to OpenNURBS material
 void ON_GL( 
@@ -191,12 +190,12 @@ void ON_GL(
 void ON_GL( 
       const ON_Light*, // pass NULL to disable the light
       GLenum                  // GL_LIGHTi where 0 <= i <= GL_MAX_LIGHTS
-			      // See glLight*() documentation for details
+                              // See glLight*() documentation for details
       );
 void ON_GL( 
       const ON_Light&,
       GLenum                  // GL_LIGHTi where 0 <= i <= GL_MAX_LIGHTS
-			      // See glLight*() documentation for details
+                              // See glLight*() documentation for details
       );
 
 //////////////////////////////////////////////////////////////////////////
@@ -218,9 +217,9 @@ void ON_GL(
 //   port_bottom = height-1
 //   port_top    = 0
 void ON_GL( ON_Viewport&,
-	    int, int, // port_left, port_right (port_left != port_right)
-	    int, int  // port_bottom, port_top (port_bottom != port_top)
-	    );
+            int, int, // port_left, port_right (port_left != port_right)
+            int, int  // port_bottom, port_top (port_bottom != port_top)
+            );
 
 ////////////
 //
@@ -231,14 +230,14 @@ void ON_GL( const ON_Viewport& );
 // Use ON_GL( order, cv_count, knot, bPermitScaling, glknot )
 // to create knot vectors suitable for GL NURBS rendering.
 void ON_GL( 
-	  const int,     // order, ON_NurbsCurve... order
-	  const int,     // cv_count, ON_NurbsCurve... cv count
-	  const double*, // knot, ON_NurbsCurve... knot vector
-	  GLfloat*,      // glknot[] - GL knot vector
-	  int = 0,       // bPermitScaling - TRUE if re-scaling is allowed
-	  double* = NULL // scale[2] - If not NULL and bPermitScaling is TRUE,
-			 // then the scaling parameters are returned here.
-			 // ( glknot = (knot = scale[0])*scale[1] )
-	  );
+          const int,     // order, ON_NurbsCurve... order
+          const int,     // cv_count, ON_NurbsCurve... cv count
+          const double*, // knot, ON_NurbsCurve... knot vector
+          GLfloat*,      // glknot[] - GL knot vector
+          int = 0,       // bPermitScaling - true if re-scaling is allowed
+          double* = NULL // scale[2] - If not NULL and bPermitScaling is true,
+                         // then the scaling parameters are returned here.
+                         // ( glknot = (knot = scale[0])*scale[1] )
+          );
 
 #endif

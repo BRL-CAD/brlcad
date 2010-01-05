@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -82,9 +81,9 @@ class ON_Linetype;
 struct ON_3DM_CHUNK
 {
   size_t m_offset; // In read or write_using_fseek mode, this is the
-		   // file position of first byte after chunk's length.
-		   // In write_using_buffer mode, this of the m_buffer[]
-		   // position of first byte after chunk's length.
+                   // file position of first byte after chunk's length.
+                   // In write_using_buffer mode, this of the m_buffer[]
+                   // position of first byte after chunk's length.
   unsigned int m_typecode;
   int m_value;
   int m_do_length; // true if chunk is a long chunk with length
@@ -128,15 +127,15 @@ public:
 
   virtual 
   size_t CurrentPosition( // current offset (in bytes) into archive ( like ftell() )
-		) const = 0; 
+                ) const = 0; 
   virtual 
   bool SeekFromCurrentPosition( // seek from current position ( like fseek( ,SEEK_CUR) )
-		int // byte offset ( >= -CurrentPostion() )
-		) = 0; 
+                int // byte offset ( >= -CurrentPostion() )
+                ) = 0; 
   virtual 
   bool SeekFromStart(  // seek from current position ( like fseek( ,SEEK_SET) )
-		size_t // byte offset ( >= 0 )
-		) = 0;
+                size_t // byte offset ( >= 0 )
+                ) = 0;
   virtual 
   bool AtEnd() const = 0; // true if at end of file
 
@@ -157,6 +156,12 @@ public:
     void*         // destination buffer (can be same a source buffer)
     );
 
+  static
+  const char* TypecodeName( unsigned int tcode );
+
+  static
+  char* ON_TypecodeParse( unsigned int tcode, char* typecode_name, size_t max_length );
+
   bool ReadMode() const;  // true if reading is permitted
   bool WriteMode() const; // true if writing is permitted
   
@@ -173,6 +178,20 @@ public:
   bool ReadByte( size_t, void* ); // must fail if mode is not read or readwrite
 
   bool WriteByte( size_t, const void* ); // must fail if mode is not write or readwrite
+
+  /*
+  Description:
+    Expert user function to control CRC calculation while reading and writing.
+    Typically this is used when seeking around and reading/writing information
+    in non-serial order.
+  Parameters:
+    bEnable  - [in]
+  Returns:
+    Current state of CRC calculation.  Use the returned value to restore the
+    CRC calculation setting after you are finished doing your fancy pants
+    expert IO.
+  */
+  bool EnableCRCCalculation( bool bEnable );
 
   // ReadCompressedBuffer()/WriteCompressedBuffer() use zlib 1.1.3
   // to inflate/deflate the data buffer.
@@ -208,25 +227,25 @@ public:
     sizeof__outbuffer - [in] size of the uncompressed buffer in bytes
     outbuffer - [out] uncompressed buffer returned here
     bFailedCRC - [out] true if cyclic redundancy check fails
-		      on uncompressed buffer
+                      on uncompressed buffer
 
   Example:
 
-	  size_t sizeof_buffer = 0;
-	  ReadCompressedBufferSize(&sizeof_buffer);
-	  buffer = ...; // something with sizeof_buffer bytes.
-	  int bFailedCRC = false;
-	  bool ok = ReadCompressedBuffer( sizeof_buffer, buffer, &bFailedCRC );
+          size_t sizeof_buffer = 0;
+          ReadCompressedBufferSize(&sizeof_buffer);
+          buffer = ...; // something with sizeof_buffer bytes.
+          int bFailedCRC = false;
+          bool ok = ReadCompressedBuffer( sizeof_buffer, buffer, &bFailedCRC );
 
   Returns:
     True if read was successful.  You need to check the value
     of bFailedCRC to see if the information that was read is valid.
   */
   bool ReadCompressedBuffer(
-	  size_t sizeof__outbuffer,
-	  void* outbuffer,
-	  int* bFailedCRC
-	  );
+          size_t sizeof__outbuffer,
+          void* outbuffer,
+          int* bFailedCRC
+          );
 
   /*
   Description:
@@ -616,7 +635,7 @@ public:
     Reads and object from a 3dm archive;
   Parameters:
     ppObject - [out]  object is allocated and a pointer to the
-		      allocated object is returned as *ppObject;
+                      allocated object is returned as *ppObject;
   Returns:
     0: failure - unable to read object because of file IO problems
     1: success
@@ -625,8 +644,8 @@ public:
        new objects.
   */
   int ReadObject( 
-	 ON_Object** ppObject
-	 );
+         ON_Object** ppObject
+         );
 
 
   /*
@@ -634,8 +653,8 @@ public:
     Reads and object from a 3dm archive.
   Parameters:
     object - [in] The value of object.ON_ClassId()->Uuid() must
-		  exactly match the class uuid in of the next
-		  object in the archive.
+                  exactly match the class uuid in of the next
+                  object in the archive.
   Returns:
     0: failure - unable to read object because of file IO problems.
     1: success
@@ -643,8 +662,8 @@ public:
        did not match pObject->ClassId.
   */
   int ReadObject( 
-	 ON_Object& object
-	 );
+         ON_Object& object
+         );
 
   bool WriteObject( const ON_Object* ); // writes object definition
   bool WriteObject( const ON_Object& ); // writes object definition
@@ -658,50 +677,50 @@ public:
   //                 for writing 3dm archives is available for
   //                 any type of serialization device.
   //
-  bool EnableSave3dmRenderMeshes( BOOL = true ); // returns previous state
+  bool EnableSave3dmRenderMeshes( ON_BOOL32 = true ); // returns previous state
   bool Save3dmRenderMeshes() const;
 
-  bool EnableSave3dmAnalysisMeshes( BOOL = true ); // returns previous state
+  bool EnableSave3dmAnalysisMeshes( ON_BOOL32 = true ); // returns previous state
   bool Save3dmAnalysisMeshes() const;
   
-  bool EnableSaveUserData( BOOL = true ); // returns previous state
+  bool EnableSaveUserData( ON_BOOL32 = true ); // returns previous state
   bool SaveUserData() const;
   
   ///////////////////////////////////////////////////////////////////
   // Step 1: REQUIRED - Write/Read Start Section
   //
   bool Write3dmStartSection( 
-	int,        // version = 1 or 2
-	const char* // NULL or ASCII string with application name, etc.
-		    // This information is primarily used when debugging files
-		    // that contain problems.  McNeel and Associates stores
-		    // application name, application version, compile date, 
-		    // OS in use when file was written.
-	);
+        int,        // version = 1, 2, 3, 4, or 5
+        const char* // NULL or ASCII string with application name, etc.
+                    // This information is primarily used when debugging files
+                    // that contain problems.  McNeel and Associates stores
+                    // application name, application version, compile date, 
+                    // OS in use when file was written.
+        );
   bool Read3dmStartSection( 
-	int*, // returns version (1 or 2)
-	ON_String& 
-	);
+        int*, // returns version (1 - 5)
+        ON_String& 
+        );
 
   ///////////////////////////////////////////////////////////////////
   // Step 2: REQUIRED - Write/Read properties table
   //
   bool Write3dmProperties(
-	const ON_3dmProperties&
-	);
+        const ON_3dmProperties&
+        );
   bool Read3dmProperties(
-	ON_3dmProperties&
-	);
+        ON_3dmProperties&
+        );
 
   ///////////////////////////////////////////////////////////////////
   // Step 3: REQUIRED - Write/Read settings table
   //
   bool Write3dmSettings(
-	const ON_3dmSettings&
-	);
+        const ON_3dmSettings&
+        );
   bool Read3dmSettings(
-	ON_3dmSettings&
-	);
+        ON_3dmSettings&
+        );
 
   ///////////////////////////////////////////////////////////////////
   // Step 4: REQUIRED - Write/Read bitmap table (it can be empty)
@@ -712,9 +731,9 @@ public:
 
   bool BeginRead3dmBitmapTable();
   int  Read3dmBitmap(   // returns 0 at end of light table
-			//         1 bitmap successfully read
-	    ON_Bitmap** // bitmap returned here
-	    );
+                        //         1 bitmap successfully read
+            ON_Bitmap** // bitmap returned here
+            );
   bool EndRead3dmBitmapTable();
 
   ///////////////////////////////////////////////////////////////////
@@ -726,8 +745,8 @@ public:
 
   bool BeginRead3dmTextureMappingTable();
   int  Read3dmTextureMapping( // returns 0 at end of table
-	    ON_TextureMapping** // layer returned here
-	    );
+            ON_TextureMapping** // layer returned here
+            );
   bool EndRead3dmTextureMappingTable();
 
   ///////////////////////////////////////////////////////////////////
@@ -739,8 +758,8 @@ public:
 
   bool BeginRead3dmMaterialTable();
   int  Read3dmMaterial( // returns 0 at end of table
-	    ON_Material** // layer returned here
-	    );
+            ON_Material** // layer returned here
+            );
   bool EndRead3dmMaterialTable();
 
   ///////////////////////////////////////////////////////////////////
@@ -763,8 +782,8 @@ public:
 
   bool BeginRead3dmLayerTable();
   int  Read3dmLayer( // returns 0 at end of table
-	    ON_Layer** // layer returned here
-	    );
+            ON_Layer** // layer returned here
+            );
   bool EndRead3dmLayerTable();
 
   ///////////////////////////////////////////////////////////////////
@@ -812,8 +831,8 @@ public:
   //           archive.EndRead3dmGroupTable();
   //      
   int  Read3dmGroup(
-	    ON_Group** // ppGroup
-	    );
+            ON_Group** // ppGroup
+            );
 
   bool EndRead3dmGroupTable();
 
@@ -863,8 +882,8 @@ public:
   //           archive.EndRead3dmFontTable();
   //      
   int Read3dmFont(
-	    ON_Font** // ppFont
-	    );
+            ON_Font** // ppFont
+            );
 
   bool EndRead3dmFontTable();
 
@@ -915,8 +934,8 @@ public:
   //           archive.EndRead3dmDimStyleTable();
   //      
   int Read3dmDimStyle(
-	    ON_DimStyle** // ppDimStyle
-	    );
+            ON_DimStyle** // ppDimStyle
+            );
 
   bool EndRead3dmDimStyleTable();
 
@@ -926,18 +945,18 @@ public:
   //
   bool BeginWrite3dmLightTable();
   bool Write3dmLight( const ON_Light&,
-	 const ON_3dmObjectAttributes* // optional
-	 );
+         const ON_3dmObjectAttributes* // optional
+         );
   bool EndWrite3dmLightTable();
 
   bool BeginRead3dmLightTable();
   int  Read3dmLight(  // returns 0 at end of light table
-		      //         1 light successfully read
-		      //        -1 if file is corrupt
-	    ON_Light**, // light returned here
-	    ON_3dmObjectAttributes* // optional - if NOT NULL, object attributes are
-				    //            returned here
-	    );
+                      //         1 light successfully read
+                      //        -1 if file is corrupt
+            ON_Light**, // light returned here
+            ON_3dmObjectAttributes* // optional - if NOT NULL, object attributes are
+                                    //            returned here
+            );
   bool EndRead3dmLightTable();
 
 
@@ -983,21 +1002,21 @@ public:
      Calls to Read3dmInstanceDefinition need to be bracketed by calls
      to BeginRead3dmInstanceDefinitionTable() / EndRead3dmInstanceDefinitionTable().
   
-	     archive.BeginRead3dmInstanceDefinitionTable();
-	     int rc = 1;
-	     ON_InstanceDefinition* pInstanceDefinition;
-	     while(rc==1)
-	     { 
-	       pInstanceDefinition = 0;
-	       archive.Read3dmInstanceDefinition(&pInstanceDefinition);
-	       if ( pInstanceDefinition )
-		 do something with pInstanceDefinition
-	     } 
-	     archive.EndRead3dmInstanceDefinitionTable();
+             archive.BeginRead3dmInstanceDefinitionTable();
+             int rc = 1;
+             ON_InstanceDefinition* pInstanceDefinition;
+             while(rc==1)
+             { 
+               pInstanceDefinition = 0;
+               archive.Read3dmInstanceDefinition(&pInstanceDefinition);
+               if ( pInstanceDefinition )
+                 do something with pInstanceDefinition
+             } 
+             archive.EndRead3dmInstanceDefinitionTable();
   */      
   int Read3dmInstanceDefinition(
-	    ON_InstanceDefinition** // ppInstanceDefinition
-	    );
+            ON_InstanceDefinition** // ppInstanceDefinition
+            );
 
   bool EndRead3dmInstanceDefinitionTable();
 
@@ -1006,21 +1025,21 @@ public:
   //
   bool BeginWrite3dmObjectTable();
   bool Write3dmObject( 
-	 const ON_Object&,
-	 const ON_3dmObjectAttributes* // optional
-	 );
+         const ON_Object&,
+         const ON_3dmObjectAttributes* // optional
+         );
   bool EndWrite3dmObjectTable();
 
   bool BeginRead3dmObjectTable();
   int  Read3dmObject( // returns 0 at end of object table
-		      //         1 if object is read
-		      //         2 if object is skipped because it does not match filter
-		      //        -1 if file is corrupt
-	  ON_Object**, // object returned here (NULL if skipped)
-	  ON_3dmObjectAttributes*, // optional - if NOT NULL, object attributes are
-				   //            returned here
-	  unsigned int = 0 // optional filter made by setting ON::object_type bits
-	  );  // returns NULL at end of object table
+                      //         1 if object is read
+                      //         2 if object is skipped because it does not match filter
+                      //        -1 if file is corrupt
+          ON_Object**, // object returned here (NULL if skipped)
+          ON_3dmObjectAttributes*, // optional - if NOT NULL, object attributes are
+                                   //            returned here
+          unsigned int = 0 // optional filter made by setting ON::object_type bits
+          );  // returns NULL at end of object table
   bool EndRead3dmObjectTable();
 
   ///////////////////////////////////////////////////////////////////
@@ -1028,21 +1047,21 @@ public:
   //
   bool BeginWrite3dmHistoryRecordTable();
   bool Write3dmHistoryRecord( 
-	 const class ON_HistoryRecord&
-	 );
+         const class ON_HistoryRecord&
+         );
   bool EndWrite3dmHistoryRecordTable();
 
   bool BeginRead3dmHistoryRecordTable();
 
   /*
   Returns:
-	   0 at end of object table
-	   1 if object is read
-	  -1 if file is corrupt
+           0 at end of object table
+           1 if object is read
+          -1 if file is corrupt
   */
   int  Read3dmHistoryRecord(
-	  class ON_HistoryRecord*&
-	  );
+          class ON_HistoryRecord*&
+          );
   bool EndRead3dmHistoryRecordTable();
 
   ///////////////////////////////////////////////////////////////////
@@ -1060,7 +1079,7 @@ public:
   // BeginRead3dmUserTable returns false when there are no more user tables
   bool BeginRead3dmUserTable(
     ON_UUID& // user table id returned here 
-	     //  - simply call EndRead3dmUserTable() to skip this information
+             //  - simply call EndRead3dmUserTable() to skip this information
     );
   // Use Read3dmAnonymousUserTableRecord() if you don't know how to decipher 
   // the contents of a user table but you need to rewrite it for some reason.
@@ -1097,8 +1116,8 @@ public:
   //   true if successful, false if unable to find or read
   //   a TCODE_ENDOFFILE chunk.
   bool Read3dmEndMark( 
-	   size_t* // sizeof_archive
-	   );
+           size_t* // sizeof_archive
+           );
 
   ///////////////////////////////////////////////////////////////////
   ///////////////////////////////////////////////////////////////////
@@ -1121,9 +1140,9 @@ public:
   // Returns:
   //   true if write was successful.
   bool BeginWrite3dmChunk(
-	unsigned int, // typecode
-	int // value
-	);
+        unsigned int, // typecode
+        int // value
+        );
 
   /*
   Description:
@@ -1139,10 +1158,10 @@ public:
     False if input was not valid or the write failed.
   */
   bool BeginWrite3dmChunk(
-	unsigned int tcode,
-	int major_version,
-	int minor_version
-	);
+        unsigned int tcode,
+        int major_version,
+        int minor_version
+        );
 
 
   // updates length in chunk header
@@ -1153,9 +1172,9 @@ public:
   // When the end of the 3dm file is reached, BeginReadChunk() will
   // return true with a typecode of TCODE_ENDOFFILE.
   bool BeginRead3dmChunk(
-	unsigned int*,   // typecode from opennurbs_3dm.h
-	int*             // value
-	);
+        unsigned int*,   // typecode from opennurbs_3dm.h
+        int*             // value
+        );
   /*
   Description:
     Begins reading a chunk that must be in the archive at this location.
@@ -1170,10 +1189,10 @@ public:
     False if the chunk did not exist at the current location in the file.
   */
   bool BeginRead3dmChunk(
-	unsigned int expected_tcode,
-	int* major_version,
-	int* minor_version
-	);
+        unsigned int expected_tcode,
+        int* major_version,
+        int* minor_version
+        );
 
   /*
   Description:
@@ -1181,28 +1200,125 @@ public:
   */
   bool EndRead3dmChunk(); 
 
+
+
+  ///////////////////////////////////////////////////////////////////
+  //
+  // Tools for dictionary IO (used in .NET)
+  //
+
+  /*
+  Description:
+    Begins writing a dictionary.
+  Parameters:
+    dictionary_id - [in]
+    version - [in]
+      It is suggested that you use YYYYMMDD as the version number.
+    dictionary_name - [in]
+      You may pass NULL.
+  Remarks:
+    Begins a new chunk with tcode TCODE_DICTIONARY and then writes
+    a TCODE_DICTIONARY_ID chunk containing the id, version and name.
+    After calling this function, you may either write entries by
+    calling
+      BeginWriteDictionaryEntry(); 
+      write entry definition...
+      EndWriteDictionaryEntry();
+    or you may finish writing the dictionay by calling
+      EndWriteDictionary();
+  */
+  bool BeginWriteDictionary(
+          ON_UUID dictionary_id,
+          unsigned int version,
+          const wchar_t* dictionary_name
+          );
+  /*
+  Description:
+    Begins writing a dictionary entry.
+  Parameters:
+    de_type - [in]
+    entry_name - [in]
+  Returns:
+    true 
+      Entry header was written and you must call EndWriteDictionary()
+      after writing the entry data.
+    false 
+      Failed to write entry header.  Do not call EndWriteDictionary().
+  Remarks:
+    Begins a new chunk with tcode TCODE_DICTIONARY_ENTRY,
+    then writes the int, and then writes the string.
+  */
+  bool EndWriteDictionary();
+
+  /*
+  Description:
+    Begins writing a dictionary entry.
+  Parameters:
+    de_type - [in]
+    entry_name - [in]
+  Returns:
+    true 
+      Entry header was written and you must call EndWriteDictionary()
+      after writing the entry data.
+    false 
+      Failed to write entry header.  Do not call EndWriteDictionary().
+  Remarks:
+    Begins a new chunk with tcode TCODE_DICTIONARY_ENTRY,
+    then writes the int, and then writes the string.
+  */
+  bool BeginWriteDictionaryEntry(
+          int de_type, 
+          const wchar_t* entry_name
+          );
+  bool EndWriteDictionaryEntry();
+
+  bool BeginReadDictionary(
+          ON_UUID* dictionary_id,
+          unsigned int* version,
+          ON_wString& dictionary_name
+          );
+  bool EndReadDictionary();
+
+  /*
+  Description:
+    Begin reading a dictionary entry.
+  Parameters:
+    de_type - [out]
+    entry_name - [out]
+  Returns:
+    0: serious IO error
+    1: success
+        read information and then call EndReadDictionaryEntry()
+    2: at end of dictionary
+  */
+  int BeginReadDictionaryEntry(
+          int* de_type, 
+          ON_wString& entry_name
+          );
+  bool EndReadDictionaryEntry();
+
   bool Read3dmGoo( ON_3dmGoo& ); // Call to read "goo"
 
   bool PeekAt3dmChunkType( // does not change file position
-	unsigned int*,   // typecode from opennurbs_3dm.h
-	int*             // value
-	);
+        unsigned int*,   // typecode from opennurbs_3dm.h
+        int*             // value
+        );
   bool Seek3dmChunkFromStart( 
-	// beginning at the start of the active chunk, search portion of
-	// archive included in active chunk for the start of a subchunk 
-	// with the specified type.
-	// if true is returned, then the position is set so the next call to
-	// BeginRead3dmChunk() will read a chunk with the specified typecode
-	unsigned int    // typecode from opennurbs_3dm.h
-	);
+        // beginning at the start of the active chunk, search portion of
+        // archive included in active chunk for the start of a subchunk 
+        // with the specified type.
+        // if true is returned, then the position is set so the next call to
+        // BeginRead3dmChunk() will read a chunk with the specified typecode
+        unsigned int    // typecode from opennurbs_3dm.h
+        );
   bool Seek3dmChunkFromCurrentPosition( 
-	// beginning at the current position, search portion of archive
-	// included in active chunk for the start of a subchunk with the
-	// specified type.
-	// if true is returned, then the position is set so the next call to
-	// BeginRead3dmChunk() will read a chunk with the specified typecode
-	unsigned int    // typecode from opennurbs_3dm.h
-	);
+        // beginning at the current position, search portion of archive
+        // included in active chunk for the start of a subchunk with the
+        // specified type.
+        // if true is returned, then the position is set so the next call to
+        // BeginRead3dmChunk() will read a chunk with the specified typecode
+        unsigned int    // typecode from opennurbs_3dm.h
+        );
 
   // A chunk version is a single byte that encodes a major.minor 
   // version number.  Useful when creating I/O code for 3dm chunks
@@ -1246,13 +1362,15 @@ public:
   /*
   Description:
     If a 3dm archive is being read or written, then this is the
-    version of the 3dm archive format (1, 2, or 3).
+    version of the 3dm archive format (1, 2, 3, 4 or 5).
   Returns:
     @untitle table
     0     a 3dm archive is not being read/written
     1     a version 1 3dm archive is being read/written
     2     a version 2 3dm archive is being read/written
     3     a version 3 3dm archive is being read/written
+    4     a version 4 3dm archive is being read/written
+    5     a version 5 3dm archive is being read/written
   See Also:
     ON_BinaryArchive::ArchiveOpenNURBSVersion
   */
@@ -1346,11 +1464,11 @@ public:
     False if the table start is not found.
   */
   bool FindTableInDamagedArchive(
-	  unsigned int tcode_table,
-	  unsigned int tcode_record,
-	  ON_UUID class_uuid,
-	  int min_length_data
-	  );
+          unsigned int tcode_table,
+          unsigned int tcode_record,
+          ON_UUID class_uuid,
+          int min_length_data
+          );
 
   /*
   Description:
@@ -1362,16 +1480,16 @@ public:
   Parameters:
     text_log - [in] place to print informtion
     recursion_depth - [in] simply a counter
-	to aid in debugging.
+        to aid in debugging.
   Returns:
     0 if something went wrong, otherwise the typecode
     of the chunk that was just studied.
   */
   unsigned int 
   Dump3dmChunk(
-	ON_TextLog& text_log, 
-	int recursion_depth = 0
-	);
+        ON_TextLog& text_log, 
+        int recursion_depth = 0
+        );
 
 protected:
 
@@ -1448,30 +1566,30 @@ private:
   
   bool Read3dmV1Layer( ON_Layer*& );
   int  Read3dmV1Light(  // returns 0 at end of light table
-		      //         1 light successfully read
-		      //        -1 if file is corrupt
-	    ON_Light**, // light returned here
-	    ON_3dmObjectAttributes* // optional - if NOT NULL, object attributes are
-				    //            returned here
-	    );
+                      //         1 light successfully read
+                      //        -1 if file is corrupt
+            ON_Light**, // light returned here
+            ON_3dmObjectAttributes* // optional - if NOT NULL, object attributes are
+                                    //            returned here
+            );
   int Read3dmV1Material( ON_Material** );
   int  Read3dmV1Object( // returns 0 at end of object table
-		      //         1 if object is read
-		      //         2 if object is skipped because it does not match filter
-		      //        -1 if file is corrupt
-	  ON_Object**, // object returned here (NULL if skipped)
-	  ON_3dmObjectAttributes*, // optional - if NOT NULL, object attributes are
-				   //            returned here
-	  unsigned int = 0 // optional filter made by setting ON::object_type bits
-	  );  // returns NULL at end of object table
+                      //         1 if object is read
+                      //         2 if object is skipped because it does not match filter
+                      //        -1 if file is corrupt
+          ON_Object**, // object returned here (NULL if skipped)
+          ON_3dmObjectAttributes*, // optional - if NOT NULL, object attributes are
+                                   //            returned here
+          unsigned int = 0 // optional filter made by setting ON::object_type bits
+          );  // returns NULL at end of object table
 
   bool Read3dmV1AttributesOrMaterial( 
-	    ON_3dmObjectAttributes*,    // attributes,
-	    ON_Material*,      // material,
-	    BOOL&,             // bHaveMat
-	    unsigned int,      // end_mark_tcode 
-	    class ON__3dmV1_XDATA* = 0 // v1 "xdata"
-	    );
+            ON_3dmObjectAttributes*,    // attributes,
+            ON_Material*,      // material,
+            ON_BOOL32&,             // bHaveMat
+            unsigned int,      // end_mark_tcode 
+            class ON__3dmV1_XDATA* = 0 // v1 "xdata"
+            );
   bool Read3dmV1String( ON_String& );
   int  Read3dmV1LayerIndex( const char* ) const;
 
@@ -1533,12 +1651,12 @@ private:
 
   // stack of chunks
   bool PushChunk( 
-	unsigned int, // typecode
-	int          // value
-	);
+        unsigned int, // typecode
+        int          // value
+        );
 
   bool m_bDoChunkCRC; // true if active chunk crc status should be checked
-		      // and updated.
+                      // and updated.
   int m_bad_CRC_count; // number of chunks that have a bad crc
 
 
@@ -1557,13 +1675,13 @@ private:
 
   // returns number of bytes written
   size_t WriteDeflate(
-	size_t,         // sizeof uncompressed input data
-	const void*  // uncompressed input data
-	);
+        size_t,         // sizeof uncompressed input data
+        const void*  // uncompressed input data
+        );
   bool ReadInflate(
-	size_t,  // sizeof uncompressed input data
-	void* // buffer to hold uncompressed data
-	);
+        size_t,  // sizeof uncompressed input data
+        void* // buffer to hold uncompressed data
+        );
   bool CompressionInit();
   void CompressionEnd();
 
@@ -1639,8 +1757,8 @@ public:
   // I/O that using this hack will speed up I/O by factors
   // of 10 to 100.
   void EnableMemoryBuffer(
-	 int=16384 // capacity of memory buffer
-	 );
+         int=16384 // capacity of memory buffer
+         );
 
 protected:
   size_t Read( size_t, void* );
@@ -1669,12 +1787,82 @@ private:
   ON_BinaryFile& operator=( const ON_BinaryFile& ); // no implementation
 };
 
+class ON_CLASS ON_Read3dmBufferArchive : public ON_BinaryArchive
+{
+public:
+
+  /*
+  Construct an ON_BinaryArchive for reading information from a memory buffer.
+  Parameters:
+    sizeof_buffer - [in] size of buffer in bytes (>0)
+    buffer - [in] memory buffer containing binary archive
+    bCopyBuffer - [in]
+      true - copy the input buffer.  
+          Useful when the buffer may be destroyed while this class is still in use.
+      false - Do not copy the input buffer.  
+          In this case you are responsible for making certain the input buffer 
+          is valid while this class is in use.
+    archive_3dm_version  - [in] (1,2,3,4 or 5)
+    archive_opennurbs_version - [in] YYYYMMDDn
+  */
+  ON_Read3dmBufferArchive( 
+    size_t sizeof_buffer, 
+    const void* buffer,
+    bool bCopyBuffer,
+    int archive_3dm_version,
+    int archive_opennurbs_version
+    );
+
+  ~ON_Read3dmBufferArchive();
+
+  /*
+  Returns: 
+     value of m_sizeof_buffer
+  */
+  size_t SizeOfBuffer() const;
+
+  /*
+  Returns: 
+     value of m_buffer
+  */
+  const void* Buffer() const;
+
+  // ON_BinaryArchive overrides
+  size_t CurrentPosition() const; 
+  bool SeekFromCurrentPosition(int); 
+  bool SeekFromStart(size_t);
+  bool AtEnd() const;
+
+protected:
+  // ON_BinaryArchive overrides
+  size_t Read( size_t, void* ); // return actual number of bytes read (like fread())
+  size_t Write( size_t, const void* );
+  bool Flush();
+
+private:
+  void* m_p;
+  const unsigned char* m_buffer;
+  size_t m_sizeof_buffer;
+  size_t m_buffer_position;
+  ON__INT_PTR m_reserved1;
+  ON__INT_PTR m_reserved2;
+  ON__INT_PTR m_reserved3;
+  ON__INT_PTR m_reserved4;
+
+private:
+  // prohibit use - no implementation
+  ON_Read3dmBufferArchive(); 
+  ON_Read3dmBufferArchive( const ON_Read3dmBufferArchive& );
+  ON_Read3dmBufferArchive& operator=(const ON_Read3dmBufferArchive&);
+};
+
+
 /*
 Description:
   Create a simple archive that contains a single geometric object.
 Parameters:
   archive - [in] destination archive.
-  version - [in] (2 or 3) format version.archive version number.
+  version - [in] (2 to 5) format version.archive version number.
       Version 2 format can be read by Rhino 2 and Rhino 3.  Version
       3 format can be read by Rhino 3.
   object - [in] object to be saved in the archive's object table.
@@ -1686,11 +1874,11 @@ Returns:
   false    archive not successfully written.
 Example:
 
-	  const char* filename = "myfile.3dm";
-	  FILE* fp = ON::OpenFile( filename, "wb" );
-	  ON_BinaryFile file( fp, ON::write3dm );
-	  BOOL ok = ON_WriteArchive( archive, geometry );
-	  ON::CloseFile( fp );
+          const char* filename = "myfile.3dm";
+          FILE* fp = ON::OpenFile( filename, "wb" );
+          ON_BinaryFile file( fp, ON::write3dm );
+          ON_BOOL32 ok = ON_WriteArchive( archive, geometry );
+          ON::CloseFile( fp );
 
 Remarks:
   The object table in the archive will contain a single
@@ -1698,10 +1886,10 @@ Remarks:
 */
 ON_DECL
 bool ON_WriteOneObjectArchive( 
-	  ON_BinaryArchive& archive,
-	  int version,
-	  const ON_Object& object
-	  );
+          ON_BinaryArchive& archive,
+          int version,
+          const ON_Object& object
+          );
 
 #endif
 

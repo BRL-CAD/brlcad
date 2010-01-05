@@ -61,7 +61,7 @@
 extern void dgo_qray_data_to_vlist(struct dg_obj *dgop, struct bn_vlblock *vbp, struct dg_qray_dataList *headp, fastf_t *dir, int do_overlaps);
 
 /* defined in dg_obj.c */
-extern int dgo_build_tops(Tcl_Interp *interp, struct solid *hsp, char **start, register char **end);
+extern int dgo_build_tops(Tcl_Interp *interp, struct solid *hsp, char **start, char **end);
 extern void dgo_cvt_vlblock_to_solids(struct dg_obj *dgop, Tcl_Interp *interp, struct bn_vlblock *vbp, char *name, int copy);
 extern void dgo_pr_wait_status(Tcl_Interp *interp, int status);
 
@@ -77,7 +77,7 @@ dgo_nirt_cmd(struct dg_obj	*dgop,
 	     int		argc,
 	     char		**argv)
 {
-    register char **vp;
+    char **vp;
     FILE *fp_in;
     FILE *fp_out, *fp_err;
     int pid, rpid;
@@ -101,8 +101,8 @@ dgo_nirt_cmd(struct dg_obj	*dgop,
     vect_t	center_model;
     vect_t dir;
     vect_t cml;
-    register int i;
-    register struct solid *sp;
+    int i;
+    struct solid *sp;
     char line[RT_MAXLINE];
     char *val;
     struct bu_vls vls;
@@ -536,7 +536,7 @@ dgo_vnirt_cmd(struct dg_obj	*dgop,
 	      Tcl_Interp	*interp,
 	      int		argc,
 	      char		**argv) {
-    register int i;
+    int i;
     int status;
     fastf_t sf = 1.0 * DG_INV_GED;
     vect_t view_ray_orig;

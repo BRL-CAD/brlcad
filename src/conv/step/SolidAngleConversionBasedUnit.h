@@ -39,7 +39,7 @@ protected:
 public:
 	SolidAngleConversionBasedUnit();
 	virtual ~SolidAngleConversionBasedUnit();
-	SolidAngleConversionBasedUnit(STEPWrapper *sw,int STEPid);
+	SolidAngleConversionBasedUnit(STEPWrapper *sw,int step_id);
 	bool Load(STEPWrapper *sw,SCLP23(Application_instance) *sse);
 	virtual void Print(int level);
 

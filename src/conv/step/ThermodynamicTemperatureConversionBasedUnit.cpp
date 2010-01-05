@@ -41,9 +41,9 @@ ThermodynamicTemperatureConversionBasedUnit::ThermodynamicTemperatureConversionB
 	id = 0;
 }
 
-ThermodynamicTemperatureConversionBasedUnit::ThermodynamicTemperatureConversionBasedUnit(STEPWrapper *sw,int STEPid) {
+ThermodynamicTemperatureConversionBasedUnit::ThermodynamicTemperatureConversionBasedUnit(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 ThermodynamicTemperatureConversionBasedUnit::~ThermodynamicTemperatureConversionBasedUnit() {
@@ -57,11 +57,11 @@ ThermodynamicTemperatureConversionBasedUnit::Load(STEPWrapper *sw,SCLP23(Applica
 
 	// load base class attributes
 	if ( !ThermodynamicTemperatureUnit::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::Unit." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 		return false;
 	}
 	if ( !ConversionBasedUnit::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::Unit." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 		return false;
 	}
 
@@ -70,10 +70,10 @@ ThermodynamicTemperatureConversionBasedUnit::Load(STEPWrapper *sw,SCLP23(Applica
 
 void
 ThermodynamicTemperatureConversionBasedUnit::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	ThermodynamicTemperatureUnit::Print(level+1);
 	ConversionBasedUnit::Print(level+1);
 
@@ -87,7 +87,7 @@ ThermodynamicTemperatureConversionBasedUnit::Create(STEPWrapper *sw, SCLP23(Appl
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

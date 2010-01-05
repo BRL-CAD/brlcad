@@ -57,7 +57,7 @@ dm_label_primitive(struct rt_wdb		*wdbp,
 		   const mat_t			xform,
 		   struct rt_db_internal	*ip)
 {
-    register int	i;
+    int	i;
     point_t		work;
     point_t		pos_view;
     int		npl = 0;
@@ -216,7 +216,7 @@ dm_label_primitive(struct rt_wdb		*wdbp,
 	    break;
 	case DB5_MINORTYPE_BRLCAD_ARS: {
 	    /*XXX Needs work */
-	    register struct rt_ars_internal *ars=
+	    struct rt_ars_internal *ars=
 		(struct rt_ars_internal *)ip->idb_ptr;
 	    int ars_crv = 0;
 	    int ars_col = 0;
@@ -245,10 +245,10 @@ dm_label_primitive(struct rt_wdb		*wdbp,
 	    break;
 	case DB5_MINORTYPE_BRLCAD_BSPLINE: {
 	    /*XXX Needs work */
-	    register struct rt_nurb_internal *sip =
+	    struct rt_nurb_internal *sip =
 		(struct rt_nurb_internal *) ip->idb_ptr;
-	    register struct face_g_snurb	*surf;
-	    register fastf_t	*fp;
+	    struct face_g_snurb	*surf;
+	    fastf_t	*fp;
 	    int spl_surfno = 0;
 	    int spl_ui = 0;
 	    int spl_vi = 0;
@@ -281,7 +281,7 @@ dm_label_primitive(struct rt_wdb		*wdbp,
 	    /* New way only */
 	{
 #ifndef NO_MAGIC_CHECKING
-	    register struct model *m =
+	    struct model *m =
 		(struct model *) ip->idb_ptr;
 	    NMG_CK_MODEL(m);
 #endif
@@ -311,7 +311,7 @@ dm_label_primitive(struct rt_wdb		*wdbp,
 #if 0
 	{
 #ifndef NO_MAGIC_CHECKING
-	    register struct rt_pipe_internal *pipe =
+	    struct rt_pipe_internal *pipe =
 		(struct rt_pipe_internal *)ip->idb_ptr;
 
 	    RT_PIPE_CK_MAGIC(pipe);
@@ -536,7 +536,7 @@ dm_label_primitive(struct rt_wdb		*wdbp,
 	case DB5_MINORTYPE_BRLCAD_SUBMODEL:
 	    break;
 	case DB5_MINORTYPE_BRLCAD_CLINE: {
-	    register struct rt_cline_internal *cli =
+	    struct rt_cline_internal *cli =
 		(struct rt_cline_internal *)ip->idb_ptr;
 	    point_t work1;
 
@@ -555,7 +555,7 @@ dm_label_primitive(struct rt_wdb		*wdbp,
 	    /*XXX Needs work */
 #if 0
 	{
-	    register struct rt_bot_internal *bot =
+	    struct rt_bot_internal *bot =
 		(struct rt_bot_internal *)ip->idb_ptr;
 
 	    RT_BOT_CK_MAGIC( bot );
@@ -623,8 +623,8 @@ dm_draw_labels(struct dm	*dmp,
     point_t lines[2*4];	/* up to 4 lines to draw */
     int num_lines=0;
     struct rt_db_internal intern;
-    register struct directory *dp;
-    register int i;
+    struct directory *dp;
+    int i;
     int id;
     struct db_tree_state ts;
     struct db_full_path path;
@@ -681,7 +681,7 @@ dm_draw_labels(struct dm	*dmp,
     }
 
     db_free_full_path(&path);
-    rt_db_free_internal(&intern, &rt_uniresource);
+    rt_db_free_internal(&intern);
 
     return BRLCAD_OK;
 }

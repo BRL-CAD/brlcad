@@ -73,7 +73,7 @@ static unsigned char	ordered[6][6] = {
 int
 tone_classic(int pix, int x, int y, int nx, int ny, int new)
 {
-    register int threshold = 14*ordered[( x + 3) % 6][ y % 6];
+    int threshold = 14*ordered[( x + 3) % 6][ y % 6];
     if (RandomFlag) {
 	threshold += BN_UNIF_DOUBLE(RandomFlag)*63;
     }

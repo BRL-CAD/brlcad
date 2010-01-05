@@ -228,7 +228,7 @@ ged_rfarb(struct ged *gedp, int argc, const char *argv[])
 
     if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &internal, &rt_uniresource) < 0)
     {
-	rt_db_free_internal(&internal, &rt_uniresource);
+	rt_db_free_internal(&internal);
 	bu_vls_printf(&gedp->ged_result_str, "%s: Database write error, aborting.\n", argv[0]);
     }
 

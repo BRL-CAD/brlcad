@@ -175,7 +175,6 @@ db_diradd5(
 		dp->d_flags = DIR_SOLID;
 	    }
 	    break;
-	case DB5_MAJORTYPE_BINARY_EXPM:
 	case DB5_MAJORTYPE_BINARY_UNIF:
 	case DB5_MAJORTYPE_BINARY_MIME:
 	    /* XXX Do we want to define extra flags for this? */
@@ -258,7 +257,6 @@ db5_diradd(struct db_i *dbip,
 		dp->d_flags = DIR_SOLID;
 	    }
 	    break;
-	case DB5_MAJORTYPE_BINARY_EXPM:
 	case DB5_MAJORTYPE_BINARY_UNIF:
 	case DB5_MAJORTYPE_BINARY_MIME:
 	    /* XXX Do we want to define extra flags for this? */

@@ -53,7 +53,7 @@ ged_rotate_arb_face(struct ged *gedp, int argc, const char *argv[])
     int vi;
     point_t pt;
     mat_t mat;
-    register int i;
+    int i;
     int pnt5;		/* special arb7 case */
     char *last;
     struct directory *dp;
@@ -98,14 +98,14 @@ ged_rotate_arb_face(struct ged *gedp, int argc, const char *argv[])
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD ||
 	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_ARB8) {
 	bu_vls_printf(&gedp->ged_result_str, "Object not an ARB");
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 
 	return GED_OK;
     }
 
     if (sscanf(argv[2], "%d", &face) != 1) {
 	bu_vls_printf(&gedp->ged_result_str, "bad face - %s", argv[2]);
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 
 	return GED_ERROR;
     }
@@ -114,14 +114,14 @@ ged_rotate_arb_face(struct ged *gedp, int argc, const char *argv[])
     face -= 1;
     if (face < 0 || 5 < face) {
 	bu_vls_printf(&gedp->ged_result_str, "bad face - %s", argv[2]);
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 
 	return GED_ERROR;
     }
 
     if (sscanf(argv[3], "%d", &vi) != 1) {
 	bu_vls_printf(&gedp->ged_result_str, "bad vertex index - %s", argv[2]);
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 
 	return GED_ERROR;
     }
@@ -131,14 +131,14 @@ ged_rotate_arb_face(struct ged *gedp, int argc, const char *argv[])
     vi -= 1;
     if (vi < 0 || 7 < vi) {
 	bu_vls_printf(&gedp->ged_result_str, "bad vertex - %s", argv[2]);
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 
 	return GED_ERROR;
     }
 
     if (sscanf(argv[4], "%lf %lf %lf", &pt[X], &pt[Y], &pt[Z]) != 3) {
 	bu_vls_printf(&gedp->ged_result_str, "bad point - %s", argv[3]);
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 
 	return GED_ERROR;
     }
@@ -149,7 +149,7 @@ ged_rotate_arb_face(struct ged *gedp, int argc, const char *argv[])
     arb_type = rt_arb_std_type(&intern, &gedp->ged_wdbp->wdb_tol);
 
     if (rt_arb_calc_planes(&gedp->ged_result_str, arb, arb_type, planes, &gedp->ged_wdbp->wdb_tol)) {
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 
 	return GED_ERROR;
     }
@@ -199,7 +199,7 @@ ged_rotate_arb_face(struct ged *gedp, int argc, const char *argv[])
     (void)rt_arb_calc_points(arb, arb_type, planes, &gedp->ged_wdbp->wdb_tol);
 
     {
-	register int i;
+	int i;
 	mat_t invmat;
 
 	bn_mat_inv(invmat, mat);
@@ -214,7 +214,7 @@ ged_rotate_arb_face(struct ged *gedp, int argc, const char *argv[])
 	GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, GED_ERROR);
     }
 
-    rt_db_free_internal(&intern, &rt_uniresource);
+    rt_db_free_internal(&intern);
     return GED_OK;
 }
 

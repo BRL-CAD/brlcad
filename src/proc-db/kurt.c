@@ -151,7 +151,7 @@ do_cell(struct val *vp, double xc, double yc)
     /* Sort in increasing Z */
     for (lim = nroots-1; lim > 0; lim--) {
 	for (l=0; l < lim; l++) {
-	    register double t;
+	    double t;
 	    if ((t=vp->v_z[l]) > vp->v_z[l+1]) {
 		vp->v_z[l] = vp->v_z[l+1];
 		vp->v_z[l+1] = t;
@@ -164,7 +164,7 @@ void
 draw_rect(struct val *a, struct val *b, struct val *c, struct val *d)
 {
     int min, max;
-    register int i;
+    int i;
     point_t centroid, work;
     int ndiff;
     int lvl;
@@ -285,7 +285,7 @@ pnorms(fastf_t (*norms)[3], fastf_t (*verts)[3], fastf_t *out, int npts)
     /* hopefully points outwards */
 
 {
-    register int i;
+    int i;
     vect_t ab, ac;
     vect_t n;
 

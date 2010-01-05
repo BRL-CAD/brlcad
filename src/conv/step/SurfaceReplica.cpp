@@ -41,9 +41,9 @@ SurfaceReplica::SurfaceReplica() {
 	transformation = NULL;
 }
 
-SurfaceReplica::SurfaceReplica(STEPWrapper *sw,int STEPid) {
+SurfaceReplica::SurfaceReplica(STEPWrapper *sw,int step_id) {
 	step=sw;
-	id = STEPid;
+	id = step_id;
 	parent_surface = NULL;
 	transformation = NULL;
 }
@@ -58,7 +58,7 @@ SurfaceReplica::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 	id = sse->STEPfile_id;
 
 	if ( !Surface::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::BoundedSurface." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::BoundedSurface." << std::endl;
 		return false;
 	}
 
@@ -71,7 +71,7 @@ SurfaceReplica::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		if (entity) {
 			parent_surface = dynamic_cast<Surface *>(Factory::CreateObject(sw,entity));
 		} else {
-			cerr << CLASSNAME << ": error loading 'parent_surface' attribute." << endl;
+			std::cerr << CLASSNAME << ": error loading 'parent_surface' attribute." << std::endl;
 			return false;
 		}
 	}
@@ -80,7 +80,7 @@ SurfaceReplica::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		if (entity) {
 			transformation = dynamic_cast<CartesianTransformationOperator3D *>(Factory::CreateObject(sw,entity));
 		} else {
-			cerr << CLASSNAME << ": error loading 'transformation' attribute." << endl;
+			std::cerr << CLASSNAME << ": error loading 'transformation' attribute." << std::endl;
 			return false;
 		}
 	}
@@ -90,16 +90,16 @@ SurfaceReplica::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 
 void
 SurfaceReplica::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << name << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Attributes:" << endl;
-	TAB(level+1); cout << "parent_surface:" << endl;
+	TAB(level); std::cout << "Attributes:" << std::endl;
+	TAB(level+1); std::cout << "parent_surface:" << std::endl;
 	parent_surface->Print(level+1);
-	TAB(level+1); cout << "transformation:" << endl;
+	TAB(level+1); std::cout << "transformation:" << std::endl;
 	transformation->Print(level+1);
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	Surface::Print(level+1);
 }
 
@@ -112,7 +112,7 @@ SurfaceReplica::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}
@@ -125,7 +125,7 @@ SurfaceReplica::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 bool
 SurfaceReplica::LoadONBrep(ON_Brep *brep)
 {
-	cerr << "Error: ::LoadONBrep(ON_Brep *brep) not implemented for " << entityname << endl;
+	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implemented for " << entityname << std::endl;
 	return false;
 }
 

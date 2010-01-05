@@ -79,7 +79,7 @@ ged_do_trace(struct db_i		*dbip,
  *
  */
 void
-_ged_trace(register struct directory	*dp,
+_ged_trace(struct directory	*dp,
 	  int				pathpos,
 	  const mat_t			old_xlate,
 	  struct _ged_trace_data		*gtdp)
@@ -114,7 +114,7 @@ _ged_trace(register struct directory	*dp,
 	    db_tree_funcleaf(gtdp->gtd_gedp->ged_wdbp->dbip, comb, comb->tree, ged_do_trace,
 			     (genptr_t)&pathpos, (genptr_t)old_xlate, (genptr_t)gtdp);
 
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 
 	return;
     }
@@ -173,7 +173,7 @@ _ged_trace(register struct directory	*dp,
 				   &rt_uniresource,
 				   gtdp->gtd_gedp->ged_wdbp->dbip) < 0)
 	bu_vls_printf(&gtdp->gtd_gedp->ged_result_str, "%s: describe error\n", dp->d_namep);
-    rt_db_free_internal(&intern, &rt_uniresource);
+    rt_db_free_internal(&intern);
 }
 
 

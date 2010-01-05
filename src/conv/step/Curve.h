@@ -54,7 +54,7 @@ protected:
 	double trim_endpoint[3];
 	Vertex *start;
 	Vertex *end;
-	Curve(STEPWrapper *sw,int STEPid);
+	Curve(STEPWrapper *sw,int step_id);
 
 public:
 	Curve();

@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -50,22 +49,22 @@ public:
     double               // height
     );
 
-  bool IsValid() const; // returns TRUE if all fields contain reasonable
-			// information and equation jibes with point and Z.
+  bool IsValid() const; // returns true if all fields contain reasonable
+                        // information and equation jibes with point and Z.
 
-  bool IsFinite() const; // returns TRUE if the cylinder is finite
-			 // (height[0] != height[1]) and FALSE if the
-			 // cylinder is infinite.
+  bool IsFinite() const; // returns true if the cylinder is finite
+                         // (height[0] != height[1]) and false if the
+                         // cylinder is infinite.
 
   const ON_3dVector& Axis() const;
   const ON_3dPoint& Center() const;
   double Height() const; // returns 0 for infinite cylinder
   ON_Circle CircleAt( 
-	double // linear parameter
-	) const;
+        double // linear parameter
+        ) const;
   ON_Line LineAt( 
-	double // angular parameter
-	) const;
+        double // angular parameter
+        ) const;
 
   // evaluate parameters and return point
   ON_3dPoint PointAt(
@@ -79,44 +78,44 @@ public:
 
   // returns parameters of point on cylinder that is closest to given point
   bool ClosestPointTo( 
-	 ON_3dPoint, 
-	 double*, // angular parameter [0,2pi]
-	 double*  // linear parameter (height from base circle's plane)
-	 ) const;
+         ON_3dPoint, 
+         double*, // angular parameter [0,2pi]
+         double*  // linear parameter (height from base circle's plane)
+         ) const;
   // returns point on cylinder that is closest to given point
   ON_3dPoint ClosestPointTo( 
-	 ON_3dPoint 
-	 ) const;
+         ON_3dPoint 
+         ) const;
 
   // For intersections see ON_Intersect();
 
   // rotate cylinder about its origin
   bool Rotate(
-	double,               // sin(angle)
-	double,               // cos(angle)
-	const ON_3dVector&  // axis of rotation
-	);
+        double,               // sin(angle)
+        double,               // cos(angle)
+        const ON_3dVector&  // axis of rotation
+        );
   bool Rotate(
-	double,               // angle in radians
-	const ON_3dVector&  // axis of rotation
-	);
+        double,               // angle in radians
+        const ON_3dVector&  // axis of rotation
+        );
 
   // rotate cylinder about a point and axis
   bool Rotate(
-	double,               // sin(angle)
-	double,               // cos(angle)
-	const ON_3dVector&, // axis of rotation
-	const ON_3dPoint&   // center of rotation
-	);
+        double,               // sin(angle)
+        double,               // cos(angle)
+        const ON_3dVector&, // axis of rotation
+        const ON_3dPoint&   // center of rotation
+        );
   bool Rotate(
-	double,              // angle in radians
-	const ON_3dVector&, // axis of rotation
-	const ON_3dPoint&   // center of rotation
-	);
+        double,              // angle in radians
+        const ON_3dVector&, // axis of rotation
+        const ON_3dPoint&   // center of rotation
+        );
 
   bool Translate(
-	const ON_3dVector&
-	);
+        const ON_3dVector&
+        );
 
   // parameterization of NURBS surface does not match cylinder's transcendental paramaterization
   int GetNurbForm( ON_NurbsSurface& ) const; // returns 0=failure, 2=success

@@ -70,9 +70,9 @@ RGBpixel	pixcolor = { 255, 255, 255 };
 
 static int	fbx1, fby1, fbx2, fby2;
 
-void		edgelimit(register struct coords *ppos);
+void		edgelimit(struct coords *ppos);
 void		BuildStr(struct coords *pt1, struct coords *pt2);
-void		Raster(register struct stroke *vp);
+void		Raster(struct stroke *vp);
 
 static char usage[] = "\
 Usage: fbline [-h -c ] [-F framebuffer]\n\
@@ -83,10 +83,10 @@ Usage: fbline [-h -c ] [-F framebuffer]\n\
  *			G E T_ A R G S
  */
 int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
 
-    register int c;
+    int c;
 
     while ( (c = bu_getopt( argc, argv, "hW:w:N:n:cF:r:g:b:" )) != EOF )  {
 	switch ( c )  {
@@ -176,7 +176,7 @@ main(int argc, char **argv)
  *	Really should clip to screen, instead.
  */
 void
-edgelimit(register struct coords *ppos)
+edgelimit(struct coords *ppos)
 {
     if ( ppos->x >= screen_width )
 	ppos->x = screen_width -1;
@@ -194,11 +194,11 @@ void
 BuildStr(struct coords *pt1, struct coords *pt2)
 {
     struct stroke cur_stroke;
-    register struct stroke *vp = &cur_stroke;
+    struct stroke *vp = &cur_stroke;
 
     /* arrange for pt1 to have the smaller Y-coordinate: */
     if ( pt1->y > pt2->y )  {
-	register struct coords *temp;	/* temporary for swap */
+	struct coords *temp;	/* temporary for swap */
 
 	temp = pt1;		/* swap pointers */
 	pt1 = pt2;
@@ -215,7 +215,7 @@ BuildStr(struct coords *pt1, struct coords *pt2)
 
     /* if Y is not really major, correct the assignments */
     if ( !(vp->ymajor = vp->minor <= vp->major) )  {
-	register short	temp;	/* temporary for swap */
+	short	temp;	/* temporary for swap */
 
 	temp = vp->minor;
 	vp->minor = vp->major;
@@ -238,9 +238,9 @@ BuildStr(struct coords *pt1, struct coords *pt2)
  *	a zero-length stroke.
  */
 void
-Raster(register struct stroke *vp)
+Raster(struct stroke *vp)
 {
-    register short	dy;		/* raster within active band */
+    short	dy;		/* raster within active band */
 
     /*
      *  Write the color of this vector on all pixels.

@@ -677,14 +677,14 @@ wrobj(struct rt_wdb	*wdbp,
 
     if ( (tdp = db_diradd( wdbp->dbip, name, -1L, 0, flags, (genptr_t)&intern.idb_type)) == DIR_NULL )
     {
-	rt_db_free_internal( &intern, &rt_uniresource );
+	rt_db_free_internal(&intern);
 	Tcl_AppendResult(interp, "Cannot add '", name, "' to directory, aborting\n", (char *)NULL );
 	return( -1 );
     }
 
     if ( rt_db_put_internal( tdp, wdbp->dbip, &intern, &rt_uniresource ) < 0 )
     {
-	rt_db_free_internal( &intern, &rt_uniresource );
+	rt_db_free_internal(&intern);
 	Tcl_AppendResult(interp, "wrobj(wdbp, interp, ", name, "):  write error\n", (char *)NULL);
 	WDB_TCL_ERROR_RECOVERY_SUGGESTION;
 	return( -1 );
@@ -694,8 +694,8 @@ wrobj(struct rt_wdb	*wdbp,
 
 static void
 tancir(Tcl_Interp	*interp,
-       register fastf_t cir1[],
-       register fastf_t cir2[]) {
+       fastf_t cir1[],
+       fastf_t cir2[]) {
     static fastf_t mag;
     vect_t	work;
     fastf_t f;
@@ -934,7 +934,7 @@ top( vec1, vec2, t )
 static void
 track_mk_tree_pure( struct rt_comb_internal *comb, struct bu_list *member_hd )
 {
-    register struct wmember *wp;
+    struct wmember *wp;
 
     for ( BU_LIST_FOR( wp, wmember, member_hd ) )  {
 	union tree	*leafp, *nodep;
@@ -1087,7 +1087,7 @@ track_mk_addmember(
     mat_t mat,
     int		op)
 {
-    register struct wmember *wp;
+    struct wmember *wp;
 
     BU_GETSTRUCT( wp, wmember );
     wp->l.magic = WMEMBER_MAGIC;
@@ -1121,7 +1121,7 @@ track_mk_addmember(
 static void
 track_mk_freemembers( struct bu_list *headp )
 {
-    register struct wmember *wp;
+    struct wmember *wp;
 
     while ( BU_LIST_WHILE( wp, wmember, headp ) )  {
 	WDB_CK_WMEMBER(wp);

@@ -39,66 +39,6 @@
 #include "fb.h"
 
 
-HIDDEN int	mem_open(FBIO *ifp, char *file, int width, int height),
-    mem_close(FBIO *ifp),
-    mem_clear(FBIO *ifp, unsigned char *pp),
-    mem_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count),
-    mem_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count),
-    mem_rmap(FBIO *ifp, ColorMap *cmp),
-    mem_wmap(FBIO *ifp, const ColorMap *cmp),
-    mem_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom),
-    mem_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom),
-    mem_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig),
-    mem_cursor(FBIO *ifp, int mode, int x, int y),
-    mem_getcursor(FBIO *ifp, int *mode, int *x, int *y),
-    mem_poll(FBIO *ifp),
-    mem_flush(FBIO *ifp),
-    mem_help(FBIO *ifp);
-
-/* This is the ONLY thing that we normally "export" */
-FBIO memory_interface =  {
-    0,
-    mem_open,		/* device_open		*/
-    mem_close,		/* device_close		*/
-    mem_clear,		/* device_clear		*/
-    mem_read,		/* buffer_read		*/
-    mem_write,		/* buffer_write		*/
-    mem_rmap,		/* colormap_read	*/
-    mem_wmap,		/* colormap_write	*/
-    mem_view,		/* set view		*/
-    mem_getview,		/* get view		*/
-    mem_setcursor,		/* define cursor	*/
-    mem_cursor,		/* set cursor		*/
-    mem_getcursor,		/* get cursor		*/
-    fb_sim_readrect,	/* rectangle read	*/
-    fb_sim_writerect,	/* rectangle write	*/
-    fb_sim_bwreadrect,
-    fb_sim_bwwriterect,
-    mem_poll,		/* poll			*/
-    mem_flush,		/* flush		*/
-    mem_close,		/* free			*/
-    mem_help,		/* help message		*/
-    "Memory Buffer",	/* device description	*/
-    8192,			/* max width		*/
-    8192,			/* max height		*/
-    "/dev/mem",		/* short device name	*/
-    512,			/* default/current width  */
-    512,			/* default/current height */
-    -1,			/* select fd		*/
-    -1,			/* file descriptor	*/
-    1, 1,			/* zoom			*/
-    256, 256,		/* window center	*/
-    0, 0, 0,		/* cursor		*/
-    PIXEL_NULL,		/* page_base		*/
-    PIXEL_NULL,		/* page_curp		*/
-    PIXEL_NULL,		/* page_endp		*/
-    -1,			/* page_no		*/
-    0,			/* page_dirty		*/
-    0L,			/* page_curpos		*/
-    0L,			/* page_pixels		*/
-    0			/* debug		*/
-};
-
 /* Per connection private info */
 struct	meminfo {
     FBIO	*fbp;		/* attached frame buffer (if any) */
@@ -474,6 +414,50 @@ mem_help(FBIO *ifp)
     }
     return(0);
 }
+
+/* This is the ONLY thing that we normally "export" */
+FBIO memory_interface =  {
+    0,
+    mem_open,		/* device_open		*/
+    mem_close,		/* device_close		*/
+    mem_clear,		/* device_clear		*/
+    mem_read,		/* buffer_read		*/
+    mem_write,		/* buffer_write		*/
+    mem_rmap,		/* colormap_read	*/
+    mem_wmap,		/* colormap_write	*/
+    mem_view,		/* set view		*/
+    mem_getview,		/* get view		*/
+    mem_setcursor,		/* define cursor	*/
+    mem_cursor,		/* set cursor		*/
+    mem_getcursor,		/* get cursor		*/
+    fb_sim_readrect,	/* rectangle read	*/
+    fb_sim_writerect,	/* rectangle write	*/
+    fb_sim_bwreadrect,
+    fb_sim_bwwriterect,
+    mem_poll,		/* poll			*/
+    mem_flush,		/* flush		*/
+    mem_close,		/* free			*/
+    mem_help,		/* help message		*/
+    "Memory Buffer",	/* device description	*/
+    8192,			/* max width		*/
+    8192,			/* max height		*/
+    "/dev/mem",		/* short device name	*/
+    512,			/* default/current width  */
+    512,			/* default/current height */
+    -1,			/* select fd		*/
+    -1,			/* file descriptor	*/
+    1, 1,			/* zoom			*/
+    256, 256,		/* window center	*/
+    0, 0, 0,		/* cursor		*/
+    PIXEL_NULL,		/* page_base		*/
+    PIXEL_NULL,		/* page_curp		*/
+    PIXEL_NULL,		/* page_endp		*/
+    -1,			/* page_no		*/
+    0,			/* page_dirty		*/
+    0L,			/* page_curpos		*/
+    0L,			/* page_pixels		*/
+    0			/* debug		*/
+};
 
 /*
  * Local Variables:

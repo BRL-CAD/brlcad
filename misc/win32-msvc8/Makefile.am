@@ -1,5 +1,6 @@
 
 EXTRA_DIST= \
+	adrt/adrt.vcproj \
 	asc2g/asc2g.vcproj \
 	asc2nmg/asc2nmg.vcproj \
 	asc2pix/asc2pix.vcproj \

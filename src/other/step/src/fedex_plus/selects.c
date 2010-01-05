@@ -34,12 +34,12 @@ extern int multiple_inheritance;
 			      ((t)->u.type->body->type == integer_) || \
 			      ((t)->u.type->body->type == number_) )
 #define PRINT_BUG_REPORT  \
-     fprintf( f, "   cerr << __FILE__ << \":\" << __LINE__ <<  \":  ERROR" \
+     fprintf( f, "   std::cerr << __FILE__ << \":\" << __LINE__ <<  \":  ERROR" \
               " in schema library:  \\n\" \n\t<< _POC_ << \"\\n\\n\";\n");
 
 #define PRINT_SELECTBUG_WARNING(f) \
      fprintf( (f), "\n   severity( SEVERITY_WARNING );\n" ); \
-     fprintf( (f), "   cerr << __FILE__ << \":\" << __LINE__ <<  \":  "); \
+     fprintf( (f), "   std::cerr << __FILE__ << \":\" << __LINE__ <<  \":  "); \
      fprintf( (f), "WARNING:  possible misuse of\"\n        << \" SELECT "); \
      fprintf( (f), "TYPE from schema library.\\n\";\n"); \
      fprintf( (f), "   Error( \"Mismatch in underlying type.\" );\n" );
@@ -595,9 +595,9 @@ TYPEselect_inc_print_vars( const Type type, FILE *f, Linked_List dups)
   fprintf (f, "\n\tvirtual BASE_TYPE ValueType() const;\n");
   
   fprintf (f, "\n\n// STEP Part 21\n");
-  fprintf (f, "\tvirtual void STEPwrite_content (ostream& out =cout,\n"
+  fprintf (f, "\tvirtual void STEPwrite_content (ostream& out =std::cout,\n"
 	      "\t\t\t\t\tconst char *currSch =0) const;\n");
-  fprintf (f, "\tvirtual void STEPwrite_verbose (ostream& out =cout,\n"
+  fprintf (f, "\tvirtual void STEPwrite_verbose (ostream& out =std::cout,\n"
 	      "\t\t\t\t\tconst char *currSch =0) const;\n");
   fprintf (f, "\tvirtual Severity STEPread_content (istream& in =cin,\n"
 	      "\t\tInstMgr * instances =0, const char *utype =0,\n"
@@ -815,27 +815,27 @@ TYPEselect_lib_print_part_one( const Type type, FILE* f, Schema schema,
 	      "os_access_reason reason, void *user_data, \n\t\t\t\tvoid *"
 	      "start_range, void *end_range)\n{\n", nm);
   fprintf (f, "#ifdef SCL_LOGGING\n    if( *logStream )\n    {\n");
-  fprintf (f, "\t*logStream << \"%s access hook funct called.\" << endl;\n",
+  fprintf (f, "\t*logStream << \"%s access hook funct called.\" << std::endl;\n",
 	      nm);
   fprintf (f, "    }\n#endif\n");
 /*
-  fprintf (f, "    cout << \"%s access hook funct called.\" << endl;\n", 
+  fprintf (f, "    std::cout << \"%s access hook funct called.\" << std::endl;\n",
 	   SelectName( TYPEget_name(type) ) );
 */
   fprintf (f, "    %s *s = (%s *) object;\n    s->_type = %s;\n", nm, nm, tdnm);
   fprintf (f, "#ifdef SCL_LOGGING\n    if( *logStream )\n    {\n");
   fprintf (f, "\t*logStream << \"underlying type set to \" << "
-	      "s->UnderlyingTypeName() << endl << endl;\n");
+	      "s->UnderlyingTypeName() << std::endl << std::endl;\n");
   fprintf (f, "    }\n#endif\n");
 /*
-  fprintf (f, "    cout << \"underlying type set to \" << s->UnderlyingTypeName() << endl << endl;\n");
+  fprintf (f, "    std::cout << \"underlying type set to \" << s->UnderlyingTypeName() << std::endl << std::endl;\n");
 */
   fprintf (f, "    const TypeDescriptor *td = s->CanBe(s->UnderlyingType"
 	      "Name());\n");
   fprintf (f, "    s->SetUnderlyingType(td);\n");
   fprintf (f, "    if(!td)\n");
-  fprintf (f, "\tcerr << \"ERROR: can't reinitialize underlying select "
-	      "TypeDescriptor.\" \n\t     << endl;\n");
+  fprintf (f, "\tstd::cerr << \"ERROR: can't reinitialize underlying select "
+	      "TypeDescriptor.\" \n\t     << std::endl;\n");
   fprintf (f, "}\n");
   fprintf (f, "#endif\n\n");
 
@@ -855,13 +855,13 @@ TYPEselect_lib_print_part_one( const Type type, FILE* f, Schema schema,
   initSelItems( type, f );
   fprintf (f, "\n{\n");
   fprintf (f, "#ifdef SCL_LOGGING\n    if( *logStream )\n    {\n");
-  fprintf (f, "\t*logStream << \"DAVE ERR entering %s constructor.\" << endl;\n", n);
+  fprintf (f, "\t*logStream << \"DAVE ERR entering %s constructor.\" << std::endl;\n", n);
   fprintf (f, "    }\n#endif\n");
 /*  fprintf( f, "#ifdef  WE_WANT_TO_HAVE_THIS_CONSTRUCTOR\n" );*/
   fprintf( f, "   nullify();\n" );
 /*  fprintf( f, "#endif\n" );*/
   fprintf (f, "#ifdef SCL_LOGGING\n    if( *logStream )\n    {\n");
-  fprintf (f, "//\t*logStream << \"DAVE ERR exiting %s constructor.\" << endl;\n", n);
+  fprintf (f, "//\t*logStream << \"DAVE ERR exiting %s constructor.\" << std::endl;\n", n);
   fprintf (f, "    }\n#endif\n");
   fprintf( f, "}\n" );
 
@@ -889,7 +889,7 @@ TYPEselect_lib_print_part_one( const Type type, FILE* f, Schema schema,
 	fprintf (f, "#ifdef SCL_LOGGING\n    if( *logStream )\n    {\n");
 	fprintf (f, 
 		 "\t*logStream << \"DAVE ERR entering %s constructor.\""
-		 " << endl;\n", n);
+		 " << std::endl;\n", n);
 	fprintf (f, "    }\n#endif\n");
 
 	if (isAggregateType (t))  
@@ -899,7 +899,7 @@ TYPEselect_lib_print_part_one( const Type type, FILE* f, Schema schema,
 	fprintf (f, "#ifdef SCL_LOGGING\n    if( *logStream )\n    {\n");
 	fprintf (f, 
 		 "//\t*logStream << \"DAVE ERR exiting %s constructor.\""
-		 " << endl;\n", n);
+		 " << std::endl;\n", n);
 	fprintf (f, "    }\n#endif\n");
 
 	fprintf( f, "}\n\n" );
@@ -922,7 +922,7 @@ TYPEselect_lib_print_part_one( const Type type, FILE* f, Schema schema,
 	     fprintf (f, "#ifdef SCL_LOGGING\n    if( *logStream )\n    {\n");
 	     fprintf (f, 
 		      "\t*logStream << \"DAVE ERR entering %s constructor.\""
-		      " << endl;\n", n);
+		      " << std::endl;\n", n);
 	     fprintf (f, "    }\n#endif\n");
 	     fprintf (f, "   _%s.ShallowCopy (*o);\n", SEL_ITEMget_dmname (t));
 	   }
@@ -942,7 +942,7 @@ TYPEselect_lib_print_part_one( const Type type, FILE* f, Schema schema,
        fprintf (f, "#ifdef SCL_LOGGING\n    if( *logStream )\n    {\n");
        fprintf (f, 
 		"//\t*logStream << \"DAVE ERR exiting %s constructor.\""
-		" << endl;\n", n);
+		" << std::endl;\n", n);
        fprintf (f, "    }\n#endif\n");
        fprintf( f, "}\n\n" );
    }
@@ -1173,7 +1173,7 @@ TYPEselect_lib_print_part_three( const Type type, FILE* f, Schema schema,
 	      break;
 
 	  case boolean_:
-	    fprintf( f, "   return (SCLBOOL(Bool)) 0;\n}\n\n" );
+	    fprintf( f, "   return (SCLBOOL(Boolean)) 0;\n}\n\n" );
 	      break;
 
 	  case logical_:
@@ -1695,7 +1695,7 @@ TYPEselect_lib_part21 (const Type type, FILE* f, Schema schema)
 
   PRINT_SELECTBUG_WARNING (f) ;
   fprintf (f, "#ifdef __SUNCPLUSPLUS__\n"
-	   "cerr << instances << \"  \" << addFileId << endl;\n"
+	   "std::cerr << instances << \"  \" << addFileId << std::endl;\n"
 	   "#endif\n");
 
   LISTfree (data_members);
@@ -1792,7 +1792,7 @@ TYPEselect_lib_StrToVal (const Type type, FILE* f, Schema schema)
   fprintf (f, "  default:  // should never be here - done in Select class\n");
   PRINT_SELECTBUG_WARNING (f) ;
   fprintf (f, "#ifdef __SUNCPLUSPLUS__\n"
-	   "cerr << str << \"  \" << instances << endl;\n"
+	   "std::cerr << str << \"  \" << instances << std::endl;\n"
 	   "#endif\n");
   fprintf (f, "\treturn SEVERITY_WARNING;\n  }\n");
 
@@ -1861,7 +1861,7 @@ SELlib_print_protected (const Type type,  FILE* f, const Schema schema)
   PRINT_SELECTBUG_WARNING (f) ;
   fprintf (f,
 	   "#ifdef __SUNCPLUSPLUS__\n"
-	   "  cerr << se -> EntityName () << endl;\n"
+	   "  std::cerr << se -> EntityName () << std::endl;\n"
 	   "#endif\n"
 	   "  return 0;\n}\n");
 

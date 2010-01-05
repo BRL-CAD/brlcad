@@ -45,7 +45,7 @@ empty(int fd)
     {
 	static struct timeval	timeout = { 0L, 600L };
 	fd_set		readfds;
-	register int nfound;
+	int nfound;
 	FD_ZERO( &readfds );
 	FD_SET( fd, &readfds );
 	nfound = select( fd+1, &readfds, (fd_set *)0, (fd_set *)0, &timeout );

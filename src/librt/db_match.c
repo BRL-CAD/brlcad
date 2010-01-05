@@ -198,7 +198,7 @@ db_update_nref( struct db_i *dbip, struct resource *resp )
 			    dp2->d_nref++;
 			}
 		    }
-		    rt_db_free_internal( &intern, resp );
+		    rt_db_free_internal(&intern);
 		} else if ( dp->d_minor_type ==  DB5_MINORTYPE_BRLCAD_REVOLVE ) {
 		    struct rt_revolve_internal *revolve;
 
@@ -212,7 +212,7 @@ db_update_nref( struct db_i *dbip, struct resource *resp )
 			    dp2->d_nref++;
 			}
 		    }
-		    rt_db_free_internal( &intern, resp );
+		    rt_db_free_internal(&intern);
 		} else if ( dp->d_minor_type ==  DB5_MINORTYPE_BRLCAD_DSP ) {
 		    struct rt_dsp_internal *dsp;
 
@@ -226,7 +226,7 @@ db_update_nref( struct db_i *dbip, struct resource *resp )
 			    dp2->d_nref++;
 			}
 		    }
-		    rt_db_free_internal( &intern, resp );
+		    rt_db_free_internal(&intern);
 		}
 	    }
 	    if ( !(dp->d_flags & DIR_COMB) )
@@ -237,14 +237,14 @@ db_update_nref( struct db_i *dbip, struct resource *resp )
 		bu_log("NOTICE: %s was marked a combination, but isn't one?  Clearing flag\n",
 		       dp->d_namep);
 		dp->d_flags &= ~DIR_COMB;
-		rt_db_free_internal( &intern, resp );
+		rt_db_free_internal(&intern);
 		continue;
 	    }
 	    comb = (struct rt_comb_internal *)intern.idb_ptr;
 	    db_tree_funcleaf( dbip, comb, comb->tree,
 			      db_count_refs, (genptr_t)NULL,
 			      (genptr_t)NULL, (genptr_t)NULL );
-	    rt_db_free_internal( &intern, resp );
+	    rt_db_free_internal(&intern);
 	}
     }
 }

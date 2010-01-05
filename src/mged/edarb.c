@@ -41,7 +41,7 @@
 #include "./mged_dm.h"
 #include "./cmd.h"
 
-void	ext4to6(int pt1, int pt2, int pt3, register struct rt_arb_internal *arb), old_ext4to6();
+void	ext4to6(int pt1, int pt2, int pt3, struct rt_arb_internal *arb), old_ext4to6();
 
 extern struct rt_db_internal	es_int;
 extern struct rt_db_internal	es_int_orig;
@@ -317,7 +317,7 @@ mv_edge(
 int
 f_extrude(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    register int i, j;
+    int i, j;
     static int face;
     static int pt[4];
     static int prod;
@@ -529,7 +529,7 @@ f_extrude(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 int
 f_arbdef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    register struct directory *dp;
+    struct directory *dp;
     struct rt_db_internal	internal;
     struct rt_arb_internal	*arb;
     int i, j;
@@ -602,14 +602,14 @@ f_arbdef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     if ( (dp=db_diradd( dbip, argv[1], -1L, 0, DIR_SOLID, (genptr_t)&internal.idb_type)) == DIR_NULL )
     {
-	rt_db_free_internal( &internal, &rt_uniresource );
+	rt_db_free_internal(&internal);
 	Tcl_AppendResult(interp, "Cannot add ", argv[1], " to directory\n", (char *)NULL );
 	return TCL_ERROR;
     }
 
     if ( rt_db_put_internal( dp, dbip, &internal, &rt_uniresource ) < 0 )
     {
-	rt_db_free_internal( &internal, &rt_uniresource );
+	rt_db_free_internal(&internal);
 	TCL_WRITE_ERR_return;
     }
 
@@ -630,7 +630,7 @@ f_arbdef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 int
 f_mirface(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    register int i, j, k;
+    int i, j, k;
     static int face;
     static int pt[4];
     static int prod;
@@ -823,7 +823,7 @@ f_mirface(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 int
 f_edgedir(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    register int i;
+    int i;
     vect_t slope;
     fastf_t rot, fb;
 
@@ -892,10 +892,10 @@ f_edgedir(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  *			to produce ARB6
  */
 void
-ext4to6(int pt1, int pt2, int pt3, register struct rt_arb_internal *arb)
+ext4to6(int pt1, int pt2, int pt3, struct rt_arb_internal *arb)
 {
     point_t pts[8];
-    register int i;
+    int i;
 
     VMOVE(pts[0], arb->pt[pt1]);
     VMOVE(pts[1], arb->pt[pt2]);
@@ -937,7 +937,7 @@ f_permute(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
      *	1) Why were all vars declared static?
      *	2) Recompute plane equations?
      */
-    register int 	vertex, i, k;
+    int 	vertex, i, k;
     int			arglen;
     int			face_size;	/* # vertices in THE face */
     char		**p;

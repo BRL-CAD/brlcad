@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -47,15 +46,15 @@ public:
   // for details.
 
   // virtual
-  BOOL IsValid( ON_TextLog* text_log = NULL ) const;
+  ON_BOOL32 IsValid( ON_TextLog* text_log = NULL ) const;
   // virtual
   void Dump( ON_TextLog& ) const;
   // virtual
   unsigned int SizeOf() const;
   // virtual
-  BOOL Write(ON_BinaryArchive&) const;
+  ON_BOOL32 Write(ON_BinaryArchive&) const;
   // virtual
-  BOOL Read(ON_BinaryArchive&);
+  ON_BOOL32 Read(ON_BinaryArchive&);
 
   /*
   Returns:
@@ -112,7 +111,7 @@ public:
     Controls object visibility
   Parameters:
     bVisible - [in] true to make object visible, 
-		    false to make object invisible
+                    false to make object invisible
   See Also:
     ON_3dmObjectAttributes::IsVisible
   */
@@ -166,28 +165,28 @@ public:
     control_limits - [in]
       The bits in control_limits determine which attributes may
       may be copied.
-		1: visibility
-		2: color
-		4: render material
-		8: plot color
-	    0x10: plot weight
-	    0x20: linetype
+                1: visibility
+                2: color
+                4: render material
+                8: plot color
+            0x10: plot weight
+            0x20: linetype
 
   Returns:
      The bits in the returned integer indicate which attributes were
      actuall modified.
 
-		1: visibility
-		2: color
-		4: render material
-		8: plot color
-	    0x10: plot weight
-	    0x20: linetype
+                1: visibility
+                2: color
+                4: render material
+                8: plot color
+            0x10: plot weight
+            0x20: linetype
   */
   unsigned int ApplyParentalControl( 
-	 const ON_3dmObjectAttributes& parent_attributes,
-	 unsigned int control_limits = 0xFFFFFFFF
-	 );
+         const ON_3dmObjectAttributes& parent_attributes,
+         unsigned int control_limits = 0xFFFFFFFF
+         );
 
   // Every OpenNURBS object has a UUID (universally unique identifier).  The
   // default value is NULL.  When an OpenNURBS object is added to a model, the
@@ -305,7 +304,7 @@ public:
 private:
   bool m_bVisible;
   unsigned char m_mode;               // (m_mode % 16) = ON::object_mode values
-				      // (m_mode / 16) = ON::display_mode values
+                                      // (m_mode / 16) = ON::display_mode values
   unsigned char m_color_source;       // ON::object_color_source values
   unsigned char m_plot_color_source;  // ON::plot_color_source values
   unsigned char m_plot_weight_source; // ON::plot_weight_source values
@@ -333,19 +332,19 @@ public:
   // or -1 if the object is not in any groups
   int TopGroup() const;
 
-  // Returns TRUE if object is in group with the specified index
-  BOOL IsInGroup(
+  // Returns true if object is in group with the specified index
+  ON_BOOL32 IsInGroup(
     int // zero based group index
     ) const;
 
-  // Returns TRUE if the object is in any of the groups in the list
-  BOOL IsInGroups(
+  // Returns true if the object is in any of the groups in the list
+  ON_BOOL32 IsInGroups(
     int,       // group_list_count
     const int* // group_list[] array
     ) const;
 
-  // Returns TRUE if object is in any of the groups in the list
-  BOOL IsInGroups(
+  // Returns true if object is in any of the groups in the list
+  ON_BOOL32 IsInGroups(
     const ON_SimpleArray<int>& // group_list[] array
     ) const;
 
@@ -432,9 +431,9 @@ public:
     True if a material_id is assigned.
   */
   bool FindDisplayMaterialId( 
-	const ON_UUID& viewport_id, 
-	ON_UUID* display_material_id = NULL
-	) const;
+        const ON_UUID& viewport_id, 
+        ON_UUID* display_material_id = NULL
+        ) const;
      
   /*
   Description:
@@ -489,6 +488,10 @@ public:
   int DisplayMaterialRefCount() const;
 
   ON_SimpleArray<ON_DisplayMaterialRef> m_dmref;
+
+private:
+  bool WriteV5Helper( ON_BinaryArchive& file ) const;
+  bool ReadV5Helper( ON_BinaryArchive& file );
 };
 
 #endif

@@ -66,7 +66,7 @@ protected:
 public:
 	MeasureValue();
 	virtual ~MeasureValue();
-	MeasureValue(STEPWrapper *sw,int STEPid);
+	MeasureValue(STEPWrapper *sw,int step_id);
 	double GetLengthMeasure();
 	double GetPlaneAngleMeasure();
 	double GetSolidAngleMeasure();

@@ -31,7 +31,7 @@ ged_comb_color(struct ged *gedp, int argc, const char *argv[])
 {
     int				i;
     int				val;
-    register struct directory	*dp;
+    struct directory	*dp;
     struct rt_db_internal	intern;
     struct rt_comb_internal	*comb;
     static const char *usage = "comb_color combination R G B";
@@ -64,7 +64,7 @@ ged_comb_color(struct ged *gedp, int argc, const char *argv[])
     for (i = 0; i < 3; ++i) {
 	if (sscanf(argv[i+2], "%d", &val) != 1 || val < 0 || 255 < val) {
 	    bu_vls_printf(&gedp->ged_result_str,"RGB value out of range: %s", argv[i + 2]);
-	    rt_db_free_internal(&intern, &rt_uniresource);
+	    rt_db_free_internal(&intern);
 	    return GED_ERROR;
 	}
 	else

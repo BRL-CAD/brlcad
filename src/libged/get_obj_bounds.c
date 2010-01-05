@@ -42,7 +42,7 @@ _ged_get_obj_bounds(struct ged	*gedp,
 		   point_t	rpp_min,
 		   point_t	rpp_max)
 {
-    register int	i;
+    int	i;
     struct rt_i		*rtip;
     struct db_full_path	path;
     struct region	*regp;
@@ -235,7 +235,7 @@ _ged_get_obj_bounds2(struct ged			*gedp,
 		    point_t			rpp_min,
 		    point_t			rpp_max)
 {
-    register struct directory *dp;
+    struct directory *dp;
     struct rt_db_internal intern;
     struct rt_i *rtip;
     struct soltab *stp;
@@ -273,7 +273,7 @@ _ged_get_obj_bounds2(struct ged			*gedp,
     VMOVE(rpp_max, stp->st_max);
 
     rt_free_rti(rtip);
-    rt_db_free_internal(&intern, &rt_uniresource);
+    rt_db_free_internal(&intern);
     bu_free( (char *)stp, "struct soltab" );
 
     return GED_OK;

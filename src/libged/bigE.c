@@ -56,7 +56,7 @@ union E_tree *build_etree(union tree *tp, struct _ged_client_data *dgcdp);
 
 /* RT_FREE_SEG_LIST assumed list head is a "struct seg" */
 #define MY_FREE_SEG_LIST(_segheadp, _res) { \
-	register struct seg *_a; \
+	struct seg *_a; \
 	while (BU_LIST_WHILE (_a, seg, (_segheadp))) { \
 		BU_LIST_DEQUEUE(&(_a->l)); \
 		RT_FREE_SEG(_a, _res); \
@@ -140,7 +140,7 @@ add_solid(const struct directory *dp,
 	RT_CK_COMB(comb);
 
 	eptr = build_etree(comb->tree, dgcdp);
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 	return(eptr);
     }
 #if 0
@@ -222,7 +222,7 @@ add_solid(const struct directory *dp,
 		    bu_vls_printf(&dgcdp->gedp->ged_result_str, "Prep failure for solid '%s'\n", dp->d_namep);
 		}
 
-		rt_db_free_internal(&intern2, &rt_uniresource);
+		rt_db_free_internal(&intern2);
 	    }
 	} else {
 	    /* prep this solid */
@@ -235,7 +235,7 @@ add_solid(const struct directory *dp,
     }
 
     if (id != ID_NMG)
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 
     /* add this leaf to the leaf list */
     bu_ptbl_ins(&dgcdp->leaf_list, (long *)eptr);
@@ -2072,7 +2072,7 @@ fix_halfs(struct _ged_client_data *dgcdp)
 			      tp->l.stp->st_dp->d_namep);
 	    }
 
-	    rt_db_free_internal(&intern2, &rt_uniresource);
+	    rt_db_free_internal(&intern2);
 	}
     }
 }
@@ -2080,8 +2080,8 @@ fix_halfs(struct _ged_client_data *dgcdp)
 int
 ged_E(struct ged *gedp, int argc, const char *argv[])
 {
-    register int i;
-    register int c;
+    int i;
+    int c;
     int ac = 1;
     char *av[2];
     struct _ged_client_data *dgcdp;
@@ -2121,7 +2121,7 @@ ged_E(struct ged *gedp, int argc, const char *argv[])
 	    case 'C':
 		{
 		    int r, g, b;
-		    register char *cp = bu_optarg;
+		    char *cp = bu_optarg;
 
 		    r = atoi(cp);
 		    while ((*cp >= '0' && *cp <= '9'))  cp++;

@@ -38,9 +38,9 @@ RationalBSplineCurveWithKnots::RationalBSplineCurveWithKnots() {
 	id = 0;
 }
 
-RationalBSplineCurveWithKnots::RationalBSplineCurveWithKnots(STEPWrapper *sw,int STEPid) {
+RationalBSplineCurveWithKnots::RationalBSplineCurveWithKnots(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 RationalBSplineCurveWithKnots::~RationalBSplineCurveWithKnots() {
@@ -53,11 +53,11 @@ RationalBSplineCurveWithKnots::Load(STEPWrapper *sw,SCLP23(Application_instance)
 
 	// load base class attributes
 	if ( !RationalBSplineCurve::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::RationalBSplineCurve." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::RationalBSplineCurve." << std::endl;
 		return false;
 	}
 	if ( !BSplineCurveWithKnots::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::BSplineCurveWithKnots." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::BSplineCurveWithKnots." << std::endl;
 		return false;
 	}
 
@@ -66,9 +66,9 @@ RationalBSplineCurveWithKnots::Load(STEPWrapper *sw,SCLP23(Application_instance)
 
 void
 RationalBSplineCurveWithKnots::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << name << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
-	cout << "ON_id:(" << ON_id << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
+	std::cout << "ON_id:(" << ON_id << ")" << std::endl;
 
 	RationalBSplineCurve::Print(level+1);
 	BSplineCurveWithKnots::Print(level+1);
@@ -83,7 +83,7 @@ RationalBSplineCurveWithKnots::Create(STEPWrapper *sw,SCLP23(Application_instanc
 		Factory::AddObject(object);
 
 		if (!object->Load(sw,sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

@@ -38,9 +38,9 @@ RationalQuasiUniformCurve::RationalQuasiUniformCurve() {
 	id = 0;
 }
 
-RationalQuasiUniformCurve::RationalQuasiUniformCurve(STEPWrapper *sw,int STEPid) {
+RationalQuasiUniformCurve::RationalQuasiUniformCurve(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 RationalQuasiUniformCurve::~RationalQuasiUniformCurve() {
@@ -53,7 +53,7 @@ RationalQuasiUniformCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *ss
 
 	// load base class attributes (no need to add quasi here has no additional attributes)
 	if ( !RationalBSplineCurve::Load(sw,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::RationalBSplineCurve." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::RationalBSplineCurve." << std::endl;
 		return false;
 	}
 
@@ -62,8 +62,8 @@ RationalQuasiUniformCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *ss
 
 void
 RationalQuasiUniformCurve::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << name << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
 	RationalBSplineCurve::Print(level);
 }
@@ -76,7 +76,7 @@ RationalQuasiUniformCurve::Create(STEPWrapper *sw,SCLP23(Application_instance) *
 		Factory::AddObject(object);
 
 		if (!object->Load(sw,sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

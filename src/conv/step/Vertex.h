@@ -41,7 +41,7 @@ protected:
 public:
 	Vertex();
 	virtual ~Vertex();
-	Vertex(STEPWrapper *sw,int STEPid);
+	Vertex(STEPWrapper *sw,int step_id);
 	bool Load(STEPWrapper *sw,SCLP23(Application_instance) *sse);
 	virtual const double *Point3d() { return NULL; };
 	virtual void Print(int level);

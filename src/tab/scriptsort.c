@@ -178,7 +178,7 @@ struct frame *getframe(FILE *in)
 void
 bubblesort()
 {
-    register struct frame *a, *b, *hold;
+    struct frame *a, *b, *hold;
 
     for (a = head.forw; a->forw != &head; a = a->forw) {
 	for (b= a->forw; b != &head; b = b->forw) {
@@ -237,7 +237,7 @@ printframe(struct frame *fp)
 }
 void merge(void)
 {
-    register struct frame *cur, *next;
+    struct frame *cur, *next;
 
     for (BU_LIST_FOR(cur, frame, &head)) {
 	next = BU_LIST_NEXT(frame, &cur->l);
@@ -303,7 +303,7 @@ main(int argc, char **argv)
 	    }
 	}
     } else {
-	register unsigned int left, right, mask, bits;
+	unsigned int left, right, mask, bits;
 	bits = sizeof(int)*4;		/* assumes 8 bit byte */
 	mask = (1<<bits)-1;		/* Makes a low bit mask */
 	/* assumes power 2 bytes/int */

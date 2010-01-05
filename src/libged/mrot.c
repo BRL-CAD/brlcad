@@ -36,7 +36,7 @@
 int
 ged_mrot(struct ged *gedp, int argc, const char *argv[])
 {
-    register int i;
+    int i;
     int ac;
     char *av[6];
     static const char *usage = "x y z";

@@ -40,9 +40,9 @@ Placement::Placement() {
 	location = NULL;
 }
 
-Placement::Placement(STEPWrapper *sw,int STEPid) {
+Placement::Placement(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 	location = NULL;
 }
 
@@ -76,7 +76,7 @@ Placement::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 	id = sse->STEPfile_id;
 
 	if ( !GeometricRepresentationItem::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::GeometricRepresentationItem." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::GeometricRepresentationItem." << std::endl;
 		return false;
 	}
 
@@ -89,7 +89,7 @@ Placement::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 		if (entity) {
 			location = dynamic_cast<CartesianPoint *>(Factory::CreateObject(sw,entity));
 		} else {
-			cout << CLASSNAME << ":Error loading attribute 'location'." << endl;
+			std::cout << CLASSNAME << ":Error loading attribute 'location'." << std::endl;
 			return false;
 		}
 	}
@@ -99,7 +99,7 @@ Placement::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 void
 Placement::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << std::endl;
 	location->Print(level+1);
 }
 
@@ -112,7 +112,7 @@ Placement::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

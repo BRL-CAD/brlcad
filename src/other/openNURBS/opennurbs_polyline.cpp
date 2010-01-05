@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -34,7 +33,7 @@ bool ON_Polyline::IsValid( double tolerance ) const
     for ( i = 1; rc && i < m_count; i++ )
     {
       if ( m_a[i].DistanceTo(m_a[i-1]) <= tolerance )
-	rc = false;
+        rc = false;
     }
     if ( rc && m_count < 4 && m_a[0].DistanceTo(m_a[m_count-1]) <= tolerance )
       rc = false;
@@ -43,7 +42,7 @@ bool ON_Polyline::IsValid( double tolerance ) const
     for ( i = 1; rc && i < m_count && rc; i++ )
     {
       if ( m_a[i] == m_a[i-1] )
-	rc = false;
+        rc = false;
     }
     if ( rc && m_count < 4 && m_a[0] == m_a[m_count-1] )
       rc = false;
@@ -120,26 +119,26 @@ bool ON_Polyline::IsClosed( double tolerance ) const
     if ( tolerance > 0.0 )
     {
       if ( m_a[0].DistanceTo(m_a[count]) <= tolerance ) {
-	for ( i = 1; i < count; i++ ) {
-	  if (   m_a[i].DistanceTo(m_a[0]) > tolerance 
-	      && m_a[i].DistanceTo(m_a[count]) > tolerance ) 
-	  {
-	     rc = true;
-	     break;
-	  }
-	}
+        for ( i = 1; i < count; i++ ) {
+          if (   m_a[i].DistanceTo(m_a[0]) > tolerance 
+              && m_a[i].DistanceTo(m_a[count]) > tolerance ) 
+          {
+             rc = true;
+             break;
+          }
+        }
       }
     }
     else {
       if ( 0 == ON_ComparePoint(3,false,&m_a[0].x,&m_a[count].x) ) {
-	for ( i = 1; i < count; i++ ) {
-	  if (    ON_ComparePoint(3,false,&m_a[i].x,&m_a[0].x) 
-	       && ON_ComparePoint(3,false,&m_a[i].x,&m_a[count].x) )
-	  {
-	    rc = true;
-	    break;
-	  }
-	}
+        for ( i = 1; i < count; i++ ) {
+          if (    ON_ComparePoint(3,false,&m_a[i].x,&m_a[0].x) 
+               && ON_ComparePoint(3,false,&m_a[i].x,&m_a[count].x) )
+          {
+            rc = true;
+            break;
+          }
+        }
       }
     }
   }
@@ -244,27 +243,27 @@ bool ON_Polyline::ClosestPointTo( const ON_3dPoint& point, double *t, int segmen
     for ( segment_index = segment_index0; segment_index < segment_index1; segment_index++ ) {
       double seg_length = m_a[segment_index].DistanceTo(m_a[segment_index + 1]);
       if (seg_length < ON_EPSILON)
-	segment_t = 0.0;
+        segment_t = 0.0;
       else {
-	const ON_3dVector D = SegmentTangent(segment_index);
-	const int i = ( point.DistanceTo(m_a[segment_index]) <= point.DistanceTo(m_a[segment_index+1]) ) ? 0 : 1;
-	segment_t = (point - m_a[segment_index+i])*D/seg_length;
-	if ( i ) {
-	  segment_t = 1.0 + segment_t;
-	}
-	if ( segment_t < 0.0 )
-	  segment_t = 0.0;
-	else if (segment_t > 1.0 )
-	  segment_t = 1.0;
+        const ON_3dVector D = SegmentTangent(segment_index);
+        const int i = ( point.DistanceTo(m_a[segment_index]) <= point.DistanceTo(m_a[segment_index+1]) ) ? 0 : 1;
+        segment_t = (point - m_a[segment_index+i])*D/seg_length;
+        if ( i ) {
+          segment_t = 1.0 + segment_t;
+        }
+        if ( segment_t < 0.0 )
+          segment_t = 0.0;
+        else if (segment_t > 1.0 )
+          segment_t = 1.0;
       }
       segment_d = point.DistanceTo((1-segment_t)*m_a[segment_index] + segment_t*m_a[segment_index+1]);
       if ( !segment_index ) {
-	best_t = segment_t;
-	best_d = segment_d;
+        best_t = segment_t;
+        best_d = segment_d;
       }
       else if ( segment_d < best_d ) {
-	best_t = segment_t + ((double)segment_index);
-	best_d = segment_d;
+        best_t = segment_t + ((double)segment_index);
+        best_d = segment_d;
       }
       rc = true;
     }
@@ -282,7 +281,7 @@ bool ON_Polyline::ClosestPointTo( const ON_3dPoint& point, double *t ) const
 ON_3dPoint ON_Polyline::ClosestPointTo( const ON_3dPoint& point ) const
 {
   double t;
-  BOOL rc = ClosestPointTo( point, &t );
+  ON_BOOL32 rc = ClosestPointTo( point, &t );
   if ( !rc )
     t = 0.0;
   return PointAt(t);
@@ -312,9 +311,9 @@ bool ON_Polyline::CreateInscribedPolygon(
 }
 
 bool ON_Polyline::CreateCircumscribedPolygon(
-	    const ON_Circle& circle,
-	    int side_count
-	    )
+            const ON_Circle& circle,
+            int side_count
+            )
 {
   bool rc = ( circle.IsValid() && side_count >= 3 ) ? true : false;
   if ( rc )
@@ -337,14 +336,14 @@ bool ON_Polyline::CreateCircumscribedPolygon(
 }
 
 bool ON_Polyline::CreateStarPolygon(
-	    const ON_Circle& circle,
-	    double other_radius,
-	    int side_count
-	    )
+            const ON_Circle& circle,
+            double other_radius,
+            int side_count
+            )
 {
   bool rc = ( circle.IsValid() && side_count >= 3 && other_radius >= 0.0 ) 
-	  ? true 
-	  : false;
+          ? true 
+          : false;
   if ( rc )
   {
     SetCapacity(2*side_count+1);

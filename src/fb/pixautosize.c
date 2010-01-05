@@ -50,9 +50,9 @@ Usage:	pixautosize [-b bytes_per_sample] [-f file_name]\n\
 or	pixautosize [-b bytes_per_sample] [-l file_length]\n";
 
 int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int c;
+    int c;
 
     while ( (c = bu_getopt( argc, argv, "b:f:l:" )) != EOF )  {
 	switch ( c )  {

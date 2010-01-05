@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -18,13 +17,13 @@
 
 static
 bool ChangeEdgeVertex( 
-	 ON_Brep& brep,
-	 ON_BrepEdge& edge,
-	 int edge_end,
-	 int old_vi,
-	 int new_vi,
-	 bool bUpdateTrims
-	 )
+         ON_Brep& brep,
+         ON_BrepEdge& edge,
+         int edge_end,
+         int old_vi,
+         int new_vi,
+         bool bUpdateTrims
+         )
 {
   // used by ON_Brep::ReplaceSurface() to change edge ends
 
@@ -54,8 +53,8 @@ bool ChangeEdgeVertex(
     {
       if ( old_v->m_ei[vei] == edge.m_edge_index )
       {
-	old_v->m_ei.Remove(vei);
-	break;
+        old_v->m_ei.Remove(vei);
+        break;
       }
     }
   }
@@ -69,10 +68,10 @@ bool ChangeEdgeVertex(
     {
       ON_BrepTrim* trim = brep.Trim(edge.m_ti[eti]);
       if ( 0 == trim )
-	continue;
+        continue;
       int trim_end = trim->m_bRev3d ? 1-edge_end : edge_end;
       if ( trim->m_vi[trim_end] == old_vi )
-	trim->m_vi[trim_end] = new_vi;
+        trim->m_vi[trim_end] = new_vi;
     }
   }
 
@@ -83,14 +82,14 @@ bool ChangeEdgeVertex(
 
 static
 bool ChangeTrimVertex( 
-	 ON_Brep& brep,
-	 ON_BrepTrim& trim,
-	 int trim_end,
-	 int old_vi,
-	 int new_vi,
-	 bool bUpdateEdge,
-	 bool bUpdateMates
-	 )
+         ON_Brep& brep,
+         ON_BrepTrim& trim,
+         int trim_end,
+         int old_vi,
+         int new_vi,
+         bool bUpdateEdge,
+         bool bUpdateMates
+         )
 {
   // used by ON_Brep::ReplaceSurface() to change trim ends
   if ( trim_end != 0 && trim_end != 1 )
@@ -136,8 +135,8 @@ ON_Curve* PushUpIsoTrim( ON_Brep& brep, ON_BrepTrim& trim )
     double c, t0, t1;
     int isodir;
     if (    trim.m_iso == ON_Surface::N_iso 
-	 || trim.m_iso == ON_Surface::S_iso 
-	 || trim.m_iso == ON_Surface::y_iso )
+         || trim.m_iso == ON_Surface::S_iso 
+         || trim.m_iso == ON_Surface::y_iso )
     {
       isodir = 0;
       c = p0.y;
@@ -145,8 +144,8 @@ ON_Curve* PushUpIsoTrim( ON_Brep& brep, ON_BrepTrim& trim )
       t1 = p1.x;
     }
     else if (    trim.m_iso == ON_Surface::E_iso 
-	      || trim.m_iso == ON_Surface::W_iso 
-	      || trim.m_iso == ON_Surface::x_iso  )
+              || trim.m_iso == ON_Surface::W_iso 
+              || trim.m_iso == ON_Surface::x_iso  )
     {
       isodir = 1;
       c = p0.x;
@@ -243,7 +242,7 @@ bool ChangeTrimSingToBdry( ON_Brep& brep, ON_BrepTrim& trim, ON_BrepTrim* nexttr
 
 static
 bool ChangeTrimBdryToSing( ON_Brep& brep, ON_BrepTrim& trim, 
-			   ON_BrepTrim* prevtrim, ON_BrepTrim* nexttrim )
+                           ON_BrepTrim* prevtrim, ON_BrepTrim* nexttrim )
 {
   if ( trim.m_vi[0] == trim.m_vi[1] )
     return false;
@@ -271,8 +270,8 @@ bool ChangeTrimBdryToSing( ON_Brep& brep, ON_BrepTrim& trim,
     {
       if ( edge->m_ti[eti] == trim.m_trim_index )
       {
-	edge->m_ti.Remove(eti);
-	break;
+        edge->m_ti.Remove(eti);
+        break;
       }
     }
 
@@ -287,14 +286,14 @@ bool ChangeTrimBdryToSing( ON_Brep& brep, ON_BrepTrim& trim,
       ON_BrepTrim* other_trim = brep.Trim(edge->m_ti[0]);
       if ( 0 != other_trim && ON_BrepTrim::seam == other_trim->m_type )
       {
-	other_trim->m_type = ON_BrepTrim::boundary;
-	int j = (trim.m_bRev3d == other_trim->m_bRev3d) ? 0 : 1;
-	if (    trim.m_vi[0] == other_trim->m_vi[j] 
-	     && trim.m_vi[1] == other_trim->m_vi[1-j] )
-	{
-	  // we need a new singular vertex
-	  sing_vi = brep.NewVertex(ON_UNSET_POINT).m_vertex_index;
-	}
+        other_trim->m_type = ON_BrepTrim::boundary;
+        int j = (trim.m_bRev3d == other_trim->m_bRev3d) ? 0 : 1;
+        if (    trim.m_vi[0] == other_trim->m_vi[j] 
+             && trim.m_vi[1] == other_trim->m_vi[1-j] )
+        {
+          // we need a new singular vertex
+          sing_vi = brep.NewVertex(ON_UNSET_POINT).m_vertex_index;
+        }
       }
     }
   }
@@ -314,11 +313,11 @@ bool ChangeTrimBdryToSing( ON_Brep& brep, ON_BrepTrim& trim,
 
 static
 bool SplitSeam( ON_Brep& brep, 
-		ON_BrepTrim& trimA, ON_BrepTrim& trimB,
-		ON_BrepTrim& prevtrimB,
-		ON_BrepTrim& nexttrimB,
-		int vcount0 // number of verts before singular fixups
-		)
+                ON_BrepTrim& trimA, ON_BrepTrim& trimB,
+                ON_BrepTrim& prevtrimB,
+                ON_BrepTrim& nexttrimB,
+                int vcount0 // number of verts before singular fixups
+                )
 {
   if ( trimA.m_trim_index == trimB.m_trim_index )
     return false;
@@ -523,14 +522,14 @@ static bool SealSeam(int closed_dir, ON_BrepFace& F)
       ON_BrepTrim* T = L->Trim(lti);
       if (!T) continue;
       if (T->m_iso == isoA) {
-	if (A_id >= 0)
-	  return false;
-	A_id = T->m_trim_index;
+        if (A_id >= 0)
+          return false;
+        A_id = T->m_trim_index;
       }
       else if (T->m_iso == isoB) {
-	if (B_id >= 0)
-	  return false;
-	B_id = T->m_trim_index;
+        if (B_id >= 0)
+          return false;
+        B_id = T->m_trim_index;
       }
     }
   }
@@ -616,9 +615,9 @@ bool ON_BrepFace::ChangeSurface(
       // need to transform trimming curves
       ON_Xform x(1), xu(1), xv(1);
       if ( udom0 != udom1 )
-	xu.IntervalChange(0,udom0,udom1);
+        xu.IntervalChange(0,udom0,udom1);
       if ( vdom0 != vdom1 )
-	xv.IntervalChange(1,vdom0,vdom1);
+        xv.IntervalChange(1,vdom0,vdom1);
       x = xv*xu;
       TransformTrim(x);
     }
@@ -633,74 +632,74 @@ bool ON_BrepFace::ChangeSurface(
       bool bSing1[4];
       for ( i = 0; i < 4; i++ )
       {
-	bSing0[i] = old_srf->IsSingular(i) ? true : false;
-	bSing1[i] = pSurface->IsSingular(i) ? true : false;
+        bSing0[i] = old_srf->IsSingular(i) ? true : false;
+        bSing1[i] = pSurface->IsSingular(i) ? true : false;
       }
       int sing_fix, sing_fix_max = 1;
       for ( sing_fix = 0; sing_fix < sing_fix_max; sing_fix++ )
       {
-	// sing_fix:
-	//   0: expands old singularities and checks for new ones
-	//   1: collapses old edges to new singular points.
-	for ( i = 0; i < 4; i++ )
-	{
-	  if ( bSing0[i] == bSing1[i] )
-	    continue;
+        // sing_fix:
+        //   0: expands old singularities and checks for new ones
+        //   1: collapses old edges to new singular points.
+        for ( i = 0; i < 4; i++ )
+        {
+          if ( bSing0[i] == bSing1[i] )
+            continue;
 
-	  ON_Surface::ISO iso = ON_Surface::not_iso;
-	  switch(i)
-	  {
-	  case 0: iso = ON_Surface::S_iso; break;
-	  case 1: iso = ON_Surface::E_iso; break;
-	  case 2: iso = ON_Surface::N_iso; break;
-	  case 3: iso = ON_Surface::W_iso; break;
-	  }
+          ON_Surface::ISO iso = ON_Surface::not_iso;
+          switch(i)
+          {
+          case 0: iso = ON_Surface::S_iso; break;
+          case 1: iso = ON_Surface::E_iso; break;
+          case 2: iso = ON_Surface::N_iso; break;
+          case 3: iso = ON_Surface::W_iso; break;
+          }
 
-	  if ( bSing0[i] && sing_fix != 0 )
-	  {
-	    // we already expanded old singular trims into edge trims
-	    continue;
-	  }
+          if ( bSing0[i] && sing_fix != 0 )
+          {
+            // we already expanded old singular trims into edge trims
+            continue;
+          }
 
-	  for ( int fli = 0; fli < m_li.Count(); fli++ )
-	  {
-	    const ON_BrepLoop* loop = Loop(fli);
-	    if ( 0 == loop )
-	      continue;
-	    if ( loop->m_type != ON_BrepLoop::outer )
-	      continue;
-	    for ( int lti = 0; lti < loop->m_ti.Count(); lti++ )
-	    {
-	      ON_BrepTrim* trim = loop->Trim(lti);
-	      if ( !trim )
-		continue;
-	      if ( trim->m_iso != iso )
-		continue;
-	      ON_BrepTrim* nexttrim = loop->Trim((lti+1)%loop->m_ti.Count());
-	      if ( bSing0[i] )
-	      {
-		// valid singular trim changing to non-singular trim
-		if( 0 == sing_fix )
-		  ChangeTrimSingToBdry( *m_brep, *trim, nexttrim );
-	      }
-	      else if ( bSing1[i] )
-	      {
-		if ( 0 == sing_fix )
-		{
-		  // we need a 2nd pass to collapse this edge
-		  // to a singular trim.
-		  sing_fix_max = 2;
-		}
-		else
-		{
-		  // valid non-singular trim changing to singular trim
-		  ON_BrepTrim* prevtrim = loop->Trim((lti-1+loop->m_ti.Count())%loop->m_ti.Count());
-		  ChangeTrimBdryToSing( *m_brep, *trim, prevtrim, nexttrim );
-		}
-	      }
-	    }
-	  }
-	}
+          for ( int fli = 0; fli < m_li.Count(); fli++ )
+          {
+            const ON_BrepLoop* loop = Loop(fli);
+            if ( 0 == loop )
+              continue;
+            if ( loop->m_type != ON_BrepLoop::outer )
+              continue;
+            for ( int lti = 0; lti < loop->m_ti.Count(); lti++ )
+            {
+              ON_BrepTrim* trim = loop->Trim(lti);
+              if ( !trim )
+                continue;
+              if ( trim->m_iso != iso )
+                continue;
+              ON_BrepTrim* nexttrim = loop->Trim((lti+1)%loop->m_ti.Count());
+              if ( bSing0[i] )
+              {
+                // valid singular trim changing to non-singular trim
+                if( 0 == sing_fix )
+                  ChangeTrimSingToBdry( *m_brep, *trim, nexttrim );
+              }
+              else if ( bSing1[i] )
+              {
+                if ( 0 == sing_fix )
+                {
+                  // we need a 2nd pass to collapse this edge
+                  // to a singular trim.
+                  sing_fix_max = 2;
+                }
+                else
+                {
+                  // valid non-singular trim changing to singular trim
+                  ON_BrepTrim* prevtrim = loop->Trim((lti-1+loop->m_ti.Count())%loop->m_ti.Count());
+                  ChangeTrimBdryToSing( *m_brep, *trim, prevtrim, nexttrim );
+                }
+              }
+            }
+          }
+        }
       }
     }
 
@@ -711,7 +710,7 @@ bool ON_BrepFace::ChangeSurface(
       bool bClosed0 = old_srf->IsClosed(i) ? true : false;
       bool bClosed1 = pSurface->IsClosed(i) ? true : false;
       if ( bClosed0 == bClosed1 )
-	continue;
+        continue;
       ON_Surface::ISO isoA = ON_Surface::not_iso;
       ON_Surface::ISO isoB = ON_Surface::not_iso;
       switch(i)
@@ -722,72 +721,72 @@ bool ON_BrepFace::ChangeSurface(
 
       for ( int fli = 0; fli < m_li.Count(); fli++ )
       {
-	const ON_BrepLoop* loop = Loop(fli);
-	if ( 0 == loop )
-	  continue;
-	if ( loop->m_type != ON_BrepLoop::outer )
-	  continue;
-	int loop_trim_count = loop->m_ti.Count();
-	for ( int ltiA = 0; ltiA < loop_trim_count; ltiA++ )
-	{
-	  ON_BrepTrim* trimA = loop->Trim(ltiA);
-	  if ( !trimA )
-	    continue;
-	  if ( trimA->m_iso != isoA )
-	    continue;
+        const ON_BrepLoop* loop = Loop(fli);
+        if ( 0 == loop )
+          continue;
+        if ( loop->m_type != ON_BrepLoop::outer )
+          continue;
+        int loop_trim_count = loop->m_ti.Count();
+        for ( int ltiA = 0; ltiA < loop_trim_count; ltiA++ )
+        {
+          ON_BrepTrim* trimA = loop->Trim(ltiA);
+          if ( !trimA )
+            continue;
+          if ( trimA->m_iso != isoA )
+            continue;
 
-	  if ( bClosed0 )
-	  {
-	    // old surface has a seam and new surface does not
-	    if ( trimA->m_type != ON_BrepTrim::seam )
-	      continue;
-	    const ON_BrepEdge* edge = m_brep->Edge(trimA->m_ei);
-	    if ( 0 == edge )
-	      continue;
-	    if ( edge->m_ti.Count() != 2 )
-	      continue;
-	    int etiB = (edge->m_ti[0] == trimA->m_trim_index) ? 1 : 0;
-	    ON_BrepTrim* trimB = edge->Trim(etiB);
-	    if ( 0 == trimB )
-	      continue;
-	    if ( trimA == trimB )
-	      continue;
-	    if ( trimB->m_li != trimA->m_li )
-	      continue;
-	    if ( trimB->m_type != ON_BrepTrim::seam )
-	      continue;
-	    if ( trimB->m_iso != isoB )
-	      continue;
-	    for ( int ltiB = 0; ltiB < loop_trim_count; ltiB++ )
-	    {
-	      if ( trimB != loop->Trim(ltiB) )
-		continue;
-	      ON_BrepTrim* prevtrimB = loop->Trim((ltiB+loop_trim_count-1)%loop_trim_count);
-	      ON_BrepTrim* nexttrimB = loop->Trim((ltiB+1)%loop_trim_count);
-	      if ( 0 == prevtrimB )
-		continue;
-	      if ( 0 == nexttrimB )
-		continue;
-	      if ( prevtrimB == trimA || prevtrimB == trimB )
-		continue;
-	      if ( nexttrimB == trimA || nexttrimB == trimB )
-		continue;
-	      if ( prevtrimB == nexttrimB )
-		continue;
-	      SplitSeam( *m_brep, *trimA, *trimB, *prevtrimB, *nexttrimB, vcount0 );
-	      break;
-	    }
-	  }
-	  else
-	  {
-	    // open sides replaced with a seam
-	    // TODO
-	    bool sok;
-	    sok = SealSeam(i, *this);
-	    if (sok)
-	      sok = !sok;
-	  }
-	}
+          if ( bClosed0 )
+          {
+            // old surface has a seam and new surface does not
+            if ( trimA->m_type != ON_BrepTrim::seam )
+              continue;
+            const ON_BrepEdge* edge = m_brep->Edge(trimA->m_ei);
+            if ( 0 == edge )
+              continue;
+            if ( edge->m_ti.Count() != 2 )
+              continue;
+            int etiB = (edge->m_ti[0] == trimA->m_trim_index) ? 1 : 0;
+            ON_BrepTrim* trimB = edge->Trim(etiB);
+            if ( 0 == trimB )
+              continue;
+            if ( trimA == trimB )
+              continue;
+            if ( trimB->m_li != trimA->m_li )
+              continue;
+            if ( trimB->m_type != ON_BrepTrim::seam )
+              continue;
+            if ( trimB->m_iso != isoB )
+              continue;
+            for ( int ltiB = 0; ltiB < loop_trim_count; ltiB++ )
+            {
+              if ( trimB != loop->Trim(ltiB) )
+                continue;
+              ON_BrepTrim* prevtrimB = loop->Trim((ltiB+loop_trim_count-1)%loop_trim_count);
+              ON_BrepTrim* nexttrimB = loop->Trim((ltiB+1)%loop_trim_count);
+              if ( 0 == prevtrimB )
+                continue;
+              if ( 0 == nexttrimB )
+                continue;
+              if ( prevtrimB == trimA || prevtrimB == trimB )
+                continue;
+              if ( nexttrimB == trimA || nexttrimB == trimB )
+                continue;
+              if ( prevtrimB == nexttrimB )
+                continue;
+              SplitSeam( *m_brep, *trimA, *trimB, *prevtrimB, *nexttrimB, vcount0 );
+              break;
+            }
+          }
+          else
+          {
+            // open sides replaced with a seam
+            // TODO
+            bool sok;
+            sok = SealSeam(i, *this);
+            if (sok)
+              sok = !sok;
+          }
+        }
       }
     }
   }
@@ -798,21 +797,21 @@ bool ON_BrepFace::ChangeSurface(
     {
       const ON_BrepLoop* loop = Loop(fli);
       if ( 0 == loop )
-	continue;
+        continue;
       for ( int lti = 0; lti < loop->m_ti.Count(); lti++ )
       {
-	const ON_BrepTrim* trim = loop->Trim(lti);
-	if ( 0 ==  trim )
-	  continue;
-	ON_BrepVertex* v0 = m_brep->Vertex(trim->m_vi[0]);
-	if ( 0 != v0 )
-	{
-	  if ( v0->point == ON_UNSET_POINT )
-	  {
-	    ON_3dPoint uv = trim->PointAtStart();
-	    v0->point = pSurface->PointAt( uv.x, uv.y );
-	  }
-	}
+        const ON_BrepTrim* trim = loop->Trim(lti);
+        if ( 0 ==  trim )
+          continue;
+        ON_BrepVertex* v0 = m_brep->Vertex(trim->m_vi[0]);
+        if ( 0 != v0 )
+        {
+          if ( v0->point == ON_UNSET_POINT )
+          {
+            ON_3dPoint uv = trim->PointAtStart();
+            v0->point = pSurface->PointAt( uv.x, uv.y );
+          }
+        }
       }
     }
   }

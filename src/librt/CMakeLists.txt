@@ -109,6 +109,7 @@ set(LIBRT_SOURCES
     primitives/hyp/hyp_brep.cpp
     primitives/hyp/hyp_mirror.c
     primitives/metaball/metaball.c
+    primitives/metaball/metaball_tri.c
     primitives/mirror.c
     primitives/nmg/nmg.c
     primitives/nmg/nmg_bool.c
@@ -182,6 +183,7 @@ set(LIBRT_SOURCES
     tree.c
     vers.c
     vlist.c
+    vshoot.c
     wdb.c
 )
 

@@ -25,7 +25,7 @@
 #include <sdai.h>
 //class SCLP23(Application_instance);
 
-#if __OSTORE__
+#ifdef __OSTORE__
 typedef  SCLP23(Application_instance) * (* Creator) (os_database *) ;
 #else
 typedef  SCLP23(Application_instance) * (* Creator) () ;
@@ -1575,14 +1575,14 @@ class ArrayTypeDescriptor  :    public AggrTypeDescriptor  {
 	SCLP23(LOGICAL) _optionalElements ;
   public:  
 
-    ArrayTypeDescriptor ( ) : _optionalElements("UNKNOWN_TYPE") { } 
+    ArrayTypeDescriptor ( ) : _optionalElements((char *)"UNKNOWN_TYPE") { } 
     ArrayTypeDescriptor (SCLLOG(Logical) optElem) : _optionalElements(optElem)
       { }
     ArrayTypeDescriptor (const char * nm, PrimitiveType ft, 
 			 Schema *origSchema, const char * d, 
 			 AggregateCreator f =0 )
 	: AggrTypeDescriptor (nm, ft, origSchema, d, f),
-	  _optionalElements("UNKNOWN_TYPE") 
+	  _optionalElements((char *)"UNKNOWN_TYPE") 
     { }
 
     virtual ~ArrayTypeDescriptor () {}
@@ -1705,7 +1705,7 @@ class StringTypeDescriptor  :    public TypeDescriptor  {
 	SCLP23(LOGICAL) _fixedSize ;
   public:  
 
-	StringTypeDescriptor ( ) : _fixedSize("UNKNOWN_TYPE") { _width = 0; }
+	StringTypeDescriptor ( ) : _fixedSize((char *)"UNKNOWN_TYPE") { _width = 0; }
 	virtual ~StringTypeDescriptor () { }
 
 

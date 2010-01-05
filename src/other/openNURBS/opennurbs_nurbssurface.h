@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -48,11 +47,11 @@ public:
 
   virtual
   bool Evaluate( double,        // a
-		 const double*, // A
-		 double,        // b
-		 const double*, // B
-		 double*        // C
-		) = 0;
+                 const double*, // A
+                 double,        // b
+                 const double*, // B
+                 double*        // C
+                ) = 0;
 
 };
 
@@ -76,31 +75,31 @@ public:
   */
   static ON_NurbsSurface* New();
   static ON_NurbsSurface* New(
-	  const ON_NurbsSurface& nurbs_surface
-	  );
+          const ON_NurbsSurface& nurbs_surface
+          );
   static ON_NurbsSurface* New(
-	    const ON_BezierSurface& bezier_surface 
-	    );
+            const ON_BezierSurface& bezier_surface 
+            );
   static ON_NurbsSurface* New(
-	  int dimension,
-	  BOOL bIsRational,
-	  int order0,
-	  int order1,
-	  int cv_count0,
-	  int cv_count1
-	  );
+          int dimension,
+          ON_BOOL32 bIsRational,
+          int order0,
+          int order1,
+          int cv_count0,
+          int cv_count1
+          );
 
   ON_NurbsSurface();
   ON_NurbsSurface(const ON_NurbsSurface& nurbs_surface);
   ON_NurbsSurface(const ON_BezierSurface& bezier_surface);
   ON_NurbsSurface(
-	  int dimension,     // dimension (>= 1)
-	  BOOL bIsRational, // TRUE to make a rational NURBS
-	  int order0,       // order0 (>= 2)
-	  int order1,       // order1 (>= 2)
-	  int cv_count0,    // cv count0 (>= order0)
-	  int cv_count1     // cv count1 (>= order1)
-	  );
+          int dimension,     // dimension (>= 1)
+          ON_BOOL32 bIsRational, // true to make a rational NURBS
+          int order0,       // order0 (>= 2)
+          int order1,       // order1 (>= 2)
+          int cv_count0,    // cv count0 (>= order0)
+          int cv_count1     // cv count1 (>= order1)
+          );
 
   // virtual ON_Object::SizeOf override
   unsigned int SizeOf() const;
@@ -114,28 +113,28 @@ public:
   Parameters:
     other - [in] other NURBS surface
     bIgnoreParameterization - [in] if true, parameterization
-	     and orientaion are ignored.
+             and orientaion are ignored.
     tolerance - [in] tolerance to use when comparing
-		     control points.
+                     control points.
   Returns:
     true if curves are tne same.
   */
   bool IsDuplicate( 
-	  const ON_NurbsSurface& other, 
-	  bool bIgnoreParameterization,
-	  double tolerance = ON_ZERO_TOLERANCE 
-	  ) const;
+          const ON_NurbsSurface& other, 
+          bool bIgnoreParameterization,
+          double tolerance = ON_ZERO_TOLERANCE 
+          ) const;
 
   void Initialize(void);  // zeros all fields
 
-  BOOL Create( 
-	  int dim,  // dimension (>= 1)
-	  BOOL is_rat, // TRUE to make a rational NURBS
-	  int order0,  // order0 (>= 2)
-	  int order1,  // order1 (>= 2)
-	  int cv_count0,  // cv count0 (>= order0)
-	  int cv_count1  // cv count1 (>= order1)
-	  );
+  ON_BOOL32 Create( 
+          int dim,  // dimension (>= 1)
+          ON_BOOL32 is_rat, // true to make a rational NURBS
+          int order0,  // order0 (>= 2)
+          int order1,  // order1 (>= 2)
+          int cv_count0,  // cv count0 (>= order0)
+          int cv_count1  // cv count1 (>= order1)
+          );
 
   /*
   Description:
@@ -165,11 +164,11 @@ public:
   */
   virtual
   int CreateRuledSurface(
-	 const ON_Curve& curveA,
-	 const ON_Curve& curveB,
-	 const ON_Interval* curveA_domain = NULL,
-	 const ON_Interval* curveB_domain = NULL
-	 );
+         const ON_Curve& curveA,
+         const ON_Curve& curveB,
+         const ON_Interval* curveA_domain = NULL,
+         const ON_Interval* curveB_domain = NULL
+         );
 
   /*
   Description:
@@ -196,22 +195,22 @@ public:
     parameterization of curve, then 2 is returned.
   */
   int CreateConeSurface(
-	 ON_3dPoint apex_point,
-	 const ON_Curve& curve,
-	 const ON_Interval* curve_domain = NULL
-	 );
+         ON_3dPoint apex_point,
+         const ON_Curve& curve,
+         const ON_Interval* curve_domain = NULL
+         );
 
   /*
   Description:
     Collapse the side of a NURBS surface to a single point.
   Parameters:
     side - [in] 0 = south west, 
-		1 = south east, 
-		2 = north east,
-		3 = north west
+                1 = south east, 
+                2 = north east,
+                3 = north west
     point - [in] point to collapse to.  If point is ON_unset_point,
-		the the current location of the start of the side
-		is used.
+                the the current location of the start of the side
+                is used.
   Returns:
     True if successful.
   Remarks:
@@ -250,29 +249,29 @@ public:
     initialized.
   Parameters:
     text_log - [in] if the object is not valid and text_log
-	is not NULL, then a brief englis description of the
-	reason the object is not valid is appened to the log.
-	The information appended to text_log is suitable for 
-	low-level debugging purposes by programmers and is 
-	not intended to be useful as a high level user 
-	interface tool.
+        is not NULL, then a brief englis description of the
+        reason the object is not valid is appened to the log.
+        The information appended to text_log is suitable for 
+        low-level debugging purposes by programmers and is 
+        not intended to be useful as a high level user 
+        interface tool.
   Returns:
     @untitled table
-    TRUE     object is valid
-    FALSE    object is invalid, uninitialized, etc.
+    true     object is valid
+    false    object is invalid, uninitialized, etc.
   Remarks:
     Overrides virtual ON_Object::IsValid
   */
-  BOOL IsValid( ON_TextLog* text_log = NULL ) const;
+  ON_BOOL32 IsValid( ON_TextLog* text_log = NULL ) const;
 
   void Dump( ON_TextLog& ) const; // for debugging
 
-  BOOL Write(
-	 ON_BinaryArchive&  // open binary file
+  ON_BOOL32 Write(
+         ON_BinaryArchive&  // open binary file
        ) const;
 
-  BOOL Read(
-	 ON_BinaryArchive&  // open binary file
+  ON_BOOL32 Read(
+         ON_BinaryArchive&  // open binary file
        );
 
   /////////////////////////////////////////////////////////////////
@@ -280,15 +279,15 @@ public:
 
   int Dimension() const;
 
-  BOOL GetBBox( // returns TRUE if successful
-	 double*,    // minimum
-	 double*,    // maximum
-	 BOOL = FALSE  // TRUE means grow box
-	 ) const;
+  ON_BOOL32 GetBBox( // returns true if successful
+         double*,    // minimum
+         double*,    // maximum
+         ON_BOOL32 = false  // true means grow box
+         ) const;
 
-  BOOL Transform( 
-	 const ON_Xform&
-	 );
+  ON_BOOL32 Transform( 
+         const ON_Xform&
+         );
 
   // virtual ON_Geometry::IsDeformable() override
   bool IsDeformable() const;
@@ -296,9 +295,9 @@ public:
   // virtual ON_Geometry::MakeDeformable() override
   bool MakeDeformable();
 
-  BOOL SwapCoordinates(
-	int, int        // indices of coords to swap
-	);
+  ON_BOOL32 SwapCoordinates(
+        int, int        // indices of coords to swap
+        );
 
   // virtual ON_Geometry override
   bool Morph( const ON_SpaceMorph& morph );
@@ -310,11 +309,11 @@ public:
   // ON_Surface overrides
 
   ON_Mesh* CreateMesh( 
-	     const ON_MeshParameters& mp,
-	     ON_Mesh* mesh = NULL
-	     ) const;
+             const ON_MeshParameters& mp,
+             ON_Mesh* mesh = NULL
+             ) const;
 
-  BOOL SetDomain( 
+  ON_BOOL32 SetDomain( 
     int dir, // 0 sets first parameter's domain, 1 gets second parameter's domain
     double t0, 
     double t1
@@ -335,9 +334,9 @@ public:
   Remarks:
     overrides virtual ON_Surface::GetSurfaceSize
   Returns:
-    TRUE if successful.
+    true if successful.
   */
-  BOOL GetSurfaceSize( 
+  ON_BOOL32 GetSurfaceSize( 
       double* width, 
       double* height 
       ) const;
@@ -346,54 +345,54 @@ public:
     int // 0 gets first parameter's domain, 1 gets second parameter's domain
     ) const; // number of smooth spans in curve
 
-  BOOL GetSpanVector( // span "knots" 
+  ON_BOOL32 GetSpanVector( // span "knots" 
     int, // 0 gets first parameter's domain, 1 gets second parameter's domain
     double* // array of length SpanCount() + 1 
     ) const; // 
 
   int Degree( // returns maximum algebraic degree of any span 
-		  // ( or a good estimate if curve spans are not algebraic )
+                  // ( or a good estimate if curve spans are not algebraic )
     int // 0 gets first parameter's domain, 1 gets second parameter's domain
     ) const; 
 
-  BOOL GetParameterTolerance( // returns tminus < tplus: parameters tminus <= s <= tplus
-	 int,     // 0 gets first parameter, 1 gets second parameter
-	 double,  // t = parameter in domain
-	 double*, // tminus
-	 double*  // tplus
-	 ) const;
+  ON_BOOL32 GetParameterTolerance( // returns tminus < tplus: parameters tminus <= s <= tplus
+         int,     // 0 gets first parameter, 1 gets second parameter
+         double,  // t = parameter in domain
+         double*, // tminus
+         double*  // tplus
+         ) const;
 
   /*
   Description:
     Test a surface to see if it is planar.
   Parameters:
-    plane - [out] if not NULL and TRUE is returned,
-		  the plane parameters are filled in.
+    plane - [out] if not NULL and true is returned,
+                  the plane parameters are filled in.
     tolerance - [in] tolerance to use when checking
   Returns:
-    TRUE if there is a plane such that the maximum distance from
+    true if there is a plane such that the maximum distance from
     the surface to the plane is <= tolerance.
   Remarks:
     Overrides virtual ON_Surface::IsPlanar.
   */
-  BOOL IsPlanar(
-	ON_Plane* plane = NULL,
-	double tolerance = ON_ZERO_TOLERANCE
-	) const;
+  ON_BOOL32 IsPlanar(
+        ON_Plane* plane = NULL,
+        double tolerance = ON_ZERO_TOLERANCE
+        ) const;
 
-  BOOL IsClosed(   // TRUE if NURBS surface is closed (either surface has
-	int // dir // clamped end knots and euclidean location of start
-	) const;   // CV = euclidean location of end CV, or surface is
-		   // periodic.)
+  ON_BOOL32 IsClosed(   // true if NURBS surface is closed (either surface has
+        int // dir // clamped end knots and euclidean location of start
+        ) const;   // CV = euclidean location of end CV, or surface is
+                   // periodic.)
 
-  BOOL IsPeriodic( // TRUE if NURBS surface is periodic (degree > 1,
-	int // dir // periodic knot vector, last degree many CVs 
-	) const;   // are duplicates of first degree many CVs.)
+  ON_BOOL32 IsPeriodic( // true if NURBS surface is periodic (degree > 1,
+        int // dir // periodic knot vector, last degree many CVs 
+        ) const;   // are duplicates of first degree many CVs.)
   
-  BOOL IsSingular( // TRUE if surface side is collapsed to a point
-	int        // side of parameter space to test
-		   // 0 = south, 1 = east, 2 = north, 3 = west
-	) const;
+  ON_BOOL32 IsSingular( // true if surface side is collapsed to a point
+        int        // side of parameter space to test
+                   // 0 = south, 1 = east, 2 = north, 3 = west
+        ) const;
 
   /*
   Description:
@@ -401,46 +400,46 @@ public:
     discontinuity.
   Parameters:
     dir - [in] If 0, then "u" parameter is checked.  If 1, then
-	       the "v" parameter is checked.
+               the "v" parameter is checked.
     c - [in] type of continity to test for.
     t0 - [in] Search begins at t0. If there is a discontinuity
-	      at t0, it will be ignored.  This makes it 
-	      possible to repeatedly call GetNextDiscontinuity
-	      and step through the discontinuities.
+              at t0, it will be ignored.  This makes it 
+              possible to repeatedly call GetNextDiscontinuity
+              and step through the discontinuities.
     t1 - [in] (t0 != t1)  If there is a discontinuity at t1 is 
-	      will be ingored unless c is a locus discontinuity
-	      type and t1 is at the start or end of the curve.
+              will be ingored unless c is a locus discontinuity
+              type and t1 is at the start or end of the curve.
     t - [out] if a discontinuity is found, then *t reports the
-	  parameter at the discontinuity.
+          parameter at the discontinuity.
     hint - [in/out] if GetNextDiscontinuity will be called 
        repeatedly, passing a "hint" with initial value *hint=0
        will increase the speed of the search.       
     dtype - [out] if not NULL, *dtype reports the kind of 
-	discontinuity found at *t.  A value of 1 means the first 
-	derivative or unit tangent was discontinuous.  A value 
-	of 2 means the second derivative or curvature was 
-	discontinuous.  A value of 0 means teh curve is not
-	closed, a locus discontinuity test was applied, and
-	t1 is at the start of end of the curve.
+        discontinuity found at *t.  A value of 1 means the first 
+        derivative or unit tangent was discontinuous.  A value 
+        of 2 means the second derivative or curvature was 
+        discontinuous.  A value of 0 means teh curve is not
+        closed, a locus discontinuity test was applied, and
+        t1 is at the start of end of the curve.
     cos_angle_tolerance - [in] default = cos(1 degree) Used only
-	when c is ON::G1_continuous or ON::G2_continuous.  If the
-	cosine of the angle between two tangent vectors is 
-	<= cos_angle_tolerance, then a G1 discontinuity is reported.
+        when c is ON::G1_continuous or ON::G2_continuous.  If the
+        cosine of the angle between two tangent vectors is 
+        <= cos_angle_tolerance, then a G1 discontinuity is reported.
     curvature_tolerance - [in] (default = ON_SQRT_EPSILON) Used 
-	only when c is ON::G2_continuous.  If K0 and K1 are 
-	curvatures evaluated from above and below and 
-	|K0 - K1| > curvature_tolerance, then a curvature 
-	discontinuity is reported.
+        only when c is ON::G2_continuous.  If K0 and K1 are 
+        curvatures evaluated from above and below and 
+        |K0 - K1| > curvature_tolerance, then a curvature 
+        discontinuity is reported.
   Returns:
     Parametric continuity tests c = (C0_continuous, ..., G2_continuous):
 
-      TRUE if a parametric discontinuity was found strictly 
+      true if a parametric discontinuity was found strictly 
       between t0 and t1. Note well that all curves are 
       parametrically continuous at the ends of their domains.
 
     Locus continuity tests c = (C0_locus_continuous, ...,G2_locus_continuous):
 
-      TRUE if a locus discontinuity was found strictly between
+      true if a locus discontinuity was found strictly between
       t0 and t1 or at t1 is the at the end of a curve.
       Note well that all open curves (IsClosed()=false) are locus
       discontinuous at the ends of their domains.  All closed 
@@ -448,16 +447,16 @@ public:
       the ends of their domains.
   */
   bool GetNextDiscontinuity( 
-		  int dir,
-		  ON::continuity c,
-		  double t0,
-		  double t1,
-		  double* t,
-		  int* hint=NULL,
-		  int* dtype=NULL,
-		  double cos_angle_tolerance=0.99984769515639123915701155881391,
-		  double curvature_tolerance=ON_SQRT_EPSILON
-		  ) const;
+                  int dir,
+                  ON::continuity c,
+                  double t0,
+                  double t1,
+                  double* t,
+                  int* hint=NULL,
+                  int* dtype=NULL,
+                  double cos_angle_tolerance=0.99984769515639123915701155881391,
+                  double curvature_tolerance=ON_SQRT_EPSILON
+                  ) const;
 
   /*
   Description:
@@ -468,21 +467,21 @@ public:
     t - [in] surface parameter to test
     hint - [in] evaluation hint
     point_tolerance - [in] if the distance between two points is
-	greater than point_tolerance, then the surface is not C0.
+        greater than point_tolerance, then the surface is not C0.
     d1_tolerance - [in] if the difference between two first derivatives is
-	greater than d1_tolerance, then the surface is not C1.
+        greater than d1_tolerance, then the surface is not C1.
     d2_tolerance - [in] if the difference between two second derivatives is
-	greater than d2_tolerance, then the surface is not C2.
+        greater than d2_tolerance, then the surface is not C2.
     cos_angle_tolerance - [in] default = cos(1 degree) Used only when
-	c is ON::G1_continuous or ON::G2_continuous.  If the cosine
-	of the angle between two normal vectors 
-	is <= cos_angle_tolerance, then a G1 discontinuity is reported.
+        c is ON::G1_continuous or ON::G2_continuous.  If the cosine
+        of the angle between two normal vectors 
+        is <= cos_angle_tolerance, then a G1 discontinuity is reported.
     curvature_tolerance - [in] (default = ON_SQRT_EPSILON) Used only when
-	c is ON::G2_continuous.  If K0 and K1 are curvatures evaluated
-	from above and below and |K0 - K1| > curvature_tolerance,
-	then a curvature discontinuity is reported.
+        c is ON::G2_continuous.  If K0 and K1 are curvatures evaluated
+        from above and below and |K0 - K1| > curvature_tolerance,
+        then a curvature discontinuity is reported.
   Returns:
-    TRUE if the surface has at least the c type continuity at the parameter t.
+    true if the surface has at least the c type continuity at the parameter t.
   Remarks:
     Overrides virtual ON_Surface::IsContinuous
   */
@@ -498,26 +497,26 @@ public:
     double curvature_tolerance=ON_SQRT_EPSILON
     ) const;
 
-  BOOL Reverse(  // reverse parameterizatrion, Domain changes from [a,b] to [-b,-a]
+  ON_BOOL32 Reverse(  // reverse parameterizatrion, Domain changes from [a,b] to [-b,-a]
     int // dir  0 = "s", 1 = "t"
     );
 
-  BOOL Transpose(); // transpose surface parameterization (swap "s" and "t")
+  ON_BOOL32 Transpose(); // transpose surface parameterization (swap "s" and "t")
 
-  BOOL Evaluate( // returns FALSE if unable to evaluate
-	 double, double, // evaluation parameter
-	 int,            // number of derivatives (>=0)
-	 int,            // array stride (>=Dimension())
-	 double*,        // array of length stride*(ndir+1)*(ndir+2)/2
-	 int = 0,        // optional - determines which quadrant to evaluate from
-			 //         0 = default
-			 //         1 from NE quadrant
-			 //         2 from NW quadrant
-			 //         3 from SW quadrant
-			 //         4 from SE quadrant
-	 int* = 0        // optional - evaluation hint (int[2]) used to speed
-			 //            repeated evaluations
-	 ) const;
+  ON_BOOL32 Evaluate( // returns false if unable to evaluate
+         double, double, // evaluation parameter
+         int,            // number of derivatives (>=0)
+         int,            // array stride (>=Dimension())
+         double*,        // array of length stride*(ndir+1)*(ndir+2)/2
+         int = 0,        // optional - determines which quadrant to evaluate from
+                         //         0 = default
+                         //         1 from NE quadrant
+                         //         2 from NW quadrant
+                         //         3 from SW quadrant
+                         //         4 from SE quadrant
+         int* = 0        // optional - evaluation hint (int[2]) used to speed
+                         //            repeated evaluations
+         ) const;
 
   /*
   Description:
@@ -525,18 +524,18 @@ public:
     Overrides virtual ON_Surface::IsoCurve.
   Parameters:
     dir - [in] 0 first parameter varies and second parameter is constant
-		 e.g., point on IsoCurve(0,c) at t is srf(t,c)
-	       1 first parameter is constant and second parameter varies
-		 e.g., point on IsoCurve(1,c) at t is srf(c,t)
+                 e.g., point on IsoCurve(0,c) at t is srf(t,c)
+               1 first parameter is constant and second parameter varies
+                 e.g., point on IsoCurve(1,c) at t is srf(c,t)
 
     c - [in] value of constant parameter 
   Returns:
     Isoparametric curve.
   */
   ON_Curve* IsoCurve(
-	 int dir,
-	 double c
-	 ) const;
+         int dir,
+         double c
+         ) const;
 
   /*
   Description:
@@ -545,29 +544,29 @@ public:
 
   Parameters:
     dir - [in] 0  The domain specifies an sub-interval of Domain(0)
-		  (the first surface parameter).
-	       1  The domain specifies an sub-interval of Domain(1)
-		  (the second surface parameter).
+                  (the first surface parameter).
+               1  The domain specifies an sub-interval of Domain(1)
+                  (the second surface parameter).
     domain - [in] interval of the surface to keep. If dir is 0, then
-	the portions of the surface with parameters (s,t) satisfying
-	s < Domain(0).Min() or s > Domain(0).Max() are trimmed away.
-	If dir is 1, then the portions of the surface with parameters
-	(s,t) satisfying t < Domain(1).Min() or t > Domain(1).Max() 
-	are trimmed away.
+        the portions of the surface with parameters (s,t) satisfying
+        s < Domain(0).Min() or s > Domain(0).Max() are trimmed away.
+        If dir is 1, then the portions of the surface with parameters
+        (s,t) satisfying t < Domain(1).Min() or t > Domain(1).Max() 
+        are trimmed away.
   */
-  BOOL Trim(
-	 int dir,
-	 const ON_Interval& domain
-	 );
+  ON_BOOL32 Trim(
+         int dir,
+         const ON_Interval& domain
+         );
 
   /*
    Description:
      Where possible, analytically extends surface to include domain.
    Parameters:
      dir - [in] 0  new Domain(0) will include domain.
-		   (the first surface parameter).
-		1  new Domain(1) will include domain.
-		   (the second surface parameter).
+                   (the first surface parameter).
+                1  new Domain(1) will include domain.
+                   (the second surface parameter).
      domain - [in] if domain is not included in surface domain, 
      surface will be extended so that its domain includes domain.  
      Will not work if surface is closed in direction dir. 
@@ -590,31 +589,31 @@ public:
 
   Parameters:
     dir - [in] 0  The surface is split vertically.  The "west" side
-		  is returned in "west_or_south_side" and the "east"
-		  side is returned in "east_or_north_side".
-	       1  The surface is split horizontally.  The "south" side
-		  is returned in "west_or_south_side" and the "north"
-		  side is returned in "east_or_north_side".
+                  is returned in "west_or_south_side" and the "east"
+                  side is returned in "east_or_north_side".
+               1  The surface is split horizontally.  The "south" side
+                  is returned in "west_or_south_side" and the "north"
+                  side is returned in "east_or_north_side".
     c - [in] value of constant parameter in interval returned
-	       by Domain(dir)
+               by Domain(dir)
     west_or_south_side - [out] west/south portion of surface returned here
     east_or_north_side - [out] east/north portion of surface returned here
 
   Example:
 
-	  ON_NurbsSurface srf = ...;
-	  int dir = 1;
-	  ON_NurbsSurface* south_side = 0;
-	  ON_NurbsSurface* north_side = 0;
-	  srf.Split( dir, srf.Domain(dir).Mid() south_side, north_side );
+          ON_NurbsSurface srf = ...;
+          int dir = 1;
+          ON_NurbsSurface* south_side = 0;
+          ON_NurbsSurface* north_side = 0;
+          srf.Split( dir, srf.Domain(dir).Mid() south_side, north_side );
 
   */
-  BOOL Split(
-	 int dir,
-	 double c,
-	 ON_Surface*& west_or_south_side,
-	 ON_Surface*& east_or_north_side
-	 ) const;
+  ON_BOOL32 Split(
+         int dir,
+         double c,
+         ON_Surface*& west_or_south_side,
+         ON_Surface*& east_or_north_side
+         ) const;
 
   /*
   Description:
@@ -625,31 +624,31 @@ public:
       can be represented using the same class of surface definition.
       In that case, the tolerance specifies the desired accuracy.
     max_deviation - [out] If this parameter is not NULL, the maximum
-      deviation from the returned offset to the TRUE offset is returned
+      deviation from the returned offset to the true offset is returned
       here.  This deviation is zero except for cases where an exact
       offset cannot be computed using the same class of surface definition.
   Returns:
     Offset surface.
   */
   ON_Surface* Offset(
-	double offset_distance, 
-	double tolerance, 
-	double* max_deviation = NULL
-	) const;
+        double offset_distance, 
+        double tolerance, 
+        double* max_deviation = NULL
+        ) const;
 
   int GetNurbForm( // returns 0: unable to create NURBS representation
-		   //            with desired accuracy.
-		   //         1: success - returned NURBS parameterization
-		   //            matches the surface's to wthe desired accuracy
-		   //         2: success - returned NURBS point locus matches
-		   //            the surfaces's to the desired accuracy but, on
-		   //            the interior of the surface's domain, the 
-		   //            surface's parameterization and the NURBS
-		   //            parameterization may not match to the 
-		   //            desired accuracy.
-	ON_NurbsSurface&,
-	double = 0.0 // tolerance
-	) const;
+                   //            with desired accuracy.
+                   //         1: success - returned NURBS parameterization
+                   //            matches the surface's to wthe desired accuracy
+                   //         2: success - returned NURBS point locus matches
+                   //            the surfaces's to the desired accuracy but, on
+                   //            the interior of the surface's domain, the 
+                   //            surface's parameterization and the NURBS
+                   //            parameterization may not match to the 
+                   //            desired accuracy.
+        ON_NurbsSurface&,
+        double = 0.0 // tolerance
+        ) const;
 
   /////////////////////////////////////////////////////////////////
   // Interface
@@ -660,38 +659,38 @@ public:
     rows and/or columns
   Parameters:
     dir - [in] 0 to get "u" direction length, 1 to get "v" 
-	       direction length
+               direction length
     length - [out] maximum length of a polygon "row" in the 
-		   specified direction
+                   specified direction
   Returns:
-    TRUE if successful.
+    true if successful.
   */
   double ControlPolygonLength( int dir ) const;
 
 
-  bool IsRational(  // TRUE if NURBS surface is rational
-	void
-	) const;
+  bool IsRational(  // true if NURBS surface is rational
+        void
+        ) const;
   
   int CVSize(       // number of doubles per control vertex 
-	void        // = IsRational() ? Dim()+1 : Dim()
-	) const;
+        void        // = IsRational() ? Dim()+1 : Dim()
+        ) const;
   
   int Order(        // order = degree + 1
-	int         // dir 0 = "s", 1 = "t"
-	) const;
+        int         // dir 0 = "s", 1 = "t"
+        ) const;
 	
   int CVCount(      // number of control vertices
-	int         // dir 0 = "s", 1 = "t"
-	) const;
+        int         // dir 0 = "s", 1 = "t"
+        ) const;
 
   int CVCount(      // total number of control vertices
-	void
-	) const;
+        void
+        ) const;
 
   int KnotCount(    // total number of knots in knot vector
-	int dir         // dir 0 = "s", 1 = "t"
-	) const;
+        int dir         // dir 0 = "s", 1 = "t"
+        ) const;
   
   /*
   Description:
@@ -716,108 +715,108 @@ public:
     ON_NurbsSurface::Weight
   */
   double* CV(
-	int i,
-	int j
-	) const;
+        int i,
+        int j
+        ) const;
 
   /*
   Description:
     Returns the style of control vertices in the m_cv array.
   Returns:
     @untitled table
-    ON::not_rational                m_is_rat is FALSE
-    ON::homogeneous_rational        m_is_rat is TRUE
+    ON::not_rational                m_is_rat is false
+    ON::homogeneous_rational        m_is_rat is true
   */
   ON::point_style CVStyle() const;
 
   double Weight(        // get value of control vertex weight
-	int i, int j   // CV index ( 0 <= i <= CVCount(0), 0 <= j <= CVCount(1)
-	) const;
+        int i, int j   // CV index ( 0 <= i <= CVCount(0), 0 <= j <= CVCount(1)
+        ) const;
 
-  BOOL SetWeight(      // get value of control vertex weight
-	int i, int j,   // CV index ( 0 <= i <= CVCount(0), 0 <= j <= CVCount(1)
-	double weight
-	);
+  ON_BOOL32 SetWeight(      // get value of control vertex weight
+        int i, int j,   // CV index ( 0 <= i <= CVCount(0), 0 <= j <= CVCount(1)
+        double weight
+        );
 
-  BOOL SetCV(              // set a single control vertex
-	int i, int j,   // CV index ( 0 <= i <= CVCount(0), 0 <= j <= CVCount(1)
-	ON::point_style, // style of input point
-	const double* cv    // value of control vertex
-	);
+  ON_BOOL32 SetCV(              // set a single control vertex
+        int i, int j,   // CV index ( 0 <= i <= CVCount(0), 0 <= j <= CVCount(1)
+        ON::point_style, // style of input point
+        const double* cv    // value of control vertex
+        );
 
-  BOOL SetCV(               // set a single control vertex
-	int i, int j,   // CV index ( 0 <= i <= CVCount(0), 0 <= j <= CVCount(1)
-	const ON_3dPoint& cv// value of control vertex
-			   // If NURBS is rational, weight
-			   // will be set to 1.
-	);
+  ON_BOOL32 SetCV(               // set a single control vertex
+        int i, int j,   // CV index ( 0 <= i <= CVCount(0), 0 <= j <= CVCount(1)
+        const ON_3dPoint& cv// value of control vertex
+                           // If NURBS is rational, weight
+                           // will be set to 1.
+        );
 
-  BOOL SetCV(              // set a single control vertex
-	int i, int j,   // CV index ( 0 <= i <= CVCount(0), 0 <= j <= CVCount(1)
-	const ON_4dPoint& cv// value of control vertex
-	);
+  ON_BOOL32 SetCV(              // set a single control vertex
+        int i, int j,   // CV index ( 0 <= i <= CVCount(0), 0 <= j <= CVCount(1)
+        const ON_4dPoint& cv// value of control vertex
+        );
 
-  BOOL SetCVRow(          // Sets CV( *, row_index ) 
+  ON_BOOL32 SetCVRow(          // Sets CV( *, row_index ) 
        int row_index,               // row_index >= 0 and < m_cv_count[1]
        const ON_3dPoint& cv // value of control vertex
-			  // If NURBS is rational, weight
-			  // will be set to 1.
+                          // If NURBS is rational, weight
+                          // will be set to 1.
        );
 
-  BOOL SetCVRow(          // Sets CV( *, row_index ) 
+  ON_BOOL32 SetCVRow(          // Sets CV( *, row_index ) 
        int row_index,               // row_index >= 0 and < m_cv_count[1]
        int v_stride,               // v stride
        const double* v     // v[] = values (same dim and is_rat as surface)
        );
 
-  BOOL SetCVColumn(       // Sets CV( col_index, * ) 
+  ON_BOOL32 SetCVColumn(       // Sets CV( col_index, * ) 
        int col_index,               // col_index >= 0 and < m_cv_count[0]
        const ON_3dPoint& cv // value of control vertex
-			  // If NURBS is rational, weight
-			  // will be set to 1.
+                          // If NURBS is rational, weight
+                          // will be set to 1.
        );
 
-  BOOL SetCVColumn(       // Sets CV( col_index, * ) 
+  ON_BOOL32 SetCVColumn(       // Sets CV( col_index, * ) 
        int col_index,               // col_index >= 0 and < m_cv_count[0]
        int v_stride,               // v stride
        const double* v     // v[] = values (same dim and is_rat as surface)
        );
 
-  BOOL GetCV(              // get a single control vertex
-	int i, int j,   // CV index ( 0 <= i <= CVCount(0), 0 <= j <= CVCount(1)
-	ON::point_style, // style to use for output point
-	double* cv          // array of length >= CVSize()
-	) const;
+  ON_BOOL32 GetCV(              // get a single control vertex
+        int i, int j,   // CV index ( 0 <= i <= CVCount(0), 0 <= j <= CVCount(1)
+        ON::point_style, // style to use for output point
+        double* cv          // array of length >= CVSize()
+        ) const;
 
-  BOOL GetCV(              // get a single control vertex
-	int i, int j,   // CV index ( 0 <= i <= CVCount(0), 0 <= j <= CVCount(1)
-	ON_3dPoint& cv     // gets euclidean cv when NURBS is rational
-	) const;
+  ON_BOOL32 GetCV(              // get a single control vertex
+        int i, int j,   // CV index ( 0 <= i <= CVCount(0), 0 <= j <= CVCount(1)
+        ON_3dPoint& cv     // gets euclidean cv when NURBS is rational
+        ) const;
 
-  BOOL GetCV(              // get a single control vertex
-	int i, int j,   // CV index ( 0 <= i <= CVCount(0), 0 <= j <= CVCount(1)
-	ON_4dPoint& cv     // gets homogeneous cv
-	) const;
+  ON_BOOL32 GetCV(              // get a single control vertex
+        int i, int j,   // CV index ( 0 <= i <= CVCount(0), 0 <= j <= CVCount(1)
+        ON_4dPoint& cv     // gets homogeneous cv
+        ) const;
 
   int SetKnot(
-	int dir,    // dir 0 = "s", 1 = "t"
-	int knot_index,            // knot index ( 0 to KnotCount - 1 )
-	double knot_value         // value for knot
-	);
+        int dir,    // dir 0 = "s", 1 = "t"
+        int knot_index,            // knot index ( 0 to KnotCount - 1 )
+        double knot_value         // value for knot
+        );
 
   double Knot(
-	int dir,    // dir 0 = "s", 1 = "t"
-	int knot_index  // knot index ( >= 0 and < Order + CV_count - 2 )
-	) const;
+        int dir,    // dir 0 = "s", 1 = "t"
+        int knot_index  // knot index ( >= 0 and < Order + CV_count - 2 )
+        ) const;
 
   int KnotMultiplicity(
-	int dir,    // dir 0 = "s", 1 = "t"
-	int knot_index            // knot index ( >= 0 and < Order + CV_count - 2 )
-	) const;
+        int dir,    // dir 0 = "s", 1 = "t"
+        int knot_index            // knot index ( >= 0 and < Order + CV_count - 2 )
+        ) const;
 
   const double* Knot(   // knot[] array
-	int dir    // dir 0 = "s", 1 = "t"
-	) const;
+        int dir    // dir 0 = "s", 1 = "t"
+        ) const;
 
   // Description:
   //   Make knot vector a clamped uniform knot vector
@@ -827,7 +826,7 @@ public:
   //   dir - [in] 0 = u knots, 1 = v knots
   //   delta - [in] (>0.0) knot spacing.
   // Returns:
-  //   TRUE if successful.
+  //   true if successful.
   // Remarks:
   //   Allocates m_knot[] if it is not big enough.
   // See Also:
@@ -845,7 +844,7 @@ public:
   //   dir - [in] 0 = u knots, 1 = v knots
   //   delta - [in] (>0.0) knot spacing.
   // Returns:
-  //   TRUE if successful.
+  //   true if successful.
   // Remarks:
   //   Allocates m_knot[] if it is not big enough.
   // See Also:
@@ -857,62 +856,62 @@ public:
 
 
   bool IsClamped( // determine if knot vector is clamped
-	int dir,    // dir 0 = "s", 1 = "t"
-	int end = 2 // end to check: 0 = start, 1 = end, 2 = start and end
-	) const;
+        int dir,    // dir 0 = "s", 1 = "t"
+        int end = 2 // end to check: 0 = start, 1 = end, 2 = start and end
+        ) const;
   
   double SuperfluousKnot(
-	   int dir,    // dir 0 = "s", 1 = "t"
-	   int end  // 0 = start, 1 = end
-	   ) const;
+           int dir,    // dir 0 = "s", 1 = "t"
+           int end  // 0 = start, 1 = end
+           ) const;
 
   double GrevilleAbcissa(
-	   int dir,  // dir
-	   int cv_index  // index (0 <= index < CVCount(dir)
-	   ) const;
+           int dir,  // dir
+           int cv_index  // index (0 <= index < CVCount(dir)
+           ) const;
 
   bool GetGrevilleAbcissae( // see ON_GetGrevilleAbcissa() for details
-	   int dir,      // dir
-	   double* g   // g[cv count]
-	   ) const;
+           int dir,      // dir
+           double* g   // g[cv count]
+           ) const;
 
   bool SetClampedGrevilleKnotVector(
-	   int dir,          // dir
-	   int g_stride,          // g_stride
-	   const double* g // g[], CVCount(dir) many Greville abcissa
-	   );
+           int dir,          // dir
+           int g_stride,          // g_stride
+           const double* g // g[], CVCount(dir) many Greville abcissa
+           );
 
   bool SetPeriodicGrevilleKnotVector(
-	   int dir,          // dir
-	   int g_stride,          // g_stride
-	   const double* g // g[], Greville abcissa
-	   );
+           int dir,          // dir
+           int g_stride,          // g_stride
+           const double* g // g[], Greville abcissa
+           );
 
   bool ZeroCVs(); // zeros all CVs (any weights set to 1);
 
   bool ClampEnd(
-	    int dir,         // dir 0 = "s", 1 = "t"
-	    int end // 0 = clamp start, 1 = clamp end, 2 = clamp start and end
-	    );
+            int dir,         // dir 0 = "s", 1 = "t"
+            int end // 0 = clamp start, 1 = clamp end, 2 = clamp start and end
+            );
 
   bool InsertKnot(
-	   int dir,         // dir 0 = "s", 1 = "t"
-	   double knot_value, // value of knot
-	   int knot_multiplicity=1   // multiplicity of knot ( >= 1 and <= degree )
-	   );
+           int dir,         // dir 0 = "s", 1 = "t"
+           double knot_value, // value of knot
+           int knot_multiplicity=1   // multiplicity of knot ( >= 1 and <= degree )
+           );
 
   bool MakeRational();
 
   bool MakeNonRational();
 
   bool IncreaseDegree(
-	   int dir,  // dir 0 = "s", 1 = "t"
-	   int desired_degree  //  desired_degree
-	   );
+           int dir,  // dir 0 = "s", 1 = "t"
+           int desired_degree  //  desired_degree
+           );
 
   bool ChangeDimension(
-	   int desired_dimension  //  desired_dimension
-	   );
+           int desired_dimension  //  desired_dimension
+           );
 
   /*
   Description:
@@ -921,32 +920,32 @@ public:
   Parameters:
 		dir - [in] must be 0 or 1
     t -		[in] dir parameter of seam, must have Domain(dir).Includes(t).
-	       The resulting surface domain in the dir direction will start at t.
+               The resulting surface domain in the dir direction will start at t.
   Returns:
-    TRUE if successful.
+    true if successful.
   */
-  BOOL ChangeSurfaceSeam( 
+  ON_BOOL32 ChangeSurfaceSeam( 
 						int dir,
-	    double t 
-	    );
+            double t 
+            );
 
 
   // Creates a tensor product nurbs surface with srf(s,t) = T(A(s),B(t));
-  BOOL TensorProduct(
-	const ON_NurbsCurve&, // A
-	const ON_NurbsCurve&, // B
-	ON_TensorProduct&     // T
-	);
+  ON_BOOL32 TensorProduct(
+        const ON_NurbsCurve&, // A
+        const ON_NurbsCurve&, // B
+        ON_TensorProduct&     // T
+        );
 
   /////////////////////////////////////////////////////////////////
   // Tools for managing CV and knot memory
-  BOOL ReserveKnotCapacity( // returns FALSE if allocation fails
-		    // does not change m_order or m_cv_count
+  ON_BOOL32 ReserveKnotCapacity( // returns false if allocation fails
+                    // does not change m_order or m_cv_count
     int dir, // dir 0 = "s", 1 = "t"
     int knot_array_capacity // minimum capacity of m_knot[] array
     );
-  BOOL ReserveCVCapacity(  // returns FALSE if allocation fails
-		    // does not change m_order or m_cv_count
+  ON_BOOL32 ReserveCVCapacity(  // returns false if allocation fails
+                    // does not change m_order or m_cv_count
     int cv_array_capacity // minimum capacity of m_cv[] array
     );
 
@@ -955,17 +954,17 @@ public:
     Convert a NURBS surface bispan into a bezier surface.
   Parameters:
     span_index0 - [in] Specifies the "u" span and must satisfy
-	 0 <= span_index0 <= m_cv_count[0]-m_order[0]
-	 m_knot[0][span_index0+m_order[0]-2] < m_knot[0][span_index0+m_order[0]-1]
+         0 <= span_index0 <= m_cv_count[0]-m_order[0]
+         m_knot[0][span_index0+m_order[0]-2] < m_knot[0][span_index0+m_order[0]-1]
     span_index1 - [in] Specifies the "v" span and must satisfy
-	 0 <= span_index1 <= m_cv_count[1]-m_order[1]
-	 m_knot[1][span_index1+m_order[1]-2] < m_knot[1][span_index1+m_order[1]-1]
+         0 <= span_index1 <= m_cv_count[1]-m_order[1]
+         m_knot[1][span_index1+m_order[1]-2] < m_knot[1][span_index1+m_order[1]-1]
     bezier_surface - [out] bezier surface returned here
   Returns:
-    TRUE if successful
-    FALSE if input is not valid
+    true if successful
+    false if input is not valid
   */
-  BOOL ConvertSpanToBezier(
+  ON_BOOL32 ConvertSpanToBezier(
       int span_index0,
       int span_index1, 
       ON_BezierSurface& bezier_surface
@@ -985,9 +984,9 @@ public:
   int     m_dim;            // (>=1)
 
   int     m_is_rat;         // 1 for rational B-splines. (Control vertices
-			    // use homogeneous form.)
-			    // 0 for non-rational B-splines. (Control
-			    // verticies do not have a weight coordinate.)
+                            // use homogeneous form.)
+                            // 0 for non-rational B-splines. (Control
+                            // verticies do not have a weight coordinate.)
 
   int     m_order[2];       // order = degree+1 (>=2)
 
@@ -996,43 +995,43 @@ public:
   // knot vector memory
 
   int     m_knot_capacity[2]; // If m_knot_capacity > 0, then m_knot[]
-			      // is an array of at least m_knot_capacity
-			      // doubles whose memory is managed by the
-			      // ON_NurbsSurface class using rhmalloc(),
-			      // onrealloc(), and rhfree().
-			      // If m_knot_capacity is 0 and m_knot is
-			      // not NULL, then  m_knot[] is assumed to
-			      // be big enough for any requested operation
-			      // and m_knot[] is not deleted by the
-			      // destructor.
+                              // is an array of at least m_knot_capacity
+                              // doubles whose memory is managed by the
+                              // ON_NurbsSurface class using rhmalloc(),
+                              // onrealloc(), and rhfree().
+                              // If m_knot_capacity is 0 and m_knot is
+                              // not NULL, then  m_knot[] is assumed to
+                              // be big enough for any requested operation
+                              // and m_knot[] is not deleted by the
+                              // destructor.
 
   double* m_knot[2];        // Knot vector. ( The knot vector has length
-			    // m_order+m_cv_count-2. )
+                            // m_order+m_cv_count-2. )
   
   // control vertex net memory
 
   int     m_cv_stride[2];   // The pointer to start of "CV[i]" is
-			    //   m_cv + i*m_cv_stride.
+                            //   m_cv + i*m_cv_stride.
 
   int     m_cv_capacity;    // If m_cv_capacity > 0, then m_cv[] is an array
-			    // of at least m_cv_capacity doubles whose
-			    // memory is managed by the ON_NurbsSurface
-			    // class using rhmalloc(), onrealloc(), and rhfree().
-			    // If m_cv_capacity is 0 and m_cv is not
-			    // NULL, then m_cv[] is assumed to be big enough
-			    // for any requested operation and m_cv[] is not
-			    // deleted by the destructor.
+                            // of at least m_cv_capacity doubles whose
+                            // memory is managed by the ON_NurbsSurface
+                            // class using rhmalloc(), onrealloc(), and rhfree().
+                            // If m_cv_capacity is 0 and m_cv is not
+                            // NULL, then m_cv[] is assumed to be big enough
+                            // for any requested operation and m_cv[] is not
+                            // deleted by the destructor.
 
   double* m_cv;             // Control points.
-			    // If m_is_rat is FALSE, then control point is
-			    //
-			    //          ( CV(i)[0], ..., CV(i)[m_dim-1] ).
-			    //
-			    // If m_is_rat is TRUE, then the control point
-			    // is stored in HOMOGENEOUS form and is
-			    //
-			    //         [ CV(i)[0], ..., CV(i)[m_dim] ].
-			    // 
+                            // If m_is_rat is false, then control point is
+                            //
+                            //          ( CV(i)[0], ..., CV(i)[m_dim-1] ).
+                            //
+                            // If m_is_rat is true, then the control point
+                            // is stored in HOMOGENEOUS form and is
+                            //
+                            //         [ CV(i)[0], ..., CV(i)[m_dim] ].
+                            // 
 
 public:
   static ON_MeshNurbsSurface _MeshNurbsSurface;
@@ -1068,7 +1067,7 @@ public:
     );
 
   ON_NurbsCage( 
-    const ON_3dPoint* box_corners,
+    const ON_3dPoint* box_corners, // array of 8 3d points
     int order0,
     int order1,
     int order2,
@@ -1093,17 +1092,17 @@ public:
     Overrides the pure virtual ON_Object::IsValid function.
   Parameters:
     text_log - [in] If not null and the object is invalid,
-		    a brief description of the problem
-		    suitable for debugging C++ code
-		    is printed in this log.
+                    a brief description of the problem
+                    suitable for debugging C++ code
+                    is printed in this log.
   Returns:
     True if the orders are at least two, dimension is positive,
     knot vectors are valid, and the other fields are valid
     for the specified orders and dimension.
   */
-  BOOL IsValid( 
-	  ON_TextLog* text_log = NULL 
-	  ) const;
+  ON_BOOL32 IsValid( 
+          ON_TextLog* text_log = NULL 
+          ) const;
 
   /*
   Description:
@@ -1135,7 +1134,7 @@ public:
   Returns:
     True if successful.
   */
-  BOOL Read(
+  ON_BOOL32 Read(
     ON_BinaryArchive& archive
     );
 
@@ -1149,7 +1148,7 @@ public:
   Returns:
     True if successful.
   */
-  BOOL Write(
+  ON_BOOL32 Write(
     ON_BinaryArchive& archive
     ) const;
 
@@ -1192,9 +1191,9 @@ public:
   Parameters:
     bbox - [in/out]
     bGrowBox - [in] If true, the input bbox is grown to include
-	this object's bounding box.
+        this object's bounding box.
     frame - [in] if not null, this specifies the coordinate system
-		frame.
+                frame.
   Returns:
     True if successful.
   */
@@ -1210,16 +1209,16 @@ public:
     boxmin - [in] array of Dimension() doubles
     boxmax - [in] array of Dimension() doubles
     bGrowBox =  [in] if true and the input is a valid box
-			  then the input box is grown to
-			  include this object's bounding box.
+                          then the input box is grown to
+                          include this object's bounding box.
   Returns:
     true if successful.
   */
-  BOOL GetBBox(
-	 double* boxmin,
-	 double* boxmax,
-	 int bGrowBox = false 
-	 ) const;
+  ON_BOOL32 GetBBox(
+         double* boxmin,
+         double* boxmax,
+         int bGrowBox = false 
+         ) const;
 
   /*
 	Description:
@@ -1251,9 +1250,9 @@ public:
   Returns:
     true if successful.
   */
-  BOOL Transform( 
-	 const ON_Xform& xform
-	 );
+  ON_BOOL32 Transform( 
+         const ON_Xform& xform
+         );
 
   /*
   Description:
@@ -1319,19 +1318,19 @@ public:
   Parameters:
     box_corners - [in] 8 points that define corners of the volume
 
-	    7______________6
-	    |\             |\
-	    | \            | \
-	    |  \ _____________\
-	    |   4          |   5
-	    |   |          |   |
-	    |   |          |   |
-	    3---|----------2   |
-	    \   |          \   |
-	     \  |z          \  |
-	    y \ |            \ |
-	       \0_____________\1
-		       x
+            7______________6
+            |\             |\
+            | \            | \
+            |  \ _____________\
+            |   4          |   5
+            |   |          |   |
+            |   |          |   |
+            3---|----------2   |
+            \   |          \   |
+             \  |z          \  |
+            y \ |            \ |
+               \0_____________\1
+                       x
 
   */
   bool Create(
@@ -1350,19 +1349,19 @@ public:
   Parameters:
     box_corners - [in] 8 points that define corners of the volume
 
-	    7______________6
-	    |\             |\
-	    | \            | \
-	    |  \ _____________\
-	    |   4          |   5
-	    |   |          |   |
-	    |   |          |   |
-	    3---|----------2   |
-	    \   |          \   |
-	     \  |t          \  |
-	    s \ |            \ |
-	       \0_____________\1
-		       r
+            7______________6
+            |\             |\
+            | \            | \
+            |  \ _____________\
+            |   4          |   5
+            |   |          |   |
+            |   |          |   |
+            3---|----------2   |
+            \   |          \   |
+             \  |t          \  |
+            s \ |            \ |
+               \0_____________\1
+                       r
 
   */
   bool Create(
@@ -1380,11 +1379,11 @@ public:
   void EmergencyDestroy(); // call if memory used by ON_NurbsCage becomes invalid
 
   ON_Interval Domain(
-    int // 0 = "u" domain, 1 = "v" domain, 2 = "w" domain
+    int // dir 0 = "r", 1 = "s", 2 = "t"
     ) const;
 
   bool Reverse( 
-    int dir 
+    int dir // dir 0 = "r", 1 = "s", 2 = "t"
     );
   
   bool Transpose(
@@ -1393,24 +1392,24 @@ public:
     );
 
   bool ClampEnd(
-	    int dir,         // dir 0 = "s", 1 = "t"
-	    int end // 0 = clamp start, 1 = clamp end, 2 = clamp start and end
-	    );
+            int dir,         // dir 0 = "r", 1 = "s", 2 = "t"
+            int end // 0 = clamp start, 1 = clamp end, 2 = clamp start and end
+            );
 
   bool InsertKnot(
-	   int dir,         // dir 0 = "s", 1 = "t"
-	   double knot_value, // value of knot
-	   int knot_multiplicity=1   // multiplicity of knot ( >= 1 and <= degree )
-	   );
+           int dir,         // dir 0 = "r", 1 = "s", 2 = "t"
+           double knot_value, // value of knot
+           int knot_multiplicity=1   // multiplicity of knot ( >= 1 and <= degree )
+           );
 
-  BOOL IncreaseDegree(
-	   int dir,  // dir 0 = "s", 1 = "t"
-	   int desired_degree  //  desired_degree
-	   );
+  ON_BOOL32 IncreaseDegree(
+           int dir,  // dir 0 = "r", 1 = "s", 2 = "t"
+           int desired_degree  //  desired_degree
+           );
 
-  BOOL ChangeDimension(
-	   int desired_dimension  //  desired_dimension
-	   );
+  ON_BOOL32 ChangeDimension(
+           int desired_dimension  //  desired_dimension
+           );
 
   /*
   Description:
@@ -1422,58 +1421,58 @@ public:
     der_count - [in]  (>= 0)
     v_stride - [in] (>= m_dim)
     v - [out] An array of length v_stride*(der_count+1)(der_count+2)*(der_count+3)/6.
-	      The evaluation results are stored in this array.
+              The evaluation results are stored in this array.
 
-		P = v[0],...,v[m_dim-1]
-		Dr = v[v_stride],...
-		Ds = v[2*v_stride],...
-		Dt = v[3*v_stride],...
+                P = v[0],...,v[m_dim-1]
+                Dr = v[v_stride],...
+                Ds = v[2*v_stride],...
+                Dt = v[3*v_stride],...
 
-	      In general, Dr^i Ds^j Dt^k is returned in v[n],...,v[n+m_dim-1], where
+              In general, Dr^i Ds^j Dt^k is returned in v[n],...,v[n+m_dim-1], where
 
-	       d = (i+j+k)
-	       n = v_stride*( d*(d+1)*(d+2)/6 + (j+k)*(j+k+1)/2 + k) 
+               d = (i+j+k)
+               n = v_stride*( d*(d+1)*(d+2)/6 + (j+k)*(j+k+1)/2 + k) 
 
     side - [in] specifies the span to use for the evaluation
-		when r, s, or t is at a knot value.
-	    0 = default
-	    1 = from upper NE quadrant
-	    2 = from upper NW quadrant
-	    3 = from upper SW quadrant
-	    4 = from upper SE quadrant
-	    5 = from lower NE quadrant
-	    6 = from lower NW quadrant
-	    7 = from lower SW quadrant
-	    8 = from lower SE quadrant  
+                when r, s, or t is at a knot value.
+            0 = default
+            1 = from upper NE quadrant
+            2 = from upper NW quadrant
+            3 = from upper SW quadrant
+            4 = from upper SE quadrant
+            5 = from lower NE quadrant
+            6 = from lower NW quadrant
+            7 = from lower SW quadrant
+            8 = from lower SE quadrant  
     hint - [in/out] If a bunch of evaluations will be performed that
-		    tend to occur in the same region, then
-		    hint[3] can be used to speed the search for
-		    the evaluation span.  The input value is
-		    used as a search hint and the output value
-		    records the span used for that evaluation.
+                    tend to occur in the same region, then
+                    hint[3] can be used to speed the search for
+                    the evaluation span.  The input value is
+                    used as a search hint and the output value
+                    records the span used for that evaluation.
   Example:
 
-	  int der_count = 2;
-	  int v_stride = dim;
-	  double v[v_stride*(der_count+1)*(der_count+2)*(der_count+3)/6];
-	  int side = 0;
-	  int hint[3]; hint[0] = 0; hint[1] = 0; hint[2] = 0;
-	  bool rc = cage.Evaluate(r,s,t,der_count,v_stride,v,side,hint);
+          int der_count = 2;
+          int v_stride = dim;
+          double v[v_stride*(der_count+1)*(der_count+2)*(der_count+3)/6];
+          int side = 0;
+          int hint[3]; hint[0] = 0; hint[1] = 0; hint[2] = 0;
+          bool rc = cage.Evaluate(r,s,t,der_count,v_stride,v,side,hint);
 
-	  ON_3dPoint P = v;
+          ON_3dPoint P = v;
 
-	  // first order partial derivatives
-	  ON_3dVector Dr = v + v_stride;
-	  ON_3dVector Ds = v + 2*v_stride;
-	  ON_3dVector Dt = v + 3*v_stride;
+          // first order partial derivatives
+          ON_3dVector Dr = v + v_stride;
+          ON_3dVector Ds = v + 2*v_stride;
+          ON_3dVector Dt = v + 3*v_stride;
 
-	  // second order partial derivatives
-	  ON_3dVector Drr = v + 4*v_stride;
-	  ON_3dVector Drs = v + 5*v_stride;
-	  ON_3dVector Drt = v + 6*v_stride;
-	  ON_3dVector Dss = v + 7*v_stride;
-	  ON_3dVector Dst = v + 8*v_stride;
-	  ON_3dVector Dtt = v + 8*v_stride;
+          // second order partial derivatives
+          ON_3dVector Drr = v + 4*v_stride;
+          ON_3dVector Drs = v + 5*v_stride;
+          ON_3dVector Drt = v + 6*v_stride;
+          ON_3dVector Dss = v + 7*v_stride;
+          ON_3dVector Dst = v + 8*v_stride;
+          ON_3dVector Dtt = v + 8*v_stride;
 
   Returns:
     True if successful
@@ -1481,15 +1480,15 @@ public:
     ON_NurbsCage::PointAt
   */
   bool Evaluate( 
-	 double r, 
-	 double s, 
-	 double t,
-	 int der_count,
-	 int v_stride,
-	 double* v,
-	 int side=0,
-	 int* hint=0
-	 ) const;
+         double r, 
+         double s, 
+         double t,
+         int der_count,
+         int v_stride,
+         double* v,
+         int side=0,
+         int* hint=0
+         ) const;
 
   /*
   Description:
@@ -1500,21 +1499,21 @@ public:
     Value of the nurbs volume map at (r,s,t).
   */
   ON_3dPoint PointAt(
-	 double r, 
-	 double s, 
-	 double t
-	 ) const;
+         double r, 
+         double s, 
+         double t
+         ) const;
 
   ON_NurbsSurface* IsoSurface(
-	 int dir,
-	 double c,
-	 ON_NurbsSurface* srf = 0
-	 ) const;
+         int dir,
+         double c,
+         ON_NurbsSurface* srf = 0
+         ) const;
 
   bool Trim(
-	 int dir,
-	 const ON_Interval& domain
-	 );
+         int dir,
+         const ON_Interval& domain
+         );
 
   bool Extend(
     int dir,
@@ -1530,40 +1529,40 @@ public:
     Value of the nurbs volume map at (rst.x,rst.y,rst.z).
   */
   ON_3dPoint PointAt(
-	 ON_3dPoint rst
-	 ) const;
+         ON_3dPoint rst
+         ) const;
 
   bool IsRational() const;
   
   int CVSize() const;
   
   int Order(
-	int dir
-	) const;
+        int dir     // dir 0 = "r", 1 = "s", 2 = "t"
+        ) const;
 	
   int CVCount(      // number of control vertices
-	int         // dir 0 = "s", 1 = "t"
-	) const;
+        int         // dir 0 = "r", 1 = "s", 2 = "t"
+        ) const;
 
   int CVCount(      // total number of control vertices
-	void
-	) const;
+        void
+        ) const;
 
   int KnotCount(    // total number of knots in knot vector
-	int dir         // dir 0 = "s", 1 = "t"
-	) const;
+        int dir     // dir 0 = "r", 1 = "s", 2 = "t"
+        ) const;
 
   int Degree(
-	int dir
-	) const;
+        int dir
+        ) const;
 
 
   int SpanCount(
-    int dir
+    int dir         // dir 0 = "r", 1 = "s", 2 = "t"
     ) const;
 
   bool GetSpanVector(
-    int dir,
+    int dir,        // dir 0 = "r", 1 = "s", 2 = "t"
     double* span_vector
     ) const;
 
@@ -1590,51 +1589,51 @@ public:
     ON_NurbsCage::Weight
   */
   double* CV(
-	int i,
-	int j,
-	int k
-	) const;
+        int i,
+        int j,
+        int k
+        ) const;
 
   /*
   Description:
     Returns the style of control vertices in the m_cv array.
   Returns:
     @untitled table
-    ON::not_rational                m_is_rat is FALSE
-    ON::homogeneous_rational        m_is_rat is TRUE
+    ON::not_rational                m_is_rat is false
+    ON::homogeneous_rational        m_is_rat is true
   */
   ON::point_style CVStyle() const;
 
   double Weight(        // get value of control vertex weight
-	int i,
-	int j,
-	int k
-	) const;
+        int i,
+        int j,
+        int k
+        ) const;
 
   bool SetWeight(      // get value of control vertex weight
-	int i,
-	int j,
-	int k,
-	double w
-	);
+        int i,
+        int j,
+        int k,
+        double w
+        );
 
   bool SetCV(              // set a single control vertex
-	int i,
-	int j,
-	int k,
-	ON::point_style, // style of input point
-	const double*     // value of control vertex
-	);
+        int i,
+        int j,
+        int k,
+        ON::point_style, // style of input point
+        const double*     // value of control vertex
+        );
 
   // set a single control vertex
   // If NURBS is rational, weight
   // will be set to 1.
   bool SetCV(
-	int i,
-	int j,
-	int k,
-	const ON_3dPoint& point
-	);
+        int i,
+        int j,
+        int k,
+        const ON_3dPoint& point
+        );
 
   // set a single control vertex
   // value of control vertex
@@ -1642,33 +1641,60 @@ public:
   // location of homogeneous point will
   // be used.
   bool SetCV(
-	int i,
-	int j,
-	int k,
-	const ON_4dPoint& hpoint
-	);
+        int i,
+        int j,
+        int k,
+        const ON_4dPoint& hpoint
+        );
 
   bool GetCV(              // get a single control vertex
-	int i,
-	int j,
-	int k,
-	ON::point_style, // style to use for output point
-	double*           // array of length >= CVSize()
-	) const;
+        int i,
+        int j,
+        int k,
+        ON::point_style, // style to use for output point
+        double*           // array of length >= CVSize()
+        ) const;
 
   bool GetCV(              // get a single control vertex
-	int i,
-	int j,
-	int k,
-	ON_3dPoint&      // gets euclidean cv when NURBS is rational
-	) const;
+        int i,
+        int j,
+        int k,
+        ON_3dPoint&      // gets euclidean cv when NURBS is rational
+        ) const;
 
   bool GetCV(              // get a single control vertex
-	int i,
-	int j,
-	int k,
-	ON_4dPoint&      // gets homogeneous cv
-	) const;
+        int i,
+        int j,
+        int k,
+        ON_4dPoint&      // gets homogeneous cv
+        ) const;
+
+  /*
+  Parameters:
+    dir - [in] 0 = "r", 1 = "s", 2 = "t"
+    knot_index - [in] 0 <= knot_index < KnotCount(dir)
+    knot_value - [in]
+  Returns:
+    True if dir and knot_index parameters were valid and knot value
+    was set.
+  */
+  bool SetKnot(
+        int dir,
+        int knot_index,
+        double knot_value
+        );
+
+  /*
+  Parameters:
+    dir - [in] 0 = "r", 1 = "s", 2 = "t"
+    knot_index - [in] 0 <= knot_index < KnotCount(dir)
+  Returns:
+    Value of knot or ON_UNSET_VALUE if input parameters are not valid.
+  */
+  double Knot(
+        int dir,
+        int knot_index
+        ) const;
 
   bool ZeroCVs(); // zeros control vertices and, if rational, sets weights to 1
 
@@ -1676,30 +1702,24 @@ public:
 
   bool MakeNonRational();
 
-  bool IsClosed(   // TRUE if NURBS surface is closed (either surface has
-	int // dir // clamped end knots and euclidean location of start
-	) const;   // CV = euclidean location of end CV, or surface is
-		   // periodic.)
+  bool IsClosed(   // true if NURBS cage is closed (either cage has
+        int // dir // clamped end knots and euclidean location of start
+        ) const;   // CV = euclidean location of end CV, or cage is
+                   // periodic.)
 
-  bool IsPeriodic( // TRUE if NURBS surface is periodic (degree > 1,
-	int // dir // periodic knot vector, last degree many CVs 
-	) const;   // are duplicates of first degree many CVs.)
+  bool IsPeriodic( // true if NURBS cage is periodic (degree > 1,
+        int // dir // periodic knot vector, last degree many CVs 
+        ) const;   // are duplicates of first degree many CVs.)
 
-  bool IsSingular( // TRUE if surface side is collapsed to a point
-	int        // side of parameter space to test
-		   // 0 = south, 1 = east, 2 = north, 3 = west
-	) const;
+  bool IsSingular( // true if cage side is collapsed to a point
+        int        // side of parameter space to test
+                   // 0 = south, 1 = east, 2 = north, 3 = west
+        ) const;
 
   double GrevilleAbcissa(
-	  int dir,    // dir
-	  int gindex  // index (0 <= index < CVCount(dir)
-	  ) const;
-
-  bool ConvertSpanToBezier(
-      int span_index0,
-      int span_index1, 
-      ON_BezierSurface& bezier_surface
-      ) const;
+          int dir,    // dir
+          int gindex  // index (0 <= index < CVCount(dir)
+          ) const;
 
   /////////////////////////////////////////////////////////////////
   // Tools for managing CV and knot memory
@@ -1742,9 +1762,9 @@ public:
 
 ON_DECL
 bool ON_GetCageXform( 
-	  const ON_NurbsCage& cage, 
-	  ON_Xform& cage_xform 
-	  );
+          const ON_NurbsCage& cage, 
+          ON_Xform& cage_xform 
+          );
 
 
 class ON_CLASS ON_MorphControl : public ON_Geometry
@@ -1767,17 +1787,17 @@ public:
 
   void MemoryRelocate();
 
-  BOOL IsValid( ON_TextLog* text_log = NULL ) const;
+  ON_BOOL32 IsValid( ON_TextLog* text_log = NULL ) const;
 
   void Dump( ON_TextLog& ) const;
 
   unsigned int SizeOf() const;
 
-  BOOL Write(
+  ON_BOOL32 Write(
     ON_BinaryArchive& archive
     ) const;
 
-  BOOL Read(
+  ON_BOOL32 Read(
     ON_BinaryArchive& archive
     );
 
@@ -1792,11 +1812,11 @@ public:
 
   int Dimension() const;
 
-  BOOL GetBBox(
-	 double* boxmin,
-	 double* boxmax,
-	 int bGrowBox = false
-	 ) const;
+  ON_BOOL32 GetBBox(
+         double* boxmin,
+         double* boxmax,
+         int bGrowBox = false
+         ) const;
 
 	bool GetTightBoundingBox( 
 			ON_BoundingBox& tight_bbox, 
@@ -1806,15 +1826,15 @@ public:
 
   void ClearBoundingBox();
 
-  BOOL Transform( 
-	 const ON_Xform& xform
-	 );
+  ON_BOOL32 Transform( 
+         const ON_Xform& xform
+         );
 
   bool Morph( const ON_SpaceMorph& morph );
 
   bool IsMorphable() const;
 
-  BOOL HasBrepForm() const;
+  ON_BOOL32 HasBrepForm() const;
 
   ON_Brep* BrepForm( ON_Brep* brep = NULL ) const;
 
@@ -1925,28 +1945,28 @@ public:
     Get localizer settings needed in MorphPoint().
   */
   void MorphPointLocalizerHelper( 
-		const ON_3dPoint& point, 
-		double& w, 
-		double& clspt_max_dist,
-		const ON_Localizer*& distloc  
-		) const;
+                const ON_3dPoint& point, 
+                double& w, 
+                double& clspt_max_dist,
+                const ON_Localizer*& distloc  
+                ) const;
 
   void MorphPointVarient1Helper(
-		double t,
-		double w,
-		const ON_Localizer* distloc,
-		ON_3dPoint& Q,
-		ON_3dVector* N
-		) const;
+                double t,
+                double w,
+                const ON_Localizer* distloc,
+                ON_3dPoint& Q,
+                ON_3dVector* N
+                ) const;
 
   void MorphPointVarient2Helper(
-		double s,
-		double t,
-		double w,
-		const ON_Localizer* distloc,
-		ON_3dPoint& Q,
-		ON_3dVector* N
-		) const;
+                double s,
+                double t,
+                double w,
+                const ON_Localizer* distloc,
+                ON_3dPoint& Q,
+                ON_3dVector* N
+                ) const;
 
 
   bool IsIdentity( const ON_BoundingBox& bbox ) const;
@@ -2008,12 +2028,12 @@ public:
 //   An ON_NurbsSurface representation of the quadrilateral.
 ON_DECL
 ON_NurbsSurface* ON_NurbsSurfaceQuadrilateral( 
-	     const ON_3dPoint& P, 
-	     const ON_3dPoint& Q, 
-	     const ON_3dPoint& R, 
-	     const ON_3dPoint& S,
-	     ON_NurbsSurface* nurbs_surface = NULL
-	     );
+             const ON_3dPoint& P, 
+             const ON_3dPoint& Q, 
+             const ON_3dPoint& R, 
+             const ON_3dPoint& S,
+             ON_NurbsSurface* nurbs_surface = NULL
+             );
 
 #if defined(ON_DLL_TEMPLATE)
 // This stuff is here because of a limitation in the way Microsoft

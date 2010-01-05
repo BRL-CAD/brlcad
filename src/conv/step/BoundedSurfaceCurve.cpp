@@ -38,9 +38,9 @@ BoundedSurfaceCurve::BoundedSurfaceCurve() {
 	id = 0;
 }
 
-BoundedSurfaceCurve::BoundedSurfaceCurve(STEPWrapper *sw,int STEPid) {
+BoundedSurfaceCurve::BoundedSurfaceCurve(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 BoundedSurfaceCurve::~BoundedSurfaceCurve() {
@@ -52,11 +52,11 @@ BoundedSurfaceCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 	id = sse->STEPfile_id;
 
 	if ( !SurfaceCurve::Load(sw,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::SurfaceCurve." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::SurfaceCurve." << std::endl;
 		return false;
 	}
 	if ( !BoundedCurve::Load(sw,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::BoundedCurve." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::BoundedCurve." << std::endl;
 		return false;
 	}
 
@@ -65,22 +65,22 @@ BoundedSurfaceCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 const double *
 BoundedSurfaceCurve::PointAtEnd() {
-	cerr << CLASSNAME << ": Error: virtual function PointAtEnd() not implemented for this type of curve.";
+	std::cerr << CLASSNAME << ": Error: virtual function PointAtEnd() not implemented for this type of curve.";
 	return NULL;
 }
 
 const double *
 BoundedSurfaceCurve::PointAtStart() {
-	cerr << CLASSNAME << ": Error: virtual function PointAtStart() not implemented for this type of curve.";
+	std::cerr << CLASSNAME << ": Error: virtual function PointAtStart() not implemented for this type of curve.";
 	return NULL;
 }
 
 void
 BoundedSurfaceCurve::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << name << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	SurfaceCurve::Print(level+1);
 	BoundedCurve::Print(level+1);
 }
@@ -94,7 +94,7 @@ BoundedSurfaceCurve::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) 
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}
@@ -107,7 +107,7 @@ BoundedSurfaceCurve::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) 
 bool
 BoundedSurfaceCurve::LoadONBrep(ON_Brep *brep)
 {
-	cerr << "Error: ::LoadONBrep(ON_Brep *brep) not implemented for " << entityname << endl;
+	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implemented for " << entityname << std::endl;
 	return false;
 }
 

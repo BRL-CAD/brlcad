@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -67,14 +66,14 @@ void* ON_Workspace::GrowMemory( void* p, size_t size )
     struct MBLK* pBlk = m_pMemBlk;
     while ( pBlk ) {
       if ( pBlk->pMem == p ) {
-	if ( size > 0 ) {
-	  newp = onrealloc(p,size);
-	}
-	else {
-	  newp = p;
-	}
-	pBlk->pMem = newp;
-	break;
+        if ( size > 0 ) {
+          newp = onrealloc(p,size);
+        }
+        else {
+          newp = p;
+        }
+        pBlk->pMem = newp;
+        break;
       }
       pBlk = pBlk->pNext;
     }
@@ -84,25 +83,25 @@ void* ON_Workspace::GrowMemory( void* p, size_t size )
 
 int ON_Workspace::KeepMemory( void* p )
 {
-  int rc = FALSE;
+  int rc = false;
   if ( p ) {
     struct MBLK* pPrevBlk = NULL;
     struct MBLK* pBlk = m_pMemBlk;
     while ( pBlk ) {
       if ( pBlk->pMem == p ) {
-	// Remove pBlk from list so ~ON_Workspace() won't onfree() its memory
-	// and any future GrowMemory...() or KeepMemory() calls won't have
-	// to search past it.
-	pBlk->pMem = NULL;
-	if ( pPrevBlk ) {
-	  pPrevBlk->pNext = pBlk->pNext;
-	}
-	else {
-	  m_pMemBlk = pBlk->pNext;
-	}
-	onfree( pBlk );
-	rc = TRUE;
-	break;
+        // Remove pBlk from list so ~ON_Workspace() won't onfree() its memory
+        // and any future GrowMemory...() or KeepMemory() calls won't have
+        // to search past it.
+        pBlk->pMem = NULL;
+        if ( pPrevBlk ) {
+          pPrevBlk->pNext = pBlk->pNext;
+        }
+        else {
+          m_pMemBlk = pBlk->pNext;
+        }
+        onfree( pBlk );
+        rc = true;
+        break;
       }
       pPrevBlk = pBlk;
       pBlk = pBlk->pNext;
@@ -147,7 +146,7 @@ int** ON_Workspace::GetIntMemory( size_t row_count, size_t col_count )
       p[0] = (int*)(p+row_count);
       for( i = 1; i < row_count; i++ )
       {
-	p[i] = p[i-1] + col_count;
+        p[i] = p[i-1] + col_count;
       }
     }
   }
@@ -170,7 +169,7 @@ double** ON_Workspace::GetDoubleMemory( size_t row_count, size_t col_count )
       p[0] = (double*)(p+i);
       for( i = 1; i < row_count; i++ )
       {
-	p[i] = p[i-1] + col_count;
+        p[i] = p[i-1] + col_count;
       }
     }
   }
@@ -231,14 +230,14 @@ FILE* ON_Workspace::OpenFile( const wchar_t* sFileName, const wchar_t* sMode )
 
 int ON_Workspace::KeepFile( FILE* pFile )
 {
-  int rc = FALSE;
+  int rc = false;
   if ( pFile ) {
     struct FBLK* pFileBlk = m_pFileBlk;
     while ( pFileBlk ) {
       if ( pFileBlk->pFile == pFile ) {
-	pFileBlk->pFile = NULL;
-	rc = TRUE;
-	break;
+        pFileBlk->pFile = NULL;
+        rc = true;
+        break;
       }
       pFileBlk = pFileBlk->pNext;
     }

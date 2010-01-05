@@ -113,7 +113,7 @@ static int button0 = 0;
 int
 doEvent(ClientData clientData, XEvent *eventPtr)
 {
-    register struct dm_list *save_dm_list;
+    struct dm_list *save_dm_list;
     int status;
 
     if (eventPtr->type == DestroyNotify || (unsigned long)eventPtr->xany.window == 0)

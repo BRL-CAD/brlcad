@@ -197,7 +197,7 @@ FileReadPIX(Tcl_Interp *interp, Tcl_Channel chan, const char *fileName, Tcl_Obj 
     /* Coordinates of top-left pixel to be used
      * in image being read. */
 {
-    size_t fileWidth, fileHeight;
+    unsigned long int fileWidth, fileHeight;
     int nBytes, h, count;
     unsigned char *pixelPtr;
     Tk_PhotoImageBlock block;

@@ -39,7 +39,7 @@ protected:
 public:
 	AmountOfSubstanceContextDependentUnit();
 	virtual ~AmountOfSubstanceContextDependentUnit();
-	AmountOfSubstanceContextDependentUnit(STEPWrapper *sw,int STEPid);
+	AmountOfSubstanceContextDependentUnit(STEPWrapper *sw,int step_id);
 	bool Load(STEPWrapper *sw,SCLP23(Application_instance) *sse);
 	virtual void Print(int level);
 

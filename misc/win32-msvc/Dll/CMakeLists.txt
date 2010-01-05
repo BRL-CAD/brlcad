@@ -83,6 +83,7 @@ set(COREINTERFACE_SOURCES
     ../../../../rt^3/src/coreInterface/ConstDatabase.cpp
     ../../../../rt^3/src/coreInterface/Database.cpp
     ../../../../rt^3/src/coreInterface/Ellipsoid.cpp
+    ../../../../rt^3/src/coreInterface/EllipticalTorus.cpp
     ../../../../rt^3/src/coreInterface/FileDatabase.cpp
     ../../../../rt^3/src/coreInterface/Halfspace.cpp
     ../../../../rt^3/src/coreInterface/MemoryDatabase.cpp

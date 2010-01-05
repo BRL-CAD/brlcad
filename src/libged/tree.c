@@ -46,8 +46,8 @@
 int
 ged_tree(struct ged *gedp, int argc, const char *argv[])
 {
-    register struct directory	*dp;
-    register int		j;
+    struct directory	*dp;
+    int		j;
     int				cflag = 0;
     int				indentSize = -1;
     int                         displayDepth = INT_MAX;

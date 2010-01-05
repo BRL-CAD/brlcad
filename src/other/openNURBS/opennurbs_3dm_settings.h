@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -56,8 +55,8 @@ public:
 
   ON::distance_display_mode m_distance_display_mode;
   int m_distance_display_precision; // decimal mode: number of decimal places
-				    // fractional modes:
-				    //    denominator = (1/2)^m_distance_display_precision
+                                    // fractional modes:
+                                    //    denominator = (1/2)^m_distance_display_precision
 
   ////////////
   // These settings apply when m_unit_system is ON::custom_unit_system
@@ -110,7 +109,7 @@ public:
   int m_angleformat;   // 0: decimal degrees, ...
   int m_textalign;     // 0: above line, 1: in line, 2: horizontal
   int m_resolution;    // depends on m_lengthformat
-		       // for decimal, digits past the decimal point
+                       // for decimal, digits past the decimal point
 
   ON_wString m_facename; // [LF_FACESIZE] // windows font name
 };
@@ -137,17 +136,17 @@ public:
 
 	double m_grid_spacing;   // distance between grid lines
   double m_snap_spacing;   // when "grid snap" is enabled, the
-			   // distance between snap points.  Typically
-			   // this is the same distance as grid spacing.
+                           // distance between snap points.  Typically
+                           // this is the same distance as grid spacing.
 	int m_grid_line_count;   // number of grid lines in each direction
   int m_grid_thick_frequency; // thick line frequency
-			    // 0: none, 
-			    // 1: all lines are thick, 
-			    // 2: every other is thick, ...
+                            // 0: none, 
+                            // 1: all lines are thick, 
+                            // 2: every other is thick, ...
 
-  BOOL m_bShowGrid;
-  BOOL m_bShowGridAxes;
-  BOOL m_bShowWorldAxes;
+  ON_BOOL32 m_bShowGrid;
+  ON_BOOL32 m_bShowGridAxes;
+  ON_BOOL32 m_bShowWorldAxes;
 };
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -176,16 +175,16 @@ public:
   // construction grid appearance
 	double m_grid_spacing;   // distance between grid lines
   double m_snap_spacing;   // when "grid snap" is enabled, the
-			   // distance between snap points.  Typically
-			   // this is the same distance as grid spacing.
+                           // distance between snap points.  Typically
+                           // this is the same distance as grid spacing.
 	int m_grid_line_count;   // number of grid lines in each direction
   int m_grid_thick_frequency; // thick line frequency
-			    // 0: none, 
-			    // 1: all lines are thick, 
-			    // 2: every other is thick, ...
+                            // 0: none, 
+                            // 1: all lines are thick, 
+                            // 2: every other is thick, ...
   bool m_bDepthBuffer; // false=grid is always drawn behind 3d geometry
-		       // true=grid is drawn at its depth as a 3d plane
-		       // and grid lines obscure things behind the grid.
+                       // true=grid is drawn at its depth as a 3d plane
+                       // and grid lines obscure things behind the grid.
 
   ON_wString  m_name;
 };
@@ -202,7 +201,7 @@ ON_DLL_TEMPLATE template class ON_CLASS ON_ClassArray<ON_3dmConstructionPlane>;
 
 //////////////////////////////////////////////////////////////////////////////////////////
 //
-// ON_3dmViewPos
+// ON_3dmViewPosition
 //
 class ON_CLASS ON_3dmViewPosition
 {
@@ -219,11 +218,24 @@ public:
   bool Read( ON_BinaryArchive& );
 
   // relative position of view window in main frame
+  // if m_floating_viewport>0, this is relative position of the view window
+  // on the virtual screen (union of potentially multiple monitors)
   double m_wnd_left;    // 0.0 to 1.0
   double m_wnd_right;
   double m_wnd_top;
   double m_wnd_bottom;
-  BOOL m_bMaximized;    // TRUE if view window is maximized
+  ON_BOOL32 m_bMaximized;    // true if view window is maximized
+
+  // m_floating_viewport is used to track floating viewport information.
+  //  0 = the view is docked in the main application window.
+  // >0 = the view is floating. When floating, this corresponds to the
+  //      number of monitors on on the user's computer when the file was saved
+  unsigned char m_floating_viewport;
+private:
+  // reserved for future use
+  unsigned char m_reserved_1;
+  unsigned char m_reserved_2;
+  unsigned char m_reserved_3;
 };
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -343,8 +355,53 @@ public:
   // It is ok to adjust clipping planes.
   bool m_bLockedProjection;
 
-  // OBSOLETE - the target point is m_vp.m_target_point
-  ON_3dPoint  m_target; // OBSOLETE
+  ///////////////////////////////////////////////////////////////////////
+  //
+  // target point
+  //
+
+  /*
+  Returns:
+    Target point.  This point is saved on m_vp.m_target_point.
+    The default constructor sets the target point to 
+    ON_3dPoint::UnsetPoint. You must explicitly set the target
+    point if you want to use it.
+  Remarks:
+    The target point is stored on m_vp.m_target_point.  The
+    value ON_3dmView.m_target is obsolete. This function always
+    returns the value of m_vp.m_target_point.
+
+  */
+  ON_3dPoint TargetPoint() const;
+
+  /*
+  Description:
+    Sets the target point. 
+  Parameters:
+    target_point - [in]
+      When in double, the point m_vp.FrustumCenterPoint(ON_UNSET_VALUE)
+      is a good choice.
+  Remarks:
+    This point is saved on m_vp.m_target_point. Using this function
+    keeps the obsolete ON_3dmView.m_target value equal to
+    m_vp.m_target_point.
+  */
+  bool SetTargetPoint(ON_3dPoint target_point);
+
+  ///////////////////////////////////////////////////////////////////////
+  // OBSOLETE                                                          //
+  //   Use ON_3dmView::SetTargetPoint() and ON_3dmView::TargetPoint()  //
+  //   functions to set and get the target point. The m_target member  //
+  //   will be removed in V6. The only reason m_target is still here   //
+  //   is to avoid breaking the public SDK.                            //
+  /* OBSOLETE */ ON_3dPoint m_target; // OBSOLETE                      //
+  //   Hmm, did you notice that m_target is obsolete?  Try using the   //
+  //   SetTargetPoint() and TargetPoint() functions instead.           //
+  // OBSOLETE                                                          //
+  ///////////////////////////////////////////////////////////////////////
+
+  //
+  ///////////////////////////////////////////////////////////////////////
 
   ON_wString  m_name;   // name on window
   
@@ -412,9 +469,9 @@ public:
   void Dump( ON_TextLog& text_log ) const;
 
   //////////
-  // FALSE: image pixel size = current viewport size
-  // TRUE:  image pixel size = m_image_width X m_image_height pixels
-  BOOL m_bCustomImageSize;
+  // false: image pixel size = current viewport size
+  // true:  image pixel size = m_image_width X m_image_height pixels
+  ON_BOOL32 m_bCustomImageSize;
   int  m_image_width;   // image width in pixels
   int  m_image_height;  // image height in pixels
   ////////
@@ -432,17 +489,17 @@ public:
   ON_Color m_background_color; // also Top color of gradient...
   ON_wString m_background_bitmap_filename;
 
-  BOOL m_bUseHiddenLights;
+  ON_BOOL32 m_bUseHiddenLights;
 
-  BOOL m_bDepthCue;
-  BOOL m_bFlatShade;
+  ON_BOOL32 m_bDepthCue;
+  ON_BOOL32 m_bFlatShade;
 
-  BOOL m_bRenderBackfaces;
-  BOOL m_bRenderPoints;
-  BOOL m_bRenderCurves;
-  BOOL m_bRenderIsoparams;
-  BOOL m_bRenderMeshEdges;
-  BOOL m_bRenderAnnotation;
+  ON_BOOL32 m_bRenderBackfaces;
+  ON_BOOL32 m_bRenderPoints;
+  ON_BOOL32 m_bRenderCurves;
+  ON_BOOL32 m_bRenderIsoparams;
+  ON_BOOL32 m_bRenderMeshEdges;
+  ON_BOOL32 m_bRenderAnnotation;
 
   int m_antialias_style; // 0 = none, 1 = normal, 2 = best
 
@@ -484,27 +541,27 @@ public:
 
   static
   int Compare(
-	  const ON_EarthAnchorPoint*, 
-	  const ON_EarthAnchorPoint*
-	  );
+          const ON_EarthAnchorPoint*, 
+          const ON_EarthAnchorPoint*
+          );
 
   static
   int CompareEarthLocation(
-	  const ON_EarthAnchorPoint*, 
-	  const ON_EarthAnchorPoint*
-	  );
+          const ON_EarthAnchorPoint*, 
+          const ON_EarthAnchorPoint*
+          );
 
   static
   int CompareModelDirection(
-	  const ON_EarthAnchorPoint*, 
-	  const ON_EarthAnchorPoint*
-	  );
+          const ON_EarthAnchorPoint*, 
+          const ON_EarthAnchorPoint*
+          );
 
   static
   int CompareIdentification(
-	  const ON_EarthAnchorPoint*, 
-	  const ON_EarthAnchorPoint*
-	  );
+          const ON_EarthAnchorPoint*, 
+          const ON_EarthAnchorPoint*
+          );
 
   void Default();
   bool Read( ON_BinaryArchive& );
@@ -518,8 +575,8 @@ public:
   double m_earth_basepoint_longitude; // in decimal degrees
   double m_earth_basepoint_elevation; // in meters
   int m_earth_basepoint_elevation_zero; // 0 = ground level
-					// 1 = mean sea level
-					// 2 = center of earth
+                                        // 1 = mean sea level
+                                        // 2 = center of earth
 
   // Corresponding model point in model coordinates.
   ON_3dPoint  m_model_basepoint; // in model coordinates
@@ -543,8 +600,8 @@ public:
       is set to m_model_basepoint.
   */
   bool GetModelCompass( 
-	  ON_Plane& model_compass 
-	  ) const;
+          ON_Plane& model_compass 
+          ) const;
 
   /*
   Description:
@@ -580,9 +637,9 @@ public:
        elevation error <= 8 centimeters
   */
   bool GetModelToEarthXform(
-	  const ON_UnitSystem& model_unit_system,
-	  ON_Xform& model_to_earth
-	  ) const;
+          const ON_UnitSystem& model_unit_system,
+          ON_Xform& model_to_earth
+          ) const;
 };
 
 
@@ -602,20 +659,20 @@ public:
 
   // linked instance defintion settings
   int m_idef_link_update;  // 0 = use ON_InstanceDefinition setting
-			   //       The ON_InstanceDefinition::m_idef_update_type
-			   //       field controls when and with how much
-			   //       prompting embedded or linked idefs get updated.
-			   // 1 = prompt
-			   //       Ignore m_idef_update_type settings.
-			   //       If an embedded or linked idef needs to 
-			   //       be updated, ask the user what to do.
-			   // 2 = always update - no prompting
-			   //       Ignore m_idef_update_type settings.
-			   //       If an embedded or linked idef needs to 
-			   //       be updated, silently update it.
-			   // 3 = never update - no prompting
-			   //       Ignore m_idef_update_type settings.
-			   //       Do not update embedded or linked idefs.
+                           //       The ON_InstanceDefinition::m_idef_update_type
+                           //       field controls when and with how much
+                           //       prompting embedded or linked idefs get updated.
+                           // 1 = prompt
+                           //       Ignore m_idef_update_type settings.
+                           //       If an embedded or linked idef needs to 
+                           //       be updated, ask the user what to do.
+                           // 2 = always update - no prompting
+                           //       Ignore m_idef_update_type settings.
+                           //       If an embedded or linked idef needs to 
+                           //       be updated, silently update it.
+                           // 3 = never update - no prompting
+                           //       Ignore m_idef_update_type settings.
+                           //       Do not update embedded or linked idefs.
 };
 
 //////////////////////////////////////////////////////////////////////////////////////////

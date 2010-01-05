@@ -164,9 +164,9 @@ rt_poly_findroot(register bn_poly_t *eqn, /* polynomial */
 	diff = bn_cx_amplsq(&p0);
 	if (b < diff)
 	    continue;
-	if ((b-diff) == b)
+	if (NEAR_ZERO(diff, SMALL_FASTF))
 	    return(i);		/* OK -- can't do better */
-	if (diff > (b - diff)*1.0e-5)
+	if (diff > (b - diff) * SQRT_SMALL_FASTF)
 	    continue;
 	return(i);			/* OK */
     }

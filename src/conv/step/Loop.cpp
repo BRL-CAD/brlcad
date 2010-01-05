@@ -38,9 +38,9 @@ Loop::Loop() {
 	id = 0;
 }
 
-Loop::Loop(STEPWrapper *sw,int STEPid) {
+Loop::Loop(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 Loop::~Loop() {
@@ -53,7 +53,7 @@ Loop::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 	// load base class attributes
 	if ( !TopologicalRepresentationItem::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::TopologicalRepresentationItem." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::TopologicalRepresentationItem." << std::endl;
 		return false;
 	}
 
@@ -62,10 +62,10 @@ Loop::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 void
 Loop::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << name << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	TopologicalRepresentationItem::Print(level+1);
 }
 
@@ -78,7 +78,7 @@ Loop::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}
@@ -96,7 +96,7 @@ Loop::GetEdgeBounds(ON_Brep *brep) {
 bool
 Loop::LoadONBrep(ON_Brep *brep)
 {
-	cerr << "Error: ::LoadONBrep(ON_Brep *brep) not implemented for " << entityname << endl;
+	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implemented for " << entityname << std::endl;
 	return false;
 }
 

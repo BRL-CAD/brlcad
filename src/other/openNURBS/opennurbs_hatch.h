@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -58,10 +57,10 @@ public:
 
   ON_HatchLoop& operator=( const ON_HatchLoop& src);
 
-  BOOL IsValid( ON_TextLog* text_log = NULL ) const;
+  ON_BOOL32 IsValid( ON_TextLog* text_log = NULL ) const;
   void Dump( ON_TextLog& ) const; // for debugging
-  BOOL Write( ON_BinaryArchive&) const;
-  BOOL Read( ON_BinaryArchive&);
+  ON_BOOL32 Write( ON_BinaryArchive&) const;
+  ON_BOOL32 Read( ON_BinaryArchive&);
 
   // Interface
   /////////////////////////////////////////////////////////////////
@@ -107,7 +106,7 @@ protected:
   friend class ON_Hatch;
   eLoopType m_type;         // loop type flag - inner or outer
   ON_Curve* m_p2dCurve;     // 2d closed curve bounding the hatch
-			    // This is really a 3d curve with z coordinates = 0
+                            // This is really a 3d curve with z coordinates = 0
 };
 
 
@@ -149,10 +148,10 @@ public:
   bool operator==( const ON_HatchLine&) const;
   bool operator!=( const ON_HatchLine&) const;
 
-  BOOL IsValid( ON_TextLog* text_log = NULL ) const;
+  ON_BOOL32 IsValid( ON_TextLog* text_log = NULL ) const;
   void Dump( ON_TextLog& ) const; // for debugging
-  BOOL Write( ON_BinaryArchive&) const;  // serialize definition to binary archive
-  BOOL Read( ON_BinaryArchive&);  // restore definition from binary archive
+  ON_BOOL32 Write( ON_BinaryArchive&) const;  // serialize definition to binary archive
+  ON_BOOL32 Read( ON_BinaryArchive&);  // restore definition from binary archive
 
   // Interface
   /////////////////////////////////////////////////////////////////
@@ -330,10 +329,10 @@ public:
 
  // ON_Object overrides
   /////////////////////////////////////////////////////////////////
-   BOOL IsValid( ON_TextLog* text_log = NULL ) const;
+   ON_BOOL32 IsValid( ON_TextLog* text_log = NULL ) const;
   void Dump( ON_TextLog& ) const; // for debugging
-  BOOL Write( ON_BinaryArchive&) const;
-  BOOL Read( ON_BinaryArchive&);
+  ON_BOOL32 Write( ON_BinaryArchive&) const;
+  ON_BOOL32 Read( ON_BinaryArchive&);
 
   // virtual
   ON_UUID ModelObjectId() const;
@@ -537,10 +536,10 @@ public:
 
   // ON_Object overrides
   /////////////////////////////////////////////////////////////////
-  BOOL IsValid( ON_TextLog* text_log = NULL ) const;
+  ON_BOOL32 IsValid( ON_TextLog* text_log = NULL ) const;
   void Dump( ON_TextLog& ) const; // for debugging
-  BOOL Write( ON_BinaryArchive&) const;
-  BOOL Read( ON_BinaryArchive&);
+  ON_BOOL32 Write( ON_BinaryArchive&) const;
+  ON_BOOL32 Read( ON_BinaryArchive&);
   ON::object_type ObjectType() const;
 
   // ON_Geometry overrides
@@ -557,14 +556,14 @@ public:
     Parameters:
       [in/out] double* boxmin - pointer to dim doubles for min box corner
       [in/out] double* boxmax - pointer to dim doubles for max box corner
-      [in] BOOL growbox   - TRUE to grow the existing box,
-			    FALSE ( the default) to reset the box
+      [in] ON_BOOL32 growbox   - true to grow the existing box,
+                            false ( the default) to reset the box
     Returns:
-      TRUE = Success
-      FALSE = Failure
+      true = Success
+      false = Failure
     Remarks:
   */
-  BOOL GetBBox( double*, double*, BOOL = FALSE) const;
+  ON_BOOL32 GetBBox( double*, double*, ON_BOOL32 = false) const;
 
   /*
 	Description:
@@ -596,12 +595,12 @@ public:
     Parameters:
       [in] xform  - An ON_Xform with the transformation information
     Returns:
-      TRUE = Success
-      FALSE = Failure
+      true = Success
+      false = Failure
     Remarks:
       The object has been transformed when the function returns.
   */
-  BOOL Transform( const ON_Xform&);
+  ON_BOOL32 Transform( const ON_Xform&);
 
   // Interface
   /////////////////////////////////////////////////////////////////
@@ -619,10 +618,10 @@ public:
     true = success, false = failure
   */
   bool Create( const ON_Plane& plane,
-	       const ON_SimpleArray<const ON_Curve*> loops, 
-	       int pattern_index, 
-	       double pattern_rotation, 
-	       double pattern_scale);
+               const ON_SimpleArray<const ON_Curve*> loops, 
+               int pattern_index, 
+               double pattern_rotation, 
+               double pattern_scale);
 
   /*
   Description:
@@ -704,7 +703,7 @@ public:
     Add a loop to the hatch
   Parameters:
     loop - [in] the loop to add. Memory management for the loop is managed
-	   by this class.
+           by this class.
   Returns:
   */
   void AddLoop( ON_HatchLoop* loop);
@@ -715,13 +714,13 @@ public:
   Parameters:
     index - [in] zero based index of the position where insert the loop to.
     loop - [in] the loop to insert. Memory management for the loop is managed
-		by this class on success.
+                by this class on success.
   Returns:
     true if success
 	  false if index is lower than 0 or greater than current loop count.
   */
   bool InsertLoop( int index,
-		   ON_HatchLoop* loop);
+                   ON_HatchLoop* loop);
 
   /*
   Description:
@@ -774,6 +773,50 @@ public:
   */
   void SetPatternIndex( int index);
 
+  // Basepoint functions added March 23, 2008 -LW
+  /*
+  Description:
+    Set 2d Base point for hatch pattern alignment.
+  Parameters:
+    basepoint - 2d point in hatch's ECS
+  */
+  void SetBasePoint(ON_2dPoint basepoint);
+
+  /*
+  Description:
+    Set 3d Base point for hatch pattern alignment.
+  Parameters:
+    point - 3d WCS point
+  Remarks:
+    Projects point to hatch's plane and sets 2d point
+  */
+  void SetBasePoint(ON_3dPoint point);
+
+  /*
+  Description:
+    Return 3d WCS point that lies on hatch's plane used for pattern origin.
+  */
+  ON_3dPoint BasePoint() const;
+
+  /*
+  Description:
+    Return 2d ECS point used for pattern origin.
+  */
+  ON_2dPoint BasePoint2d() const;
+
+  /*
+  Function added June 12 2008 LW
+  Description:
+    Remove all of the loops on the hatch and add the curves in 'loops' as new loops
+  Parameters:
+    loops - [in] An array of pointers to 2d or 3d curves
+                 If the curves are 2d, add them to the hatch directly
+                 If they are 3d, project them to the hatch's plane first
+  Returns:
+    true  - success
+    false - no loops in input array or an error adding them
+  */
+  bool ReplaceLoops(ON_SimpleArray<const ON_Curve*> loops);
 
 protected:
   ON_Plane m_plane;
@@ -781,6 +824,10 @@ protected:
   double m_pattern_rotation;
   ON_SimpleArray<ON_HatchLoop*> m_loops;
   int m_pattern_index;
+
+    // This function is temporary and will be removed next time the SDK can be modified.
+  class ON_HatchExtra* HatchExtension();
+
 };
 
 #endif

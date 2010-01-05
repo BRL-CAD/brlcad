@@ -71,7 +71,6 @@
 #  ifdef WITH_TK
 #    include "tk.h"
 #  endif
-#  include <X11/Xutil.h>
 #  include "dm_xvars.h"
 #  include "dm-tk.h"
 #endif /* DM_TK */
@@ -1069,8 +1068,9 @@ go_open_tcl(ClientData clientData,
 	    int argc,
 	    const char **argv)
 {
-    struct ged_obj *gop;
-    struct ged *gedp;
+    struct ged_obj *gop = NULL;
+    struct ged *gedp = NULL;
+    const char *dbname = NULL;
 
     if (argc == 1) {
 	/* get list of database objects */
@@ -1098,12 +1098,22 @@ Usage: go_open\n\
     (void)Tcl_DeleteCommand(interp, argv[1]);
 
     if (argc == 3 || strcmp(argv[2], "db") == 0) {
-	if (argc == 3)
-	    gedp = ged_open("filename", argv[2], 0); 
-	else
-	    gedp = ged_open("db", argv[3], 0); 
-    } else
-	gedp = ged_open(argv[2], argv[3], 0); 
+	if (argc == 3) {
+	    dbname = argv[2];
+	    gedp = ged_open("filename", dbname, 0); 
+	} else {
+	    dbname = argv[3];
+	    gedp = ged_open("db", dbname, 0); 
+	}
+    } else {
+	dbname = argv[3];
+	gedp = ged_open(argv[2], dbname, 0); 
+    }
+
+    if (gedp == GED_NULL) {
+	Tcl_AppendResult(interp, "Unable to open geometry database: ", dbname, (char *)NULL);
+	return TCL_ERROR;
+    }
 
     /* initialize ged_obj */
     BU_GETSTRUCT(gop, ged_obj);

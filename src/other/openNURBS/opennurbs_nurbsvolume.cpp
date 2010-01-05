@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -21,7 +20,7 @@ ON_OBJECT_IMPLEMENT(ON_NurbsCage,ON_Geometry,"06936AFB-3D3C-41ac-BF70-C9319FA480
 ON_OBJECT_IMPLEMENT(ON_MorphControl,ON_Geometry,"D379E6D8-7C31-4407-A913-E3B7040D034A");
 
 
-BOOL ON_NurbsCage::Read(ON_BinaryArchive& archive)
+ON_BOOL32 ON_NurbsCage::Read(ON_BinaryArchive& archive)
 {
   Destroy();
 
@@ -34,9 +33,9 @@ BOOL ON_NurbsCage::Read(ON_BinaryArchive& archive)
     {
       if ( major_version != 1 )
       {
-	ON_ERROR("ON_NurbsCage::Read - old code unable to read new version of chunk");
-	rc = false;
-	break;
+        ON_ERROR("ON_NurbsCage::Read - old code unable to read new version of chunk");
+        rc = false;
+        break;
       }
 
       int dim=0;
@@ -46,106 +45,106 @@ BOOL ON_NurbsCage::Read(ON_BinaryArchive& archive)
 
       rc = archive.ReadInt(&dim);
       if (!rc)
-	break;
+        break;
       if (dim < 1 || dim > 10000)
       {
-	ON_ERROR("ON_NurbsCage::Read - invalid dim");
-	rc=false;
-	break;
+        ON_ERROR("ON_NurbsCage::Read - invalid dim");
+        rc=false;
+        break;
       }
 
       rc = archive.ReadInt(&is_rat);
       if (!rc)
-	break;
+        break;
       if (is_rat != 0 && is_rat != 1)
       {
-	ON_ERROR("ON_NurbsCage::Read - invalid is_rat");
-	rc=false;
-	break;
+        ON_ERROR("ON_NurbsCage::Read - invalid is_rat");
+        rc=false;
+        break;
       }
 
       rc = archive.ReadInt(&order0);
       if (!rc)
-	break;
+        break;
       if ( order0 < 2 || order0 > 10000 )
       {
-	ON_ERROR("ON_NurbsCage::Read - invalid order0");
-	rc=false;
-	break;
+        ON_ERROR("ON_NurbsCage::Read - invalid order0");
+        rc=false;
+        break;
       }
 
       rc = archive.ReadInt(&order1);
       if (!rc)
-	break;
+        break;
       if ( order1 < 2 || order1 > 10000 )
       {
-	ON_ERROR("ON_NurbsCage::Read - invalid order1");
-	rc=false;
-	break;
+        ON_ERROR("ON_NurbsCage::Read - invalid order1");
+        rc=false;
+        break;
       }
 
       rc = archive.ReadInt(&order2);
       if (!rc)
-	break;
+        break;
       if ( order2 < 2 || order2 > 10000 )
       {
-	ON_ERROR("ON_NurbsCage::Read - invalid order2");
-	rc=false;
-	break;
+        ON_ERROR("ON_NurbsCage::Read - invalid order2");
+        rc=false;
+        break;
       }
 
       rc = archive.ReadInt(&cv_count0);
       if (!rc)
-	break;
+        break;
       if ( cv_count0 < order0 || cv_count0 > 100000 )
       {
-	ON_ERROR("ON_NurbsCage::Read - invalid cv_count0");
-	rc=false;
-	break;
+        ON_ERROR("ON_NurbsCage::Read - invalid cv_count0");
+        rc=false;
+        break;
       }
 
       rc = archive.ReadInt(&cv_count1);
       if (!rc)
-	break;
+        break;
       if ( cv_count1 < order1 || cv_count1 > 100000 )
       {
-	ON_ERROR("ON_NurbsCage::Read - invalid cv_count1");
-	rc=false;
-	break;
+        ON_ERROR("ON_NurbsCage::Read - invalid cv_count1");
+        rc=false;
+        break;
       }
 
       rc = archive.ReadInt(&cv_count2);
       if (!rc)
-	break;
+        break;
       if ( cv_count2 < order2 || cv_count2 > 100000 )
       {
-	ON_ERROR("ON_NurbsCage::Read - invalid cv_count2");
-	rc=false;
-	break;
+        ON_ERROR("ON_NurbsCage::Read - invalid cv_count2");
+        rc=false;
+        break;
       }
 
       rc = Create(dim,is_rat==1,order0,order1,order2,cv_count0,cv_count1,cv_count2);
       if (!rc)
-	break;
+        break;
 
       if (rc)
-	rc = archive.ReadDouble(KnotCount(0),m_knot[0]);
+        rc = archive.ReadDouble(KnotCount(0),m_knot[0]);
       if (rc)
-	rc = archive.ReadDouble(KnotCount(1),m_knot[1]);
+        rc = archive.ReadDouble(KnotCount(1),m_knot[1]);
       if (rc)
-	rc = archive.ReadDouble(KnotCount(2),m_knot[2]);
+        rc = archive.ReadDouble(KnotCount(2),m_knot[2]);
 
       int i,j,k;
       const int cv_dim = m_is_rat?(m_dim+1):m_dim;
       for(i = 0; i < cv_count0 && rc; i++)
       {
-	for(j = 0; j < cv_count1 && rc; j++)
-	{
-	  for ( k = 0; k < cv_count2 && rc; k++)
-	  {
-	    rc = archive.ReadDouble(cv_dim,CV(i,j,k));
-	  }
-	}
+        for(j = 0; j < cv_count1 && rc; j++)
+        {
+          for ( k = 0; k < cv_count2 && rc; k++)
+          {
+            rc = archive.ReadDouble(cv_dim,CV(i,j,k));
+          }
+        }
       }
 
       
@@ -161,7 +160,7 @@ BOOL ON_NurbsCage::Read(ON_BinaryArchive& archive)
   return rc;
 }
 
-BOOL ON_NurbsCage::Write(ON_BinaryArchive& archive) const
+ON_BOOL32 ON_NurbsCage::Write(ON_BinaryArchive& archive) const
 {
   bool rc = archive.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK,1,0);
 
@@ -201,13 +200,13 @@ BOOL ON_NurbsCage::Write(ON_BinaryArchive& archive) const
     {
       for(j = 0; j < m_cv_count[1] && rc; j++)
       {
-	for ( k = 0; k < m_cv_count[2] && rc; k++)
-	{
-	  const double* cv = CV(i,j,k);
-	  if ( !cv )
-	    cv = bogus_cv;
-	  rc = archive.WriteDouble(cv_dim,cv);
-	}
+        for ( k = 0; k < m_cv_count[2] && rc; k++)
+        {
+          const double* cv = CV(i,j,k);
+          if ( !cv )
+            cv = bogus_cv;
+          rc = archive.WriteDouble(cv_dim,cv);
+        }
       }
     }
 
@@ -243,14 +242,14 @@ ON_NurbsCage::ON_NurbsCage()
 }
 
 ON_NurbsCage::ON_NurbsCage( int dim, bool is_rat, 
-				int order0,
-				int order1,
-				int order2,
-				int cv_count0,
-				int cv_count1,
-				int cv_count2
-				)
-		 : m_dim(0),m_is_rat(0),m_cv_capacity(0),m_cv(0)
+                                int order0,
+                                int order1,
+                                int order2,
+                                int cv_count0,
+                                int cv_count1,
+                                int cv_count2
+                                )
+                 : m_dim(0),m_is_rat(0),m_cv_capacity(0),m_cv(0)
 {
   m_order[0] = 0;
   m_order[1] = 0;
@@ -271,9 +270,9 @@ ON_NurbsCage::ON_NurbsCage( int dim, bool is_rat,
 }
 
 ON_NurbsCage::ON_NurbsCage( const ON_BoundingBox& bbox, 
-			       int order0, int order1, int order2,
-			       int cv_count0, int cv_count1, int cv_count2
-			       )
+                               int order0, int order1, int order2,
+                               int cv_count0, int cv_count1, int cv_count2
+                               )
 : m_dim(0),m_is_rat(0),m_cv_capacity(0),m_cv(0)
 {
   m_order[0] = 0;
@@ -308,8 +307,8 @@ bool ON_NurbsCage::IsParallelogram(double tolerance) const
   {
     d[i] = Domain(i);
     rc = (    d[i][0] == m_knot[i][0]
-	   && d[i][1] == m_knot[i][m_cv_count[i]+m_order[i]-3]
-	   );
+           && d[i][1] == m_knot[i][m_cv_count[i]+m_order[i]-3]
+           );
   }
 
   if (rc)
@@ -328,18 +327,18 @@ bool ON_NurbsCage::IsParallelogram(double tolerance) const
       x = d[0].NormalizedParameterAt(r);
       for ( j = 0; j < m_cv_count[1]; j++ )
       {
-	s = ON_GrevilleAbcissa(m_order[1],m_knot[1]+j);
-	y = d[1].NormalizedParameterAt(s);
-	for ( k = 0; k < m_cv_count[2]; k++ )
-	{
-	  t = ON_GrevilleAbcissa(m_order[2],m_knot[2]+k);
-	  z = d[2].NormalizedParameterAt(t);
-	  Evaluate(r,s,t,0,3,&Q.x);
-	  B = (1.0-x-y-z)*P + x*X + y*Y + z*Z;
-	  dist = B.DistanceTo(Q);
-	  if ( dist > tolerance )
-	    return false;          
-	}
+        s = ON_GrevilleAbcissa(m_order[1],m_knot[1]+j);
+        y = d[1].NormalizedParameterAt(s);
+        for ( k = 0; k < m_cv_count[2]; k++ )
+        {
+          t = ON_GrevilleAbcissa(m_order[2],m_knot[2]+k);
+          z = d[2].NormalizedParameterAt(t);
+          Evaluate(r,s,t,0,3,&Q.x);
+          B = (1.0-x-y-z)*P + x*X + y*Y + z*Z;
+          dist = B.DistanceTo(Q);
+          if ( dist > tolerance )
+            return false;          
+        }
       }
     }
   }
@@ -349,9 +348,9 @@ bool ON_NurbsCage::IsParallelogram(double tolerance) const
 
 
 ON_NurbsCage::ON_NurbsCage( const ON_3dPoint* box_corners, 
-			       int order0, int order1, int order2,
-			       int cv_count0, int cv_count1, int cv_count2
-			       )
+                               int order0, int order1, int order2,
+                               int cv_count0, int cv_count1, int cv_count2
+                               )
 : m_dim(0),m_is_rat(0),m_cv_capacity(0),m_cv(0)
 {
   m_order[0] = 0;
@@ -404,13 +403,13 @@ int ON_NurbsCage::KnotCount(int dir) const
 }
 
 double ON_NurbsCage::GrevilleAbcissa(
-	 int dir,    // dir
-	 int gindex  // index (0 <= index < CVCount(dir)
-	 ) const
+         int dir,    // dir
+         int gindex  // index (0 <= index < CVCount(dir)
+         ) const
 {
   return (dir >= 0 && dir <= 2)
-	 ? ON_GrevilleAbcissa( m_order[dir], m_knot[dir] + gindex )
-	 : ON_UNSET_VALUE;
+         ? ON_GrevilleAbcissa( m_order[dir], m_knot[dir] + gindex )
+         : ON_UNSET_VALUE;
 }
 
 bool ON_NurbsCage::IsMorphable() const
@@ -428,9 +427,9 @@ bool ON_NurbsCage::Morph(const ON_SpaceMorph& morph)
     {
       for ( k = 0; k < m_cv_count[2]; k++ )
       {
-	GetCV(i,j,k,P);
-	Q = morph.MorphPoint(P);
-	SetCV(i,j,k,Q);//morph.MorphPoint(P));
+        GetCV(i,j,k,P);
+        Q = morph.MorphPoint(P);
+        SetCV(i,j,k,Q);//morph.MorphPoint(P));
       }           
     }
   }
@@ -467,15 +466,15 @@ bool ON_NurbsCage::GetTightBoundingBox( ON_BoundingBox& tight_bbox,int bGrowBox,
     {
       for ( j = 0; j < m_cv_count[1]; j++ )
       {
-	for ( k = 0; k < m_cv_count[2]; k++ )
-	{
-	  GetCV(i,j,k,P);
-	  P = (*xform)*P;
-	  if ( tight_bbox.Set(P,bGrowBox) )
-	  {
-	    bGrowBox = true;
-	  }
-	}           
+        for ( k = 0; k < m_cv_count[2]; k++ )
+        {
+          GetCV(i,j,k,P);
+          P = (*xform)*P;
+          if ( tight_bbox.Set(P,bGrowBox) )
+          {
+            bGrowBox = true;
+          }
+        }           
       }
     }
   }
@@ -511,18 +510,18 @@ ON::object_type ON_NurbsCage::ObjectType() const
 ON_NurbsCage& ON_NurbsCage::operator=( const ON_BezierCage& src )
 {
   if ( Create(src.m_dim,src.m_is_rat,
-	      src.m_order[0],src.m_order[1],src.m_order[2],
-	      src.m_order[0],src.m_order[1],src.m_order[2]) )
+              src.m_order[0],src.m_order[1],src.m_order[2],
+              src.m_order[0],src.m_order[1],src.m_order[2]) )
   {
     int i,j,k;
     for ( i = 0; i < m_cv_count[0]; i++ )
     {
       for ( j = 0; j < m_cv_count[1]; j++ )
       {
-	for ( k = 0; k < m_cv_count[2]; k++ )
-	{
-	  SetCV(i,j,k,ON::intrinsic_point_style,src.CV(i,j,k));
-	}           
+        for ( k = 0; k < m_cv_count[2]; k++ )
+        {
+          SetCV(i,j,k,ON::intrinsic_point_style,src.CV(i,j,k));
+        }           
       }
     }
   }
@@ -554,12 +553,12 @@ ON__UINT32 ON_NurbsCage::DataCRC(ON__UINT32 current_remainder) const
     {
       for ( j = 0; j < m_cv_count[1]; j++ )
       {
-	cv = CV(i,j,0);
-	for (k = 0; i < m_cv_count[2]; k++ )
-	{
-	  current_remainder = ON_CRC32(current_remainder,sizeof_cv,cv);
-	  cv += m_cv_stride[2];
-	}
+        cv = CV(i,j,0);
+        for (k = 0; i < m_cv_count[2]; k++ )
+        {
+          current_remainder = ON_CRC32(current_remainder,sizeof_cv,cv);
+          cv += m_cv_stride[2];
+        }
       }
     }
   }
@@ -571,8 +570,8 @@ ON__UINT32 ON_NurbsCage::DataCRC(ON__UINT32 current_remainder) const
 }
 
 ON_NurbsCage::ON_NurbsCage(const ON_NurbsCage& src)
-		 : ON_Geometry(src),
-		   m_dim(0),m_is_rat(0),m_cv_capacity(0),m_cv(0)
+                 : ON_Geometry(src),
+                   m_dim(0),m_is_rat(0),m_cv_capacity(0),m_cv(0)
 {
   m_order[0] = 0;
   m_order[1] = 0;
@@ -600,39 +599,39 @@ ON_NurbsCage& ON_NurbsCage::operator=(const ON_NurbsCage& src)
   {
     ON_Geometry::operator=(src);
     if ( Create( src.m_dim, src.m_is_rat, 
-	 src.m_order[0], src.m_order[1], src.m_order[2],
-	 src.m_cv_count[0], src.m_cv_count[1], src.m_cv_count[2]
-	 ) )
+         src.m_order[0], src.m_order[1], src.m_order[2],
+         src.m_cv_count[0], src.m_cv_count[1], src.m_cv_count[2]
+         ) )
     {
       if ( m_order[0] >= 2 && m_cv_count[0] >= m_order[0] && m_knot[0] && src.m_knot[0] )
-	memcpy( m_knot[0], src.m_knot[0], KnotCount(0)*sizeof(m_knot[0][0]));
+        memcpy( m_knot[0], src.m_knot[0], KnotCount(0)*sizeof(m_knot[0][0]));
       if ( m_order[1] >= 2 && m_cv_count[1] >= m_order[1] && m_knot[1] && src.m_knot[1]  )
-	memcpy( m_knot[1], src.m_knot[1], KnotCount(1)*sizeof(m_knot[1][0]));
+        memcpy( m_knot[1], src.m_knot[1], KnotCount(1)*sizeof(m_knot[1][0]));
       if ( m_order[2] >= 2 && m_cv_count[2] >= m_order[2] && m_knot[2] && src.m_knot[2]  )
-	memcpy( m_knot[2], src.m_knot[2], KnotCount(2)*sizeof(m_knot[2][0]));
+        memcpy( m_knot[2], src.m_knot[2], KnotCount(2)*sizeof(m_knot[2][0]));
 
       if ( m_cv && src.m_cv && m_cv_stride[0] > 0 && m_cv_stride[1] > 0 && m_cv_stride[2] > 0 )
       {
-	const int cv_dim = CVSize();
-	const int sizeofcv = cv_dim*sizeof(m_cv[0]);
-	if (    m_cv_stride[0] == src.m_cv_stride[0] 
-	    && m_cv_stride[1] == src.m_cv_stride[1]
-	    && m_cv_stride[2] == src.m_cv_stride[2] )
-	{
-	  memcpy(m_cv,src.m_cv,m_cv_count[0]*m_cv_count[1]*m_cv_count[2]*sizeofcv);
-	}
-	else
-	{
-	  int i, j, k;
-	  double* cv = m_cv;
-	  for ( i = 0; i < m_cv_count[0]; i++ ) 
-	  for ( j = 0; j < m_cv_count[1]; j++ ) 
-	  for ( k = 0; k < m_cv_count[2]; k++ ) 
-	  {
-	    memcpy( cv, src.CV(i,j,k), sizeofcv );
-	    cv += cv_dim;
-	  }
-	}
+        const int cv_dim = CVSize();
+        const int sizeofcv = cv_dim*sizeof(m_cv[0]);
+        if (    m_cv_stride[0] == src.m_cv_stride[0] 
+            && m_cv_stride[1] == src.m_cv_stride[1]
+            && m_cv_stride[2] == src.m_cv_stride[2] )
+        {
+          memcpy(m_cv,src.m_cv,m_cv_count[0]*m_cv_count[1]*m_cv_count[2]*sizeofcv);
+        }
+        else
+        {
+          int i, j, k;
+          double* cv = m_cv;
+          for ( i = 0; i < m_cv_count[0]; i++ ) 
+          for ( j = 0; j < m_cv_count[1]; j++ ) 
+          for ( k = 0; k < m_cv_count[2]; k++ ) 
+          {
+            memcpy( cv, src.CV(i,j,k), sizeofcv );
+            cv += cv_dim;
+          }
+        }
       }
     }
     else 
@@ -643,9 +642,9 @@ ON_NurbsCage& ON_NurbsCage::operator=(const ON_NurbsCage& src)
   return *this;
 }
 
-BOOL ON_NurbsCage::IsValid( 
-	  ON_TextLog* //text_log 
-	  ) const
+ON_BOOL32 ON_NurbsCage::IsValid( 
+          ON_TextLog* //text_log 
+          ) const
 {
   if ( 0 == m_cv )
     return false;
@@ -715,11 +714,11 @@ BOOL ON_NurbsCage::IsValid(
 void ON_NurbsCage::Dump( ON_TextLog& dump ) const
 {
   dump.Print( "ON_NurbsCage dim = %d is_rat = %d\n"
-	       "        order = (%d, %d, %d) \n",
-	       "        cv_count = (%d, %d, %d) \n",
-	       m_dim, m_is_rat, 
-	       m_order[0], m_order[1], m_order[2], 
-	       m_cv_count[0], m_cv_count[1], m_cv_count[2] );
+               "        order = (%d, %d, %d) \n",
+               "        cv_count = (%d, %d, %d) \n",
+               m_dim, m_is_rat, 
+               m_order[0], m_order[1], m_order[2], 
+               m_cv_count[0], m_cv_count[1], m_cv_count[2] );
 
   int dir;
   for ( dir = 0; dir < 3; dir++ ) 
@@ -729,9 +728,9 @@ void ON_NurbsCage::Dump( ON_TextLog& dump ) const
   }
 
   dump.Print( "Control Points  %d %s points\n"
-	       "  index               value\n",
-	       m_cv_count[0]*m_cv_count[1]*m_cv_count[2], 
-	       (m_is_rat) ? "rational" : "non-rational" );
+               "  index               value\n",
+               m_cv_count[0]*m_cv_count[1]*m_cv_count[2], 
+               (m_is_rat) ? "rational" : "non-rational" );
   if ( !m_cv ) 
   {
     dump.Print("  NULL cv array\n");
@@ -745,17 +744,17 @@ void ON_NurbsCage::Dump( ON_TextLog& dump ) const
     {
       for ( j = 0; j < m_order[1]; j++ )
       {
-	if ( i > 0 || j > 0)
-	  dump.Print("\n");
-	sPreamble[0] = 0;
-	sprintf(sPreamble,"  CV[%2d][%2d]",i,j);
-	dump.PrintPointList( m_dim, m_is_rat, 
-			  m_cv_count[2], m_cv_stride[2],
-			  CV(i,j,0), 
-			  sPreamble );
+        if ( i > 0 || j > 0)
+          dump.Print("\n");
+        sPreamble[0] = 0;
+        sprintf(sPreamble,"  CV[%2d][%2d]",i,j);
+        dump.PrintPointList( m_dim, m_is_rat, 
+                          m_cv_count[2], m_cv_stride[2],
+                          CV(i,j,0), 
+                          sPreamble );
       }
       if ( i < m_order[0]-1)
-	dump.Print("\n");
+        dump.Print("\n");
     }
   }
 }
@@ -766,24 +765,24 @@ int ON_NurbsCage::Dimension() const
 }
 
 bool ON_NurbsCage::Create( const ON_BoundingBox& bbox, 
-			    int order0, int order1, int order2,
-			    int cv_count0, int cv_count1, int cv_count2 
-			    )
+                            int order0, int order1, int order2,
+                            int cv_count0, int cv_count1, int cv_count2 
+                            )
 {
   /*
-	    7______________6
-	    |\             |\
-	    | \            | \
-	    |  \ _____________\
-	    |   4          |   5
-	    |   |          |   |
-	    |   |          |   |
-	    3---|----------2   |
-	    \   |          \   |
-	     \  |z          \  |
-	    y \ |            \ |
-	       \0_____________\1
-		       x
+            7______________6
+            |\             |\
+            | \            | \
+            |  \ _____________\
+            |   4          |   5
+            |   |          |   |
+            |   |          |   |
+            3---|----------2   |
+            \   |          \   |
+             \  |z          \  |
+            y \ |            \ |
+               \0_____________\1
+                       x
   */
   ON_3dPoint box_corners[8];
   box_corners[0] = bbox.Corner(0,0,0);
@@ -799,16 +798,16 @@ bool ON_NurbsCage::Create( const ON_BoundingBox& bbox,
 
 
 bool ON_NurbsCage::Create( int dim, bool is_rat, 
-			    int order0, int order1, int order2,
-			    int cv_count0, int cv_count1, int cv_count2 
-			    )
+                            int order0, int order1, int order2,
+                            int cv_count0, int cv_count1, int cv_count2 
+                            )
 {
   Destroy();
   if ( order0 < 2 || order1 < 2 || order2 < 2 )
   {
     if (   0 == dim && 0 == is_rat 
-	 && 0 == order0 && 0 == order1 && 0 == order2 
-	 && 0 == cv_count0 && 0 == cv_count1 && 0 == cv_count2 )
+         && 0 == order0 && 0 == order1 && 0 == order2 
+         && 0 == cv_count0 && 0 == cv_count1 && 0 == cv_count2 )
     {
       return true;
     }
@@ -922,12 +921,12 @@ bool ON_NurbsCage::Create(
       r = g0[i];
       for (j = 0; j < m_cv_count[1]; j++)
       {
-	s = g1[j];
-	for (k = 0; k < m_cv_count[2]; k++)
-	{
-	  t = g2[k];
-	  SetCV(i,j,k,cube.PointAt(r,s,t));
-	}
+        s = g1[j];
+        for (k = 0; k < m_cv_count[2]; k++)
+        {
+          t = g2[k];
+          SetCV(i,j,k,cube.PointAt(r,s,t));
+        }
       }
     }
 
@@ -1004,16 +1003,16 @@ void ON_NurbsCage::EmergencyDestroy()
 }
 
 
-BOOL ON_NurbsCage::GetBBox( // returns true if successful
+ON_BOOL32 ON_NurbsCage::GetBBox( // returns true if successful
        double* boxmin,    // minimum
        double* boxmax,    // maximum
-       BOOL bGrowBox  // true means grow box
+       ON_BOOL32 bGrowBox  // true means grow box
        ) const
 {
   int i, j;
   bool rc = ( 0 != m_cv 
-	      && m_cv_count[0] >= 2 && m_cv_count[1] >= 2 && m_cv_count[2] >= 2 
-	      && m_cv_stride[0] > 0 && m_cv_stride[1] > 0 && m_cv_stride[2] > 0 ) ? true : false;
+              && m_cv_count[0] >= 2 && m_cv_count[1] >= 2 && m_cv_count[2] >= 2 
+              && m_cv_stride[0] > 0 && m_cv_stride[1] > 0 && m_cv_stride[2] > 0 ) ? true : false;
   if ( !rc )
   {
     ON_ERROR("ON_NurbsCage::GetBBox - invalid input");
@@ -1024,15 +1023,15 @@ BOOL ON_NurbsCage::GetBBox( // returns true if successful
     for ( j = 0; rc && j < m_cv_count[1]; j++ ) 
     {
       rc = ON_GetPointListBoundingBox( m_dim, m_is_rat, m_cv_count[2], m_cv_stride[2],
-				      CV(i,j,0), 
-				      boxmin, boxmax, bGrowBox?true:false );
+                                      CV(i,j,0), 
+                                      boxmin, boxmax, bGrowBox?true:false );
       bGrowBox = true;
     }
   }
   return rc;
 }
 
-BOOL ON_NurbsCage::Transform( const ON_Xform& xform )
+ON_BOOL32 ON_NurbsCage::Transform( const ON_Xform& xform )
 {
   int i,j;
   bool rc = (m_cv_count[0] > 0 && m_cv_count[1] > 0 && m_cv_count[2]) ? true : false;
@@ -1042,7 +1041,7 @@ BOOL ON_NurbsCage::Transform( const ON_Xform& xform )
     {
       if ( xform.m_xform[3][0] != 0.0 || xform.m_xform[3][1] != 0.0 || xform.m_xform[3][2] != 0.0 )
       {
-	MakeRational();
+        MakeRational();
       }
     }
   
@@ -1050,9 +1049,9 @@ BOOL ON_NurbsCage::Transform( const ON_Xform& xform )
     {
       for ( j = 0; rc && j < m_cv_count[1]; j++ ) 
       {
-	rc = ON_TransformPointList( m_dim, m_is_rat, 
-				    m_cv_count[2], m_cv_stride[2], 
-				    CV(i,j,0), xform );
+        rc = ON_TransformPointList( m_dim, m_is_rat, 
+                                    m_cv_count[2], m_cv_stride[2], 
+                                    CV(i,j,0), xform );
       }
     }
   }
@@ -1074,19 +1073,19 @@ ON_Interval ON_NurbsCage::Domain(
 
 
 bool ON_EvaluateNurbsCageSpan(
-	int dim,
-	int is_rat,
-	int order0, int order1, int order2,
-	const double* knot0,
-	const double* knot1,
-	const double* knot2,
-	int cv_stride0, int cv_stride1, int cv_stride2,
-	const double* cv0,
-	int der_count,
-	double t0, double t1, double t2,
-	int v_stride, 
-	double* v
-	)
+        int dim,
+        int is_rat,
+        int order0, int order1, int order2,
+        const double* knot0,
+        const double* knot1,
+        const double* knot2,
+        int cv_stride0, int cv_stride1, int cv_stride2,
+        const double* cv0,
+        int der_count,
+        double t0, double t1, double t2,
+        int v_stride, 
+        double* v
+        )
 {
   double c;
   double* N_0, *N_1, *N_2, *P, *P0, *P00;
@@ -1135,11 +1134,11 @@ bool ON_EvaluateNurbsCageSpan(
 			  c = N_0[j0]*N_1[j1]*N_2[j2];
 			  j = cvdim;
 			  while (j--) 
-	{
+        {
 				  *P++ += c* *cv++;
-	}
+        }
 			  P -= cvdim;
-	cv += dcv2;
+        cv += dcv2;
 		  }
 	  }
   }
@@ -1147,36 +1146,36 @@ bool ON_EvaluateNurbsCageSpan(
   if ( der_count > 0 ) 
   {
     // quickly compute first derivatives
-	P += cvdim; // step over point
+  	P += cvdim; // step over point
 		for ( j0 = 0; j0 < order0; j0++) 
     {
 			for ( j1 = 0; j1 < order1; j1++ ) 
       {
-	cv = cv0 + j0*cv_stride0 + j1*cv_stride1;
-	for ( j2 = 0; j2 < order2; j2++ )
-	{
-	  // "Dr"
+        cv = cv0 + j0*cv_stride0 + j1*cv_stride1;
+        for ( j2 = 0; j2 < order2; j2++ )
+        {
+          // "Dr"
 				  c = N_0[j0+order0]*N_1[j1]*N_2[j2];
 				  j = cvdim;
 				  while (j--) 
 					  *P++ += c* *cv++;
-	  cv -= cvdim;
+          cv -= cvdim;
 
-	  // "Ds"
+          // "Ds"
 				  c = N_0[j0]*N_1[j1+order1]*N_2[j2];
 				  j = cvdim;
 				  while (j--) 
 					  *P++ += c* *cv++;
-	  cv -= cvdim;
+          cv -= cvdim;
 
-	  // "Dt"
+          // "Dt"
 				  c = N_0[j0]*N_1[j1]*N_2[j2+order2];
 				  j = cvdim;
 				  while (j--) 
 					  *P++ += c* *cv++;
 
 				  P -= 3*cvdim;
-	  cv += dcv2;
+          cv += dcv2;
 			  }
 		  }
     }
@@ -1190,38 +1189,38 @@ bool ON_EvaluateNurbsCageSpan(
       if ( der_count0+der_count1+der_count2 > 1 ) 
       {
 		    for ( j0 = 0; j0 < order0; j0++) 
-	{
+        {
 		      for ( j1 = 0; j1 < order1; j1++) 
-	  {
-	    cv = cv0 + j0*cv_stride0 + j1*cv_stride1;
+          {
+            cv = cv0 + j0*cv_stride0 + j1*cv_stride1;
 			      for ( j2 = 0; j2 < order2; j2++ ) 
-	    {
-	      P00 = P;
-	      for ( d0 = d; d0 >= 0; d0-- )
-	      {
-		for ( d1 = d-d0; d1 >= 0; d1-- )
-		{
-		  d2 = d-d0-d1;
-		  if ( d0 > der_count0 || d1 > der_count1 || d2 > der_count2 )
-		  {
-		    // this partial is zero
-		    P += cvdim;
-		  }
-		  else
-		  {
-		    c = N_0[j0 + d0*order0]*N_1[j1 + d1*order1]*N_2[j2 + d2*order2];
-		    j = cvdim;
-		    while(j--)
-		      *P++ += c* *cv++;
-		    cv -= cvdim;
-		  }
-		}
-	      }
-	      P = P00;
-	      cv += cv_stride2;
+            {
+              P00 = P;
+              for ( d0 = d; d0 >= 0; d0-- )
+              {
+                for ( d1 = d-d0; d1 >= 0; d1-- )
+                {
+                  d2 = d-d0-d1;
+                  if ( d0 > der_count0 || d1 > der_count1 || d2 > der_count2 )
+                  {
+                    // this partial is zero
+                    P += cvdim;
+                  }
+                  else
+                  {
+                    c = N_0[j0 + d0*order0]*N_1[j1 + d1*order1]*N_2[j2 + d2*order2];
+                    j = cvdim;
+                    while(j--)
+                      *P++ += c* *cv++;
+                    cv -= cvdim;
+                  }
+                }
+              }
+              P = P00;
+              cv += cv_stride2;
 			      }
 		      }
-	}
+        }
       }
     }
 
@@ -1250,15 +1249,15 @@ bool ON_NurbsCage::Evaluate( // returns false if unable to evaluate
        int v_stride,             // array stride (>=Dimension())
        double* v,                // array of length stride*(ndir+1)*(ndir+2)/2
        int side,       // optional - determines which side to evaluate from
-		       //         0 = default
-		       //         1 = from upper NE quadrant
-		       //         2 = from upper NW quadrant
-		       //         3 = from upper SW quadrant
-		       //         4 = from upper SE quadrant
-		       //         5 = from lower NE quadrant
-		       //         6 = from lower NW quadrant
-		       //         7 = from lower SW quadrant
-		       //         8 = from lower SE quadrant
+                       //         0 = default
+                       //         1 = from upper NE quadrant
+                       //         2 = from upper NW quadrant
+                       //         3 = from upper SW quadrant
+                       //         4 = from upper SE quadrant
+                       //         5 = from lower NE quadrant
+                       //         6 = from lower NW quadrant
+                       //         7 = from lower SW quadrant
+                       //         8 = from lower SE quadrant
        int* hint
        ) const
 {  
@@ -1295,10 +1294,10 @@ bool ON_NurbsCage::Evaluate( // returns false if unable to evaluate
 }
 
 ON_3dPoint ON_NurbsCage::PointAt(
-	double r, 
-	double s, 
-	double t
-	) const
+        double r, 
+        double s, 
+        double t
+        ) const
 {
   ON_3dPoint pt;
   if ( m_dim <= 3 )
@@ -1347,10 +1346,10 @@ ON_3dPoint ON_NurbsCage::PointAt( ON_3dPoint rst ) const
 }
 
 ON_NurbsSurface* ON_NurbsCage::IsoSurface(
-	int dir,
-	double c,
-	ON_NurbsSurface* srf
-	) const
+        int dir,
+        double c,
+        ON_NurbsSurface* srf
+        ) const
 {
   // c = 0; cage(c,s,t) = srf(s,t)
   // c = 1; cage(r,c,t) = srf(r,t)
@@ -1432,9 +1431,9 @@ ON_NurbsSurface* ON_NurbsCage::IsoSurface(
       cage_ijk[jj] = j;
       for ( k = 0; k < k1; k++ )
       {
-	cage_ijk[kk] = k;
-	memcpy(cv,CV(cage_ijk[0],cage_ijk[1],cage_ijk[2]),cage_sizeofcv);
-	cv += cage_cvdim;
+        cage_ijk[kk] = k;
+        memcpy(cv,CV(cage_ijk[0],cage_ijk[1],cage_ijk[2]),cage_sizeofcv);
+        cv += cage_cvdim;
       }
     }
   }
@@ -1482,16 +1481,16 @@ bool ON_NurbsCage::IsClosed(int dir) const
       d[dir] = m_cv_count[dir] - 1;
       for ( i = 0; i+d[0] < m_cv_count[0]; i++ )
       {
-	for ( j = 0; j+d[1] < m_cv_count[1]; j++ )
-	{
-	  for ( k = 0; k+d[2] < m_cv_count[2]; k++ )
-	  {
-	    cv0 = CV(i,j,k);
-	    cv1 = CV(i+d[0],j+d[1],k+d[2]);
-	    if ( ON_ComparePoint( m_dim, m_is_rat, cv0, cv1 ) )
-	      return false;
-	  }
-	}
+        for ( j = 0; j+d[1] < m_cv_count[1]; j++ )
+        {
+          for ( k = 0; k+d[2] < m_cv_count[2]; k++ )
+          {
+            cv0 = CV(i,j,k);
+            cv1 = CV(i+d[0],j+d[1],k+d[2]);
+            if ( ON_ComparePoint( m_dim, m_is_rat, cv0, cv1 ) )
+              return false;
+          }
+        }
       }
       bIsClosed = true;
     }
@@ -1516,16 +1515,16 @@ bool ON_NurbsCage::IsPeriodic(int dir) const
       d[dir] = m_cv_count[dir] - (m_order[dir]-1);
       for ( i = 0; i+d[0] < m_cv_count[0]; i++ )
       {
-	for ( j = 0; j+d[1] < m_cv_count[1]; j++ )
-	{
-	  for ( k = 0; k+d[2] < m_cv_count[2]; k++ )
-	  {
-	    cv0 = CV(i,j,k);
-	    cv1 = CV(i+d[0],j+d[1],k+d[2]);
-	    if ( ON_ComparePoint( m_dim, m_is_rat, cv0, cv1 ) )
-	      return false;
-	  }
-	}
+        for ( j = 0; j+d[1] < m_cv_count[1]; j++ )
+        {
+          for ( k = 0; k+d[2] < m_cv_count[2]; k++ )
+          {
+            cv0 = CV(i,j,k);
+            cv1 = CV(i+d[0],j+d[1],k+d[2]);
+            if ( ON_ComparePoint( m_dim, m_is_rat, cv0, cv1 ) )
+              return false;
+          }
+        }
       }
     }
   }
@@ -1610,7 +1609,7 @@ bool ON_NurbsCage::SetCV( int i, int j, int k, ON::point_style style, const doub
       // NURBS surface is not rational
       w = (Point[m_dim] != 0.0) ? 1.0/Point[m_dim] : 1.0;
       for ( n = 0; n < m_dim; n++ ) {
-	cv[n] = w*Point[n];
+        cv[n] = w*Point[n];
       }
     }
     break;
@@ -1620,7 +1619,7 @@ bool ON_NurbsCage::SetCV( int i, int j, int k, ON::point_style style, const doub
       // NURBS surface is rational - convert euclean point to homogeneous form
       w = Point[m_dim];
       for ( n = 0; n < m_dim; n++ )
-	cv[i] = w*Point[i];
+        cv[i] = w*Point[i];
       cv[m_dim] = w;
     }
     else {
@@ -1650,7 +1649,7 @@ bool ON_NurbsCage::SetCV( int i, int j, int k, const ON_3dPoint& point )
     if ( m_dim > 1 ) {
       cv[1] = point.y;
       if ( m_dim > 2 )
-	cv[2] = point.z;
+        cv[2] = point.z;
     }
     if ( m_is_rat ) {
       cv[m_dim] = 1.0;
@@ -1668,9 +1667,9 @@ bool ON_NurbsCage::SetCV( int i, int j, int k, const ON_4dPoint& point )
     if ( m_is_rat ) {
       cv[0] = point.x;
       if ( m_dim > 1 ) {
-	cv[1] = point.y;
-	if ( m_dim > 2 )
-	  cv[2] = point.z;
+        cv[1] = point.y;
+        if ( m_dim > 2 )
+          cv[2] = point.z;
       }
       cv[m_dim] = point.w;
       rc = true;
@@ -1678,18 +1677,18 @@ bool ON_NurbsCage::SetCV( int i, int j, int k, const ON_4dPoint& point )
     else {
       double w;
       if ( point.w != 0.0 ) {
-	w = 1.0/point.w;
-	rc = true;
+        w = 1.0/point.w;
+        rc = true;
       }
       else {
-	w = 1.0;
+        w = 1.0;
       }
       cv[0] = w*point.x;
       if ( m_dim > 1 ) {
-	cv[1] = w*point.y;
-	if ( m_dim > 2 ) {
-	  cv[2] = w*point.z;
-	}
+        cv[1] = w*point.y;
+        if ( m_dim > 2 ) {
+          cv[2] = w*point.z;
+        }
       }
     }
   }
@@ -1730,11 +1729,11 @@ bool ON_NurbsCage::GetCV( int i, int j, int k, ON_3dPoint& point ) const
   if ( cv ) {
     if ( m_is_rat ) {
       if (cv[m_dim] != 0.0) {
-	const double w = 1.0/cv[m_dim];
-	point.x = cv[0]*w;
-	point.y = (m_dim>1)? cv[1]*w : 0.0;
-	point.z = (m_dim>2)? cv[2]*w : 0.0;
-	rc = true;
+        const double w = 1.0/cv[m_dim];
+        point.x = cv[0]*w;
+        point.y = (m_dim>1)? cv[1]*w : 0.0;
+        point.z = (m_dim>2)? cv[2]*w : 0.0;
+        rc = true;
       }
     }
     else {
@@ -1761,6 +1760,62 @@ bool ON_NurbsCage::GetCV( int i, int j, int k, ON_4dPoint& point ) const
   return rc;
 }
 
+
+
+bool ON_NurbsCage::SetKnot(
+      int dir,
+      int knot_index,
+      double knot_value
+      )
+{
+  bool rc;
+
+  // Validate input so invalid input does not crash Rhino.
+  // Expert programmers who want to write fast code can directly
+  // access the m_knot[] arrays.
+  if (    dir >= 0 && dir < 3 
+       && 0 != m_knot[dir]
+       && knot_index >= 0 
+       && knot_index < m_order[dir]+m_cv_count[dir]-2
+     )
+  {
+    m_knot[dir][knot_index] = knot_value;
+    rc = true;
+  }
+  else
+  {
+    ON_ERROR("ON_NurbsCage::SetKnot - invalid input parameters");
+    rc = false;
+  }
+  return rc;
+}
+
+double ON_NurbsCage::Knot(
+      int dir,
+      int knot_index
+      ) const
+{
+  double knot_value;
+
+  // Validate input so invalid input does not crash Rhino.
+  // Expert programmers who want to write fast code can directly
+  // access the m_knot[] arrays.
+  if (    dir >= 0 && dir < 3 
+       && 0 != m_knot[dir]
+       && knot_index >= 0 
+       && knot_index < m_order[dir]+m_cv_count[dir]-2
+     )
+  {
+    knot_value = m_knot[dir][knot_index];
+  }
+  else
+  {
+    ON_ERROR("ON_NurbsCage::Knot - invalid input parameters");
+    knot_value = ON_UNSET_VALUE;
+  }
+  return knot_value;
+}
+
 bool ON_NurbsCage::ZeroCVs()
 {
   // zeros control vertices and, if rational, sets weights to 1
@@ -1770,13 +1825,13 @@ bool ON_NurbsCage::ZeroCVs()
     if ( m_cv_capacity > 0 ) {
       memset( m_cv, 0, m_cv_capacity*sizeof(*m_cv) );
       if ( m_is_rat ) {
-	for ( i = 0; i < m_order[0]; i++ ) {
-	  for ( j = 0; j < m_order[1]; j++ ) {
-	    for ( k = 0; k < m_order[2]; k++ ) {
-	      SetWeight( i,j,k, 1.0 );
-	    }
-	  }
-	}
+        for ( i = 0; i < m_order[0]; i++ ) {
+          for ( j = 0; j < m_order[1]; j++ ) {
+            for ( k = 0; k < m_order[2]; k++ ) {
+              SetWeight( i,j,k, 1.0 );
+            }
+          }
+        }
       }
       rc = true;
     }
@@ -1784,14 +1839,14 @@ bool ON_NurbsCage::ZeroCVs()
       double* cv;
       int s = CVSize()*sizeof(*cv);
       for ( i = 0; i < m_order[0]; i++ ) {
-	for ( j = 0; j < m_order[1]; j++ ) {
-	  for ( k = 0; k < m_order[2]; k++ ) {
-	    cv = CV(i,j,k);
-	    memset(cv,0,s);
-	    if ( m_is_rat )
-	      cv[m_dim] = 1.0;
-	  }
-	}
+        for ( j = 0; j < m_order[1]; j++ ) {
+          for ( k = 0; k < m_order[2]; k++ ) {
+            cv = CV(i,j,k);
+            memset(cv,0,s);
+            if ( m_is_rat )
+              cv[m_dim] = 1.0;
+          }
+        }
       }
       rc = (i>0) ? true : false;
     }
@@ -1809,44 +1864,44 @@ bool ON_NurbsCage::MakeRational()
       int i,j,k;
       if ( m_cv_stride[0] <= dim || m_cv_stride[1] <= dim || m_cv_stride[2] <= dim )
       {
-	// there's not room for the weight in the existing m_cv array - adjust the strides
-	double* new_cv = (double*)onmalloc(m_cv_count[0]*m_cv_count[1]*m_cv_count[2]*(dim+1)*sizeof(*new_cv));
-	double* cv1 = new_cv;
-	const int sizeofoldcv = dim*sizeof(*cv1);
-	for (i = 0; i < m_cv_count[0]; i++) 
-	{
-	  for(j = 0; j < m_cv_count[1]; j++) 
-	  {
-	    for(k = 0; k < m_cv_count[2]; k++)
-	    {
-	      memcpy(cv1,CV(i,j,k),sizeofoldcv);
-	      cv1 += dim;
-	      *cv1++ = 1.0;
-	    }
-	  }
-	}
-	m_is_rat = 1;
-	ReserveCVCapacity(m_cv_count[0]*m_cv_count[1]*m_cv_count[2]*(dim+1));
-	memcpy(m_cv,new_cv,m_cv_count[0]*m_cv_count[1]*m_cv_count[2]*(dim+1)*sizeof(*m_cv));
-	onfree(new_cv);
-	m_cv_stride[2] = dim+1;
-	m_cv_stride[1] = m_cv_stride[2]*m_cv_count[2];
-	m_cv_stride[0] = m_cv_stride[1]*m_cv_count[1];
+        // there's not room for the weight in the existing m_cv array - adjust the strides
+        double* new_cv = (double*)onmalloc(m_cv_count[0]*m_cv_count[1]*m_cv_count[2]*(dim+1)*sizeof(*new_cv));
+        double* cv1 = new_cv;
+        const int sizeofoldcv = dim*sizeof(*cv1);
+        for (i = 0; i < m_cv_count[0]; i++) 
+        {
+          for(j = 0; j < m_cv_count[1]; j++) 
+          {
+            for(k = 0; k < m_cv_count[2]; k++)
+            {
+              memcpy(cv1,CV(i,j,k),sizeofoldcv);
+              cv1 += dim;
+              *cv1++ = 1.0;
+            }
+          }
+        }
+        m_is_rat = 1;
+        ReserveCVCapacity(m_cv_count[0]*m_cv_count[1]*m_cv_count[2]*(dim+1));
+        memcpy(m_cv,new_cv,m_cv_count[0]*m_cv_count[1]*m_cv_count[2]*(dim+1)*sizeof(*m_cv));
+        onfree(new_cv);
+        m_cv_stride[2] = dim+1;
+        m_cv_stride[1] = m_cv_stride[2]*m_cv_count[2];
+        m_cv_stride[0] = m_cv_stride[1]*m_cv_count[1];
       }
       else
       {
-	// there's room for the weight in the existing m_cv array
-	for (i = 0; i < m_cv_count[0]; i++) 
-	{
-	  for(j = 0; j < m_cv_count[1]; j++) 
-	  {
-	    for(k = 0; k < m_cv_count[2]; k++)
-	    {
-	      CV(i,j,k)[dim] = 1.0;
-	    }
-	  }
-	}
-	m_is_rat = 1;
+        // there's room for the weight in the existing m_cv array
+        for (i = 0; i < m_cv_count[0]; i++) 
+        {
+          for(j = 0; j < m_cv_count[1]; j++) 
+          {
+            for(k = 0; k < m_cv_count[2]; k++)
+            {
+              CV(i,j,k)[dim] = 1.0;
+            }
+          }
+        }
+        m_is_rat = 1;
       }
     }
   }
@@ -1869,13 +1924,13 @@ bool ON_NurbsCage::MakeNonRational()
       w = cv[m_dim];
       if ( w != 1.0 && w != 0.0 )
       {
-	w = 1.0/w;
-	n = m_dim;
-	while(n--)
-	{
-	  *cv++ *= w;
-	}
-	*cv = 1.0;
+        w = 1.0/w;
+        n = m_dim;
+        while(n--)
+        {
+          *cv++ *= w;
+        }
+        *cv = 1.0;
       }
     }
 
@@ -1896,8 +1951,8 @@ bool ON_NurbsCage::ReserveCVCapacity(
     {
       if ( m_cv_capacity ) 
       {
-	m_cv = (double*)onrealloc( m_cv, capacity*sizeof(*m_cv) );
-	m_cv_capacity = (m_cv) ? capacity : 0;
+        m_cv = (double*)onrealloc( m_cv, capacity*sizeof(*m_cv) );
+        m_cv_capacity = (m_cv) ? capacity : 0;
       }
       // else user supplied m_cv[] array
     }
@@ -1922,17 +1977,17 @@ bool ON_NurbsCage::ReserveKnotCapacity(
     {
       if ( m_knot[dir] )
       {
-	if( m_knot_capacity[dir] )
-	{
-	  m_knot[dir] = (double*)onrealloc(m_knot[dir],knot_capacity*sizeof(m_knot[dir][0]));
-	  m_knot_capacity[dir] = m_knot[dir] ? knot_capacity : 0;
-	}
-	// else user supplied m_knot[dir] array.
+        if( m_knot_capacity[dir] )
+        {
+          m_knot[dir] = (double*)onrealloc(m_knot[dir],knot_capacity*sizeof(m_knot[dir][0]));
+          m_knot_capacity[dir] = m_knot[dir] ? knot_capacity : 0;
+        }
+        // else user supplied m_knot[dir] array.
       }
       else
       {
-	m_knot[dir] = (double*)onmalloc(knot_capacity*sizeof(m_knot[dir][0]));
-	m_knot_capacity[dir] = m_knot[dir] ? knot_capacity : 0;
+        m_knot[dir] = (double*)onmalloc(knot_capacity*sizeof(m_knot[dir][0]));
+        m_knot_capacity[dir] = m_knot[dir] ? knot_capacity : 0;
       }
     }
     rc = m_knot[dir] != 0;
@@ -2064,11 +2119,11 @@ ON_CageMorph::~ON_CageMorph()
 }
 
 void ON_MorphControl::MorphPointLocalizerHelper( 
-	      const ON_3dPoint& point, 
-	      double& w, 
-	      double& clspt_max_dist,
-	      const ON_Localizer*& distloc  
-	      ) const
+              const ON_3dPoint& point, 
+              double& w, 
+              double& clspt_max_dist,
+              const ON_Localizer*& distloc  
+              ) const
 {
   w = 1.0;
   clspt_max_dist = 0.0;
@@ -2081,12 +2136,12 @@ void ON_MorphControl::MorphPointLocalizerHelper(
       distloc = &loc;
       if (distloc->m_d.IsDecreasing() )
       {
-	// points further away than clspt_max_dist
-	// from the cage do not get morphed.
-	// Setting this value will substantially speed
-	// up localized morphs (like small srfs
-	// draped on a large mesh).
-	clspt_max_dist = distloc->m_d[0];
+        // points further away than clspt_max_dist
+        // from the cage do not get morphed.
+        // Setting this value will substantially speed
+        // up localized morphs (like small srfs
+        // draped on a large mesh).
+        clspt_max_dist = distloc->m_d[0];
       }
     }
     else
@@ -2155,7 +2210,7 @@ void ON_MorphControl::MorphPointVarient1Helper(
       T1 = rot*T0;
       T = (1.0-w)*T0 + w*T1;
       if ( T.Unitize() )
-	*N = T;
+        *N = T;
     }
   }
   else
@@ -2165,7 +2220,7 @@ void ON_MorphControl::MorphPointVarient1Helper(
     {
       T1 = rot*(*N);
       if ( T1.Unitize() )
-	*N = T1;
+        *N = T1;
     }
   }
 }
@@ -2217,24 +2272,36 @@ void ON_MorphControl::MorphPointVarient2Helper(
     D.x -= z*N0.x;
     D.y -= z*N0.y;
     D.z -= z*N0.z;
-    if ( bDuTweak )
+    //if ( bDuTweak )
+    //{
+    //  if ( bDvTweak )
+    //  {
+    //    if ( 2 == ON_Solve3x2(&Du0.x,&Dv0.x,D.x,D.y,D.z,&u,&v,&e,&pr) )
+    //    {
+    //      //D = s*Du1 + t*Dv1;
+    //      D.x = u*Du1.x + v*Dv1.x;
+    //      D.y = u*Du1.y + v*Dv1.y;
+    //      D.z = u*Du1.z + v*Dv1.z;
+    //    }
+    //  }
+    //  else
+    //  {
+    //    u = Du0.x*D.x + Du0.y*D.y + Du0.z*D.z;
+    //    D.x = u*Du1.x;
+    //    D.y = u*Du1.y;
+    //    D.z = u*Du1.z;
+    //  }
+    //}
+    if ( bDuTweak || bDvTweak )
     {
-      if ( bDvTweak )
+      // point is not "above" the surface - use extended tangent
+      // plane.  If you modify this code, retest RR 23644.
+      if ( 2 == ON_Solve3x2(&Du0.x,&Dv0.x,D.x,D.y,D.z,&u,&v,&e,&pr) )
       {
-	if ( 2 == ON_Solve3x2(&Du0.x,&Dv0.x,D.x,D.y,D.z,&u,&v,&e,&pr) )
-	{
-	  //D = s*Du1 + t*Dv1;
-	  D.x = u*Du1.x + v*Dv1.x;
-	  D.y = u*Du1.y + v*Dv1.y;
-	  D.z = u*Du1.z + v*Dv1.z;
-	}
-      }
-      else
-      {
-	u = Du0.x*D.x + Du0.y*D.y + Du0.z*D.z;
-	D.x = u*Du1.x;
-	D.y = u*Du1.y;
-	D.z = u*Du1.z;
+        //D = s*Du1 + t*Dv1;
+        D.x = u*Du1.x + v*Dv1.x;
+        D.y = u*Du1.y + v*Dv1.y;
+        D.z = u*Du1.z + v*Dv1.z;
       }
     }
     else
@@ -2286,24 +2353,24 @@ void ON_MorphControl::MorphPointVarient2Helper(
     {
       if ( w < 1.0 )
       {
-	N0 = *N;
-	if ( N0.Unitize() )
-	{
-	  u = 1.0-w;
-	  N1.x = u*N0.x + w*D.x; 
-	  N1.y = u*N0.y + w*D.y; 
-	  N1.z = u*N0.z + w*D.z;
-	  if ( N1.Unitize() )
-	  {
-	    N->x = N1.x;
-	    N->y = N1.y;
-	    N->z = N1.z;
-	  }
-	}
+        N0 = *N;
+        if ( N0.Unitize() )
+        {
+          u = 1.0-w;
+          N1.x = u*N0.x + w*D.x; 
+          N1.y = u*N0.y + w*D.y; 
+          N1.z = u*N0.z + w*D.z;
+          if ( N1.Unitize() )
+          {
+            N->x = N1.x;
+            N->y = N1.y;
+            N->z = N1.z;
+          }
+        }
       }
       else
       {
-	N->x = D.x; N->y = D.y; N->z = D.z;
+        N->x = D.x; N->y = D.y; N->z = D.z;
       }
     }
   }
@@ -2329,22 +2396,22 @@ ON_3dPoint ON_MorphControl::MorphPoint( ON_3dPoint point ) const
     case 1:
       if ( m_nurbs_curve0.GetClosestPoint(Q,&t,clspt_max_dist) )
       {
-	MorphPointVarient1Helper(t,w,distloc,Q,0);
+        MorphPointVarient1Helper(t,w,distloc,Q,0);
       }
       else
       {
-	w = 0.0;
+        w = 0.0;
       }
       break;
 
     case 2:
       if ( m_nurbs_surface0.GetClosestPoint(Q,&s,&t,clspt_max_dist) )
       {
-	MorphPointVarient2Helper(s,t,w,distloc,Q,0);
+        MorphPointVarient2Helper(s,t,w,distloc,Q,0);
       }
       else
       {
-	w = 0.0;
+        w = 0.0;
       }
       break;
 
@@ -2385,8 +2452,8 @@ bool ON_CageMorph::IsIdentity( const ON_BoundingBox& bbox ) const
 }
 
 ON_MorphControl::ON_MorphControl() 
-		: m_varient(0),
-		  m_nurbs_cage0(1.0)
+                : m_varient(0),
+                  m_nurbs_cage0(1.0)
 {
   m_sporh_tolerance          = 0.0;
   m_sporh_bQuickPreview      = false;
@@ -2428,9 +2495,9 @@ void ON_MorphControl::MemoryRelocate()
   ON_Geometry::MemoryRelocate();
 }
 
-BOOL ON_MorphControl::IsValid( ON_TextLog* text_log ) const
+ON_BOOL32 ON_MorphControl::IsValid( ON_TextLog* text_log ) const
 {
-  BOOL rc = false;
+  ON_BOOL32 rc = false;
   switch(m_varient)
   {
   case 1:
@@ -2486,9 +2553,9 @@ void ON_MorphControl::Dump( ON_TextLog& text_log ) const
 unsigned int ON_MorphControl::SizeOf() const
 {
   unsigned int sz = sizeof(*this) 
-		  - 2*sizeof(ON_NurbsCurve) 
-		  - 2*sizeof(ON_NurbsSurface) 
-		  - sizeof(m_nurbs_cage);
+                  - 2*sizeof(ON_NurbsCurve) 
+                  - 2*sizeof(ON_NurbsSurface) 
+                  - sizeof(m_nurbs_cage);
   sz += m_nurbs_curve0.SizeOf();
   sz += m_nurbs_curve.SizeOf();
   sz += m_nurbs_surface0.SizeOf();
@@ -2530,13 +2597,13 @@ int ON_MorphControl::Dimension() const
   return dim;
 }
 
-BOOL ON_MorphControl::GetBBox(
-	double* boxmin,
-	double* boxmax,
-	int bGrowBox
-	) const
+ON_BOOL32 ON_MorphControl::GetBBox(
+        double* boxmin,
+        double* boxmax,
+        int bGrowBox
+        ) const
 {
-  BOOL rc = false;
+  ON_BOOL32 rc = false;
   switch(m_varient)
   {
   case 1:
@@ -2578,11 +2645,11 @@ void ON_MorphControl::ClearBoundingBox()
 {
 }
 
-BOOL ON_MorphControl::Transform( 
-	const ON_Xform& xform
-	)
+ON_BOOL32 ON_MorphControl::Transform( 
+        const ON_Xform& xform
+        )
 {
-  BOOL rc = false;
+  ON_BOOL32 rc = false;
 
   switch(m_varient)
   {
@@ -2646,9 +2713,9 @@ bool ON_MorphControl::IsMorphable() const
   return rc;
 }
 
-BOOL ON_MorphControl::HasBrepForm() const
+ON_BOOL32 ON_MorphControl::HasBrepForm() const
 {
-  BOOL rc = false;
+  ON_BOOL32 rc = false;
 
   switch(m_varient)
   {
@@ -2892,25 +2959,25 @@ bool ON_MorphControl::GetCageMorph(ON_CageMorph& cage_morph) const
   return true;
 }
 
-BOOL ON_MorphControl::Read( ON_BinaryArchive& archive )
+ON_BOOL32 ON_MorphControl::Read( ON_BinaryArchive& archive )
 {
   Destroy();
   int major_version = 0;
   int minor_version = 0;
   bool rc = archive.BeginRead3dmChunk(TCODE_ANONYMOUS_CHUNK,
-				      &major_version,
-				      &minor_version);
+                                      &major_version,
+                                      &minor_version);
   while(rc)
   {
     if ( 1 == major_version )
     {
       m_varient = 3;
       if (rc)
-	rc = m_nurbs_cage.Read(archive)?true:false;
+        rc = m_nurbs_cage.Read(archive)?true:false;
       if (rc)
-	rc = m_captive_id.Read(archive);
+        rc = m_captive_id.Read(archive);
       if (rc)
-	rc = archive.ReadXform(m_nurbs_cage0);
+        rc = archive.ReadXform(m_nurbs_cage0);
     }
     else if ( 2 == major_version )
     {
@@ -2924,31 +2991,31 @@ BOOL ON_MorphControl::Read( ON_BinaryArchive& archive )
       rc = (1 == mjv);
       if (rc)
       {
-	switch(m_varient)
-	{
-	case 1:
-	  rc = m_nurbs_curve0.Read(archive)?true:false;
-	  if (rc)
-	    m_nurbs_curve_domain = m_nurbs_curve0.Domain();
-	  break;
-	case 2:
-	  rc = m_nurbs_surface0.Read(archive)?true:false;
-	  if (rc)
-	  {
-	    m_nurbs_surface_domain[0] = m_nurbs_surface0.Domain(0);
-	    m_nurbs_surface_domain[1] = m_nurbs_surface0.Domain(1);
-	  }
-	  break;
-	case 3:
-	  rc = archive.ReadXform(m_nurbs_cage0);
-	  break;
-	}
+        switch(m_varient)
+        {
+        case 1:
+          rc = m_nurbs_curve0.Read(archive)?true:false;
+          if (rc)
+            m_nurbs_curve_domain = m_nurbs_curve0.Domain();
+          break;
+        case 2:
+          rc = m_nurbs_surface0.Read(archive)?true:false;
+          if (rc)
+          {
+            m_nurbs_surface_domain[0] = m_nurbs_surface0.Domain(0);
+            m_nurbs_surface_domain[1] = m_nurbs_surface0.Domain(1);
+          }
+          break;
+        case 3:
+          rc = archive.ReadXform(m_nurbs_cage0);
+          break;
+        }
       }
       if ( !archive.EndRead3dmChunk() )
-	rc = false;
+        rc = false;
 
       if(!rc)
-	break;
+        break;
 
       mjv = 0;
       mnv = 0;
@@ -2957,60 +3024,60 @@ BOOL ON_MorphControl::Read( ON_BinaryArchive& archive )
       rc = (1 == mjv);
       if (rc)
       {
-	switch(m_varient)
-	{
-	case 1:
-	  rc = m_nurbs_curve.Read(archive)?true:false;
-	  break;
-	case 2:
-	  rc = m_nurbs_surface.Read(archive)?true:false;
-	  break;
-	case 3:
-	  rc = m_nurbs_cage.Read(archive)?true:false;
-	  break;
-	}
+        switch(m_varient)
+        {
+        case 1:
+          rc = m_nurbs_curve.Read(archive)?true:false;
+          break;
+        case 2:
+          rc = m_nurbs_surface.Read(archive)?true:false;
+          break;
+        case 3:
+          rc = m_nurbs_cage.Read(archive)?true:false;
+          break;
+        }
       }
       if ( !archive.EndRead3dmChunk() )
-	rc = false;
+        rc = false;
 
       // captive ids
       rc = m_captive_id.Read(archive);
       if (!rc)
-	break;
+        break;
 
       // localizers
       mjv = 0;
       mnv = 0;
       rc = archive.BeginRead3dmChunk(TCODE_ANONYMOUS_CHUNK,&mjv,&mnv);
       if (!rc) 
-	break;
+        break;
       int i, count = 0;
       rc = (1 == mjv);
       if (rc)
-	rc = archive.ReadInt(&count);
+        rc = archive.ReadInt(&count);
       if (rc)
-	m_localizers.Reserve(count);
+        m_localizers.Reserve(count);
       for ( i = 0; i < count && rc; i++ )
       {
-	m_localizers.AppendNew();
-	rc = m_localizers[i].Read(archive);
+        m_localizers.AppendNew();
+        rc = m_localizers[i].Read(archive);
       }
       if ( !archive.EndRead3dmChunk() )
-	rc = false;
+        rc = false;
       if ( !rc)
-	break;
+        break;
 
       if ( minor_version >= 1 )
       {
-	rc = archive.ReadDouble(&m_sporh_tolerance);
-	if (!rc) 
-	  break;
-	rc = archive.ReadBool(&m_sporh_bQuickPreview);
-	if (!rc) 
-	  break;
-	rc = archive.ReadBool(&m_sporh_bPreserveStructure);
-	if (!rc) 
-	  break;
+        rc = archive.ReadDouble(&m_sporh_tolerance);
+        if (!rc) 
+          break;
+        rc = archive.ReadBool(&m_sporh_bQuickPreview);
+        if (!rc) 
+          break;
+        rc = archive.ReadBool(&m_sporh_bPreserveStructure);
+        if (!rc) 
+          break;
       }
     }
     else
@@ -3026,7 +3093,7 @@ BOOL ON_MorphControl::Read( ON_BinaryArchive& archive )
   return rc;
 }
 
-BOOL ON_MorphControl::Write( ON_BinaryArchive& archive ) const
+ON_BOOL32 ON_MorphControl::Write( ON_BinaryArchive& archive ) const
 {
   bool rc = archive.BeginWrite3dmChunk(TCODE_ANONYMOUS_CHUNK,2,1);
   if (!rc)
@@ -3132,48 +3199,48 @@ bool ON_MorphControl::AddControlLocalizer(
     case 1:
     case 2:
       {
-	ON_Localizer& localizer = m_localizers.AppendNew();
-	localizer.m_type = ON_Localizer::distance_type;
-	localizer.m_d.Set(support_distance+falloff_distance,support_distance);
-	rc = true;
+        ON_Localizer& localizer = m_localizers.AppendNew();
+        localizer.m_type = ON_Localizer::distance_type;
+        localizer.m_d.Set(support_distance+falloff_distance,support_distance);
+        rc = true;
       }
       break;
 
     case 3:
       {
-	ON_Xform xform = m_nurbs_cage0;
-	xform.Invert();
-	ON_Interval d[3];
-	d[0] = m_nurbs_cage.Domain(0);
-	d[1] = m_nurbs_cage.Domain(1);
-	d[2] = m_nurbs_cage.Domain(2);
+        ON_Xform xform = m_nurbs_cage0;
+        xform.Invert();
+        ON_Interval d[3];
+        d[0] = m_nurbs_cage.Domain(0);
+        d[1] = m_nurbs_cage.Domain(1);
+        d[2] = m_nurbs_cage.Domain(2);
 
-	ON_SimpleArray<ON_Plane> planes(6);
+        ON_SimpleArray<ON_Plane> planes(6);
 
-	ON_3dPoint C(d[0].ParameterAt(0.5),d[1].ParameterAt(0.5),d[2].ParameterAt(0.5));
-	ON_3dPoint P;
-	ON_3dVector N;
-	int i;
-	double det = (xform.Determinant() < 0.0) ? -1.0 : 1.0;
-	for ( i = 0; i < 3; i++ )
-	{
-	  P = C;
-	  N.Zero();
+        ON_3dPoint C(d[0].ParameterAt(0.5),d[1].ParameterAt(0.5),d[2].ParameterAt(0.5));
+        ON_3dPoint P;
+        ON_3dVector N;
+        int i;
+        double det = (xform.Determinant() < 0.0) ? -1.0 : 1.0;
+        for ( i = 0; i < 3; i++ )
+        {
+          P = C;
+          N.Zero();
 
-	  N[i] = -det;
-	  P[i] = d[i][0];
-	  ON_Plane& plane0 = planes.AppendNew();
-	  plane0.CreateFromNormal(P,N);
-	  plane0.Transform(xform);
+          N[i] = -det;
+          P[i] = d[i][0];
+          ON_Plane& plane0 = planes.AppendNew();
+          plane0.CreateFromNormal(P,N);
+          plane0.Transform(xform);
 
-	  P[i] = d[i][1];
-	  N[i] = det;
-	  ON_Plane& plane1 = planes.AppendNew();
-	  plane1.CreateFromNormal(P,N);
-	  plane1.Transform(xform);
-	}
+          P[i] = d[i][1];
+          N[i] = det;
+          ON_Plane& plane1 = planes.AppendNew();
+          plane1.CreateFromNormal(P,N);
+          plane1.Transform(xform);
+        }
 
-	rc = AddConvexPolygonLocalizer(planes,support_distance,falloff_distance);
+        rc = AddConvexPolygonLocalizer(planes,support_distance,falloff_distance);
       }
       break;
 
@@ -3196,9 +3263,9 @@ bool ON_MorphControl::AddSphereLocalizer(
   {
     ON_Localizer& localizer = m_localizers.AppendNew();
     rc = localizer.CreateSphereLocalizer(
-		  center,
-		  support_distance+falloff_distance,
-		  support_distance);
+                  center,
+                  support_distance+falloff_distance,
+                  support_distance);
   }
   return rc;
 }
@@ -3214,9 +3281,9 @@ bool ON_MorphControl::AddCylinderLocalizer(
   {
     ON_Localizer& localizer = m_localizers.AppendNew();
     rc = localizer.CreateCylinderLocalizer(
-		  axis.from,axis.Tangent(),
-		  support_distance+falloff_distance,
-		  support_distance);
+                  axis.from,axis.Tangent(),
+                  support_distance+falloff_distance,
+                  support_distance);
   }
   return rc;
 }
@@ -3255,10 +3322,10 @@ bool ON_MorphControl::AddBoxLocalizer(
 }
 
 bool ON_MorphControl::AddPlaneLocalizer(
-	    const ON_Plane& plane,
-	    double support_distance, 
-	    double falloff_distance
-	    )
+            const ON_Plane& plane,
+            double support_distance, 
+            double falloff_distance
+            )
 {
   ON_SimpleArray<ON_Plane> planes(1);
   planes.Append(plane);
@@ -3281,9 +3348,9 @@ bool ON_MorphControl::AddConvexPolygonLocalizer(
       const ON_Plane& plane = planes[i];
       ON_Localizer& localizer = m_localizers.AppendNew();
       rc = localizer.CreatePlaneLocalizer(
-		    plane.origin,plane.zaxis,
-		    support_distance+falloff_distance,
-		    support_distance);
+                    plane.origin,plane.zaxis,
+                    support_distance+falloff_distance,
+                    support_distance);
     }
   }
   return rc;

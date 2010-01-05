@@ -31,11 +31,7 @@
 #ifndef __FBIO_H__
 #define __FBIO_H__
 
-#if __STDC__ || USE_PROTOTYPES
-#  define	FB_ARGS(args)			args
-#else
-#  define	FB_ARGS(args)			()
-#endif
+#define	FB_ARGS(args) args
 
 #ifndef FB_EXPORT
 #  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
@@ -158,18 +154,6 @@ typedef struct FBIO_ {
 FB_EXPORT extern FBIO remote_interface;	/* not in list[] */
 #endif
 
-#ifdef IF_ADAGE
-FB_EXPORT extern FBIO adage_interface;
-#endif
-
-#ifdef IF_SUN
-FB_EXPORT extern FBIO sun_interface;
-#endif
-
-#if defined(IF_SGI)
-FB_EXPORT extern FBIO sgi_interface;
-#endif
-
 #ifdef IF_OGL
 FB_EXPORT extern FBIO ogl_interface;
 #endif
@@ -178,29 +162,9 @@ FB_EXPORT extern FBIO ogl_interface;
 FB_EXPORT extern FBIO wgl_interface;
 #endif
 
-#ifdef IF_RAT
-FB_EXPORT extern FBIO rat_interface;
-#endif
-
-#ifdef IF_UG
-FB_EXPORT extern FBIO ug_interface;
-#endif
-
 #ifdef IF_X
 FB_EXPORT extern FBIO X24_interface;
 FB_EXPORT extern FBIO X_interface;
-#endif
-
-#ifdef IF_PTTY
-FB_EXPORT extern FBIO ptty_interface;
-#endif
-
-#ifdef IF_AB
-FB_EXPORT extern FBIO abekas_interface;
-#endif
-
-#ifdef IF_TS
-FB_EXPORT extern FBIO ts_interface;
 #endif
 
 #ifdef IF_TK

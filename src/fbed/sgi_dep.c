@@ -80,7 +80,7 @@ sgi_Getchar()
 
 int
 sgi_Mouse_Pos( pointp )
-    register Point *pointp;
+    Point *pointp;
 {
     static Point mouse;
     Point image;

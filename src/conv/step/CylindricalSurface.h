@@ -39,7 +39,7 @@ protected:
 public:
 	CylindricalSurface();
 	virtual ~CylindricalSurface();
-	CylindricalSurface(STEPWrapper *sw,int STEPid);
+	CylindricalSurface(STEPWrapper *sw,int step_id);
 	const double *GetOrigin();
 	const double *GetNormal();
 	const double *GetXAxis();

@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -40,6 +39,28 @@ public:
   ON_Annotation2Text();
   ~ON_Annotation2Text();
 
+  void SetDefaults();
+
+    // override virtual ON_Object::Dump function
+  void Dump( ON_TextLog& text_log ) const;
+
+  // override virtual ON_Object::Dump function
+  unsigned int SizeOf() const;
+
+  // override virtual ON_Object::Write function
+  ON_BOOL32 Write(ON_BinaryArchive& binary_archive) const;
+
+  // override virtual ON_Object::Read function
+  ON_BOOL32 Read(ON_BinaryArchive& binary_archive);
+
+  // override virtual ON_UserData::GetDescription function
+  ON_BOOL32 GetDescription( ON_wString& description );
+
+  // override virtual ON_UserData::Archive function
+  ON_BOOL32 Archive() const; 
+
+
+
   ON_Annotation2Text& operator=(const char*);
   ON_Annotation2Text& operator=(const wchar_t*);
 
@@ -57,6 +78,88 @@ public:
   // left <= x < right and top <= y < bottom.
   ON_RECT m_rect;
 };
+
+
+class ON_CLASS ON_DimensionExtra : public ON_UserData
+{
+  ON_OBJECT_DECLARE(ON_DimensionExtra);
+public:
+
+  ON_DimensionExtra();
+  ~ON_DimensionExtra();
+
+  void SetDefaults();
+
+  // override virtual ON_Object::Dump function
+  void Dump( ON_TextLog& text_log ) const;
+
+  // override virtual ON_Object::Dump function
+  unsigned int SizeOf() const;
+
+  // override virtual ON_Object::Write function
+  ON_BOOL32 Write(ON_BinaryArchive& binary_archive) const;
+
+  // override virtual ON_Object::Read function
+  ON_BOOL32 Read(ON_BinaryArchive& binary_archive);
+
+  // override virtual ON_UserData::GetDescription function
+  ON_BOOL32 GetDescription( ON_wString& description );
+
+  // override virtual ON_UserData::Archive function
+  ON_BOOL32 Archive() const; 
+
+  ON_UUID ParentUUID() const;
+  void SetParentUUID( ON_UUID parent_uuid);
+
+  //  0: default position
+  //  1: force inside
+  // -1: force outside
+  int ArrowPosition() const;
+  void SetArrowPosition( int position);
+
+  const wchar_t* ToleranceUpperString() const;
+  ON_wString& ToleranceUpperString();
+  void SetToleranceUpperString( const wchar_t* upper_string);
+  void SetToleranceUpperString( ON_wString& upper_string);
+
+  const wchar_t* ToleranceLowerString() const;
+  ON_wString& ToleranceLowerString();
+  void SetToleranceLowerString( const wchar_t* lower_string);
+  void SetToleranceLowerString( ON_wString& lower_string);
+
+  const wchar_t* AlternateString() const;
+  ON_wString& AlternateString();
+  void SetAlternateString( const wchar_t* alt_string);
+  void SetAlternateString( ON_wString& alt_string);
+
+  const wchar_t* AlternateToleranceUpperString() const;
+  ON_wString& AlternateToleranceUpperString();
+  void SetAlternateToleranceUpperString( const wchar_t* upper_string);
+  void SetAlternateToleranceUpperString( ON_wString& upper_string);
+
+  const wchar_t* AlternateToleranceLowerString() const;
+  ON_wString& AlternateToleranceLowerString();
+  void SetAlternateToleranceLowerString( const wchar_t* lower_string);
+  void SetAlternateToleranceLowerString( ON_wString& lower_string);
+
+  ON_UUID m_partent_uuid;  // the dimension using this extension
+
+  int m_arrow_position;
+
+  // This is either NULL or an array of GDI rects for the substrings 
+  // that make up the dimension string.
+  // If the dimension text is all on the same line, there is just one
+  // rectangle needed to bound the text and that is the same as the
+  // m_rect on the ON_Annotation2Text.
+  // If the dimension has tolerances or for some other reason has more
+  // than one line of text, m_text_rects is an array of 7 rects, one
+  // each for the substrings that might be needed to display the dimension.
+  // If some of the rects aren't used, they are empty at 0,0
+  // The strings that correspond to these rectangles are generated from
+  // info in the dimstyle
+  ON_RECT* m_text_rects;
+};
+
 
 /*
   class ON_Annotation2
@@ -103,7 +206,7 @@ public:
   // ON_Object overrides
   //
 
-  BOOL IsValid( ON_TextLog* text_log = NULL ) const;
+  ON_BOOL32 IsValid( ON_TextLog* text_log = NULL ) const;
 
 
   /*
@@ -111,11 +214,11 @@ public:
 
     Returns:
       @untitled Table
-      TRUE     Success
-      FALSE    Failure
+      true     Success
+      false    Failure
   */
-  BOOL Write(
-	 ON_BinaryArchive&
+  ON_BOOL32 Write(
+         ON_BinaryArchive&
        ) const;
 
   /*
@@ -123,11 +226,11 @@ public:
 
     Returns:
       @untitled Table
-      TRUE     Success
-      FALSE    Failure
+      true     Success
+      false    Failure
   */
-  BOOL Read(
-	 ON_BinaryArchive&
+  ON_BOOL32 Read(
+         ON_BinaryArchive&
        );
 
   /*
@@ -146,7 +249,7 @@ public:
   int Dimension() const;
 
   // overrides virtual ON_Geometry::Transform()
-  BOOL Transform( const ON_Xform& xform );
+  ON_BOOL32 Transform( const ON_Xform& xform );
 
   // virtual ON_Geometry override
   bool EvaluatePoint( const class ON_ObjRef& objref, ON_3dPoint& P ) const;
@@ -167,15 +270,15 @@ public:
     tjBottom = 1<<16,
     tjMiddle = 1<<17,
     tjTop    = 1<<18,
-    tjBottomLeft   = tjBottom & tjLeft,
-    tjBottomCenter = tjBottom & tjCenter,
-    tjBottomRight  = tjBottom & tjRight,
-    tjMiddleLeft   = tjMiddle & tjLeft,
-    tjMiddleCenter = tjMiddle & tjCenter,
-    tjMiddleRight  = tjMiddle & tjRight,
-    tjTopLeft      = tjTop    & tjLeft,
-    tjTopCenter    = tjTop    & tjCenter,
-    tjTopRight     = tjTop    & tjRight,
+    tjBottomLeft   = tjBottom | tjLeft,
+    tjBottomCenter = tjBottom | tjCenter,
+    tjBottomRight  = tjBottom | tjRight,
+    tjMiddleLeft   = tjMiddle | tjLeft,
+    tjMiddleCenter = tjMiddle | tjCenter,
+    tjMiddleRight  = tjMiddle | tjRight,
+    tjTopLeft      = tjTop    | tjLeft,
+    tjTopCenter    = tjTop    | tjCenter,
+    tjTopRight     = tjTop    | tjRight,
   };
 
   /*
@@ -185,8 +288,8 @@ public:
       none
     Returns:
       @untitled table
-      TRUE    It is text
-      FALSE   Its not text
+      true    It is text
+      false   Its not text
   */
   bool IsText() const;
 
@@ -197,8 +300,8 @@ public:
       none
     Returns:
       @untitled table
-      TRUE    It is a leader
-      FALSE   Its not a leader
+      true    It is a leader
+      false   Its not a leader
   */
   bool IsLeader() const;
 
@@ -209,8 +312,8 @@ public:
       none
     Returns:
       @untitled table
-      TRUE    It is a dimension
-      FALSE   Its not a dimension
+      true    It is a dimension
+      false   Its not a dimension
   */
   bool IsDimension() const;
 
@@ -258,7 +361,7 @@ public:
   /*
     Description:
       Sets or gets the object type member to a specific annotation type:
-	   dtDimLinear, dtDimAligned, dtDimAngular, etc.
+           dtDimLinear, dtDimAligned, dtDimAngular, etc.
     Parameters:
       [in] ON::eAnnotationType type - dtDimLinear, dtDimAligned, dtDimAngular, etc.
     Returns:
@@ -337,12 +440,12 @@ public:
       from the default location.
     Parameters:
       bUserPositionedText - [in] 
-	       TRUE to indicate that the text has been placed by the user.
-	       FALSE to indicate that it hasn't
+               true to indicate that the text has been placed by the user.
+               false to indicate that it hasn't
     Returns:
       @untitled table
-      TRUE    The text has been moved
-      FALSE   The text is in the default location
+      true    The text has been moved
+      false   The text is in the default location
     Remarks:
       If the text is in the default location, it should be repositioned
       automatically when the dimension is adjusted.
@@ -373,10 +476,10 @@ public:
       [out] xform   set to produce the ECS to WCS transform
     Returns:
       @untitled table
-      TRUE    Success
-      FALSE   Failure
+      true    Success
+      false   Failure
   */
-  BOOL GetECStoWCSXform( ON_Xform&) const;
+  ON_BOOL32 GetECStoWCSXform( ON_Xform&) const;
 
   /*
     Description:
@@ -385,10 +488,10 @@ public:
       [out] xform - set to produce the WCS to ECS transform
     Returns:
       @untitled table
-      TRUE    Success
-      FALSE   Failure
+      true    Success
+      false   Failure
   */
-  BOOL GetWCStoECSXform( ON_Xform& xform) const;
+  ON_BOOL32 GetWCStoECSXform( ON_Xform& xform) const;
 
   /*
     Description:
@@ -416,7 +519,7 @@ public:
       target [out] the old-style object
     Returns:
       @untitled table
-      TRUE     Success
+      true     Success
       False    Failure
     See Also:  ON_AngularDimension::ConvertBack()
   */
@@ -446,65 +549,162 @@ public:
     Description:
       Get the transformation that maps the annotation's
       text to world coordinates.
+      Added Oct 30, 07 LW
     Parameters:
       gdi_text_rect - [in] 
-	      Windows gdi rect of text when it is drawn with
-	      LOGFONT lfHeight = ON_Font::normal_font_height.
+              Windows gdi rect of text when it is drawn with
+              LOGFONT lfHeight = ON_Font::normal_font_height.
       gdi_height_of_I - [in]
-	 Value returned by ON_Font::HeightOfI().
+         Value returned by ON_Font::HeightOfI().
       dimstyle_textheight - [in]
-	 Height of text in world units.  If the annotation is
-	 an ON_TextEntity2, this is the m_textheight value.  
-	 If the annotation is not an ON_TextEntity2, pass in 
-	 the value returned by the dimension style's 
-	 ON_DimStyle::TextHeight() 
+         Height of text in world units.  If the annotation is
+         an ON_TextEntity2, this is the m_textheight value.  
+         If the annotation is not an ON_TextEntity2, pass in 
+         the value returned by the dimension style's 
+         ON_DimStyle::TextHeight() 
       dimstyle_textgap - [in]
-	 The value of the annotation's dimension style's 
-	 ON_DimStyle::TextGap().
+         The value of the annotation's dimension style's 
+         ON_DimStyle::TextGap().
       dimstyle_textalignment - [in]
-	 ON::TextDisplayMode(ON_DimStyle::TextAlignment()).
+         ON::TextDisplayMode(ON_DimStyle::TextAlignment()).
       dimscale - [in]
-	 Global dimension scaling value.  If you are using the
-	 Rhino SDK, this value is returned by
-	 CRhinoDoc::Properties().AnnotationSettings().DimScale().
-	 If you are using the OpenNURBS IO toolkit, this value
-	 is on ON_3dmSettings::m_AnnotationSettings.m_dimscale.
+         Global dimension scaling value.  If you are using the
+         Rhino SDK, this value is returned by
+         CRhinoDoc::Properties().AnnotationSettings().DimScale().
+         If you are using the OpenNURBS IO toolkit, this value
+         is on ON_3dmSettings::m_AnnotationSettings.m_dimscale.
       cameraX - [in]
-	 zero or the view's unit camera right vector
+         zero or the view's unit camera right vector
       cameraY - [in]
-	 zero or the view's unit camera up vector
+         zero or the view's unit camera up vector
+      model_xform - [in] transforms the text's parent entity 
+         to world coordinates in case its instance geometry
+         NULL == Identity
+      text_xform - [out]
+    Returns:
+      True if text_xform is set.
+  */
+  bool GetTextXform( 
+        ON_RECT gdi_text_rect,
+        int gdi_height_of_I,
+        double dimstyle_textheight,
+        double dimstyle_textgap,
+        ON::eTextDisplayMode dimstyle_textalignment,
+        double dimscale,
+        ON_3dVector cameraX,
+        ON_3dVector cameraY,
+        const ON_Xform* model_xform,
+        ON_Xform& text_xform // output
+        ) const;
+
+  /*
+    Description:
+
+    This function has been replaced with a version that
+    takes a model transform to transform block instance 
+    geometry to world coordinates  Oct 30, 07 LW
+
+      Get the transformation that maps the annotation's
+      text to world coordinates.
+    Parameters:
+      gdi_text_rect - [in] 
+              Windows gdi rect of text when it is drawn with
+              LOGFONT lfHeight = ON_Font::normal_font_height.
+      gdi_height_of_I - [in]
+         Value returned by ON_Font::HeightOfI().
+      dimstyle_textheight - [in]
+         Height of text in world units.  If the annotation is
+         an ON_TextEntity2, this is the m_textheight value.  
+         If the annotation is not an ON_TextEntity2, pass in 
+         the value returned by the dimension style's 
+         ON_DimStyle::TextHeight() 
+      dimstyle_textgap - [in]
+         The value of the annotation's dimension style's 
+         ON_DimStyle::TextGap().
+      dimstyle_textalignment - [in]
+         ON::TextDisplayMode(ON_DimStyle::TextAlignment()).
+      dimscale - [in]
+         Global dimension scaling value.  If you are using the
+         Rhino SDK, this value is returned by
+         CRhinoDoc::Properties().AnnotationSettings().DimScale().
+         If you are using the OpenNURBS IO toolkit, this value
+         is on ON_3dmSettings::m_AnnotationSettings.m_dimscale.
+      cameraX - [in]
+         zero or the view's unit camera right vector
+      cameraY - [in]
+         zero or the view's unit camera up vector
       xform - [out]
     Returns:
       True if xform is set.
   */
   bool GetTextXform( 
-	ON_RECT gdi_text_rect,
-	int gdi_height_of_I,
-	double dimstyle_textheight,
-	double dimstyle_textgap,
-	ON::eTextDisplayMode dimstyle_textalignment,
-	double dimscale,
-	ON_3dVector cameraX,
-	ON_3dVector cameraY,
-	ON_Xform& xform
-	) const;
+        ON_RECT gdi_text_rect,
+        int gdi_height_of_I,
+        double dimstyle_textheight,
+        double dimstyle_textgap,
+        ON::eTextDisplayMode dimstyle_textalignment,
+        double dimscale,
+        ON_3dVector cameraX,
+        ON_3dVector cameraY,
+        ON_Xform& xform
+        ) const;
 
   /*
     Description:
       Get the transformation that maps the annotation's
       text to world coordinates.
+      Oct 30, 07 LW
     Parameters:
       gdi_text_rect - [in] 
-	      Windows gdi rect of text when it is drawn with
-	      LOGFONT lfHeight = ON_Font::normal_font_height.
+              Windows gdi rect of text when it is drawn with
+              LOGFONT lfHeight = ON_Font::normal_font_height.
       font - [in]
       dimstyle - [in]
       dimscale - [in]
-	 Global dimension scaling value.  If you are using the
-	 Rhino SDK, this value is returned by
-	 CRhinoDoc::Properties().AnnotationSettings().DimScale().
-	 If you are using the OpenNURBS IO toolkit, this value
-	 is on ON_3dmSettings::m_AnnotationSettings.m_dimscale.
+         Global dimension scaling value.  If you are using the
+         Rhino SDK, this value is returned by
+         CRhinoDoc::Properties().AnnotationSettings().DimScale().
+         If you are using the OpenNURBS IO toolkit, this value
+         is on ON_3dmSettings::m_AnnotationSettings.m_dimscale.
+      vp - [in]
+      model_xform - [in] transforms the text's parent entity 
+         to world coordinates in case its instance geometry
+         NULL == Identity
+      text_xform - [out]
+    Returns:
+      True if text_xform is set.
+  */
+  bool GetTextXform( 
+      const ON_RECT gdi_text_rect,
+      const ON_Font& font,
+      const ON_DimStyle& dimstyle,
+      double dimscale,
+      const ON_Viewport* vp,
+      const ON_Xform* model_xform,
+      ON_Xform& text_xform  // output
+      ) const;
+
+  /*
+    Description:
+
+    This function has been replaced with a version that
+    takes a model transform because the viewport doesn't 
+    contain block instance transform info  Oct 30, 07 LW
+
+      Get the transformation that maps the annotation's
+      text to world coordinates.
+    Parameters:
+      gdi_text_rect - [in] 
+              Windows gdi rect of text when it is drawn with
+              LOGFONT lfHeight = ON_Font::normal_font_height.
+      font - [in]
+      dimstyle - [in]
+      dimscale - [in]
+         Global dimension scaling value.  If you are using the
+         Rhino SDK, this value is returned by
+         CRhinoDoc::Properties().AnnotationSettings().DimScale().
+         If you are using the OpenNURBS IO toolkit, this value
+         is on ON_3dmSettings::m_AnnotationSettings.m_dimscale.
       vp - [in]
       xform - [out]
     Returns:
@@ -562,11 +762,25 @@ public:
   // ON_Leader2 that explains how the points are used.
   ON_2dPointArray m_points;
 
-  // "<>", or user override
+  // With the addition of tolerances and therefore multi-line
+  // text, the ON_wString in m_usertext will hold multiple 
+  // strings with NULLs between them.  
+  // The strings will be in this order:
+  // Result of expanding "<>", or user override
+  // Alternate dimension
+  // Tolerance upper
+  // Tolerance lower
+  // Alt tolerance upper
+  // Alt tolerance lower
+  // Prefix
+  // Suffix
+  // Alt prefix
+  // Alt suffix
+  // 
   ON_Annotation2Text m_usertext;
 
-  // TRUE: User has positioned text
-  // FALSE: use default location
+  // true: User has positioned text
+  // false: use default location
   bool m_userpositionedtext;
 
   // For dimensions, this is the ON_DimStyle index
@@ -599,21 +813,18 @@ public:
 
     In the picture below, [n] means ON_Annotation2::m_points[n].
 
-						     [2]
-						      |
-	|                                             |
+                                                     [2]
+                                                      |
+        |                                             |
        [1]-------------------------------------------[3]
-	|                                             |
-	|                       TEXT
-	|                       [4]
+        |                                             |
+        |                       TEXT
+        |                       [4]
        [0]
 
-      The "x" and "y" coordinates of [0] can be any value.
+      The "x" and "y" coordinates of [0] must be (0.0, 0.0).
 
       The "x" coordinate of [1] = "x" of [0]
-      The "y" coordinate of [1] can be any value.
-
-      The "x" coordinate of [1] = "x" coordinate of 0.0;
       The "y" coordinate of [1] can be any value.
 
       The "x" and "y" coordinates of [2] can be any value.
@@ -648,7 +859,7 @@ public:
   //ON_LinearDimension2& operator=(const ON_LinearDimension2&);
 
   // overrides virtual ON_Geometry::Transform()
-  BOOL Transform( const ON_Xform& xform );
+  ON_BOOL32 Transform( const ON_Xform& xform );
 
   /*
   Description:
@@ -688,14 +899,20 @@ public:
        ) const;
 
   // overrides virual ON_Object::IsValid
-  BOOL IsValid( ON_TextLog* text_log = 0 ) const;
+  ON_BOOL32 IsValid( ON_TextLog* text_log = 0 ) const;
+
+  // overrides virual ON_Object::Write
+  ON_BOOL32 Write(ON_BinaryArchive&) const;
+
+  // overrides virual ON_Object::Read
+  ON_BOOL32 Read(ON_BinaryArchive&);
 
   // overrides virual ON_Geometry::GetBBox
-  BOOL GetBBox(
-	 double*,
-	 double*,
-	 BOOL = FALSE
-	 ) const;
+  ON_BOOL32 GetBBox(
+         double*,
+         double*,
+         ON_BOOL32 = false
+         ) const;
 
   // overrides virual ON_Geometry::GetTightBoundingBox
 	bool GetTightBoundingBox( 
@@ -757,15 +974,15 @@ public:
       dimscale - [in]
     vp - [in]
     x - [out] plane x coordinates of the dimension line.
-	      The y coordinate = m_points[arrow0_pt_index].y
+              The y coordinate = m_points[arrow0_pt_index].y
     bInside - [out] true if arrowheads go inside extension lines, 
-		    false if they go outside
+                    false if they go outside
   Returns:
     0: the input or class is not valid
     1: A single line from x[0] to x[1] with arrow heads at both ends.
-	Arrowtips at x[4] & x[5]
+        Arrowtips at x[4] & x[5]
     2: Two lines from x[0] to x[1] and from x[1] to x[2].  The
-	Arrowtips at x[4] & x[5]
+        Arrowtips at x[4] & x[5]
        
   */
   int GetDimensionLineSegments(
@@ -778,6 +995,15 @@ public:
       double a[6],
       bool& bInside
       ) const;
+
+
+  // Added for V5. 4/24/07 LW
+  // Get the userdata extension for this dimension
+  ON_DimensionExtra* DimensionExtension();
+  const ON_DimensionExtra* DimensionExtension() const;
+
+
+
 
 };
 
@@ -798,12 +1024,12 @@ public:
     Radial dimensions do not permit user positioned text
 
 
-	   knee
-	    [3]--------[2] TEXT
-	    /         (tail)
-	   /
-	  /
-	[1] (arrow head here)
+           knee
+            [3]--------[2] TEXT
+            /         (tail)
+           /
+          /
+        [1] (arrow head here)
 
 
     + [0] = (usually at (0,0) = center of circle)
@@ -833,7 +1059,7 @@ public:
   //ON_RadialDimension2& operator=(const ON_RadialDimension2&);
 
   // overrides virtual ON_Geometry::Transform()
-  BOOL Transform( const ON_Xform& xform );
+  ON_BOOL32 Transform( const ON_Xform& xform );
 
   /*
   Description:
@@ -863,14 +1089,20 @@ public:
 
 
   // overrides virual ON_Object::IsValid
-  BOOL IsValid( ON_TextLog* text_log = 0 ) const;
+  ON_BOOL32 IsValid( ON_TextLog* text_log = 0 ) const;
+
+  // overrides virual ON_Object::Write
+  ON_BOOL32 Write(ON_BinaryArchive&) const;
+
+  // overrides virual ON_Object::Read
+  ON_BOOL32 Read(ON_BinaryArchive&);
 
   // overrides virual ON_Geometry::GetBBox
-  BOOL GetBBox(
-	 double*,
-	 double*,
-	 BOOL = FALSE
-	 ) const;
+  ON_BOOL32 GetBBox(
+         double*,
+         double*,
+         ON_BOOL32 = false
+         ) const;
 
   // overrides virual ON_Geometry::GetTightBoundingBox
 	bool GetTightBoundingBox( 
@@ -890,16 +1122,16 @@ public:
       offset_distance - [in] distance from arrow tip to knee point
     Returns:
       @untitled table
-      TRUE     Success
-      FALSE    Failure
+      true     Success
+      false    Failure
   */
   bool CreateFromPoints( 
-	  ON_3dPoint center, 
-	  ON_3dPoint arrowtip, 
-	  ON_3dVector xaxis, 
-	  ON_3dVector normal,
-	  double offset_distance
-	  );
+          ON_3dPoint center, 
+          ON_3dPoint arrowtip, 
+          ON_3dVector xaxis, 
+          ON_3dVector normal,
+          double offset_distance
+          );
 
   /*
   Description:
@@ -961,28 +1193,28 @@ public:
     In the picture below, [n] means ON_Annotation2::m_points[n].
 
     [0] = if m_userpositionedtext=true, this is the center of text.
-	  If m_userpositionedtext=false, this point is not used and
-	  the center of the text is at the arc's midpoint.
+          If m_userpositionedtext=false, this point is not used and
+          the center of the text is at the arc's midpoint.
 
     Always counter clockwise arc in m_plane with center = (0,0)
     [1] = a point somewhere on the line from the center through the start point.
-	  The distance from center to [1] can be any value.
+          The distance from center to [1] can be any value.
     [2] = a point somewhere on the line from the center through the end point.
-	  The distance from center to [2] can be any value.
+          The distance from center to [2] can be any value.
     [3] = a point on the interior of the arc.  The distance 
-	  from (0,0) to [3] is the radius of the arc.
+          from (0,0) to [3] is the radius of the arc.
 
 
-		  /
-		[2]
-		/
-	       /         [0]TEXT
-	      /
-	     /    [3]
+                  /
+                [2]
+                /
+               /         [0]TEXT
+              /
+             /    [3]
      -----(0,0)----------[1]---
-	   /
-	  /
-	 /
+           /
+          /
+         /
 
   */
 
@@ -1014,7 +1246,7 @@ public:
   //ON_AngularDimension2& operator=(const ON_AngularDimension2&);
 
   // overrides virtual ON_Geometry::Transform()
-  BOOL Transform( const ON_Xform& xform );
+  ON_BOOL32 Transform( const ON_Xform& xform );
 
   /*
   Description:
@@ -1044,14 +1276,14 @@ public:
 
 
   // overrides virual ON_Object::IsValid
-  BOOL IsValid( ON_TextLog* text_log = 0 ) const;
+  ON_BOOL32 IsValid( ON_TextLog* text_log = 0 ) const;
 
   // overrides virual ON_Geometry::GetBBox
-  BOOL GetBBox(
-	 double*,
-	 double*,
-	 BOOL = FALSE
-	 ) const;
+  ON_BOOL32 GetBBox(
+         double*,
+         double*,
+         ON_BOOL32 = false
+         ) const;
 
   // overrides virual ON_Geometry::GetTightBoundingBox
 	bool GetTightBoundingBox( 
@@ -1065,11 +1297,11 @@ public:
       Read from or write to a file
     Returns:
       @untitled Table
-      TRUE     Success
-      FALSE    Failure
+      true     Success
+      false    Failure
   */
-  BOOL Write( ON_BinaryArchive& file ) const;
-  BOOL Read( ON_BinaryArchive& file );
+  ON_BOOL32 Write( ON_BinaryArchive& file ) const;
+  ON_BOOL32 Read( ON_BinaryArchive& file );
 
   /*
     Description:
@@ -1077,17 +1309,17 @@ public:
       in world coordinates.
     Parameters:
       apex - [in] 3d apex of the dimension
-		  (center of arc)
+                  (center of arc)
       p0 - [in] 3d point on first line
       p1 - [in] 3d point on second line
       arcpt - [in] 3d point on dimension arc 
-		   (determines radius of arc)
+                   (determines radius of arc)
       Normal - [in] normal of the plane on which to make the dimension
-		    (must be perpendicular to p0-apex and p1-apex) 
+                    (must be perpendicular to p0-apex and p1-apex) 
     Returns:
       @untitled table
-      TRUE     Success
-      FALSE    Failure
+      true     Success
+      false    Failure
   */
   bool CreateFromPoints( 
     const ON_3dPoint& apex, 
@@ -1104,8 +1336,8 @@ public:
       arc - [in]
     Returns:
       @untitled table
-      TRUE     Success
-      FALSE    Failure
+      true     Success
+      false    Failure
   */
   bool CreateFromArc( 
     const ON_Arc& arc
@@ -1160,7 +1392,7 @@ public:
       target [out] the old-style object
     Returns:
       @untitled table
-      TRUE     Success
+      true     Success
       False    Failure
     See Also:  ON_AnnotationObject::ConvertBack()
   */
@@ -1226,24 +1458,24 @@ public:
 
     Measures in X direction
 
-		       [1]
-			|
-			|
-			|
-			|
-			|
-		       [0]
+                       [1]
+                        |
+                        |
+                        |
+                        |
+                        |
+                       [0]
        +
  [plane origin]                                      [plane origin]
-							   +
+                                                           +
 
       or - Measures in Y direction                                                   *---[1]       
-										    /
-										   /
-		   [0]--------------------[1]                   [0]---------------*
+                                                                                    /
+                                                                                   /
+                   [0]--------------------[1]                   [0]---------------*
 
 
-									      * = calculated, not stored
+                                                                              * = calculated, not stored
 
 
        +     
@@ -1259,7 +1491,7 @@ public:
       If Direction is "y" and [1][y] <> [0][y], an offset segment is drawn
       The dimension lines are always drawn in the X or Y directions of the entity plane
       The distance represented by the dimension is measured from the 
-	plane origin to point [0], parallel to the appropriate axis.
+        plane origin to point [0], parallel to the appropriate axis.
       The points of the offset segment are calculated rather than stored
   */
 
@@ -1290,7 +1522,7 @@ public:
   ~ON_OrdinateDimension2();
 
   // overrides virtual ON_Geometry::Transform()
-  BOOL Transform( const ON_Xform& xform );
+  ON_BOOL32 Transform( const ON_Xform& xform );
 
   /*
   Description:
@@ -1298,7 +1530,7 @@ public:
   Parameters:
     point_index - [in] One of the POINT_INDEX enum values
     default_offset [in] - kink offset to use if m_kink_offset_0
-			  or m_kink_offset_1 are ON_UNSET_VALUE
+                          or m_kink_offset_1 are ON_UNSET_VALUE
   Returns:
     2d point or ON_UNSET_POINT if point_index or m_points[]
     array is not valid.
@@ -1314,7 +1546,7 @@ public:
   Parameters:
     point_index - [in] One of the POINT_INDEX enum values
     default_offset [in] - kink offset to use if m_kink_offset_0
-			  or m_kink_offset_1 are ON_UNSET_VALUE
+                          or m_kink_offset_1 are ON_UNSET_VALUE
   Returns:
     2d point or ON_UNSET_POINT if point_index or m_points[]
     array is not valid.
@@ -1325,14 +1557,14 @@ public:
        ) const;
 
   // overrides virual ON_Object::IsValid
-  BOOL IsValid( ON_TextLog* text_log = 0 ) const;
+  ON_BOOL32 IsValid( ON_TextLog* text_log = 0 ) const;
 
   // overrides virual ON_Geometry::GetBBox
-  BOOL GetBBox(
-	 double* boxmin,
-	 double* boxmax,
-	 BOOL bGrowBox = FALSE
-	 ) const;
+  ON_BOOL32 GetBBox(
+         double* boxmin,
+         double* boxmax,
+         ON_BOOL32 bGrowBox = false
+         ) const;
 
   // overrides virual ON_Geometry::GetTightBoundingBox
 	bool GetTightBoundingBox( 
@@ -1346,11 +1578,11 @@ public:
       Read from or write to a file
     Returns:
       @untitled Table
-      TRUE     Success
-      FALSE    Failure
+      true     Success
+      false    Failure
   */
-  BOOL Write( ON_BinaryArchive& file ) const;
-  BOOL Read( ON_BinaryArchive& file );
+  ON_BOOL32 Write( ON_BinaryArchive& file ) const;
+  ON_BOOL32 Read( ON_BinaryArchive& file );
 
   /*
   Description:
@@ -1423,7 +1655,7 @@ public:
       ON_UNSET_VALUE and a default should be used to find the point.
     Parameters:
       index [in] - which offset distance to return 
-		   (0 is closer to the text)
+                   (0 is closer to the text)
       offset [in] - the offset distance to set
   */
   double KinkOffset( int index) const;
@@ -1431,8 +1663,8 @@ public:
 
 
   int m_direction;   // -1 == underermined
-		     //  0 == x direction
-		     //  1 == y direction
+                     //  0 == x direction
+                     //  1 == y direction
 
   // kink offsets added 2-4-06 - LW
   double m_kink_offset_0;  // from leader_end_point to first break point
@@ -1452,8 +1684,8 @@ public:
       If they are ON_UNSET_VALUE, they will be set to the defaults
   */
   void CalcKinkPoints( ON_2dPoint p0, ON_2dPoint p1, 
-		       int direction, double default_offset,
-		       ON_2dPoint& k0, ON_2dPoint& k1) const;
+                       int direction, double default_offset,
+                       ON_2dPoint& k0, ON_2dPoint& k1) const;
 
 };
 
@@ -1470,19 +1702,31 @@ public:
   ~ON_TextEntity2();
 
   // overrides virual ON_Object::IsValid
-  BOOL IsValid( ON_TextLog* text_log = 0 ) const;
+  // Text entities with strings that contain no "printable" characters
+  // are considered to be NOT valid.
+  ON_BOOL32 IsValid( ON_TextLog* text_log = 0 ) const;
+
+  // overrides virual ON_Object::Write
+  ON_BOOL32 Write(ON_BinaryArchive&) const;
+
+  // overrides virual ON_Object::Read
+  ON_BOOL32 Read(ON_BinaryArchive&);
 
   // overrides virtual ON_Geometry::Transform()
-  BOOL Transform( const ON_Xform& xform );
+  ON_BOOL32 Transform( const ON_Xform& xform );
 
   // overrides virual ON_Geometry::GetBBox
-  BOOL GetBBox(
-	 double*,
-	 double*,
-	 BOOL = FALSE
-	 ) const;
+  // This just adds the text base point to the box
+  // There is no calculation of the size of the text or its bounds
+  ON_BOOL32 GetBBox(
+         double*,
+         double*,
+         ON_BOOL32 = false
+         ) const;
 
   // overrides virual ON_Geometry::GetTightBoundingBox
+  // This just adds the text base point to the box
+  // There is no calculation of the size of the text or its bounds
 	bool GetTightBoundingBox( 
 			ON_BoundingBox& tight_bbox, 
       int bGrowBox = false,
@@ -1505,6 +1749,10 @@ public:
 // 6-23-03 lw Added v2 file writing of annotation
   void GetV2Form( ON_TextEntity& text);
 
+  void SetJustification( unsigned int justification);
+
+  unsigned int Justification();
+
 };
 
 //////////
@@ -1525,15 +1773,15 @@ public:
 
       Polyline with N=m_points.Count() points (N >= 2).
 
-		      [N-2] ----- [N-1] TEXT
-			/         (tail)
-		       /
-		      /
-	    [1]------[2]
-	    /
-	   /
-	  /
-	[0] (arrow)
+                      [N-2] ----- [N-1] TEXT
+                        /         (tail)
+                       /
+                      /
+            [1]------[2]
+            /
+           /
+          /
+        [0] (arrow)
 
       Leaders ignore the m_userpositionedtext setting.  If the
       default leader text handling is not adequate, then use
@@ -1562,7 +1810,7 @@ public:
   //ON_Leader2& operator=(const ON_Leader2&);
 
   // overrides virtual ON_Geometry::Transform()
-  BOOL Transform( const ON_Xform& xform );
+  ON_BOOL32 Transform( const ON_Xform& xform );
 
   /*
   Description:
@@ -1591,14 +1839,20 @@ public:
        ) const;
 
   // overrides virual ON_Object::IsValid
-  BOOL IsValid( ON_TextLog* text_log = 0 ) const;
+  ON_BOOL32 IsValid( ON_TextLog* text_log = 0 ) const;
+
+  // overrides virual ON_Object::Write
+  ON_BOOL32 Write(ON_BinaryArchive&) const;
+
+  // overrides virual ON_Object::Read
+  ON_BOOL32 Read(ON_BinaryArchive&);
 
   // overrides virual ON_Geometry::GetBBox
-  BOOL GetBBox(
-	 double*,
-	 double*,
-	 BOOL = FALSE
-	 ) const;
+  ON_BOOL32 GetBBox(
+         double*,
+         double*,
+         ON_BOOL32 = false
+         ) const;
 
   // overrides virual ON_Geometry::GetTightBoundingBox
 	bool GetTightBoundingBox( 
@@ -1615,7 +1869,7 @@ public:
       point [in]  The point to add
     Returns:
       @untitled table
-      TRUE     Success
+      true     Success
       False    Failure
   */
   void AddPoint( const ON_2dPoint& point);
@@ -1664,20 +1918,20 @@ public:
     initialized.
   Paramters:
     text_log - [in] if the object is not valid and text_log
-	is not NULL, then a brief english description of the
-	reason the object is not valid is appened to the log.
-	The information appended to text_log is suitable for
-	low-level debugging purposes by programmers and is
-	not intended to be useful as a high level user
-	interface tool.
+        is not NULL, then a brief english description of the
+        reason the object is not valid is appened to the log.
+        The information appended to text_log is suitable for
+        low-level debugging purposes by programmers and is
+        not intended to be useful as a high level user
+        interface tool.
   Returns:
     @untitled table
-    TRUE     object is valid
-    FALSE    object is invalid, uninitialized, etc.
+    true     object is valid
+    false    object is invalid, uninitialized, etc.
   Remarks:
     Overrides virtual ON_Object::IsValid
   */
-  BOOL IsValid( ON_TextLog* text_log = NULL ) const;
+  ON_BOOL32 IsValid( ON_TextLog* text_log = NULL ) const;
 
   /*
     Description: Write data values to a text file for debugging
@@ -1689,20 +1943,20 @@ public:
 
     Returns:
       @untitled Table
-      TRUE     Success
-      FALSE    Failure
+      true     Success
+      false    Failure
   */
-  BOOL Write( ON_BinaryArchive& ar) const;
+  ON_BOOL32 Write( ON_BinaryArchive& ar) const;
 
   /*
     Description: Reads the object from a file
 
     Returns:
       @untitled Table
-      TRUE     Success
-      FALSE    Failure
+      true     Success
+      false    Failure
   */
-  BOOL Read( ON_BinaryArchive& ar);
+  ON_BOOL32 Read( ON_BinaryArchive& ar);
 
   /*
     Returns: The Object Type of this object
@@ -1723,16 +1977,16 @@ public:
     Parameters:
       [in/out] double* boxmin - pointer to dim doubles for min box corner
       [in/out] double* boxmax - pointer to dim doubles for max box corner
-      [in] BOOL growbox   - TRUE to grow the existing box,
-			    FALSE ( the default) to reset the box
+      [in] ON_BOOL32 growbox   - true to grow the existing box,
+                            false ( the default) to reset the box
     Returns:
-      TRUE = Success
-      FALSE = Failure
+      true = Success
+      false = Failure
     Remarks:
       Since the bounding box of this entity changes size at different
       zoom levels, the bounding box is a point at the definition point
   */
-  BOOL GetBBox( double* box_min, double* box_max, BOOL grow_box = FALSE) const;
+  ON_BOOL32 GetBBox( double* box_min, double* box_max, ON_BOOL32 grow_box = false) const;
 
   /*
     Description:
@@ -1740,12 +1994,12 @@ public:
     Parameters:
       [in] xform  - An ON_Xform with the transformation information
     Returns:
-      TRUE = Success
-      FALSE = Failure
+      true = Success
+      false = Failure
     Remarks:
       The object has been transformed when the function returns
   */
-  BOOL Transform( const ON_Xform& xform);
+  ON_BOOL32 Transform( const ON_Xform& xform);
 
   // virtual ON_Geometry::IsDeformable() override
   bool IsDeformable() const;
@@ -1764,6 +2018,33 @@ public:
 
   const wchar_t* FontFace() const;
   void SetFontFace( const wchar_t* face);
+
+  
+  /*
+    Description:
+      Get or Set whether the dot is drawn "On Top" of other geometry
+    Parameters:
+      [in] bTop  bool - It is or isn't on top
+    Returns:
+      @untitled table
+      true - on top
+      false - not on top
+  */
+  void SetAlwaysOnTop(bool bTop);
+  bool AlwaysOnTop() const;
+
+  /*
+    Description:
+      Get or Set whether the dot is drawn with a transparent background
+    Parameters:
+      [in] bTop  bool - It is or isn't on transparent
+    Returns:
+      @untitled table
+      true - transparent
+      false - not transparent
+  */
+  void SetTransparent(bool bTransparent);
+  bool Transparent() const;
 
 
   ON_3dPoint m_point;

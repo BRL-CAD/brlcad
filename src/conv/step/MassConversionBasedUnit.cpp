@@ -41,9 +41,9 @@ MassConversionBasedUnit::MassConversionBasedUnit() {
 	id = 0;
 }
 
-MassConversionBasedUnit::MassConversionBasedUnit(STEPWrapper *sw,int STEPid) {
+MassConversionBasedUnit::MassConversionBasedUnit(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 MassConversionBasedUnit::~MassConversionBasedUnit() {
@@ -57,11 +57,11 @@ MassConversionBasedUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse)
 
 	// load base class attributes
 	if ( !MassUnit::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::Unit." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 		return false;
 	}
 	if ( !ConversionBasedUnit::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::Unit." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 		return false;
 	}
 
@@ -70,10 +70,10 @@ MassConversionBasedUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse)
 
 void
 MassConversionBasedUnit::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	MassUnit::Print(level+1);
 	ConversionBasedUnit::Print(level+1);
 
@@ -87,7 +87,7 @@ MassConversionBasedUnit::Create(STEPWrapper *sw, SCLP23(Application_instance) *s
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}
