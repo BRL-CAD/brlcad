@@ -35,13 +35,14 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu.h"
 
 int
 main(int argc, char *argv[])
 {
-    long matching;
-    long off1;
-    long offmany;
+    long matching = 0;
+    long off1 = 0;
+    long offmany = 0;
 
     FILE *f1, *f2;
 
