@@ -1,0 +1,728 @@
+<!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+"../../resources/standard/dtd/docbookx.dtd">
+<article xmlns:xi="http://www.w3.org/2001/XInclude">
+  <articleinfo>
+    <title>Reconocer las opciones de vistas en 
+	   <application>MGED</application></title>
+
+    <xi:include href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_II_authors"/>
+
+    <legalnotice>
+       <para>Aprobada su publicación, su distribución es ilimitada.</para>
+   </legalnotice>
+  </articleinfo>
+
+    <para id="learning_viewing_options_overviewlist">
+     En este tutorial usted aprenderá a:
+      
+      <itemizedlist mark='bullet'>
+	<listitem>
+	  <para>Crear un modelo de un radio (walkie-talkie).</para>
+	</listitem> 
+	<listitem>
+	  <para>Localizar la vista informativa en la ventana de comandos.</para>
+	</listitem> 
+	<listitem>
+	  <para>Identificar elementos del sistema de visualización de 
+	  	<application>MGED</application>.</para>
+	</listitem> 
+	<listitem>
+	  <para>Visualizar el radio desde distintos ángulos.</para>
+	</listitem> 
+	<listitem>
+	  <para>Trabajar con atajos de teclado (Shift Grips).</para>
+	</listitem> 
+      </itemizedlist>
+    </para>
+
+    <para id="learning_viewing_options_intropara1">
+	Los diseños en <application>BRL-CAD</application> están estructurados en 
+	el sistema simple de coordenadas x, z e y, al cual nos referiremos a veces
+	 como modelo espacial. La ventana gráfica de <application>MGED</application>
+	 muestra una porción de este espacio representado. Este sistema se 
+	usará tanto para especificar las figuras como para representarlas en la
+	 ventana gráfica.
+    </para>
+    
+    <para id="learning_viewing_options_intropara2">
+      <application>MGED</application> ofrece una vista por defecto, pero 
+	también ofrece una variedad de opciones para modificarla. Usted puede 
+	alternar estas vistas durante y luego de la creación del modelo.
+    </para>
+    
+    <sect1 id="creating_radio">
+      <title>Creando el modelo de un radio</title>
+     
+      <para>
+	Para ganar práctica visualizando los modelos actuales vamos a 
+	construir el diseño simple de un radio tipo "walkie-talkie". Los 
+	comandos que usaremos para hacer esto no son explicados aquí porque 
+	no nos concierne en este tutorial. En el tutorial de creación de 
+	direcciones de modelos se explicarán en detalle. 
+	Ejecute <application>MGED</application> y cree una nueva base de datos 
+	llamada radio.g. Recuerde que la única manera de hacer esto es tipeando
+	 en una terminal el siguiente comando:
+
+	<command>$ mged radio.g [ENTER]</command>.
+
+      </para>
+      
+      <para>
+	Tipee lo siguiente en la línea de comandos, chequeando cuidadosamente 
+	antes de presionar ENTER. Si se equivoca, use BACKSPACE o las fechas 
+	de izquierda/derecha para hacer las correcciones (en el apéndice B hay 
+	una lista de comandos de edición).
+      </para>
+      
+	<para>
+	Nota: Tenga un cuidado especial en reconocer cuando se está usando el número 
+	uno [1] o la letra ele [l], por ejemplo en la tercera línea de la 
+	siguiente lista.
+	</para>
+      
+      <literallayout>
+       <command>in body.s rpp 0 16 0 32 0 48 [ENTER]</command>
+       
+       <command>in btn.s rec 8 30 36 0 3 0 4 0 0 0 0 2 [ENTER]</command>
+       
+       <command>in btn2.s ell1 8 33 36 4 0 0 2 [ENTER]</command>
+       
+       <command>in spkr.s tor 16 16 16 1 0 0 12 1 [ENTER]</command>
+       
+       <command>in ant.s rcc 2 2 46 0 0 48 1 [ENTER]</command>
+       
+       <command>in knob.s rcc 4 4 40 8 0 0 5 [ENTER]</command>
+      </literallayout>
+      
+      
+	<para>
+	  Nota: La expresión btn es una abreviación de button (botón en inglés), ant 
+	  de antenna (antena en inglés), y spkr es una abreviación de speaker 
+	  (parlante). Los números pueden estar separados por espacios simples, 
+	  aunque puede usarse espaciados extra para mejorar la legibilidad. 
+	  En algunos casos (p.e., los comandos r y comb, que se mostrarán más adelante), 
+	  el espaciado deberá ser exacto.
+	</para>
+
+      <para>
+	Una imagen similar a la siguiente debería aparecer en la ventana gráfica
+
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" fileref="../../lessons/es/images/mged02_defaultradio.png" format="PNG"></imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	     Vista del radio por defecto
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
+
+      </para>
+    </sect1>
+    
+    <sect1 id="locating_viewing_info_cmd_window">
+      <title>Encontrar información sobre las vistas en la ventana de comandos</title>
+      <para>
+	Tómese un minuto para observar la ventana de comandos.
+	Inclusive si no hay nada a la vista, en la parte inferior encontrará 
+	información sobre la ventana gráfica. Por ejemplo, algo similar a lo 
+	siguiente:
+	
+	<literal>cent=(8.000 16.000 24.000) sz=96.000 mm az=35.00 el=25.00 tw=-0.00
+	ang=(0.00 0.00 0.00)</literal>
+      </para>
+      <para>
+	Como se detalla en la siguiente tabla, esta información contiene cuatro 
+	grupos de datos sobre la vista de la ventana gráfica.
+	
+	<table frame='all'><title>Vista de información en la parte inferior de 
+				  la ventana de comandos</title>
+	<tgroup cols='5' align='center' colsep='1' rowsep='1'>
+	  <colspec colname='c1'/>
+	  <colspec colname='c2'/>
+	  <colspec colname='c3'/>
+	  <colspec colname='c4'/>
+	  <colspec colname='c5'/>
+	  <thead>
+	    <row>
+	      <entry>Designación de pantalla</entry>
+	      <entry>Información de vistas</entry>
+	      <entry>Localización de variables</entry>
+	      <entry>Unidades por defecto</entry>
+	      <entry>Valores por defecto</entry>
+	    </row>
+	  </thead>
+	  <tbody>
+	    <row>
+	      <entry>cent=</entry>
+	      <entry>vista centrada</entry>
+	      <entry>Primeros 3 números</entry>
+	      <entry>Milímetros</entry>
+	      <entry>0.000 0.000 0.000</entry>
+	    </row>
+	    <row>
+	      <entry>sz=</entry>
+	      <entry>Medida de la vista (Size)</entry>
+	      <entry>4to número</entry>
+	      <entry>Milímetros</entry>
+	      <entry>Dependiente del tamaño seleccionado</entry>
+	    </row>
+	    <row>
+	      <entry>az=</entry>
+	      <entry morerows='1' valign='middle'>Ángulo de vista</entry>
+	      <entry morerows='1' valign='middle'>5to-6to números</entry>
+	      <entry morerows='1' valign='middle'>Grados</entry>
+	      <entry>35.00</entry>
+	    </row>
+	    <row>
+	      <entry>el=</entry>
+	      <entry>25.00</entry>
+	    </row>
+	    <row>
+	      <entry>tw=</entry>
+	      <entry>Giro (Twist)</entry>
+	      <entry morerows='1' valign='middle'>7mo-10mo números</entry>
+	      <entry morerows='1' valign='middle'>Grados</entry>
+	      <entry>0.00</entry>
+	    </row>
+	    <row>
+	      <entry>ang=</entry>
+	      <entry>Ángulo de visión (Angle)</entry>
+	      <entry>0.00 0.00 0.00</entry>
+	    </row>
+	  </tbody>
+	</tgroup>
+	</table>
+      </para>
+    </sect1>
+     
+    <sect1 id="viewing_system_elements">
+      <title>Identificar elementos del sistema de visualización de 
+		<application>MGED</application>.</title>
+     
+      <sect2>
+	<title>Vista centrada</title>
+	<para>
+	  El primer conjunto de la información le dirá el centro de lo que está
+	   viendo.
+	  Usted puede cambiar el centro de lo que está mirando, tanto por la GUI
+	   como por comandos.
+	</para>
+	<para>
+	  Para modificar el centro de la vista de su radio usando la interfaz 
+	  gráfica, presione la tecla SHIFT y cualquier botón del mouse mientras 
+	  lo arrastra.
+	  También puede mover el centro posicionando el puntero del mouse donde 
+	  quiere que esté ubicado el centro y luego presionar el botón del medio
+	   del mouse.
+	</para>
+	<para>
+	  Para cambiar el centro utilizando la ventana de comandos, simplemente
+	   tipee en el prompt la palabra "center" seguido de tres valores que 
+	  corresponderán a la x, la y y la z.
+	  
+	  <command>center 0 15 325.735 [Enter]</command>
+	  
+	   A medida que cambia su punto de vista de su modelo, observe que los 
+	  números que están entre paréntesis luego del título cent= cambiarán 
+	  para reflejar el nuevo centro de la vista.
+	</para>
+      </sect2>
+      
+      <sect2>
+	<title>Tamaño de la vista</title>
+     
+	<para>
+	  El tamaño de la vista es la cantidad de espacio modelo que se 
+	  muestra en la ventana gráfica. Por ejemplo, imagine que usa una 
+	  cámara con una lente de zoom para fotografiar una rosa. Como se 
+	  muestra en las siguientes imágenes, si hace zoom sobre la rosa, 
+	  aparecerá grande en relación a su campo de visión. Si aleja la imagen, 
+	  aparecerá más pequeña. 
+	  El tamaño de vista de la rosa de la imagen de la izquierda podría 
+	  representar sólo 15 mm de diámetro, mientras que el tamaño de la vista
+	  para la imagen de la derecha podría representar 100 mm de diámetro. 
+	  En ambos casos, sin embargo, el tamaño real de la rosa es el mismo.
+	</para>
+	
+	<informaltable frame='none' pgwide="1">
+	  <tgroup cols='2' align='center'>
+	    <tbody>
+	      <row>
+		<entry><inlinegraphic fileref="../../lessons/es/images/mged02_flower_zoomin.jpg" scale="60" /></entry>
+		<entry><inlinegraphic fileref="../../lessons/es/images/mged02_flower_zoomout.jpg" /></entry>
+	      </row>
+	      <row>
+		<entry>Zoom de acercamiento para ver detalles 
+			(vista a pequeña escala)
+		</entry>
+		<entry>Zoom distante para ver el objeto en relación con su 
+			entorno (vista a gran escala)
+		</entry>
+	      </row>
+	    </tbody>
+	  </tgroup>
+	</informaltable>
+	
+	<para>
+	  Para modificar el tamaño de la vista de su radio por medio de la GUI
+	  cliquee el botón derecho del mouse para acercar la vista, y el botón 
+	  izquierdo para alejarla.
+	  Cada vez que cliquee cualquiera de los dos botones, la vista del 
+	  diseño incrementará o decrementará en tamaño en un factor igual a 2 
+	  (dos veces más grande o más pequeño que el tamaño previo).
+	</para>
+	<para>
+	  También puede hacer zoom hacia dentro o hacia afuera de su modelo 
+	  seleccionando del menú View (Vista) las opciones Zoom In o Zoom Out. 
+	  Un inconveniente de este método es que sólo se puede acercar o alejar 
+	  una medida cada vez, debido a que el menú desplegable se cierra una 
+	  vez que se hace la selección.
+	</para>
+	<para>
+	  Si se pierde en algún momento mientras crea su modelo, puede usar el 
+	  comando zap para despejar el diseño de la ventana gráfica, y luego 
+	  volver a llamar a la figura con el comado draw. Cuando aplica draw 
+	  en una ventana gráfica vacía <application>MGED</application> 
+	  reacomoda la vista automáticamente para visualizar lo que acaba de 
+	  dibujar de modo que utilice la ventana completa.
+	</para>
+	<para>
+	  También puede controlar el tamaño de su diseño desde la ventana de 
+	  comandos con el comando "size", seguido del porcentaje de crecimiento
+	  o decrecimiento. Por ejemplo:
+	  
+	  <command>size 100 [Enter]</command>
+	</para>
+	<para>
+	  Desde la línea de comandos también se puede acercar o alejar la vista.
+	  Por ejemplo, para que su radio aparezca reducido a la mitad, usted 
+	  debe tipear:
+	  
+	  <command>zoom 0.5 [Enter]</command>
+	</para>
+	<para>
+	  Para que su radio se vea dos veces más grande, debería tipear:
+	  
+	  <command>zoom 2 [Enter]</command>
+	</para>
+	
+	<para>
+	    Nota: Recuerde que modificando el tamaño de la vista NO se modifica el 
+	    tamaño del objeto. Sabrá como escalar el tamaño del objeto en el 
+	    tutorial #6.
+	</para>
+      </sect2>
+      
+      <sect2>
+	<title>Ángulo de visualización</title>
+	
+	<para>
+	  Acimut, elevación y giro (todos medidos en grados) determinan la 
+	  vista que usted tiene en relación al objeto. Acimut (azimuth), 
+	  determina su ubicación alrededor del objeto (enfrente, a la izquierda 
+	  o derecha, detrás, o algún punto intermedio). La elevación 
+	  (elevation) determina su visualización en forma vertical, por encima 
+	  o por debajo. Y giro (twist) determina el ángulo de rotación que 
+	  tiene respecto de la dirección de la figura.
+
+	</para>
+	<para>
+	  Para comprender mejor el acimut, imagine que camina alrededor de un 
+	  camión con una cámara en mano. Como se mostrará en las siguientes 
+	  ilustraciones, se ubicará en el valor 0'0 del acimut si se posiciona 
+	  exactamente frente al camión. El valor irá acrecentándo mientras lo 
+	  rodee hacia la derecha. De esta manera, si está enfrentado a la 
+	  puerta del conductor (siendo que el asiento del conductor es de la 
+	  izquierda) se encontrará a una posición de 90'0 acimuth, detrás del
+	  camión será de 180'0, y del lado de la puerta del acompañante será 
+	  de 270'0.
+	</para>
+	
+	<para>
+	    Nota: Los términos azimuth, elevation y twist son similares a los 
+	    términos yaw, pitch, and roll, respectivamente, los cuales son 
+	    comúnmente utilizados en la industria aeroespacial.
+	</para>
+	
+	
+	<informaltable frame="none" pgwide="1">
+	  <tgroup cols='2' align='center'>
+	    <colspec colwidth="1*" />
+	    <colspec colwidth="3*" />
+  	    <tbody>
+	      <row>
+		<entry><inlinegraphic fileref="../../lessons/es/images/mged02_truck_front.png" /></entry>
+		<entry><inlinegraphic fileref="../../lessons/es/images/mged02_truck_35_0.png" /></entry>
+	      </row>
+	      <row>
+		<entry>Front (az=0, el=0)</entry>
+		<entry>az=35, el=0</entry>
+	      </row>
+	    </tbody>
+	  </tgroup>
+	</informaltable>
+	
+	<informaltable frame="none" pgwide="1">
+	  <tgroup cols='2' align='center'>
+	    <colspec colwidth="3*" />
+	    <colspec colwidth="1*" />
+	    <tbody>
+	      <row>
+		<entry><inlinegraphic fileref="../../lessons/es/images/mged02_truck_left.png" /></entry>
+		<entry><inlinegraphic fileref="../../lessons/es/images/mged02_truck_rear.png" /></entry>
+	      </row>
+	      <row>
+		<entry>Left (az=90, el=0)</entry>
+		<entry>Rear (az=180, el=0)</entry>
+	      </row>
+	    </tbody>
+	  </tgroup>
+	</informaltable>
+	
+	<informaltable frame="none" pgwide="1">
+	  <tgroup cols='1' align='center'>
+	    <tbody>
+	      <row>
+		<entry><inlinegraphic fileref="../../lessons/es/images/mged02_truck_right.png" /></entry>
+	      </row>
+	      <row>
+		<entry>Right (az=270, el=0)</entry>
+	      </row>
+	    </tbody>
+	  </tgroup>
+	</informaltable>
+	
+	<para>
+	  Por otro lado, la elevación determina la posición del espectador 
+	  arriba o debajo del objeto. En el ejemplo anterior, usted se desplazó
+	   alrededor del camión sin modificar su altura relativa. Tenía una 
+	  elevación de 0'0, lo que significa que se ubicada al mismo nivel. 
+	  En la siguientes imágenes ilustrativas, imagine que detiene el 
+	  camión en un acimut de 35'0 y luego sube a una escalera para 
+	  fotografiarlo a una elevación de 25'0. Trepando aún más podrá 
+	  fotografiarlo desde una elevación de 60'0. Si la cámara enfocara 
+	  directamente hacia abajo, posicionandose exactamente sobre el 
+	  camión, la elevación sería de 90'0. Si se agachara bajo el camión y 
+	  mirara directamente hacia arriba, su elevación sería de -90'0.
+	</para>
+	
+	<informaltable frame="none" pgwide="1">
+	  <tgroup cols='2' align='center'>
+	    <tbody>
+	      <row>
+		<entry><inlinegraphic fileref="../../lessons/es/images/mged02_truck_35_0.png" /></entry>
+		<entry><inlinegraphic fileref="../../lessons/es/images/mged02_truck_35_25.png" /></entry>
+	      </row>
+	      <row>
+		<entry>az=35, el=0</entry>
+		<entry>az=35, el=25</entry>
+	      </row>
+	      <row>
+		<entry><inlinegraphic fileref="../../lessons/es/images/mged02_truck_35_60.png" /></entry>
+		<entry><inlinegraphic fileref="../../lessons/es/images/mged02_truck_35_90.png" /></entry>
+	      </row>
+	      <row>
+		<entry>az=35, el=60</entry>
+		<entry>az=35, el=90</entry>
+	      </row>
+	      <row>
+		<entry><inlinegraphic fileref="../../lessons/es/images/mged02_truck_270_90.png" /></entry>
+		<entry><inlinegraphic fileref="../../lessons/es/images/mged02_truck_270_-90.png" /></entry>
+	      </row>
+	      <row>
+		<entry>Top (az=270, el=90)</entry>
+		<entry>Bottom (az=270, el=-90)</entry>
+	      </row>
+	    </tbody>
+	  </tgroup>
+	</informaltable>
+	
+	<para>
+	  Finalmente, el giro (que es una configuración opcional en 
+	  <application>MGED</application>) especifica la rotación en relación 
+	  a la direccion de la vista. La rotación se aplica a la vista antes 
+	  de que el acimut o la elevación sean designados.
+	  Siguiendo con el ejemplo del camión, imagine que se posiciona 
+	  exactamente delante del camión (az=0, el=0) y luego rota su cámara 
+	  en sentido horario 14'0. Esto modificará el ángulo de giro de su 
+	  visión en 14'0, como muestra la siguiente figura de la izquierda. 
+	  Note nuevamente que no es el camión el que se mueve, sino sólo su 
+	  vista sobre el mismo. Para saber más sobre giros, mire el comando 
+	  <command>ae</command> en el apéndice A.
+	  <informaltable frame="none" pgwide="1">
+	    <tgroup cols='1' align='center'>
+	      <tbody>
+		<row>
+		  <entry><inlinegraphic fileref="../../lessons/es/images/mged02_truck_0_0_14.png" /></entry>
+		</row>
+		<row>
+		  <entry>Front (az=0, el=0, tw=14)</entry>
+		</row>
+	      </tbody>
+	    </tgroup>
+	  </informaltable>
+	</para>
+      </sect2>
+    </sect1>
+    
+    <sect1 id="coord_sys_summary">
+      <title>Relación del Acimut y la Elevación con el sistema de coordenadas xyz</title>
+     
+      <para>
+	Como mencionamos al principio de este tutorial, <application>MGED</application>
+	opera en un sistema de coordenadas tridimensional (determinado por los 
+	ejes x, y, and z).
+	Acimut se mide por los ejes del plano xy, con el semieje positivo del 
+	eje x correspondiendo al acimuth igual a 0'0. Los ángulos positivos 
+	del acimut son medidos desde el lado positivo del eje x, yendo hacia 
+	y pasando el lado positivo del eje y (sentido antihorario). Los valores
+	 negativos de acimut son medidos en la dirección opuesta.
+      </para>
+      
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" fileref="../../lessons/es/images/mged02_coordsys.png" scale="60" format="PNG"></imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	      Acimut, elevación, y el sistema de coordenada xyz.
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>
+      
+      <para>
+	Si el ángulo de acimut es de 0'0, la elevación es medida en el plano con
+	+90'0 correspondiendo al semieje positivo del eje z, y -90'0, si es al 
+	semieje negativo. Si el acimut no es 0'0, los ángulos de elevación 
+	están alineados con la dirección del acimut.
+      </para>
+    </sect1>
+    
+    <sect1 id="view_radio_angles">
+      <title>Visualizando su radio desde distintos ángulos</title>
+      
+      <para>
+	Vamos ahora a experimentar con las distintas vistas de su radio. 
+	<application>MGED</application> tiene algunas vistas estándard por 
+	defecto, las cuales pudieron apreciarse en el ejemplo del camión.
+	Están incluídas las vistas desde arriba (Top)(az270, el90); desde 
+	abajo (Bottom)(az270, el-90); desde la derecha (Right)(az270, el0); 
+	desde la izquierda (Left)(az90, el0); de frente (Front)(az0, el0); 
+	y por detrás (Rear)(az180, el0); az35, el25; and az45, el45.
+      </para>
+      
+      <para>
+	Despliegue el menú View (Vistas) e intente ver su radio desde distintos ángulos.
+      </para>
+      
+      <informaltable frame="none" pgwide="1">
+	<tgroup cols='2' align='center'>
+	  <tbody>
+	    <row>
+	      <entry><inlinegraphic fileref="../../lessons/es/images/mged02_radio_top.png" scale="90"/></entry>
+	      <entry><inlinegraphic fileref="../../lessons/es/images/mged02_radio_35_25.png" scale="90" /></entry>
+	    </row>
+	    <row>
+	      <entry>Top</entry>
+	      <entry>az35,el25</entry>
+	    </row>
+	    <row>
+	      <entry><inlinegraphic fileref="../../lessons/es/images/mged02_radio_right.png" scale="90" /></entry>
+	      <entry><inlinegraphic fileref="../../lessons/es/images/mged02_radio_front.png" scale="90" /></entry>
+	    </row>
+	    <row>
+	      <entry>Right</entry>
+	      <entry>Front</entry>
+	    </row>
+	  </tbody>
+	</tgroup>
+      </informaltable>
+      
+      <para>
+	También puede seleccionar alguna combinación de acimut, elevación y 
+	giro de su vista desde la línea de comandos. Por ejemplo, tipee en un prompt:
+	
+	<command>ae 128 17 [Enter]</command>
+	
+	Como muchas otras opciones de la línea de comandos, este método es 
+	mucho más preciso al ofrecer mayor control de las medidas en grados de 
+	lo que usted necesita modificar.
+      </para>
+      
+      <para>
+	<application>MGED</application> también puede mostrar varias vistas en 
+	simultáneo. Seleccione del menú Modes (Modos) la opción Multipane 
+	(Multipanel). Pequeños paneles con vistas distintas aparecerán una 
+	ventana gráfica, como se muestra en la ilustración:
+      </para>
+
+      <informalfigure>
+	<mediaobject>
+	  <imageobject>
+	    <imagedata align = "center" fileref="../../lessons/es/images/mged02_multipane.png" format="PNG"></imagedata>
+	  </imageobject>
+	  <caption>
+	    <para>
+	      Vista Mulipanel de la radio
+	    </para>
+	  </caption>
+	</mediaobject>
+      </informalfigure>      
+
+    </sect1>
+
+    <sect1 id="shift_grips">
+      <title>Trabajar con atajos de teclado (Shift Grips)</title>
+      
+      <para>
+	Las opciones de atajos de teclado (Shift Grip) de 
+	<application>MGED</application> son una combinación de presiones de 
+	teclado y botones del mouse que pueden ser utilizados de distinta 
+	forma. Estos atajos de teclados podrán mover el espacio en torno al 
+	espectador, sin modificar el objeto en sí, ni sus coordenadas.
+	Deberá familiarizarse con el modo en que operan porque en el modo 
+	edición usted podrá mover y modificar la geometría real de los 
+	objetos; y en ambos casos, el cambio parece ser el mismo.
+      </para>
+      
+      <para>
+	En general, la tecla SHIFT translada (mueve), el CTRL rota, y el ALT 
+	limita las traslaciones o rotaciones a un eje particual (x, y, o z). 
+	Los ejes corresponden a los tres botones del mouse de la siguiente 
+	forma: el botón izquierdo para el eje x, el del medio para el eje y y 
+	el derecho para el eje z. Además, las teclas SHIFT y CTRL pueden 
+	combinarse con cualquier botón del mouse para escalar el objeto, en 
+	cuyo caso la tecla ALT no podrá limitar esta acción. La siguiente 
+	tabla muestra las distintas opciones y sus funciones.
+      </para>
+      
+      <table frame='all'>
+	<title>Los atajos de teclado y sus efectos</title>
+	<tgroup cols='5' align='center' colsep='1' rowsep='1'>
+	  <colspec colname='c1'/>
+	  <colspec colname='c2'/>
+	  <colspec colname='c3'/>
+	  <colspec colname='c4'/>
+	  <thead>
+	    <row>
+	      <entry>Función</entry>
+	      <entry>Combinación de teclas</entry>
+	      <entry>Efecto en la vista normal</entry>
+	      <entry>Efecto en modo Edición</entry>
+	    </row>
+	  </thead>
+	  <tbody>
+	    <row>
+	      <entry>Translación (Mueve)</entry>
+	      <entry>SHIFT + cualquier botón del mouse + moviento del mouse</entry>
+	      <entry>Mueve la vista en cualquier dirección</entry>
+	      <entry>Translada el objeto en cualquier dirección</entry>
+	    </row>
+	    <row>
+	      <entry>Rotación</entry>
+	      <entry>CTRL + cualquier botón del mouse + moviento del mouse</entry>
+	      <entry>Rota la vista en cualquier dirección</entry>
+	      <entry>Rota el objeto en cualquier dirección</entry>
+	    </row>
+	    <row>
+	      <entry morerows='2' valign='middle'>Traslación limitada</entry>
+	      <entry>SHIFT + ALT + botón izquierdo + movimiento del mouse</entry>
+	      <entry>Mueve la vista en la dirección x</entry>
+	      <entry>Mueve el objeto en la dirección x</entry>
+	    </row>
+	    <row>
+	      <entry>SHIFT + ALT + botón medio + movimiento del mouse</entry>
+	      <entry>Mueve la vista en la dirección y</entry>
+	      <entry>Mueve el objeto en la dirección y</entry>
+	    </row>
+	    <row>
+	      <entry>SHIFT + ALT + botón derecho + movimiento del mouse</entry>
+	      <entry>Mueve la vista en la dirección z</entry>
+	      <entry>Mueve el objeto en la dirección z</entry>
+	    </row>
+	    <row>
+	      <entry morerows='2' valign='middle'>Rotación limitada</entry>
+	      <entry>CTRL + ALT + botón izquierdo + movimiento del mouse</entry>
+	      <entry>Rota la vista según el eje x</entry>
+	      <entry>Rota el objeto según el eje x</entry>
+	    </row>
+	    <row>
+	      <entry>CTRL + ALT + botón medio + movimiento del mouse</entry>
+	      <entry>Rota la vista según el eje y</entry>
+	      <entry>Rota el objeto según el eje y</entry>
+	    </row>
+	    <row>
+	      <entry>CTRL + ALT + botón derecho + movimiento del mouse</entry>
+	      <entry>Rota la vista según el eje z</entry>
+	      <entry>Rota el objeto según el eje z</entry>
+	    </row>
+	    <row>
+	      <entry>Escalar</entry>
+	      <entry>SHIFT + CTRL + cualquier botón del mouse + movimiento del mouse</entry>
+	      <entry>Escala la vista en forma creciente o decreciente</entry>
+	      <entry>Escala el objeto en forma creciente o decreciente</entry>
+	    </row>
+	  </tbody>
+	</tgroup>
+      </table>
+      
+      <caution>
+	<para>
+	  Dependiendo de su administrador de escritorio o de la configuración 
+	  de su entorno gráfico, algunas combinaciones de teclas pueden estar 
+	  reservadas para otras tareas (p.e.: modificar el tamaño de una 
+	  ventana). De ser así, usted debe reconfigurarlo para poder habilitar 
+	  las opciones de Shift Grip.
+	  Los zurdos, por ejemplo, podrían haber cambiado el comportamiento de 
+	  los botones izquierdo y derecho en sus configuraciones de sistema. En 
+	  tales casos, los términos botón izquierdo del ratón y el botón 
+	  derecho del ratón debe ser cambiados en todo este documento.
+	</para>
+      </caution>
+      
+      <para>
+	Probablemente, la mejor forma de familiarizarse con las opciones de 
+	Shift Grip es probándolas sobre su radio. Utilizando el cuadro previo 
+	como guía, pruebe la traslación, rotación y limitación a los distintos 
+	ejes, modificando las vistas y escalando la imágen.
+      </para>
+      
+	<para>
+	  Nota: Recuerde que las opciones de Shift Grip manipula objetos. A 
+	  menos que usted se encuentre en el modo Edit (Edición), se modificará
+	   únicamente la visión de los diseños.                 
+	</para>
+    </sect1>
+    
+    <sect1 id="learning_viewing_options_review">
+      <title>Revisión</title>
+      
+      <para>
+	En este tutorial usted aprendió a:
+	
+	<itemizedlist mark='bullet'>
+	  <listitem>
+	    <para>Crear el diseño de una radio.</para>
+	  </listitem>
+	  <listitem>
+	    <para>Localizar información sobre la vista en la ventana de comandos.</para>
+	  </listitem>
+	  <listitem>
+	    <para>Identificar elementos del sistema de visualización de <application>MGED</application>.</para>
+	  </listitem>
+	  <listitem>
+	    <para>Visualizar su radio desde distintos ángulos.</para>
+	  </listitem>
+	  <listitem>
+	    <para>Trabajar con atajos de teclado.</para>
+	  </listitem>
+	</itemizedlist>
+      </para>
+    </sect1>
+  </article>
