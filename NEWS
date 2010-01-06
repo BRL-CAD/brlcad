@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 --- 2009-12-XX  Release 7.16.4                                     ---
 ----------------------------------------------------------------------
 
+* fixed sorting bug in idents/regions/solids commands - Keith Bowman
 * translation of mged tutorials 1 and 2 to Spanish - Jesica Giudice
 * benchmark suite includes sysctl hardware information - Sean Morrison
 * independent scaling of x/y/z axes for sca command - Richard Weiss
