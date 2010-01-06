@@ -17,13 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup anim */
-/** @{ */
-/** @file anim.c
- *
- * Routines useful in animation programs.
- *
- */
 
 #include "common.h"
 
@@ -41,26 +34,6 @@
 #define ERROR2 2
 
 
-/**
- * Orientation conventions: The default object orientation is facing
- * the positive x-axis, with the positive y-axis to the object's left
- * and the positive z-axis above the object.
- *
- * The default view orientation for rt and mged is facing the negative
- * z-axis, with the negative x-axis leading to the left and the
- * positive y-axis going upwards.
- */
-
-/**
- * @brief Pre-multiply a rotation matrix by a matrix which maps the
- * z-axis to the negative x-axis, the y-axis to the z-axis and the
- * x-axis to the negative y-axis.
- *
- * This has the effect of twisting an object in the default view
- * orientation into the default object orientation before applying the
- * matrix.  Given a matrix designed to operate on an object, yield a
- * matrix which operates on the view.
- */
 void
 anim_v_permute(mat_t m)
 {
@@ -75,14 +48,7 @@ anim_v_permute(mat_t m)
     }
 }
 
-/**
- * @brief Undo the mapping done by anim_v_permute().
- *
- * This has the effect of twisting an object in the default object
- * orientation into the default view orientation before applying the
- * matrix.  Given a matrix designed to operate on the view, yield a
- * matrix which operates on an object.
- */
+
 void
 anim_v_unpermute(mat_t m)
 {
@@ -97,9 +63,7 @@ anim_v_unpermute(mat_t m)
     }
 }
 
-/**
- * @brief Transpose matrix in place
- */
+
 void
 anim_tran(mat_t m)
 {
@@ -116,18 +80,11 @@ anim_tran(mat_t m)
     }
 }
 
+
 /***************************************
  *ANIM_MAT2* - Conversions from matrices
  ***************************************/
 
-/**
- * @brief
- * Convert the rotational part of a 4x4 transformation matrix to zyx
- * form, that is to say, rotations carried out in the order z, y, and
- * then x. The angles are stored in radians as a vector in the order
- * x, y, z. A return value of ERROR1 means that arbitrary assumptions
- * were necessary. ERROR2 means that the conversion failed.
- */
 int
 anim_mat2zyx(const mat_t viewrot, vect_t angle)
 {
@@ -139,8 +96,7 @@ anim_mat2zyx(const mat_t viewrot, vect_t angle)
 	return_value = ERROR1;
 	angle[0] = 0.0;
 	angle[2] = atan2(viewrot[4], viewrot[5]);
-    }
-    else {
+    } else {
 	return_value = NORMAL;
 	angle[2] = atan2(-viewrot[1], viewrot[0]);
 	angle[0] = atan2(-viewrot[6], viewrot[10]);
@@ -166,8 +122,7 @@ anim_mat2zyx(const mat_t viewrot, vect_t angle)
 	/* this should be impossible*/
 	/* unable to calculate pitch*/
 	return(ERROR2);
-    }
-    else if (id_x && (!id_z))
+    } else if (id_x && (!id_z))
 	angle[1]=atan2((viewrot[4] - cos_x*sin_z)/(sin_x*cos_z), -viewrot[6]/sin_x);
     else if ((!id_x) && (!id_z))
 	angle[1]=atan2((-viewrot[8] + sin_x*sin_z)/(cos_x*cos_z), viewrot[0]/cos_z);
@@ -189,15 +144,7 @@ anim_mat2zyx(const mat_t viewrot, vect_t angle)
     return(return_value);
 }
 
-/**
- * @brief
- * Convert the rotational part of a 4x4 transformation matrix to
- * yaw-pitch-roll form, that is to say, +roll degrees about the
- * x-axis, -pitch degrees about the y-axis, and +yaw degrees about the
- * z-axis. The angles are stored in radians as a vector in the order
- * y, p, r.  A return of ERROR1 means that arbitrary assumptions were
- * necessary.  ERROR2 means that the conversion failed.
- */
+
 int
 anim_mat2ypr(mat_t viewrot, vect_t angle)
 {
@@ -209,8 +156,7 @@ anim_mat2ypr(mat_t viewrot, vect_t angle)
 	return_value = ERROR1;
 	angle[2] = 0.0;
 	angle[0] = atan2(-viewrot[1], viewrot[5]);
-    }
-    else {
+    } else {
 	return_value = NORMAL;
 	angle[0] = atan2(viewrot[4], viewrot[0]);
 	angle[2] = atan2(viewrot[9], viewrot[10]);
@@ -236,8 +182,7 @@ anim_mat2ypr(mat_t viewrot, vect_t angle)
 	/* this should not happen */
 	/* unable to calculate pitch*/
 	return(ERROR2);
-    }
-    else if ((!id_y) && id_r)
+    } else if ((!id_y) && id_r)
 	angle[1] = atan2(-(viewrot[1]+sin_y*cos_r)/(cos_y*sin_r), viewrot[9]/sin_r);
     else if (id_y && (!id_r))
 	angle[1] = atan2(-(viewrot[6]+cos_y*sin_r)/(sin_y*cos_r), viewrot[10]/cos_r);
@@ -245,7 +190,6 @@ anim_mat2ypr(mat_t viewrot, vect_t angle)
 	angle[1] = atan2(-(viewrot[5]-cos_y*cos_r)/(sin_y*sin_r), viewrot[4]/sin_y);
     else if ((!id_y) && (!id_r))
 	angle[1] = atan2(-(viewrot[2]-sin_y*sin_r)/(cos_y*cos_r), viewrot[0]/cos_y);
-
 
     /* assume the smallest possible arc-length from frame to frame */
     for (i=0; i<3; i++) {
@@ -259,14 +203,7 @@ anim_mat2ypr(mat_t viewrot, vect_t angle)
     return(return_value);
 }
 
-/**
- * @brief
- * This interprets the rotational part of a 4x4 transformation matrix
- * in terms of unit quaternions. The result is stored as a vector in
- * the order x, y, z, w.  The algorithm is from Ken Shoemake,
- * Animating Rotation with Quaternion Curves, 1985 SIGGraph Conference
- * Proceeding, p.245.
- */
+
 int
 anim_mat2quat(quat_t quat, const mat_t viewrot)
 {
@@ -280,23 +217,20 @@ anim_mat2quat(quat_t quat, const mat_t viewrot)
 	quat[X] = 0.25 * (viewrot[9] - viewrot[6])/ quat[W];
 	quat[Y] = 0.25 * (viewrot[2] - viewrot[8])/ quat[W];
 	quat[Z] = 0.25 * (viewrot[4] - viewrot[1])/ quat[W];
-    }
-    else {
+    } else {
 	quat[W] = 0.0;
 	square = -0.5 * (viewrot[5] + viewrot[10]);
 	if (!NEAR_ZERO(square, SMALL_FASTF)) {
 	    quat[X] = sqrt(square);
 	    quat[Y] = 0.5 * viewrot[4] / quat[X];
 	    quat[Z] = 0.5 * viewrot[8] / quat[X];
-	}
-	else {
+	} else {
 	    quat[X] = 0.0;
 	    square = 0.5 * (1 - viewrot[10]);
 	    if (!NEAR_ZERO(square, SMALL_FASTF)) {
 		quat[Y] = sqrt(square);
 		quat[Z] = 0.5 * viewrot[9]/ quat[Y];
-	    }
-	    else {
+	    } else {
 		quat[Y] = 0.0;
 		quat[Z] = 1.0;
 	    }
@@ -322,15 +256,11 @@ anim_mat2quat(quat_t quat, const mat_t viewrot)
     return(1);
 }
 
+
 /***************************************
  *ANIM_*2MAT - Conversions to matrices
  ***************************************/
 
-/**
- * @brief Create a premultiplication rotation matrix to turn the front
- * of an object (its x-axis) to the given yaw, pitch, and roll, which
- * is stored in radians in the vector a.
- */
 void
 anim_ypr2mat(mat_t m, const vect_t a)
 {
@@ -361,18 +291,7 @@ anim_ypr2mat(mat_t m, const vect_t a)
     m[15] =	1.0;
 }
 
-/**
- * @brief Create a post-multiplication rotation matrix, which could be
- * used to move the virtual camera to the given yaw, pitch, and roll,
- * which are stored in radians in the given vector a. The following
- * are equivalent sets of commands:
- *
- * ypr2vmat(matrix, a);
- * -- or --
- * ypr2mat(matrix, a);
- * v_permute(matrix);
- * transpose(matrix;
- */
+
 void
 anim_ypr2vmat(mat_t m, const vect_t a)
 {
@@ -403,11 +322,7 @@ anim_ypr2vmat(mat_t m, const vect_t a)
     m[15] =	   1.0;
 }
 
-/**
- * @brief
- * Make matrix to rotate an object to the given yaw, pitch, and
- * roll. (Specified in radians.)
- */
+
 void
 anim_y_p_r2mat(mat_t m, double y, double p, double r)
 {
@@ -432,10 +347,6 @@ anim_y_p_r2mat(mat_t m, double y, double p, double r)
 }
 
 
-/**
- * @brief Make matrix to rotate an object to the given yaw, pitch, and
- * roll. (Specified in degrees.)
- */
 void
 anim_dy_p_r2mat(mat_t m, double y, double p, double r)
 {
@@ -464,11 +375,6 @@ anim_dy_p_r2mat(mat_t m, double y, double p, double r)
 }
 
 
-/**
- * @brief Make a view rotation matrix, given desired yaw, pitch and
- * roll. (Note that the matrix is a permutation of the object rotation
- * matrix).
- */
 void
 anim_dy_p_r2vmat(mat_t m, double yaw, double pch, double rll)
 {
@@ -499,11 +405,7 @@ anim_dy_p_r2vmat(mat_t m, double yaw, double pch, double rll)
 
 }
 
-/**
- * @brief Make a rotation matrix corresponding to a rotation of "x"
- * radians about the x-axis, "y" radians about the y-axis, and then
- * "z" radians about the z-axis.
- */
+
 void
 anim_x_y_z2mat(mat_t m, double x, double y, double z)
 {
@@ -528,11 +430,6 @@ anim_x_y_z2mat(mat_t m, double x, double y, double z)
 }
 
 
-/**
- * @brief Make a rotation matrix corresponding to a rotation of "x"
- * degrees about the x-axis, "y" degrees about the y-axis, and then
- * "z" degrees about the z-axis.
- */
 void
 anim_dx_y_z2mat(mat_t m, double x, double y, double z)
 {
@@ -562,11 +459,7 @@ anim_dx_y_z2mat(mat_t m, double x, double y, double z)
     m[15]=1.0;
 }
 
-/**
- * @brief Make a rotation matrix corresponding to a rotation of "z"
- * radians about the z-axis, "y" radians about the y-axis, and then
- * "x" radians about the x-axis.
- */
+
 void
 anim_zyx2mat(mat_t m, const vect_t a)
 {
@@ -598,11 +491,7 @@ anim_zyx2mat(mat_t m, const vect_t a)
 
 }
 
-/**
- * @brief Make a rotation matrix corresponding to a rotation of "z"
- * radians about the z-axis, "y" radians about the y-axis, and then
- * "x" radians about the x-axis.
- */
+
 void
 anim_z_y_x2mat(mat_t m, double x, double y, double z)
 {
@@ -627,12 +516,6 @@ anim_z_y_x2mat(mat_t m, double x, double y, double z)
 }
 
 
-/**
- * @brief
- * Make a rotation matrix corresponding to a rotation of "z" degrees
- * about the z-axis, "y" degrees about the y-axis, and then "x"
- * degrees about the x-axis.
- */
 void
 anim_dz_y_x2mat(mat_t m, double x, double y, double z)
 {
@@ -663,12 +546,6 @@ anim_dz_y_x2mat(mat_t m, double x, double y, double z)
 }
 
 
-/**
- * @brief
- * Make 4x4 matrix from the given quaternion Note: these quaternions
- * are the conjugates of the quaternions used in the librt/qmath.c
- * quat_quat2mat()
- */
 void
 anim_quat2mat(mat_t m, const quat_t qq)
 {
@@ -699,15 +576,7 @@ anim_quat2mat(mat_t m, const quat_t qq)
 }
 
 
-/**
- * @brief
- * make a matrix which turns a vehicle from the x-axis to point in the
- * desired direction, staying "right-side up" (ie the y-axis never has
- * a z-component). A second direction vector is consulted when the
- * given direction is vertical. This is intended to represent the the
- * direction from a previous frame.
- */
-void
+ovoid
 anim_dir2mat(mat_t m, const vect_t d, const vect_t d2b)
 {
     fastf_t hypotenuse, sign;
@@ -732,8 +601,7 @@ anim_dir2mat(mat_t m, const vect_t d, const vect_t d2b)
 	m[6] = -sign * d2[1]/hypotenuse;
 	m[8] = sign;
 	m[0]=m[4]=m[9]=m[10]=0.0;
-    }
-    else {
+    } else {
 	/* normal - no roll*/
 	m[0] = d[0];
 	m[1] = -d[1]/hypotenuse;
@@ -751,14 +619,7 @@ anim_dir2mat(mat_t m, const vect_t d, const vect_t d2b)
 
 }
 
-/**
- * @brief make a matrix which turns a vehicle from the x-axis to point
- * in the desired direction, staying "right-side up". In cases where
- * the direction is vertical, the second vector is consulted. The
- * second vector defines a normal to the the vertical plane into which
- * the vehicle's x and z axes should be put. A good choice to put here
- * is the direction of the vehicle's y-axis in the previous frame.
- */
+
 void
 anim_dirn2mat(mat_t m, const vect_t dx2, const vect_t dn)
 {
@@ -828,14 +689,6 @@ anim_dirn2mat(mat_t m, const vect_t dx2, const vect_t dn)
 #define ASM_FIRST 1
 #define ASM_FULL 2
 
-/**
- * @brief given the next frame's position, remember the value of the
- * previous frame's position and calculate a matrix which points the
- * x-axis in the direction defined by those two positions. Return new
- * matrix, and the remembered value of the current position, as
- * arguments; return 1 as the normal value, and 0 when there is not
- * yet information to remember.
-*/
 int
 anim_steer_mat(mat_t mat, vect_t point, int end)
 {
@@ -893,12 +746,6 @@ anim_steer_mat(mat_t mat, vect_t point, int end)
  ***************************************/
 
 
-/**
- * @brief Add pre- and post- translation to a rotation matrix.  The
- * resulting matrix has the effect of performing the first
- * translation, followed by the rotation, followed by the second
- * translation.
- */
 void
 anim_add_trans(mat_t m, const vect_t post, const vect_t pre)
 {
@@ -908,9 +755,7 @@ anim_add_trans(mat_t m, const vect_t post, const vect_t pre)
 
 }
 
-/**
- * @brief Rotate the vector "d" through "a" radians about the z-axis.
- */
+
 void
 anim_rotatez(fastf_t a, vect_t d)
 {
@@ -923,9 +768,7 @@ anim_rotatez(fastf_t a, vect_t d)
     d[1]=temp[1];
 }
 
-/**
- * @brief print out 4X4 matrix, with optional colon
- */
+
 void
 anim_mat_print(FILE *fp, const mat_t m, int s_colon)
 {
@@ -939,10 +782,6 @@ anim_mat_print(FILE *fp, const mat_t m, int s_colon)
 }
 
 
-/** 
- * @brief print out 4X4 matrix.  formstr must be less than twenty
- * chars
- */
 void
 anim_mat_printf(
     FILE *fp,
@@ -959,10 +798,7 @@ anim_mat_printf(
     bu_flog(fp, mystr, m[12], m[13], m[14], m[15], endstr);
 }
 
-/**
- * @brief Reverse the direction of a view matrix, keeping it
- * right-side up
- */
+
 void
 anim_view_rev(mat_t m)
 {
@@ -974,7 +810,6 @@ anim_view_rev(mat_t m)
     m[9] = -m[9];
 }
 
-/** @} */
 
 /*
  * Local Variables:
