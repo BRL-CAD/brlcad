@@ -1,4 +1,13 @@
-#  gqa sample _DENSITIES file
+#***************************************************************************************
+#  sample .density file for gqa and rtweight
+#***************************************************************************************
+#
+#     *** IMPORTANT:  This file may change over time and should not be relied upon
+#     *** for production analysis work.
+#
+#     All densities are in units of g/cm^3.
+#
+#***************************************************************************************
 
 2    7.82      Carbon Tool Steel
 3    2.7       Aluminum, 6061-T6
