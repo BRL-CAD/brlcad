@@ -46,6 +46,10 @@ Tcl_Interp *fbinterp;
 Tk_Window fbwin;
 Tk_PhotoHandle fbphoto;
 
+int tk_close_existing()
+{
+}
+
 HIDDEN int	fb_tk_open(FBIO *ifp, char *file, int width, int height),
     fb_tk_close(FBIO *ifp),
     tk_clear(FBIO *ifp, unsigned char *pp),
