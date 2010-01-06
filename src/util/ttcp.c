@@ -92,6 +92,7 @@ int sinkmode;			/* 0=normal I/O, !0=sink/source mode */
 
 struct hostent *addr;
 
+/* Usage broken into two strings to avoid the 509 C90 'minimum' */
 char Usage[] = "\
 Usage: ttcp -t [-options] host <in\n\
 	-l##	length of bufs written to network (default 1024)\n\
@@ -99,6 +100,8 @@ Usage: ttcp -t [-options] host <in\n\
 	-n##	number of bufs written to network (-s only, default 1024)\n\
 	-p##	port number to send to (default 2000)\n\
 	-u	use UDP instead of TCP\n\
+";
+char Usage2[] = "\
 Usage: ttcp -r [-options] >out\n\
 	-l##	length of network read buf (default 1024)\n\
 	-s	sink (discard) all data from network\n\
@@ -645,7 +648,7 @@ main(int argc, char **argv)
     return 0;
 
  usage:
-    fprintf(stderr, "%s", Usage);
+    fprintf(stderr, "%s%s", Usage, Usage2);
     return 1;
 }
 
