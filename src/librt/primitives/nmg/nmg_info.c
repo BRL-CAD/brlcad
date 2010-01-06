@@ -1,7 +1,7 @@
 /*                      N M G _ I N F O . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2009 United States Government as represented by
+ * Copyright (c) 1993-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1353,6 +1353,8 @@ nmg_find_eu_leftvec(fastf_t *left, const struct edgeuse *eu)
 	vect_t prev_left;
 	vect_t other_edge;
 	int other_edge_is_parallel=1;
+
+	VSETALL(other_edge, 0);
 
 	bu_log("WARNING: eu x%x (%f %f %f) parallel to normal (%f %f %f)\n", eu, V3ARGS(edgevect), V3ARGS(Norm));
 

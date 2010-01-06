@@ -1,7 +1,7 @@
 /*                       N M G _ T R I . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -2477,6 +2477,8 @@ nmg_triangulate_fu(struct faceuse *fu, const struct bn_tol *tol)
     vect_t N;
 
     char db_name[32];
+
+    VSETALL(N, 0);
 
     BN_CK_TOL(tol);
     NMG_CK_FACEUSE(fu);

@@ -1,7 +1,7 @@
 /*                  N M G _ R T _ I S E C T . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -356,6 +356,8 @@ get_pole_dist_to_face(struct ray_data *rd, struct vertexuse *vu, fastf_t *Pole, 
     point_t pcaA, pcaB;
     double distA, distB;
     int code, status;
+
+    VSETALL(pca_to_pole_vect, 0);
 
     /* find the points of closest approach
      * There are six distinct return values from bn_dist_pt3_lseg3():
@@ -1837,6 +1839,8 @@ isect_ray_snurb_face(struct ray_data *rd, struct faceuse *fu, struct face_g_snur
 	int planar;
 	point_t hit;
 	fastf_t dist;
+
+	VSETALL(hit, 0);
 
 	srf = BU_LIST_FIRST(face_g_snurb,  &bezier);
 	BU_LIST_DEQUEUE(&srf->l);

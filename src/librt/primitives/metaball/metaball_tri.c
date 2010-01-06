@@ -1,7 +1,7 @@
 /*			M B _ T R I . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2009 United States Government as represented by
+ * Copyright (c) 1985-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -47,6 +47,35 @@
 
 static int bitcount(unsigned char w) { return (w==0) ? 0 : bitcount(w>>1) + (w|1); }
 
+static int
+rt_metaball_realize_cube(struct shell *s, struct rt_metaball_internal *mb, fastf_t finalstep, int pv, point_t **p, fastf_t mtol)
+{
+    int pvbc;
+    struct vertex **corners[3];
+    struct faceuse *fu;
+
+    pvbc = bitcount(pv);
+    if (pvbc==1) {
+	point_t a, b, mid;
+	rt_metaball_find_intersection(&mid, mb, (const point_t *)&a, (const point_t *)&*b, mtol, finalstep);
+	bu_log("Intersect between %f, %f, %f and %f, %f, %f is at %f, %f, %f\n", V3ARGS(a), V3ARGS(b), V3ARGS(mid));
+    }
+    /* should the actual surface intersection be searched for, or
+     * just say the mid point is good enough? */
+
+    /* needs to be stitched into a triangle style NMG. Then
+     * decimated, perhaps? */
+
+    /* convert intersect to vertices */
+    p = p;
+
+    if ((fu=nmg_cmface(s, corners, 3)) == (struct faceuse *)NULL) {
+	bu_log("rt_metaball_tess() nmg_cmface() failed\n");
+	return -1;
+    }
+    return -1;
+}
+
 /**
  * R T _ M E T A B A L L _ T E S S
  *
@@ -61,6 +90,7 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
     fastf_t i, j, k, finalstep = +INFINITY;
     struct bu_vls times;
     struct wdb_metaballpt *mbpt;
+    struct shell *s;
 
     if (r) *r = NULL;
     if (m) NMG_CK_MODEL(m);
@@ -79,12 +109,19 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
     finalstep /= (fastf_t)1e5;
 
     radius = rt_metaball_get_bounding_sphere(&center, mb->threshold, mb);
+    if(radius < 0) {	/* no control points */
+	bu_log("Attempting to tesselate metaball with no control points");
+	return -1;
+    }
     rt_metaball_set_bbox(center, radius, &min, &max);
 
     /* TODO: get better sampling tolerance, unless this is "good enough" */
     mtol = ttol->abs;
     V_MAX(mtol, ttol->rel * radius);
     V_MAX(mtol, tol->dist);
+
+    *r = nmg_mrsv(m);	/* new empty nmg */
+    s = BU_LIST_FIRST(shell, &(*r)->s_hd);
 
     /* the incredibly naïve approach. Time could be cut in half by simply
      * caching 4 point values, more by actually marching or doing active
@@ -93,33 +130,31 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
     for (i = min[X]; i<max[X]; i+=mtol)
 	for (j = min[Y]; j<max[Y]; j+=mtol)
 	    for (k = min[Z]; k<max[Z]; k+=mtol) {
-		point_t p;
+		point_t p[8];
 		int pv = 0;
-		int pvbc;	/* bit count */
-		VSET(p, i,      j,      k);		pv |= rt_metaball_point_inside((const point_t *)&p, mb) << 0;
-		VSET(p, i,      j,      k+mtol);	pv |= rt_metaball_point_inside((const point_t *)&p, mb) << 1;
-		VSET(p, i,      j+mtol, k);		pv |= rt_metaball_point_inside((const point_t *)&p, mb) << 2;
-		VSET(p, i,      j+mtol, k+mtol);	pv |= rt_metaball_point_inside((const point_t *)&p, mb) << 3;
-		VSET(p, i+mtol, j,      k);		pv |= rt_metaball_point_inside((const point_t *)&p, mb) << 4;
-		VSET(p, i+mtol, j,      k+mtol);	pv |= rt_metaball_point_inside((const point_t *)&p, mb) << 5;
-		VSET(p, i+mtol, j+mtol, k);		pv |= rt_metaball_point_inside((const point_t *)&p, mb) << 6;
-		VSET(p, i+mtol, j+mtol, k+mtol);	pv |= rt_metaball_point_inside((const point_t *)&p, mb) << 7;
-		pvbc = bitcount(pv);
-		if (pvbc==1) {
-		    point_t a, b, mid;
-		    VSET(a, i, j, k);
-		    VSET(b, i, j, k+mtol);
-		    rt_metaball_find_intersection(&mid, mb, (const point_t *)&a, (const point_t *)&*b, mtol, finalstep);
-		    bu_log("Intersect between %f, %f, %f and %f, %f, %f is at %f, %f, %f\n", V3ARGS(a), V3ARGS(b), V3ARGS(mid));
-		}
-		/* should the actual surface intersection be searched for, or
-		 * just say the mid point is good enough? */
-		/* needs to be stitched into a triangle style NMG. Then
-		 * decimated, perhaps? */
+
+#define MEH(c,di,dj,dk) VSET(p[c], i+di, j+dj, k+dk); pv |= rt_metaball_point_inside((const point_t *)&p[c], mb) << c;
+		MEH(0, 0, 0, 0);
+		MEH(1, 0, 0, mtol);
+		MEH(2, 0, mtol, 0);
+		MEH(3, 0, mtol, mtol);
+		MEH(4, mtol, 0, 0);
+		MEH(5, mtol, 0, mtol);
+		MEH(6, mtol, mtol, 0);
+		MEH(7, mtol, mtol, mtol);
+#undef MET
+		if ( pv != 0 && pv != 255 )
+		    if(rt_metaball_realize_cube(s, mb, finalstep, pv, (point_t **)&p, mtol) == -1) {
+			bu_log("Error attempting to realize a cube O.o\n");
+			return -1;
+		    }
 	    }
 
     rt_get_timer(&times, NULL);
     bu_log("metaball tesselate: %s\n", bu_vls_addr(&times));
+
+    nmg_mark_edges_real(&s->l.magic);
+    nmg_region_a(*r, tol);
 
     bu_log("ERROR: rt_metaball_tess called() is not implemented\n");
     return -1;

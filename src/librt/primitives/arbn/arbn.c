@@ -1,7 +1,7 @@
 /*                          A R B N . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2009 United States Government as represented by
+ * Copyright (c) 1989-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -364,6 +364,9 @@ rt_arbn_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 	    int point_count;	/* # points on this line */
 	    point_t a, b;		/* start and end points */
 	    vect_t dist;
+
+	    VSETALL(a, 0);
+	    VSETALL(b, 0);
 
 	    /* If normals are parallel, no intersection */
 	    dot = VDOT(aip->eqn[i], aip->eqn[j]);

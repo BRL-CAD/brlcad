@@ -1,7 +1,7 @@
 /*                           A R S . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2009 United States Government as represented by
+ * Copyright (c) 1985-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -151,6 +151,8 @@ rt_ars_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     register int i, j;
     vect_t base_vect;
     int currec;
+
+    VSETALL(base_vect, 0);
 
     if (dbip) RT_CK_DBI(dbip);
 

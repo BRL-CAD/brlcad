@@ -1,7 +1,7 @@
 /*                        S K E T C H . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2009 United States Government as represented by
+ * Copyright (c) 1990-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -503,6 +503,10 @@ seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
     vect_t semi_a, semi_b;
     fastf_t radius;
     vect_t norm;
+
+    VSETALL(semi_a, 0);
+    VSETALL(semi_b, 0);
+    VSETALL(center, 0);
 
     lng = (long *)seg;
     switch (*lng) {
