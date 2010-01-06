@@ -64,6 +64,13 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* investigate impact of using lookup tables for root solving.
+  implement lookup tables for a range of linear, quadratic, cubic, and
+  quartic polynomial coefficients.  compare performance to root
+  solving without lookups.  evaluate memory use.  non-imaginary roots
+  are relatively sparse, may need to consider linked lists, hash
+  tables, or some hybrid storage arrangement.
+
 * make the 'tables' ged command not call system() on the "sort" unix
   command.  It should perform all sorting on the data directly in
   memory, at least without creating another process.
