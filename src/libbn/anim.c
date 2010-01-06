@@ -576,7 +576,7 @@ anim_quat2mat(mat_t m, const quat_t qq)
 }
 
 
-ovoid
+void
 anim_dir2mat(mat_t m, const vect_t d, const vect_t d2b)
 {
     fastf_t hypotenuse, sign;
