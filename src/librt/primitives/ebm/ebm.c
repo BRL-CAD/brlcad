@@ -62,6 +62,8 @@ struct rt_ebm_specific {
 
 #define RT_EBM_O(m) bu_offsetof(struct rt_ebm_internal, m)
 
+/* NOTE: export5 does not use this. You must update export5 if you change
+ * something here. */
 const struct bu_structparse rt_ebm_parse[] = {
     {"%s",	RT_EBM_NAME_LEN, "file", bu_offsetofarray(struct rt_ebm_internal, file), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "w",		RT_EBM_O(xdim),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -790,7 +792,14 @@ rt_ebm_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     BU_CK_EXTERNAL(ep);
 
     bu_vls_init(&str);
+    /*	This does not work. the bu parse require key/value pairs and interprets
+     *	mat=xx, as the end of a pair, making the next pair "xx,", which fails.
     bu_vls_struct_print(&str, rt_ebm_parse, (char *)&ebm);
+    */
+    bu_vls_printf(&str, "file=\"%s\" w=%d n=%d d=%f mat=\"%f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f\"\n",
+	    ebm.file, ebm.xdim, ebm.ydim, ebm.tallness, 
+	    V4ARGS(ebm.mat), V4ARGS(ebm.mat+4), V4ARGS(ebm.mat+8), V4ARGS(ebm.mat+12));
+
 
     ep->ext_nbytes = bu_vls_strlen(&str) + 1;
     ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "ebm external");
@@ -1651,16 +1660,15 @@ rt_ebm_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, ch
 	    /*XXX needs list_to_fastf_array function */
 	    ar_ptr = array;
 
-	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &ar_ptr, &len) !=
-		len) {
+	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &ar_ptr, &len) != len) {
 		bu_vls_printf(logstr, "ERROR: incorrect number of coefficents for matrix\n");
 		return BRLCAD_ERROR;
 	    }
 	    MAT_COPY(ebm->mat, array)
-		} else {
-		    bu_vls_printf(logstr, "ERROR: illegal argument, choices are F, W, N, or H\n");
-		    return BRLCAD_ERROR;
-		}
+	} else {
+	    bu_vls_printf(logstr, "ERROR: illegal argument, choices are F, W, N, or H\n");
+	    return BRLCAD_ERROR;
+	}
 	argc -= 2;
 	argv += 2;
     }
