@@ -64,6 +64,10 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* make the 'tables' ged command not call system() on the "sort" unix
+  command.  It should perform all sorting on the data directly in
+  memory, at least without creating another process.
+
 * make libwdb routines not free user-allocated memory.  notably
   mk_nmg() and mk_sketch() but probably others as well.
 
