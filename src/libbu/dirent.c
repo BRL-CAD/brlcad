@@ -36,7 +36,7 @@ bu_count_path(char *path, char *substr)
     DIR *dir = opendir(path);
     struct dirent *dp;
     while ((dp = readdir(dir)) != NULL) {
-	if (strcmp(substr, "") == 0) {
+	if (strlen(substr) == 0) {
 	    filecount++;
 	} else {
 	    if (strcmp(dp->d_name+(strlen(dp->d_name)-strlen(substr)), substr) == 0) {
@@ -55,7 +55,7 @@ bu_list_path(char *path, char *substr, char **filearray)
     DIR *dir = opendir(path);
     struct dirent *dp;
     while ((dp = readdir(dir)) != NULL) {
-	if (strcmp(substr, "") == 0) {
+	if (strlen(substr) == 0) {
 	    filecount++;
 	    filearray[filecount]=dp->d_name;
 	} else {

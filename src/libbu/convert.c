@@ -278,7 +278,7 @@ bu_cv_optimize(register int cookie)
 
     /* Run time check:  which kind of integers does this machine have? */
     if (Endian == END_NOTSET) {
-	size_t soli = sizeof(long int);
+	volatile size_t soli = sizeof(long int);
 	unsigned long int testval = 0;
 	register int i;
 	for (i=0; i<4; i++) {
