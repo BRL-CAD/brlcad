@@ -538,8 +538,17 @@ _bu_parse_double(const char *str, long int count, double *loc)
 
 	*loc++ = tmp_double;
 
+	/* skip any whitespace before separator */
+	while (*str && isspace(*str))
+	    str++;
+
 	/* skip the separator */
-	if (*str) str++;
+	if (*str && !isdigit(*str) && *str != '-' && *str != '+' && *str != '.')
+	    str++;
+
+	/* skip any whitespace after separator */
+	while (*str && isspace(*str))
+	    str++;
     }
     return 0;
 }
@@ -653,8 +662,18 @@ _bu_struct_lookup(register const struct bu_structparse *sdp, register const char
 			    *(ip++) = tmpi;
 			    pv = cp;
 			}
+
+			/* skip any whitespace before separator */
+			while (*pv && isspace(*pv))
+			    pv++;
+
 			/* skip the separator */
-			if (*pv) pv++;
+			if (*pv && !isdigit(*pv) && *pv != '+' && *pv != '-')
+			    pv++;
+
+			/* skip any whitespace after separator */
+			while (*pv && isspace(*pv))
+			    pv++;
 		    }
 		}
 		break;
@@ -694,8 +713,18 @@ _bu_struct_lookup(register const struct bu_structparse *sdp, register const char
 			    *(ip++) = tmpi;
 			    pv = cp;
 			}
+
+			/* skip any whitespace before separator */
+			while (*pv && isspace(*pv))
+			    pv++;
+
 			/* skip the separator */
-			if (*pv) pv++;
+			if (*pv && !isdigit(*pv) && *pv != '+' && *pv != '-')
+			    pv++;
+
+			/* skip any whitespace after separator */
+			while (*pv && isspace(*pv))
+			    pv++;
 		    }
 		}
 		break;
