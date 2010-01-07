@@ -13,6 +13,11 @@
 ////////////////////////////////////////////////////////////////
 */
 
+#include "brlcad_config.h"
+#ifdef HAVE_IEEEFP_H
+# include <ieeefp.h>
+#endif
+
 #include "opennurbs.h"
 
 bool ON_IsValid(double x)
