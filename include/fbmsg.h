@@ -20,13 +20,10 @@
 /** @addtogroup libfb */
 /** @{ */
 /** @file fbmsg.h
+ *
  *  Types of packages used for the remote frame buffer
  *  communication between libfb/if_remote.c and fbserv/fbserv.c.
  *  This file is shared by those two modules.
- *
- *
- *  @author	Phil Dykstra
- *  @author	Michael John Muuss
  *
  */
 /** @} */

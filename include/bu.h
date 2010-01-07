@@ -5619,11 +5619,6 @@ BU_EXPORT BU_EXTERN(int Bu_Init,
 /** @{ */
 /** @file lex.c
  *
- * @author
- * Christopher T. Johnson
- *
- * @par Source
- * Geometric Solutions, Inc.
  */
 
 #define BU_LEX_ANY 0	/* pseudo type */

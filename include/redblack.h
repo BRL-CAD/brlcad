@@ -28,7 +28,6 @@
  *	of T. H. Cormen, C. E. Leiserson, and R. L. Rivest,
  *	_Introduction to algorithms_, MIT Press, Cambridge, MA, 1990.
  *
- *	@author:	Paul Tanenbaum
  */
 #warning "The redblack.h header is OBSOLETE -- use bu.h instead"
 /** @} */

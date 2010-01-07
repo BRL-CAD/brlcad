@@ -59,9 +59,6 @@
  * machines of dissimilar types.  In time, an external representation
  * for floats might be implemented.
  *
- *  @author
- *	Michael John Muuss
- *
  */
 
 #ifndef __DB_H__

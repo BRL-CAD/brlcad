@@ -26,9 +26,8 @@
  *
  * The majority of the code in this compatibility library comes from
  * sources external to BRL-CAD and as such, refer to each individual
- * file for authorship and license information.  All code included is
- * either covered by the LGPL, BSD license, or is in the public
- * domain.
+ * file for license information.  All code included is either covered
+ * by the LGPL, BSD license, or is in the public domain.
  *
  */
 
