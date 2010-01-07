@@ -21,9 +21,6 @@
 /** @{ */
 /** @file dmdfb.h
  *
- *  Author -
- *	Gary S. Moss
- *
  */
 /** @} */
 

@@ -23,8 +23,6 @@
  * useful on Mac OS X where X11 applications are not necessarily given
  * focus after the application is launched.
  *
- * Author -
- *   Christopher Sean Morrison
  */
 
 #include "common.h"

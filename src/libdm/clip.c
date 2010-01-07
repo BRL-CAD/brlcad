@@ -23,12 +23,9 @@
  *	clip	clip a 2-D integer line seg against the size of the display
  *	vclip	clip a 3-D floating line segment against a bounding RPP.
  *
- *  Authors -
- *	clip() was written by Doug Kingston, 14 October 81
- *	Based on the clipping routine in "Principles of Computer
- *	Graphics" by Newman and Sproull, 1973, McGraw/Hill.
- *
- *	vclip() was adapted from RT by Mike Muuss, 17 January 1985.
+ * Authors - clip() was started on 14 October 81, Based on the
+ * clipping routine in "Principles of Computer Graphics" by Newman and
+ * Sproull, 1973, McGraw/Hill.
  *
  */
 

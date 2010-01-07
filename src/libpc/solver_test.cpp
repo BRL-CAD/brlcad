@@ -21,8 +21,6 @@
  *
  * @brief Simple Test cases for Constraint Solver
  *
- * @author Dawn Thomas
- *
  */
 
 #include "common.h"

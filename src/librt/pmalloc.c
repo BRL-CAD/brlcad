@@ -23,21 +23,12 @@
  *
  * The Princeton memory allocater.
  *
- * Functions -
- * rt_pmalloc
- * rt_pfree
- * rt_prealloc
- * rt_forget
- *
- * Author -
- * Wiliam L. Sebok
- *
- * Modified:
- * John Anderson - modified for use in multi-threaded applications.
- * It now uses a field from the BRL-CAD resource structure
- * to store the memory blocks. Also replaced mlindx() routine
- * with a faster (but less general) version that takes advantage
- * of the fact that bucket sizes increase by powers of two.
+ * Original Author was Wiliam L. Sebok but later modified by John
+ * Anderson for use in multi-threaded applications.  It now uses a
+ * field from the BRL-CAD resource structure to store the memory
+ * blocks. Also replaced mlindx() routine with a faster (but less
+ * general) version that takes advantage of the fact that bucket sizes
+ * increase by powers of two.
  *
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * A "smarter" malloc v1.0			William L. Sebok

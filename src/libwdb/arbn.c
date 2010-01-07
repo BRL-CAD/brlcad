@@ -21,9 +21,6 @@
  *
  *  libwdb support for writing an ARBN.
  *
- *  Author -
- *	Michael John Muuss
- *
  */
 
 #include "common.h"

@@ -18,12 +18,8 @@
  * information.
  */
 /** @file sh_spm.c
- *			S P M . C
  *
  *  Spherical Data Structures/Texture Maps
- *
- *  Author -
- *	Phillip Dykstra
  *
  */
 

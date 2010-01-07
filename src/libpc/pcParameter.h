@@ -23,7 +23,6 @@
  *
  * Parameter Class abstraction over the Variable class
  *
- * @author Dawn Thomas
  */
 #ifndef __PCPARAMETER_H__
 #define __PCPARAMETER_H__

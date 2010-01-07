@@ -22,9 +22,6 @@
  *  Library stub for writing BREP objects into
  *  MGED databases from arbitrary procedures.
  *
- *  Authors -
- *	Jason Owens
- *
  */
 
 #include "common.h"

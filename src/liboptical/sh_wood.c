@@ -8,7 +8,6 @@
  * the BRL-CAD package.
  */
 /** @file sh_wood.c
- *  			W O O D . C
  *
  *	Simple wood-grain texture
  *

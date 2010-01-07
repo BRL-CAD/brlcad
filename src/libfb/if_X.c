@@ -23,9 +23,6 @@
  *
  *  X Window System (X11) libfb interface.
  *
- *  Authors -
- *	Phillip Dykstra
- *
  */
 /** @} */
 

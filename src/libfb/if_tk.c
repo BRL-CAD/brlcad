@@ -23,8 +23,6 @@
  *
  * Tk libfb interface.
  *
- * Author -
- *   Tim J. Myers
  */
 /** @} */
 

@@ -23,7 +23,6 @@
  *
  * VCSet Class Methods
  * 
- * @author Dawn Thomas
  */
 #include "pcVCSet.h"
 #include "pc.h"

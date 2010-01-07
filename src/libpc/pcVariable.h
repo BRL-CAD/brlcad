@@ -23,7 +23,6 @@
  *
  * Class definition of Variable & Domain
  *
- * @author Dawn Thomas
  */
 #ifndef __PCVARIABLE_H__
 #define __PCVARIABLE_H__

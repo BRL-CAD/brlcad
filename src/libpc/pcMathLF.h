@@ -23,7 +23,6 @@
  *
  * Lazy Function wrappers for Math VM
  *
- * @author Dawn Thomas
  */
 #ifndef __PCMATHLF_H__
 #define __PCMATHLF_H__

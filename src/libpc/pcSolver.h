@@ -23,7 +23,6 @@
  *
  * various constraint solving methods
  *
- * @author Dawn Thomas
  */
 #ifndef __PCSOLVER_H__
 #define __PCSOLVER_H__

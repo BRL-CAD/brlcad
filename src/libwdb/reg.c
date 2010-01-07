@@ -25,11 +25,6 @@
  *
  *  It is expected that this library will grow as experience is gained.
  *
- *  Authors -
- *	Michael John Muuss
- *	Paul R. Stay
- *	Bill Mermagen Jr.
- *
  */
 
 #include "common.h"

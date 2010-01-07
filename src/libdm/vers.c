@@ -17,15 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file vers.c
- *
- * version information about LIBDM
- *
- * Author -
- *   Christopher Sean Morrison
- */
 
 #include "common.h"
+
 #include "bio.h"
 
 #include "dm.h"

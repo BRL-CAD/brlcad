@@ -33,11 +33,6 @@
  *
  *  Return codes of 0 are OK, -1 signal an error.
  *
- *  Authors -
- *	Michael John Muuss
- *	Paul R. Stay
- *	Susanne Muuss, J.D.
- *
  */
 
 #include "common.h"
