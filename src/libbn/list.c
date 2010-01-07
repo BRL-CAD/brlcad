@@ -21,11 +21,10 @@
 /** @{ */
 /** @file libbn/list.c
  *
- *  NOTE that tp_2list() and tp_3list() are good candidates to become
- *  intrinsic parts of plot3.c, for efficiency reasons.
+ * NOTE that tp_2list() and tp_3list() are good candidates to become
+ * intrinsic parts of plot3.c, for efficiency reasons.
  *
- * @author Michael John Muuss
- * @n	August 04, 1978
+ * Originally written in August 04, 1978
  */
 
 #include "common.h"

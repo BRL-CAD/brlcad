@@ -34,9 +34,7 @@
  * and delta y (xincr, yincr) which describes the interval to
  * the start of the next tick.
  *
- *  @author
- *	Michael John Muuss
- *@n	August 01, 1978
+ * Originally written on August 01, 1978
  *
  */
 /** @} */
