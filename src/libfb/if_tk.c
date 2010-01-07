@@ -263,7 +263,12 @@ tk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
 	    fb_log( "\n" );
     }
 
-    Tk_PhotoImageBlock block = {
+    // Note that Tk_PhotoPutBlock claims to have a faster
+    // copy method when pixelSize is 4 and alphaOffset is
+    // 3 - perhaps output could be massaged to generate this
+    // type of information and speed up the process?
+    //
+   Tk_PhotoImageBlock block = {
 	&pixp,
 	count,
 	1,
@@ -276,9 +281,17 @@ tk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
 	    0
 	}
     };
-
+ 
+    // the pixelp array (as of r37151) is getting 492 pixels
+    // rather than 512 for a default sized test case - 
+    // that is causing Tk_PhotoPutBlock to crash on a
+    // memory access error.  Need to find out the cause
+    // of the truncated pixel array.  Forcing count to
+    // match the array size doesn't result in a picture
+    // display, although it does complete the raytrace
+    // and exit.
+ 
     Tk_PhotoPutBlock(fbinterp, fbphoto, &block, x, ifp->if_height-y, count, 1, TK_PHOTO_COMPOSITE_SET);
-
     return	count;
 }
 
