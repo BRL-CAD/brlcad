@@ -34,6 +34,8 @@
 
 /* for snprintf */
 #include <stdio.h>
+/* for strlen */
+#include <string.h>
 
 
 /* FIXED VALUES */
