@@ -26,8 +26,6 @@
  * should use the library-specific LIBRARY_version() functions.
  * (e.g. bu_version())
  *
- * Author -
- *   Christopher Sean Morrison
  */
 
 #include "common.h"
