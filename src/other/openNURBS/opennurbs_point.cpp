@@ -13,7 +13,7 @@
 ////////////////////////////////////////////////////////////////
 */
 
-#include "brlcad_config.h"
+#include "common.h"
 #ifdef HAVE_IEEEFP_H
 # include <ieeefp.h>
 #endif
