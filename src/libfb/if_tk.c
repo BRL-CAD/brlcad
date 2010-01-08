@@ -46,6 +46,7 @@ Tk_PhotoHandle fbphoto;
 
 int tk_close_existing()
 {
+    return 0;
 }
 
 HIDDEN int	fb_tk_open(FBIO *ifp, char *file, int width, int height),
@@ -110,7 +111,13 @@ FBIO tk_interface = {
     0,			/* page_ref */
     0L,			/* page_curpos */
     0L,			/* page_pixels */
-    0			/* debug */
+    0,			/* debug */
+    {0}, /* u1 */
+    {0}, /* u2 */
+    {0}, /* u3 */
+    {0}, /* u4 */
+    {0}, /* u5 */
+    {0}  /* u6 */
 };
 
 
@@ -288,9 +295,14 @@ tk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
     // match the array size doesn't result in a picture
     // display, although it does complete the raytrace
     // and exit.
- 
+
+#if defined(TK_MAJOR_VERSION) && TK_MAJOR_VERSION == 8 && defined(TK_MINOR_VERSION) && TK_MINOR_VERSION < 5
     Tk_PhotoPutBlock(fbphoto, &block, x, ifp->if_height-y, count, 1, TK_PHOTO_COMPOSITE_SET);
-    return	count;
+#else
+    Tk_PhotoPutBlock(fbinterp, fbphoto, &block, x, ifp->if_height-y, count, 1, TK_PHOTO_COMPOSITE_SET);
+#endif
+
+    return count;
 }
 
 HIDDEN int
