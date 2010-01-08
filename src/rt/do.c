@@ -590,8 +590,7 @@ do_frame(int framenumber)
     do_prep(rtip);
 
     if (rt_verbosity & VERBOSE_VIEWDETAIL)
-	bu_log("Tree: %d solids in %d regions\n",
-	       rtip->nsolids, rtip->nregions);
+	bu_log("Tree: %d solids in %d regions\n", rtip->nsolids, rtip->nregions);
 
     if (Query_one_pixel) {
 	query_rdebug = R_DEBUG;
@@ -600,7 +599,10 @@ do_frame(int framenumber)
     }
 
     if (rtip->nsolids <= 0)
-	bu_exit(3, "rt ERROR: No solids\n");
+	bu_exit(3, "ERROR: No primitives remaining.\n");
+
+    if (rtip->nregions <= 0)
+	bu_exit(3, "ERROR: No regions remaining.\n");
 
     if (rt_verbosity & VERBOSE_VIEWDETAIL)
 	bu_log("Model: X(%g, %g), Y(%g, %g), Z(%g, %g)\n",
@@ -936,9 +938,10 @@ do_ae(double azim, double elev)
     struct rt_i *rtip = ap.a_rt_i;
 
     if (rtip->nsolids <= 0)
-	bu_exit(EXIT_FAILURE, "do_ae: no solids active\n");
+	bu_exit(EXIT_FAILURE, "ERROR: no primitives active\n");
+
     if (rtip->nregions <= 0)
-	bu_exit(EXIT_FAILURE, "do_ae: no regions active\n");
+	bu_exit(EXIT_FAILURE, "ERROR: no regions active\n");
 
     if (rtip->mdl_max[X] >= INFINITY) {
 	bu_log("do_ae: infinite model bounds? setting a unit minimum\n");
