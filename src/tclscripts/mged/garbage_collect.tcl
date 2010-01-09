@@ -230,7 +230,7 @@ proc garbage_collect { args } {
     puts "old size: $old_size bytes, new size: $new_size bytes"
     set percentage [format "%.1f" [expr \( $old_size - $new_size \) / \( $old_size / 100.0 \)]]
     if { $new_size < $old_size } {
-	puts "Reduced by [expr $old_size - $new_size] bytes ($percentage%)"
+	puts "Reduced by [expr $old_size - $new_size] bytes ($percentage% savings)"
 	if { $percentage > 50.0 && $old_size > 512 } {
 	    puts "WARNING: Database size decreased substantially (more than 50%)"
 	    incr verify_failures
@@ -238,7 +238,7 @@ proc garbage_collect { args } {
     } elseif { $new_size == $old_size } {
 	puts "Database size did NOT change."
     } else {
-	puts "Increased by [expr $new_size - $old_size] bytes ($percentage%)"
+	puts "Increased by [expr $new_size - $old_size] bytes ($percentage% savings)"
 	if { $old_size > 512 } {
 	    puts "Database got bigger!  This should generally not happen."
 	    incr verify_failures
