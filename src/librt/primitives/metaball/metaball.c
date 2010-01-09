@@ -339,6 +339,10 @@ int
 rt_metaball_find_intersection(point_t *intersect, const struct rt_metaball_internal *mb, const point_t *a, const point_t *b, fastf_t step, const fastf_t finalstep)
 {
     point_t mid;
+    const point_t *midp;
+
+    midp = (const point_t *)&mid;
+
     VADD2(mid, *a, *b);
     VSCALE(mid, mid, 0.5);
 
@@ -349,7 +353,7 @@ rt_metaball_find_intersection(point_t *intersect, const struct rt_metaball_inter
 
     /* should probably make a or b necessarily inside, to eliminate one point
      * computation? */
-    return rt_metaball_find_intersection(intersect, mb, (const point_t *)&mid, (rt_metaball_point_inside(a, mb) == rt_metaball_point_inside((const point_t *)&mid, mb)) ?b:a , step/2.0, finalstep);
+    return rt_metaball_find_intersection(intersect, mb, (const point_t *)&mid, (rt_metaball_point_inside(a, mb) == rt_metaball_point_inside(midp, mb)) ?b:a , step/2.0, finalstep);
 }
 
 
@@ -839,8 +843,11 @@ rt_metaball_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int arg
 
     while(1) {
 	point_t loc;
+	const point_t *locp;
 	fastf_t fldstr, goo;
 	int len;
+
+	locp = (const point_t *)&loc;
 
 	while( pts < pend && *pts != '{' ) ++pts;
 	if(pts >= pend) break;
@@ -851,7 +858,7 @@ rt_metaball_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int arg
 	    return BRLCAD_ERROR;
 	}
 	pts++;
-	if(rt_metaball_add_point (mb, (const point_t *)&loc, fldstr, goo)) {
+	if(rt_metaball_add_point (mb, locp, fldstr, goo)) {
 	    bu_vls_printf(logstr, "Failure adding point: {%f %f %f %f %f}", V3ARGS(loc), fldstr, goo);
 	    return BRLCAD_ERROR;
 	}
