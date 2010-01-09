@@ -38,6 +38,9 @@ proc garbage_collect { args } {
 	puts "keeping all existing top-level objects to a new file and, after"
 	puts "verifying that all objects were successfully saved, will replace"
 	puts "the currently open geometry database with the new file."
+	puts ""
+	puts "DUE TO THE POTENTIAL FOR DATA CORRUPTION, PLEASE MANUALLY BACK UP"
+	puts "YOUR GEOMETRY FILE BEFORE RUNNING 'garbage_collect'."
 	return
     }
 
