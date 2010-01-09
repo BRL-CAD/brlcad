@@ -103,19 +103,14 @@ union E_tree {
 #define E_TREE_MAGIC 0x45545245
 #define CK_ETREE(_p)		BU_CKMAG(_p, E_TREE_MAGIC, "struct E_tree")
 
-void
-Edrawtree(int dp)
-{
-    return;
-}
 
 HIDDEN union E_tree *
 add_solid(const struct directory *dp,
 	  matp_t mat,
 	  struct _ged_client_data *dgcdp)
 {
-    union E_tree *eptr;
-    struct nmgregion *r;
+    union E_tree *eptr = NULL;
+    struct nmgregion *r = NULL;
     struct rt_db_internal intern;
     int id;
     int solid_is_plate_mode_bot=0;

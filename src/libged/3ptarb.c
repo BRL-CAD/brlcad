@@ -103,7 +103,7 @@ ged_3ptarb(struct ged *gedp, int argc, const char *argv[])
     }
     VCROSS(norm, vec1, vec2);
     length = MAGNITUDE( norm );
-    if (length == 0.0) {
+    if (NEAR_ZERO(length, SMALL_FASTF)) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: points are colinear\n", argv[0]);
 	return GED_ERROR;
     }
@@ -116,7 +116,7 @@ ged_3ptarb(struct ged *gedp, int argc, const char *argv[])
 
     switch (argv[11][0]) {
 	case 'x':
-	    if (norm[0] == 0.0) {
+	    if (NEAR_ZERO(norm[0], SMALL_FASTF)) {
 		bu_vls_printf(&gedp->ged_result_str, "%s: X not unique in this face\n", argv[0]);
 		return GED_ERROR;
 	    }
@@ -136,7 +136,7 @@ ged_3ptarb(struct ged *gedp, int argc, const char *argv[])
 	    break;
 
 	case 'y':
-	    if (norm[1] == 0.0) {
+	    if (NEAR_ZERO(norm[1], SMALL_FASTF)) {
 		bu_vls_printf(&gedp->ged_result_str, "%s: Y not unique in this face\n", argv[0]);
 		return GED_ERROR;
 	    }
@@ -156,7 +156,7 @@ ged_3ptarb(struct ged *gedp, int argc, const char *argv[])
 	    break;
 
 	case 'z':
-	    if (norm[2] == 0.0) {
+	    if (NEAR_ZERO(norm[2], SMALL_FASTF)) {
 		bu_vls_printf(&gedp->ged_result_str, "%s: Z not unique in this face\n", argv[0]);
 		return GED_ERROR;
 	    }
@@ -185,7 +185,8 @@ ged_3ptarb(struct ged *gedp, int argc, const char *argv[])
 	return GED_MORE;
     }
 
-    if ((thick = (atof( argv[14] ))) == 0.0) {
+    thick = atof(argv[14]);
+    if (NEAR_ZERO(thick, SMALL_FASTF)) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: thickness = 0.0\n", argv[0]);
 	return GED_ERROR;
     }
