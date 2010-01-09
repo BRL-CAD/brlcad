@@ -2084,12 +2084,14 @@ rt_arb_edit(struct bu_vls *error_msg_ret,
      */
     edptr = final;	/* point to the correct location */
     for (i=0; i<2; i++) {
+	const plane_t *c_planes = (const plane_t *)planes;
+
 	if ((p1 = *edptr++) == -1)
 	    break;
 
 	/* intersect proper planes to define vertex p1 */
 
-	if (rt_arb_3face_intersect(arb->pt[p1], (const plane_t *)planes, arb_type, p1*3))
+	if (rt_arb_3face_intersect(arb->pt[p1], c_planes, arb_type, p1*3))
 	    goto err;
     }
 
