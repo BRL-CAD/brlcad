@@ -55,6 +55,14 @@ changes made.  See document footer for additional details.
 --- 2009-09-29  Release 7.16.0                                     ---
 ----------------------------------------------------------------------
 
+Considerable development continues towards improving BRL-CAD's
+geometry support through the addition of several new geometry
+importers.  This release includes initial support for 3DM (Rhino3D)
+files, OBJ (Alias Wavefront) files, and STEP geometry (ISO 10303,
+AP203) files.  Additionally, development on the Archer modeling tool
+continues as MGED features are merged in and new features, such as
+undo support and graphical editing, are expanded upon.
+
 * initial step-g geometry importer - Keith Bowman
 * added '-u' flag to 3dm-g - uses UUID for import names - Cliff Yapp
 * improved fb-png and pix-png defaut gamma correction - Sean Morrison
