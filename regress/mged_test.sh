@@ -9,11 +9,23 @@ NAME_OF_THIS=`basename $0`
 PATH_TO_THIS=`dirname $0`
 THIS="$PATH_TO_THIS/$NAME_OF_THIS"
 
-MGED="/Users/cyapp/brlcad-install/bin/mged"
+MGED="$1/src/mged/mged"
 if test ! -f "$MGED" ; then
-    echo "Unable to find mged, aborting"
-    exit 1  
+    MGED="$PATH_TO_THIS/../src/mged/mged"
+    if test ! -f "$MGED" ; then
+	MGED="../src/mged/mged"
+	if test ! -f "$MGED" ; then
+	    echo "Unable to find mged, aborting"
+	    exit 1
+	fi
+    fi
 fi
+MGEDDIR="`dirname $MGED`"
+
+LD_LIBRARY_PATH=$MGEDDIR/../../src/other/tcl/unix:$MGEDDIR/../../src/other/tk/unix:$1/src/other/tcl/unix:$1/src/other/tk/unix:$LD_LIBRARY_PATH
+DYLD_LIBRARY_PATH=$MGEDDIR/../../src/other/tcl/unix:$MGEDDIR/../../src/other/tk/unix:$1/src/other/tcl/unix:$1/src/other/tk/unix:$DYLD_LIBRARY_PATH
+export LD_LIBRARY_PATH DYLD_LIBRARY_PATH
+
 
 # Clear out older results files
 rm -f mged.g mged.log mged_files
