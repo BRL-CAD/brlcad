@@ -82,6 +82,7 @@ struct _ged_client_data {
     int				shaded_mode_override;
     fastf_t			transparency;
     int				dmode;
+    int				hiddenLine;
     /* bigE related members */
     struct application		*ap;
     struct bu_ptbl		leaf_list;

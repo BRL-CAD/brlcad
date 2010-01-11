@@ -181,6 +181,7 @@ ged_drawH_part2(int dashflag, struct bu_list *vhead, struct db_full_path *pathp,
 	sp->s_regionid = tsp->ts_regionid;
 	sp->s_transparency = dgcdp->transparency;
 	sp->s_dmode = dgcdp->dmode;
+	sp->s_hiddenLine = dgcdp->hiddenLine;
 
 	/* Add to linked list of solid structs */
 	bu_semaphore_acquire(RT_SEM_MODEL);
@@ -598,7 +599,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 
 	/* Parse options. */
 	bu_optind = 0;		/* re-init bu_getopt() */
-	while ((c = bu_getopt(argc, (char * const *)argv, "dfm:nqstuvwx:C:STP:A:oR")) != EOF) {
+	while ((c = bu_getopt(argc, (char * const *)argv, "dfhm:nqstuvwx:C:STP:A:oR")) != EOF) {
 	    switch (c) {
 		case 'u':
 		    dgcdp->draw_edge_uses = 1;
@@ -659,6 +660,10 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		    dgcdp->wireframe_color[2] = b;
 		}
 		break;
+		case 'h':
+		    dgcdp->hiddenLine = 1;
+		    dgcdp->shaded_mode_override = _GED_SHADED_MODE_ALL;
+		    break;
 		case 'm':
 		    /* clamp it to [-infinity, 2] */
 		    dgcdp->shaded_mode_override = atoi(bu_optarg);
