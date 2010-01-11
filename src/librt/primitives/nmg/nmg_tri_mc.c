@@ -28,22 +28,24 @@
 /** @} */
 
 /* rough game plan
- *   [ ] develop/proof metaball primitive tesselation using MC
+ *   [ ] develop/proof metaball primitive tesselation using MC (end of Jan10)
  *       [ ] asc-g/g-asc of metaballs for regression/comparison testing
  *           [X] asc-g
  *           [X] g-asc
- *	     [ ] regression shtuff
+ *	     [ ] regression shtuff (on hold; regress/ has issues)
  *       [ ] edge solve cubes
- *       [ ] write compiled table shtuff (use existing table, the hex/index one?)
+ *       [X] write compiled table shtuff (use existing table, the hex/index one?)
  *       [ ] produce NMG mesh
+ * ============================================================
  *       [ ] experiment with decimating
  *   [ ] hoist code where final cube edge intersections is known
  *   [ ] implement ray-firing to find edge intersects
  *   [ ] hoise table stuff
- *   [ ] hoist NMG mesh writer.
+ *   [ ] hoist NMG mesh writer. (End of Feb10)
+ * ============================================================
  *   [ ] try decimation?
  *   [ ] ???
- *   [ ] profit!
+ *   [ ] profit! (Mid Apr10)
  *   [ ] explore optimizations if time left?
  *   [ ] compare old nmg tesselator for accuracy/performance/robustness?
  */
