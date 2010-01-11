@@ -34,24 +34,44 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 ###
-set -x
+
 # Ensure /bin/sh
 export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 
 # source common library functionality, setting ARGS, NAME_OF_THIS,
 # PATH_TO_THIS, and THIS.
-. library.sh
+. $1/library.sh
 
+RT="`ensearch rt/rt`"
+if test ! -f "$RT" ; then
+    echo "Unable to find rt, aborting"
+    exit 1
+fi
 MGED="`ensearch mged/mged`"
 if test ! -f "$MGED" ; then
     echo "Unable to find mged, aborting"
+    exit 1
+fi
+A2P="`ensearch conv/asc2pix`"
+if test ! -f "$A2P" ; then
+    echo "Unable to find asc2pix, aborting"
+    exit 1
+fi
+GENCOLOR="`ensearch util/gencolor`"
+if test ! -f "$GENCOLOR" ; then
+    echo "Unable to find gencolor, aborting"
+    exit 1
+fi
+PIXDIFF="`ensearch util/pixdiff`"
+if test ! -f "$PIXDIFF" ; then
+    echo "Unable to find pixdiff, aborting"
     exit 1
 fi
 
 
 rm -f dsp.dat ebm.bw solids.rt solids.g solids.log solids.rt.pix solids.pix.diff solids.mged
 
-../src/conv/asc2pix > dsp.dat << EOF
+$A2P > dsp.dat << EOF
 01BF01
 A101A7
 01C001
@@ -782,7 +802,7 @@ EOF
 
 
 # Trim 1025 byte sequence down to exactly 1024.
-../src/util/gencolor -r205 0 16 32 64 128 | dd of=ebm.bw bs=1024 count=1 > solids.log 2>&1
+$GENCOLOR -r205 0 16 32 64 128 | dd of=ebm.bw bs=1024 count=1 > solids.log 2>&1
 
 cat > solids.mged <<EOF
 opendb solids.g y
@@ -933,7 +953,8 @@ if [ ! -f solids.rt ] ; then
     exit 1
 fi
 mv solids.rt solids.orig.rt
-sed "s,^rt,../src/rt/rt -B -P 1 ," < solids.orig.rt > solids.rt
+export RT
+sed "s,^rt,$RT -B -P 1 ," < solids.orig.rt > solids.rt
 rm -f solids.orig.rt
 chmod 775 solids.rt
 
@@ -947,8 +968,8 @@ if [ ! -f $PATH_TO_THIS/solidspix.asc ] ; then
 	echo No reference file for solids.rt.pix
 	exit 1
 fi
-../src/conv/asc2pix < $1/regress/solidspix.asc > solids_ref.pix
-../src/util/pixdiff solids.rt.pix solids_ref.pix > solids.pix.diff \
+$A2P < $1/regress/solidspix.asc > solids_ref.pix
+$PIXDIFF solids.rt.pix solids_ref.pix > solids.pix.diff \
     2> solids-diff.log
 
 tr , '\012' < solids-diff.log | awk '/many/ {print $0}'
