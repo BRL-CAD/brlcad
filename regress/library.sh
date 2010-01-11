@@ -43,6 +43,10 @@ PATH_TO_THIS=`dirname $ARG0`
 THIS="$PATH_TO_THIS/$NAME_OF_THIS"
 export ARGS ARG0 ARG1 NAME_OF_THIS PATH_TO_THIS THIS
 
+LD_LIBRARY_PATH=../src/other/tcl/unix:../src/other/tk/unix:$LD_LIBRARY_PATH
+DYLD_LIBRARY_PATH=../src/other/tcl/unix:../src/other/tk/unix:$DYLD_LIBRARY_PATH
+export LD_LIBRARY_PATH DYLD_LIBRARY_PATH
+
 
 ensearch ( ) {
     ensearch_file="$1"
@@ -62,11 +66,6 @@ ensearch ( ) {
 	    echo "$ensearch_binary"
 
 	    ensearch_path="`dirname $ensearch_binary`"
-
-	    LD_LIBRARY_PATH=$ensearch_path/../../src/other/tcl/unix:$$ensearch_path/../../src/other/tk/unix:$LD_LIBRARY_PATH
-	    DYLD_LIBRARY_PATH=$ensearch_path/../../src/other/tcl/unix:$$ensearch_path/../../src/other/tk/unix:$DYLD_LIBRARY_PATH
-	    export LD_LIBRARY_PATH DYLD_LIBRARY_PATH
-
 	    return
 	fi
     done
