@@ -41,39 +41,21 @@
 # Ensure /bin/sh
 export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 
-# save the precious args
-ARGS="$*"
-NAME_OF_THIS=`basename $0`
-PATH_TO_THIS=`dirname $0`
-THIS="$PATH_TO_THIS/$NAME_OF_THIS"
+# source common library functionality, setting ARGS, NAME_OF_THIS,
+# PATH_TO_THIS, and THIS.
+. library.sh
 
-F4G="$1/src/conv/fast4-g"
+F4G="`ensearch conv/fast4-g`"
 if test ! -f "$F4G" ; then
-    F4G="$PATH_TO_THIS/../src/conv/fast4-g"
-    if test ! -f "$F4G" ; then
-	F4G="../src/conv/fast4-g"
-	if test ! -f "$F4G" ; then
-	    echo "Unable to find fast4-g, aborting"
-	    exit 1
-	fi
-    fi
+    echo "Unable to find fast4-g, aborting"
+    exit 1
 fi
-G_DIFF="$1/src/gtools/g_diff"
-if test ! -f "$G_DIFF" ; then
-    G_DIFF="$PATH_TO_THIS/../src/gtools/g_diff"
-    if test ! -f "$G_DIFF" ; then
-	G_DIFF="../src/gtools/g_diff"
-	if test ! -f "$G_DIFF" ; then
-	    echo "Unable to find g_diff, aborting"
-	    exit 1
-	fi
-    fi
-fi
-BINDIR="`dirname $G_DIFF`"
 
-LD_LIBRARY_PATH=$BINDIR/../../src/other/tcl/unix:$BINDIR/../../src/other/tk/unix:$1/src/other/tcl/unix:$1/src/other/tk/unix:$LD_LIBRARY_PATH
-DYLD_LIBRARY_PATH=$BINDIR/../../src/other/tcl/unix:$BINDIR/../../src/other/tk/unix:$1/src/other/tcl/unix:$1/src/other/tk/unix:$DYLD_LIBRARY_PATH
-export LD_LIBRARY_PATH DYLD_LIBRARY_PATH
+G_DIFF="`ensearch gtools/g_diff`"
+if test ! -f "$G_DIFF" ; then
+    echo "Unable to find g_diff, aborting"
+    exit 1
+fi
 
 
 echo "testing fast4-g importer..."
