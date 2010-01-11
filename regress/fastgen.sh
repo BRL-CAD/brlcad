@@ -45,7 +45,7 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 # PATH_TO_THIS, and THIS.
 . $1/regress/library.sh
 
-F4G="`ensearch conv/fastf4_g`"
+F4G="`ensearch conv/fast4-g`"
 if test ! -f "$F4G" ; then
     echo "Unable to find fast4-g, aborting"
     exit 1
@@ -98,12 +98,12 @@ if test ! -f fastgen_unix.g ; then
 fi
 
 echo "Creating an input file with DOS line-endings"
-if test ! -f fastgen_dos.fast4 ; then
+if test ! -f $PATH_TO_THIS/fastgen_dos.fast4 ; then
     echo "Unable to find fastgen_dos.fast4"
     exit 1
 fi
 rm -f fastgen_box.fast4
-cp fastgen_dos.fast4 fastgen_box.fast4
+cp $PATH_TO_THIS/fastgen_dos.fast4 fastgen_box.fast4
 
 rm -f fastgen_dos.g
 $F4G fastgen_box.fast4 fastgen_dos.g
@@ -116,6 +116,7 @@ if test ! -f fastgen_dos.g ; then
     exit 1
 fi
 
+echo "Comparing geometry files from sources with DOS and UNIX line endings."
 $G_DIFF fastgen_unix.g fastgen_dos.g
 if test "$?" -ne 0 ; then
     echo "ERROR running $G_DIFF fastgen_unix.g fastgen_dos.g"
