@@ -65,6 +65,7 @@ EXTRA_DIST = \
 	flawfinder.sh \
 	gqa.sh \
 	iges.sh \
+	library.sh \
 	lights.sh \
 	lights_ref.asc \
 	main.sh \
