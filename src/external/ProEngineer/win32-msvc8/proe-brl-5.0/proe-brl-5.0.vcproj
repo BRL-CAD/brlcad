@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="8.00"
-	Name="proe-brl-3.0"
-	ProjectGUID="{6035025B-4B4B-47E7-9660-E37F04B86D24}"
-	RootNamespace="proe-brl-3.0"
+	Name="proe-brl-5.0"
+	ProjectGUID="{53FFA9D6-663F-48E7-9E17-1997697AF016}"
+	RootNamespace="proe-brl-5.0"
 	Keyword="Win32Proj"
 	>
 	<Platforms>
@@ -44,7 +44,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="&quot;C:\Program Files\proeWildfire 3.0\protoolkit\protk_appls\includes&quot;;&quot;C:\Program Files\proeWildfire 3.0\protoolkit\includes&quot;;&quot;C:\Program Files\proeWildfire 3.0\prodevelop\includes&quot;;../../../../../include;../../../../other/tcl/generic"
+				AdditionalIncludeDirectories="&quot;C:\Program Files\proeWildfire 5.0\protoolkit\protk_appls\includes&quot;;&quot;C:\Program Files\proeWildfire 5.0\protoolkit\includes&quot;;&quot;C:\Program Files\proeWildfire 5.0\prodevelop\includes&quot;;../../../../../include;../../../../other/tcl/generic"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;_CRT_SECURE_NO_WARNINGS;inline=__inline;PRO_MACHINE=29;PRO_OS=4;MSB_LEFT;_X86=1;_WSTDIO_DEFINED"
 				RuntimeLibrary="2"
 				DisableLanguageExtensions="false"
@@ -68,9 +68,9 @@
 				AdditionalDependencies="libbu.lib libbn.lib protk_dllmd.lib prodev_dllmd.lib kernel32.lib user32.lib wsock32.lib advapi32.lib mpr.lib winspool.lib netapi32.lib psapi.lib gdi32.lib shell32.lib comdlg32.lib ole32.lib"
 				OutputFile=".\$(PlatformName)\$(ConfigurationName)\proe-brl.dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;C:\Program Files\proeWildfire 3.0\protoolkit\i486_nt\obj&quot;;&quot;C:\Program Files\proeWildfire 3.0\prodevelop\i486_nt\obj&quot;;../../../../../brlcadInstall/lib"
+				AdditionalLibraryDirectories="&quot;C:\Program Files\proeWildfire 5.0\protoolkit\i486_nt\obj&quot;;&quot;C:\Program Files\proeWildfire 5.0\prodevelop\i486_nt\obj&quot;;../../../../../brlcadInstall/lib"
 				IgnoreAllDefaultLibraries="false"
-				IgnoreDefaultLibraryNames=""
+				IgnoreDefaultLibraryNames="libcmt.lib"
 				GenerateDebugInformation="false"
 				SubSystem="1"
 				OptimizeReferences="2"
@@ -105,7 +105,7 @@
 		</Configuration>
 		<Configuration
 			Name="Release|x64"
-			OutputDirectory="$(PlatformName)\$(ConfigurationName)"
+			OutputDirectory="$(PlatformName)$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="2"
 			UseOfMFC="0"
@@ -130,8 +130,8 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="&quot;C:\Program Files\proeWildfire 3.0\protoolkit\protk_appls\includes&quot;;&quot;C:\Program Files\proeWildfire 3.0\protoolkit\includes&quot;;&quot;C:\Program Files\proeWildfire 3.0\prodevelop\includes&quot;;../../../../../include;../../../../other/tcl/generic;../../../../external/ProEngineer"
-				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;_CRT_SECURE_NO_WARNINGS;inline=__inline;PRO_MACHINE=29;PRO_OS=4;MSB_LEFT;_X86=1;_WSTDIO_DEFINED;PROE_BRL_EXPORT_DLL"
+				AdditionalIncludeDirectories="&quot;C:\Program Files\proeWildfire 5.0\protoolkit\protk_appls\includes&quot;;&quot;C:\Program Files\proeWildfire 5.0\protoolkit\includes&quot;;&quot;C:\Program Files\proeWildfire 5.0\prodevelop\includes&quot;;../../../../../include;../../../../other/tcl/generic"
+				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;_CRT_SECURE_NO_WARNINGS;inline=__inline;PRO_MACHINE=29;PRO_OS=4;MSB_LEFT;_X86=1;_WSTDIO_DEFINED"
 				RuntimeLibrary="2"
 				DisableLanguageExtensions="false"
 				UsePrecompiledHeader="0"
@@ -151,10 +151,10 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="libbu.lib libbn.lib protk_dllmd.lib prodev_dllmd.lib kernel32.lib user32.lib wsock32.lib advapi32.lib mpr.lib winspool.lib netapi32.lib psapi.lib gdi32.lib shell32.lib comdlg32.lib ole32.lib"
+				AdditionalDependencies="libbu.lib libbn.lib protk_dllmd.lib prodev_dllmd.lib kernel32.lib user32.lib wsock32.lib advapi32.lib mpr.lib winspool.lib netapi32.lib psapi.lib gdi32.lib shell32.lib comdlg32.lib ole32.lib ws2_32.lib"
 				OutputFile=".\$(PlatformName)\$(ConfigurationName)\proe-brl.dll"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;C:\Program Files\proeWildfire 3.0\protoolkit\x86e_win64\obj&quot;;&quot;C:\Program Files\proeWildfire 3.0\prodevelop\x86e_win64\obj&quot;;../../../../../brlcadInstallx64/lib"
+				AdditionalLibraryDirectories="&quot;C:\Program Files\proeWildfire 5.0\protoolkit\x86e_win64\obj&quot;;&quot;C:\Program Files\proeWildfire 5.0\prodevelop\x86e_win64\obj&quot;;../../../../../brlcadInstallx64/lib"
 				IgnoreAllDefaultLibraries="false"
 				IgnoreDefaultLibraryNames=""
 				GenerateDebugInformation="false"
