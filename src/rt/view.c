@@ -1127,6 +1127,12 @@ int viewit(register struct application *ap,
 	{
 	}
 	break;
+    case 8:
+    {
+	bu_log("Entered the awesome heat graph!\n");
+	break;
+    }
+
     }
 
     if (R_DEBUG&RDEBUG_HITS)  {
@@ -1530,6 +1536,12 @@ view_2init(register struct application *ap, char *framename)
 
 	}
 	break;
+    case 8:
+    {
+	VSETALL(background, 255);
+	break;
+    }
+
 	default:
 	    bu_exit(EXIT_FAILURE, "bad lighting model #");
     }
