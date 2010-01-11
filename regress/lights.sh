@@ -35,9 +35,34 @@
 #
 ###
 
-LD_LIBRARY_PATH=../src/other/tcl/unix:../src/other/tk/unix:$1/src/other/tcl/unix:$1/src/other/tk/unix:$LD_LIBRARY_PATH
-DYLD_LIBRARY_PATH=../src/other/tcl/unix:../src/other/tk/unix:$1/src/other/tcl/unix:$1/src/other/tk/unix:$DYLD_LIBRARY_PATH
-export LD_LIBRARY_PATH DYLD_LIBRARY_PATH
+# Ensure /bin/sh
+export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
+
+# source common library functionality, setting ARGS, NAME_OF_THIS,
+# PATH_TO_THIS, and THIS.
+. library.sh
+
+RT="`ensearch rt/rt`"
+if test ! -f "$RT" ; then
+    echo "Unable to find rt, aborting"
+    exit 1
+fi
+A2G="`ensearch conv/asc2g`"
+if test ! -f "$A2G" ; then
+    echo "Unable to find asc2g, aborting"
+    exit 1
+fi
+A2P="`ensearch conv/asc2pix`"
+if test ! -f "$A2P" ; then
+    echo "Unable to find asc2pix, aborting"
+    exit 1
+fi
+PIXDIFF="`ensearch util/pixdiff`"
+if test ! -f "$PIXDIFF" ; then
+    echo "Unable to find pixdiff, aborting"
+    exit 1
+fi
+
 
 rm -f lights.pix
 
@@ -62,11 +87,11 @@ attr set {local.r} {region} {R} {rgb} {255/255/255} {oshader} {light {s 4  pt {-
 put {all.g} comb region no tree {u {u {l infinite.r} {l local.r}} {u {l plate.r} {l shadow_objs.r}}}
 EOF
 
-../src/conv/asc2g lights.asc lights.g
+$A2G lights.asc lights.g
 rm -f lights.asc
 
 echo rendering lights...
-../src/rt/rt -M -B -p30 -o lights.pix lights.g 'all.g' 2> lights.log <<EOF
+$RT -M -B -p30 -o lights.pix lights.g 'all.g' 2> lights.log <<EOF
 viewsize 1.600000000000000e+02;
 orientation 0.000000000000000e+00 0.000000000000000e+00 0.000000000000000e+00 1.000000000000000e+00;
 eye_pt 0.000000000000000e+00 0.000000000000000e+00 7.950000000000000e+01;
@@ -75,8 +100,8 @@ end;
 
 EOF
 
-../src/conv/asc2pix < $1/regress/lights_ref.asc  > lights_ref.pix
-../src/util/pixdiff lights.pix lights_ref.pix > lights_diff.pix 2>> lights.log
+$A2P < $1/regress/lights_ref.asc  > lights_ref.pix
+$PIXDIFF lights.pix lights_ref.pix > lights_diff.pix 2>> lights.log
 NUMBER_WRONG=`tr , '\012' < lights.log | awk '/many/ {print $1}'`
 echo "lights.pix $NUMBER_WRONG off by many"
 

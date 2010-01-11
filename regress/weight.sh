@@ -38,28 +38,20 @@
 # Ensure /bin/sh
 export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 
-# save the precious args
-ARGS="$*"
-NAME_OF_THIS=`basename $0`
-PATH_TO_THIS=`dirname $0`
-THIS="$PATH_TO_THIS/$NAME_OF_THIS"
+# source common library functionality, setting ARGS, NAME_OF_THIS,
+# PATH_TO_THIS, and THIS.
+. library.sh
 
-MGED="$1/src/mged/mged"
+MGED="`ensearch mged/mged`"
 if test ! -f "$MGED" ; then
-    MGED="$PATH_TO_THIS/../src/mged/mged"
-    if test ! -f "$MGED" ; then
-	MGED="../src/mged/mged"
-	if test ! -f "$MGED" ; then
-	    echo "Unable to find mged, aborting"
-	    exit 1
-	fi
-    fi
+    echo "Unable to find mged, aborting"
+    exit 1
 fi
-MGEDDIR="`dirname $MGED`"
-
-LD_LIBRARY_PATH=$MGEDDIR/../../src/other/tcl/unix:$MGEDDIR/../../src/other/tk/unix:$1/src/other/tcl/unix:$1/src/other/tk/unix:$LD_LIBRARY_PATH
-DYLD_LIBRARY_PATH=$MGEDDIR/../../src/other/tcl/unix:$MGEDDIR/../../src/other/tk/unix:$1/src/other/tcl/unix:$1/src/other/tk/unix:$DYLD_LIBRARY_PATH
-export LD_LIBRARY_PATH DYLD_LIBRARY_PATH
+RTWEIGHT="`ensearch rt/rtweight`"
+if test ! -f "$RTWEIGHT" ; then
+    echo "Unable to find rtweight, aborting"
+    exit 1
+fi
 
 
 rm -f weight.log .density weight.g weight.ref weight.out weight.mged
@@ -79,7 +71,7 @@ cat > .density <<EOF
 1 7.8295        steel
 EOF
 
-../src/rt/rtweight -a 25 -e 35 -s128 -o weight.out weight.g box.r > weight.log 2>&1
+$RTWEIGHT -a 25 -e 35 -s128 -o weight.out weight.g box.r > weight.log 2>&1
 
 
 cat >> weight.ref <<EOF

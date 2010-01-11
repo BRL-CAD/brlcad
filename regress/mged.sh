@@ -41,28 +41,15 @@
 # Ensure /bin/sh
 export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 
-# save the precious args
-ARGS="$*"
-NAME_OF_THIS=`basename $0`
-PATH_TO_THIS=`dirname $0`
-THIS="$PATH_TO_THIS/$NAME_OF_THIS"
+# source common library functionality, setting ARGS, NAME_OF_THIS,
+# PATH_TO_THIS, and THIS.
+. library.sh
 
-MGED="$1/src/mged/mged"
+MGED="`ensearch mged/mged`"
 if test ! -f "$MGED" ; then
-    MGED="$PATH_TO_THIS/../src/mged/mged"
-    if test ! -f "$MGED" ; then
-	MGED="../src/mged/mged"
-	if test ! -f "$MGED" ; then
-	    echo "Unable to find mged, aborting"
-	    exit 1
-	fi
-    fi
+    echo "Unable to find mged, aborting"
+    exit 1
 fi
-MGEDDIR="`dirname $MGED`"
-
-LD_LIBRARY_PATH=$MGEDDIR/../../src/other/tcl/unix:$MGEDDIR/../../src/other/tk/unix:$1/src/other/tcl/unix:$1/src/other/tk/unix:$LD_LIBRARY_PATH
-DYLD_LIBRARY_PATH=$MGEDDIR/../../src/other/tcl/unix:$MGEDDIR/../../src/other/tk/unix:$1/src/other/tcl/unix:$1/src/other/tk/unix:$DYLD_LIBRARY_PATH
-export LD_LIBRARY_PATH DYLD_LIBRARY_PATH
 
 
 FAILED=0
