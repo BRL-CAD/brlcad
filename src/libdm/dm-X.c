@@ -92,6 +92,7 @@ struct dm dm_X = {
     X_drawLines3D,
     X_drawPoint2D,
     X_drawVList,
+    X_drawVList,
     X_draw,
     X_setFGColor,
     X_setBGColor,

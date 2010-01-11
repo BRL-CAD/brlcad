@@ -69,6 +69,7 @@ struct dm dm_plot = {
     plot_drawLines3D,
     plot_drawPoint2D,
     plot_drawVList,
+    plot_drawVList,
     plot_draw,
     plot_setFGColor,
     plot_setBGColor,
