@@ -63,8 +63,8 @@ ensearch ( ) {
 
 	    ensearch_path="`dirname $ensearch_binary`"
 
-	    LD_LIBRARY_PATH=$ensearch_path/../../src/other/tcl/unix:$$ensearch_path/../../src/other/tk/unix:../src/other/tcl/unix:../src/other/tk/unix:$ARG1/../src/other/tcl/unix:$ARG1/../src/other/tk/unix:$LD_LIBRARY_PATH
-	    DYLD_LIBRARY_PATH=$ensearch_path/../../src/other/tcl/unix:$$ensearch_path/../../src/other/tk/unix:../src/other/tcl/unix:../src/other/tk/unix:$ARG1/../src/other/tcl/unix:$ARG1/../src/other/tk/unix:$DYLD_LIBRARY_PATH
+	    LD_LIBRARY_PATH=$ensearch_path/../../src/other/tcl/unix:$$ensearch_path/../../src/other/tk/unix:$LD_LIBRARY_PATH
+	    DYLD_LIBRARY_PATH=$ensearch_path/../../src/other/tcl/unix:$$ensearch_path/../../src/other/tk/unix:$DYLD_LIBRARY_PATH
 	    export LD_LIBRARY_PATH DYLD_LIBRARY_PATH
 
 	    return
