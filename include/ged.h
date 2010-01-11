@@ -261,7 +261,7 @@ struct ged_adc_state {
 
 struct ged_axes_state {
     int       gas_draw;
-    point_t   gas_axes_pos;		/* in view coordinates */
+    point_t   gas_axes_pos;		/* in model coordinates */
     fastf_t   gas_axes_size; 		/* in view coordinates */
     int	      gas_line_width;    	/* in pixels */
     int	      gas_pos_only;
@@ -276,8 +276,42 @@ struct ged_axes_state {
     int	      gas_tick_threshold;
     int	      gas_tick_color[3];
     int	      gas_tick_major_color[3];
-    int       gas_num_data_points;
-    point_t   *gas_data_points;		/* in view coordinates */
+};
+
+struct ged_data_arrow_state {
+    int       gdas_draw;
+    int	      gdas_color[3];
+    int	      gdas_line_width;    	/* in pixels */
+    int       gdas_tip_length;
+    int       gdas_tip_width;
+    int       gdas_num_points;
+    point_t   *gdas_points;		/* in model coordinates */
+};
+
+struct ged_data_axes_state {
+    int       gdas_draw;
+    int	      gdas_color[3];
+    int	      gdas_line_width;    	/* in pixels */
+    fastf_t   gdas_size; 		/* in view coordinates */
+    int       gdas_num_points;
+    point_t   *gdas_points;		/* in model coordinates */
+};
+
+struct ged_data_label_state {
+    int		gdls_draw;
+    int		gdls_color[3];
+    int		gdls_num_labels;
+    int		gdls_size;
+    char	**gdls_labels;
+    point_t	*gdls_points;
+};
+
+struct ged_data_line_state {
+    int       gdls_draw;
+    int	      gdls_color[3];
+    int	      gdls_line_width;    	/* in pixels */
+    int       gdls_num_points;
+    point_t   *gdls_points;		/* in model coordinates */
 };
 
 struct ged_grid_state {
@@ -417,15 +451,22 @@ struct ged_view {
     int				gv_mode;
     int				gv_zclip;
     struct ged_adc_state 	gv_adc;
-    struct ged_axes_state 	gv_data_axes;
     struct ged_axes_state 	gv_model_axes;
     struct ged_axes_state 	gv_view_axes;
+    struct ged_data_arrow_state gv_data_arrows;
+    struct ged_data_axes_state 	gv_data_axes;
+    struct ged_data_label_state gv_data_labels;
+    struct ged_data_line_state  gv_data_lines;
+    struct ged_data_arrow_state	gv_sdata_arrows;
+    struct ged_data_axes_state 	gv_sdata_axes;
+    struct ged_data_label_state gv_sdata_labels;
+    struct ged_data_line_state 	gv_sdata_lines;
     struct ged_grid_state 	gv_grid;
-    struct ged_rect_state 	gv_rect;
     struct ged_other_state 	gv_center_dot;
     struct ged_other_state 	gv_prim_labels;
     struct ged_other_state 	gv_view_params;
     struct ged_other_state 	gv_view_scale;
+    struct ged_rect_state 	gv_rect;
 };
 
 
