@@ -52,8 +52,6 @@ if test ! -f "$MGED" ; then
 fi
 
 
-FAILED=0
-
 # test all commands
 echo "testing mged commands..."
 
@@ -74,6 +72,7 @@ help="`$MGED -c mged.g help 2>&1 | grep -v Using`"
 # cmds="$cmds `$MGED -c mged.g ?lib 2>&1`"
 # cmds="$cmds `$MGED -c mged.g ?devel 2>&1`"
 
+FAILED=0
 for cmd in $cmds ; do
     echo "...$cmd"
 
@@ -131,8 +130,8 @@ else
     echo "-> mged check FAILED"
 fi
 
-
 exit $FAILED
+
 
 # Local Variables:
 # tab-width: 8
