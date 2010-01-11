@@ -774,7 +774,7 @@ dmo_drawDataAxes_tcl(ClientData clientData,
     fastf_t axesSize;
     int axesColor[3];
     int lineWidth;
-    struct ged_axes_state gas;
+    struct ged_data_axes_state gdas;
     struct bu_vls vls;
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
@@ -804,24 +804,17 @@ dmo_drawDataAxes_tcl(ClientData clientData,
 	return TCL_ERROR;
     }
 
-    MAT4X3PNT(viewAxesPos, model2view, modelAxesPos);
-
-    memset(&gas, 0, sizeof(struct ged_axes_state));
-    VMOVE(gas.gas_axes_pos, viewAxesPos);
-    gas.gas_axes_size = axesSize;
-    VMOVE(gas.gas_axes_color, axesColor);
-    gas.gas_line_width = lineWidth;
+#if 1
+    memset(&gdas, 0, sizeof(struct ged_data_axes_state));
+    VMOVE(gdas.gdas_points[0], modelAxesPos);
+    gdas.gdas_size = axesSize;
+    VMOVE(gdas.gdas_color, axesColor);
+    gdas.gdas_line_width = lineWidth;
 
     dm_draw_data_axes(dmop->dmo_dmp,
 		      viewSize,
-		      rmat,
-		      &gas);
-
-/*     viewAxesPos, */
-/* 	axesSize, */
-/* 	axesColor, */
-/* 	lineWidth); */
-
+		      &gdas);
+#endif
 
     bu_vls_free(&vls);
     return TCL_OK;
