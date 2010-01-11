@@ -43,7 +43,7 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 
 # source common library functionality, setting ARGS, NAME_OF_THIS,
 # PATH_TO_THIS, and THIS.
-. library.sh
+. $1/regress/library.sh
 
 F4G="`ensearch conv/fastf4_g`"
 if test ! -f "$F4G" ; then

@@ -40,7 +40,7 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 
 # source common library functionality, setting ARGS, NAME_OF_THIS,
 # PATH_TO_THIS, and THIS.
-. $1/library.sh
+. $1/regress/library.sh
 
 RT="`ensearch rt/rt`"
 if test ! -f "$RT" ; then
