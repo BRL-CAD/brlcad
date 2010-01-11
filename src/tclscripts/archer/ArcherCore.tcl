@@ -127,6 +127,7 @@ namespace eval ArcherCore {
 	method getLastSelectedDir  {}
 	method refreshDisplay      {}
 	method putString           {_str}
+	method setStatusString     {_str}
 
 	# Commands exposed to the user via the command line.
 	# More to be added later...
@@ -276,6 +277,8 @@ namespace eval ArcherCore {
 	variable mLighting 1
 	variable mRenderMode -1
 	variable mActivePane
+	variable mActivePaneName
+	variable mCurrentPaneName ""
 	variable mStatusStr ""
 	variable mDbType ""
 	variable mDbReadOnly 0
@@ -433,9 +436,8 @@ Popup Menu    Right or Ctrl-Left
 	variable mDbUnits ""
 	variable mDbTitle ""
 
-	variable mCurrentDisplay ""
-
 	variable mMouseRayCallbacks ""
+	variable mLastTags ""
 
 	method handleMoreArgs {args}
 
@@ -445,7 +447,11 @@ Popup Menu    Right or Ctrl-Left
 
 	method redrawObj {_obj {_wflag 1}}
 
+	method colorMenuStatusCB {_w}
 	method menuStatusCB {_w}
+	method menuStatusCB_junk {_w}
+	method transparencyMenuStatusCB {_w}
+
 	method updateTheme {}
 	method updateSaveMode {}
 	method createTargetCopy {}
@@ -476,9 +482,6 @@ Popup Menu    Right or Ctrl-Left
 	variable mCenterZ ""
 
 	variable mImages
-
-	variable mMeasureStart
-	variable mMeasureEnd
 
 	# init functions
 	method initTree          {}
@@ -552,10 +555,8 @@ Popup Menu    Right or Ctrl-Left
 	method mrayCallback_erase {_start _target _partitions}
 	method mrayCallback_pick {_start _target _partitions}
 
-	method initMeasure {}
-	method beginMeasure {_dm _x _y}
-	method handleMeasure {_dm _x _y}
-	method endMeasure {_dm}
+	method initViewMeasure {}
+	method endViewMeasure {_mstring}
 
 	method initDefaultBindings {{_comp ""}}
 	method initBrlcadBindings {}
@@ -1270,6 +1271,7 @@ Popup Menu    Right or Ctrl-Left
     }
 
     bind $itk_component(canvasF) <Configure> [::itcl::code $this updateRtControl]
+    setActivePane ur
 }
 
 ::itcl::body ArcherCore::closeMged {} {
@@ -1598,7 +1600,7 @@ Popup Menu    Right or Ctrl-Left
 	-helpstr "Measuring Tool" \
 	-variable [::itcl::scope mDefaultBindingMode] \
 	-value $MEASURE_MODE \
-	-command [::itcl::code $this initMeasure] \
+	-command [::itcl::code $this initViewMeasure] \
 	-state disabled
 
     $itk_component(primaryToolbar) itemconfigure rotate -state disabled
@@ -1732,14 +1734,14 @@ Popup Menu    Right or Ctrl-Left
     set partition [lindex $_partitions 0]
 
     if {[catch {bu_get_value_by_keyword in $partition} in]} {
-	puts "Partition does not contain an \"in\""
-	puts "$in"
+	putString "Partition does not contain an \"in\""
+	putString "$in"
 	return
     }
 
     if {[catch {bu_get_value_by_keyword point $in} point]} {
-	puts "Partition does not contain an \"in\" point"
-	puts "$point"
+	putString "Partition does not contain an \"in\" point"
+	putString "$point"
 	return
     }
 
@@ -1755,96 +1757,54 @@ Popup Menu    Right or Ctrl-Left
     set partition [lindex $_partitions 0]
 
     if {[catch {bu_get_value_by_keyword in $partition} in]} {
-	puts "Partition does not contain an \"in\""
-	puts "$in"
+	putString "Partition does not contain an \"in\""
+	putString "$in"
 	return
     }
 
     if {[catch {bu_get_value_by_keyword path $in} path]} {
-	puts "Partition does not contain an \"in\" path"
-	puts "[subst $[subst pt_$i]]"
+	putString "Partition does not contain an \"in\" path"
+	putString "[subst $[subst pt_$i]]"
 	return
     }
 
     erase $path
-    $itk_component(cmd) putstring "erase $path"
+    putString "erase $path"
+    set mStatusStr "erase $path"
 }
 
 ::itcl::body ArcherCore::mrayCallback_pick {_start _target _partitions} {
     set partition [lindex $_partitions 0]
     if {$partition == {}} {
-	$itk_component(cmd) putstring "Missed!"
+	putString "Missed!"
+	set mStatusStr "Missed!"
     } else {
 	set region [bu_get_value_by_keyword "region" $partition]
-	$itk_component(cmd) putstring "$region"
+	putString "$region"
+	set mStatusStr "$region"
     }
 }
 
-::itcl::body ArcherCore::initMeasure {} {
+::itcl::body ArcherCore::initViewMeasure {} {
     if {![info exists itk_component(ged)]} {
 	return
     }
 
+    $itk_component(ged) clear_view_measure_callback_list
+    $itk_component(ged) add_view_measure_callback [::itcl::code $this endViewMeasure]
     $itk_component(ged) init_view_measure
 }
 
-::itcl::body ArcherCore::beginMeasure {_dm _x _y} {
-    if {$mMeasuringStickMode == 0} {
-	# Draw on the front face of the viewing cube
-	set view [$_dm screen2view $_x $_y]
-	set bounds [$_dm bounds]
-	set vZ [expr {[lindex $bounds 4] / -2048.0}]
-	set mMeasureStart [$_dm v2mPoint [lindex $view 0] [lindex $view 1] $vZ]
-    } else {
-	# Draw on the center of the viewing cube (i.e. view Z is 0)
-	set mMeasureStart [$_dm screen2model $_x $_y]
-    }
-
-    # start receiving motion events
-    set win [$_dm component dm]
-    bind $win <Motion> "[::itcl::code $this handleMeasure $_dm %x %y]; break"
-
-    set mMeasuringStickColorVDraw [getVDrawColor $mMeasuringStickColor]
+::itcl::body ArcherCore::endViewMeasure {_mstring} {
+    putString $_mstring
+    set mStatusStr $_mstring
 }
-
-::itcl::body ArcherCore::handleMeasure {_dm _x _y} {
-    catch {gedCmd vdraw vlist delete $MEASURING_STICK}
-
-    if {$mMeasuringStickMode == 0} {
-	# Draw on the front face of the viewing cube
-	set view [$_dm screen2view $_x $_y]
-	set bounds [$_dm bounds]
-	set vZ [expr {[lindex $bounds 4] / -2048.0}]
-	set mMeasureEnd [$_dm v2mPoint [lindex $view 0] [lindex $view 1] $vZ]
-    } else {
-	# Draw on the center of the viewing cube (i.e. view Z is 0)
-	set mMeasureEnd [$_dm screen2model $_x $_y]
-    }
-
-    set move 0
-    set draw 1
-    gedCmd vdraw open $MEASURING_STICK
-    gedCmd vdraw params color $mMeasuringStickColorVDraw
-    eval gedCmd vdraw write next $move $mMeasureStart
-    eval gedCmd vdraw write next $draw $mMeasureEnd
-    gedCmd vdraw send
-}
-
-::itcl::body ArcherCore::endMeasure {_dm} {
-    $_dm idle_mode
-
-    catch {gedCmd vdraw vlist delete $MEASURING_STICK}
-    gedCmd erase _VDRW$MEASURING_STICK
-
-    set diff [vsub2 $mMeasureEnd $mMeasureStart]
-    set delta [expr {[magnitude $diff] * [gedCmd base2local]}]
-    tk_messageBox -title "Measured Distance" \
-	-icon info \
-	-message "Measured distance:  $delta [gedCmd units -s]"
-}
-
 
 ::itcl::body ArcherCore::initDefaultBindings {{_comp ""}} {
+    if {![info exists itk_component(ged)]} {
+	return
+    }
+
     $itk_component(primaryToolbar) itemconfigure rotate -state normal
     $itk_component(primaryToolbar) itemconfigure translate -state normal
     $itk_component(primaryToolbar) itemconfigure scale -state normal
@@ -1855,12 +1815,25 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(primaryToolbar) itemconfigure measure -state normal
 
     $itk_component(ged) init_view_bindings
+
+    # Initialize rotate mode
+    set mDefaultBindingMode $ROTATE_MODE
+    beginViewRotate
 }
 
 ::itcl::body ArcherCore::initBrlcadBindings {} {
     if {![info exists itk_component(ged)]} {
 	return
     }
+
+    $itk_component(primaryToolbar) itemconfigure rotate -state disabled
+    $itk_component(primaryToolbar) itemconfigure translate -state disabled
+    $itk_component(primaryToolbar) itemconfigure scale -state disabled
+    $itk_component(primaryToolbar) itemconfigure center -state disabled
+    $itk_component(primaryToolbar) itemconfigure centervo -state disabled
+    $itk_component(primaryToolbar) itemconfigure cpick -state disabled
+    $itk_component(primaryToolbar) itemconfigure cerase -state disabled
+    $itk_component(primaryToolbar) itemconfigure measure -state disabled
 
     $itk_component(ged) init_view_bindings brlcad
 }
@@ -1916,6 +1889,7 @@ Popup Menu    Right or Ctrl-Left
 
 
 ::itcl::body ArcherCore::backgroundColor {r g b} {
+    set mCurrentPaneName ""
     set mBackground [list $r $g $b]
 
     if {![info exists itk_component(ged)]} {
@@ -2142,6 +2116,9 @@ Popup Menu    Right or Ctrl-Left
 	set plnode {}
     }
 
+    $itk_component(ged) refresh_off
+
+    catch {
     if {[catch {gedCmd attr get \
 		    $tnode displayColor} displayColor]} {
 	switch -exact -- $state {
@@ -2160,6 +2137,10 @@ Popup Menu    Right or Ctrl-Left
 	    "3" {
 		gedCmd configure -primitiveLabels $plnode
 		gedCmd E $node
+	    }
+	    "4" {
+		gedCmd configure -primitiveLabels $plnode
+		gedCmd draw -h $node
 	    }
 	    "-1" {
 		gedCmd configure -primitiveLabels {}
@@ -2187,12 +2168,20 @@ Popup Menu    Right or Ctrl-Left
 		gedCmd configure -primitiveLabels $plnode
 		gedCmd E -C$displayColor $node
 	    }
+	    "4" {
+		gedCmd configure -primitiveLabels $plnode
+		gedCmd draw -h -C$displayColor $node
+	    }
 	    "-1" {
 		gedCmd configure -primitiveLabels {}
 		gedCmd erase $node
 	    }
 	}
     }
+    }
+
+    $itk_component(ged) refresh_on
+    $itk_component(ged) refresh_all
  
     # Turn ground plane back on if it was on before the draw
     if {$saveGroundPlane} {
@@ -2286,18 +2275,29 @@ Popup Menu    Right or Ctrl-Left
     }
 }
 
-::itcl::body ArcherCore::setActivePane {pane} {
-    $itk_component(ged) pane $pane
-    updateActivePane $pane
+::itcl::body ArcherCore::setActivePane {_pane} {
+    $itk_component(ged) pane $_pane
 }
 
 ::itcl::body ArcherCore::updateActivePane {args} {
     # update active pane radiobuttons
     switch -- $args {
-	ul {set mActivePane 0}
-	ur {set mActivePane 1}
-	ll {set mActivePane 2}
-	lr {set mActivePane 3}
+	ul {
+	    set mActivePane 0
+	    set mActivePaneName ul
+	}
+	ur {
+	    set mActivePane 1
+	    set mActivePaneName ur
+	}
+	ll {
+	    set mActivePane 2
+	    set mActivePaneName ll
+	}
+	lr {
+	    set mActivePane 3
+	    set mActivePaneName lr
+	}
     }
 
     set mShowModelAxes [gedCmd cget -modelAxesEnable]
@@ -2327,6 +2327,7 @@ Popup Menu    Right or Ctrl-Left
 	return
     }
 
+    set mCurrentPaneName ""
     gedCmd autoview_all
     gedCmd default_views
 }
@@ -2336,7 +2337,14 @@ Popup Menu    Right or Ctrl-Left
 	return
     }
 
-    gedCmd autoview_all
+    if {$mCurrentPaneName == ""} {
+	set pane $mActivePaneName
+    } else {
+	set pane $mCurrentPaneName
+    }
+    set mCurrentPaneName ""
+
+    $itk_component(ged) pane_autoview $pane
 }
 
 ::itcl::body ArcherCore::doViewCenter {} {
@@ -2344,32 +2352,37 @@ Popup Menu    Right or Ctrl-Left
 	return
     }
 
-    if {$mCurrentDisplay == ""} {
-	set dm gedCmd
+    if {$mCurrentPaneName == ""} {
+	set pane $mActivePaneName
     } else {
-	set dm $mCurrentDisplay
+	set pane $mCurrentPaneName
     }
+    set mCurrentPaneName ""
 
-    set center [$dm center]
+    set center [$itk_component(ged) pane_center $pane]
     set mCenterX [lindex $center 0]
     set mCenterY [lindex $center 1]
     set mCenterZ [lindex $center 2]
 
     set mDbUnits [gedCmd units -s]
     $itk_component(centerDialog) center [namespace tail $this]
+    ::update
     if {[$itk_component(centerDialog) activate]} {
-	$dm center $mCenterX $mCenterY $mCenterZ
+	$itk_component(ged) pane_center $pane $mCenterX $mCenterY $mCenterZ
     }
 }
 
-::itcl::body ArcherCore::doAe {az el} {
-    if {$mCurrentDisplay == ""} {
-	gedCmd ae $az $el
+::itcl::body ArcherCore::doAe {_az _el} {
+    if {$mCurrentPaneName == ""} {
+	set pane $mActivePaneName
     } else {
-	$mCurrentDisplay ae $az $el
+	set pane $mCurrentPaneName
     }
+    set mCurrentPaneName ""
 
-    addHistory "ae $az $el"
+    $itk_component(ged) pane_ae $pane $_az $_el
+
+    addHistory "ae $_az $_el"
 }
 
 ::itcl::body ArcherCore::showViewAxes {} {
@@ -2535,6 +2548,7 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::selectNode {tags {rflag 1}} {
+    set mLastTags $tags
     set tags [split $tags ":"]
     if {[llength $tags] > 1} {
 	set element [lindex $tags 1]
@@ -2570,15 +2584,23 @@ Popup Menu    Right or Ctrl-Left
     # label the object if it's being drawn
     set mRenderMode [gedCmd how $node]
 
-    if {$mShowPrimitiveLabels && 0 <= $mRenderMode} {
-	gedCmd configure -primitiveLabels $node
-    } else {
-	gedCmd configure -primitiveLabels {}
+    if {$mShowPrimitiveLabels} {
+	if {0 <= $mRenderMode} {
+	    gedCmd configure -primitiveLabels $node
+	} else {
+	    gedCmd configure -primitiveLabels {}
+	}
     }
 
-    if {$rflag} {
-	gedCmd refresh
-    }
+#    if {$mShowPrimitiveLabels && 0 <= $mRenderMode} {
+#	gedCmd configure -primitiveLabels $node
+#    } else {
+#	gedCmd configure -primitiveLabels {}
+#    }
+#
+#    if {$rflag} {
+#	gedCmd refresh
+#    }
 
     set mPrevSelectedObjPath $mSelectedObjPath
     set mPrevSelectedObj $mSelectedObj
@@ -2592,6 +2614,7 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::dblClick {tags} {
+    set mLastTags $tags
     set element [split $tags ":"]
     if {[llength $element] > 1} {
 	set element [lindex $element 1]
@@ -2651,12 +2674,15 @@ Popup Menu    Right or Ctrl-Left
 	    -indicatoron 1 -value 0 -variable [::itcl::scope mRenderMode] \
 	    -command [::itcl::code $this render $node 0 1 1]
 
-	$menu add radiobutton -label "Shaded (Mode 1)" \
+	$menu add radiobutton -label "Shaded" \
 	    -indicatoron 1 -value 1 -variable [::itcl::scope mRenderMode] \
 	    -command [::itcl::code $this render $node 1 1 1]
-	$menu add radiobutton -label "Shaded (Mode 2)" \
+#	$menu add radiobutton -label "Shaded (Mode 2)" \
+#	    -indicatoron 1 -value 2 -variable [::itcl::scope mRenderMode] \
+#	    -command [::itcl::code $this render $node 2 1 1]
+	$menu add radiobutton -label "Hidden Line)" \
 	    -indicatoron 1 -value 2 -variable [::itcl::scope mRenderMode] \
-	    -command [::itcl::code $this render $node 2 1 1]
+	    -command [::itcl::code $this render $node 4 1 1]
 
 	if {$mEnableBigE} {
 	    $menu add radiobutton \
@@ -2674,10 +2700,12 @@ Popup Menu    Right or Ctrl-Left
 	$menu add command -label "Wireframe" \
 	    -command [::itcl::code $this render $node 0 1 1]
 
-	$menu add command -label "Shaded (Mode 1)" \
+	$menu add command -label "Shaded" \
 	    -command [::itcl::code $this render $node 1 1 1]
-	$menu add command -label "Shaded (Mode 2)" \
-	    -command [::itcl::code $this render $node 2 1 1]
+#	$menu add command -label "Shaded (Mode 2)" \
+#	    -command [::itcl::code $this render $node 2 1 1]
+	$menu add command -label "Hidden Line" \
+	    -command [::itcl::code $this render $node 4 1 1]
 
 	if {$mEnableBigE} {
 	    $menu add command \
@@ -2772,11 +2800,17 @@ Popup Menu    Right or Ctrl-Left
 	    -command [::itcl::code $this setTransparency $node 0.03]
 	$trans add command -label "99%" \
 	    -command [::itcl::code $this setTransparency $node 0.01]
+
+	# set up bindings for transparency status
+	bind $trans <<MenuSelect>> \
+	    [::itcl::code $this transparencyMenuStatusCB %W]
     }
 
     # set up bindings for status
     bind $menu <<MenuSelect>> \
 	[::itcl::code $this menuStatusCB %W]
+    bind $color <<MenuSelect>> \
+	[::itcl::code $this colorMenuStatusCB %W]
 }
 
 # ------------------------------------------------------------
@@ -2863,8 +2897,6 @@ Popup Menu    Right or Ctrl-Left
 
     if {$mBindingMode == 0} {
 	initDefaultBindings $itk_component(ged)
-	set mDefaultBindingMode $ROTATE_MODE
-	beginViewRotate
     }
     SetNormalCursor $this
 }
@@ -2891,6 +2923,7 @@ Popup Menu    Right or Ctrl-Left
     }
 
     $itk_component(saveDialog) center [namespace tail $this]
+    ::update
     if {[$itk_component(saveDialog) activate]} {
 	saveDb
 	return 1
@@ -2899,10 +2932,79 @@ Popup Menu    Right or Ctrl-Left
     return 0
 }
 
-::itcl::body ArcherCore::menuStatusCB {w} {
+::itcl::body ArcherCore::colorMenuStatusCB {_w} {
     if {$mDoStatus} {
 	# entry might not support -label (i.e. tearoffs)
-	if {[catch {$w entrycget active -label} op]} {
+	if {[catch {$_w entrycget active -label} op]} {
+	    set op ""
+	}
+
+	switch -- $op {
+	    "Red" {
+		set mStatusStr "Set this object's color to red"
+	    }
+	    "Orange" {
+		set mStatusStr "Set this object's color to orange"
+	    }
+	    "Yellow" {
+		set mStatusStr "Set this object's color to yellow"
+	    }
+	    "Green" {
+		set mStatusStr "Set this object's color to green"
+	    }
+	    "Blue" {
+		set mStatusStr "Set this object's color to blue"
+	    }
+	    "Indigo" {
+		set mStatusStr "Set this object's color to indigo"
+	    }
+	    "Violet" {
+		set mStatusStr "Set this object's color to violet"
+	    }
+	    "Default" {
+		set mStatusStr "Set this object's color to the default color"
+	    }
+	    "Select..." {
+		set mStatusStr "Set this object's color to the selected color"
+	    }
+	    default {
+		set mStatusStr ""
+	    }
+	}
+    }
+}
+
+::itcl::body ArcherCore::menuStatusCB {_w} {
+    if {$mDoStatus} {
+	# entry might not support -label (i.e. tearoffs)
+	if {[catch {$_w entrycget active -label} op]} {
+	    set op ""
+	}
+
+	switch -- $op {
+	    "Wireframe" {
+		set mStatusStr "Draw object as wireframe"
+	    }
+	    "Shaded" {
+		set mStatusStr "Draw object as shaded if a bot or polysolid (unevalutated)"
+	    }
+	    "Hidden Line" {
+		set mStatusStr "Draw object as hidden line"
+	    }
+	    "Off" {
+		set mStatusStr "Erase object"
+	    }
+	    default {
+		set mStatusStr ""
+	    }
+	}
+    }
+}
+
+::itcl::body ArcherCore::menuStatusCB_junk {_w} {
+    if {$mDoStatus} {
+	# entry might not support -label (i.e. tearoffs)
+	if {[catch {$_w entrycget active -label} op]} {
 	    set op ""
 	}
 
@@ -2997,14 +3099,50 @@ Popup Menu    Right or Ctrl-Left
 	    "Wireframe" {
 		set mStatusStr "Draw object as wireframe"
 	    }
-	    "Shaded (Mode 1)" {
+	    "Shaded" {
 		set mStatusStr "Draw object as shaded if a bot or polysolid (unevalutated)"
 	    }
-	    "Shaded (Mode 2)" {
-		set mStatusStr "Draw object as shaded (unevalutated)"
+	    "Hidden Line" {
+		set mStatusStr "Draw object as hidden line"
 	    }
 	    "Off" {
 		set mStatusStr "Erase object"
+	    }
+	    default {
+		set mStatusStr ""
+	    }
+	}
+    }
+}
+
+::itcl::body ArcherCore::transparencyMenuStatusCB {_w} {
+    if {$mDoStatus} {
+	# entry might not support -label (i.e. tearoffs)
+	if {[catch {$_w entrycget active -label} op]} {
+	    set op ""
+	}
+
+	switch -- $op {
+	    "None" {
+		set mStatusStr "Set this object's transparency to 0%"
+	    }
+	    "80%" {
+		set mStatusStr "Set this object's transparency to 80%"
+	    }
+	    "85%" {
+		set mStatusStr "Set this object's transparency to 85%"
+	    }
+	    "90%" {
+		set mStatusStr "Set this object's transparency to 90%"
+	    }
+	    "95%" {
+		set mStatusStr "Set this object's transparency to 95%"
+	    }
+	    "97%" {
+		set mStatusStr "Set this object's transparency to 97%"
+	    }
+	    "99%" {
+		set mStatusStr "Set this object's transparency to 99%"
 	    }
 	    default {
 		set mStatusStr ""
@@ -3217,7 +3355,12 @@ Popup Menu    Right or Ctrl-Left
 	return
     }
 
-    redrawObj $mSelectedObjPath
+    if {!$mShowPrimitiveLabels} {
+	gedCmd configure -primitiveLabels {}
+    }
+
+    selectNode $mLastTags
+#    redrawObj $mSelectedObjPath
 }
 
 ::itcl::body ArcherCore::showViewParams {} {
@@ -3253,8 +3396,8 @@ Popup Menu    Right or Ctrl-Left
 	return
     }
 
-    $itk_component(cmd) putstring "nirt -b"
-    $itk_component(cmd) putstring [$itk_component(ged) nirt -b]
+    putString "nirt -b"
+    putString [$itk_component(ged) nirt -b]
 }
 
 ::itcl::body ArcherCore::launchRtApp {app size} {
@@ -3276,15 +3419,22 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::refreshDisplay {} {
-    if {$mCurrentDisplay == ""} {
-	gedCmd refresh
+    if {$mCurrentPaneName == ""} {
+	set pane $mActivePaneName
     } else {
-	$mCurrentDisplay refresh
+	set pane $mCurrentPaneName
     }
+    set mCurrentPaneName ""
+
+    $itk_component(ged) pane_refresh $pane
 }
 
 ::itcl::body ArcherCore::putString {_str} {
     $itk_component(cmd) putstring $_str
+}
+
+::itcl::body ArcherCore::setStatusString {_str} {
+    set mStatusStr $_str
 }
 
 ::itcl::body ArcherCore::mouseRay {_dm _x _y} {
@@ -3366,7 +3516,7 @@ Popup Menu    Right or Ctrl-Left
 		set ret 1
 	} \
 	$MEASURE_MODE { \
-		initMeasure \
+		initViewMeasure \
 		set ret 1
 	}
 
@@ -4355,7 +4505,7 @@ Popup Menu    Right or Ctrl-Left
 	mModelAxesTickMajorColor {
 	    $itk_component(ged) configure -modelAxesTickMajorColor $mModelAxesTickMajorColor
 	}
-	mPrimitveLabelColor {
+	mPrimitiveLabelColor {
 	    $itk_component(ged) configure -primitiveLabelColor $mPrimitiveLabelColor
 	}
 	mScaleColor {
