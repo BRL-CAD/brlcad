@@ -33,6 +33,7 @@
  *	5	curvature debugging (principal direction)
  *	6	UV Coord
  *	7	Photon Mapping
+ *      8       Time-to-render heat graph
  *
  *  Notes -
  *	The normals on all surfaces point OUT of the solid.
@@ -1129,7 +1130,20 @@ int viewit(register struct application *ap,
 	break;
     case 8:
     {
-	bu_log("Entered the awesome heat graph!\n");
+	/*routine taken from 0 case*/
+
+            /* Light from the "eye" (ray source).  Note sign change */
+	    lp = BU_LIST_FIRST( light_specific, &(LightHead.l) );
+	    diffuse0 = 0;
+	    if ( (cosI0 = -VDOT(normal, ap->a_ray.r_dir)) >= 0.0 )
+		diffuse0 = cosI0 * ( AmbientIntensity - 1.0);
+	    VSCALE( work0, lp->lt_color, diffuse0 );
+
+	    /* Add in contribution from ambient light */
+	    VSCALE( work1, ambient_color, AmbientIntensity );
+	    VADD2( ap->a_color, work0, work1 );
+
+	    /*bu_log("Entered the awesome heat graph!\n");*/
 	break;
     }
 
@@ -1536,9 +1550,14 @@ view_2init(register struct application *ap, char *framename)
 
 	}
 	break;
+	/*Now for the new Heat-graph lightmodel that will take all times to
+	 *compute the ray trace, normalize times, and then create the trace
+	 *according to how long each individual pixel took to render
+	 */
     case 8:
     {
-	VSETALL(background, 255);
+	ap->a_hit = colorview;
+	VSETALL(background, 1);
 	break;
     }
 
