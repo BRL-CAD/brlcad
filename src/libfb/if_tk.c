@@ -302,6 +302,21 @@ tk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
     Tk_PhotoPutBlock(fbinterp, fbphoto, &block, x, ifp->if_height-y, count, 1, TK_PHOTO_COMPOSITE_SET);
 #endif
 
+    /* Immediately update display window */
+    int flags = 0;
+    flags = TCL_DONT_WAIT;
+    Tcl_DoOneEvent(flags);
+    
+    /* Do the update in Tcl instead of C - might
+     * need this if the above proves non-robust
+     * (i.e. if one event isn't always enough...)
+     */
+    /*
+    if (((y % 10) == 0) || (y == count - 1)) {
+     	const char *updateidlecmd = "update idletasks";
+    	Tcl_Eval(fbinterp, updateidlecmd);
+    }
+    */
     return count;
 }
 
