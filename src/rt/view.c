@@ -57,6 +57,8 @@
 #include "photonmap.h"
 #include "scanline.h"
 
+
+
 const char title[] = "The BRL-CAD Raytracer RT";
 const char usage[] = "\
 Usage:  rt [options] model.g objects...\n\
@@ -1128,22 +1130,28 @@ int viewit(register struct application *ap,
 	{
 	}
 	break;
+	/*This case will most likely be moved from viewit to viewcolor, to allow
+	 *for a colored render to be done with all special stuff, for better calculation
+	 *of time taken for render
+	 */
     case 8:
     {
-	/*routine taken from 0 case*/
+	/*routine taken from 1 case*/
+	rt_prep_timer();
 
             /* Light from the "eye" (ray source).  Note sign change */
 	    lp = BU_LIST_FIRST( light_specific, &(LightHead.l) );
 	    diffuse0 = 0;
 	    if ( (cosI0 = -VDOT(normal, ap->a_ray.r_dir)) >= 0.0 )
-		diffuse0 = cosI0 * ( AmbientIntensity - 1.0);
+		diffuse0 = cosI0 * ( AmbientIntensity - 1.0 );
 	    VSCALE( work0, lp->lt_color, diffuse0 );
 
 	    /* Add in contribution from ambient light */
 	    VSCALE( work1, ambient_color, AmbientIntensity );
 	    VADD2( ap->a_color, work0, work1 );
-
-	    /*bu_log("Entered the awesome heat graph!\n");*/
+	    double pixelTime = rt_get_timer(NULL,NULL);
+	    bu_log("Time was: %lf\n", pixelTime);
+/*	    bu_log("Entered the awesome heat graph!\n");*/
 	break;
     }
 
@@ -1556,7 +1564,7 @@ view_2init(register struct application *ap, char *framename)
 	 */
     case 8:
     {
-	ap->a_hit = colorview;
+	ap->a_hit = viewit; //colorview;
 	VSETALL(background, 1);
 	break;
     }
