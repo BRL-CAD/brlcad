@@ -216,6 +216,14 @@ fb_tk_close(FBIO *ifp)
 {
     FB_CK_FBIO(ifp);
     fb_log( "fb_close( 0x%lx )\n", (unsigned long)ifp );
+    fclose(stdin);
+    // have GOT to figure out how to persist cleanly.  Obvious
+    // approach is to get some sort of binding set up on 
+    // WM_DELETE_WINDOW - look at other framebuffer codes
+    // for how to idle properly in the meantime without
+    // burning CPU and needing Ctrl-c to exit.
+    while (1) {
+    }
     return	0;
 }
 
@@ -303,20 +311,8 @@ tk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
 #endif
 
     /* Immediately update display window */
-    int flags = 0;
-    flags = TCL_DONT_WAIT;
-    Tcl_DoOneEvent(flags);
-    
-    /* Do the update in Tcl instead of C - might
-     * need this if the above proves non-robust
-     * (i.e. if one event isn't always enough...)
-     */
-    /*
-    if (((y % 10) == 0) || (y == count - 1)) {
-     	const char *updateidlecmd = "update idletasks";
-    	Tcl_Eval(fbinterp, updateidlecmd);
-    }
-    */
+    Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT);
+   
     return count;
 }
 
