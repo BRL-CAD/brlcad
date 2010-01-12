@@ -780,12 +780,10 @@ colorview(register struct application *ap, struct partition *PartHeadp, struct s
 	    /* exit point, ignore everything before "dist" */
 	    dist = norm_dist/slant_factor;
 	    for (; pp != PartHeadp; pp = pp->pt_forw ) {
-		if( pp->pt_outhit->hit_dist >= dist ) {
-		    if( pp->pt_inhit->hit_dist < dist ) {
-			pp->pt_inhit->hit_dist = dist;
-			pp->pt_inflip = 0;
-			pp->pt_inseg->seg_stp = kut_soltab;
-		    }
+		if( (pp->pt_outhit->hit_dist >= dist) && (pp->pt_inhit->hit_dist < dist) ) {
+		    pp->pt_inhit->hit_dist = dist;
+		    pp->pt_inflip = 0;
+		    pp->pt_inseg->seg_stp = kut_soltab;
 		    break;
 		}
 	    }
@@ -881,23 +879,21 @@ colorview(register struct application *ap, struct partition *PartHeadp, struct s
 	goto out;
     }
 
-    if ( R_DEBUG&RDEBUG_RAYWRITE )  {
 	/* Record the approach path */
-	if ( hitp->hit_dist > 0.0001 )  {
+    if ( R_DEBUG&RDEBUG_RAYWRITE && (hitp->hit_dist > 0.0001) )  {
 	    VJOIN1( hitp->hit_point, ap->a_ray.r_pt,
 		    hitp->hit_dist, ap->a_ray.r_dir );
 	    wraypts( ap->a_ray.r_pt,
 		     ap->a_ray.r_dir,
 		     hitp->hit_point,
 		     -1, ap, stdout );	/* -1 = air */
-	}
     }
-    if ( R_DEBUG&(RDEBUG_RAYPLOT|RDEBUG_RAYWRITE|RDEBUG_REFRACT) )  {
+
+    if ( (R_DEBUG&(RDEBUG_RAYPLOT|RDEBUG_RAYWRITE|RDEBUG_REFRACT)) && (hitp->hit_dist > 0.0001))  {
 	/*  There are two parts to plot here.
 	 *  Ray start to inhit (purple),
 	 *  and inhit to outhit (grey).
 	 */
-	if ( hitp->hit_dist > 0.0001 )  {
 	    register int i, lvl;
 	    fastf_t out;
 	    vect_t inhit, outhit;
@@ -936,7 +932,7 @@ vdraw open oray;vdraw params c %2.2x%2.2x%2.2x;vdraw write n 0 %g %g %g;vdraw wr
 vdraw open iray;vdraw params c %2.2x%2.2x%2.2x;vdraw write n 0 %g %g %g;vdraw write n 1 %g %g %g;vdraw send\n",
 		   i, i, i,
 		   V3ARGS(inhit), V3ARGS(outhit) );
-	}
+	
     }
 
     memset((char *)&sw, 0, sizeof(sw));
