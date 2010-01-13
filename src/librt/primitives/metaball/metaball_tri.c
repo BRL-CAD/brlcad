@@ -44,36 +44,10 @@
 
 #include "metaball.h"
 
-static int bitcount(unsigned char w) { return (w==0) ? 0 : bitcount(w>>1) + (w|1); }
+extern int mc_edges[256];
 
-static int
-rt_metaball_realize_cube(struct shell *s, struct rt_metaball_internal *mb, fastf_t finalstep, int pv, point_t **p, fastf_t mtol)
-{
-    int pvbc;
-    struct vertex **corners[3];
-    struct faceuse *fu;
-
-    pvbc = bitcount(pv);
-    if (pvbc==1) {
-	point_t a, b, mid;
-	rt_metaball_find_intersection(&mid, mb, (const point_t *)&a, (const point_t *)&*b, mtol, finalstep);
-	bu_log("Intersect between %f, %f, %f and %f, %f, %f is at %f, %f, %f\n", V3ARGS(a), V3ARGS(b), V3ARGS(mid));
-    }
-    /* should the actual surface intersection be searched for, or
-     * just say the mid point is good enough? */
-
-    /* needs to be stitched into a triangle style NMG. Then
-     * decimated, perhaps? */
-
-    /* convert intersect to vertices */
-    p = p;
-
-    if ((fu=nmg_cmface(s, corners, 3)) == (struct faceuse *)NULL) {
-	bu_log("rt_metaball_tess() nmg_cmface() failed\n");
-	return -1;
-    }
-    return -1;
-}
+/* TODO: make a real header entry once the signature is good... */
+int rt_nmg_mc_realize_cube(struct shell *s, int pv, point_t **p, fastf_t *edges);
 
 /**
  * R T _ M E T A B A L L _ T E S S
@@ -130,6 +104,7 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
 	for (j = min[Y]; j<max[Y]; j+=mtol)
 	    for (k = min[Z]; k<max[Z]; k+=mtol) {
 		point_t p[8];
+		fastf_t edge[12];
 		int pv = 0;
 
 #define MEH(c,di,dj,dk) VSET(p[c], i+di, j+dj, k+dk); pv |= rt_metaball_point_inside((const point_t *)&p[c], mb) << c;
@@ -142,11 +117,18 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
 		MEH(6, mtol, mtol, 0);
 		MEH(7, mtol, mtol, mtol);
 #undef MET
-		if ( pv != 0 && pv != 255 )
-		    if(rt_metaball_realize_cube(s, mb, finalstep, pv, (point_t **)&p, mtol) == -1) {
+		if ( pv != 0 && pv != 255 ) {	/* entire cube is either inside or outside */
+		    int r;
+		    fastf_t edges[12];
+		    bu_log("%x\n", mc_edges[pv]);
+		    /*
+				rt_metaball_find_intersection(&mid, mb, (const point_t *)&a, (const point_t *)&*b, mtol, finalstep);
+		    */
+		    if(rt_nmg_mc_realize_cube(s, pv, (point_t **)&p, edges) == -1) {
 			bu_log("Error attempting to realize a cube O.o\n");
 			return -1;
 		    }
+		}
 	    }
 
     rt_get_timer(&times, NULL);
