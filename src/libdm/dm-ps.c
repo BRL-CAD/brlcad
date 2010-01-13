@@ -69,6 +69,7 @@ struct dm dm_ps = {
     ps_drawLines3D,
     ps_drawPoint2D,
     ps_drawVList,
+    ps_drawVList,
     ps_draw,
     ps_setFGColor,
     ps_setBGColor,

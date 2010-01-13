@@ -696,6 +696,9 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     struct rt_pt_node *rt_ptalloc(void);
     fastf_t rt_ell_ang(fastf_t *, fastf_t, fastf_t, fastf_t, fastf_t);
 
+    MAT_ZERO(invRoS);
+    MAT_ZERO(SoR);
+
     RT_CK_DB_INTERNAL(ip);
     iip = (struct rt_hyp_internal *)ip->idb_ptr;
     RT_HYP_CK_MAGIC(iip);
@@ -1118,7 +1121,6 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	NMG_CK_VERTEX_G(vg);
 
 	VSUB2(tmp_pt, vg->coord, xip->hyp_V);
-	/* Fix me. SoR and invRoS have not been initialized before using */
 	MAT4X3VEC(pt_prime, SoR, tmp_pt);
 	VSET(tmp_vect, pt_prime[X]*(2*cprime+1), pt_prime[Y]*(2*cprime+1), -(pt_prime[Z]+cprime+1));
 	MAT4X3VEC(norm, invRoS, tmp_vect);

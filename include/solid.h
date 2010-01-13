@@ -57,6 +57,7 @@ struct solid  {
 				 *	      2 - shaded (booleans NOT evaluated)
 				 *	      3 - shaded (booleans evaluated)
 				 */
+    int s_hiddenLine;         	/**< @brief  1 - hidden line */
 };
 
 

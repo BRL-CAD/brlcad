@@ -25,7 +25,6 @@
  *
  * Code is based on concepts from YAC by Angus Leeming
  *
- * @author Dawn Thomas
  */
 #ifndef __PCMATHVM_H__
 #define __PCMATHVM_H__

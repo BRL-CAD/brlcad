@@ -40,9 +40,6 @@
 '   BrlcadDllRcDefines: create a header file containing the BRL-CAD version
 '                       numbers as defines to be used in brlcad.rc
 '
-' Author -
-'   Daniel Rossberg
-'
 '''
 
 Set fileSystem     = CreateObject("Scripting.FileSystemObject")

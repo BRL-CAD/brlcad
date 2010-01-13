@@ -21,9 +21,6 @@
  *
  *  libwdb support for writing an ARS.
  *
- *  Author -
- *	Michael John Muuss
- *
  */
 
 #include "common.h"

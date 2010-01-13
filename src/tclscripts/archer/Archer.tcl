@@ -224,6 +224,7 @@ package provide Archer 1.0
 	method clearTargetLedger {}
 	method createTargetLedger {}
 	method global_undo {}
+	method global_undo_callback {_gname}
 	method ledger_cleanup {}
 	method object_checkpoint {}
 	method object_undo {}
@@ -286,7 +287,14 @@ package provide Archer 1.0
 	method doArcherHelp {}
 	method launchDisplayMenuBegin {_dm _m _x _y}
 	method launchDisplayMenuEnd {}
+
+	#XXX Need to split up menuStatusCB into one method per menu
 	method menuStatusCB {_w}
+	method modesMenuStatusCB {_w}
+	method rtCheckMenuStatusCB {_w}
+	method rtEdgeMenuStatusCB {_w}
+	method rtMenuStatusCB {_w}
+
 	method updateCreationButtons {_on}
 	method updatePrimaryToolbar {}
 
@@ -638,6 +646,7 @@ package provide Archer 1.0
 #    bind $dialog <FocusOut> "raise $dialog"
 
     $dialog center $w
+    ::update
     $dialog activate
 }
 
@@ -1750,6 +1759,7 @@ package provide Archer 1.0
     }
 
     $itk_component(revertDialog) center [namespace tail $this]
+    ::update
     if {[$itk_component(revertDialog) activate]} {
 	revert
 	return 1
@@ -2000,7 +2010,7 @@ package provide Archer 1.0
 	set le [lindex $l end]
 
 	if {$le == ""} {
-	    puts "No ledger entry found for $obj."
+	    putString "No ledger entry found for $obj."
 	} else {
 	    # Assumed to have mods after the command invocation above
 	    $mLedger attr set $le $LEDGER_ENTRY_OUT_OF_SYNC_ATTR 1
@@ -2277,24 +2287,24 @@ package provide Archer 1.0
 
     foreach dname {ul ur ll lr} {
 	set dm [$_comp component $dname]
-	set win [$dm component dm]
+	set win $dm
 
 	if {$mViewOnly} {
 	    bind $win <Control-ButtonPress-1> \
-		"[::itcl::code $this launchDisplayMenuBegin $dm [$itk_component(canvas_menu) component view-menu] %X %Y]; break"
+		"[::itcl::code $this launchDisplayMenuBegin $dname [$itk_component(canvas_menu) component view-menu] %X %Y]; break"
 	    bind $win <3> \
-		"[::itcl::code $this launchDisplayMenuBegin $dm [$itk_component(canvas_menu) component view-menu] %X %Y]; break"
+		"[::itcl::code $this launchDisplayMenuBegin $dname [$itk_component(canvas_menu) component view-menu] %X %Y]; break"
 	} else {
 	    if {$ArcherCore::inheritFromToplevel} {
 		bind $win <Control-ButtonPress-1> \
-		    "[::itcl::code $this launchDisplayMenuBegin $dm $itk_component(displaymenu) %X %Y]; break"
+		    "[::itcl::code $this launchDisplayMenuBegin $dname $itk_component(displaymenu) %X %Y]; break"
 		bind $win <3> \
-		    "[::itcl::code $this launchDisplayMenuBegin $dm $itk_component(displaymenu) %X %Y]; break"
+		    "[::itcl::code $this launchDisplayMenuBegin $dname $itk_component(displaymenu) %X %Y]; break"
 	    } else {
 		bind $win <Control-ButtonPress-1> \
-		    "[::itcl::code $this launchDisplayMenuBegin $dm [$itk_component(menubar) component display-menu] %X %Y]; break"
+		    "[::itcl::code $this launchDisplayMenuBegin $dname [$itk_component(menubar) component display-menu] %X %Y]; break"
 		bind $win <3> \
-		    "[::itcl::code $this launchDisplayMenuBegin $dm [$itk_component(menubar) component display-menu] %X %Y]; break"
+		    "[::itcl::code $this launchDisplayMenuBegin $dname [$itk_component(menubar) component display-menu] %X %Y]; break"
 	    }
 	}
     }
@@ -2362,6 +2372,7 @@ package provide Archer 1.0
 }
 
 ::itcl::body Archer::selectNode {tags {rflag 1}} {
+    set mLastTags $tags
     set tags [split $tags ":"]
     if {[llength $tags] > 1} {
 	set element [lindex $tags 1]
@@ -2421,15 +2432,23 @@ package provide Archer 1.0
     # label the object if it's being drawn
     set mRenderMode [gedCmd how $node]
 
-    if {$mShowPrimitiveLabels && 0 <= $mRenderMode} {
-	gedCmd configure -primitiveLabels $node
-    } else {
-	gedCmd configure -primitiveLabels {}
+    if {$mShowPrimitiveLabels} {
+	if {0 <= $mRenderMode} {
+	    gedCmd configure -primitiveLabels $node
+	} else {
+	    gedCmd configure -primitiveLabels {}
+	}
     }
 
-    if {$rflag} {
-	gedCmd refresh
-    }
+#    if {$mShowPrimitiveLabels && 0 <= $mRenderMode} {
+#	gedCmd configure -primitiveLabels $node
+#    } else {
+#	gedCmd configure -primitiveLabels {}
+#    }
+#
+#    if {$rflag} {
+#	gedCmd refresh
+#    }
 
     set mPrevSelectedObjPath $mSelectedObjPath
     set mPrevSelectedObj $mSelectedObj
@@ -3576,7 +3595,7 @@ package provide Archer 1.0
 	-state disabled
     $itk_component(displaymenu) add command \
 	-label "Clear" \
-	-command [::itcl::code $this clear] \
+	-command [::itcl::code $this zap] \
 	-state disabled
     $itk_component(displaymenu) add command \
 	-label "Refresh" \
@@ -3707,13 +3726,17 @@ package provide Archer 1.0
 
     # set up bindings for status
     bind $itk_component(filemenu) <<MenuSelect>> [::itcl::code $this menuStatusCB %W]
-#    bind $itk_component(importMenu) <<MenuSelect>> [::itcl::code $this menuStatusCB %W]
-#    bind $itk_component(exportMenu) <<MenuSelect>> [::itcl::code $this menuStatusCB %W]
     bind $itk_component(displaymenu) <<MenuSelect>> [::itcl::code $this menuStatusCB %W]
+    bind $itk_component(backgroundmenu) <<MenuSelect>> [::itcl::code $this menuStatusCB %W]
     bind $itk_component(stdviewsmenu) <<MenuSelect>> [::itcl::code $this menuStatusCB %W]
-    bind $itk_component(modesmenu) <<MenuSelect>> [::itcl::code $this menuStatusCB %W]
+    bind $itk_component(modesmenu) <<MenuSelect>> [::itcl::code $this modesMenuStatusCB %W]
     bind $itk_component(activepanemenu) <<MenuSelect>> [::itcl::code $this menuStatusCB %W]
     bind $itk_component(helpmenu) <<MenuSelect>> [::itcl::code $this menuStatusCB %W]
+
+    bind $itk_component(raytracemenu) <<MenuSelect>> [::itcl::code $this menuStatusCB %W]
+    bind $itk_component(rtmenu) <<MenuSelect>> [::itcl::code $this rtMenuStatusCB %W]
+    bind $itk_component(rtcheckmenu) <<MenuSelect>> [::itcl::code $this rtCheckMenuStatusCB %W]
+    bind $itk_component(rtedgemenu) <<MenuSelect>> [::itcl::code $this rtEdgeMenuStatusCB %W]
 }
 
 
@@ -3790,6 +3813,7 @@ package provide Archer 1.0
 #    bind $itk_component(aboutDialog) <FocusOut> "raise $itk_component(aboutDialog)"
 
     $itk_component(aboutDialog) center [namespace tail $this]
+    ::update
     $itk_component(aboutDialog) activate
 }
 
@@ -3806,22 +3830,23 @@ package provide Archer 1.0
 
 
 ::itcl::body Archer::launchDisplayMenuBegin {_dm _m _x _y} {
-    set currentDisplay $_dm
+    set mCurrentPaneName $_dm
     tk_popup $_m $_x $_y
     after idle [::itcl::code $this launchDisplayMenuEnd]
 }
 
 ::itcl::body Archer::launchDisplayMenuEnd {} {
-    set currentDisplay ""
+#    set mCurrentPaneName ""
 }
 
-::itcl::body Archer::menuStatusCB {w} {
+::itcl::body Archer::menuStatusCB {_w} {
     if {$mDoStatus} {
 	# entry might not support -label (i.e. tearoffs)
-	if {[catch {$w entrycget active -label} op]} {
+	if {[catch {$_w entrycget active -label} op]} {
 	    set op ""
 	}
 
+	set validOp 1
 	switch -- $op {
 	    "New..." {
 		set mStatusStr "Create a new target description"
@@ -3832,20 +3857,11 @@ package provide Archer 1.0
 	    "Save" {
 		set mStatusStr "Save the current target description"
 	    }
-	    "Basic" {
-		set mStatusStr "Basic user mode"
+	    "Revert" {
+		set mStatusStr "Discard all edits waiting to be saved"
 	    }
-	    "Intermediate" {
-		set mStatusStr "Intermediate user mode"
-	    }
-	    "Advanced" {
-		set mStatusStr "Advanced user mode"
-	    }
-	    "Fastgen 4 Import..." {
-		set mStatusStr "Import from a Fastgen 4 file"
-	    }
-	    "Fastgen 4 Export..." {
-		set mStatusStr "Export to a Fastgen 4 file"
+	    "Raytrace Control Panel..." {
+		set mStatusStr "Launch the raytrace control panel"
 	    }
 	    "Close" {
 		set mStatusStr "Close the current target description"
@@ -3895,14 +3911,14 @@ package provide Archer 1.0
 	    "View Controls" {
 		set mStatusStr "Toggle on/off view toolbar"
 	    }
-	    "Status Bar" {
-		set mStatusStr "Toggle on/off status bar"
+	    "About Archer..." {
+		set mStatusStr "Info about Archer"
 	    }
-	    "Command Window" {
-		set mStatusStr "Toggle on/off command window"
+	    "Archer Help..." {
+		set mStatusStr "Help for Archer"
 	    }
-	    "About..." {
-		set mStatusStr "Info about ArcherCore"
+	    "About Plug-ins..." {
+		set mStatusStr "Info about Archer's plugins"
 	    }
 	    "Mouse Mode Overrides..." {
 		set mStatusStr "Mouse mode override definitions"
@@ -3919,15 +3935,6 @@ package provide Archer 1.0
 	    "Lower Right" {
 		set mStatusStr "Set the active pane to the lower right pane"
 	    }
-	    "Quad View" {
-		set mStatusStr "Toggle between single and multiple geometry pane mode"
-	    }
-	    "View Axes" {
-		set mStatusStr "Hide/Show view axes"
-	    }
-	    "Model Axes" {
-		set mStatusStr "Hide/Show model axes"
-	    }
 	    "File" {
 		set mStatusStr ""
 	    }
@@ -3940,17 +3947,76 @@ package provide Archer 1.0
 	    "Help" {
 		set mStatusStr ""
 	    }
-	    "Wireframe" {
-		set mStatusStr "Draw object as wireframe"
+	    "Black" {
+		set mStatusStr "Set the display background color to black"
 	    }
-	    "Shaded (Mode 1)" {
-		set mStatusStr "Draw object as shaded if a bot or polysolid (unevalutated)"
+	    "Grey" {
+		set mStatusStr "Set the display background color to grey"
 	    }
-	    "Shaded (Mode 2)" {
-		set mStatusStr "Draw object as shaded (unevalutated)"
+	    "White" {
+		set mStatusStr "Set the display background color to white"
 	    }
-	    "Off" {
-		set mStatusStr "Erase object"
+	    "Cyan" {
+		set mStatusStr "Set the display background color to cyan"
+	    }
+	    "Blue" {
+		set mStatusStr "Set the display background color to blue"
+	    }
+	    "Clear" {
+		set mStatusStr "Clear the display"
+	    }
+	    "Refresh" {
+		set mStatusStr "Refresh the display"
+	    }
+	    "nirt" {
+		set mStatusStr "Run nirt on the displayed geometry"
+	    }
+	    default {
+		set validOp 0
+		set mStatusStr ""
+	    }
+	}
+
+	if {!$validOp} {
+	    ArcherCore::menuStatusCB $_w
+	}
+    }
+}
+
+::itcl::body Archer::modesMenuStatusCB {_w} {
+    if {$mDoStatus} {
+	# entry might not support -label (i.e. tearoffs)
+	if {[catch {$_w entrycget active -label} op]} {
+	    set op ""
+	}
+
+	switch -- $op {
+	    "Active Pane" {
+		set mStatusStr ""
+	    }
+	    "Quad View" {
+		set mStatusStr "Toggle between single and multiple geometry pane mode"
+	    }
+	    "View Axes" {
+		set mStatusStr "Hide/Show view axes"
+	    }
+	    "Model Axes" {
+		set mStatusStr "Hide/Show model axes"
+	    }
+	    "Ground Plane" {
+		set mStatusStr "Hide/Show ground plane"
+	    }
+	    "Primitive Labels" {
+		set mStatusStr "Hide/Show primitive labels"
+	    }
+	    "Viewing Parameters" {
+		set mStatusStr "Hide/Show viewing parameters"
+	    }
+	    "Scale" {
+		set mStatusStr "Hide/Show view scale"
+	    }
+	    "Lighting" {
+		set mStatusStr "Toggle lighting on/off "
 	    }
 	    default {
 		set mStatusStr ""
@@ -3959,8 +4025,83 @@ package provide Archer 1.0
     }
 }
 
-::itcl::body Archer::updateCreationButtons {on} {
-    if {$on} {
+::itcl::body Archer::rtCheckMenuStatusCB {_w} {
+    if {$mDoStatus} {
+	# entry might not support -label (i.e. tearoffs)
+	if {[catch {$_w entrycget active -label} op]} {
+	    set op ""
+	}
+
+	switch -- $op {
+	    "50x50" {
+		set mStatusStr "Run rtcheck with a size of 50 on the displayed geometry"
+	    }
+	    "100x100" {
+		set mStatusStr "Run rtcheck with a size of 100 on the displayed geometry"
+	    }
+	    "256x256" {
+		set mStatusStr "Run rtcheck with a size of 256 on the displayed geometry"
+	    }
+	    "512x512" {
+		set mStatusStr "Run rtcheck with a size of 512 on the displayed geometry"
+	    }
+	    default {
+		set mStatusStr ""
+	    }
+	}
+    }
+}
+
+::itcl::body Archer::rtEdgeMenuStatusCB {_w} {
+    if {$mDoStatus} {
+	# entry might not support -label (i.e. tearoffs)
+	if {[catch {$_w entrycget active -label} op]} {
+	    set op ""
+	}
+
+	switch -- $op {
+	    "512x512" {
+		set mStatusStr "Run rtedge with a size of 512 on the displayed geometry"
+	    }
+	    "1024x1024" {
+		set mStatusStr "Run rtedge with a size of 1024 on the displayed geometry"
+	    }
+	    "Window Size" {
+		set mStatusStr "Run rtedge with a size of \"window size\" on the displayed geometry"
+	    }
+	    default {
+		set mStatusStr ""
+	    }
+	}
+    }
+}
+
+::itcl::body Archer::rtMenuStatusCB {_w} {
+    if {$mDoStatus} {
+	# entry might not support -label (i.e. tearoffs)
+	if {[catch {$_w entrycget active -label} op]} {
+	    set op ""
+	}
+
+	switch -- $op {
+	    "512x512" {
+		set mStatusStr "Run rt with a size of 512 on the displayed geometry"
+	    }
+	    "1024x1024" {
+		set mStatusStr "Run rt with a size of 1024 on the displayed geometry"
+	    }
+	    "Window Size" {
+		set mStatusStr "Run rt with a size of \"window size\" on the displayed geometry"
+	    }
+	    default {
+		set mStatusStr ""
+	    }
+	}
+    }
+}
+
+::itcl::body Archer::updateCreationButtons {_on} {
+    if {$_on} {
 	$itk_component(primaryToolbar) itemconfigure arb6 -state normal
 	$itk_component(primaryToolbar) itemconfigure arb8 -state normal
 	$itk_component(primaryToolbar) itemconfigure cone -state normal
@@ -4518,7 +4659,7 @@ package provide Archer 1.0
     $itk_component(menubar) menuconfigure .display.standard.45,45 \
 	-command [::itcl::code $this doAe 45 45]
     $itk_component(menubar) menuconfigure .display.clear \
-	-command [::itcl::code $this clear] \
+	-command [::itcl::code $this zap] \
 	-state disabled
     $itk_component(menubar) menuconfigure .display.refresh \
 	-command [::itcl::code $this refreshDisplay] \
@@ -6350,6 +6491,7 @@ package provide Archer 1.0
 #    bind $dialog <FocusOut> "raise $dialog"
 
     $dialog center $w
+    ::update
     $dialog activate
 }
 
@@ -6412,6 +6554,7 @@ package provide Archer 1.0
     wm protocol $dialog WM_DELETE_WINDOW "$dialog deactivate; ::itcl::delete object $dialog"
     wm geometry $dialog "400x400"
     $dialog center [namespace tail $this]
+    ::update
     $dialog activate
 }
 
@@ -7105,6 +7248,7 @@ package provide Archer 1.0
     set mModelAxesTickMajorColorPref $mModelAxesTickMajorColor
 
     $itk_component(preferencesDialog) center [namespace tail $this]
+    ::update
     if {[$itk_component(preferencesDialog) activate]} {
 	applyPreferencesIfDiff
     }
@@ -7177,7 +7321,7 @@ package provide Archer 1.0
 	writePreferencesBody $pfile
 	close $pfile
     } else {
-	puts "Failed to write the preferences file:\n$pfile"
+	putString "Failed to write the preferences file:\n$pfile"
     }
 }
 
@@ -7898,7 +8042,7 @@ package provide Archer 1.0
 			regsub {([^/]+)$} $mSelectedObjPath $gname mSelectedObjPath
 		    }
 		} else {
-		    puts "No old name found for $lentry"
+		    putString "No old name found for $lentry"
 		    continue
 		}
 	    } \
@@ -7911,9 +8055,10 @@ package provide Archer 1.0
 		gedCmd attr rm $gname $LEDGER_ENTRY_TYPE_ATTR
 	    }
 
-	if {$gname == "_GLOBAL"} {
-	    gedCmd refresh
-	}
+#	if {$gname == "_GLOBAL"} {
+#	    global_undo_callback
+#	}
+	global_undo_callback $gname
 
 	# Remove the ledger entry
 	$mLedger kill $lentry
@@ -7960,6 +8105,10 @@ package provide Archer 1.0
 	updateSaveMode
 	updateUndoMode
     }
+}
+
+::itcl::body Archer::global_undo_callback {_gname} {
+    gedCmd refresh
 }
 
 ::itcl::body Archer::ledger_cleanup {} {
@@ -8053,7 +8202,7 @@ package provide Archer 1.0
 			regsub {([^/]+)$} $mSelectedObjPath $gname mSelectedObjPath
 		    }
 		} else {
-		    puts "No old name found for $lentry"
+		    putString "No old name found for $lentry"
 		    continue
 		}
 	    } \

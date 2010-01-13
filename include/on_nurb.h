@@ -26,8 +26,6 @@
  * 	Non Rational Uniform B-Spline (NURB)
  *	curves and surfaces. Uses openNURBS library.
  *
- * @author	Jason Owens
- *
  */
 
 #ifndef ON_NURB_H

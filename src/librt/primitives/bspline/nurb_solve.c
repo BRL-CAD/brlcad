@@ -23,10 +23,6 @@
  *
  * Decompose a matrix into its LU decomposition using pivoting.
  *
- * Author:	Paul R. Stay
- * 		Computer Science Dept.
- * 		University of Utah
- * Date:	Wed Mar 23 1983
  */
 /** @} */
 

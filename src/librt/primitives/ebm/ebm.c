@@ -104,10 +104,8 @@ BU_EXTERN(int rt_seg_planeclip, (struct seg *out_hd, struct seg *in_hd,
  */
 #define BIT_XWIDEN 2
 #define BIT_YWIDEN 2
-#define BIT(_eip, _xx, _yy)	\
-	((unsigned char *)((_eip)->mp->apbuf))[ \
-		((_yy)+BIT_YWIDEN)*((_eip)->xdim + \
-		BIT_XWIDEN*2)+(_xx)+BIT_XWIDEN ]
+#define BIT(_eip, _xx, _yy) \
+    ((unsigned char *)((_eip)->mp->apbuf))[ ((_yy)+BIT_YWIDEN)*((_eip)->xdim + BIT_XWIDEN*2)+(_xx)+BIT_XWIDEN ]
 
 /**
  * R T _ S E G _ P L A N E C L I P
@@ -1545,7 +1543,7 @@ rt_ebm_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
     return(0);
 
- fail:
+fail:
     bu_free((char *)vertp, "rt_ebm_tess: vertp");
     bu_free((char *)loop_verts, "rt_ebm_tess: loop_verts");
     while (BU_LIST_NON_EMPTY(&edges.l)) {
@@ -1651,16 +1649,15 @@ rt_ebm_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, ch
 	    /*XXX needs list_to_fastf_array function */
 	    ar_ptr = array;
 
-	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &ar_ptr, &len) !=
-		len) {
+	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &ar_ptr, &len) != len) {
 		bu_vls_printf(logstr, "ERROR: incorrect number of coefficents for matrix\n");
 		return BRLCAD_ERROR;
 	    }
-	    MAT_COPY(ebm->mat, array)
-		} else {
-		    bu_vls_printf(logstr, "ERROR: illegal argument, choices are F, W, N, or H\n");
-		    return BRLCAD_ERROR;
-		}
+	    MAT_COPY(ebm->mat, array);
+	} else {
+	    bu_vls_printf(logstr, "ERROR: illegal argument, choices are F, W, N, or H\n");
+	    return BRLCAD_ERROR;
+	}
 	argc -= 2;
 	argv += 2;
     }

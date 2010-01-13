@@ -293,7 +293,7 @@ ged_bev(struct ged *gedp, int argc, const char *argv[])
  *  This routine must be prepared to run in parallel.
  */
 static union tree *
-ged_facetize_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+ged_facetize_region_end(struct db_tree_state *tsp __attribute__((unused)), struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
     struct bu_list vhead;
     struct ged *gedp = (struct ged *)client_data;

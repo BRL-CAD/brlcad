@@ -20,10 +20,9 @@
 /** @addtogroup rtserver */
 /** @{ */
 /** @file rtserver.h
+ *
  * @brief
  *	header file for the rtserver
- *
- *  @author: John R. Anderson
  *
  */
 

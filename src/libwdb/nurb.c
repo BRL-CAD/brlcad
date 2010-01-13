@@ -22,9 +22,6 @@
  *  Library for writing NURB objects into
  *  MGED databases from arbitrary procedures.
  *
- *  Authors -
- *	Michael John Muuss
- *
  */
 
 #include "common.h"

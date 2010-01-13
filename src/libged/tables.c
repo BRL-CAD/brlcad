@@ -67,7 +67,8 @@ static void ged_new_tables(struct ged *gedp, struct directory *dp, struct bu_ptb
 int
 ged_tables(struct ged *gedp, int argc, const char *argv[])
 {
-    static const char sortcmd[] = "sort -n +1 -2 -o /tmp/ord_id ";
+    static const char sortcmd_orig[] = "sort -n +1 -2 -o /tmp/ord_id ";
+    static const char sortcmd_long[] = "sort --numeric --key=2,2 --output /tmp/ord_id ";
     static const char catcmd[] = "cat /tmp/ord_id >> ";
     struct bu_vls tmp_vls;
     struct bu_vls	cmd;
@@ -208,11 +209,17 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
 
 	bu_vls_printf(&gedp->ged_result_str, "Processed %d Regions\n", numreg);
 
-	/* make ordered idents */
-	bu_vls_strcpy(&cmd, sortcmd);
+	/* make ordered idents - tries newer gnu 'sort' syntax if not successful */
+	bu_vls_strcpy(&cmd, sortcmd_orig);
 	bu_vls_strcat(&cmd, argv[1]);
+	bu_vls_strcat(&cmd, " 2> /dev/null" );
+	if(system( bu_vls_addr(&cmd) ) != 0 ) {
+	    bu_vls_trunc( &cmd, 0 );
+	    bu_vls_strcpy(&cmd, sortcmd_long);
+	    bu_vls_strcat(&cmd, argv[1]);
+	    (void)system( bu_vls_addr(&cmd) );
+	}
 	bu_vls_printf(&gedp->ged_result_str, "%V\n", &cmd);
-	(void)system( bu_vls_addr(&cmd) );
 
 	bu_vls_trunc( &cmd, 0 );
 	bu_vls_strcpy( &cmd, catcmd );

@@ -29,10 +29,6 @@
  *
  *  Return codes of 0 are OK, -1 signal an error.
  *
- *  Authors -
- *	Michael John Muuss
- *	Susanne L. Muuss
- *
  */
 
 #include "common.h"

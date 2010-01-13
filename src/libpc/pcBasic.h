@@ -23,7 +23,6 @@
  *
  * Basic classes for Parametrics and Constraints Library
  *
- * @author Dawn Thomas
  */
 #ifndef __PCBASIC_H__
 #define __PCBASIC_H__

@@ -199,6 +199,7 @@ struct dm {
     int (*dm_drawLines3D)();
     int (*dm_drawPoint2D)();
     int (*dm_drawVList)();
+    int (*dm_drawVListHiddenLine)();
     int (*dm_draw)(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), genptr_t *data);	/**< @brief formerly dmr_object */
     int (*dm_setFGColor)(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency);
     int (*dm_setBGColor)(struct dm *, unsigned char, unsigned char, unsigned char);
@@ -280,6 +281,7 @@ struct dm_obj {
 #define DM_DRAW_LINES_3D(_dmp, _npoints, _points) _dmp->dm_drawLines3D(_dmp, _npoints, _points)
 #define DM_DRAW_POINT_2D(_dmp, _x, _y) _dmp->dm_drawPoint2D(_dmp, _x, _y)
 #define DM_DRAW_VLIST(_dmp, _vlist) _dmp->dm_drawVList(_dmp, _vlist)
+#define DM_DRAW_VLIST_HIDDEN_LINE(_dmp, _vlist) _dmp->dm_drawVListHiddenLine(_dmp, _vlist)
 #define DM_DRAW(_dmp, _callback, _data) _dmp->dm_draw(_dmp, _callback, _data)
 #define DM_SET_FGCOLOR(_dmp, _r, _g, _b, _strict, _transparency) _dmp->dm_setFGColor(_dmp, _r, _g, _b, _strict, _transparency)
 #define DM_SET_BGCOLOR(_dmp, _r, _g, _b) _dmp->dm_setBGColor(_dmp, _r, _g, _b)
@@ -351,8 +353,7 @@ DM_EXPORT BU_EXTERN(void dm_draw_adc,
 DM_EXPORT BU_EXTERN(void dm_draw_data_axes,
 		    (struct dm *dmp,
 		     fastf_t viewSize,
-		     const mat_t rmat,
-		     struct ged_axes_state *gasp));
+		     struct ged_data_axes_state *gdasp));
 
 DM_EXPORT BU_EXTERN(void dm_draw_axes,
 		    (struct dm *dmp,

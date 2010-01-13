@@ -383,8 +383,14 @@ edit_com(int	argc,
 	new_argv = (char **)bu_calloc( max_count+1, sizeof( char *), "edit_com new_argv" );
 	new_argc = bu_argv_from_string( new_argv, max_count, bu_vls_addr( &vls ) );
 
-	if ((ret = ged_draw(gedp, new_argc, (const char **)new_argv)) != GED_OK) {
+	ret = ged_draw(gedp, new_argc, (const char **)new_argv);
+	if (ret == GED_ERROR) {
 	    bu_log("ERROR: %s\n", bu_vls_addr(&gedp->ged_result_str));
+	    bu_vls_free( &vls );
+	    bu_free( (char *)new_argv, "edit_com new_argv" );
+	    return ret;
+	} else if (ret == GED_HELP) {
+	    bu_log("%s\n", bu_vls_addr(&gedp->ged_result_str));
 	    bu_vls_free( &vls );
 	    bu_free( (char *)new_argv, "edit_com new_argv" );
 	    return ret;
@@ -405,9 +411,12 @@ edit_com(int	argc,
 		ret = ged_ev(gedp, argc, (const char **)argv);
 		break;
 	}
-	if (ret != GED_OK) {
+	if (ret == GED_ERROR) {
 	    bu_log("ERROR: %s\n", bu_vls_addr(&gedp->ged_result_str));
 	    return TCL_ERROR;
+	} else if (ret == GED_HELP) {
+	    bu_log("%s\n", bu_vls_addr(&gedp->ged_result_str));
+	    return TCL_OK;
 	}
     }
 

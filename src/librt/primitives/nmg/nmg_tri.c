@@ -2478,6 +2478,8 @@ nmg_triangulate_fu(struct faceuse *fu, const struct bn_tol *tol)
 
     char db_name[32];
 
+    VSETALL(N, 0);
+
     BN_CK_TOL(tol);
     NMG_CK_FACEUSE(fu);
 

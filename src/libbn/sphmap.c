@@ -21,11 +21,8 @@
 /** @{ */
 /** @file sphmap.c
  *
- * @brief
- *  Common Subroutines for Spherical Data Structures/Texture Maps Subroutines
- *
- * @author
- *	Phillip Dykstra
+ * @brief Common Subroutines for Spherical Data Structures/Texture
+ * Maps Subroutines
  *
  */
 

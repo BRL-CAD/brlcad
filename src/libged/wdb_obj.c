@@ -842,16 +842,16 @@ wdb_get_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
 
     {
-	struct bu_vls log;
+	struct bu_vls logstr;
 
-	bu_vls_init(&log);
+	bu_vls_init(&logstr);
 
 	if (!intern.idb_meth->ft_get)
 	    return TCL_ERROR;
 
-	status = intern.idb_meth->ft_get(&log, &intern, argv[2]);
-	Tcl_AppendResult(interp, bu_vls_addr(&log), (char *)NULL);
-	bu_vls_free(&log);
+	status = intern.idb_meth->ft_get(&logstr, &intern, argv[2]);
+	Tcl_AppendResult(interp, bu_vls_addr(&logstr), (char *)NULL);
+	bu_vls_free(&logstr);
     }
 
     rt_db_free_internal(&intern);
@@ -1127,19 +1127,19 @@ wdb_put_cmd(struct rt_wdb *wdbp,
     }
 
     {
-	struct bu_vls log;
+	struct bu_vls logstr;
 
-	bu_vls_init(&log);
+	bu_vls_init(&logstr);
 
-	if (!ftp->ft_adjust || ftp->ft_adjust(&log, &intern, argc-3, argv+3) == GED_ERROR) {
-	    Tcl_AppendResult(interp, bu_vls_addr(&log), (char *)NULL);
-	    bu_vls_free(&log);
+	if (!ftp->ft_adjust || ftp->ft_adjust(&logstr, &intern, argc-3, argv+3) == GED_ERROR) {
+	    Tcl_AppendResult(interp, bu_vls_addr(&logstr), (char *)NULL);
+	    bu_vls_free(&logstr);
 	    rt_db_free_internal(&intern);
 	    return TCL_ERROR;
 	}
 
-	Tcl_AppendResult(interp, bu_vls_addr(&log), (char *)NULL);
-	bu_vls_free(&log);
+	Tcl_AppendResult(interp, bu_vls_addr(&logstr), (char *)NULL);
+	bu_vls_free(&logstr);
     }
 
     if (wdb_put_internal(wdbp, name, &intern, 1.0) < 0) {
@@ -1220,26 +1220,26 @@ wdb_adjust_cmd(struct rt_wdb *wdbp,
     RT_CK_FUNCTAB(intern.idb_meth);
 
     {
-	struct bu_vls log;
+	struct bu_vls logstr;
 
-	bu_vls_init(&log);
+	bu_vls_init(&logstr);
 
 	if (!intern.idb_meth->ft_adjust)
 	    return TCL_ERROR;
 
-	status = intern.idb_meth->ft_adjust(&log, &intern, argc-2, argv+2);
+	status = intern.idb_meth->ft_adjust(&logstr, &intern, argc-2, argv+2);
 
 	if (status == GED_OK && wdb_put_internal(wdbp, name, &intern, 1.0) < 0) {
-	    Tcl_AppendResult(interp, bu_vls_addr(&log), (char *)NULL);
-	    bu_vls_free(&log);
+	    Tcl_AppendResult(interp, bu_vls_addr(&logstr), (char *)NULL);
+	    bu_vls_free(&logstr);
 	    Tcl_AppendResult(interp, "wdb_export(", name,
 			     ") failure", (char *)NULL);
 	    rt_db_free_internal(&intern);
 	    return TCL_ERROR;
 	}
 
-	Tcl_AppendResult(interp, bu_vls_addr(&log), (char *)NULL);
-	bu_vls_free(&log);
+	Tcl_AppendResult(interp, bu_vls_addr(&logstr), (char *)NULL);
+	bu_vls_free(&logstr);
     }
 
     /* notify observers */
@@ -1304,16 +1304,16 @@ wdb_form_cmd(struct rt_wdb *wdbp,
 
     {
 	int ret;
-	struct bu_vls log;
+	struct bu_vls logstr;
 
-	bu_vls_init(&log);
+	bu_vls_init(&logstr);
 	
 	if (!ftp->ft_form)
 	    return TCL_ERROR;
 
-	ret = ftp->ft_form(&log, ftp);
-	Tcl_AppendResult(interp, bu_vls_addr(&log), (char *)NULL);
-	bu_vls_free(&log);
+	ret = ftp->ft_form(&logstr, ftp);
+	Tcl_AppendResult(interp, bu_vls_addr(&logstr), (char *)NULL);
+	bu_vls_free(&logstr);
 
 	return ret;
     }

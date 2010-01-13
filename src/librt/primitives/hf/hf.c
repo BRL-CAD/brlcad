@@ -734,6 +734,8 @@ rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
     fastf_t in, out;
     vect_t aray, curloc;
 
+    VSETALL(peqn, 0);
+
     memset(hits, 0, sizeof(hits));
 
     in = -INFINITY;

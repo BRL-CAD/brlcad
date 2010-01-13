@@ -23,7 +23,6 @@
  *
  * Math VM Method implementation
  *
- * @author Dawn Thomas
  */
 
 #include "pcMathVM.h"

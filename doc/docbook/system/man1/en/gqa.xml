@@ -37,7 +37,7 @@
 <!-- USE OF THIS DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF   -->
 <!-- SUCH DAMAGE.                                                       -->
 
-<refentry id='gqa1'>
+<refentry id='gqa1' xmlns:xi="http://www.w3.org/2001/XInclude">
   <refmeta>
     <refentrytitle>GQA</refentrytitle>
     <manvolnum>1</manvolnum>
@@ -152,16 +152,8 @@
     </para>
 
     <literallayout>
-2    7.82      Carbon Tool Steel
-3    2.7       Aluminum, 6061-T6
-4    2.74      Aluminum, 7079-T6
-5    8.9       Copper, pure
-6    19.32          Gold, pure
-7    8.03      Stainless, 18Cr-8Ni
-8    7.47      Stainless 27Cr
-9    7.715          Steel, tool
-10   7.84      Carbon Steel
-    </literallayout>
+<xi:include href="../../../../../misc/GQA_SAMPLE_DENSITIES" parse="text"/>
+   </literallayout>
 
     <para>
       The table is typically created in an external file using a text editor.

@@ -26,12 +26,10 @@
  *	The normals on all surfaces point OUT of the solid.
  *	The incoming light rays point IN.
  *
- *  Authors -
- *	John R. Anderson
- *
- *	Based on the simple Isotropic Gaussian Model presented by Gregory Ward
- *	in "Measuring and Modeling Anisotropic Reflection" (Which also references
- *	earlier work by Beckmann, Torrance, and Cook).
+ * Implementation is based on the simple Isotropic Gaussian Model
+ * presented by Gregory Ward in "Measuring and Modeling Anisotropic
+ * Reflection" (Which also references earlier work by Beckmann,
+ * Torrance, and Cook).
  */
 
 #include "common.h"

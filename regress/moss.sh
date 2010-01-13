@@ -1,8 +1,78 @@
 #!/bin/sh
+#                         M O S S . S H
+# BRL-CAD
+#
+# Copyright (c) 2010 United States Government as represented by
+# the U.S. Army Research Laboratory.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following
+# disclaimer in the documentation and/or other materials provided
+# with the distribution.
+#
+# 3. The name of the author may not be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+# OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+# GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+###
 
-LD_LIBRARY_PATH=../src/other/tcl/unix:../src/other/tk/unix:$LD_LIBRARY_PATH
-DYLD_LIBRARY_PATH=../src/other/tcl/unix:../src/other/tk/unix:$DYLD_LIBRARY_PATH
-export LD_LIBRARY_PATH DYLD_LIBRARY_PATH
+# Ensure /bin/sh
+export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
+
+# source common library functionality, setting ARGS, NAME_OF_THIS,
+# PATH_TO_THIS, and THIS.
+. $1/regress/library.sh
+
+RT="`ensearch rt/rt`"
+if test ! -f "$RT" ; then
+    echo "Unable to find rt, aborting"
+    exit 1
+fi
+A2G="`ensearch conv/asc2g`"
+if test ! -f "$A2G" ; then
+    echo "Unable to find asc2g, aborting"
+    exit 1
+fi
+A2P="`ensearch conv/asc2pix`"
+if test ! -f "$A2P" ; then
+    echo "Unable to find asc2pix, aborting"
+    exit 1
+fi
+PIXDIFF="`ensearch util/pixdiff`"
+if test ! -f "$PIXDIFF" ; then
+    echo "Unable to find pixdiff, aborting"
+    exit 1
+fi
+PIX2PNG="`ensearch util/pix-png`"
+if test ! -f "$PIX2PNG" ; then
+    echo "Unable to find pix-png, aborting"
+    exit 1
+fi
+PNG2PIX="`ensearch util/png-pix`"
+if test ! -f "$PNG2PIX" ; then
+    echo "Unable to find png-pix, aborting"
+    exit 1
+fi
+
 
 rm -f moss.pix moss.log moss.png moss2.pix
 
@@ -37,10 +107,10 @@ M u tor.r 1.000000000000e+00 0.000000000000e+00 0.000000000000e+00 0.00000000000
 M u light.r 1.000000000000e+00 0.000000000000e+00 0.000000000000e+00 0.000000000000e+00 0.000000000000e+00 1.000000000000e+00 0.000000000000e+00 0.000000000000e+00 0.000000000000e+00 0.000000000000e+00 1.000000000000e+00 0.000000000000e+00 0.000000000000e+00 0.000000000000e+00 0.000000000000e+00 1.000000000000e+00 0
 EOF
 
-../src/conv/asc2g moss.asc moss.g
+$A2G moss.asc moss.g
 
 echo "rendering moss..."
-../src/rt/rt -P 1 -B -C0/0/50 -M -s 512 -o moss.pix moss.g all.g > moss.log 2>&1 << EOF
+$RT -P 1 -B -C0/0/50 -M -s 512 -o moss.pix moss.g all.g > moss.log 2>&1 << EOF
 viewsize 1.572026215e+02;
 eye_pt 6.379990387e+01 3.271768951e+01 3.366661453e+01;
 viewrot -5.735764503e-01 8.191520572e-01 0.000000000e+00
@@ -60,11 +130,8 @@ else
     if [ ! -f $1/regress/mosspix.asc ] ; then
 	echo "No reference file for moss.pix"
     else
-	../src/conv/asc2pix < $1/regress/mosspix.asc > moss_ref.pix
-	../src/util/pixdiff moss.pix \
-	    moss_ref.pix \
-	    > moss.pix.diff \
-	    2> moss-diff.log
+	$A2P < $1/regress/mosspix.asc > moss_ref.pix
+	$PIXDIFF moss.pix moss_ref.pix > moss.pix.diff 2> moss-diff.log
 
 	echo -n moss.pix
 	tr , '\012' < moss-diff.log | grep many
@@ -73,9 +140,9 @@ else
 	fi
     fi
 
-    ../src/util/pix-png -s 512 moss.pix > moss.png
-    ../src/util/png-pix moss.png > moss2.pix
-    ../src/util/pixdiff moss.pix moss2.pix > moss_png.diff 2> moss-png.log
+    $PIX2PNG -s 512 moss.pix > moss.png
+    $PNG2PIX moss.png > moss2.pix
+    $PIXDIFF moss.pix moss2.pix > moss_png.diff 2> moss-png.log
     NUMBER_WRONG=`tr , '\012' < moss-png.log | awk '/many/ {print $1}'`
     echo moss.pix $NUMBER_WRONG off by many
 fi

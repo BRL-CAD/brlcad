@@ -1354,6 +1354,8 @@ nmg_find_eu_leftvec(fastf_t *left, const struct edgeuse *eu)
 	vect_t other_edge;
 	int other_edge_is_parallel=1;
 
+	VSETALL(other_edge, 0);
+
 	bu_log("WARNING: eu x%x (%f %f %f) parallel to normal (%f %f %f)\n", eu, V3ARGS(edgevect), V3ARGS(Norm));
 
 	eu_next = eu;

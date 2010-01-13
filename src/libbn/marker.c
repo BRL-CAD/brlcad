@@ -37,8 +37,7 @@
  *				5 = an hourglass
  @endcode
  *
- *  @author	Mike Muuss
- *@n	August 04, 1978
+ * Originally written on August 04, 1978
  *
  */
 /** @} */

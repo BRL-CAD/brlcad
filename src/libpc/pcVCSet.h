@@ -23,7 +23,6 @@
  *
  * VCSet Class definition : A Set of Variables and Constraints
  *
- * @author Dawn Thomas
  */
 #ifndef __PCVCSET_H__
 #define __PCVCSET_H__

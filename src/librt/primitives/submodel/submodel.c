@@ -21,16 +21,12 @@
 /** @{ */
 /** @file submodel.c
  *
- * Intersect a ray with an entire subspace full of geometry,
- * possibly included from another .g file, with a subordinate
- * instance of LIBRT.
+ * Intersect a ray with an entire subspace full of geometry, possibly
+ * included from another .g file, with a subordinate instance of
+ * LIBRT.
  *
- * This solid is particularly useful when instancing millions of copies
- * of a given complex object, such as a detailed tree.
- *
- *
- * Author -
- * Michael John Muuss
+ * This solid is particularly useful when instancing millions of
+ * copies of a given complex object, such as a detailed tree.
  *
  */
 /** @} */

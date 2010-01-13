@@ -23,7 +23,6 @@
  *
  * Class definition of Interval for Constraint Solution
  *
- * @author Dawn Thomas
  */
 #ifndef __PCINTERVAL_H__
 #define __PCINTERVAL_H__

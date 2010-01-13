@@ -23,9 +23,6 @@
  *
  *  A Memory (virtual) Frame Buffer Interface.
  *
- *  Authors -
- *	Phillip Dykstra
- *
  */
 /** @} */
 

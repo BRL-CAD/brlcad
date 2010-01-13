@@ -23,9 +23,6 @@
  *
  * @brief External C Routines of Parametrics and Constraints API
  *
- * @author Dawn Thomas
- *
- *
  */
 
 #include "common.h"

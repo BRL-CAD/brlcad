@@ -60,9 +60,24 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 * fix metaball "shelling" but that causes the primitive to invert and
   just give paper thin surface (something wrong in the intersection).
 
+* fix src/librt/roots.c exact floating point comparison issue and
+  tight tolerance problems.  See !!! comments.
+
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* investigate impact of using lookup tables for root solving.
+  implement lookup tables for a range of linear, quadratic, cubic, and
+  quartic polynomial coefficients.  compare performance to root
+  solving without lookups.  evaluate memory use.  non-imaginary roots
+  are relatively sparse, may need to consider linked lists, hash
+  tables, or some hybrid storage arrangement.  Idea inspired by:
+  http://math.ucr.edu/home/baez/roots/
+
+* make the 'tables' ged command not call system() on the "sort" unix
+  command.  It should perform all sorting on the data directly in
+  memory, at least without creating another process.
 
 * make libwdb routines not free user-allocated memory.  notably
   mk_nmg() and mk_sketch() but probably others as well.

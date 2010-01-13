@@ -1778,8 +1778,8 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
     bu_ptbl_init(&loops, 5, "loops");
     for (i=0; i<crv->seg_count; i++) {
 	genptr_t cur_seg;
-	int loop_start, loop_end;
-	int seg_start, seg_end;
+	int loop_start = 0, loop_end = 0;
+	int seg_start = 0, seg_end = 0;
 
 	if (used_seg[i])
 	    continue;

@@ -27,11 +27,6 @@
  *  and librt.  It may be used in leu of including all of the
  *  individual headers.
  *
- *  @author
- *	Christopher Sean Morrison
- *
- *  @par Source
- *	BRL-CAD Open Source
  */
 
 #ifndef __BRLCAD_H__

@@ -21,7 +21,8 @@ AM_CPPFLAGS = \
 	${TCL_CPPFLAGS} \
 	${BREP_CPPFLAGS}
 
-AM_CFLAGS = ${STRICT_FLAGS}
+# must fix roots.c exact floating point comparison
+# AM_CFLAGS = ${STRICT_FLAGS}
 
 noinst_PROGRAMS = \
 	comb \
@@ -241,7 +242,6 @@ nurb_example_LDADD = \
 noinst_HEADERS = \
 	primitives/fixpt.h \
 	primitives/brep/brep_debug.h \
-	primitives/metaball/mc_table.h \
 	primitives/metaball/metaball.h \
 	primitives/revolve/revolve.h \
 	primitives/xxx/xxx.h

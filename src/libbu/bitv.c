@@ -199,20 +199,26 @@ bu_pr_bitv(const char *str, register const struct bu_bitv *bv)
 
 
 void
-bu_bitv_to_hex(struct bu_vls *v, register const struct bu_bitv *bv)
+bu_bitv_to_hex(struct bu_vls *v, const struct bu_bitv *bv)
 {
-    unsigned int word_count, byte_no;
+    unsigned int word_count = 0;
+    unsigned int chunksize = 0;
+    /* necessarily volatile to keep the compiler from complaining
+     * about unreachable code during optimization.
+     */
+    volatile size_t BVS = sizeof(bitv_t);
 
     BU_CK_VLS(v);
     BU_CK_BITV(bv);
 
-    word_count = bv->nbits/8/sizeof(bitv_t);
-    bu_vls_extend(v, word_count * (unsigned int)sizeof(bitv_t) * 2 + 1);
+    word_count = bv->nbits / 8 / BVS;
+    bu_vls_extend(v, word_count * BVS * 2 + 1);
 
     while (word_count--) {
-	byte_no = sizeof(bitv_t);
-	while (byte_no--) {
-	    bu_vls_printf(v, "%02lx", (unsigned long)((bv->bits[word_count] & ((bitv_t)(0xff)<<(byte_no*8))) >> (byte_no*8)) & (bitv_t)0xff);
+	chunksize = (unsigned int)BVS;
+	while (chunksize--) {
+	    unsigned long val = (unsigned long)((bv->bits[word_count] & ((bitv_t)(0xff)<<(chunksize*8))) >> (chunksize*8)) & (bitv_t)0xff;
+	    bu_vls_printf(v, "%02lx", val);
 	}
     }
 }
@@ -227,7 +233,9 @@ bu_hex_to_bitv(const char *str)
     int bytes;
     struct bu_bitv *bv;
     unsigned long c;
-    int word_count, byte_no;
+    int word_count;
+    unsigned int chunksize = 0;
+    volatile size_t BVS = sizeof(bitv_t);
 
     abyte[2] = '\0';
 
@@ -242,25 +250,28 @@ bu_hex_to_bitv(const char *str)
 
     len = str - str_start;
 
-    if (len < 2 || len%2) {
+    if (len < 2 || len % 2) {
 	/* Must be two digits per byte */
-	bu_log("bu_hex_to_bitv: illegal hex bitv (%s)\n", str_start);
+	bu_log("ERROR: bitv length is not a multiple of two.\nIllegal hex bitv: [%s]\n", str_start);
 	return ((struct bu_bitv *)NULL);
     }
 
     bytes = len / 2; /* two hex digits per byte */
+    word_count = bytes / BVS;
+    chunksize = bytes % BVS;
+    if (chunksize == 0) {
+	chunksize = (unsigned int)BVS;
+    } else {
+	/* handle partial chunk before using chunksize == BVS */
+	word_count++;
+    }
+
     bv = bu_bitv_new(len * 4); /* 4 bits per hex digit */
     bu_bitv_clear(bv);
-    word_count = bytes/sizeof(bitv_t);
-    byte_no = bytes % sizeof(bitv_t);
-    if (!byte_no)
-	byte_no = sizeof(bitv_t);
-    else
-	word_count++;
 
     str = str_start;
     while (word_count--) {
-	while (byte_no--) {
+	while (chunksize--) {
 	    /* get next two hex digits from string */
 	    abyte[0] = *str++;
 	    abyte[1] = *str++;
@@ -269,9 +280,9 @@ bu_hex_to_bitv(const char *str)
 	    c = strtoul(abyte, (char **)NULL, 16);
 
 	    /* set the appropriate bits in the bit vector */
-	    bv->bits[word_count] |= (bitv_t)c<<(byte_no*8);
+	    bv->bits[word_count] |= (bitv_t)c<<(chunksize*8);
 	}
-	byte_no = sizeof(bitv_t);
+	chunksize = (unsigned int)BVS;
     }
 
     return (bv);

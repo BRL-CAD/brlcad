@@ -89,6 +89,7 @@ struct dm dm_tk = {
     tk_drawLines3D,
     tk_drawPoint2D,
     tk_drawVList,
+    tk_drawVList,
     tk_draw,
     tk_setFGColor,
     tk_setBGColor,

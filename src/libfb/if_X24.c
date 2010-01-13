@@ -27,20 +27,6 @@
  * X Window System (X11) libfb interface, supporting 24-, 8-, and
  * 1-bit displays.
  *
- * Authors -
- * Christopher J. Jackson, Sun
- * Timothy G. Smith, Sun
- * Michael John Muuss, ARL
- *
- * Source -
- * Sun Microsystems, Inc.
- * Southern Area Special Projects Group
- * 6716 Alexander Bell Drive, Suite 200
- * Columbia, MD 21046
- *
- * Acknowledgements -
- * This software is loosely based on the original if_X.c by
- * Phillip Dykstra of BRL, which was Copyright 1988, US Army.
  */
 /** @} */
 
