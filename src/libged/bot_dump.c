@@ -54,6 +54,14 @@ enum otype {
     OTYPE_STL
 };
 
+struct _ged_bot_dump_client_data {
+    struct ged *gedp;
+    FILE *fp;
+    int fd;
+    struct bu_vls *file_name;
+    char *file_ext;
+};
+
 static enum otype output_type = OTYPE_STL;
 static int binary = 0;
 static int normals = 0;
@@ -614,6 +622,55 @@ bot_dump(struct directory *dp, struct rt_bot_internal *bot, FILE *fp, int fd, st
     }
 }
 
+static union tree *
+ged_bot_dump_leaf(struct db_tree_state	*tsp,
+		  struct db_full_path	*pathp,
+		  struct rt_db_internal	*ip,
+		  genptr_t		client_data)
+{
+    int ret;
+    char *pstr;
+    union tree *curtree;
+    mat_t mat;
+    struct directory *dp;
+    struct rt_db_internal intern;
+    struct rt_bot_internal *bot;
+    struct _ged_bot_dump_client_data *gbdcdp = (struct _ged_bot_dump_client_data *)client_data;
+
+    /* Indicate success by returning something other than TREE_NULL */
+    RT_GET_TREE(curtree, tsp->ts_resp);
+    curtree->magic = RT_TREE_MAGIC;
+    curtree->tr_op = OP_NOP;
+
+    dp = pathp->fp_names[pathp->fp_len-1];
+
+    /* we only dump BOT primitives, so skip some obvious exceptions */
+    if (dp->d_major_type != DB5_MAJORTYPE_BRLCAD || dp->d_flags & DIR_COMB)
+	return curtree;
+
+    MAT_IDN(mat);
+
+    /* get the internal form */
+    ret=rt_db_get_internal(&intern, dp, gbdcdp->gedp->ged_wdbp->dbip, mat, &rt_uniresource);
+
+    if (ret < 0) {
+	bu_log("ged_bot_leaf: rt_get_internal failure %d on %s\n", ret, dp->d_namep);
+	return curtree;
+    }
+
+    if (ret != ID_BOT) {
+	bu_log("ged_bot_leaf: %s is not a bot (ignored)\n", dp->d_namep);
+	rt_db_free_internal(&intern);
+	return curtree;
+    }
+
+    bot = (struct rt_bot_internal *)intern.idb_ptr;
+    bot_dump(dp, bot, gbdcdp->fp, gbdcdp->fd, gbdcdp->file_name, gbdcdp->file_ext, gbdcdp->gedp->ged_wdbp->dbip->dbi_filename);
+    rt_db_free_internal(&intern);
+
+    return curtree;
+}
+
 int
 ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
 {
@@ -813,38 +870,38 @@ ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
 
 	    bot = (struct rt_bot_internal *)intern.idb_ptr;
 	    bot_dump(dp, bot, fp, fd, &file_name, file_ext, gedp->ged_wdbp->dbip->dbi_filename);
+	    rt_db_free_internal(&intern);
 
 	} FOR_ALL_DIRECTORY_END;
     } else {
-	/* dump only the specified bots */
+	int ret;
+	int ac = 1;
+	int ncpu = 1;
+	char *av[2];
+	struct _ged_bot_dump_client_data *gbdcdp;
+
+	av[1] = (char *)0;
+	BU_GETSTRUCT(gbdcdp, _ged_bot_dump_client_data);
+	gbdcdp->gedp = gedp;
+	gbdcdp->fp = fp;
+	gbdcdp->fd = fd;
+	gbdcdp->file_name = &file_name;
+	gbdcdp->file_ext = file_ext;
+
 	for (i = 0; i < argc; ++i) {
-	    int ret;
-
-	    if ((dp=db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_QUIET)) == DIR_NULL) {
-		fprintf(stderr, "%s: db_lookup failed on %s\n", cmd_name, argv[i]);
-		continue;
-	    }
-
-	    /* we only dump BOT primitives, so skip some obvious exceptions */
-	    if (dp->d_major_type != DB5_MAJORTYPE_BRLCAD) continue;
-	    if (dp->d_flags & DIR_COMB) continue;
-
-	    /* get the internal form */
-	    ret=rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, mat, &rt_uniresource);
-
-	    if (ret < 0) {
-		fprintf(stderr, "%s: rt_get_internal failure %d on %s\n", cmd_name, ret, dp->d_namep);
-		continue;
-	    }
-
-	    if (ret != ID_BOT) {
-		fprintf(stderr, "%s: %s is not a bot (ignored)\n", cmd_name, argv[i]);
-		continue;
-	    }
-
-	    bot = (struct rt_bot_internal *)intern.idb_ptr;
-	    bot_dump(dp, bot, fp, fd, &file_name, file_ext, gedp->ged_wdbp->dbip->dbi_filename);
+	    av[0] = (char *)argv[i];
+	    ret = db_walk_tree(gedp->ged_wdbp->dbip,
+			       ac,
+			       (const char **)av,
+			       ncpu,
+			       &gedp->ged_wdbp->wdb_initial_tree_state,
+			       0,
+			       0,
+			       ged_bot_dump_leaf,
+			       (genptr_t)gbdcdp);
 	}
+
+	bu_free((genptr_t)gbdcdp, "ged_bot_dump: gbdcdp");
     }
 
 

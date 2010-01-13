@@ -22,9 +22,6 @@
  *  Routines to allow libwdb to use librt's import/export interface,
  *  rather than having to know about the database formats directly.
  *
- *  Author -
- *	Michael John Muuss
- *
  */
 
 #include "common.h"

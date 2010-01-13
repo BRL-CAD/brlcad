@@ -23,7 +23,6 @@
  *
  * EBNF Parser generation using boost:Spirit
  *
- * @author Dawn Thomas
  */
 #ifndef __PCPARSER_H__
 #define __PCPARSER_H__

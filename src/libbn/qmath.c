@@ -47,10 +47,6 @@
  *
  *   bisect(P, Q) = (P + Q) / |P + Q|	Great circle bisector
  *
- *
- *  @author
- *	Phil Dykstra, 25 Sep 1985
- *
  *  Additions inspired by "Quaternion Calculus For Animation" by Ken Shoemake,
  *  SIGGRAPH '89 course notes for "Math for SIGGRAPH", May 1989.
  *

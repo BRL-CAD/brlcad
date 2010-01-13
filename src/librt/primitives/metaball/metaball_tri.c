@@ -43,7 +43,6 @@
 #include "wdb.h"
 
 #include "metaball.h"
-#include "mc_table.h"
 
 static int bitcount(unsigned char w) { return (w==0) ? 0 : bitcount(w>>1) + (w|1); }
 

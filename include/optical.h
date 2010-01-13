@@ -98,15 +98,9 @@ OPTICAL_EXPORT extern int	rdebug;
 #endif
 
 /*
- *
- *
  *  Debugging flags for thr RT program itself.
  *  These flags follow the "-X" (cap X) option to the RT program.
  *  librt debugging is separately controlled.
- *
- *  @author
- *	Michael John Muuss
- *
  */
 
 /* These definitions are each for one bit */

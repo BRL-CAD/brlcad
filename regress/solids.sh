@@ -1,30 +1,77 @@
 #!/bin/sh
+#                       S O L I D S . S H
+# BRL-CAD
+#
+# Copyright (c) 2010 United States Government as represented by
+# the U.S. Army Research Laboratory.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following
+# disclaimer in the documentation and/or other materials provided
+# with the distribution.
+#
+# 3. The name of the author may not be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+# OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+# GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+###
 
 # Ensure /bin/sh
 export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 
-# save the precious args
-ARGS="$*"
-NAME_OF_THIS=`basename $0`
-PATH_TO_THIS=`dirname $0`
-THIS="$PATH_TO_THIS/$NAME_OF_THIS"
+# source common library functionality, setting ARGS, NAME_OF_THIS,
+# PATH_TO_THIS, and THIS.
+. $1/regress/library.sh
 
-MGED="$1/src/mged/mged"
+RT="`ensearch rt/rt`"
+if test ! -f "$RT" ; then
+    echo "Unable to find rt, aborting"
+    exit 1
+fi
+MGED="`ensearch mged/mged`"
 if test ! -f "$MGED" ; then
-    MGED="$PATH_TO_THIS/../src/mged/mged"
-    if test ! -f "$MGED" ; then
-	echo "Unable to find mged, aborting"
-	exit 1
-    fi
+    echo "Unable to find mged, aborting"
+    exit 1
+fi
+A2P="`ensearch conv/asc2pix`"
+if test ! -f "$A2P" ; then
+    echo "Unable to find asc2pix, aborting"
+    exit 1
+fi
+GENCOLOR="`ensearch util/gencolor`"
+if test ! -f "$GENCOLOR" ; then
+    echo "Unable to find gencolor, aborting"
+    exit 1
+fi
+PIXDIFF="`ensearch util/pixdiff`"
+if test ! -f "$PIXDIFF" ; then
+    echo "Unable to find pixdiff, aborting"
+    exit 1
 fi
 
-LD_LIBRARY_PATH=../src/other/tcl/unix:../src/other/tk/unix:$1/src/other/tcl/unix:$1/src/other/tk/unix:$LD_LIBRARY_PATH
-DYLD_LIBRARY_PATH=../src/other/tcl/unix:../src/other/tk/unix:$1/src/other/tcl/unix:$1/src/other/tk/unix:$DYLD_LIBRARY_PATH
-export LD_LIBRARY_PATH DYLD_LIBRARY_PATH
 
 rm -f dsp.dat ebm.bw solids.rt solids.g solids.log solids.rt.pix solids.pix.diff solids.mged
 
-../src/conv/asc2pix > dsp.dat << EOF
+$A2P > dsp.dat << EOF
 01BF01
 A101A7
 01C001
@@ -755,7 +802,7 @@ EOF
 
 
 # Trim 1025 byte sequence down to exactly 1024.
-../src/util/gencolor -r205 0 16 32 64 128 | dd of=ebm.bw bs=1024 count=1 > solids.log 2>&1
+$GENCOLOR -r205 0 16 32 64 128 | dd of=ebm.bw bs=1024 count=1 > solids.log 2>&1
 
 cat > solids.mged <<EOF
 opendb solids.g y
@@ -906,7 +953,8 @@ if [ ! -f solids.rt ] ; then
     exit 1
 fi
 mv solids.rt solids.orig.rt
-sed "s,^rt,../src/rt/rt -B -P 1 ," < solids.orig.rt > solids.rt
+export RT
+sed "s,^rt,$RT -B -P 1 ," < solids.orig.rt > solids.rt
 rm -f solids.orig.rt
 chmod 775 solids.rt
 
@@ -916,12 +964,12 @@ if [ ! -f solids.rt.pix ] ; then
 	echo raytrace failed
 	exit 1
 fi
-if [ ! -f solidspix.asc ] ; then
+if [ ! -f $PATH_TO_THIS/solidspix.asc ] ; then
 	echo No reference file for solids.rt.pix
 	exit 1
 fi
-../src/conv/asc2pix < solidspix.asc > solids_ref.pix
-../src/util/pixdiff solids.rt.pix solids_ref.pix > solids.pix.diff \
+$A2P < $1/regress/solidspix.asc > solids_ref.pix
+$PIXDIFF solids.rt.pix solids_ref.pix > solids.pix.diff \
     2> solids-diff.log
 
 tr , '\012' < solids-diff.log | awk '/many/ {print $0}'

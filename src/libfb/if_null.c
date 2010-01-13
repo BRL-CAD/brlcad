@@ -24,9 +24,6 @@
  *  A Null Frame Buffer.
  *  Useful for benchmarking or debugging.
  *
- *  Authors -
- *	Phillip Dykstra
- *
  */
 /** @} */
 

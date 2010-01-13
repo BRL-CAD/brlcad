@@ -51,7 +51,7 @@
     # process options
     eval itk_initialize $args
 
-    after idle [::itcl::code $this updateBgColor $parentBg]
+    after idle [::itcl::code $this updateBgColor $mParentBg]
 }
 
 ::itcl::body AttrGroupsDisplayUtilityP::destructor {} {

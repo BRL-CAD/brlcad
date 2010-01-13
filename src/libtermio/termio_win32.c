@@ -17,10 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file termio_win32.c
- *
- * Author:		Gary S. Moss
- */
 
 #include "common.h"
 

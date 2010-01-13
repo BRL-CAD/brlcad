@@ -1,8 +1,68 @@
 #!/bin/sh
+#                       L I G H T S . S H
+# BRL-CAD
+#
+# Copyright (c) 2010 United States Government as represented by
+# the U.S. Army Research Laboratory.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following
+# disclaimer in the documentation and/or other materials provided
+# with the distribution.
+#
+# 3. The name of the author may not be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+# OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+# GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+###
 
-LD_LIBRARY_PATH=../src/other/tcl/unix:../src/other/tk/unix:$1/src/other/tcl/unix:$1/src/other/tk/unix:$LD_LIBRARY_PATH
-DYLD_LIBRARY_PATH=../src/other/tcl/unix:../src/other/tk/unix:$1/src/other/tcl/unix:$1/src/other/tk/unix:$DYLD_LIBRARY_PATH
-export LD_LIBRARY_PATH DYLD_LIBRARY_PATH
+# Ensure /bin/sh
+export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
+
+# source common library functionality, setting ARGS, NAME_OF_THIS,
+# PATH_TO_THIS, and THIS.
+. $1/regress/library.sh
+
+RT="`ensearch rt/rt`"
+if test ! -f "$RT" ; then
+    echo "Unable to find rt, aborting"
+    exit 1
+fi
+A2G="`ensearch conv/asc2g`"
+if test ! -f "$A2G" ; then
+    echo "Unable to find asc2g, aborting"
+    exit 1
+fi
+A2P="`ensearch conv/asc2pix`"
+if test ! -f "$A2P" ; then
+    echo "Unable to find asc2pix, aborting"
+    exit 1
+fi
+PIXDIFF="`ensearch util/pixdiff`"
+if test ! -f "$PIXDIFF" ; then
+    echo "Unable to find pixdiff, aborting"
+    exit 1
+fi
+
 
 rm -f lights.pix
 
@@ -27,11 +87,11 @@ attr set {local.r} {region} {R} {rgb} {255/255/255} {oshader} {light {s 4  pt {-
 put {all.g} comb region no tree {u {u {l infinite.r} {l local.r}} {u {l plate.r} {l shadow_objs.r}}}
 EOF
 
-../src/conv/asc2g lights.asc lights.g
+$A2G lights.asc lights.g
 rm -f lights.asc
 
 echo rendering lights...
-../src/rt/rt -M -B -p30 -o lights.pix lights.g 'all.g' 2> lights.log <<EOF
+$RT -M -B -p30 -o lights.pix lights.g 'all.g' 2> lights.log <<EOF
 viewsize 1.600000000000000e+02;
 orientation 0.000000000000000e+00 0.000000000000000e+00 0.000000000000000e+00 1.000000000000000e+00;
 eye_pt 0.000000000000000e+00 0.000000000000000e+00 7.950000000000000e+01;
@@ -40,8 +100,8 @@ end;
 
 EOF
 
-../src/conv/asc2pix < $1/regress/lights_ref.asc  > lights_ref.pix
-../src/util/pixdiff lights.pix lights_ref.pix > lights_diff.pix 2>> lights.log
+$A2P < $1/regress/lights_ref.asc  > lights_ref.pix
+$PIXDIFF lights.pix lights_ref.pix > lights_diff.pix 2>> lights.log
 NUMBER_WRONG=`tr , '\012' < lights.log | awk '/many/ {print $1}'`
 echo "lights.pix $NUMBER_WRONG off by many"
 

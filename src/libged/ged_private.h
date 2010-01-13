@@ -82,6 +82,7 @@ struct _ged_client_data {
     int				shaded_mode_override;
     fastf_t			transparency;
     int				dmode;
+    int				hiddenLine;
     /* bigE related members */
     struct application		*ap;
     struct bu_ptbl		leaf_list;
@@ -315,7 +316,7 @@ BU_EXTERN (void _ged_rt_output_handler,
 
 /* defined in rtcheck.c */
 BU_EXTERN (void _ged_wait_status,
-	   (struct bu_vls *log,
+	   (struct bu_vls *logstr,
 	    int status));
 
 /* defined in rotate_eto.c */

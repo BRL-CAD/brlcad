@@ -784,6 +784,8 @@ ged_tgc_anal(struct ged *gedp, const struct rt_db_internal *ip)
 static void
 ged_ars_anal(struct ged *gedp, const struct rt_db_internal *ip)
 {
+    if (ip) RT_CK_DB_INTERNAL(ip);
+
     bu_vls_printf(&gedp->ged_result_str, "ARS analyze not implemented\n");
 }
 
@@ -801,6 +803,8 @@ ged_ars_anal(struct ged *gedp, const struct rt_db_internal *ip)
 static void
 ged_part_anal(struct ged *gedp, const struct rt_db_internal *ip)
 {
+    if (ip) RT_CK_DB_INTERNAL(ip);
+
     bu_vls_printf(&gedp->ged_result_str, "PARTICLE analyze not implemented\n");
 }
 

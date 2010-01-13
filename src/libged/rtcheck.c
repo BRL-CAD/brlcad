@@ -548,7 +548,7 @@ ged_rtcheck_output_handler(ClientData clientData, int mask)
 #endif
 
 void
-_ged_wait_status(struct bu_vls	*log,
+_ged_wait_status(struct bu_vls	*logstr,
 		int		status)
 {
     int	sig = status & 0x7f;
@@ -556,19 +556,19 @@ _ged_wait_status(struct bu_vls	*log,
     int	ret = status >> 8;
 
     if (status == 0) {
-	bu_vls_printf(log, "Normal exit\n");
+	bu_vls_printf(logstr, "Normal exit\n");
 	return;
     }
 
-    bu_vls_printf(log, "Abnormal exit x%x", status);
+    bu_vls_printf(logstr, "Abnormal exit x%x", status);
 
     if (core)
-	bu_vls_printf(log, ", core dumped");
+	bu_vls_printf(logstr, ", core dumped");
 
     if (sig)
-	bu_vls_printf(log, ", terminating signal = %d", sig);
+	bu_vls_printf(logstr, ", terminating signal = %d", sig);
     else
-	bu_vls_printf(log, ", return (exit) code = %d", ret);
+	bu_vls_printf(logstr, ", return (exit) code = %d", ret);
 }
 
 

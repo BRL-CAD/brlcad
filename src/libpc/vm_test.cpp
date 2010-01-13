@@ -21,8 +21,6 @@
  *
  * @brief Simple Test cases for Math Virtual Machine
  *
- * @author Dawn Thomas
- *
  */
 
 #include "common.h"

@@ -18,13 +18,8 @@
  * information.
  */
 /** @file sh_stack.c
- *			S T A C K . C
  *
  *  Stack multiple material modules together
- *
- *  Author -
- *	Phillip Dykstra
- *  	Lee A. Butler
  *
  */
 

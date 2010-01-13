@@ -27,7 +27,7 @@
  *	1. Expression grammar definiton
  *	2. Variable grammar completion
  *	3. lazy function evaluation
- * @author Dawn Thomas
+ *
  */
 #ifndef PC_MATH_GRAMMAR
 #define PC_MATH_GRAMMAR

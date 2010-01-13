@@ -24,7 +24,6 @@
  * Method implementation for Parser Class as well as the associated
  * grammar classes
  *
- * @author Dawn Thomas
  */
 #include "pcParser.h"
 

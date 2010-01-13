@@ -24,9 +24,6 @@
  *  Subroutines to simulate device specific functions for simple
  *  device interfaces to use, and backward compatibility routines.
  *
- *  Author -
- *	Phillip Dykstra
- *
  */
 /** @} */
 

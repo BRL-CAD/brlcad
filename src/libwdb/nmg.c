@@ -21,9 +21,6 @@
  *
  *  libwdb support for writing an NMG to disk.
  *
- *  Author -
- *	Michael John Muuss
- *
  */
 
 #include "common.h"

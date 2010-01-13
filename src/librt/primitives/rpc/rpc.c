@@ -153,9 +153,6 @@
  * The normal for a hit on the front plate is -Hunit, and
  * the normal for a hit on the back plate is +Hunit.
  *
- * Authors -
- * Michael J. Markowski
- *
  */
 /** @} */
 

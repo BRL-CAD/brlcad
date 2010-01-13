@@ -23,9 +23,6 @@
  *
  *  Allows multiple frame buffers to be ganged together.
  *
- *  Authors -
- *	Phillip Dykstra
- *
  */
 /** @} */
 

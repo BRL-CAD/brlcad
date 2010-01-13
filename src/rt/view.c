@@ -33,6 +33,7 @@
  *	5	curvature debugging (principal direction)
  *	6	UV Coord
  *	7	Photon Mapping
+ *      8       Time-to-render heat graph
  *
  *  Notes -
  *	The normals on all surfaces point OUT of the solid.
@@ -55,6 +56,8 @@
 #include "plot3.h"
 #include "photonmap.h"
 #include "scanline.h"
+
+
 
 const char title[] = "The BRL-CAD Raytracer RT";
 const char usage[] = "\
@@ -745,6 +748,17 @@ colorview(register struct application *ap, struct partition *PartHeadp, struct s
     register struct hit *hitp;
     struct shadework sw;
 
+    /*Add to this function a method for determining the length of time taken
+     *to calculate a pixel, using the new heat-graph light model. What it will
+     *do is, when active, start a timer here, and stop the timer at the end of
+     *this function, take the total time in this funtion, and place it into an
+     *array that is the size of the picture that is being rendered (X by Y)
+     */
+    if(lightmodel == 8)
+    {
+	rt_prep_timer();
+    }
+
     pp = PartHeadp->pt_forw;
     if ( ap->a_flag == 1 )
     {
@@ -777,12 +791,10 @@ colorview(register struct application *ap, struct partition *PartHeadp, struct s
 	    /* exit point, ignore everything before "dist" */
 	    dist = norm_dist/slant_factor;
 	    for (; pp != PartHeadp; pp = pp->pt_forw ) {
-		if( pp->pt_outhit->hit_dist >= dist ) {
-		    if( pp->pt_inhit->hit_dist < dist ) {
-			pp->pt_inhit->hit_dist = dist;
-			pp->pt_inflip = 0;
-			pp->pt_inseg->seg_stp = kut_soltab;
-		    }
+		if( (pp->pt_outhit->hit_dist >= dist) && (pp->pt_inhit->hit_dist < dist) ) {
+		    pp->pt_inhit->hit_dist = dist;
+		    pp->pt_inflip = 0;
+		    pp->pt_inseg->seg_stp = kut_soltab;
 		    break;
 		}
 	    }
@@ -878,23 +890,21 @@ colorview(register struct application *ap, struct partition *PartHeadp, struct s
 	goto out;
     }
 
-    if ( R_DEBUG&RDEBUG_RAYWRITE )  {
 	/* Record the approach path */
-	if ( hitp->hit_dist > 0.0001 )  {
+    if ( R_DEBUG&RDEBUG_RAYWRITE && (hitp->hit_dist > 0.0001) )  {
 	    VJOIN1( hitp->hit_point, ap->a_ray.r_pt,
 		    hitp->hit_dist, ap->a_ray.r_dir );
 	    wraypts( ap->a_ray.r_pt,
 		     ap->a_ray.r_dir,
 		     hitp->hit_point,
 		     -1, ap, stdout );	/* -1 = air */
-	}
     }
-    if ( R_DEBUG&(RDEBUG_RAYPLOT|RDEBUG_RAYWRITE|RDEBUG_REFRACT) )  {
+
+    if ( (R_DEBUG&(RDEBUG_RAYPLOT|RDEBUG_RAYWRITE|RDEBUG_REFRACT)) && (hitp->hit_dist > 0.0001))  {
 	/*  There are two parts to plot here.
 	 *  Ray start to inhit (purple),
 	 *  and inhit to outhit (grey).
 	 */
-	if ( hitp->hit_dist > 0.0001 )  {
 	    register int i, lvl;
 	    fastf_t out;
 	    vect_t inhit, outhit;
@@ -933,7 +943,7 @@ vdraw open oray;vdraw params c %2.2x%2.2x%2.2x;vdraw write n 0 %g %g %g;vdraw wr
 vdraw open iray;vdraw params c %2.2x%2.2x%2.2x;vdraw write n 0 %g %g %g;vdraw write n 1 %g %g %g;vdraw send\n",
 		   i, i, i,
 		   V3ARGS(inhit), V3ARGS(outhit) );
-	}
+	
     }
 
     memset((char *)&sw, 0, sizeof(sw));
@@ -978,6 +988,11 @@ vdraw open iray;vdraw params c %2.2x%2.2x%2.2x;vdraw write n 0 %g %g %g;vdraw wr
 	       ap->a_user,
 	       pp->pt_regionp->reg_name);
 	VPRINT("color   ", ap->a_color);
+    }
+    if(lightmodel == 8)
+    {
+	double pixelTime = rt_get_timer(NULL,NULL);
+	bu_log("Time taken: %lf\n", pixelTime);
     }
     return(1);
 }
@@ -1127,6 +1142,31 @@ int viewit(register struct application *ap,
 	{
 	}
 	break;
+	/*This case will most likely be moved from viewit to viewcolor, to allow
+	 *for a colored render to be done with all special stuff, for better calculation
+	 *of time taken for render
+	 */
+    case 8:
+    {
+	/*routine taken from 1 case*/
+//	rt_prep_timer();
+//
+          /* Light from the "eye" (ray source).  Note sign change */
+//	    lp = BU_LIST_FIRST( light_specific, &(LightHead.l) );
+//	    diffuse0 = 0;
+//	    if ( (cosI0 = -VDOT(normal, ap->a_ray.r_dir)) >= 0.0 )
+//		diffuse0 = cosI0 * ( AmbientIntensity - 1.0 );
+//	    VSCALE( work0, lp->lt_color, diffuse0 );
+
+	    /* Add in contribution from ambient light */
+//	    VSCALE( work1, ambient_color, AmbientIntensity );
+//	    VADD2( ap->a_color, work0, work1 );
+//	    double pixelTime = rt_get_timer(NULL,NULL);
+//	    bu_log("Time was: %lf\n", pixelTime);
+/*	    bu_log("Entered the awesome heat graph!\n");*/
+	break;
+    }
+
     }
 
     if (R_DEBUG&RDEBUG_HITS)  {
@@ -1530,6 +1570,17 @@ view_2init(register struct application *ap, char *framename)
 
 	}
 	break;
+	/*Now for the new Heat-graph lightmodel that will take all times to
+	 *compute the ray trace, normalize times, and then create the trace
+	 *according to how long each individual pixel took to render
+	 */
+    case 8:
+    {
+	ap->a_hit = colorview;
+	VSETALL(background, 1);
+	break;
+    }
+
 	default:
 	    bu_exit(EXIT_FAILURE, "bad lighting model #");
     }

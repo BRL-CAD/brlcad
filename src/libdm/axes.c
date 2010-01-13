@@ -36,12 +36,11 @@
 #include "raytrace.h"
 #include "dm.h"
 
-#if 1
+
 void
-dm_draw_data_axes(struct		dm *dmp,
-		  fastf_t		viewSize, /* in mm */
-		  const mat_t			rmat,     /* view rotation matrix */
-		  struct ged_axes_state *gasp)
+dm_draw_data_axes(struct dm *dmp,
+		  fastf_t viewSize, /* in mm */
+		  struct ged_data_axes_state *gdasp)
 {
     int i, j;
     fastf_t halfAxesSize;		/* half the length of an axis */
@@ -49,216 +48,57 @@ dm_draw_data_axes(struct		dm *dmp,
     point_t rxv1, rxv2;
     point_t ryv1, ryv2;
     point_t rzv1, rzv2;
+    point_t ptA, ptB;
+    int npoints = gdasp->gdas_num_points * 6;
+    point_t *points;
     /* Save the line attributes */
     int saveLineWidth = dmp->dm_lineWidth;
     int saveLineStyle = dmp->dm_lineStyle;
 
-    halfAxesSize = gasp->gas_axes_size * 0.5;
+    if (npoints < 1)
+	return;
+
+    points = (point_t *)bu_calloc(npoints, sizeof(point_t), "data axes points");
+    halfAxesSize = gdasp->gdas_size * 0.5;
 
     /* set color */
-    DM_SET_FGCOLOR(dmp, gasp->gas_axes_color[0], gasp->gas_axes_color[1], gasp->gas_axes_color[2], 1, 1.0);
+    DM_SET_FGCOLOR(dmp, gdasp->gdas_color[0], gdasp->gdas_color[1], gdasp->gdas_color[2], 1, 1.0);
 
     /* set linewidth */
-    DM_SET_LINE_ATTR(dmp, gasp->gas_line_width, 0);  /* solid lines */
+    DM_SET_LINE_ATTR(dmp, gdasp->gdas_line_width, 0);  /* solid lines */
 
-#if 1
-    if (gasp->gas_num_data_points <= 0) {
-	point_t ptA, ptB;
-
+    for (i = 0, j = -1; i < gdasp->gdas_num_points; ++i) {
 	/* draw X axis with x/y offsets */
-	VSET(ptA, gasp->gas_axes_pos[X] - halfAxesSize, gasp->gas_axes_pos[Y], gasp->gas_axes_pos[Z]);
-	VSET(ptB, gasp->gas_axes_pos[X] + halfAxesSize, gasp->gas_axes_pos[Y], gasp->gas_axes_pos[Z]);
-	DM_DRAW_LINE_3D(dmp, ptA, ptB);
-			
-	/* draw Y axis with x/y offsets */
-	VSET(ptA, gasp->gas_axes_pos[X], gasp->gas_axes_pos[Y] - halfAxesSize, gasp->gas_axes_pos[Z]);
-	VSET(ptB, gasp->gas_axes_pos[X], gasp->gas_axes_pos[Y] + halfAxesSize, gasp->gas_axes_pos[Z]);
-	DM_DRAW_LINE_3D(dmp, ptA, ptB);
-			
-	/* draw Z axis with x/y offsets */
-	VSET(ptA, gasp->gas_axes_pos[X], gasp->gas_axes_pos[Y], gasp->gas_axes_pos[Z] - halfAxesSize);
-	VSET(ptB, gasp->gas_axes_pos[X], gasp->gas_axes_pos[Y], gasp->gas_axes_pos[Z] + halfAxesSize);
-	DM_DRAW_LINE_3D(dmp, ptA, ptB);
-			
-    } else {
-	point_t ptA, ptB;
-#if 1
-	int npoints = gasp->gas_num_data_points * 6;
-	point_t *points = (point_t *)bu_calloc(npoints, sizeof(point_t), "data axes points");
-
-	for (i = 0, j = -1; i < gasp->gas_num_data_points; ++i) {
-	    /* draw X axis with x/y offsets */
-	    VSET(ptA, gasp->gas_data_points[i][X] - halfAxesSize, gasp->gas_data_points[i][Y], gasp->gas_data_points[i][Z]);
-	    VSET(ptB, gasp->gas_data_points[i][X] + halfAxesSize, gasp->gas_data_points[i][Y], gasp->gas_data_points[i][Z]);
-	    ++j;
-	    VMOVE(points[j], ptA);
-	    ++j;
-	    VMOVE(points[j], ptB);
-
-	    /* draw Y axis with x/y offsets */
-	    VSET(ptA, gasp->gas_data_points[i][X], gasp->gas_data_points[i][Y] - halfAxesSize, gasp->gas_data_points[i][Z]);
-	    VSET(ptB, gasp->gas_data_points[i][X], gasp->gas_data_points[i][Y] + halfAxesSize, gasp->gas_data_points[i][Z]);
-	    ++j;
-	    VMOVE(points[j], ptA);
-	    ++j;
-	    VMOVE(points[j], ptB);
-
-	    /* draw Z axis with x/y offsets */
-	    VSET(ptA, gasp->gas_data_points[i][X], gasp->gas_data_points[i][Y], gasp->gas_data_points[i][Z] - halfAxesSize);
-	    VSET(ptB, gasp->gas_data_points[i][X], gasp->gas_data_points[i][Y], gasp->gas_data_points[i][Z] + halfAxesSize);
-	    ++j;
-	    VMOVE(points[j], ptA);
-	    ++j;
-	    VMOVE(points[j], ptB);
-	}
-
-	DM_DRAW_LINES_3D(dmp, npoints, points);
-	bu_free((genptr_t)points, "data axes points");
-#else
-	for (i = 0; i < gasp->gas_num_data_points; ++i) {
-	    /* draw X axis with x/y offsets */
-	    VSET(ptA, gasp->gas_data_points[i][X] - halfAxesSize, gasp->gas_data_points[i][Y], gasp->gas_data_points[i][Z]);
-	    VSET(ptB, gasp->gas_data_points[i][X] + halfAxesSize, gasp->gas_data_points[i][Y], gasp->gas_data_points[i][Z]);
-	    DM_DRAW_LINE_3D(dmp, ptA, ptB);
-
-	    /* draw Y axis with x/y offsets */
-	    VSET(ptA, gasp->gas_data_points[i][X], gasp->gas_data_points[i][Y] - halfAxesSize, gasp->gas_data_points[i][Z]);
-	    VSET(ptB, gasp->gas_data_points[i][X], gasp->gas_data_points[i][Y] + halfAxesSize, gasp->gas_data_points[i][Z]);
-	    DM_DRAW_LINE_3D(dmp, ptA, ptB);
-
-	    /* draw Z axis with x/y offsets */
-	    VSET(ptA, gasp->gas_data_points[i][X], gasp->gas_data_points[i][Y], gasp->gas_data_points[i][Z] - halfAxesSize);
-	    VSET(ptB, gasp->gas_data_points[i][X], gasp->gas_data_points[i][Y], gasp->gas_data_points[i][Z] + halfAxesSize);
-	    DM_DRAW_LINE_3D(dmp, ptA, ptB);
-	}
-#endif
-    }
-#else
-    /* build X axis about view center */
-    VSET(v2, halfAxesSize, 0.0, 0.0);
-
-    /* rotate X axis into position */
-    MAT4X3PNT(rxv2, rmat, v2);
-    VSCALE(rxv1, rxv2, -1.0);
-
-    /* build Y axis about view center */
-    VSET(v2, 0.0, halfAxesSize, 0.0);
-
-    /* rotate Y axis into position */
-    MAT4X3PNT(ryv2, rmat, v2);
-    VSCALE(ryv1, ryv2, -1.0);
-
-    /* build Z axis about view center */
-    VSET(v2, 0.0, 0.0, halfAxesSize);
-
-    /* rotate Z axis into position */
-    MAT4X3PNT(rzv2, rmat, v2);
-    VSCALE(rzv1, rzv2, -1.0);
-
-    if (gasp->gas_num_data_points <= 0) {
-	/* draw X axis with x/y offsets */
-	DM_DRAW_LINE_2D(dmp,
-			rxv1[X] + gasp->gas_axes_pos[X], (rxv1[Y] + gasp->gas_axes_pos[Y]) * dmp->dm_aspect,
-			rxv2[X] + gasp->gas_axes_pos[X], (rxv2[Y] + gasp->gas_axes_pos[Y]) * dmp->dm_aspect);
+	VSET(ptA, gdasp->gdas_points[i][X] - halfAxesSize, gdasp->gdas_points[i][Y], gdasp->gdas_points[i][Z]);
+	VSET(ptB, gdasp->gdas_points[i][X] + halfAxesSize, gdasp->gdas_points[i][Y], gdasp->gdas_points[i][Z]);
+	++j;
+	VMOVE(points[j], ptA);
+	++j;
+	VMOVE(points[j], ptB);
 
 	/* draw Y axis with x/y offsets */
-	DM_DRAW_LINE_2D(dmp,
-			ryv1[X] + gasp->gas_axes_pos[X], (ryv1[Y] + gasp->gas_axes_pos[Y]) * dmp->dm_aspect,
-			ryv2[X] + gasp->gas_axes_pos[X], (ryv2[Y] + gasp->gas_axes_pos[Y]) * dmp->dm_aspect);
+	VSET(ptA, gdasp->gdas_points[i][X], gdasp->gdas_points[i][Y] - halfAxesSize, gdasp->gdas_points[i][Z]);
+	VSET(ptB, gdasp->gdas_points[i][X], gdasp->gdas_points[i][Y] + halfAxesSize, gdasp->gdas_points[i][Z]);
+	++j;
+	VMOVE(points[j], ptA);
+	++j;
+	VMOVE(points[j], ptB);
 
 	/* draw Z axis with x/y offsets */
-	DM_DRAW_LINE_2D(dmp,
-			rzv1[X] + gasp->gas_axes_pos[X], (rzv1[Y] + gasp->gas_axes_pos[Y]) * dmp->dm_aspect,
-			rzv2[X] + gasp->gas_axes_pos[X], (rzv2[Y] + gasp->gas_axes_pos[Y]) * dmp->dm_aspect);
-    } else {
-	for (i = 0; i < gasp->gas_num_data_points; ++i) {
-	    /* draw X axis with x/y offsets */
-	    DM_DRAW_LINE_2D(dmp,
-			    rxv1[X] + gasp->gas_data_points[i][X], (rxv1[Y] + gasp->gas_data_points[i][Y]) * dmp->dm_aspect,
-			    rxv2[X] + gasp->gas_data_points[i][X], (rxv2[Y] + gasp->gas_data_points[i][Y]) * dmp->dm_aspect);
-
-	    /* draw Y axis with x/y offsets */
-	    DM_DRAW_LINE_2D(dmp,
-			    ryv1[X] + gasp->gas_data_points[i][X], (ryv1[Y] + gasp->gas_data_points[i][Y]) * dmp->dm_aspect,
-			    ryv2[X] + gasp->gas_data_points[i][X], (ryv2[Y] + gasp->gas_data_points[i][Y]) * dmp->dm_aspect);
-
-	    /* draw Z axis with x/y offsets */
-	    DM_DRAW_LINE_2D(dmp,
-			    rzv1[X] + gasp->gas_data_points[i][X], (rzv1[Y] + gasp->gas_data_points[i][Y]) * dmp->dm_aspect,
-			    rzv2[X] + gasp->gas_data_points[i][X], (rzv2[Y] + gasp->gas_data_points[i][Y]) * dmp->dm_aspect);
-	}
+	VSET(ptA, gdasp->gdas_points[i][X], gdasp->gdas_points[i][Y], gdasp->gdas_points[i][Z] - halfAxesSize);
+	VSET(ptB, gdasp->gdas_points[i][X], gdasp->gdas_points[i][Y], gdasp->gdas_points[i][Z] + halfAxesSize);
+	++j;
+	VMOVE(points[j], ptA);
+	++j;
+	VMOVE(points[j], ptB);
     }
-#endif
+
+    DM_DRAW_LINES_3D(dmp, npoints, points);
+    bu_free((genptr_t)points, "data axes points");
 
     /* Restore the line attributes */
     DM_SET_LINE_ATTR(dmp, saveLineWidth, saveLineStyle);
 }
-
-#else
-
-void
-dm_draw_data_axes(struct		dm *dmp,
-		  fastf_t		viewSize, /* in mm */
-		  const mat_t		rmat,     /* view rotation matrix */
-		  struct ged_axes_state *gasp)
-{
-    fastf_t halfAxesSize;		/* half the length of an axis */
-    point_t v2;
-    point_t rxv1, rxv2;
-    point_t ryv1, ryv2;
-    point_t rzv1, rzv2;
-    /* Save the line attributes */
-    int saveLineWidth = dmp->dm_lineWidth;
-    int saveLineStyle = dmp->dm_lineStyle;
-
-    halfAxesSize = gasp->gas_axes_size * 0.5;
-
-    /* set color */
-    DM_SET_FGCOLOR(dmp, gasp->gas_axes_color[0], gasp->gas_axes_color[1], gasp->gas_axes_color[2], 1, 1.0);
-
-    /* set linewidth */
-    DM_SET_LINE_ATTR(dmp, gasp->gas_line_width, 0);  /* solid lines */
-
-    /* build X axis about view center */
-    VSET(v2, halfAxesSize, 0.0, 0.0);
-
-    /* rotate X axis into position */
-    MAT4X3PNT(rxv2, rmat, v2);
-    VSCALE(rxv1, rxv2, -1.0);
-
-    /* draw X axis with x/y offsets */
-    DM_DRAW_LINE_2D(dmp,
-		    rxv1[X] + gasp->gas_axes_pos[X], (rxv1[Y] + gasp->gas_axes_pos[Y]) * dmp->dm_aspect,
-		    rxv2[X] + gasp->gas_axes_pos[X], (rxv2[Y] + gasp->gas_axes_pos[Y]) * dmp->dm_aspect);
-
-    /* build Y axis about view center */
-    VSET(v2, 0.0, halfAxesSize, 0.0);
-
-    /* rotate Y axis into position */
-    MAT4X3PNT(ryv2, rmat, v2);
-    VSCALE(ryv1, ryv2, -1.0);
-
-    /* draw Y axis with x/y offsets */
-    DM_DRAW_LINE_2D(dmp,
-		    ryv1[X] + gasp->gas_axes_pos[X], (ryv1[Y] + gasp->gas_axes_pos[Y]) * dmp->dm_aspect,
-		    ryv2[X] + gasp->gas_axes_pos[X], (ryv2[Y] + gasp->gas_axes_pos[Y]) * dmp->dm_aspect);
-
-    /* build Z axis about view center */
-    VSET(v2, 0.0, 0.0, halfAxesSize);
-
-    /* rotate Z axis into position */
-    MAT4X3PNT(rzv2, rmat, v2);
-    VSCALE(rzv1, rzv2, -1.0);
-
-    /* draw Z axis with x/y offsets */
-    DM_DRAW_LINE_2D(dmp,
-		    rzv1[X] + gasp->gas_axes_pos[X], (rzv1[Y] + gasp->gas_axes_pos[Y]) * dmp->dm_aspect,
-		    rzv2[X] + gasp->gas_axes_pos[X], (rzv2[Y] + gasp->gas_axes_pos[Y]) * dmp->dm_aspect);
-
-    /* Restore the line attributes */
-    DM_SET_LINE_ATTR(dmp, saveLineWidth, saveLineStyle);
-}
-#endif
 
 void
 dm_draw_axes(struct dm			*dmp,

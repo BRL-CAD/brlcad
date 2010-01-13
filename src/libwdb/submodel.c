@@ -17,12 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file submodel.c
- *
- *  Authors -
- *	John R. Anderson
- *
- */
 
 #include "common.h"
 

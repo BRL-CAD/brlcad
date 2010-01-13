@@ -24,7 +24,6 @@
  * Generator Class implementation as well as well as implementation of various
  * functors used in the generation of Variables and Constraints
  *
- * @author Dawn Thomas
  */
 
 #include "pcGenerator.h"

@@ -23,7 +23,6 @@
  *
  * Class definition of Constraint Network
  *
- * @author Dawn Thomas
  */
 #ifndef __PCNETWORK_H__
 #define __PCNETWORK_H__

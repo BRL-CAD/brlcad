@@ -23,9 +23,6 @@
  *
  *  Image file AutoSizing code.
  *
- *  Author -
- *	Phil Dykstra
- *
  */
 /** @} */
 

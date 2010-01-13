@@ -24,8 +24,6 @@
  * @brief
  *  Sphere data structure and function declarations.
  *
- *  @author
- *	Phillip Dykstra
  */
 
 #ifndef __SPM_H__

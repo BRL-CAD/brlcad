@@ -18,14 +18,10 @@
  * information.
  */
 /** @file sh_stxt.c
- *			S T X T . C
  *
  *  Routines to implement solid (ie, 3-D) texture maps.
  *
  *  XXX Solid texturing is still preliminary.
- *
- *  Author -
- *	Tom DiGiacinto
  *
  */
 

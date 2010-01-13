@@ -20,7 +20,7 @@
 /** @file sph_brep.cpp
  *
  * Convert sph to b-rep
- * Author - Ben Poole
+ *
  */
 
 #include "common.h"

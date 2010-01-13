@@ -24,7 +24,6 @@
  * Constraint Network Generator Class as well as various functors used
  * in the generation of constraints and parameters/variables
  *
- * @author Dawn Thomas
  */
 #ifndef __PCGENERATOR_H__
 #define __PCGENERATOR_H__

@@ -23,7 +23,6 @@
  *
  * Method implementations of Constraint Network
  *
- * @author Dawn Thomas
  */
 #include "pcNetwork.h"
 

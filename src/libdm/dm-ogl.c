@@ -70,12 +70,104 @@
 #define YSTEREO		491	/* subfield height, in scanlines */
 #define YOFFSET_LEFT	532	/* YSTEREO + YBLANK ? */
 
+static int ogl_actively_drawing = 0;
+HIDDEN XVisualInfo *ogl_choose_visual(struct dm *dmp, Tk_Window tkwin);
+
 /* Display Manager package interface */
 #define IRBOUND 4095.9	/* Max magnification in Rot matrix */
 #define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
 
+struct dm	*ogl_open(Tcl_Interp *interp, int argc, char **argv);
+HIDDEN int	ogl_close(struct dm *dmp);
+HIDDEN int	ogl_drawBegin(struct dm *dmp);
+HIDDEN int      ogl_drawEnd(struct dm *dmp);
+HIDDEN int	ogl_normal(struct dm *dmp);
+HIDDEN int	ogl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye);
+HIDDEN int	ogl_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int size, int use_aspect);
+HIDDEN int	ogl_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2);
+HIDDEN int	ogl_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2);
+HIDDEN int	ogl_drawLines3D(struct dm *dmp, int npoints, point_t *points);
+HIDDEN int      ogl_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y);
+HIDDEN int      ogl_drawVList(struct dm *dmp, register struct bn_vlist *vp);
+HIDDEN int      ogl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp);
+HIDDEN int 	ogl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), genptr_t *data);
+HIDDEN int      ogl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency);
+HIDDEN int	ogl_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b);
+HIDDEN int	ogl_setLineAttr(struct dm *dmp, int width, int style);
+HIDDEN int	ogl_configureWin_guts(struct dm *dmp, int force);
+HIDDEN int	ogl_configureWin(struct dm *dmp);
+HIDDEN int	ogl_setLight(struct dm *dmp, int lighting_on);
+HIDDEN int	ogl_setTransparency(struct dm *dmp, int transparency_on);
+HIDDEN int	ogl_setDepthMask(struct dm *dmp, int depthMask_on);
+HIDDEN int	ogl_setZBuffer(struct dm *dmp, int zbuffer_on);
+HIDDEN int	ogl_setWinBounds(struct dm *dmp, int *w);
+HIDDEN int	ogl_debug(struct dm *dmp, int lvl);
+HIDDEN int      ogl_beginDList(struct dm *dmp, unsigned int list);
+HIDDEN int	ogl_endDList(struct dm *dmp);
+HIDDEN int      ogl_drawDList(struct dm *dmp, unsigned int list);
+HIDDEN int      ogl_freeDLists(struct dm *dmp, unsigned int list, int range);
 
-static int ogl_actively_drawing = 0;
+struct dm dm_ogl = {
+    ogl_close,
+    ogl_drawBegin,
+    ogl_drawEnd,
+    ogl_normal,
+    ogl_loadMatrix,
+    ogl_drawString2D,
+    ogl_drawLine2D,
+    ogl_drawLine3D,
+    ogl_drawLines3D,
+    ogl_drawPoint2D,
+    ogl_drawVList,
+    ogl_drawVListHiddenLine,
+    ogl_draw,
+    ogl_setFGColor,
+    ogl_setBGColor,
+    ogl_setLineAttr,
+    ogl_configureWin,
+    ogl_setWinBounds,
+    ogl_setLight,
+    ogl_setTransparency,
+    ogl_setDepthMask,
+    ogl_setZBuffer,
+    ogl_debug,
+    ogl_beginDList,
+    ogl_endDList,
+    ogl_drawDList,
+    ogl_freeDLists,
+    0,
+    1,				/* has displaylist */
+    0,                            /* no stereo by default */
+    1.0,				/* zoom-in limit */
+    1,				/* bound flag */
+    "ogl",
+    "X Windows with OpenGL graphics",
+    DM_TYPE_OGL,
+    1,
+    0,
+    0,
+    0,
+    0,
+    1.0, /* aspect ratio */
+    0,
+    {0, 0},
+    {0, 0, 0, 0, 0},		/* bu_vls path name*/
+    {0, 0, 0, 0, 0},		/* bu_vls full name drawing window */
+    {0, 0, 0, 0, 0},		/* bu_vls short name drawing window */
+    {0, 0, 0},			/* bg color */
+    {0, 0, 0},			/* fg color */
+    {GED_MIN, GED_MIN, GED_MIN},	/* clipmin */
+    {GED_MAX, GED_MAX, GED_MAX},	/* clipmax */
+    0,				/* no debugging */
+    0,				/* no perspective */
+    0,				/* no lighting */
+    0,				/* no transparency */
+    1,				/* depth buffer is writable */
+    1,				/* zbuffer */
+    0,				/* no zclipping */
+    0,                          /* clear back buffer after drawing and swap */
+    0				/* Tcl interpreter */
+};
 
 static fastf_t default_viewscale = 1000.0;
 static double xlim_view = 1.0;	/* args for glOrtho*/
@@ -83,7 +175,6 @@ static double ylim_view = 1.0;
 
 /* lighting parameters */
 static float amb_three[] = {0.3, 0.3, 0.3, 1.0};
-
 
 static float light0_direction[] = {0.0, 0.0, 1.0, 0.0};
 static float light0_position[] = {100.0, 200.0, 100.0, 0.0};
@@ -1260,6 +1351,156 @@ ogl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 
 
 /*
+ *  			O G L _ D R A W V L I S T H I D D E N L I N E
+ *
+ */
+HIDDEN int
+ogl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp)
+{
+    register struct bn_vlist	*tvp;
+    int				first;
+    static float black[4] = {0.0, 0.0, 0.0, 0.0};
+
+    if (dmp->dm_debugLevel)
+	bu_log("ogl_drawVList()\n");
+
+
+    /* First, draw polygons using background color. */
+
+    if (dmp->dm_light) {
+	glDisable(GL_LIGHTING);
+    }
+
+    glDisable(GL_BLEND);
+    glDepthMask(GL_TRUE);
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LEQUAL);
+    glEnable(GL_POLYGON_OFFSET_FILL);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glPolygonOffset(1.0, 1.0);
+
+    /* Set color to background color for drawing polygons. */
+    glColor3f(((struct ogl_vars *)dmp->dm_vars.priv_vars)->r,
+	       ((struct ogl_vars *)dmp->dm_vars.priv_vars)->g,
+	       ((struct ogl_vars *)dmp->dm_vars.priv_vars)->b);
+
+    /* Viewing region is from -1.0 to +1.0 */
+    first = 1;
+    for (BU_LIST_FOR(tvp, bn_vlist, &vp->l)) {
+	register int	i;
+	register int	nused = tvp->nused;
+	register int	*cmd = tvp->cmd;
+	register point_t *pt = tvp->pt;
+	for (i = 0; i < nused; i++, cmd++, pt++) {
+	    if (dmp->dm_debugLevel > 2)
+		bu_log(" %d (%g %g %g)\n", *cmd, V3ARGS(pt));
+	    switch (*cmd) {
+		case BN_VLIST_LINE_MOVE:
+		    break;
+		case BN_VLIST_POLY_START:
+
+		    /* Start poly marker & normal */
+		    if (first == 0)
+			glEnd();
+
+		    glBegin(GL_POLYGON);
+		    /* Set surface normal (vl_pnt points outward) */
+		    glNormal3dv(*pt);
+		    break;
+		case BN_VLIST_LINE_DRAW:
+		    break;
+		case BN_VLIST_POLY_MOVE:
+		case BN_VLIST_POLY_DRAW:
+		    glVertex3dv(*pt);
+		    break;
+		case BN_VLIST_POLY_END:
+		    /* Draw, End Polygon */
+		    glVertex3dv(*pt);
+		    glEnd();
+		    first = 1;
+		    break;
+		case BN_VLIST_POLY_VERTNORM:
+		    /* Set per-vertex normal.  Given before vert. */
+		    glNormal3dv(*pt);
+		    break;
+	    }
+	}
+    }
+
+    if (first == 0)
+	glEnd();
+
+
+    /* Last, draw wireframe/edges. */
+
+    /* Set color to wireColor for drawing wireframe/edges */
+    glColor3f(wireColor[0], wireColor[1], wireColor[2]);
+
+    /* Viewing region is from -1.0 to +1.0 */
+    first = 1;
+    for (BU_LIST_FOR(tvp, bn_vlist, &vp->l)) {
+	register int	i;
+	register int	nused = tvp->nused;
+	register int	*cmd = tvp->cmd;
+	register point_t *pt = tvp->pt;
+	for (i = 0; i < nused; i++, cmd++, pt++) {
+	    if (dmp->dm_debugLevel > 2)
+		bu_log(" %d (%g %g %g)\n", *cmd, V3ARGS(pt));
+	    switch (*cmd) {
+		case BN_VLIST_LINE_MOVE:
+		    /* Move, start line */
+		    if (first == 0)
+			glEnd();
+		    first = 0;
+
+		    glBegin(GL_LINE_STRIP);
+		    glVertex3dv(*pt);
+		    break;
+		case BN_VLIST_POLY_START:
+		    /* Start poly marker & normal */
+		    if (first == 0)
+			glEnd();
+
+		    glBegin(GL_LINE_STRIP);
+		    break;
+		case BN_VLIST_LINE_DRAW:
+		case BN_VLIST_POLY_MOVE:
+		case BN_VLIST_POLY_DRAW:
+		    glVertex3dv(*pt);
+		    break;
+		case BN_VLIST_POLY_END:
+		    /* Draw, End Polygon */
+		    glVertex3dv(*pt);
+		    glEnd();
+		    first = 1;
+		    break;
+		case BN_VLIST_POLY_VERTNORM:
+		    /* Set per-vertex normal.  Given before vert. */
+		    glNormal3dv(*pt);
+		    break;
+	    }
+	}
+    }
+
+    if (first == 0)
+	glEnd();
+
+    if (dmp->dm_light) {
+	glEnable(GL_LIGHTING);
+    }
+
+    if (!((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuffer_on)
+	glDisable(GL_DEPTH_TEST);
+
+    if (!dmp->dm_depthMask)
+	glDepthMask(GL_FALSE);
+
+    glDisable(GL_POLYGON_OFFSET_FILL);
+
+    return TCL_OK;
+}
+
+/*
  * O G L _ D R A W V L I S T
  *
  */
@@ -1552,7 +1793,7 @@ ogl_drawLines3D(struct dm *dmp, int npoints, point_t *points)
 
     /* Must be an even number of points */
     if (npoints%2)
-	return;
+	return TCL_OK;
 
     if (dmp->dm_light) {
 	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, wireColor);
@@ -1830,68 +2071,6 @@ ogl_freeDLists(struct dm *dmp, unsigned int list, int range)
     glDeleteLists(dmp->dm_displaylist + list, (GLsizei)range);
     return TCL_OK;
 }
-
-
-struct dm dm_ogl = {
-    ogl_close,
-    ogl_drawBegin,
-    ogl_drawEnd,
-    ogl_normal,
-    ogl_loadMatrix,
-    ogl_drawString2D,
-    ogl_drawLine2D,
-    ogl_drawLine3D,
-    ogl_drawLines3D,
-    ogl_drawPoint2D,
-    ogl_drawVList,
-    ogl_draw,
-    ogl_setFGColor,
-    ogl_setBGColor,
-    ogl_setLineAttr,
-    ogl_configureWin,
-    ogl_setWinBounds,
-    ogl_setLight,
-    ogl_setTransparency,
-    ogl_setDepthMask,
-    ogl_setZBuffer,
-    ogl_debug,
-    ogl_beginDList,
-    ogl_endDList,
-    ogl_drawDList,
-    ogl_freeDLists,
-    0,
-    1,				/* has displaylist */
-    0,                            /* no stereo by default */
-    1.0,				/* zoom-in limit */
-    1,				/* bound flag */
-    "ogl",
-    "X Windows with OpenGL graphics",
-    DM_TYPE_OGL,
-    1,
-    0,
-    0,
-    0,
-    0,
-    1.0, /* aspect ratio */
-    0,
-    {0, 0},
-    {0, 0, 0, 0, 0},		/* bu_vls path name*/
-    {0, 0, 0, 0, 0},		/* bu_vls full name drawing window */
-    {0, 0, 0, 0, 0},		/* bu_vls short name drawing window */
-    {0, 0, 0},			/* bg color */
-    {0, 0, 0},			/* fg color */
-    {GED_MIN, GED_MIN, GED_MIN},	/* clipmin */
-    {GED_MAX, GED_MAX, GED_MAX},	/* clipmax */
-    0,				/* no debugging */
-    0,				/* no perspective */
-    0,				/* no lighting */
-    0,				/* no transparency */
-    1,				/* depth buffer is writable */
-    1,				/* zbuffer */
-    0,				/* no zclipping */
-    0,                          /* clear back buffer after drawing and swap */
-    0				/* Tcl interpreter */
-};
 
 #endif /* DM_OGL */
 

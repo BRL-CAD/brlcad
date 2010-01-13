@@ -227,18 +227,21 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
     }
 
     if (rtip->nsolids <= 0) {
-	if (rtip->rti_air_discards > 0)
+	if (rtip->rti_air_discards > 0) {
 	    bu_log("rt_prep_parallel(%s, %d): %d primitives discarded due to air regions\n",
 		   rtip->rti_dbip->dbi_filename,
 		   rtip->rti_dbip->dbi_uses,
 		   rtip->rti_air_discards);
+	}
 	bu_log("rt_prep_parallel:  no primitives left to prep\n");
+	rtip->needprep = 0;		/* rt_gettrees left us nothing */
 	bu_semaphore_release(RT_SEM_RESULTS);
 	return;
     }
 
     if (rtip->nregions <= 0) {
 	bu_log("rt_prep_parallel:  no regions left to prep\n");
+	rtip->needprep = 0;		/* rt_gettrees left us nothing */
 	bu_semaphore_release(RT_SEM_RESULTS);
 	return;
     }

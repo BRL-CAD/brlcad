@@ -23,9 +23,6 @@
  *
  * @brief Constraint evaluation functions in C
  *
- * @author Dawn Thomas
- *
- *
  */
 
 #include "common.h"

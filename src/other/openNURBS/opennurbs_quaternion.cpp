@@ -1,3 +1,8 @@
+#include "common.h"
+#ifdef HAVE_IEEEFP_H
+# include <ieeefp.h>
+#endif
+
 #include "opennurbs.h"
 
 /* $NoKeywords: $ */

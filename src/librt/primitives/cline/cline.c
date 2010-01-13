@@ -23,9 +23,6 @@
  *
  * Intersect a ray with a FASTGEN4 CLINE element.
  *
- * Authors -
- * John Anderson
- *
  */
 
 #include "common.h"

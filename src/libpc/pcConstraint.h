@@ -23,7 +23,6 @@
  *
  * Constraint Class for Parametrics and Constraints Library
  *
- * @author Dawn Thomas
  */
 #ifndef __PCCONSTRAINT_H__
 #define __PCCONSTRAINT_H__

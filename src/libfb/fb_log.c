@@ -22,10 +22,8 @@
 /** @file fb_log.c
  *
  * Log a framebuffer library event in the Standard way.
- Author -
- Gary S. Moss
-
-*/
+ *
+ */
 /** @} */
 
 #include "common.h"

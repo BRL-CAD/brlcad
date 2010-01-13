@@ -19,6 +19,7 @@ dist_tcl_DATA = \
 	edit_select.png \
 	edit_translate.png \
 	compErase.png \
+	compExclude.png \
 	compSelect.png \
 	file_new.png \
 	file_text_small.png \

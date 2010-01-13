@@ -28,18 +28,21 @@
 char *
 bu_dirname(const char *cp)
 {
-    char	*ret;
-    char	*slash;
+    char *ret;
+    char *slash;
     int	len;
+    const char *SLASH = "/";
+    const char *DOT = ".";
+    const char *DOTDOT = "..";
 
     /* Special cases */
     if (cp == NULL)  return bu_strdup(".");
-    if (strcmp(cp, "/") == 0)
-	return bu_strdup("/");
-    if (strcmp(cp, ".") == 0 ||
-	strcmp(cp, "..") == 0 ||
+    if (strcmp(cp, SLASH) == 0)
+	return bu_strdup(SLASH);
+    if (strcmp(cp, DOT) == 0 ||
+	strcmp(cp, DOTDOT) == 0 ||
 	strrchr(cp, '/') == NULL)
-	return bu_strdup(".");
+	return bu_strdup(DOT);
 
     /* Make a duplicate copy of the string, and shorten it in place */
     ret = bu_strdup(cp);
@@ -51,7 +54,7 @@ bu_dirname(const char *cp)
     /* If no slashes remain, return "." */
     if ((slash = strrchr(ret, '/')) == NULL) {
 	bu_free(ret, "bu_dirname");
-	return bu_strdup(".");
+	return bu_strdup(DOT);
     }
 
     /* Remove trailing slash, unless it's at front */

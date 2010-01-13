@@ -23,7 +23,6 @@
  *
  * Constraint Class Methods
  *
- * @author Dawn Thomas
  */
 #include "pcConstraint.h"
 #include "pcVCSet.h"

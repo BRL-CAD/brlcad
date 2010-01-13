@@ -21,9 +21,6 @@
  *
  *  Module of libwdb to handle units conversion.
  *
- *  Author -
- *	Michael John Muuss
- *
  */
 
 #include "common.h"

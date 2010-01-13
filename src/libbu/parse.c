@@ -32,6 +32,12 @@
 #include "bu.h"
 
 
+/* Note: struct parsing requires no space after the commas.  take care
+ * when formatting this file if compile breaks here that spaces are
+ * not getting inserted.
+ */
+#define COMMA ','
+
 #define CKMEM(_len) {  \
 	register int offset; \
 	if ((offset = (ep - cp) - (_len)) < 0) { \
@@ -532,8 +538,17 @@ _bu_parse_double(const char *str, long int count, double *loc)
 
 	*loc++ = tmp_double;
 
+	/* skip any whitespace before separator */
+	while (*str && isspace(*str))
+	    str++;
+
 	/* skip the separator */
-	if (*str) str++;
+	if (*str && !isdigit(*str) && *str != '-' && *str != '+' && *str != '.')
+	    str++;
+
+	/* skip any whitespace after separator */
+	while (*str && isspace(*str))
+	    str++;
     }
     return 0;
 }
@@ -647,8 +662,18 @@ _bu_struct_lookup(register const struct bu_structparse *sdp, register const char
 			    *(ip++) = tmpi;
 			    pv = cp;
 			}
+
+			/* skip any whitespace before separator */
+			while (*pv && isspace(*pv))
+			    pv++;
+
 			/* skip the separator */
-			if (*pv) pv++;
+			if (*pv && !isdigit(*pv) && *pv != '+' && *pv != '-')
+			    pv++;
+
+			/* skip any whitespace after separator */
+			while (*pv && isspace(*pv))
+			    pv++;
 		    }
 		}
 		break;
@@ -688,8 +713,18 @@ _bu_struct_lookup(register const struct bu_structparse *sdp, register const char
 			    *(ip++) = tmpi;
 			    pv = cp;
 			}
+
+			/* skip any whitespace before separator */
+			while (*pv && isspace(*pv))
+			    pv++;
+
 			/* skip the separator */
-			if (*pv) pv++;
+			if (*pv && !isdigit(*pv) && *pv != '+' && *pv != '-')
+			    pv++;
+
+			/* skip any whitespace after separator */
+			while (*pv && isspace(*pv))
+			    pv++;
 		    }
 		}
 		break;
@@ -1032,7 +1067,7 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 
 		    bu_log(" %s=%d", sdp->sp_name, *sp++);
 
-		    while (--i > 0) bu_log(", %d", *sp++);
+		    while (--i > 0) bu_log("%c%d", COMMA, *sp++);
 
 		    bu_log("\n");
 		}
@@ -1044,7 +1079,7 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 
 		    bu_log(" %s=%d", sdp->sp_name, *dp++);
 
-		    while (--i > 0) bu_log(", %d", *dp++);
+		    while (--i > 0) bu_log("%c%d", COMMA, *dp++);
 
 		    bu_log("\n");
 		}
@@ -1060,7 +1095,7 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 			bu_log(" %s=%.25G", sdp->sp_name, *dp++);
 
 			while (--i > 0)
-			    bu_log(", %.25G", *dp++);
+			    bu_log("%c%.25G", COMMA, *dp++);
 
 			bu_log("\n");
 		    } else {
@@ -1085,7 +1120,7 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 
 		    bu_log(" %s=%08x", sdp->sp_name, *dp++);
 
-		    while (--i > 0) bu_log(", %08x", *dp++);
+		    while (--i > 0) bu_log("%c%08x", COMMA, *dp++);
 
 		    bu_log("\n");
 		}
@@ -1116,7 +1151,7 @@ _bu_vls_print_double(struct bu_vls *vls, const char *name, register long int cou
 
     while (--count > 0) {
 	cp += tmpi;
-	sprintf(cp, ", %.27G", *dp++);
+	sprintf(cp, "%c%.27G", COMMA, *dp++);
 	tmpi = strlen(cp);
 	vls->vls_len += tmpi;
     }
@@ -1258,7 +1293,7 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 
 		    while (--i > 0) {
 			cp += tmpi;
-			sprintf(cp, ", %d", *sp++);
+			sprintf(cp, "%c%d", COMMA, *sp++);
 			tmpi = strlen(cp);
 			vls->vls_len += tmpi;
 		    }
@@ -1282,7 +1317,7 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 
 		    while (--i > 0) {
 			cp += tmpi;
-			sprintf(cp, ", %d", *dp++);
+			sprintf(cp, "%c%d", COMMA, *dp++);
 			tmpi = strlen(cp);
 			vls->vls_len += tmpi;
 		    }
@@ -1377,7 +1412,7 @@ bu_vls_struct_print2(struct bu_vls *vls_out,
 		    bu_vls_printf(vls_out, " %s=%d", sdp->sp_name, *sp++);
 
 		    while (--i > 0)
-			bu_vls_printf(vls_out, ", %d", *sp++);
+			bu_vls_printf(vls_out, "%c%d", COMMA, *sp++);
 
 		    bu_vls_printf(vls_out, "\n");
 		}
@@ -1390,7 +1425,7 @@ bu_vls_struct_print2(struct bu_vls *vls_out,
 		    bu_vls_printf(vls_out, " %s=%d", sdp->sp_name, *dp++);
 
 		    while (--i > 0)
-			bu_vls_printf(vls_out, ", %d", *dp++);
+			bu_vls_printf(vls_out, "%c%d", COMMA, *dp++);
 
 		    bu_vls_printf(vls_out, "\n");
 		}
@@ -1406,7 +1441,7 @@ bu_vls_struct_print2(struct bu_vls *vls_out,
 			bu_vls_printf(vls_out, " %s=%.25G", sdp->sp_name, *dp++);
 
 			while (--i > 0)
-			    bu_vls_printf(vls_out, ", %.25G", *dp++);
+			    bu_vls_printf(vls_out, "%c%.25G", COMMA, *dp++);
 
 			bu_vls_printf(vls_out, "\n");
 		    } else {
@@ -1434,7 +1469,7 @@ bu_vls_struct_print2(struct bu_vls *vls_out,
 		    bu_vls_printf(vls_out, " %s=%08x", sdp->sp_name, *dp++);
 
 		    while (--i > 0)
-			bu_vls_printf(vls_out, ", %08x", *dp++);
+			bu_vls_printf(vls_out, "%c%08x", COMMA, *dp++);
 
 		    bu_vls_printf(vls_out, "\n");
 		}

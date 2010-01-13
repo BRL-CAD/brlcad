@@ -21,8 +21,6 @@
  *
  * version information about LIBBN
  *
- *@author
- *   Christopher Sean Morrison
  */
 
 #include "common.h"
