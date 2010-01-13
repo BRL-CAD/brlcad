@@ -122,10 +122,10 @@ static int	buf_mode=0;
 static struct scanline* scanline;
 
 static short int	pwidth;			/* Width of each pixel (in bytes) */
-
 struct mfuncs *mfHead = MF_NULL;	/* Head of list of shaders */
 
 fastf_t	gamma_corr = 0.0;			/* gamma correction if !0 */
+
 
 /* The default a_onehit = -1 requires at least one non-air hit,
  * (stop at first surface) and stops ray/geometry intersection after that.
@@ -748,7 +748,8 @@ colorview(register struct application *ap, struct partition *PartHeadp, struct s
     register struct hit *hitp;
     struct shadework sw;
 
-    /*Add to this function a method for determining the length of time taken
+    /*
+     *Add to this function a method for determining the length of time taken
      *to calculate a pixel, using the new heat-graph light model. What it will
      *do is, when active, start a timer here, and stop the timer at the end of
      *this function, take the total time in this funtion, and place it into an
@@ -991,9 +992,13 @@ vdraw open iray;vdraw params c %2.2x%2.2x%2.2x;vdraw write n 0 %g %g %g;vdraw wr
     }
     if(lightmodel == 8)
     {
-	double pixelTime = rt_get_timer(NULL,NULL);
+	fastf_t pixelTime = rt_get_timer(NULL,NULL);
 	bu_log("Time taken: %lf\n", pixelTime);
     }
+    extern int cur_pixel;
+    extern int last_pixel;
+    bu_log("Pixel = %d ", cur_pixel);
+    bu_log("End = %d\n", last_pixel);
     return(1);
 }
 
@@ -1142,29 +1147,14 @@ int viewit(register struct application *ap,
 	{
 	}
 	break;
-	/*This case will most likely be moved from viewit to viewcolor, to allow
+
+	/*This case was moved from viewit to viewcolor, to allow
 	 *for a colored render to be done with all special stuff, for better calculation
 	 *of time taken for render
+	 *Now it does nothing.
 	 */
     case 8:
     {
-	/*routine taken from 1 case*/
-//	rt_prep_timer();
-//
-          /* Light from the "eye" (ray source).  Note sign change */
-//	    lp = BU_LIST_FIRST( light_specific, &(LightHead.l) );
-//	    diffuse0 = 0;
-//	    if ( (cosI0 = -VDOT(normal, ap->a_ray.r_dir)) >= 0.0 )
-//		diffuse0 = cosI0 * ( AmbientIntensity - 1.0 );
-//	    VSCALE( work0, lp->lt_color, diffuse0 );
-
-	    /* Add in contribution from ambient light */
-//	    VSCALE( work1, ambient_color, AmbientIntensity );
-//	    VADD2( ap->a_color, work0, work1 );
-//	    double pixelTime = rt_get_timer(NULL,NULL);
-//	    bu_log("Time was: %lf\n", pixelTime);
-/*	    bu_log("Entered the awesome heat graph!\n");*/
-	break;
     }
 
     }
@@ -1570,14 +1560,17 @@ view_2init(register struct application *ap, char *framename)
 
 	}
 	break;
+
 	/*Now for the new Heat-graph lightmodel that will take all times to
 	 *compute the ray trace, normalize times, and then create the trace
-	 *according to how long each individual pixel took to render
+	 *according to how long each individual pixel took to render.
+	 * ALSO, should call a static funtion that creates a 2D array of sizes
+	 * width and height
 	 */
     case 8:
     {
 	ap->a_hit = colorview;
-	VSETALL(background, 1);
+	VSETALL(background, 0.5);
 	break;
     }
 
@@ -1677,6 +1670,16 @@ void application_init (void)
     view_parse[6].sp_offset = bu_byteoffset(overlay);
 }
 
+/*
+ *             T I M E T A B L E _ I N I T
+ * This function creates a 2D array of size X by Y, for use by the
+ * heat graph light model. Stores time used by each pixel for render.
+ */
+void timeTable_init(int x, int y, fastf_t time)
+{
+    static fastf_t timeTable[256][256]={0};
+    timeTable[x][y]=time;
+}
 
 
 /*
