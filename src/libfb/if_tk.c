@@ -44,6 +44,30 @@ Tcl_Interp *fbinterp;
 Tk_Window fbwin;
 Tk_PhotoHandle fbphoto;
 
+/* Note that Tk_PhotoPutBlock claims to have a faster
+ * copy method when pixelSize is 4 and alphaOffset is
+ * 3 - perhaps output could be massaged to generate this
+ * type of information and speed up the process?
+ *
+ * Might as well use one block and set the three things
+ * that actually change in tk_write
+ */   
+Tk_PhotoImageBlock block = {
+    NULL, /*Pointer to first pixel*/
+    0,    /*Width of block in pixels*/
+    1,    /*Height of block in pixels - always one for a scanline*/
+    0,    /*Address difference between successive lines*/
+    3,    /*Address difference between successive pixels on one scanline*/
+    {
+	RED,
+	GRN,
+	BLU,
+	0   /* alpha */
+    }
+};
+
+int have_memdumped = 0;
+
 int tk_close_existing()
 {
     return 0;
@@ -269,15 +293,13 @@ HIDDEN int
 tk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
 {
     int	i;
-    unsigned char pixp = *pixelp;
 
     FB_CK_FBIO(ifp);
-    fb_log( "fb_write( 0x%lx,%4d,%4d, 0x%lx, %d )\n",
-	    (unsigned long)ifp, x, y,
-	    (unsigned long)pixelp, count );
+    fb_log( "fb_write(ifp:0x%x, x:%d, y:%d, pixelp:0x%x, count:%d)\n", ifp, x, y, pixelp, count );
 
     /* write them out, four per line */
-    if ( ifp->if_debug & FB_DEBUG_RW ) {
+    if ( !have_memdumped ) {
+	have_memdumped = 1;
 	for ( i = 0; i < count; i++ ) {
 	    if ( i % 4 == 0 )
 		fb_log( "%4d:", i );
@@ -290,33 +312,10 @@ tk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
 	    fb_log( "\n" );
     }
 
-    // Note that Tk_PhotoPutBlock claims to have a faster
-    // copy method when pixelSize is 4 and alphaOffset is
-    // 3 - perhaps output could be massaged to generate this
-    // type of information and speed up the process?
-    //
-   Tk_PhotoImageBlock block = {
-	&pixp,
-	count,
-	1,
-	3 * ifp->if_width,
-	3,
-	{
-	    RED,
-	    GRN,
-	    BLU,
-	    0
-	}
-    };
- 
-    // the pixelp array (as of r37151) is getting 492 pixels
-    // rather than 512 for a default sized test case - 
-    // that is causing Tk_PhotoPutBlock to crash on a
-    // memory access error.  Need to find out the cause
-    // of the truncated pixel array.  Forcing count to
-    // match the array size doesn't result in a picture
-    // display, although it does complete the raytrace
-    // and exit.
+    /* Set local values of Tk_PhotoImageBlock */
+    block.pixelPtr = (unsigned char *)pixelp;
+    block.width = count;
+    block.pitch = 3 * ifp->if_width;
 
 #if defined(TK_MAJOR_VERSION) && TK_MAJOR_VERSION == 8 && defined(TK_MINOR_VERSION) && TK_MINOR_VERSION < 5
     Tk_PhotoPutBlock(fbphoto, &block, x, ifp->if_height-y, count, 1, TK_PHOTO_COMPOSITE_SET);
