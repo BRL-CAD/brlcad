@@ -235,8 +235,10 @@ fb_tk_close(FBIO *ifp)
     // Wait for CloseWindow to be changed by the WM_DELETE_WINDOW
     // binding set up in fb_tk_open
     Tcl_Eval(fbinterp, "vwait CloseWindow");
-    if (!strcmp(Tcl_GetVar(fbinterp, "CloseWindow", 0),"close"))
+    if (!strcmp(Tcl_GetVar(fbinterp, "CloseWindow", 0),"close")) {
+	Tcl_Eval(fbinterp, "destroy .");
 	return 0;
+    }
 }
 
 HIDDEN int
