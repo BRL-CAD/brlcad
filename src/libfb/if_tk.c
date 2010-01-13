@@ -206,6 +206,21 @@ fb_tk_open(FBIO *ifp, char *file, int width, int height)
 		Tcl_GetStringResult(fbinterp));
     }
 
+    /* Set our Tcl variable pertaining to whether a
+     * window closing event has been seen from the
+     * Window manager.  WM_DELETE_WINDOW will be
+     * bound to a command setting this variable to
+     * the string "close", in order to let tk_fb_close
+     * detect the Tk event and handle the closure
+     * itself.
+     */
+    Tcl_SetVar(fbinterp, "CloseWindow", "open", 0);
+    const char *wmcmd = "wm protocol . WM_DELETE_WINDOW {set CloseWindow \"close\"}";
+    if (Tcl_Eval(fbinterp, wmcmd) != TCL_OK) {
+	fb_log( "Error binding WM_DELETE_WINDOW." );
+    }
+    
+	 
     while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
 
     return	0;
@@ -217,14 +232,13 @@ fb_tk_close(FBIO *ifp)
     FB_CK_FBIO(ifp);
     fb_log( "fb_close( 0x%lx )\n", (unsigned long)ifp );
     fclose(stdin);
-    // have GOT to figure out how to persist cleanly.  Obvious
-    // approach is to get some sort of binding set up on 
-    // WM_DELETE_WINDOW - look at other framebuffer codes
-    // for how to idle properly in the meantime without
-    // burning CPU and needing Ctrl-c to exit.
+    // How can we idle properly without burning CPU??
     while (1) {
+	while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT)) {
+	}
+	if (!strcmp(Tcl_GetVar(fbinterp, "CloseWindow", 0),"close"))
+    	    return 0;
     }
-    return	0;
 }
 
 HIDDEN int
