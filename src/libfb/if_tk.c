@@ -232,13 +232,11 @@ fb_tk_close(FBIO *ifp)
     FB_CK_FBIO(ifp);
     fb_log( "fb_close( 0x%lx )\n", (unsigned long)ifp );
     fclose(stdin);
-    // How can we idle properly without burning CPU??
-    while (1) {
-	while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT)) {
-	}
-	if (!strcmp(Tcl_GetVar(fbinterp, "CloseWindow", 0),"close"))
-    	    return 0;
-    }
+    // Wait for CloseWindow to be changed by the WM_DELETE_WINDOW
+    // binding set up in fb_tk_open
+    Tcl_Eval(fbinterp, "vwait CloseWindow");
+    if (!strcmp(Tcl_GetVar(fbinterp, "CloseWindow", 0),"close"))
+	return 0;
 }
 
 HIDDEN int
