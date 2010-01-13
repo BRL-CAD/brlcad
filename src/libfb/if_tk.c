@@ -66,7 +66,6 @@ Tk_PhotoImageBlock block = {
     }
 };
 
-int have_memdumped = 0;
 
 int tk_close_existing()
 {
@@ -295,22 +294,6 @@ tk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
     int	i;
 
     FB_CK_FBIO(ifp);
-    fb_log( "fb_write(ifp:0x%x, x:%d, y:%d, pixelp:0x%x, count:%d)\n", ifp, x, y, pixelp, count );
-
-    /* write them out, four per line */
-    if ( !have_memdumped ) {
-	have_memdumped = 1;
-	for ( i = 0; i < count; i++ ) {
-	    if ( i % 4 == 0 )
-		fb_log( "%4d:", i );
-	    fb_log( "  [%3d,%3d,%3d]", *(pixelp+(i*3)+RED),
-		    *(pixelp+(i*3)+GRN), *(pixelp+(i*3)+BLU) );
-	    if ( i % 4 == 3 )
-		fb_log( "\n" );
-	}
-	if ( i % 4 != 0 )
-	    fb_log( "\n" );
-    }
 
     /* Set local values of Tk_PhotoImageBlock */
     block.pixelPtr = (unsigned char *)pixelp;
