@@ -47,7 +47,7 @@
 extern int mc_edges[256];
 
 /* TODO: make a real header entry once the signature is good... */
-int rt_nmg_mc_realize_cube(struct shell *s, int pv, point_t **p, fastf_t *edges);
+int rt_nmg_mc_realize_cube(struct shell *s, int pv, point_t *p, point_t *edges);
 
 /**
  * R T _ M E T A B A L L _ T E S S
@@ -95,6 +95,7 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
 
     *r = nmg_mrsv(m);	/* new empty nmg */
     s = BU_LIST_FIRST(shell, &(*r)->s_hd);
+    bu_log("Booyeah!\n");
 
     /* the incredibly naïve approach. Time could be cut in half by simply
      * caching 4 point values, more by actually marching or doing active
@@ -104,9 +105,9 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
 	for (j = min[Y]; j<max[Y]; j+=mtol)
 	    for (k = min[Z]; k<max[Z]; k+=mtol) {
 		point_t p[8];
-		fastf_t edge[12];
 		int pv = 0;
 
+		/* generate the vertex values */
 #define MEH(c,di,dj,dk) VSET(p[c], i+di, j+dj, k+dk); pv |= rt_metaball_point_inside((const point_t *)&p[c], mb) << c;
 		MEH(0, 0, 0, 0);
 		MEH(1, 0, 0, mtol);
@@ -116,15 +117,28 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
 		MEH(5, mtol, 0, mtol);
 		MEH(6, mtol, mtol, 0);
 		MEH(7, mtol, mtol, mtol);
-#undef MET
+#undef MEH
+
 		if ( pv != 0 && pv != 255 ) {	/* entire cube is either inside or outside */
-		    int r;
-		    fastf_t edges[12];
-		    bu_log("%x\n", mc_edges[pv]);
-		    /*
-				rt_metaball_find_intersection(&mid, mb, (const point_t *)&a, (const point_t *)&*b, mtol, finalstep);
-		    */
-		    if(rt_nmg_mc_realize_cube(s, pv, (point_t **)&p, edges) == -1) {
+		    point_t edges[12];
+
+		    /* compute the edge values (if needed) */
+#define MEH(a,b,c) if(!(pv&(1<<b)&&pv&(1<<c))) rt_metaball_find_intersection(edges+a, mb, (const point_t *)(p+b), (const point_t *)(p+c), mtol, finalstep);
+		    MEH(0 ,0,1);
+		    MEH(1 ,1,2);
+		    MEH(2 ,2,3);
+		    MEH(3 ,0,3);
+		    MEH(4 ,4,5);
+		    MEH(5 ,5,6);
+		    MEH(6 ,6,7);
+		    MEH(7 ,4,7);
+		    MEH(8 ,0,4);
+		    MEH(9 ,1,5);
+		    MEH(10,2,6);
+		    MEH(11,3,7);
+#undef MEH
+
+		    if(rt_nmg_mc_realize_cube(s, pv, (point_t *)p, (point_t *)edges) == -1) {
 			bu_log("Error attempting to realize a cube O.o\n");
 			return -1;
 		    }
@@ -140,8 +154,6 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
     bu_log("ERROR: rt_metaball_tess called() is not implemented\n");
     return -1;
 }
-
-
 
 /*
  * Local Variables:

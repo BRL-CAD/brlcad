@@ -33,7 +33,7 @@
  *           [X] asc-g
  *           [X] g-asc
  *	     [ ] regression shtuff (on hold; regress/ has issues)
- *       [ ] edge solve cubes
+ *       [X] edge solve cubes
  *       [X] write compiled table shtuff (use existing table, the hex/index one?)
  *       [ ] produce NMG mesh
  * ============================================================
@@ -361,7 +361,7 @@ int mc_tris[256][16] =
 static int bitcount(unsigned char w) { return (w==0) ? 0 : bitcount(w>>1) + (w|1); }
 
 int
-rt_nmg_mc_realize_cube(struct shell *s, int pv, point_t **p, fastf_t *edges)
+rt_nmg_mc_realize_cube(struct shell *s, int pv, point_t *p, point_t *edges)
 {
     int pvbc;
     struct vertex **corners[3];
@@ -369,6 +369,7 @@ rt_nmg_mc_realize_cube(struct shell *s, int pv, point_t **p, fastf_t *edges)
 
     pvbc = bitcount(pv);
     if (pvbc==1) {
+	    bu_log("Huh, pvbc = 1\n");
 	    /*
 	point_t a, b, mid;
 	bu_log("Intersect between %f, %f, %f and %f, %f, %f is at %f, %f, %f\n", V3ARGS(a), V3ARGS(b), V3ARGS(mid));
@@ -380,6 +381,7 @@ rt_nmg_mc_realize_cube(struct shell *s, int pv, point_t **p, fastf_t *edges)
 
     /* convert intersect to vertices */
     p = p;
+    return 0;
 
     if ((fu=nmg_cmface(s, corners, 3)) == (struct faceuse *)NULL) {
 	bu_log("rt_metaball_tess() nmg_cmface() failed\n");
