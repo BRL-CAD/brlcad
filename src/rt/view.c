@@ -995,8 +995,7 @@ vdraw open iray;vdraw params c %2.2x%2.2x%2.2x;vdraw write n 0 %g %g %g;vdraw wr
 	       pp->pt_regionp->reg_name);
 	VPRINT("color   ", ap->a_color);
     }
-    if(lightmodel == 8)
-    {
+    if(lightmodel == 8)  {
 	/****************************
 	 * Notes to Self:
 	 *
@@ -1005,13 +1004,13 @@ vdraw open iray;vdraw params c %2.2x%2.2x%2.2x;vdraw write n 0 %g %g %g;vdraw wr
 	 * outfp is for writing to an external pix file.
 	 * height and width are the dementions of the trace
 	 * ap->a_x ap->a_y is the current X/Y coordinate being worked on
+	 *
 	 ****************************/
-	if(fbp != FBIO_NULL)
-	{
-	    bu_log("Framebuffer is non-null!\n");
+
+	if(fbp != FBIO_NULL) {
+/*	    bu_log("Framebuffer is non-null!\n"); */
 	    extern int cur_pixel;
-//	    bu_log("FB X = %d, FB Y = %d\n", fb_getwidth(fbp), fb_getheight(fbp));
-	    bu_log("FB=%c \n", fbp);
+/*	    bu_log("FB X = %d, FB Y = %d\n", fb_getwidth(fbp), fb_getheight(fbp)); */
 
 /* This changes the framebuffer behavior. May be useful later, once all data points are
  * converted to time-heat-graph points
@@ -1024,7 +1023,15 @@ vdraw open iray;vdraw params c %2.2x%2.2x%2.2x;vdraw write n 0 %g %g %g;vdraw wr
 	    bu_log("Cur: %d, X = %d, Y = %d\n", cur_pixel, ap->a_x, ap->a_y);
 	}
 	fastf_t pixelTime = rt_get_timer(NULL,NULL);
-//	bu_log("Time taken: %lf\n", pixelTime);
+
+	/*
+	 * What will happen here is that the current pixel time will be shot
+	 * off into an array at location (current x)(current y) to be stored
+	 * for processing. Once processed, the time array will contain RGBpixel
+	 * values 
+	 */
+
+/*	bu_log("Time taken: %lf\n", pixelTime); */
     }
     return(1);
 }
@@ -1175,14 +1182,15 @@ int viewit(register struct application *ap,
 	}
 	break;
 
-	/*This case was moved from viewit to viewcolor, to allow
-	 *for a colored render to be done with all special stuff, for better calculation
-	 *of time taken for render
-	 *Now it does nothing.
+	/* This case was moved from viewit to viewcolor, to allow
+	 * for a colored render to be done with all special stuff, for better calculation
+	 * of time taken for render
+	 * Now it does nothing.
 	 */
     case 8:
     {
     }
+    break;
 
     }
 
@@ -1588,9 +1596,9 @@ view_2init(register struct application *ap, char *framename)
 	}
 	break;
 
-	/*Now for the new Heat-graph lightmodel that will take all times to
-	 *compute the ray trace, normalize times, and then create the trace
-	 *according to how long each individual pixel took to render.
+	/* Now for the new Heat-graph lightmodel that will take all times to
+	 * compute the ray trace, normalize times, and then create the trace
+	 * according to how long each individual pixel took to render.
 	 * ALSO, should call a static funtion that creates a 2D array of sizes
 	 * width and height
 	 */
