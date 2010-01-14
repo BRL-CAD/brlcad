@@ -2689,7 +2689,7 @@ TCL_CPPFLAGS=""
 TCL_DIR=""
 unset ac_cv_c_tclconfig
 if test "x$build_brlcad_tcl" = "xyes" ; then
-    TCL_VERSION="8.6"
+    TCL_VERSION="8.5"
     AC_MSG_RESULT(yes)
     case $host_os in
 	 darwin*)
@@ -2822,7 +2822,7 @@ TK=""
 TKSTUB=""
 TK_CPPFLAGS=""
 TK_DIR=""
-TK_VERSION="8.6"
+TK_VERSION="8.5"
 unset ac_cv_c_tkconfig
 
 if test "x$build_against_tk" = "xyes" ; then
@@ -2834,6 +2834,9 @@ if test "x$build_against_tk" = "xyes" ; then
              TK='-L${top_builddir}/src/other/tk/macosx'" -ltk${TCL_VERSION}"
 	     TKSTUB='-L${top_builddir}/src/other/tk/macosx'" -ltkstub${TK_VERSION}"
 	     TK_DIR='macosx'
+	     if test "x$bc_build_aquatk" = "xyes" ; then
+	         TK_CPPFLAGS="$TK_CPPFLAGS "'-I${top_srcdir}/src/other/tk/xlib'
+	     fi
 	     ;;
     	 *)
              TK='-L${top_builddir}/src/other/tk/unix'" -ltk${TCL_VERSION}"
