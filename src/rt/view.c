@@ -523,7 +523,7 @@ void timeTable_init(int x, int y, fastf_t time)
 {
     static fastf_t maxtime = -1.0;
     static fastf_t mintime = 1000000.0; /* about 11 days. No pixel should take longer */
-
+    static int entries = 0;
     /* for now, a 4096x4096 will be a theoretical maximum for a render
      * size, which is pretty huge. Eventually it will be set to
      * whatever the maximum size possible is. Filled initially with -1
@@ -541,7 +541,8 @@ void timeTable_init(int x, int y, fastf_t time)
     bu_semaphore_release(BU_SEM_SYSCALL);
 
     timeTable[x][y]=time;
-    bu_log("Current Max: %lf, Current Min: %lf\n", maxtime, mintime);
+    entries++;
+    bu_log("Current Max: %lf, Current Min: %lf Entries: %d\n", maxtime, mintime, entries);
 }
 
 /**
