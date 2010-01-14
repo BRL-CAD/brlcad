@@ -161,7 +161,7 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
 #undef MEH
 
 		    rval = rt_nmg_mc_realize_cube(s, pv, (point_t *)p, (point_t *)edges);
-		    if(rval)
+		    if(rval) {
 			bu_log("Error attempting to realize a cube O.o\n");
 			return rval;
 		    }
