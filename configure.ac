@@ -2695,7 +2695,7 @@ if test "x$build_brlcad_tcl" = "xyes" ; then
 	 darwin*)
 	     TCL='-L${top_builddir}/src/other/tcl/macosx'" -ltcl${TCL_VERSION} $FRAMEWORK_COREFOUNDATION"
     	     TCLSTUB='-L${top_builddir}/src/other/tcl/macosx'" -ltclstub${TCL_VERSION}"
-             TCL_CPPFLAGS='-I${top_srcdir}/src/other/tcl/generic -I${top_srcdir}/src/other/tcl/macosx'
+             TCL_CPPFLAGS='-I${top_srcdir}/src/other/tcl/generic -I${top_srcdir}/src/other/tcl/macosx -I${top_srcdir}/src/other/tcl/unix'
 	     TCL_DIR='macosx'
 	     ;;
     	 *)
