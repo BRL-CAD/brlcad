@@ -2,16 +2,16 @@
 all: all-am
 
 all-am:
-	if test -d unix ; then cd unix && $(MAKE) $(AM_MAKEFLAGS) all ; fi
+	if test -d $(TK_DIR) ; then cd $(TK_DIR) && $(MAKE) $(AM_MAKEFLAGS) all ; fi
 
 clean-am:
-	if test -d unix ; then cd unix && $(MAKE) $(AM_MAKEFLAGS) clean ; fi
+	if test -d $(TK_DIR) ; then cd $(TK_DIR) && $(MAKE) $(AM_MAKEFLAGS) clean ; fi
 
 distclean-am:
-	if test -d unix ; then cd unix && $(MAKE) $(AM_MAKEFLAGS) distclean ; fi
+	if test -d $(TK_DIR) ; then cd $(TK_DIR) && $(MAKE) $(AM_MAKEFLAGS) distclean ; fi
 
 install-am: all-am
-	if test -d unix ; then cd unix && $(MAKE) $(AM_MAKEFLAGS) install ; fi
+	if test -d $(TK_DIR) ; then cd $(TK_DIR) && $(MAKE) $(AM_MAKEFLAGS) install ; fi
 
 INSTALLED_BINARIES = \
 	wish \

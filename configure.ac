@@ -1102,6 +1102,26 @@ LIBS="$PRELIBS"
 AC_MSG_RESULT($framework_carbon)
 AC_SUBST(FRAMEWORK_CARBON)
 
+dnl check whether the Cocoa framework is available (used for X11 focus)
+AC_MSG_CHECKING([whether -framework Cocoa is available])
+framework_cocoa=no
+FRAMEWORK_COCOA=""
+PRELIBS="$LIBS"
+LIBS="$LIBS -Xlinker -framework -Xlinker Cocoa"
+AC_TRY_LINK([#include <Cocoa/Cocoa.h>], [
+OSStatus status;
+ProcessSerialNumber psn = {kNoProcess, kNoProcess};
+CFStringRef processName = NULL;
+GetCurrentProcess(&psn);
+CopyProcessName(&psn, &processName);
+if (processName != NULL) {
+   CFShow(processName);
+}
+], [framework_cocoa=yes ; FRAMEWORK_COCOA="-Xlinker -framework -Xlinker Cocoa"])
+LIBS="$PRELIBS"
+AC_MSG_RESULT($framework_cocoa)
+AC_SUBST(FRAMEWORK_COCOA)
+
 dnl check whether the JavaVM framework is available (used for librtserver)
 AC_MSG_CHECKING([whether -framework JavaVM is available])
 framework_javavm=no
@@ -1528,6 +1548,7 @@ AC_HEADER_DIRENT
 AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS( \
 	Carbon/Carbon.h \
+	Cocoa/Cocoa.h \
 	curses.h \
 	dslib.h \
 	getopt.h \
@@ -2665,20 +2686,25 @@ AC_MSG_CHECKING(whether to build Tcl)
 TCL=""
 TCLSTUB=""
 TCL_CPPFLAGS=""
+TCL_DIR=""
 unset ac_cv_c_tclconfig
 if test "x$build_brlcad_tcl" = "xyes" ; then
-    TCL_VERSION="8.5"
+    TCL_VERSION="8.6"
     AC_MSG_RESULT(yes)
     case $host_os in
 	 darwin*)
-	     TCL='-L${top_builddir}/src/other/tcl/unix'" -ltcl${TCL_VERSION} $FRAMEWORK_COREFOUNDATION"
+	     TCL='-L${top_builddir}/src/other/tcl/macosx'" -ltcl${TCL_VERSION} $FRAMEWORK_COREFOUNDATION"
+    	     TCLSTUB='-L${top_builddir}/src/other/tcl/macosx'" -ltclstub${TCL_VERSION}"
+             TCL_CPPFLAGS='-I${top_srcdir}/src/other/tcl/generic -I${top_srcdir}/src/other/tcl/macosx'
+	     TCL_DIR='macosx'
 	     ;;
     	 *)
 	     TCL='-L${top_builddir}/src/other/tcl/unix'" -ltcl${TCL_VERSION} ${LIBDL} ${LIBM}"
+             TCLSTUB='-L${top_builddir}/src/other/tcl/unix'" -ltclstub${TCL_VERSION}"
+             TCL_CPPFLAGS='-I${top_srcdir}/src/other/tcl/generic -I${top_srcdir}/src/other/tcl/unix'
+	     TCL_DIR='unix'
 	     ;;
     esac
-    TCLSTUB='-L${top_builddir}/src/other/tcl/unix'" -ltclstub${TCL_VERSION}"
-    TCL_CPPFLAGS='-I${top_srcdir}/src/other/tcl/generic -I${top_srcdir}/src/other/tcl/unix'
 else
     AC_MSG_RESULT(no)
 
@@ -2710,7 +2736,7 @@ AC_SUBST(TCLSTUB)
 AC_SUBST(TCL_CPPFLAGS)
 AC_SUBST(TCL_VERSION)
 AC_SUBST(LIBTCL)
-
+AC_SUBST(TCL_DIR)
 
 dnl *** Tk ***
 dnl See if libtk seems to work
@@ -2795,19 +2821,27 @@ fi
 TK=""
 TKSTUB=""
 TK_CPPFLAGS=""
-TK_VERSION="8.5"
+TK_DIR=""
+TK_VERSION="8.6"
 unset ac_cv_c_tkconfig
 
 if test "x$build_against_tk" = "xyes" ; then
     AC_MSG_CHECKING(whether to build Tk)
     if test "x$build_brlcad_tk" = "xyes" ; then
 	AC_MSG_RESULT(yes)
-	TK='-L${top_builddir}/src/other/tk/unix'" -ltk${TCL_VERSION}"
-	TKSTUB='-L${top_builddir}/src/other/tk/unix'" -ltkstub${TK_VERSION}"
-	TK_CPPFLAGS='-I${top_srcdir}/src/other/tk/generic -I${top_srcdir}/src/other/tk/unix -I${top_srcdir}/src/other/tk/win'
-	if test "x$bc_build_aquatk" = "xyes" ; then
-	    TK_CPPFLAGS="$TK_CPPFLAGS "'-I${top_srcdir}/src/other/tk/xlib'
-	fi
+	case $host_os in
+	 darwin*)
+             TK='-L${top_builddir}/src/other/tk/macosx'" -ltk${TCL_VERSION}"
+	     TKSTUB='-L${top_builddir}/src/other/tk/macosx'" -ltkstub${TK_VERSION}"
+	     TK_DIR='macosx'
+	     ;;
+    	 *)
+             TK='-L${top_builddir}/src/other/tk/unix'" -ltk${TCL_VERSION}"
+	     TKSTUB='-L${top_builddir}/src/other/tk/unix'" -ltkstub${TK_VERSION}"
+	     TK_DIR='unix'
+	     ;;
+   	 esac
+	 TK_CPPFLAGS='-I${top_srcdir}/src/other/tk/generic -I${top_srcdir}/src/other/tk/macosx -I${top_srcdir}/src/other/tk/unix -I${top_srcdir}/src/other/tk/win'
     else
 	AC_MSG_RESULT(no)
 
@@ -2848,7 +2882,7 @@ AC_SUBST(TKSTUB)
 AC_SUBST(TK_CPPFLAGS)
 AC_SUBST(TK_VERSION)
 AC_SUBST(LIBTK)
-
+AC_SUBST(TK_DIR)
 
 dnl *** incrTcl ***
 dnl See if libitcl and libitk seem to work, make sure it's not dependant upon libtcl
@@ -3921,21 +3955,40 @@ fi
 
 dnl configure Tcl
 if test "x$build_brlcad_tcl" = "xyes" ; then
-    TCL_PATH="$PWD/${ac_top_builddir}/src/other/tcl/unix"
-    ac_configure_args="$ac_configure_args --with-tcl=\"$TCL_PATH\""
-    AC_CONFIG_SUBDIRS([src/other/tcl/unix])
+    case $host_os in
+         darwin*)
+    	     TCL_PATH="$PWD/${ac_top_builddir}/src/other/tcl/macosx"
+    	     ac_configure_args="$ac_configure_args --with-tcl=\"$TCL_PATH\""
+    	     AC_CONFIG_SUBDIRS([src/other/tcl/macosx])
+	     ;;
+    	 *)
+    	     TCL_PATH="$PWD/${ac_top_builddir}/src/other/tcl/unix"
+    	     ac_configure_args="$ac_configure_args --with-tcl=\"$TCL_PATH\""
+    	     AC_CONFIG_SUBDIRS([src/other/tcl/unix])
+	     ;;
+    esac
+
     TCL_PATH="`echo ${TCL_PATH} | sed 's/\\/\\//\\//g;s/\\//\\\\\\//g'`"
 fi
 AC_SUBST(TCL_PATH)
 
 dnl configure Tk
 if test "x$build_brlcad_tk" = "xyes" ; then
-    if test "x$bc_build_aquatk" = "xyes" ; then
-	ac_configure_args="$ac_configure_args --enable-aqua --disable-xft"
-    fi
-    TK_PATH="$PWD/${ac_top_builddir}/src/other/tk/unix"
-    ac_configure_args="$ac_configure_args --with-tk=\"$TK_PATH\""
-    AC_CONFIG_SUBDIRS([src/other/tk/unix])
+     case $host_os in
+         darwin*)
+  	     if test "x$bc_build_aquatk" = "xyes" ; then
+ 	          ac_configure_args="$ac_configure_args --enable-aqua --disable-xft"
+             fi
+             TK_PATH="$PWD/${ac_top_builddir}/src/other/tk/macosx"
+             ac_configure_args="$ac_configure_args --with-tk=\"$TK_PATH\""
+             AC_CONFIG_SUBDIRS([src/other/tk/macosx])
+	     ;;
+    	 *)
+             TK_PATH="$PWD/${ac_top_builddir}/src/other/tk/unix"
+             ac_configure_args="$ac_configure_args --with-tk=\"$TK_PATH\""
+             AC_CONFIG_SUBDIRS([src/other/tk/unix])
+	     ;;
+    esac
     TK_PATH="`echo ${TK_PATH} | sed 's/\\/\\//\\//g;s/\\//\\\\\\//g'`"
 fi
 AC_SUBST(TK_PATH)
