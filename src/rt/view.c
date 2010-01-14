@@ -997,6 +997,32 @@ vdraw open iray;vdraw params c %2.2x%2.2x%2.2x;vdraw write n 0 %g %g %g;vdraw wr
     }
     if(lightmodel == 8)
     {
+	/****************************
+	 * Notes to Self:
+	 *
+	 * framebuffer is the actual framebuffer destination (/dev/X)
+	 * fbp is the framebuffer handle (what?)
+	 * outfp is for writing to an external pix file.
+	 * height and width are the dementions of the trace
+	 * ap->a_x ap->a_y is the current X/Y coordinate being worked on
+	 ****************************/
+	if(fbp != FBIO_NULL)
+	{
+	    bu_log("Framebuffer is non-null!\n");
+	    extern int cur_pixel;
+//	    bu_log("FB X = %d, FB Y = %d\n", fb_getwidth(fbp), fb_getheight(fbp));
+	    bu_log("FB=%c \n", fbp);
+
+/* This changes the framebuffer behavior. May be useful later, once all data points are
+ * converted to time-heat-graph points
+ *
+ *	    bu_semaphore_acquire(BU_SEM_SYSCALL);
+ *         (void)fb_view(fbp, width/2, height/2, 1, 1);
+ *         bu_semaphore_release(BU_SEM_SYSCALL);
+*/
+
+	    bu_log("Cur: %d, X = %d, Y = %d\n", cur_pixel, ap->a_x, ap->a_y);
+	}
 	fastf_t pixelTime = rt_get_timer(NULL,NULL);
 //	bu_log("Time taken: %lf\n", pixelTime);
     }
