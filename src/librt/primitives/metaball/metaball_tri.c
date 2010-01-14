@@ -23,6 +23,24 @@
  *
  * Tesselation/facetization routines for the metaball primitive.
  *
+ *
+ *
+ *
+ * Here be magic.
+ *
+ *
+ *              4
+ *        4-----------5   
+ *      7/|         5/|
+ *      / |   6     / |
+ *     7-----------6  |9
+ *     |  |8       |  |
+ *     |  |   0  10|  |
+ *   11|  0--------|--1
+ *     | /         | /
+ *     |/3         |/1
+ *     3-----------2 
+ *          2
  */
 /** @} */
 
@@ -121,9 +139,13 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
 
 		if ( pv != 0 && pv != 255 ) {	/* entire cube is either inside or outside */
 		    point_t edges[12];
+		    int rval;
 
 		    /* compute the edge values (if needed) */
 #define MEH(a,b,c) if(!(pv&(1<<b)&&pv&(1<<c))) rt_metaball_find_intersection(edges+a, mb, (const point_t *)(p+b), (const point_t *)(p+c), mtol, finalstep);
+		    /* magic numbers! an edge, then the two attached vertices.
+		     * For edge/vertex mapping, refer to the awesome ascii art
+		     * at the beginning of this file. */
 		    MEH(0 ,0,1);
 		    MEH(1 ,1,2);
 		    MEH(2 ,2,3);
@@ -138,9 +160,10 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
 		    MEH(11,3,7);
 #undef MEH
 
-		    if(rt_nmg_mc_realize_cube(s, pv, (point_t *)p, (point_t *)edges) == -1) {
+		    rval = rt_nmg_mc_realize_cube(s, pv, (point_t *)p, (point_t *)edges);
+		    if(rval)
 			bu_log("Error attempting to realize a cube O.o\n");
-			return -1;
+			return rval;
 		    }
 		}
 	    }
