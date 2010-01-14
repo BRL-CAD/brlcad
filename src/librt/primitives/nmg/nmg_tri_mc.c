@@ -33,7 +33,7 @@
  *           [X] asc-g
  *           [X] g-asc
  *	     [ ] regression shtuff (on hold; regress/ has issues)
- *       [ ] edge solve cubes
+ *       [X] edge solve cubes
  *       [X] write compiled table shtuff (use existing table, the hex/index one?)
  *       [ ] produce NMG mesh
  * ============================================================
@@ -72,7 +72,7 @@
  * Grid definition matches SIGGRAPH 1987 p 164 (original presentation of technique)
  */
 
-static int mc_edges[256]={
+int mc_edges[256]={
 0x000,0x109,0x203,0x30a,0x406,0x50f,0x605,0x70c,
 0x80c,0x905,0xa0f,0xb06,0xc0a,0xd03,0xe09,0xf00,
 0x190,0x099,0x393,0x29a,0x596,0x49f,0x795,0x69c,
@@ -106,7 +106,7 @@ static int mc_edges[256]={
 0xf00,0xe09,0xd03,0xc0a,0xb06,0xa0f,0x905,0x80c,
 0x70c,0x605,0x50f,0x406,0x30a,0x203,0x109,0x000};
 
-static int mc_tris[256][16] =
+int mc_tris[256][16] =
 {{-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
 {0, 8, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
 {0, 1, 9, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
@@ -358,6 +358,37 @@ static int mc_tris[256][16] =
 
 
 
+static int bitcount(unsigned char w) { return (w==0) ? 0 : bitcount(w>>1) + (w|1); }
+
+int
+rt_nmg_mc_realize_cube(struct shell *s, int pv, point_t *p, point_t *edges)
+{
+    int pvbc;
+    struct vertex **corners[3];
+    struct faceuse *fu;
+
+    pvbc = bitcount(pv);
+    if (pvbc==1) {
+	    bu_log("Huh, pvbc = 1\n");
+	    /*
+	point_t a, b, mid;
+	bu_log("Intersect between %f, %f, %f and %f, %f, %f is at %f, %f, %f\n", V3ARGS(a), V3ARGS(b), V3ARGS(mid));
+	*/
+    }
+
+    /* needs to be stitched into a triangle style NMG. Then
+     * decimated, perhaps? */
+
+    /* convert intersect to vertices */
+    p = p;
+    return 0;
+
+    if ((fu=nmg_cmface(s, corners, 3)) == (struct faceuse *)NULL) {
+	bu_log("rt_metaball_tess() nmg_cmface() failed\n");
+	return -1;
+    }
+    return -1;
+}
 
 void
 nmg_triangulate_model_mc(struct model *m, const struct bn_tol *tol)
@@ -368,7 +399,6 @@ nmg_triangulate_model_mc(struct model *m, const struct bn_tol *tol)
 
     if (rt_g.NMG_debug & DEBUG_TRI)
 	bu_log("Triangulating NMG\n");
-
 
     if (rt_g.NMG_debug & DEBUG_TRI)
 	bu_log("Triangulation completed\n");

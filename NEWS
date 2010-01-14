@@ -14,6 +14,8 @@ changes made.  See document footer for additional details.
 --- 2009-12-XX  Release 7.16.4                                     ---
 ----------------------------------------------------------------------
 
+* fixed gqa units argument parsing bug on 64-bit Linux - Sean Morrison
+* bot_dump exports BoTs referenced within combinations - Bob Parker
 * mged 'garbage_collect' validation care and bug fixes - Sean Morrison
 * fixed mged 'view' command bugs setting quat and ypr - Sean Morrison
 * improved rt reporting and exiting after prep failure - Sean Morrison
@@ -30,6 +32,7 @@ changes made.  See document footer for additional details.
 * librt now queries env LIBRT_DEBUG for more flags - Erik Greenwald
 * pixdiff outputs matching pixels at half-intensity - Sean Morrison
 * fixed rate interpolation bug in tabinterp - Emton
+* runtime toggling of display managers - Cliff Yapp
 
 
 ----------------------------------------------------------------------

@@ -23,6 +23,24 @@
  *
  * Tesselation/facetization routines for the metaball primitive.
  *
+ *
+ *
+ *
+ * Here be magic.
+ *
+ *
+ *              4
+ *        4-----------5   
+ *      7/|         5/|
+ *      / |   6     / |
+ *     7-----------6  |9
+ *     |  |8       |  |
+ *     |  |   0  10|  |
+ *   11|  0--------|--1
+ *     | /         | /
+ *     |/3         |/1
+ *     3-----------2 
+ *          2
  */
 /** @} */
 
@@ -44,36 +62,10 @@
 
 #include "metaball.h"
 
-static int bitcount(unsigned char w) { return (w==0) ? 0 : bitcount(w>>1) + (w|1); }
+extern int mc_edges[256];
 
-static int
-rt_metaball_realize_cube(struct shell *s, struct rt_metaball_internal *mb, fastf_t finalstep, int pv, point_t **p, fastf_t mtol)
-{
-    int pvbc;
-    struct vertex **corners[3];
-    struct faceuse *fu;
-
-    pvbc = bitcount(pv);
-    if (pvbc==1) {
-	point_t a, b, mid;
-	rt_metaball_find_intersection(&mid, mb, (const point_t *)&a, (const point_t *)&*b, mtol, finalstep);
-	bu_log("Intersect between %f, %f, %f and %f, %f, %f is at %f, %f, %f\n", V3ARGS(a), V3ARGS(b), V3ARGS(mid));
-    }
-    /* should the actual surface intersection be searched for, or
-     * just say the mid point is good enough? */
-
-    /* needs to be stitched into a triangle style NMG. Then
-     * decimated, perhaps? */
-
-    /* convert intersect to vertices */
-    p = p;
-
-    if ((fu=nmg_cmface(s, corners, 3)) == (struct faceuse *)NULL) {
-	bu_log("rt_metaball_tess() nmg_cmface() failed\n");
-	return -1;
-    }
-    return -1;
-}
+/* TODO: make a real header entry once the signature is good... */
+int rt_nmg_mc_realize_cube(struct shell *s, int pv, point_t *p, point_t *edges);
 
 /**
  * R T _ M E T A B A L L _ T E S S
@@ -121,6 +113,7 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
 
     *r = nmg_mrsv(m);	/* new empty nmg */
     s = BU_LIST_FIRST(shell, &(*r)->s_hd);
+    bu_log("Booyeah!\n");
 
     /* the incredibly naïve approach. Time could be cut in half by simply
      * caching 4 point values, more by actually marching or doing active
@@ -132,6 +125,7 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
 		point_t p[8];
 		int pv = 0;
 
+		/* generate the vertex values */
 #define MEH(c,di,dj,dk) VSET(p[c], i+di, j+dj, k+dk); pv |= rt_metaball_point_inside((const point_t *)&p[c], mb) << c;
 		MEH(0, 0, 0, 0);
 		MEH(1, 0, 0, mtol);
@@ -141,12 +135,37 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
 		MEH(5, mtol, 0, mtol);
 		MEH(6, mtol, mtol, 0);
 		MEH(7, mtol, mtol, mtol);
-#undef MET
-		if ( pv != 0 && pv != 255 )
-		    if(rt_metaball_realize_cube(s, mb, finalstep, pv, (point_t **)&p, mtol) == -1) {
+#undef MEH
+
+		if ( pv != 0 && pv != 255 ) {	/* entire cube is either inside or outside */
+		    point_t edges[12];
+		    int rval;
+
+		    /* compute the edge values (if needed) */
+#define MEH(a,b,c) if(!(pv&(1<<b)&&pv&(1<<c))) rt_metaball_find_intersection(edges+a, mb, (const point_t *)(p+b), (const point_t *)(p+c), mtol, finalstep);
+		    /* magic numbers! an edge, then the two attached vertices.
+		     * For edge/vertex mapping, refer to the awesome ascii art
+		     * at the beginning of this file. */
+		    MEH(0 ,0,1);
+		    MEH(1 ,1,2);
+		    MEH(2 ,2,3);
+		    MEH(3 ,0,3);
+		    MEH(4 ,4,5);
+		    MEH(5 ,5,6);
+		    MEH(6 ,6,7);
+		    MEH(7 ,4,7);
+		    MEH(8 ,0,4);
+		    MEH(9 ,1,5);
+		    MEH(10,2,6);
+		    MEH(11,3,7);
+#undef MEH
+
+		    rval = rt_nmg_mc_realize_cube(s, pv, (point_t *)p, (point_t *)edges);
+		    if(rval) {
 			bu_log("Error attempting to realize a cube O.o\n");
-			return -1;
+			return rval;
 		    }
+		}
 	    }
 
     rt_get_timer(&times, NULL);
@@ -158,8 +177,6 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
     bu_log("ERROR: rt_metaball_tess called() is not implemented\n");
     return -1;
 }
-
-
 
 /*
  * Local Variables:
