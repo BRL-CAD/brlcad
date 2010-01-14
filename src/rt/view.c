@@ -974,6 +974,11 @@ vdraw open iray;vdraw params c %2.2x%2.2x%2.2x;vdraw write n 0 %g %g %g;vdraw wr
     /*
      *  e ^(-density * distance)
      */
+	if(lightmodel == 8)
+	{
+	    VSET(ap->a_color, 1-ap->a_color[0], 1-ap->a_color[1], 1-ap->a_color[2]);
+	}
+
     if (airdensity != 0.0) {
 	double g;
 	double f = exp(-hitp->hit_dist * airdensity);
@@ -993,12 +998,8 @@ vdraw open iray;vdraw params c %2.2x%2.2x%2.2x;vdraw write n 0 %g %g %g;vdraw wr
     if(lightmodel == 8)
     {
 	fastf_t pixelTime = rt_get_timer(NULL,NULL);
-	bu_log("Time taken: %lf\n", pixelTime);
+//	bu_log("Time taken: %lf\n", pixelTime);
     }
-    extern int cur_pixel;
-    extern int last_pixel;
-    bu_log("Pixel = %d ", cur_pixel);
-    bu_log("End = %d\n", last_pixel);
     return(1);
 }
 
