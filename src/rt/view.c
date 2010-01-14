@@ -513,6 +513,36 @@ view_pixel(register struct application *ap)
     }
 }
 
+/**
+ * T I M E T A B L E _ I N I T
+ *
+ * This function creates a 2D array of size X by Y, for use by the
+ * heat graph light model. Stores time used by each pixel for render.
+ */
+void timeTable_init(int x, int y, fastf_t time)
+{
+    static fastf_t maxtime = -1.0;
+    static fastf_t mintime = 1000000.0; /* about 11 days. No pixel should take longer */
+
+    /* for now, a 4096x4096 will be a theoretical maximum for a render
+     * size, which is pretty huge. Eventually it will be set to
+     * whatever the maximum size possible is. Filled initially with -1
+     * in order to determine the actual 'size' of the inputed heat
+     * graph.
+     */
+    static fastf_t timeTable[4096][4096]={-1};
+
+    /* These are used later for normalization of time graph */
+    bu_semaphore_acquire(BU_SEM_SYSCALL);
+    if (time > maxtime)
+	maxtime = time;
+    if (time < mintime)
+	mintime = time;
+    bu_semaphore_release(BU_SEM_SYSCALL);
+
+    timeTable[x][y]=time;
+    bu_log("Current Max: %lf, Current Min: %lf\n", maxtime, mintime);
+}
 
 /**
  * V I E W _ E O L
@@ -1033,7 +1063,7 @@ vdraw open iray;vdraw params c %2.2x%2.2x%2.2x;vdraw write n 0 %g %g %g;vdraw wr
 	    bu_log("Cur: %d, X = %d, Y = %d\n", cur_pixel, ap->a_x, ap->a_y);
 	}
 	fastf_t pixelTime = rt_get_timer(NULL, NULL);
-
+	(void)timeTable_init((int)ap->a_x, (int)ap->a_y, pixelTime);
 	/*
 	 * What will happen here is that the current pixel time will
 	 * be shot off into an array at location (current x)(current
@@ -1726,19 +1756,6 @@ void application_init (void)
     view_parse[4].sp_offset = bu_byteoffset(background[0]);
     view_parse[5].sp_offset = bu_byteoffset(overlay);
     view_parse[6].sp_offset = bu_byteoffset(overlay);
-}
-
-
-/**
- * T I M E T A B L E _ I N I T
- *
- * This function creates a 2D array of size X by Y, for use by the
- * heat graph light model. Stores time used by each pixel for render.
- */
-void timeTable_init(int x, int y, fastf_t time)
-{
-    static fastf_t timeTable[256][256]={0};
-    timeTable[x][y]=time;
 }
 
 
