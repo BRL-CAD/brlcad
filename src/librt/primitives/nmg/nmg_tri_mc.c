@@ -357,24 +357,33 @@ int mc_tris[256][16] =
 {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1}};
 
 
-
-static int bitcount(unsigned char w) { return (w==0) ? 0 : bitcount(w>>1) + (w|1); }
-
 int
 rt_nmg_mc_realize_cube(struct shell *s, int pv, point_t *p, point_t *edges)
 {
-    int pvbc;
+    int *vi, fo;
     struct vertex **corners[3];
     struct faceuse *fu;
 
-    pvbc = bitcount(pv);
-    if (pvbc==1) {
-	    bu_log("Huh, pvbc = 1\n");
-	    /*
-	point_t a, b, mid;
-	bu_log("Intersect between %f, %f, %f and %f, %f, %f is at %f, %f, %f\n", V3ARGS(a), V3ARGS(b), V3ARGS(mid));
-	*/
+    /* this is where we do s omething with the tables. */
+
+    vi = (int *)(mc_tris[pv]);
+    /* 
+     * vi now has the vertex list for our (possibly up to) 5 triangles as
+     * offsets into "edges". If the tuple is all '-1', there is no triangle. The
+     * vi array is actually 16 triangles, with an extra terminal -1.
+     */
+
+    fo = 0;
+    while( *vi >= 0 ) {
+	if(++fo > 5) {
+	    bu_log("Whoa, too many triangles?\n");
+	    return -1;
+	}
+	/* edges[vi[0]], edges[vi[1]], edges[vi[2]] */
+	bu_log(" <%.2f %.2f %.2f>", edges[vi[0]][X], edges[vi[1]][Y], edges[vi[2]][Z]);
+	vi+=3;
     }
+    bu_log("\n");
 
     /* needs to be stitched into a triangle style NMG. Then
      * decimated, perhaps? */
