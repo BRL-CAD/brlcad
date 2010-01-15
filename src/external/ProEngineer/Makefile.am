@@ -121,13 +121,14 @@ EXTRA_DIST = \
 	$(proe_DATA) \
 	$(rsrc_DATA) \
 	$(tmsg_DATA) \
+	mk.in \
+	protk.dat.in \
+	win32-msvc8/proe \
 	win32-msvc8/proe-brl-3.0/proe-brl-3.0.vcproj \
 	win32-msvc8/proe-brl-4.0/proe-brl-4.0.vcproj \
 	win32-msvc8/proe-brl-4.0/proe-brl.vcproj \
-	win32-msvc8/proe \
-	win32-msvc8/proe/proe.sln \
-	mk.in \
-	protk.dat.in
+	win32-msvc8/proe-brl-5.0/proe-brl-5.0.vcproj \
+	win32-msvc8/proe/proe.sln
 
 CLEANFILES = \
 	libproe2brl.so \
