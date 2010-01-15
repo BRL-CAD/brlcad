@@ -515,7 +515,6 @@ bot_dump(struct directory *dp, struct rt_bot_internal *bot, FILE *fp, int fd, st
 	bu_vls_strcpy(file_name, output_directory);
 	bu_vls_putc(file_name, '/');
 	cp = dp->d_namep;
-	cp++;
 	while (*cp != '\0') {
 	    if (*cp == '/') {
 		bu_vls_putc(file_name, '@');
