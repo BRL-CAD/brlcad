@@ -212,7 +212,7 @@ TCL_EXE			= @TCLSH_PROG@
 INSTALL_STRIP_PROGRAM   = -s
 INSTALL_STRIP_LIBRARY   = -S -x
 
-INSTALL			= @srcdir@/install-sh -c
+INSTALL			= @srcdir@/../unix/install-sh -c
 INSTALL_PROGRAM		= ${INSTALL} -m 775
 INSTALL_LIBRARY		= ${INSTALL} -m 775
 INSTALL_DATA		= ${INSTALL} -m 664
@@ -709,8 +709,8 @@ install-binaries: $(TK_LIB_FILE) $(TK_STUB_LIB_FILE) $(TK_BUILD_EXP_FILE) wish
 		else true; \
 		fi; \
 	    done;
-	@if test ! -x $(SRC_DIR)/install-sh; then \
-	    chmod +x $(SRC_DIR)/install-sh; \
+	@if test ! -x $(TOP_DIR)/unix/install-sh; then \
+	    chmod +x $(TOP_DIR)/unix/install-sh; \
 	    fi
 	@if test "x$(TK_SHARED_BUILD)" = "x1"; then \
 	    echo "Creating package index $(PKG_INDEX)"; \
