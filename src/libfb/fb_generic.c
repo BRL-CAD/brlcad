@@ -80,9 +80,6 @@ int fb_null_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits
  */
 static
 FBIO *_if_list[] = {
-#ifdef IF_TK
-    &tk_interface,
-#endif
 #ifdef IF_WGL
     &wgl_interface,
 #endif
@@ -92,6 +89,9 @@ FBIO *_if_list[] = {
 #ifdef IF_X
     &X24_interface,
     &X_interface,
+#endif
+#ifdef IF_TK
+    &tk_interface,
 #endif
 
     &debug_interface,
