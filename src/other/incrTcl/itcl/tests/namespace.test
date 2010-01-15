@@ -13,17 +13,15 @@
 # See the file "license.terms" for information on usage and
 # redistribution of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
-if {[lsearch [namespace children] ::tcltest] == -1} {
-    package require tcltest 2.1
-    namespace import -force ::tcltest::test
-}
-
+package require tcltest 2.2
+namespace import ::tcltest::test
 ::tcltest::loadTestedCommands
 
 # ----------------------------------------------------------------------
 #  Classes within namespaces
 # ----------------------------------------------------------------------
-test namespace-1.1 {same class name can be used in different namespaces} {
+test namespace-1.1 {same class name can be used in different namespaces
+} -body {
     namespace eval test_ns_1 {
         itcl::class Counter {
             variable num 0
@@ -53,41 +51,52 @@ test namespace-1.1 {same class name can be used in different namespaces} {
             common tag 2
         }
     }
-} ""
+} -result {}
 
-test namespace-1.2 {classes in different namespaces are different} {
+test namespace-1.2 {classes in different namespaces are different
+} -body {
     list [namespace eval test_ns_1::Counter {info variable tag}] \
          [namespace eval test_ns_2::Counter {info variable tag}] \
-} {{protected common ::test_ns_1::Counter::tag 1 1} {protected common ::test_ns_2::Counter::tag 2 2}}
+} -result {{protected common ::test_ns_1::Counter::tag 1 1} {protected common ::test_ns_2::Counter::tag 2 2}}
 
-test namespace-1.3 {create an object in one namespace} {
+test namespace-1.3 {create an object in one namespace
+} -body {
     namespace eval test_ns_1 {
         list [Counter c] [c ++] [c ++] [c ++] [c ++]
     }
-} {c 1 2 3 4}
+} -result {c 1 2 3 4}
 
-test namespace-1.4 {create an object in another namespace} {
+test namespace-1.4 {create an object in another namespace
+} -body {
     namespace eval test_ns_2 {
         list [Counter c] [c ++] [c ++] [c ++] [c ++]
     }
-} {c 1 2 4 8}
+} -cleanup {
+    namespace delete ::itcl::internal::variables::test_ns_2
+    namespace delete test_ns_2
+} -result {c 1 2 4 8}
 
-test namespace-1.5 {can find classes wrapped in a namespace} {
+test namespace-1.5 {can find classes wrapped in a namespace
+} -body {
     list [catch {test_ns_1::c do itcl::find objects -isa Counter} msg] $msg \
          [catch {test_ns_1::c do itcl::find objects -class Counter} msg] $msg
-} {0 ::test_ns_1::c 0 ::test_ns_1::c}
+} -result {0 ::test_ns_1::c 0 ::test_ns_1::c}
 
-test namespace-1.6 {can't create an object that clobbers a command in this namespace} {
+test namespace-1.6 {can't create an object that clobbers a command in this namespace
+} -body {
     list [catch {namespace eval test_ns_1 {Counter exists}} msg] $msg
-} {1 {command "exists" already exists in namespace "::test_ns_1"}}
+} -result {1 {command "exists" already exists in namespace "::test_ns_1"}}
 
-test namespace-1.7 {can create an object that shadows a command in the global namespace} {
+test namespace-1.7 {can create an object that shadows a command in the global namespace
+} -body {
     list [catch {namespace eval test_ns_1 {Counter lreplace}} msg] $msg \
          [catch {itcl::find objects *lreplace} msg] $msg \
          [namespace eval test_ns_1 {namespace which lreplace}]
-} {0 lreplace 0 ::test_ns_1::lreplace ::test_ns_1::lreplace}
-
-namespace delete test_ns_1 test_ns_2
+} -cleanup {
+    namespace delete ::itcl::internal::variables::lreplace
+    namespace delete ::itcl::internal::variables::test_ns_1
+    namespace delete test_ns_1
+} -result {0 lreplace 0 ::test_ns_1::lreplace ::test_ns_1::lreplace}
 
 ::tcltest::cleanupTests
 return

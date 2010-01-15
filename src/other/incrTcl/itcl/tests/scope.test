@@ -13,11 +13,8 @@
 # See the file "license.terms" for information on usage and
 # redistribution of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
-if {[lsearch [namespace children] ::tcltest] == -1} {
-    package require tcltest 2.1
-    namespace import -force ::tcltest::test
-}
-
+package require tcltest 2.1
+namespace import ::tcltest::test
 ::tcltest::loadTestedCommands
 
 # ----------------------------------------------------------------------
@@ -142,7 +139,7 @@ test scope-3.2 {code command captures only class context} {
 test scope-3.3 {scope command captures class and object context} {
     list [test_scope0 mcontext itcl::scope priv] \
          [test_scope::pcontext itcl::scope pric]
-} {{@itcl ::test_scope0 ::test_scope::priv} ::test_scope::pric}
+} {::itcl::internal::variables::test_scope0::test_scope::priv ::itcl::internal::variables::test_scope::pric}
 
 test scope-3.4 {scope command must recognize variable} {
     list [catch {test_scope0 mcontext itcl::scope xyzzy} msg] $msg
@@ -174,7 +171,7 @@ test scope-3.7 {code command provides access to methods} {
     set result ""
     foreach mname {prim prom pubm} {
         set cmd [test_scope0 mcontext eval itcl::code \$this $mname]
-        lappend result $cmd [$cmd 1 2 3]
+        lappend result $cmd [uplevel 0 $cmd 1 2 3]
     }
     set result
 } {{namespace inscope ::test_scope {::test_scope0 prim}} {prim: 1 2 3} {namespace inscope ::test_scope {::test_scope0 prom}} {prom: 1 2 3} {namespace inscope ::test_scope {::test_scope0 pubm}} {pubm: 1 2 3}}
@@ -186,7 +183,7 @@ test scope-3.8 {scope command allows access to slots in an array} {
          [catch {test_scope0 mcontext itcl::scope varray(1)} msg] $msg \
          [catch {test_scope::pcontext itcl::scope carray(0)} msg] $msg \
          [catch {test_scope::pcontext itcl::scope carray(1)} msg] $msg
-} {0 {@itcl ::test_scope0 ::test_scope::varray(0)} 0 {@itcl ::test_scope0 ::test_scope::varray(1)} 0 ::test_scope::carray(0) 0 ::test_scope::carray(1)}
+} {0 ::itcl::internal::variables::test_scope0::test_scope::varray(0) 0 ::itcl::internal::variables::test_scope0::test_scope::varray(1) 0 ::itcl::internal::variables::test_scope::carray(0) 0 ::itcl::internal::variables::test_scope::carray(1)}
 
 itcl::delete class test_scope
 

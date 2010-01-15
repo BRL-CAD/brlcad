@@ -1,0 +1,45 @@
+# itclWidgetConfig.sh --
+# 
+# This shell script (for sh) is generated automatically by ItclWidget's
+# configure script.  It will create shell variables for most of
+# the configuration options discovered by the configure script.
+# This script is intended to be included by the configure scripts
+# for ItclWidget extensions so that they don't have to figure this all
+# out for themselves.  This file does not duplicate information
+# already provided by tclConfig.sh, tkConfig.sh or itclConfig.sh,
+# so you may need to use those files in addition to this one.
+#
+# The information in this file is specific to a single platform.
+
+# Itcl's version number.
+ITCL_VERSION='@ITCL_VERSION@'
+
+# The name of the ItclWidget library (may be either a .a file or a shared library):
+ITCL_WIDGET_LIB_FILE=@ITCL_WIDGET_LIB_FILE@
+
+# String to pass to linker to pick up the ItclWidget library from its
+# build directory.
+ITCL_WIDGET_BUILD_LIB_SPEC='@ITCL_WIDGET_BUILD_LIB_SPEC@'
+
+# String to pass to linker to pick up the ItclWidget library from its
+# installed directory.
+ITCL_WIDGET_LIB_SPEC='@ITCL_WIDGET_LIB_SPEC@'
+
+# The name of the ItclWidget stub library (a .a file):
+ITCL_WIDGET_STUB_LIB_FILE=@ITCL_WIDGET_STUB_LIB_FILE@
+
+# String to pass to linker to pick up the ItclWidget stub library from its
+# build directory.
+ITCL_WIDGET_BUILD_STUB_LIB_SPEC='@ITCL_WIDGET_BUILD_STUB_LIB_SPEC@'
+
+# String to pass to linker to pick up the ItclWidget stub library from its
+# installed directory.
+ITCL_WIDGET_STUB_LIB_SPEC='@ITCL_WIDGET_STUB_LIB_SPEC@'
+
+# Location of the top-level source directories from which [incr Tk]
+# was built.  This is the directory that contains a README file as well
+# as subdirectories such as generic, unix, etc.  If [incr Tk] was
+# compiled in a different place than the directory containing the source
+# files, this points to the location of the sources, not the location
+# where [incr Tk] was compiled.
+ITCL_WIDGET_SRC_DIR='@ITCL_WIDGET_SRC_DIR@'

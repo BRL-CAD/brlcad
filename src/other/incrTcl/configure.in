@@ -1,0 +1,31 @@
+#!/bin/bash -norc
+dnl	This file is an input file used by the GNU "autoconf" program to
+dnl	generate the file "configure", which is run during [incr Tcl]
+dnl installation to configure the system for the local environment.
+#
+# RCS: $Id$
+
+builtin(include,tclconfig/tcl.m4)
+
+#-----------------------------------------------------------------------
+# We need to do some TEA stuff here to handle --prefix correctly
+# in this toplevel configure file.  autoconf is broken in multiple
+# ways.  It passes --prefix, but not --exec-prefix to configure
+# subdirs.  This would not be a problem if it properly passed
+# whether --prefix was set, but this is not true with ac2.57.
+#-----------------------------------------------------------------------
+
+AC_INIT([itcl-master], [3.4])
+
+TEA_INIT([3.6])
+
+AC_CONFIG_AUX_DIR(tclconfig)
+
+TEA_PATH_TCLCONFIG
+TEA_LOAD_TCLCONFIG
+
+TEA_PREFIX
+
+AC_CONFIG_SUBDIRS([itcl itk])
+
+AC_OUTPUT([Makefile], [chmod +x ${srcdir}/tclconfig/install-sh])

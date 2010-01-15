@@ -1,0 +1,6 @@
+RCS: @(#) $Id$
+2007-09-08 Arnulf P. Wiedemann <wiede@users.sf.net>
+    * all new modules installed and added
+This is the ChangeLog file for itcl-ng/itk
+it is here as Itk and itcl-ng/itk will be different modules in the future
+

@@ -1,4 +1,22 @@
 /*
+ * itcl.h --
+ *
+ * This file contains definitions for the C-implemeted part of a Itcl
+ * this version of [incr Tcl] (Itcl) is a completely new implementation
+ * based on TclOO extension of Tcl 8.5
+ * It tries to provide the same interfaces as the original implementation
+ * of Michael J. McLennan
+ * Some small pieces of code are taken from that implementation
+ *
+ * Copyright (c) 2007 by Arnulf P. Wiedemann
+ *
+ * See the file "license.terms" for information on usage and redistribution of
+ * this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *
+ * RCS: @(#) $Id$
+ */
+
+/*
  * ------------------------------------------------------------------------
  *      PACKAGE:  [incr Tcl]
  *  DESCRIPTION:  Object-Oriented Extensions to Tcl
@@ -11,7 +29,7 @@
  *  it encourages better organization of Tcl applications through the
  *  object-oriented paradigm, leading to code that is easier to
  *  understand and maintain.
- *  
+ *
  *  ADDING [incr Tcl] TO A Tcl-BASED APPLICATION:
  *
  *    To add [incr Tcl] facilities to a Tcl application, modify the
@@ -21,124 +39,85 @@
  *       Tcl_AppInit():
  *
  *         #include "itcl.h"
- *
+*
  *    2) Within the body of Tcl_AppInit(), add the following lines:
  *
  *         if (Itcl_Init(interp) == TCL_ERROR) {
  *             return TCL_ERROR;
  *         }
- * 
+ *
  *    3) Link your application with libitcl.a
  *
  *    NOTE:  An example file "tclAppInit.c" containing the changes shown
  *           above is included in this distribution.
- *  
- * ========================================================================
- *  AUTHOR:  Michael J. McLennan
- *           Bell Labs Innovations for Lucent Technologies
- *           mmclennan@lucent.com
- *           http://www.tcltk.com/itcl
  *
- *     RCS:  $Id$
- * ========================================================================
- *           Copyright (c) 1993-1998  Lucent Technologies, Inc.
- * ------------------------------------------------------------------------
- * See the file "license.terms" for information on usage and redistribution
- * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+ *---------------------------------------------------------------------
  */
-#ifndef ITCL_H
-#define ITCL_H
 
+#ifndef ITCL_H_INCLUDED
+#define ITCL_H_INCLUDED
+
+#include <string.h>
+#include <ctype.h>
 #include "tcl.h"
 
+/*
+ * For C++ compilers, use extern "C"
+ */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#if defined(BUILD_itcl)
+#       define ITCLAPI DLLEXPORT
+#       undef USE_ITCL_STUBS
+#else
+#       define ITCLAPI DLLIMPORT
+#endif
+
 #ifndef TCL_ALPHA_RELEASE
-#   define TCL_ALPHA_RELEASE	0
+#   define TCL_ALPHA_RELEASE    0
 #endif
 #ifndef TCL_BETA_RELEASE
-#   define TCL_BETA_RELEASE	1
+#   define TCL_BETA_RELEASE     1
 #endif
 #ifndef TCL_FINAL_RELEASE
-#   define TCL_FINAL_RELEASE	2
+#   define TCL_FINAL_RELEASE    2
 #endif
 
+#define ITCL_MAJOR_VERSION	4
+#define ITCL_MINOR_VERSION	0
+#define ITCL_RELEASE_LEVEL      TCL_BETA_RELEASE
+#define ITCL_RELEASE_SERIAL     4
 
-#define ITCL_MAJOR_VERSION	3
-#define ITCL_MINOR_VERSION	4
-#define ITCL_RELEASE_LEVEL	TCL_FINAL_RELEASE
-#define ITCL_RELEASE_SERIAL	0
+#define ITCL_VERSION            "4.0"
+#define ITCL_PATCH_LEVEL        "4.0b4"
 
-#define ITCL_VERSION		"3.4"
-#define ITCL_PATCH_LEVEL	"3.4.0"
 
-/* 
- * A special definition used to allow this header file to be included 
- * in resource files so that they can get obtain version information from
- * this file.  Resource compilers don't like all the C stuff, like typedefs
- * and procedure declarations, that occur below.
+/*
+ * A special definition used to allow this header file to be included from
+ * windows resource files so that they can obtain version information.
+ * RC_INVOKED is defined by default by the windows RC tool.
+ *
+ * Resource compilers don't like all the C stuff, like typedefs and function
+ * declarations, that occur below, so block them out.
  */
 
 #ifndef RC_INVOKED
+
+#define ITCL_NAMESPACE          "::itcl"
 
 #undef TCL_STORAGE_CLASS
 #ifdef BUILD_itcl
 #   define TCL_STORAGE_CLASS DLLEXPORT
 #else
 #   ifdef USE_ITCL_STUBS
-#	define TCL_STORAGE_CLASS
+#       define TCL_STORAGE_CLASS
 #   else
-#	define TCL_STORAGE_CLASS DLLIMPORT
+#       define TCL_STORAGE_CLASS DLLIMPORT
 #   endif
 #endif
-
-/*
- * Fix the Borland bug that's in the EXTERN macro from tcl.h.
- */
-#ifndef TCL_EXTERN
-#   undef DLLIMPORT
-#   undef DLLEXPORT
-#   ifdef __cplusplus
-#	define TCL_EXTERNC extern "C"
-#   else
-#	define TCL_EXTERNC extern
-#   endif
-#   if defined(STATIC_BUILD)
-#	define DLLIMPORT
-#	define DLLEXPORT
-#	define TCL_EXTERN(RTYPE) TCL_EXTERNC RTYPE
-#   elif (defined(__WIN32__) && ( \
-	    defined(_MSC_VER) || (__BORLANDC__ >= 0x0550) || \
-	    defined(__LCC__) || defined(__WATCOMC__) || \
-	    (defined(__GNUC__) && defined(__declspec)) \
-	)) || (defined(MAC_TCL) && FUNCTION_DECLSPEC)
-#	define DLLIMPORT __declspec(dllimport)
-#	define DLLEXPORT __declspec(dllexport)
-#	define TCL_EXTERN(RTYPE) TCL_EXTERNC TCL_STORAGE_CLASS RTYPE
-#   elif defined(__BORLANDC__)
-#	define DLLIMPORT __import
-#	define DLLEXPORT __export
-	/* Pre-5.5 Borland requires the attributes be placed after the */
-	/* return type instead. */
-#	define TCL_EXTERN(RTYPE) TCL_EXTERNC RTYPE TCL_STORAGE_CLASS
-#   else
-#	define DLLIMPORT
-#	define DLLEXPORT
-#	define TCL_EXTERN(RTYPE) TCL_EXTERNC TCL_STORAGE_CLASS RTYPE
-#   endif
-#endif
-
-
-/*
- * Starting from the 8.4 core, Tcl API is CONST'ified.  Our API is always
- * CONST, but we need to build with Tcl when it isn't CONST and fake it
- * when needed with <= 8.3
- *
- * http://wiki.tcl.tk/3669
- */
-
-#ifndef CONST84
-#   define CONST84
-#endif
-
 
 /*
  * Protection levels:
@@ -151,7 +130,6 @@
 #define ITCL_PROTECTED        2
 #define ITCL_PRIVATE          3
 #define ITCL_DEFAULT_PROTECT  4
-
 
 /*
  *  Generic stack.
@@ -195,39 +173,33 @@ typedef struct Itcl_List {
  */
 typedef struct Itcl_InterpState_ *Itcl_InterpState;
 
-
+
 /*
- * Include the public function declarations that are accessible via
- * the stubs table.
+ * Include all the public API, generated from itcl.decls.
  */
 
 #include "itclDecls.h"
 
-
-/*
- * Itcl_InitStubs is used by extensions like Itk that can be linked
- * against the itcl stubs library.  If we are not using stubs
- * then this reduces to package require.
- */
-
-#ifdef USE_ITCL_STUBS
-
-TCL_EXTERNC CONST char *
-	Itcl_InitStubs _ANSI_ARGS_((Tcl_Interp *interp,
-			    CONST char *version, int exact));
-#else
-#define Itcl_InitStubs(interp, version, exact) \
-      Tcl_PkgRequire(interp, "Itcl", version, exact)
+#ifdef ITCL_PRESERVE_DEBUG
+#undef Itcl_PreserveData
+#undef Itcl_ReleaseData
+void ItclDbgPreserveData(ClientData cdata, int line, const char *file);
+void ItclDbgReleaseData(ClientData cdata, int line, const char *file);
+#define Itcl_PreserveData(addr) ItclDbgPreserveData(addr, __LINE__, __FILE__)
+#define Itcl_ReleaseData(addr) ItclDbgReleaseData(addr, __LINE__, __FILE__)
 #endif
-
-/*
- * Public functions that are not accessible via the stubs table.
- */
-
-
-#endif /* RC_INVOKED */
 
 #undef TCL_STORAGE_CLASS
 #define TCL_STORAGE_CLASS DLLIMPORT
 
-#endif /* ITCL_H */
+#endif /* RC_INVOKED */
+
+/*
+ * end block for C++
+ */
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* ITCL_H_INCLUDED */
