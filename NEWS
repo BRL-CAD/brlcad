@@ -11,7 +11,7 @@ changes made.  See document footer for additional details.
 
 
 ----------------------------------------------------------------------
---- 2009-12-XX  Release 7.16.4                                     ---
+--- 2010-01-15  Release 7.16.4                                     ---
 ----------------------------------------------------------------------
 
 * fixed gqa units argument parsing bug on 64-bit Linux - Sean Morrison
