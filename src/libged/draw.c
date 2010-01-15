@@ -1281,7 +1281,7 @@ ged_addToDisplay(struct ged *gedp,
     struct db_full_path namepath;
 
     cp = strrchr(name, '/');
-    if (cp == '\0')
+    if (*cp == '\0')
 	cp = (char *)name;
     else
 	++cp;
