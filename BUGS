@@ -59,18 +59,6 @@ Recent Bugs
   renders, and gets better the larger the render size. Does not happen
   in non-perspective ray-traces.
 
-* shaders.sh regression test is failing because mged's view
-  initialization has changed.  this causes the first shaders.txt
-  projection shader to have bad/changed eye_pt and orientation values:
-
-  eye_pt=1484.81,1039.67,1094.24
-  orientation=0.248097349046,0.476590573266,0.748097349046,0.389434830518
-
-  instead of the correct:
-
-  eye_pt=0.0,0.0,2249.0
-  orientation=0,0,0,1
-
 * infinite light sources close to objects result in unexpected/bad
   light behavior.  example is a 1m sph light about 5m from a box about
   1k x 1k x 1k in size.  setting make each light be red, green, and
