@@ -1274,14 +1274,14 @@ ged_addToDisplay(struct ged *gedp,
 		 const char *name)
 {
     int i;
-    struct directory *dp;
-    struct ged_display_list *gdlp;
-    char *cp;
+    struct directory *dp = NULL;
+    struct ged_display_list *gdlp = NULL;
+    char *cp = NULL;
     int found_namepath = 0;
     struct db_full_path namepath;
 
     cp = strrchr(name, '/');
-    if (*cp == '\0')
+    if (!cp || *cp == '\0')
 	cp = (char *)name;
     else
 	++cp;
