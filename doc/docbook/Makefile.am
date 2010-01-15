@@ -23,13 +23,6 @@ XML_CATALOG_FILES=$(top_srcdir)/doc/docbook/catalog.xml
 	@mkdir -p $$(dirname $@)
 	XML_CATALOG_FILES=$(XML_CATALOG_FILES) $(XSLTPROC) $(XSLTPROC_FLAGS) -o $@ $(XSL_FO_STYLESHEET) $?
 
-ARTICLES_EN_MAKEFILE_AM = $(srcdir)/articles/en/Makefile.am
-BOOKS_EN_MAKEFILE_AM = $(srcdir)/books/en/Makefile.am
-LESSONS_EN_MAKEFILE_AM = $(srcdir)/lessons/en/Makefile.am
-LESSONS_ES_MAKEFILE_AM = $(srcdir)/lessons/es/Makefile.am
-SPECIFICATIONS_EN_MAKEFILE_AM = $(srcdir)/specifications/en/Makefile.am
-SYSTEM_MAN1_EN_MAKEFILE_AM = $(srcdir)/system/man1/en/Makefile.am
-SYSTEM_MAN3_EN_MAKEFILE_AM = $(srcdir)/system/man3/en/Makefile.am
 
 include $(srcdir)/articles/en/Makefile.am
 include $(srcdir)/books/en/Makefile.am
@@ -39,14 +32,6 @@ include $(srcdir)/specifications/en/Makefile.am
 include $(srcdir)/system/man1/en/Makefile.am
 include $(srcdir)/system/man3/en/Makefile.am
 
-MAKEFILE_TEMPLATES = \
-	${ARTICLES_EN_MAKEFILE_AM} \
-	${BOOKS_EN_MAKEFILE_AM} \
-	${LESSONS_EN_MAKEFILE_AM} \
-	${LESSONS_ES_MAKEFILE_AM} \
-	${SPECIFICATIONS_EN_MAKEFILE_AM} \
-	${SYSTEM_MAN1_EN_MAKEFILE_AM} \
-	${SYSTEM_MAN3_EN_MAKEFILE_AM}
 
 if BUILD_DOCS
 
@@ -80,12 +65,18 @@ endif
 
 
 CLEANFILES = \
-	$(BUILT_SOURCES) \
-	$(BUILTMAN_EN_SOURCES)
+	$(BUILTMAN_EN_SOURCES) \
+	$(BUILT_SOURCES)
 
 
 EXTRA_DIST = \
-	${MAKEFILE_TEMPLATES} \
+	articles/en/Makefile.am \
+	books/en/Makefile.am \
+	lessons/en/Makefile.am \
+	lessons/es/Makefile.am \
+	specifications/en/Makefile.am \
+	system/man1/en/Makefile.am \
+	system/man3/en/Makefile.am \
 	${articlesDOCBOOK_EN_IMAGES} \
 	${articlesDOCBOOK_EN} \
 	${booksDOCBOOK_EN_IMAGES} \
