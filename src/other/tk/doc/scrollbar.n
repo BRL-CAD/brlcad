@@ -264,6 +264,7 @@ If it is given two real arguments then the new syntax will be
 used in the future, and if it is given four integer arguments then
 the old syntax will be used.
 .SH BINDINGS
+.PP
 Tk automatically creates class bindings for scrollbars that give them
 the following default behavior.
 If the behavior is different for vertical and horizontal scrollbars,
@@ -330,6 +331,7 @@ The Home key adjusts the view to the top (left edge) of the document.
 .IP [14]
 The End key adjusts the view to the bottom (right edge) of the document.
 .SH EXAMPLE
+.PP
 Create a window with a scrollable \fBtext\fR widget:
 .CS
 toplevel .tl
@@ -343,3 +345,6 @@ grid rowconfigure .tl 0 \-weight 1
 ttk:scrollbar(n)
 .SH KEYWORDS
 scrollbar, widget
+'\" Local Variables:
+'\" mode: nroff
+'\" End:

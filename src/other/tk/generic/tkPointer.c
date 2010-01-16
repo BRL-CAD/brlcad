@@ -140,7 +140,7 @@ GenerateEnterLeave(
     int state)			/* State flags. */
 {
     int crossed = 0;		/* 1 if mouse crossed a window boundary */
-    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
+    ThreadSpecificData *tsdPtr =
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
     TkWindow *restrictWinPtr = tsdPtr->restrictWinPtr;
     TkWindow *lastWinPtr = tsdPtr->lastWinPtr;
@@ -233,7 +233,7 @@ Tk_UpdatePointer(
     int x, int y,		/* Pointer location in root coords. */
     int state)			/* Modifier state mask. */
 {
-    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
+    ThreadSpecificData *tsdPtr =
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
     TkWindow *winPtr = (TkWindow *)tkwin;
     TkWindow *targetWinPtr;
@@ -268,7 +268,7 @@ Tk_UpdatePointer(
      * between the current button state and the last known button state.
      */
 
-    for (b = Button1; b <= Button3; b++) {
+    for (b = Button1; b <= Button5; b++) {
 	mask = ButtonMask(b);
 	if (changes & mask) {
 	    if (state & mask) {
@@ -438,7 +438,7 @@ XGrabPointer(
     Cursor cursor,
     Time time)
 {
-    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
+    ThreadSpecificData *tsdPtr =
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     display->request++;
@@ -473,7 +473,7 @@ XUngrabPointer(
     Display *display,
     Time time)
 {
-    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
+    ThreadSpecificData *tsdPtr =
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     display->request++;
@@ -503,7 +503,7 @@ void
 TkPointerDeadWindow(
     TkWindow *winPtr)
 {
-    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
+    ThreadSpecificData *tsdPtr =
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     if (winPtr == tsdPtr->lastWinPtr) {
@@ -542,7 +542,7 @@ UpdateCursor(
     TkWindow *winPtr)
 {
     Cursor cursor = None;
-    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
+    ThreadSpecificData *tsdPtr =
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     /*
@@ -587,8 +587,8 @@ XDefineCursor(
     Window w,
     Cursor cursor)
 {
-    TkWindow *winPtr = (TkWindow *)Tk_IdToWindow(display, w);
-    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
+    TkWindow *winPtr = (TkWindow *) Tk_IdToWindow(display, w);
+    ThreadSpecificData *tsdPtr =
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     if (tsdPtr->cursorWinPtr == winPtr) {

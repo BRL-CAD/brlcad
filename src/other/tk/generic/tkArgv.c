@@ -30,7 +30,7 @@ static Tk_ArgvInfo defaultTable[] = {
  * Forward declarations for functions defined in this file:
  */
 
-static void	PrintUsage(Tcl_Interp *interp, Tk_ArgvInfo *argTable,
+static void	PrintUsage(Tcl_Interp *interp, const Tk_ArgvInfo *argTable,
 		    int flags);
 
 /*
@@ -63,17 +63,17 @@ Tk_ParseArgv(
 				 * means ignore Tk option specs. */
     int *argcPtr,		/* Number of arguments in argv. Modified to
 				 * hold # args left in argv at end. */
-    CONST char **argv,		/* Array of arguments. Modified to hold those
+    const char **argv,		/* Array of arguments. Modified to hold those
 				 * that couldn't be processed here. */
-    Tk_ArgvInfo *argTable,	/* Array of option descriptions */
+    const Tk_ArgvInfo *argTable,	/* Array of option descriptions */
     int flags)			/* Or'ed combination of various flag bits,
 				 * such as TK_ARGV_NO_DEFAULTS. */
 {
-    register Tk_ArgvInfo *infoPtr;
+    register const Tk_ArgvInfo *infoPtr;
 				/* Pointer to the current entry in the table
 				 * of argument descriptions. */
-    Tk_ArgvInfo *matchPtr;	/* Descriptor that matches current argument. */
-    CONST char *curArg;		/* Current argument */
+    const Tk_ArgvInfo *matchPtr;	/* Descriptor that matches current argument. */
+    const char *curArg;		/* Current argument */
     register char c;		/* Second character of current arg (used for
 				 * quick check for matching; use 2nd char.
 				 * because first char. will almost always be
@@ -195,7 +195,7 @@ Tk_ParseArgv(
 	    if (argc == 0) {
 		goto missingArg;
 	    }
-	    *((CONST char **)infoPtr->dst) = argv[srcIndex];
+	    *((const char **)infoPtr->dst) = argv[srcIndex];
 	    srcIndex++;
 	    argc--;
 	    break;
@@ -228,22 +228,22 @@ Tk_ParseArgv(
 	    }
 	    break;
 	case TK_ARGV_FUNC: {
-	    typedef int (ArgvFunc)(char *, char *, CONST char *);
+	    typedef int (ArgvFunc)(char *, const char *, const char *);
 	    ArgvFunc *handlerProc = (ArgvFunc *) infoPtr->src;
 
-	    if ((*handlerProc)(infoPtr->dst, infoPtr->key, argv[srcIndex])) {
+	    if (handlerProc(infoPtr->dst, infoPtr->key, argv[srcIndex])) {
 		srcIndex++;
 		argc--;
 	    }
 	    break;
 	}
 	case TK_ARGV_GENFUNC: {
-	    typedef int (ArgvGenFunc)(char *, Tcl_Interp *, char *, int,
-		    CONST char **);
+	    typedef int (ArgvGenFunc)(char *, Tcl_Interp *, const char *, int,
+		    const char **);
 	    ArgvGenFunc *handlerProc = (ArgvGenFunc *) infoPtr->src;
 
-	    argc = (*handlerProc)(infoPtr->dst, interp, infoPtr->key,
-		    argc, argv+srcIndex);
+	    argc = handlerProc(infoPtr->dst, interp, infoPtr->key, argc,
+		    argv+srcIndex);
 	    if (argc < 0) {
 		return TCL_ERROR;
 	    }
@@ -330,13 +330,13 @@ static void
 PrintUsage(
     Tcl_Interp *interp,		/* Place information in this interp's result
 				 * area. */
-    Tk_ArgvInfo *argTable,	/* Array of command-specific argument
+    const Tk_ArgvInfo *argTable,	/* Array of command-specific argument
 				 * descriptions. */
     int flags)			/* If the TK_ARGV_NO_DEFAULTS bit is set in
 				 * this word, then don't generate information
 				 * for default options. */
 {
-    register Tk_ArgvInfo *infoPtr;
+    register const Tk_ArgvInfo *infoPtr;
     size_t width, i, numSpaces;
     char tmp[TCL_DOUBLE_SPACE];
 

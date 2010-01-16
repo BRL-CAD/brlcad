@@ -96,7 +96,6 @@ acceptable to \fBTk_GetPixels\fR.
 If this option is less than or equal to zero then the window will
 not request any size at all.
 .BE
-
 .SH DESCRIPTION
 .PP
 The \fBtoplevel\fR command creates a new toplevel widget (given
@@ -114,7 +113,6 @@ purpose of a toplevel is to serve as a container for dialog boxes
 and other collections of widgets.  The only visible features
 of a toplevel are its background color and an optional 3-D border
 to make the toplevel appear raised or sunken.
-
 .SH "WIDGET COMMAND"
 .PP
 The \fBtoplevel\fR command creates a new Tcl command whose
@@ -148,18 +146,14 @@ modifies the given widget option(s) to have the given value(s);  in
 this case the command returns an empty string.
 \fIOption\fR may have any of the values accepted by the \fBtoplevel\fR
 command.
-
 .SH BINDINGS
 .PP
 When a new toplevel is created, it has no default event bindings:
 toplevels are not intended to be interactive.
-
 .SH "SEE ALSO"
 frame(n)
-
 .SH KEYWORDS
 toplevel, widget
-
 '\" Local Variables:
 '\" mode: nroff
 '\" End:

@@ -38,46 +38,46 @@ TTKAPI Ttk_Theme	Ttk_GetDefaultTheme (Tcl_Interp * interp);
 /* 2 */
 TTKAPI Ttk_Theme	Ttk_GetCurrentTheme (Tcl_Interp * interp);
 /* 3 */
-TTKAPI Ttk_Theme	Ttk_CreateTheme (Tcl_Interp * interp, 
+TTKAPI Ttk_Theme	Ttk_CreateTheme (Tcl_Interp * interp,
 				const char * name, Ttk_Theme parent);
 /* 4 */
-TTKAPI void		Ttk_RegisterCleanup (Tcl_Interp * interp, 
-				void * deleteData, 
+TTKAPI void		Ttk_RegisterCleanup (Tcl_Interp * interp,
+				void * deleteData,
 				Ttk_CleanupProc * cleanupProc);
 /* 5 */
-TTKAPI int		Ttk_RegisterElementSpec (Ttk_Theme theme, 
-				const char * elementName, 
-				Ttk_ElementSpec * elementSpec, 
+TTKAPI int		Ttk_RegisterElementSpec (Ttk_Theme theme,
+				const char * elementName,
+				Ttk_ElementSpec * elementSpec,
 				void * clientData);
 /* 6 */
-TTKAPI Ttk_ElementImpl	Ttk_RegisterElement (Tcl_Interp * interp, 
-				Ttk_Theme theme, const char * elementName, 
-				Ttk_ElementSpec * elementSpec, 
+TTKAPI Ttk_ElementClass * Ttk_RegisterElement (Tcl_Interp * interp,
+				Ttk_Theme theme, const char * elementName,
+				Ttk_ElementSpec * elementSpec,
 				void * clientData);
 /* 7 */
-TTKAPI int		Ttk_RegisterElementFactory (Tcl_Interp * interp, 
-				const char * name, 
-				Ttk_ElementFactory factoryProc, 
+TTKAPI int		Ttk_RegisterElementFactory (Tcl_Interp * interp,
+				const char * name,
+				Ttk_ElementFactory factoryProc,
 				void * clientData);
 /* 8 */
-TTKAPI void		Ttk_RegisterLayout (Ttk_Theme theme, 
-				const char * className, 
+TTKAPI void		Ttk_RegisterLayout (Ttk_Theme theme,
+				const char * className,
 				Ttk_LayoutSpec layoutSpec);
 /* Slot 9 is reserved */
 /* 10 */
-TTKAPI int		Ttk_GetStateSpecFromObj (Tcl_Interp * interp, 
+TTKAPI int		Ttk_GetStateSpecFromObj (Tcl_Interp * interp,
 				Tcl_Obj * objPtr, Ttk_StateSpec * spec_rtn);
 /* 11 */
-TTKAPI Tcl_Obj *	Ttk_NewStateSpecObj (unsigned int onbits, 
+TTKAPI Tcl_Obj *	Ttk_NewStateSpecObj (unsigned int onbits,
 				unsigned int offbits);
 /* 12 */
-TTKAPI Ttk_StateMap	Ttk_GetStateMapFromObj (Tcl_Interp * interp, 
+TTKAPI Ttk_StateMap	Ttk_GetStateMapFromObj (Tcl_Interp * interp,
 				Tcl_Obj * objPtr);
 /* 13 */
-TTKAPI Tcl_Obj *	Ttk_StateMapLookup (Tcl_Interp * interp, 
+TTKAPI Tcl_Obj *	Ttk_StateMapLookup (Tcl_Interp * interp,
 				Ttk_StateMap map, Ttk_State state);
 /* 14 */
-TTKAPI int		Ttk_StateTableLookup (Ttk_StateTable map[], 
+TTKAPI int		Ttk_StateTableLookup (Ttk_StateTable map[],
 				Ttk_State state);
 /* Slot 15 is reserved */
 /* Slot 16 is reserved */
@@ -85,14 +85,14 @@ TTKAPI int		Ttk_StateTableLookup (Ttk_StateTable map[],
 /* Slot 18 is reserved */
 /* Slot 19 is reserved */
 /* 20 */
-TTKAPI int		Ttk_GetPaddingFromObj (Tcl_Interp * interp, 
-				Tk_Window tkwin, Tcl_Obj * objPtr, 
+TTKAPI int		Ttk_GetPaddingFromObj (Tcl_Interp * interp,
+				Tk_Window tkwin, Tcl_Obj * objPtr,
 				Ttk_Padding * pad_rtn);
 /* 21 */
-TTKAPI int		Ttk_GetBorderFromObj (Tcl_Interp * interp, 
+TTKAPI int		Ttk_GetBorderFromObj (Tcl_Interp * interp,
 				Tcl_Obj * objPtr, Ttk_Padding * pad_rtn);
 /* 22 */
-TTKAPI int		Ttk_GetStickyFromObj (Tcl_Interp * interp, 
+TTKAPI int		Ttk_GetStickyFromObj (Tcl_Interp * interp,
 				Tcl_Obj * objPtr, Ttk_Sticky * sticky_rtn);
 /* 23 */
 TTKAPI Ttk_Padding	Ttk_MakePadding (short l, short t, short r, short b);
@@ -101,27 +101,27 @@ TTKAPI Ttk_Padding	Ttk_UniformPadding (short borderWidth);
 /* 25 */
 TTKAPI Ttk_Padding	Ttk_AddPadding (Ttk_Padding pad1, Ttk_Padding pad2);
 /* 26 */
-TTKAPI Ttk_Padding	Ttk_RelievePadding (Ttk_Padding padding, int relief, 
+TTKAPI Ttk_Padding	Ttk_RelievePadding (Ttk_Padding padding, int relief,
 				int n);
 /* 27 */
 TTKAPI Ttk_Box		Ttk_MakeBox (int x, int y, int width, int height);
 /* 28 */
 TTKAPI int		Ttk_BoxContains (Ttk_Box box, int x, int y);
 /* 29 */
-TTKAPI Ttk_Box		Ttk_PackBox (Ttk_Box * cavity, int w, int h, 
+TTKAPI Ttk_Box		Ttk_PackBox (Ttk_Box * cavity, int w, int h,
 				Ttk_Side side);
 /* 30 */
-TTKAPI Ttk_Box		Ttk_StickBox (Ttk_Box parcel, int w, int h, 
+TTKAPI Ttk_Box		Ttk_StickBox (Ttk_Box parcel, int w, int h,
 				Ttk_Sticky sticky);
 /* 31 */
-TTKAPI Ttk_Box		Ttk_AnchorBox (Ttk_Box parcel, int w, int h, 
+TTKAPI Ttk_Box		Ttk_AnchorBox (Ttk_Box parcel, int w, int h,
 				Tk_Anchor anchor);
 /* 32 */
 TTKAPI Ttk_Box		Ttk_PadBox (Ttk_Box b, Ttk_Padding p);
 /* 33 */
 TTKAPI Ttk_Box		Ttk_ExpandBox (Ttk_Box b, Ttk_Padding p);
 /* 34 */
-TTKAPI Ttk_Box		Ttk_PlaceBox (Ttk_Box * cavity, int w, int h, 
+TTKAPI Ttk_Box		Ttk_PlaceBox (Ttk_Box * cavity, int w, int h,
 				Ttk_Side side, Ttk_Sticky sticky);
 /* 35 */
 TTKAPI Tcl_Obj *	Ttk_NewBoxObj (Ttk_Box box);
@@ -130,7 +130,7 @@ TTKAPI Tcl_Obj *	Ttk_NewBoxObj (Ttk_Box box);
 /* Slot 38 is reserved */
 /* Slot 39 is reserved */
 /* 40 */
-TTKAPI int		Ttk_GetOrientFromObj (Tcl_Interp * interp, 
+TTKAPI int		Ttk_GetOrientFromObj (Tcl_Interp * interp,
 				Tcl_Obj * objPtr, int * orient);
 
 #endif /* !defined(USE_TTK_STUBS) */
@@ -147,7 +147,7 @@ typedef struct TtkStubs {
     Ttk_Theme (*ttk_CreateTheme) (Tcl_Interp * interp, const char * name, Ttk_Theme parent); /* 3 */
     void (*ttk_RegisterCleanup) (Tcl_Interp * interp, void * deleteData, Ttk_CleanupProc * cleanupProc); /* 4 */
     int (*ttk_RegisterElementSpec) (Ttk_Theme theme, const char * elementName, Ttk_ElementSpec * elementSpec, void * clientData); /* 5 */
-    Ttk_ElementImpl (*ttk_RegisterElement) (Tcl_Interp * interp, Ttk_Theme theme, const char * elementName, Ttk_ElementSpec * elementSpec, void * clientData); /* 6 */
+    Ttk_ElementClass * (*ttk_RegisterElement) (Tcl_Interp * interp, Ttk_Theme theme, const char * elementName, Ttk_ElementSpec * elementSpec, void * clientData); /* 6 */
     int (*ttk_RegisterElementFactory) (Tcl_Interp * interp, const char * name, Ttk_ElementFactory factoryProc, void * clientData); /* 7 */
     void (*ttk_RegisterLayout) (Ttk_Theme theme, const char * className, Ttk_LayoutSpec layoutSpec); /* 8 */
     void (*reserved9)(void);

@@ -8,45 +8,18 @@
 #
 # RCS: @(#) $Id$
 
-package require tcltest 2.1
+package require tcltest 2.2
+namespace import ::tcltest::*
 eval tcltest::configure $argv
 tcltest::loadTestedCommands
 
-catch {destroy .b}
-toplevel .b
-wm geom .b +0+0
+
+catch {eval font delete [font names]}
+deleteWindows
+# Toplevel used (in some tests) of the whole file
+toplevel .t
+wm geom .t +0+0
 update idletasks
-
-proc setup {} {
-    catch {destroy .b.f}
-    catch {eval font delete [font names]}
-    label .b.f 
-    pack .b.f
-    update
-}
-
-label .b.l -padx 0 -pady 0 -bd 0 -highlightthickness 0 -justify left -text "0" -font "Courier -12"
-pack .b.l
-canvas .b.c -closeenough 0 
-.b.c create text 0 0 -tags text -anchor nw -just left -font "Courier -12"
-pack .b.c
-update
-
-set ax [winfo reqwidth .b.l]
-set ay [winfo reqheight .b.l]
-proc getsize {} {
-    update
-    return "[winfo reqwidth .b.l] [winfo reqheight .b.l]"
-}
-
-proc csetup {{str ""}} {
-    focus -force .b.c
-    .b.c dchars text 0 end
-    .b.c insert text 0 $str
-    .b.c focus text
-}
-
-setup
 
 case [tk windowingsystem] {
     x11	 	{set fixed "fixed"}
@@ -56,195 +29,242 @@ case [tk windowingsystem] {
 }
 
 
-set times [font actual {times 0} -family]
+# Procedure used in tests: 24.15, 26.*, 28.*, 30.*, 31.*, 32.1
+proc csetup {{str ""}} {
+    focus -force .t.c
+    .t.c dchars text 0 end
+    .t.c insert text 0 $str
+    .t.c focus text
+}
 
-test font-1.1 {TkFontPkgInit} {
+
+test font-1.1 {TkFontPkgInit} -setup {
     catch {interp delete foo}
+} -body {
     interp create foo
     foo eval {
-	load {} Tk
-	wm geometry . +0+0
-	update
+		load {} Tk
+		wm geometry . +0+0
+		update
     }
     interp delete foo
-} {}
+} -result {}
 
-test font-2.1 {TkFontPkgFree} {
+
+test font-2.1 {TkFontPkgFree} -setup {
     catch {interp delete foo}
-    interp create foo
     set x {}
+} -body {
+    interp create foo
 
     # Makes sure that named font was visible only to child interp.
-
     foo eval {
-	load {} Tk
-	wm geometry . +0+0
-	button .b -font {times 16} -text "hi"
-	pack .b
-	font create wiggles -family courier -underline 1
-	update
+		load {} Tk
+		wm geometry . +0+0
+		button .b -font {times 16} -text "hi"
+		pack .b
+		font create wiggles -family courier -underline 1
+		update
     }
     lappend x [catch {font configure wiggles} msg; set msg]
 
     # Tests cancelling the idle handler for TheWorldHasChanged,
     # because app goes away before idle serviced.
-    
     foo eval {
-	.b config -font wiggles
-	font config wiggles -size 24
-	destroy .
+		.b config -font wiggles
+		font config wiggles -size 24
+		destroy .
     }
     lappend x [foo eval {catch {font families} msg; set msg}]
+} -cleanup {
+        interp delete foo
+} -result {{named font "wiggles" doesn't exist} {can't invoke "font" command:  application has been destroyed}}
 
-    interp delete foo
-    set x
-} {{named font "wiggles" doesn't exist} {can't invoke "font" command:  application has been destroyed}}
+
+test font-3.1 {font command: general} -body {
+    font
+} -returnCodes error -result {wrong # args: should be "font option ?arg?"}
+test font-3.2 {font command: general} -body {
+    font xyz
+} -returnCodes error -result {bad option "xyz": must be actual, configure, create, delete, families, measure, metrics, or names}
 
 
-test font-3.1 {font command: general} {
-    list [catch {font} msg] $msg
-} {1 {wrong # args: should be "font option ?arg?"}}
-test font-3.2 {font command: general} {
-    list [catch {font xyz} msg] $msg
-} {1 {bad option "xyz": must be actual, configure, create, delete, families, measure, metrics, or names}}
-
-test font-4.1 {font command: actual: arguments} {
+test font-4.1 {font command: actual: arguments} -body {
     # (skip < 0)
-    list [catch {font actual xyz -displayof} msg] $msg
-} {1 {value for "-displayof" missing}}
-test font-4.2 {font command: actual: arguments} {
+    font actual xyz -displayof
+} -returnCodes error -result {value for "-displayof" missing}
+test font-4.2 {font command: actual: arguments} -body {
     # (objc < 3) 
-    list [catch {font actual} msg] $msg
-} {1 {wrong # args: should be "font actual font ?-displayof window? ?option? ?--? ?char?"}}
-test font-4.3 {font command: actual: arguments} {
+    font actual
+} -returnCodes error -result {wrong # args: should be "font actual font ?-displayof window? ?option? ?--? ?char?"}
+test font-4.3 {font command: actual: arguments} -body {
     # (objc - skip > 4) when skip == 0
-    list [catch {font actual xyz abc def} msg] $msg
-} {1 {wrong # args: should be "font actual font ?-displayof window? ?option? ?--? ?char?"}}
-test font-4.4 {font command: actual: displayof specified, so skip to next} {
+    font actual xyz abc def
+} -returnCodes error -result {wrong # args: should be "font actual font ?-displayof window? ?option? ?--? ?char?"}
+test font-4.4 {font command: actual: displayof specified, so skip to next} -body {
     catch {font actual xyz -displayof . -size}
-} {0}
-test font-4.5 {font command: actual: displayof specified, so skip to next} {
+} -result {0}
+test font-4.5 {font command: actual: displayof specified, so skip to next} -body {
     lindex [font actual xyz -displayof .] 0
-} {-family}
-test font-4.6 {font command: actual: arguments} {
+} -result {-family}
+test font-4.6 {font command: actual: arguments} -body {
     # (objc - skip > 4) when skip == 2
-    list [catch {font actual xyz -displayof . abc def} msg] $msg
-} {1 {wrong # args: should be "font actual font ?-displayof window? ?option? ?--? ?char?"}}
-test font-4.7 {font command: actual: arguments} {noExceed} {
+    font actual xyz -displayof . abc def
+} -returnCodes error -result {wrong # args: should be "font actual font ?-displayof window? ?option? ?--? ?char?"}
+test font-4.7 {font command: actual: arguments} -constraints noExceed -body {
     # (tkfont == NULL)
-    list [catch {font actual "\{xyz"} msg] $msg
-} [list 1 "font \"{xyz\" doesn't exist"]
-test font-4.8 {font command: actual: all attributes} {
+    font actual "\{xyz"
+} -returnCodes error -result "font \"{xyz\" doesn't exist"
+test font-4.8 {font command: actual: all attributes} -body {
     # not (objc > 3) so objPtr = NULL
     lindex [font actual {-family times}] 0
-} {-family}
-test font-4.9 {font command: actual} {unix noExceed} {
+} -result {-family}
+test font-4.9 {font command: actual} -constraints {unix noExceed} -body {
     # (objc > 3) so objPtr = objv[3 + skip]
     string tolower [font actual {-family times} -family]
-} {times}
-test font-4.10 {font command: actual} win {
+} -result {times}
+test font-4.10 {font command: actual} -constraints win -body {
     # (objc > 3) so objPtr = objv[3 + skip]
     font actual {-family times} -family
-} {Times New Roman}
-test font-4.11 {font command: bad option} {
-    list [catch {font actual xyz -style} msg] $msg
-} {1 {bad option "-style": must be -family, -size, -weight, -slant, -underline, or -overstrike}}
+} -result {Times New Roman}
+test font-4.11 {font command: bad option} -body {
+    font actual xyz -style
+} -returnCodes error -result {bad option "-style": must be -family, -size, -weight, -slant, -underline, or -overstrike}
 
-test font-5.1 {font command: configure} {
+
+test font-5.1 {font command: configure} -body {
     # (objc < 3) 
-    list [catch {font configure} msg] $msg
-} {1 {wrong # args: should be "font configure fontname ?options?"}}
-test font-5.2 {font command: configure: non-existent font} {
+    font configure
+} -returnCodes error -result {wrong # args: should be "font configure fontname ?-option value ...?"}
+test font-5.2 {font command: configure: non-existent font} -body {
     # (namedHashPtr == NULL)
-    list [catch {font configure xyz} msg] $msg
-} {1 {named font "xyz" doesn't exist}}
-test font-5.3 {font command: configure: "deleted" font} {
+    font configure xyz
+} -returnCodes error -result {named font "xyz" doesn't exist}
+test font-5.3 {font command: configure: "deleted" font} -setup {
+    destroy .t.f
+    catch {font delete xyz}
+    pack [label .t.f]
+    update
+} -body {
     # (nfPtr->deletePending != 0) 
-    setup
     font create xyz
-    .b.f configure -font xyz
+    .t.f configure -font xyz
     font delete xyz
-    list [catch {font configure xyz} msg] $msg
-} {1 {named font "xyz" doesn't exist}}
-test font-5.4 {font command: configure: get all options} {
+    font configure xyz
+} -cleanup {
+    destroy .t.f
+} -returnCodes error -result {named font "xyz" doesn't exist}
+test font-5.4 {font command: configure: get all options} -setup {
+    catch {font delete xyz}
+} -body {
     # (objc == 3) so objPtr = NULL
-    setup
     font create xyz -family xyz
     lindex [font configure xyz] 1
-} xyz
-test font-5.5 {font command: configure: get one option} {
+} -cleanup {
+	font delete xyz
+} -result xyz
+test font-5.5 {font command: configure: get one option} -setup {
+    catch {eval font delete [font names]}
+} -body {
     # (objc == 4) so objPtr = objv[3]
-    setup
     font create xyz -family xyz
     font configure xyz -family
-} xyz
-test font-5.6 {font command: configure: update existing font} {
+	font names
+} -cleanup {
+	font delete xyz
+} -result xyz
+test font-5.6 {font command: configure: update existing font} -setup {
+    catch {font delete xyz}
+} -body {
     # else result = ConfigAttributesObj()
-    setup
     font create xyz
     font configure xyz -family xyz
     update
     font configure xyz -family
-} xyz
-test font-5.7 {font command: configure: bad option} {
-    setup
+} -cleanup {
+	font delete xyz
+} -result xyz
+test font-5.7 {font command: configure: bad option} -setup {
+    catch {font delete xyz}
+} -body {
     font create xyz
-    list [catch {font configure xyz -style} msg] $msg
-} {1 {bad option "-style": must be -family, -size, -weight, -slant, -underline, or -overstrike}}
+    font configure xyz -style
+} -cleanup {
+	font delete xyz
+} -returnCodes error -result {bad option "-style": must be -family, -size, -weight, -slant, -underline, or -overstrike}
 
-test font-6.1 {font command: create: make up name} {
+
+test font-6.1 {font command: create: make up name} -setup {
+    catch {eval font delete [font names]}
+} -body {
     # (objc < 3) so name = NULL
-    setup
     font create
     font names
-} {font1}
-test font-6.2 {font command: create: name specified} {
+} -cleanup {
+    font delete font1
+} -result {font1}
+test font-6.2 {font command: create: name specified} -setup {
+    catch {eval font delete [font names]}
+} -body {
     # not (objc < 3)
-    setup
     font create xyz
     font names
-} {xyz}
-test font-6.3 {font command: create: name not really specified} {
+} -cleanup {
+	font delete xyz
+} -result {xyz}
+test font-6.3 {font command: create: name not really specified} -setup {
+    catch {eval font delete [font names]}
+} -body {
     # (name[0] == '-') so name = NULL
-    setup
     font create -family xyz
     font names
-} {font1}
-test font-6.4 {font command: create: generate name} {
+} -cleanup {
+    font delete font1
+} -result {font1}
+test font-6.4 {font command: create: generate name} -setup {
+    catch {eval font delete [font names]}
+} -body {
     # (name == NULL)
-    setup
     font create -family one
     font create -family two
     font create -family three
     font delete font2
     font create -family four
     font configure font2 -family
-} {four}
-test font-6.5 {font command: create: bad option creating new font} {
+} -cleanup {
+    catch {eval font delete [font names]}
+} -result {four}
+test font-6.5 {font command: create: bad option creating new font} -setup {
+    catch {font delete xyz}
+} -body {
     # name was specified so skip = 3 
-    setup
-    list [catch {font create xyz -xyz times} msg] $msg
-} {1 {bad option "-xyz": must be -family, -size, -weight, -slant, -underline, or -overstrike}}
-test font-6.6 {font command: create: bad option creating new font} {
+    font create xyz -xyz times
+} -returnCodes error -result {bad option "-xyz": must be -family, -size, -weight, -slant, -underline, or -overstrike}
+test font-6.6 {font command: create: bad option creating new font} -setup {
+    catch {eval font delete [font names]}
+} -body {
     # name was not specified so skip = 2 
-    setup
-    list [catch {font create -xyz times} msg] $msg
-} {1 {bad option "-xyz": must be -family, -size, -weight, -slant, -underline, or -overstrike}}
-test font-6.7 {font command: create: already exists} {
+    font create -xyz times
+} -returnCodes error -result {bad option "-xyz": must be -family, -size, -weight, -slant, -underline, or -overstrike}
+test font-6.7 {font command: create: already exists} -setup {
+    catch {font delete xyz}
+} -body {
     # (CreateNamedFont() != TCL_OK)
-    setup
     font create xyz
-    list [catch {font create xyz} msg] $msg
-} {1 {named font "xyz" already exists}}
+    font create xyz
+} -cleanup {
+	font delete xyz
+} -returnCodes error -result {named font "xyz" already exists}
 
-test font-7.1 {font command: delete: arguments} {
+test font-7.1 {font command: delete: arguments} -body {
     # (objc < 3) 
-    list [catch {font delete} msg] $msg
-} {1 {wrong # args: should be "font delete fontname ?fontname ...?"}}
-test font-7.2 {font command: delete: loop test} {
+    font delete
+} -returnCodes error -result {wrong # args: should be "font delete fontname ?fontname ...?"}
+test font-7.2 {font command: delete: loop test} -setup {
+    catch {eval font delete [font names]}
+	set x {}
+} -body {
     # for (i = 2; i < objc; i++) 
-    setup
-    set x {}
     font create a -underline 1
     font create b -underline 1
     font create c -underline 1
@@ -253,11 +273,14 @@ test font-7.2 {font command: delete: loop test} {
     lappend x [lsort [font names]]
     font delete a e c b
     lappend x [lsort [font names]]
-} {{a b c d e} d}
-test font-7.3 {font command: delete: loop test} {
+} -cleanup {
+    catch {eval font delete [font names]}
+} -result {{a b c d e} d}
+test font-7.3 {font command: delete: loop test} -setup {
+    catch {eval font delete [font names]}
+	set x {}
+} -body {
     # (namedHashPtr == NULL) in middle of loop
-    setup
-    set x {}
     font create a -underline 1
     font create b -underline 1
     font create c -underline 1
@@ -266,299 +289,440 @@ test font-7.3 {font command: delete: loop test} {
     lappend x [lsort [font names]]
     catch {font delete a d q c e b}
     lappend x [lsort [font names]]
-} {{a b c d e} {b c e}}
-test font-7.4 {font command: delete: non-existent} {
+} -cleanup {
+    catch {eval font delete [font names]}
+} -result {{a b c d e} {b c e}}
+test font-7.4 {font command: delete: non-existent} -setup {
+    catch {font delete xyz}
+} -body {
     # (namedHashPtr == NULL) 
-    setup
-    list [catch {font delete xyz} msg] $msg
-} {1 {named font "xyz" doesn't exist}}
-test font-7.5 {font command: delete: mark for later deletion} {
+    font delete xyz
+} -returnCodes error -result {named font "xyz" doesn't exist}
+test font-7.5 {font command: delete: mark for later deletion} -setup {
+    destroy .t.f
+    catch {font delete xyz}
+    pack [label .t.f]
+    update
+} -body {
     # (nfPtr->refCount != 0)
-    setup
     font create xyz
-    .b.f configure -font xyz
+    .t.f configure -font xyz
     font delete xyz
     font actual xyz
-    list [catch {font configure xyz} msg] $msg [.b.f cget -font]
-} {1 {named font "xyz" doesn't exist} xyz}
-test font-7.6 {font command: delete: actually delete} {
+    font configure xyz
+} -cleanup {
+	destroy .t.f
+} -returnCodes error -result {named font "xyz" doesn't exist}
+test font-7.6 {font command: delete: mark for later deletion} -setup {
+    destroy .t.f
+    catch {font delete xyz}
+    pack [label .t.f]
+    update
+} -body {
+    # (nfPtr->refCount != 0)
+    font create xyz
+    .t.f configure -font xyz
+    font delete xyz
+    font actual xyz
+    catch {font configure xyz}
+	.t.f cget -font
+} -cleanup {
+	destroy .t.f
+} -result xyz
+test font-7.7 {font command: delete: actually delete} -setup {
+    catch {font delete xyz}
+} -body {
     # not (nfPtr->refCount != 0)
-    setup
     font create xyz -underline 1
     font delete xyz
-    catch {font config xyz}
-} {1}
-setup
+    font config xyz
+} -returnCodes error -match glob -result {*}
 
-test font-8.1 {font command: families: arguments} {
+
+test font-8.1 {font command: families: arguments} -body {
     # (skip < 0)
-    list [catch {font families -displayof} msg] $msg
-} {1 {value for "-displayof" missing}}
-test font-8.2 {font command: families: arguments} {
+    font families -displayof
+} -returnCodes error -result {value for "-displayof" missing}
+test font-8.2 {font command: families: arguments} -body {
     # (objc - skip != 2) when skip == 0
-    list [catch {font families xyz} msg] $msg
-} {1 {wrong # args: should be "font families ?-displayof window?"}}
-test font-8.3 {font command: families: arguments} {
+    font families xyz
+} -returnCodes error -result {wrong # args: should be "font families ?-displayof window?"}
+test font-8.3 {font command: families: arguments} -body {
     # (objc - skip != 2) when skip == 2
-    list [catch {font families -displayof . xyz} msg] $msg
-} {1 {wrong # args: should be "font families ?-displayof window?"}}
-test font-8.4 {font command: families} {
+    font families -displayof . xyz
+} -returnCodes error -result {wrong # args: should be "font families ?-displayof window?"}
+test font-8.4 {font command: families} -body {
     # TkpGetFontFamilies()
     regexp -nocase times [font families]
-} {1}
+} -result 1
 
-test font-9.1 {font command: measure: arguments} {
+
+test font-9.1 {font command: measure: arguments} -body {
     # (skip < 0)
-    list [catch {expr {[font measure xyz -displayof]>0}} msg] $msg
-} {0 1}
-test font-9.2 {font command: measure: arguments} {
+    expr {[font measure xyz -displayof] > 0}
+} -returnCodes ok -result 1
+test font-9.2 {font command: measure: arguments} -body {
     # (objc - skip != 4) 
-    list [catch {font measure} msg] $msg
-} {1 {wrong # args: should be "font measure font ?-displayof window? text"}}
-test font-9.3 {font command: measure: arguments} {
+    font measure
+} -returnCodes error -result {wrong # args: should be "font measure font ?-displayof window? text"}
+test font-9.3 {font command: measure: arguments} -body {
     # (objc - skip != 4) 
-    list [catch {font measure xyz abc def} msg] $msg
-} {1 {wrong # args: should be "font measure font ?-displayof window? text"}}
-test font-9.4 {font command: measure: arguments} {noExceed} {
+    font measure xyz abc def
+} -returnCodes error -result {wrong # args: should be "font measure font ?-displayof window? text"}
+test font-9.4 {font command: measure: arguments} -constraints noExceed -body {
     # (tkfont == NULL)
-    list [catch {font measure "\{xyz" abc} msg] $msg
-} [list 1 "font \"{xyz\" doesn't exist"]
-test font-9.5 {font command: measure} {
+    font measure "\{xyz" abc
+} -returnCodes error -result "font \"{xyz\" doesn't exist"
+test font-9.5 {font command: measure} -body {
     # Tk_TextWidth()
-    expr [font measure $fixed "abcdefg"]==[font measure $fixed "a"]*7
-} {1}
-test font-9.6 {font command: measure -d} {
-     list [catch {expr {[font measure $fixed -d] > 0}} msg] $msg
-} {0 1}
-test font-9.7 {font command: measure -d with -displayof} {
-     list [catch {expr {[font measure $fixed -displayof . -d] > 0}} msg] $msg
-} {0 1}
-test font-9.8 {font command: measure: arguments} {
-    list [catch {font measure $fixed -displayof .} msg] $msg
-} {1 {wrong # args: should be "font measure font ?-displayof window? text"}}
+    expr {[font measure $fixed "abcdefg"] == [font measure $fixed "a"]*7 }
+} -result 1
+test font-9.6 {font command: measure -d} -body {
+     expr {[font measure $fixed -d] > 0}
+} -returnCodes ok -result 1
+test font-9.7 {font command: measure -d with -displayof} -body {
+     expr {[font measure $fixed -displayof . -d] > 0}
+} -returnCodes ok -result 1
+test font-9.8 {font command: measure: arguments} -body {
+    font measure $fixed -displayof .
+} -returnCodes error -result {wrong # args: should be "font measure font ?-displayof window? text"}
 
-test font-10.1 {font command: metrics: arguments} {
-    list [catch {font metrics xyz -displayof} msg] $msg
-} {1 {value for "-displayof" missing}}
-test font-10.2 {font command: metrics: arguments} {
+
+test font-10.1 {font command: metrics: arguments} -body {
+    font metrics xyz -displayof
+} -returnCodes error -result {value for "-displayof" missing}
+test font-10.2 {font command: metrics: arguments} -body {
     # (skip < 0)
-    list [catch {font metrics xyz -displayof} msg] $msg
-} {1 {value for "-displayof" missing}}
-test font-10.3 {font command: metrics: arguments} {
+    font metrics xyz -displayof
+} -returnCodes error -result {value for "-displayof" missing}
+test font-10.3 {font command: metrics: arguments} -body {
     # (objc < 3) 
-    list [catch {font metrics} msg] $msg
-} {1 {wrong # args: should be "font metrics font ?-displayof window? ?option?"}}
-test font-10.4 {font command: metrics: arguments} {
+    font metrics
+} -returnCodes error -result {wrong # args: should be "font metrics font ?-displayof window? ?option?"}
+test font-10.4 {font command: metrics: arguments} -body {
     # (objc - skip) > 4) when skip == 0
-    list [catch {font metrics xyz abc def} msg] $msg
-} {1 {wrong # args: should be "font metrics font ?-displayof window? ?option?"}}
-test font-10.5 {font command: metrics: arguments} {
+    font metrics xyz abc def
+} -returnCodes error -result {wrong # args: should be "font metrics font ?-displayof window? ?option?"}
+test font-10.5 {font command: metrics: arguments} -body {
     # (objc - skip) > 4) when skip == 2
-    list [catch {font metrics xyz -displayof . abc} msg] $msg
-} {1 {bad metric "abc": must be -ascent, -descent, -linespace, or -fixed}}
-test font-10.6 {font command: metrics: bad font} {noExceed} {
+    font metrics xyz -displayof . abc
+} -returnCodes error -result {bad metric "abc": must be -ascent, -descent, -linespace, or -fixed}
+test font-10.6 {font command: metrics: bad font} -constraints noExceed -body {
     # (tkfont == NULL)
-    list [catch {font metrics "\{xyz"} msg] $msg
-} [list 1 "font \"{xyz\" doesn't exist"]
-test font-10.7 {font command: metrics: get all metrics} {
-    # (objc == 3)
+    font metrics "\{xyz"
+} -returnCodes error -result "font \"{xyz\" doesn't exist"
+test font-10.7 {font command: metrics: get all metrics} -setup {
     catch {unset a}
+} -body {
+    # (objc == 3)
     array set a [font metrics {-family xyz}]
-    set x [lsort [array names a]]
+    lsort [array names a]
+} -cleanup {
     unset a
-    set x    
-} {-ascent -descent -fixed -linespace}
-test font-10.8 {font command: metrics: bad metric} {
+} -result {-ascent -descent -fixed -linespace}
+test font-10.8 {font command: metrics: bad metric} -body {
     # (Tcl_GetIndexFromObj() != TCL_OK)
-    list [catch {font metrics $fixed -xyz} msg] $msg
-} {1 {bad metric "-xyz": must be -ascent, -descent, -linespace, or -fixed}}
-test font-10.9 {font command: metrics: get individual metrics} {
+    font metrics $fixed -xyz
+} -returnCodes error -result {bad metric "-xyz": must be -ascent, -descent, -linespace, or -fixed}
+test font-10.9 {font command: metrics: get individual metrics} -body {
     font metrics $fixed -ascent
     font metrics $fixed -descent
     font metrics $fixed -linespace
     font metrics $fixed -fixed
-} {1}
+} -result 1
 
-test font-11.1 {font command: names: arguments} {
+
+test font-11.1 {font command: names: arguments} -body {
     # (objc != 2)
-    list [catch {font names xyz} msg] $msg
-} {1 {wrong # args: should be "font names"}}
-test font-11.2 {font command: names: loop test: no passes} {
-    setup
+    font names xyz
+} -returnCodes error -result {wrong # args: should be "font names"}
+test font-11.2 {font command: names: loop test: no passes} -setup {
+    catch {eval font delete [font names]}
+} -body {
     font names
-} {}
-test font-11.3 {font command: names: loop test: one pass} {
-    setup
+} -result {}
+test font-11.3 {font command: names: loop test: one pass} -setup {
+    catch {eval font delete [font names]}
+} -body {
     font create
     font names
-} {font1}
-test font-11.4 {font command: names: loop test: multiple passes} {
-    setup
+} -result {font1}
+test font-11.4 {font command: names: loop test: multiple passes} -setup {
+    catch {eval font delete [font names]}
+} -body {
     font create xyz
     font create abc
     font create def
     lsort [font names]
-} {abc def xyz}
-test font-11.5 {font command: names: skip deletePending fonts} {
-    # (nfPtr->deletePending == 0)
-    setup
+} -cleanup {
+    catch {eval font delete [font names]}
+} -result {abc def xyz}
+test font-11.5 {font command: names: skip deletePending fonts} -setup {
+    destroy .t.f
+    catch {eval font delete [font names]}
+    pack [label .t.f]
+    update
     set x {}
+} -body {
+    # (nfPtr->deletePending == 0)
     font create xyz
     font create abc
     lappend x [lsort [font names]]
-    .b.f config -font xyz
+    .t.f config -font xyz
     font delete xyz
     lappend x [font names]
-} {{abc xyz} abc}
+} -cleanup {
+    catch {eval font delete [font names]}
+} -result {{abc xyz} abc}
 
-test font-12.1 {UpdateDependantFonts procedure: no users} {
+
+test font-12.1 {UpdateDependantFonts procedure: no users} -setup {
+    catch {font delete xyz}
+} -body {
     # (nfPtr->refCount == 0)
-    setup
     font create xyz
     font configure xyz -family times
-} {}
-test font-12.2 {UpdateDependantFonts procedure: pings the widgets} {
-    setup
+} -cleanup {
+	font delete xyz
+} -result {}
+test font-12.2 {UpdateDependantFonts procedure: pings the widgets} -setup {
+    destroy .t.f
+    catch {font delete xyz}
+    pack [label .t.f]
+    update
+} -body {
     font create xyz -family times -size 20
-    .b.f config -font xyz -text "abcd" -padx 0 -bd 0 -highlightthickness 0
+    .t.f config -font xyz -text "abcd" -padx 0 -bd 0 -highlightthickness 0
     set a1 [font measure xyz "abcd"]
     update
-    set b1 [winfo reqwidth .b.f]
+    set b1 [winfo reqwidth .t.f]
     font configure xyz -family helvetica -size 20
     set a2 [font measure xyz "abcd"]
     update
-    set b2 [winfo reqwidth .b.f]
+    set b2 [winfo reqwidth .t.f]
     expr {$a1==$b1 && $a2==$b2}
-} {1}
+} -cleanup {
+	destroy .t.f
+    font delete xyz
+} -result {1}
 
-test font-13.1 {CreateNamedFont: new named font} {
+
+test font-13.1 {CreateNamedFont: new named font} -setup {
+    catch {font delete xyz}
+	set x {}
+} -body {
     # not (new == 0)
-    setup
-    set x {}
     lappend x [font names]
     font create xyz
     lappend x [font names]
-} {{} xyz}
-test font-13.2 {CreateNamedFont: named font already exists} {
+} -cleanup {
+	font delete xyz
+} -result {{} xyz}
+test font-13.2 {CreateNamedFont: named font already exists} -setup {
+    catch {font delete xyz}
+} -body {
     # (new == 0)
-    setup
     font create xyz
-    list [catch {font create xyz} msg] $msg
-} {1 {named font "xyz" already exists}}
-test font-13.3 {CreateNamedFont: named font already exists} {
+    font create xyz
+} -cleanup {
+	font delete xyz
+} -returnCodes error -result {named font "xyz" already exists}
+test font-13.3 {CreateNamedFont: named font already exists} -setup {
+    catch {font delete xyz}
+} -body {
     # (nfPtr->deletePending == 0)
-    setup
     font create xyz
-    list [catch {font create xyz} msg] $msg
-} {1 {named font "xyz" already exists}}
-test font-13.4 {CreateNamedFont: recreate "deleted" font} {
+    font create xyz
+} -cleanup {
+	font delete xyz
+} -returnCodes error -result {named font "xyz" already exists}
+test font-13.4 {CreateNamedFont: recreate "deleted" font} -setup {
+    destroy .t.f
+    catch {font delete xyz}
+    pack [label .t.f]
+    update
+} -body {
     # not (nfPtr->deletePending == 0)
-    setup
     font create xyz -family times
-    .b.f configure -font xyz
+    .t.f configure -font xyz
     font delete xyz
     font create xyz -family courier
     font configure xyz -family
-} {courier}
+} -cleanup {
+	font delete xyz
+	destroy .t.f
+} -result {courier}
 
-test font-14.1 {Tk_GetFont procedure} {
-} {}
 
-test font-15.1 {Tk_AllocFontFromObj - converting internal reps} testfont {
+test font-14.1 {Tk_GetFont procedure} -body {
+} -result {}
+
+
+test font-15.1 {Tk_AllocFontFromObj - converting internal reps} -constraints {
+	testfont 
+} -setup {
+    destroy .b1 .b2
+} -body {
     set x {Times 16}
     lindex $x 0
-    destroy .b1 .b2
     button .b1 -font $x
     lindex $x 0
     testfont counts {Times 16}
-} {{1 0}}
-test font-15.2 {Tk_AllocFontFromObj - discard stale font} testfont {
-    set x {Times 16}
+} -cleanup {
     destroy .b1 .b2
+} -result {{1 0}}
+test font-15.2 {Tk_AllocFontFromObj - discard stale font} -constraints {
+	testfont 
+} -setup {
+    destroy .b1 .b2
+    set result {}
+} -body {
+    set x {Times 16}
     button .b1 -font $x
     destroy .b1
-    set result {}
     lappend result [testfont counts {Times 16}]
     button .b2 -font $x
     lappend result [testfont counts {Times 16}]
-} {{} {{1 1}}}
-test font-15.3 {Tk_AllocFontFromObj - reuse existing font} testfont {
-    set x {Times 16}
+} -cleanup {
+    destroy .b2
+} -result {{} {{1 1}}}
+test font-15.3 {Tk_AllocFontFromObj - reuse existing font} -constraints {
+	testfont 
+} -setup {
     destroy .b1 .b2
-    button .b1 -font $x
     set result {}
+} -body {
+    set x {Times 16}
+    button .b1 -font $x
     lappend result [testfont counts {Times 16}]
     button .b2 -font $x
     pack .b1 .b2 -side top
     lappend result [testfont counts {Times 16}]
-} {{{1 1}} {{2 1}}}
-test font-15.4 {Tk_AllocFontFromObj procedure: bump ref count} {
+} -cleanup {
+    destroy .b1 .b2
+} -result {{{1 1}} {{2 1}}}
+test font-15.4 {Tk_AllocFontFromObj procedure: bump ref count} -setup {
+    destroy .t.f
+    pack [label .t.f]
+    update
+} -body {
     # (new == 0)
-    setup
-    .b.f config -font {-family fixed}
+    .t.f config -font {-family fixed}
     lindex [font actual {-family fixed}] 0
-} {-family}
-test font-15.5 {Tk_AllocFontFromObj procedure: get named font} {
+} -cleanup {
+	destroy .t.f
+} -result {-family}
+test font-15.5 {Tk_AllocFontFromObj procedure: get named font} -setup {
+    destroy .t.f
+    catch {font delete xyz}
+    pack [label .t.f]
+    update
+} -body {
     # (namedHashPtr != NULL) 
-    setup
     font create xyz 
-    .b.f config -font xyz 
-} {}
-test font-15.6 {Tk_AllocFontFromObj procedure: not a named font} {
+    .t.f config -font xyz 
+} -cleanup {
+	destroy .t.f
+    font delete xyz
+} -result {}
+test font-15.6 {Tk_AllocFontFromObj procedure: not a named font} -setup {
+    destroy .t.f
+    pack [label .t.f]
+    update
+} -body {
     # not (namedHashPtr != NULL)
-    setup
-    .b.f config -font {times 20}
-} {}
-test font-15.7 {Tk_AllocFontFromObj procedure: get native font} unix {
+    .t.f config -font {times 20}
+} -cleanup {
+	destroy .t.f
+} -result {-family} -result {}
+test font-15.7 {Tk_AllocFontFromObj procedure: get native font} -constraints {
+	unix 
+} -setup {
+    destroy .t.f
+    pack [label .t.f]
+    update
+} -body {
     # not (fontPtr == NULL) 
-    setup
-    .b.f config -font fixed
-} {}
-test font-15.8 {Tk_AllocFontFromObj procedure: get native font} win {
+    .t.f config -font fixed
+} -result {}
+test font-15.8 {Tk_AllocFontFromObj procedure: get native font} -constraints {
+	win 
+} -setup {
+    destroy .t.f
+	catch {eval font delete [font names]}
+    pack [label .t.f]
+    update
+} -body {
     # not (fontPtr == NULL) 
-    setup
-    .b.f config -font oemfixed
-} {}
-test font-15.10 {Tk_AllocFontFromObj procedure: get attribute font} {
+    .t.f config -font oemfixed
+} -cleanup {
+	destroy .t.f
+} -result {}
+test font-15.9 {Tk_AllocFontFromObj procedure: get attribute font} -setup {
+    destroy .t.f
+    pack [label .t.f]
+    update
+} -body {
     # (fontPtr == NULL) 
-    list [catch {.b.f config -font {xxx yyy zzz}} msg] $msg
-} {1 {expected integer but got "yyy"}}
-test font-15.11 {Tk_AllocFontFromObj procedure: no match} {noExceed} {
+    .t.f config -font {xxx yyy zzz}
+} -cleanup {
+	destroy .t.f
+} -returnCodes error -result {expected integer but got "yyy"}
+test font-15.10 {Tk_AllocFontFromObj procedure: no match} -constraints noExceed -body {
     # (ParseFontNameObj() != TCL_OK)
-    list [catch {font actual "\{xyz"} msg] $msg
-} [list 1 "font \"{xyz\" doesn't exist"]
-test font-15.12 {Tk_AllocFontFromObj procedure: get attribute font} {
+    font actual "\{xyz"
+} -returnCodes error -result "font \"{xyz\" doesn't exist"
+test font-15.11 {Tk_AllocFontFromObj procedure: get attribute font} -body {
     # not (ParseFontNameObj() != TCL_OK)
     lindex [font actual {plan 9}] 0
-} {-family}
-test font-15.13 {Tk_AllocFontFromObj procedure: setup tab width} {
+} -result {-family}
+test font-15.12 {Tk_AllocFontFromObj procedure: setup tab width} -setup {
+	destroy .l
+} -body {
     # Tk_MeasureChars(fontPtr, "0", ...)
     label .l -bd 0 -padx 0  -highlightthickness 0 -font $fixed -text "a\tb"
     update
-    set x [winfo reqwidth .l]
-    destroy .l
-    set x
-} [expr [font measure $fixed "0"]*9]
-test font-15.14 {Tk_AllocFontFromObj procedure: underline position} {
-    # (fontPtr->underlineHeight == 0) because size was < 10
-    setup
-    .b.f config -text "underline" -font "times -8 underline"
+    set res1 [winfo reqwidth .l]
+	set res2 [expr [font measure $fixed "0"]*9]
+	expr {$res1 eq $res2}
+} -cleanup {
+	destroy .l
+} -result 1
+test font-15.13 {Tk_AllocFontFromObj procedure: underline position} -setup {
+    destroy .t.f
+    pack [label .t.f]
     update
-} {}    
+} -body {
+    # (fontPtr->underlineHeight == 0) because size was < 10
+    .t.f config -text "underline" -font "times -8 underline"
+    update
+} -cleanup {
+	destroy .t.f
+} -result {}    
 
-test font-16.1 {Tk_NameOfFont procedure} {
-    setup
-    .b.f config -font -family\ fixed
-    .b.f cget -font
-} {-family fixed}
 
-test font-17.1 {Tk_FreeFontFromObj - reference counts} testfont {
-    set x {Courier 12}
+test font-16.1 {Tk_NameOfFont procedure} -setup {
+    destroy .t.f
+    pack [label .t.f]
+    update
+} -body {
+    .t.f config -font -family\ fixed
+    .t.f cget -font
+} -cleanup {
+	destroy .t.f
+} -result {-family fixed}
+
+
+test font-17.1 {Tk_FreeFontFromObj - reference counts} -constraints {
+	testfont 
+} -setup {
     destroy .b1 .b2 .b3
+    set result {}
+} -body {
+    set x {Courier 12}
     button .b1 -font $x
     button .b3 -font $x
     button .b2 -font $x
-    set result {}
     lappend result [testfont counts {Courier 12}]
     destroy .b1
     lappend result [testfont counts {Courier 12}]
@@ -566,61 +730,83 @@ test font-17.1 {Tk_FreeFontFromObj - reference counts} testfont {
     lappend result [testfont counts {Courier 12}]
     destroy .b3
     lappend result [testfont counts {Courier 12}]
-} {{{3 1}} {{2 1}} {{1 1}} {}}
-test font-17.2 {Tk_FreeFont procedure: one ref} {
+} -result {{{3 1}} {{2 1}} {{1 1}} {}}
+test font-17.2 {Tk_FreeFont procedure: one ref} -setup {
+    destroy .t.f
+    pack [label .t.f]
+    update
+} -body {
     # (fontPtr->refCount == 0)
-    setup
-    .b.f config -font {-family fixed}
-    destroy .b.f
-} {}
-test font-17.3 {Tk_FreeFont procedure: multiple ref} {
+    .t.f config -font {-family fixed}
+    destroy .t.f
+} -result {}
+test font-17.3 {Tk_FreeFont procedure: multiple ref} -setup {
+    destroy .t.f .t.b
+    pack [label .t.f]
+    update
+} -body {
     # not (fontPtr->refCount == 0)
-    setup
-    .b.f config -font {-family fixed}
-    button .b.b -font {-family fixed}
-    destroy .b.f
-    set x [.b.b cget -font]
-    destroy .b.b
-    set x
-} {-family fixed}
-test font-17.4 {Tk_FreeFont procedure: named font} {
+    .t.f config -font {-family fixed}
+    button .t.b -font {-family fixed}
+    destroy .t.f
+    .t.b cget -font
+} -cleanup {
+    destroy .t.b
+} -result {-family fixed}
+test font-17.4 {Tk_FreeFont procedure: named font} -setup {
+    destroy .t.f
+    catch {eval font delete [font names]}
+    pack [label .t.f]
+    update
+} -body {
     # (fontPtr->namedHashPtr != NULL) 
-    setup
     font create xyz
-    .b.f config -font xyz
-    destroy .b.f
+    .t.f config -font xyz
+    destroy .t.f
     font names
-} {xyz}
-test font-17.5 {Tk_FreeFont procedure: named font} {
+} -result {xyz}
+test font-17.5 {Tk_FreeFont procedure: named font} -setup {
+    destroy .t.f
+    catch {font delete xyz}
+    pack [label .t.f]
+    update
+} -body {
     # not (fontPtr->refCount == 0) 
-    setup
     font create xyz -underline 1
-    .b.f config -font xyz
+    .t.f config -font xyz
     font delete xyz
     set x [font actual xyz -underline]
-    destroy .b.f
+    destroy .t.f
     list [font actual xyz -underline] $x
-} {0 1}
-test font-17.6 {Tk_FreeFont procedure: named font not deleted yet} {
-    setup
+} -result {0 1}
+test font-17.6 {Tk_FreeFont procedure: named font not deleted yet} -setup {
+    destroy .t.f .t.b
+    catch {font delete xyz}
+    pack [label .t.f]
+    update
+} -body {
     font create xyz 
-    .b.f config -font xyz
-    button .b.b -font xyz
+    .t.f config -font xyz
+    button .t.b -font xyz
     font delete xyz
     set x [font actual xyz]
-    destroy .b.b
+    destroy .t.b
     list [lindex [font actual xyz] 0] [lindex $x 0]
-} {-family -family}
+} -cleanup {
+    destroy .t.f
+} -result {-family -family}
 
-test font-18.1 {FreeFontObjProc} testfont {
+
+test font-18.1 {FreeFontObjProc} -constraints testfont -setup {
     destroy .b1
+    set result {}
+} -body {
     set x [format {Courier 12}]
     button .b1 -font $x
     set y [format {Courier 12}]
     .b1 configure -font $y
     set z [format {Courier 12}]
     .b1 configure -font $z
-    set result {}
     lappend result [testfont counts {Courier 12}]
     set x red
     lappend result [testfont counts {Courier 12}]
@@ -629,275 +815,864 @@ test font-18.1 {FreeFontObjProc} testfont {
     destroy .b1
     lappend result [testfont counts {Courier 12}]
     set y bogus
-    set result
-} {{{1 3}} {{1 2}} {{1 1}} {}}
+    return $result
+} -result {{{1 3}} {{1 2}} {{1 1}} {}}
 
-test font-19.1 {Tk_FontId} {
-    .b.f config -font "times 20"
+
+test font-19.1 {Tk_FontId} -setup {
+    destroy .t.f
+    pack [label .t.f]
     update
-} {}
-
-test font-20.1 {Tk_GetFontMetrics procedure} {
-    button .b.w1 -text abc
-    entry .b.w2 -text abcd
+} -body {
+    .t.f config -font "times 20"
     update
-    destroy .b.w1 .b.w2
-} {}
+} -cleanup {
+	destroy .t.f
+} -result {}
 
+
+test font-20.1 {Tk_GetFontMetrics procedure} -setup {
+	destroy .t.w1 .t.w2
+} -body {
+    button .t.w1 -text abc
+    entry .t.w2 -text abcd
+    update
+    destroy .t.w1 .t.w2
+} -result {}
+
+
+# Procedure used in 21.* tests
 proc psfontname {name} {
-    set a [.b.c itemcget text -font]
-    .b.c itemconfig text -text "We need text" -font $name
-    set post [.b.c postscript]
-    .b.c itemconfig text -font $a
+	destroy .t.c
+	canvas .t.c -closeenough 0 
+	.t.c create text 0 0 -tags text -anchor nw -just left -font "Courier -12"
+	pack .t.c
+	update
+    set a [.t.c itemcget text -font]
+    .t.c itemconfig text -text "We need text" -font $name
+    set post [.t.c postscript]
+    .t.c itemconfig text -font $a
     set end [string first "findfont" $post]
     incr end -2
     set post [string range $post [expr $end-70] $end]
     set start [string first "gsave" $post]
+	destroy .t.c
     return [string range $post [expr $start+7] end]
 }
-test font-21.1 {Tk_PostscriptFontName procedure: native} unix {
+test font-21.1 {Tk_PostscriptFontName procedure: native} -constraints {
+	unix
+} -body {
     set x [font actual {{itc avant garde} 10} -family]
     if {[string match *avant*garde $x]} {
-	psfontname "{itc avant garde} 10"
+		psfontname "{itc avant garde} 10"
     } else {
-	set x {AvantGarde-Book}
+		set x {AvantGarde-Book}
     }
-} {AvantGarde-Book}
-test font-21.2 {Tk_PostscriptFontName procedure: native} win {
+} -result {AvantGarde-Book}
+test font-21.2 {Tk_PostscriptFontName procedure: native} -constraints {
+	win 
+} -body {
     psfontname "arial 10"
-} {Helvetica}
-test font-21.3 {Tk_PostscriptFontName procedure: native} win {
+} -result {Helvetica}
+test font-21.3 {Tk_PostscriptFontName procedure: native} -constraints {
+	win 
+} -body {
     psfontname "{times new roman} 10"
-} {Times-Roman}
-test font-21.4 {Tk_PostscriptFontName procedure: native} win {
+} -result {Times-Roman}
+test font-21.4 {Tk_PostscriptFontName procedure: native} -constraints {
+	win 
+} -body {
     psfontname "{courier new} 10"
-} {Courier}
-test font-21.8 {Tk_PostscriptFontName procedure: spaces} unix {
+} -result {Courier}
+test font-21.5 {Tk_PostscriptFontName procedure: spaces} -constraints {
+	unix 
+} -body {
     set x [font actual {{lucida bright} 10} -family]
     if {[string match lucida*bright $x]} {
-	psfontname "{lucida bright} 10"
+		psfontname "{lucida bright} 10"
     } else {
-	set x {LucidaBright}
+		set x {LucidaBright}
     }
-} {LucidaBright}
-test font-21.9 {Tk_PostscriptFontName procedure: spaces} unix {
+} -result {LucidaBright}
+test font-21.6 {Tk_PostscriptFontName procedure: spaces} -constraints {
+	unix 
+} -body {
     psfontname "{new century schoolbook} 10"
-} {NewCenturySchlbk-Roman}
-set i 10
-foreach p {
-    {font-21.10 "avantgarde"
-	    AvantGarde-Book AvantGarde-Demi
-	    AvantGarde-BookOblique AvantGarde-DemiOblique}
-    {font-21.11 "bookman"
-	    Bookman-Light Bookman-Demi Bookman-LightItalic Bookman-DemiItalic}
-    {font-21.12 "courier"
-	    Courier Courier-Bold Courier-Oblique Courier-BoldOblique}
-    {font-21.13 "helvetica"
-	    Helvetica Helvetica-Bold Helvetica-Oblique Helvetica-BoldOblique}
-    {font-21.14 "new century schoolbook"
-	    NewCenturySchlbk-Roman NewCenturySchlbk-Bold
-	    NewCenturySchlbk-Italic NewCenturySchlbk-BoldItalic}
-    {font-21.15 "palatino"
-	    Palatino-Roman Palatino-Bold Palatino-Italic Palatino-BoldItalic}
-    {font-21.16 "symbol"
-	    Symbol Symbol Symbol Symbol}
-    {font-21.17 "times"
-	    Times-Roman Times-Bold Times-Italic Times-BoldItalic}
-    {font-21.18 "zapfchancery"
-	    ZapfChancery-MediumItalic ZapfChancery-MediumItalic
-	    ZapfChancery-MediumItalic ZapfChancery-MediumItalic}
-    {font-21.19 "zapfdingbats"
-	    ZapfDingbats ZapfDingbats ZapfDingbats ZapfDingbats}
-} {
-    set values [lassign $p testName family]
-    test $testName {Tk_PostscriptFontName procedure: exhaustive} unix {
-	set x {}
-	set j 0
-	foreach slant {roman italic} {
-	    foreach weight {normal bold} {
-		set name [list $family 12 $slant $weight]
-		if {[font actual $name -family] == $family} {
-		    lappend x [psfontname $name]
-		} else {
-		    lappend x [lindex $values $j]
-		}
-		incr j
-	    }
-	}
-	set x
-    } $values
-}
-foreach p {
-    {font-21.20 "arial"
-	    Helvetica Helvetica-Bold Helvetica-Oblique Helvetica-BoldOblique}
-    {font-21.21 "courier new"
-	    Courier Courier-Bold Courier-Oblique Courier-BoldOblique}
-    {font-21.22 "helvetica"
-	    Helvetica Helvetica-Bold Helvetica-Oblique Helvetica-BoldOblique}
-    {font-21.23 "symbol"
-	    Symbol Symbol-Bold Symbol-Italic Symbol-BoldItalic}
-    {font-21.24 "times new roman"
-	    Times-Roman Times-Bold Times-Italic Times-BoldItalic}
-} {
-    set values [lassign $p testName family]
-    test $testName {Tk_PostscriptFontName procedure: exhaustive} win {
-	set x {}
-	foreach slant {roman italic} {
-	    foreach weight {normal bold} {
-		lappend x [psfontname [list $family 12 "$slant $weight"]]
-	    }
-	}
-	set x
-    } $values
-}
+} -result {NewCenturySchlbk-Roman}
 
-test font-22.1 {Tk_TextWidth procedure} {
-    font measure [.b.l cget -font] "000"
-} [expr $ax*3]
+test font-21.7 {Tk_PostscriptFontName procedure: exhaustive} -constraints {
+    unix 
+} -body {
+    set name {avantgarde 12 roman normal}
+    if {[font actual {avantgarde 12 roman normal} -family] == "avantgarde"} {
+        set x [psfontname avantgarde 12 roman normal]
+    } else {
+        set x AvantGarde-Book
+    }
+} -result {AvantGarde-Book}
+test font-21.8 {Tk_PostscriptFontName procedure: exhaustive} -constraints {
+    unix 
+} -body {
+    set name {avantgarde 12 roman bold}
+    if {[font actual {avantgarde 12 roman normal} -family] == "avantgarde"} {
+        set x [psfontname avantgarde 12 roman normal]
+    } else {
+        set x AvantGarde-Demi
+    }
+} -result {AvantGarde-Demi}
+test font-21.9 {Tk_PostscriptFontName procedure: exhaustive} -constraints {
+    unix 
+} -body {
+    set name {avantgarde 12 italic normal}
+    if {[font actual {avantgarde 12 roman normal} -family] == "avantgarde"} {
+        set x [psfontname avantgarde 12 roman normal]
+    } else {
+        set x AvantGarde-BookOblique
+    }
+} -result {AvantGarde-BookOblique}
+test font-21.10 {Tk_PostscriptFontName procedure: exhaustive} -constraints {
+    unix 
+} -body {
+    set name {avantgarde 12 italic bold}
+    if {[font actual {avantgarde 12 roman normal} -family] == "avantgarde"} {
+        set x [psfontname avantgarde 12 roman normal]
+    } else {
+        set x AvantGarde-DemiOblique
+    }
+} -result {AvantGarde-DemiOblique}
 
-test font-23.1 {Tk_UnderlineChars procedure} {
-    text .b.t
-    .b.t insert 1.0 abc\tdefg
-    .b.t tag config sel -underline 1
-    .b.t tag add sel 1.0 end
+test font-21.11 {Tk_PostscriptFontName procedure: exhaustive} -constraints {
+    unix 
+} -body {
+    set name {bookman 12 roman normal}
+    if {[font actual {avantgarde 12 roman normal} -family] == "bookman"} {
+        set x [psfontname avantgarde 12 roman normal]
+    } else {
+        set x Bookman-Light
+    }
+} -result {Bookman-Light}
+test font-21.12 {Tk_PostscriptFontName procedure: exhaustive} -constraints {
+    unix 
+} -body {
+    set name {bookman 12 roman bold}
+    if {[font actual {avantgarde 12 roman normal} -family] == "bookman"} {
+        set x [psfontname avantgarde 12 roman normal]
+    } else {
+        set x Bookman-Demi
+    }
+} -result {Bookman-Demi}
+test font-21.13 {Tk_PostscriptFontName procedure: exhaustive} -constraints {
+    unix 
+} -body {
+    set name {bookman 12 italic normal}
+    if {[font actual {avantgarde 12 roman normal} -family] == "bookman"} {
+        set x [psfontname avantgarde 12 roman normal]
+    } else {
+        set x Bookman-LightItalic
+    }
+} -result {Bookman-LightItalic}
+test font-21.14 {Tk_PostscriptFontName procedure: exhaustive} -constraints {
+    unix 
+} -body {
+    set name {bookman 12 italic bold}
+    if {[font actual {avantgarde 12 roman normal} -family] == "bookman"} {
+        set x [psfontname avantgarde 12 roman normal]
+    } else {
+        set x Bookman-DemiItalic
+    }
+} -result {Bookman-DemiItalic}
+
+test font-21.15 {Tk_PostscriptFontName procedure: exhaustive} -constraints {
+    unix 
+} -body {
+    set name {courier 12 roman normal}
+    if {[font actual {avantgarde 12 roman normal} -family] == "courier"} {
+        set x [psfontname avantgarde 12 roman normal]
+    } else {
+        set x Courier
+    }
+} -result {Courier}
+test font-21.16 {Tk_PostscriptFontName procedure: exhaustive} -constraints {
+    unix 
+} -body {
+    set name {courier 12 roman bold}
+    if {[font actual {avantgarde 12 roman normal} -family] == "courier"} {
+        set x [psfontname avantgarde 12 roman normal]
+    } else {
+        set x Courier-Bold
+    }
+} -result {Courier-Bold}
+test font-21.17 {Tk_PostscriptFontName procedure: exhaustive} -constraints {
+    unix 
+} -body {
+    set name {courier 12 italic normal}
+    if {[font actual {avantgarde 12 roman normal} -family] == "courier"} {
+        set x [psfontname avantgarde 12 roman normal]
+    } else {
+        set x Courier-Oblique
+    }
+} -result {Courier-Oblique}
+test font-21.18 {Tk_PostscriptFontName procedure: exhaustive} -constraints {
+    unix 
+} -body {
+    set name {courier 12 italic bold}
+    if {[font actual {avantgarde 12 roman normal} -family] == "courier"} {
+        set x [psfontname avantgarde 12 roman normal]
+    } else {
+        set x Courier-BoldOblique
+    }
+} -result {Courier-BoldOblique}
+
+test font-21.19 {Tk_PostscriptFontName procedure: exhaustive} -constraints {
+    unix 
+} -body {
+    set name {helvetica 12 roman normal}
+    if {[font actual {avantgarde 12 roman normal} -family] == "helvetica"} {
+        set x [psfontname avantgarde 12 roman normal]
+    } else {
+        set x Helvetica
+    }
+} -result {Helvetica}
+test font-21.20 {Tk_PostscriptFontName procedure: exhaustive} -constraints {
+    unix 
+} -body {
+    set name {helvetica 12 roman bold}
+    if {[font actual {avantgarde 12 roman normal} -family] == "helvetica"} {
+        set x [psfontname avantgarde 12 roman normal]
+    } else {
+        set x Helvetica-Bold
+    }
+} -result {Helvetica-Bold}
+test font-21.21 {Tk_PostscriptFontName procedure: exhaustive} -constraints {
+    unix 
+} -body {
+    set name {helvetica 12 italic normal}
+    if {[font actual {avantgarde 12 roman normal} -family] == "helvetica"} {
+        set x [psfontname avantgarde 12 roman normal]
+    } else {
+        set x Helvetica-Oblique
+    }
+} -result {Helvetica-Oblique}
+test font-21.22 {Tk_PostscriptFontName procedure: exhaustive} -constraints {
+    unix 
+} -body {
+    set name {helvetica 12 italic bold}
+    if {[font actual {avantgarde 12 roman normal} -family] == "helvetica"} {
+        set x [psfontname avantgarde 12 roman normal]
+    } else {
+        set x Helvetica-BoldOblique
+    }
+} -result {Helvetica-BoldOblique}
+
+test font-21.23 {Tk_PostscriptFontName procedure: exhaustive} -constraints {
+    unix 
+} -body {
+    set name {{new century schoolbook} 12 roman normal}
+    if {[font actual {avantgarde 12 roman normal} -family] == "new century schoolbook"} {
+        set x [psfontname avantgarde 12 roman normal]
+    } else {
+        set x NewCenturySchlbk-Roman
+    }
+} -result {NewCenturySchlbk-Roman}
+test font-21.24 {Tk_PostscriptFontName procedure: exhaustive} -constraints {
+    unix 
+} -body {
+    set name {{new century schoolbook} 12 roman bold}
+    if {[font actual {avantgarde 12 roman normal} -family] == "new century schoolbook"} {
+        set x [psfontname avantgarde 12 roman normal]
+    } else {
+        set x NewCenturySchlbk-Bold
+    }
+} -result {NewCenturySchlbk-Bold}
+test font-21.25 {Tk_PostscriptFontName procedure: exhaustive} -constraints {
+    unix 
+} -body {
+    set name {{new century schoolbook} 12 italic normal}
+    if {[font actual {avantgarde 12 roman normal} -family] == "new century schoolbook"} {
+        set x [psfontname avantgarde 12 roman normal]
+    } else {
+        set x NewCenturySchlbk-Italic
+    }
+} -result {NewCenturySchlbk-Italic}
+test font-21.26 {Tk_PostscriptFontName procedure: exhaustive} -constraints {
+    unix 
+} -body {
+    set name {{new century schoolbook} 12 italic bold}
+    if {[font actual {avantgarde 12 roman normal} -family] == "new century schoolbook"} {
+        set x [psfontname avantgarde 12 roman normal]
+    } else {
+        set x NewCenturySchlbk-BoldItalic
+    }
+} -result {NewCenturySchlbk-BoldItalic}
+
+test font-21.27 {Tk_PostscriptFontName procedure: exhaustive} -constraints {
+    unix 
+} -body {
+    set name {palatino 12 roman normal}
+    if {[font actual {avantgarde 12 roman normal} -family] == "palatino"} {
+        set x [psfontname avantgarde 12 roman normal]
+    } else {
+        set x Palatino-Roman
+    }
+} -result {Palatino-Roman}
+test font-21.28 {Tk_PostscriptFontName procedure: exhaustive} -constraints {
+    unix 
+} -body {
+    set name {palatino 12 roman bold}
+    if {[font actual {avantgarde 12 roman normal} -family] == "palatino"} {
+        set x [psfontname avantgarde 12 roman normal]
+    } else {
+        set x Palatino-Bold
+    }
+} -result {Palatino-Bold}
+test font-21.29 {Tk_PostscriptFontName procedure: exhaustive} -constraints {
+    unix 
+} -body {
+    set name {palatino 12 italic normal}
+    if {[font actual {avantgarde 12 roman normal} -family] == "palatino"} {
+        set x [psfontname avantgarde 12 roman normal]
+    } else {
+        set x Palatino-Italic
+    }
+} -result {Palatino-Italic}
+test font-21.30 {Tk_PostscriptFontName procedure: exhaustive} -constraints {
+    unix 
+} -body {
+    set name {palatino 12 italic bold}
+    if {[font actual {avantgarde 12 roman normal} -family] == "palatino"} {
+        set x [psfontname avantgarde 12 roman normal]
+    } else {
+        set x Palatino-BoldItalic
+    }
+} -result {Palatino-BoldItalic}
+
+test font-21.31 {Tk_PostscriptFontName procedure: exhaustive} -constraints {
+    unix 
+} -body {
+    set name {symbol 12 roman normal}
+    if {[font actual {avantgarde 12 roman normal} -family] == "symbol"} {
+        set x [psfontname avantgarde 12 roman normal]
+    } else {
+        set x Symbol
+    }
+} -result {Symbol}
+test font-21.32 {Tk_PostscriptFontName procedure: exhaustive} -constraints {
+    unix 
+} -body {
+    set name {symbol 12 roman bold}
+    if {[font actual {avantgarde 12 roman normal} -family] == "symbol"} {
+        set x [psfontname avantgarde 12 roman normal]
+    } else {
+        set x Symbol
+    }
+} -result {Symbol}
+test font-21.33 {Tk_PostscriptFontName procedure: exhaustive} -constraints {
+    unix 
+} -body {
+    set name {symbol 12 italic normal}
+    if {[font actual {avantgarde 12 roman normal} -family] == "symbol"} {
+        set x [psfontname avantgarde 12 roman normal]
+    } else {
+        set x Symbol
+    }
+} -result {Symbol}
+test font-21.34 {Tk_PostscriptFontName procedure: exhaustive} -constraints {
+    unix 
+} -body {
+    set name {symbol 12 italic bold}
+    if {[font actual {avantgarde 12 roman normal} -family] == "symbol"} {
+        set x [psfontname avantgarde 12 roman normal]
+    } else {
+        set x Symbol
+    }
+} -result {Symbol}
+
+test font-21.35 {Tk_PostscriptFontName procedure: exhaustive} -constraints {
+    unix 
+} -body {
+    set name {times 12 roman normal}
+    if {[font actual {avantgarde 12 roman normal} -family] == "times"} {
+        set x [psfontname avantgarde 12 roman normal]
+    } else {
+        set x Times-Roman
+    }
+} -result {Times-Roman}
+test font-21.36 {Tk_PostscriptFontName procedure: exhaustive} -constraints {
+    unix 
+} -body {
+    set name {times 12 roman bold}
+    if {[font actual {avantgarde 12 roman normal} -family] == "times"} {
+        set x [psfontname avantgarde 12 roman normal]
+    } else {
+        set x Times-Bold
+    }
+} -result {Times-Bold}
+test font-21.37 {Tk_PostscriptFontName procedure: exhaustive} -constraints {
+    unix 
+} -body {
+    set name {times 12 italic normal}
+    if {[font actual {avantgarde 12 roman normal} -family] == "times"} {
+        set x [psfontname avantgarde 12 roman normal]
+    } else {
+        set x Times-Italic
+    }
+} -result {Times-Italic}
+test font-21.38 {Tk_PostscriptFontName procedure: exhaustive} -constraints {
+    unix 
+} -body {
+    set name {times 12 italic bold}
+    if {[font actual {avantgarde 12 roman normal} -family] == "times"} {
+        set x [psfontname avantgarde 12 roman normal]
+    } else {
+        set x Times-BoldItalic
+    }
+} -result {Times-BoldItalic}
+
+test font-21.39 {Tk_PostscriptFontName procedure: exhaustive} -constraints {
+    unix 
+} -body {
+    set name {zapfchancery 12 roman normal}
+    if {[font actual {avantgarde 12 roman normal} -family] == "zapfchancery"} {
+        set x [psfontname avantgarde 12 roman normal]
+    } else {
+        set x ZapfChancery-MediumItalic
+    }
+} -result {ZapfChancery-MediumItalic}
+test font-21.40 {Tk_PostscriptFontName procedure: exhaustive} -constraints {
+    unix 
+} -body {
+    set name {zapfchancery 12 roman bold}
+    if {[font actual {avantgarde 12 roman normal} -family] == "zapfchancery"} {
+        set x [psfontname avantgarde 12 roman normal]
+    } else {
+        set x ZapfChancery-MediumItalic
+    }
+} -result {ZapfChancery-MediumItalic}
+test font-21.41 {Tk_PostscriptFontName procedure: exhaustive} -constraints {
+    unix 
+} -body {
+    set name {zapfchancery 12 italic normal}
+    if {[font actual {avantgarde 12 roman normal} -family] == "zapfchancery"} {
+        set x [psfontname avantgarde 12 roman normal]
+    } else {
+        set x ZapfChancery-MediumItalic
+    }
+} -result {ZapfChancery-MediumItalic}
+test font-21.42 {Tk_PostscriptFontName procedure: exhaustive} -constraints {
+    unix 
+} -body {
+    set name {zapfchancery 12 italic bold}
+    if {[font actual {avantgarde 12 roman normal} -family] == "zapfchancery"} {
+        set x [psfontname avantgarde 12 roman normal]
+    } else {
+        set x ZapfChancery-MediumItalic
+    }
+} -result {ZapfChancery-MediumItalic}
+
+test font-21.43 {Tk_PostscriptFontName procedure: exhaustive} -constraints {
+    unix 
+} -body {
+    set name {zapfdingbats 12 roman normal}
+    if {[font actual {avantgarde 12 roman normal} -family] == "zapfdingbats"} {
+        set x [psfontname avantgarde 12 roman normal]
+    } else {
+        set x ZapfDingbats
+    }
+} -result {ZapfDingbats}
+test font-21.44 {Tk_PostscriptFontName procedure: exhaustive} -constraints {
+    unix 
+} -body {
+    set name {zapfdingbats 12 roman bold}
+    if {[font actual {avantgarde 12 roman normal} -family] == "zapfdingbats"} {
+        set x [psfontname avantgarde 12 roman normal]
+    } else {
+        set x ZapfDingbats
+    }
+} -result {ZapfDingbats}
+test font-21.45 {Tk_PostscriptFontName procedure: exhaustive} -constraints {
+    unix 
+} -body {
+    set name {zapfdingbats 12 italic normal}
+    if {[font actual {avantgarde 12 roman normal} -family] == "zapfdingbats"} {
+        set x [psfontname avantgarde 12 roman normal]
+    } else {
+        set x ZapfDingbats
+    }
+} -result {ZapfDingbats}
+test font-21.46 {Tk_PostscriptFontName procedure: exhaustive} -constraints {
+    unix 
+} -body {
+    set name {zapfdingbats 12 italic bold}
+    if {[font actual {avantgarde 12 roman normal} -family] == "zapfdingbats"} {
+        set x [psfontname avantgarde 12 roman normal]
+    } else {
+        set x ZapfDingbats
+    }
+} -result {ZapfDingbats}
+
+test font-21.47 {Tk_PostscriptFontName procedure: exhaustive} -constraints {
+    win
+} -body {
+    set x [psfontname {arial 12 roman normal}]
+} -result {Helvetica}
+test font-21.48 {Tk_PostscriptFontName procedure: exhaustive} -constraints {
+    win
+} -body {
+    set x [psfontname {arial 12 roman bold}]
+} -result {Helvetica-Bold}
+test font-21.49 {Tk_PostscriptFontName procedure: exhaustive} -constraints {
+    win
+} -body {
+    set x [psfontname {arial 12 italic normal}]
+} -result {Helvetica-Oblique}
+test font-21.50 {Tk_PostscriptFontName procedure: exhaustive} -constraints {
+    win
+} -body {
+    set x [psfontname {arial 12 italic bold}]
+} -result {Helvetica-BoldOblique}
+
+test font-21.51 {Tk_PostscriptFontName procedure: exhaustive} -constraints {
+    win
+} -body {
+    set x [psfontname {{courier new} 12 roman normal}]
+} -result {Courier}
+test font-21.52 {Tk_PostscriptFontName procedure: exhaustive} -constraints {
+    win
+} -body {
+    set x [psfontname {{courier new} 12 roman bold}]
+} -result {Courier-Bold}
+test font-21.53 {Tk_PostscriptFontName procedure: exhaustive} -constraints {
+    win
+} -body {
+    set x [psfontname {{courier new} 12 italic normal}]
+} -result {Courier-Oblique}
+test font-21.54 {Tk_PostscriptFontName procedure: exhaustive} -constraints {
+    win
+} -body {
+    set x [psfontname {{courier new} 12 italic bold}]
+} -result {Courier-BoldOblique}
+
+test font-21.55 {Tk_PostscriptFontName procedure: exhaustive} -constraints {
+    win
+} -body {
+    set x [psfontname {helvetica 12 roman normal}]
+} -result {Helvetica}
+test font-21.56 {Tk_PostscriptFontName procedure: exhaustive} -constraints {
+    win
+} -body {
+    set x [psfontname {helvetica 12 roman bold}]
+} -result {Helvetica-Bold}
+test font-21.57 {Tk_PostscriptFontName procedure: exhaustive} -constraints {
+    win
+} -body {
+    set x [psfontname {helvetica 12 italic normal}]
+} -result {Helvetica-Oblique}
+test font-21.58 {Tk_PostscriptFontName procedure: exhaustive} -constraints {
+    win
+} -body {
+    set x [psfontname {helvetica 12 italic bold}]
+} -result {Helvetica-BoldOblique}
+
+test font-21.59 {Tk_PostscriptFontName procedure: exhaustive} -constraints {
+    win
+} -body {
+    set x [psfontname {symbol 12 roman normal}]
+} -result {Symbol}
+test font-21.60 {Tk_PostscriptFontName procedure: exhaustive} -constraints {
+    win
+} -body {
+    set x [psfontname {symbol 12 roman bold}]
+} -result {Symbol-Bold}
+test font-21.61 {Tk_PostscriptFontName procedure: exhaustive} -constraints {
+    win
+} -body {
+    set x [psfontname {symbol 12 italic normal}]
+} -result {Symbol-Italic}
+test font-21.62 {Tk_PostscriptFontName procedure: exhaustive} -constraints {
+    win
+} -body {
+    set x [psfontname {symbol 12 italic bold}]
+} -result {Symbol-BoldItalic}
+
+test font-21.63 {Tk_PostscriptFontName procedure: exhaustive} -constraints {
+    win
+} -body {
+    set x [psfontname {{times new roman} 12 roman normal}]
+} -result {Times-Roman}
+test font-21.64 {Tk_PostscriptFontName procedure: exhaustive} -constraints {
+    win
+} -body {
+    set x [psfontname {{times new roman} 12 roman bold}]
+} -result {Times-Bold}
+test font-21.65 {Tk_PostscriptFontName procedure: exhaustive} -constraints {
+    win
+} -body {
+    set x [psfontname {{times new roman} 12 italic normal}]
+} -result {Times-Italic}
+test font-21.66 {Tk_PostscriptFontName procedure: exhaustive} -constraints {
+    win
+} -body {
+    set x [psfontname {{times new roman} 12 italic bold}]
+} -result {Times-BoldItalic}
+
+
+test font-22.1 {Tk_TextWidth procedure} -setup {
+	destroy .t.l 
+} -body {
+	label .t.l -padx 0 -pady 0 -bd 0 -highlightthickness 0 -justify left \
+		-text "0" -font "Courier -12"
+	pack .t.l
+	set ax [winfo reqwidth .t.l]
+    expr {[font measure [.t.l cget -font] "000"] eq $ax*3}
+} -cleanup {
+	destroy .t.l
+} -result 1
+
+
+test font-23.1 {Tk_UnderlineChars procedure} -setup {
+	destroy .t.t
+} -body {
+    text .t.t
+    .t.t insert 1.0 abc\tdefg
+    .t.t tag config sel -underline 1
+    .t.t tag add sel 1.0 end
     update
-} {}
+} -cleanup {
+	destroy .t.t
+} -result {}
 
-setup
-test font-24.1 {Tk_ComputeTextLayout: empty string} {
-    .b.l config -text ""
-} {}
-test font-24.2 {Tk_ComputeTextLayout: simple string} {
-    .b.l config -text "000"
-    getsize
-} "[expr $ax*3] $ay"
-test font-24.3 {Tk_ComputeTextLayout: find special chars} {
-    .b.l config -text "000\n000"
-    getsize
-} "[expr $ax*3] [expr $ay*2]"
-test font-24.4 {Tk_ComputeTextLayout: calls Tk_MeasureChars} {
-    .b.l config -text "000\n000"
-    getsize
-} "[expr $ax*3] [expr $ay*2]"
-test font-24.5 {Tk_ComputeTextLayout: break line} {
-    .b.l config -text "000\t00000" -wrap [expr 9*$ax]
-    set x [getsize]
-    .b.l config -wrap 0
-    set x
-} "[expr 8*$ax] [expr 2*$ay]"
-test font-24.6 {Tk_ComputeTextLayout: normal ended on special char} {
-    .b.l config -text "000\n000"
-} {}
-test font-24.7 {Tk_ComputeTextLayout: special char was \n} {
-    .b.l config -text "000\n0000"
-    getsize
-} "[expr $ax*4] [expr $ay*2]"
-test font-24.8 {Tk_ComputeTextLayout: special char was \t} {
-    .b.l config -text "000\t00"
-    getsize
-} "[expr $ax*10] $ay"
-test font-24.9 {Tk_ComputeTextLayout: tab didn't cause break} {
+
+# Data used in 24.* tests
+destroy .t.l 
+label .t.l -padx 0 -pady 0 -bd 0 -highlightthickness 0 -justify left \
+	-text "0" -font "Courier -12"
+pack .t.l
+update
+set ax [winfo reqwidth .t.l]
+set ay [winfo reqheight .t.l]
+test font-24.1 {Tk_ComputeTextLayout: empty string} -body {
+    .t.l config -text ""
+} -result {}
+test font-24.2 {Tk_ComputeTextLayout: simple string} -body {
+    .t.l config -text "000"
+	update
+	list [expr {[winfo reqwidth .t.l] eq [expr {$ax * 3}]}] \
+		[expr {[winfo reqheight .t.l] eq $ay}]
+} -result {1 1}
+test font-24.3 {Tk_ComputeTextLayout: find special chars} -body {
+    .t.l config -text "000\n000"
+	update
+	list [expr {[winfo reqwidth .t.l] eq [expr {$ax * 3}]}] \
+		[expr {[winfo reqheight .t.l] eq [expr {$ay * 2}]}]
+} -result {1 1}
+test font-24.4 {Tk_ComputeTextLayout: calls Tk_MeasureChars} -body {
+    .t.l config -text "000\n000"
+	update
+	list [expr {[winfo reqwidth .t.l] eq [expr {$ax * 3}]}] \
+		[expr {[winfo reqheight .t.l] eq [expr {$ay * 2}]}]
+} -result {1 1}
+test font-24.5 {Tk_ComputeTextLayout: break line} -body {
+    .t.l config -text "000\t00000" -wrap [expr 9 * $ax]
+	update
+	list [expr {[winfo reqwidth .t.l] eq [expr {$ax * 8}]}] \
+		[expr {[winfo reqheight .t.l] eq [expr {$ay * 2}]}]
+} -cleanup {
+    .t.l config -wrap 0
+} -result {1 1}
+test font-24.6 {Tk_ComputeTextLayout: normal ended on special char} -body {
+    .t.l config -text "000\n000"
+} -result {}
+test font-24.7 {Tk_ComputeTextLayout: special char was \n} -body {
+    .t.l config -text "000\n0000"
+	update
+	list [expr {[winfo reqwidth .t.l] eq [expr {$ax * 4}]}] \
+		[expr {[winfo reqheight .t.l] eq [expr {$ay * 2}]}]
+} -result {1 1}
+test font-24.8 {Tk_ComputeTextLayout: special char was \t} -body {
+    .t.l config -text "000\t00"
+	update
+	list [expr {[winfo reqwidth .t.l] eq [expr {$ax * 10}]}] \
+		[expr {[winfo reqheight .t.l] eq $ay}]
+} -result {1 1}
+test font-24.9 {Tk_ComputeTextLayout: tab didn't cause break} -body {
     set x {}
-    .b.l config -text "000\t000"
-    lappend x [getsize]
-    .b.l config -text "000\t000" -wrap [expr 100*$ax]
-    lappend x [getsize]
-    .b.l config -wrap 0
-    set x
-} "{[expr $ax*11] $ay} {[expr $ax*11] $ay}"
-test font-24.10 {Tk_ComputeTextLayout: tab caused break} {
+    .t.l config -text "000\t000"
+	update
+    lappend x [expr {[winfo reqwidth .t.l] eq [expr {$ax * 11}]}]
+	lappend x [expr {[winfo reqheight .t.l] eq $ay}]
+    .t.l config -text "000\t000" -wrap [expr 100 * $ax]
+	update
+    lappend x [expr {[winfo reqwidth .t.l] eq [expr {$ax * 11}]}]
+	lappend x [expr {[winfo reqheight .t.l] eq $ay}]
+    return $x
+} -cleanup {
+    .t.l config -wrap 0
+} -result {1 1 1 1}
+test font-24.10 {Tk_ComputeTextLayout: tab caused break} -body {
     set x {}
-    .b.l config -text "000\t"
-    lappend x [getsize]
-    .b.l config -text "000\t00" -wrap [expr $ax*6]
-    lappend x [getsize]
-    .b.l config -wrap 0
-    set x
-} "{[expr $ax*3] $ay} {[expr $ax*3] [expr $ay*2]}"
-test font-24.11 {Tk_ComputeTextLayout: absorb spaces at eol} {
+    .t.l config -text "000\t"
+	update
+    lappend x [expr {[winfo reqwidth .t.l] eq [expr {$ax * 3}]}]
+	lappend x [expr {[winfo reqheight .t.l] eq $ay}]
+    .t.l config -text "000\t00" -wrap [expr $ax * 6]
+	update
+	lappend x [expr {[winfo reqwidth .t.l] eq [expr {$ax * 3}]}]
+	lappend x [expr {[winfo reqheight .t.l] eq [expr {$ay * 2}]}]
+    return $x
+} -cleanup {
+    .t.l config -wrap 0
+} -result {1 1 1 1}
+test font-24.11 {Tk_ComputeTextLayout: absorb spaces at eol} -body {
     set x {}
-    .b.l config -text "000            000" -wrap [expr $ax*5]
-    lappend x [getsize]
-    .b.l config -text "000            "
-    lappend x [getsize]
-    .b.l config -wrap 0
-    set x
-} "{[expr $ax*3] [expr $ay*2]} {[expr $ax*3] $ay}"
-test font-24.12 {Tk_ComputeTextLayout: append non-printing spaces to chunk} {
+    .t.l config -text "000            000" -wrap [expr {$ax * 5}]
+	update
+	lappend x [expr {[winfo reqwidth .t.l] eq [expr {$ax * 3}]}]
+	lappend x [expr {[winfo reqheight .t.l] eq [expr {$ay * 2}]}]
+    .t.l config -text "000            "
+	update
+	lappend x [expr {[winfo reqwidth .t.l] eq [expr {$ax * 3}]}]
+	lappend x [expr {[winfo reqheight .t.l] eq $ay}]
+    return $x
+} -cleanup {
+    .t.l config -wrap 0
+} -result {1 1 1 1}
+test font-24.12 {Tk_ComputeTextLayout: append non-printing spaces to chunk} -body {
     set x {}
-    .b.l config -text "000            0000" -wrap [expr $ax*5]
-    lappend x [getsize]
-    .b.l config -text "000\t00            0000" -wrap [expr $ax*12]
-    lappend x [getsize]
-    .b.l config -wrap 0
-    set x
-} "{[expr $ax*4] [expr $ay*2]} {[expr $ax*10] [expr $ay*2]}"
-test font-24.13 {Tk_ComputeTextLayout: many lines -> realloc line array} {
-    .b.l config -text "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
-    getsize
-} "1 [expr $ay*129]"
-test font-24.14 {Tk_ComputeTextLayout: text ended with \n} {
-    list [.b.l config -text "0000"; getsize] [.b.l config -text "0000\n"; getsize]
-} "{[expr $ax*4] $ay} {[expr $ax*4] [expr $ay*2]}"
-test font-24.15 {Tk_ComputeTextLayout: justification} {
+    .t.l config -text "000            0000" -wrap [expr {$ax * 5}]
+	update
+	lappend x [expr {[winfo reqwidth .t.l] eq [expr {$ax * 4}]}]
+	lappend x [expr {[winfo reqheight .t.l] eq [expr {$ay * 2}]}]
+    .t.l config -text "000\t00            0000" -wrap [expr {$ax * 12}]
+	update
+	lappend x [expr {[winfo reqwidth .t.l] eq [expr {$ax * 10}]}]
+	lappend x [expr {[winfo reqheight .t.l] eq [expr {$ay * 2}]}]
+    return $x
+} -cleanup {
+    .t.l config -wrap 0
+} -result {1 1 1 1}
+test font-24.13 {Tk_ComputeTextLayout: many lines -> realloc line array} -body {
+    .t.l config -text "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+	update
+	list [expr {[winfo reqwidth .t.l] eq 1}] \
+		[expr {[winfo reqheight .t.l] eq [expr {$ay * 129}]}]
+} -result {1 1}
+test font-24.14 {Tk_ComputeTextLayout: text ended with \n} -body {
+    set x {}
+	.t.l config -text "0000"
+	update
+	lappend x [expr {[winfo reqwidth .t.l] eq [expr {$ax * 4}]}]
+	lappend x [expr {[winfo reqheight .t.l] eq $ay}]
+	.t.l config -text "0000\n"
+	update
+	lappend x [expr {[winfo reqwidth .t.l] eq [expr {$ax * 4}]}]
+	lappend x [expr {[winfo reqheight .t.l] eq [expr {$ay * 2}]}]
+    return $x
+} -result {1 1 1 1}
+destroy .t.l 
+
+test font-24.15 {Tk_ComputeTextLayout: justification} -setup {
+    set x {}
+	destroy .t.c
+	canvas .t.c -closeenough 0 
+	.t.c create text 0 0 -tags text -anchor nw -just left -font "Courier -12"
+	pack .t.c
+	update
+} -body {
     csetup "000\n00000"
-    set x {}
-    .b.c itemconfig text -just left
-    lappend x [.b.c index text @[expr $ax*2],0]
-    .b.c itemconfig text -just center
-    lappend x [.b.c index text @[expr $ax*2],0]
-    .b.c itemconfig text -just right
-    lappend x [.b.c index text @[expr $ax*2],0]
-    .b.c itemconfig text -just left
-    set x
-} {2 1 0}
+    .t.c itemconfig text -just left
+    lappend x [.t.c index text @[expr $ax*2],0]
+    .t.c itemconfig text -just center
+    lappend x [.t.c index text @[expr $ax*2],0]
+    .t.c itemconfig text -just right
+    lappend x [.t.c index text @[expr $ax*2],0]
+    .t.c itemconfig text -just left
+    return $x
+} -cleanup {
+	destroy .t.c
+} -result {2 1 0}
 
-test font-25.1 {Tk_FreeTextLayout procedure} {
-    setup
-    .b.f config -text foo
-    .b.f config -text boo
-} {}
+
+test font-25.1 {Tk_FreeTextLayout procedure} -setup {
+    destroy .t.f
+    pack [label .t.f]
+    update
+} -body {
+    .t.f config -text foo
+    .t.f config -text boo
+} -cleanup {
+	destroy .t.f
+} -result {}
     
-test font-26.1 {Tk_DrawTextLayout procedure: auto-detect last char} {
-    .b.f config -text foo
-} {}
-test font-26.2 {Tk_DrawTextLayout procedure: multiple chunks} {
+
+# Canvas created for tests: 26.*
+destroy .t.c
+canvas .t.c -closeenough 0 
+.t.c create text 0 0 -tags text -anchor nw -just left -font "Courier -12"
+pack .t.c
+update
+test font-26.1 {Tk_DrawTextLayout procedure: auto-detect last char} -setup {
+    destroy .t.f
+    pack [label .t.f]
+    update
+} -body {
+    .t.f config -text foo
+} -cleanup {
+	destroy .t.f
+} -result {}
+test font-26.2 {Tk_DrawTextLayout procedure: multiple chunks} -body {
     csetup "000\t00\n000"
-} {}
-test font-26.3 {Tk_DrawTextLayout: draw subset of chunk: numDisplay <= 0} {
+} -result {}
+test font-26.3 {Tk_DrawTextLayout: draw subset of chunk: numDisplay <= 0} -body {
     csetup "000\t00"
-    .b.c select from text 3
-    .b.c select to text 5
-} {}
-test font-26.4 {Tk_DrawTextLayout: draw subset of chunk: firstChar <= 0} {
-    .b.c select from text 3
-    .b.c select to text 5
-} {}
-test font-26.5 {Tk_DrawTextLayout: draw subset of chunk: firstChar > 0} {
-    .b.c select from text 2
-    .b.c select to text 2
-} {}
-test font-26.6 {Tk_DrawTextLayout: draw subset of chunk: lastChar < numChars} {
-    .b.c select from text 4
-    .b.c select to text 4
-} {}
+    .t.c select from text 3
+    .t.c select to text 5
+} -result {}
+test font-26.4 {Tk_DrawTextLayout: draw subset of chunk: firstChar <= 0} -body {
+    csetup "000\t00"
+    .t.c select from text 3
+    .t.c select to text 5
+} -result {}
+test font-26.5 {Tk_DrawTextLayout: draw subset of chunk: firstChar > 0} -body {
+    csetup "000\t00"
+    .t.c select from text 2
+    .t.c select to text 2
+} -result {}
+test font-26.6 {Tk_DrawTextLayout: draw subset of chunk: lastChar < numChars} -body {
+    csetup "000\t00"
+    .t.c select from text 4
+    .t.c select to text 4
+} -result {}
+destroy .t.c
 
-test font-27.1 {Tk_UnderlineTextLayout procedure: no underline chosen} {
-    .b.f config -text "foo" -under -1
-} {}
-test font-27.2 {Tk_UnderlineTextLayout procedure: underline not visible} {
-    .b.f config -text "000          00000" -wrap [expr $ax*7] -under 10
-} {}
-test font-27.3 {Tk_UnderlineTextLayout procedure: underline is visible} {
-    .b.f config -text "000          00000" -wrap [expr $ax*7] -under 5
-    .b.f config -wrap -1 -under -1
-} {}
-    
-test font-28.1 {Tk_PointToChar procedure: above all lines} {
+#  Label used in 27.* tests
+destroy .t.f
+pack [label .t.f]
+update
+test font-27.1 {Tk_UnderlineTextLayout procedure: no underline chosen} -body {
+    .t.f config -text "foo" -under -1
+} -result {}
+test font-27.2 {Tk_UnderlineTextLayout procedure: underline not visible} -body {
+    .t.f config -text "000          00000" -wrap [expr $ax*7] -under 10
+} -result {}
+test font-27.3 {Tk_UnderlineTextLayout procedure: underline is visible} -body {
+    .t.f config -text "000          00000" -wrap [expr $ax*7] -under 5
+    .t.f config -wrap -1 -under -1
+} -result {}
+destroy .t.f
+
+
+
+# Canvas created for tests: 28.*
+destroy .t.c
+canvas .t.c -closeenough 0 
+.t.c create text 0 0 -tags text -anchor nw -just left -font "Courier -12"
+pack .t.c
+update
+test font-28.1 {Tk_PointToChar procedure: above all lines} -body {
     csetup "000"
-    .b.c index text @-1,0
-} {0}
-test font-28.2 {Tk_PointToChar procedure: no chars} {
+    .t.c index text @-1,0
+} -result {0}
+test font-28.2 {Tk_PointToChar procedure: no chars} -body {
     # After fixing the following bug:
     #
     # In canvas text item, it was impossible to click to position the
@@ -907,206 +1682,277 @@ test font-28.2 {Tk_PointToChar procedure: no chars} {
     # index of 1 if TextLayout contained 0 characters.
 
     csetup ""
-    .b.c index text @100,100
-} {0}
-test font-28.3 {Tk_PointToChar procedure: loop test} {
+    .t.c index text @100,100
+} -result {0}
+test font-28.3 {Tk_PointToChar procedure: loop test} -body {
     csetup "000\n000\n000\n000"
-    .b.c index text @10000,0
-} {3}
-test font-28.4 {Tk_PointToChar procedure: intersect line} {
+    .t.c index text @10000,0
+} -result {3}
+test font-28.4 {Tk_PointToChar procedure: intersect line} -body {
     csetup "000\n000\n000"
-    .b.c index text @0,$ay
-} {4}
-test font-28.5 {Tk_PointToChar procedure: to the left of all chunks} {
-    .b.c index text @-100,$ay
-} {4}
-test font-28.6 {Tk_PointToChar procedure: past any possible chunk} {
-    .b.c index text @100000,$ay
-} {7}
-test font-28.7 {Tk_PointToChar procedure: which chunk on this line} {
+    .t.c index text @0,$ay
+} -result {4}
+test font-28.5 {Tk_PointToChar procedure: to the left of all chunks} -body {
+    csetup "000\n000\n000"
+    .t.c index text @-100,$ay
+} -result {4}
+test font-28.6 {Tk_PointToChar procedure: past any possible chunk} -body {
+    csetup "000\n000\n000"
+    .t.c index text @100000,$ay
+} -result {7}
+test font-28.7 {Tk_PointToChar procedure: which chunk on this line} -body {
     csetup "000\n000\t000\t000\n000"
-    .b.c index text @[expr $ax*2],$ay
-} {6}
-test font-28.8 {Tk_PointToChar procedure: which chunk on this line} {
+    .t.c index text @[expr $ax*2],$ay
+} -result {6}
+test font-28.8 {Tk_PointToChar procedure: which chunk on this line} -body {
     csetup "000\n000\t000\t000\n000"
-    .b.c index text @[expr $ax*10],$ay
-} {10}
-test font-28.9 {Tk_PointToChar procedure: in special chunk} {
+    .t.c index text @[expr $ax*10],$ay
+} -result {10}
+test font-28.9 {Tk_PointToChar procedure: in special chunk} -body {
     csetup "000\n000\t000\t000\n000"
-    .b.c index text @[expr $ax*6],$ay
-} {7}
-test font-28.10 {Tk_PointToChar procedure: past all chars in chunk} {
+    .t.c index text @[expr $ax*6],$ay
+} -result {7}
+test font-28.10 {Tk_PointToChar procedure: past all chars in chunk} -body {
     csetup "000 0000000"
-    .b.c itemconfig text -width [expr $ax*5]
-    set x [.b.c index text @[expr $ax*5],0]
-    .b.c itemconfig text -width 0
-    set x
-} {3}
-test font-28.11 {Tk_PointToChar procedure: below all chunks} {
+    .t.c itemconfig text -width [expr $ax*5]
+    set x [.t.c index text @[expr $ax*5],0]
+    .t.c itemconfig text -width 0
+    return $x
+} -result {3}
+test font-28.11 {Tk_PointToChar procedure: below all chunks} -body {
     csetup "000 0000000"
-    .b.c index text @0,1000000
-} {11}
-    
-test font-29.1 {Tk_CharBBox procedure: index < 0} {
-    .b.f config -text "000" -underline -1
-} {}
-test font-29.2 {Tk_CharBBox procedure: loop} {
-    .b.f config -text "000\t000\t000\t000" -underline 9
-} {}
-test font-29.3 {Tk_CharBBox procedure: special char} {
-    .b.f config -text "000\t000\t000" -underline 7
-} {}
-test font-29.4 {Tk_CharBBox procedure: normal char} {
-    .b.f config -text "000" -underline 1
-} {}
-test font-29.5 {Tk_CharBBox procedure: right edge of bbox truncated} {
-    .b.f config -text "0    0000" -wrap [expr $ax*4] -under 2
-    .b.f config -wrap 0
-} {}
-test font-29.6 {Tk_CharBBox procedure: bbox pegged to right edge} {
-    .b.f config -text "0    0000" -wrap [expr $ax*4] -under 3
-    .b.f config -wrap 0
-} {}
+    .t.c index text @0,1000000
+} -result {11}
+destroy .t.c
 
-.b.c bind all <Enter> {lappend x [.b.c index current @%x,%y]}
 
-test font-30.1 {Tk_DistanceToTextLayout procedure: loop once} {
+#  Label used in 29.* tests
+destroy .t.f
+pack [label .t.f]
+update
+test font-29.1 {Tk_CharBBox procedure: index < 0} -body {
+    .t.f config -text "000" -underline -1
+} -result {}
+test font-29.2 {Tk_CharBBox procedure: loop} -body {
+    .t.f config -text "000\t000\t000\t000" -underline 9
+} -result {}
+test font-29.3 {Tk_CharBBox procedure: special char} -body {
+    .t.f config -text "000\t000\t000" -underline 7
+} -result {}
+test font-29.4 {Tk_CharBBox procedure: normal char} -body {
+    .t.f config -text "000" -underline 1
+} -result {}
+test font-29.5 {Tk_CharBBox procedure: right edge of bbox truncated} -body {
+    .t.f config -text "0    0000" -wrap [expr $ax*4] -under 2
+    .t.f config -wrap 0
+} -result {}
+test font-29.6 {Tk_CharBBox procedure: bbox pegged to right edge} -body {
+    .t.f config -text "0    0000" -wrap [expr $ax*4] -under 3
+    .t.f config -wrap 0
+} -result {}
+destroy .t.f
+
+
+
+# Canvas created for tests: 30.*
+destroy .t.c
+canvas .t.c -closeenough 0 
+.t.c create text 0 0 -tags text -anchor nw -just left -font "Courier -12"
+pack .t.c
+update
+test font-30.1 {Tk_DistanceToTextLayout procedure: loop once} -body {
     csetup "000\n000\n000"
+	.t.c bind all <Enter> {lappend x [.t.c index current @%x,%y]}
     set x {}
-    event generate .b.c <Leave>
-    event generate .b.c <Enter> -x 0 -y 0
-    set x
-} {0}
-test font-30.2 {Tk_DistanceToTextLayout procedure: loop multiple} {
+    event generate .t.c <Leave>
+    event generate .t.c <Enter> -x 0 -y 0
+    return $x
+} -cleanup {
+	bind all <Enter> {}
+} -result {0}
+test font-30.2 {Tk_DistanceToTextLayout procedure: loop multiple} -body {
     csetup "000\n000\n000"
+	.t.c bind all <Enter> {lappend x [.t.c index current @%x,%y]}
     set x {}
-    event generate .b.c <Leave>
-    event generate .b.c <Enter> -x $ax -y $ay
-    set x
-} {5}
-test font-30.3 {Tk_DistanceToTextLayout procedure: loop to end} {
+    event generate .t.c <Leave>
+    event generate .t.c <Enter> -x $ax -y $ay
+    return $x
+} -cleanup {
+	bind all <Enter> {}
+} -result {5}
+test font-30.3 {Tk_DistanceToTextLayout procedure: loop to end} -body {
     csetup "000\n0\n000"
+	.t.c bind all <Enter> {lappend x [.t.c index current @%x,%y]}
     set x {}
-    event generate .b.c <Leave>
-    event generate .b.c <Enter> -x [expr $ax*2] -y $ay
-    set x
-} {}
-test font-30.4 {Tk_DistanceToTextLayout procedure: hit a special char (tab)} {
+    event generate .t.c <Leave>
+    event generate .t.c <Enter> -x [expr $ax*2] -y $ay
+    return $x
+} -cleanup {
+	bind all <Enter> {}
+} -result {}
+test font-30.4 {Tk_DistanceToTextLayout procedure: hit a special char (tab)} -body {
     csetup "000\t000\n000"
+	.t.c bind all <Enter> {lappend x [.t.c index current @%x,%y]}
     set x {}
-    event generate .b.c <Leave>
-    event generate .b.c <Enter> -x [expr $ax*6] -y 0
-    set x
-} {3}
-test font-30.5 {Tk_DistanceToTextLayout procedure: ignore newline} {
+    event generate .t.c <Leave>
+    event generate .t.c <Enter> -x [expr $ax*6] -y 0
+    return $x
+} -cleanup {
+	bind all <Enter> {}
+} -result {3}
+test font-30.5 {Tk_DistanceToTextLayout procedure: ignore newline} -body {
     csetup "000\n0\n000"
+	.t.c bind all <Enter> {lappend x [.t.c index current @%x,%y]}
     set x {}
-    event generate .b.c <Leave>
-    event generate .b.c <Enter> -x [expr $ax*2] -y $ay
-    set x
-} {}
-test font-30.6 {Tk_DistanceToTextLayout procedure: ignore spaces at eol} {
+    event generate .t.c <Leave>
+    event generate .t.c <Enter> -x [expr $ax*2] -y $ay
+    return $x
+} -cleanup {
+	bind all <Enter> {}
+} -result {}
+test font-30.6 {Tk_DistanceToTextLayout procedure: ignore spaces at eol} -body {
     csetup "000\n000      000000000"
-    .b.c itemconfig text -width [expr $ax*10]
+    .t.c itemconfig text -width [expr $ax*10]
+	.t.c bind all <Enter> {lappend x [.t.c index current @%x,%y]}
     set x {}
-    event generate .b.c <Leave>
-    event generate .b.c <Enter> -x [expr $ax*5] -y $ay
-    .b.c itemconfig text -width 0
-    set x
-} {}
-.b.c itemconfig text -justify center
-test font-30.7 {Tk_DistanceToTextLayout procedure: on left side} {
+    event generate .t.c <Leave>
+    event generate .t.c <Enter> -x [expr $ax*5] -y $ay
+    .t.c itemconfig text -width 0
+    return $x
+} -cleanup {
+	bind all <Enter> {}
+} -result {}
+.t.c itemconfig text -justify center
+test font-30.7 {Tk_DistanceToTextLayout procedure: on left side} -body {
     csetup "0\n000"
+	.t.c bind all <Enter> {lappend x [.t.c index current @%x,%y]}
     set x {}
-    event generate .b.c <Leave>
-    event generate .b.c <Enter> -x 0 -y 0
-    set x
-} {}
-test font-30.8 {Tk_DistanceToTextLayout procedure: on right side} {
+    event generate .t.c <Leave>
+    event generate .t.c <Enter> -x 0 -y 0
+    return $x
+} -cleanup {
+	bind all <Enter> {}
+} -result {}
+test font-30.8 {Tk_DistanceToTextLayout procedure: on right side} -body {
     csetup "0\n000"
+	.t.c bind all <Enter> {lappend x [.t.c index current @%x,%y]}
     set x {}
-    event generate .b.c <Leave>
-    event generate .b.c <Enter> -x [expr $ax*2] -y 0
-    set x
-} {}
-test font-30.9 {Tk_DistanceToTextLayout procedure: inside line} {
+    event generate .t.c <Leave>
+    event generate .t.c <Enter> -x [expr $ax*2] -y 0
+    return $x
+} -cleanup {
+	bind all <Enter> {}
+} -result {}
+test font-30.9 {Tk_DistanceToTextLayout procedure: inside line} -body {
     csetup "0\n000"
+	.t.c bind all <Enter> {lappend x [.t.c index current @%x,%y]}
     set x {}
-    event generate .b.c <Leave>
-    event generate .b.c <Enter> -x $ax -y 0
-    set x
-} {0}
-test font-30.10 {Tk_DistanceToTextLayout procedure: above line} {
+    event generate .t.c <Leave>
+    event generate .t.c <Enter> -x $ax -y 0
+    return $x
+} -cleanup {
+	bind all <Enter> {}
+} -result {0}
+test font-30.10 {Tk_DistanceToTextLayout procedure: above line} -body {
     csetup "0\n000"
+	.t.c bind all <Enter> {lappend x [.t.c index current @%x,%y]}
     set x {}
-    event generate .b.c <Leave>
-    event generate .b.c <Enter> -x 0 -y 0
-    set x
-} {}
-test font-30.11 {Tk_DistanceToTextLayout procedure: below line} {
+    event generate .t.c <Leave>
+    event generate .t.c <Enter> -x 0 -y 0
+    return $x
+} -cleanup {
+	bind all <Enter> {}
+} -result {}
+test font-30.11 {Tk_DistanceToTextLayout procedure: below line} -body {
     csetup "000\n0"
+	.t.c bind all <Enter> {lappend x [.t.c index current @%x,%y]}
     set x {}
-    event generate .b.c <Leave>
-    event generate .b.c <Enter> -x 0 -y $ay
-    set x
-} {}
-test font-30.12 {Tk_DistanceToTextLayout procedure: in line} {
+    event generate .t.c <Leave>
+    event generate .t.c <Enter> -x 0 -y $ay
+    return $x
+} -cleanup {
+	bind all <Enter> {}
+} -result {}
+test font-30.12 {Tk_DistanceToTextLayout procedure: in line} -body {
     csetup "0\n000"
+	.t.c bind all <Enter> {lappend x [.t.c index current @%x,%y]}
     set x {}
-    event generate .b.c <Leave>
-    event generate .b.c <Enter> -x $ax -y $ay
-    set x
-} {3}
-.b.c itemconfig text -justify left
-test font-30.13 {Tk_DistanceToTextLayout procedure: exact hit} {
+    event generate .t.c <Leave>
+    event generate .t.c <Enter> -x $ax -y $ay
+    return $x
+} -cleanup {
+	bind all <Enter> {}
+} -result {3}
+.t.c itemconfig text -justify left
+test font-30.13 {Tk_DistanceToTextLayout procedure: exact hit} -body {
     csetup "000"
+	.t.c bind all <Enter> {lappend x [.t.c index current @%x,%y]}
     set x {}
-    event generate .b.c <Leave>
-    event generate .b.c <Enter> -x $ax -y 0
-    set x
-} {1}
+    event generate .t.c <Leave>
+    event generate .t.c <Enter> -x $ax -y 0
+    return $x
+} -cleanup {
+	bind all <Enter> {}
+} -result {1}
+destroy .t.c
 
-test font-31.1 {Tk_IntersectTextLayout procedure: loop once} {
+
+# Canvas created for tests 31.*
+destroy .t.c
+canvas .t.c -closeenough 0 
+.t.c create text 0 0 -tags text -anchor nw -just left -font "Courier -12"
+pack .t.c
+update
+test font-31.1 {Tk_IntersectTextLayout procedure: loop once} -body {
     csetup "000\n000\n000"
-    .b.c find overlapping 0 0 0 0
-} [.b.c find withtag text]
-test font-31.2 {Tk_IntersectTextLayout procedure: loop multiple} {
+    .t.c find overlapping 0 0 0 0
+} -result [.t.c find withtag text]
+test font-31.2 {Tk_IntersectTextLayout procedure: loop multiple} -body {
     csetup "000\t000\t000"
-    .b.c find overlapping [expr $ax*10] 0 [expr $ax*10] 0
-} [.b.c find withtag text]
-test font-31.3 {Tk_IntersectTextLayout procedure: loop to end} {
+    .t.c find overlapping [expr $ax*10] 0 [expr $ax*10] 0
+} -result [.t.c find withtag text]
+test font-31.3 {Tk_IntersectTextLayout procedure: loop to end} -body {
     csetup "0\n000"
-    .b.c find overlapping [expr $ax*2] 0 [expr $ax*2] 0
-} {}
-test font-31.4 {Tk_IntersectTextLayout procedure: hit a special char (tab)} {
+    .t.c find overlapping [expr $ax*2] 0 [expr $ax*2] 0
+} -result {}
+test font-31.4 {Tk_IntersectTextLayout procedure: hit a special char (tab)} -body {
     csetup "000\t000"
-    .b.c find overlapping [expr $ax*6] 0 [expr $ax*6] 0
-} [.b.c find withtag text]
-test font-31.5 {Tk_IntersectTextLayout procedure: ignore newlines} {
+    .t.c find overlapping [expr $ax*6] 0 [expr $ax*6] 0
+} -result [.t.c find withtag text]
+test font-31.5 {Tk_IntersectTextLayout procedure: ignore newlines} -body {
     csetup "000\n0\n000"
-    .b.c find overlapping $ax $ay $ax $ay
-} {}
-test font-31.6 {Tk_IntersectTextLayout procedure: ignore spaces at eol} {
+    .t.c find overlapping $ax $ay $ax $ay
+} -result {}
+test font-31.6 {Tk_IntersectTextLayout procedure: ignore spaces at eol} -body {
     csetup "000\n000      000000000"
-    .b.c itemconfig text -width [expr $ax*10]
-    set x [.b.c find overlapping [expr $ax*5] $ay [expr $ax*5] $ay]
-    .b.c itemconfig text -width 0
-    set x
-} {}
+    .t.c itemconfig text -width [expr $ax*10]
+    set x [.t.c find overlapping [expr $ax*5] $ay [expr $ax*5] $ay]
+    .t.c itemconfig text -width 0
+    return $x
+} -result {}
+destroy .t.c
 
-test font-32.1 {Tk_TextLayoutToPostscript: ensure buffer doesn't overflow} {
+
+test font-32.1 {Tk_TextLayoutToPostscript: ensure buffer doesn't overflow} -setup {
+	destroy .t.c
+	canvas .t.c -closeenough 0 
+	.t.c create text 0 0 -tags text -anchor nw -just left -font "Courier -12"
+	pack .t.c
+	update
+} -body {
     # If there were a whole bunch of returns or tabs in a row, then the
     # temporary buffer could overflow and write on the stack.
-    
     csetup "qwertyuiopasdfghjklzxcvbnm1234qwertyuiopasdfghjklzxcvbnm\n"
-    .b.c itemconfig text -width 800
-    .b.c insert text end "qwertyuiopasdfghjklzxcvbnm1234qwertyuiopasdfghjklzxcvbnm\n"
-    .b.c insert text end "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
-    .b.c insert text end "end"
-    set x [.b.c postscript]
+    .t.c itemconfig text -width 800
+    .t.c insert text end "qwertyuiopasdfghjklzxcvbnm1234qwertyuiopasdfghjklzxcvbnm\n"
+    .t.c insert text end "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+    .t.c insert text end "end"
+    set x [.t.c postscript]
     set i [string first "(qwerty" $x] 
     string range $x $i [expr {$i + 278}]
-} {(qwertyuiopasdfghjklzxcvbnm1234qwertyuiopasdfghjklzxcvbnm)]
+} -cleanup {
+	destroy .t.c
+} -result {(qwertyuiopasdfghjklzxcvbnm1234qwertyuiopasdfghjklzxcvbnm)]
 [(qwertyuiopasdfghjklzxcvbnm1234qwertyuiopasdfghjklzxcvbnm)]
 [()]
 [()]
@@ -1141,242 +1987,372 @@ test font-32.1 {Tk_TextLayoutToPostscript: ensure buffer doesn't overflow} {
 [(end)]
 }
 
-test font-33.1 {Tk_TextWidth procedure} {
-} {}
 
-test font-34.1 {ConfigAttributesObj procedure: arguments} {
+test font-33.1 {Tk_TextWidth procedure} -body {
+} -result {}
+
+
+test font-34.1 {ConfigAttributesObj procedure: arguments} -setup {
+    catch {font delete xyz}
+} -body {
     # (Tcl_GetIndexFromObj() != TCL_OK)
-    setup
-    list [catch {font create xyz -xyz} msg] $msg
-} {1 {bad option "-xyz": must be -family, -size, -weight, -slant, -underline, or -overstrike}}
-test font-34.2 {ConfigAttributesObj procedure: arguments} {
+    font create xyz -xyz
+} -returnCodes {
+    error
+} -result {bad option "-xyz": must be -family, -size, -weight, -slant, -underline, or -overstrike}
+test font-34.2 {ConfigAttributesObj procedure: arguments} -setup {
+    catch {font delete xyz}
+} -body {
     # (objc & 1)
-    setup
-    list [catch {font create xyz -family} msg] $msg
-} {1 {value for "-family" option missing}}
-foreach p {
-    {font-34.3 family xyz times}
-    {font-34.4 size 20 40}
-    {font-34.5 weight normal bold}
-    {font-34.6 slant roman italic}
-    {font-34.7 underline 0 1}
-    {font-34.8 overstrike 0 1}
-} {
-    lassign $p testName opt val1 val2
-    test $testName "ConfigAttributesObj procedure: $opt" {
-	setup
-	set x {}
-	font create xyz -$opt $val1
-	lappend x [font config xyz -$opt]
-	font config xyz -$opt $val2
-	lappend x [font config xyz -$opt]
-    } [list $val1 $val2]
-}
-foreach p {
-    {font-34.9  size   xyz {expected integer but got "xyz"}}
-    {font-34.10 weight xyz {bad -weight value "xyz": must be normal, or bold}}
-    {font-34.11 slant  xyz {bad -slant value "xyz": must be roman, or italic}}
-    {font-34.12 underline  xyz {expected boolean value but got "xyz"}}
-    {font-34.13 overstrike xyz {expected boolean value but got "xyz"}}
-} {
-    lassign $p testName opt val result
-    test $testName "ConfigAttributesObj procedure: $opt" -setup {
-	setup
-    } -body {
-	font create xyz -$opt $val
-    } -returnCodes error -result $result
-}
+    font create xyz -family
+} -returnCodes error -result {value for "-family" option missing}
 
-test font-35.1 {GetAttributeInfoObj procedure: one attribute} {
+test font-34.3 {ConfigAttributesObj procedure: family} -setup {
+    catch {font delete xyz}
+	set x {}
+} -body {
+	font create xyz -family xyz
+	lappend x [font config xyz -family]
+	font config xyz -family times
+	lappend x [font config xyz -family]
+} -cleanup {
+	font delete xyz
+} -result {xyz times}
+test font-34.4 {ConfigAttributesObj procedure: size} -setup {
+    catch {font delete xyz}
+	set x {}
+} -body {
+	font create xyz -size 20
+	lappend x [font config xyz -size]
+	font config xyz -size 40
+	lappend x [font config xyz -size]
+} -cleanup {
+	font delete xyz
+} -result {20 40}
+test font-34.5 {ConfigAttributesObj procedure: weight} -setup {
+    catch {font delete xyz}
+	set x {}
+} -body {
+	font create xyz -weight normal
+	lappend x [font config xyz -weight]
+	font config xyz -weight bold
+	lappend x [font config xyz -weight]
+} -cleanup {
+	font delete xyz
+} -result {normal bold}
+test font-34.6 {ConfigAttributesObj procedure: slant} -setup {
+    catch {font delete xyz}
+	set x {}
+} -body {
+	font create xyz -slant roman
+	lappend x [font config xyz -slant]
+	font config xyz -slant italic
+	lappend x [font config xyz -slant]
+} -cleanup {
+	font delete xyz
+} -result {roman italic}
+test font-34.7 {ConfigAttributesObj procedure: underline} -setup {
+    catch {font delete xyz}
+	set x {}
+} -body {
+	font create xyz -underline 0
+	lappend x [font config xyz -underline]
+	font config xyz -underline 1
+	lappend x [font config xyz -underline]
+} -cleanup {
+	font delete xyz
+} -result {0 1}
+test font-34.8 {ConfigAttributesObj procedure: overstrike} -setup {
+    catch {font delete xyz}
+	set x {}
+} -body {
+	font create xyz -overstrike 0
+	lappend x [font config xyz -overstrike]
+	font config xyz -overstrike 1
+	lappend x [font config xyz -overstrike]
+} -cleanup {
+	font delete xyz
+} -result {0 1}
+
+test font-34.9 {ConfigAttributesObj procedure: size} -body {
+	font create xyz -size xyz
+} -returnCodes error -result {expected integer but got "xyz"}
+test font-34.10 {ConfigAttributesObj procedure: weight} -body {
+	font create xyz -weight xyz
+} -returnCodes error -result {bad -weight value "xyz": must be normal, or bold}
+test font-34.11 {ConfigAttributesObj procedure: slant} -body {
+	font create xyz -slant xyz
+} -returnCodes error -result {bad -slant value "xyz": must be roman, or italic}
+test font-34.12 {ConfigAttributesObj procedure: underline} -body {
+	font create xyz -underline xyz
+} -returnCodes error -result {expected boolean value but got "xyz"}
+test font-34.13 {ConfigAttributesObj procedure: overstrike} -body {
+	font create xyz -overstrike xyz
+} -returnCodes error -result {expected boolean value but got "xyz"}
+
+
+test font-35.1 {GetAttributeInfoObj procedure: one attribute} -setup {
+    catch {font delete xyz}
+} -body {
     # (objPtr != NULL)
-    setup
     font create xyz -family xyz
     font config xyz -family
-} {xyz}
+} -cleanup {
+	font delete xyz
+} -result {xyz}
 
-test font-36.1 {GetAttributeInfoObj procedure: unknown attribute} {
+
+test font-36.1 {GetAttributeInfoObj procedure: unknown attribute} -setup {
+    catch {font delete xyz}
+} -body {
     # (Tcl_GetIndexFromObj() != TCL_OK)
-    setup
     font create xyz
-    list [catch {font config xyz -xyz} msg] $msg
-} {1 {bad option "-xyz": must be -family, -size, -weight, -slant, -underline, or -overstrike}}
+    font config xyz -xyz
+} -cleanup {
+	font delete xyz
+} -returnCodes {
+    error
+} -result {bad option "-xyz": must be -family, -size, -weight, -slant, -underline, or -overstrike}
 
-test font-37.1 {GetAttributeInfoObj procedure: all attributes} {
-    # not (objPtr != NULL) 
-    setup
+
+test font-37.1 {GetAttributeInfoObj procedure: all attributes} -setup {
+    catch {font delete xyz}
+} -body {
+    # not (objPtr != NULL)
     font create xyz -family xyz
     font config xyz
-} {-family xyz -size 0 -weight normal -slant roman -underline 0 -overstrike 0}
-set i 4
-foreach p {
-    {font-37.2 family     xyz    xyz}
-    {font-37.3 size       20     20}
-    {font-37.4 weight     normal normal}
-    {font-37.5 slant      italic italic}
-    {font-37.6 underline  yes    1}
-    {font-37.7 overstrike false  0}
-} {
-    lassign $p testName opt val expected
-    test $testName "GetAttributeInfo procedure: $opt" -setup {
-	setup
-    } -body {
-	font create xyz -$opt $val
-	font config xyz -$opt
-    } -result $expected
-}
+} -cleanup {
+	font delete xyz
+} -result {-family xyz -size 0 -weight normal -slant roman -underline 0 -overstrike 0}
+test font-37.2 {GetAttributeInfo procedure: family} -setup {
+    catch {font delete xyz}
+} -body {
+	font create xyz -family xyz
+	font config xyz -family
+} -cleanup {
+	font delete xyz
+} -result {xyz}
+test font-37.3 {GetAttributeInfo procedure: size} -setup {
+    catch {font delete xyz}
+	set x {}
+} -body {
+	font create xyz -size 20
+	font config xyz -size
+} -cleanup {
+	font delete xyz
+} -result {20}
+test font-37.4 {GetAttributeInfo procedure: weight} -setup {
+    catch {font delete xyz}
+	set x {}
+} -body {
+	font create xyz -weight normal
+	font config xyz -weight
+} -cleanup {
+	font delete xyz
+} -result {normal}
+test font-37.5 {GetAttributeInfo procedure: slant} -setup {
+    catch {font delete xyz}
+	set x {}
+} -body {
+	font create xyz -slant italic
+	font config xyz -slant
+} -cleanup {
+	font delete xyz
+} -result {italic}
+test font-37.6 {GetAttributeInfo procedure: underline} -setup {
+    catch {font delete xyz}
+	set x {}
+} -body {
+	font create xyz -underline yes
+	font config xyz -underline 
+} -cleanup {
+	font delete xyz
+} -result {1}
+test font-37.7 {GetAttributeInfo procedure: overstrike} -setup {
+    catch {font delete xyz}
+	set x {}
+} -body {
+	font create xyz -overstrike no
+	font config xyz -overstrike 
+} -cleanup {
+	font delete xyz
+} -result {0}
+
 
 # In tests below, one field is set to "xyz" so that font name doesn't
 # look like a native X font, so that ParseFontNameObj or TkParseXLFD will
 # be called.
 
-setup
-
-test font-38.1 {ParseFontNameObj procedure: begins with -} {
+test font-38.1 {ParseFontNameObj procedure: begins with -} -body {
     lindex [font actual -xyz-times-*-*-*-*-*-*-*-*-*-*-*-*] 1
-} $times
-test font-38.2 {ParseFontNameObj procedure: begins with -*} {
+} -result [font actual {times 0} -family]
+test font-38.2 {ParseFontNameObj procedure: begins with -*} -body {
     lindex [font actual -*-times-xyz-*-*-*-*-*-*-*-*-*-*-*] 1
-} $times
-test font-38.3 {ParseFontNameObj procedure: begins with -, doesn't look like list} {
+} -result [font actual {times 0} -family]
+test font-38.3 {ParseFontNameObj procedure: begins with -, doesn't look like list} -body {
     lindex [font actual -xyz-times-*-*-*-*-*-*-*-*-*-*-*-*] 1
-} $times
-test font-38.4 {ParseFontNameObj procedure: begins with -, looks like list} {
+} -result [font actual {times 0} -family]
+test font-38.4 {ParseFontNameObj procedure: begins with -, looks like list} -body {
     lindex [font actual {-family times}] 1
-} $times
-test font-38.5 {ParseFontNameObj procedure: begins with *} {
+} -result [font actual {times 0} -family]
+test font-38.5 {ParseFontNameObj procedure: begins with *} -body {
     lindex [font actual *-times-xyz-*-*-*-*-*-*-*-*-*-*-*] 1
-} $times
-test font-38.6 {ParseFontNameObj procedure: begins with *} {
+} -result [font actual {times 0} -family]
+test font-38.6 {ParseFontNameObj procedure: begins with *} -body {
     font actual *-times-xyz -family
-} $times
-test font-38.7 {ParseFontNameObj procedure: arguments} {noExceed} {
-    list [catch {font actual "\{xyz"} msg] $msg
-} [list 1 "font \"{xyz\" doesn't exist"]
-test font-38.8 {ParseFontNameObj procedure: arguments} {noExceed} {
-    list [catch {font actual ""} msg] $msg
-} {1 {font "" doesn't exist}}
-test font-38.9 {ParseFontNameObj procedure: arguments} {
-    list [catch {font actual {times 20 xyz xyz}} msg] $msg
-} {1 {unknown font style "xyz"}}
-test font-38.10 {ParseFontNameObj procedure: arguments} {
-    list [catch {font actual {times xyz xyz}} msg] $msg
-} {1 {expected integer but got "xyz"}}
-test font-38.12 {ParseFontNameObj procedure: stylelist loop} {unixOrPc} {
+} -result [font actual {times 0} -family]
+test font-38.7 {ParseFontNameObj procedure: arguments} -constraints noExceed -body {
+    font actual "\{xyz"
+} -returnCodes error -result "font \"{xyz\" doesn't exist"
+test font-38.8 {ParseFontNameObj procedure: arguments} -constraints noExceed -body {
+    font actual ""
+} -returnCodes error -result {font "" doesn't exist}
+test font-38.9 {ParseFontNameObj procedure: arguments} -body {
+    font actual {times 20 xyz xyz}
+} -returnCodes error -result {unknown font style "xyz"}
+test font-38.10 {ParseFontNameObj procedure: arguments} -body {
+    font actual {times xyz xyz}
+} -returnCodes error -result {expected integer but got "xyz"}
+test font-38.11 {ParseFontNameObj procedure: stylelist loop} -constraints {
+	unixOrPc
+} -body {
     lrange [font actual {times 12 bold italic overstrike underline}] 4 end
-} {-weight bold -slant italic -underline 1 -overstrike 1}
-test font-38.13 {ParseFontNameObj procedure: stylelist error} {
-    list [catch {font actual {times 12 bold xyz}} msg] $msg
-} {1 {unknown font style "xyz"}}
+} -result {-weight bold -slant italic -underline 1 -overstrike 1}
+test font-38.12 {ParseFontNameObj procedure: stylelist error} -body {
+    font actual {times 12 bold xyz}
+} -returnCodes error -result {unknown font style "xyz"}
+test font-38.13 "ParseFontNameObj: options with hyphenated family: bug #2791352" -body {
+    font actual {-family sans-serif -size 12 -weight bold -slant roman -underline 0 -overstrike 0}
+} -returnCodes ok -result [font actual {sans-serif 12 bold}]
+test font-38.14 "ParseFontNameObj: bug #2791352" -body {
+    font actual {-invalidfont 8 bold}
+} -returnCodes error -match glob -result {bad option "-invalidfont": *}
 
-test font-39.1 {NewChunk procedure: test realloc} {
-    .b.f config -text "xxx\nxxx\txxx\nxxx\t\t\t"
-} {}
 
-test font-40.1 {TkFontParseXLFD procedure: initial dash} {
+test font-39.1 {NewChunk procedure: test realloc} -setup {
+    destroy .t.f
+    pack [label .t.f]
+    update
+} -body {
+    .t.f config -text "xxx\nxxx\txxx\nxxx\t\t\t"
+} -cleanup {
+	destroy .t.f
+} -result {}
+
+
+test font-40.1 {TkFontParseXLFD procedure: initial dash} -body {
     font actual -xyz-times-*-*-*-*-*-*-*-*-*-*-*-* -family
-} $times
-test font-40.2 {TkFontParseXLFD procedure: no initial dash} {
+} -result [font actual {times 0} -family]
+test font-40.2 {TkFontParseXLFD procedure: no initial dash} -body {
     font actual *-times-*-*-*-*-*-*-*-*-*-*-*-xyz -family
-} $times
-test font-40.3 {TkFontParseXLFD procedure: not enough fields} {
+} -result [font actual {times 0} -family]
+test font-40.3 {TkFontParseXLFD procedure: not enough fields} -body {
     font actual -xyz-times-*-*-* -family
-} $times
-test font-40.4 {TkFontParseXLFD procedure: all fields unspecified} {
+} -result [font actual {times 0} -family]
+test font-40.4 {TkFontParseXLFD procedure: all fields unspecified} -body {
     lindex [font actual -xyz-*-*-*-*-*-*-*-*-*-*-*-*-*] 0
-} {-family}
-test font-40.5 {TkFontParseXLFD procedure: all fields specified} {
-    lindex [font actual -foundry-times-weight-slant-setwidth-addstyle-10-10-10-10-spacing-avgwidth-registry-encoding] 1
-} $times
-test font-41.1 {TkParseXLFD procedure: arguments} {
+} -result {-family}
+test font-40.5 {TkFontParseXLFD procedure: all fields specified} -body {
+    lindex [font actual \
+        -foundry-times-weight-slant-setwidth-addstyle-10-10-10-10-spacing-avgwidth-registry-encoding] 1
+} -result [font actual {times 0} -family]
+
+
+test font-41.1 {TkParseXLFD procedure: arguments} -body {
     # XLFD with bad pointsize: fallback to some system font.
     font actual -*-*-*-*-*-*-xyz-*-*-*-*-*-*-*
     set x {}
-} {}
-test font-42.1 {TkFontParseXLFD procedure: arguments} {
+} -result {}
+
+
+test font-42.1 {TkFontParseXLFD procedure: arguments} -body {
     # XLFD with bad pixelsize: fallback to some system font.
     font actual -*-*-*-*-*-*-*-xyz-*-*-*-*-*-*
     set x {}
-} {}
-test font-42.2 {TkFontParseXLFD procedure: pixelsize specified} {
+} -result {}
+test font-42.2 {TkFontParseXLFD procedure: pixelsize specified} -body {
     font metrics -xyz-times-*-*-*-*-12-*-*-*-*-*-*-* -linespace
     set x {}
-} {}
-test font-42.3 {TkFontParseXLFD procedure: weird pixelsize specified} {
+} -result {}
+test font-42.3 {TkFontParseXLFD procedure: weird pixelsize specified} -body {
     font metrics {-xyz-times-*-*-*-*-[ 12.0 0 12.0 0]-*-*-*-*-*-*-*} -linespace
     set x {}
-} {}
-test font-42.4 {TkFontParseXLFD procedure: pointsize specified} {
+} -result {}
+test font-42.4 {TkFontParseXLFD procedure: pointsize specified} -body {
     font metrics -xyz-times-*-*-*-*-*-120-*-*-*-*-*-* -linespace
     set x {}
-} {}
-test font-42.5 {TkFontParseXLFD procedure: weird pointsize specified} {
+} -result {}
+test font-42.5 {TkFontParseXLFD procedure: weird pointsize specified} -body {
     font metrics {-xyz-times-*-*-*-*-*-[ 12.0 0 12.0 0]-*-*-*-*-*-*} -linespace
     set x {}
-} {}
+} -result {}
 
-test font-43.1 {FieldSpecified procedure: specified vs. non-specified} {
+
+test font-43.1 {FieldSpecified procedure: specified vs. non-specified} -body {
     font actual -xyz--*-*-*-*-*-*-*-*-*-*-*-*
     font actual -xyz-*-*-*-*-*-*-*-*-*-*-*-*-*
     font actual -xyz-?-*-*-*-*-*-*-*-*-*-*-*-*
     lindex [font actual -xyz-times-*-*-*-*-*-*-*-*-*-*-*-*] 1
-} $times
+} -result [font actual {times 0} -family]
 
-set oldscale [tk scaling]
-tk scaling 0.5
-test font-44.1 {TkFontGetPixels: size < 0} {
+
+test font-44.1 {TkFontGetPixels: size < 0} -setup {
+	set oldscale [tk scaling]
+} -body {
+	tk scaling 0.5
     font actual {times -12} -size
-} {24}
-test font-44.2 {TkFontGetPoints: size >= 0} {noExceed} {
+} -cleanup {
+	tk scaling $oldscale
+} -result {24}
+test font-44.2 {TkFontGetPoints: size >= 0} -constraints noExceed -setup {
+	set oldscale [tk scaling]
+} -body {
+	tk scaling 0.5
     font actual {times 12} -size
-} {12}
+} -cleanup {
+	tk scaling $oldscale
+} -result {12}
 
-tk scaling $oldscale
 
-test font-45.1 {TkFontGetAliasList: no match} {
+test font-45.1 {TkFontGetAliasList: no match} -body {
     font actual {snarky 10} -family
-} [font actual {-size 10} -family]
-test font-45.3 {TkFontGetAliasList: match} win {
+} -result [font actual {-size 10} -family]
+test font-45.2 {TkFontGetAliasList: match} -constraints win -body {
     font actual {times 10} -family
-} {Times New Roman}
-test font-45.4 {TkFontGetAliasList: match} {unix noExceed} {
+} -result {Times New Roman}
+test font-45.3 {TkFontGetAliasList: match} -constraints {unix noExceed} -body {
     # can fail on Unix systems that have a real "times new roman" font
     font actual {{times new roman} 10} -family
-} [font actual {times 10} -family]
+} -result [font actual {times 10} -family]
 
-test font-46.1 {font actual, with character, no option, no --} \
-    -body {
+
+test font-46.1 {font actual, with character, no option, no --} -body {
 	font actual {times 10} a
-    } \
-    -match glob \
-    -result [list -family [font actual {times 10} -family] -size *\
+} -match glob -result [list -family [font actual {times 10} -family] -size *\
 		 -slant roman -underline 0 -overstrike 0]
 
-test font-46.2 {font actual, with character introduced by --} \
-    -body {
+test font-46.2 {font actual, with character introduced by --} -body {
 	font actual {times 10} -- -
-    } \
-    -match glob \
-    -result [list -family [font actual {times 10} -family] -size *\
+} -match glob -result [list -family [font actual {times 10} -family] -size *\
 		 -slant roman -underline 0 -overstrike 0]
 
-test font-46.3 {font actual, with character and option} {
+test font-46.3 {font actual, with character and option} -body {
     font actual {times 10} -family a
-} [font actual {times 10} -family]
+} -result [font actual {times 10} -family]
 
-test font-46.4 {font actual, with character, option and --} {
+test font-46.4 {font actual, with character, option and --} -body {
     font actual {times 10} -family -- -
-} [font actual {times 10} -family]
+} -result [font actual {times 10} -family]
 
-test font-46.5 {font actual, too many chars} {
-    list [catch {
-	font actual {times 10} 123456789012345678901234567890123456789012345678901
-    } result] $result
-} {1 {expected a single character but got "1234567890123456789012345678901234567..."}}
+test font-46.5 {font actual, too many chars} -body {
+    font actual {times 10} 123456789012345678901234567890123456789012345678901
+} -returnCodes error -result {expected a single character but got "1234567890123456789012345678901234567..."}
 
-setup
-
-destroy .b
 
 # cleanup
 cleanupTests
 return
+
+
+
+

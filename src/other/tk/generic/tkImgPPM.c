@@ -36,14 +36,14 @@
  * The format record for the PPM file format:
  */
 
-static int		FileMatchPPM(Tcl_Channel chan, CONST char *fileName,
+static int		FileMatchPPM(Tcl_Channel chan, const char *fileName,
 			    Tcl_Obj *format, int *widthPtr, int *heightPtr,
 			    Tcl_Interp *interp);
 static int		FileReadPPM(Tcl_Interp *interp, Tcl_Channel chan,
-			    CONST char *fileName, Tcl_Obj *format,
+			    const char *fileName, Tcl_Obj *format,
 			    Tk_PhotoHandle imageHandle, int destX, int destY,
 			    int width, int height, int srcX, int srcY);
-static int		FileWritePPM(Tcl_Interp *interp, CONST char *fileName,
+static int		FileWritePPM(Tcl_Interp *interp, const char *fileName,
 			    Tcl_Obj *format, Tk_PhotoImageBlock *blockPtr);
 static int		StringWritePPM(Tcl_Interp *interp, Tcl_Obj *format,
 			    Tk_PhotoImageBlock *blockPtr);
@@ -95,7 +95,7 @@ static int		ReadPPMStringHeader(Tcl_Obj *dataObj, int *widthPtr,
 static int
 FileMatchPPM(
     Tcl_Channel chan,		/* The image file, open for reading. */
-    CONST char *fileName,	/* The name of the image file. */
+    const char *fileName,	/* The name of the image file. */
     Tcl_Obj *format,		/* User-specified format string, or NULL. */
     int *widthPtr, int *heightPtr,
 				/* The dimensions of the image are returned
@@ -131,7 +131,7 @@ static int
 FileReadPPM(
     Tcl_Interp *interp,		/* Interpreter to use for reporting errors. */
     Tcl_Channel chan,		/* The image file, open for reading. */
-    CONST char *fileName,	/* The name of the image file. */
+    const char *fileName,	/* The name of the image file. */
     Tcl_Obj *format,		/* User-specified format string, or NULL. */
     Tk_PhotoHandle imageHandle,	/* The photo image to write into. */
     int destX, int destY,	/* Coordinates of top-left pixel in photo
@@ -267,7 +267,7 @@ FileReadPPM(
 static int
 FileWritePPM(
     Tcl_Interp *interp,
-    CONST char *fileName,
+    const char *fileName,
     Tcl_Obj *format,
     Tk_PhotoImageBlock *blockPtr)
 {

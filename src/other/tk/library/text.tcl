@@ -88,10 +88,10 @@ bind Text <ButtonRelease-1> {
 bind Text <Control-1> {
     %W mark set insert @%x,%y
 }
-bind Text <Left> {
+bind Text <<PrevChar>> {
     tk::TextSetCursor %W insert-1displayindices
 }
-bind Text <Right> {
+bind Text <<NextChar>> {
     tk::TextSetCursor %W insert+1displayindices
 }
 bind Text <Up> {
@@ -100,10 +100,10 @@ bind Text <Up> {
 bind Text <Down> {
     tk::TextSetCursor %W [tk::TextUpDownLine %W 1]
 }
-bind Text <Shift-Left> {
+bind Text <<SelectPrevChar>> {
     tk::TextKeySelect %W [%W index {insert - 1displayindices}]
 }
-bind Text <Shift-Right> {
+bind Text <<SelectNextChar>> {
     tk::TextKeySelect %W [%W index {insert + 1displayindices}]
 }
 bind Text <Shift-Up> {
@@ -112,10 +112,10 @@ bind Text <Shift-Up> {
 bind Text <Shift-Down> {
     tk::TextKeySelect %W [tk::TextUpDownLine %W 1]
 }
-bind Text <Control-Left> {
+bind Text <<PrevWord>> {
     tk::TextSetCursor %W [tk::TextPrevPos %W insert tcl_startOfPreviousWord]
 }
-bind Text <Control-Right> {
+bind Text <<NextWord>> {
     tk::TextSetCursor %W [tk::TextNextWord %W insert]
 }
 bind Text <Control-Up> {
@@ -124,10 +124,10 @@ bind Text <Control-Up> {
 bind Text <Control-Down> {
     tk::TextSetCursor %W [tk::TextNextPara %W insert]
 }
-bind Text <Shift-Control-Left> {
+bind Text <<SelectPrevWord>> {
     tk::TextKeySelect %W [tk::TextPrevPos %W insert tcl_startOfPreviousWord]
 }
-bind Text <Shift-Control-Right> {
+bind Text <<SelectNextWord>> {
     tk::TextKeySelect %W [tk::TextNextWord %W insert]
 }
 bind Text <Shift-Control-Up> {
@@ -155,16 +155,16 @@ bind Text <Control-Next> {
     %W xview scroll 1 page
 }
 
-bind Text <Home> {
+bind Text <<LineStart>> {
     tk::TextSetCursor %W {insert display linestart}
 }
-bind Text <Shift-Home> {
+bind Text <<SelectLineStart>> {
     tk::TextKeySelect %W {insert display linestart}
 }
-bind Text <End> {
+bind Text <<LineEnd>> {
     tk::TextSetCursor %W {insert display lineend}
 }
-bind Text <Shift-End> {
+bind Text <<SelectLineEnd>> {
     tk::TextKeySelect %W {insert display lineend}
 }
 bind Text <Control-Home> {
@@ -211,15 +211,19 @@ bind Text <Delete> {
     if {[%W tag nextrange sel 1.0 end] ne ""} {
 	%W delete sel.first sel.last
     } else {
-	%W delete insert
+	if {[%W compare end != insert+1c]} {
+	    %W delete insert
+	}
 	%W see insert
     }
 }
 bind Text <BackSpace> {
     if {[%W tag nextrange sel 1.0 end] ne ""} {
 	%W delete sel.first sel.last
-    } elseif {[%W compare insert != 1.0]} {
-	%W delete insert-1c
+    } else {
+	if {[%W compare insert != 1.0]} {
+	    %W delete insert-1c
+	}
 	%W see insert
     }
 }
@@ -296,7 +300,7 @@ bind Text <Control-b> {
     }
 }
 bind Text <Control-d> {
-    if {!$tk_strictMotif} {
+    if {!$tk_strictMotif && [%W compare end != insert+1c]} {
 	%W delete insert
     }
 }
@@ -311,7 +315,7 @@ bind Text <Control-f> {
     }
 }
 bind Text <Control-k> {
-    if {!$tk_strictMotif} {
+    if {!$tk_strictMotif && [%W compare end != insert+1c]} {
 	if {[%W compare insert == {insert lineend}]} {
 	    %W delete insert
 	} else {
@@ -355,7 +359,7 @@ bind Text <Meta-b> {
     }
 }
 bind Text <Meta-d> {
-    if {!$tk_strictMotif} {
+    if {!$tk_strictMotif && [%W compare end != insert+1c]} {
 	%W delete insert [tk::TextNextWord %W insert]
     }
 }
@@ -471,6 +475,13 @@ if {[tk windowingsystem] eq "aqua"} {
 	    %W yview scroll [expr {(2-%D)/3}] pixels
 	}
     }
+    bind Text <Shift-MouseWheel> {
+	if {%D >= 0} {
+	    %W xview scroll [expr {-%D/3}] pixels
+	} else {
+	    %W xview scroll [expr {(2-%D)/3}] pixels
+	}
+    }
 }
 
 if {"x11" eq [tk windowingsystem]} {
@@ -486,6 +497,16 @@ if {"x11" eq [tk windowingsystem]} {
     bind Text <5> {
 	if {!$tk_strictMotif} {
 	    %W yview scroll 50 pixels
+	}
+    }
+    bind Text <Shift-4> {
+	if {!$tk_strictMotif} {
+	    %W xview scroll -50 pixels
+	}
+    }
+    bind Text <Shift-5> {
+	if {!$tk_strictMotif} {
+	    %W xview scroll 50 pixels
 	}
     }
 }
@@ -742,7 +763,6 @@ proc ::tk::TextAutoScan {w} {
 # pos -		The desired new position for the cursor in the window.
 
 proc ::tk::TextSetCursor {w pos} {
-
     if {[$w compare $pos == end]} {
 	set pos {end - 1 chars}
     }
@@ -765,7 +785,6 @@ proc ::tk::TextSetCursor {w pos} {
 #		actually been moved to this position yet).
 
 proc ::tk::TextKeySelect {w new} {
-
     set anchorname [tk::TextAnchor $w]
     if {[$w tag nextrange sel 1.0 end] eq ""} {
 	if {[$w compare $new < insert]} {

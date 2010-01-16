@@ -6,8 +6,8 @@
  *
  * Copyright (c) 1990-1994 The Regents of the University of California.
  * Copyright (c) 1994-1997 Sun Microsystems, Inc.
- * Copyright 2001, Apple Computer, Inc.
- * Copyright (c) 2006-2007 Daniel A. Steffen <das@users.sourceforge.net>
+ * Copyright 2001-2009, Apple Inc.
+ * Copyright (c) 2006-2009 Daniel A. Steffen <das@users.sourceforge.net>
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -28,7 +28,7 @@
  * Function prototypes
  */
 
-MODULE_SCOPE void TkMacOSXInitControlFontStyle(Tk_Font tkfont,
-	ControlFontStylePtr fsPtr);
+MODULE_SCOPE Tcl_Obj * TkMacOSXFontDescriptionForNSFontAndNSFontAttributes(
+	NSFont *nsFont, NSDictionary *nsAttributes);
 
 #endif /*TKMACOSXFONT_H*/

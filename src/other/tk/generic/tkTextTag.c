@@ -25,7 +25,7 @@
  * a whole is not.
  */
 
-static char *wrapStrings[] = {
+static const char *const wrapStrings[] = {
     "char", "none", "word", "", NULL
 };
 
@@ -36,7 +36,7 @@ static char *wrapStrings[] = {
  * widget as a whole is not.
  */
 
-static char *tabStyleStrings[] = {
+static const char *const tabStyleStrings[] = {
     "tabular", "wordprocessor", "", NULL
 };
 
@@ -101,7 +101,7 @@ static void		ChangeTagPriority(TkText *textPtr, TkTextTag *tagPtr,
 static TkTextTag *	FindTag(Tcl_Interp *interp, TkText *textPtr,
 			    Tcl_Obj *tagName);
 static void		SortTags(int numTags, TkTextTag **tagArrayPtr);
-static int		TagSortProc(CONST VOID *first, CONST VOID *second);
+static int		TagSortProc(const void *first, const void *second);
 static void             TagBindEvent(TkText *textPtr, XEvent *eventPtr,
 			    int numTags, TkTextTag **tagArrayPtr);
 
@@ -128,11 +128,11 @@ TkTextTagCmd(
     register TkText *textPtr,	/* Information about text widget. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *CONST objv[])	/* Argument objects. Someone else has already
+    Tcl_Obj *const objv[])	/* Argument objects. Someone else has already
 				 * parsed this command enough to know that
 				 * objv[1] is "tag". */
 {
-    static CONST char *tagOptionStrings[] = {
+    static const char *const tagOptionStrings[] = {
 	"add", "bind", "cget", "configure", "delete", "lower", "names",
 	"nextrange", "prevrange", "raise", "ranges", "remove", NULL
     };
@@ -146,7 +146,7 @@ TkTextTagCmd(
     TkTextIndex index1, index2;
 
     if (objc < 3) {
-	Tcl_WrongNumArgs(interp, 2, objv, "option ?arg arg ...?");
+	Tcl_WrongNumArgs(interp, 2, objv, "option ?arg ...?");
 	return TCL_ERROR;
     }
 
@@ -225,7 +225,7 @@ TkTextTagCmd(
 		    if (addTag && textPtr->exportSelection
 			    && !(textPtr->flags & GOT_SELECTION)) {
 			Tk_OwnSelection(textPtr->tkwin, XA_PRIMARY,
-				TkTextLostSelection, (ClientData) textPtr);
+				TkTextLostSelection, textPtr);
 			textPtr->flags |= GOT_SELECTION;
 		    }
 		    textPtr->abortSelections = 1;
@@ -253,7 +253,7 @@ TkTextTagCmd(
 	if (objc == 6) {
 	    int append = 0;
 	    unsigned long mask;
-	    char *fifth = Tcl_GetString(objv[5]);
+	    const char *fifth = Tcl_GetString(objv[5]);
 
 	    if (fifth[0] == 0) {
 		return Tk_DeleteBinding(interp,
@@ -285,13 +285,13 @@ TkTextTagCmd(
 		return TCL_ERROR;
 	    }
 	} else if (objc == 5) {
-	    CONST char *command;
+	    const char *command;
 
 	    command = Tk_GetBinding(interp,
 		    textPtr->sharedTextPtr->bindingTable,
 		    (ClientData) tagPtr->name, Tcl_GetString(objv[4]));
 	    if (command == NULL) {
-		CONST char *string = Tcl_GetStringResult(interp);
+		const char *string = Tcl_GetStringResult(interp);
 
 		/*
 		 * Ignore missing binding errors. This is a special hack that
@@ -336,7 +336,7 @@ TkTextTagCmd(
 
 	if (objc < 4) {
 	    Tcl_WrongNumArgs(interp, 3, objv,
-		    "tagName ?option? ?value? ?option value ...?");
+		    "tagName ?-option? ?value? ?-option value ...?");
 	    return TCL_ERROR;
 	}
 	tagPtr = TkTextCreateTag(textPtr, Tcl_GetString(objv[3]), &newTag);
@@ -353,7 +353,7 @@ TkTextTagCmd(
 	} else {
 	    int result = TCL_OK;
 
-	    if (Tk_SetOptions(interp, (char*)tagPtr, tagPtr->optionTable,
+	    if (Tk_SetOptions(interp, (char *) tagPtr, tagPtr->optionTable,
 		    objc-4, objv+4, textPtr->tkwin, NULL, NULL) != TCL_OK) {
 		return TCL_ERROR;
 	    }
@@ -541,7 +541,7 @@ TkTextTagCmd(
 
 		continue;
 	    }
-	    tagPtr = (TkTextTag *) Tcl_GetHashValue(hPtr);
+	    tagPtr = Tcl_GetHashValue(hPtr);
 	    if (tagPtr == textPtr->selTagPtr) {
 		continue;
 	    }
@@ -607,7 +607,7 @@ TkTextTagCmd(
 	    for (i=0, hPtr = Tcl_FirstHashEntry(
 		    &textPtr->sharedTextPtr->tagTable, &search);
 		    hPtr != NULL; i++, hPtr = Tcl_NextHashEntry(&search)) {
-		arrayPtr[i] = (TkTextTag *) Tcl_GetHashValue(hPtr);
+		arrayPtr[i] = Tcl_GetHashValue(hPtr);
 	    }
 
 	    /*
@@ -928,14 +928,14 @@ TkTextTagCmd(
 TkTextTag *
 TkTextCreateTag(
     TkText *textPtr,		/* Widget in which tag is being used. */
-    CONST char *tagName,	/* Name of desired tag. */
+    const char *tagName,	/* Name of desired tag. */
     int *newTag)		/* If non-NULL, then return 1 if new, or 0 if
 				 * already exists. */
 {
     register TkTextTag *tagPtr;
     Tcl_HashEntry *hPtr = NULL;
     int isNew;
-    CONST char *name;
+    const char *name;
 
     if (!strcmp(tagName, "sel")) {
         if (textPtr->selTagPtr != NULL) {
@@ -955,7 +955,7 @@ TkTextCreateTag(
 	    *newTag = isNew;
 	}
 	if (!isNew) {
-	    return (TkTextTag *) Tcl_GetHashValue(hPtr);
+	    return Tcl_GetHashValue(hPtr);
 	}
 	name = Tcl_GetHashKey(&textPtr->sharedTextPtr->tagTable, hPtr);
     }
@@ -1013,6 +1013,7 @@ TkTextCreateTag(
 	tagPtr->textPtr = textPtr;
 	textPtr->refCount++;
     } else {
+	CLANG_ASSERT(hPtr);
 	Tcl_SetHashValue(hPtr, tagPtr);
     }
     tagPtr->optionTable =
@@ -1048,7 +1049,7 @@ FindTag(
 {
     Tcl_HashEntry *hPtr;
     int len;
-    CONST char *str;
+    const char *str;
 
     str = Tcl_GetStringFromObj(tagName, &len);
     if (len == 3 && !strcmp(str,"sel")) {
@@ -1057,7 +1058,7 @@ FindTag(
     hPtr = Tcl_FindHashEntry(&textPtr->sharedTextPtr->tagTable,
 	    Tcl_GetString(tagName));
     if (hPtr != NULL) {
-	return (TkTextTag *) Tcl_GetHashValue(hPtr);
+	return Tcl_GetHashValue(hPtr);
     }
     if (interp != NULL) {
 	Tcl_AppendResult(interp, "tag \"", Tcl_GetString(tagName),
@@ -1279,8 +1280,8 @@ SortTags(
 
 static int
 TagSortProc(
-    CONST void *first,
-    CONST void *second)		/* Elements to be compared. */
+    const void *first,
+    const void *second)		/* Elements to be compared. */
 {
     TkTextTag *tagPtr1, *tagPtr2;
 
@@ -1349,7 +1350,7 @@ ChangeTagPriority(
     }
     for (hPtr = Tcl_FirstHashEntry(&textPtr->sharedTextPtr->tagTable, &search);
 	    hPtr != NULL; hPtr = Tcl_NextHashEntry(&search)) {
-	tagPtr2 = (TkTextTag *) Tcl_GetHashValue(hPtr);
+	tagPtr2 = Tcl_GetHashValue(hPtr);
 	if ((tagPtr2->priority >= low) && (tagPtr2->priority <= high)) {
 	    tagPtr2->priority += delta;
 	}
@@ -1380,7 +1381,7 @@ TkTextBindProc(
     ClientData clientData,	/* Pointer to canvas structure. */
     XEvent *eventPtr)		/* Pointer to X event that just happened. */
 {
-    TkText *textPtr = (TkText *) clientData;
+    TkText *textPtr = clientData;
     int repick  = 0;
 
 # define AnyButtonMask \
@@ -1686,9 +1687,9 @@ TagBindEvent(
     int numTags,		/* Number of relevant tags. */
     TkTextTag **tagArrayPtr)	/* Array of relevant tags. */
 {
-    #define NUM_BIND_TAGS 10
-    CONST char *nameArray[NUM_BIND_TAGS];
-    CONST char **nameArrPtr;
+#   define NUM_BIND_TAGS 10
+    const char *nameArray[NUM_BIND_TAGS];
+    const char **nameArrPtr;
     int i;
 
     /*
@@ -1696,7 +1697,7 @@ TagBindEvent(
      */
 
     if (numTags > NUM_BIND_TAGS) {
-	nameArrPtr = (CONST char **) ckalloc(numTags * sizeof(CONST char *));
+	nameArrPtr = (const char **) ckalloc(numTags * sizeof(const char *));
     } else {
 	nameArrPtr = nameArray;
     }

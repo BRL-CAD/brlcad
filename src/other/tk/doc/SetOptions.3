@@ -245,7 +245,6 @@ The \fBTk_Offset\fR macro is provided as a safe way of generating the
 Tk_OptionSpec structures.  It takes two arguments: the name of a type
 of record, and the name of a field in that record. It returns the byte
 offset of the named field in records of the given type.
-
 .SH "TEMPLATES"
 .PP
 The array of Tk_OptionSpec structures passed to \fBTk_CreateOptionTable\fR
@@ -264,7 +263,7 @@ typedef struct {
     int \fIflags\fR;
     ClientData \fIclientData\fR;
     int \fItypeMask\fR;
-} Tk_OptionSpec;
+} \fBTk_OptionSpec\fR;
 .CE
 The \fItype\fR field indicates what kind of configuration option this is
 (e.g. \fBTK_OPTION_COLOR\fR for a color value, or \fBTK_OPTION_INT\fR for
@@ -436,7 +435,7 @@ suitable for passing to \fBTcl_GetIndexFromObj\fR.  The value must
 be one of the strings in the table, or a unique abbreviation of
 one of the strings.  The internal form is an integer giving the index
 into the table of the matching string, like the return value
-from \fBTcl_GetStringFromObj\fR. 
+from \fBTcl_GetStringFromObj\fR.
 .TP
 \fBTK_OPTION_SYNONYM\fR
 This type is used to provide alternative names for an option (for
@@ -452,7 +451,6 @@ The value must be a window path name.  The internal form is a
 This option type requires \fItkwin\fR to be supplied to procedures
 such as \fBTk_SetOptions\fR (in order to identify the application),
 and it supports the \fBTK_OPTION_NULL_OK\fR flag.
-
 .SH "STORAGE MANAGEMENT ISSUES"
 .PP
 If a field of a widget record has its offset stored in the \fIobjOffset\fR
@@ -476,7 +474,6 @@ However, the widget code is responsible for storing NULL or \fBNone\fR in
 all pointer and token fields before invoking \fBTk_InitOptions\fR.
 This is needed to allow proper cleanup in the rare case where
 an error occurs in \fBTk_InitOptions\fR.
-
 .SH "OBJOFFSET VS. INTERNALOFFSET"
 .PP
 In most cases it is simplest to use the \fIinternalOffset\fR field of
@@ -507,7 +504,6 @@ To implement a new type of option, you can use \fBTK_OPTION_STRING\fR as
 the type in the Tk_OptionSpec structure and set the \fIobjOffset\fR field
 but not the \fIinternalOffset\fR field.  Then, after calling
 \fBTk_SetOptions\fR, convert the object to internal form yourself.
-
 .SH "CUSTOM OPTION TYPES"
 .PP
 Applications can extend the built-in configuration types with
@@ -522,34 +518,34 @@ typedef struct Tk_ObjCustomOption {
     Tk_CustomOptionRestoreProc *\fIrestoreProc\fR;
     Tk_CustomOptionFreeProc *\fIfreeProc\fR;
     ClientData \fIclientData\fR;
-} Tk_ObjCustomOption;
+} \fBTk_ObjCustomOption\fR;
 
-typedef int Tk_CustomOptionSetProc(
-    ClientData \fIclientData\fR,
-    Tcl_Interp *\fIinterp\fR, 
-    Tk_Window \fItkwin\fR, 
-    Tcl_Obj **\fIvaluePtr\fR,
-    char *\fIrecordPtr\fR,
-    int \fIinternalOffset\fR,
-    char *\fIsaveInternalPtr\fR, 
-    int \fIflags\fR);
+typedef int \fBTk_CustomOptionSetProc\fR(
+        ClientData \fIclientData\fR,
+        Tcl_Interp *\fIinterp\fR,
+        Tk_Window \fItkwin\fR,
+        Tcl_Obj **\fIvaluePtr\fR,
+        char *\fIrecordPtr\fR,
+        int \fIinternalOffset\fR,
+        char *\fIsaveInternalPtr\fR,
+        int \fIflags\fR);
 
-typedef Tcl_Obj *Tk_CustomOptionGetProc(
-    ClientData \fIclientData\fR,
-    Tk_Window \fItkwin\fR, 
-    char *\fIrecordPtr\fR,
-    int \fIinternalOffset\fR);
+typedef Tcl_Obj *\fBTk_CustomOptionGetProc\fR(
+        ClientData \fIclientData\fR,
+        Tk_Window \fItkwin\fR,
+        char *\fIrecordPtr\fR,
+        int \fIinternalOffset\fR);
 
-typedef void Tk_CustomOptionRestoreProc(
-    ClientData \fIclientData\fR,
-    Tk_Window \fItkwin\fR, 
-    char *\fIinternalPtr\fR, 
-    char *\fIsaveInternalPtr\fR);
+typedef void \fBTk_CustomOptionRestoreProc\fR(
+        ClientData \fIclientData\fR,
+        Tk_Window \fItkwin\fR,
+        char *\fIinternalPtr\fR,
+        char *\fIsaveInternalPtr\fR);
 
-typedef void Tk_CustomOptionFreeProc(
-    ClientData \fIclientData\fR,
-    Tk_Window \fItkwin\fR, 
-    char *\fIinternalPtr\fR);
+typedef void \fBTk_CustomOptionFreeProc\fR(
+        ClientData \fIclientData\fR,
+        Tk_Window \fItkwin\fR,
+        char *\fIinternalPtr\fR);
 .CE
 .PP
 The Tk_ObjCustomOption structure contains six fields: a name
@@ -647,8 +643,6 @@ structure.  \fITkwin\fR is a copy of the \fItkwin\fR argument to
 is a pointer to the location where the internal representation of the
 option value is stored.  The \fIfreeProc\fR must free any storage
 associated with the option.  \fIFreeProc\fR has no return value.
-
-
 .SH KEYWORDS
 anchor, bitmap, boolean, border, color, configuration option,
 cursor, double, font, integer, justify,

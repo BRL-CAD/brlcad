@@ -1,0 +1,506 @@
+# The file tests the tclZlib.c file.
+#
+# This file contains a collection of tests for one or more of the Tcl built-in
+# commands. Sourcing this file into Tcl runs the tests and generates output
+# for errors. No output means no errors were found.
+#
+# Copyright (c) 1996-1998 by Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
+#
+# See the file "license.terms" for information on usage and redistribution of
+# this file, and for a DISCLAIMER OF ALL WARRANTIES.
+#
+# RCS: @(#) $Id$
+
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    package require tcltest 2.1
+    namespace import -force ::tcltest::*
+}
+
+testConstraint zlib [llength [info commands zlib]]
+
+test zlib-1.1 {zlib basics} -constraints zlib -returnCodes error -body {
+    zlib
+} -result {wrong # args: should be "zlib command arg ?...?"}
+test zlib-1.2 {zlib basics} -constraints zlib -returnCodes error -body {
+    zlib ? {}
+} -result {bad command "?": must be adler32, compress, crc32, decompress, deflate, gunzip, gzip, inflate, push, or stream}
+
+test zlib-2.1 {zlib compress/decompress} zlib {
+    zlib decompress [zlib compress abcdefghijklm]
+} abcdefghijklm
+
+test zlib-3.1 {zlib deflate/inflate} zlib {
+    zlib inflate [zlib deflate abcdefghijklm]
+} abcdefghijklm
+
+test zlib-4.1 {zlib gzip/gunzip} zlib {
+    zlib gunzip [zlib gzip abcdefghijklm]
+} abcdefghijklm
+test zlib-4.2 {zlib gzip/gunzip} zlib {
+    set s [string repeat abcdef 5]
+    list [zlib gunzip [zlib gzip $s -header {comment gorp}] -header head] \
+	[dict get $head comment] [dict get $head size]
+} {abcdefabcdefabcdefabcdefabcdef gorp 30}
+
+test zlib-5.1 {zlib adler32} zlib {
+    format %x [expr {[zlib adler32 abcdeabcdeabcdeabcdeabcdeabcde] & 0xffffffff}]
+} b3b50b9b
+test zlib-5.2 {zlib adler32} zlib {
+    format %x [expr {[zlib adler32 abcdeabcdeabcdeabcdeabcdeabcde 42] & 0xffffffff}]
+} b8830bc4
+test zlib-5.3 {zlib adler32} -constraints zlib -returnCodes error -body {
+    zlib adler32 abcdeabcdeabcdeabcdeabcdeabcde 42 x
+} -result {wrong # args: should be "zlib adler32 data ?startValue?"}
+
+test zlib-6.1 {zlib crc32} zlib {
+    format %x [expr {[zlib crc32 abcdeabcdeabcdeabcdeabcdeabcde] & 0xffffffff}]
+} 6f73e901
+test zlib-6.2 {zlib crc32} zlib {
+    format %x [expr {[zlib crc32 abcdeabcdeabcdeabcdeabcdeabcde 42] & 0xffffffff}]
+} ce1c4914
+test zlib-6.3 {zlib crc32} -constraints zlib -returnCodes error -body {
+    zlib crc32 abcdeabcdeabcdeabcdeabcdeabcde 42 x
+} -result {wrong # args: should be "zlib crc32 data ?startValue?"}
+test zlib-6.4 {zlib crc32: bug 2662434} -constraints zlib -body {
+    zlib crc32 "dabale arroz a la zorra el abad"
+} -result 3842832571
+
+test zlib-7.0 {zlib stream} -constraints zlib -returnCodes error -setup {
+    set s [zlib stream compress]
+} -body {
+    $s ?
+} -cleanup {
+    $s close
+} -result {bad option "?": must be add, checksum, close, eof, finalize, flush, fullflush, get, put, or reset}
+test zlib-7.1 {zlib stream} zlib {
+    set s [zlib stream compress]
+    $s put -finalize abcdeEDCBA
+    set data [$s get]
+    set result [list [$s get] [format %x [$s checksum]]]
+    $s close
+    lappend result [zlib decompress $data]
+} {{} 136f033f abcdeEDCBA}
+test zlib-7.2 {zlib stream} zlib {
+    set s [zlib stream decompress]
+    $s put -finalize [zlib compress abcdeEDCBA]
+    set data [$s get]
+    set result [list [$s get] [format %x [$s checksum]]]
+    $s close
+    lappend result $data
+} {{} 136f033f abcdeEDCBA}
+test zlib-7.3 {zlib stream} zlib {
+    set s [zlib stream deflate]
+    $s put -finalize abcdeEDCBA
+    set data [$s get]
+    set result [list [$s get] [format %x [$s checksum]]]
+    $s close
+    lappend result [zlib inflate $data]
+} {{} 1 abcdeEDCBA}
+test zlib-7.4 {zlib stream} zlib {
+    set s [zlib stream inflate]
+    $s put -finalize [zlib deflate abcdeEDCBA]
+    set data [$s get]
+    set result [list [$s get] [format %x [$s checksum]]]
+    $s close
+    lappend result $data
+} {{} 1 abcdeEDCBA}
+
+test zlib-8.1 {zlib transformation} -constraints zlib -setup {
+    set file [makeFile {} test.gz]
+} -body {
+    set f [zlib push gzip [open $file w] -header {comment gorp}]
+    puts $f "ok"
+    close $f
+    set f [zlib push gunzip [open $file]]
+    list [gets $f] [dict get [chan configure $f -header] comment]
+} -cleanup {
+    close $f
+    removeFile $file
+} -result {ok gorp}
+test zlib-8.2 {zlib transformation} -constraints zlib -setup {
+    set file [makeFile {} test.z]
+} -body {
+    set f [zlib push compress [open $file w]]
+    puts $f "ok"
+    close $f
+    set f [zlib push decompress [open $file]]
+    gets $f
+} -cleanup {
+    close $f
+    removeFile $file
+} -result ok
+test zlib-8.3 {zlib transformation and fileevent} -constraints zlib -setup {
+    set srv [socket -myaddr localhost -server {apply {{c a p} {
+        fconfigure $c -translation binary
+        puts -nonewline $c [zlib gzip [string repeat a 81920]]
+        close $c
+    }}} 0]
+    set port [lindex [fconfigure $srv -sockname] 2]
+    set file [makeFile {} test.gz]
+    set fout [open $file wb]
+} -body {
+    set sin [socket localhost $port]
+    try {
+	fconfigure $sin -translation binary
+	zlib push gunzip $sin
+	after 1000 {set total timeout}
+	fcopy $sin $fout -command {apply {{c {e {}}} {
+	    set ::total [expr {$e eq {} ? $c : $e}]
+	}}}
+	vwait total
+    } finally {
+	close $sin
+    }
+    append total --> [file size $file]
+} -cleanup {
+    close $fout
+    close $srv
+    removeFile $file
+} -result 81920-->81920
+test zlib-9.1 "check fcopy with push" -constraints zlib -setup {
+    set sfile [makeFile {} testsrc.gz]
+    set file [makeFile {} test.gz]
+    set f [open $sfile wb]
+    puts -nonewline $f [zlib gzip [string repeat a 81920]]
+    close $f
+} -body {
+    set fin [zlib push gunzip [open $sfile rb]]
+    set fout [open $file wb]
+    set total [fcopy $fin $fout]
+    close $fin ; close $fout
+    list copied $total size [file size $file]
+} -cleanup {
+    removeFile $file
+    removeFile $sfile
+} -result {copied 81920 size 81920}
+test zlib-9.2 "socket fcopy with push" -constraints zlib -setup {
+    set srv [socket -myaddr localhost -server {apply {{c a p} {
+        chan configure $c -encoding binary -translation binary
+        puts -nonewline $c [zlib gzip [string repeat a 81920]]
+        close $c
+    }}} 0]
+    set file [makeFile {} test.gz]
+} -body {
+    lassign [chan configure $srv -sockname] addr name port
+    set sin [socket $addr $port]
+    chan configure $sin -translation binary
+    zlib push gunzip $sin
+    update
+    set total [fcopy $sin [set fout [open $file wb]]]
+    close $sin
+    close $fout
+    list read $total size [file size $file]
+} -cleanup {
+    close $srv
+    removeFile $file
+} -result {read 81920 size 81920}
+test zlib-9.3 "socket fcopy bg (identity)" -constraints {tempNotWin zlib} -setup {
+    set srv [socket -myaddr localhost -server {apply {{c a p} {
+        #puts "connection from $a:$p on $c"
+        chan configure $c -encoding binary -translation binary
+        puts -nonewline $c [string repeat a 81920]
+        close $c
+    }}} 0]
+    set file [makeFile {} test.gz]
+} -body {
+    lassign [chan configure $srv -sockname] addr name port
+    #puts "listening for connections on $addr $port"
+    set sin [socket localhost $port]
+    chan configure $sin -translation binary
+    update
+    set fout [open $file wb]
+    after 1000 {set ::total timeout}
+    fcopy $sin $fout -command {apply {{c {e {}}} {
+        set ::total [expr {$e eq {} ? $c : $e}]
+    }}}
+    vwait ::total
+    close $sin; close $fout
+    list read $::total size [file size $file]
+} -cleanup {
+    close $srv
+    removeFile $file
+} -returnCodes {ok error} -result {read 81920 size 81920}
+test zlib-9.4 "socket fcopy bg (gzip)" -constraints zlib -setup {
+    set srv [socket -myaddr localhost -server {apply {{c a p} {
+        chan configure $c -encoding binary -translation binary
+        puts -nonewline $c [zlib gzip [string repeat a 81920]]
+        close $c
+    }}} 0]
+    set file [makeFile {} test.gz]
+} -body {
+    lassign [chan configure $srv -sockname] addr name port
+    set sin [socket $addr $port]
+    chan configure $sin -translation binary
+    zlib push gunzip $sin
+    update
+    set fout [open $file wb]
+    after 1000 {set ::total timeout}
+    fcopy $sin $fout -command {apply {{c {e {}}} {
+        set ::total [expr {$e eq {} ? $c : $e}]
+    }}}
+    vwait ::total
+    close $sin; close $fout
+    list read $::total size [file size $file]
+} -cleanup {
+    close $srv
+    removeFile $file
+} -result {read 81920 size 81920}
+test zlib-9.5 "socket fcopy incremental (gzip)" -constraints zlib -setup {
+    set srv [socket -myaddr localhost -server {apply {{c a p} {
+        chan configure $c -encoding binary -translation binary
+        puts -nonewline $c [zlib gzip [string repeat a 81920]]
+        close $c
+    }}} 0]
+    proc zlib95copy {i o t c {e {}}} {
+        incr t $c
+        if {$e ne {}} {
+            set ::total [list error $e]
+        } elseif {[eof $i]} {
+            set ::total [list eof $t]
+        } else {
+            fcopy $i $o -size 8192 -command [list zlib95copy $i $o $t]
+        }
+    }
+    set file [makeFile {} test.gz]
+} -body {
+    lassign [chan configure $srv -sockname] addr name port
+    set sin [socket $addr $port]
+    chan configure $sin -translation binary
+    zlib push gunzip $sin
+    update
+    set fout [open $file wb]
+    after 1000 {set ::total timeout}
+    fcopy $sin $fout -size 8192 -command [list zlib95copy $sin $fout 0]
+    vwait ::total
+    close $sin; close $fout
+    list $::total size [file size $file]
+} -cleanup {
+    close $srv
+    rename zlib95copy {}
+    removeFile $file
+} -result {{eof 81920} size 81920}
+test zlib-9.6 "bug #2818131 (gzip)" -constraints zlib -setup {
+    set srv [socket -myaddr localhost -server {apply {{c a p} {
+        chan configure $c -translation binary -buffering none
+        zlib push gzip $c
+        puts -nonewline $c [string repeat hello 100]
+        close $c
+    }}} 0]
+} -body {
+    lassign [chan configure $srv -sockname] addr name port
+    after 1000 {set ::total timeout}
+    set s [socket $addr $port]
+    chan configure $s -translation binary -buffering none
+    zlib push gunzip $s
+    chan event $s readable [list apply {{s} {
+        set d [read $s]
+        if {[eof $s]} {
+            chan event $s readable {}
+            set ::total [list eof [string length $d]]
+        }
+    }} $s]
+    vwait ::total
+    close $s
+    set ::total
+} -cleanup {
+    close $srv
+    unset -nocomplain total
+} -result {eof 500}
+test zlib-9.7 "bug #2818131 (compress)" -constraints zlib -setup {
+    set srv [socket -myaddr localhost -server {apply {{c a p} {
+        chan configure $c -translation binary -buffering none
+        zlib push compress $c
+        puts -nonewline $c [string repeat hello 100]
+        close $c
+    }}} 0]
+} -body {
+    lassign [chan configure $srv -sockname] addr name port
+    after 1000 {set ::total timeout}
+    set s [socket $addr $port]
+    chan configure $s -translation binary -buffering none
+    zlib push decompress $s
+    chan event $s readable [list apply {{s} {
+        set d [read $s]
+        if {[eof $s]} {
+            chan event $s readable {}
+            set ::total [list eof [string length $d]]
+        }
+    }} $s]
+    vwait ::total
+    close $s
+    set ::total
+} -cleanup {
+    close $srv
+    unset -nocomplain total
+} -result {eof 500}
+test zlib-9.8 "bug #2818131 (deflate)" -constraints zlib -setup {
+    set srv [socket -myaddr localhost -server {apply {{c a p} {
+        chan configure $c -translation binary -buffering none
+        zlib push deflate $c
+        puts -nonewline $c [string repeat hello 100]
+        close $c
+    }}} 0]
+} -body {
+    lassign [chan configure $srv -sockname] addr name port
+    after 1000 {set ::total timeout}
+    set s [socket $addr $port]
+    chan configure $s -translation binary -buffering none
+    zlib push inflate $s
+    chan event $s readable [list apply {{s} {
+        set d [read $s]
+        if {[eof $s]} {
+            chan event $s readable {}
+            set ::total [list eof [string length $d]]
+        }
+    }} $s]
+    vwait ::total
+    close $s
+    set ::total
+} -cleanup {
+    unset -nocomplain total
+    close $srv
+} -result {eof 500}
+test zlib-9.9 "bug #2818131 (gzip mismatch)" -constraints zlib -setup {
+    proc bgerror {s} {set ::total [list error $s]}
+    set srv [socket -myaddr localhost -server {apply {{c a p} {
+        chan configure $c -translation binary -buffering none
+        zlib push gzip $c
+        puts -nonewline $c [string repeat hello 100]
+        close $c
+    }}} 0]
+} -body {
+    lassign [chan configure $srv -sockname] addr name port
+    after 1000 {set ::total timeout}
+    set s [socket $addr $port]
+    try {
+        chan configure $s -translation binary -buffering none
+        zlib push inflate $s
+        chan event $s readable [list apply {{s} {
+            set d [read $s]
+            if {[eof $s]} {
+                chan event $s readable {}
+                set ::total [list eof [string length $d]]
+            }
+        }} $s]
+        vwait ::total
+    } finally {
+        close $s
+    }
+    set ::total
+} -cleanup {
+    unset -nocomplain total
+    close $srv
+    rename bgerror {}
+} -result {error {invalid block type}}
+test zlib-9.10 "bug #2818131 (compress mismatch)" -constraints zlib -setup {
+    proc bgerror {s} {set ::total [list error $s]}
+    set srv [socket -myaddr localhost -server {apply {{c a p} {
+        chan configure $c -translation binary -buffering none
+        zlib push compress $c
+        puts -nonewline $c [string repeat hello 100]
+        close $c
+    }}} 0]
+} -body {
+    lassign [chan configure $srv -sockname] addr name port
+    after 1000 {set ::total timeout}
+    set s [socket $addr $port]
+    try {
+        chan configure $s -translation binary -buffering none
+        zlib push inflate $s
+        chan event $s readable [list apply {{s} {
+            set d [read $s]
+            if {[eof $s]} {
+                chan event $s readable {}
+                set ::total [list eof [string length $d]]
+            }
+        }} $s]
+        vwait ::total
+    } finally {
+        close $s
+    }
+    set ::total
+} -cleanup {
+    unset -nocomplain total
+    close $srv
+    rename bgerror {}
+} -result {error {invalid stored block lengths}}
+test zlib-9.11 "bug #2818131 (deflate mismatch)" -constraints zlib -setup {
+    proc bgerror {s} {set ::total [list error $s]}
+    set srv [socket -myaddr localhost -server {apply {{c a p} {
+        chan configure $c -translation binary -buffering none
+        zlib push deflate $c
+        puts -nonewline $c [string repeat hello 100]
+        close $c
+    }}} 0]
+} -body {
+    lassign [chan configure $srv -sockname] addr name port
+    after 1000 {set ::total timeout}
+    set s [socket $addr $port]
+    try {
+        chan configure $s -translation binary -buffering none
+        zlib push gunzip $s
+        chan event $s readable [list apply {{s} {
+            set d [read $s]
+            if {[eof $s]} {
+                chan event $s readable {}
+                set ::total [list eof [string length $d]]
+            }
+        }} $s]
+        vwait ::total
+    } finally {
+        close $s
+    }
+    set ::total
+} -cleanup {
+    unset -nocomplain total
+    close $srv
+    rename bgerror {}
+} -result {error {incorrect header check}}
+
+test zlib-10.1 "bug #2818131 (close with null interp)" -constraints {
+    zlib
+} -setup {
+    proc bgerror {s} {set ::total [list error $s]}
+    set srv [socket -myaddr localhost -server {apply {{c a p} {
+        chan configure $c -translation binary -buffering none
+        zlib push inflate $c
+        chan event $c readable [list apply {{c} {
+            set d [read $c]
+            if {[eof $c]} {
+                chan event $c readable {}
+                close $c
+                set ::total [list eof [string length $d]]
+            }
+        }} $c]
+    }}} 0]
+} -body {
+    lassign [chan configure $srv -sockname] addr name port
+    after 1000 {set ::total timeout}
+    set s [socket $addr $port]
+    chan configure $s -translation binary -buffering none
+    zlib push gzip $s
+    chan event $s xyzzy [list apply {{s} {
+        if {[gets $s line] < 0} {
+            chan close $s
+        }
+    }} $s]
+    after idle [list apply {{s} {
+        puts $s test
+        chan close $s
+        after 100 {set ::total done}
+    }} $s]
+    vwait ::total
+    set ::total
+} -cleanup {
+    close $srv
+    rename bgerror {}
+} -returnCodes error \
+  -result {bad event name "xyzzy": must be readable or writable}
+
+::tcltest::cleanupTests
+return
+
+# Local Variables:
+# mode: tcl
+# End:

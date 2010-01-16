@@ -12,11 +12,11 @@
 .SH NAME
 keysyms \- keysyms recognized by Tk
 .BE
-
 .SH DESCRIPTION
 .PP
-Tk recognizes many keysyms when specifying key bindings (e.g. 
-\fBbind . <Key-\fR\fIkeysym\fR\fB>\fR).  The following list enumerates the
+Tk recognizes many keysyms when specifying key bindings (e.g.,
+.QW "\fBbind\fR \fB. <Key-\fR\fIkeysym\fR\fB>\fR" ).
+The following list enumerates the
 keysyms that will be recognized by Tk.  Note that not all keysyms will
 be valid on all platforms.  For example, on Unix systems, the presence
 of a particular keysym is dependant on the configuration of the
@@ -922,9 +922,10 @@ Hyper_L                          65517     0xffed
 Hyper_R                          65518     0xffee
 Delete                           65535     0xffff
 .CE
-
 .SH "SEE ALSO"
-bind
-
+bind(n), event(n)
 .SH KEYWORDS
-keysym, bind, binding
+bind, binding, event, keysym
+'\" Local Variables:
+'\" mode: nroff
+'\" End:

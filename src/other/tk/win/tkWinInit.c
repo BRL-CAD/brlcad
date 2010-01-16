@@ -70,7 +70,7 @@ TkpGetAppName(
     Tcl_DString *namePtr)	/* A previously initialized Tcl_DString. */
 {
     int argc, namelength;
-    CONST char **argv = NULL, *name, *p;
+    const char **argv = NULL, *name, *p;
 
     name = Tcl_GetVar(interp, "argv0", TCL_GLOBAL_ONLY);
     namelength = -1;
@@ -115,8 +115,8 @@ TkpGetAppName(
 
 void
 TkpDisplayWarning(
-    CONST char *msg,		/* Message to be displayed. */
-    CONST char *title)		/* Title of warning. */
+    const char *msg,		/* Message to be displayed. */
+    const char *title)		/* Title of warning. */
 {
     Tcl_DString msgString, titleString;
     Tcl_Encoding unicodeEncoding = TkWinGetUnicodeEncoding();
@@ -129,7 +129,7 @@ TkpDisplayWarning(
 #define TK_MAX_WARN_LEN (1024 * sizeof(WCHAR))
     Tcl_UtfToExternalDString(unicodeEncoding, msg, -1, &msgString);
     Tcl_UtfToExternalDString(unicodeEncoding, title, -1, &titleString);
-    if (Tcl_DStringLength(&msgString) > TK_MAX_WARN_LEN) {
+    if (Tcl_DStringLength(&msgString) > (int) TK_MAX_WARN_LEN) {
 	Tcl_DStringSetLength(&msgString, TK_MAX_WARN_LEN);
 	Tcl_DStringAppend(&msgString, (char *) L" ...", 4 * sizeof(WCHAR));
     }

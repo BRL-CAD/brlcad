@@ -28,7 +28,6 @@ Procedure to invoke when \fItkwin\fR loses selection ownership later.
 .AP ClientData clientData in
 Arbitrary one-word value to pass to \fIproc\fR.
 .BE
-
 .SH DESCRIPTION
 .PP
 \fBTk_OwnSelection\fR arranges for \fItkwin\fR to become the
@@ -41,12 +40,12 @@ invoked so that the window can clean itself up (e.g. by
 unhighlighting the selection).  \fIProc\fR should have arguments and
 result that match the type \fBTk_LostSelProc\fR:
 .CS
-typedef void Tk_LostSelProc(ClientData \fIclientData\fR);
+typedef void \fBTk_LostSelProc\fR(
+        ClientData \fIclientData\fR);
 .CE
 The \fIclientData\fR parameter to \fIproc\fR is a copy of the
 \fIclientData\fR argument given to \fBTk_OwnSelection\fR, and is
 usually a pointer to a data structure containing application-specific
 information about \fItkwin\fR.
-
 .SH KEYWORDS
 own, selection owner

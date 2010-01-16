@@ -10,7 +10,7 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-# 
+#
 # RCS: @(#) $Id$
 
 library tk
@@ -50,8 +50,8 @@ declare 4 generic {
 	    int relief)
 }
 declare 5 generic {
-    void Tk_AddOption(Tk_Window tkwin, CONST char *name,
-	    CONST char *value, int priority)
+    void Tk_AddOption(Tk_Window tkwin, const char *name,
+	    const char *value, int priority)
 }
 declare 6 generic {
     void Tk_BindEvent(Tk_BindingTable bindingTable,
@@ -69,7 +69,7 @@ declare 8 generic {
 }
 declare 9 generic {
     int Tk_CanvasGetCoord(Tcl_Interp *interp,
-	    Tk_Canvas canvas, CONST char *str, double *doublePtr)
+	    Tk_Canvas canvas, const char *str, double *doublePtr)
 }
 declare 10 generic {
     Tk_CanvasTextInfo *Tk_CanvasGetTextInfo(Tk_Canvas canvas)
@@ -103,10 +103,10 @@ declare 17 generic {
 }
 declare 18 generic {
     int Tk_CanvasTagsParseProc(ClientData clientData, Tcl_Interp *interp,
-	    Tk_Window tkwin, CONST char *value, char *widgRec, int offset)
+	    Tk_Window tkwin, const char *value, char *widgRec, int offset)
 }
 declare 19 generic {
-    char * Tk_CanvasTagsPrintProc(ClientData clientData, Tk_Window tkwin,
+    CONST86 char * Tk_CanvasTagsPrintProc(ClientData clientData, Tk_Window tkwin,
 	    char *widgRec, int offset, Tcl_FreeProc **freeProcPtr)
 }
 declare 20 generic {
@@ -129,7 +129,7 @@ declare 24 generic {
 }
 declare 25 generic {
     int Tk_ClipboardAppend(Tcl_Interp *interp,Tk_Window tkwin,
-	    Atom target, Atom format, char* buffer)
+	    Atom target, Atom format, const char* buffer)
 }
 declare 26 generic {
     int Tk_ClipboardClear(Tcl_Interp *interp, Tk_Window tkwin)
@@ -137,12 +137,12 @@ declare 26 generic {
 declare 27 generic {
     int Tk_ConfigureInfo(Tcl_Interp *interp,
 	    Tk_Window tkwin, Tk_ConfigSpec *specs,
-	    char *widgRec, CONST char *argvName, int flags)
+	    char *widgRec, const char *argvName, int flags)
 }
 declare 28 generic {
     int Tk_ConfigureValue(Tcl_Interp *interp,
 	    Tk_Window tkwin, Tk_ConfigSpec *specs,
-	    char *widgRec, CONST char *argvName, int flags)
+	    char *widgRec, const char *argvName, int flags)
 }
 declare 29 generic {
     int Tk_ConfigureWidget(Tcl_Interp *interp,
@@ -156,7 +156,7 @@ declare 30 generic {
 }
 declare 31 generic {
     Tk_TextLayout Tk_ComputeTextLayout(Tk_Font font,
-	    CONST char *str, int numChars, int wrapLength,
+	    const char *str, int numChars, int wrapLength,
 	    Tk_Justify justify, int flags, int *widthPtr,
 	    int *heightPtr)
 }
@@ -166,7 +166,7 @@ declare 32 generic {
 declare 33 generic {
     unsigned long Tk_CreateBinding(Tcl_Interp *interp,
 	    Tk_BindingTable bindingTable, ClientData object,
-	    CONST char *eventStr, CONST char *command, int append)
+	    const char *eventStr, const char *command, int append)
 }
 declare 34 generic {
     Tk_BindingTable Tk_CreateBindingTable(Tcl_Interp *interp)
@@ -185,13 +185,13 @@ declare 37 generic {
     void Tk_CreateGenericHandler(Tk_GenericProc *proc, ClientData clientData)
 }
 declare 38 generic {
-    void Tk_CreateImageType(Tk_ImageType *typePtr)
+    void Tk_CreateImageType(const Tk_ImageType *typePtr)
 }
 declare 39 generic {
     void Tk_CreateItemType(Tk_ItemType *typePtr)
 }
 declare 40 generic {
-    void Tk_CreatePhotoImageFormat(Tk_PhotoImageFormat *formatPtr)
+    void Tk_CreatePhotoImageFormat(const Tk_PhotoImageFormat *formatPtr)
 }
 declare 41 generic {
     void Tk_CreateSelHandler(Tk_Window tkwin,
@@ -201,15 +201,15 @@ declare 41 generic {
 }
 declare 42 generic {
     Tk_Window Tk_CreateWindow(Tcl_Interp *interp,
-	    Tk_Window parent, CONST char *name, CONST char *screenName)
+	    Tk_Window parent, const char *name, const char *screenName)
 }
 declare 43 generic {
     Tk_Window Tk_CreateWindowFromPath(Tcl_Interp *interp, Tk_Window tkwin,
-	    CONST char *pathName, CONST char *screenName)
+	    const char *pathName, const char *screenName)
 }
 declare 44 generic {
-    int Tk_DefineBitmap(Tcl_Interp *interp, CONST char *name,
-	    CONST char *source, int width, int height)
+    int Tk_OldDefineBitmap(Tcl_Interp *interp, const char *name,
+	    const char *source, int width, int height)
 }
 declare 45 generic {
     void Tk_DefineCursor(Tk_Window window, Tk_Cursor cursor)
@@ -220,7 +220,7 @@ declare 46 generic {
 declare 47 generic {
     int Tk_DeleteBinding(Tcl_Interp *interp,
 	    Tk_BindingTable bindingTable, ClientData object,
-	    CONST char *eventStr)
+	    const char *eventStr)
 }
 declare 48 generic {
     void Tk_DeleteBindingTable(Tk_BindingTable bindingTable)
@@ -237,7 +237,7 @@ declare 51 generic {
     void Tk_DeleteGenericHandler(Tk_GenericProc *proc, ClientData clientData)
 }
 declare 52 generic {
-    void Tk_DeleteImage(Tcl_Interp *interp, CONST char *name)
+    void Tk_DeleteImage(Tcl_Interp *interp, const char *name)
 }
 declare 53 generic {
     void Tk_DeleteSelHandler(Tk_Window tkwin, Atom selection, Atom target)
@@ -264,7 +264,7 @@ declare 58 generic {
 }
 declare 59 generic {
     void Tk_DrawChars(Display *display, Drawable drawable, GC gc,
-	    Tk_Font tkfont, CONST char *source, int numBytes, int x, int y)
+	    Tk_Font tkfont, const char *source, int numBytes, int x, int y)
 }
 declare 60 generic {
     void Tk_DrawFocusHighlight(Tk_Window tkwin, GC gc, int width,
@@ -288,7 +288,7 @@ declare 63 generic {
 	    int relief)
 }
 declare 64 generic {
-    Tk_PhotoHandle Tk_FindPhoto(Tcl_Interp *interp, CONST char *imageName)
+    Tk_PhotoHandle Tk_FindPhoto(Tcl_Interp *interp, const char *imageName)
 }
 declare 65 generic {
     Font Tk_FontId(Tk_Font font)
@@ -346,7 +346,7 @@ declare 81 generic {
 }
 declare 82 generic {
     int Tk_GetAnchor(Tcl_Interp *interp,
-	    CONST char *str, Tk_Anchor *anchorPtr)
+	    const char *str, Tk_Anchor *anchorPtr)
 }
 declare 83 generic {
     CONST84_RETURN char * Tk_GetAtomName(Tk_Window tkwin, Atom atom)
@@ -354,17 +354,17 @@ declare 83 generic {
 declare 84 generic {
     CONST84_RETURN char * Tk_GetBinding(Tcl_Interp *interp,
 	    Tk_BindingTable bindingTable, ClientData object,
-	    CONST char *eventStr)
+	    const char *eventStr)
 }
 declare 85 generic {
-    Pixmap Tk_GetBitmap(Tcl_Interp *interp, Tk_Window tkwin, CONST char * str)
+    Pixmap Tk_GetBitmap(Tcl_Interp *interp, Tk_Window tkwin, const char * str)
 }
 declare 86 generic {
-    Pixmap Tk_GetBitmapFromData(Tcl_Interp *interp,
-	    Tk_Window tkwin, CONST char *source, int width, int height)
+    Pixmap Tk_OldGetBitmapFromData(Tcl_Interp *interp,
+	    Tk_Window tkwin, const char *source, int width, int height)
 }
 declare 87 generic {
-    int Tk_GetCapStyle(Tcl_Interp *interp, CONST char *str, int *capPtr)
+    int Tk_GetCapStyle(Tcl_Interp *interp, const char *str, int *capPtr)
 }
 declare 88 generic {
     XColor * Tk_GetColor(Tcl_Interp *interp, Tk_Window tkwin, Tk_Uid name)
@@ -374,7 +374,7 @@ declare 89 generic {
 }
 declare 90 generic {
     Colormap Tk_GetColormap(Tcl_Interp *interp, Tk_Window tkwin,
-	    CONST char *str)
+	    const char *str)
 }
 declare 91 generic {
     Tk_Cursor Tk_GetCursor(Tcl_Interp *interp, Tk_Window tkwin,
@@ -382,13 +382,13 @@ declare 91 generic {
 }
 declare 92 generic {
     Tk_Cursor Tk_GetCursorFromData(Tcl_Interp *interp,
-	    Tk_Window tkwin, CONST char *source, CONST char *mask,
+	    Tk_Window tkwin, const char *source, const char *mask,
 	    int width, int height, int xHot, int yHot,
 	    Tk_Uid fg, Tk_Uid bg)
 }
 declare 93 generic {
     Tk_Font Tk_GetFont(Tcl_Interp *interp,
-	    Tk_Window tkwin, CONST char *str)
+	    Tk_Window tkwin, const char *str)
 }
 declare 94 generic {
     Tk_Font Tk_GetFontFromObj(Tk_Window tkwin, Tcl_Obj *objPtr)
@@ -400,40 +400,40 @@ declare 96 generic {
     GC Tk_GetGC(Tk_Window tkwin, unsigned long valueMask, XGCValues *valuePtr)
 }
 declare 97 generic {
-    Tk_Image Tk_GetImage(Tcl_Interp *interp, Tk_Window tkwin, CONST char *name,
+    Tk_Image Tk_GetImage(Tcl_Interp *interp, Tk_Window tkwin, const char *name,
 	    Tk_ImageChangedProc *changeProc, ClientData clientData)
 }
 declare 98 generic {
     ClientData Tk_GetImageMasterData(Tcl_Interp *interp,
-	    CONST char *name, Tk_ImageType **typePtrPtr)
+	    const char *name, CONST86 Tk_ImageType **typePtrPtr)
 }
 declare 99 generic {
     Tk_ItemType * Tk_GetItemTypes(void)
 }
 declare 100 generic {
-    int Tk_GetJoinStyle(Tcl_Interp *interp, CONST char *str, int *joinPtr)
+    int Tk_GetJoinStyle(Tcl_Interp *interp, const char *str, int *joinPtr)
 }
 declare 101 generic {
     int Tk_GetJustify(Tcl_Interp *interp,
-	    CONST char *str, Tk_Justify *justifyPtr)
+	    const char *str, Tk_Justify *justifyPtr)
 }
 declare 102 generic {
     int Tk_GetNumMainWindows(void)
 }
 declare 103 generic {
-    Tk_Uid Tk_GetOption(Tk_Window tkwin, CONST char *name,
-	    CONST char *className)
+    Tk_Uid Tk_GetOption(Tk_Window tkwin, const char *name,
+	    const char *className)
 }
 declare 104 generic {
     int Tk_GetPixels(Tcl_Interp *interp,
-	    Tk_Window tkwin, CONST char *str, int *intPtr)
+	    Tk_Window tkwin, const char *str, int *intPtr)
 }
 declare 105 generic {
     Pixmap Tk_GetPixmap(Display *display, Drawable d,
 	    int width, int height, int depth)
 }
 declare 106 generic {
-    int Tk_GetRelief(Tcl_Interp *interp, CONST char *name, int *reliefPtr)
+    int Tk_GetRelief(Tcl_Interp *interp, const char *name, int *reliefPtr)
 }
 declare 107 generic {
     void Tk_GetRootCoords(Tk_Window tkwin, int *xPtr, int *yPtr)
@@ -444,7 +444,7 @@ declare 108 generic {
 }
 declare 109 generic {
     int Tk_GetScreenMM(Tcl_Interp *interp,
-	    Tk_Window tkwin, CONST char *str, double *doublePtr)
+	    Tk_Window tkwin, const char *str, double *doublePtr)
 }
 declare 110 generic {
     int Tk_GetSelection(Tcl_Interp *interp,
@@ -452,11 +452,11 @@ declare 110 generic {
 	    Tk_GetSelProc *proc, ClientData clientData)
 }
 declare 111 generic {
-    Tk_Uid Tk_GetUid(CONST char *str)
+    Tk_Uid Tk_GetUid(const char *str)
 }
 declare 112 generic {
     Visual * Tk_GetVisual(Tcl_Interp *interp,
-	    Tk_Window tkwin, CONST char *str, int *depthPtr,
+	    Tk_Window tkwin, const char *str, int *depthPtr,
 	    Colormap *colormapPtr)
 }
 declare 113 generic {
@@ -480,7 +480,7 @@ declare 118 generic {
     int Tk_Init(Tcl_Interp *interp)
 }
 declare 119 generic {
-    Atom Tk_InternAtom(Tk_Window tkwin, CONST char *name)
+    Atom Tk_InternAtom(Tk_Window tkwin, const char *name)
 }
 declare 120 generic {
     int Tk_IntersectTextLayout(Tk_TextLayout layout, int x, int y,
@@ -498,14 +498,14 @@ declare 123 generic {
 }
 declare 124 generic {
     void Tk_ManageGeometry(Tk_Window tkwin,
-	    CONST Tk_GeomMgr *mgrPtr, ClientData clientData)
+	    const Tk_GeomMgr *mgrPtr, ClientData clientData)
 }
 declare 125 generic {
     void Tk_MapWindow(Tk_Window tkwin)
 }
 declare 126 generic {
     int Tk_MeasureChars(Tk_Font tkfont,
-	    CONST char *source, int numBytes, int maxPixels,
+	    const char *source, int numBytes, int maxPixels,
 	    int flags, int *lengthPtr)
 }
 declare 127 generic {
@@ -553,7 +553,7 @@ declare 140 generic {
 }
 declare 141 generic {
     Tk_Window Tk_NameToWindow(Tcl_Interp *interp,
-	    CONST char *pathName, Tk_Window tkwin)
+	    const char *pathName, Tk_Window tkwin)
 }
 declare 142 generic {
     void Tk_OwnSelection(Tk_Window tkwin,
@@ -563,7 +563,7 @@ declare 142 generic {
 declare 143 generic {
     int Tk_ParseArgv(Tcl_Interp *interp,
 	    Tk_Window tkwin, int *argcPtr, CONST84 char **argv,
-	    Tk_ArgvInfo *argTable, int flags)
+	    const Tk_ArgvInfo *argTable, int flags)
 }
 declare 144 generic {
     void Tk_PhotoPutBlock_NoComposite(Tk_PhotoHandle handle,
@@ -622,13 +622,13 @@ declare 159 generic {
     int Tk_SafeInit(Tcl_Interp *interp)
 }
 declare 160 generic {
-    CONST char * Tk_SetAppName(Tk_Window tkwin, CONST char *name)
+    const char * Tk_SetAppName(Tk_Window tkwin, const char *name)
 }
 declare 161 generic {
     void Tk_SetBackgroundFromBorder(Tk_Window tkwin, Tk_3DBorder border)
 }
 declare 162 generic {
-    void Tk_SetClass(Tk_Window tkwin, CONST char *className)
+    void Tk_SetClass(Tk_Window tkwin, const char *className)
 }
 declare 163 generic {
     void Tk_SetGrid(Tk_Window tkwin, int reqWidth, int reqHeight,
@@ -673,7 +673,7 @@ declare 175 generic {
     void Tk_TextLayoutToPostscript(Tcl_Interp *interp, Tk_TextLayout layout)
 }
 declare 176 generic {
-    int Tk_TextWidth(Tk_Font font, CONST char *str, int numBytes)
+    int Tk_TextWidth(Tk_Font font, const char *str, int numBytes)
 }
 declare 177 generic {
     void Tk_UndefineCursor(Tk_Window window)
@@ -681,7 +681,7 @@ declare 177 generic {
 declare 178 generic {
     void Tk_UnderlineChars(Display *display,
 	    Drawable drawable, GC gc, Tk_Font tkfont,
-	    CONST char *source, int x, int y, int firstByte,
+	    const char *source, int x, int y, int firstByte,
 	    int lastByte)
 }
 declare 179 generic {
@@ -730,7 +730,7 @@ declare 189 generic {
 }
 declare 190 generic {
     Tk_OptionTable Tk_CreateOptionTable(Tcl_Interp *interp,
-	    CONST Tk_OptionSpec *templatePtr)
+	    const Tk_OptionSpec *templatePtr)
 }
 declare 191 generic {
     void  Tk_DeleteOptionTable(Tk_OptionTable optionTable)
@@ -801,7 +801,7 @@ declare 209 generic {
 }
 declare 210 generic {
     int	 Tk_GetScrollInfoObj(Tcl_Interp *interp,
-	    int objc, Tcl_Obj *CONST objv[], double *dblPtr, int *intPtr)
+	    int objc, Tcl_Obj *const objv[], double *dblPtr, int *intPtr)
 }
 declare 211 generic {
     int	 Tk_InitOptions(Tcl_Interp *interp, char *recordPtr,
@@ -817,7 +817,7 @@ declare 213 generic {
 declare 214 generic {
     int	 Tk_SetOptions(Tcl_Interp *interp, char *recordPtr,
 	    Tk_OptionTable optionTable, int objc,
-	    Tcl_Obj *CONST objv[], Tk_Window tkwin,
+	    Tcl_Obj *const objv[], Tk_Window tkwin,
 	    Tk_SavedOptions *savePtr, int *maskPtr)
 }
 declare 215 generic {
@@ -827,7 +827,7 @@ declare 216 generic {
     int Tk_CreateConsoleWindow(Tcl_Interp *interp)
 }
 declare 217 generic {
-    void Tk_CreateSmoothMethod(Tcl_Interp *interp, Tk_SmoothMethod *method)
+    void Tk_CreateSmoothMethod(Tcl_Interp *interp, const Tk_SmoothMethod *method)
 }
 
 #declare 218 generic {
@@ -835,11 +835,11 @@ declare 217 generic {
 #}
 
 #declare 219 generic {
-#    VOID *Tk_GetCanvasVisitor(Tcl_Interp *interp, CONST char *name)
+#    VOID *Tk_GetCanvasVisitor(Tcl_Interp *interp, const char *name)
 #}
 
 declare 220 generic {
-    int Tk_GetDash(Tcl_Interp *interp, CONST char *value, Tk_Dash *dash)
+    int Tk_GetDash(Tcl_Interp *interp, const char *value, Tk_Dash *dash)
 }
 declare 221 generic {
     void Tk_CreateOutline(Tk_Outline *outline)
@@ -925,11 +925,11 @@ declare 240 generic {
 #
 declare 241 generic {
     Tk_Window Tk_CreateAnonymousWindow(Tcl_Interp *interp,
-	    Tk_Window parent, CONST char *screenName)
+	    Tk_Window parent, const char *screenName)
 }
 declare 242 generic {
     void Tk_SetClassProcs(Tk_Window tkwin,
-	    Tk_ClassProcs *procs, ClientData instanceData)
+	    const Tk_ClassProcs *procs, ClientData instanceData)
 }
 
 # New in 8.4a4
@@ -965,31 +965,31 @@ declare 248 generic {
 
 # Style engine
 declare 249 generic {
-    Tk_StyleEngine Tk_RegisterStyleEngine(CONST char *name,
+    Tk_StyleEngine Tk_RegisterStyleEngine(const char *name,
 	    Tk_StyleEngine parent)
 }
 declare 250 generic {
-    Tk_StyleEngine Tk_GetStyleEngine(CONST char *name)
+    Tk_StyleEngine Tk_GetStyleEngine(const char *name)
 }
 declare 251 generic {
     int Tk_RegisterStyledElement(Tk_StyleEngine engine,
 	    Tk_ElementSpec *templatePtr)
 }
 declare 252 generic {
-    int Tk_GetElementId(CONST char *name)
+    int Tk_GetElementId(const char *name)
 }
 declare 253 generic {
-    Tk_Style Tk_CreateStyle(CONST char *name, Tk_StyleEngine engine,
+    Tk_Style Tk_CreateStyle(const char *name, Tk_StyleEngine engine,
 	    ClientData clientData)
 }
 declare 254 generic {
-    Tk_Style Tk_GetStyle(Tcl_Interp *interp, CONST char *name)
+    Tk_Style Tk_GetStyle(Tcl_Interp *interp, const char *name)
 }
 declare 255 generic {
     void Tk_FreeStyle(Tk_Style style)
 }
 declare 256 generic {
-    CONST char * Tk_NameOfStyle(Tk_Style style)
+    const char * Tk_NameOfStyle(Tk_Style style)
 }
 declare 257 generic {
     Tk_Style  Tk_AllocStyleFromObj(Tcl_Interp *interp, Tcl_Obj *objPtr)
@@ -1068,10 +1068,21 @@ declare 271 generic {
 # Developers who need to produce a file [load]able into legacy interps must
 # build against legacy sources.
 declare 272 generic {
-    void Tk_CreateOldImageType(Tk_ImageType *typePtr)
+    void Tk_CreateOldImageType(const Tk_ImageType *typePtr)
 }
 declare 273 generic {
-    void Tk_CreateOldPhotoImageFormat(Tk_PhotoImageFormat *formatPtr)
+    void Tk_CreateOldPhotoImageFormat(const Tk_PhotoImageFormat *formatPtr)
+}
+
+# See [Enhancement request 2636558] Tk_DefineBitmap and
+# Tk_GetBitmapFromData signature problem
+declare 274 generic {
+    int Tk_DefineBitmap(Tcl_Interp *interp, const char *name,
+	    const void *source, int width, int height)
+}
+declare 275 generic {
+    Pixmap Tk_GetBitmapFromData(Tcl_Interp *interp,
+	    Tk_Window tkwin, const void *source, int width, int height)
 }
 
 # Define the platform specific public Tk interface.  These functions are
@@ -1137,10 +1148,10 @@ declare 6 aqua {
     void TkMacOSXInvalClipRgns(Tk_Window tkwin)
 }
 declare 7 aqua {
-    GWorldPtr TkMacOSXGetDrawablePort(Drawable drawable)
+    void *TkMacOSXGetDrawablePort(Drawable drawable)
 }
 declare 8 aqua {
-    ControlRef TkMacOSXGetRootControl(Drawable drawable)
+    void *TkMacOSXGetRootControl(Drawable drawable)
 }
 declare 9 aqua {
     void Tk_MacOSXSetupTkNotifier(void)
@@ -1154,28 +1165,6 @@ declare 10 aqua {
 # Public functions that are not accessible via the stubs table.
 
 export {
-    CONST char *Tk_InitStubs(Tcl_Interp *interp, CONST char *version,
+    const char *Tk_PkgInitStubsCheck(Tcl_Interp *interp, const char *version,
 	    int exact)
-}
-export {
-    CONST char *Tk_PkgInitStubsCheck(Tcl_Interp *interp, CONST char *version,
-	    int exact)
-}
-
-# Global variables that need to be exported from the tcl shared library.
-
-export {
-    TkStubs *tkStubsPtr                         (fool checkstubs)
-}
-export {
-    TkPlatStubs *tkPlatStubsPtr                 (fool checkstubs)
-}
-export {
-    TkIntStubs *tkIntStubsPtr                   (fool checkstubs)
-}
-export {
-    TkIntPlatStubs *tkIntPlatStubsPtr           (fool checkstubs)
-}
-export {
-    TkIntXlibStubs *tkIntXlibStubsPtr           (fool checkstubs)
 }

@@ -7,49 +7,58 @@
 #
 # RCS: @(#) $Id$
 
-package require tcltest 2.1
+package require tcltest 2.2
+namespace import ::tcltest::*
 eval tcltest::configure $argv
 tcltest::loadTestedCommands
 
-test bgerror-1.1 {bgerror / tkerror compat} {
+test bgerror-1.1 {bgerror / tkerror compat} -setup {
     set errRes {}
     proc tkerror {err} {
-	global errRes;
-	set errRes $err;
+        global errRes;
+        set errRes $err;
     }
+} -body {
     after 0 {error err1}
     vwait errRes;
-    set errRes;
-} err1
+    return $errRes;
+} -cleanup {
+    catch {rename tkerror {}}
+} -result {err1}
 
-test bgerror-1.2 {bgerror / tkerror compat / accumulation} {
+test bgerror-1.2 {bgerror / tkerror compat / accumulation} -setup {
     set errRes {}
     proc tkerror {err} {
-	global errRes;
-	lappend errRes $err;
+        global errRes;
+        lappend errRes $err;
     }
+} -body {
     after 0 {error err1}
     after 0 {error err2}
     after 0 {error err3}
     update
-    set errRes;
-} {err1 err2 err3}
+    return $errRes;
+} -cleanup {
+    catch {rename tkerror {}}
+} -result {err1 err2 err3}
 
-test bgerror-1.3 {bgerror / tkerror compat / accumulation / break} {
+test bgerror-1.3 {bgerror / tkerror compat / accumulation / break} -setup {
     set errRes {}
     proc tkerror {err} {
-	global errRes;
-	lappend errRes $err;
-	return -code break "skip!";
+        global errRes;
+        lappend errRes $err;
+        return -code break "skip!";
     }
+} -body {
     after 0 {error err1}
     after 0 {error err2}
     after 0 {error err3}
     update
-    set errRes;
-} err1
+    return $errRes;
+} -cleanup {
+    catch {rename tkerror {}}
+} -result {err1}
 
-catch {rename tkerror {}}
 
 # some testing of the default error dialog
 # would be needed too, but that's not easy at all

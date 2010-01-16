@@ -22,12 +22,12 @@
  */
 
 typedef struct VisualDictionary {
-    char *name;			/* Textual name of class. */
+    const char *name;			/* Textual name of class. */
     int minLength;		/* Minimum # characters that must be specified
 				 * for an unambiguous match. */
     int class;			/* X symbol for class. */
 } VisualDictionary;
-static VisualDictionary visualNames[] = {
+static const VisualDictionary visualNames[] = {
     {"best",		1,	0},
     {"directcolor",	2,	DirectColor},
     {"grayscale",	1,	GrayScale},
@@ -88,7 +88,7 @@ Visual *
 Tk_GetVisual(
     Tcl_Interp *interp,		/* Interpreter to use for error reporting. */
     Tk_Window tkwin,		/* Window in which visual will be used. */
-    CONST char *string,		/* String describing visual. See manual entry
+    const char *string,		/* String describing visual. See manual entry
 				 * for details. */
     int *depthPtr,		/* The depth of the returned visual is stored
 				 * here. */
@@ -103,8 +103,8 @@ Tk_GetVisual(
     Visual *visual;
     ptrdiff_t length;
     int c, numVisuals, prio, bestPrio, i;
-    CONST char *p;
-    VisualDictionary *dictPtr;
+    const char *p;
+    const VisualDictionary *dictPtr;
     TkColormap *cmapPtr;
     TkDisplay *dispPtr = ((TkWindow *) tkwin)->dispPtr;
 
@@ -303,6 +303,7 @@ Tk_GetVisual(
 	bestPtr = &visInfoList[i];
 	bestPrio = prio;
     }
+    CLANG_ASSERT(bestPtr);
     *depthPtr = bestPtr->depth;
     visual = bestPtr->visual;
     XFree((char *) visInfoList);
@@ -368,7 +369,7 @@ Colormap
 Tk_GetColormap(
     Tcl_Interp *interp,		/* Interpreter to use for error reporting. */
     Tk_Window tkwin,		/* Window where colormap will be used. */
-    CONST char *string)		/* String that identifies colormap: either
+    const char *string)		/* String that identifies colormap: either
 				 * "new" or the name of another window. */
 {
     Colormap colormap;

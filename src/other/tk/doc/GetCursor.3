@@ -69,7 +69,6 @@ Opaque Tk identifier for cursor.  If passed to \fBTk_FreeCursor\fR, must
 have been returned by some previous call to \fBTk_GetCursor\fR or
 \fBTk_GetCursorFromData\fR.
 .BE
-
 .SH DESCRIPTION
 .PP
 These procedures manage a collection of cursors
@@ -120,7 +119,7 @@ in preference to black and white cursors.
 \fB@\fIsourceName\0maskName\0fgColor\0bgColor\fR
 In this form, \fIsourceName\fR and \fImaskName\fR are the names of
 files describing cursors for the cursor's source bits and mask.
-Each file must be in standard X11 or X10 cursor format.
+Each file must be in standard X11 cursor format.
 \fIFgColor\fR and \fIbgColor\fR 
 indicate the colors to use for the
 cursor, in any of the forms acceptable to \fBTk_GetColor\fR.  This
@@ -215,8 +214,8 @@ with its Tk_Cursor token.
 There should be exactly one call to \fBTk_FreeCursor\fR for
 each call to \fBTk_AllocCursorFromObj\fR, \fBTk_GetCursor\fR,
 or \fBTk_GetCursorFromData\fR.
-
 .SH BUGS
+.PP
 In determining whether an existing cursor can be used to satisfy
 a new request, \fBTk_AllocCursorFromObj\fR, \fBTk_GetCursor\fR,
 and \fBTk_GetCursorFromData\fR
@@ -230,6 +229,5 @@ a different file.  Similarly, \fBTk_GetCursorFromData\fR assumes
 that if the same \fIsource\fR pointer is used in two different calls,
 then the pointers refer to the same data;  it does not check to
 see if the actual data values have changed.
-
 .SH KEYWORDS
 cursor

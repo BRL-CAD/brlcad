@@ -98,7 +98,7 @@ test winSend-1.6 {Tk_SetAppName - safe interps} winSend {
 
 test winSend-2.1 {Tk_SendObjCmd - # of args} winSend {
     list [catch {send tktest} msg] $msg
-} {1 {wrong # args: should be "send ?options? interpName arg ?arg ...?"}}
+} {1 {wrong # args: should be "send ?-option value ...? interpName arg ?arg ...?"}}
 test winSend-2.1a {Tk_SendObjCmd: arguments} winSend {
     list [catch {send -bogus tktest} msg] $msg
 } {1 {bad option "-bogus": must be -async, -displayof, or --}}

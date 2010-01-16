@@ -67,6 +67,7 @@ following screen font families should print correctly:
 Any other font families may not print correctly because the computed
 Postscript font name may be incorrect or not exist on the printer.
 .SH "DATA STRUCTURES"
+.PP
 The \fBTk_FontMetrics\fR data structure is used by \fBTk_GetFontMetrics\fR to
 return information about a font and is defined as follows:
 .CS
@@ -74,7 +75,7 @@ typedef struct Tk_FontMetrics {
     int \fIascent\fR;
     int \fIdescent\fR;
     int \fIlinespace\fR;
-} Tk_FontMetrics;
+} \fBTk_FontMetrics\fR;
 .CE
 .PP
 The \fIascent\fR field is the amount in pixels that the tallest

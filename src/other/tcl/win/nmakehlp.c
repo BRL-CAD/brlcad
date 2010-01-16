@@ -23,10 +23,10 @@
 #include <math.h>
 
 /*
- * This library is required for x64 builds with _some_ versions
+ * This library is required for x64 builds with _some_ versions of MSVC
  */
 #if defined(_M_IA64) || defined(_M_AMD64)
-#if _MSC_FULL_VER > 140000000 && _MSC_FULL_VER <= 140040310
+#if _MSC_VER >= 1400 && _MSC_VER < 1500
 #pragma comment(lib, "bufferoverflowU")
 #endif
 #endif
@@ -43,7 +43,6 @@
 int		CheckForCompilerFeature(const char *option);
 int		CheckForLinkerFeature(const char *option);
 int		IsIn(const char *string, const char *substring);
-int		GrepForDefine(const char *file, const char *string);
 int		SubstituteFile(const char *substs, const char *filename);
 const char *    GetVersionFromFile(const char *filename, const char *match);
 DWORD WINAPI	ReadFromPipe(LPVOID args);
@@ -128,18 +127,6 @@ main(
 	    } else {
 		return IsIn(argv[2], argv[3]);
 	    }
-	case 'g':
-	    if (argc == 2) {
-		chars = snprintf(msg, sizeof(msg) - 1,
-			"usage: %s -g <file> <string>\n"
-			"grep for a #define\n"
-			"exitcodes: integer of the found string (no decimals)\n",
-			argv[0]);
-		WriteFile(GetStdHandle(STD_ERROR_HANDLE), msg, chars,
-			&dwWritten, NULL);
-		return 2;
-	    }
-	    return GrepForDefine(argv[2], argv[3]);
 	case 's':
 	    if (argc == 2) {
 		chars = snprintf(msg, sizeof(msg) - 1,
@@ -466,63 +453,6 @@ IsIn(
     const char *substring)
 {
     return (strstr(string, substring) != NULL);
-}
-
-/*
- * Find a specified #define by name.
- *
- * If the line is '#define TCL_VERSION "8.5"', it returns 85 as the result.
- */
-
-int
-GrepForDefine(
-    const char *file,
-    const char *string)
-{
-    char s1[51], s2[51], s3[51];
-    FILE *f = fopen(file, "rt");
-
-    if (f == NULL) {
-	return 0;
-    }
-
-    do {
-	int r = fscanf(f, "%50s", s1);
-
-	if (r == 1 && !strcmp(s1, "#define")) {
-	    /*
-	     * Get next two words.
-	     */
-
-	    r = fscanf(f, "%50s %50s", s2, s3);
-	    if (r != 2) {
-		continue;
-	    }
-
-	    /*
-	     * Is the first word what we're looking for?
-	     */
-
-	    if (!strcmp(s2, string)) {
-		double d1;
-
-		fclose(f);
-
-		/*
-		 * Add 1 past first double quote char. "8.5"
-		 */
-
-		d1 = atof(s3 + 1);		  /*    8.5  */
-		while (floor(d1) != d1) {
-		    d1 *= 10.0;
-		}
-		return ((int) d1);		  /*    85   */
-	    }
-	}
-    } while (!feof(f));
-
-    fclose(f);
-    return 0;
 }
 
 /*

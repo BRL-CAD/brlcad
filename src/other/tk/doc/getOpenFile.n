@@ -38,6 +38,7 @@ The following \fIoption\-value\fR pairs are possible as command line
 arguments to these two commands:
 .TP
 \fB\-defaultextension\fR \fIextension\fR
+.
 Specifies a string that will be appended to the filename if the user
 enters a filename without an extension. The default value is the empty
 string, which means no extension will be appended to the filename in
@@ -47,6 +48,7 @@ and the UNIX implementation guesses reasonable values for this from
 the \fB\-filetypes\fR option when this is not supplied.
 .TP
 \fB\-filetypes\fR \fIfilePatternList\fR
+.
 If a \fBFile types\fR listbox exists in the file dialog on the particular
 platform, this option gives the \fIfiletype\fRs in this listbox. When
 the user choose a filetype in the listbox, only the files of that type
@@ -57,6 +59,7 @@ types. See the section \fBSPECIFYING FILE PATTERNS\fR below for a
 discussion on the contents of \fIfilePatternList\fR.
 .TP
 \fB\-initialdir\fR \fIdirectory\fR
+.
 Specifies that the files in \fIdirectory\fR should be displayed
 when the dialog pops up. If this parameter is not specified, then
 the files in the current working directory are displayed. If the
@@ -64,26 +67,32 @@ parameter specifies a relative path, the return value will convert the
 relative path to an absolute path.
 .TP
 \fB\-initialfile\fR \fIfilename\fR
+.
 Specifies a filename to be displayed in the dialog when it pops up.
 .TP
 \fB\-message\fR \fIstring\fR
+.
 Specifies a message to include in the client area of the dialog.
 This is only available on Mac OS X.
 .TP
 \fB\-multiple\fR \fIboolean\fR
+.
 Allows the user to choose multiple files from the Open dialog.
 .TP
 \fB\-parent\fR \fIwindow\fR
+.
 Makes \fIwindow\fR the logical parent of the file dialog. The file
 dialog is displayed on top of its parent window. On Mac OS X, this
 turns the file dialog into a sheet attached to the parent window.
 .TP
 \fB\-title\fR \fItitleString\fR
+.
 Specifies a string to display as the title of the dialog box. If this
 option is not specified, then a default title is displayed. 
 .TP
 \fB\-typevariable\fR \fIvariableName\fR
-The variable \fIvariableName\fR is used to preselect which filter is
+.
+The global variable \fIvariableName\fR is used to preselect which filter is
 used from \fIfilterList\fR when the dialog box is opened and is
 updated when the dialog box is closed, to the last selected
 filter. The variable is read once at the beginning to select the
@@ -159,6 +168,7 @@ Extensions without a full stop character (e.g.
 .QW ~ )
 are allowed but may not work on all platforms.
 .SH EXAMPLE
+.PP
 .CS
 set types {
     {{Text Files}       {.txt}        }
@@ -178,3 +188,6 @@ if {$filename != ""} {
 tk_chooseDirectory
 .SH KEYWORDS
 file selection dialog
+'\" Local Variables:
+'\" mode: nroff
+'\" End:

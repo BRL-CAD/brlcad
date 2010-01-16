@@ -18,7 +18,6 @@ int
 .sp
 void
 \fBTk_Ungrab\fR(\fItkwin\fR)
-
 .SH ARGUMENTS
 .AP Tcl_Interp *interp in
 Interpreter to use for error reporting
@@ -27,7 +26,6 @@ Window on whose behalf the pointer is to be grabbed or released
 .AP int grabGlobal in
 Boolean indicating whether the grab is global or application local
 .BE
-
 .SH DESCRIPTION
 .PP
 These functions are used to set or release a global or
@@ -41,7 +39,6 @@ intended for windows in other applications) will be redirected to
 \fItkwin\fR.  If the grab is application local, only mouse and
 keyboard events intended for a windows within the same application
 (but outside the tree rooted at \fItkwin\fR) will be redirected.
-
 .PP
 \fBTk_Grab\fR sets a grab on a particular window.  \fITkwin\fR
 specifies the window on whose behalf the pointer is to be grabbed.
@@ -54,12 +51,10 @@ successfully, no window outside the tree rooted at \fItkwin\fR will
 receive pointer- or keyboard-related events until the next call to
 Tk_Ungrab.  If a previous grab was in effect within the application,
 then it is replaced with a new one.
-
 .PP
 \fBTcl_Ungrab\fR releases a grab on the mouse pointer and keyboard, if
 there is one set on the window given by \fItkwin\fR.  Once a grab is
 released, pointer and keyboard events will start being delivered to
 other windows again.
-
 .SH KEYWORDS
 grab, window

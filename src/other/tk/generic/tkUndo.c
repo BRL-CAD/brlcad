@@ -131,7 +131,7 @@ TkUndoClearStack(
 	    TkUndoSubAtom *sub;
 
 	    sub = elem->apply;
-	    while (sub->next != NULL) {
+	    while (sub != NULL) {
 		TkUndoSubAtom *next = sub->next;
 
 		if (sub->action != NULL) {
@@ -142,7 +142,7 @@ TkUndoClearStack(
 	    }
 
 	    sub = elem->revert;
-	    while (sub->next != NULL) {
+	    while (sub != NULL) {
 		TkUndoSubAtom *next = sub->next;
 
 		if (sub->action != NULL) {
@@ -394,12 +394,13 @@ TkUndoSetDepth(
 	    prevelem = elem;
 	    elem = elem->next;
 	}
+	CLANG_ASSERT(prevelem); 
 	prevelem->next = NULL;
 	while (elem != NULL) {
 	    prevelem = elem;
 	    if (elem->type != TK_UNDO_SEPARATOR) {
 		TkUndoSubAtom *sub = elem->apply;
-		while (sub->next != NULL) {
+		while (sub != NULL) {
 		    TkUndoSubAtom *next = sub->next;
 
 		    if (sub->action != NULL) {
@@ -409,7 +410,7 @@ TkUndoSetDepth(
 		    sub = next;
 		}
 		sub = elem->revert;
-		while (sub->next != NULL) {
+		while (sub != NULL) {
 		    TkUndoSubAtom *next = sub->next;
 
 		    if (sub->action != NULL) {
@@ -656,7 +657,7 @@ EvaluateActionList(
 
     while (action != NULL) {
 	if (action->funcPtr != NULL) {
-	    result = (*action->funcPtr)(interp, action->clientData,
+	    result = action->funcPtr(interp, action->clientData,
 		    action->action);
 	} else if (action->command != NULL) {
 	    Tcl_Obj *cmdNameObj, *evalObj;

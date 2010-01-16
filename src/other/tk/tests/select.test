@@ -1,6 +1,6 @@
 # This file is a Tcl script to test out Tk's selection management code,
-# especially the "selection" command.  It is organized in the standard
-# fashion for Tcl tests.
+# especially the "selection" command. It is organized in the standard fashion
+# for Tcl tests.
 #
 # Copyright (c) 1994 Sun Microsystems, Inc.
 # Copyright (c) 1998-1999 by Scriptics Corporation.
@@ -13,11 +13,11 @@
 # environment variable TK_ALT_DISPLAY is set to an alternate display.
 #
 
-package require tcltest 2.1
+package require tcltest 2.2
+namespace import ::tcltest::*
+namespace import ::tk::test:loadTkCommand
 eval tcltest::configure $argv
 tcltest::loadTestedCommands
-
-namespace import -force ::tk::test:loadTkCommand
 
 global longValue selValue selInfo
 
@@ -111,48 +111,55 @@ foreach i {a b c d e f g j h i j k l m o p q r s t u v w x y z} {
 }
 
 # Now we start the main body of the test code
-
-test select-1.1 {Tk_CreateSelHandler procedure} {
+
+test select-1.1 {Tk_CreateSelHandler procedure} -setup {
     setup
+} -body {
     lsort [selection get TARGETS]
-} {MULTIPLE TARGETS TIMESTAMP TK_APPLICATION TK_WINDOW}
-test select-1.2 {Tk_CreateSelHandler procedure} {
+} -result {MULTIPLE TARGETS TIMESTAMP TK_APPLICATION TK_WINDOW}
+test select-1.2 {Tk_CreateSelHandler procedure} -setup {
     setup
+} -body {
     selection handle .f1 {handler TEST} TEST
     lsort [selection get TARGETS]
-} {MULTIPLE TARGETS TEST TIMESTAMP TK_APPLICATION TK_WINDOW}
-test select-1.3 {Tk_CreateSelHandler procedure} {
+} -result {MULTIPLE TARGETS TEST TIMESTAMP TK_APPLICATION TK_WINDOW}
+test select-1.3 {Tk_CreateSelHandler procedure} -setup {
     global selValue selInfo
     setup
+} -body {
     selection handle .f1 {handler TEST} TEST
     set selValue "Test value"
     set selInfo ""
     list [selection get TEST] $selInfo
-} {{Test value} {TEST 0 4000}}
-test select-1.4.1 {Tk_CreateSelHandler procedure} unix {
+} -result {{Test value} {TEST 0 4000}}
+test select-1.4.1 {Tk_CreateSelHandler procedure} -constraints unix -setup {
     setup
+} -body {
     selection handle .f1 {handler TEST} TEST
     selection handle .f1 {handler STRING}
     lsort [selection get TARGETS]
-} {MULTIPLE STRING TARGETS TEST TIMESTAMP TK_APPLICATION TK_WINDOW UTF8_STRING}
-test select-1.4.2 {Tk_CreateSelHandler procedure} win {
+} -result {MULTIPLE STRING TARGETS TEST TIMESTAMP TK_APPLICATION TK_WINDOW UTF8_STRING}
+test select-1.4.2 {Tk_CreateSelHandler procedure} -constraints win -setup {
     setup
+} -body {
     selection handle .f1 {handler TEST} TEST
     selection handle .f1 {handler STRING}
     lsort [selection get TARGETS]
-} {MULTIPLE STRING TARGETS TEST TIMESTAMP TK_APPLICATION TK_WINDOW}
-test select-1.5 {Tk_CreateSelHandler procedure} {
+} -result {MULTIPLE STRING TARGETS TEST TIMESTAMP TK_APPLICATION TK_WINDOW}
+test select-1.5 {Tk_CreateSelHandler procedure} -setup {
     global selValue selInfo
     setup
+} -body {
     selection handle .f1 {handler TEST} TEST
     selection handle .f1 {handler STRING}
     set selValue ""
     set selInfo ""
     list [selection get] $selInfo
-} {{} {STRING 0 4000}}
-test select-1.6.1 {Tk_CreateSelHandler procedure} unix {
+} -result {{} {STRING 0 4000}}
+test select-1.6.1 {Tk_CreateSelHandler procedure} -constraints unix -setup {
     global selValue selInfo
     setup
+} -body {
     selection handle .f1 {handler TEST} TEST
     selection handle .f1 {handler STRING}
     set selValue ""
@@ -161,11 +168,12 @@ test select-1.6.1 {Tk_CreateSelHandler procedure} unix {
     selection get -type TEST
     selection handle .f1 {handler TEST2} TEST
     selection get -type TEST
-    list [set selInfo] [lsort [selection get TARGETS]]
-} {{STRING 0 4000 TEST 0 4000 TEST2 0 4000} {MULTIPLE STRING TARGETS TEST TIMESTAMP TK_APPLICATION TK_WINDOW UTF8_STRING}}
-test select-1.6.2 {Tk_CreateSelHandler procedure} win {
+    list $selInfo [lsort [selection get TARGETS]]
+} -result {{STRING 0 4000 TEST 0 4000 TEST2 0 4000} {MULTIPLE STRING TARGETS TEST TIMESTAMP TK_APPLICATION TK_WINDOW UTF8_STRING}}
+test select-1.6.2 {Tk_CreateSelHandler procedure} -constraints win -setup {
     global selValue selInfo
     setup
+} -body {
     selection handle .f1 {handler TEST} TEST
     selection handle .f1 {handler STRING}
     set selValue ""
@@ -174,141 +182,157 @@ test select-1.6.2 {Tk_CreateSelHandler procedure} win {
     selection get -type TEST
     selection handle .f1 {handler TEST2} TEST
     selection get -type TEST
-    list [set selInfo] [lsort [selection get TARGETS]]
-} {{STRING 0 4000 TEST 0 4000 TEST2 0 4000} {MULTIPLE STRING TARGETS TEST TIMESTAMP TK_APPLICATION TK_WINDOW}}
-test select-1.7.1 {Tk_CreateSelHandler procedure} unix {
+    list $selInfo [lsort [selection get TARGETS]]
+} -result {{STRING 0 4000 TEST 0 4000 TEST2 0 4000} {MULTIPLE STRING TARGETS TEST TIMESTAMP TK_APPLICATION TK_WINDOW}}
+test select-1.7.1 {Tk_CreateSelHandler procedure} -constraints unix -setup {
     setup
+} -body {
     selection own -selection CLIPBOARD .f1
     selection handle -selection CLIPBOARD .f1 {handler TEST} TEST
     selection handle -selection PRIMARY .f1 {handler TEST2} STRING
     list [lsort [selection get -selection PRIMARY TARGETS]] \
 	[lsort [selection get -selection CLIPBOARD TARGETS]]
-} {{MULTIPLE STRING TARGETS TIMESTAMP TK_APPLICATION TK_WINDOW UTF8_STRING} {MULTIPLE TARGETS TEST TIMESTAMP TK_APPLICATION TK_WINDOW}}
-test select-1.7.2 {Tk_CreateSelHandler procedure} win {
+} -result {{MULTIPLE STRING TARGETS TIMESTAMP TK_APPLICATION TK_WINDOW UTF8_STRING} {MULTIPLE TARGETS TEST TIMESTAMP TK_APPLICATION TK_WINDOW}}
+test select-1.7.2 {Tk_CreateSelHandler procedure} -constraints win -setup {
     setup
+} -body {
     selection own -selection CLIPBOARD .f1
     selection handle -selection CLIPBOARD .f1 {handler TEST} TEST
     selection handle -selection PRIMARY .f1 {handler TEST2} STRING
     list [lsort [selection get -selection PRIMARY TARGETS]] \
 	[lsort [selection get -selection CLIPBOARD TARGETS]]
-} {{MULTIPLE STRING TARGETS TIMESTAMP TK_APPLICATION TK_WINDOW} {MULTIPLE TARGETS TEST TIMESTAMP TK_APPLICATION TK_WINDOW}}
-test select-1.8 {Tk_CreateSelHandler procedure} {
+} -result {{MULTIPLE STRING TARGETS TIMESTAMP TK_APPLICATION TK_WINDOW} {MULTIPLE TARGETS TEST TIMESTAMP TK_APPLICATION TK_WINDOW}}
+test select-1.8 {Tk_CreateSelHandler procedure} -setup {
     setup
+} -body {
     selection handle -format INTEGER -type TEST .f1 {handler TEST}
     lsort [selection get TARGETS]
-} {MULTIPLE TARGETS TEST TIMESTAMP TK_APPLICATION TK_WINDOW}
+} -result {MULTIPLE TARGETS TEST TIMESTAMP TK_APPLICATION TK_WINDOW}
 
 ##############################################################################
 
-test select-2.1 {Tk_DeleteSelHandler procedure} unix {
+test select-2.1 {Tk_DeleteSelHandler procedure} -constraints unix -setup {
     setup
+} -body {
     selection handle .f1 {handler STRING}
     selection handle -type TEST .f1 {handler TEST}
     selection handle -type USER .f1 {handler USER}
     set result [list [lsort [selection get TARGETS]]]
     selection handle -type TEST .f1 {}
     lappend result [lsort [selection get TARGETS]]
-} {{MULTIPLE STRING TARGETS TEST TIMESTAMP TK_APPLICATION TK_WINDOW USER UTF8_STRING} {MULTIPLE STRING TARGETS TIMESTAMP TK_APPLICATION TK_WINDOW USER UTF8_STRING}}
-test select-2.2 {Tk_DeleteSelHandler procedure} unix {
+} -result {{MULTIPLE STRING TARGETS TEST TIMESTAMP TK_APPLICATION TK_WINDOW USER UTF8_STRING} {MULTIPLE STRING TARGETS TIMESTAMP TK_APPLICATION TK_WINDOW USER UTF8_STRING}}
+test select-2.2 {Tk_DeleteSelHandler procedure} -constraints unix -setup {
     setup
+} -body {
     selection handle .f1 {handler STRING}
     selection handle -type TEST .f1 {handler TEST}
     selection handle -type USER .f1 {handler USER}
     set result [list [lsort [selection get TARGETS]]]
     selection handle -type USER .f1 {}
     lappend result [lsort [selection get TARGETS]]
-} {{MULTIPLE STRING TARGETS TEST TIMESTAMP TK_APPLICATION TK_WINDOW USER UTF8_STRING} {MULTIPLE STRING TARGETS TEST TIMESTAMP TK_APPLICATION TK_WINDOW UTF8_STRING}}
-test select-2.3 {Tk_DeleteSelHandler procedure} unix {
+} -result {{MULTIPLE STRING TARGETS TEST TIMESTAMP TK_APPLICATION TK_WINDOW USER UTF8_STRING} {MULTIPLE STRING TARGETS TEST TIMESTAMP TK_APPLICATION TK_WINDOW UTF8_STRING}}
+test select-2.3 {Tk_DeleteSelHandler procedure} -constraints unix -setup {
     setup
+} -body {
     selection own -selection CLIPBOARD .f1
     selection handle -selection PRIMARY .f1 {handler STRING}
     selection handle -selection CLIPBOARD .f1 {handler STRING}
     selection handle -selection CLIPBOARD .f1 {}
     list [lsort [selection get TARGETS]] \
 	[lsort [selection get -selection CLIPBOARD TARGETS]]
-} {{MULTIPLE STRING TARGETS TIMESTAMP TK_APPLICATION TK_WINDOW UTF8_STRING} {MULTIPLE TARGETS TIMESTAMP TK_APPLICATION TK_WINDOW}}
-test select-2.4 {Tk_DeleteSelHandler procedure} win {
+} -result {{MULTIPLE STRING TARGETS TIMESTAMP TK_APPLICATION TK_WINDOW UTF8_STRING} {MULTIPLE TARGETS TIMESTAMP TK_APPLICATION TK_WINDOW}}
+test select-2.4 {Tk_DeleteSelHandler procedure} -constraints win -setup {
     setup
+} -body {
     selection handle .f1 {handler STRING}
     selection handle -type TEST .f1 {handler TEST}
     selection handle -type USER .f1 {handler USER}
     set result [list [lsort [selection get TARGETS]]]
     selection handle -type TEST .f1 {}
     lappend result [lsort [selection get TARGETS]]
-} {{MULTIPLE STRING TARGETS TEST TIMESTAMP TK_APPLICATION TK_WINDOW USER} {MULTIPLE STRING TARGETS TIMESTAMP TK_APPLICATION TK_WINDOW USER}}
-test select-2.5 {Tk_DeleteSelHandler procedure} win {
+} -result {{MULTIPLE STRING TARGETS TEST TIMESTAMP TK_APPLICATION TK_WINDOW USER} {MULTIPLE STRING TARGETS TIMESTAMP TK_APPLICATION TK_WINDOW USER}}
+test select-2.5 {Tk_DeleteSelHandler procedure} -constraints win -setup {
     setup
+} -body {
     selection handle .f1 {handler STRING}
     selection handle -type TEST .f1 {handler TEST}
     selection handle -type USER .f1 {handler USER}
     set result [list [lsort [selection get TARGETS]]]
     selection handle -type USER .f1 {}
     lappend result [lsort [selection get TARGETS]]
-} {{MULTIPLE STRING TARGETS TEST TIMESTAMP TK_APPLICATION TK_WINDOW USER} {MULTIPLE STRING TARGETS TEST TIMESTAMP TK_APPLICATION TK_WINDOW}}
-test select-2.6 {Tk_DeleteSelHandler procedure} win {
+} -result {{MULTIPLE STRING TARGETS TEST TIMESTAMP TK_APPLICATION TK_WINDOW USER} {MULTIPLE STRING TARGETS TEST TIMESTAMP TK_APPLICATION TK_WINDOW}}
+test select-2.6 {Tk_DeleteSelHandler procedure} -constraints win -setup {
     setup
+} -body {
     selection own -selection CLIPBOARD .f1
     selection handle -selection PRIMARY .f1 {handler STRING}
     selection handle -selection CLIPBOARD .f1 {handler STRING}
     selection handle -selection CLIPBOARD .f1 {}
     list [lsort [selection get TARGETS]] \
 	[lsort [selection get -selection CLIPBOARD TARGETS]]
-} {{MULTIPLE STRING TARGETS TIMESTAMP TK_APPLICATION TK_WINDOW} {MULTIPLE TARGETS TIMESTAMP TK_APPLICATION TK_WINDOW}}
-test select-2.7 {Tk_DeleteSelHandler procedure} {
+} -result {{MULTIPLE STRING TARGETS TIMESTAMP TK_APPLICATION TK_WINDOW} {MULTIPLE TARGETS TIMESTAMP TK_APPLICATION TK_WINDOW}}
+test select-2.7 {Tk_DeleteSelHandler procedure} -setup {
     setup
+} -body {
     selection handle .f1 {handler STRING}
     list [selection handle .f1 {}] [selection handle .f1 {}]
-} {{} {}}
+} -result {{} {}}
 
 ##############################################################################
 
-test select-3.1 {Tk_OwnSelection procedure} {
+test select-3.1 {Tk_OwnSelection procedure} -setup {
     setup
+} -body {
     selection own
-} {.f1}
-test select-3.2 {Tk_OwnSelection procedure} {
+} -result {.f1}
+test select-3.2 {Tk_OwnSelection procedure} -body {
     setup .f1
     set result [selection own]
     setup .f2
     lappend result [selection own]
-} {.f1 .f2}
-test select-3.3 {Tk_OwnSelection procedure} {
+} -result {.f1 .f2}
+test select-3.3 {Tk_OwnSelection procedure} -setup {
     setup .f1
     setup .f2
+} -body {
     selection own -selection CLIPBOARD .f1
     list [selection own] [selection own -selection CLIPBOARD]
-} {.f2 .f1}
-test select-3.4 {Tk_OwnSelection procedure} {
+} -result {.f2 .f1}
+test select-3.4 {Tk_OwnSelection procedure} -setup {
     global lostSel
     setup
+} -body {
     set lostSel {owned}
     selection own -command { set lostSel {lost} } .f1
     selection clear .f1
     set lostSel
-} {lost}
-test select-3.5 {Tk_OwnSelection procedure} {
+} -result {lost}
+test select-3.5 {Tk_OwnSelection procedure} -setup {
     global lostSel
     setup .f1
     setup .f2
+} -body {
     set lostSel {owned}
     selection own -command { set lostSel {lost1} } .f1
     selection own -command { set lostSel {lost2} } .f2
     list $lostSel [selection own]
-} {lost1 .f2}
-test select-3.6 {Tk_OwnSelection procedure} {
+} -result {lost1 .f2}
+test select-3.6 {Tk_OwnSelection procedure} -setup {
     global lostSel
     setup
+} -body {
     set lostSel {owned}
     selection own -command { set lostSel {lost1} } .f1
     selection own -command { set lostSel {lost2} } .f1
     set result $lostSel
     selection clear .f1
     lappend result $lostSel
-} {owned lost2}
-test select-3.7 {Tk_OwnSelection procedure} unix {
+} -result {owned lost2}
+test select-3.7 {Tk_OwnSelection procedure} -constraints unix -setup {
     global lostSel
     setup
     setupbg
+} -body {
     set lostSel {owned}
     selection own -command { set lostSel {lost1} } .f1
     update
@@ -318,60 +342,71 @@ test select-3.7 {Tk_OwnSelection procedure} unix {
     update
     cleanupbg
     lappend result $lostSel
-} {{} . lost1}
+} -result {{} . lost1}
 # check reentrancy on selection replacement
-test select-3.8 {Tk_OwnSelection procedure} {
+test select-3.8 {Tk_OwnSelection procedure} -setup {
     setup
+} -body {
     selection own -selection CLIPBOARD -command { destroy .f1 } .f1
     selection own -selection CLIPBOARD .
-} {}
-test select-3.9 {Tk_OwnSelection procedure} {
+} -result {}
+test select-3.9 {Tk_OwnSelection procedure} -setup {
     setup .f2
     setup .f1
+} -body {
     selection own -selection CLIPBOARD -command { destroy .f2 } .f1
     selection own -selection CLIPBOARD .f2
-} {}
+} -result {}
 # multiple display tests
-test select-3.10 {Tk_OwnSelection procedure} {altDisplay} {
+test select-3.10 {Tk_OwnSelection procedure} -constraints {
+    altDisplay
+} -body {
     setup .f1
     setup .f2 $env(TK_ALT_DISPLAY)
     list [selection own -displayof .f1] [selection own -displayof .f2]
-} {.f1 .f2}
-test select-3.11 {Tk_OwnSelection procedure} {altDisplay} {
+} -result {.f1 .f2}
+test select-3.11 {Tk_OwnSelection procedure} -constraints {
+    altDisplay
+} -setup {
     setup .f1
     setup .f2 $env(TK_ALT_DISPLAY)
     setupbg
     update
     set result ""
+} -body {
     lappend result [dobg "toplevel .t -screen $env(TK_ALT_DISPLAY); wm geom .t +0+0; selection own .t; update"]
     lappend result [selection own -displayof .f1] \
 	    [selection own -displayof .f2]
+} -cleanup {
     cleanupbg
-    set result
-} {{} .f1 {}}
+} -result {{} .f1 {}}
 
 ##############################################################################
 
-test select-4.1 {Tk_ClearSelection procedure} {
+test select-4.1 {Tk_ClearSelection procedure} -setup {
     setup
+} -body {
     set result [selection own]
     selection clear .f1
     lappend result [selection own]
-} {.f1 {}}
-test select-4.2 {Tk_ClearSelection procedure} {
+} -result {.f1 {}}
+test select-4.2 {Tk_ClearSelection procedure} -setup {
     setup
+} -body {
     selection own -selection CLIPBOARD .f1
     selection clear .f1
     selection own -selection CLIPBOARD
-} {.f1}
-test select-4.3 {Tk_ClearSelection procedure} {
+} -result {.f1}
+test select-4.3 {Tk_ClearSelection procedure} -setup {
     setup
+} -body {
     list [selection clear .f1] [selection clear .f1]
-} {{} {}}
-test select-4.4 {Tk_ClearSelection procedure} unix {
+} -result {{} {}}
+test select-4.4 {Tk_ClearSelection procedure} -constraints unix -setup {
     global lostSel
     setup
     setupbg
+} -body {
     set lostSel {owned}
     selection own -command { set lostSel {lost1} } .f1
     update
@@ -380,12 +415,15 @@ test select-4.4 {Tk_ClearSelection procedure} unix {
     update
     cleanupbg
     lappend result [selection own]
-} {{} {}}
+} -result {{} {}}
 # multiple display tests
-test select-4.5 {Tk_ClearSelection procedure} {altDisplay} {
+test select-4.5 {Tk_ClearSelection procedure} -constraints {
+    altDisplay
+} -setup {
     global lostSel lostSel2
     setup .f1
     setup .f2 $env(TK_ALT_DISPLAY)
+} -body {
     set lostSel {owned}
     set lostSel2 {owned2}
     selection own -command { set lostSel {lost1} } .f1
@@ -394,11 +432,14 @@ test select-4.5 {Tk_ClearSelection procedure} {altDisplay} {
     selection clear -displayof .f2
     update
     list $lostSel $lostSel2
-} {owned lost2}
-test select-4.6 {Tk_ClearSelection procedure} {unix altDisplay} {
+} -result {owned lost2}
+test select-4.6 {Tk_ClearSelection procedure} -constraints {
+    unix altDisplay
+} -setup {
     setup .f1
     setup .f2 $env(TK_ALT_DISPLAY)
     setupbg
+} -body {
     set lostSel {owned}
     set lostSel2 {owned2}
     selection own -command { set lostSel {lost1} } .f1
@@ -410,73 +451,79 @@ test select-4.6 {Tk_ClearSelection procedure} {unix altDisplay} {
 	    [selection own -displayof .f2] $lostSel $lostSel2
     cleanupbg
     set result
-} {{} .f1 {} owned lost2}
+} -result {{} .f1 {} owned lost2}
 
 ##############################################################################
 
-test select-5.1 {Tk_GetSelection procedure} {
+test select-5.1 {Tk_GetSelection procedure} -returnCodes error -setup {
     setup
-    list [catch {selection get TEST} msg] $msg
-} {1 {PRIMARY selection doesn't exist or form "TEST" not defined}}
-test select-5.2 {Tk_GetSelection procedure} {
+} -body {
+    selection get TEST
+} -result {PRIMARY selection doesn't exist or form "TEST" not defined}
+test select-5.2 {Tk_GetSelection procedure} -setup {
     setup
+} -body {
     selection get TK_WINDOW
-} {.f1}
-test select-5.3 {Tk_GetSelection procedure} {
+} -result {.f1}
+test select-5.3 {Tk_GetSelection procedure} -setup {
     setup
+} -body {
     selection handle -selection PRIMARY .f1 {handler TEST} TEST
     set selValue "Test value"
     set selInfo ""
     list [selection get TEST] $selInfo
-} {{Test value} {TEST 0 4000}}
-test select-5.4 {Tk_GetSelection procedure} {
+} -result {{Test value} {TEST 0 4000}}
+test select-5.4 {Tk_GetSelection procedure} -setup {
     setup
+} -returnCodes error -body {
     selection handle .f1 ERROR errHandler
-    list [catch {selection get ERROR} msg] $msg
-} {1 {PRIMARY selection doesn't exist or form "ERROR" not defined}}
-test select-5.5 {Tk_GetSelection procedure} {
+    selection get ERROR
+} -result {PRIMARY selection doesn't exist or form "ERROR" not defined}
+test select-5.5 {Tk_GetSelection procedure} -setup {
     setup
+} -body {
     set selValue $longValue
     set selInfo ""
     selection handle .f1 {handler STRING}
     list [selection get] $selInfo
-} "$longValue {STRING 0 4000 STRING 4000 4000 STRING 8000 4000 STRING 12000 4000 STRING 16000 4000}"
-test select-5.6 {Tk_GetSelection procedure} {
-    proc weirdHandler {type offset count} {
+} -result "$longValue {STRING 0 4000 STRING 4000 4000 STRING 8000 4000 STRING 12000 4000 STRING 16000 4000}"
+test select-5.6 {Tk_GetSelection procedure} -setup {
+    setup
+} -returnCodes error -body {
+    set selValue $longValue
+    set selInfo ""
+    selection handle .f1 {apply {{type offset count} {
 	selection handle .f1 {}
 	handler $type $offset $count
-    }
+    }} STRING}
+    selection get
+} -result {PRIMARY selection doesn't exist or form "STRING" not defined}
+test select-5.7 {Tk_GetSelection procedure} -setup {
     setup
-    set selValue $longValue
-    set selInfo ""
-    selection handle .f1 {weirdHandler STRING}
-    list [catch {selection get} msg] $msg
-} {1 {PRIMARY selection doesn't exist or form "STRING" not defined}}
-test select-5.7 {Tk_GetSelection procedure} {
-    proc weirdHandler {type offset count} {
-	destroy .f1
-	handler $type $offset $count
-    }
-    setup
+} -returnCodes error -body {
     set selValue "Test Value"
     set selInfo ""
-    selection handle .f1 {weirdHandler STRING}
-    list [catch {selection get} msg] $msg
-} {1 {PRIMARY selection doesn't exist or form "STRING" not defined}}
-test select-5.8 {Tk_GetSelection procedure} {
-    proc weirdHandler {type offset count} {
-	selection clear
+    selection handle .f1 {apply {{type offset count} {
+	destroy .f1
 	handler $type $offset $count
-    }
+    }} STRING}
+    selection get
+} -result {PRIMARY selection doesn't exist or form "STRING" not defined}
+test select-5.8 {Tk_GetSelection procedure} -setup {
     setup
+} -body {
     set selValue $longValue
     set selInfo ""
-    selection handle .f1 {weirdHandler STRING}
+    selection handle .f1 {apply {{type offset count} {
+	selection clear
+	handler $type $offset $count
+    }} STRING}
     list [selection get] $selInfo [catch {selection get} msg] $msg
-} "$longValue {STRING 0 4000 STRING 4000 4000 STRING 8000 4000 STRING 12000 4000 STRING 16000 4000} 1 {PRIMARY selection doesn't exist or form \"STRING\" not defined}"
-test select-5.9 {Tk_GetSelection procedure} unix {
+} -result "$longValue {STRING 0 4000 STRING 4000 4000 STRING 8000 4000 STRING 12000 4000 STRING 16000 4000} 1 {PRIMARY selection doesn't exist or form \"STRING\" not defined}"
+test select-5.9 {Tk_GetSelection procedure} -constraints unix -setup {
     setup
     setupbg
+} -body {
     selection handle -selection PRIMARY .f1 {handler TEST} TEST
     update
     set selValue "Test value"
@@ -485,10 +532,11 @@ test select-5.9 {Tk_GetSelection procedure} unix {
     lappend result [dobg {selection get TEST}]
     cleanupbg
     lappend result $selInfo
-} {{Test value} {TEST 0 4000}}
-test select-5.10 {Tk_GetSelection procedure} unix {
+} -result {{Test value} {TEST 0 4000}}
+test select-5.10 {Tk_GetSelection procedure} -constraints unix -setup {
     setup
     setupbg
+} -body {
     selection handle -selection PRIMARY .f1 {handler TEST} TEST
     update
     set selValue "Test value"
@@ -498,11 +546,14 @@ test select-5.10 {Tk_GetSelection procedure} unix {
     lappend result [dobg {selection get TEST} 1]
     cleanupbg
     lappend result $selInfo
-} {{selection owner didn't respond} {}}
+} -result {{selection owner didn't respond} {}}
 # multiple display tests
-test select-5.11 {Tk_GetSelection procedure} {altDisplay} {
+test select-5.11 {Tk_GetSelection procedure} -constraints {
+    altDisplay
+} -setup {
     setup .f1
     setup .f2 $env(TK_ALT_DISPLAY)
+} -body {
     selection handle -selection PRIMARY .f1 {handler TEST} TEST
     selection handle -selection PRIMARY .f2 {handler TEST2} TEST
     set selValue "Test value"
@@ -511,11 +562,14 @@ test select-5.11 {Tk_GetSelection procedure} {altDisplay} {
     set selValue "Test value2"
     set selInfo ""
     lappend result [selection get -displayof .f2 TEST] $selInfo
-} {{Test value} {TEST 0 4000} {Test value2} {TEST2 0 4000}}
-test select-5.12 {Tk_GetSelection procedure} {altDisplay} {
+} -result {{Test value} {TEST 0 4000} {Test value2} {TEST2 0 4000}}
+test select-5.12 {Tk_GetSelection procedure} -constraints {
+    altDisplay
+} -setup {
     global lostSel lostSel2
     setup .f1
     setup .f2 $env(TK_ALT_DISPLAY)
+} -body {
     selection handle -selection PRIMARY .f1 {handler TEST} TEST
     selection handle -selection PRIMARY .f2 {} TEST
     set selValue "Test value"
@@ -525,11 +579,14 @@ test select-5.12 {Tk_GetSelection procedure} {altDisplay} {
     set selInfo ""
     lappend result [catch {selection get -displayof .f2 TEST} msg] $msg \
 	    $selInfo
-} {0 {Test value} {TEST 0 4000} 1 {PRIMARY selection doesn't exist or form "TEST" not defined} {}}
-test select-5.13 {Tk_GetSelection procedure} {unix altDisplay} {
+} -result {0 {Test value} {TEST 0 4000} 1 {PRIMARY selection doesn't exist or form "TEST" not defined} {}}
+test select-5.13 {Tk_GetSelection procedure} -constraints {
+    unix altDisplay
+} -setup {
     setup .f1
     setup .f2 $env(TK_ALT_DISPLAY)
     setupbg
+} -body {
     selection handle -selection PRIMARY .f1 {handler TEST} TEST
     selection own .f1
     selection handle -selection PRIMARY .f2 {handler TEST2} TEST
@@ -543,11 +600,14 @@ test select-5.13 {Tk_GetSelection procedure} {unix altDisplay} {
     lappend result [dobg "selection get TEST"]
     cleanupbg
     lappend result $selInfo
-} {{Test value} {Test value2} {TEST2 0 4000 TEST 0 4000}}
-test select-5.14 {Tk_GetSelection procedure} {unix altDisplay} {
+} -result {{Test value} {Test value2} {TEST2 0 4000 TEST 0 4000}}
+test select-5.14 {Tk_GetSelection procedure} -constraints {
+    unix altDisplay
+} -setup {
     setup .f1
     setup .f2 $env(TK_ALT_DISPLAY)
     setupbg
+} -body {
     selection handle -selection PRIMARY .f1 {handler TEST} TEST
     selection own .f1
     selection handle -selection PRIMARY .f2 {} TEST
@@ -561,215 +621,244 @@ test select-5.14 {Tk_GetSelection procedure} {unix altDisplay} {
     lappend result [dobg "selection get TEST"]
     cleanupbg
     lappend result $selInfo
-} {{PRIMARY selection doesn't exist or form "TEST" not defined} {Test value2} {TEST 0 4000}}
+} -result {{PRIMARY selection doesn't exist or form "TEST" not defined} {Test value2} {TEST 0 4000}}
+test select-5.15 {Tk_GetSelection procedure} -setup {
+    setup
+    if {[llength [info command ::bgerror]]} {
+	rename ::bgerror ::TMPbgerror
+    }
+    set ::bgerrors {}
+} -body {
+    proc ::bgerror msg {lappend ::bgerrors $msg}
+    selection handle .f1 ERROR errHandler
+    list [catch {selection get ERROR} msg] $msg [update] {*}$::bgerrors
+} -cleanup {
+    rename ::bgerror {}
+    if {[llength [info command ::TMPbgerror]]} {
+	rename ::TMPbgerror ::bgerror
+    }
+} -result {1 {PRIMARY selection doesn't exist or form "ERROR" not defined} {} {selection handler aborted}}
 
 ##############################################################################
 
-test select-6.1 {Tk_SelectionCmd procedure} {
-    list [catch {selection} cmd] $cmd
-} {1 {wrong # args: should be "selection option ?arg arg ...?"}}
+test select-6.1 {Tk_SelectionCmd procedure} -returnCodes error -body {
+    selection
+} -result {wrong # args: should be "selection option ?arg ...?"}
 # selection clear
-test select-6.2 {Tk_SelectionCmd procedure} {
-    list [catch {selection clear -selection} cmd] $cmd
-} {1 {value for "-selection" missing}}
-test select-6.3 {Tk_SelectionCmd procedure} {
+test select-6.2 {Tk_SelectionCmd procedure} -body {
+    selection clear -selection
+} -returnCodes error -result {value for "-selection" missing}
+test select-6.3 {Tk_SelectionCmd procedure} -setup {
     setup
+} -body {
     selection own .
     set result [selection own]
     selection clear -displayof .f1
     lappend result [selection own]
-} {. {}}
-test select-6.4 {Tk_SelectionCmd procedure} {
+} -result {. {}}
+test select-6.4 {Tk_SelectionCmd procedure} -setup {
     setup
+} -body {
     selection own -selection CLIPBOARD .f1
     set result [list [selection own] [selection own -selection CLIPBOARD]]
     selection clear -selection CLIPBOARD .f1
     lappend result [selection own] [selection own -selection CLIPBOARD]
-} {.f1 .f1 .f1 {}}
-test select-6.5 {Tk_SelectionCmd procedure} {
+} -result {.f1 .f1 .f1 {}}
+test select-6.5 {Tk_SelectionCmd procedure} -setup {
     setup
+} -body {
     selection own -selection CLIPBOARD .
     set result [list [selection own] [selection own -selection CLIPBOARD]]
     selection clear -selection CLIPBOARD -displayof .f1
     lappend result [selection own] [selection own -selection CLIPBOARD]
-} {.f1 . .f1 {}}
-test select-6.6 {Tk_SelectionCmd procedure} {
-    list [catch {selection clear -badopt foo} cmd] $cmd
-} {1 {bad option "-badopt": must be -displayof or -selection}}
-test select-6.7 {Tk_SelectionCmd procedure} {
-    list [catch {selection clear -selectionfoo foo} cmd] $cmd
-} {1 {bad option "-selectionfoo": must be -displayof or -selection}}
-test select-6.8 {Tk_SelectionCmd procedure} {
-    catch {destroy .f2}
-    list [catch {selection clear -displayof .f2} cmd] $cmd
-} {1 {bad window path name ".f2"}}
-test select-6.9 {Tk_SelectionCmd procedure} {
-    catch {destroy .f2}
-    list [catch {selection clear .f2} cmd] $cmd
-} {1 {bad window path name ".f2"}}
-test select-6.10 {Tk_SelectionCmd procedure} {
+} -result {.f1 . .f1 {}}
+test select-6.6 {Tk_SelectionCmd procedure} -returnCodes error -body {
+    selection clear -badopt foo
+} -result {bad option "-badopt": must be -displayof or -selection}
+test select-6.7 {Tk_SelectionCmd procedure} -returnCodes error -body {
+    selection clear -selectionfoo foo
+} -result {bad option "-selectionfoo": must be -displayof or -selection}
+test select-6.8 {Tk_SelectionCmd procedure} -body {
+    destroy .f2
+    selection clear -displayof .f2
+} -returnCodes error -result {bad window path name ".f2"}
+test select-6.9 {Tk_SelectionCmd procedure} -body {
+    destroy .f2
+    selection clear .f2
+} -returnCodes error -result {bad window path name ".f2"}
+test select-6.10 {Tk_SelectionCmd procedure} -setup {
     setup
+} -body {
     set result [selection own -selection PRIMARY]
     selection clear
     lappend result [selection own -selection PRIMARY]
-} {.f1 {}}
-test select-6.11 {Tk_SelectionCmd procedure} {
+} -result {.f1 {}}
+test select-6.11 {Tk_SelectionCmd procedure} -setup {
     setup
+} -body {
     selection own -selection CLIPBOARD .f1
     set result [selection own -selection CLIPBOARD]
     selection clear -selection CLIPBOARD
     lappend result [selection own -selection CLIPBOARD]
-} {.f1 {}}
-test select-6.12 {Tk_SelectionCmd procedure} {
-    list [catch {selection clear foo bar} cmd] $cmd
-} {1 {wrong # args: should be "selection clear ?options?"}}
+} -result {.f1 {}}
+test select-6.12 {Tk_SelectionCmd procedure} -returnCodes error -body {
+    selection clear foo bar
+} -result {wrong # args: should be "selection clear ?-option value ...?"}
 # selection get
-test select-6.13 {Tk_SelectionCmd procedure} {
-    list [catch {selection get -selection} cmd] $cmd
-} {1 {value for "-selection" missing}}
-test select-6.14 {Tk_SelectionCmd procedure} {
+test select-6.13 {Tk_SelectionCmd procedure} -body {
+    selection get -selection
+} -returnCodes error -result {value for "-selection" missing}
+test select-6.14 {Tk_SelectionCmd procedure} -setup {
     global selValue selInfo
     setup
+} -body {
     selection handle .f1 {handler TEST}
     set selValue "Test value"
     set selInfo ""
     list [selection get -displayof .f1] $selInfo
-} {{Test value} {TEST 0 4000}}
-test select-6.15 {Tk_SelectionCmd procedure} {
+} -result {{Test value} {TEST 0 4000}}
+test select-6.15 {Tk_SelectionCmd procedure} -setup {
     global selValue selInfo
     setup
+} -body {
     selection handle .f1 {handler STRING}
     selection handle -selection CLIPBOARD .f1 {handler TEST}
     selection own -selection CLIPBOARD .f1
     set selValue "Test value"
     set selInfo ""
     list [selection get -selection CLIPBOARD] $selInfo
-} {{Test value} {TEST 0 4000}}
-test select-6.16 {Tk_SelectionCmd procedure} {
+} -result {{Test value} {TEST 0 4000}}
+test select-6.16 {Tk_SelectionCmd procedure} -setup {
     global selValue selInfo
     setup
+} -body {
     selection handle -type TEST .f1 {handler TEST}
     selection handle -type STRING .f1 {handler STRING}
     set selValue "Test value"
     set selInfo ""
     list [selection get -type TEST] $selInfo
-} {{Test value} {TEST 0 4000}}
-test select-6.17 {Tk_SelectionCmd procedure} {
-    list [catch {selection get -badopt foo} cmd] $cmd
-} {1 {bad option "-badopt": must be -displayof, -selection, or -type}}
-test select-6.18 {Tk_SelectionCmd procedure} {
-    list [catch {selection get -selectionfoo foo} cmd] $cmd
-} {1 {bad option "-selectionfoo": must be -displayof, -selection, or -type}}
-test select-6.19 {Tk_SelectionCmd procedure} {
+} -result {{Test value} {TEST 0 4000}}
+test select-6.17 {Tk_SelectionCmd procedure} -returnCodes error -body {
+    selection get -badopt foo
+} -result {bad option "-badopt": must be -displayof, -selection, or -type}
+test select-6.18 {Tk_SelectionCmd procedure} -returnCodes error -body {
+    selection get -selectionfoo foo
+} -result {bad option "-selectionfoo": must be -displayof, -selection, or -type}
+test select-6.19 {Tk_SelectionCmd procedure} -body {
     catch { destroy .f2 }
-    list [catch {selection get -displayof .f2} cmd] $cmd
-} {1 {bad window path name ".f2"}}
-test select-6.20 {Tk_SelectionCmd procedure} {
-    list [catch {selection get foo bar} cmd] $cmd
-} {1 {wrong # args: should be "selection get ?options?"}}
-test select-6.21 {Tk_SelectionCmd procedure} {
+    selection get -displayof .f2
+} -returnCodes error -result {bad window path name ".f2"}
+test select-6.20 {Tk_SelectionCmd procedure} -returnCodes error -body {
+    selection get foo bar
+} -result {wrong # args: should be "selection get ?-option value ...?"}
+test select-6.21 {Tk_SelectionCmd procedure} -setup {
     global selValue selInfo
     setup
+} -body {
     selection handle -type TEST .f1 {handler TEST}
     selection handle -type STRING .f1 {handler STRING}
     set selValue "Test value"
     set selInfo ""
     list [selection get TEST] $selInfo
-} {{Test value} {TEST 0 4000}}
+} -result {{Test value} {TEST 0 4000}}
 # selection handle
 # most of the handle section has been covered earlier
-test select-6.22 {Tk_SelectionCmd procedure} {
-    list [catch {selection handle -selection} cmd] $cmd
-} {1 {value for "-selection" missing}}
-test select-6.23 {Tk_SelectionCmd procedure} {
+test select-6.22 {Tk_SelectionCmd procedure} -body {
+    selection handle -selection
+} -returnCodes error -result {value for "-selection" missing}
+test select-6.23 {Tk_SelectionCmd procedure} -setup {
     global selValue selInfo
     setup
+} -body {
     set selValue "Test value"
     set selInfo ""
     list [selection handle -format INTEGER .f1 {handler TEST}] [selection get -displayof .f1] $selInfo
-} {{} {Test value} {TEST 0 4000}}
-test select-6.24 {Tk_SelectionCmd procedure} {
-    list [catch {selection handle -badopt foo} cmd] $cmd
-} {1 {bad option "-badopt": must be -format, -selection, or -type}}
-test select-6.25 {Tk_SelectionCmd procedure} {
-    list [catch {selection handle -selectionfoo foo} cmd] $cmd
-} {1 {bad option "-selectionfoo": must be -format, -selection, or -type}}
-test select-6.26 {Tk_SelectionCmd procedure} {
-    list [catch {selection handle} cmd] $cmd
-} {1 {wrong # args: should be "selection handle ?options? window command"}}
-test select-6.27 {Tk_SelectionCmd procedure} {
-    list [catch {selection handle .} cmd] $cmd
-} {1 {wrong # args: should be "selection handle ?options? window command"}}
-test select-6.28 {Tk_SelectionCmd procedure} {
-    list [catch {selection handle . foo bar baz blat} cmd] $cmd
-} {1 {wrong # args: should be "selection handle ?options? window command"}}
-test select-6.29 {Tk_SelectionCmd procedure} {
+} -result {{} {Test value} {TEST 0 4000}}
+test select-6.24 {Tk_SelectionCmd procedure} -returnCodes error -body {
+    selection handle -badopt foo
+} -result {bad option "-badopt": must be -format, -selection, or -type}
+test select-6.25 {Tk_SelectionCmd procedure} -returnCodes error -body {
+    selection handle -selectionfoo foo
+} -result {bad option "-selectionfoo": must be -format, -selection, or -type}
+test select-6.26 {Tk_SelectionCmd procedure} -returnCodes error -body {
+    selection handle
+} -result {wrong # args: should be "selection handle ?-option value ...? window command"}
+test select-6.27 {Tk_SelectionCmd procedure} -returnCodes error -body {
+    selection handle .
+} -result {wrong # args: should be "selection handle ?-option value ...? window command"}
+test select-6.28 {Tk_SelectionCmd procedure} -returnCodes error -body {
+    selection handle . foo bar baz blat
+} -result {wrong # args: should be "selection handle ?-option value ...? window command"}
+test select-6.29 {Tk_SelectionCmd procedure} -body {
     catch { destroy .f2 }
-    list [catch {selection handle .f2 dummy} cmd] $cmd
-} {1 {bad window path name ".f2"}}
+    selection handle .f2 dummy
+} -returnCodes error -result {bad window path name ".f2"}
 # selection own
-test select-6.30 {Tk_SelectionCmd procedure} {
-    list [catch {selection own -selection} cmd] $cmd
-} {1 {value for "-selection" missing}}
-test select-6.31 {Tk_SelectionCmd procedure} {
+test select-6.30 {Tk_SelectionCmd procedure} -body {
+    selection own -selection
+} -returnCodes error -result {value for "-selection" missing}
+test select-6.31 {Tk_SelectionCmd procedure} -setup {
     setup
+} -body {
     selection own .
     selection own -displayof .f1
-} {.}
-test select-6.32 {Tk_SelectionCmd procedure} {
+} -result {.}
+test select-6.32 {Tk_SelectionCmd procedure} -setup {
     setup
+} -body {
     selection own .
     selection own -selection CLIPBOARD .f1
     list [selection own] [selection own -selection CLIPBOARD]
-} {. .f1}
-test select-6.33 {Tk_SelectionCmd procedure} {
+} -result {. .f1}
+test select-6.33 {Tk_SelectionCmd procedure} -setup {
     global lostSel
     setup
+} -body {
     set lostSel owned
     selection own -command { set lostSel lost } .
     selection own -selection CLIPBOARD .f1
     set result $lostSel
     selection own .f1
     lappend result $lostSel
-} {owned lost}
-test select-6.34 {Tk_SelectionCmd procedure} {
-    list [catch {selection own -badopt foo} cmd] $cmd
-} {1 {bad option "-badopt": must be -command, -displayof, or -selection}}
-test select-6.35 {Tk_SelectionCmd procedure} {
-    list [catch {selection own -selectionfoo foo} cmd] $cmd
-} {1 {bad option "-selectionfoo": must be -command, -displayof, or -selection}}
-test select-6.36 {Tk_SelectionCmd procedure} {
-    catch {destroy .f2}
-    list [catch {selection own -displayof .f2} cmd] $cmd
-} {1 {bad window path name ".f2"}}
-test select-6.37 {Tk_SelectionCmd procedure} {
-    catch {destroy .f2}
-    list [catch {selection own .f2} cmd] $cmd
-} {1 {bad window path name ".f2"}}
-test select-6.38 {Tk_SelectionCmd procedure} {
-    list [catch {selection own foo bar baz} cmd] $cmd
-} {1 {wrong # args: should be "selection own ?options? ?window?"}}
-test select-6.39 {Tk_SelectionCmd procedure} {
-    list [catch {selection foo} cmd] $cmd
-} {1 {bad option "foo": must be clear, get, handle, or own}}
+} -result {owned lost}
+test select-6.34 {Tk_SelectionCmd procedure} -returnCodes error -body {
+    selection own -badopt foo
+} -result {bad option "-badopt": must be -command, -displayof, or -selection}
+test select-6.35 {Tk_SelectionCmd procedure} -returnCodes error -body {
+    selection own -selectionfoo foo
+} -result {bad option "-selectionfoo": must be -command, -displayof, or -selection}
+test select-6.36 {Tk_SelectionCmd procedure} -body {
+    destroy .f2
+    selection own -displayof .f2
+} -returnCodes error -result {bad window path name ".f2"}
+test select-6.37 {Tk_SelectionCmd procedure} -body {
+    destroy .f2
+    selection own .f2
+} -returnCodes error -result {bad window path name ".f2"}
+test select-6.38 {Tk_SelectionCmd procedure} -returnCodes error -body {
+    selection own foo bar baz
+} -result {wrong # args: should be "selection own ?-option value ...? ?window?"}
+test select-6.39 {Tk_SelectionCmd procedure} -returnCodes error -body {
+    selection foo
+} -result {bad option "foo": must be clear, get, handle, or own}
 
 ##############################################################################
 
-# This test is non-portable because some old X11/News servers ignore
-# a selection request when the window doesn't exist, which causes a
-# different error message.
-test select-7.1 {TkSelDeadWindow procedure} nonPortable {
+# This test is non-portable because some old X11/News servers ignore a
+# selection request when the window doesn't exist, which causes a different
+# error message.
+test select-7.1 {TkSelDeadWindow procedure} -constraints nonPortable -setup {
     setup
+} -body {
     selection handle .f1 { handler TEST }
     set result [selection own]
     destroy .f1
     lappend result [selection own] [catch {selection get} msg] $msg
-} {.f1 {} 1 {PRIMARY selection doesn't exist or form "STRING" not defined}}
+} -result {.f1 {} 1 {PRIMARY selection doesn't exist or form "STRING" not defined}}
 
 ##############################################################################
 
 # Check reentrancy on losing selection
-
 test select-8.1 {TkSelEventProc procedure} -constraints unix -setup {
     setup
     setupbg
@@ -790,16 +879,17 @@ test select-9.1 {SelCvtToX and SelCvtFromX procedures} -setup {
     set selValue "1024"
     set selInfo ""
     selection handle -selection PRIMARY -format INTEGER -type TEST \
-	    .f1 {handler TEST}
+        .f1 {handler TEST}
     update
     set result ""
     lappend result [dobg {selection get TEST}]
     cleanupbg
     lappend result $selInfo
-} -result {0x400 {TEST 0 4000}}
-test select-9.2 {SelCvtToX and SelCvtFromX procedures} unix {
+} -result {{0x400 } {TEST 0 4000}}
+test select-9.2 {SelCvtToX and SelCvtFromX procedures} -setup {
     setup
     setupbg
+} -constraints unix -body {
     set selValue "1024 0xffff  2048 -2  "
     set selInfo ""
     selection handle -selection PRIMARY -format INTEGER -type TEST \
@@ -808,10 +898,11 @@ test select-9.2 {SelCvtToX and SelCvtFromX procedures} unix {
     lappend result [dobg {selection get TEST}]
     cleanupbg
     lappend result $selInfo
-} {{0x400 0xffff 0x800 0xfffffffe} {TEST 0 4000}}
-test select-9.3 {SelCvtToX and SelCvtFromX procedures} unix {
+} -result {{0x400 0xffff 0x800 0xfffffffe } {TEST 0 4000}}
+test select-9.3 {SelCvtToX and SelCvtFromX procedures} -setup {
     setup
     setupbg
+} -constraints unix -body {
     set selValue "   "
     set selInfo ""
     selection handle -selection PRIMARY -format INTEGER -type TEST \
@@ -820,10 +911,11 @@ test select-9.3 {SelCvtToX and SelCvtFromX procedures} unix {
     lappend result [dobg {selection get TEST}]
     cleanupbg
     lappend result $selInfo
-} {{} {TEST 0 4000}}
-test select-9.4 {SelCvtToX and SelCvtFromX procedures} unix {
+} -result {{ } {TEST 0 4000}}
+test select-9.4 {SelCvtToX and SelCvtFromX procedures} -setup {
     setup
     setupbg
+} -constraints unix -body {
     set selValue "16 foobar 32"
     set selInfo ""
     selection handle -selection PRIMARY -format INTEGER -type TEST \
@@ -832,7 +924,7 @@ test select-9.4 {SelCvtToX and SelCvtFromX procedures} unix {
     lappend result [dobg {selection get TEST}]
     cleanupbg
     lappend result $selInfo
-} {{0x10 0x0 0x20} {TEST 0 4000}}
+} -result {{0x10 0x0 0x20 } {TEST 0 4000}}
 test select-9.5 {SelCvtToX and SelCvtFromX procedures} -setup {
     setup
     setupbg
@@ -843,19 +935,21 @@ test select-9.5 {SelCvtToX and SelCvtFromX procedures} -setup {
     set selInfo ""
     set selType {text/x-tk-test;detail="foo bar"}
     selection handle -selection PRIMARY -format STRING -type $selType \
-	.f1 [list handler $selType]
+    .f1 [list handler $selType]
     lsort [dobg {selection get TARGETS}]
 } -cleanup {
     cleanupbg
 } -result {MULTIPLE TARGETS TIMESTAMP TK_APPLICATION TK_WINDOW {text/x-tk-test;detail="foo bar"}}
 
 ##############################################################################
-
 # note, we are not testing MULTIPLE style selections
 
 # most control paths have been exercised above
-test select-10.1 {ConvertSelection procedure, race with selection clear} unix {
+test select-10.1 {ConvertSelection procedure, race with selection clear} -constraints {
+    unix 
+} -setup {
     setup
+} -body {
     proc Ready {fd} {
 	variable x
 	lappend x [gets $fd]
@@ -869,7 +963,7 @@ test select-10.1 {ConvertSelection procedure, race with selection clear} unix {
     set selInfo ""
     selection handle .f1 {handler STRING}
     update
-    puts $fd {puts "[catch {selection get} msg] $msg"; puts **DONE**; flush stdout}
+    puts $fd {puts "[catch {selection get} msg]:$msg"; puts **DONE**; flush stdout}
     flush $fd
     after 200
     selection own .
@@ -881,10 +975,11 @@ test select-10.1 {ConvertSelection procedure, race with selection clear} unix {
     # a "broken pipe" error when Tk was actually [load]ed in the child.
     catch {close $fd}
     lappend x $selInfo
-} {{1 PRIMARY selection doesn't exist or form "STRING" not defined} {}}
-test select-10.2 {ConvertSelection procedure} unix {
+} -result {{1:PRIMARY selection doesn't exist or form "STRING" not defined} {}}
+test select-10.2 {ConvertSelection procedure} -constraints unix -setup {
     setup
     setupbg
+} -body {
     set selValue [string range $longValue 0 3999]
     set selInfo ""
     selection handle .f1 {handler STRING}
@@ -892,21 +987,24 @@ test select-10.2 {ConvertSelection procedure} unix {
     lappend result [dobg {selection get}]
     cleanupbg
     lappend result $selInfo
-} [list [string range $longValue 0 3999] {STRING 0 4000 STRING 4000 4000 STRING 0 4000 STRING 4000 4000}]
-test select-10.3 {ConvertSelection procedure} unix {
+} -result [list [string range $longValue 0 3999] {STRING 0 4000 STRING 4000 4000 STRING 0 4000 STRING 4000 4000}]
+test select-10.3 {ConvertSelection procedure} -constraints unix -setup {
     setup
     setupbg
+} -body {
     selection handle .f1 ERROR errHandler
-    set result ""
-    lappend result [dobg {selection get ERROR}]
+    dobg {selection get ERROR}
+} -cleanup {
     cleanupbg
-    set result
-} {{PRIMARY selection doesn't exist or form "ERROR" not defined}}
+} -result {PRIMARY selection doesn't exist or form "ERROR" not defined}
 # testing timers
 # This one hangs in Exceed
-test select-10.4 {ConvertSelection procedure} {unix noExceed} {
+test select-10.4 {ConvertSelection procedure} -constraints {
+    unix noExceed
+} -setup {
     setup
     setupbg
+} -body {
     set selValue $longValue
     set selInfo ""
     selection handle .f1 {errIncrHandler STRING}
@@ -915,10 +1013,13 @@ test select-10.4 {ConvertSelection procedure} {unix noExceed} {
     lappend result [dobg {selection get}]
     cleanupbg
     lappend result $selInfo
-} {{selection owner didn't respond} {STRING 0 4000 STRING 4000 4000 STRING 8000 4000 STRING 12000 4000 STRING 16000 4000 STRING 0 4000 STRING 4000 4000}}
-test select-10.5 {ConvertSelection procedure, reentrancy issues} unix {
+} -result {{selection owner didn't respond} {STRING 0 4000 STRING 4000 4000 STRING 8000 4000 STRING 12000 4000 STRING 16000 4000 STRING 0 4000 STRING 4000 4000}}
+test select-10.5 {ConvertSelection procedure, reentrancy issues} -constraints {
+    unix 
+} -setup {
     setup
     setupbg
+} -body {
     set selValue "Test value"
     set selInfo ""
     selection handle -type TEST .f1 { handler TEST }
@@ -927,14 +1028,17 @@ test select-10.5 {ConvertSelection procedure, reentrancy issues} unix {
     lappend result [dobg {selection get}]
     cleanupbg
     lappend result $selInfo
-} {{PRIMARY selection doesn't exist or form "STRING" not defined} {.f1 STRING 0 4000}}
-test select-10.6 {ConvertSelection procedure, reentrancy issues} unix {
+} -result {{PRIMARY selection doesn't exist or form "STRING" not defined} {.f1 STRING 0 4000}}
+test select-10.6 {ConvertSelection procedure, reentrancy issues} -constraints {
+    unix 
+} -setup {
+    setup
+    setupbg
+} -body {
     proc weirdHandler {type offset count} {
 	destroy .f1
 	handler $type $offset $count
     }
-    setup
-    setupbg
     set selValue $longValue
     set selInfo ""
     selection handle .f1 {weirdHandler STRING}
@@ -942,14 +1046,15 @@ test select-10.6 {ConvertSelection procedure, reentrancy issues} unix {
     lappend result [dobg {selection get}]
     cleanupbg
     lappend result $selInfo
-} {{PRIMARY selection doesn't exist or form "STRING" not defined} {STRING 0 4000}}
+} -result {{PRIMARY selection doesn't exist or form "STRING" not defined} {STRING 0 4000}}
 
 ##############################################################################
 
 # testing reentrancy
-test select-11.1 {TkSelPropProc procedure} unix {
+test select-11.1 {TkSelPropProc procedure} -constraints unix -setup {
     setup
     setupbg
+} -body {
     set selValue $longValue
     set selInfo ""
     selection handle -type TEST .f1 { handler TEST }
@@ -959,28 +1064,28 @@ test select-11.1 {TkSelPropProc procedure} unix {
     lappend result [dobg {selection get}]
     cleanupbg
     lappend result $selInfo
-} {{selection owner didn't respond} {.f1 STRING 0 4000 .f1 STRING 4000 4000 .f1 STRING 8000 4000 .f1 STRING 12000 4000 .f1 STRING 16000 4000 .f1 STRING 0 4000 .f1 STRING 4000 4000}}
+} -result {{selection owner didn't respond} {.f1 STRING 0 4000 .f1 STRING 4000 4000 .f1 STRING 8000 4000 .f1 STRING 12000 4000 .f1 STRING 16000 4000 .f1 STRING 0 4000 .f1 STRING 4000 4000}}
 
 ##############################################################################
 
 # Note, this assumes we are using CurrentTtime
-test select-12.1 {DefaultSelection procedure} unix {
+test select-12.1 {DefaultSelection procedure} -constraints unix -body {
     setup
     set result [selection get -type TIMESTAMP]
     setupbg
     lappend result [dobg {selection get -type TIMESTAMP}]
     cleanupbg
     set result
-} {0x0 0x0}
-test select-12.2 {DefaultSelection procedure} unix {
+} -result {0x0 {0x0 }}
+test select-12.2 {DefaultSelection procedure} -constraints unix -body {
     setup
     set result [lsort [list [selection get -type TARGETS]]]
     setupbg
     lappend result [dobg {lsort [selection get -type TARGETS]}]
     cleanupbg
     set result
-} {{MULTIPLE TARGETS TIMESTAMP TK_APPLICATION TK_WINDOW} {MULTIPLE TARGETS TIMESTAMP TK_APPLICATION TK_WINDOW}}
-test select-12.3 {DefaultSelection procedure} unix {
+} -result {{MULTIPLE TARGETS TIMESTAMP TK_APPLICATION TK_WINDOW} {MULTIPLE TARGETS TIMESTAMP TK_APPLICATION TK_WINDOW}}
+test select-12.3 {DefaultSelection procedure} -constraints unix -body {
     setup
     selection handle .f1 {handler TEST} TEST
     set result [list [lsort [selection get -type TARGETS]]]
@@ -988,25 +1093,26 @@ test select-12.3 {DefaultSelection procedure} unix {
     lappend result [dobg {lsort [selection get -type TARGETS]}]
     cleanupbg
     set result
-} {{MULTIPLE TARGETS TEST TIMESTAMP TK_APPLICATION TK_WINDOW} {MULTIPLE TARGETS TEST TIMESTAMP TK_APPLICATION TK_WINDOW}}
-test select-12.4 {DefaultSelection procedure} unix {
+} -result {{MULTIPLE TARGETS TEST TIMESTAMP TK_APPLICATION TK_WINDOW} {MULTIPLE TARGETS TEST TIMESTAMP TK_APPLICATION TK_WINDOW}}
+test select-12.4 {DefaultSelection procedure} -constraints unix -setup {
     setup
     set result ""
+} -body {
     lappend result [selection get -type TK_APPLICATION]
     setupbg
     lappend result [dobg {selection get -type TK_APPLICATION}]
     cleanupbg
     set result
-} [list [winfo name .] [winfo name .]]
-test select-12.5 {DefaultSelection procedure} unix {
+} -result [list [winfo name .] [winfo name .]]
+test select-12.5 {DefaultSelection procedure} -constraints unix -body {
     setup
     set result [selection get -type TK_WINDOW]
     setupbg
     lappend result [dobg {selection get -type TK_WINDOW}]
     cleanupbg
     set result
-} {.f1 .f1}
-test select-12.6 {DefaultSelection procedure} {
+} -result {.f1 .f1}
+test select-12.6 {DefaultSelection procedure} -body {
     setup
     selection handle .f1 {handler TARGETS.f1} TARGETS
     set selValue "Targets value"
@@ -1014,9 +1120,14 @@ test select-12.6 {DefaultSelection procedure} {
     set result [list [selection get TARGETS] $selInfo]
     selection handle .f1 {} TARGETS
     lappend result [selection get TARGETS]
-} {{Targets value} {TARGETS.f1 0 4000} {MULTIPLE TARGETS TIMESTAMP TK_APPLICATION TK_WINDOW}}
+} -result {{Targets value} {TARGETS.f1 0 4000} {MULTIPLE TARGETS TIMESTAMP TK_APPLICATION TK_WINDOW}}
 
-test select-13.1 {SelectionSize procedure, handler deleted} unix {
+test select-13.1 {SelectionSize procedure, handler deleted} -constraints {
+    unix 
+} -setup {
+    setup
+    setupbg
+} -body {
     proc badHandler {path type offset count} {
 	global selValue selInfo abortCount
 	incr abortCount -1
@@ -1030,8 +1141,6 @@ test select-13.1 {SelectionSize procedure, handler deleted} unix {
 	}
 	string range $selValue $offset [expr $numBytes+$offset]
     }
-    setup
-    setupbg
     set selValue $longValue
     set selInfo ""
     selection handle .f1 {badHandler .f1 STRING}
@@ -1040,10 +1149,14 @@ test select-13.1 {SelectionSize procedure, handler deleted} unix {
     lappend result [dobg {selection get}]
     cleanupbg
     lappend result $selInfo
-} {{PRIMARY selection doesn't exist or form "STRING" not defined} {.f1 STRING 0 4000 .f1 STRING 4000 4000}}
-
+} -result {{PRIMARY selection doesn't exist or form "STRING" not defined} {.f1 STRING 0 4000 .f1 STRING 4000 4000}}
+
 catch {rename weirdHandler {}}
 
 # cleanup
 cleanupTests
 return
+
+# Local Variables:
+# mode: tcl
+# End:

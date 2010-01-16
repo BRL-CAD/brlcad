@@ -63,7 +63,7 @@ Display containing widget whose record is being freed;  needed in
 order to free up resources.
 .BE
 .SH DESCRIPTION
-.PP 
+.PP
 Note: \fBTk_ConfigureWidget\fR should be replaced with the new
 \fBTcl_Obj\fR based API \fBTk_SetOptions\fR.  The old interface is
 retained for backward compatibility.
@@ -91,7 +91,7 @@ to fill in fields of \fIwidgRec\fR that are not specified in \fIargv\fR.
 case it does not modify \fIinterp\fR.
 If an error
 occurs then \fBTCL_ERROR\fR is returned and \fBTk_ConfigureWidget\fR will
-leave an error message in \fIinterp->result\fR in the standard Tcl
+leave an error message in interpreter \fIinterp\fR's result in the standard Tcl
 fashion.
 In the event of an error return, some of the fields of \fIwidgRec\fR
 could already have been set, if configuration information for them
@@ -105,14 +105,14 @@ option and has the following structure:
 .CS
 typedef struct {
     int \fItype\fR;
-    char *\fIargvName\fR;
-    char *\fIdbName\fR;
-    char *\fIdbClass\fR;
-    char *\fIdefValue\fR;
+    const char *\fIargvName\fR;
+    const char *\fIdbName\fR;
+    const char *\fIdbClass\fR;
+    const char *\fIdefValue\fR;
     int \fIoffset\fR;
     int \fIspecFlags\fR;
-    Tk_CustomOption *\fIcustomPtr\fR;
-} Tk_ConfigSpec;
+    const Tk_CustomOption *\fIcustomPtr\fR;
+} \fBTk_ConfigSpec\fR;
 .CE
 The \fItype\fR field indicates what type of configuration option this is
 (e.g. \fBTK_CONFIG_COLOR\fR for a color value, or \fBTK_CONFIG_INT\fR for
@@ -358,7 +358,6 @@ is an empty string then the target will be set to NULL.
 \fBTK_CONFIG_WINDOW\fR
 The value must be a window path name.  It is translated to a
 \fBTk_Window\fR token and the token is stored in the target.
-
 .SH "GROUPED ENTRIES"
 .PP
 In some cases it is useful to generate multiple resources from
@@ -376,7 +375,6 @@ Each of the entries after the first must have a NULL value in its
 \fIargvName\fR field;  this indicates that the entry is to be grouped
 with the entry that precedes it.  Only the \fItype\fR and \fIoffset\fR
 fields are used from these follow-on entries.
-
 .SH "FLAGS"
 .PP
 The \fIflags\fR argument passed to \fBTk_ConfigureWidget\fR is used
@@ -436,13 +434,11 @@ once, save the value, and provide it before calling
 .TP
 \fBTK_CONFIG_OPTION_SPECIFIED\fR
 This bit is
-.VS 8.5
 deprecated. It used to be set and cleared by \fBTk_ConfigureWidget\fR
 so that callers could detect what entries were specified in
 \fIargv\fR, but it was removed because it was inherently
 thread-unsafe. Code that wishes to detect what options were specified
 should use \fBTk_SetOptions\fR instead.
-.VE 8.5
 .PP
 The \fBTK_CONFIG_MONO_ONLY\fR and \fBTK_CONFIG_COLOR_ONLY\fR flags are typically
 used to specify different default values for
@@ -475,7 +471,6 @@ for which this entry is valid.  When calling \fBTk_ConfigureWidget\fR,
 \fIflags\fR will have a single one of these bits set to select the
 entries for the desired widget type.  For a working example of
 this feature, see the code in tkButton.c.
-
 .SH TK_OFFSET
 .PP
 The \fBTk_Offset\fR macro is provided as a safe way of generating
@@ -483,7 +478,6 @@ the \fIoffset\fR values for entries in Tk_ConfigSpec structures.
 It takes two arguments:  the name of a type of record, and the
 name of a field in that record.  It returns the byte offset of
 the named field in records of the given type.
-
 .SH TK_CONFIGUREINFO
 .PP
 The \fBTk_ConfigureInfo\fR procedure may be used to obtain
@@ -494,12 +488,12 @@ pointer to a widget record containing the current information for
 a widget (\fIwidgRec\fR), and a NULL \fIargvName\fR argument,
 \fBTk_ConfigureInfo\fR generates a string describing all of the
 configuration options for the window.  The string is placed
-in \fIinterp->result\fR.  Under normal circumstances
+in interpreter \fIinterp\fR's result.  Under normal circumstances
 it returns \fBTCL_OK\fR;  if an error occurs then it returns \fBTCL_ERROR\fR
-and \fIinterp->result\fR contains an error message.
+and the interpreter's result will contain an error message.
 .PP
 If \fIargvName\fR is NULL, then the value left in
-\fIinterp->result\fR by \fBTk_ConfigureInfo\fR
+the interpreter's result by \fBTk_ConfigureInfo\fR
 consists of a list of one or more entries, each of which describes
 one configuration option (i.e. one entry in \fIspecs\fR).  Each
 entry in the list will contain either two or five values.  If the
@@ -512,27 +506,25 @@ field of \fIwidgRec\fR by calling procedures like \fBTk_NameOfColor\fR.
 .PP
 If the \fIargvName\fR argument to \fBTk_ConfigureInfo\fR is non-NULL,
 then it indicates a single option, and information is returned only
-for that option.  The string placed in \fIinterp->result\fR will be
+for that option.  The string placed in the interpreter's result will be
 a list containing two or five values as described above;  this will
 be identical to the corresponding sublist that would have been returned
 if \fIargvName\fR had been NULL.
 .PP
 The \fIflags\fR argument to \fBTk_ConfigureInfo\fR is used to restrict
 the \fIspecs\fR entries to consider, just as for \fBTk_ConfigureWidget\fR.
-
 .SH TK_CONFIGUREVALUE
 .PP
 \fBTk_ConfigureValue\fR takes arguments similar to \fBTk_ConfigureInfo\fR;
 instead of returning a list of values, it just returns the current value
 of the option given by \fIargvName\fR (\fIargvName\fR must not be NULL).
-The value is returned in \fIinterp->result\fR and \fBTCL_OK\fR is
+The value is returned in interpreter \fIinterp\fR's result and \fBTCL_OK\fR is
 normally returned as the procedure's result.
 If an error occurs in \fBTk_ConfigureValue\fR (e.g., \fIargvName\fR is
 not a valid option name), \fBTCL_ERROR\fR is returned and an error message
-is left in \fIinterp->result\fR.
+is left in the interpreter's result.
 This procedure is typically called to implement \fBcget\fR widget
 commands.
-
 .SH TK_FREEOPTIONS
 .PP
 The \fBTk_FreeOptions\fR procedure may be invoked during widget cleanup
@@ -545,7 +537,6 @@ it contains a null pointer) then no resource is freed for that
 entry.
 After freeing a resource, \fBTk_FreeOptions\fR sets the
 corresponding field of the widget record to null.
-
 .SH "CUSTOM OPTION TYPES"
 .PP
 Applications can extend the built-in configuration types with additional
@@ -556,22 +547,22 @@ typedef struct Tk_CustomOption {
     Tk_OptionParseProc *\fIparseProc\fR;
     Tk_OptionPrintProc *\fIprintProc\fR;
     ClientData \fIclientData\fR;
-} Tk_CustomOption;
+} \fBTk_CustomOption\fR;
 
-typedef int Tk_OptionParseProc(
-    ClientData \fIclientData\fR,
-    Tcl_Interp *\fIinterp\fR,
-    Tk_Window \fItkwin\fR,
-    char *\fIvalue\fR,
-    char *\fIwidgRec\fR,
-    int \fIoffset\fR);
+typedef int \fBTk_OptionParseProc\fR(
+        ClientData \fIclientData\fR,
+        Tcl_Interp *\fIinterp\fR,
+        Tk_Window \fItkwin\fR,
+        char *\fIvalue\fR,
+        char *\fIwidgRec\fR,
+        int \fIoffset\fR);
 
-typedef char *Tk_OptionPrintProc(
-    ClientData \fIclientData\fR,
-    Tk_Window \fItkwin\fR,
-    char *\fIwidgRec\fR,
-    int \fIoffset\fR,
-    Tcl_FreeProc **\fIfreeProcPtr\fR);
+typedef const char *\fBTk_OptionPrintProc\fR(
+        ClientData \fIclientData\fR,
+        Tk_Window \fItkwin\fR,
+        char *\fIwidgRec\fR,
+        int \fIoffset\fR,
+        Tcl_FreeProc **\fIfreeProcPtr\fR);
 .CE
 The Tk_CustomOption structure contains three fields, which are pointers
 to the two procedures and a \fIclientData\fR value to be passed to those
@@ -601,7 +592,7 @@ be placed.  The procedure should translate the string to whatever
 form is appropriate for the option and store the value in the widget
 record.  It should normally return \fBTCL_OK\fR, but if an error occurs
 in translating the string to a value then it should return \fBTCL_ERROR\fR
-and store an error message in \fIinterp->result\fR.
+and store an error message in interpreter \fIinterp\fR's result.
 .PP
 The \fIprintProc\fR procedure is called
 by \fBTk_ConfigureInfo\fR to produce a string value describing an
@@ -624,7 +615,6 @@ Tk_CustomOption structure has been created for them, options of this
 new type may be manipulated with Tk_ConfigSpec entries whose \fItype\fR
 fields are \fBTK_CONFIG_CUSTOM\fR and whose \fIcustomPtr\fR fields point
 to the Tk_CustomOption structure.
-
 .SH EXAMPLES
 .PP
 Although the explanation of \fBTk_ConfigureWidget\fR is fairly
@@ -635,10 +625,8 @@ The library implementation of frames
 (tkFrame.c) has a simple configuration table, and the library
 implementation of buttons (tkButton.c) has a much more complex
 table that uses many of the fancy \fIspecFlags\fR mechanisms.
-
 .SH "SEE ALSO"
 Tk_SetOptions(3)
-
 .SH KEYWORDS
 anchor, bitmap, boolean, border, cap style, color, configuration options,
 cursor, custom, double, font, integer, join style, justify, millimeters,

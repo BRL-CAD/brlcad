@@ -84,11 +84,11 @@ static void		UpdateScrollbarMetrics(void);
  * The class procedure table for the scrollbar widget.
  */
 
-Tk_ClassProcs tkpScrollbarProcs = {
+const Tk_ClassProcs tkpScrollbarProcs = {
     sizeof(Tk_ClassProcs),	/* size */
     NULL,			/* worldChangedProc */
     CreateProc,			/* createProc */
-    ModalLoopProc,		/* modalProc */
+    ModalLoopProc		/* modalProc */
 };
 
 
@@ -572,7 +572,7 @@ ScrollbarProc(
 	code = Tcl_GlobalEval(interp, cmdString.string);
 	if (code != TCL_OK && code != TCL_CONTINUE && code != TCL_BREAK) {
 	    Tcl_AddErrorInfo(interp, "\n    (scrollbar command)");
-	    Tcl_BackgroundError(interp);
+	    Tcl_BackgroundException(interp, code);
 	}
 	Tcl_DStringFree(&cmdString);
 
@@ -669,12 +669,12 @@ ModalLoopProc(
     Tk_Window tkwin,
     XEvent *eventPtr)
 {
-    TkWindow *winPtr = (TkWindow *) tkwin;
+    TkWindow *winPtr = (TkWindow*)tkwin;
     WinScrollbar *scrollPtr = (WinScrollbar *) winPtr->instanceData;
     int oldMode;
 
     if (scrollPtr->hwnd) {
-	Tcl_Preserve(scrollPtr);
+	Tcl_Preserve((ClientData)scrollPtr);
 	scrollPtr->winFlags |= IN_MODAL_LOOP;
 	oldMode = Tcl_SetServiceMode(TCL_SERVICE_ALL);
 	TkWinResendEvent(scrollPtr->oldProc, scrollPtr->hwnd, eventPtr);
@@ -683,7 +683,7 @@ ModalLoopProc(
 	if (scrollPtr->hwnd && scrollPtr->winFlags & ALREADY_DEAD) {
 	    DestroyWindow(scrollPtr->hwnd);
 	}
-	Tcl_Release(scrollPtr);
+	Tcl_Release((ClientData)scrollPtr);
     }
 }
 

@@ -28,7 +28,6 @@ Name of desired option.
 Class of desired option.  Null means there is no class for
 this option;  do lookup based on name only.
 .BE
-
 .SH DESCRIPTION
 .PP
 This procedure is invoked to retrieve an option from the database
@@ -41,6 +40,5 @@ is returned.  If no option matches, then NULL is returned.
 \fBTk_GetOption\fR caches options related to \fItkwin\fR so that
 successive calls for the same \fItkwin\fR will execute much more
 quickly than successive calls for different windows.
-
 .SH KEYWORDS
 class, name, option, retrieve

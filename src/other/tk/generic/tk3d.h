@@ -42,9 +42,8 @@ typedef struct TkBorder {
 				 * no longer valid and it isn't present in
 				 * borderTable: it is being kept around only
 				 * because there are objects referring to it.
-				 * The structure is freed when
-				 * resourceRefCount and objRefCount are both
-				 * 0. */
+				 * The structure is freed when objRefCount and
+				 * resourceRefCount are both 0. */
     int objRefCount;		/* The number of Tcl objects that reference
 				 * this structure. */
     XColor *bgColorPtr;		/* Background color (intensity between

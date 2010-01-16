@@ -71,7 +71,7 @@ static const Tk_SegType tkTextEmbImageType = {
  * Definitions for alignment values:
  */
 
-static char *alignStrings[] = {
+static const char *const alignStrings[] = {
     "baseline", "bottom", "center", "top", NULL
 };
 
@@ -99,7 +99,6 @@ static const Tk_OptionSpec optionSpecs[] = {
 	TK_OPTION_NULL_OK, 0, 0},
     {TK_OPTION_END}
 };
-
 
 /*
  *--------------------------------------------------------------
@@ -130,7 +129,7 @@ TkTextImageCmd(
     int idx;
     register TkTextSegment *eiPtr;
     TkTextIndex index;
-    static const char *optionStrings[] = {
+    static const char *const optionStrings[] = {
 	"cget", "configure", "create", "names", NULL
     };
     enum opts {
@@ -138,7 +137,7 @@ TkTextImageCmd(
     };
 
     if (objc < 3) {
-	Tcl_WrongNumArgs(interp, 2, objv, "option ?arg arg ...?");
+	Tcl_WrongNumArgs(interp, 2, objv, "option ?arg ...?");
 	return TCL_ERROR;
     }
     if (Tcl_GetIndexFromObj(interp, objv[2], optionStrings, "option", 0,
@@ -173,7 +172,7 @@ TkTextImageCmd(
     }
     case CMD_CONF:
 	if (objc < 4) {
-	    Tcl_WrongNumArgs(interp, 3, objv, "index ?option value ...?");
+	    Tcl_WrongNumArgs(interp, 3, objv, "index ?-option value ...?");
 	    return TCL_ERROR;
 	}
 	if (TkTextGetObjIndex(interp, textPtr, objv[3], &index) != TCL_OK) {
@@ -217,7 +216,7 @@ TkTextImageCmd(
 	 */
 
 	if (objc < 4) {
-	    Tcl_WrongNumArgs(interp, 3, objv, "index ?option value ...?");
+	    Tcl_WrongNumArgs(interp, 3, objv, "index ?-option value ...?");
 	    return TCL_ERROR;
 	}
 	if (TkTextGetObjIndex(interp, textPtr, objv[3], &index) != TCL_OK) {
@@ -345,7 +344,7 @@ EmbImageConfigure(
 
     if (eiPtr->body.ei.imageString != NULL) {
 	image = Tk_GetImage(textPtr->interp, textPtr->tkwin,
-		eiPtr->body.ei.imageString, EmbImageProc, (ClientData) eiPtr);
+		eiPtr->body.ei.imageString, EmbImageProc, eiPtr);
 	if (image == NULL) {
 	    return TCL_ERROR;
 	}
@@ -472,6 +471,9 @@ EmbImageDeleteProc(
 
     Tk_FreeConfigOptions((char *) &eiPtr->body.ei, eiPtr->body.ei.optionTable,
 	    NULL);
+    if (eiPtr->body.ei.name) {
+	ckfree(eiPtr->body.ei.name);
+    }
     ckfree((char *) eiPtr);
     return 0;
 }
@@ -585,7 +587,7 @@ EmbImageLayoutProc(
     chunkPtr->width = width;
     chunkPtr->breakIndex = -1;
     chunkPtr->breakIndex = 1;
-    chunkPtr->clientData = (ClientData) eiPtr;
+    chunkPtr->clientData = eiPtr;
     eiPtr->body.ei.chunkCount += 1;
     return 1;
 }
@@ -657,7 +659,7 @@ EmbImageDisplayProc(
     int screenY)		/* Y-coordinate in text window that
 				 * corresponds to y. */
 {
-    TkTextSegment *eiPtr = (TkTextSegment *) chunkPtr->clientData;
+    TkTextSegment *eiPtr = chunkPtr->clientData;
     int lineX, imageX, imageY, width, height;
     Tk_Image image;
 
@@ -721,7 +723,7 @@ EmbImageBboxProc(
     int *heightPtr)		/* Gets filled in with height of image, in
 				 * pixels. */
 {
-    TkTextSegment *eiPtr = (TkTextSegment *) chunkPtr->clientData;
+    TkTextSegment *eiPtr = chunkPtr->clientData;
     Tk_Image image;
 
     image = eiPtr->body.ei.image;
@@ -782,7 +784,7 @@ TkTextImageIndex(
     if (hPtr == NULL) {
 	return 0;
     }
-    eiPtr = (TkTextSegment *) Tcl_GetHashValue(hPtr);
+    eiPtr = Tcl_GetHashValue(hPtr);
     indexPtr->tree = textPtr->sharedTextPtr->tree;
     indexPtr->linePtr = eiPtr->body.ei.linePtr;
     indexPtr->byteIndex = TkTextSegToOffset(eiPtr, indexPtr->linePtr);
@@ -816,7 +818,7 @@ EmbImageProc(
     int imgWidth, int imgHeight)/* New dimensions of image. */
 
 {
-    TkTextSegment *eiPtr = (TkTextSegment *) clientData;
+    TkTextSegment *eiPtr = clientData;
     TkTextIndex index;
 
     index.tree = eiPtr->body.ei.sharedTextPtr->tree;

@@ -312,7 +312,7 @@ Ttk_CreateImageElement(
     void *clientData,
     Ttk_Theme theme,
     const char *elementName,
-    int objc, Tcl_Obj *CONST objv[])
+    int objc, Tcl_Obj *const objv[])
 {
     const char *optionStrings[] =
 	 { "-border","-height","-padding","-sticky","-width",NULL };

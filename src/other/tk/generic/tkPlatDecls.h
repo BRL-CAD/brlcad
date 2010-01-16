@@ -25,6 +25,10 @@
  * in the generic/tk.decls script.
  */
 
+#ifdef __cplusplus
+#extern "C" {
+#endif
+
 /* !BEGIN!: Do not edit below this line. */
 
 /*
@@ -60,8 +64,8 @@ EXTERN void		Tk_PointerEvent (HWND hwnd, int x, int y);
 #ifndef Tk_TranslateWinEvent_TCL_DECLARED
 #define Tk_TranslateWinEvent_TCL_DECLARED
 /* 5 */
-EXTERN int		Tk_TranslateWinEvent (HWND hwnd, UINT message, 
-				WPARAM wParam, LPARAM lParam, 
+EXTERN int		Tk_TranslateWinEvent (HWND hwnd, UINT message,
+				WPARAM wParam, LPARAM lParam,
 				LRESULT * result);
 #endif
 #endif /* WIN */
@@ -70,10 +74,10 @@ EXTERN int		Tk_TranslateWinEvent (HWND hwnd, UINT message,
 #define Tk_MacOSXSetEmbedHandler_TCL_DECLARED
 /* 0 */
 EXTERN void		Tk_MacOSXSetEmbedHandler (
-				Tk_MacOSXEmbedRegisterWinProc * registerWinProcPtr, 
-				Tk_MacOSXEmbedGetGrafPortProc * getPortProcPtr, 
-				Tk_MacOSXEmbedMakeContainerExistProc * containerExistProcPtr, 
-				Tk_MacOSXEmbedGetClipProc * getClipProc, 
+				Tk_MacOSXEmbedRegisterWinProc * registerWinProcPtr,
+				Tk_MacOSXEmbedGetGrafPortProc * getPortProcPtr,
+				Tk_MacOSXEmbedMakeContainerExistProc * containerExistProcPtr,
+				Tk_MacOSXEmbedGetClipProc * getClipProc,
 				Tk_MacOSXEmbedGetOffsetInParentProc * getOffsetProc);
 #endif
 #ifndef Tk_MacOSXTurnOffMenus_TCL_DECLARED
@@ -99,7 +103,7 @@ EXTERN void		TkMacOSXInitAppleEvents (Tcl_Interp * interp);
 #ifndef TkGenWMConfigureEvent_TCL_DECLARED
 #define TkGenWMConfigureEvent_TCL_DECLARED
 /* 5 */
-EXTERN void		TkGenWMConfigureEvent (Tk_Window tkwin, int x, int y, 
+EXTERN void		TkGenWMConfigureEvent (Tk_Window tkwin, int x, int y,
 				int width, int height, int flags);
 #endif
 #ifndef TkMacOSXInvalClipRgns_TCL_DECLARED
@@ -110,12 +114,12 @@ EXTERN void		TkMacOSXInvalClipRgns (Tk_Window tkwin);
 #ifndef TkMacOSXGetDrawablePort_TCL_DECLARED
 #define TkMacOSXGetDrawablePort_TCL_DECLARED
 /* 7 */
-EXTERN GWorldPtr	TkMacOSXGetDrawablePort (Drawable drawable);
+EXTERN void *		TkMacOSXGetDrawablePort (Drawable drawable);
 #endif
 #ifndef TkMacOSXGetRootControl_TCL_DECLARED
 #define TkMacOSXGetRootControl_TCL_DECLARED
 /* 8 */
-EXTERN ControlRef	TkMacOSXGetRootControl (Drawable drawable);
+EXTERN void *		TkMacOSXGetRootControl (Drawable drawable);
 #endif
 #ifndef Tk_MacOSXSetupTkNotifier_TCL_DECLARED
 #define Tk_MacOSXSetupTkNotifier_TCL_DECLARED
@@ -131,7 +135,7 @@ EXTERN int		Tk_MacOSXIsAppInFront (void);
 
 typedef struct TkPlatStubs {
     int magic;
-    struct TkPlatStubHooks *hooks;
+    const struct TkPlatStubHooks *hooks;
 
 #ifdef __WIN32__ /* WIN */
     Window (*tk_AttachHWND) (Tk_Window tkwin, HWND hwnd); /* 0 */
@@ -149,20 +153,16 @@ typedef struct TkPlatStubs {
     void (*tkMacOSXInitAppleEvents) (Tcl_Interp * interp); /* 4 */
     void (*tkGenWMConfigureEvent) (Tk_Window tkwin, int x, int y, int width, int height, int flags); /* 5 */
     void (*tkMacOSXInvalClipRgns) (Tk_Window tkwin); /* 6 */
-    GWorldPtr (*tkMacOSXGetDrawablePort) (Drawable drawable); /* 7 */
-    ControlRef (*tkMacOSXGetRootControl) (Drawable drawable); /* 8 */
+    void * (*tkMacOSXGetDrawablePort) (Drawable drawable); /* 7 */
+    void * (*tkMacOSXGetRootControl) (Drawable drawable); /* 8 */
     void (*tk_MacOSXSetupTkNotifier) (void); /* 9 */
     int (*tk_MacOSXIsAppInFront) (void); /* 10 */
 #endif /* AQUA */
 } TkPlatStubs;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-extern TkPlatStubs *tkPlatStubsPtr;
-#ifdef __cplusplus
-}
-#endif
+#if defined(USE_TK_STUBS) && !defined(USE_TK_STUB_PROCS)
+extern const TkPlatStubs *tkPlatStubsPtr;
+#endif /* defined(USE_TK_STUBS) && !defined(USE_TK_STUB_PROCS) */
 
 #if defined(USE_TK_STUBS) && !defined(USE_TK_STUB_PROCS)
 
@@ -246,6 +246,10 @@ extern TkPlatStubs *tkPlatStubsPtr;
 #endif /* defined(USE_TK_STUBS) && !defined(USE_TK_STUB_PROCS) */
 
 /* !END!: Do not edit above this line. */
+
+#ifdef __cplusplus
+}
+#endif
 
 #undef TCL_STORAGE_CLASS
 #define TCL_STORAGE_CLASS DLLIMPORT

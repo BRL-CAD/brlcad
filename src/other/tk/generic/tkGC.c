@@ -220,7 +220,7 @@ Tk_GetGC(
     valueHashPtr = Tcl_CreateHashEntry(&dispPtr->gcValueTable,
 	    (char *) &valueKey, &isNew);
     if (!isNew) {
-	gcPtr = (TkGC *) Tcl_GetHashValue(valueHashPtr);
+	gcPtr = Tcl_GetHashValue(valueHashPtr);
 	gcPtr->refCount++;
 	return gcPtr->gc;
     }
@@ -313,7 +313,7 @@ Tk_FreeGC(
     if (idHashPtr == NULL) {
 	Tcl_Panic("Tk_FreeGC received unknown gc argument");
     }
-    gcPtr = (TkGC *) Tcl_GetHashValue(idHashPtr);
+    gcPtr = Tcl_GetHashValue(idHashPtr);
     gcPtr->refCount--;
     if (gcPtr->refCount == 0) {
 	Tk_FreeXId(gcPtr->display, (XID) XGContextFromGC(gcPtr->gc));
@@ -351,7 +351,7 @@ TkGCCleanup(
 
     for (entryPtr = Tcl_FirstHashEntry(&dispPtr->gcIdTable, &search);
 	    entryPtr != NULL; entryPtr = Tcl_NextHashEntry(&search)) {
-	gcPtr = (TkGC *) Tcl_GetHashValue(entryPtr);
+	gcPtr = Tcl_GetHashValue(entryPtr);
 
 	/*
 	 * This call is not needed, as it is only used on Unix to restore the

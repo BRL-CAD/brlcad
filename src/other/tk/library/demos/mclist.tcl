@@ -10,7 +10,6 @@ if {![info exists widgetDemo]} {
 }
 
 package require Tk
-package require Ttk
 
 set w .mclist
 catch {destroy $w}
@@ -29,18 +28,21 @@ pack [addSeeDismiss $w.seeDismiss $w] -side bottom -fill x
 ttk::frame $w.container
 ttk::treeview $w.tree -columns {country capital currency} -show headings \
     -yscroll "$w.vsb set" -xscroll "$w.hsb set"
-if {[tk windowingsystem] ne "aqua"} {
-    ttk::scrollbar $w.vsb -orient vertical -command "$w.tree yview"
-    ttk::scrollbar $w.hsb -orient horizontal -command "$w.tree xview"
-} else {
-    scrollbar $w.vsb -orient vertical -command "$w.tree yview"
-    scrollbar $w.hsb -orient horizontal -command "$w.tree xview"
-}
+ttk::scrollbar $w.vsb -orient vertical -command "$w.tree yview"
+ttk::scrollbar $w.hsb -orient horizontal -command "$w.tree xview"
 pack $w.container -fill both -expand 1
 grid $w.tree $w.vsb -in $w.container -sticky nsew
 grid $w.hsb         -in $w.container -sticky nsew
 grid column $w.container 0 -weight 1
 grid row    $w.container 0 -weight 1
+
+image create photo upArrow -data {
+    R0lGODlhDgAOAJEAANnZ2YCAgPz8/P///yH5BAEAAAAALAAAAAAOAA4AAAImhI+
+    py+1LIsJHiBAh+BgmiEAJQITgW6DgUQIAECH4JN8IPqYuNxUAOw==}
+image create photo downArrow -data {
+    R0lGODlhDgAOAJEAANnZ2YCAgPz8/P///yH5BAEAAAAALAAAAAAOAA4AAAInhI+
+    py+1I4ocQ/IgDEYIPgYJICUCE4F+YIBolEoKPEJKZmVJK6ZACADs=}
+image create photo noArrow -height 14 -width 14
 
 ## The data we're going to insert
 set data {
@@ -62,11 +64,15 @@ set data {
 }
 
 ## Code to insert the data nicely
-set font [ttk::style lookup [$w.tree cget -style] -font]
+set font [ttk::style lookup Heading -font]
 foreach col {country capital currency} name {Country Capital Currency} {
-    $w.tree heading $col -command [list SortBy $w.tree $col 0] -text $name
-    $w.tree column $col -width [font measure $font $name]
+    $w.tree heading $col -text $name -image noArrow -anchor w \
+	-command [list SortBy $w.tree $col 0]
+    $w.tree column $col -width [expr {
+	[font measure $font $name] + [image width noArrow] + 5
+    }]
 }
+set font [ttk::style lookup Treeview -font]
 foreach {country capital currency} $data {
     $w.tree insert {} end -values [list $country $capital $currency]
     foreach col {country capital currency} {
@@ -79,6 +85,16 @@ foreach {country capital currency} $data {
 
 ## Code to do the sorting of the tree contents when clicked on
 proc SortBy {tree col direction} {
+    # Determine currently sorted column and its sort direction
+    foreach c {country capital currency} {
+	set s [$tree heading $c state]
+	if {("selected" in $s || "alternate" in $s) && $col ne $c} {
+	    # Sorted column has changed
+	    $tree heading $c -image noArrow state {!selected !alternate !user1}
+	    set direction [expr {"alternate" in $s}]
+	}
+    }
+
     # Build something we can sort
     set data {}
     foreach row [$tree children {}] {
@@ -94,5 +110,12 @@ proc SortBy {tree col direction} {
     }
 
     # Switch the heading so that it will sort in the opposite direction
-    $tree heading $col -command [list SortBy $tree $col [expr {!$direction}]]
+    $tree heading $col -command [list SortBy $tree $col [expr {!$direction}]] \
+	state [expr {$direction?"!selected alternate":"selected !alternate"}]
+    if {[ttk::style theme use] eq "aqua"} {
+	# Aqua theme displays native sort arrows when user1 state is set
+	$tree heading $col state "user1"
+    } else {
+	$tree heading $col -image [expr {$direction?"upArrow":"downArrow"}]
+    }
 }

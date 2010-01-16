@@ -92,6 +92,12 @@ HTML_DIR		= @HTML_DIR@
 # Directory in which to install html documentation:
 HTML_INSTALL_DIR	= $(INSTALL_ROOT)$(HTML_DIR)
 
+# Directory in which to install the configuration file tkConfig.sh:
+CONFIG_INSTALL_DIR	= $(INSTALL_ROOT)$(libdir)
+
+# Directory in which to install the demo files:
+DEMO_INSTALL_DIR	= $(INSTALL_ROOT)$(TK_LIBRARY)/demos
+
 # The directory containing the Tcl sources and headers appropriate
 # for this version of Tk ("srcdir" will be replaced or has already
 # been replaced by the configure script):
@@ -125,7 +131,7 @@ CFLAGS_WARNING		= @CFLAGS_WARNING@
 
 # The default switches for optimization or debugging
 CFLAGS_DEBUG		= @CFLAGS_DEBUG@
-CFLAGS_OPTIMIZE		= @CFLAGS_OPTIMIZE@
+CFLAGS_OPTIMIZE		= -DNDEBUG @CFLAGS_OPTIMIZE@
 
 # To change the compiler switches, for example to change from optimization to
 # debugging symbols, change the following line:
@@ -150,7 +156,7 @@ AQUA_INCLUDES		= -I$(MAC_OSX_DIR) -I$(XLIB_DIR)
 # Linker switch(es) to use to link with the X11 library archive (the
 # configure script will try to set this value automatically, but you
 # can override it).
-X11_LIB_SWITCHES	= @XLIBSW@ $(XFT_LIBS)
+X11_LIB_SWITCHES	= $(XFT_LIBS) @XLIBSW@
 
 
 # To turn off the security checks that disallow incoming sends when
@@ -187,7 +193,7 @@ NO_DEPRECATED_FLAGS	= -DTCL_NO_DEPRECATED
 
 # Some versions of make, like SGI's, use the following variable to
 # determine which shell to use for executing commands:
-SHELL			= /bin/sh
+SHELL			= @SHELL@
 
 # BUILD_TCLSH is the fully qualified path name of the tclsh shell
 # in the Tcl build directory. Test that need to be run in the
@@ -202,7 +208,9 @@ BUILD_TCLSH		= @BUILD_TCLSH@
 # need it to be available on the PATH. This executable should *NOT* be
 # required just to do a normal build although it can be required to run
 # make dist. This variable is set to "" if no tclsh is available.
+EXE_SUFFIX		= @EXE_SUFFIX@
 TCL_EXE			= @TCLSH_PROG@
+WISH_EXE		= wish${EXE_SUFFIX}
 
 # Tk used to let the configure script choose which program to use
 # for installing, but there are just too many different versions of
@@ -212,10 +220,10 @@ TCL_EXE			= @TCLSH_PROG@
 INSTALL_STRIP_PROGRAM   = -s
 INSTALL_STRIP_LIBRARY   = -S -x
 
-INSTALL			= @srcdir@/../unix/install-sh -c
-INSTALL_PROGRAM		= ${INSTALL} -m 775
-INSTALL_LIBRARY		= ${INSTALL} -m 775
-INSTALL_DATA		= ${INSTALL} -m 664
+INSTALL			= @srcdir@/install-sh -c
+INSTALL_PROGRAM		= ${INSTALL}
+INSTALL_LIBRARY		= ${INSTALL}
+INSTALL_DATA		= ${INSTALL} -m 644
 
 # The symbol below provides support for dynamic loading and shared
 # libraries.  See configure.in for a description of what it means.
@@ -269,8 +277,6 @@ SHLIB_LD		= @SHLIB_LD@
 SHLIB_LD_LIBS		= @SHLIB_LD_LIBS@
 TK_SHLIB_LD_EXTRAS	= @TK_SHLIB_LD_EXTRAS@
 
-SHLIB_SUFFIX            = @SHLIB_SUFFIX@
-
 # Additional search flags needed to find the various shared libraries
 # at run-time.  The first symbol is for use when creating a binary
 # with cc, and the second is for use when running ld directly.
@@ -307,7 +313,7 @@ UNIX_DIR		= $(TOP_DIR)/unix
 BMAP_DIR		= $(TOP_DIR)/bitmaps
 TOOL_DIR		= @TCL_SRC_DIR@/tools
 TEST_DIR		= $(TOP_DIR)/tests
-MAC_OSX_DIR		= $(TOP_DIR)/macosx
+MAC_OSX_DIR		= $(TOP_DIR)/@MACOSX_SRC_DIR@
 XLIB_DIR		= $(TOP_DIR)/xlib
 
 #----------------------------------------------------------------
@@ -328,7 +334,7 @@ CC_SWITCHES_NO_STUBS = ${CFLAGS} ${CFLAGS_WARNING} ${SHLIB_CFLAGS} \
 ${PROTO_FLAGS} ${SECURITY_FLAGS} ${MEM_DEBUG_FLAGS} ${KEYSYM_FLAGS} \
 ${NO_DEPRECATED_FLAGS} @EXTRA_CC_SWITCHES@
 
-CC_SWITCHES = $(CC_SWITCHES_NO_STUBS) ${TCL_STUB_FLAGS} 
+CC_SWITCHES = $(CC_SWITCHES_NO_STUBS) @TCL_STUB_FLAGS@
 
 APP_CC_SWITCHES = $(CC_SWITCHES_NO_STUBS) @EXTRA_APP_CC_SWITCHES@
 
@@ -350,7 +356,8 @@ CANV_OBJS = tkCanvas.o tkCanvArc.o tkCanvBmap.o tkCanvImg.o \
 	tkCanvLine.o tkCanvPoly.o tkCanvPs.o tkCanvText.o \
 	tkCanvUtil.o tkCanvWind.o tkRectOval.o tkTrig.o
 
-IMAGE_OBJS = tkImage.o tkImgBmap.o tkImgGIF.o tkImgPPM.o tkImgPhoto.o
+IMAGE_OBJS = tkImage.o tkImgBmap.o tkImgGIF.o tkImgPNG.o tkImgPPM.o \
+	tkImgPhoto.o tkImgPhInstance.o
 
 TEXT_OBJS = tkText.o tkTextBTree.o tkTextDisp.o tkTextImage.o tkTextIndex.o \
 	tkTextMark.o tkTextTag.o tkTextWind.o
@@ -359,7 +366,8 @@ TEXT_OBJS = tkText.o tkTextBTree.o tkTextDisp.o tkTextImage.o tkTextIndex.o \
 # 
 FONT_OBJS = @UNIX_FONT_OBJS@
 
-GENERIC_OBJS = tk3d.o tkArgv.o tkAtom.o tkBind.o tkBitmap.o tkClipboard.o \
+GENERIC_OBJS = tk3d.o tkArgv.o tkAtom.o tkBind.o tkBitmap.o tkBusy.o \
+	tkClipboard.o \
 	tkCmds.o tkColor.o tkConfig.o tkConsole.o tkCursor.o tkError.o \
 	tkEvent.o tkFocus.o tkFont.o tkGet.o tkGC.o tkGeometry.o tkGrab.o \
 	tkGrid.o tkMain.o tkObj.o tkOldConfig.o tkOption.o tkPack.o tkPlace.o \
@@ -374,7 +382,7 @@ TTK_OBJS = \
 	ttkTagSet.o ttkTheme.o ttkTrace.o ttkTrack.o ttkTreeview.o \
 	ttkWidget.o ttkStubInit.o
 
-STUB_OBJS = tkStubInit.o tkStubLib.o
+STUB_OBJS = tkStubInit.o
 
 STUB_LIB_OBJS = tkStubLib.o ttkStubLib.o
 
@@ -392,7 +400,7 @@ AQUA_OBJS = tkMacOSXBitmap.o tkMacOSXButton.o tkMacOSXClipboard.o \
 	tkMacOSXMenubutton.o tkMacOSXMenus.o tkMacOSXMouseEvent.o \
 	tkMacOSXNotify.o tkMacOSXRegion.o tkMacOSXScrlbr.o tkMacOSXSend.o \
 	tkMacOSXSubwindows.o tkMacOSXWindowEvent.o \
-	tkMacOSXWm.o tkMacOSXXStubs.o tkMacOSXCarbonEvents.o \
+	tkMacOSXWm.o tkMacOSXXStubs.o @EXTRA_AQUA_OBJS@ \
 	tkFileFilter.o tkMacWinMenu.o tkPointer.o tkUnix3d.o tkUnixScale.o \
 	xcolors.o xdraw.o xgc.o ximage.o xutil.o \
 	ttkMacOSXTheme.o
@@ -413,7 +421,8 @@ TTK_DECLS = \
 GENERIC_SRCS = \
 	$(GENERIC_DIR)/tk3d.c $(GENERIC_DIR)/tkArgv.c \
 	$(GENERIC_DIR)/tkAtom.c $(GENERIC_DIR)/tkBind.c	\
-	$(GENERIC_DIR)/tkBitmap.c $(GENERIC_DIR)/tkClipboard.c \
+	$(GENERIC_DIR)/tkBitmap.c $(GENERIC_DIR)/tkBusy.c \
+	$(GENERIC_DIR)/tkClipboard.c \
 	$(GENERIC_DIR)/tkCmds.c $(GENERIC_DIR)/tkColor.c \
 	$(GENERIC_DIR)/tkConfig.c $(GENERIC_DIR)/tkCursor.c \
 	$(GENERIC_DIR)/tkError.c $(GENERIC_DIR)/tkEvent.c \
@@ -440,15 +449,16 @@ GENERIC_SRCS = \
 	$(GENERIC_DIR)/tkCanvWind.c $(GENERIC_DIR)/tkRectOval.c \
 	$(GENERIC_DIR)/tkTrig.c $(GENERIC_DIR)/tkImage.c \
 	$(GENERIC_DIR)/tkImgBmap.c $(GENERIC_DIR)/tkImgGIF.c \
-	$(GENERIC_DIR)/tkImgPPM.c \
-	$(GENERIC_DIR)/tkImgPhoto.c $(GENERIC_DIR)/tkText.c \
+	$(GENERIC_DIR)/tkImgPNG.c $(GENERIC_DIR)/tkImgPPM.c \
+	$(GENERIC_DIR)/tkImgPhoto.c $(GENERIC_DIR)/tkImgPhInstance.c \
+	$(GENERIC_DIR)/tkText.c \
 	$(GENERIC_DIR)/tkTextBTree.c $(GENERIC_DIR)/tkTextDisp.c \
 	$(GENERIC_DIR)/tkTextImage.c \
 	$(GENERIC_DIR)/tkTextIndex.c $(GENERIC_DIR)/tkTextMark.c \
 	$(GENERIC_DIR)/tkTextTag.c $(GENERIC_DIR)/tkTextWind.c \
 	$(GENERIC_DIR)/tkOldConfig.c $(GENERIC_DIR)/tkOldTest.c \
 	$(GENERIC_DIR)/tkSquare.c $(GENERIC_DIR)/tkTest.c \
-	$(GENERIC_DIR)/tkStubInit.c $(GENERIC_DIR)/tkStubLib.c
+	$(GENERIC_DIR)/tkStubInit.c
 
 TTK_SRCS = \
 	$(TTK_DIR)/ttkBlink.c \
@@ -518,7 +528,7 @@ AQUA_SRCS = \
 	$(MAC_OSX_DIR)/tkMacOSXSend.c $(MAC_OSX_DIR)/tkMacOSXSubwindows.c \
 	$(MAC_OSX_DIR)/tkMacOSXTest.c $(MAC_OSX_DIR)/tkMacOSXWindowEvent.c \
 	$(MAC_OSX_DIR)/tkMacOSXWm.c $(MAC_OSX_DIR)/tkMacOSXXStubs.c \
-	$(MAC_OSX_DIR)/tkMacOSXCarbonEvents.c \
+	@EXTRA_AQUA_SRCS@ \
 	$(GENERIC_DIR)/tkFileFilter.c $(GENERIC_DIR)/tkMacWinMenu.c \
 	$(GENERIC_DIR)/tkPointer.c $(UNIX_DIR)/tkUnix3d.c \
 	$(UNIX_DIR)/tkUnixScale.c $(XLIB_DIR)/xcolors.c $(XLIB_DIR)/xdraw.c \
@@ -552,7 +562,7 @@ PRIVATE_HDRS = $(GENERIC_DIR)/tkInt.h $(GENERIC_DIR)/tkIntDecls.h \
 	$(GENERIC_DIR)/tkIntPlatDecls.h $(GENERIC_DIR)/tkPort.h \
 	$(TTK_HDRS) $(@TK_WINDOWINGSYSTEM@_PRIVATE_HDRS)
 
-DEMOPROGS = browse hello ixset rmt rolodex square tcolor timer widget
+DEMOPROGS = browse hello ixset rmt rolodex tcolor timer widget
 
 SHELL_ENV = \
 	@LD_LIBRARY_PATH_VAR@="`pwd`:${TCL_BIN_DIR}:$${@LD_LIBRARY_PATH_VAR@}"; \
@@ -562,12 +572,12 @@ SHELL_ENV = \
 
 all: binaries libraries doc
 
-binaries: ${LIB_FILE} ${STUB_LIB_FILE} wish
+binaries: ${LIB_FILE} ${STUB_LIB_FILE} ${TK_BUILD_EXP_FILE} ${WISH_EXE}
 
 libraries:
 
 $(TOP_DIR)/doc/man.macros:
-	chmod 775 $(UNIX_DIR)/install-sh
+	chmod +x $(UNIX_DIR)/install-sh
 	$(INSTALL_DATA) @TCL_SRC_DIR@/doc/man.macros $(TOP_DIR)/doc/man.macros
 
 doc: $(TOP_DIR)/doc/man.macros
@@ -577,20 +587,10 @@ doc: $(TOP_DIR)/doc/man.macros
 ${LIB_FILE}: ${OBJS} ${STUB_LIB_FILE} @LIB_RSRC_FILE@
 	rm -f $@
 	@MAKE_LIB@
-	@if test -f $(LIB_FILE) ; then \
-	 if test ! -f libtk$(SHLIB_SUFFIX) ; then \
-            ln -s $(LIB_FILE) libtk$(SHLIB_SUFFIX) ; \
-	 fi;\
-	fi
 
 ${STUB_LIB_FILE}: ${STUB_LIB_OBJS}
 	rm -f $@
 	@MAKE_STUB_LIB@
-	@if test -f $(STUB_LIB_FILE) ; then \
-	  if test ! -f libtkstub.a ; then \
-	    ln -s $(STUB_LIB_FILE) libtkstub.a ; \
-	 fi;\
-	fi
 
 # Build Aqua resource files
 ${TK_RSRC_FILE}: $(AQUA_RESOURCES)
@@ -613,9 +613,9 @@ tkLibObjs:
 objs: ${OBJS}
 
 
-wish: $(WISH_OBJS) $(TK_LIB_FILE) $(TK_STUB_LIB_FILE) @APP_RSRC_FILE@
+${WISH_EXE}: $(WISH_OBJS) $(TK_LIB_FILE) $(TK_STUB_LIB_FILE) @APP_RSRC_FILE@
 	${CC} ${CFLAGS} ${LDFLAGS} $(WISH_OBJS) @TK_BUILD_LIB_SPEC@ \
-		$(WISH_LIBS) $(CC_SEARCH_FLAGS) -o wish
+		$(WISH_LIBS) $(CC_SEARCH_FLAGS) -o ${WISH_EXE}
 
 # Resetting the LIB_RUNTIME_DIR below is required so that
 # the generated tktest executable gets the build directory
@@ -623,21 +623,21 @@ wish: $(WISH_OBJS) $(TK_LIB_FILE) $(TK_STUB_LIB_FILE) @APP_RSRC_FILE@
 # picking up an already installed version of the Tcl or
 # Tk shared libraries.
 
-tktest: $(TKTEST_OBJS) $(TK_LIB_FILE)
+tktest${EXE_SUFFIX}: $(TKTEST_OBJS) $(TK_LIB_FILE)
 	$(MAKE) tktest-real LIB_RUNTIME_DIR="`pwd`:$(TCL_BIN_DIR)"
 
-tktest-real:
-	${CC} ${CFLAGS} ${LDFLAGS} $(TKTEST_OBJS) @TK_BUILD_LIB_SPEC@ \
-		$(WISH_LIBS) $(CC_SEARCH_FLAGS) -o tktest
+tktest-real: ${TK_STUB_LIB_FILE}
+	${CC} ${CFLAGS} ${LDFLAGS} $(TKTEST_OBJS) ${TK_STUB_LIB_FILE} ${TCL_STUB_LIB_SPEC} @TK_BUILD_LIB_SPEC@ \
+		$(WISH_LIBS) $(CC_SEARCH_FLAGS) -o tktest${EXE_SUFFIX}
 
-# FIXME: This xttest rule seems to be broken in a number of ways.
-# It should use CC_SEARCH_FLAGS, it does not include the shared
-# lib location logic from tktest, and it is not clear where this
-# test.o object file comes from.
-xttest: test.o tkTest.o tkSquare.o $(TK_LIB_FILE)
-	${CC} ${CFLAGS} ${LDFLAGS} test.o tkTest.o tkSquare.o \
-		@TK_BUILD_LIB_SPEC@ \
-		$(WISH_LIBS) $(LD_SEARCH_FLAGS) -lXt -o xttest
+# # FIXME: This xttest rule seems to be broken in a number of ways.  It should
+# # use CC_SEARCH_FLAGS, it does not include the shared lib location logic from
+# # tktest, and it is not clear where this test.o object file comes from.
+# 
+# xttest: test.o tkTest.o tkSquare.o $(TK_LIB_FILE) ${TK_STUB_LIB_FILE}
+# 	${CC} ${CFLAGS} ${LDFLAGS} test.o tkTest.o tkSquare.o \
+# 		@TK_BUILD_LIB_SPEC@ ${TK_STUB_LIB_FILE}  ${TCL_STUB_LIB_SPEC} \
+# 		$(WISH_LIBS) $(LD_SEARCH_FLAGS) -lXt -o xttest
 
 # Note, in the target below TCL_LIBRARY needs to be set or else
 # "make test" won't work in the case where the compilation directory
@@ -647,43 +647,42 @@ xttest: test.o tkTest.o tkSquare.o $(TK_LIB_FILE)
 #	% make test TESTFLAGS="-verbose bps -file fileName.test"
 
 test: test-classic test-ttk
-	@
 
-test-classic: tktest
-	$(SHELL_ENV) ./tktest $(TEST_DIR)/all.tcl -geometry +0+0 $(TESTFLAGS)
+test-classic: tktest${EXE_SUFFIX}
+	$(SHELL_ENV) ./tktest${EXE_SUFFIX} $(TEST_DIR)/all.tcl -geometry +0+0 $(TESTFLAGS)
 
-test-ttk: tktest
-	$(SHELL_ENV) ./tktest $(TEST_DIR)/ttk/all.tcl -geometry +0+0 \
+test-ttk: tktest${EXE_SUFFIX}
+	$(SHELL_ENV) ./tktest${EXE_SUFFIX} $(TEST_DIR)/ttk/all.tcl -geometry +0+0 \
 	$(TESTFLAGS)
 
 # Tests with different languages
-testlang: tktest
+testlang: tktest${EXE_SUFFIX}
 	$(SHELL_ENV) \
 	for lang in $(LOCALES) ;  \
 	do \
 	LANG=$(lang); export LANG; \
-	./tktest $(TEST_DIR)/all.tcl -geometry +0+0 \
+	./tktest${EXE_SUFFIX} $(TEST_DIR)/all.tcl -geometry +0+0 \
 	$(TESTFLAGS); \
 	done
 
 # Useful target to launch a built tktest with the proper path,...
-runtest: tktest
-	$(SHELL_ENV) ./tktest
+runtest: tktest${EXE_SUFFIX}
+	$(SHELL_ENV) ./tktest${EXE_SUFFIX}
 
 # This target can be used to run wish from the build directory
 # via `make shell` or `make shell SCRIPT=/tmp/foo.tcl`
-shell: wish
-	$(SHELL_ENV) ./wish $(SCRIPT)
+shell: ${WISH_EXE}
+	$(SHELL_ENV) ./${WISH_EXE} $(SCRIPT)
 
 demo:
-	$(SHELL_ENV) ./wish $(TOP_DIR)/library/demos/widget
+	$(SHELL_ENV) ./${WISH_EXE} $(TOP_DIR)/library/demos/widget
 
 # This target can be used to run wish inside either gdb or insight
-gdb: wish
+gdb: ${WISH_EXE}
 	@echo "set env @LD_LIBRARY_PATH_VAR@=\"`pwd`:${TCL_BIN_DIR}:$${@LD_LIBRARY_PATH_VAR@}\"" > gdb.run
 	@echo "set env TCL_LIBRARY=@TCL_SRC_DIR@/library" >> gdb.run
 	@echo "set env TK_LIBRARY=@TK_SRC_DIR@/library" >> gdb.run
-	gdb ./wish --command=gdb.run
+	gdb ./${WISH_EXE} --command=gdb.run
 	rm gdb.run
 
 INSTALL_TARGETS = install-binaries install-libraries install-demos install-doc @EXTRA_INSTALL@
@@ -699,57 +698,50 @@ install-strip:
 # some ranlibs write to current directory, and this might not always be
 # possible (e.g. if installing as root).
 
-install-binaries: $(TK_LIB_FILE) $(TK_STUB_LIB_FILE) $(TK_BUILD_EXP_FILE) wish
-	@for i in "$(LIB_INSTALL_DIR)" "$(BIN_INSTALL_DIR)" "$(PKG_INSTALL_DIR)"; \
+install-binaries: $(TK_LIB_FILE) $(TK_STUB_LIB_FILE) $(TK_BUILD_EXP_FILE) ${WISH_EXE}
+	@for i in "$(LIB_INSTALL_DIR)" "$(BIN_INSTALL_DIR)" \
+	    "$(PKG_INSTALL_DIR)" "$(CONFIG_INSTALL_DIR)" ; \
 	    do \
 	    if [ ! -d "$$i" ] ; then \
 		echo "Making directory $$i"; \
 		mkdir -p "$$i"; \
-		chmod 775 "$$i"; \
+		chmod 755 "$$i"; \
 		else true; \
 		fi; \
 	    done;
-	@if test ! -x $(TOP_DIR)/unix/install-sh; then \
-	    chmod +x $(TOP_DIR)/unix/install-sh; \
+	@if test ! -x $(SRC_DIR)/install-sh; then \
+	    chmod +x $(SRC_DIR)/install-sh; \
 	    fi
 	@if test "x$(TK_SHARED_BUILD)" = "x1"; then \
 	    echo "Creating package index $(PKG_INDEX)"; \
 	    rm -f "$(PKG_INDEX)"; \
 	    (\
-	    echo "if {[catch {package present Tcl 8.5.0-8.6}]} { return }";\
+	    echo "if {[catch {package present Tcl $(TCLVERSION)$(TCLPATCHL)}]} return";\
 	    relative=`echo | awk '{ORS=" "; split("$(TK_PKG_DIR)",a,"/"); for (f in a) {print ".."}}'`;\
 	    echo "package ifneeded Tk $(MAJOR_VERSION).$(MINOR_VERSION)$(PATCH_LEVEL)\
 		[list load [file join \$$dir $${relative}$(TK_LIB_FILE)] Tk]";\
 	    ) > "$(PKG_INDEX)"; \
 	    fi
-	@echo "Installing $(LIB_FILE) to $(LIB_INSTALL_DIR)/"
+	@echo "Installing $(LIB_FILE) to @DLL_INSTALL_DIR@/"
 	@@INSTALL_LIB@
-	@chmod 775 "$(LIB_INSTALL_DIR)"/$(LIB_FILE)
-	if test -f libtk$(SHLIB_SUFFIX) ; then \
-	   $(INSTALL_LIBRARY) libtk$(SHLIB_SUFFIX) $(LIB_INSTALL_DIR)/libtk$(SHLIB_SUFFIX);\
-	   chmod 775 $(LIB_INSTALL_DIR)/libtk$(SHLIB_SUFFIX) ; \
-	fi
+	@chmod 555 "@DLL_INSTALL_DIR@"/$(LIB_FILE)
 	@if test "$(TK_BUILD_EXP_FILE)" != ""; then \
 	    echo "Installing $(TK_EXP_FILE) to $(LIB_INSTALL_DIR)/"; \
 	    $(INSTALL_DATA) $(TK_BUILD_EXP_FILE) \
 			"$(LIB_INSTALL_DIR)"/$(TK_EXP_FILE); \
 	    fi
-	@echo "Installing wish as $(BIN_INSTALL_DIR)/wish$(VERSION)"
-	@$(INSTALL_PROGRAM) wish "$(BIN_INSTALL_DIR)"/wish$(VERSION)
-	@echo "Installing wish as $(BIN_INSTALL_DIR)/wish"
-	@$(INSTALL_PROGRAM) wish "$(BIN_INSTALL_DIR)"/wish
-	@echo "Installing tkConfig.sh to $(LIB_INSTALL_DIR)/"
-	@$(INSTALL_DATA) tkConfig.sh "$(LIB_INSTALL_DIR)"/tkConfig.sh
+	@echo "Installing ${WISH_EXE} as $(BIN_INSTALL_DIR)/wish$(VERSION)${EXE_SUFFIX}"
+	@$(INSTALL_PROGRAM) ${WISH_EXE} "$(BIN_INSTALL_DIR)"/wish$(VERSION)${EXE_SUFFIX}
+	@echo "Installing tkConfig.sh to $(CONFIG_INSTALL_DIR)/"
+	@$(INSTALL_DATA) tkConfig.sh "$(CONFIG_INSTALL_DIR)"/tkConfig.sh
 	@if test "$(STUB_LIB_FILE)" != "" ; then \
 	    echo "Installing $(STUB_LIB_FILE) to $(LIB_INSTALL_DIR)/"; \
 	    @INSTALL_STUB_LIB@ ; \
-	    chmod 775 $(LIB_INSTALL_DIR)/$(STUB_LIB_FILE) ; \
-	    if test -f libtkstub.a ; then \
-		$(INSTALL_LIBRARY) libtkstub.a $(LIB_INSTALL_DIR)/libtkstub.a ; \
-		chmod 775 $(LIB_INSTALL_DIR)/libtkstub.a ; \
-	    fi;\
 	fi
 	@EXTRA_INSTALL_BINARIES@
+	@echo "Installing pkg-config file to $(LIB_INSTALL_DIR)/pkgconfig/"
+	@mkdir -p $(LIB_INSTALL_DIR)/pkgconfig
+	@$(INSTALL_DATA) tk.pc $(LIB_INSTALL_DIR)/pkgconfig/tk.pc
 
 install-libraries: libraries
 	@if test "$(@TK_WINDOWINGSYSTEM@_XLIB_HDRS)" != ""; then \
@@ -761,7 +753,7 @@ install-libraries: libraries
 	    if [ -n "$$i" -a ! -d "$$i" ] ; then \
 		echo "Making directory $$i"; \
 		mkdir -p "$$i"; \
-		chmod 775 "$$i"; \
+		chmod 755 "$$i"; \
 		else true; \
 		fi; \
 	    done;
@@ -778,8 +770,8 @@ install-libraries: libraries
 	    $(INSTALL_DATA) $$i "$(INCLUDE_INSTALL_DIR)"/X11; \
 	    done;
 	@echo "Installing library files to $(SCRIPT_INSTALL_DIR)";
-	@for i in $(TOP_DIR)/library/*.tcl $(GENERIC_DIR)/prolog.ps \
-	        $(TOP_DIR)/library/tclIndex $(UNIX_DIR)/tkAppInit.c; \
+	@for i in $(TOP_DIR)/library/*.tcl $(TOP_DIR)/library/tclIndex \
+		$(UNIX_DIR)/tkAppInit.c; \
 	    do \
 	    $(INSTALL_DATA) $$i "$(SCRIPT_INSTALL_DIR)"; \
 	    done;
@@ -806,63 +798,58 @@ install-libraries: libraries
 	    done;
 
 install-demos:
-	@for i in "$(SCRIPT_INSTALL_DIR)" \
-		"$(SCRIPT_INSTALL_DIR)"/demos \
-		"$(SCRIPT_INSTALL_DIR)"/demos/images ; \
+	@for i in "$(DEMO_INSTALL_DIR)" "$(DEMO_INSTALL_DIR)"/images ; \
 	    do \
 	    if [ ! -d "$$i" ] ; then \
 		echo "Making directory $$i"; \
 		mkdir -p "$$i"; \
-		chmod 775 "$$i"; \
+		chmod 755 "$$i"; \
 		else true; \
 		fi; \
 	    done;
-	@echo "Installing demos to $(SCRIPT_INSTALL_DIR)/demos/";
+	@echo "Installing demos to $(DEMO_INSTALL_DIR)/";
 	@for i in $(TOP_DIR)/library/demos/*; \
 	    do \
 	    if [ -f $$i ] ; then \
 		sed -e '3 s|exec wish|exec wish$(VERSION)|' \
-			$$i > "$(SCRIPT_INSTALL_DIR)"/demos/`basename $$i`; \
+			$$i > "$(DEMO_INSTALL_DIR)"/`basename $$i`; \
 	    fi; \
 	    done;
 	@for i in $(DEMOPROGS); \
 	    do \
-	    chmod 775 "$(SCRIPT_INSTALL_DIR)"/demos/$$i; \
+	    chmod 755 "$(DEMO_INSTALL_DIR)"/$$i; \
 	    done;
 	@echo "Installing demo images";
 	@for i in $(TOP_DIR)/library/demos/images/*; \
 	    do \
 	    if [ -f $$i ] ; then \
-		$(INSTALL_DATA) $$i "$(SCRIPT_INSTALL_DIR)"/demos/images; \
+		$(INSTALL_DATA) $$i "$(DEMO_INSTALL_DIR)"/images; \
 		fi; \
 	    done;
 
 install-doc:
-	@if test ! -x $(UNIX_DIR)/installManPage; then \
-	    chmod +x $(UNIX_DIR)/installManPage; \
-	    fi
 	@for i in "$(MAN_INSTALL_DIR)" "$(MAN1_INSTALL_DIR)" "$(MAN3_INSTALL_DIR)" "$(MANN_INSTALL_DIR)" ; \
 	    do \
 	    if [ ! -d "$$i" ] ; then \
 		echo "Making directory $$i"; \
 		mkdir -p "$$i"; \
-		chmod 775 "$$i"; \
+		chmod 755 "$$i"; \
 		else true; \
 		fi; \
 	    done;
 	@echo "Installing and cross-linking top-level (.1) docs";
 	@for i in $(TOP_DIR)/doc/*.1; do \
-	     [ ! -e $(TOP_DIR)/doc/$$i ] || $(UNIX_DIR)/installManPage $(MAN_FLAGS) $(TOP_DIR)/doc/$$i $(MAN1_INSTALL_DIR); \
+	    $(SHELL) $(UNIX_DIR)/installManPage $(MAN_FLAGS) $$i "$(MAN1_INSTALL_DIR)"; \
 	done
 
 	@echo "Installing and cross-linking C API (.3) docs";
 	@for i in $(TOP_DIR)/doc/*.3; do \
-	    [ ! -e $(TOP_DIR)/doc/$$i ] || $(UNIX_DIR)/installManPage $(MAN_FLAGS) $(TOP_DIR)/doc/$$i $(MAN3_INSTALL_DIR); \
+	    $(SHELL) $(UNIX_DIR)/installManPage $(MAN_FLAGS) $$i "$(MAN3_INSTALL_DIR)"; \
 	done
 
 	@echo "Installing and cross-linking command (.n) docs";
 	@for i in $(TOP_DIR)/doc/*.n; do \
-	    [ ! -e $(TOP_DIR)/doc/$$i ] || $(UNIX_DIR)/installManPage $(MAN_FLAGS) $(TOP_DIR)/doc/$$i $(MANN_INSTALL_DIR); \
+	    $(SHELL) $(UNIX_DIR)/installManPage $(MAN_FLAGS) $$i "$(MANN_INSTALL_DIR)"; \
 	done
 
 # Optional target to install private headers
@@ -872,7 +859,7 @@ install-private-headers: libraries
 	    if [ ! -d "$$i" ] ; then \
 		echo "Making directory $$i"; \
 		mkdir -p "$$i"; \
-		chmod 775 "$$i"; \
+		chmod 755 "$$i"; \
 		else true; \
 		fi; \
 	    done;
@@ -895,11 +882,11 @@ Makefile: $(UNIX_DIR)/Makefile.in
 
 clean:
 	rm -f *.a *.o libtk* core errs *~ \#* TAGS *.E a.out \
-		errors wish tktest lib.exp Tk *.rsrc
+		errors ${WISH_EXE} tktest${EXE_SUFFIX} lib.exp Tk *.rsrc
 
 distclean: clean
 	rm -rf Makefile config.status config.cache config.log tkConfig.sh \
-		$(PACKAGE).* prototype tkConfig.h *.plist Tk.framework
+		tkConfig.h *.plist Tk.framework tk.pc
 
 depend:
 	makedepend -- $(DEPEND_SWITCHES) -- $(SRCS)
@@ -912,7 +899,7 @@ depend:
 # execute concurrently with the renaming and recompiling of that same object
 # file in the target below.
 
-tkTestInit.o: $(UNIX_DIR)/tkAppInit.c wish
+tkTestInit.o: $(UNIX_DIR)/tkAppInit.c ${WISH_EXE}
 	@if test -f tkAppInit.o ; then \
 	    rm -f tkAppInit.sav; \
 	    mv tkAppInit.o tkAppInit.sav; \
@@ -941,6 +928,9 @@ tkBind.o: $(GENERIC_DIR)/tkBind.c
 
 tkBitmap.o: $(GENERIC_DIR)/tkBitmap.c
 	$(CC) -c $(CC_SWITCHES) $(GENERIC_DIR)/tkBitmap.c
+
+tkBusy.o: $(GENERIC_DIR)/tkBusy.c
+	$(CC) -c $(CC_SWITCHES) $(GENERIC_DIR)/tkBusy.c
 
 tkClipboard.o: $(GENERIC_DIR)/tkClipboard.c
 	$(CC) -c $(CC_SWITCHES) $(GENERIC_DIR)/tkClipboard.c
@@ -1101,11 +1091,17 @@ tkImgBmap.o: $(GENERIC_DIR)/tkImgBmap.c
 tkImgGIF.o: $(GENERIC_DIR)/tkImgGIF.c
 	$(CC) -c $(CC_SWITCHES) $(GENERIC_DIR)/tkImgGIF.c
 
+tkImgPNG.o: $(GENERIC_DIR)/tkImgPNG.c
+	$(CC) -c $(CC_SWITCHES) $(GENERIC_DIR)/tkImgPNG.c
+
 tkImgPPM.o: $(GENERIC_DIR)/tkImgPPM.c
 	$(CC) -c $(CC_SWITCHES) $(GENERIC_DIR)/tkImgPPM.c
 
-tkImgPhoto.o: $(GENERIC_DIR)/tkImgPhoto.c
+tkImgPhoto.o: $(GENERIC_DIR)/tkImgPhoto.c $(GENERIC_DIR)/tkImgPhoto.h
 	$(CC) -c $(CC_SWITCHES) $(GENERIC_DIR)/tkImgPhoto.c
+
+tkImgPhInstance.o: $(GENERIC_DIR)/tkImgPhInstance.c $(GENERIC_DIR)/tkImgPhoto.h
+	$(CC) -c $(CC_SWITCHES) $(GENERIC_DIR)/tkImgPhInstance.c
 
 tkOldTest.o: $(GENERIC_DIR)/tkOldTest.c
 	$(CC) -c $(APP_CC_SWITCHES) $(GENERIC_DIR)/tkOldTest.c
@@ -1223,9 +1219,6 @@ tkMacOSXBitmap.o: $(MAC_OSX_DIR)/tkMacOSXBitmap.c
 tkMacOSXButton.o: $(MAC_OSX_DIR)/tkMacOSXButton.c
 	$(CC) -c $(CC_SWITCHES) $(MAC_OSX_DIR)/tkMacOSXButton.c
 
-tkMacOSXCarbonEvents.o: $(MAC_OSX_DIR)/tkMacOSXCarbonEvents.c
-	$(CC) -c $(CC_SWITCHES) $(MAC_OSX_DIR)/tkMacOSXCarbonEvents.c
-
 tkMacOSXClipboard.o: $(MAC_OSX_DIR)/tkMacOSXClipboard.c
 	$(CC) -c $(CC_SWITCHES) $(MAC_OSX_DIR)/tkMacOSXClipboard.c
 
@@ -1313,6 +1306,9 @@ tkMacOSXWm.o: $(MAC_OSX_DIR)/tkMacOSXWm.c
 
 tkMacOSXXStubs.o: $(MAC_OSX_DIR)/tkMacOSXXStubs.c
 	$(CC) -c $(CC_SWITCHES) $(MAC_OSX_DIR)/tkMacOSXXStubs.c
+
+tkMacOSXCarbonEvents.o: $(TOP_DIR)/carbon/tkMacOSXCarbonEvents.c
+	$(CC) -c $(CC_SWITCHES) $(TOP_DIR)/carbon/tkMacOSXCarbonEvents.c
 
 tkFileFilter.o: $(GENERIC_DIR)/tkFileFilter.c
 	$(CC) -c $(CC_SWITCHES) $(GENERIC_DIR)/tkFileFilter.c
@@ -1526,7 +1522,7 @@ $(MAC_OSX_DIR)/configure: $(MAC_OSX_DIR)/configure.ac $(UNIX_DIR)/configure
 $(UNIX_DIR)/tkConfig.h.in: $(MAC_OSX_DIR)/configure
 	cd $(MAC_OSX_DIR); autoheader; touch $@
 
-dist:   $(UNIX_DIR)/configure $(UNIX_DIR)/tkConfig.h.in $(MAC_OSX_DIR)/configure genstubs
+dist:   $(UNIX_DIR)/configure $(UNIX_DIR)/tkConfig.h.in $(UNIX_DIR)/tk.pc.in $(MAC_OSX_DIR)/configure genstubs
 	rm -rf $(DISTDIR)
 	mkdir -p $(DISTDIR)/unix
 	cp -p $(UNIX_DIR)/*.c $(UNIX_DIR)/*.h $(DISTDIR)/unix
@@ -1536,9 +1532,9 @@ dist:   $(UNIX_DIR)/configure $(UNIX_DIR)/tkConfig.h.in $(MAC_OSX_DIR)/configure
 		$(UNIX_DIR)/aclocal.m4 $(UNIX_DIR)/tcl.m4 \
 		$(UNIX_DIR)/tkConfig.sh.in $(TCLDIR)/unix/install-sh \
 		$(UNIX_DIR)/README $(UNIX_DIR)/installManPage \
-		$(UNIX_DIR)/tkConfig.h.in $(DISTDIR)/unix
+		$(UNIX_DIR)/tkConfig.h.in $(UNIX_DIR)/tk.pc.in $(DISTDIR)/unix
 	chmod 775 $(DISTDIR)/unix/configure $(DISTDIR)/unix/configure.in
-	chmod 775 $(DISTDIR)/unix/install-sh
+	chmod +x $(DISTDIR)/unix/install-sh
 	mkdir $(DISTDIR)/bitmaps
 	@(cd $(TOP_DIR); for i in bitmaps/* ; do \
 	    if [ -f $$i ] ; then \
@@ -1547,7 +1543,7 @@ dist:   $(UNIX_DIR)/configure $(UNIX_DIR)/tkConfig.h.in $(MAC_OSX_DIR)/configure
 	    fi; \
 	done;)
 	mkdir $(DISTDIR)/generic
-	cp -p $(GENERIC_DIR)/*.[ch] $(GENERIC_DIR)/prolog.ps $(DISTDIR)/generic
+	cp -p $(GENERIC_DIR)/*.[ch] $(DISTDIR)/generic
 	cp -p $(GENERIC_DIR)/*.decls $(DISTDIR)/generic
 	cp -p $(GENERIC_DIR)/README $(DISTDIR)/generic
 	cp -p $(TOP_DIR)/changes $(TOP_DIR)/ChangeLog \
@@ -1578,19 +1574,35 @@ dist:   $(UNIX_DIR)/configure $(UNIX_DIR)/tkConfig.h.in $(MAC_OSX_DIR)/configure
 	$(TCL_EXE) $(TOOL_DIR)/eolFix.tcl -crlf $(DISTDIR)/win/rc/*.rc
 	$(TCL_EXE) $(TOOL_DIR)/eolFix.tcl -crlf $(DISTDIR)/win/wish.exe.manifest.in
 	mkdir $(DISTDIR)/macosx
-	cp -p $(MAC_OSX_DIR)/GNUmakefile $(MAC_OSX_DIR)/README \
-		$(MAC_OSX_DIR)/Wish.icns $(MAC_OSX_DIR)/*.[chr] \
-		$(MAC_OSX_DIR)/*.in $(MAC_OSX_DIR)/*.ac \
-		$(MAC_OSX_DIR)/*.xcconfig $(MAC_OSX_DIR)/configure \
+	cp -p $(TOP_DIR)/macosx/GNUmakefile $(TOP_DIR)/macosx/README \
+		$(TOP_DIR)/macosx/*.icns $(TOP_DIR)/macosx/*.tiff \
+		$(TOP_DIR)/macosx/*.[ch] $(TOP_DIR)/macosx/*.in \
+		$(TOP_DIR)/macosx/*.ac $(TOP_DIR)/macosx/*.xcconfig \
+		$(TOP_DIR)/macosx/*.sdef  $(TOP_DIR)/macosx/configure \
 		$(DISTDIR)/macosx
 	cp -p $(TOP_DIR)/license.terms $(DISTDIR)/macosx
-	mkdir $(DISTDIR)/macosx/Wish.pbproj
-	cp -p $(MAC_OSX_DIR)/Wish.pbproj/*.pbx* $(DISTDIR)/macosx/Wish.pbproj
-	mkdir $(DISTDIR)/macosx/Wish.xcode
-	cp -p $(MAC_OSX_DIR)/Wish.xcode/*.pbx* $(DISTDIR)/macosx/Wish.xcode
-	mkdir $(DISTDIR)/macosx/Wish.xcodeproj
-	cp -p $(MAC_OSX_DIR)/Wish.xcodeproj/*.pbx* \
-		$(DISTDIR)/macosx/Wish.xcodeproj
+	mkdir $(DISTDIR)/macosx/Tk.xcode
+	cp -p $(TOP_DIR)/macosx/Tk.xcode/project.pbxproj \
+		$(TOP_DIR)/macosx/Tk.xcode/default.pbxuser \
+		$(DISTDIR)/macosx/Tk.xcode
+	mkdir $(DISTDIR)/macosx/Tk.xcodeproj
+	cp -p $(TOP_DIR)/macosx/Tk.xcodeproj/project.pbxproj \
+		$(TOP_DIR)/macosx/Tk.xcodeproj/default.pbxuser \
+		$(DISTDIR)/macosx/Tk.xcodeproj
+	mkdir $(DISTDIR)/carbon
+	cp -p $(TOP_DIR)/carbon/GNUmakefile $(TOP_DIR)/carbon/README \
+		$(TOP_DIR)/carbon/Wish.icns $(TOP_DIR)/carbon/*.[chr] \
+		$(TOP_DIR)/carbon/*.in $(TOP_DIR)/carbon/*.ac \
+		$(TOP_DIR)/carbon/*.xcconfig $(DISTDIR)/carbon
+	cp -p $(TOP_DIR)/license.terms $(DISTDIR)/carbon
+	mkdir $(DISTDIR)/carbon/Wish.xcode
+	cp -p $(TOP_DIR)/carbon/Wish.xcode/project.pbxproj \
+		$(TOP_DIR)/carbon/Wish.xcode/default.pbxuser \
+		$(DISTDIR)/carbon/Wish.xcode
+	mkdir $(DISTDIR)/carbon/Wish.xcodeproj
+	cp -p $(TOP_DIR)/carbon/Wish.xcodeproj/project.pbxproj \
+		$(TOP_DIR)/carbon/Wish.xcodeproj/default.pbxuser \
+		$(DISTDIR)/carbon/Wish.xcodeproj
 	mkdir $(DISTDIR)/compat
 	cp -p $(TOP_DIR)/license.terms $(TCLDIR)/compat/unistd.h \
 		$(TCLDIR)/compat/stdlib.h $(TCLDIR)/compat/limits.h \
@@ -1701,85 +1713,14 @@ BUILD_HTML = \
 		--srcdir=$(TOP_DIR)/.. $(BUILD_HTML_FLAGS)
 
 #
-# Targets to build Solaris package of the distribution for the current
-# architecture.  To build stream packages for both sun4 and i86pc
-# architectures: 
-#
-#   On the sun4 machine, execute the following:
-#     make distclean; ./configure
-#     make DISTDIR=<distdir> package
-#
-#   Once the build is complete, execute the following on the i86pc
-#   machine:
-#     make DISTDIR=<distdir> package-quick
-#
-# <distdir> is the absolute path to a directory where the build should
-# take place.  These steps will generate the $(PACKAGE).sun4 and
-# $(PACKAGE).i86pc stream packages.  It is important that the packages be
-# built in this fashion in order to ensure that the architecture
-# independent files are exactly the same, including timestamps, in
-# both packages.
+# The list of all the targets that do not correspond to real files. This stops
+# 'make' from getting confused when someone makes an error in a rule.
 #
 
-PACKAGE=SCRPtk
-
-package: dist package-config package-common package-binaries package-generate
-package-quick: package-config package-binaries package-generate
-
-#
-# Configure for the current architecture in the dist directory.
-#
-package-config:
-	mkdir -p $(DISTDIR)/unix/`arch`
-	cd $(DISTDIR)/unix/`arch`; \
-        ../configure --prefix=/opt/SUNWtcl/$(TCLVERSION) \
-		--exec_prefix=/opt/SUNWtcl/$(TCLVERSION)/`arch` \
-		--with-tcl=$(DISTDIR)/../tcl$(TCLVERSION)/unix/`arch` \
-		--enable-shared
-	mkdir -p $(DISTDIR)/SUNWtcl/$(TCLVERSION)
-	mkdir -p $(DISTDIR)/SUNWtcl/$(TCLVERSION)/`arch`
-
-#
-# Build and install the architecture independent files in the dist directory.
-#
-
-package-common:
-	cd $(DISTDIR)/unix/`arch`;\
-	$(MAKE); \
-	$(MAKE) install-libraries install-doc \
-		prefix=$(DISTDIR)/SUNWtcl/$(TCLVERSION) \
-		exec_prefix=$(DISTDIR)/SUNWtcl/$(TCLVERSION)/`arch`
-	mkdir -p $(DISTDIR)/SUNWtcl/$(TCLVERSION)/bin
-	sed -e "s/TCLVERSION/$(TCLVERSION)/g" \
-		-e "s/TKVERSION/$(VERSION)/g" < $(UNIX_DIR)/wish.sh \
-		> $(DISTDIR)/SUNWtcl/$(TCLVERSION)/bin/wish$(VERSION)
-	chmod 775 $(DISTDIR)/SUNWtcl/$(TCLVERSION)/bin/wish$(VERSION)
-
-#
-# Build and install the architecture specific files in the dist directory.
-#
-
-package-binaries: 
-	cd $(DISTDIR)/unix/`arch`; \
-	$(MAKE); \
-	$(MAKE) install-binaries prefix=$(DISTDIR)/SUNWtcl/$(TCLVERSION) \
-		exec_prefix=$(DISTDIR)/SUNWtcl/$(TCLVERSION)/`arch`
-
-#
-# Generate a package from the installed files in the dist directory for the
-# current architecture.
-#
-
-package-generate:
-	pkgproto $(DISTDIR)/SUNWtcl/$(TCLVERSION)/bin=bin \
-		 $(DISTDIR)/SUNWtcl/$(TCLVERSION)/include=include \
-		 $(DISTDIR)/SUNWtcl/$(TCLVERSION)/lib=lib \
-		 $(DISTDIR)/SUNWtcl/$(TCLVERSION)/man=man \
-		 $(DISTDIR)/SUNWtcl/$(TCLVERSION)/`arch`=`arch` \
-	| $(TCL_EXE) $(TCLDIR)/unix/mkProto.tcl $(TCLVERSION) \
-		$(UNIX_DIR) > prototype
-	pkgmk -o -d . -f prototype -a `arch`
-	pkgtrans -s . $(PACKAGE).`arch` $(PACKAGE)
-	rm -rf $(PACKAGE)
+.PHONY: all binaries libraries doc tkLibObjs objs tktest-real test test-classic
+.PHONY: test-ttk testlang runtest shell demo gdb install install-strip
+.PHONY: install-binaries install-libraries install-demos install-doc
+.PHONY: install-private-headers clean distclean depend genstubs checkstubs
+.PHONY: checkuchar checkexports rpm dist alldist allpatch html html-tcl html-tk
 
 # DO NOT DELETE THIS LINE -- make depend depends on it.

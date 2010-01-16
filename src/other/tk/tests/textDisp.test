@@ -3846,6 +3846,30 @@ test textDisp-33.5 {bold or italic fonts} win {
 } {italic font measurement ok}
 destroy .tt
 
+test textDisp-34.1 {Text widgets multi-scrolling problem: Bug 2677890} -setup {
+    pack [text .t1 -width 10 -yscrollcommand {.sy set}] \
+	[ttk::scrollbar .sy -orient vertical -command {.t1 yview}] \
+	-side left -fill both
+    bindtags .sy {}; # No clicky!
+    set txt ""
+    for {set i 0} {$i < 99} {incr i} {
+	lappend txt "$i" [list pc $i] "\n" ""
+    }
+    set result {}
+} -body {
+    .t1 insert end {*}$txt
+    update
+    lappend result [.sy get]
+    .t1 replace 6.0 6.0+1c "*"
+    lappend result [.sy get]
+    after 0 {lappend result [.sy get]}
+    after 1000 {lappend result [.sy get]}
+    vwait result;vwait result
+    return $result
+} -cleanup {
+    destroy .t1 .sy
+} -result {{0.0 1.0} {0.0 1.0} {0.0 1.0} {0.0 0.24}}
+
 deleteWindows
 option clear
 

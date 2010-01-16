@@ -8,7 +8,7 @@
 #
 # Copyright (c) 1995-1997 Sun Microsystems, Inc.
 # Copyright (c) 1998-2000 Ajuba Solutions.
-# Copyright (c) 2007 Daniel A. Steffen <das@users.sourceforge.net>
+# Copyright (c) 2007-2008 Daniel A. Steffen <das@users.sourceforge.net>
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -22,10 +22,9 @@ namespace eval ::tk::console {
     variable magicKeys   1   ; # enable brace matching and proc/var recognition
     variable maxLines    600 ; # maximum # of lines buffered in console
     variable showMatches 1   ; # show multiple expand matches
-
+    variable useFontchooser [llength [info command ::tk::fontchooser]]
     variable inPlugin [info exists embed_args]
     variable defaultPrompt   ; # default prompt if tcl_prompt1 isn't used
-
 
     if {$inPlugin} {
 	set defaultPrompt {subst {[history nextid] % }}
@@ -69,10 +68,7 @@ proc ::tk::ConsoleInit {} {
 	    -command {wm withdraw .}
     AmpMenuArgs .menubar.file add command -label [mc "&Clear Console"] \
 	    -command {.console delete 1.0 "promptEnd linestart"}
-    if {[tk windowingsystem] eq "aqua"} {
-	AmpMenuArgs .menubar.file add command \
-		-label [mc &Quit] -command {exit} -accel "Cmd-Q"
-    } else {
+    if {[tk windowingsystem] ne "aqua"} {
 	AmpMenuArgs .menubar.file add command -label [mc E&xit] -command {exit}
     }
 
@@ -98,15 +94,38 @@ proc ::tk::ConsoleInit {} {
     }
 
     AmpMenuArgs .menubar.edit add separator
+    if {$::tk::console::useFontchooser} {
+        if {[tk windowingsystem] eq "aqua"} {
+            .menubar.edit add command -label tk_choose_font_marker
+            set index [.menubar.edit index tk_choose_font_marker]
+            .menubar.edit entryconfigure $index \
+                -label [mc "Show Fonts"]\
+                -accelerator "$mod-T"\
+                -command [list ::tk::console::FontchooserToggle]
+            bind Console <<TkFontchooserVisibility>> \
+                [list ::tk::console::FontchooserVisibility $index]
+	    ::tk::console::FontchooserVisibility $index
+        } else {
+            AmpMenuArgs .menubar.edit add command -label [mc "&Font..."] \
+                -command [list ::tk::console::FontchooserToggle]
+        }
+	bind Console <FocusIn>  [list ::tk::console::FontchooserFocus %W 1]
+	bind Console <FocusOut> [list ::tk::console::FontchooserFocus %W 0]
+    }
     AmpMenuArgs .menubar.edit add command -label [mc "&Increase Font Size"] \
         -accel "$mod++" -command {event generate .console <<Console_FontSizeIncr>>}
     AmpMenuArgs .menubar.edit add command -label [mc "&Decrease Font Size"] \
         -accel "$mod+-" -command {event generate .console <<Console_FontSizeDecr>>}
 
+    if {[tk windowingsystem] eq "aqua"} {
+	.menubar add cascade -label [mc Window] -menu [menu .menubar.window]
+	.menubar add cascade -label [mc Help] -menu [menu .menubar.help]
+    }
+
     . configure -menu .menubar
 
     # See if we can find a better font than the TkFixedFont
-    font create TkConsoleFont {*}[font configure TkFixedFont]
+    catch {font create TkConsoleFont {*}[font configure TkFixedFont]}
     set families [font families]
     switch -exact -- [tk windowingsystem] {
         aqua { set preferred {Monaco 10} }
@@ -328,6 +347,39 @@ proc ::tk::ConsolePrompt {{partial normal}} {
     $w see end
 }
 
+# Copy selected text from the console
+proc ::tk::console::Copy {w} {
+    if {![catch {set data [$w get sel.first sel.last]}]} {
+        clipboard clear -displayof $w
+        clipboard append -displayof $w $data
+    }
+}
+# Copies selected text. If the selection is within the current active edit
+# region then it will be cut, if not it is only copied.
+proc ::tk::console::Cut {w} {
+    if {![catch {set data [$w get sel.first sel.last]}]} {
+        clipboard clear -displayof $w
+        clipboard append -displayof $w $data
+        if {[$w compare sel.first >= output]} {
+            $w delete sel.first sel.last
+	}
+    }
+}
+# Paste text from the clipboard
+proc ::tk::console::Paste {w} {
+    catch {
+        set clip [::tk::GetSelection $w CLIPBOARD]
+        set list [split $clip \n\r]
+        tk::ConsoleInsert $w [lindex $list 0]
+        foreach x [lrange $list 1 end] {
+            $w mark set insert {end - 1c}
+            tk::ConsoleInsert $w "\n"
+            tk::ConsoleInvoke
+            tk::ConsoleInsert $w $x
+        }
+    }
+}
+
 # ::tk::ConsoleBind --
 # This procedure first ensures that the default bindings for the Text
 # class have been defined.  Then certain bindings are overridden for
@@ -354,6 +406,8 @@ proc ::tk::ConsoleBind {w} {
 
     # Ignore all Alt, Meta, and Control keypresses unless explicitly bound.
     # Otherwise, if a widget binding for one of these is defined, the
+    # <Keypress> class binding will also fire and insert the character
+    # which is wrong.
 
     bind Console <Alt-KeyPress> {# nothing }
     bind Console <Meta-KeyPress> {# nothing}
@@ -395,6 +449,9 @@ proc ::tk::ConsoleBind {w} {
 	} {
 	    event add $ev $key
 	    bind Console $key {}
+	}
+	if {$::tk::console::useFontchooser} {
+	    bind Console <Command-Key-t> [list ::tk::console::FontchooserToggle]
 	}
     }
     bind Console <<Console_Expand>> {
@@ -526,39 +583,28 @@ proc ::tk::ConsoleBind {w} {
 	    exit
 	}
     }
-    bind Console <<Cut>> {
-        # Same as the copy event
- 	if {![catch {set data [%W get sel.first sel.last]}]} {
-	    clipboard clear -displayof %W
-	    clipboard append -displayof %W $data
-	}
-    }
-    bind Console <<Copy>> {
- 	if {![catch {set data [%W get sel.first sel.last]}]} {
-	    clipboard clear -displayof %W
-	    clipboard append -displayof %W $data
-	}
-    }
-    bind Console <<Paste>> {
-	catch {
-	    set clip [::tk::GetSelection %W CLIPBOARD]
-	    set list [split $clip \n\r]
-	    tk::ConsoleInsert %W [lindex $list 0]
-	    foreach x [lrange $list 1 end] {
-		%W mark set insert {end - 1c}
-		tk::ConsoleInsert %W "\n"
-		tk::ConsoleInvoke
-		tk::ConsoleInsert %W $x
-	    }
-	}
-    }
+    bind Console <<Cut>> { ::tk::console::Cut %W }
+    bind Console <<Copy>> { ::tk::console::Copy %W }
+    bind Console <<Paste>> { ::tk::console::Paste %W }
+
     bind Console <<Console_FontSizeIncr>> {
         set size [font configure TkConsoleFont -size]
-        font configure TkConsoleFont -size [incr size]
+        if {$size < 0} {set sign -1} else {set sign 1}
+        set size [expr {(abs($size) + 1) * $sign}]
+        font configure TkConsoleFont -size $size
+	if {$::tk::console::useFontchooser} {
+	    tk fontchooser configure -font TkConsoleFont
+	}
     }
     bind Console <<Console_FontSizeDecr>> {
         set size [font configure TkConsoleFont -size]
-        font configure TkConsoleFont -size [incr size -1]
+        if {abs($size) < 2} { return }
+        if {$size < 0} {set sign -1} else {set sign 1}
+        set size [expr {(abs($size) - 1) * $sign}]
+        font configure TkConsoleFont -size $size
+	if {$::tk::console::useFontchooser} {
+	    tk fontchooser configure -font TkConsoleFont
+	}
     }
 
     ##
@@ -589,7 +635,6 @@ proc ::tk::ConsoleBind {w} {
 	if {"%A" ne ""} {
 	    ::tk::console::TagProc %W
 	}
-	break
     }
 }
 
@@ -632,7 +677,7 @@ proc ::tk::ConsoleInsert {w s} {
 
 proc ::tk::ConsoleOutput {dest string} {
     set w .console
-    $w insert output $string $dest
+    $w insert output [string map {\0 \u25a1} $string] $dest
     ::tk::console::ConstrainBuffer $w $::tk::console::maxLines
     $w see insert
 }
@@ -662,6 +707,35 @@ proc ::tk::ConsoleAbout {} {
 
 Tcl $::tcl_patchLevel
 Tk $::tk_patchLevel"
+}
+
+# ::tk::console::Fontchooser* --
+# 	Let the user select the console font (TIP 324).
+
+proc ::tk::console::FontchooserToggle {} {
+    if {[tk fontchooser configure -visible]} {
+	tk fontchooser hide
+    } else {
+	tk fontchooser show
+    }
+}
+proc ::tk::console::FontchooserVisibility {index} {
+    if {[tk fontchooser configure -visible]} {
+	.menubar.edit entryconfigure $index -label [msgcat::mc "Hide Fonts"]
+    } else {
+	.menubar.edit entryconfigure $index -label [msgcat::mc "Show Fonts"]
+    }
+}
+proc ::tk::console::FontchooserFocus {w isFocusIn} {
+    if {$isFocusIn} {
+	tk fontchooser configure -parent $w -font TkConsoleFont \
+		-command [namespace code [list FontchooserApply]]
+    } else {
+	tk fontchooser configure -parent $w -font {} -command {}
+    }
+}
+proc ::tk::console::FontchooserApply {font args} {
+    catch {font configure TkConsoleFont {*}[font actual $font]}
 }
 
 # ::tk::console::TagProc --

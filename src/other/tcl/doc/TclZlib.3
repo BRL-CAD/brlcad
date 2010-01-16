@@ -1,0 +1,159 @@
+'\"
+'\" Copyright (c) 2008 Donal K. Fellows
+'\"
+'\" See the file "license.terms" for information on usage and redistribution
+'\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+'\" 
+'\" RCS: @(#) $Id$
+'\" 
+.so man.macros
+.TH TclZlib 3 8.6 Tcl "Tcl Library Procedures"
+.BS
+'\" Note:  do not modify the .SH NAME line immediately below!
+.SH NAME
+Tcl_ZlibAdler32, Tcl_ZlibCRC32, Tcl_ZlibDeflate, Tcl_ZlibInflate, Tcl_ZlibStreamChecksum, Tcl_ZlibStreamClose, Tcl_ZlibStreamEof, Tcl_ZlibStreamGet, Tcl_ZlibStreamGetCommandName, Tcl_ZlibStreamInit, Tcl_ZlibStreamPut \- compression and decompression functions
+.SH SYNOPSIS
+.nf
+#include <tcl.h>
+.sp
+Tcl_Obj *
+\fBTcl_ZlibDeflate\fR(\fIinterp, format, dataObj, level, dictObj\fR)
+.sp
+Tcl_Obj *
+\fBTcl_ZlibInflate\fR(\fIinterp, format, dataObj, dictObj\fR)
+.sp
+unsigned int
+\fBTcl_ZlibCRC32\fR(\fIinitValue, bytes, length\fR)
+.sp
+unsigned int
+\fBTcl_ZlibAdler32\fR(\fIinitValue, bytes, length\fR)
+.sp
+int
+\fBTcl_ZlibStreamInit\fR(\fIinterp, mode, format, level, dictObj, zshandlePtr\fR)
+.sp
+Tcl_Obj *
+\fBTcl_ZlibStreamGetCommandName\fR(\fIzshandle\fR)
+.sp
+int
+\fBTcl_ZlibStreamEof\fR(\fIzshandle\fR)
+.sp
+int
+\fBTcl_ZlibStreamClose\fR(\fIzshandle\fR)
+.sp
+int
+\fBTcl_ZlibStreamChecksum\fR(\fIzshandle\fR)
+.sp
+int
+\fBTcl_ZlibStreamPut\fR(\fIzshandle, dataObj, flush\fR)
+.sp
+int
+\fBTcl_ZlibStreamGet\fR(\fIzshandle, dataObj, count\fR)
+.fi
+.SH ARGUMENTS
+.AS Tcl_ZlibStream *zshandlePtr out
+.AP Tcl_Interp *interp in
+The interpreter to store resulting compressed or uncompressed data in. Also
+where any error messages are written. For \fBTcl_ZlibStreamInit\fR, this can
+be NULL to create a stream that is not bound to a command.
+.AP int format in
+What format of compressed data to work with. Must be one of
+\fBTCL_ZLIB_FORMAT_ZLIB\fR for zlib-format data, \fBTCL_ZLIB_FORMAT_GZIP\fR
+for gzip-format data, or \fBTCL_ZLIB_FORMAT_RAW\fR for raw compressed data. In
+addition, for decompression only, \fBTCL_ZLIB_FORMAT_AUTO\fR may also be
+chosen which can automatically detect whether the compressed data was in zlib
+or gzip format.
+.AP Tcl_Obj *dataObj in/out
+A byte-array object containing the data to be compressed or decompressed, or
+to which the data extracted from the stream is appended when passed to
+\fBTcl_ZlibStreamGet\fR.
+.AP int level in
+What level of compression to use. Should be a number from 0 to 9 or one of the
+following: \fBTCL_ZLIB_COMPRESS_NONE\fR for no compression,
+\fBTCL_ZLIB_COMPRESS_FAST\fR for fast but inefficient compression,
+\fBTCL_ZLIB_COMPRESS_BEST\fR for slow but maximal compression, or
+\fBTCL_ZLIB_COMPRESS_DEFAULT\fR for the level recommended by the zlib library.
+.AP Tcl_Obj *dictObj in/out
+A dictionary that contains, or which will be updated to contain, a description
+of the gzip header associated with the compressed data. Only useful when the
+\fIformat\fR is \fBTCL_ZLIB_FORMAT_GZIP\fR or \fBTCL_ZLIB_FORMAT_AUTO\fR. If
+a NULL is passed, a default header will be used on compression and the header
+will be ignored (apart from integrity checks) on decompression.
+.AP "unsigned int" initValue in
+The initial value for the checksum algorithm.
+.AP "unsigned char" *bytes in
+An array of bytes to run the checksum algorithm over, or NULL to get the
+recommended initial value for the checksum algorithm.
+.AP int length in
+The number of bytes in the array.
+.AP int mode in
+What mode to operate the stream in. Should be either
+\fBTCL_ZLIB_STREAM_DEFLATE\fR for a compressing stream or
+\fBTCL_ZLIB_STREAM_INFLATE\fR for a decompressing stream.
+.AP Tcl_ZlibStream *zshandlePtr out
+A pointer to a variable in which to write the abstract token for the stream
+upon successful creation.
+.AP Tcl_ZlibStream zshandle in
+The abstract token for the stream to operate on.
+.AP int flush in
+Whether and how to flush the stream after writing the data to it. Must be one
+of: \fBTCL_ZLIB_NO_FLUSH\fR if no flushing is to be done, \fBTCL_ZLIB_FLUSH\fR
+if the currently compressed data must be made available for access using
+\fBTcl_ZlibStreamGet\fR, \fBTCL_ZLIB_FULLFLUSH\fR if the stream must be put
+into a state where the decompressor can recover from on corruption, or
+\fBTCL_ZLIB_FINALIZE\fR to ensure that the stream is finished and that any
+trailer demanded by the format is written.
+.AP int count in
+The maximum number of bytes to get from the stream, or -1 to get all remaining
+bytes from the stream's buffers.
+.BE
+.SH DESCRIPTION
+These functions form the interface from the Tcl library to the Zlib
+library by Jean-loup Gailly and Mark Adler.
+.PP
+\fBTcl_ZlibDeflate\fR and \fBTcl_ZlibInflate\fR compress and decompress data
+respectively. Upon success, they leave the resulting compressed or
+decompressed data in a byte-array object that is the Tcl interpreter's
+result. Note that the \fIdictObj\fR parameter is only used when the
+\fIformat\fR parameter is \fBTCL_ZLIB_FORMAT_GZIP\fR or
+\fBTCL_ZLIB_FORMAT_AUTO\fR.
+.PP
+\fBTcl_ZlibAdler32\fR and \fBTcl_ZlibCRC32\fR compute checksums on arrays of
+bytes. Typical usage is:
+.PP
+.CS
+checksum = \fBTcl_ZlibCRC32\fR(\fBTcl_ZlibCRC32\fR(0,NULL,0), data, length);
+.CE
+.SS "ZLIB STREAMS"
+.PP
+\fBTcl_ZlibStreamInit\fR creates a compressing or decompressing stream that is
+linked to a Tcl command, according to its arguments, and provides an abstract
+token for the stream and returns a normal Tcl result code;
+\fBTcl_ZlibStreamGetCommandName\fR returns the name of that command given the
+stream token, or NULL if the stream has no command.
+.PP
+Once a stream has been constructed, \fBTcl_ZlibStreamPut\fR is used to add
+data to the stream and \fBTcl_ZlibStreamGet\fR is used to retrieve data from
+the stream after processing. Both return normal Tcl result codes. With
+\fBTcl_ZlibStreamPut\fR, the data buffer object passed to it should not be
+modified afterwards. With \fBTcl_ZlibStreamGet\fR, the data buffer object
+passed to it will have the data bytes appended to it.
+.PP
+\fBTcl_ZlibStreamChecksum\fR returns the checksum computed over the
+uncompressed data according to the format, and \fBTcl_ZlibStreamEof\fR returns
+whether the end of the uncompressed data has been reached.
+.PP
+Finally, \fBTcl_ZlibStreamClose\fR will clean up the stream and delete the
+associated command: using \fBTcl_DeleteCommand\fR on the stream's command is
+equivalent.
+.SH "PORTABILITY NOTES"
+These functions will fail gracefully if Tcl is not linked with the zlib
+library.
+.SH "SEE ALSO"
+Tcl_NewByteArrayObj(3), zlib(n)
+'\"Tcl_StackChannel(3)
+.SH "KEYWORDS"
+compress, decompress, deflate, gzip, inflate
+'\" Local Variables:
+'\" mode: nroff
+'\" fill-column: 78
+'\" End:

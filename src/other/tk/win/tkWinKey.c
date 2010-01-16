@@ -81,7 +81,7 @@ static KeySym		KeycodeToKeysym(unsigned int keycode,
  *----------------------------------------------------------------------
  */
 
-char *
+const char *
 TkpGetString(
     TkWindow *winPtr,		/* Window where event occurred: needed to get
 				 * input context. */
@@ -330,7 +330,7 @@ KeycodeToKeysym(
      */
 
   skipToAscii:
-    if (keycode < 0 || keycode > MAX_KEYCODE) {
+    if (keycode > MAX_KEYCODE) {
 	return NoSymbol;
     }
     switch (keycode) {

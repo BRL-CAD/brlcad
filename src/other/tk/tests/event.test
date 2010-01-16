@@ -8,9 +8,10 @@
 #
 # RCS: @(#) $Id$
 
-package require tcltest 2.1
+package require tcltest 2.2
 eval tcltest::configure $argv
 tcltest::loadTestedCommands
+namespace import -force tcltest::test
 
 # XXX This test file is woefully incomplete.  Right now it only tests
 # a few of the procedures in tkEvent.c.  Please add more tests whenever
@@ -185,37 +186,49 @@ proc _get_selection {widget} {
 
 # Begining of the actual tests
 
-test event-1.1 {Tk_HandleEvent procedure, filter events for dead windows} {
+test event-1.1 {Tk_HandleEvent procedure, filter events for dead windows} -setup {
+	deleteWindows
+    set x {}
+} -body {
     button .b -text Test
     pack .b
     bindtags .b .b
     update
     bind .b <Destroy> {
-	lappend x destroy
-	event generate .b <1>
-	event generate .b <ButtonRelease-1>
+	    lappend x destroy
+	    event generate .b <1>
+	    event generate .b <ButtonRelease-1>
     }
     bind .b <1> {
-	lappend x button
+	    lappend x button
     }
-    set x {}
+
     destroy .b
-    set x
-} {destroy}
-test event-1.2 {event generate <Alt-z>} {
-	catch {destroy .e}
-	catch {unset ::event12result}
+    return $x
+} -cleanup {
+    deleteWindows
+} -result {destroy}
+test event-1.2 {event generate <Alt-z>} -setup {
+	deleteWindows
+    catch {unset ::event12result}
+} -body {
 	set ::event12result 0
 	pack [entry .e]
 	update
 	bind .e <Alt-z> {set ::event12result "1"}
-	focus -force .e ; event generate .e <Alt-z>
+
+	focus -force .e
+     event generate .e <Alt-z>
 	destroy .e
 	set ::event12result
-} 1
+} -cleanup {
+    deleteWindows
+} -result 1
 
-test event-2.1(keypress) {type into entry widget and hit Return} {
-    destroy .t
+
+test event-2.1(keypress) {type into entry widget and hit Return} -setup {
+	deleteWindows
+} -body {
     set t [toplevel .t]
     set e [entry $t.e]
     pack $e
@@ -224,9 +237,12 @@ test event-2.1(keypress) {type into entry widget and hit Return} {
     tkwait visibility $e
     _keypress_string $e HELLO\n
     list [$e get] $return_binding
-} {HELLO 1}
-test event-2.2(keypress) {type into entry widget and then delete some text} {
-    destroy .t
+} -cleanup {
+    deleteWindows
+} -result {HELLO 1}
+test event-2.2(keypress) {type into entry widget and then delete some text} -setup {
+	deleteWindows
+} -body {
     set t [toplevel .t]
     set e [entry $t.e]
     pack $e
@@ -235,10 +251,13 @@ test event-2.2(keypress) {type into entry widget and then delete some text} {
     _keypress $e BackSpace
     _keypress $e BackSpace
     $e get
-} MEL
-test event-2.3(keypress) {type into entry widget, triple click,\
-	hit Delete key, and then type some more} {
-    destroy .t
+} -cleanup {
+    deleteWindows
+} -result {MEL}
+test event-2.3(keypress) {type into entry widget, triple click, hit Delete key,
+        and then type some more} -setup {
+    deleteWindows
+} -body {
     set t [toplevel .t]
     set e [entry $t.e]
     pack $e
@@ -258,9 +277,12 @@ test event-2.3(keypress) {type into entry widget, triple click,\
     _keypress $e Delete
     _keypress_string $e UP
     lappend result [$e get]
-} {JUMP UP}
-test event-1.4(keypress) {type into text widget and hit Return} {
-    destroy .t
+} -cleanup {
+    deleteWindows
+} -result {JUMP UP}
+test event-2.4(keypress) {type into text widget and hit Return} -setup {
+	deleteWindows
+} -body {
     set t [toplevel .t]
     set e [text $t.e]
     pack $e
@@ -269,9 +291,12 @@ test event-1.4(keypress) {type into text widget and hit Return} {
     tkwait visibility $e
     _keypress_string $e HELLO\n
     list [$e get 1.0 end] $return_binding
-} [list "HELLO\n\n" 1]
-test event-2.5(keypress) {type into text widget and then delete some text} {
-    destroy .t
+} -cleanup {
+    deleteWindows
+} -result [list "HELLO\n\n" 1]
+test event-2.5(keypress) {type into text widget and then delete some text} -setup {
+	deleteWindows
+} -body {
     set t [toplevel .t]
     set e [text $t.e]
     pack $e
@@ -280,10 +305,13 @@ test event-2.5(keypress) {type into text widget and then delete some text} {
     _keypress $e BackSpace
     _keypress $e BackSpace
     $e get 1.0 1.end
-} MEL
-test event-2.6(keypress) {type into text widget, triple click,\
-	hit Delete key, and then type some more} {
-    destroy .t
+} -cleanup {
+    deleteWindows
+} -result {MEL}
+test event-2.6(keypress) {type into text widget, triple click,
+    hit Delete key, and then type some more} -setup {
+	deleteWindows
+} -body {
     set t [toplevel .t]
     set e [text $t.e]
     pack $e
@@ -303,11 +331,14 @@ test event-2.6(keypress) {type into text widget, triple click,\
     _keypress $e Delete
     _keypress_string $e UP
     lappend result [$e get 1.0 1.end]
-} {JUMP UP}
+} -cleanup {
+    deleteWindows
+} -result {JUMP UP}
 
-test event-3.1(click-drag) {click and drag in a text widget, this tests\
-	tkTextSelectTo in text.tcl} {
-    destroy .t
+test event-3.1(click-drag) {click and drag in a text widget, this tests
+    tkTextSelectTo in text.tcl} -setup {
+	deleteWindows
+} -body {
     set t [toplevel .t]
     set e [text $t.e]
     pack $e
@@ -368,10 +399,13 @@ test event-3.1(click-drag) {click and drag in a text widget, this tests\
     # Save the highlighted text
     lappend result [_get_selection $e]
 
-} {{A Tcl/Tk selection test!} 1.6 1.18 {Tk selection} 1.2 {Tcl/Tk selection}}
-test event-3.2(click-drag) {click and drag in an entry widget, this\
-	tests tkEntryMouseSelect in entry.tcl} {
-    destroy .t
+} -cleanup {
+    deleteWindows
+} -result {{A Tcl/Tk selection test!} 1.6 1.18 {Tk selection} 1.2 {Tcl/Tk selection}}
+ test event-3.2(click-drag) {click and drag in an entry widget, this
+    tests tkEntryMouseSelect in entry.tcl} -setup {
+	deleteWindows
+} -body {
     set t [toplevel .t]
     set e [entry $t.e]
     pack $e
@@ -432,11 +466,15 @@ test event-3.2(click-drag) {click and drag in an entry widget, this\
     # Save the highlighted text
     lappend result [_get_selection $e]
 
-} {{A Tcl/Tk selection!} 6 18 {Tk selection} 2 {Tcl/Tk selection}}
+} -cleanup {
+    deleteWindows
+} -result {{A Tcl/Tk selection!} 6 18 {Tk selection} 2 {Tcl/Tk selection}}
 
-test event-4.1(double-click-drag) {click down, click up, click down again,\
-	then drag in a text widget} {
-    destroy .t
+
+test event-4.1(double-click-drag) {click down, click up, click down again,
+    then drag in a text widget} -setup {
+	deleteWindows
+} -body {
     set t [toplevel .t]
     set e [text $t.e]
     pack $e
@@ -499,11 +537,14 @@ test event-4.1(double-click-drag) {click down, click up, click down again,\
     # Insert cursor should be before the r in "Word"
     lappend result [$e index insert]
 
-    set result
-} {select 1.5 1.7 select 1.4 { select} {Word select} 1.2}
-test event-4.2(double-click-drag) {click down, click up, click down again,\
-	then drag in an entry widget} {
-    destroy .t
+    return $result
+} -cleanup {
+    deleteWindows
+} -result {select 1.5 1.7 select 1.4 { select} {Word select} 1.2}
+test event-4.2(double-click-drag) {click down, click up, click down again,
+    then drag in an entry widget} -setup {
+	deleteWindows
+} -body {
     set t [toplevel .t]
     set e [entry $t.e]
     pack $e
@@ -566,12 +607,15 @@ test event-4.2(double-click-drag) {click down, click up, click down again,\
     # Insert cursor should be before the r in "Word"
     lappend result [$e index insert]
 
-    set result
-} {select 11 7 select 4 { select} {Word select} 2}
+    return $result
+} -cleanup {
+    deleteWindows
+} -result {select 11 7 select 4 { select} {Word select} 2}
 
-test event-5.1(triple-click-drag) {Triple click and drag across lines in\
-        a text widget, this should extend the selection to the new line} {
-    destroy .t
+test event-5.1(triple-click-drag) {Triple click and drag across lines in a 
+        text widget, this should extend the selection to the new line} -setup {
+	deleteWindows
+} -body {
     set t [toplevel .t]
     set e [text $t.e]
     pack $e
@@ -622,16 +666,18 @@ test event-5.1(triple-click-drag) {Triple click and drag across lines in\
 
     lappend result [_get_selection $e]
 
-    set result
-
-} [list "LINE THREE\n" "LINE TWO\nLINE THREE\n" \
+    return $result
+} -cleanup {
+    deleteWindows
+} -result [list "LINE THREE\n" "LINE TWO\nLINE THREE\n" \
         "LINE ONE\nLINE TWO\nLINE THREE\n"]
 
-test event-6.1(button-state) {button press in a window that is then\
-        destroyed, when the mouse is moved into another window it\
-        should not generate a <B1-motion> event since the mouse\
-        was not pressed down in that window} {
-    destroy .t
+test event-6.1(button-state) {button press in a window that is then
+        destroyed, when the mouse is moved into another window it
+        should not generate a <B1-motion> event since the mouse
+        was not pressed down in that window} -setup {
+	deleteWindows
+} -body {
     set t [toplevel .t]
 
     event generate $t <ButtonPress-1>
@@ -640,12 +686,15 @@ test event-6.1(button-state) {button press in a window that is then\
     set motion nomotion
     bind $t <B1-Motion> {set motion inmotion}
     event generate $t <Motion>
-    set motion
-} nomotion
+    return $motion
+} -cleanup {
+    deleteWindows
+} -result {nomotion}
 
 test event-7.1(double-click) {A double click on a lone character
-	in a text widget should select that character} {
-    destroy .t
+    in a text widget should select that character} -setup {
+	deleteWindows
+} -body {
     set t [toplevel .t]
     set e [text $t.e]
     pack $e
@@ -704,11 +753,16 @@ test event-7.1(double-click) {A double click on a lone character
     lappend result [$e index insert]
     lappend result [_get_selection $e]
 
-    set result
-} {1.3 A 1.3 A}
-test event-7.2(double-click) {A double click on a lone character\
-	in an entry widget should select that character} {knownBug} {
-    destroy .t
+    return $result
+} -cleanup {
+    deleteWindows
+} -result {1.3 A 1.3 A}
+test event-7.2(double-click) {A double click on a lone character
+    in an entry widget should select that character} -constraints {
+    knownBug
+} -setup {
+	deleteWindows
+} -body {
     set t [toplevel .t]
     set e [entry $t.e]
     pack $e
@@ -767,13 +821,12 @@ test event-7.2(double-click) {A double click on a lone character\
     lappend result [$e index insert]
     lappend result [_get_selection $e]
 
-    set result
-} {3 A 4 A}
+    return $result
+} -cleanup {
+    deleteWindows
+} -result {3 A 4 A}
 
 # cleanup
-
-destroy .t
-
 unset -nocomplain keypress_lookup
 rename _init_keypress_lookup {}
 rename _keypress_lookup {}
@@ -784,3 +837,5 @@ rename _get_selection {}
 
 cleanupTests
 return
+
+

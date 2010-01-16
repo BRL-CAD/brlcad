@@ -6,7 +6,8 @@
  *
  * Copyright (c) 1996 by Sun Microsystems, Inc.
  * Copyright (c) 1998-2000 by Scriptics Corporation.
- * Copyright (c) 2006-2007 Daniel A. Steffen <das@users.sourceforge.net>
+ * Copyright (c) 2006-2009 Daniel A. Steffen <das@users.sourceforge.net>
+ * Copyright 2008-2009, Apple Inc.
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -17,6 +18,7 @@
 #include "tkMacOSXPrivate.h"
 #include "tkScale.h"
 
+#ifdef MAC_OSX_TK_TODO
 /*
 #ifdef TK_MAC_DEBUG
 #define TK_MAC_DEBUG_SCALE
@@ -174,7 +176,7 @@ TkpDisplayScale(
 	result = Tcl_VarEval(interp, scalePtr->command, " ", string, NULL);
 	if (result != TCL_OK) {
 	    Tcl_AddErrorInfo(interp, "\n    (command executed by scale)");
-	    Tcl_BackgroundError(interp);
+	    Tcl_BackgroundException(interp, result);
 	}
 	Tcl_Release((ClientData) interp);
     }
@@ -481,4 +483,13 @@ ScaleActionProc(
     TkMacOSXRunTclEventLoop();
     Tcl_Release((ClientData) scalePtr);
 }
-
+#endif
+
+/*
+ * Local Variables:
+ * mode: c
+ * c-basic-offset: 4
+ * fill-column: 79
+ * coding: utf-8
+ * End:
+ */

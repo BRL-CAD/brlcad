@@ -158,7 +158,7 @@ TkSelGetSelection(
      * Pass the data off to the selection procedure.
      */
 
-    result = (*proc)(clientData, interp, Tcl_DStringValue(&ds));
+    result = proc(clientData, interp, Tcl_DStringValue(&ds));
     Tcl_DStringFree(&ds);
     CloseClipboard();
     return result;
@@ -295,7 +295,7 @@ TkWinClipboardRender(
      * encoding before placing it on the clipboard.
      */
 
-    if (TkWinGetPlatformId() == VER_PLATFORM_WIN32_NT) {
+    if (TkWinGetPlatformId() != VER_PLATFORM_WIN32_WINDOWS) {
 	Tcl_DStringInit(&ds);
 	Tcl_UtfToUniCharDString(rawText, -1, &ds);
 	ckfree(rawText);
@@ -385,7 +385,7 @@ UpdateClipboard(
      * possible.
      */
 
-    if (TkWinGetPlatformId() == VER_PLATFORM_WIN32_NT) {
+    if (TkWinGetPlatformId() != VER_PLATFORM_WIN32_WINDOWS) {
 	SetClipboardData(CF_UNICODETEXT, NULL);
     } else {
 	SetClipboardData(CF_TEXT, NULL);

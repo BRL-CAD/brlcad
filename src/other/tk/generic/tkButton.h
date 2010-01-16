@@ -298,7 +298,7 @@ typedef struct {
  * Declaration of variables shared between the files in the button module.
  */
 
-MODULE_SCOPE Tk_ClassProcs tkpButtonProcs;
+MODULE_SCOPE const Tk_ClassProcs tkpButtonProcs;
 
 /*
  * Declaration of functions used in the implementation of the button widget.

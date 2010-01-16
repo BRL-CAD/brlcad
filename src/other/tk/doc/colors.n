@@ -947,3 +947,6 @@ GrayText	WindowText
 options(n), Tk_GetColor(3)
 .SH KEYWORDS
 color, option
+'\" Local Variables:
+'\" mode: nroff
+'\" End:

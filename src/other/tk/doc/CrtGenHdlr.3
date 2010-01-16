@@ -26,7 +26,6 @@ Procedure to invoke whenever any X event occurs on any display.
 .AP ClientData clientData in
 Arbitrary one-word value to pass to \fIproc\fR.
 .BE
-
 .SH DESCRIPTION
 .PP
 \fBTk_CreateGenericHandler\fR arranges for \fIproc\fR to be
@@ -47,9 +46,9 @@ call \fBTk_HandleEvent\fR, such as \fBTk_DoOneEvent\fR or
 \fIProc\fR should have arguments and result that match the
 type \fBTk_GenericProc\fR:
 .CS
-typedef int Tk_GenericProc(
-    ClientData \fIclientData\fR,
-    XEvent *\fIeventPtr\fR);
+typedef int \fBTk_GenericProc\fR(
+        ClientData \fIclientData\fR,
+        XEvent *\fIeventPtr\fR);
 .CE
 The \fIclientData\fR parameter to \fIproc\fR is a copy of the \fIclientData\fR
 argument given to \fBTk_CreateGenericHandler\fR when the callback

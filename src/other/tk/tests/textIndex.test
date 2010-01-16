@@ -784,7 +784,7 @@ test textIndex-19.12 {Display lines} {
 } {2.20}
 
 test textIndex-19.13 {Display lines} {
-    destroy .t
+    destroy {*}[pack slaves .]
     text .txt -height 1 -wrap word -yscroll ".sbar set" -width 400
     scrollbar .sbar -command ".txt yview"
     grid .txt .sbar -sticky news

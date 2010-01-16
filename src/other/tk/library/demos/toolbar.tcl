@@ -9,7 +9,6 @@ if {![info exists widgetDemo]} {
 }
 
 package require Tk
-package require Ttk
 
 set w .toolbar
 destroy $w

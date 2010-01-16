@@ -43,13 +43,11 @@ typedef struct BitmapItem  {
  * Information used for parsing configuration specs:
  */
 
-static Tk_CustomOption stateOption = {
-    (Tk_OptionParseProc *) TkStateParseProc,
-    TkStatePrintProc, (ClientData) 2
+static const Tk_CustomOption stateOption = {
+    TkStateParseProc, TkStatePrintProc, (ClientData) 2
 };
-static Tk_CustomOption tagsOption = {
-    (Tk_OptionParseProc *) Tk_CanvasTagsParseProc,
-    Tk_CanvasTagsPrintProc, (ClientData) NULL
+static const Tk_CustomOption tagsOption = {
+    Tk_CanvasTagsParseProc, Tk_CanvasTagsPrintProc, (ClientData) NULL
 };
 
 static Tk_ConfigSpec configSpecs[] = {
@@ -90,7 +88,7 @@ static Tk_ConfigSpec configSpecs[] = {
 
 static int		BitmapCoords(Tcl_Interp *interp,
 			    Tk_Canvas canvas, Tk_Item *itemPtr, int objc,
-			    Tcl_Obj *CONST objv[]);
+			    Tcl_Obj *const objv[]);
 static int		BitmapToArea(Tk_Canvas canvas,
 			    Tk_Item *itemPtr, double *rectPtr);
 static double		BitmapToPoint(Tk_Canvas canvas,
@@ -101,10 +99,10 @@ static void		ComputeBitmapBbox(Tk_Canvas canvas,
 			    BitmapItem *bmapPtr);
 static int		ConfigureBitmap(Tcl_Interp *interp,
 			    Tk_Canvas canvas, Tk_Item *itemPtr, int objc,
-			    Tcl_Obj *CONST objv[], int flags);
+			    Tcl_Obj *const objv[], int flags);
 static int		TkcCreateBitmap(Tcl_Interp *interp,
 			    Tk_Canvas canvas, struct Tk_Item *itemPtr,
-			    int objc, Tcl_Obj *CONST objv[]);
+			    int objc, Tcl_Obj *const objv[]);
 static void		DeleteBitmap(Tk_Canvas canvas,
 			    Tk_Item *itemPtr, Display *display);
 static void		DisplayBitmap(Tk_Canvas canvas,
@@ -170,7 +168,7 @@ TkcCreateBitmap(
     Tk_Item *itemPtr,		/* Record to hold new item; header has been
 				 * initialized by caller. */
     int objc,			/* Number of arguments in objv. */
-    Tcl_Obj *CONST objv[])	/* Arguments describing rectangle. */
+    Tcl_Obj *const objv[])	/* Arguments describing rectangle. */
 {
     BitmapItem *bmapPtr = (BitmapItem *) itemPtr;
     int i;
@@ -203,7 +201,7 @@ TkcCreateBitmap(
     if (objc == 1) {
 	i = 1;
     } else {
-	char *arg = Tcl_GetString(objv[1]);
+	const char *arg = Tcl_GetString(objv[1]);
 	i = 2;
 	if ((arg[0] == '-') && (arg[1] >= 'a') && (arg[1] <= 'z')) {
 	    i = 1;
@@ -246,7 +244,7 @@ BitmapCoords(
     Tk_Item *itemPtr,		/* Item whose coordinates are to be read or
 				 * modified. */
     int objc,			/* Number of coordinates supplied in objv. */
-    Tcl_Obj *CONST objv[])	/* Array of coordinates: x1, y1, x2, y2, ... */
+    Tcl_Obj *const objv[])	/* Array of coordinates: x1, y1, x2, y2, ... */
 {
     BitmapItem *bmapPtr = (BitmapItem *) itemPtr;
 
@@ -312,7 +310,7 @@ ConfigureBitmap(
     Tk_Canvas canvas,		/* Canvas containing itemPtr. */
     Tk_Item *itemPtr,		/* Bitmap item to reconfigure. */
     int objc,			/* Number of elements in objv.  */
-    Tcl_Obj *CONST objv[],	/* Arguments describing things to configure. */
+    Tcl_Obj *const objv[],	/* Arguments describing things to configure. */
     int flags)			/* Flags to pass to Tk_ConfigureWidget. */
 {
     BitmapItem *bmapPtr = (BitmapItem *) itemPtr;
@@ -327,7 +325,7 @@ ConfigureBitmap(
 
     tkwin = Tk_CanvasTkwin(canvas);
     if (TCL_OK != Tk_ConfigureWidget(interp, tkwin, configSpecs, objc,
-	    (CONST char **) objv, (char *) bmapPtr, flags|TK_CONFIG_OBJS)) {
+	    (const char **) objv, (char *) bmapPtr, flags|TK_CONFIG_OBJS)) {
 	return TCL_ERROR;
     }
 
@@ -347,7 +345,7 @@ ConfigureBitmap(
     }
 
     if (state == TK_STATE_NULL) {
-	state = ((TkCanvas *)canvas)->canvas_state;
+	state = Canvas(canvas)->canvas_state;
     }
     if (state == TK_STATE_HIDDEN) {
 	ComputeBitmapBbox(canvas, bmapPtr);
@@ -356,7 +354,7 @@ ConfigureBitmap(
     fgColor = bmapPtr->fgColor;
     bgColor = bmapPtr->bgColor;
     bitmap = bmapPtr->bitmap;
-    if (((TkCanvas *)canvas)->currentItemPtr == itemPtr) {
+    if (Canvas(canvas)->currentItemPtr == itemPtr) {
 	if (bmapPtr->activeFgColor!=NULL) {
 	    fgColor = bmapPtr->activeFgColor;
 	}
@@ -488,10 +486,10 @@ ComputeBitmapBbox(
     Tk_State state = bmapPtr->header.state;
 
     if (state == TK_STATE_NULL) {
-	state = ((TkCanvas *)canvas)->canvas_state;
+	state = Canvas(canvas)->canvas_state;
     }
     bitmap = bmapPtr->bitmap;
-    if (((TkCanvas *)canvas)->currentItemPtr == (Tk_Item *)bmapPtr) {
+    if (Canvas(canvas)->currentItemPtr == (Tk_Item *)bmapPtr) {
 	if (bmapPtr->activeBitmap!=None) {
 	    bitmap = bmapPtr->activeBitmap;
 	}
@@ -598,10 +596,10 @@ DisplayBitmap(
      */
 
     if (state == TK_STATE_NULL) {
-	state = ((TkCanvas *)canvas)->canvas_state;
+	state = Canvas(canvas)->canvas_state;
     }
     bitmap = bmapPtr->bitmap;
-    if (((TkCanvas *)canvas)->currentItemPtr == itemPtr) {
+    if (Canvas(canvas)->currentItemPtr == itemPtr) {
 	if (bmapPtr->activeBitmap!=None) {
 	    bitmap = bmapPtr->activeBitmap;
 	}
@@ -864,12 +862,12 @@ BitmapToPostscript(
     Tk_State state = itemPtr->state;
 
     if (state == TK_STATE_NULL) {
-	state = ((TkCanvas *)canvas)->canvas_state;
+	state = Canvas(canvas)->canvas_state;
     }
     fgColor = bmapPtr->fgColor;
     bgColor = bmapPtr->bgColor;
     bitmap = bmapPtr->bitmap;
-    if (((TkCanvas *)canvas)->currentItemPtr == itemPtr) {
+    if (Canvas(canvas)->currentItemPtr == itemPtr) {
 	if (bmapPtr->activeFgColor!=NULL) {
 	    fgColor = bmapPtr->activeFgColor;
 	}

@@ -592,7 +592,10 @@ typedef struct list_item_t {
 
 /* insert a list item into the list (list may be null) */
 static list_item_t *
-list_insert(list_item_t **listPtrPtr, const char *key, const char *value)
+list_insert(
+    list_item_t **listPtrPtr,
+    const char *key,
+    const char *value)
 {
     list_item_t *itemPtr = malloc(sizeof(list_item_t));
     if (itemPtr) {
@@ -609,7 +612,8 @@ list_insert(list_item_t **listPtrPtr, const char *key, const char *value)
 }
 
 static void
-list_free(list_item_t **listPtrPtr)
+list_free(
+    list_item_t **listPtrPtr)
 {
     list_item_t *tmpPtr, *listPtr = *listPtrPtr;
     while (listPtr) {

@@ -214,6 +214,7 @@ _VC_MANIFEST_EMBED_DLL=if exist $@.manifest mt -nologo -manifest $@.manifest -ou
 STATIC_BUILD	= 0
 TCL_THREADS	= 0
 DEBUG		= 0
+SYMBOLS		= 0
 PROFILE		= 0
 MSVCRT		= 0
 LOIMPACT	= 0
@@ -242,6 +243,7 @@ TCL_USE_STATIC_PACKAGES	= 0
 !if [nmakehlp -f $(OPTS) "threads"]
 !message *** Doing threads
 TCL_THREADS	= 1
+USE_THREAD_ALLOC= 1
 !else
 TCL_THREADS	= 0
 !endif
@@ -250,6 +252,12 @@ TCL_THREADS	= 0
 DEBUG		= 1
 !else
 DEBUG		= 0
+!endif
+!if [nmakehlp -f $(OPTS) "pdbs"]
+!message *** Doing pdbs
+SYMBOLS		= 1
+!else
+SYMBOLS		= 0
 !endif
 !if [nmakehlp -f $(OPTS) "profile"]
 !message *** Doing profile
@@ -266,7 +274,9 @@ LOIMPACT	= 0
 !if [nmakehlp -f $(OPTS) "thrdalloc"]
 !message *** Doing thrdalloc
 USE_THREAD_ALLOC = 1
-!else
+!endif
+!if [nmakehlp -f $(OPTS) "tclalloc"]
+!message *** Doing thrdalloc
 USE_THREAD_ALLOC = 0
 !endif
 !if [nmakehlp -f $(OPTS) "unchecked"]
@@ -659,4 +669,3 @@ TK_INCLUDES     = -I"$(_TKDIR)\generic" -I"$(_TKDIR)\win" -I"$(_TKDIR)\xlib"
 !message *** Link options '$(LINKERFLAGS)'
 
 !endif
-

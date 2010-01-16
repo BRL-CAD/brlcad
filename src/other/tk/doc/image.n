@@ -16,7 +16,6 @@ image \- Create and manipulate images
 .SH SYNOPSIS
 \fBimage\fR \fIoption \fR?\fIarg arg ...\fR?
 .BE
-
 .SH DESCRIPTION
 .PP
 The \fBimage\fR command is used to create, delete, and query images.
@@ -96,9 +95,10 @@ See the \fBbitmap\fR manual entry for more information.
 Displays a variety of full-color images, using dithering to
 approximate colors on displays with limited color capabilities.
 See the \fBphoto\fR manual entry for more information.
-
 .SH "SEE ALSO"
 bitmap(n), options(n), photo(n)
-
 .SH KEYWORDS
 height, image, types of images, width
+'\" Local Variables:
+'\" mode: nroff
+'\" End:

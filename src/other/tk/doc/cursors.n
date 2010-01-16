@@ -138,12 +138,13 @@ On Mac OS X systems, the following cursors are mapped to native cursors:
 .RS
 .CS
 arrow
+top_left_arrow
+left_ptr
 cross
 crosshair
+tcross
 ibeam
 none
-plus
-watch
 xterm
 .CE
 And the following additional native cursors are available:
@@ -151,24 +152,43 @@ And the following additional native cursors are available:
 copyarrow
 aliasarrow
 contextualmenuarrow
+movearrow
 text
 cross-hair
-closedhand
+hand
 openhand
+closedhand
+fist
 pointinghand
+resize
 resizeleft
 resizeright
 resizeleftright
 resizeup
 resizedown
 resizeupdown
+resizebottomleft
+resizetopleft
+resizebottomright
+resizetopright
 notallowed
 poof
+wait
 countinguphand
 countingdownhand
 countingupanddownhand
 spinning
+help
+bucket
+cancel
+eyedrop
+eyedrop-full
+zoom-in
+zoom-out
 .CE
 .RE
 .SH KEYWORDS
 cursor, option
+'\" Local Variables:
+'\" mode: nroff
+'\" End:

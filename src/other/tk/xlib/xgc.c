@@ -5,7 +5,8 @@
  *	contexts.
  *
  * Copyright (c) 1995-1996 Sun Microsystems, Inc.
- * Copyright (c) 2002-2007 Daniel A. Steffen <das@users.sourceforge.net>
+ * Copyright (c) 2002-2009 Daniel A. Steffen <das@users.sourceforge.net>
+ * Copyright 2008-2009, Apple Inc.
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -17,13 +18,17 @@
 
 #if !defined(MAC_OSX_TK)
 #   include <X11/Xlib.h>
-#endif
-#ifdef MAC_OSX_TK
+#   define gcCacheSize 0
+#   define TkpInitGCCache(gc)
+#   define TkpFreeGCCache(gc)
+#   define TkpGetGCCache(gc)
+#else
 #   include <tkMacOSXInt.h>
 #   include <X11/Xlib.h>
 #   include <X11/X.h>
 #   define Cursor XCursor
 #   define Region XRegion
+#   define gcCacheSize sizeof(TkpGCCache)
 #endif
 
 
@@ -119,7 +124,8 @@ XCreateGC(
 
 #define MAX_DASH_LIST_SIZE 10
 
-    gp = (XGCValues *) ckalloc(sizeof(XGCValues) + MAX_DASH_LIST_SIZE);
+    gp = (XGCValues *) ckalloc(sizeof(XGCValues) + MAX_DASH_LIST_SIZE +
+	    gcCacheSize);
     if (!gp) {
 	return None;
     }
@@ -160,9 +166,32 @@ XCreateGC(
 	clip_mask->type = TKP_CLIP_PIXMAP;
 	clip_mask->value.pixmap = values->clip_mask;
     }
+    TkpInitGCCache(gp);
 
     return gp;
 }
+
+#ifdef MAC_OSX_TK
+/*
+ *----------------------------------------------------------------------
+ *
+ * TkpGetGCCache --
+ *
+ * Results:
+ *	Pointer to the TkpGCCache at the end of the GC.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
+
+TkpGCCache*
+TkpGetGCCache(GC gc) {
+    return (gc ? (TkpGCCache*)(((char*) gc) + sizeof(XGCValues) +
+	    MAX_DASH_LIST_SIZE) : NULL);
+}
+#endif
 
 /*
  *----------------------------------------------------------------------
@@ -242,6 +271,7 @@ void XFreeGC(
 {
     if (gc != None) {
 	FreeClipMask(gc);
+	TkpFreeGCCache(gc);
 	ckfree((char *) gc);
     }
 }

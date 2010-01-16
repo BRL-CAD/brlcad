@@ -19,7 +19,6 @@
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>
-#include "tclInt.h"
 #include "tkInt.h"
 #ifdef NO_STDLIB_H
 #   include "../compat/stdlib.h"
@@ -56,7 +55,7 @@ static Tcl_ThreadDataKey dataKey;
 
 #if !defined(__WIN32__) && !defined(_WIN32)
 extern int		isatty(int fd);
-extern char *		strrchr(CONST char *string, int c);
+extern char *		strrchr(const char *string, int c);
 #endif
 
 /*
@@ -96,7 +95,7 @@ Tk_MainEx(
     Tcl_Interp *interp)
 {
     Tcl_Obj *path, *argvPtr;
-    CONST char *encodingName;
+    const char *encodingName;
     int code, nullStdin = 0;
     Tcl_Channel inChannel, outChannel;
     ThreadSpecificData *tsdPtr;
@@ -106,20 +105,19 @@ Tk_MainEx(
     Tcl_DString appName;
 
     /*
-     * Ensure that we are getting the matching version of Tcl. This is really
+     * Ensure that we are getting a compatible version of Tcl. This is really
      * only an issue when Tk is loaded dynamically.
      */
 
-    if (Tcl_InitStubs(interp, TCL_VERSION, 1) == NULL) {
+    if (Tcl_InitStubs(interp, TCL_VERSION, 0) == NULL) {
 	abort();
     }
 
-    tsdPtr = (ThreadSpecificData *)
-	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
+    tsdPtr = Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     Tcl_FindExecutable(argv[0]);
     tsdPtr->interp = interp;
-    Tcl_Preserve((ClientData) interp);
+    Tcl_Preserve(interp);
 
 #if defined(__WIN32__)
     Tk_InitConsoleChannels(interp);
@@ -176,7 +174,7 @@ Tk_MainEx(
 	Tcl_ExternalToUtfDString(NULL, argv[0], -1, &appName);
     } else {
 	int numBytes;
-	CONST char *pathName = Tcl_GetStringFromObj(path, &numBytes);
+	const char *pathName = Tcl_GetStringFromObj(path, &numBytes);
 
 	Tcl_ExternalToUtfDString(NULL, pathName, numBytes, &appName);
 	path = Tcl_NewStringObj(Tcl_DStringValue(&appName), -1);
@@ -256,7 +254,7 @@ Tk_MainEx(
      * Invoke application-specific initialization.
      */
 
-    if ((*appInitProc)(interp) != TCL_OK) {
+    if (appInitProc(interp) != TCL_OK) {
 	TkpDisplayWarning(Tcl_GetStringResult(interp),
 		"Application initialization failed");
     }
@@ -298,7 +296,7 @@ Tk_MainEx(
 	inChannel = Tcl_GetStdChannel(TCL_STDIN);
 	if (inChannel) {
 	    Tcl_CreateChannelHandler(inChannel, TCL_READABLE, StdinProc,
-		    (ClientData) inChannel);
+		    inChannel);
 	}
 	if (tsdPtr->tty) {
 	    Prompt(interp, 0);
@@ -320,7 +318,7 @@ Tk_MainEx(
 
     Tk_MainLoop();
     Tcl_DeleteInterp(interp);
-    Tcl_Release((ClientData) interp);
+    Tcl_Release(interp);
     Tcl_SetStartupScript(NULL, NULL);
     Tcl_Exit(0);
 }
@@ -353,8 +351,8 @@ StdinProc(
     static int gotPartial = 0;
     char *cmd;
     int code, count;
-    Tcl_Channel chan = (Tcl_Channel) clientData;
-    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
+    Tcl_Channel chan = clientData;
+    ThreadSpecificData *tsdPtr =
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
     Tcl_Interp *interp = tsdPtr->interp;
 
@@ -364,13 +362,12 @@ StdinProc(
 	if (tsdPtr->tty) {
 	    Tcl_Exit(0);
 	} else {
-	    Tcl_DeleteChannelHandler(chan, StdinProc, (ClientData) chan);
+	    Tcl_DeleteChannelHandler(chan, StdinProc, chan);
 	}
 	return;
     }
 
-    (void) Tcl_DStringAppend(&tsdPtr->command, Tcl_DStringValue(
-	    &tsdPtr->line), -1);
+    Tcl_DStringAppend(&tsdPtr->command, Tcl_DStringValue(&tsdPtr->line), -1);
     cmd = Tcl_DStringAppend(&tsdPtr->command, "\n", -1);
     Tcl_DStringFree(&tsdPtr->line);
     if (!Tcl_CommandComplete(cmd)) {
@@ -386,13 +383,12 @@ StdinProc(
      * things, this will trash the text of the command being evaluated.
      */
 
-    Tcl_CreateChannelHandler(chan, 0, StdinProc, (ClientData) chan);
+    Tcl_CreateChannelHandler(chan, 0, StdinProc, chan);
     code = Tcl_RecordAndEval(interp, cmd, TCL_EVAL_GLOBAL);
 
     chan = Tcl_GetStdChannel(TCL_STDIN);
     if (chan) {
-	Tcl_CreateChannelHandler(chan, TCL_READABLE, StdinProc,
-		(ClientData) chan);
+	Tcl_CreateChannelHandler(chan, TCL_READABLE, StdinProc, chan);
     }
     Tcl_DStringFree(&tsdPtr->command);
     if (Tcl_GetStringResult(interp)[0] != '\0') {

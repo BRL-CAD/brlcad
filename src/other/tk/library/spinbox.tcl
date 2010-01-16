@@ -129,45 +129,45 @@ bind Spinbox <Down> {
     %W invoke buttondown
 }
 
-bind Spinbox <Left> {
+bind Spinbox <<PrevChar>> {
     ::tk::EntrySetCursor %W [expr {[%W index insert] - 1}]
 }
-bind Spinbox <Right> {
+bind Spinbox <<NextChar>> {
     ::tk::EntrySetCursor %W [expr {[%W index insert] + 1}]
 }
-bind Spinbox <Shift-Left> {
+bind Spinbox <<SelectPrevChar>> {
     ::tk::EntryKeySelect %W [expr {[%W index insert] - 1}]
     ::tk::EntrySeeInsert %W
 }
-bind Spinbox <Shift-Right> {
+bind Spinbox <<SelectNextChar>> {
     ::tk::EntryKeySelect %W [expr {[%W index insert] + 1}]
     ::tk::EntrySeeInsert %W
 }
-bind Spinbox <Control-Left> {
+bind Spinbox <<PrevWord>> {
     ::tk::EntrySetCursor %W [::tk::EntryPreviousWord %W insert]
 }
-bind Spinbox <Control-Right> {
+bind Spinbox <<NextWord>> {
     ::tk::EntrySetCursor %W [::tk::EntryNextWord %W insert]
 }
-bind Spinbox <Shift-Control-Left> {
+bind Spinbox <<SelectPrevWord>> {
     ::tk::EntryKeySelect %W [::tk::EntryPreviousWord %W insert]
     ::tk::EntrySeeInsert %W
 }
-bind Spinbox <Shift-Control-Right> {
+bind Spinbox <<SelectNextWord>> {
     ::tk::EntryKeySelect %W [::tk::EntryNextWord %W insert]
     ::tk::EntrySeeInsert %W
 }
-bind Spinbox <Home> {
+bind Spinbox <<LineStart>> {
     ::tk::EntrySetCursor %W 0
 }
-bind Spinbox <Shift-Home> {
+bind Spinbox <<SelectLineStart>> {
     ::tk::EntryKeySelect %W 0
     ::tk::EntrySeeInsert %W
 }
-bind Spinbox <End> {
+bind Spinbox <<LineEnd>> {
     ::tk::EntrySetCursor %W end
 }
-bind Spinbox <Shift-End> {
+bind Spinbox <<SelectLineEnd>> {
     ::tk::EntryKeySelect %W end
     ::tk::EntrySeeInsert %W
 }
@@ -217,6 +217,8 @@ bind Spinbox <Escape> {# nothing}
 bind Spinbox <Return> {# nothing}
 bind Spinbox <KP_Enter> {# nothing}
 bind Spinbox <Tab> {# nothing}
+bind Spinbox <Prior> {# nothing}
+bind Spinbox <Next> {# nothing}
 if {[tk windowingsystem] eq "aqua"} {
     bind Spinbox <Command-KeyPress> {# nothing}
 }

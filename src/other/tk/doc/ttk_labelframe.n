@@ -15,6 +15,7 @@ ttk::labelframe \- Container widget with optional label
 \fBttk::labelframe\fR \fIpathName \fR?\fIoptions\fR?
 .BE
 .SH DESCRIPTION
+.PP
 A \fBttk::labelframe\fR widget is a container used to group other widgets
 together.  It has an optional label, which may be a plain text string or
 another widget.
@@ -64,6 +65,7 @@ If specified, the widget's requested height in pixels.
 (See \fIttk::frame(n)\fR for further notes on \fB\-width\fR and
 \fB\-height\fR).
 .SH "WIDGET COMMAND"
+.PP
 Supports the standard widget commands
 \fBconfigure\fR, \fBcget\fR, \fBidentify\fR, \fBinstate\fR, and \fBstate\fR;
 see \fIttk::widget(n)\fR.
@@ -71,3 +73,6 @@ see \fIttk::widget(n)\fR.
 ttk::widget(n), ttk::frame(n), labelframe(n)
 .SH "KEYWORDS"
 widget, frame, container, label, groupbox
+'\" Local Variables:
+'\" mode: nroff
+'\" End:

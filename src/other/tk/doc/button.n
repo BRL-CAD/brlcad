@@ -77,7 +77,6 @@ If the width is negative then this specifies a minimum width.
 If this option is not specified, the button's desired width is computed
 from the size of the image or bitmap or text being displayed in it.
 .BE
-
 .SH DESCRIPTION
 .PP
 The \fBbutton\fR command creates a new window (given by the
@@ -105,7 +104,6 @@ and it can be made to flash.  When a user invokes the
 button (by pressing mouse button 1 with the cursor over the
 button), then the Tcl command specified in the \fB\-command\fR
 option is invoked.
-
 .SH "WIDGET COMMAND"
 .PP
 The \fBbutton\fR command creates a new Tcl command whose
@@ -141,9 +139,9 @@ command.
 .TP
 \fIpathName \fBflash\fR
 Flash the button.  This is accomplished by redisplaying the button
-several times, alternating between active and normal colors.  At
-the end of the flash the button is left in the same normal/active
-state as when the command was invoked.
+several times, alternating between the configured activebackground
+and background colors.  At the end of the flash the button is left
+in the same normal/active state as when the command was invoked.
 This command is ignored if the button's state is \fBdisabled\fR.
 .TP
 \fIpathName \fBinvoke\fR
@@ -151,7 +149,6 @@ Invoke the Tcl command associated with the button, if there is one.
 The return value is the return value from the Tcl command, or an
 empty string if there is no command associated with the button.
 This command is ignored if the button's state is \fBdisabled\fR.
-
 .SH "DEFAULT BINDINGS"
 .PP
 Tk automatically creates class bindings for buttons that give them
@@ -178,8 +175,8 @@ actions occur:  the button is completely non-responsive.
 .PP
 The behavior of buttons can be changed by defining new bindings for
 individual widgets or by redefining the class bindings.
-
 .SH EXAMPLES
+.PP
 This is the classic Tk
 .QW "Hello, World!"
 demonstration:
@@ -202,3 +199,6 @@ This example demonstrates how to handle button accelerators:
 ttk::button(n)
 .SH KEYWORDS
 button, widget
+'\" Local Variables:
+'\" mode: nroff
+'\" End:

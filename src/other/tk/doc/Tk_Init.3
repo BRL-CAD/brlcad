@@ -25,7 +25,6 @@ int
 Interpreter in which to load Tk.  Tk should not already be loaded
 in this interpreter.
 .BE
-
 .SH DESCRIPTION
 .PP
 \fBTk_Init\fR is the package initialization procedure for Tk.
@@ -36,7 +35,7 @@ and creates a new Tk application, including its main window.
 If the initialization is successful \fBTk_Init\fR returns
 \fBTCL_OK\fR;  if there is an error it returns \fBTCL_ERROR\fR.
 \fBTk_Init\fR also leaves a result or error message
-in \fIinterp->result\fR.
+in interpreter \fIinterp\fR's result.
 .PP
 If there is a variable \fBargv\fR in \fIinterp\fR, \fBTk_Init\fR
 treats the contents of this variable as a list of options for the
@@ -84,6 +83,5 @@ from the user.
 \fBwm\fR
 If toplevels are ever allowed, wm can be used to remove decorations,
 move windows around, etc.
-
 .SH KEYWORDS
 safe, application, initialization, load, main window

@@ -381,8 +381,8 @@ Async(
 
     hr = VariantChangeType(&vCmd, &Cmd, 0, VT_BSTR);
     if (FAILED(hr)) {
-	Tcl_SetStringObj(Tcl_GetObjResult(obj->interp),
-		"invalid args: Async(command)", -1);
+	Tcl_SetObjResult(obj->interp, Tcl_NewStringObj(
+		"invalid args: Async(command)", -1));
 	SetExcepInfo(obj->interp, pExcepInfo);
 	hr = DISP_E_EXCEPTION;
     }
@@ -390,13 +390,13 @@ Async(
     if (SUCCEEDED(hr)) {
 	if (obj->interp) {
 	    Tcl_Obj *scriptPtr = Tcl_NewUnicodeObj(vCmd.bstrVal,
-		    (int)SysStringLen(vCmd.bstrVal));
+		    (int) SysStringLen(vCmd.bstrVal));
+
 	    result = TkWinSend_QueueCommand(obj->interp, scriptPtr);
 	}
     }
 
     VariantClear(&vCmd);
-
     return hr;
 }
 

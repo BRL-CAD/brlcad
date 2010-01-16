@@ -8,7 +8,8 @@
 # RCS: @(#) $Id$
 #
 
-package require tcltest 2.1
+package require tcltest 2.2
+namespace import ::tcltest::*
 eval tcltest::configure $argv
 tcltest::loadTestedCommands
 
@@ -87,61 +88,86 @@ set fake [file join $dir non-existant]
 
 set parent .
 
-foreach opt {-initialdir -mustexist -parent -title} {
-    test choosedir-1.1$opt "tk_chooseDirectory command" unix {
-	list [catch {tk_chooseDirectory $opt} msg] $msg
-    } [list 1 "value for \"$opt\" missing"]
-}
-test choosedir-1.2 "tk_chooseDirectory command" unix {
-    list [catch {tk_chooseDirectory -foo bar} msg] $msg
-} [list 1 "bad option \"-foo\": must be -initialdir, -mustexist, -parent, or -title"]
-test choosedir-1.3 "tk_chooseDirectory command" unix {
-    list [catch {tk_chooseDirectory -parent foo.bar} msg] $msg
-} {1 {bad window path name "foo.bar"}}
+test choosedir-1.1 {tk_chooseDirectory command} -constraints unix -body {
+    tk_chooseDirectory -initialdir
+} -returnCodes error -result {value for "-initialdir" missing}
+test choosedir-1.2 {tk_chooseDirectory command} -constraints unix -body {
+    tk_chooseDirectory -mustexist
+} -returnCodes error -result {value for "-mustexist" missing}
+test choosedir-1.3 {tk_chooseDirectory command} -constraints unix -body {
+    tk_chooseDirectory -parent
+} -returnCodes error -result {value for "-parent" missing}
+test choosedir-1.4 {tk_chooseDirectory command} -constraints unix -body {
+    tk_chooseDirectory -title
+} -returnCodes error -result {value for "-title" missing}
+
+test choosedir-1.5 {tk_chooseDirectory command} -constraints unix -body {
+    tk_chooseDirectory -foo bar
+} -returnCodes error -result {bad option "-foo": must be -initialdir, -mustexist, -parent, or -title}
+test choosedir-1.6 {tk_chooseDirectory command} -constraints unix -body {
+    tk_chooseDirectory -parent foo.bar
+} -returnCodes error -result {bad window path name "foo.bar"}
 
 
-test choosedir-2.1 "tk_chooseDirectory command, cancel gives null" {unix notAqua} {
+test choosedir-2.1 {tk_chooseDirectory command, cancel gives null} -constraints {
+	unix notAqua
+} -body {
     ToPressButton $parent cancel
     tk_chooseDirectory -title "Press Cancel" -parent $parent
-} ""
+} -result {}
 
-test choosedir-3.1 "tk_chooseDirectory -mustexist 1" {unix notAqua} {
+
+test choosedir-3.1 {tk_chooseDirectory -mustexist 1} -constraints {
+	unix notAqua
+} -body {
     # first enter a bogus dirname, then enter a real one.
     ToEnterDirsByKey $parent [list $fake $real $real]
     set result [tk_chooseDirectory \
 	    -title "Enter \"$fake\", press OK, enter \"$real\", press OK" \
 	    -parent $parent -mustexist 1]
     set result
-} $real
-test choosedir-3.2 "tk_chooseDirectory -mustexist 0" {unix notAqua} {
+} -result $real
+test choosedir-3.2 {tk_chooseDirectory -mustexist 0} -constraints {
+	unix notAqua
+} -body {
     ToEnterDirsByKey $parent [list $fake $fake]
     tk_chooseDirectory -title "Enter \"$fake\", press OK" \
 	    -parent $parent -mustexist 0
-} $fake
+} -result $fake
 
-test choosedir-4.1 "tk_chooseDirectory command, initialdir" {unix notAqua} {
+
+test choosedir-4.1 {tk_chooseDirectory command, initialdir} -constraints {
+	unix notAqua
+} -body {
     ToPressButton $parent ok
     tk_chooseDirectory -title "Press Ok" -parent $parent -initialdir $real
-} $real
-test choosedir-4.2 "tk_chooseDirectory command, initialdir" {unix notAqua} {
+} -result $real
+test choosedir-4.2 {tk_chooseDirectory command, initialdir} -constraints {
+	unix notAqua
+} -body {
     ToEnterDirsByKey $parent [list $fake $fake]
     tk_chooseDirectory \
 	    -title "Enter \"$fake\" and press Ok" \
 	    -parent $parent -initialdir $real
-} $fake
-test choosedir-4.3 "tk_chooseDirectory, -initialdir {}" {unix notAqua} {
+} -result $fake
+test choosedir-4.3 {tk_chooseDirectory command, {} initialdir} -constraints {
+	unix notAqua
+} -body {
     catch {unset ::tk::dialog::file::__tk_choosedir}
     ToPressButton $parent ok
     tk_chooseDirectory \
 	    -title "Press OK" \
 	    -parent $parent -initialdir ""
-} [pwd]
+} -result [pwd]
 
-test choosedir-5.1 "tk_chooseDirectory, handles {} entry text" {unix notAqua} {
+
+test choosedir-5.1 {tk_chooseDirectory, handles {} entry text} -constraints {
+	unix notAqua
+} -body {
     ToEnterDirsByKey $parent [list "" $real $real]
     tk_chooseDirectory -title "Clear entry, Press OK; Enter $real, press OK" \
 	    -parent $parent
-} $real
+} -result $real
 
 # cleanup
 removeDirectory choosedirTest

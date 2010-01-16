@@ -27,7 +27,6 @@ Array of strings containing command-line arguments.
 Address of an application-specific initialization procedure.
 The value for this argument is usually \fBTcl_AppInit\fR.
 .BE
-
 .SH DESCRIPTION
 .PP
 \fBTk_Main\fR acts as the main program for most Tk-based applications.
@@ -52,11 +51,21 @@ for the application to perform its own initialization, such as defining
 application-specific commands.  The procedure must have an interface
 that matches the type \fBTcl_AppInitProc\fR:
 .CS
-typedef int Tcl_AppInitProc(Tcl_Interp *\fIinterp\fR);
+typedef int \fBTcl_AppInitProc\fR(
+        Tcl_Interp *\fIinterp\fR);
 .CE
 \fIAppInitProc\fR is almost always a pointer to \fBTcl_AppInit\fR;
 for more details on this procedure, see the documentation
 for \fBTcl_AppInit\fR.
-
+.PP
+\fBTk_Main\fR functions much the same as \fBTcl_Main\fR.  In particular,
+\fBTk_Main\fR supports both an interactive mode and a startup script
+mode, with the file name and encoding of a startup script under the
+control of the \fBTcl_SetStartupScript\fR and \fBTcl_GetStartupScript\fR
+routines. However it calls \fBTk_MainLoop\fR after processing any
+supplied script, and in interactive uses events registered with
+\fBTcl_CreateFileHandler\fR to process user input.
+.SH "SEE ALSO"
+Tcl_DoOneEvent(3)
 .SH KEYWORDS
 application-specific initialization, command-line arguments, main program

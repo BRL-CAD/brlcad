@@ -20,207 +20,8 @@
  * RCS: @(#) $Id$
  */
 
-#include "tkInt.h"
+#include "tkImgPhoto.h"
 #include <ctype.h>
-
-#ifdef __WIN32__
-#include "tkWinInt.h"
-#endif
-
-/*
- * Declaration for internal Xlib function used here:
- */
-
-extern int _XInitImageFuncPtrs(XImage *image);
-
-/*
- * A signed 8-bit integral type. If chars are unsigned and the compiler isn't
- * an ANSI one, then we have to use short instead (which wastes space) to get
- * signed behavior.
- */
-
-#if defined(__STDC__) || defined(_AIX)
-    typedef signed char schar;
-#else
-#   ifndef __CHAR_UNSIGNED__
-	typedef char schar;
-#   else
-	typedef short schar;
-#   endif
-#endif
-
-/*
- * An unsigned 32-bit integral type, used for pixel values. We use int rather
- * than long here to accommodate those systems where longs are 64 bits.
- */
-
-typedef unsigned int pixel;
-
-/*
- * The maximum number of pixels to transmit to the server in a single
- * XPutImage call.
- */
-
-#define MAX_PIXELS 65536
-
-/*
- * The set of colors required to display a photo image in a window depends on:
- *	- the visual used by the window
- *	- the palette, which specifies how many levels of each primary color to
- *	  use, and
- *	- the gamma value for the image.
- *
- * Pixel values allocated for specific colors are valid only for the colormap
- * in which they were allocated. Sets of pixel values allocated for displaying
- * photos are re-used in other windows if possible, that is, if the display,
- * colormap, palette and gamma values match. A hash table is used to locate
- * these sets of pixel values, using the following data structure as key:
- */
-
-typedef struct {
-    Display *display;		/* Qualifies the colormap resource ID. */
-    Colormap colormap;		/* Colormap that the windows are using. */
-    double gamma;		/* Gamma exponent value for images. */
-    Tk_Uid palette;		/* Specifies how many shades of each primary
-				 * we want to allocate. */
-} ColorTableId;
-
-/*
- * For a particular (display, colormap, palette, gamma) combination, a data
- * structure of the following type is used to store the allocated pixel values
- * and other information:
- */
-
-typedef struct ColorTable {
-    ColorTableId id;		/* Information used in selecting this color
-				 * table. */
-    int	flags;			/* See below. */
-    int	refCount;		/* Number of instances using this map. */
-    int liveRefCount;		/* Number of instances which are actually in
-				 * use, using this map. */
-    int	numColors;		/* Number of colors allocated for this map. */
-
-    XVisualInfo	visualInfo;	/* Information about the visual for windows
-				 * using this color table. */
-
-    pixel redValues[256];	/* Maps 8-bit values of red intensity to a
-				 * pixel value or index in pixelMap. */
-    pixel greenValues[256];	/* Ditto for green intensity. */
-    pixel blueValues[256];	/* Ditto for blue intensity. */
-    unsigned long *pixelMap;	/* Actual pixel values allocated. */
-
-    unsigned char colorQuant[3][256];
-				/* Maps 8-bit intensities to quantized
-				 * intensities. The first index is 0 for red,
-				 * 1 for green, 2 for blue. */
-} ColorTable;
-
-/*
- * Bit definitions for the flags field of a ColorTable.
- * BLACK_AND_WHITE:		1 means only black and white colors are
- *				available.
- * COLOR_WINDOW:		1 means a full 3-D color cube has been
- *				allocated.
- * DISPOSE_PENDING:		1 means a call to DisposeColorTable has been
- *				scheduled as an idle handler, but it hasn't
- *				been invoked yet.
- * MAP_COLORS:			1 means pixel values should be mapped through
- *				pixelMap.
- */
-
-#ifdef COLOR_WINDOW
-#undef COLOR_WINDOW
-#endif
-
-#define BLACK_AND_WHITE		1
-#define COLOR_WINDOW		2
-#define DISPOSE_PENDING		4
-#define MAP_COLORS		8
-
-/*
- * Definition of the data associated with each photo image master.
- */
-
-typedef struct PhotoMaster {
-    Tk_ImageMaster tkMaster;	/* Tk's token for image master. NULL means the
-				 * image is being deleted. */
-    Tcl_Interp *interp;		/* Interpreter associated with the application
-				 * using this image. */
-    Tcl_Command imageCmd;	/* Token for image command (used to delete it
-				 * when the image goes away). NULL means the
-				 * image command has already been deleted. */
-    int	flags;			/* Sundry flags, defined below. */
-    int	width, height;		/* Dimensions of image. */
-    int userWidth, userHeight;	/* User-declared image dimensions. */
-    Tk_Uid palette;		/* User-specified default palette for
-				 * instances of this image. */
-    double gamma;		/* Display gamma value to correct for. */
-    char *fileString;		/* Name of file to read into image. */
-    Tcl_Obj *dataString;	/* Object to use as contents of image. */
-    Tcl_Obj *format;		/* User-specified format of data in image file
-				 * or string value. */
-    unsigned char *pix32;	/* Local storage for 32-bit image. */
-    int ditherX, ditherY;	/* Location of first incorrectly dithered
-				 * pixel in image. */
-    TkRegion validRegion;	/* Tk region indicating which parts of the
-				 * image have valid image data. */
-    struct PhotoInstance *instancePtr;
-				/* First in the list of instances associated
-				 * with this master. */
-} PhotoMaster;
-
-/*
- * Bit definitions for the flags field of a PhotoMaster.
- * COLOR_IMAGE:			1 means that the image has different color
- *				components.
- * IMAGE_CHANGED:		1 means that the instances of this image need
- *				to be redithered.
- * COMPLEX_ALPHA:		1 means that the instances of this image have
- *				alpha values that aren't 0 or 255, and so need
- *				the copy-merge-replace renderer .
- */
-
-#define COLOR_IMAGE		1
-#define IMAGE_CHANGED		2
-#define COMPLEX_ALPHA		4
-
-/*
- * Flag to OR with the compositing rule to indicate that the source, despite
- * having an alpha channel, has simple alpha.
- */
-
-#define SOURCE_IS_SIMPLE_ALPHA_PHOTO 0x10000000
-
-/*
- * The following data structure represents all of the instances of a photo
- * image in windows on a given screen that are using the same colormap.
- */
-
-typedef struct PhotoInstance {
-    PhotoMaster *masterPtr;	/* Pointer to master for image. */
-    Display *display;		/* Display for windows using this instance. */
-    Colormap colormap;		/* The image may only be used in windows with
-				 * this particular colormap. */
-    struct PhotoInstance *nextPtr;
-				/* Pointer to the next instance in the list of
-				 * instances associated with this master. */
-    int refCount;		/* Number of instances using this structure. */
-    Tk_Uid palette;		/* Palette for these particular instances. */
-    double gamma;		/* Gamma value for these instances. */
-    Tk_Uid defaultPalette;	/* Default palette to use if a palette is not
-				 * specified for the master. */
-    ColorTable *colorTablePtr;	/* Pointer to information about colors
-				 * allocated for image display in windows like
-				 * this one. */
-    Pixmap pixels;		/* X pixmap containing dithered image. */
-    int width, height;		/* Dimensions of the pixmap. */
-    schar *error;		/* Error image, used in dithering. */
-    XImage *imagePtr;		/* Image structure for converted pixels. */
-    XVisualInfo visualInfo;	/* Information about the visual that these
-				 * windows are using. */
-    GC gc;			/* Graphics context for writing images to the
-				 * pixmap. */
-} PhotoInstance;
 
 /*
  * The following data structure is used to return information from
@@ -276,7 +77,7 @@ struct SubcommandOptions {
  * of the OPT_* constants above.
  */
 
-static char *optionNames[] = {
+static const char *const optionNames[] = {
     "-background",
     "-compositingrule",
     "-format",
@@ -301,16 +102,10 @@ static char *optionNames[] = {
  * Functions used in the type record for photo images.
  */
 
-static int		ImgPhotoCreate(Tcl_Interp *interp, char *name,
-			    int objc, Tcl_Obj *CONST objv[],
-			    Tk_ImageType *typePtr, Tk_ImageMaster master,
+static int		ImgPhotoCreate(Tcl_Interp *interp, const char *name,
+			    int objc, Tcl_Obj *const objv[],
+			    const Tk_ImageType *typePtr, Tk_ImageMaster master,
 			    ClientData *clientDataPtr);
-static ClientData	ImgPhotoGet(Tk_Window tkwin, ClientData clientData);
-static void		ImgPhotoDisplay(ClientData clientData,
-			    Display *display, Drawable drawable,
-			    int imageX, int imageY, int width, int height,
-			    int drawableX, int drawableY);
-static void		ImgPhotoFree(ClientData clientData, Display *display);
 static void		ImgPhotoDelete(ClientData clientData);
 static int		ImgPhotoPostscript(ClientData clientData,
 			    Tcl_Interp *interp, Tk_Window tkwin,
@@ -324,9 +119,9 @@ static int		ImgPhotoPostscript(ClientData clientData,
 Tk_ImageType tkPhotoImageType = {
     "photo",			/* name */
     ImgPhotoCreate,		/* createProc */
-    ImgPhotoGet,		/* getProc */
-    ImgPhotoDisplay,		/* displayProc */
-    ImgPhotoFree,		/* freeProc */
+    TkImgPhotoGet,		/* getProc */
+    TkImgPhotoDisplay,		/* displayProc */
+    TkImgPhotoFree,		/* freeProc */
     ImgPhotoDelete,		/* deleteProc */
     ImgPhotoPostscript,		/* postscriptProc */
     NULL			/* nextPtr */
@@ -340,7 +135,7 @@ typedef struct ThreadSpecificData {
 				/* Pointer to the first in the list of known
 				 * photo image formats.*/
     int initialized;		/* Set to 1 if we've initialized the
-				 * strucuture. */
+				 * structure. */
 } ThreadSpecificData;
 static Tcl_ThreadDataKey dataKey;
 
@@ -372,30 +167,12 @@ static Tk_ConfigSpec configSpecs[] = {
 };
 
 /*
- * Hash table used to hash from (display, colormap, palette, gamma) to
- * ColorTable address.
- */
-
-static Tcl_HashTable imgPhotoColorHash;
-static int imgPhotoColorHashInitialized;
-#define N_COLOR_HASH	(sizeof(ColorTableId) / sizeof(int))
-
-/*
- * Implementation of the Porter-Duff Source-Over compositing rule.
- */
-
-#define PD_SRC_OVER(srcColor,srcAlpha,dstColor,dstAlpha) \
-	(srcColor*srcAlpha/255) + dstAlpha*(255-srcAlpha)/255*dstColor/255
-#define PD_SRC_OVER_ALPHA(srcAlpha,dstAlpha) \
-	(srcAlpha + (255-srcAlpha)*dstAlpha/255)
-
-/*
  * Forward declarations
  */
 
 static void		PhotoFormatThreadExitProc(ClientData clientData);
 static int		ImgPhotoCmd(ClientData clientData, Tcl_Interp *interp,
-			    int objc, Tcl_Obj *CONST objv[]);
+			    int objc, Tcl_Obj *const objv[]);
 static int		ParseSubcommandOptions(
 			    struct SubcommandOptions *optPtr,
 			    Tcl_Interp *interp, int allowedOptions,
@@ -404,31 +181,17 @@ static void		ImgPhotoCmdDeletedProc(ClientData clientData);
 static int		ImgPhotoConfigureMaster(Tcl_Interp *interp,
 			    PhotoMaster *masterPtr, int objc,
 			    Tcl_Obj *const objv[], int flags);
-static void		ImgPhotoConfigureInstance(PhotoInstance *instancePtr);
 static int		ToggleComplexAlphaIfNeeded(PhotoMaster *mPtr);
-static void		ImgPhotoBlendComplexAlpha(XImage *bgImg,
-			    PhotoInstance *iPtr, int xOffset, int yOffset,
-			    int width, int height);
 static int		ImgPhotoSetSize(PhotoMaster *masterPtr, int width,
 			    int height);
-static void		ImgPhotoInstanceSetSize(PhotoInstance *instancePtr);
 static int		ImgStringWrite(Tcl_Interp *interp,
 			    Tcl_Obj *formatString,
 			    Tk_PhotoImageBlock *blockPtr);
 static char *		ImgGetPhoto(PhotoMaster *masterPtr,
 			    Tk_PhotoImageBlock *blockPtr,
 			    struct SubcommandOptions *optPtr);
-static int		IsValidPalette(PhotoInstance *instancePtr,
-			    const char *palette);
-static int		CountBits(pixel mask);
-static void		GetColorTable(PhotoInstance *instancePtr);
-static void		FreeColorTable(ColorTable *colorPtr, int force);
-static void		AllocateColors(ColorTable *colorPtr);
-static void		DisposeColorTable(ClientData clientData);
-static void		DisposeInstance(ClientData clientData);
-static int		ReclaimColors(ColorTableId *id, int numColors);
 static int		MatchFileFormat(Tcl_Interp *interp, Tcl_Channel chan,
-			    char *fileName, Tcl_Obj *formatString,
+			    const char *fileName, Tcl_Obj *formatString,
 			    Tk_PhotoImageFormat **imageFormatPtr,
 			    int *widthPtr, int *heightPtr, int *oldformat);
 static int		MatchStringFormat(Tcl_Interp *interp, Tcl_Obj *data,
@@ -436,15 +199,8 @@ static int		MatchStringFormat(Tcl_Interp *interp, Tcl_Obj *data,
 			    Tk_PhotoImageFormat **imageFormatPtr,
 			    int *widthPtr, int *heightPtr, int *oldformat);
 static Tcl_ObjCmdProc *	PhotoOptionFind(Tcl_Interp *interp, Tcl_Obj *obj);
-static void		DitherInstance(PhotoInstance *instancePtr, int x,
-			    int y, int width, int height);
 static void		PhotoOptionCleanupProc(ClientData clientData,
 			    Tcl_Interp *interp);
-
-#undef MIN
-#define MIN(a, b)	((a) < (b)? (a): (b))
-#undef MAX
-#define MAX(a, b)	((a) > (b)? (a): (b))
 
 /*
  *----------------------------------------------------------------------
@@ -467,7 +223,7 @@ PhotoFormatThreadExitProc(
     ClientData clientData)	/* not used */
 {
     Tk_PhotoImageFormat *freePtr;
-    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
+    ThreadSpecificData *tsdPtr =
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     while (tsdPtr->oldFormatList != NULL) {
@@ -478,6 +234,7 @@ PhotoFormatThreadExitProc(
     while (tsdPtr->formatList != NULL) {
 	freePtr = tsdPtr->formatList;
 	tsdPtr->formatList = tsdPtr->formatList->nextPtr;
+	ckfree((char *) freePtr->name);
 	ckfree((char *) freePtr);
     }
 }
@@ -503,13 +260,13 @@ PhotoFormatThreadExitProc(
 
 void
 Tk_CreateOldPhotoImageFormat(
-    Tk_PhotoImageFormat *formatPtr)
+    const Tk_PhotoImageFormat *formatPtr)
 				/* Structure describing the format. All of the
 				 * fields except "nextPtr" must be filled in
 				 * by caller. */
 {
     Tk_PhotoImageFormat *copyPtr;
-    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
+    ThreadSpecificData *tsdPtr =
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     if (!tsdPtr->initialized) {
@@ -524,13 +281,13 @@ Tk_CreateOldPhotoImageFormat(
 
 void
 Tk_CreatePhotoImageFormat(
-    Tk_PhotoImageFormat *formatPtr)
+    const Tk_PhotoImageFormat *formatPtr)
 				/* Structure describing the format. All of the
 				 * fields except "nextPtr" must be filled in
 				 * by caller. */
 {
     Tk_PhotoImageFormat *copyPtr;
-    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
+    ThreadSpecificData *tsdPtr =
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     if (!tsdPtr->initialized) {
@@ -543,6 +300,10 @@ Tk_CreatePhotoImageFormat(
 	copyPtr->nextPtr = tsdPtr->oldFormatList;
 	tsdPtr->oldFormatList = copyPtr;
     } else {
+	/* for compatibility with aMSN: make a copy of formatPtr->name */
+	char *name = ckalloc(strlen(formatPtr->name) + 1);
+	strcpy(name, formatPtr->name);
+	copyPtr->name = name;
 	copyPtr->nextPtr = tsdPtr->formatList;
 	tsdPtr->formatList = copyPtr;
     }
@@ -569,11 +330,11 @@ static int
 ImgPhotoCreate(
     Tcl_Interp *interp,		/* Interpreter for application containing
 				 * image. */
-    char *name,			/* Name to use for image. */
+    const char *name,		/* Name to use for image. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *CONST objv[],	/* Argument objects for options (doesn't
+    Tcl_Obj *const objv[],	/* Argument objects for options (doesn't
 				 * include image name or type). */
-    Tk_ImageType *typePtr,	/* Pointer to our type record (not used). */
+    const Tk_ImageType *typePtr,/* Pointer to our type record (not used). */
     Tk_ImageMaster master,	/* Token for image, to be used by us in later
 				 * callbacks. */
     ClientData *clientDataPtr)	/* Store manager's token for image here; it
@@ -590,7 +351,7 @@ ImgPhotoCreate(
     masterPtr->tkMaster = master;
     masterPtr->interp = interp;
     masterPtr->imageCmd = Tcl_CreateObjCommand(interp, name, ImgPhotoCmd,
-	    (ClientData) masterPtr, ImgPhotoCmdDeletedProc);
+	    masterPtr, ImgPhotoCmdDeletedProc);
     masterPtr->palette = NULL;
     masterPtr->pix32 = NULL;
     masterPtr->instancePtr = NULL;
@@ -601,11 +362,11 @@ ImgPhotoCreate(
      */
 
     if (ImgPhotoConfigureMaster(interp, masterPtr, objc, objv, 0) != TCL_OK) {
-	ImgPhotoDelete((ClientData) masterPtr);
+	ImgPhotoDelete(masterPtr);
 	return TCL_ERROR;
     }
 
-    *clientDataPtr = (ClientData) masterPtr;
+    *clientDataPtr = masterPtr;
     return TCL_OK;
 }
 
@@ -632,9 +393,9 @@ ImgPhotoCmd(
     ClientData clientData,	/* Information about photo master. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *CONST objv[])	/* Argument objects. */
+    Tcl_Obj *const objv[])	/* Argument objects. */
 {
-    static const char *photoOptions[] = {
+    static const char *const photoOptions[] = {
 	"blank", "cget", "configure", "copy", "data", "get", "put",
 	"read", "redither", "transparency", "write", NULL
     };
@@ -644,7 +405,7 @@ ImgPhotoCmd(
 	PHOTO_WRITE
     };
 
-    PhotoMaster *masterPtr = (PhotoMaster *) clientData;
+    PhotoMaster *masterPtr = clientData;
     int result, index, x, y, width, height, dataWidth, dataHeight, listObjc;
     struct SubcommandOptions options;
     Tcl_Obj **listObjv, **srcObjv;
@@ -655,18 +416,18 @@ ImgPhotoCmd(
     int imageWidth, imageHeight, matched, length, oldformat = 0;
     Tcl_Channel chan;
     Tk_PhotoHandle srcHandle;
-    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
+    ThreadSpecificData *tsdPtr =
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     if (objc < 2) {
-	Tcl_WrongNumArgs(interp, 1, objv, "option ?arg arg ...?");
+	Tcl_WrongNumArgs(interp, 1, objv, "option ?arg ...?");
 	return TCL_ERROR;
     }
 
     if (Tcl_GetIndexFromObj(interp, objv[1], photoOptions, "option", 0,
 	    &index) != TCL_OK) {
-	Tcl_ObjCmdProc *proc;
-	proc = PhotoOptionFind(interp, objv[1]);
+	Tcl_ObjCmdProc *proc = PhotoOptionFind(interp, objv[1]);
+
 	if (proc == NULL) {
 	    return TCL_ERROR;
 	}
@@ -688,7 +449,7 @@ ImgPhotoCmd(
 	}
 
     case PHOTO_CGET: {
-	char *arg;
+	const char *arg;
 
 	if (objc != 3) {
 	    Tcl_WrongNumArgs(interp, 2, objv, "option");
@@ -743,11 +504,15 @@ ImgPhotoCmd(
 	    return TCL_OK;
 
 	} else if (objc == 3) {
-	    char *arg = Tcl_GetStringFromObj(objv[2], &length);
+	    const char *arg = Tcl_GetStringFromObj(objv[2], &length);
 
 	    if (length > 1 && !strncmp(arg, "-data", (unsigned) length)) {
 		Tcl_AppendResult(interp, "-data {} {} {}", NULL);
 		if (masterPtr->dataString) {
+		    /*
+		     * TODO: Modifying result is bad!
+		     */
+
 		    Tcl_ListObjAppendElement(interp, Tcl_GetObjResult(interp),
 			    masterPtr->dataString);
 		} else {
@@ -758,6 +523,10 @@ ImgPhotoCmd(
 		    !strncmp(arg, "-format", (unsigned) length)) {
 		Tcl_AppendResult(interp, "-format {} {} {}", NULL);
 		if (masterPtr->format) {
+		    /*
+		     * TODO: Modifying result is bad!
+		     */
+
 		    Tcl_ListObjAppendElement(interp, Tcl_GetObjResult(interp),
 			    masterPtr->format);
 		} else {
@@ -768,9 +537,10 @@ ImgPhotoCmd(
 		return Tk_ConfigureInfo(interp, Tk_MainWindow(interp),
 			configSpecs, (char *) masterPtr, arg, 0);
 	    }
+	} else {
+	    return ImgPhotoConfigureMaster(interp, masterPtr, objc-2, objv+2,
+		    TK_CONFIG_ARGV_ONLY);
 	}
-	return ImgPhotoConfigureMaster(interp, masterPtr, objc-2, objv+2,
-		TK_CONFIG_ARGV_ONLY);
 
     case PHOTO_COPY:
 	/*
@@ -904,7 +674,7 @@ ImgPhotoCmd(
 	    return TCL_ERROR;
 	}
 	if ((options.name != NULL) || (index < objc)) {
-	    Tcl_WrongNumArgs(interp, 2, objv, "?options?");
+	    Tcl_WrongNumArgs(interp, 2, objv, "?-option value ...?");
 	    return TCL_ERROR;
 	}
 	if ((options.fromX > masterPtr->width)
@@ -975,23 +745,25 @@ ImgPhotoCmd(
 
 	if (oldformat) {
 	    Tcl_DString buffer;
+	    typedef int (*OldStringWriteProc)(Tcl_Interp *interp,
+		    Tcl_DString *dataPtr, const char *formatString,
+		    Tk_PhotoImageBlock *blockPtr);
 
 	    Tcl_DStringInit(&buffer);
-	    result = ((int (*) (Tcl_Interp *interp,
-		    Tcl_DString *dataPtr, char *formatString,
-		    Tk_PhotoImageBlock *blockPtr)) stringWriteProc)
-		    (interp, &buffer, Tcl_GetString(options.format), &block);
+	    result = ((OldStringWriteProc) stringWriteProc)(interp, &buffer,
+		    Tcl_GetString(options.format), &block);
 	    if (result == TCL_OK) {
 		Tcl_DStringResult(interp, &buffer);
 	    } else {
 		Tcl_DStringFree(&buffer);
 	    }
 	} else {
-
-	    result = ((int (*) (Tcl_Interp *interp,
+	    typedef int (*NewStringWriteProc)(Tcl_Interp *interp,
 		    Tcl_Obj *formatString, Tk_PhotoImageBlock *blockPtr,
-		    void *dummy)) stringWriteProc)
-		    (interp, options.format, &block, NULL);
+		    void *dummy);
+
+	    result = ((NewStringWriteProc) stringWriteProc)(interp,
+		    options.format, &block, NULL);
 	}
 	if (options.background) {
 	    Tk_FreeColor(options.background);
@@ -1048,7 +820,7 @@ ImgPhotoCmd(
 	    return TCL_ERROR;
 	}
 	if ((options.name == NULL) || (index < objc)) {
-	    Tcl_WrongNumArgs(interp, 2, objv, "data ?options?");
+	    Tcl_WrongNumArgs(interp, 2, objv, "data ?-option value ...?");
 	    return TCL_ERROR;
 	}
 
@@ -1075,10 +847,9 @@ ImgPhotoCmd(
 		}
 		data = (Tcl_Obj *) Tcl_GetString(data);
 	    }
-	    if ((*imageFormat->stringReadProc)(interp, data,
-		    format, (Tk_PhotoHandle) masterPtr,
-		    options.toX, options.toY, imageWidth, imageHeight,
-		    0, 0) != TCL_OK) {
+	    if (imageFormat->stringReadProc(interp, data, format,
+		    (Tk_PhotoHandle) masterPtr, options.toX, options.toY,
+		    imageWidth, imageHeight, 0, 0) != TCL_OK) {
 		return TCL_ERROR;
 	    }
 	    masterPtr->flags |= IMAGE_CHANGED;
@@ -1121,7 +892,7 @@ ImgPhotoCmd(
 	    }
 
 	    for (x = 0; x < dataWidth; ++x) {
-		char *colorString = Tcl_GetString(listObjv[x]);
+		const char *colorString = Tcl_GetString(listObjv[x]);
 		XColor color;
 		int tmpr, tmpg, tmpb;
 
@@ -1198,7 +969,7 @@ ImgPhotoCmd(
 	block.offset[1] = 1;
 	block.offset[2] = 2;
 	block.offset[3] = 0;
-	result = Tk_PhotoPutBlock(interp, (ClientData)masterPtr, &block,
+	result = Tk_PhotoPutBlock(interp, masterPtr, &block,
 		options.toX, options.toY, options.toX2 - options.toX,
 		options.toY2 - options.toY,
 		TK_PHOTO_COMPOSITE_SET);
@@ -1222,7 +993,7 @@ ImgPhotoCmd(
 	    return TCL_ERROR;
 	}
 	if ((options.name == NULL) || (index < objc)) {
-	    Tcl_WrongNumArgs(interp, 2, objv, "fileName ?options?");
+	    Tcl_WrongNumArgs(interp, 2, objv, "fileName ?-option value ...?");
 	    return TCL_ERROR;
 	}
 
@@ -1305,7 +1076,7 @@ ImgPhotoCmd(
 	if (oldformat && format) {
 	    format = (Tcl_Obj *) Tcl_GetString(format);
 	}
-	result = (*imageFormat->fileReadProc)(interp, chan,
+	result = imageFormat->fileReadProc(interp, chan,
 		Tcl_GetString(options.name),
 		format, (Tk_PhotoHandle) masterPtr, options.toX,
 		options.toY, width, height, options.fromX, options.fromY);
@@ -1351,7 +1122,7 @@ ImgPhotoCmd(
 	return TCL_OK;
 
     case PHOTO_TRANS: {
-	static const char *photoTransOptions[] = {
+	static const char *const photoTransOptions[] = {
 	    "get", "set", NULL
 	};
 	enum transOptions {
@@ -1359,7 +1130,7 @@ ImgPhotoCmd(
 	};
 
 	if (objc < 3) {
-	    Tcl_WrongNumArgs(interp, 2, objv, "option ?arg arg ...?");
+	    Tcl_WrongNumArgs(interp, 2, objv, "option ?arg ...?");
 	    return TCL_ERROR;
 	}
 	if (Tcl_GetIndexFromObj(interp, objv[2], photoTransOptions, "option",
@@ -1381,7 +1152,7 @@ ImgPhotoCmd(
 		return TCL_ERROR;
 	    }
 	    if ((x < 0) || (x >= masterPtr->width)
-		|| (y < 0) || (y >= masterPtr->height)) {
+		    || (y < 0) || (y >= masterPtr->height)) {
 		Tcl_AppendResult(interp, Tcl_GetString(objv[0]),
 			" transparency get: coordinates out of range", NULL);
 		return TCL_ERROR;
@@ -1398,8 +1169,8 @@ ImgPhotoCmd(
 	    TkClipBox(testRegion, &testBox);
 	    TkDestroyRegion(testRegion);
 
-	    Tcl_SetBooleanObj(Tcl_GetObjResult(interp),
-		    (testBox.width==0 && testBox.height==0));
+	    Tcl_SetObjResult(interp, Tcl_NewBooleanObj(
+		    testBox.width==0 && testBox.height==0));
 	    return TCL_OK;
 	}
 
@@ -1500,7 +1271,7 @@ ImgPhotoCmd(
 	    return TCL_ERROR;
 	}
 	if ((options.name == NULL) || (index < objc)) {
-	    Tcl_WrongNumArgs(interp, 2, objv, "fileName ?options?");
+	    Tcl_WrongNumArgs(interp, 2, objv, "fileName ?-option value ...?");
 	    return TCL_ERROR;
 	}
 	if ((options.fromX > masterPtr->width)
@@ -1577,7 +1348,7 @@ ImgPhotoCmd(
 	if (oldformat && format) {
 	    format = (Tcl_Obj *) Tcl_GetString(options.format);
 	}
-	result = (*imageFormat->fileWriteProc)(interp,
+	result = imageFormat->fileWriteProc(interp,
 		Tcl_GetString(options.name), format, &block);
 	if (options.background) {
 	    Tk_FreeColor(options.background);
@@ -1627,7 +1398,8 @@ ParseSubcommandOptions(
 {
     int index, c, bit, currentBit, length;
     int values[4], numValues, maxValues, argIndex;
-    char *option, **listPtr;
+    const char *option;
+    const char *const *listPtr;
 
     for (index = *optIndexPtr; index < objc; *optIndexPtr = ++index) {
 	/*
@@ -1736,7 +1508,7 @@ ParseSubcommandOptions(
 		 * constants.
 		 */
 
-		static const char *compositingRules[] = {
+		static const char *const compositingRules[] = {
 		    "overlay", "set", NULL
 		};
 
@@ -1753,7 +1525,7 @@ ParseSubcommandOptions(
 		return TCL_ERROR;
 	    }
 	} else if ((bit != OPT_SHRINK) && (bit != OPT_GRAYSCALE)) {
-	    char *val;
+	    const char *val;
 	    maxValues = ((bit == OPT_FROM) || (bit == OPT_TO))? 4: 2;
 	    argIndex = index + 1;
 	    for (numValues = 0; numValues < maxValues; ++numValues) {
@@ -1912,6 +1684,7 @@ ImgPhotoConfigureMaster(
 		    data = objv[i];
 		    j--;
 		} else {
+		    ckfree((char *) args);
 		    Tcl_AppendResult(interp,
 			    "value for \"-data\" missing", NULL);
 		    return TCL_ERROR;
@@ -1922,6 +1695,7 @@ ImgPhotoConfigureMaster(
 		    format = objv[i];
 		    j--;
 		} else {
+		    ckfree((char *) args);
 		    Tcl_AppendResult(interp,
 			    "value for \"-format\" missing", NULL);
 		    return TCL_ERROR;
@@ -2026,7 +1800,6 @@ ImgPhotoConfigureMaster(
     if ((masterPtr->fileString != NULL)
 	    && ((masterPtr->fileString != oldFileString)
 	    || (masterPtr->format != oldFormat))) {
-
 	/*
 	 * Prevent file system access in a safe interpreter.
 	 */
@@ -2066,7 +1839,7 @@ ImgPhotoConfigureMaster(
 	if (oldformat && tempformat) {
 	    tempformat = (Tcl_Obj *) Tcl_GetString(tempformat);
 	}
-	result = (*imageFormat->fileReadProc)(interp, chan,
+	result = imageFormat->fileReadProc(interp, chan,
 		masterPtr->fileString, tempformat, (Tk_PhotoHandle) masterPtr,
 		0, 0, imageWidth, imageHeight, 0, 0);
 	Tcl_Close(NULL, chan);
@@ -2100,9 +1873,9 @@ ImgPhotoConfigureMaster(
 	    }
 	    tempdata = (Tcl_Obj *) Tcl_GetString(tempdata);
 	}
-	if ((*imageFormat->stringReadProc)(interp, tempdata,
-		tempformat, (Tk_PhotoHandle) masterPtr,
-		0, 0, imageWidth, imageHeight, 0, 0) != TCL_OK) {
+	if (imageFormat->stringReadProc(interp, tempdata, tempformat,
+		(Tk_PhotoHandle) masterPtr, 0, 0, imageWidth, imageHeight,
+		0, 0) != TCL_OK) {
 	    goto errorExit;
 	}
 
@@ -2131,7 +1904,7 @@ ImgPhotoConfigureMaster(
 
     for (instancePtr = masterPtr->instancePtr; instancePtr != NULL;
 	    instancePtr = instancePtr->nextPtr) {
-	ImgPhotoConfigureInstance(instancePtr);
+	TkImgPhotoConfigureInstance(instancePtr);
     }
 
     /*
@@ -2161,327 +1934,6 @@ ImgPhotoConfigureMaster(
 	Tcl_DecrRefCount(oldFormat);
     }
     return TCL_ERROR;
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * ImgPhotoConfigureInstance --
- *
- *	This function is called to create displaying information for a photo
- *	image instance based on the configuration information in the master.
- *	It is invoked both when new instances are created and when the master
- *	is reconfigured.
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	Generates errors via Tcl_BackgroundError if there are problems in
- *	setting up the instance.
- *
- *----------------------------------------------------------------------
- */
-
-static void
-ImgPhotoConfigureInstance(
-    PhotoInstance *instancePtr)	/* Instance to reconfigure. */
-{
-    PhotoMaster *masterPtr = instancePtr->masterPtr;
-    XImage *imagePtr;
-    int bitsPerPixel;
-    ColorTable *colorTablePtr;
-    XRectangle validBox;
-
-    /*
-     * If the -palette configuration option has been set for the master, use
-     * the value specified for our palette, but only if it is a valid palette
-     * for our windows. Use the gamma value specified the master.
-     */
-
-    if ((masterPtr->palette && masterPtr->palette[0])
-	    && IsValidPalette(instancePtr, masterPtr->palette)) {
-	instancePtr->palette = masterPtr->palette;
-    } else {
-	instancePtr->palette = instancePtr->defaultPalette;
-    }
-    instancePtr->gamma = masterPtr->gamma;
-
-    /*
-     * If we don't currently have a color table, or if the one we have no
-     * longer applies (e.g. because our palette or gamma has changed), get a
-     * new one.
-     */
-
-    colorTablePtr = instancePtr->colorTablePtr;
-    if ((colorTablePtr == NULL)
-	    || (instancePtr->colormap != colorTablePtr->id.colormap)
-	    || (instancePtr->palette != colorTablePtr->id.palette)
-	    || (instancePtr->gamma != colorTablePtr->id.gamma)) {
-	/*
-	 * Free up our old color table, and get a new one.
-	 */
-
-	if (colorTablePtr != NULL) {
-	    colorTablePtr->liveRefCount -= 1;
-	    FreeColorTable(colorTablePtr, 0);
-	}
-	GetColorTable(instancePtr);
-
-	/*
-	 * Create a new XImage structure for sending data to the X server, if
-	 * necessary.
-	 */
-
-	if (instancePtr->colorTablePtr->flags & BLACK_AND_WHITE) {
-	    bitsPerPixel = 1;
-	} else {
-	    bitsPerPixel = instancePtr->visualInfo.depth;
-	}
-
-	if ((instancePtr->imagePtr == NULL)
-		|| (instancePtr->imagePtr->bits_per_pixel != bitsPerPixel)) {
-	    if (instancePtr->imagePtr != NULL) {
-		XDestroyImage(instancePtr->imagePtr);
-	    }
-	    imagePtr = XCreateImage(instancePtr->display,
-		    instancePtr->visualInfo.visual, (unsigned) bitsPerPixel,
-		    (bitsPerPixel > 1? ZPixmap: XYBitmap), 0, NULL,
-		    1, 1, 32, 0);
-	    instancePtr->imagePtr = imagePtr;
-
-	    /*
-	     * We create images using the local host's endianness, rather than
-	     * the endianness of the server; otherwise we would have to
-	     * byte-swap any 16 or 32 bit values that we store in the image
-	     * if the server's endianness is different from ours.
-	     */
-
-	    if (imagePtr != NULL) {
-#ifdef WORDS_BIGENDIAN
-		imagePtr->byte_order = MSBFirst;
-#else
-		imagePtr->byte_order = LSBFirst;
-#endif
-		_XInitImageFuncPtrs(imagePtr);
-	    }
-	}
-    }
-
-    /*
-     * If the user has specified a width and/or height for the master which is
-     * different from our current width/height, set the size to the values
-     * specified by the user. If we have no pixmap, we do this also, since it
-     * has the side effect of allocating a pixmap for us.
-     */
-
-    if ((instancePtr->pixels == None) || (instancePtr->error == NULL)
-	    || (instancePtr->width != masterPtr->width)
-	    || (instancePtr->height != masterPtr->height)) {
-	ImgPhotoInstanceSetSize(instancePtr);
-    }
-
-    /*
-     * Redither this instance if necessary.
-     */
-
-    if ((masterPtr->flags & IMAGE_CHANGED)
-	    || (instancePtr->colorTablePtr != colorTablePtr)) {
-	TkClipBox(masterPtr->validRegion, &validBox);
-	if ((validBox.width > 0) && (validBox.height > 0)) {
-	    DitherInstance(instancePtr, validBox.x, validBox.y,
-		    validBox.width, validBox.height);
-	}
-    }
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * ImgPhotoGet --
- *
- *	This function is called for each use of a photo image in a widget.
- *
- * Results:
- *	The return value is a token for the instance, which is passed back to
- *	us in calls to ImgPhotoDisplay and ImgPhotoFree.
- *
- * Side effects:
- *	A data structure is set up for the instance (or, an existing instance
- *	is re-used for the new one).
- *
- *----------------------------------------------------------------------
- */
-
-static ClientData
-ImgPhotoGet(
-    Tk_Window tkwin,		/* Window in which the instance will be
-				 * used. */
-    ClientData masterData)	/* Pointer to our master structure for the
-				 * image. */
-{
-    PhotoMaster *masterPtr = (PhotoMaster *) masterData;
-    PhotoInstance *instancePtr;
-    Colormap colormap;
-    int mono, nRed, nGreen, nBlue, numVisuals;
-    XVisualInfo visualInfo, *visInfoPtr;
-    char buf[TCL_INTEGER_SPACE * 3];
-    XColor *white, *black;
-    XGCValues gcValues;
-
-    /*
-     * Table of "best" choices for palette for PseudoColor displays with
-     * between 3 and 15 bits/pixel.
-     */
-
-    static const int paletteChoice[13][3] = {
-	/*  #red, #green, #blue */
-	 {2,  2,  2,		/* 3 bits, 8 colors */},
-	 {2,  3,  2,		/* 4 bits, 12 colors */},
-	 {3,  4,  2,		/* 5 bits, 24 colors */},
-	 {4,  5,  3,		/* 6 bits, 60 colors */},
-	 {5,  6,  4,		/* 7 bits, 120 colors */},
-	 {7,  7,  4,		/* 8 bits, 198 colors */},
-	 {8, 10,  6,		/* 9 bits, 480 colors */},
-	{10, 12,  8,		/* 10 bits, 960 colors */},
-	{14, 15,  9,		/* 11 bits, 1890 colors */},
-	{16, 20, 12,		/* 12 bits, 3840 colors */},
-	{20, 24, 16,		/* 13 bits, 7680 colors */},
-	{26, 30, 20,		/* 14 bits, 15600 colors */},
-	{32, 32, 30,		/* 15 bits, 30720 colors */}
-    };
-
-    /*
-     * See if there is already an instance for windows using the same
-     * colormap. If so then just re-use it.
-     */
-
-    colormap = Tk_Colormap(tkwin);
-    for (instancePtr = masterPtr->instancePtr; instancePtr != NULL;
-	    instancePtr = instancePtr->nextPtr) {
-	if ((colormap == instancePtr->colormap)
-		&& (Tk_Display(tkwin) == instancePtr->display)) {
-	    /*
-	     * Re-use this instance.
-	     */
-
-	    if (instancePtr->refCount == 0) {
-		/*
-		 * We are resurrecting this instance.
-		 */
-
-		Tcl_CancelIdleCall(DisposeInstance, (ClientData) instancePtr);
-		if (instancePtr->colorTablePtr != NULL) {
-		    FreeColorTable(instancePtr->colorTablePtr, 0);
-		}
-		GetColorTable(instancePtr);
-	    }
-	    instancePtr->refCount++;
-	    return (ClientData) instancePtr;
-	}
-    }
-
-    /*
-     * The image isn't already in use in a window with the same colormap. Make
-     * a new instance of the image.
-     */
-
-    instancePtr = (PhotoInstance *) ckalloc(sizeof(PhotoInstance));
-    instancePtr->masterPtr = masterPtr;
-    instancePtr->display = Tk_Display(tkwin);
-    instancePtr->colormap = Tk_Colormap(tkwin);
-    Tk_PreserveColormap(instancePtr->display, instancePtr->colormap);
-    instancePtr->refCount = 1;
-    instancePtr->colorTablePtr = NULL;
-    instancePtr->pixels = None;
-    instancePtr->error = NULL;
-    instancePtr->width = 0;
-    instancePtr->height = 0;
-    instancePtr->imagePtr = 0;
-    instancePtr->nextPtr = masterPtr->instancePtr;
-    masterPtr->instancePtr = instancePtr;
-
-    /*
-     * Obtain information about the visual and decide on the default palette.
-     */
-
-    visualInfo.screen = Tk_ScreenNumber(tkwin);
-    visualInfo.visualid = XVisualIDFromVisual(Tk_Visual(tkwin));
-    visInfoPtr = XGetVisualInfo(Tk_Display(tkwin),
-	    VisualScreenMask | VisualIDMask, &visualInfo, &numVisuals);
-    if (visInfoPtr == NULL) {
-	Tcl_Panic("ImgPhotoGet couldn't find visual for window");
-    }
-
-    nRed = 2;
-    nGreen = nBlue = 0;
-    mono = 1;
-    instancePtr->visualInfo = *visInfoPtr;
-    switch (visInfoPtr->class) {
-    case DirectColor:
-    case TrueColor:
-	nRed = 1 << CountBits(visInfoPtr->red_mask);
-	nGreen = 1 << CountBits(visInfoPtr->green_mask);
-	nBlue = 1 << CountBits(visInfoPtr->blue_mask);
-	mono = 0;
-	break;
-    case PseudoColor:
-    case StaticColor:
-	if (visInfoPtr->depth > 15) {
-	    nRed = 32;
-	    nGreen = 32;
-	    nBlue = 32;
-	    mono = 0;
-	} else if (visInfoPtr->depth >= 3) {
-	    const int *ip = paletteChoice[visInfoPtr->depth - 3];
-
-	    nRed = ip[0];
-	    nGreen = ip[1];
-	    nBlue = ip[2];
-	    mono = 0;
-	}
-	break;
-    case GrayScale:
-    case StaticGray:
-	nRed = 1 << visInfoPtr->depth;
-	break;
-    }
-    XFree((char *) visInfoPtr);
-
-    sprintf(buf, ((mono) ? "%d": "%d/%d/%d"), nRed, nGreen, nBlue);
-    instancePtr->defaultPalette = Tk_GetUid(buf);
-
-    /*
-     * Make a GC with background = black and foreground = white.
-     */
-
-    white = Tk_GetColor(masterPtr->interp, tkwin, "white");
-    black = Tk_GetColor(masterPtr->interp, tkwin, "black");
-    gcValues.foreground = (white != NULL)? white->pixel:
-	    WhitePixelOfScreen(Tk_Screen(tkwin));
-    gcValues.background = (black != NULL)? black->pixel:
-	    BlackPixelOfScreen(Tk_Screen(tkwin));
-    gcValues.graphics_exposures = False;
-    instancePtr->gc = Tk_GetGC(tkwin,
-	    GCForeground|GCBackground|GCGraphicsExposures, &gcValues);
-
-    /*
-     * Set configuration options and finish the initialization of the
-     * instance. This will also dither the image if necessary.
-     */
-
-    ImgPhotoConfigureInstance(instancePtr);
-
-    /*
-     * If this is the first instance, must set the size of the image.
-     */
-
-    if (instancePtr->nextPtr == NULL) {
-	Tk_ImageChanged(masterPtr->tkMaster, 0, 0, 0, 0,
-		masterPtr->width, masterPtr->height);
-    }
-
-    return (ClientData) instancePtr;
 }
 
 /*
@@ -2530,349 +1982,6 @@ ToggleComplexAlphaIfNeeded(
 /*
  *----------------------------------------------------------------------
  *
- * ImgPhotoBlendComplexAlpha --
- *
- *	This function is called when an image with partially transparent
- *	pixels must be drawn over another image. It blends the photo data onto
- *	a local copy of the surface that we are drawing on, *including* the
- *	pixels drawn by everything that should be drawn underneath the image.
- *
- *	Much of this code has hard-coded values in for speed because this
- *	routine is performance critical for complex image drawing.
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	Background image passed in gets drawn over with image data.
- *
- * Notes:
- *	This should work on all platforms that set mask and shift data
- *	properly from the visualInfo. RGB is really only a 24+ bpp version
- *	whereas RGB15 is the correct version and works for 15bpp+, but it
- *	slower, so it's only used for 15bpp+.
- *
- *	Note that Win32 pre-defines those operations that we really need.
- *
- *----------------------------------------------------------------------
- */
-
-#ifndef __WIN32__
-#define GetRValue(rgb)	(UCHAR(((rgb) & red_mask) >> red_shift))
-#define GetGValue(rgb)	(UCHAR(((rgb) & green_mask) >> green_shift))
-#define GetBValue(rgb)	(UCHAR(((rgb) & blue_mask) >> blue_shift))
-#define RGB(r, g, b)	((unsigned)( \
-	(UCHAR(r) << red_shift)   | \
-	(UCHAR(g) << green_shift) | \
-	(UCHAR(b) << blue_shift)  ))
-#define RGB15(r, g, b)	((unsigned)( \
-	(((r) * red_mask / 255)   & red_mask)   | \
-	(((g) * green_mask / 255) & green_mask) | \
-	(((b) * blue_mask / 255)  & blue_mask)  ))
-#endif /* !__WIN32__ */
-
-static void
-ImgPhotoBlendComplexAlpha(
-    XImage *bgImg,		/* Background image to draw on. */
-    PhotoInstance *iPtr,	/* Image instance to draw. */
-    int xOffset, int yOffset,	/* X & Y offset into image instance to
-				 * draw. */
-    int width, int height)	/* Width & height of image to draw. */
-{
-    int x, y, line;
-    unsigned long pixel;
-    unsigned char r, g, b, alpha, unalpha, *masterPtr;
-    unsigned char *alphaAr = iPtr->masterPtr->pix32;
-
-    /*
-     * This blending is an integer version of the Source-Over compositing rule
-     * (see Porter&Duff, "Compositing Digital Images", proceedings of SIGGRAPH
-     * 1984) that has been hard-coded (for speed) to work with targetting a
-     * solid surface.
-     *
-     * The 'unalpha' field must be 255-alpha; it is separated out to encourage
-     * more efficient compilation.
-     */
-
-#define ALPHA_BLEND(bgPix, imgPix, alpha, unalpha) \
-	((bgPix * unalpha + imgPix * alpha) / 255)
-
-    /*
-     * We have to get the mask and shift info from the visual on non-Win32 so
-     * that the macros Get*Value(), RGB() and RGB15() work correctly. This
-     * might be cached for better performance.
-     */
-
-#ifndef __WIN32__
-    unsigned long red_mask, green_mask, blue_mask;
-    unsigned long red_shift, green_shift, blue_shift;
-    Visual *visual = iPtr->visualInfo.visual;
-
-    red_mask = visual->red_mask;
-    green_mask = visual->green_mask;
-    blue_mask = visual->blue_mask;
-    red_shift = 0;
-    green_shift = 0;
-    blue_shift = 0;
-    while ((0x0001 & (red_mask >> red_shift)) == 0) {
-	red_shift++;
-    }
-    while ((0x0001 & (green_mask >> green_shift)) == 0) {
-	green_shift++;
-    }
-    while ((0x0001 & (blue_mask >> blue_shift)) == 0) {
-	blue_shift++;
-    }
-#endif /* !__WIN32__ */
-
-    /*
-     * Only UNIX requires the special case for <24bpp. It varies with 3 extra
-     * shifts and uses RGB15. The 24+bpp version could also then be further
-     * optimized.
-     */
-
-#if !(defined(__WIN32__) || defined(MAC_OSX_TK))
-    if (bgImg->depth < 24) {
-	unsigned char red_mlen, green_mlen, blue_mlen;
-
-	red_mlen = 8 - CountBits(red_mask >> red_shift);
-	green_mlen = 8 - CountBits(green_mask >> green_shift);
-	blue_mlen = 8 - CountBits(blue_mask >> blue_shift);
-	for (y = 0; y < height; y++) {
-	    line = (y + yOffset) * iPtr->masterPtr->width;
-	    for (x = 0; x < width; x++) {
-		masterPtr = alphaAr + ((line + x + xOffset) * 4);
-		alpha = masterPtr[3];
-
-		/*
-		 * Ignore pixels that are fully transparent
-		 */
-
-		if (alpha) {
-		    /*
-		     * We could perhaps be more efficient than XGetPixel for
-		     * 24 and 32 bit displays, but this seems "fast enough".
-		     */
-
-		    r = masterPtr[0];
-		    g = masterPtr[1];
-		    b = masterPtr[2];
-		    if (alpha != 255) {
-			/*
-			 * Only blend pixels that have some transparency
-			 */
-
-			unsigned char ra, ga, ba;
-
-			pixel = XGetPixel(bgImg, x, y);
-			ra = GetRValue(pixel) << red_mlen;
-			ga = GetGValue(pixel) << green_mlen;
-			ba = GetBValue(pixel) << blue_mlen;
-			unalpha = 255 - alpha;	/* Calculate once. */
-			r = ALPHA_BLEND(ra, r, alpha, unalpha);
-			g = ALPHA_BLEND(ga, g, alpha, unalpha);
-			b = ALPHA_BLEND(ba, b, alpha, unalpha);
-		    }
-		    XPutPixel(bgImg, x, y, RGB15(r, g, b));
-		}
-	    }
-	}
-	return;
-    }
-#endif /* !__WIN32__ && !MAC_OSX_TK */
-
-    for (y = 0; y < height; y++) {
-	line = (y + yOffset) * iPtr->masterPtr->width;
-	for (x = 0; x < width; x++) {
-	    masterPtr = alphaAr + ((line + x + xOffset) * 4);
-	    alpha = masterPtr[3];
-
-	    /*
-	     * Ignore pixels that are fully transparent
-	     */
-
-	    if (alpha) {
-		/*
-		 * We could perhaps be more efficient than XGetPixel for 24
-		 * and 32 bit displays, but this seems "fast enough".
-		 */
-
-		r = masterPtr[0];
-		g = masterPtr[1];
-		b = masterPtr[2];
-		if (alpha != 255) {
-		    /*
-		     * Only blend pixels that have some transparency
-		     */
-
-		    unsigned char ra, ga, ba;
-
-		    pixel = XGetPixel(bgImg, x, y);
-		    ra = GetRValue(pixel);
-		    ga = GetGValue(pixel);
-		    ba = GetBValue(pixel);
-		    unalpha = 255 - alpha;	/* Calculate once. */
-		    r = ALPHA_BLEND(ra, r, alpha, unalpha);
-		    g = ALPHA_BLEND(ga, g, alpha, unalpha);
-		    b = ALPHA_BLEND(ba, b, alpha, unalpha);
-		}
-		XPutPixel(bgImg, x, y, RGB(r, g, b));
-	    }
-	}
-    }
-#undef ALPHA_BLEND
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * ImgPhotoDisplay --
- *
- *	This function is invoked to draw a photo image.
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	A portion of the image gets rendered in a pixmap or window.
- *
- *----------------------------------------------------------------------
- */
-
-static void
-ImgPhotoDisplay(
-    ClientData clientData,	/* Pointer to PhotoInstance structure for
-				 * instance to be displayed. */
-    Display *display,		/* Display on which to draw image. */
-    Drawable drawable,		/* Pixmap or window in which to draw image. */
-    int imageX, int imageY,	/* Upper-left corner of region within image to
-				 * draw. */
-    int width, int height,	/* Dimensions of region within image to
-				 * draw. */
-    int drawableX,int drawableY)/* Coordinates within drawable that correspond
-				 * to imageX and imageY. */
-{
-    PhotoInstance *instancePtr = (PhotoInstance *) clientData;
-    XVisualInfo visInfo = instancePtr->visualInfo;
-
-    /*
-     * If there's no pixmap, it means that an error occurred while creating
-     * the image instance so it can't be displayed.
-     */
-
-    if (instancePtr->pixels == None) {
-	return;
-    }
-
-    if ((instancePtr->masterPtr->flags & COMPLEX_ALPHA)
-	    && visInfo.depth >= 15
-	    && (visInfo.class == DirectColor || visInfo.class == TrueColor)) {
-	Tk_ErrorHandler handler;
-	XImage *bgImg = NULL;
-
-	/*
-	 * Create an error handler to suppress the case where the input was
-	 * not properly constrained, which can cause an X error. [Bug 979239]
-	 */
-
-	handler = Tk_CreateErrorHandler(display, -1, -1, -1, NULL,
-		(ClientData) NULL);
-
-	/*
-	 * Pull the current background from the display to blend with
-	 */
-
-	bgImg = XGetImage(display, drawable, drawableX, drawableY,
-		(unsigned int)width, (unsigned int)height, AllPlanes, ZPixmap);
-	if (bgImg == NULL) {
-	    Tk_DeleteErrorHandler(handler);
-	    return;
-	}
-
-	ImgPhotoBlendComplexAlpha(bgImg, instancePtr, imageX, imageY, width,
-		height);
-
-	/*
-	 * Color info is unimportant as we only do this operation for depth >=
-	 * 15.
-	 */
-
-	TkPutImage(NULL, 0, display, drawable, instancePtr->gc,
-		bgImg, 0, 0, drawableX, drawableY,
-		(unsigned int) width, (unsigned int) height);
-	XDestroyImage(bgImg);
-	Tk_DeleteErrorHandler(handler);
-    } else {
-	/*
-	 * masterPtr->region describes which parts of the image contain valid
-	 * data. We set this region as the clip mask for the gc, setting its
-	 * origin appropriately, and use it when drawing the image.
-	 */
-
-	TkSetRegion(display, instancePtr->gc,
-		instancePtr->masterPtr->validRegion);
-	XSetClipOrigin(display, instancePtr->gc, drawableX - imageX,
-		drawableY - imageY);
-	XCopyArea(display, instancePtr->pixels, drawable, instancePtr->gc,
-		imageX, imageY, (unsigned) width, (unsigned) height,
-		drawableX, drawableY);
-	XSetClipMask(display, instancePtr->gc, None);
-	XSetClipOrigin(display, instancePtr->gc, 0, 0);
-    }
-    XFlush(display);
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * ImgPhotoFree --
- *
- *	This function is called when a widget ceases to use a particular
- *	instance of an image. We don't actually get rid of the instance until
- *	later because we may be about to get this instance again.
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	Internal data structures get cleaned up, later.
- *
- *----------------------------------------------------------------------
- */
-
-static void
-ImgPhotoFree(
-    ClientData clientData,	/* Pointer to PhotoInstance structure for
-				 * instance to be displayed. */
-    Display *display)		/* Display containing window that used
-				 * image. */
-{
-    PhotoInstance *instancePtr = (PhotoInstance *) clientData;
-    ColorTable *colorPtr;
-
-    instancePtr->refCount -= 1;
-    if (instancePtr->refCount > 0) {
-	return;
-    }
-
-    /*
-     * There are no more uses of the image within this widget. Decrement the
-     * count of live uses of its color table, so that its colors can be
-     * reclaimed if necessary, and set up an idle call to free the instance
-     * structure.
-     */
-
-    colorPtr = instancePtr->colorTablePtr;
-    if (colorPtr != NULL) {
-	colorPtr->liveRefCount -= 1;
-    }
-
-    Tcl_DoWhenIdle(DisposeInstance, (ClientData) instancePtr);
-}
-
-/*
- *----------------------------------------------------------------------
- *
  * ImgPhotoDelete --
  *
  *	This function is called by the image code to delete the master
@@ -2892,15 +2001,15 @@ ImgPhotoDelete(
     ClientData masterData)	/* Pointer to PhotoMaster structure for image.
 				 * Must not have any more instances. */
 {
-    PhotoMaster *masterPtr = (PhotoMaster *) masterData;
+    PhotoMaster *masterPtr = masterData;
     PhotoInstance *instancePtr;
 
     while ((instancePtr = masterPtr->instancePtr) != NULL) {
 	if (instancePtr->refCount > 0) {
 	    Tcl_Panic("tried to delete photo image when instances still exist");
 	}
-	Tcl_CancelIdleCall(DisposeInstance, (ClientData) instancePtr);
-	DisposeInstance((ClientData) instancePtr);
+	Tcl_CancelIdleCall(TkImgDisposeInstance, instancePtr);
+	TkImgDisposeInstance(instancePtr);
     }
     masterPtr->tkMaster = NULL;
     if (masterPtr->imageCmd != NULL) {
@@ -2944,7 +2053,7 @@ ImgPhotoCmdDeletedProc(
     ClientData clientData)	/* Pointer to PhotoMaster structure for
 				 * image. */
 {
-    PhotoMaster *masterPtr = (PhotoMaster *) clientData;
+    PhotoMaster *masterPtr = clientData;
 
     masterPtr->imageCmd = NULL;
     if (masterPtr->tkMaster != NULL) {
@@ -3131,871 +2240,10 @@ ImgPhotoSetSize(
 
     for (instancePtr = masterPtr->instancePtr; instancePtr != NULL;
 	    instancePtr = instancePtr->nextPtr) {
-	ImgPhotoInstanceSetSize(instancePtr);
+	TkImgPhotoInstanceSetSize(instancePtr);
     }
 
     return TCL_OK;
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * ImgPhotoInstanceSetSize --
- *
- *	This function reallocates the instance pixmap and dithering error
- *	array for a photo instance, as necessary, to change the image's size
- *	to `width' x `height' pixels.
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	Storage gets reallocated, here and in the X server.
- *
- *----------------------------------------------------------------------
- */
-
-static void
-ImgPhotoInstanceSetSize(
-    PhotoInstance *instancePtr)	/* Instance whose size is to be changed. */
-{
-    PhotoMaster *masterPtr;
-    schar *newError, *errSrcPtr, *errDestPtr;
-    int h, offset;
-    XRectangle validBox;
-    Pixmap newPixmap;
-
-    masterPtr = instancePtr->masterPtr;
-    TkClipBox(masterPtr->validRegion, &validBox);
-
-    if ((instancePtr->width != masterPtr->width)
-	    || (instancePtr->height != masterPtr->height)
-	    || (instancePtr->pixels == None)) {
-	newPixmap = Tk_GetPixmap(instancePtr->display,
-		RootWindow(instancePtr->display,
-			instancePtr->visualInfo.screen),
-		(masterPtr->width > 0) ? masterPtr->width: 1,
-		(masterPtr->height > 0) ? masterPtr->height: 1,
-		instancePtr->visualInfo.depth);
-	if (!newPixmap) {
-	    Tcl_Panic("Fail to create pixmap with Tk_GetPixmap in ImgPhotoInstanceSetSize.\n");
-	}
-
-	/*
-	 * The following is a gross hack needed to properly support colormaps
-	 * under Windows. Before the pixels can be copied to the pixmap, the
-	 * relevent colormap must be associated with the drawable. Normally we
-	 * can infer this association from the window that was used to create
-	 * the pixmap. However, in this case we're using the root window, so
-	 * we have to be more explicit.
-	 */
-
-	TkSetPixmapColormap(newPixmap, instancePtr->colormap);
-
-	if (instancePtr->pixels != None) {
-	    /*
-	     * Copy any common pixels from the old pixmap and free it.
-	     */
-
-	    XCopyArea(instancePtr->display, instancePtr->pixels, newPixmap,
-		    instancePtr->gc, validBox.x, validBox.y,
-		    validBox.width, validBox.height, validBox.x, validBox.y);
-	    Tk_FreePixmap(instancePtr->display, instancePtr->pixels);
-	}
-	instancePtr->pixels = newPixmap;
-    }
-
-    if ((instancePtr->width != masterPtr->width)
-	    || (instancePtr->height != masterPtr->height)
-	    || (instancePtr->error == NULL)) {
-
-	if (masterPtr->height > 0 && masterPtr->width > 0) {
-	    newError = (schar *) ckalloc((unsigned)
-		    masterPtr->height * masterPtr->width * 3 * sizeof(schar));
-
-	    /*
-	     * Zero the new array so that we don't get bogus error values
-	     * propagating into areas we dither later.
-	     */
-
-	    if ((instancePtr->error != NULL)
-		    && ((instancePtr->width == masterPtr->width)
-		    || (validBox.width == masterPtr->width))) {
-		if (validBox.y > 0) {
-		    memset(newError, 0, (size_t)
-			    validBox.y * masterPtr->width * 3 * sizeof(schar));
-		}
-		h = validBox.y + validBox.height;
-		if (h < masterPtr->height) {
-		    memset(newError + h*masterPtr->width*3, 0,
-			    (size_t) (masterPtr->height - h)
-			    * masterPtr->width * 3 * sizeof(schar));
-		}
-	    } else {
-		memset(newError, 0, (size_t)
-			masterPtr->height * masterPtr->width *3*sizeof(schar));
-	    }
-	} else {
-	    newError = NULL;
-	}
-
-	if (instancePtr->error != NULL) {
-	    /*
-	     * Copy the common area over to the new array and free the old
-	     * array.
-	     */
-
-	    if (masterPtr->width == instancePtr->width) {
-		offset = validBox.y * masterPtr->width * 3;
-		memcpy(newError + offset, instancePtr->error + offset,
-			(size_t) (validBox.height
-			* masterPtr->width * 3 * sizeof(schar)));
-
-	    } else if (validBox.width > 0 && validBox.height > 0) {
-		errDestPtr = newError +
-			(validBox.y * masterPtr->width + validBox.x) * 3;
-		errSrcPtr = instancePtr->error +
-			(validBox.y * instancePtr->width + validBox.x) * 3;
-
-		for (h = validBox.height; h > 0; --h) {
-		    memcpy(errDestPtr, errSrcPtr,
-			    validBox.width * 3 * sizeof(schar));
-		    errDestPtr += masterPtr->width * 3;
-		    errSrcPtr += instancePtr->width * 3;
-		}
-	    }
-	    ckfree((char *) instancePtr->error);
-	}
-
-	instancePtr->error = newError;
-    }
-
-    instancePtr->width = masterPtr->width;
-    instancePtr->height = masterPtr->height;
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * IsValidPalette --
- *
- *	This function is called to check whether a value given for the
- *	-palette option is valid for a particular instance of a photo image.
- *
- * Results:
- *	A boolean value: 1 if the palette is acceptable, 0 otherwise.
- *
- * Side effects:
- *	None.
- *
- *----------------------------------------------------------------------
- */
-
-static int
-IsValidPalette(
-    PhotoInstance *instancePtr,	/* Instance to which the palette specification
-				 * is to be applied. */
-    const char *palette)	/* Palette specification string. */
-{
-    int nRed, nGreen, nBlue, mono, numColors;
-    char *endp;
-
-    /*
-     * First parse the specification: it must be of the form %d or %d/%d/%d.
-     */
-
-    nRed = strtol(palette, &endp, 10);
-    if ((endp == palette) || ((*endp != 0) && (*endp != '/'))
-	    || (nRed < 2) || (nRed > 256)) {
-	return 0;
-    }
-
-    if (*endp == 0) {
-	mono = 1;
-	nGreen = nBlue = nRed;
-    } else {
-	palette = endp + 1;
-	nGreen = strtol(palette, &endp, 10);
-	if ((endp == palette) || (*endp != '/') || (nGreen < 2)
-		|| (nGreen > 256)) {
-	    return 0;
-	}
-	palette = endp + 1;
-	nBlue = strtol(palette, &endp, 10);
-	if ((endp == palette) || (*endp != 0) || (nBlue < 2)
-		|| (nBlue > 256)) {
-	    return 0;
-	}
-	mono = 0;
-    }
-
-    switch (instancePtr->visualInfo.class) {
-    case DirectColor:
-    case TrueColor:
-	if ((nRed > (1 << CountBits(instancePtr->visualInfo.red_mask)))
-		|| (nGreen>(1<<CountBits(instancePtr->visualInfo.green_mask)))
-		|| (nBlue>(1<<CountBits(instancePtr->visualInfo.blue_mask)))) {
-	    return 0;
-	}
-	break;
-    case PseudoColor:
-    case StaticColor:
-	numColors = nRed;
-	if (!mono) {
-	    numColors *= nGreen*nBlue;
-	}
-	if (numColors > (1 << instancePtr->visualInfo.depth)) {
-	    return 0;
-	}
-	break;
-    case GrayScale:
-    case StaticGray:
-	if (!mono || (nRed > (1 << instancePtr->visualInfo.depth))) {
-	    return 0;
-	}
-	break;
-    }
-
-    return 1;
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * CountBits --
- *
- *	This function counts how many bits are set to 1 in `mask'.
- *
- * Results:
- *	The integer number of bits.
- *
- * Side effects:
- *	None.
- *
- *----------------------------------------------------------------------
- */
-
-static int
-CountBits(
-    pixel mask)			/* Value to count the 1 bits in. */
-{
-    int n;
-
-    for (n=0 ; mask!=0 ; mask&=mask-1) {
-	n++;
-    }
-    return n;
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * GetColorTable --
- *
- *	This function is called to allocate a table of colormap information
- *	for an instance of a photo image. Only one such table is allocated for
- *	all photo instances using the same display, colormap, palette and
- *	gamma values, so that the application need only request a set of
- *	colors from the X server once for all such photo widgets. This
- *	function maintains a hash table to find previously-allocated
- *	ColorTables.
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	A new ColorTable may be allocated and placed in the hash table, and
- *	have colors allocated for it.
- *
- *----------------------------------------------------------------------
- */
-
-static void
-GetColorTable(
-    PhotoInstance *instancePtr)	/* Instance needing a color table. */
-{
-    ColorTable *colorPtr;
-    Tcl_HashEntry *entry;
-    ColorTableId id;
-    int isNew;
-
-    /*
-     * Look for an existing ColorTable in the hash table.
-     */
-
-    memset(&id, 0, sizeof(id));
-    id.display = instancePtr->display;
-    id.colormap = instancePtr->colormap;
-    id.palette = instancePtr->palette;
-    id.gamma = instancePtr->gamma;
-    if (!imgPhotoColorHashInitialized) {
-	Tcl_InitHashTable(&imgPhotoColorHash, N_COLOR_HASH);
-	imgPhotoColorHashInitialized = 1;
-    }
-    entry = Tcl_CreateHashEntry(&imgPhotoColorHash, (char *) &id, &isNew);
-
-    if (!isNew) {
-	/*
-	 * Re-use the existing entry.
-	 */
-
-	colorPtr = (ColorTable *) Tcl_GetHashValue(entry);
-    } else {
-	/*
-	 * No color table currently available; need to make one.
-	 */
-
-	colorPtr = (ColorTable *) ckalloc(sizeof(ColorTable));
-
-	/*
-	 * The following line of code should not normally be needed due to the
-	 * assignment in the following line. However, it compensates for bugs
-	 * in some compilers (HP, for example) where sizeof(ColorTable) is 24
-	 * but the assignment only copies 20 bytes, leaving 4 bytes
-	 * uninitialized; these cause problems when using the id for lookups
-	 * in imgPhotoColorHash, and can result in core dumps.
-	 */
-
-	memset(&colorPtr->id, 0, sizeof(ColorTableId));
-	colorPtr->id = id;
-	Tk_PreserveColormap(colorPtr->id.display, colorPtr->id.colormap);
-	colorPtr->flags = 0;
-	colorPtr->refCount = 0;
-	colorPtr->liveRefCount = 0;
-	colorPtr->numColors = 0;
-	colorPtr->visualInfo = instancePtr->visualInfo;
-	colorPtr->pixelMap = NULL;
-	Tcl_SetHashValue(entry, colorPtr);
-    }
-
-    colorPtr->refCount++;
-    colorPtr->liveRefCount++;
-    instancePtr->colorTablePtr = colorPtr;
-    if (colorPtr->flags & DISPOSE_PENDING) {
-	Tcl_CancelIdleCall(DisposeColorTable, (ClientData) colorPtr);
-	colorPtr->flags &= ~DISPOSE_PENDING;
-    }
-
-    /*
-     * Allocate colors for this color table if necessary.
-     */
-
-    if ((colorPtr->numColors == 0)
-	    && ((colorPtr->flags & BLACK_AND_WHITE) == 0)) {
-	AllocateColors(colorPtr);
-    }
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * FreeColorTable --
- *
- *	This function is called when an instance ceases using a color table.
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	If no other instances are using this color table, a when-idle handler
- *	is registered to free up the color table and the colors allocated for
- *	it.
- *
- *----------------------------------------------------------------------
- */
-
-static void
-FreeColorTable(
-    ColorTable *colorPtr,	/* Pointer to the color table which is no
-				 * longer required by an instance. */
-    int force)			/* Force free to happen immediately. */
-{
-    colorPtr->refCount--;
-    if (colorPtr->refCount > 0) {
-	return;
-    }
-
-    if (force) {
-	if ((colorPtr->flags & DISPOSE_PENDING) != 0) {
-	    Tcl_CancelIdleCall(DisposeColorTable, (ClientData) colorPtr);
-	    colorPtr->flags &= ~DISPOSE_PENDING;
-	}
-	DisposeColorTable((ClientData) colorPtr);
-    } else if ((colorPtr->flags & DISPOSE_PENDING) == 0) {
-	Tcl_DoWhenIdle(DisposeColorTable, (ClientData) colorPtr);
-	colorPtr->flags |= DISPOSE_PENDING;
-    }
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * AllocateColors --
- *
- *	This function allocates the colors required by a color table, and sets
- *	up the fields in the color table data structure which are used in
- *	dithering.
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	Colors are allocated from the X server. Fields in the color table data
- *	structure are updated.
- *
- *----------------------------------------------------------------------
- */
-
-static void
-AllocateColors(
-    ColorTable *colorPtr)	/* Pointer to the color table requiring colors
-				 * to be allocated. */
-{
-    int i, r, g, b, rMult, mono;
-    int numColors, nRed, nGreen, nBlue;
-    double fr, fg, fb, igam;
-    XColor *colors;
-    unsigned long *pixels;
-
-    /*
-     * 16-bit intensity value for i/n of full intensity.
-     */
-#define CFRAC(i, n)	((i) * 65535 / (n))
-
-    /* As for CFRAC, but apply exponent of g. */
-#define CGFRAC(i, n, g)	((int)(65535 * pow((double)(i) / (n), (g))))
-
-    /*
-     * First parse the palette specification to get the required number of
-     * shades of each primary.
-     */
-
-    mono = sscanf(colorPtr->id.palette, "%d/%d/%d", &nRed, &nGreen, &nBlue)
-	    <= 1;
-    igam = 1.0 / colorPtr->id.gamma;
-
-    /*
-     * Each time around this loop, we reduce the number of colors we're trying
-     * to allocate until we succeed in allocating all of the colors we need.
-     */
-
-    for (;;) {
-	/*
-	 * If we are using 1 bit/pixel, we don't need to allocate any colors
-	 * (we just use the foreground and background colors in the GC).
-	 */
-
-	if (mono && (nRed <= 2)) {
-	    colorPtr->flags |= BLACK_AND_WHITE;
-	    return;
-	}
-
-	/*
-	 * Calculate the RGB coordinates of the colors we want to allocate and
-	 * store them in *colors.
-	 */
-
-	if ((colorPtr->visualInfo.class == DirectColor)
-		|| (colorPtr->visualInfo.class == TrueColor)) {
-
-	    /*
-	     * Direct/True Color: allocate shades of red, green, blue
-	     * independently.
-	     */
-
-	    if (mono) {
-		numColors = nGreen = nBlue = nRed;
-	    } else {
-		numColors = MAX(MAX(nRed, nGreen), nBlue);
-	    }
-	    colors = (XColor *) ckalloc(numColors * sizeof(XColor));
-
-	    for (i = 0; i < numColors; ++i) {
-		if (igam == 1.0) {
-		    colors[i].red = CFRAC(i, nRed - 1);
-		    colors[i].green = CFRAC(i, nGreen - 1);
-		    colors[i].blue = CFRAC(i, nBlue - 1);
-		} else {
-		    colors[i].red = CGFRAC(i, nRed - 1, igam);
-		    colors[i].green = CGFRAC(i, nGreen - 1, igam);
-		    colors[i].blue = CGFRAC(i, nBlue - 1, igam);
-		}
-	    }
-	} else {
-	    /*
-	     * PseudoColor, StaticColor, GrayScale or StaticGray visual: we
-	     * have to allocate each color in the color cube separately.
-	     */
-
-	    numColors = (mono) ? nRed: (nRed * nGreen * nBlue);
-	    colors = (XColor *) ckalloc(numColors * sizeof(XColor));
-
-	    if (!mono) {
-		/*
-		 * Color display using a PseudoColor or StaticColor visual.
-		 */
-
-		i = 0;
-		for (r = 0; r < nRed; ++r) {
-		    for (g = 0; g < nGreen; ++g) {
-			for (b = 0; b < nBlue; ++b) {
-			    if (igam == 1.0) {
-				colors[i].red = CFRAC(r, nRed - 1);
-				colors[i].green = CFRAC(g, nGreen - 1);
-				colors[i].blue = CFRAC(b, nBlue - 1);
-			    } else {
-				colors[i].red = CGFRAC(r, nRed - 1, igam);
-				colors[i].green = CGFRAC(g, nGreen - 1, igam);
-				colors[i].blue = CGFRAC(b, nBlue - 1, igam);
-			    }
-			    i++;
-			}
-		    }
-		}
-	    } else {
-		/*
-		 * Monochrome display - allocate the shades of grey we want.
-		 */
-
-		for (i = 0; i < numColors; ++i) {
-		    if (igam == 1.0) {
-			r = CFRAC(i, numColors - 1);
-		    } else {
-			r = CGFRAC(i, numColors - 1, igam);
-		    }
-		    colors[i].red = colors[i].green = colors[i].blue = r;
-		}
-	    }
-	}
-
-	/*
-	 * Now try to allocate the colors we've calculated.
-	 */
-
-	pixels = (unsigned long *) ckalloc(numColors * sizeof(unsigned long));
-	for (i = 0; i < numColors; ++i) {
-	    if (!XAllocColor(colorPtr->id.display, colorPtr->id.colormap,
-		    &colors[i])) {
-		/*
-		 * Can't get all the colors we want in the default colormap;
-		 * first try freeing colors from other unused color tables.
-		 */
-
-		if (!ReclaimColors(&colorPtr->id, numColors - i)
-			|| !XAllocColor(colorPtr->id.display,
-			colorPtr->id.colormap, &colors[i])) {
-		    /*
-		     * Still can't allocate the color.
-		     */
-
-		    break;
-		}
-	    }
-	    pixels[i] = colors[i].pixel;
-	}
-
-	/*
-	 * If we didn't get all of the colors, reduce the resolution of the
-	 * color cube, free the ones we got, and try again.
-	 */
-
-	if (i >= numColors) {
-	    break;
-	}
-	XFreeColors(colorPtr->id.display, colorPtr->id.colormap, pixels, i, 0);
-	ckfree((char *) colors);
-	ckfree((char *) pixels);
-
-	if (!mono) {
-	    if ((nRed == 2) && (nGreen == 2) && (nBlue == 2)) {
-		/*
-		 * Fall back to 1-bit monochrome display.
-		 */
-
-		mono = 1;
-	    } else {
-		/*
-		 * Reduce the number of shades of each primary to about 3/4 of
-		 * the previous value. This should reduce the total number of
-		 * colors required to about half the previous value for
-		 * PseudoColor displays.
-		 */
-
-		nRed = (nRed * 3 + 2) / 4;
-		nGreen = (nGreen * 3 + 2) / 4;
-		nBlue = (nBlue * 3 + 2) / 4;
-	    }
-	} else {
-	    /*
-	     * Reduce the number of shades of gray to about 1/2.
-	     */
-
-	    nRed = nRed / 2;
-	}
-    }
-
-    /*
-     * We have allocated all of the necessary colors: fill in various fields
-     * of the ColorTable record.
-     */
-
-    if (!mono) {
-	colorPtr->flags |= COLOR_WINDOW;
-
-	/*
-	 * The following is a hairy hack. We only want to index into the
-	 * pixelMap on colormap displays. However, if the display is on
-	 * Windows, then we actually want to store the index not the value
-	 * since we will be passing the color table into the TkPutImage call.
-	 */
-
-#ifndef __WIN32__
-	if ((colorPtr->visualInfo.class != DirectColor)
-		&& (colorPtr->visualInfo.class != TrueColor)) {
-	    colorPtr->flags |= MAP_COLORS;
-	}
-#endif /* __WIN32__ */
-    }
-
-    colorPtr->numColors = numColors;
-    colorPtr->pixelMap = pixels;
-
-    /*
-     * Set up quantization tables for dithering.
-     */
-
-    rMult = nGreen * nBlue;
-    for (i = 0; i < 256; ++i) {
-	r = (i * (nRed - 1) + 127) / 255;
-	if (mono) {
-	    fr = (double) colors[r].red / 65535.0;
-	    if (colorPtr->id.gamma != 1.0 ) {
-		fr = pow(fr, colorPtr->id.gamma);
-	    }
-	    colorPtr->colorQuant[0][i] = (int)(fr * 255.99);
-	    colorPtr->redValues[i] = colors[r].pixel;
-	} else {
-	    g = (i * (nGreen - 1) + 127) / 255;
-	    b = (i * (nBlue - 1) + 127) / 255;
-	    if ((colorPtr->visualInfo.class == DirectColor)
-		    || (colorPtr->visualInfo.class == TrueColor)) {
-		colorPtr->redValues[i] =
-			colors[r].pixel & colorPtr->visualInfo.red_mask;
-		colorPtr->greenValues[i] =
-			colors[g].pixel & colorPtr->visualInfo.green_mask;
-		colorPtr->blueValues[i] =
-			colors[b].pixel & colorPtr->visualInfo.blue_mask;
-	    } else {
-		r *= rMult;
-		g *= nBlue;
-		colorPtr->redValues[i] = r;
-		colorPtr->greenValues[i] = g;
-		colorPtr->blueValues[i] = b;
-	    }
-	    fr = (double) colors[r].red / 65535.0;
-	    fg = (double) colors[g].green / 65535.0;
-	    fb = (double) colors[b].blue / 65535.0;
-	    if (colorPtr->id.gamma != 1.0) {
-		fr = pow(fr, colorPtr->id.gamma);
-		fg = pow(fg, colorPtr->id.gamma);
-		fb = pow(fb, colorPtr->id.gamma);
-	    }
-	    colorPtr->colorQuant[0][i] = (int)(fr * 255.99);
-	    colorPtr->colorQuant[1][i] = (int)(fg * 255.99);
-	    colorPtr->colorQuant[2][i] = (int)(fb * 255.99);
-	}
-    }
-
-    ckfree((char *) colors);
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * DisposeColorTable --
- *
- *	Release a color table and its associated resources.
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	The colors in the argument color table are freed, as is the color
- *	table structure itself. The color table is removed from the hash table
- *	which is used to locate color tables.
- *
- *----------------------------------------------------------------------
- */
-
-static void
-DisposeColorTable(
-    ClientData clientData)	/* Pointer to the ColorTable whose
-				 * colors are to be released. */
-{
-    ColorTable *colorPtr = (ColorTable *) clientData;
-    Tcl_HashEntry *entry;
-
-    if (colorPtr->pixelMap != NULL) {
-	if (colorPtr->numColors > 0) {
-	    XFreeColors(colorPtr->id.display, colorPtr->id.colormap,
-		    colorPtr->pixelMap, colorPtr->numColors, 0);
-	    Tk_FreeColormap(colorPtr->id.display, colorPtr->id.colormap);
-	}
-	ckfree((char *) colorPtr->pixelMap);
-    }
-
-    entry = Tcl_FindHashEntry(&imgPhotoColorHash, (char *) &colorPtr->id);
-    if (entry == NULL) {
-	Tcl_Panic("DisposeColorTable couldn't find hash entry");
-    }
-    Tcl_DeleteHashEntry(entry);
-
-    ckfree((char *) colorPtr);
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * ReclaimColors --
- *
- *	This function is called to try to free up colors in the colormap used
- *	by a color table. It looks for other color tables with the same
- *	colormap and with a zero live reference count, and frees their colors.
- *	It only does so if there is the possibility of freeing up at least
- *	`numColors' colors.
- *
- * Results:
- *	The return value is TRUE if any colors were freed, FALSE otherwise.
- *
- * Side effects:
- *	ColorTables which are not currently in use may lose their color
- *	allocations.
- *
- *----------------------------------------------------------------------
- */
-
-static int
-ReclaimColors(
-    ColorTableId *id,		/* Pointer to information identifying
-				 * the color table which needs more colors. */
-    int numColors)		/* Number of colors required. */
-{
-    Tcl_HashSearch srch;
-    Tcl_HashEntry *entry;
-    ColorTable *colorPtr;
-    int nAvail = 0;
-
-    /*
-     * First scan through the color hash table to get an upper bound on how
-     * many colors we might be able to free.
-     */
-
-    entry = Tcl_FirstHashEntry(&imgPhotoColorHash, &srch);
-    while (entry != NULL) {
-	colorPtr = (ColorTable *) Tcl_GetHashValue(entry);
-	if ((colorPtr->id.display == id->display)
-		&& (colorPtr->id.colormap == id->colormap)
-		&& (colorPtr->liveRefCount == 0 )&& (colorPtr->numColors != 0)
-		&& ((colorPtr->id.palette != id->palette)
-			|| (colorPtr->id.gamma != id->gamma))) {
-	    /*
-	     * We could take this guy's colors off him.
-	     */
-
-	    nAvail += colorPtr->numColors;
-	}
-	entry = Tcl_NextHashEntry(&srch);
-    }
-
-    /*
-     * nAvail is an (over)estimate of the number of colors we could free.
-     */
-
-    if (nAvail < numColors) {
-	return 0;
-    }
-
-    /*
-     * Scan through a second time freeing colors.
-     */
-
-    entry = Tcl_FirstHashEntry(&imgPhotoColorHash, &srch);
-    while ((entry != NULL) && (numColors > 0)) {
-	colorPtr = (ColorTable *) Tcl_GetHashValue(entry);
-	if ((colorPtr->id.display == id->display)
-		&& (colorPtr->id.colormap == id->colormap)
-		&& (colorPtr->liveRefCount == 0) && (colorPtr->numColors != 0)
-		&& ((colorPtr->id.palette != id->palette)
-			|| (colorPtr->id.gamma != id->gamma))) {
-	    /*
-	     * Free the colors that this ColorTable has.
-	     */
-
-	    XFreeColors(colorPtr->id.display, colorPtr->id.colormap,
-		    colorPtr->pixelMap, colorPtr->numColors, 0);
-	    numColors -= colorPtr->numColors;
-	    colorPtr->numColors = 0;
-	    ckfree((char *) colorPtr->pixelMap);
-	    colorPtr->pixelMap = NULL;
-	}
-
-	entry = Tcl_NextHashEntry(&srch);
-    }
-    return 1;			/* We freed some colors. */
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * DisposeInstance --
- *
- *	This function is called to finally free up an instance of a photo
- *	image which is no longer required.
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	The instance data structure and the resources it references are freed.
- *
- *----------------------------------------------------------------------
- */
-
-static void
-DisposeInstance(
-    ClientData clientData)	/* Pointer to the instance whose resources are
-				 * to be released. */
-{
-    PhotoInstance *instancePtr = (PhotoInstance *) clientData;
-    PhotoInstance *prevPtr;
-
-    if (instancePtr->pixels != None) {
-	Tk_FreePixmap(instancePtr->display, instancePtr->pixels);
-    }
-    if (instancePtr->gc != None) {
-	Tk_FreeGC(instancePtr->display, instancePtr->gc);
-    }
-    if (instancePtr->imagePtr != NULL) {
-	XDestroyImage(instancePtr->imagePtr);
-    }
-    if (instancePtr->error != NULL) {
-	ckfree((char *) instancePtr->error);
-    }
-    if (instancePtr->colorTablePtr != NULL) {
-	FreeColorTable(instancePtr->colorTablePtr, 1);
-    }
-
-    if (instancePtr->masterPtr->instancePtr == instancePtr) {
-	instancePtr->masterPtr->instancePtr = instancePtr->nextPtr;
-    } else {
-	for (prevPtr = instancePtr->masterPtr->instancePtr;
-		prevPtr->nextPtr != instancePtr; prevPtr = prevPtr->nextPtr) {
-	    /* Empty loop body. */
-	}
-	prevPtr->nextPtr = instancePtr->nextPtr;
-    }
-    Tk_FreeColormap(instancePtr->display, instancePtr->colormap);
-    ckfree((char *) instancePtr);
 }
 
 /*
@@ -4024,7 +2272,7 @@ static int
 MatchFileFormat(
     Tcl_Interp *interp,		/* Interpreter to use for reporting errors. */
     Tcl_Channel chan,		/* The image file, open for reading. */
-    char *fileName,		/* The name of the image file. */
+    const char *fileName,	/* The name of the image file. */
     Tcl_Obj *formatObj,		/* User-specified format string, or NULL. */
     Tk_PhotoImageFormat **imageFormatPtr,
 				/* A pointer to the photo image format record
@@ -4036,9 +2284,9 @@ MatchFileFormat(
 {
     int matched = 0, useoldformat = 0;
     Tk_PhotoImageFormat *formatPtr;
-    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
+    ThreadSpecificData *tsdPtr =
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
-    char *formatString = NULL;
+    const char *formatString = NULL;
 
     if (formatObj) {
 	formatString = Tcl_GetString(formatObj);
@@ -4066,7 +2314,7 @@ MatchFileFormat(
 	if (formatPtr->fileMatchProc != NULL) {
 	    (void) Tcl_Seek(chan, Tcl_LongAsWide(0L), SEEK_SET);
 
-	    if ((*formatPtr->fileMatchProc)(chan, fileName, formatObj,
+	    if (formatPtr->fileMatchProc(chan, fileName, formatObj,
 		    widthPtr, heightPtr, interp)) {
 		if (*widthPtr < 1) {
 		    *widthPtr = 1;
@@ -4096,7 +2344,7 @@ MatchFileFormat(
 	    }
 	    if (formatPtr->fileMatchProc != NULL) {
 		(void) Tcl_Seek(chan, Tcl_LongAsWide(0L), SEEK_SET);
-		if ((*formatPtr->fileMatchProc)(chan, fileName, (Tcl_Obj *)
+		if (formatPtr->fileMatchProc(chan, fileName, (Tcl_Obj *)
 			formatString, widthPtr, heightPtr, interp)) {
 		    if (*widthPtr < 1) {
 			*widthPtr = 1;
@@ -4165,9 +2413,9 @@ MatchStringFormat(
 {
     int matched = 0, useoldformat = 0;
     Tk_PhotoImageFormat *formatPtr;
-    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
+    ThreadSpecificData *tsdPtr =
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
-    char *formatString = NULL;
+    const char *formatString = NULL;
 
     if (formatObj) {
 	formatString = Tcl_GetString(formatObj);
@@ -4194,8 +2442,8 @@ MatchStringFormat(
 	}
 	if ((formatPtr->stringMatchProc != NULL)
 		&& (formatPtr->stringReadProc != NULL)
-		&& (*formatPtr->stringMatchProc)(data, formatObj,
-		widthPtr, heightPtr, interp)) {
+		&& formatPtr->stringMatchProc(data, formatObj,
+			widthPtr, heightPtr, interp)) {
 	    break;
 	}
     }
@@ -4218,7 +2466,7 @@ MatchStringFormat(
 	    }
 	    if ((formatPtr->stringMatchProc != NULL)
 		    && (formatPtr->stringReadProc != NULL)
-		    && (*formatPtr->stringMatchProc)(
+		    && formatPtr->stringMatchProc(
 			    (Tcl_Obj *) Tcl_GetString(data),
 			    (Tcl_Obj *) formatString,
 			    widthPtr, heightPtr, interp)) {
@@ -4265,16 +2513,16 @@ Tk_PhotoHandle
 Tk_FindPhoto(
     Tcl_Interp *interp,		/* Interpreter (application) in which image
 				 * exists. */
-    CONST char *imageName)	/* Name of the desired photo image. */
+    const char *imageName)	/* Name of the desired photo image. */
 {
-    ClientData clientData;
-    Tk_ImageType *typePtr;
+    const Tk_ImageType *typePtr;
+    ClientData clientData =
+	    Tk_GetImageMasterData(interp, imageName, &typePtr);
 
-    clientData = Tk_GetImageMasterData(interp, imageName, &typePtr);
     if ((typePtr == NULL) || (typePtr->name != tkPhotoImageType.name)) {
 	return NULL;
     }
-    return (Tk_PhotoHandle) clientData;
+    return clientData;
 }
 
 /*
@@ -4606,27 +2854,32 @@ Tk_PhotoPutBlock(
      * Check if display code needs alpha blending...
      */
 
-    if (!sourceIsSimplePhoto && (width == 1) && (height == 1)) {
+    if (!sourceIsSimplePhoto && (height == 1)) {
 	/*
-	 * Optimize the single pixel case if we can. This speeds up code that
-	 * builds up large simple-alpha images by single pixels.  We don't
-	 * negate COMPLEX_ALPHA in this case. [Bug 1409140]
+	 * Optimize the single span case if we can. This speeds up code that
+	 * builds up large simple-alpha images by scan-lines or individual
+	 * pixels. We don't negate COMPLEX_ALPHA in this case. [Bug 1409140]
+	 * [Patch 1539990]
 	 */
 
 	if (!(masterPtr->flags & COMPLEX_ALPHA)) {
-	    unsigned char newAlpha;
+	    register int x1;
 
-	    destLinePtr = masterPtr->pix32 + (y * masterPtr->width + x) * 4;
-	    newAlpha = destLinePtr[3];
+	    for (x1=x ; x1<x+width ; x1++) {
+		register unsigned char newAlpha;
 
-	    if (newAlpha && newAlpha != 255) {
-		masterPtr->flags |= COMPLEX_ALPHA;
+		destLinePtr = masterPtr->pix32 + (y*masterPtr->width + x1)*4;
+		newAlpha = destLinePtr[3];
+		if (newAlpha && newAlpha != 255) {
+		    masterPtr->flags |= COMPLEX_ALPHA;
+		    break;
+		}
 	    }
 	}
     } else if ((alphaOffset != 0) || (masterPtr->flags & COMPLEX_ALPHA)) {
 	/*
 	 * Check for partial transparency if alpha pixels are specified, or
-	 * rescan if we already knew such pixels existed.  To restrict this
+	 * rescan if we already knew such pixels existed. To restrict this
 	 * Toggle to only checking the changed pixels requires knowing where
 	 * the alpha pixels are.
 	 */
@@ -4735,7 +2988,7 @@ Tk_PhotoPutZoomedBlock(
     }
 
     if ((y < masterPtr->ditherY) || ((y == masterPtr->ditherY)
-	   && (x < masterPtr->ditherX))) {
+	    && (x < masterPtr->ditherX))) {
 	/*
 	 * The dithering isn't correct past the start of this block.
 	 */
@@ -4909,7 +3162,7 @@ Tk_PhotoPutZoomedBlock(
     if (!sourceIsSimplePhoto && (width == 1) && (height == 1)) {
 	/*
 	 * Optimize the single pixel case if we can. This speeds up code that
-	 * builds up large simple-alpha images by single pixels.  We don't
+	 * builds up large simple-alpha images by single pixels. We don't
 	 * negate COMPLEX_ALPHA in this case. [Bug 1409140]
 	 */
 	if (!(masterPtr->flags & COMPLEX_ALPHA)) {
@@ -4925,7 +3178,7 @@ Tk_PhotoPutZoomedBlock(
     } else if ((alphaOffset != 0) || (masterPtr->flags & COMPLEX_ALPHA)) {
 	/*
 	 * Check for partial transparency if alpha pixels are specified, or
-	 * rescan if we already knew such pixels existed.  To restrict this
+	 * rescan if we already knew such pixels existed. To restrict this
 	 * Toggle to only checking the changed pixels requires knowing where
 	 * the alpha pixels are.
 	 */
@@ -4983,7 +3236,7 @@ Tk_DitherPhoto(
 
     for (instancePtr = masterPtr->instancePtr; instancePtr != NULL;
 	    instancePtr = instancePtr->nextPtr) {
-	DitherInstance(instancePtr, x, y, width, height);
+	TkImgDitherInstance(instancePtr, x, y, width, height);
     }
 
     /*
@@ -5024,345 +3277,6 @@ Tk_DitherPhoto(
 	    }
 	}
     }
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * DitherInstance --
- *
- *	This function is called to update an area of an instance's pixmap by
- *	dithering the corresponding area of the master.
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	The instance's pixmap gets updated.
- *
- *----------------------------------------------------------------------
- */
-
-static void
-DitherInstance(
-    PhotoInstance *instancePtr,	/* The instance to be updated. */
-    int xStart, int yStart,	/* Coordinates of the top-left pixel in the
-				 * block to be dithered. */
-    int width, int height)	/* Dimensions of the block to be dithered. */
-{
-    PhotoMaster *masterPtr = instancePtr->masterPtr;
-    ColorTable *colorPtr = instancePtr->colorTablePtr;
-    XImage *imagePtr;
-    int nLines, bigEndian, i, c, x, y, xEnd, doDithering = 1;
-    int bitsPerPixel, bytesPerLine, lineLength;
-    unsigned char *srcLinePtr;
-    schar *errLinePtr;
-    pixel firstBit, word, mask;
-
-    /*
-     * Turn dithering off in certain cases where it is not needed (TrueColor,
-     * DirectColor with many colors).
-     */
-
-    if ((colorPtr->visualInfo.class == DirectColor)
-	    || (colorPtr->visualInfo.class == TrueColor)) {
-	int nRed, nGreen, nBlue, result;
-
-	result = sscanf(colorPtr->id.palette, "%d/%d/%d", &nRed,
-		&nGreen, &nBlue);
-	if ((nRed >= 256)
-		&& ((result == 1) || ((nGreen >= 256) && (nBlue >= 256)))) {
-	    doDithering = 0;
-	}
-    }
-
-    /*
-     * First work out how many lines to do at a time, then how many bytes
-     * we'll need for pixel storage, and allocate it.
-     */
-
-    nLines = (MAX_PIXELS + width - 1) / width;
-    if (nLines < 1) {
-	nLines = 1;
-    }
-    if (nLines > height ) {
-	nLines = height;
-    }
-
-    imagePtr = instancePtr->imagePtr;
-    if (imagePtr == NULL) {
-	return;			/* We must be really tight on memory. */
-    }
-    bitsPerPixel = imagePtr->bits_per_pixel;
-    bytesPerLine = ((bitsPerPixel * width + 31) >> 3) & ~3;
-    imagePtr->width = width;
-    imagePtr->height = nLines;
-    imagePtr->bytes_per_line = bytesPerLine;
-    imagePtr->data = (char *)
-	    ckalloc((unsigned) (imagePtr->bytes_per_line * nLines));
-    bigEndian = imagePtr->bitmap_bit_order == MSBFirst;
-    firstBit = bigEndian? (1 << (imagePtr->bitmap_unit - 1)): 1;
-
-    lineLength = masterPtr->width * 3;
-    srcLinePtr = masterPtr->pix32 + (yStart * masterPtr->width + xStart) * 4;
-    errLinePtr = instancePtr->error + yStart * lineLength + xStart * 3;
-    xEnd = xStart + width;
-
-    /*
-     * Loop over the image, doing at most nLines lines before updating the
-     * screen image.
-     */
-
-    for (; height > 0; height -= nLines) {
-	unsigned char *dstLinePtr = (unsigned char *) imagePtr->data;
-	int yEnd;
-
-	if (nLines > height) {
-	    nLines = height;
-	}
-	yEnd = yStart + nLines;
-	for (y = yStart; y < yEnd; ++y) {
-	    unsigned char *srcPtr = srcLinePtr;
-	    schar *errPtr = errLinePtr;
-	    unsigned char *destBytePtr = dstLinePtr;
-	    pixel *destLongPtr = (pixel *) dstLinePtr;
-
-	    if (colorPtr->flags & COLOR_WINDOW) {
-		/*
-		 * Color window. We dither the three components independently,
-		 * using Floyd-Steinberg dithering, which propagates errors
-		 * from the quantization of pixels to the pixels below and to
-		 * the right.
-		 */
-
-		for (x = xStart; x < xEnd; ++x) {
-		    int col[3];
-
-		    if (doDithering) {
-			for (i = 0; i < 3; ++i) {
-			    /*
-			     * Compute the error propagated into this pixel
-			     * for this component. If e[x,y] is the array of
-			     * quantization error values, we compute
-			     *     7/16 * e[x-1,y] + 1/16 * e[x-1,y-1]
-			     *   + 5/16 * e[x,y-1] + 3/16 * e[x+1,y-1]
-			     * and round it to an integer.
-			     *
-			     * The expression ((c + 2056) >> 4) - 128 computes
-			     * round(c / 16), and works correctly on machines
-			     * without a sign-extending right shift.
-			     */
-
-			    c = (x > 0) ? errPtr[-3] * 7: 0;
-			    if (y > 0) {
-				if (x > 0) {
-				    c += errPtr[-lineLength-3];
-				}
-				c += errPtr[-lineLength] * 5;
-				if ((x + 1) < masterPtr->width) {
-				    c += errPtr[-lineLength+3] * 3;
-				}
-			    }
-
-			    /*
-			     * Add the propagated error to the value of this
-			     * component, quantize it, and store the
-			     * quantization error.
-			     */
-
-			    c = ((c + 2056) >> 4) - 128 + *srcPtr++;
-			    if (c < 0) {
-				c = 0;
-			    } else if (c > 255) {
-				c = 255;
-			    }
-			    col[i] = colorPtr->colorQuant[i][c];
-			    *errPtr++ = c - col[i];
-			}
-		    } else {
-			/*
-			 * Output is virtually continuous in this case, so
-			 * don't bother dithering.
-			 */
-
-			col[0] = *srcPtr++;
-			col[1] = *srcPtr++;
-			col[2] = *srcPtr++;
-		    }
-		    srcPtr++;
-
-		    /*
-		     * Translate the quantized component values into an X
-		     * pixel value, and store it in the image.
-		     */
-
-		    i = colorPtr->redValues[col[0]]
-			    + colorPtr->greenValues[col[1]]
-			    + colorPtr->blueValues[col[2]];
-		    if (colorPtr->flags & MAP_COLORS) {
-			i = colorPtr->pixelMap[i];
-		    }
-		    switch (bitsPerPixel) {
-		    case NBBY:
-			*destBytePtr++ = i;
-			break;
-#ifndef __WIN32__
-			/*
-			 * This case is not valid for Windows because the
-			 * image format is different from the pixel format in
-			 * Win32. Eventually we need to fix the image code in
-			 * Tk to use the Windows native image ordering. This
-			 * would speed up the image code for all of the common
-			 * sizes.
-			 */
-
-		    case NBBY * sizeof(pixel):
-			*destLongPtr++ = i;
-			break;
-#endif
-		    default:
-			XPutPixel(imagePtr, x - xStart, y - yStart,
-				(unsigned) i);
-		    }
-		}
-
-	    } else if (bitsPerPixel > 1) {
-		/*
-		 * Multibit monochrome window. The operation here is similar
-		 * to the color window case above, except that there is only
-		 * one component. If the master image is in color, use the
-		 * luminance computed as
-		 *	0.344 * red + 0.5 * green + 0.156 * blue.
-		 */
-
-		for (x = xStart; x < xEnd; ++x) {
-		    c = (x > 0) ? errPtr[-1] * 7: 0;
-		    if (y > 0) {
-			if (x > 0)  {
-			    c += errPtr[-lineLength-1];
-			}
-			c += errPtr[-lineLength] * 5;
-			if (x + 1 < masterPtr->width) {
-			    c += errPtr[-lineLength+1] * 3;
-			}
-		    }
-		    c = ((c + 2056) >> 4) - 128;
-
-		    if ((masterPtr->flags & COLOR_IMAGE) == 0) {
-			c += srcPtr[0];
-		    } else {
-			c += (unsigned)(srcPtr[0] * 11 + srcPtr[1] * 16
-				+ srcPtr[2] * 5 + 16) >> 5;
-		    }
-		    srcPtr += 4;
-
-		    if (c < 0) {
-			c = 0;
-		    } else if (c > 255) {
-			c = 255;
-		    }
-		    i = colorPtr->colorQuant[0][c];
-		    *errPtr++ = c - i;
-		    i = colorPtr->redValues[i];
-		    switch (bitsPerPixel) {
-		    case NBBY:
-			*destBytePtr++ = i;
-			break;
-#ifndef __WIN32__
-			/*
-			 * This case is not valid for Windows because the
-			 * image format is different from the pixel format in
-			 * Win32. Eventually we need to fix the image code in
-			 * Tk to use the Windows native image ordering. This
-			 * would speed up the image code for all of the common
-			 * sizes.
-			 */
-
-		    case NBBY * sizeof(pixel):
-			*destLongPtr++ = i;
-			break;
-#endif
-		    default:
-			XPutPixel(imagePtr, x - xStart, y - yStart,
-				(unsigned) i);
-		    }
-		}
-	    } else {
-		/*
-		 * 1-bit monochrome window. This is similar to the multibit
-		 * monochrome case above, except that the quantization is
-		 * simpler (we only have black = 0 and white = 255), and we
-		 * produce an XY-Bitmap.
-		 */
-
-		word = 0;
-		mask = firstBit;
-		for (x = xStart; x < xEnd; ++x) {
-		    /*
-		     * If we have accumulated a whole word, store it in the
-		     * image and start a new word.
-		     */
-
-		    if (mask == 0) {
-			*destLongPtr++ = word;
-			mask = firstBit;
-			word = 0;
-		    }
-
-		    c = (x > 0) ? errPtr[-1] * 7: 0;
-		    if (y > 0) {
-			if (x > 0) {
-			    c += errPtr[-lineLength-1];
-			}
-			c += errPtr[-lineLength] * 5;
-			if (x + 1 < masterPtr->width) {
-			    c += errPtr[-lineLength+1] * 3;
-			}
-		    }
-		    c = ((c + 2056) >> 4) - 128;
-
-		    if ((masterPtr->flags & COLOR_IMAGE) == 0) {
-			c += srcPtr[0];
-		    } else {
-			c += (unsigned)(srcPtr[0] * 11 + srcPtr[1] * 16
-				+ srcPtr[2] * 5 + 16) >> 5;
-		    }
-		    srcPtr += 4;
-
-		    if (c < 0) {
-			c = 0;
-		    } else if (c > 255) {
-			c = 255;
-		    }
-		    if (c >= 128) {
-			word |= mask;
-			*errPtr++ = c - 255;
-		    } else {
-			*errPtr++ = c;
-		    }
-		    mask = bigEndian? (mask >> 1): (mask << 1);
-		}
-		*destLongPtr = word;
-	    }
-	    srcLinePtr += masterPtr->width * 4;
-	    errLinePtr += lineLength;
-	    dstLinePtr += bytesPerLine;
-	}
-
-	/*
-	 * Update the pixmap for this instance with the block of pixels that
-	 * we have just computed.
-	 */
-
-	TkPutImage(colorPtr->pixelMap, colorPtr->numColors,
-		instancePtr->display, instancePtr->pixels,
-		instancePtr->gc, imagePtr, 0, 0, xStart, yStart,
-		(unsigned) width, (unsigned) nLines);
-	yStart = yEnd;
-    }
-
-    ckfree(imagePtr->data);
-    imagePtr->data = NULL;
 }
 
 /*
@@ -5410,11 +3324,7 @@ Tk_PhotoBlank(
 	    (size_t) (masterPtr->width * masterPtr->height * 4));
     for (instancePtr = masterPtr->instancePtr; instancePtr != NULL;
 	    instancePtr = instancePtr->nextPtr) {
-	if (instancePtr->error) {
-	    memset(instancePtr->error, 0,
-		    (size_t) (masterPtr->width * masterPtr->height
-		    * 3 * sizeof(schar)));
-	}
+	TkImgResetDither(instancePtr);
     }
 
     /*
@@ -5657,8 +3567,11 @@ ImgGetPhoto(
 	if ((greenOffset||blueOffset) && !(optPtr->options & OPT_GRAYSCALE)) {
 	    newPixelSize += 2;
 	}
-	data = ckalloc((unsigned int) (newPixelSize *
+	data = attemptckalloc((unsigned int) (newPixelSize *
 		blockPtr->width * blockPtr->height));
+	if (data == NULL) {
+	    return NULL;
+	}
 	srcPtr = blockPtr->pixelPtr + blockPtr->offset[0];
 	destPtr = (unsigned char *) data;
 	if (!greenOffset && !blueOffset) {
@@ -5674,8 +3587,8 @@ ImgGetPhoto(
 	} else if (optPtr->options & OPT_GRAYSCALE) {
 	    for (y = blockPtr->height; y > 0; y--) {
 		for (x = blockPtr->width; x > 0; x--) {
-		    *destPtr = (unsigned char)
-			    (srcPtr[0]*11+srcPtr[1]*16+srcPtr[2]*5 + 16) >> 5;
+		    *destPtr = (unsigned char) ((srcPtr[0]*11 + srcPtr[1]*16
+			    + srcPtr[2]*5 + 16) >> 5);
 		    srcPtr += blockPtr->pixelSize;
 		    destPtr += newPixelSize;
 		}
@@ -5788,9 +3701,6 @@ ImgStringWrite(
     Tcl_Obj *formatString,
     Tk_PhotoImageBlock *blockPtr)
 {
-    int row, col;
-    char *line, *linePtr;
-    unsigned char *pixelPtr;
     int greenOffset, blueOffset;
     Tcl_DString data;
 
@@ -5799,11 +3709,14 @@ ImgStringWrite(
 
     Tcl_DStringInit(&data);
     if ((blockPtr->width > 0) && (blockPtr->height > 0)) {
-	line = (char *) ckalloc((unsigned int) ((8 * blockPtr->width) + 2));
+	char *line = ckalloc((unsigned) ((8 * blockPtr->width) + 2));
+	int row, col;
+
 	for (row=0; row<blockPtr->height; row++) {
-	    pixelPtr = blockPtr->pixelPtr + blockPtr->offset[0] +
-		    row * blockPtr->pitch;
-	    linePtr = line;
+	    unsigned char *pixelPtr = blockPtr->pixelPtr + blockPtr->offset[0]
+		    + row * blockPtr->pitch;
+	    char *linePtr = line;
+
 	    for (col=0; col<blockPtr->width; col++) {
 		sprintf(linePtr, " #%02x%02x%02x", *pixelPtr,
 			pixelPtr[greenOffset], pixelPtr[blueOffset]);
@@ -5812,7 +3725,7 @@ ImgStringWrite(
 	    }
 	    Tcl_DStringAppendElement(&data, line+1);
 	}
-	ckfree (line);
+	ckfree(line);
     }
     Tcl_DStringResult(interp, &data);
     return TCL_OK;
@@ -5889,11 +3802,10 @@ PhotoOptionFind(
     Tcl_Obj *obj)		/* Name of option to be found. */
 {
     int length;
-    char *name = Tcl_GetStringFromObj(obj, &length);
+    const char *name = Tcl_GetStringFromObj(obj, &length);
     char *prevname = NULL;
     Tcl_ObjCmdProc *proc = NULL;
-    OptionAssocData *list = (OptionAssocData *) Tcl_GetAssocData(interp,
-	    "photoOption", NULL);
+    OptionAssocData *list = Tcl_GetAssocData(interp, "photoOption", NULL);
 
     while (list != NULL) {
 	if (strncmp(name, list->name, (unsigned) length) == 0) {
@@ -5943,12 +3855,12 @@ PhotoOptionCleanupProc(
 				 * interpreter. */
     Tcl_Interp *interp)		/* Interpreter that is being deleted. */
 {
-    OptionAssocData *list = (OptionAssocData *) clientData;
+    OptionAssocData *list = clientData;
 
     while (list != NULL) {
-	register OptionAssocData *ptr;
+	register OptionAssocData *ptr = list;
 
-	list = (ptr = list)->nextPtr;
+	list = list->nextPtr;
 	ckfree((char *) ptr);
     }
 }
@@ -5973,12 +3885,11 @@ PhotoOptionCleanupProc(
 MODULE_SCOPE void
 Tk_CreatePhotoOption(
     Tcl_Interp *interp,		/* Interpreter. */
-    CONST char *name,		/* Option name. */
+    const char *name,		/* Option name. */
     Tcl_ObjCmdProc *proc)	/* Function to execute command. */
 {
     OptionAssocData *typePtr2, *prevPtr, *ptr;
-    OptionAssocData *list = (OptionAssocData *)
-	    Tcl_GetAssocData(interp, "photoOption", NULL);
+    OptionAssocData *list = Tcl_GetAssocData(interp, "photoOption", NULL);
 
     /*
      * If there's already a photo option with the given name, remove it.
@@ -6000,8 +3911,7 @@ Tk_CreatePhotoOption(
     strcpy(&(ptr->name[0]), name);
     ptr->command = proc;
     ptr->nextPtr = list;
-    Tcl_SetAssocData(interp, "photoOption", PhotoOptionCleanupProc,
-	    (ClientData) ptr);
+    Tcl_SetAssocData(interp, "photoOption", PhotoOptionCleanupProc, ptr);
 }
 
 /*
@@ -6033,7 +3943,7 @@ ImgPhotoPostscript(
 {
     Tk_PhotoImageBlock block;
 
-    Tk_PhotoGetImage((Tk_PhotoHandle) clientData, &block);
+    Tk_PhotoGetImage(clientData, &block);
     block.pixelPtr += y * block.pitch + x * block.pixelSize;
 
     return Tk_PostscriptPhoto(interp, &block, psInfo, width, height);

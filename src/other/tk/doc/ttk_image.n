@@ -7,14 +7,15 @@
 '\" RCS: @(#) $Id$
 '\" 
 .so man.macros
-.TH ttk::image n 8.5 Tk "Tk Themed Widget"
+.TH ttk_image n 8.5 Tk "Tk Themed Widget"
 .BS
 .SH NAME
-ttk::image \- Define an element based on an image
+ttk_image \- Define an element based on an image
 .SH SYNOPSIS
 \fBttk::style element create \fIname\fR \fBimage\fR \fIimageSpec\fR ?\fIoptions\fR?
 .BE
 .SH DESCRIPTION
+.PP
 The \fIimage\fR element factory creates a new element
 in the current theme whose visual appearance is determined
 by Tk images. 
@@ -24,6 +25,7 @@ The rest of the list is a sequence of \fIstatespec / value\fR
 pairs specifying other images to use when the element is
 in a particular state or combination of states.
 .SH OPTIONS
+.PP
 Valid \fIoptions\fR are:
 .TP
 \fB\-border\fR \fIpadding\fR
@@ -52,6 +54,7 @@ or
 Specifies a minimum width for the element.
 If less than zero, the base image's width is used as a default.
 .SH "IMAGE STRETCHING"
+.PP
 If the element's allocated parcel is larger than the image, 
 the image will be placed in the parcel based on the \fB\-sticky\fR option.
 If the image needs to stretch horizontally (i.e., \fB\-sticky ew\fR)
@@ -63,6 +66,7 @@ four fixed corners, top and left edges (which may be tiled horizontally),
 left and right edges (which may be tiled vertically),
 and the central area (which may be tiled in both directions).
 .SH "EXAMPLE"
+.PP
 .CS
 set img1 [image create photo \-file button.png]
 set img2 [image create photo \-file button-pressed.png]
@@ -72,6 +76,9 @@ style element create Button.button image \e
     \-border {2 4} \-sticky we
 .CE
 .SH "SEE ALSO"
-image(n), photo(n)
+ttk::intro(n), ttk::style(n), ttk_vsapi(n), image(n), photo(n)
 .SH KEYWORDS
-pixmap theme, image
+style, theme, appearance, pixmap theme, image
+'\" Local Variables:
+'\" mode: nroff
+'\" End:

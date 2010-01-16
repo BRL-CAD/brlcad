@@ -20,7 +20,6 @@ focus \- Manage the input focus
 \fBfocus \fIoption\fR ?\fIarg arg ...\fR?
 .fi
 .BE
-
 .SH DESCRIPTION
 .PP
 The \fBfocus\fR command is used to manage the Tk input focus.
@@ -108,6 +107,7 @@ number of problems that would occur if the X focus were actually moved;
 the fact that the X focus is on the top-level is invisible unless
 you use C code to query the X server directly.
 .SH "EXAMPLE"
+.PP
 To make a window that only participates in the focus traversal ring
 when a variable is set, add the following bindings to the widgets
 \fIbefore\fR and \fIafter\fR it in that focus ring:
@@ -132,6 +132,8 @@ bind .after <Shift\-Tab> {
 }
 \fBfocus\fR .before
 .CE
-
 .SH KEYWORDS
 events, focus, keyboard, top-level, window manager
+'\" Local Variables:
+'\" mode: nroff
+'\" End:

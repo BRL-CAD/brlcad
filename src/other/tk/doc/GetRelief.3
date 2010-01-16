@@ -30,13 +30,14 @@ const char *
 Interpreter to use for error reporting.
 .AP Tcl_Obj *objPtr in/out
 String value contains name of relief, one of
-.QW flat ,
-.QW groove ,
-.QW raised ,
-.QW ridge ,
-.QW solid ,
+.QW \fBflat\fR ,
+.QW \fBgroove\fR ,
+.QW \fBraised\fR ,
+.QW \fBridge\fR ,
+.QW \fBsolid\fR ,
 or
-.QW sunken ;
+.QW \fBsunken\fR
+(or any unique abbreviation thereof on input);
 the internal rep will be modified to cache corresponding relief value.
 .AP char *string in
 Same as \fIobjPtr\fR except description of relief is passed as

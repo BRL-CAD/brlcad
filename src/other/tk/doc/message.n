@@ -144,3 +144,6 @@ The most common result is that the line is justified wrong.
 label(n)
 .SH KEYWORDS
 message, widget
+'\" Local Variables:
+'\" mode: nroff
+'\" End:

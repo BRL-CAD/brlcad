@@ -20,15 +20,10 @@
  * including the rest of the stub functions.
  */
 
-#ifndef USE_TCL_STUBS
+#undef USE_TCL_STUBS
 #define USE_TCL_STUBS
-#endif
-#undef USE_TCL_STUB_PROCS
 
-#ifndef USE_TK_STUBS
 #define USE_TK_STUBS
-#endif
-#undef USE_TK_STUB_PROCS
 
 #include "tkInt.h"
 
@@ -48,17 +43,25 @@
 #include "tkPlatDecls.h"
 #include "tkIntXlibDecls.h"
 
-TkStubs *tkStubsPtr = NULL;
-TkPlatStubs *tkPlatStubsPtr = NULL;
-TkIntStubs *tkIntStubsPtr = NULL;
-TkIntPlatStubs *tkIntPlatStubsPtr = NULL;
-TkIntXlibStubs *tkIntXlibStubsPtr = NULL;
+MODULE_SCOPE const TkStubs *tkStubsPtr;
+MODULE_SCOPE const TkPlatStubs *tkPlatStubsPtr;
+MODULE_SCOPE const TkIntStubs *tkIntStubsPtr;
+MODULE_SCOPE const TkIntPlatStubs *tkIntPlatStubsPtr;
+MODULE_SCOPE const TkIntXlibStubs *tkIntXlibStubsPtr;
+
+const TkStubs *tkStubsPtr = NULL;
+const TkPlatStubs *tkPlatStubsPtr = NULL;
+const TkIntStubs *tkIntStubsPtr = NULL;
+const TkIntPlatStubs *tkIntPlatStubsPtr = NULL;
+const TkIntXlibStubs *tkIntXlibStubsPtr = NULL;
 
 /*
  * Use our own isdigit to avoid linking to libc on windows
  */
 
-static int isDigit(const int c)
+static int
+isDigit(
+    const int c)
 {
     return (c >= '0' && c <= '9');
 }
@@ -81,18 +84,14 @@ static int isDigit(const int c)
  *----------------------------------------------------------------------
  */
 
-#ifdef Tk_InitStubs
-#undef Tk_InitStubs
-#endif
-
-CONST char *
+MODULE_SCOPE const char *
 Tk_InitStubs(
     Tcl_Interp *interp,
-    CONST char *version,
+    const char *version,
     int exact)
 {
-    CONST char *actualVersion;
-    TkStubs **stubsPtrPtr = &tkStubsPtr;	/* squelch warning */
+    const char *actualVersion;
+    const TkStubs **stubsPtrPtr = &tkStubsPtr;	/* squelch warning */
 
     actualVersion = Tcl_PkgRequireEx(interp, "Tk", version, 0,
 	    (ClientData *) stubsPtrPtr);
@@ -100,14 +99,14 @@ Tk_InitStubs(
 	return NULL;
     }
     if (exact) {
-        CONST char *p = version;
+        const char *p = version;
         int count = 0;
 
         while (*p) {
             count += !isDigit(*p++);
         }
         if (count == 1) {
-	    CONST char *q = actualVersion;
+	    const char *q = actualVersion;
 
 	    p = version;
 	    while (*p && (*p == *q)) {
@@ -117,7 +116,6 @@ Tk_InitStubs(
 		/* Construct error message */
 		Tcl_PkgRequireEx(interp, "Tk", version, 1, NULL);
                 return NULL;
-
             }
         } else {
             actualVersion = Tcl_PkgRequireEx(interp, "Tk", version, 1, NULL);

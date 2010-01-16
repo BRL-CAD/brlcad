@@ -19,21 +19,6 @@
 
 #define __UNIX__ 1
 
-/*
- * Macro to use instead of "void" for arguments that must have
- * type "void *" in ANSI C;  maps them to type "char *" in
- * non-ANSI systems.  This macro may be used in some of the include
- * files below, which is why it is defined here.
- */
-
-#ifndef VOID
-#   ifdef __STDC__
-#       define VOID void
-#   else
-#       define VOID char
-#   endif
-#endif
-
 #include <stdio.h>
 #include <ctype.h>
 #include <fcntl.h>
@@ -203,16 +188,5 @@
 
 #define TkpPrintWindowId(buf,w) \
 	sprintf((buf), "%#08lx", (unsigned long) (w))
-
-/*
- * The following declaration is used to get access to a private Tcl interface
- * that is needed for portability reasons.
- *
- * Disabled for now to determined whether we really still need this.
-
-#ifndef _TCLINT
-#include <tclInt.h>
-#endif
- */
 
 #endif /* _UNIXPORT */

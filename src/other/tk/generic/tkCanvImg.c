@@ -46,13 +46,11 @@ typedef struct ImageItem  {
  * Information used for parsing configuration specs:
  */
 
-static Tk_CustomOption stateOption = {
-    (Tk_OptionParseProc *) TkStateParseProc,
-    TkStatePrintProc, (ClientData) 2
+static const Tk_CustomOption stateOption = {
+    TkStateParseProc, TkStatePrintProc, (ClientData) 2
 };
-static Tk_CustomOption tagsOption = {
-    (Tk_OptionParseProc *) Tk_CanvasTagsParseProc,
-    Tk_CanvasTagsPrintProc, (ClientData) NULL
+static const Tk_CustomOption tagsOption = {
+    Tk_CanvasTagsParseProc, Tk_CanvasTagsPrintProc, (ClientData) NULL
 };
 
 static Tk_ConfigSpec configSpecs[] = {
@@ -80,7 +78,7 @@ static void		ImageChangedProc(ClientData clientData,
 			    int imgHeight);
 static int		ImageCoords(Tcl_Interp *interp,
 			    Tk_Canvas canvas, Tk_Item *itemPtr, int argc,
-			    Tcl_Obj *CONST argv[]);
+			    Tcl_Obj *const argv[]);
 static int		ImageToArea(Tk_Canvas canvas,
 			    Tk_Item *itemPtr, double *rectPtr);
 static double		ImageToPoint(Tk_Canvas canvas,
@@ -90,10 +88,10 @@ static int		ImageToPostscript(Tcl_Interp *interp,
 static void		ComputeImageBbox(Tk_Canvas canvas, ImageItem *imgPtr);
 static int		ConfigureImage(Tcl_Interp *interp,
 			    Tk_Canvas canvas, Tk_Item *itemPtr, int argc,
-			    Tcl_Obj *CONST argv[], int flags);
+			    Tcl_Obj *const argv[], int flags);
 static int		CreateImage(Tcl_Interp *interp,
 			    Tk_Canvas canvas, struct Tk_Item *itemPtr,
-			    int argc, Tcl_Obj *CONST argv[]);
+			    int argc, Tcl_Obj *const argv[]);
 static void		DeleteImage(Tk_Canvas canvas,
 			    Tk_Item *itemPtr, Display *display);
 static void		DisplayImage(Tk_Canvas canvas,
@@ -159,7 +157,7 @@ CreateImage(
     Tk_Item *itemPtr,		/* Record to hold new item; header has been
 				 * initialized by caller. */
     int objc,			/* Number of arguments in objv. */
-    Tcl_Obj *CONST objv[])	/* Arguments describing rectangle. */
+    Tcl_Obj *const objv[])	/* Arguments describing rectangle. */
 {
     ImageItem *imgPtr = (ImageItem *) itemPtr;
     int i;
@@ -189,7 +187,7 @@ CreateImage(
     if (objc == 1) {
 	i = 1;
     } else {
-	char *arg = Tcl_GetString(objv[1]);
+	const char *arg = Tcl_GetString(objv[1]);
 	i = 2;
 	if ((arg[0] == '-') && (arg[1] >= 'a') && (arg[1] <= 'z')) {
 	    i = 1;
@@ -231,7 +229,7 @@ ImageCoords(
     Tk_Item *itemPtr,		/* Item whose coordinates are to be read or
 				 * modified. */
     int objc,			/* Number of coordinates supplied in objv. */
-    Tcl_Obj *CONST objv[])	/* Array of coordinates: x1, y1, x2, y2, ... */
+    Tcl_Obj *const objv[])	/* Array of coordinates: x1, y1, x2, y2, ... */
 {
     ImageItem *imgPtr = (ImageItem *) itemPtr;
 
@@ -296,7 +294,7 @@ ConfigureImage(
     Tk_Canvas canvas,		/* Canvas containing itemPtr. */
     Tk_Item *itemPtr,		/* Image item to reconfigure. */
     int objc,			/* Number of elements in objv.  */
-    Tcl_Obj *CONST objv[],	/* Arguments describing things to configure. */
+    Tcl_Obj *const objv[],	/* Arguments describing things to configure. */
     int flags)			/* Flags to pass to Tk_ConfigureWidget. */
 {
     ImageItem *imgPtr = (ImageItem *) itemPtr;
@@ -305,7 +303,7 @@ ConfigureImage(
 
     tkwin = Tk_CanvasTkwin(canvas);
     if (TCL_OK != Tk_ConfigureWidget(interp, tkwin, configSpecs, objc,
-	    (CONST char **) objv, (char *) imgPtr, flags|TK_CONFIG_OBJS)) {
+	    (const char **) objv, (char *) imgPtr, flags|TK_CONFIG_OBJS)) {
 	return TCL_ERROR;
     }
 
@@ -323,7 +321,7 @@ ConfigureImage(
     }
     if (imgPtr->imageString != NULL) {
 	image = Tk_GetImage(interp, tkwin, imgPtr->imageString,
-		ImageChangedProc, (ClientData) imgPtr);
+		ImageChangedProc, imgPtr);
 	if (image == NULL) {
 	    return TCL_ERROR;
 	}
@@ -336,7 +334,7 @@ ConfigureImage(
     imgPtr->image = image;
     if (imgPtr->activeImageString != NULL) {
 	image = Tk_GetImage(interp, tkwin, imgPtr->activeImageString,
-		ImageChangedProc, (ClientData) imgPtr);
+		ImageChangedProc, imgPtr);
 	if (image == NULL) {
 	    return TCL_ERROR;
 	}
@@ -349,7 +347,7 @@ ConfigureImage(
     imgPtr->activeImage = image;
     if (imgPtr->disabledImageString != NULL) {
 	image = Tk_GetImage(interp, tkwin, imgPtr->disabledImageString,
-		ImageChangedProc, (ClientData) imgPtr);
+		ImageChangedProc, imgPtr);
 	if (image == NULL) {
 	    return TCL_ERROR;
 	}
@@ -439,10 +437,10 @@ ComputeImageBbox(
     Tk_State state = imgPtr->header.state;
 
     if(state == TK_STATE_NULL) {
-	state = ((TkCanvas *)canvas)->canvas_state;
+	state = Canvas(canvas)->canvas_state;
     }
     image = imgPtr->image;
-    if (((TkCanvas *)canvas)->currentItemPtr == (Tk_Item *)imgPtr) {
+    if (Canvas(canvas)->currentItemPtr == (Tk_Item *)imgPtr) {
 	if (imgPtr->activeImage != NULL) {
 	    image = imgPtr->activeImage;
 	}
@@ -542,11 +540,11 @@ DisplayImage(
     Tk_State state = itemPtr->state;
 
     if (state == TK_STATE_NULL) {
-	state = ((TkCanvas *)canvas)->canvas_state;
+	state = Canvas(canvas)->canvas_state;
     }
 
     image = imgPtr->image;
-    if (((TkCanvas *)canvas)->currentItemPtr == itemPtr) {
+    if (Canvas(canvas)->currentItemPtr == itemPtr) {
 	if (imgPtr->activeImage != NULL) {
 	    image = imgPtr->activeImage;
 	}
@@ -699,7 +697,7 @@ ImageToPostscript(
 				 * information; 0 means final Postscript is
 				 * being created.*/
 {
-    ImageItem *imgPtr = (ImageItem *)itemPtr;
+    ImageItem *imgPtr = (ImageItem *) itemPtr;
     Tk_Window canvasWin = Tk_CanvasTkwin(canvas);
 
     char buffer[256];
@@ -709,11 +707,11 @@ ImageToPostscript(
     Tk_State state = itemPtr->state;
 
     if(state == TK_STATE_NULL) {
-	state = ((TkCanvas *)canvas)->canvas_state;
+	state = Canvas(canvas)->canvas_state;
     }
 
     image = imgPtr->image;
-    if (((TkCanvas *)canvas)->currentItemPtr == itemPtr) {
+    if (Canvas(canvas)->currentItemPtr == itemPtr) {
 	if (imgPtr->activeImage != NULL) {
 	    image = imgPtr->activeImage;
 	}
@@ -853,7 +851,7 @@ ImageChangedProc(
 				 * 0). */
     int imgWidth, int imgHeight)/* New dimensions of image. */
 {
-    ImageItem *imgPtr = (ImageItem *) clientData;
+    ImageItem *imgPtr = clientData;
 
     /*
      * If the image's size changed and it's not anchored at its northwest

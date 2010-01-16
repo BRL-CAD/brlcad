@@ -7,38 +7,56 @@
 #
 # RCS: @(#) $Id$
 
-package require tcltest 2.1
+package require tcltest 2.2
 eval tcltest::configure $argv
 tcltest::loadTestedCommands
+namespace import -force tcltest::test
 
 update
 
-test cmds-1.1 {tkwait visibility, argument errors} {
-    list [catch {tkwait visibility} msg] $msg
-} {1 {wrong # args: should be "tkwait variable|visibility|window name"}}
-test cmds-1.2 {tkwait visibility, argument errors} {
-    list [catch {tkwait visibility foo bar} msg] $msg
-} {1 {wrong # args: should be "tkwait variable|visibility|window name"}}
-test cmds-1.3 {tkwait visibility, argument errors} {
-    list [catch {tkwait visibility bad_window} msg] $msg
-} {1 {bad window path name "bad_window"}}
-test cmds-1.4 {tkwait visibility, waiting for window to be mapped} {
+test cmds-1.1 {tkwait visibility, argument errors} -body {
+    tkwait visibility
+} -returnCodes {error} -result {wrong # args: should be "tkwait variable|visibility|window name"}
+test cmds-1.2 {tkwait visibility, argument errors} -body {
+    tkwait visibility foo bar
+} -returnCodes {error} -result {wrong # args: should be "tkwait variable|visibility|window name"}
+test cmds-1.3 {tkwait visibility, argument errors} -body {
+    tkwait visibility bad_window
+} -returnCodes {error} -result {bad window path name "bad_window"}
+test cmds-1.4 {tkwait visibility, waiting for window to be mapped} -setup {
     button .b -text "Test"
     set x init
+} -body {
     after 100 {set x delay; place .b -x 0 -y 0}
     tkwait visibility .b
+    return $x
+} -cleanup {
     destroy .b
-    set x
-} {delay}
-test cmds-1.5 {tkwait visibility, window gets deleted} {
+} -result {delay}
+test cmds-1.5 {tkwait visibility, window gets deleted} -setup {
     frame .f
     button .f.b -text "Test"
     pack .f.b
     set x init
+} -body {
     after 100 {set x deleted; destroy .f}
-    list [catch {tkwait visibility .f.b} msg] $msg $x
-} {1 {window ".f.b" was deleted before its visibility changed} deleted}
+    tkwait visibility .f.b
+} -returnCodes {error} -result {window ".f.b" was deleted before its visibility changed} 
+test cmds-1.6 {tkwait visibility, window gets deleted} -setup {
+    frame .f
+    button .f.b -text "Test"
+    pack .f.b
+    set x init
+} -body {
+    after 100 {set x deleted; destroy .f}
+    catch {tkwait visibility .f.b}
+    return $x
+} -cleanup {
+    destroy .f
+} -result {deleted}
+
 
 # cleanup
 cleanupTests
 return
+

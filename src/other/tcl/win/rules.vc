@@ -216,6 +216,7 @@ TCL_THREADS	= 0
 DEBUG		= 0
 SYMBOLS		= 0
 PROFILE		= 0
+PGO		= 0
 MSVCRT		= 0
 LOIMPACT	= 0
 TCL_USE_STATIC_PACKAGES	= 0
@@ -243,6 +244,7 @@ TCL_USE_STATIC_PACKAGES	= 0
 !if [nmakehlp -f $(OPTS) "threads"]
 !message *** Doing threads
 TCL_THREADS	= 1
+USE_THREAD_ALLOC= 1
 !else
 TCL_THREADS	= 0
 !endif
@@ -264,6 +266,15 @@ PROFILE		= 1
 !else
 PROFILE		= 0
 !endif
+!if [nmakehlp -f $(OPTS) "pgi"]
+!message *** Doing profile guided optimization instrumentation
+PGO		= 1
+!elseif [nmakehlp -f $(OPTS) "pgo"]
+!message *** Doing profile guided optimization
+PGO		= 2
+!else
+PGO		= 0
+!endif
 !if [nmakehlp -f $(OPTS) "loimpact"]
 !message *** Doing loimpact
 LOIMPACT	= 1
@@ -273,7 +284,9 @@ LOIMPACT	= 0
 !if [nmakehlp -f $(OPTS) "thrdalloc"]
 !message *** Doing thrdalloc
 USE_THREAD_ALLOC = 1
-!else
+!endif
+!if [nmakehlp -f $(OPTS) "tclalloc"]
+!message *** Doing thrdalloc
 USE_THREAD_ALLOC = 0
 !endif
 !if [nmakehlp -f $(OPTS) "unchecked"]
@@ -413,6 +426,24 @@ WARNINGS		    = -W3
 !if [nmakehlp -f $(CHECKS) "64bit"] && [nmakehlp -c -Wp64]
 !message *** Doing 64bit portability warnings
 WARNINGS		    = $(WARNINGS) -Wp64
+!endif
+!endif
+
+!if $(PGO) > 1
+!if [nmakehlp -l -ltcg:pgoptimize]
+LINKERFLAGS	= $(LINKERFLAGS:-ltcg=) -ltcg:pgoptimize
+!else
+MSG=^
+This compiler does not support profile guided optimization.
+!error $(MSG)
+!endif
+!elseif $(PGO) > 0
+!if [nmakehlp -l -ltcg:pginstrument]
+LINKERFLAGS	= $(LINKERFLAGS:-ltcg=) -ltcg:pginstrument
+!else
+MSG=^
+This compiler does not support profile guided optimization.
+!error $(MSG)
 !endif
 !endif
 
@@ -672,4 +703,3 @@ TK_INCLUDES     = -I"$(_TKDIR)\generic" -I"$(_TKDIR)\win" -I"$(_TKDIR)\xlib"
 !message *** Link options '$(LINKERFLAGS)'
 
 !endif
-

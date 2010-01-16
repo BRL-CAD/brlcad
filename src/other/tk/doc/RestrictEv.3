@@ -28,7 +28,6 @@ Arbitrary argument to pass to \fIproc\fR.
 .AP ClientData *prevClientDataPtr out
 Pointer to place to save argument to previous restrict procedure.
 .BE
-
 .SH DESCRIPTION
 .PP
 This procedure is useful in certain situations where applications
@@ -42,9 +41,9 @@ later time (e.g. when the event restriction is lifted), or discarded.
 is a procedure with arguments and result that match
 the type \fBTk_RestrictProc\fR:
 .CS
-typedef Tk_RestrictAction Tk_RestrictProc(
-    ClientData \fIclientData\fR,
-    XEvent *\fIeventPtr\fR);
+typedef Tk_RestrictAction \fBTk_RestrictProc\fR(
+        ClientData \fIclientData\fR,
+        XEvent *\fIeventPtr\fR);
 .CE
 The \fIclientData\fR argument is a copy of the \fIclientData\fR passed
 to \fBTk_RestrictEvents\fR; it may be used to provide \fIproc\fR with

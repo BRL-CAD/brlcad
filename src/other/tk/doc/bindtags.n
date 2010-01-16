@@ -16,7 +16,6 @@ bindtags \- Determine which bindings apply to a window, and order of evaluation
 .SH SYNOPSIS
 \fBbindtags \fIwindow \fR?\fItagList\fR?
 .BE
-
 .SH DESCRIPTION
 .PP
 When a binding is created with the \fBbind\fR command, it is
@@ -75,6 +74,7 @@ associated with the \fBButton\fR tag, will no longer apply to \fB.b\fR,
 but any bindings associated with \fBTrickyButton\fR (perhaps some
 new button behavior) will apply.
 .SH EXAMPLE
+.PP
 If you have a set of nested \fBframe\fR widgets and you want events
 sent to a \fBbutton\fR widget to also be delivered to all the widgets
 up to the current \fBtoplevel\fR (in contrast to Tk's default
@@ -95,9 +95,10 @@ proc setupBindtagsForTreeDelivery {widget} {
     \fBbindtags\fR $widget $tags
 }
 .CE
-
 .SH "SEE ALSO"
 bind(n)
-
 .SH KEYWORDS
 binding, event, tag
+'\" Local Variables:
+'\" mode: nroff
+'\" End:

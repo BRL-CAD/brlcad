@@ -434,7 +434,7 @@ proc genStubs::makeDecl {name decl index} {
 			[lindex $arg 2]
 		if {[string length $line] + [string length $next] \
 			+ $pad > 76} {
-		    append text $line \n
+		    append text [string trimright $line] \n
 		    set line "\t\t\t\t"
 		    set pad 28
 		}
@@ -452,7 +452,7 @@ proc genStubs::makeDecl {name decl index} {
 			[lindex $arg 2]
 		if {[string length $line] + [string length $next] \
 			+ $pad > 76} {
-		    append text $line \n
+		    append text [string trimright $line] \n
 		    set line "\t\t\t\t"
 		    set pad 28
 		}
@@ -876,7 +876,7 @@ proc genStubs::init {} {
 if {[string length [namespace which lassign]] == 0} {
 proc lassign {valueList args} {
   if {[llength $args] == 0} {
-      error "wrong # args: lassign list varname ?varname..?"
+      error "wrong # args: should be \"lassign list ?varName ...?\""
   }
 
   uplevel [list foreach $args $valueList {break}]

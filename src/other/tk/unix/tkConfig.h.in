@@ -4,11 +4,8 @@
     #ifndef _TKCONFIG
     #define _TKCONFIG
 
-/* Is pthread_attr_get_np() declared in <pthread.h>? */
-#undef ATTRGETNP_NOT_DECLARED
-
-/* Is pthread_getattr_np declared in <pthread.h>? */
-#undef GETATTRNP_NOT_DECLARED
+/* Define to 1 if you have the <AvailabilityMacros.h> header file. */
+#undef HAVE_AVAILABILITYMACROS_H
 
 /* Do we have access to Darwin CoreFoundation.framework? */
 #undef HAVE_COREFOUNDATION
@@ -34,17 +31,8 @@
 /* Define to 1 if you have the `open64' function. */
 #undef HAVE_OPEN64
 
-/* Do we want a BSD-like thread-attribute interface? */
-#undef HAVE_PTHREAD_ATTR_GET_NP
-
 /* Define to 1 if you have the `pthread_attr_setstacksize' function. */
 #undef HAVE_PTHREAD_ATTR_SETSTACKSIZE
-
-/* Do we want a Linux-like thread-attribute interface? */
-#undef HAVE_PTHREAD_GETATTR_NP
-
-/* Define to 1 if you have the `pthread_get_stacksize_np' function. */
-#undef HAVE_PTHREAD_GET_STACKSIZE_NP
 
 /* Does struct password have a pw_gecos field? */
 #undef HAVE_PW_GECOS
@@ -87,6 +75,9 @@
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
+
+/* Is weak import available? */
+#undef HAVE_WEAK_IMPORT
 
 /* Have we turned on XFT (antialiased fonts)? */
 #undef HAVE_XFT
@@ -185,6 +176,9 @@
    first (like Motorola and SPARC, unlike Intel and VAX). */
 #undef WORDS_BIGENDIAN
 
+/* Are Darwin SUSv3 extensions available? */
+#undef _DARWIN_C_SOURCE
+
 /* Add the _ISOC99_SOURCE flag when building */
 #undef _ISOC99_SOURCE
 
@@ -219,6 +213,12 @@
 
 /* Define to `int' if <sys/types.h> doesn't define. */
 #undef gid_t
+
+/* Define to `__inline__' or `__inline' if that's what the C compiler
+   calls it, or to nothing if 'inline' is not supported under any name.  */
+#ifndef __cplusplus
+#undef inline
+#endif
 
 /* Signed integer type wide enough to hold a pointer. */
 #undef intptr_t

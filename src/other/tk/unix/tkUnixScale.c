@@ -557,7 +557,7 @@ TkpDisplayScale(
 		(char *) NULL);
 	if (result != TCL_OK) {
 	    Tcl_AddErrorInfo(interp, "\n    (command executed by scale)");
-	    Tcl_BackgroundError(interp);
+	    Tcl_BackgroundException(interp, result);
 	}
 	Tcl_Release((ClientData) interp);
     }

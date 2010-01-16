@@ -196,6 +196,9 @@ if {[tk windowingsystem] eq "aqua"} {
     bind Listbox <MouseWheel> {
         %W yview scroll [expr {- (%D / 120) * 4}] units
     }
+    bind Listbox <Shift-MouseWheel> {
+        %W xview scroll [expr {- (%D / 120) * 4}] units
+    }
 }
 
 if {"x11" eq [tk windowingsystem]} {
@@ -208,9 +211,19 @@ if {"x11" eq [tk windowingsystem]} {
 	    %W yview scroll -5 units
 	}
     }
+    bind Listbox <Shift-4> {
+	if {!$tk_strictMotif} {
+	    %W xview scroll -5 units
+	}
+    }
     bind Listbox <5> {
 	if {!$tk_strictMotif} {
 	    %W yview scroll 5 units
+	}
+    }
+    bind Listbox <Shift-5> {
+	if {!$tk_strictMotif} {
+	    %W xview scroll 5 units
 	}
     }
 }

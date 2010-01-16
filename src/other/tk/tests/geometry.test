@@ -9,9 +9,16 @@
 #
 # RCS: @(#) $Id$
 
-package require tcltest 2.1
+proc getsize w {
+    regexp {(^[^+-]*)} [wm geometry $w] foo x
+    return $x
+}
+
+package require tcltest 2.2
 eval tcltest::configure $argv
 tcltest::loadTestedCommands
+namespace import -force tcltest::test
+
 
 wm geometry . 300x300
 raise .
@@ -25,15 +32,20 @@ button .b2 -text .b2
 button .b3 -text .b3
 button .f.f.b4 -text .b4
 
-test geometry-1.1 {Tk_ManageGeometry procedure} {
+test geometry-1.1 {Tk_ManageGeometry procedure} -setup {
+	foreach w {.f .f.f .f.f.f .b1 .b2 .b3} {
+        place forget $w
+    }
+} -body {
     place .b1 -x 120 -y 80
     update
     list [winfo x .b1] [winfo y .b1]
-} {120 80}
-test geometry-1.2 {Tk_ManageGeometry procedure} {
-    foreach w {.f .f.f .f.f.f .b1 .b2 .b3} {
-	place forget $w
+} -result {120 80}
+test geometry-1.2 {Tk_ManageGeometry procedure} -setup {
+	foreach w {.f .f.f .f.f.f .b1 .b2 .b3} {
+        place forget $w
     }
+} -body {
     place .f -x 20 -y 30 -width 200 -height 200
     place .b1 -in .f -x 40 -y 30
     update
@@ -41,28 +53,37 @@ test geometry-1.2 {Tk_ManageGeometry procedure} {
     place .f -x 30 -y 40
     update
     list [winfo x .b1] [winfo y .b1]
-} {0 0}
+} -result {0 0}
 
-test geometry-2.1 {Tk_GeometryRequest procedure} {
+
+test geometry-2.1 {Tk_GeometryRequest procedure} -setup {
+	foreach w {.f .f.f .f.f.f .b1 .b2 .b3} {
+        place forget $w
+    }
+    destroy .f2
+} -body {
     frame .f2
     set result [list [winfo reqwidth .f2] [winfo reqheight .f2]]
     .f2 configure -width 150 -height 300
     update
     lappend result [winfo reqwidth .f2] [winfo reqheight .f2] \
-	    [winfo geom .f2]
+        [winfo geom .f2]
     place .f2 -x 10 -y 20
     update
     lappend result [winfo geom .f2]
     .f2 configure -width 100 -height 80
     update
     lappend result [winfo geom .f2]
-} {1 1 150 300 1x1+0+0 150x300+10+20 100x80+10+20}
-catch {destroy .f2}
+} -cleanup {
+    destroy .f2
+} -result {1 1 150 300 1x1+0+0 150x300+10+20 100x80+10+20}
 
-test geometry-3.1 {Tk_SetInternalBorder procedure} {
-    foreach w {.f .f.f .f.f.f .b1 .b2 .b3} {
-	place forget $w
+
+test geometry-3.1 {Tk_SetInternalBorder procedure} -setup {
+	foreach w {.f .f.f .f.f.f .b1 .b2 .b3} {
+        place forget $w
     }
+} -body {
     place .f -x 20 -y 30 -width 200 -height 200
     place .b1 -in .f -x 50 -y 5
     update
@@ -70,24 +91,28 @@ test geometry-3.1 {Tk_SetInternalBorder procedure} {
     .f configure -bd 5
     update
     lappend x [winfo x .b1] [winfo y .b1]
-} {72 37 75 40}
-.f configure -bd 2
+} -cleanup {
+    .f configure -bd 2
+} -result {72 37 75 40}
 
-test geometry-4.1 {Tk_MaintainGeometry and Tk_UnmaintainGeometry} {
-    foreach w {.f .f.f .f.f.f .b1 .b2 .b3} {
-	place forget $w
+
+test geometry-4.1 {Tk_MaintainGeometry and Tk_UnmaintainGeometry} -setup {
+	foreach w {.f .f.f .f.f.f .b1 .b2 .b3} {
+        place forget $w
     }
+} -body {
     place .f -x 20 -y 30 -width 200 -height 200
     place .f.f -x 15 -y 5 -width 150 -height 120
     place .f.f.f -width 100 -height 80
     place .b1 -in .f.f.f -x 50 -y 5
     update
     list [winfo x .b1] [winfo y .b1]
-} {91 46}
-test geometry-4.2 {Tk_MaintainGeometry and Tk_UnmaintainGeometry} {
-    foreach w {.f .f.f .f.f.f .b1 .b2 .b3} {
-	place forget $w
+} -result {91 46}
+test geometry-4.2 {Tk_MaintainGeometry and Tk_UnmaintainGeometry} -setup {
+	foreach w {.f .f.f .f.f.f .b1 .b2 .b3} {
+        place forget $w
     }
+} -body {
     place .f -x 20 -y 30 -width 200 -height 200
     place .f.f -x 15 -y 5 -width 150 -height 120
     place .f.f.f -width 100 -height 80
@@ -98,12 +123,13 @@ test geometry-4.2 {Tk_MaintainGeometry and Tk_UnmaintainGeometry} {
     place .f -x 30 -y 25
     update
     list [winfo x .b1] [winfo y .b1] [winfo x .b2] [winfo y .b2] \
-	    [winfo x .b3] [winfo y .b3]
-} {101 41 61 61 101 61}
-test geometry-4.3 {Tk_MaintainGeometry and Tk_UnmaintainGeometry} {
-    foreach w {.f .f.f .f.f.f .b1 .b2 .b3} {
-	place forget $w
+        [winfo x .b3] [winfo y .b3]
+} -result {101 41 61 61 101 61}
+test geometry-4.3 {Tk_MaintainGeometry and Tk_UnmaintainGeometry} -setup {
+	foreach w {.f .f.f .f.f.f .b1 .b2 .b3} {
+        place forget $w
     }
+} -body {
     place .f -x 20 -y 30 -width 200 -height 200
     place .f.f -x 15 -y 5 -width 150 -height 120
     place .f.f.f -width 100 -height 80
@@ -116,12 +142,13 @@ test geometry-4.3 {Tk_MaintainGeometry and Tk_UnmaintainGeometry} {
     place .f.f -x 10 -y 25
     update
     list [winfo x .b1] [winfo y .b1] [winfo x .b2] [winfo y .b2] \
-	    [winfo x .b3] [winfo y .b3]
-} {0 0 46 86 86 86}
-test geometry-4.4 {Tk_MaintainGeometry and Tk_UnmaintainGeometry} {
-    foreach w {.f .f.f .f.f.f .b1 .b2 .b3} {
-	place forget $w
+        [winfo x .b3] [winfo y .b3]
+} -result {0 0 46 86 86 86}
+test geometry-4.4 {Tk_MaintainGeometry and Tk_UnmaintainGeometry} -setup {
+	foreach w {.f .f.f .f.f.f .b1 .b2 .b3} {
+        place forget $w
     }
+} -body {
     place .f -x 20 -y 30 -width 200 -height 200
     place .f.f -x 15 -y 5 -width 150 -height 120
     place .f.f.f -width 100 -height 80
@@ -134,12 +161,13 @@ test geometry-4.4 {Tk_MaintainGeometry and Tk_UnmaintainGeometry} {
     place .f.f.f -x 2 -y 3
     update
     list [winfo x .b1] [winfo y .b1] [winfo x .b2] [winfo y .b2] \
-	    [winfo x .b3] [winfo y .b3]
-} {93 49 0 0 93 69}
-test geometry-4.5 {Tk_MaintainGeometry and Tk_UnmaintainGeometry} {
-    foreach w {.f .f.f .f.f.f .b1 .b2 .b3} {
-	place forget $w
+        [winfo x .b3] [winfo y .b3]
+} -result {93 49 0 0 93 69}
+test geometry-4.5 {Tk_MaintainGeometry and Tk_UnmaintainGeometry} -setup {
+	foreach w {.f .f.f .f.f.f .b1 .b2 .b3} {
+        place forget $w
     }
+} -body {
     place .f -x 20 -y 30 -width 200 -height 200
     place .f.f -x 15 -y 5 -width 150 -height 120
     place .f.f.f -width 100 -height 80
@@ -152,11 +180,15 @@ test geometry-4.5 {Tk_MaintainGeometry and Tk_UnmaintainGeometry} {
     place .f.f.f -x 2 -y 3
     update
     list [winfo x .b1] [winfo y .b1] [winfo x .b2] [winfo y .b2] \
-	    [winfo x .b3] [winfo y .b3]
-} {93 49 53 69 0 0}
-test geometry-4.6 {Tk_MaintainGeometry and Tk_UnmaintainGeometry} {
+        [winfo x .b3] [winfo y .b3]
+} -result {93 49 53 69 0 0}
+test geometry-4.6 {Tk_MaintainGeometry and Tk_UnmaintainGeometry} -setup {
+	foreach w {.f .f.f .f.f.f .b1 .b2 .b3} {
+        place forget $w
+    }
+} -body {
     foreach w {.f .f.f .f.f.f .b1 .b2 .b3 .f.f.b4} {
-	place forget $w
+    place forget $w
     }
     place .f -x 20 -y 30 -width 200 -height 200
     place .f.f -x 15 -y 5 -width 150 -height 120
@@ -167,11 +199,12 @@ test geometry-4.6 {Tk_MaintainGeometry and Tk_UnmaintainGeometry} {
     place .f -x 25 -y 35
     update
     list [winfo x .f.f.b4] [winfo y .f.f.b4] [winfo x .b2] [winfo y .b2]
-} {54 9 56 71}
-test geometry-4.7 {Tk_MaintainGeometry and Tk_UnmaintainGeometry} {
-    foreach w {.f .f.f .f.f.f .b1 .b2 .b3 .f.f.b4} {
-	place forget $w
+} -result {54 9 56 71}
+test geometry-4.7 {Tk_MaintainGeometry and Tk_UnmaintainGeometry} -setup {
+	foreach w {.f .f.f .f.f.f .b1 .b2 .b3} {
+        place forget $w
     }
+} -body {
     bind .b1 <Configure> {lappend x configure}
     place .f -x 20 -y 30 -width 200 -height 200
     place .f.f -x 15 -y 5 -width 150 -height 120
@@ -186,13 +219,15 @@ test geometry-4.7 {Tk_MaintainGeometry and Tk_UnmaintainGeometry} {
     place .f -x 30 -y 40
     place .f.f -x 10 -y 0
     update
+    return $x
+} -cleanup {
     bind .b1 <Configure> {}
-    set x
-} {init configure |}
-test geometry-4.8 {Tk_MaintainGeometry and Tk_UnmaintainGeometry} {
-    foreach w {.f .f.f .f.f.f .b1 .b2 .b3} {
-	place forget $w
+} -result {init configure |}
+test geometry-4.8 {Tk_MaintainGeometry and Tk_UnmaintainGeometry} -setup {
+	foreach w {.f .f.f .f.f.f .b1 .b2 .b3} {
+        place forget $w
     }
+} -body {
     place .f -x 20 -y 30 -width 200 -height 200
     place .f.f -x 15 -y 5 -width 150 -height 120
     place .f.f.f -width 100 -height 80
@@ -206,13 +241,14 @@ test geometry-4.8 {Tk_MaintainGeometry and Tk_UnmaintainGeometry} {
     place .f -x 30 -y 25
     update
     list [winfo x .b1] [winfo y .b1] [winfo ismapped .b1] \
-	    [winfo x .b2] [winfo y .b2] [winfo ismapped .b2] \
-	    [winfo x .b3] [winfo y .b3] [winfo ismapped .b3]
-} {91 46 0 51 66 0 91 66 0}
-test geometry-4.9 {Tk_MaintainGeometry and Tk_UnmaintainGeometry} {
-    foreach w {.f .f.f .f.f.f .b1 .b2 .b3} {
-	place forget $w
+        [winfo x .b2] [winfo y .b2] [winfo ismapped .b2] \
+        [winfo x .b3] [winfo y .b3] [winfo ismapped .b3]
+} -result {91 46 0 51 66 0 91 66 0}
+test geometry-4.9 {Tk_MaintainGeometry and Tk_UnmaintainGeometry} -setup {
+	foreach w {.f .f.f .f.f.f .b1 .b2 .b3} {
+        place forget $w
     }
+} -body {
     place .f -x 20 -y 30 -width 200 -height 200
     place .f.f -x 15 -y 5 -width 150 -height 120
     place .f.f.f -width 100 -height 80
@@ -225,14 +261,18 @@ test geometry-4.9 {Tk_MaintainGeometry and Tk_UnmaintainGeometry} {
     place .f.f -x 15 -y 5 -width 150 -height 120
     update
     lappend result [winfo ismapped .b1]
-} {1 0 1}
-test geometry-4.10 {Tk_MaintainGeometry and Tk_UnmaintainGeometry} {
+} -result {1 0 1}
+test geometry-4.10 {Tk_MaintainGeometry and Tk_UnmaintainGeometry} -setup {
+	foreach w {.f .f.f .f.f.f .b1 .b2 .b3} {
+        place forget $w
+    }
+    destroy .t
+} -body {
     toplevel .t
     wm geometry .t +0+0
     tkwait visibility .t
     update
-    frame .t.f 
-    pack .t.f
+    pack [frame .t.f] 
     button .t.quit -text Quit -command exit
     pack .t.quit -in .t.f
     wm iconify .t
@@ -242,10 +282,12 @@ test geometry-4.10 {Tk_MaintainGeometry and Tk_UnmaintainGeometry} {
     wm deiconify .t
     update
     winfo ismapped .t.quit
-} {1}
+} -cleanup {
+    destroy .t
+} -result {1}
 
-catch {destroy .t}
 
 # cleanup
 cleanupTests
 return
+

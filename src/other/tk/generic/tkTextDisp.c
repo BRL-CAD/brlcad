@@ -446,6 +446,7 @@ typedef struct BaseCharInfo {
 				 * LayoutDLine(). */
 } BaseCharInfo;
 
+/* TODO: Thread safety */
 static TkTextDispChunk *baseCharChunkPtr = NULL;
 
 #endif /* TK_LAYOUT_WITH_BASE_CHUNKS */
@@ -542,23 +543,23 @@ static void		DisplayDLine(TkText *textPtr, DLine *dlPtr,
 static void		DisplayLineBackground(TkText *textPtr, DLine *dlPtr,
 			    DLine *prevPtr, Pixmap pixmap);
 static void		DisplayText(ClientData clientData);
-static DLine *		FindDLine(DLine *dlPtr, CONST TkTextIndex *indexPtr);
+static DLine *		FindDLine(DLine *dlPtr, const TkTextIndex *indexPtr);
 static void		FreeDLines(TkText *textPtr, DLine *firstPtr,
 			    DLine *lastPtr, int action);
 static void		FreeStyle(TkText *textPtr, TextStyle *stylePtr);
-static TextStyle *	GetStyle(TkText *textPtr, CONST TkTextIndex *indexPtr);
+static TextStyle *	GetStyle(TkText *textPtr, const TkTextIndex *indexPtr);
 static void		GetXView(Tcl_Interp *interp, TkText *textPtr,
 			    int report);
 static void		GetYView(Tcl_Interp *interp, TkText *textPtr,
 			    int report);
 static int		GetYPixelCount(TkText *textPtr, DLine *dlPtr);
 static DLine *		LayoutDLine(TkText *textPtr,
-			    CONST TkTextIndex *indexPtr);
-static int		MeasureChars(Tk_Font tkfont, CONST char *source,
+			    const TkTextIndex *indexPtr);
+static int		MeasureChars(Tk_Font tkfont, const char *source,
 			    int maxBytes, int rangeStart, int rangeLength,
 			    int startX, int maxX, int flags, int *nextXPtr);
 static void		MeasureUp(TkText *textPtr,
-			    CONST TkTextIndex *srcPtr, int distance,
+			    const TkTextIndex *srcPtr, int distance,
 			    TkTextIndex *dstPtr, int *overlap);
 static int		NextTabStop(Tk_Font tkfont, int x, int tabOrigin);
 static void		UpdateDisplayInfo(TkText *textPtr);
@@ -568,8 +569,8 @@ static int		SizeOfTab(TkText *textPtr, int tabStyle,
 			    TkTextTabArray *tabArrayPtr, int *indexPtr, int x,
 			    int maxX);
 static void		TextChanged(TkText *textPtr,
-			    CONST TkTextIndex *index1Ptr,
-			    CONST TkTextIndex *index2Ptr);
+			    const TkTextIndex *index1Ptr,
+			    const TkTextIndex *index2Ptr);
 static void		TextInvalidateRegion(TkText *textPtr, TkRegion region);
 static void		TextRedrawTag(TkText *textPtr,
 			    TkTextIndex *index1Ptr, TkTextIndex *index2Ptr,
@@ -577,7 +578,7 @@ static void		TextRedrawTag(TkText *textPtr,
 static void		TextInvalidateLineMetrics(TkText *textPtr,
 			    TkTextLine *linePtr, int lineCount, int action);
 static int		CalculateDisplayLineHeight(TkText *textPtr,
-			    CONST TkTextIndex *indexPtr, int *byteCountPtr,
+			    const TkTextIndex *indexPtr, int *byteCountPtr,
 			    int *mergedLinePtr);
 static void		DlineIndexOfX(TkText *textPtr,
 			    DLine *dlPtr, int x, TkTextIndex *indexPtr);
@@ -585,7 +586,7 @@ static int		DlineXOfIndex(TkText *textPtr,
 			    DLine *dlPtr, int byteIndex);
 static int		TextGetScrollInfoObj(Tcl_Interp *interp,
 			    TkText *textPtr, int objc,
-			    Tcl_Obj *CONST objv[], double *dblPtr,
+			    Tcl_Obj *const objv[], double *dblPtr,
 			    int *intPtr);
 static void		AsyncUpdateLineMetrics(ClientData clientData);
 static void		AsyncUpdateYScrollbar(ClientData clientData);
@@ -661,10 +662,10 @@ TkTextCreateDInfo(
 
     textPtr->refCount++;
     dInfoPtr->lineUpdateTimer = Tcl_CreateTimerHandler(0,
-	    AsyncUpdateLineMetrics, (ClientData) textPtr);
+	    AsyncUpdateLineMetrics, textPtr);
     textPtr->refCount++;
     dInfoPtr->scrollbarTimer = Tcl_CreateTimerHandler(200,
-	    AsyncUpdateYScrollbar, (ClientData) textPtr);
+	    AsyncUpdateYScrollbar, textPtr);
 
     textPtr->dInfoPtr = dInfoPtr;
 }
@@ -706,7 +707,7 @@ TkTextFreeDInfo(
     }
     Tk_FreeGC(textPtr->display, dInfoPtr->scrollGC);
     if (dInfoPtr->flags & REDRAW_PENDING) {
-	Tcl_CancelIdleCall(DisplayText, (ClientData) textPtr);
+	Tcl_CancelIdleCall(DisplayText, textPtr);
     }
     if (dInfoPtr->lineUpdateTimer != NULL) {
 	Tcl_DeleteTimerHandler(dInfoPtr->lineUpdateTimer);
@@ -742,7 +743,7 @@ TkTextFreeDInfo(
 static TextStyle *
 GetStyle(
     TkText *textPtr,		/* Overall information about text widget. */
-    CONST TkTextIndex *indexPtr)/* The character in the text for which display
+    const TkTextIndex *indexPtr)/* The character in the text for which display
 				 * information is wanted. */
 {
     TkTextTag **tagPtrs;
@@ -932,7 +933,7 @@ GetStyle(
     hPtr = Tcl_CreateHashEntry(&textPtr->dInfoPtr->styleTable,
 	    (char *) &styleValues, &isNew);
     if (!isNew) {
-	stylePtr = (TextStyle *) Tcl_GetHashValue(hPtr);
+	stylePtr = Tcl_GetHashValue(hPtr);
 	stylePtr->refCount++;
 	return stylePtr;
     }
@@ -1047,7 +1048,7 @@ FreeStyle(
 static DLine *
 LayoutDLine(
     TkText *textPtr,		/* Overall information about text widget. */
-    CONST TkTextIndex *indexPtr)/* Beginning of display line. May not
+    const TkTextIndex *indexPtr)/* Beginning of display line. May not
 				 * necessarily point to a character
 				 * segment. */
 {
@@ -1265,14 +1266,14 @@ LayoutDLine(
 	     */
 
 	    TkTextLine *linePtr = TkBTreeNextLine(NULL, curIndex.linePtr);
-	    if (linePtr != NULL) {
-		dlPtr->logicalLinesMerged++;
-		curIndex.byteIndex = 0;
-		curIndex.linePtr = linePtr;
-		segPtr = curIndex.linePtr->segPtr;
-	    } else {
+	    if (linePtr == NULL) {
 		break;
 	    }
+
+	    dlPtr->logicalLinesMerged++;
+	    curIndex.byteIndex = 0;
+	    curIndex.linePtr = linePtr;
+	    segPtr = curIndex.linePtr->segPtr;
 	}
     }
 
@@ -1459,7 +1460,7 @@ LayoutDLine(
 
 	    code = 1;
 	} else {
-	    code = (*segPtr->typePtr->layoutProc)(textPtr, &curIndex, segPtr,
+	    code = segPtr->typePtr->layoutProc(textPtr, &curIndex, segPtr,
 		    byteOffset, maxX-tabSize, maxBytes, noCharsYet, wrapMode,
 		    chunkPtr);
 	}
@@ -1611,18 +1612,18 @@ LayoutDLine(
 	    FreeStyle(textPtr, chunkPtr->stylePtr);
 	    breakChunkPtr->nextPtr = chunkPtr->nextPtr;
 	    if (chunkPtr->undisplayProc != NULL) {
-		(*chunkPtr->undisplayProc)(textPtr, chunkPtr);
+		chunkPtr->undisplayProc(textPtr, chunkPtr);
 	    }
 	    ckfree((char *) chunkPtr);
 	}
 	if (breakByteOffset != breakChunkPtr->numBytes) {
 	    if (breakChunkPtr->undisplayProc != NULL) {
-		(*breakChunkPtr->undisplayProc)(textPtr, breakChunkPtr);
+		breakChunkPtr->undisplayProc(textPtr, breakChunkPtr);
 	    }
 	    segPtr = TkTextIndexToSeg(&breakIndex, &byteOffset);
-	    (*segPtr->typePtr->layoutProc)(textPtr, &breakIndex,
-		    segPtr, byteOffset, maxX, breakByteOffset, 0,
-		    wrapMode, breakChunkPtr);
+	    segPtr->typePtr->layoutProc(textPtr, &breakIndex, segPtr,
+		    byteOffset, maxX, breakByteOffset, 0, wrapMode,
+		    breakChunkPtr);
 #if TK_LAYOUT_WITH_BASE_CHUNKS
 	    FinalizeBaseChunk(NULL);
 #endif /* TK_LAYOUT_WITH_BASE_CHUNKS */
@@ -2306,7 +2307,7 @@ FreeDLines(
 	for (chunkPtr = firstPtr->chunkPtr; chunkPtr != NULL;
 		chunkPtr = nextChunkPtr) {
 	    if (chunkPtr->undisplayProc != NULL) {
-		(*chunkPtr->undisplayProc)(textPtr, chunkPtr);
+		chunkPtr->undisplayProc(textPtr, chunkPtr);
 	    }
 	    FreeStyle(textPtr, chunkPtr->stylePtr);
 	    nextChunkPtr = chunkPtr->nextPtr;
@@ -2404,7 +2405,7 @@ DisplayDLine(
 	    if (chunkPtr->displayProc == TkTextInsertDisplayProc) {
 		int x = chunkPtr->x + dInfoPtr->x - dInfoPtr->curXPixelOffset;
 
-		(*chunkPtr->displayProc)(textPtr, chunkPtr, x,
+		chunkPtr->displayProc(textPtr, chunkPtr, x,
 			y + dlPtr->spaceAbove,
 			dlPtr->height - dlPtr->spaceAbove - dlPtr->spaceBelow,
 			dlPtr->baseline - dlPtr->spaceAbove, display, pixmap,
@@ -2452,7 +2453,7 @@ DisplayDLine(
 
 		x = -chunkPtr->width;
 	    }
-	    (*chunkPtr->displayProc)(textPtr, chunkPtr, x,
+	    chunkPtr->displayProc(textPtr, chunkPtr, x,
 		    y + dlPtr->spaceAbove, dlPtr->height - dlPtr->spaceAbove -
 		    dlPtr->spaceBelow, dlPtr->baseline - dlPtr->spaceAbove,
 		    display, pixmap, dlPtr->y + dlPtr->spaceAbove);
@@ -2726,7 +2727,7 @@ DisplayLineBackground(
 		    rightX2 + xOffset, y, sValuePtr->borderWidth,
 		    sValuePtr->borderWidth, 1, sValuePtr->relief);
 	    Tk_3DHorizontalBevel(textPtr->tkwin, pixmap, sValuePtr->border,
-		    leftX + xOffset, y, rightX2 + sValuePtr->borderWidth - 
+		    leftX + xOffset, y, rightX2 + sValuePtr->borderWidth -
 		    leftX, sValuePtr->borderWidth, leftXIn, 0, 1,
 		    sValuePtr->relief);
 	}
@@ -2878,7 +2879,7 @@ static void
 AsyncUpdateLineMetrics(
     ClientData clientData)	/* Information about widget. */
 {
-    register TkText *textPtr = (TkText *) clientData;
+    register TkText *textPtr = clientData;
     TextDInfo *dInfoPtr = textPtr->dInfoPtr;
     int lineNum;
 
@@ -2901,9 +2902,15 @@ AsyncUpdateLineMetrics(
 	return;
     }
 
+    /*
+     * Reify where we end or all hell breaks loose with the calculations when
+     * we try to update. [Bug 2677890]
+     */
+
     lineNum = dInfoPtr->currentMetricUpdateLine;
-    if (lineNum == -1) {
-	dInfoPtr->lastMetricUpdateLine = 0;
+    if (dInfoPtr->lastMetricUpdateLine == -1) {
+	dInfoPtr->lastMetricUpdateLine =
+		TkBTreeNumLines(textPtr->sharedTextPtr->tree, textPtr);
     }
 
     /*
@@ -2948,7 +2955,7 @@ AsyncUpdateLineMetrics(
      */
 
     dInfoPtr->lineUpdateTimer = Tcl_CreateTimerHandler(1,
-	    AsyncUpdateLineMetrics, (ClientData) textPtr);
+	    AsyncUpdateLineMetrics, textPtr);
 }
 
 /*
@@ -3049,86 +3056,82 @@ TkTextUpdateLineMetrics(
 	     */
 
 	    if (TkBTreeLinePixelEpoch(textPtr, linePtr)
-		!= textPtr->dInfoPtr->lineMetricUpdateEpoch) {
-		if (doThisMuch == -1) {
-		    count += 8 * TkTextUpdateOneLine(textPtr, linePtr, 0,
-			    NULL, 0);
-		} else {
-		    TkTextIndex index;
-		    TkTextIndex *indexPtr;
-		    int pixelHeight;
-
-		    /*
-		     * If the metric epoch is the same as the widget's epoch,
-		     * then we know that indexPtrs are still valid, and if the
-		     * cached metricIndex (if any) is for the same line as we
-		     * wish to examine, then we are looking at a long line
-		     * wrapped many times, which we will examine in pieces.
-		     */
-
-		    if (textPtr->dInfoPtr->metricEpoch ==
-			    textPtr->sharedTextPtr->stateEpoch &&
-			    textPtr->dInfoPtr->metricIndex.linePtr==linePtr) {
-			indexPtr = &textPtr->dInfoPtr->metricIndex;
-			pixelHeight = textPtr->dInfoPtr->metricPixelHeight;
-		    } else {
-			/*
-			 * We must reset the partial line height calculation
-			 * data here, so we don't use it when it is out of
-			 * date.
-			 */
-
-			textPtr->dInfoPtr->metricEpoch = -1;
-			index.tree = textPtr->sharedTextPtr->tree;
-			index.linePtr = linePtr;
-			index.byteIndex = 0;
-			index.textPtr = NULL;
-			indexPtr = &index;
-			pixelHeight = 0;
-		    }
-
-		    /*
-		     * Update the line and update the counter, counting 8 for
-		     * each display line we actually re-layout.
-		     */
-
-		    count += 8 * TkTextUpdateOneLine(textPtr, linePtr,
-			    pixelHeight, indexPtr, 1);
-
-		    if (indexPtr->linePtr == linePtr) {
-			/*
-			 * We didn't complete the logical line, because it
-			 * produced very many display lines - it must be a
-			 * long line wrapped many times. So we must cache as
-			 * far as we got for next time around.
-			 */
-
-			if (pixelHeight == 0) {
-			    /*
-			     * These have already been stored, unless we just
-			     * started the new line.
-			     */
-
-			    textPtr->dInfoPtr->metricIndex = index;
-			    textPtr->dInfoPtr->metricEpoch =
-				    textPtr->sharedTextPtr->stateEpoch;
-			}
-			textPtr->dInfoPtr->metricPixelHeight =
-				TkBTreeLinePixelCount(textPtr, linePtr);
-			break;
-		    } else {
-			/*
-			 * We're done with this long line.
-			 */
-
-			textPtr->dInfoPtr->metricEpoch = -1;
-		    }
-		}
-	    } else {
+		    == textPtr->dInfoPtr->lineMetricUpdateEpoch) {
 		/*
 		 * This line is already up to date. That means there's nothing
 		 * to do here.
 		 */
+	    } else if (doThisMuch == -1) {
+		count += 8 * TkTextUpdateOneLine(textPtr, linePtr, 0,NULL,0);
+	    } else {
+		TkTextIndex index;
+		TkTextIndex *indexPtr;
+		int pixelHeight;
+
+		/*
+		 * If the metric epoch is the same as the widget's epoch, then
+		 * we know that indexPtrs are still valid, and if the cached
+		 * metricIndex (if any) is for the same line as we wish to
+		 * examine, then we are looking at a long line wrapped many
+		 * times, which we will examine in pieces.
+		 */
+
+		if (textPtr->dInfoPtr->metricEpoch ==
+			textPtr->sharedTextPtr->stateEpoch &&
+			textPtr->dInfoPtr->metricIndex.linePtr==linePtr) {
+		    indexPtr = &textPtr->dInfoPtr->metricIndex;
+		    pixelHeight = textPtr->dInfoPtr->metricPixelHeight;
+		} else {
+		    /*
+		     * We must reset the partial line height calculation data
+		     * here, so we don't use it when it is out of date.
+		     */
+
+		    textPtr->dInfoPtr->metricEpoch = -1;
+		    index.tree = textPtr->sharedTextPtr->tree;
+		    index.linePtr = linePtr;
+		    index.byteIndex = 0;
+		    index.textPtr = NULL;
+		    indexPtr = &index;
+		    pixelHeight = 0;
+		}
+
+		/*
+		 * Update the line and update the counter, counting 8 for each
+		 * display line we actually re-layout.
+		 */
+
+		count += 8 * TkTextUpdateOneLine(textPtr, linePtr,
+			pixelHeight, indexPtr, 1);
+
+		if (indexPtr->linePtr == linePtr) {
+		    /*
+		     * We didn't complete the logical line, because it
+		     * produced very many display lines, which must be because
+		     * it must be a long line wrapped many times. So we must
+		     * cache as far as we got for next time around.
+		     */
+
+		    if (pixelHeight == 0) {
+			/*
+			 * These have already been stored, unless we just
+			 * started the new line.
+			 */
+
+			textPtr->dInfoPtr->metricIndex = index;
+			textPtr->dInfoPtr->metricEpoch =
+				textPtr->sharedTextPtr->stateEpoch;
+		    }
+		    textPtr->dInfoPtr->metricPixelHeight =
+			    TkBTreeLinePixelCount(textPtr, linePtr);
+		    break;
+		}
+
+		/*
+		 * We're done with this long line.
+		 */
+
+		textPtr->dInfoPtr->metricEpoch = -1;
 	    }
 	} else {
 	    /*
@@ -3329,7 +3332,7 @@ TextInvalidateLineMetrics(
     if (dInfoPtr->lineUpdateTimer == NULL) {
 	textPtr->refCount++;
 	dInfoPtr->lineUpdateTimer = Tcl_CreateTimerHandler(1,
-		AsyncUpdateLineMetrics, (ClientData) textPtr);
+		AsyncUpdateLineMetrics, textPtr);
     }
 }
 
@@ -3379,6 +3382,8 @@ TkTextFindDisplayLineEnd(
 				 * of the original index within its display
 				 * line. */
 {
+    TkTextIndex index;
+
     if (!end && indexPtr->byteIndex == 0) {
 	/*
 	 * Nothing to do.
@@ -3388,95 +3393,93 @@ TkTextFindDisplayLineEnd(
 	    *xOffset = 0;
 	}
 	return;
-    } else {
-	TkTextIndex index = *indexPtr;
+    }
 
-	index.byteIndex = 0;
-	index.textPtr = NULL;
+    index = *indexPtr;
+    index.byteIndex = 0;
+    index.textPtr = NULL;
 
-	while (1) {
-	    TkTextIndex endOfLastLine;
+    while (1) {
+	TkTextIndex endOfLastLine;
 
-	    if (TkTextIndexBackBytes(textPtr, &index, 1, &endOfLastLine)) {
-		/*
-		 * Reached beginning of text.
-		 */
-
-		break;
-	    }
-
-	    if (!TkTextIsElided(textPtr, &endOfLastLine, NULL)) {
-		/*
-		 * The eol is not elided, so 'index' points to the start of a
-		 * display line (as well as logical line).
-		 */
-
-		break;
-	    }
-
+	if (TkTextIndexBackBytes(textPtr, &index, 1, &endOfLastLine)) {
 	    /*
-	     * indexPtr's logical line is actually merged with the previous
-	     * logical line whose eol is elided. Continue searching back to
-	     * get a real line start.
+	     * Reached beginning of text.
 	     */
 
-	    index = endOfLastLine;
-	    index.byteIndex = 0;
+	    break;
 	}
 
-	while (1) {
-	    DLine *dlPtr;
-	    int byteCount;
-	    TkTextIndex nextLineStart;
-
-	    dlPtr = LayoutDLine(textPtr, &index);
-	    byteCount = dlPtr->byteCount;
-
-	    TkTextIndexForwBytes(textPtr, &index, byteCount, &nextLineStart);
-
+	if (!TkTextIsElided(textPtr, &endOfLastLine, NULL)) {
 	    /*
-	     * 'byteCount' goes up to the beginning of the next display line,
-	     * so equality here says we need one more line. We try to perform
-	     * a quick comparison which is valid for the case where the
-	     * logical line is the same, but otherwise fall back on a full
-	     * TkTextIndexCmp.
+	     * The eol is not elided, so 'index' points to the start of a
+	     * display line (as well as logical line).
 	     */
 
-	    if (((index.linePtr == indexPtr->linePtr)
-		    && (index.byteIndex + byteCount > indexPtr->byteIndex))
-		    || (dlPtr->logicalLinesMerged > 0
-		    && TkTextIndexCmp(&nextLineStart, indexPtr) > 0)) {
+	    break;
+	}
+
+	/*
+	 * indexPtr's logical line is actually merged with the previous
+	 * logical line whose eol is elided. Continue searching back to get a
+	 * real line start.
+	 */
+
+	index = endOfLastLine;
+	index.byteIndex = 0;
+    }
+
+    while (1) {
+	DLine *dlPtr;
+	int byteCount;
+	TkTextIndex nextLineStart;
+
+	dlPtr = LayoutDLine(textPtr, &index);
+	byteCount = dlPtr->byteCount;
+
+	TkTextIndexForwBytes(textPtr, &index, byteCount, &nextLineStart);
+
+	/*
+	 * 'byteCount' goes up to the beginning of the next display line, so
+	 * equality here says we need one more line. We try to perform a quick
+	 * comparison which is valid for the case where the logical line is
+	 * the same, but otherwise fall back on a full TkTextIndexCmp.
+	 */
+
+	if (((index.linePtr == indexPtr->linePtr)
+		&& (index.byteIndex + byteCount > indexPtr->byteIndex))
+		|| (dlPtr->logicalLinesMerged > 0
+		&& TkTextIndexCmp(&nextLineStart, indexPtr) > 0)) {
+	    /*
+	     * It's on this display line.
+	     */
+
+	    if (xOffset != NULL) {
 		/*
-		 * It's on this display line.
+		 * This call takes a byte index relative to the start of the
+		 * current _display_ line, not logical line. We are about to
+		 * overwrite indexPtr->byteIndex, so we must do this now.
 		 */
 
-		if (xOffset != NULL) {
-		    /*
-		     * This call takes a byte index relative to the start of
-		     * the current _display_ line, not logical line. We are
-		     * about to overwrite indexPtr->byteIndex, so we must do
-		     * this now.
-		     */
+		*xOffset = DlineXOfIndex(textPtr, dlPtr,
+			indexPtr->byteIndex - dlPtr->index.byteIndex);
+	    }
+	    if (end) {
+		/*
+		 * The index we want is one less than the number of bytes in
+		 * the display line.
+		 */
 
-		    *xOffset = DlineXOfIndex(textPtr, dlPtr,
-			    indexPtr->byteIndex - dlPtr->index.byteIndex);
-		}
-		if (end) {
-		    /*
-		     * The index we want is one less than the number of bytes
-		     * in the display line.
-		     */
-
-		    TkTextIndexBackBytes(textPtr, &nextLineStart, 1, indexPtr);
-		} else {
-		    *indexPtr = index;
-		}
-		FreeDLines(textPtr, dlPtr, NULL, DLINE_FREE_TEMP);
-		return;
+		TkTextIndexBackBytes(textPtr, &nextLineStart, 1, indexPtr);
+	    } else {
+		*indexPtr = index;
 	    }
 	    FreeDLines(textPtr, dlPtr, NULL, DLINE_FREE_TEMP);
-	    index = nextLineStart;
+	    return;
 	}
+
+	FreeDLines(textPtr, dlPtr, NULL, DLINE_FREE_TEMP);
+	index = nextLineStart;
     }
 }
 
@@ -3518,7 +3521,7 @@ TkTextFindDisplayLineEnd(
 static int
 CalculateDisplayLineHeight(
     TkText *textPtr,		/* Widget record for text widget. */
-    CONST TkTextIndex *indexPtr,/* The index at the beginning of the display
+    const TkTextIndex *indexPtr,/* The index at the beginning of the display
 				 * line of interest. */
     int *byteCountPtr,		/* NULL or used to return the number of byte
 				 * indices on the given display line. */
@@ -3589,7 +3592,7 @@ CalculateDisplayLineHeight(
 int
 TkTextIndexYPixels(
     TkText *textPtr,		/* Widget record for text widget. */
-    CONST TkTextIndex *indexPtr)/* The index of which we want the pixel
+    const TkTextIndex *indexPtr)/* The index of which we want the pixel
 				 * distance from top of logical line to top of
 				 * index. */
 {
@@ -3860,7 +3863,7 @@ TkTextUpdateOneLine(
     if (textPtr->dInfoPtr->scrollbarTimer == NULL) {
 	textPtr->refCount++;
 	textPtr->dInfoPtr->scrollbarTimer = Tcl_CreateTimerHandler(200,
-		AsyncUpdateYScrollbar, (ClientData) textPtr);
+		AsyncUpdateYScrollbar, textPtr);
     }
     return displayLines;
 }
@@ -3886,7 +3889,7 @@ static void
 DisplayText(
     ClientData clientData)	/* Information about widget. */
 {
-    register TkText *textPtr = (TkText *) clientData;
+    register TkText *textPtr = clientData;
     TextDInfo *dInfoPtr = textPtr->dInfoPtr;
     register DLine *dlPtr;
     DLine *prevPtr;
@@ -3905,7 +3908,7 @@ DisplayText(
     }
 
     interp = textPtr->interp;
-    Tcl_Preserve((ClientData) interp);
+    Tcl_Preserve(interp);
 
     if (tkTextDebug) {
 	Tcl_SetVar2(interp, "tk_textRelayout", NULL, "", TCL_GLOBAL_ONLY);
@@ -4343,7 +4346,7 @@ DisplayText(
     }
 
   end:
-    Tcl_Release((ClientData) interp);
+    Tcl_Release(interp);
 }
 
 /*
@@ -4372,7 +4375,7 @@ TkTextEventuallyRepick(
     dInfoPtr->flags |= REPICK_NEEDED;
     if (!(dInfoPtr->flags & REDRAW_PENDING)) {
 	dInfoPtr->flags |= REDRAW_PENDING;
-	Tcl_DoWhenIdle(DisplayText, (ClientData) textPtr);
+	Tcl_DoWhenIdle(DisplayText, textPtr);
     }
 }
 
@@ -4416,7 +4419,7 @@ TkTextRedrawRegion(
 
     if (!(dInfoPtr->flags & REDRAW_PENDING)) {
 	dInfoPtr->flags |= REDRAW_PENDING;
-	Tcl_DoWhenIdle(DisplayText, (ClientData) textPtr);
+	Tcl_DoWhenIdle(DisplayText, textPtr);
     }
     TkDestroyRegion(damageRgn);
 }
@@ -4510,8 +4513,8 @@ void
 TkTextChanged(
     TkSharedText *sharedTextPtr,/* Shared widget section, or NULL. */
     TkText *textPtr,		/* Widget record for text widget, or NULL. */
-    CONST TkTextIndex*index1Ptr,/* Index of first character to redisplay. */
-    CONST TkTextIndex*index2Ptr)/* Index of character just after last one to
+    const TkTextIndex*index1Ptr,/* Index of first character to redisplay. */
+    const TkTextIndex*index2Ptr)/* Index of character just after last one to
 				 * redisplay. */
 {
     if (sharedTextPtr == NULL) {
@@ -4528,8 +4531,8 @@ TkTextChanged(
 static void
 TextChanged(
     TkText *textPtr,		/* Widget record for text widget, or NULL. */
-    CONST TkTextIndex*index1Ptr,/* Index of first character to redisplay. */
-    CONST TkTextIndex*index2Ptr)/* Index of character just after last one to
+    const TkTextIndex*index1Ptr,/* Index of first character to redisplay. */
+    const TkTextIndex*index2Ptr)/* Index of character just after last one to
 				 * redisplay. */
 {
     TextDInfo *dInfoPtr = textPtr->dInfoPtr;
@@ -4553,7 +4556,7 @@ TextChanged(
      */
 
     if (!(dInfoPtr->flags & REDRAW_PENDING)) {
-	Tcl_DoWhenIdle(DisplayText, (ClientData) textPtr);
+	Tcl_DoWhenIdle(DisplayText, textPtr);
     }
     dInfoPtr->flags |= REDRAW_PENDING|DINFO_OUT_OF_DATE|REPICK_NEEDED;
 
@@ -4735,7 +4738,7 @@ TextRedrawTag(
      */
 
     if (!(dInfoPtr->flags & REDRAW_PENDING)) {
-	Tcl_DoWhenIdle(DisplayText, (ClientData) textPtr);
+	Tcl_DoWhenIdle(DisplayText, textPtr);
     }
     dInfoPtr->flags |= REDRAW_PENDING|DINFO_OUT_OF_DATE|REPICK_NEEDED;
 
@@ -4840,7 +4843,7 @@ TkTextRelayoutWindow(
      */
 
     if (!(dInfoPtr->flags & REDRAW_PENDING)) {
-	Tcl_DoWhenIdle(DisplayText, (ClientData) textPtr);
+	Tcl_DoWhenIdle(DisplayText, textPtr);
     }
     dInfoPtr->flags |= REDRAW_PENDING|REDRAW_BORDERS|DINFO_OUT_OF_DATE
 	    |REPICK_NEEDED;
@@ -4935,7 +4938,7 @@ TkTextRelayoutWindow(
 	if (dInfoPtr->lineUpdateTimer == NULL) {
 	    textPtr->refCount++;
 	    dInfoPtr->lineUpdateTimer = Tcl_CreateTimerHandler(1,
-		    AsyncUpdateLineMetrics, (ClientData) textPtr);
+		    AsyncUpdateLineMetrics, textPtr);
 	}
     }
 }
@@ -5119,7 +5122,7 @@ TkTextSetYView(
 
   scheduleUpdate:
     if (!(dInfoPtr->flags & REDRAW_PENDING)) {
-	Tcl_DoWhenIdle(DisplayText, (ClientData) textPtr);
+	Tcl_DoWhenIdle(DisplayText, textPtr);
     }
     dInfoPtr->flags |= REDRAW_PENDING|DINFO_OUT_OF_DATE|REPICK_NEEDED;
 }
@@ -5209,7 +5212,7 @@ TkTextMeasureDown(
 static void
 MeasureUp(
     TkText *textPtr,		/* Text widget in which to measure. */
-    CONST TkTextIndex *srcPtr,	/* Index of character from which to start
+    const TkTextIndex *srcPtr,	/* Index of character from which to start
 				 * measuring. */
     int distance,		/* Vertical distance in pixels measured from
 				 * the pixel just below the lowest one in
@@ -5313,7 +5316,7 @@ TkTextSeeCmd(
     TkText *textPtr,		/* Information about text widget. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *CONST objv[])	/* Argument objects. Someone else has already
+    Tcl_Obj *const objv[])	/* Argument objects. Someone else has already
 				 * parsed this command enough to know that
 				 * objv[1] is "see". */
 {
@@ -5385,7 +5388,7 @@ TkTextSeeCmd(
      */
 
     if (chunkPtr != NULL) {
-	(*chunkPtr->bboxProc)(textPtr, chunkPtr, byteCount,
+	chunkPtr->bboxProc(textPtr, chunkPtr, byteCount,
 		dlPtr->y + dlPtr->spaceAbove,
 		dlPtr->height - dlPtr->spaceAbove - dlPtr->spaceBelow,
 		dlPtr->baseline - dlPtr->spaceAbove, &x, &y, &width,
@@ -5394,27 +5397,25 @@ TkTextSeeCmd(
 	oneThird = lineWidth/3;
 	if (delta < 0) {
 	    if (delta < -oneThird) {
-		dInfoPtr->newXPixelOffset = (x - lineWidth/2);
+		dInfoPtr->newXPixelOffset = x - lineWidth/2;
 	    } else {
-		dInfoPtr->newXPixelOffset -= ((-delta) );
+		dInfoPtr->newXPixelOffset += delta;
 	    }
 	} else {
-	    delta -= (lineWidth - width);
-	    if (delta > 0) {
-		if (delta > oneThird) {
-		    dInfoPtr->newXPixelOffset = (x - lineWidth/2);
-		} else {
-		    dInfoPtr->newXPixelOffset += (delta );
-		}
-	    } else {
+	    delta -= lineWidth - width;
+	    if (delta <= 0) {
 		return TCL_OK;
+	    } else if (delta > oneThird) {
+		dInfoPtr->newXPixelOffset = x - lineWidth/2;
+	    } else {
+		dInfoPtr->newXPixelOffset += delta;
 	    }
 	}
     }
     dInfoPtr->flags |= DINFO_OUT_OF_DATE;
     if (!(dInfoPtr->flags & REDRAW_PENDING)) {
 	dInfoPtr->flags |= REDRAW_PENDING;
-	Tcl_DoWhenIdle(DisplayText, (ClientData) textPtr);
+	Tcl_DoWhenIdle(DisplayText, textPtr);
     }
     return TCL_OK;
 }
@@ -5442,7 +5443,7 @@ TkTextXviewCmd(
     TkText *textPtr,		/* Information about text widget. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *CONST objv[])	/* Argument objects. Someone else has already
+    Tcl_Obj *const objv[])	/* Argument objects. Someone else has already
 				 * parsed this command enough to know that
 				 * objv[1] is "xview". */
 {
@@ -5495,7 +5496,7 @@ TkTextXviewCmd(
     dInfoPtr->flags |= DINFO_OUT_OF_DATE;
     if (!(dInfoPtr->flags & REDRAW_PENDING)) {
 	dInfoPtr->flags |= REDRAW_PENDING;
-	Tcl_DoWhenIdle(DisplayText, (ClientData) textPtr);
+	Tcl_DoWhenIdle(DisplayText, textPtr);
     }
     return TCL_OK;
 }
@@ -5580,7 +5581,7 @@ YScrollByPixels(
 	return;
     }
     if (!(dInfoPtr->flags & REDRAW_PENDING)) {
-	Tcl_DoWhenIdle(DisplayText, (ClientData) textPtr);
+	Tcl_DoWhenIdle(DisplayText, textPtr);
     }
     dInfoPtr->flags |= REDRAW_PENDING|DINFO_OUT_OF_DATE|REPICK_NEEDED;
 }
@@ -5697,7 +5698,7 @@ YScrollByLines(
 
   scheduleUpdate:
     if (!(dInfoPtr->flags & REDRAW_PENDING)) {
-	Tcl_DoWhenIdle(DisplayText, (ClientData) textPtr);
+	Tcl_DoWhenIdle(DisplayText, textPtr);
     }
     dInfoPtr->flags |= REDRAW_PENDING|DINFO_OUT_OF_DATE|REPICK_NEEDED;
 }
@@ -5725,7 +5726,7 @@ TkTextYviewCmd(
     TkText *textPtr,		/* Information about text widget. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *CONST objv[])	/* Argument objects. Someone else has already
+    Tcl_Obj *const objv[])	/* Argument objects. Someone else has already
 				 * parsed this command enough to know that
 				 * objv[1] is "yview". */
 {
@@ -5751,7 +5752,7 @@ TkTextYviewCmd(
 
     pickPlace = 0;
     if (Tcl_GetString(objv[2])[0] == '-') {
-	register CONST char *switchStr =
+	register const char *switchStr =
 		Tcl_GetStringFromObj(objv[2], &switchLength);
 
 	if ((switchLength >= 2) && (strncmp(switchStr, "-pickplace",
@@ -5906,7 +5907,7 @@ TkTextScanCmd(
     register TkText *textPtr,	/* Information about text widget. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *CONST objv[])	/* Argument objects. Someone else has already
+    Tcl_Obj *const objv[])	/* Argument objects. Someone else has already
 				 * parsed this command enough to know that
 				 * objv[1] is "scan". */
 {
@@ -5977,7 +5978,7 @@ TkTextScanCmd(
 	dInfoPtr->flags |= DINFO_OUT_OF_DATE;
 	if (!(dInfoPtr->flags & REDRAW_PENDING)) {
 	    dInfoPtr->flags |= REDRAW_PENDING;
-	    Tcl_DoWhenIdle(DisplayText, (ClientData) textPtr);
+	    Tcl_DoWhenIdle(DisplayText, textPtr);
 	}
     } else if (c=='m' && strncmp(Tcl_GetString(objv[2]), "mark", length)==0) {
 	dInfoPtr->scanMarkXPixel = dInfoPtr->newXPixelOffset;
@@ -6068,7 +6069,7 @@ GetXView(
 	if (code != TCL_OK) {
 	    Tcl_AddErrorInfo(interp,
 		    "\n    (horizontal scrolling command executed by text)");
-	    Tcl_BackgroundError(interp);
+	    Tcl_BackgroundException(interp, code);
 	}
     }
 }
@@ -6190,9 +6191,8 @@ GetYPixelCount(
 		notFirst = 1;
 	    }
 	    break;
-	} else {
-	    dlPtr = dlPtr->nextPtr;
 	}
+	dlPtr = dlPtr->nextPtr;
     } while (dlPtr->index.linePtr == linePtr);
 
     return count;
@@ -6351,7 +6351,7 @@ GetYView(
 	if (code != TCL_OK) {
 	    Tcl_AddErrorInfo(interp,
 		    "\n    (vertical scrolling command executed by text)");
-	    Tcl_BackgroundError(interp);
+	    Tcl_BackgroundException(interp, code);
 	}
     }
 }
@@ -6378,7 +6378,7 @@ static void
 AsyncUpdateYScrollbar(
     ClientData clientData)	/* Information about widget. */
 {
-    register TkText *textPtr = (TkText *) clientData;
+    register TkText *textPtr = clientData;
 
     textPtr->dInfoPtr->scrollbarTimer = NULL;
 
@@ -6414,7 +6414,7 @@ static DLine *
 FindDLine(
     register DLine *dlPtr,	/* Pointer to first in list of DLines to
 				 * search. */
-    CONST TkTextIndex *indexPtr)/* Index of desired character. */
+    const TkTextIndex *indexPtr)/* Index of desired character. */
 {
     TkTextLine *linePtr;
 
@@ -6543,25 +6543,26 @@ TkTextPixelIndex(
 	}
 	*indexPtr = textPtr->topIndex;
 	return;
-    } else {
-	for (dlPtr = validDlPtr = dInfoPtr->dLinePtr;
-		y >= (dlPtr->y + dlPtr->height);
-		dlPtr = dlPtr->nextPtr) {
-	    if (dlPtr->chunkPtr != NULL) {
-		validDlPtr = dlPtr;
-	    }
-	    if (dlPtr->nextPtr == NULL) {
-		/*
-		 * Y-coordinate is off the bottom of the displayed text. Use
-		 * the last character on the last line.
-		 */
-
-		x = dInfoPtr->maxX - 1;
-		nearby = 1;
-		break;
-	    }
+    }
+    for (dlPtr = validDlPtr = dInfoPtr->dLinePtr;
+	    y >= (dlPtr->y + dlPtr->height);
+	    dlPtr = dlPtr->nextPtr) {
+	if (dlPtr->chunkPtr != NULL) {
+	    validDlPtr = dlPtr;
 	}
-	if (dlPtr->chunkPtr == NULL) dlPtr = validDlPtr;
+	if (dlPtr->nextPtr == NULL) {
+	    /*
+	     * Y-coordinate is off the bottom of the displayed text. Use the
+	     * last character on the last line.
+	     */
+
+	    x = dInfoPtr->maxX - 1;
+	    nearby = 1;
+	    break;
+	}
+    }
+    if (dlPtr->chunkPtr == NULL) {
+	dlPtr = validDlPtr;
     }
 
     if (nearest != NULL) {
@@ -6654,7 +6655,7 @@ DlineIndexOfX(
      */
 
     if (chunkPtr->numBytes > 1) {
-	indexPtr->byteIndex += (*chunkPtr->measureProc)(chunkPtr, x);
+	indexPtr->byteIndex += chunkPtr->measureProc(chunkPtr, x);
     }
 }
 
@@ -6726,10 +6727,10 @@ DlineXOfIndex(
 				 * coordinate. */
 {
     register TkTextDispChunk *chunkPtr = dlPtr->chunkPtr;
-    int x;
+    int x = 0;
 
     if (byteIndex == 0 || chunkPtr == NULL) {
-	return 0;
+	return x;
     }
 
     /*
@@ -6742,15 +6743,14 @@ DlineXOfIndex(
 	if (byteIndex < chunkPtr->numBytes) {
 	    int y, width, height;
 
-	    (*chunkPtr->bboxProc)(textPtr, chunkPtr, byteIndex,
+	    chunkPtr->bboxProc(textPtr, chunkPtr, byteIndex,
 		    dlPtr->y + dlPtr->spaceAbove,
 		    dlPtr->height - dlPtr->spaceAbove - dlPtr->spaceBelow,
 		    dlPtr->baseline - dlPtr->spaceAbove, &x, &y, &width,
 		    &height);
 	    break;
-	} else {
-	    byteIndex -= chunkPtr->numBytes;
 	}
+	byteIndex -= chunkPtr->numBytes;
 	if (chunkPtr->nextPtr == NULL || byteIndex == 0) {
 	    x = chunkPtr->x + chunkPtr->width;
 	    break;
@@ -6784,7 +6784,7 @@ DlineXOfIndex(
 int
 TkTextIndexBbox(
     TkText *textPtr,		/* Widget record for text widget. */
-    CONST TkTextIndex *indexPtr,/* Index whose bounding box is desired. */
+    const TkTextIndex *indexPtr,/* Index whose bounding box is desired. */
     int *xPtr, int *yPtr,	/* Filled with index's upper-left
 				 * coordinate. */
     int *widthPtr, int *heightPtr,
@@ -6838,7 +6838,7 @@ TkTextIndexBbox(
      * coordinate on the screen. Translate it to reflect horizontal scrolling.
      */
 
-    (*chunkPtr->bboxProc)(textPtr, chunkPtr, byteIndex,
+    chunkPtr->bboxProc(textPtr, chunkPtr, byteIndex,
 	    dlPtr->y + dlPtr->spaceAbove,
 	    dlPtr->height - dlPtr->spaceAbove - dlPtr->spaceBelow,
 	    dlPtr->baseline - dlPtr->spaceAbove, xPtr, yPtr, widthPtr,
@@ -6914,7 +6914,7 @@ TkTextIndexBbox(
 int
 TkTextDLineInfo(
     TkText *textPtr,		/* Widget record for text widget. */
-    CONST TkTextIndex *indexPtr,/* Index of character whose bounding box is
+    const TkTextIndex *indexPtr,/* Index of character whose bounding box is
 				 * desired. */
     int *xPtr, int *yPtr,	/* Filled with line's upper-left
 				 * coordinate. */
@@ -7079,7 +7079,7 @@ TkTextCharLayoutProc(
 
 	ciPtr = &bciPtr->ci;
     } else {
-	bciPtr = (BaseCharInfo *) baseCharChunkPtr->clientData;
+	bciPtr = baseCharChunkPtr->clientData;
 	ciPtr = (CharInfo *) ckalloc(sizeof(CharInfo));
 	baseString = &bciPtr->baseChars;
     }
@@ -7087,7 +7087,7 @@ TkTextCharLayoutProc(
     lineOffset = Tcl_DStringLength(baseString);
     line = Tcl_DStringAppend(baseString,p,maxBytes);
 
-    chunkPtr->clientData = (ClientData) ciPtr;
+    chunkPtr->clientData = ciPtr;
     ciPtr->baseChunkPtr = baseCharChunkPtr;
     ciPtr->baseOffset = lineOffset;
     ciPtr->chars = NULL;
@@ -7171,7 +7171,7 @@ TkTextCharLayoutProc(
 #if !TK_LAYOUT_WITH_BASE_CHUNKS
     ciPtr = (CharInfo *)
 	    ckalloc((unsigned) bytesThatFit + Tk_Offset(CharInfo, chars) + 1);
-    chunkPtr->clientData = (ClientData) ciPtr;
+    chunkPtr->clientData = ciPtr;
     memcpy(ciPtr->chars, p, (unsigned) bytesThatFit);
 #endif /* TK_LAYOUT_WITH_BASE_CHUNKS */
 
@@ -7209,11 +7209,21 @@ TkTextCharLayoutProc(
     } else {
 	for (count = bytesThatFit, p += bytesThatFit - 1; count > 0;
 		count--, p--) {
-	    if (isspace(UCHAR(*p))) {
+	    /*
+	     * Don't use isspace(); effects are unpredictable and can lead to
+	     * odd word-wrapping problems on some platforms. Also don't use
+	     * Tcl_UniCharIsSpace here either, as it identifies non-breaking
+	     * spaces as places to break. What we actually want is only the
+	     * ASCII space characters, so use them explicitly...
+	     */
+
+	    switch (*p) {
+	    case '\t': case '\n': case '\v': case '\f': case '\r': case ' ':
 		chunkPtr->breakIndex = count;
-		break;
+		goto checkForNextChunk;
 	    }
 	}
+    checkForNextChunk:
 	if ((bytesThatFit + byteOffset) == segPtr->size) {
 	    for (nextPtr = segPtr->nextPtr; nextPtr != NULL;
 		    nextPtr = nextPtr->nextPtr) {
@@ -7273,7 +7283,7 @@ CharChunkMeasureChars(
 				 * here. */
 {
     Tk_Font tkfont = chunkPtr->stylePtr->sValuePtr->tkfont;
-    CharInfo *ciPtr = (CharInfo *) chunkPtr->clientData;
+    CharInfo *ciPtr = chunkPtr->clientData;
 
 #if !TK_LAYOUT_WITH_BASE_CHUNKS
     if (chars == NULL) {
@@ -7362,7 +7372,7 @@ CharDisplayProc(
     int screenY)		/* Y-coordinate in text window that
 				 * corresponds to y. */
 {
-    CharInfo *ciPtr = (CharInfo *) chunkPtr->clientData;
+    CharInfo *ciPtr = chunkPtr->clientData;
     const char *string;
     TextStyle *stylePtr;
     StyleValues *sValuePtr;
@@ -7380,7 +7390,7 @@ CharDisplayProc(
     }
 
 #if TK_DRAW_IN_CONTEXT
-    bciPtr = (BaseCharInfo *) ciPtr->baseChunkPtr->clientData;
+    bciPtr = ciPtr->baseChunkPtr->clientData;
     numBytes = Tcl_DStringLength(&bciPtr->baseChars);
     string = Tcl_DStringValue(&bciPtr->baseChars);
 
@@ -7513,7 +7523,7 @@ CharUndisplayProc(
     TkText *textPtr,		/* Overall information about text widget. */
     TkTextDispChunk *chunkPtr)	/* Chunk that is about to be freed. */
 {
-    CharInfo *ciPtr = (CharInfo *) chunkPtr->clientData;
+    CharInfo *ciPtr = chunkPtr->clientData;
 
     if (ciPtr) {
 #if TK_LAYOUT_WITH_BASE_CHUNKS
@@ -7616,7 +7626,7 @@ CharBboxProc(
     int *heightPtr)		/* Gets filled in with height of character, in
 				 * pixels. */
 {
-    CharInfo *ciPtr = (CharInfo *) chunkPtr->clientData;
+    CharInfo *ciPtr = chunkPtr->clientData;
     int maxX;
 
     maxX = chunkPtr->width + chunkPtr->x;
@@ -7779,7 +7789,7 @@ AdjustForTab(
 	if (chunkPtr2->displayProc != CharDisplayProc) {
 	    continue;
 	}
-	ciPtr = (CharInfo *) chunkPtr2->clientData;
+	ciPtr = chunkPtr2->clientData;
 	for (p = ciPtr->chars, i = 0; i < ciPtr->numBytes; p++, i++) {
 	    if (isdigit(UCHAR(*p))) {
 		gotDigit = 1;
@@ -7800,23 +7810,23 @@ AdjustForTab(
     if (decimalChunkPtr != NULL) {
 	int curX;
 
-	ciPtr = (CharInfo *) decimalChunkPtr->clientData;
+	ciPtr = decimalChunkPtr->clientData;
 	CharChunkMeasureChars(decimalChunkPtr, NULL, 0, 0, decimal,
 		decimalChunkPtr->x, -1, 0, &curX);
 	desired = tabX - (curX - x);
 	goto update;
-    } else {
-	/*
-	 * There wasn't a decimal point. Right justify the text.
-	 */
-
-	width = 0;
-	for (chunkPtr2 = chunkPtr->nextPtr; chunkPtr2 != NULL;
-		chunkPtr2 = chunkPtr2->nextPtr) {
-	    width += chunkPtr2->width;
-	}
-	desired = tabX - width;
     }
+
+    /*
+     * There wasn't a decimal point. Right justify the text.
+     */
+
+    width = 0;
+    for (chunkPtr2 = chunkPtr->nextPtr; chunkPtr2 != NULL;
+	    chunkPtr2 = chunkPtr2->nextPtr) {
+	width += chunkPtr2->width;
+    }
+    desired = tabX - width;
 
     /*
      * Shift all of the chunks to the right so that the left edge is at the
@@ -8054,7 +8064,7 @@ NextTabStop(
 static int
 MeasureChars(
     Tk_Font tkfont,		/* Font in which to draw characters. */
-    CONST char *source,		/* Characters to be displayed. Need not be
+    const char *source,		/* Characters to be displayed. Need not be
 				 * NULL-terminated. */
     int maxBytes,		/* Maximum # of bytes to consider from
 				 * source. */
@@ -8069,7 +8079,7 @@ MeasureChars(
 				 * here. */
 {
     int curX, width, ch;
-    CONST char *special, *end, *start;
+    const char *special, *end, *start;
 
     ch = 0;			/* lint. */
     curX = startX;
@@ -8116,11 +8126,10 @@ MeasureChars(
 	    break;
 	}
 	if (special < end) {
-	    if (ch == '\t') {
-		start++;
-	    } else {
+	    if (ch != '\t') {
 		break;
 	    }
+	    start++;
 	}
     }
 
@@ -8161,19 +8170,19 @@ TextGetScrollInfoObj(
     Tcl_Interp *interp,		/* Used for error reporting. */
     TkText *textPtr,		/* Information about the text widget. */
     int objc,			/* # arguments for command. */
-    Tcl_Obj *CONST objv[],	/* Arguments for command. */
+    Tcl_Obj *const objv[],	/* Arguments for command. */
     double *dblPtr,		/* Filled in with argument "moveto" option, if
 				 * any. */
     int *intPtr)		/* Filled in with number of pages or lines or
 				 * pixels to scroll, if any. */
 {
-    static CONST char *subcommands[] = {
+    static const char *const subcommands[] = {
 	"moveto", "scroll", NULL
     };
     enum viewSubcmds {
 	VIEW_MOVETO, VIEW_SCROLL
     };
-    static CONST char *units[] = {
+    static const char *const units[] = {
 	"units", "pages", "pixels", NULL
     };
     enum viewUnits {
@@ -8280,7 +8289,7 @@ FinalizeBaseChunk(
 	if (chunkPtr->displayProc != CharDisplayProc) {
 	    continue;
 	}
-	ciPtr = (CharInfo *)chunkPtr->clientData;
+	ciPtr = chunkPtr->clientData;
 	if (ciPtr->baseChunkPtr != baseCharChunkPtr) {
 	    break;
 	}
@@ -8297,7 +8306,7 @@ FinalizeBaseChunk(
     }
 
     if (addChunkPtr != NULL) {
-	ciPtr = (CharInfo *)addChunkPtr->clientData;
+	ciPtr = addChunkPtr->clientData;
 	ciPtr->chars = baseChars + ciPtr->baseOffset;
 
 #if TK_DRAW_IN_CONTEXT
@@ -8348,7 +8357,7 @@ FreeBaseChunk(
 	if (chunkPtr->undisplayProc != CharUndisplayProc) {
 	    continue;
 	}
-	ciPtr = (CharInfo *) chunkPtr->clientData;
+	ciPtr = chunkPtr->clientData;
 	if (ciPtr->baseChunkPtr != baseChunkPtr) {
 	    break;
 	}
@@ -8357,7 +8366,9 @@ FreeBaseChunk(
 	ciPtr->chars = NULL;
     }
 
-    Tcl_DStringFree(&((BaseCharInfo *) baseChunkPtr->clientData)->baseChars);
+    if (baseChunkPtr) {
+	Tcl_DStringFree(&((BaseCharInfo *) baseChunkPtr->clientData)->baseChars);
+    }
 }
 
 /*
@@ -8466,14 +8477,14 @@ RemoveFromBaseChunk(
      * Reinstitute this base chunk for re-layout.
      */
 
-    ciPtr = (CharInfo *) chunkPtr->clientData;
+    ciPtr = chunkPtr->clientData;
     baseCharChunkPtr = ciPtr->baseChunkPtr;
 
     /*
      * Remove the chunk data from the base chunk data.
      */
 
-    bciPtr = (BaseCharInfo *) baseCharChunkPtr->clientData;
+    bciPtr = baseCharChunkPtr->clientData;
 
     if ((ciPtr->baseOffset + ciPtr->numBytes)
 	    != Tcl_DStringLength(&bciPtr->baseChars)) {

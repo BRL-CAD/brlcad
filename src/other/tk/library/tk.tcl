@@ -1,7 +1,7 @@
 # tk.tcl --
 #
-# Initialization script normally executed in the interpreter for each
-# Tk-based application.  Arranges class bindings for widgets.
+# Initialization script normally executed in the interpreter for each Tk-based
+# application.  Arranges class bindings for widgets.
 #
 # RCS: @(#) $Id$
 #
@@ -9,16 +9,14 @@
 # Copyright (c) 1994-1996 Sun Microsystems, Inc.
 # Copyright (c) 1998-2000 Ajuba Solutions.
 #
-# See the file "license.terms" for information on usage and redistribution
-# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+# See the file "license.terms" for information on usage and redistribution of
+# this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
-package require Tcl 8.5	;# Guard against [source] in an 8.4- interp
-			;# before using 8.5 [package] features.
 # Insist on running with compatible version of Tcl
-package require Tcl 8.5.0-8.6
+package require Tcl 8.6
 # Verify that we have Tk binary and script components from the same release
-package require -exact Tk  8.5.6
-
+package require -exact Tk  8.6b1.1
+
 # Create a ::tk namespace
 namespace eval ::tk {
     # Set up the msgcat commands
@@ -28,7 +26,7 @@ namespace eval ::tk {
             # The msgcat package is not available.  Supply our own
             # minimal replacement.
             proc mc {src args} {
-                return [format $src {*}$args]
+                tailcall format $src {*}$args
             }
             proc mcmax {args} {
                 set max 0
@@ -61,7 +59,8 @@ namespace eval ::ttk {
 # isn't already on the path:
 
 if {[info exists ::auto_path] && ($::tk_library ne "")
-    && ($::tk_library ni $::auto_path)} {
+    && ($::tk_library ni $::auto_path)
+} then {
     lappend ::auto_path $::tk_library $::ttk::library
 }
 
@@ -73,7 +72,7 @@ set ::tk_strictMotif 0
 # We catch this because safe interpreters may not allow the call.
 
 catch {tk useinputmethods 1}
-
+
 # ::tk::PlaceWindow --
 #   place a toplevel at a particular position
 # Arguments:
@@ -131,13 +130,15 @@ proc ::tk::PlaceWindow {w {place ""} {anchor ""}} {
 	}
 	if {[tk windowingsystem] eq "aqua"} {
 	    # Avoid the native menu bar which sits on top of everything.
-	    if {$y < 22} { set y 22 }
+	    if {$y < 22} {
+		set y 22
+	    }
 	}
     }
     wm geometry $w +$x+$y
     wm deiconify $w
 }
-
+
 # ::tk::SetFocusGrab --
 #   swap out current focus and grab temporarily (for dialogs)
 # Arguments:
@@ -197,7 +198,7 @@ proc ::tk::RestoreFocusGrab {grab focus {destroy destroy}} {
 	}
     }
 }
-
+
 # ::tk::GetSelection --
 #   This tries to obtain the default selection.  On Unix, we first try
 #   and get a UTF8_STRING, a type supported by modern Unix apps for
@@ -212,9 +213,11 @@ proc ::tk::RestoreFocusGrab {grab focus {destroy destroy}} {
 #
 if {$tcl_platform(platform) eq "unix"} {
     proc ::tk::GetSelection {w {sel PRIMARY}} {
-	if {[catch {selection get -displayof $w -selection $sel \
-		-type UTF8_STRING} txt] \
-		&& [catch {selection get -displayof $w -selection $sel} txt]} {
+	if {[catch {
+	    selection get -displayof $w -selection $sel -type UTF8_STRING
+	} txt] && [catch {
+	    selection get -displayof $w -selection $sel
+	} txt]} then {
 	    return -code error "could not find default selection"
 	} else {
 	    return $txt
@@ -222,14 +225,16 @@ if {$tcl_platform(platform) eq "unix"} {
     }
 } else {
     proc ::tk::GetSelection {w {sel PRIMARY}} {
-	if {[catch {selection get -displayof $w -selection $sel} txt]} {
+	if {[catch {
+	    selection get -displayof $w -selection $sel
+	} txt]} then {
 	    return -code error "could not find default selection"
 	} else {
 	    return $txt
 	}
     }
 }
-
+
 # ::tk::ScreenChanged --
 # This procedure is invoked by the binding mechanism whenever the
 # "current" screen is changing.  The procedure does two things.
@@ -241,14 +246,15 @@ if {$tcl_platform(platform) eq "unix"} {
 # screen -		The name of the new screen.
 
 proc ::tk::ScreenChanged screen {
-    set x [string last . $screen]
-    if {$x > 0} {
-	set disp [string range $screen 0 [expr {$x - 1}]]
-    } else {
-	set disp $screen
-    }
+    # Extract the display name.
+    set disp [string range $screen 0 [string last . $screen]-1]
 
-    uplevel #0 upvar #0 ::tk::Priv.$disp ::tk::Priv
+    # Ensure that namespace separators never occur in the display name (as
+    # they cause problems in variable names). Double-colons exist in some VNC
+    # display names. [Bug 2912473]
+    set disp [string map {:: _doublecolon_} $disp]
+
+    uplevel #0 [list upvar #0 ::tk::Priv.$disp ::tk::Priv]
     variable ::tk::Priv
     global tcl_platform
 
@@ -288,7 +294,7 @@ proc ::tk::ScreenChanged screen {
 # value, which will cause trouble later).
 
 tk::ScreenChanged [winfo screen .]
-
+
 # ::tk::EventMotifBindings --
 # This procedure is invoked as a trace whenever ::tk_strictMotif is
 # changed.  It is used to turn on or turn off the motif virtual
@@ -311,7 +317,7 @@ proc ::tk::EventMotifBindings {n1 dummy dummy} {
     event $op <<Paste>> <Control-Key-y>
     event $op <<Undo>> <Control-underscore>
 }
-
+
 #----------------------------------------------------------------------
 # Define common dialogs on platforms where they are not implemented 
 # using compiled code.
@@ -319,55 +325,73 @@ proc ::tk::EventMotifBindings {n1 dummy dummy} {
 
 if {![llength [info commands tk_chooseColor]]} {
     proc ::tk_chooseColor {args} {
-	return [tk::dialog::color:: {*}$args]
+	tailcall ::tk::dialog::color:: {*}$args
     }
 }
 if {![llength [info commands tk_getOpenFile]]} {
     proc ::tk_getOpenFile {args} {
 	if {$::tk_strictMotif} {
-	    return [tk::MotifFDialog open {*}$args]
+	    tailcall ::tk::MotifFDialog open {*}$args
 	} else {
-	    return [::tk::dialog::file:: open {*}$args]
+	    tailcall ::tk::dialog::file:: open {*}$args
 	}
     }
 }
 if {![llength [info commands tk_getSaveFile]]} {
     proc ::tk_getSaveFile {args} {
 	if {$::tk_strictMotif} {
-	    return [tk::MotifFDialog save {*}$args]
+	    tailcall ::tk::MotifFDialog save {*}$args
 	} else {
-	    return [::tk::dialog::file:: save {*}$args]
+	    tailcall ::tk::dialog::file:: save {*}$args
 	}
     }
 }
 if {![llength [info commands tk_messageBox]]} {
     proc ::tk_messageBox {args} {
-	return [tk::MessageBox {*}$args]
+	tailcall ::tk::MessageBox {*}$args
     }
 }
 if {![llength [info command tk_chooseDirectory]]} {
     proc ::tk_chooseDirectory {args} {
-	return [::tk::dialog::file::chooseDir:: {*}$args]
+	tailcall ::tk::dialog::file::chooseDir:: {*}$args
     }
 }
-
+
 #----------------------------------------------------------------------
 # Define the set of common virtual events.
 #----------------------------------------------------------------------
 
 switch -exact -- [tk windowingsystem] {
     "x11" {
-	event add <<Cut>> <Control-Key-x> <Key-F20> 
-	event add <<Copy>> <Control-Key-c> <Key-F16>
-	event add <<Paste>> <Control-Key-v> <Key-F18>
+	event add <<Cut>> <Control-Key-x> <Key-F20> <Control-Lock-Key-X>
+	event add <<Copy>> <Control-Key-c> <Key-F16> <Control-Lock-Key-C>
+	event add <<Paste>> <Control-Key-v> <Key-F18> <Control-Lock-Key-V>
 	event add <<PasteSelection>> <ButtonRelease-2>
-	event add <<Undo>> <Control-Key-z>
-	event add <<Redo>> <Control-Key-Z>
-	# Some OS's define a goofy (as in, not <Shift-Tab>) keysym
-	# that is returned when the user presses <Shift-Tab>.  In order for
-	# tab traversal to work, we have to add these keysyms to the 
-	# PrevWindow event.
-	# We use catch just in case the keysym isn't recognized.
+	event add <<Undo>> <Control-Key-z> <Control-Lock-Key-Z>
+	event add <<Redo>> <Control-Key-Z> <Control-Lock-Key-z>
+	event add <<ContextMenu>> <Button-3>
+	if {[info exists tcl_platform(os)] && $tcl_platform(os) eq "Darwin"} {
+	    event add <<ContextMenu>> <Button-2>
+	}
+
+	event add <<NextChar>>		<Right>
+	event add <<SelectNextChar>>	<Shift-Right>
+	event add <<PrevChar>>		<Left>
+	event add <<SelectPrevChar>>	<Shift-Left>
+	event add <<NextWord>>		<Control-Right>
+	event add <<SelectNextWord>>	<Shift-Control-Right>
+	event add <<PrevWord>>		<Control-Left>
+	event add <<SelectPrevWord>>	<Shift-Control-Left>
+	event add <<LineStart>>		<Home>
+	event add <<SelectLineStart>>	<Shift-Home>
+	event add <<LineEnd>>		<End>
+	event add <<SelectLineEnd>>	<Shift-End>
+
+	# Some OS's define a goofy (as in, not <Shift-Tab>) keysym that is
+	# returned when the user presses <Shift-Tab>. In order for tab
+	# traversal to work, we have to add these keysyms to the PrevWindow
+	# event. We use catch just in case the keysym isn't recognized.
+
 	# This is needed for XFree86 systems
 	catch { event add <<PrevWindow>> <ISO_Left_Tab> }
 	# This seems to be correct on *some* HP systems.
@@ -380,23 +404,59 @@ switch -exact -- [tk windowingsystem] {
 	set ::tk::AlwaysShowSelection 1
     }
     "win32" {
-	event add <<Cut>> <Control-Key-x> <Shift-Key-Delete>
-	event add <<Copy>> <Control-Key-c> <Control-Key-Insert>
-	event add <<Paste>> <Control-Key-v> <Shift-Key-Insert>
+	event add <<Cut>> <Control-Key-x> <Shift-Key-Delete> \
+	    <Control-Lock-Key-X>
+	event add <<Copy>> <Control-Key-c> <Control-Key-Insert> \
+	    <Control-Lock-Key-C>
+	event add <<Paste>> <Control-Key-v> <Shift-Key-Insert> \
+	    <Control-Lock-Key-V>
 	event add <<PasteSelection>> <ButtonRelease-2>
-  	event add <<Undo>> <Control-Key-z>
-	event add <<Redo>> <Control-Key-y>
+  	event add <<Undo>> <Control-Key-z> <Control-Lock-Key-Z>
+	event add <<Redo>> <Control-Key-y> <Control-Lock-Key-Y>
+	event add <<ContextMenu>> <Button-3>
+
+	event add <<NextChar>>		<Right>
+	event add <<SelectNextChar>>	<Shift-Right>
+	event add <<PrevChar>>		<Left>
+	event add <<SelectPrevChar>>	<Shift-Left>
+	event add <<NextWord>>		<Control-Right>
+	event add <<SelectNextWord>>	<Shift-Control-Right>
+	event add <<PrevWord>>		<Control-Left>
+	event add <<SelectPrevWord>>	<Shift-Control-Left>
+	event add <<LineStart>>		<Home>
+	event add <<SelectLineStart>>	<Shift-Home>
+	event add <<LineEnd>>		<End>
+	event add <<SelectLineEnd>>	<Shift-End>
     }
     "aqua" {
-	event add <<Cut>> <Command-Key-x> <Key-F2> 
-	event add <<Copy>> <Command-Key-c> <Key-F3>
-	event add <<Paste>> <Command-Key-v> <Key-F4>
+	event add <<Cut>> <Command-Key-x> <Key-F2> <Control-Lock-Key-X>
+	event add <<Copy>> <Command-Key-c> <Key-F3> <Control-Lock-Key-C>
+	event add <<Paste>> <Command-Key-v> <Key-F4> <Control-Lock-Key-V>
 	event add <<PasteSelection>> <ButtonRelease-2>
 	event add <<Clear>> <Clear>
-  	event add <<Undo>> <Command-Key-z>
-	event add <<Redo>> <Command-Key-y>
+  	event add <<Undo>> <Command-Key-z> <Control-Lock-Key-Z>
+	event add <<Redo>> <Command-Key-y> <Control-Lock-Key-Y>
+	event add <<ContextMenu>> <Button-2>
+
+	# Official bindings
+	# See http://support.apple.com/kb/HT1343
+	event add <<NextChar>>		<Right>
+	event add <<SelectNextChar>>	<Shift-Right>
+	event add <<PrevChar>>		<Left>
+	event add <<SelectPrevChar>>	<Shift-Left>
+	event add <<NextWord>>		<Option-Right>
+	event add <<SelectNextWord>>	<Shift-Option-Right>
+	event add <<PrevWord>>		<Option-Left>
+	event add <<SelectPrevWord>>	<Shift-Option-Left>
+	event add <<SelectLineStart>>	<Shift-Home> <Shift-Command-Left>
+	event add <<SelectLineEnd>>	<Shift-End> <Shift-Command-Right>
+	# Not official, but logical extensions of above. Also derived from
+	# bindings present in MS Word on OSX.
+	event add <<LineStart>>		<Home> <Command-Left>
+	event add <<LineEnd>>		<End> <Command-Right>
     }
 }
+
 # ----------------------------------------------------------------------
 # Read in files that define all of the class bindings.
 # ----------------------------------------------------------------------
@@ -406,6 +466,7 @@ if {$::tk_library ne ""} {
         namespace eval :: [list source [file join $::tk_library $file.tcl]]
     }
     namespace eval ::tk {
+	SourceLibFile icons
 	SourceLibFile button
 	SourceLibFile entry
 	SourceLibFile listbox
@@ -417,14 +478,16 @@ if {$::tk_library ne ""} {
 	SourceLibFile text
     }
 }
+
 # ----------------------------------------------------------------------
 # Default bindings for keyboard traversal.
 # ----------------------------------------------------------------------
 
 event add <<PrevWindow>> <Shift-Tab>
-bind all <Tab> {tk::TabToWindow [tk_focusNext %W]}
+event add <<NextWindow>> <Tab>
+bind all <<NextWindow>> {tk::TabToWindow [tk_focusNext %W]}
 bind all <<PrevWindow>> {tk::TabToWindow [tk_focusPrev %W]}
-
+
 # ::tk::CancelRepeat --
 # This procedure is invoked to cancel an auto-repeat action described
 # by ::tk::Priv(afterId).  It's used by several widgets to auto-scroll
@@ -439,7 +502,7 @@ proc ::tk::CancelRepeat {} {
     after cancel $Priv(afterId)
     set Priv(afterId) {}
 }
-
+
 # ::tk::TabToWindow --
 # This procedure moves the focus to the given widget.
 # It sends a <<TraverseOut>> virtual event to the previous focus window, 
@@ -457,7 +520,7 @@ proc ::tk::TabToWindow {w} {
     focus $w
     event generate $w <<TraverseIn>>
 }
-
+
 # ::tk::UnderlineAmpersand --
 # This procedure takes some text with ampersand and returns
 # text w/o ampersand and position of the ampersand.
@@ -465,25 +528,9 @@ proc ::tk::TabToWindow {w} {
 # Position returned is -1 when there is no ampersand.
 #
 proc ::tk::UnderlineAmpersand {text} {
-    set idx [string first "&" $text]
-    if {$idx >= 0} {
-	set underline $idx
-	# ignore "&&"
-	while {[string match "&" [string index $text [expr {$idx + 1}]]]} {
-	    set base [expr {$idx + 2}]
-	    set idx  [string first "&" [string range $text $base end]]
-	    if {$idx < 0} {
-		break
-	    } else {
-		set underline [expr {$underline + $idx + 1}]
-		incr idx $base
-	    }
-	}
-    }
-    if {$idx >= 0} {
-	regsub -all -- {&([^&])} $text {\1} text
-    }
-    return [list $text $idx]
+    set s [string map {&& & & \ufeff} $text]
+    set idx [string first \ufeff $s]
+    return [list [string map {\ufeff {}} $s] $idx]
 }
 
 # ::tk::SetAmpText -- 
@@ -567,8 +614,9 @@ proc ::tk::FindAltKeyTarget {path char} {
 #
 proc ::tk::AltKeyInDialog {path key} {
     set target [FindAltKeyTarget $path $key]
-    if { $target eq ""} return
-    event generate $target <<AltUnderlined>>
+    if {$target ne ""} {
+	event generate $target <<AltUnderlined>>
+    }
 }
 
 # ::tk::mcmaxamp --
@@ -587,6 +635,7 @@ proc ::tk::mcmaxamp {args} {
     }
     return $maxlen
 }
+
 # For now, turn off the custom mdef proc for the mac:
 
 if {[tk windowingsystem] eq "aqua"} {
@@ -599,3 +648,8 @@ if {[tk windowingsystem] eq "aqua"} {
 if {$::ttk::library ne ""} {
     uplevel \#0 [list source $::ttk::library/ttk.tcl]
 }
+
+# Local Variables:
+# mode: tcl
+# fill-column: 78
+# End:

@@ -15,6 +15,7 @@ ttk::scale \- Create and manipulate a scale widget
 \fBttk::scale \fIpathName \fR?\fIoptions...\fR?
 .BE
 .SH DESCRIPTION
+.PP
 A \fBttk::scale\fR widget is typically used to control the numeric value of a
 linked variable that varies uniformly over some range. A scale displays a
 \fIslider\fR that can be moved along over a \fItrough\fR, with the relative
@@ -49,6 +50,7 @@ value of the variable changes, the scale will update to reflect this value.
 Whenever the scale is manipulated interactively, the variable will be modified
 to reflect the scale's new value.
 .SH "WIDGET COMMAND"
+.PP
 .TP
 \fIpathName \fBcget \fIoption\fR
 .
@@ -84,6 +86,7 @@ named in the \fB\-variable\fR option) does not cause such clipping.
 .
 Modify or query the widget state; see \fIttk::widget(n)\fR.
 .SH "INTERNAL COMMANDS"
+.PP
 .TP
 \fIpathName \fBcoords \fR?\fIvalue\fR?
 .

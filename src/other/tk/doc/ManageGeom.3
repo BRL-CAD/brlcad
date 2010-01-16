@@ -47,7 +47,7 @@ typedef struct {
     const char *\fIname\fR;
     Tk_GeomRequestProc *\fIrequestProc\fR;
     Tk_GeomLostSlaveProc *\fIlostSlaveProc\fR;
-} Tk_GeomMgr;
+} \fBTk_GeomMgr\fR;
 .CE
 The \fIname\fR field is the textual name for the geometry manager,
 such as \fBpack\fR or \fBplace\fR;  this value will be returned
@@ -59,9 +59,9 @@ slave to change its desired geometry.
 \fIrequestProc\fR should have arguments and results that match the
 type \fBTk_GeomRequestProc\fR:
 .CS
-typedef void Tk_GeomRequestProc(
-    ClientData \fIclientData\fR,
-    Tk_Window \fItkwin\fR);
+typedef void \fBTk_GeomRequestProc\fR(
+        ClientData \fIclientData\fR,
+        Tk_Window \fItkwin\fR);
 .CE
 The parameters to \fIrequestProc\fR will be identical to the
 corresponding parameters passed to \fBTk_ManageGeometry\fR.
@@ -82,12 +82,11 @@ is the same as the window's current geometry manager.
 \fIlostSlaveProc\fR should have
 arguments and results that match the following prototype:
 .CS
-typedef void Tk_GeomLostSlaveProc(
-    ClientData \fIclientData\fR,
-    Tk_Window \fItkwin\fR);
+typedef void \fBTk_GeomLostSlaveProc\fR(
+        ClientData \fIclientData\fR,
+        Tk_Window \fItkwin\fR);
 .CE
 The parameters to \fIlostSlaveProc\fR will be identical to the
 corresponding parameters passed to \fBTk_ManageGeometry\fR.
-
 .SH KEYWORDS
 callback, geometry, managed, request, unmanaged

@@ -16,7 +16,6 @@ tkerror \- Command invoked to process background errors
 .SH SYNOPSIS
 \fBtkerror \fImessage\fR
 .BE
-
 .SH DESCRIPTION
 .PP
 Note: as of Tk 4.1 the \fBtkerror\fR command has been renamed to
@@ -33,6 +32,8 @@ to the user. If you want your own error management you should
 directly override \fBbgerror\fR instead of \fBtkerror\fR.
 Documentation for \fBbgerror\fR is available as part of Tcl's
 documentation.
-
 .SH KEYWORDS
 background error, reporting
+'\" Local Variables:
+'\" mode: nroff
+'\" End:

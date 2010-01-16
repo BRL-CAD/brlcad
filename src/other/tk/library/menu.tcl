@@ -307,7 +307,7 @@ proc ::tk::MbPost {w {x {}} {y {}}} {
     	    	set x [expr {[winfo rootx $w] - [winfo reqwidth $menu]}]
     	    	set y [expr {(2 * [winfo rooty $w] + [winfo height $w]) / 2}]
     	    	set entry [MenuFindName $menu [$w cget -text]]
-    	    	if {[$w cget -indicatoron]} {
+		if {[$w cget -indicatoron] && $entry ne ""} {
 		    if {$entry == [$menu index last]} {
 		    	incr y [expr {-([$menu yposition $entry] \
 			    	+ [winfo reqheight $menu])/2}]
@@ -327,7 +327,7 @@ proc ::tk::MbPost {w {x {}} {y {}}} {
     	    	set x [expr {[winfo rootx $w] + [winfo width $w]}]
     	    	set y [expr {(2 * [winfo rooty $w] + [winfo height $w]) / 2}]
     	    	set entry [MenuFindName $menu [$w cget -text]]
-    	    	if {[$w cget -indicatoron]} {
+		if {[$w cget -indicatoron] && $entry ne ""} {
 		    if {$entry == [$menu index last]} {
 		    	incr y [expr {-([$menu yposition $entry] \
 			    	+ [winfo reqheight $menu])/2}]
@@ -405,6 +405,9 @@ proc ::tk::MenuUnpost menu {
 
     # Unpost menu(s) and restore some stuff that's dependent on
     # what was posted.
+
+    after cancel [array get Priv menuActivatedTimer]
+    unset -nocomplain Priv(menuActivated)
 
     catch {
 	if {$mb ne ""} {
@@ -547,6 +550,7 @@ proc ::tk::MbButtonUp w {
 proc ::tk::MenuMotion {menu x y state} {
     variable ::tk::Priv
     if {$menu eq $Priv(window)} {
+        set activeindex [$menu index active]
 	if {[$menu cget -type] eq "menubar"} {
 	    if {[info exists Priv(focus)] && $menu ne $Priv(focus)} {
 		$menu activate @$x,$y
@@ -556,9 +560,18 @@ proc ::tk::MenuMotion {menu x y state} {
 	    $menu activate @$x,$y
 	    GenerateMenuSelect $menu
 	}
-    }
-    if {($state & 0x1f00) != 0} {
-	$menu postcascade active
+        set index [$menu index @$x,$y]
+        if {[info exists Priv(menuActivated)] \
+                && $index ne "none" \
+                && $index ne $activeindex \
+                && [$menu type $index] eq "cascade"} {
+            set mode [option get $menu clickToFocus ClickToFocus]
+            if {$mode eq "" || ([string is boolean $mode] && !$mode)} {
+                set delay [expr {[$menu cget -type] eq "menubar"? 0 : 50}]
+                set Priv(menuActivatedTimer) \
+                    [after $delay [list $menu postcascade active]]
+            }
+        }
     }
 }
 
@@ -599,6 +612,9 @@ proc ::tk::MenuButtonDown menu {
 	    if {$::tk_strictMotif} {
 		set Priv(cursor) [$menu cget -cursor]
 		$menu configure -cursor arrow
+	    }
+	    if {[$menu type active] eq "cascade"} {
+		set Priv(menuActivated) 1
 	    }
         }
 
@@ -1311,6 +1327,7 @@ proc ::tk_popup {menu x y {entry {}}} {
         tk::SaveGrabInfo $menu
 	grab -global $menu
 	set Priv(popup) $menu
+	set Priv(menuActivated) 1
 	tk_menuSetFocus $menu
     }
 }

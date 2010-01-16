@@ -6502,11 +6502,22 @@ Several documentation and release notes improvements
 
 --- Released 8.5.2, March 28, 2008 --- See ChangeLog for details ---
 
+2008-04-01 (interface)[1819422] tkStubsPtr no longer in libtk (porter)
+	*** POTENTIAL INCOMPATIBILITY ***
+
+2008-04-02 (interface)[1819422] libtkstub symbols MODULE_SCOPE (steffen)
+
 2008-04-07 (bug fix)[1937135] Tk_ParseArgv() double free crash (hobbs)
 
 2008-04-07 (bug fix)[1936238] wish -h mem explosion (bachmann,kenny)
 
+2008-04-08 (new feature) Win: visual-styles API element engine (thoyts)
+
+2008-04-09 (enhancement) real LZW compression in GIF writer (nijtmans)
+
 2008-04-14 (bug fix)[1941740] [tk_chooseColor -title] (thoyts)
+
+2008-04-16 (interface)[1938497] make stubs tables 'static const' (steffen)
 
 2008-04-17 (bug fix)[1327482] canvas item <Enter> events (wangnick)
 
@@ -6518,11 +6529,16 @@ Several documentation and release notes improvements
 
 2008-06-12 (platform support) Solaris/amd64 gcc 64bit support (steffen)
 
+2008-06-13 (new feature)[TIP 285] [tkwait] and [update] are now
+[interp cancel]able (mistachkin)
+
 2008-06-18 (bug fix) Aqua: missing focus on first map (steffen)
 
---- Released 8.5.3, June 30, 2008 --- See ChangeLog for details ---
+--- Released 8.6a1, June 25, 2008 --- See ChangeLog for details ---
 
 2008-07-04 (bug fix)[2009213] crash in [ttk::scale] (polo,english)
+
+2008-07-24 (bug fix)[2021443] consistent "wrong # args" messages (nijtmans)
 
 2008-07-26 (bug fix)[2026405] portability of [winfo id] (uchida,thoyts)
 
@@ -6533,12 +6549,15 @@ Several documentation and release notes improvements
 2008-08-05 (bug fix)[2010422] Tk header files revised to accommodate
 incompatible changes in recent X.org releases of X11 headers. (jenglish)
 
---- Released 8.5.4, August 15, 2008 --- See ChangeLog for details ---
+2008-08-19 (bug fix) revised number format in -[xy]scrollcommand callbacks
+and [xy]view methods (jenglish)
+        *** POTENTIAL INCOMPATIBILITY ***
 
-2008-08-19 (behavior change) arguments passed to -[xy]scrollcommand
-callbacks, and values returned by [xy]view methods are explicitly
-formatted as doubles.  (english)
-	*** POTENTIAL INCOMPATIBILITY ***
+2008-08-19 (enhancement) removed obsolete XID management code (staplin)
+
+Test suite modernization by Ania Pawelczyk.
+
+--- Released 8.6a2, August 25, 2008 --- See ChangeLog for details ---
 
 2008-08-25 (bug fix)[1936220] fix [tk_getOpenFile -multiple 1] on unix (helfter)
 
@@ -6546,32 +6565,63 @@ formatted as doubles.  (english)
 
 2008-08-28 (bug fix) correct TK_LIBS value to include Xft (porter)
 
+2008-09-03 (support) Dropped support for pre-ANSI compilers. (porter)
+
+2008-10-01 (new feature)[TIP 236] [$canvas moveto] (mckay,fellows)
+
 2008-10-05 (bug fix)[2112563] format double values explicitly in double
 format, avoiding sensitivity to locale setting. (fellows)
-	*** POTENTIAL INCOMPATIBILITY ***
+        *** POTENTIAL INCOMPATIBILITY ***
 
-2008-10-10 (bug fix)[1894038] [package require] any Tk 8.5.* in any Tcl 8.5.*
-(porter)
-
---- Released 8.5.5, October 15, 2008 --- See ChangeLog for details ---
+--- Released 8.6a3, October 10, 2008 --- See ChangeLog for details ---
 
 2008-10-17 (enhancement) keyboard bindings for ttk::scale (thoyts)
 
+2008-10-18 (bug fix)[1825353] Russian Windows tiny fonts problem (thoyts)
+
+2008-10-18 (new feature)[TIP 321] [tk busy] (decoster,fellows)
+
+2008-10-28 (bug fix)[1534835,2054562] use of more correct cursors (english)
+
+2008-11-01 (new feature) New [ttk::spinbox] widget (thoyts)
+
+2008-11-01 (new feature)[TIP 97] [$canvas imove] [$canvas rchars] (fellows)
+
+2008-11-09 (bug fix)[2207435] [ttk::entry .t -textvar ::noexist::x] (english)
+
+2008-11-11 (bug fix)[2312027] Tk_Create*ImageType() thread safety (nijtmans)
+
+2008-11-11 (bug fix)[2264732] crash using nondefault visual (english)
+
 2008-11-12 (bug fix)[1777362] permit [text] names containing "-" (thoyts)
 
-2008-11-15 (bug fix)[2239034] limit [wm manage] to Frames (thoyts)
+2008-11-14 (bug fix)[2239034] limit [wm manage] to Frames (thoyts)
 
-2008-11-19 (bug fix)[2312027] Tk_Create*ImageType() thread safety (nijtmans)
+2008-11-22 (new feature)[TIP 119] -angle option for canvas text items (fellows)
 
 2008-11-22 (bug fix)[1939129,1991930] combobox behind other windows (thoyts)
 
-2008-12-22 (bug fix)[1813597,2218964] eliminate unnecessary units conversion
+2008-11-22 (new feature) Demo ctext.tcl now demos angled text (fellows)
+
+2008-11-23 (bug fix)[1389270] made [event generate <Focus*>] work (thoyts)
+
+2008-11-28 (bug fix)[1813597,2218964] eliminate unnecessary units conversion
 in screen distances, reducing precision loss (ferrieux)
 
-2008-12-22 (bug fix)[2107938] no negative font size in PS (fellows)
+2008-12-03 (enhancement) new "hover" state for proper Vista visuals (thoyts)
 
-2008-12-22 (bug fix)[2264732] crash using nondefault visual (english)
+2008-12-05 (bug fix)[2107938] no negative font size in PS (fellows)
 
-2008-12-22 (bug fix)[2207435] [ttk::entry .t -textvar ::noexist::x] (english)
+2008-12-05 (enhancement) new "vista" theme (thoyts)
 
---- Released 8.5.6, December 23, 2008 --- See ChangeLog for details ---
+2008-12-06 (new feature)[TIP 197] [$text -insertunfocussed] (edwards,fellows)
+
+2008-12-06 (new feature)[TIP 337] handle non-error bg exceptions (porter)
+
+2008-12-10 (new feature)[TIP 324] [tk fontchooser](thoyts,vetter,robert,steffen)
+
+2008-12-12 (new feature) Demo fontchoose.tcl demos [tk fontchooser] (thoyts)
+
+2008-12-18 (enhancement)[24442309] Updated German messages (haertel)
+
+--- Released 8.6b1, December 19, 2008 --- See ChangeLog for details ---

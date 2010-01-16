@@ -36,7 +36,6 @@ Display for which \fIgc\fR was allocated.
 X identifier for graphics context that is no longer needed.
 Must have been allocated by \fBTk_GetGC\fR.
 .BE
-
 .SH DESCRIPTION
 .PP
 \fBTk_GetGC\fR and \fBTk_FreeGC\fR manage a collection of graphics contexts
@@ -69,6 +68,5 @@ each call to \fBTk_GetGC\fR.
 When a graphics context is no longer in use anywhere (i.e. it has
 been freed as many times as it has been gotten) \fBTk_FreeGC\fR
 will release it to the X server and delete it from the database.
-
 .SH KEYWORDS
 graphics context

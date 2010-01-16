@@ -1,0 +1,73 @@
+# This file is a Tcl script to test out the code in tkImgFmtPNG.c, which reads
+# and write PNG-format image files for photo widgets. The files is organized
+# in the standard fashion for Tcl tests.
+#
+# Copyright (c) 1994-1997 Sun Microsystems, Inc.
+# Copyright (c) 1998-1999 by Scriptics Corporation.
+# Copyright (c) 1998 Willem van Schaik (images only)
+# Copyright (c) 2008 Donal K. Fellows
+# All rights reserved.
+#
+# RCS: @(#) $Id$
+
+package require tcltest 2.2
+namespace import ::tcltest::*
+eval tcltest::configure $argv
+tcltest::loadTestedCommands
+imageInit
+
+namespace eval png {
+    variable encoded
+    # Key names are from the names of the source images, which come from
+    # http://www.schaik.com/pngsuite/pngsuite.html
+    array set encoded {
+	basn0g08 "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAAAAABWESUoAAAABGdBTUEAAYagMeiWXwAAAEFJREFUeJxjZGAkABQIyLMMBQWMDwgp+PcfP2B5MBwUMMoRkGdkonlcDAYFjI/wyv7/z/iH5nExGBQwyuCVZWQEAFDl/nE14thZAAAAAElFTkSuQmCC"
+	basn2c08 "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAIAAAD8GO2jAAAABGdBTUEAAYagMeiWXwAAAEhJREFUeJzt1cEJADAMAkCF7JH9t3ITO0Qr9KH4zuErtA0EO4AKFPgcoO3kfUx4QIECD0qHH8KEBxQo8KB0OCOpQIG7cHejwAGCsfleD0DPSwAAAABJRU5ErkJggg=="
+	basn3p08 "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAMAAABEpIrGAAAABGdBTUEAAYagMeiWXwAAAwBQTFRFIkQA9f/td/93y///EQoAOncAIiL//xH/EQAAIiIA/6xVZv9m/2Zm/wH/IhIA3P//zP+ZRET/AFVVIgAAy8v/REQAVf9Vy8sAMxoA/+zc7f//5P/L/9zcRP9EZmb/MwAARCIA7e3/ZmYA/6RE//+q7e0AAMvL/v///f/+//8BM/8zVSoAAQH/iIj/AKqqAQEARAAAiIgA/+TLulsAIv8iZjIA//+Zqqr/VQAAqqoAy2MAEf8R1P+qdzoA/0RE3GsAZgAAAf8BiEIA7P/ca9wA/9y6ADMzAO0A7XMA//+ImUoAEf//dwAA/4MB/7q6/nsA//7/AMsA/5mZIv//iAAA//93AIiI/9z/GjMAAACqM///AJkAmQAAAAABMmYA/7r/RP///6r/AHcAAP7+qgAASpkA//9m/yIiAACZi/8RVf///wEB/4j/AFUAABER///+//3+pP9EZv///2b/ADMA//9V/3d3AACI/0T/ABEAd///AGZm///tAAEA//XtERH///9E/yL//+3tEREAiP//AAB3k/8iANzcMzP//gD+urr/mf//MzMAY8sAuroArP9V///c//8ze/4A7QDtVVX/qv//3Nz/VVUAAABm3NwA3ADcg/8Bd3f//v7////L/1VVd3cA/v4AywDLAAD+AQIAAQAAEiIA//8iAEREm/8z/9SqAABVmZn/mZkAugC6KlUA/8vLtP9m/5sz//+6qgCqQogAU6oA/6qqAADtALq6//8RAP4AAABEAJmZmQCZ/8yZugAAiACIANwA/5MiAADc/v/+qlMAdwB3AgEAywAAAAAz/+3/ALoA/zMz7f/t/8SIvP93AKoAZgBmACIi3AAA/8v/3P/c/4sRAADLAAEBVQBVAIgAAAAiAf//y//L7QAA/4iIRABEW7oA/7x3/5n/AGYAuv+6AHd3c+0A/gAAMwAzAAC6/3f/AEQAqv+q//7+AAARIgAixP+IAO3tmf+Z/1X/ACIA/7RmEQARChEA/xER3P+6uv//iP+IAQAB/zP/uY7TYgAAAbFJREFUeJwNwQcACAQQAMBHqIxIZCs7Mwlla1hlZ+8VitCw9yoqNGiYDatsyt6jjIadlVkysve+u5jC9xTmV/qyl6bcJR7kAQZzg568xXmuE2lIyUNM5So7OMAFIhvp+YgGvEtFNnOKeJonSEvwP9NZzhHiOfLzBXPoxKP8yD6iPMXITjP+oTdfsp14lTJMJjGtOMFQfiFe4wWK8BP7qUd31hBNqMos2tKYFbRnJdGGjTzPz2yjEA1ZSKymKCM5ylaWcJrZxCZK8jgfU4vc/MW3xE7K8RUvsZb3Wc/XxCEqk4v/qMQlFvMZcZIafMOnLKM13zGceJNqPMU4KnCQAqQgbrKHpXSgFK/Qn6REO9YxjWE8Sx2SMJD4jfl8wgzy0YgPuEeUJQcD6EoWWpCaHsQkHuY9RpGON/icK0RyrvE680jG22TlHaIbx6jLnySkF+M5QxzmD6pwkTsMoSAdidqsojipuMyHzOQ4sYgfyElpzjKGErQkqvMyC7jFv9xmBM2JuTzDRDLxN4l4jF1EZjIwmhfZzSOMpT4xiH70IQG/k5En2UKcowudycsG8jCBmtwHgRv+EIeWyOAAAAAASUVORK5CYII="
+	basn6a08 "iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAABGdBTUEAAYagMeiWXwAAAG9JREFUeJzt1jEKgDAMRuEnZGhPofc/VQSPIcTdxUV4HVLoUCj8H00o2YoBMF57fpz/ujODHXUFRwPKBqj5DVigB041HiJ9gFyCVOMbsEIPXNwuAHkgiJL/4qABNqB7QAeUPBAE2QAZUDZAfwEb8ABSIBqcFg+4TAAAAABJRU5ErkJggg=="
+    }
+
+# $encoded(basn0g08), $encoded(basn2c08), $encoded(basn3p08), $encoded(basn6a08)
+test png-1.1 {reading basic images; grayscale} -setup {
+    catch {rename foo ""}
+} -body {
+    image create photo foo -data $encoded(basn0g08)
+    list [image width foo] [image height foo]
+} -cleanup {
+    rename foo ""
+} -result {32 32}
+test png-1.2 {reading basic images; color} -setup {
+    catch {rename foo ""}
+} -body {
+    image create photo foo -data $encoded(basn2c08)
+    list [image width foo] [image height foo]
+} -cleanup {
+    rename foo ""
+} -result {32 32}
+test png-1.3 {reading basic images; color with palette} -setup {
+    catch {rename foo ""}
+} -body {
+    image create photo foo -data $encoded(basn3p08)
+    list [image width foo] [image height foo]
+} -cleanup {
+    rename foo ""
+} -result {32 32}
+test png-1.4 {reading basic images; alpha} -setup {
+    catch {rename foo ""}
+} -body {
+    image create photo foo -data $encoded(basn6a08)
+    list [image width foo] [image height foo]
+} -cleanup {
+    rename foo ""
+} -result {32 32}
+
+}
+namespace delete png
+imageFinish
+cleanupTests
+return
+
+# Local Variables:
+# mode: tcl
+# fill-column: 78
+# End:

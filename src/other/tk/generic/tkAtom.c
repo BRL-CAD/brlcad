@@ -22,7 +22,7 @@
  * those found in xatom.h
  */
 
-static char * atomNameArray[] = {
+static const char *const atomNameArray[] = {
     "PRIMARY",		"SECONDARY",		"ARC",
     "ATOM",		"BITMAP",		"CARDINAL",
     "COLORMAP",		"CURSOR",		"CUT_BUFFER0",
@@ -78,10 +78,10 @@ Atom
 Tk_InternAtom(
     Tk_Window tkwin,		/* Window token; map name to atom for this
 				 * window's display. */
-    CONST char *name)		/* Name to turn into atom. */
+    const char *name)		/* Name to turn into atom. */
 {
-    register TkDisplay *dispPtr;
-    register Tcl_HashEntry *hPtr;
+    TkDisplay *dispPtr;
+    Tcl_HashEntry *hPtr;
     int isNew;
 
     dispPtr = ((TkWindow *) tkwin)->dispPtr;
@@ -123,14 +123,14 @@ Tk_InternAtom(
  *--------------------------------------------------------------
  */
 
-CONST char *
+const char *
 Tk_GetAtomName(
     Tk_Window tkwin,		/* Window token; map atom to name relative to
 				 * this window's display. */
     Atom atom)			/* Atom whose name is wanted. */
 {
-    register TkDisplay *dispPtr;
-    register Tcl_HashEntry *hPtr;
+    TkDisplay *dispPtr;
+    Tcl_HashEntry *hPtr;
 
     dispPtr = ((TkWindow *) tkwin)->dispPtr;
     if (!dispPtr->atomInit) {
@@ -139,23 +139,22 @@ Tk_GetAtomName(
 
     hPtr = Tcl_FindHashEntry(&dispPtr->atomTable, (char *) atom);
     if (hPtr == NULL) {
-	char *name;
+	const char *name;
 	Tk_ErrorHandler handler;
-	int isNew, mustFree;
+	int isNew;
+	char *mustFree = NULL;
 
 	handler = Tk_CreateErrorHandler(dispPtr->display, BadAtom, -1, -1,
-		NULL, (ClientData) NULL);
-	name = XGetAtomName(dispPtr->display, atom);
-	mustFree = 1;
+		NULL, NULL);
+	name = mustFree = XGetAtomName(dispPtr->display, atom);
 	if (name == NULL) {
 	    name = "?bad atom?";
-	    mustFree = 0;
 	}
 	Tk_DeleteErrorHandler(handler);
 	hPtr = Tcl_CreateHashEntry(&dispPtr->nameTable, name, &isNew);
 	Tcl_SetHashValue(hPtr, atom);
 	if (mustFree) {
-	    XFree(name);
+	    XFree(mustFree);
 	}
 	name = Tcl_GetHashKey(&dispPtr->nameTable, hPtr);
 	hPtr = Tcl_CreateHashEntry(&dispPtr->atomTable, (char *) atom, &isNew);
@@ -182,7 +181,7 @@ Tk_GetAtomName(
 
 static void
 AtomInit(
-    register TkDisplay *dispPtr)/* Display to initialize. */
+    TkDisplay *dispPtr)/* Display to initialize. */
 {
     Tcl_HashEntry *hPtr;
     Atom atom;
@@ -192,7 +191,7 @@ AtomInit(
     Tcl_InitHashTable(&dispPtr->atomTable, TCL_ONE_WORD_KEYS);
 
     for (atom = 1; atom <= XA_LAST_PREDEFINED; atom++) {
-	char *name;
+	const char *name;
 	int isNew;
 
 	hPtr = Tcl_FindHashEntry(&dispPtr->atomTable, (char *) atom);

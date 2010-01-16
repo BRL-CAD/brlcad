@@ -56,11 +56,11 @@ the selection.  The most common form is STRING.
 \fIProc\fR should have arguments and result that match the
 type \fBTk_SelectionProc\fR:
 .CS
-typedef int Tk_SelectionProc(
-    ClientData \fIclientData\fR,
-    int \fIoffset\fR,
-    char *\fIbuffer\fR,
-    int \fImaxBytes\fR);
+typedef int \fBTk_SelectionProc\fR(
+        ClientData \fIclientData\fR,
+        int \fIoffset\fR,
+        char *\fIbuffer\fR,
+        int \fImaxBytes\fR);
 .CE
 The \fIclientData\fR parameter to \fIproc\fR is a copy of the
 \fIclientData\fR argument given to \fBTk_CreateSelHandler\fR.
@@ -114,6 +114,5 @@ existing handler is replaced with a new one.
 \fBTk_DeleteSelHandler\fR removes the handler given by \fItkwin\fR,
 \fIselection\fR, and \fItarget\fR, if such a handler exists.
 If there is no such handler then it has no effect.
-
 .SH KEYWORDS
 format, handler, selection, target

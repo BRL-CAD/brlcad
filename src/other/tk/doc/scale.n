@@ -98,7 +98,6 @@ Specifies the desired narrow dimension of the trough in screen units
 For vertical scales this is the trough's width;  for horizontal scales
 this is the trough's height.
 .BE
-
 .SH DESCRIPTION
 .PP
 The \fBscale\fR command creates a new window (given by the
@@ -241,6 +240,8 @@ none of the above bindings have any effect.
 .PP
 The behavior of scales can be changed by defining new bindings for
 individual widgets or by redefining the class bindings.
-
 .SH KEYWORDS
 scale, slider, trough, widget
+'\" Local Variables:
+'\" mode: nroff
+'\" End:

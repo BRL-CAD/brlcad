@@ -71,11 +71,11 @@ TkGetServerInfo(
  *----------------------------------------------------------------------
  */
 
-CONST char *
+const char *
 TkGetDefaultScreenName(
     Tcl_Interp *interp,		/* Interp used to find environment
 				 * variables. */
-    CONST char *screenName)	/* Screen name from command line, or NULL. */
+    const char *screenName)	/* Screen name from command line, or NULL. */
 {
     if ((screenName == NULL) || (screenName[0] == '\0')) {
 	screenName = Tcl_GetVar2(interp, "env", "DISPLAY", TCL_GLOBAL_ONLY);

@@ -20,9 +20,9 @@ Tk_HandleEvent \- invoke event handlers for window system events
 .SH ARGUMENTS
 .AS XEvent *eventPtr
 .AP XEvent *eventPtr in
-Pointer to X event to dispatch to relevant handler(s).
+Pointer to X event to dispatch to relevant handler(s). It is important
+that all unused fields of the structure be set to zero.
 .BE
-
 .SH DESCRIPTION
 .PP
 \fBTk_HandleEvent\fR is a lower-level procedure that deals with window
@@ -44,6 +44,5 @@ as when a
 notifier has been popped up and an application wishes to
 wait for the user to click a button in the notifier before
 doing anything else.
-
 .SH KEYWORDS
 callback, event, handler, window

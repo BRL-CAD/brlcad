@@ -17,10 +17,8 @@ wish \- Simple windowing shell
 \fBwish\fR ?\fB\-encoding \fIname\fR? ?\fIfileName arg arg ...\fR?
 .SH OPTIONS
 .IP "\fB\-encoding \fIname\fR" 20
-.VS 8.5
 Specifies the encoding of the text stored in \fIfileName\fR.
 This option is only recognized prior to the \fIfileName\fR argument.
-.VE 8.5
 .IP "\fB\-colormap \fInew\fR" 20
 Specifies that the window should have a new private colormap instead of
 using the default colormap for the screen.
@@ -65,7 +63,7 @@ language, the Tk toolkit, and a main program that reads commands
 from standard input or from a file.
 It creates a main window and then processes Tcl commands.
 If \fBwish\fR is invoked with arguments, then the first few
-arguments, ?\fB\-encoding \fIname\fR? ?\fIfileName\fR? specify the
+arguments, ?\fB\-encoding \fIname\fR? ?\fIfileName\fR?, specify the
 name of a script file, and, optionally, the
 encoding of the text data stored in that script file.  A value
 for \fIfileName\fR is recognized if the appropriate argument
@@ -168,7 +166,7 @@ following three lines:
 .CS
 \fB#!/bin/sh
 # the next line restarts using wish \e
-exec wish "$0" "$@"\fR
+exec wish "$0" ${1+"$@"}\fR
 .CE
 This approach has three advantages over the approach in the previous
 paragraph.  First, the location of the \fBwish\fR binary does not have
@@ -215,5 +213,8 @@ The variable \fBtcl_prompt2\fR is used in a similar way when
 a newline is typed but the current command is not yet complete;
 if \fBtcl_prompt2\fR is not set then no prompt is output for
 incomplete commands.
+.SH "SEE ALSO"
+tclsh(1), toplevel(n), Tk_Main(3), Tk_MainLoop(3), Tk_MainWindow(3)
 .SH KEYWORDS
-shell, toolkit
+application, argument, interpreter, prompt, script file, shell,
+toolkit, toplevel

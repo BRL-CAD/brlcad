@@ -45,6 +45,12 @@ namespace eval ttk::theme::winnative {
 	    -focusfill	[list {readonly focus} SystemHighlight] \
 	    ;
 
+	ttk::style element create ComboboxPopdownFrame.border from default
+	ttk::style configure ComboboxPopdownFrame \
+	    -borderwidth 1 -relief solid
+
+        ttk::style configure TSpinbox -padding {2 0 16 0}
+
 	ttk::style configure TLabelframe -borderwidth 2 -relief groove
 
 	ttk::style configure Toolbutton -relief flat -padding {8 4}
@@ -59,15 +65,8 @@ namespace eval ttk::theme::winnative {
 
 	# Treeview:
 	ttk::style configure Heading -font TkHeadingFont -relief raised
-	ttk::style configure Row -background SystemWindow
-	ttk::style configure Cell -background SystemWindow
-	ttk::style map Row \
-	    -background [list selected SystemHighlight] \
-	    -foreground [list selected SystemHighlightText] ;
-	ttk::style map Cell \
-	    -background [list selected SystemHighlight] \
-	    -foreground [list selected SystemHighlightText] ;
-	ttk::style map Item \
+	ttk::style configure Treeview -background SystemWindow
+	ttk::style map Treeview \
 	    -background [list selected SystemHighlight] \
 	    -foreground [list selected SystemHighlightText] ;
 

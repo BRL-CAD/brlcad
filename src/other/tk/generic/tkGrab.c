@@ -132,7 +132,7 @@ typedef struct NewGrabWinEvent {
  * we generated.
  */
 
-#define GENERATED_EVENT_MAGIC ((Bool) 0x147321ac)
+#define GENERATED_GRAB_EVENT_MAGIC ((Bool) 0x147321ac)
 
 /*
  * Mask that selects any of the state bits corresponding to buttons, plus
@@ -183,18 +183,18 @@ Tk_GrabObjCmd(
     ClientData clientData,	/* Main window associated with interpreter. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *CONST objv[])	/* Argument objects. */
+    Tcl_Obj *const objv[])	/* Argument objects. */
 {
     int globalGrab;
     Tk_Window tkwin;
     TkDisplay *dispPtr;
-    char *arg;
+    const char *arg;
     int index;
     int len;
-    static CONST char *optionStrings[] = {
+    static const char *const optionStrings[] = {
 	"current", "release", "set", "status", NULL
     };
-    static CONST char *flagStrings[] = {
+    static const char *const flagStrings[] = {
 	"-global", NULL
     };
     enum options {
@@ -205,8 +205,8 @@ Tk_GrabObjCmd(
 	/*
 	 * Can't use Tcl_WrongNumArgs here because we want the message to
 	 * read:
-	 * wrong # args: should be "cmd ?-global window" or "cmd option
-	 *    ?arg arg ...?"
+	 * wrong # args: should be "cmd ?-global? window" or "cmd option
+	 *    ?arg ...?"
 	 * We can fake it with Tcl_WrongNumArgs if we assume the command name
 	 * is "grab", but if it has been aliased, the message will be
 	 * incorrect.
@@ -214,7 +214,7 @@ Tk_GrabObjCmd(
 	Tcl_ResetResult(interp);
 	Tcl_AppendResult(interp, "wrong # args: should be \"",
 		Tcl_GetString(objv[0]), " ?-global? window\" or \"",
-		Tcl_GetString(objv[0]), " option ?arg arg ...?\"", NULL);
+		Tcl_GetString(objv[0]), " option ?arg ...?\"", NULL);
 	return TCL_ERROR;
     }
 
@@ -229,7 +229,7 @@ Tk_GrabObjCmd(
 	    Tcl_WrongNumArgs(interp, 1, objv, "?-global? window");
 	    return TCL_ERROR;
 	}
-	tkwin = Tk_NameToWindow(interp, arg, (Tk_Window) clientData);
+	tkwin = Tk_NameToWindow(interp, arg, clientData);
 	if (tkwin == NULL) {
 	    return TCL_ERROR;
 	}
@@ -245,8 +245,7 @@ Tk_GrabObjCmd(
 	    Tcl_WrongNumArgs(interp, 1, objv, "?-global? window");
 	    return TCL_ERROR;
 	}
-	tkwin = Tk_NameToWindow(interp, Tcl_GetString(objv[2]),
-		(Tk_Window) clientData);
+	tkwin = Tk_NameToWindow(interp, Tcl_GetString(objv[2]), clientData);
 	if (tkwin == NULL) {
 	    return TCL_ERROR;
 	}
@@ -272,7 +271,7 @@ Tk_GrabObjCmd(
 	}
 	if (objc == 3) {
 	    tkwin = Tk_NameToWindow(interp, Tcl_GetString(objv[2]),
-		    (Tk_Window) clientData);
+		    clientData);
 	    if (tkwin == NULL) {
 		return TCL_ERROR;
 	    }
@@ -298,8 +297,7 @@ Tk_GrabObjCmd(
 	    Tcl_WrongNumArgs(interp, 1, objv, "release window");
 	    return TCL_ERROR;
 	}
-	tkwin = Tk_NameToWindow(interp, Tcl_GetString(objv[2]),
-		(Tk_Window) clientData);
+	tkwin = Tk_NameToWindow(interp, Tcl_GetString(objv[2]), clientData);
 	if (tkwin == NULL) {
 	    Tcl_ResetResult(interp);
 	} else {
@@ -316,7 +314,7 @@ Tk_GrabObjCmd(
 	if (objc == 3) {
 	    globalGrab = 0;
 	    tkwin = Tk_NameToWindow(interp, Tcl_GetString(objv[2]),
-		    (Tk_Window) clientData);
+		    clientData);
 	} else {
 	    globalGrab = 1;
 
@@ -332,7 +330,7 @@ Tk_GrabObjCmd(
 		return TCL_ERROR;
 	    }
 	    tkwin = Tk_NameToWindow(interp, Tcl_GetString(objv[3]),
-		    (Tk_Window) clientData);
+		    clientData);
 	}
 	if (tkwin == NULL) {
 	    return TCL_ERROR;
@@ -348,7 +346,7 @@ Tk_GrabObjCmd(
 	    return TCL_ERROR;
 	}
 	winPtr = (TkWindow *) Tk_NameToWindow(interp, Tcl_GetString(objv[2]),
-		(Tk_Window) clientData);
+		clientData);
 	if (winPtr == NULL) {
 	    return TCL_ERROR;
 	}
@@ -421,7 +419,12 @@ Tk_Grab(
     }
 
     Tk_MakeWindowExist(tkwin);
-    if (!grabGlobal) {
+#ifndef MAC_OSX_TK
+    if (!grabGlobal)
+#else
+    if (0)
+#endif
+    {
 	Window dummy1, dummy2;
 	int dummy3, dummy4, dummy5, dummy6;
 	unsigned int state;
@@ -724,7 +727,7 @@ TkPointerEvent(
 	 * serverWinPtr.
 	 */
 
-	if (eventPtr->xcrossing.send_event != GENERATED_EVENT_MAGIC) {
+	if (eventPtr->xcrossing.send_event != GENERATED_GRAB_EVENT_MAGIC) {
 	    if ((eventPtr->type == LeaveNotify) &&
 		    (winPtr->flags & TK_TOP_HIERARCHY)) {
 		dispPtr->serverWinPtr = NULL;
@@ -1153,7 +1156,7 @@ MovePointer2(
     }
 
     event.xcrossing.serial = LastKnownRequestProcessed(winPtr->display);
-    event.xcrossing.send_event = GENERATED_EVENT_MAGIC;
+    event.xcrossing.send_event = GENERATED_GRAB_EVENT_MAGIC;
     event.xcrossing.display = winPtr->display;
     event.xcrossing.root = RootWindow(winPtr->display, winPtr->screenNum);
     event.xcrossing.time = TkCurrentTime(winPtr->dispPtr);
@@ -1246,8 +1249,9 @@ EatGrabEvents(
     info.display = dispPtr->display;
     info.serial = serial;
     TkpSync(info.display);
-    oldProc = Tk_RestrictEvents(GrabRestrictProc, (ClientData)&info, &oldArg);
+    oldProc = Tk_RestrictEvents(GrabRestrictProc, &info, &oldArg);
     while (Tcl_ServiceEvent(TCL_WINDOW_EVENTS)) {
+	/* EMPTY */
     }
     Tk_RestrictEvents(oldProc, oldArg, &dummy);
 }
@@ -1276,7 +1280,7 @@ GrabRestrictProc(
     ClientData arg,
     XEvent *eventPtr)
 {
-    GrabInfo *info = (GrabInfo *) arg;
+    GrabInfo *info = arg;
     int mode, diff;
 
     /*

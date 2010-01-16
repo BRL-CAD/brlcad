@@ -11,6 +11,9 @@
  * RCS: @(#) $Id$
  */
 
+#ifndef USE_TCL_STUBS
+#   define USE_TCL_STUBS
+#endif
 #include "tclInt.h"
 
 /*
@@ -31,7 +34,6 @@
  * Forward declarations of functions defined later in this file:
  */
 
-int			TclplatformtestInit(Tcl_Interp *interp);
 static int		TesteventloopCmd(ClientData dummy, Tcl_Interp *interp,
 			    int argc, const char **argv);
 static int		TestvolumetypeCmd(ClientData dummy,
@@ -189,7 +191,7 @@ TestvolumetypeCmd(
 #define VOL_BUF_SIZE 32
     int found;
     char volType[VOL_BUF_SIZE];
-    char *path;
+    const char *path;
 
     if (objc > 2) {
 	Tcl_WrongNumArgs(interp, 1, objv, "?name?");
@@ -421,7 +423,7 @@ TestExceptionCmd(
     int objc,				/* Argument count */
     Tcl_Obj *const objv[])		/* Argument vector */
 {
-    static const char *cmds[] = {
+    static const char *const cmds[] = {
 	"access_violation", "datatype_misalignment", "array_bounds",
 	"float_denormal", "float_divbyzero", "float_inexact",
 	"float_invalidop", "float_overflow", "float_stack", "float_underflow",
@@ -736,7 +738,7 @@ TestplatformChmod(
 	 * Copy the current ACE from the old to the new ACL.
 	 */
 
-	if (!addAceProc(newAcl, ACL_REVISION, MAXDWORD, (PACL *)pACE2,
+	if (!addAceProc(newAcl, ACL_REVISION, MAXDWORD, (PACL *) pACE2,
 		((PACE_HEADER) pACE2)->AceSize)) {
 	    goto done;
 	}
@@ -754,7 +756,7 @@ TestplatformChmod(
 
   done:
     if (secDesc) {
-	ckfree(secDesc);
+	ckfree((char *) secDesc);
     }
     if (newAcl) {
 	ckfree((char *) newAcl);

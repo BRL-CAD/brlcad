@@ -137,6 +137,7 @@ command.
 When a new labelframe is created, it has no default event bindings:
 labelframes are not intended to be interactive.
 .SH EXAMPLE
+.PP
 This shows how to build part of a GUI for a hamburger vendor. The
 \fBlabelframe\fR widgets are used to organize the available choices by
 the kinds of things that the choices are being made over.
@@ -180,3 +181,6 @@ set pickle none
 frame(n), label(n), ttk::labelframe(n)
 .SH KEYWORDS
 labelframe, widget
+'\" Local Variables:
+'\" mode: nroff
+'\" End:

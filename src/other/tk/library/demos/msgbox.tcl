@@ -9,7 +9,6 @@ if {![info exists widgetDemo]} {
 }
 
 package require Tk
-package require Ttk
 
 set w .msgbox
 catch {destroy $w}

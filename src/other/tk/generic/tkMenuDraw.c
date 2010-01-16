@@ -434,7 +434,7 @@ TkEventuallyRecomputeMenu(
 {
     if (!(menuPtr->menuFlags & RESIZE_PENDING)) {
 	menuPtr->menuFlags |= RESIZE_PENDING;
-	Tcl_DoWhenIdle(ComputeMenuGeometry, (ClientData) menuPtr);
+	Tcl_DoWhenIdle(ComputeMenuGeometry, menuPtr);
     }
 }
 
@@ -460,8 +460,8 @@ TkRecomputeMenu(
     TkMenu *menuPtr)
 {
     if (menuPtr->menuFlags & RESIZE_PENDING) {
-	Tcl_CancelIdleCall(ComputeMenuGeometry, (ClientData) menuPtr);
-	ComputeMenuGeometry((ClientData) menuPtr);
+	Tcl_CancelIdleCall(ComputeMenuGeometry, menuPtr);
+	ComputeMenuGeometry(menuPtr);
     }
 }
 
@@ -505,7 +505,7 @@ TkEventuallyRedrawMenu(
 	    || (menuPtr->menuFlags & REDRAW_PENDING)) {
 	return;
     }
-    Tcl_DoWhenIdle(DisplayMenu, (ClientData) menuPtr);
+    Tcl_DoWhenIdle(DisplayMenu, menuPtr);
     menuPtr->menuFlags |= REDRAW_PENDING;
 }
 
@@ -532,7 +532,7 @@ static void
 ComputeMenuGeometry(
     ClientData clientData)	/* Structure describing menu. */
 {
-    TkMenu *menuPtr = (TkMenu *) clientData;
+    TkMenu *menuPtr = clientData;
 
     if (menuPtr->tkwin == NULL) {
 	return;
@@ -588,12 +588,12 @@ TkMenuSelectImageProc(
 				 * <=0). */
     int imgWidth, int imgHeight)/* New dimensions of image. */
 {
-    register TkMenuEntry *mePtr = (TkMenuEntry *) clientData;
+    register TkMenuEntry *mePtr = clientData;
 
     if ((mePtr->entryFlags & ENTRY_SELECTED)
 	    && !(mePtr->menuPtr->menuFlags & REDRAW_PENDING)) {
 	mePtr->menuPtr->menuFlags |= REDRAW_PENDING;
-	Tcl_DoWhenIdle(DisplayMenu, (ClientData) mePtr->menuPtr);
+	Tcl_DoWhenIdle(DisplayMenu, mePtr->menuPtr);
     }
 }
 
@@ -617,7 +617,7 @@ static void
 DisplayMenu(
     ClientData clientData)	/* Information about widget. */
 {
-    register TkMenu *menuPtr = (TkMenu *) clientData;
+    register TkMenu *menuPtr = clientData;
     register TkMenuEntry *mePtr;
     register Tk_Window tkwin = menuPtr->tkwin;
     int index, strictMotif;
@@ -747,7 +747,7 @@ TkMenuEventProc(
     ClientData clientData,	/* Information about window. */
     XEvent *eventPtr)		/* Information about event. */
 {
-    TkMenu *menuPtr = (TkMenu *) clientData;
+    TkMenu *menuPtr = clientData;
 
     if ((eventPtr->type == Expose) && (eventPtr->xexpose.count == 0)) {
 	TkEventuallyRedrawMenu(menuPtr, NULL);
@@ -774,14 +774,14 @@ TkMenuEventProc(
 	    menuPtr->widgetCmd = NULL;
 	}
 	if (menuPtr->menuFlags & REDRAW_PENDING) {
-	    Tcl_CancelIdleCall(DisplayMenu, (ClientData) menuPtr);
+	    Tcl_CancelIdleCall(DisplayMenu, menuPtr);
 	    menuPtr->menuFlags &= ~REDRAW_PENDING;
 	}
 	if (menuPtr->menuFlags & RESIZE_PENDING) {
-	    Tcl_CancelIdleCall(ComputeMenuGeometry, (ClientData) menuPtr);
+	    Tcl_CancelIdleCall(ComputeMenuGeometry, menuPtr);
 	    menuPtr->menuFlags &= ~RESIZE_PENDING;
 	}
-	Tcl_EventuallyFree((ClientData) menuPtr, TCL_DYNAMIC);
+	Tcl_EventuallyFree(menuPtr, TCL_DYNAMIC);
     }
 }
 
@@ -812,11 +812,11 @@ TkMenuImageProc(
 				 * <=0). */
     int imgWidth, int imgHeight)/* New dimensions of image. */
 {
-    register TkMenu *menuPtr = ((TkMenuEntry *)clientData)->menuPtr;
+    register TkMenu *menuPtr = ((TkMenuEntry *) clientData)->menuPtr;
 
     if ((menuPtr->tkwin != NULL) && !(menuPtr->menuFlags & RESIZE_PENDING)) {
 	menuPtr->menuFlags |= RESIZE_PENDING;
-	Tcl_DoWhenIdle(ComputeMenuGeometry, (ClientData) menuPtr);
+	Tcl_DoWhenIdle(ComputeMenuGeometry, menuPtr);
     }
 }
 
@@ -984,11 +984,15 @@ TkPostSubmenu(
 	 * attempt to match Motif behavior).
 	 *
 	 * The menu has to redrawn so that the entry can change relief.
+	 *
+	 * Set postedCascade early to ensure tear-off submenus work on
+	 * Windows. [Bug 873613]
 	 */
 
 	Tk_GetRootCoords(menuPtr->tkwin, &x, &y);
 	AdjustMenuCoords(menuPtr, mePtr, &x, &y);
 
+	menuPtr->postedCascade = mePtr;
 	subary[0] = mePtr->namePtr;
 	subary[1] = Tcl_NewStringObj("post", -1);
 	subary[2] = Tcl_NewIntObj(x);
@@ -1001,9 +1005,9 @@ TkPostSubmenu(
 	Tcl_DecrRefCount(subary[2]);
 	Tcl_DecrRefCount(subary[3]);
 	if (result != TCL_OK) {
+	    menuPtr->postedCascade = NULL;
 	    return result;
 	}
-	menuPtr->postedCascade = mePtr;
 	TkEventuallyRedrawMenu(menuPtr, mePtr);
     }
     return TCL_OK;

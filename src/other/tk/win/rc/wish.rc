@@ -86,4 +86,3 @@ app                      ICON    DISCARDABLE     "wish.ico"
 #define CREATEPROCESS_MANIFEST_RESOURCE_ID 1
 #endif
 CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST "wish.exe.manifest"
-

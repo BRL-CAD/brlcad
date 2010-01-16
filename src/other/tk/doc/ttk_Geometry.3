@@ -42,7 +42,7 @@ Ttk_Padding
 Ttk_Padding
 \fBTtk_AddPadding\fR(Ttk_Padding \fIpadding1\fR, Ttk_Padding \fIpadding2\fR;
 
-Ttk_Padding 
+Ttk_Padding
 \fBTtk_RelievePadding\fR(Ttk_Padding \fIpadding\fR, int \fIrelief\fR);
 
 int
@@ -57,7 +57,6 @@ int
 int
 \fBTtk_GetStickyFromObj\fR(Tcl_Interp *\fIinterp\fR, Tcl_Obj *\fIobjPtr\fR, int *\fIsticky_rtn\fR);
 .fi
-
 .SH ARGUMENTS
 .AP Tk_Anchor anchor in
 One of the symbolic constants \fBTK_ANCHOR_N\fR, \fBTK_ANCHOR_NE\fR,
@@ -118,16 +117,16 @@ X coordinate of upper-left corner of region.
 .AP int y in
 Y coordinate of upper-left corner of region.
 .BE
-
 .SH "BOXES"
-The \fBTtk_Box\fR structure represents a rectangular region of a window: 
+.PP
+The \fBTtk_Box\fR structure represents a rectangular region of a window:
 .CS
-typedef struct 	{
-    int x;
-    int y;
-    int width;
-    int height;
-} Ttk_Box;
+typedef struct {
+    int \fIx\fR;
+    int \fIy\fR;
+    int \fIwidth\fR;
+    int \fIheight\fR;
+} \fBTtk_Box\fR;
 .CE
 All coordinates are relative to the window.
 .PP
@@ -136,12 +135,12 @@ a \fBTtk_Box\fR structure representing a region \fIwidth\fR pixels
 wide, \fIheight\fR pixels tall, at the specified \fIx, y\fR coordinates.
 .PP
 \fBTtk_PadBox\fR returns a new box located inside the specified \fIparcel\fR,
-shrunken according to the left, top, right, and bottom margins 
+shrunken according to the left, top, right, and bottom margins
 specified by \fIpadding\fR.
 .PP
 \fBTtk_ExpandBox\fR is the inverse of \fBTtk_PadBox\fR:
 it returns a new box surrounding the specified \fIparcel\fR,
-expanded  according to the left, top, right, and bottom margins 
+expanded  according to the left, top, right, and bottom margins
 specified by \fIpadding\fR.
 .PP
 \fBTtk_PackBox\fR allocates a parcel \fIwidth\fR by \fIheight\fR
@@ -149,7 +148,7 @@ pixels wide on the specified \fIside\fR of the \fIcavity\fR,
 and shrinks the \fIcavity\fR accordingly.
 .PP
 \fBTtk_StickBox\fR places a box with the requested \fIwidth\fR
-and \fIheight\fR inside the \fIparcel\fR according to the 
+and \fIheight\fR inside the \fIparcel\fR according to the
 \fIsticky\fR bits.
 .PP
 \fBTtk_PlaceBox\fR combines \fBTtk_PackBox\fR and \fBTtk_StickBox\fR:
@@ -164,20 +163,21 @@ specified \fIanchor\fR option.
 \fBTtk_BoxContains\fR tests if the specified \fIx, y\fR coordinate
 lies within the rectangular region \fIbox\fR.
 .SH "PADDDING"
-The \fBTtk_Padding\fR structure is used to represent 
+.PP
+The \fBTtk_Padding\fR structure is used to represent
 borders, internal padding, and external margins:
 .CS
 typedef struct {
-    short left;
-    short top;
-    short right;
-    short bottom;
-} Ttk_Padding;
+    short \fIleft\fR;
+    short \fItop\fR;
+    short \fIright\fR;
+    short \fIbottom\fR;
+} \fBTtk_Padding\fR;
 .CE
-.PP 
+.PP
 \fBTtk_MakePadding\fR is a convenience routine that contsructs
 a \fBTtk_Padding\fR structure with the specified left, top, right, and bottom
-components.  
+components.
 .PP
 \fBTtk_UniformPadding\fR constructs a \fBTtk_Padding\fR structure
 with all components equal to the specified \fIborder\fR.
@@ -200,6 +200,7 @@ This is typically used in element geometry procedures to simulate a
 .QW pressed-in
 look for pushbuttons.
 .SH "CONVERSION ROUTINES"
+.PP
 \fBTtk_GetPaddingFromObj\fR converts the string in \fIobjPtr\fR
 to a \fBTtk_Padding\fR structure.
 The string representation is a list of 

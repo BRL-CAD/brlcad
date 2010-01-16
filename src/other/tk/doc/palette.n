@@ -19,7 +19,6 @@ tk_setPalette, tk_bisque \- Modify the Tk color palette
 .sp
 \fBtk_bisque\fR
 .BE
-
 .SH DESCRIPTION
 .PP
 The \fBtk_setPalette\fR procedure changes the color scheme for Tk.
@@ -69,6 +68,8 @@ The procedure \fBtk_bisque\fR is provided for backward compatibility:
 it restores the application's colors to the light brown
 .PQ bisque
 color scheme used in Tk 3.6 and earlier versions.
-
 .SH KEYWORDS
 bisque, color, palette
+'\" Local Variables:
+'\" mode: nroff
+'\" End:

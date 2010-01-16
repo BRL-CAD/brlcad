@@ -232,10 +232,10 @@ test send-8.4 {Tk_SendCmd procedure, options} {secureserver} {
 } {1 {bad option "-gorp": must be -async, -displayof, or --}}
 test send-8.5 {Tk_SendCmd procedure, options} {secureserver} {
     list [catch {send -async foo} msg] $msg
-} {1 {wrong # args: should be "send ?options? interpName arg ?arg ...?"}}
+} {1 {wrong # args: should be "send ?-option value ...? interpName arg ?arg ...?"}}
 test send-8.6 {Tk_SendCmd procedure, options} {secureserver} {
     list [catch {send foo} msg] $msg
-} {1 {wrong # args: should be "send ?options? interpName arg ?arg ...?"}}
+} {1 {wrong # args: should be "send ?-option value ...? interpName arg ?arg ...?"}}
 test send-8.7 {Tk_SendCmd procedure, local execution} {secureserver} {
     set a initial
     send [tk appname] {set a new}

@@ -32,7 +32,6 @@ in the window given by \fItkwin\fR.
 .AP ClientData clientData in
 Arbitrary one-word value to pass to \fIproc\fR.
 .BE
-
 .SH DESCRIPTION
 .PP
 \fBTk_CreateEventHandler\fR arranges for \fIproc\fR to be
@@ -47,9 +46,9 @@ call \fBTk_HandleEvent\fR, such as \fBTk_DoOneEvent\fR or
 \fIProc\fR should have arguments and result that match the
 type \fBTk_EventProc\fR:
 .CS
-typedef void Tk_EventProc(
-    ClientData \fIclientData\fR,
-    XEvent *\fIeventPtr\fR);
+typedef void \fBTk_EventProc\fR(
+        ClientData \fIclientData\fR,
+        XEvent *\fIeventPtr\fR);
 .CE
 The \fIclientData\fR parameter to \fIproc\fR is a copy of the \fIclientData\fR
 argument given to \fBTk_CreateEventHandler\fR when the callback
@@ -74,6 +73,5 @@ automatically;  in this case there is no need to call
 If multiple handlers are declared for the same type of X event
 on the same window, then the handlers will be invoked in the
 order they were created.
-
 .SH KEYWORDS
 bind, callback, event, handler

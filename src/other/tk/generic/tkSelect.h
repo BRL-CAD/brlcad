@@ -77,8 +77,7 @@ typedef struct TkSelRetrievalInfo {
     Atom selection;		/* Selection being requested. */
     Atom property;		/* Property where selection will appear. */
     Atom target;		/* Desired form for selection. */
-    int (*proc) _ANSI_ARGS_((ClientData clientData, Tcl_Interp *interp,
-	char *portion));	/* Procedure to call to handle pieces of
+    Tk_GetSelProc *proc;	/* Procedure to call to handle pieces of
 				 * selection. */
     ClientData clientData;	/* Argument for proc. */
     int result;			/* Initially -1. Set to a Tcl return value
@@ -162,9 +161,6 @@ MODULE_SCOPE void	TkSelClearSelection(Tk_Window tkwin, XEvent *eventPtr);
 MODULE_SCOPE int	TkSelDefaultSelection(TkSelectionInfo *infoPtr,
 			    Atom target, char *buffer, int maxBytes,
 			    Atom *typePtr);
-MODULE_SCOPE int	TkSelGetSelection(Tcl_Interp *interp, Tk_Window tkwin,
-			    Atom selection, Atom target, Tk_GetSelProc *proc,
-			    ClientData clientData);
 #ifndef TkSelUpdateClipboard
 MODULE_SCOPE void	TkSelUpdateClipboard(TkWindow *winPtr,
 			    TkClipboardTarget *targetPtr);

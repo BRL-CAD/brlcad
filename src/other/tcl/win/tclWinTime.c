@@ -29,11 +29,11 @@
  * month, where index 1 is January.
  */
 
-static int normalDays[] = {
+static const int normalDays[] = {
     -1, 30, 58, 89, 119, 150, 180, 211, 242, 272, 303, 333, 364
 };
 
-static int leapDays[] = {
+static const int leapDays[] = {
     -1, 30, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365
 };
 
@@ -89,7 +89,7 @@ typedef struct TimeInfo {
 } TimeInfo;
 
 static TimeInfo timeInfo = {
-    { NULL },
+    { NULL, 0, 0, NULL, NULL, 0 },
     0,
     0,
     (HANDLE) NULL,
@@ -158,7 +158,7 @@ TclpGetSeconds(void)
 {
     Tcl_Time t;
 
-    (*tclGetTimeProcPtr) (&t, tclTimeClientData);    /* Tcl_GetTime inlined. */
+    tclGetTimeProcPtr(&t, tclTimeClientData);	/* Tcl_GetTime inlined. */
     return t.sec;
 }
 
@@ -192,7 +192,7 @@ TclpGetClicks(void)
     Tcl_Time now;		/* Current Tcl time */
     unsigned long retval;	/* Value to return */
 
-    (*tclGetTimeProcPtr) (&now, tclTimeClientData);   /* Tcl_GetTime inlined */
+    tclGetTimeProcPtr(&now, tclTimeClientData);	/* Tcl_GetTime inlined */
 
     retval = (now.sec * 1000000) + now.usec;
     return retval;
@@ -254,7 +254,7 @@ void
 Tcl_GetTime(
     Tcl_Time *timePtr)		/* Location to store time information. */
 {
-    (*tclGetTimeProcPtr) (timePtr, tclTimeClientData);
+    tclGetTimeProcPtr(timePtr, tclTimeClientData);
 }
 
 /*
@@ -624,7 +624,7 @@ TclpGetTZName(
 
 struct tm *
 TclpGetDate(
-    CONST time_t *t,
+    const time_t *t,
     int useGMT)
 {
     struct tm *tmPtr;
@@ -736,7 +736,7 @@ ComputeGMT(
     struct tm *tmPtr;
     long tmp, rem;
     int isLeap;
-    int *days;
+    const int *days;
     ThreadSpecificData *tsdPtr = TCL_TSD_INIT(&dataKey);
 
     tmPtr = &tsdPtr->tm;
@@ -1170,7 +1170,7 @@ AccumulateSample(
 
 struct tm *
 TclpGmtime(
-    CONST time_t *timePtr)	/* Pointer to the number of seconds since the
+    const time_t *timePtr)	/* Pointer to the number of seconds since the
 				 * local system's epoch */
 {
     /*
@@ -1201,9 +1201,8 @@ TclpGmtime(
 
 struct tm *
 TclpLocaltime(
-    CONST time_t *timePtr)	/* Pointer to the number of seconds since the
+    const time_t *timePtr)	/* Pointer to the number of seconds since the
 				 * local system's epoch */
-
 {
     /*
      * The MS implementation of localtime is thread safe because it returns

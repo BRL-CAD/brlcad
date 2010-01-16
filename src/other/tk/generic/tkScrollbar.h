@@ -167,7 +167,7 @@ typedef struct TkScrollbar {
  * Declaration of scrollbar class functions structure.
  */
 
-MODULE_SCOPE Tk_ClassProcs tkpScrollbarProcs;
+MODULE_SCOPE const Tk_ClassProcs tkpScrollbarProcs;
 
 /*
  * Declaration of scrollbar configuration options.

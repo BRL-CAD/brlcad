@@ -16,7 +16,6 @@ pack \- Geometry manager that packs around edges of cavity
 .SH SYNOPSIS
 \fBpack \fIoption arg \fR?\fIarg ...\fR?
 .BE
-
 .SH DESCRIPTION
 .PP
 The \fBpack\fR command is used to communicate with the packer,
@@ -261,6 +260,7 @@ will be highest in the stacking order.
 Or, you can use the \fBraise\fR and \fBlower\fR commands to change
 the stacking order of either the master or the slave.
 .SH EXAMPLE
+.PP
 .CS
 # Make the widgets
 label .t \-text "This widget is at the top"    \-bg red
@@ -276,9 +276,10 @@ text .mid
 \fBpack\fR .r   \-side right  \-fill y
 \fBpack\fR .mid \-expand 1    \-fill both
 .CE
-
 .SH "SEE ALSO"
 grid(n), place(n)
-
 .SH KEYWORDS
 geometry manager, location, packer, parcel, propagation, size
+'\" Local Variables:
+'\" mode: nroff
+'\" End:

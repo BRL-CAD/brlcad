@@ -163,6 +163,7 @@ TKOBJS = \
 	$(TMPDIR)\tkAtom.obj \
 	$(TMPDIR)\tkBind.obj \
 	$(TMPDIR)\tkBitmap.obj \
+	$(TMPDIR)\tkBusy.obj \
 	$(TMPDIR)\tkButton.obj \
 	$(TMPDIR)\tkCanvArc.obj \
 	$(TMPDIR)\tkCanvBmap.obj \
@@ -196,6 +197,7 @@ TKOBJS = \
 	$(TMPDIR)\tkImgGIF.obj \
 	$(TMPDIR)\tkImgPPM.obj \
 	$(TMPDIR)\tkImgPhoto.obj \
+	$(TMPDIR)\tkImgPhInstance.obj \
 	$(TMPDIR)\tkImgUtil.obj \
 	$(TMPDIR)\tkListbox.obj \
 	$(TMPDIR)\tkMacWinMenu.obj \
@@ -227,7 +229,6 @@ TKOBJS = \
 	$(TMPDIR)\tkUtil.obj \
 	$(TMPDIR)\tkVisual.obj \
 	$(TMPDIR)\tkStubInit.obj \
-	$(TMPDIR)\tkStubLib.obj \
 	$(TMPDIR)\tkWindow.obj
 
 # Maintenance hint: Please have multiple members of TKSTUBOBJS be separated
@@ -534,6 +535,5 @@ $(GENERICDIR)/tkMacWinMenu.c: $(GENERICDIR)/tkMenu.h
 $(GENERICDIR)/tkMenu.c: $(GENERICDIR)/tkMenu.h
 $(GENERICDIR)/tkMenuDraw.c: $(GENERICDIR)/tkMenu.h
 $(WINDIR)/tkWinMenu.c: $(GENERICDIR)/tkMenu.h
-
 
 

@@ -4,8 +4,8 @@
  *	This file manages the clipboard for the Tk toolkit.
  *
  * Copyright (c) 1995-1997 Sun Microsystems, Inc.
- * Copyright 2001, Apple Computer, Inc.
- * Copyright (c) 2006-2007 Daniel A. Steffen <das@users.sourceforge.net>
+ * Copyright 2001-2009, Apple Inc.
+ * Copyright (c) 2006-2009 Daniel A. Steffen <das@users.sourceforge.net>
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -16,20 +16,94 @@
 #include "tkMacOSXPrivate.h"
 #include "tkSelect.h"
 
+static NSInteger changeCount = -1;
+static Tk_Window clipboardOwner = NULL;
+
+#pragma mark TKApplication(TKClipboard)
+
+@implementation TKApplication(TKClipboard)
+- (void) tkProvidePasteboard: (TkDisplay *) dispPtr
+	pasteboard: (NSPasteboard *) sender
+	provideDataForType: (NSString *) type
+{
+    NSMutableString *string = [NSMutableString new];
+
+    if (dispPtr && dispPtr->clipboardActive &&
+	    [type isEqualToString:NSStringPboardType]) {
+	for (TkClipboardTarget *targetPtr = dispPtr->clipTargetPtr; targetPtr;
+		targetPtr = targetPtr->nextPtr) {
+	    if (targetPtr->type == XA_STRING ||
+		    targetPtr->type == dispPtr->utf8Atom) {
+		for (TkClipboardBuffer *cbPtr = targetPtr->firstBufferPtr;
+			cbPtr; cbPtr = cbPtr->nextPtr) {
+		    NSString *s = [[NSString alloc] initWithBytesNoCopy:
+			    cbPtr->buffer length:cbPtr->length
+			    encoding:NSUTF8StringEncoding freeWhenDone:NO];
+
+		    [string appendString:s];
+		    [s release];
+		}
+		break;
+	    }
+	}
+    }
+    [sender setString:string forType:type];
+    [string release];
+}
+
+- (void) tkProvidePasteboard: (TkDisplay *) dispPtr
+{
+    if (dispPtr && dispPtr->clipboardActive) {
+	[self tkProvidePasteboard:dispPtr
+		pasteboard:[NSPasteboard generalPasteboard]
+		provideDataForType:NSStringPboardType];
+    }
+}
+
+- (void) pasteboard: (NSPasteboard *) sender
+	provideDataForType: (NSString *) type
+{
+    [self tkProvidePasteboard:TkGetDisplayList() pasteboard:sender
+	    provideDataForType:type];
+}
+
+- (void) tkCheckPasteboard
+{
+    if (clipboardOwner && [[NSPasteboard generalPasteboard] changeCount] !=
+	    changeCount) {
+	TkDisplay *dispPtr = TkGetDisplayList();
+
+	if (dispPtr) {
+	    XEvent event;
+
+	    event.xany.type = SelectionClear;
+	    event.xany.serial = NextRequest(Tk_Display(clipboardOwner));
+	    event.xany.send_event = False;
+	    event.xany.window = Tk_WindowId(clipboardOwner);
+	    event.xany.display = Tk_Display(clipboardOwner);
+	    event.xselectionclear.selection = dispPtr->clipboardAtom;
+	    Tk_QueueWindowEvent(&event, TCL_QUEUE_TAIL);
+	}
+	clipboardOwner = NULL;
+    }
+}
+@end
+
+#pragma mark -
 
 /*
  *----------------------------------------------------------------------
  *
  * TkSelGetSelection --
  *
- *	Retrieve the specified selection from another process. For
- *	now, only fetching XA_STRING from CLIPBOARD is supported.
- *	Eventually other types should be allowed.
+ *	Retrieve the specified selection from another process. For now, only
+ *	fetching XA_STRING from CLIPBOARD is supported. Eventually other types
+ *	should be allowed.
  *
  * Results:
- *	The return value is a standard Tcl return value.
- *	If an error occurs (such as no selection exists)
- *	then an error message is left in the interp's result.
+ *	The return value is a standard Tcl return value. If an error occurs
+ *	(such as no selection exists) then an error message is left in the
+ *	interp's result.
  *
  * Side effects:
  *	None.
@@ -50,109 +124,35 @@ TkSelGetSelection(
 				 * once it has been retrieved. */
     ClientData clientData)	/* Arbitrary value to pass to proc. */
 {
-    int result;
-    OSStatus err;
-    long length;
-    ScrapRef scrapRef;
-    char *buf;
+    int result = TCL_ERROR;
+    TkDisplay *dispPtr = ((TkWindow *) tkwin)->dispPtr;
 
-    if ((selection == Tk_InternAtom(tkwin, "CLIPBOARD"))
-	    && (target == XA_STRING)) {
-	/*
-	 * Get the scrap from the Macintosh global clipboard.
-	 */
+    if (dispPtr && selection == dispPtr->clipboardAtom && (target == XA_STRING
+	    || target == dispPtr->utf8Atom)) {
+	NSString *string = nil;
+	NSPasteboard *pb = [NSPasteboard generalPasteboard];
+	NSString *type = [pb availableTypeFromArray:[NSArray arrayWithObject:
+		NSStringPboardType]];
 
-	err = ChkErr(GetCurrentScrap, &scrapRef);
-	if (err != noErr) {
-	    Tcl_AppendResult(interp, Tk_GetAtomName(tkwin, selection),
-		    " GetCurrentScrap failed.", NULL);
-	    return TCL_ERROR;
+	if (type) {
+	    string = [pb stringForType:type];
 	}
-
-	/*
-	 * Try UNICODE first
-	 */
-	err = ChkErr(GetScrapFlavorSize, scrapRef, kScrapFlavorTypeUnicode,
-		&length);
-	if (err == noErr && length > 0) {
-	    Tcl_DString ds;
-	    char *data;
-
-	    buf = (char *) ckalloc(length + 2);
-	    buf[length] = 0;
-	    buf[length+1] = 0; /* 2-byte unicode null */
-	    err = ChkErr(GetScrapFlavorData, scrapRef, kScrapFlavorTypeUnicode,
-		    &length, buf);
-	    if (err == noErr) {
-		Tcl_DStringInit(&ds);
-		Tcl_UniCharToUtfDString((Tcl_UniChar *)buf,
-			Tcl_UniCharLen((Tcl_UniChar *)buf), &ds);
-		for (data = Tcl_DStringValue(&ds); *data != '\0'; data++) {
-		    if (*data == '\r') {
-			*data = '\n';
-		    }
-		}
-		result = (*proc)(clientData, interp, Tcl_DStringValue(&ds));
-		Tcl_DStringFree(&ds);
-		ckfree(buf);
-		return result;
-	    }
-	}
-
-	err = ChkErr(GetScrapFlavorSize, scrapRef, 'TEXT', &length);
-	if (err != noErr) {
-	    Tcl_AppendResult(interp, Tk_GetAtomName(tkwin, selection),
-		    " GetScrapFlavorSize failed.", NULL);
-	    return TCL_ERROR;
-	}
-	if (length > 0) {
-	    Tcl_DString encodedText;
-	    char *data;
-
-	    buf = (char *) ckalloc(length + 1);
-	    buf[length] = 0;
-	    err = ChkErr(GetScrapFlavorData, scrapRef, 'TEXT', &length, buf);
-	    if (err != noErr) {
-		    Tcl_AppendResult(interp, Tk_GetAtomName(tkwin, selection),
-			" GetScrapFlavorData failed.", NULL);
-		    return TCL_ERROR;
-	    }
-
-	    /*
-	     * Tcl expects '\n' not '\r' as the line break character.
-	     */
-
-	    for (data = buf; *data != '\0'; data++) {
-		if (*data == '\r') {
-		    *data = '\n';
-		}
-	    }
-
-	    Tcl_ExternalToUtfDString(TkMacOSXCarbonEncoding, buf, length,
-		    &encodedText);
-	    result = (*proc)(clientData, interp,
-		    Tcl_DStringValue(&encodedText));
-	    Tcl_DStringFree(&encodedText);
-
-	    ckfree(buf);
-	    return result;
-	}
+	result = proc(clientData, interp, string ? [string UTF8String] : "");
+    } else {
+	Tcl_AppendResult(interp, Tk_GetAtomName(tkwin, selection),
+		" selection doesn't exist or form \"",
+		Tk_GetAtomName(tkwin, target), "\" not defined", NULL);
     }
-
-    Tcl_AppendResult(interp, Tk_GetAtomName(tkwin, selection),
-	    " selection doesn't exist or form \"",
-	    Tk_GetAtomName(tkwin, target), "\" not defined", NULL);
-    return TCL_ERROR;
+    return result;
 }
 
 /*
  *----------------------------------------------------------------------
  *
- * TkSetSelectionOwner --
+ * XSetSelectionOwner --
  *
- *	This function claims ownership of the specified selection.
- *	If the selection is CLIPBOARD, then we empty the system
- *	clipboard.
+ *	This function claims ownership of the specified selection. If the
+ *	selection is CLIPBOARD, then we empty the system clipboard.
  *
  * Results:
  *	None.
@@ -170,27 +170,41 @@ XSetSelectionOwner(
     Window owner,		/* Window to be the owner. */
     Time time)			/* The current time? */
 {
-    Tk_Window tkwin;
-    TkDisplay *dispPtr;
+    TkDisplay *dispPtr = TkGetDisplayList();
 
-    /*
-     * This is a gross hack because the Tk_InternAtom interface is broken.
-     * It expects a Tk_Window, even though it only needs a Tk_Display.
-     */
+    if (dispPtr && selection == dispPtr->clipboardAtom) {
+	clipboardOwner = owner ? Tk_IdToWindow(display, owner) : NULL;
+	if (!dispPtr->clipboardActive) {
+	    NSPasteboard *pb = [NSPasteboard generalPasteboard];
 
-    tkwin = (Tk_Window) TkGetMainInfoList()->winPtr;
-
-    if (selection == Tk_InternAtom(tkwin, "CLIPBOARD")) {
-	/*
-	 * Only claim and empty the clipboard if we aren't already the
-	 * owner of the clipboard.
-	 */
-
-	dispPtr = TkGetMainInfoList()->winPtr->dispPtr;
-	if (dispPtr->clipboardActive) {
-	    return;
+	    changeCount = [pb declareTypes:[NSArray array] owner:NSApp];
 	}
-	ClearCurrentScrap();
+    }
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TkMacOSXSelDeadWindow --
+ *
+ *	This function is invoked just before a TkWindow is deleted. It
+ *	performs selection-related cleanup.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	clipboardOwner is cleared.
+ *
+ *----------------------------------------------------------------------
+ */
+
+void
+TkMacOSXSelDeadWindow(
+    TkWindow *winPtr)
+{
+    if (winPtr && winPtr == (TkWindow *)clipboardOwner) {
+	clipboardOwner = NULL;
     }
 }
 
@@ -199,9 +213,8 @@ XSetSelectionOwner(
  *
  * TkSelUpdateClipboard --
  *
- *	This function is called to force the clipboard to be updated
- *	after new data is added. On the Mac we don't need to do
- *	anything.
+ *	This function is called to force the clipboard to be updated after new
+ *	data is added.
  *
  * Results:
  *	None.
@@ -218,6 +231,10 @@ TkSelUpdateClipboard(
     TkClipboardTarget *targetPtr)
 				/* Info about the content. */
 {
+    NSPasteboard *pb = [NSPasteboard generalPasteboard];
+
+    changeCount = [pb addTypes:[NSArray arrayWithObject:NSStringPboardType]
+	    owner:NSApp];
 }
 
 /*
@@ -225,8 +242,7 @@ TkSelUpdateClipboard(
  *
  * TkSelEventProc --
  *
- *	This procedure is invoked whenever a selection-related
- *	event occurs.
+ *	This procedure is invoked whenever a selection-related event occurs.
  *
  * Results:
  *	None.
@@ -244,6 +260,7 @@ TkSelEventProc(
 				 * SelectionRequest, or SelectionNotify. */
 {
     if (eventPtr->type == SelectionClear) {
+	clipboardOwner = NULL;
 	TkSelClearSelection(tkwin, eventPtr);
     }
 }
@@ -253,9 +270,8 @@ TkSelEventProc(
  *
  * TkSelPropProc --
  *
- *	This procedure is invoked when property-change events
- *	occur on windows not known to the toolkit. This is a stub
- *	function under Windows.
+ *	This procedure is invoked when property-change events occur on windows
+ *	not known to the toolkit. This is a stub function under Windows.
  *
  * Results:
  *	None.
@@ -278,7 +294,6 @@ TkSelPropProc(
  * TkSuspendClipboard --
  *
  *	Handle clipboard conversion as required by the suppend event.
- *	This function is also called on exit.
  *
  * Results:
  *	None.
@@ -292,80 +307,14 @@ TkSelPropProc(
 void
 TkSuspendClipboard(void)
 {
-    TkClipboardTarget *targetPtr;
-    TkClipboardBuffer *cbPtr;
-    TkDisplay *dispPtr;
-    char *buffer, *p, *endPtr, *buffPtr;
-    long length;
-    ScrapRef scrapRef;
-
-    dispPtr = TkGetDisplayList();
-    if ((dispPtr == NULL) || !dispPtr->clipboardActive) {
-	return;
-    }
-
-    for (targetPtr = dispPtr->clipTargetPtr; targetPtr != NULL;
-	    targetPtr = targetPtr->nextPtr) {
-	if (targetPtr->type == XA_STRING) {
-	    break;
-	}
-    }
-    if (targetPtr != NULL) {
-	Tcl_DString encodedText, unicodedText;
-
-	length = 0;
-	for (cbPtr = targetPtr->firstBufferPtr; cbPtr != NULL;
-		cbPtr = cbPtr->nextPtr) {
-	    length += cbPtr->length;
-	}
-
-	buffer = ckalloc(length);
-	buffPtr = buffer;
-	for (cbPtr = targetPtr->firstBufferPtr; cbPtr != NULL;
-		cbPtr = cbPtr->nextPtr) {
-	    for (p = cbPtr->buffer, endPtr = p + cbPtr->length;
-		    p < endPtr; p++) {
-		if (*p == '\n') {
-		    *buffPtr++ = '\r';
-		} else {
-		    *buffPtr++ = *p;
-		}
-	    }
-	}
-
-	ClearCurrentScrap();
-	GetCurrentScrap(&scrapRef);
-	Tcl_UtfToExternalDString(TkMacOSXCarbonEncoding, buffer, length,
-		&encodedText);
-	PutScrapFlavor(scrapRef, 'TEXT', 0, Tcl_DStringLength(&encodedText),
-		Tcl_DStringValue(&encodedText));
-	Tcl_DStringFree(&encodedText);
-
-	/*
-	 * Also put unicode data on scrap.
-	 */
-
-	Tcl_DStringInit(&unicodedText);
-	Tcl_UtfToUniCharDString(buffer, length, &unicodedText);
-	PutScrapFlavor(scrapRef, kScrapFlavorTypeUnicode, 0,
-		Tcl_DStringLength(&unicodedText),
-		Tcl_DStringValue(&unicodedText));
-	Tcl_DStringFree(&unicodedText);
-
-	ckfree(buffer);
-    }
-
-    /*
-     * The system now owns the scrap. We tell Tk that it has
-     * lost the selection so that it will look for it the next time
-     * it needs it. (Window list NULL if quiting.)
-     */
-
-    if (TkGetMainInfoList() != NULL) {
-	Tk_ClearSelection((Tk_Window) TkGetMainInfoList()->winPtr,
-		Tk_InternAtom((Tk_Window) TkGetMainInfoList()->winPtr,
-		"CLIPBOARD"));
-    }
-
-    return;
+    changeCount = [[NSPasteboard generalPasteboard] changeCount];
 }
+
+/*
+ * Local Variables:
+ * mode: objc
+ * c-basic-offset: 4
+ * fill-column: 79
+ * coding: utf-8
+ * End:
+ */

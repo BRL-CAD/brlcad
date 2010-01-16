@@ -38,7 +38,7 @@ proc loadDir w {
 proc selectAndLoadDir w {
     global dirName
     set dir [tk_chooseDirectory -initialdir $dirName -parent $w -mustexist 1]
-    if {[string length $dir] != 0} {
+    if {$dir ne ""} {
 	set dirName $dir
 	loadDir $w
     }

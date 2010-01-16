@@ -90,18 +90,14 @@ the widget and will ignore mouse button presses.
 In this state the \fBdisabledForeground\fR and
 \fBbackground\fR options determine how the radiobutton is displayed.
 .OP \-tristateimage tristateImage TristateImage
-.VS 8.5
 Specifies an image to display (in place of the \fBimage\fR option)
 when the radiobutton is selected.
 This option is ignored unless the \fBimage\fR option has been
 specified.
-.VE 8.5
 .OP \-tristatevalue tristateValue Value
-.VS 8.5
-Specifies the value that causes the radiobutton to display the multi-value 
+Specifies the value that causes the radiobutton to display the multi-value
 selection, also known as the tri-state mode.  Defaults to
 .QW "" .
-.VE 8.5
 .OP \-value value Value
 Specifies value to store in the button's associated variable whenever
 this button is selected.
@@ -162,12 +158,10 @@ When a radiobutton is selected it sets the value of the variable to
 indicate that fact;  each radiobutton also monitors the value of
 the variable and automatically selects and deselects itself when the
 variable's value changes.
-.VS 8.5
-If the variable's value matches the \fBtristateValue\fR, then the radiobutton is 
-drawn using the tri-state mode.  This mode is used to indicate mixed or 
-multiple values.  (This is used when the radiobutton represents the state 
+If the variable's value matches the \fBtristateValue\fR, then the radiobutton
+is drawn using the tri-state mode.  This mode is used to indicate mixed or
+multiple values.  (This is used when the radiobutton represents the state
 of multiple items.)
-.VE 8.5
 By default the variable \fBselectedButton\fR
 is used;  its contents give the name of the button that is
 selected, or the empty string if no button associated with that
@@ -263,3 +257,6 @@ individual widgets or by redefining the class bindings.
 checkbutton(n), labelframe(n), listbox(n), options(n), scale(n), ttk::radiobutton(n)
 .SH KEYWORDS
 radiobutton, widget
+'\" Local Variables:
+'\" mode: nroff
+'\" End:

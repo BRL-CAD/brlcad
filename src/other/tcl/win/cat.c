@@ -12,7 +12,11 @@
  */
 
 #include <stdio.h>
-#include <io.h>
+#ifdef __CYGWIN__
+#   include <unistd.h>
+#else
+#   include <io.h>
+#endif
 #include <string.h>
 
 int
@@ -20,7 +24,7 @@ main(void)
 {
     char buf[1024];
     int n;
-    char *err;
+    const char *err;
 
     while (1) {
 	n = read(0, buf, sizeof(buf));

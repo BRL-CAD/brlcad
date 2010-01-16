@@ -46,7 +46,7 @@ int Ttk_GetCompoundFromObj(
  * Legal values for the -orient option.
  * See also: enum Ttk_Orient.
  */
-CONST char *ttkOrientStrings[] = {
+const char *ttkOrientStrings[] = {
     "horizontal", "vertical", NULL
 };
 
@@ -114,17 +114,17 @@ void TtkCheckStateOption(WidgetCore *corePtr, Tcl_Obj *objPtr)
  */
 void TtkSendVirtualEvent(Tk_Window tgtWin, const char *eventName)
 {
-    XEvent event;
+    union {XEvent general; XVirtualEvent virtual;} event;
 
     memset(&event, 0, sizeof(event));
-    event.xany.type = VirtualEvent;
-    event.xany.serial = NextRequest(Tk_Display(tgtWin));
-    event.xany.send_event = False;
-    event.xany.window = Tk_WindowId(tgtWin);
-    event.xany.display = Tk_Display(tgtWin);
-    ((XVirtualEvent *) &event)->name = Tk_GetUid(eventName);
+    event.general.xany.type = VirtualEvent;
+    event.general.xany.serial = NextRequest(Tk_Display(tgtWin));
+    event.general.xany.send_event = False;
+    event.general.xany.window = Tk_WindowId(tgtWin);
+    event.general.xany.display = Tk_Display(tgtWin);
+    event.virtual.name = Tk_GetUid(eventName);
 
-    Tk_QueueWindowEvent(&event, TCL_QUEUE_TAIL);
+    Tk_QueueWindowEvent(&event.general, TCL_QUEUE_TAIL);
 }
 
 /* TtkEnumerateOptions, TtkGetOptionValue --

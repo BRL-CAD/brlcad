@@ -73,8 +73,7 @@ static const char *validateReasonStrings[] = {
 
 /* Style parameters:
  */
-typedef struct 
-{
+typedef struct {
     Tcl_Obj *foregroundObj;	/* Foreground color for normal text */
     Tcl_Obj *backgroundObj;	/* Entry widget background color */
     Tcl_Obj *selBorderObj;	/* Border and background for selection */
@@ -84,8 +83,7 @@ typedef struct
     Tcl_Obj *insertWidthObj;	/* Insert cursor width */
 } EntryStyleData;
 
-typedef struct
-{
+typedef struct {
     /*
      * Internal state:
      */
@@ -135,8 +133,7 @@ typedef struct
 
 } EntryPart;
 
-typedef struct
-{
+typedef struct {
     WidgetCore	core;
     EntryPart	entry;
 } Entry;
@@ -158,8 +155,7 @@ typedef struct
 #define DEF_ENTRY_FONT	"TkTextFont"
 #define DEF_LIST_HEIGHT	"10"
 
-static Tk_OptionSpec EntryOptionSpecs[] =
-{
+static Tk_OptionSpec EntryOptionSpecs[] = {
     WIDGET_TAKES_FOCUS,
 
     {TK_OPTION_BOOLEAN, "-exportselection", "exportSelection",
@@ -523,7 +519,7 @@ static int RunValidationScript(
     ExpandPercents(entryPtr, template, new, index, count, reason, &script);
     code = Tcl_EvalEx(interp,
 		Tcl_DStringValue(&script), Tcl_DStringLength(&script),
-		TCL_EVAL_GLOBAL | TCL_EVAL_DIRECT);
+		TCL_EVAL_GLOBAL);
     Tcl_DStringFree(&script);
     if (WidgetDestroyed(&entryPtr->core))
 	return TCL_ERROR;
@@ -566,7 +562,7 @@ static int EntryNeedsValidation(VMODE vmode, VREASON reason)
  *	TCL_BREAK if the change is rejected
  *      TCL_ERROR if any errors occured
  *
- * The change will be rejected if -validatecommand returns 0, 
+ * The change will be rejected if -validatecommand returns 0,
  * or if -validatecommand or -invalidcommand modifies the value.
  */
 static int
@@ -925,7 +921,7 @@ EntryEventProc(ClientData clientData, XEvent *eventPtr)
  * +++ Initialization and cleanup.
  */
 
-static int
+static void
 EntryInitialize(Tcl_Interp *interp, void *recordPtr)
 {
     Entry *entryPtr = recordPtr;
@@ -950,8 +946,6 @@ EntryInitialize(Tcl_Interp *interp, void *recordPtr)
     entryPtr->entry.insertPos		= 0;
     entryPtr->entry.selectFirst 	= -1;
     entryPtr->entry.selectLast		= -1;
-
-    return TCL_OK;
 }
 
 static void
@@ -1058,17 +1052,6 @@ static int EntryPostConfigure(Tcl_Interp *interp, void *recordPtr, int mask)
  * +++ Layout and display.
  */
 
-/* EntryTextArea --
- * 	Return bounding box of entry display ("owner-draw") area.
- */
-static Ttk_Box
-EntryTextArea(Entry *entryPtr)
-{
-    WidgetCore *corePtr = &entryPtr->core;
-    Ttk_LayoutNode *node = Ttk_LayoutFindNode(corePtr->layout, "textarea");
-    return node ? Ttk_LayoutNodeParcel(node) : Ttk_WinBox(corePtr->tkwin);
-}
-
 /* EntryCharPosition --
  * 	Return the X coordinate of the specified character index.
  * 	Precondition: textLayout and layoutX up-to-date.
@@ -1102,7 +1085,7 @@ EntryDoLayout(void *recordPtr)
     Ttk_Box textarea;
 
     Ttk_PlaceLayout(corePtr->layout,corePtr->state,Ttk_WinBox(corePtr->tkwin));
-    textarea = EntryTextArea(entryPtr);
+    textarea = Ttk_ClientRegion(corePtr->layout, "textarea");
 
     /* Center the text vertically within the available parcel:
      */
@@ -1188,7 +1171,7 @@ static void EntryDisplay(void *clientData, Drawable d)
 
     EntryInitStyleData(entryPtr, &es);
 
-    showCursor = 
+    showCursor =
 	   (entryPtr->core.flags & CURSOR_ON) != 0
 	&& EntryEditable(entryPtr)
 	&& entryPtr->entry.insertPos >= leftIndex
@@ -1250,7 +1233,7 @@ static void EntryDisplay(void *clientData, Drawable d)
 	Tk_SetCaretPos(tkwin, cursorX, cursorY, cursorHeight);
 
 	gc = EntryGetGC(entryPtr, es.insertColorObj);
-	XFillRectangle(Tk_Display(tkwin), d, gc, 
+	XFillRectangle(Tk_Display(tkwin), d, gc,
 	    cursorX-cursorWidth/2, cursorY, cursorWidth, cursorHeight);
 	Tk_FreeGC(Tk_Display(tkwin), gc);
     }
@@ -1392,7 +1375,7 @@ EntryBBoxCommand(
     if ((index == entryPtr->entry.numChars) && (index > 0)) {
 	index--;
     }
-    Tk_CharBbox(entryPtr->entry.textLayout, index, 
+    Tk_CharBbox(entryPtr->entry.textLayout, index,
 	    &b.x, &b.y, &b.width, &b.height);
     b.x += entryPtr->entry.layoutX;
     b.y += entryPtr->entry.layoutY;
@@ -1639,8 +1622,7 @@ static int EntryXViewCommand(
     return TtkScrollviewCommand(interp, objc, objv, entryPtr->entry.xscrollHandle);
 }
 
-static WidgetCommandSpec EntryCommands[] =
-{
+static WidgetCommandSpec EntryCommands[] = {
     { "bbox", 		EntryBBoxCommand },
     { "cget", 		TtkWidgetCgetCommand },
     { "configure", 	TtkWidgetConfigureCommand },
@@ -1662,8 +1644,7 @@ static WidgetCommandSpec EntryCommands[] =
  * +++ Entry widget definition.
  */
 
-static WidgetSpec EntryWidgetSpec =
-{
+static WidgetSpec EntryWidgetSpec = {
     "TEntry",			/* className */
     sizeof(Entry), 		/* recordSize */
     EntryOptionSpecs, 		/* optionSpecs */
@@ -1695,8 +1676,7 @@ typedef struct {
     ComboboxPart combobox;
 } Combobox;
 
-static Tk_OptionSpec ComboboxOptionSpecs[] =
-{
+static Tk_OptionSpec ComboboxOptionSpecs[] = {
     {TK_OPTION_STRING, "-height", "height", "Height",
         DEF_LIST_HEIGHT, Tk_Offset(Combobox, combobox.heightObj), -1,
 	0,0,0 },
@@ -1712,13 +1692,14 @@ static Tk_OptionSpec ComboboxOptionSpecs[] =
 /* ComboboxInitialize --
  * 	Initialization hook for combobox widgets.
  */
-static int
+static void
 ComboboxInitialize(Tcl_Interp *interp, void *recordPtr)
 {
     Combobox *cb = recordPtr;
+
     cb->combobox.currentIndex = -1;
     TtkTrackElementState(&cb->core);
-    return EntryInitialize(interp, recordPtr);
+    EntryInitialize(interp, recordPtr);
 }
 
 /* ComboboxConfigure --
@@ -1742,7 +1723,7 @@ ComboboxConfigure(Tcl_Interp *interp, void *recordPtr, int mask)
  * 	Setting the current index updates the combobox value,
  * 	but the value and -values may be changed independently
  * 	of the index.  Instead of trying to keep currentIndex
- * 	in sync at all times, [$cb current] double-checks 
+ * 	in sync at all times, [$cb current] double-checks
  */
 static int ComboboxCurrentCommand(
     Tcl_Interp *interp, int objc, Tcl_Obj *const objv[], void *recordPtr)
@@ -1758,7 +1739,7 @@ static int ComboboxCurrentCommand(
     if (objc == 2) {
 	/* Check if currentIndex still valid:
 	 */
-	if (    currentIndex < 0 
+	if (    currentIndex < 0
 	     || currentIndex >= nValues
 	     || strcmp(currentValue,Tcl_GetString(values[currentIndex]))
 	   )
@@ -1783,7 +1764,7 @@ static int ComboboxCurrentCommand(
 	    return TCL_ERROR;
 	}
 	if (currentIndex < 0 || currentIndex >= nValues) {
-	    Tcl_AppendResult(interp, 
+	    Tcl_AppendResult(interp,
 		    "Index ", Tcl_GetString(objv[2]), " out of range",
 		    NULL);
 	    return TCL_ERROR;
@@ -1802,8 +1783,7 @@ static int ComboboxCurrentCommand(
 /*------------------------------------------------------------------------
  * +++ Combobox widget definition.
  */
-static WidgetCommandSpec ComboboxCommands[] =
-{
+static WidgetCommandSpec ComboboxCommands[] = {
     { "bbox", 		EntryBBoxCommand },
     { "cget", 		TtkWidgetCgetCommand },
     { "configure", 	TtkWidgetConfigureCommand },
@@ -1822,8 +1802,7 @@ static WidgetCommandSpec ComboboxCommands[] =
     {0,0}
 };
 
-static WidgetSpec ComboboxWidgetSpec =
-{
+static WidgetSpec ComboboxWidgetSpec = {
     "TCombobox",		/* className */
     sizeof(Combobox), 		/* recordSize */
     ComboboxOptionSpecs,	/* optionSpecs */
@@ -1831,6 +1810,118 @@ static WidgetSpec ComboboxWidgetSpec =
     ComboboxInitialize,     	/* initializeProc */
     EntryCleanup,		/* cleanupProc */
     ComboboxConfigure,		/* configureProc */
+    EntryPostConfigure,  	/* postConfigureProc */
+    TtkWidgetGetLayout, 	/* getLayoutProc */
+    TtkWidgetSize, 		/* sizeProc */
+    EntryDoLayout,		/* layoutProc */
+    EntryDisplay		/* displayProc */
+};
+
+/*------------------------------------------------------------------------
+ * +++ Spinbox widget.
+ */
+
+typedef struct {
+    Tcl_Obj	*valuesObj;
+
+    Tcl_Obj	*fromObj;
+    Tcl_Obj	*toObj;
+    Tcl_Obj	*incrementObj;
+    Tcl_Obj	*formatObj;
+
+    Tcl_Obj	*wrapObj;
+    Tcl_Obj	*commandObj;
+} SpinboxPart;
+
+typedef struct {
+    WidgetCore core;
+    EntryPart entry;
+    SpinboxPart spinbox;
+} Spinbox;
+
+static Tk_OptionSpec SpinboxOptionSpecs[] = {
+    {TK_OPTION_STRING, "-values", "values", "Values",
+        "", Tk_Offset(Spinbox, spinbox.valuesObj), -1,
+	0,0,0 },
+
+    {TK_OPTION_DOUBLE, "-from", "from", "From",
+	"0", Tk_Offset(Spinbox,spinbox.fromObj), -1,
+	0,0,0 },
+    {TK_OPTION_DOUBLE, "-to", "to", "To",
+	"0", Tk_Offset(Spinbox,spinbox.toObj), -1,
+	0,0,0 },
+    {TK_OPTION_DOUBLE, "-increment", "increment", "Increment",
+	"1", Tk_Offset(Spinbox,spinbox.incrementObj), -1,
+	0,0,0 },
+    {TK_OPTION_STRING, "-format", "format", "Format",
+	"", Tk_Offset(Spinbox, spinbox.formatObj), -1,
+	0,0,0 },
+
+    {TK_OPTION_STRING, "-command", "command", "Command",
+	"", Tk_Offset(Spinbox, spinbox.commandObj), -1,
+	0,0,0 },
+    {TK_OPTION_BOOLEAN, "-wrap", "wrap", "Wrap",
+	"0", Tk_Offset(Spinbox,spinbox.wrapObj), -1,
+	0,0,0 },
+
+    WIDGET_INHERIT_OPTIONS(EntryOptionSpecs)
+};
+
+/* SpinboxInitialize --
+ * 	Initialization hook for spinbox widgets.
+ */
+static void
+SpinboxInitialize(Tcl_Interp *interp, void *recordPtr)
+{
+    Spinbox *sb = recordPtr;
+    TtkTrackElementState(&sb->core);
+    EntryInitialize(interp, recordPtr);
+}
+
+/* SpinboxConfigure --
+ * 	Configuration hook for spinbox widgets.
+ */
+static int
+SpinboxConfigure(Tcl_Interp *interp, void *recordPtr, int mask)
+{
+    Spinbox *sb = recordPtr;
+    int unused;
+
+    /* Make sure -values is a valid list:
+     */
+    if (Tcl_ListObjLength(interp,sb->spinbox.valuesObj,&unused) != TCL_OK)
+	return TCL_ERROR;
+
+    return EntryConfigure(interp, recordPtr, mask);
+}
+
+static WidgetCommandSpec SpinboxCommands[] = {
+    { "bbox", 		EntryBBoxCommand },
+    { "cget", 		TtkWidgetCgetCommand },
+    { "configure", 	TtkWidgetConfigureCommand },
+    { "delete", 	EntryDeleteCommand },
+    { "get", 		EntryGetCommand },
+    { "icursor", 	EntryICursorCommand },
+    { "identify",	TtkWidgetIdentifyCommand },
+    { "index", 		EntryIndexCommand },
+    { "insert", 	EntryInsertCommand },
+    { "instate",	TtkWidgetInstateCommand },
+    { "selection", 	EntrySelectionCommand },
+    { "state",  	TtkWidgetStateCommand },
+    { "set", 		EntrySetCommand },
+    { "validate",	EntryValidateCommand },
+    { "xview", 		EntryXViewCommand },
+    {0,0}
+};
+
+static WidgetSpec SpinboxWidgetSpec = {
+    "TSpinbox",			/* className */
+    sizeof(Spinbox), 		/* recordSize */
+    SpinboxOptionSpecs,		/* optionSpecs */
+    SpinboxCommands,  		/* subcommands */
+    SpinboxInitialize,     	/* initializeProc */
+    EntryCleanup,		/* cleanupProc */
+    SpinboxConfigure,		/* configureProc */
     EntryPostConfigure,  	/* postConfigureProc */
     TtkWidgetGetLayout, 	/* getLayoutProc */
     TtkWidgetSize, 		/* sizeProc */
@@ -1902,10 +1993,18 @@ TTK_BEGIN_LAYOUT(ComboboxLayout)
 	    TTK_NODE("Combobox.textarea", TTK_FILL_BOTH)))
 TTK_END_LAYOUT
 
+TTK_BEGIN_LAYOUT(SpinboxLayout)
+     TTK_GROUP("Spinbox.field", TTK_PACK_TOP|TTK_FILL_X,
+	 TTK_GROUP("null", TTK_PACK_RIGHT,
+	     TTK_NODE("Spinbox.uparrow", TTK_PACK_TOP|TTK_STICK_E)
+	     TTK_NODE("Spinbox.downarrow", TTK_PACK_BOTTOM|TTK_STICK_E))
+	 TTK_GROUP("Spinbox.padding", TTK_FILL_BOTH,
+	     TTK_NODE("Spinbox.textarea", TTK_FILL_BOTH)))
+TTK_END_LAYOUT
+
 /*------------------------------------------------------------------------
  * +++ Initialization.
  */
-
 MODULE_SCOPE
 void TtkEntry_Init(Tcl_Interp *interp)
 {
@@ -1915,9 +2014,11 @@ void TtkEntry_Init(Tcl_Interp *interp)
 
     Ttk_RegisterLayout(themePtr, "TEntry", EntryLayout);
     Ttk_RegisterLayout(themePtr, "TCombobox", ComboboxLayout);
+    Ttk_RegisterLayout(themePtr, "TSpinbox", SpinboxLayout);
 
     RegisterWidget(interp, "ttk::entry", &EntryWidgetSpec);
     RegisterWidget(interp, "ttk::combobox", &ComboboxWidgetSpec);
+    RegisterWidget(interp, "ttk::spinbox", &SpinboxWidgetSpec);
 }
 
 /*EOF*/

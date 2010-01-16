@@ -12,6 +12,9 @@
  * RCS: @(#) $Id$
  */
 
+/* Make sure this file is never compiled with Stubs! */
+#undef USE_TCL_STUBS
+#undef USE_TK_STUBS
 #include "tkInt.h"
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -28,7 +31,7 @@
  * Forward declarations for procedures defined later in this file:
  */
 
-static void		WishPanic(CONST char *format, ...);
+static void		WishPanic(const char *format, ...);
 #ifdef TK_TEST
 extern int		Tktest_Init(Tcl_Interp *interp);
 #endif /* TK_TEST */
@@ -224,7 +227,7 @@ error:
 
 void
 WishPanic(
-    CONST char *format, ...)
+    const char *format, ...)
 {
     va_list argList;
     char buf[1024];

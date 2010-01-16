@@ -97,18 +97,14 @@ the widget and will ignore mouse button presses.
 In this state the \fBdisabledForeground\fR and
 \fBbackground\fR options determine how the checkbutton is displayed.
 .OP \-tristateimage tristateImage TristateImage
-.VS 8.5
 Specifies an image to display (in place of the \fBimage\fR option)
 when the checkbutton is in tri-state mode.
 This option is ignored unless the \fBimage\fR option has been
 specified.
-.VE 8.5
 .OP \-tristatevalue tristateValue Value
-.VS 8.5
-Specifies the value that causes the checkbutton to display the multi-value 
+Specifies the value that causes the checkbutton to display the multi-value
 selection, also known as the tri-state mode.  Defaults to
 .QW "" .
-.VE 8.5
 .OP \-variable variable Variable
 Specifies name of global variable to set to indicate whether
 or not this button is selected.  Defaults to the name of the
@@ -157,17 +153,16 @@ If a checkbutton is selected then the indicator is normally
 drawn with a selected appearance, and
 a Tcl variable associated with the checkbutton is set to a particular
 value (normally 1).
-.VS 8.5
 The indicator is drawn with a check mark inside.
 If the checkbutton is not selected, then the indicator is drawn with a
 deselected appearance, and the associated variable is
 set to a different value (typically 0).
-The indicator is drawn without a check mark inside.  In the special case 
-where the variable (if specified) has a value that matches the tristatevalue, 
-the indicator is drawn with a tri-state appearance and is in the tri-state 
-mode indicating mixed or multiple values.  (This is used when the check 
+The indicator is drawn without a check mark inside.  In the special case
+where the variable (if specified) has a value that matches the tristatevalue,
+the indicator is drawn with a tri-state appearance and is in the tri-state
+mode indicating mixed or multiple values.  (This is used when the check
 box represents the state of multiple items.)
-The indicator is drawn in a platform dependent manner.  Under Unix and 
+The indicator is drawn in a platform dependent manner.  Under Unix and
 Windows, the background interior of the box is
 .QW grayed .
 Under Mac, the indicator is drawn with a dash mark inside.
@@ -192,7 +187,6 @@ changes to and from the button's
 and
 .QW tristate
 values.
-.VE 8.5
 .SH "WIDGET COMMAND"
 .PP
 The \fBcheckbutton\fR command creates a new Tcl command whose
@@ -280,6 +274,7 @@ actions occur:  the checkbutton is completely non-responsive.
 The behavior of checkbuttons can be changed by defining new bindings for
 individual widgets or by redefining the class bindings.
 .SH EXAMPLE
+.PP
 This example shows a group of uncoupled checkbuttons.
 .PP
 .CS
@@ -294,3 +289,6 @@ This example shows a group of uncoupled checkbuttons.
 button(n), options(n), radiobutton(n), ttk::checkbutton(n)
 .SH KEYWORDS
 checkbutton, widget
+'\" Local Variables:
+'\" mode: nroff
+'\" End:

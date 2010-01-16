@@ -56,13 +56,17 @@ in the style.
 .\" .OP \-padding padding Padding
 .\" .OP \-relief relief Relief
 .SH "WIDGET COMMAND"
+.PP
 In addition to the standard 
 \fBcget\fR, \fBconfigure\fR, \fBidentify\fR, \fBinstate\fR, and \fBstate\fR 
-commands, checkbuttons support the following additional
-widget commands:
+commands, buttons support the following additional widget commands:
 .TP
 \fIpathName \fBinvoke\fR
 Invokes the command associated with the button.
+.SH "STANDARD STYLES"
+.PP
+\fBTtk::button\fR widgets support the \fBToolbutton\fR style in all standard
+themes, which is useful for creating widgets for toolbars.
 .SH "COMPATIBILITY OPTIONS"
 .OP \-state state State
 May be set to \fBnormal\fR or \fBdisabled\fR to control the
@@ -74,3 +78,6 @@ widget command does not affect the state option.
 ttk::widget(n), button(n)
 .SH "KEYWORDS"
 widget, button, default, command
+'\" Local Variables:
+'\" mode: nroff
+'\" End:

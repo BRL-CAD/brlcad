@@ -50,6 +50,19 @@ enum compound {
 };
 
 /*
+ * Additional menu entry drawing parameters for Windows platform.
+ * DRAW_MENU_ENTRY_ARROW makes TkpDrawMenuEntry draw the arrow
+ * itself when cascade entry is disabled.
+ * DRAW_MENU_ENTRY_NOUNDERLINE forbids underline when ODS_NOACCEL
+ * is set, thus obeying the system-wide Windows UI setting.
+ */
+
+enum drawingParameters {
+    DRAW_MENU_ENTRY_ARROW = (1<<0),
+    DRAW_MENU_ENTRY_NOUNDERLINE = (1<<1)
+};
+
+/*
  * One of the following data structures is kept for each entry of each menu
  * managed by this file:
  */
@@ -240,8 +253,6 @@ typedef struct TkMenuEntry {
 /*
  * Menu states
  */
-
-MODULE_SCOPE char *tkMenuStateStrings[];
 
 #define ENTRY_ACTIVE 0
 #define ENTRY_NORMAL 1
@@ -494,12 +505,12 @@ typedef struct TkMenuOptionTables {
 MODULE_SCOPE int	TkActivateMenuEntry(TkMenu *menuPtr, int index);
 MODULE_SCOPE void	TkBindMenu(Tk_Window tkwin, TkMenu *menuPtr);
 MODULE_SCOPE TkMenuReferences*TkCreateMenuReferences(Tcl_Interp *interp,
-			    char *name);
+			    const char *name);
 MODULE_SCOPE void	TkDestroyMenu(TkMenu *menuPtr);
 MODULE_SCOPE void	TkEventuallyRecomputeMenu(TkMenu *menuPtr);
 MODULE_SCOPE void	TkEventuallyRedrawMenu(TkMenu *menuPtr,
 			    TkMenuEntry *mePtr);
-MODULE_SCOPE TkMenuReferences*TkFindMenuReferences(Tcl_Interp *interp, char *name);
+MODULE_SCOPE TkMenuReferences*TkFindMenuReferences(Tcl_Interp *interp, const char *name);
 MODULE_SCOPE TkMenuReferences*TkFindMenuReferencesObj(Tcl_Interp *interp,
 			    Tcl_Obj *namePtr);
 MODULE_SCOPE int	TkFreeMenuReferences(TkMenuReferences *menuRefPtr);
@@ -548,7 +559,7 @@ MODULE_SCOPE void	TkpDrawMenuEntry(TkMenuEntry *mePtr,
 			    Drawable d, Tk_Font tkfont,
 			    const Tk_FontMetrics *menuMetricsPtr, int x,
 			    int y, int width, int height, int strictMotif,
-			    int drawArrow);
+			    int drawingParameters);
 MODULE_SCOPE void	TkpMenuInit(void);
 MODULE_SCOPE int	TkpMenuNewEntry(TkMenuEntry *mePtr);
 MODULE_SCOPE int	TkpNewMenu(TkMenu *menuPtr);

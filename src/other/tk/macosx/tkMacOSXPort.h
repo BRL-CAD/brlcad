@@ -6,8 +6,8 @@
  *	#includes for system include files and a few other things.
  *
  * Copyright (c) 1994-1996 Sun Microsystems, Inc.
- * Copyright 2001, Apple Computer, Inc.
- * Copyright (c) 2005-2007 Daniel A. Steffen <das@users.sourceforge.net>
+ * Copyright 2001-2009, Apple Inc.
+ * Copyright (c) 2005-2009 Daniel A. Steffen <das@users.sourceforge.net>
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -17,21 +17,6 @@
 
 #ifndef _TKMACPORT
 #define _TKMACPORT
-
-/*
- * Macro to use instead of "void" for arguments that must have
- * type "void *" in ANSI C; maps them to type "char *" in
- * non-ANSI systems. This macro may be used in some of the include
- * files below, which is why it is defined here.
- */
-
-#ifndef VOID
-#   ifdef __STDC__
-#	define VOID void
-#   else
-#	define VOID char
-#   endif
-#endif
 
 #include <stdio.h>
 #include <ctype.h>
@@ -140,9 +125,6 @@
  * The following functions are not used on the Mac, so we stub them out.
  */
 
-#define TkFreeWindowId(dispPtr,w)
-#define TkInitXId(dispPtr)
-#define TkpButtonSetDefaults(specPtr) {}
 #define TkpCmapStressed(tkwin,colormap) (0)
 #define TkpFreeColor(tkColPtr)
 #define TkSetPixmapColormap(p,c) {}

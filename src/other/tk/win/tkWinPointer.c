@@ -362,6 +362,20 @@ XWarpPointer(
     GetWindowRect(Tk_GetHWND(dest_w), &r);
     SetCursorPos(r.left+dest_x, r.top+dest_y);
 }
+
+void
+TkpWarpPointer(
+    TkDisplay *dispPtr)
+{
+    if (dispPtr->warpWindow) {
+	RECT r;
+
+	GetWindowRect(Tk_GetHWND(Tk_WindowId(dispPtr->warpWindow)), &r);
+	SetCursorPos(r.left + dispPtr->warpX, r.top + dispPtr->warpY);
+    } else {
+	SetCursorPos(dispPtr->warpX, dispPtr->warpY);
+    }
+}
 
 /*
  *----------------------------------------------------------------------

@@ -136,7 +136,6 @@ it forms the bottom side.
 Specifies which of the border's graphics contexts is desired.
 Must be \fBTK_3D_FLAT_GC\fR, \fBTK_3D_LIGHT_GC\fR, or \fBTK_3D_DARK_GC\fR.
 .BE
-
 .SH DESCRIPTION
 .PP
 These procedures provide facilities for drawing window borders in a
@@ -155,7 +154,8 @@ darker than \fIobjPtr\fR.
 \fBTk_Alloc3DBorderFromObj\fR returns a token that may be used in later calls
 to \fBTk_Draw3DRectangle\fR.  If an error occurs in allocating information
 for the border (e.g. a bogus color name was given)
-then NULL is returned and an error message is left in \fIinterp->result\fR.
+then NULL is returned and an error message is left as the result of
+interpreter \fIinterp\fR.
 If it returns successfully, \fBTk_Alloc3DBorderFromObj\fR caches
 information about the return value in \fIobjPtr\fR, which speeds up
 future calls to \fBTk_Alloc3DBorderFromObj\fR with the same \fIobjPtr\fR
@@ -292,6 +292,5 @@ with the Tk_3DBorder token for the border.
 There should be exactly one call to \fBTk_Free3DBorderFromObj\fR or
 \fBTk_Free3DBorder\fR for each call to \fBTk_Alloc3DBorderFromObj\fR
 or \fBTk_Get3DBorder\fR.
-
 .SH KEYWORDS
 3D, background, border, color, depressed, illumination, object, polygon, raised, shadow, three-dimensional effect

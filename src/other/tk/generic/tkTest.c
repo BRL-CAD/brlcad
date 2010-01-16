@@ -16,6 +16,13 @@
  * RCS: @(#) $Id$
  */
 
+#undef STATIC_BUILD
+#ifndef USE_TCL_STUBS
+#   define USE_TCL_STUBS
+#endif
+#ifndef USE_TK_STUBS
+#   define USE_TK_STUBS
+#endif
 #include "tkInt.h"
 #include "tkText.h"
 
@@ -32,6 +39,15 @@
 #include "tkUnixInt.h"
 #endif
 
+/*
+ * TCL_STORAGE_CLASS is set unconditionally to DLLEXPORT because the
+ * Tcltest_Init declaration is in the source file itself, which is only
+ * accessed when we are building a library.
+ */
+
+#undef TCL_STORAGE_CLASS
+#define TCL_STORAGE_CLASS DLLEXPORT
+EXTERN int		Tktest_Init(Tcl_Interp *interp);
 /*
  * The following data structure represents the master for a test image:
  */
@@ -61,8 +77,8 @@ typedef struct TImageInstance {
  */
 
 static int		ImageCreate(Tcl_Interp *interp,
-			    char *name, int argc, Tcl_Obj *CONST objv[],
-			    Tk_ImageType *typePtr, Tk_ImageMaster master,
+			    const char *name, int argc, Tcl_Obj *const objv[],
+			    const Tk_ImageType *typePtr, Tk_ImageMaster master,
 			    ClientData *clientDataPtr);
 static ClientData	ImageGet(Tk_Window tkwin, ClientData clientData);
 static void		ImageDisplay(ClientData clientData,
@@ -96,14 +112,6 @@ typedef struct NewApp {
 } NewApp;
 
 static NewApp *newAppPtr = NULL;/* First in list of all new interpreters. */
-
-/*
- * Declaration for the square widget's class command function:
- */
-
-extern int		SquareObjCmd(ClientData clientData,
-			    Tcl_Interp *interp, int objc,
-			    Tcl_Obj * CONST objv[]);
 
 typedef struct CBinding {
     Tcl_Interp *interp;
@@ -142,41 +150,40 @@ static int		CBindingEvalProc(ClientData clientData,
 			    Tcl_Interp *interp, XEvent *eventPtr,
 			    Tk_Window tkwin, KeySym keySym);
 static void		CBindingFreeProc(ClientData clientData);
-int			Tktest_Init(Tcl_Interp *interp);
 static int		ImageCmd(ClientData dummy,
-			    Tcl_Interp *interp, int argc, CONST char **argv);
+			    Tcl_Interp *interp, int argc, const char **argv);
 static int		TestcbindCmd(ClientData dummy,
-			    Tcl_Interp *interp, int argc, CONST char **argv);
+			    Tcl_Interp *interp, int argc, const char **argv);
 static int		TestbitmapObjCmd(ClientData dummy,
 			    Tcl_Interp *interp, int objc,
-			    Tcl_Obj * CONST objv[]);
+			    Tcl_Obj * const objv[]);
 static int		TestborderObjCmd(ClientData dummy,
 			    Tcl_Interp *interp, int objc,
-			    Tcl_Obj * CONST objv[]);
+			    Tcl_Obj * const objv[]);
 static int		TestcolorObjCmd(ClientData dummy,
 			    Tcl_Interp *interp, int objc,
-			    Tcl_Obj * CONST objv[]);
+			    Tcl_Obj * const objv[]);
 static int		TestcursorObjCmd(ClientData dummy,
 			    Tcl_Interp *interp, int objc,
-			    Tcl_Obj * CONST objv[]);
+			    Tcl_Obj * const objv[]);
 static int		TestdeleteappsCmd(ClientData dummy,
-			    Tcl_Interp *interp, int argc, CONST char **argv);
+			    Tcl_Interp *interp, int argc, const char **argv);
 static int		TestfontObjCmd(ClientData dummy,
 			    Tcl_Interp *interp, int objc,
-			    Tcl_Obj *CONST objv[]);
+			    Tcl_Obj *const objv[]);
 static int		TestmakeexistCmd(ClientData dummy,
-			    Tcl_Interp *interp, int argc, CONST char **argv);
+			    Tcl_Interp *interp, int argc, const char **argv);
 #if !(defined(__WIN32__) || defined(MAC_OSX_TK))
 static int		TestmenubarCmd(ClientData dummy,
-			    Tcl_Interp *interp, int argc, CONST char **argv);
+			    Tcl_Interp *interp, int argc, const char **argv);
 #endif
 #if defined(__WIN32__) || defined(MAC_OSX_TK)
 static int		TestmetricsCmd(ClientData dummy,
-			    Tcl_Interp *interp, int argc, CONST char **argv);
+			    Tcl_Interp *interp, int argc, const char **argv);
 #endif
 static int		TestobjconfigObjCmd(ClientData dummy,
 			    Tcl_Interp *interp, int objc,
-			    Tcl_Obj * CONST objv[]);
+			    Tcl_Obj * const objv[]);
 static int		CustomOptionSet(ClientData clientData,
 			    Tcl_Interp *interp, Tk_Window tkwin,
 			    Tcl_Obj **value, char *recordPtr,
@@ -191,32 +198,17 @@ static void		CustomOptionRestore(ClientData clientData,
 static void		CustomOptionFree(ClientData clientData,
 			    Tk_Window tkwin, char *internalPtr);
 static int		TestpropCmd(ClientData dummy,
-			    Tcl_Interp *interp, int argc, CONST char **argv);
+			    Tcl_Interp *interp, int argc, const char **argv);
 #if !(defined(__WIN32__) || defined(MAC_OSX_TK))
 static int		TestwrapperCmd(ClientData dummy,
-			    Tcl_Interp *interp, int argc, CONST char **argv);
+			    Tcl_Interp *interp, int argc, const char **argv);
 #endif
 static void		TrivialCmdDeletedProc(ClientData clientData);
 static int		TrivialConfigObjCmd(ClientData dummy,
 			    Tcl_Interp *interp, int objc,
-			    Tcl_Obj * CONST objv[]);
+			    Tcl_Obj * const objv[]);
 static void		TrivialEventProc(ClientData clientData,
 			    XEvent *eventPtr);
-
-/*
- * External (platform specific) initialization routine:
- */
-
-#if !(defined(__WIN32__) || defined(MAC_OSX_TK))
-#define TkplatformtestInit(x) TCL_OK
-#else
-MODULE_SCOPE int	TkplatformtestInit(Tcl_Interp *interp);
-#endif
-
-/*
- * External legacy testing initialization routine:
- */
-MODULE_SCOPE int	TkOldTestInit(Tcl_Interp *interp);
 
 /*
  *----------------------------------------------------------------------
@@ -240,6 +232,13 @@ Tktest_Init(
     Tcl_Interp *interp)		/* Interpreter for application. */
 {
     static int initialized = 0;
+
+    if (Tcl_InitStubs(interp, "8.1", 0) == NULL) {
+	return TCL_ERROR;
+    }
+    if (Tk_InitStubs(interp, "8.1", 0) == NULL) {
+	return TCL_ERROR;
+    }
 
     /*
      * Create additional commands for testing Tk.
@@ -334,7 +333,7 @@ TestcbindCmd(
     ClientData clientData,	/* Main window for application. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int argc,			/* Number of arguments. */
-    CONST char **argv)		/* Argument strings. */
+    const char **argv)		/* Argument strings. */
 {
     TkWindow *winPtr;
     Tk_Window tkwin;
@@ -442,7 +441,7 @@ TestbitmapObjCmd(
     ClientData clientData,	/* Main window for application. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *CONST objv[])	/* Argument objects. */
+    Tcl_Obj *const objv[])	/* Argument objects. */
 {
 
     if (objc < 2) {
@@ -477,7 +476,7 @@ TestborderObjCmd(
     ClientData clientData,	/* Main window for application. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *CONST objv[])	/* Argument objects. */
+    Tcl_Obj *const objv[])	/* Argument objects. */
 {
 
     if (objc < 2) {
@@ -512,7 +511,7 @@ TestcolorObjCmd(
     ClientData clientData,	/* Main window for application. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *CONST objv[])	/* Argument objects. */
+    Tcl_Obj *const objv[])	/* Argument objects. */
 {
     if (objc < 2) {
 	Tcl_WrongNumArgs(interp, 1, objv, "color");
@@ -546,7 +545,7 @@ TestcursorObjCmd(
     ClientData clientData,	/* Main window for application. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *CONST objv[])	/* Argument objects. */
+    Tcl_Obj *const objv[])	/* Argument objects. */
 {
     if (objc < 2) {
 	Tcl_WrongNumArgs(interp, 1, objv, "cursor");
@@ -581,7 +580,7 @@ TestdeleteappsCmd(
     ClientData clientData,	/* Main window for application. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int argc,			/* Number of arguments. */
-    CONST char **argv)		/* Argument strings. */
+    const char **argv)		/* Argument strings. */
 {
     NewApp *nextPtr;
 
@@ -618,9 +617,9 @@ TestobjconfigObjCmd(
     ClientData clientData,	/* Main window for application. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *CONST objv[])	/* Argument objects. */
+    Tcl_Obj *const objv[])	/* Argument objects. */
 {
-    static CONST char *options[] = {
+    static const char *const options[] = {
 	"alltypes", "chain1", "chain2", "configerror", "delete", "info",
 	"internal", "new", "notenoughparams", "twowindows", NULL
     };
@@ -699,7 +698,7 @@ TestobjconfigObjCmd(
 	    Tcl_Obj *customPtr;
 	} TypesRecord;
 	TypesRecord *recordPtr;
-	static char *stringTable[] = {
+	static const char *const stringTable[] = {
 	    "one", "two", "three", "four", NULL
 	};
 	static const Tk_OptionSpec typesSpecs[] = {
@@ -972,7 +971,7 @@ TestobjconfigObjCmd(
 	    char *custom;
 	} InternalRecord;
 	InternalRecord *recordPtr;
-	static char *internalStringTable[] = {
+	static const char *const internalStringTable[] = {
 	    "one", "two", "three", "four", NULL
 	};
 	static const Tk_OptionSpec internalSpecs[] = {
@@ -1107,7 +1106,7 @@ TestobjconfigObjCmd(
 	};
 
 	if (objc < 3) {
-	    Tcl_WrongNumArgs(interp, 1, objv, "new name ?options?");
+	    Tcl_WrongNumArgs(interp, 1, objv, "new name ?-option value ...?");
 	    return TCL_ERROR;
 	}
 
@@ -1249,10 +1248,10 @@ TrivialConfigObjCmd(
     ClientData clientData,	/* Main window for application. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *CONST objv[])	/* Argument objects. */
+    Tcl_Obj *const objv[])	/* Argument objects. */
 {
     int result = TCL_OK;
-    static CONST char *options[] = {
+    static const char *const options[] = {
 	"cget", "configure", "csave", NULL
     };
     enum {
@@ -1314,7 +1313,7 @@ TrivialConfigObjCmd(
 		    headerPtr->optionTable, objc - 2, objv + 2,
 		    tkwin, NULL, &mask);
 	    if (result == TCL_OK) {
-		Tcl_SetIntObj(Tcl_GetObjResult(interp), mask);
+		Tcl_SetObjResult(interp, Tcl_NewIntObj(mask));
 	    }
 	}
 	break;
@@ -1324,7 +1323,7 @@ TrivialConfigObjCmd(
 		tkwin, &saved, &mask);
 	Tk_FreeSavedOptions(&saved);
 	if (result == TCL_OK) {
-	    Tcl_SetIntObj(Tcl_GetObjResult(interp), mask);
+	    Tcl_SetObjResult(interp, Tcl_NewIntObj(mask));
 	}
 	break;
     }
@@ -1432,9 +1431,9 @@ TestfontObjCmd(
     ClientData clientData,	/* Main window for application. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *CONST objv[])	/* Argument objects. */
+    Tcl_Obj *const objv[])	/* Argument objects. */
 {
-    static CONST char *options[] = {"counts", "subfonts", NULL};
+    static const char *const options[] = {"counts", "subfonts", NULL};
     enum option {COUNTS, SUBFONTS};
     int index;
     Tk_Window tkwin;
@@ -1491,18 +1490,18 @@ static int
 ImageCreate(
     Tcl_Interp *interp,		/* Interpreter for application containing
 				 * image. */
-    char *name,			/* Name to use for image. */
+    const char *name,			/* Name to use for image. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *CONST objv[],	/* Argument strings for options (doesn't
+    Tcl_Obj *const objv[],	/* Argument strings for options (doesn't
 				 * include image name or type). */
-    Tk_ImageType *typePtr,	/* Pointer to our type record (not used). */
+    const Tk_ImageType *typePtr,	/* Pointer to our type record (not used). */
     Tk_ImageMaster master,	/* Token for image, to be used by us in later
 				 * callbacks. */
     ClientData *clientDataPtr)	/* Store manager's token for image here; it
 				 * will be returned in later callbacks. */
 {
     TImageMaster *timPtr;
-    char *varName;
+    const char *varName;
     int i;
 
     varName = "log";
@@ -1558,14 +1557,14 @@ ImageCmd(
     ClientData clientData,	/* Main window for application. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int argc,			/* Number of arguments. */
-    CONST char **argv)		/* Argument strings. */
+    const char **argv)		/* Argument strings. */
 {
     TImageMaster *timPtr = (TImageMaster *) clientData;
     int x, y, width, height;
 
     if (argc < 2) {
 	Tcl_AppendResult(interp, "wrong # args: should be \"",
-		argv[0], "option ?arg arg ...?", NULL);
+		argv[0], "option ?arg ...?", NULL);
 	return TCL_ERROR;
     }
     if (strcmp(argv[1], "changed") == 0) {
@@ -1779,7 +1778,7 @@ TestmakeexistCmd(
     ClientData clientData,	/* Main window for application. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int argc,			/* Number of arguments. */
-    CONST char **argv)		/* Argument strings. */
+    const char **argv)		/* Argument strings. */
 {
     Tk_Window mainWin = (Tk_Window) clientData;
     int i;
@@ -1821,7 +1820,7 @@ TestmenubarCmd(
     ClientData clientData,	/* Main window for application. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int argc,			/* Number of arguments. */
-    CONST char **argv)		/* Argument strings. */
+    const char **argv)		/* Argument strings. */
 {
 #ifdef __UNIX__
     Tk_Window mainWin = (Tk_Window) clientData;
@@ -1890,7 +1889,7 @@ TestmetricsCmd(
     ClientData clientData,	/* Main window for application. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int argc,			/* Number of arguments. */
-    CONST char **argv)		/* Argument strings. */
+    const char **argv)		/* Argument strings. */
 {
     char buf[TCL_INTEGER_SPACE];
     int val;
@@ -1963,7 +1962,7 @@ TestpropCmd(
     ClientData clientData,	/* Main window for application. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int argc,			/* Number of arguments. */
-    CONST char **argv)		/* Argument strings. */
+    const char **argv)		/* Argument strings. */
 {
     Tk_Window mainWin = (Tk_Window) clientData;
     int result, actualFormat;
@@ -2043,7 +2042,7 @@ TestwrapperCmd(
     ClientData clientData,	/* Main window for application. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int argc,			/* Number of arguments. */
-    CONST char **argv)		/* Argument strings. */
+    const char **argv)		/* Argument strings. */
 {
     TkWindow *winPtr, *wrapperPtr;
     Tk_Window tkwin;
@@ -2125,6 +2124,7 @@ CustomOptionSet(
 
     if (value == NULL) {
 	objEmpty = 1;
+	CLANG_ASSERT(value);
     } else if ((*value)->bytes != NULL) {
 	objEmpty = ((*value)->length == 0);
     } else {

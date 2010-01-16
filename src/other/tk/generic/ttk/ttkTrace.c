@@ -27,8 +27,8 @@ static char *
 VarTraceProc(
     ClientData clientData,	/* Widget record pointer */
     Tcl_Interp *interp, 	/* Interpreter containing variable. */
-    CONST char *name1,		/* (unused) */
-    CONST char *name2,		/* (unused) */
+    const char *name1,		/* (unused) */
+    const char *name2,		/* (unused) */
     int flags)			/* Information about what happened. */
 {
     Ttk_TraceHandle *tracePtr = clientData;

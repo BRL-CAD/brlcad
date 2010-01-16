@@ -379,7 +379,7 @@ TkpGetShadows(
 	 */
 
 	/*
-	 * Compute the dark shadow color
+	 * Compute the dark shadow color.
 	 */
 
 	r = (int) borderPtr->bgColorPtr->red;
@@ -397,7 +397,7 @@ TkpGetShadows(
 	}
 
 	/*
-	 * Allocate the dark shadow color and its GC
+	 * Allocate the dark shadow color and its GC.
 	 */
 
 	borderPtr->darkColorPtr = Tk_GetColorByValue(tkwin, &darkColor);
@@ -405,7 +405,7 @@ TkpGetShadows(
 	borderPtr->darkGC = Tk_GetGC(tkwin, GCForeground, &gcValues);
 
 	/*
-	 * Compute the light shadow color
+	 * Compute the light shadow color.
 	 */
 
 	if (g > MAX_INTENSITY*0.95) {
@@ -433,9 +433,9 @@ TkpGetShadows(
 	    lightColor.blue = (tmp1 > tmp2) ? tmp1 : tmp2;
 	}
 
-       /*
-        * Allocate the light shadow color and its GC
-        */
+	/*
+	 * Allocate the light shadow color and its GC.
+	 */
 
 	borderPtr->lightColorPtr = Tk_GetColorByValue(tkwin, &lightColor);
 	gcValues.foreground = borderPtr->lightColorPtr->pixel;

@@ -30,7 +30,6 @@ Points to word in which to store width of virtual root.
 .AP "int" heightPtr out
 Points to word in which to store height of virtual root.
 .BE
-
 .SH DESCRIPTION
 .PP
 \fBTk_GetVRootGeometry\fR returns geometry information about the virtual
@@ -45,6 +44,5 @@ If \fItkwin\fR is not associated with a virtual root (e.g.
 because the window manager does not use virtual roots) then *\fIxPtr\fR and
 *\fIyPtr\fR will be set to 0 and *\fIwidthPtr\fR and *\fIheightPtr\fR
 will be set to the dimensions of the screen containing \fItkwin\fR.
-
 .SH KEYWORDS
 geometry, height, location, virtual root, width, window manager

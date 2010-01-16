@@ -16,7 +16,6 @@ raise \- Change a window's position in the stacking order
 .SH SYNOPSIS
 \fBraise \fIwindow \fR?\fIaboveThis\fR?
 .BE
-
 .SH DESCRIPTION
 .PP
 If the \fIaboveThis\fR argument is omitted then the command raises
@@ -31,6 +30,7 @@ In this case the \fBraise\fR command will insert
 (or the ancestor of \fIaboveThis\fR that is a sibling of \fIwindow\fR);
 this could end up either raising or lowering \fIwindow\fR.
 .SH EXAMPLE
+.PP
 Make a button appear to be in a sibling frame that was created after
 it. This is is often necessary when building GUIs in the style where
 you create your activity widgets first before laying them out on the
@@ -43,9 +43,10 @@ pack .b \-in .f
 pack [label .f.l2 \-text "This is below"]
 \fBraise\fR .b
 .CE
-
 .SH "SEE ALSO"
 lower(n)
-
 .SH KEYWORDS
 obscure, raise, stacking order
+'\" Local Variables:
+'\" mode: nroff
+'\" End:

@@ -15,6 +15,7 @@ ttk::frame \- Simple container widget
 \fBttk::frame\fR \fIpathName \fR?\fIoptions\fR?
 .BE
 .SH DESCRIPTION
+.PP
 A \fBttk::frame\fR widget is a container, used to group other widgets
 together.
 .SO ttk_widget
@@ -36,10 +37,12 @@ If specified, the widget's requested width in pixels.
 .OP \-height height Height
 If specified, the widget's requested height in pixels.
 .SH "WIDGET COMMAND"
+.PP
 Supports the standard widget commands
 \fBconfigure\fR, \fBcget\fR, \fBidentify\fR, \fBinstate\fR, and \fBstate\fR;
 see \fIttk::widget(n)\fR.
 .SH "NOTES"
+.PP
 Note that if the \fBpack\fR, \fBgrid\fR, or other geometry managers
 are used to manage the children of the \fBframe\fR,
 by the GM's requested size will normally take precedence
@@ -50,3 +53,6 @@ to change this.
 ttk::widget(n), ttk::labelframe(n), frame(n)
 .SH "KEYWORDS"
 widget, frame, container
+'\" Local Variables:
+'\" mode: nroff
+'\" End:
