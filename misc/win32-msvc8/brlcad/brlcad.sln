@@ -1630,6 +1630,12 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "g_transfer", "..\g_transfer
 		{E1CBDBEE-887A-4CD8-9D3E-59A52CA2E45E} = {E1CBDBEE-887A-4CD8-9D3E-59A52CA2E45E}
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libadrt", "..\adrt\adrt.vcproj", "{43DF8660-74E7-4371-BEC3-602E2E6481B5}"
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Release|Win32 = Release|Win32
@@ -2308,6 +2314,10 @@ Global
 		{425AA1E2-1885-4B62-BCC7-1307EA29AE88}.Release|Win32.Build.0 = Release|Win32
 		{425AA1E2-1885-4B62-BCC7-1307EA29AE88}.Release|x64.ActiveCfg = Release|x64
 		{425AA1E2-1885-4B62-BCC7-1307EA29AE88}.Release|x64.Build.0 = Release|x64
+		{43DF8660-74E7-4371-BEC3-602E2E6481B5}.Release|Win32.ActiveCfg = Release|Win32
+		{43DF8660-74E7-4371-BEC3-602E2E6481B5}.Release|Win32.Build.0 = Release|Win32
+		{43DF8660-74E7-4371-BEC3-602E2E6481B5}.Release|x64.ActiveCfg = Release|x64
+		{43DF8660-74E7-4371-BEC3-602E2E6481B5}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

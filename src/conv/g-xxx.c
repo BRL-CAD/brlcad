@@ -1,7 +1,7 @@
 /*                         G - X X X . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2009 United States Government as represented by
+ * Copyright (c) 1993-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -77,7 +77,7 @@ main(int argc, char *argv[])
     } user_data;
 
     int		i;
-    register int	c;
+    int	c;
     char idbuf[132];
 
     struct rt_i *rtip;

@@ -1,7 +1,7 @@
 /*                 Edge.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -41,9 +41,9 @@ Edge::Edge() {
 	edge_end = NULL;
 }
 
-Edge::Edge(STEPWrapper *sw,int STEPid) {
+Edge::Edge(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 	edge_start = NULL;
 	edge_end = NULL;
 }
@@ -59,7 +59,7 @@ Edge::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 	id = sse->STEPfile_id;
 
 	if ( !TopologicalRepresentationItem::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::TopologicalRepresentationItem." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::TopologicalRepresentationItem." << std::endl;
 		return false;
 	}
 
@@ -73,7 +73,7 @@ Edge::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 			if (entity->STEPfile_id > 0)
 				edge_start = dynamic_cast<Vertex *>(Factory::CreateObject(sw,entity));
 		} else {
-			cout << CLASSNAME << ":Error loading attribute edge_start" << endl;
+			std::cout << CLASSNAME << ":Error loading attribute edge_start" << std::endl;
 			return false;
 		}
 	}
@@ -83,7 +83,7 @@ Edge::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 			if (entity->STEPfile_id > 0)
 				edge_end = dynamic_cast<Vertex *>(Factory::CreateObject(sw,entity));
 		} else {
-			cout << CLASSNAME << ":Error loading attribute edge_end" << endl;
+			std::cout << CLASSNAME << ":Error loading attribute edge_end" << std::endl;
 			return false;
 		}
 	}
@@ -92,14 +92,14 @@ Edge::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 void
 Edge::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << name << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Attributes:" << endl;
-	TAB(level+1); cout << "edge_start:" << endl;
+	TAB(level); std::cout << "Attributes:" << std::endl;
+	TAB(level+1); std::cout << "edge_start:" << std::endl;
 	if (edge_start) edge_start->Print(level+1);
 
-	TAB(level+1); cout << "edge_end:" << endl;
+	TAB(level+1); std::cout << "edge_end:" << std::endl;
 	if (edge_end) edge_end->Print(level+1);
 }
 
@@ -112,7 +112,7 @@ Edge::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}
@@ -125,7 +125,7 @@ Edge::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 bool
 Edge::LoadONBrep(ON_Brep *brep)
 {
-	cerr << "Error: ::LoadONBrep(ON_Brep *brep) not implemented for " << entityname << endl;
+	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implemented for " << entityname << std::endl;
 	return false;
 }
 

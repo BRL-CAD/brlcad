@@ -1,7 +1,7 @@
 /*                 Ellipse.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -39,9 +39,9 @@ Ellipse::Ellipse() {
 	id = 0;
 }
 
-Ellipse::Ellipse(STEPWrapper *sw,int STEPid) {
+Ellipse::Ellipse(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 Ellipse::~Ellipse() {
@@ -53,7 +53,7 @@ Ellipse::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 	id = sse->STEPfile_id;
 
 	if ( !Conic::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::Conic." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::Conic." << std::endl;
 		return false;
 	}
 
@@ -69,14 +69,14 @@ Ellipse::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 void
 Ellipse::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << name << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Attributes:" << endl;
-	TAB(level+1); cout << "semi_axis_1:" << semi_axis_1 << endl;
-	TAB(level+1); cout << "semi_axis_2:" << semi_axis_2 << endl;
+	TAB(level); std::cout << "Attributes:" << std::endl;
+	TAB(level+1); std::cout << "semi_axis_1:" << semi_axis_1 << std::endl;
+	TAB(level+1); std::cout << "semi_axis_2:" << semi_axis_2 << std::endl;
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	Conic::Print(level);
 }
 
@@ -89,7 +89,7 @@ Ellipse::Create(STEPWrapper *sw,SCLP23(Application_instance) *sse){
 		Factory::AddObject(object);
 
 		if (!object->Load(sw,sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

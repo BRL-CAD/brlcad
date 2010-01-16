@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -47,15 +46,15 @@ public:
   //      the axis of the cone is plane.zaxis.
   //  height - [in] The center of the base is height*plane.zaxis.
   //  radius - [in] tan(cone angle) = radius/height
-  BOOL Create(
+  ON_BOOL32 Create(
     const ON_Plane& plane,
     double height,
     double radius
     );
 
-  // Returns TRUE if plane is valid, height is not zero, and
+  // Returns true if plane is valid, height is not zero, and
   // radius is not zero.
-  BOOL IsValid() const;
+  ON_BOOL32 IsValid() const;
 
   // Returns:
   //   Center of base circle.
@@ -122,48 +121,48 @@ public:
 
   // returns parameters of point on cone that is closest to given point
   bool ClosestPointTo( 
-	  ON_3dPoint point, 
-	  double* radial_parameter,
-	  double* height_parameter
-	 ) const;
+          ON_3dPoint point, 
+          double* radial_parameter,
+          double* height_parameter
+         ) const;
 
   // returns point on cone that is closest to given point
   ON_3dPoint ClosestPointTo( 
-	 ON_3dPoint 
-	 ) const;
+         ON_3dPoint 
+         ) const;
 
-  BOOL Transform( const ON_Xform& );
+  ON_BOOL32 Transform( const ON_Xform& );
 
   // rotate cone about its origin
-  BOOL Rotate(
-	double sin_angle,
-	double cos_angle,
-	const ON_3dVector& axis_of_rotation
-	);
+  ON_BOOL32 Rotate(
+        double sin_angle,
+        double cos_angle,
+        const ON_3dVector& axis_of_rotation
+        );
 
-  BOOL Rotate(
-	double angle_in_radians,
-	const ON_3dVector& axis_of_rotation
-	);
+  ON_BOOL32 Rotate(
+        double angle_in_radians,
+        const ON_3dVector& axis_of_rotation
+        );
 
   // rotate cone about a point and axis
-  BOOL Rotate(
-	double sin_angle,
-	double cos_angle,
-	const ON_3dVector& axis_of_rotation,
-	const ON_3dPoint& center_of_rotation
-	);
-  BOOL Rotate(
-	double angle_in_radians,
-	const ON_3dVector& axis_of_rotation,
-	const ON_3dPoint& center_of_rotation
-	);
+  ON_BOOL32 Rotate(
+        double sin_angle,
+        double cos_angle,
+        const ON_3dVector& axis_of_rotation,
+        const ON_3dPoint& center_of_rotation
+        );
+  ON_BOOL32 Rotate(
+        double angle_in_radians,
+        const ON_3dVector& axis_of_rotation,
+        const ON_3dPoint& center_of_rotation
+        );
 
-  BOOL Translate(
-	const ON_3dVector& delta
-	);
+  ON_BOOL32 Translate(
+        const ON_3dVector& delta
+        );
 
-  BOOL GetNurbForm( ON_NurbsSurface& ) const;
+  ON_BOOL32 GetNurbForm( ON_NurbsSurface& ) const;
 
   /*
   Description:

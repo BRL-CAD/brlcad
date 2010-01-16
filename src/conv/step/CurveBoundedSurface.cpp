@@ -1,7 +1,7 @@
 /*                 CurveBoundedSurface.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -40,9 +40,9 @@ CurveBoundedSurface::CurveBoundedSurface() {
 	basis_surface = NULL;
 }
 
-CurveBoundedSurface::CurveBoundedSurface(STEPWrapper *sw,int STEPid) {
+CurveBoundedSurface::CurveBoundedSurface(STEPWrapper *sw,int step_id) {
 	step=sw;
-	id = STEPid;
+	id = step_id;
 	basis_surface = NULL;
 }
 
@@ -57,7 +57,7 @@ CurveBoundedSurface::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 	id = sse->STEPfile_id;
 
 	if ( !BoundedSurface::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::BoundedSurface." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::BoundedSurface." << std::endl;
 		return false;
 	}
 
@@ -70,7 +70,7 @@ CurveBoundedSurface::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		if (entity) {
 			basis_surface = dynamic_cast<Surface *>(Factory::CreateObject(sw,entity));
 		} else {
-			cerr << CLASSNAME << ": error loading 'basis_surface' attribute." << endl;
+			std::cerr << CLASSNAME << ": error loading 'basis_surface' attribute." << std::endl;
 			return false;
 		}
 	}
@@ -85,7 +85,7 @@ CurveBoundedSurface::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 
 				boundaries.push_back(aAF);
 			} else {
-				cerr << CLASSNAME  << ": Unhandled entity in attribute 'cfs_faces'." << endl;
+				std::cerr << CLASSNAME  << ": Unhandled entity in attribute 'cfs_faces'." << std::endl;
 				return false;
 			}
 		}
@@ -100,21 +100,21 @@ CurveBoundedSurface::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 
 void
 CurveBoundedSurface::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << name << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Attributes:" << endl;
+	TAB(level); std::cout << "Attributes:" << std::endl;
 	basis_surface->Print(level+1);
 
-	TAB(level+1); cout << "boundaries:" << endl;
+	TAB(level+1); std::cout << "boundaries:" << std::endl;
 	LIST_OF_BOUNDARIES::iterator i;
 	for(i=boundaries.begin(); i != boundaries.end(); ++i) {
 		(*i)->Print(level+1);
 	}
 
-	TAB(level+1); cout << "implicit_outer:" << step->getBooleanString((SCLBOOL_H(Bool))implicit_outer) << endl;
+	TAB(level+1); std::cout << "implicit_outer:" << step->getBooleanString((SCLBOOL_H(Boolean))implicit_outer) << std::endl;
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	BoundedSurface::Print(level+1);
 }
 
@@ -127,7 +127,7 @@ CurveBoundedSurface::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) 
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}
@@ -140,7 +140,7 @@ CurveBoundedSurface::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) 
 bool
 CurveBoundedSurface::LoadONBrep(ON_Brep *brep)
 {
-	cerr << "Error: ::LoadONBrep(ON_Brep *brep) not implemented for " << entityname << endl;
+	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implemented for " << entityname << std::endl;
 	return false;
 }
 

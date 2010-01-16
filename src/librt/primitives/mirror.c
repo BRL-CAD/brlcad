@@ -1,7 +1,7 @@
 /*                        M I R R O R . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2009 United States Government as represented by
+ * Copyright (c) 2007-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -40,7 +40,7 @@
 /* FIXME: temporary until all mirror functions are migrated and the
  * functab is utilized.
  */
-#define RT_DECLARE_MIRROR(name) BU_EXTERN(int rt_##name##_mirror, (struct rt_db_internal *ip, const plane_t plane));
+#define RT_DECLARE_MIRROR(name) BU_EXTERN(int rt_##name##_mirror, (struct rt_db_internal *ip, const plane_t plane))
 
 RT_DECLARE_MIRROR(tor);
 RT_DECLARE_MIRROR(tgc);
@@ -66,6 +66,7 @@ RT_DECLARE_MIRROR(vol);
 RT_DECLARE_MIRROR(superell);
 RT_DECLARE_MIRROR(comb);
 RT_DECLARE_MIRROR(bot);
+RT_DECLARE_MIRROR(nurb);
 
 
 /*
@@ -98,17 +99,9 @@ rt_mirror(struct db_i *dbip,
 	  vect_t mirror_dir,
 	  struct resource *resp)
 {
-    register int i, j;
     int id;
     int err;
-    fastf_t ang;
-    mat_t mirmat;
-    mat_t rmat;
-    mat_t temp;
-    vect_t nvec;
-    vect_t xvec;
     static fastf_t tol_dist_sq = 0.005 * 0.005;
-    static point_t origin = {0.0, 0.0, 0.0};
     plane_t plane;
 
     RT_CK_DBI(dbip);

@@ -1,7 +1,7 @@
 /*                    N U R B _ B A S I S . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2009 United States Government as represented by
+ * Copyright (c) 1990-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -85,7 +85,7 @@ rt_nurb_basis_eval(register struct knot_vector *knts, int interval, int order, f
 
     den = ( *(kk + order - 1) - k1);
 
-    if ( den == 0.0)
+    if (NEAR_ZERO(den, SMALL_FASTF))
 	b1 = 0.0;
     else
 	b1 = ((mu - k1) *
@@ -93,7 +93,7 @@ rt_nurb_basis_eval(register struct knot_vector *knts, int interval, int order, f
 
     den = ( k3 - k2);
 
-    if (den == 0.0)
+    if (NEAR_ZERO(den, SMALL_FASTF))
 	b2 = 0.0;
     else
 	b2 = ((k3 - mu) *

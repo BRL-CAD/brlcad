@@ -1,7 +1,7 @@
 /*                         M O V E _ A L L . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,10 +38,10 @@
 int
 ged_move_all(struct ged *gedp, int argc, const char *argv[])
 {
-    register struct ged_display_list *gdlp;
+    struct ged_display_list *gdlp;
     int nflag;
-    register int	i;
-    register struct directory *dp;
+    int	i;
+    struct directory *dp;
     struct rt_db_internal	intern;
     struct rt_comb_internal *comb;
     struct bu_ptbl		stack;
@@ -121,7 +121,7 @@ ged_move_all(struct ged *gedp, int argc, const char *argv[])
 		    if (!strcmp(extrude->sketch_name, argv[1])) {
 			if (nflag) {
 			    bu_vls_printf(&gedp->ged_result_str, "%s ", dirp->d_namep);
-			    rt_db_free_internal(&intern, &rt_uniresource);
+			    rt_db_free_internal(&intern);
 			} else {
 			    bu_free(extrude->sketch_name, "sketch name");
 			    extrude->sketch_name = bu_strdup(argv[2]);
@@ -131,7 +131,7 @@ ged_move_all(struct ged *gedp, int argc, const char *argv[])
 			    }
 			}
 		    } else
-			rt_db_free_internal(&intern, &rt_uniresource);
+			rt_db_free_internal(&intern);
 		}
 	    }
 	}
@@ -214,7 +214,7 @@ ged_move_all(struct ged *gedp, int argc, const char *argv[])
 		}
 	    }
 	    else
-		rt_db_free_internal(&intern, &rt_uniresource);
+		rt_db_free_internal(&intern);
 	}
     }
 
@@ -223,8 +223,8 @@ ged_move_all(struct ged *gedp, int argc, const char *argv[])
     if (!nflag) {
 	/* Change object name anywhere in the display list path. */
 	for (BU_LIST_FOR(gdlp, ged_display_list, &gedp->ged_gdp->gd_headDisplay)) {
-	    register int first = 1;
-	    register int found = 0;
+	    int first = 1;
+	    int found = 0;
 	    struct bu_vls new_path;
 	    char *dup = strdup(bu_vls_addr(&gdlp->gdl_path));
 	    char *tok = strtok(dup, "/");

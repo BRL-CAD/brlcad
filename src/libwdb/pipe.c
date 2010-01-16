@@ -1,7 +1,7 @@
 /*                          P I P E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2009 United States Government as represented by
+ * Copyright (c) 1990-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,10 +28,6 @@
  *  calling routine is not surprised.
  *
  *  Return codes of 0 are OK, -1 signal an error.
- *
- *  Authors -
- *	Michael John Muuss
- *	Susanne L. Muuss
  *
  */
 
@@ -113,7 +109,7 @@ mk_pipe(struct rt_wdb *fp, const char *name, struct bu_list *headp)
 void
 mk_pipe_free( struct bu_list *headp )
 {
-    register struct wdb_pipept	*wp;
+    struct wdb_pipept	*wp;
 
     while ( BU_LIST_WHILE( wp, wdb_pipept, headp ) )  {
 	BU_LIST_DEQUEUE( &wp->l );

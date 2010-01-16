@@ -1,4 +1,3 @@
-if EN_DOCS
 man1DOCBOOK_EN = \
 	system/man1/en/3ptarb.xml \
 	system/man1/en/B.xml \
@@ -96,4 +95,3 @@ endif
 
 man1DOCBOOK_ENpdfdir = $(BRLCAD_DATA)/pdf/man1/en
 man1DOCBOOK_ENpdf_DATA = $(BUILTMAN_ENPDF)
-endif

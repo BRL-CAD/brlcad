@@ -1,7 +1,7 @@
 /*                         I F _ T K . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2009 United States Government as represented by
+ * Copyright (c) 2007-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,8 +23,6 @@
  *
  * Tk libfb interface.
  *
- * Author -
- *   Tim J. Myers
  */
 /** @} */
 
@@ -45,6 +43,34 @@
 Tcl_Interp *fbinterp;
 Tk_Window fbwin;
 Tk_PhotoHandle fbphoto;
+
+/* Note that Tk_PhotoPutBlock claims to have a faster
+ * copy method when pixelSize is 4 and alphaOffset is
+ * 3 - perhaps output could be massaged to generate this
+ * type of information and speed up the process?
+ *
+ * Might as well use one block and set the three things
+ * that actually change in tk_write
+ */   
+Tk_PhotoImageBlock block = {
+    NULL, /*Pointer to first pixel*/
+    0,    /*Width of block in pixels*/
+    1,    /*Height of block in pixels - always one for a scanline*/
+    0,    /*Address difference between successive lines*/
+    3,    /*Address difference between successive pixels on one scanline*/
+    {
+	RED,
+	GRN,
+	BLU,
+	0   /* alpha */
+    }
+};
+
+
+int tk_close_existing()
+{
+    return 0;
+}
 
 HIDDEN int	fb_tk_open(FBIO *ifp, char *file, int width, int height),
     fb_tk_close(FBIO *ifp),
@@ -108,7 +134,13 @@ FBIO tk_interface = {
     0,			/* page_ref */
     0L,			/* page_curpos */
     0L,			/* page_pixels */
-    0			/* debug */
+    0,			/* debug */
+    {0}, /* u1 */
+    {0}, /* u2 */
+    {0}, /* u3 */
+    {0}, /* u4 */
+    {0}, /* u5 */
+    {0}  /* u6 */
 };
 
 
@@ -197,6 +229,21 @@ fb_tk_open(FBIO *ifp, char *file, int width, int height)
 		Tcl_GetStringResult(fbinterp));
     }
 
+    /* Set our Tcl variable pertaining to whether a
+     * window closing event has been seen from the
+     * Window manager.  WM_DELETE_WINDOW will be
+     * bound to a command setting this variable to
+     * the string "close", in order to let tk_fb_close
+     * detect the Tk event and handle the closure
+     * itself.
+     */
+    Tcl_SetVar(fbinterp, "CloseWindow", "open", 0);
+    const char *wmcmd = "wm protocol . WM_DELETE_WINDOW {set CloseWindow \"close\"}";
+    if (Tcl_Eval(fbinterp, wmcmd) != TCL_OK) {
+	fb_log( "Error binding WM_DELETE_WINDOW." );
+    }
+    
+	 
     while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
 
     return	0;
@@ -207,7 +254,14 @@ fb_tk_close(FBIO *ifp)
 {
     FB_CK_FBIO(ifp);
     fb_log( "fb_close( 0x%lx )\n", (unsigned long)ifp );
-    return	0;
+    fclose(stdin);
+    // Wait for CloseWindow to be changed by the WM_DELETE_WINDOW
+    // binding set up in fb_tk_open
+    Tcl_Eval(fbinterp, "vwait CloseWindow");
+    if (!strcmp(Tcl_GetVar(fbinterp, "CloseWindow", 0),"close")) {
+	Tcl_Eval(fbinterp, "destroy .");
+	return 0;
+    }
 }
 
 HIDDEN int
@@ -238,44 +292,24 @@ HIDDEN int
 tk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
 {
     int	i;
-    unsigned char pixp = *pixelp;
 
     FB_CK_FBIO(ifp);
-    fb_log( "fb_write( 0x%lx,%4d,%4d, 0x%lx, %d )\n",
-	    (unsigned long)ifp, x, y,
-	    (unsigned long)pixelp, count );
 
-    /* write them out, four per line */
-    if ( ifp->if_debug & FB_DEBUG_RW ) {
-	for ( i = 0; i < count; i++ ) {
-	    if ( i % 4 == 0 )
-		fb_log( "%4d:", i );
-	    fb_log( "  [%3d,%3d,%3d]", *(pixelp+(i*3)+RED),
-		    *(pixelp+(i*3)+GRN), *(pixelp+(i*3)+BLU) );
-	    if ( i % 4 == 3 )
-		fb_log( "\n" );
-	}
-	if ( i % 4 != 0 )
-	    fb_log( "\n" );
-    }
+    /* Set local values of Tk_PhotoImageBlock */
+    block.pixelPtr = (unsigned char *)pixelp;
+    block.width = count;
+    block.pitch = 3 * ifp->if_width;
 
-    Tk_PhotoImageBlock block = {
-	&pixp,
-	count,
-	1,
-	3 * ifp->if_width,
-	3,
-	{
-	    RED,
-	    GRN,
-	    BLU,
-	    0
-	}
-    };
-
+#if defined(TK_MAJOR_VERSION) && TK_MAJOR_VERSION == 8 && defined(TK_MINOR_VERSION) && TK_MINOR_VERSION < 5
+    Tk_PhotoPutBlock(fbphoto, &block, x, ifp->if_height-y, count, 1, TK_PHOTO_COMPOSITE_SET);
+#else
     Tk_PhotoPutBlock(fbinterp, fbphoto, &block, x, ifp->if_height-y, count, 1, TK_PHOTO_COMPOSITE_SET);
+#endif
 
-    return	count;
+    /* Immediately update display window */
+    Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT);
+   
+    return count;
 }
 
 HIDDEN int

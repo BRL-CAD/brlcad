@@ -1,7 +1,7 @@
 /*                    E H Y _ B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,7 +35,7 @@
  * R T _ E H Y _ B R E P
  */
 extern "C" void
-rt_ehy_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
+rt_ehy_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 {
     struct rt_ehy_internal *eip;
 
@@ -48,13 +48,13 @@ rt_ehy_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     ON_TextLog dump_to_stdout;
     ON_TextLog* dump = &dump_to_stdout;
     
-    point_t p1_origin, p2_origin;
+    point_t p1_origin;
     ON_3dPoint plane1_origin, plane2_origin;
     ON_3dVector plane_x_dir, plane_y_dir;
     
     //  First, find plane in 3 space corresponding to the bottom face of the EPA.
    
-    vect_t tmp, x_dir, y_dir;
+    vect_t x_dir, y_dir;
     
     VMOVE(x_dir, eip->ehy_Au);
     VCROSS(y_dir, eip->ehy_Au, eip->ehy_H);
@@ -103,7 +103,7 @@ rt_ehy_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     double MP = MX + intercept_length;
     double w = (MX/MP)/(1-MX/MP);
     
-    point_t ep1, ep2, ep3, tmppt;
+    point_t ep1, ep2, ep3;
     VSET(ep1, -eip->ehy_r1, 0, 0);
     VSET(ep2, 0, 0, w*intercept_dist);
     VSET(ep3, eip->ehy_r1, 0, 0);
@@ -168,7 +168,7 @@ rt_ehy_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     int surfindex = (*b)->m_S.Count();
     ON_BrepFace& face = (*b)->NewFace(surfindex - 1);
     int faceindex = (*b)->m_F.Count();
-    ON_BrepLoop* outerloop = (*b)->NewOuterLoop(faceindex-1);
+    (*b)->NewOuterLoop(faceindex-1);
     bu_log("Valid brep face: %d\n", face.IsValid(dump));
 }
 

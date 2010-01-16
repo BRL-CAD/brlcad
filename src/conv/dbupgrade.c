@@ -1,7 +1,7 @@
 /*                    D B U P G R A D E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -197,7 +197,7 @@ main(int argc, char **argv)
 	    }
 	}
 	if ( id == ID_HF ) {
-	    if (rt_hf_to_dsp( &intern, &rt_uniresource )) {
+	    if (rt_hf_to_dsp( &intern )) {
 		fprintf(stderr,
 			"%s: Conversion from HF to DSP failed for solid %s\n",
 			argv[0], dp->d_namep );
@@ -223,11 +223,11 @@ main(int argc, char **argv)
 	    fprintf(stderr,
 		    "%s: wdb_put_internal(%s) failure, skipping\n",
 		    argv[0], dp->d_namep);
-	    rt_db_free_internal( &intern, &rt_uniresource );
+	    rt_db_free_internal(&intern);
 	    errors++;
 	    continue;
 	}
-	rt_db_free_internal( &intern, &rt_uniresource );
+	rt_db_free_internal(&intern);
     } FOR_ALL_DIRECTORY_END
 
 	  wdb_close( fp );

@@ -1,7 +1,7 @@
 /*                 FoundedItem.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,9 +38,9 @@ FoundedItem::FoundedItem() {
 	id = 0;
 }
 
-FoundedItem::FoundedItem(STEPWrapper *sw,int STEPid) {
+FoundedItem::FoundedItem(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 FoundedItem::~FoundedItem() {
@@ -56,8 +56,8 @@ FoundedItem::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 void
 FoundedItem::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 }
 STEPEntity *
 FoundedItem::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
@@ -68,7 +68,7 @@ FoundedItem::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

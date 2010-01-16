@@ -1,7 +1,7 @@
 /*                       C M D H I S T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2009 United States Government as represented by
+ * Copyright (c) 1998-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -41,8 +41,9 @@ HIDDEN void
 _bu_history_record(struct bu_cmdhist_obj *chop, struct bu_vls *cmdp, struct timeval *start, struct timeval *finish, int status)
 {
     struct bu_cmdhist *new_hist;
+    const char *eol = "\n";
 
-    if (strcmp(bu_vls_addr(cmdp), "\n") == 0)
+    if (strcmp(bu_vls_addr(cmdp), eol) == 0)
 	return;
 
     new_hist = (struct bu_cmdhist *)bu_malloc(sizeof(struct bu_cmdhist),
@@ -78,7 +79,7 @@ _bu_timediff(struct timeval *tvdiff, struct timeval *start, struct timeval *fini
 
 
 int
-bu_cmdhist_history(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
+bu_cmdhist_history(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
     struct bu_cmdhist_obj *chop = (struct bu_cmdhist_obj *)clientData;
     FILE *fp;
@@ -99,15 +100,18 @@ bu_cmdhist_history(ClientData clientData, Tcl_Interp *interp, int argc, const ch
 
     fp = NULL;
     while (argc >= 3) {
-	if (strcmp(argv[2], "-delays") == 0)
+	const char *delays = "-delays";
+	const char *outfile = "-outfile";
+
+	if (strcmp(argv[2], delays) == 0)
 	    with_delays = 1;
-	else if (strcmp(argv[2], "-outfile") == 0) {
+	else if (strcmp(argv[2], outfile) == 0) {
 	    if (fp != NULL) {
 		fclose(fp);
 		Tcl_AppendResult(interp, "history: -outfile option given more than once\n",
 				 (char *)NULL);
 		return TCL_ERROR;
-	    } else if (argc < 4 || strcmp(argv[3], "-delays") == 0) {
+	    } else if (argc < 4 || strcmp(argv[3], delays) == 0) {
 		Tcl_AppendResult(interp, "history: I need a file name\n", (char *)NULL);
 		return TCL_ERROR;
 	    } else {

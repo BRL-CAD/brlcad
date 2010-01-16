@@ -1,7 +1,7 @@
 /*                          P L O T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -55,7 +55,7 @@ plotInit()
 
 void
 plotGrid(r_pt)
-    register fastf_t	*r_pt;
+    fastf_t	*r_pt;
 {
     if (plotfp == NULL)
 	return;
@@ -66,7 +66,7 @@ plotGrid(r_pt)
 
 void
 plotRay(rayp)
-    register struct xray	*rayp;
+    struct xray	*rayp;
 {
     int	endpoint[3];
     if (plotfp == NULL)
@@ -93,7 +93,7 @@ plotRay(rayp)
 void
 plotPartition(ihitp, ohitp)
     struct hit		*ihitp;
-    register struct hit	*ohitp;
+    struct hit	*ohitp;
 {
     if (plotfp == NULL)
 	return;

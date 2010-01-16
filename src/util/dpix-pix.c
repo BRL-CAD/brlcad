@@ -1,7 +1,7 @@
 /*                      D P I X - P I X . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2009 United States Government as represented by
+ * Copyright (c) 1990-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -48,8 +48,8 @@ main(int argc, char **argv)
     int		count;			/* count of items */
     int		got;			/* count of bytes */
     int		fd;			/* UNIX file descriptor */
-    register double	*dp;			/* ptr to d */
-    register double *ep;
+    double	*dp;			/* ptr to d */
+    double *ep;
     double		m;			/* slope */
     double		b;			/* intercept */
 
@@ -73,7 +73,7 @@ main(int argc, char **argv)
      * bigger than it.
      */
     {
-	register double	min, max;		/* high usage items */
+	double	min, max;		/* high usage items */
 
 	min = 1.0e20;
 	max = -1.0e20;
@@ -89,7 +89,7 @@ main(int argc, char **argv)
 	    count = got / sizeof(doub[0]);
 	    ep = &doub[count];
 	    for (dp = &doub[0]; dp < ep;)  {
-		register double val;
+		double val;
 		if ( (val = *dp++) < min )
 		    min = val;
 		else if ( val > max )
@@ -114,9 +114,9 @@ main(int argc, char **argv)
     }
 
     while (1)  {
-	register char	*cp;		/* ptr to c */
-	register double	mm;		/* slope */
-	register double	bb;		/* intercept */
+	char	*cp;		/* ptr to c */
+	double	mm;		/* slope */
+	double	bb;		/* intercept */
 
 	mm = m;
 	bb = b;

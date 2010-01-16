@@ -1,7 +1,7 @@
 /*                          T T C P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -92,6 +92,7 @@ int sinkmode;			/* 0=normal I/O, !0=sink/source mode */
 
 struct hostent *addr;
 
+/* Usage broken into two strings to avoid the 509 C90 'minimum' */
 char Usage[] = "\
 Usage: ttcp -t [-options] host <in\n\
 	-l##	length of bufs written to network (default 1024)\n\
@@ -99,6 +100,8 @@ Usage: ttcp -t [-options] host <in\n\
 	-n##	number of bufs written to network (-s only, default 1024)\n\
 	-p##	port number to send to (default 2000)\n\
 	-u	use UDP instead of TCP\n\
+";
+char Usage2[] = "\
 Usage: ttcp -r [-options] >out\n\
 	-l##	length of network read buf (default 1024)\n\
 	-s	sink (discard) all data from network\n\
@@ -125,11 +128,11 @@ double cput, realt;		/* user, real time (seconds) */
  */
 int
 mread(int		fd,
-      register char	*bufp,
+      char	*bufp,
       unsigned		n)
 {
-    register unsigned	count = 0;
-    register int		nread;
+    unsigned	count = 0;
+    int		nread;
 
     do {
 	nread = read(fd, bufp, n-count);
@@ -162,9 +165,9 @@ mes(char *s)
 }
 
 void
-pattern(register char *cp, register int cnt)
+pattern(char *cp, int cnt)
 {
-    register char c;
+    char c;
     c = 0;
     while ( cnt-- > 0 )  {
 	while ( !isprint((c&0x7F)) )  c++;
@@ -183,10 +186,10 @@ static struct tms tms0;
 static struct	timeval time0;	/* Time at which timeing started */
 static struct	rusage ru0;	/* Resource utilization at the start */
 
-static void prusage(register struct rusage *r0, register struct rusage *r1, struct timeval *e, struct timeval *b, char *outp);
+static void prusage(struct rusage *r0, struct rusage *r1, struct timeval *e, struct timeval *b, char *outp);
 static void tvadd(struct timeval *tsum, struct timeval *t0, struct timeval *t1);
 static void tvsub(struct timeval *tdiff, struct timeval *t1, struct timeval *t0);
-static void psecs(long int l, register char *cp);
+static void psecs(long int l, char *cp);
 #endif
 
 /*
@@ -257,16 +260,16 @@ read_timer(char *str, int len)
 
 #if !defined(SYSV) && !defined(__HAIKU__)
 static void
-prusage(register struct rusage *r0,
-	register struct rusage *r1,
+prusage(struct rusage *r0,
+	struct rusage *r1,
 	struct timeval *e,
 	struct timeval *b,
 	char *outp)
 {
     struct timeval tdiff;
-    register time_t t;
-    register char *cp;
-    register int i;
+    time_t t;
+    char *cp;
+    int i;
     int ms;
 
     t = (r1->ru_utime.tv_sec-r0->ru_utime.tv_sec)*100+
@@ -384,9 +387,9 @@ tvsub(struct timeval *tdiff, struct timeval *t1, struct timeval *t0)
 }
 
 static void
-psecs(long l, register char *cp)
+psecs(long l, char *cp)
 {
-    register int i;
+    int i;
 
     i = l / 3600;
     if (i) {
@@ -414,7 +417,7 @@ Nread(int fd, char *buf, int count )
 {
     struct sockaddr_in from;
     socklen_t len = (socklen_t)sizeof(from);
-    register int cnt;
+    int cnt;
 
     if ( udp )  {
 	cnt = recvfrom( fd, (void *)buf, (size_t)count, 0, (struct sockaddr *)&from, &len );
@@ -445,7 +448,7 @@ delay(int us)
 int
 Nwrite(int fd, char *buf, int count )
 {
-    register int cnt;
+    int cnt;
     if ( udp )  {
     again:
 	cnt = sendto( fd, (const void *)buf, (size_t) count, 0,
@@ -588,7 +591,7 @@ main(int argc, char **argv)
     prep_timer();
     errno = 0;
     if (sinkmode) {
-	register int cnt;
+	int cnt;
 	if (trans)  {
 	    pattern( buf, buflen );
 	    if (udp)  (void)Nwrite( fd, buf, 4 ); /* rcvr start */
@@ -608,7 +611,7 @@ main(int argc, char **argv)
 	    }
 	}
     } else {
-	register int cnt;
+	int cnt;
 	if (trans)  {
 	    while ((cnt=read(0, buf, buflen)) > 0 &&
 		   Nwrite(fd, buf, cnt) == cnt)
@@ -645,7 +648,7 @@ main(int argc, char **argv)
     return 0;
 
  usage:
-    fprintf(stderr, "%s", Usage);
+    fprintf(stderr, "%s%s", Usage, Usage2);
     return 1;
 }
 

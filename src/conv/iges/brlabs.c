@@ -1,7 +1,7 @@
 /*                        B R L A B S . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2009 United States Government as represented by
+ * Copyright (c) 1990-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,9 +33,9 @@
 #include "bu.h"
 
 fastf_t brlabs( a )
-    register const fastf_t a;
+    const fastf_t a;
 {
-    register fastf_t b;
+    fastf_t b;
 
     if ( a > 0 )
 	b = a;

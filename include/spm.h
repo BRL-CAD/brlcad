@@ -1,7 +1,7 @@
 /*                           S P M . H
  * BRL-CAD
  *
- * Copyright (c) 1986-2009 United States Government as represented by
+ * Copyright (c) 1986-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,8 +24,6 @@
  * @brief
  *  Sphere data structure and function declarations.
  *
- *  @author
- *	Phillip Dykstra
  */
 
 #ifndef __SPM_H__

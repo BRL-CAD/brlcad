@@ -1,7 +1,7 @@
 /*                   G E D _ P R I V A T E . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -82,6 +82,7 @@ struct _ged_client_data {
     int				shaded_mode_override;
     fastf_t			transparency;
     int				dmode;
+    int				hiddenLine;
     /* bigE related members */
     struct application		*ap;
     struct bu_ptbl		leaf_list;
@@ -114,7 +115,7 @@ extern struct solid _FreeSolid;
 /* defined in ged.c */
 BU_EXTERN (void _ged_print_node,
 	   (struct ged		*gedp,
-	    register struct directory *dp,
+	    struct directory *dp,
 	    int			pathpos,
 	    int			indentSize,
 	    char		prefix,
@@ -128,16 +129,16 @@ BU_EXTERN (struct db_i *_ged_open_dbip,
 /* defined in color.c */
 BU_EXTERN (void _ged_color_putrec,
 	   (struct ged			*gedp,
-	    register struct mater	*mp));
+	    struct mater	*mp));
 	    
 BU_EXTERN (void _ged_color_zaprec,
 	   (struct ged			*gedp,
-	    register struct mater	*mp));
+	    struct mater	*mp));
 
 /* defined in comb.c */
 BU_EXTERN (struct directory *_ged_combadd,
 	   (struct ged			*gedp,
-	    register struct directory	*objp,
+	    struct directory	*objp,
 	    char			*combname,
 	    int				region_flag,
 	    int				relation,
@@ -176,11 +177,11 @@ BU_EXTERN (void _ged_eraseobjpath,
 	    const int	skip_first));
 BU_EXTERN (void _ged_eraseobjall,
 	   (struct ged			*gedp,
-	    register struct directory	**dpp,
+	    struct directory	**dpp,
 	    int				skip_first));
 BU_EXTERN (void _ged_eraseobj,
 	   (struct ged			*gedp,
-	    register struct directory	**dpp,
+	    struct directory	**dpp,
 	    int				skip_first));
 BU_EXTERN (void _ged_eraseAllNamesFromDisplay,
 	   (struct ged			*gedp,
@@ -230,7 +231,7 @@ BU_EXTERN (struct directory **_ged_build_dpp,
 /* defined in list.c */
 BU_EXTERN(void _ged_do_list,
 	  (struct ged			*gedp,
-	   register struct directory	*dp,
+	   struct directory	*dp,
 	   int				verbose));
 
 /* defined in loadview.c */
@@ -268,12 +269,12 @@ BU_EXTERN(void _ged_vls_col_pr4v,
 	   int			no_decorate));
 BU_EXTERN(struct directory ** _ged_getspace,
 	  (struct db_i	*dbip,
-	   register int	num_entries));
+	   int	num_entries));
 
 /* defined in preview.c */
 BU_EXTERN (void _ged_setup_rt,
 	   (struct ged *gedp,
-	    register char **vp,
+	    char **vp,
 	    int printcmd));
 
 /* defined in red.c */
@@ -315,7 +316,7 @@ BU_EXTERN (void _ged_rt_output_handler,
 
 /* defined in rtcheck.c */
 BU_EXTERN (void _ged_wait_status,
-	   (struct bu_vls *log,
+	   (struct bu_vls *logstr,
 	    int status));
 
 /* defined in rotate_eto.c */
@@ -445,11 +446,11 @@ BU_EXTERN (int _ged_scale_tor,
 /* defined in tops.c */
 struct directory **
 _ged_dir_getspace(struct db_i	*dbip,
-		 register int	num_entries);
+		 int	num_entries);
 
 /* defined in trace.c */
 BU_EXTERN (void _ged_trace,
-	   (register struct directory	*dp,
+	   (struct directory	*dp,
 	    int				pathpos,
 	    const mat_t			old_xlate,
 	    struct _ged_trace_data	*gtdp));

@@ -1,7 +1,7 @@
 /*                 Line.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -43,7 +43,7 @@ protected:
 public:
 	Line();
 	virtual ~Line();
-	Line(STEPWrapper *sw,int STEPid);
+	Line(STEPWrapper *sw,int step_id);
 	virtual curve_type CurveType() { return LINE; };
 	void StartPoint(double *p);
 	void EndPoint(double *p);

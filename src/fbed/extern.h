@@ -1,7 +1,7 @@
 /*                        E X T E R N . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -88,8 +88,8 @@ extern struct vfont font;
 extern Func_Tab	*get_Func_Name(char* inbuf, size_t bufsz, const char* msg);
 extern RGBpixel *get_Fb_Panel();
 extern char *char_To_String(int i);
-extern int add_Try(Func_Tab* ftbl, register const char* name, register Try** trypp);
-extern int bitx(register char *bitstring, register int posn);
+extern int add_Try(Func_Tab* ftbl, const char* name, Try** trypp);
+extern int bitx(char *bitstring, int posn);
 extern int fb_Init_Menu();
 extern int getpos(Point *pos);
 extern int get_Input(char* inbuf, size_t bufsz, const char* msg);
@@ -102,8 +102,8 @@ extern void prnt_Usage(void);
 extern void prnt_Scroll( const char * fmt, ... );
 extern void prnt_Debug( const char *fmt, ... );
 extern void prnt_Event( const char *fmt, ... );
-extern void prnt_Rectangle(const char *str, register Rectangle *rectp);
-extern void do_Key_Cmd(register int key, register int n);
+extern void prnt_Rectangle(const char *str, Rectangle *rectp);
+extern void do_Key_Cmd(int key, int n);
 extern int InitTermCap();
 extern void prnt_Prompt(const char *msg);
 extern int empty(int fd);
@@ -112,7 +112,7 @@ extern int get_Mouse_Pos(Point *pointp);
 extern int SetStandout();
 extern int ClrStandout();
 extern int exec_Shell(char **args);
-extern void do_line(int xpos, int ypos, register const char *line, RGBpixel (*menu_border));
+extern void do_line(int xpos, int ypos, const char *line, RGBpixel (*menu_border));
 extern int pad_open(int n);
 extern void save_Tty();
 extern void set_Raw();

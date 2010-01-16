@@ -1,7 +1,7 @@
 /*                           E P A . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2009 United States Government as represented by
+ * Copyright (c) 1990-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -173,12 +173,12 @@ struct epa_specific {
 
 
 const struct bu_structparse rt_epa_parse[] = {
-    { "%f", 3, "V",   bu_offsetof(struct rt_epa_internal, epa_V[X]),  BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "H",   bu_offsetof(struct rt_epa_internal, epa_H[X]),  BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "A",   bu_offsetof(struct rt_epa_internal, epa_Au[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 1, "r_1", bu_offsetof(struct rt_epa_internal, epa_r1),    BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 1, "r_2", bu_offsetof(struct rt_epa_internal, epa_r2),    BU_STRUCTPARSE_FUNC_NULL },
-    { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
+    { "%f", 3, "V",   bu_offsetof(struct rt_epa_internal, epa_V[X]),  BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "H",   bu_offsetof(struct rt_epa_internal, epa_H[X]),  BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "A",   bu_offsetof(struct rt_epa_internal, epa_Au[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 1, "r_1", bu_offsetof(struct rt_epa_internal, epa_r1),    BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 1, "r_2", bu_offsetof(struct rt_epa_internal, epa_r2),    BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
@@ -201,7 +201,7 @@ int
 rt_epa_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_epa_internal *xip;
-    register struct epa_specific *epa;
+    struct epa_specific *epa;
 #ifndef NO_MAGIC_CHECKING
     const struct bn_tol *tol = &rtip->rti_tol;
 #endif
@@ -299,9 +299,9 @@ rt_epa_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
  * R T _ E P A _ P R I N T
  */
 void
-rt_epa_print(register const struct soltab *stp)
+rt_epa_print(const struct soltab *stp)
 {
-    register const struct epa_specific *epa =
+    const struct epa_specific *epa =
 	(struct epa_specific *)stp->st_specific;
 
     VPRINT("V", epa->epa_V);
@@ -329,16 +329,16 @@ rt_epa_print(register const struct soltab *stp)
  * >0 HIT
  */
 int
-rt_epa_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
+rt_epa_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
-    register struct epa_specific *epa =
+    struct epa_specific *epa =
 	(struct epa_specific *)stp->st_specific;
     vect_t dprime;		/* D' */
     vect_t pprime;		/* P' */
     fastf_t k1, k2;		/* distance constants of solution */
     vect_t xlated;		/* translated vector */
     struct hit hits[3];		/* 2 potential hit points */
-    register struct hit *hitp;	/* pointer to hit point */
+    struct hit *hitp;	/* pointer to hit point */
 
     hitp = &hits[0];
 
@@ -421,7 +421,7 @@ rt_epa_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 
     if (hits[0].hit_dist < hits[1].hit_dist) {
 	/* entry is [0], exit is [1] */
-	register struct seg *segp;
+	struct seg *segp;
 
 	RT_GET_SEG(segp, ap->a_resource);
 	segp->seg_stp = stp;
@@ -430,7 +430,7 @@ rt_epa_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	BU_LIST_INSERT(&(seghead->l), &(segp->l));
     } else {
 	/* entry is [1], exit is [0] */
-	register struct seg *segp;
+	struct seg *segp;
 
 	RT_GET_SEG(segp, ap->a_resource);
 	segp->seg_stp = stp;
@@ -442,37 +442,17 @@ rt_epa_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 }
 
 
-#define RT_EPA_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
-
-
-/**
- * R T _ E P A _ V S H O T
- *
- * Vectorized version.
- */
-void
-rt_epa_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
-    /* An array of solid pointers */
-    /* An array of ray pointers */
-    /* array of segs (results returned) */
-    /* Number of ray/object pairs */
-
-{
-    rt_vstub(stp, rp, segp, n, ap);
-}
-
-
 /**
  * R T _ E P A _ N O R M
  *
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
-rt_epa_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
+rt_epa_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
     fastf_t scale;
     vect_t can_normal;	/* normal to canonical epa */
-    register struct epa_specific *epa =
+    struct epa_specific *epa =
 	(struct epa_specific *)stp->st_specific;
 
     VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir);
@@ -505,11 +485,11 @@ rt_epa_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
  * Return the curvature of the epa.
  */
 void
-rt_epa_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
+rt_epa_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
     fastf_t a, b, c, scale;
     mat_t M1, M2;
-    register struct epa_specific *epa =
+    struct epa_specific *epa =
 	(struct epa_specific *)stp->st_specific;
     vect_t u, v;		/* basis vectors (with normal) */
     vect_t vec1, vec2;		/* eigen vectors */
@@ -562,14 +542,16 @@ rt_epa_curve(register struct curvature *cvp, register struct hit *hitp, struct s
  * v = elevation
  */
 void
-rt_epa_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
+rt_epa_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
-    register struct epa_specific *epa =
+    struct epa_specific *epa =
 	(struct epa_specific *)stp->st_specific;
 
     vect_t work;
     vect_t pprime;
     fastf_t len;
+
+    if (ap) RT_CK_APPLICATION(ap);
 
     /* hit_point is on surface; project back to unit epa, creating a
      * vector from vertex to hit point.
@@ -580,7 +562,7 @@ rt_epa_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
     switch (hitp->hit_surfno) {
 	case EPA_NORM_BODY:
 	    /* top plate, polar coords */
-	    if (pprime[Z] == -1.0) {
+	    if (NEAR_ZERO(pprime[Z] + 1.0, SMALL_FASTF)) { /* i.e., == -1.0 */
 		/* bottom pt of body */
 		uvp->uv_u = 0;
 	    } else {
@@ -609,9 +591,9 @@ rt_epa_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
  * R T _ E P A _ F R E E
  */
 void
-rt_epa_free(register struct soltab *stp)
+rt_epa_free(struct soltab *stp)
 {
-    register struct epa_specific *epa =
+    struct epa_specific *epa =
 	(struct epa_specific *)stp->st_specific;
 
 
@@ -633,18 +615,21 @@ rt_epa_class(void)
  * R T _ E P A _ P L O T
  */
 int
-rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol __attribute__((unused)))
 {
     fastf_t dtol, f, mag_a, mag_h, ntol, r1, r2;
-    fastf_t **ellipses, theta_new, theta_prev, rt_ell_ang(fastf_t *p1, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol);
+    fastf_t **ellipses, theta_new, theta_prev;
     int *pts_dbl, i, j, nseg;
     int jj, na, nb, nell, recalc_b;
     mat_t R;
     mat_t invR;
     struct rt_epa_internal *xip;
     point_t p1;
-    struct rt_pt_node *pos_a, *pos_b, *pts_a, *pts_b, *rt_ptalloc(void);
+    struct rt_pt_node *pos_a, *pos_b, *pts_a, *pts_b;
     vect_t A, Au, B, Bu, Hu, V, Work;
+
+    struct rt_pt_node *rt_ptalloc(void);
+    fastf_t rt_ell_ang(fastf_t *, fastf_t, fastf_t, fastf_t, fastf_t);
 
 #ifndef NO_MAGIC_CHECKING
     RT_CK_DB_INTERNAL(ip);
@@ -697,12 +682,11 @@ rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 	/* Convert rel to absolute by scaling by smallest side */
 	dtol = ttol->rel * 2 * r2;
     if (ttol->abs <= 0.0) {
-	if (dtol <= 0.0)
+	if (dtol <= 0.0) {
 	    /* No tolerance given, use a default */
 	    dtol = 2 * 0.10 * r2;	/* 10% */
-	else
-	    /* Use absolute-ized relative tolerance */
-	    ;
+	}
+	/* Use absolute-ized relative tolerance */
     } else {
 	/* Absolute tolerance was given, pick smaller */
 	if (ttol->rel <= 0.0 || dtol > ttol->abs)
@@ -901,7 +885,7 @@ rt_epa_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 #define ELLOUT(n) ov+(n-1)*3
 
 void
-rt_ell_norms(register fastf_t *ov, fastf_t *A, fastf_t *B, fastf_t *h_vec, fastf_t t, int sides)
+rt_ell_norms(fastf_t *ov, fastf_t *A, fastf_t *B, fastf_t *h_vec, fastf_t t, int sides)
 {
     fastf_t ang, theta, x, y, sqrt_1mt;
     int n;
@@ -931,7 +915,7 @@ rt_ell_norms(register fastf_t *ov, fastf_t *A, fastf_t *B, fastf_t *h_vec, fastf
  * Generate an ellipsoid with the specified number of sides approximating it.
  */
 void
-rt_ell(register fastf_t *ov, register const fastf_t *V, const fastf_t *A, const fastf_t *B, int sides)
+rt_ell(fastf_t *ov, const fastf_t *V, const fastf_t *A, const fastf_t *B, int sides)
 {
     fastf_t ang, theta, x, y;
     int n;
@@ -1073,12 +1057,11 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	/* Convert rel to absolute by scaling by smallest side */
 	dtol = ttol->rel * 2 * r2;
     if (ttol->abs <= 0.0) {
-	if (dtol <= 0.0)
+	if (dtol <= 0.0) {
 	    /* No tolerance given, use a default */
 	    dtol = 2 * 0.10 * r2;	/* 10% */
-	else
-	    /* Use absolute-ized relative tolerance */
-	    ;
+	}
+	/* Use absolute-ized relative tolerance */
     } else {
 	/* Absolute tolerance was given, pick smaller */
 	if (ttol->rel <= 0.0 || dtol > ttol->abs)
@@ -1456,10 +1439,12 @@ rt_epa_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
  * Apply modeling transformations as well.
  */
 int
-rt_epa_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_epa_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_epa_internal *xip;
     union record *rp;
+
+    if (dbip) RT_CK_DBI(dbip);
 
     BU_CK_EXTERNAL(ep);
     rp = (union record *)ep->ext_buf;
@@ -1507,6 +1492,8 @@ rt_epa_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     struct rt_epa_internal *xip;
     union record *epa;
     fastf_t mag_h;
+
+    if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_EPA) return(-1);
@@ -1563,11 +1550,12 @@ rt_epa_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
  * Apply modeling transformations as well.
  */
 int
-rt_epa_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_epa_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_epa_internal *xip;
     fastf_t vec[11];
 
+    if (dbip) RT_CK_DBI(dbip);
     BU_CK_EXTERNAL(ep);
 
     BU_ASSERT_LONG(ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * 11);
@@ -1614,6 +1602,8 @@ rt_epa_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     struct rt_epa_internal *xip;
     fastf_t vec[11];
     fastf_t mag_h;
+
+    if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_EPA) return(-1);
@@ -1672,8 +1662,7 @@ rt_epa_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 int
 rt_epa_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
-    register struct rt_epa_internal *xip =
-	(struct rt_epa_internal *)ip->idb_ptr;
+    struct rt_epa_internal *xip = (struct rt_epa_internal *)ip->idb_ptr;
     char buf[256];
 
     RT_EPA_CK_MAGIC(xip);
@@ -1692,13 +1681,16 @@ rt_epa_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 	    INTCLAMP(MAGNITUDE(xip->epa_H) * mm2local));
     bu_vls_strcat(str, buf);
 
+    if (!verbose)
+	return 0;
+
     sprintf(buf, "\tA=%g\n", INTCLAMP(xip->epa_r1 * mm2local));
     bu_vls_strcat(str, buf);
 
     sprintf(buf, "\tB=%g\n", INTCLAMP(xip->epa_r2 * mm2local));
     bu_vls_strcat(str, buf);
 
-    return(0);
+    return 0;
 }
 
 
@@ -1709,12 +1701,11 @@ rt_epa_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
  * solid.
  */
 void
-rt_epa_ifree(struct rt_db_internal *ip, struct resource *resp)
+rt_epa_ifree(struct rt_db_internal *ip)
 {
-    register struct rt_epa_internal *xip;
+    struct rt_epa_internal *xip;
 
     RT_CK_DB_INTERNAL(ip);
-    if (!resp) resp = &rt_uniresource;
 
     xip = (struct rt_epa_internal *)ip->idb_ptr;
     RT_EPA_CK_MAGIC(xip);
@@ -1730,8 +1721,11 @@ rt_epa_ifree(struct rt_db_internal *ip, struct resource *resp)
  *
  */
 int
-rt_epa_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
+rt_epa_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 {
+    if (!ps) return(0);
+    if (ip) RT_CK_DB_INTERNAL(ip);
+
     return(0);			/* OK */
 }
 

@@ -1,7 +1,7 @@
 /*                 ElectricCurrentUnit.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,9 +38,9 @@ ElectricCurrentUnit::ElectricCurrentUnit() {
 	id = 0;
 }
 
-ElectricCurrentUnit::ElectricCurrentUnit(STEPWrapper *sw,int STEPid) {
+ElectricCurrentUnit::ElectricCurrentUnit(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 ElectricCurrentUnit::~ElectricCurrentUnit() {
@@ -54,7 +54,7 @@ ElectricCurrentUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 	// load base class attributes
 	if ( !NamedUnit::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::Unit." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 		return false;
 	}
 
@@ -63,10 +63,10 @@ ElectricCurrentUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 void
 ElectricCurrentUnit::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	NamedUnit::Print(level+1);
 
 }
@@ -79,7 +79,7 @@ ElectricCurrentUnit::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) 
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

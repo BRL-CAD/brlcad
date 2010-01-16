@@ -1,7 +1,7 @@
 /*                 AdvancedBrepShapeRepresentation.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -26,33 +26,43 @@
 #ifndef ADVANCEDBREPSHAPEREPRESENTATION_H_
 #define ADVANCEDBREPSHAPEREPRESENTATION_H_
 
+#include "common.h"
+
+/* system interface headers */
 #include <list>
+#include <string>
 
+/* must come before step headers */
+#include "opennurbs.h"
+
+/* interface headers */
 #include "ShapeRepresentation.h"
+#include "sclprefixes.h"
 
-class ON_Brep;
 
-class AdvancedBrepShapeRepresentation : public ShapeRepresentation {
-private:
-	static string entityname;
+class AdvancedBrepShapeRepresentation : public ShapeRepresentation
+{
+ private:
+    static std::string entityname;
 
-protected:
+ protected:
 
-public:
-	AdvancedBrepShapeRepresentation();
-	AdvancedBrepShapeRepresentation(STEPWrapper *sw, int STEPid);
-	virtual ~AdvancedBrepShapeRepresentation();
+ public:
+    AdvancedBrepShapeRepresentation();
+	AdvancedBrepShapeRepresentation(STEPWrapper *sw,int step_id);
+    virtual ~AdvancedBrepShapeRepresentation();
 
-	ON_Brep *GetONBrep();
-	virtual bool LoadONBrep(ON_Brep *brep);
+    ON_Brep *GetONBrep();
+    virtual bool LoadONBrep(ON_Brep *brep);
 
-	bool Load(STEPWrapper *sw, SCLP23(Application_instance) *sse);
-	string Name() {return name;};
-	virtual void Print(int level);
+    bool Load(STEPWrapper *sw, SCLP23(Application_instance) *sse);
+    std::string Name() {return name;};
+    virtual void Print(int level);
 
-	//static methods
-	static STEPEntity *Create(STEPWrapper *sw,SCLP23(Application_instance) *sse);
+    //static methods
+    static STEPEntity *Create(STEPWrapper *sw, SCLP23(Application_instance) *sse);
 };
+
 
 #endif /* ADVANCEDBREPSHAPEREPRESENTATION_H_ */
 

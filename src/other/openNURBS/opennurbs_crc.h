@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -31,42 +30,42 @@ Parameters:
 Example:
   16 bit CRC calculations are typically done something like this:
 
-	  const ON__UINT16 crc_seed = 0; // or 1, or your favorite starting value
+          const ON__UINT16 crc_seed = 0; // or 1, or your favorite starting value
 
-	  // Compute CRC on "good" data
-	  unsigned ON__UINT16 first_crc = crc_seed;
-	  first_crc = ON_CRC16( first_crc, size1, buffer1 );
-	  ...
-	  first_crc = ON_CRC16( first_crc, sizeN, bufferN );
-	  unsigned char two_zero_bytes[2] = (0,0);
-	  first_crc = ON_CRC16( first_crc, 2, two_zero_bytes );
+          // Compute CRC on "good" data
+          unsigned ON__UINT16 first_crc = crc_seed;
+          first_crc = ON_CRC16( first_crc, size1, buffer1 );
+          ...
+          first_crc = ON_CRC16( first_crc, sizeN, bufferN );
+          unsigned char two_zero_bytes[2] = (0,0);
+          first_crc = ON_CRC16( first_crc, 2, two_zero_bytes );
 
-	  // make sure 16 bit CRC calculation is valid
-	  ON__UINT16 check_crc_calculation = ON_CRC16( first_crc, 2, &first_crc );
-	  if ( check_crc_calculation != 0 ) 
-	  {
-	     printf("ON_CRC16() calculated a bogus 16 bit CRC\n");
-	  }
+          // make sure 16 bit CRC calculation is valid
+          ON__UINT16 check_crc_calculation = ON_CRC16( first_crc, 2, &first_crc );
+          if ( check_crc_calculation != 0 ) 
+          {
+             printf("ON_CRC16() calculated a bogus 16 bit CRC\n");
+          }
 
-	  // Do something that may potentially change the values in
-	  // the buffers (like storing them on a faulty disk).
+          // Do something that may potentially change the values in
+          // the buffers (like storing them on a faulty disk).
 
-	  // Compute CRC on "suspect" data
-	  ON__UINT16 second_crc = crc_seed;
-	  second_crc = ON_CRC16( second_crc, size1, buffer1 );
-	  ...
-	  second_crc = ON_CRC16( second_crc, sizeN, bufferN );
-	  if ( 0 != ON_CRC16( second_crc, 2, &first_crc ) ) 
-	  {
-	    printf( "The value of at least one byte has changed.\n" );
-	  }
+          // Compute CRC on "suspect" data
+          ON__UINT16 second_crc = crc_seed;
+          second_crc = ON_CRC16( second_crc, size1, buffer1 );
+          ...
+          second_crc = ON_CRC16( second_crc, sizeN, bufferN );
+          if ( 0 != ON_CRC16( second_crc, 2, &first_crc ) ) 
+          {
+            printf( "The value of at least one byte has changed.\n" );
+          }
 */
 ON_DECL
 ON__UINT16 ON_CRC16(
-	 ON__UINT16 current_remainder,
-	 size_t sizeof_buffer,
-	 const void* buffer
-	 );
+         ON__UINT16 current_remainder,
+         size_t sizeof_buffer,
+         const void* buffer
+         );
 
 /*
 Description:
@@ -88,33 +87,33 @@ Parameters:
 Example:
   32 bit CRC calculations are typically done something like this:
 
-	  const ON__UINT32 crc_seed = 0; // or 1, or your favorite starting value
+          const ON__UINT32 crc_seed = 0; // or 1, or your favorite starting value
 
-	  //Compute CRC on "good" data
-	  ON__UINT32 first_crc = crc_seed;
-	  first_crc = ON_CRC32( first_crc, size1, buffer1 );
-	  ...
-	  first_crc = ON_CRC32( first_crc, sizeN, bufferN );
+          //Compute CRC on "good" data
+          ON__UINT32 first_crc = crc_seed;
+          first_crc = ON_CRC32( first_crc, size1, buffer1 );
+          ...
+          first_crc = ON_CRC32( first_crc, sizeN, bufferN );
 
-	  // Do something that may potentially change the values in
-	  // the buffers (like storing them on a faulty disk).
+          // Do something that may potentially change the values in
+          // the buffers (like storing them on a faulty disk).
 
-	  // Compute CRC on "suspect" data
-	  ON__UINT32 second_crc = crc_seed;
-	  second_crc = ON_CRC32( second_crc, size1, buffer1 );
-	  ...
-	  second_crc = ON_CRC32( second_crc, sizeN, bufferN );
-	  if ( second_crc != first_crc ) 
-	  {
-	    printf( "The value of at least one byte has changed.\n" );
-	  }
+          // Compute CRC on "suspect" data
+          ON__UINT32 second_crc = crc_seed;
+          second_crc = ON_CRC32( second_crc, size1, buffer1 );
+          ...
+          second_crc = ON_CRC32( second_crc, sizeN, bufferN );
+          if ( second_crc != first_crc ) 
+          {
+            printf( "The value of at least one byte has changed.\n" );
+          }
 */
 ON_DECL
 ON__UINT32 ON_CRC32(
-	 ON__UINT32 current_remainder,
-	 size_t sizeof_buffer,
-	 const void* buffer
-	 );
+         ON__UINT32 current_remainder,
+         size_t sizeof_buffer,
+         const void* buffer
+         );
 
 /*
 zlib.h -- interface of the 'zlib' general purpose compression library

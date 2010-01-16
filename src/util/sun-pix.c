@@ -1,7 +1,7 @@
 /*                       S U N - P I X . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2009 United States Government as represented by
+ * Copyright (c) 1986-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -100,8 +100,8 @@ Usage: sun-pix [-b -h -i -P -v -C] [sun.bitmap]\n";
 unsigned long
 getlong(char *msgp)
 {
-    register unsigned char *p = (unsigned char *) msgp;
-    register unsigned long u;
+    unsigned char *p = (unsigned char *) msgp;
+    unsigned long u;
 
     u = *p++; u <<= 8;
     u |= *p++; u <<= 8;
@@ -110,9 +110,9 @@ getlong(char *msgp)
 }
 
 int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int c;
+    int c;
 
     while ( (c = bu_getopt( argc, argv, "bhiPvC" )) != EOF )  {
 	switch ( c )  {
@@ -242,11 +242,11 @@ unsigned char bits[8] = { 128, 64, 32, 16, 8, 4, 2, 1 };
 int
 main(int argc, char **argv)
 {
-    register int	x;
-    register int	off = 0;
-    register int	on = 255;
-    register int	width;			/* line width in bits */
-    register int	scanbytes;		/* bytes/line (padded to 16 bits) */
+    int	x;
+    int	off = 0;
+    int	on = 255;
+    int	width;			/* line width in bits */
+    int	scanbytes;		/* bytes/line (padded to 16 bits) */
     unsigned char	buf[4096];
 
     fp = stdin;
@@ -260,7 +260,7 @@ main(int argc, char **argv)
     }
 
     if ( !pure )  {
-	register long nbits;
+	long nbits;
 
 	fread( inbuf, sizeof(struct rasterfile), 1, fp );
 

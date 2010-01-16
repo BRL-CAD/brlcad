@@ -1,7 +1,7 @@
 /*                     C O M B _ B O O L . H
  * BRL-CAD
  *
- * Copyright (c) 1995-2009 United States Government as represented by
+ * Copyright (c) 1995-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -82,32 +82,21 @@ extern struct bool_tree_node	*comb_bool_tree;
  *
  */
 
-#ifdef USE_PROTOTYPES
-extern struct bool_tree_node	*bt_create_internal (
-    int,
-    struct bool_tree_node *,
-    struct bool_tree_node *);
-extern struct bool_tree_node	*bt_create_leaf (char*);
-extern void			show_tree_infix (
-    struct bool_tree_node *,
-    int);
-extern void			show_tree_lisp (struct bool_tree_node *);
-extern int			cvt_to_gift_bool (struct bool_tree_node *);
-extern void			show_gift_bool (struct bool_tree_node *, int);
-#else
-extern struct bool_tree_node *bt_create_internal(), *bt_create_leaf();
-extern void show_tree_infix(), show_tree_lisp(), show_gift_bool();
-extern int cvt_to_gift_bool();
-#endif
+extern struct bool_tree_node *bt_create_internal (int, struct bool_tree_node *, struct bool_tree_node *);
+extern struct bool_tree_node *bt_create_leaf (char*);
+extern void show_tree_infix (struct bool_tree_node *, int);
+extern void show_tree_lisp (struct bool_tree_node *);
+extern int cvt_to_gift_bool (struct bool_tree_node *);
+extern void show_gift_bool (struct bool_tree_node *, int);
 
 
-#define show_tree(t, l)		if (l)				\
-				{				\
-				    show_tree_lisp((t));	\
-				    printf("\n");		\
-				}				\
-				else				\
-				    show_tree_infix((t), 0)
+#define show_tree(t, l) \
+    if (l) {							\
+	show_tree_lisp((t));					\
+	printf("\n");						\
+    } else {							\
+	show_tree_infix((t), 0);				\
+    }
 
 /*
  * Local Variables:

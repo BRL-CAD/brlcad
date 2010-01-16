@@ -1,7 +1,7 @@
 /*                          D 2 - C . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -55,7 +55,7 @@ main(int argc, char *argv[])
     int i;
     int nr, ni, num;
     double obuf[2*1024];
-    register double *obufp;
+    double *obufp;
     FILE *rfp, *ifp;
     double real[1024], imag[1024];
 

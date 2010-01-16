@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -40,32 +39,32 @@ public:
     initialized.
   Parameters:
     text_log - [in] if the object is not valid and text_log
-	is not NULL, then a brief englis description of the
-	reason the object is not valid is appened to the log.
-	The information appended to text_log is suitable for 
-	low-level debugging purposes by programmers and is 
-	not intended to be useful as a high level user 
-	interface tool.
+        is not NULL, then a brief englis description of the
+        reason the object is not valid is appened to the log.
+        The information appended to text_log is suitable for 
+        low-level debugging purposes by programmers and is 
+        not intended to be useful as a high level user 
+        interface tool.
   Returns:
     @untitled table
-    TRUE     object is valid
-    FALSE    object is invalid, uninitialized, etc.
+    true     object is valid
+    false    object is invalid, uninitialized, etc.
   Remarks:
     Overrides virtual ON_Object::IsValid
   */
-  BOOL IsValid( ON_TextLog* text_log = NULL ) const;
+  ON_BOOL32 IsValid( ON_TextLog* text_log = NULL ) const;
 
   // virtual
   void Dump( ON_TextLog& ) const; // for debugging
 
   // virtual
-  BOOL Write(
-	 ON_BinaryArchive&  // serialize definition to binary archive
+  ON_BOOL32 Write(
+         ON_BinaryArchive&  // serialize definition to binary archive
        ) const;
 
   // virtual
-  BOOL Read(
-	 ON_BinaryArchive&  // restore definition from binary archive
+  ON_BOOL32 Read(
+         ON_BinaryArchive&  // restore definition from binary archive
        );
 
   // virtual
@@ -78,10 +77,24 @@ public:
   enum 
   { 
 
-#if defined(ON_ON_WINDOWS_GDI)
+#if defined(ON_OS_WINDOWS_GDI)
 
     // Windows GDI facename length
-    face_name_size = LF_FACESIZE+1,
+
+    // 13 November 2008 - Dale Lear
+    // Because:
+    //   * Prior to this date the above "ON_OS_WINDOWS_GDI" 
+    //     was misspelled and this code did not get compiled.
+    //   * The Windows headers defines LF_FACESIZE = 32
+    //   * ON_Font has a member wchar_t m_facename[face_name_size] array
+    //   * We cannot break the SDK by changing the size of ON_Font
+    //
+    //  we cannot define face_name_size = LF_FACESIZE+1.  So, I'm
+    //  using the same "65" we use below.  It is critical that
+    //  face_name_size >= LF_FACESIZE+1
+    //
+    //face_name_size = LF_FACESIZE+1, // <- prior to 13 Nov but never used
+    face_name_size = 65,
 
     // Windows GDI font weights
     bold_weight   = FW_BOLD,
@@ -116,8 +129,8 @@ public:
 
   static
   const int m_metrics_char; // ASCII code of character to used
-			    // to get runtime "default" glyph
-			    // metrics. (Currently an "I").
+                            // to get runtime "default" glyph
+                            // metrics. (Currently an "I").
 
   /*
   Returns:
@@ -125,8 +138,8 @@ public:
   */
   static
   bool IsSymbolFontFaceName( 
-	  const wchar_t* facename
-	  );
+          const wchar_t* facename
+          );
 
   void SetFontName( const wchar_t* );
   void SetFontName( const char* );
@@ -156,9 +169,14 @@ public:
 
   bool IsItalic() const;
   void SetIsItalic( bool );
+  void SetItalic( bool );
 
   bool IsBold() const;
   void SetBold( bool );
+
+  // Added 7/12/07 LW
+  bool IsUnderlined() const;
+  void SetUnderlined( bool );
 
   void Defaults();
 
@@ -189,6 +207,23 @@ public:
   */
   double AscentRatio() const;
 
+  /*
+    Description:
+      Compare the visible characteristics to another font
+
+    Parameters:
+      font_to_compare - [in] The cont to compare this one to
+      bCompareName    - [in] if this is set, test if the names match
+                             otherwise don't compare the names
+
+    Returns:
+      true if font_to_compare matches this one
+      false if font_to_match doesn't match this one
+
+    Added for v5 - 5/20/07
+  */
+  bool CompareFontCharacteristics( ON_Font& font_to_compare, bool bCompareName) const;
+
 #if defined(ON_OS_WINDOWS_GDI)
   bool SetLogFont( const LOGFONT& logfont );
   const LOGFONT& LogFont() const;
@@ -198,6 +233,7 @@ public:
   ON_wString m_font_name;      // Name of this font in the Rhino UI
   int        m_font_weight;    // Same as m_logfont.lfWeight
   bool       m_font_italic;    // Same as m_logfont.lfItalic
+  bool       m_font_underlined;// Same as m_logfont.lfUnderlined (Added 7/12/07 LW)
   double     m_linefeed_ratio; // defaults to static s_linefeed_ratio.
   int        m_font_index;     // font index in Rhino font table
   ON_UUID    m_font_id;
@@ -211,7 +247,7 @@ public:
 private:
   // volitile - can be changed by ON_Font::HeightOfI() const.
   int m_I_height; // height of the 'I' character when the font is drawn 
-		  // with m_logfont.lfHeight = 256.
+                  // with m_logfont.lfHeight = 256.
 };
 
 #endif

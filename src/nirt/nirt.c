@@ -1,7 +1,7 @@
 /*                          N I R T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -372,7 +372,7 @@ main(int argc, char *argv[])
     extern outval ValTab[];
 
     /* from if.c, callback functions for overlap, hit, and miss shots */
-    int if_overlap(register struct application *, register struct partition *, struct region *, struct region *, struct partition *);
+    int if_overlap(struct application *, struct partition *, struct region *, struct region *, struct partition *);
     int if_hit(struct application *, struct partition *, struct seg *);
     int if_miss(struct application *);
 

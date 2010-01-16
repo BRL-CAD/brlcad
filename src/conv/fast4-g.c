@@ -1,7 +1,7 @@
 /*                       F A S T 4 - G . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -2851,7 +2851,7 @@ fix_regions(struct db_i *dbip, struct directory *dp, genptr_t ptr)
     tree = comb->tree;
 
     if (tree->tr_op != MKOP(12)) {
-	rt_db_free_internal(&internal, &rt_uniresource);
+	rt_db_free_internal(&internal);
 	return;
     }
 
@@ -2859,7 +2859,7 @@ fix_regions(struct db_i *dbip, struct directory *dp, genptr_t ptr)
 
     if ((dp2=db_lookup(dbip, tree->tr_l.tl_name, 0)) == DIR_NULL) {
 	bu_log("Could not find %s\n", tree->tr_l.tl_name);
-	rt_db_free_internal(&internal, &rt_uniresource);
+	rt_db_free_internal(&internal);
 	return;
     }
 
@@ -2868,8 +2868,8 @@ fix_regions(struct db_i *dbip, struct directory *dp, genptr_t ptr)
     }
 
     if (internal2.idb_type != ID_COMBINATION) {
-	rt_db_free_internal(&internal, &rt_uniresource);
-	rt_db_free_internal(&internal2, &rt_uniresource);
+	rt_db_free_internal(&internal);
+	rt_db_free_internal(&internal2);
 	return;
     }
 

@@ -11,9 +11,20 @@ changes made.  See document footer for additional details.
 
 
 ----------------------------------------------------------------------
---- 2009-11-XX  Release 7.16.4                                     ---
+--- 2010-01-15  Release 7.16.4                                     ---
 ----------------------------------------------------------------------
 
+* fixed gqa units argument parsing bug on 64-bit Linux - Sean Morrison
+* bot_dump exports BoTs referenced within combinations - Bob Parker
+* mged 'garbage_collect' validation care and bug fixes - Sean Morrison
+* fixed mged 'view' command bugs setting quat and ypr - Sean Morrison
+* improved rt reporting and exiting after prep failure - Sean Morrison
+* fixed sorting bug in idents/regions/solids commands - Keith Bowman
+* translation of mged tutorials 1 and 2 to Spanish - Jesica Giudice
+* benchmark suite includes sysctl hardware information - Sean Morrison
+* independent scaling of x/y/z axes for sca command - Richard Weiss
+* ADRT cut mode now paints intersected regions - Erik Greenwald
+* improved metaball primitive conversion support - Erik Greenwald
 * new data_axes command added to archer - Bob Parker
 * additional improvements to the step-g importer - Keith Bowman
 * fixed mged "Pick Edit-Primitive" crash after killall - Sean Morrison
@@ -21,6 +32,7 @@ changes made.  See document footer for additional details.
 * librt now queries env LIBRT_DEBUG for more flags - Erik Greenwald
 * pixdiff outputs matching pixels at half-intensity - Sean Morrison
 * fixed rate interpolation bug in tabinterp - Emton
+* runtime toggling of display managers - Cliff Yapp
 
 
 ----------------------------------------------------------------------
@@ -45,6 +57,14 @@ changes made.  See document footer for additional details.
 ----------------------------------------------------------------------
 --- 2009-09-29  Release 7.16.0                                     ---
 ----------------------------------------------------------------------
+
+Considerable development continues towards improving BRL-CAD's
+geometry support through the addition of several new geometry
+importers.  This release includes initial support for 3DM (Rhino3D)
+files, OBJ (Alias Wavefront) files, and STEP geometry (ISO 10303,
+AP203) files.  Additionally, development on the Archer modeling tool
+continues as MGED features are merged in and new features, such as
+undo support and graphical editing, are expanded upon.
 
 * initial step-g geometry importer - Keith Bowman
 * added '-u' flag to 3dm-g - uses UUID for import names - Cliff Yapp

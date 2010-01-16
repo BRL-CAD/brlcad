@@ -1,7 +1,7 @@
 /*                         A U T O V I E W . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -41,10 +41,10 @@
 int
 ged_autoview(struct ged *gedp, int argc, const char *argv[])
 {
-    register struct ged_display_list *gdlp;
-    register struct ged_display_list *next_gdlp;
-    register struct solid	*sp;
-    register int is_empty = 1;
+    struct ged_display_list *gdlp;
+    struct ged_display_list *next_gdlp;
+    struct solid	*sp;
+    int is_empty = 1;
     vect_t		min, max;
     vect_t		minus, plus;
     vect_t		center;

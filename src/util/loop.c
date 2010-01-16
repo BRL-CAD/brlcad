@@ -1,7 +1,7 @@
 /*                          L O O P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -50,17 +50,17 @@
 int
 main(int argc, char **argv)
 {
-    register int	status = INTEGER;
+    int	status = INTEGER;
 
-    register int	i;
-    register int 	start,  finish, incr;
+    int	i;
+    int 	start,  finish, incr;
 
-    register double	d;
-    register double	dstart, dfinish, dincr;
+    double	d;
+    double	dstart, dfinish, dincr;
 
-    register char       c;
-    register char       cstart, cfinish;
-    register int	cincr;
+    char       c;
+    char       cstart, cfinish;
+    int	cincr;
 
     if (argc < 3 || argc > 5) {
 	bu_exit(9, "Usage:  loop [-c|-n] start finish [incr] \n -n is the default option\n");

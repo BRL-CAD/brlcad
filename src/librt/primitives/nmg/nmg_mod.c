@@ -1,7 +1,7 @@
 /*                       N M G _ M O D . C
  * BRL-CAD
  *
- * Copyright (c) 1991-2009 United States Government as represented by
+ * Copyright (c) 1991-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -374,7 +374,6 @@ nmg_rm_redundancies(struct shell *s, const struct bn_tol *tol)
 	while (BU_LIST_NOT_HEAD(&lu->l, &fu->lu_hd)) {
 	    struct loopuse *next_lu;
 	    struct loopuse *lu1;
-	    struct edgeuse *eu;
 
 	    NMG_CK_LOOPUSE(lu);
 
@@ -1407,7 +1406,7 @@ nmg_fu_planeeqn(struct faceuse *fu, const struct bn_tol *tol)
 	HPRINT("plane", plane);
 	return(-1);
     }
-    if (plane[0] == 0.0 && plane[1] == 0.0 && plane[2] == 0.0) {
+    if (VNEAR_ZERO(plane, SMALL_FASTF)) {
 	bu_log("nmg_fu_planeeqn():  Bad plane equation from bn_mk_plane_3pts\n");
 	HPRINT("plane", plane);
 	return(-1);
@@ -3423,13 +3422,8 @@ nmg_simplify_loop(struct loopuse *lu)
 	     */
 	    eu = tmpeu;
 
-	    if (rt_g.NMG_debug &(DEBUG_PLOTEM|DEBUG_PL_ANIM) &&
-		*lu->up.magic_p == NMG_FACEUSE_MAGIC) {
-		static int fno=0;
-
-		nmg_pl_2fu("After_joinloop%d.pl", fno++,
-			   lu->up.fu_p, lu->up.fu_p->fumate_p, 0);
-
+	    if (rt_g.NMG_debug &(DEBUG_PLOTEM|DEBUG_PL_ANIM) && *lu->up.magic_p == NMG_FACEUSE_MAGIC) {
+		nmg_pl_2fu("After_joinloop%d.pl", lu->up.fu_p, lu->up.fu_p->fumate_p, 0);
 	    }
 	}
 	eu = BU_LIST_PNEXT(edgeuse, eu);
@@ -3497,12 +3491,9 @@ nmg_kill_snakes(struct loopuse *lu)
 		    return 1;	/* loopuse is empty */
 		eu = BU_LIST_FIRST(edgeuse, &lu->down_hd);
 
-		if (rt_g.NMG_debug &(DEBUG_PLOTEM|DEBUG_PL_ANIM) &&
-		    *lu->up.magic_p == NMG_FACEUSE_MAGIC) {
-		    static int fno=0;
+		if (rt_g.NMG_debug &(DEBUG_PLOTEM|DEBUG_PL_ANIM) && *lu->up.magic_p == NMG_FACEUSE_MAGIC) {
 
-		    nmg_pl_2fu("After_joinloop%d.pl", fno++,
-			       lu->up.fu_p, lu->up.fu_p->fumate_p, 0);
+		    nmg_pl_2fu("After_joinloop%d.pl", lu->up.fu_p, lu->up.fu_p->fumate_p, 0);
 
 		}
 
@@ -4355,7 +4346,6 @@ nmg_ebreaker(struct vertex *v, struct edgeuse *eu, const struct bn_tol *tol)
     NMG_CK_EDGEUSE(eu);
     BN_CK_TOL(tol);
 
-    nmg_eu_radial_check(eu, nmg_find_s_of_eu(eu), tol);
     new_eu = nmg_ebreak(v, eu);
     if (v) {
 	/*
@@ -4386,9 +4376,7 @@ nmg_ebreaker(struct vertex *v, struct edgeuse *eu, const struct bn_tol *tol)
 	    }
 	    nmg_radial_join_eu(new_eu, oeu, tol);
 	}
-/* XXX Will this catch it? */
-	nmg_eu_radial_check(eu, nmg_find_s_of_eu(eu), tol);
-	nmg_eu_radial_check(new_eu, nmg_find_s_of_eu(new_eu), tol);
+
 	if (nmg_check_radial(eu, tol)) bu_log("ERROR ebreaker eu=x%x bad\n", eu);
 	if (nmg_check_radial(new_eu, tol)) bu_log("ERROR ebreaker new_eu=x%x bad\n", new_eu);
     }

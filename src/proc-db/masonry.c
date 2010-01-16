@@ -1,7 +1,7 @@
 /*                       M A S O N R Y . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -147,7 +147,7 @@ set_translate(char *s)
  * There is important information in dx, dy, dz, s .
  */
 void
-buildHrot(register matp_t mat, double alpha, double beta, double ggamma)
+buildHrot(matp_t mat, double alpha, double beta, double ggamma)
 {
     static fastf_t calpha, cbeta, cgamma;
     static fastf_t salpha, sbeta, sgamma;
@@ -749,7 +749,7 @@ frame(struct rt_wdb *fd)
      * opening for a window or a door.
      */
     for (pos = 0.0; pos <= WALL_WIDTH-bd_thin; pos += stud_spacing) {
-	register int mk_stud_flag;
+	int mk_stud_flag;
 
 	if (pos > WALL_WIDTH-bd_thin*2.0)
 	    pos = WALL_WIDTH-bd_thin;

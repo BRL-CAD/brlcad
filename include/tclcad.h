@@ -1,7 +1,7 @@
 /*                        T C L C A D . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -58,13 +58,8 @@ __BEGIN_DECLS
  *  It is vital that the argument list given for "args" be enclosed
  *  in parens.
  */
-#if __STDC__ || USE_PROTOTYPES
-#	define	TCLCAD_EXTERN(type_and_name, args)	extern type_and_name args
-#	define	TCLCAD_ARGS(args)			args
-#else
-#	define	TCLCAD_EXTERN(type_and_name, args)	extern type_and_name()
-#	define	TCLCAD_ARGS(args)			()
-#endif
+#define TCLCAD_EXTERN(type_and_name, args) extern type_and_name args
+#define TCLCAD_ARGS(args) args
 
 #define GED_OBJ_NUM_VIEWS 4
 #define GED_OBJ_FB_MODE_OFF 0

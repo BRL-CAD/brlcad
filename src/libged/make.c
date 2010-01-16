@@ -1,7 +1,7 @@
 /*                         M A K E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -44,7 +44,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
     int i;
     int k;
     int save_bu_optind;
-    register struct directory *dp;
+    struct directory *dp;
     fastf_t scale = 1;
     point_t origin = {0.0, 0.0, 0.0};
     struct rt_db_internal	internal;

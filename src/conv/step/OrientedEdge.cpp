@@ -1,7 +1,7 @@
 /*                 OrientedEdge.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -40,9 +40,9 @@ OrientedEdge::OrientedEdge() {
 	edge_element = NULL;
 }
 
-OrientedEdge::OrientedEdge(STEPWrapper *sw,int STEPid) {
+OrientedEdge::OrientedEdge(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 	edge_element = NULL;
 }
 
@@ -57,7 +57,7 @@ OrientedEdge::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 
 	if ( !Edge::Load(sw,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::Curve." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::Curve." << std::endl;
 		return false;
 	}
 
@@ -79,7 +79,7 @@ OrientedEdge::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 				edge_end = edge_element->GetEdgeStart();
 			}
 		} else {
-			cerr << CLASSNAME << ": Error loading entity attribute 'edge_element'." << endl;
+			std::cerr << CLASSNAME << ": Error loading entity attribute 'edge_element'." << std::endl;
 			return false;
 		}
 	}
@@ -89,13 +89,13 @@ OrientedEdge::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 void
 OrientedEdge::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Attributes:" << endl;
-	TAB(level+1); cout << "edge_element:" << endl;
+	TAB(level); std::cout << "Attributes:" << std::endl;
+	TAB(level+1); std::cout << "edge_element:" << std::endl;
 	edge_element->Print(level+1);
-	TAB(level+1); cout << "orientation:" << step->getBooleanString((SCLBOOL_H(Bool))orientation) << endl;
+	TAB(level+1); std::cout << "orientation:" << step->getBooleanString((SCLBOOL_H(Boolean))orientation) << std::endl;
 
 }
 
@@ -108,7 +108,7 @@ OrientedEdge::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}
@@ -120,7 +120,7 @@ OrientedEdge::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 
 bool
 OrientedEdge::OrientWithEdge() {
-	if ((SCLBOOL_H(Bool))orientation == SCLBOOL_H(BTrue)) {
+	if ((SCLBOOL_H(Boolean))orientation == SCLBOOL_H(BTrue)) {
 		return true;
 	}
 	return false;

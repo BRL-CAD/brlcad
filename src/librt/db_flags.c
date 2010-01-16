@@ -1,7 +1,7 @@
 /*                     D B _ F L A G S . C
  * BRL-CAD
  *
- * Copyright (c) 2006-2009 United States Government as represented by
+ * Copyright (c) 2006-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,18 +21,11 @@
 /** @{ */
 /** @file db_flags.c
  *
- *  Given an internal representation of a geometry object, there are
- *  particular directory flags associated with it (at least for
- *  geometric objects) that we may need to obtain.  The directory
- *  flags are mostly based on the major and minor type of the object
- *  so these routines consolidate that logic.
- *
- *  Functions
- *    db_flags_internal - given an rt_db_internal, return the flags
- *    db_flags_raw_internal - given a db5_raw_internal, return flags
- *
- *  Authors -
- *      Christopher Sean Morrison
+ * Given an internal representation of a geometry object, there are
+ * particular directory flags associated with it (at least for
+ * geometric objects) that we may need to obtain.  The directory flags
+ * are mostly based on the major and minor type of the object so these
+ * routines consolidate that logic.
  *
  */
 

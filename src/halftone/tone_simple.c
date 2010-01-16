@@ -1,7 +1,7 @@
 /*                   T O N E _ S I M P L E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -65,7 +65,7 @@ extern struct bn_unif *RandomFlag;
 int
 tone_simple(int pix, int x, int y, int nx, int ny, int new)
 {
-    register int threshold;
+    int threshold;
     if (RandomFlag) {
 	threshold = THRESHOLD + BN_UNIF_DOUBLE(RandomFlag)*127;
     } else {

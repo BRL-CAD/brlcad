@@ -1,7 +1,7 @@
 /*                        P N G - F B . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2009 United States Government as represented by
+ * Copyright (c) 1998-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -76,9 +76,9 @@ Usage: png-fb [-H -h -i -c -v -z -1] [-m #lines] [-F framebuffer]\n\
 	[-S squarescrsize] [-W scr_width] [-N scr_height] [file.png]\n";
 
 int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int c;
+    int c;
 
     while ( (c = bu_getopt( argc, argv, "1m:g:HhicvzF:s:x:y:X:Y:S:W:N:" )) != EOF )  {
 	switch ( c )  {
@@ -166,8 +166,8 @@ get_args(int argc, register char **argv)
 int
 main(int argc, char **argv)
 {
-    register int y;
-    register FBIO *fbp;
+    int y;
+    FBIO *fbp;
     int i;
     int	xout, yout, m, xstart;
     png_structp png_p;

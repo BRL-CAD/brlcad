@@ -1,7 +1,7 @@
 /*                         H M E N U . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -118,7 +118,7 @@ prnt_HMllist(HMllist *listp)
 static void
 free_HMitems(HMitem *itemp)
 {
-    register HMitem	*citemp;
+    HMitem	*citemp;
     for ( citemp = itemp; citemp->text != NULL; citemp++ )
     {
 	free( citemp->text );
@@ -141,25 +141,25 @@ free_HMllist(HMllist *listp)
 }
 
 static void
-hm_Put_Item(register HWindow *win, register HMitem *itemp, int flag)
+hm_Put_Item(HWindow *win, HMitem *itemp, int flag)
 {
-    register int	label_len = strlen( itemp->text );
+    int	label_len = strlen( itemp->text );
     static char	buf[MAXLINE];
-    register char	*p = buf;
-    register int	col = win->menux;
-    register int	row = win->menuy+(ENTRY-win->menup->prevtop)+1;
-    register int	width = win->width;
-    register int	bitmap = flag & P_FORCE ?
+    char	*p = buf;
+    int	col = win->menux;
+    int	row = win->menuy+(ENTRY-win->menup->prevtop)+1;
+    int	width = win->width;
+    int	bitmap = flag & P_FORCE ?
 	~0 : win->dirty[ENTRY+1];
-    register int	bit = 1;
-    register int	writemask = 0;
+    int	bit = 1;
+    int	writemask = 0;
     if ( bitmap == 0 )
 	return;
 
     /* Pad text on left.					*/
     if ( itemp->text[0] & 0200 )	/* right-justified */
     {
-	register int	i;
+	int	i;
 	for ( i = 0; i < width - label_len; i++ )
 	    *p++ = ' ';
 	for ( i = 1; itemp->text[i] != '\0'; i++ )
@@ -168,7 +168,7 @@ hm_Put_Item(register HWindow *win, register HMitem *itemp, int flag)
     else				/* left-justified */
 	if ( itemp->text[label_len-1] & 0200 )
 	{
-	    register int	i;
+	    int	i;
 	    for ( i = 0; !(itemp->text[i] & 0200); i++ )
 		*p++ = itemp->text[i];
 	    for (; i < width; i++ )
@@ -176,7 +176,7 @@ hm_Put_Item(register HWindow *win, register HMitem *itemp, int flag)
 	}
 	else				/* centered */
 	{
-	    register int	i, j;
+	    int	i, j;
 	    for ( i = 0; i < (width - label_len + 1)/2; i++ )
 		*p++ = ' ';
 	    for ( j = 0; itemp->text[j] != '\0'; j++ )
@@ -202,7 +202,7 @@ hm_Put_Item(register HWindow *win, register HMitem *itemp, int flag)
 	}
 	else
 	{
-	    register int	i;
+	    int	i;
 	    for ( i = 0; i < p-buf; i++ )
 		writemask |= 1<<(i+1);
 	    for ( i = 0; i < p-buf; i++ )
@@ -229,14 +229,14 @@ hm_Put_Item(register HWindow *win, register HMitem *itemp, int flag)
 }
 
 static void
-hm_Put_Border(register HWindow *win, register int row, int mark)
+hm_Put_Border(HWindow *win, int row, int mark)
 {
-    register int	i;
-    register int	bit = 1;
-    register int	col = win->menux;
-    register int	bitmap = win->dirty[row - win->menuy];
+    int	i;
+    int	bit = 1;
+    int	col = win->menux;
+    int	bitmap = win->dirty[row - win->menuy];
     static char	buf[MAXLINE];
-    register char	*p = buf;
+    char	*p = buf;
     *p++ = (char)mark;
     for ( i = 0; i < win->width; i++ )
 	*p++ = '-';
@@ -254,9 +254,9 @@ hm_Put_Border(register HWindow *win, register int row, int mark)
 }
 
 static void
-hm_Setbit(register HWindow *win, int col, int row)
+hm_Setbit(HWindow *win, int col, int row)
 {
-    register int	bit = col - win->menux;
+    int	bit = col - win->menux;
     win->dirty[row-(win->menuy-win->menup->prevtop)] |= bit == 0 ? 1 : 1 << bit;
     return;
 }
@@ -264,7 +264,7 @@ hm_Setbit(register HWindow *win, int col, int row)
 static void
 hm_Clrmap(HWindow *win)
 {
-    register int	row;
+    int	row;
     for ( row = 0; row <= win->height+1; row++ )
 	win->dirty[row] = 0;
     return;
@@ -273,18 +273,18 @@ hm_Clrmap(HWindow *win)
 static void
 hm_Setmap(HWindow *win)
 {
-    register int	row;
+    int	row;
     for ( row = 0; row <= win->height+1; row++ )
 	win->dirty[row] = ~0; /* 0xffff... */
     return;
 }
 
 static HWindow	*
-hm_In_Win(register int x, register int y, register HWindow *win)
+hm_In_Win(int x, int y, HWindow *win)
 {
     for (; win != (HWindow *) 0; win = win->next )
     {
-	register int	height = Min( win->height, MAXVISABLE );
+	int	height = Min( win->height, MAXVISABLE );
 	if ( !	(x < win->menux || x > win->menux + win->width + 1 ||
 		 y < win->menuy || y > win->menuy + height + 1)
 	    )
@@ -294,9 +294,9 @@ hm_In_Win(register int x, register int y, register HWindow *win)
 }
 
 static void
-hm_Draw_Win(register HWindow *win)
+hm_Draw_Win(HWindow *win)
 {
-    register HMitem	*itemp;
+    HMitem	*itemp;
     int	height;
     hm_Put_Border( win, win->menuy, win->menup->prevtop > 0 ? '^' : '+' );
     for (	itemp = win->menup->item + win->menup->prevtop;
@@ -327,10 +327,10 @@ hm_Redraw_Win(HWindow *win)
 }
 
 static void
-hm_Help(register HWindow *win, int entry)
+hm_Help(HWindow *win, int entry)
 {
     int	bottomline = 1;
-    register HWindow	*curwin;
+    HWindow	*curwin;
     for ( curwin = windows; curwin != (HWindow *) 0; curwin = curwin->next )
     {
 	if ( curwin->height > MAXVISABLE )
@@ -353,18 +353,18 @@ hm_Help(register HWindow *win, int entry)
 }
 
 static void
-hm_Lift_Win(register HWindow *win)
+hm_Lift_Win(HWindow *win)
 {
-    register int	row, col;
-    register int	lastcol = -1, lastrow = -1;
-    register int	endcol = win->menux + win->width + 2;
-    register int	endrow = win->menuy +
+    int	row, col;
+    int	lastcol = -1, lastrow = -1;
+    int	endcol = win->menux + win->width + 2;
+    int	endrow = win->menuy +
 	Min( win->height, MAXVISABLE ) + 2;
     for ( row = win->menuy; row < endrow; row++ )
     {
 	for ( col = win->menux; col < endcol; col++ )
 	{
-	    register HWindow	*olwin;
+	    HWindow	*olwin;
 	    if ( (olwin = hm_In_Win( col, row, win->next ))
 		 == (HWindow *) 0
 		)
@@ -388,7 +388,7 @@ hm_Lift_Win(register HWindow *win)
 void
 hmredraw(void)
 {
-    register HWindow	*win;
+    HWindow	*win;
     for ( win = windows; win != (HWindow *) 0; win = win->next )
 	hm_Setmap( win );
     hm_dirty = 1;
@@ -400,10 +400,10 @@ hmenuhit(HMenu *menup, int menux, int menuy)
     /* -> first HMitem in array.		*/
 
 {
-    register HMitem	*itemp;
+    HMitem	*itemp;
     HMitem		*retitemp = 0;
     HWindow		*win;
-    register int	done = 0;
+    int	done = 0;
     int		dynamic = 0;
     static int	hmlevel = 0;
 
@@ -419,8 +419,8 @@ hmenuhit(HMenu *menup, int menux, int menuy)
     */
     if ( (dynamic = (menup->item == (HMitem *) 0)) )
     {
-	register int	i;
-	register HMitem	*gitemp;
+	int	i;
+	HMitem	*gitemp;
 	HMllist	llhead, **listp;
 	for (	i = 0, listp = &llhead.next;
 		;
@@ -489,8 +489,8 @@ hmenuhit(HMenu *menup, int menux, int menuy)
     /* Determine width of menu, allowing for border.		*/
     for ( itemp = menup->item; itemp->text != NULL; itemp++ )
     {
-	register int	len = 0;
-	register int	i;
+	int	len = 0;
+	int	i;
 	for ( i = 0; itemp->text[i] != '\0'; i++ )
 	    if ( ! (itemp->text[i] & 0200) )
 		len++;

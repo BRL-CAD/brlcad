@@ -1,7 +1,7 @@
 /*                 PCurveOrSurface.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -51,9 +51,9 @@ PCurveOrSurface::PCurveOrSurface() {
 	surface = NULL;
 }
 
-PCurveOrSurface::PCurveOrSurface(STEPWrapper *sw,int STEPid) {
+PCurveOrSurface::PCurveOrSurface(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 	pcurve = NULL;
 	surface = NULL;
 }
@@ -67,7 +67,7 @@ bool
 PCurveOrSurface::Load(STEPWrapper *sw,SCLP23(Select) *sse) {
 	step=sw;
 
-	cout << sse->UnderlyingTypeName() << endl;
+	std::cout << sse->UnderlyingTypeName() << std::endl;
 	SdaiPcurve_or_surface *v = (SdaiPcurve_or_surface *)sse;
 
 	if ( v->IsPcurve() ) {
@@ -85,12 +85,12 @@ PCurveOrSurface::Load(STEPWrapper *sw,SCLP23(Select) *sse) {
 
 void
 PCurveOrSurface::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << std::endl;
 	if (type == PCURVE) {
-		TAB(level); cout << "Type:" << pcurve_or_surface_type_names[type] << " Value:" << endl;
+		TAB(level); std::cout << "Type:" << pcurve_or_surface_type_names[type] << " Value:" << std::endl;
 		pcurve->Print(level+1);
 	} else if (type == SURFACE) {
-		TAB(level); cout << "Type:" << pcurve_or_surface_type_names[type] << " Value:" << endl;
+		TAB(level); std::cout << "Type:" << pcurve_or_surface_type_names[type] << " Value:" << std::endl;
 		surface->Print(level+1);
 	}
 }
@@ -103,7 +103,7 @@ PCurveOrSurface::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, (SCLP23(Select) *)sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

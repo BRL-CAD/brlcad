@@ -1,7 +1,7 @@
 /*                    D O U B L E - A S C . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2009 United States Government as represented by
+ * Copyright (c) 1996-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -61,9 +61,9 @@ void print_usage (void)
 
 
 int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int ch;
+    int ch;
 
     while ((ch = bu_getopt(argc, argv, OPT_STRING)) != EOF)
     {

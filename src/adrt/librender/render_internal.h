@@ -1,7 +1,7 @@
 /*               R E N D E R _ I N T E R N A L . H
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2009 United States Government as represented by
+ * Copyright (c) 2007-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -49,9 +49,12 @@ typedef void render_work_t(struct render_s *render, tie_t *tie, tie_ray_t *ray, 
 typedef void render_free_t(struct render_s *render);
 
 typedef struct render_s {
+    char name[256];
+    tie_t *tie;
     render_work_t *work;
     render_free_t *free;
     void *data;
+    struct render_s *next;
 } render_t;
 
 #endif

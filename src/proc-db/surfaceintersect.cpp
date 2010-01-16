@@ -1,7 +1,7 @@
 /*             S U R F A C E I N T E R S E C T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2009 United States Government as represented by
+ * Copyright (c) 2009-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,6 +27,7 @@
  * This code is written and maintained by Joe Doliner: jdoliner@gmail.com
  */
 
+#include "assert.h"
 #include "surfaceintersect.h"
 
 #define SI_MIN(a, b) (((a) > (b)) ? (a) : (b))
@@ -1054,7 +1055,7 @@ ON_Surface*
 TwistedCubeSideSurface(const ON_3dPoint& SW, const ON_3dPoint& SE, const ON_3dPoint& NE, const ON_3dPoint& NW)
 {
     ON_NurbsSurface* pNurbsSurface = new ON_NurbsSurface(3, // dimension
-							 FALSE, // not rational
+							 0, // not rational
 							 2, // u order
 							 2, // v order,
 							 2, // number of control vertices in u

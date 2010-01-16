@@ -1,7 +1,7 @@
 /*                 Hyperbola.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -39,9 +39,9 @@ Hyperbola::Hyperbola() {
 	id = 0;
 }
 
-Hyperbola::Hyperbola(STEPWrapper *sw,int STEPid) {
+Hyperbola::Hyperbola(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 Hyperbola::~Hyperbola() {
@@ -53,7 +53,7 @@ Hyperbola::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 	id = sse->STEPfile_id;
 
 	if ( !Conic::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::Conic." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::Conic." << std::endl;
 		return false;
 	}
 
@@ -69,14 +69,14 @@ Hyperbola::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 void
 Hyperbola::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << name << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Attributes:" << endl;
-	TAB(level+1); cout << "semi_axis:" << semi_axis << endl;
-	TAB(level+1); cout << "semi_imag_axis:" << semi_imag_axis << endl;
+	TAB(level); std::cout << "Attributes:" << std::endl;
+	TAB(level+1); std::cout << "semi_axis:" << semi_axis << std::endl;
+	TAB(level+1); std::cout << "semi_imag_axis:" << semi_imag_axis << std::endl;
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	Conic::Print(level+1);
 }
 STEPEntity *
@@ -88,7 +88,7 @@ Hyperbola::Create(STEPWrapper *sw,SCLP23(Application_instance) *sse){
 		Factory::AddObject(object);
 
 		if (!object->Load(sw,sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

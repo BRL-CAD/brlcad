@@ -1,7 +1,7 @@
 /*                 Axis2Placement.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -48,9 +48,9 @@ Axis2Placement::Axis2Placement() {
 	value = NULL;
 }
 
-Axis2Placement::Axis2Placement(STEPWrapper *sw,int STEPid) {
+Axis2Placement::Axis2Placement(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 	value = NULL;
 }
 
@@ -100,15 +100,15 @@ Axis2Placement::Load(STEPWrapper *sw,SCLP23(Select) *sse) {
 
 void
 Axis2Placement::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Attributes:" << endl;
+	TAB(level); std::cout << "Attributes:" << std::endl;
 	if (type == AXIS2_PLACEMENT_2D) {
-		TAB(level+1); cout << "Type:" << axis2_placement_type_names[type] << " Value:" << endl;
+		TAB(level+1); std::cout << "Type:" << axis2_placement_type_names[type] << " Value:" << std::endl;
 		value->Print(level+1);
 	} else if (type == AXIS2_PLACEMENT_2D) {
-		TAB(level+1); cout << "Type:" << axis2_placement_type_names[type] << " Value:" << endl;
+		TAB(level+1); std::cout << "Type:" << axis2_placement_type_names[type] << " Value:" << std::endl;
 		value->Print(level+1);
 	}
 }
@@ -121,7 +121,7 @@ Axis2Placement::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, (SCLP23(Select) *)sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

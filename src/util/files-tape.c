@@ -1,7 +1,7 @@
 /*                    F I L E S - T A P E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -64,16 +64,16 @@ long	byteswritten = 0;	/* Number of bytes written */
 int	bufsize = 24*1024;	/* Default buffer size */
 char	*buf;
 
-void	fileout(register int fd, char *name);
+void	fileout(int fd, char *name);
 
 
 static char usage[] = "\
 Usage: files-tape [-b bytes] [-k Kbytes] [files]\n";
 
 int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int c;
+    int c;
 
     while ( (c = bu_getopt( argc, argv, "b:k:" )) != EOF )  {
 	switch ( c )  {
@@ -101,7 +101,7 @@ get_args(int argc, register char **argv)
 int
 main(int argc, char **argv)
 {
-    register int	fd;
+    int	fd;
 
     if ( !get_args( argc, argv ) )  {
 	(void)fputs(usage, stderr);
@@ -145,9 +145,9 @@ main(int argc, char **argv)
  *			F I L E O U T
  */
 void
-fileout(register int fd, char *name)
+fileout(int fd, char *name)
 {
-    register int	count, out;
+    int	count, out;
 
     while ( (count = bu_mread( fd, buf, bufsize )) > 0 )  {
 	if ( count < bufsize )  {

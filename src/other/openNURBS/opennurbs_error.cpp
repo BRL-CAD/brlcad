@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -104,23 +103,35 @@ static int FormatMessage(const char*, va_list );
 
 void ON_DebugBreak()
 {
-  if ( ON_DEBUG_BREAK_OPTION )
+#if defined(ON_DEBUG) && defined (ON_COMPILER_MSC)
+  static int i = 0;
+  if ( 0 == i )
   {
     // Dear Rhino Developer:
-    //   If you find this annoying, then look at the call stack,
-    //   figure out why this happening, create an RR item,
-    //   and then run the TestErrorCheck DebugBreak=No.
+    //   If you find this annoying, then either fix the bug
+    //   or look at the call stack, figure out why this 
+    //   happening, create an RR item and birddog the
+    //   error until it gets fixed.
+    ::DebugBreak(); // Windows debug break
+    i = 1;
+  }
+  else
+#endif
+
+  if ( ON_DEBUG_BREAK_OPTION )
+  {
 #if defined(ON_COMPILER_MSC)
     ::DebugBreak(); // Windows debug break
 #endif
   }
+
 }
 
 void ON_MathError( 
-	const char* sModuleName,
-	const char* sErrorType,
-	const char* sFunctionName
-	)
+        const char* sModuleName,
+        const char* sErrorType,
+        const char* sFunctionName
+        )
 {
   ON_MATH_ERROR_COUNT++; // <- Good location for a debugger breakpoint.
 
@@ -132,20 +143,30 @@ void ON_MathError(
     sFunctionName = "";
 
   ON_Error(__FILE__,__LINE__,
-	   "Math library or floating point ERROR # %d module=%s type=%s function=%s",
-	   ON_MATH_ERROR_COUNT, 
-	   sModuleName, // rhino.exe, opennurbs.dll, etc.
-	   sErrorType,   
-	   sFunctionName 
-	   );
+           "Math library or floating point ERROR # %d module=%s type=%s function=%s",
+           ON_MATH_ERROR_COUNT, 
+           sModuleName, // rhino.exe, opennurbs.dll, etc.
+           sErrorType,   
+           sFunctionName 
+           );
 }	
 
 
+#if defined(ON_COMPILER_MSC)
+// Disable the MSC /W4 warning
+//   C4189: 'first_error' : local variable is initialized but not referenced
+// on the line
+//   int first_error = 0.  
+// The warning disable is here because MS is ignoring it
+// if I put it inside of the function.
+#pragma warning( push )
+#pragma warning( disable : 4189 ) 
+#endif
 
 void ON_Error(const char* sFileName, int line_number, 
-	      const char* sFormat, ...)
+              const char* sFormat, ...)
 {
-  int bPrintMessage = FALSE;
+  int bPrintMessage = false;
   int rc = 0;
   ON_ERROR_COUNT++; // <- Good location for a debugger breakpoint.
   sMessage[0] = 0;
@@ -166,12 +187,12 @@ void ON_Error(const char* sFileName, int line_number,
     {
       // put file and line number info for debug mode
       sprintf(sMessage,"openNURBS ERROR # %d %s:%d ",ON_ERROR_COUNT,sFileName,line_number);
-      bPrintMessage = TRUE;
+      bPrintMessage = true;
     }
     else if ( 50 == ON_ERROR_COUNT )
     {
       sprintf(sMessage,"openNURBS ERROR # %d - Too many errors.  No more printed messages.",ON_ERROR_COUNT);
-      bPrintMessage = TRUE;
+      bPrintMessage = true;
     }
   }
 
@@ -191,11 +212,16 @@ void ON_Error(const char* sFileName, int line_number,
   ON_DebugBreak();
 }
 
+#if defined(ON_COMPILER_MSC)
+#pragma warning(pop)
+#endif
+
+
 
 void ON_Warning(const char* sFileName, int line_number, 
-		const char* sFormat, ...)
+                const char* sFormat, ...)
 {
-  int bPrintMessage = FALSE;
+  int bPrintMessage = false;
   int rc = 0;
   ON_WARNING_COUNT++; // <- Good location for a debugger breakpoint.
   sMessage[0] = 0;
@@ -204,7 +230,7 @@ void ON_Warning(const char* sFileName, int line_number,
   {
     // put file and line number info for debug mode
     sprintf(sMessage,"openNURBS WARNING # %d %s:%d ",ON_ERROR_COUNT,sFileName,line_number);
-    bPrintMessage = TRUE;
+    bPrintMessage = true;
   }
 
   if ( bPrintMessage ) {
@@ -225,12 +251,12 @@ void ON_Warning(const char* sFileName, int line_number,
 
 
 void ON_Assert(int bCondition,
-	       const char* sFileName, int line_number, 
-	       const char* sFormat, ...)
+               const char* sFileName, int line_number, 
+               const char* sFormat, ...)
 {
   if ( !bCondition ) 
   {
-    int bPrintMessage = FALSE;
+    int bPrintMessage = false;
     int rc = 0;
     ON_ERROR_COUNT++; // <- Good location for a debugger breakpoint.
     sMessage[0] = 0;
@@ -239,19 +265,19 @@ void ON_Assert(int bCondition,
     {
       // put file and line number info for debug mode
       sprintf(sMessage,"openNURBS ON_Assert ERROR # %d %s:%d ",ON_ERROR_COUNT,sFileName,line_number);
-      bPrintMessage = TRUE;
+      bPrintMessage = true;
     }
 
     if ( bPrintMessage ) {
       if (sFormat)  {
-	// append formatted error message to sMessage[]
-	va_list args;
-	va_start(args, sFormat);
-	rc = FormatMessage(sFormat,args);
-	va_end(args);
+        // append formatted error message to sMessage[]
+        va_list args;
+        va_start(args, sFormat);
+        rc = FormatMessage(sFormat,args);
+        va_end(args);
       }
       if (!rc && bPrintMessage ) { 
-	ON_ErrorMessage(2,sMessage);
+        ON_ErrorMessage(2,sMessage);
       }
     }
 
@@ -272,165 +298,4 @@ static int FormatMessage(const char* format, va_list args)
   return 0;
 }	
 
-static double ON__dbl_qnan(void)
-{ 
-  double z; 
-  unsigned char* byt;
-  unsigned int byt0 = 7;
-  unsigned int byt1 = 6;
-  if ( ON::big_endian == ON::Endian() )
-  {
-    byt0 = 0;
-    byt1 = 1;
-  }
-  byt = (unsigned char*)&z; 
-  memset(byt,0,sizeof(z));
-  byt[byt0] = 0x7f; 
-  byt[byt1] = 0xf8;  
-  return z;
-}
 
-static float ON__flt_qnan(void)
-{ 
-  float z; 
-  unsigned char* byt;
-  unsigned int byt0 = 3;
-  unsigned int byt1 = 2;
-  if ( ON::big_endian == ON::Endian() )
-  {
-    byt0 = 0;
-    byt1 = 1;
-  }
-  byt = (unsigned char*)&z; 
-  memset(byt,0,sizeof(z));
-  byt[byt0] = 0x7f; 
-  byt[byt1] = 0xd0;  
-  return z;
-}
-
-static double ON__dbl_snan(void)
-{ 
-  double z; 
-  unsigned char* byt;
-  unsigned int byt0 = 7;
-  unsigned int byt1 = 6;
-  if ( ON::big_endian == ON::Endian() )
-  {
-    byt0 = 0;
-    byt1 = 1;
-  }
-  byt = (unsigned char*)&z; 
-  memset(byt,0xff,sizeof(z));
-  byt[byt0] = 0x7f; 
-  byt[byt1] = 0xf4;  
-  return z;
-}
-
-static float ON__flt_snan(void)
-{ 
-  float z; 
-  unsigned char* byt;
-  unsigned int byt0 = 3;
-  unsigned int byt1 = 2;
-  if ( ON::big_endian == ON::Endian() )
-  {
-    byt0 = 0;
-    byt1 = 1;
-  }
-  byt = (unsigned char*)&z; 
-  memset(byt,0xff,sizeof(z));
-  byt[byt0] = 0x7f; 
-  byt[byt1] = 0xa0;  
-  return z;
-}
-
-static double ON__dbl_pinf(void)
-{ 
-  double z; 
-  unsigned char* byt;
-  unsigned int byt0 = 7;
-  unsigned int byt1 = 6;
-  if ( ON::big_endian == ON::Endian() )
-  {
-    byt0 = 0;
-    byt1 = 1;
-  }
-  byt = (unsigned char*)&z; 
-  memset(byt,0,sizeof(z));
-  byt[byt0] = 0x7f; 
-  byt[byt1] = 0xf0;
-  return z;
-}
-
-static float ON__flt_pinf(void)
-{ 
-  float z; 
-  unsigned char* byt;
-  unsigned int byt0 = 3;
-  unsigned int byt1 = 2;
-  if ( ON::big_endian == ON::Endian() )
-  {
-    byt0 = 0;
-    byt1 = 1;
-  }
-  byt = (unsigned char*)&z; 
-  memset(byt,0,sizeof(z));
-  byt[byt0] = 0x7f; 
-  byt[byt1] = 0x80;  
-  return z;
-}
-
-static double ON__dbl_ninf(void)
-{ 
-  double z; 
-  unsigned char* byt;
-  unsigned int byt0 = 7;
-  unsigned int byt1 = 6;
-  if ( ON::big_endian == ON::Endian() )
-  {
-    byt0 = 0;
-    byt1 = 1;
-  }
-  byt = (unsigned char*)&z; 
-  memset(byt,0,sizeof(z));
-  byt[byt0] = 0xff; 
-  byt[byt1] = 0xf0;
-  return z;
-}
-
-static float ON__flt_ninf(void)
-{ 
-  float z; 
-  unsigned char* byt;
-  unsigned int byt0 = 3;
-  unsigned int byt1 = 2;
-  if ( ON::big_endian == ON::Endian() )
-  {
-    byt0 = 0;
-    byt1 = 1;
-  }
-  byt = (unsigned char*)&z; 
-  memset(byt,0,sizeof(z));
-  byt[byt0] = 0xff; 
-  byt[byt1] = 0x80; 
-  return z;
-}
-
-
-// Initialize special values
-
-// IEEE 754 Quiet NaN (symantically indeterminant result)
-const double ON_DBL_QNAN = ON__dbl_qnan();
-const float  ON_FLT_QNAN = ON__flt_qnan();
-
-// IEEE 754 Signalling NaN (symantically invalid result)
-const double ON_DBL_SNAN = ON__dbl_snan();
-const float  ON_FLT_SNAN = ON__flt_snan();
-
-// IEEE 754 Positive infinity
-const double ON_DBL_PINF = ON__dbl_pinf();
-const float  ON_FLT_PINF = ON__flt_pinf();
-
-// IEEE 754 Negative infinity
-const double ON_DBL_NINF = ON__dbl_ninf();
-const float  ON_FLT_NINF = ON__flt_ninf();

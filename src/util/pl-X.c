@@ -1,7 +1,7 @@
 /*                          P L - X . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2009 United States Government as represented by
+ * Copyright (c) 1988-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -153,7 +153,7 @@ getstring(void)
 long
 getshort(void)
 {
-    register long	v, w;
+    long	v, w;
 
     v = getchar();
     v |= (getchar()<<8);	/* order is important! */
@@ -331,7 +331,7 @@ xsetup(int argc, char **argv)
 int
 main(int argc, char **argv)
 {
-    register int	c;
+    int	c;
     struct	uplot *up;
     int erase = 0;
     int waiting = 1;

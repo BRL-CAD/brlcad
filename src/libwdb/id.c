@@ -1,7 +1,7 @@
 /*                            I D . C
  * BRL-CAD
  *
- * Copyright (c) 1987-2009 United States Government as represented by
+ * Copyright (c) 1987-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,10 +22,6 @@
  *  An ID record must be the first granule in the database.
  *
  *  Return codes of 0 are OK, -1 signal an error.
- *
- *  Authors -
- *	Michael John Muuss
- *	Paul R. Stay
  *
  */
 
@@ -65,7 +61,7 @@ mk_id(struct rt_wdb *fp, const char *title)
  *	0	success
  */
 int
-mk_id_units(struct rt_wdb *fp, const char *title, register const char *units)
+mk_id_units(struct rt_wdb *fp, const char *title, const char *units)
 {
     return mk_id_editunits( fp, title, bu_units_conversion(units) );
 }

@@ -1,7 +1,7 @@
 /*                         S O L I D S _ O N _ R A Y . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -183,7 +183,7 @@ ged_no_op(struct application *ap, struct partition *ph, struct region *r1, struc
 static int
 ged_rpt_hits_mike(struct application *ap, struct partition *PartHeadp, struct seg *segp)
 {
-    register struct partition *pp;
+    struct partition *pp;
     int len;
     char **list;
     int i;

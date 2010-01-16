@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -96,9 +95,9 @@ void ON_PointCloud::EmergencyDestroy()
   m_bbox.Destroy();
 }
 
-BOOL ON_PointCloud::IsValid( ON_TextLog* text_log ) const
+ON_BOOL32 ON_PointCloud::IsValid( ON_TextLog* text_log ) const
 {
-  return ( m_P.Count() > 0 ) ? TRUE : FALSE;
+  return ( m_P.Count() > 0 ) ? true : false;
 }
 
 void ON_PointCloud::Dump( ON_TextLog& dump ) const
@@ -126,7 +125,7 @@ void ON_PointCloud::Dump( ON_TextLog& dump ) const
   dump.PopIndent();
 }
 
-BOOL ON_PointCloud::Write( ON_BinaryArchive& file ) const
+ON_BOOL32 ON_PointCloud::Write( ON_BinaryArchive& file ) const
 {
   bool rc = file.Write3dmChunkVersion(1,1);
 
@@ -142,7 +141,7 @@ BOOL ON_PointCloud::Write( ON_BinaryArchive& file ) const
   return rc;
 }
 
-BOOL ON_PointCloud::Read( ON_BinaryArchive& file )
+ON_BOOL32 ON_PointCloud::Read( ON_BinaryArchive& file )
 {
   int major_version = 0;
   int minor_version = 0;
@@ -174,51 +173,51 @@ int ON_PointCloud::Dimension() const
   return 3;
 }
 
-BOOL ON_PointCloud::GetBBox( // returns TRUE if successful
+ON_BOOL32 ON_PointCloud::GetBBox( // returns true if successful
        double* boxmin,    // minimum
        double* boxmax,    // maximum
-       BOOL bGrowBox  // TRUE means grow box
+       ON_BOOL32 bGrowBox  // true means grow box
        ) const
 {
   if ( !m_bbox.IsValid() ) {
-    m_P.GetBBox( (double*)&m_bbox.m_min.x, (double*)&m_bbox.m_max.x, FALSE );
+    m_P.GetBBox( (double*)&m_bbox.m_min.x, (double*)&m_bbox.m_max.x, false );
   }
-  BOOL rc = m_bbox.IsValid();
+  ON_BOOL32 rc = m_bbox.IsValid();
   if (rc) {
     if ( bGrowBox ) {
       if ( boxmin ) {
-	if ( boxmin[0] > m_bbox.m_min.x ) boxmin[0] = m_bbox.m_min.x;
-	if ( boxmin[1] > m_bbox.m_min.y ) boxmin[1] = m_bbox.m_min.y;
-	if ( boxmin[2] > m_bbox.m_min.z ) boxmin[2] = m_bbox.m_min.z;
+        if ( boxmin[0] > m_bbox.m_min.x ) boxmin[0] = m_bbox.m_min.x;
+        if ( boxmin[1] > m_bbox.m_min.y ) boxmin[1] = m_bbox.m_min.y;
+        if ( boxmin[2] > m_bbox.m_min.z ) boxmin[2] = m_bbox.m_min.z;
       }
       if ( boxmax ) {
-	if ( boxmax[0] < m_bbox.m_max.x ) boxmax[0] = m_bbox.m_max.x;
-	if ( boxmax[1] < m_bbox.m_max.y ) boxmax[1] = m_bbox.m_max.y;
-	if ( boxmax[2] < m_bbox.m_max.z ) boxmax[2] = m_bbox.m_max.z;
+        if ( boxmax[0] < m_bbox.m_max.x ) boxmax[0] = m_bbox.m_max.x;
+        if ( boxmax[1] < m_bbox.m_max.y ) boxmax[1] = m_bbox.m_max.y;
+        if ( boxmax[2] < m_bbox.m_max.z ) boxmax[2] = m_bbox.m_max.z;
       }
     }
     else {
       if ( boxmin ) {
-	boxmin[0] = m_bbox.m_min.x;
-	boxmin[1] = m_bbox.m_min.y;
-	boxmin[2] = m_bbox.m_min.z;
+        boxmin[0] = m_bbox.m_min.x;
+        boxmin[1] = m_bbox.m_min.y;
+        boxmin[2] = m_bbox.m_min.z;
       }
       if ( boxmax ) {
-	boxmax[0] = m_bbox.m_max.x;
-	boxmax[1] = m_bbox.m_max.y;
-	boxmax[2] = m_bbox.m_max.z;
+        boxmax[0] = m_bbox.m_max.x;
+        boxmax[1] = m_bbox.m_max.y;
+        boxmax[2] = m_bbox.m_max.z;
       }
     }
   }
   return rc;
 }
 
-BOOL ON_PointCloud::Transform( 
+ON_BOOL32 ON_PointCloud::Transform( 
        const ON_Xform& xform
        )
 {
   TransformUserData(xform);
-  BOOL rc = m_P.Transform(xform);
+  ON_BOOL32 rc = m_P.Transform(xform);
   if (rc && HasPlane() )
     rc = m_plane.Transform(xform);
   m_bbox.Destroy();
@@ -235,11 +234,11 @@ bool ON_PointCloud::MakeDeformable()
   return true;
 }
 
-BOOL ON_PointCloud::SwapCoordinates(
+ON_BOOL32 ON_PointCloud::SwapCoordinates(
       int i, int j        // indices of coords to swap
       )
 {
-  BOOL rc = m_P.SwapCoordinates(i,j);
+  ON_BOOL32 rc = m_P.SwapCoordinates(i,j);
   if ( rc && HasPlane() ) {
     rc = m_plane.SwapCoordinates(i,j);
   }
@@ -310,11 +309,11 @@ double ON_PointCloud::Height(int i)
 }
 
 bool ON_GetClosestPointInPointList( 
-	  int point_count,
-	  const ON_3dPoint* point_list,
-	  ON_3dPoint P,
-	  int* closest_point_index
-	  )
+          int point_count,
+          const ON_3dPoint* point_list,
+          ON_3dPoint P,
+          int* closest_point_index
+          )
 {
   bool rc = false;
   if ( point_count>0 && 0 != point_list && closest_point_index )
@@ -341,14 +340,14 @@ bool ON_GetClosestPointInPointList(
       e = P.DistanceTo(*point_list);
       if ( e < d )
       {
-	d = e;
-	best_i = point_count-i-1;
+        d = e;
+        best_i = point_count-i-1;
       }
     }
     if ( best_i >= 0 )
     {
       if ( closest_point_index )
-	*closest_point_index = best_i;
+        *closest_point_index = best_i;
       rc = true;
     }
   }
@@ -356,10 +355,10 @@ bool ON_GetClosestPointInPointList(
 }
 
 bool ON_3dPointArray::GetClosestPoint( 
-	  ON_3dPoint P,
-	  int* closest_point_index,
-	  double maximum_distance
-	  ) const
+          ON_3dPoint P,
+          int* closest_point_index,
+          double maximum_distance
+          ) const
 {
   int i;
 
@@ -393,35 +392,30 @@ bool ON_PointCloud::HasPointNormals() const
 }
 
 bool ON_PointCloud::GetClosestPoint(
-		ON_3dPoint P,
-		int* closest_point_index,
-		double maximum_distance 
-		) const
+                ON_3dPoint P,
+                int* closest_point_index,
+                double maximum_distance 
+                ) const
 {
-  bool rc = false;
-
   if ( maximum_distance > 0.0 && m_bbox.IsValid() )
   {
     // check bounding box
     if ( m_bbox.MinimumDistanceTo(P) > maximum_distance )
       return false;
   }
-
   return m_P.GetClosestPoint( P, closest_point_index, maximum_distance );
-
-  return rc;
 }
 
 int ON_PointCloud::HiddenPointCount() const
 {
   int point_count;
   return (    m_hidden_count > 0 
-	   && (point_count = m_P.Count()) > 0
-	   && m_hidden_count < point_count 
-	   && m_H.Count() == point_count 
-	   )
-	   ? m_hidden_count
-	   : 0;
+           && (point_count = m_P.Count()) > 0
+           && m_hidden_count < point_count 
+           && m_H.Count() == point_count 
+           )
+           ? m_hidden_count
+           : 0;
 }
 
 void ON_PointCloud::DestroyHiddenPointArray()
@@ -433,8 +427,8 @@ void ON_PointCloud::DestroyHiddenPointArray()
 const bool* ON_PointCloud::HiddenPointArray() const
 {
   return (m_hidden_count > 0 && m_H.Count() == m_P.Count()) 
-	 ? m_H.Array() 
-	 : 0;
+         ? m_H.Array() 
+         : 0;
 }
 
 void ON_PointCloud::SetHiddenPointFlag( int point_index, bool bHidden )
@@ -446,16 +440,16 @@ void ON_PointCloud::SetHiddenPointFlag( int point_index, bool bHidden )
     {
       if ( point_count != m_H.Count() )
       {
-	m_H.SetCapacity(point_count);
-	m_H.SetCount(point_count);
-	m_H.Zero();
-	m_H[point_index] = true;
-	m_hidden_count = 1;
+        m_H.SetCapacity(point_count);
+        m_H.SetCount(point_count);
+        m_H.Zero();
+        m_H[point_index] = true;
+        m_hidden_count = 1;
       }
       else if ( false == m_H[point_index] )
       {
-	m_H[point_index] = true;
-	m_hidden_count++;
+        m_H[point_index] = true;
+        m_hidden_count++;
       }
     }
     else
@@ -463,20 +457,20 @@ void ON_PointCloud::SetHiddenPointFlag( int point_index, bool bHidden )
       // show this vertex
       if ( m_hidden_count > 0 && point_count == m_H.Count() )
       {
-	if  ( m_H[point_index] )
-	{
-	  m_H[point_index] = false;
-	  m_hidden_count--;
-	  if ( 0 == m_hidden_count )
-	  {
-	    DestroyHiddenPointArray();
-	  }
-	}
+        if  ( m_H[point_index] )
+        {
+          m_H[point_index] = false;
+          m_hidden_count--;
+          if ( 0 == m_hidden_count )
+          {
+            DestroyHiddenPointArray();
+          }
+        }
       }
       else if ( m_hidden_count > 0 || m_H.Capacity() > 0 )
       {
-	// if m_H exists, it is bogus.
-	DestroyHiddenPointArray();
+        // if m_H exists, it is bogus.
+        DestroyHiddenPointArray();
       }
     }
   }
@@ -486,9 +480,9 @@ bool ON_PointCloud::PointIsHidden( int point_index ) const
 {
   int point_count;
   return (    point_index >= 0
-	   && point_index < (point_count = m_P.Count())
-	   && m_H.Count() == point_count )
-	   ? m_H[point_index]
-	   : false;
+           && point_index < (point_count = m_P.Count())
+           && m_H.Count() == point_count )
+           ? m_H[point_index]
+           : false;
 }
 

@@ -1,7 +1,7 @@
 /*                 B R E P I N T E R S E C T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,6 +27,7 @@
  * This code is written and maintained by Joe Doliner: jdoliner@gmail.com
  */
 
+#include "assert.h"
 #include "brepintersect.h"
 
 int PolylineBBox(

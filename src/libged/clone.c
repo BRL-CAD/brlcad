@@ -1,7 +1,7 @@
 /*                         C L O N E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -261,7 +261,7 @@ clone_get_name(struct directory *dp, struct ged_clone_state *state, int iter)
 static void
 copy_v4_solid(struct db_i *dbip, struct directory *proto, struct ged_clone_state *state, int idx)
 {
-    register struct directory *dp = (struct directory *)NULL;
+    struct directory *dp = (struct directory *)NULL;
     union record *rp = (union record *)NULL;
     int i, j;
 
@@ -385,7 +385,7 @@ copy_v5_solid(struct db_i *dbip, struct directory *proto, struct ged_clone_state
 	char *argv[4];
 	struct bu_vls *name;
 	int ret;
-	register struct directory *dp = (struct directory *)NULL;
+	struct directory *dp = (struct directory *)NULL;
 	struct rt_db_internal intern;
 
 	if (i==0)
@@ -419,7 +419,7 @@ copy_v5_solid(struct db_i *dbip, struct directory *proto, struct ged_clone_state
 	/* pull the new name */
 	dp = db_lookup(dbip, bu_vls_addr(name), LOOKUP_QUIET);
 	if (!dp) {
-	    rt_db_free_internal(&intern, &rt_uniresource);
+	    rt_db_free_internal(&intern);
 	    bu_vls_free(name);
 	    continue;
 	}
@@ -472,7 +472,7 @@ copy_solid(struct db_i *dbip, struct directory *proto, genptr_t clientData)
 static struct directory *
 copy_v4_comb(struct db_i *dbip, struct directory *proto, struct ged_clone_state *state, int idx)
 {
-    register struct directory *dp = (struct directory *)NULL;
+    struct directory *dp = (struct directory *)NULL;
     union record *rp = (union record *)NULL;
     int i, j;
 
@@ -576,7 +576,7 @@ copy_v5_comb_tree(struct ged_clone_state *state, union tree *tree, int idx)
 static struct directory *
 copy_v5_comb(struct db_i *dbip, struct directory *proto, struct ged_clone_state *state, int idx)
 {
-    register struct directory *dp = (struct directory *)NULL;
+    struct directory *dp = (struct directory *)NULL;
     struct bu_vls *name;
     int i;
 
@@ -634,7 +634,7 @@ copy_v5_comb(struct db_i *dbip, struct directory *proto, struct ged_clone_state 
 	    }
 	    bu_vls_printf(&state->olist, "%V ", name);
 	    bu_vls_free(name);
-	    rt_db_free_internal(&dbintern, &rt_uniresource);
+	    rt_db_free_internal(&dbintern);
 	}
 
 	/* done with this name */
@@ -682,10 +682,10 @@ copy_comb(struct db_i *dbip, struct directory *proto, genptr_t clientData)
 static struct directory *
 copy_tree(struct directory *dp, struct resource *resp, struct ged_clone_state *state)
 {
-    register int i;
-    register union record   *rp = (union record *)NULL;
-    register struct directory *mdp = (struct directory *)NULL;
-    register struct directory *copy = (struct directory *)NULL;
+    int i;
+    union record   *rp = (union record *)NULL;
+    struct directory *mdp = (struct directory *)NULL;
+    struct directory *copy = (struct directory *)NULL;
 
     struct bu_vls *copyname;
     struct bu_vls *nextname;

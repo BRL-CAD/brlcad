@@ -1,7 +1,7 @@
 /*                        S Q U A S H . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -43,9 +43,9 @@
 	assumed to be only 0 or 1.
 */
 void
-squash(register int *buf0, register int *buf1, register int *buf2, register float *ret_buf, register int n)
+squash(int *buf0, int *buf1, int *buf2, float *ret_buf, int n)
 {
-    register int     j;
+    int     j;
 #if DEBUG_SQUASH
     fb_log( "squash: buf0=0x%x buf1=0x%x buf2=0x%x ret_buf=0x%x n=%d\n",
 	    buf0, buf1, buf2, ret_buf, n );

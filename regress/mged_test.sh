@@ -1,19 +1,53 @@
 #!/bin/sh
+#                    M G E D _ T E S T . S H
+# BRL-CAD
+#
+# Copyright (c) 2010 United States Government as represented by
+# the U.S. Army Research Laboratory.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following
+# disclaimer in the documentation and/or other materials provided
+# with the distribution.
+#
+# 3. The name of the author may not be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+# OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+# GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+###
 
 # Ensure /bin/sh
 export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 
-# save the precious args
-ARGS="$*"
-NAME_OF_THIS=`basename $0`
-PATH_TO_THIS=`dirname $0`
-THIS="$PATH_TO_THIS/$NAME_OF_THIS"
+# source common library functionality, setting ARGS, NAME_OF_THIS,
+# PATH_TO_THIS, and THIS.
+. $1/regress/library.sh
 
-MGED="/Users/cyapp/brlcad-install/bin/mged"
+MGED="`ensearch mged/mged`"
 if test ! -f "$MGED" ; then
     echo "Unable to find mged, aborting"
-    exit 1  
+    exit 1
 fi
+
 
 # Clear out older results files
 rm -f mged.g mged.log mged_files
@@ -40,7 +74,7 @@ EOF
 # performed to make sure no command is missing from the final script is
 # to make sure the line count of the final mged.mged_regress file matches
 # the sum of all the individual #CMDNAME.mged_regress files.  The final
-# mged.mged_regress file will be organized according to functionality - 
+# mged.mged_regress file will be organized according to functionality -
 # for example, all geometry creation commands will be grouped - in, make,
 # special purpose commands like tire, etc.  Similarly, geometry editing
 # commands like translate, rot, oed, etc. will be grouped.
@@ -203,7 +237,7 @@ cp eto_a.s eto_b.s
 clone -b 10 100 100 100 eto_b.s
 g clone2.c eto_b.s*
 cp eto_b.s eto_c.s
-clone -i 30 -m x 10 -n 1 eto_c.s 
+clone -i 30 -m x 10 -n 1 eto_c.s
 g clone3.c eto_c.s*
 cp eto_c.s eto_d.s
 clone -i 5 -p 30 30 30 -r 10 10 15 -n 20 eto_d.s
@@ -218,7 +252,7 @@ EOF
 
 
 #
-#                        C O M B 
+#                        C O M B
 #
 # Test commands for c/comb - because comb acts on existing primitives,
 # first set up primitives for comb to act on.
@@ -406,7 +440,7 @@ Z
 EOF
 
 #
-#                        G 
+#                        G
 #
 # Test commands for g - because g acts on existing primitives,
 # first set up primitives and combinations to act on.
@@ -444,7 +478,7 @@ i i_prim2.s i_comb.c
 EOF
 
 #
-#                         I N 
+#                         I N
 #
 # Test commands for in - because the behavior of this command must be
 # checked on a per-primitive basis, one make command exists for each
@@ -454,44 +488,44 @@ EOF
 
 cat > in.mged_regress << EOF
 in in_arb4.s arb4 3 -3 -3 3 0 -3 3 0 0 0 0 -3
-in in_arb5.s arb5 1 0 0 1 2 0 3 2 0 3 0 0 1.5 1.5 5  
+in in_arb5.s arb5 1 0 0 1 2 0 3 2 0 3 0 0 1.5 1.5 5
 in in_arb6.s arb6 2 -.5 -.5 2 0 -.5 2 0 0 2 -.5 0 2.5 -.3 -.5 2.5 -.3 0
 in in_arb7.s arb7 3.25 -1.25 -0.75 3.25 -0.25 -0.75 3.25 -0.25 0.25 3.25 -1.25 -0.25 2.25 -1.25 -0.75 2.25 -0.25 -0.75 2.25 -0.25 -0.25
 in in_arb8.s arb8 10 -9 -8 10 -1 -8 10 -1 0 10 -9 0 3 -9 -8 3 -1 -8 3 -1 0 3 -9 0
 in in_arbn.s arbn 8 1 0 0 1000 -1 0 0 1000 0 1 0 1000 0 -1 0 1000 0 0 1 1000 0 0 -1 1000 0.57735 0.57735 0.57735 1000 -0.57735 -0.57735 -0.57735 200
-in in_ars.s ars 3 3 0 0 0 0 0 100 100 0 100 100 100 100 0 0 200 
-in in_bot.s bot 4 4 2 1 0 0 0 10 10 0 -10 10 0 0 10 10 0 1 2 1 2 3 3 2 0 0 3 1 
+in in_ars.s ars 3 3 0 0 0 0 0 100 100 0 100 100 100 100 0 0 200
+in in_bot.s bot 4 4 2 1 0 0 0 10 10 0 -10 10 0 0 10 10 0 1 2 1 2 3 3 2 0 0 3 1
 in in_ehy.s ehy 0 0 0 0 10 10 10 0 0 10 3
-in in_ell.s ell 10 0 0 -12 0 0 0 -3 0 0 0 5 
+in in_ell.s ell 10 0 0 -12 0 0 0 -3 0 0 0 5
 in in_ell1.s ell1 3 2 8 3 -1 8 4
-in in_epa.s epa 0 0 0 3 0 0 0 5 0 3 
+in in_epa.s epa 0 0 0 3 0 0 0 5 0 3
 in in_eto.s eto 0 0 0 1 1 1 10 0 2 2 1.5
-in in_grip.s grip 0 0 0 3 0 0 6 
+in in_grip.s grip 0 0 0 3 0 0 6
 in in_half.s half 1 1 1 5
-in in_hyp.s hyp 0 0 0 0 0 10 3 0 0 4 .3 
+in in_hyp.s hyp 0 0 0 0 0 10 3 0 0 4 .3
 in in_part.s part 0 0 0 0 0 16 4 2
 in in_pipe.s pipe 4 0 0 0 3 5 6 0 0 3 3 5 7 3 4 8 2 6 10 8 8 10 0 6 8
 in in_rcc.s rcc 0 0 0 3 3 30 7
 in in_rec.s rec 0 0 0 3 3 10 10 0 0 0 3 0
 in in_rhc.s rhc 0 0 0 0 0 10 3 0 0 4 3
-in in_rpc.s rpc 0 0 0 0 0 4 0 1 0 3 
-in in_rpp.s rpp 0 30 -3 12 -1 22 
+in in_rpc.s rpc 0 0 0 0 0 4 0 1 0 3
+in in_rpp.s rpp 0 30 -3 12 -1 22
 in in_sph.s sph 42 42 42 42
 in in_tec.s tec 0 0 0 0 0 10 5 0 0 0 3 0 .6
-in in_tgc.s tgc 0 0 0 0 0 10 5 0 0 0 8 0 2 9 
+in in_tgc.s tgc 0 0 0 0 0 10 5 0 0 0 8 0 2 9
 in in_tor.s tor 0 0 0 1 1 3 5 2
 in in_trc.s trc 0 0 0 0 0 10 4 7
 EOF
 
 # Unsupported
-# in in_nmg.s nmg  
+# in in_nmg.s nmg
 # in in_sketch.s sketch
 
 # Because sketch does not currently have in command support, it is necessary to
 # to provide an example sketch for extrude.
 cat >> in.mged_regress << EOF
 put {extrude_test_sketch} sketch V {10 20 30} A {1 0 0} B {0 1 0} VL { {250 0} {500 0} {500 500} {0 500} {0 250} {250 250} {125 125} {0 125} {125 0} {200 200} } SL { { bezier D 4 P { 4 7 9 8 0 } } { line S 0 E 1 } { line S 1 E 2 } { line S 2 E 3 } { line S 3 E 4 } { carc S 6 E 5 R -1 L 0 O 0 } }
-in in_extrude.s extrude 0 0 0 0 0 1000 10 0 0 0 10 0 extrude_test_sketch 1 
+in in_extrude.s extrude 0 0 0 0 0 1000 10 0 0 0 10 0 extrude_test_sketch 1
 EOF
 
 #
@@ -531,7 +565,7 @@ in killall_1.s arb8 10 -9 -8 10 -1 -8 10 -1 0 10 -9 0 3 -9 -8 3 -1 -8 3 -1 0 3 -
 cp killall_1.s killall_2.s
 comb killall_1.c u killall_1.s u killall_2.s
 cp killall_1.c killall_2.c
-comb killall.c u killall_1.c u killall_2.s 
+comb killall.c u killall_1.c u killall_2.s
 ls killall*
 l killall*
 killall killall_1.s
@@ -772,7 +806,7 @@ make_bb rec_bb.s make_rec.s
 make_bb rhc_bb.s make_rhc.s
 make_bb rpc_bb.s make_rpc.s
 make_bb rpp_bb.s make_rpp.s
-make_bb sketch_bb.s extrude_test_sketch 
+make_bb sketch_bb.s extrude_test_sketch
 make_bb sph_bb.s make_sph.s
 make_bb tec_bb.s make_tec.s
 make_bb tgc_bb.s make_tgc.s
@@ -787,7 +821,7 @@ make_bb comb_bb3.s bb_prim3.c
 comb bb_prim4.c u make_rcc.s u make_rec.s u make_rhc.s u make_rpc.s u make_rpp.s
 make_bb comb_bb4.s bb_prim4.c
 comb bb_prim5.c u extrude_test_sketch u make_sph.s u make_tec.s u make_tgc.s u make_tor.s u make_trc.s
-make_bb comb_bb5.s bb_prim5.c 
+make_bb comb_bb5.s bb_prim5.c
 EOF
 
 #
@@ -1021,7 +1055,7 @@ view quat
 EOF
 
 #
-#                        R 
+#                        R
 #
 # Test commands for r command to build regions - because region building
 # acts on existing primitives and combinations, first set up primitives
@@ -1287,7 +1321,7 @@ Z
 e translate3.s
 sed translate3.s
 translate -100 -100 -100
-accept 
+accept
 Z
 EOF
 
@@ -1309,7 +1343,7 @@ EOF
 
 #
 #            V I E W
-# 
+#
 cat > view.mged_regress << EOF
 view quat 0.413175911167 0.492403876506 0.586824088833 0.492403876506
 view ypr 10 1 2
@@ -1391,7 +1425,7 @@ EOF
 #
 ##################################################################
 
-# Create empty file to hold commands - all other MGED commands will 
+# Create empty file to hold commands - all other MGED commands will
 # be appended to this file.
 cat > mged.mged_regress << EOF
 EOF
@@ -1517,3 +1551,12 @@ EOF
 # clean up files
 
 rm -f *.mged_regress mged_saveview_test.rt mged_ps_test.ps mged_plot_test.pl mged_overlay_test.ps
+
+# Local Variables:
+# tab-width: 8
+# mode: sh
+# sh-indentation: 4
+# sh-basic-offset: 4
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=4 tabstop=8

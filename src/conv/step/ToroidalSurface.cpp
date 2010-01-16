@@ -1,7 +1,7 @@
 /*                 ToroidalSurface.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,9 +38,9 @@ ToroidalSurface::ToroidalSurface() {
 	id = 0;
 }
 
-ToroidalSurface::ToroidalSurface(STEPWrapper *sw,int STEPid) {
+ToroidalSurface::ToroidalSurface(STEPWrapper *sw,int step_id) {
 	step=sw;
-	id = STEPid;
+	id = step_id;
 }
 
 ToroidalSurface::~ToroidalSurface() {
@@ -72,7 +72,7 @@ ToroidalSurface::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 	id = sse->STEPfile_id;
 
 	if ( !ElementarySurface::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::Surface." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::Surface." << std::endl;
 		return false;
 	}
 
@@ -88,11 +88,11 @@ ToroidalSurface::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 
 void
 ToroidalSurface::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << name << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level+1); cout << "major_radius: " << major_radius << endl;
-	TAB(level+1); cout << "minor_radius: " << minor_radius << endl;
+	TAB(level+1); std::cout << "major_radius: " << major_radius << std::endl;
+	TAB(level+1); std::cout << "minor_radius: " << minor_radius << std::endl;
 
 	ElementarySurface::Print(level+1);
 }
@@ -106,7 +106,7 @@ ToroidalSurface::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

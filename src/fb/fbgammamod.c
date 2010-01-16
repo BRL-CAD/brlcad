@@ -1,7 +1,7 @@
 /*                    F B G A M M A M O D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -187,8 +187,8 @@ main(int argc, char **argv)
     bmul = bm * mul;
 
     for ( i=0; i<256; i++ )  {
-	register double	t;
-	register int	val;
+	double	t;
+	int	val;
 
 	if ( (t = (pow( i/255.0, pre_exp) + radd) * rmul) < 0 )
 	    t = 0;

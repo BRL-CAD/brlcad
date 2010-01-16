@@ -1,7 +1,7 @@
 /*                           W D B . H
  * BRL-CAD
  *
- * Copyright (c) 1988-2009 United States Government as represented by
+ * Copyright (c) 1988-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -61,13 +61,8 @@ __BEGIN_DECLS
  *  It is vital that the argument list given for "args" be enclosed
  *  in parens.
  */
-#if __STDC__ || USE_PROTOTYPES
-#  define WDB_EXTERN(type_and_name, args)	extern type_and_name args
-#  define WDB_ARGS(args)			args
-#else
-#  define WDB_EXTERN(type_and_name, args)	extern type_and_name()
-#  define WDB_ARGS(args)			()
-#endif
+#define WDB_EXTERN(type_and_name, args) extern type_and_name args
+#define WDB_ARGS(args) args
 
 /*
  *  In-memory form of database combinations

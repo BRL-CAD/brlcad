@@ -1,7 +1,7 @@
 /*                   	P C _ C O N S T R A I N T S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,9 +22,6 @@
 /** @file pc_constraints.c
  *
  * @brief Constraint evaluation functions in C
- *
- * @author Dawn Thomas
- *
  *
  */
 
@@ -54,7 +51,7 @@ pc_isperpendicular(double ** v)
 void
 pc_mk_isperpendicular(struct pc_constrnt ** c,const char * name, const char ** args)
 {
-    register int i;
+    int i;
     
     pc_getconstraint_struct(c,2);
     bu_vls_strcat(&((*c)->name), name);

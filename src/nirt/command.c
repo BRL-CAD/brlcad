@@ -1,7 +1,7 @@
 /*                       C O M M A N D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -551,7 +551,7 @@ cm_attr(char *buffer, com_table *ctp)
 void
 cm_debug(char *buffer, com_table *ctp)
 {
-    register char *cp = buffer;
+    char *cp = buffer;
 
     /* This is really icky -- should have argc, argv interface */
     while (*cp && isascii(*cp) && isspace(*cp))  cp++;
@@ -574,7 +574,7 @@ cm_debug(char *buffer, com_table *ctp)
 void
 cm_libdebug(char *buffer, com_table *ctp)
 {
-    register char *cp = buffer;
+    char *cp = buffer;
 
     /* This is really icky -- should have argc, argv interface */
 

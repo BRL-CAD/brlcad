@@ -1,7 +1,7 @@
 /*                     S H O W T H E R M . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -72,8 +72,8 @@ struct table		/*  Table for region name & temperature.  */
 };
 struct table *info;	/*  Dimension later with malloc.  */
 
-extern int hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *segp);	/*  User supplied hit function.  */
-extern int miss(register struct application *ap_p);	/*  User supplied miss function.  */
+extern int hit(struct application *ap_p, struct partition *PartHeadp, struct seg *segp);	/*  User supplied hit function.  */
+extern int miss(struct application *ap_p);	/*  User supplied miss function.  */
 extern int overlap(struct application *ap, struct partition *pp, struct region *r1, struct region *r2, struct partition *hp);
 
 
@@ -574,9 +574,9 @@ int main(int argc, char **argv)
 /****************************************************************************/
 /*  User supplied hit function.  */
 int
-hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *segp)
+hit(struct application *ap_p, struct partition *PartHeadp, struct seg *segp)
 {
-    register struct partition *pp;
+    struct partition *pp;
 
     /*
      * (void)printf("It is a hit.\n");
@@ -597,7 +597,7 @@ hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *
 /****************************************************************************/
 /*  User supplied miss function.  */
 int
-miss(register struct application *ap_p)
+miss(struct application *ap_p)
 {
     /*
      * (void)printf("It is a miss.\n");

@@ -1,7 +1,7 @@
 /*                 IntersectionCurve.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,9 +38,9 @@ IntersectionCurve::IntersectionCurve() {
 	id = 0;
 }
 
-IntersectionCurve::IntersectionCurve(STEPWrapper *sw,int STEPid) {
+IntersectionCurve::IntersectionCurve(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 IntersectionCurve::~IntersectionCurve() {
@@ -52,7 +52,7 @@ IntersectionCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 	id = sse->STEPfile_id;
 
 	if ( !SurfaceCurve::Load(sw,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::SurfaceCurve." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::SurfaceCurve." << std::endl;
 		return false;
 	}
 
@@ -61,10 +61,10 @@ IntersectionCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 void
 IntersectionCurve::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << name << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	SurfaceCurve::Print(level+1);
 }
 
@@ -77,7 +77,7 @@ IntersectionCurve::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}
@@ -90,7 +90,7 @@ IntersectionCurve::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 bool
 IntersectionCurve::LoadONBrep(ON_Brep *brep)
 {
-	cerr << "Error: ::LoadONBrep(ON_Brep *brep) not implemented for " << entityname << endl;
+	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implemented for " << entityname << std::endl;
 	return false;
 }
 

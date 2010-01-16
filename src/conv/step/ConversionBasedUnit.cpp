@@ -1,7 +1,7 @@
 /*                 ConversionBasedUnit.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -43,9 +43,9 @@ ConversionBasedUnit::ConversionBasedUnit() {
 	conversion_factor = NULL;
 }
 
-ConversionBasedUnit::ConversionBasedUnit(STEPWrapper *sw,int STEPid) {
+ConversionBasedUnit::ConversionBasedUnit(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 	conversion_factor = NULL;
 }
 
@@ -75,7 +75,7 @@ ConversionBasedUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 	// load base class attributes
 	if ( !NamedUnit::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::Unit." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 		return false;
 	}
 
@@ -90,7 +90,7 @@ ConversionBasedUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 		if (entity) {
 			conversion_factor = dynamic_cast<MeasureWithUnit *>(Factory::CreateObject(sw,entity));
 		} else {
-			cerr << CLASSNAME << ": error loading 'conversion_factor' attribute." << endl;
+			std::cerr << CLASSNAME << ": error loading 'conversion_factor' attribute." << std::endl;
 			return false;
 		}
 	}
@@ -100,15 +100,15 @@ ConversionBasedUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 void
 ConversionBasedUnit::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Attributes:" << endl;
-	TAB(level+1); cout << "name:" << name << endl;
-	TAB(level+1); cout << "conversion_factor:" << endl;
+	TAB(level); std::cout << "Attributes:" << std::endl;
+	TAB(level+1); std::cout << "name:" << name << std::endl;
+	TAB(level+1); std::cout << "conversion_factor:" << std::endl;
 	conversion_factor->Print(level+2);
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	NamedUnit::Print(level+1);
 
 }
@@ -121,7 +121,7 @@ ConversionBasedUnit::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) 
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

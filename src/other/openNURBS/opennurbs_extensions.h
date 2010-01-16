@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -209,31 +208,31 @@ public:
     errors.
   Example:
 
-	    // for ASCII file names
-	    const char* sFileName = ....;
-	    FILE* fp = ON::OpenFile( sFileName, "rb");
+            // for ASCII file names
+            const char* sFileName = ....;
+            FILE* fp = ON::OpenFile( sFileName, "rb");
 
-	    // for UNICODE file names
-	    const wchar* sFileName = ....;
-	    FILE* fp = ON::OpenFile( sFileName, L"rb");
+            // for UNICODE file names
+            const wchar* sFileName = ....;
+            FILE* fp = ON::OpenFile( sFileName, L"rb");
 
-	    bool bModelRead = false;
-	    bool bModelIsValid = false;
+            bool bModelRead = false;
+            bool bModelIsValid = false;
 
-	    ON_TextLog error_log;
-	    ONX_Model model;
+            ON_TextLog error_log;
+            ONX_Model model;
 
-	    if ( 0 != fp )
-	    {
-	      ON_BinaryFile archive( ON::read3dm, fp );
-	      bModelRead = model.read( archive, error_log );
-	      ON::CloseFile( fp );
-	    }
+            if ( 0 != fp )
+            {
+              ON_BinaryFile archive( ON::read3dm, fp );
+              bModelRead = model.read( archive, error_log );
+              ON::CloseFile( fp );
+            }
 
-	    if ( bModelRead )
-	    {
-	      bModelIsValid = model.Validate(error_log);
-	    }
+            if ( bModelRead )
+            {
+              bModelIsValid = model.Validate(error_log);
+            }
 
   See Also:
     ONX_Model::IsValid
@@ -241,19 +240,19 @@ public:
     ONX_Model::m_crc_error_count
   */
   bool Read( 
-	 ON_BinaryArchive& archive,
-	 ON_TextLog* error_log = NULL
-	 );
+         ON_BinaryArchive& archive,
+         ON_TextLog* error_log = NULL
+         );
 
   bool Read( 
-	 const char* filename,
-	 ON_TextLog* error_log = NULL
-	 );
+         const char* filename,
+         ON_TextLog* error_log = NULL
+         );
 
   bool Read( 
-	 const wchar_t* filename,
-	 ON_TextLog* error_log = NULL
-	 );
+         const wchar_t* filename,
+         ON_TextLog* error_log = NULL
+         );
 
   /*
   Description:
@@ -265,14 +264,14 @@ public:
   Parameters:
     archive - [in] archive to write to
     version - [in] Version of the openNURBS archive to write.
-		   Must be 2, 3 or 4.  
-		   Rhino 2.x can read version 2 files.
-		   Rhino 3.x can read version 2 and 3 files.
-		   Rhino 4.x can read version 2, 3 and 4 files.
-		   Use version 4 when possible.
+                   Must be 2, 3 or 4.  
+                   Rhino 2.x can read version 2 files.
+                   Rhino 3.x can read version 2 and 3 files.
+                   Rhino 4.x can read version 2, 3 and 4 files.
+                   Use version 4 when possible.
     sStartSectionComment - [in] 
-		   Brief ASCII desciption of your app, today's date,
-		   etc.
+                   Brief ASCII desciption of your app, today's date,
+                   etc.
     error_log - [out] any archive writing errors are logged here.
   Returns:
     True if archive is written with no error. 
@@ -280,41 +279,41 @@ public:
     Error details are logged in error_log.
   Example:
 
-	    model = ...;
+            model = ...;
 
-	    model.Polish(); // fill in defaults as needed.
+            model.Polish(); // fill in defaults as needed.
 
-	    ON_TextLog error_log;
-	    if ( !model.IsValid( error_log ) )
-	    {
-	      // try to repair the model
-	      model.Audit(true);
-	    }
+            ON_TextLog error_log;
+            if ( !model.IsValid( error_log ) )
+            {
+              // try to repair the model
+              model.Audit(true);
+            }
 
-	    if ( model.IsValid( error_log ) )
-	    {
+            if ( model.IsValid( error_log ) )
+            {
 
-	      // for ASCII file names
-	      const char* sFileName = ....;
-	      FILE* fp = ON::OpenFile( sFileName, "wb");
+              // for ASCII file names
+              const char* sFileName = ....;
+              FILE* fp = ON::OpenFile( sFileName, "wb");
 
-	      // for UNICODE file names
-	      const wchar* sFileName = ....;
-	      FILE* fp = ON::OpenFile( sFileName, L"wb");
+              // for UNICODE file names
+              const wchar* sFileName = ....;
+              FILE* fp = ON::OpenFile( sFileName, L"wb");
 
-	      bool ok = false;
-	      if ( 0 != fp )
-	      {
-		const char* sStartSectionComment = "...";
-		int version = 4; // 2, 3, or 4 are valid
-		ON_BinaryFile archive( ON::write3dm, fp );
-		ok = model.write( archive, 
-				  version, 
-				  sStartSectionComment, 
-				  error_log );
-		ON::CloseFile( fp );
-	      }
-	   }
+              bool ok = false;
+              if ( 0 != fp )
+              {
+                const char* sStartSectionComment = "...";
+                int version = 5; // 2, 3, 4 or 5 are valid
+                ON_BinaryFile archive( ON::write3dm, fp );
+                ok = model.write( archive, 
+                                  version, 
+                                  sStartSectionComment, 
+                                  error_log );
+                ON::CloseFile( fp );
+              }
+           }
 
   See Also:
     ONX_Model::Polish
@@ -322,33 +321,33 @@ public:
     ONX_Model::Read
   */
   bool Write( 
-	 ON_BinaryArchive& archive,
-	 int version = 4,
-	 const char* sStartSectionComment = NULL,
-	 ON_TextLog* error_log = NULL
-	 );
+         ON_BinaryArchive& archive,
+         int version = 5,
+         const char* sStartSectionComment = NULL,
+         ON_TextLog* error_log = NULL
+         );
 
   bool Write( 
-	 const char* filename,
-	 int version = 4,
-	 const char* sStartSectionComment = NULL,
-	 ON_TextLog* error_log = NULL
-	 );
+         const char* filename,
+         int version = 5,
+         const char* sStartSectionComment = NULL,
+         ON_TextLog* error_log = NULL
+         );
 
   bool Write( 
-	 const wchar_t* filename,
-	 int version = 4,
-	 const char* sStartSectionComment = NULL,
-	 ON_TextLog* error_log = NULL
-	 );
+         const wchar_t* filename,
+         int version = 5,
+         const char* sStartSectionComment = NULL,
+         ON_TextLog* error_log = NULL
+         );
 
   /*
   Description:
     Check a model to make sure it is valid.
   Parameters:
     text_log - [in] if not NULL and errors are found,
-		    a description of the problem is put in
-		    this text_log.
+                    a description of the problem is put in
+                    this text_log.
   Returns:
     True if the model is valid.
   */
@@ -371,29 +370,29 @@ public:
     and requrested, attempt to repair.
   Parameters:
     bAttemptRepair - [in] if true and a problem is found,
-	 the problem is repaired.
+         the problem is repaired.
     repair_count - [out] number of successful repairs.
     text_log - [in] if not NULL and errors are found,
-		    a description of the problem is put in
-		    this text_log.
+                    a description of the problem is put in
+                    this text_log.
     warnings - [out]
-	If problems were found, warning ids are appended to this list.
-	  @untitled table
-	   1      m_material_table[] flaws
-	   2      layer table is not perfect.
-	   3      some m_object_table[].m_attributes.m_uuid was nil or not unique.
-	   4      some m_object_table[].IsValid() is false
-	   5      some m_idef_table[] has an invalid or duplicate name
-	   6      warning some m_idef_table[].m_object_uuid[] is not valid
-	   7      warning some m_object_table[].m_object is null
-	   8      warning some m_object_table[].m_object->IsValid() is false
-	   9      warning some m_object_table[].m_attributes is not valid
-	  10      linetype table is not perfect.
-	  11      lineset table is not perfect.
-	  12      some m_idef_table[].m_uuid was nil or not unique.
-	  13      some m_texture_mapping_table[i].m_mapping_id was nil or not unique.
-	  14      some m_material_table[i].m_material_id was nil or not unique.
-	  15      some m_light_table[i].m_light_id was nil or not unique.
+        If problems were found, warning ids are appended to this list.
+          @untitled table
+           1      m_material_table[] flaws
+           2      layer table is not perfect.
+           3      some m_object_table[].m_attributes.m_uuid was nil or not unique.
+           4      some m_object_table[].IsValid() is false
+           5      some m_idef_table[] has an invalid or duplicate name
+           6      warning some m_idef_table[].m_object_uuid[] is not valid
+           7      warning some m_object_table[].m_object is null
+           8      warning some m_object_table[].m_object->IsValid() is false
+           9      warning some m_object_table[].m_attributes is not valid
+          10      linetype table is not perfect.
+          11      lineset table is not perfect.
+          12      some m_idef_table[].m_uuid was nil or not unique.
+          13      some m_texture_mapping_table[i].m_mapping_id was nil or not unique.
+          14      some m_material_table[i].m_material_id was nil or not unique.
+          15      some m_light_table[i].m_light_id was nil or not unique.
   Returns:
     True if model is valid and false if the model has serious 
     @untitled table
@@ -403,11 +402,11 @@ public:
   */
   virtual
   int Audit( 
-	bool bAttemptRepair,
-	int* repair_count,
-	ON_TextLog* text_log,
-	ON_SimpleArray<int>* warnings
-	);
+        bool bAttemptRepair,
+        int* repair_count,
+        ON_TextLog* text_log,
+        ON_SimpleArray<int>* warnings
+        );
 
   /////////////////////////////////////////////////////////////////////
   //
@@ -475,9 +474,9 @@ public:
     material - [out] render material
   */
   void GetRenderMaterial( 
-	const ON_3dmObjectAttributes& attributes,
-	ON_Material& material 
-	) const;
+        const ON_3dmObjectAttributes& attributes,
+        ON_Material& material 
+        ) const;
 
   /*
   Description:
@@ -487,9 +486,9 @@ public:
     material - [out] render material
   */
   void GetRenderMaterial( 
-	int object_index,
-	ON_Material& material 
-	) const;
+        int object_index,
+        ON_Material& material 
+        ) const;
 
   /*
   Description:
@@ -499,9 +498,9 @@ public:
     linetype - [out] linetype
   */
   void GetLinetype( 
-	const ON_3dmObjectAttributes& attributes,
-	ON_Linetype& linetype 
-	) const;
+        const ON_3dmObjectAttributes& attributes,
+        ON_Linetype& linetype 
+        ) const;
 
   /*
   Description:
@@ -511,9 +510,9 @@ public:
     linetype - [out] linetype
   */
   void GetLinetype(
-	int object_index,
-	ON_Linetype& linetype 
-	) const;
+        int object_index,
+        ON_Linetype& linetype 
+        ) const;
 
   /*
   Description:
@@ -555,16 +554,16 @@ public:
     idef_uuid - [in] instance definition uuid.
   Example:
 
-	  ON_XModel model = ...;
-	  ..
-	  ON_InstanceRef* pIRef = ..;
-	  ON_UUID idef_uuid = pIRef->m_instance_definition_uuid;
-	  int idef_index = model.IDefIndex( idef_uuid );
-	  if ( idef_index >= 0 )
-	  {
-	    const ON_InstanceDefinition& idef = model.m_idef_table[idef_index];
-	    ...
-	  }
+          ON_XModel model = ...;
+          ..
+          ON_InstanceRef* pIRef = ..;
+          ON_UUID idef_uuid = pIRef->m_instance_definition_uuid;
+          int idef_index = model.IDefIndex( idef_uuid );
+          if ( idef_index >= 0 )
+          {
+            const ON_InstanceDefinition& idef = model.m_idef_table[idef_index];
+            ...
+          }
 
   Returns:
     Index of the instance definition or -1 if it is not found.
@@ -611,9 +610,9 @@ public:
   */
   virtual
   int UsesIDef( 
-	const ON_InstanceRef& iref,
-	ON_UUID idef_uuid
-	) const;
+        const ON_InstanceRef& iref,
+        ON_UUID idef_uuid
+        ) const;
 
   /* 
   Description:
@@ -622,16 +621,16 @@ public:
     layer_name - [in] name to search for
   Example:
 
-	  ON_XModel model = ...;
-	  ..
-	  ON_InstanceRef* pIRef = ..;
-	  ON_UUID idef_uuid = pIRef->m_instance_definition_uuid;
-	  int layer_index = model.IDefIndex( idef_uuid );
-	  if ( idef_index >= 0 )
-	  {
-	    const ON_InstanceDefinition& idef = model.m_idef_table[idef_index];
-	    ...
-	  }
+          ON_XModel model = ...;
+          ..
+          ON_InstanceRef* pIRef = ..;
+          ON_UUID idef_uuid = pIRef->m_instance_definition_uuid;
+          int layer_index = model.IDefIndex( idef_uuid );
+          if ( idef_index >= 0 )
+          {
+            const ON_InstanceDefinition& idef = model.m_idef_table[idef_index];
+            ...
+          }
 
   Returns:
     Index of the layer or -1 if it is not found.
@@ -736,7 +735,7 @@ Returns:
 */
 ON_DECL
 bool ONX_IsValidName( 
-	  const wchar_t* name 
-	  );
+          const wchar_t* name 
+          );
 
 #endif

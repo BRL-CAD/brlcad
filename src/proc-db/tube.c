@@ -1,7 +1,7 @@
 /*                          T U B E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2009 United States Government as represented by
+ * Copyright (c) 1986-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -236,11 +236,11 @@ void
 build_spline(char *name, int npts, double radius)
 {
     struct face_g_snurb *bp;
-    register int i;
+    int i;
     int nv;
     int cur_kv;
     fastf_t *meshp;
-    register int col;
+    int col;
     vect_t point;
 
     /*
@@ -297,7 +297,7 @@ build_spline(char *name, int npts, double radius)
 	/* row = i; */
 	VMOVE(point, sample[i]);
 	for (col=0; col<9; col++) {
-	    register fastf_t h;
+	    fastf_t h;
 
 	    h = polyline[col*4+H];
 	    *meshp++ = polyline[col*4+X]*radius + point[X]*h;
@@ -456,7 +456,7 @@ read_pos(FILE *fp)
 void
 build_cyl(char *cname, int npts, double radius)
 {
-    register int i;
+    int i;
     vect_t v, h, a, b;
     char name[32];
     struct wmember head;
@@ -483,7 +483,7 @@ build_cyl(char *cname, int npts, double radius)
 void
 xfinddir(fastf_t *dir, double x, fastf_t *loc)
 {
-    register int i;
+    int i;
     fastf_t ratio;
 
     for (i=0; i<nsamples-1; i++) {

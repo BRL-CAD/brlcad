@@ -1,7 +1,7 @@
 /*                 RectangularTrimmedSurface.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -39,9 +39,9 @@ RectangularTrimmedSurface::RectangularTrimmedSurface() {
 	basis_surface = NULL;
 }
 
-RectangularTrimmedSurface::RectangularTrimmedSurface(STEPWrapper *sw,int STEPid) {
+RectangularTrimmedSurface::RectangularTrimmedSurface(STEPWrapper *sw,int step_id) {
 	step=sw;
-	id = STEPid;
+	id = step_id;
 	basis_surface = NULL;
 }
 
@@ -55,7 +55,7 @@ RectangularTrimmedSurface::Load(STEPWrapper *sw, SCLP23(Application_instance) *s
 	id = sse->STEPfile_id;
 
 	if ( !BoundedSurface::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::BoundedSurface." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::BoundedSurface." << std::endl;
 		return false;
 	}
 
@@ -68,7 +68,7 @@ RectangularTrimmedSurface::Load(STEPWrapper *sw, SCLP23(Application_instance) *s
 		if (entity) {
 			basis_surface = dynamic_cast<Surface *>(Factory::CreateObject(sw,entity));
 		} else {
-			cerr << CLASSNAME << ": error loading 'basis_surface' attribute." << endl;
+			std::cerr << CLASSNAME << ": error loading 'basis_surface' attribute." << std::endl;
 			return false;
 		}
 	}
@@ -86,21 +86,21 @@ RectangularTrimmedSurface::Load(STEPWrapper *sw, SCLP23(Application_instance) *s
 
 void
 RectangularTrimmedSurface::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << name << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Attributes:" << endl;
+	TAB(level); std::cout << "Attributes:" << std::endl;
 	basis_surface->Print(level+1);
 
-	TAB(level+1); cout << "u1:" << u1 << endl;
-	TAB(level+1); cout << "u2:" << u2 << endl;
-	TAB(level+1); cout << "v1:" << u1 << endl;
-	TAB(level+1); cout << "v2:" << u2 << endl;
+	TAB(level+1); std::cout << "u1:" << u1 << std::endl;
+	TAB(level+1); std::cout << "u2:" << u2 << std::endl;
+	TAB(level+1); std::cout << "v1:" << u1 << std::endl;
+	TAB(level+1); std::cout << "v2:" << u2 << std::endl;
 
-	TAB(level+1); cout << "usense:" << step->getBooleanString((SCLBOOL_H(Bool))usense) << endl;
-	TAB(level+1); cout << "vsense:" << step->getBooleanString((SCLBOOL_H(Bool))vsense) << endl;
+	TAB(level+1); std::cout << "usense:" << step->getBooleanString((SCLBOOL_H(Boolean))usense) << std::endl;
+	TAB(level+1); std::cout << "vsense:" << step->getBooleanString((SCLBOOL_H(Boolean))vsense) << std::endl;
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	BoundedSurface::Print(level+1);
 }
 
@@ -113,7 +113,7 @@ RectangularTrimmedSurface::Create(STEPWrapper *sw, SCLP23(Application_instance) 
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}
@@ -126,7 +126,7 @@ RectangularTrimmedSurface::Create(STEPWrapper *sw, SCLP23(Application_instance) 
 bool
 RectangularTrimmedSurface::LoadONBrep(ON_Brep *brep)
 {
-	cerr << "Error: ::LoadONBrep(ON_Brep *brep) not implemented for " << entityname << endl;
+	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implemented for " << entityname << std::endl;
 	return false;
 }
 

@@ -1,7 +1,7 @@
 /*                       P I X H I S T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2009 United States Government as represented by
+ * Copyright (c) 1986-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -52,7 +52,7 @@ static FILE	*fp;
 int
 main(int argc, char **argv)
 {
-    register int i;
+    int i;
 
     /* check for verbose flag */
     if ( argc > 1 && strcmp(argv[1], "-v") == 0 ) {
@@ -77,8 +77,8 @@ main(int argc, char **argv)
     }
 
     while ( (i = fread(&ibuf[0], sizeof(*ibuf), sizeof(ibuf), fp)) > 0 ) {
-	register unsigned char *bp;
-	register int j;
+	unsigned char *bp;
+	int j;
 
 	bp = &ibuf[0];
 	for ( j = i/3; j > 0; j-- )  {
@@ -106,9 +106,9 @@ main(int argc, char **argv)
 
     /* Display them */
     for ( i = 0; i < 256; i++ ) {
-	register int j;
-	register int level;
-	register long npix;
+	int j;
+	int level;
+	long npix;
 
 	level = (int)((double)bin_r[i]*scalefactor);
 	if ( level > 511 )  level = 511;

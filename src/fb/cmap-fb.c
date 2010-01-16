@@ -1,7 +1,7 @@
 /*                       C M A P - F B . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2009 United States Government as represented by
+ * Copyright (c) 1986-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,8 +38,8 @@
 #include "bu.h"
 #include "fb.h"
 
-static char *nextsym(register char *b, register char *cp);
-static int htoi(register char *s);
+static char *nextsym(char *b, char *cp);
+static int htoi(char *s);
 
 ColorMap cm;
 static char usage[] = "\
@@ -120,7 +120,7 @@ main(int argc, char **argv)
  */
 static
 char *
-nextsym(register char *b, register char *cp)
+nextsym(char *b, char *cp)
 {
     /* skip white */
     while ( isspace(*cp) )
@@ -140,9 +140,9 @@ nextsym(register char *b, register char *cp)
  */
 static
 int
-htoi(register char *s)
+htoi(char *s)
 {
-    register int	i;
+    int	i;
 
     i = 0;
 

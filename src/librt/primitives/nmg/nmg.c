@@ -1,7 +1,7 @@
 /*                           N M G . C
  * BRL-CAD
  *
- * Copyright (c) 2005-2009 United States Government as represented by
+ * Copyright (c) 2005-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -78,7 +78,7 @@ int
 rt_nmg_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct model *m;
-    register struct nmg_specific *nmg_s;
+    struct nmg_specific *nmg_s;
     struct nmgregion *rp;
     vect_t work;
 
@@ -128,9 +128,9 @@ rt_nmg_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
  * R T _ N M G _ P R I N T
  */
 void
-rt_nmg_print(register const struct soltab *stp)
+rt_nmg_print(const struct soltab *stp)
 {
-    register struct model *m =
+    struct model *m =
 	(struct model *)stp->st_specific;
 
     NMG_CK_MODEL(m);
@@ -149,7 +149,7 @@ rt_nmg_print(register const struct soltab *stp)
  * >0 HIT
  */
 int
-rt_nmg_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
+rt_nmg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 
     /* info about the ray */
 
@@ -229,34 +229,25 @@ rt_nmg_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 }
 
 
-#define RT_NMG_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
-
-
-/**
- * R T _ N M G _ V S H O T
- *
- * Vectorized version.
- */
-void
-rt_nmg_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
-    /* An array of solid pointers */
-    /* An array of ray pointers */
-    /* array of segs (results returned) */
-    /* Number of ray/object pairs */
-
-{
-    rt_vstub(stp, rp, segp, n, ap);
-}
-
-
 /**
  * R T _ N M G _ N O R M
  *
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
-rt_nmg_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
+rt_nmg_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
+    struct half_specific *halfp;
+    
+    if (!hitp || !rp)
+	return;
+
+    if (stp) RT_CK_SOLTAB(stp);
+    RT_CK_RAY(rp);
+    RT_CK_HIT(hitp);
+
+    halfp = (struct half_specific *)stp->st_specific;
+
     VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir);
 }
 
@@ -267,8 +258,14 @@ rt_nmg_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
  * Return the curvature of the nmg.
  */
 void
-rt_nmg_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
+rt_nmg_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
+    if (!cvp || !hitp)
+	return;
+
+    RT_CK_HIT(hitp);
+    if (stp) RT_CK_SOLTAB(stp);
+
     cvp->crv_c1 = cvp->crv_c2 = 0;
 
     /* any tangent direction */
@@ -286,8 +283,12 @@ rt_nmg_curve(register struct curvature *cvp, register struct hit *hitp, struct s
  * v = elevation
  */
 void
-rt_nmg_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
+rt_nmg_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
+    if (ap) RT_CK_APPLICATION(ap);
+    if (stp) RT_CK_SOLTAB(stp);
+    if (hitp) RT_CK_HIT(hitp);
+    if (!uvp) return;
 }
 
 
@@ -295,9 +296,9 @@ rt_nmg_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
  * R T _ N M G _ F R E E
  */
 void
-rt_nmg_free(register struct soltab *stp)
+rt_nmg_free(struct soltab *stp)
 {
-    register struct nmg_specific *nmg =
+    struct nmg_specific *nmg =
 	(struct nmg_specific *)stp->st_specific;
 
     nmg_km(nmg->nmg_model);
@@ -319,7 +320,7 @@ rt_nmg_class(void)
  * R T _ N M G _ P L O T
  */
 int
-rt_nmg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_nmg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
 {
     struct model *m;
 
@@ -346,7 +347,7 @@ rt_nmg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_nmg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_nmg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol)
 {
     struct model *lm;
 
@@ -742,7 +743,7 @@ const char rt_nmg_kind_names[NMG_N_KINDS+2][18] = {
  * manifest constant which identifies that structure kind.
  */
 int
-rt_nmg_magic_to_kind(register long int magic)
+rt_nmg_magic_to_kind(long int magic)
 {
     switch (magic) {
 	case NMG_MODEL_MAGIC:
@@ -846,7 +847,7 @@ rt_nmg_export4_fastf(const fastf_t *fp, int count, int pt_type, double scale)
     /* If zero, means literal array of values */
 
 {
-    register unsigned char *cp;
+    unsigned char *cp;
 
     if (pt_type)
 	count *= RT_NURB_EXTRACT_COORDS(pt_type);
@@ -854,7 +855,7 @@ rt_nmg_export4_fastf(const fastf_t *fp, int count, int pt_type, double scale)
     cp = rt_nmg_fastf_p;
     (void)bu_plong(cp + 0, DISK_DOUBLE_ARRAY_MAGIC);
     (void)bu_plong(cp + 4, count);
-    if (pt_type == 0 || scale == 1.0) {
+    if (pt_type == 0 || NEAR_ZERO(scale - 1.0, SMALL_FASTF)) {
 	htond(cp + (4+4), (unsigned char *)fp, count);
     } else {
 	fastf_t *new;
@@ -863,7 +864,7 @@ rt_nmg_export4_fastf(const fastf_t *fp, int count, int pt_type, double scale)
 	new = (fastf_t *)bu_malloc(count*sizeof(fastf_t), "rt_nmg_export4_fastf");
 	if (RT_NURB_IS_PT_RATIONAL(pt_type)) {
 	    /* Don't scale the homogeneous (rational) coord */
-	    register int i;
+	    int i;
 	    int nelem;	/* # elements per tuple */
 
 	    nelem = RT_NURB_EXTRACT_COORDS(pt_type);
@@ -891,7 +892,7 @@ fastf_t *
 rt_nmg_import4_fastf(const unsigned char *base, struct nmg_exp_counts *ecnt, long int subscript, const matp_t mat, int len, int pt_type)
 {
     const unsigned char *cp;
-    register int count;
+    int count;
     fastf_t *ret;
     fastf_t *tmp;
 
@@ -968,23 +969,23 @@ rt_nmg_import4_fastf(const unsigned char *base, struct nmg_exp_counts *ecnt, lon
 int
 rt_nmg_reindex(genptr_t p, struct nmg_exp_counts *ecnt)
 {
-    int index;
+    int idx;
     int ret=0;	/* zero is NOT the default value, this is just to satisfy cray compilers */
 
     /* If null pointer, return new subscript of zero */
     if (p == 0) {
 	ret = 0;
-	index = 0;	/* sanity */
+	idx = 0;	/* sanity */
     } else {
-	index = nmg_index_of_struct((unsigned long *)(p));
-	if (index == -1) {
+	idx = nmg_index_of_struct((unsigned long *)(p));
+	if (idx == -1) {
 	    ret = DISK_INDEX_LISTHEAD; /* FLAG:  special list head */
-	} else if (index < -1) {
+	} else if (idx < -1) {
 	    bu_bomb("rt_nmg_reindex(): unable to obtain struct index\n");
 	} else {
-	    ret = ecnt[index].new_subscript;
-	    if (ecnt[index].kind < 0) {
-		bu_log("rt_nmg_reindex(p=x%x), p->index=%d, ret=%d, kind=%d\n", p, index, ret, ecnt[index].kind);
+	    ret = ecnt[idx].new_subscript;
+	    if (ecnt[idx].kind < 0) {
+		bu_log("rt_nmg_reindex(p=x%x), p->index=%d, ret=%d, kind=%d\n", p, idx, ret, ecnt[idx].kind);
 		bu_bomb("rt_nmg_reindex() This index not found in ecnt[]\n");
 	    }
 	    /* ret == 0 on supressed loop_g ptrs, etc */
@@ -992,12 +993,12 @@ rt_nmg_reindex(genptr_t p, struct nmg_exp_counts *ecnt)
 		bu_log("rt_nmg_reindex(p=x%x) %s, p->index=%d, ret=%d, maxindex=%d\n",
 		       p,
 		       bu_identify_magic(*(long *)p),
-		       index, ret, ecnt[0].byte_offset);
+		       idx, ret, ecnt[0].byte_offset);
 		bu_bomb("rt_nmg_reindex() subscript out of range\n");
 	    }
 	}
     }
-/*bu_log("rt_nmg_reindex(p=x%x), p->index=%d, ret=%d\n", p, index, ret);*/
+/*bu_log("rt_nmg_reindex(p=x%x), p->index=%d, ret=%d\n", p, idx, ret);*/
     return(ret);
 }
 
@@ -1006,7 +1007,7 @@ rt_nmg_reindex(genptr_t p, struct nmg_exp_counts *ecnt)
 #define INDEX(o, i, elem)	\
 	(void)bu_plong(&(o)->elem[0], rt_nmg_reindex((genptr_t)((i)->elem), ecnt))
 #define INDEXL(oo, ii, elem) { \
-	register long _f = rt_nmg_reindex((genptr_t)((ii)->elem.forw), ecnt); \
+	long _f = rt_nmg_reindex((genptr_t)((ii)->elem.forw), ecnt); \
 	if (_f == DISK_INDEX_NULL) bu_log("Warning rt_nmg_edisk: reindex forw to null?\n"); \
 	(void)bu_plong((oo)->elem.forw, _f); \
 	(void)bu_plong((oo)->elem.back, rt_nmg_reindex((genptr_t)((ii)->elem.back), ecnt)); }
@@ -1021,7 +1022,7 @@ rt_nmg_reindex(genptr_t p, struct nmg_exp_counts *ecnt)
  * Scale geometry by 'local2mm'
  */
 void
-rt_nmg_edisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int index, double local2mm)
+rt_nmg_edisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, double local2mm)
     /* base of disk array */
     /* ptr to in-memory structure */
 
@@ -1029,8 +1030,8 @@ rt_nmg_edisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int index, d
 {
     int oindex;		/* index in op */
 
-    oindex = ecnt[index].per_struct_index;
-    switch (ecnt[index].kind) {
+    oindex = ecnt[idx].per_struct_index;
+    switch (ecnt[idx].kind) {
 	case NMG_KIND_MODEL: {
 	    struct model *m = (struct model *)ip;
 	    struct disk_model *d;
@@ -1336,7 +1337,7 @@ rt_nmg_edisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int index, d
 	}
 	    return;
     }
-    bu_log("rt_nmg_edisk kind=%d unknown\n", ecnt[index].kind);
+    bu_log("rt_nmg_edisk kind=%d unknown\n", ecnt[idx].kind);
 }
 #undef INDEX
 #undef INDEXL
@@ -1349,7 +1350,7 @@ rt_nmg_edisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int index, d
  */
 #define INDEX(o, i, ty, elem)	(i)->elem = (struct ty *)ptrs[bu_glong((o)->elem)]
 #define INDEXL_HD(oo, ii, elem, hd) { \
-	register int sub; \
+	int sub; \
 	if ((sub = bu_glong((oo)->elem.forw)) < 0) \
 		(ii)->elem.forw = &(hd); \
 	else	(ii)->elem.forw = (struct bu_list *)ptrs[sub]; \
@@ -1360,8 +1361,8 @@ rt_nmg_edisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int index, d
 /* For use with the edgeuse l2 / edge_g eu2_hd secondary list */
 /* The subscripts will point to the edgeuse, not the edgeuse's l2 rt_list */
 #define INDEXL_HD2(oo, ii, elem, hd) { \
-	register int sub; \
-	register struct edgeuse *eu2; \
+	int sub; \
+	struct edgeuse *eu2; \
 	if ((sub = bu_glong((oo)->elem.forw)) < 0) { \
 		(ii)->elem.forw = &(hd); \
 	} else { \
@@ -1386,7 +1387,7 @@ rt_nmg_edisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int index, d
  * Transform geometry by given matrix.
  */
 int
-rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int index, unsigned long **ptrs, const fastf_t *mat, const unsigned char *basep)
+rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int idx, unsigned long **ptrs, const fastf_t *mat, const unsigned char *basep)
     /* ptr to in-memory structure */
     /* base of disk array */
 
@@ -1396,7 +1397,7 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int index, u
     int iindex;		/* index in ip */
 
     iindex = 0;
-    switch (ecnt[index].kind) {
+    switch (ecnt[idx].kind) {
 	case NMG_KIND_MODEL: {
 	    struct model *m = (struct model *)op;
 	    struct disk_model *d;
@@ -1742,7 +1743,7 @@ rt_nmg_idisk(genptr_t op, genptr_t ip, struct nmg_exp_counts *ecnt, int index, u
 	}
 	    return 0;
     }
-    bu_log("rt_nmg_idisk kind=%d unknown\n", ecnt[index].kind);
+    bu_log("rt_nmg_idisk kind=%d unknown\n", ecnt[idx].kind);
     return -1;
 }
 
@@ -1956,9 +1957,9 @@ rt_nmg_ialloc(unsigned long **ptrs, struct nmg_exp_counts *ecnt, int *kind_count
  * appropriate.
  */
 void
-rt_nmg_i2alloc(struct nmg_exp_counts *ecnt, unsigned char *cp, int *kind_counts, int maxindex)
+rt_nmg_i2alloc(struct nmg_exp_counts *ecnt, unsigned char *cp, int *kind_counts)
 {
-    register int kind;
+    int kind;
     int nkind;
     int subscript;
     int offset;
@@ -2003,7 +2004,7 @@ rt_nmg_i2alloc(struct nmg_exp_counts *ecnt, unsigned char *cp, int *kind_counts,
  * 0 indicates that a null pointer should be used.
  */
 int
-rt_nmg_import4_internal(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, int rebound, const struct bn_tol *tol)
+rt_nmg_import4_internal(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, int rebound, const struct bn_tol *tol)
 {
     struct model *m;
     union record *rp;
@@ -2061,7 +2062,7 @@ rt_nmg_import4_internal(struct rt_db_internal *ip, const struct bu_external *ep,
 
     /* Locate the variably sized fastf_t arrays.  ecnt[] has room. */
     cp = (unsigned char *)(rp+1);	/* start at first granule in */
-    rt_nmg_i2alloc(ecnt, cp, kind_counts, maxindex);
+    rt_nmg_i2alloc(ecnt, cp, kind_counts);
 
     /* Import each structure, in turn */
     for (i=1; i < maxindex; i++) {
@@ -2326,13 +2327,15 @@ rt_nmg_export4_internal(struct bu_external *ep, const struct rt_db_internal *ip,
  * Apply modeling transformations as well.
  */
 int
-rt_nmg_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_nmg_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct model *m;
     union record *rp;
     struct bn_tol tol;
 
     BU_CK_EXTERNAL(ep);
+    if (dbip) RT_CK_DBI(dbip);
+
     rp = (union record *)ep->ext_buf;
     /* Check record type */
     if (rp->u_id != DBID_NMG) {
@@ -2370,7 +2373,7 @@ rt_nmg_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
 int
 rt_nmg_import5(struct rt_db_internal *ip,
 	       struct bu_external *ep,
-	       register const mat_t mat,
+	       const mat_t mat,
 	       const struct db_i *dbip)
 {
     struct model *m;
@@ -2383,8 +2386,10 @@ rt_nmg_import5(struct rt_db_internal *ip,
     unsigned long **real_ptrs;
     unsigned long **ptrs;
     struct nmg_exp_counts *ecnt;
-    register int i;
+    int i;
     static unsigned long bad_magic = 0x999;
+
+    if (dbip) RT_CK_DBI(dbip);
 
     BU_CK_EXTERNAL(ep);
     dp = (genptr_t)ep->ext_buf;
@@ -2427,7 +2432,7 @@ rt_nmg_import5(struct rt_db_internal *ip,
 
     m = rt_nmg_ialloc(ptrs, ecnt, kind_counts);
 
-    rt_nmg_i2alloc(ecnt, dp, kind_counts, maxindex);
+    rt_nmg_i2alloc(ecnt, dp, kind_counts);
 
     /* Now import each structure, in turn */
     for (i=1; i < maxindex; i++) {
@@ -2469,6 +2474,8 @@ rt_nmg_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 {
     struct model *m;
 
+    if (dbip) RT_CK_DBI(dbip);
+
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_NMG) return(-1);
     m = (struct model *)ip->idb_ptr;
@@ -2502,8 +2509,10 @@ rt_nmg_export5(
     int tot_size;
     int kind;
     int double_count;
-    register int i;
+    int i;
     int subscript, fastf_byte_count;
+
+    if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_NMG) return -1;
@@ -2663,9 +2672,9 @@ rt_nmg_export5(
  * tab, and give parameter values.
  */
 int
-rt_nmg_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
+rt_nmg_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local __attribute__((unused)))
 {
-    register struct model *m =
+    struct model *m =
 	(struct model *)ip->idb_ptr;
 
     NMG_CK_MODEL(m);
@@ -2685,13 +2694,9 @@ rt_nmg_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
  * solid.
  */
 void
-rt_nmg_ifree(struct rt_db_internal *ip, struct resource *resp)
+rt_nmg_ifree(struct rt_db_internal *ip)
 {
-    register struct model *m;
-
-    if (!resp) {
-	resp = &rt_uniresource;
-    }
+    struct model *m;
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_ptr) {
@@ -2705,9 +2710,9 @@ rt_nmg_ifree(struct rt_db_internal *ip, struct resource *resp)
 
 
 int
-rt_nmg_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *attr)
+rt_nmg_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr)
 {
-    register struct model *m=(struct model *)intern->idb_ptr;
+    struct model *m=(struct model *)intern->idb_ptr;
     struct bu_ptbl verts;
     struct nmgregion *r;
     struct shell *s;
@@ -2722,33 +2727,33 @@ rt_nmg_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *
     NMG_CK_MODEL(m);
 
     if (attr == (char *)NULL) {
-	bu_vls_strcpy(log, "nmg");
+	bu_vls_strcpy(logstr, "nmg");
 	bu_ptbl_init(&verts, 256, "nmg verts");
 	nmg_vertex_tabulate(&verts, &m->magic);
 
 	/* first list all the vertices */
-	bu_vls_strcat(log, " V {");
+	bu_vls_strcat(logstr, " V {");
 	for (i=0; i<BU_PTBL_LEN(&verts); i++) {
 	    v = (struct vertex *) BU_PTBL_GET(&verts, i);
 	    NMG_CK_VERTEX(v);
 	    vg = v->vg_p;
 	    if (!vg) {
-		bu_vls_printf(log, "Vertex has no geometry\n");
+		bu_vls_printf(logstr, "Vertex has no geometry\n");
 		bu_ptbl_free(&verts);
 		return BRLCAD_ERROR;
 	    }
-	    bu_vls_printf(log, " { %.25g %.25g %.25g }", V3ARGS(vg->coord));
+	    bu_vls_printf(logstr, " { %.25g %.25g %.25g }", V3ARGS(vg->coord));
 	}
-	bu_vls_strcat(log, " }");
+	bu_vls_strcat(logstr, " }");
 
 	/* use the backwards macros here so that "asc2g" will build the same structures */
 	/* now all the nmgregions */
 	for (BU_LIST_FOR_BACKWARDS(r, nmgregion, &m->r_hd)) {
-	    /* bu_vls_strcat(log, " R {"); */
+	    /* bu_vls_strcat(logstr, " R {"); */
 
 	    /* and all the shells */
 	    for (BU_LIST_FOR_BACKWARDS(s, shell, &r->s_hd)) {
-		/* bu_vls_strcat(log, " S {"); */
+		/* bu_vls_strcat(logstr, " S {"); */
 
 		/* all the faces */
 		if (BU_LIST_NON_EMPTY(&s->fu_hd)) {
@@ -2756,34 +2761,34 @@ rt_nmg_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *
 			if (fu->orientation != OT_SAME)
 			    continue;
 
-			bu_vls_strcat(log, " F {");
+			bu_vls_strcat(logstr, " F {");
 
 			/* all the loops in this face */
 			for (BU_LIST_FOR_BACKWARDS(lu, loopuse, &fu->lu_hd)) {
 
 			    if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) {
 				vu = BU_LIST_FIRST(vertexuse, &lu->down_hd);
-				bu_vls_printf(log, " %d",
+				bu_vls_printf(logstr, " %d",
 					      bu_ptbl_locate(&verts, (long *)vu->v_p));
 			    } else {
-				bu_vls_strcat(log, " {");
+				bu_vls_strcat(logstr, " {");
 				for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd)) {
 				    vu = eu->vu_p;
-				    bu_vls_printf(log, " %d",
+				    bu_vls_printf(logstr, " %d",
 						  bu_ptbl_locate(&verts, (long *)vu->v_p));
 				}
 				/* end of this loop */
-				bu_vls_strcat(log, " }");
+				bu_vls_strcat(logstr, " }");
 			    }
 			}
 
 			/* end of this face */
-			bu_vls_strcat(log, " }");
+			bu_vls_strcat(logstr, " }");
 		    }
 		}
 	    }
 	    /* end of this nmgregion */
-	    /* bu_vls_strcat(log, " }"); */
+	    /* bu_vls_strcat(logstr, " }"); */
 	}
 	bu_ptbl_free(&verts);
     } else if (!strcmp(attr, "V")) {
@@ -2796,15 +2801,15 @@ rt_nmg_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *
 	    NMG_CK_VERTEX(v);
 	    vg = v->vg_p;
 	    if (!vg) {
-		bu_vls_printf(log, "Vertex has no geometry\n");
+		bu_vls_printf(logstr, "Vertex has no geometry\n");
 		bu_ptbl_free(&verts);
 		return BRLCAD_ERROR;
 	    }
-	    bu_vls_printf(log, " { %.25g %.25g %.25g }", V3ARGS(vg->coord));
+	    bu_vls_printf(logstr, " { %.25g %.25g %.25g }", V3ARGS(vg->coord));
 	}
 	bu_ptbl_free(&verts);
     } else {
-	bu_vls_printf(log, "Unrecognized parameter\n");
+	bu_vls_printf(logstr, "Unrecognized parameter\n");
 	return BRLCAD_ERROR;
     }
 
@@ -2813,7 +2818,7 @@ rt_nmg_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *
 
 
 int
-rt_nmg_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char **argv, struct resource *resp)
+rt_nmg_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv)
 {
     struct model *m;
     struct nmgregion *r=NULL;
@@ -2839,7 +2844,7 @@ rt_nmg_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 	    obj = Tcl_NewStringObj(argv[i+1], -1);
 	    if (Tcl_ListObjGetElements(brlcad_interp, obj, &num_verts,
 				       &obj_array) != TCL_OK) {
-		bu_vls_printf(log,
+		bu_vls_printf(logstr,
 			      "ERROR: failed to parse vertex list\n");
 		Tcl_DecrRefCount(obj);
 		return BRLCAD_ERROR;
@@ -2852,7 +2857,7 @@ rt_nmg_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 		tmp = &verts[j].pt[0];
 		if (tcl_obj_to_fastf_array(brlcad_interp, obj_array[j],
 					   &tmp, &len) != 3) {
-		    bu_vls_printf(log,
+		    bu_vls_printf(logstr,
 				  "ERROR: incorrect number of coordinates for vertex\n");
 		    return BRLCAD_ERROR;
 		}
@@ -2863,14 +2868,13 @@ rt_nmg_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 
     while (argc >= 2) {
 	struct vertex ***face_verts;
-	struct faceuse *fu;
 
 	if (!strcmp(argv[0], "V")) {
 	    /* vertex list handled above */
 	    goto cont;
 	} else if (!strcmp(argv[0], "F")) {
 	    if (!verts) {
-		bu_vls_printf(log,
+		bu_vls_printf(logstr,
 			      "ERROR: cannot set faces without vertices\n");
 		return BRLCAD_ERROR;
 	    }
@@ -2884,7 +2888,7 @@ rt_nmg_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 	    obj = Tcl_NewStringObj(argv[1], -1);
 	    if (Tcl_ListObjGetElements(brlcad_interp, obj, &num_loops,
 				       &obj_array) != TCL_OK) {
-		bu_vls_printf(log,
+		bu_vls_printf(logstr,
 			      "ERROR: failed to parse face list\n");
 		Tcl_DecrRefCount(obj);
 		return BRLCAD_ERROR;
@@ -2897,7 +2901,7 @@ rt_nmg_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 		(void)tcl_obj_to_int_array(brlcad_interp, obj_array[i],
 					   &loop, &loop_len);
 		if (!loop_len) {
-		    bu_vls_printf(log,
+		    bu_vls_printf(logstr,
 				  "ERROR: unable to parse face list\n");
 		    return BRLCAD_ERROR;
 		}
@@ -2928,7 +2932,7 @@ rt_nmg_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 		}
 	    }
 	} else {
-	    bu_vls_printf(log,
+	    bu_vls_printf(logstr,
 			  "ERROR: Unrecognized parameter, must be V or F\n");
 	    return BRLCAD_ERROR;
 	}
@@ -2963,7 +2967,7 @@ rt_nmg_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char 
 
 
 void
-rt_nmg_make(const struct rt_functab *ftp, struct rt_db_internal *intern, double d)
+rt_nmg_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 {
     struct model *m;
 
@@ -2979,8 +2983,11 @@ rt_nmg_make(const struct rt_functab *ftp, struct rt_db_internal *intern, double 
  * R T _ N M G _ P A R A M S
  */
 int
-rt_nmg_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
+rt_nmg_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 {
+    ps = ps; /* quellage */
+    if (ip) RT_CK_DB_INTERNAL(ip);
+
     return(0);			/* OK */
 }
 

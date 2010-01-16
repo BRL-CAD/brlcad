@@ -1,7 +1,7 @@
 #                       M O U S E . T C L
 # BRL-CAD
 #
-# Copyright (c) 1995-2009 United States Government as represented by
+# Copyright (c) 1995-2010 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -54,7 +54,11 @@ proc place_near_mouse {top} {
     }
 
     if {$y < 0} {
-	set y 0
+        if {[tk windowingsystem] eq "aqua"} {
+          set y 22
+  	} else {
+	  set y 0
+        }
     } elseif {[expr {$y + $height}] > $screenheight} {
 	set y [expr {$screenheight - $height}]
     }

@@ -1,7 +1,7 @@
 /*                         S O L I D . H
  * BRL-CAD
  *
- * Copyright (c) 1985-2009 United States Government as represented by
+ * Copyright (c) 1985-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -57,6 +57,7 @@ struct solid  {
 				 *	      2 - shaded (booleans NOT evaluated)
 				 *	      3 - shaded (booleans evaluated)
 				 */
+    int s_hiddenLine;         	/**< @brief  1 - hidden line */
 };
 
 

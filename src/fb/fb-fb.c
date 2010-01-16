@@ -1,7 +1,7 @@
 /*                         F B - F B . C
  * BRL-CAD
  *
- * Copyright (c) 1991-2009 United States Government as represented by
+ * Copyright (c) 1991-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -50,9 +50,9 @@ Usage: fb-fb [-v] [-F output_framebuffer]\n\
 	input_framebuffer [output_framebuffer]\n";
 
 int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int c;
+    int c;
 
     while ( (c = bu_getopt( argc, argv, "vF:" )) != EOF )  {
 	switch ( c )  {
@@ -87,8 +87,8 @@ get_args(int argc, register char **argv)
 int
 main(int argc, char **argv)
 {
-    register int y;
-    register FBIO *in_fbp, *out_fbp;
+    int y;
+    FBIO *in_fbp, *out_fbp;
     int	n, m;
     int	height;
 

@@ -1,7 +1,7 @@
 /*                        L G T _ D B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,7 +34,7 @@
 #include "./lgt.h"
 #include "./extern.h"
 #include "./screen.h"
-static int	get_Lgt_Entry(register Lgt_Source *entry, FILE *fp), put_Lgt_Entry(register Lgt_Source *entry, FILE *fp);
+static int	get_Lgt_Entry(Lgt_Source *entry, FILE *fp), put_Lgt_Entry(Lgt_Source *entry, FILE *fp);
 
 /*	l g t _ P r i n t _ D b ( )
 	Print light source database entry.
@@ -42,8 +42,8 @@ static int	get_Lgt_Entry(register Lgt_Source *entry, FILE *fp), put_Lgt_Entry(re
 int
 lgt_Print_Db(int id)
 {
-    register Lgt_Source	*entry;
-    register int		stop;
+    Lgt_Source	*entry;
+    int		stop;
     int			lines =	(PROMPT_LINE-TOP_SCROLL_WIN);
     if ( id >= lgt_db_size )
 	return	0;
@@ -113,8 +113,8 @@ lgt_Print_Db(int id)
 int
 lgt_Rd_Db(char *file)
 {
-    register Lgt_Source	*entry;
-    register FILE		*fp;
+    Lgt_Source	*entry;
+    FILE		*fp;
     if ( (fp = fopen( file, "rb" )) == NULL )
 	return	0;
     lgt_db_size = 0;
@@ -135,8 +135,8 @@ lgt_Rd_Db(char *file)
 int
 lgt_Save_Db(char *file)
 {
-    register Lgt_Source	*entry;
-    register FILE		*fp;
+    Lgt_Source	*entry;
+    FILE		*fp;
 
     if ( (fp = fopen( file, "wb" )) == NULL )
 	return	0;
@@ -159,7 +159,7 @@ lgt_Save_Db(char *file)
 int
 lgt_Edit_Db_Entry(int id)
 {
-    register Lgt_Source	*entry;
+    Lgt_Source	*entry;
     char			input_buf[MAX_LN];
     char			editprompt[MAX_LN];
     int			red, grn, blu;
@@ -226,9 +226,9 @@ lgt_Edit_Db_Entry(int id)
 }
 
 static int
-get_Lgt_Entry(register Lgt_Source *entry, FILE *fp)
+get_Lgt_Entry(Lgt_Source *entry, FILE *fp)
 {
-    register char	*ptr;
+    char	*ptr;
     int		red, grn, blu;
     if ( bu_fgets( entry->name, MAX_LGT_NM, fp ) == NULL )
 	return	0;
@@ -262,7 +262,7 @@ get_Lgt_Entry(register Lgt_Source *entry, FILE *fp)
 }
 
 static int
-put_Lgt_Entry(register Lgt_Source *entry, FILE *fp)
+put_Lgt_Entry(Lgt_Source *entry, FILE *fp)
 {
     (void) fprintf( fp, "%s\n", entry->name );
     (void) fprintf(	fp,

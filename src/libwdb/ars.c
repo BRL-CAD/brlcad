@@ -1,7 +1,7 @@
 /*                           A R S . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2009 United States Government as represented by
+ * Copyright (c) 1989-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -20,9 +20,6 @@
 /** @file ars.c
  *
  *  libwdb support for writing an ARS.
- *
- *  Author -
- *	Michael John Muuss
  *
  */
 

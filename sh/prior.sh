@@ -1,7 +1,7 @@
 #                        P R I O R . S H
 # BRL-CAD
 #
-# Copyright (c) 2006-2009 United States Government as represented by
+# Copyright (c) 2006-2010 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without

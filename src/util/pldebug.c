@@ -1,7 +1,7 @@
 /*                       P L D E B U G . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2009 United States Government as represented by
+ * Copyright (c) 1988-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -148,7 +148,7 @@ outstring(int n)
 int
 getshort(void)
 {
-    register long	v, w;
+    long	v, w;
 
     v = getc(fp);
     v |= (getc(fp)<<8);	/* order is important! */
@@ -199,7 +199,7 @@ outfloat(int n)
 int
 main(int argc, char **argv)
 {
-    register int	c;
+    int	c;
     struct	uplot *up;
     int	i;
 

@@ -1,7 +1,7 @@
 /*                       P I X - I P U . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2009 United States Government as represented by
+ * Copyright (c) 1996-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -137,7 +137,7 @@ void step2(aa)
     void	*aa;
 {
     struct chore	*chorep;
-    register unsigned char	*cp;
+    unsigned char	*cp;
     unsigned char *green, *blue;
     int	buf_y;
 
@@ -157,8 +157,8 @@ void step2(aa)
 
 	    for ( buf_y = chorep->todo-1; buf_y >= 0; buf_y-- )  {
 		int	offset;
-		register unsigned char	*rp, *gp, *bp;
-		register int		x;
+		unsigned char	*rp, *gp, *bp;
+		int		x;
 
 		offset = buf_y * width;
 		rp = &chorep->cbuf[offset];
@@ -174,7 +174,7 @@ void step2(aa)
 	    /* Monochrome */
 	    for ( buf_y = chorep->todo-1; buf_y >= 0; buf_y-- )  {
 		int	offset;
-		register unsigned char	*rp;
+		unsigned char	*rp;
 		offset = buf_y * width;
 		rp = &chorep->cbuf[offset];
 		memcpy(rp, cp, width);

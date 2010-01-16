@@ -1,7 +1,7 @@
 /*                    S P H _ B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -20,7 +20,7 @@
 /** @file sph_brep.cpp
  *
  * Convert sph to b-rep
- * Author - Ben Poole
+ *
  */
 
 #include "common.h"

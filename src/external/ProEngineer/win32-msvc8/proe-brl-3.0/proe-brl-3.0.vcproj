@@ -130,8 +130,8 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				InlineFunctionExpansion="1"
-				AdditionalIncludeDirectories="&quot;C:\Program Files\proeWildfire 3.0\protoolkit\protk_appls\includes&quot;;&quot;C:\Program Files\proeWildfire 3.0\protoolkit\includes&quot;;&quot;C:\Program Files\proeWildfire 3.0\prodevelop\includes&quot;;../../../../../include;../../../../other/tcl/generic"
-				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;_CRT_SECURE_NO_WARNINGS;inline=__inline;PRO_MACHINE=29;PRO_OS=4;MSB_LEFT;_X86=1;_WSTDIO_DEFINED"
+				AdditionalIncludeDirectories="&quot;C:\Program Files\proeWildfire 3.0\protoolkit\protk_appls\includes&quot;;&quot;C:\Program Files\proeWildfire 3.0\protoolkit\includes&quot;;&quot;C:\Program Files\proeWildfire 3.0\prodevelop\includes&quot;;../../../../../include;../../../../other/tcl/generic;../../../../external/ProEngineer"
+				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;BRLCAD_DLL;HAVE_CONFIG_H;BRLCADBUILD;_CRT_SECURE_NO_WARNINGS;inline=__inline;PRO_MACHINE=29;PRO_OS=4;MSB_LEFT;_X86=1;_WSTDIO_DEFINED;PROE_BRL_EXPORT_DLL"
 				RuntimeLibrary="2"
 				DisableLanguageExtensions="false"
 				UsePrecompiledHeader="0"

@@ -1,7 +1,7 @@
 /*                          T R I E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -47,10 +47,10 @@ static Func *matchTrie();
 */
 Trie	*
 addTrie( name, triepp )
-    register char *name;
-    register Trie **triepp;
+    char *name;
+    Trie **triepp;
 {
-    register Trie *curp;
+    Trie *curp;
     if ( *name == NUL )
     {
 	/* End of name, see if name already exists. */
@@ -92,10 +92,10 @@ addTrie( name, triepp )
 
 Func	*
 getTrie( name, triep )
-    register char	*name;
-    register Trie	*triep;
+    char	*name;
+    Trie	*triep;
 {
-    register Trie *curp = NULL;
+    Trie *curp = NULL;
     assert( triep != TRIE_NULL );
 
     /* Traverse next links to end of region name. */
@@ -148,7 +148,7 @@ getTrie( name, triep )
 
 static Func	*
 matchTrie( triep )
-    register Trie	*triep;
+    Trie	*triep;
 {
     Func	*func;
     if ( triep == TRIE_NULL )
@@ -169,7 +169,7 @@ prntTrie( triep, level )
     Trie	*triep;
     int	level;
 {
-    register Trie	*tp = triep;
+    Trie	*tp = triep;
     static char	name_buf[MAX_TRIE_LEVEL+1], *namep;
 #if DEBUG_TRIE
     brst_log( "prntTrie(triep=0x%x, level=%d)\n", triep, level );
@@ -202,7 +202,7 @@ writeTrie( triep, level, fp )
     int	level;
     FILE	*fp;
 {
-    register Trie	*tp = triep;
+    Trie	*tp = triep;
     static char	name_buf[MAX_TRIE_LEVEL+1], *namep;
     if ( tp == TRIE_NULL )
 	return	1;
@@ -286,8 +286,8 @@ getFuncNm( inbuf, bufsz, msg, triepp )
     Trie	**triepp;
 {
     static char	buffer[BUFSIZ];
-    register char	*p = buffer;
-    register int	c;
+    char	*p = buffer;
+    int	c;
     Func		*funcp;
     if ( tty )
     {
@@ -339,7 +339,7 @@ getFuncNm( inbuf, bufsz, msg, triepp )
 		break;
 	    case Ctrl('D') : /* Delete character under cursor. */
 	    {
-		register char	*q = p;
+		char	*q = p;
 		if ( *p == NUL )
 		{
 		    ring_Bell();
@@ -386,7 +386,7 @@ getFuncNm( inbuf, bufsz, msg, triepp )
 		break;
 	    case Ctrl('P') : /* Yank previous contents of "inbuf". */
 	    {
-		register int	len = strlen( inbuf );
+		int	len = strlen( inbuf );
 		if ( (p + len) - buffer >= BUFSIZ )
 		{
 		    ring_Bell();
@@ -405,7 +405,7 @@ getFuncNm( inbuf, bufsz, msg, triepp )
 		}
 		for (; p > buffer; --p )
 		{
-		    register char	*q = p;
+		    char	*q = p;
 		    (void) putchar( BS );
 		    for (; *(q-1) != NUL; ++q )
 		    {
@@ -418,7 +418,7 @@ getFuncNm( inbuf, bufsz, msg, triepp )
 		break;
 	    case Ctrl('R') : /* Print line, cursor doesn't move. */
 	    {
-		register int	i;
+		int	i;
 		if ( buffer[0] == NUL )
 		    break;
 		for ( i = p - buffer; i > 0; i-- )
@@ -430,7 +430,7 @@ getFuncNm( inbuf, bufsz, msg, triepp )
 	    }
 	    case DEL : /* Delete character behind cursor. */
 	    {
-		register char	*q = p;
+		char	*q = p;
 		if ( p == buffer )
 		{
 		    ring_Bell();
@@ -470,8 +470,8 @@ getFuncNm( inbuf, bufsz, msg, triepp )
 		/* Fall through to default case! */
 	    default : /* Insert character at cursor. */
 	    {
-		register char	*q = p;
-		register int	len = strlen( p );
+		char	*q = p;
+		int	len = strlen( p );
 		/* Scroll characters forward. */
 		if ( c >= NUL && c < SP )
 		    (void) printf( "%s", char_To_String( c ) );

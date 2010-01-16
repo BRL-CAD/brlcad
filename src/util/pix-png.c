@@ -1,7 +1,7 @@
 /*                       P I X - P N G . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2009 United States Government as represented by
+ * Copyright (c) 1998-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -64,9 +64,9 @@ double out_gamma = -1.0;
 
 
 int
-get_args(int argc, register char **argv, long *width, long *height)
+get_args(int argc, char **argv, long *width, long *height)
 {
-    register int c;
+    int c;
 
     while ((c = bu_getopt(argc, argv, "ag:s:w:n:o:h?")) != EOF) {
 	switch (c) {

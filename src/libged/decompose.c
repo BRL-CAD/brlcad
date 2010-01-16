@@ -1,7 +1,7 @@
 /*                         D E C O M P O S E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -196,7 +196,7 @@ ged_decompose(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    rt_db_free_internal( &nmg_intern, &rt_uniresource );
+    rt_db_free_internal(&nmg_intern);
     bu_vls_free( &solid_name );
 
     return GED_OK;

@@ -1,7 +1,7 @@
 /*                         R E M O V E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,8 +36,8 @@
 int
 ged_remove(struct ged *gedp, int argc, const char *argv[])
 {
-    register struct directory	*dp;
-    register int			i;
+    struct directory	*dp;
+    int			i;
     int				num_deleted;
     struct rt_db_internal		intern;
     struct rt_comb_internal		*comb;

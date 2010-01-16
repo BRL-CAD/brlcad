@@ -1,7 +1,7 @@
 /*                      N M G _ I N F O . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2009 United States Government as represented by
+ * Copyright (c) 1993-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -277,29 +277,25 @@ nmg_find_fu_of_vu(const struct vertexuse *vu)
 	case NMG_LOOPUSE_MAGIC:
 	    return nmg_find_fu_of_lu(vu->up.lu_p);
 	case NMG_SHELL_MAGIC:
-	    if (rt_g.NMG_debug & DEBUG_BASIC) bu_log("nmg_find_fu_of_vu(vu=x%x) vertexuse is child of shell, can't find faceuse\n", vu);
+	    if (rt_g.NMG_debug & DEBUG_BASIC)
+		bu_log("nmg_find_fu_of_vu(vu=x%x) vertexuse is child of shell, can't find faceuse\n", vu);
 	    return ((struct faceuse *)NULL);
 	case NMG_EDGEUSE_MAGIC:
 	    switch (*vu->up.eu_p->up.magic_p) {
 		case NMG_LOOPUSE_MAGIC:
 		    return nmg_find_fu_of_lu(vu->up.eu_p->up.lu_p);
 		case NMG_SHELL_MAGIC:
-		    if (rt_g.NMG_debug & DEBUG_BASIC) bu_log("nmg_find_fu_of_vu(vu=x%x) vertexuse is child of shell/edgeuse, can't find faceuse\n", vu);
+		    if (rt_g.NMG_debug & DEBUG_BASIC)
+			bu_log("nmg_find_fu_of_vu(vu=x%x) vertexuse is child of shell/edgeuse, can't find faceuse\n", vu);
 		    return ((struct faceuse *)NULL);
 	    }
-	    bu_log("Error at %s %d:\nInvalid loopuse parent magic 0x%x\n",
-		   __FILE__, __LINE__, *vu->up.lu_p->up.magic_p);
-	    abort();
+	    bu_log("Error at %s %d:\nInvalid loopuse parent magic 0x%x\n", __FILE__, __LINE__, *vu->up.lu_p->up.magic_p);
 	    break;
 	default:
-	    bu_log("Error at %s %d:\nInvalid vertexuse parent magic 0x%x\n",
-		   __FILE__, __LINE__,
-		   *vu->up.magic_p);
-	    abort();
+	    bu_log("Error at %s %d:\nInvalid vertexuse parent magic 0x%x\n", __FILE__, __LINE__, *vu->up.magic_p);
 	    break;
     }
-    bu_log("How did I get here %s %d?\n", __FILE__, __LINE__);
-    bu_bomb("nmg_find_fu_of_vu()\n");
+
     return ((struct faceuse *)NULL);
 }
 /**
@@ -367,7 +363,7 @@ nmg_find_fu_with_fg_in_s(const struct shell *s1, const struct faceuse *fu2)
  * That will be the only case for negative returns.
  */
 double
-nmg_measure_fu_angle(const struct edgeuse *eu, const fastf_t *xvec, const fastf_t *yvec, const fastf_t *zvec)
+nmg_measure_fu_angle(const struct edgeuse *eu, const fastf_t *xvec, const fastf_t *yvec, const fastf_t *zvec __attribute__((unused)))
 {
     vect_t left;
     double ret;
@@ -812,12 +808,12 @@ nmg_find_eu_in_face(const struct vertex *v1, const struct vertex *v2, const stru
     if (fu) NMG_CK_FACEUSE(fu);
 
     if (eup) {
-	struct faceuse *fu;
+	struct faceuse *fu1;
 	NMG_CK_EDGEUSE(eup);
 	eup_mate = eup->eumate_p;
 	NMG_CK_EDGEUSE(eup_mate);
-	if ((fu = nmg_find_fu_of_eu(eup)))
-	    eup_orientation = fu->orientation;
+	if ((fu1 = nmg_find_fu_of_eu(eup)))
+	    eup_orientation = fu1->orientation;
 	else
 	    eup_orientation = OT_SAME;
     } else {
@@ -1179,7 +1175,7 @@ struct fen2d_state {
 
 
 static void
-nmg_find_e_pt2_handler(long int *lp, genptr_t state, int first)
+nmg_find_e_pt2_handler(long int *lp, genptr_t state, int unused __attribute__((unused)))
 {
     register struct fen2d_state *sp = (struct fen2d_state *)state;
     register struct edge *e = (struct edge *)lp;
@@ -1357,6 +1353,8 @@ nmg_find_eu_leftvec(fastf_t *left, const struct edgeuse *eu)
 	vect_t prev_left;
 	vect_t other_edge;
 	int other_edge_is_parallel=1;
+
+	VSETALL(other_edge, 0);
 
 	bu_log("WARNING: eu x%x (%f %f %f) parallel to normal (%f %f %f)\n", eu, V3ARGS(edgevect), V3ARGS(Norm));
 
@@ -1823,7 +1821,7 @@ int
 nmg_is_vertex_in_looplist(register const struct vertex *v, const struct bu_list *hd, int singletons)
 {
     register const struct loopuse *lu;
-    long magic1;
+    unsigned long magic1;
 
     NMG_CK_VERTEX(v);
     for (BU_LIST_FOR(lu, loopuse, hd)) {
@@ -2057,7 +2055,7 @@ struct vf_state {
  * add it to the bu_ptbl array.
  */
 static void
-nmg_2rvf_handler(long int *vp, genptr_t state, int first)
+nmg_2rvf_handler(long int *vp, genptr_t state, int unused __attribute__((unused)))
 {
     register struct vf_state *sp = (struct vf_state *)state;
     register struct vertex *v = (struct vertex *)vp;
@@ -2111,7 +2109,7 @@ nmg_vertex_tabulate(struct bu_ptbl *tab, const unsigned long *magic_p)
  * add it to the bu_ptbl array.
  */
 static void
-nmg_vert_a_handler(long int *vp, genptr_t state, int first)
+nmg_vert_a_handler(long int *vp, genptr_t state, int unused __attribute__((unused)))
 {
     register struct vf_state *sp = (struct vf_state *)state;
     register struct vertexuse_a_plane *va;
@@ -2168,7 +2166,7 @@ nmg_vertexuse_normal_tabulate(struct bu_ptbl *tab, const unsigned long *magic_p)
  * add it to the bu_ptbl array.
  */
 static void
-nmg_2edgeuse_handler(long int *eup, genptr_t state, int first)
+nmg_2edgeuse_handler(long int *eup, genptr_t state, int unused __attribute__((unused)))
 {
     register struct vf_state *sp = (struct vf_state *)state;
     register struct edgeuse *eu = (struct edgeuse *)eup;
@@ -2222,7 +2220,7 @@ nmg_edgeuse_tabulate(struct bu_ptbl *tab, const unsigned long *magic_p)
  * add it to the bu_ptbl array.
  */
 static void
-nmg_2edge_handler(long int *ep, genptr_t state, int first)
+nmg_2edge_handler(long int *ep, genptr_t state, int unused __attribute__((unused)))
 {
     register struct vf_state *sp = (struct vf_state *)state;
     register struct edge *e = (struct edge *)ep;
@@ -2276,7 +2274,7 @@ nmg_edge_tabulate(struct bu_ptbl *tab, const unsigned long *magic_p)
  * add it to the bu_ptbl array.
  */
 static void
-nmg_edge_g_handler(long int *ep, genptr_t state, int first)
+nmg_edge_g_handler(long int *ep, genptr_t state, int unused __attribute__((unused)))
 {
     register struct vf_state *sp = (struct vf_state *)state;
 
@@ -2339,7 +2337,7 @@ nmg_edge_g_tabulate(struct bu_ptbl *tab, const unsigned long *magic_p)
  * add it to the bu_ptbl array.
  */
 static void
-nmg_2face_handler(long int *fp, genptr_t state, int first)
+nmg_2face_handler(long int *fp, genptr_t state, int unused __attribute__((unused)))
 {
     register struct vf_state *sp = (struct vf_state *)state;
     register struct face *f = (struct face *)fp;
@@ -2430,7 +2428,7 @@ struct edge_line_state {
  * add it to the bu_ptbl array.
  */
 static void
-nmg_line_handler(long int *longp, genptr_t state, int first)
+nmg_line_handler(long int *longp, genptr_t state, int unused __attribute__((unused)))
 {
     register struct edge_line_state *sp = (struct edge_line_state *)state;
     register struct edgeuse *eu = (struct edgeuse *)longp;
@@ -2527,7 +2525,7 @@ struct e_and_v_state {
  * in the eventual application.
  */
 static void
-nmg_e_handler(long int *longp, genptr_t state, int first)
+nmg_e_handler(long int *longp, genptr_t state, int unused __attribute__((unused)))
 {
     register struct e_and_v_state *sp = (struct e_and_v_state *)state;
     register struct edge *e = (struct edge *)longp;
@@ -2547,7 +2545,7 @@ nmg_e_handler(long int *longp, genptr_t state, int first)
  * A private support routine for nmg_e_and_v_tabulate().
  */
 static void
-nmg_v_handler(long int *longp, genptr_t state, int first)
+nmg_v_handler(long int *longp, genptr_t state, int unused __attribute__((unused)))
 {
     register struct e_and_v_state *sp = (struct e_and_v_state *)state;
     register struct vertex *v = (struct vertex *)longp;

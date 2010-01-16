@@ -1,7 +1,7 @@
 /*                       F B P O I N T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2009 United States Government as represented by
+ * Copyright (c) 1986-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -80,7 +80,7 @@ q Q cr	QUIT\r\n\
 void
 SimpleInput(void)	/* ==== get keyboard input.	*/
 {
-    register char ch;
+    char ch;
     static char c;
 
     if ( read( 0, &c, 1) <= 0 ) {

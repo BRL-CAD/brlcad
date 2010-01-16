@@ -1,7 +1,7 @@
 /*                       P A R S A R G . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2009 United States Government as represented by
+ * Copyright (c) 1986-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -37,7 +37,7 @@
 int
 parsArg(int argc, char **argv)
 {
-    register int	i, c, arg_cnt;
+    int	i, c, arg_cnt;
     extern int	bu_optind;
 
     while ( (c = bu_getopt( argc, argv, "d" )) != EOF )

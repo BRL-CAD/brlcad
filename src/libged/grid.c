@@ -1,7 +1,7 @@
 /*                          G R I D . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2009 United States Government as represented by
+ * Copyright (c) 1998-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -278,13 +278,13 @@ ged_grid_vls_print(struct ged *gedp)
 static void
 ged_snap_to_grid(struct ged *gedp, fastf_t *mx, fastf_t *my)
 {
-    register int nh, nv;		/* whole grid units */
+    int nh, nv;		/* whole grid units */
     point_t view_pt;
     point_t view_grid_anchor;
     fastf_t grid_units_h;		/* eventually holds only fractional horizontal grid units */
     fastf_t grid_units_v;		/* eventually holds only fractional vertical grid units */
-    register fastf_t sf;
-    register fastf_t inv_sf;
+    fastf_t sf;
+    fastf_t inv_sf;
     fastf_t local2base = 1.0 / gedp->ged_wdbp->dbip->dbi_base2local;
 
     if (NEAR_ZERO(gedp->ged_gvp->gv_grid.ggs_res_h, (fastf_t)SMALL_FASTF) ||

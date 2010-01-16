@@ -1,7 +1,7 @@
 /*                         C A N O N . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -78,11 +78,8 @@ extern int	ipu_debug;
 #endif
 
 
-#ifdef USE_PROTOTYPES
-#  define	FUNC_EXTERN(type_and_name, args)	extern type_and_name args
-#else
-#  define	FUNC_EXTERN(type_and_name, args)	extern type_and_name()
-#endif
+#define FUNC_EXTERN(type_and_name, args) extern type_and_name args
+
 
 #ifdef IPU_FULL_LIB
 FUNC_EXTERN(int ipu_not_ready, (struct dsreq *dsp));

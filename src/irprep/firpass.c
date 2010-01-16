@@ -1,7 +1,7 @@
 /*                       F I R P A S S . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2009 United States Government as represented by
+ * Copyright (c) 1990-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -81,9 +81,9 @@
 #define GAMMA 35.	/*  Rotation about x-axis.  */
 
 
-extern int hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *segp);	/*  User supplied hit function.  */
-extern int miss(register struct application *ap_p);	/*  User supplied miss function.  */
-extern int ovrlap(register struct application *ap_p, struct partition *PartHeadp, struct region *reg1, struct region *reg2, struct partition *hp);	/*  User supplied overlap function.  */
+extern int hit(struct application *ap_p, struct partition *PartHeadp, struct seg *segp);	/*  User supplied hit function.  */
+extern int miss(struct application *ap_p);	/*  User supplied miss function.  */
+extern int ovrlap(struct application *ap_p, struct partition *PartHeadp, struct region *reg1, struct region *reg2, struct partition *hp);	/*  User supplied overlap function.  */
 extern void rotate(double *p, double *a, double *np);	/*  Subroutine to rotate a point.  */
 extern double radians(double a);/*  Subroutines to find angle in radians.  */
 
@@ -2300,11 +2300,11 @@ int main(int argc, char **argv)
 }
 
 int
-hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *segp)
+hit(struct application *ap_p, struct partition *PartHeadp, struct seg *segp)
 {
-    register struct partition *pp;
-    register struct hit *hitp;
-    register struct soltab *stp;
+    struct partition *pp;
+    struct hit *hitp;
+    struct soltab *stp;
     struct curvature cur;
 
     double enterpt[3];	/*  Point where ray enters.  */
@@ -2712,7 +2712,7 @@ hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *
 
 /*  User supplied miss function.  */
 int
-miss(register struct application *ap_p)
+miss(struct application *ap_p)
 {
     /*
      *	(void)printf("It was a miss.\n");
@@ -2723,7 +2723,7 @@ miss(register struct application *ap_p)
 
 /*  User supplied overlap function.  */
 int
-ovrlap(register struct application *ap_p, struct partition *PartHeadp, struct region *reg1, struct region *reg2, struct partition *hp)
+ovrlap(struct application *ap_p, struct partition *PartHeadp, struct region *reg1, struct region *reg2, struct partition *hp)
 {
     int a, b;
     double depth;

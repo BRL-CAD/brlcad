@@ -1,7 +1,7 @@
 /*                         K I L L T R E E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -43,14 +43,14 @@ struct ged_killtree_data {
 
 static void
 ged_killtree_callback(struct db_i		*dbip,
-		      register struct directory *dp,
+		      struct directory *dp,
 		      genptr_t			ptr);
 
 int
 ged_killtree(struct ged *gedp, int argc, const char *argv[])
 {
-    register struct directory *dp;
-    register int i;
+    struct directory *dp;
+    int i;
     int c;
     struct ged_killtree_data gktd;
     static const char *usage = "[-a|-n] object(s)";
@@ -146,7 +146,7 @@ ged_killtree(struct ged *gedp, int argc, const char *argv[])
  */
 static void
 ged_killtree_callback(struct db_i		*dbip,
-		      register struct directory *dp,
+		      struct directory *dp,
 		      genptr_t			ptr)
 {
     struct directory *dpp[2];

@@ -1,7 +1,7 @@
 /* T A B I N T E R P . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2009 United States Government as represented by
+ * Copyright (c) 1988-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -184,7 +184,7 @@ cm_file(int argc, char **argv)
     /* First step, count number of lines in file */
     nlines = 0;
     {
-	register int c;
+	int c;
 
 	while ((c = fgetc(fp)) != EOF) {
 	    if (c == '\n')
@@ -221,7 +221,7 @@ cm_file(int argc, char **argv)
     }
 
     for (line=0; line < nlines; line++) {
-	register char *bp;
+	char *bp;
 
 	bu_vls_trunc(&buf, 0);
 	if (bu_vls_gets(&buf, fp) == -1)  break;
@@ -293,8 +293,8 @@ cm_file(int argc, char **argv)
 HIDDEN void
 pr_ichan(int ch)
 {
-    register struct chan *cp;
-    register int i;
+    struct chan *cp;
+    int i;
 
     if (ch < 0 || ch >= nchans) {
 	bu_log("pr_ichan(%d) out of range\n", ch);
@@ -318,8 +318,8 @@ pr_ichan(int ch)
 HIDDEN int
 cm_idump(int argc, char **argv)
 {
-    register int ch;
-    register int i;
+    int ch;
+    int i;
 
     if (argc <= 1) {
 	for (ch=0; ch < nchans; ch++) {
@@ -340,9 +340,9 @@ cm_idump(int argc, char **argv)
 HIDDEN void
 output()
 {
-    register int ch;
-    register struct chan *cp;
-    register int t;
+    int ch;
+    struct chan *cp;
+    int t;
 
     if (!o_time) {
 	bu_log("times command not given, aborting\n");
@@ -372,7 +372,7 @@ HIDDEN int
 cm_times(int argc, char **argv)
 {
     double a, b;
-    register int i;
+    int i;
 
     if (argc < 3)
 	bu_exit(1, "Internal error.  Unexpected argument count encountered.");
@@ -469,9 +469,9 @@ cm_interp(int argc, char **argv)
 HIDDEN void
 next_interpolate(struct chan *chp)
 {
-    register int t;		/* output time index */
-    register int i;		/* input time index */
-    register struct chan *ip;
+    int t;		/* output time index */
+    int i;		/* input time index */
+    struct chan *ip;
 
     ip = &chan[chp->c_sourcechan];
 
@@ -503,8 +503,8 @@ next_interpolate(struct chan *chp)
 HIDDEN void
 step_interpolate(struct chan *chp, fastf_t *times)
 {
-    register int t;		/* output time index */
-    register int i;		/* input time index */
+    int t;		/* output time index */
+    int i;		/* input time index */
 
     i = 0;
     for (t=0; t<o_len; t++) {
@@ -542,8 +542,8 @@ step_interpolate(struct chan *chp, fastf_t *times)
 HIDDEN void
 linear_interpolate(struct chan *chp, fastf_t *times)
 {
-    register int t;		/* output time index */
-    register int i;		/* input time index */
+    int t;		/* output time index */
+    int i;		/* input time index */
 
     if (chp->c_ilen < 2) {
 	bu_log("lienar_interpolate:  need at least 2 points\n");
@@ -590,9 +590,9 @@ linear_interpolate(struct chan *chp, fastf_t *times)
 HIDDEN void
 rate_interpolate(struct chan *chp, fastf_t *times)
 {
-    register int t;		/* output time index */
-    register double ival;
-    register double rate;
+    int t;		/* output time index */
+    double ival;
+    double rate;
 
     times = times; /* quell warning */
     if (chp->c_ilen != 2) {
@@ -614,10 +614,10 @@ rate_interpolate(struct chan *chp, fastf_t *times)
 HIDDEN void
 accel_interpolate(struct chan *chp, fastf_t *times)
 {
-    register int t;		/* output time index */
+    int t;		/* output time index */
     double ival;
     double mul;
-    register double scale;
+    double scale;
 
     times = times; /* quell warning */
     if (chp->c_ilen != 2) {
@@ -648,8 +648,8 @@ accel_interpolate(struct chan *chp, fastf_t *times)
 HIDDEN void
 quat_interpolate(struct chan *x, struct chan *y, struct chan *z, struct chan *w, fastf_t *times)
 {
-    register int t;		/* output time index */
-    register int i;		/* input time index */
+    int t;		/* output time index */
+    int i;		/* input time index */
 
 #define QIGET(_q, _it)  QSET((_q), x->c_ival[(_it)], y->c_ival[(_it)], z->c_ival[(_it)], w->c_ival[(_it)]);
 #define QPUT(_q) { x->c_oval[t] = (_q)[X]; y->c_oval[t] = (_q)[Y]; \
@@ -657,7 +657,7 @@ quat_interpolate(struct chan *x, struct chan *y, struct chan *z, struct chan *w,
 
     i = 0;
     for (t=0; t<o_len; t++) {
-	register fastf_t now = times[t];
+	fastf_t now = times[t];
 
 	/* Check for below initial time */
 	if (now <= x->c_itime[0]) {
@@ -785,7 +785,7 @@ quat_interpolate(struct chan *x, struct chan *y, struct chan *z, struct chan *w,
  * 1	OK
  */
 HIDDEN int
-spline(register struct chan *chp, fastf_t *times)
+spline(struct chan *chp, fastf_t *times)
 {
     double d, s;
     double u = 0;
@@ -801,8 +801,8 @@ spline(register struct chan *chp, fastf_t *times)
     double konst = 0.0;		/* derriv. at endpts, non-periodic */
     double *diag = (double *)0;
     double *rrr = (double *)0;
-    register int i;
-    register int t;
+    int i;
+    int t;
 
     if (chp->c_ilen<3) {
 	bu_log("spline(%s): need at least 3 points\n", chp->c_itag);
@@ -904,10 +904,10 @@ spline(register struct chan *chp, fastf_t *times)
 
 	/* Sweep downward in times[], looking for times in this span */
 	for (t=o_len-1; t>=0; t--) {
-	    register double x0;	/* fraction from [i+0] */
-	    register double x1;	/* fraction from [i+1] */
-	    register double yy;
-	    register double cur_t;
+	    double x0;	/* fraction from [i+0] */
+	    double x1;	/* fraction from [i+1] */
+	    double yy;
+	    double cur_t;
 
 	    cur_t = times[t];
 	    if (cur_t > chp->c_itime[i+1])
@@ -945,7 +945,7 @@ go()
     int ch;
     struct chan *chp;
     fastf_t *times;
-    register int t;
+    int t;
 
     if (!o_time) {
 	bu_log("times command not given\n");
@@ -977,7 +977,7 @@ go()
 	 */
 	if (chp->c_periodic) {
 	    for (t=0; t < o_len; t++) {
-		register double cur_t;
+		double cur_t;
 
 		cur_t = o_time[t];
 
@@ -1052,7 +1052,7 @@ go()
 HIDDEN int
 cm_rate(int argc, char **argv)
 {
-    register struct chan *chp;
+    struct chan *chp;
     int ch;
     int nvals = 2;
 
@@ -1078,7 +1078,7 @@ cm_rate(int argc, char **argv)
 HIDDEN int
 cm_accel(int argc, char **argv)
 {
-    register struct chan *chp;
+    struct chan *chp;
     int ch;
     int nvals = 2;
 
@@ -1148,7 +1148,7 @@ get_args(int argc, char **argv)
     return(1);
 }
 
-int cm_help(int argc, char **argv);
+HIDDEN int cm_help(int argc, char **argv);
 
 struct command_tab cmdtab[] = {
     {"file", "filename chan_num(s)", "load channels from file",
@@ -1178,7 +1178,7 @@ struct command_tab cmdtab[] = {
 HIDDEN int
 cm_help(int argc, char **argv)
 {
-    register struct command_tab *ctp;
+    struct command_tab *ctp;
 
     if (argc <= 1) {
 	bu_log("The following commands are available:\n\n");
@@ -1200,8 +1200,8 @@ cm_help(int argc, char **argv)
 int
 main(int argc, char *argv[])
 {
-    register char *buf;
-    register int ret;
+    char *buf;
+    int ret;
 
     get_args(argc, argv);
     /*

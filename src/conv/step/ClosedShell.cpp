@@ -1,7 +1,7 @@
 /*                 ClosedShell.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,9 +38,9 @@ ClosedShell::ClosedShell() {
 	id = 0;
 }
 
-ClosedShell::ClosedShell(STEPWrapper *sw,int STEPid) {
+ClosedShell::ClosedShell(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 ClosedShell::~ClosedShell() {
@@ -52,7 +52,7 @@ ClosedShell::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 	id = sse->STEPfile_id;
 
 	if ( !ConnectedFaceSet::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::ConnectedFaceSet." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::ConnectedFaceSet." << std::endl;
 		return false;
 	}
 	return true;
@@ -60,10 +60,10 @@ ClosedShell::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 void
 ClosedShell::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << name << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	ConnectedFaceSet::Print(level+1);
 }
 STEPEntity *
@@ -75,7 +75,7 @@ ClosedShell::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}
@@ -89,7 +89,7 @@ bool
 ClosedShell::LoadONBrep(ON_Brep *brep)
 {
 	if (!ConnectedFaceSet::LoadONBrep(brep)) {
-		cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << endl;
+		std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
 		return false;
 	}
 	return true;

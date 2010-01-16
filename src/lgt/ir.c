@@ -1,7 +1,7 @@
 /*                            I R . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -91,10 +91,10 @@ adjust_Page(int y)
 void
 display_Temps(int xmin, int ymin)
 {
-    register int	x, y;
-    register int	interval = ((grid_sz*3+2)/4)/(S_BINS+2);
-    register int	xmax = xmin+(interval*S_BINS);
-    register int	ymax;
+    int	x, y;
+    int	interval = ((grid_sz*3+2)/4)/(S_BINS+2);
+    int	xmax = xmin+(interval*S_BINS);
+    int	ymax;
     fastf_t		xrange = xmax - xmin;
 
     /* Avoid page thrashing of frame buffer.			*/
@@ -123,7 +123,7 @@ display_Temps(int xmin, int ymin)
 	    if ( D_XPOS % interval == 0 )
 	    {
 		int	temp = AMBIENT+percent*RANGE;
-		register int	lgtindex = temp - ir_min;
+		int	lgtindex = temp - ir_min;
 		pixel = (RGBpixel *) ir_table[(lgtindex < ir_max_index ?
 					       lgtindex : ir_max_index)];
 		/* this should be an &ir_table...,
@@ -176,8 +176,8 @@ get_IR(int x, int y, int *fahp, FILE *fp)
 int
 read_IR(FILE *fp)
 {
-    register int	fy;
-    register int	rx, ry;
+    int	fy;
+    int	rx, ry;
     int		min, max;
     if (	fread( (char *) &min, (int) sizeof(int), 1, fp ) != 1
 		||	fread( (char *) &max, (int) sizeof(int), 1, fp ) != 1
@@ -225,12 +225,12 @@ read_IR(FILE *fp)
 	{
 	    int	fah;
 	    int	sum = 0;
-	    register int	i;
-	    register int	lgtindex;
+	    int	i;
+	    int	lgtindex;
 	    RGBpixel	*pixel;
 	    for ( i = 0; i < ir_aperture; i++ )
 	    {
-		register int	j;
+		int	j;
 		for ( j = 0; j < ir_aperture; j++ )
 		{
 		    if ( get_IR( rx+j, ry+i, &fah, fp ) )
@@ -272,8 +272,8 @@ temp_To_RGB(unsigned char *rgb, int temp)
     fastf_t		hue = 4.0 - ((t < AMBIENT ? AMBIENT :
 				      t > HOTTEST ? HOTTEST :
 				      t) - AMBIENT) * scale;
-    register int	h = (int) hue;	/* integral part	*/
-    register int	f = (int)(256.0 * (hue - (fastf_t)h));
+    int	h = (int) hue;	/* integral part	*/
+    int	f = (int)(256.0 * (hue - (fastf_t)h));
     /* fractional part * 256	*/
     if ( NEAR_ZERO(t - ABSOLUTE_ZERO, SMALL_FASTF) )
 	rgb[RED] = rgb[GRN] = rgb[BLU] = 0;
@@ -328,7 +328,7 @@ temp_To_RGB(unsigned char *rgb, int temp)
 int
 init_Temp_To_RGB(void)
 {
-    register int	temp, i;
+    int	temp, i;
     RGBpixel	rgb;
     if ( (ir_aperture = fb_getwidth( fbiop )/grid_sz) < 1 )
     {
@@ -362,7 +362,7 @@ init_Temp_To_RGB(void)
 }
 
 int
-same_Hue(register RGBpixel (*pixel1p), register RGBpixel (*pixel2p))
+same_Hue(RGBpixel (*pixel1p), RGBpixel (*pixel2p))
 {
     fastf_t	rval1, gval1, bval1;
     fastf_t	rval2, gval2, bval2;
@@ -458,11 +458,11 @@ same_Hue(register RGBpixel (*pixel1p), register RGBpixel (*pixel2p))
 }
 
 int
-pixel_To_Temp(register RGBpixel (*pixelp))
+pixel_To_Temp(RGBpixel (*pixelp))
 {
-    register RGBpixel *p;
-    register RGBpixel *q = (RGBpixel *) ir_table[ir_max-ir_min];
-    register int	temp = ir_min;
+    RGBpixel *p;
+    RGBpixel *q = (RGBpixel *) ir_table[ir_max-ir_min];
+    int	temp = ir_min;
     for ( p = (RGBpixel *) ir_table[0]; p <= q; p++, temp++ ) {
 	if ( same_Hue( p, pixelp ) )
 	    return	temp;
@@ -476,7 +476,7 @@ pixel_To_Temp(register RGBpixel (*pixelp))
 }
 
 int
-f_IR_Model(register struct application *ap, Octree *op)
+f_IR_Model(struct application *ap, Octree *op)
 {
     fastf_t		octnt_min[3], octnt_max[3];
     fastf_t		delta = modl_radius / pow_Of_2( ap->a_level );
@@ -557,7 +557,7 @@ f_IR_Model(register struct application *ap, Octree *op)
 	/* Factor in reflectance from "ambient" light source.	*/
 	fastf_t	intensity = VDOT( norml, lgts[0].dir );
 	/* Calculate index into false-color table.		*/
-	register int	lgtindex = op->o_temp - ir_min;
+	int	lgtindex = op->o_temp - ir_min;
 	if ( lgtindex > ir_max_index )
 	{
 	    bu_log( "Temperature (%d) above range of data.\n", op->o_temp );
@@ -577,7 +577,7 @@ f_IR_Model(register struct application *ap, Octree *op)
     return	1;
 }
 int
-f_IR_Backgr(register struct application *ap)
+f_IR_Backgr(struct application *ap)
 {
     VMOVE( ap->a_color, bg_coefs );
     return	0;

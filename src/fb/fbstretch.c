@@ -1,7 +1,7 @@
 /*                     F B S T R E T C H . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -178,7 +178,7 @@ main(int argc, char **argv)
 #endif
 		0
 	    };
-	register int	i;
+	int	i;
 
 	for (i = 0; getsigs[i] != 0; ++i)
 	    if (signal(getsigs[i], SIG_IGN) != SIG_IGN)
@@ -187,8 +187,8 @@ main(int argc, char **argv)
 
     /* Process arguments. */
     {
-	register int	c;
-	register bool_t	errors = 0;
+	int	c;
+	bool_t	errors = 0;
 
 	while ((c = bu_getopt(argc, argv, OPTSTR)) != EOF)
 	    switch (c)
@@ -328,7 +328,7 @@ main(int argc, char **argv)
 	)
 	Stretch_Fatal("Couldn't open input image");
     else	{
-	register int	wt, ht;	/* actual frame buffer size */
+	int	wt, ht;	/* actual frame buffer size */
 
 	/* Use smaller input size in preference to requested size. */
 
@@ -409,10 +409,10 @@ main(int argc, char **argv)
 
     if (x_compress && y_compress)
     {
-	register int	src_x, src_y;	/* source rect. pixel coords. */
-	register int	dst_x, dst_y;	/* destination pixel coords. */
-	register int	top_x, top_y;	/* source rect. upper bounds */
-	register int	bot_x, bot_y;	/* source rect. lower bounds */
+	int	src_x, src_y;	/* source rect. pixel coords. */
+	int	dst_x, dst_y;	/* destination pixel coords. */
+	int	top_x, top_y;	/* source rect. upper bounds */
+	int	bot_x, bot_y;	/* source rect. lower bounds */
 
 	/* Compute coords. of source rectangle and destination pixel. */
 
@@ -511,7 +511,7 @@ main(int argc, char **argv)
 	}
 	else	{
 	    int		sum[3];	/* pixel value accumulator */
-	    register float	tally;	/* # of pixels accumulated */
+	    float	tally;	/* # of pixels accumulated */
 
 	    /* "Read in" source rectangle and average pixels. */
 
@@ -537,10 +537,10 @@ main(int argc, char **argv)
     }
     else if (x_compress && !y_compress)
     {
-	register int	src_x, src_y;	/* source rect. pixel coords. */
-	register int	dst_x, dst_y;	/* dest. rect. pixel coords. */
-	register int	bot_x, top_x;	/* source rectangle bounds */
-	register int	bot_y, top_y;	/* destination rect. bounds */
+	int	src_x, src_y;	/* source rect. pixel coords. */
+	int	dst_x, dst_y;	/* dest. rect. pixel coords. */
+	int	bot_x, top_x;	/* source rectangle bounds */
+	int	bot_y, top_y;	/* destination rect. bounds */
 
 	/* Compute coords. of source and destination rectangles. */
 
@@ -608,7 +608,7 @@ main(int argc, char **argv)
 	    }
 	else	{
 	    int		sum[3];	/* pixel value accumulator */
-	    register float	tally;	/* # of pixels accumulated */
+	    float	tally;	/* # of pixels accumulated */
 
 	    /* "Read in" source rectangle and average pixels. */
 
@@ -640,10 +640,10 @@ main(int argc, char **argv)
     }
     else if (!x_compress && y_compress)
     {
-	register int	src_x, src_y;	/* source rect. pixel coords. */
-	register int	dst_x, dst_y;	/* dest. rect. pixel coords. */
-	register int	bot_x, top_x;	/* destination rect. bounds */
-	register int	bot_y, top_y;	/* source rectangle bounds */
+	int	src_x, src_y;	/* source rect. pixel coords. */
+	int	dst_x, dst_y;	/* dest. rect. pixel coords. */
+	int	bot_x, top_x;	/* destination rect. bounds */
+	int	bot_y, top_y;	/* source rectangle bounds */
 
 	assert(dst_width >= src_width);	/* (thus no right margin) */
 
@@ -735,7 +735,7 @@ main(int argc, char **argv)
 	    }
 	else	{
 	    int		sum[3];	/* pixel value accumulator */
-	    register float	tally;	/* # of pixels accumulated */
+	    float	tally;	/* # of pixels accumulated */
 
 	    /* "Read in" source rectangle and average pixels. */
 
@@ -767,10 +767,10 @@ main(int argc, char **argv)
     }
     else if (!x_compress && !y_compress)
     {
-	register int	src_x, src_y;	/* source pixel coords. */
-	register int	dst_x, dst_y;	/* dest. rect. pixel coords. */
-	register int	bot_x, bot_y;	/* dest. rect. lower bounds */
-	register int	top_x, top_y;	/* dest. rect. upper bounds */
+	int	src_x, src_y;	/* source pixel coords. */
+	int	dst_x, dst_y;	/* dest. rect. pixel coords. */
+	int	bot_x, bot_y;	/* dest. rect. lower bounds */
+	int	top_x, top_y;	/* dest. rect. upper bounds */
 
 	assert(dst_width >= src_width);	/* (thus no right margin) */
 

@@ -1,7 +1,7 @@
 /*                         R R T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,8 +37,8 @@
 int
 ged_rrt(struct ged *gedp, int argc, const char *argv[])
 {
-    register char **vp;
-    register int i;
+    char **vp;
+    int i;
     static const char *usage = "options";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);

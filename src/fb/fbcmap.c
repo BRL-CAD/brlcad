@@ -1,7 +1,7 @@
 /*                        F B C M A P . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2009 United States Government as represented by
+ * Copyright (c) 1986-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,7 +36,7 @@
 #include "pkg.h"
 
 void		usage(char **argv);
-int		pars_Argv(int argc, register char **argv);
+int		pars_Argv(int argc, char **argv);
 
 static char	*framebuffer = NULL;
 static int	scr_width = 0;
@@ -68,9 +68,9 @@ static unsigned char	utah_cmap[256] = {
 int
 main(int argc, char **argv)
 {
-    register int		i;
-    register int		fudge;
-    register ColorMap	*cp = &cmap;
+    int		i;
+    int		fudge;
+    ColorMap	*cp = &cmap;
     FBIO *fbp;
 
     if ( ! pars_Argv( argc, argv ) ) {
@@ -133,7 +133,7 @@ main(int argc, char **argv)
 			    "Color map #4, amplify middle range to boost dim pictures.\n" );
 	    /* First entry black */
 	    for ( i = 1; i< 256-UPSHIFT; i++ )  {
-		register int j = i + UPSHIFT;
+		int j = i + UPSHIFT;
 		cp->cm_red[i] =
 		    cp->cm_green[i] =
 		    cp->cm_blue[i] = j << 8;
@@ -231,9 +231,9 @@ main(int argc, char **argv)
 /*	p a r s _ A r g v ( )
  */
 int
-pars_Argv(int argc, register char **argv)
+pars_Argv(int argc, char **argv)
 {
-    register int	c;
+    int	c;
     extern int	bu_optind;
 
     while ( (c = bu_getopt( argc, argv, "hF:s:S:w:W:n:N:" )) != EOF ) {

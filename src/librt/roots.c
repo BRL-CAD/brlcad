@@ -1,7 +1,7 @@
 /*                         R O O T S . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2009 United States Government as represented by
+ * Copyright (c) 1985-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -164,9 +164,11 @@ rt_poly_findroot(register bn_poly_t *eqn, /* polynomial */
 	diff = bn_cx_amplsq(&p0);
 	if (b < diff)
 	    continue;
-	if ((b-diff) == b)
+	/* !!! this is super-sensitive for eto (causing off-by-many changes) */
+	if ((b-diff) == b /* NEAR_ZERO(diff, SMALL_FASTF) */)
 	    return(i);		/* OK -- can't do better */
-	if (diff > (b - diff)*1.0e-5)
+	/* !!! this is super-sensitive for eto (causing off-by-one changes and convergence failures) */
+	if (diff > (b - diff) * 1.0e-5 /* SQRT_SMALL_FASTF */)
 	    continue;
 	return(i);			/* OK */
     }

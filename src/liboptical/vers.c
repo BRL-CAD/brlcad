@@ -1,7 +1,7 @@
 /*                          V E R S . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2009 United States Government as represented by
+ * Copyright (c) 2007-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -16,13 +16,6 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this file; see the file named COPYING for more
  * information.
- */
-/** @file vers.c
- *
- * version information about LIBOPTICAL
- *
- * Author -
- *   Christopher Sean Morrison
  */
 
 #include "common.h"

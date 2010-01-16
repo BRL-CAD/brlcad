@@ -1,7 +1,7 @@
 /*                 SolidModel.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,9 +38,9 @@ SolidModel::SolidModel() {
 	id = 0;
 }
 
-SolidModel::SolidModel(STEPWrapper *sw,int STEPid) {
+SolidModel::SolidModel(STEPWrapper *sw,int step_id) {
 	step=sw;
-	id = STEPid;
+	id = step_id;
 }
 
 SolidModel::~SolidModel() {
@@ -52,7 +52,7 @@ SolidModel::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 	id = sse->STEPfile_id;
 
 	if ( !GeometricRepresentationItem::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::GeometricRepresentationItem." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::GeometricRepresentationItem." << std::endl;
 		return false;
 	}
 	return true;
@@ -60,8 +60,8 @@ SolidModel::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 void
 SolidModel::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << name << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
 	GeometricRepresentationItem::Print(level);
 }
@@ -75,7 +75,7 @@ SolidModel::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}
@@ -88,7 +88,7 @@ SolidModel::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 void
 SolidModel::LoadONBrep(ON_Brep *brep)
 {
-	cerr << "Error: ::LoadONBrep(ON_Brep *brep) not implememnted for " << entityname << endl;
+	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implememnted for " << entityname << std::endl;
 	return; // false;
 }
 */

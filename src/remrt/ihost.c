@@ -1,7 +1,7 @@
 /*                         I H O S T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -87,7 +87,7 @@ get_our_hostname(void)
 struct ihost *
 host_lookup_by_hostent(const struct hostent * addr, int enter)
 {
-    register struct ihost	*ihp;
+    struct ihost	*ihp;
     const struct hostent *	addr2;
     const struct hostent *	addr3;
 
@@ -132,7 +132,7 @@ host_lookup_by_hostent(const struct hostent * addr, int enter)
 struct ihost *
 make_default_host(const char* name)
 {
-    register struct ihost	*ihp;
+    struct ihost	*ihp;
 
     BU_GETSTRUCT( ihp, ihost );
     ihp->l.magic = IHOST_MAGIC;
@@ -158,7 +158,7 @@ make_default_host(const char* name)
 struct ihost *
 host_lookup_by_addr(const struct sockaddr_in * from, int enter)
 {
-    register struct ihost	*ihp;
+    struct ihost	*ihp;
     struct hostent	*addr;
     unsigned long	addr_tmp;
     char		name[64];

@@ -1,7 +1,7 @@
 /*                    S K E T C H _ B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,9 +30,6 @@
 #include "brep.h"
 
 void FindLoops(ON_Brep **b) {
-    ON_TextLog dump_to_stdout;
-    ON_TextLog* dump = &dump_to_stdout;
-
     ON_3dPoint ptmatch, ptterminate, pstart, pend;
 
     int *curvearray;
@@ -43,9 +40,6 @@ void FindLoops(ON_Brep **b) {
     ON_SimpleArray<ON_Curve *> allsegments;
     ON_SimpleArray<ON_Curve *> loopsegments;
     int loop_complete;
-    int orientation;
-    int current_loop = 0;
-    int current_segment;
     for (int i = 0; i < (*b)->m_C3.Count(); i++) {
 	allsegments.Append((*b)->m_C3[i]);
     }
@@ -67,7 +61,6 @@ void FindLoops(ON_Brep **b) {
 	loop_complete = 0;
 	while ((loop_complete != 1) && (allcurvesassigned != 1)) {
 	    curvearray[curvecount] = loopcount;
-    	    ON_Curve *currentcurve = allsegments[curvecount];
     	    ptmatch = (*b)->m_C3[curvecount]->PointAtEnd();
     	    ptterminate = (*b)->m_C3[curvecount]->PointAtStart();
 	    for (int i = 0; i < allsegments.Count(); i++) {
@@ -143,7 +136,7 @@ void FindLoops(ON_Brep **b) {
  * R T _ S K E T C H _ B R E P
  */
 extern "C" void
-rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
+rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol __attribute__((unused)))
 {
     struct rt_sketch_internal *eip;
 
@@ -152,9 +145,6 @@ rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol
     RT_SKETCH_CK_MAGIC(eip);
 
     *b = ON_Brep::New();
-
-    ON_TextLog dump_to_stdout;
-    ON_TextLog* dump = &dump_to_stdout;
 
     ON_3dPoint plane_origin;
     ON_3dVector plane_x_dir, plane_y_dir;
@@ -171,7 +161,6 @@ rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol
     //  points for the vertices.
     for (int i = 0; i < eip->vert_count; i++) {
 	(*b)->NewVertex(sketch_plane->PointAt(eip->verts[i][0], eip->verts[i][1]), 0.0);
-	int vertind = (*b)->m_V.Count() - 1;
     }
 
     // Create the brep elements corresponding to the sketch lines, curves
@@ -206,16 +195,14 @@ rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol
 		} else {
 		    // need to calculated 3rd point on arc - look to sketch.c around line 581 for
 		    // logic
-		    ON_Arc* c3darc = new ON_Arc();
-		    ON_Curve* c3d = new ON_ArcCurve();
 		}
 		break;
 	    case CURVE_BEZIER_MAGIC:
 		bsg = (struct bezier_seg *)lng;
 		{
 		    ON_3dPointArray *bezpoints = new ON_3dPointArray(bsg->degree + 1);
-		    for (int i = 0; i < bsg->degree + 1; i++) {
-			bezpoints->Append((*b)->m_V[bsg->ctl_points[i]].Point());
+		    for (int j = 0; j < bsg->degree + 1; j++) {
+			bezpoints->Append((*b)->m_V[bsg->ctl_points[j]].Point());
 		    }
 		    ON_BezierCurve* bez3d = new ON_BezierCurve((const ON_3dPointArray)*bezpoints);
 		    ON_NurbsCurve* beznurb3d = ON_NurbsCurve::New();

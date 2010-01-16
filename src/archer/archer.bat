@@ -3,7 +3,7 @@
 REM                      A R C H E R . B A T
 REM  BRL-CAD
 REM 
-REM  Copyright (c) 2006-2009 United States Government as represented by
+REM  Copyright (c) 2006-2010 United States Government as represented by
 REM  the U.S. Army Research Laboratory.
 REM 
 REM  This library is free software; you can redistribute it and/or
@@ -23,7 +23,7 @@ REM
 SETLOCAL
 
 REM XXX FIXME: SHOULD NOT NEED TO SET BRLCAD_DATA OR CAD_VERSION XXX
-SET CAD_VERSION=7.16.3
+SET CAD_VERSION=7.16.4
 
 SET SAVE_CD=%CD%
 SET PATH=%~dp0

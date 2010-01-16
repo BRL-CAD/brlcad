@@ -1,7 +1,7 @@
 /*                          F B M S G . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -20,13 +20,10 @@
 /** @addtogroup libfb */
 /** @{ */
 /** @file fbmsg.h
+ *
  *  Types of packages used for the remote frame buffer
  *  communication between libfb/if_remote.c and fbserv/fbserv.c.
  *  This file is shared by those two modules.
- *
- *
- *  @author	Phil Dykstra
- *  @author	Michael John Muuss
  *
  */
 /** @} */

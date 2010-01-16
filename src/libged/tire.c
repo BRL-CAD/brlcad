@@ -1,7 +1,7 @@
 /*                          T I R E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -417,6 +417,16 @@ SolveEchelon(fastf_t **mat, fastf_t *result1)
  *                 Convert General Conic Equation                     *
  *                 Coefficients to BRL-CAD eto input                  *
  *                 Parameters                                         *
+ *                                                                    *
+ *   Note:  The general procedure here is to rotate and translate     *
+ *   the general conic equation into a form where the various         *
+ *   geometric parameters may be more easily obtained.  The solution  *
+ *   below is probably neither unique nor optimal, but appears to     *
+ *   function in most "common" tire cases.  To explore the problem    *
+ *   start by looking into methods of graphing the General Conic.     *
+ *   In particular, either here or even earlier in the process a      *
+ *   type check should be done to ensure an elliptical geometry has   *
+ *   been found, rather than parabolic or hyperboloic.                * 
  *                                                                    *
  **********************************************************************/
 static void

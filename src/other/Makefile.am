@@ -38,11 +38,7 @@ TCLDIR=
 endif
 
 if BUILD_TK
-if WITH_X11
 TKDIR=tk
-else !WITH_X11
-TKDIR=
-endif
 else !BUILD_TK
 TKDIR=
 endif
@@ -67,7 +63,7 @@ endif
 
 if BUILD_DOCS
 if BUILD_TKHTML3
-if WITH_X11
+if WITH_TK
 TKHTML3_MAKE=$(MAKE)
 else
 TKHTML3_MAKE=:
@@ -103,9 +99,9 @@ uninstall-local: tkhtml3-uninstall
 .PHONY : tkhtml3-all tkhtml3-install tkhtml3-clean tkhtml3-distclean tkhtml3-uninstall
 
 if BUILD_TKIMG
-if WITH_X11
+if WITH_TK
 TKIMGDIR=tkimg
-else !WITH_X11
+else !WITH_TK
 TKIMGDIR=
 endif
 else !BUILD_TKIMG

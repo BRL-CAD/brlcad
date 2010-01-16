@@ -1,7 +1,7 @@
 #                          G E D . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2009 United States Government as represented by
+# Copyright (c) 1998-2010 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -147,7 +147,12 @@ package provide cadwidgets::Ged 1.0
 	method copymat {args}
 	method cp {args}
 	method cpi {args}
+	method data_arrows {args}
 	method data_axes {args}
+	method data_labels {args}
+	method data_lines {args}
+	method data_move {args}
+	method data_pick {args}
 	method dbconcat {args}
 	method dbfind {args}
 	method dbip {args}
@@ -415,6 +420,10 @@ package provide cadwidgets::Ged 1.0
 	method ptranslate_mode {args}
 	method scale_mode {args}
 	method screen2view {args}
+	method sdata_arrows {args}
+	method sdata_axes {args}
+	method sdata_labels {args}
+	method sdata_lines {args}
 	method search {args}
 	method set_coord {args}
 	method set_fb_mode {args}
@@ -474,10 +483,17 @@ package provide cadwidgets::Ged 1.0
 
 	method ? {}
 	method apropos {key}
+	method begin_data_arrow {_pane _x _y}
+	method begin_data_line {_pane _x _y}
+	method begin_data_move {_pane _x _y}
 	method begin_view_measure {_pane _x _y}
 	method default_views {}
+	method end_data_arrow {_pane}
+	method end_data_line {_pane}
+	method end_data_move {_pane}
 	method end_view_measure {_pane}
 	method getUserCmds {}
+	method handle_data_move {_pane _dtype _dindex _x _y}
 	method handle_view_measure {_pane _x _y}
 	method handle_view_rotate_end {_pane}
 	method handle_view_scale_end {_pane}
@@ -485,6 +501,11 @@ package provide cadwidgets::Ged 1.0
 	method help {args}
 	method history_callback {args}
 	method init_comp_pick {}
+	method init_data_arrow {}
+	method init_data_label {}
+	method init_data_line {}
+	method init_data_move {}
+	method init_data_pick {}
 	method init_view_bindings {{_type default}}
 	method init_view_center {}
 	method init_view_measure {}
@@ -493,21 +514,61 @@ package provide cadwidgets::Ged 1.0
 	method init_view_translate {}
 	method center_ray {{_pflag 0}}
 	method mouse_ray {_x _y {_pflag 0}}
+	method pane_mouse_3dpoint {_pane _x _y {_vflag 1}}
+	method pane_mouse_data_label {_pane _x _y}
+	method pane_mouse_data_pick {_pane _x _y}
 	method pane_mouse_ray {_pane _x _y {_pflag 0}}
 	method pane {args}
 	method shoot_ray {_start _op _target _prep _no_bool _onehit}
 
+	method add_begin_data_arrow_callback {_callback}
+	method clear_begin_data_arrow_callback_list {}
+	method delete_begin_data_arrow_callback {_callback}
+
+	method add_end_data_arrow_callback {_callback}
+	method clear_end_data_arrow_callback_list {}
+	method delete_end_data_arrow_callback {_callback}
+
+	method add_begin_data_line_callback {_callback}
+	method clear_begin_data_line_callback_list {}
+	method delete_begin_data_line_callback {_callback}
+
+	method add_end_data_line_callback {_callback}
+	method clear_end_data_line_callback_list {}
+	method delete_end_data_line_callback {_callback}
+
+	method add_begin_data_move_callback {_callback}
+	method clear_begin_data_move_callback_list {}
+	method delete_begin_data_move_callback {_callback}
+
+	method add_end_data_move_callback {_callback}
+	method clear_end_data_move_callback_list {}
+	method delete_end_data_move_callback {_callback}
+
+	method add_mouse_data_callback {_callback}
+	method clear_mouse_data_callback_list {}
+	method delete_mouse_data_callback {_callback}
+
 	method add_mouse_ray_callback {_callback}
 	method clear_mouse_ray_callback_list {}
 	method delete_mouse_ray_callback {_callback}
+
+	method add_data_label_callback {_callback}
+	method clear_data_label_callback_list {}
+	method delete_data_label_callback {_callback}
+
+	method add_data_move_callback {_callback}
+	method clear_data_move_callback_list {}
+	method delete_data_move_callback {_callback}
+
+	method add_view_measure_callback {_callback}
+	method clear_view_measure_callback_list {}
+	method delete_view_measure_callback {_callback}
  
 	#XXX Still needs to be resolved
 	method set_outputHandler {args}
 	method fb_active {args}
 
-#	method get_ged_color {_color}
-#	method get_rgb_color {_color}
-#	method get_vdraw_color {_color}
 	proc get_ged_color {_color}
 	proc get_rgb_color {_color}
 	proc get_vdraw_color {_color}
@@ -520,9 +581,25 @@ package provide cadwidgets::Ged 1.0
 	variable mMeasureEnd
 	variable mMeasureStart
 	variable mMeasuringStickColorVDraw ffff00
-	variable mMouseRayCallbacks ""
 	variable mRefreshOn 1
+	variable mLastDataType ""
+	variable mLastDataIndex ""
 	variable mLastMouseRayPos ""
+	variable mLastMousePos ""
+	variable mBegin3DPoint ""
+	variable mEnd3DPoint ""
+
+	variable mBeginDataArrowCallbacks ""
+	variable mBeginDataLineCallbacks ""
+	variable mBeginDataMoveCallbacks ""
+	variable mDataLabelCallbacks ""
+	variable mDataMoveCallbacks ""
+	variable mEndDataArrowCallbacks ""
+	variable mEndDataLineCallbacks ""
+	variable mEndDataMoveCallbacks ""
+	variable mMouseDataCallbacks ""
+	variable mMouseRayCallbacks ""
+	variable mViewMeasureCallbacks ""
 
 	method multi_pane {args}
 	method new_view {args}
@@ -961,11 +1038,60 @@ package provide cadwidgets::Ged 1.0
     eval $mGed cpi $args
 }
 
+::itcl::body cadwidgets::Ged::data_arrows {args} {
+    set len [llength $args]
+    if {$len < 2} {
+	return [eval $mGed data_arrows $itk_component($itk_option(-pane)) $args]
+    }
+
+    eval $mGed data_arrows $itk_component(ur) $args
+    eval $mGed data_arrows $itk_component(ul) $args
+    eval $mGed data_arrows $itk_component(ll) $args
+    eval $mGed data_arrows $itk_component(lr) $args
+}
+
 ::itcl::body cadwidgets::Ged::data_axes {args} {
+    set len [llength $args]
+    if {$len < 2} {
+	return [eval $mGed data_axes $itk_component($itk_option(-pane)) $args]
+    }
+
     eval $mGed data_axes $itk_component(ur) $args
     eval $mGed data_axes $itk_component(ul) $args
     eval $mGed data_axes $itk_component(ll) $args
     eval $mGed data_axes $itk_component(lr) $args
+}
+
+::itcl::body cadwidgets::Ged::data_labels {args} {
+    set len [llength $args]
+    if {$len < 2} {
+	return [eval $mGed data_labels $itk_component($itk_option(-pane)) $args]
+    }
+
+    eval $mGed data_labels $itk_component(ur) $args
+    eval $mGed data_labels $itk_component(ul) $args
+    eval $mGed data_labels $itk_component(ll) $args
+    eval $mGed data_labels $itk_component(lr) $args
+}
+
+::itcl::body cadwidgets::Ged::data_lines {args} {
+    set len [llength $args]
+    if {$len < 2} {
+	return [eval $mGed data_lines $itk_component($itk_option(-pane)) $args]
+    }
+
+    eval $mGed data_lines $itk_component(ur) $args
+    eval $mGed data_lines $itk_component(ul) $args
+    eval $mGed data_lines $itk_component(ll) $args
+    eval $mGed data_lines $itk_component(lr) $args
+}
+
+::itcl::body cadwidgets::Ged::data_move {args} {
+    eval $mGed data_move $itk_component($itk_option(-pane)) $args
+}
+
+::itcl::body cadwidgets::Ged::data_pick {args} {
+    eval $mGed data_pick $itk_component($itk_option(-pane)) $args
 }
 
 ::itcl::body cadwidgets::Ged::dbconcat {args} {
@@ -2080,6 +2206,54 @@ package provide cadwidgets::Ged 1.0
     eval $mGed scale_mode $itk_component($itk_option(-pane)) $args
 }
 
+::itcl::body cadwidgets::Ged::sdata_arrows {args} {
+    set len [llength $args]
+    if {$len < 2} {
+	return [eval $mGed sdata_arrows $itk_component($itk_option(-pane)) $args]
+    }
+
+    eval $mGed sdata_arrows $itk_component(ur) $args
+    eval $mGed sdata_arrows $itk_component(ul) $args
+    eval $mGed sdata_arrows $itk_component(ll) $args
+    eval $mGed sdata_arrows $itk_component(lr) $args
+}
+
+::itcl::body cadwidgets::Ged::sdata_axes {args} {
+    set len [llength $args]
+    if {$len < 2} {
+	return [eval $mGed sdata_axes $itk_component($itk_option(-pane)) $args]
+    }
+
+    eval $mGed sdata_axes $itk_component(ur) $args
+    eval $mGed sdata_axes $itk_component(ul) $args
+    eval $mGed sdata_axes $itk_component(ll) $args
+    eval $mGed sdata_axes $itk_component(lr) $args
+}
+
+::itcl::body cadwidgets::Ged::sdata_labels {args} {
+    set len [llength $args]
+    if {$len < 2} {
+	return [eval $mGed sdata_labels $itk_component($itk_option(-pane)) $args]
+    }
+
+    eval $mGed sdata_labels $itk_component(ur) $args
+    eval $mGed sdata_labels $itk_component(ul) $args
+    eval $mGed sdata_labels $itk_component(ll) $args
+    eval $mGed sdata_labels $itk_component(lr) $args
+}
+
+::itcl::body cadwidgets::Ged::sdata_lines {args} {
+    set len [llength $args]
+    if {$len < 2} {
+	return [eval $mGed sdata_lines $itk_component($itk_option(-pane)) $args]
+    }
+
+    eval $mGed sdata_lines $itk_component(ur) $args
+    eval $mGed sdata_lines $itk_component(ul) $args
+    eval $mGed sdata_lines $itk_component(ll) $args
+    eval $mGed sdata_lines $itk_component(lr) $args
+}
+
 ::itcl::body cadwidgets::Ged::search {args} {
     eval $mGed search $args
 }
@@ -2328,7 +2502,75 @@ package provide cadwidgets::Ged 1.0
     return [eval $help apropos $args]
 }
 
+# Create a new arrow with both points the same.
+# Go into data move mode for this arrow and it's second point.
+#
+::itcl::body cadwidgets::Ged::begin_data_arrow {_pane _x _y} {
+    set mLastMousePos "$_x $_y"
+    set point [pane_mouse_3dpoint $_pane $_x $_y]
+
+    if {$point == ""} {
+	return
+    }
+
+    foreach callback $mBeginDataArrowCallbacks {
+	catch {$callback $point}
+    }
+
+    #XXX Temporarily depend on callbacks to create the arrow
+    set points [$mGed data_arrows $itk_component($_pane) points]
+    set dindex [llength $points]
+    incr dindex -1
+
+    # start receiving motion events
+    bind $itk_component($_pane) <Motion> "[::itcl::code $this handle_data_move $_pane data_arrows $dindex %x %y]; break"
+}
+
+::itcl::body cadwidgets::Ged::begin_data_line {_pane _x _y} {
+    set mLastMousePos "$_x $_y"
+    set point [pane_mouse_3dpoint $_pane $_x $_y]
+
+    if {$point == ""} {
+	return
+    }
+
+    foreach callback $mBeginDataLineCallbacks {
+	catch {$callback $point}
+    }
+
+    #XXX Temporarily depend on callbacks to create the line
+    set points [$mGed data_lines $itk_component($_pane) points]
+    set dindex [llength $points]
+    incr dindex -1
+
+    # start receiving motion events
+    bind $itk_component($_pane) <Motion> "[::itcl::code $this handle_data_move $_pane data_lines $dindex %x %y]; break"
+}
+
+::itcl::body cadwidgets::Ged::begin_data_move {_pane _x _y} {
+    set mLastMousePos "$_x $_y"
+    set data [$mGed data_pick $itk_component($_pane) $_x $_y]
+    set mLastDataType ""
+
+    if {$data == ""} {
+	return
+    }
+
+    foreach callback $mBeginDataMoveCallbacks {
+	catch {$callback $point}
+    }
+
+    set mLastDataType [lindex $data 0]
+    set mLastDataIndex [lindex $data 1]
+
+    # start receiving motion events
+    bind $itk_component($_pane) <Motion> "[::itcl::code $this handle_data_move $_pane $mLastDataType $mLastDataIndex %x %y]; break"
+}
+
 ::itcl::body cadwidgets::Ged::begin_view_measure {_pane _x _y} {
+    set mLastMousePos "$_x $_y"
+    set mBegin3DPoint [pane_mouse_3dpoint $_pane $_x $_y]
+
     if {$itk_option(-measuringStickMode) == 0} {
 	# Draw on the front face of the viewing cube
 	set view [$mGed screen2view $itk_component($_pane) $_x $_y]
@@ -2353,24 +2595,161 @@ package provide cadwidgets::Ged 1.0
     $mGed aet $itk_component(lr) 90 0 0
 }
 
+::itcl::body cadwidgets::Ged::end_data_arrow {_pane} {
+    $mGed idle_mode $itk_component($_pane)
+
+    if {$mLastMousePos == ""} {
+	return
+    }
+
+    refresh_off
+    $mGed data_arrows $itk_component($_pane) draw 0
+    set point [eval pane_mouse_3dpoint $_pane $mLastMousePos]
+    $mGed data_arrows $itk_component($_pane) draw 1
+    set mLastMousePos ""
+
+    # replace last point
+    set points [$mGed data_arrows $itk_component($_pane) points]
+    set points [lreplace $points end end $point]
+    $mGed data_arrows $itk_component($_pane) points $points
+
+    foreach callback $mEndDataArrowCallbacks {
+	catch {$callback $point}
+    }
+
+    refresh_on
+    refresh_all
+}
+
+::itcl::body cadwidgets::Ged::end_data_line {_pane} {
+    $mGed idle_mode $itk_component($_pane)
+
+    if {$mLastMousePos == ""} {
+	return
+    }
+
+    refresh_off
+    $mGed data_lines $itk_component($_pane) draw 0
+    set point [eval pane_mouse_3dpoint $_pane $mLastMousePos]
+    $mGed data_lines $itk_component($_pane) draw 1
+    set mLastMousePos ""
+
+    # replace last point
+    set points [$mGed data_lines $itk_component($_pane) points]
+    set points [lreplace $points end end $point]
+    $mGed data_lines $itk_component($_pane) points $points
+
+    foreach callback $mEndDataLineCallbacks {
+	catch {$callback $point}
+    }
+
+    refresh_on
+    refresh_all
+}
+
+::itcl::body cadwidgets::Ged::end_data_move {_pane} {
+    $mGed idle_mode $itk_component($_pane)
+
+    if {$mLastMousePos == "" || $mLastDataType == ""} { 
+	return
+    }
+
+    refresh_off
+    $mGed $mLastDataType $itk_component($_pane) draw 0
+    set point [eval pane_mouse_3dpoint $_pane $mLastMousePos 0]
+    $mGed $mLastDataType $itk_component($_pane) draw 1
+    set mLastMousePos ""
+
+    # Replace the mLastDataIndex point with this point
+    if {$point != ""} {
+	if {$mLastDataType == "data_labels" || $mLastDataType == "sdata_labels"} {
+	    set labels [$mGed $mLastDataType $itk_component($_pane) labels]
+	    set label [lindex $labels $mLastDataIndex]
+	    set label [lreplace $label 1 1 $point]
+	    set labels [lreplace $labels $mLastDataIndex $mLastDataIndex $label]
+	    $mGed $mLastDataType $itk_component($_pane) labels $labels
+	} else {
+
+	    set points [$mGed $mLastDataType $itk_component($_pane) points]
+	    set points [lreplace $points $mLastDataIndex $mLastDataIndex $point]
+	    $mGed $mLastDataType $itk_component($_pane) points $points
+	}
+    }
+
+    foreach callback $mEndDataMoveCallbacks {
+	catch {$callback $mLastDataType}
+    }
+    refresh_on
+    refresh_all
+}
+
 ::itcl::body cadwidgets::Ged::end_view_measure {_pane} {
     $mGed idle_mode $itk_component($_pane)
+
+    if {$mLastMousePos == ""} {
+	return
+    }
+
+    refresh_off
 
     catch {$mGed vdraw vlist delete $MEASURING_STICK}
     $mGed erase _VDRW$MEASURING_STICK
 
-    set diff [vsub2 $mMeasureEnd $mMeasureStart]
+    set mEnd3DPoint [eval pane_mouse_3dpoint $_pane $mLastMousePos]
+    set mLastMousePos ""
+
+# Use this for 2D
+#    set diff [vsub2 $mMeasureEnd $mMeasureStart]
+
+    set diff [vsub2 $mEnd3DPoint $mBegin3DPoint]
     set delta [expr {[magnitude $diff] * [$mGed base2local $itk_component($_pane)]}]
-    tk_messageBox -title "Measured Distance" \
-	-icon info \
-	-message "Measured distance:  $delta [$mGed units]"
+
+    set mstring "Measured distance:  $delta [$mGed units -s]"
+
+    if {[llength $mViewMeasureCallbacks] == 0} {
+	tk_messageBox -title "Measured Distance" \
+	    -icon info \
+	    -message $mstring
+    } else {
+	foreach callback $mViewMeasureCallbacks {
+	    catch {$callback $mstring}
+	}
+    }
+
+    refresh_on
+    refresh_all
 }
 
 ::itcl::body cadwidgets::Ged::getUserCmds {} {
     return [$help getCmds]
 }
 
+::itcl::body cadwidgets::Ged::handle_data_move {_pane _dtype _dindex _x _y} {
+    refresh_off
+    set mLastMousePos "$_x $_y"
+    $mGed data_move $itk_component($_pane) $_dtype $_dindex $_x $_y
+
+    if {$_dtype == "data_labels" || $_dtype == "sdata_labels"} {
+	set labels [$mGed $_dtype $itk_component($_pane) labels]
+
+	$mGed $_dtype $itk_component(ur) labels $labels
+	$mGed $_dtype $itk_component(ul) labels $labels
+	$mGed $_dtype $itk_component(ll) labels $labels
+	$mGed $_dtype $itk_component(lr) labels $labels
+    } else {
+	set points [$mGed $_dtype $itk_component($_pane) points]
+
+	$mGed $_dtype $itk_component(ur) points $points
+	$mGed $_dtype $itk_component(ul) points $points
+	$mGed $_dtype $itk_component(ll) points $points
+	$mGed $_dtype $itk_component(lr) points $points
+    }
+    refresh_on
+    refresh_all
+}
+
 ::itcl::body cadwidgets::Ged::handle_view_measure {_pane _x _y} {
+    set mLastMousePos "$_x $_y"
     catch {$mGed vdraw vlist delete $MEASURING_STICK}
 
     if {$itk_option(-measuringStickMode) == 0} {
@@ -2434,6 +2813,66 @@ package provide cadwidgets::Ged 1.0
     bind $itk_component(ul) <1> "[::itcl::code $this pane_mouse_ray ul %x %y]; break"
     bind $itk_component(ll) <1> "[::itcl::code $this pane_mouse_ray ll %x %y]; break"
     bind $itk_component(lr) <1> "[::itcl::code $this pane_mouse_ray lr %x %y]; break"
+
+    bind $itk_component(ur) <ButtonRelease-1> ""
+    bind $itk_component(ul) <ButtonRelease-1> ""
+    bind $itk_component(ll) <ButtonRelease-1> ""
+    bind $itk_component(lr) <ButtonRelease-1> ""
+}
+
+::itcl::body cadwidgets::Ged::init_data_arrow {} {
+    bind $itk_component(ur) <1> "[::itcl::code $this begin_data_arrow ur %x %y]; break"
+    bind $itk_component(ul) <1> "[::itcl::code $this begin_data_arrow ul %x %y]; break"
+    bind $itk_component(ll) <1> "[::itcl::code $this begin_data_arrow ll %x %y]; break"
+    bind $itk_component(lr) <1> "[::itcl::code $this begin_data_arrow lr %x %y]; break"
+
+    bind $itk_component(ur) <ButtonRelease-1> "[::itcl::code $this end_data_arrow ur]; break"
+    bind $itk_component(ul) <ButtonRelease-1> "[::itcl::code $this end_data_arrow ul]; break"
+    bind $itk_component(ll) <ButtonRelease-1> "[::itcl::code $this end_data_arrow ll]; break"
+    bind $itk_component(lr) <ButtonRelease-1> "[::itcl::code $this end_data_arrow lr]; break"
+}
+
+::itcl::body cadwidgets::Ged::init_data_label {} {
+    bind $itk_component(ur) <1> "[::itcl::code $this pane_mouse_data_label ur %x %y]; break"
+    bind $itk_component(ul) <1> "[::itcl::code $this pane_mouse_data_label ul %x %y]; break"
+    bind $itk_component(ll) <1> "[::itcl::code $this pane_mouse_data_label ll %x %y]; break"
+    bind $itk_component(lr) <1> "[::itcl::code $this pane_mouse_data_label lr %x %y]; break"
+
+    bind $itk_component(ur) <ButtonRelease-1> ""
+    bind $itk_component(ul) <ButtonRelease-1> ""
+    bind $itk_component(ll) <ButtonRelease-1> ""
+    bind $itk_component(lr) <ButtonRelease-1> ""
+}
+
+::itcl::body cadwidgets::Ged::init_data_line {} {
+    bind $itk_component(ur) <1> "[::itcl::code $this begin_data_line ur %x %y]; break"
+    bind $itk_component(ul) <1> "[::itcl::code $this begin_data_line ul %x %y]; break"
+    bind $itk_component(ll) <1> "[::itcl::code $this begin_data_line ll %x %y]; break"
+    bind $itk_component(lr) <1> "[::itcl::code $this begin_data_line lr %x %y]; break"
+
+    bind $itk_component(ur) <ButtonRelease-1> "[::itcl::code $this end_data_line ur]; break"
+    bind $itk_component(ul) <ButtonRelease-1> "[::itcl::code $this end_data_line ul]; break"
+    bind $itk_component(ll) <ButtonRelease-1> "[::itcl::code $this end_data_line ll]; break"
+    bind $itk_component(lr) <ButtonRelease-1> "[::itcl::code $this end_data_line lr]; break"
+}
+
+::itcl::body cadwidgets::Ged::init_data_move {} {
+    bind $itk_component(ur) <1> "[::itcl::code $this begin_data_move ur %x %y]; break"
+    bind $itk_component(ul) <1> "[::itcl::code $this begin_data_move ul %x %y]; break"
+    bind $itk_component(ll) <1> "[::itcl::code $this begin_data_move ll %x %y]; break"
+    bind $itk_component(lr) <1> "[::itcl::code $this begin_data_move lr %x %y]; break"
+
+    bind $itk_component(ur) <ButtonRelease-1> "[::itcl::code $this end_data_move ur]; break"
+    bind $itk_component(ul) <ButtonRelease-1> "[::itcl::code $this end_data_move ul]; break"
+    bind $itk_component(ll) <ButtonRelease-1> "[::itcl::code $this end_data_move ll]; break"
+    bind $itk_component(lr) <ButtonRelease-1> "[::itcl::code $this end_data_move lr]; break"
+}
+
+::itcl::body cadwidgets::Ged::init_data_pick {} {
+    bind $itk_component(ur) <1> "[::itcl::code $this pane_mouse_data_pick ur %x %y]; break"
+    bind $itk_component(ul) <1> "[::itcl::code $this pane_mouse_data_pick ul %x %y]; break"
+    bind $itk_component(ll) <1> "[::itcl::code $this pane_mouse_data_pick ll %x %y]; break"
+    bind $itk_component(lr) <1> "[::itcl::code $this pane_mouse_data_pick lr %x %y]; break"
 
     bind $itk_component(ur) <ButtonRelease-1> ""
     bind $itk_component(ul) <ButtonRelease-1> ""
@@ -2592,6 +3031,89 @@ package provide cadwidgets::Ged 1.0
     pane_mouse_ray $itk_option(-pane) $_x $_y $_pflag
 }
 
+## pane_mouse_3dpoint
+#
+# First, try to pick a data point.
+# If that fails, try to pick a point on an object.
+# Lastly, if all else fails, pick a point on the view plane.
+#
+::itcl::body cadwidgets::Ged::pane_mouse_3dpoint {_pane _x _y {_vflag 1}} {
+    set pdata [$mGed data_pick $itk_component($_pane) $_x $_y]
+
+    if {$pdata == ""} {
+	set partitions [pane_mouse_ray $_pane $_x $_y 1]
+
+	if {$partitions == ""} {
+	    if {!$_vflag} {
+		return
+	    }
+
+	    refresh_off
+	    set saved_center [$mGed center $itk_component($_pane)]
+	    eval $mGed vslew $itk_component($_pane) $mLastMouseRayPos
+	    set point [vscale [$mGed center $itk_component($_pane)] [$mGed local2base $itk_component($_pane)]]
+	    $mGed center $itk_component($_pane) $saved_center
+	    refresh_on
+	} else {
+	    set partition [lindex $partitions 0]
+
+	    if {[catch {bu_get_value_by_keyword in $partition} in]} {
+		putString "Partition does not contain an \"in\""
+		putString "$in"
+		return
+	    }
+
+	    if {[catch {bu_get_value_by_keyword point $in} point]} {
+		putString "Partition does not contain an \"in\" point"
+		putString "$point"
+		return
+	    }
+	}
+    } else {
+	set dtype [lindex $pdata 0]
+	set dindex [lindex $pdata 1]
+
+	if {$dtype == "data_labels"} {
+	    set labels [$mGed $dtype $itk_component($_pane) labels]
+	    set label [lindex $labels $dindex]
+	    set point [lindex $label 1]
+	} else {
+	    set points [$mGed $dtype $itk_component($_pane) points]
+	    set point [lindex $points $dindex]
+	}
+    }
+
+    return $point
+}
+
+::itcl::body cadwidgets::Ged::pane_mouse_data_label {_pane _x _y} {
+    set mLastMousePos "$_x $_y"
+    set point [pane_mouse_3dpoint $_pane $_x $_y]
+
+    if {$point == ""} {
+	return
+    }
+
+    #XXX Temporarily depend on callbacks to create the label
+    # should prompt the user for a label via the callback, then create
+
+    foreach callback $mDataLabelCallbacks {
+	catch {$callback $point}
+    }
+}
+
+::itcl::body cadwidgets::Ged::pane_mouse_data_pick {_pane _x _y} {
+    set pdata [$mGed data_pick $itk_component($_pane) $_x $_y]
+
+    if {[llength $mMouseDataCallbacks] == 0} {
+	tk_messageBox -message "pdata - $pdata"
+    } else {
+	foreach callback $mMouseDataCallbacks {
+	    catch {$callback $pdata} msg
+	}
+    }
+}
+
 ::itcl::body cadwidgets::Ged::pane_mouse_ray {_pane _x _y {_pflag 0}} {
     set mLastMouseRayPos "$_x $_y"
 
@@ -2650,6 +3172,10 @@ package provide cadwidgets::Ged 1.0
     if {!$itk_option(-multi_pane)} {
 	# nothing to do
 	if {$mPrivPane == $itk_option(-pane)} {
+	    if {$itk_option(-paneCallback) != ""} {
+		catch {eval $itk_option(-paneCallback) $args}
+	    }
+
 	    return
 	}
 
@@ -2753,12 +3279,141 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::shoot_ray {_start _op _target _prep _no_bool _onehit} {
-    eval $mGed rt_gettrees ray -i -u [$mGed who]
-    ray prep $_prep
-    ray no_bool $_no_bool
-    ray onehit $_onehit
+    SetWaitCursor $this
 
-    return [ray shootray $_start $_op $_target]
+    set result ""
+    catch {
+	eval $mGed rt_gettrees ray -i -u [$mGed who]
+	ray prep $_prep
+	ray no_bool $_no_bool
+	ray onehit $_onehit
+
+	set result [ray shootray $_start $_op $_target]
+    }
+
+    SetNormalCursor $this
+
+    return $result
+}
+
+::itcl::body cadwidgets::Ged::add_begin_data_arrow_callback {_callback} {
+    set i [lsearch $mBeginDataArrowCallbacks $_callback]
+
+    # Add if not already in list
+    if {$i == -1} {
+	lappend mBeginDataArrowCallbacks $_callback
+    }
+}
+
+::itcl::body cadwidgets::Ged::clear_begin_data_arrow_callback_list {} {
+    set mBeginDataArrowCallbacks {}
+}
+
+::itcl::body cadwidgets::Ged::delete_begin_data_arrow_callback {_callback} {
+    set i [lsearch $mBeginDataArrowCallbacks $_callback]
+    if {$i != -1} {
+	set mBeginDataArrowCallbacks [lreplace $mBeginDataArrowCallbacks $i $i]
+    }
+}
+
+::itcl::body cadwidgets::Ged::add_end_data_arrow_callback {_callback} {
+    set i [lsearch $mEndDataArrowCallbacks $_callback]
+
+    # Add if not already in list
+    if {$i == -1} {
+	lappend mEndDataArrowCallbacks $_callback
+    }
+}
+
+::itcl::body cadwidgets::Ged::clear_end_data_arrow_callback_list {} {
+    set mEndDataArrowCallbacks {}
+}
+
+::itcl::body cadwidgets::Ged::delete_end_data_arrow_callback {_callback} {
+    set i [lsearch $mEndDataArrowCallbacks $_callback]
+    if {$i != -1} {
+	set mEndDataArrowCallbacks [lreplace $mEndDataArrowCallbacks $i $i]
+    }
+}
+
+::itcl::body cadwidgets::Ged::add_begin_data_line_callback {_callback} {
+    set i [lsearch $mBeginDataLineCallbacks $_callback]
+
+    # Add if not already in list
+    if {$i == -1} {
+	lappend mBeginDataLineCallbacks $_callback
+    }
+}
+
+::itcl::body cadwidgets::Ged::clear_begin_data_line_callback_list {} {
+    set mBeginDataLineCallbacks {}
+}
+
+::itcl::body cadwidgets::Ged::delete_begin_data_line_callback {_callback} {
+    set i [lsearch $mBeginDataLineCallbacks $_callback]
+    if {$i != -1} {
+	set mBeginDataLineCallbacks [lreplace $mBeginDataLineCallbacks $i $i]
+    }
+}
+
+::itcl::body cadwidgets::Ged::add_end_data_line_callback {_callback} {
+    set i [lsearch $mEndDataLineCallbacks $_callback]
+
+    # Add if not already in list
+    if {$i == -1} {
+	lappend mEndDataLineCallbacks $_callback
+    }
+}
+
+::itcl::body cadwidgets::Ged::clear_end_data_line_callback_list {} {
+    set mEndDataLineCallbacks {}
+}
+
+::itcl::body cadwidgets::Ged::delete_end_data_line_callback {_callback} {
+    set i [lsearch $mEndDataLineCallbacks $_callback]
+    if {$i != -1} {
+	set mEndDataLineCallbacks [lreplace $mEndDataLineCallbacks $i $i]
+    }
+}
+
+::itcl::body cadwidgets::Ged::add_begin_data_move_callback {_callback} {
+    set i [lsearch $mBeginDataMoveCallbacks $_callback]
+
+    # Add if not already in list
+    if {$i == -1} {
+	lappend mBeginDataMoveCallbacks $_callback
+    }
+}
+
+::itcl::body cadwidgets::Ged::clear_begin_data_move_callback_list {} {
+    set mBeginDataMoveCallbacks {}
+}
+
+::itcl::body cadwidgets::Ged::delete_begin_data_move_callback {_callback} {
+    set i [lsearch $mBeginDataMoveCallbacks $_callback]
+    if {$i != -1} {
+	set mBeginDataMoveCallbacks [lreplace $mBeginDataMoveCallbacks $i $i]
+    }
+}
+
+::itcl::body cadwidgets::Ged::add_end_data_move_callback {_callback} {
+    set i [lsearch $mEndDataMoveCallbacks $_callback]
+
+    # Add if not already in list
+    if {$i == -1} {
+	lappend mEndDataMoveCallbacks $_callback
+    }
+}
+
+::itcl::body cadwidgets::Ged::clear_end_data_move_callback_list {} {
+    set mEndDataMoveCallbacks {}
+}
+
+::itcl::body cadwidgets::Ged::delete_end_data_move_callback {_callback} {
+    set i [lsearch $mEndDataMoveCallbacks $_callback]
+    if {$i != -1} {
+	set mEndDataMoveCallbacks [lreplace $mEndDataMoveCallbacks $i $i]
+    }
 }
 
 ::itcl::body cadwidgets::Ged::add_mouse_ray_callback {_callback} {
@@ -2778,6 +3433,86 @@ package provide cadwidgets::Ged 1.0
     set i [lsearch $mMouseRayCallbacks $_callback]
     if {$i != -1} {
 	set mMouseRayCallbacks [lreplace $mMouseRayCallbacks $i $i]
+    }
+}
+
+::itcl::body cadwidgets::Ged::add_mouse_data_callback {_callback} {
+    set i [lsearch $mMouseDataCallbacks $_callback]
+
+    # Add if not already in list
+    if {$i == -1} {
+	lappend mMouseDataCallbacks $_callback
+    }
+}
+
+::itcl::body cadwidgets::Ged::clear_mouse_data_callback_list {} {
+    set mMouseDataCallbacks {}
+}
+
+::itcl::body cadwidgets::Ged::delete_mouse_data_callback {_callback} {
+    set i [lsearch $mMouseDataCallbacks $_callback]
+    if {$i != -1} {
+	set mMouseDataCallbacks [lreplace $mMouseDataCallbacks $i $i]
+    }
+}
+
+::itcl::body cadwidgets::Ged::add_data_label_callback {_callback} {
+    set i [lsearch $mDataLabelCallbacks $_callback]
+
+    # Add if not already in list
+    if {$i == -1} {
+	lappend mDataLabelCallbacks $_callback
+    }
+}
+
+::itcl::body cadwidgets::Ged::clear_data_label_callback_list {} {
+    set mDataLabelCallbacks {}
+}
+
+::itcl::body cadwidgets::Ged::delete_data_label_callback {_callback} {
+    set i [lsearch $mDataLabelCallbacks $_callback]
+    if {$i != -1} {
+	set mDataLabelCallbacks [lreplace $mDataLabelCallbacks $i $i]
+    }
+}
+
+::itcl::body cadwidgets::Ged::add_data_move_callback {_callback} {
+    set i [lsearch $mDataMoveCallbacks $_callback]
+
+    # Add if not already in list
+    if {$i == -1} {
+	lappend mDataMoveCallbacks $_callback
+    }
+}
+
+::itcl::body cadwidgets::Ged::clear_data_move_callback_list {} {
+    set mDataMoveCallbacks {}
+}
+
+::itcl::body cadwidgets::Ged::delete_data_move_callback {_callback} {
+    set i [lsearch $mDataMoveCallbacks $_callback]
+    if {$i != -1} {
+	set mDataMoveCallbacks [lreplace $mDataMoveCallbacks $i $i]
+    }
+}
+
+::itcl::body cadwidgets::Ged::add_view_measure_callback {_callback} {
+    set i [lsearch $mViewMeasureCallbacks $_callback]
+
+    # Add if not already in list
+    if {$i == -1} {
+	lappend mViewMeasureCallbacks $_callback
+    }
+}
+
+::itcl::body cadwidgets::Ged::clear_view_measure_callback_list {} {
+    set mViewMeasureCallbacks {}
+}
+
+::itcl::body cadwidgets::Ged::delete_view_measure_callback {_callback} {
+    set i [lsearch $mViewMeasureCallbacks $_callback]
+    if {$i != -1} {
+	set mViewMeasureCallbacks [lreplace $mViewMeasureCallbacks $i $i]
     }
 }
 
@@ -3206,6 +3941,16 @@ package provide cadwidgets::Ged 1.0
     $help add ypr		{{yaw pitch roll} {set the view orientation given the yaw, pitch and roll}}
     $help add zap		{{} {clear screen}}
     $help add zoom		{{sf} {zoom view by specified scale factor}}
+    $help add data_arrows	{{} {}}
+    $help add data_axes		{{} {}}
+    $help add data_labels	{{} {}}
+    $help add data_lines	{{} {}}
+    $help add data_move 	{{} {}}
+    $help add data_pick 	{{} {}}
+    $help add sdata_arrows	{{} {}}
+    $help add sdata_axes	{{} {}}
+    $help add sdata_labels	{{} {}}
+    $help add sdata_lines	{{} {}}
 }
 
 # Local Variables:

@@ -1,7 +1,7 @@
 /*                     P I X B O R D E R . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2009 United States Government as represented by
+ * Copyright (c) 1996-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -359,9 +359,9 @@ static int is_border (unsigned char *prp, unsigned char *trp, unsigned char *nrp
  *		    G E T _ A R G S ( )
  */
 static int
-get_args (int argc, register char **argv)
+get_args (int argc, char **argv)
 {
-    register int c;
+    int c;
 
     while ((c = bu_getopt( argc, argv, OPT_STRING)) != EOF)
     {

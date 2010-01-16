@@ -1,7 +1,7 @@
 /*                         M U V E S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -214,7 +214,7 @@ f_read_muves(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	regions[reg_count].dp = dp;
 	regions[reg_count].region_id = comb->region_id;
 
-	rt_db_free_internal( &intern, &rt_uniresource );
+	rt_db_free_internal(&intern);
 	reg_count++;
     } FOR_ALL_DIRECTORY_END;
 

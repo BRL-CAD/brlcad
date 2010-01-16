@@ -1,7 +1,7 @@
 /*                 Parabola.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,9 +38,9 @@ Parabola::Parabola() {
 	id = 0;
 }
 
-Parabola::Parabola(STEPWrapper *sw,int STEPid) {
+Parabola::Parabola(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 Parabola::~Parabola() {
@@ -52,7 +52,7 @@ Parabola::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 	id = sse->STEPfile_id;
 
 	if ( !Conic::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::Conic." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::Conic." << std::endl;
 		return false;
 	}
 
@@ -67,13 +67,13 @@ Parabola::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 void
 Parabola::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << name << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Attributes:" << endl;
-	TAB(level+1); cout << "focal_dist:" << focal_dist << endl;
+	TAB(level); std::cout << "Attributes:" << std::endl;
+	TAB(level+1); std::cout << "focal_dist:" << focal_dist << std::endl;
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	Conic::Print(level+1);
 }
 STEPEntity *
@@ -85,7 +85,7 @@ Parabola::Create(STEPWrapper *sw,SCLP23(Application_instance) *sse){
 		Factory::AddObject(object);
 
 		if (!object->Load(sw,sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

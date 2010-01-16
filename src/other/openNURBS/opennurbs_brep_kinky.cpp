@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -18,9 +17,9 @@
 
 
 bool ON_Brep::SplitKinkyFaces( 
-	double kink_tol_radians,
-	bool bCompactIfNeeded
-	)
+        double kink_tol_radians,
+        bool bCompactIfNeeded
+        )
 {
   bool rc = true;
   // see if splitting is required
@@ -105,7 +104,7 @@ bool ON_Brep::SplitKinkyEdge(
     {
       //m_E[edge_index].ON_CurveProxy::Trim(ON_Interval(split_t[i], t1));
       if ( split_t[i] - t0 <= ON_ZERO_TOLERANCE )
-	edge_split_s = 0.0;  // just in case edge_split_s is too large for later test
+        edge_split_s = 0.0;  // just in case edge_split_s is too large for later test
       bTrimEdgeEnd = true;
       continue;
     }
@@ -113,7 +112,7 @@ bool ON_Brep::SplitKinkyEdge(
     {
       //m_E[edge_index].ON_CurveProxy::Trim(ON_Interval(t0, split_t[i]));
       if ( t1 - split_t[i] <= ON_ZERO_TOLERANCE )
-	edge_split_s = 1.0; // just in case edge_split_s is too small for later test
+        edge_split_s = 1.0; // just in case edge_split_s is too small for later test
       bTrimEdgeEnd = true;
       continue;
     }
@@ -126,25 +125,25 @@ bool ON_Brep::SplitKinkyEdge(
     {
       for (int j=0; j<m_E[edge_index].m_ti.Count(); j++)
       {
-	double t;
-	if (!GetTrimParameter(m_E[edge_index].m_ti[j], split_t[i], &t)){
-	  rc = false;
-	  continue;
-	}
-	trim_t.Append(t);
-	const ON_BrepTrim& trim = m_T[m_E[edge_index].m_ti[j]];
-	ON_Interval trim_domain = trim.Domain();
-	trim_split_s = trim_domain.NormalizedParameterAt(t);
-	if ( trim_split_s <= ON_SQRT_EPSILON || t - trim_domain[0] <= ON_ZERO_TOLERANCE )
-	{
-	  bTrimEdgeEnd = true;
-	  break;
-	}
-	if ( trim_split_s >= 1.0-ON_SQRT_EPSILON || trim_domain[1] - t <= ON_ZERO_TOLERANCE )
-	{
-	  bTrimEdgeEnd = true;
-	  break;
-	}
+        double t;
+        if (!GetTrimParameter(m_E[edge_index].m_ti[j], split_t[i], &t)){
+          rc = false;
+          continue;
+        }
+        trim_t.Append(t);
+        const ON_BrepTrim& trim = m_T[m_E[edge_index].m_ti[j]];
+        ON_Interval trim_domain = trim.Domain();
+        trim_split_s = trim_domain.NormalizedParameterAt(t);
+        if ( trim_split_s <= ON_SQRT_EPSILON || t - trim_domain[0] <= ON_ZERO_TOLERANCE )
+        {
+          bTrimEdgeEnd = true;
+          break;
+        }
+        if ( trim_split_s >= 1.0-ON_SQRT_EPSILON || trim_domain[1] - t <= ON_ZERO_TOLERANCE )
+        {
+          bTrimEdgeEnd = true;
+          break;
+        }
       }
     }
 
@@ -154,20 +153,20 @@ bool ON_Brep::SplitKinkyEdge(
       // the end of the edge or a trim for us to split it.
       if ( edge_split_s <= 0.01 )
       {
-	if ( t0 < split_t[i] )
-	  m_E[edge_index].ON_CurveProxy::Trim(ON_Interval(split_t[i], t1));
+        if ( t0 < split_t[i] )
+          m_E[edge_index].ON_CurveProxy::Trim(ON_Interval(split_t[i], t1));
       }
       else if ( edge_split_s >= 0.99 )
       {
-	if ( split_t[i] < t1 )
-	  m_E[edge_index].ON_CurveProxy::Trim(ON_Interval(t0, split_t[i]));
+        if ( split_t[i] < t1 )
+          m_E[edge_index].ON_CurveProxy::Trim(ON_Interval(t0, split_t[i]));
       }
       else
       {
-	// no decent agreement between trims and edges - continue
-	// with other parameters but this is basically the same
-	// thing as having SplitEdge() fail.
-	rc = false;
+        // no decent agreement between trims and edges - continue
+        // with other parameters but this is basically the same
+        // thing as having SplitEdge() fail.
+        rc = false;
       }
 
       continue;

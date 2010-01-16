@@ -1,7 +1,7 @@
 /*                         I H I S T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -40,7 +40,7 @@ Usage: ihist [-v] < shorts\n";
 
 int main(int argc, char **argv)
 {
-    register long i, bit;
+    long i, bit;
     int	n;
     int	max, min;
     long	num, levels=0;

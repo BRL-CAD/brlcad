@@ -1,7 +1,7 @@
 /*                          C H A R . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -43,15 +43,15 @@
 #define FONTCOLOR_BLU  0.0
 
 #define BUFFSIZ 200
-static int	bitx(register char *bitstring, register int posn);
-static void	do_char(int c, register int xpos, register int ypos);
+static int	bitx(char *bitstring, int posn);
+static void	do_char(int c, int xpos, int ypos);
 
 void
-do_line(int xpos, int ypos, register char *line)
+do_line(int xpos, int ypos, char *line)
 {
-    register int    currx;
-    register int    char_count, char_id;
-    register int	len = strlen( line );
+    int    currx;
+    int    char_count, char_id;
+    int	len = strlen( line );
     if ( font.ffdes == NULL )
     {
 	bu_log( "ERROR: do_line() called before get_font().\n" );
@@ -102,13 +102,13 @@ do_line(int xpos, int ypos, register char *line)
 	to be in the correct position.
 */
 static void
-do_char(int c, register int xpos, register int ypos)
+do_char(int c, int xpos, int ypos)
 {
     int     	up = font.dir[c].up / ir_aperture;
     int		left = font.dir[c].left / ir_aperture;
     static char	bitbuf[BUFFSIZ][BUFFSIZ];
     static RGBpixel	pixel;
-    register int    h, i, j;
+    int    h, i, j;
     int		k, x;
     for ( k = 0; k < font.height; k++ )
     {
@@ -127,7 +127,7 @@ do_char(int c, register int xpos, register int ypos)
 	x = xpos - left;
 	for ( j = 0; j < font.width; j += ir_aperture, x++ )
 	{
-	    register int	sum;
+	    int	sum;
 	    fastf_t		weight;
 	    /* The bitx routine extracts the bit value.
 	       Can't just use the j-th bit because
@@ -170,10 +170,10 @@ do_char(int c, register int xpos, register int ypos)
 */
 /*ARGSUSED*/
 static int
-bitx(register char *bitstring, register int posn)
+bitx(char *bitstring, int posn)
 {
 #if defined( vax )
-    register field;
+    field;
 
     asm("extzv	r10,$1,(r11), r8");
     return field;

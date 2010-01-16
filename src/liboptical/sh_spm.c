@@ -1,7 +1,7 @@
 /*                        S H _ S P M . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2009 United States Government as represented by
+ * Copyright (c) 1986-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -18,12 +18,8 @@
  * information.
  */
 /** @file sh_spm.c
- *			S P M . C
  *
  *  Spherical Data Structures/Texture Maps
- *
- *  Author -
- *	Phillip Dykstra
  *
  */
 

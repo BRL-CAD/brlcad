@@ -1,7 +1,7 @@
 /*                      U T I L I T Y 1 . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2009 United States Government as represented by
+ * Copyright (c) 1990-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -262,10 +262,10 @@ f_edcodes(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 int
 f_wcodes(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    register int i;
+    int i;
     int status;
     FILE *fp;
-    register struct directory *dp;
+    struct directory *dp;
 
     CHECK_DBI_NULL;
 
@@ -309,7 +309,7 @@ f_rcodes(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     char line[LINELEN];
     char *cp;
     FILE *fp;
-    register struct directory *dp;
+    struct directory *dp;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
 
@@ -389,7 +389,7 @@ f_rcodes(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		Tcl_AppendResult(interp, "Database write error, aborting.\n",
 				 (char *)NULL );
 		TCL_ERROR_RECOVERY_SUGGESTION;
-		rt_db_free_internal( &intern, &rt_uniresource );
+		rt_db_free_internal(&intern);
 		return TCL_ERROR;
 	    }
 	}
@@ -459,7 +459,7 @@ printcodes(FILE *fp, struct directory *dp, int pathpos)
 	for (i=0; i < pathpos; i++)
 	    fprintf(fp, "/%s", path[i]->d_namep);
 	fprintf(fp, "/%s\n", dp->d_namep );
-	intern.idb_meth->ft_ifree(&intern, &rt_uniresource);
+	intern.idb_meth->ft_ifree(&intern);
 	return TCL_OK;
     }
 
@@ -469,7 +469,7 @@ printcodes(FILE *fp, struct directory *dp, int pathpos)
 			  (genptr_t)fp, (genptr_t)&pathpos, (genptr_t)NULL );
     }
 
-    intern.idb_meth->ft_ifree(&intern, &rt_uniresource);
+    intern.idb_meth->ft_ifree(&intern);
     return TCL_OK;
 }
 
@@ -478,10 +478,10 @@ printcodes(FILE *fp, struct directory *dp, int pathpos)
 */
 
 int
-check(register char *a, register char *b)
+check(char *a, char *b)
 {
 
-    register int	c= sizeof( struct identt );
+    int	c= sizeof( struct identt );
 
     while ( c-- )	if ( *a++ != *b++ ) return( 0 );	/* no match */
     return( 1 );	/* match */
@@ -506,8 +506,8 @@ struct id_to_names {
 int
 f_which_shader(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    register int	i, j;
-    register struct directory *dp;
+    int	i, j;
+    struct directory *dp;
     struct rt_db_internal	intern;
     struct rt_comb_internal	*comb;
     int sflag;
@@ -567,7 +567,7 @@ f_which_shader(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    else
 		Tcl_AppendResult(interp, "   ", dp->d_namep,
 				 "\n", (char *)NULL);
-	    intern.idb_meth->ft_ifree(&intern, &rt_uniresource);
+	    intern.idb_meth->ft_ifree(&intern);
 	} FOR_ALL_DIRECTORY_END;
     }
 
@@ -640,14 +640,14 @@ new_tables(struct directory *dp, struct bu_ptbl *cur_path, const matp_t old_mat,
 	db_non_union_push( comb->tree, &rt_uniresource );
 	if ( db_ck_v4gift_tree( comb->tree ) < 0 ) {
 	    Tcl_AppendResult(interp, "Cannot flatten tree for editing\n", (char *)NULL );
-	    intern.idb_meth->ft_ifree(&intern, &rt_uniresource);
+	    intern.idb_meth->ft_ifree(&intern);
 	    return;
 	}
     }
 
     if ( !comb->tree ) {
 	/* empty combination */
-	intern.idb_meth->ft_ifree(&intern, &rt_uniresource);
+	intern.idb_meth->ft_ifree(&intern);
 	return;
     }
 
@@ -748,7 +748,7 @@ new_tables(struct directory *dp, struct bu_ptbl *cur_path, const matp_t old_mat,
 		bu_vls_free( &tmp_vls );
 	    }
 	    if ( nsoltemp && (sol_dp->d_flags & DIR_SOLID) )
-		rt_db_free_internal( &sol_intern, &rt_uniresource );
+		rt_db_free_internal(&sol_intern);
 	}
     } else if ( dp->d_flags & DIR_COMB ) {
 	int cur_length;
@@ -783,7 +783,7 @@ new_tables(struct directory *dp, struct bu_ptbl *cur_path, const matp_t old_mat,
 
  out:
     bu_free( (char *)tree_list, "new_tables: tree_list" );
-    intern.idb_meth->ft_ifree(&intern, &rt_uniresource);
+    intern.idb_meth->ft_ifree(&intern);
     return;
 }
 

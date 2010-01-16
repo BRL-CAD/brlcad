@@ -1767,41 +1767,41 @@ create_LOGICALS()
 #endif
 
 ///////////////////////////////////////////////////////////////////////////////
-// BOOLS
+// BOOLEANS
 ///////////////////////////////////////////////////////////////////////////////
 
-BOOLS::BOOLS() 
+BOOLEANS::BOOLEANS() 
 {
 }
 
-BOOLS::~BOOLS() 
+BOOLEANS::~BOOLEANS() 
 {
 }
 
 //EnumNode * 
 SingleLinkNode *
-BOOLS::NewNode ()  
+BOOLEANS::NewNode ()  
 {
 #ifdef __OSTORE__
     return new (os_segment::of(this), EnumNode::get_os_typespec()) 
 			EnumNode( new (os_segment::of(this), 
-				       SCLP23(BOOL)::get_os_typespec()) SCLP23(BOOL) );
+				       SCLP23(BOOLEAN)::get_os_typespec()) SCLP23(BOOLEAN) );
 #else
-    return new EnumNode (new SCLP23(BOOL));
+    return new EnumNode (new SCLP23(BOOLEAN));
 #endif
 }	
 
 #ifdef __OSTORE__
-BOOLS * 
-create_BOOLS(os_database *db)
+BOOLEANS * 
+create_BOOLEANS(os_database *db)
 {
-    return new (db, BOOLS::get_os_typespec()) BOOLS;
+    return new (db, BOOLEANS::get_os_typespec()) BOOLEANS;
 }
 #else
-BOOLS * 
-create_BOOLS()
+BOOLEANS * 
+create_BOOLEANS()
 {
-    return new BOOLS ; 
+    return new BOOLEANS ; 
 }
 #endif
 

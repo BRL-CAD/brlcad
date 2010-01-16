@@ -1,7 +1,7 @@
 /*                           A R S . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2009 United States Government as represented by
+ * Copyright (c) 1985-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -64,7 +64,7 @@ extern int rt_bot_minpieces;
 
 /* from g_bot.c */
 extern int rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip);
-extern void rt_bot_ifree(struct rt_db_internal *ip, struct resource *resp);
+extern void rt_bot_ifree(struct rt_db_internal *ip);
 
 
 void
@@ -151,6 +151,8 @@ rt_ars_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     register int i, j;
     vect_t base_vect;
     int currec;
+
+    VSETALL(base_vect, 0);
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -454,13 +456,12 @@ rt_ars_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
  * solid.
  */
 void
-rt_ars_ifree(struct rt_db_internal *ip, struct resource *resp)
+rt_ars_ifree(struct rt_db_internal *ip)
 {
     register struct rt_ars_internal *arip;
     register int i;
 
     RT_CK_DB_INTERNAL(ip);
-    if (!resp) resp = &rt_uniresource;
     arip = (struct rt_ars_internal *)ip->idb_ptr;
     RT_ARS_CK_MAGIC(arip);
 
@@ -685,7 +686,7 @@ rt_ars_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	nmg_km(m);
 	return(-1);
     }
-    rt_ars_ifree(ip, NULL);
+    rt_ars_ifree(ip);
 
     s = BU_LIST_FIRST(shell, &r->s_hd);
     bot = nmg_bot(s, &rtip->rti_tol);
@@ -707,7 +708,7 @@ rt_ars_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     ret = rt_bot_prep(stp, &intern, rtip);
 
-    rt_bot_ifree(&intern, NULL);
+    rt_bot_ifree(&intern);
 
     return(ret);
 #else
@@ -818,7 +819,7 @@ rt_ars_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     rt_bot_prep_pieces(bot, stp, ntri, tol);
 
-    rt_ars_ifree(ip, NULL);
+    rt_ars_ifree(ip);
 
     return(0);		/* OK */
 #endif

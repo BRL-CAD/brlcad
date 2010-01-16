@@ -1,7 +1,7 @@
 /*                    N U R B _ S O L V E . C
  * BRL-CAD
  *
- * Copyright (c) 1983-2009 United States Government as represented by
+ * Copyright (c) 1983-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,10 +23,6 @@
  *
  * Decompose a matrix into its LU decomposition using pivoting.
  *
- * Author:	Paul R. Stay
- * 		Computer Science Dept.
- * 		University of Utah
- * Date:	Wed Mar 23 1983
  */
 /** @} */
 

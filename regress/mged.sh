@@ -1,7 +1,7 @@
 #                       M G E D . S H
 # BRL-CAD
 #
-# Copyright (c) 2008-2009 United States Government as represented by
+# Copyright (c) 2008-2010 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -41,26 +41,16 @@
 # Ensure /bin/sh
 export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 
-# save the precious args
-ARGS="$*"
-NAME_OF_THIS=`basename $0`
-PATH_TO_THIS=`dirname $0`
-THIS="$PATH_TO_THIS/$NAME_OF_THIS"
+# source common library functionality, setting ARGS, NAME_OF_THIS,
+# PATH_TO_THIS, and THIS.
+. $1/regress/library.sh
 
-MGED="$1/src/mged/mged"
+MGED="`ensearch mged/mged`"
 if test ! -f "$MGED" ; then
-    MGED="$PATH_TO_THIS/../src/mged/mged"
-    if test ! -f "$MGED" ; then
-	echo "Unable to find mged, aborting"
-	exit 1
-    fi
+    echo "Unable to find mged, aborting"
+    exit 1
 fi
 
-FAILED=0
-
-LD_LIBRARY_PATH=../src/other/tcl/unix:../src/other/tk/unix:$1/src/other/tcl/unix:$1/src/other/tk/unix:$LD_LIBRARY_PATH
-DYLD_LIBRARY_PATH=../src/other/tcl/unix:../src/other/tk/unix:$1/src/other/tcl/unix:$1/src/other/tk/unix:$DYLD_LIBRARY_PATH
-export LD_LIBRARY_PATH DYLD_LIBRARY_PATH
 
 # test all commands
 echo "testing mged commands..."
@@ -82,6 +72,7 @@ help="`$MGED -c mged.g help 2>&1 | grep -v Using`"
 # cmds="$cmds `$MGED -c mged.g ?lib 2>&1`"
 # cmds="$cmds `$MGED -c mged.g ?devel 2>&1`"
 
+FAILED=0
 for cmd in $cmds ; do
     echo "...$cmd"
 
@@ -139,8 +130,8 @@ else
     echo "-> mged check FAILED"
 fi
 
-
 exit $FAILED
+
 
 # Local Variables:
 # tab-width: 8

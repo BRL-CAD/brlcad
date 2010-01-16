@@ -1,7 +1,7 @@
 /*                         R E P O R T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -84,10 +84,10 @@ ged_report(struct ged *gedp, int argc, const char *argv[])
 static void
 ged_print_schain(struct ged *gedp, int lvl)
 {
-    register struct ged_display_list *gdlp;
-    register struct ged_display_list *next_gdlp;
-    register struct solid	*sp;
-    register struct bn_vlist	*vp;
+    struct ged_display_list *gdlp;
+    struct ged_display_list *next_gdlp;
+    struct solid	*sp;
+    struct bn_vlist	*vp;
     int				nvlist;
     int				npts;
 
@@ -140,10 +140,10 @@ ged_print_schain(struct ged *gedp, int lvl)
 	    nvlist = 0;
 	    npts = 0;
 	    for (BU_LIST_FOR(vp, bn_vlist, &(sp->s_vlist))) {
-		register int	i;
-		register int	nused = vp->nused;
-		register int	*cmd = vp->cmd;
-		register point_t *pt = vp->pt;
+		int	i;
+		int	nused = vp->nused;
+		int	*cmd = vp->cmd;
+		point_t *pt = vp->pt;
 
 		BN_CK_VLIST(vp);
 		nvlist++;
@@ -177,10 +177,10 @@ ged_print_schain(struct ged *gedp, int lvl)
 static void
 ged_print_schain_vlcmds(struct ged *gedp)
 {
-    register struct ged_display_list *gdlp;
-    register struct ged_display_list *next_gdlp;
-    register struct solid	*sp;
-    register struct bn_vlist	*vp;
+    struct ged_display_list *gdlp;
+    struct ged_display_list *next_gdlp;
+    struct solid	*sp;
+    struct bn_vlist	*vp;
 
     if (gedp->ged_wdbp->dbip == DBI_NULL)
 	return;
@@ -197,10 +197,10 @@ ged_print_schain_vlcmds(struct ged *gedp)
 
 	    /* Print the actual vector list */
 	    for (BU_LIST_FOR(vp, bn_vlist, &(sp->s_vlist))) {
-		register int	i;
-		register int	nused = vp->nused;
-		register int	*cmd = vp->cmd;
-		register point_t *pt = vp->pt;
+		int	i;
+		int	nused = vp->nused;
+		int	*cmd = vp->cmd;
+		point_t *pt = vp->pt;
 
 		BN_CK_VLIST(vp);
 

@@ -1,7 +1,7 @@
 /*                      P I X P A S T E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -71,9 +71,9 @@ pixpaste: Usage: pixpaste [-v] [-h] [-H] [-a] [-A] [-# num_bytes]\n\
 	A '-' can be used to indicate stdin for orig_file or paste_file\n";
 
 int
-get_args(register int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int c;
+    int c;
 
     while ( (c = bu_getopt(argc, argv, "vahHs:w:n:S:W:N:x:y:#:" )) != EOF) {
 	switch (c) {
@@ -181,7 +181,7 @@ main(int argc, char **argv)
 {
     unsigned char *origbuf, *pastebuf;
     unsigned char *buffer;
-    register long int i;
+    long int i;
     long int row, result;
 
     if (!get_args(argc, argv)) {
@@ -312,7 +312,7 @@ pixpaste: new image == original image.\n");
     while (row < org_height && row < base_y+paste_height) {
 	result=fread(origbuf, num_bytes, org_width, orig);
 	if (result != org_width) {
-	    register long int jj;
+	    long int jj;
 	    for (jj=result; jj<num_bytes*org_width; jj++) {
 		origbuf[jj]=0;
 	    }
@@ -336,7 +336,7 @@ pixpaste: new image == original image.\n");
     while (row < org_height) {
 	result=fread(origbuf, num_bytes, org_width, orig);
 	if (result != org_width) {
-	    register long int jj;
+	    long int jj;
 	    for (jj=result; jj<num_bytes*org_width; jj++) {
 		origbuf[jj]=0;
 	    }

@@ -1,7 +1,7 @@
 /*                B R L C A D _ V E R S I O N . H
  * BRL-CAD
  *
- * Copyright (c) 2007-2009 United States Government as represented by
+ * Copyright (c) 2007-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,14 +26,14 @@
  * should use the library-specific LIBRARY_version() functions.
  * (e.g. bu_version())
  *
- * Author -
- *   Christopher Sean Morrison
  */
 
 #include "common.h"
 
 /* for snprintf */
 #include <stdio.h>
+/* for strlen */
+#include <string.h>
 
 
 /* FIXED VALUES */
@@ -159,18 +159,22 @@ static const char *
 brlcad_ident(const char *title)
 {
     static char ident[1024] = {0};
-    static char label[64] = {0};
-
-    if (title) {
-	snprintf(label, 64, "  %s", title);
-    }
 
     if (ident[0] == 0) {
-	snprintf(ident, 1024,
-		 "BRL-CAD Release %s%s\n"
+	/* header */
+	size_t isize = 0;
+	snprintf(ident, 1024, "BRL-CAD Release %s", brlcad_version());
+
+	/* optional title */
+	isize = strlen(ident);
+	if (title)
+	    snprintf(ident + isize, 1024 - isize, "  %s\n", title);
+
+	/* compile info */
+	isize = strlen(ident);
+	snprintf(ident + isize, 1024 - isize,
 		 "    %s, Compilation %d\n"
 		 "    %s@%s:%s\n",
-		 brlcad_version(), label,
 		 BRLCAD_DATE, BRLCAD_COUNT,
 		 BRLCAD_USER, BRLCAD_HOST, BRLCAD_PATH
 	    );

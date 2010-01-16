@@ -1,7 +1,7 @@
 /*                            P C . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -50,13 +50,8 @@ __BEGIN_DECLS
  * list given for "args" be enclosed in parens.
  */
 
-#if __STDC__ || USE_PROTOTYPES
-#  define PC_EXTERN(type_and_name, args)       extern type_and_name args
-#  define PC_ARGS(args)                        args
-#else
-#  define PC_EXTERN(type_and_name, args)       extern type_and_name()
-#  define PC_ARGS(args)                        ()
-#endif
+#define PC_EXTERN(type_and_name, args) extern type_and_name args
+#define PC_ARGS(args) args
 
 #define PC_PCSET_PUSHP(_pcsp,_par) \
 	BU_LIST_PUSH(&(_pcsp->ps->l),&(_par->l));

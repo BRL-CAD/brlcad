@@ -1,7 +1,7 @@
 /*                 CompositeCurveSegment.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,12 +38,12 @@ private:
 protected:
 	Curve *parent_curve;
 	Transition_code transition;
-	SCLBOOL_H(Bool) same_sense;
+	SCLBOOL_H(Boolean) same_sense;
 
 public:
 	CompositeCurveSegment();
 	virtual ~CompositeCurveSegment();
-	CompositeCurveSegment(STEPWrapper *sw,int STEPid);
+	CompositeCurveSegment(STEPWrapper *sw,int step_id);
 	bool Load(STEPWrapper *sw,SCLP23(Application_instance) *sse);
 	virtual void Print(int level);
 

@@ -1,7 +1,7 @@
 /*                  W R I T E _ B R L . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -116,7 +116,7 @@ void smoothBot
                 rt_db_put_internal(dp, wdbp->dbip, &intern, &rt_uniresource);
         }
 
-        rt_db_free_internal(&intern, &rt_uniresource);
+        rt_db_free_internal(&intern);
     }
 }
 

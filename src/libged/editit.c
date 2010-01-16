@@ -1,7 +1,7 @@
 /*                        E D I T I T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -49,8 +49,8 @@
 int
 ged_editit(const char *file)
 {
-    register int pid = 0;
-    register int xpid = 0;
+    int pid = 0;
+    int xpid = 0;
     char buffer[RT_MAXLINE] = {0};
     const char *editor = (char *)NULL;
     int stat = 0;

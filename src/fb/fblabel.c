@@ -1,7 +1,7 @@
 /*                       F B L A B E L . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2009 United States Government as represented by
+ * Copyright (c) 1986-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -66,13 +66,13 @@ static char	*textstring;
 static int	debug;
 static int	alias_off;
 
-void	do_char(struct vfont *vfp, struct vfont_dispatch *vdp, int x, int y), do_line(register struct vfont *vfp, register char *line), squash(register int *buf0, register int *buf1, register int *buf2, register float *ret_buf, register int n), fill_buf(register int wid, register int *buf, register char *bitrow);
+void	do_char(struct vfont *vfp, struct vfont_dispatch *vdp, int x, int y), do_line(struct vfont *vfp, char *line), squash(int *buf0, int *buf1, int *buf2, float *ret_buf, int n), fill_buf(int wid, int *buf, char *bitrow);
 
 int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
 
-    register int c;
+    int c;
 
     pixcolor[RED]  = 255;
     pixcolor[GRN]  = 255;
@@ -114,8 +114,8 @@ get_args(int argc, register char **argv)
 		break;
 	    case 'C':
 	    {
-		register char *cp = bu_optarg;
-		register unsigned char *conp
+		char *cp = bu_optarg;
+		unsigned char *conp
 		    = (unsigned char *)pixcolor;
 
 		/* premature null => atoi gives zeros */
@@ -187,18 +187,18 @@ main(int argc, char **argv)
 }
 
 void
-do_line(register struct vfont *vfp, register char *line)
+do_line(struct vfont *vfp, char *line)
 {
-    register int    currx;
-    register int    char_count, char_id;
-    register int	len = strlen( line );
+    int    currx;
+    int    char_count, char_id;
+    int	len = strlen( line );
 
     if ( vfp == VFONT_NULL )  return;
 
     currx = xpos;
 
     for ( char_count = 0; char_count < len; char_count++ )  {
-	register struct vfont_dispatch	*vdp;
+	struct vfont_dispatch	*vdp;
 
 	char_id = (int) line[char_count] & 0377;
 
@@ -240,7 +240,7 @@ do_line(register struct vfont *vfp, register char *line)
 void
 do_char(struct vfont *vfp, struct vfont_dispatch *vdp, int x, int y)
 {
-    register int    i, j;
+    int    i, j;
     int		base;
     int     	totwid = width;
     int		ln;
@@ -279,7 +279,7 @@ do_char(struct vfont *vfp, struct vfont_dispatch *vdp, int x, int y)
 	    );
 	fb_read( fbp, x, y - vdp->vd_down + i, (unsigned char *)fbline, totwid+3);
 	for (j = 0; j < (totwid + 3) - 1; j++)  {
-	    register int	tmp;
+	    int	tmp;
 	    /* EDITOR'S NOTE : do not rearrange this code,
 	     * the SUN compiler can't handle more
 	     * complex expressions.
@@ -310,7 +310,7 @@ do_char(struct vfont *vfp, struct vfont_dispatch *vdp, int x, int y)
 	Extract a bit field from a bit string.
 */
 int
-bitx(register char *bitstring, register int posn)
+bitx(char *bitstring, int posn)
 {
     for (; posn >= 8; posn -= 8, bitstring++);
 #if defined( CANT_DO_ZERO_SHIFT )
@@ -342,9 +342,9 @@ bitx(register char *bitstring, register int posn)
 	assumed to be only 0 or 1.
 */
 void
-squash(register int *buf0, register int *buf1, register int *buf2, register float *ret_buf, register int n)
+squash(int *buf0, int *buf1, int *buf2, float *ret_buf, int n)
 {
-    register int    j;
+    int    j;
 
     for (j = 1; j < n - 1; j++) {
 	if (alias_off)
@@ -375,9 +375,9 @@ squash(register int *buf0, register int *buf1, register int *buf2, register floa
 	correct position.
 */
 void
-fill_buf(register int wid, register int *buf, register char *bitrow)
+fill_buf(int wid, int *buf, char *bitrow)
 {
-    register int    j;
+    int    j;
 
     /*
      * For each bit in the row, set the array value to 1 if it's on. The

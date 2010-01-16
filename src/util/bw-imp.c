@@ -1,7 +1,7 @@
 /*                        B W - I M P . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2009 United States Government as represented by
+ * Copyright (c) 1986-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -85,7 +85,7 @@ static int	im_width;		/* image size (in Imagen dots) */
 static int	im_wpatches;		/* # 32-bit patches width */
 static int	im_hpatches;		/* # 32-bit patches height */
 
-bool	get_args(int argc, register char **argv);
+bool	get_args(int argc, char **argv);
 bool	im_close(void);
 bool	im_header(void);
 void	im_write(int y);
@@ -95,9 +95,9 @@ Usage: bw-imp [-h -D] [-s squaresize] [-w width] [-n height]\n\
 	[-X page_xoff] [-Y page_yoff] [-t thresh] [file.bw] > impress\n";
 
 bool
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int	c;
+    int	c;
 
     while ( (c = bu_getopt( argc, argv, "hDs:n:w:t:X:Y:" )) != EOF )  {
 	switch ( c )  {
@@ -158,7 +158,7 @@ get_args(int argc, register char **argv)
 int
 main(int argc, char **argv)
 {
-    register int 	y;
+    int 	y;
 
     height = width = 512;		/* Defaults */
 
@@ -250,13 +250,13 @@ im_write(int y)
 	    int my;
 
 	    for ( my = 0; my < im_mag; ++my )  {
-		register long	b = 0L;	/* image bits */
+		long	b = 0L;	/* image bits */
 		int x1;
 
 		for ( x1 = 0; x1 < 32; x1 += im_mag )  {
-		    register int	level =
+		    int	level =
 			line[width-1-((x + x1) / im_mag)];
-		    register int mx;
+		    int mx;
 
 		    if ( im_mag <= 1 )  {
 			b <<= 1;
@@ -265,7 +265,7 @@ im_write(int y)
 			continue;
 		    }
 		    for ( mx = 0; mx < im_mag; ++mx )  {
-			register int pgx, pgy;	/* page position */
+			int pgx, pgy;	/* page position */
 			b <<= 1;
 
 			/* Compute Dither */
@@ -287,11 +287,11 @@ im_write(int y)
 
     /* output the swath */
     {
-	register int xx, yy;
+	int xx, yy;
 	for ( xx = 0; xx < im_wpatches; ++xx )  {
 	    for ( yy = 0; yy < 32; ++yy )  {
-		register long	b = swath[yy][xx];
-		register int c;
+		long	b = swath[yy][xx];
+		int c;
 
 		c = (int)(b >> 24) & 0xFF; (void)putchar( c );
 		c = (int)(b >> 16) & 0xFF; (void)putchar( c );

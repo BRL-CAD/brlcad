@@ -1,7 +1,7 @@
 /*                        G I F - F B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -128,7 +128,7 @@ Sig_Catcher(int sig)
 static void
 Skip(void)					/* skip over raster data */
 {
-    register int	c;
+    int	c;
 
     if ( (c = getc( gfp )) == EOF )
 	Fatal(fbp, "Error reading code size" );
@@ -158,7 +158,7 @@ static unsigned char	*pixbuf;		/* malloc()ed scan line buffer */
 
 
 static void
-PutPixel(register int value)
+PutPixel(int value)
 {
     if ( pass == stop )
 	Fatal(fbp, "Too much raster data for image size" );
@@ -230,7 +230,7 @@ static int	bits_on_hand;		/* # of bits left over from last call */
 static int
 GetCode(void)
 {
-    register int	next_val;
+    int	next_val;
 
     while ( bits_on_hand < chunk_size )
     {
@@ -278,7 +278,7 @@ GetCode(void)
 /* WARNING:  This recursion could get pretty deep (2047 nested calls)! */
 static void
 Expand( c )
-    register int	c;		/* LZW code */
+    int	c;		/* LZW code */
 {
     if ( c < compress_code )	/* "atomic", i.e. raw color index */
 	PutPixel( k = c );	/* first atom in string */
@@ -295,10 +295,10 @@ static short	exp_buffer[(1 << 11) - 2];	/* reverse-order atomic codes */
 
 /* Non-recursive version, for wimpy systems: */
 static void
-Expand(register int c)
+Expand(int c)
     /* LZW code */
 {
-    register short	*bp = exp_buffer;
+    short	*bp = exp_buffer;
 
     while ( c >= compress_code )	/* "molecular"; follow chain */
     {
@@ -321,10 +321,10 @@ Expand(register int c)
 static void
 LZW(void)
 {
-    register int	c;		/* input LZW code, also input byte */
-    register int	w;		/* prefix code */
-    register int	next_code;	/* next available table index */
-    register int	max_code;	/* limit at which LZW chunk must grow */
+    int	c;		/* input LZW code, also input byte */
+    int	w;		/* prefix code */
+    int	next_code;	/* next available table index */
+    int	max_code;	/* limit at which LZW chunk must grow */
     int		eoi_code;	/* end of LZW stream */
     int		clear_code;	/* table reset code */
 
@@ -462,7 +462,7 @@ main(int argc, char **argv)
 #endif
 		0
 	    };
-	register int	i;
+	int	i;
 
 	for ( i = 0; getsigs[i] != 0; ++i )
 	    if ( signal( getsigs[i], SIG_IGN ) != SIG_IGN )
@@ -472,8 +472,8 @@ main(int argc, char **argv)
     /* Process arguments. */
 
     {
-	register int	c;
-	register bool_t	errors = 0;
+	int	c;
+	bool_t	errors = 0;
 
 	while ( (c = bu_getopt( argc, argv, OPTSTR )) != EOF )
 	    switch ( c )
@@ -530,7 +530,7 @@ main(int argc, char **argv)
 	/* Scan until "GIF" seen, to skip over additional headers
 	   (e.g., from Macintosh BBSes). */
 
-	register int	state;	/* FSA state */
+	int	state;	/* FSA state */
 #define			ST_INITIAL	0	/* initial state of FSA */
 #define			ST_G_SEEN	1	/* just after 'G' */
 #define			ST_I_SEEN	2	/* just after 'I' */
@@ -632,8 +632,8 @@ main(int argc, char **argv)
 
     if ( M_bit )
     {
-	register int	i;
-	register double	expand;	/* dynamic range expansion factor ~ 1 */
+	int	i;
+	double	expand;	/* dynamic range expansion factor ~ 1 */
 
 	/* Read in global color map. */
 
@@ -664,7 +664,7 @@ main(int argc, char **argv)
 	}
     }
     else	{
-	register int	i;
+	int	i;
 
 	/* Set up default linear grey scale global color map.
 	   GIF specs for this case are utterly nonsensical. */
@@ -689,7 +689,7 @@ main(int argc, char **argv)
 	Fatal(fbp, "Couldn't open frame buffer" );
 
     {
-	register int	wt = fb_getwidth( fbp );
+	int	wt = fb_getwidth( fbp );
 	int zoom;
 
 	ht = fb_getheight( fbp );
@@ -730,7 +730,7 @@ main(int argc, char **argv)
 
     /* Fill scanline buffer with background color too */
     {
-	register int i;
+	int i;
 	for ( i=0; i < width; i++ )  {
 	    COPYRGB(&pixbuf[i*3], g_cmap[background]);
 	}
@@ -740,7 +740,7 @@ main(int argc, char **argv)
 
     for (;;)
     {
-	register int	c;
+	int	c;
 
 	if ( (c = getc( gfp )) == EOF )  {
 	    Fatal(fbp, "Missing GIF terminator" );
@@ -773,7 +773,7 @@ main(int argc, char **argv)
 
 	    case GIF_EXTENSION:	/* GIF extension block introducer */
 	    {
-		register int	i;
+		int	i;
 
 		if ( (i = getc( gfp )) == EOF )
 		    Fatal(fbp, "Error reading extension function code"
@@ -850,8 +850,8 @@ main(int argc, char **argv)
 
 	    if ( M_bit )
 	    {
-		register int	i;
-		register double	expand;	/* range expansion */
+		int	i;
+		double	expand;	/* range expansion */
 
 		/* Read in local color map. */
 

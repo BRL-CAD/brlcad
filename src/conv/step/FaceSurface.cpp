@@ -1,7 +1,7 @@
 /*                 FaceSurface.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -41,9 +41,9 @@ FaceSurface::FaceSurface() {
 	face_geometry = NULL;
 }
 
-FaceSurface::FaceSurface(STEPWrapper *sw, int STEPid) {
+FaceSurface::FaceSurface(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 	face_geometry = NULL;
 }
 
@@ -59,12 +59,12 @@ FaceSurface::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 
 
 	if ( !Face::Load(sw,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::Face." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::Face." << std::endl;
 		return false;
 	}
 
 	if ( !GeometricRepresentationItem::Load(sw,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::GeometricRepresentationItem." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::GeometricRepresentationItem." << std::endl;
 		return false;
 	}
 
@@ -88,16 +88,16 @@ FaceSurface::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 
 void
 FaceSurface::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << name << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Attributes:" << endl;
-	TAB(level+1); cout << "face_geometry:" << endl;
+	TAB(level); std::cout << "Attributes:" << std::endl;
+	TAB(level+1); std::cout << "face_geometry:" << std::endl;
 	face_geometry->Print(level+1);
 
-	TAB(level+1); cout << "same_sense:" << step->getBooleanString((SCLBOOL_H(Bool))same_sense) << endl;
+	TAB(level+1); std::cout << "same_sense:" << step->getBooleanString((SCLBOOL_H(Boolean))same_sense) << std::endl;
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	Face::Print(level+1);
 	GeometricRepresentationItem::Print(level+1);
 }
@@ -111,7 +111,7 @@ FaceSurface::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

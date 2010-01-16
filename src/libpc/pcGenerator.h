@@ -1,7 +1,7 @@
 /*                    P C G E N E R A T O R . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,7 +24,6 @@
  * Constraint Network Generator Class as well as various functors used
  * in the generation of constraints and parameters/variables
  *
- * @author Dawn Thomas
  */
 #ifndef __PCGENERATOR_H__
 #define __PCGENERATOR_H__

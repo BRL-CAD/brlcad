@@ -1,7 +1,7 @@
 /*                  T E R M I O _ W I N 3 2 . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2009 United States Government as represented by
+ * Copyright (c) 2007-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -16,10 +16,6 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this file; see the file named COPYING for more
  * information.
- */
-/** @file termio_win32.c
- *
- * Author:		Gary S. Moss
  */
 
 #include "common.h"

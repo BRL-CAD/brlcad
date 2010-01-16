@@ -1,7 +1,7 @@
 /*                  W D B _ C O M B _ S T D . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2009 United States Government as represented by
+ * Copyright (c) 1997-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -454,7 +454,7 @@ wdb_comb_std_cmd(struct rt_wdb	*wdbp,
     char				*comb_name;
     int				ch;
     int				region_flag = -1;
-    register struct directory	*dp;
+    struct directory	*dp;
     struct rt_db_internal		intern;
     struct rt_comb_internal		*comb = NULL;
     struct tokens			tok_hd;
@@ -538,7 +538,7 @@ wdb_comb_std_cmd(struct rt_wdb	*wdbp,
 	    comb->region_flag = 0;
 
 	if (rt_db_put_internal(dp, wdbp->dbip, &intern, &rt_uniresource) < 0) {
-	    rt_db_free_internal(&intern, &rt_uniresource);
+	    rt_db_free_internal(&intern);
 	    Tcl_AppendResult(interp, "Database write error, aborting\n", (char *)NULL);
 	    return TCL_ERROR;
 	}
@@ -592,7 +592,7 @@ wdb_comb_std_cmd(struct rt_wdb	*wdbp,
 		if (wdb_add_operator(interp, &tok_hd.l, *ptr, &last_tok) == TCL_ERROR) {
 		    wdb_free_tokens(&tok_hd.l);
 		    if (dp != DIR_NULL)
-			rt_db_free_internal(&intern, &rt_uniresource);
+			rt_db_free_internal(&intern);
 		    return TCL_ERROR;
 		}
 		ptr++;
@@ -604,7 +604,7 @@ wdb_comb_std_cmd(struct rt_wdb	*wdbp,
 		if (name_len < 1) {
 		    wdb_free_tokens(&tok_hd.l);
 		    if (dp != DIR_NULL)
-			rt_db_free_internal(&intern, &rt_uniresource);
+			rt_db_free_internal(&intern);
 		    return TCL_ERROR;
 		}
 		last_tok = WDB_TOK_TREE;
@@ -614,7 +614,7 @@ wdb_comb_std_cmd(struct rt_wdb	*wdbp,
 		if (wdb_add_operator(interp, &tok_hd.l, *ptr, &last_tok) == TCL_ERROR) {
 		    wdb_free_tokens(&tok_hd.l);
 		    if (dp != DIR_NULL)
-			rt_db_free_internal(&intern, &rt_uniresource);
+			rt_db_free_internal(&intern);
 		    return TCL_ERROR;
 		}
 		ptr++;
@@ -628,7 +628,7 @@ wdb_comb_std_cmd(struct rt_wdb	*wdbp,
 		if (name_len < 1) {
 		    wdb_free_tokens(&tok_hd.l);
 		    if (dp != DIR_NULL)
-			rt_db_free_internal(&intern, &rt_uniresource);
+			rt_db_free_internal(&intern);
 		    return TCL_ERROR;
 		}
 		last_tok = WDB_TOK_TREE;
@@ -668,7 +668,7 @@ wdb_comb_std_cmd(struct rt_wdb	*wdbp,
 
 			tok->tp = comb1->tree;
 			comb1->tree = (union tree *)NULL;
-			rt_db_free_internal(&intern1, &rt_uniresource);
+			rt_db_free_internal(&intern1);
 		    }
 		    break;
 		default:

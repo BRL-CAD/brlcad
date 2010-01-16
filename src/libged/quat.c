@@ -1,7 +1,7 @@
 /*                         Q U A T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -53,19 +53,19 @@ ged_quat(struct ged *gedp, int argc, const char *argv[])
 	return GED_OK;
     }
 
-    if (argc != 6) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    if (argc != 5) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: view %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
     /* Set the view orientation given a quaternion */
-    if (sscanf(argv[2], "%lf", quat) != 1 ||
-	sscanf(argv[3], "%lf", quat+1) != 1 ||
-	sscanf(argv[4], "%lf", quat+2) != 1 ||
-	sscanf(argv[5], "%lf", quat+3) != 1) {
-
-	bu_vls_printf(&gedp->ged_result_str, "%s quat: bad value detected - %s %s %s %s",
-		      argv[0], argv[2], argv[3], argv[4], argv[5]);
+    if (sscanf(argv[1], "%lf", quat) != 1
+	|| sscanf(argv[2], "%lf", quat+1) != 1
+	|| sscanf(argv[3], "%lf", quat+2) != 1
+	|| sscanf(argv[4], "%lf", quat+3) != 1)
+    {
+	bu_vls_printf(&gedp->ged_result_str, "view %s: bad value detected - %s %s %s %s",
+		      argv[0], argv[1], argv[2], argv[3], argv[4]);
 	return GED_ERROR;
     }
 

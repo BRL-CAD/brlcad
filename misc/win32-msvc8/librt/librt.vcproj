@@ -552,6 +552,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\metaball\metaball_tri.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\primitives\mirror.c"
 				>
 			</File>

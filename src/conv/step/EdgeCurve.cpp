@@ -1,7 +1,7 @@
 /*                 EdgeCurve.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -45,9 +45,9 @@ EdgeCurve::EdgeCurve() {
 	edge_geometry = NULL;
 }
 
-EdgeCurve::EdgeCurve(STEPWrapper *sw,int STEPid) {
+EdgeCurve::EdgeCurve(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 	edge_start = NULL;
 	edge_end = NULL;
 	edge_geometry = NULL;
@@ -63,7 +63,7 @@ EdgeCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 	id = sse->STEPfile_id;
 
 	if ( !Edge::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::Edge." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::Edge." << std::endl;
 		return false;
 	}
 
@@ -85,16 +85,16 @@ EdgeCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 void
 EdgeCurve::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << name << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Attributes:" << endl;
-	TAB(level+1); cout << "edge_geometry:" << endl;
+	TAB(level); std::cout << "Attributes:" << std::endl;
+	TAB(level+1); std::cout << "edge_geometry:" << std::endl;
 	edge_geometry->Print(level+1);
 
-	TAB(level+1); cout << "same_sense:" << step->getBooleanString((SCLBOOL_H(Bool))same_sense) << endl;
+	TAB(level+1); std::cout << "same_sense:" << step->getBooleanString((SCLBOOL_H(Boolean))same_sense) << std::endl;
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	Edge::Print(level+1);
 }
 
@@ -107,7 +107,7 @@ EdgeCurve::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

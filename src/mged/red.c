@@ -1,7 +1,7 @@
 /*                           R E D . C
  * BRL-CAD
  *
- * Copyright (c) 1992-2009 United States Government as represented by
+ * Copyright (c) 1992-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -1347,7 +1347,7 @@ int save_comb(struct directory *dpold)
 {
     /* Save a combination under a temporory name */
 
-    register struct directory	*dp;
+    struct directory	*dp;
     struct rt_db_internal		intern;
 
     if (dbip == DBI_NULL)

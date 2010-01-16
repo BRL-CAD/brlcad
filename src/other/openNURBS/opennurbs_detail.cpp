@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -32,7 +31,7 @@ void ON_DetailView::MemoryRelocate()
   m_boundary.MemoryRelocate();
 }
 
-BOOL ON_DetailView::IsValid( ON_TextLog* text_log ) const
+ON_BOOL32 ON_DetailView::IsValid( ON_TextLog* text_log ) const
 {
   // Don't bother checking m_view - during runtime it's
   // not filled in. It is only used for IO.  See
@@ -54,7 +53,7 @@ unsigned int ON_DetailView::SizeOf() const
   return sz;
 }
 
-BOOL ON_DetailView::Write( ON_BinaryArchive& archive ) const
+ON_BOOL32 ON_DetailView::Write( ON_BinaryArchive& archive ) const
 {
   bool rc = archive.BeginWrite3dmChunk( TCODE_ANONYMOUS_CHUNK, 1, 1 );
   if (!rc)
@@ -69,7 +68,7 @@ BOOL ON_DetailView::Write( ON_BinaryArchive& archive ) const
     {
       rc = m_view.Write(archive);
       if (!archive.EndWrite3dmChunk())
-	rc = false;
+        rc = false;
     }
     if(!rc)
       break;
@@ -81,7 +80,7 @@ BOOL ON_DetailView::Write( ON_BinaryArchive& archive ) const
     {
       rc = m_boundary.Write(archive)?true:false;
       if (!archive.EndWrite3dmChunk())
-	rc = false;
+        rc = false;
     }
     if(!rc)
       break;
@@ -100,7 +99,7 @@ BOOL ON_DetailView::Write( ON_BinaryArchive& archive ) const
   return rc;
 }
 
-BOOL ON_DetailView::Read(ON_BinaryArchive& archive)
+ON_BOOL32 ON_DetailView::Read(ON_BinaryArchive& archive)
 {
   m_page_per_model_ratio = 0.0;
   m_view.Default();
@@ -125,7 +124,7 @@ BOOL ON_DetailView::Read(ON_BinaryArchive& archive)
     {
       rc = m_view.Read(archive);
       if (!archive.EndRead3dmChunk())
-	rc = false;
+        rc = false;
     }
     if (!rc) break;
 
@@ -138,7 +137,7 @@ BOOL ON_DetailView::Read(ON_BinaryArchive& archive)
     {
       rc = m_boundary.Read(archive)?true:false;
       if (!archive.EndRead3dmChunk())
-	rc = false;
+        rc = false;
     }
     if (!rc) break;
 
@@ -167,7 +166,7 @@ int ON_DetailView::Dimension() const
   return m_boundary.Dimension();
 }
 
-BOOL ON_DetailView::GetBBox(
+ON_BOOL32 ON_DetailView::GetBBox(
     double* boxmin,
     double* boxmax,
     int bGrowBox
@@ -183,7 +182,7 @@ bool ON_DetailView::GetTightBoundingBox(
   return m_boundary.GetTightBoundingBox(tight_bbox,bGrowBox,xform);
 }
 
-BOOL ON_DetailView::Transform( const ON_Xform& xform )
+ON_BOOL32 ON_DetailView::Transform( const ON_Xform& xform )
 {
   return m_boundary.Transform(xform);
 }

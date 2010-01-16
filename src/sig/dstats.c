@@ -1,7 +1,7 @@
 /*                        D S T A T S . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2009 United States Government as represented by
+ * Copyright (c) 1986-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -43,7 +43,7 @@ int main(int ac, char *av[])
 {
     int i, n;
     long num_values;
-    register double *bp;
+    double *bp;
     double sum, sum2;
     double max, min;
     double mean, var;

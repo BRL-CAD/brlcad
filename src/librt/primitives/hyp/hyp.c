@@ -1,7 +1,7 @@
 /*                           H Y P . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2009 United States Government as represented by
+ * Copyright (c) 1990-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -103,12 +103,12 @@ hyp_internal_to_specific(struct rt_hyp_internal *hyp_in) {
 
 
 const struct bu_structparse rt_hyp_parse[] = {
-    { "%f", 3, "V",   bu_offsetof(struct rt_hyp_internal, hyp_Vi[X]),  BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "H",   bu_offsetof(struct rt_hyp_internal, hyp_Hi[X]),  BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "A",   bu_offsetof(struct rt_hyp_internal, hyp_A[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 1, "b", bu_offsetof(struct rt_hyp_internal, hyp_b),    BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 1, "bnr",   bu_offsetof(struct rt_hyp_internal, hyp_bnr),     BU_STRUCTPARSE_FUNC_NULL },
-    { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
+    { "%f", 3, "V",   bu_offsetof(struct rt_hyp_internal, hyp_Vi[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "H",   bu_offsetof(struct rt_hyp_internal, hyp_Hi[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "A",   bu_offsetof(struct rt_hyp_internal, hyp_A[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 1, "b", bu_offsetof(struct rt_hyp_internal, hyp_b), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 1, "bnr",   bu_offsetof(struct rt_hyp_internal, hyp_bnr), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
@@ -131,7 +131,7 @@ int
 rt_hyp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_hyp_internal *hyp_ip;
-    register struct hyp_specific *hyp;
+    struct hyp_specific *hyp;
 #ifndef NO_MAGIC_CHECKING
     const struct bn_tol *tol = &rtip->rti_tol;
 #endif
@@ -177,7 +177,7 @@ rt_hyp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 void
 rt_hyp_print(const struct soltab *stp)
 {
-    register const struct hyp_specific *hyp =
+    const struct hyp_specific *hyp =
 	(struct hyp_specific *)stp->st_specific;
 
     VPRINT("V", hyp->hyp_V);
@@ -207,12 +207,11 @@ rt_hyp_print(const struct soltab *stp)
 int
 rt_hyp_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
-    register struct hyp_specific *hyp =	(struct hyp_specific *)stp->st_specific;
-    register struct seg *segp;
-    const struct bn_tol *tol = &ap->a_rt_i->rti_tol;
+    struct hyp_specific *hyp =	(struct hyp_specific *)stp->st_specific;
+    struct seg *segp;
 
     struct hit hits[5];	/* 4 potential hits (top, bottom, 2 sides) */
-    register struct hit *hitp;	/* pointer to hitpoint */
+    struct hit *hitp;	/* pointer to hitpoint */
 
     vect_t dp;
     vect_t pp;
@@ -313,8 +312,6 @@ rt_hyp_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 	/* 2 hits */
 	if (hits[0].hit_dist < hits[1].hit_dist) {
 	    /* entry is [0], exit is [1] */
-	    register struct seg *segp;
-
 	    RT_GET_SEG(segp, ap->a_resource);
 	    segp->seg_stp = stp;
 	    segp->seg_in = hits[0];	/* struct copy */
@@ -322,7 +319,6 @@ rt_hyp_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 	    BU_LIST_INSERT(&(seghead->l), &(segp->l));
 	} else {
 	    /* entry is [1], exit is [0] */
-	    register struct seg *segp;
 
 	    RT_GET_SEG(segp, ap->a_resource);
 	    segp->seg_stp = stp;
@@ -374,25 +370,6 @@ rt_hyp_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 }
 
 
-#define RT_HYP_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
-
-
-/**
- * R T _ H Y P _ V S H O T
- *
- * Vectorized version.
- */
-void
-rt_hyp_vshot(struct soltab *stp[],	/* An array of solid pointers */
-	     struct xray *rp[],		/* An array of ray pointers */
-	     struct seg segp[],		/* array of segs (results returned) */
-	     int n,			/* Number of ray/object pairs */
-	     struct application *ap)
-{
-    rt_vstub(stp, rp, segp, n, ap);
-}
-
-
 /**
  * R T _ H Y P _ N O R M
  *
@@ -401,7 +378,7 @@ rt_hyp_vshot(struct soltab *stp[],	/* An array of solid pointers */
 void
 rt_hyp_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
-    register struct hyp_specific *hyp =
+    struct hyp_specific *hyp =
 	(struct hyp_specific *)stp->st_specific;
 
     /* normal from basic hyperboloid and transformed normal */
@@ -450,7 +427,7 @@ rt_hyp_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 void
 rt_hyp_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
-    register struct hyp_specific *hyp =
+    struct hyp_specific *hyp =
 	(struct hyp_specific *)stp->st_specific;
     vect_t vert, horiz;
     point_t hp;
@@ -529,8 +506,9 @@ rt_hyp_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 void
 rt_hyp_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
-    register struct hyp_specific *hyp =
-	(struct hyp_specific *)stp->st_specific;
+    struct hyp_specific *hyp =	(struct hyp_specific *)stp->st_specific;
+
+    if (ap) RT_CK_APPLICATION(ap);
 
     /* u = (angle from semi-major axis on basic hyperboloid) / (2*pi) */
     uvp->uv_u = M_1_PI * 0.5 
@@ -577,7 +555,7 @@ rt_hyp_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 void
 rt_hyp_free(struct soltab *stp)
 {
-    register struct hyp_specific *hyp =
+    struct hyp_specific *hyp =
 	(struct hyp_specific *)stp->st_specific;
 
     bu_free((char *)hyp, "hyp_specific");
@@ -585,22 +563,12 @@ rt_hyp_free(struct soltab *stp)
 
 
 /**
- * R T _ H Y P _ C L A S S
- */
-int
-rt_hyp_class(const struct soltab *stp, const vect_t min, const vect_t max, const struct bn_tol *tol)
-{
-    return(0);
-}
-
-
-/**
  * R T _ H Y P _ P L O T
  */
 int
-rt_hyp_plot(struct bu_list *vhead, struct rt_db_internal *incoming, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_hyp_plot(struct bu_list *vhead, struct rt_db_internal *incoming, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
 {
-    register int i, j;		/* loop indices */
+    int i, j;		/* loop indices */
     struct rt_hyp_internal *hyp_in;
     struct hyp_specific *hyp_ip;
     vect_t majorAxis[8],	/* vector offsets along major axis */
@@ -708,15 +676,13 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 {
     fastf_t c, dtol, f, mag_a, mag_h, ntol, r1, r2, r3, cprime;
     fastf_t **ellipses, theta_prev, theta_new;
-    fastf_t rt_ell_ang(fastf_t *p1, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol);
     int *pts_dbl, face, i, j, nseg;
     int jj, nell;
     mat_t invRoS;
     mat_t SoR;
     struct rt_hyp_internal *iip;
     struct hyp_specific *xip;
-    point_t p1;
-    struct rt_pt_node *pos_a, *pos_b, *pts_a, *pts_b, *rt_ptalloc(void);
+    struct rt_pt_node *pos_a, *pos_b, *pts_a, *pts_b;
     struct shell *s;
     struct faceuse **outfaceuses = NULL;
     struct faceuse *fu_top;
@@ -726,6 +692,12 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     struct vertex ***vells = (struct vertex ***)NULL;
     vect_t A, Au, B, Bu, Hu, V;
     struct bu_ptbl vert_tab;
+
+    struct rt_pt_node *rt_ptalloc(void);
+    fastf_t rt_ell_ang(fastf_t *, fastf_t, fastf_t, fastf_t, fastf_t);
+
+    MAT_ZERO(invRoS);
+    MAT_ZERO(SoR);
 
     RT_CK_DB_INTERNAL(ip);
     iip = (struct rt_hyp_internal *)ip->idb_ptr;
@@ -773,12 +745,11 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	/* Convert rel to absolute by scaling by smallest side */
 	dtol = ttol->rel * 2 * r2;
     if (ttol->abs <= 0.0) {
-	if (dtol <= 0.0)
+	if (dtol <= 0.0) {
 	    /* No tolerance given, use a default */
 	    dtol = 2 * 0.10 * r2;	/* 10% */
-	else
-	    /* Use absolute-ized relative tolerance */
-	    ;
+	}
+	/* else, use absolute-ized relative tolerance */
     } else {
 	/* Absolute tolerance was given, pick smaller */
 	if (ttol->rel <= 0.0 || dtol > ttol->abs)
@@ -814,7 +785,7 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     i = 1;
     {
 	point_t p0, p1, p2;
-	fastf_t m, len, dist, ang0, ang2;
+	fastf_t mm, len, dist, ang0, ang2;
 	vect_t v01, v02; /* vectors from p0->p1 and p0->p2 */
 	vect_t nLine, nHyp;
 	struct rt_pt_node *add, *rt_ptalloc(void);
@@ -827,14 +798,14 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		VMOVE(p0, pos_a->p);
 		VMOVE(p2, pos_a->next->p);
 		/* either X or Y will be zero; so adding handles either case */
-		m = (p2[Z] - p0[Z]) / ((p2[X]+p2[Y]) - (p0[X]+p0[Y]));
-		if (p0[X]) {
-		    p1[X] = fabs(m*c*r1) / sqrt(m*m*c*c - 1.0);
+		mm = (p2[Z] - p0[Z]) / ((p2[X]+p2[Y]) - (p0[X]+p0[Y]));
+		if (!NEAR_ZERO(p0[X], SMALL_FASTF)) {
+		    p1[X] = fabs(mm*c*r1) / sqrt(mm*mm*c*c - 1.0);
 		    p1[Y] = 0.0;
 		    p1[Z] = sqrt(p1[X]*p1[X] - r1*r1) / c;
 		} else {
 		    p1[X] = 0.0;
-		    p1[Y] = fabs(m*r2*r2*c) / sqrt(m*m*r2*r2*c*c - r1*r1);
+		    p1[Y] = fabs(mm*r2*r2*c) / sqrt(mm*mm*r2*r2*c*c - r1*r1);
 		    p1[Z] = (r3/r2) * sqrt(p1[Y]*p1[Y] - r2*r2);
 		}
 		if (p0[Z] + p2[Z] < 0) p1[Z] = -p1[Z];
@@ -902,9 +873,11 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     i = 0;
     nseg = 0;
     theta_prev = bn_twopi;
-    pos_a = pts_a;	/*->next;	/* skip over apex of hyp */
+    pos_a = pts_a;	/*->next; */	/* skip over apex of hyp */
     pos_b = pts_b;	/*->next; */
     while (pos_a) {
+	point_t p1;
+
 	VSCALE(A, Au, pos_a->p[X]);	/* semimajor axis */
 	VSCALE(B, Bu, pos_b->p[Y]);	/* semiminor axis */
 	VJOIN1(V, xip->hyp_V, -pos_a->p[Z], Hu);
@@ -1148,7 +1121,6 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	NMG_CK_VERTEX_G(vg);
 
 	VSUB2(tmp_pt, vg->coord, xip->hyp_V);
-	/* Fix me. SoR and invRoS have not been initialized before using */
 	MAT4X3VEC(pt_prime, SoR, tmp_pt);
 	VSET(tmp_vect, pt_prime[X]*(2*cprime+1), pt_prime[Y]*(2*cprime+1), -(pt_prime[Z]+cprime+1));
 	MAT4X3VEC(norm, invRoS, tmp_vect);
@@ -1207,6 +1179,7 @@ rt_hyp_import5(struct rt_db_internal *ip, const struct bu_external *ep, const ma
 
     RT_CK_DB_INTERNAL(ip);
     BU_CK_EXTERNAL(ep);
+    if (dbip) RT_CK_DBI(dbip);
 
     BU_ASSERT_LONG(ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * 3 * 4);
 
@@ -1252,6 +1225,8 @@ rt_hyp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     struct rt_hyp_internal *hyp_ip;
     fastf_t vec[ELEMENTS_PER_VECT * 4];
 
+    if (dbip) RT_CK_DBI(dbip);
+
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_HYP) return(-1);
     hyp_ip = (struct rt_hyp_internal *)ip->idb_ptr;
@@ -1289,12 +1264,15 @@ rt_hyp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 int
 rt_hyp_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
-    register struct rt_hyp_internal *hyp_ip =
-	(struct rt_hyp_internal *)ip->idb_ptr;
+    struct rt_hyp_internal *hyp_ip;
     char buf[256];
 
+    hyp_ip = (struct rt_hyp_internal *)ip->idb_ptr;
     RT_HYP_CK_MAGIC(hyp_ip);
     bu_vls_strcat(str, "truncated general hyp (HYP)\n");
+
+    if (!verbose)
+	return 0;
 
     sprintf(buf, "\tV (%g, %g, %g)\n",
 	    INTCLAMP(hyp_ip->hyp_Vi[X] * mm2local),
@@ -1321,7 +1299,7 @@ rt_hyp_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
     sprintf(buf, "\tNeck to Base Ratio=%g\n", INTCLAMP(hyp_ip->hyp_bnr * mm2local));
     bu_vls_strcat(str, buf);
 
-    return(0);
+    return 0;
 }
 
 
@@ -1332,15 +1310,11 @@ rt_hyp_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
  * solid.
  */
 void
-rt_hyp_ifree(struct rt_db_internal *ip, struct resource *resp)
+rt_hyp_ifree(struct rt_db_internal *ip)
 {
-    register struct rt_hyp_internal *hyp_ip;
+    struct rt_hyp_internal *hyp_ip;
 
     RT_CK_DB_INTERNAL(ip);
-
-    if (!resp) {
-	resp = &rt_uniresource;
-    }
 
     hyp_ip = (struct rt_hyp_internal *)ip->idb_ptr;
     RT_HYP_CK_MAGIC(hyp_ip);
@@ -1357,6 +1331,9 @@ rt_hyp_ifree(struct rt_db_internal *ip, struct resource *resp)
 int
 rt_hyp_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
 {
+    ps = ps; /* quellage */
+    if (ip) RT_CK_DB_INTERNAL(ip);
+
     return(0);			/* OK */
 }
 

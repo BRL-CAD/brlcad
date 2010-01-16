@@ -1,7 +1,7 @@
 /*                       S H _ B R D F . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2009 United States Government as represented by
+ * Copyright (c) 1996-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,12 +26,10 @@
  *	The normals on all surfaces point OUT of the solid.
  *	The incoming light rays point IN.
  *
- *  Authors -
- *	John R. Anderson
- *
- *	Based on the simple Isotropic Gaussian Model presented by Gregory Ward
- *	in "Measuring and Modeling Anisotropic Reflection" (Which also references
- *	earlier work by Beckmann, Torrance, and Cook).
+ * Implementation is based on the simple Isotropic Gaussian Model
+ * presented by Gregory Ward in "Measuring and Modeling Anisotropic
+ * Reflection" (Which also references earlier work by Beckmann,
+ * Torrance, and Cook).
  */
 
 #include "common.h"

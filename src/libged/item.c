@@ -1,7 +1,7 @@
 /*                        I T E M . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,7 +30,7 @@ int
 ged_item(struct ged *gedp, int argc, const char *argv[])
 {
     int status = GED_OK;
-    register struct directory *dp;
+    struct directory *dp;
     int			ident, air, GIFTmater=0, los=0;
     int			GIFTmater_set, los_set;
     struct rt_db_internal	intern;

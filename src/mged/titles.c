@@ -1,7 +1,7 @@
 /*                        T I T L E S . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2009 United States Government as represented by
+ * Copyright (c) 1985-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -113,11 +113,11 @@ create_text_overlay( struct bu_vls *vp )
     }
 
     {
-	register char *start;
-	register char *p;
-	register int imax = 0;
-	register int i = 0;
-	register int j;
+	char *start;
+	char *p;
+	int imax = 0;
+	int i = 0;
+	int j;
 	struct bu_vls vls;
 
 	start = bu_vls_addr( vp );
@@ -178,9 +178,9 @@ screen_vls(
     int	ybase,
     struct bu_vls	*vp)
 {
-    register char	*start;
-    register char	*end;
-    register int	y;
+    char	*start;
+    char	*end;
+    int	y;
 
     BU_CK_VLS( vp );
     y = ybase;
@@ -212,10 +212,10 @@ screen_vls(
 void
 dotitles(struct bu_vls *overlay_vls)
 {
-    register int    i;
-    register int    x, y;			/* for menu computations */
+    int    i;
+    int    x, y;			/* for menu computations */
     static vect_t   temp;
-    register int    yloc, xloc;
+    int    yloc, xloc;
     int		scroll_ybot;
     struct bu_vls   vls;
     typedef char    c_buf[80];
@@ -232,7 +232,7 @@ dotitles(struct bu_vls *overlay_vls)
 
     if (illump != SOLID_NULL) {
 	struct bu_vls path_lhs, path_rhs;
-	register struct directory *dp;
+	struct directory *dp;
 
 	bu_vls_init(&path_lhs);
 	bu_vls_init(&path_rhs);

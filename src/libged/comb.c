@@ -1,7 +1,7 @@
 /*                  C O M B . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,9 +36,9 @@
 int
 ged_comb(struct ged *gedp, int argc, const char *argv[])
 {
-    register struct directory *dp;
+    struct directory *dp;
     char *comb_name;
-    register int i;
+    int i;
     char oper;
     static const char *usage = "comb_name <operation solid>";
 
@@ -115,14 +115,14 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
  */
 struct directory *
 _ged_combadd(struct ged			*gedp,
-	    register struct directory	*objp,
+	    struct directory	*objp,
 	    char			*combname,
 	    int				region_flag,	/* true if adding region */
 	    int				relation,	/* = UNION, SUBTRACT, INTERSECT */
 	    int				ident,		/* "Region ID" */
 	    int				air		/* Air code */)
 {
-    register struct directory *dp;
+    struct directory *dp;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
     union tree *tp;
@@ -202,7 +202,7 @@ _ged_combadd(struct ged			*gedp,
 	db_non_union_push(comb->tree, &rt_uniresource);
 	if (db_ck_v4gift_tree(comb->tree) < 0) {
 	    bu_vls_printf(&gedp->ged_result_str, "Cannot flatten tree for editing\n");
-	    rt_db_free_internal(&intern, &rt_uniresource);
+	    rt_db_free_internal(&intern);
 	    return DIR_NULL;
 	}
     }

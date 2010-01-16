@@ -1,7 +1,7 @@
 dnl                    C O N F I G U R E . A C
 dnl BRL-CAD
 dnl
-dnl Copyright (c) 2004-2009 United States Government as represented by
+dnl Copyright (c) 2004-2010 United States Government as represented by
 dnl the U.S. Army Research Laboratory.
 dnl
 dnl Redistribution and use in source and binary forms, with or without
@@ -376,9 +376,6 @@ BC_ARG_WITH([with_wgl], [wgl], [Specify use of or path to WindowsGL], [auto])
 # use pro/engineer
 BC_ARG_WITH([with_proe], [proe], [Specify build of Pro/ENGINEER plugin or path to Pro/ENGINEER installation (optional)], [no])
 
-# set documentation language
-BC_ARG_WITH([with_lang], [language], [Set documentation language], [auto])
-
 ###
 # argument aliases
 # they need to go below here in order for --help to consolidate the
@@ -605,10 +602,6 @@ BC_ARG_WITH_ALIAS([with_opengl], [opengl])
 
 # with wgl aliases (help uses wgl)
 BC_ARG_WITH_ALIAS([with_wgl], [windowsgl])
-
-# with lang aliases
-BC_ARG_WITH_ALIAS([with_lang], [lang])
-
 
 
 ###
@@ -2010,9 +2003,9 @@ fi
 
 dnl verbose warning flags (if yes or auto)
 if test "x$bc_build_warnings" != "xno" ; then
-	BC_COMPILER_AND_LINKER_RECOGNIZES([-W -Wall -Wundef -Wfloat-equal -Wshadow -Wunreachable-code -Winline], [warning])
+	BC_COMPILER_AND_LINKER_RECOGNIZES([-W -Wall -Wundef -Wfloat-equal -Wshadow -Winline], [warning])
 	# XXX also of interest
-	# -Wmissing-declarations -Wmissing-prototypes -Wstrict-prototypes -pedantic -ansi -Werror
+	# -Wunreachable-code -Wmissing-declarations -Wmissing-prototypes -Wstrict-prototypes -ansi
 
 	if test "x$bc_warning_flag_works" = "xno" ; then
 		AC_MSG_WARN([Don't know how to output verbose warnings with this compiler])
@@ -2763,6 +2756,7 @@ build_brlcad_tk="no (using system)"
 build_against_tk=$tk_works
 if test "x$bc_build_tk" = "xyes" ; then
     build_brlcad_tk=yes
+    build_against_tk=yes
 else
     if test "x$bc_build_tk" = "xno" ; then
 	if test "x$tk_works" = "xno" ; then
@@ -2774,49 +2768,68 @@ else
     else
 	dnl automatic detection
 	if test "x$tk_works" = "xno" ; then
-	    build_brlcad_tk=yes
+	    if test "x$build_against_x11" = "xno" && test "x$bc_build_aquatk" = "xno" ; then
+		AC_MSG_WARN([Neither X11 nor AquaTk are usable, disabling Tk])
+		sleep 1
+		build_brlcad_tk="no (incapable)"
+	    else
+		build_brlcad_tk=yes
+		build_against_tk="yes"
+	    fi
 	fi
     fi
 fi
-AC_MSG_CHECKING(whether to build Tk)
+
 TK=""
 TKSTUB=""
 TK_CPPFLAGS=""
+TK_VERSION="8.5"
 unset ac_cv_c_tkconfig
-if test "x$build_brlcad_tk" = "xyes" ; then
-    TK_VERSION="8.5"
-    build_against_tk="yes"
-    AC_MSG_RESULT(yes)
-    TK='-L${top_builddir}/src/other/tk/unix'" -ltk${TCL_VERSION}"
-    TKSTUB='-L${top_builddir}/src/other/tk/unix'" -ltkstub${TK_VERSION}"
-    TK_CPPFLAGS='-I${top_srcdir}/src/other/tk/generic -I${top_srcdir}/src/other/tk/unix -I${top_srcdir}/src/other/tk/win'
-    if test "x$bc_build_aquatk" = "xyes" ; then
-	TK_CPPFLAGS="$TK_CPPFLAGS "'-I${top_srcdir}/src/other/tk/xlib'
+
+if test "x$build_against_tk" = "xyes" ; then
+    AC_MSG_CHECKING(whether to build Tk)
+    if test "x$build_brlcad_tk" = "xyes" ; then
+	AC_MSG_RESULT(yes)
+	TK='-L${top_builddir}/src/other/tk/unix'" -ltk${TCL_VERSION}"
+	TKSTUB='-L${top_builddir}/src/other/tk/unix'" -ltkstub${TK_VERSION}"
+	TK_CPPFLAGS='-I${top_srcdir}/src/other/tk/generic -I${top_srcdir}/src/other/tk/unix -I${top_srcdir}/src/other/tk/win'
+	if test "x$bc_build_aquatk" = "xyes" ; then
+	    TK_CPPFLAGS="$TK_CPPFLAGS "'-I${top_srcdir}/src/other/tk/xlib'
+	fi
+    else
+	AC_MSG_RESULT(no)
+
+	dnl find tkConfig.sh, add --with-tk option, don't cache result for AC_CONFIG_SUBDIRS
+	SC_PATH_TKCONFIG
+	# keep TK_BIN_DIR, don't keep ac_cv_c_tkconfig
+	unset ac_cv_c_tkconfig
+
+	dnl If we're using the system Tk, then we need to load
+	dnl tkConfig.sh to get the TK_VERSION and other vars.
+	SC_LOAD_TKCONFIG
+
+	if test "x$tk_link_works" = "xyes" ; then
+	    TK="$LIBTK"
+	else
+	    AC_MSG_WARN([Unable to link against a system Tk library])
+	    sleep 1
+	fi
+	if test "x$tkstub_link_works" = "xyes" ; then
+	    TKSTUB="$LIBTKSTUB"
+	else
+	    AC_MSG_WARN([Unable to link against a system Tkstub library])
+	    sleep 1
+        fi
     fi
+    AC_DEFINE(HAVE_TK, 1, [Support for a Tk GUI is enabled])
 else
-    AC_MSG_RESULT(no)
-
-    dnl find tkConfig.sh, add --with-tk option, don't cache result for AC_CONFIG_SUBDIRS
-    SC_PATH_TKCONFIG
-    # keep TK_BIN_DIR, don't keep ac_cv_c_tkconfig
-    unset ac_cv_c_tkconfig
-
-    dnl If we're using the system Tk, then we need to load
-    dnl tkConfig.sh to get the TK_VERSION and other vars.
-    SC_LOAD_TKCONFIG
-
-    if test "x$tk_link_works" = "xyes" ; then
-	TK="$LIBTK"
-    else
-	AC_MSG_WARN([Unable to link against a system Tk library])
-	sleep 1
-    fi
-    if test "x$tkstub_link_works" = "xyes" ; then
-	TKSTUB="$LIBTKSTUB"
-    else
-	AC_MSG_WARN([Unable to link against a system Tkstub library])
-	sleep 1
-    fi
+    dnl *** NO MGED GUI ***
+    AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
+    AC_MSG_WARN([Support for a BRL-CAD graphical user interface (GUI) will be disabled.])
+    AC_MSG_NOTICE([Try installing X11 development headers or system Tcl/Tk libraries.])
+    AC_MSG_NOTICE([MGED will still work in classic console mode but without a GUI.])
+    AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
+    sleep 5
 fi
 AC_SUBST(TK)
 AC_SUBST(TKSTUB)
@@ -2913,6 +2926,17 @@ AC_SUBST(ITCL_CPPFLAGS)
 AC_SUBST(ITK_CPPFLAGS)
 AC_SUBST(LIBITCL)
 AC_SUBST(LIBITK)
+
+AC_MSG_CHECKING(whether to build incrTk)
+build_brlcad_itk="$build_brlcad_itcl"
+if test "x$build_against_tk" = "xno" ; then
+    build_brlcad_itk=no
+else
+    if test "$bc_build_aquatk" = "xno" && test "x$build_against_x11" = "xno" ; then
+        build_brlcad_itk=no
+    fi
+fi
+AC_MSG_RESULT($build_brlcad_itk)
 
 # XXX hack until we can call incrTcl's configure to get the value
 case $host_os in
@@ -3550,17 +3574,6 @@ fi
 AC_MSG_RESULT($dials_and_buttons)
 
 
-dnl *** MGED GUI ***
-tk_gui=yes
-if test "x$build_against_x11" = "xno" && test "x$build_against_opengl" = "xno" && test "x$build_against_wgl" = "xno" ; then
-    if test "x$build_brlcad_tk" = "xno" ; then
-	tk_gui=no
-    fi
-fi
-if test "x$tk_gui" = "xyes" ; then
-    AC_DEFINE(HAVE_TK, 1, [Support for a Tk GUI is enabled])
-fi
-
 dnl *** Docbook functionality ***
 docbook_processing=no
 docbook_pdf_processing=no
@@ -3619,32 +3632,6 @@ fi
 AC_SUBST(ECHO)
 AC_SUBST(ECHO_N)
 
-en_docs="no"
-es_docs="no"
-dnl check for language settings
-dnl for now, just check for a supplied value - need to use saved DOCLANG
-dnl and DOCLC_ALL with an m4 macro here later for environment aware
-dnl locale setting
-if test "x$bc_with_lang" != "xno" ; then
-  if test "x$bc_with_lang_val" != "x" ; then
-     if test "x$bc_with_lang_val" = "xen" ; then
-	en_docs="yes"
-	DOCLANG="English"
-     fi
-     if test "x$bc_with_lang_val" = "xes" ; then
-	es_docs="yes"
-	DOCLANG="Spanish"
-     fi
-  else
-     en_docs="yes"
-     DOCLANG="English"
-  fi
-else
-  en_docs="yes"
-  DOCLANG="English"
-fi
-AC_MSG_RESULT([Documentation language set to: $DOCLANG])
-
 dnl **************************************
 dnl *** Configure Makefiles and output ***
 dnl **************************************
@@ -3661,6 +3648,7 @@ LIBS="`echo $LIBS`"
 AM_CONDITIONAL(BUILD_TCL, [test "x$build_brlcad_tcl" = "xyes"])
 AM_CONDITIONAL(BUILD_TK, [test "x$build_brlcad_tk" = "xyes"])
 AM_CONDITIONAL(BUILD_ITCL, [test "x$build_brlcad_itcl" = "xyes"])
+AM_CONDITIONAL(BUILD_ITK, [test "x$build_brlcad_itk" = "xyes"])
 AM_CONDITIONAL(BUILD_IWIDGETS, [test "x$build_brlcad_iwidgets" = "xyes"])
 AM_CONDITIONAL(BUILD_TKHTML3, [test "x$build_brlcad_tkhtml3" = "xyes"])
 AM_CONDITIONAL(BUILD_TKIMG, [test "x$build_brlcad_tkimg" = "xyes"])
@@ -3682,8 +3670,7 @@ AM_CONDITIONAL(BUILD_UG, [test "x$bc_build_ug" = "xyes"])
 AM_CONDITIONAL(WITH_X11, [test "x$build_against_x11" != "xno"])
 AM_CONDITIONAL(WITH_OPENGL, [test "x$build_against_opengl" != "xno" && test "x$build_against_x11" != "xno"])
 AM_CONDITIONAL(WITH_WGL, [test "x$build_against_wgl" != "xno"])
-AM_CONDITIONAL(WITH_TK, [test "xyes" = "xno"])
-#AM_CONDITIONAL(WITH_TK, [test "x$build_against_tk" != "xno"])
+AM_CONDITIONAL(WITH_TK, [test "x$build_against_tk" != "xno"])
 
 # XXX need to refactor the above fb/dm interfaces to have a better
 # separation of their external 'with' deps and the interfaces
@@ -3807,8 +3794,13 @@ OPTICAL_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${TCL}"
 MULTISPECTRAL_LIBS="${OPTICAL} ${OPTICAL_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 PC_LIBS="${LIBSTDCXX} ${BU} ${BU_LIBS}"
 if test "x$build_against_x11" = "xno" ; then
-    DM_LIBS="${GED} ${GED_LIBS} ${RT} ${RT_LIBS} ${FB} ${FB_LIBS} ${PNG} ${FRAMEWORK_CARBON}"
-    TCLCAD_LIBS="${GED} ${GED_LIBS} ${DM} ${DM_LIBS} ${FB} ${FB_LIBS} ${ITCL} ${TCLSTUB} ${TCL}"
+    if test "x$bc_build_aquatk" = "xyes" ; then
+       DM_LIBS="${GED} ${GED_LIBS} ${RT} ${RT_LIBS} ${FB} ${FB_LIBS} ${PNG} ${FRAMEWORK_CARBON} ${TK}"
+       TCLCAD_LIBS="${GED} ${GED_LIBS} ${DM} ${DM_LIBS} ${FB} ${FB_LIBS} ${ITCL} ${ITK} ${TCLSTUB} ${TCL} ${TK}"
+    else
+       DM_LIBS="${GED} ${GED_LIBS} ${RT} ${RT_LIBS} ${FB} ${FB_LIBS} ${PNG} ${FRAMEWORK_CARBON}"
+       TCLCAD_LIBS="${GED} ${GED_LIBS} ${DM} ${DM_LIBS} ${FB} ${FB_LIBS} ${ITCL} ${TCLSTUB} ${TCL}"
+    fi
 else
     DM_LIBS="${GED} ${GED_LIBS} ${RT} ${RT_LIBS} ${FB} ${FB_LIBS} ${PNG} ${TK} ${X_LIBS} ${FRAMEWORK_CARBON}"
     TCLCAD_LIBS="${GED} ${GED_LIBS} ${DM} ${DM_LIBS} ${FB} ${FB_LIBS} ${ITK} ${ITCL} ${TK} ${TCLSTUB} ${TCL}"

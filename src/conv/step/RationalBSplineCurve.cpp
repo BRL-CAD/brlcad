@@ -1,7 +1,7 @@
 /*                 RationalBSplineCurve.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -39,9 +39,9 @@ RationalBSplineCurve::RationalBSplineCurve() {
 	id = 0;
 }
 
-RationalBSplineCurve::RationalBSplineCurve(STEPWrapper *sw,int STEPid) {
+RationalBSplineCurve::RationalBSplineCurve(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 RationalBSplineCurve::~RationalBSplineCurve() {
@@ -55,7 +55,7 @@ RationalBSplineCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 	// load base class attributes
 	if ( !BSplineCurve::Load(sw,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::BSplineCurve." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::BSplineCurve." << std::endl;
 		return false;
 	}
 
@@ -75,7 +75,7 @@ RationalBSplineCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 				rn = (RealNode *)rn->NextNode();
 			}
 		} else {
-			cout << CLASSNAME << ": Error loading RationalBSplineCurve(weights_data)." << endl;
+			std::cout << CLASSNAME << ": Error loading RationalBSplineCurve(weights_data)." << std::endl;
 			return false;
 		}
 	}
@@ -85,18 +85,18 @@ RationalBSplineCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 void
 RationalBSplineCurve::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << name << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	BSplineCurve::Print(level);
 
-	TAB(level); cout << "weights_data:";
+	TAB(level); std::cout << "weights_data:";
 	LIST_OF_REALS::iterator i;
 	for(i=weights_data.begin();i!=weights_data.end();i++) {
-		cout << " " << (*i);
+		std::cout << " " << (*i);
 	}
-	cout << endl;
+	std::cout << std::endl;
 
 }
 STEPEntity *
@@ -108,7 +108,7 @@ RationalBSplineCurve::Create(STEPWrapper *sw,SCLP23(Application_instance) *sse){
 		Factory::AddObject(object);
 
 		if (!object->Load(sw,sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

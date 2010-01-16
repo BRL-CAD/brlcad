@@ -1,7 +1,7 @@
 /*                         T R A C K . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -654,14 +654,14 @@ wrobj(struct ged	*gedp,
 
     if ( (tdp = db_diradd( gedp->ged_wdbp->dbip, name, -1L, 0, flags, (genptr_t)&intern.idb_type)) == DIR_NULL )
     {
-	rt_db_free_internal( &intern, &rt_uniresource );
+	rt_db_free_internal(&intern);
 	bu_vls_printf(&gedp->ged_result_str, "Cannot add '%s' to directory, aborting\n", name);
 	return GED_ERROR;
     }
 
     if ( rt_db_put_internal( tdp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource ) < 0 )
     {
-	rt_db_free_internal( &intern, &rt_uniresource );
+	rt_db_free_internal(&intern);
 	bu_vls_printf(&gedp->ged_result_str, "wrobj(gedp, %s):  write error\n", name);
 	bu_vls_printf(&gedp->ged_result_str, "The in-memory table of contents may not match the status of the on-disk\ndatabase.  The on-disk database should still be intact.  For safety,\nyou should exit now, and resolve the I/O problem, before continuing.\n");
 
@@ -672,8 +672,8 @@ wrobj(struct ged	*gedp,
 
 static void
 tancir(struct ged *gedp,
-       register fastf_t cir1[],
-       register fastf_t cir2[]) {
+       fastf_t cir1[],
+       fastf_t cir2[]) {
     static fastf_t mag;
     vect_t	work;
     fastf_t f;
@@ -912,7 +912,7 @@ top( vec1, vec2, t )
 static void
 track_mk_tree_pure( struct rt_comb_internal *comb, struct bu_list *member_hd )
 {
-    register struct wmember *wp;
+    struct wmember *wp;
 
     for ( BU_LIST_FOR( wp, wmember, member_hd ) )  {
 	union tree	*leafp, *nodep;
@@ -1065,7 +1065,7 @@ track_mk_addmember(
     mat_t mat,
     int		op)
 {
-    register struct wmember *wp;
+    struct wmember *wp;
 
     BU_GETSTRUCT( wp, wmember );
     wp->l.magic = WMEMBER_MAGIC;
@@ -1099,7 +1099,7 @@ track_mk_addmember(
 static void
 track_mk_freemembers( struct bu_list *headp )
 {
-    register struct wmember *wp;
+    struct wmember *wp;
 
     while ( BU_LIST_WHILE( wp, wmember, headp ) )  {
 	WDB_CK_WMEMBER(wp);

@@ -1,7 +1,7 @@
 /*                         Y P R . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -54,7 +54,7 @@ ged_ypr(struct ged *gedp, int argc, const char *argv[])
 	anim_v_unpermute(mat);
 
 	if (anim_mat2ypr(pt, mat) == 2) {
-	    bu_vls_printf(&gedp->ged_result_str, "%s ypr - matrix is not a rotation matrix", argv[0]);
+	    bu_vls_printf(&gedp->ged_result_str, "view %s - matrix is not a rotation matrix", argv[0]);
 	    return GED_ERROR;
 	}
 
@@ -64,18 +64,19 @@ ged_ypr(struct ged *gedp, int argc, const char *argv[])
 	return GED_OK;
     }
 
-    if (argc != 5) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    if (argc != 4) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: view %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
     /* attempt to set Viewrot given yaw, pitch and roll */
-    if (sscanf(argv[2], "%lf", ypr) != 1 ||
-	sscanf(argv[3], "%lf", ypr+1) != 1 ||
-	sscanf(argv[4], "%lf", ypr+2) != 1) {
+    if (sscanf(argv[1], "%lf", ypr) != 1
+	|| sscanf(argv[2], "%lf", ypr+1) != 1
+	|| sscanf(argv[3], "%lf", ypr+2) != 1)
+    {
 
-	bu_vls_printf(&gedp->ged_result_str, "%s ypr: bad value detected - %s %s %s",
-		      argv[0], argv[2], argv[3], argv[4]);
+	bu_vls_printf(&gedp->ged_result_str, "view %s: bad value detected - %s %s %s",
+		      argv[0], argv[1], argv[2], argv[3]);
 	return GED_ERROR;
     }
 

@@ -1,7 +1,7 @@
 /*                        S E R V E R . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2009 United States Government as represented by
+ * Copyright (c) 1998-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -663,7 +663,7 @@ fb_server_fb_getview(struct pkg_conn *pcp, char *buf)
 void
 fb_server_fb_rmap(struct pkg_conn *pcp, char *buf)
 {
-    register int	i;
+    int	i;
     char	rbuf[NET_LONG_LEN+1];
     ColorMap map;
     unsigned char	cm[256*2*3];

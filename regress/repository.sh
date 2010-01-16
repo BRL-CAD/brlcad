@@ -1,7 +1,7 @@
 #                   R E P O S I T O R Y . S H
 # BRL-CAD
 #
-# Copyright (c) 2008-2009 United States Government as represented by
+# Copyright (c) 2008-2010 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -75,8 +75,8 @@ fi
 COMMONFILES="`find $TOPSRC -type f \( -name \*.c -o -name \*.cpp -o -name \*.cxx -o -name \*.h -o -name \*.y -o -name \*.l \) -not -regex '.*src/other.*' -not -regex '.*~' -not -regex '.*\.log' -not -regex '.*Makefile.*' -not -regex '.*cache.*' -not -regex '.*\.svn.*' -exec grep -n -I -e '#[[:space:]]*include' {} /dev/null \; | grep '\"common.h\"' | sed 's/:.*//g'`"
 
 FOUND=
-for file in $COMMONFILES ; do 
-    if test -f "`echo $file | sed 's/\.c$/\.l/g'`" ; then 
+for file in $COMMONFILES ; do
+    if test -f "`echo $file | sed 's/\.c$/\.l/g'`" ; then
 	continue
     fi
     MATCH="`grep '#[[:space:]]*include' $file /dev/null | head -n 1 | grep -v '\"common.h\"' | sed 's/:.*//g'`"

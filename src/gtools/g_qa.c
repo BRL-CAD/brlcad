@@ -1,7 +1,7 @@
 /*                          G _ Q A . C
  * BRL-CAD
  *
- * Copyright (c) 2005-2009 United States Government as represented by
+ * Copyright (c) 2005-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -42,7 +42,7 @@ static char usage[] = "Usage: %s [-A A|a|b|e|g|o|v|w] [-a az] [-d] [-e el] [-f d
 int
 main(int argc, char *argv[])
 {
-    register int i, j;
+    int i, j;
     int db_index;
     char c;
     const char *av[MAXARGS];

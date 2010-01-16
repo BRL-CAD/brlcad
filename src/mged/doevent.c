@@ -1,7 +1,7 @@
 /*                       D O E V E N T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -113,7 +113,7 @@ static int button0 = 0;
 int
 doEvent(ClientData clientData, XEvent *eventPtr)
 {
-    register struct dm_list *save_dm_list;
+    struct dm_list *save_dm_list;
     int status;
 
     if (eventPtr->type == DestroyNotify || (unsigned long)eventPtr->xany.window == 0)

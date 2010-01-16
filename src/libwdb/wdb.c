@@ -1,7 +1,7 @@
 /*                           W D B . C
  * BRL-CAD
  *
- * Copyright (c) 1987-2009 United States Government as represented by
+ * Copyright (c) 1987-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,11 +32,6 @@
  *  calling routine is not surprised.
  *
  *  Return codes of 0 are OK, -1 signal an error.
- *
- *  Authors -
- *	Michael John Muuss
- *	Paul R. Stay
- *	Susanne Muuss, J.D.
  *
  */
 
@@ -284,7 +279,7 @@ mk_arb8(struct rt_wdb *wdbp, const char *name, const fastf_t *pts)
 
     /* [24] */
 {
-    register int i;
+    int i;
     struct rt_arb_internal	*arb;
 
     BU_GETSTRUCT( arb, rt_arb_internal );

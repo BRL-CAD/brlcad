@@ -1,7 +1,7 @@
 /*                         E X P A N D . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -40,9 +40,9 @@ ged_scrape_escapes_AppendResult(struct bu_vls	*result,
 int
 ged_expand(struct ged *gedp, int argc, const char *argv[])
 {
-    register char *pattern;
-    register struct directory *dp;
-    register int i, whicharg;
+    char *pattern;
+    struct directory *dp;
+    int i, whicharg;
     int regexp, nummatch, thismatch, backslashed;
     static const char *usage = "expression";
 

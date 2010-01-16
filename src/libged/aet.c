@@ -1,7 +1,7 @@
 /*                         A E T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -84,18 +84,18 @@ ged_aet(struct ged *gedp, int argc, const char *argv[])
 
     if (argc == 3 || argc == 4) {
 	if (sscanf(argv[1], "%lf", &aet[X]) != 1) {
-	    bu_vls_printf(&gedp->ged_result_str, "ged_aet: bad azimuth - %s\n", argv[1]);
+	    bu_vls_printf(&gedp->ged_result_str, "%s: bad azimuth - %s\n", argv[0], argv[1]);
 	    return GED_ERROR;
 	}
 
 	if (sscanf(argv[2], "%lf", &aet[Y]) != 1) {
-	    bu_vls_printf(&gedp->ged_result_str, "ged_aet: bad elevation - %s\n", argv[2]);
+	    bu_vls_printf(&gedp->ged_result_str, "%s: bad elevation - %s\n", argv[0], argv[2]);
 	    return GED_ERROR;
 	}
 
 	if (argc == 4) {
 	    if (sscanf(argv[3], "%lf", &aet[Z]) != 1) {
-		bu_vls_printf(&gedp->ged_result_str, "ged_aet: bad twist - %s\n", argv[3]);
+		bu_vls_printf(&gedp->ged_result_str, "%s: bad twist - %s\n", argv[0], argv[3]);
 		return GED_ERROR;
 	    }
 	} else

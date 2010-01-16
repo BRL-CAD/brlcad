@@ -1,7 +1,7 @@
 /*                       P I X S T A T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2009 United States Government as represented by
+ * Copyright (c) 1986-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -80,7 +80,7 @@ main(int argc, char **argv)
     int	i, n, num;
     double	d;
     long	num_pixels;
-    register unsigned char *bp;
+    unsigned char *bp;
     FILE	*fp;
 
     /* check for verbose flag */

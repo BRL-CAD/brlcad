@@ -1,7 +1,7 @@
 /*                       D M - W G L . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2009 United States Government as represented by
+ * Copyright (c) 1988-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -56,12 +56,6 @@
 #define YSTEREO		491	/* subfield height, in scanlines */
 #define YOFFSET_LEFT	532	/* YSTEREO + YBLANK ? */
 
-#define USE_VECTOR_THRESHHOLD 0
-
-#if USE_VECTOR_THRESHHOLD
-extern int vectorThreshold;	/* defined in libdm/tcl.c */
-#endif
-
 static int wgl_actively_drawing;
 HIDDEN PIXELFORMATDESCRIPTOR *wgl_choose_visual();
 
@@ -73,12 +67,18 @@ struct dm	*wgl_open();
 HIDDEN int	wgl_close();
 HIDDEN int	wgl_drawBegin();
 HIDDEN int      wgl_drawEnd();
-HIDDEN int	wgl_normal(), wgl_loadMatrix();
-HIDDEN int	wgl_drawString2D(), wgl_drawLine2D();
+HIDDEN int	wgl_normal();
+HIDDEN int	wgl_loadMatrix();
+HIDDEN int	wgl_drawString2D();
+HIDDEN int	wgl_drawLine2D();
+HIDDEN int	wgl_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2);
+HIDDEN int	wgl_drawLines3D(struct dm *dmp, int npoints, point_t *points);
 HIDDEN int      wgl_drawPoint2D();
 HIDDEN int	wgl_drawVList();
-HIDDEN int	wgl_draw();
-HIDDEN int      wgl_setFGColor(), wgl_setBGColor();
+HIDDEN int	wgl_drawVListHiddenLine();
+HIDDEN int 	wgl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), genptr_t *data);
+HIDDEN int      wgl_setFGColor();
+HIDDEN int      wgl_setBGColor();
 HIDDEN int	wgl_setLineAttr();
 HIDDEN int	wgl_configureWin_guts();
 HIDDEN int	wgl_configureWin();
@@ -86,8 +86,10 @@ HIDDEN int	wgl_setLight();
 HIDDEN int	wgl_setTransparency();
 HIDDEN int	wgl_setDepthMask();
 HIDDEN int	wgl_setZBuffer();
-HIDDEN int	wgl_setWinBounds(), wgl_debug();
-HIDDEN int      wgl_beginDList(), wgl_endDList();
+HIDDEN int	wgl_setWinBounds();
+HIDDEN int	wgl_debug();
+HIDDEN int      wgl_beginDList();
+HIDDEN int      wgl_endDList();
 HIDDEN int      wgl_drawDList();
 HIDDEN int      wgl_freeDLists();
 
@@ -99,8 +101,11 @@ struct dm dm_wgl = {
     wgl_loadMatrix,
     wgl_drawString2D,
     wgl_drawLine2D,
+    wgl_drawLine3D,
+    wgl_drawLines3D,
     wgl_drawPoint2D,
     wgl_drawVList,
+    wgl_drawVListHiddenLine,
     wgl_draw,
     wgl_setFGColor,
     wgl_setBGColor,
@@ -837,7 +842,7 @@ wgl_loadMatrix(dmp, mat, which_eye)
     mat_t mat;
     int which_eye;
 {
-    register fastf_t *mptr;
+    fastf_t *mptr;
     GLfloat gtmat[16];
     mat_t	newm;
 
@@ -922,19 +927,164 @@ wgl_loadMatrix(dmp, mat, which_eye)
 }
 
 /*
+ *  			W G L _ D R A W V L I S T H I D D E N L I N E
+ *
+ */
+HIDDEN int
+wgl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp)
+{
+    register struct bn_vlist	*tvp;
+    int				first;
+    static float black[4] = {0.0, 0.0, 0.0, 0.0};
+
+    if (dmp->dm_debugLevel)
+	bu_log("wgl_drawVList()\n");
+
+
+    /* First, draw polygons using background color. */
+
+    if (dmp->dm_light) {
+	glDisable(GL_LIGHTING);
+    }
+
+    glDisable(GL_BLEND);
+    glDepthMask(GL_TRUE);
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_POLYGON_OFFSET_FILL);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glPolygonOffset(1.0, 1.0);
+
+    /* Set color to background color for drawing polygons. */
+    glColor3f(((struct wgl_vars *)dmp->dm_vars.priv_vars)->r,
+	       ((struct wgl_vars *)dmp->dm_vars.priv_vars)->g,
+	       ((struct wgl_vars *)dmp->dm_vars.priv_vars)->b);
+
+    /* Viewing region is from -1.0 to +1.0 */
+    first = 1;
+    for (BU_LIST_FOR(tvp, bn_vlist, &vp->l)) {
+	register int	i;
+	register int	nused = tvp->nused;
+	register int	*cmd = tvp->cmd;
+	register point_t *pt = tvp->pt;
+	for (i = 0; i < nused; i++, cmd++, pt++) {
+	    if (dmp->dm_debugLevel > 2)
+		bu_log(" %d (%g %g %g)\n", *cmd, V3ARGS(pt));
+	    switch (*cmd) {
+		case BN_VLIST_LINE_MOVE:
+		    break;
+		case BN_VLIST_POLY_START:
+		    /* Start poly marker & normal */
+		    if (first == 0)
+			glEnd();
+
+		    glBegin(GL_POLYGON);
+		    /* Set surface normal (vl_pnt points outward) */
+		    glNormal3dv(*pt);
+		    break;
+		case BN_VLIST_LINE_DRAW:
+		    break;
+		case BN_VLIST_POLY_MOVE:
+		case BN_VLIST_POLY_DRAW:
+		    glVertex3dv(*pt);
+		    break;
+		case BN_VLIST_POLY_END:
+		    /* Draw, End Polygon */
+		    glVertex3dv(*pt);
+		    glEnd();
+		    first = 1;
+		    break;
+		case BN_VLIST_POLY_VERTNORM:
+		    /* Set per-vertex normal.  Given before vert. */
+		    glNormal3dv(*pt);
+		    break;
+	    }
+	}
+    }
+
+    if (first == 0)
+	glEnd();
+
+
+    /* Last, draw wireframe/edges. */
+
+    /* Set color to wireColor for drawing wireframe/edges */
+    glColor3f(wireColor[0], wireColor[1], wireColor[2]);
+
+    /* Viewing region is from -1.0 to +1.0 */
+    first = 1;
+    for (BU_LIST_FOR(tvp, bn_vlist, &vp->l)) {
+	register int	i;
+	register int	nused = tvp->nused;
+	register int	*cmd = tvp->cmd;
+	register point_t *pt = tvp->pt;
+	for (i = 0; i < nused; i++, cmd++, pt++) {
+	    if (dmp->dm_debugLevel > 2)
+		bu_log(" %d (%g %g %g)\n", *cmd, V3ARGS(pt));
+	    switch (*cmd) {
+		case BN_VLIST_LINE_MOVE:
+		    /* Move, start line */
+		    if (first == 0)
+			glEnd();
+		    first = 0;
+
+		    glBegin(GL_LINE_STRIP);
+		    glVertex3dv(*pt);
+		    break;
+		case BN_VLIST_POLY_START:
+		    /* Start poly marker & normal */
+		    if (first == 0)
+			glEnd();
+
+		    glBegin(GL_LINE_STRIP);
+		    break;
+		case BN_VLIST_LINE_DRAW:
+		case BN_VLIST_POLY_MOVE:
+		case BN_VLIST_POLY_DRAW:
+		    glVertex3dv(*pt);
+		    break;
+		case BN_VLIST_POLY_END:
+		    /* Draw, End Polygon */
+		    glVertex3dv(*pt);
+		    glEnd();
+		    first = 1;
+		    break;
+		case BN_VLIST_POLY_VERTNORM:
+		    /* Set per-vertex normal.  Given before vert. */
+		    glNormal3dv(*pt);
+		    break;
+	    }
+	}
+    }
+
+    if (first == 0)
+	glEnd();
+
+    if (dmp->dm_light) {
+	glEnable(GL_LIGHTING);
+    }
+
+    if (!((struct wgl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuffer_on)
+	glDisable(GL_DEPTH_TEST);
+
+    if (!dmp->dm_depthMask)
+	glDepthMask(GL_FALSE);
+
+    glDisable(GL_POLYGON_OFFSET_FILL);
+
+    return TCL_OK;
+}
+
+/*
  *  			W G L _ D R A W V L I S T
  *
  */
 HIDDEN int
 wgl_drawVList(dmp, vp)
     struct dm			*dmp;
-    register struct bn_vlist	*vp;
+    struct bn_vlist	*vp;
 {
-    register struct bn_vlist	*tvp;
+    struct bn_vlist	*tvp;
     int				first;
-#if USE_VECTOR_THRESHHOLD
-    static int			nvectors = 0;
-#endif
     int mflag = 1;
     float black[4] = {0.0, 0.0, 0.0, 0.0};
 
@@ -944,10 +1094,10 @@ wgl_drawVList(dmp, vp)
     /* Viewing region is from -1.0 to +1.0 */
     first = 1;
     for (BU_LIST_FOR(tvp, bn_vlist, &vp->l)) {
-	register int	i;
-	register int	nused = tvp->nused;
-	register int	*cmd = tvp->cmd;
-	register point_t *pt = tvp->pt;
+	int	i;
+	int	nused = tvp->nused;
+	int	*cmd = tvp->cmd;
+	point_t *pt = tvp->pt;
 	for (i = 0; i < nused; i++, cmd++, pt++) {
 	    if (dmp->dm_debugLevel > 2)
 		bu_log(" %d (%g %g %g)\n", *cmd, V3ARGS(pt));
@@ -1014,32 +1164,34 @@ wgl_drawVList(dmp, vp)
 		    break;
 	    }
 	}
-
-#if USE_VECTOR_THRESHHOLD
-/*XXX The Tcl_DoOneEvent below causes the following error:
-  X Error of failed request:  GLXBadContextState
-*/
-
-	nvectors += nused;
-
-	if (nvectors >= vectorThreshold) {
-	    if (dmp->dm_debugLevel)
-		bu_log("wgl_drawVList(): handle Tcl events\n");
-
-	    nvectors = 0;
-
-	    /* Handle events in the queue */
-	    while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
-
-	    if (dmp->dm_debugLevel)
-		bu_log("wgl_drawVList(): handled Tcl events successfully\n");
-	}
-#endif
     }
 
     if (first == 0)
 	glEnd();
 
+    return TCL_OK;
+}
+
+/*
+ *  			W G L _ D R A W
+ *
+ */
+HIDDEN int
+wgl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), genptr_t *data)
+{
+    struct bn_vlist *vp;
+    if (!callback_function) {
+	if (data) {
+	    vp = (struct bn_vlist *)data;
+	    wgl_drawVList(dmp,vp);
+	}
+    } else {
+	if (!data) {
+	    return TCL_ERROR;
+	} else {
+	    vp = callback_function(data);
+	}
+    }
     return TCL_OK;
 }
 
@@ -1083,7 +1235,7 @@ wgl_normal(dmp)
 HIDDEN int
 wgl_drawString2D( dmp, str, x, y, size, use_aspect )
     struct dm *dmp;
-    register char *str;
+    char *str;
     fastf_t x, y;
     int size;
     int use_aspect;
@@ -1142,6 +1294,105 @@ wgl_drawLine2D( dmp, x1, y1, x2, y2)
     return TCL_OK;
 }
 
+/*
+ *			W G L _ D R A W L I N E 3 D
+ *
+ */
+HIDDEN int
+wgl_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2)
+{
+    static float black[4] = {0.0, 0.0, 0.0, 0.0};
+
+    if (dmp->dm_debugLevel)
+	bu_log("wgl_drawLine3D()\n");
+
+    if (dmp->dm_debugLevel) {
+	GLfloat pmat[16];
+
+	glGetFloatv(GL_PROJECTION_MATRIX, pmat);
+	bu_log("projection matrix:\n");
+	bu_log("%g %g %g %g\n", pmat[0], pmat[4], pmat[8], pmat[12]);
+	bu_log("%g %g %g %g\n", pmat[1], pmat[5], pmat[9], pmat[13]);
+	bu_log("%g %g %g %g\n", pmat[2], pmat[6], pmat[10], pmat[14]);
+	bu_log("%g %g %g %g\n", pmat[3], pmat[7], pmat[11], pmat[15]);
+	glGetFloatv(GL_MODELVIEW_MATRIX, pmat);
+	bu_log("modelview matrix:\n");
+	bu_log("%g %g %g %g\n", pmat[0], pmat[4], pmat[8], pmat[12]);
+	bu_log("%g %g %g %g\n", pmat[1], pmat[5], pmat[9], pmat[13]);
+	bu_log("%g %g %g %g\n", pmat[2], pmat[6], pmat[10], pmat[14]);
+	bu_log("%g %g %g %g\n", pmat[3], pmat[7], pmat[11], pmat[15]);
+    }
+
+    if (dmp->dm_light) {
+	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, wireColor);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, black);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, black);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, black);
+
+	if (dmp->dm_transparency)
+	    glDisable(GL_BLEND);
+    }
+
+    glBegin(GL_LINES);
+    glVertex3dv(pt1);
+    glVertex3dv(pt2);
+    glEnd();
+
+    return TCL_OK;
+}
+
+/*
+ *			W G L _ D R A W L I N E S 3 D
+ *
+ */
+HIDDEN int
+wgl_drawLines3D(struct dm *dmp, int npoints, point_t *points)
+{
+    register int i;
+    static float black[4] = {0.0, 0.0, 0.0, 0.0};
+
+    if (dmp->dm_debugLevel)
+	bu_log("wgl_drawLine3D()\n");
+
+    if (dmp->dm_debugLevel) {
+	GLfloat pmat[16];
+
+	glGetFloatv(GL_PROJECTION_MATRIX, pmat);
+	bu_log("projection matrix:\n");
+	bu_log("%g %g %g %g\n", pmat[0], pmat[4], pmat[8], pmat[12]);
+	bu_log("%g %g %g %g\n", pmat[1], pmat[5], pmat[9], pmat[13]);
+	bu_log("%g %g %g %g\n", pmat[2], pmat[6], pmat[10], pmat[14]);
+	bu_log("%g %g %g %g\n", pmat[3], pmat[7], pmat[11], pmat[15]);
+	glGetFloatv(GL_MODELVIEW_MATRIX, pmat);
+	bu_log("modelview matrix:\n");
+	bu_log("%g %g %g %g\n", pmat[0], pmat[4], pmat[8], pmat[12]);
+	bu_log("%g %g %g %g\n", pmat[1], pmat[5], pmat[9], pmat[13]);
+	bu_log("%g %g %g %g\n", pmat[2], pmat[6], pmat[10], pmat[14]);
+	bu_log("%g %g %g %g\n", pmat[3], pmat[7], pmat[11], pmat[15]);
+    }
+
+    /* Must be an even number of points */
+    if (npoints%2)
+	return TCL_OK;
+
+    if (dmp->dm_light) {
+	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, wireColor);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, black);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, black);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, black);
+
+	if (dmp->dm_transparency)
+	    glDisable(GL_BLEND);
+    }
+
+    glBegin(GL_LINES);
+    for (i = 0; i < npoints; ++i)
+	glVertex3dv(points[i]);
+    glEnd();
+
+    return TCL_OK;
+}
+
 HIDDEN int
 wgl_drawPoint2D(dmp, x, y)
     struct dm *dmp;
@@ -1174,6 +1425,12 @@ wgl_setFGColor(dmp, r, g, b, strict, transparency)
     dmp->dm_fg[1] = g;
     dmp->dm_fg[2] = b;
 
+    /* wireColor gets the full rgb */
+    wireColor[0] = r / 255.0;
+    wireColor[1] = g / 255.0;
+    wireColor[2] = b / 255.0;
+    wireColor[3] = transparency;
+
     if (strict) {
 	glColor3ub( (GLubyte)r, (GLubyte)g, (GLubyte)b );
     } else {
@@ -1200,6 +1457,12 @@ wgl_setFGColor(dmp, r, g, b, strict, transparency)
 	    diffuseColor[1] = wireColor[1] * 0.6;
 	    diffuseColor[2] = wireColor[2] * 0.6;
 	    diffuseColor[3] = wireColor[3];
+
+#if 1
+	    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambientColor);
+	    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specularColor);
+	    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuseColor);
+#endif
 	} else {
 	    glColor3ub( (GLubyte)r,  (GLubyte)g,  (GLubyte)b );
 	}

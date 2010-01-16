@@ -1,7 +1,7 @@
 /*                           P K G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -137,8 +137,8 @@ static FILE *_pkg_debug = (FILE*)NULL;
 unsigned short
 pkg_gshort(char *buf)
 {
-    register unsigned char *p = (unsigned char *)buf;
-    register unsigned short u;
+    unsigned char *p = (unsigned char *)buf;
+    unsigned short u;
 
     u = *p++ << 8;
     return ((unsigned short)(u | *p));
@@ -148,8 +148,8 @@ pkg_gshort(char *buf)
 unsigned long
 pkg_glong(char *buf)
 {
-    register unsigned char *p = (unsigned char *)buf;
-    register unsigned long u;
+    unsigned char *p = (unsigned char *)buf;
+    unsigned long u;
 
     u = *p++; u <<= 8;
     u |= *p++; u <<= 8;
@@ -266,7 +266,7 @@ static
 struct pkg_conn *
 _pkg_makeconn(int fd, const struct pkg_switch *switchp, void (*errlog) (char *msg))
 {
-    register struct pkg_conn *pc;
+    struct pkg_conn *pc;
 
     if (_pkg_debug) {
 	_pkg_timestamp();
@@ -330,7 +330,7 @@ pkg_open(const char *host, const char *service, const char *protocol, const char
 {
 #ifdef HAVE_WINSOCK_H
     LPHOSTENT lpHostEntry;
-    register SOCKET netfd;
+    SOCKET netfd;
     SOCKADDR_IN saServer;
     WORD wVersionRequested;		/* initialize Windows socket networking, increment reference count */
     WSADATA wsaData;
@@ -340,8 +340,8 @@ pkg_open(const char *host, const char *service, const char *protocol, const char
 #ifdef HAVE_SYS_UN_H
     struct sockaddr_un sunhim;		/* Server, UNIX Domain */
 #endif
-    register struct hostent *hp;
-    register int netfd;
+    struct hostent *hp;
+    int netfd;
     struct sockaddr *addr;			/* UNIX or INET addr */
     size_t addrlen;			/* length of address */
 #endif
@@ -385,7 +385,7 @@ pkg_open(const char *host, const char *service, const char *protocol, const char
     if (atoi(service) > 0) {
 	saServer.sin_port = htons((unsigned short)atoi(service));
     } else {
-	register struct servent *sp;
+	struct servent *sp;
 	if ((sp = getservbyname(service, "tcp")) == NULL) {
 	    snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_open(%s, %s): unknown service\n",
 		     host, service);
@@ -423,7 +423,7 @@ pkg_open(const char *host, const char *service, const char *protocol, const char
     if (atoi(service) > 0) {
 	sinhim.sin_port = htons((unsigned short)atoi(service));
     } else {
-	register struct servent *sp;
+	struct servent *sp;
 	if ((sp = getservbyname(service, "tcp")) == NULL) {
 	    snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_open(%s, %s): unknown service\n",
 		     host, service);
@@ -514,7 +514,7 @@ pkg_transerver(const struct pkg_switch *switchp, void (*errlog)(char *))
 static int
 _pkg_permserver_impl(struct in_addr iface, const char *service, const char *protocol, int backlog, void (*errlog)(char *msg))
 {
-    register struct servent *sp;
+    struct servent *sp;
     int pkg_listenfd;
 #ifdef HAVE_WINSOCK_H
     SOCKADDR_IN saServer;
@@ -708,7 +708,7 @@ struct pkg_conn *
 pkg_getclient(int fd, const struct pkg_switch *switchp, void (*errlog) (char *msg), int nodelay)
 {
     struct sockaddr_in from;
-    register int s2;
+    int s2;
     unsigned int fromlen = sizeof (from);
     auto int onoff;
 #ifdef HAVE_WINSOCK_H
@@ -779,7 +779,7 @@ pkg_getclient(int fd, const struct pkg_switch *switchp, void (*errlog) (char *ms
 
 
 void
-pkg_close(register struct pkg_conn *pc)
+pkg_close(struct pkg_conn *pc)
 {
     PKG_CK(pc);
     if (_pkg_debug) {
@@ -836,10 +836,10 @@ pkg_close(register struct pkg_conn *pc)
  * This is a private implementation function.
  */
 static size_t
-_pkg_inget(register struct pkg_conn *pc, char *buf, size_t count)
+_pkg_inget(struct pkg_conn *pc, char *buf, size_t count)
 {
-    register size_t len = 0;
-    register int todo = (int)count;
+    size_t len = 0;
+    int todo = (int)count;
 
     while (todo > 0) {
 
@@ -869,7 +869,7 @@ _pkg_inget(register struct pkg_conn *pc, char *buf, size_t count)
  * This is a private implementation function.
  */
 static void
-_pkg_checkin(register struct pkg_conn *pc, int nodelay)
+_pkg_checkin(struct pkg_conn *pc, int nodelay)
 {
     struct timeval tv;
     fd_set bits;
@@ -917,13 +917,13 @@ _pkg_checkin(register struct pkg_conn *pc, int nodelay)
 
 
 int
-pkg_send(int type, const char *buf, size_t len, register struct pkg_conn *pc)
+pkg_send(int type, const char *buf, size_t len, struct pkg_conn *pc)
 {
 #ifdef HAVE_WRITEV
     static struct iovec cmdvec[2];
 #endif
     static struct pkg_header hdr;
-    register int i;
+    int i;
 
     PKG_CK(pc);
 
@@ -1036,13 +1036,13 @@ pkg_send(int type, const char *buf, size_t len, register struct pkg_conn *pc)
 
 
 int
-pkg_2send(int type, const char *buf1, size_t len1, const char *buf2, size_t len2, register struct pkg_conn *pc)
+pkg_2send(int type, const char *buf1, size_t len1, const char *buf2, size_t len2, struct pkg_conn *pc)
 {
 #ifdef HAVE_WRITEV
     static struct iovec cmdvec[3];
 #endif
     static struct pkg_header hdr;
-    register int i;
+    int i;
 
     PKG_CK(pc);
 
@@ -1174,7 +1174,7 @@ pkg_2send(int type, const char *buf1, size_t len1, const char *buf2, size_t len2
 
 
 int
-pkg_stream(int type, const char *buf, size_t len, register struct pkg_conn *pc)
+pkg_stream(int type, const char *buf, size_t len, struct pkg_conn *pc)
 {
     static struct pkg_header hdr;
 
@@ -1207,9 +1207,9 @@ pkg_stream(int type, const char *buf, size_t len, register struct pkg_conn *pc)
 
 
 int
-pkg_flush(register struct pkg_conn *pc)
+pkg_flush(struct pkg_conn *pc)
 {
-    register int i;
+    int i;
 
     if (_pkg_debug) {
 	_pkg_timestamp();
@@ -1254,9 +1254,9 @@ pkg_flush(register struct pkg_conn *pc)
  * This is a private implementation function.
  */
 static int
-_pkg_gethdr(register struct pkg_conn *pc, char *buf)
+_pkg_gethdr(struct pkg_conn *pc, char *buf)
 {
-    register size_t i;
+    size_t i;
 
     PKG_CK(pc);
     if (pc->pkc_left >= 0)  return(1);	/* go get it! */
@@ -1317,9 +1317,9 @@ _pkg_gethdr(register struct pkg_conn *pc, char *buf)
 
 
 int
-pkg_waitfor (int type, char *buf, size_t len, register struct pkg_conn *pc)
+pkg_waitfor (int type, char *buf, size_t len, struct pkg_conn *pc)
 {
-    register size_t i;
+    size_t i;
 
     PKG_CK(pc);
     if (_pkg_debug) {
@@ -1358,7 +1358,7 @@ pkg_waitfor (int type, char *buf, size_t len, register struct pkg_conn *pc)
 
     /* See if incomming message is larger than user's buffer */
     if (pc->pkc_len > len) {
-	register char *bp;
+	char *bp;
 	size_t excess;
 	snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE,
 		 "pkg_waitfor: message %ld exceeds buffer %ld\n",
@@ -1409,10 +1409,10 @@ pkg_waitfor (int type, char *buf, size_t len, register struct pkg_conn *pc)
 
 
 char *
-pkg_bwaitfor (int type, register struct pkg_conn *pc)
+pkg_bwaitfor (int type, struct pkg_conn *pc)
 {
-    register size_t i;
-    register char *tmpbuf;
+    size_t i;
+    char *tmpbuf;
 
     PKG_CK(pc);
     if (_pkg_debug) {
@@ -1464,9 +1464,9 @@ pkg_bwaitfor (int type, register struct pkg_conn *pc)
  * This is a private implementation function.
  */
 static int
-_pkg_dispatch(register struct pkg_conn *pc)
+_pkg_dispatch(struct pkg_conn *pc)
 {
-    register int i;
+    int i;
 
     PKG_CK(pc);
     if (_pkg_debug) {
@@ -1480,7 +1480,7 @@ _pkg_dispatch(register struct pkg_conn *pc)
 
     /* Whole message received, process it via switchout table */
     for (i = 0; pc->pkc_switch[i].pks_handler != NULL; i++) {
-	register char *tempbuf;
+	char *tempbuf;
 
 	if (pc->pkc_switch[i].pks_type != pc->pkc_type)
 	    continue;
@@ -1509,12 +1509,12 @@ _pkg_dispatch(register struct pkg_conn *pc)
 
 
 int
-pkg_process(register struct pkg_conn *pc)
+pkg_process(struct pkg_conn *pc)
 {
-    register size_t len;
-    register int available;
-    register int errcnt;
-    register int ret;
+    size_t len;
+    int available;
+    int errcnt;
+    int ret;
     int goodcnt;
 
     goodcnt = 0;
@@ -1631,7 +1631,7 @@ pkg_process(register struct pkg_conn *pc)
 
 
 int
-pkg_block(register struct pkg_conn *pc)
+pkg_block(struct pkg_conn *pc)
 {
     PKG_CK(pc);
     if (_pkg_debug) {
@@ -1663,7 +1663,7 @@ pkg_block(register struct pkg_conn *pc)
 
 
 int
-pkg_suckin(register struct pkg_conn *pc)
+pkg_suckin(struct pkg_conn *pc)
 {
     size_t avail;
     int got;
@@ -1699,7 +1699,7 @@ pkg_suckin(register struct pkg_conn *pc)
 
     /* If cur point is near end of buffer, recopy data to buffer front */
     if (pc->pkc_incur >= (pc->pkc_inlen * 7) / 8) {
-	register size_t ammount;
+	size_t ammount;
 
 	ammount = pc->pkc_inend - pc->pkc_incur;
 	/* This copy can not overlap itself, because of 7/8 above */

@@ -1,7 +1,7 @@
 /*                            H E X . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -49,8 +49,8 @@ static long offset=0;	 /* offset from begining of file from which to start */
  */
 void dump(FILE *fd)
 {
-    register int	i;
-    register char	*p;
+    int	i;
+    char	*p;
     int		bytes;
     long		addr = 0L;
     static char	buf[DUMPLEN];    /* input buffer */

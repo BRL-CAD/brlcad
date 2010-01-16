@@ -1,7 +1,7 @@
 /*                      D B 5 _ C O M B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -446,13 +446,7 @@ rt_comb_export5(
  *	-1	FAIL
  */
 int
-rt_comb_import5(
-    struct rt_db_internal	*ip,
-    const struct bu_external *ep,
-    const mat_t		mat,
-    const struct db_i	*dbip,
-    struct resource		*resp,
-    const int		minor_type __attribute__((unused)))
+rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp)
 {
     struct rt_comb_internal	*comb;
     unsigned char	*cp;

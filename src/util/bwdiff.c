@@ -1,7 +1,7 @@
 /*                        B W D I F F . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2009 United States Government as represented by
+ * Copyright (c) 1986-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -69,7 +69,7 @@ open_file(FILE **fp, char *name)
 int
 main(int argc, char **argv)
 {
-    register unsigned char *p1, *p2, *op;
+    unsigned char *p1, *p2, *op;
     int	i, n, m;
 
     while ( argc > 3 ) {

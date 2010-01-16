@@ -1,7 +1,7 @@
 /*                 B R E P L I C A T O R . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -147,7 +147,7 @@ generate_brep(int count, ON_3dPoint *points)
 
     // SURFACES
 #if 1
-    ON_NurbsSurface* surf0123 = new ON_NurbsSurface(3 /*dimension*/, FALSE /*nonrational*/, 2 /*u*/, 2 /*v*/, 2 /*#u*/, 2 /*#v*/);
+    ON_NurbsSurface* surf0123 = new ON_NurbsSurface(3 /*dimension*/, 0 /*nonrational*/, 2 /*u*/, 2 /*v*/, 2 /*#u*/, 2 /*#v*/);
     surf0123->SetKnot(0, 0, 0.0); surf0123->SetKnot(0, 1, 1.0); surf0123->SetKnot(1, 0, 0.0); surf0123->SetKnot(1, 1, 1.0);
     surf0123->SetCV(0, 0, points[0]);
     surf0123->SetCV(1, 0, points[1]);
@@ -156,7 +156,7 @@ generate_brep(int count, ON_3dPoint *points)
     brep->m_S.Append(surf0123); /* 0 */
 #else
     /* XXX */
-    ON_NurbsSurface* surf0123prime = new ON_NurbsSurface(3 /*dimension*/, FALSE /*nonrational*/, 2 /*u*/, 2 /*v*/, 2 /*#u*/, 2 /*#v*/);
+    ON_NurbsSurface* surf0123prime = new ON_NurbsSurface(3 /*dimension*/, 0 /*nonrational*/, 2 /*u*/, 2 /*v*/, 2 /*#u*/, 2 /*#v*/);
     surf0123prime->SetKnot(0, 0, 0.0); surf0123prime->SetKnot(0, 1, 1.0); surf0123prime->SetKnot(1, 0, 0.0); surf0123prime->SetKnot(1, 1, 1.0);
     surf0123prime->SetCV(0, 0, p8);
     surf0123prime->SetCV(1, 0, p9);
@@ -165,7 +165,7 @@ generate_brep(int count, ON_3dPoint *points)
     brep->m_S.Append(surf0123prime); /* 0 */
 #endif
 
-    ON_NurbsSurface* surf4765 = new ON_NurbsSurface(3 /*dimension*/, FALSE /*nonrational*/, 2 /*u*/, 2 /*v*/, 2 /*#u*/, 2 /*#v*/);
+    ON_NurbsSurface* surf4765 = new ON_NurbsSurface(3 /*dimension*/, 0 /*nonrational*/, 2 /*u*/, 2 /*v*/, 2 /*#u*/, 2 /*#v*/);
     surf4765->SetKnot(0, 0, 0.0); surf4765->SetKnot(0, 1, 1.0); surf4765->SetKnot(1, 0, 0.0); surf4765->SetKnot(1, 1, 1.0);
     surf4765->SetCV(0, 0, points[4]);
     surf4765->SetCV(1, 0, points[7]);
@@ -173,7 +173,7 @@ generate_brep(int count, ON_3dPoint *points)
     surf4765->SetCV(0, 1, points[5]);
     brep->m_S.Append(surf4765); /* 1 */
     
-    ON_NurbsSurface* surf0451 = new ON_NurbsSurface(3 /*dimension*/, FALSE /*nonrational*/, 2 /*u*/, 2 /*v*/, 2 /*#u*/, 2 /*#v*/);
+    ON_NurbsSurface* surf0451 = new ON_NurbsSurface(3 /*dimension*/, 0 /*nonrational*/, 2 /*u*/, 2 /*v*/, 2 /*#u*/, 2 /*#v*/);
     surf0451->SetKnot(0, 0, 0.0); surf0451->SetKnot(0, 1, 1.0); surf0451->SetKnot(1, 0, 0.0); surf0451->SetKnot(1, 1, 1.0);
     surf0451->SetCV(0, 0, points[0]);
     surf0451->SetCV(1, 0, points[4]);
@@ -181,7 +181,7 @@ generate_brep(int count, ON_3dPoint *points)
     surf0451->SetCV(0, 1, points[1]);
     brep->m_S.Append(surf0451); /* 2 */
     
-    ON_NurbsSurface* surf2673 = new ON_NurbsSurface(3 /*dimension*/, FALSE /*nonrational*/, 2 /*u*/, 2 /*v*/, 2 /*#u*/, 2 /*#v*/);
+    ON_NurbsSurface* surf2673 = new ON_NurbsSurface(3 /*dimension*/, 0 /*nonrational*/, 2 /*u*/, 2 /*v*/, 2 /*#u*/, 2 /*#v*/);
     surf2673->SetKnot(0, 0, 0.0); surf2673->SetKnot(0, 1, 1.0); surf2673->SetKnot(1, 0, 0.0); surf2673->SetKnot(1, 1, 1.0);
     surf2673->SetCV(0, 0, points[2]);
     surf2673->SetCV(1, 0, points[6]);
@@ -189,7 +189,7 @@ generate_brep(int count, ON_3dPoint *points)
     surf2673->SetCV(0, 1, points[3]);
     brep->m_S.Append(surf2673); /* 3 */
     
-    ON_NurbsSurface* surf1562 = new ON_NurbsSurface(3 /*dimension*/, FALSE /*nonrational*/, 2 /*u*/, 2 /*v*/, 2 /*#u*/, 2 /*#v*/);
+    ON_NurbsSurface* surf1562 = new ON_NurbsSurface(3 /*dimension*/, 0 /*nonrational*/, 2 /*u*/, 2 /*v*/, 2 /*#u*/, 2 /*#v*/);
     surf1562->SetKnot(0, 0, 0.0); surf1562->SetKnot(0, 1, 1.0); surf1562->SetKnot(1, 0, 0.0); surf1562->SetKnot(1, 1, 1.0);
     surf1562->SetCV(0, 0, points[1]);
     surf1562->SetCV(1, 0, points[5]);
@@ -197,7 +197,7 @@ generate_brep(int count, ON_3dPoint *points)
     surf1562->SetCV(0, 1, points[2]);
     brep->m_S.Append(surf1562); /* 4 */
     
-    ON_NurbsSurface* surf0374 = new ON_NurbsSurface(3 /*dimension*/, FALSE /*nonrational*/, 2 /*u*/, 2 /*v*/, 2 /*#u*/, 2 /*#v*/);
+    ON_NurbsSurface* surf0374 = new ON_NurbsSurface(3 /*dimension*/, 0 /*nonrational*/, 2 /*u*/, 2 /*v*/, 2 /*#u*/, 2 /*#v*/);
     surf0374->SetKnot(0, 0, 0.0); surf0374->SetKnot(0, 1, 1.0); surf0374->SetKnot(1, 0, 0.0); surf0374->SetKnot(1, 1, 1.0);
     surf0374->SetCV(0, 0, points[0]);
     surf0374->SetCV(1, 0, points[3]);

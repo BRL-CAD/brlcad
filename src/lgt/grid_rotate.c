@@ -1,7 +1,7 @@
 /*                   G R I D _ R O T A T E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -49,7 +49,7 @@
  *		sin( A )^2  +  cos( A )^2  =  1 .
  */
 void
-grid_Rotate(fastf_t azim, fastf_t elev, fastf_t roll, register fastf_t *des_H, register fastf_t *des_V)
+grid_Rotate(fastf_t azim, fastf_t elev, fastf_t roll, fastf_t *des_H, fastf_t *des_V)
 {
     fastf_t	sn_azm = sin( azim );
     fastf_t	cs_azm = cos( azim );

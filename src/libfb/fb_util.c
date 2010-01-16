@@ -1,7 +1,7 @@
 /*                       F B _ U T I L . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2009 United States Government as represented by
+ * Copyright (c) 1990-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,9 +23,6 @@
  *
  *  Subroutines to simulate device specific functions for simple
  *  device interfaces to use, and backward compatibility routines.
- *
- *  Author -
- *	Phillip Dykstra
  *
  */
 /** @} */

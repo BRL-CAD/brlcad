@@ -1,7 +1,7 @@
 /*                  N M G _ F I X _ N O R M A L S . C
  * BRL-CAD
  *
- * Copyright (c) 2009 United States Government as represented by
+ * Copyright (c) 2009-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -79,7 +79,7 @@ ged_nmg_fix_normals(struct ged *gedp, int argc, const char *argv[])
 
     if (nmg_intern.idb_type != ID_NMG) {
 	bu_vls_printf(&gedp->ged_result_str, "%s is not an NMG solid\n", nmg_name);
-	rt_db_free_internal(&nmg_intern, &rt_uniresource);
+	rt_db_free_internal(&nmg_intern);
 	return GED_ERROR;
     }
 

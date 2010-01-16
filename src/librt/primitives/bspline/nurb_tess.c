@@ -1,7 +1,7 @@
 /*                     N U R B _ T E S S . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2009 United States Government as represented by
+ * Copyright (c) 1990-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -211,7 +211,7 @@ rt_cnurb_par_edge(const struct edge_g_cnurb *crv, fastf_t epsilon)
 	    final_t = t;
     }
 
-    if ( final_t == MAX_FASTF )
+    if ( NEAR_ZERO(final_t - MAX_FASTF, SMALL_FASTF) )
 	return( -1.0 );
     else
 	return( final_t/2.0 );

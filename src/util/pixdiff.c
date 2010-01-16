@@ -1,7 +1,7 @@
 /*                       P I X D I F F . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2009 United States Government as represented by
+ * Copyright (c) 1985-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,13 +35,14 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu.h"
 
 int
 main(int argc, char *argv[])
 {
-    long matching;
-    long off1;
-    long offmany;
+    long matching = 0;
+    long off1 = 0;
+    long offmany = 0;
 
     FILE *f1, *f2;
 
@@ -63,7 +64,7 @@ main(int argc, char *argv[])
     }
 
     while (1) {
-	register int r1, g1, b1;
+	int r1, g1, b1;
 	int r2, g2, b2;
 
 	r1 = fgetc(f1);
@@ -75,7 +76,7 @@ main(int argc, char *argv[])
 	if (feof(f1) || feof(f2)) break;
 
 	if (r1 != r2 || g1 != g2 || b1 != b2) {
-	    register int i;
+	    int i;
 
 	    /* Highlight differing channels */
 	    if (r1 != r2) {
@@ -122,7 +123,7 @@ main(int argc, char *argv[])
 	     * 0.55 G + 0.10 B, calculated in fixed-point, output at
 	     * half intensity.
 	     */
-	    register long i;
+	    long i;
 	    i = ((22937 * r1 + 36044 * g1 + 6553 * b1)>>17);
 	    if (i < 0) i = 0;
 	    i /= 2;

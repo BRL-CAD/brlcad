@@ -1,7 +1,7 @@
 /*                       S T O R A G E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -50,7 +50,7 @@ void
 rt_get_seg(register struct resource *res)
 {
     register struct seg *sp;
-    register int bytes;
+    size_t bytes;
 
     RT_CK_RESOURCE(res);
 

@@ -1,7 +1,7 @@
 /*                      P I X - O R L E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2009 United States Government as represented by
+ * Copyright (c) 1986-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -54,9 +54,9 @@ and the .rle file is written to stdout\n";
  *			G E T _ A R G S
  */
 static int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int	c;
+    int	c;
 
     while ( (c = bu_getopt( argc, argv, "dhs:w:n:vC:" )) != EOF )  {
 	switch ( c )  {
@@ -84,8 +84,8 @@ get_args(int argc, register char **argv)
 		break;
 	    case 'C':
 	    {
-		register char *cp = bu_optarg;
-		register int *conp = background;
+		char *cp = bu_optarg;
+		int *conp = background;
 
 		/* premature null => atoi gives zeros */
 		for ( c=0; c < 3; c++ )  {
@@ -134,8 +134,8 @@ get_args(int argc, register char **argv)
 int
 main(int argc, char **argv)
 {
-    register RGBpixel *scan_buf;
-    register int	y;
+    RGBpixel *scan_buf;
+    int	y;
 
     infp = stdin;
     outfp = stdout;

@@ -1,7 +1,7 @@
 /*                           C M D . C
  * BRL-CAD
  *
- * Copyright (c) 1987-2009 United States Government as represented by
+ * Copyright (c) 1987-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -82,8 +82,6 @@ rt_read_cmd(register FILE *fp)
 	     *  pass will detect it.
 	     */
 	    c = fgetc(fp);
-	} else if ( !isascii(c) )  {
-	    c = '?';
 	}
 	if ( c != '\0' && curpos == 0 && isspace(c) )  {
 	    /*  Dispose of leading white space.

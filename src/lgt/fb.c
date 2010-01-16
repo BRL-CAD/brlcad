@@ -1,7 +1,7 @@
 /*                            F B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -62,7 +62,7 @@ fb_Setup(char *file, int size)
 void
 fb_Zoom_Window(void)
 {
-    register int	xpos, ypos;
+    int	xpos, ypos;
     zoom = fb_getwidth( fbiop ) / grid_sz;
     xpos = ypos = grid_sz / 2;
     if ( tty )

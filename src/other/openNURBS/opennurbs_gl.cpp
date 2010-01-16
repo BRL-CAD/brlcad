@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -18,20 +17,20 @@
 #include "opennurbs_gl.h" // ON_GL() function declarations
 
 void ON_GL( const int order,     // ON_NurbsCurve order
-	      const int cv_count,  // ON_NurbsCurve cv count
-	      const double* knot,  // ON_NurbsCurve knot vector
-	      GLfloat* glknot,     // GL knot vector
-	      int bPermitScaling,  // TRUE if knot scaling is allowed
-	      double* scale        // If not NULL and knot scaling is
-				   // allowed, then the scaling
-				   // parameters are returned here.
-				   // glknot = (knot - scale[0])*scale[1]
-	    )
+              const int cv_count,  // ON_NurbsCurve cv count
+              const double* knot,  // ON_NurbsCurve knot vector
+              GLfloat* glknot,     // GL knot vector
+              int bPermitScaling,  // true if knot scaling is allowed
+              double* scale        // If not NULL and knot scaling is
+                                   // allowed, then the scaling
+                                   // parameters are returned here.
+                                   // glknot = (knot - scale[0])*scale[1]
+            )
 {
   // Because GL uses floats instead of doubles for knot vectors and
   // because some GLs are intolerant of closely spaced knots,
   // the returned glknots[] may be re-scaled when bPermitScaling
-  // is TRUE.  When the knots belong to a trimmed surface, any rescaling
+  // is true.  When the knots belong to a trimmed surface, any rescaling
   // done to the surface's knots must be applied to the trimming geometry.
 
   const int knot_count = order + cv_count - 2;
@@ -55,21 +54,21 @@ void ON_GL( const int order,     // ON_NurbsCurve order
       double dmax = 1.0;
       double d;
       for ( i = 1; i < knot_count; i++ ) {
-	d = knot[i] - knot[i-1];
-	if ( d <= 0.0 )
-	  continue; // multiple knot
-	if ( d < dmin )
-	  dmin = d;
-	else if ( d > dmax )
-	  dmax = d;
+        d = knot[i] - knot[i-1];
+        if ( d <= 0.0 )
+          continue; // multiple knot
+        if ( d < dmin )
+          dmin = d;
+        else if ( d > dmax )
+          dmax = d;
       }
       if ( dmin > 0.0 && dmax >= dmin ) {
-	if ( dmin < 1.0e-2 )
-	  dk = 1.0e-2/dmin;
-	else if ( dmax > 1.0e4 ) {
-	  if ( 1.0e4*dmin >= 1.0e-2*dmax )
-	    dk = 1.0e4/dmax;        
-	}
+        if ( dmin < 1.0e-2 )
+          dk = 1.0e-2/dmin;
+        else if ( dmax > 1.0e4 ) {
+          if ( 1.0e4*dmin >= 1.0e-2*dmax )
+            dk = 1.0e4/dmax;        
+        }
       }
     }
     if ( scale ) {
@@ -90,8 +89,8 @@ void ON_GL( const int order,     // ON_NurbsCurve order
 }
 
 static void GetGLCV( const int dim, const int is_rat, const double* cv,
-		     double xform[4][4], 
-		     GLfloat* glcv )
+                     double xform[4][4], 
+                     GLfloat* glcv )
 {
   if ( xform ) {
     const double x = cv[0];
@@ -116,33 +115,33 @@ static void GetGLCV( const int dim, const int is_rat, const double* cv,
 }
 
 void ON_GL( const ON_NurbsCurve& nurbs_curve,
-	      GLUnurbsObj* nobj, // created with gluNewNurbsRenderer )
-	      GLenum type, // = 0 (and type is automatically set)
-	      int bPermitKnotScaling,
-	      double* knot_scale,
-	      double xform[][4]
-	    )
+              GLUnurbsObj* nobj, // created with gluNewNurbsRenderer )
+              GLenum type, // = 0 (and type is automatically set)
+              int bPermitKnotScaling,
+              double* knot_scale,
+              double xform[][4]
+            )
 {
   ON_GL( nurbs_curve.Dimension(), 
-	 nurbs_curve.IsRational(),
-	 nurbs_curve.Order(),
-	 nurbs_curve.CVCount(),
-	 nurbs_curve.Knot(),
-	 nurbs_curve.m_cv_stride,
-	 nurbs_curve.m_cv,
-	 nobj,
-	 type,
-	 bPermitKnotScaling,
-	 knot_scale,
-	 xform
-	 );
+         nurbs_curve.IsRational(),
+         nurbs_curve.Order(),
+         nurbs_curve.CVCount(),
+         nurbs_curve.Knot(),
+         nurbs_curve.m_cv_stride,
+         nurbs_curve.m_cv,
+         nobj,
+         type,
+         bPermitKnotScaling,
+         knot_scale,
+         xform
+         );
 }
 
 void ON_GL( const ON_Curve& curve,
-	      GLUnurbsObj* nobj, // created with gluNewNurbsRenderer )
-	      GLenum type, // = 0 (and type is automatically set)
-	      double xform[][4]
-	    )
+              GLUnurbsObj* nobj, // created with gluNewNurbsRenderer )
+              GLenum type, // = 0 (and type is automatically set)
+              double xform[][4]
+            )
 {
   const ON_PolyCurve* poly_curve = ON_PolyCurve::Cast(&curve);
   if ( poly_curve ) 
@@ -153,7 +152,7 @@ void ON_GL( const ON_Curve& curve,
     for ( i = 0; i < segment_count; i++ ) {
       pSegmentCurve = poly_curve->SegmentCurve(i);
       if ( pSegmentCurve )
-	ON_GL( *pSegmentCurve, nobj, type, xform );
+        ON_GL( *pSegmentCurve, nobj, type, xform );
     }
     return;
   }
@@ -179,30 +178,28 @@ void ON_GL( const ON_Curve& curve,
     if ( !nurbs_curve ) 
     {
       if ( curve.GetNurbForm(tmp) )
-	nurbs_curve = &tmp;
+        nurbs_curve = &tmp;
     }
-    ON_GL( *nurbs_curve, nobj, type, TRUE, NULL, xform );
+    ON_GL( *nurbs_curve, nobj, type, true, NULL, xform );
   }
 }
 
 void ON_GL( int dim, int is_rat, int nurb_order, int cv_count,
-	      const double* knot_vector, 
-	      int cv_stride, const double* cv,
-	      GLUnurbsObj* nobj, // created with gluNewNurbsRenderer )
-	      GLenum type, // = 0 (and type is automatically set)
-	      int bPermitKnotScaling,
-	      double* knot_scale,
-	      double xform[][4]
-	    )
+            const double* knot_vector, 
+            int cv_stride, const double* cv,
+            GLUnurbsObj* nobj,
+            GLenum type,
+            int bPermitKnotScaling,
+            double* knot_scale,
+            double xform[][4]
+            )
 {
-  BOOL bCallgluBeginEndCurve = FALSE;
+  ON_BOOL32 bCallgluBeginEndCurve = false;
   int i;
-
-  double dbg_ks[2];
 
   GLint nknots = nurb_order + cv_count; // GL knot count = TL knot count + 2
   GLfloat* knot = (GLfloat*)onmalloc( nknots*sizeof(*knot) );
-  ON_GL( nurb_order, cv_count, knot_vector, knot, bPermitKnotScaling, dbg_ks);//knot_scale );
+  ON_GL( nurb_order, cv_count, knot_vector, knot, bPermitKnotScaling, knot_scale );
 
   // control vertices
   //const int cv_size = (is_rat) ? dim+1: dim;
@@ -219,16 +216,16 @@ void ON_GL( int dim, int is_rat, int nurb_order, int cv_count,
     {
       switch ( dim ) {
       case 2: // must be a GLU_MAP1_TRIM_2/3
-	type = ( is_rat ) 
-	     ? GLU_MAP1_TRIM_3   // rational 2d trim uses homogeneous coords
-	     : GLU_MAP1_TRIM_2;  // non-rational 2d trim uses euclidean coords
-	break;
+        type = ( is_rat ) 
+             ? GLU_MAP1_TRIM_3   // rational 2d trim uses homogeneous coords
+             : GLU_MAP1_TRIM_2;  // non-rational 2d trim uses euclidean coords
+        break;
       case 3: // must be a GLU_MAP1_VERTEX_3/4
-	type = ( is_rat ) 
-	     ? GL_MAP1_VERTEX_4  // rational 3d curve uses homogeneous coords
-	     : GL_MAP1_VERTEX_3; // non-rational 3d curve used euclidean coords
-	bCallgluBeginEndCurve = TRUE;
-	break;
+        type = ( is_rat ) 
+             ? GL_MAP1_VERTEX_4  // rational 3d curve uses homogeneous coords
+             : GL_MAP1_VERTEX_3; // non-rational 3d curve used euclidean coords
+        bCallgluBeginEndCurve = true;
+        break;
       }
     }
     break;
@@ -237,23 +234,23 @@ void ON_GL( int dim, int is_rat, int nurb_order, int cv_count,
   case GLU_MAP1_TRIM_3:
     // make sure type matches rational flag
     type = ( is_rat ) 
-	 ? GLU_MAP1_TRIM_3   // rational 2d trim uses homogeneous coords
-	 : GLU_MAP1_TRIM_2;  // non-rational 2d trim uses euclidean coords
+         ? GLU_MAP1_TRIM_3   // rational 2d trim uses homogeneous coords
+         : GLU_MAP1_TRIM_2;  // non-rational 2d trim uses euclidean coords
     break;
 
   case GL_MAP1_VERTEX_3:
   case GL_MAP1_VERTEX_4:
     // make sure type matches rational flag
     type = ( is_rat ) 
-	 ? GL_MAP1_VERTEX_4  // rational 3d curve uses homogeneous coords
-	 : GL_MAP1_VERTEX_3; // non-rational 3d curve used euclidean coords
-    bCallgluBeginEndCurve = TRUE;
+         ? GL_MAP1_VERTEX_4  // rational 3d curve uses homogeneous coords
+         : GL_MAP1_VERTEX_3; // non-rational 3d curve used euclidean coords
+    bCallgluBeginEndCurve = true;
     break;
   }
 
   if ( bCallgluBeginEndCurve )
     gluBeginCurve(nobj);
-  gluNurbsCurve(
+    gluNurbsCurve(
     nobj,
     nknots,
     knot,
@@ -274,17 +271,17 @@ void ON_GL( int dim, int is_rat, int nurb_order, int cv_count,
 // See comments in opennurbs_gl.h for calling instructions.
 
 void ON_GL( const ON_NurbsSurface& s,
-	      GLUnurbsObj* nobj, // created with gluNewNurbsRenderer )
-	      GLenum type,       // = 0 (and type is automatically set)
-	      int bPermitKnotScaling,
-	      double* knot_scale0,
-	      double* knot_scale1
-	     )
+              GLUnurbsObj* nobj, // created with gluNewNurbsRenderer )
+              GLenum type,       // = 0 (and type is automatically set)
+              int bPermitKnotScaling,
+              double* knot_scale0,
+              double* knot_scale1
+             )
 {
   int i, j, k;
 
   // The "bPermitScaling" parameters to the ON_GL() call that
-  // fills in the knot vectors is set to FALSE because any
+  // fills in the knot vectors is set to false because any
   // rescaling that is applied to a surface domain must also
   // be applied to parameter space trimming curve geometry.
 
@@ -292,13 +289,13 @@ void ON_GL( const ON_NurbsSurface& s,
   GLint sknot_count = s.KnotCount(0) + 2;
   GLfloat* sknot = (GLfloat*)onmalloc( sknot_count*sizeof(*sknot) );
   ON_GL( s.Order(0), s.CVCount(0), s.Knot(0), sknot, 
-	   bPermitKnotScaling, knot_scale0 );
+           bPermitKnotScaling, knot_scale0 );
 
   // GL "t" knots
   GLint tknot_count = s.KnotCount(1) + 2;
   GLfloat* tknot = (GLfloat*)onmalloc( tknot_count*sizeof(*tknot) );
   ON_GL( s.Order(1), s.CVCount(1), s.Knot(1), tknot,
-	   bPermitKnotScaling, knot_scale1 );
+           bPermitKnotScaling, knot_scale1 );
 
   // control vertices
   const int cv_size= s.CVSize();
@@ -311,7 +308,7 @@ void ON_GL( const ON_NurbsSurface& s,
       const double*  cv = s.CV(i,j);
       GLfloat* gl_cv = ctlarray + s_stride*i + t_stride*j;
       for ( k = 0; k < cv_size; k++ ) {
-	gl_cv[k] = (GLfloat)cv[k];
+        gl_cv[k] = (GLfloat)cv[k];
       }
     }
   }
@@ -344,8 +341,8 @@ void ON_GL( const ON_NurbsSurface& s,
 }
 
 void ON_GL( const ON_Brep& brep,
-	    GLUnurbsObj* nobj     // created with gluNewNurbsRenderer )
-	  )
+            GLUnurbsObj* nobj     // created with gluNewNurbsRenderer )
+          )
 {
   const int face_count = brep.m_F.Count();
   int face_index;
@@ -358,9 +355,11 @@ void ON_GL( const ON_Brep& brep,
 // See comments in opennurbs_gl.h for calling instructions.
 
 void ON_GL( const ON_BrepFace& face,
-	    GLUnurbsObj* nobj     // created with gluNewNurbsRenderer )
-	  )
+            GLUnurbsObj* nobj     // created with gluNewNurbsRenderer )
+          )
 {
+  bool bSkipTrims = false;
+
   const ON_Mesh* mesh;
   mesh = face.Mesh(ON::render_mesh);
   if ( mesh ) 
@@ -381,22 +380,23 @@ void ON_GL( const ON_BrepFace& face,
       ON_NurbsSurface tmp_nurbssrf;
       const ON_Surface* srf = brep->m_S[face.m_si];
       const ON_NurbsSurface* nurbs_srf = ON_NurbsSurface::Cast(srf);
-      if ( !nurbs_srf ) {
-	// attempt to get NURBS form of this surface
-	if ( srf->GetNurbForm( tmp_nurbssrf ) )
-	  nurbs_srf = &tmp_nurbssrf;
+      if ( !nurbs_srf ) 
+      {
+        // attempt to get NURBS form of this surface
+        if ( srf->GetNurbForm( tmp_nurbssrf ) )
+          nurbs_srf = &tmp_nurbssrf;
       }
       if ( !nurbs_srf )
-	return;
+        return;
       gluBeginSurface( nobj );
       ON_GL( *nurbs_srf,
-	     nobj, 
-	     (nurbs_srf->IsRational()) ? GL_MAP2_VERTEX_4 : GL_MAP2_VERTEX_3,
-	     TRUE, knot_scale[0], knot_scale[1]
-	    );
+             nobj, 
+             (nurbs_srf->IsRational()) ? GL_MAP2_VERTEX_4 : GL_MAP2_VERTEX_3,
+             true, knot_scale[0], knot_scale[1]
+            );
     }
 
-    if ( brep->FaceIsSurface( face.m_face_index ) ) {
+    if ( bSkipTrims || brep->FaceIsSurface( face.m_face_index ) ) {
       gluEndSurface( nobj );
       return; // face is trivially trimmed
     }
@@ -407,40 +407,34 @@ void ON_GL( const ON_BrepFace& face,
     // the parameter space trimming geometry
     double xform[4][4] 
       = {{knot_scale[0][1], 0.0, 0.0, -knot_scale[0][0]*knot_scale[0][1] },
-	 {0.0, knot_scale[1][1], 0.0, -knot_scale[1][0]*knot_scale[1][1] },
-	 {0.0, 0.0, 1.0, 0.0},
-	 {0.0, 0.0, 0.0, 1.0}};
+         {0.0, knot_scale[1][1], 0.0, -knot_scale[1][0]*knot_scale[1][1] },
+         {0.0, 0.0, 1.0, 0.0},
+         {0.0, 0.0, 0.0, 1.0}};
 
     // Add face's 2d trimming loop(s)
     const int face_loop_count = face.m_li.Count();
-    for ( fli = 0; fli < face_loop_count; fli++ ) {
+    for ( fli = 0; fli < face_loop_count; fli++ ) 
+    {
       gluBeginTrim( nobj );
 
       li = face.m_li[fli];
       const ON_BrepLoop& loop = brep->m_L[li];
       const int loop_trim_count = loop.m_ti.Count();
-      for ( lti = 0; lti < loop_trim_count; lti++ ) {
-	ti = loop.m_ti[lti];
-	const ON_BrepTrim& trim = brep->m_T[ti];
-	ON_GL( trim,
-	       nobj, 
-	       GLU_MAP1_TRIM_2,
-	       xform
-	      );
+      for ( lti = 0; lti < loop_trim_count; lti++ )
+      {
+        ti = loop.m_ti[lti];
+        const ON_BrepTrim& trim = brep->m_T[ti];
+        ON_GL( trim,
+               nobj, 
+               GLU_MAP1_TRIM_2,
+               xform
+              );
       }
 
       gluEndTrim( nobj );
     }
     gluEndSurface( nobj );
   }
-}
-
-static double dist_sq( const double* a, const double* b )
-{
-  double dx = a[0]-b[0];
-  double dy = a[1]-b[1];
-  double dz = a[2]-b[2];
-  return (dx*dx+dy*dy+dz*dz);
 }
 
 void ON_GL( const ON_Mesh& mesh )
@@ -452,8 +446,8 @@ void ON_GL( const ON_Mesh& mesh )
   ON_2fPoint t[4];
 
   const int face_count = mesh.FaceCount();
-  const BOOL bHasNormals = mesh.HasVertexNormals();
-  const BOOL bHasTCoords = mesh.HasTextureCoordinates();
+  const ON_BOOL32 bHasNormals = mesh.HasVertexNormals();
+  const ON_BOOL32 bHasTCoords = mesh.HasTextureCoordinates();
 
   glBegin(GL_TRIANGLES);
   for ( fi = 0; fi < face_count; fi++ ) {
@@ -480,16 +474,16 @@ void ON_GL( const ON_Mesh& mesh )
       // quadrangle - render as two triangles
       v[3] = mesh.m_V[f.vi[3]];
       if ( bHasNormals )
-	n[3] = mesh.m_N[f.vi[3]];
+        n[3] = mesh.m_N[f.vi[3]];
       if ( bHasTCoords )
-	t[3] = mesh.m_T[f.vi[3]];
+        t[3] = mesh.m_T[f.vi[3]];
       if ( v[0].DistanceTo(v[2]) <= v[1].DistanceTo(v[3]) ) {
-	i0 = 0; i1 = 1; i2 = 2;
-	j0 = 0; j1 = 2; j2 = 3;
+        i0 = 0; i1 = 1; i2 = 2;
+        j0 = 0; j1 = 2; j2 = 3;
       }
       else {
-	i0 = 1; i1 = 2; i2 = 3;
-	j0 = 1; j1 = 3; j2 = 0;
+        i0 = 1; i1 = 2; i2 = 3;
+        j0 = 1; j1 = 3; j2 = 0;
       }
     }
     else {
@@ -520,21 +514,21 @@ void ON_GL( const ON_Mesh& mesh )
     if ( j0 != j1 ) {
       // if we have a quad, second triangle
       if ( bHasNormals )
-	glNormal3f( n[j0].x, n[j0].y, n[j0].z );
+        glNormal3f( n[j0].x, n[j0].y, n[j0].z );
       if ( bHasTCoords )
-	glTexCoord2f( t[j0].x, t[j0].y );
+        glTexCoord2f( t[j0].x, t[j0].y );
       glVertex3f( v[j0].x, v[j0].y, v[j0].z );
 
       if ( bHasNormals )
-	glNormal3f( n[j1].x, n[j1].y, n[j1].z );
+        glNormal3f( n[j1].x, n[j1].y, n[j1].z );
       if ( bHasTCoords )
-	glTexCoord2f( t[j1].x, t[j1].y );
+        glTexCoord2f( t[j1].x, t[j1].y );
       glVertex3f( v[j1].x, v[j1].y, v[j1].z );
 
       if ( bHasNormals )
-	glNormal3f( n[j2].x, n[j2].y, n[j2].z );
+        glNormal3f( n[j2].x, n[j2].y, n[j2].z );
       if ( bHasTCoords )
-	glTexCoord2f( t[j2].x, t[j2].y );
+        glTexCoord2f( t[j2].x, t[j2].y );
       glVertex3f( v[j2].x, v[j2].y, v[j2].z );
     }
 
@@ -629,21 +623,21 @@ void ON_GL( const ON_Light* light, GLenum light_index )
 
 void ON_GL( const ON_Light& light, GLenum light_index )
 {
-  BOOL bPopModelViewMatrix = FALSE;
-  BOOL bPopProjectionMatrix = FALSE;
+  ON_BOOL32 bPopModelViewMatrix = false;
+  ON_BOOL32 bPopProjectionMatrix = false;
 
   switch ( light.CoordinateSystem() ) 
   {
   case ON::world_cs:
     break;
   case ON::clip_cs:
-    bPopProjectionMatrix = TRUE;
+    bPopProjectionMatrix = true;
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
     // no break here
   case ON::camera_cs:
-    bPopModelViewMatrix = TRUE;
+    bPopModelViewMatrix = true;
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     glLoadIdentity();
@@ -691,9 +685,9 @@ void ON_GL( const ON_Light& light, GLenum light_index )
 }
 
 void ON_GL( ON_Viewport& viewport,
-	    int port_left, int port_right,
-	    int port_bottom, int port_top
-	  )
+            int port_left, int port_right,
+            int port_bottom, int port_top
+          )
 {
   // Sets viewport's port to port_* values and adjusts frustum
   // so it's aspect matches the port's.
@@ -708,13 +702,13 @@ void ON_GL( ON_Viewport& viewport,
   viewport.SetFrustumAspect( port_aspect );
 
   viewport.SetScreenPort( port_left, port_right, port_bottom, port_top,
-			  0, 0xff );
+                          0, 0xff );
 
-  BOOL bHaveCameraToClip = viewport.GetXform( 
-				       ON::camera_cs,  
-				       ON::clip_cs,
-				       projectionMatrix 
-				       );
+  ON_BOOL32 bHaveCameraToClip = viewport.GetXform( 
+                                       ON::camera_cs,  
+                                       ON::clip_cs,
+                                       projectionMatrix 
+                                       );
 
   if ( bHaveCameraToClip ) {
     projectionMatrix.Transpose();
@@ -727,11 +721,11 @@ void ON_GL( const ON_Viewport& viewport )
 {
   // sets model view matrix (world to camera transformation)
   ON_Xform modelviewMatrix; // world to camera transformation
-  BOOL bHaveWorldToCamera = viewport.GetXform( 
-				       ON::world_cs,  
-				       ON::camera_cs,
-				       modelviewMatrix 
-				       );
+  ON_BOOL32 bHaveWorldToCamera = viewport.GetXform( 
+                                       ON::world_cs,  
+                                       ON::camera_cs,
+                                       modelviewMatrix 
+                                       );
   if ( bHaveWorldToCamera ) {
     modelviewMatrix.Transpose();
     glMatrixMode(GL_MODELVIEW);
@@ -753,5 +747,5 @@ void ON_GL(
     }
   }
   if ( nurbs_surface )
-    ON_GL( *nurbs_surface, nobj, 0, TRUE );
+    ON_GL( *nurbs_surface, nobj, 0, true );
 }

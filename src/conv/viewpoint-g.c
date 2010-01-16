@@ -1,7 +1,7 @@
 /*                   V I E W P O I N T - G . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2009 United States Government as represented by
+ * Copyright (c) 1993-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -65,7 +65,7 @@ static char *usage="viewpoint-g [-t tol] -c coord_file_name -e elements_file_nam
 int
 main(int argc, char **argv)
 {
-    register int c;
+    int c;
     FILE *coords, *elems;		/* input file pointers */
     struct rt_wdb *out_fp;		/* output file pointers */
     char *output_file = "viewpoint.g";

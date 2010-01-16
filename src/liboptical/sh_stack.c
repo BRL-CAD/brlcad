@@ -1,7 +1,7 @@
 /*                      S H _ S T A C K . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2009 United States Government as represented by
+ * Copyright (c) 1986-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -18,13 +18,8 @@
  * information.
  */
 /** @file sh_stack.c
- *			S T A C K . C
  *
  *  Stack multiple material modules together
- *
- *  Author -
- *	Phillip Dykstra
- *  	Lee A. Butler
  *
  */
 

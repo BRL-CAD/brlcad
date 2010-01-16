@@ -1,7 +1,7 @@
 /*                        A L L _ S F . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2009 United States Government as represented by
+ * Copyright (c) 1990-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -41,7 +41,7 @@
 #include "raytrace.h"
 
 
-extern int hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *segp);       /*  User supplied hit function.  */
+extern int hit(struct application *ap_p, struct partition *PartHeadp, struct seg *segp);       /*  User supplied hit function.  */
 extern int miss(struct application *ap);      /*  User supplied miss function.  */
 extern int overlap(struct application *ap, struct partition *pp, struct region *r1, struct region *r2, struct partition *hp);   /*  User supplied overlap function.  */
 
@@ -528,12 +528,12 @@ int main(int argc, char **argv)
 /***************************************************************************/
 /*  User supplied hit function.  */
 int
-hit(register struct application *ap_p, struct partition *PartHeadp, struct seg *segp)
+hit(struct application *ap_p, struct partition *PartHeadp, struct seg *segp)
 {
     /*  START # 1000  */
-    register struct partition *pp;
-    register struct hit *hitp;
-    register struct soltab *stp;
+    struct partition *pp;
+    struct hit *hitp;
+    struct soltab *stp;
 
     int rh1;		/*  1st region hit (leaving region).  */
     int rh2;		/*  2nd region hit (entering region).  */

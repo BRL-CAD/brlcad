@@ -1,7 +1,7 @@
 /*                        G - I G E S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -179,7 +179,7 @@ int
 main(int argc, char *argv[])
 {
     int			i, ret;
-    register int		c;
+    int		c;
     double			percent;
     char			copy_buffer[CP_BUF_SIZE] = {0};
     struct directory	*dp;
@@ -461,7 +461,7 @@ main(int argc, char *argv[])
  */
 union tree *
 do_nmg_region_end(tsp, pathp, curtree, client_data)
-    register struct db_tree_state	*tsp;
+    struct db_tree_state	*tsp;
     struct db_full_path	*pathp;
     union tree		*curtree;
     genptr_t		client_data;
@@ -792,7 +792,7 @@ csg_comb_func( dbip, dp, ptr )
     {
 	bu_log( "Error in combination %s\n", dp->d_namep );
 	bu_free( (char *)de_pointers, "csg_comb_func de_pointers" );
-	rt_db_free_internal( &intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 	return;
     }
 
@@ -817,7 +817,7 @@ csg_comb_func( dbip, dp, ptr )
 	bu_log( "g-iges: combination (%s) not written to iges file\n", dp->d_namep );
     }
 
-    rt_db_free_internal( &intern, &rt_uniresource);
+    rt_db_free_internal(&intern);
     bu_free( (char *)de_pointers, "csg_comb_func de_pointers" );
 
 }
@@ -854,7 +854,7 @@ csg_leaf_func( dbip, dp, ptr )
     else
 	dp->d_nref = 0;
 
-    rt_db_free_internal( &ip, &rt_uniresource );
+    rt_db_free_internal(&ip);
 }
 
 void

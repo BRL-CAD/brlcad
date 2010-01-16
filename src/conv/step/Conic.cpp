@@ -1,7 +1,7 @@
 /*                 Conic.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -40,9 +40,9 @@ Conic::Conic() {
 	position = NULL;
 }
 
-Conic::Conic(STEPWrapper *sw,int STEPid) {
+Conic::Conic(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 	position = NULL;
 }
 
@@ -76,7 +76,7 @@ Conic::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 	id = sse->STEPfile_id;
 
 	if ( !GeometricRepresentationItem::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::GeometricRepresentationItem." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::GeometricRepresentationItem." << std::endl;
 		return false;
 	}
 
@@ -92,12 +92,12 @@ Conic::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 				position = aA2P;
 				if (!aA2P->Load(step,select)) {
-					cout << CLASSNAME << ":Error loading select Axis2Placement from Conic." << endl;
+					std::cout << CLASSNAME << ":Error loading select Axis2Placement from Conic." << std::endl;
 					return false;
 				}
 
 			//} else {
-			//	cout << CLASSNAME << ":Unexpected select type for 'position' : " << select->UnderlyingTypeName() << endl;
+			//	std::cout << CLASSNAME << ":Unexpected select type for 'position' : " << select->UnderlyingTypeName() << std::endl;
 			//	return false;
 			//}
 		}
@@ -108,14 +108,14 @@ Conic::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 void
 Conic::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << name << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Attributes:" << endl;
-	TAB(level+1); cout << "position:" << endl;
+	TAB(level); std::cout << "Attributes:" << std::endl;
+	TAB(level+1); std::cout << "position:" << std::endl;
 	position->Print(level+1);
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	GeometricRepresentationItem::Print(level+1);
 
 }
@@ -129,7 +129,7 @@ Conic::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}
@@ -142,7 +142,7 @@ Conic::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 bool
 Conic::LoadONBrep(ON_Brep *brep)
 {
-	cerr << "Error: ::LoadONBrep(ON_Brep *brep) not implemented for " << entityname << endl;
+	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implemented for " << entityname << std::endl;
 	return false;
 }
 

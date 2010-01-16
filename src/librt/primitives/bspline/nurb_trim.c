@@ -1,7 +1,7 @@
 /*                     N U R B _ T R I M . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2009 United States Government as represented by
+ * Copyright (c) 1990-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -577,7 +577,7 @@ nmg_uv_in_lu(const fastf_t u, const fastf_t v, const struct loopuse *lu)
 		continue;
 	    if ( uv1[0] <= u && uv2[0] <= u )
 		continue;
-	    if ( uv1[0] == uv2[0] )
+	    if ( NEAR_ZERO(uv1[0] - uv2[0], SMALL_FASTF) )
 	    {
 		if ( (uv1[1] <= v && uv2[1] >= v) ||
 		     (uv2[1] <= v && uv1[1] >= v) )

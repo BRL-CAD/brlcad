@@ -1,7 +1,7 @@
 /*                 GeometricRepresentationContext.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,9 +38,9 @@ GeometricRepresentationContext::GeometricRepresentationContext() {
 	id = 0;
 }
 
-GeometricRepresentationContext::GeometricRepresentationContext(STEPWrapper *sw,int STEPid) {
+GeometricRepresentationContext::GeometricRepresentationContext(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 GeometricRepresentationContext::~GeometricRepresentationContext() {
@@ -53,7 +53,7 @@ GeometricRepresentationContext::Load(STEPWrapper *sw,SCLP23(Application_instance
 
 	// load base class attributes
 	if ( !RepresentationContext::Load(sw,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::RepresentationContext." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::RepresentationContext." << std::endl;
 		return false;
 	}
 
@@ -68,13 +68,13 @@ GeometricRepresentationContext::Load(STEPWrapper *sw,SCLP23(Application_instance
 
 void
 GeometricRepresentationContext::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Attributes:" << endl;
-	TAB(level+1); cout << "coordinate_space_dimension:" << coordinate_space_dimension << endl;
+	TAB(level); std::cout << "Attributes:" << std::endl;
+	TAB(level+1); std::cout << "coordinate_space_dimension:" << coordinate_space_dimension << std::endl;
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	RepresentationContext::Print(level+1);
 }
 STEPEntity *
@@ -86,7 +86,7 @@ GeometricRepresentationContext::Create(STEPWrapper *sw, SCLP23(Application_insta
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

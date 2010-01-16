@@ -1,7 +1,7 @@
 /*                         B W - F B . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2009 United States Government as represented by
+ * Copyright (c) 1986-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -77,9 +77,9 @@ Usage: bw-fb [-a -h -i -c -z -R -G -B] [-F framebuffer]\n\
 	[-x file_xoff] [-y file_yoff] [-X scr_xoff] [-Y scr_yoff]\n\
 	[-S squarescrsize] [-W scr_width] [-N scr_height] [file.bw]\n";
 int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int c;
+    int c;
 
     while ((c = bu_getopt(argc, argv, "ahiczRGBF:s:w:n:x:y:X:Y:S:W:N:")) != EOF) {
 	switch (c) {
@@ -178,7 +178,7 @@ get_args(int argc, register char **argv)
 int
 main(int argc, char **argv)
 {
-    register int	x, y, n;
+    int	x, y, n;
     long xout, yout;		/* number of sceen output lines */
     long xstart, xskip;
 

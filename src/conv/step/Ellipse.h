@@ -1,7 +1,7 @@
 /*                 Ellipse.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,7 +38,7 @@ protected:
 	double semi_axis_2;
 
 	Ellipse();
-	Ellipse(STEPWrapper *sw,int STEPid);
+	Ellipse(STEPWrapper *sw,int step_id);
 
 public:
 	virtual ~Ellipse();

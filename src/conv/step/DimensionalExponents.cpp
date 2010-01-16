@@ -38,9 +38,9 @@ DimensionalExponents::DimensionalExponents() {
 	id = 0;
 }
 
-DimensionalExponents::DimensionalExponents(STEPWrapper *sw,int STEPid) {
+DimensionalExponents::DimensionalExponents(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 DimensionalExponents::~DimensionalExponents() {
@@ -68,17 +68,17 @@ DimensionalExponents::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 void
 DimensionalExponents::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Local Attributes:" << endl;
-	TAB(level+1); cout << "length_exponent:" << length_exponent << endl;
-	TAB(level+1); cout << "mass_exponent:" << mass_exponent << endl;
-	TAB(level+1); cout << "time_exponent:" << time_exponent << endl;
-	TAB(level+1); cout << "electric_current_exponent:" << electric_current_exponent << endl;
-	TAB(level+1); cout << "thermodynamic_temperature_exponent:" << thermodynamic_temperature_exponent << endl;
-	TAB(level+1); cout << "amount_of_substance_exponent:" << amount_of_substance_exponent << endl;
-	TAB(level+1); cout << "luminous_intensity_exponent:" << luminous_intensity_exponent << endl;
+	TAB(level); std::cout << "Local Attributes:" << std::endl;
+	TAB(level+1); std::cout << "length_exponent:" << length_exponent << std::endl;
+	TAB(level+1); std::cout << "mass_exponent:" << mass_exponent << std::endl;
+	TAB(level+1); std::cout << "time_exponent:" << time_exponent << std::endl;
+	TAB(level+1); std::cout << "electric_current_exponent:" << electric_current_exponent << std::endl;
+	TAB(level+1); std::cout << "thermodynamic_temperature_exponent:" << thermodynamic_temperature_exponent << std::endl;
+	TAB(level+1); std::cout << "amount_of_substance_exponent:" << amount_of_substance_exponent << std::endl;
+	TAB(level+1); std::cout << "luminous_intensity_exponent:" << luminous_intensity_exponent << std::endl;
 }
 STEPEntity *
 DimensionalExponents::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
@@ -89,7 +89,7 @@ DimensionalExponents::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse)
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

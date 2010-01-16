@@ -1,7 +1,7 @@
 /*                    B O T _ M I R R O R . C
  * BRL-CAD
  *
- * Copyright (c) 2009 United States Government as represented by
+ * Copyright (c) 2009-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -104,7 +104,6 @@ rt_bot_mirror(struct rt_db_internal *ip, register const plane_t plane)
 	vectp_t np = &bot->normals[i*3];
 	vect_t n1;
 	vect_t n2;
-	fastf_t ang;
 	mat_t mat;
 
 	VMOVE(n1, np);

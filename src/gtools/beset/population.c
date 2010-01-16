@@ -1,7 +1,7 @@
 /*                    P O P U L A T I O N . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2009 United States Government as represented by
+ * Copyright (c) 2007-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -369,7 +369,7 @@ pop_functree(struct db_i *dbi_p, struct db_i *dbi_c,
 		bu_exit(EXIT_FAILURE, "Failed to add new object to the database");
 	    if (rt_db_put_internal(dp, dbi_c, &in, resp) < 0)
 		bu_exit(EXIT_FAILURE, "Failed to write new individual to databse");
-	    rt_db_free_internal(&in, resp);
+	    rt_db_free_internal(&in);
 
 	    break;
 
@@ -496,7 +496,7 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
 	    if ((dp = db_diradd(dbi_c, child2_id, -1, 0, dp->d_flags, (genptr_t)&dp->d_minor_type)) == DIR_NULL)
 		bu_exit(EXIT_FAILURE, "Failed to add new individual to child database");
 	    rt_db_put_internal(dp, dbi_c, &in2, resp);
-	    rt_db_free_internal(&in2, resp);
+	    rt_db_free_internal(&in2);
 
 	    break;
 	case MUTATE:
@@ -529,7 +529,7 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
 	bu_exit(EXIT_FAILURE, "Failed to add new individual to child database");
     }
     rt_db_put_internal(dp, dbi_c,  &in1, resp);
-    rt_db_free_internal(&in1, resp);
+    rt_db_free_internal(&in1);
 }
 
 

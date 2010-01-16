@@ -1,7 +1,7 @@
 /*                         P P - F B . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2009 United States Government as represented by
+ * Copyright (c) 1986-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -455,7 +455,7 @@ paint(void)
     int	inten_high;
     long li, lj, numb(void);
     RGBpixel ocl, tcl, pmix, tp, bp;
-    register unsigned char *fb_p;	/* Current position in buffer.	*/
+    unsigned char *fb_p;	/* Current position in buffer.	*/
 
     printf("Picture is being painted\n");
     bp[RED]=colortab[ibc].c_pixel[RED];
@@ -601,8 +601,8 @@ long numb(void)
 /*
  *	get number from packed word */
 {
-    register long n;
-    register int shift;
+    long n;
+    int shift;
     n=0;
     shift=0;
     while ((io=g()-32)>31) {

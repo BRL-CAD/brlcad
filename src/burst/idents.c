@@ -1,7 +1,7 @@
 /*                        I D E N T S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -41,7 +41,7 @@
 boolean
 findIdents( ident, idp )
     int		ident;
-    register Ids	*idp;
+    Ids	*idp;
 {
 #if DEBUG_IDENTS
     brst_log( "findIdents(%d)\n", ident );
@@ -66,7 +66,7 @@ findIdents( ident, idp )
 Colors *
 findColors( ident, colp )
     int ident;
-    register Colors	*colp;
+    Colors	*colp;
 {
     for ( colp = colp->c_next; colp != COLORS_NULL; colp = colp->c_next )
     {
@@ -79,13 +79,13 @@ findColors( ident, colp )
 }
 
 /*
-  void freeIdents( register Ids *idp )
+  void freeIdents( Ids *idp )
 
   Free up linked list, except for the head node.
 */
 void
 freeIdents( idp )
-    register Ids *idp;
+    Ids *idp;
 {
     if ( idp->i_next == NULL )
 	return;	/* finished */
@@ -100,7 +100,7 @@ readIdents( idlist, fp )
 {
     char input_buf[BUFSIZ];
     int lower, upper;
-    register Ids *idp;
+    Ids *idp;
     freeIdents( idlist ); /* free old list if it exists */
     for (	idp = idlist;
 		bu_fgets( input_buf, BUFSIZ, fp ) != NULL;
@@ -134,7 +134,7 @@ readColors( colorlist, fp )
     char input_buf[BUFSIZ];
     int lower, upper;
     int rgb[3];
-    register Colors	*colp;
+    Colors	*colp;
     for (	colp = colorlist;
 		bu_fgets( input_buf, BUFSIZ, fp ) != NULL;
 	)

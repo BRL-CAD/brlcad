@@ -1,7 +1,7 @@
 /*                 S O L I D S _ O N _ R A Y . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2009 United States Government as represented by
+ * Copyright (c) 1995-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -447,7 +447,7 @@ rpt_solids(struct application *ap, struct partition *ph, struct seg *finished_se
 static int
 rpt_hits_mike(struct application *ap, struct partition *PartHeadp, struct seg *segp)
 {
-    register struct partition	*pp;
+    struct partition	*pp;
     int		len;
     char		**list;
     int		i;

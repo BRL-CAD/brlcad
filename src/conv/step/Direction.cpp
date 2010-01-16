@@ -1,7 +1,7 @@
 /*                 Direction.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -39,9 +39,9 @@ Direction::Direction() {
 	id = 0;
 }
 
-Direction::Direction(STEPWrapper *sw,int STEPid) {
+Direction::Direction(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 Direction::~Direction() {
@@ -53,7 +53,7 @@ Direction::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 	id = sse->STEPfile_id;
 
 	if ( !GeometricRepresentationItem::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::GeometricRepresentationItem." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::GeometricRepresentationItem." << std::endl;
 		return false;
 	}
 
@@ -71,7 +71,7 @@ Direction::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 			rn = (RealNode *)rn->NextNode();
 		}
 	} else {
-		cout << CLASSNAME << ": error loading 'coordinate' attribute." << endl;
+		std::cout << CLASSNAME << ": error loading 'coordinate' attribute." << std::endl;
 	}
 
 	return true;
@@ -79,16 +79,16 @@ Direction::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 void
 Direction::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Local Attributes:" << endl;
-	TAB(level+1); cout << "direction_ratios:";
-	cout << "(" << direction_ratios[0] << ",";
-	cout << direction_ratios[1] << ",";
-	cout << direction_ratios[2] << ")" << endl;
+	TAB(level); std::cout << "Local Attributes:" << std::endl;
+	TAB(level+1); std::cout << "direction_ratios:";
+	std::cout << "(" << direction_ratios[0] << ",";
+	std::cout << direction_ratios[1] << ",";
+	std::cout << direction_ratios[2] << ")" << std::endl;
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	GeometricRepresentationItem::Print(level+1);
 }
 
@@ -101,7 +101,7 @@ Direction::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}
@@ -114,7 +114,7 @@ Direction::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 bool
 Direction::LoadONBrep(ON_Brep *brep)
 {
-	cerr << "Error: ::LoadONBrep(ON_Brep *brep) not implemented for " << entityname << endl;
+	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implemented for " << entityname << std::endl;
 	return false;
 }
 

@@ -1,7 +1,7 @@
 /*                     S H _ P O I N T S . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2009 United States Government as represented by
+ * Copyright (c) 1989-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -18,19 +18,15 @@
  * information.
  */
 /** @file sh_points.c
- *			P O I N T S . C
  *
- *  Reads a file of u, v point locations and associated RGB color values.
- *  For each u, v texture mapping cell, this routine fills in the color
- *  of the "brightest" point contained in that cell (if any).
+ * Reads a file of u, v point locations and associated RGB color
+ * values.  For each u, v texture mapping cell, this routine fills in
+ * the color of the "brightest" point contained in that cell (if any).
  *
- *  This routine was born in order to environment map the Yale Bright
- *  Star catalog data without under or over sampling the point sources.
- *  It was soon realized that making it "star" specific limited its
- *  usefulness.
- *
- *  Author -
- *	Phillip Dykstra
+ * This routine was born in order to environment map the Yale Bright
+ * Star catalog data without under or over sampling the point sources.
+ * It was soon realized that making it "star" specific limited its
+ * usefulness.
  *
  */
 

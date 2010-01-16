@@ -1,7 +1,7 @@
 /*                     P I X H I S T 3 D . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2009 United States Government as represented by
+ * Copyright (c) 1986-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -80,8 +80,8 @@ main(int argc, char **argv)
     }
 
     while ( (n = fread(&ibuf[0], sizeof(*ibuf), sizeof(ibuf), fp)) > 0 ) {
-	register unsigned char *bp;
-	register int i;
+	unsigned char *bp;
+	int i;
 
 	bp = &ibuf[0];
 	for ( i = n/3; i > 0; i--, bp += 3 )  {
@@ -105,7 +105,7 @@ main(int argc, char **argv)
 void
 disp_array(long int (*v)[256], int xoff, int yoff)
 {
-    register int	x, y;
+    int	x, y;
     static long	max;
     static double scale;
     unsigned char	obuf[256*3];
@@ -123,7 +123,7 @@ disp_array(long int (*v)[256], int xoff, int yoff)
     /* plot them */
     for ( y = 0; y < 256; y++ ) {
 	for ( x = 0; x < 256; x++ ) {
-	    register int value;
+	    int value;
 
 	    value = v[y][x] * scale;
 	    if ( value < THRESH && v[y][x] != 0 )

@@ -1,7 +1,7 @@
 /*                         V L I S T . C
  * BRL-CAD
  *
- * Copyright (c) 1992-2009 United States Government as represented by
+ * Copyright (c) 1992-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -670,9 +670,8 @@ rt_uplot_get_args(FILE *fp, const struct uplot *up, char *carg, fastf_t *arg)
 static void
 rt_uplot_get_text_args(FILE *fp, const struct uplot *up, char *carg, fastf_t *arg)
 {
-    int i, j;
-    int cc;
-    char inbuf[8];
+    int i;
+    unsigned int tchar;
 
     for (i = 0; i < up->narg; i++) {
 	switch (up->targ) {
@@ -686,7 +685,9 @@ rt_uplot_get_text_args(FILE *fp, const struct uplot *up, char *carg, fastf_t *ar
 		fscanf(fp, "%256s\n", &carg[0]);
 		break;
 	    case TCHAR:
-		fscanf(fp, "%u", &carg[i]);
+		fscanf(fp, "%u", &tchar);
+		if (tchar > 255) tchar = 255;
+		carg[i] = tchar;
 		arg[i] = 0;
 		break;
 	    case TNONE:

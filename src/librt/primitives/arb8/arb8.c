@@ -1,7 +1,7 @@
 /*                           A R B . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2009 United States Government as represented by
+ * Copyright (c) 1985-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -859,9 +859,7 @@ rt_arb_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 }
 
 
-#define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;
-
-
+#define RT_ARB8_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
 /**
  * R T _ A R B _ V S H O T
  *
@@ -922,11 +920,11 @@ rt_arb_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 		/* ray is parallel to plane when dir.N == 0.
 		 * If it is outside the solid, stop now */
 		if (dxbdn > SQRT_SMALL_FASTF) {
-		    SEG_MISS(segp[i]);		/* MISS */
+		    RT_ARB8_SEG_MISS(segp[i]);		/* MISS */
 		}
 	    }
 	    if (segp[i].seg_in.hit_dist > segp[i].seg_out.hit_dist) {
-		SEG_MISS(segp[i]);		/* MISS */
+		RT_ARB8_SEG_MISS(segp[i]);		/* MISS */
 	    }
 	} /* for each ray/arb_face pair */
     } /* for each arb_face */
@@ -942,10 +940,10 @@ rt_arb_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 
 	if (segp[i].seg_in.hit_surfno == -1 ||
 	    segp[i].seg_out.hit_surfno == -1) {
-	    SEG_MISS(segp[i]);		/* MISS */
+	    RT_ARB8_SEG_MISS(segp[i]);		/* MISS */
 	} else if (segp[i].seg_in.hit_dist >= segp[i].seg_out.hit_dist ||
 		 segp[i].seg_out.hit_dist >= INFINITY) {
-	    SEG_MISS(segp[i]);		/* MISS */
+	    RT_ARB8_SEG_MISS(segp[i]);		/* MISS */
 	}
     }
 }
@@ -1033,7 +1031,7 @@ rt_arb_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 	}
 	bu_semaphore_release(RT_SEM_MODEL);
 
-	rt_db_free_internal(&intern, ap->a_resource);
+	rt_db_free_internal(&intern);
 
 	if (ret != 0 || arbp->arb_opt == (struct oface *)0) {
 	    bu_log("rt_arb_uv(%s) dyanmic setup failure st_specific=x%x, optp=x%x\n",
@@ -1428,10 +1426,9 @@ rt_arb_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
  * solid.
  */
 void
-rt_arb_ifree(struct rt_db_internal *ip, struct resource *resp)
+rt_arb_ifree(struct rt_db_internal *ip)
 {
     RT_CK_DB_INTERNAL(ip);
-    if (!resp) resp = &rt_uniresource;
     bu_free(ip->idb_ptr, "arb ifree");
     ip->idb_ptr = (genptr_t)NULL;
 }
@@ -1766,7 +1763,7 @@ static const int rt_arb_planes[5][24] = {
 int
 rt_arb_3face_intersect(
     point_t point,
-    const plane_t planes[6],
+    const plane_t *planes, /* assumes [6] planes */
     int type,		/* 4..8 */
     int loc)
 {
@@ -1929,7 +1926,7 @@ rt_arb_edit(struct bu_vls *error_msg_ret,
 	    plane_t planes[6],
 	    const struct bn_tol *tol)
 {
-    int pt1, pt2, bp1, bp2, newp, p1, p2, p3;
+    int pt1 = 0, pt2 = 0, bp1, bp2, newp, p1, p2, p3;
     short *edptr;		/* pointer to arb edit array */
     short *final;		/* location of points to redo */
     int i;
@@ -2087,12 +2084,14 @@ rt_arb_edit(struct bu_vls *error_msg_ret,
      */
     edptr = final;	/* point to the correct location */
     for (i=0; i<2; i++) {
+	const plane_t *c_planes = (const plane_t *)planes;
+
 	if ((p1 = *edptr++) == -1)
 	    break;
 
 	/* intersect proper planes to define vertex p1 */
 
-	if (rt_arb_3face_intersect(arb->pt[p1], (const plane_t *)planes, arb_type, p1*3))
+	if (rt_arb_3face_intersect(arb->pt[p1], c_planes, arb_type, p1*3))
 	    goto err;
     }
 

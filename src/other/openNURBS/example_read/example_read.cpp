@@ -19,6 +19,7 @@
 ////////////////////////////////////////////////////////////////////////
 
 #include "../opennurbs.h"
+#include "../opennurbs_staticlib_linking_pragmas.h"
 
 int main( int argc, const char *argv[] )
 {
@@ -52,20 +53,20 @@ int main( int argc, const char *argv[] )
 
     // check for -out or /out option
     if ( ( 0 == strncmp(arg,"-out:",5) || 0 == strncmp(arg,"/out:",5) ) 
-	 && arg[5] )
+         && arg[5] )
     {
       // change destination of dump file
       const char* sDumpFilename = arg+5;
       FILE* text_fp = ON::OpenFile(sDumpFilename,"w");
       if ( text_fp )
       {
-	if ( dump_fp )
-	{
-	  delete dump;
-	  ON::CloseFile(dump_fp);
-	}
-	dump_fp = text_fp;
-	dump = new ON_TextLog(dump_fp);
+        if ( dump_fp )
+        {
+          delete dump;
+          ON::CloseFile(dump_fp);
+        }
+        dump_fp = text_fp;
+        dump = new ON_TextLog(dump_fp);
       }
       continue;
     }

@@ -1,7 +1,7 @@
 /*                       F A C E D E F . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2009 United States Government as represented by
+ * Copyright (c) 1986-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -311,7 +311,7 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     for (i=0; i<8; i++) {
 	MAT4X3PNT( arbo->pt[i], es_invmat, arb->pt[i] );
     }
-    rt_db_free_internal(&intern, &rt_uniresource);
+    rt_db_free_internal(&intern);
 
     /* draw the new solid */
     replot_editing_solid();

@@ -1,7 +1,7 @@
 /*                       C H G V I E W . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2009 United States Government as represented by
+ * Copyright (c) 1985-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -256,11 +256,11 @@ edit_com(int	argc,
 	 int	kind,
 	 int	catch_sigint)
 {
-    register struct ged_display_list *gdlp;
-    register struct ged_display_list *next_gdlp;
-    register struct dm_list *dmlp;
-    register struct dm_list *save_dmlp;
-    register struct cmd_list *save_cmd_list;
+    struct ged_display_list *gdlp;
+    struct ged_display_list *next_gdlp;
+    struct dm_list *dmlp;
+    struct dm_list *save_dmlp;
+    struct cmd_list *save_cmd_list;
     int	ret;
     int	initial_blank_screen = 1;
 
@@ -383,8 +383,14 @@ edit_com(int	argc,
 	new_argv = (char **)bu_calloc( max_count+1, sizeof( char *), "edit_com new_argv" );
 	new_argc = bu_argv_from_string( new_argv, max_count, bu_vls_addr( &vls ) );
 
-	if ((ret = ged_draw(gedp, new_argc, (const char **)new_argv)) != GED_OK) {
+	ret = ged_draw(gedp, new_argc, (const char **)new_argv);
+	if (ret == GED_ERROR) {
 	    bu_log("ERROR: %s\n", bu_vls_addr(&gedp->ged_result_str));
+	    bu_vls_free( &vls );
+	    bu_free( (char *)new_argv, "edit_com new_argv" );
+	    return ret;
+	} else if (ret == GED_HELP) {
+	    bu_log("%s\n", bu_vls_addr(&gedp->ged_result_str));
 	    bu_vls_free( &vls );
 	    bu_free( (char *)new_argv, "edit_com new_argv" );
 	    return ret;
@@ -405,9 +411,12 @@ edit_com(int	argc,
 		ret = ged_ev(gedp, argc, (const char **)argv);
 		break;
 	}
-	if (ret != GED_OK) {
+	if (ret == GED_ERROR) {
 	    bu_log("ERROR: %s\n", bu_vls_addr(&gedp->ged_result_str));
 	    return TCL_ERROR;
+	} else if (ret == GED_HELP) {
+	    bu_log("%s\n", bu_vls_addr(&gedp->ged_result_str));
+	    return TCL_OK;
 	}
     }
 
@@ -538,9 +547,9 @@ emuves_com( int argc, char **argv )
 int
 cmd_autoview(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
-    register struct dm_list *dmlp;
-    register struct dm_list *save_dmlp;
-    register struct cmd_list *save_cmd_list;
+    struct dm_list *dmlp;
+    struct dm_list *save_dmlp;
+    struct cmd_list *save_cmd_list;
 
     if (argc != 1) {
 	struct bu_vls vls;
@@ -647,7 +656,7 @@ f_regdebug(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
  *			D O _ L I S T
  */
 void
-do_list(struct bu_vls *outstrp, register struct directory *dp, int verbose)
+do_list(struct bu_vls *outstrp, struct directory *dp, int verbose)
 {
     int			id;
     struct rt_db_internal	intern;
@@ -666,7 +675,7 @@ do_list(struct bu_vls *outstrp, register struct directory *dp, int verbose)
     if ( rt_functab[id].ft_describe( outstrp, &intern,
 				     verbose, base2local, &rt_uniresource, dbip ) < 0 )
 	Tcl_AppendResult(interp, dp->d_namep, ": describe error\n", (char *)NULL);
-    rt_db_free_internal( &intern, &rt_uniresource );
+    rt_db_free_internal(&intern);
 }
 
 /*
@@ -679,8 +688,8 @@ do_list(struct bu_vls *outstrp, register struct directory *dp, int verbose)
 void
 mged_freemem(void)
 {
-    register struct solid		*sp;
-    register struct bn_vlist	*vp;
+    struct solid		*sp;
+    struct bn_vlist	*vp;
 
     FOR_ALL_SOLIDS(sp, &MGED_FreeSolid.l) {
 	GET_SOLID(sp, &MGED_FreeSolid.l);
@@ -699,8 +708,8 @@ mged_freemem(void)
 int
 cmd_zap(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
-    register struct ged_display_list *gdlp;
-    register struct ged_display_list *next_gdlp;
+    struct ged_display_list *gdlp;
+    struct ged_display_list *next_gdlp;
     char *av[2] = {"zap", (char *)0};
 
     CHECK_DBI_NULL;
@@ -871,8 +880,8 @@ pr_schain(struct solid *startp, int lvl)
 
     /* debug level */
 {
-    register struct solid	*sp;
-    register struct bn_vlist	*vp;
+    struct solid	*sp;
+    struct bn_vlist	*vp;
     int			nvlist;
     int			npts;
     struct bu_vls vls;
@@ -930,10 +939,10 @@ pr_schain(struct solid *startp, int lvl)
 	nvlist = 0;
 	npts = 0;
 	for ( BU_LIST_FOR( vp, bn_vlist, &(sp->s_vlist) ) )  {
-	    register int	i;
-	    register int	nused = vp->nused;
-	    register int	*cmd = vp->cmd;
-	    register point_t *pt = vp->pt;
+	    int	i;
+	    int	nused = vp->nused;
+	    int	*cmd = vp->cmd;
+	    point_t *pt = vp->pt;
 
 	    BN_CK_VLIST( vp );
 	    nvlist++;
@@ -962,12 +971,12 @@ static char ** path_parse (char *path);
 int
 f_ill(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
-    register struct ged_display_list *gdlp;
-    register struct ged_display_list *next_gdlp;
-    register struct directory *dp;
-    register struct solid *sp;
+    struct ged_display_list *gdlp;
+    struct ged_display_list *next_gdlp;
+    struct directory *dp;
+    struct solid *sp;
     struct solid *lastfound = SOLID_NULL;
-    register int i, j;
+    int i, j;
     int nmatch;
     int	c;
     int	ri = 0;
@@ -1198,8 +1207,8 @@ f_ill(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 int
 f_sed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
-    register struct ged_display_list *gdlp;
-    register struct ged_display_list *next_gdlp;
+    struct ged_display_list *gdlp;
+    struct ged_display_list *next_gdlp;
     int is_empty = 1;
 
     CHECK_DBI_NULL;
@@ -4405,22 +4414,50 @@ cmd_sca(ClientData	clientData,
     if (gedp == GED_NULL)
 	return TCL_OK;
 
-    if ((state == ST_S_EDIT || state == ST_O_EDIT) &&
-	mged_variables->mv_transform == 'e') {
-	fastf_t sf;
+    if ((state == ST_S_EDIT || state == ST_O_EDIT) && mged_variables->mv_transform == 'e') {
+	fastf_t sf1 = 0.0; /* combined xyz scale or x scale */
+	fastf_t sf2 = 0.0; /* y scale */
+	fastf_t sf3 = 0.0; /* z scale */
+        int save_edobj;
+        int ret;
 
-	if (ged_scale_args(gedp, argc, (const char **)argv, &sf) != GED_OK) {
+	if (ged_scale_args(gedp, argc, (const char **)argv, &sf1, &sf2, &sf3) != GED_OK) {
 	    Tcl_DStringInit(&ds);
 	    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
 	    Tcl_DStringResult(interp, &ds);
-
 	    return TCL_ERROR;
 	}
 
-	if (sf <= SMALL_FASTF || INFINITY < sf)
-	    return TCL_OK;
-
-	return mged_escale(sf);
+        /* argc is 2 or 4 because otherwise ged_scale_args fails */
+	if (argc == 2) {
+	    if (sf1 <= SMALL_FASTF || INFINITY < sf1)
+	        return TCL_OK;
+	    return mged_escale(sf1);
+        } else {
+	    if (sf1 <= SMALL_FASTF || INFINITY < sf1)
+	        return TCL_OK;
+	    if (sf2 <= SMALL_FASTF || INFINITY < sf2)
+	        return TCL_OK;
+	    if (sf3 <= SMALL_FASTF || INFINITY < sf3)
+	        return TCL_OK;
+            if (state == ST_O_EDIT) {
+	        save_edobj = edobj;
+	        edobj = BE_O_XSCALE;
+	        if ((ret = mged_escale(sf1)) == TCL_OK) {
+	            edobj = BE_O_YSCALE;
+	            if ((ret = mged_escale(sf2)) == TCL_OK) {
+	                edobj = BE_O_ZSCALE;
+	                ret = mged_escale(sf3);
+	            }
+	        }
+	        edobj = save_edobj;
+	        return ret;
+	    } else {
+                /* argc was 4 but state was ST_S_EDIT so do nothing */
+	        bu_log( "Error: Can only scale xyz independently on an object.\n" );
+	        return TCL_OK;
+            }
+	}
     } else {
 	int ret;
 	fastf_t	f;
@@ -4489,3 +4526,5 @@ cmd_pov(ClientData	clientData,
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
+
+

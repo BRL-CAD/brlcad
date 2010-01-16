@@ -1,7 +1,7 @@
 /*                      R A Y T R A C E . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2009 United States Government as represented by
+ * Copyright (c) 1993-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -527,7 +527,7 @@ struct soltab {
  * Non-geometric objects
  */
 #define ID_COMBINATION	31	/**< @brief Combination Record */
-#define ID_BINEXPM	32	/**< @brief Experimental binary */
+#define ID_UNUSED1	32	/**< @brief UNUSED (placeholder)  */
 #define ID_BINUNIF	33	/**< @brief Uniform-array binary */
 #define ID_BINMIME	34	/**< @brief MIME-typed binary */
 #define ID_CONSTRAINT   39      /**< @brief Constraint object */
@@ -1920,14 +1920,12 @@ struct rt_functab {
 			       const struct bu_external * /*ep*/,
 			       const mat_t /*mat*/,
 			       const struct db_i * /*dbip*/,
-			       struct resource * /*resp*/,
-			       const int minor_type));
+			       struct resource * /*resp*/));
     int (*ft_export5) BU_ARGS((struct bu_external * /*ep*/,
 			       const struct rt_db_internal * /*ip*/,
 			       double /*local2mm*/,
 			       const struct db_i * /*dbip*/,
-			       struct resource * /*resp*/,
-			       const int minor_type));
+			       struct resource * /*resp*/));
     int (*ft_import4) BU_ARGS((struct rt_db_internal * /*ip*/,
 			      const struct bu_external * /*ep*/,
 			      const mat_t /*mat*/,
@@ -1938,8 +1936,7 @@ struct rt_functab {
 			      double /*local2mm*/,
 			      const struct db_i * /*dbip*/,
 			      struct resource * /*resp*/));
-    void (*ft_ifree) BU_ARGS((struct rt_db_internal * /*ip*/,
-			      struct resource * /*resp*/));
+    void (*ft_ifree) BU_ARGS((struct rt_db_internal * /*ip*/));
     int	(*ft_describe) BU_ARGS((struct bu_vls * /*str*/,
 				const struct rt_db_internal * /*ip*/,
 				int /*verbose*/,
@@ -1953,17 +1950,11 @@ struct rt_functab {
     const struct bu_structparse *ft_parsetab;	/**< @brief  rt_xxx_parse */
     size_t ft_internal_size;	/**< @brief  sizeof(struct rt_xxx_internal) */
     unsigned long ft_internal_magic;	/**< @brief  RT_XXX_INTERNAL_MAGIC */
-    int	(*ft_get) BU_ARGS((struct bu_vls *,
-			   const struct rt_db_internal *, const char *item));
-    int	(*ft_adjust) BU_ARGS((struct bu_vls *,
-			      struct rt_db_internal *,
-			      int /*argc*/, char ** /*argv*/,
-			      struct resource * /*resp*/));
-    int	(*ft_form) BU_ARGS((struct bu_vls *,
-			    const struct rt_functab *));
+    int	(*ft_get) BU_ARGS((struct bu_vls *, const struct rt_db_internal *, const char *item));
+    int	(*ft_adjust) BU_ARGS((struct bu_vls *, struct rt_db_internal *, int /*argc*/, char ** /*argv*/));
+    int	(*ft_form) BU_ARGS((struct bu_vls *, const struct rt_functab *));
 
-    void (*ft_make) BU_ARGS((const struct rt_functab *,
-			     struct rt_db_internal *, double /*diameter*/));
+    void (*ft_make) BU_ARGS((const struct rt_functab *, struct rt_db_internal */*ip*/));
     int (*ft_params) BU_ARGS((struct pc_pc_set *, const struct rt_db_internal */*ip*/));
 };
 
@@ -2974,22 +2965,10 @@ RT_EXPORT BU_EXTERN(int db5_scan,
 		     genptr_t client_data));
 
 /* db5_comb.c */
-RT_EXPORT BU_EXTERN(int rt_comb_import5,
-		    (struct rt_db_internal   *ip,
-		     const struct bu_external *ep,
-		     const mat_t             mat,
-		     const struct db_i       *dbip,
-		     struct resource         *resp,
-		     const int		minor_type));
+RT_EXPORT BU_EXTERN(int rt_comb_import5, (struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp));
 
 /* extrude.c */
-RT_EXPORT BU_EXTERN(int rt_extrude_import5,
-		    (struct rt_db_internal	*ip,
-		     const struct bu_external	*ep,
-		     const mat_t mat,
-		     const struct db_i		*dbip,
-		     struct resource		*resp,
-		     const int			minor_type));
+RT_EXPORT BU_EXTERN(int rt_extrude_import5, (struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp));
 
 
 /* db_inmem.c */
@@ -3275,9 +3254,7 @@ RT_EXPORT BU_EXTERN(int rt_fwrite_internal,
 		     const char *name,
 		     const struct rt_db_internal *ip,
 		     double conv2mm));
-RT_EXPORT BU_EXTERN(void rt_db_free_internal,
-		    (struct rt_db_internal *ip,
-		     struct resource *resp));
+RT_EXPORT BU_EXTERN(void rt_db_free_internal, (struct rt_db_internal *ip));
 RT_EXPORT BU_EXTERN(int rt_db_lookup_internal,
 		    (struct db_i *dbip,
 		     const char *obj_name,
@@ -3484,9 +3461,7 @@ RT_EXPORT BU_EXTERN(int rt_pg_plot_poly,
 		     const struct bn_tol	*tol));
 
 /* hf.c */
-RT_EXPORT BU_EXTERN(int rt_hf_to_dsp,
-		    (struct rt_db_internal *db_intern,
-		     struct resource *resp));
+RT_EXPORT BU_EXTERN(int rt_hf_to_dsp, (struct rt_db_internal *db_intern));
 
 /* dsp.c */
 RT_EXPORT BU_EXTERN(int dsp_pos,
@@ -3567,10 +3542,6 @@ RT_EXPORT BU_EXTERN(int rt_generic_xform,
 		     struct db_i		*dbip,
 		     struct resource		*resp));
 
-RT_EXPORT BU_EXTERN(void rt_nul_make,
-		    (const struct rt_functab *ftp,
-		     struct rt_db_internal *intern,
-		     double diameter));
 
 /* prep.c */
 RT_EXPORT BU_EXTERN(void rt_plot_all_bboxes,
@@ -4245,38 +4216,14 @@ RT_EXPORT BU_EXTERN(int nmg_2edgeuse_g_coincident,
 		     const struct bn_tol	*tol));
 
 /* From nmg_extrude.c */
-RT_EXPORT BU_EXTERN(void nmg_translate_face,
-		    (struct faceuse *fu,
-		     const vect_t Vec,
-		     const struct bn_tol *tol));
-RT_EXPORT BU_EXTERN(int nmg_extrude_face,
-		    (struct faceuse *fu,
-		     const vect_t Vec,
-		     const struct bn_tol *tol));
-RT_EXPORT BU_EXTERN(struct vertexuse *nmg_find_vertex_in_lu,
-		    (const struct vertex *v,
-		     const struct loopuse *lu));
-RT_EXPORT BU_EXTERN(void nmg_fix_overlapping_loops,
-		    (struct shell *s,
-		     const struct bn_tol *tol));
-RT_EXPORT BU_EXTERN(void nmg_break_crossed_loops,
-		    (struct shell *is,
-		     const struct bn_tol *tol));
-RT_EXPORT BU_EXTERN(struct shell *nmg_extrude_cleanup,
-		    (struct shell *is,
-		     const int is_void,
-		     const struct bn_tol *tol));
-RT_EXPORT BU_EXTERN(void nmg_hollow_shell,
-		    (struct shell *s,
-		     const fastf_t thick,
-		     const int approximate,
-		     const struct bn_tol *tol));
-RT_EXPORT BU_EXTERN(struct shell *nmg_extrude_shell,
-		    (struct shell *s,
-		     const fastf_t dist,
-		     const int normal_ward,
-		     const int approximate,
-		     const struct bn_tol *tol));
+RT_EXPORT BU_EXTERN(void nmg_translate_face, (struct faceuse *fu, const vect_t Vec));
+RT_EXPORT BU_EXTERN(int nmg_extrude_face, (struct faceuse *fu, const vect_t Vec, const struct bn_tol *tol));
+RT_EXPORT BU_EXTERN(struct vertexuse *nmg_find_vertex_in_lu, (const struct vertex *v, const struct loopuse *lu));
+RT_EXPORT BU_EXTERN(void nmg_fix_overlapping_loops, (struct shell *s, const struct bn_tol *tol));
+RT_EXPORT BU_EXTERN(void nmg_break_crossed_loops, (struct shell *is, const struct bn_tol *tol));
+RT_EXPORT BU_EXTERN(struct shell *nmg_extrude_cleanup, (struct shell *is, const int is_void, const struct bn_tol *tol));
+RT_EXPORT BU_EXTERN(void nmg_hollow_shell, (struct shell *s, const fastf_t thick, const int approximate, const struct bn_tol *tol));
+RT_EXPORT BU_EXTERN(struct shell *nmg_extrude_shell, (struct shell *s, const fastf_t dist, const int normal_ward, const int approximate, const struct bn_tol *tol));
 
 /* From nmg_pr.c */
 RT_EXPORT BU_EXTERN(char *nmg_orientation,
@@ -4769,12 +4716,7 @@ RT_EXPORT BU_EXTERN(int rt_tcl_cutter,
 		     Tcl_Interp *interp,
 		     int argc,
 		     const char *const*argv));
-RT_EXPORT BU_EXTERN(void rt_tcl_pr_hit,
-		    (Tcl_Interp *interp,
-		     struct hit *hitp,
-		     const struct seg *segp,
-		     const struct xray *rayp,
-		     int flipflag));
+RT_EXPORT BU_EXTERN(void rt_tcl_pr_hit, (Tcl_Interp *interp, struct hit *hitp, const struct seg *segp, int flipflag));
 RT_EXPORT BU_EXTERN(int rt_tcl_rt,
 		    (ClientData clientData,
 		     Tcl_Interp *interp,
@@ -4785,10 +4727,7 @@ RT_EXPORT BU_EXTERN(int rt_tcl_import_from_path,
 		     struct rt_db_internal *ip,
 		     const char *path,
 		     struct rt_wdb *wdb));
-RT_EXPORT BU_EXTERN(void rt_generic_make,
-		    (const struct rt_functab *ftp,
-		     struct rt_db_internal *intern,
-		     double diameter));
+RT_EXPORT BU_EXTERN(void rt_generic_make, (const struct rt_functab *ftp, struct rt_db_internal *intern));
 RT_EXPORT BU_EXTERN(void rt_tcl_setup,
 		    (Tcl_Interp *interp));
 RT_EXPORT BU_EXTERN(int Sysv_Init,
@@ -4970,8 +4909,7 @@ RT_EXPORT BU_EXTERN(void nmg_vlblock_e,
 		     long *tab,
 		     int red,
 		     int green,
-		     int blue,
-		     int fancy));
+		     int blue));
 RT_EXPORT BU_EXTERN(void nmg_vlblock_eu,
 		    (struct bn_vlblock *vbp,
 		     const struct edgeuse *eu,
@@ -4979,8 +4917,7 @@ RT_EXPORT BU_EXTERN(void nmg_vlblock_eu,
 		     int red,
 		     int green,
 		     int blue,
-		     int fancy,
-		     int loopnum));
+		     int fancy));
 RT_EXPORT BU_EXTERN(void nmg_vlblock_euleft,
 		    (struct bu_list			*vh,
 		     const struct edgeuse		*eu,
@@ -5003,8 +4940,7 @@ RT_EXPORT BU_EXTERN(void nmg_vlblock_lu,
 		     int red,
 		     int green,
 		     int blue,
-		     int fancy,
-		     int loopnum));
+		     int fancy));
 RT_EXPORT BU_EXTERN(void nmg_vlblock_fu,
 		    (struct bn_vlblock *vbp,
 		     const struct faceuse *fu,
@@ -5038,7 +4974,6 @@ RT_EXPORT BU_EXTERN(void nmg_pl_comb_fu,
 		     const struct faceuse *fu1));
 RT_EXPORT BU_EXTERN(void nmg_pl_2fu,
 		    (const char *str,
-		     int num,
 		     const struct faceuse *fu1,
 		     const struct faceuse *fu2,
 		     int show_mates));
@@ -5754,10 +5689,6 @@ RT_EXPORT BU_EXTERN(void nmg_radial_exchange_marked,
 RT_EXPORT BU_EXTERN(void nmg_s_radial_harmonize,
 		    (struct shell		*s,
 		     const struct bn_tol	*tol));
-RT_EXPORT BU_EXTERN(int nmg_eu_radial_check,
-		    (const struct edgeuse	*eu,
-		     const struct shell	*s,
-		     const struct bn_tol	*tol));
 RT_EXPORT BU_EXTERN(void nmg_s_radial_check,
 		    (struct shell		*s,
 		     const struct bn_tol	*tol));
@@ -5864,7 +5795,7 @@ RT_EXPORT BU_EXTERN(int rt_mk_binunif,
 		     const char *obj_name,
 		     const char *file_name,
 		     unsigned int minor_type,
-		     long max_count));
+		     size_t max_count));
 
 /* defined in db5_bin.c */
 RT_EXPORT BU_EXTERN(void rt_binunif_free,

@@ -1,7 +1,7 @@
 /*                        P I X - P S . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2009 United States Government as represented by
+ * Copyright (c) 1986-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -60,9 +60,9 @@ Usage: pix-ps [-e] [-c|-l] [-L] [-h]\n\
 	[-S inches_square] [-W inches_width] [-N inches_height] [file.pix]\n";
 
 int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int c;
+    int c;
 
     while ( (c = bu_getopt( argc, argv, "ehclLs:w:n:S:W:N:" )) != EOF )  {
 	switch ( c )  {

@@ -1,7 +1,7 @@
 /*                          P R N T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -60,8 +60,8 @@ static char *usage[] =
 void init_Status(void);
 void prnt_Status(void), prnt_Usage(void);
 void prnt_Prompt(const char *msg);
-void prnt_Macro(register char *bufp);
-void prnt_Rectangle(const char *str, register Rectangle *rectp);
+void prnt_Macro(char *bufp);
+void prnt_Rectangle(const char *str, Rectangle *rectp);
 /**void prnt_FBC();**/
 
 /*	p r n t _ S t a t u s ( ) */
@@ -102,8 +102,8 @@ static char *screen_template[] = {
 void
 init_Status(void)
 {
-    register char **p = screen_template;
-    register int template_co;
+    char **p = screen_template;
+    int template_co;
     char buf[MAX_LN];
     extern int CO;
     template_co = Min( CO, MAX_LN );
@@ -133,7 +133,7 @@ init_Status(void)
 void
 prnt_Usage(void)
 {
-    register char **p = usage;
+    char **p = usage;
     while ( *p )
 	(void) fprintf( stderr, "%s\n", *p++ );
     return;
@@ -332,10 +332,10 @@ prnt_Prompt(const char *msg)
 }
 
 void
-prnt_Macro(register char *bufp)
+prnt_Macro(char *bufp)
 {
     char prnt_buf[BUFSIZ];
-    register char *p;
+    char *p;
     for ( p = prnt_buf; *bufp != '\0'; bufp++ )
     {
 	switch ( *bufp )
@@ -363,7 +363,7 @@ prnt_Macro(register char *bufp)
 }
 
 void
-prnt_Rectangle(const char *str, register Rectangle *rectp)
+prnt_Rectangle(const char *str, Rectangle *rectp)
 {
     prnt_Scroll(	"%s {<%d,%d>,<%d,%d>}\n",
 			str,

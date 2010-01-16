@@ -1,7 +1,7 @@
 /*                         C O P Y M A T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -157,7 +157,7 @@ ged_copymat(struct ged *gedp, int argc, const char *argv[])
 
     bu_vls_free(&pvls);
     if (status == GED_ERROR)
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
     return status;
 
     return GED_OK;

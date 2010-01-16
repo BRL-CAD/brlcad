@@ -1,7 +1,7 @@
 /*                      R T S E R V E R . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -20,10 +20,9 @@
 /** @addtogroup rtserver */
 /** @{ */
 /** @file rtserver.h
+ *
  * @brief
  *	header file for the rtserver
- *
- *  @author: John R. Anderson
  *
  */
 

@@ -1,7 +1,7 @@
 /*                 UncertaintyMeasureWithUnit.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -40,9 +40,9 @@ UncertaintyMeasureWithUnit::UncertaintyMeasureWithUnit() {
 	id = 0;
 }
 
-UncertaintyMeasureWithUnit::UncertaintyMeasureWithUnit(STEPWrapper *sw,int STEPid) {
+UncertaintyMeasureWithUnit::UncertaintyMeasureWithUnit(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 UncertaintyMeasureWithUnit::~UncertaintyMeasureWithUnit() {
@@ -55,7 +55,7 @@ UncertaintyMeasureWithUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *s
 
 	// load base class attributes
 	if ( !MeasureWithUnit::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::MeasureWithUnit." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::MeasureWithUnit." << std::endl;
 		return false;
 	}
 
@@ -71,14 +71,14 @@ UncertaintyMeasureWithUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *s
 
 void
 UncertaintyMeasureWithUnit::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
 
-	TAB(level); cout << "Local Attributes:" << endl;
-	TAB(level+1); cout << "name:" << name << endl;
-	TAB(level+1); cout << "description:" << description << endl;
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Local Attributes:" << std::endl;
+	TAB(level+1); std::cout << "name:" << name << std::endl;
+	TAB(level+1); std::cout << "description:" << description << std::endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	MeasureWithUnit::Print(level+1);
 }
 STEPEntity *
@@ -90,7 +90,7 @@ UncertaintyMeasureWithUnit::Create(STEPWrapper *sw, SCLP23(Application_instance)
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

@@ -1,7 +1,7 @@
 /*                          C O M B . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2009 United States Government as represented by
+ * Copyright (c) 1996-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -112,7 +112,7 @@ main(int argc, char *argv[])
 	if ( ip.idb_type != ID_COMBINATION )
 	{
 	    bu_log( "idb_type = %d\n", ip.idb_type );
-	    rt_db_free_internal( &ip, &rt_uniresource );
+	    rt_db_free_internal(&ip);
 	    continue;
 	}
 
@@ -151,7 +151,7 @@ main(int argc, char *argv[])
 	    bu_log("ERROR: db_ck_v4gift_tree is unhappy\n");
 
 	/* Test the lumberjacks */
-	rt_db_free_internal( &ip, &rt_uniresource );
+	rt_db_free_internal(&ip);
 
     }
 

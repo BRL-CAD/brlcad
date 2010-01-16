@@ -1,7 +1,7 @@
 /*                   N M G _ E X T R U D E . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -97,7 +97,7 @@ verts_in_nmg_face(struct faceuse *fu)
  * Translate a face using a vector's magnitude and direction.
  */
 void
-nmg_translate_face(struct faceuse *fu, const fastf_t *Vec, const struct bn_tol *tol)
+nmg_translate_face(struct faceuse *fu, const fastf_t *Vec)
 {
     int cnt,		/* Number of vertices in face. */
 	cur,
@@ -192,10 +192,13 @@ nmg_extrude_face(struct faceuse *fu, const fastf_t *Vec, const struct bn_tol *to
 {
     fastf_t cosang;
     int nfaces;
-    struct faceuse *fu2, *nmg_dup_face(struct faceuse *fu, struct shell *s), **outfaces;
-    int face_count=2;
+    struct faceuse *fu2;
+    struct faceuse **outfaces;
     struct loopuse *lu, *lu2;
     plane_t n;
+    int face_count=2;
+
+    struct faceuse *nmg_dup_face(struct faceuse *, struct shell *);
 
 #define MIKE_TOL 0.0001
 
@@ -214,9 +217,9 @@ nmg_extrude_face(struct faceuse *fu, const fastf_t *Vec, const struct bn_tol *to
     if (NEAR_ZERO(cosang, MIKE_TOL))
 	bu_bomb("extrude_nmg_face: extrusion cannot be parallel to face\n");
     if (cosang > 0.)
-	nmg_translate_face(fu, Vec, tol);
+	nmg_translate_face(fu, Vec);
     else if (cosang < 0.)
-	nmg_translate_face(fu2->fumate_p, Vec, tol);
+	nmg_translate_face(fu2->fumate_p, Vec);
 
     nfaces = verts_in_nmg_face(fu);
     outfaces = (struct faceuse **)bu_calloc(nfaces+2, sizeof(struct faceuse *) ,
@@ -561,9 +564,9 @@ nmg_fix_overlapping_loops(struct shell *s, const struct bn_tol *tol)
 			dist[1]>=0.0 && dist[1]<=1.0) {
 			point_t pt;
 
-			if (dist[1] == 0.0)
+			if (NEAR_ZERO(dist[1], SMALL_FASTF))
 			    v = eu2->vu_p->v_p;
-			else if (dist[1] == 1.0)
+			else if (NEAR_ZERO(dist[1] - 1.0, SMALL_FASTF)) /* i.e., == 1.0 */
 			    v = eu2->eumate_p->vu_p->v_p;
 			else {
 			    VJOIN1(pt, eu1->vu_p->v_p->vg_p->coord, dist[0], v1);
@@ -579,9 +582,9 @@ nmg_fix_overlapping_loops(struct shell *s, const struct bn_tol *tol)
 		    if (dist[1]>0.0 && dist[1]<1.0 && dist[0]>=0.0 && dist[0]<=1.0) {
 			point_t pt;
 
-			if (dist[0] == 0.0)
+			if (NEAR_ZERO(dist[0], SMALL_FASTF))
 			    v = eu1->vu_p->v_p;
-			else if (dist[0] == 1.0)
+			else if (NEAR_ZERO(dist[0] - 1.0, SMALL_FASTF)) /* i.e., == 1.0 */
 			    v = eu2->eumate_p->vu_p->v_p;
 			else {
 			    VJOIN1(pt, eu2->vu_p->v_p->vg_p->coord, dist[1], v2);
@@ -760,9 +763,9 @@ nmg_break_crossed_loops(struct shell *is, const struct bn_tol *tol)
 
 			if (dist[0]>0.0 && dist[0]<1.0 &&
 			    dist[1]>=0.0 && dist[1]<=1.0) {
-			    if (dist[1] == 0.0)
+			    if (NEAR_ZERO(dist[1], SMALL_FASTF))
 				v = eu2->vu_p->v_p;
-			    else if (dist[1] == 1.0)
+			    else if (NEAR_ZERO(dist[1] - 1.0, SMALL_FASTF)) /* i.e., == 1.0 */
 				v = eu2->eumate_p->vu_p->v_p;
 			    else {
 				VJOIN1(pt, eu1->vu_p->v_p->vg_p->coord ,
@@ -781,9 +784,9 @@ nmg_break_crossed_loops(struct shell *is, const struct bn_tol *tol)
 			if (dist[1] > 0.0 && dist[1] < 1.0 &&
 			    dist[0]>=0.0 && dist[0]<=1.0)
 			{
-			    if (dist[0] == 0.0)
+			    if (NEAR_ZERO(dist[0], SMALL_FASTF))
 				v = eu1->vu_p->v_p;
-			    else if (dist[0] == 1.0)
+			    else if (NEAR_ZERO(dist[0] - 1.0, SMALL_FASTF)) /* i.e., == 1.0 */
 				v = eu1->eumate_p->vu_p->v_p;
 			    else {
 				VJOIN1(pt, eu2->vu_p->v_p->vg_p->coord, dist[1], v2);

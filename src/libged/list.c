@@ -1,7 +1,7 @@
 /*                         L I S T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,13 +34,13 @@
 #include "./ged_private.h"
 
 
-void _ged_do_list(struct ged *gedp, register struct directory *dp, int verbose);
+void _ged_do_list(struct ged *gedp, struct directory *dp, int verbose);
 
 int
 ged_list(struct ged *gedp, int argc, const char *argv[])
 {
-    register struct directory	*dp;
-    register int		arg;
+    struct directory	*dp;
+    int		arg;
     int				id;
     int				recurse = 0;
     char			*listeval = "listeval";
@@ -112,7 +112,7 @@ ged_list(struct ged *gedp, int argc, const char *argv[])
 	    if (!rt_functab[id].ft_describe || rt_functab[id].ft_describe(&gedp->ged_result_str, &intern, 99, gedp->ged_wdbp->dbip->dbi_base2local, &rt_uniresource, gedp->ged_wdbp->dbip) < 0)
 		bu_vls_printf(&gedp->ged_result_str, "%s: describe error", dp->d_namep);
 
-	    rt_db_free_internal(&intern, &rt_uniresource);
+	    rt_db_free_internal(&intern);
 	} else {
 	    if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[arg], LOOKUP_NOISY)) == DIR_NULL)
 		continue;
@@ -129,7 +129,7 @@ ged_list(struct ged *gedp, int argc, const char *argv[])
  *			G E D _ D O _ L I S T
  */
 void
-_ged_do_list(struct ged *gedp, register struct directory *dp, int verbose)
+_ged_do_list(struct ged *gedp, struct directory *dp, int verbose)
 {
     int			id;
     struct rt_db_internal	intern;
@@ -187,7 +187,7 @@ _ged_do_list(struct ged *gedp, register struct directory *dp, int verbose)
 				       &rt_uniresource,
 				       gedp->ged_wdbp->dbip) < 0)
 	    bu_vls_printf(&gedp->ged_result_str, "%s: describe error\n", dp->d_namep);
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
     }
 }
 

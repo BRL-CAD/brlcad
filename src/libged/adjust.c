@@ -1,7 +1,7 @@
 /*                         A D J U S T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,7 +36,7 @@ int
 ged_adjust(struct ged *gedp, int argc, const char *argv[])
 {
     int status;
-    register struct directory	*dp;
+    struct directory	*dp;
     char			*name;
     struct rt_db_internal	 intern;
     static const char *usage = "object attr value ?attr value?";
@@ -77,10 +77,10 @@ ged_adjust(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    status = intern.idb_meth->ft_adjust(&gedp->ged_result_str, &intern, argc-2, (char **)argv+2, &rt_uniresource);
+    status = intern.idb_meth->ft_adjust(&gedp->ged_result_str, &intern, argc-2, (char **)argv+2);
     if (status == GED_OK && wdb_put_internal(gedp->ged_wdbp, name, &intern, 1.0) < 0) {
 	bu_vls_printf(&gedp->ged_result_str, "wdb_export(%s) failure", name);
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 	return GED_ERROR;
     }
 

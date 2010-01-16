@@ -1,7 +1,7 @@
 /*                         F I N D . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -44,10 +44,10 @@ ged_find_ref(struct db_i		*dbip,
 int
 ged_find(struct ged *gedp, int argc, const char *argv[])
 {
-    register int				i, k;
-    register struct directory		*dp;
+    int				i, k;
+    struct directory		*dp;
     struct rt_db_internal			intern;
-    register struct rt_comb_internal	*comb=(struct rt_comb_internal *)NULL;
+    struct rt_comb_internal	*comb=(struct rt_comb_internal *)NULL;
     int c;
     int aflag = 0;		/* look at all objects */
     static const char *usage = "<objects>";
@@ -109,7 +109,7 @@ ged_find(struct ged *gedp, int argc, const char *argv[])
 				 (genptr_t)dp->d_namep,
 				 (genptr_t)gedp);
 
-	    rt_db_free_internal(&intern, &rt_uniresource);
+	    rt_db_free_internal(&intern);
 	}
     }
 

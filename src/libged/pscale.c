@@ -1,7 +1,7 @@
 /*                         P S C A L E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -101,7 +101,7 @@ ged_pscale(struct ged *gedp, int argc, const char *argv[])
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: Object not eligible for scaling.", argv[0]);
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 
 	return GED_ERROR;
     }
@@ -145,7 +145,7 @@ ged_pscale(struct ged *gedp, int argc, const char *argv[])
 	break;
     default:
 	bu_vls_printf(&gedp->ged_result_str, "%s: Object not yet supported.", argv[0]);
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 
 	return GED_ERROR;
     }
@@ -153,7 +153,7 @@ ged_pscale(struct ged *gedp, int argc, const char *argv[])
     if (ret == GED_OK) {
 	GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, GED_ERROR);
     } else if (ret == GED_ERROR) {
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
     }
 
     return ret;

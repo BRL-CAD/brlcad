@@ -1,7 +1,7 @@
 /*                     P I X S H R I N K . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -137,7 +137,7 @@ shrink_image(int scanlen, int Width, int Height, unsigned char *buffer, int Fact
 void
 usample_image(int scanlen, int Width, int Height, unsigned char *buffer, int Factor)
 {
-    register int t, x, y;
+    int t, x, y;
 
     UCHAR *p;
 

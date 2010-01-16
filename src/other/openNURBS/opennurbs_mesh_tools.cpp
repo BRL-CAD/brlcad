@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -156,7 +155,8 @@ bool ON_Mesh::SwapEdge( int topei )
 // CollapseMeshEdge()
 //
 
-class MESHEDGE
+// DO NOT PUT THIS CLASS IN A HEADER FILE
+class ON__MESHEDGE
 {
 public:
   // ON_Mesh m_V[] indices
@@ -176,7 +176,8 @@ public:
   ON_2fPoint  newT;
 };
 
-class NEWVI
+// DO NOT PUT THIS CLASS IN A HEADER FILE
+class ON__NEWVI
 {
 public:
   // ON_Mesh m_V[] indices
@@ -186,7 +187,7 @@ public:
 
 typedef int (*QSORTCMPFUNC)(const void*,const void*);
 
-static int CompareMESHEDGE( const MESHEDGE* a, const MESHEDGE* b )
+static int CompareMESHEDGE( const ON__MESHEDGE* a, const ON__MESHEDGE* b )
 {
   // sort based on "vi0" and vi1" values (vi0 is always < vi1)
   int i = (a->vi0 - b->vi0);
@@ -197,7 +198,7 @@ static int CompareMESHEDGE( const MESHEDGE* a, const MESHEDGE* b )
   return i;
 }
 
-static int CompareNEWVI( const NEWVI* a, const NEWVI* b )
+static int CompareNEWVI( const ON__NEWVI* a, const ON__NEWVI* b )
 {
   // sort based on "oldvi" value
   return a->oldvi - b->oldvi;
@@ -212,7 +213,7 @@ bool ON_Mesh::CollapseEdge( int topei )
 {
   ON_Mesh& mesh = *this;
 
-  MESHEDGE me;
+  ON__MESHEDGE me;
   memset(&me,0,sizeof(me));
   const ON_MeshTopology& top = mesh.Topology();  
   const int F_count = mesh.m_F.Count();
@@ -252,8 +253,8 @@ bool ON_Mesh::CollapseEdge( int topei )
     return false;
   }
   
-  // create a MESHEDGE for each face (usually one or two) that uses the edge
-  MESHEDGE* me_list = (MESHEDGE*)alloca(tope.m_topf_count*sizeof(me_list[0]));
+  // create a ON__MESHEDGE for each face (usually one or two) that uses the edge
+  ON__MESHEDGE* me_list = (ON__MESHEDGE*)alloca(tope.m_topf_count*sizeof(me_list[0]));
   int me_list_count = 0;
   int efi;
   for ( efi = 0; efi < tope.m_topf_count; efi++ )
@@ -275,17 +276,17 @@ bool ON_Mesh::CollapseEdge( int topei )
       me.topvi1 = top.m_topv_map[me.vi1];
       if ( me.vi0 != me.vi1 )
       {
-	if (    (me.topvi0 == tope.m_topvi[0] && me.topvi1 == tope.m_topvi[1])
-	     || (me.topvi0 == tope.m_topvi[1] && me.topvi1 == tope.m_topvi[0]) )
-	{
-	  if ( me.vi0 > me.vi1 )
-	  {
-	    int i = me.vi0; me.vi0 = me.vi1; me.vi1 = i;
-	    i = me.topvi0; me.topvi0 = me.topvi1; me.topvi1 = i;
-	  }
-	  me_list[me_list_count++] = me;
-	  break;
-	}
+        if (    (me.topvi0 == tope.m_topvi[0] && me.topvi1 == tope.m_topvi[1])
+             || (me.topvi0 == tope.m_topvi[1] && me.topvi1 == tope.m_topvi[0]) )
+        {
+          if ( me.vi0 > me.vi1 )
+          {
+            int i = me.vi0; me.vi0 = me.vi1; me.vi1 = i;
+            i = me.topvi0; me.topvi0 = me.topvi1; me.topvi1 = i;
+          }
+          me_list[me_list_count++] = me;
+          break;
+        }
       }
     }
   }
@@ -326,20 +327,20 @@ bool ON_Mesh::CollapseEdge( int topei )
     {
       vi = topv0.m_vi[tvi];
       if ( vi < 0 || vi > V_count )
-	continue;
+        continue;
       if ( vi < newvi )
-	newvi = vi;
+        newvi = vi;
       cnt++;
       P = mesh.m_V[vi];
       Vline.from += P;
       if ( bHasVertexNormals )
       {
-	N0 += ON_3dVector(mesh.m_N[vi]);
+        N0 += ON_3dVector(mesh.m_N[vi]);
       }
       if ( bHasTextureCoordinates )
       {
-	P = mesh.m_T[vi];
-	Tline.from += P;
+        P = mesh.m_T[vi];
+        Tline.from += P;
       }
     }
 
@@ -360,20 +361,20 @@ bool ON_Mesh::CollapseEdge( int topei )
     {
       vi = topv1.m_vi[tvi];
       if ( vi < 0 || vi > V_count )
-	continue;
+        continue;
       if ( vi < newvi )
-	newvi = vi;
+        newvi = vi;
       cnt++;
       P = mesh.m_V[vi];
       Vline.to += P;
       if ( bHasVertexNormals )
       {
-	N1 += ON_3dVector(mesh.m_N[vi]);
+        N1 += ON_3dVector(mesh.m_N[vi]);
       }
       if ( bHasTextureCoordinates )
       {
-	P = mesh.m_T[vi];
-	Tline.to += P;
+        P = mesh.m_T[vi];
+        Tline.to += P;
       }
     }
 
@@ -399,7 +400,7 @@ bool ON_Mesh::CollapseEdge( int topei )
       ON_3dVector N = N0+N1;
       if ( !N.Unitize() )
       {
-	N = (topv0.m_v_count == 1) ? mesh.m_N[topv0.m_vi[0]] :mesh.m_N[topv1.m_vi[0]];
+        N = (topv0.m_v_count == 1) ? mesh.m_N[topv0.m_vi[0]] :mesh.m_N[topv1.m_vi[0]];
       }
       newN = N;
     }
@@ -426,36 +427,36 @@ bool ON_Mesh::CollapseEdge( int topei )
     {
       if ( 0 == mei && CompareMESHEDGE(&me,me_list+mei) )
       {
-	// cook up new vertex
-	me_list[mei].newvi = mesh.m_V.Count();
-	me = me_list[mei];
-	ON_Line line;
-	line.from = mesh.m_V[me.vi0];
-	line.to   = mesh.m_V[me.vi1];
-	me.newV = line.PointAt(0.5);
-	if ( bHasVertexNormals )
-	{
-	  ON_3dVector N0(mesh.m_N[me.vi0]);
-	  ON_3dVector N1(mesh.m_N[me.vi1]);
-	  ON_3dVector N = N0 + N1;
-	  if ( !N.Unitize() )
-	    N = N0;
-	  me.newN = N;
-	}
-	if ( bHasTextureCoordinates )
-	{
-	  line.from = mesh.m_T[me.vi0];
-	  line.to   = mesh.m_T[me.vi1];
-	  me.newT = line.PointAt(0.5);
-	}
-	me.newvi = (me.vi0 < me.vi1) ? me.vi0 : me.vi1;
+        // cook up new vertex
+        me_list[mei].newvi = mesh.m_V.Count();
+        me = me_list[mei];
+        ON_Line line;
+        line.from = mesh.m_V[me.vi0];
+        line.to   = mesh.m_V[me.vi1];
+        me.newV = line.PointAt(0.5);
+        if ( bHasVertexNormals )
+        {
+          ON_3dVector N0(mesh.m_N[me.vi0]);
+          ON_3dVector N1(mesh.m_N[me.vi1]);
+          ON_3dVector N = N0 + N1;
+          if ( !N.Unitize() )
+            N = N0;
+          me.newN = N;
+        }
+        if ( bHasTextureCoordinates )
+        {
+          line.from = mesh.m_T[me.vi0];
+          line.to   = mesh.m_T[me.vi1];
+          me.newT = line.PointAt(0.5);
+        }
+        me.newvi = (me.vi0 < me.vi1) ? me.vi0 : me.vi1;
       }
       else
       {
-	me_list[mei].newvi = me.newvi;
-	me_list[mei].newV = me.newV;
-	me_list[mei].newN = me.newN;
-	me_list[mei].newT = me.newT;
+        me_list[mei].newvi = me.newvi;
+        me_list[mei].newV = me.newV;
+        me_list[mei].newN = me.newN;
+        me_list[mei].newT = me.newT;
       }
     }
   }
@@ -480,7 +481,7 @@ bool ON_Mesh::CollapseEdge( int topei )
 
   // make a map of old to new
   int old2new_map_count = 0;
-  NEWVI* old2new_map = (NEWVI*)alloca(2*me_list_count*sizeof(old2new_map[0]));
+  ON__NEWVI* old2new_map = (ON__NEWVI*)alloca(2*me_list_count*sizeof(old2new_map[0]));
 
   for ( mei = 0; mei < me_list_count; mei++ )
   {
@@ -499,7 +500,7 @@ bool ON_Mesh::CollapseEdge( int topei )
   // count faces that use the vertices that are being changed
   int bad_fi_count = 0;
   int topv_end, vei, fi, fvi23, fvi;
-  NEWVI nvi;
+  ON__NEWVI nvi;
 
   for ( topv_end = 0; topv_end < 2; topv_end++ )
   {
@@ -508,7 +509,7 @@ bool ON_Mesh::CollapseEdge( int topei )
     {
       topei = topv.m_topei[vei];
       if ( topei < 0 && topei >= top.m_tope.Count() )
-	continue;
+        continue;
       bad_fi_count += top.m_tope[topei].m_topf_count;
     }
   }
@@ -525,67 +526,67 @@ bool ON_Mesh::CollapseEdge( int topei )
     {
       topei = topv.m_topei[vei];
       if ( topei < 0 && topei >= top.m_tope.Count() )
-	continue;
+        continue;
       const ON_MeshTopologyEdge& e = top.m_tope[topei];
       for ( efi = 0; efi < e.m_topf_count; efi++ )
       {
-	fi = e.m_topfi[efi];
-	if ( fi < 0 || fi >= F_count )
-	  continue;
-	bool bChangedFace = false;
-	ON_MeshFace& f = mesh.m_F[fi];
-	for ( fvi = 0; fvi < 4; fvi++ )
-	{
-	  nvi.oldvi = f.vi[fvi];
-	  NEWVI* p = (NEWVI*)bsearch(&nvi,old2new_map,old2new_map_count,sizeof(old2new_map[0]),(QSORTCMPFUNC)CompareNEWVI);
-	  if ( 0 != p && p->oldvi != p->newvi)
-	  {
-	    f.vi[fvi] = p->newvi;
-	    bChangedFace = true;
-	  }
-	}
-	if ( bChangedFace )
-	{
-	  if ( !f.IsValid(V_count) )
-	  {
-	    if ( f.vi[3] == f.vi[0] )
-	    {
-	      f.vi[0] = f.vi[1];
-	      f.vi[1] = f.vi[2];
-	      f.vi[2] = f.vi[3];
-	    }
-	    else if ( f.vi[0] == f.vi[1] )
-	    {
-	      fvi23 = f.vi[0];
-	      f.vi[0] = f.vi[2];
-	      f.vi[1] = f.vi[3];
-	      f.vi[2] = fvi23;
-	      f.vi[3] = fvi23;
-	    }
-	    else if ( f.vi[1] == f.vi[2] )
-	    {
-	      fvi23 = f.vi[1];
-	      f.vi[1] = f.vi[0];
-	      f.vi[0] = f.vi[3];
-	      f.vi[2] = fvi23;
-	      f.vi[3] = fvi23;
-	    }
-	    if ( f.vi[0] == f.vi[1] || f.vi[1] == f.vi[2] || f.vi[2] == f.vi[0] || f.vi[2] != f.vi[3] )
-	    {
-	      bad_fi[bad_fi_count++] = fi;
-	    }
-	  }
-	  if ( bHasFaceNormals )
-	  {
-	    // invalid faces are removed below
-	    ON_3fVector a, b, n;
-	    a = mesh.m_V[f.vi[2]] - mesh.m_V[f.vi[0]];
-	    b = mesh.m_V[f.vi[3]] - mesh.m_V[f.vi[1]];
-	    n = ON_CrossProduct( a, b );
-	    n.Unitize();
-	    mesh.m_FN[fi] = n;
-	  }
-	}
+        fi = e.m_topfi[efi];
+        if ( fi < 0 || fi >= F_count )
+          continue;
+        bool bChangedFace = false;
+        ON_MeshFace& f = mesh.m_F[fi];
+        for ( fvi = 0; fvi < 4; fvi++ )
+        {
+          nvi.oldvi = f.vi[fvi];
+          ON__NEWVI* p = (ON__NEWVI*)bsearch(&nvi,old2new_map,old2new_map_count,sizeof(old2new_map[0]),(QSORTCMPFUNC)CompareNEWVI);
+          if ( 0 != p && p->oldvi != p->newvi)
+          {
+            f.vi[fvi] = p->newvi;
+            bChangedFace = true;
+          }
+        }
+        if ( bChangedFace )
+        {
+          if ( !f.IsValid(V_count) )
+          {
+            if ( f.vi[3] == f.vi[0] )
+            {
+              f.vi[0] = f.vi[1];
+              f.vi[1] = f.vi[2];
+              f.vi[2] = f.vi[3];
+            }
+            else if ( f.vi[0] == f.vi[1] )
+            {
+              fvi23 = f.vi[0];
+              f.vi[0] = f.vi[2];
+              f.vi[1] = f.vi[3];
+              f.vi[2] = fvi23;
+              f.vi[3] = fvi23;
+            }
+            else if ( f.vi[1] == f.vi[2] )
+            {
+              fvi23 = f.vi[1];
+              f.vi[1] = f.vi[0];
+              f.vi[0] = f.vi[3];
+              f.vi[2] = fvi23;
+              f.vi[3] = fvi23;
+            }
+            if ( f.vi[0] == f.vi[1] || f.vi[1] == f.vi[2] || f.vi[2] == f.vi[0] || f.vi[2] != f.vi[3] )
+            {
+              bad_fi[bad_fi_count++] = fi;
+            }
+          }
+          if ( bHasFaceNormals )
+          {
+            // invalid faces are removed below
+            ON_3fVector a, b, n;
+            a = mesh.m_V[f.vi[2]] - mesh.m_V[f.vi[0]];
+            b = mesh.m_V[f.vi[3]] - mesh.m_V[f.vi[1]];
+            n = ON_CrossProduct( a, b );
+            n.Unitize();
+            mesh.m_FN[fi] = n;
+          }
+        }
       }
     }
   }
@@ -600,11 +601,11 @@ bool ON_Mesh::CollapseEdge( int topei )
     {
       if ( fi == bad_fi[bfi] )
       {
-	bfi++;
+        bfi++;
       }
       else
       {
-	mesh.m_F[dest_fi++] = mesh.m_F[fi];
+        mesh.m_F[dest_fi++] = mesh.m_F[fi];
       }
     }
     while (fi<F_count)
@@ -619,18 +620,18 @@ bool ON_Mesh::CollapseEdge( int topei )
       dest_fi = bad_fi[0];
       for ( fi = dest_fi+1; fi < F_count && bfi < bad_fi_count; fi++ )
       {
-	if ( fi == bad_fi[bfi] )
-	{
-	  bfi++;
-	}
-	else
-	{
-	  mesh.m_FN[dest_fi++] = mesh.m_FN[fi];
-	}
+        if ( fi == bad_fi[bfi] )
+        {
+          bfi++;
+        }
+        else
+        {
+          mesh.m_FN[dest_fi++] = mesh.m_FN[fi];
+        }
       }
       while (fi<F_count)
       {
-	mesh.m_FN[dest_fi++] = mesh.m_FN[fi++];
+        mesh.m_FN[dest_fi++] = mesh.m_FN[fi++];
       }
       mesh.m_FN.SetCount(dest_fi);
     }
@@ -684,10 +685,10 @@ bool ON_Mesh::DeleteFace( int meshfi )
 }
 
 ON_Mesh* ON_ControlPolygonMesh( 
-	  const ON_NurbsSurface& nurbs_surface, 
-	  bool bCleanMesh,
-	  ON_Mesh* input_mesh
-	  )
+          const ON_NurbsSurface& nurbs_surface, 
+          bool bCleanMesh,
+          ON_Mesh* input_mesh
+          )
 {
   int u0 = 0;
   int u1 = nurbs_surface.CVCount(0);
@@ -768,11 +769,11 @@ ON_Mesh* ON_ControlPolygonMesh(
       mesh->m_T.AppendNew() = T;
       if ( i > u0 && j > v0 )
       {
-	ON_MeshFace& f = mesh->m_F.AppendNew();
-	f.vi[0] = k++;
-	f.vi[1] = k;
-	f.vi[2] = mesh->m_V.Count()-1;
-	f.vi[3] = f.vi[2]-1;
+        ON_MeshFace& f = mesh->m_F.AppendNew();
+        f.vi[0] = k++;
+        f.vi[1] = k;
+        f.vi[2] = mesh->m_V.Count()-1;
+        f.vi[3] = f.vi[2]-1;
       }
     }
     k++;
@@ -791,7 +792,7 @@ ON_Mesh* ON_ControlPolygonMesh(
       mesh->m_V[k] = mesh->m_V[i];
       if ( bPeriodic0 )
       {
-	mesh->m_N[k] = mesh->m_N[i];
+        mesh->m_N[k] = mesh->m_N[i];
       }
       i = k+1;
       // do NOT synch texture coordinates
@@ -805,13 +806,14 @@ ON_Mesh* ON_ControlPolygonMesh(
       mesh->m_V[k] = mesh->m_V[i];
       if ( bPeriodic1 )
       {
-	mesh->m_N[k] = mesh->m_N[i];
+        mesh->m_N[k] = mesh->m_N[i];
       }
       // do NOT synch texture coordinates
     }
   }
 
   // make sure singular ends are spot on
+  i=0;
   for ( k = 0; k < 4; k++ )
   {
     if ( nurbs_surface.IsSingular(k) )
@@ -819,33 +821,33 @@ ON_Mesh* ON_ControlPolygonMesh(
       switch(k)
       {
       case 0: // 0 = south
-	i = 0;
-	j = 1;
-	k = u1;
-	break;
+        i = 0;
+        j = 1;
+        k = u1;
+        break;
 
       case 1: // 1 = east
-	i = u1-1;
-	j = u1;
-	k = u1*v1;
-	break;
+        i = u1-1;
+        j = u1;
+        k = u1*v1;
+        break;
 
       case 2: // 2 = north
-	i = u1*(v1-1);
-	j = 1;
-	k = u1*v1;
-	break;
+        i = u1*(v1-1);
+        j = 1;
+        k = u1*v1;
+        break;
 
       case 3: // 3 = west
-	i = 0;
-	j = u1;
-	k = u1*(v1-1)+1;
-	break;
+        i = 0;
+        j = u1;
+        k = u1*(v1-1)+1;
+        break;
       }
       V = mesh->m_V[i];
       for ( i = i+j; i < k; i += j )
       {
-	mesh->m_V[i] = V;
+        mesh->m_V[i] = V;
       }
     }
   }
@@ -864,36 +866,36 @@ ON_Mesh* ON_ControlPolygonMesh(
       P[3] = mesh->m_V[f.vi[3]];
       if ( P[0] == P[1] )
       {
-	f.vi[1] = f.vi[2];
-	f.vi[2] = f.vi[3];
-	P[1] = P[2];
-	P[2] = P[3];
+        f.vi[1] = f.vi[2];
+        f.vi[2] = f.vi[3];
+        P[1] = P[2];
+        P[2] = P[3];
       }
       if ( P[1] == P[2] )
       {
-	f.vi[2] = f.vi[3];
-	P[2] = P[3];
+        f.vi[2] = f.vi[3];
+        P[2] = P[3];
       }
       if ( P[2] == P[3] )
       {
-	f.vi[2] = f.vi[3];
-	P[2] = P[3];
+        f.vi[2] = f.vi[3];
+        P[2] = P[3];
       }
       if ( P[3] == P[0] )
       {
-	f.vi[0] = f.vi[1];
-	f.vi[1] = f.vi[2];
-	f.vi[2] = f.vi[3];
-	P[0] = P[1];
-	P[1] = P[2];
-	P[2] = P[3];
+        f.vi[0] = f.vi[1];
+        f.vi[1] = f.vi[2];
+        f.vi[2] = f.vi[3];
+        P[0] = P[1];
+        P[1] = P[2];
+        P[2] = P[3];
       }
       if (    f.vi[0] == f.vi[1] 
-	   || f.vi[1] == f.vi[2] 
-	   || f.vi[3] == f.vi[0] 
-	   || P[0] == P[2] || P[1] == P[3] )
+           || f.vi[1] == f.vi[2] 
+           || f.vi[3] == f.vi[0] 
+           || P[0] == P[2] || P[1] == P[3] )
       {
-	badfi.Append(i);
+        badfi.Append(i);
       }
     }
     
@@ -901,37 +903,40 @@ ON_Mesh* ON_ControlPolygonMesh(
     {
       if ( badfi.Count() == mesh->m_F.Count() )
       {
-	if ( input_mesh )
-	{
-	  mesh->Destroy();
-	}
-	else
-	{
-	  delete mesh;
-	}
-	mesh = 0;
+        if ( input_mesh )
+        {
+          mesh->Destroy();
+        }
+        else
+        {
+          delete mesh;
+        }
+        mesh = 0;
       }
       else
       {
-	// remove bad faces
-	i = badfi[0];
-	j = i+1;
-	k = 1;
-	for ( j = i+1; j < mesh->m_F.Count(); j++ )
-	{
-	  if ( k < badfi.Count() && j == badfi[k] )
-	  {
-	    k++;
-	  }
-	  else
-	  {
-	    mesh->m_F[i++] = mesh->m_F[j];
-	  }
-	}
-	mesh->m_F.SetCount(i);
+        // remove bad faces
+        i = badfi[0];
+        j = i+1;
+        k = 1;
+        for ( j = i+1; j < mesh->m_F.Count(); j++ )
+        {
+          if ( k < badfi.Count() && j == badfi[k] )
+          {
+            k++;
+          }
+          else
+          {
+            mesh->m_F[i++] = mesh->m_F[j];
+          }
+        }
+        mesh->m_F.SetCount(i);
       }
 
-      mesh->CullUnusedVertices();
+      // 29 May 2008: Mikko, TRR 34687:
+      // Added crash protection. At this point mesh is NULL if it contained all bad faces.
+      if ( mesh)
+        mesh->CullUnusedVertices();
     }
   }
 

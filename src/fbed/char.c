@@ -1,7 +1,7 @@
 /*                          C H A R . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -42,21 +42,21 @@
   char.c - routines for displaying a string on a frame buffer.
 */
 extern void fudge_Pixel();
-extern void fill_buf(register int wid, register int *buf), clear_buf(int wid, register int *buf);
-extern void squash(register int *buf0, register int *buf1, register int *buf2, register float *ret_buf, register int n);
+extern void fill_buf(int wid, int *buf), clear_buf(int wid, int *buf);
+extern void squash(int *buf0, int *buf1, int *buf2, float *ret_buf, int n);
 
 HIDDEN void do_Char(int c, int xpos, int ypos, int odd);
-void menu_char(int x_adjust, int menu_wid, int odd, register unsigned char *menu_border);
+void menu_char(int x_adjust, int menu_wid, int odd, unsigned char *menu_border);
 
 void
-do_line(int xpos, int ypos, register const char* line, RGBpixel (*menu_border))
+do_line(int xpos, int ypos, const char* line, RGBpixel (*menu_border))
 
 
     /* Menu outline color, if NULL, do filtering. */
 {
-    register int    currx;
-    register int    char_count, char_id;
-    register int len = strlen( line );
+    int    currx;
+    int    char_count, char_id;
+    int len = strlen( line );
 #if DEBUG_STRINGS
     fb_log( "do_line: xpos=%d ypos=%d line=\"%s\" menu_border=0x%x\n",
 	    xpos, ypos, line, (int) menu_border );
@@ -122,7 +122,7 @@ static int filterbuf[FONTBUFSZ][FONTBUFSZ];
 HIDDEN void
 do_Char(int c, int xpos, int ypos, int odd)
 {
-    register int    i, j;
+    int    i, j;
     int base;
     int     	totwid = font.width;
     int     	down;
@@ -162,7 +162,7 @@ do_Char(int c, int xpos, int ypos, int odd)
 	fb_read( fbp, xpos, ypos - down + i, (unsigned char *)fbline, totwid+3);
 	for (j = 0; j < (totwid + 3) - 1; j++)
 	{
-	    register int tmp;
+	    int tmp;
 	    /* EDITOR'S NOTE : do not rearrange this code,
 	       the SUN compiler can't handle more
 	       complex expressions. */
@@ -185,9 +185,9 @@ do_Char(int c, int xpos, int ypos, int odd)
 }
 
 void
-menu_char(int x_adjust, int menu_wid, int odd, register unsigned char *menu_border)
+menu_char(int x_adjust, int menu_wid, int odd, unsigned char *menu_border)
 {
-    register int    i, j, k;
+    int    i, j, k;
     int embold = 1;
     int base;
     int totwid = font.width;
@@ -210,7 +210,7 @@ menu_char(int x_adjust, int menu_wid, int odd, register unsigned char *menu_bord
     /* Change bits in menu that correspond to character bitmap. */
     for (i = font.height + base, k = 0; i >= base; i--, k++)
     {
-	register RGBpixel *menu;
+	RGBpixel *menu;
 	menu = menu_addr + k * menu_wid + x_adjust;
 	for (j = 0; j < (totwid + 3) - 1; j++, menu++ )
 	    if ( filterbuf[i][j] )
@@ -225,10 +225,10 @@ menu_char(int x_adjust, int menu_wid, int odd, register unsigned char *menu_bord
 	Extract a bit field from a bit string.
 */
 int
-bitx(register char *bitstring, register int posn)
+bitx(char *bitstring, int posn)
 {
 #if 0 /* Was #ifdef vax, but doesn't work on 4.3BSD */
-    register field;
+    field;
 
     asm("extzv	r10,$1,(r11), r8");
     return field;

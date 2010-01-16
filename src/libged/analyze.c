@@ -1,7 +1,7 @@
 /*                          A N A L Y Z E . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2009 United States Government as represented by
+ * Copyright (c) 1985-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -63,8 +63,8 @@ static void	ged_superell_anal(struct ged *gedp, const struct rt_db_internal *ip)
 int
 ged_analyze(struct ged *gedp, int argc, const char *argv[])
 {
-    register struct directory *ndp;
-    register int i;
+    struct directory *ndp;
+    int i;
     struct rt_db_internal	intern;
     static const char *usage = "object(s)";
 
@@ -94,7 +94,7 @@ ged_analyze(struct ged *gedp, int argc, const char *argv[])
 
 	_ged_do_list(gedp, ndp, 1);
 	ged_do_anal(gedp, &intern);
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
     }
 
     return GED_OK;
@@ -169,7 +169,7 @@ static void
 ged_arb_anal(struct ged *gedp, const struct rt_db_internal *ip)
 {
     struct rt_arb_internal	*arb = (struct rt_arb_internal *)ip->idb_ptr;
-    register int	i;
+    int	i;
     point_t		center_pt;
     double		tot_vol;
     double		tot_area;
@@ -258,7 +258,7 @@ static const int farb4[6][4] = {
  * unitv = pointer to the unit vector (previously computed)
  */
 static void
-findang(register fastf_t *angles, register fastf_t *unitv)
+findang(fastf_t *angles, fastf_t *unitv)
 {
     fastf_t f;
 
@@ -311,7 +311,7 @@ ged_anal_face(struct ged *gedp, int face, fastf_t *center_pt, const struct rt_ar
 
 
 {
-    register int i, j, k;
+    int i, j, k;
     int a, b, c, d;		/* 4 points of face to look at */
     fastf_t	angles[5];	/* direction cosines, rot, fb */
     fastf_t	temp;
@@ -390,7 +390,7 @@ ged_anal_face(struct ged *gedp, int face, fastf_t *center_pt, const struct rt_ar
 static void
 ged_anal_edge(struct ged *gedp, int edge, const struct rt_arb_internal *arb, int type)
 {
-    register int a, b;
+    int a, b;
     static vect_t v_temp;
 
     a = nedge[type][edge*2];
@@ -784,6 +784,8 @@ ged_tgc_anal(struct ged *gedp, const struct rt_db_internal *ip)
 static void
 ged_ars_anal(struct ged *gedp, const struct rt_db_internal *ip)
 {
+    if (ip) RT_CK_DB_INTERNAL(ip);
+
     bu_vls_printf(&gedp->ged_result_str, "ARS analyze not implemented\n");
 }
 
@@ -801,6 +803,8 @@ ged_ars_anal(struct ged *gedp, const struct rt_db_internal *ip)
 static void
 ged_part_anal(struct ged *gedp, const struct rt_db_internal *ip)
 {
+    if (ip) RT_CK_DB_INTERNAL(ip);
+
     bu_vls_printf(&gedp->ged_result_str, "PARTICLE analyze not implemented\n");
 }
 

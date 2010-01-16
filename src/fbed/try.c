@@ -1,7 +1,7 @@
 /*                           T R Y . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -40,9 +40,9 @@
 			Malloc_Bomb(); \
 			}
 int
-add_Try(Func_Tab* ftbl, register const char* name, register Try** trypp)
+add_Try(Func_Tab* ftbl, const char* name, Try** trypp)
 {
-    register Try	*curp;
+    Try	*curp;
     if ( *name == NUL )
     {
 	/* We are finished, make leaf node. */
@@ -73,9 +73,9 @@ add_Try(Func_Tab* ftbl, register const char* name, register Try** trypp)
 }
 
 Func_Tab *
-get_Try(register char *name, register Try *tryp)
+get_Try(char *name, Try *tryp)
 {
-    register Try *curp = NULL; /* initialize to shutup compiler. */
+    Try *curp = NULL; /* initialize to shutup compiler. */
     /* Traverse next links to end of function name. */
     for (; tryp != TRY_NULL; tryp = tryp->n.t_next )
     {

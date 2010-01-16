@@ -1,7 +1,7 @@
 /*                           S P L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -85,10 +85,10 @@ spl_kvknot(order, lower, upper, num)
     int order, num;
     fastf_t lower, upper;
 {
-    register int i;
+    int i;
     int total;
     fastf_t knot_step;
-    register struct knot_vec *new_knots;
+    struct knot_vec *new_knots;
 
     total = order * 2 + num;
 

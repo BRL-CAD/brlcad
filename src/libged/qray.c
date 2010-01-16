@@ -1,7 +1,7 @@
 /*                          Q R A Y . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2009 United States Government as represented by
+ * Copyright (c) 1998-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -416,8 +416,8 @@ ged_qray(struct ged	*gedp,
 void
 ged_init_qray(struct ged_drawable *gdp)
 {
-    register int i;
-    register int n = 0;
+    int i;
+    int n = 0;
     struct ged_qray_fmt_data *qfdp;
 
     bu_vls_init(&gdp->gd_qray_basename);
@@ -449,7 +449,7 @@ ged_init_qray(struct ged_drawable *gdp)
 void
 ged_free_qray(struct ged_drawable *gdp)
 {
-    register int i;
+    int i;
 
     bu_vls_free(&gdp->gd_qray_basename);
     bu_vls_free(&gdp->gd_qray_script);
@@ -465,9 +465,9 @@ ged_qray_data_to_vlist(struct ged		*gedp,
 		       vect_t			dir,
 		       int			do_overlaps)
 {
-    register int i = 1;			/* start out odd */
-    register struct bu_list *vhead;
-    register struct ged_qray_dataList *ndlp;
+    int i = 1;			/* start out odd */
+    struct bu_list *vhead;
+    struct ged_qray_dataList *ndlp;
     vect_t in_pt, out_pt;
     vect_t last_out_pt = { 0, 0, 0 };
 

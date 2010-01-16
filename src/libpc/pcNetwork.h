@@ -1,7 +1,7 @@
 /*                    P C N E T W O R K . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,7 +23,6 @@
  *
  * Class definition of Constraint Network
  *
- * @author Dawn Thomas
  */
 #ifndef __PCNETWORK_H__
 #define __PCNETWORK_H__

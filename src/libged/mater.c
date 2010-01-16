@@ -1,7 +1,7 @@
 /*                         M A T E R . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,7 +30,7 @@ int
 ged_mater(struct ged *gedp, int argc, const char *argv[])
 {
     int status = GED_OK;
-    register struct directory *dp;
+    struct directory *dp;
     int r=0, g=0, b=0;
     char inherit;
     struct rt_db_internal	intern;
@@ -66,26 +66,26 @@ ged_mater(struct ged *gedp, int argc, const char *argv[])
     bu_vls_trunc(&comb->shader, 0);
     if (bu_shader_to_tcl_list(argv[2], &comb->shader)) {
 	bu_vls_printf(&gedp->ged_result_str, "Problem with shader string: %s", argv[2]);
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 	return GED_ERROR;
     }
 
     /* Color */
     if (sscanf(argv[3], "%d", &r) != 1 || r < 0 || 255 < r) {
 	bu_vls_printf(&gedp->ged_result_str, "Bad color value - %s", argv[3]);
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 	return GED_ERROR;
     }
 
     if (sscanf(argv[4], "%d", &g) != 1 || g < 0 || 255 < g) {
 	bu_vls_printf(&gedp->ged_result_str, "Bad color value - %s", argv[4]);
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 	return GED_ERROR;
     }
 
     if (sscanf(argv[5], "%d", &b) != 1 || b < 0 || 255 < b) {
 	bu_vls_printf(&gedp->ged_result_str, "Bad color value - %s", argv[5]);
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 	return GED_ERROR;
     }
 
@@ -105,7 +105,7 @@ ged_mater(struct ged *gedp, int argc, const char *argv[])
 	    break;
 	default:
 	    bu_vls_printf(&gedp->ged_result_str, "Inherit value must be 0 or 1");
-	    rt_db_free_internal(&intern, &rt_uniresource);
+	    rt_db_free_internal(&intern);
 	    return GED_ERROR;
     }
 

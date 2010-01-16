@@ -111,10 +111,10 @@ class SCLP23_NAME(Enum)  {
 
 #ifndef _ODI_OSSG_
 class SCLP23_NAME(LOGICAL);
-class SCLP23_NAME(BOOL);
+class SCLP23_NAME(BOOLEAN);
 #endif
 
-// If NO_BOOLS_LOGS is defined then Bool and Logical need to be defined 
+// If NO_BOOLS_LOGS is defined then Boolean and Logical need to be defined 
 // elsewhere. Namely they are specified by Part 26 to be defined within the 
 // context of CORBA in IDL. That means they need to have code generated for 
 // them by the IDL compiler so that they are understood by the compiler in the 
@@ -133,7 +133,7 @@ class SCLP23_NAME(BOOL);
 //    clstepcore/sclprefixes.h  
 // DAS
 #ifndef NO_BOOLS_LOGS
-enum SCLBOOL_H(Bool) { SCLBOOL_H(BFalse), SCLBOOL_H(BTrue), SCLBOOL_H(BUnset) };
+enum SCLBOOL_H(Boolean) { SCLBOOL_H(BFalse), SCLBOOL_H(BTrue), SCLBOOL_H(BUnset) };
 enum SCLLOG_H(Logical) { SCLLOG_H(LFalse), SCLLOG_H(LTrue), SCLLOG_H(LUnset), SCLLOG_H(LUnknown) };
 #endif
 
@@ -153,9 +153,9 @@ public SCLP23_NAME(Enum)  {
 // this is to avoid a bug? in the ossg utility for ObjectStore
 #ifndef __OSTORE__
 #ifndef _ODI_OSSG_
-// this causes an error with sun C++ because SCLP23_NAME(BOOL) is not a completely 
+// this causes an error with sun C++ because SCLP23_NAME(BOOLEAN) is not a completely 
 // specified type. (this is supposed to be SDAI?) DAS
-//    SCLP23_NAME(LOGICAL) (const SCLP23_NAME(BOOL)& boo);
+//    SCLP23_NAME(LOGICAL) (const SCLP23_NAME(BOOLEAN)& boo);
 #endif
 #endif
     virtual ~SCLP23_NAME(LOGICAL) ();
@@ -189,25 +189,25 @@ public SCLP23_NAME(Enum)  {
 }
 ;
 
-class SCLP23_NAME(BOOL)  :
+class SCLP23_NAME(BOOLEAN)  :
 public SCLP23_NAME(Enum)  {
   public:
     const char * Name() const;
 
-    SCLP23_NAME(BOOL) (char * val = 0);
-    SCLP23_NAME(BOOL) (SCLBOOL_H(Bool) state);
-    SCLP23_NAME(BOOL) (const SCLP23_NAME(BOOL)& source);
-    SCLP23_NAME(BOOL) (int i);
-    SCLP23_NAME(BOOL) (const SCLP23_NAME(LOGICAL)& val);
-    virtual ~SCLP23_NAME(BOOL) ();
+    SCLP23_NAME(BOOLEAN) (char * val = 0);
+    SCLP23_NAME(BOOLEAN) (SCLBOOL_H(Boolean) state);
+    SCLP23_NAME(BOOLEAN) (const SCLP23_NAME(BOOLEAN)& source);
+    SCLP23_NAME(BOOLEAN) (int i);
+    SCLP23_NAME(BOOLEAN) (const SCLP23_NAME(LOGICAL)& val);
+    virtual ~SCLP23_NAME(BOOLEAN) ();
 
     virtual int no_elements () const;
     virtual const char * element_at (int n) const;
 
-    operator SCLBOOL_H(Bool)() const;
-    SCLP23_NAME(BOOL)& operator=(const SCLP23_NAME(LOGICAL)& t);
+    operator SCLBOOL_H(Boolean)() const;
+    SCLP23_NAME(BOOLEAN)& operator=(const SCLP23_NAME(LOGICAL)& t);
 
-    SCLP23_NAME(BOOL)& operator=(const SCLBOOL_H(Bool) t);
+    SCLP23_NAME(BOOLEAN)& operator=(const SCLBOOL_H(Boolean) t);
 //    operator int () const;
 //    operator SCLLOG_H(Logical) () const;
     SCLP23_NAME(LOGICAL) operator==( const SCLP23_NAME(LOGICAL)& t ) const;
@@ -222,9 +222,9 @@ public SCLP23_NAME(Enum)  {
 }
 ;
 
-  static const SCLP23_NAME(BOOL) SCLP23_NAME(TRUE);
-  static const SCLP23_NAME(BOOL) SCLP23_NAME(FALSE);
-  static const SCLP23_NAME(BOOL) SCLP23_NAME(UNSET);
+  static const SCLP23_NAME(BOOLEAN) SCLP23_NAME(TRUE);
+  static const SCLP23_NAME(BOOLEAN) SCLP23_NAME(FALSE);
+  static const SCLP23_NAME(BOOLEAN) SCLP23_NAME(UNSET);
   static const SCLP23_NAME(LOGICAL) SCLP23_NAME(UNKNOWN);
 
 //}; // end struct P23_NAMESPACE
@@ -234,9 +234,9 @@ public SCLP23_NAME(Enum)  {
 // These are now defined in sdai.h
 
 #ifdef __OSTORE__
-SCLP23(BOOL) *create_BOOL(os_database *db);
+SCLP23(BOOLEAN) *create_BOOLEAN(os_database *db);
 #else
-inline SCLP23(BOOL) *create_BOOL() { return new SCLP23(BOOL) ; }
+inline SCLP23(BOOLEAN) *create_BOOLEAN() { return new SCLP23(BOOLEAN) ; }
 #endif
 
 #ifdef __OSTORE__

@@ -1,7 +1,7 @@
 #                     F A S T G E N . S H
 # BRL-CAD
 #
-# Copyright (c) 2008-2009 United States Government as represented by
+# Copyright (c) 2008-2010 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -41,32 +41,20 @@
 # Ensure /bin/sh
 export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 
-# save the precious args
-ARGS="$*"
-NAME_OF_THIS=`basename $0`
-PATH_TO_THIS=`dirname $0`
-THIS="$PATH_TO_THIS/$NAME_OF_THIS"
+# source common library functionality, setting ARGS, NAME_OF_THIS,
+# PATH_TO_THIS, and THIS.
+. $1/regress/library.sh
 
-F4G="$1/src/conv/fast4-g"
+F4G="`ensearch conv/fast4-g`"
 if test ! -f "$F4G" ; then
-    F4G="$PATH_TO_THIS/../src/conv/fast4-g"
-    if test ! -f "$F4G" ; then
-	echo "Unable to find fast4-g, aborting"
-	exit 1
-    fi
+    echo "Unable to find fast4-g, aborting"
+    exit 1
 fi
-G_DIFF="$1/src/gtools/g_diff"
+G_DIFF="`ensearch gtools/g_diff`"
 if test ! -f "$G_DIFF" ; then
-    G_DIFF="$PATH_TO_THIS/../src/gtools/g_diff"
-    if test ! -f "$G_DIFF" ; then
-	echo "Unable to find g_diff, aborting"
-	exit 1
-    fi
+    echo "Unable to find g_diff, aborting"
+    exit 1
 fi
-
-LD_LIBRARY_PATH=../src/other/tcl/unix:../src/other/tk/unix:$1/src/other/tcl/unix:$1/src/other/tk/unix:$LD_LIBRARY_PATH
-DYLD_LIBRARY_PATH=../src/other/tcl/unix:../src/other/tk/unix:$1/src/other/tcl/unix:$1/src/other/tk/unix:$DYLD_LIBRARY_PATH
-export LD_LIBRARY_PATH DYLD_LIBRARY_PATH
 
 echo "testing fast4-g importer..."
 
@@ -110,12 +98,12 @@ if test ! -f fastgen_unix.g ; then
 fi
 
 echo "Creating an input file with DOS line-endings"
-if test ! -f fastgen_dos.fast4 ; then
+if test ! -f $PATH_TO_THIS/fastgen_dos.fast4 ; then
     echo "Unable to find fastgen_dos.fast4"
     exit 1
 fi
 rm -f fastgen_box.fast4
-cp fastgen_dos.fast4 fastgen_box.fast4
+cp $PATH_TO_THIS/fastgen_dos.fast4 fastgen_box.fast4
 
 rm -f fastgen_dos.g
 $F4G fastgen_box.fast4 fastgen_dos.g
@@ -128,6 +116,7 @@ if test ! -f fastgen_dos.g ; then
     exit 1
 fi
 
+echo "Comparing geometry files from sources with DOS and UNIX line endings."
 $G_DIFF fastgen_unix.g fastgen_dos.g
 if test "$?" -ne 0 ; then
     echo "ERROR running $G_DIFF fastgen_unix.g fastgen_dos.g"

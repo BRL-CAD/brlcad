@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -18,9 +17,9 @@
 
 
 void ON_Brep::RebuildTrimsForV2(
-		ON_BrepFace& face, 
-		const ON_NurbsSurface& nurbs_surface
-		)
+                ON_BrepFace& face, 
+                const ON_NurbsSurface& nurbs_surface
+                )
 {
   /*
     No support is available for this function.
@@ -68,7 +67,7 @@ void ON_Brep::RebuildTrimsForV2(
     {
       ON_BrepTrim* trim = brep.Trim(loop->m_ti[lti]);
       if ( 0 == trim )
-	break;
+        break;
       loop_trim.Append(trim);
       uv0 = trim->PointAtStart();
       pt.Append( face_srf->PointAt(uv0.x,uv0.y) );
@@ -84,13 +83,13 @@ void ON_Brep::RebuildTrimsForV2(
       const ON_BrepEdge* edge = brep.Edge(trim->m_ei);
       double pbtol = edge ? edge->m_tolerance : 1.0e-5;
       if ( !ON_IsValid(pbtol) || pbtol < 1.0e-5 )
-	pbtol = 1.0e-5;
+        pbtol = 1.0e-5;
       else if (pbtol > 0.01 )
-	pbtol = 0.01;
+        pbtol = 0.01;
       if ( pt.Last()->DistanceTo(N0) <= pbtol )
-	uv1 = uv0;
+        uv1 = uv0;
       else if ( !nurbs_surface.GetLocalClosestPoint( pt[lti], uv0.x, uv0.y, &uv1.x, &uv1.y, NULL, NULL ) )
-	break;
+        break;
       nurbsuv.Append(uv1);
     }
     if ( nurbsuv.Count() != loop_trim_count )
@@ -105,70 +104,70 @@ void ON_Brep::RebuildTrimsForV2(
       ON_Curve* c2 = 0;
       if ( trim.m_iso == ON_Surface::not_iso )
       {
-	const ON_BrepEdge* edge = brep.Edge(trim.m_ei);
-	if ( edge )
-	{
-	  double pbtol = edge->m_tolerance;
-	  if ( pbtol < 0.001 )
-	    pbtol = 0.001;
-	  if (trim.m_bRev3d) 
-	    c2 = nurbs_surface.Pullback(*edge,pbtol,NULL,uv1,uv0);
-	  else
-	    c2 = nurbs_surface.Pullback(*edge,pbtol,NULL,uv0,uv1);
-	  if ( !c2 )
-	  {
-	    c2 = trim.DuplicateCurve();
-	    ON_Xform T1(1), SR(1), T2(1), x;
-	    ON_3dPoint a0 = trim.PointAtStart();
-	    ON_3dPoint a1 = trim.PointAtEnd();
-	    ON_3dVector v = 0.5*(a0+a1); v.z = 0.0;
-	    T1.Translation(-v);
-	    v = 0.5*(uv0+uv1); v.z = 0.0;
-	    T2.Translation(v);
-	    double s1 = a0.DistanceTo(a1);
-	    double s2 = uv0.DistanceTo(uv1);
-	    if ( s1 > 0.0 && s2 > 0.0 
-		 && s2 > s1*ON_SQRT_EPSILON 
-		 &&  s1 > s2*ON_SQRT_EPSILON )
-	    {
-	      ON_Xform S(1), R(1);
-	      S.Scale(ON_origin,s2/s1);
-	      ON_3dVector a = a1-a0;
-	      ON_3dVector b = uv1 - uv0;
-	      a.Unitize();
-	      b.Unitize();
-	      a.z = 0.0; b.z = 0.0;
-	      ON_3dVector z = ON_CrossProduct(a,b);
-	      double sa = z.Length();
-	      z.Unitize();
-	      double ca = a*b;
-	      R.Rotation( sa, ca, z, ON_origin );
-	      SR = S*R;
-	    }
-	    x = T2*SR*T1;
-	    c2->Transform(x);
-	  }
-	  else if ( c2 && trim.m_bRev3d )
-	    c2->Reverse();
-	}
+        const ON_BrepEdge* edge = brep.Edge(trim.m_ei);
+        if ( edge )
+        {
+          double pbtol = edge->m_tolerance;
+          if ( pbtol < 0.001 )
+            pbtol = 0.001;
+          if (trim.m_bRev3d) 
+            c2 = nurbs_surface.Pullback(*edge,pbtol,NULL,uv1,uv0);
+          else
+            c2 = nurbs_surface.Pullback(*edge,pbtol,NULL,uv0,uv1);
+          if ( !c2 )
+          {
+            c2 = trim.DuplicateCurve();
+            ON_Xform T1(1), SR(1), T2(1), x;
+            ON_3dPoint a0 = trim.PointAtStart();
+            ON_3dPoint a1 = trim.PointAtEnd();
+            ON_3dVector v = 0.5*(a0+a1); v.z = 0.0;
+            T1.Translation(-v);
+            v = 0.5*(uv0+uv1); v.z = 0.0;
+            T2.Translation(v);
+            double s1 = a0.DistanceTo(a1);
+            double s2 = uv0.DistanceTo(uv1);
+            if ( s1 > 0.0 && s2 > 0.0 
+                 && s2 > s1*ON_SQRT_EPSILON 
+                 &&  s1 > s2*ON_SQRT_EPSILON )
+            {
+              ON_Xform S(1), R(1);
+              S.Scale(ON_origin,s2/s1);
+              ON_3dVector a = a1-a0;
+              ON_3dVector b = uv1 - uv0;
+              a.Unitize();
+              b.Unitize();
+              a.z = 0.0; b.z = 0.0;
+              ON_3dVector z = ON_CrossProduct(a,b);
+              double sa = z.Length();
+              z.Unitize();
+              double ca = a*b;
+              R.Rotation( sa, ca, z, ON_origin );
+              SR = S*R;
+            }
+            x = T2*SR*T1;
+            c2->Transform(x);
+          }
+          else if ( c2 && trim.m_bRev3d )
+            c2->Reverse();
+        }
       }
       if ( 0 == c2 )
       {
-	ON_NurbsCurve* nc2 = new ON_NurbsCurve(2,0,2,2);
-	nc2->m_knot[0] = 0.0;
-	nc2->m_knot[1] = 1.0;
-	nc2->SetCV(0,uv0);
-	nc2->SetCV(nc2->m_cv_count-1,uv1);
-	c2 = nc2;
+        ON_NurbsCurve* nc2 = new ON_NurbsCurve(2,0,2,2);
+        nc2->m_knot[0] = 0.0;
+        nc2->m_knot[1] = 1.0;
+        nc2->SetCV(0,uv0);
+        nc2->SetCV(nc2->m_cv_count-1,uv1);
+        c2 = nc2;
       }
 
       //some trims that weren't isos end up being isos.  Pullback creates ON_LineCurves.
       if (!ON_NurbsCurve::Cast(c2)){
-	ON_NurbsCurve* nc2 = c2->NurbsCurve();
-	if (0 != nc2){
-	  delete c2;
-	  c2 = nc2;
-	}
+        ON_NurbsCurve* nc2 = c2->NurbsCurve();
+        if (0 != nc2){
+          delete c2;
+          c2 = nc2;
+        }
       }
       c2->ON_Curve::SetDomain( trim.Domain() );
       c2->SetStartPoint(uv0);
@@ -177,7 +176,7 @@ void ON_Brep::RebuildTrimsForV2(
       trim.ChangeTrimCurve(c2i);
       //sometimes nearly iso curves become iso. Chuck 4/11/03
       if (trim.m_iso == ON_Surface::not_iso)
-	brep.SetTrimIsoFlags(trim);
+        brep.SetTrimIsoFlags(trim);
       loop->m_pbox.Union(trim.m_pbox);
     }
   }
@@ -228,7 +227,7 @@ bool ON_Brep::IsDeformable() const
 
 bool ON_Brep::MakeDeformable()
 {
-  bool rc = false;
+  bool rc = true;
 
   int ei, edge_count = m_E.Count();
   for ( ei = 0; ei < edge_count; ei++ )
@@ -250,7 +249,7 @@ bool ON_Brep::MakeDeformable()
     if ( edge.ProxyCurveDomain() == crv->Domain() )
     {
       if ( const_cast<ON_Curve*>(crv)->MakeDeformable() )
-	continue;
+        continue;
       edge_curve = edge.NurbsCurve();
 
       // 4 April 2007 Dale Lear - don't loose user data
@@ -258,7 +257,7 @@ bool ON_Brep::MakeDeformable()
       // edge_curve.
       if ( edge_curve && crv )
       {
-	edge_curve->CopyUserData(*crv);
+        edge_curve->CopyUserData(*crv);
       }
     }
     else
@@ -269,28 +268,28 @@ bool ON_Brep::MakeDeformable()
       edge_curve = edge.DuplicateCurve();
       if ( 0 == edge_curve )
       {
-	delete edge_curve;
-	edge_curve = edge.NurbsCurve();
-	// 4 April 2007 Dale Lear - don't loose user data
-	// on the m_C3[] curve that will be replaced by
-	// edge_curve.
-	if ( edge_curve && crv )
-	{
-	  edge_curve->CopyUserData(*crv);
-	}
+        delete edge_curve;
+        edge_curve = edge.NurbsCurve();
+        // 4 April 2007 Dale Lear - don't loose user data
+        // on the m_C3[] curve that will be replaced by
+        // edge_curve.
+        if ( edge_curve && crv )
+        {
+          edge_curve->CopyUserData(*crv);
+        }
       }
       else if  ( !edge_curve->MakeDeformable() )
       {
-	ON_NurbsCurve* nurbs_curve = edge_curve->NurbsCurve();
-	delete edge_curve;
-	edge_curve = nurbs_curve;
-	// 4 April 2007 Dale Lear - don't loose user data
-	// on the m_C3[] curve that will be replaced by
-	// edge_curve.
-	if ( edge_curve && crv )
-	{
-	  edge_curve->CopyUserData(*crv);
-	}
+        ON_NurbsCurve* nurbs_curve = edge_curve->NurbsCurve();
+        delete edge_curve;
+        edge_curve = nurbs_curve;
+        // 4 April 2007 Dale Lear - don't loose user data
+        // on the m_C3[] curve that will be replaced by
+        // edge_curve.
+        if ( edge_curve && crv )
+        {
+          edge_curve->CopyUserData(*crv);
+        }
       }
     }
 
@@ -346,8 +345,8 @@ bool ON_Brep::MakeDeformable()
       // when the surface parameterization changes.
       if ( const_cast<ON_Surface*>(srf)->MakeDeformable() )
       {
-	face.DestroyRuntimeCache();
-	continue;
+        face.DestroyRuntimeCache();
+        continue;
       }
     }
 
@@ -412,6 +411,8 @@ bool ON_Brep::MakeValidForV2()
   double w;
   int short_seg_count = 0;
 
+  int saved_is_solid = m_is_solid;
+
   // prune ends of 2d curves that are trimmed by setting
   // trim.m_t to be a subinterval of the 2d curve's domain.
   const int trim_count = m_T.Count();
@@ -430,42 +431,42 @@ bool ON_Brep::MakeValidForV2()
     {
       c->ClampEnd(2);
       if ( c->m_dim != 2 )
-	c->ChangeDimension(2);
+        c->ChangeDimension(2);
 
       // V2 is closed check
       if ( c->m_cv_count >= 4 && 0 == ON_ComparePoint( c->m_dim, c->m_is_rat, c->m_cv, c->CV(c->m_cv_count-1) ) )
       {
-	// c is "closed" by V2 standards
-	if ( trim.m_vi[0] != trim.m_vi[1] )
-	{
-	  const ON_BrepLoop* loop = Loop(trim.m_li);
-	  if ( 0 != loop && loop->m_ti.Count() > 1 )
-	  {
-	    if ( c->IsShort(0.0001) )
-	    {
-	      // 2 June 2003 Dale Lear - RR 8843 fix
-	      // If this is a micro segment, then make it a line so it will read into v2.
-	      ON_3dPoint P0, P1;
-	      c->GetCV(0,P0);
-	      c->GetCV(c->m_cv_count-1,P1);
-	      c->m_knot[0] = c->m_knot[c->m_order-2];
-	      c->m_knot[1] = c->m_knot[c->m_cv_count-1];
-	      c->m_order = 2;
-	      c->m_cv_count = 2;
-	      c->m_dim = 2;
-	      c->m_is_rat = 0;
-	      c->m_cv_stride = 2;
-	      c->SetCV(0,P0);
-	      c->SetCV(1,P1);
-	    }
-	  }
-	}
+        // c is "closed" by V2 standards
+        if ( trim.m_vi[0] != trim.m_vi[1] )
+        {
+          const ON_BrepLoop* loop = Loop(trim.m_li);
+          if ( 0 != loop && loop->m_ti.Count() > 1 )
+          {
+            if ( c->IsShort(0.0001) )
+            {
+              // 2 June 2003 Dale Lear - RR 8843 fix
+              // If this is a micro segment, then make it a line so it will read into v2.
+              ON_3dPoint P0, P1;
+              c->GetCV(0,P0);
+              c->GetCV(c->m_cv_count-1,P1);
+              c->m_knot[0] = c->m_knot[c->m_order-2];
+              c->m_knot[1] = c->m_knot[c->m_cv_count-1];
+              c->m_order = 2;
+              c->m_cv_count = 2;
+              c->m_dim = 2;
+              c->m_is_rat = 0;
+              c->m_cv_stride = 2;
+              c->SetCV(0,P0);
+              c->SetCV(1,P1);
+            }
+          }
+        }
       }
 
       c->MakePiecewiseBezier(true);// 2 June 2003 Dale Lear - V2 likes end weights to be 1.0
       if ( c->RemoveShortSegments(1.0e-8) )
       {
-	short_seg_count++;
+        short_seg_count++;
       }
       trim.m_pline.Destroy();
       trim.DestroyCurveTree();
@@ -493,55 +494,55 @@ bool ON_Brep::MakeValidForV2()
     {
       c->ClampEnd(2);
       if ( c->m_dim != 3 )
-	c->ChangeDimension(3);
+        c->ChangeDimension(3);
       if ( c->m_is_rat )
       {
-	// 2 June 2003 Dale Lear - RR 8809 fix
-	//    V2 likes end weights to be 1.0
-	if ( c->m_cv[3] != 1.0 || c->CV(c->m_cv_count-1)[3] != 1.0 )
-	{
-	  c->MakePiecewiseBezier(true);
-	}
+        // 2 June 2003 Dale Lear - RR 8809 fix
+        //    V2 likes end weights to be 1.0
+        if ( c->m_cv[3] != 1.0 || c->CV(c->m_cv_count-1)[3] != 1.0 )
+        {
+          c->MakePiecewiseBezier(true);
+        }
       }
 
       // V2 is closed check
       if ( c->m_cv_count >= 4 && 0 == ON_ComparePoint( c->m_dim, c->m_is_rat, c->m_cv, c->CV(c->m_cv_count-1) ) )
       {
-	// c is "closed" by V2 standards
-	if ( edge.m_vi[0] != edge.m_vi[1] && c->IsShort(0.0005) )
-	{
-	  // 2 June 2003 Dale Lear - RR 8808 fix
-	  // If this is a micro segment, then make it a line so it will read into v2.
-	  ON_3dPoint P0, P1;
-	  c->GetCV(0,P0);
-	  c->GetCV(c->m_cv_count-1,P1);
-	  c->m_knot[0] = c->m_knot[c->m_order-2];
-	  c->m_knot[1] = c->m_knot[c->m_cv_count-1];
-	  c->m_order = 2;
-	  c->m_cv_count = 2;
-	  c->m_dim = 3;
-	  c->m_is_rat = 0;
-	  c->m_cv_stride = 3;
-	  c->SetCV(0,P0);
-	  c->SetCV(1,P1);
-	}
+        // c is "closed" by V2 standards
+        if ( edge.m_vi[0] != edge.m_vi[1] && c->IsShort(0.0005) )
+        {
+          // 2 June 2003 Dale Lear - RR 8808 fix
+          // If this is a micro segment, then make it a line so it will read into v2.
+          ON_3dPoint P0, P1;
+          c->GetCV(0,P0);
+          c->GetCV(c->m_cv_count-1,P1);
+          c->m_knot[0] = c->m_knot[c->m_order-2];
+          c->m_knot[1] = c->m_knot[c->m_cv_count-1];
+          c->m_order = 2;
+          c->m_cv_count = 2;
+          c->m_dim = 3;
+          c->m_is_rat = 0;
+          c->m_cv_stride = 3;
+          c->SetCV(0,P0);
+          c->SetCV(1,P1);
+        }
       }
       else if ( edge.m_vi[0] == edge.m_vi[1] && !c->IsShort(0.0005) && c->m_cv_count >= 4 )
       {
-	// see if we should force c to be closed.
-	ON_3dPoint P0, P1;
-	c->GetCV(0,P0);
-	c->GetCV(c->m_cv_count-1,P1);
-	if ( P0.DistanceTo(P1) <= 0.05*c->ControlPolygonLength() )
-	{
-	  // close up c
-	  c->SetCV(c->m_cv_count-1,P0);
-	}
+        // see if we should force c to be closed.
+        ON_3dPoint P0, P1;
+        c->GetCV(0,P0);
+        c->GetCV(c->m_cv_count-1,P1);
+        if ( P0.DistanceTo(P1) <= 0.05*c->ControlPolygonLength() )
+        {
+          // close up c
+          c->SetCV(c->m_cv_count-1,P0);
+        }
       }
 
       if ( c->RemoveShortSegments(1.0e-6) )
       {
-	short_seg_count++;
+        short_seg_count++;
       }
 
       edge.DestroyCurveTree();
@@ -565,36 +566,36 @@ bool ON_Brep::MakeValidForV2()
       ti = loop.m_ti[lti];
       next_ti = loop.m_ti[next_lti];
       if ( ti < 0 || ti >= trim_count )
-	continue;
+        continue;
       if ( next_ti < 0 || next_ti >= trim_count )
-	continue;
+        continue;
       ON_BrepTrim& trim = m_T[ti];
       ON_BrepTrim& next_trim = m_T[next_ti];
       P0 = trim.PointAtEnd();
       P1 = next_trim.PointAtStart();
       if ( P0 != P1 )
       {
-	// tweak end of curve 
-	ON_NurbsCurve* c = new ON_NurbsCurve;
-	if ( trim.GetNurbForm( *c ) )
-	{
-	  if ( c->m_is_rat && c->Weight(c->m_cv_count-1) != 1.0 )
-	  {
-	    cv = c->CV(c->m_cv_count-1);
-	    w = cv[c->m_dim];
-	    cv[0] = P1.x*w;
-	    cv[1] = P1.y*w;
-	  }
-	  else
-	    c->SetCV( c->m_cv_count-1, P1 );
-	  trim.m_pbox = c->BoundingBox(); // no intersection because end point moved
-	  trim.m_c2i = AddTrimCurve(c);
-	  trim.SetProxyCurve( m_C2[trim.m_c2i] );
-	  trim.m_pline.Destroy();
-	  trim.DestroyCurveTree();
-	}
-	else
-	  delete c;
+        // tweak end of curve 
+        ON_NurbsCurve* c = new ON_NurbsCurve;
+        if ( trim.GetNurbForm( *c ) )
+        {
+          if ( c->m_is_rat && c->Weight(c->m_cv_count-1) != 1.0 )
+          {
+            cv = c->CV(c->m_cv_count-1);
+            w = cv[c->m_dim];
+            cv[0] = P1.x*w;
+            cv[1] = P1.y*w;
+          }
+          else
+            c->SetCV( c->m_cv_count-1, P1 );
+          trim.m_pbox = c->BoundingBox(); // no intersection because end point moved
+          trim.m_c2i = AddTrimCurve(c);
+          trim.SetProxyCurve( m_C2[trim.m_c2i] );
+          trim.m_pline.Destroy();
+          trim.DestroyCurveTree();
+        }
+        else
+          delete c;
       }
       loop.m_pbox.Union(trim.m_pbox);
     }
@@ -617,7 +618,7 @@ bool ON_Brep::MakeValidForV2()
     else
     {
       if ( rc > 1 )
-	RebuildTrimsForV2(face,*nurbs_surface);
+        RebuildTrimsForV2(face,*nurbs_surface);
       face.m_si = AddSurface(nurbs_surface);
       face.SetProxySurface(nurbs_surface);
     }
@@ -625,6 +626,8 @@ bool ON_Brep::MakeValidForV2()
 
   // removed unused items from m_V, m_E, m_T, m_F, m_C2, m_C2, and m_S arrays.
   Compact();
+
+  m_is_solid = saved_is_solid;
 
   return IsValidForV2();
 }
@@ -670,7 +673,7 @@ bool ON_Brep::IsValidForV2( const ON_BrepTrim& trim ) const
     {
       const ON_BrepLoop* loop = Loop(trim.m_li);
       if ( 0 != loop && loop->m_ti.Count() > 1 )
-	return false;
+        return false;
     }
   }
   
@@ -768,68 +771,68 @@ bool ON_Brep::IsValidForV2() const
     {
       // v2 3dm files expect NURBS curves
       if ( !ON_NurbsCurve::Cast(m_C2[c2i]) )
-	return false;
+        return false;
     }
 
     for ( c3i = 0; c3i < c3_count; c3i++ )
     {
       // v2 3dm files expect NURBS curves
       if ( !ON_NurbsCurve::Cast(m_C3[c3i]) )
-	return false;
+        return false;
     }
 
     for ( si = 0; si < s_count; si++ )
     {
       // v2 3dm files expect NURBS surfaces
       if ( !ON_NurbsSurface::Cast(m_S[si]) )
-	return false;
+        return false;
     }
 
     for ( vi = 0; vi < vertex_count; vi++ )
     {
       const ON_BrepVertex& vertex = m_V[vi];
       if ( vertex.m_vertex_index != vi )
-	return false;
+        return false;
     }
 
     for ( fi = 0; fi < face_count; fi++ )
     {
       const ON_BrepFace& face = m_F[fi];
       if ( face.m_face_index != fi )
-	return false;
+        return false;
     }
 
     for ( ti = 0; ti < trim_count; ti++ )
     {
       if ( !IsValidForV2( m_T[ti] ) )
-	return false;
+        return false;
     }
 
     for ( ei = 0; ei < edge_count; ei++ )
     {
       if ( !IsValidForV2(m_E[ei]) )
-	return false;
+        return false;
     }
 
     for ( li = 0; li < loop_count; li++ )
     {
       const ON_BrepLoop& loop = m_L[li];
       if ( loop.m_loop_index == -1 )
-	return false;
+        return false;
       loop_trim_count = loop.m_ti.Count();
       for ( lti = 0; lti < loop_trim_count; lti++ )
       {
-	next_lti = (lti+1)%loop_trim_count;
-	ti = loop.m_ti[lti];
-	next_ti = loop.m_ti[next_lti];
-	if ( ti < 0 || ti >= trim_count )
-	  return false;
-	if ( next_ti < 0 || next_ti >= trim_count )
-	  return false;
-	P0 = m_T[ti].PointAtEnd();
-	P1 = m_T[next_ti].PointAtStart();
-	if ( P0.DistanceTo(P1) > ON_ZERO_TOLERANCE )
-	  return false;
+        next_lti = (lti+1)%loop_trim_count;
+        ti = loop.m_ti[lti];
+        next_ti = loop.m_ti[next_lti];
+        if ( ti < 0 || ti >= trim_count )
+          return false;
+        if ( next_ti < 0 || next_ti >= trim_count )
+          return false;
+        P0 = m_T[ti].PointAtEnd();
+        P1 = m_T[next_ti].PointAtStart();
+        if ( P0.DistanceTo(P1) > ON_ZERO_TOLERANCE )
+          return false;
       }
     }
   }

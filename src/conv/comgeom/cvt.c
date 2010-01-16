@@ -1,7 +1,7 @@
 /*                           C V T . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2009 United States Government as represented by
+ * Copyright (c) 1989-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -47,10 +47,10 @@ extern void region_register(int reg_num, int id, int air, int mat, int los);
 extern void group_write(void);
 
 /* defined in read.c */
-extern int get_line(register char *cp, int buflen, char *title);
+extern int get_line(char *cp, int buflen, char *title);
 
 /* defined in solid.c */
-extern void trim_trail_spaces(register char *cp);
+extern void trim_trail_spaces(char *cp);
 extern int getsolid(void);
 
 struct wmember	*wmp;	/* array indexed by region number */
@@ -82,9 +82,9 @@ Options:\n\
 ";
 
 int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int	c;
+    int	c;
     char		*file_name;
 
     while ( (c = bu_getopt( argc, argv, "d:v:s:" )) != EOF )  {
@@ -142,7 +142,7 @@ get_args(int argc, register char **argv)
 int
 main(int argc, char **argv)
 {
-    register int i;
+    int i;
     char	ctitle[132];
     char	*title;
     char	units[16];
@@ -223,7 +223,7 @@ main(int argc, char **argv)
 
     /* Convert units to lower case */
     {
-	register char	*cp = units;
+	char	*cp = units;
 	while ( *cp )  {
 	    if ( isupper(*cp) )
 		*cp = tolower(*cp);

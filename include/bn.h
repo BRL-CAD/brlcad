@@ -1,7 +1,7 @@
 /*                            B N . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -118,102 +118,295 @@ struct bn_tol {
 
 #define BN_APPROXEQUAL(_a, _b, _tol) (fabs((_a) - (_b)) <= _tol->dist)
 /** @} */
+
+
 /*----------------------------------------------------------------------*/
 /* anim.c */
 /** @addtogroup anim */
 /** @{ */
+
+/**
+ * Routines useful in animation programs.
+ *
+ * Orientation conventions: The default object orientation is facing
+ * the positive x-axis, with the positive y-axis to the object's left
+ * and the positive z-axis above the object.
+ *
+ * The default view orientation for rt and mged is facing the negative
+ * z-axis, with the negative x-axis leading to the left and the
+ * positive y-axis going upwards.
+ */
+
 /* XXX These should all have bn_ prefixes */
+
+/**
+ * @brief Pre-multiply a rotation matrix by a matrix which maps the
+ * z-axis to the negative x-axis, the y-axis to the z-axis and the
+ * x-axis to the negative y-axis.
+ *
+ * This has the effect of twisting an object in the default view
+ * orientation into the default object orientation before applying the
+ * matrix.  Given a matrix designed to operate on an object, yield a
+ * matrix which operates on the view.
+ */
 BN_EXPORT BU_EXTERN(void anim_v_permute,
 		    (mat_t m));
+
+/**
+ * @brief Undo the mapping done by anim_v_permute().
+ *
+ * This has the effect of twisting an object in the default object
+ * orientation into the default view orientation before applying the
+ * matrix.  Given a matrix designed to operate on the view, yield a
+ * matrix which operates on an object.
+ */
 BN_EXPORT BU_EXTERN(void anim_v_unpermute,
 		    (mat_t m));
+
+/**
+ * @brief Transpose matrix in place
+ */
 BN_EXPORT BU_EXTERN(void anim_tran,
 		    (mat_t m));
+
+/**
+ * @brief
+ * Convert the rotational part of a 4x4 transformation matrix to zyx
+ * form, that is to say, rotations carried out in the order z, y, and
+ * then x. The angles are stored in radians as a vector in the order
+ * x, y, z. A return value of ERROR1 means that arbitrary assumptions
+ * were necessary. ERROR2 means that the conversion failed.
+ */
 BN_EXPORT BU_EXTERN(int anim_mat2zyx,
 		    (const mat_t viewrot,
 		     vect_t angle));
+
+/**
+ * @brief
+ * Convert the rotational part of a 4x4 transformation matrix to
+ * yaw-pitch-roll form, that is to say, +roll degrees about the
+ * x-axis, -pitch degrees about the y-axis, and +yaw degrees about the
+ * z-axis. The angles are stored in radians as a vector in the order
+ * y, p, r.  A return of ERROR1 means that arbitrary assumptions were
+ * necessary.  ERROR2 means that the conversion failed.
+ */
 BN_EXPORT BU_EXTERN(int anim_mat2ypr,
 		    (mat_t viewrot,
 		     vect_t angle));
+
+/**
+ * @brief
+ * This interprets the rotational part of a 4x4 transformation matrix
+ * in terms of unit quaternions. The result is stored as a vector in
+ * the order x, y, z, w.  The algorithm is from Ken Shoemake,
+ * Animating Rotation with Quaternion Curves, 1985 SIGGraph Conference
+ * Proceeding, p.245.
+ */
 BN_EXPORT BU_EXTERN(int anim_mat2quat,
 		    (quat_t quat,
 		     const mat_t viewrot));
+
+/**
+ * @brief Create a premultiplication rotation matrix to turn the front
+ * of an object (its x-axis) to the given yaw, pitch, and roll, which
+ * is stored in radians in the vector a.
+ */
 BN_EXPORT BU_EXTERN(void anim_ypr2mat,
 		    (mat_t m,
 		     const vect_t a));
+
+/**
+ * @brief Create a post-multiplication rotation matrix, which could be
+ * used to move the virtual camera to the given yaw, pitch, and roll,
+ * which are stored in radians in the given vector a. The following
+ * are equivalent sets of commands:
+ *
+ * ypr2vmat(matrix, a);
+ * -- or --
+ * ypr2mat(matrix, a);
+ * v_permute(matrix);
+ * transpose(matrix;
+ */
 BN_EXPORT BU_EXTERN(void anim_ypr2vmat,
 		    (mat_t m,
 		     const vect_t a));
+
+/**
+ * @brief
+ * Make matrix to rotate an object to the given yaw, pitch, and
+ * roll. (Specified in radians.)
+ */
 BN_EXPORT BU_EXTERN(void anim_y_p_r2mat,
 		    (mat_t m,
 		     double y,
 		     double p,
 		     double r));
+
+/**
+ * @brief Make matrix to rotate an object to the given yaw, pitch, and
+ * roll. (Specified in degrees.)
+ */
 BN_EXPORT BU_EXTERN(void anim_dy_p_r2mat,
 		    (mat_t m,
 		     double y,
 		     double p,
 		     double r));
+
+/**
+ * @brief Make a view rotation matrix, given desired yaw, pitch and
+ * roll. (Note that the matrix is a permutation of the object rotation
+ * matrix).
+ */
 BN_EXPORT BU_EXTERN(void anim_dy_p_r2vmat,
 		    (mat_t m,
 		     double yaw,
 		     double pch,
 		     double rll));
+
+/**
+ * @brief Make a rotation matrix corresponding to a rotation of "x"
+ * radians about the x-axis, "y" radians about the y-axis, and then
+ * "z" radians about the z-axis.
+ */
 BN_EXPORT BU_EXTERN(void anim_x_y_z2mat,
 		    (mat_t m,
 		     double x,
 		     double y,
 		     double z));
+
+/**
+ * @brief Make a rotation matrix corresponding to a rotation of "x"
+ * degrees about the x-axis, "y" degrees about the y-axis, and then
+ * "z" degrees about the z-axis.
+ */
 BN_EXPORT BU_EXTERN(void anim_dx_y_z2mat,
 		    (mat_t m,
 		     double x,
 		     double y,
 		     double z));
+
+/**
+ * @brief Make a rotation matrix corresponding to a rotation of "z"
+ * radians about the z-axis, "y" radians about the y-axis, and then
+ * "x" radians about the x-axis.
+ */
 BN_EXPORT BU_EXTERN(void anim_zyx2mat,
 		    (mat_t m,
 		     const vect_t a));
+
+/**
+ * @brief Make a rotation matrix corresponding to a rotation of "z"
+ * radians about the z-axis, "y" radians about the y-axis, and then
+ * "x" radians about the x-axis.
+ */
 BN_EXPORT BU_EXTERN(void anim_z_y_x2mat,
 		    (mat_t m,
 		     double x,
 		     double y,
 		     double z));
+
+/**
+ * @brief
+ * Make a rotation matrix corresponding to a rotation of "z" degrees
+ * about the z-axis, "y" degrees about the y-axis, and then "x"
+ * degrees about the x-axis.
+ */
 BN_EXPORT BU_EXTERN(void anim_dz_y_x2mat,
 		    (mat_t m,
 		     double x,
 		     double y,
 		     double z));
+
+/**
+ * @brief
+ * Make 4x4 matrix from the given quaternion Note: these quaternions
+ * are the conjugates of the quaternions used in the librt/qmath.c
+ * quat_quat2mat()
+ */
 BN_EXPORT BU_EXTERN(void anim_quat2mat,
 		    (mat_t m,
 		     const quat_t qq));
+
+/**
+ * @brief
+ * make a matrix which turns a vehicle from the x-axis to point in the
+ * desired direction, staying "right-side up" (ie the y-axis never has
+ * a z-component). A second direction vector is consulted when the
+ * given direction is vertical. This is intended to represent the the
+ * direction from a previous frame.
+ */
 BN_EXPORT BU_EXTERN(void anim_dir2mat,
 		    (mat_t m,
 		     const vect_t d,
 		     const vect_t d2));
+
+/**
+ * @brief make a matrix which turns a vehicle from the x-axis to point
+ * in the desired direction, staying "right-side up". In cases where
+ * the direction is vertical, the second vector is consulted. The
+ * second vector defines a normal to the the vertical plane into which
+ * the vehicle's x and z axes should be put. A good choice to put here
+ * is the direction of the vehicle's y-axis in the previous frame.
+ */
 BN_EXPORT BU_EXTERN(void anim_dirn2mat,
 		    (mat_t m,
 		     const vect_t dx,
 		     const vect_t dn));
+
+/**
+ * @brief given the next frame's position, remember the value of the
+ * previous frame's position and calculate a matrix which points the
+ * x-axis in the direction defined by those two positions. Return new
+ * matrix, and the remembered value of the current position, as
+ * arguments; return 1 as the normal value, and 0 when there is not
+ * yet information to remember.
+ */
 BN_EXPORT BU_EXTERN(int anim_steer_mat,
 		    (mat_t mat,
 		     vect_t point,
 		     int end));
+
+/**
+ * @brief Add pre- and post- translation to a rotation matrix.  The
+ * resulting matrix has the effect of performing the first
+ * translation, followed by the rotation, followed by the second
+ * translation.
+ */
 BN_EXPORT BU_EXTERN(void anim_add_trans,
 		    (mat_t m,
 		     const vect_t post,
 		     const vect_t pre));
+
+/**
+ * @brief Rotate the vector "d" through "a" radians about the z-axis.
+ */
 BN_EXPORT BU_EXTERN(void anim_rotatez,
 		    (fastf_t a,
 		     vect_t d));
+
+/**
+ * @brief print out 4X4 matrix, with optional colon
+ */
 BN_EXPORT BU_EXTERN(void anim_mat_print,
 		    (FILE *fp,
 		     const mat_t m,
 		     int s_colon));
+
+/** 
+ * @brief print out 4X4 matrix.  formstr must be less than twenty
+ * chars
+ */
 BN_EXPORT BU_EXTERN(void anim_mat_printf,
 		    (FILE *fp,
 		     const mat_t m,
 		     const char *formstr,
 		     const char *linestr,
 		     const char *endstr));
+
+/**
+ * @brief Reverse the direction of a view matrix, keeping it
+ * right-side up
+ */
 BN_EXPORT BU_EXTERN(void anim_view_rev,
 		    (mat_t m));
 
@@ -369,12 +562,12 @@ BN_EXPORT BU_EXTERN(double bn_atan2,
 
 
 BN_EXPORT BU_EXTERN(void bn_mat_mul,
-		    (register mat_t o,
-		     register const mat_t a,
-		     register const mat_t b));
+		    (mat_t o,
+		     const mat_t a,
+		     const mat_t b));
 BN_EXPORT BU_EXTERN(void bn_mat_mul2,
-		    (register const mat_t i,
-		     register mat_t o));
+		    (const mat_t i,
+		     mat_t o));
 BN_EXPORT BU_EXTERN(void bn_mat_mul3,
 		    (mat_t o,
 		     const mat_t a,
@@ -387,26 +580,26 @@ BN_EXPORT BU_EXTERN(void bn_mat_mul4,
 		     const mat_t c,
 		     const mat_t d));
 BN_EXPORT BU_EXTERN(void bn_matXvec,
-		    (register hvect_t ov,
-		     register const mat_t im,
-		     register const hvect_t iv));
+		    (hvect_t ov,
+		     const mat_t im,
+		     const hvect_t iv));
 BN_EXPORT BU_EXTERN(void bn_mat_inv,
-		    (register mat_t output,
+		    (mat_t output,
 		     const mat_t input));
 BN_EXPORT BU_EXTERN(int bn_mat_inverse,
-		    (register mat_t output,
+		    (mat_t output,
 		     const mat_t input));
 BN_EXPORT BU_EXTERN(void bn_vtoh_move,
-		    (register vect_t h,
-		     register const vect_t v));
+		    (vect_t h,
+		     const vect_t v));
 BN_EXPORT BU_EXTERN(void bn_htov_move,
-		    (register vect_t v,
-		     register const vect_t h));
+		    (vect_t v,
+		     const vect_t h));
 BN_EXPORT BU_EXTERN(void bn_mat_trn,
 		    (mat_t om,
-		     register const mat_t im));
+		     const mat_t im));
 BN_EXPORT BU_EXTERN(void bn_mat_ae,
-		    (register mat_t m,
+		    (mat_t m,
 		     double azimuth,
 		     double elev));
 BN_EXPORT BU_EXTERN(void bn_ae_vec,
@@ -431,11 +624,11 @@ BN_EXPORT BU_EXTERN(void bn_vec_aed,
 		     fastf_t dist));
 
 BN_EXPORT BU_EXTERN(void bn_mat_angles,
-		    (register mat_t mat,
+		    (mat_t mat,
 		     double alpha,
 		     double beta, double ggamma));
 BN_EXPORT BU_EXTERN(void bn_mat_angles_rad,
-		    (register mat_t mat,
+		    (mat_t mat,
 		     double alpha,
 		     double beta,
 		     double ggamma));
@@ -473,8 +666,8 @@ BN_EXPORT BU_EXTERN(void bn_mat_lookat,
 		     const vect_t dir,
 		     int yflip));
 BN_EXPORT BU_EXTERN(void bn_vec_ortho,
-		    (register vect_t out,
-		     register const vect_t in));
+		    (vect_t out,
+		     const vect_t in));
 BN_EXPORT BU_EXTERN(int bn_mat_scale_about_pt,
 		    (mat_t mat,
 		     const point_t pt,

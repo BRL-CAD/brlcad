@@ -1,7 +1,7 @@
 /*                 LuminousIntensityConversionBasedUnit.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -41,9 +41,9 @@ LuminousIntensityConversionBasedUnit::LuminousIntensityConversionBasedUnit() {
 	id = 0;
 }
 
-LuminousIntensityConversionBasedUnit::LuminousIntensityConversionBasedUnit(STEPWrapper *sw,int STEPid) {
+LuminousIntensityConversionBasedUnit::LuminousIntensityConversionBasedUnit(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 LuminousIntensityConversionBasedUnit::~LuminousIntensityConversionBasedUnit() {
@@ -57,11 +57,11 @@ LuminousIntensityConversionBasedUnit::Load(STEPWrapper *sw,SCLP23(Application_in
 
 	// load base class attributes
 	if ( !LuminousIntensityUnit::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::Unit." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 		return false;
 	}
 	if ( !ConversionBasedUnit::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::Unit." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 		return false;
 	}
 
@@ -70,10 +70,10 @@ LuminousIntensityConversionBasedUnit::Load(STEPWrapper *sw,SCLP23(Application_in
 
 void
 LuminousIntensityConversionBasedUnit::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	LuminousIntensityUnit::Print(level+1);
 	ConversionBasedUnit::Print(level+1);
 
@@ -87,7 +87,7 @@ LuminousIntensityConversionBasedUnit::Create(STEPWrapper *sw, SCLP23(Application
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

@@ -1,7 +1,7 @@
 /*                       D M - N U L L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -46,6 +46,7 @@ static int     Nu_bg(struct dm *, unsigned char, unsigned char, unsigned char);
 static int     Nu_dr(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), genptr_t *data){};
 
 struct dm dm_Null = {
+    Nu_int0,
     Nu_int0,
     Nu_int0,
     Nu_int0,

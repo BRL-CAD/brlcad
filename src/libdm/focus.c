@@ -1,7 +1,7 @@
 /*                         F O C U S . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2009 United States Government as represented by
+ * Copyright (c) 2007-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,8 +23,6 @@
  * useful on Mac OS X where X11 applications are not necessarily given
  * focus after the application is launched.
  *
- * Author -
- *   Christopher Sean Morrison
  */
 
 #include "common.h"

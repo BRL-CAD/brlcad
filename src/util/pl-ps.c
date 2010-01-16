@@ -1,7 +1,7 @@
 /*                         P L - P S . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2009 United States Government as represented by
+ * Copyright (c) 1989-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -145,9 +145,9 @@ Usage: pl-ps [-e] [-c] [-S inches_square]\n\
 	[-W width_inches] [-N height_inches] [file.pl]\n";
 
 int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int c;
+    int c;
 
     while ( (c = bu_getopt( argc, argv, "ecs:w:n:S:W:N:" )) != EOF )  {
 	switch ( c )  {
@@ -202,7 +202,7 @@ get_args(int argc, register char **argv)
 int
 main(int argc, char **argv)
 {
-    register int	c;
+    int	c;
     struct	uplot *up;
 
     outwidth = outheight = DEFAULT_SIZE;
@@ -340,7 +340,7 @@ main(int argc, char **argv)
 int
 getshort(void)
 {
-    register long	v, w;
+    long	v, w;
 
     v = getc(infp);
     v |= (getc(infp)<<8);	/* order is important! */

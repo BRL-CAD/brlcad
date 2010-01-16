@@ -1,7 +1,7 @@
 /*                         C C . C
  * BRL-CAD
  *
- * Copyright (c) 2009 United States Government as represented by
+ * Copyright (c) 2009-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -49,7 +49,7 @@ ged_cc(struct ged *gedp, int argc, const char *argv[])
 
     struct rt_db_internal	internal;
     struct rt_constraint_internal	*con_ip;
-    register struct directory	*dp;
+    struct directory	*dp;
     int save_bu_optind;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);

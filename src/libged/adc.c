@@ -1,7 +1,7 @@
 /*                           A D C . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2009 United States Government as represented by
+ * Copyright (c) 1985-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -649,7 +649,7 @@ ged_calc_adc_a1(struct ged_view *gvp)
 	dx = view_pt[X] * GED_MAX - gvp->gv_adc.gas_dv_x;
 	dy = view_pt[Y] * GED_MAX - gvp->gv_adc.gas_dv_y;
 
-	if (dx != 0.0 || dy != 0.0) {
+	if (!NEAR_ZERO(dx, SMALL_FASTF) || !NEAR_ZERO(dy, SMALL_FASTF)) {
 	    gvp->gv_adc.gas_a1 = RAD2DEG*atan2(dy, dx);
 	    gvp->gv_adc.gas_dv_a1 = (1.0 - (gvp->gv_adc.gas_a1 / 45.0)) * GED_MAX;
 	}
@@ -667,7 +667,7 @@ ged_calc_adc_a2(struct ged_view *gvp)
 	dx = view_pt[X] * GED_MAX - gvp->gv_adc.gas_dv_x;
 	dy = view_pt[Y] * GED_MAX - gvp->gv_adc.gas_dv_y;
 
-	if (dx != 0.0 || dy != 0.0) {
+	if (!NEAR_ZERO(dx, SMALL_FASTF) || !NEAR_ZERO(dy, SMALL_FASTF)) {
 	    gvp->gv_adc.gas_a2 = RAD2DEG*atan2(dy, dx);
 	    gvp->gv_adc.gas_dv_a2 = (1.0 - (gvp->gv_adc.gas_a2 / 45.0)) * GED_MAX;
 	}

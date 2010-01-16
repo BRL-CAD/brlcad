@@ -4,31 +4,36 @@ XSL_MAN_STYLESHEET=$(top_srcdir)/doc/docbook/resources/standard/xsl/manpages/doc
 XSL_FO_STYLESHEET=$(top_srcdir)/doc/docbook/resources/standard/xsl/fo/docbook.xsl
 XML_CATALOG_FILES=$(top_srcdir)/doc/docbook/catalog.xml
 
-.xml.html: 
+.xml.html:
+	@mkdir -p $$(dirname $@)
 	XML_CATALOG_FILES=$(XML_CATALOG_FILES) $(XSLTPROC) $(XSLTPROC_FLAGS) -o $@ $(XSL_XHTML_STYLESHEET) $?
 
 .xml.1:
 	XML_CATALOG_FILES=$(XML_CATALOG_FILES) $(XSLTPROC) $(XSLTPROC_FLAGS) $(XSL_MAN_STYLESHEET) $?
-	mkdir -p system/man1/en/
-	mv '$(@F)' system/man1/en/
+	@dir="$$(dirname $@)" && mkdir -p $$dir && mv '$(@F)' $$dir
+
+.xml.3:
+	XML_CATALOG_FILES=$(XML_CATALOG_FILES) $(XSLTPROC) $(XSLTPROC_FLAGS) $(XSL_MAN_STYLESHEET) $?
+	@dir="$$(dirname $@)" && mkdir -p $$dir && mv '$(@F)' $$dir
 
 .fo.pdf: .xml.fo
 	$(APACHEFOP) -c fop.xconf $? -pdf $@
 
 .xml.fo:
+	@mkdir -p $$(dirname $@)
 	XML_CATALOG_FILES=$(XML_CATALOG_FILES) $(XSLTPROC) $(XSLTPROC_FLAGS) -o $@ $(XSL_FO_STYLESHEET) $?
 
+
 include $(srcdir)/articles/en/Makefile.am
-
-include $(srcdir)/lessons/en/Makefile.am
-
 include $(srcdir)/books/en/Makefile.am
-
-include $(srcdir)/specifications/en/Makefile.am
-
-include $(srcdir)/system/man1/en/Makefile.am
-
+include $(srcdir)/lessons/en/Makefile.am
 include $(srcdir)/lessons/es/Makefile.am
+include $(srcdir)/specifications/en/Makefile.am
+include $(srcdir)/system/man1/en/Makefile.am
+include $(srcdir)/system/man3/en/Makefile.am
+
+
+if BUILD_DOCS
 
 BUILT_SOURCES = \
 	$(BUILTARTICLES_ENHTML) \
@@ -41,34 +46,49 @@ BUILT_SOURCES = \
 	$(BUILTSPECS_ENPDF) \
 	$(BUILTMAN_ENHTML) \
 	$(BUILTMAN_ENPDF) \
-        $(BUILTLESSONS_ESHTML) \
-        $(BUILTLESSONS_ESPDF)
+	$(BUILTMAN3_ENHTML) \
+	$(BUILTMAN3_ENPDF) \
+	$(BUILTLESSONS_ESHTML) \
+	$(BUILTLESSONS_ESPDF)
 
 BUILTMAN_EN_SOURCES = \
-	${man1DOCBOOK_EN:xml=1}  
+	${man1DOCBOOK_EN:xml=1}  \
+	${man3DOCBOOK_EN:xml=3}
 
 man_MANS = \
-         $(BUILTMAN_EN_SOURCES)
+	$(BUILTMAN_EN_SOURCES)
 
-MOSTLYCLEANFILES = \
-         $(BUILT_SOURCES) \
-         $(BUILTMAN_EN_SOURCES)
+else
+BUILT_SOURCES =
+BUILTMAN_EN_SOURCES =
+endif
 
-clean-generic: mostlyclean-generic
-	-rmdir -p system/man1/en
+
+CLEANFILES = \
+	$(BUILTMAN_EN_SOURCES) \
+	$(BUILT_SOURCES)
+
 
 EXTRA_DIST = \
+	articles/en/Makefile.am \
+	books/en/Makefile.am \
+	lessons/en/Makefile.am \
+	lessons/es/Makefile.am \
+	specifications/en/Makefile.am \
+	system/man1/en/Makefile.am \
+	system/man3/en/Makefile.am \
 	${articlesDOCBOOK_EN_IMAGES} \
 	${articlesDOCBOOK_EN} \
 	${booksDOCBOOK_EN_IMAGES} \
 	${booksDOCBOOK_EN} \
 	${lessonsDOCBOOK_EN_IMAGES} \
 	${lessonsDOCBOOK_EN} \
+	${lessonsDOCBOOK_ES_IMAGES} \
+	${lessonsDOCBOOK_ES} \
 	${man1DOCBOOK_EN} \
 	${man1INTRO_EN} \
+	${man3DOCBOOK_EN} \
 	${specificationsDOCBOOK_EN} \
-        ${lessonsDOCBOOK_ES} \
-	${lessonsDOCBOOK_ES_IMAGES} \
 	README \
 	articles/en/images/tire_fig12.svg \
 	articles/en/images/tire_fig13.svg \
@@ -77,7 +97,8 @@ EXTRA_DIST = \
 	catalog.xml \
 	fop.xconf.in \
 	resources \
-	system/man1/README \
-	system/man1/mged_cmd_template.xml
+	system/README \
+	system/man1/mged_cmd_template.xml \
+	system/man3/mged_cmd_template.xml
 
 include $(top_srcdir)/misc/Makefile.defs

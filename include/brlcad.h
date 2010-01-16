@@ -1,7 +1,7 @@
 /*                        B R L C A D . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,11 +27,6 @@
  *  and librt.  It may be used in leu of including all of the
  *  individual headers.
  *
- *  @author
- *	Christopher Sean Morrison
- *
- *  @par Source
- *	BRL-CAD Open Source
  */
 
 #ifndef __BRLCAD_H__

@@ -1,7 +1,7 @@
 /*                         Q M A T H . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -46,10 +46,6 @@
  *   slerp(Q, R, a) = Q(Q  R)	Spherical linear interp: 0 < a < 1
  *
  *   bisect(P, Q) = (P + Q) / |P + Q|	Great circle bisector
- *
- *
- *  @author
- *	Phil Dykstra, 25 Sep 1985
  *
  *  Additions inspired by "Quaternion Calculus For Animation" by Ken Shoemake,
  *  SIGGRAPH '89 course notes for "Math for SIGGRAPH", May 1989.

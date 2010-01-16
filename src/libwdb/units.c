@@ -1,7 +1,7 @@
 /*                         U N I T S . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2009 United States Government as represented by
+ * Copyright (c) 1990-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -20,9 +20,6 @@
 /** @file units.c
  *
  *  Module of libwdb to handle units conversion.
- *
- *  Author -
- *	Michael John Muuss
  *
  */
 

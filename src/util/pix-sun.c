@@ -1,7 +1,7 @@
 /*                       P I X - S U N . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2009 United States Government as represented by
+ * Copyright (c) 1986-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -147,7 +147,7 @@ double *end_table = &table[10];
 
 /* convert 24 bit pixel into appropriate 8 bit pixel */
 #define DITHERMAP(red, green, blue, i) {\
-	register int _r, _g, _b; double dr, dg, db; \
+	int _r, _g, _b; double dr, dg, db; \
 	dr = NOISE(); DITHER(_r, red, dr, MAG1); _r = (_r+26) / 51; \
 	dg = NOISE(); DITHER(_g, green, dg, MAG1); _g = (_g+26) / 51; \
 	db = NOISE(); DITHER(_b, blue, db, MAG1); _b = (_b+26) / 51; \
@@ -188,7 +188,7 @@ double *end_table = &table[10];
 }
 
 #define REMAPIXEL(red, green, blue, i) {\
-	register unsigned char _r, _g, _b; \
+	unsigned char _r, _g, _b; \
 	_r = ((int)red+26)/51; _g = ((int)green+26)/51; _b = ((int)blue+26)/51; \
 	if (_r == _g) { \
 	    if (_r == _b) i = nvec[ ( ((int)red+(int)green+(int)blue) /3) >> 4]; /* grey */ \
@@ -206,7 +206,7 @@ void doit(void)
 {
     int i, cx, cy;
     unsigned char *pix, *rast;
-    register unsigned char red, green, blue;
+    unsigned char red, green, blue;
 
     if ( ((ras.ras_width/2)*2) != ras.ras_width ) {
 	(void)fprintf(stderr, "%s: Cannot handle odd x dimension\n",progname);

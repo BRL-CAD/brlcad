@@ -1,7 +1,7 @@
 /*                     N M G _ M A N I F . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -386,7 +386,7 @@ nmg_shell_manifolds(struct shell *sp, char *tbl)
 	paint_color = NMG_INDEX_VALUE((unsigned char *)paint_table, fu_p->index);
 
 	/* this should never trigger. */
-	if (paint_color < 0 || paint_color > 255) {
+	if (paint_color > 255) {
 	    bu_log("ERROR: color index out of range (%d > %d)\n", paint_color, 255);
 	    break;
 	}

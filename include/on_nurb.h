@@ -1,7 +1,7 @@
 /*                       O N _ N U R B . H
  * BRL-CAD
  *
- * Copyright (c) 2007-2009 United States Government as represented by
+ * Copyright (c) 2007-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,8 +25,6 @@
  *	Define surface and curve structures for
  * 	Non Rational Uniform B-Spline (NURB)
  *	curves and surfaces. Uses openNURBS library.
- *
- * @author	Jason Owens
  *
  */
 

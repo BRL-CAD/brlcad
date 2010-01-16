@@ -1,7 +1,7 @@
 /*                       S G I _ D E P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -80,7 +80,7 @@ sgi_Getchar()
 
 int
 sgi_Mouse_Pos( pointp )
-    register Point *pointp;
+    Point *pointp;
 {
     static Point mouse;
     Point image;

@@ -1,7 +1,7 @@
 /*                        R L E - F B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -37,9 +37,6 @@
  * system installed RLE reports a re-define, so undef it to quell the
  * warning
  */
-#ifdef USE_PROTOTYPES
-# undef USE_PROTOTYPES
-#endif
 #include "rle.h"
 
 static FILE	*infp;
@@ -73,9 +70,9 @@ Usage: rle-fb [-c -d -h -O] [-F framebuffer]  [-C r/g/b]\n\
  *			G E T _ A R G S
  */
 static int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int	c;
+    int	c;
 
     while ( (c = bu_getopt( argc, argv, "cOdhs:S:w:W:n:N:C:F:X:Y:" )) != EOF )  {
 	switch ( c )  {
@@ -116,8 +113,8 @@ get_args(int argc, register char **argv)
 		break;
 	    case 'C':
 	    {
-		register char *cp = bu_optarg;
-		register int *conp = background;
+		char *cp = bu_optarg;
+		int *conp = background;
 
 		/* premature null => atoi gives zeros */
 		for ( c=0; c < 3; c++ )  {
@@ -157,7 +154,7 @@ int
 main(int argc, char **argv)
 {
     FBIO	*fbp;
-    register int i;
+    int i;
     int	file_width;		/* unclipped width of rectangle */
     int	file_skiplen;		/* # of pixels to skip on l.h.s. */
     int	screen_xbase;		/* screen X of l.h.s. of rectangle */
@@ -281,8 +278,8 @@ main(int argc, char **argv)
      *  XXX need to handle < 3 channels of color map, by replication.
      */
     if ( rle_dflt_hdr.ncmap > 0 )  {
-	register int maplen = (1 << rle_dflt_hdr.cmaplen);
-	register int all = 0;
+	int maplen = (1 << rle_dflt_hdr.cmaplen);
+	int all = 0;
 	for ( i=0; i<256; i++ )  {
 	    cmap.cm_red[i] = rle_dflt_hdr.cmap[i];
 	    cmap.cm_green[i] = rle_dflt_hdr.cmap[i+maplen];
@@ -313,11 +310,11 @@ main(int argc, char **argv)
 	rle_getrow( &rle_dflt_hdr, rows );
 
     for (; i <= rle_dflt_hdr.ymax; i++)  {
-	register unsigned char	*pp = (unsigned char *)scan_buf;
-	register rle_pixel	*rp = &(rows[0][file_skiplen]);
-	register rle_pixel	*gp = &(rows[1][file_skiplen]);
-	register rle_pixel	*bp = &(rows[2][file_skiplen]);
-	register int		j;
+	unsigned char	*pp = (unsigned char *)scan_buf;
+	rle_pixel	*rp = &(rows[0][file_skiplen]);
+	rle_pixel	*gp = &(rows[1][file_skiplen]);
+	rle_pixel	*bp = &(rows[2][file_skiplen]);
+	int		j;
 
 	if ( overlay )  {
 	    fb_read( fbp, screen_xbase, i, scan_buf, screen_xlen );

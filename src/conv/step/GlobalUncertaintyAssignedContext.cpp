@@ -1,7 +1,7 @@
 /*                 GlobalUncertaintyAssignedContext.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -41,9 +41,9 @@ GlobalUncertaintyAssignedContext::GlobalUncertaintyAssignedContext() {
 	id = 0;
 }
 
-GlobalUncertaintyAssignedContext::GlobalUncertaintyAssignedContext(STEPWrapper *sw,int STEPid) {
+GlobalUncertaintyAssignedContext::GlobalUncertaintyAssignedContext(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 GlobalUncertaintyAssignedContext::~GlobalUncertaintyAssignedContext() {
@@ -65,7 +65,7 @@ GlobalUncertaintyAssignedContext::Load(STEPWrapper *sw,SCLP23(Application_instan
 
 	// load base class attributes
 	if ( !RepresentationContext::Load(sw,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::RepresentationContext." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::RepresentationContext." << std::endl;
 		return false;
 	}
 
@@ -83,7 +83,7 @@ GlobalUncertaintyAssignedContext::Load(STEPWrapper *sw,SCLP23(Application_instan
 
 				uncertainty.push_back(aUMWU);
 			} else {
-				cerr << CLASSNAME  << ": Unhandled entity in attribute 'uncertainty'." << endl;
+				std::cerr << CLASSNAME  << ": Unhandled entity in attribute 'uncertainty'." << std::endl;
 				return false;
 			}
 		}
@@ -95,18 +95,18 @@ GlobalUncertaintyAssignedContext::Load(STEPWrapper *sw,SCLP23(Application_instan
 
 void
 GlobalUncertaintyAssignedContext::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Attributes:" << endl;
-	TAB(level+1); cout << "uncertainty(list):" << endl;
+	TAB(level); std::cout << "Attributes:" << std::endl;
+	TAB(level+1); std::cout << "uncertainty(list):" << std::endl;
 	LIST_OF_UNCERTAINTY_MEASURE_WITH_UNIT::iterator i;
 	for(i=uncertainty.begin();i!=uncertainty.end();i++) {
 		(*i)->Print(level+1);
-		cout << endl;
+		std::cout << std::endl;
 	}
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	RepresentationContext::Print(level+1);
 }
 STEPEntity *
@@ -118,7 +118,7 @@ GlobalUncertaintyAssignedContext::Create(STEPWrapper *sw, SCLP23(Application_ins
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

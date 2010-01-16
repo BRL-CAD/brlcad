@@ -1,7 +1,7 @@
 /*                         B E V . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,7 +35,7 @@
 #include "./ged_private.h"
 
 
-static union tree *ged_facetize_region_end(register struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
+static union tree *ged_facetize_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
 
 static union tree *ged_facetize_tree;
 static struct model *ged_nmg_model;
@@ -44,7 +44,7 @@ int
 ged_bev(struct ged *gedp, int argc, const char *argv[])
 {
     int			i;
-    register int	c;
+    int	c;
     int			ncpu;
     int			triangulate;
     char			*cmdname;
@@ -293,7 +293,7 @@ ged_bev(struct ged *gedp, int argc, const char *argv[])
  *  This routine must be prepared to run in parallel.
  */
 static union tree *
-ged_facetize_region_end(register struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+ged_facetize_region_end(struct db_tree_state *tsp __attribute__((unused)), struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
     struct bu_list vhead;
     struct ged *gedp = (struct ged *)client_data;

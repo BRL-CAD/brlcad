@@ -1,7 +1,7 @@
 /*                        S E A R C H . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -175,7 +175,7 @@ db_fullpath_traverse( struct ged *gedp,
 		      genptr_t client_data )
 {
     struct directory *dp;
-    register int i;
+    int i;
     RT_CK_FULL_PATH(dfp);
     RT_CK_DBI(gedp->ged_wdbp->dbip);
 
@@ -186,8 +186,8 @@ db_fullpath_traverse( struct ged *gedp,
 	if ( comb_func )
 	    comb_func( gedp, dfp, client_data );
 	if ( gedp->ged_wdbp->dbip->dbi_version < 5 ) {
-	    register union record   *rp;
-	    register struct directory *mdp;
+	    union record   *rp;
+	    struct directory *mdp;
 	    /*
 	     * Load the combination into local record buffer
 	     * This is in external v4 format.
@@ -217,7 +217,7 @@ db_fullpath_traverse( struct ged *gedp,
 
 	    db_fullpath_traverse_subtree( comb->tree, db_fullpath_traverse, gedp, dfp, comb_func, leaf_func, resp, client_data );
 
-	    rt_db_free_internal( &in, resp );
+	    rt_db_free_internal(&in);
 	}
     }
     if ( dp->d_flags & DIR_SOLID || dp->d_major_type & DB5_MAJORTYPE_BINARY_MASK )  {
@@ -466,7 +466,7 @@ db_fullpath_stateful_traverse( struct ged *gedp,
 			       genptr_t client_data )
 {
     struct directory *dp;
-    register int i;
+    int i;
     int state = 0;
     RT_CK_FULL_PATH(dfp);
     RT_CK_DBI(gedp->ged_wdbp->dbip);
@@ -478,8 +478,8 @@ db_fullpath_stateful_traverse( struct ged *gedp,
 	if ( comb_func )
 	    if (comb_func( gedp, dfp, client_data )) return 1;
 	if ( gedp->ged_wdbp->dbip->dbi_version < 5 ) {
-	    register union record   *rp;
-	    register struct directory *mdp;
+	    union record   *rp;
+	    struct directory *mdp;
 	    /*
 	     * Load the combination into local record buffer
 	     * This is in external v4 format.
@@ -514,7 +514,7 @@ db_fullpath_stateful_traverse( struct ged *gedp,
 
 	    state = db_fullpath_stateful_traverse_subtree( comb->tree, db_fullpath_stateful_traverse, gedp, dfp, comb_func, leaf_func, resp, client_data );
 
-	    rt_db_free_internal( &in, resp );
+	    rt_db_free_internal(&in);
 	    if (state == 1) {
 		return 1;
 	    } else {
@@ -562,7 +562,7 @@ f_below(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
 
 	state = db_fullpath_stateful_traverse_subtree( comb->tree, db_fullpath_stateful_traverse, gedp, &belowpath, find_execute_nested_plans, find_execute_nested_plans, gedp->ged_wdbp->wdb_resp, plan->bl_data[0] );
 
-	rt_db_free_internal( &in, gedp->ged_wdbp->wdb_resp );
+	rt_db_free_internal(&in);
     }
     db_free_full_path(&belowpath);
     if (state >= 1) {
@@ -1174,7 +1174,7 @@ f_type(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
 	    break;
     }
 
-    rt_db_free_internal(&intern, &rt_uniresource);
+    rt_db_free_internal(&intern);
     return (type_match);
 }
 
@@ -1321,7 +1321,7 @@ f_nnodes(PLAN *plan, struct db_full_path *entry, struct ged *gedp)
 	} else {
     		node_count = db_tree_nleaves(comb->tree);
 	}
-	rt_db_free_internal( &in, &rt_uniresource );
+	rt_db_free_internal(&in);
     } else {
 	return 0;
     }	
@@ -2024,8 +2024,8 @@ int
 ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 {
     PLAN *dbplan;
-    register int i;
-    register struct directory *dp;
+    int i;
+    struct directory *dp;
     struct db_full_path dfp;
     /* COPY argv_orig to argv; */
     char **argv = bu_dup_argv(argc, argv_orig);

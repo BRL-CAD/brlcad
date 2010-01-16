@@ -1,7 +1,7 @@
 /*                         T A B L E S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -60,14 +60,15 @@ static int numreg;
 static int numsol;
 static FILE *tabptr;
 
-static int ged_check(register char *a, register char *b);
+static int ged_check(char *a, char *b);
 static int ged_sol_number(matp_t matrix, char *name, int *old);
 static void ged_new_tables(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path, fastf_t *old_mat, int flag);
 
 int
 ged_tables(struct ged *gedp, int argc, const char *argv[])
 {
-    static const char sortcmd[] = "sort -n +1 -2 -o /tmp/ord_id ";
+    static const char sortcmd_orig[] = "sort -n +1 -2 -o /tmp/ord_id ";
+    static const char sortcmd_long[] = "sort --numeric --key=2,2 --output /tmp/ord_id ";
     static const char catcmd[] = "cat /tmp/ord_id >> ";
     struct bu_vls tmp_vls;
     struct bu_vls	cmd;
@@ -208,11 +209,17 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
 
 	bu_vls_printf(&gedp->ged_result_str, "Processed %d Regions\n", numreg);
 
-	/* make ordered idents */
-	bu_vls_strcpy(&cmd, sortcmd);
+	/* make ordered idents - tries newer gnu 'sort' syntax if not successful */
+	bu_vls_strcpy(&cmd, sortcmd_orig);
 	bu_vls_strcat(&cmd, argv[1]);
+	bu_vls_strcat(&cmd, " 2> /dev/null" );
+	if(system( bu_vls_addr(&cmd) ) != 0 ) {
+	    bu_vls_trunc( &cmd, 0 );
+	    bu_vls_strcpy(&cmd, sortcmd_long);
+	    bu_vls_strcat(&cmd, argv[1]);
+	    (void)system( bu_vls_addr(&cmd) );
+	}
 	bu_vls_printf(&gedp->ged_result_str, "%V\n", &cmd);
-	(void)system( bu_vls_addr(&cmd) );
 
 	bu_vls_trunc( &cmd, 0 );
 	bu_vls_strcpy( &cmd, catcmd );
@@ -234,10 +241,10 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
 }
 
 static int
-ged_check(register char *a, register char *b)
+ged_check(char *a, char *b)
 {
 
-    register int	c= sizeof( struct identt );
+    int	c= sizeof( struct identt );
 
     while ( c-- )	if ( *a++ != *b++ ) return( 0 );	/* no match */
     return( 1 );	/* match */
@@ -308,14 +315,14 @@ ged_new_tables(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path,
 	db_non_union_push( comb->tree, &rt_uniresource );
 	if ( db_ck_v4gift_tree( comb->tree ) < 0 ) {
 	    bu_vls_printf(&gedp->ged_result_str, "Cannot flatten tree for editing\n");
-	    intern.idb_meth->ft_ifree( &intern, &rt_uniresource );
+	    intern.idb_meth->ft_ifree(&intern);
 	    return;
 	}
     }
 
     if (!comb->tree) {
 	/* empty combination */
-	intern.idb_meth->ft_ifree( &intern, &rt_uniresource );
+	intern.idb_meth->ft_ifree(&intern);
 	return;
     }
 
@@ -416,7 +423,7 @@ ged_new_tables(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path,
 		bu_vls_free( &tmp_vls );
 	    }
 	    if ( nsoltemp && (sol_dp->d_flags & DIR_SOLID) )
-		rt_db_free_internal( &sol_intern, &rt_uniresource );
+		rt_db_free_internal(&sol_intern);
 	}
     } else if ( dp->d_flags & DIR_COMB ) {
 	int cur_length;
@@ -450,7 +457,7 @@ ged_new_tables(struct ged *gedp, struct directory *dp, struct bu_ptbl *cur_path,
 
  out:
     bu_free( (char *)tree_list, "new_tables: tree_list" );
-    intern.idb_meth->ft_ifree( &intern, &rt_uniresource );
+    intern.idb_meth->ft_ifree(&intern);
     return;
 }
 

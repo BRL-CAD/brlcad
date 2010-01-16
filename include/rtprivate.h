@@ -1,7 +1,7 @@
 /*                     R T P R I V A T E . H
  * BRL-CAD
  *
- * Copyright (c) 1985-2009 United States Government as represented by
+ * Copyright (c) 1985-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -42,7 +42,7 @@
 /* do.c */
 extern void do_ae(double azim, double elev);
 extern int do_frame( int framenumber );
-extern void def_tree( register struct rt_i *rtip );
+extern void def_tree( struct rt_i *rtip );
 extern void do_prep( struct rt_i *rtip );
 extern int old_way( FILE *fp );
 

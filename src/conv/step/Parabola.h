@@ -1,7 +1,7 @@
 /*                 Parabola.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -37,7 +37,7 @@ protected:
 	double focal_dist;
 
 	Parabola();
-	Parabola(STEPWrapper *sw,int STEPid);
+	Parabola(STEPWrapper *sw,int step_id);
 
 public:
 	virtual ~Parabola();

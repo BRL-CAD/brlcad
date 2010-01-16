@@ -1,7 +1,7 @@
 /*                      C A N O N L I B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -209,7 +209,7 @@ ipu_inquire(struct dsreq *dsp)
 int
 ipu_remote(struct dsreq *dsp)
 {
-    register char *p;
+    char *p;
     int i;
 
     if (ipu_debug) fprintf(stderr, "ipu_remote()\n");
@@ -295,7 +295,7 @@ void
 ipu_delete_file(struct dsreq *dsp,
 		u_char id)
 {
-    register char *p;
+    char *p;
     static short ids;
     int i;
 
@@ -329,7 +329,7 @@ ipu_get_image(struct dsreq *dsp,
 	      int sx, int sy, 	/* upper left corner of image */
 	      int w, int h)	/* width/height of image portion to retrieve */
 {
-    register u_char *p;
+    u_char *p;
     u_char		*img;
     int size;
     int i;
@@ -610,7 +610,7 @@ ipu_print_config(struct dsreq *dsp,
 		 u_char conv, u_char mosaic, u_char ipu_gamma,
 		 int tray)
 {
-    register u_char *p;
+    u_char *p;
     u_char params[255];
     int bytes;
     int save;
@@ -676,7 +676,7 @@ ipu_print_file(struct dsreq *dsp,
 	       int sw, int sh,
 	       union ipu_prsc_param *pr_param)
 {
-    register u_char *p;
+    u_char *p;
     char buf[18];
     int i;
 
@@ -740,7 +740,7 @@ ipu_scan_config(struct dsreq *dsp,
 		char field,
 		short rotation)
 {
-    register u_char *p;
+    u_char *p;
     u_char params[255];
     int bytes;
     int i;
@@ -799,7 +799,7 @@ ipu_scan_file(struct dsreq *dsp,
 	      int w, int h,
 	      union ipu_prsc_param *sc_param)
 {
-    register u_char *p;
+    u_char *p;
     char buf[18];
     int i;
 
@@ -874,7 +874,7 @@ ipu_list_files(struct dsreq *dsp)
     }
 
     for (i = 8; i < len; i += buf[2]) {
-	register char t;
+	char t;
 	if (buf[i+1] == 0) t = 'B';
 	else if (buf[i+1] == 2) t = 'R';
 	else if (buf[i+1] == 3) t = 'P';
@@ -901,7 +901,7 @@ int
 ipu_stop(struct dsreq *dsp,
 	 int halt)
 {
-    register char *p;
+    char *p;
     char buf[18];
     int i;
 
@@ -930,7 +930,7 @@ ipu_stop(struct dsreq *dsp,
 int
 ipu_get_conf(struct dsreq *dsp)
 {
-    register u_char *p;
+    u_char *p;
     u_char params[255];
     int i;
 
@@ -1058,7 +1058,7 @@ ipu_get_conf(struct dsreq *dsp)
 int
 ipu_get_conf_long(struct dsreq *dsp)
 {
-    register u_char *p;
+    u_char *p;
     static u_char params[65535];
     int i;
 
@@ -1102,15 +1102,15 @@ ipu_set_palette(dsp, cmap)
     struct dsreq	*dsp;
     unsigned char	*cmap;		/* NULL or [768] */
 {
-    register caddr_t p;
+    caddr_t p;
     unsigned char	linear[768];
     int		i;
     int		ret;
 
     if (ipu_debug) fprintf(stderr, "ipu_set_palette(cmap=x%lx)\n", (long)cmap);
     if (cmap == NULL) {
-	register int	j;
-	register unsigned char *cp = linear;
+	int	j;
+	unsigned char *cp = linear;
 	for (j=0; j < 256; j++) {
 	    *cp++ = j;
 	    *cp++ = j;

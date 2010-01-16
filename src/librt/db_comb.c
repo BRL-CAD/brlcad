@@ -1,7 +1,7 @@
 /*                       D B _ C O M B . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2009 United States Government as represented by
+ * Copyright (c) 1996-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -872,17 +872,16 @@ db_comb_describe(
  * Free the storage associated with the rt_db_internal version of this combination.
  */
 void
-rt_comb_ifree(struct rt_db_internal *ip, struct resource *resp)
+rt_comb_ifree(struct rt_db_internal *ip)
 {
     register struct rt_comb_internal *comb;
 
     RT_CK_DB_INTERNAL(ip);
-    RT_CK_RESOURCE(resp);
     comb = (struct rt_comb_internal *)ip->idb_ptr;
 
     if (comb) {
 	/* If tree hasn't been stolen, release it */
-	if (comb->tree) db_free_tree(comb->tree, resp);
+	if (comb->tree) db_free_tree(comb->tree, &rt_uniresource);
 	comb->tree = NULL;
 
 	bu_vls_free(&comb->shader);

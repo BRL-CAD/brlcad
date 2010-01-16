@@ -1,7 +1,7 @@
 /*                          C L I P . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2009 United States Government as represented by
+ * Copyright (c) 1985-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,12 +23,9 @@
  *	clip	clip a 2-D integer line seg against the size of the display
  *	vclip	clip a 3-D floating line segment against a bounding RPP.
  *
- *  Authors -
- *	clip() was written by Doug Kingston, 14 October 81
- *	Based on the clipping routine in "Principles of Computer
- *	Graphics" by Newman and Sproull, 1973, McGraw/Hill.
- *
- *	vclip() was adapted from RT by Mike Muuss, 17 January 1985.
+ * Authors - clip() was started on 14 October 81, Based on the
+ * clipping routine in "Principles of Computer Graphics" by Newman and
+ * Sproull, 1973, McGraw/Hill.
  *
  */
 
@@ -140,15 +137,15 @@ code (fastf_t x, fastf_t y)
  *  Implicit Return -
  *	if !0 was returned, "a" and "b" have been clipped to the RPP.
  */
-int vclip( vect_t a, vect_t b, register fastf_t *min, register fastf_t *max )
+int vclip( vect_t a, vect_t b, fastf_t *min, fastf_t *max )
 {
     static vect_t diff;
     static double sv;
     static double st;
     static double mindist, maxdist;
-    register fastf_t *pt = &a[0];
-    register fastf_t *dir = &diff[0];
-    register int i;
+    fastf_t *pt = &a[0];
+    fastf_t *dir = &diff[0];
+    int i;
 
     mindist = -CLIP_DISTANCE;
     maxdist = CLIP_DISTANCE;

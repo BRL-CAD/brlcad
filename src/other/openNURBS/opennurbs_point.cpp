@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -14,43 +13,24 @@
 ////////////////////////////////////////////////////////////////
 */
 
-#include "opennurbs.h"
-
-/* for finite() in ON_IsFinite() */
-
-/* ugh, included just to get HAVE_IEEEFP_H */
 #include "common.h"
-
 #ifdef HAVE_IEEEFP_H
 # include <ieeefp.h>
-#else
-# include <math.h>
 #endif
 
-bool ON_IsFinite(double x)
-{
-  // Returns true if x is a finite double.  Specifically,
-  // _finite returns a nonzero value (true) if its argument x
-  // is not infinite, that is, if -INF < x < +INF. 
-  // It returns 0 (false) if the argument is infinite or a NaN.
-  //
-  // If you are trying to compile opennurbs on a platform
-  // that does not support finite(), then see if you can
-  // use _fpclass(), fpclass(), _isnan(), or isnan().  If
-  // you can't find anything, then just set this
-  // function to return true.
-
-#if defined(ON_COMPILER_GNU)
-  return (finite(x)?true:false);
-#else
-  return (_finite(x)?true:false);
-#endif
-}
+#include "opennurbs.h"
 
 bool ON_IsValid(double x)
 {
-  return (x != ON_UNSET_VALUE && ON_IsFinite(x) );
+  return ON_IS_VALID(x);
 }
+
+bool ON_IsValidFloat(float x)
+{
+  return ON_IS_VALID_FLOAT(x);
+}
+
+const ON_Interval ON_Interval::EmptyInterval(ON_UNSET_VALUE,ON_UNSET_VALUE);
 
 ON_Interval::ON_Interval()
 {
@@ -96,7 +76,7 @@ void ON_Interval::Set(double t0,double t1)
 
 double ON_Interval::ParameterAt(double x) const
 {
-  return (ON_IsValid(x) ? ((1.0-x)*m_t[0] + x*m_t[1]) : ON_UNSET_VALUE);
+  return (ON_IS_VALID(x) ? ((1.0-x)*m_t[0] + x*m_t[1]) : ON_UNSET_VALUE);
 }
 
 ON_Interval ON_Interval::ParameterAt(ON_Interval x) const
@@ -108,7 +88,7 @@ double ON_Interval::NormalizedParameterAt( // returns x so that min*(1.0-x) + ma
   double t
   ) const
 {
-  if (!ON_IsValid(t))
+  if (!ON_IS_VALID(t))
     return ON_UNSET_VALUE; // added 29 Sep 2006
 
   double x = m_t[0];
@@ -141,32 +121,38 @@ ON_Interval::Mid() const
 double
 ON_Interval::Length() const
 {
-  return ( ON_IsValid(m_t[0]) && ON_IsValid(m_t[1]) ) ? m_t[1]-m_t[0] : 0.0;
+  return ( ON_IS_VALID(m_t[0]) && ON_IS_VALID(m_t[1]) ) ? m_t[1]-m_t[0] : 0.0;
 }
 
 bool
 ON_Interval::IsIncreasing() const
 {
-  return ( m_t[0] < m_t[1] && ON_IsValid(m_t[0]) && ON_IsValid(m_t[1]) ) ? true : false;
+  return ( m_t[0] < m_t[1] && ON_IS_VALID(m_t[0]) && ON_IS_VALID(m_t[1]) ) ? true : false;
 }
 
 bool
 ON_Interval::IsDecreasing() const
 {
-  return ( m_t[0] > m_t[1] && ON_IsValid(m_t[0]) && ON_IsValid(m_t[1]) ) ? true : false;
+  return ( m_t[0] > m_t[1] && ON_IS_VALID(m_t[0]) && ON_IS_VALID(m_t[1]) ) ? true : false;
 }
 
 bool
 ON_Interval::IsInterval() const
 {
-  return ( m_t[0] != m_t[1] && ON_IsValid(m_t[0]) && ON_IsValid(m_t[1]) ) ? true : false;
+  return ( m_t[0] != m_t[1] && ON_IS_VALID(m_t[0]) && ON_IS_VALID(m_t[1]) ) ? true : false;
 }
 
 
 bool
 ON_Interval::IsSingleton() const
 {
-  return ( m_t[0] == m_t[1] && ON_IsValid(m_t[1]) ) ? true : false;
+  return ( m_t[0] == m_t[1] && ON_IS_VALID(m_t[1]) ) ? true : false;
+}
+
+bool
+ON_Interval::IsEmptyInterval() const
+{
+  return ( m_t[0] == ON_UNSET_VALUE && m_t[1] == ON_UNSET_VALUE ) ? true : false;
 }
 
 bool
@@ -179,7 +165,7 @@ bool
 ON_Interval::IsValid() const
 {
   // 05/29/2007 TimH. Changed 0 to 1.
-  return ( ON_IsValid(m_t[0]) && ON_IsValid(m_t[1]) );
+  return ( ON_IS_VALID(m_t[0]) && ON_IS_VALID(m_t[1]) );
 }
 
 bool 
@@ -223,7 +209,7 @@ bool
 ON_Interval::Includes( double t, bool bTestOpenInterval) const
 {
   bool rc = false;
-  if ( ON_IsValid(t) && ON_IsValid(m_t[0]) && ON_IsValid(m_t[1]) )
+  if ( ON_IS_VALID(t) && ON_IS_VALID(m_t[0]) && ON_IS_VALID(m_t[1]) )
   {
     int i = (m_t[0] <= m_t[1]) ? 0 : 1;
     if ( bTestOpenInterval )
@@ -414,13 +400,6 @@ bool ON_Interval::Union( // this = union of two args
   return rc;
 }
 
-// Bounds the given value to within the interval
-void
-ON_Interval::Bound(double& val) const
-{
-  if (val < m_t[0]) { val = m_t[0]; return; }
-  if (val > m_t[1]) val = m_t[1];
-}
 
 bool ON_3dVector::Decompose( // Computes a, b, c such that this vector = a*X + b*Y + c*Z
        //
@@ -442,8 +421,8 @@ bool ON_3dVector::Decompose( // Computes a, b, c such that this vector = a*X + b
   row1[0] = row0[1]; row1[1] = Y*Y;   row1[2] = Y*Z;
   row2[0] = row0[2]; row2[1] = row1[2]; row2[2] = Z*Z;
   rank = ON_Solve3x3( row0, row1, row2, 
-		    (*this)*X, (*this)*Y, (*this)*Z,
-		    a, b, c, &pivot_ratio );
+                    (*this)*X, (*this)*Y, (*this)*Z,
+                    a, b, c, &pivot_ratio );
   return (rank == 3) ? true : false;
 }
 
@@ -749,8 +728,8 @@ void ON_4fPoint::Transform( const ON_Xform& xform )
 }
 
 double ON_3fPoint::Fuzz( 
-	  double absolute_tolerance // (default =  ON_ZERO_TOLERANCE) 
-	  ) const
+          double absolute_tolerance // (default =  ON_ZERO_TOLERANCE) 
+          ) const
 {
   double t = MaximumCoordinate()* ON_SQRT_EPSILON;
   return(t > absolute_tolerance) ? t : absolute_tolerance;
@@ -843,8 +822,8 @@ bool ON_2dVector::Decompose( // Computes a, b such that this vector = a*X + b*Y
   double pivot_ratio = 0.0;
   double XoY = X*Y;
   rank = ON_Solve2x2( X*X, XoY, Y*Y, XoY,
-		    (*this)*X, (*this)*Y, 
-		    a, b, &pivot_ratio );
+                    (*this)*X, (*this)*Y, 
+                    a, b, &pivot_ratio );
   return (rank == 2) ? true : false;
 }
 
@@ -1168,23 +1147,35 @@ bool ON_IsRightHandFrame( const ON_3dVector& X,  const ON_3dVector& Y,  const ON
 
 ON_2dPoint ON_2dPoint::operator*( const ON_Xform& xform ) const
 {
-  double hx[4], w;
-  xform.ActOnRight(x,y,0.0,1.0,hx);
-  w = (hx[3] != 0.0) ? 1.0/hx[3] : 1.0;
+  const double px = x; // optimizer should put px,py in registers
+  const double py = y;
+  double hx[2], w;
+  const double* m = &xform.m_xform[0][0];
+  hx[0] = m[0]*px + m[4]*py + m[12];
+  hx[1] = m[1]*px + m[5]*py + m[13];
+  w     = m[3]*px + m[7]*py + m[15];
+  w = (w != 0.0) ? 1.0/w : 1.0;
   return ON_2dPoint( w*hx[0], w*hx[1] );
 }
 
 ON_3dPoint ON_3dPoint::operator*( const ON_Xform& xform ) const
 {
-  double hx[4], w;
-  xform.ActOnRight(x,y,z,1.0,hx);
-  w = (hx[3] != 0.0) ? 1.0/hx[3] : 1.0;
+  const double px = x; // optimizer should put px,py,pz in registers
+  const double py = y;
+  const double pz = z;
+  double hx[3], w;
+  const double* m = &xform.m_xform[0][0];
+  hx[0] = m[0]*px + m[4]*py + m[ 8]*pz + m[12];
+  hx[1] = m[1]*px + m[5]*py + m[ 9]*pz + m[13];
+  hx[2] = m[2]*px + m[6]*py + m[10]*pz + m[14];
+  w     = m[3]*px + m[7]*py + m[11]*pz + m[15];
+  w = (w != 0.0) ? 1.0/w : 1.0;
   return ON_3dPoint( w*hx[0], w*hx[1], w*hx[2] );
 }
 
 double ON_3dPoint::Fuzz( 
-	  double absolute_tolerance // (default =  ON_ZERO_TOLERANCE) 
-	  ) const
+          double absolute_tolerance // (default =  ON_ZERO_TOLERANCE) 
+          ) const
 {
   double t = MaximumCoordinate()* ON_SQRT_EPSILON;
   return(t > absolute_tolerance) ? t : absolute_tolerance;
@@ -1192,28 +1183,47 @@ double ON_3dPoint::Fuzz(
 
 ON_4dPoint ON_4dPoint::operator*( const ON_Xform& xform ) const
 {
+  const double px = x; // optimizer should put x,y,z,w in registers
+  const double py = y;
+  const double pz = z;
+  const double pw = w;
   double hx[4];
-  xform.ActOnRight(x,y,z,w,hx);
+  const double* m = &xform.m_xform[0][0];
+  hx[0] = m[0]*px + m[4]*py + m[ 8]*pz + m[12]*pw;
+  hx[1] = m[1]*px + m[5]*py + m[ 9]*pz + m[13]*pw;
+  hx[2] = m[2]*px + m[6]*py + m[10]*pz + m[14]*pw;
+  hx[3] = m[3]*px + m[7]*py + m[11]*pz + m[15]*pw;
+
   return ON_4dPoint( hx[0],hx[1],hx[2],hx[3] );
 }
 
 ON_2dVector ON_2dVector::operator*( const ON_Xform& xform ) const
 {
-  double hx[4];
-  xform.ActOnRight(x,y,0.0,0.0,hx);
+  const double vx = x; // optimizer should put vx,vy in registers
+  const double vy = y;
+  double hx[2];
+  const double* m = &xform.m_xform[0][0];
+  hx[0] = m[0]*vx + m[4]*vy;
+  hx[1] = m[1]*vx + m[5]*vy;
   return ON_2dVector( hx[0],hx[1] );
 }
 
 ON_3dVector ON_3dVector::operator*( const ON_Xform& xform ) const
 {
-  double hx[4];
-  xform.ActOnRight(x,y,z,0.0,hx);
+  const double vx = x; // optimizer should put vx,vy,vz in registers
+  const double vy = y;
+  const double vz = z;
+  double hx[3];
+  const double* m = &xform.m_xform[0][0];
+  hx[0] = m[0]*vx + m[4]*vy + m[ 8]*vz;
+  hx[1] = m[1]*vx + m[5]*vy + m[ 9]*vz;
+  hx[2] = m[2]*vx + m[6]*vy + m[10]*vz;
   return ON_3dVector( hx[0],hx[1],hx[2] );
 }
 
 double ON_3fVector::Fuzz(
-	  double absolute_tolerance // (default =  ON_ZERO_TOLERANCE) 
-	  ) const
+          double absolute_tolerance // (default =  ON_ZERO_TOLERANCE) 
+          ) const
 {
   double t = MaximumCoordinate()* ON_SQRT_EPSILON;
   return(t > absolute_tolerance) ? t : absolute_tolerance;
@@ -1221,26 +1231,71 @@ double ON_3fVector::Fuzz(
 
 
 double ON_3dVector::Fuzz(
-	  double absolute_tolerance // (default =  ON_ZERO_TOLERANCE) 
-	  ) const
+          double absolute_tolerance // (default =  ON_ZERO_TOLERANCE) 
+          ) const
 {
   double t = MaximumCoordinate()* ON_SQRT_EPSILON;
   return(t > absolute_tolerance) ? t : absolute_tolerance;
 }
 
+const ON_2dPoint ON_2dPoint::Origin(0.0,0.0);
+const ON_2dPoint ON_2dPoint::UnsetPoint(ON_UNSET_VALUE,ON_UNSET_VALUE);
+
+const ON_3dPoint ON_3dPoint::Origin(0.0,0.0,0.0);
+const ON_3dPoint ON_3dPoint::UnsetPoint(ON_UNSET_VALUE,ON_UNSET_VALUE,ON_UNSET_VALUE);
+
+const ON_2dVector ON_2dVector::ZeroVector(0.0,0.0);
+const ON_2dVector ON_2dVector::XAxis(1.0,0.0);
+const ON_2dVector ON_2dVector::YAxis(0.0,1.0);
+const ON_2dVector ON_2dVector::UnsetVector(ON_UNSET_VALUE,ON_UNSET_VALUE);
+
+const ON_3dVector ON_3dVector::ZeroVector(0.0,0.0,0.0);
+const ON_3dVector ON_3dVector::XAxis(1.0,0.0,0.0);
+const ON_3dVector ON_3dVector::YAxis(0.0,1.0,0.0);
+const ON_3dVector ON_3dVector::ZAxis(0.0,0.0,1.0);
+const ON_3dVector ON_3dVector::UnsetVector(ON_UNSET_VALUE,ON_UNSET_VALUE,ON_UNSET_VALUE);
+
+const ON_2fPoint ON_2fPoint::Origin(0.0f,0.0f);
+const ON_3fPoint ON_3fPoint::Origin(0.0f,0.0f,0.0f);
+
+const ON_2fVector ON_2fVector::ZeroVector(0.0f,0.0f);
+const ON_2fVector ON_2fVector::XAxis(1.0f,0.0f);
+const ON_2fVector ON_2fVector::YAxis(0.0f,1.0f);
+
+const ON_3fVector ON_3fVector::ZeroVector(0.0f,0.0f,0.0f);
+const ON_3fVector ON_3fVector::XAxis(1.0f,0.0f,0.0f);
+const ON_3fVector ON_3fVector::YAxis(0.0f,1.0f,0.0f);
+const ON_3fVector ON_3fVector::ZAxis(0.0f,0.0f,1.0f);
+
+// OBSOLETE  - use ON_3dPoint::UnsetPoint
 const ON_3dPoint  ON_UNSET_POINT(ON_UNSET_VALUE, ON_UNSET_VALUE, ON_UNSET_VALUE);
+
+// OBSOLETE  - use ON_3dVector::UnsetVector
 const ON_3dVector ON_UNSET_VECTOR(ON_UNSET_VALUE, ON_UNSET_VALUE, ON_UNSET_VALUE);
 
+// OBSOLETE  - use ON_3dPoint::Origin
 const ON_3dPoint  ON_origin(0.0, 0.0,0.0);
+
+// OBSOLETE  - use ON_3dVector::XAxis
 const ON_3dVector ON_xaxis(1.0, 0.0, 0.0);
+
+// OBSOLETE  - use ON_3dVector::YAxis
 const ON_3dVector ON_yaxis(0.0, 1.0, 0.0);
+
+// OBSOLETE  - use ON_3dVector::ZAxis
 const ON_3dVector ON_zaxis(0.0, 0.0, 1.0);
 
+// OBSOLETE  - use ON_3fPoint::Origin
 const ON_3fPoint  ON_forigin(0.0f, 0.0f, 0.0f);
-const ON_3fVector ON_fxaxis(1.0f, 0.0f, 0.0f);
-const ON_3fVector ON_fyaxis(0.0f, 1.0f, 0.0f);
-const ON_3fVector ON_fzaxis(0.0f, 0.0f, 1.0f);
 
+// OBSOLETE  - use ON_3fVector::XAxis
+const ON_3fVector ON_fxaxis(1.0f, 0.0f, 0.0f);
+
+// OBSOLETE  - use ON_3fVector::YAxis
+const ON_3fVector ON_fyaxis(0.0f, 1.0f, 0.0f);
+
+// OBSOLETE  - use ON_3fVector::ZAxis
+const ON_3fVector ON_fzaxis(0.0f, 0.0f, 1.0f);
 
 
 //////////////////////////////////////////////////////////////////
@@ -1283,14 +1338,36 @@ ON_2fPoint::ON_2fPoint(const ON_3fPoint& p)
 
 ON_2fPoint::ON_2fPoint(const ON_4fPoint& h)
 {
-  x=h.x;y=h.y;
   const float w = (h.w != 1.0f && h.w != 0.0f) ? 1.0f/h.w : 1.0f;
-  x *= w;
-  y *= w;
+  x = w*h.x;
+  y = w*h.y;
 }
 
 ON_2fPoint::ON_2fPoint(const ON_2fVector& v)
 {x=v.x;y=v.y;}
+
+ON_2fPoint::ON_2fPoint(const ON_3fVector& v)
+{x=v.x;y=v.y;}
+
+ON_2fPoint::ON_2fPoint(const ON_2dPoint& p)
+{x=(float)p.x;y=(float)p.y;}
+
+ON_2fPoint::ON_2fPoint(const ON_3dPoint& p)
+{x=(float)p.x;y=(float)p.y;}
+
+ON_2fPoint::ON_2fPoint(const ON_4dPoint& h)
+{
+  const double w = (h.w != 1.0 && h.w != 0.0) ? 1.0/h.w : 1.0;
+  x = (float)(w*h.x);
+  y = (float)(w*h.y);
+}
+
+ON_2fPoint::ON_2fPoint(const ON_2dVector& v)
+{x=(float)v.x;y=(float)v.y;}
+
+ON_2fPoint::ON_2fPoint(const ON_3dVector& v)
+{x=(float)v.x;y=(float)v.y;}
+
 
 ON_2fPoint::operator float*()
 {
@@ -1348,6 +1425,49 @@ ON_2fPoint& ON_2fPoint::operator=(const ON_2fVector& v)
   return *this;
 }
 
+ON_2fPoint& ON_2fPoint::operator=(const ON_3fVector& v)
+{
+  x = v.x;
+  y = v.y;
+  return *this;
+}
+
+ON_2fPoint& ON_2fPoint::operator=(const ON_2dPoint& p)
+{
+  x = (float)p.x;
+  y = (float)p.y;
+  return *this;
+}
+
+ON_2fPoint& ON_2fPoint::operator=(const ON_3dPoint& p)
+{
+  x = (float)p.x;
+  y = (float)p.y;
+  return *this;
+}
+
+ON_2fPoint& ON_2fPoint::operator=(const ON_4dPoint& h)
+{
+  const double w = (h.w != 1.0 && h.w != 0.0) ? 1.0/h.w : 1.0;
+  x = (float)(w*h.x);
+  y = (float)(w*h.y);
+  return *this;
+}
+
+ON_2fPoint& ON_2fPoint::operator=(const ON_2dVector& v)
+{
+  x = (float)v.x;
+  y = (float)v.y;
+  return *this;
+}
+
+ON_2fPoint& ON_2fPoint::operator=(const ON_3dVector& v)
+{
+  x = (float)v.x;
+  y = (float)v.y;
+  return *this;
+}
+
 ON_2fPoint& ON_2fPoint::operator*=(float d)
 {
   x *= d;
@@ -1377,6 +1497,13 @@ ON_2fPoint& ON_2fPoint::operator+=(const ON_2fVector& v)
   return *this;
 }
 
+ON_2fPoint& ON_2fPoint::operator+=(const ON_3fVector& v)
+{
+  x += v.x;
+  y += v.y;
+  return *this;
+}
+
 ON_2fPoint& ON_2fPoint::operator-=(const ON_2fPoint& p)
 {
   x -= p.x;
@@ -1391,15 +1518,44 @@ ON_2fPoint& ON_2fPoint::operator-=(const ON_2fVector& v)
   return *this;
 }
 
+ON_2fPoint& ON_2fPoint::operator-=(const ON_3fVector& v)
+{
+  x -= v.x;
+  y -= v.y;
+  return *this;
+}
+
+ON_2fPoint ON_2fPoint::operator*( int d ) const
+{
+  return ON_2fPoint(x*d,y*d);
+}
+
 ON_2fPoint ON_2fPoint::operator*( float d ) const
 {
   return ON_2fPoint(x*d,y*d);
+}
+
+ON_2dPoint ON_2fPoint::operator*( double d ) const
+{
+  return ON_2dPoint(x*d,y*d);
+}
+
+ON_2fPoint ON_2fPoint::operator/( int i ) const
+{
+  const float one_over_d = 1.0f/((float)i);
+  return ON_2fPoint(x*one_over_d,y*one_over_d);
 }
 
 ON_2fPoint ON_2fPoint::operator/( float d ) const
 {
   const float one_over_d = 1.0f/d;
   return ON_2fPoint(x*one_over_d,y*one_over_d);
+}
+
+ON_2dPoint ON_2fPoint::operator/( double d ) const
+{
+  const double one_over_d = 1.0/d;
+  return ON_2dPoint(x*one_over_d,y*one_over_d);
 }
 
 ON_2fPoint ON_2fPoint::operator+( const ON_2fPoint& p ) const
@@ -1421,6 +1577,67 @@ ON_2fPoint ON_2fPoint::operator-( const ON_2fVector& v ) const
 {
   return ON_2fPoint(x-v.x,y-v.y);
 }
+
+ON_3fPoint ON_2fPoint::operator+( const ON_3fPoint& p ) const
+{
+  return ON_3fPoint(x+p.x,y+p.y,p.z);
+}
+
+ON_3fPoint ON_2fPoint::operator+( const ON_3fVector& v ) const
+{
+  return ON_3fPoint(x+v.x,y+v.y,v.z);
+}
+
+ON_3fVector ON_2fPoint::operator-( const ON_3fPoint& p ) const
+{
+  return ON_3fVector(x-p.x,y-p.y,-p.y);
+}
+
+ON_3fPoint ON_2fPoint::operator-( const ON_3fVector& v ) const
+{
+  return ON_3fPoint(x-v.x,y-v.y,-v.z);
+}
+
+ON_2dPoint ON_2fPoint::operator+( const ON_2dPoint& p ) const
+{
+  return ON_2dPoint(x+p.x,y+p.y);
+}
+
+ON_2dPoint ON_2fPoint::operator+( const ON_2dVector& v ) const
+{
+  return ON_2dPoint(x+v.x,y+v.y);
+}
+
+ON_2dVector ON_2fPoint::operator-( const ON_2dPoint& p ) const
+{
+  return ON_2dVector(x-p.x,y-p.y);
+}
+
+ON_2dPoint ON_2fPoint::operator-( const ON_2dVector& v ) const
+{
+  return ON_2dPoint(x-v.x,y-v.y);
+}
+
+ON_3dPoint ON_2fPoint::operator+( const ON_3dPoint& p ) const
+{
+  return ON_3dPoint(x+p.x,y+p.y,p.z);
+}
+
+ON_3dPoint ON_2fPoint::operator+( const ON_3dVector& v ) const
+{
+  return ON_3dPoint(x+v.x,y+v.y,v.z);
+}
+
+ON_3dVector ON_2fPoint::operator-( const ON_3dPoint& p ) const
+{
+  return ON_3dVector(x-p.x,y-p.y,-p.y);
+}
+
+ON_3dPoint ON_2fPoint::operator-( const ON_3dVector& v ) const
+{
+  return ON_3dPoint(x-v.x,y-v.y,-v.z);
+}
+
 
 float ON_2fPoint::operator*(const ON_2fPoint& h) const
 {
@@ -1503,9 +1720,19 @@ void ON_2fPoint::Zero()
   x = y = 0.0;
 }
 
+ON_2fPoint operator*(int d, const ON_2fPoint& p)
+{
+  return ON_2fPoint(d*p.x,d*p.y);
+}
+
 ON_2fPoint operator*(float d, const ON_2fPoint& p)
 {
   return ON_2fPoint(d*p.x,d*p.y);
+}
+
+ON_2dPoint operator*(double d, const ON_2fPoint& p)
+{
+  return ON_2dPoint(d*p.x,d*p.y);
 }
 
 ////////////////////////////////////////////////////////////////
@@ -1536,23 +1763,45 @@ ON_3fPoint::ON_3fPoint( const float* p )
   }
 }
 
-ON_3fPoint::ON_3fPoint(float xx,float yy,float zz) // :x(xx),y(yy),z(zz)
+ON_3fPoint::ON_3fPoint(float xx,float yy,float zz)
 {x=xx;y=yy;z=zz;}
 
-ON_3fPoint::ON_3fPoint(const ON_2fPoint& p) // : x(p.x),y(p.y),z(0.0)
+ON_3fPoint::ON_3fPoint(const ON_2fPoint& p)
 {x=p.x;y=p.y;z=0.0;}
 
-ON_3fPoint::ON_3fPoint(const ON_4fPoint& p) // :x(p.x),y(p.y),z(p.z)
+ON_3fPoint::ON_3fPoint(const ON_4fPoint& p)
 {
-  x=p.x;y=p.y;z=p.z;
-  const float w = (p.w != 1.0f && p.w != 0.0f) ? 1.0f/p.w : 1.0f;
-  x *= w;
-  y *= w;
-  z *= w;
+  const double w = (p.w != 1.0f && p.w != 0.0f) ? 1.0/((double)p.w) : 1.0;
+  x = (float)(w*p.x);
+  y = (float)(w*p.y);
+  z = (float)(w*p.z);
 }
 
-ON_3fPoint::ON_3fPoint(const ON_3fVector& v) // : x(p.x),y(p.y),z(0.0)
+ON_3fPoint::ON_3fPoint(const ON_2fVector& v)
+{x=v.x;y=v.y;z=0.0f;}
+
+ON_3fPoint::ON_3fPoint(const ON_3fVector& v)
 {x=v.x;y=v.y;z=v.z;}
+
+ON_3fPoint::ON_3fPoint(const ON_2dPoint& p)
+{x=(float)p.x;y=(float)p.y;z=0.0;}
+
+ON_3fPoint::ON_3fPoint(const ON_3dPoint& p)
+{x=(float)p.x;y=(float)p.y;z=(float)p.z;}
+
+ON_3fPoint::ON_3fPoint(const ON_4dPoint& p)
+{
+  const double w = (p.w != 1.0 && p.w != 0.0) ? 1.0/p.w : 1.0;
+  x = (float)(w*p.x);
+  y = (float)(w*p.y);
+  z = (float)(w*p.z);
+}
+
+ON_3fPoint::ON_3fPoint(const ON_2dVector& v)
+{x=(float)v.x;y=(float)v.y;z=0.0f;}
+
+ON_3fPoint::ON_3fPoint(const ON_3dVector& v)
+{x=(float)v.x;y=(float)v.y;z=(float)v.z;}
 
 ON_3fPoint::operator float*()
 {
@@ -1607,11 +1856,60 @@ ON_3fPoint& ON_3fPoint::operator=(const ON_4fPoint& p)
   return *this;
 }
 
+ON_3fPoint& ON_3fPoint::operator=(const ON_2fVector& v)
+{
+  x = v.x;
+  y = v.y;
+  z = 0.0f;
+  return *this;
+}
+
 ON_3fPoint& ON_3fPoint::operator=(const ON_3fVector& v)
 {
   x = v.x;
   y = v.y;
   z = v.z;
+  return *this;
+}
+
+ON_3fPoint& ON_3fPoint::operator=(const ON_2dPoint& p)
+{
+  x = (float)p.x;
+  y = (float)p.y;
+  z = 0.0f;
+  return *this;
+}
+
+ON_3fPoint& ON_3fPoint::operator=(const ON_3dPoint& p)
+{
+  x = (float)p.x;
+  y = (float)p.y;
+  z = (float)p.z;
+  return *this;
+}
+
+ON_3fPoint& ON_3fPoint::operator=(const ON_4dPoint& p)
+{
+  const double w = (p.w != 1.0 && p.w != 0.0) ? 1.0/p.w : 1.0;
+  x = (float)(w*p.x);
+  y = (float)(w*p.y);
+  z = (float)(w*p.z);
+  return *this;
+}
+
+ON_3fPoint& ON_3fPoint::operator=(const ON_2dVector& v)
+{
+  x = (float)v.x;
+  y = (float)v.y;
+  z = 0.0f;
+  return *this;
+}
+
+ON_3fPoint& ON_3fPoint::operator=(const ON_3dVector& v)
+{
+  x = (float)v.x;
+  y = (float)v.y;
+  z = (float)v.z;
   return *this;
 }
 
@@ -1664,15 +1962,37 @@ ON_3fPoint& ON_3fPoint::operator-=(const ON_3fVector& v)
   return *this;
 }
 
+ON_3fPoint ON_3fPoint::operator*( int d ) const
+{
+  return ON_3fPoint(x*d,y*d,z*d);
+}
+
 ON_3fPoint ON_3fPoint::operator*( float d ) const
 {
   return ON_3fPoint(x*d,y*d,z*d);
+}
+
+ON_3dPoint ON_3fPoint::operator*( double d ) const
+{
+  return ON_3dPoint(x*d,y*d,z*d);
+}
+
+ON_3fPoint ON_3fPoint::operator/( int d ) const
+{
+  const float one_over_d = 1.0f/((float)d);
+  return ON_3fPoint(x*one_over_d,y*one_over_d,z*one_over_d);
 }
 
 ON_3fPoint ON_3fPoint::operator/( float d ) const
 {
   const float one_over_d = 1.0f/d;
   return ON_3fPoint(x*one_over_d,y*one_over_d,z*one_over_d);
+}
+
+ON_3dPoint ON_3fPoint::operator/( double d ) const
+{
+  const double one_over_d = 1.0/d;
+  return ON_3dPoint(x*one_over_d,y*one_over_d,z*one_over_d);
 }
 
 ON_3fPoint ON_3fPoint::operator+( const ON_3fPoint& p ) const
@@ -1694,6 +2014,69 @@ ON_3fPoint ON_3fPoint::operator-( const ON_3fVector& v ) const
 {
   return ON_3fPoint(x-v.x,y-v.y,z-v.z);
 }
+
+
+ON_3fPoint ON_3fPoint::operator+( const ON_2fPoint& p ) const
+{
+  return ON_3fPoint(x+p.x,y+p.y,z);
+}
+
+ON_3fPoint ON_3fPoint::operator+( const ON_2fVector& v ) const
+{
+  return ON_3fPoint(x+v.x,y+v.y,z);
+}
+
+ON_3fVector ON_3fPoint::operator-( const ON_2fPoint& p ) const
+{
+  return ON_3fVector(x-p.x,y-p.y,z);
+}
+
+ON_3fPoint ON_3fPoint::operator-( const ON_2fVector& v ) const
+{
+  return ON_3fPoint(x-v.x,y-v.y,z);
+}
+
+ON_3dPoint ON_3fPoint::operator+( const ON_3dPoint& p ) const
+{
+  return ON_3dPoint(x+p.x,y+p.y,z+p.z);
+}
+
+ON_3dPoint ON_3fPoint::operator+( const ON_3dVector& v ) const
+{
+  return ON_3dPoint(x+v.x,y+v.y,z+v.z);
+}
+
+ON_3dVector ON_3fPoint::operator-( const ON_3dPoint& p ) const
+{
+  return ON_3dVector(x-p.x,y-p.y,z-p.z);
+}
+
+ON_3dPoint ON_3fPoint::operator-( const ON_3dVector& v ) const
+{
+  return ON_3dPoint(x-v.x,y-v.y,z-v.z);
+}
+
+
+ON_3dPoint ON_3fPoint::operator+( const ON_2dPoint& p ) const
+{
+  return ON_3dPoint(x+p.x,y+p.y,z);
+}
+
+ON_3dPoint ON_3fPoint::operator+( const ON_2dVector& v ) const
+{
+  return ON_3dPoint(x+v.x,y+v.y,z);
+}
+
+ON_3dVector ON_3fPoint::operator-( const ON_2dPoint& p ) const
+{
+  return ON_3dVector(x-p.x,y-p.y,z);
+}
+
+ON_3dPoint ON_3fPoint::operator-( const ON_2dVector& v ) const
+{
+  return ON_3dPoint(x-v.x,y-v.y,z);
+}
+
 
 float ON_3fPoint::operator*(const ON_3fPoint& h) const
 {
@@ -1776,9 +2159,19 @@ void ON_3fPoint::Zero()
   x = y = z = 0.0;
 }
 
+ON_3fPoint operator*(int d, const ON_3fPoint& p)
+{
+  return ON_3fPoint(d*p.x,d*p.y,d*p.z);
+}
+
 ON_3fPoint operator*(float d, const ON_3fPoint& p)
 {
   return ON_3fPoint(d*p.x,d*p.y,d*p.z);
+}
+
+ON_3dPoint operator*(double d, const ON_3fPoint& p)
+{
+  return ON_3dPoint(d*p.x,d*p.y,d*p.z);
 }
 
 ////////////////////////////////////////////////////////////////
@@ -1825,6 +2218,25 @@ ON_4fPoint::ON_4fPoint(const ON_2fVector& v)
 
 ON_4fPoint::ON_4fPoint(const ON_3fVector& v)
 {x=v.x;y=v.y;z=v.z;w=0.0;}
+
+ON_4fPoint::ON_4fPoint(const ON_2dPoint& p)
+{x=(float)p.x;y=(float)p.y;z=0.0f;w=1.0f;}
+
+ON_4fPoint::ON_4fPoint(const ON_3dPoint& p)
+{
+  x=(float)p.x;y=(float)p.y;z=(float)p.z;w=1.0f;
+}
+
+ON_4fPoint::ON_4fPoint(const ON_4dPoint& p)
+{
+  x=(float)p.x;y=(float)p.y;z=(float)p.z;w=(float)p.w;
+}
+
+ON_4fPoint::ON_4fPoint(const ON_2dVector& v)
+{x=(float)v.x;y=(float)v.y;z=w=0.0f;}
+
+ON_4fPoint::ON_4fPoint(const ON_3dVector& v)
+{x=(float)v.x;y=(float)v.y;z=(float)v.z;w=0.0f;}
 
 ON_4fPoint::operator float*()
 {
@@ -1896,6 +2308,51 @@ ON_4fPoint& ON_4fPoint::operator=(const ON_3fVector& v)
   x = v.x;
   y = v.y;
   z = v.z;
+  w = 0.0;
+  return *this;
+}
+
+ON_4fPoint& ON_4fPoint::operator=(const ON_2dPoint& p)
+{
+  x = (float)p.x;
+  y = (float)p.y;
+  z = 0.0;
+  w = 1.0;
+  return *this;
+}
+
+ON_4fPoint& ON_4fPoint::operator=(const ON_3dPoint& p)
+{
+  x = (float)p.x;
+  y = (float)p.y;
+  z = (float)p.z;
+  w = 1.0;
+  return *this;
+}
+
+ON_4fPoint& ON_4fPoint::operator=(const ON_4dPoint& p)
+{
+  x = (float)p.x;
+  y = (float)p.y;
+  z = (float)p.z;
+  w = (float)p.w;
+  return *this;
+}
+
+ON_4fPoint& ON_4fPoint::operator=(const ON_2dVector& v)
+{
+  x = (float)v.x;
+  y = (float)v.y;
+  z = 0.0;
+  w = 0.0;
+  return *this;
+}
+
+ON_4fPoint& ON_4fPoint::operator=(const ON_3dVector& v)
+{
+  x = (float)v.x;
+  y = (float)v.y;
+  z = (float)v.z;
   w = 0.0;
   return *this;
 }
@@ -2064,6 +2521,11 @@ ON_4fPoint operator*( float d, const ON_4fPoint& p )
   return ON_4fPoint( d*p.x, d*p.y, d*p.z, d*p.w );
 }
 
+ON_4dPoint operator*( double d, const ON_4fPoint& p )
+{
+  return ON_4dPoint( d*p.x, d*p.y, d*p.z, d*p.w );
+}
+
 ////////////////////////////////////////////////////////////////
 //
 // ON_2fVector
@@ -2117,6 +2579,21 @@ ON_2fVector::ON_2fVector(const ON_3fVector& v)
 ON_2fVector::ON_2fVector(const ON_2fPoint& p)
 {x=p.x;y=p.y;}
 
+ON_2fVector::ON_2fVector(const ON_3fPoint& p)
+{x=p.x;y=p.y;}
+
+ON_2fVector::ON_2fVector(const ON_2dVector& v)
+{x=(float)v.x;y=(float)v.y;}
+
+ON_2fVector::ON_2fVector(const ON_3dVector& v)
+{x=(float)v.x;y=(float)v.y;}
+
+ON_2fVector::ON_2fVector(const ON_2dPoint& p)
+{x=(float)p.x;y=(float)p.y;}
+
+ON_2fVector::ON_2fVector(const ON_3dPoint& p)
+{x=(float)p.x;y=(float)p.y;}
+
 ON_2fVector::operator float*()
 {
   return &x;
@@ -2165,6 +2642,42 @@ ON_2fVector& ON_2fVector::operator=(const ON_2fPoint& p)
   return *this;
 }
 
+ON_2fVector& ON_2fVector::operator=(const ON_3fPoint& p)
+{
+  x = p.x;
+  y = p.y;
+  return *this;
+}
+
+
+ON_2fVector& ON_2fVector::operator=(const ON_2dVector& v)
+{
+  x = (float)v.x;
+  y = (float)v.y;
+  return *this;
+}
+
+ON_2fVector& ON_2fVector::operator=(const ON_3dVector& v)
+{
+  x = (float)v.x;
+  y = (float)v.y;
+  return *this;
+}
+
+ON_2fVector& ON_2fVector::operator=(const ON_2dPoint& p)
+{
+  x = (float)p.x;
+  y = (float)p.y;
+  return *this;
+}
+
+ON_2fVector& ON_2fVector::operator=(const ON_3dPoint& p)
+{
+  x = (float)p.x;
+  y = (float)p.y;
+  return *this;
+}
+
 ON_2fVector ON_2fVector::operator-() const
 {
   return ON_2fVector(-x,-y);
@@ -2199,9 +2712,19 @@ ON_2fVector& ON_2fVector::operator-=(const ON_2fVector& v)
   return *this;
 }
 
+ON_2fVector ON_2fVector::operator*( int d ) const
+{
+  return ON_2fVector(x*d,y*d);
+}
+
 ON_2fVector ON_2fVector::operator*( float d ) const
 {
   return ON_2fVector(x*d,y*d);
+}
+
+ON_2dVector ON_2fVector::operator*( double d ) const
+{
+  return ON_2dVector(x*d,y*d);
 }
 
 float ON_2fVector::operator*( const ON_2fVector& v ) const
@@ -2219,10 +2742,22 @@ double ON_2fVector::operator*( const ON_2dVector& v ) const
   return (x*v.x + y*v.y);
 }
 
+ON_2fVector ON_2fVector::operator/( int d ) const
+{
+  const float one_over_d = 1.0f/((float)d);
+  return ON_2fVector(x*one_over_d,y*one_over_d);
+}
+
 ON_2fVector ON_2fVector::operator/( float d ) const
 {
   const float one_over_d = 1.0f/d;
   return ON_2fVector(x*one_over_d,y*one_over_d);
+}
+
+ON_2dVector ON_2fVector::operator/( double d ) const
+{
+  const double one_over_d = 1.0/d;
+  return ON_2dVector(x*one_over_d,y*one_over_d);
 }
 
 ON_2fVector ON_2fVector::operator+( const ON_2fVector& v ) const
@@ -2239,6 +2774,75 @@ ON_2fVector ON_2fVector::operator-( const ON_2fVector& v ) const
 {
   return ON_2fVector(x-v.x,y-v.y);
 }
+
+ON_2fPoint ON_2fVector::operator-( const ON_2fPoint& v ) const
+{
+  return ON_2fPoint(x-v.x,y-v.y);
+}
+
+ON_3fVector ON_2fVector::operator+( const ON_3fVector& v ) const
+{
+  return ON_3fVector(x+v.x,y+v.y,v.z);
+}
+
+ON_3fPoint ON_2fVector::operator+( const ON_3fPoint& p ) const
+{
+  return ON_3fPoint(x+p.x,y+p.y,p.z);
+}
+
+ON_3fVector ON_2fVector::operator-( const ON_3fVector& v ) const
+{
+  return ON_3fVector(x-v.x,y-v.y,-v.z);
+}
+
+ON_3fPoint ON_2fVector::operator-( const ON_3fPoint& v ) const
+{
+  return ON_3fPoint(x-v.x,y-v.y,-v.z);
+}
+
+////
+
+
+ON_2dVector ON_2fVector::operator+( const ON_2dVector& v ) const
+{
+  return ON_2dVector(x+v.x,y+v.y);
+}
+
+ON_2dPoint ON_2fVector::operator+( const ON_2dPoint& p ) const
+{
+  return ON_2dPoint(x+p.x,y+p.y);
+}
+
+ON_2dVector ON_2fVector::operator-( const ON_2dVector& v ) const
+{
+  return ON_2dVector(x-v.x,y-v.y);
+}
+
+ON_2dPoint ON_2fVector::operator-( const ON_2dPoint& v ) const
+{
+  return ON_2dPoint(x-v.x,y-v.y);
+}
+
+ON_3dVector ON_2fVector::operator+( const ON_3dVector& v ) const
+{
+  return ON_3dVector(x+v.x,y+v.y,v.z);
+}
+
+ON_3dPoint ON_2fVector::operator+( const ON_3dPoint& p ) const
+{
+  return ON_3dPoint(x+p.x,y+p.y,p.z);
+}
+
+ON_3dVector ON_2fVector::operator-( const ON_3dVector& v ) const
+{
+  return ON_3dVector(x-v.x,y-v.y,-v.z);
+}
+
+ON_3dPoint ON_2fVector::operator-( const ON_3dPoint& v ) const
+{
+  return ON_3dPoint(x-v.x,y-v.y,-v.z);
+}
+
 
 float ON_2fVector::operator*(const ON_4fPoint& h) const
 {
@@ -2329,7 +2933,7 @@ double ON_2fVector::Length() const
     fy *= len;
     len = fx*sqrt(1.0 + fy*fy);
   }
-  else if ( fx > 0.0 && ON_IsFinite(fx) )
+  else if ( fx > 0.0 && ON_IS_FINITE(fx) )
     len = fx;
   else
     len = 0.0;
@@ -2365,6 +2969,15 @@ bool ON_2fVector::Unitize()
   return rc;
 }
 
+bool ON_2fVector::IsUnitVector() const
+{
+  return (x != ON_UNSET_FLOAT && y != ON_UNSET_FLOAT && fabs(Length() - 1.0) <= 1.0e-5);
+}
+
+bool ON_3fVector::IsUnitVector() const
+{
+  return (x != ON_UNSET_FLOAT && y != ON_UNSET_FLOAT && z != ON_UNSET_FLOAT && fabs(Length() - 1.0) <= 1.0e-5);
+}
 
 bool ON_2fVector::IsTiny( double tiny_tol ) const
 {
@@ -2376,10 +2989,9 @@ bool ON_2fVector::IsZero() const
   return (x==0.0f && y==0.0f);
 }
 
-
 // set this vector to be perpendicular to another vector
 bool ON_2fVector::PerpendicularTo( // Result is not unitized. 
-		      // returns false if input vector is zero
+                      // returns false if input vector is zero
       const ON_2fVector& v
       )
 {
@@ -2397,9 +3009,19 @@ bool ON_2fVector::PerpendicularTo(
   return PerpendicularTo(q-p);
 }
 
+ON_2fVector operator*(int d, const ON_2fVector& v)
+{
+  return ON_2fVector(d*v.x,d*v.y);
+}
+
 ON_2fVector operator*(float d, const ON_2fVector& v)
 {
   return ON_2fVector(d*v.x,d*v.y);
+}
+
+ON_2dVector operator*(double d, const ON_2fVector& v)
+{
+  return ON_2dVector(d*v.x,d*v.y);
 }
 
 float ON_DotProduct( const ON_2fVector& a , const ON_2fVector& b )
@@ -2464,10 +3086,25 @@ ON_3fVector::ON_3fVector(float xx,float yy,float zz)
 {x=xx;y=yy;z=zz;}
 
 ON_3fVector::ON_3fVector(const ON_2fVector& v)
-{x=v.x;y=v.y;z=0.0;}
+{x=v.x;y=v.y;z=0.0f;}
+
+ON_3fVector::ON_3fVector(const ON_2fPoint& p)
+{x=p.x;y=p.y;z=0.0f;}
 
 ON_3fVector::ON_3fVector(const ON_3fPoint& p)
 {x=p.x;y=p.y;z=p.z;}
+
+ON_3fVector::ON_3fVector(const ON_2dVector& v)
+{x=(float)v.x;y=(float)v.y;z=(float)0.0f;}
+
+ON_3fVector::ON_3fVector(const ON_3dVector& v)
+{x=(float)v.x;y=(float)v.y;z=(float)v.z;}
+
+ON_3fVector::ON_3fVector(const ON_2dPoint& p)
+{x=(float)p.x;y=(float)p.y;z=(float)0.0f;}
+
+ON_3fVector::ON_3fVector(const ON_3dPoint& p)
+{x=(float)p.x;y=(float)p.y;z=(float)p.z;}
 
 ON_3fVector::operator float*()
 {
@@ -2513,11 +3150,52 @@ ON_3fVector& ON_3fVector::operator=(const ON_2fVector& v)
   return *this;
 }
 
+ON_3fVector& ON_3fVector::operator=(const ON_2fPoint& p)
+{
+  x = p.x;
+  y = p.y;
+  z = 0.0f;
+  return *this;
+}
+
 ON_3fVector& ON_3fVector::operator=(const ON_3fPoint& p)
 {
   x = p.x;
   y = p.y;
   z = p.z;
+  return *this;
+}
+
+
+ON_3fVector& ON_3fVector::operator=(const ON_2dVector& v)
+{
+  x = (float)v.x;
+  y = (float)v.y;
+  z = 0.0f;
+  return *this;
+}
+
+ON_3fVector& ON_3fVector::operator=(const ON_3dVector& v)
+{
+  x = (float)v.x;
+  y = (float)v.y;
+  z = (float)v.z;
+  return *this;
+}
+
+ON_3fVector& ON_3fVector::operator=(const ON_2dPoint& p)
+{
+  x = (float)p.x;
+  y = (float)p.y;
+  z = 0.0f;
+  return *this;
+}
+
+ON_3fVector& ON_3fVector::operator=(const ON_3dPoint& p)
+{
+  x = (float)p.x;
+  y = (float)p.y;
+  z = (float)p.z;
   return *this;
 }
 
@@ -2559,9 +3237,19 @@ ON_3fVector& ON_3fVector::operator-=(const ON_3fVector& v)
   return *this;
 }
 
+ON_3fVector ON_3fVector::operator*( int d ) const
+{
+  return ON_3fVector(x*d,y*d,z*d);
+}
+
 ON_3fVector ON_3fVector::operator*( float d ) const
 {
   return ON_3fVector(x*d,y*d,z*d);
+}
+
+ON_3dVector ON_3fVector::operator*( double d ) const
+{
+  return ON_3dVector(x*d,y*d,z*d);
 }
 
 float ON_3fVector::operator*( const ON_3fVector& v ) const
@@ -2579,10 +3267,22 @@ double ON_3fVector::operator*( const ON_3dVector& v ) const
   return (x*v.x + y*v.y + z*v.z);
 }
 
+ON_3fVector ON_3fVector::operator/( int d ) const
+{
+  const float one_over_d = 1.0f/((int)d);
+  return ON_3fVector(x*one_over_d,y*one_over_d,z*one_over_d);
+}
+
 ON_3fVector ON_3fVector::operator/( float d ) const
 {
   const float one_over_d = 1.0f/d;
   return ON_3fVector(x*one_over_d,y*one_over_d,z*one_over_d);
+}
+
+ON_3dVector ON_3fVector::operator/( double d ) const
+{
+  const double one_over_d = 1.0/d;
+  return ON_3dVector(x*one_over_d,y*one_over_d,z*one_over_d);
 }
 
 ON_3fVector ON_3fVector::operator+( const ON_3fVector& v ) const
@@ -2599,6 +3299,75 @@ ON_3fVector ON_3fVector::operator-( const ON_3fVector& v ) const
 {
   return ON_3fVector(x-v.x,y-v.y,z-v.z);
 }
+
+ON_3fPoint ON_3fVector::operator-( const ON_3fPoint& v ) const
+{
+  return ON_3fPoint(x-v.x,y-v.y,z-v.z);
+}
+
+ON_3fVector ON_3fVector::operator+( const ON_2fVector& v ) const
+{
+  return ON_3fVector(x+v.x,y+v.y,z);
+}
+
+ON_3fPoint ON_3fVector::operator+( const ON_2fPoint& p ) const
+{
+  return ON_3fPoint(x+p.x,y+p.y,z);
+}
+
+ON_3fVector ON_3fVector::operator-( const ON_2fVector& v ) const
+{
+  return ON_3fVector(x-v.x,y-v.y,z);
+}
+
+ON_3fPoint ON_3fVector::operator-( const ON_2fPoint& v ) const
+{
+  return ON_3fPoint(x-v.x,y-v.y,z);
+}
+
+/////
+
+
+ON_3dVector ON_3fVector::operator+( const ON_3dVector& v ) const
+{
+  return ON_3dVector(x+v.x,y+v.y,z+v.z);
+}
+
+ON_3dPoint ON_3fVector::operator+( const ON_3dPoint& p ) const
+{
+  return ON_3dPoint(x+p.x,y+p.y,z+p.z);
+}
+
+ON_3dVector ON_3fVector::operator-( const ON_3dVector& v ) const
+{
+  return ON_3dVector(x-v.x,y-v.y,z-v.z);
+}
+
+ON_3dPoint ON_3fVector::operator-( const ON_3dPoint& v ) const
+{
+  return ON_3dPoint(x-v.x,y-v.y,z-v.z);
+}
+
+ON_3dVector ON_3fVector::operator+( const ON_2dVector& v ) const
+{
+  return ON_3dVector(x+v.x,y+v.y,z);
+}
+
+ON_3dPoint ON_3fVector::operator+( const ON_2dPoint& p ) const
+{
+  return ON_3dPoint(x+p.x,y+p.y,z);
+}
+
+ON_3dVector ON_3fVector::operator-( const ON_2dVector& v ) const
+{
+  return ON_3dVector(x-v.x,y-v.y,z);
+}
+
+ON_3dPoint ON_3fVector::operator-( const ON_2dPoint& v ) const
+{
+  return ON_3dPoint(x-v.x,y-v.y,z);
+}
+
 
 float ON_3fVector::operator*(const ON_4fPoint& h) const
 {
@@ -2694,7 +3463,7 @@ double ON_3fVector::Length() const
     fz *= len;
     len = fx*sqrt(1.0 + fy*fy + fz*fz);
   }
-  else if ( fx > 0.0 && ON_IsFinite(fx) )
+  else if ( fx > 0.0 && ON_IS_FINITE(fx) )
     len = fx;
   else
     len = 0.0;
@@ -2744,9 +3513,19 @@ bool ON_3fVector::IsZero() const
 }
 
 
+ON_3fVector operator*(int d, const ON_3fVector& v)
+{
+  return ON_3fVector(d*v.x,d*v.y,d*v.z);
+}
+
 ON_3fVector operator*(float d, const ON_3fVector& v)
 {
   return ON_3fVector(d*v.x,d*v.y,d*v.z);
+}
+
+ON_3dVector operator*(double d, const ON_3fVector& v)
+{
+  return ON_3dVector(d*v.x,d*v.y,d*v.z);
 }
 
 float ON_DotProduct( const ON_3fVector& a , const ON_3fVector& b )
@@ -2822,6 +3601,28 @@ ON_2dPoint::ON_2dPoint(const ON_4dPoint& h)
 ON_2dPoint::ON_2dPoint(const ON_2dVector& v)
 {x=v.x;y=v.y;}
 
+ON_2dPoint::ON_2dPoint(const ON_3dVector& v)
+{x=v.x;y=v.y;}
+
+ON_2dPoint::ON_2dPoint(const ON_2fPoint& p)
+{x=p.x;y=p.y;}
+
+ON_2dPoint::ON_2dPoint(const ON_3fPoint& p)
+{x=p.x;y=p.y;}
+
+ON_2dPoint::ON_2dPoint(const ON_4fPoint& h)
+{
+  const double w = (h.w != 1.0f && h.w != 0.0f) ? 1.0/((double)h.w) : 1.0;
+  x *= w*h.x;
+  y *= w*h.y;
+}
+
+ON_2dPoint::ON_2dPoint(const ON_2fVector& v)
+{x=v.x;y=v.y;}
+
+ON_2dPoint::ON_2dPoint(const ON_3fVector& v)
+{x=v.x;y=v.y;}
+
 ON_2dPoint::operator double*()
 {
   return &x;
@@ -2878,6 +3679,51 @@ ON_2dPoint& ON_2dPoint::operator=(const ON_2dVector& v)
   return *this;
 }
 
+ON_2dPoint& ON_2dPoint::operator=(const ON_3dVector& v)
+{
+  x = v.x;
+  y = v.y;
+  y = v.z;
+  return *this;
+}
+
+ON_2dPoint& ON_2dPoint::operator=(const ON_2fPoint& p)
+{
+  x = p.x;
+  y = p.y;
+  return *this;
+}
+
+ON_2dPoint& ON_2dPoint::operator=(const ON_3fPoint& p)
+{
+  x = p.x;
+  y = p.y;
+  return *this;
+}
+
+ON_2dPoint& ON_2dPoint::operator=(const ON_4fPoint& h)
+{
+  const double w = (h.w != 1.0f && h.w != 0.0f) ? 1.0/((double)h.w) : 1.0;
+  x = w*h.x;
+  y = w*h.y;
+  return *this;
+}
+
+ON_2dPoint& ON_2dPoint::operator=(const ON_2fVector& v)
+{
+  x = v.x;
+  y = v.y;
+  return *this;
+}
+
+ON_2dPoint& ON_2dPoint::operator=(const ON_3fVector& v)
+{
+  x = v.x;
+  y = v.y;
+  y = v.z;
+  return *this;
+}
+
 ON_2dPoint& ON_2dPoint::operator*=(double d)
 {
   x *= d;
@@ -2907,6 +3753,13 @@ ON_2dPoint& ON_2dPoint::operator+=(const ON_2dVector& v)
   return *this;
 }
 
+ON_2dPoint& ON_2dPoint::operator+=(const ON_3dVector& v)
+{
+  x += v.x;
+  y += v.y;
+  return *this;
+}
+
 ON_2dPoint& ON_2dPoint::operator-=(const ON_2dPoint& p)
 {
   x -= p.x;
@@ -2921,9 +3774,40 @@ ON_2dPoint& ON_2dPoint::operator-=(const ON_2dVector& v)
   return *this;
 }
 
+ON_2dPoint& ON_2dPoint::operator-=(const ON_3dVector& v)
+{
+  x -= v.x;
+  y -= v.y;
+  return *this;
+}
+
+ON_2dPoint ON_2dPoint::operator*( int i ) const
+{
+  double d = i;
+  return ON_2dPoint(x*d,y*d);
+}
+
+ON_2dPoint ON_2dPoint::operator*( float f ) const
+{
+  double d = f;
+  return ON_2dPoint(x*d,y*d);
+}
+
 ON_2dPoint ON_2dPoint::operator*( double d ) const
 {
   return ON_2dPoint(x*d,y*d);
+}
+
+ON_2dPoint ON_2dPoint::operator/( int i ) const
+{
+  const double one_over_d = 1.0/((double)i);
+  return ON_2dPoint(x*one_over_d,y*one_over_d);
+}
+
+ON_2dPoint ON_2dPoint::operator/( float f ) const
+{
+  const double one_over_d = 1.0/((double)f);
+  return ON_2dPoint(x*one_over_d,y*one_over_d);
 }
 
 ON_2dPoint ON_2dPoint::operator/( double d ) const
@@ -2951,6 +3835,72 @@ ON_2dPoint ON_2dPoint::operator-( const ON_2dVector& v ) const
 {
   return ON_2dPoint(x-v.x,y-v.y);
 }
+
+
+ON_3dPoint ON_2dPoint::operator+( const ON_3dPoint& p ) const
+{
+  return ON_3dPoint(x+p.x,y+p.y,p.z);
+}
+
+ON_3dPoint ON_2dPoint::operator+( const ON_3dVector& v ) const
+{
+  return ON_3dPoint(x+v.x,y+v.y,v.z);
+}
+
+ON_3dVector ON_2dPoint::operator-( const ON_3dPoint& p ) const
+{
+  return ON_3dVector(x-p.x,y-p.y,-p.z);
+}
+
+ON_3dPoint ON_2dPoint::operator-( const ON_3dVector& v ) const
+{
+  return ON_3dPoint(x-v.x,y-v.y,-v.z);
+}
+
+///////////////////////////////////////////////////
+
+
+ON_2dPoint ON_2dPoint::operator+( const ON_2fPoint& p ) const
+{
+  return ON_2dPoint(x+p.x,y+p.y);
+}
+
+ON_2dPoint ON_2dPoint::operator+( const ON_2fVector& v ) const
+{
+  return ON_2dPoint(x+v.x,y+v.y);
+}
+
+ON_2dVector ON_2dPoint::operator-( const ON_2fPoint& p ) const
+{
+  return ON_2dVector(x-p.x,y-p.y);
+}
+
+ON_2dPoint ON_2dPoint::operator-( const ON_2fVector& v ) const
+{
+  return ON_2dPoint(x-v.x,y-v.y);
+}
+
+
+ON_3dPoint ON_2dPoint::operator+( const ON_3fPoint& p ) const
+{
+  return ON_3dPoint(x+p.x,y+p.y,p.z);
+}
+
+ON_3dPoint ON_2dPoint::operator+( const ON_3fVector& v ) const
+{
+  return ON_3dPoint(x+v.x,y+v.y,v.z);
+}
+
+ON_3dVector ON_2dPoint::operator-( const ON_3fPoint& p ) const
+{
+  return ON_3dVector(x-p.x,y-p.y,-p.z);
+}
+
+ON_3dPoint ON_2dPoint::operator-( const ON_3fVector& v ) const
+{
+  return ON_3dPoint(x-v.x,y-v.y,-v.z);
+}
+
 
 double ON_2dPoint::operator*(const ON_2dPoint& h) const
 {
@@ -3045,6 +3995,18 @@ void ON_2dPoint::Zero()
   x = y = 0.0;
 }
 
+ON_2dPoint operator*(int i, const ON_2dPoint& p)
+{
+  double d = i;
+  return ON_2dPoint(d*p.x,d*p.y);
+}
+
+ON_2dPoint operator*(float f, const ON_2dPoint& p)
+{
+  double d = f;
+  return ON_2dPoint(d*p.x,d*p.y);
+}
+
 ON_2dPoint operator*(double d, const ON_2dPoint& p)
 {
   return ON_2dPoint(d*p.x,d*p.y);
@@ -3068,6 +4030,26 @@ ON_3dPoint::ON_3dPoint( const float* p )
   }
 }
 
+ON_3dPoint::ON_3dPoint(const ON_2fPoint& p)
+{x=(double)p.x;y=(double)p.y;z=0.0;}
+
+ON_3dPoint::ON_3dPoint(const ON_3fPoint& p)
+{x=(double)p.x;y=(double)p.y;z=(double)p.z;}
+
+ON_3dPoint::ON_3dPoint(const ON_4fPoint& p)
+{
+  const double w = (p.w != 1.0f && p.w != 0.0f) ? 1.0/((double)p.w) : 1.0;
+  x = w*((double)p.x);
+  y = w*((double)p.y);
+  z = w*((double)p.z);
+}
+
+ON_3dPoint::ON_3dPoint(const ON_2fVector& p)
+{x=(double)p.x;y=(double)p.y;z=0.0;}
+
+ON_3dPoint::ON_3dPoint(const ON_3fVector& p)
+{x=(double)p.x;y=(double)p.y;z=(double)p.z;}
+
 ON_3dRay::ON_3dRay()
 {}
 
@@ -3084,13 +4066,13 @@ ON_3dPoint::ON_3dPoint( const double* p )
   }
 }
 
-ON_3dPoint::ON_3dPoint(double xx,double yy,double zz) // :x(xx),y(yy),z(zz)
+ON_3dPoint::ON_3dPoint(double xx,double yy,double zz)
 {x=xx;y=yy;z=zz;}
 
-ON_3dPoint::ON_3dPoint(const ON_2dPoint& p) // : x(p.x),y(p.y),z(0.0)
+ON_3dPoint::ON_3dPoint(const ON_2dPoint& p)
 {x=p.x;y=p.y;z=0.0;}
 
-ON_3dPoint::ON_3dPoint(const ON_4dPoint& p) // :x(p.x),y(p.y),z(p.z)
+ON_3dPoint::ON_3dPoint(const ON_4dPoint& p)
 {
   x=p.x;y=p.y;z=p.z;
   const double w = (p.w != 1.0 && p.w != 0.0) ? 1.0/p.w : 1.0;
@@ -3099,7 +4081,10 @@ ON_3dPoint::ON_3dPoint(const ON_4dPoint& p) // :x(p.x),y(p.y),z(p.z)
   z *= w;
 }
 
-ON_3dPoint::ON_3dPoint(const ON_3dVector& v) // : x(p.x),y(p.y),z(0.0)
+ON_3dPoint::ON_3dPoint(const ON_2dVector& v)
+{x=v.x;y=v.y;z=0.0;}
+
+ON_3dPoint::ON_3dPoint(const ON_3dVector& v)
 {x=v.x;y=v.y;z=v.z;}
 
 ON_3dPoint::operator double*()
@@ -3155,6 +4140,14 @@ ON_3dPoint& ON_3dPoint::operator=(const ON_4dPoint& p)
   return *this;
 }
 
+ON_3dPoint& ON_3dPoint::operator=(const ON_2dVector& v)
+{
+  x = v.x;
+  y = v.y;
+  z = 0.0;
+  return *this;
+}
+
 ON_3dPoint& ON_3dPoint::operator=(const ON_3dVector& v)
 {
   x = v.x;
@@ -3162,6 +4155,48 @@ ON_3dPoint& ON_3dPoint::operator=(const ON_3dVector& v)
   z = v.z;
   return *this;
 }
+
+ON_3dPoint& ON_3dPoint::operator=(const ON_2fPoint& p)
+{
+  x = (double)p.x;
+  y = (double)p.y;
+  z = (double)0.0;
+  return *this;
+}
+
+ON_3dPoint& ON_3dPoint::operator=(const ON_3fPoint& p)
+{
+  x = (double)p.x;
+  y = (double)p.y;
+  z = (double)p.z;
+  return *this;
+}
+
+ON_3dPoint& ON_3dPoint::operator=(const ON_4fPoint& p)
+{
+  const double w = (p.w != 1.0f && p.w != 0.0f) ? 1.0/((double)p.w) : 1.0;
+  x = w*((double)p.x);
+  y = w*((double)p.y);
+  z = w*((double)p.z);
+  return *this;
+}
+
+ON_3dPoint& ON_3dPoint::operator=(const ON_2fVector& v)
+{
+  x = v.x;
+  y = v.y;
+  z = 0.0;
+  return *this;
+}
+
+ON_3dPoint& ON_3dPoint::operator=(const ON_3fVector& v)
+{
+  x = v.x;
+  y = v.y;
+  z = v.z;
+  return *this;
+}
+
 
 ON_3dPoint& ON_3dPoint::operator*=(double d)
 {
@@ -3212,9 +4247,33 @@ ON_3dPoint& ON_3dPoint::operator-=(const ON_3dVector& v)
   return *this;
 }
 
+ON_3dPoint ON_3dPoint::operator*( int i ) const
+{
+  double d = i;
+  return ON_3dPoint(x*d,y*d,z*d);
+}
+
+ON_3dPoint ON_3dPoint::operator*( float f ) const
+{
+  double d = f;
+  return ON_3dPoint(x*d,y*d,z*d);
+}
+
 ON_3dPoint ON_3dPoint::operator*( double d ) const
 {
   return ON_3dPoint(x*d,y*d,z*d);
+}
+
+ON_3dPoint ON_3dPoint::operator/( int i ) const
+{
+  const double one_over_d = 1.0/((double)i);
+  return ON_3dPoint(x*one_over_d,y*one_over_d,z*one_over_d);
+}
+
+ON_3dPoint ON_3dPoint::operator/( float f ) const
+{
+  const double one_over_d = 1.0/((double)f);
+  return ON_3dPoint(x*one_over_d,y*one_over_d,z*one_over_d);
 }
 
 ON_3dPoint ON_3dPoint::operator/( double d ) const
@@ -3241,6 +4300,66 @@ ON_3dVector ON_3dPoint::operator-( const ON_3dPoint& p ) const
 ON_3dPoint ON_3dPoint::operator-( const ON_3dVector& v ) const
 {
   return ON_3dPoint(x-v.x,y-v.y,z-v.z);
+}
+
+ON_3dPoint ON_3dPoint::operator+( const ON_2dPoint& p ) const
+{
+  return ON_3dPoint(x+p.x,y+p.y,z);
+}
+
+ON_3dPoint ON_3dPoint::operator+( const ON_2dVector& v ) const
+{
+  return ON_3dPoint(x+v.x,y+v.y,z);
+}
+
+ON_3dVector ON_3dPoint::operator-( const ON_2dPoint& p ) const
+{
+  return ON_3dVector(x-p.x,y-p.y,z);
+}
+
+ON_3dPoint ON_3dPoint::operator-( const ON_2dVector& v ) const
+{
+  return ON_3dPoint(x-v.x,y-v.y,z);
+}
+
+ON_3dPoint ON_3dPoint::operator+( const ON_3fPoint& p ) const
+{
+  return ON_3dPoint(x+p.x,y+p.y,z+p.z);
+}
+
+ON_3dPoint ON_3dPoint::operator+( const ON_3fVector& v ) const
+{
+  return ON_3dPoint(x+v.x,y+v.y,z+v.z);
+}
+
+ON_3dVector ON_3dPoint::operator-( const ON_3fPoint& p ) const
+{
+  return ON_3dVector(x-p.x,y-p.y,z-p.z);
+}
+
+ON_3dPoint ON_3dPoint::operator-( const ON_3fVector& v ) const
+{
+  return ON_3dPoint(x-v.x,y-v.y,z-v.z);
+}
+
+ON_3dPoint ON_3dPoint::operator+( const ON_2fPoint& p ) const
+{
+  return ON_3dPoint(x+p.x,y+p.y,z);
+}
+
+ON_3dPoint ON_3dPoint::operator+( const ON_2fVector& v ) const
+{
+  return ON_3dPoint(x+v.x,y+v.y,z);
+}
+
+ON_3dVector ON_3dPoint::operator-( const ON_2fPoint& p ) const
+{
+  return ON_3dVector(x-p.x,y-p.y,z);
+}
+
+ON_3dPoint ON_3dPoint::operator-( const ON_2fVector& v ) const
+{
+  return ON_3dPoint(x-v.x,y-v.y,z);
 }
 
 double ON_3dPoint::operator*(const ON_3dPoint& h) const
@@ -3335,6 +4454,18 @@ void ON_3dPoint::Zero()
   x = y = z = 0.0;
 }
 
+ON_3dPoint operator*(int i, const ON_3dPoint& p)
+{
+  double d = i;
+  return ON_3dPoint(d*p.x,d*p.y,d*p.z);
+}
+
+ON_3dPoint operator*(float f, const ON_3dPoint& p)
+{
+  double d = f;
+  return ON_3dPoint(d*p.x,d*p.y,d*p.z);
+}
+
 ON_3dPoint operator*(double d, const ON_3dPoint& p)
 {
   return ON_3dPoint(d*p.x,d*p.y,d*p.z);
@@ -3385,6 +4516,26 @@ ON_4dPoint::ON_4dPoint(const ON_2dVector& v)
 ON_4dPoint::ON_4dPoint(const ON_3dVector& v)
 {x=v.x;y=v.y;z=v.z;w=0.0;}
 
+
+ON_4dPoint::ON_4dPoint(const ON_2fPoint& p)
+{x=p.x;y=p.y;z=0.0;w=1.0;}
+
+ON_4dPoint::ON_4dPoint(const ON_3fPoint& p)
+{
+  x=p.x;y=p.y;z=p.z;w=1.0;
+}
+
+ON_4dPoint::ON_4dPoint(const ON_4fPoint& p)
+{
+  x=p.x;y=p.y;z=p.z;w=p.w;
+}
+
+ON_4dPoint::ON_4dPoint(const ON_2fVector& v)
+{x=v.x;y=v.y;z=w=0.0;}
+
+ON_4dPoint::ON_4dPoint(const ON_3fVector& v)
+{x=v.x;y=v.y;z=v.z;w=0.0;}
+
 ON_4dPoint::operator double*()
 {
   return &x;
@@ -3406,42 +4557,6 @@ ON_4dPoint& ON_4dPoint::operator=(const float* p)
   else {
     x = y = z = 0.0; w = 1.0;
   }
-  return *this;
-}
-
-ON_4dPoint& ON_4dPoint::operator=(const ON_2fPoint& p)
-{
-  x = (double)p.x;
-  y = (double)p.y;
-  z = 0.0;
-  w = 1.0;
-  return *this;
-}
-
-ON_4dPoint& ON_4dPoint::operator=(const ON_3fPoint& p)
-{
-  x = (double)p.x;
-  y = (double)p.y;
-  z = (double)p.z;
-  w = 1.0;
-  return *this;
-}
-
-ON_4dPoint& ON_4dPoint::operator=(const ON_2fVector& v)
-{
-  x = (double)v.x;
-  y = (double)v.y;
-  z = 0.0;
-  w = 0.0;
-  return *this;
-}
-
-ON_4dPoint& ON_4dPoint::operator=(const ON_3fVector& v)
-{
-  x = (double)v.x;
-  y = (double)v.y;
-  z = (double)v.z;
-  w = 0.0;
   return *this;
 }
 
@@ -3494,6 +4609,52 @@ ON_4dPoint& ON_4dPoint::operator=(const ON_3dVector& v)
   w = 0.0;
   return *this;
 }
+
+ON_4dPoint& ON_4dPoint::operator=(const ON_2fPoint& p)
+{
+  x = (double)p.x;
+  y = (double)p.y;
+  z = 0.0;
+  w = 1.0;
+  return *this;
+}
+
+ON_4dPoint& ON_4dPoint::operator=(const ON_3fPoint& p)
+{
+  x = (double)p.x;
+  y = (double)p.y;
+  z = (double)p.z;
+  w = 1.0;
+  return *this;
+}
+
+ON_4dPoint& ON_4dPoint::operator=(const ON_4fPoint& p)
+{
+  x = (double)p.x;
+  y = (double)p.y;
+  z = (double)p.z;
+  w = (double)p.w;
+  return *this;
+}
+
+ON_4dPoint& ON_4dPoint::operator=(const ON_2fVector& v)
+{
+  x = (double)v.x;
+  y = (double)v.y;
+  z = 0.0;
+  w = 0.0;
+  return *this;
+}
+
+ON_4dPoint& ON_4dPoint::operator=(const ON_3fVector& v)
+{
+  x = (double)v.x;
+  y = (double)v.y;
+  z = (double)v.z;
+  w = 0.0;
+  return *this;
+}
+
 
 ON_4dPoint& ON_4dPoint::operator*=(double d)
 {
@@ -3726,6 +4887,22 @@ ON_2dVector::ON_2dVector(const ON_3dVector& v)
 ON_2dVector::ON_2dVector(const ON_2dPoint& p)
 {x=p.x;y=p.y;}
 
+ON_2dVector::ON_2dVector(const ON_3dPoint& p)
+{x=p.x;y=p.y;}
+
+ON_2dVector::ON_2dVector(const ON_2fVector& v)
+{x=v.x;y=v.y;}
+
+ON_2dVector::ON_2dVector(const ON_3fVector& v)
+{x=v.x;y=v.y;}
+
+ON_2dVector::ON_2dVector(const ON_2fPoint& p)
+{x=p.x;y=p.y;}
+
+ON_2dVector::ON_2dVector(const ON_3fPoint& p)
+{x=p.x;y=p.y;}
+
+
 ON_2dVector::operator double*()
 {
   return &x;
@@ -3774,6 +4951,41 @@ ON_2dVector& ON_2dVector::operator=(const ON_2dPoint& p)
   return *this;
 }
 
+ON_2dVector& ON_2dVector::operator=(const ON_3dPoint& p)
+{
+  x = p.x;
+  y = p.y;
+  return *this;
+}
+
+ON_2dVector& ON_2dVector::operator=(const ON_2fVector& v)
+{
+  x = v.x;
+  y = v.y;
+  return *this;
+}
+
+ON_2dVector& ON_2dVector::operator=(const ON_3fVector& v)
+{
+  x = v.x;
+  y = v.y;
+  return *this;
+}
+
+ON_2dVector& ON_2dVector::operator=(const ON_2fPoint& p)
+{
+  x = p.x;
+  y = p.y;
+  return *this;
+}
+
+ON_2dVector& ON_2dVector::operator=(const ON_3fPoint& p)
+{
+  x = p.x;
+  y = p.y;
+  return *this;
+}
+
 ON_2dVector ON_2dVector::operator-() const
 {
   return ON_2dVector(-x,-y);
@@ -3808,6 +5020,18 @@ ON_2dVector& ON_2dVector::operator-=(const ON_2dVector& v)
   return *this;
 }
 
+ON_2dVector ON_2dVector::operator*( int i ) const
+{
+  double d = i;
+  return ON_2dVector(x*d,y*d);
+}
+
+ON_2dVector ON_2dVector::operator*( float f ) const
+{
+  double d = f;
+  return ON_2dVector(x*d,y*d);
+}
+
 ON_2dVector ON_2dVector::operator*( double d ) const
 {
   return ON_2dVector(x*d,y*d);
@@ -3826,6 +5050,18 @@ double ON_2dVector::operator*( const ON_2dPoint& v ) const
 double ON_2dVector::operator*( const ON_2fVector& v ) const
 {
   return (x*v.x + y*v.y);
+}
+
+ON_2dVector ON_2dVector::operator/( int i ) const
+{
+  const double one_over_d = 1.0/((double)i);
+  return ON_2dVector(x*one_over_d,y*one_over_d);
+}
+
+ON_2dVector ON_2dVector::operator/( float f ) const
+{
+  const double one_over_d = 1.0/((double)f);
+  return ON_2dVector(x*one_over_d,y*one_over_d);
 }
 
 ON_2dVector ON_2dVector::operator/( double d ) const
@@ -3848,6 +5084,75 @@ ON_2dVector ON_2dVector::operator-( const ON_2dVector& v ) const
 {
   return ON_2dVector(x-v.x,y-v.y);
 }
+
+ON_2dPoint ON_2dVector::operator-( const ON_2dPoint& v ) const
+{
+  return ON_2dPoint(x-v.x,y-v.y);
+}
+
+
+ON_3dVector ON_2dVector::operator+( const ON_3dVector& v ) const
+{
+  return ON_3dVector(x+v.x,y+v.y,v.z);
+}
+
+ON_3dPoint ON_2dVector::operator+( const ON_3dPoint& p ) const
+{
+  return ON_3dPoint(x+p.x,y+p.y,p.z);
+}
+
+ON_3dVector ON_2dVector::operator-( const ON_3dVector& v ) const
+{
+  return ON_3dVector(x-v.x,y-v.y,-v.z);
+}
+
+ON_3dPoint ON_2dVector::operator-( const ON_3dPoint& v ) const
+{
+  return ON_3dPoint(x-v.x,y-v.y,-v.z);
+}
+
+ON_2dVector ON_2dVector::operator+( const ON_2fVector& v ) const
+{
+  return ON_2dVector(x+v.x,y+v.y);
+}
+
+ON_2dPoint ON_2dVector::operator+( const ON_2fPoint& p ) const
+{
+  return ON_2dPoint(x+p.x,y+p.y);
+}
+
+ON_2dVector ON_2dVector::operator-( const ON_2fVector& v ) const
+{
+  return ON_2dVector(x-v.x,y-v.y);
+}
+
+ON_2dPoint ON_2dVector::operator-( const ON_2fPoint& v ) const
+{
+  return ON_2dPoint(x-v.x,y-v.y);
+}
+
+
+ON_3dVector ON_2dVector::operator+( const ON_3fVector& v ) const
+{
+  return ON_3dVector(x+v.x,y+v.y,v.z);
+}
+
+ON_3dPoint ON_2dVector::operator+( const ON_3fPoint& p ) const
+{
+  return ON_3dPoint(x+p.x,y+p.y,p.z);
+}
+
+ON_3dVector ON_2dVector::operator-( const ON_3fVector& v ) const
+{
+  return ON_3dVector(x-v.x,y-v.y,-v.z);
+}
+
+ON_3dPoint ON_2dVector::operator-( const ON_3fPoint& v ) const
+{
+  return ON_3dPoint(x-v.x,y-v.y,-v.z);
+}
+
+
 
 double ON_2dVector::operator*(const ON_4dPoint& h) const
 {
@@ -3949,7 +5254,7 @@ double ON_2dVector::Length() const
     fy *= len;
     len = fx*sqrt(1.0 + fy*fy);
   }
-  else if ( fx > 0.0 && ON_IsFinite(fx) )
+  else if ( fx > 0.0 && ON_IS_FINITE(fx) )
     len = fx;
   else
     len = 0.0;
@@ -3986,7 +5291,7 @@ bool ON_2dVector::Unitize()
     y *= d;
     rc = true;
   }
-  else if ( d > 0.0 && ON_IsFinite(d) )
+  else if ( d > 0.0 && ON_IS_FINITE(d) )
   {
     // This code is rarely used and can be slow.
     // It multiplies by 2^1023 in an attempt to 
@@ -4030,9 +5335,14 @@ bool ON_2dVector::IsZero() const
   return (x==0.0 && y==0.0);
 }
 
+bool ON_2dVector::IsUnitVector() const
+{
+  return (x != ON_UNSET_VALUE && y != ON_UNSET_VALUE && fabs(Length() - 1.0) <= ON_SQRT_EPSILON);
+}
+
 // set this vector to be perpendicular to another vector
 bool ON_2dVector::PerpendicularTo( // Result is not unitized. 
-		      // returns false if input vector is zero
+                      // returns false if input vector is zero
       const ON_2dVector& v
       )
 {
@@ -4048,6 +5358,18 @@ bool ON_2dVector::PerpendicularTo(
       )
 {
   return PerpendicularTo(q-p);
+}
+
+ON_2dVector operator*(int i, const ON_2dVector& v)
+{
+  double d = i;
+  return ON_2dVector(d*v.x,d*v.y);
+}
+
+ON_2dVector operator*(float f, const ON_2dVector& v)
+{
+  double d = f;
+  return ON_2dVector(d*v.x,d*v.y);
 }
 
 ON_2dVector operator*(double d, const ON_2dVector& v)
@@ -4125,7 +5447,22 @@ ON_3dVector::ON_3dVector(double xx,double yy,double zz)
 ON_3dVector::ON_3dVector(const ON_2dVector& v)
 {x=v.x;y=v.y;z=0.0;}
 
+ON_3dVector::ON_3dVector(const ON_2dPoint& p)
+{x=p.x;y=p.y;z=0.0;}
+
 ON_3dVector::ON_3dVector(const ON_3dPoint& p)
+{x=p.x;y=p.y;z=p.z;}
+
+ON_3dVector::ON_3dVector(const ON_2fVector& v)
+{x=v.x;y=v.y;z=0.0;}
+
+ON_3dVector::ON_3dVector(const ON_3fVector& v)
+{x=v.x;y=v.y;z=v.z;}
+
+ON_3dVector::ON_3dVector(const ON_2fPoint& p)
+{x=p.x;y=p.y;z=0.0;}
+
+ON_3dVector::ON_3dVector(const ON_3fPoint& p)
 {x=p.x;y=p.y;z=p.z;}
 
 ON_3dVector::operator double*()
@@ -4172,7 +5509,48 @@ ON_3dVector& ON_3dVector::operator=(const ON_2dVector& v)
   return *this;
 }
 
+ON_3dVector& ON_3dVector::operator=(const ON_2dPoint& p)
+{
+  x = p.x;
+  y = p.y;
+  z = 0.0;
+  return *this;
+}
+
 ON_3dVector& ON_3dVector::operator=(const ON_3dPoint& p)
+{
+  x = p.x;
+  y = p.y;
+  z = p.z;
+  return *this;
+}
+
+
+ON_3dVector& ON_3dVector::operator=(const ON_2fVector& v)
+{
+  x = v.x;
+  y = v.y;
+  z = 0.0;
+  return *this;
+}
+
+ON_3dVector& ON_3dVector::operator=(const ON_3fVector& v)
+{
+  x = v.x;
+  y = v.y;
+  z = v.z;
+  return *this;
+}
+
+ON_3dVector& ON_3dVector::operator=(const ON_2fPoint& p)
+{
+  x = p.x;
+  y = p.y;
+  z = 0.0;
+  return *this;
+}
+
+ON_3dVector& ON_3dVector::operator=(const ON_3fPoint& p)
 {
   x = p.x;
   y = p.y;
@@ -4218,6 +5596,18 @@ ON_3dVector& ON_3dVector::operator-=(const ON_3dVector& v)
   return *this;
 }
 
+ON_3dVector ON_3dVector::operator*( int i ) const
+{
+  double d = i;
+  return ON_3dVector(x*d,y*d,z*d);
+}
+
+ON_3dVector ON_3dVector::operator*( float f ) const
+{
+  double d = f;
+  return ON_3dVector(x*d,y*d,z*d);
+}
+
 ON_3dVector ON_3dVector::operator*( double d ) const
 {
   return ON_3dVector(x*d,y*d,z*d);
@@ -4236,6 +5626,18 @@ double ON_3dVector::operator*( const ON_3dPoint& v ) const
 double ON_3dVector::operator*( const ON_3fVector& v ) const
 {
   return (x*v.x + y*v.y + z*v.z);
+}
+
+ON_3dVector ON_3dVector::operator/( int i ) const
+{
+  const double one_over_d = 1.0/((double)i);
+  return ON_3dVector(x*one_over_d,y*one_over_d,z*one_over_d);
+}
+
+ON_3dVector ON_3dVector::operator/( float f ) const
+{
+  const double one_over_d = 1.0/((double)f);
+  return ON_3dVector(x*one_over_d,y*one_over_d,z*one_over_d);
 }
 
 ON_3dVector ON_3dVector::operator/( double d ) const
@@ -4258,6 +5660,72 @@ ON_3dVector ON_3dVector::operator-( const ON_3dVector& v ) const
 {
   return ON_3dVector(x-v.x,y-v.y,z-v.z);
 }
+
+ON_3dPoint ON_3dVector::operator-( const ON_3dPoint& v ) const
+{
+  return ON_3dPoint(x-v.x,y-v.y,z-v.z);
+}
+
+ON_3dVector ON_3dVector::operator+( const ON_2dVector& v ) const
+{
+  return ON_3dVector(x+v.x,y+v.y,z);
+}
+
+ON_3dPoint ON_3dVector::operator+( const ON_2dPoint& p ) const
+{
+  return ON_3dPoint(x+p.x,y+p.y,z);
+}
+
+ON_3dVector ON_3dVector::operator-( const ON_2dVector& v ) const
+{
+  return ON_3dVector(x-v.x,y-v.y,z);
+}
+
+ON_3dPoint ON_3dVector::operator-( const ON_2dPoint& v ) const
+{
+  return ON_3dPoint(x-v.x,y-v.y,z);
+}
+
+ON_3dVector ON_3dVector::operator+( const ON_3fVector& v ) const
+{
+  return ON_3dVector(x+v.x,y+v.y,z+v.z);
+}
+
+ON_3dPoint ON_3dVector::operator+( const ON_3fPoint& p ) const
+{
+  return ON_3dPoint(x+p.x,y+p.y,z+p.z);
+}
+
+ON_3dVector ON_3dVector::operator-( const ON_3fVector& v ) const
+{
+  return ON_3dVector(x-v.x,y-v.y,z-v.z);
+}
+
+ON_3dPoint ON_3dVector::operator-( const ON_3fPoint& v ) const
+{
+  return ON_3dPoint(x-v.x,y-v.y,z-v.z);
+}
+
+ON_3dVector ON_3dVector::operator+( const ON_2fVector& v ) const
+{
+  return ON_3dVector(x+v.x,y+v.y,z);
+}
+
+ON_3dPoint ON_3dVector::operator+( const ON_2fPoint& p ) const
+{
+  return ON_3dPoint(x+p.x,y+p.y,z);
+}
+
+ON_3dVector ON_3dVector::operator-( const ON_2fVector& v ) const
+{
+  return ON_3dVector(x-v.x,y-v.y,z);
+}
+
+ON_3dPoint ON_3dVector::operator-( const ON_2fPoint& v ) const
+{
+  return ON_3dPoint(x-v.x,y-v.y,z);
+}
+
 
 double ON_3dVector::operator*(const ON_4dPoint& h) const
 {
@@ -4364,7 +5832,7 @@ double ON_3dVector::Length() const
     fz *= len;
     len = fx*sqrt(1.0 + fy*fy + fz*fz);
   }
-  else if ( fx > 0.0 && ON_IsFinite(fx) )
+  else if ( fx > 0.0 && ON_IS_FINITE(fx) )
     len = fx;
   else
     len = 0.0;
@@ -4399,7 +5867,7 @@ bool ON_3dVector::Unitize()
     z *= d;
     rc = true;
   }
-  else if ( d > 0.0 && ON_IsFinite(d) )
+  else if ( d > 0.0 && ON_IS_FINITE(d) )
   {
     // This code is rarely used and can be slow.
     // It multiplies by 2^1023 in an attempt to 
@@ -4437,6 +5905,56 @@ bool ON_3dVector::Unitize()
   return rc;
 }
 
+double ON_3dVector::LengthAndUnitize()
+{
+  double d;
+  double len = Length();
+  if ( len > ON_DBL_MIN )
+  {
+    d = 1.0/len;
+    x *= d;
+    y *= d;
+    z *= d;
+  }
+  else if ( len > 0.0 && ON_IS_FINITE(len) )
+  {
+    // This code is rarely used and can be slow.
+    // It multiplies by 2^1023 in an attempt to 
+    // normalize the coordinates.
+    // If the renormalization works, then we're
+    // ok.  If the renormalization fails, we
+    // return false.
+    ON_3dVector tmp;
+    tmp.x = x*8.9884656743115795386465259539451e+307;
+    tmp.y = y*8.9884656743115795386465259539451e+307;
+    tmp.z = z*8.9884656743115795386465259539451e+307;
+    d = tmp.Length();
+    if ( d > ON_DBL_MIN )
+    {
+      d = 1.0/d;
+      x = tmp.x*d;
+      y = tmp.y*d;
+      z = tmp.z*d;
+    }
+    else
+    {
+      len = 0.0;
+      x = 0.0;
+      y = 0.0;
+      z = 0.0;
+    }
+  }
+  else
+  {
+    len = 0.0;
+    x = 0.0;
+    y = 0.0;
+    z = 0.0;
+  }
+
+  return len;
+}
+
 
 bool ON_3dVector::IsTiny( double tiny_tol ) const
 {
@@ -4446,6 +5964,23 @@ bool ON_3dVector::IsTiny( double tiny_tol ) const
 bool ON_3dVector::IsZero() const
 {
   return (x==0.0 && y==0.0 && z==0.0);
+}
+
+bool ON_3dVector::IsUnitVector() const
+{
+  return (x != ON_UNSET_VALUE && y != ON_UNSET_VALUE && z != ON_UNSET_VALUE && fabs(Length() - 1.0) <= ON_SQRT_EPSILON);
+}
+
+ON_3dVector operator*(int i, const ON_3dVector& v)
+{
+  double d = i;
+  return ON_3dVector(d*v.x,d*v.y,d*v.z);
+}
+
+ON_3dVector operator*(float f, const ON_3dVector& v)
+{
+  double d = f;
+  return ON_3dVector(d*v.x,d*v.y,d*v.z);
 }
 
 ON_3dVector operator*(double d, const ON_3dVector& v)
@@ -4483,28 +6018,54 @@ double ON_TripleProduct( const double* a, const double* b, const double* c )
 
 bool ON_2dVector::IsValid() const
 {
-  return ( ON_IsValid(x) && ON_IsValid(y) ) ? true : false;
+  return ( ON_IS_VALID(x) && ON_IS_VALID(y) ) ? true : false;
+}
+
+bool ON_2dVector::IsUnsetVector() const
+{
+  return ( ON_UNSET_VALUE == x && ON_UNSET_VALUE == y );
 }
 
 bool ON_3dVector::IsValid() const
 {
-  return ( ON_IsValid(x) && ON_IsValid(y) && ON_IsValid(z) ) ? true : false;
+  return ( ON_IS_VALID(x) && ON_IS_VALID(y) && ON_IS_VALID(z) ) ? true : false;
+}
+
+bool ON_3dVector::IsUnsetVector() const
+{
+  return ( ON_UNSET_VALUE == x && ON_UNSET_VALUE == y && ON_UNSET_VALUE == z );
 }
 
 bool ON_2dPoint::IsValid() const
 {
-  return (ON_IsValid(x) && ON_IsValid(y)) ? true : false;
+  return (ON_IS_VALID(x) && ON_IS_VALID(y)) ? true : false;
+}
+
+bool ON_2dPoint::IsUnsetPoint() const
+{
+  return ( ON_UNSET_VALUE == x && ON_UNSET_VALUE == y );
 }
 
 bool ON_3dPoint::IsValid() const
 {
-  return (ON_IsValid(x) && ON_IsValid(y) && ON_IsValid(z) ) ? true : false;
+  return (ON_IS_VALID(x) && ON_IS_VALID(y) && ON_IS_VALID(z) ) ? true : false;
+}
+
+bool ON_3dPoint::IsUnsetPoint() const
+{
+  return ( ON_UNSET_VALUE == x && ON_UNSET_VALUE == y && ON_UNSET_VALUE == z );
 }
 
 bool ON_4dPoint::IsValid() const
 {
-  return (ON_IsValid(x) && ON_IsValid(y) && ON_IsValid(z) && ON_IsValid(w)) ? true : false;
+  return (ON_IS_VALID(x) && ON_IS_VALID(y) && ON_IS_VALID(z) && ON_IS_VALID(w)) ? true : false;
 }
+
+bool ON_4dPoint::IsUnsetPoint() const
+{
+  return ( ON_UNSET_VALUE == x && ON_UNSET_VALUE == y && ON_UNSET_VALUE == z && ON_UNSET_VALUE == w );
+}
+
 
 void ON_2dPoint::Set(double xx, double yy)
 {
@@ -4559,7 +6120,6 @@ void ON_3fVector::Set(float xx, float yy, float zz)
   x = xx; y = yy; z = zz;
 }
 
-
 bool ON_PlaneEquation::Create( ON_3dPoint P, ON_3dVector N )
 {
   bool rc = false;
@@ -4576,7 +6136,7 @@ bool ON_PlaneEquation::Create( ON_3dPoint P, ON_3dVector N )
 
 bool ON_PlaneEquation::IsValid() const
 {
-  return (ON_3dVector::IsValid() && ON_IsValid(d));
+  return (ON_IS_VALID(x) && ON_IS_VALID(y) && ON_IS_VALID(z) && ON_IS_VALID(d));
 }
 
 bool ON_PlaneEquation::Transform( const ON_Xform& xform )
@@ -4661,15 +6221,15 @@ double ON_PlaneEquation::MaximumValueAt(const ON_BoundingBox& bbox) const
 }
 
 bool ON_PlaneEquation::IsNearerThan( 
-	const ON_BezierCurve& bezcrv,
-	double s0,
-	double s1,
-	int sample_count,
-	double endpoint_tolerance,
-	double interior_tolerance,
-	double* smin,
-	double* smax
-	) const
+        const ON_BezierCurve& bezcrv,
+        double s0,
+        double s1,
+        int sample_count,
+        double endpoint_tolerance,
+        double interior_tolerance,
+        double* smin,
+        double* smax
+        ) const
 {
   int i, n;
   double smn, smx, vmn, vmx, s, v, w;
@@ -4697,9 +6257,9 @@ bool ON_PlaneEquation::IsNearerThan(
     if (v > endpoint_tolerance )
     {
       if ( smin )
-	*smin = smn;
+        *smin = smn;
       if ( smax )
-	*smax = s0;
+        *smax = s0;
       return false;
     }
     if ( v < vmn ) { vmn = v; smn = s0; } else if (v > vmx) { vmx = v; smx = s0; }
@@ -4709,9 +6269,9 @@ bool ON_PlaneEquation::IsNearerThan(
     if (v > endpoint_tolerance )
     {
       if ( smin )
-	*smin = smn;
+        *smin = smn;
       if ( smax )
-	*smax = s1;
+        *smax = s1;
       return false;
     }
     if ( v < vmn ) { vmn = v; smn = s1; } else if (v > vmx) { vmx = v; smx = s1; }
@@ -4730,21 +6290,21 @@ bool ON_PlaneEquation::IsNearerThan(
 
       if ( v < vmn ) 
       { 
-	vmn = v; 
-	smn = s; 
+        vmn = v; 
+        smn = s; 
       } 
       else if (v > vmx) 
       { 
-	vmx = v; 
-	smx = s; 
-	if ( vmx > interior_tolerance )
-	{
-	  if ( smin )
-	    *smin = smn;
-	  if ( smax )
-	    *smax = s;
-	  return false;
-	}
+        vmx = v; 
+        smx = s; 
+        if ( vmx > interior_tolerance )
+        {
+          if ( smin )
+            *smin = smn;
+          if ( smax )
+            *smax = s;
+          return false;
+        }
       }
 
       sample_count--;
@@ -4762,9 +6322,9 @@ bool ON_PlaneEquation::IsNearerThan(
 
 
 int ON_Get3dConvexHull( 
-	  const ON_SimpleArray<ON_3dPoint>& points, 
-	  ON_SimpleArray<ON_PlaneEquation>& hull 
-	  )
+          const ON_SimpleArray<ON_3dPoint>& points, 
+          ON_SimpleArray<ON_PlaneEquation>& hull 
+          )
 {
   // This is a slow and stupid way to get the convex hull.
   // It works for small point sets.  If you need something
@@ -4790,73 +6350,73 @@ int ON_Get3dConvexHull(
       B = points[j];
       for (k = j+1; k < point_count; k++ )
       {
-	C = points[k];
-	e.ON_3dVector::operator=(ON_CrossProduct(B-A,C-A));
-	if ( !e.ON_3dVector::Unitize() )
-	  continue;
-	e.d = -(A.x*e.x + A.y*e.y + A.z*e.z);
-	d0 = d1 = e.ValueAt(A);
-	d = e.ValueAt(B); if ( d < d0 ) d0 = d; else if (d > d1) d1 = d;
-	d = e.ValueAt(C); if ( d < d0 ) d0 = d; else if (d > d1) d1 = d;
-	if ( d0 > -ON_ZERO_TOLERANCE )
-	  d0 = -ON_ZERO_TOLERANCE;
-	if ( d1 < ON_ZERO_TOLERANCE )
-	  d1 = ON_ZERO_TOLERANCE;
+        C = points[k];
+        e.ON_3dVector::operator=(ON_CrossProduct(B-A,C-A));
+        if ( !e.ON_3dVector::Unitize() )
+          continue;
+        e.d = -(A.x*e.x + A.y*e.y + A.z*e.z);
+        d0 = d1 = e.ValueAt(A);
+        d = e.ValueAt(B); if ( d < d0 ) d0 = d; else if (d > d1) d1 = d;
+        d = e.ValueAt(C); if ( d < d0 ) d0 = d; else if (d > d1) d1 = d;
+        if ( d0 > -ON_ZERO_TOLERANCE )
+          d0 = -ON_ZERO_TOLERANCE;
+        if ( d1 < ON_ZERO_TOLERANCE )
+          d1 = ON_ZERO_TOLERANCE;
 
-	h0 = 0.0; h1 = 0.0;
+        h0 = 0.0; h1 = 0.0;
 
-	bGoodSide = true;
-	for ( n = 0; n < point_count && bGoodSide; n++ )
-	{
-	  d = e.ValueAt(points[n]);
-	  if ( d < h0 )
-	  {
-	    h0 = d;
-	    bGoodSide = (d0 <= h0 || h1 <= d1);
-	  }
-	  else if ( d > h1 )
-	  {
-	    h1 = d;
-	    bGoodSide = (d0 <= h0 || h1 <= d1);
-	  }
-	}
+        bGoodSide = true;
+        for ( n = 0; n < point_count && bGoodSide; n++ )
+        {
+          d = e.ValueAt(points[n]);
+          if ( d < h0 )
+          {
+            h0 = d;
+            bGoodSide = (d0 <= h0 || h1 <= d1);
+          }
+          else if ( d > h1 )
+          {
+            h1 = d;
+            bGoodSide = (d0 <= h0 || h1 <= d1);
+          }
+        }
 
-	if ( bGoodSide )
-	{
-	  if ( h1 <= d1 )
-	  {
-	    // all points are "below" the plane
-	    if ( d0 <= h0  )
-	    {
-	      // all points are also "above" the plane,
-	      hull.SetCount(count0);
-	      ON_PlaneEquation& e0 = hull.AppendNew();
-	      e0.x = -e.x;
-	      e0.y = -e.y;
-	      e0.z = -e.z;
-	      e0.d = -(e.d-h0);
-	    }
-	    ON_PlaneEquation& e1 = hull.AppendNew();
-	    e1.x = e.x;
-	    e1.y = e.y;
-	    e1.z = e.z;
-	    e1.d = (e.d-h1);
-	    if ( d0 <= h0  )
-	    {
-	      // points are (nearly) planar
-	      return 2;
-	    }
-	  }
-	  else if ( d0 <= h0  )
-	  {
-	    // all points are "above" the plane
-	    ON_PlaneEquation& e0 = hull.AppendNew();
-	    e0.x = -e.x;
-	    e0.y = -e.y;
-	    e0.z = -e.z;
-	    e0.d = -(e.d-h0);
-	  }
-	}
+        if ( bGoodSide )
+        {
+          if ( h1 <= d1 )
+          {
+            // all points are "below" the plane
+            if ( d0 <= h0  )
+            {
+              // all points are also "above" the plane,
+              hull.SetCount(count0);
+              ON_PlaneEquation& e0 = hull.AppendNew();
+              e0.x = -e.x;
+              e0.y = -e.y;
+              e0.z = -e.z;
+              e0.d = -(e.d-h0);
+            }
+            ON_PlaneEquation& e1 = hull.AppendNew();
+            e1.x = e.x;
+            e1.y = e.y;
+            e1.z = e.z;
+            e1.d = (e.d-h1);
+            if ( d0 <= h0  )
+            {
+              // points are (nearly) planar
+              return 2;
+            }
+          }
+          else if ( d0 <= h0  )
+          {
+            // all points are "above" the plane
+            ON_PlaneEquation& e0 = hull.AppendNew();
+            e0.x = -e.x;
+            e0.y = -e.y;
+            e0.z = -e.z;
+            e0.d = -(e.d-h0);
+          }
+        }
       }
     }
   }
@@ -4867,3 +6427,736 @@ int ON_Get3dConvexHull(
   return hull.Count() - count0;
 }
 
+bool ON_BoundingBox::IsValid() const 
+{
+	return (    m_min.x <= m_max.x
+          && ON_IS_VALID(m_min.x)
+          && ON_IS_VALID(m_max.x)
+          && m_min.y <= m_max.y 
+          && ON_IS_VALID(m_min.y)
+          && ON_IS_VALID(m_max.y)
+          && m_min.z <= m_max.z
+          && ON_IS_VALID(m_min.z)
+          && ON_IS_VALID(m_max.z)
+         );
+};
+
+bool ON_IsDegenrateConicHelper(double A, double B, double C, double D, double E)
+{
+  //
+  // The conic is degenerate (lines and/or points) if the 
+  //
+  //     A   B/2 D/2
+  //     B/2 C   E/2
+  //     D/2 E/2 F
+  //
+  // has rank < 3
+  // (F = 0 in our case here.)
+
+  // zero_tol was tuned by 
+  //  1) testing sets of equaly spaced colinear 
+  //     points with coordinate sizes ranging from 0.001 to 1.0e4 and
+  //     segment lengths from 0.001 to 1000.0.
+  //  2) testing ellipses with axes lengths ranging from 0.001 to 1000
+  //     where the major/minor ration <= 2000 and the centers had coordinates
+  //     from 0.001 to 1.0e4.
+  //  Do not change zero_tol without extensive testing.
+  const double zero_tol = 1.0e-9;
+
+  double x, y;
+  double M[3][3];
+  int i0, i1, i2;
+
+  // scale matrix coefficients so largest is 1 to
+  // make checking for a zero pivot easier.
+  x = fabs(A);
+  if ( x < (y=fabs(B)) ) x = y;
+  if ( x < (y=fabs(C)) ) x = y;
+  if ( x < (y=fabs(D)) ) x = y;
+  if ( x < (y=fabs(E)) ) x = y;
+  if ( x <= 1.0e-12 )
+    return true; // rank 0
+
+  x = 1.0/x;
+
+  // set up matrix
+  M[0][0] = x*A;
+  M[1][1] = x*C;
+  x *= 0.5;
+  M[0][1] = M[1][0] = x*B;
+  M[0][2] = M[2][0] = x*D;
+  M[1][2] = M[2][1] = x*E;
+  M[2][2] = 0.0;
+
+  // since M is symmetric, just use partial pivoting
+
+  // get first pivot ic column M[][0]
+  i0 = 0;
+  x = fabs(M[0][0]);
+  if ( x < (y=fabs(M[1][0])) ) {x=y;i0=1;}
+  if ( x < (y=fabs(M[2][0])) ) {x=y;i0=2;}
+  if ( x <= zero_tol )
+    return true; // rank 0
+
+  // first pivot row reduction
+  x = 1.0/M[i0][0]; 
+  M[i0][1] *= x; 
+  M[i0][2] *= x;
+  i1 = (i0+1)%3;
+  if ( 0.0 != (y = -M[i1][0]) )
+  {
+    M[i1][1] += y*M[i0][1];
+    M[i1][2] += y*M[i0][2];
+  }
+  i2 = (i0+2)%3;
+  if ( 0.0 != (y = -M[i2][0]) )
+  {
+    M[i2][1] += y*M[i0][1]; 
+    M[i2][2] += y*M[i0][2];
+  }
+
+  // get second pivot in column M[][1]
+  if ( fabs(M[i1][1]) < fabs(M[i2][1]) )
+  {
+    i1 = i2;
+    i2 = (i0+1)%3;
+  }
+  if ( fabs(M[i1][1]) <= zero_tol )
+    return true; // rank 1
+
+  // second pivot row reduction
+  x = 1.0/M[i1][1]; 
+  M[i1][2] *= x;
+  if ( 0.0 != (y = -M[i2][1]) )
+    M[i2][2] += y*M[i1][2];
+
+  // test third and final pivot
+  if ( fabs(M[i2][2]) <= zero_tol )
+    return true;  // rank 2
+
+  return false;
+}
+
+bool ON_GetConicEquationThrough6Points( 
+        int stride, 
+        const double* points2d, 
+        double conic[6],
+        double* max_pivot,
+        double* min_pivot,
+        double* zero_pivot
+        )
+{
+  // Sets conic[] to the coefficents = (A,B,C,D,E,F), 
+  // such that A*x*x + B*x*y + C*y*y + D*x + E*y + F = 0
+  // for each of the 6 input points.
+
+  // This code is long and ugly.  The reason for unrolling the 
+  // obvious loops is to make it as efficient as possible.  
+  // Rhino calls this function in time critical situations.
+  //
+
+  ON_2dPoint pts[6], bboxmin, bboxmax;
+  double scale, x, y, M[5][5], N[5][5], max_piv, min_piv;
+  const double* p;
+  int i, j, k;
+
+  if ( 0 == conic )
+    return false;
+  memset(conic,0,6*sizeof(conic[0]));
+  if ( max_pivot )
+    *max_pivot = 0.0;
+  if ( min_pivot )
+    *min_pivot = 0.0;
+  if ( zero_pivot )
+    *zero_pivot = 0.0;
+
+  // copy input points into pts[6] and calculate bounding box
+  bboxmin.x = bboxmax.x = pts[0].x = points2d[0];
+  bboxmin.y = bboxmax.y = pts[0].y = points2d[1];
+  if ( !pts[0].IsValid() )
+    return false;
+  for ( i = 1; i < 6; i++ )
+  {
+    points2d += stride;
+    pts[i].x = points2d[0];
+    pts[i].y = points2d[1];
+    if ( !pts[i].IsValid() )
+      return false;
+    if ( pts[i].x < bboxmin.x ) bboxmin.x = pts[i].x; 
+    else if ( pts[i].x > bboxmax.x ) bboxmax.x = pts[i].x;
+    if ( pts[i].y < bboxmin.y ) bboxmin.y = pts[i].y; 
+    else if ( pts[i].y > bboxmax.y ) bboxmax.y = pts[i].y;
+  }
+
+  // translate and scale pts[] so pts[5] is at the origin and
+  // (pts[0],...pts[4]) have and have a "diameter" near 1.
+  // This keeps the starting coefficients in M[][] less than 5
+  // with the largest generally near one.
+  x = bboxmax.x-bboxmin.x;
+  y = bboxmax.y-bboxmin.y;
+  if ( x >= y )
+  {
+    if ( x > 0.0 )
+    {
+      y /= x;
+      scale = x*sqrt(1.0 + y*y);
+    }
+    else
+      return false;
+  }
+  else 
+  {
+    x /= y;
+    scale = y*sqrt(1.0 + x*x);
+  }
+  if ( scale > 0.0 )
+    scale = 1.0/scale;
+  else
+    return false;
+
+  for ( i = 0; i < 5; i++ )
+  {
+    x = scale*(pts[i].x - pts[5].x);
+    y = scale*(pts[i].y - pts[5].y);
+    M[i][0] = x*x;
+    M[i][1] = x*y;
+    M[i][2] = y*y;
+    M[i][3] = x;
+    M[i][4] = y;
+  }
+
+  memset( N,0,sizeof(N) );
+  N[0][0] = N[1][1] = N[2][2] = N[3][3] = N[4][4] = 1.0;
+
+  // The conic (A,B,C,D,E) is the kernel of M.
+
+  //////////////////////////////////////////////////////////
+  //
+  // find first pivot
+  //
+  j = 0;
+  p = &M[0][0];
+  x = fabs(*p);
+  for ( i = 1; i < 25; i++ )
+  {
+    if ( x < (y = fabs(*(++p))) )
+    {
+      x = y;
+      j = i;
+    }
+  }
+  max_piv = min_piv = x;
+  if ( 0.0 == x )
+    return false; // all input points are equal
+  i = j/5;
+  j %= 5;
+
+  if ( 0 != i )
+  {
+    // swap rows M[0][] and M[i][]
+    // Do not modify N because row ops act on the left of M.
+    for ( k = 0; k < 5; k++ )
+    {
+      y = M[0][k]; M[0][k] = M[i][k]; M[i][k] = y;
+    }
+  }
+  if ( 0 != j )
+  {
+    // Swap columns M[][0] and M[][j]
+    // Also swap N[][] columns because column swap
+    // matrix acts on the right of M.
+    for ( k = 0; k < 5; k++ )
+    {
+      y = M[k][0]; M[k][0] = M[k][j]; M[k][j] = y;
+      y = N[k][0]; N[k][0] = N[k][j]; N[k][j] = y;
+    }
+  }
+
+  // scale row M[0][] so that M[0][0] = 1.
+  // Do not modify N because row ops act on the left of M.
+  x = 1.0/M[0][0];
+  M[0][0] = 1.0; 
+  M[0][1] *= x; M[0][2] *= x; M[0][3] *= x; M[0][4] *= x;
+
+  // kill column M[1,2,3,4][0]
+  for ( i = 1; i < 5; i++)
+  {
+    if ( 0.0 != (y = -M[i][0]) )
+    {
+      // use row op M[i][] += y*M[0][]
+      // Do not modify N because row ops act on the left of M.
+      M[i][0] = 0.0; // set to zero so search for pivot is faster
+      M[i][1] += y*M[0][1]; M[i][2] += y*M[0][2]; M[i][3] += y*M[0][3]; M[i][4] += y*M[0][4];
+    }
+  }
+
+
+  //////////////////////////////////////////////////////////
+  //
+  // find second pivot
+  //
+  j = 6;
+  p = &M[1][1];
+  x = fabs(*p);
+  for ( i = 7; i < 25; i++ )
+  {
+    if ( x < (y = fabs(*(++p))) )
+    {
+      x = y;
+      j = i;
+    }
+  }
+  if ( x > max_piv ) max_piv = x; else if ( x < min_piv ) min_piv = x;
+  if ( 0.0 == x )
+  {
+    if ( 0 != max_pivot )
+      *max_pivot = max_piv;
+    return false; // two distinct points in input point list.
+  }
+  i = j/5;  // should always be >= 1
+  j %= 5;   // should always be >= 1
+
+  if ( i > 1 )
+  {
+    // swap rows M[1][] and M[i][]
+    // Do not modify N because row ops act on the left of M.
+    for ( k = 1; k < 5; k++ )
+    {
+      y = M[1][k]; M[1][k] = M[i][k]; M[i][k] = y;
+    }
+  }
+  if ( j > 1 )
+  {
+    // Swap columns M[][1] and M[][j]
+    // Also swap N[][] columns because column swap
+    // matrix acts on the right of M.
+    for ( k = 0; k < 5; k++ )
+    {
+      y = M[k][1]; M[k][1] = M[k][j]; M[k][j] = y;
+      y = N[k][1]; N[k][1] = N[k][j]; N[k][j] = y;
+    }
+  }
+
+  // scale row M[1][] so that M[1][1] = 1.
+  // Do not modify N because row ops act on the left of M.
+  x = 1.0/M[1][1];
+  M[1][1] = 1.0; 
+  M[1][2] *= x; M[1][3] *= x; M[1][4] *= x;
+
+  // kill column M[2,3,4][1]
+  for ( i = 2; i < 5; i++)
+  {
+    if ( 0.0 != (y = -M[i][1]) )
+    {
+      // use row op M[i][] += y*M[0][]
+      // Do not modify N because row ops act on the left of M.
+      M[i][1] = 0.0; // set to zero so search for pivot is faster
+      M[i][2] += y*M[1][2]; M[i][3] += y*M[1][3]; M[i][4] += y*M[1][4];
+    }
+  }
+
+
+  //////////////////////////////////////////////////////////
+  //
+  // find third pivot
+  //
+  j = 12;
+  p = &M[2][2];
+  x = fabs(*p);
+  for ( i = 13; i < 25; i++ )
+  {
+    if ( x < (y = fabs(*(++p))) )
+    {
+      x = y;
+      j = i;
+    }
+  }
+  if ( x > max_piv ) max_piv = x; else if ( x < min_piv ) min_piv = x;
+  if ( 0.0 == x )
+  {
+    if ( 0 != max_pivot )
+      *max_pivot = max_piv;
+    return false; // three distinct points in input point list.
+  }
+  i = j/5;  // should always be >= 2
+  j %= 5;   // should always be >= 2
+
+  if ( i > 2 )
+  {
+    // swap rows M[2][] and M[i][]
+    // Do not modify N because row ops act on the left of M.
+    for ( k = 2; k < 5; k++ )
+    {
+      y = M[2][k]; M[2][k] = M[i][k]; M[i][k] = y;
+    }
+  }
+  if ( j > 2 )
+  {
+    // Swap columns M[][2] and M[][j]
+    // Also swap N[][] columns because column swap
+    // matrix acts on the right of M.
+    for ( k = 0; k < 5; k++ )
+    {
+      y = M[k][2]; M[k][2] = M[k][j]; M[k][j] = y;
+      y = N[k][2]; N[k][2] = N[k][j]; N[k][j] = y;
+    }
+  }
+
+  // scale row M[2][] so that M[2][2] = 1.
+  // Do not modify N because row ops act on the left of M.
+  x = 1.0/M[2][2];
+  M[2][2] = 1.0; M[2][3] *= x; M[2][4] *= x;
+
+  // kill column M[3,4][2]
+  for ( i = 3; i < 5; i++)
+  {
+    if ( 0.0 != (y = -M[i][2]) )
+    {
+      // use row op M[i][] += y*M[0][]
+      // Do not modify N because row ops act on the left of M.
+      M[i][2] = 0.0; // set to zero so search for pivot is faster
+      M[i][3] += y*M[2][3]; M[i][4] += y*M[2][4];
+    }
+  }
+
+  //////////////////////////////////////////////////////////
+  //
+  // find fourth pivot
+  //
+  i = j = 3;
+  x = fabs(M[3][3]);
+  if ( x < (y = fabs(M[3][4])) )
+  {
+    x = y; j = 4;
+  }
+  if ( x < (y = fabs(M[4][3])) )
+  {
+    x = y; i = 4; j = 3;
+  }
+  if ( x < (y = fabs(M[4][4])) )
+  {
+    x = y; i = j = 4;
+  }
+  if ( x > max_piv ) max_piv = x; else if ( x < min_piv ) min_piv = x;
+  if ( 0.0 == x )
+  {
+    if ( 0 != max_pivot )
+      *max_pivot = max_piv;
+    return false; // four distinct points in the input point list.
+  }
+
+  if ( i > 3 )
+  {
+    // swap rows M[3][] and M[i][]
+    // Do not modify N[][] because row ops act on the left of M.
+    y = M[3][3]; M[3][3] = M[4][3]; M[4][3] = y;
+    y = M[3][4]; M[3][4] = M[i][4]; M[4][4] = y;
+  }
+  if ( j > 3 )
+  {
+    // Swap columns M[][3] and M[][j]
+    // Also swap N[][] columns because column swap
+    // matrix acts on the right of M.
+    for ( k = 0; k < 5; k++ )
+    {
+      y = M[k][3]; M[k][3] = M[k][4]; M[k][4] = y;
+      y = N[k][3]; N[k][3] = N[k][4]; N[k][4] = y;
+    }
+  }
+
+  // scale row M[3][] so that M[3][3] = 1.
+  // Do not modify N because row ops act on the left of M.
+  x = 1.0/M[3][3];
+  M[3][3] = 1.0; 
+  M[3][4] *= x;
+
+  // kill column M[4][3]
+  if ( 0.0 != M[4][3] )
+  {
+    // use row op M[i][] += y*M[3][]
+    // Do not modify N because row ops act on the left of M.
+    M[4][4] -= M[4][3]*M[3][4];
+    M[4][3] = 0.0; // set to zero so search for pivot is faster
+  }
+
+  // By construction, M[][] is singular and M[4][4] should be nearly zero.
+  // It should be upper triangluar with diagonal 1,1,1,1,0-ish
+  if ( max_pivot )
+    *max_pivot = max_piv;
+  if ( min_pivot )
+    *min_pivot = max_piv;
+  if ( zero_pivot )
+    *zero_pivot = fabs(M[4][4]);
+
+  // Use column operations to make M[][] the identity.
+  // The operations must also be applied to N[][] in order to
+  // calculate the kernel of the original M[][].
+  for ( i = 0; i < 4; i++ )
+  {
+    for (j = i+1; j < 5; j++ )
+    {
+      if ( 0.0 != (y = -M[i][j]) )
+      {
+        // waste of time // M[i][j] = 0.0;
+        for ( k = 0; k < 5; k++ )
+        {
+          //M[k][j] += y*M[k][i];
+          N[k][j] += y*N[k][i];
+        }
+      }
+    }
+  }
+
+  // At this point, M[][] should be reduced to a diagonal matrix with 
+  // 1,1,1,1,0 on the diagonal. The vector (A,B,C,D,E) = N*Transpose(0,0,0,0,1)
+  // will be in the kernel of the original M[][]. The conic through the 
+  // six points( scale*(pts[0]-pts[5]),...,scale*(pts[4]-pts[5]),(0,0) ) 
+  // is Ax^2 + Bxy + Cy^2 + Dx + Ey = 0.
+  // We need to apply the inverse of the scale and then translate by 
+  // (pts[5].x,pts[5].y) to get the equation of the conic through the 
+  // input point list.
+
+  double A = N[0][4];
+  double B = N[1][4];
+  double C = N[2][4];
+  double D = N[3][4];
+  double E = N[4][4];
+  // F = 0
+
+  // check for colinear point set
+  if ( ON_IsDegenrateConicHelper(A,B,C,D,E) )
+  {
+    // points lie on one or two lines
+    return false;
+  }
+
+  // points are not colinear
+
+  // undo the scale we applied when we calculated M[][]
+  x = scale*scale;
+  A *= x;
+  B *= x;
+  C *= x;
+  D *= scale;
+  E *= scale;
+
+  // undo the translation of pts[5] to (0,0) we applied when we calculated M[][]
+  x = -pts[5].x;
+  y = -pts[5].y;
+  double F = A*x*x + B*x*y + C*y*y + D*x + E*y;
+  D += 2.0*A*x + B*y;
+  E += 2.0*C*y + B*x;
+
+  if ( (fabs(A) >= fabs(C)) ? (A<0.0):(C<0.0) )
+  {
+    // Make the largest A/C coefficent positive.
+    A = -A; B = -B; C = -C; D = -D; E = -E; F = -F;
+  }
+
+  conic[0] = A; conic[1] = B; conic[2] = C;
+  conic[3] = D; conic[4] = E; conic[5] = F;
+
+  //
+  j = 0;
+  x = fabs(conic[0]);
+  for ( i = 0; i < 6; i++ )
+  {
+    if ( x < (y = fabs(conic[i])) )
+    {
+      x = y;
+      j = i;
+    }
+  }
+  if ( !(conic[j] != 0.0) )
+    return false;
+  y = 1.0/conic[j];
+  conic[0] *= y; conic[1] *= y; conic[2] *= y; 
+  conic[3] *= y; conic[4] *= y; conic[5] *= y; 
+  conic[j] = 1.0;
+
+  return true;
+}
+
+bool ON_IsConicEquationAnEllipse( 
+        const double conic[6], 
+        ON_2dPoint& center, 
+        ON_2dVector& major_axis, 
+        ON_2dVector& minor_axis, 
+        double* major_radius, 
+        double* minor_radius
+        )
+{
+  double A, C, D, E, F, x0, y0;
+  double X[2], Y[2], P[2];
+
+  if (    !ON_IsValid(conic[0]) 
+       || !ON_IsValid(conic[1]) 
+       || !ON_IsValid(conic[2]) 
+       || !ON_IsValid(conic[3]) 
+       || !ON_IsValid(conic[4]) 
+       || !ON_IsValid(conic[5]) 
+     )
+  {
+    return false;
+  }
+
+  if ( fabs(conic[1]) > 1.0e-14*fabs(conic[0]+fabs(conic[2])) ) 
+  {
+    // "B" is non zero - remove "rotation" from conic equation
+    const double alpha = 0.5*atan2(conic[1],conic[0]-conic[2]);
+    const double s = sin(alpha);
+    const double c = cos(alpha);
+    X[0] =  c; X[1] = s;
+    Y[0] = -s; Y[1] = c;
+
+    A = conic[0]*c*c + conic[1]*c*s + conic[2]*s*s;
+    // B = conic[1]*(c*c-s*s) + 2.0*(conic[2]-conic[0])*s*c; // (B = 0)
+    C = conic[0]*s*s - conic[1]*c*s + conic[2]*c*c;
+    D = conic[3]*c + conic[4]*s;
+    E = conic[4]*c - conic[3]*s;
+    // F = conic[5]; // F not changed by rotation
+  }
+  else
+  {
+    A = conic[0];
+    // B = conic[1];
+    C = conic[2];
+    D = conic[3];
+    E = conic[4];
+    // F = conic[5]; 
+    X[0] = 1.0; X[1] = 0.0;
+    Y[0] = 0.0; Y[1] = 1.0;
+  }
+
+  F = conic[5];
+
+  // the if (!(...)) insures we exit if A or C is a NaN
+  if ( !((A > 0.0 && C > 0.0) || (A < 0.0 && C < 0.0)) )
+    return false; // conic is not an ellipse 
+
+  // set P = center
+  x0 = -0.5*D/A;
+  y0 = -0.5*E/C;
+  P[0] = x0*X[0] + y0*Y[0];
+  P[1] = x0*X[1] + y0*Y[1];
+
+  // set A and C to elipse axes lengths
+  F = conic[5] -(A*x0*x0 + C*y0*y0);
+  if ( !(0.0 != F) )
+    return false; // F is 0.0 or a NaN
+
+  // We know A and C have the same sign and F has the opposite sign.
+  A = sqrt(-F/A);
+  C = sqrt(-F/C);
+
+  if ( A == C )
+  {
+    // circle
+    major_axis.x = 1.0;
+    major_axis.y = 0.0;
+    minor_axis.x = 0.0;
+    minor_axis.y = 1.0;
+    *major_radius = A;
+    *minor_radius = C;
+  }
+  else if ( A > C )
+  {
+    // X = major axis, Y = minor axis
+    major_axis.x = X[0];
+    major_axis.y = X[1];
+    minor_axis.x = Y[0];
+    minor_axis.y = Y[1];
+    *major_radius = A;
+    *minor_radius = C;
+  }
+  else if ( C > A )
+  {
+    // Y = major axis, -X = minor axis
+    major_axis.x = Y[0];
+    major_axis.y = Y[1];
+    minor_axis.x = -X[0];
+    minor_axis.y = -X[1];
+    *major_radius = C;
+    *minor_radius = A;
+  }
+  else
+  {
+    // A or C is a NaN
+    return false;
+  }
+
+  center.x = P[0];
+  center.y = P[1];
+
+  return true;
+}
+
+bool ON_GetEllipseConicEquation( 
+    double a, double b, 
+    double x0, double y0, 
+    double alpha,
+    double conic[6]
+    )
+{
+  if ( 0 == conic )
+    return false;
+
+  if ( !(a > 0.0 && b > 0.0 && ON_IsValid(x0) && ON_IsValid(y0) && ON_IsValid(alpha)) )
+  {
+    return false;
+  }
+
+  int k;
+  double e, y;
+  double a2 = a*a;
+  double b2 = b*b;
+
+  double A0 = 1.0/a2;                    // A*x*x
+  double B0 = 0.0;                       // B*x*y
+  double C0 = 1.0/b2;                    // C*y*y
+  double D0 = 0.0;                       // D*x
+  double E0 = 0.0;                       // E*y
+  double F0 = -1.0;                      // F
+
+  // rotate
+  const double ca = cos(-alpha);
+  const double sa = sin(-alpha);
+  const double A = A0*ca*ca + B0*ca*sa + C0*sa*sa;
+  const double B = B0*(ca*ca - sa*sa) + 2.0*(C0-A0)*sa*ca;
+  const double C = C0*ca*ca - B0*sa*ca + A0*sa*sa; 
+  const double D = D0*ca + E0*sa;
+  const double E = E0*ca - D0*sa;
+  const double F = F0;
+
+  if ( !((A > 0.0 && C > 0.0) || (A < 0.0 && C < 0.0)) )
+  {
+    return false;
+  }
+
+  // translate center to (x0,y0)
+  conic[0] = A;
+  conic[1] = B;
+  conic[2] = C;
+  conic[3] = D - 2.0*A*x0 - B*y0;
+  conic[4] = E - 2.0*C*y0 - B*x0;
+  conic[5] = F + A*x0*x0 + B*x0*y0 + C*y0*y0 - D*x0 - E*y0;
+
+  k = 0;
+  e = fabs(conic[0]);
+  if ( e < (y=fabs(conic[1])) ) {e=y;k=1;}
+  if ( e < (y=fabs(conic[2])) ) {e=y;k=2;}
+  if ( e < (y=fabs(conic[3])) ) {e=y;k=3;}
+  if ( e < (y=fabs(conic[4])) ) {e=y;k=4;}
+  if ( e < (y=fabs(conic[5])) ) {e=y;k=5;}
+  e = 1.0/conic[k];
+  conic[0] *= e; conic[1] *= e; conic[2] *= e;
+  conic[3] *= e; conic[4] *= e; conic[5] *= e;
+  conic[k] = 1.0;
+  if ( conic[0] < 0.0 )
+  {
+    conic[0] = -conic[0]; conic[1] = -conic[1]; conic[2] = -conic[2];
+    conic[3] = -conic[3]; conic[4] = -conic[4]; conic[5] = -conic[5];
+  }
+
+  return true;
+}

@@ -1,7 +1,7 @@
 /*                         G Q A . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -696,23 +696,38 @@ parse_args(int ac, char *av[])
 		    char *ptr = bu_optarg;
 		    const struct cvt_tab *cv;
 		    static const char *dim[3] = {"length", "volume", "weight"};
-		    char *units_name[3];
+		    char *units_name[3] = {NULL, NULL, NULL};
+		    char **units_ap;
 
-		    for (i=0; i < 3 && ptr; i++) {
-			units_name[i] = strsep(&ptr, ", ");
+		    /* fill in units_name with the names we parse out */
+		    units_ap = units_name;
 
-			/* make sure the unit value is in the table */
-			if (*units_name[i] != '\0') {
-			    for (cv= &units_tab[i][0]; cv->name[0] != '\0'; cv++) {
-				if (!strcmp(cv->name, units_name[i])) {
-				    goto found_cv;
-				}
+		    /* acquire unit names */
+		    *units_ap = strtok(ptr, ", ");
+		    for (i = 0; i < 3 && ptr; i++) {
+			int found_unit;
+
+			/* got something? */
+			if (*units_ap == NULL)
+			    break;
+
+			/* got something valid? */
+			found_unit = 0;
+			for (cv = &units_tab[i][0]; cv->name[0] != '\0'; cv++) {
+			    if (units_name[i] && strcmp(cv->name, units_name[i]) == 0) {
+				units[i] = cv;
+				found_unit = 1;
+				break;
 			    }
+			}
+
+			if (!found_unit) {
 			    bu_vls_printf(&_ged_current_gedp->ged_result_str, "Units \"%s\" not found in coversion table\n", units_name[i]);
 			    return -1;
-			found_cv:
-			    units[i] = cv;
 			}
+
+			++units_ap;
+			*units_ap = strtok(NULL, ", ");
 		    }
 
 		    bu_vls_printf(&_ged_current_gedp->ged_result_str, "Units: ");
@@ -847,26 +862,20 @@ parse_densities_buffer(char *buf, unsigned long len)
 int
 get_densities_from_file(char *name)
 {
-    FILE *fp;
     struct stat sb;
-    char *buf;
-    int ret;
 
-    if ((fp=fopen(name, "rb")) == (FILE *)NULL) {
-#if 1
+    FILE *fp = (FILE *)NULL;
+    char *buf = NULL;
+    int ret = 0;
+
+    fp = fopen(name, "rb");
+    if (fp == (FILE *)NULL) {
 	bu_vls_printf(&_ged_current_gedp->ged_result_str, "Could not open file - %s\n", name);
-#else
-	perror(name);
-#endif
 	return GED_ERROR;
     }
 
-    if (fstat(fileno(fp), &sb)) {
-#if 1
-	bu_vls_printf(&_ged_current_gedp->ged_result_str, "Could not fstat file - %s\n", name);
-#else
-	perror(name);
-#endif
+    if (stat(name, &sb)) {
+	bu_vls_printf(&_ged_current_gedp->ged_result_str, "Could not read file - %s\n", name);
 	return GED_ERROR;
     }
 
@@ -998,9 +1007,9 @@ overlap(struct application *ap,
 	struct partition *hp)
 {
 
-    register struct xray *rp = &ap->a_ray;
-    register struct hit *ihitp = pp->pt_inhit;
-    register struct hit *ohitp = pp->pt_outhit;
+    struct xray *rp = &ap->a_ray;
+    struct hit *ihitp = pp->pt_inhit;
+    struct hit *ohitp = pp->pt_outhit;
     point_t ihit;
     point_t ohit;
     double depth;
@@ -1110,10 +1119,10 @@ void exposed_air(struct partition *pp,
  * this routine must be prepared to run in parallel
  */
 int
-hit(register struct application *ap, struct partition *PartHeadp, struct seg *segs)
+hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 {
     /* see raytrace.h for all of these guys */
-    register struct partition *pp;
+    struct partition *pp;
     point_t pt, opt, last_out_point;
     int last_air = 0;  /* what was the aircode of the last item */
     int air_first = 1; /* are we in an air before a solid */
@@ -1424,7 +1433,7 @@ hit(register struct application *ap, struct partition *PartHeadp, struct seg *se
  * This routine must be prepared to run in parallel
  */
 int
-miss(register struct application *ap)
+miss(struct application *ap)
 {
 #if 0
     bu_semaphore_acquire(GED_SEM_WORKER);
@@ -1575,7 +1584,7 @@ int
 find_cmd_line_obj(struct per_obj_data *obj_rpt, const char *name)
 {
     int i;
-    char *str = strdup(name);
+    char *str = bu_strdup(name);
     char *p;
 
     if ((p=strchr(str, '/'))) {

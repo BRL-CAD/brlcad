@@ -1,7 +1,7 @@
 /*                 RepresentationItem.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -39,9 +39,9 @@ RepresentationItem::RepresentationItem() {
 	name="";
 }
 
-RepresentationItem::RepresentationItem(STEPWrapper *sw,int STEPid) {
+RepresentationItem::RepresentationItem(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 	name="";
 }
 
@@ -71,18 +71,18 @@ RepresentationItem::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 	name = step->getStringAttribute(sse,"name");
 
-	//cout << "name:" << name << endl;
+	//std::cout << "name:" << name << std::endl;
 
 	return true;
 }
 
 void
 RepresentationItem::Print(int level) {
-	TAB(level); cout << "RepresentationItem:" << name << endl;
-	TAB(level); cout << "ID:" << STEPid() << endl;
+	TAB(level); std::cout << "RepresentationItem:" << name << std::endl;
+	TAB(level); std::cout << "ID:" << STEPid() << std::endl;
 
-	TAB(level); cout << "Attributes:" << endl;
-	TAB(level+1); cout << "name:" << name << endl;
+	TAB(level); std::cout << "Attributes:" << std::endl;
+	TAB(level+1); std::cout << "name:" << name << std::endl;
 }
 
 STEPEntity *
@@ -94,7 +94,7 @@ RepresentationItem::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}
@@ -107,7 +107,7 @@ RepresentationItem::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 bool
 RepresentationItem::LoadONBrep(ON_Brep *brep)
 {
-	cerr << "Error: ::LoadONBrep(ON_Brep *brep) not implemented for " << entityname << endl;
+	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implemented for " << entityname << std::endl;
 	return false;
 }
 

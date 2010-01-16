@@ -1,7 +1,7 @@
 /*                      H I D E L I N E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -69,9 +69,9 @@ vect_t aim_point;
 static int
 hit_headon(struct application *ap, struct partition *PartHeadp, struct seg *segp)
 {
-    register char diff_solid;
+    char diff_solid;
     vect_t	diff;
-    register fastf_t len;
+    fastf_t len;
     struct solid *sp;
 
     if (PartHeadp->pt_forw->pt_forw != PartHeadp)
@@ -124,8 +124,8 @@ hit_overlap(struct application *ap, struct partition *ph, struct region *r1, str
 int
 f_hideline(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    register struct ged_display_list *gdlp;
-    register struct ged_display_list *next_gdlp;
+    struct ged_display_list *gdlp;
+    struct ged_display_list *next_gdlp;
     FILE 	*plotfp;
     char 	visible;
     int 	i, numobjs;
@@ -138,7 +138,7 @@ f_hideline(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     struct application a;
     vect_t temp;
     vect_t last, dir;
-    register struct bn_vlist	*vp;
+    struct bn_vlist	*vp;
     struct solid *sp;
 
     CHECK_DBI_NULL;
@@ -232,10 +232,10 @@ f_hideline(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	    Tcl_AppendResult(interp, "Primitive\n", (char *)NULL);
 	    for (BU_LIST_FOR(vp, bn_vlist, &(sp->s_vlist))) {
-		register int	i;
-		register int	nused = vp->nused;
-		register int	*cmd = vp->cmd;
-		register point_t *pt = vp->pt;
+		int	i;
+		int	nused = vp->nused;
+		int	*cmd = vp->cmd;
+		point_t *pt = vp->pt;
 		for (i = 0; i < nused; i++, cmd++, pt++) {
 		    Tcl_AppendResult(interp, "\tVector\n", (char *)NULL);
 		    switch (*cmd) {

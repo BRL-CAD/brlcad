@@ -1,7 +1,7 @@
 /*                        F B S E R V . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -135,9 +135,9 @@ Usage: fbserv port_num\n\
 ";
 
 int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int c;
+    int c;
 
     while ( (c = bu_getopt( argc, argv, "hvF:s:w:n:S:W:N:p:" )) != EOF )  {
 	switch ( c )  {
@@ -227,7 +227,7 @@ sigalarm(int code)
 void
 new_client(struct pkg_conn *pcp)
 {
-    register int	i;
+    int	i;
 
     if ( pcp == PKC_ERROR )
 	return;
@@ -419,7 +419,7 @@ main_loop(void)
     while ( !fb_server_got_fb_free ) {
 	fd_set infds;
 	struct timeval tv;
-	register int	i;
+	int	i;
 
 	infds = select_list;	/* struct copy */
 

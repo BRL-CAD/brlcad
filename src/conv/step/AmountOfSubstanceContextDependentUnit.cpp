@@ -1,7 +1,7 @@
 /*                 AmountOfSubstanceContextDependentUnit.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,9 +38,9 @@ AmountOfSubstanceContextDependentUnit::AmountOfSubstanceContextDependentUnit() {
 	id = 0;
 }
 
-AmountOfSubstanceContextDependentUnit::AmountOfSubstanceContextDependentUnit(STEPWrapper *sw,int STEPid) {
+AmountOfSubstanceContextDependentUnit::AmountOfSubstanceContextDependentUnit(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 AmountOfSubstanceContextDependentUnit::~AmountOfSubstanceContextDependentUnit() {
@@ -54,11 +54,11 @@ AmountOfSubstanceContextDependentUnit::Load(STEPWrapper *sw,SCLP23(Application_i
 
 	// load base class attributes
 	if ( !AmountOfSubstanceUnit::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::Unit." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 		return false;
 	}
 	if ( !ContextDependentUnit::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::Unit." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 		return false;
 	}
 
@@ -67,10 +67,10 @@ AmountOfSubstanceContextDependentUnit::Load(STEPWrapper *sw,SCLP23(Application_i
 
 void
 AmountOfSubstanceContextDependentUnit::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	AmountOfSubstanceUnit::Print(level+1);
 	ContextDependentUnit::Print(level+1);
 
@@ -84,7 +84,7 @@ AmountOfSubstanceContextDependentUnit::Create(STEPWrapper *sw, SCLP23(Applicatio
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

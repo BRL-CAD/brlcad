@@ -1,7 +1,7 @@
 /*                      S S A M P - B W . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -74,9 +74,9 @@ Usage: ssamp-bw [-s squarefilesize] [-w file_width] [-n file_height]\n\
  *			G E T _ A R G S
  */
 int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int c;
+    int c;
 
     while ( (c = bu_getopt( argc, argv, "vs:w:n:l:u:m:M:" )) != EOF )  {
 	switch ( c )  {
@@ -121,14 +121,14 @@ get_args(int argc, register char **argv)
 void
 find_minmax(void)
 {
-    register fastf_t	max, min;
-    register int		i;
+    fastf_t	max, min;
+    int		i;
 
     max = -INFINITY;
     min =  INFINITY;
 
     for ( i = width * height - 1; i >= 0; i-- )  {
-	register fastf_t	v;
+	fastf_t	v;
 
 	if ( (v = pixels[i]) > max )  max = v;
 	if ( v < min )  min = v;
@@ -210,7 +210,7 @@ main(int argc, char **argv)
     /* Convert to 0..255 range and output */
     scale = 255 / (forced_maxval - forced_minval);
     for ( i = 0; i < width*height; i++ )  {
-	register int	val;
+	int	val;
 	val = (int)( (pixels[i] - forced_minval) * scale );
 	if ( val > 255 )  val = 255;
 	else if ( val < 0 ) val = 0;

@@ -1,7 +1,7 @@
 /*                         P U T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,7 +36,7 @@ int
 ged_put(struct ged *gedp, int argc, const char *argv[])
 {
     struct rt_db_internal intern;
-    register const struct rt_functab *ftp;
+    const struct rt_functab *ftp;
     int i;
     char *name;
     char type[16];
@@ -88,29 +88,23 @@ ged_put(struct ged *gedp, int argc, const char *argv[])
     RT_CK_FUNCTAB(ftp);
 
     if (ftp->ft_make) {
-	if (ftp->ft_make == rt_nul_make) {
-	    bu_vls_printf(&gedp->ged_result_str,
-			  "wdb_put_internal(%s) cannot put a %s",
-			  argv[1], type);
-	    return GED_ERROR;
-	}
-	ftp->ft_make(ftp, &intern, 0.0);
+	ftp->ft_make(ftp, &intern);
     } else {
-	rt_generic_make(ftp, &intern, 0.0);
+	rt_generic_make(ftp, &intern);
     }
 
-    if (!ftp->ft_adjust || ftp->ft_adjust(&gedp->ged_result_str, &intern, argc-3, (char **)argv+3, &rt_uniresource) == GED_ERROR) {
-	rt_db_free_internal(&intern, &rt_uniresource);
+    if (!ftp->ft_adjust || ftp->ft_adjust(&gedp->ged_result_str, &intern, argc-3, (char **)argv+3) == GED_ERROR) {
+	rt_db_free_internal(&intern);
 	return GED_ERROR;
     }
 
     if (wdb_put_internal(gedp->ged_wdbp, name, &intern, 1.0) < 0) {
 	bu_vls_printf(&gedp->ged_result_str, "wdb_put_internal(%s)", argv[1]);
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 	return GED_ERROR;
     }
 
-    rt_db_free_internal(&intern, &rt_uniresource);
+    rt_db_free_internal(&intern);
 
     return GED_OK;
 }

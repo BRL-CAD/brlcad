@@ -1,7 +1,7 @@
 /*                 RationalQuasiUniformSurface.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,9 +38,9 @@ RationalQuasiUniformSurface::RationalQuasiUniformSurface() {
 	id = 0;
 }
 
-RationalQuasiUniformSurface::RationalQuasiUniformSurface(STEPWrapper *sw,int STEPid) {
+RationalQuasiUniformSurface::RationalQuasiUniformSurface(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 RationalQuasiUniformSurface::~RationalQuasiUniformSurface() {
@@ -53,7 +53,7 @@ RationalQuasiUniformSurface::Load(STEPWrapper *sw,SCLP23(Application_instance) *
 
 	// load base class attributes (no need to add quasi here has no additional attributes)
 	if ( !RationalBSplineSurface::Load(sw,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::RationalBSplineSurface." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::RationalBSplineSurface." << std::endl;
 		return false;
 	}
 
@@ -62,8 +62,8 @@ RationalQuasiUniformSurface::Load(STEPWrapper *sw,SCLP23(Application_instance) *
 
 void
 RationalQuasiUniformSurface::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << name << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
 	RationalBSplineSurface::Print(level);
 }
@@ -76,7 +76,7 @@ RationalQuasiUniformSurface::Create(STEPWrapper *sw,SCLP23(Application_instance)
 		Factory::AddObject(object);
 
 		if (!object->Load(sw,sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

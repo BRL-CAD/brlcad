@@ -1,7 +1,7 @@
 /*                       F B C L E A R . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2009 United States Government as represented by
+ * Copyright (c) 1986-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -52,9 +52,9 @@ Usage: fbclear [-h -c] [-F framebuffer]\n\
 	[-S squarescrsize] [-W scr_width] [-N scr_height] [gray | r g b]\n";
 
 int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int c;
+    int c;
 
     while ( (c = bu_getopt( argc, argv, "hcF:s:w:n:S:W:N:" )) != EOF )  {
 	switch ( c )  {

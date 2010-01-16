@@ -1,7 +1,7 @@
 /*                           M A T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -57,9 +57,9 @@
  *
  * Fill in the matrix "m" with zeros.
  */
-mat_zero(register matp_t m)
+mat_zero(matp_t m)
 {
-    register int i = 0;
+    int i = 0;
 
     /* Clear everything */
     for (; i<16; i++)
@@ -72,7 +72,7 @@ mat_zero(register matp_t m)
  *
  * Fill in the matrix "m" with an identity matrix.
  */
-mat_idn(register matp_t m)
+mat_idn(matp_t m)
 {
     /* Clear everything first */
     mat_zero( m );
@@ -87,9 +87,9 @@ mat_idn(register matp_t m)
  *
  * Copy the matrix "im" into the matrix "om".
  */
-mat_copy(register matp_t om, register matp_t im)
+mat_copy(matp_t om, matp_t im)
 {
-    register int i = 0;
+    int i = 0;
 
     /* Copy all elements */
     for (; i<16; i++)
@@ -104,12 +104,12 @@ mat_copy(register matp_t om, register matp_t im)
  * NOTE:  This is different from multiplying "im2" by "im1" (most
  * of the time!)
  */
-mat_mul(register matp_t om, register matp_t im1, register matp_t im2)
+mat_mul(matp_t om, matp_t im1, matp_t im2)
 {
-    register int em1;		/* Element subscript for im1 */
-    register int em2;		/* Element subscript for im2 */
-    register int el = 0;		/* Element subscript for om */
-    register int i;			/* For counting */
+    int em1;		/* Element subscript for im1 */
+    int em2;		/* Element subscript for im2 */
+    int el = 0;		/* Element subscript for om */
+    int i;			/* For counting */
 
     /* For each element in the output matrix... */
     for (; el<16; el++) {
@@ -134,11 +134,11 @@ mat_mul(register matp_t om, register matp_t im1, register matp_t im2)
  * Multiply the vector "iv" by the matrix "im" and store the result
  * in the vector "ov".  Note this is pre-multiply.
  */
-vecXmat(register vectp_t ov, register vectp_t iv, register matp_t im)
+vecXmat(vectp_t ov, vectp_t iv, matp_t im)
 {
-    register int el = 0;		/* Position in output vector */
-    register int ev;		/* Position in input vector */
-    register int em;		/* Position in input matrix */
+    int el = 0;		/* Position in output vector */
+    int ev;		/* Position in input vector */
+    int em;		/* Position in input matrix */
 
     /* For each element in the output array... */
     for (; el<4; el++) {
@@ -160,11 +160,11 @@ vecXmat(register vectp_t ov, register vectp_t iv, register matp_t im)
  * Multiply the matrix "im" by the vector "iv" and store the result
  * in the vector "ov".  Note this is post-multiply.
  */
-matXvec(register vectp_t ov, register matp_t im, register vectp_t iv)
+matXvec(vectp_t ov, matp_t im, vectp_t iv)
 {
-    register int eo = 0;		/* Position in output vector */
-    register int em = 0;		/* Position in input matrix */
-    register int ei;		/* Position in input vector */
+    int eo = 0;		/* Position in output vector */
+    int em = 0;		/* Position in input matrix */
+    int ei;		/* Position in input vector */
 
     /* For each element in the output array... */
     for (; eo<4; eo++) {
@@ -182,9 +182,9 @@ matXvec(register vectp_t ov, register matp_t im, register vectp_t iv)
  *
  * Print out the 4x4 matrix addressed by "m".
  */
-mat_print(register matp_t m)
+mat_print(matp_t m)
 {
-    register int i;
+    int i;
 
     for (i=0; i<16; i++) {
 	printf("%f%c", m[i], ((i+1)%4) ? '\t' : '\n');
@@ -199,7 +199,7 @@ mat_print(register matp_t m)
  * variable "hscale".  NOTE that the input matrix is ALSO the output
  * matrix.
  */
-mat_hscale(register matp_t m, float hscale)
+mat_hscale(matp_t m, float hscale)
 {
     m[0] *= hscale;
     m[5] *= hscale;
@@ -221,9 +221,9 @@ mat_hscale(register matp_t m, float hscale)
  * Note:  Inversion is done in place, with 3 work vectors
  */
 void
-mat_inv(register matp_t output, matp_t input)
+mat_inv(matp_t output, matp_t input)
 {
-    register int i, j;			/* Indices */
+    int i, j;			/* Indices */
     static int k;				/* Indices */
     static int	z[4];			/* Temporary */
     static float	b[4];			/* Temporary */
@@ -309,7 +309,7 @@ mat_inv(register matp_t output, matp_t input)
  * to space for a homogeneous vector [x, y, z, w],
  * and builds [x, y, z, 1].
  */
-vtoh_move(register float *h, register float *v)
+vtoh_move(float *h, float *v)
 {
     *h++ = *v++;
     *h++ = *v++;
@@ -324,7 +324,7 @@ vtoh_move(register float *h, register float *v)
  * an ordinary vector [x/w, y/w, z/w].
  * Optimization for the case of w==1 is performed.
  */
-htov_move(register float *v, register float *h)
+htov_move(float *v, float *h)
 {
     static float inv;
 

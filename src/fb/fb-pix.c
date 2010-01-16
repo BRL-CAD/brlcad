@@ -1,7 +1,7 @@
 /*                        F B - P I X . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2009 United States Government as represented by
+ * Copyright (c) 1986-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -56,16 +56,16 @@ static int	inverse = 0;		/* Draw upside-down */
 int	screen_height;			/* input height */
 int	screen_width;			/* input width */
 
-extern void	cmap_crunch(register RGBpixel (*scan_buf), register int pixel_ct, ColorMap *colormap);
+extern void	cmap_crunch(RGBpixel (*scan_buf), int pixel_ct, ColorMap *colormap);
 
 char usage[] = "\
 Usage: fb-pix [-h -i -c] [-F framebuffer]\n\
 	[-s squaresize] [-w width] [-n height] [file.pix]\n";
 
 int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int c;
+    int c;
 
     while ( (c = bu_getopt( argc, argv, "chiF:s:w:n:" )) != EOF )  {
 	switch ( c )  {
@@ -123,8 +123,8 @@ get_args(int argc, register char **argv)
 int
 main(int argc, char **argv)
 {
-    register FBIO *fbp;
-    register int y;
+    FBIO *fbp;
+    int y;
 
     screen_height = screen_width = 512;		/* Defaults */
 

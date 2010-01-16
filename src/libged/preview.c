@@ -1,7 +1,7 @@
 /*                         P R E V I E W . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -174,7 +174,7 @@ ged_cm_start(int argc, char **argv)
 int
 ged_cm_tree(int argc, char **argv)
 {
-    register int	i = 1;
+    int	i = 1;
     char *cp = rt_cmd_storage;
 
     for ( i = 1;  i < argc && i < MAXARGS; i++ )  {
@@ -191,7 +191,7 @@ ged_cm_tree(int argc, char **argv)
 }
 
 void
-_ged_setup_rt(struct ged *gedp, register char **vp, int printcmd)
+_ged_setup_rt(struct ged *gedp, char **vp, int printcmd)
 {
     _ged_current_gedp->ged_gdp->gd_rt_cmd_len = vp - _ged_current_gedp->ged_gdp->gd_rt_cmd;
     _ged_current_gedp->ged_gdp->gd_rt_cmd_len += ged_build_tops(gedp, 

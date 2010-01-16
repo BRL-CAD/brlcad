@@ -1,7 +1,7 @@
 #                A T T R G R O U P S D I S P L A Y U T I L I T Y P . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2009 United States Government as represented by
+# Copyright (c) 2002-2010 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -51,7 +51,7 @@
     # process options
     eval itk_initialize $args
 
-    after idle [::itcl::code $this updateBgColor $parentBg]
+    after idle [::itcl::code $this updateBgColor $mParentBg]
 }
 
 ::itcl::body AttrGroupsDisplayUtilityP::destructor {} {

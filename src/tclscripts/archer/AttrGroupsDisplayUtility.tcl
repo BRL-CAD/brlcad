@@ -1,7 +1,7 @@
 #                A T T R G R O U P S U T I L I T Y . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2009 United States Government as represented by
+# Copyright (c) 2002-2010 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -47,9 +47,11 @@
 	method exportToPng {}
 	method hideStatusbar {}
 	method hideToolbar {}
+	method highlightSelectedAttr {}
 	method importAttrGroups {}
 	method importAttrMap {}
 	method initLists {}
+	method selectHighlightedAttr {}
     }
 
     protected {
@@ -81,12 +83,14 @@
 
 	method eraseDrawArgs {}
 	method getAttrArgs {_atype _alist}
+	method getAttrList {}
+	method getSelectedAttr {}
 	method highlightCurrentAttr {}
-	method highlightSelectedAttr {}
 	method loadAttrList {}
 	method readAttrGroups {_file}
 	method readAttrMap {_file}
 	method setDrawArgs {_atype _alist}
+	method selectCurrentGroup {}
 	method updateBgColor {_bg}
     }
 
@@ -100,6 +104,9 @@
 #
 ::itcl::body AttrGroupsDisplayUtility::constructor {_archer _handleToplevel args} {
     global env
+
+    set mArcher $_archer
+    set mHandleToplevel $_handleToplevel
 
     set parent [winfo parent $itk_interior]
     set mParentBg [$parent cget -background]
@@ -179,19 +186,16 @@
     } {}
 
     set lb [$itk_component(alist) component listbox]
-# Temporarily disabled
-#    bind $lb <Delete> [::itcl::code $this deleteCurrAttrVal]
+    bind $lb <Delete> [::itcl::code $this deleteCurrAttrVal]
 
     set lb [$itk_component(glist) component listbox]
-# Temporarily disabled
-#    bind $lb <Delete> [::itcl::code $this deleteCurrAttrGroup]
+    bind $lb <Delete> [::itcl::code $this deleteCurrAttrGroup]
 
     itk_component add status {
 	::label $itk_interior.status \
 	    -anchor w \
 	    -textvariable [::itcl::scope mStatus]
     } {}
-
 
     # Make windows visible
     pack $itk_component(hpane) -expand yes -fill both
@@ -215,9 +219,6 @@
 	-sticky ew
 
     grid columnconfigure $itk_interior 0 -weight 1
-
-    set mArcher $_archer
-    set mHandleToplevel $_handleToplevel
 
     # process options
     eval itk_initialize $args
@@ -380,6 +381,56 @@
     grid forget $itk_component(toolbar)
 }
 
+::itcl::body AttrGroupsDisplayUtility::highlightSelectedAttr {} {
+    if {$mManageRefresh} {
+	$mArchersGed refresh_off
+    }
+
+    set alist [getAttrList]
+
+    if {$mHighlightedAttr != ""} {
+	set i [lsearch $alist $mHighlightedAttr]
+        if {$i != -1} {
+            $itk_component(alist) itemconfigure $i -background white
+        }
+
+	set rlist [getAttrArgs $mCurrentAttr $mHighlightedAttr]
+	set slist [lindex $rlist 0]
+	set slen [llength $slist]
+
+	# Redraw using the default color
+	if {$slen} {
+	    eval $mArchersGed draw -m1 $slist
+	}
+
+	set mHighlightedAttr ""
+    }
+
+    set mHighlightedAttr [getSelectedAttr]
+    if {$mHighlightedAttr != ""} {
+	set i [lsearch $alist $mHighlightedAttr]
+        if {$i != -1} {
+            $itk_component(alist) itemconfigure $i -background \#c3c3c3
+        }
+    }
+    set rlist [highlightCurrentAttr]
+    if {$rlist != {}} {
+	if {$mManageRefresh} {
+	    $mArchersGed refresh_on
+	    $mArchersGed refresh_all
+	}
+
+	return $rlist
+    }
+
+    if {$mManageRefresh} {
+	$mArchersGed refresh_on
+	$mArchersGed refresh_all
+    }
+
+    return {}
+}
+
 ::itcl::body AttrGroupsDisplayUtility::importAttrGroups {} {
     set typelist {
 	{"Text" {".txt"}}
@@ -422,6 +473,10 @@
     $itk_component(alist) clear
     $itk_component(glist) clear
 
+    set mCurrentGroup ""
+    set mCurrentAttr ""
+    set mCurrentHighlightedAttr ""
+
     eraseDrawArgs
 
     if {$mMasterAttrGroups == ""} {
@@ -437,6 +492,20 @@
     foreach item $mMasterAttrGroups {
 	$itk_component(glist) insert end [lindex $item 0]
     }
+}
+
+::itcl::body AttrGroupsDisplayUtility::selectHighlightedAttr {} {
+    if {$mHighlightedAttr == ""} {
+	return
+    }
+
+    if {[catch {$itk_component(alist) index $mHighlightedAttr} cindex]} {
+	set mHighlightedAttr ""
+	return
+    }
+
+    $itk_component(alist) activate $cindex
+    $itk_component(alist) selection set active
 }
 
 
@@ -523,21 +592,26 @@
 }
 
 ::itcl::body AttrGroupsDisplayUtility::deleteCurrAttrVal {} {
-    set currSel [$itk_component(alist) curselection]
-    if {$currSel == ""} {
+#    set currSel [$itk_component(alist) curselection]
+#    if {$currSel == ""} {
+#	return
+#    }
+
+#    set attrVal [$itk_component(alist) get $currSel]
+#    deleteAttrFromCurrGroup $attrVal
+
+    if {$mHighlightedAttr == ""} {
 	return
     }
-
-    set attrVal [$itk_component(alist) get $currSel]
-    deleteAttrFromCurrGroup $attrVal
+    set cindex [$itk_component(alist) index $mHighlightedAttr]
+    deleteAttrFromCurrGroup $mHighlightedAttr
 
     if {$mDrawArgs != ""} {
 	eval $mArchersGed draw -m1 $mDrawArgs
-#	eval $mArchersGed draw -m1 -oA $mDrawArgs
     }
 
-    $itk_component(alist) delete $currSel
-    $itk_component(alist) activate $currSel
+    $itk_component(alist) delete $cindex
+    $itk_component(alist) activate $cindex
     $itk_component(alist) selection set active
 
     set mHighlightedAttr ""
@@ -555,13 +629,17 @@
 }
 
 ::itcl::body AttrGroupsDisplayUtility::getAttrArgs {_atype _alist} {
+    if {$_alist == ""} {
+	return
+    }
+
     set aspec {}
     foreach item $_alist {
 	lappend aspec $_atype $item
     }
 
     set rlist [eval $mArchersGed ls -oA $aspec]
-    set rlist [regsub -all {(/R)|(\n)} $rlist " "]
+    set rlist [regsub -all {(/)|(/R)|(\n)} $rlist " "]
     set rlist [lsort -dictionary -unique $rlist]
 
     set slist {}
@@ -583,6 +661,14 @@
     return [list $slist $hlist]
 }
 
+::itcl::body AttrGroupsDisplayUtility::getAttrList {} {
+    return [$itk_component(alist) get 0 end]
+}
+
+::itcl::body AttrGroupsDisplayUtility::getSelectedAttr {} {
+    return [$itk_component(alist) getcurselection]
+}
+
 ::itcl::body AttrGroupsDisplayUtility::highlightCurrentAttr {} {
     if {$mHighlightedAttr != ""} {
 	set rlist [getAttrArgs $mCurrentAttr $mHighlightedAttr]
@@ -599,51 +685,6 @@
 	}
 
 	return $rlist
-    }
-
-    return {}
-}
-
-::itcl::body AttrGroupsDisplayUtility::highlightSelectedAttr {} {
-    if {$mManageRefresh} {
-	$mArchersGed refresh_off
-    }
-
-    set alist [$itk_component(alist) get 0 end]
-
-    if {$mHighlightedAttr != ""} {
-	set i [lsearch $alist $mHighlightedAttr]
-        if {$i != -1} {
-            $itk_component(alist) itemconfigure $i -background white
-        }
-
-	set rlist [getAttrArgs $mCurrentAttr $mHighlightedAttr]
-	set slist [lindex $rlist 0]
-	set slen [llength $slist]
-
-	# Redraw using the default color
-	if {$slen} {
-	    eval $mArchersGed draw -m1 $slist
-	}
-
-	set mHighlightedAttr ""
-    }
-
-    set mHighlightedAttr [$itk_component(alist) getcurselection]
-    if {$mHighlightedAttr != ""} {
-	set i [lsearch $alist $mHighlightedAttr]
-        if {$i != -1} {
-            $itk_component(alist) itemconfigure $i -background \#c3c3c3
-        }
-    }
-    set rlist [highlightCurrentAttr]
-    if {$rlist != {}} {
-	return $rlist
-    }
-
-    if {$mManageRefresh} {
-	$mArchersGed refresh_on
-	$mArchersGed refresh_all
     }
 
     return {}
@@ -680,7 +721,6 @@
     }
     $itk_component(glist) itemconfigure $csindex -background \#c3c3c3
 
-
     set mCurrentGroup $cs
     set mCurrentAttr [lindex $glist 1]
     set alist [lindex $glist 2]
@@ -714,6 +754,11 @@
     set lines [split $data "\n"]
 
     foreach line $lines {
+	# skip blank lines
+	if {[regexp {^[ \t]*$} $line]} {
+	    continue
+	}
+
 	# skip comments
 	if {[regexp {^[ \t]*\#} $line]} {
 #	    puts "skipping \"$line\""
@@ -741,8 +786,8 @@
 }
 
 #
-# ATTR1 ATTRVAL1 rid1 rid2 ... ridN
-# ATTR2 ATTRVAL2 rid1 rid2 ... ridN
+# ATTR1,ATTRVAL1,rid1,rid2, ... ridN
+# ATTR2,ATTRVAL2,rid1,rid2, ... ridN
 #
 ::itcl::body AttrGroupsDisplayUtility::readAttrMap {_file} {
     set fh [open $_file r]
@@ -763,6 +808,11 @@
 
     set sflag 0
     foreach line $lines {
+	# skip blank lines
+	if {[regexp {^[ \t]*$} $line]} {
+	    continue
+	}
+
 	# skip comments
 	if {[regexp {^[ \t]*\#} $line]} {
 #	    puts "skipping \"$line\""
@@ -793,19 +843,27 @@
 
 	    # Ahh, much better. All of the previous cases search the entire database.
 	    # This version uses an associative array.
-	    if {$rid == "_GLOBAL"} {
-		set objects "_GLOBAL"
-	    } else {
+	    if {[string is digit $rid]} {
 		if {[catch {set rmap($rid)} objects]} {
 		    continue
 		}
+	    } else {
+		# Must be a regular object name
+		set objects $rid
 	    }
+#	    if {$rid == "_GLOBAL"} {
+#		set objects "_GLOBAL"
+#	    } else {
+#		if {[catch {set rmap($rid)} objects]} {
+#		    continue
+#		}
+#	    }
 
 	    foreach object $objects {
 		set obj [file tail $object]
 
 		if {[catch {$mArchersGed attr set $obj $attr_name $attr_val} msg]} {
-		    puts $msg
+		    $mArcher putString $msg
 		} else {
 		    set sflag 1
 		}
@@ -826,6 +884,21 @@
 ::itcl::body AttrGroupsDisplayUtility::setDrawArgs {_atype _alist} {
     set rlist [getAttrArgs $_atype $_alist]
     set mDrawArgs [lindex $rlist 0]
+}
+
+::itcl::body AttrGroupsDisplayUtility::selectCurrentGroup {} {
+    if {$mCurrentGroup == ""} {
+	return
+    }
+
+    if {[catch {$itk_component(glist) index $mCurrentGroup} cindex]} {
+	set mCurrentGroup ""
+	set mCurrentAttr ""
+	return
+    }
+
+    $itk_component(glist) activate $cindex
+    $itk_component(glist) selection set active
 }
 
 ::itcl::body AttrGroupsDisplayUtility::updateBgColor {_bg} {

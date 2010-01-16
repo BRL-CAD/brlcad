@@ -1,7 +1,7 @@
 /*                         D A M D F . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -43,8 +43,8 @@ Usage: damdf [window_size (512)] < doubles\n";
 int main(int argc, char **argv)
 {
     int	i, j, n, L;
-    register double *dp1, *dp2;
-    register double	d;
+    double *dp1, *dp2;
+    double	d;
 
     if ( isatty(fileno(stdin)) || isatty(fileno(stdout)) ) {
 	bu_exit(1, "%s", usage );

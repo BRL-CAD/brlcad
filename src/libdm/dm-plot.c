@@ -1,7 +1,7 @@
 /*                       D M - P L O T . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2009 United States Government as represented by
+ * Copyright (c) 1985-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -68,6 +68,7 @@ struct dm dm_plot = {
     plot_drawLine3D,
     plot_drawLines3D,
     plot_drawPoint2D,
+    plot_drawVList,
     plot_drawVList,
     plot_draw,
     plot_setFGColor,
@@ -351,13 +352,13 @@ plot_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
  *  Returns 0 if object could be drawn, !0 if object was omitted.
  */
 HIDDEN int
-plot_drawVList(struct dm *dmp, register struct bn_vlist *vp)
+plot_drawVList(struct dm *dmp, struct bn_vlist *vp)
 {
     static vect_t			last;
-    register struct bn_vlist	*tvp;
-    register point_t		*pt_prev=NULL;
-    register fastf_t		dist_prev=1.0;
-    register fastf_t		dist;
+    struct bn_vlist	*tvp;
+    point_t		*pt_prev=NULL;
+    fastf_t		dist_prev=1.0;
+    fastf_t		dist;
     fastf_t				delta;
     int				useful = 0;
 
@@ -378,10 +379,10 @@ plot_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 	delta = SQRT_SMALL_FASTF;
 
     for (BU_LIST_FOR(tvp, bn_vlist, &vp->l)) {
-	register int	i;
-	register int	nused = tvp->nused;
-	register int	*cmd = tvp->cmd;
-	register point_t *pt = tvp->pt;
+	int	i;
+	int	nused = tvp->nused;
+	int	*cmd = tvp->cmd;
+	point_t *pt = tvp->pt;
 	for (i = 0; i < nused; i++, cmd++, pt++) {
 	    static vect_t	start, fin;
 	    switch (*cmd) {
@@ -528,7 +529,7 @@ plot_normal(struct dm *dmp)
  */
 /* ARGSUSED */
 HIDDEN int
-plot_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int size, int use_aspect)
+plot_drawString2D(struct dm *dmp, char *str, fastf_t x, fastf_t y, int size, int use_aspect)
 {
     int	sx, sy;
 
@@ -625,7 +626,7 @@ plot_debug(struct dm *dmp, int lvl)
 }
 
 HIDDEN int
-plot_setWinBounds(struct dm *dmp, register int *w)
+plot_setWinBounds(struct dm *dmp, int *w)
 {
     /* Compute the clipping bounds */
     dmp->dm_clipmin[0] = w[0] / 2048.;

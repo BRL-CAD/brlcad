@@ -1,7 +1,7 @@
 /*                      P I X S C A L E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2009 United States Government as represented by
+ * Copyright (c) 1986-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -66,9 +66,9 @@ Usage: pixscale [-h] [-r] [-s squareinsize] [-w inwidth] [-n inheight]\n\
 	[-S squareoutsize] [-W outwidth] [-N outheight] [in.pix] > out.pix\n";
 
 int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int c;
+    int c;
 
     while ( (c = bu_getopt( argc, argv, "rhs:w:n:S:W:N:" )) != EOF )  {
 	switch ( c )  {
@@ -324,7 +324,7 @@ binterp(FILE *ofp, int ix, int iy, int ox, int oy)
     int	i, j;
     double	x, y, dx, dy, mid1, mid2;
     double	xstep, ystep;
-    register unsigned char *op, *up, *lp;
+    unsigned char *op, *up, *lp;
 
     xstep = (double)(ix - 1) / (double)ox - 1.0e-6;
     ystep = (double)(iy - 1) / (double)oy - 1.0e-6;

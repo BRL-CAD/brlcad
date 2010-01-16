@@ -1,7 +1,7 @@
 /*                        T A B S U B . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2009 United States Government as represented by
+ * Copyright (c) 1998-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -145,8 +145,8 @@ do_lines(FILE *fp, char *buffer)
 #define TOKLEN	128
     char	token[TOKLEN];
     int	ntokenwords;
-    register char	*cp;
-    register char	*tp;
+    char	*cp;
+    char	*tp;
     int	i;
 
     for ( line=0; /*NIL*/; line++ )  {
@@ -338,7 +338,7 @@ multi_words( char *words[], int	nwords )
 	return(0);
     }
     if ( strcmp( words[0], "orient" ) == 0 )  {
-	register int i;
+	int i;
 	mat_t	mat;
 	double	args[8];
 

@@ -1,7 +1,7 @@
 /*                         F A C E T I Z E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -41,7 +41,7 @@ int
 ged_facetize(struct ged *gedp, int argc, const char *argv[])
 {
     int			i;
-    register int	c;
+    int	c;
     int			triangulate;
     char		*newname;
     struct rt_db_internal	intern;
@@ -259,7 +259,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     if ( rt_db_put_internal( dp, dbip, &intern, &rt_uniresource ) < 0 )
     {
 	bu_vls_printf(&gedp->ged_result_str, "Failed to write %s to database\n", newname);
-	rt_db_free_internal( &intern, &rt_uniresource );
+	rt_db_free_internal(&intern);
 	return GED_ERROR;
     }
 
@@ -273,7 +273,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 }
 
 static union tree *
-facetize_region_end(register struct db_tree_state	*tsp,
+facetize_region_end(struct db_tree_state	*tsp,
 		    struct db_full_path			*pathp,
 		    union tree				*curtree,
 		    genptr_t				client_data)

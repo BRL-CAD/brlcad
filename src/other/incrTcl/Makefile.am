@@ -3,12 +3,12 @@ ITCLLIB = \
 	libitcl.la \
 	libitcl@ITCL_VERSION@.la
 
-if WITH_X11
+if BUILD_ITK
 ITKDIR = itk
 ITKLIB = \
 	libitk.la \
 	libitk@ITCL_VERSION@.la
-else !WITH_X11
+else !BUILD_ITK
 ITKDIR =
 ITKLIB =
 endif

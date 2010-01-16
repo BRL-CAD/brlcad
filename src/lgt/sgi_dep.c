@@ -1,7 +1,7 @@
 /*                       S G I _ D E P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -309,7 +309,7 @@ mips_Size_Grid( size )
 static void
 sgi_Pup_Strs()
 {
-    register int	i, ypos = PUPHGT-WINBANNER-WINBORDER;
+    int	i, ypos = PUPHGT-WINBANNER-WINBORDER;
     long	gid = winget();
     winset( popup_gid );
     color( CYAN );
@@ -325,7 +325,7 @@ sgi_Pup_Strs()
 
 static void
 sgi_Pt_Select( x, y, xp, yp, originp )
-    register int	x, y, *xp, *yp, *originp;
+    int	x, y, *xp, *yp, *originp;
 {
     char		*args[3];
     char		buf1[5], buf2[5];
@@ -538,7 +538,7 @@ sgi_Window_In( origin, x, y, x0, y0, out_flag )
     int	origin, x, y, x0, y0, out_flag;
 {
     short		val;
-    register long	dx = 0, dy = 0, dw = 0;
+    long	dx = 0, dy = 0, dw = 0;
     double		relscale;
     double		x_translate, y_translate;
     long		xwin, ywin;
@@ -702,7 +702,7 @@ sgi_User_Input( args )
 
 int
 sgi_Cursor_Input( x, y, mxp, myp, xx0, yy0, origin )
-    register int	x, y, *mxp, *myp;
+    int	x, y, *mxp, *myp;
     int	xx0, yy0;
     int	origin;
 {
@@ -1022,9 +1022,9 @@ sgi_Animate( framesz, fps )
     int	framesz;
     int	fps;
 {
-    register int	i, j;
-    register int	wid;
-    register int	xpos, ypos;
+    int	i, j;
+    int	wid;
+    int	xpos, ypos;
     static long	movie_gid = -1;
     long		xwin, ywin, xsiz, ysiz;
     long		movie_xwin, movie_ywin;
@@ -1126,8 +1126,8 @@ sgi_GetInput( inbuf, bufsz, msg )
     char	*msg;
 {
     static char	buffer[BUFSIZ];
-    register char	*p = buffer;
-    register int	c;
+    char	*p = buffer;
+    int	c;
     prnt_Prompt( msg );
     *p = NUL;
     do
@@ -1156,7 +1156,7 @@ sgi_GetInput( inbuf, bufsz, msg )
 	    break;
 	case Ctrl('D') : /* Delete character under cursor.	*/
 	{
-	    register char	*q = p;
+	    char	*q = p;
 	    if ( *p == NUL )
 	    {
 		ring_Bell();
@@ -1204,7 +1204,7 @@ sgi_GetInput( inbuf, bufsz, msg )
 	    break;
 	case Ctrl('P') : /* Yank previous contents of "inbuf".	*/
 	{
-	    register int	len = strlen( inbuf );
+	    int	len = strlen( inbuf );
 	    if ( (p + len) - buffer >= BUFSIZ )
 	    {
 		ring_Bell();
@@ -1223,7 +1223,7 @@ sgi_GetInput( inbuf, bufsz, msg )
 	    }
 	    for (; p > buffer; --p )
 	    {
-		register char	*q = p;
+		char	*q = p;
 		(void) putchar( BS );
 		for (; *(q-1) != NUL; ++q )
 		{
@@ -1236,7 +1236,7 @@ sgi_GetInput( inbuf, bufsz, msg )
 	    break;
 	case Ctrl('R') : /* Print line, cursor doesn't move.	*/
 	{
-	    register int	i;
+	    int	i;
 	    if ( buffer[0] == NUL )
 		break;
 	    for ( i = p - buffer; i > 0; i-- )
@@ -1248,7 +1248,7 @@ sgi_GetInput( inbuf, bufsz, msg )
 	}
 	case DEL : /* Delete character behind cursor.		*/
 	{
-	    register char	*q = p;
+	    char	*q = p;
 	    if ( p == buffer )
 	    {
 		ring_Bell();
@@ -1280,8 +1280,8 @@ sgi_GetInput( inbuf, bufsz, msg )
 	    /* Fall through to default case!		*/
 	default : /* Insert character at cursor.		*/
 	{
-	    register char	*q = p;
-	    register int	len = strlen( p );
+	    char	*q = p;
+	    int	len = strlen( p );
 	    /* Print control characters as strings.		*/
 	    if ( c >= NUL && c < SP )
 		(void) printf( "%s", char_To_String( c ) );
@@ -1313,8 +1313,8 @@ static void
 sgi_Read_Keyboard( args )
     char	**args;
 {
-    register int	i;
-    register char	*eof_flag;
+    int	i;
+    char	*eof_flag;
     (void) get_Input( input_ln, BUFSIZ, ": " );
     if ( (args[0] = strtok( input_ln, " \t" )) == NULL )
     {

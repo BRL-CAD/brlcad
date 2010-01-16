@@ -1,7 +1,7 @@
 /*                    T O N E _ F L O Y D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -67,12 +67,12 @@ tone_floyd(int pix, int x, int y, int nx, int ny, int new)
 {
     static int *error = 0;
     static int *thisline;
-    register int diff, value;
+    int diff, value;
     int Dir = nx-x;
-    register double w1, w3, w5, w7;
+    double w1, w3, w5, w7;
 
     if (RandomFlag) {
-	register double val;
+	double val;
 	val = BN_UNIF_DOUBLE(RandomFlag)*1.0/16.0; /* slowest */
 	w1 = 1.0/16.0 + val;
 	w3 = 3.0/16.0 - val;

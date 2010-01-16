@@ -1,7 +1,7 @@
 /*                         H O W . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -45,12 +45,12 @@
 int
 ged_how(struct ged *gedp, int argc, const char *argv[])
 {
-    register struct ged_display_list *gdlp;
-    register struct ged_display_list *next_gdlp;
-    register struct solid *sp;
+    struct ged_display_list *gdlp;
+    struct ged_display_list *next_gdlp;
+    struct solid *sp;
     int i;
     struct directory **dpp;
-    register struct directory **tmp_dpp;
+    struct directory **tmp_dpp;
     int both = 0;
     static const char *usage = "[-b] object";
 
@@ -126,7 +126,7 @@ ged_how(struct ged *gedp, int argc, const char *argv[])
 struct directory **
 _ged_build_dpp(struct ged *gedp,
 	      const char *path) {
-    register struct directory *dp;
+    struct directory *dp;
     struct directory **dpp;
     int i;
     char *begin;

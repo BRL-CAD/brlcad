@@ -1,7 +1,7 @@
 /*                 ParametricRepresentationContext.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,9 +38,9 @@ ParametricRepresentationContext::ParametricRepresentationContext() {
 	id = 0;
 }
 
-ParametricRepresentationContext::ParametricRepresentationContext(STEPWrapper *sw,int STEPid) {
+ParametricRepresentationContext::ParametricRepresentationContext(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 ParametricRepresentationContext::~ParametricRepresentationContext() {
@@ -53,7 +53,7 @@ ParametricRepresentationContext::Load(STEPWrapper *sw,SCLP23(Application_instanc
 
 	// load base class attributes
 	if ( !RepresentationContext::Load(sw,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::RepresentationContext." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::RepresentationContext." << std::endl;
 		return false;
 	}
 
@@ -62,11 +62,11 @@ ParametricRepresentationContext::Load(STEPWrapper *sw,SCLP23(Application_instanc
 
 void
 ParametricRepresentationContext::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	RepresentationContext::Print(level+1);
 
 }
@@ -79,7 +79,7 @@ ParametricRepresentationContext::Create(STEPWrapper *sw, SCLP23(Application_inst
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

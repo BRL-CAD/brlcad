@@ -1,7 +1,7 @@
 /*                  S H _ B I L L B O A R D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -300,7 +300,7 @@ bbd_setup( struct region *rp,
 	img_num++;
     }
 
-    rt_db_free_internal(&intern, &rt_uniresource);
+    rt_db_free_internal(&intern);
 
     if (rdebug&RDEBUG_SHADE) {
 	bu_struct_print( " Parameters:", bbd_print_tab, (char *)bbd_sp );

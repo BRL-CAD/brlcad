@@ -1,7 +1,7 @@
 /* F B F A D E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -123,7 +123,7 @@ main(int argc, char **argv)
 #endif
 	    0
 	};
-	register int i;
+	int i;
 
 	for (i = 0; getsigs[i] != 0; ++i)
 	    if (signal(getsigs[i], SIG_IGN) != SIG_IGN)
@@ -132,8 +132,8 @@ main(int argc, char **argv)
 
     /* Process arguments. */
     {
-	register int c;
-	register bool_t errors = 0;
+	int c;
+	bool_t errors = 0;
 
 	while ((c = bu_getopt(argc, argv, OPTSTR)) != EOF)
 	    switch (c) {
@@ -217,9 +217,9 @@ main(int argc, char **argv)
 	if ((fbp = fb_open(in_fb_file, src_width, src_height)) == FBIO_NULL)
 	    Fatal(fbp, "Couldn't open input frame buffer");
 	else {
-	    register int y;
-	    register int wt = fb_getwidth(fbp);
-	    register int ht = fb_getheight(fbp);
+	    int y;
+	    int wt = fb_getwidth(fbp);
+	    int ht = fb_getheight(fbp);
 
 	    /* Use smaller actual input size instead of request. */
 
@@ -255,8 +255,8 @@ main(int argc, char **argv)
     if ((fbp = fb_open(out_fb_file, dst_width, dst_height)) == FBIO_NULL)
 	Fatal(fbp, "Couldn't open output frame buffer");
     else {
-	register int wt = fb_getwidth(fbp);
-	register int ht = fb_getheight(fbp);
+	int wt = fb_getwidth(fbp);
+	int ht = fb_getheight(fbp);
 
 	/* Use smaller actual frame buffer size for output. */
 
@@ -283,8 +283,8 @@ main(int argc, char **argv)
      * entry, then reduce the array size.
      */
     {
-	register long *loc;		/* keeps track of pixel shuffling */
-	register long wxh = (long)dst_width * (long)dst_height;
+	long *loc;		/* keeps track of pixel shuffling */
+	long wxh = (long)dst_width * (long)dst_height;
 	/* down-counter */
 
 	if ((loc = (long *)malloc((size_t)wxh * sizeof(long))) == NULL)
@@ -300,9 +300,9 @@ main(int argc, char **argv)
 	 */
 
 	for (wxh = (long)dst_width * (long)dst_height; --wxh >= 0L;) {
-	    register long r = (long)((double)wxh * drand48());
-	    register long x = loc[r] % dst_width;
-	    register long y = loc[r] / dst_width;
+	    long r = (long)((double)wxh * drand48());
+	    long x = loc[r] % dst_width;
+	    long y = loc[r] / dst_width;
 
 	    if (fb_write(fbp, (int)x, (int)y, in_fb_file == NULL ? bg : pix[x + y * src_width], 1) == -1) {
 		Fatal(fbp, "Error writing pixel");

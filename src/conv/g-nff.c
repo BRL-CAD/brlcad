@@ -1,7 +1,7 @@
 /*                         G - N F F . C
  * BRL-CAD
  *
- * Copyright (c) 2003-2009 United States Government as represented by
+ * Copyright (c) 2003-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -89,7 +89,7 @@ main(argc, argv)
     point_t		light_loc;
     char		buf[COPY_BUF_SIZE];
     size_t		read_size;
-    register int	c;
+    int	c;
     double		percent;
     int		i;
 
@@ -389,7 +389,7 @@ nmg_to_nff( r, pathp, region_id, material_id )
  *  This routine must be prepared to run in parallel.
  */
 union tree *do_region_end(tsp, pathp, curtree, client_data)
-    register struct db_tree_state	*tsp;
+    struct db_tree_state	*tsp;
     struct db_full_path	*pathp;
     union tree		*curtree;
     genptr_t		client_data;

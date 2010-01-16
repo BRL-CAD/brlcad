@@ -1,7 +1,7 @@
 /*                         L S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -51,9 +51,9 @@
  */
 struct directory **
 _ged_getspace(struct db_i *dbip,
-	      register int num_entries)
+	      int num_entries)
 {
-    register struct directory **dir_basep;
+    struct directory **dir_basep;
 
     if (num_entries < 0) {
 	bu_log("_ged_getspace: was passed %d, used 0\n",
@@ -81,7 +81,7 @@ static int
 cmpdirname(const genptr_t a,
 	   const genptr_t b)
 {
-    register struct directory **dp1, **dp2;
+    struct directory **dp1, **dp2;
 
     dp1 = (struct directory **)a;
     dp2 = (struct directory **)b;
@@ -281,9 +281,6 @@ vls_long_dpp(struct bu_vls *vls,
 		case DB5_MAJORTYPE_BINARY_UNIF:
 		    len = strlen(binu_types[list_of_names[i]->d_minor_type]);
 		    break;
-		case DB5_MAJORTYPE_BINARY_EXPM:
-		    len = strlen("binary(expm)");
-		    break;
 	    }
 	}
 
@@ -314,11 +311,6 @@ vls_long_dpp(struct bu_vls *vls,
 		case DB5_MAJORTYPE_ATTRIBUTE_ONLY:
 		    isSolid = 0;
 		    type = "global";
-		    break;
-		case DB5_MAJORTYPE_BINARY_EXPM:
-		    isSolid = 0;
-		    isRegion = 0;
-		    type = "binary(expm)";
 		    break;
 		case DB5_MAJORTYPE_BINARY_MIME:
 		    isSolid = 0;
@@ -410,8 +402,8 @@ int
 ged_ls(struct ged *gedp, int argc, const char *argv[])
 {
     struct bu_vls vls;
-    register struct directory *dp;
-    register int i;
+    struct directory *dp;
+    int i;
     int c;
     int aflag = 0;		/* print all objects without formatting */
     int cflag = 0;		/* print combinations */

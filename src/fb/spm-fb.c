@@ -1,7 +1,7 @@
 /*                        S P M - F B . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2009 United States Government as represented by
+ * Copyright (c) 1986-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -43,7 +43,7 @@ static int	square = 0;
 static int	vsize;
 
 void spm_fb(spm_map_t *mapp);
-void spm_square(register spm_map_t *mapp);
+void spm_square(spm_map_t *mapp);
 
 static char usage[] = "\
 Usage: spm-fb [-h -s] [-F framebuffer]\n\
@@ -51,9 +51,9 @@ Usage: spm-fb [-h -s] [-F framebuffer]\n\
 	vsize [filename]\n";
 
 int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int c;
+    int c;
 
     while ( (c = bu_getopt( argc, argv, "hF:sS:W:N:" )) != EOF )  {
 	switch ( c )  {
@@ -106,7 +106,7 @@ get_args(int argc, register char **argv)
 int
 main(int argc, char **argv)
 {
-    register spm_map_t	*mp;
+    spm_map_t	*mp;
 
     if ( !get_args( argc, argv ) )  {
 	(void)fputs(usage, stderr);
@@ -142,7 +142,7 @@ main(int argc, char **argv)
 void
 spm_fb(spm_map_t *mapp)
 {
-    register int	j;
+    int	j;
 
     for ( j = 0; j < mapp->ny; j++ ) {
 	fb_write( fbp, 0, j, mapp->xbin[j], mapp->nx[j] );
@@ -163,10 +163,10 @@ spm_fb(spm_map_t *mapp)
  *  Display a square sphere map on a framebuffer.
  */
 void
-spm_square(register spm_map_t *mapp)
+spm_square(spm_map_t *mapp)
 {
-    register int	x, y;
-    register unsigned char	*scanline;
+    int	x, y;
+    unsigned char	*scanline;
 
     scanline = (unsigned char *)malloc( scr_width * sizeof(RGBpixel) );
 

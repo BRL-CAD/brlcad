@@ -11,6 +11,7 @@ dist_tcl_DATA = \
 	combination.png \
 	command.png \
 	compErase.png \
+	compExclude.png \
 	compSelect.png \
 	configure.png \
 	edit_copy.png \

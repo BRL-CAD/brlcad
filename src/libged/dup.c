@@ -1,7 +1,7 @@
 /*                         D U P . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,13 +34,13 @@
 
 
 static void
-ged_dir_check5(register struct db_i		*input_dbip,
+ged_dir_check5(struct db_i		*input_dbip,
 	       const struct db5_raw_internal	*rip,
 	       long				addr,
 	       genptr_t				ptr);
 static int
-ged_dir_check(register struct db_i *input_dbip,
-	      register const char *name,
+ged_dir_check(struct db_i *input_dbip,
+	      const char *name,
 	      long int laddr,
 	      int len,
 	      int flags,
@@ -151,7 +151,7 @@ ged_dup(struct ged *gedp, int argc, const char *argv[])
  *
  */
 static void
-ged_dir_check5(register struct db_i		*input_dbip,
+ged_dir_check5(struct db_i		*input_dbip,
 	       const struct db5_raw_internal	*rip,
 	       long				addr,
 	       genptr_t				ptr)
@@ -216,7 +216,7 @@ ged_dir_check5(register struct db_i		*input_dbip,
  * Check a name against the global directory.
  */
 static int
-ged_dir_check(register struct db_i *input_dbip, register const char *name, long int laddr, int len, int flags, genptr_t ptr)
+ged_dir_check(struct db_i *input_dbip, const char *name, long int laddr, int len, int flags, genptr_t ptr)
 {
     struct directory	*dupdp;
     struct bu_vls		local;

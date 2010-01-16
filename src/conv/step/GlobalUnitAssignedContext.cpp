@@ -1,7 +1,7 @@
 /*                 GlobalUnitAssignedContext.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -58,9 +58,9 @@ GlobalUnitAssignedContext::GlobalUnitAssignedContext() {
 	id = 0;
 }
 
-GlobalUnitAssignedContext::GlobalUnitAssignedContext(STEPWrapper *sw,int STEPid) {
+GlobalUnitAssignedContext::GlobalUnitAssignedContext(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 GlobalUnitAssignedContext::~GlobalUnitAssignedContext() {
@@ -93,11 +93,12 @@ GlobalUnitAssignedContext::GetLengthConversionFactor() {
 		LengthContextDependentUnit *cd = dynamic_cast<LengthContextDependentUnit *>(*i);
 		if (cd != NULL) {
 			//found conversion based length unit
-			cerr << "found context dependent length unit" << endl;
+			std::cerr << "found context dependent length unit" << std::endl;
 			return 1.0;
 		}
 		i++;
 	}
+	return 1.0; //assume no conversion factor
 }
 
 double
@@ -118,11 +119,12 @@ GlobalUnitAssignedContext::GetPlaneAngleConversionFactor() {
 		PlaneAngleContextDependentUnit *cd = dynamic_cast<PlaneAngleContextDependentUnit *>(*i);
 		if (cd != NULL) {
 			//found conversion based length unit
-			cerr << "found context dependent length unit" << endl;
+			std::cerr << "found context dependent length unit" << std::endl;
 			return 1.0;
 		}
 		i++;
 	}
+	return 1.0; //assume no conversion factor
 }
 
 double
@@ -138,17 +140,18 @@ GlobalUnitAssignedContext::GetSolidAngleConversionFactor() {
 		SolidAngleConversionBasedUnit *cb = dynamic_cast<SolidAngleConversionBasedUnit *>(*i);
 		if (cb != NULL) {
 			//found conversion based length unit
-			cerr << "found SI length unit" << endl;
+			std::cerr << "found SI length unit" << std::endl;
 			return 1.0;
 		}
 		SolidAngleContextDependentUnit *cd = dynamic_cast<SolidAngleContextDependentUnit *>(*i);
 		if (cd != NULL) {
 			//found conversion based length unit
-			cerr << "found context dependent length unit" << endl;
+			std::cerr << "found context dependent length unit" << std::endl;
 			return 1.0;
 		}
 		i++;
 	}
+	return 1.0; //assume no conversion factor
 }
 
 bool
@@ -158,7 +161,7 @@ GlobalUnitAssignedContext::Load(STEPWrapper *sw,SCLP23(Application_instance) *ss
 
 	// load base class attributes
 	if ( !RepresentationContext::Load(sw,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::RepresentationContext." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::RepresentationContext." << std::endl;
 		return false;
 	}
 
@@ -186,7 +189,7 @@ GlobalUnitAssignedContext::Load(STEPWrapper *sw,SCLP23(Application_instance) *ss
 			} else {
 				l->clear();
 				delete l;
-				cout << CLASSNAME << ":Error unhandled unit type in units list." << endl;
+				std::cout << CLASSNAME << ":Error unhandled unit type in units list." << std::endl;
 				return false;
 			}
 		}
@@ -199,18 +202,18 @@ GlobalUnitAssignedContext::Load(STEPWrapper *sw,SCLP23(Application_instance) *ss
 
 void
 GlobalUnitAssignedContext::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Attributes:" << endl;
-	TAB(level+1); cout << "units(list):" << endl;
+	TAB(level); std::cout << "Attributes:" << std::endl;
+	TAB(level+1); std::cout << "units(list):" << std::endl;
 	LIST_OF_UNITS::iterator i;
 	for(i=units.begin();i!=units.end();i++) {
 		(*i)->Print(level+1);
-		cout << endl;
+		std::cout << std::endl;
 	}
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	RepresentationContext::Print(level+1);
 }
 STEPEntity *
@@ -222,7 +225,7 @@ GlobalUnitAssignedContext::Create(STEPWrapper *sw, SCLP23(Application_instance) 
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

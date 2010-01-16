@@ -1,7 +1,7 @@
 /*                        G - J A C K . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -76,7 +76,7 @@ int
 main(int argc, char **argv)
 {
     char		*dot;
-    register int	c;
+    int	c;
     double		percent;
     struct bu_vls	fig_file;
 
@@ -250,7 +250,7 @@ main(int argc, char **argv)
  *
  *  This routine must be prepared to run in parallel.
  */
-union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+union tree *do_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
     union tree		*ret_tree;
     struct bu_list		vhead;
@@ -449,7 +449,7 @@ nmg_to_psurf(struct nmgregion *r, FILE *fp_psurf)
     /* Print list of unique vertices and convert from mm to cm. */
     for (i = 0; i < BU_PTBL_END(&vtab); i++)  {
 	struct vertex			*v;
-	register struct vertex_g	*vg;
+	struct vertex_g	*vg;
 	v = (struct vertex *)BU_PTBL_GET(&vtab, i);
 	NMG_CK_VERTEX(v);
 	vg = v->vg_p;

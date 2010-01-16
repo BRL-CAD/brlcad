@@ -1,7 +1,7 @@
 /*                      R E D B L A C K . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,7 +28,6 @@
  *	of T. H. Cormen, C. E. Leiserson, and R. L. Rivest,
  *	_Introduction to algorithms_, MIT Press, Cambridge, MA, 1990.
  *
- *	@author:	Paul Tanenbaum
  */
 #warning "The redblack.h header is OBSOLETE -- use bu.h instead"
 /** @} */

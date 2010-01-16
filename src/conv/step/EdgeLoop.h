@@ -1,7 +1,7 @@
 /*                 EdgeLoop.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -42,7 +42,7 @@ protected:
 public:
 	EdgeLoop();
 	virtual ~EdgeLoop();
-	EdgeLoop(STEPWrapper *sw,int STEPid);
+	EdgeLoop(STEPWrapper *sw,int step_id);
 	ON_BoundingBox *GetEdgeBounds(ON_Brep *brep);
 	bool Load(STEPWrapper *sw,SCLP23(Application_instance) *sse);
 	virtual bool LoadONBrep(ON_Brep *brep);

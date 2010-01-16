@@ -1,7 +1,7 @@
 /*                        G _ L I N T . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2009 United States Government as represented by
+ * Copyright (c) 1995-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -784,7 +784,7 @@ static int rpt_ovlp (struct application *ap, struct partition *pp, struct region
 
 void init_plot3 (struct application *ap)
 {
-    register struct rt_i *rtip;
+    struct rt_i *rtip;
     struct g_lint_ctrl *cp;
 
     RT_AP_CHECK(ap);

@@ -13,6 +13,12 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "proe-brl-3.0", "..\proe-brl
 		Release.AspNetCompiler.Debug = "False"
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "proe-brl-5.0", "..\proe-brl-5.0\proe-brl-5.0.vcproj", "{53FFA9D6-663F-48E7-9E17-1997697AF016}"
+	ProjectSection(WebsiteProperties) = preProject
+		Debug.AspNetCompiler.Debug = "True"
+		Release.AspNetCompiler.Debug = "False"
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Release|Win32 = Release|Win32
@@ -27,6 +33,10 @@ Global
 		{6035025B-4B4B-47E7-9660-E37F04B86D24}.Release|Win32.Build.0 = Release|Win32
 		{6035025B-4B4B-47E7-9660-E37F04B86D24}.Release|x64.ActiveCfg = Release|x64
 		{6035025B-4B4B-47E7-9660-E37F04B86D24}.Release|x64.Build.0 = Release|x64
+		{53FFA9D6-663F-48E7-9E17-1997697AF016}.Release|Win32.ActiveCfg = Release|Win32
+		{53FFA9D6-663F-48E7-9E17-1997697AF016}.Release|Win32.Build.0 = Release|Win32
+		{53FFA9D6-663F-48E7-9E17-1997697AF016}.Release|x64.ActiveCfg = Release|x64
+		{53FFA9D6-663F-48E7-9E17-1997697AF016}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

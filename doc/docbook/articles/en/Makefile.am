@@ -1,4 +1,3 @@
-if EN_DOCS
 articlesDOCBOOK_EN = \
 	articles/en/build_pattern.xml \
 	articles/en/build_region.xml \
@@ -118,4 +117,3 @@ endif
 
 articlesDOCBOOK_ENpdfdir = $(BRLCAD_DATA)/pdf/articles/en
 articlesDOCBOOK_ENpdf_DATA = $(BUILTARTICLES_ENPDF)
-endif

@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -186,14 +185,14 @@ public:
 
   // returns parameters of point on circle that is closest to given point
   bool ClosestPointTo( 
-	 const ON_3dPoint& point, 
-	 double* t
-	 ) const;
+         const ON_3dPoint& point, 
+         double* t
+         ) const;
 
   // returns point on circle that is closest to given point
   ON_3dPoint ClosestPointTo( 
-	 const ON_3dPoint& point
-	 ) const;
+         const ON_3dPoint& point
+         ) const;
 
   // evaluate circle's implicit equation in plane
   double EquationAt( const ON_2dPoint& plane_point ) const;
@@ -202,33 +201,33 @@ public:
 
   // rotate circle about its center
   bool Rotate(
-	double sin_angle,
-	double cos_angle,
-	const ON_3dVector& axis_of_rotation
-	);
+        double sin_angle,
+        double cos_angle,
+        const ON_3dVector& axis_of_rotation
+        );
 
   bool Rotate(
-	double angle_in_radians,
-	const ON_3dVector&  axis_of_rotation
-	);
+        double angle_in_radians,
+        const ON_3dVector&  axis_of_rotation
+        );
 
   // rotate circle about a point and axis
   bool Rotate(
-	double sin_angle,
-	double cos_angle,
-	const ON_3dVector& axis_of_rotation,
-	const ON_3dPoint& center_of_rotation
-	);
+        double sin_angle,
+        double cos_angle,
+        const ON_3dVector& axis_of_rotation,
+        const ON_3dPoint& center_of_rotation
+        );
 
   bool Rotate(
-	double angle_in_radians,
-	const ON_3dVector&  axis_of_rotation,
-	const ON_3dPoint& center_of_rotation
-	);
+        double angle_in_radians,
+        const ON_3dVector&  axis_of_rotation,
+        const ON_3dPoint& center_of_rotation
+        );
 
   bool Translate(
-	const ON_3dVector& delta
-	);
+        const ON_3dVector& delta
+        );
 
   bool Reverse();
 
@@ -244,8 +243,8 @@ public:
   //   ON_Circle::GetParameterFromRadian() to convert between 
   //   the NURBS curve parameter and the transcendental parameter.
   int GetNurbForm(
-	ON_NurbsCurve& nurbs_curve
-	) const; 
+        ON_NurbsCurve& nurbs_curve
+        ) const; 
 
   /*
   Description:
@@ -255,16 +254,16 @@ public:
     circle_radians_parameter - [out]
   Example:
 
-	  ON_Circle circle = ...;
-	  double nurbs_t = 1.2345; // some number in interval (0,2.0*ON_PI).
-	  double circle_t;
-	  circle.GetRadianFromNurbFormParameter( nurbs_t, &circle_t );
+          ON_Circle circle = ...;
+          double nurbs_t = 1.2345; // some number in interval (0,2.0*ON_PI).
+          double circle_t;
+          circle.GetRadianFromNurbFormParameter( nurbs_t, &circle_t );
 
-	  ON_NurbsCurve nurbs_curve;
-	  circle.GetNurbsForm( nurbs_curve );
-	  circle_pt = circle.PointAt(circle_t);
-	  nurbs_pt = nurbs_curve.PointAt(nurbs_t);
-	  // circle_pt and nurbs_pt will be the same
+          ON_NurbsCurve nurbs_curve;
+          circle.GetNurbsForm( nurbs_curve );
+          circle_pt = circle.PointAt(circle_t);
+          nurbs_pt = nurbs_curve.PointAt(nurbs_t);
+          // circle_pt and nurbs_pt will be the same
 
   Remarks:
     The NURBS curve parameter is with respect to the NURBS curve
@@ -276,9 +275,9 @@ public:
     ON_Circle::GetNurbFormParameterFromRadian
   */
   bool GetRadianFromNurbFormParameter(
-	double nurbs_parameter,
-	double* circle_radians_parameter
-	) const;
+        double nurbs_parameter,
+        double* circle_radians_parameter
+        ) const;
 
   /*
   Description:
@@ -288,16 +287,16 @@ public:
     nurbs_parameter - [out]
   Example:
 
-	  ON_Circle circle = ...;
-	  double circle_t = 1.2345; // some number in interval (0,2.0*ON_PI).
-	  double nurbs_t;
-	  circle.GetNurbFormParameterFromRadian( circle_t, &nurbs_t );
+          ON_Circle circle = ...;
+          double circle_t = 1.2345; // some number in interval (0,2.0*ON_PI).
+          double nurbs_t;
+          circle.GetNurbFormParameterFromRadian( circle_t, &nurbs_t );
 
-	  ON_NurbsCurve nurbs_curve;
-	  circle.GetNurbsForm( nurbs_curve );
-	  circle_pt = circle.PointAt(circle_t);
-	  nurbs_pt = nurbs_curve.PointAt(nurbs_t);
-	  // circle_pt and nurbs_pt will be the same
+          ON_NurbsCurve nurbs_curve;
+          circle.GetNurbsForm( nurbs_curve );
+          circle_pt = circle.PointAt(circle_t);
+          nurbs_pt = nurbs_curve.PointAt(nurbs_t);
+          // circle_pt and nurbs_pt will be the same
 
   Remarks:
     The NURBS curve parameter is with respect to the NURBS curve
@@ -309,9 +308,9 @@ public:
     ON_Circle::GetNurbFormParameterFromRadian
   */
   bool GetNurbFormParameterFromRadian(
-	double circle_radians_parameter,
-	double* nurbs_parameter
-	) const;
+        double circle_radians_parameter,
+        double* nurbs_parameter
+        ) const;
 
 public:
   // circle is in the plane with center at plane.m_origin.

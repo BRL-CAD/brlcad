@@ -1,7 +1,7 @@
 /*                 Representation.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -24,30 +24,38 @@
  *
  */
 
+/* interface header */
+#include "./Representation.h"
+
+/* implemenation headers */
 #include "STEPWrapper.h"
 #include "Factory.h"
 
-#include "Representation.h"
 #include "ManifoldSolidBrep.h"
 #include "GeometricRepresentationContext.h"
 #include "GlobalUncertaintyAssignedContext.h"
 #include "GlobalUnitAssignedContext.h"
 #include "ParametricRepresentationContext.h"
 
+
 #define BUFSIZE 255 // used for buffer size that stringifies step ID
 #define CLASSNAME "Representation"
 #define ENTITYNAME "Representation"
+
 string Representation::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)Representation::Create);
+
 
 Representation::Representation() {
 	step = NULL;
 	id = 0;
 }
 
-Representation::Representation(STEPWrapper *sw, int STEPid) {
+
+Representation::Representation(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
+
 
 Representation::~Representation() {
 	/*
@@ -78,6 +86,7 @@ Representation::~Representation() {
 	}
 }
 
+
 double
 Representation::GetLengthConversionFactor() {
 	LIST_OF_REPRESENTATION_CONTEXT::iterator i = context_of_items.begin();
@@ -91,6 +100,7 @@ Representation::GetLengthConversionFactor() {
 	}
 	return 1000.0; // assume base of meters
 }
+
 
 double
 Representation::GetPlaneAngleConversionFactor() {
@@ -106,6 +116,7 @@ Representation::GetPlaneAngleConversionFactor() {
 	return 1.0; // assume base of radians
 }
 
+
 double
 Representation::GetSolidAngleConversionFactor() {
 	LIST_OF_REPRESENTATION_CONTEXT::iterator i = context_of_items.begin();
@@ -119,6 +130,7 @@ Representation::GetSolidAngleConversionFactor() {
 	}
 	return 1.0; // assume base of steradians
 }
+
 
 bool
 Representation::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
@@ -140,7 +152,7 @@ Representation::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 				RepresentationItem *aRI = dynamic_cast<RepresentationItem *>(Factory::CreateObject(sw,entity));
 				items.push_back(aRI);
 			} else {
-				cerr << CLASSNAME  << ": Unhandled entity in attribute 'items'." << endl;
+		std::cerr << CLASSNAME << ": Unhandled entity in attribute 'items'." << std::endl;;
 				return false;
 			}
 		}
@@ -157,7 +169,7 @@ Representation::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 
 				context_of_items.push_back(aGRC);
 				if (!aGRC->Load(step,sub_entity)) {
-					cout << CLASSNAME << ":Error loading GeometricRepresentationContext" << endl;
+		    std::cout << CLASSNAME << ":Error loading GeometricRepresentationContext" << std::endl;;
 					return false;
 				}
 			}
@@ -168,7 +180,7 @@ Representation::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 
 				context_of_items.push_back(aGUAC);
 				if (!aGUAC->Load(step,sub_entity)) {
-					cout << CLASSNAME << ":Error loading GlobalUncertaintyAssignedContext" << endl;
+		    std::cout << CLASSNAME << ":Error loading GlobalUncertaintyAssignedContext" << std::endl;;
 					return false;
 				}
 			}
@@ -179,7 +191,7 @@ Representation::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 
 				context_of_items.push_back(aGUAC);
 				if (!aGUAC->Load(step,sub_entity)) {
-					cout << CLASSNAME << ":Error loading GlobalUnitAssignedContext" << endl;
+		    std::cout << CLASSNAME << ":Error loading GlobalUnitAssignedContext" << std::endl;;
 					return false;
 				}
 			}
@@ -190,7 +202,7 @@ Representation::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 
 				context_of_items.push_back(aPRC);
 				if (!aPRC->Load(step,sub_entity)) {
-					cout << CLASSNAME << ":Error loading ParametricRepresentationContext" << endl;
+		    std::cout << CLASSNAME << ":Error loading ParametricRepresentationContext" << std::endl;;
 					return false;
 				}
 			}
@@ -204,7 +216,7 @@ Representation::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 
 	LIST_OF_STRINGS::iterator i;
 	for(i=attributes->begin(); i != attributes->end(); ++i) {
-		string attrName = (*i);
+      std::string attrName = (*i);
 
 		if (attrName.compare("name") == 0) {
 			name = step->getStringAttribute(id,attrName.c_str());
@@ -222,11 +234,11 @@ Representation::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 					items.push_back(aRI);
 
 					//if ( !aMSB->Load(step,entity)) {
-					//	cout << CLASSNAME << "::" << __func__ << "()"  << ":Error loading ManifoldSolidBrep." << endl;
+      //	std::cout << CLASSNAME << "::" << __func__ << "()" << ":Error loading ManifoldSolidBrep." << std::endl;;
 					//	return false;
 					//}
 				} else {
-					cout << CLASSNAME << "::" << __func__ << "()"  << ":Unhandled entity in attribute 'items': " << entity->EntityName() << endl;
+      std::cout << CLASSNAME << "::" << __func__ << "()" << ":Unhandled entity in attribute 'items': " << entity->EntityName() << std::endl;;
 					return false;
 				}
 			}
@@ -244,7 +256,7 @@ Representation::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 
 				context_of_items.push_back(aGRC);
 				if (!aGRC->Load(step,entity)) {
-					cout << CLASSNAME << ":Error loading GeometricRepresentationContext" << endl;
+      std::cout << CLASSNAME << ":Error loading GeometricRepresentationContext" << std::endl;;
 					return false;
 				}
 			}
@@ -256,7 +268,7 @@ Representation::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 
 				context_of_items.push_back(aGUAC);
 				if (!aGUAC->Load(step,entity)) {
-					cout << CLASSNAME << ":Error loading GlobalUncertaintyAssignedContext" << endl;
+      std::cout << CLASSNAME << ":Error loading GlobalUncertaintyAssignedContext" << std::endl;;
 					return false;
 				}
 			}
@@ -268,7 +280,7 @@ Representation::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 
 				context_of_items.push_back(aGUAC);
 				if (!aGUAC->Load(step,entity)) {
-					cout << CLASSNAME << ":Error loading GlobalUnitAssignedContext" << endl;
+      std::cout << CLASSNAME << ":Error loading GlobalUnitAssignedContext" << std::endl;;
 					return false;
 				}
 			}
@@ -280,25 +292,26 @@ Representation::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 
 				context_of_items.push_back(aPRC);
 				if (!aPRC->Load(step,entity)) {
-					cout << CLASSNAME << ":Error loading ParametricRepresentationContext" << endl;
+      std::cout << CLASSNAME << ":Error loading ParametricRepresentationContext" << std::endl;;
 					return false;
 				}
 			}
 
 		} else {
-			cout << CLASSNAME << ":Unhandled AttrName :" << attrName << endl;
+      std::cout << CLASSNAME << ":Unhandled AttrName :" << attrName << std::endl;;
 		}
 	}
 	*/
 	return true;
 }
 
+
 void
 Representation::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << name << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+    TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+    std::cout << "ID:" << STEPid() << ")" << std::endl;;
 
-	TAB(level+1); cout << "items:" << endl;
+    TAB(level+1); std::cout << "items:" << std::endl;;
 	LIST_OF_REPRESENTATION_ITEMS::iterator i;
 	for(i=items.begin(); i != items.end(); ++i) {
 		//ManifoldSolidBrep *msb = (ManifoldSolidBrep *)(*i);
@@ -307,12 +320,13 @@ Representation::Print(int level) {
 		(*i)->Print(level+1);
 	}
 
-	TAB(level+1); cout << "context_of_items:" << endl;
+    TAB(level+1); std::cout << "context_of_items:" << std::endl;;
 	LIST_OF_REPRESENTATION_CONTEXT::iterator ic;
 	for(ic=context_of_items.begin(); ic != context_of_items.end(); ++ic) {
 		(*ic)->Print(level+1);
 	}
 }
+
 
 STEPEntity *
 Representation::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
@@ -323,7 +337,7 @@ Representation::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;;
 			delete object;
 			return NULL;
 		}
@@ -332,6 +346,7 @@ Representation::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		return (*i).second;
 	}
 }
+
 
 // Local Variables:
 // tab-width: 8

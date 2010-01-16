@@ -1,7 +1,7 @@
 /*                 SurfaceCurve.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -49,9 +49,9 @@ SurfaceCurve::SurfaceCurve() {
 	curve_3d = NULL;
 }
 
-SurfaceCurve::SurfaceCurve(STEPWrapper *sw,int STEPid) {
+SurfaceCurve::SurfaceCurve(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 	curve_3d = NULL;
 }
 
@@ -66,7 +66,7 @@ SurfaceCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 	id = sse->STEPfile_id;
 
 	if ( !Curve::Load(sw,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::Curve." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::Curve." << std::endl;
 		return false;
 	}
 
@@ -79,7 +79,7 @@ SurfaceCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 		if (entity) {
 			curve_3d = dynamic_cast<Curve *>(Factory::CreateObject(sw,entity)); //CreateCurveObject(sw,entity));
 		} else {
-			cout << CLASSNAME << ":Error loading attribute 'curve_3d'." << endl;
+			std::cout << CLASSNAME << ":Error loading attribute 'curve_3d'." << std::endl;
 			return false;
 		}
 	}
@@ -94,7 +94,7 @@ SurfaceCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 			associated_geometry.push_back(aPCOS);
 		} else {
-			cerr << CLASSNAME  << ": Unhandled entity in attribute 'associated_geometry'." << endl;
+			std::cerr << CLASSNAME  << ": Unhandled entity in attribute 'associated_geometry'." << std::endl;
 			return false;
 		}
 	}
@@ -117,11 +117,11 @@ SurfaceCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 					associated_geometry.push_back(aPCOS);
 
 					if (!aPCOS->Load(step, p_or_s)) {
-						cout << CLASSNAME << ":Error loading PCurveOrSurface select." << endl;
+						std::cout << CLASSNAME << ":Error loading PCurveOrSurface select." << std::endl;
 						return false;
 					}
 				} else {
-					cout << CLASSNAME << ":Unhandled select in attribute 'associated_geometry': " << p_or_s->CurrentUnderlyingType()->Description() << endl;
+					std::cout << CLASSNAME << ":Unhandled select in attribute 'associated_geometry': " << p_or_s->CurrentUnderlyingType()->Description() << std::endl;
 					return false;
 				}
 				sn = (EntityNode *) sn->NextNode();
@@ -146,19 +146,19 @@ SurfaceCurve::PointAtStart() {
 
 void
 SurfaceCurve::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << name << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Attributes:" << endl;
-	TAB(level+1); cout << "curve_3d:" << endl;
+	TAB(level); std::cout << "Attributes:" << std::endl;
+	TAB(level+1); std::cout << "curve_3d:" << std::endl;
 	curve_3d->Print(level+1);
-	TAB(level+1); cout << "associated_geometry:" << endl;
+	TAB(level+1); std::cout << "associated_geometry:" << std::endl;
 	LIST_OF_PCURVE_OR_SURFACE::iterator i;
 	for(i=associated_geometry.begin();i!=associated_geometry.end();i++) {
 		(*i)->Print(level+1);
 	}
 
-	TAB(level+1); cout << "master_representation:" << Preferred_surface_curve_representation_string[master_representation] << endl;
+	TAB(level+1); std::cout << "master_representation:" << Preferred_surface_curve_representation_string[master_representation] << std::endl;
 }
 
 STEPEntity *
@@ -170,7 +170,7 @@ SurfaceCurve::Create(STEPWrapper *sw,SCLP23(Application_instance) *sse){
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

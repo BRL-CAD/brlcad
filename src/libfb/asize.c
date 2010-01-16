@@ -1,7 +1,7 @@
 /*                         A S I Z E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,9 +22,6 @@
 /** @file ./libfb/asize.c
  *
  *  Image file AutoSizing code.
- *
- *  Author -
- *	Phil Dykstra
  *
  */
 /** @} */

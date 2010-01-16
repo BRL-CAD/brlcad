@@ -1,7 +1,7 @@
 /*                          B O M B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,8 +35,10 @@ static char *_bu_bomb_failsafe = NULL;
 /* used for tty printing */
 static int fd = -1;
 
+#if defined(DEBUG)
 /* used for crash reporting */
 static char tracefile[512] = {0};
+#endif
 
 /* release memory on application exit */
 static void

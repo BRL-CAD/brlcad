@@ -1,7 +1,7 @@
 /*                        S K E T C H . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2009 United States Government as represented by
+ * Copyright (c) 1990-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -133,6 +133,12 @@ rt_check_curve(const struct curve *crv, const struct rt_sketch_internal *skt, in
 int
 rt_sketch_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
+    if (!stp)
+	return -1;
+    RT_CK_SOLTAB(stp);
+    if (ip) RT_CK_DB_INTERNAL(ip);
+    if (rtip) RT_CK_RTI(rtip);
+
     stp->st_specific = (genptr_t)NULL;
     return(0);
 }
@@ -142,8 +148,9 @@ rt_sketch_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
  * R T _ S K E T C H _ P R I N T
  */
 void
-rt_sketch_print(register const struct soltab *stp)
+rt_sketch_print(const struct soltab *stp)
 {
+    if (stp) RT_CK_SOLTAB(stp);
 }
 
 
@@ -158,33 +165,20 @@ rt_sketch_print(register const struct soltab *stp)
  * >0 HIT
  */
 int
-rt_sketch_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
+rt_sketch_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
+    if (!stp || !rp || !ap || !seghead)
+	return 0;
+
+    RT_CK_SOLTAB(stp);
+    RT_CK_RAY(rp);
+    RT_CK_APPLICATION(ap);
+
     /* can't hit 'em as they're not solid geometry, so no surfno, not
      * hit point, nada.
      */
 
-    return(0);			/* MISS */
-}
-
-
-#define RT_SKETCH_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
-
-
-/**
- * R T _ S K E T C H _ V S H O T
- *
- * Vectorized version.
- */
-void
-rt_sketch_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
-    /* An array of solid pointers */
-    /* An array of ray pointers */
-    /* array of segs (results returned) */
-    /* Number of ray/object pairs */
-
-{
-    rt_vstub(stp, rp, segp, n, ap);
+    return 0;			/* MISS */
 }
 
 
@@ -194,8 +188,14 @@ rt_sketch_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, 
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
-rt_sketch_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
+rt_sketch_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
+    if (!hitp || !rp)
+	return;
+
+    RT_CK_HIT(hitp);
+    if (stp) RT_CK_SOLTAB(stp);
+    RT_CK_RAY(rp);
 
     VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir);
 }
@@ -207,8 +207,14 @@ rt_sketch_norm(register struct hit *hitp, struct soltab *stp, register struct xr
  * Return the curvature of the sketch.
  */
 void
-rt_sketch_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
+rt_sketch_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
+    if (!cvp || !hitp)
+	return;
+
+    RT_CK_HIT(hitp);
+    if (stp) RT_CK_SOLTAB(stp);
+
     cvp->crv_c1 = cvp->crv_c2 = 0;
 
     /* any tangent direction */
@@ -225,8 +231,13 @@ rt_sketch_curve(register struct curvature *cvp, register struct hit *hitp, struc
  * u = azimuth,  v = elevation
  */
 void
-rt_sketch_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
+rt_sketch_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
+    if (ap) RT_CK_APPLICATION(ap);
+    if (stp) RT_CK_SOLTAB(stp);
+    if (hitp) RT_CK_HIT(hitp);
+    if (!uvp)
+	return;
 }
 
 
@@ -234,8 +245,9 @@ rt_sketch_uv(struct application *ap, struct soltab *stp, register struct hit *hi
  * R T _ S K E T C H _ F R E E
  */
 void
-rt_sketch_free(register struct soltab *stp)
+rt_sketch_free(struct soltab *stp)
 {
+    if (stp) RT_CK_SOLTAB(stp);
 }
 
 
@@ -262,14 +274,12 @@ rt_sketch_class(void)
 int
 rt_sketch_contains(struct rt_sketch_internal *sk, point2d_t pt)
 {
-    fastf_t nseg, radius;
-    int i, j, hits;
+    fastf_t nseg;
+    int i, hits;
 
     long *lng;
     struct line_seg *lsg;
     struct carc_seg *csg;
-    struct nurb_seg *nsg;
-    struct bezier_seg *bsg;
 
     point2d_t pt1, pt2, isec;
     vect2d_t one, two;
@@ -367,7 +377,6 @@ void
 rt_sketch_bounds(struct rt_sketch_internal *sk, fastf_t *bounds)
 {
     fastf_t nseg, radius;
-    fastf_t xmin, xmax, ymin, ymax;
     int i, j;
 
     long *lng;
@@ -495,6 +504,10 @@ seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
     fastf_t radius;
     vect_t norm;
 
+    VSETALL(semi_a, 0);
+    VSETALL(semi_b, 0);
+    VSETALL(center, 0);
+
     lng = (long *)seg;
     switch (*lng) {
 	case CURVE_LSEG_MAGIC:
@@ -557,11 +570,11 @@ seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
 			delta = tmp_delta;
 		}
 		if (ttol->norm > 0.0) {
-		    fastf_t norm;
+		    fastf_t normal;
 
-		    norm = ttol->norm * M_PI / 180.0;
-		    if (norm < delta)
-			delta = norm;
+		    normal = ttol->norm * M_PI / 180.0;
+		    if (normal < delta)
+			delta = normal;
 		}
 		if (csg->radius <= 0.0) {
 		    /* this is a full circle */
@@ -895,7 +908,7 @@ curve_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V
  * R T _ S K E T C H _ P L O T
  */
 int
-rt_sketch_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_sketch_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol __attribute__((unused)))
 {
     struct rt_sketch_internal *sketch_ip;
     int ret;
@@ -923,8 +936,12 @@ rt_sketch_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_sketch_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_sketch_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
 {
+    if (r) NMG_CK_REGION(*r);
+    if (m) NMG_CK_MODEL(m);
+    if (ip) RT_CK_DB_INTERNAL(ip);
+
     return(-1);
 }
 
@@ -936,7 +953,7 @@ rt_sketch_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip,
  * Apply modeling transformations as well.
  */
 int
-rt_sketch_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_sketch_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_sketch_internal *sketch_ip;
     union record *rp;
@@ -945,6 +962,8 @@ rt_sketch_import4(struct rt_db_internal *ip, const struct bu_external *ep, regis
     unsigned char *ptr;
     struct curve *crv;
     int i;
+
+    if (dbip) RT_CK_DBI(dbip);
 
     BU_CK_EXTERNAL(ep);
     rp = (union record *)ep->ext_buf;
@@ -994,7 +1013,6 @@ rt_sketch_import4(struct rt_db_internal *ip, const struct bu_external *ep, regis
 	struct carc_seg *csg;
 	struct nurb_seg *nsg;
 	struct bezier_seg *bsg;
-	int i;
 
 	magic = bu_glong(ptr);
 	ptr += 4;
@@ -1099,6 +1117,8 @@ rt_sketch_export4(struct bu_external *ep, const struct rt_db_internal *ip, doubl
     int i, seg_no, nbytes=0, ngran;
     vect_t tmp_vec;
     unsigned char *ptr;
+
+    if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_SKETCH) return(-1);
@@ -1274,7 +1294,7 @@ rt_sketch_export4(struct bu_external *ep, const struct rt_db_internal *ip, doubl
  * Apply modeling transformations as well.
  */
 int
-rt_sketch_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_sketch_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_sketch_internal *sketch_ip;
     vect_t v;
@@ -1283,12 +1303,13 @@ rt_sketch_import5(struct rt_db_internal *ip, const struct bu_external *ep, regis
     struct curve *crv;
     int i;
 
-    BU_CK_EXTERNAL(ep);
-
     if (bu_debug&BU_DEBUG_MEM_CHECK) {
 	bu_log("Barrier check at start of sketch_import5():\n");
 	bu_mem_barriercheck();
     }
+
+    if (dbip) RT_CK_DBI(dbip);
+    BU_CK_EXTERNAL(ep);
 
     RT_CK_DB_INTERNAL(ip);
     ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -1329,7 +1350,6 @@ rt_sketch_import5(struct rt_db_internal *ip, const struct bu_external *ep, regis
 	struct carc_seg *csg;
 	struct nurb_seg *nsg;
 	struct bezier_seg *bsg;
-	int i;
 
 	magic = bu_glong(ptr);
 	ptr += SIZEOF_NETWORK_LONG;
@@ -1441,6 +1461,8 @@ rt_sketch_export5(struct bu_external *ep, const struct rt_db_internal *ip, doubl
 	bu_log("Barrier check at start of sketch_export5():\n");
 	bu_mem_barriercheck();
     }
+
+    if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_SKETCH) return(-1);
@@ -1615,7 +1637,7 @@ rt_sketch_export5(struct bu_external *ep, const struct rt_db_internal *ip, doubl
 int
 rt_sketch_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
-    register struct rt_sketch_internal *sketch_ip =
+    struct rt_sketch_internal *sketch_ip =
 	(struct rt_sketch_internal *)ip->idb_ptr;
     int i;
     int seg_no;
@@ -1858,16 +1880,12 @@ rt_curve_free(struct curve *crv)
  * solid.
  */
 void
-rt_sketch_ifree(struct rt_db_internal *ip, struct resource *resp)
+rt_sketch_ifree(struct rt_db_internal *ip)
 {
-    register struct rt_sketch_internal *sketch_ip;
+    struct rt_sketch_internal *sketch_ip;
     struct curve *crv;
 
     RT_CK_DB_INTERNAL(ip);
-
-    if (!resp) {
-	resp = &rt_uniresource;
-    }
 
     sketch_ip = (struct rt_sketch_internal *)ip->idb_ptr;
     RT_SKETCH_CK_MAGIC(sketch_ip);
@@ -2058,66 +2076,66 @@ curve_to_tcl_list(struct bu_vls *vls, struct curve *crv)
 }
 
 
-int rt_sketch_form(struct bu_vls *log, const struct rt_functab *ftp)
+int rt_sketch_form(struct bu_vls *logstr, const struct rt_functab *ftp)
 {
-    BU_CK_VLS(log);
+    BU_CK_VLS(logstr);
     RT_CK_FUNCTAB(ftp);
 
-    bu_vls_printf(log, "V {%%f %%f %%f} A {%%f %%f %%f} B {%%f %%f %%f} VL {{%%f %%f} {%%f %%f} ...} SL {{segment_data} {segment_data}}");
+    bu_vls_printf(logstr, "V {%%f %%f %%f} A {%%f %%f %%f} B {%%f %%f %%f} VL {{%%f %%f} {%%f %%f} ...} SL {{segment_data} {segment_data}}");
 
     return BRLCAD_OK;
 }
 
 
 int
-rt_sketch_get(struct bu_vls *log, const struct rt_db_internal *intern, const char *attr)
+rt_sketch_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr)
 {
-    register struct rt_sketch_internal *skt=(struct rt_sketch_internal *)intern->idb_ptr;
+    struct rt_sketch_internal *skt=(struct rt_sketch_internal *)intern->idb_ptr;
     int i;
     struct curve *crv;
 
-    BU_CK_VLS(log);
+    BU_CK_VLS(logstr);
     RT_SKETCH_CK_MAGIC(skt);
 
     if (attr == (char *)NULL) {
-	bu_vls_strcpy(log, "sketch");
-	bu_vls_printf(log, " V {%.25g %.25g %.25g}", V3ARGS(skt->V));
-	bu_vls_printf(log, " A {%.25g %.25g %.25g}", V3ARGS(skt->u_vec));
-	bu_vls_printf(log, " B {%.25g %.25g %.25g}", V3ARGS(skt->v_vec));
-	bu_vls_strcat(log, " VL {");
+	bu_vls_strcpy(logstr, "sketch");
+	bu_vls_printf(logstr, " V {%.25g %.25g %.25g}", V3ARGS(skt->V));
+	bu_vls_printf(logstr, " A {%.25g %.25g %.25g}", V3ARGS(skt->u_vec));
+	bu_vls_printf(logstr, " B {%.25g %.25g %.25g}", V3ARGS(skt->v_vec));
+	bu_vls_strcat(logstr, " VL {");
 	for (i=0; i<skt->vert_count; i++)
-	    bu_vls_printf(log, " {%.25g %.25g}", V2ARGS(skt->verts[i]));
-	bu_vls_strcat(log, " }");
+	    bu_vls_printf(logstr, " {%.25g %.25g}", V2ARGS(skt->verts[i]));
+	bu_vls_strcat(logstr, " }");
 
 	crv = &skt->skt_curve;
-	if (curve_to_tcl_list(log, crv)) {
+	if (curve_to_tcl_list(logstr, crv)) {
 	    return BRLCAD_ERROR;
 	}
     } else if (!strcmp(attr, "V")) {
-	bu_vls_printf(log, "%.25g %.25g %.25g", V3ARGS(skt->V));
+	bu_vls_printf(logstr, "%.25g %.25g %.25g", V3ARGS(skt->V));
     } else if (!strcmp(attr, "A")) {
-	bu_vls_printf(log, "%.25g %.25g %.25g", V3ARGS(skt->u_vec));
+	bu_vls_printf(logstr, "%.25g %.25g %.25g", V3ARGS(skt->u_vec));
     } else if (!strcmp(attr, "B")) {
-	bu_vls_printf(log, "%.25g %.25g %.25g", V3ARGS(skt->v_vec));
+	bu_vls_printf(logstr, "%.25g %.25g %.25g", V3ARGS(skt->v_vec));
     } else if (!strcmp(attr, "VL")) {
 	for (i=0; i<skt->vert_count; i++)
-	    bu_vls_printf(log, " {%.25g %.25g}", V2ARGS(skt->verts[i]));
+	    bu_vls_printf(logstr, " {%.25g %.25g}", V2ARGS(skt->verts[i]));
     } else if (!strcmp(attr, "SL")) {
 	crv = &skt->skt_curve;
-	if (curve_to_tcl_list(log, crv)) {
+	if (curve_to_tcl_list(logstr, crv)) {
 	    return BRLCAD_ERROR;
 	}
     } else if (*attr == 'V') {
 	i = atoi((attr+1));
 	if (i < 0 || i >= skt->vert_count) {
-	    bu_vls_printf(log, "ERROR: Illegal vertex number\n");
+	    bu_vls_printf(logstr, "ERROR: Illegal vertex number\n");
 	    return BRLCAD_ERROR;
 	}
 
-	bu_vls_printf(log, "%.25g %.25g", V2ARGS(skt->verts[i]));
+	bu_vls_printf(logstr, "%.25g %.25g", V2ARGS(skt->verts[i]));
     } else {
 	/* unrecognized attribute */
-	bu_vls_printf(log, "ERROR: Unknown attribute, choices are V, A, B, VL, SL, or V#\n");
+	bu_vls_printf(logstr, "ERROR: Unknown attribute, choices are V, A, B, VL, SL, or V#\n");
 	return BRLCAD_ERROR;
     }
 
@@ -2297,7 +2315,7 @@ get_tcl_curve(Tcl_Interp *interp, struct curve *crv, Tcl_Obj *seg_list)
 
 
 int
-rt_sketch_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, char **argv)
+rt_sketch_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv)
 {
     struct rt_sketch_internal *skt;
     int ret, array_len;
@@ -2313,7 +2331,7 @@ rt_sketch_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, ch
 	    array_len = 3;
 	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &new, &array_len) !=
 		array_len) {
-		bu_vls_printf(log, "ERROR: Incorrect number of coordinates for vertex\n");
+		bu_vls_printf(logstr, "ERROR: Incorrect number of coordinates for vertex\n");
 		return BRLCAD_ERROR;
 	    }
 	} else if (!strcmp(argv[0], "A")) {
@@ -2321,7 +2339,7 @@ rt_sketch_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, ch
 	    array_len = 3;
 	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &new, &array_len) !=
 		array_len) {
-		bu_vls_printf(log, "ERROR: Incorrect number of coordinates for vertex\n");
+		bu_vls_printf(logstr, "ERROR: Incorrect number of coordinates for vertex\n");
 		return BRLCAD_ERROR;
 	    }
 	} else if (!strcmp(argv[0], "B")) {
@@ -2329,7 +2347,7 @@ rt_sketch_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, ch
 	    array_len = 3;
 	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &new, &array_len) !=
 		array_len) {
-		bu_vls_printf(log, "ERROR: Incorrect number of coordinates for vertex\n");
+		bu_vls_printf(logstr, "ERROR: Incorrect number of coordinates for vertex\n");
 		return BRLCAD_ERROR;
 	    }
 	} else if (!strcmp(argv[0], "VL")) {
@@ -2350,7 +2368,7 @@ rt_sketch_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, ch
 	    len = 0;
 	    (void)tcl_list_to_fastf_array(brlcad_interp, argv[1], &new_verts, &len);
 	    if (len%2) {
-		bu_vls_printf(log, "ERROR: Incorrect number of coordinates for vertices\n");
+		bu_vls_printf(logstr, "ERROR: Incorrect number of coordinates for vertices\n");
 		return BRLCAD_ERROR;
 	    }
 
@@ -2381,12 +2399,12 @@ rt_sketch_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, ch
 	    vert_no = atoi(argv[0] + 1);
 	    new_vert = skt->verts[vert_no];
 	    if (vert_no < 0 || vert_no > skt->vert_count) {
-		bu_vls_printf(log, "ERROR: Illegal vertex number\n");
+		bu_vls_printf(logstr, "ERROR: Illegal vertex number\n");
 		return BRLCAD_ERROR;
 	    }
 	    array_len = 2;
 	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &new_vert, &array_len) != array_len) {
-		bu_vls_printf(log, "ERROR: Incorrect number of coordinates for vertex\n");
+		bu_vls_printf(logstr, "ERROR: Incorrect number of coordinates for vertex\n");
 		return BRLCAD_ERROR;
 	    }
 	}
@@ -2404,8 +2422,11 @@ rt_sketch_adjust(struct bu_vls *log, struct rt_db_internal *intern, int argc, ch
  *
  */
 int
-rt_sketch_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
+rt_sketch_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 {
+    ps = ps; /* quellage */
+    if (ip) RT_CK_DB_INTERNAL(ip);
+
     return(0);			/* OK */
 }
 

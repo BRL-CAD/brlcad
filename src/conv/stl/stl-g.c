@@ -1,7 +1,7 @@
 /*                         S T L - G . C
  * BRL-CAD
  *
- * Copyright (c) 2002-2009 United States Government as represented by
+ * Copyright (c) 2002-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -565,7 +565,7 @@ Convert_input()
 int
 main(int argc, char *argv[])
 {
-    register int c;
+    int c;
 
     tol.magic = BN_TOL_MAGIC;
 

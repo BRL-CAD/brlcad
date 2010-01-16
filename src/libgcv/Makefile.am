@@ -16,7 +16,7 @@ libgcv_la_LIBADD = \
 EXTRA_DIST = \
         CMakeLists.txt
 
-AM_CFLAGS = ${STRICT_FLAGS}
+#AM_CFLAGS = ${STRICT_FLAGS}
 
 DEPENDS = src/librt
 

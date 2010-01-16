@@ -1,7 +1,7 @@
 /*                       C O N V E R T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,9 +30,9 @@
 
 
 int
-bu_cv_cookie(char *in)			/* input format */
+bu_cv_cookie(const char *in)			/* input format */
 {
-    char *p;
+    const char *p;
     int collector;
     int result = 0x0000;	/* zero/one channel, Net, unsigned, char, clip */
 
@@ -63,7 +63,7 @@ bu_cv_cookie(char *in)			/* input format */
 	++p;
     } else if (*p == 's') {
 	/* could be 'signed' or 'short' */
-	char *p2;
+	const char *p2;
 	p2 = p+1;
 	if (*p2 && (islower(*p2) || isdigit(*p2))) {
 	    result |= CV_SIGNED_MASK;
@@ -120,8 +120,8 @@ bu_cv_cookie(char *in)			/* input format */
 }
 
 
-void
-bu_cv_fmt_cookie(char * buf, size_t buflen, int cookie)
+HIDDEN void
+bu_cv_fmt_cookie(char *buf, size_t buflen, int cookie)
 {
     register char *cp = buf;
     unsigned int len;
@@ -278,7 +278,7 @@ bu_cv_optimize(register int cookie)
 
     /* Run time check:  which kind of integers does this machine have? */
     if (Endian == END_NOTSET) {
-	size_t soli = sizeof(long int);
+	volatile size_t soli = sizeof(long int);
 	unsigned long int testval = 0;
 	register int i;
 	for (i=0; i<4; i++) {

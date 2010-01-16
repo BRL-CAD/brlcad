@@ -1,7 +1,7 @@
 /*                       P A T C H - G . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2009 United States Government as represented by
+ * Copyright (c) 1989-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -824,7 +824,7 @@ nmg_patch_coplanar_face_merge(struct shell *s, int *face_count, struct patch_fac
 	     BU_LIST_NOT_HEAD(fu2, &s->fu_hd);
 	     fu2 = BU_LIST_NEXT(faceuse, &fu2->l)
 	    ) {
-	    register fastf_t dist;
+	    fastf_t dist;
 	    plane_t n2;
 
 	    f2 = fu2->f_p;
@@ -3524,7 +3524,7 @@ proc_rod(int cnt)
  */
 void
 pnorms(fastf_t (*norms)[3], fastf_t (*verts)[3], fastf_t *centroid, int npts, int inv) {
-    register int i;
+    int i;
     vect_t ab, ac;
     vect_t n;
 

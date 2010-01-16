@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -25,6 +24,9 @@ class ON_CLASS ON_Color
 {
 public:
 	// Constructors & Conversions -     also default copy and assignment	
+
+  static const ON_Color UnsetColor; // 0xFFFFFFFF
+
 
   // Default is black
 	ON_Color();
@@ -110,10 +112,10 @@ public:
   double Value() const;
 
   void SetHSV( 
-	 double h, // hue in radians 0 to 2*pi
-	 double s, // satuation 0.0 = gray, 1.0 = saturated
-	 double v // value     
-	 );
+         double h, // hue in radians 0 to 2*pi
+         double s, // satuation 0.0 = gray, 1.0 = saturated
+         double v // value     
+         );
 
 private:
   // m_color is in Windows COLORREF format.

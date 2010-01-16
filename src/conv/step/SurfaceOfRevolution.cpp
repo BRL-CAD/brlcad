@@ -1,7 +1,7 @@
 /*                 SurfaceOfRevolution.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -39,9 +39,9 @@ SurfaceOfRevolution::SurfaceOfRevolution() {
 	axis_position = NULL;
 }
 
-SurfaceOfRevolution::SurfaceOfRevolution(STEPWrapper *sw,int STEPid) {
+SurfaceOfRevolution::SurfaceOfRevolution(STEPWrapper *sw,int step_id) {
 	step=sw;
-	id = STEPid;
+	id = step_id;
 	axis_position = NULL;
 }
 
@@ -54,7 +54,7 @@ SurfaceOfRevolution::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 	id = sse->STEPfile_id;
 
 	if ( !SweptSurface::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::Surface." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::Surface." << std::endl;
 		return false;
 	}
 
@@ -67,7 +67,7 @@ SurfaceOfRevolution::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		if (entity) {
 			axis_position = dynamic_cast<Axis1Placement *>(Factory::CreateObject(sw,entity));
 		} else {
-			cerr << CLASSNAME << ": error loading 'axis_position' attribute." << endl;
+			std::cerr << CLASSNAME << ": error loading 'axis_position' attribute." << std::endl;
 			return false;
 		}
 	}
@@ -77,8 +77,8 @@ SurfaceOfRevolution::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 
 void
 SurfaceOfRevolution::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << name << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
 	if (axis_position != NULL)
 		axis_position->Print(level+1);
@@ -95,7 +95,7 @@ SurfaceOfRevolution::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) 
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

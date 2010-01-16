@@ -1,7 +1,7 @@
 /*                        R M A T E R . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -83,7 +83,7 @@ ged_rmater(struct ged *gedp, int argc, const char *argv[])
 #endif
     int status = GED_OK;
     FILE *fp;
-    register struct directory *dp;
+    struct directory *dp;
     struct rt_db_internal	intern;
     struct rt_comb_internal	*comb;
     char line[LINELEN];

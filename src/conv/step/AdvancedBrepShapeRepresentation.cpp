@@ -1,7 +1,7 @@
 /*                 AdvancedBrepShapeRepresentation.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -24,70 +24,83 @@
  *
  */
 
+/* interface header */
+#include "./AdvancedBrepShapeRepresentation.h"
+
+/* implementation headers */
 #include "STEPWrapper.h"
 #include "Factory.h"
-
-#include "AdvancedBrepShapeRepresentation.h"
 #include "ManifoldSolidBrep.h"
 #include "GeometricRepresentationContext.h"
 
 
 #define CLASSNAME "AdvancedBrepShapeRepresentation"
 #define ENTITYNAME "Advanced_Brep_Shape_Representation"
-string AdvancedBrepShapeRepresentation::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)AdvancedBrepShapeRepresentation::Create);
+
+
+std::string AdvancedBrepShapeRepresentation::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)AdvancedBrepShapeRepresentation::Create);
+
 
 AdvancedBrepShapeRepresentation::AdvancedBrepShapeRepresentation() {
-	step = NULL;
-	id = 0;
+    step = NULL;
+    id = 0;
 }
 
-AdvancedBrepShapeRepresentation::AdvancedBrepShapeRepresentation(STEPWrapper *sw, int STEPid) {
-	step = sw;
-	id = STEPid;
+
+AdvancedBrepShapeRepresentation::AdvancedBrepShapeRepresentation(STEPWrapper *sw, int step_id) {
+    step = sw;
+	id = step_id;
 }
+
 
 AdvancedBrepShapeRepresentation::~AdvancedBrepShapeRepresentation() {
 }
 
+
 STEPEntity *
-AdvancedBrepShapeRepresentation::Create(STEPWrapper *sw,SCLP23(Application_instance) *sse){
-	Factory::OBJECTS::iterator i;
-	if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
-		AdvancedBrepShapeRepresentation *object = new AdvancedBrepShapeRepresentation(sw,sse->STEPfile_id);
+AdvancedBrepShapeRepresentation::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
+    Factory::OBJECTS::iterator i;
+    if ((i = Factory::FindObject(sse->STEPfile_id)) == Factory::objects.end()) {
+	AdvancedBrepShapeRepresentation *object = new AdvancedBrepShapeRepresentation(sw, sse->STEPfile_id);
 
-		Factory::AddObject(object);
+	Factory::AddObject(object);
 
-		if (!object->Load(sw,sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
-			delete object;
-			return NULL;
-		}
-		return static_cast<STEPEntity *>(object);
-	} else {
-		return (*i).second;
+	if (!object->Load(sw, sse)) {
+	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
+	    delete object;
+	    return NULL;
 	}
+	return static_cast<STEPEntity *>(object);
+    } else {
+	return (*i).second;
+    }
 }
+
 
 bool
 AdvancedBrepShapeRepresentation::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
-	step=sw;
-	id = sse->STEPfile_id;
+    step = sw;
+    id = sse->STEPfile_id;
 
-	if ( !ShapeRepresentation::Load(step,sse) ) {
-		cerr << CLASSNAME << ":Error loading base class ::ShapeRepresentation." << endl;
-		return false;
-	}
-	return true;
+    if (!ShapeRepresentation::Load(step, sse)) {
+	std::cerr << CLASSNAME << ":Error loading base class ::ShapeRepresentation." << std::endl;
+	return false;
+    }
+    return true;
 }
+
 
 void
 AdvancedBrepShapeRepresentation::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << name << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
+    std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
-	ShapeRepresentation::Print(level);
+    TAB(level);
+    std::cout << "Inherited Attributes:" << std::endl;
+    ShapeRepresentation::Print(level);
 }
+
 
 // Local Variables:
 // tab-width: 8

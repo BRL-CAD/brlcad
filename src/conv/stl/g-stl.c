@@ -1,7 +1,7 @@
 /*                         G - S T L . C
  * BRL-CAD
  *
- * Copyright (c) 2003-2009 United States Government as represented by
+ * Copyright (c) 2003-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -296,7 +296,7 @@ static struct gcv_data gcvwriter = {nmg_to_stl};
 int
 main(int argc, char *argv[])
 {
-    register int c;
+    int c;
     double percent;
     int i;
 

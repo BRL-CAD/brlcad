@@ -1,7 +1,7 @@
 /*                        F B S E R V . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2009 United States Government as represented by
+ * Copyright (c) 1995-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -100,7 +100,7 @@ new_client(struct pkg_conn	*pcp,
 	   Tcl_Channel		chan)
 	   
 {
-    register int	i;
+    int	i;
 
     if (pcp == PKC_ERROR)
 	return;
@@ -133,7 +133,7 @@ new_client(struct pkg_conn	*pcp,
 void
 set_port(void)
 {
-    register int i;
+    int i;
     int save_port;
     int port;
     char hostname[32];
@@ -205,7 +205,7 @@ static struct pkg_conn *
 fbserv_makeconn(int fd,
 		const struct pkg_switch *switchp)
 {
-    register struct pkg_conn *pc;
+    struct pkg_conn *pc;
 #ifdef HAVE_WINSOCK_H
     WORD wVersionRequested;		/* initialize Windows socket networking, increment reference count */
     WSADATA wsaData;
@@ -273,7 +273,7 @@ new_client_handler(ClientData	 clientData,
 LOCAL_STATIC void
 new_client(struct pkg_conn *pcp)
 {
-    register int	i;
+    int	i;
 
     if (pcp == PKC_ERROR)
 	return;
@@ -304,7 +304,7 @@ new_client(struct pkg_conn *pcp)
 void
 set_port(void)
 {
-    register int i;
+    int i;
     int save_port;
     char portname[32];
 
@@ -394,7 +394,7 @@ new_client_handler(ClientData clientData, int mask)
 LOCAL_STATIC void
 existing_client_handler(ClientData clientData, int mask)
 {
-    register int i;
+    int i;
     int fd = (int)((long)clientData & 0xFFFF);	/* fd's will be small */
     int npp;			/* number of processed packages */
     struct dm_list *dlp;
@@ -901,7 +901,7 @@ rfbgetview(struct pkg_conn *pcp, char *buf)
 void
 rfbrmap(struct pkg_conn *pcp, char *buf)
 {
-    register int	i;
+    int	i;
     char	rbuf[NET_LONG_LEN+1];
     ColorMap map;
     unsigned char	cm[256*2*3];

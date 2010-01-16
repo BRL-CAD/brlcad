@@ -1,7 +1,7 @@
 /*                 FaceBound.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -43,7 +43,7 @@ protected:
 	int ON_face_index;
 	bool inner;
 #ifdef YAYA
-	SCLBOOL_H(Bool) orientation;
+	SCLBOOL_H(Boolean) orientation;
 #else
 	int orientation;
 #endif
@@ -51,7 +51,7 @@ protected:
 public:
 	FaceBound();
 	virtual ~FaceBound();
-	FaceBound(STEPWrapper *sw,int STEPid);
+	FaceBound(STEPWrapper *sw,int step_id);
 	void SetInner() { inner = true; };
 	void SetOuter() { inner = false; };
 	bool IsInner() {return inner;}

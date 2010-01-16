@@ -1,7 +1,7 @@
 /*                      D E C I M A T E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -62,8 +62,8 @@ int	wpad;
 int
 main(int argc, char **argv)
 {
-    register int	i;
-    register int	j;
+    int	i;
+    int	j;
     int	nh, nw;
     int	dh, dw;
     int	todo;
@@ -108,7 +108,7 @@ main(int argc, char **argv)
 #endif
 
     while ( !feof(stdin) )  {
-	register unsigned char	*ip, *op;
+	unsigned char	*ip, *op;
 
 	/* Scrunch down first scanline of input data */
 	if ( fread( iline, nbytes, iwidth, stdin ) != iwidth ) break;

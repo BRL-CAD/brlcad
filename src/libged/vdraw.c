@@ -1,7 +1,7 @@
 /*                         V D R A W . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -157,7 +157,7 @@ ged_vdraw(struct ged *gedp, int argc, const char *argv[])
 int
 ged_vdraw_cmd(struct ged *gedp, int argc, const char *argv[])
 {
-    register struct bu_cmdtab *ctp;
+    struct bu_cmdtab *ctp;
     static const char *usage = "write|insert|delete|read|send|params|open|vlist [args]";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);

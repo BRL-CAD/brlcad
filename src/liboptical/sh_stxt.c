@@ -1,7 +1,7 @@
 /*                       S H _ S T X T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2009 United States Government as represented by
+ * Copyright (c) 1986-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -18,14 +18,10 @@
  * information.
  */
 /** @file sh_stxt.c
- *			S T X T . C
  *
  *  Routines to implement solid (ie, 3-D) texture maps.
  *
  *  XXX Solid texturing is still preliminary.
- *
- *  Author -
- *	Tom DiGiacinto
  *
  */
 

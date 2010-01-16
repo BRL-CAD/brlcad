@@ -1,7 +1,7 @@
 /*                         C A T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,8 +36,8 @@
 int
 ged_cat(struct ged *gedp, int argc, const char *argv[])
 {
-    register struct directory *dp;
-    register int arg;
+    struct directory *dp;
+    int arg;
     static const char *usage = "<objects>";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);

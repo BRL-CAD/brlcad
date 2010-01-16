@@ -1,7 +1,7 @@
 /*                        F B _ L O G . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2009 United States Government as represented by
+ * Copyright (c) 1986-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,10 +22,8 @@
 /** @file fb_log.c
  *
  * Log a framebuffer library event in the Standard way.
- Author -
- Gary S. Moss
-
-*/
+ *
+ */
 /** @} */
 
 #include "common.h"

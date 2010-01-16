@@ -1,7 +1,7 @@
 /*                          A R B N . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2009 United States Government as represented by
+ * Copyright (c) 1989-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -256,21 +256,6 @@ rt_arbn_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 
 
 /**
- * R T _ A R B N _ V S H O T
- */
-void
-rt_arbn_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
-/* An array of solid pointers */
-/* An array of ray pointers */
-/* array of segs (results returned) */
-/* Number of ray/object pairs */
-
-{
-    rt_vstub(stp, rp, segp, n, ap);
-}
-
-
-/**
  * R T _ A R B N _ N O R M
  *
  * Given ONE ray distance, return the normal and entry/exit point.
@@ -379,6 +364,9 @@ rt_arbn_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 	    int point_count;	/* # points on this line */
 	    point_t a, b;		/* start and end points */
 	    vect_t dist;
+
+	    VSETALL(a, 0);
+	    VSETALL(b, 0);
 
 	    /* If normals are parallel, no intersection */
 	    dot = VDOT(aip->eqn[i], aip->eqn[j]);
@@ -1059,12 +1047,11 @@ rt_arbn_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbos
  * Free the storage associated with the rt_db_internal version of this solid.
  */
 void
-rt_arbn_ifree(struct rt_db_internal *ip, struct resource *resp)
+rt_arbn_ifree(struct rt_db_internal *ip)
 {
     struct rt_arbn_internal *aip;
 
     RT_CK_DB_INTERNAL(ip);
-    if (!resp) resp = &rt_uniresource;
     aip = (struct rt_arbn_internal *)ip->idb_ptr;
     RT_ARBN_CK_MAGIC(aip);
 

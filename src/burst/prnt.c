@@ -1,7 +1,7 @@
 /*                          P R N T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -56,7 +56,7 @@ int
 doMore(linesp)
     int	*linesp;
 {
-    register int	ret = 1;
+    int	ret = 1;
     if (! tty)
 	return	1;
     save_Tty(HmTtyFd);
@@ -108,9 +108,9 @@ f_Normal(ap, pt_headp, segp)
     struct partition *pt_headp;
     struct seg *segp;
 {
-    register struct partition *pp = pt_headp->pt_forw;
-    register struct partition *cp;
-    register struct hit *ohitp;
+    struct partition *pp = pt_headp->pt_forw;
+    struct partition *cp;
+    struct hit *ohitp;
 
     segp = segp; /* quell */
 
@@ -145,11 +145,11 @@ notify(str, mode)
     char    *str;
     int	mode;
 {
-    register int    i;
+    int    i;
     static int      lastlen = -1;
-    register int    len;
+    int    len;
     static char	buf[LNBUFSZ] = { 0 };
-    register char	*p='\0';
+    char	*p='\0';
     if (! tty)
 	return	0;
     switch (mode)
@@ -320,7 +320,7 @@ prntBurstHdr(bpt, shotdir)
 */
 void
 prntCellIdent(ap)
-    register struct application *ap;
+    struct application *ap;
 {
     if (	outfile[0] != NUL
 		&&	fprintf(outfp,
@@ -366,8 +366,8 @@ prntCellIdent(ap)
 */
 void
 prntSeg(ap, cpp, space, entrynorm, exitnorm, burstflag)
-    register struct application *ap;
-    register struct partition *cpp;		/* component partition */
+    struct application *ap;
+    struct partition *cpp;		/* component partition */
     int space;
     fastf_t entrynorm[3];
     fastf_t exitnorm[3];
@@ -533,10 +533,10 @@ prntRegionHdr(ap, pt_headp, pp, entrynorm, exitnorm)
 {
     fastf_t	cosobliquity;
     fastf_t normthickness;
-    register struct hit *ihitp = pp->pt_inhit;
-    register struct hit *ohitp = pp->pt_outhit;
-    register struct region *regp = pp->pt_regionp;
-    register struct xray *rayp = &ap->a_ray;
+    struct hit *ihitp = pp->pt_inhit;
+    struct hit *ohitp = pp->pt_outhit;
+    struct region *regp = pp->pt_regionp;
+    struct xray *rayp = &ap->a_ray;
     /* Get entry/exit normals and fill in hit points */
     getRtHitNorm(ihitp, pp->pt_inseg->seg_stp, rayp,
 		 (boolean) pp->pt_inflip, entrynorm);
@@ -620,8 +620,8 @@ prntRegionHdr(ap, pt_headp, pp, entrynorm, exitnorm)
 */
 static fastf_t
 getNormThickness(ap, pp, cosobliquity, normvec)
-    register struct application *ap;
-    register struct partition *pp;
+    struct application *ap;
+    struct partition *pp;
     fastf_t cosobliquity;
     fastf_t normvec[3];
 {
@@ -648,8 +648,8 @@ getNormThickness(ap, pp, cosobliquity, normvec)
     {
 	/* need to shoot ray */
 	struct application a_thick;
-	register struct hit *ihitp = pp->pt_inhit;
-	register struct region *regp = pp->pt_regionp;
+	struct hit *ihitp = pp->pt_inhit;
+	struct region *regp = pp->pt_regionp;
 	a_thick = *ap;
 	a_thick.a_hit = f_Normal;
 	a_thick.a_miss = f_Nerror;
@@ -709,7 +709,7 @@ void
 prntShieldComp(ap, pt_headp, qp)
     struct application *ap;
     struct partition *pt_headp;
-    register Pt_Queue *qp;
+    Pt_Queue *qp;
 {
     fastf_t entrynorm[3], exitnorm[3];
     if (outfile[0] == NUL)
@@ -721,7 +721,7 @@ prntShieldComp(ap, pt_headp, qp)
 }
 void
 prntColors(colorp, str)
-    register Colors	*colorp;
+    Colors	*colorp;
     char	*str;
 {
     brst_log("%s:\n", str);
@@ -740,14 +740,14 @@ prntColors(colorp, str)
 }
 
 /*
-  void prntFiringCoords(register fastf_t *vec)
+  void prntFiringCoords(fastf_t *vec)
 
   If the user has asked for grid coordinates to be saved, write
   them to the output stream 'gridfp'.
 */
 void
 prntFiringCoords(vec)
-    register fastf_t *vec;
+    fastf_t *vec;
 {
     if (gridfile[0] == '\0')
 	return;
@@ -777,7 +777,7 @@ prntGridOffsets(x, y)
 
 void
 prntIdents(idp, str)
-    register Ids	*idp;
+    Ids	*idp;
     char	*str;
 {
     brst_log("%s:\n", str);
@@ -797,9 +797,9 @@ prntIdents(idp, str)
 /**/
 void
 prntPagedMenu(menu)
-    register char	**menu;
+    char	**menu;
 {
-    register int	done = 0;
+    int	done = 0;
     int		lines =	(PROMPT_Y-SCROLL_TOP);
     if (! tty)
     {
@@ -963,7 +963,7 @@ static char	*usage[] =
 void
 prntUsage()
 {
-    register char   **p = usage;
+    char   **p = usage;
     while (*p != NULL)
 	(void) fprintf(stderr, "%s\n", *p++);
 }

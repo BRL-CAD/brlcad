@@ -1,7 +1,7 @@
 /*                        C G A R B S . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2009 United States Government as represented by
+ * Copyright (c) 1990-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -57,7 +57,7 @@ cgarbs( cgtype, gp, uniq, svec, dist_tol )
     int			svec[11];	/* array of like pt subscripts */
     const double		dist_tol;	/* distance tolerance */
 {
-    register int	i, j;
+    int	i, j;
     int		numuniq, unique, done;
     int		si;
 
@@ -146,8 +146,8 @@ cgarbs( cgtype, gp, uniq, svec, dist_tol )
  */
 static void
 arb_mv( pts, gp, p0, p1, p2, p3, p4, p5, p6, p7 )
-    register point_t	pts[8];
-    register const struct rt_arb_internal	*gp;
+    point_t	pts[8];
+    const struct rt_arb_internal	*gp;
     const int		p0, p1, p2, p3, p4, p5, p6, p7;
 {
     RT_ARB_CK_MAGIC(gp);
@@ -181,7 +181,7 @@ redoarb( pts, gp, uniq, svec, numvec, cgtype )
     const int	numvec;
     const int	cgtype;
 {
-    register int	i, j;
+    int	i, j;
     int		prod;
 
     /* For all the cases that don't require shuffling, duplicate first */

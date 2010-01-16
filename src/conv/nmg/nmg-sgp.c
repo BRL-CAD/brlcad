@@ -1,7 +1,7 @@
 /*                       N M G - S G P . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2009 United States Government as represented by
+ * Copyright (c) 1997-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -121,7 +121,7 @@ main(argc, argv)
     char	*argv[];
 {
     int		i;
-    register int	c;
+    int	c;
     struct db_i	*dbip;
     char		idbuf[132];
     vect_t		h_delta, v_delta;
@@ -222,7 +222,7 @@ main(argc, argv)
 	if ( id != ID_NMG )
 	{
 	    bu_log( "%s is not an NMG......ignoring\n", dp->d_namep );
-	    rt_db_free_internal( &ip, &rt_uniresource );
+	    rt_db_free_internal(&ip);
 	    continue;
 	}
 
@@ -230,7 +230,7 @@ main(argc, argv)
 	NMG_CK_MODEL( m );
 
 	write_model_as_sgp( m );
-	rt_db_free_internal( &ip, &rt_uniresource );
+	rt_db_free_internal(&ip);
     }
 
     fprintf( fp_out, "end_object\n" );

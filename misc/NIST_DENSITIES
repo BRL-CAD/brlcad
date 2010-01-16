@@ -1,32 +1,46 @@
-#***************************************************************************************
+#******************************************************************************
 #
 #                           BRL-CAD NIST Density Table v 1.0
 #
-#     *** IMPORTANT:  This file may change over time and should not be relied upon
-#     *** for production analysis work.
+#     *** IMPORTANT: This file may change over time and should not be
+#     *** relied upon for production analysis work.
 #
-#     Based on data present in various databases available at http://www.nist.gov - each
-# subsection below cites the particular database from which information is drawn.  
+
+#     Based on data present in various databases available at
+#     http://www.nist.gov - each subsection below cites the particular
+#     database from which information is drawn.
 #
-#     The numbering provided for each entry is somewhat arbitrary in that the number
-# does not typically contain any information about the particular material in question,
-# but each "grouping" of materials will share a common two digit prefix.  For example,
-# all pure elements will share the prefix "11".
+#     The numbering provided for each entry is somewhat arbitrary in
+#     that the number does not typically contain any information about
+#     the particular material in question, but each "grouping" of
+#     materials will share a common two digit prefix.  For example,
+#     all pure elements will share the prefix "11".
 #
 #     All densities are in units of g/cm^3.
 #
-#***************************************************************************************
+#******************************************************************************
+#
+# To use the file with rtweight, copy the file to your working directory:
+#   cp NIST_DENSITIES .density
+#
+# To use the file with gqa, import the file data as a binary object:
+#   mged file.g bo -i u c _DENSITIES NIST_DENSITIES
+#
+#******************************************************************************
 
 
 #			  Densities of Elementally Pure Materials
 #
-#     Drawn from the FCOMP database file included with ESTAR, available from this web
-# address:  http://physics.nist.gov/PhysRefData/Star/Text/contents.html
+# Drawn from the FCOMP database file included with ESTAR, available
+# from this web address:
 #
-# Numbering Conventions:  All pure elements will  have a prefix of "11".  The last three
-# digits will be the atomic number of the element in question.  The third digit will be
-# the beginning of a counter - the first value will always be one, and any subsequent
-# entries for the same element will be counted up.
+# http://physics.nist.gov/PhysRefData/Star/Text/contents.html
+#
+# Numbering Conventions: All pure elements will have a prefix of "11".
+# The last three digits will be the atomic number of the element in
+# question.  The third digit will be the beginning of a counter - the
+# first value will always be one, and any subsequent entries for the
+# same element will be counted up.
 
 111001	0.000083748	Hydrogen
 111002	0.000166322	Helium
@@ -130,11 +144,13 @@
 
 #			     Densities of Real World Materials
 #
-#     Drawn from the FCOMP database file included with ESTAR, available from this web
-# address:  http://physics.nist.gov/PhysRefData/Star/Text/contents.html
+# Drawn from the FCOMP database file included with ESTAR, available
+# from this web address:
 #
-# Numbering Conventions:  All real world materials from FCOMP will have a prefix of
-# 12, followed by their ID number in the FCOMP database.
+# http://physics.nist.gov/PhysRefData/Star/Text/contents.html
+#
+# Numbering Conventions: All real world materials from FCOMP will have
+# a prefix of 12, followed by their ID number in the FCOMP database.
 
 12099	1.12700		A-150 Tissue-Equivalent Plastic
 12100	0.78990		Acetone 

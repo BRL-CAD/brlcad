@@ -1,7 +1,7 @@
 /*                      P I X B L E N D . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2009 United States Government as represented by
+ * Copyright (c) 1995-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -69,9 +69,9 @@ timeseed(void)
 }
 
 int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int c;
+    int c;
 
     while ( (c = bu_getopt( argc, argv, "r:i:Ss:g:" )) != EOF )  {
 	switch ( c )  {
@@ -195,7 +195,7 @@ main(int argc, char **argv)
 
     while (1)  {
 	unsigned char	*cb1, *cb2;	/* current input buf ptrs */
-	register unsigned char	*cb3; 	/* current output buf ptr */
+	unsigned char	*cb3; 	/* current output buf ptr */
 	int r1, r2, len, todo;
 
 	++c;

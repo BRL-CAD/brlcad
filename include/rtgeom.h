@@ -1,7 +1,7 @@
 /*                        R T G E O M . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -104,8 +104,34 @@ struct rt_superell_internal {
 };
 #define RT_SUPERELL_CK_MAGIC(_p)        BU_CKMAG(_p, RT_SUPERELL_INTERNAL_MAGIC, "rt_superell_internal")
 
-/*
- *      ID_METABALL
+/**
+ *  ID_METABALL
+ *
+ *  The "metaball" primitive contains a method ID, threshold 
+ *  value, and an unordered set of control points. Each control 
+ *  point contains a 3d location, a "field strength", and 
+ *  possibly a "blobbiness" value (called "goo" in
+ *  rt_metaball_add_point).
+ *  
+ *  There are three method ID's defined
+ *  
+ *  1. "metaball", which is the Tokyo Metaball approximation 
+ *     of the Blinn Blobby Surface. This method is not implemented 
+ *     yet.
+ *  
+ *  2. "blob", the Blinn method. 
+ *
+ *  3. "iso", which is a simple \Sum_{i}\frac{f_{i}}{d^{2}} 
+ *     computation like you'd see for computing gravitational 
+ *     magnitude or point charge in a basic physics course.
+ *  
+ *  The surface of the primitive exists where the summation of 
+ *  the points contribution is equal to the threshold, with the 
+ *  general fldstr/distance^2 pattern.
+ *  
+ *  The blobbiness value is only used in the blob method, and 
+ *  modifies the gusseting effect.
+ *
  */
 struct rt_metaball_internal {
     unsigned long magic;

@@ -1,7 +1,7 @@
 /*                       Y U V - P I X . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2009 United States Government as represented by
+ * Copyright (c) 1995-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -62,9 +62,9 @@ Usage: yuv-pix [-h] [-a]\n\
 	[-s squaresize] [-w file_width] [-n file_height] [file.yuv] > file.pix\n";
 
 int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int c;
+    int c;
 
     while ((c = bu_getopt(argc, argv, "ahs:w:n:")) != EOF) {
 	switch (c) {
@@ -192,7 +192,7 @@ main(int argc, char **argv)
 
 #define	V5DOT(a, b)	(a[0]*b[0]+a[1]*b[1]+a[2]*b[2]+a[3]*b[3]+a[4]*b[4])
 #define	floor(d)	(d>=0?(int)d:((int)d==d?d:(int)(d-1.0)))
-#define	CLIP(out, in) { register int t; \
+#define	CLIP(out, in) { int t; \
 		if ((t = (in)) < 0)  (out) = 0; \
 		else if (t >= 255)  (out) = 255; \
 		else (out) = t; }
@@ -217,9 +217,9 @@ static double	vbuf[724*4];
 void
 ab_rgb_to_yuv(unsigned char *yuv_buf, unsigned char *rgb_buf, long int len)
 {
-    register unsigned char *cp;
-    register double	*yp, *up, *vp;
-    register long int	i;
+    unsigned char *cp;
+    double	*yp, *up, *vp;
+    long int	i;
     static int	first=1;
 
     if (first) {
@@ -265,12 +265,12 @@ ab_rgb_to_yuv(unsigned char *yuv_buf, unsigned char *rgb_buf, long int len)
 void
 ab_yuv_to_rgb(unsigned char *rgb_buf, unsigned char *yuv_buf, long int len)
 {
-    register unsigned char *rgbp;
-    register unsigned char *yuvp;
-    register double	y;
-    register double	u = 0.0;
-    register double	v;
-    register long int	pixel;
+    unsigned char *rgbp;
+    unsigned char *yuvp;
+    double	y;
+    double	u = 0.0;
+    double	v;
+    long int	pixel;
     long int		last;
 
     /* Input stream looks like:  uy  vy  uy  vy  */

@@ -1,7 +1,7 @@
 /*                        D A U T O 2 . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -43,7 +43,7 @@ Usage: dauto2 [window_size (512)] < doubles\n";
 int main(int argc, char **argv)
 {
     int	i, j, n, L;
-    register int *dp1, *dp2;
+    int *dp1, *dp2;
     double	max1, max2, m, m2;
 
     if ( isatty(fileno(stdin)) || isatty(fileno(stdout)) ) {

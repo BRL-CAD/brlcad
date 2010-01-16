@@ -1,7 +1,7 @@
 /*                           E L L . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2009 United States Government as represented by
+ * Copyright (c) 1985-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -45,11 +45,11 @@ BU_EXTERN(int rt_sph_prep, (struct soltab *stp, struct rt_db_internal *ip,
 			    struct rt_i *rtip));
 
 const struct bu_structparse rt_ell_parse[] = {
-    { "%f", 3, "V", bu_offsetof(struct rt_ell_internal, v[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "A", bu_offsetof(struct rt_ell_internal, a[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "B", bu_offsetof(struct rt_ell_internal, b[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "C", bu_offsetof(struct rt_ell_internal, c[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
+    { "%f", 3, "V", bu_offsetof(struct rt_ell_internal, v[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "A", bu_offsetof(struct rt_ell_internal, a[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "B", bu_offsetof(struct rt_ell_internal, b[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "C", bu_offsetof(struct rt_ell_internal, c[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
@@ -390,8 +390,6 @@ rt_ell_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 
 
 #define RT_ELL_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
-
-
 /**
  * R T _ E L L _ V S H O T
  *
@@ -414,6 +412,8 @@ rt_ell_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
     fastf_t dp, dd;		/* D' dot P', D' dot D' */
     fastf_t k1, k2;		/* distance constants of solution */
     fastf_t root;		/* root of radical */
+
+    if (ap) RT_CK_APPLICATION(ap);
 
     /* for each ray/ellipse pair */
     for (i = 0; i < n; i++) {
@@ -625,7 +625,7 @@ rt_ell_16pts(fastf_t *ov,
  * R T _ E L L _ P L O T
  */
 int
-rt_ell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_ell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
 {
     register int i;
     struct rt_ell_internal *eip;
@@ -1100,6 +1100,8 @@ rt_ell_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     union record *rp;
     fastf_t vec[3*4];
 
+    if (dbip) RT_CK_DBI(dbip);
+
     BU_CK_EXTERNAL(ep);
     rp = (union record *)ep->ext_buf;
     /* Check record type */
@@ -1139,6 +1141,8 @@ rt_ell_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     struct rt_ell_internal *tip;
     union record *rec;
 
+    if (dbip) RT_CK_DBI(dbip);
+
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_ELL && ip->idb_type != ID_SPH) return(-1);
     tip = (struct rt_ell_internal *)ip->idb_ptr;
@@ -1174,6 +1178,7 @@ rt_ell_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     struct rt_ell_internal *eip;
     fastf_t vec[ELEMENTS_PER_VECT*4];
 
+    if (dbip) RT_CK_DBI(dbip);
     RT_CK_DB_INTERNAL(ip);
     BU_CK_EXTERNAL(ep);
 
@@ -1215,6 +1220,8 @@ rt_ell_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 {
     struct rt_ell_internal *eip;
     fastf_t vec[ELEMENTS_PER_VECT*4];
+
+    if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_ELL && ip->idb_type != ID_SPH) return(-1);
@@ -1314,10 +1321,9 @@ rt_ell_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
  * solid.
  */
 void
-rt_ell_ifree(struct rt_db_internal *ip, struct resource *resp)
+rt_ell_ifree(struct rt_db_internal *ip)
 {
     RT_CK_DB_INTERNAL(ip);
-    if (!resp) resp = &rt_uniresource;
 
     bu_free(ip->idb_ptr, "ell ifree");
     ip->idb_ptr = GENPTR_NULL;
@@ -1636,10 +1642,13 @@ nmg_sphere_face_snurb(struct faceuse *fu, const matp_t m)
  * @return -1 on failure
  */
 int
-rt_ell_params(struct pc_pc_set * pcs, const struct rt_db_internal *ip)
+rt_ell_params(struct pc_pc_set *pcs, const struct rt_db_internal *ip)
 {
     struct rt_ell_internal *eip;
     eip = (struct rt_ell_internal *)ip->idb_ptr;
+
+    if (!pcs) return (0);
+
 #if 0
     pcs->ps = bu_calloc(pcs->n_params, sizeof (struct pc_param), "pc_param");
     pcs->cs = bu_calloc(pcs->n_constraints, sizeof (struct pc_constrnt), "pc_constrnt");

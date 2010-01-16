@@ -1,7 +1,7 @@
 /*                      G E N C O L O R . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2009 United States Government as represented by
+ * Copyright (c) 1986-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -48,8 +48,8 @@ int
 main(int argc, char **argv)
 {
     int	i, len, times;
-    register long	count;
-    register unsigned char *bp;
+    long	count;
+    unsigned char *bp;
 
     if ( argc < 1 || isatty(fileno(stdout)) ) {
 	bu_exit(1, "%s", Usage );

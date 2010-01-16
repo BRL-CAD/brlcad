@@ -1,7 +1,7 @@
 /*                        C A M E R A . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2009 United States Government as represented by
+ * Copyright (c) 2007-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -402,6 +402,8 @@ void
 
     td = (render_camera_thread_data_t *)ptr;
     view_inv = 1.0 / td->camera->view_num;
+
+    td->camera->render.tie = td->tie;
 
     res_ind = 0;
 /* row, vertical */

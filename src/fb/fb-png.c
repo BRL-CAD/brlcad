@@ -1,7 +1,7 @@
 /*                        F B - P N G . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2009 United States Government as represented by
+ * Copyright (c) 1998-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -44,7 +44,7 @@
 
 #include "pkg.h"
 
-extern void cmap_crunch(register RGBpixel (*scan_buf), register int pixel_ct, ColorMap *colormap);
+extern void cmap_crunch(RGBpixel (*scan_buf), int pixel_ct, ColorMap *colormap);
 
 
 static int crunch = 0;		/* Color map crunch? */
@@ -59,7 +59,7 @@ FILE *outfp;
 
 
 int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
     int c;
     char *file_name;
@@ -131,8 +131,8 @@ main(int argc, char **argv)
     static int scanpix;			/* # of pixels of scanline */
     static ColorMap cmap;		/* libfb color map */
 
-    register FBIO *fbp;
-    register int y;
+    FBIO *fbp;
+    int y;
     int got;
     png_structp png_p;
     png_infop info_p;

@@ -1,7 +1,7 @@
 /*                       B W 3 - P I X . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2009 United States Government as represented by
+ * Copyright (c) 1986-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -61,7 +61,7 @@ main(int argc, char **argv)
 {
     int	i;
     int	nr, ng, nb, num;
-    register unsigned char *obufp;
+    unsigned char *obufp;
     FILE	*rfp, *bfp, *gfp;
 
     if ( argc != 4 || isatty(fileno(stdout)) ) {

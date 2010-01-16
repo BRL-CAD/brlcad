@@ -51,7 +51,7 @@
 				BufferSecurityCheck="false"
 				UsePrecompiledHeader="2"
 				PrecompiledHeaderThrough="opennurbs.h"
-				WarningLevel="3"
+				WarningLevel="4"
 				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="3"
 			/>
@@ -133,7 +133,7 @@
 				BufferSecurityCheck="false"
 				UsePrecompiledHeader="2"
 				PrecompiledHeaderThrough="opennurbs.h"
-				WarningLevel="3"
+				WarningLevel="4"
 				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="3"
 			/>
@@ -212,7 +212,7 @@
 				BufferSecurityCheck="false"
 				UsePrecompiledHeader="2"
 				PrecompiledHeaderThrough="opennurbs.h"
-				WarningLevel="3"
+				WarningLevel="4"
 				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="3"
 			/>
@@ -294,7 +294,7 @@
 				BufferSecurityCheck="false"
 				UsePrecompiledHeader="2"
 				PrecompiledHeaderThrough="opennurbs.h"
-				WarningLevel="3"
+				WarningLevel="4"
 				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="3"
 			/>
@@ -390,7 +390,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\opennurbs_base32.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\opennurbs_base64.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\opennurbs_basic.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\opennurbs_beam.cpp"
 				>
 			</File>
 			<File
@@ -435,6 +447,10 @@
 			</File>
 			<File
 				RelativePath=".\opennurbs_brep_kinky.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\opennurbs_brep_region.cpp"
 				>
 			</File>
 			<File
@@ -594,6 +610,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\opennurbs_lookup.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\opennurbs_massprop.cpp"
 				>
 			</File>
@@ -690,6 +710,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\opennurbs_mesh_ngon.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\opennurbs_mesh_tools.cpp"
 				>
 			</File>
@@ -762,6 +786,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\opennurbs_polyedgecurve.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\opennurbs_polyline.cpp"
 				>
 			</File>
@@ -806,7 +834,19 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath=".\opennurbs_quaternion.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\opennurbs_rand.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\opennurbs_revsurface.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\opennurbs_rtree.cpp"
 				>
 			</File>
 			<File
@@ -932,6 +972,18 @@
 				>
 			</File>
 			<File
+				RelativePath=".\opennurbs_base32.h"
+				>
+			</File>
+			<File
+				RelativePath=".\opennurbs_base64.h"
+				>
+			</File>
+			<File
+				RelativePath=".\opennurbs_beam.h"
+				>
+			</File>
+			<File
 				RelativePath=".\opennurbs_bezier.h"
 				>
 			</File>
@@ -965,6 +1017,10 @@
 			</File>
 			<File
 				RelativePath=".\opennurbs_cone.h"
+				>
+			</File>
+			<File
+				RelativePath=".\opennurbs_crashtest.h"
 				>
 			</File>
 			<File
@@ -1080,6 +1136,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\opennurbs_lookup.h"
+				>
+			</File>
+			<File
 				RelativePath=".\opennurbs_mapchan.h"
 				>
 			</File>
@@ -1152,6 +1212,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\opennurbs_plus_mesh_marker.h"
+				>
+			</File>
+			<File
+				RelativePath=".\opennurbs_plus_registry.h"
+				>
+			</File>
+			<File
 				RelativePath=".\opennurbs_point.h"
 				>
 			</File>
@@ -1172,6 +1240,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\opennurbs_polyedgecurve.h"
+				>
+			</File>
+			<File
 				RelativePath=".\opennurbs_polyline.h"
 				>
 			</File>
@@ -1180,11 +1252,23 @@
 				>
 			</File>
 			<File
+				RelativePath=".\opennurbs_quaternion.h"
+				>
+			</File>
+			<File
+				RelativePath=".\opennurbs_rand.h"
+				>
+			</File>
+			<File
 				RelativePath=".\opennurbs_rendering.h"
 				>
 			</File>
 			<File
 				RelativePath=".\opennurbs_revsurface.h"
+				>
+			</File>
+			<File
+				RelativePath=".\opennurbs_rtree.h"
 				>
 			</File>
 			<File
@@ -1209,10 +1293,6 @@
 			</File>
 			<File
 				RelativePath=".\opennurbs_system.h"
-				>
-			</File>
-			<File
-				RelativePath=".\opennurbs_temp.h"
 				>
 			</File>
 			<File
@@ -1262,126 +1342,6 @@
 			<File
 				RelativePath=".\opennurbs_zlib.h"
 				>
-			</File>
-		</Filter>
-		<Filter
-			Name="Libs Debug"
-			>
-			<File
-				RelativePath=".\zlib\Debug\zlib_d.lib"
-				>
-				<FileConfiguration
-					Name="Debug|x64"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|x64"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\zlib\x64\Debug\zlibx64_d.lib"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|x64"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-			</File>
-		</Filter>
-		<Filter
-			Name="Libs Release"
-			>
-			<File
-				RelativePath=".\zlib\Release\zlib.lib"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|x64"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|x64"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\zlib\x64\Release\zlibx64.lib"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Debug|x64"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32"
-					ExcludedFromBuild="true"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-					/>
-				</FileConfiguration>
 			</File>
 		</Filter>
 		<File

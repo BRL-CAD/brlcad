@@ -1,7 +1,7 @@
 /*                        M A R K E R . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,8 +37,7 @@
  *				5 = an hourglass
  @endcode
  *
- *  @author	Mike Muuss
- *@n	August 04, 1978
+ * Originally written on August 04, 1978
  *
  */
 /** @} */

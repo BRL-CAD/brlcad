@@ -1,7 +1,7 @@
 /*                    S C R I P T - T A B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -72,7 +72,7 @@ cm_eyept( argc, argv )
     int	argc;
     char	**argv;
 {
-    register int i;
+    int i;
 
     for ( i=0; i<3; i++ )
 	eye_model[i] = atof( argv[i+1] );
@@ -110,7 +110,7 @@ cm_vrot( argc, argv )
     int	argc;
     char	**argv;
 {
-    register int i;
+    int i;
 
     for ( i=0; i<16; i++ )
 	Viewrotscale[i] = atof( argv[i+1] );
@@ -122,7 +122,7 @@ cm_orientation( argc, argv )
     int	argc;
     char	**argv;
 {
-    register int	i;
+    int	i;
     quat_t		quat;
 
     for ( i=0; i<4; i++ )
@@ -293,8 +293,8 @@ main( argc, argv )
     int	argc;
     char	**argv;
 {
-    register char	*buf;
-    register int	ret;
+    char	*buf;
+    int	ret;
 
     if ( argc != 1 || isatty(fileno(stdin)) )  {
 	fprintf(stderr, "Usage: script-tab < script > table\n");

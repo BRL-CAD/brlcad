@@ -1,7 +1,7 @@
 /*                         A T T R . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,7 +30,7 @@
 int
 ged_attr(struct ged *gedp, int argc, const char *argv[])
 {
-    int			i;
+    size_t i;
     struct directory	*dp;
     struct bu_attribute_value_set avs;
     struct bu_attribute_value_pair	*avpp;
@@ -83,7 +83,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	    const char *val;
 	    int do_separators=argc-4; /* if more than one attribute */
 
-	    for (i=3; i<argc; i++) {
+	    for (i=3; i<(size_t)argc; i++) {
 		val = bu_avs_get(&avs, argv[i]);
 		if ( !val ) {
 		    bu_vls_printf(&gedp->ged_result_str,
@@ -114,7 +114,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	i = 3;
-	while (i < argc) {
+	while (i < (size_t)argc) {
 	    if(strcmp( argv[i], "region") == 0 && strcmp(argv[i+1], "R") == 0) {
  		dp->d_flags |= DIR_REGION;
  	    }
@@ -132,7 +132,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	return GED_OK;
     } else if (strcmp(argv[1], "rm") == 0) {
 	i = 3;
-	while (i < argc) {
+	while (i < (size_t)argc) {
     	    if(strcmp( argv[i], "region") == 0) {
  		dp->d_flags = dp->d_flags & ~(DIR_REGION);
  	    }
@@ -156,7 +156,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	    return GED_ERROR;
 	}
 	i = 3;
-	while (i < argc) {
+	while (i < (size_t)argc) {
 	    const char *old_val;
 	    if(strcmp( argv[i], "region") == 0 && strcmp(argv[i+1], "R") == 0) {
  		dp->d_flags |= DIR_REGION;
@@ -203,9 +203,6 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	    switch ( dp->d_major_type ) {
 		case DB5_MAJORTYPE_ATTRIBUTE_ONLY:
 		    bu_vls_printf( &gedp->ged_result_str, "%s global:\n", argv[2] );
-		    break;
-		case DB5_MAJORTYPE_BINARY_EXPM:
-		    bu_vls_printf( &gedp->ged_result_str, "%s binary(expm):\n", argv[2] );
 		    break;
 		case DB5_MAJORTYPE_BINARY_MIME:
 		    bu_vls_printf( &gedp->ged_result_str, "%s binary(mime):\n", argv[2] );
@@ -258,14 +255,14 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	    int len;
 
 	    /* show just the specified attributes */
-	    for ( i=0; i<argc; i++ ) {
+	    for ( i=0; i<(size_t)argc; i++ ) {
 		len = strlen( argv[i] );
 		if ( len > max_attr_name_len ) {
 		    max_attr_name_len = len;
 		}
 	    }
 	    tabs1 = 2 + max_attr_name_len/8;
-	    for (i=3; i<argc; i++) {
+	    for (i=3; i<(size_t)argc; i++) {
 		int tabs2;
 		int k;
 		const char *c;

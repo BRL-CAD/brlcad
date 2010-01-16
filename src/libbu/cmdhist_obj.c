@@ -1,7 +1,7 @@
 /*                   C M D H I S T _ O B J . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2009 United States Government as represented by
+ * Copyright (c) 1998-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,15 +30,6 @@
 
 static struct bu_cmdhist_obj HeadCmdHistObj;		/* head of command history object list */
 
-static struct bu_cmdtab ch_cmds[] =
-{
-    {"add",	bu_cmdhist_add},
-    {"curr",	bu_cmdhist_curr},
-    {"next",	bu_cmdhist_next},
-    {"prev",	bu_cmdhist_prev},
-    {(char *)NULL,	CMD_NULL}
-};
-
 
 static struct bu_cmdtab cho_cmds[] =
 {
@@ -49,13 +40,6 @@ static struct bu_cmdtab cho_cmds[] =
     {"prev",	bu_cmdhist_prev},
     {(char *)NULL,	CMD_NULL}
 };
-
-
-HIDDEN int
-cho_hist(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
-{
-    return bu_cmd(clientData, interp, argc, argv, ch_cmds, 1);
-}
 
 
 HIDDEN int

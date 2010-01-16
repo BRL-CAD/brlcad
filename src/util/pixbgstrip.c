@@ -1,7 +1,7 @@
 /*                    P I X B G S T R I P . C
  * BRL-CAD
  *
- * Copyright (c) 1991-2009 United States Government as represented by
+ * Copyright (c) 1991-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -54,9 +54,9 @@ Usage: pixbgstrip [-a -h] [-t thresh] [-x x_off for bg pixel]\n\
 	[file.pix]\n";
 
 int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int c;
+    int c;
 
     while ( (c = bu_getopt( argc, argv, "ahs:w:n:t:x:" )) != EOF )  {
 	switch ( c )  {
@@ -118,8 +118,8 @@ get_args(int argc, register char **argv)
 int
 main(int argc, char **argv)
 {
-    register int	r, g, b;
-    register long int	i;
+    int	r, g, b;
+    long int	i;
 
     if ( !get_args( argc, argv ) )  {
 	(void)fputs(usage, stderr);
@@ -152,7 +152,7 @@ main(int argc, char **argv)
 	g = scanline[bg_x_offset*3+1];
 	b = scanline[bg_x_offset*3+2];
 	for ( i=0; i<file_width; i++ )  {
-	    register int diff;
+	    int diff;
 
 	    diff = scanline[i*3+0] - r;
 	    if ( diff <= -thresh || diff >= thresh ) continue;

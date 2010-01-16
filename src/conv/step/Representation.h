@@ -1,7 +1,7 @@
 /*                 Representation.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -26,28 +26,37 @@
 #ifndef REPRESENTATION_H_
 #define REPRESENTATION_H_
 
+#include "common.h"
+
+/* system headers */
 #include <list>
 
+/* inteface headers */
 #include "STEPEntity.h"
+#include "STEPWrapper.h"
+#include "sclprefixes.h"
+
 
 class RepresentationItem;
 class RepresentationContext;
 
-typedef list<RepresentationItem *> LIST_OF_REPRESENTATION_ITEMS;
-typedef list<RepresentationContext *> LIST_OF_REPRESENTATION_CONTEXT;
+typedef std::list<RepresentationItem *> LIST_OF_REPRESENTATION_ITEMS;
+typedef std::list<RepresentationContext *> LIST_OF_REPRESENTATION_CONTEXT;
 
-class Representation : public STEPEntity {
+
+class Representation : public STEPEntity
+{
 private:
-	static string entityname;
+    static std::string entityname;
 
 protected:
-	string name;
+    std::string name;
 	LIST_OF_REPRESENTATION_ITEMS items;
 	LIST_OF_REPRESENTATION_CONTEXT context_of_items;
 
 public:
 	Representation();
-	Representation(STEPWrapper *sw, int STEPid);
+	Representation(STEPWrapper *sw,int step_id);
 	virtual ~Representation();
 	double GetLengthConversionFactor();
 	double GetPlaneAngleConversionFactor();
@@ -58,6 +67,7 @@ public:
 	//static methods
 	static STEPEntity *Create(STEPWrapper *sw,SCLP23(Application_instance) *sse);
 };
+
 
 #endif /* REPRESENTATION_H_ */
 

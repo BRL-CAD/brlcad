@@ -1,7 +1,7 @@
 /*                      C H G M O D E L . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2009 United States Government as represented by
+ * Copyright (c) 1985-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -313,7 +313,7 @@ f_sc_obj(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 int
 f_tr_obj(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    register int i;
+    int i;
     mat_t incr, old;
     vect_t model_sol_pt, model_incr, ed_sol_pt, new_vertex;
 

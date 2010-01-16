@@ -1,7 +1,7 @@
 /*                 RationalUniformCurve.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -39,9 +39,9 @@ RationalUniformCurve::RationalUniformCurve() {
 	id = 0;
 }
 
-RationalUniformCurve::RationalUniformCurve(STEPWrapper *sw,int STEPid) {
+RationalUniformCurve::RationalUniformCurve(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 RationalUniformCurve::~RationalUniformCurve() {
@@ -54,7 +54,7 @@ RationalUniformCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 	// load base class attributes
 	if ( !RationalBSplineCurve::Load(sw,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::RationalBSplineCurve." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::RationalBSplineCurve." << std::endl;
 		return false;
 	}
 
@@ -63,10 +63,10 @@ RationalUniformCurve::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 void
 RationalUniformCurve::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << name << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << name << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Inherited:" << endl;
+	TAB(level); std::cout << "Inherited:" << std::endl;
 	RationalBSplineCurve::Print(level+1);
 }
 STEPEntity *
@@ -78,7 +78,7 @@ RationalUniformCurve::Create(STEPWrapper *sw,SCLP23(Application_instance) *sse){
 		Factory::AddObject(object);
 
 		if (!object->Load(sw,sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

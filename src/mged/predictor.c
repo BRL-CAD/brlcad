@@ -1,7 +1,7 @@
 /*                     P R E D I C T O R . C
  * BRL-CAD
  *
- * Copyright (c) 1992-2009 United States Government as represented by
+ * Copyright (c) 1992-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -156,7 +156,7 @@ poly_trail(struct bu_list *vhead, struct trail *t1, struct trail *t2)
 void
 predictor_init(void)
 {
-    register int i;
+    int i;
 
     for (i = 0; i < NUM_TRAILS; ++i)
 	init_trail(&curr_dm_list->dml_trails[i]);

@@ -1,7 +1,7 @@
 /*                   P I X S A T U R A T E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -67,7 +67,7 @@ main(int argc, char **argv)
     int	rt, gt, bt;
     int	n;
     int	nby;
-    register unsigned char	*cp;
+    unsigned char	*cp;
 
     if ( argc != 2 )  {
 	bu_exit(1, "Usage: pixsaturate saturation\n");

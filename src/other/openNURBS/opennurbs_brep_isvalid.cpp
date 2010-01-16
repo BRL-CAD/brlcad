@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -23,7 +22,7 @@ ON_Brep::IsValidVertexTopology( int vertex_index, ON_TextLog* text_log ) const
   {
     if ( text_log )
       text_log->Print("brep vertex_index = %d (should be >=0 and <%d=brep.m_V.Count() ).\n",
-		      vertex_index, m_V.Count());
+                      vertex_index, m_V.Count());
     return false;
   }
   const ON_BrepVertex& vertex = m_V[vertex_index];
@@ -34,7 +33,7 @@ ON_Brep::IsValidVertexTopology( int vertex_index, ON_TextLog* text_log ) const
       text_log->Print("brep.m_V[%d] vertex is not valid.\n",vertex_index);
       text_log->PushIndent();
       text_log->Print("vertex.m_vertex_index = %d (should be %d).\n",
-		       vertex.m_vertex_index, vertex_index );
+                       vertex.m_vertex_index, vertex_index );
       text_log->PopIndent();
     }
     return false;
@@ -50,10 +49,10 @@ ON_Brep::IsValidVertexTopology( int vertex_index, ON_TextLog* text_log ) const
     {
       if ( text_log )
       {
-	text_log->Print("brep.m_V[%d] vertex is not valid.\n",vertex_index);
-	text_log->PushIndent();
-	text_log->Print("vertex.m_ei[%d] = %d (should be >=0 and <%d).\n", vei, ei, m_E.Count());
-	text_log->PopIndent();
+        text_log->Print("brep.m_V[%d] vertex is not valid.\n",vertex_index);
+        text_log->PushIndent();
+        text_log->Print("vertex.m_ei[%d] = %d (should be >=0 and <%d).\n", vei, ei, m_E.Count());
+        text_log->PopIndent();
       }
       return false;
     }
@@ -64,10 +63,10 @@ ON_Brep::IsValidVertexTopology( int vertex_index, ON_TextLog* text_log ) const
     {
       if ( text_log )
       {
-	text_log->Print("brep.m_V[%d] vertex is not valid.\n",vertex_index);
-	text_log->PushIndent();
-	text_log->Print("vertex.m_ei[%d] = %d is a deleted edge.\n", vei, ei);
-	text_log->PopIndent();
+        text_log->Print("brep.m_V[%d] vertex is not valid.\n",vertex_index);
+        text_log->PushIndent();
+        text_log->Print("vertex.m_ei[%d] = %d is a deleted edge.\n", vei, ei);
+        text_log->PopIndent();
       }
       return false;
     }
@@ -76,12 +75,12 @@ ON_Brep::IsValidVertexTopology( int vertex_index, ON_TextLog* text_log ) const
     {
       if ( text_log )
       {
-	text_log->Print("brep.m_V[%d] vertex or brep.m_E[%d] edge is not valid.\n",vertex_index,ei);
-	text_log->PushIndent();
-	text_log->Print("vertex.m_ei[%d] = %d but brep.m_E[%d].m_vi[] = [%d,%d]. "
-			"At least one edge m_vi[] value should be %d.\n",
-			vei,ei,ei,edge.m_vi[0],edge.m_vi[1],vertex_index);
-	text_log->PopIndent();
+        text_log->Print("brep.m_V[%d] vertex or brep.m_E[%d] edge is not valid.\n",vertex_index,ei);
+        text_log->PushIndent();
+        text_log->Print("vertex.m_ei[%d] = %d but brep.m_E[%d].m_vi[] = [%d,%d]. "
+                        "At least one edge m_vi[] value should be %d.\n",
+                        vei,ei,ei,edge.m_vi[0],edge.m_vi[1],vertex_index);
+        text_log->PopIndent();
       }
       return false;
     }
@@ -90,37 +89,37 @@ ON_Brep::IsValidVertexTopology( int vertex_index, ON_TextLog* text_log ) const
     {
       if ( vertex.m_ei[i] == ei ) 
       {
-	// edge should be closed
-	if ( edge.m_vi[0] != vertex_index || edge.m_vi[1] != vertex_index )
-	{
-	  if ( text_log )
-	  {
-	    text_log->Print("brep.m_V[%d] vertex is not valid.\n",vertex_index);
-	    text_log->PushIndent();
-	    text_log->Print("vertex.m_ei[%d] and vertex.m_ei[%d] = %d but brep.m_E[%d].m_vi[0] = %d",
-			     i,vei,ei,ei,edge.m_vi[0]);
-	    text_log->Print("and ON_Brep.m_E[%d].m_vi[1] = %d (both m_vi[] values should be %d).\n",
-			    ei,edge.m_vi[1],vertex_index);
-	    text_log->PopIndent();
-	  }
-	  return false;
-	}
-	for (j = i+1; j < vei; j++ ) 
-	{
-	  if ( vertex.m_ei[j] == ei )
-	  {
-	    if ( text_log )
-	    {
-	      text_log->Print("brep.m_V[%d] vertex is not valid.\n",vertex_index);
-	      text_log->PushIndent();
-	      text_log->Print("vertex.m_ei[%d,%d,%d] = %d. An open edge index should appear once\n",i,vei,j,ei);
-	      text_log->Print("in vertex.m_ei[] and a closed edge index should appear twice.\n");
-	      text_log->PopIndent();
-	    }
-	    return false;
-	  }
-	}
-	break;
+        // edge should be closed
+        if ( edge.m_vi[0] != vertex_index || edge.m_vi[1] != vertex_index )
+        {
+          if ( text_log )
+          {
+            text_log->Print("brep.m_V[%d] vertex is not valid.\n",vertex_index);
+            text_log->PushIndent();
+            text_log->Print("vertex.m_ei[%d] and vertex.m_ei[%d] = %d but brep.m_E[%d].m_vi[0] = %d",
+                             i,vei,ei,ei,edge.m_vi[0]);
+            text_log->Print("and ON_Brep.m_E[%d].m_vi[1] = %d (both m_vi[] values should be %d).\n",
+                            ei,edge.m_vi[1],vertex_index);
+            text_log->PopIndent();
+          }
+          return false;
+        }
+        for (j = i+1; j < vei; j++ ) 
+        {
+          if ( vertex.m_ei[j] == ei )
+          {
+            if ( text_log )
+            {
+              text_log->Print("brep.m_V[%d] vertex is not valid.\n",vertex_index);
+              text_log->PushIndent();
+              text_log->Print("vertex.m_ei[%d,%d,%d] = %d. An open edge index should appear once\n",i,vei,j,ei);
+              text_log->Print("in vertex.m_ei[] and a closed edge index should appear twice.\n");
+              text_log->PopIndent();
+            }
+            return false;
+          }
+        }
+        break;
       }
     }
 
@@ -137,7 +136,7 @@ ON_Brep::IsValidFaceTopology( int face_index, ON_TextLog* text_log  ) const
     if ( text_log )
     {
       text_log->Print("brep face_index = %d (should be >=0 and <%d=brep.m_F.Count()).\n",
-		      face_index, m_F.Count());
+                      face_index, m_F.Count());
     }
     return false;
   }
@@ -149,7 +148,7 @@ ON_Brep::IsValidFaceTopology( int face_index, ON_TextLog* text_log  ) const
       text_log->Print("brep.m_F[%d] face is not valid.\n",face_index);
       text_log->PushIndent();
       text_log->Print("face.m_face_index = %d (should be %d).\n",
-		       face.m_face_index, face_index );
+                       face.m_face_index, face_index );
       text_log->PopIndent();
     }
     return false;
@@ -187,25 +186,25 @@ ON_Brep::IsValidFaceTopology( int face_index, ON_TextLog* text_log  ) const
     {
       if ( face.m_li[i] == li )
       {
-	if ( text_log )
-	{
-	  text_log->Print("brep.m_F[%d] face is not valid.\n",face_index);
-	  text_log->PushIndent();
-	  text_log->Print("face.m_li[%d]=face.m_li[%d]=%d (a loop index should appear once in face.m_li[])\n",
-			  fli,i,li);
-	  text_log->PopIndent();
-	}
-	return false;
+        if ( text_log )
+        {
+          text_log->Print("brep.m_F[%d] face is not valid.\n",face_index);
+          text_log->PushIndent();
+          text_log->Print("face.m_li[%d]=face.m_li[%d]=%d (a loop index should appear once in face.m_li[])\n",
+                          fli,i,li);
+          text_log->PopIndent();
+        }
+        return false;
       }
     }
     if ( !IsValidLoop( li, text_log ) )
     {
       if ( text_log )
       {
-	text_log->Print("brep.m_F[%d] face is not valid.\n",face_index);
-	text_log->PushIndent();
-	text_log->Print("brep.m_L[face.m_li[%d]=%d] is not valid.\n",fli,li);
-	text_log->PopIndent();
+        text_log->Print("brep.m_F[%d] face is not valid.\n",face_index);
+        text_log->PushIndent();
+        text_log->Print("brep.m_L[face.m_li[%d]=%d] is not valid.\n",fli,li);
+        text_log->PopIndent();
       }
       return false;
     }
@@ -214,11 +213,11 @@ ON_Brep::IsValidFaceTopology( int face_index, ON_TextLog* text_log  ) const
     {
       if ( text_log )
       {
-	text_log->Print("brep.m_F[%d] face is not valid.\n",face_index);
-	text_log->PushIndent();
-	text_log->Print("face.m_li[%d]=%d is a deleted loop\n",
-			fli,li);
-	text_log->PopIndent();
+        text_log->Print("brep.m_F[%d] face is not valid.\n",face_index);
+        text_log->PushIndent();
+        text_log->Print("face.m_li[%d]=%d is a deleted loop\n",
+                        fli,li);
+        text_log->PopIndent();
       }
       return false;
     }
@@ -226,38 +225,38 @@ ON_Brep::IsValidFaceTopology( int face_index, ON_TextLog* text_log  ) const
     {
       if ( text_log )
       {
-	text_log->Print("brep.m_F[%d] face is not valid.\n",face_index);
-	text_log->PushIndent();
-	text_log->Print("face.m_li[%d]=%d but brep.m_L[%d].m_fi=%d (m_fi should be %d)\n",
-			fli,li,li,loop.m_fi,face_index);
-	text_log->PopIndent();
+        text_log->Print("brep.m_F[%d] face is not valid.\n",face_index);
+        text_log->PushIndent();
+        text_log->Print("face.m_li[%d]=%d but brep.m_L[%d].m_fi=%d (m_fi should be %d)\n",
+                        fli,li,li,loop.m_fi,face_index);
+        text_log->PopIndent();
       }
       return false;
     }
     if ( fli == 0 ) {
       if ( loop.m_type != ON_BrepLoop::outer )
       {
-	if ( text_log )
-	{
-	  text_log->Print("brep.m_F[%d] face is not valid.\n",face_index);
-	  text_log->PushIndent();
-	  text_log->Print("brep.m_L[face.m_li[0]=%d].m_type is not outer.\n",li);
-	  text_log->PopIndent();
-	}
-	return false;
+        if ( text_log )
+        {
+          text_log->Print("brep.m_F[%d] face is not valid.\n",face_index);
+          text_log->PushIndent();
+          text_log->Print("brep.m_L[face.m_li[0]=%d].m_type is not outer.\n",li);
+          text_log->PopIndent();
+        }
+        return false;
       }
     }
     else {
       if ( loop.m_type != ON_BrepLoop::inner )
       {
-	if ( text_log )
-	{
-	  text_log->Print("brep.m_F[%d] face is not valid.\n",face_index);
-	  text_log->PushIndent();
-	  text_log->Print("brep.m_L[face.m_li[%d]=%d].m_type is not inner.\n",fli,li);
-	  text_log->PopIndent();
-	}
-	return false;
+        if ( text_log )
+        {
+          text_log->Print("brep.m_F[%d] face is not valid.\n",face_index);
+          text_log->PushIndent();
+          text_log->Print("brep.m_L[face.m_li[%d]=%d].m_type is not inner.\n",fli,li);
+          text_log->PopIndent();
+        }
+        return false;
       }
     }
   }
@@ -270,7 +269,7 @@ ON_Brep::IsValidFaceTopology( int face_index, ON_TextLog* text_log  ) const
       text_log->Print("brep.m_F[%d] face is not valid.\n",face_index);
       text_log->PushIndent();
       text_log->Print("face.m_si=%d (should be >=0 and <%d=m_S.Count())\n",
-		      face.m_si,m_S.Count());                      
+                      face.m_si,m_S.Count());                      
       text_log->PopIndent();
     }
     return false;
@@ -334,7 +333,7 @@ ON_Brep::IsValidEdgeTopology( int edge_index, ON_TextLog* text_log ) const
   {
     if ( text_log )
       text_log->Print("brep edge_index = %d (should be >=0 and <%d=brep.m_E.Count() ).\n",
-		      edge_index, m_E.Count());
+                      edge_index, m_E.Count());
     return false;
   }
   const ON_BrepEdge& edge = m_E[edge_index];
@@ -345,7 +344,7 @@ ON_Brep::IsValidEdgeTopology( int edge_index, ON_TextLog* text_log ) const
       text_log->Print("brep.m_E[%d] edge is not valid.\n",edge_index);
       text_log->PushIndent();
       text_log->Print("edge.m_edge_index = %d (should be %d).\n",
-		       edge.m_edge_index, edge_index );
+                       edge.m_edge_index, edge_index );
       text_log->PopIndent();
     }
     return false;
@@ -386,7 +385,7 @@ ON_Brep::IsValidEdgeTopology( int edge_index, ON_TextLog* text_log ) const
       text_log->Print("brep.m_E[%d] edge is not valid.\n",edge_index);
       text_log->PushIndent();
       text_log->Print("edge.m_c3i = %d (should be >=0 and <%d=m_C3.Count()\n",
-		      edge.m_c3i,m_C3.Count() );
+                      edge.m_c3i,m_C3.Count() );
       text_log->PopIndent();
     }
     return false;
@@ -439,7 +438,7 @@ ON_Brep::IsValidEdgeTopology( int edge_index, ON_TextLog* text_log ) const
       text_log->Print("brep.m_E[%d] edge is not valid.\n",edge_index);
       text_log->PushIndent();
       text_log->Print("m_C3[%d].Domain() = (%g,%g) does not inlclude m_E[%d].ProxyCurveDomain() = (%g,%g) is not increasing\n",
-		      c3i,c3_dom[0],c3_dom[1],edge_index,proxy_sub_dom[0],proxy_sub_dom[1]);
+                      c3i,c3_dom[0],c3_dom[1],edge_index,proxy_sub_dom[0],proxy_sub_dom[1]);
       text_log->PopIndent();
     }
     return false;
@@ -469,7 +468,7 @@ ON_Brep::IsValidEdgeTopology( int edge_index, ON_TextLog* text_log ) const
       text_log->Print("brep.m_E[%d] edge is not valid.\n",edge_index);
       text_log->PushIndent();
       text_log->Print("edge.m_vi[0]=%d (should be >=0 and <%d=m_V.Count()\n",
-		       vi0, m_V.Count() );
+                       vi0, m_V.Count() );
       text_log->PopIndent();
     }
     return false;
@@ -481,7 +480,7 @@ ON_Brep::IsValidEdgeTopology( int edge_index, ON_TextLog* text_log ) const
       text_log->Print("brep.m_E[%d] edge is not valid.\n",edge_index);
       text_log->PushIndent();
       text_log->Print("edge.m_vi[1]=%d (should be >=0 and <%d=m_V.Count()\n",
-		       vi1, m_V.Count() );
+                       vi1, m_V.Count() );
       text_log->PopIndent();
     }
     return false;
@@ -495,18 +494,18 @@ ON_Brep::IsValidEdgeTopology( int edge_index, ON_TextLog* text_log ) const
     {
       if ( text_log )
       {
-	text_log->Print("brep.m_E[%d] edge is not valid.\n",edge_index);
-	text_log->PushIndent();
-	text_log->Print("edge.m_vi[%d]=%d is a deleted vertex\n",
-			 evi,edge.m_vi[evi] );
-	text_log->PopIndent();
+        text_log->Print("brep.m_E[%d] edge is not valid.\n",edge_index);
+        text_log->PushIndent();
+        text_log->Print("edge.m_vi[%d]=%d is a deleted vertex\n",
+                         evi,edge.m_vi[evi] );
+        text_log->PopIndent();
       }
       return false;
     }
 
 
     const int vertex_edge_count = vertex.m_ei.Count();
-    BOOL bFoundIt = false;
+    ON_BOOL32 bFoundIt = false;
     int vei;
     for ( vei = 0; vei < vertex_edge_count && !bFoundIt; vei++ ) 
     {
@@ -516,11 +515,11 @@ ON_Brep::IsValidEdgeTopology( int edge_index, ON_TextLog* text_log ) const
     {
       if ( text_log )
       {
-	text_log->Print("brep.m_E[%d] edge is not valid.\n",edge_index);
-	text_log->PushIndent();
-	text_log->Print("edge.m_vi[%d]=%d but edge is not referenced in m_V[%d].m_ei[]\n",
-			 evi,edge.m_vi[evi],edge.m_vi[evi] );
-	text_log->PopIndent();
+        text_log->Print("brep.m_E[%d] edge is not valid.\n",edge_index);
+        text_log->PushIndent();
+        text_log->Print("edge.m_vi[%d]=%d but edge is not referenced in m_V[%d].m_ei[]\n",
+                         evi,edge.m_vi[evi],edge.m_vi[evi] );
+        text_log->PopIndent();
       }
       return false;
     }
@@ -546,10 +545,10 @@ ON_Brep::IsValidEdgeTopology( int edge_index, ON_TextLog* text_log ) const
     {
       if ( text_log )
       {
-	text_log->Print("brep.m_E[%d] edge is not valid.\n",edge_index);
-	text_log->PushIndent();
-	text_log->Print("edge.m_ti[%d]=%d (should be >=0 and <%d=m_T.Count())\n",eti,ti);
-	text_log->PopIndent();
+        text_log->Print("brep.m_E[%d] edge is not valid.\n",edge_index);
+        text_log->PushIndent();
+        text_log->Print("edge.m_ti[%d]=%d (should be >=0 and <%d=m_T.Count())\n",eti,ti);
+        text_log->PopIndent();
       }
       return false;
     }
@@ -557,10 +556,10 @@ ON_Brep::IsValidEdgeTopology( int edge_index, ON_TextLog* text_log ) const
     {
       if ( text_log )
       {
-	text_log->Print("brep.m_E[%d] edge is not valid.\n",edge_index);
-	text_log->PushIndent();
-	text_log->Print("edge.m_ti[%d]=%d is a deleted trim\n",eti,ti);
-	text_log->PopIndent();
+        text_log->Print("brep.m_E[%d] edge is not valid.\n",edge_index);
+        text_log->PushIndent();
+        text_log->Print("edge.m_ti[%d]=%d is a deleted trim\n",eti,ti);
+        text_log->PopIndent();
       }
       return false;
     }
@@ -568,14 +567,14 @@ ON_Brep::IsValidEdgeTopology( int edge_index, ON_TextLog* text_log ) const
     {
       if ( edge.m_ti[i] == ti )
       {
-	if ( text_log )
-	{
-	  text_log->Print("brep.m_E[%d] edge is not valid.\n",edge_index);
-	  text_log->PushIndent();
-	  text_log->Print("edge.m_ti[%d]=edge.m_ti[%d]=%d (a trim should be referenced once).\n",i,eti,ti);
-	  text_log->PopIndent();
-	}
-	return false;
+        if ( text_log )
+        {
+          text_log->Print("brep.m_E[%d] edge is not valid.\n",edge_index);
+          text_log->PushIndent();
+          text_log->Print("edge.m_ti[%d]=edge.m_ti[%d]=%d (a trim should be referenced once).\n",i,eti,ti);
+          text_log->PopIndent();
+        }
+        return false;
       }
     }
     const ON_BrepTrim& trim = m_T[ti];
@@ -583,10 +582,10 @@ ON_Brep::IsValidEdgeTopology( int edge_index, ON_TextLog* text_log ) const
     {
       if ( text_log )
       {
-	text_log->Print("brep.m_E[%d] edge is not valid.\n",edge_index);
-	text_log->PushIndent();
-	text_log->Print("edge.m_ti[%d]=%d but brep.m_T[%d].m_ei=%d\n",eti,ti,ti,trim.m_ei);
-	text_log->PopIndent();
+        text_log->Print("brep.m_E[%d] edge is not valid.\n",edge_index);
+        text_log->PushIndent();
+        text_log->Print("edge.m_ti[%d]=%d but brep.m_T[%d].m_ei=%d\n",eti,ti,ti,trim.m_ei);
+        text_log->PopIndent();
       }
       return false;
     }
@@ -604,7 +603,7 @@ ON_Brep::IsValidLoopTopology( int loop_index, ON_TextLog* text_log ) const
   {
     if ( text_log )
       text_log->Print("brep loop_index = %d (should be >=0 and <%d=brep.m_L.Count() ).\n",
-		      loop_index, m_L.Count());
+                      loop_index, m_L.Count());
     return false;
   }
   const ON_BrepLoop& loop = m_L[loop_index];
@@ -615,7 +614,7 @@ ON_Brep::IsValidLoopTopology( int loop_index, ON_TextLog* text_log ) const
       text_log->Print("brep.m_L[%d] loop is not valid.\n",loop_index);
       text_log->PushIndent();
       text_log->Print("loop.m_loop_index = %d (should be %d).\n",
-		       loop.m_loop_index, loop_index );
+                       loop.m_loop_index, loop_index );
       text_log->PopIndent();
     }
     return false;
@@ -647,7 +646,7 @@ ON_Brep::IsValidLoopTopology( int loop_index, ON_TextLog* text_log ) const
   if ( loop.m_ti.Count() < 1 )
   {
       if ( text_log )
-	text_log->Print("ON_Brep.m_L[%d].m_ti.Count() = %d  (should be > 0 )\n",loop_index,loop.m_ti.Count());
+        text_log->Print("ON_Brep.m_L[%d].m_ti.Count() = %d  (should be > 0 )\n",loop_index,loop.m_ti.Count());
       return false;
   }
 
@@ -657,24 +656,24 @@ ON_Brep::IsValidLoopTopology( int loop_index, ON_TextLog* text_log ) const
     if ( ti < 0 || ti >= m_T.Count() )
     {
       if ( text_log )
-	text_log->Print("ON_Brep.m_L[%d].m_ti[%d] = %d is not invalid.\n",loop_index,lti,ti);
+        text_log->Print("ON_Brep.m_L[%d].m_ti[%d] = %d is not invalid.\n",loop_index,lti,ti);
       return false;
     }
     const ON_BrepTrim& trim = m_T[ti];
     if ( trim.m_trim_index != ti )
     {
       if ( text_log )
-	text_log->Print("ON_Brep.m_L[%d].m_ti[%d] = %d is a deleted trim.\n",loop_index,lti,ti);
+        text_log->Print("ON_Brep.m_L[%d].m_ti[%d] = %d is a deleted trim.\n",loop_index,lti,ti);
       return false;
     }
     if ( trim.m_li != loop_index )
     {
       if ( text_log )
       {
-	text_log->Print("brep loop m_L[%d] or trim m_T[%d] is not valid.\n",loop_index,ti);
-	text_log->PushIndent();
-	text_log->Print("loop.m_ti[%d] = %d != %d =trim.m_li\n",lti,ti,trim.m_li);
-	text_log->PopIndent();
+        text_log->Print("brep loop m_L[%d] or trim m_T[%d] is not valid.\n",loop_index,ti);
+        text_log->PushIndent();
+        text_log->Print("loop.m_ti[%d] = %d != %d =trim.m_li\n",lti,ti,trim.m_li);
+        text_log->PopIndent();
       }
       return false;
     }
@@ -700,11 +699,11 @@ ON_Brep::IsValidLoopTopology( int loop_index, ON_TextLog* text_log ) const
       //     in a loop shared vertices.
       if ( text_log )
       {
-	 text_log->Print("brep loop m_L[%d] is not valid.\n",loop_index);
-	 text_log->PushIndent();
-	 text_log->Print("m_T[loop.m_ti[%d]=%d].m_vi[1] = %d != m_T[loop.m_ti[%d]=%d].m_vi[0]=%d.\n",
-			  lti-1,prev_trim_ti,prev_trim_vi1,lti,loop.m_ti[lti],trim.m_vi[0]);
-	 text_log->PopIndent();
+         text_log->Print("brep loop m_L[%d] is not valid.\n",loop_index);
+         text_log->PushIndent();
+         text_log->Print("m_T[loop.m_ti[%d]=%d].m_vi[1] = %d != m_T[loop.m_ti[%d]=%d].m_vi[0]=%d.\n",
+                          lti-1,prev_trim_ti,prev_trim_vi1,lti,loop.m_ti[lti],trim.m_vi[0]);
+         text_log->PopIndent();
       }
       return false;
     }
@@ -722,7 +721,7 @@ ON_Brep::IsValidLoopTopology( int loop_index, ON_TextLog* text_log ) const
        text_log->Print("brep loop m_L[%d] is not valid.\n",loop_index);
        text_log->PushIndent();
        text_log->Print("m_T[loop.m_ti[%d]=%d].m_vi[1] = %d != m_T[loop.m_ti[0]=%d].m_vi[0]=%d.\n",
-			loop.m_ti.Count()-1,prev_trim_ti,prev_trim_vi1,first_trim_ti,first_trim_vi0);
+                        loop.m_ti.Count()-1,prev_trim_ti,prev_trim_vi1,first_trim_ti,first_trim_vi0);
        text_log->PopIndent();
     }
     return false;
@@ -739,7 +738,7 @@ ON_Brep::IsValidTrimTopology( int trim_index, ON_TextLog* text_log ) const
   {
     if ( text_log )
       text_log->Print("brep trim_index = %d (should be >=0 and <%d=brep.m_T.Count() ).\n",
-		      trim_index, m_T.Count());
+                      trim_index, m_T.Count());
     return false;
   }
   const ON_BrepTrim& trim = m_T[trim_index];
@@ -750,7 +749,7 @@ ON_Brep::IsValidTrimTopology( int trim_index, ON_TextLog* text_log ) const
       text_log->Print("brep.m_T[%d] trim is not valid.\n",trim_index);
       text_log->PushIndent();
       text_log->Print("trim.m_trim_index = %d (should be %d).\n",
-		       trim.m_trim_index, trim_index );
+                       trim.m_trim_index, trim_index );
       text_log->PopIndent();
     }
     return false;
@@ -821,7 +820,7 @@ ON_Brep::IsValidTrimTopology( int trim_index, ON_TextLog* text_log ) const
       text_log->Print("brep.m_T[%d] trim is not valid.\n",trim_index);
       text_log->PushIndent();
       text_log->Print("m_T[%d].m_c2i=%d, m_C2[%d] != m_T[%d].ProxyCurve()\n",
-		      trim_index, trim.m_c2i, trim.m_c2i, trim_index);
+                      trim_index, trim.m_c2i, trim.m_c2i, trim_index);
       text_log->PopIndent();
     }
     return false;
@@ -848,8 +847,8 @@ ON_Brep::IsValidTrimTopology( int trim_index, ON_TextLog* text_log ) const
       text_log->Print("brep.m_T[%d] trim is not valid.\n",trim_index);
       text_log->PushIndent();
       text_log->Print("m_C2[%d].Domain() = (%g,%g) does not include m_T[%d].ProxyCurveDomain() = (%g,%g) is not increasing\n",
-		      trim.m_c2i,c2_dom[0],c2_dom[1],
-		      trim_index,proxy_sub_dom[0],proxy_sub_dom[1]);
+                      trim.m_c2i,c2_dom[0],c2_dom[1],
+                      trim_index,proxy_sub_dom[0],proxy_sub_dom[1]);
       text_log->PopIndent();
     }
     return false;
@@ -901,7 +900,7 @@ ON_Brep::IsValidTrimTopology( int trim_index, ON_TextLog* text_log ) const
       text_log->Print("brep.m_T[%d] trim or brep.m_L[%d] loop is not valid.\n",trim_index,trim.m_li);
       text_log->PushIndent();
       text_log->Print("trim.m_li = %d but loop.m_ti[] does not contain %d (should appear once in).\n",
-		      trim.m_li,trim_index);
+                      trim.m_li,trim_index);
       text_log->PopIndent();
     }
     return false;
@@ -913,20 +912,20 @@ ON_Brep::IsValidTrimTopology( int trim_index, ON_TextLog* text_log ) const
     if ( trim.m_ei != -1 )
     {
       if ( text_log )
-	text_log->Print("ON_Brep.m_T[%d].m_type = singular, but m_ei = %d (should be -1).\n",trim_index,trim.m_ei);
+        text_log->Print("ON_Brep.m_T[%d].m_type = singular, but m_ei = %d (should be -1).\n",trim_index,trim.m_ei);
       return false;
     }
     if ( trim.m_bRev3d )
     {
       if ( text_log )
-	text_log->Print("ON_Brep.m_T[%d].m_type = singular, but m_bRev3d = %d (should be 0).\n",trim_index,trim.m_bRev3d);
+        text_log->Print("ON_Brep.m_T[%d].m_type = singular, but m_bRev3d = %d (should be 0).\n",trim_index,trim.m_bRev3d);
       return false;
     }
     if ( trim.m_vi[0] != trim.m_vi[1] )
     {
       if ( text_log )
-	text_log->Print("ON_Brep.m_T[%d].m_type = singular, but m_vi = (%d,%d) (should be same vertex index).\n",
-			trim_index,trim.m_vi[0],trim.m_vi[1]);
+        text_log->Print("ON_Brep.m_T[%d].m_type = singular, but m_vi = (%d,%d) (should be same vertex index).\n",
+                        trim_index,trim.m_vi[0],trim.m_vi[1]);
       return false;
     }
   }
@@ -936,7 +935,7 @@ ON_Brep::IsValidTrimTopology( int trim_index, ON_TextLog* text_log ) const
     if ( trim.m_ei < 0 || trim.m_ei >= m_E.Count() )
     {
       if ( text_log )
-	text_log->Print("ON_Brep.m_T[%d].m_ei = %d is not invalid.\n",trim_index,trim.m_ei);
+        text_log->Print("ON_Brep.m_T[%d].m_ei = %d is not invalid.\n",trim_index,trim.m_ei);
       return false;
     }
   
@@ -944,7 +943,7 @@ ON_Brep::IsValidTrimTopology( int trim_index, ON_TextLog* text_log ) const
     if ( edge.m_edge_index != trim.m_ei )
     {
       if ( text_log )
-	text_log->Print("ON_Brep.m_T[%d].m_ei is deleted.\n",trim_index);
+        text_log->Print("ON_Brep.m_T[%d].m_ei is deleted.\n",trim_index);
       return false;
     }
 
@@ -953,13 +952,13 @@ ON_Brep::IsValidTrimTopology( int trim_index, ON_TextLog* text_log ) const
     if ( trim.m_vi[0] != edge.m_vi[evi0] )
     {
       if ( text_log )
-	text_log->Print("ON_Brep.m_T[%d].m_bRev3d = %d, but m_vi[0] != m_E[m_ei].m_vi[%d].\n",trim_index,trim.m_bRev3d,evi0);
+        text_log->Print("ON_Brep.m_T[%d].m_bRev3d = %d, but m_vi[0] != m_E[m_ei].m_vi[%d].\n",trim_index,trim.m_bRev3d,evi0);
       return false;
     }
     if ( trim.m_vi[1] != edge.m_vi[evi1] )
     {
       if ( text_log )
-	text_log->Print("ON_Brep.m_T[%d].m_bRev3d = %d, but m_vi[0] != m_E[m_ei].m_vi[%d].\n",trim_index,trim.m_bRev3d,evi1);
+        text_log->Print("ON_Brep.m_T[%d].m_bRev3d = %d, but m_vi[0] != m_E[m_ei].m_vi[%d].\n",trim_index,trim.m_bRev3d,evi1);
       return false;
     }
   }
@@ -993,31 +992,31 @@ ON_Brep::IsValidTopology( ON_TextLog* text_log ) const
     if ( 0 == edge_count )
     {
       if ( text_log )
-	text_log->Print( "ON_Brep has no edges.\n");
+        text_log->Print( "ON_Brep has no edges.\n");
       return false;
     }
     if ( 0 == loop_count )
     {
       if ( text_log )
-	text_log->Print( "ON_Brep has no loops.\n");
+        text_log->Print( "ON_Brep has no loops.\n");
       return false;
     }
     if ( 0 == surface_count )
     {
       if ( text_log )
-	text_log->Print( "ON_Brep has no surfaces.\n");
+        text_log->Print( "ON_Brep has no surfaces.\n");
       return false;
     }
     if ( 0 == trim_count )
     {
       if ( text_log )
-	text_log->Print( "ON_Brep has no trims.\n");
+        text_log->Print( "ON_Brep has no trims.\n");
       return false;
     }
     if ( 0 == curve2d_count )
     {
       if ( text_log )
-	text_log->Print( "ON_Brep has no 2d curves.\n");
+        text_log->Print( "ON_Brep has no 2d curves.\n");
       return false;
     }
   }
@@ -1027,13 +1026,13 @@ ON_Brep::IsValidTopology( ON_TextLog* text_log ) const
     if ( 0 == curve3d_count )
     {
       if ( text_log )
-	text_log->Print( "ON_Brep has no 3d curves.\n");
+        text_log->Print( "ON_Brep has no 3d curves.\n");
       return false;
     }
     if ( 0 == vertex_count )
     {
       if ( text_log )
-	text_log->Print( "ON_Brep has no vertices.\n");
+        text_log->Print( "ON_Brep has no vertices.\n");
       return false;
     }
   }
@@ -1046,17 +1045,17 @@ ON_Brep::IsValidTopology( ON_TextLog* text_log ) const
       const ON_BrepVertex& vertex = m_V[vi];
       if ( vertex.m_ei.Count() > 0 )
       {
-	if ( text_log )
-	  text_log->Print( "ON_Brep.m_V[%d] is deleted (m_vertex_index = -1) but vertex.m_ei.Count() = %d.\n",
-			   vi, vertex.m_ei.Count() );
-	return false;
+        if ( text_log )
+          text_log->Print( "ON_Brep.m_V[%d] is deleted (m_vertex_index = -1) but vertex.m_ei.Count() = %d.\n",
+                           vi, vertex.m_ei.Count() );
+        return false;
       }
     }
     else if ( m_V[vi].m_vertex_index != vi )
     {
       if ( text_log )
-	text_log->Print( "ON_Brep.m_V[%d].m_vertex_index = %d (should be %d)\n",
-			 vi, m_V[vi].m_vertex_index, vi );
+        text_log->Print( "ON_Brep.m_V[%d].m_vertex_index = %d (should be %d)\n",
+                         vi, m_V[vi].m_vertex_index, vi );
       return false;
     }
   }
@@ -1068,45 +1067,45 @@ ON_Brep::IsValidTopology( ON_TextLog* text_log ) const
       const ON_BrepEdge& edge = m_E[ei];
       if ( edge.m_ti.Count() > 0 )
       {
-	if ( text_log )
-	  text_log->Print( "ON_Brep.m_E[%d] is deleted (m_edge_index = -1) but edge.m_ei.Count() = %d.\n",
-			   ei, edge.m_ti.Count() );
-	return false;
+        if ( text_log )
+          text_log->Print( "ON_Brep.m_E[%d] is deleted (m_edge_index = -1) but edge.m_ei.Count() = %d.\n",
+                           ei, edge.m_ti.Count() );
+        return false;
       }
       if ( edge.m_c3i != -1 )
       {
-	if ( text_log )
-	  text_log->Print( "ON_Brep.m_E[%d] is deleted (m_edge_index = -1) but edge.m_c3i=%d (should be -1).\n",
-			   ei, edge.m_c3i );
-	return false;
+        if ( text_log )
+          text_log->Print( "ON_Brep.m_E[%d] is deleted (m_edge_index = -1) but edge.m_c3i=%d (should be -1).\n",
+                           ei, edge.m_c3i );
+        return false;
       }
       if ( edge.ProxyCurve() )
       {
-	if ( text_log )
-	  text_log->Print( "ON_Brep.m_E[%d] is deleted (m_edge_index = -1) but edge.m_curve is not NULL.\n",
-			   ei );
-	return false;
+        if ( text_log )
+          text_log->Print( "ON_Brep.m_E[%d] is deleted (m_edge_index = -1) but edge.m_curve is not NULL.\n",
+                           ei );
+        return false;
       }
       if ( edge.m_vi[0] != -1 )
       {
-	if ( text_log )
-	  text_log->Print( "ON_Brep.m_E[%d] is deleted (m_edge_index = -1) but edge.m_vi[0]=%d (should be -1).\n",
-			   ei, edge.m_vi[0] );
-	return false;
+        if ( text_log )
+          text_log->Print( "ON_Brep.m_E[%d] is deleted (m_edge_index = -1) but edge.m_vi[0]=%d (should be -1).\n",
+                           ei, edge.m_vi[0] );
+        return false;
       }
       if ( edge.m_vi[1] != -1 )
       {
-	if ( text_log )
-	  text_log->Print( "ON_Brep.m_E[%d] is deleted (m_edge_index = -1) but edge.m_vi[1]=%d (should be -1).\n",
-			   ei, edge.m_vi[1] );
-	return false;
+        if ( text_log )
+          text_log->Print( "ON_Brep.m_E[%d] is deleted (m_edge_index = -1) but edge.m_vi[1]=%d (should be -1).\n",
+                           ei, edge.m_vi[1] );
+        return false;
       }
     }
     else if ( m_E[ei].m_edge_index != ei )
     {
       if ( text_log )
-	text_log->Print( "ON_Brep.m_E[%d].m_edge_index = %d (should be %d)\n",
-			 ei, m_E[ei].m_edge_index, ei );
+        text_log->Print( "ON_Brep.m_E[%d].m_edge_index = %d (should be %d)\n",
+                         ei, m_E[ei].m_edge_index, ei );
       return false;
     }
   }
@@ -1118,51 +1117,51 @@ ON_Brep::IsValidTopology( ON_TextLog* text_log ) const
       const ON_BrepTrim& trim = m_T[ti];
       if ( trim.m_ei != -1 )
       {
-	if ( text_log )
-	  text_log->Print( "ON_Brep.m_T[%d] is deleted (m_trim_index = -1) but trim.m_ei=%d (should be -1).\n",
-			   ti, trim.m_ei );
-	return false;
+        if ( text_log )
+          text_log->Print( "ON_Brep.m_T[%d] is deleted (m_trim_index = -1) but trim.m_ei=%d (should be -1).\n",
+                           ti, trim.m_ei );
+        return false;
       }
       if ( trim.m_li != -1 )
       {
-	if ( text_log )
-	  text_log->Print( "ON_Brep.m_T[%d] is deleted (m_trim_index = -1) but trim.m_li=%d (should be -1).\n",
-			   ti, trim.m_li );
-	return false;
+        if ( text_log )
+          text_log->Print( "ON_Brep.m_T[%d] is deleted (m_trim_index = -1) but trim.m_li=%d (should be -1).\n",
+                           ti, trim.m_li );
+        return false;
       }
       if ( trim.m_c2i != -1 )
       {
-	if ( text_log )
-	  text_log->Print( "ON_Brep.m_T[%d] is deleted (m_trim_index = -1) but trim.m_c2i=%d (should be -1).\n",
-			   ti, trim.m_c2i );
-	return false;
+        if ( text_log )
+          text_log->Print( "ON_Brep.m_T[%d] is deleted (m_trim_index = -1) but trim.m_c2i=%d (should be -1).\n",
+                           ti, trim.m_c2i );
+        return false;
       }
       if ( trim.m_vi[0] != -1 )
       {
-	if ( text_log )
-	  text_log->Print( "ON_Brep.m_T[%d] is deleted (m_trim_index = -1) but trim.m_vi[0]=%d (should be -1).\n",
-			   ti, trim.m_vi[0] );
-	return false;
+        if ( text_log )
+          text_log->Print( "ON_Brep.m_T[%d] is deleted (m_trim_index = -1) but trim.m_vi[0]=%d (should be -1).\n",
+                           ti, trim.m_vi[0] );
+        return false;
       }
       if ( trim.m_vi[1] != -1 )
       {
-	if ( text_log )
-	  text_log->Print( "ON_Brep.m_T[%d] is deleted (m_trim_index = -1) but trim.m_vi[1]=%d (should be -1).\n",
-			   ti, trim.m_vi[1] );
-	return false;
+        if ( text_log )
+          text_log->Print( "ON_Brep.m_T[%d] is deleted (m_trim_index = -1) but trim.m_vi[1]=%d (should be -1).\n",
+                           ti, trim.m_vi[1] );
+        return false;
       }
     }
     else if ( m_T[ti].m_trim_index != ti  )
     {
       if ( text_log )
-	text_log->Print( "ON_Brep.m_T[%d].m_trim_index = %d (should be %d)\n",
-			 ti, m_T[ti].m_trim_index, ti );
+        text_log->Print( "ON_Brep.m_T[%d].m_trim_index = %d (should be %d)\n",
+                         ti, m_T[ti].m_trim_index, ti );
       return false;
     }
     else if ( !m_T[ti].IsValid( text_log ) )
     {
       if ( text_log )
-	text_log->Print( "ON_Brep.m_T[%d] is not valid\n",ti );
+        text_log->Print( "ON_Brep.m_T[%d] is not valid\n",ti );
       return false;
     }
   }
@@ -1174,24 +1173,24 @@ ON_Brep::IsValidTopology( ON_TextLog* text_log ) const
       const ON_BrepLoop& loop = m_L[li];
       if ( loop.m_fi != -1 )
       {
-	if ( text_log )
-	  text_log->Print( "ON_Brep.m_L[%d] is deleted (m_loop_index = -1) but loop.m_fi=%d (should be -1).\n",
-			   li, loop.m_fi );
-	return false;
+        if ( text_log )
+          text_log->Print( "ON_Brep.m_L[%d] is deleted (m_loop_index = -1) but loop.m_fi=%d (should be -1).\n",
+                           li, loop.m_fi );
+        return false;
       }
       if ( loop.m_ti.Count() > 0 )
       {
-	if ( text_log )
-	  text_log->Print( "ON_Brep.m_L[%d] is deleted (m_loop_index = -1) but loop.m_ti.Count()=%d.\n",
-			   li, loop.m_ti.Count() );
-	return false;
+        if ( text_log )
+          text_log->Print( "ON_Brep.m_L[%d] is deleted (m_loop_index = -1) but loop.m_ti.Count()=%d.\n",
+                           li, loop.m_ti.Count() );
+        return false;
       }
     }
     else if ( m_L[li].m_loop_index != li )
     {
       if ( text_log )
-	text_log->Print( "ON_Brep.m_L[%d].m_loop_index = %d (should be %d)\n",
-			 li, m_L[li].m_loop_index, li );
+        text_log->Print( "ON_Brep.m_L[%d].m_loop_index = %d (should be %d)\n",
+                         li, m_L[li].m_loop_index, li );
       return false;
     }
   }
@@ -1203,31 +1202,31 @@ ON_Brep::IsValidTopology( ON_TextLog* text_log ) const
       const ON_BrepFace& face = m_F[fi];
       if ( face.m_si != -1 )
       {
-	if ( text_log )
-	  text_log->Print( "ON_Brep.m_F[%d] is deleted (m_face_index = -1) but face.m_si=%d (should be -1).\n",
-			   fi, face.m_si );
-	return false;
+        if ( text_log )
+          text_log->Print( "ON_Brep.m_F[%d] is deleted (m_face_index = -1) but face.m_si=%d (should be -1).\n",
+                           fi, face.m_si );
+        return false;
       }
       if ( face.ProxySurface() )
       {
-	if ( text_log )
-	  text_log->Print( "ON_Brep.m_F[%d] is deleted (m_face_index = -1) but face.ProxySurface() is not NULL.\n",
-			   fi );
-	return false;
+        if ( text_log )
+          text_log->Print( "ON_Brep.m_F[%d] is deleted (m_face_index = -1) but face.ProxySurface() is not NULL.\n",
+                           fi );
+        return false;
       }
       if ( face.m_li.Count() > 0 )
       {
-	if ( text_log )
-	  text_log->Print( "ON_Brep.m_F[%d] is deleted (m_face_index = -1) but face.m_li.Count()=%d.\n",
-			   fi, face.m_li.Count() );
-	return false;
+        if ( text_log )
+          text_log->Print( "ON_Brep.m_F[%d] is deleted (m_face_index = -1) but face.m_li.Count()=%d.\n",
+                           fi, face.m_li.Count() );
+        return false;
       }
     }
     else if ( m_F[fi].m_face_index != fi )
     {
       if ( text_log )
-	text_log->Print( "ON_Brep.m_F[%d].m_face_index = %d (should be %d)\n",
-			 fi, m_F[fi].m_face_index, fi );
+        text_log->Print( "ON_Brep.m_F[%d].m_face_index = %d (should be %d)\n",
+                         fi, m_F[fi].m_face_index, fi );
       return false;
     }
   }
@@ -1238,7 +1237,7 @@ ON_Brep::IsValidTopology( ON_TextLog* text_log ) const
       continue;
     if ( !IsValidVertexTopology( vi, text_log ) ) {
       if ( text_log )
-	text_log->Print("ON_Brep.m_V[%d] is invalid.\n",vi);
+        text_log->Print("ON_Brep.m_V[%d] is invalid.\n",vi);
       return false;
     }
   }
@@ -1250,7 +1249,7 @@ ON_Brep::IsValidTopology( ON_TextLog* text_log ) const
       continue;
     if ( !IsValidEdgeTopology( ei, text_log ) ) {
       if ( text_log )
-	text_log->Print("ON_Brep.m_E[%d] is invalid.\n",ei);
+        text_log->Print("ON_Brep.m_E[%d] is invalid.\n",ei);
       return false;
     }
   }
@@ -1262,7 +1261,7 @@ ON_Brep::IsValidTopology( ON_TextLog* text_log ) const
       continue;
     if ( !IsValidFaceTopology( fi, text_log ) ) {
       if ( text_log )
-	text_log->Print("ON_Brep.m_F[%d] is invalid.\n",fi);
+        text_log->Print("ON_Brep.m_F[%d] is invalid.\n",fi);
       return false;
     }
   }
@@ -1275,7 +1274,7 @@ ON_Brep::IsValidTopology( ON_TextLog* text_log ) const
       continue;
     if ( !IsValidTrimTopology( ti, text_log ) ) {
       if ( text_log )
-	text_log->Print("ON_Brep.m_T[%d] is invalid.\n",ti);
+        text_log->Print("ON_Brep.m_T[%d] is invalid.\n",ti);
       return false;
     }
   }
@@ -1288,7 +1287,7 @@ ON_Brep::IsValidTopology( ON_TextLog* text_log ) const
       continue;
     if ( !IsValidLoopTopology( li, text_log ) ) {
       if ( text_log )
-	text_log->Print("ON_Brep.m_L[%d] is invalid.\n",li);
+        text_log->Print("ON_Brep.m_L[%d] is invalid.\n",li);
       return false;
     }
   }
@@ -1308,7 +1307,7 @@ ON_Brep::IsValidVertexGeometry( int vertex_index, ON_TextLog* text_log ) const
   {
     if ( text_log )
       text_log->Print("brep vertex_index = %d (should be >=0 and <%d=brep.m_V.Count() ).\n",
-		      vertex_index, m_V.Count());
+                      vertex_index, m_V.Count());
     return false;
   }
   const ON_BrepVertex& vertex = m_V[vertex_index];
@@ -1319,7 +1318,7 @@ ON_Brep::IsValidVertexGeometry( int vertex_index, ON_TextLog* text_log ) const
       text_log->Print("brep.m_V[%d] vertex is not valid.\n",vertex_index);
       text_log->PushIndent();
       text_log->Print("vertex.m_vertex_index = %d (should be %d).\n",
-		       vertex.m_vertex_index, vertex_index );
+                       vertex.m_vertex_index, vertex_index );
       text_log->PopIndent();
     }
     return false;
@@ -1346,7 +1345,7 @@ ON_Brep::IsValidEdgeGeometry( int edge_index, ON_TextLog* text_log ) const
   {
     if ( text_log )
       text_log->Print("brep edge_index = %d (should be >=0 and <%d=brep.m_E.Count() ).\n",
-		      edge_index, m_E.Count());
+                      edge_index, m_E.Count());
     return false;
   }
   const ON_BrepEdge& edge = m_E[edge_index];
@@ -1357,7 +1356,7 @@ ON_Brep::IsValidEdgeGeometry( int edge_index, ON_TextLog* text_log ) const
       text_log->Print("brep.m_E[%d] edge is not valid.\n",edge_index);
       text_log->PushIndent();
       text_log->Print("edge.m_edge_index = %d (should be %d).\n",
-		       edge.m_edge_index, edge_index );
+                       edge.m_edge_index, edge_index );
       text_log->PopIndent();
     }
     return false;
@@ -1371,11 +1370,11 @@ ON_Brep::IsValidEdgeGeometry( int edge_index, ON_TextLog* text_log ) const
     {
       if ( text_log )
       {
-	text_log->Print("brep.m_E[%d] edge is not valid.\n",edge_index);
-	text_log->PushIndent();
-	text_log->Print("edge.m_vi[]=(%d,%d) but edge.IsClosed() is true\n",
-			 vi0,vi1);
-	text_log->PopIndent();
+        text_log->Print("brep.m_E[%d] edge is not valid.\n",edge_index);
+        text_log->PushIndent();
+        text_log->Print("edge.m_vi[]=(%d,%d) but edge.IsClosed() is true\n",
+                         vi0,vi1);
+        text_log->PopIndent();
       }
       return false;
     }
@@ -1385,11 +1384,11 @@ ON_Brep::IsValidEdgeGeometry( int edge_index, ON_TextLog* text_log ) const
     {
       if ( text_log )
       {
-	text_log->Print("brep.m_E[%d] edge is not valid.\n",edge_index);
-	text_log->PushIndent();
-	text_log->Print("edge.m_vi[0]=edge.m_vi[1]=%d but edge.IsClosed() is false.\n",
-			 vi0);
-	text_log->PopIndent();
+        text_log->Print("brep.m_E[%d] edge is not valid.\n",edge_index);
+        text_log->PushIndent();
+        text_log->Print("edge.m_vi[0]=edge.m_vi[1]=%d but edge.IsClosed() is false.\n",
+                         vi0);
+        text_log->PopIndent();
       }
       return false;
     }
@@ -1405,7 +1404,7 @@ ON_Brep::IsValidFaceGeometry( int face_index, ON_TextLog* text_log ) const
   {
     if ( text_log )
       text_log->Print("brep face_index = %d (should be >=0 and <%d=brep.m_F.Count() ).\n",
-		      face_index, m_F.Count());
+                      face_index, m_F.Count());
     return false;
   }
   const ON_BrepFace& face = m_F[face_index];
@@ -1416,7 +1415,7 @@ ON_Brep::IsValidFaceGeometry( int face_index, ON_TextLog* text_log ) const
       text_log->Print("brep.m_F[%d] face is not valid.\n",face_index);
       text_log->PushIndent();
       text_log->Print("face.m_face_index = %d (should be %d).\n",
-		       face.m_face_index, face_index );
+                       face.m_face_index, face_index );
       text_log->PopIndent();
     }
     return false;
@@ -1431,7 +1430,7 @@ ON_Brep::IsValidLoopGeometry( int loop_index, ON_TextLog* text_log ) const
   {
     if ( text_log )
       text_log->Print("brep loop_index = %d (should be >=0 and <%d=brep.m_L.Count() ).\n",
-		      loop_index, m_L.Count());
+                      loop_index, m_L.Count());
     return false;
   }
   const ON_BrepLoop& loop = m_L[loop_index];
@@ -1442,7 +1441,7 @@ ON_Brep::IsValidLoopGeometry( int loop_index, ON_TextLog* text_log ) const
       text_log->Print("brep.m_L[%d] loop is not valid.\n",loop_index);
       text_log->PushIndent();
       text_log->Print("loop.m_loop_index = %d (should be %d).\n",
-		       loop.m_loop_index, loop_index );
+                       loop.m_loop_index, loop_index );
       text_log->PopIndent();
     }
     return false;
@@ -1457,7 +1456,7 @@ ON_Brep::IsValidTrimGeometry( int trim_index, ON_TextLog* text_log ) const
   {
     if ( text_log )
       text_log->Print("brep trim_index = %d (should be >=0 and <%d=brep.m_T.Count() ).\n",
-		      trim_index, m_T.Count());
+                      trim_index, m_T.Count());
     return false;
   }
   const ON_BrepTrim& trim = m_T[trim_index];
@@ -1468,7 +1467,7 @@ ON_Brep::IsValidTrimGeometry( int trim_index, ON_TextLog* text_log ) const
       text_log->Print("brep.m_T[%d] trim is not valid.\n",trim_index);
       text_log->PushIndent();
       text_log->Print("trim.m_trim_index = %d (should be %d).\n",
-		       trim.m_trim_index, trim_index );
+                       trim.m_trim_index, trim_index );
       text_log->PopIndent();
     }
     return false;
@@ -1500,14 +1499,14 @@ ON_Brep::IsValidGeometry( ON_TextLog* text_log ) const
     if ( !m_C2[c2i]->IsValid(text_log) )
     {
       if ( text_log )
-	text_log->Print("ON_Brep.m_C2[%d] is invalid.\n",c2i);
+        text_log->Print("ON_Brep.m_C2[%d] is invalid.\n",c2i);
       return false;
     }
     int c2_dim = m_C2[c2i]->Dimension();
     if ( c2_dim != 2 )
     {
       if ( text_log )
-	text_log->Print("ON_Brep.m_C2[%d]->Dimension() = %d (should be 2).\n", c2i, c2_dim );
+        text_log->Print("ON_Brep.m_C2[%d]->Dimension() = %d (should be 2).\n", c2i, c2_dim );
       return false;
     }
   }
@@ -1522,14 +1521,14 @@ ON_Brep::IsValidGeometry( ON_TextLog* text_log ) const
     if ( !m_C3[c3i]->IsValid(text_log) )
     {
       if ( text_log )
-	text_log->Print("ON_Brep.m_C3[%d] is invalid.\n",c3i);
+        text_log->Print("ON_Brep.m_C3[%d] is invalid.\n",c3i);
       return false;
     }
     int c3_dim = m_C3[c3i]->Dimension();
     if ( c3_dim != 3 )
     {
       if ( text_log )
-	text_log->Print("ON_Brep.m_C3[%d]->Dimension() = %d (should be 3).\n", c3i, c3_dim );
+        text_log->Print("ON_Brep.m_C3[%d]->Dimension() = %d (should be 3).\n", c3i, c3_dim );
       return false;
     }
   }
@@ -1544,14 +1543,14 @@ ON_Brep::IsValidGeometry( ON_TextLog* text_log ) const
     if ( !m_S[si]->IsValid(text_log) )
     {
       if ( text_log )
-	text_log->Print("ON_Brep.m_S[%d] is invalid.\n",si);
+        text_log->Print("ON_Brep.m_S[%d] is invalid.\n",si);
       return false;
     }
     int dim = m_S[si]->Dimension();
     if ( dim != 3 )
     {
       if ( text_log )
-	text_log->Print("ON_Brep.m_S[%d]->Dimension() = %d (should be 3).\n", si, dim );
+        text_log->Print("ON_Brep.m_S[%d]->Dimension() = %d (should be 3).\n", si, dim );
       return false;
     }
   }
@@ -1562,7 +1561,7 @@ ON_Brep::IsValidGeometry( ON_TextLog* text_log ) const
       continue;
     if ( !IsValidVertexGeometry( vi, text_log ) ) {
       if ( text_log )
-	text_log->Print("ON_Brep.m_V[%d] is invalid.\n",vi);
+        text_log->Print("ON_Brep.m_V[%d] is invalid.\n",vi);
       return false;
     }
   }
@@ -1574,7 +1573,7 @@ ON_Brep::IsValidGeometry( ON_TextLog* text_log ) const
       continue;
     if ( !IsValidEdgeGeometry( ei, text_log ) ) {
       if ( text_log )
-	text_log->Print("ON_Brep.m_E[%d] is invalid.\n",ei);
+        text_log->Print("ON_Brep.m_E[%d] is invalid.\n",ei);
       return false;
     }
   }
@@ -1586,7 +1585,7 @@ ON_Brep::IsValidGeometry( ON_TextLog* text_log ) const
       continue;
     if ( !IsValidFaceGeometry( fi, text_log ) ) {
       if ( text_log )
-	text_log->Print("ON_Brep.m_F[%d] is invalid.\n",fi);
+        text_log->Print("ON_Brep.m_F[%d] is invalid.\n",fi);
       return false;
     }
   }
@@ -1598,7 +1597,7 @@ ON_Brep::IsValidGeometry( ON_TextLog* text_log ) const
       continue;
     if ( !IsValidTrimGeometry( ti, text_log ) ) {
       if ( text_log )
-	text_log->Print("ON_Brep.m_T[%d] is invalid.\n",ti);
+        text_log->Print("ON_Brep.m_T[%d] is invalid.\n",ti);
       return false;
     }
   }
@@ -1610,7 +1609,7 @@ ON_Brep::IsValidGeometry( ON_TextLog* text_log ) const
       continue;
     if ( !IsValidLoopGeometry( li, text_log ) ) {
       if ( text_log )
-	text_log->Print("ON_Brep.m_L[%d] is invalid.\n",li);
+        text_log->Print("ON_Brep.m_L[%d] is invalid.\n",li);
       return false;
     }
   }
@@ -1629,7 +1628,7 @@ ON_Brep::IsValidVertexTolerancesAndFlags( int vertex_index, ON_TextLog* text_log
   {
     if ( text_log )
       text_log->Print("brep vertex_index = %d (should be >=0 and <%d=brep.m_V.Count() ).\n",
-		      vertex_index, m_V.Count());
+                      vertex_index, m_V.Count());
     return false;
   }
   const ON_BrepVertex& vertex = m_V[vertex_index];
@@ -1640,7 +1639,7 @@ ON_Brep::IsValidVertexTolerancesAndFlags( int vertex_index, ON_TextLog* text_log
       text_log->Print("brep.m_V[%d] vertex is not valid.\n",vertex_index);
       text_log->PushIndent();
       text_log->Print("vertex.m_vertex_index = %d (should be %d).\n",
-		       vertex.m_vertex_index, vertex_index );
+                       vertex.m_vertex_index, vertex_index );
       text_log->PopIndent();
     }
     return false;
@@ -1668,7 +1667,7 @@ ON_Brep::IsValidEdgeTolerancesAndFlags( int edge_index, ON_TextLog* text_log ) c
   {
     if ( text_log )
       text_log->Print("brep edge_index = %d (should be >=0 and <%d=brep.m_E.Count() ).\n",
-		      edge_index, m_E.Count());
+                      edge_index, m_E.Count());
     return false;
   }
   const ON_BrepEdge& edge = m_E[edge_index];
@@ -1679,7 +1678,7 @@ ON_Brep::IsValidEdgeTolerancesAndFlags( int edge_index, ON_TextLog* text_log ) c
       text_log->Print("brep.m_E[%d] edge is not valid.\n",edge_index);
       text_log->PushIndent();
       text_log->Print("edge.m_edge_index = %d (should be %d).\n",
-		       edge.m_edge_index, edge_index );
+                       edge.m_edge_index, edge_index );
       text_log->PopIndent();
     }
     return false;
@@ -1707,7 +1706,7 @@ ON_Brep::IsValidFaceTolerancesAndFlags( int face_index, ON_TextLog* text_log ) c
   {
     if ( text_log )
       text_log->Print("brep face_index = %d (should be >=0 and <%d=brep.m_F.Count() ).\n",
-		      face_index, m_F.Count());
+                      face_index, m_F.Count());
     return false;
   }
   const ON_BrepFace& face = m_F[face_index];
@@ -1718,7 +1717,7 @@ ON_Brep::IsValidFaceTolerancesAndFlags( int face_index, ON_TextLog* text_log ) c
       text_log->Print("brep.m_F[%d] face is not valid.\n",face_index);
       text_log->PushIndent();
       text_log->Print("face.m_face_index = %d (should be %d).\n",
-		       face.m_face_index, face_index );
+                       face.m_face_index, face_index );
       text_log->PopIndent();
     }
     return false;
@@ -1733,7 +1732,7 @@ ON_Brep::IsValidLoopTolerancesAndFlags( int loop_index, ON_TextLog* text_log ) c
   {
     if ( text_log )
       text_log->Print("brep loop_index = %d (should be >=0 and <%d=brep.m_L.Count() ).\n",
-		      loop_index, m_L.Count());
+                      loop_index, m_L.Count());
     return false;
   }
   const ON_BrepLoop& loop = m_L[loop_index];
@@ -1744,7 +1743,7 @@ ON_Brep::IsValidLoopTolerancesAndFlags( int loop_index, ON_TextLog* text_log ) c
       text_log->Print("brep.m_L[%d] loop is not valid.\n",loop_index);
       text_log->PushIndent();
       text_log->Print("loop.m_loop_index = %d (should be %d).\n",
-		       loop.m_loop_index, loop_index );
+                       loop.m_loop_index, loop_index );
       text_log->PopIndent();
     }
     return false;
@@ -1759,7 +1758,7 @@ ON_Brep::IsValidTrimTolerancesAndFlags( int trim_index, ON_TextLog* text_log ) c
   {
     if ( text_log )
       text_log->Print("brep trim_index = %d (should be >=0 and <%d=brep.m_T.Count() ).\n",
-		      trim_index, m_T.Count());
+                      trim_index, m_T.Count());
     return false;
   }
   const ON_BrepTrim& trim = m_T[trim_index];
@@ -1770,7 +1769,7 @@ ON_Brep::IsValidTrimTolerancesAndFlags( int trim_index, ON_TextLog* text_log ) c
       text_log->Print("brep.m_T[%d] trim is not valid.\n",trim_index);
       text_log->PushIndent();
       text_log->Print("trim.m_trim_index = %d (should be %d).\n",
-		       trim.m_trim_index, trim_index );
+                       trim.m_trim_index, trim_index );
       text_log->PopIndent();
     }
     return false;
@@ -1795,7 +1794,7 @@ ON_Brep::IsValidTolerancesAndFlags( ON_TextLog* text_log ) const
       continue;
     if ( !IsValidVertexTolerancesAndFlags( vi, text_log ) ) {
       if ( text_log )
-	text_log->Print("ON_Brep.m_V[%d] is invalid.\n",vi);
+        text_log->Print("ON_Brep.m_V[%d] is invalid.\n",vi);
       return false;
     }
   }
@@ -1807,7 +1806,7 @@ ON_Brep::IsValidTolerancesAndFlags( ON_TextLog* text_log ) const
       continue;
     if ( !IsValidEdgeTolerancesAndFlags( ei, text_log ) ) {
       if ( text_log )
-	text_log->Print("ON_Brep.m_E[%d] is invalid.\n",ei);
+        text_log->Print("ON_Brep.m_E[%d] is invalid.\n",ei);
       return false;
     }
   }
@@ -1819,7 +1818,7 @@ ON_Brep::IsValidTolerancesAndFlags( ON_TextLog* text_log ) const
       continue;
     if ( !IsValidFaceTolerancesAndFlags( fi, text_log ) ) {
       if ( text_log )
-	text_log->Print("ON_Brep.m_F[%d] is invalid.\n",fi);
+        text_log->Print("ON_Brep.m_F[%d] is invalid.\n",fi);
       return false;
     }
   }
@@ -1831,7 +1830,7 @@ ON_Brep::IsValidTolerancesAndFlags( ON_TextLog* text_log ) const
       continue;
     if ( !IsValidTrimTolerancesAndFlags( ti, text_log ) ) {
       if ( text_log )
-	text_log->Print("ON_Brep.m_T[%d] is invalid.\n",ti);
+        text_log->Print("ON_Brep.m_T[%d] is invalid.\n",ti);
       return false;
     }
   }
@@ -1843,7 +1842,7 @@ ON_Brep::IsValidTolerancesAndFlags( ON_TextLog* text_log ) const
       continue;
     if ( !IsValidLoopTolerancesAndFlags( li, text_log ) ) {
       if ( text_log )
-	text_log->Print("ON_Brep.m_L[%d] is invalid.\n",li);
+        text_log->Print("ON_Brep.m_L[%d] is invalid.\n",li);
       return false;
     }
   }

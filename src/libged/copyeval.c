@@ -1,7 +1,7 @@
 /*                         C O P Y E V A L . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -98,7 +98,7 @@ ged_copyeval(struct ged *gedp, int argc, const char *argv[])
     if (endpos > 1) {
 	/* Make sure that final component in path is a solid */
 	if (internal.idb_type == ID_COMBINATION) {
-	    rt_db_free_internal(&internal, &rt_uniresource);
+	    rt_db_free_internal(&internal);
 	    bu_vls_printf(&gedp->ged_result_str, "final component on path must be a primitive!\n");
 	    return GED_ERROR;
 	}
@@ -113,7 +113,7 @@ ged_copyeval(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(&gedp->ged_result_str, "/%s", gtd.gtd_obj[i]->d_namep);
 
 	    bu_vls_printf(&gedp->ged_result_str, "  NOT FOUND\n");
-	    rt_db_free_internal(&internal, &rt_uniresource);
+	    rt_db_free_internal(&internal);
 	    return GED_ERROR;
 	}
 
@@ -124,7 +124,7 @@ ged_copyeval(struct ged *gedp, int argc, const char *argv[])
 	RT_INIT_DB_INTERNAL(&new_int);
 	if (rt_generic_xform(&new_int, gtd.gtd_xform,
 			     &internal, 0, gedp->ged_wdbp->dbip, &rt_uniresource)) {
-	    rt_db_free_internal(&internal, &rt_uniresource);
+	    rt_db_free_internal(&internal);
 	    bu_vls_printf(&gedp->ged_result_str, "ged_copyeval: rt_generic_xform failed\n");
 	    return GED_ERROR;
 	}
@@ -139,9 +139,9 @@ ged_copyeval(struct ged *gedp, int argc, const char *argv[])
     if ((dp=db_diradd(gedp->ged_wdbp->dbip, argv[2], -1L, 0,
 		      gtd.gtd_obj[endpos-1]->d_flags,
 		      (genptr_t)&ip->idb_type)) == DIR_NULL) {
-	rt_db_free_internal(&internal, &rt_uniresource);
+	rt_db_free_internal(&internal);
 	if (ip == &new_int)
-	    rt_db_free_internal(&new_int, &rt_uniresource);
+	    rt_db_free_internal(&new_int);
 	bu_vls_printf(&gedp->ged_result_str, "An error has occured while adding a new object to the database.");
 	return GED_ERROR;
     }
@@ -157,7 +157,7 @@ ged_copyeval(struct ged *gedp, int argc, const char *argv[])
 	 * not been allocated.
 	 */
 	if (ip == &new_int)
-	    rt_db_free_internal(&internal, &rt_uniresource);
+	    rt_db_free_internal(&internal);
 
 	bu_vls_printf(&gedp->ged_result_str, "Database write error, aborting");
 	return GED_ERROR;
@@ -165,7 +165,7 @@ ged_copyeval(struct ged *gedp, int argc, const char *argv[])
 
     /* see previous comment */
     if (ip == &new_int)
-	rt_db_free_internal(&internal, &rt_uniresource);
+	rt_db_free_internal(&internal);
 
     return GED_OK;
 }

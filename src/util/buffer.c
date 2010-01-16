@@ -1,7 +1,7 @@
 /*                        B U F F E R . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -50,8 +50,8 @@ int
 main(int argc, char *argv[])
 {
     FILE *fp;
-    register int	count;
-    register int	tfd;
+    int	count;
+    int	tfd;
 
     if ( (count = bu_mread(0, buf, sizeof(buf))) < sizeof(buf) )  {
 	if ( count < 0 )  {

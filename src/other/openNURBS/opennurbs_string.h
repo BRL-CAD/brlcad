@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -187,7 +186,7 @@ public:
 #if defined(ON_OS_WINDOWS)
   // Windows support
 	bool LoadResourceString( HINSTANCE, UINT); // load from Windows string resource
-													 // 2047 chars max
+										                         // 2047 chars max
 #endif
 
   void Create();
@@ -197,7 +196,7 @@ public:
   // Attributes & Operations
 	// as an array of characters
 	int Length() const;
-	bool IsEmpty() const; // returns TRUE if length == 0 
+	bool IsEmpty() const; // returns true if length == 0 
   void Empty();   // sets length to zero - if possible, memory is retained
 
 	char& operator[](int);
@@ -265,7 +264,7 @@ public:
   //   pattern - [in] pattern string where ? and * are wild cards.
   //
   // Returns:
-  //   TRUE if the string mathes the wild card pattern.
+  //   true if the string mathes the wild card pattern.
 	bool WildCardMatch( const char* ) const;
 	bool WildCardMatch( const unsigned char* ) const;
 
@@ -278,7 +277,7 @@ public:
   //   pattern - [in] pattern string where ? and * are wild cards.
   //
   // Returns:
-  //   TRUE if the string mathes the wild card pattern.
+  //   true if the string mathes the wild card pattern.
 	bool WildCardMatchNoCase( const char* ) const;
 	bool WildCardMatchNoCase( const unsigned char* ) const;
 
@@ -335,16 +334,23 @@ public:
 	int Find(const unsigned char*) const;
 
 	// simple formatting
-	void ON_VARG_CDECL Format( const char*, ...);
-	void ON_VARG_CDECL Format( const unsigned char*, ...);
+	void ON_MSC_CDECL Format( const char*, ...);
+	void ON_MSC_CDECL Format( const unsigned char*, ...);
 
 	// Low level access to string contents as character array
 	void ReserveArray(size_t); // make sure internal array has at least
-			  // the requested capacity.
+                          // the requested capacity.
 	void ShrinkArray();     // shrink internal storage to minimum size
   void SetLength(size_t);    // set length (<=capacity)
   char* Array();
   const char* Array() const;
+
+  /*
+  Returns:
+    Total number of bytes of memory used by this class.
+    (For use in ON_Object::SizeOf() overrides.
+  */
+  unsigned int SizeOf() const;
 
 // Implementation
 public:
@@ -352,8 +358,8 @@ public:
 
 protected:
 	char* m_s; // pointer to ref counted string array
-	      // m_s - 12 bytes points at the strings
-	      // ON_aStringHeader
+              // m_s - 12 bytes points at the strings
+              // ON_aStringHeader
 
 	// implementation helpers
 	ON_aStringHeader* Header() const;
@@ -412,7 +418,7 @@ public:
 #if defined(ON_OS_WINDOWS)
   // Windows support
 	bool LoadResourceString(HINSTANCE, UINT); // load from string resource
-													// 2047 characters max
+										                        // 2047 characters max
 #endif
 
   void Create();
@@ -501,7 +507,7 @@ public:
   //   pattern - [in] pattern string where ? and * are wild cards.
   //
   // Returns:
-  //   TRUE if the string mathes the wild card pattern.
+  //   true if the string mathes the wild card pattern.
 	bool WildCardMatch( const wchar_t* ) const;
 
   // Description:
@@ -513,7 +519,7 @@ public:
   //   pattern - [in] pattern string where ? and * are wild cards.
   //
   // Returns:
-  //   TRUE if the string mathes the wild card pattern.
+  //   true if the string mathes the wild card pattern.
 	bool WildCardMatchNoCase( const wchar_t* ) const;
 
   /*
@@ -527,6 +533,22 @@ public:
   */
   int Replace( const wchar_t* token1, const wchar_t* token2 );
   int Replace( wchar_t token1, wchar_t token2 );
+
+  /*
+  Description:
+    Replaces all characters in the string whose values are
+    not '0-9', 'A-Z', or 'a-z' with a percent sign followed
+    by a 2 digit hex value.
+  */
+  void UrlEncode();
+
+  /*
+  Description:
+    Replaces all %xx where xx a two digit hexadecimal number,
+    with a single character. Returns false if the orginal
+    string contained 
+  */
+  bool UrlDecode();
 
   /*
   Description:
@@ -604,17 +626,24 @@ public:
 
 
 	// simple formatting - be careful with %s in format string
-	void ON_VARG_CDECL Format( const char*, ...);
-	void ON_VARG_CDECL Format( const unsigned char*, ...);
-	void ON_VARG_CDECL Format( const wchar_t*, ...);
+	void ON_MSC_CDECL Format( const char*, ...);
+	void ON_MSC_CDECL Format( const unsigned char*, ...);
+	void ON_MSC_CDECL Format( const wchar_t*, ...);
 
 	// Low level access to string contents as character array
 	void ReserveArray(size_t); // make sure internal array has at least
-			  // the requested capacity.
+                          // the requested capacity.
 	void ShrinkArray();     // shrink internal storage to minimum size
   void SetLength(size_t); // set length (<=capacity)
   wchar_t* Array();
   const wchar_t* Array() const;
+
+  /*
+  Returns:
+    Total number of bytes of memory used by this class.
+    (For use in ON_Object::SizeOf() overrides.
+  */
+  unsigned int SizeOf() const;
 
 // Implementation
 public:
@@ -622,8 +651,8 @@ public:
 
 protected:
 	wchar_t* m_s; // pointer to ref counted string array
-	      // m_s - 12 bytes points at the strings
-	      // ON_wStringHeader
+              // m_s - 12 bytes points at the strings
+              // ON_wStringHeader
 
 	// implementation helpers
 	ON_wStringHeader* Header() const;

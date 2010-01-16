@@ -1,7 +1,7 @@
 /*                       N M G - B O T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2009 United States Government as represented by
+ * Copyright (c) 1998-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -65,7 +65,7 @@ nmg_conv(struct rt_db_internal *intern, const char *name )
     if (BU_SETJUMP) {
 	BU_UNSETJUMP;
 	bu_log( "Failed to convert %s\n", name );
-	rt_db_free_internal( intern, &rt_uniresource );
+	rt_db_free_internal(intern);
 	return;
     }
     if (s) {
@@ -73,7 +73,7 @@ nmg_conv(struct rt_db_internal *intern, const char *name )
     }
     BU_UNSETJUMP;
     if (verbose) bu_log("Converted %s to a Bot solid\n", name);
-    rt_db_free_internal( intern, &rt_uniresource );
+    rt_db_free_internal(intern);
 }
 
 int
@@ -137,10 +137,10 @@ main(int argc, char **argv)
 		fprintf(stderr,
 			"%s: wdb_put_internal(%s) failure, skipping\n",
 			argv[0], dp->d_namep);
-		rt_db_free_internal( &intern, &rt_uniresource );
+		rt_db_free_internal(&intern);
 		continue;
 	    }
-	    rt_db_free_internal( &intern, &rt_uniresource );
+	    rt_db_free_internal(&intern);
 	}
     } FOR_ALL_DIRECTORY_END
 	  wdb_close(fdout);

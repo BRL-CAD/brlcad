@@ -1,7 +1,7 @@
 /*                      N M G _ E V A L . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2009 United States Government as represented by
+ * Copyright (c) 1990-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -50,7 +50,7 @@ struct nmg_bool_state {
 
 
 HIDDEN void nmg_eval_shell BU_ARGS((struct shell *s, struct nmg_bool_state *bs));
-HIDDEN void nmg_eval_plot BU_ARGS((struct nmg_bool_state *bs, int num, int delay));
+HIDDEN void nmg_eval_plot BU_ARGS((struct nmg_bool_state *bs, int num));
 
 
 #define BACTION_KILL 1
@@ -103,7 +103,7 @@ nmg_ck_lu_orientation(struct loopuse *lu, const struct bn_tol *tolp)
 
     dot = VDOT(fu_peqn, lu_peqn);
 
-    if (dot == 0.0)
+    if (NEAR_ZERO(dot, tolp->perp))
 	return;		/* can't determine geometric orientation */
 
 
@@ -386,7 +386,7 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
      * For each face in the shell, process all the loops in the face,
      * and then handle the face and all loops as a unit.
      */
-    nmg_eval_plot(bs, nmg_eval_count++, 1);	/* debug */
+    nmg_eval_plot(bs, nmg_eval_count++);	/* debug */
     fu = BU_LIST_FIRST(faceuse, &s->fu_hd);
     while (BU_LIST_NOT_HEAD(fu, &s->fu_hd)) {
 	NMG_CK_FACEUSE(fu);
@@ -420,7 +420,7 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
 			/* loop of single vertex */
 			(void)nmg_klu(lu);
 		    } else if (nmg_demote_lu(lu) == 0) {
-			nmg_eval_plot(bs, nmg_eval_count++, 1);	/* debug */
+			nmg_eval_plot(bs, nmg_eval_count++);	/* debug */
 		    }
 		    lu = nextlu;
 		    continue;
@@ -452,7 +452,7 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
 	    nmg_kfu(fu);	/* kill face & mate, dequeue from shell */
 	    if (rt_g.NMG_debug & DEBUG_VERIFY)
 		nmg_vshell(&s->r_p->s_hd, s->r_p);
-	    nmg_eval_plot(bs, nmg_eval_count++, 1);	/* debug */
+	    nmg_eval_plot(bs, nmg_eval_count++);	/* debug */
 	    fu = nextfu;
 	    continue;
 	}
@@ -471,7 +471,7 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
      * Each loop is either a wire-loop, or a vertex-with-self-loop.
      * Only consider wire loops here.
      */
-    nmg_eval_plot(bs, nmg_eval_count++, 1);	/* debug */
+    nmg_eval_plot(bs, nmg_eval_count++);	/* debug */
     lu = BU_LIST_FIRST(loopuse, &s->lu_hd);
     while (BU_LIST_NOT_HEAD(lu, &s->lu_hd)) {
 	NMG_CK_LOOPUSE(lu);
@@ -490,7 +490,7 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
 		/* Demote the loopuse into wire edges */
 		/* kill loop & mate */
 		if (nmg_demote_lu(lu) == 0)
-		    nmg_eval_plot(bs, nmg_eval_count++, 1);	/* debug */
+		    nmg_eval_plot(bs, nmg_eval_count++);	/* debug */
 		lu = nextlu;
 		continue;
 	    case BACTION_RETAIN:
@@ -506,7 +506,7 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
     /*
      * For each wire-edge in the shell, ...
      */
-    nmg_eval_plot(bs, nmg_eval_count++, 1);	/* debug */
+    nmg_eval_plot(bs, nmg_eval_count++);	/* debug */
     eu = BU_LIST_FIRST(edgeuse, &s->eu_hd);
     while (BU_LIST_NOT_HEAD(eu, &s->eu_hd)) {
 	NMG_CK_EDGEUSE(eu);
@@ -520,7 +520,7 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
 	    case BACTION_KILL:
 		/* Demote the edegeuse (and mate) into vertices */
 		if (nmg_demote_eu(eu) == 0)
-		    nmg_eval_plot(bs, nmg_eval_count++, 1);	/* debug */
+		    nmg_eval_plot(bs, nmg_eval_count++);	/* debug */
 		eu = nexteu;
 		continue;
 	    case BACTION_RETAIN:
@@ -543,7 +543,7 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
      * be demoted into vertex-with-self-loop objects above,
      * which will be processed here.
      */
-    nmg_eval_plot(bs, nmg_eval_count++, 1);	/* debug */
+    nmg_eval_plot(bs, nmg_eval_count++);	/* debug */
     lu = BU_LIST_FIRST(loopuse, &s->lu_hd);
     while (BU_LIST_NOT_HEAD(lu, &s->lu_hd)) {
 	NMG_CK_LOOPUSE(lu);
@@ -584,7 +584,7 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
 	switch (nmg_eval_action(&vu->v_p->magic, bs)) {
 	    case BACTION_KILL:
 		nmg_kvu(vu);
-		nmg_eval_plot(bs, nmg_eval_count++, 0);	/* debug */
+		nmg_eval_plot(bs, nmg_eval_count++);	/* debug */
 		s->vu_p = (struct vertexuse *)0;	/* sanity */
 		break;
 	    case BACTION_RETAIN:
@@ -595,7 +595,7 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
     }
     if (rt_g.NMG_debug & DEBUG_VERIFY)
 	nmg_vshell(&s->r_p->s_hd, s->r_p);
-    nmg_eval_plot(bs, nmg_eval_count++, 1);	/* debug */
+    nmg_eval_plot(bs, nmg_eval_count++);	/* debug */
 }
 
 
@@ -608,7 +608,7 @@ nmg_eval_shell(register struct shell *s, struct nmg_bool_state *bs)
  * module.
  */
 HIDDEN void
-nmg_eval_plot(struct nmg_bool_state *bs, int num, int delay)
+nmg_eval_plot(struct nmg_bool_state *bs, int num)
 {
     FILE *fp;
     char fname[128];

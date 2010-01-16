@@ -1,7 +1,7 @@
 /*                     N U R B _ D I F F . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2009 United States Government as represented by
+ * Copyright (c) 1986-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -167,7 +167,7 @@ rt_nurb_mesh_diff(int order, const fastf_t *o_pts, fastf_t *n_pts, const fastf_t
     for ( i = 1; i < o_size; i++) {
 	denom = knots[ i + order - 1] - knots[i];
 	for (k = 0; k < coords; k++) {
-	    if (denom == 0.0)
+	    if (NEAR_ZERO(denom, SMALL_FASTF))
 		n_pts[k] = 0.0;
 	    else
 		n_pts[k] = (order - 1) *

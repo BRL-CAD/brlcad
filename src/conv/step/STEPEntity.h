@@ -1,7 +1,7 @@
 /*                    S T E P E N T I T Y . H
  * BRL-CAD
  *
- * Copyright (c) 2009 United States Government as represented by
+ * Copyright (c) 2009-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,24 +26,25 @@
 #ifndef STEPENTITY_H_
 #define STEPENTITY_H_
 
-#include <string>
-#include <vector>
-#include <list>
-#include <map>
+#include "common.h"
 
-using namespace std;
+/* system headers */
+#include <iostream>
+
 
 class STEPWrapper;
 class ON_Brep;
 
+
 #define POINT_CLOSENESS_TOLERANCE 1e-6
 #define TAB(j) \
 	{ \
-		for ( int i=0; i< j; i++) \
-			cout << "    "; \
+		for ( int tab_index=0; tab_index< j; tab_index++) \
+			std::cout << "    "; \
 	}
 
-class STEPEntity {
+class STEPEntity
+{
 protected:
 	int id;
 	int ON_id;
@@ -55,10 +56,11 @@ public:
 
 	int GetId() {return id;}
 	int GetONId() {return ON_id;}
-	void SetONId(int id) {ON_id = id;}
+	void SetONId(int on_id) {ON_id = on_id;}
 	int STEPid();
 	STEPWrapper *Step();
 };
+
 
 #endif /* STEPENTITY_H_ */
 

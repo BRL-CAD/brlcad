@@ -1,7 +1,7 @@
 /*                    F B _ G E N E R I C . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2009 United States Government as represented by
+ * Copyright (c) 1986-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -80,48 +80,23 @@ int fb_null_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits
  */
 static
 FBIO *_if_list[] = {
-#ifdef IF_TK
-    &tk_interface,
-#endif
-#ifdef IF_ADAGE
-    &adage_interface,
-#endif
-#ifdef IF_SUN
-    &sun_interface,
-#endif
-#if defined(IF_SGI)
-    &sgi_interface,
-#endif
-
 #ifdef IF_WGL
     &wgl_interface,
 #endif
 #ifdef IF_OGL
     &ogl_interface,
 #endif
-#ifdef IF_RAT
-    &rat_interface,
-#endif
-#ifdef IF_UG
-    &ug_interface,
-#endif
 #ifdef IF_X
     &X24_interface,
     &X_interface,
 #endif
+#ifdef IF_TK
+    &tk_interface,
+#endif
 
     &debug_interface,
 /* never get any of the following by default */
-#ifdef IF_AB
-    &abekas_interface,
-#endif
-#ifdef IF_TS
-    &ts_interface,
-#endif
-#ifdef IF_PTTY
-    &ptty_interface,
-#endif
-    &stk_interface,
+   &stk_interface,
     &memory_interface,
     &null_interface,
     (FBIO *) 0

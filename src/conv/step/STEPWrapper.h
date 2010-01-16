@@ -1,7 +1,7 @@
 /*                 STEPWrapper.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -25,22 +25,28 @@
 #ifndef STEPWRAPPER_H_
 #define STEPWRAPPER_H_
 
-#define TAB(j) \
-	{ \
-		for ( int i=0; i< j; i++) \
-			cout << "    "; \
-	}
+#include "common.h"
 
-//TODO
-//#define TRACE(s) std::cerr << __FILE__ << ":" << __LINE__ << ":" << __func__ << ":" << s << std::endl;
-#define ERROR(s) std::cerr << __FILE__ << ":" << __LINE__ << ":" << __func__ << ":" << s << std::endl;
+#if 0
+#ifdef DEBUG
+#define TRACE(arg) sizeof(std::cerr << arg << std::endl)
+#else
+#define TRACE(arg)
+#endif
+#endif
 
+#ifdef DEBUG
+#define ERROR(arg) sizeof(std::cerr << __FILE__ << ":" << __LINE__ << ":" << __func__ << ":" << arg << std::endl)
+#else
+#define ERROR(arg)
+#endif
+
+/* system headers */
 #include <list>
 #include <map>
 #include <vector>
 
-using namespace std;
-
+/* interface headers */
 #include <sdai.h>
 
 #include <STEPattribute.h>
@@ -58,18 +64,18 @@ class STEPcomplex;
 
 class CartesianPoint;
 class SurfacePatch;
-typedef list<CartesianPoint *> LIST_OF_POINTS;
-typedef list<LIST_OF_POINTS *> LIST_OF_LIST_OF_POINTS;
-typedef list<SurfacePatch *> LIST_OF_PATCHES;
-typedef list<LIST_OF_PATCHES *> LIST_OF_LIST_OF_PATCHES;
-typedef list<string> LIST_OF_STRINGS;
-typedef list<SCLP23(Application_instance) *> LIST_OF_ENTITIES;
-typedef list<SDAI_Select *> LIST_OF_SELECTS;
-typedef map<string,STEPcomplex *> MAP_OF_SUPERTYPES;
-typedef vector<double> VECTOR_OF_REALS;
-typedef list<int> LIST_OF_INTEGERS;
-typedef list<double> LIST_OF_REALS;
-typedef list<LIST_OF_REALS *> LIST_OF_LIST_OF_REALS;
+typedef std::list<CartesianPoint *> LIST_OF_POINTS;
+typedef std::list<LIST_OF_POINTS *> LIST_OF_LIST_OF_POINTS;
+typedef std::list<SurfacePatch *> LIST_OF_PATCHES;
+typedef std::list<LIST_OF_PATCHES *> LIST_OF_LIST_OF_PATCHES;
+typedef std::list<string> LIST_OF_STRINGS;
+typedef std::list<SCLP23(Application_instance) *> LIST_OF_ENTITIES;
+typedef std::list<SDAI_Select *> LIST_OF_SELECTS;
+typedef std::map<string,STEPcomplex *> MAP_OF_SUPERTYPES;
+typedef std::vector<double> VECTOR_OF_REALS;
+typedef std::list<int> LIST_OF_INTEGERS;
+typedef std::list<double> LIST_OF_REALS;
+typedef std::list<LIST_OF_REALS *> LIST_OF_LIST_OF_REALS;
 
 class STEPWrapper {
 private:
@@ -93,12 +99,12 @@ public:
 	SCLP23(Application_instance) *getEntity( int STEPid, const char *name );
 	SCLP23(Application_instance) *getEntity( SCLP23(Application_instance) *, const char *name );
 	string getLogicalString( SCLLOG_H(Logical) v );
-	string getBooleanString( SCLBOOL_H(Bool) v );
+	string getBooleanString( SCLBOOL_H(Boolean) v );
 
 	// helper functions based on STEP id
 	STEPattribute *getAttribute( int STEPid, const char *name );
 	LIST_OF_STRINGS *getAttributes( int STEPid );
-	SCLBOOL_H(Bool) getBooleanAttribute( int STEPid, const char *name );
+	SCLBOOL_H(Boolean) getBooleanAttribute( int STEPid, const char *name );
 	SCLP23(Application_instance) *getEntityAttribute( int STEPid, const char *name );
 	int getEnumAttribute( int STEPid, const char *name );
 	int getIntegerAttribute( int STEPid, const char *name );
@@ -114,7 +120,7 @@ public:
 	//helper functions based on entity instance pointer
 	STEPattribute *getAttribute( SCLP23(Application_instance) *sse, const char *name );
 	LIST_OF_STRINGS *getAttributes( SCLP23(Application_instance) *sse );
-	SCLBOOL_H(Bool) getBooleanAttribute( SCLP23(Application_instance) *sse, const char *name );
+	SCLBOOL_H(Boolean) getBooleanAttribute( SCLP23(Application_instance) *sse, const char *name );
 	SCLP23(Application_instance) *getEntityAttribute( SCLP23(Application_instance) *sse, const char *name );
 	SCLP23(Select) *getSelectAttribute( SCLP23(Application_instance) *sse, const char *name );
 	int getEnumAttribute( SCLP23(Application_instance) *sse, const char *name );
@@ -130,7 +136,7 @@ public:
 	SCLP23(Application_instance) *getSuperType(SCLP23(Application_instance) *sse, const char *name);
 	string getStringAttribute( SCLP23(Application_instance) *sse, const char *name );
 
-	bool load(string &stepfile);
+	bool load(string &step_file);
 	LIST_OF_PATCHES *parseListOfPatchEntities( const char *in);
 	LIST_OF_REALS *parseListOfReals( const char *in);
 	LIST_OF_POINTS *parseListOfPointEntities( const char *in);

@@ -1,7 +1,7 @@
 /*                        B O D Y I O . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2009 United States Government as represented by
+ * Copyright (c) 2000-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -57,7 +57,7 @@
 int
 cmd_import_body(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    register struct directory	*dp;
+    struct directory	*dp;
     struct stat			stat_buf;
     int				major_code, minor_code;
     int				majc, minc;
@@ -202,7 +202,7 @@ cmd_import_body(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 	    intern.idb_ptr = (genptr_t)bip;
 	    rt_binunif_dump(bip);
 	    rt_db_put_internal5( dp, dbip, &intern, &rt_uniresource, DB5_MAJORTYPE_BINARY_UNIF );
-	    rt_db_free_internal( &intern, &rt_uniresource );
+	    rt_db_free_internal(&intern);
 	    break;
 	default:
 	    bu_vls_printf( &vls,
@@ -226,7 +226,7 @@ cmd_import_body(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 int
 cmd_export_body(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    register struct directory	*dp;
+    struct directory	*dp;
     int				fd;
     void			*bufp;
     size_t			nbytes = 0;

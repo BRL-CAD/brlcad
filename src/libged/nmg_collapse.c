@@ -1,7 +1,7 @@
 /*                         N M G _ C O L L A P S E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -93,7 +93,7 @@ ged_nmg_collapse(struct ged *gedp, int argc, const char *argv[])
 
     if (intern.idb_type != ID_NMG) {
 	bu_vls_printf(&gedp->ged_result_str, "%s is not an NMG solid!!!!\n", argv[1]);
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 	return GED_ERROR;
     }
 
@@ -135,17 +135,17 @@ ged_nmg_collapse(struct ged *gedp, int argc, const char *argv[])
 
     if ((dp=db_diradd(gedp->ged_wdbp->dbip, new_name, -1L, 0, DIR_SOLID, (genptr_t)&intern.idb_type)) == DIR_NULL) {
 	bu_vls_printf(&gedp->ged_result_str, "Cannot add %s to directory\n", new_name);
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 	return GED_ERROR;
     }
 
     if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 	bu_vls_printf(&gedp->ged_result_str, "Database write error, aborting.\n");
 	return GED_ERROR;
     }
 
-    rt_db_free_internal(&intern, &rt_uniresource);
+    rt_db_free_internal(&intern);
 
     bu_vls_printf(&gedp->ged_result_str, "%d edges collapsed\n", count);
 

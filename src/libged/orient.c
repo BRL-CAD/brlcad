@@ -1,7 +1,7 @@
 /*                         O R I E N T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -64,7 +64,7 @@ ged_orient(struct ged *gedp, int argc, const char *argv[])
 	    return GED_ERROR;
 	}
     } else {
-	register int i;
+	int i;
 
 	for (i = 1; i < 5; ++i)
 	    if (sscanf(argv[i], "%lf", &quat[i-1]) != 1) {

@@ -1,7 +1,7 @@
 /*                         S H O W M A T S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -102,7 +102,7 @@ ged_showmats(struct ged *gedp, int argc, const char *argv[])
 	if (comb->tree)
 	    db_tree_funcleaf(gedp->ged_wdbp->dbip, comb, comb->tree, Do_showmats,
 			     (genptr_t)&sm_data, (genptr_t)NULL, (genptr_t)NULL);
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 
 	if (!sm_data.smd_count) {
 	    bu_vls_printf(&gedp->ged_result_str, "%s is not a member of %s\n", sm_data.smd_child, parent);

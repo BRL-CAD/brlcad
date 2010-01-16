@@ -1,7 +1,7 @@
 /*                         R T C H E C K . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -91,8 +91,8 @@ static void ged_rtcheck_output_handler(ClientData clientData, int mask);
 int
 ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
 {
-    register char **vp;
-    register int i;
+    char **vp;
+    int i;
 #ifndef _WIN32
     int	pid;
     int	i_pipe[2];	/* object reads results for building vectors */
@@ -216,7 +216,7 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
     rtcp->gedp = gedp;
     rtcp->interp = brlcad_interp;
 
-    /* register file handlers */
+    /* file handlers */
     Tcl_CreateFileHandler(i_pipe[0], TCL_READABLE,
 			  ged_rtcheck_vector_handler, (ClientData)rtcp);
 
@@ -378,8 +378,8 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
 static void
 ged_rtcheck_vector_handler(ClientData clientData, int mask)
 {
-    register struct ged_display_list *gdlp;
-    register struct ged_display_list *next_gdlp;
+    struct ged_display_list *gdlp;
+    struct ged_display_list *next_gdlp;
     int value;
     struct solid *sp;
     struct ged_rtcheck *rtcp = (struct ged_rtcheck *)clientData;
@@ -465,8 +465,8 @@ ged_rtcheck_output_handler(ClientData clientData, int mask)
 void
 ged_rtcheck_vector_handler(ClientData clientData, int mask)
 {
-    register struct ged_display_list *gdlp;
-    register struct ged_display_list *next_gdlp;
+    struct ged_display_list *gdlp;
+    struct ged_display_list *next_gdlp;
     int value;
     struct solid *sp;
     struct ged_rtcheck *rtcp = (struct ged_rtcheck *)clientData;
@@ -548,7 +548,7 @@ ged_rtcheck_output_handler(ClientData clientData, int mask)
 #endif
 
 void
-_ged_wait_status(struct bu_vls	*log,
+_ged_wait_status(struct bu_vls	*logstr,
 		int		status)
 {
     int	sig = status & 0x7f;
@@ -556,19 +556,19 @@ _ged_wait_status(struct bu_vls	*log,
     int	ret = status >> 8;
 
     if (status == 0) {
-	bu_vls_printf(log, "Normal exit\n");
+	bu_vls_printf(logstr, "Normal exit\n");
 	return;
     }
 
-    bu_vls_printf(log, "Abnormal exit x%x", status);
+    bu_vls_printf(logstr, "Abnormal exit x%x", status);
 
     if (core)
-	bu_vls_printf(log, ", core dumped");
+	bu_vls_printf(logstr, ", core dumped");
 
     if (sig)
-	bu_vls_printf(log, ", terminating signal = %d", sig);
+	bu_vls_printf(logstr, ", terminating signal = %d", sig);
     else
-	bu_vls_printf(log, ", return (exit) code = %d", ret);
+	bu_vls_printf(logstr, ", return (exit) code = %d", ret);
 }
 
 

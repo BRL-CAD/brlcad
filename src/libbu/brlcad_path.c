@@ -1,7 +1,7 @@
 /*                   B R L C A D _ P A T H . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -54,13 +54,16 @@ static char bu_progname[MAXPATHLEN] = {0};
 HIDDEN const char *
 _brlcad_data()
 {
-#ifndef BRLCAD_DATA
     static char path[MAXPATHLEN] = {0};
+#ifndef BRLCAD_DATA
     snprintf(path, MAXPATHLEN, "%s/share/brlcad/%s", BRLCAD_ROOT, brlcad_version());
-    return path;
 #else
-    return BRLCAD_DATA;
+    /* do this instead of just returning BRLCAD_DATA to keep compiler
+     * quiet about unreachable code.
+     */
+    snprintf(path, MAXPATHLEN, "%s", BRLCAD_DATA);
 #endif
+    return path;
 }
 
 
@@ -85,11 +88,10 @@ _bu_ipwd()
     ipwd = getenv("PWD"); /* not our memory to free */
 
     if (!ipwd && (ipwd = bu_which("pwd"))) {
+#if defined(HAVE_POPEN) && !defined(STRICT_FLAGS)
 	FILE *fp = NULL;
 
-#if defined(HAVE_POPEN) && !defined(STRICT_FLAGS)
 	fp = popen(ipwd, "r");
-#endif
 	if (fp) {
 	    if (bu_fgets(buffer, MAXPATHLEN, fp)) {
 		ipwd = buffer;
@@ -99,6 +101,10 @@ _bu_ipwd()
 	} else {
 	    ipwd = ".";
 	}
+#else
+	memset(buffer, 0, MAXPATHLEN); /* quellage */
+	ipwd = ".";
+#endif
     } else {
 	ipwd = ".";
     }
@@ -398,6 +404,7 @@ bu_brlcad_root(const char *rhs, int fail_quietly)
     }
 
     /* BRLCAD_ROOT compile-time path */
+#ifdef BRLCAD_ROOT
     lhs = BRLCAD_ROOT;
     if (lhs) {
 	snprintf(where, MAX_WHERE_SIZE, "\tBRLCAD_ROOT compile-time path [%s]\n", lhs);
@@ -408,10 +415,11 @@ bu_brlcad_root(const char *rhs, int fail_quietly)
 	    bu_vls_free(&searched);
 	    return result;
 	}
-    } else {
-	snprintf(where, MAX_WHERE_SIZE, "\tBRLCAD_ROOT compile-time path [UNKNOWN]\n");
-	bu_vls_strcat(&searched, where);
     }
+#else
+    snprintf(where, MAX_WHERE_SIZE, "\tBRLCAD_ROOT compile-time path [UNKNOWN]\n");
+    bu_vls_strcat(&searched, where);
+#endif
 
     /* run-time path identification */
     lhs = bu_getprogname();
@@ -519,18 +527,13 @@ bu_brlcad_data(const char *rhs, int fail_quietly)
 
     /* BRLCAD_DATA compile-time path */
     lhs = _brlcad_data();
-    if (lhs) {
-	snprintf(where, MAX_WHERE_SIZE, "\tBRLCAD_DATA compile-time path [%s]\n", lhs);
-	if (_bu_find_path(result, lhs, rhs, &searched, where)) {
-	    if (bu_debug & BU_DEBUG_PATHS) {
-		bu_log("Found: BRLCAD_DATA compile-time path [%s]\n", result);
-	    }
-	    bu_vls_free(&searched);
-	    return result;
+    snprintf(where, MAX_WHERE_SIZE, "\tBRLCAD_DATA compile-time path [%s]\n", lhs);
+    if (_bu_find_path(result, lhs, rhs, &searched, where)) {
+	if (bu_debug & BU_DEBUG_PATHS) {
+	    bu_log("Found: BRLCAD_DATA compile-time path [%s]\n", result);
 	}
-    } else {
-	snprintf(where, MAX_WHERE_SIZE, "\tBRLCAD_DATA compile-time path [UNKNOWN]\n");
-	bu_vls_strcat(&searched, where);
+	bu_vls_free(&searched);
+	return result;
     }
 
     /* bu_brlcad_root/share/brlcad/VERSION path */

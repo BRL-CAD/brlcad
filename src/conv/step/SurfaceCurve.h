@@ -1,7 +1,7 @@
 /*                 SurfaceCurve.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -47,7 +47,7 @@ protected:
 public:
 	SurfaceCurve();
 	virtual ~SurfaceCurve();
-	SurfaceCurve(STEPWrapper *sw,int STEPid);
+	SurfaceCurve(STEPWrapper *sw,int step_id);
 	//TODO: check for ANDOR types of SURFACE_CURVE
 	virtual curve_type CurveType() { return SURFACE_CURVE; };
 	bool Load(STEPWrapper *sw,SCLP23(Application_instance) *sse);

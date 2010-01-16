@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -29,11 +28,11 @@ class ON_CLASS ON_Xform
 {
 public:
   double m_xform[4][4]; // [i][j] = row i, column j.  I.e., 
-			//
-			//           [0][0] [0][1] [0][2] [0][3]
-			//           [1][0] [1][1] [1][2] [1][3]
-			//           [2][0] [2][1] [2][2] [2][3]
-			//           [3][0] [3][1] [3][2] [3][3]
+                        //
+                        //           [0][0] [0][1] [0][2] [0][3]
+                        //           [1][0] [1][1] [1][2] [1][3]
+                        //           [2][0] [2][1] [2][2] [2][3]
+                        //           [3][0] [3][1] [3][2] [3][3]
 
   // use implicit destructor, copy constructor
   ON_Xform();                     // zero matrix
@@ -55,8 +54,8 @@ public:
   ON_Xform( const float* );       // from array of 16 floats (row0,row1,row2,row3)
   
   ON_Xform( const ON_Matrix& ); // from upper left 4x4 of an
-				    // arbitrary matrix.  Any missing
-				    // rows/columns are set to identity. 
+                                    // arbitrary matrix.  Any missing
+                                    // rows/columns are set to identity. 
 	ON_Xform(const ON_3dPoint& P,	// as a frame. 
 						const ON_3dVector& X,	
 						const ON_3dVector& Y,	
@@ -72,8 +71,8 @@ public:
   ON_Xform& operator=( float );
   ON_Xform& operator=( double );
   ON_Xform& operator=( const ON_Matrix& ); // from upper left 4x4 of an
-					       // arbitrary matrix.  Any missing
-					       // rows/columns are set to identity.
+                                               // arbitrary matrix.  Any missing
+                                               // rows/columns are set to identity.
 
   // All non-commutative operations have "this" as left hand side and
   // argument as right hand side.
@@ -102,10 +101,10 @@ public:
   Returns:
     true if matrix is the identity transformation
 
-	  1 0 0 0
-	  0 1 0 0
-	  0 0 1 0
-	  0 0 0 1
+          1 0 0 0
+          0 1 0 0
+          0 0 1 0
+          0 0 0 1
   Remarks:
     The test for zero is fabs(x) <= zero_tolerance.
     The test for one is fabs(x-1) <= zero_tolerance.
@@ -114,12 +113,26 @@ public:
   
   /*
   Returns:
+    true if matrix is a pure translation
+
+          1 0 0 dx
+          0 1 0 dy
+          0 0 1 dz
+          0 0 0 1
+  Remarks:
+    The test for zero is fabs(x) <= zero_tolerance.
+    The test for one is fabs(x-1) <= zero_tolerance.
+  */
+  bool IsTranslation( double zero_tolerance = 0.0) const;
+  
+  /*
+  Returns:
     true if matrix is the zero transformation
 
-	  0 0 0 0
-	  0 0 0 0
-	  0 0 0 0
-	  0 0 0 *
+          0 0 0 0
+          0 0 0 0
+          0 0 0 0
+          0 0 0 *
   */
   bool IsZero() const;
 
@@ -153,14 +166,14 @@ public:
 
   bool
   Invert( // If matrix is non-singular, returns true,
-	  // otherwise returns false and sets matrix to 
-	  // pseudo inverse.
+          // otherwise returns false and sets matrix to 
+          // pseudo inverse.
     double* = NULL // If not NULL, returns minimum pivot
   );
 
   ON_Xform
   Inverse(  // If matrix is non-singular, returns inverse,
-	    // otherwise returns pseudo inverse.
+            // otherwise returns pseudo inverse.
     double* = NULL // If not NULL, returns minimum pivot
   ) const;
 
@@ -214,12 +227,12 @@ public:
   //   z - [in]
   //   ans - [out] = matrix * transpose([x,y,z,w])
   void ActOnLeft(
-	 double, // x
-	 double, // y
-	 double, // z
-	 double, // w
-	 double[4] // ans
-	 ) const;
+         double, // x
+         double, // y
+         double, // z
+         double, // w
+         double[4] // ans
+         ) const;
 
   // Description:
   //   Computes [x,y,z,w] * matrix.
@@ -231,12 +244,12 @@ public:
   //   z - [in]
   //   ans - [out] = [x,y,z,w] * matrix
   void ActOnRight(
-	 double, // x
-	 double, // y
-	 double, // z
-	 double, // w
-	 double[4] // ans
-	 ) const;
+         double, // x
+         double, // y
+         double, // z
+         double, // w
+         double[4] // ans
+         ) const;
 
   ////////////////////////////////////////////////////////////////
   // standard transformations
@@ -572,19 +585,19 @@ public:
 
   // standard viewing transformations
   void WorldToCamera( 
-	 const ON_3dPoint&,  // CameraLocation
-	 const ON_3dVector&, // unit CameraX vector (right)
-	 const ON_3dVector&, // unit CameraY vector (up)
-	 const ON_3dVector&  // unit CameraZ vector (from screen to camera)
-	 );
+         const ON_3dPoint&,  // CameraLocation
+         const ON_3dVector&, // unit CameraX vector (right)
+         const ON_3dVector&, // unit CameraY vector (up)
+         const ON_3dVector&  // unit CameraZ vector (from screen to camera)
+         );
   void CameraToWorld( 
-	 const ON_3dPoint&,  // CameraLocation
-	 const ON_3dVector&, // unit CameraX vector (right)
-	 const ON_3dVector&, // unit CameraY vector (up)
-	 const ON_3dVector&  // unit CameraZ vector (from screen to camera)
-	 );
+         const ON_3dPoint&,  // CameraLocation
+         const ON_3dVector&, // unit CameraX vector (right)
+         const ON_3dVector&, // unit CameraY vector (up)
+         const ON_3dVector&  // unit CameraZ vector (from screen to camera)
+         );
   bool CameraToClip( // maps viewport frustum to -1 <= x,y,z <= 1 box
-      BOOL, // true for perspective, false for orthographic
+      ON_BOOL32, // true for perspective, false for orthographic
       double, double, // left != right (usually left < right )
       double, double, // bottom != top (usually bottom < top )
       double, double  // near != far (usually 0 < near < far )
@@ -662,7 +675,7 @@ public:
     int, // count
     int, // stride
     const double*, // points
-    BOOL = true // bTeztZ
+    ON_BOOL32 = true // bTeztZ
     ) const;
 
   // Description: 
@@ -696,7 +709,7 @@ public:
     int, // count
     int, // stride 
     const double*, // points
-    BOOL = true // bTestZ
+    ON_BOOL32 = true // bTestZ
     ) const;
 
   // Description: Computes 3d clipping flags for a 3d bounding
@@ -780,11 +793,11 @@ public:
       If false, then the additional clipping planes are ignored.
   Returns:
     0 = No part of the of the convex hull of the tested points
-	is in the view frustum.
+        is in the view frustum.
     1 = A portion of the convex hull of the otested points may
-	be in the view frustum.
+        be in the view frustum.
     2 = The entire convex hull of the tested points is in the
-	view frustum.
+        view frustum.
   */
   int InViewFrustum( 
     ON_3dPoint P
@@ -821,11 +834,11 @@ public:
       If false, then the additional clipping planes are ignored.
   Returns:
     0 = No part of the of the convex hull of the tested points
-	is in the clip plane region.
+        is in the clip plane region.
     1 = A portion of the convex hull of the tested points may
-	be in the clip plane region.
+        be in the clip plane region.
     2 = The entire convex hull of the tested points is in the
-	clip plane region.
+        clip plane region.
   */
   int InClipPlaneRegion( 
     ON_3dPoint P
@@ -889,35 +902,35 @@ public:
   Parameters:
     count - [in] number of points
     p - [in/out] array of points to test and transform
-	  If 0 is returned, some of the points may not
-	  be transformed.  In all other cases, the output
-	  points are transformed by m_xform.
+          If 0 is returned, some of the points may not
+          be transformed.  In all other cases, the output
+          points are transformed by m_xform.
     pflags - [out]
-	  0 when the point is in the visible region.  
-	  Otherwise the bits are set to indicate which planes clip the
-	  intput point.
-	  0x01 left of the view frusturm
-	  0x02 right of the view frustum
-	  0x04 below the view frustum
-	  0x08 above the view frustum
-	  0x10 behind the view frustum (too far)
-	  0x20 in front of the view frustum (too near)
+          0 when the point is in the visible region.  
+          Otherwise the bits are set to indicate which planes clip the
+          intput point.
+          0x01 left of the view frusturm
+          0x02 right of the view frustum
+          0x04 below the view frustum
+          0x08 above the view frustum
+          0x10 behind the view frustum (too far)
+          0x20 in front of the view frustum (too near)
 
-	  0x10 below m_clip_plane[0]
-	  0x20 below m_clip_plane[1]
-	  ...
-	  0x40000000 below m_clip_plane[24]
+          0x10 below m_clip_plane[0]
+          0x20 below m_clip_plane[1]
+          ...
+          0x40000000 below m_clip_plane[24]
 
-	  0x80000000 transformation created a non-positive weight
+          0x80000000 transformation created a non-positive weight
   Returns:
     0 = convex hull of the points is not in the region.
-	The m_cull_bits field reports which plane or planes
-	culled the point set.
+        The m_cull_bits field reports which plane or planes
+        culled the point set.
     1 = a portion of the convex hull is in the region.
-	The m_cull_bits field reports which plane or planes
-	culled the point set.
+        The m_cull_bits field reports which plane or planes
+        culled the point set.
     2 = all points are in the region.
-	The m_cull_bits field will be zero.
+        The m_cull_bits field will be zero.
   */
   int TransformPoints( int count, ON_4dPoint* p ) const;
   int TransformPoints( int count, ON_4dPoint* p, unsigned int* pflags ) const;
@@ -948,17 +961,17 @@ public:
     0x80000000 transformation created a non-positive weight
   */
   unsigned int TransformPoint(
-		     const ON_4dPoint& P, 
-		     ON_4dPoint& Q
-		     ) const;
+                     const ON_4dPoint& P, 
+                     ON_4dPoint& Q
+                     ) const;
   unsigned int TransformPoint(
-		     const ON_3dPoint& P, 
-		     ON_3dPoint& Q
-		     ) const;
+                     const ON_3dPoint& P, 
+                     ON_3dPoint& Q
+                     ) const;
   unsigned int TransformPoint(
-		     const ON_3fPoint& P, 
-		     ON_3dPoint& Q
-		     ) const;
+                     const ON_3fPoint& P, 
+                     ON_3dPoint& Q
+                     ) const;
 
   /*
   Description:
@@ -974,11 +987,11 @@ public:
     0.0 <= *t0 <= *t1 <= 1.0.
   */
   bool GetLineClipPlaneParamters( 
-	 ON_4dPoint P0, 
-	 ON_4dPoint P1, 
-	 double* t0, 
-	 double* t1 
-	 ) const;
+         ON_4dPoint P0, 
+         ON_4dPoint P1, 
+         double* t0, 
+         double* t1 
+         ) const;
 
 };
 
@@ -1152,8 +1165,8 @@ public:
   */
   virtual
   ON_3dPoint MorphPoint( 
-	    ON_3dPoint point 
-	    ) const = 0;
+            ON_3dPoint point 
+            ) const = 0;
 
   /*
   Description:
@@ -1168,12 +1181,12 @@ public:
   */
   virtual
   bool Ev1Der(
-	    ON_3dPoint rst,
-	    ON_3dPoint& xyz,
-	    ON_3dVector& Dr,
-	    ON_3dVector& Ds,
-	    ON_3dVector& Dt
-	    ) const;
+            ON_3dPoint rst,
+            ON_3dPoint& xyz,
+            ON_3dVector& Dr,
+            ON_3dVector& Ds,
+            ON_3dVector& Dt
+            ) const;
 
 
 
@@ -1204,8 +1217,8 @@ public:
   */
   virtual
   ON_4dPoint MorphPoint( 
-	    ON_4dPoint point 
-	    ) const;
+            ON_4dPoint point 
+            ) const;
 
   /*
   Description:
@@ -1220,9 +1233,9 @@ public:
   */
   virtual
   ON_3dVector MorphVector( 
-	    ON_3dPoint tail_point, 
-	    ON_3dVector vector 
-	    ) const;
+            ON_3dPoint tail_point, 
+            ON_3dVector vector 
+            ) const;
 
   /*
   Description:
@@ -1235,12 +1248,12 @@ public:
     point - [in/out]
   */
   void MorphPointList(
-	  int dim, 
-	  int is_rat,
-	  int count, 
-	  int stride,
-	  double* point
-	  ) const;
+          int dim, 
+          int is_rat,
+          int count, 
+          int stride,
+          double* point
+          ) const;
 
   /*
   Description:
@@ -1253,12 +1266,12 @@ public:
     point - [in/out]
   */
   void MorphPointList(
-	  int dim, 
-	  int is_rat,
-	  int count, 
-	  int stride,
-	  float* point
-	  ) const;
+          int dim, 
+          int is_rat,
+          int count, 
+          int stride,
+          float* point
+          ) const;
 
   /*
   Description:
@@ -1283,8 +1296,8 @@ public:
     tolerance - [in] values < 0.0 are treated as 0.0.                     
   */
   void SetTolerance(
-	  double tolerance
-	  );
+          double tolerance
+          );
 
   /*
   Returns:
@@ -1306,8 +1319,8 @@ public:
     bQuickPreview - [in]
   */
   void SetQuickPreview( 
-	  bool bQuickPreview 
-	  );
+          bool bQuickPreview 
+          );
 
   /*
   Returns:
@@ -1329,8 +1342,8 @@ public:
     bPreserveStructure - [in]
   */
   void SetPreserveStructure( 
-	  bool bPreserveStructure
-	  );
+          bool bPreserveStructure
+          );
 
 private:
   double m_tolerance;

@@ -1,7 +1,7 @@
 /*                 Curve.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -54,7 +54,7 @@ protected:
 	double trim_endpoint[3];
 	Vertex *start;
 	Vertex *end;
-	Curve(STEPWrapper *sw,int STEPid);
+	Curve(STEPWrapper *sw,int step_id);
 
 public:
 	Curve();

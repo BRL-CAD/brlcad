@@ -1,7 +1,7 @@
 /*                         K I L L . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,8 +36,8 @@
 int
 ged_kill(struct ged *gedp, int argc, const char *argv[])
 {
-    register struct directory *dp;
-    register int i;
+    struct directory *dp;
+    int i;
     int c;
     int	is_phony;
     int	verbose = LOOKUP_NOISY;

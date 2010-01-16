@@ -1,7 +1,7 @@
 /*                 P C M A T H G R A M M A R . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,7 +27,7 @@
  *	1. Expression grammar definiton
  *	2. Variable grammar completion
  *	3. lazy function evaluation
- * @author Dawn Thomas
+ *
  */
 #ifndef PC_MATH_GRAMMAR
 #define PC_MATH_GRAMMAR

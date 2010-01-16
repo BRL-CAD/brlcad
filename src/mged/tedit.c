@@ -1,7 +1,7 @@
 /*                         T E D I T . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2009 United States Government as represented by
+ * Copyright (c) 1985-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -78,7 +78,7 @@ int editit(const char *file);
 int
 f_tedit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    register int i;
+    int i;
     FILE *fp;
 
     CHECK_DBI_NULL;
@@ -151,7 +151,7 @@ useThisVertex( int index )
 int
 writesolid(void)
 {
-    register int i;
+    int i;
     FILE *fp;
     char *eol = "\n";
 
@@ -323,7 +323,7 @@ Get_next_line(FILE *fp)
 int
 readsolid(void)
 {
-    register int i;
+    int i;
     FILE *fp;
     int ret_val=0;
 
@@ -932,8 +932,8 @@ readsolid(void)
 int
 editit(const char *file)
 {
-    register int pid = 0;
-    register int xpid = 0;
+    int pid = 0;
+    int xpid = 0;
     char buffer[RT_MAXLINE] = {0};
     const char *editor = (char *)NULL;
     int stat = 0;

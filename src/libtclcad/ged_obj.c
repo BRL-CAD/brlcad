@@ -1,7 +1,7 @@
 /*                       G E D _ O B J . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2009 United States Government as represented by
+ * Copyright (c) 2000-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -71,7 +71,6 @@
 #  ifdef WITH_TK
 #    include "tk.h"
 #  endif
-#  include <X11/Xutil.h>
 #  include "dm_xvars.h"
 #  include "dm-tk.h"
 #endif /* DM_TK */
@@ -103,8 +102,7 @@ HIDDEN int go_axes(struct ged *gedp,
 		   struct ged_axes_state *gasp,
 		   int argc,
 		   const char *argv[],
-		   const char *usage,
-		   int dflag);
+		   const char *usage);
 HIDDEN int go_base2local(struct ged *gedp,
 			 int argc,
 			 const char *argv[],
@@ -153,7 +151,37 @@ HIDDEN int go_copy(struct ged *gedp,
 		   ged_func_ptr func,
 		   const char *usage,
 		   int maxargs);
+HIDDEN int go_data_arrows(struct ged *gedp,
+			int argc,
+			const char *argv[],
+			ged_func_ptr func,
+			const char *usage,
+			int maxargs);
 HIDDEN int go_data_axes(struct ged *gedp,
+			int argc,
+			const char *argv[],
+			ged_func_ptr func,
+			const char *usage,
+			int maxargs);
+HIDDEN int go_data_labels(struct ged *gedp,
+			int argc,
+			const char *argv[],
+			ged_func_ptr func,
+			const char *usage,
+			int maxargs);
+HIDDEN int go_data_lines(struct ged *gedp,
+			int argc,
+			const char *argv[],
+			ged_func_ptr func,
+			const char *usage,
+			int maxargs);
+HIDDEN int go_data_move(struct ged *gedp,
+			int argc,
+			const char *argv[],
+			ged_func_ptr func,
+			const char *usage,
+			int maxargs);
+HIDDEN int go_data_pick(struct ged *gedp,
 			int argc,
 			const char *argv[],
 			ged_func_ptr func,
@@ -571,6 +599,11 @@ HIDDEN void go_autoview_all_views(struct ged_obj *gop);
 
 HIDDEN void go_output_handler(struct ged *gedp, char *line);
 
+/*XXX these belong in libdm/data.c */
+static void go_dm_draw_arrows(struct dm *dmp, struct ged_data_arrow_state *gdasp);
+static void go_dm_draw_labels(struct dm *dmp, struct ged_data_label_state *gdlsp, matp_t m2vmat);
+static void go_dm_draw_lines(struct dm *dmp, struct ged_data_line_state *gdasp);
+
 typedef int (*go_wrapper_func_ptr)(struct ged *, int, const char *[], ged_func_ptr, const char *, int);
 #define GO_WRAPPER_FUNC_PTR_NULL (go_wrapper_func_ptr)0
 
@@ -636,7 +669,12 @@ static struct go_cmdtab go_cmds[] = {
     {"cpi",	(char *)0, MAXARGS, go_pass_through_func, ged_cpi},
     {"d",	(char *)0, MAXARGS, go_pass_through_and_refresh_func, ged_erase},
     {"dall",	(char *)0, MAXARGS, go_pass_through_and_refresh_func, ged_erase_all},
+    {"data_arrows",	"???", MAXARGS, go_data_arrows, GED_FUNC_PTR_NULL},
     {"data_axes",	"???", MAXARGS, go_data_axes, GED_FUNC_PTR_NULL},
+    {"data_labels",	"???", MAXARGS, go_data_labels, GED_FUNC_PTR_NULL},
+    {"data_lines",	"???", MAXARGS, go_data_lines, GED_FUNC_PTR_NULL},
+    {"data_move",	"???", MAXARGS, go_data_move, GED_FUNC_PTR_NULL},
+    {"data_pick",	"???", MAXARGS, go_data_pick, GED_FUNC_PTR_NULL},
     {"dbconcat",	(char *)0, MAXARGS, go_pass_through_func, ged_concat},
     {"dbfind",	(char *)0, MAXARGS, go_pass_through_func, ged_find},
     {"dbip",	(char *)0, MAXARGS, go_pass_through_func, ged_dbip},
@@ -815,6 +853,10 @@ static struct go_cmdtab go_cmds[] = {
     {"scale_mode",	"x y", MAXARGS, go_scale_mode, GED_FUNC_PTR_NULL},
     {"screen2model",	"x y", MAXARGS, go_screen2model, GED_FUNC_PTR_NULL},
     {"screen2view",	"x y", MAXARGS, go_screen2view, GED_FUNC_PTR_NULL},
+    {"sdata_arrows",	"???", MAXARGS, go_data_arrows, GED_FUNC_PTR_NULL},
+    {"sdata_axes",	"???", MAXARGS, go_data_axes, GED_FUNC_PTR_NULL},
+    {"sdata_labels",	"???", MAXARGS, go_data_labels, GED_FUNC_PTR_NULL},
+    {"sdata_lines",	"???", MAXARGS, go_data_lines, GED_FUNC_PTR_NULL},
     {"search",		(char *)0, MAXARGS, go_pass_through_func, ged_search},
     {"set_coord",	"[m|v]", MAXARGS, go_set_coord, GED_FUNC_PTR_NULL},
     {"set_fb_mode",	"[mode]", MAXARGS, go_set_fb_mode, GED_FUNC_PTR_NULL},
@@ -1069,8 +1111,9 @@ go_open_tcl(ClientData clientData,
 	    int argc,
 	    const char **argv)
 {
-    struct ged_obj *gop;
-    struct ged *gedp;
+    struct ged_obj *gop = NULL;
+    struct ged *gedp = NULL;
+    const char *dbname = NULL;
 
     if (argc == 1) {
 	/* get list of database objects */
@@ -1098,12 +1141,22 @@ Usage: go_open\n\
     (void)Tcl_DeleteCommand(interp, argv[1]);
 
     if (argc == 3 || strcmp(argv[2], "db") == 0) {
-	if (argc == 3)
-	    gedp = ged_open("filename", argv[2], 0); 
-	else
-	    gedp = ged_open("db", argv[3], 0); 
-    } else
-	gedp = ged_open(argv[2], argv[3], 0); 
+	if (argc == 3) {
+	    dbname = argv[2];
+	    gedp = ged_open("filename", dbname, 0); 
+	} else {
+	    dbname = argv[3];
+	    gedp = ged_open("db", dbname, 0); 
+	}
+    } else {
+	dbname = argv[3];
+	gedp = ged_open(argv[2], dbname, 0); 
+    }
+
+    if (gedp == GED_NULL) {
+	Tcl_AppendResult(interp, "Unable to open geometry database: ", dbname, (char *)NULL);
+	return TCL_ERROR;
+    }
 
     /* initialize ged_obj */
     BU_GETSTRUCT(gop, ged_obj);
@@ -1166,8 +1219,7 @@ go_axes(struct ged *gedp,
 	struct ged_axes_state *gasp,
 	int argc,
 	const char *argv[],
-	const char *usage,
-	int dflag)
+	const char *usage)
 {
 
     if (strcmp(argv[2], "draw") == 0) {
@@ -1562,67 +1614,6 @@ go_axes(struct ged *gedp,
 	}
 
 	goto bad;
-    }
-
-    if (dflag && strcmp(argv[2], "points") == 0) {
-	register int i;
-
-	if (argc == 3) {
-	    bu_vls_printf(&gedp->ged_result_str, "{");
-	    for (i = 0; i < gasp->gas_num_data_points; ++i) {
-		bu_vls_printf(&gedp->ged_result_str, " {%lf %lf %lf} ",
-			      V3ARGS(gasp->gas_data_points[i]));
-	    }
-	    bu_vls_printf(&gedp->ged_result_str, "}");
-	    return BRLCAD_OK;
-	}
-
-	if (argc == 4) {
-	    int ac;
-	    const char **av;
-
-	    if (Tcl_SplitList(go_current_gop->go_interp, argv[3], &ac, &av) != TCL_OK) {
-		bu_vls_printf(&gedp->ged_result_str, "%s", Tcl_GetStringResult(go_current_gop->go_interp));
-		return BRLCAD_ERROR;
-	    }
-
-	    if (gasp->gas_num_data_points) {
-		bu_free((genptr_t)gasp->gas_data_points, "data points");
-		gasp->gas_data_points = (point_t *)0;
-		gasp->gas_num_data_points = 0;
-	    }
-
-	    /* Clear out data points */
-	    if (ac < 1) {
-		go_refresh_view(gdvp);
-		Tcl_Free((char *)av);
-		return BRLCAD_OK;
-	    }
-
-	    gasp->gas_num_data_points = ac;
-	    gasp->gas_data_points = (point_t *)bu_calloc(ac, sizeof(point_t), "data points");
-	    for (i = 0; i < ac; ++i) {
-		if (sscanf(av[i], "%lf %lf %lf",
-			   &gasp->gas_data_points[i][X],
-			   &gasp->gas_data_points[i][Y],
-			   &gasp->gas_data_points[i][Z]) != 3) {
-
-		    bu_free((genptr_t)gasp->gas_data_points, "data points");
-		    gasp->gas_data_points = (point_t *)0;
-		    gasp->gas_num_data_points = 0;
-		    bu_vls_printf(&gedp->ged_result_str, "bad data point - {%lf %lf %lf}\n",
-				  V3ARGS(gasp->gas_data_points[i]));
-
-		    go_refresh_view(gdvp);
-		    Tcl_Free((char *)av);
-		    return BRLCAD_ERROR;
-		}
-	    }
-
-	    go_refresh_view(gdvp);
-	    Tcl_Free((char *)av);
-	    return BRLCAD_OK;
-	}
     }
 
  bad:
@@ -2131,14 +2122,15 @@ go_copy(struct ged *gedp,
 }
 
 HIDDEN int
-go_data_axes(struct ged *gedp,
-	     int argc,
-	     const char *argv[],
-	     ged_func_ptr func,
-	     const char *usage,
-	     int maxargs)
+go_data_arrows(struct ged *gedp,
+	       int argc,
+	       const char *argv[],
+	       ged_func_ptr func,
+	       const char *usage,
+	       int maxargs)
 {
     struct ged_dm_view *gdvp;
+    struct ged_data_arrow_state *gdasp;
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -2164,7 +2156,1277 @@ go_data_axes(struct ged *gedp,
 	return BRLCAD_ERROR;
     }
 
-    return go_axes(gedp, gdvp, &gdvp->gdv_view->gv_data_axes, argc, argv, usage, 1);
+    if (argv[0][0] == 's')
+	gdasp = &gdvp->gdv_view->gv_sdata_arrows;
+    else
+	gdasp = &gdvp->gdv_view->gv_data_arrows;
+
+    if (strcmp(argv[2], "draw") == 0) {
+	if (argc == 3) {
+	    bu_vls_printf(&gedp->ged_result_str, "%d", gdasp->gdas_draw);
+	    return BRLCAD_OK;
+	}
+
+	if (argc == 4) {
+	    int i;
+
+	    if (sscanf(argv[3], "%d", &i) != 1)
+		goto bad;
+
+	    if (i)
+		gdasp->gdas_draw = 1;
+	    else
+		gdasp->gdas_draw = 0;
+
+	    go_refresh_view(gdvp);
+	    return BRLCAD_OK;
+	}
+
+	goto bad;
+    }
+
+    if (strcmp(argv[2], "color") == 0) {
+	if (argc == 3) {
+	    bu_vls_printf(&gedp->ged_result_str, "%d %d %d",
+			  V3ARGS(gdasp->gdas_color));
+	    return BRLCAD_OK;
+	}
+
+	if (argc == 6) {
+	    int r, g, b;
+
+	    /* set background color */
+	    if (sscanf(argv[3], "%d", &r) != 1 ||
+		sscanf(argv[4], "%d", &g) != 1 ||
+		sscanf(argv[5], "%d", &b) != 1)
+		goto bad;
+
+	    /* validate color */
+	    if (r < 0 || 255 < r ||
+		g < 0 || 255 < g ||
+		b < 0 || 255 < b)
+		goto bad;
+
+	    VSET(gdasp->gdas_color, r, g, b);
+
+	    go_refresh_view(gdvp);
+	    return BRLCAD_OK;
+	}
+
+	goto bad;
+    }
+
+    if (strcmp(argv[2], "line_width") == 0) {
+	if (argc == 3) {
+	    bu_vls_printf(&gedp->ged_result_str, "%d", gdasp->gdas_line_width);
+	    return BRLCAD_OK;
+	}
+
+	if (argc == 4) {
+	    int line_width;
+
+	    if (sscanf(argv[3], "%d", &line_width) != 1)
+		goto bad;
+
+	    gdasp->gdas_line_width = line_width;
+
+	    go_refresh_view(gdvp);
+	    return BRLCAD_OK;
+	}
+
+	goto bad;
+    }
+
+    if (strcmp(argv[2], "points") == 0) {
+	register int i;
+
+	if (argc == 3) {
+	    for (i = 0; i < gdasp->gdas_num_points; ++i) {
+		bu_vls_printf(&gedp->ged_result_str, " {%lf %lf %lf} ",
+			      V3ARGS(gdasp->gdas_points[i]));
+	    }
+	    return BRLCAD_OK;
+	}
+
+	if (argc == 4) {
+	    int ret;
+	    int ac;
+	    const char **av;
+
+	    if (Tcl_SplitList(go_current_gop->go_interp, argv[3], &ac, &av) != TCL_OK) {
+		bu_vls_printf(&gedp->ged_result_str, "%s", Tcl_GetStringResult(go_current_gop->go_interp));
+		return BRLCAD_ERROR;
+	    }
+
+	    if (ac % 2) {
+		bu_vls_printf(&gedp->ged_result_str, "%s: must be an even number of points", argv[0]);
+		return BRLCAD_ERROR;
+	    }
+
+	    if (gdasp->gdas_num_points) {
+		bu_free((genptr_t)gdasp->gdas_points, "data points");
+		gdasp->gdas_points = (point_t *)0;
+		gdasp->gdas_num_points = 0;
+	    }
+
+	    /* Clear out data points */
+	    if (ac < 1) {
+		go_refresh_view(gdvp);
+		Tcl_Free((char *)av);
+		return BRLCAD_OK;
+	    }
+
+	    gdasp->gdas_num_points = ac;
+	    gdasp->gdas_points = (point_t *)bu_calloc(ac, sizeof(point_t), "data points");
+	    for (i = 0; i < ac; ++i) {
+		if (sscanf(av[i], "%lf %lf %lf",
+			   &gdasp->gdas_points[i][X],
+			   &gdasp->gdas_points[i][Y],
+			   &gdasp->gdas_points[i][Z]) != 3) {
+
+		    bu_vls_printf(&gedp->ged_result_str, "bad data point - %s\n", av[i]);
+
+		    bu_free((genptr_t)gdasp->gdas_points, "data points");
+		    gdasp->gdas_points = (point_t *)0;
+		    gdasp->gdas_num_points = 0;
+
+		    go_refresh_view(gdvp);
+		    Tcl_Free((char *)av);
+		    return BRLCAD_ERROR;
+		}
+	    }
+
+	    go_refresh_view(gdvp);
+	    Tcl_Free((char *)av);
+	    return BRLCAD_OK;
+	}
+    }
+
+    if (strcmp(argv[2], "tip_length") == 0) {
+	if (argc == 3) {
+	    bu_vls_printf(&gedp->ged_result_str, "%d", gdasp->gdas_tip_length);
+	    return BRLCAD_OK;
+	}
+
+	if (argc == 4) {
+	    int tip_length;
+
+	    if (sscanf(argv[3], "%d", &tip_length) != 1)
+		goto bad;
+
+	    gdasp->gdas_tip_length = tip_length;
+
+	    go_refresh_view(gdvp);
+	    return BRLCAD_OK;
+	}
+
+	goto bad;
+    }
+
+    if (strcmp(argv[2], "tip_width") == 0) {
+	if (argc == 3) {
+	    bu_vls_printf(&gedp->ged_result_str, "%d", gdasp->gdas_tip_width);
+	    return BRLCAD_OK;
+	}
+
+	if (argc == 4) {
+	    int tip_width;
+
+	    if (sscanf(argv[3], "%d", &tip_width) != 1)
+		goto bad;
+
+	    gdasp->gdas_tip_width = tip_width;
+
+	    go_refresh_view(gdvp);
+	    return BRLCAD_OK;
+	}
+
+	goto bad;
+    }
+
+ bad:
+    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    return BRLCAD_ERROR;
+}
+
+HIDDEN int
+go_data_axes(struct ged *gedp,
+	     int argc,
+	     const char *argv[],
+	     ged_func_ptr func,
+	     const char *usage,
+	     int maxargs)
+{
+    struct ged_dm_view *gdvp;
+    struct ged_data_axes_state *gdasp;
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    if (argc < 3 || 6 < argc) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
+    }
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
+	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	    break;
+    }
+
+    if (BU_LIST_IS_HEAD(&gdvp->l, &go_current_gop->go_head_views.l)) {
+	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	return BRLCAD_ERROR;
+    }
+
+    if (argv[0][0] == 's')
+	gdasp = &gdvp->gdv_view->gv_sdata_axes;
+    else
+	gdasp = &gdvp->gdv_view->gv_data_axes;
+
+    if (strcmp(argv[2], "draw") == 0) {
+	if (argc == 3) {
+	    bu_vls_printf(&gedp->ged_result_str, "%d", gdasp->gdas_draw);
+	    return BRLCAD_OK;
+	}
+
+	if (argc == 4) {
+	    int i;
+
+	    if (sscanf(argv[3], "%d", &i) != 1)
+		goto bad;
+
+	    if (i)
+		gdasp->gdas_draw = 1;
+	    else
+		gdasp->gdas_draw = 0;
+
+	    go_refresh_view(gdvp);
+	    return BRLCAD_OK;
+	}
+
+	goto bad;
+    }
+
+    if (strcmp(argv[2], "color") == 0) {
+	if (argc == 3) {
+	    bu_vls_printf(&gedp->ged_result_str, "%d %d %d",
+			  V3ARGS(gdasp->gdas_color));
+	    return BRLCAD_OK;
+	}
+
+	if (argc == 6) {
+	    int r, g, b;
+
+	    /* set background color */
+	    if (sscanf(argv[3], "%d", &r) != 1 ||
+		sscanf(argv[4], "%d", &g) != 1 ||
+		sscanf(argv[5], "%d", &b) != 1)
+		goto bad;
+
+	    /* validate color */
+	    if (r < 0 || 255 < r ||
+		g < 0 || 255 < g ||
+		b < 0 || 255 < b)
+		goto bad;
+
+	    VSET(gdasp->gdas_color, r, g, b);
+
+	    go_refresh_view(gdvp);
+	    return BRLCAD_OK;
+	}
+
+	goto bad;
+    }
+
+    if (strcmp(argv[2], "line_width") == 0) {
+	if (argc == 3) {
+	    bu_vls_printf(&gedp->ged_result_str, "%d", gdasp->gdas_line_width);
+	    return BRLCAD_OK;
+	}
+
+	if (argc == 4) {
+	    int line_width;
+
+	    if (sscanf(argv[3], "%d", &line_width) != 1)
+		goto bad;
+
+	    gdasp->gdas_line_width = line_width;
+
+	    go_refresh_view(gdvp);
+	    return BRLCAD_OK;
+	}
+
+	goto bad;
+    }
+
+    if (strcmp(argv[2], "size") == 0) {
+	if (argc == 3) {
+	    bu_vls_printf(&gedp->ged_result_str, "%lf", gdasp->gdas_size);
+	    return BRLCAD_OK;
+	}
+
+	if (argc == 4) {
+	    fastf_t size;
+
+	    if (sscanf(argv[3], "%lf", &size) != 1)
+		goto bad;
+
+	    gdasp->gdas_size = size;
+
+	    go_refresh_view(gdvp);
+	    return BRLCAD_OK;
+	}
+
+	goto bad;
+    }
+
+    if (strcmp(argv[2], "points") == 0) {
+	register int i;
+
+	if (argc == 3) {
+	    for (i = 0; i < gdasp->gdas_num_points; ++i) {
+		bu_vls_printf(&gedp->ged_result_str, " {%lf %lf %lf} ",
+			      V3ARGS(gdasp->gdas_points[i]));
+	    }
+	    return BRLCAD_OK;
+	}
+
+	if (argc == 4) {
+	    int ret;
+	    int ac;
+	    const char **av;
+
+	    if (Tcl_SplitList(go_current_gop->go_interp, argv[3], &ac, &av) != TCL_OK) {
+		bu_vls_printf(&gedp->ged_result_str, "%s", Tcl_GetStringResult(go_current_gop->go_interp));
+		return BRLCAD_ERROR;
+	    }
+
+	    if (gdasp->gdas_num_points) {
+		bu_free((genptr_t)gdasp->gdas_points, "data points");
+		gdasp->gdas_points = (point_t *)0;
+		gdasp->gdas_num_points = 0;
+	    }
+
+	    /* Clear out data points */
+	    if (ac < 1) {
+		go_refresh_view(gdvp);
+		Tcl_Free((char *)av);
+		return BRLCAD_OK;
+	    }
+
+	    gdasp->gdas_num_points = ac;
+	    gdasp->gdas_points = (point_t *)bu_calloc(ac, sizeof(point_t), "data points");
+	    for (i = 0; i < ac; ++i) {
+		if (sscanf(av[i], "%lf %lf %lf",
+			   &gdasp->gdas_points[i][X],
+			   &gdasp->gdas_points[i][Y],
+			   &gdasp->gdas_points[i][Z]) != 3) {
+
+		    bu_vls_printf(&gedp->ged_result_str, "bad data point - %s\n", av[i]);
+
+		    bu_free((genptr_t)gdasp->gdas_points, "data points");
+		    gdasp->gdas_points = (point_t *)0;
+		    gdasp->gdas_num_points = 0;
+
+		    go_refresh_view(gdvp);
+		    Tcl_Free((char *)av);
+		    return BRLCAD_ERROR;
+		}
+	    }
+
+	    go_refresh_view(gdvp);
+	    Tcl_Free((char *)av);
+	    return BRLCAD_OK;
+	}
+    }
+
+ bad:
+    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    return BRLCAD_ERROR;
+}
+
+HIDDEN int
+go_data_labels(struct ged *gedp,
+	       int argc,
+	       const char *argv[],
+	       ged_func_ptr func,
+	       const char *usage,
+	       int maxargs)
+{
+    struct ged_dm_view *gdvp;
+    struct ged_data_label_state *gdlsp;
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    if (argc < 3 || 6 < argc) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
+    }
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
+	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	    break;
+    }
+
+    if (BU_LIST_IS_HEAD(&gdvp->l, &go_current_gop->go_head_views.l)) {
+	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	return BRLCAD_ERROR;
+    }
+
+    if (argv[0][0] == 's')
+	gdlsp = &gdvp->gdv_view->gv_sdata_labels;
+    else
+	gdlsp = &gdvp->gdv_view->gv_data_labels;
+
+    if (strcmp(argv[2], "draw") == 0) {
+	if (argc == 3) {
+	    bu_vls_printf(&gedp->ged_result_str, "%d", gdlsp->gdls_draw);
+	    return BRLCAD_OK;
+	}
+
+	if (argc == 4) {
+	    int i;
+
+	    if (sscanf(argv[3], "%d", &i) != 1)
+		goto bad;
+
+	    if (i)
+		gdlsp->gdls_draw = 1;
+	    else
+		gdlsp->gdls_draw = 0;
+
+	    go_refresh_view(gdvp);
+	    return BRLCAD_OK;
+	}
+
+	goto bad;
+    }
+
+    if (strcmp(argv[2], "color") == 0) {
+	if (argc == 3) {
+	    bu_vls_printf(&gedp->ged_result_str, "%d %d %d",
+			  V3ARGS(gdlsp->gdls_color));
+	    return BRLCAD_OK;
+	}
+
+	if (argc == 6) {
+	    int r, g, b;
+
+	    /* set background color */
+	    if (sscanf(argv[3], "%d", &r) != 1 ||
+		sscanf(argv[4], "%d", &g) != 1 ||
+		sscanf(argv[5], "%d", &b) != 1)
+		goto bad;
+
+	    /* validate color */
+	    if (r < 0 || 255 < r ||
+		g < 0 || 255 < g ||
+		b < 0 || 255 < b)
+		goto bad;
+
+	    VSET(gdlsp->gdls_color, r, g, b);
+
+	    go_refresh_view(gdvp);
+	    return BRLCAD_OK;
+	}
+
+	goto bad;
+    }
+
+    if (strcmp(argv[2], "labels") == 0) {
+	register int i;
+
+	/* { {{label this} {0 0 0}} {{label that} {100 100 100}} }*/
+
+	if (argc == 3) {
+	    for (i = 0; i < gdlsp->gdls_num_labels; ++i) {
+		bu_vls_printf(&gedp->ged_result_str, "{{%s}", gdlsp->gdls_labels[i]);
+		bu_vls_printf(&gedp->ged_result_str, " {%lf %lf %lf}} ",
+			      V3ARGS(gdlsp->gdls_points[i]));
+	    }
+	    return BRLCAD_OK;
+	}
+
+	if (argc == 4) {
+	    int ret;
+	    int ac;
+	    const char **av;
+
+	    if (Tcl_SplitList(go_current_gop->go_interp, argv[3], &ac, &av) != TCL_OK) {
+		bu_vls_printf(&gedp->ged_result_str, "%s", Tcl_GetStringResult(go_current_gop->go_interp));
+		return BRLCAD_ERROR;
+	    }
+
+	    if (gdlsp->gdls_num_labels) {
+		for (i = 0; i < gdlsp->gdls_num_labels; ++i)
+		    bu_free((genptr_t)gdlsp->gdls_labels[i], "data label");
+
+		bu_free((genptr_t)gdlsp->gdls_labels, "data labels");
+		bu_free((genptr_t)gdlsp->gdls_points, "data points");
+		gdlsp->gdls_labels = (char **)0;
+		gdlsp->gdls_points = (point_t *)0;
+		gdlsp->gdls_num_labels = 0;
+	    }
+
+	    /* Clear out data points */
+	    if (ac < 1) {
+		Tcl_Free((char *)av);
+		go_refresh_view(gdvp);
+		return BRLCAD_OK;
+	    }
+
+	    gdlsp->gdls_num_labels = ac;
+	    gdlsp->gdls_labels = (char **)bu_calloc(ac, sizeof(char *), "data labels");
+	    gdlsp->gdls_points = (point_t *)bu_calloc(ac, sizeof(point_t), "data points");
+	    for (i = 0; i < ac; ++i) {
+		int sub_ac;
+		const char **sub_av;
+
+		if (Tcl_SplitList(go_current_gop->go_interp, av[i], &sub_ac, &sub_av) != TCL_OK) {
+		    bu_vls_printf(&gedp->ged_result_str, "%s", Tcl_GetStringResult(go_current_gop->go_interp));
+		    Tcl_Free((char *)av);
+		    go_refresh_view(gdvp);
+		    return BRLCAD_ERROR;
+		}
+
+		if (sub_ac != 2) {
+		    bu_vls_printf(&gedp->ged_result_str, "Each list element must contain a label and a point (i.e. {{some label} {0 0 0}})");
+		    Tcl_Free((char *)sub_av);
+		    Tcl_Free((char *)av);
+		    go_refresh_view(gdvp);
+		    return BRLCAD_ERROR;
+		}
+
+		if (sscanf(sub_av[1], "%lf %lf %lf",
+			   &gdlsp->gdls_points[i][X],
+			   &gdlsp->gdls_points[i][Y],
+			   &gdlsp->gdls_points[i][Z]) != 3) {
+		    bu_vls_printf(&gedp->ged_result_str, "bad data point - %s\n", sub_av[1]);
+
+		    bu_free((genptr_t)gdlsp->gdls_labels, "data labels");
+		    bu_free((genptr_t)gdlsp->gdls_points, "data points");
+		    gdlsp->gdls_labels = (char **)0;
+		    gdlsp->gdls_points = (point_t *)0;
+		    gdlsp->gdls_num_labels = 0;
+
+		    Tcl_Free((char *)sub_av);
+		    Tcl_Free((char *)av);
+		    go_refresh_view(gdvp);
+		    return BRLCAD_ERROR;
+		}
+
+		gdlsp->gdls_labels[i] = bu_strdup(sub_av[0]);
+		Tcl_Free((char *)sub_av);
+	    }
+
+	    Tcl_Free((char *)av);
+	    go_refresh_view(gdvp);
+	    return BRLCAD_OK;
+	}
+    }
+
+    if (strcmp(argv[2], "size") == 0) {
+	if (argc == 3) {
+	    bu_vls_printf(&gedp->ged_result_str, "%lf", gdlsp->gdls_size);
+	    return BRLCAD_OK;
+	}
+
+	if (argc == 4) {
+	    int size;
+
+	    if (sscanf(argv[3], "%d", &size) != 1)
+		goto bad;
+
+	    gdlsp->gdls_size = size;
+
+	    go_refresh_view(gdvp);
+	    return BRLCAD_OK;
+	}
+
+	goto bad;
+    }
+
+
+ bad:
+    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    return BRLCAD_ERROR;
+}
+
+HIDDEN int
+go_data_lines(struct ged *gedp,
+	      int argc,
+	      const char *argv[],
+	      ged_func_ptr func,
+	      const char *usage,
+	      int maxargs)
+{
+    struct ged_dm_view *gdvp;
+    struct ged_data_line_state *gdlsp;
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    if (argc < 3 || 6 < argc) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
+    }
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
+	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	    break;
+    }
+
+    if (BU_LIST_IS_HEAD(&gdvp->l, &go_current_gop->go_head_views.l)) {
+	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	return BRLCAD_ERROR;
+    }
+
+    if (argv[0][0] == 's')
+	gdlsp = &gdvp->gdv_view->gv_sdata_lines;
+    else
+	gdlsp = &gdvp->gdv_view->gv_data_lines;
+
+    if (strcmp(argv[2], "draw") == 0) {
+	if (argc == 3) {
+	    bu_vls_printf(&gedp->ged_result_str, "%d", gdlsp->gdls_draw);
+	    return BRLCAD_OK;
+	}
+
+	if (argc == 4) {
+	    int i;
+
+	    if (sscanf(argv[3], "%d", &i) != 1)
+		goto bad;
+
+	    if (i)
+		gdlsp->gdls_draw = 1;
+	    else
+		gdlsp->gdls_draw = 0;
+
+	    go_refresh_view(gdvp);
+	    return BRLCAD_OK;
+	}
+
+	goto bad;
+    }
+
+    if (strcmp(argv[2], "color") == 0) {
+	if (argc == 3) {
+	    bu_vls_printf(&gedp->ged_result_str, "%d %d %d",
+			  V3ARGS(gdlsp->gdls_color));
+	    return BRLCAD_OK;
+	}
+
+	if (argc == 6) {
+	    int r, g, b;
+
+	    /* set background color */
+	    if (sscanf(argv[3], "%d", &r) != 1 ||
+		sscanf(argv[4], "%d", &g) != 1 ||
+		sscanf(argv[5], "%d", &b) != 1)
+		goto bad;
+
+	    /* validate color */
+	    if (r < 0 || 255 < r ||
+		g < 0 || 255 < g ||
+		b < 0 || 255 < b)
+		goto bad;
+
+	    VSET(gdlsp->gdls_color, r, g, b);
+
+	    go_refresh_view(gdvp);
+	    return BRLCAD_OK;
+	}
+
+	goto bad;
+    }
+
+    if (strcmp(argv[2], "line_width") == 0) {
+	if (argc == 3) {
+	    bu_vls_printf(&gedp->ged_result_str, "%d", gdlsp->gdls_line_width);
+	    return BRLCAD_OK;
+	}
+
+	if (argc == 4) {
+	    int line_width;
+
+	    if (sscanf(argv[3], "%d", &line_width) != 1)
+		goto bad;
+
+	    gdlsp->gdls_line_width = line_width;
+
+	    go_refresh_view(gdvp);
+	    return BRLCAD_OK;
+	}
+
+	goto bad;
+    }
+
+    if (strcmp(argv[2], "points") == 0) {
+	register int i;
+
+	if (argc == 3) {
+	    for (i = 0; i < gdlsp->gdls_num_points; ++i) {
+		bu_vls_printf(&gedp->ged_result_str, " {%lf %lf %lf} ",
+			      V3ARGS(gdlsp->gdls_points[i]));
+	    }
+	    return BRLCAD_OK;
+	}
+
+	if (argc == 4) {
+	    int ret;
+	    int ac;
+	    const char **av;
+
+	    if (Tcl_SplitList(go_current_gop->go_interp, argv[3], &ac, &av) != TCL_OK) {
+		bu_vls_printf(&gedp->ged_result_str, "%s", Tcl_GetStringResult(go_current_gop->go_interp));
+		return BRLCAD_ERROR;
+	    }
+
+	    if (ac % 2) {
+		bu_vls_printf(&gedp->ged_result_str, "%s: must be an even number of points", argv[0]);
+		return BRLCAD_ERROR;
+	    }
+
+ 	    if (gdlsp->gdls_num_points) {
+		bu_free((genptr_t)gdlsp->gdls_points, "data points");
+		gdlsp->gdls_points = (point_t *)0;
+		gdlsp->gdls_num_points = 0;
+	    }
+
+	    /* Clear out data points */
+	    if (ac < 1) {
+		go_refresh_view(gdvp);
+		Tcl_Free((char *)av);
+		return BRLCAD_OK;
+	    }
+
+	    gdlsp->gdls_num_points = ac;
+	    gdlsp->gdls_points = (point_t *)bu_calloc(ac, sizeof(point_t), "data points");
+	    for (i = 0; i < ac; ++i) {
+		if (sscanf(av[i], "%lf %lf %lf",
+			   &gdlsp->gdls_points[i][X],
+			   &gdlsp->gdls_points[i][Y],
+			   &gdlsp->gdls_points[i][Z]) != 3) {
+
+		    bu_vls_printf(&gedp->ged_result_str, "bad data point - %s\n", av[i]);
+
+		    bu_free((genptr_t)gdlsp->gdls_points, "data points");
+		    gdlsp->gdls_points = (point_t *)0;
+		    gdlsp->gdls_num_points = 0;
+
+		    go_refresh_view(gdvp);
+		    Tcl_Free((char *)av);
+		    return BRLCAD_ERROR;
+		}
+	    }
+
+	    go_refresh_view(gdvp);
+	    Tcl_Free((char *)av);
+	    return BRLCAD_OK;
+	}
+    }
+
+ bad:
+    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    return BRLCAD_ERROR;
+}
+
+/*
+ * Usage: data_move vname dtype dindex mx my
+ */
+HIDDEN int
+go_data_move(struct ged *gedp,
+	     int argc,
+	     const char *argv[],
+	     ged_func_ptr func,
+	     const char *usage,
+	     int maxargs)
+{
+    register int i;
+    int mx, my;
+    int dindex;
+    fastf_t cx, cy;
+    fastf_t vx, vy;
+    fastf_t sf;
+    point_t mpoint, vpoint;
+    struct ged_dm_view *gdvp;
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    if (argc < 5 || 6 < argc) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
+    }
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
+	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	    break;
+    }
+
+    if (BU_LIST_IS_HEAD(&gdvp->l, &go_current_gop->go_head_views.l)) {
+	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	return BRLCAD_ERROR;
+    }
+
+    if (sscanf(argv[3], "%d", &dindex) != 1)
+	goto bad;
+
+    if (argc == 5) {
+	if (sscanf(argv[4], "%d %d", &mx, &my) != 2)
+	    goto bad;
+    } else {
+	if (sscanf(argv[4], "%d", &mx) != 1)
+	    goto bad;
+
+	if (sscanf(argv[5], "%d", &my) != 1)
+	    goto bad;
+    }
+
+    cx = 0.5 * gdvp->gdv_dmp->dm_width;
+    cy = 0.5 * gdvp->gdv_dmp->dm_height;
+    sf = 2.0 / (fastf_t)gdvp->gdv_dmp->dm_width;
+    vx = (mx - cx) * sf;
+    vy = (cy - my) * sf;
+
+    if (!strcmp(argv[2], "data_arrows")) {
+	struct ged_data_arrow_state *gdasp = &gdvp->gdv_view->gv_data_arrows; 
+
+	/* Silently ignore */
+	if (dindex >= gdvp->gdv_view->gv_data_arrows.gdas_num_points)
+	    return BRLCAD_OK;
+
+	MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, gdasp->gdas_points[dindex]);
+	vpoint[X] = vx;
+	vpoint[Y] = vy;
+	MAT4X3PNT(mpoint, gdvp->gdv_view->gv_view2model, vpoint);
+	VMOVE(gdasp->gdas_points[dindex], mpoint);
+
+	go_refresh_view(gdvp);
+	return BRLCAD_OK;
+    }
+
+    if (!strcmp(argv[2], "sdata_arrows")) {
+	struct ged_data_arrow_state *gdasp = &gdvp->gdv_view->gv_sdata_arrows; 
+
+	/* Silently ignore */
+	if (dindex >= gdvp->gdv_view->gv_sdata_arrows.gdas_num_points)
+	    return BRLCAD_OK;
+
+	MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, gdasp->gdas_points[dindex]);
+	vpoint[X] = vx;
+	vpoint[Y] = vy;
+	MAT4X3PNT(mpoint, gdvp->gdv_view->gv_view2model, vpoint);
+	VMOVE(gdasp->gdas_points[dindex], mpoint);
+
+	go_refresh_view(gdvp);
+	return BRLCAD_OK;
+    }
+
+    if (!strcmp(argv[2], "data_axes")) {
+	struct ged_data_axes_state *gdasp = &gdvp->gdv_view->gv_data_axes; 
+
+	/* Silently ignore */
+	if (dindex >= gdvp->gdv_view->gv_data_axes.gdas_num_points)
+	    return BRLCAD_OK;
+
+	MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, gdasp->gdas_points[dindex]);
+	vpoint[X] = vx;
+	vpoint[Y] = vy;
+	MAT4X3PNT(mpoint, gdvp->gdv_view->gv_view2model, vpoint);
+	VMOVE(gdasp->gdas_points[dindex], mpoint);
+
+	go_refresh_view(gdvp);
+	return BRLCAD_OK;
+    }
+
+    if (!strcmp(argv[2], "sdata_axes")) {
+	struct ged_data_axes_state *gdasp = &gdvp->gdv_view->gv_sdata_axes; 
+
+	/* Silently ignore */
+	if (dindex >= gdvp->gdv_view->gv_sdata_axes.gdas_num_points)
+	    return BRLCAD_OK;
+
+	MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, gdasp->gdas_points[dindex]);
+	vpoint[X] = vx;
+	vpoint[Y] = vy;
+	MAT4X3PNT(mpoint, gdvp->gdv_view->gv_view2model, vpoint);
+	VMOVE(gdasp->gdas_points[dindex], mpoint);
+
+	go_refresh_view(gdvp);
+	return BRLCAD_OK;
+    }
+
+
+    if (!strcmp(argv[2], "data_labels")) {
+	struct ged_data_label_state *gdlsp = &gdvp->gdv_view->gv_data_labels; 
+
+	/* Silently ignore */
+	if (dindex >= gdvp->gdv_view->gv_data_labels.gdls_num_labels)
+	    return BRLCAD_OK;
+
+	MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, gdlsp->gdls_points[dindex]);
+	vpoint[X] = vx;
+	vpoint[Y] = vy;
+	MAT4X3PNT(mpoint, gdvp->gdv_view->gv_view2model, vpoint);
+	VMOVE(gdlsp->gdls_points[dindex], mpoint);
+
+	go_refresh_view(gdvp);
+	return BRLCAD_OK;
+    }
+
+    if (!strcmp(argv[2], "sdata_labels")) {
+	struct ged_data_label_state *gdlsp = &gdvp->gdv_view->gv_sdata_labels; 
+
+	/* Silently ignore */
+	if (dindex >= gdvp->gdv_view->gv_sdata_labels.gdls_num_labels)
+	    return BRLCAD_OK;
+
+	MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, gdlsp->gdls_points[dindex]);
+	vpoint[X] = vx;
+	vpoint[Y] = vy;
+	MAT4X3PNT(mpoint, gdvp->gdv_view->gv_view2model, vpoint);
+	VMOVE(gdlsp->gdls_points[dindex], mpoint);
+
+	go_refresh_view(gdvp);
+	return BRLCAD_OK;
+    }
+
+    if (!strcmp(argv[2], "data_lines")) {
+	struct ged_data_line_state *gdlsp = &gdvp->gdv_view->gv_data_lines; 
+
+	/* Silently ignore */
+	if (dindex >= gdvp->gdv_view->gv_data_lines.gdls_num_points)
+	    return BRLCAD_OK;
+
+	MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, gdlsp->gdls_points[dindex]);
+	vpoint[X] = vx;
+	vpoint[Y] = vy;
+	MAT4X3PNT(mpoint, gdvp->gdv_view->gv_view2model, vpoint);
+	VMOVE(gdlsp->gdls_points[dindex], mpoint);
+
+	go_refresh_view(gdvp);
+	return BRLCAD_OK;
+    }
+
+    if (!strcmp(argv[2], "sdata_lines")) {
+	struct ged_data_line_state *gdlsp = &gdvp->gdv_view->gv_sdata_lines; 
+
+	/* Silently ignore */
+	if (dindex >= gdvp->gdv_view->gv_sdata_lines.gdls_num_points)
+	    return BRLCAD_OK;
+
+	MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, gdlsp->gdls_points[dindex]);
+	vpoint[X] = vx;
+	vpoint[Y] = vy;
+	MAT4X3PNT(mpoint, gdvp->gdv_view->gv_view2model, vpoint);
+	VMOVE(gdlsp->gdls_points[dindex], mpoint);
+
+	go_refresh_view(gdvp);
+	return BRLCAD_OK;
+    }
+
+bad:
+    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    return BRLCAD_ERROR;
+}
+
+HIDDEN int
+go_data_pick(struct ged *gedp,
+	     int argc,
+	     const char *argv[],
+	     ged_func_ptr func,
+	     const char *usage,
+	     int maxargs)
+{
+    int mx, my;
+    fastf_t cx, cy;
+    fastf_t vx, vy;
+    fastf_t sf;
+    point_t dpoint, vpoint;
+    register int i;
+    struct ged_dm_view *gdvp;
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    if (argc < 3 || 4 < argc) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
+    }
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
+	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	    break;
+    }
+
+    if (BU_LIST_IS_HEAD(&gdvp->l, &go_current_gop->go_head_views.l)) {
+	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	return BRLCAD_ERROR;
+    }
+
+    if (argc == 3) {
+	if (sscanf(argv[2], "%d %d", &mx, &my) != 2)
+	    goto bad;
+    } else {
+	if (sscanf(argv[2], "%d", &mx) != 1)
+	    goto bad;
+
+	if (sscanf(argv[3], "%d", &my) != 1)
+	    goto bad;
+    }
+
+    cx = 0.5 * gdvp->gdv_dmp->dm_width;
+    cy = 0.5 * gdvp->gdv_dmp->dm_height;
+    sf = 2.0 / (fastf_t)gdvp->gdv_dmp->dm_width;
+    vx = (mx - cx) * sf;
+    vy = (cy - my) * sf;
+
+    /* check for label points */
+    if (gdvp->gdv_view->gv_data_labels.gdls_draw &&
+	gdvp->gdv_view->gv_data_labels.gdls_num_labels) {
+	struct ged_data_label_state *gdlsp = &gdvp->gdv_view->gv_data_labels;
+
+	for (i = 0; i < gdlsp->gdls_num_labels; ++i) {
+	    fastf_t minX, maxX;
+	    fastf_t minY, maxY;
+
+	    VMOVE(dpoint, gdlsp->gdls_points[i]);
+	    MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, dpoint);
+
+#if 1
+	    minX = vpoint[X];
+	    maxX = vpoint[X] + 0.03;
+	    minY = vpoint[Y];
+	    maxY = vpoint[Y] + 0.03;
+#else
+	    minX = vpoint[X] - 0.015;
+	    maxX = vpoint[X] + 0.015;
+	    minY = vpoint[Y] - 0.015;
+	    maxY = vpoint[Y] + 0.015;
+#endif
+	    if (minX < vx && vx < maxX &&
+		minY < vy && vy < maxY) {
+		bu_vls_printf(&gedp->ged_result_str, "data_labels %d {{%s} {%lf %lf %lf}}",
+			      i, gdlsp->gdls_labels[i], V3ARGS(dpoint));
+		return BRLCAD_OK;
+	    }
+	}
+    }
+
+    /* check for selected label points */
+    if (gdvp->gdv_view->gv_sdata_labels.gdls_draw &&
+	gdvp->gdv_view->gv_sdata_labels.gdls_num_labels) {
+	struct ged_data_label_state *gdlsp = &gdvp->gdv_view->gv_sdata_labels;
+
+	for (i = 0; i < gdlsp->gdls_num_labels; ++i) {
+	    fastf_t minX, maxX;
+	    fastf_t minY, maxY;
+
+	    VMOVE(dpoint, gdlsp->gdls_points[i]);
+	    MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, dpoint);
+
+#if 1
+	    minX = vpoint[X];
+	    maxX = vpoint[X] + 0.03;
+	    minY = vpoint[Y];
+	    maxY = vpoint[Y] + 0.03;
+#else
+	    minX = vpoint[X] - 0.015;
+	    maxX = vpoint[X] + 0.015;
+	    minY = vpoint[Y] - 0.015;
+	    maxY = vpoint[Y] + 0.015;
+#endif
+	    if (minX < vx && vx < maxX &&
+		minY < vy && vy < maxY) {
+		bu_vls_printf(&gedp->ged_result_str, "sdata_labels %d {{%s} {%lf %lf %lf}}",
+			      i, gdlsp->gdls_labels[i], V3ARGS(dpoint));
+		return BRLCAD_OK;
+	    }
+	}
+    }
+
+    /* check for line points */
+    if (gdvp->gdv_view->gv_data_lines.gdls_draw &&
+	gdvp->gdv_view->gv_data_lines.gdls_num_points) {
+	struct ged_data_line_state *gdlsp = &gdvp->gdv_view->gv_data_lines;
+
+	for (i = 0; i < gdlsp->gdls_num_points; ++i) {
+	    fastf_t minX, maxX;
+	    fastf_t minY, maxY;
+
+	    VMOVE(dpoint, gdlsp->gdls_points[i]);
+	    MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, dpoint);
+
+	    minX = vpoint[X] - 0.015;
+	    maxX = vpoint[X] + 0.015;
+	    minY = vpoint[Y] - 0.015;
+	    maxY = vpoint[Y] + 0.015;
+	    if (minX < vx && vx < maxX &&
+		minY < vy && vy < maxY) {
+		bu_vls_printf(&gedp->ged_result_str, "data_lines %d {%lf %lf %lf}", i, V3ARGS(dpoint));
+		return BRLCAD_OK;
+	    }
+	}
+    }
+
+    /* check for selected line points */
+    if (gdvp->gdv_view->gv_sdata_lines.gdls_draw &&
+	gdvp->gdv_view->gv_sdata_lines.gdls_num_points) {
+	struct ged_data_line_state *gdlsp = &gdvp->gdv_view->gv_sdata_lines;
+
+	for (i = 0; i < gdlsp->gdls_num_points; ++i) {
+	    fastf_t minX, maxX;
+	    fastf_t minY, maxY;
+
+	    VMOVE(dpoint, gdlsp->gdls_points[i]);
+	    MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, dpoint);
+
+	    minX = vpoint[X] - 0.015;
+	    maxX = vpoint[X] + 0.015;
+	    minY = vpoint[Y] - 0.015;
+	    maxY = vpoint[Y] + 0.015;
+	    if (minX < vx && vx < maxX &&
+		minY < vy && vy < maxY) {
+		bu_vls_printf(&gedp->ged_result_str, "sdata_lines %d {%lf %lf %lf}", i, V3ARGS(dpoint));
+		return BRLCAD_OK;
+	    }
+	}
+    }
+
+    /* check for arrow points */
+    if (gdvp->gdv_view->gv_data_arrows.gdas_draw &&
+	gdvp->gdv_view->gv_data_arrows.gdas_num_points) {
+	struct ged_data_arrow_state *gdasp = &gdvp->gdv_view->gv_data_arrows;
+
+	for (i = 0; i < gdasp->gdas_num_points; ++i) {
+	    fastf_t minX, maxX;
+	    fastf_t minY, maxY;
+
+	    VMOVE(dpoint, gdasp->gdas_points[i]);
+	    MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, dpoint);
+
+	    minX = vpoint[X] - 0.015;
+	    maxX = vpoint[X] + 0.015;
+	    minY = vpoint[Y] - 0.015;
+	    maxY = vpoint[Y] + 0.015;
+	    if (minX < vx && vx < maxX &&
+		minY < vy && vy < maxY) {
+		bu_vls_printf(&gedp->ged_result_str, "data_arrows %d {%lf %lf %lf}", i, V3ARGS(dpoint));
+		return BRLCAD_OK;
+	    }
+	}
+    }
+
+    /* check for selected arrow points */
+    if (gdvp->gdv_view->gv_sdata_arrows.gdas_draw &&
+	gdvp->gdv_view->gv_sdata_arrows.gdas_num_points) {
+	struct ged_data_arrow_state *gdasp = &gdvp->gdv_view->gv_sdata_arrows;
+
+	for (i = 0; i < gdasp->gdas_num_points; ++i) {
+	    fastf_t minX, maxX;
+	    fastf_t minY, maxY;
+
+	    VMOVE(dpoint, gdasp->gdas_points[i]);
+	    MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, dpoint);
+
+	    minX = vpoint[X] - 0.015;
+	    maxX = vpoint[X] + 0.015;
+	    minY = vpoint[Y] - 0.015;
+	    maxY = vpoint[Y] + 0.015;
+	    if (minX < vx && vx < maxX &&
+		minY < vy && vy < maxY) {
+		bu_vls_printf(&gedp->ged_result_str, "sdata_arrows %d {%lf %lf %lf}", i, V3ARGS(dpoint));
+		return BRLCAD_OK;
+	    }
+	}
+    }
+
+    /* check for axes points */
+    if (gdvp->gdv_view->gv_data_axes.gdas_draw &&
+	gdvp->gdv_view->gv_data_axes.gdas_num_points) {
+	struct ged_data_axes_state *gdasp = &gdvp->gdv_view->gv_data_axes; 
+
+	for (i = 0; i < gdasp->gdas_num_points; ++i) {
+	    fastf_t minX, maxX;
+	    fastf_t minY, maxY;
+
+	    VMOVE(dpoint, gdasp->gdas_points[i]);
+	    MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, dpoint);
+
+	    minX = vpoint[X] - 0.015;
+	    maxX = vpoint[X] + 0.015;
+	    minY = vpoint[Y] - 0.015;
+	    maxY = vpoint[Y] + 0.015;
+	    if (minX < vx && vx < maxX &&
+		minY < vy && vy < maxY) {
+		bu_vls_printf(&gedp->ged_result_str, "data_axes %d {%lf %lf %lf}", i, V3ARGS(dpoint));
+		return BRLCAD_OK;
+	    }
+	}
+    }
+
+    /* check for selected axes points */
+    if (gdvp->gdv_view->gv_sdata_axes.gdas_draw &&
+	gdvp->gdv_view->gv_sdata_axes.gdas_num_points) {
+	struct ged_data_axes_state *gdasp = &gdvp->gdv_view->gv_sdata_axes; 
+
+	for (i = 0; i < gdasp->gdas_num_points; ++i) {
+	    fastf_t minX, maxX;
+	    fastf_t minY, maxY;
+
+	    VMOVE(dpoint, gdasp->gdas_points[i]);
+	    MAT4X3PNT(vpoint, gdvp->gdv_view->gv_model2view, dpoint);
+
+	    minX = vpoint[X] - 0.015;
+	    maxX = vpoint[X] + 0.015;
+	    minY = vpoint[Y] - 0.015;
+	    maxY = vpoint[Y] + 0.015;
+	    if (minX < vx && vx < maxX &&
+		minY < vy && vy < maxY) {
+		bu_vls_printf(&gedp->ged_result_str, "sdata_axes %d {%lf %lf %lf}", i, V3ARGS(dpoint));
+		return BRLCAD_OK;
+	    }
+	}
+    }
+
+    return BRLCAD_OK;
+
+ bad:
+    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    return BRLCAD_ERROR;
 }
 
 HIDDEN void
@@ -2941,7 +4203,7 @@ go_model_axes(struct ged *gedp,
 	return BRLCAD_ERROR;
     }
 
-    return go_axes(gedp, gdvp, &gdvp->gdv_view->gv_model_axes, argc, argv, usage, 0);
+    return go_axes(gedp, gdvp, &gdvp->gdv_view->gv_model_axes, argc, argv, usage);
 }
 
 HIDDEN int
@@ -6039,7 +7301,7 @@ go_view_axes(struct ged *gedp,
 	return BRLCAD_ERROR;
     }
 
-    return go_axes(gedp, gdvp, &gdvp->gdv_view->gv_view_axes, argc, argv, usage, 0);
+    return go_axes(gedp, gdvp, &gdvp->gdv_view->gv_view_axes, argc, argv, usage);
 }
 
 HIDDEN int
@@ -6226,7 +7488,7 @@ go_vslew(struct ged *gedp,
 
     xpos2 = 0.5 * gdvp->gdv_dmp->dm_width;
     ypos2 = 0.5 * gdvp->gdv_dmp->dm_height;
-    sf = 2.0 / gdvp->gdv_dmp->dm_width;
+    sf = 2.0 / (fastf_t)gdvp->gdv_dmp->dm_width;
 
     bu_vls_init(&slew_vec);
     bu_vls_printf(&slew_vec, "%lf %lf", (xpos1 - xpos2) * sf, (ypos2 - ypos1) * sf);
@@ -6681,7 +7943,11 @@ go_drawSolid(struct dm *dmp, struct solid *sp)
 		       (unsigned char)sp->s_color[1],
 		       (unsigned char)sp->s_color[2], 0, sp->s_transparency);
 
-    DM_DRAW_VLIST(dmp, (struct bn_vlist *)&sp->s_vlist);
+    if (sp->s_hiddenLine) {
+	DM_DRAW_VLIST_HIDDEN_LINE(dmp, (struct bn_vlist *)&sp->s_vlist);
+    } else {
+	DM_DRAW_VLIST(dmp, (struct bn_vlist *)&sp->s_vlist);
+    }
 }
 
 /* Draw all display lists */
@@ -7045,7 +8311,7 @@ go_draw_faceplate(struct ged_dm_view *gdvp)
     /* View scale */
     if (gdvp->gdv_view->gv_view_scale.gos_draw)
 	dm_draw_scale(gdvp->gdv_dmp,
-		      gdvp->gdv_view->gv_size,
+		      gdvp->gdv_view->gv_size*go_current_gop->go_gedp->ged_wdbp->dbip->dbi_base2local,
 		      gdvp->gdv_view->gv_view_scale.gos_line_color,
 		      gdvp->gdv_view->gv_view_scale.gos_text_color);
 
@@ -7095,14 +8361,40 @@ go_refresh_view(struct ged_dm_view *gdvp)
     if (!go_current_gop->go_refresh_on)
 	return;
 
+    /* Check if window is viewable */
+    {
+	struct bu_vls vls;
+	Tcl_Obj *result_obj;
+	int result_int;
+
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "winfo viewable %V", &gdvp->gdv_dmp->dm_pathName);
+
+	if (Tcl_Eval(go_current_gop->go_interp, bu_vls_addr(&vls)) != TCL_OK) {
+	    bu_vls_free(&vls);
+	    return;
+	}
+
+	result_obj = Tcl_GetObjResult(go_current_gop->go_interp);
+	Tcl_GetIntFromObj(go_current_gop->go_interp, result_obj, &result_int);
+
+	if (!result_int) {
+	    bu_vls_free(&vls);
+	    return;
+	}
+
+	bu_vls_free(&vls);
+#if 0
+	bu_log("go_refresh_view: %V\n", &gdvp->gdv_dmp->dm_pathName);
+#endif
+    }
+
     /* Turn off the zbuffer if the framebuffer is active AND the zbuffer is on. */
     if (gdvp->gdv_fbs.fbs_mode != GED_OBJ_FB_MODE_OFF &&
 	gdvp->gdv_dmp->dm_zbuffer) {
 	DM_SET_ZBUFFER(gdvp->gdv_dmp, 0);
 	restore_zbuffer = 1;
     }
-
-    /*XXX Need to check if window is even visible before drawing */
 
     DM_DRAW_BEGIN(gdvp->gdv_dmp);
 
@@ -7150,16 +8442,37 @@ go_refresh_view(struct ged_dm_view *gdvp)
 	go_draw(gdvp);
     }
 
-    if (gdvp->gdv_view->gv_data_axes.gas_draw && gdvp->gdv_view->gv_data_axes.gas_num_data_points) {
+    if (gdvp->gdv_view->gv_data_arrows.gdas_draw)
+	go_dm_draw_arrows(gdvp->gdv_dmp, &gdvp->gdv_view->gv_data_arrows);
+
+    if (gdvp->gdv_view->gv_sdata_arrows.gdas_draw)
+	go_dm_draw_arrows(gdvp->gdv_dmp, &gdvp->gdv_view->gv_sdata_arrows);
+
+    if (gdvp->gdv_view->gv_data_axes.gdas_draw)
 	dm_draw_data_axes(gdvp->gdv_dmp,
 			  gdvp->gdv_view->gv_size,
-			  bn_mat_identity,
 			  &gdvp->gdv_view->gv_data_axes);
-    }
+
+    if (gdvp->gdv_view->gv_sdata_axes.gdas_draw)
+	dm_draw_data_axes(gdvp->gdv_dmp,
+			  gdvp->gdv_view->gv_size,
+			  &gdvp->gdv_view->gv_sdata_axes);
+
+    if (gdvp->gdv_view->gv_data_lines.gdls_draw)
+	go_dm_draw_lines(gdvp->gdv_dmp, &gdvp->gdv_view->gv_data_lines);
+
+    if (gdvp->gdv_view->gv_sdata_lines.gdls_draw)
+	go_dm_draw_lines(gdvp->gdv_dmp, &gdvp->gdv_view->gv_sdata_lines);
 
     /* Restore to non-rotated, full brightness */
     DM_NORMAL(gdvp->gdv_dmp);
     go_draw_faceplate(gdvp);
+
+    if (gdvp->gdv_view->gv_data_labels.gdls_draw)
+	go_dm_draw_labels(gdvp->gdv_dmp, &gdvp->gdv_view->gv_data_labels, gdvp->gdv_view->gv_model2view);
+
+    if (gdvp->gdv_view->gv_sdata_labels.gdls_draw)
+	go_dm_draw_labels(gdvp->gdv_dmp, &gdvp->gdv_view->gv_sdata_labels, gdvp->gdv_view->gv_model2view);
 
     /* Draw labels */
     if (gdvp->gdv_view->gv_prim_labels.gos_draw) {
@@ -7245,6 +8558,136 @@ go_output_handler(struct ged *gedp, char *line)
     }
 }
 
+static void
+go_dm_draw_arrows(struct dm *dmp, struct ged_data_arrow_state *gdasp)
+{
+    register int i;
+    int saveLineWidth;
+    int saveLineStyle;
+
+    if (gdasp->gdas_num_points < 1)
+	return;
+
+    saveLineWidth = dmp->dm_lineWidth;
+    saveLineStyle = dmp->dm_lineStyle;
+
+    /* set color */
+    DM_SET_FGCOLOR(dmp,
+		   gdasp->gdas_color[0],
+		   gdasp->gdas_color[1],
+		   gdasp->gdas_color[2], 1, 1.0);
+
+    /* set linewidth */
+    DM_SET_LINE_ATTR(dmp, gdasp->gdas_line_width, 0);  /* solid lines */
+
+    DM_DRAW_LINES_3D(dmp,
+		     gdasp->gdas_num_points,
+		     gdasp->gdas_points);
+
+    for (i = 0; i < gdasp->gdas_num_points; i += 2) {
+	point_t points[16];
+	point_t A, B;
+	point_t BmA;
+	point_t offset;
+	point_t perp1, perp2;
+	point_t a_base;
+	point_t a_pt1, a_pt2, a_pt3, a_pt4;
+
+	VMOVE(A, gdasp->gdas_points[i]);
+	VMOVE(B, gdasp->gdas_points[i+1]);
+	VSUB2(BmA, B, A);
+
+	VUNITIZE(BmA);
+	VSCALE(offset, BmA, -gdasp->gdas_tip_length);
+
+	bn_vec_perp(perp1, BmA);
+	VUNITIZE(perp1);
+
+	VCROSS(perp2, BmA, perp1);
+	VUNITIZE(perp2);
+
+	VSCALE(perp1, perp1, gdasp->gdas_tip_width);
+	VSCALE(perp2, perp2, gdasp->gdas_tip_width);
+
+	VADD2(a_base, B, offset);
+	VADD2(a_pt1, a_base, perp1);
+	VADD2(a_pt2, a_base, perp2);
+	VSUB2(a_pt3, a_base, perp1);
+	VSUB2(a_pt4, a_base, perp2);
+
+	VMOVE(points[0], B);
+	VMOVE(points[1], a_pt1);
+	VMOVE(points[2], B);
+	VMOVE(points[3], a_pt2);
+	VMOVE(points[4], B);
+	VMOVE(points[5], a_pt3);
+	VMOVE(points[6], B);
+	VMOVE(points[7], a_pt4);
+	VMOVE(points[8], a_pt1);
+	VMOVE(points[9], a_pt2);
+	VMOVE(points[10], a_pt2);
+	VMOVE(points[11], a_pt3);
+	VMOVE(points[12], a_pt3);
+	VMOVE(points[13], a_pt4);
+	VMOVE(points[14], a_pt4);
+	VMOVE(points[15], a_pt1);
+
+	DM_DRAW_LINES_3D(dmp, 16, points);
+    }
+
+    /* Restore the line attributes */
+    DM_SET_LINE_ATTR(dmp, saveLineWidth, saveLineStyle);
+}
+
+static void
+go_dm_draw_labels(struct dm *dmp, struct ged_data_label_state *gdlsp, matp_t m2vmat)
+{
+    register int i;
+
+    /* set color */
+    DM_SET_FGCOLOR(dmp,
+		   gdlsp->gdls_color[0],
+		   gdlsp->gdls_color[1],
+		   gdlsp->gdls_color[2], 1, 1.0);
+
+    for (i = 0; i < gdlsp->gdls_num_labels; ++i) {
+	point_t vpoint;
+
+	MAT4X3PNT(vpoint, m2vmat,
+		  gdlsp->gdls_points[i]);
+	DM_DRAW_STRING_2D(dmp, gdlsp->gdls_labels[i],
+			  vpoint[X], vpoint[Y], 0, 1);
+    }
+}
+
+static void
+go_dm_draw_lines(struct dm *dmp, struct ged_data_line_state *gdlsp)
+{
+    int saveLineWidth;
+    int saveLineStyle;
+
+    if (gdlsp->gdls_num_points < 1)
+	return;
+
+    saveLineWidth = dmp->dm_lineWidth;
+    saveLineStyle = dmp->dm_lineStyle;
+
+    /* set color */
+    DM_SET_FGCOLOR(dmp,
+		   gdlsp->gdls_color[0],
+		   gdlsp->gdls_color[1],
+		   gdlsp->gdls_color[2], 1, 1.0);
+
+    /* set linewidth */
+    DM_SET_LINE_ATTR(dmp, gdlsp->gdls_line_width, 0);  /* solid lines */
+
+    DM_DRAW_LINES_3D(dmp,
+		     gdlsp->gdls_num_points,
+		     gdlsp->gdls_points);
+
+    /* Restore the line attributes */
+    DM_SET_LINE_ATTR(dmp, saveLineWidth, saveLineStyle);
+}
 
 /*
  * Local Variables:

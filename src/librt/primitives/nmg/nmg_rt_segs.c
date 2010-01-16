@@ -1,7 +1,7 @@
 /*                   N M G _ R T _ S E G S . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2009 United States Government as represented by
+ * Copyright (c) 1993-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -295,7 +295,7 @@ set_outpoint(struct seg **seg_p, struct hitmiss *a_hit)
 
 
 HIDDEN int
-state0(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *a_hit, struct soltab *stp, struct application *ap, struct bn_tol *tol)
+state0(struct seg *seghead __attribute__((unused)), struct seg **seg_p, int *seg_count __attribute__((unused)), struct hitmiss *a_hit, struct soltab *stp, struct application *ap, struct bn_tol *tol __attribute__((unused)))
     /* intersection w/ ray */
     /* The segment we're building */
     /* The number of valid segments built */
@@ -349,7 +349,7 @@ state0(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *
 
 
 HIDDEN int
-state1(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *a_hit, struct soltab *stp, struct application *ap, struct bn_tol *tol)
+state1(struct seg *seghead __attribute__((unused)), struct seg **seg_p, int *seg_count __attribute__((unused)), struct hitmiss *a_hit, struct soltab *stp, struct application *ap, struct bn_tol *tol __attribute__((unused)))
     /* intersection w/ ray */
     /* The segment we're building */
     /* The number of valid segments built */
@@ -359,6 +359,8 @@ state1(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *
 {
     int ret_val = -1;
 
+    if (stp) RT_CK_SOLTAB(stp);
+    if (ap) RT_CK_APPLICATION(ap);
     NMG_CK_HITMISS(a_hit);
 
     switch (a_hit->in_out) {
@@ -970,7 +972,7 @@ common_topo(struct bu_ptbl *a_tbl, struct bu_ptbl *next_tbl)
 
 
 HIDDEN void
-visitor(long int *l_p, genptr_t tbl, int after)
+visitor(long int *l_p, genptr_t tbl, int unused __attribute__((unused)))
 {
     (void)bu_ptbl_ins_unique((struct bu_ptbl *)tbl, l_p);
 }
@@ -1066,7 +1068,7 @@ build_topo_list(unsigned long *l_p, struct bu_ptbl *tbl)
 
 
 HIDDEN void
-unresolved(struct hitmiss *a_hit, struct hitmiss *next_hit, struct bu_ptbl *a_tbl, struct bu_ptbl *next_tbl, struct hitmiss *hd, struct ray_data *rd)
+unresolved(struct hitmiss *next_hit, struct bu_ptbl *a_tbl, struct bu_ptbl *next_tbl, struct hitmiss *hd, struct ray_data *rd)
 {
 
     struct hitmiss *hm;
@@ -1198,8 +1200,7 @@ check_hitstate(struct hitmiss *hd, struct ray_data *rd)
 		a_hit->inbound_use = long_ptr;
 
 	    } else
-		unresolved(a_hit, next_hit,
-			   a_tbl, next_tbl, hd, rd);
+		unresolved(next_hit, a_tbl, next_tbl, hd, rd);
 
 	}
 

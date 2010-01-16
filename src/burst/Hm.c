@@ -1,7 +1,7 @@
 /*                            H M . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -112,8 +112,8 @@ struct nmllist
 void
 HmBanner( const char *pgmname, int borderchr )
 {
-    register int    co;
-    register char   *p;
+    int    co;
+    char   *p;
 #define HmBUFLEN	81
     static char     HmPgmName[HmBUFLEN] = "No name";
     static int      HmBorderChr = '_';
@@ -180,7 +180,7 @@ HmPrntMenu( HmMenu *menup )
 static void
 HmPrntWindows( void )
 {
-    register HmWindow	*win;
+    HmWindow	*win;
     (void) ErLog( "HmPrntWindows()\n" );
     for ( win = windows; win != (HmWindow *) NULL; win = win->next )
     {
@@ -220,8 +220,8 @@ HmPrntLList( HmLList *listp )
 static void
 HmFreeItems( HmItem *itemp )
 {
-    register HmItem	*citemp;
-    register int	count;
+    HmItem	*citemp;
+    int	count;
     for (	citemp = itemp, count = 1;
 		citemp->text != (char *) NULL;
 		citemp++, count++
@@ -244,7 +244,7 @@ HmFreeItems( HmItem *itemp )
 static void
 HmFreeLList( HmLList *listp )
 {
-    register HmLList	*tp;
+    HmLList	*tp;
     for (; listp != (HmLList *) NULL; listp = tp )
     {
 	MmFree( HmItem, listp->itemp );
@@ -255,7 +255,7 @@ HmFreeLList( HmLList *listp )
 }
 
 /*
-  void	HmPutItem( register HmWindow *win, register HmItem *itemp, int flag )
+  void	HmPutItem( HmWindow *win, HmItem *itemp, int flag )
 
   Display menu entry itemp.
 
@@ -268,25 +268,25 @@ HmFreeLList( HmLList *listp )
   P_ON	means this entry is current so highlight it.
 */
 static void
-HmPutItem( register HmWindow *win, register HmItem *itemp, int flag )
+HmPutItem( HmWindow *win, HmItem *itemp, int flag )
 {
-    register int	label_len = strlen( itemp->text );
+    int	label_len = strlen( itemp->text );
     static char	buf[HmMAXLINE];
-    register char	*p = buf;
-    register int	col = win->menux;
-    register int	row = win->menuy+
+    char	*p = buf;
+    int	col = win->menux;
+    int	row = win->menuy+
 	(HmENTRY-win->menup->prevtop)+1;
-    register int	width = win->width;
-    register int	bitmap = flag & P_FORCE ?
+    int	width = win->width;
+    int	bitmap = flag & P_FORCE ?
 	~0 : win->dirty[row-win->menuy];
     /*	~0 : win->dirty[HmENTRY+1];*/
-    register int	bit = 1;
-    register int	writemask = 0;
+    int	bit = 1;
+    int	writemask = 0;
     if ( bitmap == 0 )
 	return;
     if ( itemp->text[0] & 0200 )	/* right-justified */
     {
-	register int	i;
+	int	i;
 	label_len--;
 	for ( i = 0; i < width - label_len; i++ )
 	    *p++ = itemp->text[0] & 0177;
@@ -296,7 +296,7 @@ HmPutItem( register HmWindow *win, register HmItem *itemp, int flag )
     else				/* left-justified */
 	if ( itemp->text[label_len-1] & 0200 )
 	{
-	    register int	i;
+	    int	i;
 	    label_len--;
 	    for ( i = 0; !(itemp->text[i] & 0200); i++ )
 		*p++ = itemp->text[i];
@@ -305,7 +305,7 @@ HmPutItem( register HmWindow *win, register HmItem *itemp, int flag )
 	}
 	else				/* centered */
 	{
-	    register int	i, j;
+	    int	i, j;
 	    for ( i = 0; i < (width - label_len)/2; i++ )
 		*p++ = ' ';
 	    for ( j = 0; itemp->text[j] != '\0'; j++ )
@@ -331,7 +331,7 @@ HmPutItem( register HmWindow *win, register HmItem *itemp, int flag )
 	}
 	else
 	{
-	    register int	i;
+	    int	i;
 	    for ( i = 0; i < p-buf; i++ )
 		writemask |= 1<<(i+1);
 	    for ( i = 0; i < p-buf; i++ )
@@ -358,20 +358,20 @@ HmPutItem( register HmWindow *win, register HmItem *itemp, int flag )
 }
 
 /*
-  void	HmPutBorder( register HmWindow *win, register row, char mark )
+  void	HmPutBorder( HmWindow *win, row, char mark )
 
   Draw the horizontal border for row of win->menup using mark
   for the corner characters.
 */
 static void
-HmPutBorder( register HmWindow *win, register int row, char mark )
+HmPutBorder( HmWindow *win, int row, char mark )
 {
-    register int	i;
-    register int	bit = 1;
-    register int	col = win->menux;
-    register int	bitmap = win->dirty[row - win->menuy];
+    int	i;
+    int	bit = 1;
+    int	col = win->menux;
+    int	bitmap = win->dirty[row - win->menuy];
     static char	buf[HmMAXLINE];
-    register char	*p = buf;
+    char	*p = buf;
     if ( bitmap == 0 )
 	return; /* No dirty bits. */
     *p++ = mark;
@@ -394,15 +394,15 @@ HmPutBorder( register HmWindow *win, register int row, char mark )
 }
 
 /*
-  void	HmSetbit( register HmWindow *win, int col, int row )
+  void	HmSetbit( HmWindow *win, int col, int row )
 
   Mark as dirty, the bit in win->dirty that corresponds to
   col and row of the screen.
 */
 static void
-HmSetbit( register HmWindow *win, int col, int row )
+HmSetbit( HmWindow *win, int col, int row )
 {
-    register int	bit = col - win->menux;
+    int	bit = col - win->menux;
 #if HmDEBUG && 0
     (void) ErLog(	"HmSetbit:menu{<%d,%d>,<%d,%d>}col=%d, row=%d\n",
 			win->menux, win->menux+win->width+1,
@@ -427,8 +427,8 @@ HmSetbit( register HmWindow *win, int col, int row )
 static void
 HmClrmap( HmWindow *win )
 {
-    register int	row;
-    register int	height = HmHEIGHT;
+    int	row;
+    int	height = HmHEIGHT;
     for ( row = 0; row <= height+1; row++ )
 	win->dirty[row] = 0;
     return;
@@ -442,22 +442,22 @@ HmClrmap( HmWindow *win )
 static void
 HmSetmap( HmWindow *win )
 {
-    register int	row;
-    register int	height = HmHEIGHT;
+    int	row;
+    int	height = HmHEIGHT;
     for ( row = 0; row <= height+1; row++ )
 	win->dirty[row] = ~0; /* 0xffff... */
     return;
 }
 
 /*
-  HmWindow *HmInWin( register  x, register y, register HmWindow *win )
+  HmWindow *HmInWin(  x, y, HmWindow *win )
 
   Return pointer to top window in stack, starting with win whose
   boundaries contain the screen coordinate <x, y>.  If the point
   is outside of all these windows, return 0.
 */
 static HmWindow	*
-HmInWin( register int x, register int y, register HmWindow *win )
+HmInWin( int x, int y, HmWindow *win )
 {
 #if HmDEBUG && 0
     if ( win != (HmWindow *) NULL )
@@ -469,7 +469,7 @@ HmInWin( register int x, register int y, register HmWindow *win )
 #endif
     for (; win != (HmWindow *) NULL; win = win->next )
     {
-	register int	height = HmHEIGHT;
+	int	height = HmHEIGHT;
 	if ( !	(x < win->menux || x > win->menux + win->width + 1 ||
 		 y < win->menuy || y > win->menuy + height + 1)
 	    )
@@ -479,15 +479,15 @@ HmInWin( register int x, register int y, register HmWindow *win )
 }
 
 /*
-  void	HmDrawWin( register HmWindow *win )
+  void	HmDrawWin( HmWindow *win )
 
   Draw win->menup on screen.  Actually, only characters flagged as
   dirty are drawn.
 */
 static void
-HmDrawWin( register HmWindow *win )
+HmDrawWin( HmWindow *win )
 {
-    register HmItem	*itemp;
+    HmItem	*itemp;
     int	height;
 
 #if HmDEBUG && 1
@@ -496,7 +496,7 @@ HmDrawWin( register HmWindow *win )
 			win->menuy, win->menuy+HmHEIGHT+1
 	);
     {
-	register int	i;
+	int	i;
 	for ( i = 0; i <= HmHEIGHT+1; i++ )
 	    (void) ErLog( "\tdirty[%d]=0x%x\r\n", i, win->dirty[i] );
     }
@@ -517,14 +517,14 @@ HmDrawWin( register HmWindow *win )
 }
 
 /*
-  void	HmHelp( register HmWindow *win, int entry )
+  void	HmHelp( HmWindow *win, int entry )
 
   Display help message for item indexed by entry in win->menup
   on line HmYCOMMO.  This message will be erased when the user
   strikes a key (or uses the mouse).
 */
 static void
-HmHelp( register HmWindow *win, int entry )
+HmHelp( HmWindow *win, int entry )
 {
     (void) ScMvCursor( HmLftMenu, HmYCOMMO );
     (void) ScClrEOL();
@@ -553,18 +553,18 @@ HmError( const char *str )
 }
 
 /*
-  void	HmLiftWin( register HmWindow *win )
+  void	HmLiftWin( HmWindow *win )
 
   Remove win->menup from screen, marking any occluded portions
   of other menus as dirty so that they will be redrawn by HmHit().
 */
 static void
-HmLiftWin( register HmWindow *win )
+HmLiftWin( HmWindow *win )
 {
-    register int	row, col;
-    register int	lastcol = -1, lastrow = -1;
-    register int	endcol = win->menux + win->width + 2;
-    register int	endrow = win->menuy +
+    int	row, col;
+    int	lastcol = -1, lastrow = -1;
+    int	endcol = win->menux + win->width + 2;
+    int	endrow = win->menuy +
 	HmHEIGHT + HmHGTBORDER;
 #if HmDEBUG && 1
     (void) ErLog( "HmLiftWin:win{<%d,%d>,<%d,%d>}\r\n",
@@ -576,7 +576,7 @@ HmLiftWin( register HmWindow *win )
     {
 	for ( col = win->menux; col < endcol; col++ )
 	{
-	    register HmWindow	*olwin;
+	    HmWindow	*olwin;
 	    if ( (olwin = HmInWin( col, row, win->next ))
 		 != (HmWindow *) NULL
 		)
@@ -647,8 +647,8 @@ HmRefreshWin( HmWindow *win )
 void
 HmRedraw( void )
 {
-    register HmWindow	*win;
-    register int		reset = 0;
+    HmWindow	*win;
+    int		reset = 0;
 
 #if HmDEBUG && 1
     HmPrntWindows();
@@ -755,19 +755,19 @@ HmInit( int x, int y, int maxvis )
 }
 
 /*
-  void	HmWidHgtMenu( register HmWindow *win )
+  void	HmWidHgtMenu( HmWindow *win )
 
   Determine width and height of win->menup, and store in win.
 */
 static void
-HmWidHgtMenu( register HmWindow *win )
+HmWidHgtMenu( HmWindow *win )
 {
-    register HmItem	*itemp;
+    HmItem	*itemp;
     
     /* Determine width of menu, allowing for border.		*/
     for ( itemp = win->menup->item; itemp->text != (char *) NULL; itemp++ ) {
-	register int	len = 0;
-	register int	i;
+	int	len = 0;
+	int	i;
 	for ( i = 0; itemp->text[i] != '\0'; i++ ) {
 	    if ( ! (itemp->text[i] & 0200) )
 		len++;
@@ -779,13 +779,13 @@ HmWidHgtMenu( register HmWindow *win )
 }
 
 /*
-  boolean HmFitMenu( register HmWindow *nwin, register HmWindow *cwin )
+  boolean HmFitMenu( HmWindow *nwin, HmWindow *cwin )
 
   If nwin->menup will fit below cwin->menup on screen, store
   position in nwin, and return 1.  Otherwise, return 0.
 */
 static boolean
-HmFitMenu( register HmWindow *nwin, register HmWindow *cwin  )
+HmFitMenu( HmWindow *nwin, HmWindow *cwin  )
 {
     if ( cwin == (HmWindow *) NULL )
 	return	0;
@@ -810,12 +810,12 @@ HmFitMenu( register HmWindow *nwin, register HmWindow *cwin  )
 }
 
 /*
-  void	HmPosMenu( register HmWindow *win )
+  void	HmPosMenu( HmWindow *win )
 
   Find best screen position for win->menup.
 */
 static void
-HmPosMenu( register HmWindow *win )
+HmPosMenu( HmWindow *win )
 {
     /* Determine origin (top-left corner) of menu.			*/
     if ( win->next != (HmWindow *) NULL )
@@ -841,15 +841,15 @@ HmPosMenu( register HmWindow *win )
 }
 
 /*
-  void	HmMyxMouse( register int *x, register int *y )
+  void	HmMyxMouse( int *x, int *y )
 
   Read and decode screen coordinates from MYX "editor ptr".
   Implicit return in x and y.
 */
 static void
-HmMyxMouse( register int *x, register int *y )
+HmMyxMouse( int *x, int *y )
 {
-    register int	c;
+    int	c;
 
     c = HmGetchar();
     switch ( c )
@@ -892,10 +892,10 @@ HmMyxMouse( register int *x, register int *y )
 HmItem *
 HmHit( HmMenu *menup )
 {
-    register HmItem	*itemp;
+    HmItem	*itemp;
     HmItem		*retitemp = NULL;
     HmWindow	*win;
-    register int	done = 0;
+    int	done = 0;
     int		dynamic = 0;
     static int	HmLevel = 0;
 
@@ -915,8 +915,8 @@ HmHit( HmMenu *menup )
     */
     if ( (dynamic = (menup->item == (HmItem *) NULL) ))
     {
-	register int	i;
-	register HmItem	*gitemp;
+	int	i;
+	HmItem	*gitemp;
 	HmLList	llhead, **listp;
 	for (	i = 0, listp = &llhead.next;
 		;
@@ -975,8 +975,8 @@ HmHit( HmMenu *menup )
 	*/
 	if ( i > 0 )
 	{
-	    register int		ii;
-	    register HmLList	*lp;
+	    int		ii;
+	    HmLList	*lp;
 	    if ( (menup->item = MmVAllo( i+1, HmItem )) == NULL )
 	    {
 		goto	clean_exit;
@@ -1076,7 +1076,7 @@ HmHit( HmMenu *menup )
 	    case M_MYXMOUSE :
 	    {
 		static int	mousex, mousey;
-		register HmItem	*lastitemp;
+		HmItem	*lastitemp;
 		if ( HmGetchar() != Ctrl('_') || HmGetchar() != '1' )
 		    goto	m_badinput;
 		HmMyxMouse( &mousex, &mousey );

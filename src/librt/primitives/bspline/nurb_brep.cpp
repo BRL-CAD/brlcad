@@ -1,7 +1,7 @@
 /*                   N U R B _ B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2009 United States Government as represented by
+ * Copyright (c) 2009-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,12 +32,10 @@
 
 
 extern "C" void
-rt_nurb_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
+rt_nurb_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 {
     int i, j, k;
     struct rt_nurb_internal *nip;
-    point_t min_pt, max_pt;
-    point_t center;
 
     RT_CK_DB_INTERNAL(ip);
     nip = (struct rt_nurb_internal *)ip->idb_ptr;
@@ -78,9 +76,9 @@ rt_nurb_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
 
 	(*b)->m_S.Append(nurb);
 	int sindex = (*b)->m_S.Count();
-	ON_BrepFace& face = (*b)->NewFace(sindex - 1);
+	(*b)->NewFace(sindex - 1);
 	int findex = (*b)->m_F.Count();
-	ON_BrepLoop* loop = (*b)->NewOuterLoop(findex - 1);
+	(*b)->NewOuterLoop(findex - 1);
     }
 
     bu_log("BREP object %s a single surface\n", (*b)->IsSurface() ? "is" : "is not");

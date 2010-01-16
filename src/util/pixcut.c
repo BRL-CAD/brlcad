@@ -1,7 +1,7 @@
 /*                        P I X C U T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -82,9 +82,9 @@ parse_color(unsigned char *bak, char *s)
 }
 
 int
-get_args(register int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int c;
+    int c;
 
     while ( (c = bu_getopt(argc, argv, "vahHC:s:w:n:S:W:N:x:y:#:" )) != EOF) {
 	switch (c) {
@@ -170,8 +170,8 @@ main(int argc, char **argv)
 {
     unsigned char *inbuf, *outbuf;
     unsigned char *buffer;
-    register long int i;
-    register unsigned char *cp;
+    long int i;
+    unsigned char *cp;
     int finish, row, result;
 
     for (i=0;i<SIZEBACK;i++) background[i] = 0;
@@ -290,7 +290,7 @@ main(int argc, char **argv)
  */
     if (base_x < 0 || base_y < 0 || base_x+new_width > org_width) {
 	for (i=0, cp = outbuf; i<new_width; i++, cp+=num_bytes) {
-	    register long int jj;
+	    long int jj;
 	    for (jj=0; jj<num_bytes && jj<SIZEBACK; jj++) {
 		cp[jj]=background[jj];
 	    }
@@ -325,7 +325,7 @@ main(int argc, char **argv)
 	result = fread(inbuf, num_bytes, org_width, input);
 	if (result != org_width) {
 	    for (cp=inbuf+result*num_bytes; result < org_width; cp+=num_bytes, ++result) {
-		register long int jj;
+		long int jj;
 		for (jj=0; jj<num_bytes && jj<SIZEBACK; jj++) {
 		    cp[jj] = background[jj];
 		}
@@ -345,7 +345,7 @@ main(int argc, char **argv)
  */
     if (row >= org_height) {
 	for (cp=outbuf, i=0;i<new_width;cp+=num_bytes, i++) {
-	    register long int jj;
+	    long int jj;
 	    for (jj=0; jj<num_bytes && jj<SIZEBACK;jj++) {
 		cp[jj] = background[jj];
 	    }

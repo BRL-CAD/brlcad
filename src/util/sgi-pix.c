@@ -1,7 +1,7 @@
 /*                       S G I - P I X . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -156,7 +156,7 @@ savescreen(FILE *ofp, int xorg, int yorg, int xsize, int ysize)
     int	npix;
     int	x;
     int	y;
-    register unsigned char	*op;
+    unsigned char	*op;
     long	got;
 
     npix = (xsize+1)*(ysize+1);		/* conservative */
@@ -173,7 +173,7 @@ savescreen(FILE *ofp, int xorg, int yorg, int xsize, int ysize)
     }
     lp = lbuf;
     for ( y=0; y<ysize; y++ )  {
-	register unsigned long	w;
+	unsigned long	w;
 	op = (unsigned char *)obuf;
 	for ( x=0; x<xsize; x++ )  {
 	    w = *lp++;

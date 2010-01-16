@@ -1,7 +1,7 @@
 /*                           L G T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -71,7 +71,7 @@ substr(char *str, char *pattern)
 int
 main(int argc, char **argv)
 {
-    register int	i;
+    int	i;
 
     bu_setlinebuf(stderr);
 
@@ -147,8 +147,8 @@ interpolate_Frame(int frame)
 	return	1;
     if ( ! movie.m_fullscreen )
     {
-	register int	frames_across;
-	register int	size;
+	int	frames_across;
+	int	size;
 	size = MovieSize( movie.m_frame_sz, movie.m_noframes );
 	frames_across = size / movie.m_frame_sz;
 	x_fb_origin = (frame % frames_across) * movie.m_frame_sz;

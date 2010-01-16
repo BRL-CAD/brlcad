@@ -1,4 +1,3 @@
-if EN_DOCS
 lessonsDOCBOOK_EN = \
 	lessons/en/mged01_creating_primitive_shapes.xml \
 	lessons/en/mged02_learning_viewing_options.xml \
@@ -142,4 +141,3 @@ endif
 
 lessonsDOCBOOK_ENpdfdir = $(BRLCAD_DATA)/pdf/lessons/en
 lessonsDOCBOOK_ENpdf_DATA = $(BUILTLESSONS_ENPDF)
-endif

@@ -1,7 +1,7 @@
 /*                 Placement.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -41,7 +41,7 @@ protected:
 public:
 	Placement();
 	virtual ~Placement();
-	Placement(STEPWrapper *sw,int STEPid);
+	Placement(STEPWrapper *sw,int step_id);
 	virtual const double *GetOrigin();
 	virtual const double *GetNormal();
 	virtual const double *GetXAxis();

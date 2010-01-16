@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -39,17 +38,17 @@ public:
   */
   static ON_NurbsCurve* New();
   static ON_NurbsCurve* New(
-	    const ON_NurbsCurve& nurbs_curve 
-	    );
+            const ON_NurbsCurve& nurbs_curve 
+            );
   static ON_NurbsCurve* New(
-	    const ON_BezierCurve& bezier_curve 
-	    );
+            const ON_BezierCurve& bezier_curve 
+            );
   static ON_NurbsCurve* New(
-	    int dimension,
-	    BOOL bIsRational,
-	    int order,
-	    int cv_count
-	    );
+            int dimension,
+            ON_BOOL32 bIsRational,
+            int order,
+            int cv_count
+            );
 
   ON_NurbsCurve();
   ON_NurbsCurve(const ON_NurbsCurve&);
@@ -59,22 +58,22 @@ public:
   // Parameters:
   //   bezier_curve - [in]
   ON_NurbsCurve(
-	const ON_BezierCurve& bezier_curve
-	);
+        const ON_BezierCurve& bezier_curve
+        );
 
   // Description:
   //   Create a NURBS curve with knot a cv memory allocated.
   // Parameters:
   //   dimension - [in] (>= 1)
-  //   bIsRational - [in] TRUE to make a rational NURBS
+  //   bIsRational - [in] true to make a rational NURBS
   //   order - [in] (>= 2) The order=degree+1
   //   cv_count - [in] (>= order) number of control vertices
   ON_NurbsCurve(
-	  int dimension,
-	  BOOL bIsRational,
-	  int order,
-	  int cv_count
-	  );
+          int dimension,
+          ON_BOOL32 bIsRational,
+          int order,
+          int cv_count
+          );
 
   // virtual ON_Object::SizeOf override
   unsigned int SizeOf() const;
@@ -88,17 +87,17 @@ public:
   Parameters:
     other - [in] other NURBS curve
     bIgnoreParameterization - [in] if true, parameterization
-	     and orientaion are ignored.
+             and orientaion are ignored.
     tolerance - [in] tolerance to use when comparing
-		     control points.
+                     control points.
   Returns:
     true if curves are tne same.
   */
   bool IsDuplicate( 
-	  const ON_NurbsCurve& other, 
-	  bool bIgnoreParameterization,
-	  double tolerance = ON_ZERO_TOLERANCE 
-	  ) const;
+          const ON_NurbsCurve& other, 
+          bool bIgnoreParameterization,
+          double tolerance = ON_ZERO_TOLERANCE 
+          ) const;
 
   // Description:
   //   Zeros all fields.
@@ -108,15 +107,15 @@ public:
   //   Create a NURBS curve with knot a cv memory allocated.
   // Parameters:
   //   dimension - [in] (>= 1)
-  //   bIsRational - [in] TRUE to make a rational NURBS
+  //   bIsRational - [in] true to make a rational NURBS
   //   order - [in] (>= 2) The order=degree+1
   //   cv_count - [in] (>= order) number of control vertices
   bool Create( 
-	  int dimension,
-	  BOOL bIsRational,
-	  int order,
-	  int cv_count
-	  );
+          int dimension,
+          ON_BOOL32 bIsRational,
+          int order,
+          int cv_count
+          );
 
   // Description:
   //   Create a clamped uniform NURBS curve from a list
@@ -128,14 +127,14 @@ public:
   //   point - [in] array of control vertex locations.
   //   knot_delta - [in] (>0.0) knot spacing
   // Returns:
-  //   TRUE if successful
+  //   true if successful
   bool CreateClampedUniformNurbs( 
-	  int dimension,
-	  int order,
-	  int point_count,
-	  const ON_3dPoint* point,
-	  double knot_delta = 1.0
-	  );
+          int dimension,
+          int order,
+          int point_count,
+          const ON_3dPoint* point,
+          double knot_delta = 1.0
+          );
 
   // Description:
   //   Create a periodic uniform NURBS curve from a list
@@ -147,14 +146,14 @@ public:
   //   point - [in] array of distinct control vertex locations.
   //   knot_delta - [in] (>0.0) knot spacing
   // Returns:
-  //   TRUE if successful
+  //   true if successful
   bool CreatePeriodicUniformNurbs( 
-	  int dimension,
-	  int order,
-	  int point_count,
-	  const ON_3dPoint* point,
-	  double knot_delta = 1.0
-	  );
+          int dimension,
+          int order,
+          int point_count,
+          const ON_3dPoint* point,
+          double knot_delta = 1.0
+          );
 
   // Description:
   //   Deallocate knot and cv memory.  Zeros all fields.
@@ -185,20 +184,20 @@ public:
     initialized.
   Parameters:
     text_log - [in] if the object is not valid and text_log
-	is not NULL, then a brief englis description of the
-	reason the object is not valid is appened to the log.
-	The information appended to text_log is suitable for 
-	low-level debugging purposes by programmers and is 
-	not intended to be useful as a high level user 
-	interface tool.
+        is not NULL, then a brief englis description of the
+        reason the object is not valid is appened to the log.
+        The information appended to text_log is suitable for 
+        low-level debugging purposes by programmers and is 
+        not intended to be useful as a high level user 
+        interface tool.
   Returns:
     @untitled table
-    TRUE     object is valid
-    FALSE    object is invalid, uninitialized, etc.
+    true     object is valid
+    false    object is invalid, uninitialized, etc.
   Remarks:
     Overrides virtual ON_Object::IsValid
   */
-  BOOL IsValid( ON_TextLog* text_log = NULL ) const;
+  ON_BOOL32 IsValid( ON_TextLog* text_log = NULL ) const;
 
   // Description:
   //   virtual ON_Object::Dump override
@@ -208,14 +207,14 @@ public:
 
   // Description:
   //   virtual ON_Object::Write override
-  BOOL Write(
-	 ON_BinaryArchive& binary_archive
+  ON_BOOL32 Write(
+         ON_BinaryArchive& binary_archive
        ) const;
 
   // Description:
   //   virtual ON_Object::Read override
-  BOOL Read(
-	 ON_BinaryArchive& binary_archive
+  ON_BOOL32 Read(
+         ON_BinaryArchive& binary_archive
        );
 
   /////////////////////////////////////////////////////////////////
@@ -233,17 +232,17 @@ public:
   // Parameters:
   //   boxmin - [in/out] array of Dimension() doubles
   //   boxmax - [in/out] array of Dimension() doubles
-  //   bGrowBox - [in] (default=FALSE) 
-  //     If TRUE, then the union of the input bbox and the 
+  //   bGrowBox - [in] (default=false) 
+  //     If true, then the union of the input bbox and the 
   //     object's bounding box is returned in bbox.  
-  //     If FALSE, the object's bounding box is returned in bbox.
+  //     If false, the object's bounding box is returned in bbox.
   // Returns:
-  //   TRUE if object has bounding box and calculation was successful
-  BOOL GetBBox( // returns TRUE if successful
-	 double* boxmin,
-	 double* boxmax,
-	 int bGrowBox = false
-	 ) const;
+  //   true if object has bounding box and calculation was successful
+  ON_BOOL32 GetBBox( // returns true if successful
+         double* boxmin,
+         double* boxmax,
+         int bGrowBox = false
+         ) const;
 
   // Description:
   //   virtual ON_Geometry::Transform override.
@@ -257,9 +256,9 @@ public:
   //   to ON_Object::TransformUserData() which takes care of 
   //   transforming any ON_UserData that may be attached to 
   //   the object.
-  BOOL Transform( 
-	 const ON_Xform& xform
-	 );
+  ON_BOOL32 Transform( 
+         const ON_Xform& xform
+         );
 
   // virtual ON_Geometry::IsDeformable() override
   bool IsDeformable() const;
@@ -273,10 +272,10 @@ public:
   // Parameters:
   //   i - [in] coordinate index
   //   j - [in] coordinate index
-  BOOL SwapCoordinates(
-	int i, 
-	int j
-	);
+  ON_BOOL32 SwapCoordinates(
+        int i, 
+        int j
+        );
 
   // virtual ON_Geometry override
   bool Morph( const ON_SpaceMorph& morph );
@@ -300,11 +299,11 @@ public:
   //   t0 - [in]
   //   t1 - [in] new domain will be [t0,t1]
   // Returns:
-  //   TRUE if successful.
-  BOOL SetDomain(
-	double t0, 
-	double t1 
-	);
+  //   true if successful.
+  ON_BOOL32 SetDomain(
+        double t0, 
+        double t1 
+        );
 
   /*
   Description:
@@ -312,15 +311,15 @@ public:
     the start/end point is at curve parameter t.
   Parameters:
     t - [in] curve parameter of new start/end point.  The
-	     returned curves domain will start at t.
+             returned curves domain will start at t.
   Returns:
-    TRUE if successful.
+    true if successful.
   Remarks:
     Overrides virtual ON_Curve::ChangeClosedCurveSeam
   */
-  BOOL ChangeClosedCurveSeam( 
-	    double t 
-	    );
+  ON_BOOL32 ChangeClosedCurveSeam( 
+            double t 
+            );
 
   // Description:
   //   virtual ON_Curve::SpanCount override.
@@ -340,10 +339,10 @@ public:
   //       filled in with the distinct knot values in the list
   ///      (m_knot[m_order-2],...,m_knot[m_cv_count-1)
   // Returns:
-  //   TRUE if successful
-  BOOL GetSpanVector(
-	 double* knot_values
-	 ) const; // 
+  //   true if successful
+  ON_BOOL32 GetSpanVector(
+         double* knot_values
+         ) const; // 
 
   // Description:
   //   virtual ON_Curve::Degree override.
@@ -353,17 +352,17 @@ public:
 
   // Description:
   //   virtual ON_Curve::GetParameterTolerance override.
-  BOOL GetParameterTolerance( // returns tminus < tplus: parameters tminus <= s <= tplus
-	 double t,
-	 double* tminus,
-	 double* tplus
-	 ) const;
+  ON_BOOL32 GetParameterTolerance( // returns tminus < tplus: parameters tminus <= s <= tplus
+         double t,
+         double* tminus,
+         double* tplus
+         ) const;
 
   // Description:
   //   virtual ON_Curve::IsLinear override.
-  BOOL IsLinear(
-	double tolerance = ON_ZERO_TOLERANCE
-	) const;
+  ON_BOOL32 IsLinear(
+        double tolerance = ON_ZERO_TOLERANCE
+        ) const;
 
   /*
   Description:
@@ -372,58 +371,58 @@ public:
     all of whose segments are some form of polyline.  IsPolyline tests
     a curve to see if it can be represented as a polyline.
   Parameters:
-    pline_points - [out] if not NULL and TRUE is returned, then the
-	points of the polyline form are returned here.
-    t - [out] if not NULL and TRUE is returned, then the parameters of
-	the polyline points are returned here.
+    pline_points - [out] if not NULL and true is returned, then the
+        points of the polyline form are returned here.
+    t - [out] if not NULL and true is returned, then the parameters of
+        the polyline points are returned here.
   Returns:
     @untitled table
     0        curve is not some form of a polyline
     >=2      number of points in polyline form
   */
   int IsPolyline(
-	ON_SimpleArray<ON_3dPoint>* pline_points = NULL,
-	ON_SimpleArray<double>* pline_t = NULL
-	) const;
+        ON_SimpleArray<ON_3dPoint>* pline_points = NULL,
+        ON_SimpleArray<double>* pline_t = NULL
+        ) const;
 
   // Description:
   //   virtual ON_Curve::IsArc override.
-  BOOL IsArc(
-	const ON_Plane* plane = NULL,
-	ON_Arc* arc = NULL,
-	double tolerance = ON_ZERO_TOLERANCE
-	) const;
+  ON_BOOL32 IsArc(
+        const ON_Plane* plane = NULL,
+        ON_Arc* arc = NULL,
+        double tolerance = ON_ZERO_TOLERANCE
+        ) const;
 
   // Description:
   //   virtual ON_Curve::IsPlanar override.
-  BOOL IsPlanar(
-	ON_Plane* plane = NULL,
-	double tolerance = ON_ZERO_TOLERANCE
-	) const;
+  ON_BOOL32 IsPlanar(
+        ON_Plane* plane = NULL,
+        double tolerance = ON_ZERO_TOLERANCE
+        ) const;
 
   // Description:
   //   virtual ON_Curve::IsInPlane override.
-  BOOL IsInPlane(
-	const ON_Plane& test_plane,
-	double tolerance = ON_ZERO_TOLERANCE
-	) const;
+  ON_BOOL32 IsInPlane(
+        const ON_Plane& test_plane,
+        double tolerance = ON_ZERO_TOLERANCE
+        ) const;
 
   // Description:
   //   virtual ON_Curve::IsClosed override.
   // Returns:
-  //   TRUE if NURBS curve is closed. (Either curve has
+  //   true if NURBS curve is closed. (Either curve has
   //   clamped end knots and euclidean location of start
   //   CV = euclidean location of end CV, or curve is
   //   periodic.)
-  BOOL IsClosed() const;
+  ON_BOOL32 IsClosed() const;
 
   // Description:
   //   virtual ON_Curve::IsPeriodic override.
   // Returns:
-  //   TRUE if NURBS curve is periodic (degree > 1,
+  //   true if NURBS curve is periodic (degree > 1,
   //   periodic knot vector, last degree many CVs 
   //   are duplicates of first degree many CVs).
-  BOOL IsPeriodic() const;
+  ON_BOOL32 IsPeriodic() const;
   
   /*
   Description:
@@ -433,37 +432,37 @@ public:
     t0 - [in] search begins at t0
     t1 - [in] (t0 < t1) search ends at t1
     t - [out] if a discontinuity is found, the *t reports the
-	  parameter at the discontinuity.
+          parameter at the discontinuity.
     hint - [in/out] if GetNextDiscontinuity will be called repeatedly,
        passing a "hint" with initial value *hint=0 will increase the speed
        of the search.       
     dtype - [out] if not NULL, *dtype reports the kind of discontinuity
-	found at *t.  A value of 1 means the first derivative or unit tangent
-	was discontinuous.  A value of 2 means the second derivative or
-	curvature was discontinuous.
+        found at *t.  A value of 1 means the first derivative or unit tangent
+        was discontinuous.  A value of 2 means the second derivative or
+        curvature was discontinuous.
     cos_angle_tolerance - [in] default = cos(1 degree) Used only when
-	c is ON::G1_continuous or ON::G2_continuous.  If the cosine
-	of the angle between two tangent vectors 
-	is <= cos_angle_tolerance, then a G1 discontinuity is reported.
+        c is ON::G1_continuous or ON::G2_continuous.  If the cosine
+        of the angle between two tangent vectors 
+        is <= cos_angle_tolerance, then a G1 discontinuity is reported.
     curvature_tolerance - [in] (default = ON_SQRT_EPSILON) Used only when
-	c is ON::G2_continuous.  If K0 and K1 are curvatures evaluated
-	from above and below and |K0 - K1| > curvature_tolerance,
-	then a curvature discontinuity is reported.
+        c is ON::G2_continuous.  If K0 and K1 are curvatures evaluated
+        from above and below and |K0 - K1| > curvature_tolerance,
+        then a curvature discontinuity is reported.
   Returns:
-    TRUE if a discontinuity was found on the interior of the interval (t0,t1).
+    true if a discontinuity was found on the interior of the interval (t0,t1).
   Remarks:
     Overrides ON_Curve::GetNextDiscontinuity.
   */
   bool GetNextDiscontinuity( 
-		  ON::continuity c,
-		  double t0,
-		  double t1,
-		  double* t,
-		  int* hint=NULL,
-		  int* dtype=NULL,
-		  double cos_angle_tolerance=0.99984769515639123915701155881391,
-		  double curvature_tolerance=ON_SQRT_EPSILON
-		  ) const;
+                  ON::continuity c,
+                  double t0,
+                  double t1,
+                  double* t,
+                  int* hint=NULL,
+                  int* dtype=NULL,
+                  double cos_angle_tolerance=0.99984769515639123915701155881391,
+                  double curvature_tolerance=ON_SQRT_EPSILON
+                  ) const;
 
   /*
   Description:
@@ -473,21 +472,21 @@ public:
     t - [in] parameter to test
     hint - [in] evaluation hint
     point_tolerance - [in] if the distance between two points is
-	greater than point_tolerance, then the curve is not C0.
+        greater than point_tolerance, then the curve is not C0.
     d1_tolerance - [in] if the difference between two first derivatives is
-	greater than d1_tolerance, then the curve is not C1.
+        greater than d1_tolerance, then the curve is not C1.
     d2_tolerance - [in] if the difference between two second derivatives is
-	greater than d2_tolerance, then the curve is not C2.
+        greater than d2_tolerance, then the curve is not C2.
     cos_angle_tolerance - [in] default = cos(1 degree) Used only when
-	c is ON::G1_continuous or ON::G2_continuous.  If the cosine
-	of the angle between two tangent vectors 
-	is <= cos_angle_tolerance, then a G1 discontinuity is reported.
+        c is ON::G1_continuous or ON::G2_continuous.  If the cosine
+        of the angle between two tangent vectors 
+        is <= cos_angle_tolerance, then a G1 discontinuity is reported.
     curvature_tolerance - [in] (default = ON_SQRT_EPSILON) Used only when
-	c is ON::G2_continuous.  If K0 and K1 are curvatures evaluated
-	from above and below and |K0 - K1| > curvature_tolerance,
-	then a curvature discontinuity is reported.
+        c is ON::G2_continuous.  If K0 and K1 are curvatures evaluated
+        from above and below and |K0 - K1| > curvature_tolerance,
+        then a curvature discontinuity is reported.
   Returns:
-    TRUE if the curve has at least the c type continuity at the parameter t.
+    true if the curve has at least the c type continuity at the parameter t.
   Remarks:
     Overrides ON_Curve::IsContinuous.
   */
@@ -508,7 +507,7 @@ public:
   Parameters:
     start_point - [in]
   Returns:
-    TRUE if successful.
+    true if successful.
   Remarks:
     Some end points cannot be moved.  Be sure to check return
     code.
@@ -518,9 +517,9 @@ public:
     ON_Curve::PointAtEnd
   */
   //virtual
-  BOOL SetStartPoint(
-	  ON_3dPoint start_point
-	  );
+  ON_BOOL32 SetStartPoint(
+          ON_3dPoint start_point
+          );
 
   /*
   Description:
@@ -528,7 +527,7 @@ public:
   Parameters:
     end_point - [in]
   Returns:
-    TRUE if successful.
+    true if successful.
   Remarks:
     Some end points cannot be moved.  Be sure to check return
     code.
@@ -538,9 +537,9 @@ public:
     ON_Curve::PointAtEnd
   */
   //virtual
-  BOOL SetEndPoint(
-	  ON_3dPoint end_point
-	  );
+  ON_BOOL32 SetEndPoint(
+          ON_3dPoint end_point
+          );
 
   // Description:
   //   virtual ON_Curve::Reverse override.
@@ -548,29 +547,29 @@ public:
   //   and reversing the order of the control vertices.
   // Remarks:
   //   Domain changes from [a,b] to [-b,-a]
-  BOOL Reverse();       
+  ON_BOOL32 Reverse();       
 
   // Description:
   //   virtual ON_Curve::Evaluate override.
-  BOOL Evaluate( // returns FALSE if unable to evaluate
-	 double,         // evaluation parameter
-	 int,            // number of derivatives (>=0)
-	 int,            // array stride (>=Dimension())
-	 double*,        // array of length stride*(ndir+1)
-	 int = 0,        // optional - determines which side to evaluate from
-			 //         0 = default
-			 //      <  0 to evaluate from below, 
-			 //      >  0 to evaluate from above
-	 int* = 0        // optional - evaluation hint (int) used to speed
-			 //            repeated evaluations
-	 ) const;
+  ON_BOOL32 Evaluate( // returns false if unable to evaluate
+         double,         // evaluation parameter
+         int,            // number of derivatives (>=0)
+         int,            // array stride (>=Dimension())
+         double*,        // array of length stride*(ndir+1)
+         int = 0,        // optional - determines which side to evaluate from
+                         //         0 = default
+                         //      <  0 to evaluate from below, 
+                         //      >  0 to evaluate from above
+         int* = 0        // optional - evaluation hint (int) used to speed
+                         //            repeated evaluations
+         ) const;
 
   bool GetClosestPoint( 
-	  const ON_3dPoint&, // test_point
-	  double* t,       // parameter of local closest point returned here
-	  double maximum_distance = 0.0,  // maximum_distance
-	  const ON_Interval* sub_domain = NULL // sub_domain
-	  ) const;
+          const ON_3dPoint&, // test_point
+          double* t,       // parameter of local closest point returned here
+          double maximum_distance = 0.0,  // maximum_distance
+          const ON_Interval* sub_domain = NULL // sub_domain
+          ) const;
 
   // Description:
   //   Get the length of the curve.
@@ -583,20 +582,20 @@ public:
   //   sub_domain - [in] If not NULL, the calculation is performed on
   //       the specified sub-domain of the curve.
   // Returns:
-  //   TRUE if returned if the length calculation is successful.
-  //   FALSE is returned if the length is not calculated.
+  //   true if returned if the length calculation is successful.
+  //   false is returned if the length is not calculated.
   // Remarks:
   //   The arc length will be computed so that
   //   (returned length - real length)/(real length) <= fractional_tolerance
   //   More simply, if you want N significant figures in the answer, set the
   //   fractional_tolerance to 1.0e-N.  For "nice" curves, 1.0e-8 works
-  //   fine.  For very high degree NURBS and NURBS with bad parametrizations,
+  //   fine.  For very high degree NURBS and NURBS with bad parameterizations,
   //   use larger values of fractional_tolerance.
-  BOOL GetLength(
-	  double* length,
-	  double fractional_tolerance = 1.0e-8,
-	  const ON_Interval* sub_domain = NULL
-	  ) const;
+  ON_BOOL32 GetLength(
+          double* length,
+          double fractional_tolerance = 1.0e-8,
+          const ON_Interval* sub_domain = NULL
+          ) const;
 
   /*
   Description:
@@ -607,7 +606,7 @@ public:
   Parameters:
     tolerance - [in]
     bRemoveShortSegments - [in] If true, then short segments
-				are removed.
+                                are removed.
   Returns:
     True if removable short segments can were found.
     False if no removable short segments can were found.
@@ -641,7 +640,7 @@ public:
 
   // Description:
   //   virtual ON_Curve::Trim override.
-  BOOL Trim( const ON_Interval& );
+  ON_BOOL32 Trim( const ON_Interval& );
 
   // Description:
   //   Where possible, analytically extends curve to include domain.
@@ -671,7 +670,7 @@ public:
   //
   // would split crv at the parametric midpoint, put the left side in crv,
   // and return the right side in right_side.
-  BOOL Split(
+  ON_BOOL32 Split(
       double,    // t = curve parameter to split curve at
       ON_Curve*&, // left portion returned here (must be an ON_NurbsCurve)
       ON_Curve*&  // right portion returned here (must be an ON_NurbsCurve)
@@ -680,72 +679,72 @@ public:
   // Description:
   //   virtual ON_Curve::GetNurbForm override.
   int GetNurbForm( // returns 0: unable to create NURBS representation
-		   //            with desired accuracy.
-		   //         1: success - returned NURBS parameterization
-		   //            matches the curve's to wthe desired accuracy
-		   //         2: success - returned NURBS point locus matches
-		   //            the curve's to the desired accuracy but, on
-		   //            the interior of the curve's domain, the 
-		   //            curve's parameterization and the NURBS
-		   //            parameterization may not match to the 
-		   //            desired accuracy.
-	ON_NurbsCurve&,
-	double = 0.0,
-	const ON_Interval* = NULL     // OPTIONAL subdomain of curve
-	) const;
+                   //            with desired accuracy.
+                   //         1: success - returned NURBS parameterization
+                   //            matches the curve's to wthe desired accuracy
+                   //         2: success - returned NURBS point locus matches
+                   //            the curve's to the desired accuracy but, on
+                   //            the interior of the curve's domain, the 
+                   //            curve's parameterization and the NURBS
+                   //            parameterization may not match to the 
+                   //            desired accuracy.
+        ON_NurbsCurve&,
+        double = 0.0,
+        const ON_Interval* = NULL     // OPTIONAL subdomain of curve
+        ) const;
 
   // Description:
   //   virtual ON_Curve::HasNurbForm override.
   int HasNurbForm( // returns 0: unable to create NURBS representation
-		   //            with desired accuracy.
-		   //         1: success - returned NURBS parameterization
-		   //            matches the curve's to wthe desired accuracy
-		   //         2: success - returned NURBS point locus matches
-		   //            the curve's to the desired accuracy but, on
-		   //            the interior of the curve's domain, the 
-		   //            curve's parameterization and the NURBS
-		   //            parameterization may not match to the 
-		   //            desired accuracy.
-	) const;
+                   //            with desired accuracy.
+                   //         1: success - returned NURBS parameterization
+                   //            matches the curve's to wthe desired accuracy
+                   //         2: success - returned NURBS point locus matches
+                   //            the curve's to the desired accuracy but, on
+                   //            the interior of the curve's domain, the 
+                   //            curve's parameterization and the NURBS
+                   //            parameterization may not match to the 
+                   //            desired accuracy.
+        ) const;
 
   // Description:
   //   virtual ON_Curve::GetCurveParameterFromNurbFormParameter override
-  BOOL GetCurveParameterFromNurbFormParameter(
-	double, // nurbs_t
-	double* // curve_t
-	) const;
+  ON_BOOL32 GetCurveParameterFromNurbFormParameter(
+        double, // nurbs_t
+        double* // curve_t
+        ) const;
 
   // Description:
   //   virtual ON_Curve::GetNurbFormParameterFromCurveParameter override
-  BOOL GetNurbFormParameterFromCurveParameter(
-	double, // curve_t
-	double* // nurbs_t
-	) const;
+  ON_BOOL32 GetNurbFormParameterFromCurveParameter(
+        double, // curve_t
+        double* // nurbs_t
+        ) const;
 
 public:
 
   /////////////////////////////////////////////////////////////////
   // Interface
 
-  bool IsRational(  // TRUE if NURBS curve is rational
-	void
-	) const;
+  bool IsRational(  // true if NURBS curve is rational
+        void
+        ) const;
   
   int CVSize(       // number of doubles per control vertex 
-	void        // = IsRational() ? Dim()+1 : Dim()
-	) const;
+        void        // = IsRational() ? Dim()+1 : Dim()
+        ) const;
   
   int Order(        // order = degree + 1
-	void
-	) const;
+        void
+        ) const;
 	
   int CVCount(      // number of control vertices
-	void 
-	) const;
+        void 
+        ) const;
 
   int KnotCount(    // total number of knots in knot vector
-	void
-	) const;
+        void
+        ) const;
   
   /*
   Description:
@@ -769,65 +768,65 @@ public:
     ON_NurbsCurve::Weight
   */
   double* CV(
-	int cv_index
-	) const;
+        int cv_index
+        ) const;
 
   /*
   Description:
     Returns the style of control vertices in the m_cv array.
   Returns:
     @untitled table
-    ON::not_rational                m_is_rat is FALSE
-    ON::homogeneous_rational        m_is_rat is TRUE
+    ON::not_rational                m_is_rat is false
+    ON::homogeneous_rational        m_is_rat is true
   */
   ON::point_style CVStyle() const;
 
 
   double Weight(        // get value of control vertex weight
-	int             // CV index ( >= 0 and < CVCount() )
-	) const;
+        int             // CV index ( >= 0 and < CVCount() )
+        ) const;
 
-  BOOL SetWeight(      // get value of control vertex weight
-	int,            // CV index ( >= 0 and < CVCount() )
-	double
-	);
+  ON_BOOL32 SetWeight(      // get value of control vertex weight
+        int,            // CV index ( >= 0 and < CVCount() )
+        double
+        );
 
-  BOOL SetCV(              // set a single control vertex
-	int,              // CV index ( >= 0 and < CVCount() )
-	ON::point_style, // style of input point
-	const double*     // value of control vertex
-	);
+  ON_BOOL32 SetCV(              // set a single control vertex
+        int,              // CV index ( >= 0 and < CVCount() )
+        ON::point_style, // style of input point
+        const double*     // value of control vertex
+        );
 
-  BOOL SetCV(               // set a single control vertex
-	int,               // CV index ( >= 0 and < CVCount() )
-	const ON_3dPoint& // value of control vertex
-			   // If NURBS is rational, weight
-			   // will be set to 1.
-	);
+  ON_BOOL32 SetCV(               // set a single control vertex
+        int,               // CV index ( >= 0 and < CVCount() )
+        const ON_3dPoint& // value of control vertex
+                           // If NURBS is rational, weight
+                           // will be set to 1.
+        );
 
-  BOOL SetCV(              // set a single control vertex
-	int,              // CV index ( >= 0 and < CVCount() )
-	const ON_4dPoint& // value of control vertex
-			  // If NURBS is not rational, euclidean
-			  // location of homogeneous point will
-			  // be used.
-	);
+  ON_BOOL32 SetCV(              // set a single control vertex
+        int,              // CV index ( >= 0 and < CVCount() )
+        const ON_4dPoint& // value of control vertex
+                          // If NURBS is not rational, euclidean
+                          // location of homogeneous point will
+                          // be used.
+        );
 
-  BOOL GetCV(              // get a single control vertex
-	int,              // CV index ( >= 0 and < CVCount() )
-	ON::point_style, // style to use for output point
-	double*           // array of length >= CVSize()
-	) const;
+  ON_BOOL32 GetCV(              // get a single control vertex
+        int,              // CV index ( >= 0 and < CVCount() )
+        ON::point_style, // style to use for output point
+        double*           // array of length >= CVSize()
+        ) const;
 
-  BOOL GetCV(              // get a single control vertex
-	int,              // CV index ( >= 0 and < CVCount() )
-	ON_3dPoint&      // gets euclidean cv when NURBS is rational
-	) const;
+  ON_BOOL32 GetCV(              // get a single control vertex
+        int,              // CV index ( >= 0 and < CVCount() )
+        ON_3dPoint&      // gets euclidean cv when NURBS is rational
+        ) const;
 
-  BOOL GetCV(              // get a single control vertex
-	int,              // CV index ( >= 0 and < CVCount() )
-	ON_4dPoint&      // gets homogeneous cv
-	) const;
+  ON_BOOL32 GetCV(              // get a single control vertex
+        int,              // CV index ( >= 0 and < CVCount() )
+        ON_4dPoint&      // gets homogeneous cv
+        ) const;
 
   // Description:
   //   Set knot value.
@@ -838,13 +837,13 @@ public:
   //   m_knot[] must exist.  Use ReserveKnotCapacity to
   //   allocate m_knot[].
   // Returns:
-  //   TRUE if successful
+  //   true if successful
   // See Also:
   //   ON_NurbsCurve::ReserveKnotCapacity
   bool SetKnot(
-	int knot_index,
-	double knot_value
-	);
+        int knot_index,
+        double knot_value
+        );
 
   // Description:
   //   Get knot value.
@@ -855,8 +854,8 @@ public:
   // See Also:
   //   ON_NurbsCurve::SetKnot, ON_NurbsCurve::KnotMultiplicity
   double Knot(
-	int knot_index
-	) const;
+        int knot_index
+        ) const;
 
   // Description:
   //   Get knot multiplicity.
@@ -868,8 +867,8 @@ public:
   //   ON_NurbsCurve::SetKnot, ON_NurbsCurve::Knot, 
   //   ON_NurbsCurve::InsertKnot
   int KnotMultiplicity(
-	int knot_index
-	) const;
+        int knot_index
+        ) const;
 
   // Description:
   //   Get pointer to knot vector array.
@@ -887,7 +886,7 @@ public:
   // Parameters:
   //   delta - [in] (>0.0) knot spacing.
   // Returns:
-  //   TRUE if successful.
+  //   true if successful.
   // Remarks:
   //   Allocates m_knot[] if it is not big enough.
   // See Also:
@@ -903,7 +902,7 @@ public:
   // Parameters:
   //   delta - [in] (>0.0) knot spacing.
   // Returns:
-  //   TRUE if successful.
+  //   true if successful.
   // Remarks:
   //   Allocates m_knot[] if it is not big enough.
   // See Also:
@@ -913,20 +912,20 @@ public:
     );
 
   bool IsClamped( // determine if knot vector is clamped
-	int = 2 // end to check: 0 = start, 1 = end, 2 = start and end
-	) const;
+        int = 2 // end to check: 0 = start, 1 = end, 2 = start and end
+        ) const;
   
   double SuperfluousKnot(
-	   int // 0 = start, 1 = end
-	   ) const;
+           int // 0 = start, 1 = end
+           ) const;
 
   double GrevilleAbcissa(
-	   int   // index (0 <= index < CVCount(dir)
-	   ) const;
+           int   // index (0 <= index < CVCount(dir)
+           ) const;
 
   bool GetGrevilleAbcissae( // see ON_GetGrevilleAbcissae() for details
-	   double*   // g[cv_count]
-	   ) const;
+           double*   // g[cv_count]
+           ) const;
 
   bool ZeroCVs(); // zeros control vertices and, if rational, sets weights to 1
 
@@ -935,10 +934,10 @@ public:
   // Parameters:
   //   end - [in] 0 = clamp start, 1 = clamp end, 2 = clamp start and end
   // Returns:
-  //   TRUE if successful
+  //   true if successful
   bool ClampEnd(
-	    int end
-	    );
+            int end
+            );
 
   // Description:
   //   Insert a knot and update cv locations.
@@ -948,23 +947,23 @@ public:
   // Remarks:
   //   Does not change parameterization or locus of curve.
   // Returns:
-  //   TRUE if successful
+  //   true if successful
   bool InsertKnot( 
-	    double knot_value,
-	    int knot_multiplicity
-	    );
+            double knot_value,
+            int knot_multiplicity
+            );
 
   bool MakeRational();
 
   bool MakeNonRational();
 
   bool IncreaseDegree(
-	  int desired_degree
-	  );
+          int desired_degree
+          );
 
   bool ChangeDimension(
-	  int desired_dimension
-	  );
+          int desired_dimension
+          );
 
   bool Append( const ON_NurbsCurve& );
 
@@ -985,14 +984,14 @@ public:
   // Converts a span of the NURBS curve into a bezier.  If
   // the span is empty 
   // (m_knot[span_index+m_order-2] == m_knot[span_index+m_order-1]),
-  // then FALSE is returned.
+  // then false is returned.
   bool ConvertSpanToBezier(
       int,            // span_index (0 <= span_index <= m_cv_count-m_order)
       ON_BezierCurve& // bezier returned here
       ) const;
 
   ////////
-  // Returns TRUE if the NURBS curve has bezier spans 
+  // Returns true if the NURBS curve has bezier spans 
   // (all distinct knots have multiplitity = degree)
   bool HasBezierSpans() const;
 
@@ -1008,24 +1007,51 @@ public:
     true if successful.
   */      
   bool MakePiecewiseBezier( 
-	bool bSetEndWeightsToOne = false
-	);
-  bool MakePiecewiseBezier(ON_BezierCurve* cache = NULL,
-			   bool bSetEndWeightsToOne = false) const;
+        bool bSetEndWeightsToOne = false
+        );
 
-  /// virtual ON_Curve override
-  int NumIntersectionsWith(const ON_Line& segment) const;
+  /*
+  Description:
+    Use a combination of scaling and reparameterization to change
+    the end weights to the specified values.
+  Parameters:
+    w0 - [in] weight for first cv
+    w1 - [in] weight for last cv
+  Returns:
+    true if successful.
+  See Also:
+    ON_ChangeRationalNurbsCurveEndWeights
+  Remarks:
+    The domain, eucleanean locations of the control points,
+    and locus of the curve do not change, but the weights,
+    homogeneous cv values and internal knot values may change.
+    If w0 and w1 are 1 and the curve is not rational, the 
+    curve is not changed.
+  */
+  bool ChangeEndWeights( double w0, double w1 );
 
-  // so it can be done in prep!
-  void CacheBezierSpans() const;
+  /*
+  Description:
+    Use a linear fractional transformation to reparameterize 
+    the NURBS curve.  This does not change the curve's domain.
+  Parameters:
+    c - [in]
+      reparameterization constant (generally speaking, c should be > 0).
+      The control points and knots are adjusted so that 
+      output_nurbs(t) = input_nurbs(lambda(t)), where
+      lambda(t) = c*t/( (c-1)*t + 1 ).
+      Note that lambda(0) = 0, lambda(1) = 1, lambda'(t) > 0, 
+      lambda'(0) = c and lambda'(1) = 1/c.
+  Returns:
+    true if successful.  
+  Remarks:
+    The cv and knot values are values are changed so that
+    output_nurbs(t) = input_nurbs(lambda(t)).
+  See Also:
+    ON_ReparameterizeRationalNurbsCurve
+  */
+  bool Reparameterize( double c );
 
-  int BezierSpanCount() const;
-  bool CopyBezierSpan(int span, ON_BezierCurve& b);
-  const ON_BezierCurve* BezierSpan(int span) const;
-
-private:
-  // XXX: ensure the cache is reset if the curve is modified!
-  mutable ON_BezierCurve* m_cached_bez;
 
 
   /////////////////////////////////////////////////////////////////
@@ -1042,9 +1068,9 @@ public:
   int     m_dim;            // (>=1)
 
   int     m_is_rat;         // 1 for rational B-splines. (Rational control
-			    // vertices use homogeneous form.)
-			    // 0 for non-rational B-splines. (Control
-			    // verticies do not have a weight coordinate.)
+                            // vertices use homogeneous form.)
+                            // 0 for non-rational B-splines. (Control
+                            // verticies do not have a weight coordinate.)
 
   int     m_order;          // order = degree+1 (>=2)
 
@@ -1053,44 +1079,43 @@ public:
   // knot vector memory
 
   int     m_knot_capacity;  // If m_knot_capacity > 0, then m_knot[]
-			    // is an array of at least m_knot_capacity
-			    // doubles whose memory is managed by the
-			    // ON_NurbsCurve class using rhmalloc(),
-			    // onrealloc(), and rhfree().
-			    // If m_knot_capacity is 0 and m_knot is
-			    // not NULL, then  m_knot[] is assumed to
-			    // be big enough for any requested operation
-			    // and m_knot[] is not deleted by the
-			    // destructor.
+                            // is an array of at least m_knot_capacity
+                            // doubles whose memory is managed by the
+                            // ON_NurbsCurve class using rhmalloc(),
+                            // onrealloc(), and rhfree().
+                            // If m_knot_capacity is 0 and m_knot is
+                            // not NULL, then  m_knot[] is assumed to
+                            // be big enough for any requested operation
+                            // and m_knot[] is not deleted by the
+                            // destructor.
 
   double* m_knot;           // Knot vector. ( The knot vector has length
-			    // m_order+m_cv_count-2. )
+                            // m_order+m_cv_count-2. )
   
   // control vertex net memory
 
   int     m_cv_stride;      // The pointer to start of "CV[i]" is
-			    //   m_cv + i*m_cv_stride.
+                            //   m_cv + i*m_cv_stride.
 
   int     m_cv_capacity;    // If m_cv_capacity > 0, then m_cv[] is an array
-			    // of at least m_cv_capacity doubles whose
-			    // memory is managed by the ON_NurbsCurve
-			    // class using rhmalloc(), onrealloc(), and rhfree().
-			    // If m_cv_capacity is 0 and m_cv is not
-			    // NULL, then m_cv[] is assumed to be big enough
-			    // for any requested operation and m_cv[] is not
-			    // deleted by the destructor.
+                            // of at least m_cv_capacity doubles whose
+                            // memory is managed by the ON_NurbsCurve
+                            // class using rhmalloc(), onrealloc(), and rhfree().
+                            // If m_cv_capacity is 0 and m_cv is not
+                            // NULL, then m_cv[] is assumed to be big enough
+                            // for any requested operation and m_cv[] is not
+                            // deleted by the destructor.
 
   double* m_cv;             // Control points.
-			    // If m_is_rat is FALSE, then control point is
-			    //
-			    //          ( CV(i)[0], ..., CV(i)[m_dim-1] ).
-			    //
-			    // If m_is_rat is TRUE, then the control point
-			    // is stored in HOMOGENEOUS form and is
-			    //
-			    //           [ CV(i)[0], ..., CV(i)[m_dim] ].
-			    //
+                            // If m_is_rat is false, then control point is
+                            //
+                            //          ( CV(i)[0], ..., CV(i)[m_dim-1] ).
+                            //
+                            // If m_is_rat is true, then the control point
+                            // is stored in HOMOGENEOUS form and is
+                            //
+                            //           [ CV(i)[0], ..., CV(i)[m_dim] ].
+                            //
 };
-
 
 #endif

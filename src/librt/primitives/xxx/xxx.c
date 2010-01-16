@@ -1,7 +1,7 @@
 /*                           X X X . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2009 United States Government as represented by
+ * Copyright (c) 1990-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -88,12 +88,15 @@ int
 rt_xxx_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_xxx_internal *xxx_ip;
-    register struct xxx_specific *xxx;
-    const struct bn_tol *tol = &rtip->rti_tol;
 
+    if (stp) RT_CK_SOLTAB(stp);
     RT_CK_DB_INTERNAL(ip);
+    if (rtip) RT_CK_RTI(rtip);
+
     xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
     RT_XXX_CK_MAGIC(xxx_ip);
+
+    return 0;
 }
 
 
@@ -103,8 +106,12 @@ rt_xxx_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 void
 rt_xxx_print(const struct soltab *stp)
 {
-    register const struct xxx_specific *xxx =
-	(struct xxx_specific *)stp->st_specific;
+    const struct xxx_specific *xxx;
+
+    if (!stp) return;
+    xxx = (struct xxx_specific *)stp->st_specific;
+    if (!xxx) return;
+    RT_CK_SOLTAB(stp);
 }
 
 
@@ -121,10 +128,15 @@ rt_xxx_print(const struct soltab *stp)
 int
 rt_xxx_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
-    register struct xxx_specific *xxx =
-	(struct xxx_specific *)stp->st_specific;
-    register struct seg *segp;
-    const struct bn_tol *tol = &ap->a_rt_i->rti_tol;
+    struct xxx_specific *xxx;
+
+    if (!stp) return -1;
+    RT_CK_SOLTAB(stp);
+    xxx = (struct xxx_specific *)stp->st_specific;
+    if (!xxx) return -1;
+    if (rp) RT_CK_RAY(rp);
+    if (ap) RT_CK_APPLICATION(ap);
+    if (!seghead) return -1;
 
 /* the EXAMPLE_NEW_SEGMENT block shows how one might add a new result
  * if the ray did hit the primitive.  the segment values would need to
@@ -150,25 +162,6 @@ rt_xxx_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 }
 
 
-#define RT_XXX_SEG_MISS(SEG)	(SEG).seg_stp=RT_SOLTAB_NULL
-
-
-/**
- * R T _ X X X _ V S H O T
- *
- * Vectorized version.
- */
-void
-rt_xxx_vshot(struct soltab *stp[],	/* An array of solid pointers */
-	     struct xray *rp[],		/* An array of ray pointers */
-	     struct seg segp[],		/* array of segs (results returned) */
-	     int n,			/* Number of ray/object pairs */
-	     struct application *ap)
-{
-    rt_vstub(stp, rp, segp, n, ap);
-}
-
-
 /**
  * R T _ X X X _ N O R M
  *
@@ -177,8 +170,12 @@ rt_xxx_vshot(struct soltab *stp[],	/* An array of solid pointers */
 void
 rt_xxx_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
-    register struct xxx_specific *xxx =
-	(struct xxx_specific *)stp->st_specific;
+    struct xxx_specific *xxx;
+
+    if (!stp) return;
+    xxx = (struct xxx_specific *)stp->st_specific;
+    if (!xxx) return;
+    RT_CK_SOLTAB(stp);
 
     VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir);
 }
@@ -192,8 +189,12 @@ rt_xxx_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 void
 rt_xxx_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
-    register struct xxx_specific *xxx =
-	(struct xxx_specific *)stp->st_specific;
+    struct xxx_specific *xxx;
+
+    if (!stp) return;
+    xxx = (struct xxx_specific *)stp->st_specific;
+    if (!xxx) return;
+    RT_CK_SOLTAB(stp);
 
     cvp->crv_c1 = cvp->crv_c2 = 0;
 
@@ -213,8 +214,15 @@ rt_xxx_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 void
 rt_xxx_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
-    register struct xxx_specific *xxx =
-	(struct xxx_specific *)stp->st_specific;
+    struct xxx_specific *xxx;
+
+    if (ap) RT_CK_APPLICATION(ap);
+    if (!stp || !uvp) return;
+    RT_CK_SOLTAB(stp);
+    if (hitp) RT_CK_HIT(hitp);
+
+    xxx = (struct xxx_specific *)stp->st_specific;
+    if (!xxx) return;
 }
 
 
@@ -224,20 +232,14 @@ rt_xxx_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 void
 rt_xxx_free(struct soltab *stp)
 {
-    register struct xxx_specific *xxx =
-	(struct xxx_specific *)stp->st_specific;
+    struct xxx_specific *xxx;
+
+    if (!stp) return;
+    RT_CK_SOLTAB(stp);
+    xxx = (struct xxx_specific *)stp->st_specific;
+    if (!xxx) return;
 
     bu_free((char *)xxx, "xxx_specific");
-}
-
-
-/**
- * R T _ X X X _ C L A S S
- */
-int
-rt_xxx_class(const struct soltab *stp, const vect_t min, const vect_t max, const struct bn_tol *tol)
-{
-    return RT_CLASSIFY_UNIMPLEMENTED;
 }
 
 
@@ -245,10 +247,11 @@ rt_xxx_class(const struct soltab *stp, const vect_t min, const vect_t max, const
  * R T _ X X X _ P L O T
  */
 int
-rt_xxx_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_xxx_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
 {
     struct rt_xxx_internal *xxx_ip;
 
+    if (!vhead) return -1;
     RT_CK_DB_INTERNAL(ip);
     xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
     RT_XXX_CK_MAGIC(xxx_ip);
@@ -265,10 +268,12 @@ rt_xxx_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_xxx_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_xxx_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
 {
     struct rt_xxx_internal *xxx_ip;
 
+    if (r) NMG_CK_REGION(*r);
+    if (m) NMG_CK_MODEL(m);
     RT_CK_DB_INTERNAL(ip);
     xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
     RT_XXX_CK_MAGIC(xxx_ip);
@@ -292,8 +297,9 @@ rt_xxx_import5(struct rt_db_internal *ip, const struct bu_external *ep, const ma
     struct rt_xxx_internal *xxx_ip;
     fastf_t vv[ELEMENTS_PER_VECT*1];
 
-    RT_CK_DB_INTERNAL(ip)
-	BU_CK_EXTERNAL(ep);
+    RT_CK_DB_INTERNAL(ip);
+    BU_CK_EXTERNAL(ep);
+    if (dbip) RT_CK_DBI(dbip);
 
     BU_ASSERT_LONG(ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * 3*4);
 
@@ -338,6 +344,7 @@ rt_xxx_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     if (ip->idb_type != ID_XXX) return(-1);
     xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
     RT_XXX_CK_MAGIC(xxx_ip);
+    if (dbip) RT_CK_DBI(dbip);
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT;
@@ -367,12 +374,15 @@ rt_xxx_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 int
 rt_xxx_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
-    register struct rt_xxx_internal *xxx_ip =
+    struct rt_xxx_internal *xxx_ip =
 	(struct rt_xxx_internal *)ip->idb_ptr;
     char buf[256];
 
     RT_XXX_CK_MAGIC(xxx_ip);
     bu_vls_strcat(str, "truncated general xxx (XXX)\n");
+
+    if (!verbose)
+	return 0;
 
     sprintf(buf, "\tV (%g, %g, %g)\n",
 	    INTCLAMP(xxx_ip->v[X] * mm2local),
@@ -380,7 +390,7 @@ rt_xxx_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 	    INTCLAMP(xxx_ip->v[Z] * mm2local));
     bu_vls_strcat(str, buf);
 
-    return(0);
+    return 0;
 }
 
 
@@ -391,15 +401,11 @@ rt_xxx_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
  * solid.
  */
 void
-rt_xxx_ifree(struct rt_db_internal *ip, struct resource *resp)
+rt_xxx_ifree(struct rt_db_internal *ip)
 {
-    register struct rt_xxx_internal *xxx_ip;
+    struct rt_xxx_internal *xxx_ip;
 
     RT_CK_DB_INTERNAL(ip);
-
-    if (!resp) {
-	resp = &rt_uniresource;
-    }
 
     xxx_ip = (struct rt_xxx_internal *)ip->idb_ptr;
     RT_XXX_CK_MAGIC(xxx_ip);
@@ -407,19 +413,6 @@ rt_xxx_ifree(struct rt_db_internal *ip, struct resource *resp)
 
     bu_free((char *)xxx_ip, "xxx ifree");
     ip->idb_ptr = GENPTR_NULL;	/* sanity */
-}
-
-
-/**
- * R T _ X X X _ X F O R M
- *
- * Create transformed version of internal form.  Free *ip if
- * requested.  Implement this if it's faster than doing an
- * export/import4 cycle.
- */
-int
-rt_xxx_xform(struct rt_db_internal *op, const mat_t mat, struct rt_db_internal *ip, int free)
-{
 }
 
 

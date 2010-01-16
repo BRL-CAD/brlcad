@@ -1,7 +1,7 @@
 /*                         Z A P . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -44,9 +44,9 @@
 int
 ged_zap(struct ged *gedp, int argc, const char *argv[])
 {
-    register struct solid *sp;
-    register struct solid *nsp;
-    register struct ged_display_list *gdlp;
+    struct solid *sp;
+    struct solid *nsp;
+    struct ged_display_list *gdlp;
     struct directory *dp;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);

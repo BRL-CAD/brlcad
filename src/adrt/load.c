@@ -1,7 +1,7 @@
 /*                         L O A D . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2009 United States Government as represented by
+ * Copyright (c) 2007-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -59,6 +59,8 @@ slave_load_free ()
 int
 slave_load_region (tie_t *tie, char *data)
 {
+    tie = NULL;
+    data = NULL;
     /*
      * data contains a region name and the triangle soup.
      * Meant to be called several times, with slave_load_kdtree called at the
@@ -70,6 +72,8 @@ slave_load_region (tie_t *tie, char *data)
 int
 slave_load_kdtree (tie_t *tie, char *data)
 {
+    tie = NULL;
+    data = NULL;
     /* after slave_load_region calls have filled in all the geometry, this loads
      * a tree or requests a tree generation if data is NULL
      */
@@ -89,7 +93,8 @@ slave_load (tie_t *tie, void *data, uint32_t dlen)
 	case ADRT_LOAD_FORMAT_G:	/* given a filename and 1 toplevel region, recursively load from a .g file */
 	    {
 		const char *db = NULL; /* FIXME */
-		return load_g ( tie, db, (int *)(meh + 1), (char *)(meh+1+sizeof(int)));
+		const char *ugh[2] = { (char *)(meh + 1 + sizeof(int)), NULL };
+		return load_g ( tie, db, *(int *)(meh + 1), ugh);
 	    }
 	case ADRT_LOAD_FORMAT_REG:	/* special magic for catching data on the pipe */
 	    return slave_load_region (tie, meh + 1);

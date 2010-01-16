@@ -1,7 +1,7 @@
 /*                       F B C O L O R . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2009 United States Government as represented by
+ * Copyright (c) 1986-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -48,8 +48,8 @@ static FBIO	*fbp;
 static int	scr_height;
 static int	scr_width;
 
-void	new_rgb(void), rgbhsv(register int *rgb, register int *hsv), hsvrgb(register int *hsv, register int *rgb);
-int	pars_Argv(int argc, register char **argv);
+void	new_rgb(void), rgbhsv(int *rgb, int *hsv), hsvrgb(int *hsv, int *rgb);
+int	pars_Argv(int argc, char **argv);
 int	doKeyPad(void);
 
 static char usage[] = "\
@@ -60,7 +60,7 @@ Usage: fbcolor [-h] [-F framebuffer]\n\
 int
 main(int argc, char **argv)
 {
-    register int i;
+    int i;
 
     if ( ! pars_Argv( argc, argv ) )  {
 	(void)fputs(usage, stderr);
@@ -176,7 +176,7 @@ q	quit\r\n\
 int
 doKeyPad(void)
 {
-    register int ch;
+    int ch;
 
     if ( (ch = getchar()) == EOF )
 	return	0;		/* done */
@@ -261,9 +261,9 @@ new_rgb(void) {
 /*	p a r s _ A r g v ( )
  */
 int
-pars_Argv(int argc, register char **argv)
+pars_Argv(int argc, char **argv)
 {
-    register int	c;
+    int	c;
     while ( (c = bu_getopt( argc, argv, "F:s:S:w:W:n:N:h" )) != EOF )  {
 	switch ( c )  {
 	    case 'F':
@@ -296,7 +296,7 @@ pars_Argv(int argc, register char **argv)
  * convert red green blue to hue saturation value
  */
 void
-rgbhsv(register int *rgb, register int *hsv)
+rgbhsv(int *rgb, int *hsv)
 {
     int	s, v;
     int	r, g, b;
@@ -351,7 +351,7 @@ rgbhsv(register int *rgb, register int *hsv)
 double modf(double, double *);
 
 void
-hsvrgb(register int *hsv, register int *rgb)
+hsvrgb(int *hsv, int *rgb)
 {
     int r, g, b, m, n, k;
     double h, s, v, foo;

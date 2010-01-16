@@ -1,7 +1,7 @@
 /*                        G _ D I F F . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2009 United States Government as represented by
+ * Copyright (c) 1998-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -50,6 +50,7 @@
 #include "wdb.h"
 #include "mater.h"
 #include "ged.h"
+#include "tclcad.h"
 
 
 static struct mater *mater_hd1 = MATER_NULL;
@@ -294,7 +295,7 @@ compare_values(int type, Tcl_Obj *val1, Tcl_Obj *val2)
 	    a = atof(str1);
 	    b = atof(str2);
 
-	    if (a != b) {
+	    if (!NEAR_ZERO(a - b, SMALL_FASTF)) {
 		return 1;
 	    }
 	} else {
@@ -525,7 +526,7 @@ do_compare(int type, struct bu_vls *vls, Tcl_Obj *obj1, Tcl_Obj *obj2, char *obj
 }
 
 int
-compare_tcl_solids(char *str1, Tcl_Obj *obj1, struct directory *dp1, char *str2, Tcl_Obj *obj2, struct directory *dp2)
+compare_tcl_solids(char *str1, Tcl_Obj *obj1, struct directory *dp1, char *str2, Tcl_Obj *obj2)
 {
     char *c1, *c2;
     struct bu_vls adjust;
@@ -568,7 +569,7 @@ compare_tcl_solids(char *str1, Tcl_Obj *obj1, struct directory *dp1, char *str2,
 }
 
 int
-compare_tcl_combs(Tcl_Obj *obj1, struct directory *dp1, Tcl_Obj *obj2, struct directory *dp2)
+compare_tcl_combs(Tcl_Obj *obj1, struct directory *dp1, Tcl_Obj *obj2)
 {
     int junk;
     struct bu_vls adjust;
@@ -666,7 +667,7 @@ verify_region_attrs(struct directory *dp, struct db_i *dbip, Tcl_Obj *obj)
 	    }
 	}
     }
-    rt_db_free_internal(&intern, &rt_uniresource);
+    rt_db_free_internal(&intern);
 }
 
 static char *region_attrs[] = { "region",
@@ -850,7 +851,7 @@ diff_objs(struct rt_wdb *wdb1, struct rt_wdb *wdb2)
 	/* got TCL versions of both */
 	if ((dp1->d_flags & DIR_SOLID) && (dp2->d_flags & DIR_SOLID)) {
 	    /* both are solids */
-	    has_diff += compare_tcl_solids(str1, obj1, dp1, str2, obj2, dp2);
+	    has_diff += compare_tcl_solids(str1, obj1, dp1, str2, obj2);
 	    if (pre_5_vers != 2) {
 		has_diff += compare_attrs(dp1, dp2);
 	    }
@@ -859,7 +860,7 @@ diff_objs(struct rt_wdb *wdb1, struct rt_wdb *wdb2)
 
 	if ((dp1->d_flags & DIR_COMB) && (dp2->d_flags & DIR_COMB)) {
 	    /* both are combinations */
-	    has_diff += compare_tcl_combs(obj1, dp1, obj2, dp2);
+	    has_diff += compare_tcl_combs(obj1, dp1, obj2);
 	    if (pre_5_vers != 2) {
 		has_diff += compare_attrs(dp1, dp2);
 	    }
@@ -975,7 +976,7 @@ main(int argc, char **argv)
     tclcad_tcl_library(interp);
 
     if (Tcl_Init(interp) == TCL_ERROR) {
-	bu_exit(1, "Tcl_Init error %s\n", Tcl_GetStringResult(interp));
+	bu_log("Tcl_Init failure:\n%s\n", Tcl_GetStringResult(interp));
     }
 
     Rt_Init(interp);
@@ -1070,7 +1071,7 @@ main(int argc, char **argv)
     }
 
     /* and units */
-    if (dbip1->dbi_local2base != dbip2->dbi_local2base) {
+    if (!NEAR_ZERO(dbip1->dbi_local2base - dbip2->dbi_local2base, SMALL_FASTF)) {
 	different = 1;
 	if (mode == HUMAN) {
 	    printf("Units changed from %s to %s\n", bu_units_string(dbip1->dbi_local2base), bu_units_string(dbip2->dbi_local2base));

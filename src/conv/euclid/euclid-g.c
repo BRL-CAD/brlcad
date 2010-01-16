@@ -1,7 +1,7 @@
 /*                      E U C L I D - G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -128,7 +128,7 @@ main(int argc, char **argv)
     FILE		*fpin;
     struct rt_wdb	*fpout;
     char		title[BRLCAD_TITLE_LENGTH];	/* BRL-CAD database title */
-    register int	c;
+    int	c;
     int i;
 
     fpin = stdin;

@@ -1,7 +1,7 @@
 /*                           R E G . C
  * BRL-CAD
  *
- * Copyright (c) 1987-2009 United States Government as represented by
+ * Copyright (c) 1987-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,11 +24,6 @@
  *  This module contains routines to create combinations, and regions.
  *
  *  It is expected that this library will grow as experience is gained.
- *
- *  Authors -
- *	Michael John Muuss
- *	Paul R. Stay
- *	Bill Mermagen Jr.
  *
  */
 
@@ -56,7 +51,7 @@
 void
 mk_tree_pure( struct rt_comb_internal *comb, struct bu_list *member_hd )
 {
-    register struct wmember *wp;
+    struct wmember *wp;
 
     for ( BU_LIST_FOR( wp, wmember, member_hd ) )  {
 	union tree	*leafp, *nodep;
@@ -209,7 +204,7 @@ mk_addmember(
     mat_t mat,
     int		op)
 {
-    register struct wmember *wp;
+    struct wmember *wp;
 
     BU_GETSTRUCT( wp, wmember );
     wp->l.magic = WMEMBER_MAGIC;
@@ -243,7 +238,7 @@ mk_addmember(
 void
 mk_freemembers( struct bu_list *headp )
 {
-    register struct wmember *wp;
+    struct wmember *wp;
 
     while ( BU_LIST_WHILE( wp, wmember, headp ) )  {
 	WDB_CK_WMEMBER(wp);

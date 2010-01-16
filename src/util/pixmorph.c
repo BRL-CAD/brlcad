@@ -1,7 +1,7 @@
 /*                      P I X M O R P H . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2009 United States Government as represented by
+ * Copyright (c) 1996-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -106,7 +106,7 @@ struct lineseg {
 void
 cross_dissolve(unsigned char *morph, unsigned char *wa, unsigned char *wb, int dissolvefrac, long int numpixels)
 {
-    register int i;
+    int i;
 
     for (i = 0; i < numpixels; i++, morph += 3, wa += 3, wb += 3) {
 	morph[RED] = CBLEND(wa[RED], wb[RED], dissolvefrac);
@@ -131,7 +131,7 @@ warp_image(unsigned char *dest, unsigned char *src,
 	   long int numlines,
 	   double a, double b, double p)
 {
-    register long int i, j, k, width3;
+    long int i, j, k, width3;
     struct lineseg *tlines;
 
     width3 = width*3;
@@ -148,9 +148,9 @@ warp_image(unsigned char *dest, unsigned char *src,
 
 	    weightsum = dsum_x = dsum_y = 0.0;
 	    for (k = 0, tlines = lines; k < numlines; k++, tlines++) {
-		register double x_minus_p_x, x_minus_p_y, u, v, x, y, weight,
+		double x_minus_p_x, x_minus_p_y, u, v, x, y, weight,
 		    dist, tmpx, tmpy;
-		register long int l2;
+		long int l2;
 
 		/* This is a fairly straightforward implementation of the
 		   algorithm in Beier and Neely's paper.
@@ -274,7 +274,7 @@ lines_read(FILE *fp, long int numlines,
 	   long int width, long int height,
 	   double warpfrac, double pb)
 {
-    register long int i, j;
+    long int i, j;
     double x1, y1, x2, y2, x3, y3, x4, y4;
 
     for (i = 0; i < numlines; i++, lines++) {
@@ -345,7 +345,7 @@ get_args(int argc, char **argv, char **picAnamep, char **picBnamep, char **lines
 	 double *warpfracp, int *dissolvefracp, long int *autosizep,
 	 long int *widthp, long int *heightp)
 {
-    register long int c;
+    long int c;
 
     *autosizep = 1;
     *widthp = *heightp = 0;
@@ -401,7 +401,7 @@ main(int argc, char **argv)
     double a, b, p;
     long int numlines;
     struct lineseg *lines;
-    register long int i;
+    long int i;
     long int autosize;
 
     autosize = 1L;

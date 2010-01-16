@@ -1,7 +1,7 @@
 /*                 AreaSiUnit.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,9 +38,9 @@ AreaSiUnit::AreaSiUnit() {
 	id = 0;
 }
 
-AreaSiUnit::AreaSiUnit(STEPWrapper *sw,int STEPid) {
+AreaSiUnit::AreaSiUnit(STEPWrapper *sw,int step_id){
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 AreaSiUnit::~AreaSiUnit() {
@@ -53,11 +53,11 @@ AreaSiUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 	// load base class attributes
 	if ( !AreaUnit::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::Unit." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 		return false;
 	}
 	if ( !SiUnit::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::Unit." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
 		return false;
 	}
 
@@ -66,10 +66,10 @@ AreaSiUnit::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 void
 AreaSiUnit::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	AreaUnit::Print(level+1);
 	SiUnit::Print(level+1);
 
@@ -83,7 +83,7 @@ AreaSiUnit::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

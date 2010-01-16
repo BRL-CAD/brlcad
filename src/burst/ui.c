@@ -1,7 +1,7 @@
 /*                            U I . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -379,11 +379,11 @@ static HmMenu *
 addMenu( tp )
     Ftable *tp;
 {
-    register HmMenu	*menup;
-    register HmItem *itemp;
-    register Ftable	*ftp = tp;
-    register int cnt;
-    register boolean done = 0;
+    HmMenu	*menup;
+    HmItem *itemp;
+    Ftable	*ftp = tp;
+    int cnt;
+    boolean done = 0;
     if ( ftp == NULL )
 	return	NULL;
     for ( cnt = 0; ftp->name != NULL; ftp++ )
@@ -435,8 +435,8 @@ getInput( ip )
 {
     if ( ! batchmode )
     {
-	register int c;
-	register char *p;
+	int c;
+	char *p;
 	char *defaultp = ip->buffer;
 	if ( *defaultp == NUL )
 	    defaultp = "no default";
@@ -473,7 +473,7 @@ getInput( ip )
 */
 static void
 initCmds( tp )
-    register Ftable *tp;
+    Ftable *tp;
 {
     for (; tp->name != NULL; tp++ )
     {
@@ -492,7 +492,7 @@ initCmds( tp )
 */
 static void
 initMenus( tp )
-    register Ftable	*tp;
+    Ftable	*tp;
 {
     mainhmenu = addMenu( tp );
     return;
@@ -551,7 +551,7 @@ MattackDir( itemp )
 	    { "Attack azimuth", "", "%lf", "degrees" },
 	    { "Attack elevation", "", "%lf", "degrees" },
 	};
-    register Input *ip = input;
+    Input *ip = input;
     GetVar( viewazim, ip, DEGRAD );
     GetVar( viewelev, ip, DEGRAD );
     (void) snprintf( scrbuf, LNBUFSZ, "%s\t%g %g",
@@ -573,7 +573,7 @@ MautoBurst( itemp )
 	    { "Burst along shotline", "n", "%d", "y or n" },
 	    { "Require burst air", "y", "%d", "y or n" }
 	};
-    register Input *ip = input;
+    Input *ip = input;
     GetBool( shotburst, ip );
     if ( shotburst )
     {
@@ -603,7 +603,7 @@ MburstAir( itemp )
 	{
 	    { "Name of burst air file", "", "%s", 0 },
 	};
-    register Input *ip = input;
+    Input *ip = input;
     FILE *airfp;
     if ( getInput( ip ) )
 	bu_strlcpy( airfile, ip->buffer, LNBUFSZ );
@@ -637,7 +637,7 @@ MburstArmor( itemp )
 	{
 	    { "Name of burst armor file", "", "%s", 0 },
 	};
-    register Input *ip = input;
+    Input *ip = input;
     FILE *armorfp;
     if ( getInput( ip ) )
 	bu_strlcpy( armorfile, ip->buffer, LNBUFSZ );
@@ -671,7 +671,7 @@ MburstDist( itemp )
 	{
 	    { "Burst distance", "", "%lf", 0 },
 	};
-    register Input *ip = input;
+    Input *ip = input;
     GetVar( bdist, ip, unitconv );
     (void) snprintf( scrbuf, LNBUFSZ, "%s\t\t%g",
 		     itemp != NULL ? itemp->text : cmdname,
@@ -690,7 +690,7 @@ MburstFile( itemp )
 	{
 	    { "Name of burst output file", "", "%s", 0 },
 	};
-    register Input *ip = input;
+    Input *ip = input;
     if ( getInput( ip ) )
 	bu_strlcpy( outfile, ip->buffer, LNBUFSZ );
     else
@@ -719,7 +719,7 @@ McellSize( itemp )
 	{
 	    { "Cell size", "", "%lf", 0 }
 	};
-    register Input *ip = input;
+    Input *ip = input;
     GetVar( cellsz, ip, unitconv );
     (void) snprintf( scrbuf, LNBUFSZ, "%s\t\t%g",
 		     itemp != NULL ? itemp->text : cmdname,
@@ -739,7 +739,7 @@ McolorFile( itemp )
 	    { "Name of ident-to-color mapping file",
 	      "", "%s", 0 },
 	};
-    register Input *ip = input;
+    Input *ip = input;
     FILE *colorfp;
     if ( getInput( ip ) )
 	bu_strlcpy( colorfile, ip->buffer, LNBUFSZ );
@@ -772,7 +772,7 @@ Mcomment( itemp )
 	{
 	    { "Comment", " ", "%s", 0 },
 	};
-    register Input *ip = input;
+    Input *ip = input;
     if ( ! batchmode )
     {
 	if ( getInput( ip ) )
@@ -797,7 +797,7 @@ MconeHalfAngle( itemp )
 	{
 	    { "Cone angle", "", "%lf", "degrees" },
 	};
-    register Input *ip = input;
+    Input *ip = input;
     GetVar( conehfangle, ip, DEGRAD );
     (void) snprintf( scrbuf, LNBUFSZ, "%s\t\t%g",
 		     itemp != NULL ? itemp->text : cmdname,
@@ -816,7 +816,7 @@ McritComp( itemp )
 	{
 	    { "Name of critical component file", "", "%s", 0 },
 	};
-    register Input *ip = input;
+    Input *ip = input;
     FILE *critfp;
     if ( getInput( ip ) )
 	bu_strlcpy( critfile, ip->buffer, LNBUFSZ );
@@ -851,7 +851,7 @@ MdeflectSpallCone( itemp )
 	{
 	    { "Deflect cone", "n", "%d", "y or n" },
 	};
-    register Input *ip = input;
+    Input *ip = input;
     GetBool( deflectcone, ip );
     (void) snprintf( scrbuf, LNBUFSZ, "%s\t%s",
 		     itemp != NULL ? itemp->text : cmdname,
@@ -869,7 +869,7 @@ Mdither( itemp )
 	{
 	    { "Dither cells", "n", "%d", "y or n" },
 	};
-    register Input *ip = input;
+    Input *ip = input;
     GetBool( dithercells, ip );
     (void) snprintf( scrbuf, LNBUFSZ, "%s\t\t%s",
 		     itemp != NULL ? itemp->text : cmdname,
@@ -890,7 +890,7 @@ MenclosePortion( itemp )
 	    { "Bottom border of grid", "", "%lf", 0 },
 	    { "Top border of grid", "", "%lf", 0 },
 	};
-    register Input *ip = input;
+    Input *ip = input;
     GetVar( gridlf, ip, unitconv );
     GetVar( gridrt, ip, unitconv );
     GetVar( griddn, ip, unitconv );
@@ -929,7 +929,7 @@ MerrorFile( itemp )
 	{
 	    { "Name of error output file", "", "%s", 0 },
 	};
-    register Input *ip = input;
+    Input *ip = input;
     static int errfd = -1;
     if ( getInput( ip ) )
 	bu_strlcpy( errfile, ip->buffer, LNBUFSZ );
@@ -1038,7 +1038,7 @@ MfbFile( itemp )
 	{
 	    { "Name of frame buffer device", "", "%s", 0 },
 	};
-    register Input *ip = input;
+    Input *ip = input;
     if ( getInput( ip ) )
 	bu_strlcpy( fbfile, ip->buffer, LNBUFSZ );
     else
@@ -1059,7 +1059,7 @@ MgedFile( itemp )
     static Input input[] = {
 	{ "Name of target (MGED) file", "", "%s", 0 },
     };
-    register Input *ip = input;
+    Input *ip = input;
 
     if ( getInput( ip ) )
 	bu_strlcpy( gedfile, ip->buffer, LNBUFSZ );
@@ -1087,7 +1087,7 @@ MgridFile( itemp )
 	{
 	    { "Name of grid file", "", "%s", 0 },
 	};
-    register Input *ip = input;
+    Input *ip = input;
     if ( getInput( ip ) )
 	bu_strlcpy( gridfile, ip->buffer, LNBUFSZ );
     else
@@ -1127,7 +1127,7 @@ MgroundPlane( itemp )
 	    { "Distance out negative Y-axis of target to edge",
 	      "", "%lf", 0 },
 	};
-    register Input *ip = input;
+    Input *ip = input;
     GetBool( groundburst, ip );
     if ( groundburst )
     {
@@ -1162,7 +1162,7 @@ MhistFile( itemp )
 	{
 	    { "Name of histogram file", "", "%s", 0 },
 	};
-    register Input *ip = input;
+    Input *ip = input;
     if ( getInput( ip ) )
 	bu_strlcpy( histfile, ip->buffer, LNBUFSZ );
     else
@@ -1192,7 +1192,7 @@ MinputBurst( itemp )
 	    { "Y-coordinate of burst point", "", "%lf", 0 },
 	    { "Z-coordinate of burst point", "", "%lf", 0 },
 	};
-    register Input *ip = input;
+    Input *ip = input;
     GetVar( burstpoint[X], ip, unitconv );
     GetVar( burstpoint[Y], ip, unitconv );
     GetVar( burstpoint[Z], ip, unitconv );
@@ -1217,7 +1217,7 @@ Minput2dShot( itemp )
 	    { "Y'-coordinate of shotline", "", "%lf", 0 },
 	    { "Z'-coordinate of shotline", "", "%lf", 0 },
 	};
-    register Input *ip = input;
+    Input *ip = input;
     GetVar( fire[X], ip, unitconv );
     GetVar( fire[Y], ip, unitconv );
     (void) snprintf( scrbuf, LNBUFSZ, "%s\t\t%g %g",
@@ -1241,7 +1241,7 @@ Minput3dShot( itemp )
 	    { "Y-coordinate of shotline", "", "%lf", 0 },
 	    { "Z-coordinate of shotline", "", "%lf", 0 },
 	};
-    register Input *ip = input;
+    Input *ip = input;
     GetVar( fire[X], ip, unitconv );
     GetVar( fire[Y], ip, unitconv );
     GetVar( fire[Z], ip, unitconv );
@@ -1273,7 +1273,7 @@ Mobjects( itemp )
 	{
 	    { "List of objects from target file", "", "%s", 0 },
 	};
-    register Input *ip = input;
+    Input *ip = input;
     if ( getInput( ip ) )
 	bu_strlcpy( objects, ip->buffer, LNBUFSZ );
     (void) snprintf( scrbuf, LNBUFSZ, "%s\t\t%s",
@@ -1292,7 +1292,7 @@ Moverlaps( itemp )
 	{
 	    { "Report overlaps", "y", "%d", "y or n" },
 	};
-    register Input *ip = input;
+    Input *ip = input;
     GetBool( reportoverlaps, ip );
     (void) snprintf( scrbuf, LNBUFSZ, "%s\t\t%s",
 		     itemp != NULL ? itemp->text : cmdname,
@@ -1310,7 +1310,7 @@ MmaxBarriers( itemp )
 	{
 	    { "Maximum spall barriers per ray", "", "%d", 0 },
 	};
-    register Input *ip = input;
+    Input *ip = input;
     GetVar( nbarriers, ip, 1 );
     (void) snprintf( scrbuf, LNBUFSZ, "%s\t\t%d",
 		     itemp != NULL ? itemp->text : cmdname,
@@ -1328,7 +1328,7 @@ MmaxSpallRays( itemp )
 	{
 	    { "Maximum rays per burst", "", "%d", 0 },
 	};
-    register Input *ip = input;
+    Input *ip = input;
     GetVar( nspallrays, ip, 1 );
     (void) snprintf( scrbuf, LNBUFSZ, "%s\t\t%d",
 		     itemp != NULL ? itemp->text : cmdname,
@@ -1346,7 +1346,7 @@ MplotFile( itemp )
 	{
 	    { "Name of UNIX plot file", "", "%s", 0 },
 	};
-    register Input *ip = input;
+    Input *ip = input;
     if ( getInput( ip ) )
 	bu_strlcpy( plotfile, ip->buffer, LNBUFSZ );
     else
@@ -1375,7 +1375,7 @@ Mread2dShotFile( itemp )
 	{
 	    { "Name of 2-D shot input file", "", "%s", 0 },
 	};
-    register Input *ip = input;
+    Input *ip = input;
     if ( getInput( ip ) )
 	bu_strlcpy( shotfile, ip->buffer, LNBUFSZ );
     if ( (shotfp = fopen( shotfile, "rb" )) == NULL )
@@ -1403,7 +1403,7 @@ Mread3dShotFile( itemp )
 	{
 	    { "Name of 3-D shot input file", "", "%s", 0 },
 	};
-    register Input *ip = input;
+    Input *ip = input;
     if ( getInput( ip ) )
 	bu_strlcpy( shotfile, ip->buffer, LNBUFSZ );
     if ( (shotfp = fopen( shotfile, "rb" )) == NULL )
@@ -1431,7 +1431,7 @@ MreadBurstFile( itemp )
 	{
 	    { "Name of 3-D burst input file", "", "%s", 0 },
 	};
-    register Input *ip = input;
+    Input *ip = input;
     if ( getInput( ip ) )
 	bu_strlcpy( burstfile, ip->buffer, LNBUFSZ );
     if ( (burstfp = fopen( burstfile, "rb" )) == NULL )
@@ -1459,7 +1459,7 @@ MreadCmdFile( itemp )
 	{
 	    { "Name of command file", "", "%s", 0 },
 	};
-    register Input *ip = input;
+    Input *ip = input;
     char cmdfile[LNBUFSZ];
     FILE *cmdfp;
     if ( getInput( ip ) )
@@ -1486,7 +1486,7 @@ MshotlineFile( itemp )
 	{
 	    { "Name of shotline output file", "", "%s", 0 },
 	};
-    register Input *ip = input;
+    Input *ip = input;
     if ( getInput( ip ) )
 	bu_strlcpy( shotlnfile, ip->buffer, LNBUFSZ );
     else
@@ -1588,7 +1588,7 @@ MwriteCmdFile( itemp )
 	{
 	    { "Name of command file", "", "%s", 0 },
 	};
-    register Input *ip = input;
+    Input *ip = input;
     char cmdfile[LNBUFSZ];
     FILE *cmdfp;
     FILE *inpfp;
@@ -1625,7 +1625,7 @@ intr_sig( int sig )
 	{
 	    { "Really quit ? ", "n", "%d", "y or n" },
 	};
-    register Input *ip = input;
+    Input *ip = input;
     (void) signal( SIGINT, intr_sig );
     if ( getInput( ip ) )
     {

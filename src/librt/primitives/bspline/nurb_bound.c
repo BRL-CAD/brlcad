@@ -1,7 +1,7 @@
 /*                    N U R B _ B O U N D . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2009 United States Government as represented by
+ * Copyright (c) 1990-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -40,18 +40,13 @@
 #include "raytrace.h"
 #include "nurb.h"
 
-#define NEAR_ZERO(val, epsilon)	( ((val) > -epsilon) && ((val) < epsilon) )
 
-#ifndef INFINITY		/* if INFINITY is not defined define it */
-#define INFINITY	(1.0e20)
-#endif
-
-/* rt_nurb_sbound()
- * 	Calculates the bounding Right Parallel Piped (RPP) of the
- *	NURB surface, and returns the minimum and maximum points
- * 	of the surface.
+/**
+ * r t _ n u r b _ s _ b o u n d
+ *
+ * Calculates the bounding Right Parallel Piped (RPP) of the NURB
+ * surface, and returns the minimum and maximum points of the surface.
  */
-
 int
 rt_nurb_s_bound(struct face_g_snurb *srf, fastf_t *bmin, fastf_t *bmax)
 {

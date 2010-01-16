@@ -1,7 +1,7 @@
 /*                       O P T I O N S . C
  * BRL-CAD
  *
- * Copyright (c) 1999-2009 United States Government as represented by
+ * Copyright (c) 1999-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,7 +37,7 @@
 int
 dm_processOptions(struct dm *dmp, struct bu_vls *init_proc_vls, int argc, char **argv)
 {
-    register int c;
+    int c;
 
     bu_optind = 0;	 /* re-init bu_getopt */
     bu_opterr = 0;

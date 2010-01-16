@@ -1,7 +1,7 @@
 /*                       S P L T E S T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -49,8 +49,8 @@ make_face(struct rt_nurb_internal *s, fastf_t *a, fastf_t *b, fastf_t *c, fastf_
     int ki;
     int cur_kv;
     int interior_pts = 0;
-    register fastf_t *fp = NULL;
-    register struct face_g_snurb *srf = NULL;
+    fastf_t *fp = NULL;
+    struct face_g_snurb *srf = NULL;
 
     srf = rt_nurb_new_snurb(order, order,
 			    2*order+interior_pts, 2*order+interior_pts,	/* # knots */

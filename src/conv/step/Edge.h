@@ -1,7 +1,7 @@
 /*                 Edge.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -43,7 +43,7 @@ protected:
 public:
 	Edge();
 	virtual ~Edge();
-	Edge(STEPWrapper *sw,int STEPid);
+	Edge(STEPWrapper *sw,int step_id);
 	Vertex *GetEdgeStart() { return edge_start; };
 	Vertex *GetEdgeEnd() { return edge_end; };
 	bool Load(STEPWrapper *sw,SCLP23(Application_instance) *sse);

@@ -1,7 +1,7 @@
 /*                 PCurve.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -43,7 +43,7 @@ protected:
 public:
 	PCurve();
 	virtual ~PCurve();
-	PCurve(STEPWrapper *sw,int STEPid);
+	PCurve(STEPWrapper *sw,int step_id);
 	virtual curve_type CurveType() { return PCURVE; };
 	bool Load(STEPWrapper *sw,SCLP23(Application_instance) *sse);
 	virtual const double *PointAtEnd();

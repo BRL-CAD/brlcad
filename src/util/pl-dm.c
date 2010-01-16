@@ -1,7 +1,7 @@
 /*                         P L - D M . C
  * BRL-CAD
  *
- * Copyright (c) 1999-2009 United States Government as represented by
+ * Copyright (c) 1999-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -92,8 +92,8 @@ int dm_type = DM_TYPE_X;
 static int
 output_catch(genptr_t clientdata, genptr_t str)
 {
-    register struct bu_vls *vp = (struct bu_vls *)clientdata;
-    register int len;
+    struct bu_vls *vp = (struct bu_vls *)clientdata;
+    int len;
 
     BU_CK_VLS(vp);
     len = bu_vls_strlen(vp);
@@ -132,7 +132,7 @@ stop_catching_output(struct bu_vls *vp)
 int
 get_args(int argc, char **argv)
 {
-    register int c;
+    int c;
 
     while ((c = bu_getopt(argc, argv, "t:")) != EOF) {
 	switch (c) {
@@ -204,7 +204,7 @@ refresh() {
  * There is important information in dx, dy, dz, s .
  */
 static void
-buildHrot(register matp_t mat, double alpha, double beta, double ggamma)
+buildHrot(matp_t mat, double alpha, double beta, double ggamma)
 {
     static fastf_t calpha, cbeta, cgamma;
     static fastf_t salpha, sbeta, sgamma;
@@ -502,7 +502,7 @@ static void
 size_reset()
 {
     int i;
-    register struct bn_vlist *tvp;
+    struct bn_vlist *tvp;
     vect_t min, max;
     vect_t center;
     vect_t radial;
@@ -516,13 +516,13 @@ size_reset()
 
 	vbp = plp->pl_vbp;
 	for (i=0; i < vbp->nused; i++) {
-	    register struct bn_vlist *vp = (struct bn_vlist *)&vbp->head[i];
+	    struct bn_vlist *vp = (struct bn_vlist *)&vbp->head[i];
 
 	    for (BU_LIST_FOR(tvp, bn_vlist, &vp->l)) {
-		register int j;
-		register int nused = tvp->nused;
-		register int *cmd = tvp->cmd;
-		register point_t *pt = tvp->pt;
+		int j;
+		int nused = tvp->nused;
+		int *cmd = tvp->cmd;
+		point_t *pt = tvp->pt;
 
 		for (j = 0; j < nused; j++, cmd++, pt++) {
 		    switch (*cmd) {
@@ -1012,7 +1012,7 @@ cmd_exit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 static void
 cmd_setup(Tcl_Interp *interp, struct cmdtab commands[])
 {
-    register struct cmdtab *ctp;
+    struct cmdtab *ctp;
 
     for (ctp = commands; ctp->ct_name; ctp++) {
 	(void)Tcl_CreateCommand(interp, ctp->ct_name, ctp->ct_func,
@@ -1143,7 +1143,7 @@ appInit(Tcl_Interp *_interp)
     bu_vls_free(&str);
     bu_vls_free(&str2);
 
-    /* register application commands */
+    /* application commands */
     cmd_setup(interp, cmdtab);
 
     /* open display manager */

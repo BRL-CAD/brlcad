@@ -1,7 +1,7 @@
 /*                       P Y R A M I D . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2009 United States Government as represented by
+ * Copyright (c) 1986-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -92,7 +92,7 @@ do_pleaf(name)
     fastf_t verts[5][3];
     fastf_t norms[5][3];
     point_t centroid;
-    register int i;
+    int i;
 
     VSET(pt[0], 0, 0, 0);
     VSET(pt[1], 100, 0, 0);
@@ -140,7 +140,7 @@ do_pleaf(name)
 void
 pnorms(fastf_t (*norms)[3], fastf_t (*verts)[3], fastf_t *centroid, int npts)
 {
-    register int i;
+    int i;
     vect_t ab, ac;
     vect_t n;
     vect_t out;		/* hopefully points outwards */
@@ -165,7 +165,7 @@ pnorms(fastf_t (*norms)[3], fastf_t (*verts)[3], fastf_t *centroid, int npts)
 void
 do_tree(char *name, char *lname, int level)
 {
-    register int i;
+    int i;
     char nm[64];
     char *leafp;
     int scale;

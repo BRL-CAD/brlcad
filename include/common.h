@@ -1,7 +1,7 @@
 /*                        C O M M O N . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -58,11 +58,6 @@
 #  endif
 
 #endif  /* BRLCADBUILD & HAVE_CONFIG_H */
-
-/* support ANSI function declarations */
-#ifndef USE_PROTOTYPES
-#  define USE_PROTOTYPES 1
-#endif
 
 /* provide declaration markers for header externals */
 #ifdef __cplusplus

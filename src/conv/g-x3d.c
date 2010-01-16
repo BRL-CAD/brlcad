@@ -1,7 +1,7 @@
 /*                         G - X 3 D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -165,7 +165,7 @@ clean_pmp( struct plate_mode *pmp )
 	    intern.idb_type = ID_BOT;
 	    intern.idb_meth = &rt_functab[ID_BOT];
 	    intern.idb_magic = RT_DB_INTERNAL_MAGIC;
-	    intern.idb_meth->ft_ifree( &intern, &rt_uniresource );
+	    intern.idb_meth->ft_ifree( &intern );
 	    pmp->bots[i] = NULL;
 	}
     }
@@ -206,7 +206,7 @@ dup_bot( struct rt_bot_internal *bot_in )
 }
 
 static int
-select_lights(register struct db_tree_state *tsp, struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
+select_lights(struct db_tree_state *tsp, struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
 {
     struct directory *dp;
     struct rt_db_internal intern;
@@ -238,18 +238,18 @@ select_lights(register struct db_tree_state *tsp, struct db_full_path *pathp, co
 
     if ( !strcmp( bu_vls_addr( &comb->shader ), "light" ) )
     {
-	rt_db_free_internal( &intern, &rt_uniresource );
+	rt_db_free_internal(&intern);
 	return( 0 );
     }
     else
     {
-	rt_db_free_internal( &intern, &rt_uniresource );
+	rt_db_free_internal(&intern);
 	return( -1 );
     }
 }
 
 static int
-select_non_lights(register struct db_tree_state *tsp, struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
+select_non_lights(struct db_tree_state *tsp, struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
 {
     int ret;
 
@@ -356,7 +356,7 @@ int
 main(int argc, char **argv)
 {
     int		i;
-    register int	c;
+    int	c;
     struct plate_mode pm;
 
     bu_setlinebuf( stderr );
@@ -930,7 +930,7 @@ bot2vrml( struct plate_mode *pmp, struct db_full_path *pathp, int region_id )
  *
  *  This routine must be prepared to run in parallel.
  */
-union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+union tree *do_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
     struct plate_mode *pmp = (struct plate_mode *)client_data;
     char *name;
@@ -965,7 +965,7 @@ union tree *do_region_end(register struct db_tree_state *tsp, struct db_full_pat
     return( (union tree *)NULL );
 }
 
-union tree *nmg_region_end(register struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+union tree *nmg_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
     struct nmgregion	*r;
     struct bu_list		vhead;

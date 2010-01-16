@@ -1,7 +1,7 @@
 /*                          R E A D . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2009 United States Government as represented by
+ * Copyright (c) 1989-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -43,16 +43,16 @@ extern FILE	*infp;
 
 extern char name_it[16];		/* argv[3] */
 
-void	namecvt(register int n, register char **cp, int c);
+void	namecvt(int n, char **cp, int c);
 
 /*
  *			G E T L I N E
  */
 int
-get_line(register char *cp, int buflen, char *title)
+get_line(char *cp, int buflen, char *title)
 {
-    register int	c;
-    register int	count = buflen;
+    int	c;
+    int	count = buflen;
 
     while ( (c = fgetc(infp)) == '\n' ) /* Skip blank lines.		*/
 	;
@@ -105,7 +105,7 @@ getdouble(char *cp, int start, int len)
 
 /*		N A M E C V T	 */
 void
-namecvt(register int n, register char **cp, int c)
+namecvt(int n, char **cp, int c)
 {
     char str[16];
 

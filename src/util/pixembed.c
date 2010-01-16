@@ -1,7 +1,7 @@
 /*                      P I X E M B E D . C
  * BRL-CAD
  *
- * Copyright (c) 1992-2009 United States Government as represented by
+ * Copyright (c) 1992-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -57,9 +57,9 @@ Usage: pixembed [-h] [-b border_inset] \n\
  *			G E T _ A R G S
  */
 int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int c;
+    int c;
 
     while ( (c = bu_getopt( argc, argv, "b:hs:w:n:S:W:N:" )) != EOF )  {
 	switch ( c )  {
@@ -180,10 +180,10 @@ main(int argc, char **argv)
 void
 load_buffer(void)
 {
-    register unsigned char	r, g, b;
-    register unsigned char	*cp;
-    register int		i;
-    register int		inbase;
+    unsigned char	r, g, b;
+    unsigned char	*cp;
+    int		i;
+    int		inbase;
 
     inbase = (xout - xin) / 2;
 

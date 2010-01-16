@@ -1,7 +1,7 @@
 /*                         A R C E D . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -126,7 +126,7 @@ ged_arced(struct ged *gedp, int argc, const char *argv[])
     return GED_OK;
 
  fail:
-    rt_db_free_internal(&intern, &rt_uniresource);
+    rt_db_free_internal(&intern);
     db_free_1anim(anp);
     return GED_ERROR;
 }

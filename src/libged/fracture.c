@@ -1,7 +1,7 @@
 /*                        F R A C T U R E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -40,7 +40,7 @@ static int frac_stat;
 int
 ged_fracture(struct ged *gedp, int argc, const char *argv[])
 {
-    register int i;
+    int i;
     struct directory *old_dp;
     struct rt_db_internal	old_intern;
     struct model	*m, *new_model;
@@ -87,7 +87,7 @@ ged_fracture(struct ged *gedp, int argc, const char *argv[])
 
     if (old_intern.idb_type != ID_NMG) {
 	bu_vls_printf(&gedp->ged_result_str, " is not an NMG solid!!\n");
-	rt_db_free_internal( &old_intern, &rt_uniresource );
+	rt_db_free_internal(&old_intern);
 	return GED_ERROR;
     }
 

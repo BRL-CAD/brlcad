@@ -1,7 +1,7 @@
 /*                          T R E E . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -100,9 +100,9 @@ F_Hdr_Ptlist;
 #define IR_OCTREE	(1<<2) /* If ON, display octree, else GED model.*/
 
 extern OcList		*get_Region_Name(char *inbuf, int bufsz, char *msg);
-extern Octree		*find_Octant(register Octree *parentp, register fastf_t *pt, register int *levelp);
+extern Octree		*find_Octant(Octree *parentp, fastf_t *pt, int *levelp);
 extern Octree		*add_Region_Octree(Octree *parentp, fastf_t *pt, Trie *triep, int temp, int level);
-extern Trie		*add_Trie(const char *name, register Trie **triepp);
+extern Trie		*add_Trie(const char *name, Trie **triepp);
 
 extern Octree		ir_octree;
 extern Trie		*reg_triep;

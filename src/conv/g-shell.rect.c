@@ -1,7 +1,7 @@
 /*                  G - S H E L L . R E C T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -222,14 +222,14 @@ static int	bot=0;
  * overlaps are irrelevant to this application
  */
 static int
-a_overlap(register struct application *ap, register struct partition *pp, struct region *reg1, struct region *reg2, struct partition *pheadp)
+a_overlap(struct application *ap, struct partition *pp, struct region *reg1, struct region *reg2, struct partition *pheadp)
 {
     return( 1 );
 }
 
 
 static int
-miss(register struct application *ap)
+miss(struct application *ap)
 {
     return(0);
 }
@@ -469,7 +469,7 @@ Get_extremes(struct shell *s, struct application *ap, struct hitmiss **hitmiss, 
 }
 
 static int
-shrink_hit(register struct application *ap, struct partition *PartHeadp, struct seg *segs)
+shrink_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 {
     point_t hit1, hit2;
     point_t mhit1, mhit2;
@@ -1147,7 +1147,7 @@ shrink_wrap(struct shell *s)
 }
 
 static int
-refine_hit(register struct application *ap, struct partition *PartHeadp, struct seg *segs)
+refine_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 {
     struct partition *pp;
     struct refine_data *ref_data;
@@ -1684,10 +1684,10 @@ Make_shell(void)
 }
 
 static int
-hit(register struct application *ap, struct partition *PartHeadp, struct seg *segs)
+hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 {
-    register struct partition *first_pp;
-    register struct partition *last_pp;
+    struct partition *first_pp;
+    struct partition *last_pp;
     struct local_part *lpart;
     fastf_t part_len;
 

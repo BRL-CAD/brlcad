@@ -1,7 +1,7 @@
 /*                       O R L E - F B . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2009 United States Government as represented by
+ * Copyright (c) 1986-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -49,7 +49,7 @@ static FILE	*fp;
 static RGBpixel	bgpixel;
 static int	bgflag = 0;
 static int	olflag = 0;
-static int	pars_Argv(int argc, register char **argv);
+static int	pars_Argv(int argc, char **argv);
 static int	xlen = -1, ylen = -1;
 static int	xpos = -1, ypos = -1;
 static void	prnt_Cmap(ColorMap *cmap);
@@ -60,15 +60,15 @@ static int	topdown = 0;
 static int	pixels_per_buffer;
 static char	*fb_file = (char *)NULL;
 
-void		fill_Buffer(register char *dest, register char *src, register int scan_bytes, register int repeat);
+void		fill_Buffer(char *dest, char *src, int scan_bytes, int repeat);
 
 /*	m a i n ( )							*/
 int
 main(int argc, char **argv)
 {
-    register int	y;
-    register int	lines_per_buffer;
-    register unsigned char *scanbuf;
+    int	y;
+    int	lines_per_buffer;
+    unsigned char *scanbuf;
     static RGBpixel	bg_scan[8192+1];
     static ColorMap	cmap;
     int		get_flags;
@@ -169,8 +169,8 @@ main(int argc, char **argv)
     /* Fill a DMA buffer buffer with background */
     if ( ! olflag && (get_flags & NO_BOX_SAVE) )
     {
-	register int	i;
-	register RGBpixel	*to;
+	int	i;
+	RGBpixel	*to;
 	to = bg_scan;
 	for ( i = 0; i < width; i++, to++ )  {
 	    COPYRGB( *to, bgpixel );
@@ -179,8 +179,8 @@ main(int argc, char **argv)
 
 #ifndef SIMPLE
     {
-	register int	page_fault = 1;
-	register int	dirty_flag = 1;
+	int	page_fault = 1;
+	int	dirty_flag = 1;
 	int		ymax = ypos + (ylen-1);
 	int		start_y = 0;
 	for ( y = 0; y < width; y++ )  {
@@ -251,9 +251,9 @@ main(int argc, char **argv)
 	Fill cluster buffer from scanline (as fast as possible).
 */
 void
-fill_Buffer(register char *dest, register char *src, register int scan_bytes, register int repeat)
+fill_Buffer(char *dest, char *src, int scan_bytes, int repeat)
 {
-    register int	i;
+    int	i;
     for ( i = 0; i < repeat; ++i )
     {
 	memcpy(dest, src, scan_bytes);
@@ -264,9 +264,9 @@ fill_Buffer(register char *dest, register char *src, register int scan_bytes, re
 
 /*	p a r s _ A r g v ( )						*/
 static int
-pars_Argv(int argc, register char **argv)
+pars_Argv(int argc, char **argv)
 {
-    register int	c;
+    int	c;
     /* Parse options.						*/
     while ( (c = bu_getopt( argc, argv, "tOF:b:dp:v" )) != EOF )
     {
@@ -360,7 +360,7 @@ pars_Argv(int argc, register char **argv)
 static void
 prnt_Usage(void)
 {
-    register char	**p = usage;
+    char	**p = usage;
     while ( *p )
 	(void) fprintf( stderr, "%s\n", *p++ );
     return;
@@ -369,8 +369,8 @@ prnt_Usage(void)
 static void
 prnt_Cmap(ColorMap *cmap)
 {
-    register unsigned short	*cp;
-    register int	i;
+    unsigned short	*cp;
+    int	i;
     (void) fprintf( stderr, "\t\t\t_________ Color map __________\n" );
     (void) fprintf( stderr, "Red segment :\n" );
     for ( i = 0, cp = cmap->cm_red; i < 16; ++i, cp += 16 )

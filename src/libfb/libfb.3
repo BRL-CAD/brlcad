@@ -2,7 +2,7 @@
 .\"                        L I B F B . 3
 .\" BRL-CAD
 .\"
-.\" Copyright (c) 2005-2009 United States Government as represented by
+.\" Copyright (c) 2005-2010 United States Government as represented by
 .\" the U.S. Army Research Laboratory.
 .\"
 .\" Redistribution and use in source (Docbook format) and 'compiled'
@@ -411,48 +411,6 @@ for the bit definitions.
 .I filename
 Disk file interface
 .TP
-.BI /dev/ik [num] [opt]
-Adage RDS-3000 ("Ikonas")
-.br
-.I Num
-indicates the device number.
-.br
-.I Opt
-is a single character which indicates optional mode modification.
-The letter ``v'' is to select NTSC video with internal sync.
-The letter ``e'' is to select NTSC video with external sync.
-The letter ``n'' is to select no frame-buffer controller (FBC) re-init
-upon open;  the default is to reprogram the FBC on each open.
-.TP
-.BI /dev/sgi [num]
-Silicon Graphics IRIS Workstation
-.br
-When the display is running the window-manager MEX, the default
-is to open a window in 12-bit mode, with RGB converted to
-a 10x10x10 color-cube approximation.
-A non-zero
-.I num
-will select a dynamically allocated colormap, which is slower but sometimes of
-higher quality.
-When MEX is not running, the full 24-bits of color are used
-on systems with that deep a display.
-Regardless of mode, the full 24-bits of color are
-stored in a shared memory segment, allowing it to be operated on in
-the "frame buffer" in MEX mode without loss of color accuracy when
-the image is read back.
-To release the shared memory segment, open /dev/sgi99.
-.TP
-.B /dev/rat
-RasterTek 1/80 (untested)
-.B /dev/sun
-Sun PixWin interface.  On monochrome displays, a dither pattern is used
-to create the impression of shading.  On 8-bit color displays, a simple
-3x3x2 color-cube approximation is used.  At present, there is no ability
-to read back pixels from the Sun display, making it less useful for
-serious image manipulation, but being able to ``brouse'' through
-images even on a monochrome workstation makes this still a very
-useful capability.
-.TP
 .BI hostname: [devicename]
 TCP-based network links to a remote framebuffer, where
 .I devicename
@@ -482,15 +440,7 @@ where
 .I <system-library>
 denotes specific libraries necesary on a particular machine.  All machines
 with networking will require the "-lpkg" option.  Machines which support the
-X Windows(tm) system will require the "-lX11" option. In addition, the following
-table lists architectures and libraries above and beyond the pkg and X11
-libraries.
-.PP
- Architecture         Libraries
- SGI 3030       -lbsd -ldbm -lgl2
- SGI 4d         -lgl_s
- Sun            -lsuntool -lsunwindow -lpixrect
- Sun+TS         -lsuntool -lsunwindow -lpixrect -lgds
+X Windows(tm) system will require the "-lX11" option. 
 .sp
 .SH FILES
 fb.h

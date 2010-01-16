@@ -1,7 +1,7 @@
 /*                        P L S T A T . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2009 United States Government as represented by
+ * Copyright (c) 1990-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -123,7 +123,7 @@ Usage: plstat [-v] [unix_plot]\n";
 int
 getshort(void)
 {
-    register long	v, w;
+    long	v, w;
 
     v = getc(fp);
     v |= (getc(fp)<<8);	/* order is important! */
@@ -139,7 +139,7 @@ getshort(void)
 int
 main(int argc, char **argv)
 {
-    register int	c;
+    int	c;
     struct	uplot *up;
     int	i;
 

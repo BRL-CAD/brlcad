@@ -1,7 +1,7 @@
 /*                           N M G . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -83,11 +83,7 @@
  * compiler understands them or not.  It is vital that the argument
  * list given for "args" be enclosed in parens.
  */
-#if __STDC__ || USE_PROTOTYPES
-#	define NMG_ARGS(args) args
-#else
-#	define NMG_ARGS(args) ()
-#endif
+#define NMG_ARGS(args) args
 
 /* Boolean operations */
 #define NMG_BOOL_SUB   1	/**< @brief subtraction */

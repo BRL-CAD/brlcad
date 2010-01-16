@@ -1,7 +1,7 @@
 /*                    C A D _ B O U N D P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -79,13 +79,13 @@ typedef struct queue
     point		*endpoint;	/* -> endpt of ray from point */
 }	queue;			/* entry in list of endpoints */
 
-static int	Build(void), Chop(void), EndPoint(register coords *p, register segment *segp), GetArgs(int argc, char **argv), Input(register segment *inp),
-    Near(register coords *ap, register coords *bp), Search(void), Split(coords *p, register segment *oldp, register segment *listh), Usage(void);
-static coords	*Intersect(register segment *a, register segment *b);
-static point	*LookUp(register coords *coop), *NewPoint(register coords *coop), *PutList(register coords *coop);
+static int	Build(void), Chop(void), EndPoint(coords *p, segment *segp), GetArgs(int argc, char **argv), Input(segment *inp),
+    Near(coords *ap, coords *bp), Search(void), Split(coords *p, segment *oldp, segment *listh), Usage(void);
+static coords	*Intersect(segment *a, segment *b);
+static point	*LookUp(coords *coop), *NewPoint(coords *coop), *PutList(coords *coop);
 static void *	Alloc(unsigned int size);
-static queue	*Enqueue(register point *addp, register point *startp);
-static void	Output(register coords *coop), Toss(register void * ptr);
+static queue	*Enqueue(point *addp, point *startp);
+static void	Output(coords *coop), Toss(void * ptr);
 
 static int	initial = 1; 	/* false after first Output */
 static int	vflag = 0;		/* set if "-v" option found */
@@ -212,10 +212,10 @@ Chop(void)					/* chop vectors into segments */
     while ( (inp = (segment *)Alloc( (unsigned)sizeof(segment) )) != NULL
 	    && Input( inp )
 	) {
-	register segment	*segp;	/* segment list entry */
+	segment	*segp;	/* segment list entry */
 	segment 		piecehead;
 	/* list of inp pieces */
-	register segment	*pp;	/* -> pieces of `inp' */
+	segment	*pp;	/* -> pieces of `inp' */
 
 	/* Reverse the segment if necessary to get endpoints
 	   in left-to-right order; speeds up range check. */
@@ -248,7 +248,7 @@ Chop(void)					/* chop vectors into segments */
 	    for ( pp = piecehead.links; pp != &piecehead;
 		  pp = pp->links
 		)	{
-		register coords *i;	/* intersectn */
+		coords *i;	/* intersectn */
 
 		/* Be careful; `i' -> static storage
 		   internal to Intersect().	      */
@@ -306,12 +306,12 @@ Chop(void)					/* chop vectors into segments */
 
 
 static int
-Split(coords *p, register segment *oldp, register segment *listh) 		/* split segment in two */
+Split(coords *p, segment *oldp, segment *listh) 		/* split segment in two */
     /* -> break point */
     /* -> segment to be split */
     /* -> list to attach tail to */
 {
-    register segment	*newp;	/* -> new list entry */
+    segment	*newp;	/* -> new list entry */
 
 #ifdef	DEBUG
     fprintf(stderr, "split (%g,%g)->(%g,%g) at (%g,%g)",
@@ -335,7 +335,7 @@ Split(coords *p, register segment *oldp, register segment *listh) 		/* split seg
 static int
 Build(void) 				/* build linked lists */
 {
-    register segment	*listp; /* -> segment list entry */
+    segment	*listp; /* -> segment list entry */
     segment 		*deadp; /* -> list entry to be freed */
 
 #ifdef	DEBUG
@@ -345,7 +345,7 @@ Build(void) 				/* build linked lists */
     for ( listp = seghead.links; listp != &seghead;
 	  deadp = listp, listp = listp->links, Toss( (void *)deadp )
 	)	{
-	register point	*startp, *endp; /* -> segment endpts */
+	point	*startp, *endp; /* -> segment endpts */
 
 	if ( (startp = PutList( &listp->sxy )) == NULL
 	     || (endp   = PutList( &listp->exy )) == NULL
@@ -363,7 +363,7 @@ static int
 Search(void)				/* output bounding polygon */
 {
     double		from;		/* backward edge direction */
-    register point	*currentp;	/* -> current (start) point */
+    point	*currentp;	/* -> current (start) point */
     point		*previousp;	/* -> previous vertex point */
 
 #ifdef	DEBUG
@@ -375,7 +375,7 @@ Search(void)				/* output bounding polygon */
     /* Locate the lowest point; this is the first polygon vertex. */
     {
 	float		miny;		/* smallest Y coordinate */
-	register point	*listp; 	/* -> next point in list */
+	point	*listp; 	/* -> next point in list */
 
 	currentp = listp = headp;
 	miny = currentp->xy.y;
@@ -395,7 +395,7 @@ Search(void)				/* output bounding polygon */
     {
 	coords		first;	/* first output if -v */
 	double		mindir; /* smallest from->to angle */
-	register point	*nextp = (point *)NULL; /* -> next perimeter point */
+	point	*nextp = (point *)NULL; /* -> next perimeter point */
 	queue		*endq;	/* -> endpoint queue entry */
 
 #ifdef	DEBUG
@@ -423,7 +423,7 @@ Search(void)				/* output bounding polygon */
 	do	{
 	    double		to;	/* forward edge dir */
 	    double		diff;	/* angle from->to */
-	    register point	*endp;	/* -> endpoint */
+	    point	*endp;	/* -> endpoint */
 
 	    endp = endq->endpoint;
 	    if ( endp == previousp	/* don't double back! */
@@ -478,10 +478,10 @@ Search(void)				/* output bounding polygon */
 
 
 static point *
-PutList(register coords *coop) 			/* return -> point in list */
+PutList(coords *coop) 			/* return -> point in list */
     /* -> coordinates */
 {
-    register point	*p;		/* -> list entry */
+    point	*p;		/* -> list entry */
 
     p = LookUp( coop );		/* may already be there */
     if ( p == NULL )		/* not yet in list */
@@ -504,10 +504,10 @@ PutList(register coords *coop) 			/* return -> point in list */
 
 
 static point *
-LookUp(register coords *coop)				/* find point group in list */
+LookUp(coords *coop)				/* find point group in list */
     /* -> coordinates */
 {
-    register point	*p;		/* -> list members */
+    point	*p;		/* -> list members */
 
     for ( p = headp; p != NULL; p = p->linkp )
 	if ( Near( coop, &p->xy ) )
@@ -525,10 +525,10 @@ LookUp(register coords *coop)				/* find point group in list */
 
 
 static point *
-NewPoint(register coords *coop)			/* add point to list */
+NewPoint(coords *coop)			/* add point to list */
     /* -> coordinates */
 {
-    register point	*newp;		/* newly allocated point */
+    point	*newp;		/* newly allocated point */
 
     newp = (point *)Alloc( (unsigned)sizeof(point) );
     if ( newp == NULL )
@@ -547,11 +547,11 @@ NewPoint(register coords *coop)			/* add point to list */
 
 
 static queue *
-Enqueue(register point *addp, register point *startp) 		/* add to endpoint queue */
+Enqueue(point *addp, point *startp) 		/* add to endpoint queue */
     /* -> point being queued */
     /* -> point owning queue */
 {
-    register queue	*newq;		/* new queue element */
+    queue	*newq;		/* new queue element */
 
     newq = (queue *)Alloc( (unsigned)sizeof(queue) );
     if ( newq == NULL )
@@ -570,7 +570,7 @@ Enqueue(register point *addp, register point *startp) 		/* add to endpoint queue
 
 
 static coords *
-Intersect(register segment *a, register segment *b)			/* determine intersection */
+Intersect(segment *a, segment *b)			/* determine intersection */
     /* segments being tested */
 {
     double			det;	/* determinant, 0 if parallel */
@@ -678,7 +678,7 @@ Intersect(register segment *a, register segment *b)			/* determine intersection 
 
 
 static int
-EndPoint(register coords *p, register segment *segp)			/* check for segment endpoint */
+EndPoint(coords *p, segment *segp)			/* check for segment endpoint */
     /* -> point being tested */
     /* -> segment */
 {
@@ -695,7 +695,7 @@ EndPoint(register coords *p, register segment *segp)			/* check for segment endp
 
 
 static int
-Near(register coords *ap, register coords *bp)				/* check if within tolerance */
+Near(coords *ap, coords *bp)				/* check if within tolerance */
     /* -> points being checked */
 {
     double		xsq, ysq;	/* dist between coords ^ 2 */
@@ -722,7 +722,7 @@ static void *
 Alloc(unsigned int size)				/* allocate storage from heap */
     /* # bytes required */
 {
-    register void *	ptr;	/* -> allocated storage */
+    void *	ptr;	/* -> allocated storage */
 
     if ( (ptr = malloc( size * sizeof(char) )) == NULL )
 	fprintf(stderr, "out of memory");
@@ -732,7 +732,7 @@ Alloc(unsigned int size)				/* allocate storage from heap */
 
 
 static void
-Toss(register void * ptr)				/* return storage to heap */
+Toss(void * ptr)				/* return storage to heap */
     /* -> allocated storage */
 {
     if ( ptr != NULL )
@@ -741,7 +741,7 @@ Toss(register void * ptr)				/* return storage to heap */
 
 
 static int
-Input(register segment *inp)				/* input stroke record */
+Input(segment *inp)				/* input stroke record */
     /* -> input segment */
 {
     char			inbuf[82];	/* record buffer */
@@ -749,7 +749,7 @@ Input(register segment *inp)				/* input stroke record */
     while ( bu_fgets( inbuf, (int)sizeof inbuf, stdin ) != NULL )
     {
 	/* scan input record */
-	register int	cvt;	/* # fields converted */
+	int	cvt;	/* # fields converted */
 
 #ifdef	DEBUG
 	fprintf(stderr, "input: %s", inbuf);
@@ -774,7 +774,7 @@ Input(register segment *inp)				/* input stroke record */
 
 
 static void
-Output(register coords *coop)				/* dump polygon vertex coords */
+Output(coords *coop)				/* dump polygon vertex coords */
     /* -> coords to be output */
 {
     static coords	last;		/* previous *coop */

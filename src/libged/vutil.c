@@ -1,7 +1,7 @@
 /*                         V U T I L . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -71,6 +71,11 @@ ged_view_update(struct ged_view	*gvp)
 	(*gvp->gv_callback)(gvp, gvp->gv_clientData);
 }
 
+
+/**
+ * FIXME: this routine is suspect and needs investigating.  if run
+ * during view initialization, the shaders regression test fails.
+ */
 void
 _ged_mat_aet(struct ged_view *gvp)
 {

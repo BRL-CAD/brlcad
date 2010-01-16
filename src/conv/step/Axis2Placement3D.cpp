@@ -1,7 +1,7 @@
 /*                 Axis2Placement3D.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -43,9 +43,9 @@ Axis2Placement3D::Axis2Placement3D() {
 	ref_direction = NULL;
 }
 
-Axis2Placement3D::Axis2Placement3D(STEPWrapper *sw,int STEPid) {
+Axis2Placement3D::Axis2Placement3D(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 	axis = NULL;
 	ref_direction = NULL;
 }
@@ -99,7 +99,6 @@ Axis2Placement3D::BuildAxis() {
 void
 Axis2Placement3D::FirstProjAxis(double *proj,double *zaxis, double *refdir) {
     double z[3];
-    double r[3];
     double v[3];
     double TOL = 1e-9;
 
@@ -202,7 +201,7 @@ Axis2Placement3D::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 	id = sse->STEPfile_id;
 
 	if ( !Placement::Load(step,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::Placement." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::Placement." << std::endl;
 		return false;
 	}
 
@@ -235,20 +234,20 @@ Axis2Placement3D::Load(STEPWrapper *sw,SCLP23(Application_instance) *sse) {
 
 void
 Axis2Placement3D::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Attributes:" << endl;
+	TAB(level); std::cout << "Attributes:" << std::endl;
 	if (axis) {
-		TAB(level+1); cout << "axis:" << endl;
+		TAB(level+1); std::cout << "axis:" << std::endl;
 		axis->Print(level+1);
 	}
 	if (ref_direction) {
-		TAB(level+1); cout << "ref_direction:" << endl;
+		TAB(level+1); std::cout << "ref_direction:" << std::endl;
 		ref_direction->Print(level+1);
 	}
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	Placement::Print(level+1);
 }
 
@@ -261,7 +260,7 @@ Axis2Placement3D::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}
@@ -275,7 +274,7 @@ bool
 Axis2Placement3D::LoadONBrep(ON_Brep *brep)
 {
 	//TODO: check other axis2placement3d usage notice being loaded from advanced brep in some instances
-	//cerr << "Error: ::LoadONBrep(ON_Brep *brep) not implemented for " << entityname << endl;
+	//std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implemented for " << entityname << std::endl;
 	return true;
 }
 

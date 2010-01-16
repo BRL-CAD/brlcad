@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -47,7 +46,7 @@ ON_Matrix::ON_Matrix() : m(0), m_row_count(0), m_col_count(0)
 }
 
 ON_Matrix::ON_Matrix( int row_size, int col_size ) 
-		   : m(0), m_row_count(0), m_col_count(0)
+                   : m(0), m_row_count(0), m_col_count(0)
 {
   m_reserved1 = 0;
   m_reserved2 = 0;
@@ -57,7 +56,7 @@ ON_Matrix::ON_Matrix( int row_size, int col_size )
 }
 
 ON_Matrix::ON_Matrix( int row0, int row1, int col0, int col1 ) 
-		   : m(0), m_row_count(0), m_col_count(0)
+                   : m(0), m_row_count(0), m_col_count(0)
 {
   m_reserved1 = 0;
   m_reserved2 = 0;
@@ -67,7 +66,7 @@ ON_Matrix::ON_Matrix( int row0, int row1, int col0, int col1 )
 }
 
 ON_Matrix::ON_Matrix( const ON_Xform& x ) 
-		   : m(0), m_row_count(0), m_col_count(0)
+                   : m(0), m_row_count(0), m_col_count(0)
 {
   m_reserved1 = 0;
   m_reserved2 = 0;
@@ -145,33 +144,33 @@ bool ON_Matrix::Create( int row_count, int col_count)
 
       int rows_per_block = max_dblblk_size/(col_count*sizeof(double));
       if ( rows_per_block > row_count )
-	rows_per_block = row_count;
+        rows_per_block = row_count;
       else if ( rows_per_block < 1 )
-	rows_per_block = 1;
+        rows_per_block = 1;
       else if ( rows_per_block < row_count && 11*rows_per_block >= 10*row_count )
-	rows_per_block = row_count;
+        rows_per_block = row_count;
 
       int j, i = row_count; 
       m = m_row.Array();
       double** row = m;
       for ( i = row_count; i > 0; i -= rows_per_block )
       {
-	if ( i < rows_per_block )
-	  rows_per_block = i;
-	int dblblk_count = rows_per_block*col_count;
-	struct DBLBLK* p = (struct DBLBLK*)onmalloc(sizeof(*p) + dblblk_count*sizeof(p->a[0]));
-	p->a = (double*)(p+1);
-	p->count = dblblk_count;
-	p->next = (struct DBLBLK*)m_cmem;
-	m_cmem = p;
-	*row = p->a;
-	j = rows_per_block-1;
-	while(j--)
-	{
-	  row[1] = row[0] + col_count;
-	  row++;
-	}
-	row++;
+        if ( i < rows_per_block )
+          rows_per_block = i;
+        int dblblk_count = rows_per_block*col_count;
+        struct DBLBLK* p = (struct DBLBLK*)onmalloc(sizeof(*p) + dblblk_count*sizeof(p->a[0]));
+        p->a = (double*)(p+1);
+        p->count = dblblk_count;
+        p->next = (struct DBLBLK*)m_cmem;
+        m_cmem = p;
+        *row = p->a;
+        j = rows_per_block-1;
+        while(j--)
+        {
+          row[1] = row[0] + col_count;
+          row++;
+        }
+        row++;
       }
       m_row_count = row_count;
       m_col_count = col_count;
@@ -181,19 +180,19 @@ bool ON_Matrix::Create( int row_count, int col_count)
       m_a.Reserve(row_count*col_count);
       if( 0 != m_a.Array() )
       {
-	m_a.SetCount(row_count*col_count);
-	m = m_row.Array();
-	m[0] = m_a.Array();
-	int i;
-	for ( i = 1; i < row_count; i++ )
-	  m[i] = m[i-1]+col_count;
-	m_row_count = row_count;
-	m_col_count = col_count;
-	b = true;
+        m_a.SetCount(row_count*col_count);
+        m = m_row.Array();
+        m[0] = m_a.Array();
+        int i;
+        for ( i = 1; i < row_count; i++ )
+          m[i] = m[i-1]+col_count;
+        m_row_count = row_count;
+        m_col_count = col_count;
+        b = true;
       }
       else
       {
-	m_row.Destroy();
+        m_row.Destroy();
       }
       */
     }
@@ -202,9 +201,9 @@ bool ON_Matrix::Create( int row_count, int col_count)
 }
 
 bool ON_Matrix::Create( // E.g., Create(1,5,1,7) creates a 5x7 sized matrix that with
-	     // "top" row = m[1][1],...,m[1][7] and "bottom" row
-	     // = m[5][1],...,m[5][7].  The result of Create(0,m,0,n) is
-	     // identical to the result of Create(m+1,n+1).
+             // "top" row = m[1][1],...,m[1][7] and "bottom" row
+             // = m[5][1],...,m[5][7].  The result of Create(0,m,0,n) is
+             // identical to the result of Create(m+1,n+1).
    int ri0, // first valid row index
    int ri1, // last valid row index
    int ci0, // first valid column index
@@ -217,13 +216,13 @@ bool ON_Matrix::Create( // E.g., Create(1,5,1,7) creates a 5x7 sized matrix that
     b = Create( ri1-ri0, ci1-ci0 );
     if (b) {
       if ( ci0 != 0 ) {
-	int i;
-	for ( i = 0; i < m_row_count; i++ ) {
-	  m[i] -= ci0;
-	}
+        int i;
+        for ( i = 0; i < m_row_count; i++ ) {
+          m[i] -= ci0;
+        }
       }
       if ( ri0 != 0 )
-	m -= ri0;
+        m -= ri0;
     }
   }
   return b;
@@ -276,7 +275,7 @@ ON_Matrix& ON_Matrix::operator=(const ON_Matrix& src)
       double** m_dest = m_row.Array();
       double*const* m_src = src.m_row.Array();
       for ( i = 0; i < m_row_count; i++ ) {
-	memcpy( m_dest[i], m_src[i], sizeof_row );
+        memcpy( m_dest[i], m_src[i], sizeof_row );
       }
     }
   }
@@ -304,7 +303,7 @@ bool ON_Matrix::Transpose()
     double** this_m = m_row.Array();
     if ( row_count == col_count ) {
       for ( i = 0; i < row_count; i++ ) for ( j = i+1; j < row_count; j++ ) {
-	t = this_m[i][j]; this_m[i][j] = this_m[j][i]; this_m[j][i] = t;
+        t = this_m[i][j]; this_m[i][j] = this_m[j][i]; this_m[j][i] = t;
       }
     }
     else {
@@ -312,7 +311,7 @@ bool ON_Matrix::Transpose()
       Create(col_count,row_count);
 		this_m = m_row.Array();
       for ( i = 0; i < row_count; i++ ) for ( j = 0; j < col_count; j++ ) {
-	this_m[j][i] = A.m[i][j];
+        this_m[j][i] = A.m[i][j];
       }
     }
   }
@@ -341,7 +340,7 @@ bool ON_Matrix::SwapCols( int col0, int col1 )
     if ( col0 != col1 ) {
       double** this_m = m_row.Array();
       for ( i = 0; i < m_row_count; i++ ) {
-	t = this_m[i][col0]; this_m[i][col0] = this_m[i][col1]; this_m[i][col1] = t;
+        t = this_m[i][col0]; this_m[i][col0] = this_m[i][col1]; this_m[i][col1] = t;
       }
     }
     b = true;
@@ -396,8 +395,8 @@ ON_Matrix::RowReduce(
     x = fabs(this_m[ix][k]);
     for ( i = k+1; i < m_row_count; i++ ) {
       if ( fabs(this_m[i][k]) > x ) {
-	ix = i;
-	x = fabs(this_m[ix][k]);
+        ix = i;
+        x = fabs(this_m[ix][k]);
       }
     }
     if ( x < piv || k == 0 ) {
@@ -424,7 +423,7 @@ ON_Matrix::RowReduce(
       x = -this_m[i][k];
       this_m[i][k] = 0.0;
       if ( fabs(x) > zero_tolerance ) {
-	ON_Array_aA_plus_B( m_col_count - 1 - k, x, &this_m[k][k+1], &this_m[i][k+1], &this_m[i][k+1] );
+        ON_Array_aA_plus_B( m_col_count - 1 - k, x, &this_m[k][k+1], &this_m[i][k+1], &this_m[i][k+1] );
       }
     }
   }
@@ -455,8 +454,8 @@ ON_Matrix::RowReduce(
     x = fabs(this_m[ix][k]);
     for ( i = k+1; i < m_row_count; i++ ) {
       if ( fabs(this_m[i][k]) > x ) {
-	ix = i;
-	x = fabs(this_m[ix][k]);
+        ix = i;
+        x = fabs(this_m[ix][k]);
       }
     }
     if ( x < piv || k == 0 ) {
@@ -481,8 +480,8 @@ ON_Matrix::RowReduce(
       x = -this_m[i][k];
       this_m[i][k] = 0.0;
       if ( fabs(x) > zero_tolerance ) {
-	ON_Array_aA_plus_B( m_col_count - 1 - k, x, &this_m[k][k+1], &this_m[i][k+1], &this_m[i][k+1] );
-	B[i] += x*B[k];
+        ON_Array_aA_plus_B( m_col_count - 1 - k, x, &this_m[k][k+1], &this_m[i][k+1], &this_m[i][k+1] );
+        B[i] += x*B[k];
       }
     }
   }
@@ -515,8 +514,8 @@ ON_Matrix::RowReduce(
     x = fabs(this_m[ix][k]);
     for ( i = k+1; i < m_row_count; i++ ) {
       if ( fabs(this_m[i][k]) > x ) {
-	ix = i;
-	x = fabs(this_m[ix][k]);
+        ix = i;
+        x = fabs(this_m[ix][k]);
       }
     }
     if ( x < piv || k == 0 ) {
@@ -541,8 +540,8 @@ ON_Matrix::RowReduce(
       x = -this_m[i][k];
       this_m[i][k] = 0.0;
       if ( fabs(x) > zero_tolerance ) {
-	ON_Array_aA_plus_B( m_col_count - 1 - k, x, &this_m[k][k+1], &this_m[i][k+1], &this_m[i][k+1] );
-	B[i] += x*B[k];
+        ON_Array_aA_plus_B( m_col_count - 1 - k, x, &this_m[k][k+1], &this_m[i][k+1], &this_m[i][k+1] );
+        B[i] += x*B[k];
       }
     }
   }
@@ -577,8 +576,8 @@ ON_Matrix::RowReduce(
     x = fabs(this_m[ix][k]);
     for ( i = k+1; i < m_row_count; i++ ) {
       if ( fabs(this_m[i][k]) > x ) {
-	ix = i;
-	x = fabs(this_m[ix][k]);
+        ix = i;
+        x = fabs(this_m[ix][k]);
       }
     }
     if ( x < piv || k == 0 ) {
@@ -605,7 +604,7 @@ ON_Matrix::RowReduce(
       ON_ArrayScale( m_col_count - 1 - k, x, &this_m[k][k+1], &this_m[k][k+1] );
       ptA = pt + (k*pt_stride);
       for ( pti = 0; pti < pt_dim; pti++ )
-	ptA[pti] *= x;
+        ptA[pti] *= x;
     }
 
     // zero column k for rows below this_m[k][k]
@@ -614,11 +613,11 @@ ON_Matrix::RowReduce(
       x = -this_m[i][k];
       this_m[i][k] = 0.0;
       if ( fabs(x) > zero_tolerance ) {
-	ON_Array_aA_plus_B( m_col_count - 1 - k, x, &this_m[k][k+1], &this_m[i][k+1], &this_m[i][k+1] );
-	ptA = pt + (i*pt_stride);
-	for ( pti = 0; pti < pt_dim; pti++ ) {
-	  ptA[pti] += x*ptB[pti];
-	}
+        ON_Array_aA_plus_B( m_col_count - 1 - k, x, &this_m[k][k+1], &this_m[i][k+1], &this_m[i][k+1] );
+        ptA = pt + (i*pt_stride);
+        for ( pti = 0; pti < pt_dim; pti++ ) {
+          ptA[pti] += x*ptB[pti];
+        }
       }
     }
   }
@@ -694,14 +693,14 @@ ON_Matrix::BackSolve(
     for ( i = m_col_count-2; i >= 0; i-- ) {
       X[i] = B[i];
       for ( j = i+1; j < m_col_count; j++ ) {
-	X[i] -= this_m[i][j]*X[j];
+        X[i] -= this_m[i][j]*X[j];
       }
     }
   }
   else {
     for ( i = m_col_count-2; i >= 0; i-- ) {
       for ( j = i+1; j < m_col_count; j++ ) {
-	X[i] -= this_m[i][j]*X[j];
+        X[i] -= this_m[i][j]*X[j];
       }
     }
   }
@@ -740,7 +739,7 @@ ON_Matrix::BackSolve(
     for( j = 0; j < pt_dim; j++ )
     {
       if ( fabs(Bi[j]) > zero_tolerance )
-	return false; // over determined
+        return false; // over determined
     }
   }
 
@@ -756,10 +755,10 @@ ON_Matrix::BackSolve(
       Bi = Bpt + i*Bpt_stride;
       memcpy(Xi,Bi,sizeof_pt);
       for ( j = i+1; j < m_col_count; j++ ) {
-	Xj = Xpt + j*Xpt_stride;
-	mij = this_m[i][j];
-	for ( k = 0; k < pt_dim; k++ )
-	  Xi[k] -= mij*Xj[k];
+        Xj = Xpt + j*Xpt_stride;
+        mij = this_m[i][j];
+        for ( k = 0; k < pt_dim; k++ )
+          Xi[k] -= mij*Xj[k];
       }
     }
   }
@@ -767,10 +766,10 @@ ON_Matrix::BackSolve(
     for ( i = m_col_count-2; i >= 0; i-- ) {
       Xi = Xpt + i*Xpt_stride;
       for ( j = i+1; j < m_col_count; j++ ) {
-	Xj = Xpt + j*Xpt_stride;
-	mij = this_m[i][j];
-	for ( k = 0; k < pt_dim; k++ )
-	  Xi[k] -= mij*Xj[k];
+        Xj = Xpt + j*Xpt_stride;
+        mij = this_m[i][j];
+        for ( k = 0; k < pt_dim; k++ )
+          Xi[k] -= mij*Xj[k];
       }
     }
   }
@@ -873,10 +872,10 @@ bool ON_Matrix::IsRowOrthoNormal() const
     for ( i = 0; i < m_row_count; i++ ) {
       d = 0.0;
       for ( j = 0; j < m_col_count; j++ ) {
-	d += this_m[i][j]*this_m[i][j];
+        d += this_m[i][j]*this_m[i][j];
       }
       if ( fabs(1.0-d) >=  ON_SQRT_EPSILON )
-	rc = false;
+        rc = false;
     }
   }
   return rc;
@@ -911,10 +910,10 @@ bool ON_Matrix::IsColOrthoNormal() const
     for ( j = 0; j < m_col_count; j++ ) {
       d = 0.0;
       for ( i = 0; i < m_row_count; i++ ) {
-	d += this_m[i][j]*this_m[i][j];
+        d += this_m[i][j]*this_m[i][j];
       }
       if ( fabs(1.0-d) >=  ON_SQRT_EPSILON )
-	rc = false;
+        rc = false;
     }
   }
   return rc;
@@ -944,11 +943,11 @@ bool ON_Matrix::Invert( double zero_tolerance )
     x = fabs(this_m[ix][jx]);
     for ( i = k; i < n; i++ ) {
       for ( j = k; j < n; j++ ) {
-	if ( fabs(this_m[i][j]) > x ) {
-	  ix = i;
-	  jx = j;
-	  x = fabs(this_m[ix][jx]);
-	}
+        if ( fabs(this_m[i][j]) > x ) {
+          ix = i;
+          jx = j;
+          x = fabs(this_m[ix][jx]);
+        }
       }
     }
 
@@ -969,12 +968,12 @@ bool ON_Matrix::Invert( double zero_tolerance )
     // zero this_m[!=k][k]'s 
     for ( i = 0; i < n; i++ ) {
       if ( i != k ) {
-	x = -this_m[i][k];
-	this_m[i][k] = 0.0;
-	if ( fabs(x) > zero_tolerance ) {
-	  ON_Array_aA_plus_B( m_col_count-k-1, x, &this_m[k][k+1], &this_m[i][k+1], &this_m[i][k+1] );
-	  I.RowOp( i, x, k );
-	}
+        x = -this_m[i][k];
+        this_m[i][k] = 0.0;
+        if ( fabs(x) > zero_tolerance ) {
+          ON_Array_aA_plus_B( m_col_count-k-1, x, &this_m[k][k+1], &this_m[i][k+1], &this_m[i][k+1] );
+          I.RowOp( i, x, k );
+        }
       }
     }
   }
@@ -1054,10 +1053,10 @@ bool ON_Matrix::Scale( double s )
     {
       if ( 0 != cmem->a && cmem->count > 0 )
       {
-	p = cmem->a;
-	i = cmem->count;
-	while(i--)
-	  *p++ *= s;
+        p = cmem->a;
+        i = cmem->count;
+        while(i--)
+          *p++ *= s;
       }
       cmem = cmem->next;
     }
@@ -1077,12 +1076,12 @@ bool ON_Matrix::Scale( double s )
 
 
 int ON_RowReduce( int row_count, 
-		  int col_count,
-		  double zero_pivot,
-		  double** A, 
-		  double** B, 
-		  double pivots[2] 
-		 )
+                  int col_count,
+                  double zero_pivot,
+                  double** A, 
+                  double** B, 
+                  double pivots[2] 
+                 )
 {
   // returned A is identity, B = inverse of input A
   const int M = row_count;
@@ -1120,7 +1119,7 @@ int ON_RowReduce( int row_count,
     {
       if ( p <= zero_pivot || !ON_IsValid(a) )
       {
-	break;
+        break;
       }
       a = 1.0/a;
 
@@ -1150,7 +1149,7 @@ int ON_RowReduce( int row_count,
     {
       a = A[ii][i];
       if ( 0.0 == a )
-	continue;
+        continue;
       a = -a;
       
       //A[ii][i] = 0.0;  // no need to do this
@@ -1167,7 +1166,7 @@ int ON_RowReduce( int row_count,
       while(j--) *ptr1++ += a* *ptr0++;
 
       for( j = 0; j <= i; j++ )
-	B[ii][j] += a*B[i][j];
+        B[ii][j] += a*B[i][j];
     }
   }
 
@@ -1192,7 +1191,7 @@ int ON_RowReduce( int row_count,
     {
       a = A[ii][i];
       if ( 0.0 == a )
-	continue;
+        continue;
       a = -a;
       //A[ii][i] = 0.0; // no need to do this
 

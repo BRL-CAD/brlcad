@@ -1,7 +1,7 @@
 /*                 MeasureValue.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -63,9 +63,9 @@ MeasureValue::MeasureValue() {
 	id = 0;
 }
 
-MeasureValue::MeasureValue(STEPWrapper *sw,int STEPid) {
+MeasureValue::MeasureValue(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
 
 MeasureValue::~MeasureValue() {
@@ -74,7 +74,7 @@ MeasureValue::~MeasureValue() {
 double
 MeasureValue::GetLengthMeasure() {
 	if (type != LENGTH_MEASURE) {
-		cerr << CLASSNAME << ":Error: Not a length measure." << endl;
+		std::cerr << CLASSNAME << ":Error: Not a length measure." << std::endl;
 		return 1.0;
 	}
 	return rvalue;
@@ -83,7 +83,7 @@ MeasureValue::GetLengthMeasure() {
 double
 MeasureValue::GetPlaneAngleMeasure() {
 	if (type != PLANE_ANGLE_MEASURE) {
-		cerr << CLASSNAME << ":Error: Not a plane angle measure." << endl;
+		std::cerr << CLASSNAME << ":Error: Not a plane angle measure." << std::endl;
 		return 1.0;
 	}
 	return rvalue;
@@ -92,7 +92,7 @@ MeasureValue::GetPlaneAngleMeasure() {
 double
 MeasureValue::GetSolidAngleMeasure() {
 	if (type != SOLID_ANGLE_MEASURE) {
-		cerr << CLASSNAME << ":Error: Not a solid angle measure." << endl;
+		std::cerr << CLASSNAME << ":Error: Not a solid angle measure." << std::endl;
 		return 1.0;
 	}
 	return rvalue;
@@ -103,7 +103,7 @@ MeasureValue::Load(STEPWrapper *sw,SCLP23(Select) *sse) {
 	step=sw;
 //	id = sse->STEPfile_id;
 
-	//cout << sse->UnderlyingTypeName() << endl;
+	//std::cout << sse->UnderlyingTypeName() << std::endl;
 	SdaiMeasure_value *v = (SdaiMeasure_value *)sse;
 
 	if ( v->IsLength_measure()) {
@@ -179,16 +179,16 @@ MeasureValue::Load(STEPWrapper *sw,SCLP23(Select) *sse) {
 
 void
 MeasureValue::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Attributes:" << endl;
+	TAB(level); std::cout << "Attributes:" << std::endl;
 	if (type == DESCRIPTIVE_MEASURE) {
-		TAB(level+1); cout << "Type:" << measure_type_names[type] << " Value:" << svalue << endl;
+		TAB(level+1); std::cout << "Type:" << measure_type_names[type] << " Value:" << svalue << std::endl;
 	} else if ((type == COUNT_MEASURE) || (type == NUMERIC_MEASURE)) {
-		TAB(level+1); cout << "Type:" << measure_type_names[type] << " Value:" << ivalue << endl;
+		TAB(level+1); std::cout << "Type:" << measure_type_names[type] << " Value:" << ivalue << std::endl;
 	} else {
-		TAB(level+1); cout << "Type:" << measure_type_names[type] << " Value:" << rvalue << endl;
+		TAB(level+1); std::cout << "Type:" << measure_type_names[type] << " Value:" << rvalue << std::endl;
 	}
 }
 STEPEntity *
@@ -200,7 +200,7 @@ MeasureValue::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, (SCLP23(Select) *)sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}

@@ -1,7 +1,7 @@
 /*                        P L - A S C . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2009 United States Government as represented by
+ * Copyright (c) 1989-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -122,7 +122,7 @@ Usage: pl-asc [-v] [unix_plot]\n";
 int
 main(int argc, char **argv)
 {
-    register int	c;
+    int	c;
     struct	uplot *up;
     int	i;
 
@@ -226,7 +226,7 @@ outstring(int n)
 short
 getshort(void)
 {
-    register long	v, w;
+    long	v, w;
 
     v = getc(fp);
     v |= (getc(fp)<<8);	/* order is important! */

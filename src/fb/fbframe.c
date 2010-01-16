@@ -1,7 +1,7 @@
 /*                       F B F R A M E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2009 United States Government as represented by
+ * Copyright (c) 1986-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -42,13 +42,13 @@ char *Usage="[-h] [-F framebuffer]\n\
 int
 main(int argc, char **argv)
 {
-    register int c;
-    register int	x;
+    int c;
+    int	x;
     FBIO		*fbp;
     int	xsize, ysize;
     int		 len;
     char	*framebuffer = (char *)NULL;
-    register unsigned char *line;
+    unsigned char *line;
     static RGBpixel white = { 255, 255, 255 };
     static RGBpixel red = { 255, 0, 0 };
     static RGBpixel green = { 0, 255, 0 };

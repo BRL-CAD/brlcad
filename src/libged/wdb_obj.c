@@ -1,7 +1,7 @@
 /*                       W D B _ O B J . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2009 United States Government as represented by
+ * Copyright (c) 2000-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -216,7 +216,7 @@ static int wdb_expand_tcl(ClientData clientData, Tcl_Interp *interp, int argc, c
 static int wdb_kill_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
 static int wdb_killall_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
 static int wdb_killtree_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
-static void wdb_killtree_callback(struct db_i *dbip, register struct directory *dp, genptr_t ptr);
+static void wdb_killtree_callback(struct db_i *dbip, struct directory *dp, genptr_t ptr);
 static int wdb_copy_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
 static int wdb_move_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
 static int wdb_move_all_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
@@ -269,17 +269,17 @@ void wdb_deleteProc(ClientData clientData);
 static void wdb_deleteProc_rt(ClientData clientData);
 
 int wdb_cmpdirname(const genptr_t a, const genptr_t b);
-void wdb_vls_col_item(struct bu_vls *str, register char *cp, int *ccp, int *clp);
+void wdb_vls_col_item(struct bu_vls *str, char *cp, int *ccp, int *clp);
 void wdb_vls_col_eol(struct bu_vls *str, int *ccp, int *clp);
 void wdb_vls_col_pr4v(struct bu_vls *vls, struct directory **list_of_names, int num_in_list, int no_decorate);
 void wdb_vls_long_dpp(struct bu_vls *vls, struct directory **list_of_names, int num_in_list, int aflag, int cflag, int rflag, int sflag);
 void wdb_vls_line_dpp(struct bu_vls *vls, struct directory **list_of_names, int num_in_list, int aflag, int cflag, int rflag, int sflag);
-void wdb_do_list(struct db_i *dbip, Tcl_Interp *interp, struct bu_vls *outstrp, register struct directory *dp, int verbose);
-struct directory ** wdb_getspace(struct db_i *dbip, register int num_entries);
-struct directory *wdb_combadd(Tcl_Interp *interp, struct db_i *dbip, register struct directory *objp, char *combname, int region_flag, int relation, int ident, int air, struct rt_wdb *wdbp);
+void wdb_do_list(struct db_i *dbip, Tcl_Interp *interp, struct bu_vls *outstrp, struct directory *dp, int verbose);
+struct directory ** wdb_getspace(struct db_i *dbip, int num_entries);
+struct directory *wdb_combadd(Tcl_Interp *interp, struct db_i *dbip, struct directory *objp, char *combname, int region_flag, int relation, int ident, int air, struct rt_wdb *wdbp);
 void wdb_identitize(struct directory *dp, struct db_i *dbip, Tcl_Interp *interp);
 static void wdb_dir_summary(struct db_i *dbip, Tcl_Interp *interp, int flag);
-static struct directory ** wdb_dir_getspace(struct db_i *dbip, register int num_entries);
+static struct directory ** wdb_dir_getspace(struct db_i *dbip, int num_entries);
 static union tree *wdb_pathlist_leaf_func(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data);
 HIDDEN union tree *facetize_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
 int wdb_dir_check(struct db_i *input_dbip, const char *name, long laddr, int len, int flags, genptr_t ptr);
@@ -842,19 +842,19 @@ wdb_get_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
 
     {
-	struct bu_vls log;
+	struct bu_vls logstr;
 
-	bu_vls_init(&log);
+	bu_vls_init(&logstr);
 
 	if (!intern.idb_meth->ft_get)
 	    return TCL_ERROR;
 
-	status = intern.idb_meth->ft_get(&log, &intern, argv[2]);
-	Tcl_AppendResult(interp, bu_vls_addr(&log), (char *)NULL);
-	bu_vls_free(&log);
+	status = intern.idb_meth->ft_get(&logstr, &intern, argv[2]);
+	Tcl_AppendResult(interp, bu_vls_addr(&logstr), (char *)NULL);
+	bu_vls_free(&logstr);
     }
 
-    rt_db_free_internal(&intern, &rt_uniresource);
+    rt_db_free_internal(&intern);
     return status;
 }
 
@@ -919,7 +919,7 @@ wdb_get_type_cmd(struct rt_wdb *wdbp,
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD) {
 	Tcl_AppendResult(interp, "unknown", (char *)NULL);
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 
 	return TCL_OK;
     }
@@ -1045,7 +1045,7 @@ wdb_get_type_cmd(struct rt_wdb *wdbp,
 	    break;
     }
 
-    rt_db_free_internal(&intern, &rt_uniresource);
+    rt_db_free_internal(&intern);
     return TCL_OK;
 }
 
@@ -1075,7 +1075,7 @@ wdb_put_cmd(struct rt_wdb *wdbp,
 	    char *argv[])
 {
     struct rt_db_internal intern;
-    register const struct rt_functab *ftp;
+    const struct rt_functab *ftp;
     int i;
     char *name;
     char type[16];
@@ -1121,41 +1121,35 @@ wdb_put_cmd(struct rt_wdb *wdbp,
     RT_CK_FUNCTAB(ftp);
 
     if (ftp->ft_make) {
-	if (ftp->ft_make == rt_nul_make) {
-	    Tcl_AppendResult(interp, "wdb_put_internal(", argv[1],
-			     ") cannot put a ", type, (char *)NULL);
-
-	    return TCL_ERROR;
-	}
-	ftp->ft_make(ftp, &intern, 0.0);
+	ftp->ft_make(ftp, &intern);
     } else {
-	rt_generic_make(ftp, &intern, 0.0);
+	rt_generic_make(ftp, &intern);
     }
 
     {
-	struct bu_vls log;
+	struct bu_vls logstr;
 
-	bu_vls_init(&log);
+	bu_vls_init(&logstr);
 
-	if (!ftp->ft_adjust || ftp->ft_adjust(&log, &intern, argc-3, argv+3, &rt_uniresource) == GED_ERROR) {
-	    Tcl_AppendResult(interp, bu_vls_addr(&log), (char *)NULL);
-	    bu_vls_free(&log);
-	    rt_db_free_internal(&intern, &rt_uniresource);
+	if (!ftp->ft_adjust || ftp->ft_adjust(&logstr, &intern, argc-3, argv+3) == GED_ERROR) {
+	    Tcl_AppendResult(interp, bu_vls_addr(&logstr), (char *)NULL);
+	    bu_vls_free(&logstr);
+	    rt_db_free_internal(&intern);
 	    return TCL_ERROR;
 	}
 
-	Tcl_AppendResult(interp, bu_vls_addr(&log), (char *)NULL);
-	bu_vls_free(&log);
+	Tcl_AppendResult(interp, bu_vls_addr(&logstr), (char *)NULL);
+	bu_vls_free(&logstr);
     }
 
     if (wdb_put_internal(wdbp, name, &intern, 1.0) < 0) {
 	Tcl_AppendResult(interp, "wdb_put_internal(", argv[1],
 			 ") failure", (char *)NULL);
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 	return TCL_ERROR;
     }
 
-    rt_db_free_internal(&intern, &rt_uniresource);
+    rt_db_free_internal(&intern);
     return TCL_OK;
 }
 
@@ -1188,7 +1182,7 @@ wdb_adjust_cmd(struct rt_wdb *wdbp,
 	       int argc,
 	       char *argv[])
 {
-    register struct directory *dp;
+    struct directory *dp;
     int status;
     char *name;
     struct rt_db_internal intern;
@@ -1226,26 +1220,26 @@ wdb_adjust_cmd(struct rt_wdb *wdbp,
     RT_CK_FUNCTAB(intern.idb_meth);
 
     {
-	struct bu_vls log;
+	struct bu_vls logstr;
 
-	bu_vls_init(&log);
+	bu_vls_init(&logstr);
 
 	if (!intern.idb_meth->ft_adjust)
 	    return TCL_ERROR;
 
-	status = intern.idb_meth->ft_adjust(&log, &intern, argc-2, argv+2, &rt_uniresource);
+	status = intern.idb_meth->ft_adjust(&logstr, &intern, argc-2, argv+2);
 
 	if (status == GED_OK && wdb_put_internal(wdbp, name, &intern, 1.0) < 0) {
-	    Tcl_AppendResult(interp, bu_vls_addr(&log), (char *)NULL);
-	    bu_vls_free(&log);
+	    Tcl_AppendResult(interp, bu_vls_addr(&logstr), (char *)NULL);
+	    bu_vls_free(&logstr);
 	    Tcl_AppendResult(interp, "wdb_export(", name,
 			     ") failure", (char *)NULL);
-	    rt_db_free_internal(&intern, &rt_uniresource);
+	    rt_db_free_internal(&intern);
 	    return TCL_ERROR;
 	}
 
-	Tcl_AppendResult(interp, bu_vls_addr(&log), (char *)NULL);
-	bu_vls_free(&log);
+	Tcl_AppendResult(interp, bu_vls_addr(&logstr), (char *)NULL);
+	bu_vls_free(&logstr);
     }
 
     /* notify observers */
@@ -1310,16 +1304,16 @@ wdb_form_cmd(struct rt_wdb *wdbp,
 
     {
 	int ret;
-	struct bu_vls log;
+	struct bu_vls logstr;
 
-	bu_vls_init(&log);
+	bu_vls_init(&logstr);
 	
 	if (!ftp->ft_form)
 	    return TCL_ERROR;
 
-	ret = ftp->ft_form(&log, ftp);
-	Tcl_AppendResult(interp, bu_vls_addr(&log), (char *)NULL);
-	bu_vls_free(&log);
+	ret = ftp->ft_form(&logstr, ftp);
+	Tcl_AppendResult(interp, bu_vls_addr(&logstr), (char *)NULL);
+	bu_vls_free(&logstr);
 
 	return ret;
     }
@@ -1349,8 +1343,8 @@ wdb_tops_cmd(struct rt_wdb *wdbp,
 	     int argc,
 	     char *argv[])
 {
-    register struct directory *dp;
-    register int i;
+    struct directory *dp;
+    int i;
     struct directory **dirp;
     struct directory **dirp0 = (struct directory **)NULL;
     struct bu_vls vls;
@@ -1691,7 +1685,7 @@ wdb_showmats_cmd(struct rt_wdb *wdbp,
 	if (comb->tree)
 	    db_tree_funcleaf(wdbp->dbip, comb, comb->tree, Do_showmats,
 			     (genptr_t)&sm_data, (genptr_t)NULL, (genptr_t)NULL);
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 
 	if (!sm_data.smd_count) {
 	    Tcl_AppendResult(interp, sm_data.smd_child, " is not a member of ",
@@ -2003,8 +1997,8 @@ wdb_ls_cmd(struct rt_wdb *wdbp,
 	   char *argv[])
 {
     struct bu_vls vls;
-    register struct directory *dp;
-    register int i;
+    struct directory *dp;
+    int i;
     int c;
     int aflag = 0;		/* print all objects without formatting */
     int cflag = 0;		/* print combinations */
@@ -2185,8 +2179,8 @@ wdb_list_cmd(struct rt_wdb *wdbp,
 	     int argc,
 	     char *argv[])
 {
-    register struct directory *dp;
-    register int arg;
+    struct directory *dp;
+    int arg;
     struct bu_vls str;
     int id;
     int recurse = 0;
@@ -2254,7 +2248,7 @@ wdb_list_cmd(struct rt_wdb *wdbp,
 	    if (!rt_functab[id].ft_describe || rt_functab[id].ft_describe(&str, &intern, 99, wdbp->dbip->dbi_base2local, &rt_uniresource, wdbp->dbip) < 0)
 		Tcl_AppendResult(interp, dp->d_namep, ": describe error", (char *)NULL);
 
-	    rt_db_free_internal(&intern, &rt_uniresource);
+	    rt_db_free_internal(&intern);
 	} else {
 	    if ((dp = db_lookup(wdbp->dbip, argv[arg], LOOKUP_NOISY)) == DIR_NULL)
 		continue;
@@ -2434,9 +2428,9 @@ wdb_expand_cmd(struct rt_wdb *wdbp,
 	       int argc,
 	       char *argv[])
 {
-    register char *pattern;
-    register struct directory *dp;
-    register int i, whicharg;
+    char *pattern;
+    struct directory *dp;
+    int i, whicharg;
     int regexp, nummatch, thismatch, backslashed;
 
     if (argc < 1 || MAXARGS < argc) {
@@ -2534,8 +2528,8 @@ wdb_kill_cmd(struct rt_wdb *wdbp,
 	     int argc,
 	     char *argv[])
 {
-    register struct directory *dp;
-    register int i;
+    struct directory *dp;
+    int i;
     int is_phony;
     int verbose = LOOKUP_NOISY;
 
@@ -2613,8 +2607,8 @@ wdb_killall_cmd(struct rt_wdb *wdbp,
 		int argc,
 		char *argv[])
 {
-    register int i, k;
-    register struct directory *dp;
+    int i, k;
+    struct directory *dp;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
     int ret;
@@ -2719,8 +2713,8 @@ wdb_killtree_cmd(struct rt_wdb *wdbp,
 		 int argc,
 		 char *argv[])
 {
-    register struct directory *dp;
-    register int i;
+    struct directory *dp;
+    int i;
     struct wdb_killtree_data ktd;
 
     WDB_TCL_CHECK_READ_ONLY;
@@ -2783,7 +2777,7 @@ wdb_killtree_tcl(ClientData clientData,
  */
 static void
 wdb_killtree_callback(struct db_i *dbip,
-		      register struct directory *dp,
+		      struct directory *dp,
 		      genptr_t ptr) {
     struct wdb_killtree_data *ktdp = (struct wdb_killtree_data *)ptr;
     Tcl_Interp *interp = ktdp->interp;
@@ -2814,8 +2808,8 @@ wdb_copy_cmd(struct rt_wdb *wdbp,
 	     int argc,
 	     char *argv[])
 {
-    register struct directory *proto;
-    register struct directory *dp;
+    struct directory *proto;
+    struct directory *dp;
     struct bu_external external;
 
     WDB_TCL_CHECK_READ_ONLY;
@@ -2903,7 +2897,7 @@ wdb_move_cmd(struct rt_wdb *wdbp,
 	     int argc,
 	     char *argv[])
 {
-    register struct directory *dp;
+    struct directory *dp;
     struct rt_db_internal intern;
 
     WDB_TCL_CHECK_READ_ONLY;
@@ -2933,7 +2927,7 @@ wdb_move_cmd(struct rt_wdb *wdbp,
 
     /*  Change object name in the in-memory directory. */
     if (db_rename(wdbp->dbip, dp, argv[2]) < 0) {
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 	Tcl_AppendResult(interp, "error in db_rename to ", argv[2],
 			 ", aborting", (char *)NULL);
 	return TCL_ERROR;
@@ -2975,8 +2969,8 @@ wdb_move_all_cmd(struct rt_wdb *wdbp,
 		 int argc,
 		 char *argv[])
 {
-    register int i;
-    register struct directory *dp;
+    int i;
+    struct directory *dp;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
     struct bu_ptbl stack;
@@ -3118,7 +3112,7 @@ wdb_move_all_cmd(struct rt_wdb *wdbp,
 	    if (changed) {
 		if (rt_db_put_internal(dp, wdbp->dbip, &intern, &rt_uniresource)) {
 		    bu_ptbl_free(&stack);
-		    rt_db_free_internal(&intern, &rt_uniresource);
+		    rt_db_free_internal(&intern);
 		    Tcl_AppendResult(interp,
 				     "Database write error, aborting",
 				     (char *)NULL);
@@ -3126,7 +3120,7 @@ wdb_move_all_cmd(struct rt_wdb *wdbp,
 		}
 	    }
 	    else
-		rt_db_free_internal(&intern, &rt_uniresource);
+		rt_db_free_internal(&intern);
 	}
     }
 
@@ -3658,7 +3652,7 @@ wdb_copyeval_cmd(struct rt_wdb *wdbp,
     }
 
     if (id >= ID_COMBINATION) {
-	rt_db_free_internal(&internal, &rt_uniresource);
+	rt_db_free_internal(&internal);
 	Tcl_AppendResult(interp, "final component on path must be a solid!!!\n", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -3672,7 +3666,7 @@ wdb_copyeval_cmd(struct rt_wdb *wdbp,
 	    Tcl_AppendResult(interp, "/", gtd.gtd_obj[i]->d_namep, (char *)NULL);
 
 	Tcl_AppendResult(interp, "  NOT FOUND\n", (char *)NULL);
-	rt_db_free_internal(&internal, &rt_uniresource);
+	rt_db_free_internal(&internal);
 	return TCL_ERROR;
     }
 
@@ -3683,7 +3677,7 @@ wdb_copyeval_cmd(struct rt_wdb *wdbp,
     RT_INIT_DB_INTERNAL(&new_int);
     if (rt_generic_xform(&new_int, gtd.gtd_xform,
 			 &internal, 0, wdbp->dbip, &rt_uniresource)) {
-	rt_db_free_internal(&internal, &rt_uniresource);
+	rt_db_free_internal(&internal);
 	Tcl_AppendResult(interp, "wdb_copyeval_cmd: rt_generic_xform failed\n", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -3691,18 +3685,18 @@ wdb_copyeval_cmd(struct rt_wdb *wdbp,
     if ((dp=db_diradd(wdbp->dbip, argv[1], -1L, 0,
 		      gtd.gtd_obj[endpos-1]->d_flags,
 		      (genptr_t)&new_int.idb_type)) == DIR_NULL) {
-	rt_db_free_internal(&internal, &rt_uniresource);
-	rt_db_free_internal(&new_int, &rt_uniresource);
+	rt_db_free_internal(&internal);
+	rt_db_free_internal(&new_int);
 	WDB_TCL_ALLOC_ERR_return;
     }
 
     if (rt_db_put_internal(dp, wdbp->dbip, &new_int, &rt_uniresource) < 0) {
-	rt_db_free_internal(&internal, &rt_uniresource);
-	rt_db_free_internal(&new_int, &rt_uniresource);
+	rt_db_free_internal(&internal);
+	rt_db_free_internal(&new_int);
 	WDB_TCL_WRITE_ERR_return;
     }
-    rt_db_free_internal(&internal, &rt_uniresource);
-    rt_db_free_internal(&new_int, &rt_uniresource);
+    rt_db_free_internal(&internal);
+    rt_db_free_internal(&new_int);
 
     return TCL_OK;
 }
@@ -3739,7 +3733,7 @@ struct dir_check_stuff {
  *
  */
 void
-wdb_dir_check5(register struct db_i *input_dbip,
+wdb_dir_check5(struct db_i *input_dbip,
 	       const struct db5_raw_internal *rip,
 	       long addr,
 	       genptr_t ptr)
@@ -3804,7 +3798,7 @@ wdb_dir_check5(register struct db_i *input_dbip,
  * Check a name against the global directory.
  */
 int
-wdb_dir_check(register struct db_i *input_dbip, register const char *name, long int laddr, int len, int flags, genptr_t ptr)
+wdb_dir_check(struct db_i *input_dbip, const char *name, long int laddr, int len, int flags, genptr_t ptr)
 {
     struct directory *dupdp;
     struct bu_vls local;
@@ -3960,8 +3954,8 @@ wdb_group_cmd(struct rt_wdb *wdbp,
 	      int argc,
 	      char *argv[])
 {
-    register struct directory *dp;
-    register int i;
+    struct directory *dp;
+    int i;
 
     WDB_TCL_CHECK_READ_ONLY;
 
@@ -4012,8 +4006,8 @@ wdb_remove_cmd(struct rt_wdb *wdbp,
 	       int argc,
 	       char *argv[])
 {
-    register struct directory *dp;
-    register int i;
+    struct directory *dp;
+    int i;
     int num_deleted;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
@@ -4098,7 +4092,7 @@ wdb_region_cmd(struct rt_wdb *wdbp,
 	       int argc,
 	       char *argv[])
 {
-    register struct directory *dp;
+    struct directory *dp;
     int i;
     int ident, air;
     char oper;
@@ -4207,9 +4201,9 @@ wdb_comb_cmd(struct rt_wdb *wdbp,
 	     int argc,
 	     char *argv[])
 {
-    register struct directory *dp;
+    struct directory *dp;
     char *comb_name;
-    register int i;
+    int i;
     char oper;
 
     WDB_TCL_CHECK_READ_ONLY;
@@ -4329,7 +4323,7 @@ wdb_find_ref(struct db_i *dbip,
  */
 HIDDEN union tree *
 facetize_region_end(tsp, pathp, curtree, client_data)
-    register struct db_tree_state *tsp;
+    struct db_tree_state *tsp;
     struct db_full_path *pathp;
     union tree *curtree;
     genptr_t client_data;
@@ -4370,7 +4364,7 @@ wdb_facetize_cmd(struct rt_wdb *wdbp,
 		 char *argv[])
 {
     int i;
-    register int c;
+    int c;
     int triangulate;
     char *newname;
     struct rt_db_internal intern;
@@ -4588,7 +4582,7 @@ wdb_facetize_cmd(struct rt_wdb *wdbp,
     if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0)
     {
 	Tcl_AppendResult(interp, "Failed to write ", newname, " to database\n", (char *)NULL);
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 	return TCL_ERROR;
     }
 
@@ -4611,10 +4605,10 @@ wdb_find_cmd(struct rt_wdb *wdbp,
 	     int argc,
 	     char *argv[])
 {
-    register int i, k;
-    register struct directory *dp;
+    int i, k;
+    struct directory *dp;
     struct rt_db_internal intern;
-    register struct rt_comb_internal *comb=(struct rt_comb_internal *)NULL;
+    struct rt_comb_internal *comb=(struct rt_comb_internal *)NULL;
     struct bu_vls vls;
     int c;
     int aflag = 0;		/* look at all objects */
@@ -4670,7 +4664,7 @@ wdb_find_cmd(struct rt_wdb *wdbp,
 				 (genptr_t)dp->d_namep,
 				 (genptr_t)interp);
 
-	    rt_db_free_internal(&intern, &rt_uniresource);
+	    rt_db_free_internal(&intern);
 	}
     }
 
@@ -4727,8 +4721,8 @@ wdb_rmap_cmd(struct rt_wdb *wdbp,
 	     int argc,
 	     char *argv[])
 {
-    register int i;
-    register struct directory *dp;
+    int i;
+    struct directory *dp;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
     struct wdb_id_to_names headIdName;
@@ -4809,7 +4803,7 @@ wdb_rmap_cmd(struct rt_wdb *wdbp,
 		BU_LIST_INSERT(&itnp->headName.l, &inp->l);
 	    }
 
-	    rt_db_free_internal(&intern, &rt_uniresource);
+	    rt_db_free_internal(&intern);
 	}
     }
 
@@ -4863,8 +4857,8 @@ wdb_which_cmd(struct rt_wdb *wdbp,
 	      int argc,
 	      char *argv[])
 {
-    register int i, j;
-    register struct directory *dp;
+    int i, j;
+    struct directory *dp;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
     struct wdb_id_to_names headIdName;
@@ -4986,7 +4980,7 @@ wdb_which_cmd(struct rt_wdb *wdbp,
 		}
 	    }
 
-	    rt_db_free_internal(&intern, &rt_uniresource);
+	    rt_db_free_internal(&intern);
 	}
     }
 
@@ -5105,9 +5099,9 @@ wdb_title_tcl(ClientData clientData,
 static int
 wdb_list_children(struct rt_wdb *wdbp,
 		  Tcl_Interp *interp,
-		  register struct directory *dp)
+		  struct directory *dp)
 {
-    register int i;
+    int i;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
 
@@ -5175,7 +5169,7 @@ wdb_list_children(struct rt_wdb *wdbp,
 	if (rt_tree_array)
 	    bu_free((char *)rt_tree_array, "printnode: rt_tree_array");
     }
-    rt_db_free_internal(&intern, &rt_uniresource);
+    rt_db_free_internal(&intern);
 
     return TCL_OK;
 }
@@ -5190,7 +5184,7 @@ wdb_lt_cmd(struct rt_wdb *wdbp,
 	   int argc,
 	   char *argv[])
 {
-    register struct directory *dp;
+    struct directory *dp;
     struct bu_vls vls;
 
     if (argc != 2)
@@ -5275,7 +5269,7 @@ wdb_version_tcl(ClientData clientData,
 void
 wdb_print_node(struct rt_wdb *wdbp,
 	       Tcl_Interp *interp,
-	       register struct directory *dp,
+	       struct directory *dp,
 	       int pathpos,
 	       int indentSize,
 	       char prefix,
@@ -5283,8 +5277,8 @@ wdb_print_node(struct rt_wdb *wdbp,
 	       int displayDepth,
 	       int currdisplayDepth)
 {
-    register int i;
-    register struct directory *nextdp;
+    int i;
+    struct directory *nextdp;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
 
@@ -5400,7 +5394,7 @@ wdb_print_node(struct rt_wdb *wdbp,
 	}
 	if (rt_tree_array) bu_free((char *)rt_tree_array, "printnode: rt_tree_array");
     }
-    rt_db_free_internal(&intern, &rt_uniresource);
+    rt_db_free_internal(&intern);
 }
 
 /**
@@ -5423,7 +5417,7 @@ wdb_track_tcl(ClientData clientData,
  *
  */
 static void
-wdb_pr_mater(register const struct mater *mp,
+wdb_pr_mater(const struct mater *mp,
 	     Tcl_Interp *interp,
 	     int *ccp,
 	     int *clp)
@@ -5453,7 +5447,7 @@ wdb_prcolor_cmd(struct rt_wdb *wdbp,
 		int argc,
 		char *argv[])
 {
-    register const struct mater *mp;
+    const struct mater *mp;
     int col_count = 0;
     int col_len = 0;
 
@@ -5754,7 +5748,7 @@ wdb_push_leaf(struct db_tree_state *tsp,
 {
     union tree *curtree;
     struct directory *dp;
-    register struct wdb_push_id *pip;
+    struct wdb_push_id *pip;
     struct wdb_push_data *wpdp = (struct wdb_push_data *)client_data;
 
     RT_CK_TESS_TOL(tsp->ts_ttol);
@@ -5823,7 +5817,7 @@ wdb_push_leaf(struct db_tree_state *tsp,
  * A null routine that does nothing.
  */
 static union tree *
-wdb_push_region_end(register struct db_tree_state *tsp,
+wdb_push_region_end(struct db_tree_state *tsp,
 		    struct db_full_path *pathp,
 		    union tree *curtree,
 		    genptr_t client_data)
@@ -5947,7 +5941,7 @@ wdb_push_cmd(struct rt_wdb *wdbp,
 	    Tcl_AppendResult(interp, "push(", pip->pi_dir->d_namep,
 			     "): solid export failure\n", (char *)NULL);
 	}
-	rt_db_free_internal(&es_int, &rt_uniresource);
+	rt_db_free_internal(&es_int);
     }
 
     /*
@@ -6380,7 +6374,7 @@ Copy_comb(struct db_i *dbip,
     if (rt_db_put_internal(found, dbip, &intern, &rt_uniresource) < 0) {
 	Tcl_AppendResult(interp, "rt_db_put_internal failed for ", dp->d_namep,
 			 "\n", (char *)NULL);
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 
 	return(DIR_NULL);
     }
@@ -6504,7 +6498,7 @@ wdb_xpush_cmd(struct rt_wdb *wdbp,
 	    if (comb->tree)
 		db_tree_funcleaf(wdbp->dbip, comb, comb->tree, Do_ref_incr,
 				 (genptr_t)NULL, (genptr_t)NULL, (genptr_t)NULL);
-	    rt_db_free_internal(&intern, &rt_uniresource);
+	    rt_db_free_internal(&intern);
 	}
     }
 
@@ -6573,7 +6567,7 @@ wdb_xpush_cmd(struct rt_wdb *wdbp,
     if (rt_db_put_internal(old_dp, wdbp->dbip, &intern, &rt_uniresource) < 0) {
 	Tcl_AppendResult(interp, "rt_db_put_internal failed for ", old_dp->d_namep,
 			 "\n", (char *)NULL);
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 	Free_uses(wdbp->dbip);
 	return TCL_ERROR;
     }
@@ -6635,7 +6629,7 @@ wdb_whatid_cmd(struct rt_wdb *wdbp,
 
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "%d", comb->region_id);
-    rt_db_free_internal(&intern, &rt_uniresource);
+    rt_db_free_internal(&intern);
     Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);
 
@@ -6674,7 +6668,7 @@ struct wdb_node_data {
  */
 void
 wdb_node_write(struct db_i *dbip,
-	       register struct directory *dp,
+	       struct directory *dp,
 	       genptr_t ptr)
 {
     struct rt_wdb *keepfp = (struct rt_wdb *)ptr;
@@ -6730,9 +6724,9 @@ wdb_keep_cmd(struct rt_wdb *wdbp,
 	     char *argv[])
 {
     struct rt_wdb *keepfp;
-    register struct directory *dp;
+    struct directory *dp;
     struct bu_vls title;
-    register int i;
+    int i;
     struct db_i *new_dbip;
 
     if (argc < 3 || MAXARGS < argc) {
@@ -6838,8 +6832,8 @@ wdb_cat_cmd(struct rt_wdb *wdbp,
 	    int argc,
 	    char *argv[])
 {
-    register struct directory *dp;
-    register int arg;
+    struct directory *dp;
+    int arg;
     struct bu_vls str;
 
     if (argc < 2 || MAXARGS < argc) {
@@ -6891,7 +6885,7 @@ wdb_instance_cmd(struct rt_wdb *wdbp,
 		 int argc,
 		 char *argv[])
 {
-    register struct directory *dp;
+    struct directory *dp;
     char oper;
 
     WDB_TCL_CHECK_READ_ONLY;
@@ -7003,7 +6997,7 @@ wdb_make_bb_cmd(struct rt_wdb *wdbp,
 		int argc,
 		char *argv[])
 {
-    register int i;
+    int i;
     point_t rpp_min, rpp_max;
     struct directory *dp;
     struct rt_arb_internal *arb;
@@ -7075,7 +7069,7 @@ wdb_make_bb_cmd(struct rt_wdb *wdbp,
     }
 
     if (rt_db_put_internal(dp, wdbp->dbip, &new_intern, wdbp->wdb_resp) < 0) {
-	rt_db_free_internal(&new_intern, wdbp->wdb_resp);
+	rt_db_free_internal(&new_intern);
 	Tcl_AppendResult(interp, "Database write error, aborting.\n", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -7676,9 +7670,6 @@ wdb_attr_cmd(struct rt_wdb *wdbp,
 		case DB5_MAJORTYPE_ATTRIBUTE_ONLY:
 		    bu_vls_printf(&vls, "%s global:\n", argv[2]);
 		    break;
-		case DB5_MAJORTYPE_BINARY_EXPM:
-		    bu_vls_printf(&vls, "%s binary(expm):\n", argv[2]);
-		    break;
 		case DB5_MAJORTYPE_BINARY_MIME:
 		    bu_vls_printf(&vls, "%s binary(mime):\n", argv[2]);
 		    break;
@@ -7888,7 +7879,7 @@ wdb_nmg_simplify_cmd(struct rt_wdb *wdbp,
 
     if (nmg_intern.idb_type != ID_NMG) {
 	Tcl_AppendResult(interp, nmg_name, " is not an NMG solid\n", (char *)NULL);
-	rt_db_free_internal(&nmg_intern, &rt_uniresource);
+	rt_db_free_internal(&nmg_intern);
 	return TCL_ERROR;
     }
 
@@ -7944,7 +7935,7 @@ wdb_nmg_simplify_cmd(struct rt_wdb *wdbp,
 		}
 	    }
 	    if (!success) {
-		rt_db_free_internal(&nmg_intern, &rt_uniresource);
+		rt_db_free_internal(&nmg_intern);
 		Tcl_AppendResult(interp, "Failed to construct an ARB equivalent to ",
 				 nmg_name, "\n", (char *)NULL);
 		return TCL_OK;
@@ -7964,7 +7955,7 @@ wdb_nmg_simplify_cmd(struct rt_wdb *wdbp,
 	    new_intern.idb_meth = &rt_functab[ID_TGC];
 	    success = 1;
 	} else if (do_tgc) {
-	    rt_db_free_internal(&nmg_intern, &rt_uniresource);
+	    rt_db_free_internal(&nmg_intern);
 	    Tcl_AppendResult(interp, "Failed to construct a TGC equivalent to ",
 			     nmg_name, "\n", (char *)NULL);
 	    return TCL_OK;
@@ -7992,7 +7983,7 @@ wdb_nmg_simplify_cmd(struct rt_wdb *wdbp,
 		success = 1;
 	    }
 	    else if (do_arb) {
-		rt_db_free_internal(&nmg_intern, &rt_uniresource);
+		rt_db_free_internal(&nmg_intern);
 		Tcl_AppendResult(interp, "Failed to construct an ARB equivalent to ",
 				 nmg_name, "\n", (char *)NULL);
 		return TCL_OK;
@@ -8013,7 +8004,7 @@ wdb_nmg_simplify_cmd(struct rt_wdb *wdbp,
 	    success = 1;
 	}
 	else if (do_poly) {
-	    rt_db_free_internal(&nmg_intern, &rt_uniresource);
+	    rt_db_free_internal(&nmg_intern);
 	    Tcl_AppendResult(interp, nmg_name, " is not a closed surface, cannot make a polysolid\n", (char *)NULL);
 	    return TCL_OK;
 	}
@@ -8035,7 +8026,7 @@ wdb_nmg_simplify_cmd(struct rt_wdb *wdbp,
 	    Tcl_AppendResult(interp, "Single vertexuse in shell of ", nmg_name,
 			     " has been ignored in conversion\n", (char *)NULL);
 
-	rt_db_free_internal(&nmg_intern, &rt_uniresource);
+	rt_db_free_internal(&nmg_intern);
 
 	if ((dp=db_diradd(wdbp->dbip, new_name, -1L, 0, DIR_SOLID, (genptr_t)&new_intern.idb_type)) == DIR_NULL) {
 	    Tcl_AppendResult(interp, "Cannot add ", new_name, " to directory\n", (char *)NULL);
@@ -8043,7 +8034,7 @@ wdb_nmg_simplify_cmd(struct rt_wdb *wdbp,
 	}
 
 	if (rt_db_put_internal(dp, wdbp->dbip, &new_intern, &rt_uniresource) < 0) {
-	    rt_db_free_internal(&new_intern, &rt_uniresource);
+	    rt_db_free_internal(&new_intern);
 	    WDB_TCL_WRITE_ERR_return;
 	}
 	return TCL_OK;
@@ -8129,7 +8120,7 @@ wdb_nmg_collapse_cmd(struct rt_wdb *wdbp,
 
     if (intern.idb_type != ID_NMG) {
 	Tcl_AppendResult(interp, argv[1], " is not an NMG solid!!!!\n", (char *)NULL);
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 	return TCL_ERROR;
     }
 
@@ -8170,16 +8161,16 @@ wdb_nmg_collapse_cmd(struct rt_wdb *wdbp,
 
     if ((dp=db_diradd(wdbp->dbip, new_name, -1L, 0, DIR_SOLID, (genptr_t)&intern.idb_type)) == DIR_NULL) {
 	Tcl_AppendResult(interp, "Cannot add ", new_name, " to directory\n", (char *)NULL);
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 	return TCL_ERROR;
     }
 
     if (rt_db_put_internal(dp, wdbp->dbip, &intern, &rt_uniresource) < 0) {
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 	WDB_TCL_WRITE_ERR_return;
     }
 
-    rt_db_free_internal(&intern, &rt_uniresource);
+    rt_db_free_internal(&intern);
 
     sprintf(count_str, "%ld", count);
     Tcl_AppendResult(interp, count_str, " edges collapsed\n", (char *)NULL);
@@ -8212,7 +8203,7 @@ wdb_summary_cmd(struct rt_wdb *wdbp,
 		int argc,
 		char *argv[])
 {
-    register char *cp;
+    char *cp;
     int flags = 0;
     int bad = 0;
 
@@ -8412,7 +8403,7 @@ wdb_bot_smooth_cmd(struct rt_wdb *wdbp,
 
     if (id != ID_BOT) {
 	Tcl_AppendResult(interp, old_bot_name, " is not a BOT primitive\n", (char *)NULL);
-	rt_db_free_internal(&intern, wdbp->wdb_resp);
+	rt_db_free_internal(&intern);
 	return TCL_ERROR;
     }
 
@@ -8421,26 +8412,26 @@ wdb_bot_smooth_cmd(struct rt_wdb *wdbp,
 
     if (rt_bot_smooth(old_bot, old_bot_name, wdbp->dbip, tolerance_angle*M_PI/180.0)) {
 	Tcl_AppendResult(interp, "Failed to smooth ", old_bot_name, "\n", (char *)NULL);
-	rt_db_free_internal(&intern, wdbp->wdb_resp);
+	rt_db_free_internal(&intern);
 	return TCL_ERROR;
     }
 
     if (dp_new == DIR_NULL) {
 	if ((dp_new=db_diradd(wdbp->dbip, new_bot_name, -1L, 0, DIR_SOLID,
 			      (genptr_t)&intern.idb_type)) == DIR_NULL) {
-	    rt_db_free_internal(&intern, wdbp->wdb_resp);
+	    rt_db_free_internal(&intern);
 	    Tcl_AppendResult(interp, "Cannot add ", new_bot_name, " to directory\n", (char *)NULL);
 	    return TCL_ERROR;
 	}
     }
 
     if (rt_db_put_internal(dp_new, wdbp->dbip, &intern, wdbp->wdb_resp) < 0) {
-	rt_db_free_internal(&intern, wdbp->wdb_resp);
+	rt_db_free_internal(&intern);
 	Tcl_AppendResult(interp, "Database write error, aborting.\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
-    rt_db_free_internal(&intern, wdbp->wdb_resp);
+    rt_db_free_internal(&intern);
 
     return TCL_OK;
 }
@@ -8670,7 +8661,7 @@ wdb_bo_cmd(struct rt_wdb *wdbp,
 	if (bip->count < 1) {
 	    Tcl_AppendResult(interp, obj_name, " has no contents", (char *)NULL);
 	    fclose(fp);
-	    rt_db_free_internal(&intern, &rt_uniresource);
+	    rt_db_free_internal(&intern);
 	    return TCL_ERROR;
 	}
 
@@ -8679,12 +8670,12 @@ wdb_bo_cmd(struct rt_wdb *wdbp,
 	    Tcl_AppendResult(interp, "Error writing contents to file",
 			     (char *)NULL);
 	    fclose(fp);
-	    rt_db_free_internal(&intern, &rt_uniresource);
+	    rt_db_free_internal(&intern);
 	    return TCL_ERROR;
 	}
 
 	fclose(fp);
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 	return TCL_OK;
     } else {
 	bu_vls_init(&vls);
@@ -8768,7 +8759,7 @@ int wdb_bot_face_sort_cmd(struct rt_wdb *wdbp,
 	}
 
 	if (id != ID_BOT) {
-	    rt_db_free_internal(&intern, wdbp->wdb_resp);
+	    rt_db_free_internal(&intern);
 	    bu_vls_printf(&vls,
 			  "%s is not a BOT primitive, skipped\n",
 			  dp->d_namep);
@@ -8782,7 +8773,7 @@ int wdb_bot_face_sort_cmd(struct rt_wdb *wdbp,
 	bu_log("processing %s (%d triangles)\n", dp->d_namep, bot->num_faces);
 	while (Tcl_DoOneEvent(TCL_DONT_WAIT | TCL_FILE_EVENTS));
 	if (rt_bot_sort_faces(bot, tris_per_piece)) {
-	    rt_db_free_internal(&intern, wdbp->wdb_resp);
+	    rt_db_free_internal(&intern);
 	    bu_vls_printf(&vls,
 			  "Face sort failed for %s, this BOT not sorted\n",
 			  dp->d_namep);
@@ -8798,7 +8789,7 @@ int wdb_bot_face_sort_cmd(struct rt_wdb *wdbp,
 	    Tcl_AppendResult(interp, "Failed to write sorted BOT (",
 			     dp->d_namep,
 			     ") to database!!! (This is very bad)\n");
-	    rt_db_free_internal(&intern, wdbp->wdb_resp);
+	    rt_db_free_internal(&intern);
 	    bu_vls_free(&vls);
 	    return(TCL_ERROR);
 	}
@@ -8881,7 +8872,7 @@ int
 wdb_cmpdirname(const genptr_t a,
 	       const genptr_t b)
 {
-    register struct directory **dp1, **dp2;
+    struct directory **dp1, **dp2;
 
     dp1 = (struct directory **)a;
     dp2 = (struct directory **)b;
@@ -8896,7 +8887,7 @@ wdb_cmpdirname(const genptr_t a,
  */
 void
 wdb_vls_col_item(struct bu_vls *str,
-		 register char *cp,
+		 char *cp,
 		 int *ccp,		/* column count pointer */
 		 int *clp)		/* column length pointer */
 {
@@ -9132,9 +9123,6 @@ wdb_vls_long_dpp(struct bu_vls *vls,
 		case DB5_MAJORTYPE_BINARY_UNIF:
 		    len = strlen(binu_types[list_of_names[i]->d_minor_type]);
 		    break;
-		case DB5_MAJORTYPE_BINARY_EXPM:
-		    len = strlen("binary(expm)");
-		    break;
 	    }
 	}
 
@@ -9165,11 +9153,6 @@ wdb_vls_long_dpp(struct bu_vls *vls,
 		case DB5_MAJORTYPE_ATTRIBUTE_ONLY:
 		    isSolid = 0;
 		    type = "global";
-		    break;
-		case DB5_MAJORTYPE_BINARY_EXPM:
-		    isSolid = 0;
-		    isRegion = 0;
-		    type = "binary(expm)";
 		    break;
 		case DB5_MAJORTYPE_BINARY_MIME:
 		    isSolid = 0;
@@ -9264,9 +9247,9 @@ wdb_vls_line_dpp(struct bu_vls *vls,
  */
 struct directory **
 wdb_getspace(struct db_i *dbip,
-	     register int num_entries)
+	     int num_entries)
 {
-    register struct directory **dir_basep;
+    struct directory **dir_basep;
 
     if (num_entries < 0) {
 	bu_log("wdb_getspace: was passed %d, used 0\n",
@@ -9289,7 +9272,7 @@ void
 wdb_do_list(struct db_i *dbip,
 	    Tcl_Interp *interp,
 	    struct bu_vls *outstrp,
-	    register struct directory *dp,
+	    struct directory *dp,
 	    int verbose)
 {
     int id;
@@ -9350,7 +9333,7 @@ wdb_do_list(struct db_i *dbip,
 	    Tcl_AppendResult(interp, dp->d_namep, ": list support unimplemented\n", (char *)NULL);
 	}
 
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
     }
 }
 
@@ -9366,7 +9349,7 @@ wdb_do_list(struct db_i *dbip,
 struct directory *
 wdb_combadd(Tcl_Interp *interp,
 	    struct db_i *dbip,
-	    register struct directory *objp,
+	    struct directory *objp,
 	    char *combname,
 	    int region_flag,	/* true if adding region */
 	    int relation,	/* = UNION, SUBTRACT, INTERSECT */
@@ -9374,7 +9357,7 @@ wdb_combadd(Tcl_Interp *interp,
 	    int air,		/* Air code */
 	    struct rt_wdb *wdbp)
 {
-    register struct directory *dp;
+    struct directory *dp;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
     union tree *tp;
@@ -9467,7 +9450,7 @@ wdb_combadd(Tcl_Interp *interp,
 	db_non_union_push(comb->tree, &rt_uniresource);
 	if (db_ck_v4gift_tree(comb->tree) < 0) {
 	    Tcl_AppendResult(interp, "Cannot flatten tree for editing\n", (char *)NULL);
-	    rt_db_free_internal(&intern, &rt_uniresource);
+	    rt_db_free_internal(&intern);
 	    return DIR_NULL;
 	}
     }
@@ -9592,8 +9575,8 @@ wdb_dir_summary(struct db_i *dbip,
 		Tcl_Interp *interp,
 		int flag)
 {
-    register struct directory *dp;
-    register int i;
+    struct directory *dp;
+    int i;
     static int sol, comb, reg;
     struct directory **dirp;
     struct directory **dirp0 = (struct directory **)NULL;
@@ -9656,11 +9639,11 @@ wdb_dir_summary(struct db_i *dbip,
  */
 static struct directory **
 wdb_dir_getspace(struct db_i *dbip,
-		 register int num_entries)
+		 int num_entries)
 {
-    register struct directory *dp;
-    register int i;
-    register struct directory **dir_basep;
+    struct directory *dp;
+    int i;
+    struct directory **dir_basep;
 
     if (num_entries < 0) {
 	bu_log("dir_getspace: was passed %d, used 0\n",
@@ -9809,7 +9792,7 @@ wdb_bot_decimate_cmd(struct rt_wdb *wdbp,
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD ||
 	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
 	Tcl_AppendResult(interp, argv[1], " is not a BOT solid\n", (char *)NULL);
-	rt_db_free_internal(&intern, wdbp->wdb_resp);
+	rt_db_free_internal(&intern);
 	return TCL_ERROR;
     }
 
@@ -9824,7 +9807,7 @@ wdb_bot_decimate_cmd(struct rt_wdb *wdbp,
     /* do the decimation */
     if (rt_bot_decimate(bot, max_chord_error, max_normal_error, min_edge_length) < 0) {
 	Tcl_AppendResult(interp, "Decimation Error\n", (char *)NULL);
-	rt_db_free_internal(&intern, wdbp->wdb_resp);
+	rt_db_free_internal(&intern);
 	return TCL_ERROR;
     }
 
@@ -9892,7 +9875,7 @@ wdb_move_arb_edge_cmd(struct rt_wdb *wdbp,
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD ||
 	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_ARB8) {
 	Tcl_AppendResult(interp, "Object not an ARB", (char *)NULL);
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 
 	return TCL_ERROR;
     }
@@ -9904,7 +9887,7 @@ wdb_move_arb_edge_cmd(struct rt_wdb *wdbp,
 	bu_vls_printf(&vls, "bad edge - %s", argv[2]);
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 
 	return TCL_ERROR;
     }
@@ -9917,7 +9900,7 @@ wdb_move_arb_edge_cmd(struct rt_wdb *wdbp,
 	bu_vls_printf(&vls, "bad point - %s", argv[3]);
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 
 	return TCL_ERROR;
     }
@@ -9951,7 +9934,7 @@ wdb_move_arb_edge_cmd(struct rt_wdb *wdbp,
 	    break;
 	default:
 	    Tcl_AppendResult(interp, "unrecognized arb type", (char *)NULL);
-	    rt_db_free_internal(&intern, &rt_uniresource);
+	    rt_db_free_internal(&intern);
 
 	    return TCL_ERROR;
     }
@@ -9964,7 +9947,7 @@ wdb_move_arb_edge_cmd(struct rt_wdb *wdbp,
 	bu_vls_printf(&vls, "bad edge - %s", argv[2]);
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 
 	return TCL_ERROR;
     }
@@ -9972,7 +9955,7 @@ wdb_move_arb_edge_cmd(struct rt_wdb *wdbp,
     bu_vls_init(&error_msg);
     if (rt_arb_calc_planes(&error_msg, arb, arb_type, planes, &wdbp->wdb_tol)) {
 	Tcl_AppendResult(interp, bu_vls_addr(&error_msg), (char *)0);
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 	bu_vls_free(&error_msg);
 
 	return TCL_ERROR;
@@ -9980,7 +9963,7 @@ wdb_move_arb_edge_cmd(struct rt_wdb *wdbp,
 
     if (rt_arb_edit(&error_msg, arb, arb_type, edge, pt, planes, &wdbp->wdb_tol)) {
 	Tcl_AppendResult(interp, bu_vls_addr(&error_msg), (char *)0);
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 	bu_vls_free(&error_msg);
 
 	return TCL_ERROR;
@@ -9988,7 +9971,7 @@ wdb_move_arb_edge_cmd(struct rt_wdb *wdbp,
     bu_vls_free(&error_msg);
 
     {
-	register int i;
+	int i;
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -10005,7 +9988,7 @@ wdb_move_arb_edge_cmd(struct rt_wdb *wdbp,
 	bu_vls_free(&vls);
     }
 
-    rt_db_free_internal(&intern, &rt_uniresource);
+    rt_db_free_internal(&intern);
     return TCL_OK;
 }
 
@@ -10065,7 +10048,7 @@ wdb_move_arb_face_cmd(struct rt_wdb *wdbp,
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD ||
 	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_ARB8) {
 	Tcl_AppendResult(interp, "Object not an ARB", (char *)NULL);
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 
 	return TCL_OK;
     }
@@ -10077,7 +10060,7 @@ wdb_move_arb_face_cmd(struct rt_wdb *wdbp,
 	bu_vls_printf(&vls, "bad face - %s", argv[2]);
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 
 	return TCL_ERROR;
     }
@@ -10091,7 +10074,7 @@ wdb_move_arb_face_cmd(struct rt_wdb *wdbp,
 	bu_vls_printf(&vls, "bad face - %s", argv[2]);
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 
 	return TCL_ERROR;
     }
@@ -10103,7 +10086,7 @@ wdb_move_arb_face_cmd(struct rt_wdb *wdbp,
 	bu_vls_printf(&vls, "bad point - %s", argv[3]);
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 
 	return TCL_ERROR;
     }
@@ -10116,7 +10099,7 @@ wdb_move_arb_face_cmd(struct rt_wdb *wdbp,
     bu_vls_init(&error_msg);
     if (rt_arb_calc_planes(&error_msg, arb, arb_type, planes, &wdbp->wdb_tol)) {
 	Tcl_AppendResult(interp, bu_vls_addr(&error_msg), (char *)0);
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 	bu_vls_free(&error_msg);
 
 	return TCL_ERROR;
@@ -10130,7 +10113,7 @@ wdb_move_arb_face_cmd(struct rt_wdb *wdbp,
     (void)rt_arb_calc_points(arb, arb_type, planes, &wdbp->wdb_tol);
 
     {
-	register int i;
+	int i;
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -10147,7 +10130,7 @@ wdb_move_arb_face_cmd(struct rt_wdb *wdbp,
 	bu_vls_free(&vls);
     }
 
-    rt_db_free_internal(&intern, &rt_uniresource);
+    rt_db_free_internal(&intern);
     return TCL_OK;
 }
 
@@ -10191,7 +10174,7 @@ wdb_rotate_arb_face_cmd(struct rt_wdb *wdbp,
     int face;
     int vi;
     point_t pt;
-    register int i;
+    int i;
     int pnt5;		/* special arb7 case */
     struct bu_vls error_msg;
 
@@ -10219,7 +10202,7 @@ wdb_rotate_arb_face_cmd(struct rt_wdb *wdbp,
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD ||
 	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_ARB8) {
 	Tcl_AppendResult(interp, "Object not an ARB", (char *)NULL);
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 
 	return TCL_OK;
     }
@@ -10231,7 +10214,7 @@ wdb_rotate_arb_face_cmd(struct rt_wdb *wdbp,
 	bu_vls_printf(&vls, "bad face - %s", argv[2]);
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 
 	return TCL_ERROR;
     }
@@ -10245,7 +10228,7 @@ wdb_rotate_arb_face_cmd(struct rt_wdb *wdbp,
 	bu_vls_printf(&vls, "bad face - %s", argv[2]);
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 
 	return TCL_ERROR;
     }
@@ -10257,7 +10240,7 @@ wdb_rotate_arb_face_cmd(struct rt_wdb *wdbp,
 	bu_vls_printf(&vls, "bad vertex index - %s", argv[2]);
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 
 	return TCL_ERROR;
     }
@@ -10272,7 +10255,7 @@ wdb_rotate_arb_face_cmd(struct rt_wdb *wdbp,
 	bu_vls_printf(&vls, "bad vertex - %s", argv[2]);
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 
 	return TCL_ERROR;
     }
@@ -10284,7 +10267,7 @@ wdb_rotate_arb_face_cmd(struct rt_wdb *wdbp,
 	bu_vls_printf(&vls, "bad point - %s", argv[3]);
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 
 	return TCL_ERROR;
     }
@@ -10297,7 +10280,7 @@ wdb_rotate_arb_face_cmd(struct rt_wdb *wdbp,
     bu_vls_init(&error_msg);
     if (rt_arb_calc_planes(&error_msg, arb, arb_type, planes, &wdbp->wdb_tol)) {
 	Tcl_AppendResult(interp, bu_vls_addr(&error_msg), (char *)0);
-	rt_db_free_internal(&intern, &rt_uniresource);
+	rt_db_free_internal(&intern);
 	bu_vls_free(&error_msg);
 
 	return TCL_ERROR;
@@ -10339,7 +10322,7 @@ wdb_rotate_arb_face_cmd(struct rt_wdb *wdbp,
     (void)rt_arb_calc_points(arb, arb_type, planes, &wdbp->wdb_tol);
 
     {
-	register int i;
+	int i;
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -10356,7 +10339,7 @@ wdb_rotate_arb_face_cmd(struct rt_wdb *wdbp,
 	bu_vls_free(&vls);
     }
 
-    rt_db_free_internal(&intern, &rt_uniresource);
+    rt_db_free_internal(&intern);
     return TCL_OK;
 }
 
@@ -10383,7 +10366,7 @@ wdb_newcmds_tcl(ClientData clientData,
 		int argc,
 		char *argv[])
 {
-    register struct bu_cmdtab *ctp;
+    struct bu_cmdtab *ctp;
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
     struct ged ged;
     Tcl_DString ds;

@@ -1,7 +1,7 @@
 /*                          M E N U . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2009 United States Government as represented by
+ * Copyright (c) 1985-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -56,7 +56,7 @@ cmd_mmenu_get(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     }
 
     if (argc == 2) {
-	register struct menu_item **m, *mptr;
+	struct menu_item **m, *mptr;
 
 	if (Tcl_GetInt(interp, argv[1], &index) != TCL_OK)
 	    return TCL_ERROR;
@@ -73,7 +73,7 @@ cmd_mmenu_get(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	for (mptr = *m; mptr->menu_string[0] != '\0'; mptr++)
 	    Tcl_AppendElement(interp, mptr->menu_string);
     } else {
-	register struct menu_item **m;
+	struct menu_item **m;
 	struct bu_vls result;
 	int status;
 
@@ -215,9 +215,9 @@ void
 mmenu_display(int y_top)
 {
     static int menu, item;
-    register struct menu_item	**m;
-    register struct menu_item	*mptr;
-    register int y = y_top;
+    struct menu_item	**m;
+    struct menu_item	*mptr;
+    int y = y_top;
 
     menu_state->ms_top = y - MENU_DY / 2;
     DM_SET_FGCOLOR(dmp,
@@ -313,8 +313,8 @@ mmenu_select( int pen_y, int do_func )
 {
     static int menu, item;
     struct menu_item	**m;
-    register struct menu_item	*mptr;
-    register int			yy;
+    struct menu_item	*mptr;
+    int			yy;
 
     if ( pen_y > menu_state->ms_top )
 	return(-1);	/* pen above menu area */

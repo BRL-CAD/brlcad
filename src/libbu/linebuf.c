@@ -1,7 +1,7 @@
 /*                       L I N E B U F . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,6 +39,7 @@ future release of BRL-CAD.  Use bu_setlinebuf instead.\n");
     return;
 }
 
+
 void
 bu_setlinebuf(FILE *fp)
 {
@@ -47,10 +48,11 @@ bu_setlinebuf(FILE *fp)
     }
 
     /* prefer this one */
-    if (setvbuf(fp, (char *) NULL, _IOLBF, BUFSIZE) != 0) {
+    if (setvbuf(fp, (char *)NULL, _IOLBF, BUFSIZE) != 0) {
 	perror("bu_setlinebuf");
     }
 }
+
 
 /*
  * Local Variables:

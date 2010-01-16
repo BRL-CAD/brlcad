@@ -1,7 +1,7 @@
 /*                 ShapeRepresentation.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -26,19 +26,27 @@
 #ifndef SHAPEREPRESENTATION_H_
 #define SHAPEREPRESENTATION_H_
 
+#include "common.h"
+
+/* inteface header */
 #include "Representation.h"
+
+/* system headers */
+#include <string>
+
 
 class ON_Brep;
 
-class ShapeRepresentation : public Representation {
+class ShapeRepresentation : public Representation
+{
 private:
-	static string entityname;
+    static std::string entityname;
 
 protected:
 
 public:
 	ShapeRepresentation();
-	ShapeRepresentation(STEPWrapper *sw, int STEPid);
+	ShapeRepresentation(STEPWrapper *sw,int step_id);
 	virtual ~ShapeRepresentation();
 	bool Load(STEPWrapper *sw, SCLP23(Application_instance) *sse);
 	virtual void Print(int level);
@@ -46,6 +54,7 @@ public:
 	//static methods
 	static STEPEntity *Create(STEPWrapper *sw,SCLP23(Application_instance) *sse);
 };
+
 
 #endif /* SHAPEREPRESENTATION_H_ */
 

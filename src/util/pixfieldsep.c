@@ -1,7 +1,7 @@
 /*                   P I X F I E L D S E P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -47,9 +47,9 @@ Usage: pixfieldsep [-w file_width] [-s square_size] [-# nbytes/pixel] \n\
 	[-d] [even.pix odd.pix]\n";
 
 int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int c;
+    int c;
 
     while ( (c = bu_getopt( argc, argv, "ds:w:#:" )) != EOF )  {
 	switch ( c )  {
@@ -88,7 +88,7 @@ get_args(int argc, register char **argv)
 int
 main(int argc, char **argv)
 {
-    register int	i;
+    int	i;
 
     if ( !get_args( argc, argv ) )  {
 	(void)fputs(usage, stderr);

@@ -2,18 +2,16 @@
 lib_LTLIBRARIES = libwdb.la
 noinst_LTLIBRARIES = libwdb_nil.la
 
-
 BREP_CPPFLAGS=-DOBJ_BREP=1 $(OPENNURBS_CPPFLAGS)
-BREP_SRCS=brep.cpp
-BREP_EXTRA=brep_stub.c
-
-AM_CPPFLAGS = ${TCL_CPPFLAGS} ${BREP_CPPFLAGS}
+AM_CPPFLAGS = \
+	${TCL_CPPFLAGS} \
+	${BREP_CPPFLAGS}
 
 libwdb_nil_la_SOURCES = \
-	$(BREP_SRCS) \
 	arbn.c \
 	ars.c \
 	bot.c \
+	brep.cpp \
 	cline.c \
 	constraint.c \
 	dsp.c \
@@ -41,10 +39,8 @@ libwdb_la_LIBADD = \
 
 man_MANS = libwdb.3
 
-# the C files here are deprecated
 EXTRA_DIST = \
 	$(man_MANS) \
-	$(BREP_EXTRA) \
 	CMakeLists.txt
 
 DEPS = src/librt

@@ -1,7 +1,7 @@
 /*                         K I L L A L L . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -60,7 +60,7 @@ ged_killall(struct ged *gedp, int argc, const char *argv[])
 
     /* Process the -n option */
     if (argc > 1 && argv[1][0] == '-' && argv[1][1] == 'n' && argv[1][2] == '\0') {
-	register int i;
+	int i;
 	nflag = 1;
 
 	/* Objects that would be killed are in the first sublist */

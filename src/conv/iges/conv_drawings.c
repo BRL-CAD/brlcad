@@ -1,7 +1,7 @@
 /*                 C O N V _ D R A W I N G S . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -495,7 +495,7 @@ Draw_entities( m, view_number, de_list, no_of_des, x, y, ang, local_scale, clip,
 	/* rotate, scale, clip, etc, ect, etc... */
 	for ( BU_LIST_FOR( vp, bn_vlist, &vhead ) )
 	{
-	    register int nused = vp->nused;
+	    int nused = vp->nused;
 
 	    for ( i=0; i<nused; i++ )
 	    {

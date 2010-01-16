@@ -1,7 +1,7 @@
 /*                      S U P E R E L L . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2009 United States Government as represented by
+ * Copyright (c) 1985-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -47,13 +47,13 @@
 
 
 const struct bu_structparse rt_superell_parse[] = {
-    { "%f", 3, "V", bu_offsetof(struct rt_superell_internal, v[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "A", bu_offsetof(struct rt_superell_internal, a[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "B", bu_offsetof(struct rt_superell_internal, b[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 3, "C", bu_offsetof(struct rt_superell_internal, c[X]), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 1, "n", bu_offsetof(struct rt_superell_internal, n), BU_STRUCTPARSE_FUNC_NULL },
-    { "%f", 1, "e", bu_offsetof(struct rt_superell_internal, e), BU_STRUCTPARSE_FUNC_NULL },
-    { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL }
+    { "%f", 3, "V", bu_offsetof(struct rt_superell_internal, v[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "A", bu_offsetof(struct rt_superell_internal, a[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "B", bu_offsetof(struct rt_superell_internal, b[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "C", bu_offsetof(struct rt_superell_internal, c[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 1, "n", bu_offsetof(struct rt_superell_internal, n), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 1, "e", bu_offsetof(struct rt_superell_internal, e), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
@@ -187,7 +187,7 @@ int
 rt_superell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
 
-    register struct superell_specific *superell;
+    struct superell_specific *superell;
     struct rt_superell_internal *eip;
     fastf_t magsq_a, magsq_b, magsq_c;
     mat_t R, TEMP;
@@ -333,9 +333,9 @@ rt_superell_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
  * R T _ S U P E R E L L _ P R I N T
  */
 void
-rt_superell_print(register const struct soltab *stp)
+rt_superell_print(const struct soltab *stp)
 {
-    register struct superell_specific *superell =
+    struct superell_specific *superell =
 	(struct superell_specific *)stp->st_specific;
 
     VPRINT("V", superell->superell_V);
@@ -359,11 +359,11 @@ rt_superell_print(register const struct soltab *stp)
  * >0 HIT
  */
 int
-rt_superell_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead)
+rt_superell_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
     static int counter=10;
 
-    register struct superell_specific *superell = (struct superell_specific *)stp->st_specific;
+    struct superell_specific *superell = (struct superell_specific *)stp->st_specific;
     bn_poly_t equation; /* equation of superell to be solved */
     vect_t translated;  /* translated shot vector */
     vect_t newShotPoint; /* P' */
@@ -371,8 +371,8 @@ rt_superell_shot(struct soltab *stp, register struct xray *rp, struct applicatio
     vect_t normalizedShotPoint; /* P' with normalized dist from superell */
     bn_complex_t complexRoot[4]; /* roots returned from poly solver */
     double realRoot[4];  /* real ray distance values */
-    register int i, j;
-    register struct seg *segp;
+    int i, j;
+    struct seg *segp;
 
     /* translate ray point */
     /* VSUB2(translated, rp->r_pt, superell->superell_V); */
@@ -469,8 +469,8 @@ rt_superell_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 	    break;
 	case 4:
 	    {
-		register short n;
-		register short lim;
+		short n;
+		short lim;
 
 		/* Inline rt_pt_sort().  Sorts realRoot[] into descending order. */
 		for (lim = i-1; lim > 0; lim--) {
@@ -522,31 +522,6 @@ rt_superell_shot(struct soltab *stp, register struct xray *rp, struct applicatio
     return(4);			/* HIT */
     /* XXX END CUT */
 
-    /* Is there any possibility of hitting another segment?  Only when there
-     * is a concave curvature (<n, e> > <2.0, 2.0>).
-     */
-    if ((superell->superell_n > 2.0) || (superell->superell_e > 2.0)) {
-
-    }
-
-    return 1;
-}
-
-
-/**
- * R T _ S U P E R E L L _ V S H O T
- *
- * This is the Becker vector version.
- */
-void
-rt_superell_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
-    /* An array of solid pointers */
-    /* An array of ray pointers */
-    /* array of segs (results returned) */
-    /* Number of ray/object pairs */
-
-{
-    return;
 }
 
 
@@ -556,9 +531,9 @@ rt_superell_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
-rt_superell_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
+rt_superell_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
-    register struct superell_specific *superell =
+    struct superell_specific *superell =
 	(struct superell_specific *)stp->st_specific;
 
     vect_t xlated;
@@ -580,8 +555,13 @@ rt_superell_norm(register struct hit *hitp, struct soltab *stp, register struct 
  * Return the curvature of the superellipsoid.
  */
 void
-rt_superell_curve(register struct curvature *cvp, register struct hit *hitp, struct soltab *stp)
+rt_superell_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 {
+    if (!cvp || !hitp || !stp)
+	return;
+    RT_CK_HIT(hitp);
+    RT_CK_SOLTAB(stp);
+
     bu_log("called rt_superell_curve!\n");
     return;
 }
@@ -596,8 +576,14 @@ rt_superell_curve(register struct curvature *cvp, register struct hit *hitp, str
  * v = elevation
  */
 void
-rt_superell_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
+rt_superell_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
+    if (ap) RT_CK_APPLICATION(ap);
+    if (!stp || !hitp || !uvp)
+	return;
+    RT_CK_SOLTAB(stp);
+    RT_CK_HIT(hitp);
+
     bu_log("called rt_superell_uv!\n");
     return;
 }
@@ -607,9 +593,9 @@ rt_superell_uv(struct application *ap, struct soltab *stp, register struct hit *
  * R T _ S U P E R E L L _ F R E E
  */
 void
-rt_superell_free(register struct soltab *stp)
+rt_superell_free(struct soltab *stp)
 {
-    register struct superell_specific *superell =
+    struct superell_specific *superell =
 	(struct superell_specific *)stp->st_specific;
 
     bu_free((char *)superell, "superell_specific");
@@ -630,8 +616,8 @@ rt_superell_class(void)
  */
 #define SUPERELLOUT(n) ov+(n-1)*3
 void
-rt_superell_16pts(register fastf_t *ov,
-		  register fastf_t *V,
+rt_superell_16pts(fastf_t *ov,
+		  fastf_t *V,
 		  fastf_t *A,
 		  fastf_t *B)
 {
@@ -672,9 +658,9 @@ rt_superell_16pts(register fastf_t *ov,
  * R T _ S U P E R E L L _ P L O T
  */
 int
-rt_superell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_superell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
 {
-    register int i;
+    int i;
     struct rt_superell_internal *eip;
     fastf_t top[16*3];
     fastf_t middle[16*3];
@@ -757,8 +743,12 @@ struct superell_vert_strip {
  * 0 OK.  *r points to nmgregion that holds this tesssuperellation.
  */
 int
-rt_superell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_superell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
 {
+    if (r) NMG_CK_REGION(*r);
+    if (m) NMG_CK_MODEL(m);
+    if (ip) RT_CK_DB_INTERNAL(ip);
+
     bu_log("rt_superell_tess called!\n");
     return -1;
 }
@@ -771,11 +761,13 @@ rt_superell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
  * internal structure.  Apply modeling transformations as wsuperell.
  */
 int
-rt_superell_import4(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_superell_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_superell_internal *eip;
     union record *rp;
     fastf_t vec[3*4 + 2];
+
+    if (dbip) RT_CK_DBI(dbip);
 
     BU_CK_EXTERNAL(ep);
     rp = (union record *)ep->ext_buf;
@@ -818,6 +810,8 @@ rt_superell_export4(struct bu_external *ep, const struct rt_db_internal *ip, dou
     struct rt_superell_internal *tip;
     union record *rec;
 
+    if (dbip) RT_CK_DBI(dbip);
+
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_SUPERELL) return(-1);
     tip = (struct rt_superell_internal *)ip->idb_ptr;
@@ -853,10 +847,12 @@ rt_superell_export4(struct bu_external *ep, const struct rt_db_internal *ip, dou
  * internal structure.  Apply modeling transformations as wsuperell.
  */
 int
-rt_superell_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip)
+rt_superell_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_superell_internal *eip;
     fastf_t vec[ELEMENTS_PER_VECT*4 + 2];
+
+    if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
     BU_CK_EXTERNAL(ep);
@@ -902,6 +898,8 @@ rt_superell_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
     struct rt_superell_internal *eip;
     fastf_t vec[ELEMENTS_PER_VECT*4 + 2];
 
+    if (dbip) RT_CK_DBI(dbip);
+
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_SUPERELL) return(-1);
     eip = (struct rt_superell_internal *)ip->idb_ptr;
@@ -937,7 +935,7 @@ rt_superell_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
 int
 rt_superell_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
 {
-    register struct rt_superell_internal *tip =
+    struct rt_superell_internal *tip =
 	(struct rt_superell_internal *)ip->idb_ptr;
     fastf_t mag_a, mag_b, mag_c;
     char buf[256];
@@ -1006,13 +1004,9 @@ rt_superell_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ve
  * solid.
  */
 void
-rt_superell_ifree(struct rt_db_internal *ip, struct resource *resp)
+rt_superell_ifree(struct rt_db_internal *ip)
 {
     RT_CK_DB_INTERNAL(ip);
-
-    if (!resp) {
-	resp = &rt_uniresource;
-    }
 
     bu_free(ip->idb_ptr, "superell ifree");
     ip->idb_ptr = GENPTR_NULL;
@@ -1032,23 +1026,15 @@ static const fastf_t rt_superell_uvw[5*ELEMENTS_PER_VECT] = {
 
 
 /**
- * R T _ S U P E R E L L _ T N U R B
- */
-int
-rt_superell_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bn_tol *tol)
-{
-    bu_log("rt_superell_tnurb called!\n");
-    return 0;
-}
-
-
-/**
  * R T _ S U P E R E L L _ P A R A M S
  *
  */
 int
-rt_superell_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
+rt_superell_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 {
+    ps = ps; /* quellage */
+    if (ip) RT_CK_DB_INTERNAL(ip);
+
     return(0);			/* OK */
 }
 

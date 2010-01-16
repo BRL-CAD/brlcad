@@ -1,7 +1,7 @@
 /*                         T O P S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,8 +36,8 @@
 int
 ged_tops(struct ged *gedp, int argc, const char *argv[])
 {
-    register struct directory *dp;
-    register int i;
+    struct directory *dp;
+    int i;
     struct directory **dirp;
     struct directory **dirp0 = (struct directory **)NULL;
     int c;
@@ -154,11 +154,11 @@ ged_tops(struct ged *gedp, int argc, const char *argv[])
  */
 struct directory **
 _ged_dir_getspace(struct db_i	*dbip,
-		 register int	num_entries)
+		 int	num_entries)
 {
-    register struct directory *dp;
-    register int i;
-    register struct directory **dir_basep;
+    struct directory *dp;
+    int i;
+    struct directory **dir_basep;
 
     if (num_entries < 0) {
 	bu_log( "dir_getspace: was passed %d, used 0\n",

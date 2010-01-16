@@ -1,7 +1,7 @@
 /*                       P I X T I L E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2009 United States Government as represented by
+ * Copyright (c) 1986-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -51,9 +51,9 @@ Usage: pixtile [-h] [-s squareinsize] [-w file_width] [-n file_height]\n\
  *			G E T _ A R G S
  */
 int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int c;
+    int c;
 
     while ( (c = bu_getopt( argc, argv, "hs:w:n:S:W:N:o:" )) != EOF )  {
 	switch ( c )  {
@@ -103,7 +103,7 @@ get_args(int argc, register char **argv)
 int
 main(int argc, char **argv)
 {
-    register int i;
+    int i;
     char *obuf;
     int im_line;		/* number of images across output scanline */
     int im_high;		/* number of images (swaths) high */
@@ -186,7 +186,7 @@ main(int argc, char **argv)
 	    }
 	    /* Read in .pix file.  Bottom to top */
 	    for ( i=0; i<file_height; i++ )  {
-		register int j;
+		int j;
 
 		/* virtual image l/r offset */
 		j = (rel*file_width);

@@ -1,4 +1,3 @@
-/* $Header$ */
 /* $NoKeywords: $ */
 /*
 //
@@ -44,7 +43,7 @@ public:
     Get a point cloud point from an ON_COMPONENT_INDEX.
   Parameters:
     ci - [in] a component index with m_typ set to ON_COMPONENT_INDEX::pointcloud_point
-	      and 0 <= m_index and m_index < m_P.Count().
+              and 0 <= m_index and m_index < m_P.Count().
   Returns:
     Point at [ci.m_index] or ON_UNSET_POINT if ci is not valid.
   */
@@ -60,16 +59,16 @@ public:
   void EmergencyDestroy();
 
   // virtual ON_Object override
-  BOOL IsValid( ON_TextLog* text_log = NULL ) const;
+  ON_BOOL32 IsValid( ON_TextLog* text_log = NULL ) const;
 
   // virtual ON_Object override
   void Dump( ON_TextLog& ) const; // for debugging
 
   // virtual ON_Object override
-  BOOL Write( ON_BinaryArchive& ) const;
+  ON_BOOL32 Write( ON_BinaryArchive& ) const;
 
   // virtual ON_Object override
-  BOOL Read( ON_BinaryArchive& );
+  ON_BOOL32 Read( ON_BinaryArchive& );
 
   // virtual ON_Object override
   ON::object_type ObjectType() const;
@@ -78,11 +77,11 @@ public:
   int Dimension() const;
 
   // virtual ON_Geometry override
-  BOOL GetBBox( // returns TRUE if successful
-	 double*,    // minimum
-	 double*,    // maximum
-	 BOOL = FALSE  // TRUE means grow box
-	 ) const;
+  ON_BOOL32 GetBBox( // returns true if successful
+         double*,    // minimum
+         double*,    // maximum
+         ON_BOOL32 = false  // true means grow box
+         ) const;
 
   // virtual ON_Geometry override
 	bool GetTightBoundingBox( 
@@ -92,9 +91,9 @@ public:
       ) const;
 
   // virtual ON_Geometry override
-  BOOL Transform( 
-	 const ON_Xform&
-	 );
+  ON_BOOL32 Transform( 
+         const ON_Xform&
+         );
 
   // virtual ON_Geometry override
   bool IsDeformable() const;
@@ -103,9 +102,9 @@ public:
   bool MakeDeformable();
 
   // virtual ON_Geometry override
-  BOOL SwapCoordinates(
-	int, int        // indices of coords to swap
-	);
+  ON_BOOL32 SwapCoordinates(
+        int, int        // indices of coords to swap
+        );
 
   // virtual ON_Geometry override
   bool Morph( const ON_SpaceMorph& morph );
@@ -121,8 +120,8 @@ public:
     P - [in]
     closest_point_index - [out]
     maximum_distance - [in] optional distance constraint.
-	If maximum_distance > 0, then only points Q with
-	|P-Q| <= maximum_distance are tested.
+        If maximum_distance > 0, then only points Q with
+        |P-Q| <= maximum_distance are tested.
   Returns:
     True if a point is found; in which case *closest_point_index
     is the index of the point.  False if no point is found
@@ -131,10 +130,10 @@ public:
     ON_GetClosestPointInPointList
   */
   bool GetClosestPoint( 
-	  ON_3dPoint P,
-	  int* closest_point_index,
-	  double maximum_distance = 0.0
-	  ) const;
+          ON_3dPoint P,
+          int* closest_point_index,
+          double maximum_distance = 0.0
+          ) const;
 
 
   /////////////////////////////////////////////////////////////////
@@ -145,11 +144,11 @@ public:
   void InvalidateBoundingBox(); // call if you change values of points
 
   // for ordered streams
-  void SetOrdered(bool bOrdered); // TRUE if set is ordered stream
-  bool IsOrdered() const; // TRUE if set is ordered stream
+  void SetOrdered(bool bOrdered); // true if set is ordered stream
+  bool IsOrdered() const; // true if set is ordered stream
 
   // for height fields
-  bool HasPlane() const; // TRUE if set is height field above a plane
+  bool HasPlane() const; // true if set is height field above a plane
   void SetPlane( const ON_Plane& );
   const ON_Plane& Plane();
   double Height(int);
@@ -238,7 +237,7 @@ public:
   ON_Plane m_plane;
   ON_BoundingBox m_bbox;
   unsigned int m_flags; // bit 1 is set if ordered
-			// bit 2 is set if plane is set
+                        // bit 2 is set if plane is set
 
 };
 

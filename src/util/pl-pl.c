@@ -1,7 +1,7 @@
 /*                         P L - P L . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2009 United States Government as represented by
+ * Copyright (c) 1988-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -137,7 +137,7 @@ Usage: pl-pl [-v] [-S] < unix_plot > unix_plot\n";
 int
 main(int argc, char **argv)
 {
-    register int	c;
+    int	c;
     struct	uplot *up;
 
     while ( argc > 1 ) {
@@ -356,7 +356,7 @@ getstring(void)
 short
 getshort(void)
 {
-    register long	v, w;
+    long	v, w;
 
     v = getchar();
     v |= (getchar()<<8);	/* order is important! */

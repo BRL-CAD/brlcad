@@ -1,7 +1,7 @@
 /*                         B R E P . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -46,7 +46,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
     char *solid_name;
     char *command;
     static const char *usage = "brep brepname.s [command]";
-    register struct directory *ndp;
+    struct directory *ndp;
     struct rt_db_internal intern;
     struct rt_brep_internal* bi;
     struct brep_specific* bs;
@@ -124,7 +124,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
     rt_vlblock_free(vbp);
     vbp = (struct bn_vlblock *)NULL;
 
-    rt_db_free_internal(&intern, &rt_uniresource);
+    rt_db_free_internal(&intern);
     
     return GED_OK;
 }

@@ -1,7 +1,7 @@
 /*                          L I S T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,11 +21,10 @@
 /** @{ */
 /** @file libbn/list.c
  *
- *  NOTE that tp_2list() and tp_3list() are good candidates to become
- *  intrinsic parts of plot3.c, for efficiency reasons.
+ * NOTE that tp_2list() and tp_3list() are good candidates to become
+ * intrinsic parts of plot3.c, for efficiency reasons.
  *
- * @author Michael John Muuss
- * @n	August 04, 1978
+ * Originally written in August 04, 1978
  */
 
 #include "common.h"

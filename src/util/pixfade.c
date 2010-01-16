@@ -1,7 +1,7 @@
 /*                       P I X F A D E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -62,9 +62,9 @@ static char usage[] = "\
 Usage: pixfade [-m max] [-p percent] [-f fraction] [pix-file]\n";
 
 int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int c;
+    int c;
 
     while ( (c = bu_getopt( argc, argv, "m:p:f:" )) != EOF )  {
 	switch ( c )  {
@@ -124,7 +124,7 @@ get_args(int argc, register char **argv)
 int
 main(int argc, char **argv)
 {
-    register float	*randp;
+    float	*randp;
     struct color_rec {
 	unsigned char red, green, blue;
     } cur_color;
@@ -140,7 +140,7 @@ main(int argc, char **argv)
 
 
     for (;;)  {
-	register double	t;
+	double	t;
 
 	if ( fread(&cur_color, 1, 3, inp) != 3 )  break;
 	if ( feof(inp) )  break;

@@ -1,7 +1,7 @@
 '                         M A K E . V B S
 ' BRL-CAD
 '
-' Copyright (c) 2005-2009 United States Government as represented by
+' Copyright (c) 2005-2010 United States Government as represented by
 ' the U.S. Army Research Laboratory.
 '
 ' Redistribution and use in source and binary forms, with or without
@@ -39,9 +39,6 @@
 ' Optional args:
 '   BrlcadDllRcDefines: create a header file containing the BRL-CAD version
 '                       numbers as defines to be used in brlcad.rc
-'
-' Author -
-'   Daniel Rossberg
 '
 '''
 

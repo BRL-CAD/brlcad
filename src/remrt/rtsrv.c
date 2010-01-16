@@ -1,7 +1,7 @@
 /*                         R T S R V . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2009 United States Government as represented by
+ * Copyright (c) 1985-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -114,17 +114,17 @@ int	save_overlaps=0;
 /*
  * Package Handlers.
  */
-void	ph_unexp(register struct pkg_conn *pc, char *buf);	/* foobar message handler */
-void	ph_enqueue(register struct pkg_conn *pc, char *buf);	/* Addes message to linked list */
-void	ph_dirbuild(register struct pkg_conn *pc, char *buf);
-void	ph_gettrees(register struct pkg_conn *pc, char *buf);
-void	ph_matrix(register struct pkg_conn *pc, char *buf);
-void	ph_options(register struct pkg_conn *pc, char *buf);
+void	ph_unexp(struct pkg_conn *pc, char *buf);	/* foobar message handler */
+void	ph_enqueue(struct pkg_conn *pc, char *buf);	/* Addes message to linked list */
+void	ph_dirbuild(struct pkg_conn *pc, char *buf);
+void	ph_gettrees(struct pkg_conn *pc, char *buf);
+void	ph_matrix(struct pkg_conn *pc, char *buf);
+void	ph_options(struct pkg_conn *pc, char *buf);
 void	ph_lines(struct pkg_conn *pc, char *buf);
-void	ph_end(register struct pkg_conn *pc, char *buf);
-void	ph_restart(register struct pkg_conn *pc, char *buf);
-void	ph_loglvl(register struct pkg_conn *pc, char *buf);
-void	ph_cd(register struct pkg_conn *pc, char *buf);
+void	ph_end(struct pkg_conn *pc, char *buf);
+void	ph_restart(struct pkg_conn *pc, char *buf);
+void	ph_loglvl(struct pkg_conn *pc, char *buf);
+void	ph_cd(struct pkg_conn *pc, char *buf);
 
 void	prepare(void);
 
@@ -156,7 +156,7 @@ char srv_usage[] = "Usage: rtsrv [-d] control-host tcp-port [cmd]\n";
 int
 main(int argc, char **argv)
 {
-    register int	n;
+    int	n;
 
     if ( argc < 2 )  {
 	fprintf(stderr, "%s", srv_usage);
@@ -317,7 +317,7 @@ main(int argc, char **argv)
     BU_LIST_INIT( &WorkHead );
 
     for (;;)  {
-	register struct pkg_queue	*lp;
+	struct pkg_queue	*lp;
 	fd_set ifds;
 	struct timeval tv;
 
@@ -390,9 +390,9 @@ main(int argc, char **argv)
  *  Presently used for MATRIX and LINES messages.
  */
 void
-ph_enqueue(register struct pkg_conn *pc, char *buf)
+ph_enqueue(struct pkg_conn *pc, char *buf)
 {
-    register struct pkg_queue	*lp;
+    struct pkg_queue	*lp;
 
     if ( debug )  fprintf(stderr, "ph_enqueue: %s\n", buf );
 
@@ -403,7 +403,7 @@ ph_enqueue(register struct pkg_conn *pc, char *buf)
 }
 
 void
-ph_cd(register struct pkg_conn *pc, char *buf)
+ph_cd(struct pkg_conn *pc, char *buf)
 {
     if (debug)fprintf(stderr, "ph_cd %s\n", buf);
     if ( chdir( buf ) < 0 )
@@ -412,7 +412,7 @@ ph_cd(register struct pkg_conn *pc, char *buf)
 }
 
 void
-ph_restart(register struct pkg_conn *pc, char *buf)
+ph_restart(struct pkg_conn *pc, char *buf)
 {
 
     if (debug)fprintf(stderr, "ph_restart %s\n", buf);
@@ -429,7 +429,7 @@ ph_restart(register struct pkg_conn *pc, char *buf)
  *  The only argument is the name of the database file.
  */
 void
-ph_dirbuild(register struct pkg_conn *pc, char *buf)
+ph_dirbuild(struct pkg_conn *pc, char *buf)
 {
 #define MAXARGS 1024
     char	*argv[MAXARGS+1];
@@ -478,7 +478,7 @@ ph_dirbuild(register struct pkg_conn *pc, char *buf)
  *  Each word in the command buffer is the name of a treetop.
  */
 void
-ph_gettrees(register struct pkg_conn *pc, char *buf)
+ph_gettrees(struct pkg_conn *pc, char *buf)
 {
 #define MAXARGS 1024
     char	*argv[MAXARGS+1];
@@ -544,9 +544,9 @@ ph_gettrees(register struct pkg_conn *pc, char *buf)
 void
 process_cmd(char *buf)
 {
-    register char	*cp;
-    register char	*sp;
-    register char	*ep;
+    char	*cp;
+    char	*sp;
+    char	*ep;
     int		len;
     extern struct command_tab rt_cmdtab[];	/* from do.c */
 
@@ -568,7 +568,7 @@ process_cmd(char *buf)
 }
 
 void
-ph_options(register struct pkg_conn *pc, char *buf)
+ph_options(struct pkg_conn *pc, char *buf)
 {
 
     if ( debug )  fprintf(stderr, "ph_options: %s\n", buf );
@@ -588,10 +588,10 @@ ph_options(register struct pkg_conn *pc, char *buf)
 }
 
 void
-ph_matrix(register struct pkg_conn *pc, char *buf)
+ph_matrix(struct pkg_conn *pc, char *buf)
 {
 #ifndef NO_MAGIC_CHECKING
-    register struct rt_i *rtip = ap.a_rt_i;
+    struct rt_i *rtip = ap.a_rt_i;
 
     RT_CK_RTI(rtip);
 #endif
@@ -623,7 +623,7 @@ ph_matrix(register struct pkg_conn *pc, char *buf)
 void
 prepare(void)
 {
-    register struct rt_i *rtip = ap.a_rt_i;
+    struct rt_i *rtip = ap.a_rt_i;
 
     RT_CK_RTI(rtip);
 
@@ -669,7 +669,7 @@ ph_lines(struct pkg_conn *pc, char *buf)
 {
     auto int		a, b, fr;
     struct line_info	info;
-    register struct rt_i	*rtip = ap.a_rt_i;
+    struct rt_i	*rtip = ap.a_rt_i;
     struct	bu_external	ext;
 
     RT_CK_RTI(rtip);
@@ -724,7 +724,7 @@ ph_lines(struct pkg_conn *pc, char *buf)
 int print_on = 1;
 
 void
-ph_loglvl(register struct pkg_conn *pc, char *buf)
+ph_loglvl(struct pkg_conn *pc, char *buf)
 {
     if (debug) fprintf(stderr, "ph_loglvl %s\n", buf);
     if ( buf[0] == '0' )
@@ -822,9 +822,9 @@ bu_bomb(const char *str)
 }
 
 void
-ph_unexp(register struct pkg_conn *pc, char *buf)
+ph_unexp(struct pkg_conn *pc, char *buf)
 {
-    register int i;
+    int i;
 
     if (debug) fprintf(stderr, "ph_unexp %s\n", buf);
 
@@ -841,7 +841,7 @@ ph_unexp(register struct pkg_conn *pc, char *buf)
  *			P H _ E N D
  */
 void
-ph_end(register struct pkg_conn *pc, char *buf)
+ph_end(struct pkg_conn *pc, char *buf)
 {
     if ( debug )  fprintf(stderr, "ph_end\n");
     pkg_close(pcsrv);
@@ -852,7 +852,7 @@ ph_end(register struct pkg_conn *pc, char *buf)
  *			P H _ P R I N T
  */
 void
-ph_print(register struct pkg_conn *pc, char *buf)
+ph_print(struct pkg_conn *pc, char *buf)
 {
     fprintf(stderr, "msg: %s\n", buf);
     (void)free(buf);

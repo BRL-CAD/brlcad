@@ -1,7 +1,7 @@
 /*                         G - D X F . C
  * BRL-CAD
  *
- * Copyright (c) 2003-2009 United States Government as represented by
+ * Copyright (c) 2003-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -345,7 +345,7 @@ nmg_to_dxf( struct nmgregion *r, struct db_full_path *pathp, int region_id, int 
 
 
 union tree *get_layer(tsp, pathp, curtree, client_data)
-    register struct db_tree_state	*tsp;
+    struct db_tree_state	*tsp;
     struct db_full_path	*pathp;
     union tree		*curtree;
     genptr_t		client_data;
@@ -390,7 +390,7 @@ main(argc, argv)
     int	argc;
     char	*argv[];
 {
-    register int	c;
+    int	c;
     double		percent;
     int		i;
 

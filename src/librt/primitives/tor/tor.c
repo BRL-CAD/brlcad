@@ -1,7 +1,7 @@
 /*                         T O R . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2009 United States Government as represented by
+ * Copyright (c) 1985-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -134,11 +134,11 @@
  */
 
 const struct bu_structparse rt_tor_parse[] = {
-    {"%f", 3, "V",   bu_offsetof(struct rt_tor_internal, v[X]), BU_STRUCTPARSE_FUNC_NULL},
-    {"%f", 3, "H",   bu_offsetof(struct rt_tor_internal, h[X]), BU_STRUCTPARSE_FUNC_NULL},
-    {"%f", 1, "r_a", bu_offsetof(struct rt_tor_internal, r_a),  BU_STRUCTPARSE_FUNC_NULL},
-    {"%f", 1, "r_h", bu_offsetof(struct rt_tor_internal, r_h),  BU_STRUCTPARSE_FUNC_NULL},
-    {{'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL}
+    {"%f", 3, "V",   bu_offsetof(struct rt_tor_internal, v[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%f", 3, "H",   bu_offsetof(struct rt_tor_internal, h[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%f", 1, "r_a", bu_offsetof(struct rt_tor_internal, r_a),  BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%f", 1, "r_h", bu_offsetof(struct rt_tor_internal, r_h),  BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {{'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL}
 };
 
 
@@ -521,9 +521,7 @@ rt_tor_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 }
 
 
-#define SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;
-
-
+#define RT_TOR_SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;
 /**
  * R T _ T O R _ V S H O T
  *
@@ -669,7 +667,7 @@ rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 		    reported=1;
 		}
 	    }
-	    SEG_MISS(segp[i]);		/* MISS */
+	    RT_TOR_SEG_MISS(segp[i]);		/* MISS */
 	}
     }
 
@@ -701,9 +699,9 @@ rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 
 	/* Here, 'i' is number of points found */
 	if (num_zero == 0) {
-	    SEG_MISS(segp[i]);		/* MISS */
+	    RT_TOR_SEG_MISS(segp[i]);		/* MISS */
 	} else if (num_zero != 2 && num_zero != 4) {
-	    SEG_MISS(segp[i]);		/* MISS */
+	    RT_TOR_SEG_MISS(segp[i]);		/* MISS */
 	}
     }
 
@@ -835,7 +833,7 @@ rt_tor_curve(register struct curvature *cvp, register struct hit *hitp, struct s
     register struct tor_specific *tor =
 	(struct tor_specific *)stp->st_specific;
     vect_t w4, w5;
-    fastf_t nx, ny, nz, x1, y1, z1;
+    fastf_t nx, ny, nz, x_1, y_1, z_1;
     fastf_t d;
 
     nx = tor->tor_N[X];
@@ -846,26 +844,26 @@ rt_tor_curve(register struct curvature *cvp, register struct hit *hitp, struct s
     VSUB2(w4, hitp->hit_point, tor->tor_V);
 
     if (!NEAR_ZERO(nz, 0.00001)) {
-	z1 = w4[Z]*nx*nx + w4[Z]*ny*ny - w4[X]*nx*nz - w4[Y]*ny*nz;
-	x1 = (nx*(z1-w4[Z])/nz) + w4[X];
-	y1 = (ny*(z1-w4[Z])/nz) + w4[Y];
+	z_1 = w4[Z]*nx*nx + w4[Z]*ny*ny - w4[X]*nx*nz - w4[Y]*ny*nz;
+	x_1 = (nx*(z_1-w4[Z])/nz) + w4[X];
+	y_1 = (ny*(z_1-w4[Z])/nz) + w4[Y];
     } else if (!NEAR_ZERO(ny, 0.00001)) {
-	y1 = w4[Y]*nx*nx + w4[Y]*nz*nz - w4[X]*nx*ny - w4[Z]*ny*nz;
-	x1 = (nx*(y1-w4[Y])/ny) + w4[X];
-	z1 = (nz*(y1-w4[Y])/ny) + w4[Z];
+	y_1 = w4[Y]*nx*nx + w4[Y]*nz*nz - w4[X]*nx*ny - w4[Z]*ny*nz;
+	x_1 = (nx*(y_1-w4[Y])/ny) + w4[X];
+	z_1 = (nz*(y_1-w4[Y])/ny) + w4[Z];
     } else {
-	x1 = w4[X]*ny*ny + w4[X]*nz*nz - w4[Y]*nx*ny - w4[Z]*nz*nx;
-	y1 = (ny*(x1-w4[X])/nx) + w4[Y];
-	z1 = (nz*(x1-w4[X])/nx) + w4[Z];
+	x_1 = w4[X]*ny*ny + w4[X]*nz*nz - w4[Y]*nx*ny - w4[Z]*nz*nx;
+	y_1 = (ny*(x_1-w4[X])/nx) + w4[Y];
+	z_1 = (nz*(x_1-w4[X])/nx) + w4[Z];
     }
-    d = sqrt(x1*x1 + y1*y1 + z1*z1);
+    d = sqrt(x_1*x_1 + y_1*y_1 + z_1*z_1);
 
     cvp->crv_c1 = (tor->tor_r1 - d) / (d * tor->tor_r2);
     cvp->crv_c2 = -1.0 / tor->tor_r2;
 
-    w4[X] = x1 / d;
-    w4[Y] = y1 / d;
-    w4[Z] = z1 / d;
+    w4[X] = x_1 / d;
+    w4[Y] = y_1 / d;
+    w4[Z] = z_1 / d;
     VCROSS(w5, tor->tor_N, w4);
     VCROSS(cvp->crv_pdir, w5, hitp->hit_normal);
     VUNITIZE(cvp->crv_pdir);
@@ -876,14 +874,19 @@ rt_tor_curve(register struct curvature *cvp, register struct hit *hitp, struct s
  * R T _ T O R _ U V
  */
 void
-rt_tor_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
+rt_tor_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
-    register struct tor_specific *tor =
-	(struct tor_specific *) stp -> st_specific;
+    struct tor_specific *tor = (struct tor_specific *) stp -> st_specific;
     vect_t work;
     vect_t pprime;
     vect_t pprime2;
     fastf_t costheta;
+
+    if (ap) RT_CK_APPLICATION(ap);
+    if (stp) RT_CK_SOLTAB(stp);
+    if (!hitp || !uvp)
+	return;
+    RT_CK_HIT(hitp);
 
     VSUB2(work, hitp -> hit_point, tor -> tor_V);
     MAT4X3VEC(pprime, tor -> tor_SoR, work);
@@ -992,7 +995,7 @@ rt_num_circular_segments(double maxerr, double radius)
  * ti.a, ti.b perpindicular, to CENTER of torus (for top, bottom)
  */
 int
-rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_tor_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol __attribute__((unused)))
 {
     fastf_t alpha;
     fastf_t beta;
@@ -1295,6 +1298,8 @@ rt_tor_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     vect_t axb;
     register fastf_t f;
 
+    if (dbip) RT_CK_DBI(dbip);
+
     BU_CK_EXTERNAL(ep);
     rp = (union record *)ep->ext_buf;
     /* Check record type */
@@ -1353,6 +1358,8 @@ rt_tor_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     double vec[2*3+2];
     struct rt_tor_internal *tip;
 
+    if (dbip) RT_CK_DBI(dbip);
+
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_TOR) return -1;
     tip = (struct rt_tor_internal *)ip->idb_ptr;
@@ -1390,6 +1397,8 @@ rt_tor_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     fastf_t r1, r2;
     fastf_t r3, r4;
     double m2;
+
+    if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_TOR) return(-1);
@@ -1485,6 +1494,8 @@ rt_tor_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 	double ra;	/* r1 */
 	double rh;	/* r2 */
     } rec;
+
+    if (dbip) RT_CK_DBI(dbip);
 
     BU_CK_EXTERNAL(ep);
     BU_ASSERT_LONG(ep->ext_nbytes, ==, SIZEOF_NETWORK_DOUBLE * (2*3+2));
@@ -1591,15 +1602,11 @@ rt_tor_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
  * solid.
  */
 void
-rt_tor_ifree(struct rt_db_internal *ip, struct resource *resp)
+rt_tor_ifree(struct rt_db_internal *ip)
 {
     register struct rt_tor_internal *tip;
 
     RT_CK_DB_INTERNAL(ip);
-
-    if (!resp) {
-	resp = &rt_uniresource;
-    }
 
     tip = (struct rt_tor_internal *)ip->idb_ptr;
     RT_TOR_CK_MAGIC(tip);
@@ -1614,8 +1621,11 @@ rt_tor_ifree(struct rt_db_internal *ip, struct resource *resp)
  *
  */
 int
-rt_tor_params(struct pc_pc_set * ps, const struct rt_db_internal *ip)
+rt_tor_params(struct pc_pc_set *ps, const struct rt_db_internal *ip)
 {
+    ps = ps; /* quellage */
+    if (ip) RT_CK_DB_INTERNAL(ip);
+
     return(0);			/* OK */
 }
 

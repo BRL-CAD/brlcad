@@ -1,7 +1,7 @@
 /*                 ShapeRepresentation.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -24,30 +24,38 @@
  *
  */
 
+/* inteface header */
+#include "ShapeRepresentation.h"
+
+/* implementation headers */
 #include "STEPWrapper.h"
 #include "Factory.h"
-
-#include "ShapeRepresentation.h"
 #include "ManifoldSolidBrep.h"
 #include "GeometricRepresentationContext.h"
+
 
 #define BUFSIZE 255 // used for buffer size that stringifies step ID
 #define CLASSNAME "ShapeRepresentation"
 #define ENTITYNAME "Shape_Representation"
-string ShapeRepresentation::entityname = Factory::RegisterClass(ENTITYNAME,(FactoryMethod)ShapeRepresentation::Create);
+
+std::string ShapeRepresentation::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)ShapeRepresentation::Create);
+
 
 ShapeRepresentation::ShapeRepresentation() {
 	step = NULL;
 	id = 0;
 }
 
-ShapeRepresentation::ShapeRepresentation(STEPWrapper *sw, int STEPid) {
+
+ShapeRepresentation::ShapeRepresentation(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 }
+
 
 ShapeRepresentation::~ShapeRepresentation() {
 }
+
 
 bool
 ShapeRepresentation::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
@@ -55,20 +63,24 @@ ShapeRepresentation::Load(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 	id = sse->STEPfile_id;
 
 	if ( !Representation::Load(sw,sse) ) {
-		cout << CLASSNAME << ":Error loading baseclass Representation." << endl;
+	std::cout << CLASSNAME << ":Error loading baseclass Representation." << std::endl;
 		return false;
 	}
 
 	return true;
 }
 
+
 void
 ShapeRepresentation::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << name << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
+    std::cout << "ID:" << STEPid() << ")" << std::endl;
 
 	Representation::Print(level);
 }
+
+
 STEPEntity *
 ShapeRepresentation::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) {
 	Factory::OBJECTS::iterator i;
@@ -78,7 +90,7 @@ ShapeRepresentation::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) 
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+	    std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}
@@ -87,6 +99,7 @@ ShapeRepresentation::Create(STEPWrapper *sw, SCLP23(Application_instance) *sse) 
 		return (*i).second;
 	}
 }
+
 
 // Local Variables:
 // tab-width: 8

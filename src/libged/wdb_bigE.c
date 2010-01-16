@@ -1,7 +1,7 @@
 /*                          B I G E . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2009 United States Government as represented by
+ * Copyright (c) 1997-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -70,7 +70,7 @@ union E_tree *wdb_build_etree(union tree *tp, struct dg_client_data *dgcdp);
 
 /* RT_FREE_SEG_LIST assumed list head is a "struct seg" */
 #define MY_FREE_SEG_LIST( _segheadp, _res )	{ \
-	register struct seg *_a; \
+	struct seg *_a; \
 	while ( BU_LIST_WHILE( _a, seg, (_segheadp) ) )  { \
 		BU_LIST_DEQUEUE( &(_a->l) ); \
 		RT_FREE_SEG( _a, _res ); \
@@ -149,7 +149,7 @@ wdb_add_solid(const struct directory	*dp,
 	RT_CK_COMB( comb );
 
 	eptr = wdb_build_etree( comb->tree, dgcdp );
-	rt_db_free_internal( &intern, &rt_uniresource );
+	rt_db_free_internal(&intern);
 	return( eptr );
     }
 #if 0
@@ -240,7 +240,7 @@ wdb_add_solid(const struct directory	*dp,
 				     "'\n", (char *)NULL );
 		}
 
-		rt_db_free_internal( &intern2, &rt_uniresource );
+		rt_db_free_internal(&intern2);
 	    }
 	}
 	else
@@ -256,7 +256,7 @@ wdb_add_solid(const struct directory	*dp,
     }
 
     if ( id != ID_NMG )
-	rt_db_free_internal( &intern, &rt_uniresource );
+	rt_db_free_internal(&intern);
 
     /* add this leaf to the leaf list */
     bu_ptbl_ins( &dgcdp->leaf_list, (long *)eptr );
@@ -2227,7 +2227,7 @@ wdb_fix_halfs(struct dg_client_data	*dgcdp)
 				 "'\n", (char *)NULL );
 	    }
 
-	    rt_db_free_internal( &intern2, &rt_uniresource );
+	    rt_db_free_internal(&intern2);
 	}
     }
 }
@@ -2238,7 +2238,7 @@ dgo_E_cmd(struct dg_obj	*dgop,
 	  int		argc,
 	  char 		**argv)
 {
-    register int		c;
+    int		c;
     char			perf_message[128];
     struct dg_client_data	*dgcdp;
 
@@ -2268,7 +2268,7 @@ dgo_E_cmd(struct dg_obj	*dgop,
 	    case 'C':
 	    {
 		int		r, g, b;
-		register char	*cp = bu_optarg;
+		char	*cp = bu_optarg;
 
 		r = atoi(cp);
 		while ((*cp >= '0' && *cp <= '9'))  cp++;

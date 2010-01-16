@@ -1,7 +1,7 @@
 /*                     G - V A R . C
  * BRL-CAD
  *
- * Copyright (c) 2002-2009 United States Government as represented by
+ * Copyright (c) 2002-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -378,7 +378,7 @@ void write_mesh_data()
  */
 int main(int argc, char *argv[])
 {
-    register int	c;
+    int	c;
     struct directory* dp;
 
     /* setup BRL-CAD environment */

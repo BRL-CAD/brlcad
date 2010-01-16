@@ -1,7 +1,7 @@
 /*                        P R O E - G . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -1030,7 +1030,7 @@ Rm_nulls(void)
 		const struct rt_functab *ftp = rt_get_functab_by_label("comb");
 		bu_log("Unable to write modified combination '%s' to database\n", dp->d_namep);
 		if (ftp && ftp->ft_ifree)
-		    ftp->ft_ifree(&intern, &rt_uniresource);
+		    ftp->ft_ifree(&intern);
 		continue;
 	    }
 	}
@@ -1044,7 +1044,7 @@ Rm_nulls(void)
 int
 main(int argc, char **argv)
 {
-    register int c;
+    int c;
 
     tol.magic = BN_TOL_MAGIC;
 

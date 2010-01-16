@@ -1,7 +1,7 @@
 /*                          A X I S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,9 +34,7 @@
  * and delta y (xincr, yincr) which describes the interval to
  * the start of the next tick.
  *
- *  @author
- *	Michael John Muuss
- *@n	August 01, 1978
+ * Originally written on August 01, 1978
  *
  */
 /** @} */

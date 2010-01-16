@@ -1,7 +1,7 @@
 /*                 Axis2Placement3D.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -47,7 +47,7 @@ protected:
 public:
 	Axis2Placement3D();
 	virtual ~Axis2Placement3D();
-	Axis2Placement3D(STEPWrapper *sw,int STEPid);
+	Axis2Placement3D(STEPWrapper *sw,int step_id);
 	const double *GetAxis(int i);
 	virtual const double *GetOrigin();
 	virtual const double *GetNormal();

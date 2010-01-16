@@ -1,7 +1,7 @@
 /*                     C O N V - V G 2 G . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2009 United States Government as represented by
+ * Copyright (c) 1985-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -232,7 +232,7 @@ main(int argc, char **argv)
 void
 mat_pr(char *title, float *mp)
 {
-    register int i;
+    int i;
 
     printf("MATRIX %s:\n  ", title);
     for (i=0; i<16; i++)  {

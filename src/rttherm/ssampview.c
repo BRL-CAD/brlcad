@@ -1,7 +1,7 @@
 /*                     S S A M P V I E W . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -573,9 +573,9 @@ Usage: ssampview [-t] [-s squarefilesize] [-w file_width] [-n file_height]\n\
 
 
 int
-get_args(int argc, register char **argv)
+get_args(int argc, char **argv)
 {
-    register int c;
+    int c;
 
     while ( (c = bu_getopt( argc, argv, "ts:w:n:" )) != EOF )  {
 	switch ( c )  {
@@ -733,7 +733,7 @@ find_minmax(void)
 {
     char			*cp;
     int			todo;
-    register fastf_t	max, min;
+    fastf_t	max, min;
     int		nbytes;
     int		j;
 
@@ -748,7 +748,7 @@ find_minmax(void)
 	sp = (struct bn_tabdata *)cp;
 	BN_CK_TABDATA(sp);
 	for ( j = 0; j < spectrum->nx; j++ )  {
-	    register fastf_t	v;
+	    fastf_t	v;
 
 	    if ( (v = sp->y[j]) > max )  max = v;
 	    if ( v < min )  min = v;
@@ -788,7 +788,7 @@ rescale(int wav)
 
     for ( todo = width * height; todo > 0; todo--, cp += nbytes, pp += 3 )  {
 	struct bn_tabdata	*sp;
-	register int		val;
+	int		val;
 
 	sp = (struct bn_tabdata *)cp;
 	BN_CK_TABDATA(sp);
@@ -835,7 +835,7 @@ show_color(int off)
 	struct bn_tabdata	*sp;
 	point_t			xyz;
 	point_t			rgb;
-	register int		val;
+	int		val;
 
 	sp = (struct bn_tabdata *)cp;
 	BN_CK_TABDATA(sp);

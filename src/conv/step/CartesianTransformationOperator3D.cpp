@@ -1,7 +1,7 @@
 /*                 CartesianTransformationOperator3D.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2009 United States Government as represented by
+ * Copyright (c) 1994-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -41,9 +41,9 @@ CartesianTransformationOperator3D::CartesianTransformationOperator3D() {
 	axis3 = NULL;
 }
 
-CartesianTransformationOperator3D::CartesianTransformationOperator3D(STEPWrapper *sw,int STEPid) {
+CartesianTransformationOperator3D::CartesianTransformationOperator3D(STEPWrapper *sw,int step_id) {
 	step = sw;
-	id = STEPid;
+	id = step_id;
 	axis3 = NULL;
 }
 
@@ -56,7 +56,7 @@ CartesianTransformationOperator3D::Load(STEPWrapper *sw,SCLP23(Application_insta
 	id = sse->STEPfile_id;
 
 	if ( !CartesianTransformationOperator::Load(sw,sse) ) {
-		cout << CLASSNAME << ":Error loading base class ::CartesianTransformationOperator." << endl;
+		std::cout << CLASSNAME << ":Error loading base class ::CartesianTransformationOperator." << std::endl;
 		return false;
 	}
 
@@ -76,16 +76,16 @@ CartesianTransformationOperator3D::Load(STEPWrapper *sw,SCLP23(Application_insta
 
 void
 CartesianTransformationOperator3D::Print(int level) {
-	TAB(level); cout << CLASSNAME << ":" << GeometricRepresentationItem::name << "(";
-	cout << "ID:" << STEPid() << ")" << endl;
+	TAB(level); std::cout << CLASSNAME << ":" << GeometricRepresentationItem::name << "(";
+	std::cout << "ID:" << STEPid() << ")" << std::endl;
 
-	TAB(level); cout << "Attributes:" << endl;
+	TAB(level); std::cout << "Attributes:" << std::endl;
 	if (axis3) {
-		TAB(level+1); cout << "axis3:" << endl;
+		TAB(level+1); std::cout << "axis3:" << std::endl;
 		axis3->Print(level+1);
 	}
 
-	TAB(level); cout << "Inherited Attributes:" << endl;
+	TAB(level); std::cout << "Inherited Attributes:" << std::endl;
 	CartesianTransformationOperator::Print(level+1);
 }
 
@@ -98,7 +98,7 @@ CartesianTransformationOperator3D::Create(STEPWrapper *sw, SCLP23(Application_in
 		Factory::AddObject(object);
 
 		if (!object->Load(sw, sse)) {
-			cerr << CLASSNAME << ":Error loading class in ::Create() method." << endl;
+			std::cerr << CLASSNAME << ":Error loading class in ::Create() method." << std::endl;
 			delete object;
 			return NULL;
 		}
@@ -111,7 +111,7 @@ CartesianTransformationOperator3D::Create(STEPWrapper *sw, SCLP23(Application_in
 bool
 CartesianTransformationOperator3D::LoadONBrep(ON_Brep *brep)
 {
-	cerr << "Error: ::LoadONBrep(ON_Brep *brep) not implemented for " << entityname << endl;
+	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << ">) not implemented for " << entityname << std::endl;
 	return false;
 }
 

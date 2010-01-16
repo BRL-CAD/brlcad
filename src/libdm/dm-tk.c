@@ -1,7 +1,7 @@
 /*                          D M - T K . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2009 United States Government as represented by
+ * Copyright (c) 1988-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -85,8 +85,12 @@ struct dm dm_tk = {
     tk_loadMatrix,
     tk_drawString2D,
     tk_drawLine2D,
+    tk_drawLine3D,
+    tk_drawLines3D,
     tk_drawPoint2D,
     tk_drawVList,
+    tk_drawVList,
+    tk_draw,
     tk_setFGColor,
     tk_setBGColor,
     tk_setLineAttr,
@@ -611,16 +615,16 @@ tk_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
  */
 
 HIDDEN int
-tk_drawVList(struct dm *dmp, register struct bn_vlist *vp)
+tk_drawVList(struct dm *dmp, struct bn_vlist *vp)
 {
 #if 1
     static vect_t			spnt, lpnt, pnt;
-    register struct bn_vlist	*tvp;
+    struct bn_vlist	*tvp;
     XSegment			segbuf[1024];		/* XDrawSegments list */
     XSegment			*segp;			/* current segment */
     int				nseg;		        /* number of segments */
     fastf_t				delta;
-    register point_t		*pt_prev = NULL;
+    point_t		*pt_prev = NULL;
     fastf_t				dist_prev=1.0;
     static int			nvectors = 0;
 
@@ -642,10 +646,10 @@ tk_drawVList(struct dm *dmp, register struct bn_vlist *vp)
     nseg = 0;
     segp = segbuf;
     for (BU_LIST_FOR(tvp, bn_vlist, &vp->l)) {
-	register int	i;
-	register int	nused = tvp->nused;
-	register int	*cmd = tvp->cmd;
-	register point_t *pt = tvp->pt;
+	int	i;
+	int	nused = tvp->nused;
+	int	*cmd = tvp->cmd;
+	point_t *pt = tvp->pt;
 	fastf_t 	 dist;
 
 	/* Viewing region is from -1.0 to +1.0 */
@@ -842,6 +846,27 @@ tk_drawVList(struct dm *dmp, register struct bn_vlist *vp)
 }
 
 /*
+ * T K _ D R A W
+ */
+tk_draw(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), genptr_t *data)
+{
+    struct bn_vlist *vp;
+    if (!callback_function) {
+	if (data) {
+	    vp = (struct bn_vlist *)data;
+	    tk_drawVList(dmp,vp);
+	}
+    } else {
+	if (!data) {
+	    return TCL_ERROR;
+	} else {
+	    vp = callback_function(data);
+	}
+    }
+    return TCL_OK;
+}
+
+/*
  *			X _ N O R M A L
  *
  * Restore the display processor to a normal mode of operation
@@ -864,7 +889,7 @@ tk_normal(struct dm *dmp)
  */
 /* ARGSUSED */
 HIDDEN int
-tk_drawString2D(struct dm *dmp, register char *str, fastf_t x, fastf_t y, int size, int use_aspect)
+tk_drawString2D(struct dm *dmp, char *str, fastf_t x, fastf_t y, int size, int use_aspect)
 {
     int sx, sy;
 
@@ -921,6 +946,18 @@ tk_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2)
 	       ((struct x_vars *)dmp->dm_vars.priv_vars)->gc,
 	       sx1, sy1, sx2, sy2 );
 
+    return TCL_OK;
+}
+
+HIDDEN int
+tk_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2)
+{
+    return TCL_OK;
+}
+
+HIDDEN int
+tk_drawLines3D(struct dm *dmp, int npoints, point_t *points)
+{
     return TCL_OK;
 }
 
@@ -1034,7 +1071,7 @@ tk_debug(struct dm *dmp, int lvl)
 }
 
 HIDDEN int
-tk_setWinBounds(struct dm *dmp, register int *w)
+tk_setWinBounds(struct dm *dmp, int *w)
 {
     if (dmp->dm_debugLevel)
 	bu_log("tk_setWinBounds()\n");

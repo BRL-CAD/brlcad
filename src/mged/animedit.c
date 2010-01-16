@@ -1,7 +1,7 @@
 /*                      A N I M E D I T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2009 United States Government as represented by
+ * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -203,7 +203,7 @@ struct bu_list hold_head = {
 static struct joint *
 joint_lookup(char *name)
 {
-    register struct joint *jp;
+    struct joint *jp;
 
     for (BU_LIST_FOR(jp, joint, &joint_head)) {
 	if (strcmp(jp->name, name) == 0) return jp;
@@ -213,7 +213,7 @@ joint_lookup(char *name)
 static void
 free_arc(struct arc *ap)
 {
-    register int i;
+    int i;
     if (!ap || ap->type == ARC_UNSET) return;
     for (i=0; i<=ap->arc_last; i++) {
 	bu_free((genptr_t)ap->arc[i], "arc entry");
@@ -239,7 +239,7 @@ free_joint(struct joint *jp)
 static void
 free_hold(struct hold *hp)
 {
-    register struct jointH *jh;
+    struct jointH *jh;
 
     if (!hp || hp->l.magic != MAGIC_HOLD_STRUCT) return;
     if (hp->objective.type != ID_FIXED) {
@@ -278,7 +278,7 @@ read_hold_point(pp, name, fip)
     char			**arc;
     int			arc_last;
     char			text[TEXT_LEN];
-    register int 		i;
+    int 		i;
     struct directory	*dp;
     struct joint		*jp;
 
@@ -457,8 +457,8 @@ if (!read_hold_point(&hp->objective, "objective", fip)) {
 int
 f_junload(int argc, char **argv)
 {
-    register struct joint *jp;
-    register struct hold *hp;
+    struct joint *jp;
+    struct hold *hp;
     int joints, holds;
 
     CHECK_DBI_NULL;
@@ -649,7 +649,7 @@ get_token(union bu_lex_token *token, FILE *fip, struct bu_vls *str, struct bu_le
 
 	bu_vls_init(&tmp_vls);
 	if (joint_debug & DEBUG_J_LEX) {
-	    register int i;
+	    int i;
 	    switch (token->type) {
 		case BU_LEX_KEYWORD:
 		    for (i=0; keys[i].tok_val != token->t_key.value; i++);
@@ -1985,8 +1985,8 @@ f_jload(int argc, char **argv)
      * evaluated. ??? XXX
      */
     for (BU_LIST_FOR(hp, hold, &hold_head)) {
-	register struct directory *dp;
-	register int i;
+	struct directory *dp;
+	int i;
 
 	if (hp->effector.arc.type == ARC_ARC) {
 	    db_init_full_path(&hp->effector.path);
@@ -2036,8 +2036,8 @@ f_jtest(int argc, char **argv)
 int
 f_jsave(int argc, char **argv)
 {
-    register struct joint *jp;
-    register int i;
+    struct joint *jp;
+    int i;
     FILE *fop;
 
     CHECK_DBI_NULL;
@@ -2116,8 +2116,8 @@ f_jsave(int argc, char **argv)
 int
 f_jaccept(int argc, char **argv)
 {
-    register struct joint *jp;
-    register int i;
+    struct joint *jp;
+    int i;
     int c;
     int no_mesh = 0;
 
@@ -2151,8 +2151,8 @@ f_jaccept(int argc, char **argv)
 int
 f_jreject(int argc, char **argv)
 {
-    register struct joint *jp;
-    register int i;
+    struct joint *jp;
+    int i;
     int c;
     int no_mesh = 0;
 
@@ -2216,7 +2216,7 @@ hold_point_location(fastf_t *loc, struct hold_point *hp)
 	    gip = (struct rt_grip_internal *)intern.idb_ptr;
 	    VMOVE(hp->point, gip->center);
 	    hp->flag |= HOLD_PT_GOOD;
-	    rt_db_free_internal( &intern, &rt_uniresource );
+	    rt_db_free_internal(&intern);
 
 	    db_path_to_mat(dbip, &hp->path, mat, hp->path.fp_len-2, &rt_uniresource);
 	    MAT4X3PNT(loc, mat, hp->point);
@@ -2293,7 +2293,7 @@ struct bu_list solve_head = {
 void
 joint_clear(void)
 {
-    register struct stack_solve *ssp;
+    struct stack_solve *ssp;
     BU_LIST_POP(stack_solve, &solve_head, ssp);
     while (ssp) {
 	bu_free((genptr_t)ssp, "struct stack_solve");
@@ -2304,14 +2304,14 @@ joint_clear(void)
 int
 part_solve(struct hold *hp, double limits, double tol)
 {
-    register struct joint *jp;
+    struct joint *jp;
     double f0, f1, f2;
     double ax, bx, cx;
     double x0, x1, x2, x3;
     double besteval, bestvalue = 0, origvalue;
     int bestfreedom = -1;
-    register struct joint *bestjoint;
-    register struct jointH *jh;
+    struct joint *bestjoint;
+    struct jointH *jh;
 
     if (joint_debug & DEBUG_J_SOLVE) {
 	Tcl_AppendResult(interp, "part_solve: solving for ", hp->name,
@@ -2319,7 +2319,7 @@ part_solve(struct hold *hp, double limits, double tol)
     }
 
     if (BU_LIST_IS_EMPTY(&hp->j_head)) {
-	register int i, j;
+	int i, j;
 	int startjoint;
 	startjoint = -1;
 	if (joint_debug & DEBUG_J_SOLVE) {
@@ -2380,7 +2380,7 @@ part_solve(struct hold *hp, double limits, double tol)
 	     * are "locked"
 	     */
 	    if (jh->arc_loc < startjoint) {
-		register struct jointH *hold;
+		struct jointH *hold;
 		if (joint_debug & DEBUG_J_SOLVE) {
 		    Tcl_AppendResult(interp, "part_solve: dequeuing ", jh->p->name,
 				     " from ", hp->name, "\n", (char *)NULL);
@@ -2411,7 +2411,7 @@ part_solve(struct hold *hp, double limits, double tol)
      * if any.
      */
     for (BU_LIST_FOR(jh, jointH, &hp->j_head)) {
-	register int i;
+	int i;
 	double hold;
 	jp= jh->p;
 	for (i=0;i<3;i++) {
@@ -2624,7 +2624,7 @@ part_solve(struct hold *hp, double limits, double tol)
 void
 reject_move(void)
 {
-    register struct solve_stack *ssp;
+    struct solve_stack *ssp;
     BU_LIST_POP(solve_stack, &solve_head, ssp);
     if (!ssp) return;
     if (joint_debug & DEBUG_J_SYSTEM) {
@@ -2677,9 +2677,9 @@ system_solve(int pri, double delta, double epsilon)
     double	pri_weights[SOLVE_MAX_PRIORITY+1];
     double	new_weights[SOLVE_MAX_PRIORITY+1];
     double	new_eval;
-    register int i;
+    int i;
     int	j;
-    register struct hold *hp;
+    struct hold *hp;
     struct jointH *jh;
     struct solve_stack *ssp;
     struct hold *test_hold = NULL;
@@ -2710,7 +2710,7 @@ system_solve(int pri, double delta, double epsilon)
      * we just did.
      */
     for (hp=(struct hold *)hold_head.forw; hp->l.forw != &hold_head;) {
-	register struct hold *tmp;
+	struct hold *tmp;
 	tmp = (struct hold *)hp->l.forw;
 
 	if ((tmp->priority < hp->priority) ||
@@ -2876,7 +2876,7 @@ system_solve(int pri, double delta, double epsilon)
 int
 f_jsolve(int argc, char **argv)
 {
-    register struct hold *hp;
+    struct hold *hp;
     int loops, count;
     double delta, epsilon;
     int	domesh;
@@ -2984,7 +2984,7 @@ f_jsolve(int argc, char **argv)
 	 * Clear all constrain flags.
 	 */
 	for (BU_LIST_FOR(hp, hold, &hold_head)) {
-	    register struct jointH *jh;
+	    struct jointH *jh;
 	    hp->flag &= ~HOLD_FLAG_TRIED;
 	    hp->eval = hold_eval(hp);
 	    for (BU_LIST_FOR(jh, jointH, &hp->j_head)) {
@@ -3019,7 +3019,7 @@ f_jsolve(int argc, char **argv)
 	     * Clear all constrain flags.
 	     */
 	    for (BU_LIST_FOR(hp, hold, &hold_head)) {
-		register struct jointH *jh;
+		struct jointH *jh;
 		hp->flag &= ~HOLD_FLAG_TRIED;
 		hp->eval = hold_eval(hp);
 		for (BU_LIST_FOR(jh, jointH, &hp->j_head)) {
@@ -3118,12 +3118,12 @@ print_hold(struct hold *hp)
 int
 f_jhold(int argc, char **argv)
 {
-    register struct hold *hp;
+    struct hold *hp;
     ++argv;
     --argc;
     for (BU_LIST_FOR(hp, hold, &hold_head)) {
 	if (argc) {
-	    register int i;
+	    int i;
 	    for (i=0; i<argc; i++) {
 		if (strcmp(argv[i], hp->name) == 0) break;
 	    }
@@ -3137,7 +3137,7 @@ f_jhold(int argc, char **argv)
 int
 f_jlist(int argc, char **argv)
 {
-    register struct joint *jp;
+    struct joint *jp;
     struct bu_vls vls;
 
     bu_vls_init(&vls);
@@ -3153,7 +3153,7 @@ f_jlist(int argc, char **argv)
 void
 joint_move(struct joint *jp)
 {
-    register struct animate *anp;
+    struct animate *anp;
     double tmp;
     mat_t	m1, m2;
     quat_t	q1;
@@ -3232,7 +3232,7 @@ joint_move(struct joint *jp)
 	    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 	    bu_vls_free(&tmp_vls);
 	}
-	{register double srot = sin(tmp);
+	{double srot = sin(tmp);
 	q1[X] *= srot;
 	q1[Y] *= srot;
 	q1[Z] *= srot;
@@ -3399,8 +3399,8 @@ struct bu_list artic_head = {
 struct joint *
 findjoint(struct db_full_path *pathp)
 {
-    register int i, j;
-    register struct joint *jp;
+    int i, j;
+    struct joint *jp;
     int best;
     struct joint *bestjp = NULL;
 
@@ -3503,7 +3503,7 @@ mesh_leaf(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_in
 }
 
 HIDDEN union tree *
-mesh_end_region (register struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+mesh_end_region (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
     return curtree;
 }
@@ -3553,7 +3553,7 @@ f_jmesh(int argc, char **argv)
 {
     char			*name;
     struct bn_vlblock*vbp;
-    register struct bu_list *vhead;
+    struct bu_list *vhead;
     struct artic_joints	*jp;
     struct artic_grips	*gp, *gpp;
     int i;
@@ -3571,9 +3571,9 @@ f_jmesh(int argc, char **argv)
 
     topc = ged_build_tops(gedp, topv, topv+2000);
     {
-	register struct ged_display_list *gdlp;
-	register struct ged_display_list *next_gdlp;
-	register struct solid *sp;
+	struct ged_display_list *gdlp;
+	struct ged_display_list *next_gdlp;
+	struct solid *sp;
 
 	gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
 	while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {

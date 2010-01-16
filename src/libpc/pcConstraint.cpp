@@ -1,7 +1,7 @@
 /*                       P C C O N S T R A I N T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2009 United States Government as represented by
+ * Copyright (c) 2008-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,7 +23,6 @@
  *
  * Constraint Class Methods
  *
- * @author Dawn Thomas
  */
 #include "pcConstraint.h"
 #include "pcVCSet.h"
