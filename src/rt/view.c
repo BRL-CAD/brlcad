@@ -529,15 +529,25 @@ fastf_t *timeTable_init(struct application *ap)
      * So first we need to get the size of the framebuffer
      * (ap->a_x, a_y) and use that as the starting point.
      */
-    static fastf_t **timeTable;
+    static fastf_t **timeTable = NULL;
+    /* FIXME: don't rely on globals (pass as parameters) */
     int x = width;
     int y = height;
     bu_log("X is %d, Y is %d\n", x, y);
     int i;
+    /* FIXME: memory leak if timeTable_init() is called multiple times */
+
+#ifdef FIXME
+    /* !!! should not be calling malloc() directly, use bu_calloc() or
+     * bu_malloc().  also have to free the memory somewhere/somehow
+     * (consider passing NULL param to mean free).
+     */
     timeTable = malloc(x * sizeof(fastf_t *));
     for (i = 0; i < x; i++) {
 	timeTable[i] = malloc(y * sizeof(fastf_t *));
     }
+#endif
+
     bu_log("Initialized timetable\n");
 
     return *timeTable;
@@ -584,6 +594,8 @@ void timeTable_process(fastf_t **timeTable)
     fastf_t meanTime = maxTime / minTime;	/* the 128 value */
     fastf_t range = maxTime - minTime;		/* All times should fall in this range */
     RGBpixel p;					/* Pixel colors for particular pixel */
+
+    /* FIXME: should not be accessing ap global, pass as data parameter */
     int maxX = ap.a_x, maxY = ap.a_y; 		/* Maximum render size. */
 
     /* The following loop will work as follows, it will loop through
