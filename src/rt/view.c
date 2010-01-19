@@ -535,18 +535,13 @@ fastf_t *timeTable_init(struct application *ap)
     int y = height;
     bu_log("X is %d, Y is %d\n", x, y);
     int i;
+
     /* FIXME: memory leak if timeTable_init() is called multiple times */
 
-#ifdef FIXME
-    /* !!! should not be calling malloc() directly, use bu_calloc() or
-     * bu_malloc().  also have to free the memory somewhere/somehow
-     * (consider passing NULL param to mean free).
-     */
     timeTable = bu_malloc(x * sizeof(fastf_t *));
     for (i = 0; i < x; i++) {
 	timeTable[i] = bu_malloc(y * sizeof(fastf_t *));
     }
-#endif
 
     bu_log("Initialized timetable\n");
 
