@@ -1,9 +1,14 @@
-
+AUTOMAKE_OPTIONS = 1.6 dist-zip dist-bzip2
 ACLOCAL_AMFLAGS = -I m4
 
+tkhtml_dirs = \
+	src
+
 SUBDIRS = \
-	src \
-	doc
+	$(tkhtml_dirs)
+
+DIST_SUBDIRS = \
+	$(tkhtml_dirs)
 
 EXTRA_DIST = \
 	AUTHORS \
@@ -11,17 +16,15 @@ EXTRA_DIST = \
 	ChangeLog \
 	INSTALL \
 	NEWS \
-	README
+	README \
+	configure.ac \
+	libtool \
+	doc
 
-TKHTMLLIB_DESTDIR = @TKHTML_TCL_TARGET@
-
-libtool: $(LIBTOOL_DEPS)
-	$(SHELL) ./config.status --recheck
-
-install-data-local:
-	$(mkinstalldirs) $(DESTDIR)$(TKHTMLLIB_DESTDIR)
-	cp -r tkhtml/* $(DESTDIR)$(TKHTMLLIB_DESTDIR)
-	-( cd  $(DESTDIR)$(TKHTMLLIB_DESTDIR) ; echo 'eval pkg_mkIndex -verbose [pwd] init.tcl [glob [file join packages * *.tcl] [file join *[info sharedlibextension]]]' | @TCLSH_PROG@ ; )
-
-uninstall-local:
-	rm -fr $(DESTDIR)$(TKHTMLLIB_DESTDIR)
+DISTCLEANFILES = \
+	$(CONFIG_CACHE) \
+	aclocal.m4 \
+	aclocal.m4~ \
+	config.log \
+	config.status \
+	configure

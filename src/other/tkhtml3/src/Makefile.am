@@ -1,17 +1,17 @@
-lib_libexecdir = @TKHTML_TCL_TARGET@
-lib_libexec_LTLIBRARIES = libtkhtml.la
+lib_dir = @TKHTML_TCL_TARGET@
+lib_LTLIBRARIES = libtkhtml.la
 
 htmltokens.c:   $(srcdir)/tokenlist.txt
-        $(TCLSH) $?
+	$(TCLSH_PROG) $?
 
 htmldefaultstyle.c: $(srcdir)/tkhtml.tcl  $(srcdir)/html.css \
                     $(srcdir)/mkdefaultstyle.tcl
-	$(TCLSH) $(srcdir)/mkdefaultstyle.tcl > htmldefaultstyle.c
+	$(TCLSH_PROG) $(srcdir)/mkdefaultstyle.tcl > htmldefaultstyle.c
 
 htmltokens.h: htmltokens.c
 
 cssprop.h: $(srcdir)/cssprop.tcl
-	$(TCLSH) $? 
+	$(TCLSH_PROG) $? 
 
 cssprop.c: cssprop.h
 
@@ -41,6 +41,8 @@ libtkhtml_la_SOURCES = \
 	htmldecode.c \
 	htmltext.c \
 	htmlutil.c	
+
+
 
 libtkhtml_la_LDFLAGS = @TCL_LIB_SPEC@ -module -avoid-version
 libtkhtml_la_LIBADD = @TCL_LIBS@

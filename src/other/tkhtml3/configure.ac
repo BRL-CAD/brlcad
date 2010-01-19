@@ -6,7 +6,6 @@ dnl
 dnl You need at least autoconf 2.59
 dnl
 #
-# RCS: @(#) $Id$
 
 #-----------------------------------------------------------------------
 # Sample configure.ac for Tcl Extensions.  The only places you should
@@ -26,24 +25,6 @@ AC_INIT([Tkhtml],[3.0])
 TEA_INIT([3.7])
 
 AC_CONFIG_AUX_DIR(tclconfig)
-AM_INIT_AUTOMAKE
-
-# AX_PREFIX_CONFIG_H is a macro taken from the autotools macro archive.
-# The typical configure generated 'config.h' can be renamed and 
-# preprocessor symbols in it can be prefixed in order to avoid clashes 
-# with Apache's config.h
-# 
-# As of today (27 Sept 2008) this macro is not part of autotools and
-# it's in the 'm4' directory
-#
-
-AX_PREFIX_CONFIG_H([tkhtml_config.h],[tkhtml])
-
-#--------------------------------------------------------------------
-# Call TEA_INIT as the first TEA_ macro to set up initial vars.
-# This will define a ${TEA_PLATFORM} variable == "unix" or "windows"
-# as well as PKG_LIB_FILE and PKG_STUB_LIB_FILE.
-#--------------------------------------------------------------------
 
 #
 # Init automake stuff
@@ -99,6 +80,7 @@ AC_SUBST(LIBTOOL_DEPS)
 # PKG_TCL_SOURCES.
 #-----------------------------------------------------------------------
 
+TEA_ADD_HEADERS([])
 TEA_ADD_INCLUDES([])
 TEA_ADD_LIBS([])
 TEA_ADD_CFLAGS([])
@@ -179,12 +161,12 @@ TEA_ENABLE_SYMBOLS
 #--------------------------------------------------------------------
 
 #
-# stubs are causing segmentation violations when mod_tkhtml is getting
-# loaded into apache.  it would be nice if we did no stubs for this and
-# still did stubs for libtkhtml and libtkhtmlparser, which seem to be OK.
+# For reaons that aren't yet clear, when building tkhtml against
+# an Aqua enabled build the stubs don't have everything needed.
+# Disable for now.
 #
-#AC_DEFINE(USE_TCL_STUBS,1,[Define to link against the Tcl stub library])
-#AC_DEFINE(USE_TK_STUBS)
+#AC_DEFINE(USE_TCL_STUBS, 1, [Define to link against the Tcl stub library])
+#AC_DEFINE(USE_TK_STUBS, 1, [Define to link against the Tk stub library])
 
 #--------------------------------------------------------------------
 # This macro generates a line to use when building a library.  It
@@ -194,92 +176,11 @@ TEA_ENABLE_SYMBOLS
 
 TEA_MAKE_LIB
 
-#--------------------------------------------------------------------
-# Find tclsh so that we can run pkg_mkIndex to generate the pkgIndex.tcl
-# file during the install process.  Don't run the TCLSH_PROG through
-# ${CYGPATH} because it's being used directly by make.
-# Require that we use a tclsh shell version 8.2 or later since earlier
-# versions have bugs in the pkg_mkIndex routine.
-# Add WISH as well if this is a Tk extension.
-#--------------------------------------------------------------------
-
-# We have to either find a working tclsh or be told where it is 
-# using --with-tclsh
-AC_ARG_WITH(tclsh, [  --with-tclsh=FILE       location of a working tclsh executable], with_tclsh=${withval})
-
-#
-# allow them to override the tclsh we think we found
-#
-if test x"${with_tclsh}" != x ; then
-    AC_MSG_CHECKING([for tclsh])
-    if test -f "${with_tclsh}" ; then
-        TCLSH_PROG=${with_tclsh}
-        AC_MSG_RESULT([manually set by --with-tclsh=$TCLSH_PROG])
-    else
-        AC_MSG_ERROR([No tclsh at place specified by --with-tclsh (${with_tclsh})])
-    fi
-    AC_SUBST(TCLSH_PROG)
-else
 TEA_PROG_TCLSH
-fi
+TEA_PROG_WISH
 
-#TEA_PROG_WISH
+AC_SUBST(TCLSH_PROG)
 
-# apache base directory
-
-AC_DEFUN([HANDLE_TCL_PACKAGE_PATH],[
-    # shamelessly stolen from TEA_LOAD_TCLCONFIG
-    AC_MSG_CHECKING([Debian TCL_PACKAGE_PATH workaround])
-        if test -f "${TCL_BIN_DIR}/tclConfig.sh" ; then
-           AC_MSG_RESULT([loading])
-           . "${TCL_BIN_DIR}/tclConfig.sh"
-        else
-           AC_MSG_RESULT([could not find ${TCL_BIN_DIR}/tclConfig.sh])
-        fi
-    # If we have multiple paths, pull the first one, add end slash if needed
-	res=`echo ${TCL_PACKAGE_PATH} | \
-             grep '[[^\]] ' | \
-             sed -e 's/\([[^\]]\)\( \)\(.*\)$/\1/'  -e 's/\([[^\/]]\)$/\1\//' `
-	if test x"${res}" != x; then
-	    TCL_PACKAGE_PATH=${res}
-            AC_SUBST(TCL_PACKAGE_PATH)
-        fi
-])
-
-AC_DEFUN([GET_TKHTML_BASE], [
-    TKHTML_BASE_INCLUDE=`pwd`/src	
-    AC_SUBST(TKHTML_BASE_INCLUDE)
-])
-
-AC_DEFUN([TKHTML_TCL_LIB],[
-    AC_ARG_WITH(
-        tkhtml_target_dir,
-        [ --with-tkhtml-target-dir=DIR  Tkhtml tcl library target dir ],,
-		with_tkhtml_target_dir="${apache_base}/lib/tkhtml${PACKAGE_VERSION}"
-    )
-    AC_MSG_CHECKING(for Tkhtml tcl library target)
-    TKHTML_TCL_TARGET=${with_tkhtml_target_dir}
-    AC_SUBST(TKHTML_TCL_TARGET)
-    AC_MSG_RESULT([$with_tkhtml_target_dir])
-])
-
-GET_TKHTML_BASE
-TKHTML_TCL_LIB
-DISPLAY_TKHTML_VERSION
-
-AC_DEFINE_UNQUOTED(TKHTMLLIB_DESTDIR,"${TKHTML_TCL_TARGET}",[The path to the tkhtml tcl library])
-AC_DEFINE_UNQUOTED(NAMEOFEXECUTABLE,"${TCLSH_PROG}",[The path to a working tclsh executable])
-
-# We need to use the package path for the installation procedure.  On
-#Debian linux TCL_PACKAGE_PATH may have more than one path in the
-#TCL_PACKAGE_PATH variable, so we have to handle this
-HANDLE_TCL_PACKAGE_PATH
-AC_SUBST(TCL_PACKAGE_PATH)
-
-# Finally, substitute all of the various values into the Makefile.
-# You may alternatively have a special pkgIndex.tcl.in or other files
-# which require substituting th AC variables in.  Include these here.
-#--------------------------------------------------------------------
 AC_CONFIG_FILES([Makefile src/Makefile])
 
 AC_OUTPUT
