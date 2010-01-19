@@ -374,6 +374,15 @@ clean:
 	-rm -f *.$(OBJEXT) core *.core
 	-test -z "$(CLEANFILES)" || rm -f $(CLEANFILES)
 
+DISTCLEANFILES = \
+	$(CONFIG_CACHE) \
+	aclocal.m4 \
+	config.log \
+	config.status \
+	$(BINARIES) \
+	$(PKG_OBJECTS) \
+	$(CLEANFILES)
+
 #========================================================================
 # Install binary object libraries.  On Windows this includes both .dll and
 # .lib files.  Because the .lib files are not explicitly listed anywhere,
