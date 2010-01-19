@@ -22,12 +22,6 @@
 #SAMPLE_NEW_VAR	= @SAMPLE_NEW_VAR@
 
 #========================================================================
-# Nothing of the variables below this line should need to be changed.
-# Please check the TARGETS section below to make sure the make targets
-# are correct.
-#========================================================================
-
-#========================================================================
 # The names of the source files is defined in the configure script.
 # The object files are used for linking into the final library.
 # This will be used when a dist target is added to the Makefile.
@@ -35,24 +29,9 @@
 # $(srcdir) or in the generic, win or unix subdirectory.
 #========================================================================
 
-PKG_SOURCES	= @PKG_SOURCES@
 PKG_OBJECTS	= @PKG_OBJECTS@ cssprop.$(OBJEXT)
 
-PKG_STUB_SOURCES = @PKG_STUB_SOURCES@
 PKG_STUB_OBJECTS = @PKG_STUB_OBJECTS@
-
-#========================================================================
-# PKG_TCL_SOURCES identifies Tcl runtime files that are associated with
-# this package that need to be installed, if any.
-#========================================================================
-
-PKG_TCL_SOURCES = @PKG_TCL_SOURCES@
-
-#========================================================================
-# This is a list of public header files to be installed, if any.
-#========================================================================
-
-#PKG_HEADERS	= @PKG_HEADERS@
 
 #========================================================================
 # "PKG_LIB_FILE" refers to the library (dynamic or static as per
@@ -398,34 +377,6 @@ cssprop.tcl:
 pkgIndex.tcl:
 	echo 'package ifneeded $(PACKAGE_NAME) $(PACKAGE_VERSION) [list load [file join $$dir $(PKG_LIB_FILE)]]' > pkgIndex.tcl
 
-#========================================================================
-# Distribution creation
-# You may need to tweak this target to make it work correctly.
-#========================================================================
-
-DIST_DIR=$(distdir)
-
-distdir: 
-	mkdir -p $(DIST_DIR)
-	cp -p   $(srcdir)/README* $(srcdir)/configure \
-		$(srcdir)/COPYING* $(srcdir)/aclocal.m4 $(srcdir)/*.in \
-		$(DIST_DIR)/
-	chmod 664 $(DIST_DIR)/Makefile.in $(DIST_DIR)/aclocal.m4
-	chmod 775 $(DIST_DIR)/configure.in $(DIST_DIR)/configure
-
-	mkdir $(DIST_DIR)/tclconfig
-	cp $(srcdir)/tclconfig/install-sh $(srcdir)/tclconfig/tcl.m4 \
-	   $(srcdir)/README* $(srcdir)/tclconfig/README.txt $(DIST_DIR)/tclconfig/
-	chmod 664 $(DIST_DIR)/tclconfig/tcl.m4
-	chmod +x $(DIST_DIR)/tclconfig/install-sh
-
-	list='doc src'; \
-	for p in $$list; do \
-	    if test -d $(srcdir)/$$p ; then \
-		mkdir $(DIST_DIR)/$$p; \
-		cp -p $(srcdir)/$$p/*.* $(DIST_DIR)/$$p/; \
-	    fi; \
-	done
 
 #========================================================================
 # End of user-definable section
