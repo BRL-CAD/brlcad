@@ -577,8 +577,8 @@ void timeTable_process(fastf_t **timeTable)
 {
     fastf_t maxTime = -MAX_FASTF;		/* The 255 value */
     fastf_t minTime = MAX_FASTF; 		/* The 1 value */
-    fastf_t meanTime = maxTime / minTime;	/* the 128 value */
-    fastf_t range = maxTime - minTime;		/* All times should fall in this range */
+    fastf_t meanTime = 0;			/* the 128 value */
+    fastf_t range = 0;				/* All times should fall in this range */
     RGBpixel p;					/* Pixel colors for particular pixel */
 
     int maxX = width, maxY = height; 		/* Maximum render size. */
