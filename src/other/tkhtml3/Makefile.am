@@ -486,7 +486,8 @@ uninstall-doc:
 	done
 
 EXTRA_DIST = \
-	src
+	src \
+	doc
 
 .PHONY: all binaries clean depend distclean doc install libraries test
 
