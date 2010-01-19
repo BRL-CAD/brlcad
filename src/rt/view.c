@@ -522,14 +522,21 @@ view_pixel(register struct application *ap)
  */
 fastf_t *timeTable_init(void)
 {
-    /* for now, a 4096x4096 will be a theoretical maximum for a render
-     * size, which is pretty huge. Eventually it will be set to
-     * whatever the maximum size possible is. Filled initially with -1
-     * in order to determine the actual 'size' of the inputed heat
-     * graph.
+    /*
+     * Time table will be initialized to the size of the current
+     * framebuffer by using a malloc.
+     * So first we need to get the size of the framebuffer
+     * (ap.a_x, a_y) and use that as the starting point.
      */
-
-    static fastf_t timeTable[4096][4096]={-1};
+    static fastf_t **timeTable;
+    int x = ap.a_x;
+    int y = ap.a_y;
+    int i;
+    timeTable = malloc(x * sizeof(fastf_t *));
+    for(i = 0; i < x; i++)
+    {
+	timeTable[i] = malloc(y * sizeof(fastf_t *));
+    }
     bu_log("Initialized timetable\n");
     return *timeTable;
 }
@@ -541,10 +548,10 @@ fastf_t *timeTable_init(void)
  * raytrace and places it into the timeTable for use in creating a
  * heat graph light model.
  */
-void timeTable_input(int x, int y, fastf_t time, fastf_t timeTable[][4096])
+void timeTable_input(int x, int y, fastf_t time, fastf_t **timeTable)
 {
-    static fastf_t maxtime = -1.0;
-    static fastf_t mintime = 1000000.0; /* about 11 days. No pixel should take longer */
+    static fastf_t maxtime = -MAX_FASTF;
+    static fastf_t mintime = MAX_FASTF;
     static int entries = 0;
 
     /*static fastf_t timeTable[4096][4096]={-1}; */
@@ -1713,6 +1720,9 @@ view_2init(register struct application *ap, char *framename)
 	     */
 	case 8:
 	    {
+		/* Maybe do timetable_init here so it may be used later...*/
+		
+		timeTable_init();
 		ap->a_hit = colorview;
 		VSETALL(background, 0.5);
 		break;
