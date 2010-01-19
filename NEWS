@@ -37,7 +37,6 @@ changes made.  See document footer for additional details.
 * librt now queries env LIBRT_DEBUG for more flags - Erik Greenwald
 * pixdiff outputs matching pixels at half-intensity - Sean Morrison
 * fixed rate interpolation bug in tabinterp - Emton
-* runtime toggling of display managers - Cliff Yapp
 
 
 ----------------------------------------------------------------------
