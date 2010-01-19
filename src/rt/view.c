@@ -563,21 +563,7 @@ fastf_t *timeTable_init(struct application *ap)
  */
 void timeTable_input(int x, int y, fastf_t time, fastf_t **timeTable)
 {
-    static fastf_t maxtime = -MAX_FASTF;
-    static fastf_t mintime = MAX_FASTF;
-     
-    /* These variables are used later for normalization of time graph */
-    
-    bu_semaphore_acquire(BU_SEM_SYSCALL);
-    if (time > maxtime)
- 	maxtime = time;
-    if (time < mintime)
- 	mintime = time;
-    bu_semaphore_release(BU_SEM_SYSCALL);
-    
     timeTable[x][y] = time;
-
-    /* bu_log("Current Max: %lf, Current Min: %lf Entries: %d\n", maxtime, mintime, entries); */
 }
 
 
@@ -589,14 +575,13 @@ void timeTable_input(int x, int y, fastf_t time, fastf_t **timeTable)
  */
 void timeTable_process(fastf_t **timeTable)
 {
-    fastf_t maxTime;				/* The 255 value */
-    fastf_t minTime; 				/* The 1 value */
+    fastf_t maxTime = -MAX_FASTF;		/* The 255 value */
+    fastf_t minTime = MAX_FASTF; 		/* The 1 value */
     fastf_t meanTime = maxTime / minTime;	/* the 128 value */
     fastf_t range = maxTime - minTime;		/* All times should fall in this range */
     RGBpixel p;					/* Pixel colors for particular pixel */
 
-    /* FIXME: should not be accessing ap global, pass as data parameter */
-    int maxX = ap.a_x, maxY = ap.a_y; 		/* Maximum render size. */
+    int maxX = width, maxY = height; 		/* Maximum render size. */
 
     /* The following loop will work as follows, it will loop through
      * timeTable and search for pixels which have a non-negative value.
@@ -605,6 +590,22 @@ void timeTable_process(fastf_t **timeTable)
      * function.
      */
     int x, y;
+    for(x = 0; x < maxX; x++) {
+	for(y = 0; y < maxY; y++) {
+	    if(timeTable[x][y] != -1) {
+		bu_semaphore_acquire(BU_SEM_SYSCALL);
+		if(timeTable[x][y] > maxTime)
+		    maxTime = timeTable[x][y];
+		if(timeTable[x][y] < minTime)
+		    minTime = timeTable[x][y];
+		bu_semaphore_release(BU_SEM_SYSCALL);
+	    }
+	}
+    }
+
+    meanTime = maxTime / minTime;
+    range = maxTime - minTime;
+    
     int color = 0;
     int npix = 0;
     for (x = 0; x < maxX; x++) {
