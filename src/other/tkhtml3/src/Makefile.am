@@ -1,5 +1,5 @@
-lib_dir = @TKHTML_TCL_TARGET@
-lib_LTLIBRARIES = libtkhtml.la
+lib_dir = $(DESTDIR)$(pkglibdir)
+lib_LTLIBRARIES = lib@PACKAGE_NAME@@PACKAGE_VERSION@.la
 
 htmltokens.c:   $(srcdir)/tokenlist.txt
 	$(TCLSH_PROG) $?
@@ -18,7 +18,7 @@ cssprop.c: cssprop.h
 #
 # Tkhtml Library
 #
-libtkhtml_la_SOURCES = \
+lib@PACKAGE_NAME@@PACKAGE_VERSION@_la_SOURCES = \
 	css.c \
 	cssdynamic.c \
 	cssparser.c \
@@ -44,9 +44,9 @@ libtkhtml_la_SOURCES = \
 
 
 
-libtkhtml_la_LDFLAGS = @TCL_LIB_SPEC@ -module -avoid-version
-libtkhtml_la_LIBADD = @TCL_LIBS@
-libtkhtml_la_CPPFLAGS = @TCL_INCLUDES@
+lib@PACKAGE_NAME@@PACKAGE_VERSION@_la_LDFLAGS = @TCL_LIB_SPEC@
+lib@PACKAGE_NAME@@PACKAGE_VERSION@_la_LIBADD = @TCL_LIBS@
+lib@PACKAGE_NAME@@PACKAGE_VERSION@_la_CPPFLAGS = @TCL_INCLUDES@
 
 BUILT_SOURCES = \
 	cssprop.c \
@@ -54,5 +54,7 @@ BUILT_SOURCES = \
 	htmltokens.h \
 	htmldefaultstyle.c \
 	htmltokens.c
+
+DISTCLEANFILES = $(BUILT_SOURCES)
 
 include $(top_srcdir)/misc/Makefile.defs
