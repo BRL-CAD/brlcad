@@ -515,22 +515,39 @@ view_pixel(register struct application *ap)
 
 /**
  * T I M E T A B L E _ I N I T
- *
- * This function creates a 2D array of size X by Y, for use by the
- * heat graph light model. Stores time used by each pixel for render.
+ * 
+ * This function creates the table of values that will store the 
+ * time taken to complete pixels during a raytrace. Returns a
+ * pointer to the table.
  */
-void timeTable_init(int x, int y, fastf_t time)
+fastf_t *timeTable_init(void)
 {
-    static fastf_t maxtime = -1.0;
-    static fastf_t mintime = 1000000.0; /* about 11 days. No pixel should take longer */
-    static int entries = 0;
     /* for now, a 4096x4096 will be a theoretical maximum for a render
      * size, which is pretty huge. Eventually it will be set to
      * whatever the maximum size possible is. Filled initially with -1
      * in order to determine the actual 'size' of the inputed heat
      * graph.
      */
+
     static fastf_t timeTable[4096][4096]={-1};
+    bu_log("Initialized timetable\n");
+    return *timeTable;
+}
+
+/**
+ * T I M E T A B L E _ I N P U T 
+ *
+ * This function inputs the time taken to complete a pixel during a
+ * raytrace and places it into the timeTable for use in creating a
+ * heat graph light model.
+ */
+void timeTable_input(int x, int y, fastf_t time, fastf_t timeTable[][4096])
+{
+    static fastf_t maxtime = -1.0;
+    static fastf_t mintime = 1000000.0; /* about 11 days. No pixel should take longer */
+    static int entries = 0;
+
+    /*static fastf_t timeTable[4096][4096]={-1}; */
 
     /* These are used later for normalization of time graph */
     bu_semaphore_acquire(BU_SEM_SYSCALL);
@@ -543,6 +560,46 @@ void timeTable_init(int x, int y, fastf_t time)
     timeTable[x][y]=time;
     entries++;
     bu_log("Current Max: %lf, Current Min: %lf Entries: %d\n", maxtime, mintime, entries);
+}
+
+/**
+ * T I M E T A B L E _ P R O C E S S
+ * 
+ * This function takes the contents of the time table, and produces the 
+ * heat graph based on time taken for each pixel.
+ */
+void timeTable_process(fastf_t **timeTable)
+{
+    fastf_t maxTime; 				/* The 255 value */
+    fastf_t minTime; 				/* The 1 value */
+    fastf_t meanTime = maxTime / minTime; 	/* the 128 value */
+    fastf_t range = maxTime - minTime; 		/* All times should fall in this range */
+    RGBpixel p;					/* Pixel colors for particular pixel */
+    int maxX = 4096, maxY = 4096; 		/* Theoretical maximum render size. */
+
+    /* The following loop will work as follows, it will loop through
+     * timeTable and search for pixels which have a non-negative value.
+     * Once a value is found, it will assign a color value from 1-255,
+     * depending on time taken. ( ( time / maxTime ) * 255 ), or similar
+     * function.
+     */
+    int x, y;
+    int color = 0;
+    int npix = 0;
+    for(x = 0; x < maxX; x++) {
+	for(y = 0; y < maxY; y++) {
+	    color = ((timeTable[x][y] / maxTime) * 255);
+
+	    if (fbp != FBIO_NULL) {
+		/* Framebuffer output */
+		bu_semaphore_acquire(BU_SEM_SYSCALL);
+		npix = fb_write(fbp, ap.a_x, ap.a_y, (unsigned char *)p, 1);
+		bu_semaphore_release(BU_SEM_SYSCALL);
+		if (npix < 1)
+		    bu_exit(EXIT_FAILURE, "pixel fb_write error");
+	    }
+	}
+    }
 }
 
 /**
@@ -1064,7 +1121,8 @@ vdraw open iray;vdraw params c %2.2x%2.2x%2.2x;vdraw write n 0 %g %g %g;vdraw wr
 	    bu_log("Cur: %d, X = %d, Y = %d\n", cur_pixel, ap->a_x, ap->a_y);
 	}
 	fastf_t pixelTime = rt_get_timer(NULL, NULL);
-	(void)timeTable_init((int)ap->a_x, (int)ap->a_y, pixelTime);
+	fastf_t *timeTable = timeTable_init();
+	(void)timeTable_input((int)ap->a_x, (int)ap->a_y, pixelTime, timeTable);
 	/*
 	 * What will happen here is that the current pixel time will
 	 * be shot off into an array at location (current x)(current
