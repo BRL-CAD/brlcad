@@ -538,9 +538,9 @@ fastf_t *timeTable_init(struct application *ap)
 
     /* FIXME: memory leak if timeTable_init() is called multiple times */
 
-    timeTable = bu_malloc(x * sizeof(fastf_t *));
+    timeTable = bu_malloc(x * sizeof(fastf_t *), "timeTable");
     for (i = 0; i < x; i++) {
-	timeTable[i] = bu_malloc(y * sizeof(fastf_t *));
+	timeTable[i] = bu_malloc(y * sizeof(fastf_t *), "timeTable[i]");
     }
 
     bu_log("Initialized timetable\n");
@@ -1158,7 +1158,7 @@ vdraw open iray;vdraw params c %2.2x%2.2x%2.2x;vdraw write n 0 %g %g %g;vdraw wr
 	}
 	fastf_t pixelTime = rt_get_timer(NULL, NULL);
         fastf_t *timeTable = timeTable_init(ap);
-	(void)timeTable_input((int)ap->a_x, (int)ap->a_y, pixelTime, timeTable);
+	(void)timeTable_input((int)ap->a_x, (int)ap->a_y, pixelTime, &timeTable);
 	/*
 	 * What will happen here is that the current pixel time will
 	 * be shot off into an array at location (current x)(current
