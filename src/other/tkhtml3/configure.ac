@@ -31,6 +31,11 @@ TEA_INIT([3.5])
 
 AC_CONFIG_AUX_DIR(tclconfig)
 
+AM_INIT_AUTOMAKE
+
+AC_DISABLE_STATIC
+AM_INIT_AUTOMAKE([foreign])
+
 #--------------------------------------------------------------------
 # Load the tclConfig.sh file
 #--------------------------------------------------------------------
@@ -60,6 +65,10 @@ TEA_PREFIX
 #-----------------------------------------------------------------------
 
 TEA_SETUP_COMPILER
+
+AC_PROG_LIBTOOL
+AC_SUBST(LIBTOOL_DEPS)
+
 
 #-----------------------------------------------------------------------
 # __CHANGE__
@@ -208,4 +217,6 @@ TEA_PROG_WISH
 # which require substituting th AC variables in.  Include these here.
 #--------------------------------------------------------------------
 
-AC_OUTPUT([Makefile])
+AC_CONFIG_FILES([Makefile])
+
+AC_OUTPUT

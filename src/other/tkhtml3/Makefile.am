@@ -52,7 +52,7 @@ PKG_TCL_SOURCES = @PKG_TCL_SOURCES@
 # This is a list of public header files to be installed, if any.
 #========================================================================
 
-PKG_HEADERS	= @PKG_HEADERS@
+#PKG_HEADERS	= @PKG_HEADERS@
 
 #========================================================================
 # "PKG_LIB_FILE" refers to the library (dynamic or static as per
@@ -86,7 +86,7 @@ top_builddir	= .
 
 INSTALL		= @INSTALL@
 INSTALL_PROGRAM	= @INSTALL_PROGRAM@
-INSTALL_DATA	= @INSTALL_DATA@
+#INSTALL_DATA	= @INSTALL_DATA@
 INSTALL_SCRIPT	= @INSTALL_SCRIPT@
 
 PACKAGE_NAME	= @PACKAGE_NAME@
@@ -278,7 +278,14 @@ $(PKG_STUB_LIB_FILE): $(PKG_STUB_OBJECTS)
 
 VPATH = $(srcdir):$(srcdir)/src:$(srcdir)/unix:$(srcdir)/win:.
 
-HEADERS = html.h cssInt.h css.h cssprop.h htmltokens.h htmldefaultstyle.c
+tkhtmldir = $(includedir)/tkhtml
+tkhtml_HEADERS = \
+	html.h \
+	cssInt.h \
+	css.h \
+	cssprop.h \
+	htmltokens.h \
+	htmldefaultstyle.c
 
 HDR = $(GENHDR) $(SRCHDR)
 
@@ -524,7 +531,7 @@ install-bin-binaries: binaries
 	  fi; \
 	done
 
-.SUFFIXES:
+#.SUFFIXES:
 # .c .$(OBJEXT)
 
 Makefile: $(srcdir)/Makefile.in  $(top_builddir)/config.status
