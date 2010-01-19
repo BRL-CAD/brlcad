@@ -387,24 +387,30 @@ rt_nmg_mc_realize_cube(struct shell *s, int pv, point_t *p, point_t *edges)
 	    bu_log("Whoa, too many triangles?\n");
 	    return -1;
 	}
-	/* edges[vi[0]], edges[vi[1]], edges[vi[2]] */
-	bu_log(" <%.2f %.2f %.2f>", edges[vi[0]][X], edges[vi[1]][Y], edges[vi[2]][Z]);
+
+	bu_log(" <%.2f %.2f %.2f / %.2f %.2f %.2f / %.2f %.2f %.2f>\n", 
+			edges[vi[0]][X], edges[vi[0]][Y], edges[vi[0]][Z],
+			edges[vi[1]][X], edges[vi[1]][Y], edges[vi[1]][Z],
+			edges[vi[2]][X], edges[vi[2]][Y], edges[vi[2]][Z]);
+	/* 
+	 * wire these edge values into the corner stuff. One would think that
+	 * stuff like 'magic' would be important, but the bot tesselator seems
+	 * to do without...
+	 */
+
+	/* check for degredate triangles here? should never happen, ... */
+
+	/*
+	if ((fu=nmg_cmface(s, corners, 3)) == (struct faceuse *)NULL) {
+	    bu_log("rt_metaball_tess() nmg_cmface() failed\n");
+	    return -1;
+	}
+	*/
+
 	vi+=3;
     }
-    bu_log("\n");
 
-    /* needs to be stitched into a triangle style NMG. Then
-     * decimated, perhaps? */
-
-    /* convert intersect to vertices */
-    p = p;
     return 0;
-
-    if ((fu=nmg_cmface(s, corners, 3)) == (struct faceuse *)NULL) {
-	bu_log("rt_metaball_tess() nmg_cmface() failed\n");
-	return -1;
-    }
-    return -1;
 }
 
 void
