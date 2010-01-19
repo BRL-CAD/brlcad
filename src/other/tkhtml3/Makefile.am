@@ -248,15 +248,6 @@ $(PKG_STUB_LIB_FILE): $(PKG_STUB_OBJECTS)
 
 VPATH = $(srcdir):$(srcdir)/src:$(srcdir)/unix:$(srcdir)/win:.
 
-tkhtmldir = $(includedir)/tkhtml
-tkhtml_HEADERS = \
-	html.h \
-	cssInt.h \
-	css.h \
-	cssprop.h \
-	htmltokens.h \
-	htmldefaultstyle.c
-
 HDR = $(GENHDR) $(SRCHDR)
 
 css.o: cssprop.h htmltokens.h
@@ -383,11 +374,6 @@ clean:
 	-rm -f *.$(OBJEXT) core *.core
 	-test -z "$(CLEANFILES)" || rm -f $(CLEANFILES)
 
-distclean: clean
-	-rm -f *.tab.c
-	-rm -f $(CONFIG_CLEAN_FILES)
-	-rm -f config.cache config.log config.status
-
 #========================================================================
 # Install binary object libraries.  On Windows this includes both .dll and
 # .lib files.  Because the .lib files are not explicitly listed anywhere,
@@ -498,6 +484,9 @@ uninstall-doc:
 		echo "Uninstalling $i" ; \
 		rm -f $(DESTDIR)$(mandir)/mann/$$i ; \
 	done
+
+EXTRA_DIST = \
+	src
 
 .PHONY: all binaries clean depend distclean doc install libraries test
 
