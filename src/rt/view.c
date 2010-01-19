@@ -542,15 +542,33 @@ fastf_t *timeTable_init(struct application *ap)
      * bu_malloc().  also have to free the memory somewhere/somehow
      * (consider passing NULL param to mean free).
      */
-    timeTable = malloc(x * sizeof(fastf_t *));
+    timeTable = bu_malloc(x * sizeof(fastf_t *));
     for (i = 0; i < x; i++) {
-	timeTable[i] = malloc(y * sizeof(fastf_t *));
+	timeTable[i] = bu_malloc(y * sizeof(fastf_t *));
     }
 #endif
 
     bu_log("Initialized timetable\n");
 
     return *timeTable;
+}
+
+
+/**
+ * T I M E T A B L E _ F R E E
+ *
+ * Frees up the time table array.
+ */
+void timeTable_free(fastf_t **timeTable)
+{
+    /* Temporarily assigned variables, until real ones are found */
+    int x = width;
+    int y = height;
+    int i = 0;
+
+    for(i = 0; i < y; i++)
+	bu_free(timeTable[i], "timeTable[]");
+    bu_free(timeTable, "timeTable");
 }
 
 
