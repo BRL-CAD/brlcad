@@ -520,17 +520,18 @@ view_pixel(register struct application *ap)
  * time taken to complete pixels during a raytrace. Returns a
  * pointer to the table.
  */
-fastf_t *timeTable_init(void)
+fastf_t *timeTable_init(register struct application *ap)
 {
     /*
      * Time table will be initialized to the size of the current
      * framebuffer by using a malloc.
      * So first we need to get the size of the framebuffer
-     * (ap.a_x, a_y) and use that as the starting point.
+     * (ap->a_x, a_y) and use that as the starting point.
      */
     static fastf_t **timeTable;
-    int x = ap.a_x;
-    int y = ap.a_y;
+    int x = width;
+    int y = height;
+    bu_log("X is %d, Y is %d\n", x, y);
     int i;
     timeTable = malloc(x * sizeof(fastf_t *));
     for(i = 0; i < x; i++)
@@ -538,6 +539,7 @@ fastf_t *timeTable_init(void)
 	timeTable[i] = malloc(y * sizeof(fastf_t *));
     }
     bu_log("Initialized timetable\n");
+
     return *timeTable;
 }
 
@@ -552,21 +554,19 @@ void timeTable_input(int x, int y, fastf_t time, fastf_t **timeTable)
 {
     static fastf_t maxtime = -MAX_FASTF;
     static fastf_t mintime = MAX_FASTF;
-    static int entries = 0;
-
-    /*static fastf_t timeTable[4096][4096]={-1}; */
-
-    /* These are used later for normalization of time graph */
+     
+    /* These variables are used later for normalization of time graph */
+    
     bu_semaphore_acquire(BU_SEM_SYSCALL);
     if (time > maxtime)
-	maxtime = time;
+ 	maxtime = time;
     if (time < mintime)
-	mintime = time;
+ 	mintime = time;
     bu_semaphore_release(BU_SEM_SYSCALL);
+    
+    timeTable[x][y] = time;
 
-    timeTable[x][y]=time;
-    entries++;
-    bu_log("Current Max: %lf, Current Min: %lf Entries: %d\n", maxtime, mintime, entries);
+ /* bu_log("Current Max: %lf, Current Min: %lf Entries: %d\n", maxtime, mintime, entries); */
 }
 
 /**
@@ -577,12 +577,12 @@ void timeTable_input(int x, int y, fastf_t time, fastf_t **timeTable)
  */
 void timeTable_process(fastf_t **timeTable)
 {
-    fastf_t maxTime; 				/* The 255 value */
+    fastf_t maxTime;				/* The 255 value */
     fastf_t minTime; 				/* The 1 value */
-    fastf_t meanTime = maxTime / minTime; 	/* the 128 value */
-    fastf_t range = maxTime - minTime; 		/* All times should fall in this range */
+    fastf_t meanTime = maxTime / minTime;	/* the 128 value */
+    fastf_t range = maxTime - minTime;		/* All times should fall in this range */
     RGBpixel p;					/* Pixel colors for particular pixel */
-    int maxX = 4096, maxY = 4096; 		/* Theoretical maximum render size. */
+    int maxX = ap.a_x, maxY = ap.a_y; 		/* Maximum render size. */
 
     /* The following loop will work as follows, it will loop through
      * timeTable and search for pixels which have a non-negative value.
@@ -1109,7 +1109,7 @@ vdraw open iray;vdraw params c %2.2x%2.2x%2.2x;vdraw write n 0 %g %g %g;vdraw wr
 	/* Note: framebuffer is the actual framebuffer destination
 	 * (/dev/X) fbp is the framebuffer handle (what?) outfp is
 	 * for writing to an external pix file.  height and width are
-	 * the dementions of the trace ap->a_x ap->a_y is the current
+	 * the dimentions of the trace ap->a_x ap->a_y is the current
 	 * X/Y coordinate being worked on
 	 */
 
@@ -1128,7 +1128,7 @@ vdraw open iray;vdraw params c %2.2x%2.2x%2.2x;vdraw write n 0 %g %g %g;vdraw wr
 	    bu_log("Cur: %d, X = %d, Y = %d\n", cur_pixel, ap->a_x, ap->a_y);
 	}
 	fastf_t pixelTime = rt_get_timer(NULL, NULL);
-	fastf_t *timeTable = timeTable_init();
+        fastf_t *timeTable = timeTable_init(ap);
 	(void)timeTable_input((int)ap->a_x, (int)ap->a_y, pixelTime, timeTable);
 	/*
 	 * What will happen here is that the current pixel time will
@@ -1721,8 +1721,7 @@ view_2init(register struct application *ap, char *framename)
 	case 8:
 	    {
 		/* Maybe do timetable_init here so it may be used later...*/
-		
-		timeTable_init();
+		/* timeTable = timeTable_init(); */
 		ap->a_hit = colorview;
 		VSETALL(background, 0.5);
 		break;
