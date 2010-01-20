@@ -20,6 +20,8 @@ cssprop.c: cssprop.h
 #
 lib@PACKAGE_NAME@@PACKAGE_VERSION@_la_SOURCES = \
 	css.c \
+	cssprop.c \
+	htmldefaultstyle.c \
 	cssdynamic.c \
 	cssparser.c \
 	csssearch.c \
@@ -47,7 +49,7 @@ lib@PACKAGE_NAME@@PACKAGE_VERSION@_la_LIBADD = @TCL_LIBS@
 lib@PACKAGE_NAME@@PACKAGE_VERSION@_la_CPPFLAGS = @TCL_INCLUDES@
 
 pkgIndex.tcl:
-	echo 'package ifneeded @PACKAGE_NAME@ @PACKAGE_VERSION@ [list load [file join $(lib_dir) ".." @PKG_LIB_FILE@)]]' > pkgIndex.tcl
+	echo 'package ifneeded @PACKAGE_NAME@ @PACKAGE_VERSION@ [list load [file join $(lib_dir) ".." @PKG_LIB_FILE@] @PACKAGE_NAME@]' > pkgIndex.tcl
 
 tkhtmlscriptdir = $(DESTDIR)$(pkglibdir)
 
