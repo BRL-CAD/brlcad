@@ -17,6 +17,9 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* new rt lighting model for calculating the time each pixel takes to
+  render and coloring an image based on that time.
+
 * fix mged EDITOR invocation bug.  have to reconcile src/mged/editit.c
   and src/libged/editit.c where the latter had the libdm dependency
   removed.  that refactoring subsequently killed all of the logic used
