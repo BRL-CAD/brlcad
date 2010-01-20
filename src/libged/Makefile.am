@@ -259,6 +259,8 @@ libged_nil_la_SOURCES = \
 	zap.c \
 	zoom.c
 
+# AM_CFLAGS = ${STRICT_FLAGS}
+
 # cannot set per-target CPPFLAGS until automake 1.7+
 AM_CPPFLAGS = \
 	${PNG_CPPFLAGS} \
