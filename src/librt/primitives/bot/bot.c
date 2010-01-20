@@ -248,9 +248,9 @@ rt_bot_unoriented_segs(struct hit *hits,
 		       struct bot_specific *bot)
 {
     if (bot->bot_flags & RT_BOT_USE_FLOATS) {
-	return (rt_bot_unoriented_segs_float(hits, nhits, stp, rp, ap, seghead, bot));
+	return (rt_bot_unoriented_segs_float(hits, nhits, stp, rp, ap, seghead));
     } else {
-	return (rt_bot_unoriented_segs_double(hits, nhits, stp, rp, ap, seghead, bot));
+	return (rt_bot_unoriented_segs_double(hits, nhits, stp, rp, ap, seghead));
     }
 }
 
