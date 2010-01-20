@@ -552,6 +552,7 @@ fastf_t *timeTable_init(struct application *ap)
 	    }
 	}
 	bu_log("Initialized timetable\n");
+
     }
     return timeTable;
 }
@@ -1820,7 +1821,7 @@ view_2init(struct application *ap, char *framename)
 		/* Maybe do timetable_init here so it may be used later...*/
 		/* timeTable = timeTable_init(); */
 		ap->a_hit = colorview;
-		VSETALL(background, 0.5);
+		VSET(background, 0.0, 0.0, 0.05);
 		break;
 	    }
 
