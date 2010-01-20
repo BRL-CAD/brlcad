@@ -457,10 +457,10 @@ rt_bot_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     RT_BOT_CK_MAGIC(bot_ip);
 
     for (i=0; i<bot_ip->num_faces; i++) {
-	RT_ADD_VLIST(vhead, &bot_ip->vertices[bot_ip->faces[i*3]*3], BN_VLIST_LINE_MOVE);
+	RT_ADD_VLIST(vhead, &bot_ip->vertices[bot_ip->faces[i*3+0]*3], BN_VLIST_LINE_MOVE);
 	RT_ADD_VLIST(vhead, &bot_ip->vertices[bot_ip->faces[i*3+1]*3], BN_VLIST_LINE_DRAW);
 	RT_ADD_VLIST(vhead, &bot_ip->vertices[bot_ip->faces[i*3+2]*3], BN_VLIST_LINE_DRAW);
-	RT_ADD_VLIST(vhead, &bot_ip->vertices[bot_ip->faces[i*3]*3], BN_VLIST_LINE_DRAW);
+	RT_ADD_VLIST(vhead, &bot_ip->vertices[bot_ip->faces[i*3+0]*3], BN_VLIST_LINE_DRAW);
     }
 
     return(0);
@@ -604,17 +604,17 @@ rt_bot_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	struct vertex **corners[3];
 
 	if (bot_ip->orientation == RT_BOT_CW) {
-	    VMOVE(pt[2], &bot_ip->vertices[bot_ip->faces[i*3]*3]);
+	    VMOVE(pt[2], &bot_ip->vertices[bot_ip->faces[i*3+0]*3]);
 	    VMOVE(pt[1], &bot_ip->vertices[bot_ip->faces[i*3+1]*3]);
 	    VMOVE(pt[0], &bot_ip->vertices[bot_ip->faces[i*3+2]*3]);
-	    corners[2] = &verts[bot_ip->faces[i*3]];
+	    corners[2] = &verts[bot_ip->faces[i*3+0]];
 	    corners[1] = &verts[bot_ip->faces[i*3+1]];
 	    corners[0] = &verts[bot_ip->faces[i*3+2]];
 	} else {
-	    VMOVE(pt[0], &bot_ip->vertices[bot_ip->faces[i*3]*3]);
+	    VMOVE(pt[0], &bot_ip->vertices[bot_ip->faces[i*3+0]*3]);
 	    VMOVE(pt[1], &bot_ip->vertices[bot_ip->faces[i*3+1]*3]);
 	    VMOVE(pt[2], &bot_ip->vertices[bot_ip->faces[i*3+2]*3]);
-	    corners[0] = &verts[bot_ip->faces[i*3]];
+	    corners[0] = &verts[bot_ip->faces[i*3+0]];
 	    corners[1] = &verts[bot_ip->faces[i*3+1]];
 	    corners[2] = &verts[bot_ip->faces[i*3+2]];
 	}
@@ -716,7 +716,7 @@ rt_bot_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     for (i=0; i<bot_ip->num_faces; i++) {
 	int idx=chars_used + i * 12;
 
-	bot_ip->faces[i*3] = bu_glong((const unsigned char *)&rp->bot.bot_data[idx]);
+	bot_ip->faces[i*3 + 0] = bu_glong((const unsigned char *)&rp->bot.bot_data[idx + 0]);
 	bot_ip->faces[i*3 + 1] = bu_glong((const unsigned char *)&rp->bot.bot_data[idx + 4]);
 	bot_ip->faces[i*3 + 2] = bu_glong((const unsigned char *)&rp->bot.bot_data[idx + 8]);
     }
@@ -818,7 +818,7 @@ rt_bot_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     for (i=0; i<bot_ip->num_faces; i++) {
 	int idx=chars_used + i * 12;
 
-	bu_plong((unsigned char *)(&rec->bot.bot_data[idx]), bot_ip->faces[i*3]);
+	bu_plong((unsigned char *)(&rec->bot.bot_data[idx + 0]), bot_ip->faces[i*3+0]);
 	bu_plong((unsigned char *)(&rec->bot.bot_data[idx + 4]), bot_ip->faces[i*3+1]);
 	bu_plong((unsigned char *)(&rec->bot.bot_data[idx + 8]), bot_ip->faces[i*3+2]);
     }
@@ -898,7 +898,7 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
     }
 
     for (i=0; i<bip->num_faces; i++) {
-	bip->faces[i*3] = bu_glong(cp);
+	bip->faces[i*3 + 0] = bu_glong(cp);
 	cp += SIZEOF_NETWORK_LONG;
 	bip->faces[i*3 + 1] = bu_glong(cp);
 	cp += SIZEOF_NETWORK_LONG;
@@ -946,7 +946,7 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 	    bip->face_normals = (int *)bu_calloc(bip->num_face_normals * 3, sizeof(int), "BOT face normals");
 
 	    for (i=0; i<bip->num_face_normals; i++) {
-		bip->face_normals[i*3] = bu_glong(cp);
+		bip->face_normals[i*3 + 0] = bu_glong(cp);
 		cp += SIZEOF_NETWORK_LONG;
 		bip->face_normals[i*3 + 1] = bu_glong(cp);
 		cp += SIZEOF_NETWORK_LONG;
@@ -1034,7 +1034,7 @@ rt_bot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     }
 
     for (i=0; i<bip->num_faces; i++) {
-	(void)bu_plong(cp, bip->faces[i*3]);
+	(void)bu_plong(cp, bip->faces[i*3 + 0]);
 	cp += SIZEOF_NETWORK_LONG;
 	rem -= SIZEOF_NETWORK_LONG;
 
@@ -1081,7 +1081,7 @@ rt_bot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 	}
 	if (bip->num_face_normals > 0) {
 	    for (i=0; i<bip->num_face_normals; i++) {
-		(void)bu_plong(cp, bip->face_normals[i*3]);
+		(void)bu_plong(cp, bip->face_normals[i*3 + 0]);
 		cp += SIZEOF_NETWORK_LONG;
 		rem -= SIZEOF_NETWORK_LONG;
 
@@ -1382,7 +1382,7 @@ rt_bot_edge_in_list(const int v1, const int v2, const int edge_list[], const int
     int i, ev1, ev2;
 
     for (i=0; i<edge_count; i++) {
-	ev1 = edge_list[i*2];
+	ev1 = edge_list[i*2 + 0];
 	ev2 = edge_list[i*2 + 1];
 
 	if (ev1 == v1 && ev2 == v2)
@@ -1425,22 +1425,22 @@ rt_bot_find_e_nearest_pt2(
     edge_list = (int *)bu_calloc(bot->num_faces * 3 * 2, sizeof(int), "bot edge list");
 
     for (i=0; i<bot->num_faces; i++) {
-	v1 = bot->faces[i*3];
+	v1 = bot->faces[i*3 + 0];
 	v2 = bot->faces[i*3 + 1];
 	v3 = bot->faces[i*3 + 2];
 
 	if (!rt_bot_edge_in_list(v1, v2, edge_list, edge_count)) {
-	    edge_list[edge_count*2] = v1;
+	    edge_list[edge_count*2 + 0] = v1;
 	    edge_list[edge_count*2 + 1] = v2;
 	    edge_count++;
 	}
 	if (!rt_bot_edge_in_list(v3, v2, edge_list, edge_count)) {
-	    edge_list[edge_count*2] = v3;
+	    edge_list[edge_count*2 + 0] = v3;
 	    edge_list[edge_count*2 + 1] = v2;
 	    edge_count++;
 	}
 	if (!rt_bot_edge_in_list(v1, v3, edge_list, edge_count)) {
-	    edge_list[edge_count*2] = v1;
+	    edge_list[edge_count*2 + 0] = v1;
 	    edge_list[edge_count*2 + 1] = v3;
 	    edge_count++;
 	}
@@ -1459,52 +1459,52 @@ rt_bot_find_e_nearest_pt2(
 	vect_t p1_to_pca, p1_to_p2;
 	int ret;
 
-	MAT4X3PNT(p1, mat, &bot->vertices[ edge_list[i*2]*3])
-	    MAT4X3PNT(p2, mat, &bot->vertices[ edge_list[i*2+1]*3])
+	MAT4X3PNT(p1, mat, &bot->vertices[ edge_list[i*2+0]*3]);
+	MAT4X3PNT(p2, mat, &bot->vertices[ edge_list[i*2+1]*3]);
 
-	    ret = bn_dist_pt2_lseg2(&tmp_dist, pca, p1, p2, pt2, &tol);
+	ret = bn_dist_pt2_lseg2(&tmp_dist, pca, p1, p2, pt2, &tol);
 
 	if (ret < 3 || tmp_dist < dist) {
 	    switch (ret) {
 		case 0:
 		    dist = 0.0;
 		    if (tmp_dist < 0.5) {
-			*vert1 = edge_list[i*2];
+			*vert1 = edge_list[i*2+0];
 			*vert2 = edge_list[i*2+1];
 		    } else {
 			*vert1 = edge_list[i*2+1];
-			*vert2 = edge_list[i*2];
+			*vert2 = edge_list[i*2+0];
 		    }
 		    break;
 		case 1:
 		    dist = 0.0;
-		    *vert1 = edge_list[i*2];
+		    *vert1 = edge_list[i*2+0];
 		    *vert2 = edge_list[i*2+1];
 		    break;
 		case 2:
 		    dist = 0.0;
 		    *vert1 = edge_list[i*2+1];
-		    *vert2 = edge_list[i*2];
+		    *vert2 = edge_list[i*2+0];
 		    break;
 		case 3:
 		    dist = tmp_dist;
-		    *vert1 = edge_list[i*2];
+		    *vert1 = edge_list[i*2+0];
 		    *vert2 = edge_list[i*2+1];
 		    break;
 		case 4:
 		    dist = tmp_dist;
 		    *vert1 = edge_list[i*2+1];
-		    *vert2 = edge_list[i*2];
+		    *vert2 = edge_list[i*2+0];
 		case 5:
 		    dist = tmp_dist;
 		    V2SUB2(p1_to_pca, pca, p1);
 		    V2SUB2(p1_to_p2, p2, p1);
 		    if (MAG2SQ(p1_to_pca) / MAG2SQ(p1_to_p2) < 0.25) {
-			*vert1 = edge_list[i*2];
+			*vert1 = edge_list[i*2+0];
 			*vert2 = edge_list[i*2+1];
 		    } else {
 			*vert1 = edge_list[i*2+1];
-			*vert2 = edge_list[i*2];
+			*vert2 = edge_list[i*2+0];
 		    }
 		    break;
 	    }
@@ -1741,19 +1741,19 @@ rt_bot_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
 	    /* Retrieve one face, as list of 3 3tuple coordinates */
 	    if (attr[1] == '\0') {
 		for (i=0; i<bot->num_faces; i++) {
-		    indx = bot->faces[i*3];
+		    indx = bot->faces[i*3+0];
 		    bu_vls_printf(logstr, " { %.25G %.25G %.25G }",
-				  bot->vertices[indx*3],
+				  bot->vertices[indx*3+0],
 				  bot->vertices[indx*3+1],
 				  bot->vertices[indx*3+2]);
 		    indx = bot->faces[i*3+1];
 		    bu_vls_printf(logstr, " { %.25G %.25G %.25G }",
-				  bot->vertices[indx*3],
+				  bot->vertices[indx*3+0],
 				  bot->vertices[indx*3+1],
 				  bot->vertices[indx*3+2]);
 		    indx = bot->faces[i*3+2];
 		    bu_vls_printf(logstr, " { %.25G %.25G %.25G }",
-				  bot->vertices[indx*3],
+				  bot->vertices[indx*3+0],
 				  bot->vertices[indx*3+1],
 				  bot->vertices[indx*3+2]);
 		}
@@ -1764,19 +1764,19 @@ rt_bot_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
 		    bu_vls_printf(logstr, "face number %d out of range (0..%d)", i, bot->num_faces-1);
 		    status = BRLCAD_ERROR;
 		} else {
-		    indx = bot->faces[i*3];
+		    indx = bot->faces[i*3+0];
 		    bu_vls_printf(logstr, " { %.25G %.25G %.25G }",
-				  bot->vertices[indx*3],
+				  bot->vertices[indx*3+0],
 				  bot->vertices[indx*3+1],
 				  bot->vertices[indx*3+2]);
 		    indx = bot->faces[i*3+1];
 		    bu_vls_printf(logstr, " { %.25G %.25G %.25G }",
-				  bot->vertices[indx*3],
+				  bot->vertices[indx*3+0],
 				  bot->vertices[indx*3+1],
 				  bot->vertices[indx*3+2]);
 		    indx = bot->faces[i*3+2];
 		    bu_vls_printf(logstr, " { %.25G %.25G %.25G }",
-				  bot->vertices[indx*3],
+				  bot->vertices[indx*3+0],
 				  bot->vertices[indx*3+1],
 				  bot->vertices[indx*3+2]);
 		    status = BRLCAD_OK;
@@ -1962,7 +1962,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, ch
 			Tcl_DecrRefCount(obj);
 			return(BRLCAD_ERROR);
 		    }
-		    bot->face_normals[i*3] = atoi(f_str);
+		    bot->face_normals[i*3+0] = atoi(f_str);
 		    f_str = bu_next_token(f_str);
 		    if (*f_str == '\0') {
 			bu_vls_printf(logstr, "incomplete list of face_normals");
@@ -1988,7 +1988,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, ch
 		}
 		f_str = Tcl_GetStringFromObj(obj, NULL);
 		while (isspace(*f_str)) f_str++;
-		bot->face_normals[i*3] = atoi(f_str);
+		bot->face_normals[i*3+0] = atoi(f_str);
 		f_str = bu_next_token(f_str);
 		if (*f_str == '\0') {
 		    bu_vls_printf(logstr, "incomplete vertex");
@@ -2026,7 +2026,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, ch
 			Tcl_DecrRefCount(obj);
 			return(BRLCAD_ERROR);
 		    }
-		    bot->normals[i*3] = atof(v_str);
+		    bot->normals[i*3+0] = atof(v_str);
 		    v_str = bu_next_token(v_str);
 		    if (*v_str == '\0') {
 			bu_vls_printf(logstr, "incomplete list of normals");
@@ -2053,7 +2053,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, ch
 		v_str = Tcl_GetStringFromObj(obj, NULL);
 		while (isspace(*v_str)) v_str++;
 
-		bot->normals[i*3] = atof(v_str);
+		bot->normals[i*3+0] = atof(v_str);
 		v_str = bu_next_token(v_str);
 		if (*v_str == '\0') {
 		    bu_vls_printf(logstr, "incomplete normal");
@@ -2091,7 +2091,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, ch
 			Tcl_DecrRefCount(obj);
 			return(BRLCAD_ERROR);
 		    }
-		    bot->vertices[i*3] = atof(v_str);
+		    bot->vertices[i*3+0] = atof(v_str);
 		    v_str = bu_next_token(v_str);
 		    if (*v_str == '\0') {
 			bu_vls_printf(logstr, "incomplete list of vertices");
@@ -2117,7 +2117,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, ch
 		v_str = Tcl_GetStringFromObj(obj, NULL);
 		while (isspace(*v_str)) v_str++;
 
-		bot->vertices[i*3] = atof(v_str);
+		bot->vertices[i*3+0] = atof(v_str);
 		v_str = bu_next_token(v_str);
 		if (*v_str == '\0') {
 		    bu_vls_printf(logstr, "incomplete vertex");
@@ -2173,7 +2173,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, ch
 			Tcl_DecrRefCount(obj);
 			return(BRLCAD_ERROR);
 		    }
-		    bot->faces[i*3] = atoi(f_str);
+		    bot->faces[i*3+0] = atoi(f_str);
 		    f_str = bu_next_token(f_str);
 		    if (*f_str == '\0') {
 			bu_vls_printf(logstr, "incomplete list of faces");
@@ -2198,7 +2198,7 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, ch
 		}
 		f_str = Tcl_GetStringFromObj(obj, NULL);
 		while (isspace(*f_str)) f_str++;
-		bot->faces[i*3] = atoi(f_str);
+		bot->faces[i*3+0] = atoi(f_str);
 		f_str = bu_next_token(f_str);
 		if (*f_str == '\0') {
 		    bu_vls_printf(logstr, "incomplete vertex");
@@ -2632,7 +2632,7 @@ find_closest_face(fastf_t **centers, int *piece, int *old_faces, int num_faces, 
 		continue;
 	    }
 	    count_centers++;
-	    v0 = &vertices[old_faces[i*3]*3];
+	    v0 = &vertices[old_faces[i*3+0]*3];
 	    v1 = &vertices[old_faces[i*3+1]*3];
 	    v2 = &vertices[old_faces[i*3+2]*3];
 	    VADD3(center, v0, v1, v2);
@@ -3974,7 +3974,7 @@ rt_bot_sync(struct rt_bot_internal *bot)
 	tep = (struct tri_edges *)bu_calloc(1, sizeof(struct tri_edges), "rt_bot_sync_orient: tep");
 	BU_LIST_APPEND(&headTep.l, &tep->l);
 
-	pt_A = bot->faces[i*3];
+	pt_A = bot->faces[i*3+0];
 	pt_B = bot->faces[i*3+1];
 	pt_C = bot->faces[i*3+2];
 
