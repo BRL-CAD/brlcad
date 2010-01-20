@@ -17,8 +17,8 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* new rt lighting model for calculating the time each pixel takes to
-  render and coloring an image based on that time.
+* implement a lighting model for rt that visualizes how expensive each
+  individual pixel is to compute with an intensity (heat graph)
 
 * fix mged EDITOR invocation bug.  have to reconcile src/mged/editit.c
   and src/libged/editit.c where the latter had the libdm dependency
@@ -450,9 +450,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * develop a tool that applies a text overlay to a given rendered image
   (e.g., as an rt option) for things like adding an image title, the
   az/el, and objects displayed.
-
-* implement a lighting model for rt that visualizes how expensive each
-  individual pixel is to compute with an intensity (heat graph)
 
 * bezier extrusions need to be optimized, really should not be
   performing dynamic memory allocation in the root solver
