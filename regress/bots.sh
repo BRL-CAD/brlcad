@@ -86,10 +86,10 @@ FAILED=0
 
 echo "Getting BoT modes"
 
-rh_mode="`$MGED -c bots.g get sph.volume.rh.bot mode 2>&1`"
-lh_mode="`$MGED -c bots.g get sph.volume.lh.bot mode 2>&1`"
-no_mode="`$MGED -c bots.g get sph.volume.no.bot mode 2>&1`"
-sync_mode="`$MGED -c bots.g get sph.sync.volume.no.bot mode 2>&1`"
+rh_mode="`$MGED -c bots.g get sph.volume.rh.bot mode 2>&1 | grep -v Using`"
+lh_mode="`$MGED -c bots.g get sph.volume.lh.bot mode 2>&1 | grep -v Using`"
+no_mode="`$MGED -c bots.g get sph.volume.no.bot mode 2>&1 | grep -v Using`"
+sync_mode="`$MGED -c bots.g get sph.sync.volume.no.bot mode 2>&1 | grep -v Using`"
 
 # the echo is to remove a newline that gets stored in the variable
 if test "x`echo $rh_mode``echo $lh_mode``echo $no_mode``echo $sync_mode`" != "xvolumevolumevolumevolume" ; then
@@ -99,22 +99,22 @@ fi
 
 echo "Getting BoT orientations"
 
-rh="`$MGED -c bots.g get sph.volume.rh.bot orient 2>&1`"
+rh="`$MGED -c bots.g get sph.volume.rh.bot orient 2>&1 | grep -v Using`"
 if test "x`echo $rh`" != "xrh" ; then
     echo "ERROR: right-hand BoT orientation (faceitize) failure [$rh]"
     FAILED="`expr $FAILED + 1`"
 fi
-lh="`$MGED -c bots.g get sph.volume.lh.bot orient 2>&1`"
+lh="`$MGED -c bots.g get sph.volume.lh.bot orient 2>&1 | grep -v Using`"
 if test "x`echo $lh`" != "xlh" ; then
     echo "ERROR: left-hand BoT orientation (bot_flip) failure [$lh]"
     FAILED="`expr $FAILED + 1`"
 fi
-no="`$MGED -c bots.g get sph.volume.no.bot orient 2>&1`"
+no="`$MGED -c bots.g get sph.volume.no.bot orient 2>&1 | grep -v Using`"
 if test "x`echo $no`" != "xno" ; then
     echo "ERROR: merged BoT orientation (bot_merge) failure [$no]"
     FAILED="`expr $FAILED + 1`"
 fi
-sync="`$MGED -c bots.g get sph.sync.volume.no.bot orient 2>&1`"
+sync="`$MGED -c bots.g get sph.sync.volume.no.bot orient 2>&1 | grep -v Using`"
 if test "x`echo $no`" != "xno" ; then
     echo "ERROR: synced BoT orientation (bot_sync) failure [$no]"
     FAILED="`expr $FAILED + 1`"
