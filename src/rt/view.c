@@ -533,7 +533,7 @@ fastf_t *timeTable_init(struct application *ap)
     /* FIXME: don't rely on globals (pass as parameters) */
     int x = width; 	/* fb_getwidth(fbp) */
     int y = height; 	/* fb_getheight(fbp) */
-    bu_log("X is %d, Y is %d\n", x, y);
+    /* bu_log("X is %d, Y is %d\n", x, y); */
     int i;
     int w;
 
@@ -543,7 +543,7 @@ fastf_t *timeTable_init(struct application *ap)
 	    timeTable[i] = bu_malloc(y * sizeof(fastf_t *), "timeTable[i]");
 	}
     }
-
+    
     if (timeTable[0][0]!=-1) {
 	for (i = 0; i < x; i++) {
 	    for (w = 0; w < y; w++) {
@@ -584,9 +584,9 @@ void timeTable_free(fastf_t **timeTable)
  */
 void timeTable_input(int x, int y, fastf_t time, fastf_t **timeTable)
 {
-    bu_log("Enter timeTable input\n");
+    /* bu_log("Enter timeTable input\n"); */
     timeTable[x][y] = time;
-    bu_log("Input %lf into timeTable %d %d\n", time, x, y);
+    /* bu_log("Input %lf into timeTable %d %d\n", time, x, y); */
 }
 
 /**
@@ -603,35 +603,34 @@ fastf_t *timeTable_singleProcess(struct application *ap, fastf_t **timeTable, fa
      * color to that pixel inside the framebuffer.
      */
     fastf_t time = timeTable[ap->a_x][ap->a_y];
-    fastf_t color = 0;	/* 1-255 value of color */
-    int npix = 0;
+    fastf_t Rcolor = 0;	/* 1-255 value of color */
+    fastf_t Gcolor = 0;	/* 1-255 value of color */
+    fastf_t Bcolor = 0;	/* 1-255 value of color */
 
-    bu_log("Time is %lf :", time);
-    if (time <= .00001) {
-	bu_log("Dark\n");
-	timeColor[0]=0;
-	timeColor[1]=0;
-	timeColor[2]=127;
+    /* bu_log("Time is %lf :", time); */
+
+    /* Eventually the time taken will span the entire color spectrum (0-255!)
+     * For now, the darkest color (1,1,1) will be set to any time slower or equal
+     * to 0.00001 sec, and (255,255,255) will be set to any time longer than 0.01 sec,
+     * making a gradient of black-white in between.
+     */
+    
+    if (time <= 0.00001) {
+	Rcolor = 1;
+	Gcolor = 1;
+	Bcolor = 1;
+    } else if (time > 0.00001 && time < 0.01) {
+	Rcolor = Gcolor = Bcolor = (time*10000)*255;
+	if (Rcolor >= 255)
+	    Rcolor = Gcolor = Bcolor = 254;
+    } else {
+	Rcolor = Gcolor = Bcolor = 255;
     }
 
-    else if (time > .00001 && time < .0001) {
-	bu_log("Medium\n");
-	color = 128;	
-
-	timeColor[0]=127;
-	timeColor[1]=127;
-	timeColor[2]=0;
-    }
-
-    else {
-	bu_log("Light\n");
-	color = 255;
-
-	timeColor[0]=255;
-	timeColor[1]=64;
-	timeColor[2]=64;
-    }
-
+    timeColor[0] = Rcolor;
+    timeColor[1] = Gcolor;
+    timeColor[2] = Bcolor;
+    /*  bu_log("Color=%d %d %d, %lf\n", Rcolor, Gcolor, Bcolor, time); */
     return timeColor;
 }
 
@@ -1210,7 +1209,7 @@ vdraw open iray;vdraw params c %2.2x%2.2x%2.2x;vdraw write n 0 %g %g %g;vdraw wr
 	     * bu_semaphore_release(BU_SEM_SYSCALL);
 	     */
 
-	    bu_log("Cur: %d, X = %d, Y = %d\n", cur_pixel, ap->a_x, ap->a_y);
+	    /* bu_log("Cur: %d, X = %d, Y = %d\n", cur_pixel, ap->a_x, ap->a_y); */
 	}
 	fastf_t pixelTime = rt_get_timer(NULL, NULL);
         fastf_t *timeTable = timeTable_init(ap);
@@ -1225,17 +1224,17 @@ vdraw open iray;vdraw params c %2.2x%2.2x%2.2x;vdraw write n 0 %g %g %g;vdraw wr
 	/* bu_log("Time taken: %lf\n", pixelTime); */
 	fastf_t timeColor[3]={0};
 	timeTable_singleProcess(ap, timeTable, timeColor);
-	bu_log("R:%d G:%d B:%d\n", timeColor[0], timeColor[1], timeColor[2]);
+	/* bu_log("R:%d G:%d B:%d\n", timeColor[0], timeColor[1], timeColor[2]); */
 
 	/* Take 1-255 color values and set them to 0-1 range */
 	fastf_t a = timeColor[0] / 255;
 	fastf_t b = timeColor[1] / 255;
 	fastf_t c = timeColor[2] / 255;
-	bu_log("a:%lf b:%lf c:%lf\n", a, b, c);
+	/* bu_log("a:%lf b:%lf c:%lf\n", a, b, c); */
 
 	/* Apply new colors to framebuffer! */
 	VSET(ap->a_color, a, b ,c);
-	VPRINT("color   ", ap->a_color);
+	/* VPRINT("color   ", ap->a_color); */
     }
     return(1);
 }
