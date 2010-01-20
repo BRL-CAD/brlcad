@@ -42,11 +42,16 @@ lib@PACKAGE_NAME@@PACKAGE_VERSION@_la_SOURCES = \
 	htmltext.c \
 	htmlutil.c	
 
-
-
 lib@PACKAGE_NAME@@PACKAGE_VERSION@_la_LDFLAGS = @TCL_LIB_SPEC@
 lib@PACKAGE_NAME@@PACKAGE_VERSION@_la_LIBADD = @TCL_LIBS@
 lib@PACKAGE_NAME@@PACKAGE_VERSION@_la_CPPFLAGS = @TCL_INCLUDES@
+
+pkgIndex.tcl:
+	echo 'package ifneeded @PACKAGE_NAME@ @PACKAGE_VERSION@ [list load [file join $(lib_dir) ".." @PKG_LIB_FILE@)]]' > pkgIndex.tcl
+
+tkhtmlscriptdir = $(DESTDIR)$(pkglibdir)
+
+tkhtmlscript_SCRIPTS = pkgIndex.tcl
 
 BUILT_SOURCES = \
 	cssprop.c \
@@ -55,6 +60,8 @@ BUILT_SOURCES = \
 	htmldefaultstyle.c \
 	htmltokens.c
 
-DISTCLEANFILES = $(BUILT_SOURCES)
+DISTCLEANFILES = \
+	$(BUILT_SOURCES) \
+	pkgIndex.tcl
 
 include $(top_srcdir)/misc/Makefile.defs
