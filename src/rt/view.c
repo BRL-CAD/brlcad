@@ -537,6 +537,7 @@ fastf_t *timeTable_init(struct application *ap)
     int i;
     int w;
 
+    /* Semaphore Acquire goes here */
     if (timeTable == NULL) {
 	timeTable = bu_malloc(x * sizeof(fastf_t *), "timeTable");
 	for (i = 0; i < x; i++) {
@@ -554,6 +555,8 @@ fastf_t *timeTable_init(struct application *ap)
 	bu_log("Initialized timetable\n");
 
     }
+    /* Semaphore release goes here */
+
     return timeTable;
 }
 
@@ -590,6 +593,7 @@ void timeTable_input(int x, int y, fastf_t time, fastf_t **timeTable)
     /* bu_log("Input %lf into timeTable %d %d\n", time, x, y); */
 }
 
+
 /**
  * T I M E T A B L E _ S I N G L E P R O C E S S
  * 
@@ -597,7 +601,6 @@ void timeTable_input(int x, int y, fastf_t time, fastf_t **timeTable)
  * opposed to all at once like timeTable_process. Heat values are
  * bracketed to certain values, instead of normalized.
  */
-
 fastf_t *timeTable_singleProcess(struct application *ap, fastf_t **timeTable, fastf_t *timeColor)
 {
     /* Process will take current X Y and time from timeTable, and apply
@@ -635,6 +638,7 @@ fastf_t *timeTable_singleProcess(struct application *ap, fastf_t **timeTable, fa
     return timeColor;
 }
 
+
 /**
  * T I M E T A B L E _ P R O C E S S
  * 
@@ -661,12 +665,12 @@ void timeTable_process(fastf_t **timeTable)
     for (x = 0; x < maxX; x++) {
 	for (y = 0; y < maxY; y++) {
 	    if (timeTable[x][y] != -1) {
-		bu_semaphore_acquire(BU_SEM_SYSCALL);
+		/* Semaphore acquire goes here */
 		if (timeTable[x][y] > maxTime)
 		    maxTime = timeTable[x][y];
 		if (timeTable[x][y] < minTime)
 		    minTime = timeTable[x][y];
-		bu_semaphore_release(BU_SEM_SYSCALL);
+		/* Semaphore release goes here */
 	    }
 	}
     }
@@ -679,6 +683,9 @@ void timeTable_process(fastf_t **timeTable)
     for (x = 0; x < maxX; x++) {
 	for (y = 0; y < maxY; y++) {
 	    color = ((timeTable[x][y] / maxTime) * 255);
+	    p[0]=color;
+	    p[1]=color;
+	    p[2]=color;
 
 	    if (fbp != FBIO_NULL) {
 		/* Framebuffer output */
@@ -1821,7 +1828,7 @@ view_2init(struct application *ap, char *framename)
 		/* Maybe do timetable_init here so it may be used later...*/
 		/* timeTable = timeTable_init(); */
 		ap->a_hit = colorview;
-		VSET(background, 0.0, 0.0, 0.05);
+		VSET(background, 0.0, 0.0, 0.05 );
 		break;
 	    }
 
