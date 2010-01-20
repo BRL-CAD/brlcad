@@ -63,7 +63,7 @@ fi
 
 echo "testing BoT primitive..."
 
-rm -f bots.g bots.log bots.rh.pix bots.lh.pix bots.no.pix bots.sync.pix
+rm -f bots.g bots.log bots.sph.pix bots.rh.pix bots.lh.pix bots.no.pix bots.sync.pix bots.diff.pix bots.rl.diff.pix bots.rn.diff.pix bots.rs.diff.pix bots.diff.log
 
 # create a geometry database with a BoT of each type
 
@@ -90,6 +90,8 @@ rh_mode="`$MGED -c bots.g get sph.volume.rh.bot mode 2>&1`"
 lh_mode="`$MGED -c bots.g get sph.volume.lh.bot mode 2>&1`"
 no_mode="`$MGED -c bots.g get sph.volume.no.bot mode 2>&1`"
 sync_mode="`$MGED -c bots.g get sph.sync.volume.no.bot mode 2>&1`"
+
+# the echo is to remove a newline that gets stored in the variable
 if test "x`echo $rh_mode``echo $lh_mode``echo $no_mode``echo $sync_mode`" != "xvolumevolumevolumevolume" ; then
     echo "ERROR: volume BoT mode failure"
     FAILED="`expr $FAILED + 1`"
