@@ -58,6 +58,14 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* separation of stderr from stdout within libbu, particularly for
+  MGED, so that there is a clean separation of result output from
+  diagnostic output.  this is a fairly separate idea from having log
+  levels (ala syslog) but is somewhat related to the concept of having
+  definable output streams.  idea in mind is to have a bu facility to
+  obtain a bu_log()-style callback function returned from a
+  logger registration function.
+
 * finish obj-g importer.  need to test more inputs and make sure all
   geometry is preserved on import in some form.
 
