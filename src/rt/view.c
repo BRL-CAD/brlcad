@@ -527,25 +527,36 @@ fastf_t *timeTable_init(struct application *ap)
      * Time table will be initialized to the size of the current
      * framebuffer by using a malloc.
      * So first we need to get the size of the framebuffer
-     * (ap->a_x, a_y) and use that as the starting point.
+     * height and width and use that as the starting point.
      */
     static fastf_t **timeTable = NULL;
     /* FIXME: don't rely on globals (pass as parameters) */
-    int x = width;
-    int y = height;
+    int x = width; 	/* fb_getwidth(fbp) */
+    int y = height; 	/* fb_getheight(fbp) */
     bu_log("X is %d, Y is %d\n", x, y);
     int i;
+    int w;
 
     /* FIXME: memory leak if timeTable_init() is called multiple times */
-
-    timeTable = bu_malloc(x * sizeof(fastf_t *), "timeTable");
-    for (i = 0; i < x; i++) {
-	timeTable[i] = bu_malloc(y * sizeof(fastf_t *), "timeTable[i]");
+    if(timeTable == NULL)
+    {
+	timeTable = bu_malloc(x * sizeof(fastf_t *), "timeTable");
+	for (i = 0; i < x; i++) {
+	    timeTable[i] = bu_malloc(y * sizeof(fastf_t *), "timeTable[i]");
+	}
     }
 
-    bu_log("Initialized timetable\n");
-
-    return *timeTable;
+    if(timeTable[0][0]!=-1)
+    {
+	for(i = 0; i < x; i++) {
+	    for(w = 0; w < y; w++) {
+		timeTable[i][w] = -1;
+		/* bu_log("Initializing table %d %d %lf\n", i, w, timeTable[i][w]); */
+	    }
+	}
+	bu_log("Initialized timetable\n");
+    }
+    return timeTable;
 }
 
 
@@ -576,7 +587,9 @@ void timeTable_free(fastf_t **timeTable)
  */
 void timeTable_input(int x, int y, fastf_t time, fastf_t **timeTable)
 {
+    bu_log("Enter timeTable input\n");
     timeTable[x][y] = time;
+    bu_log("Input %lf into timeTable %d %d\n", time, x, y);
 }
 
 
@@ -1158,7 +1171,7 @@ vdraw open iray;vdraw params c %2.2x%2.2x%2.2x;vdraw write n 0 %g %g %g;vdraw wr
 	}
 	fastf_t pixelTime = rt_get_timer(NULL, NULL);
         fastf_t *timeTable = timeTable_init(ap);
-	(void)timeTable_input((int)ap->a_x, (int)ap->a_y, pixelTime, &timeTable);
+	(void)timeTable_input((int)ap->a_x, (int)ap->a_y, pixelTime, timeTable);
 	/*
 	 * What will happen here is that the current pixel time will
 	 * be shot off into an array at location (current x)(current
