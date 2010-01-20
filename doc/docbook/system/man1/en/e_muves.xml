@@ -37,17 +37,17 @@
 <!-- USE OF THIS DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF   -->
 <!-- SUCH DAMAGE.                                                       -->
 
-<refentry id=''>
+<refentry id='e_muves'>
 
 <refmeta>
-  <refentrytitle>e_muves</refentrytitle>
+  <refentrytitle>E_MUVES</refentrytitle>
   <manvolnum>1</manvolnum>
   <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
   <refmiscinfo class='manual'>BRL-CAD User Commands</refmiscinfo>
 </refmeta>
 
 <refnamediv id='name'>
-  <refname>E_MUVES</refname>
+  <refname>e_muves</refname>
   <refpurpose>Displays the <emphasis>BRL-CAD</emphasis> regions that are part of the indicated
 	MUVES components.
    </refpurpose>
@@ -74,10 +74,10 @@
 
 <refsect1 id='examples'>
   <title>EXAMPLES</title>
-  <para>The example shows the use of the <command>e_muves</command> command to display the <emphasis>BRL-	CAD</emphasis> regions that make up the specified MUVES components.
+  <para>The example shows the use of the <command>e_muves</command> command to display the <emphasis>BRL-CAD</emphasis> regions that make up the specified MUVES components.
   </para>
   <example>
-    <title>Display the <emphasis>BRL-CAD</emphasis> regions that make up the specified MUVES components.	</title>
+    <title>Display the <emphasis>BRL-CAD</emphasis> regions that make up the specified MUVES components.</title>
     <variablelist>
       <varlistentry>
 	   <term><prompt>mged></prompt> <userinput>e_muves fuel transmission</userinput></term>
