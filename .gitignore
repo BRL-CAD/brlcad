@@ -1,2 +1,12 @@
-/install-sh
-/mkinstalldirs
+/Makefile
+/autom4te.cache
+/config.log
+/config.status
+/configure
+/libtool
+/aclocal.m4
+/htmldefaultstyle.c
+/htmltokens.c
+/cssprop.c
+/htmltokens.h
+/cssprop.h
