@@ -537,19 +537,16 @@ fastf_t *timeTable_init(struct application *ap)
     int i;
     int w;
 
-    /* FIXME: memory leak if timeTable_init() is called multiple times */
-    if(timeTable == NULL)
-    {
+    if (timeTable == NULL) {
 	timeTable = bu_malloc(x * sizeof(fastf_t *), "timeTable");
 	for (i = 0; i < x; i++) {
 	    timeTable[i] = bu_malloc(y * sizeof(fastf_t *), "timeTable[i]");
 	}
     }
 
-    if(timeTable[0][0]!=-1)
-    {
-	for(i = 0; i < x; i++) {
-	    for(w = 0; w < y; w++) {
+    if (timeTable[0][0]!=-1) {
+	for (i = 0; i < x; i++) {
+	    for (w = 0; w < y; w++) {
 		timeTable[i][w] = -1;
 		/* bu_log("Initializing table %d %d %lf\n", i, w, timeTable[i][w]); */
 	    }
@@ -572,7 +569,7 @@ void timeTable_free(fastf_t **timeTable)
     int y = height;
     int i = 0;
 
-    for(i = 0; i < y; i++)
+    for (i = 0; i < y; i++)
 	bu_free(timeTable[i], "timeTable[]");
     bu_free(timeTable, "timeTable");
 }
@@ -592,6 +589,51 @@ void timeTable_input(int x, int y, fastf_t time, fastf_t **timeTable)
     bu_log("Input %lf into timeTable %d %d\n", time, x, y);
 }
 
+/**
+ * T I M E T A B L E _ S I N G L E P R O C E S S
+ * 
+ * This function processes the time table 1 pixel at a time, as
+ * opposed to all at once like timeTable_process. Heat values are
+ * bracketed to certain values, instead of normalized.
+ */
+
+fastf_t *timeTable_singleProcess(struct application *ap, fastf_t **timeTable, fastf_t *timeColor)
+{
+    /* Process will take current X Y and time from timeTable, and apply
+     * color to that pixel inside the framebuffer.
+     */
+    fastf_t time = timeTable[ap->a_x][ap->a_y];
+    fastf_t color = 0;	/* 1-255 value of color */
+    int npix = 0;
+
+    bu_log("Time is %lf :", time);
+    if (time <= .00001) {
+	bu_log("Dark\n");
+	timeColor[0]=0;
+	timeColor[1]=0;
+	timeColor[2]=127;
+    }
+
+    else if (time > .00001 && time < .0001) {
+	bu_log("Medium\n");
+	color = 128;	
+
+	timeColor[0]=127;
+	timeColor[1]=127;
+	timeColor[2]=0;
+    }
+
+    else {
+	bu_log("Light\n");
+	color = 255;
+
+	timeColor[0]=255;
+	timeColor[1]=64;
+	timeColor[2]=64;
+    }
+
+    return timeColor;
+}
 
 /**
  * T I M E T A B L E _ P R O C E S S
@@ -616,13 +658,13 @@ void timeTable_process(fastf_t **timeTable)
      * function.
      */
     int x, y;
-    for(x = 0; x < maxX; x++) {
-	for(y = 0; y < maxY; y++) {
-	    if(timeTable[x][y] != -1) {
+    for (x = 0; x < maxX; x++) {
+	for (y = 0; y < maxY; y++) {
+	    if (timeTable[x][y] != -1) {
 		bu_semaphore_acquire(BU_SEM_SYSCALL);
-		if(timeTable[x][y] > maxTime)
+		if (timeTable[x][y] > maxTime)
 		    maxTime = timeTable[x][y];
-		if(timeTable[x][y] < minTime)
+		if (timeTable[x][y] < minTime)
 		    minTime = timeTable[x][y];
 		bu_semaphore_release(BU_SEM_SYSCALL);
 	    }
@@ -646,7 +688,7 @@ void timeTable_process(fastf_t **timeTable)
 		if (npix < 1)
 		    bu_exit(EXIT_FAILURE, "pixel fb_write error");
 	    }
-	}
+ 	}
     }
 }
 
@@ -1127,7 +1169,8 @@ vdraw open iray;vdraw params c %2.2x%2.2x%2.2x;vdraw write n 0 %g %g %g;vdraw wr
      * e ^(-density * distance)
      */
     if (lightmodel == 8) {
-	VSET(ap->a_color, 1-ap->a_color[0], 1-ap->a_color[1], 1-ap->a_color[2]);
+	/* Invert lights for testing */
+	VSET(ap->a_color, 0.75, 0.5, 0.25);
     }
 
     if (airdensity != 0.0) {
@@ -1180,6 +1223,19 @@ vdraw open iray;vdraw params c %2.2x%2.2x%2.2x;vdraw write n 0 %g %g %g;vdraw wr
 	 */
 
 	/* bu_log("Time taken: %lf\n", pixelTime); */
+	fastf_t timeColor[3]={0};
+	timeTable_singleProcess(ap, timeTable, timeColor);
+	bu_log("R:%d G:%d B:%d\n", timeColor[0], timeColor[1], timeColor[2]);
+
+	/* Take 1-255 color values and set them to 0-1 range */
+	fastf_t a = timeColor[0] / 255;
+	fastf_t b = timeColor[1] / 255;
+	fastf_t c = timeColor[2] / 255;
+	bu_log("a:%lf b:%lf c:%lf\n", a, b, c);
+
+	/* Apply new colors to framebuffer! */
+	VSET(ap->a_color, a, b ,c);
+	VPRINT("color   ", ap->a_color);
     }
     return(1);
 }
