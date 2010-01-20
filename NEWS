@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2010-0x-xx  Release 7.16.6                                     ---
 ----------------------------------------------------------------------
 
+* extensive work on MGED Docbook man page conversions - Janine Gettier
 * fixed unoriented BoT badmagic raytrace failure - Sean Morrison
 
 

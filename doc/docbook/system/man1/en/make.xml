@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "../../../resources/standard/dtd/docbookx.dtd">
+
+<!-- Copyright (c) 2005-2008 United States Government as represented by -->
+<!-- the U.S. Army Research Laboratory.                                 -->
+<!--                                                                    -->
+<!-- Redistribution and use in source (Docbook format) and 'compiled'   -->
+<!-- forms (PDF, PostScript, HTML, RTF, etc), with or without           -->
+<!-- modification, are permitted provided that the following conditions -->
+<!-- are met:                                                           -->
+<!--                                                                    -->
+<!-- 1. Redistributions of source code (Docbook format) must retain the -->
+<!-- above copyright notice, this list of conditions and the following  -->
+<!-- disclaimer.                                                        -->
+<!--                                                                    -->
+<!-- 2. Redistributions in compiled form (transformed to other DTDs,    -->
+<!-- converted to PDF, PostScript, HTML, RTF, and other formats) must   -->
+<!-- reproduce the above copyright notice, this list of conditions and  -->
+<!-- the following disclaimer in the documentation and/or other         -->
+<!-- materials provided with the distribution.                          -->
+<!--                                                                    -->
+<!-- 3. The name of the author may not be used to endorse or promote    -->
+<!-- products derived from this documentation without specific prior    -->
+<!-- written permission.                                                -->
+<!--                                                                    -->
+<!-- THIS DOCUMENTATION IS PROVIDED BY THE AUTHOR "AS IS" AND ANY       -->
+<!-- EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE  -->
+<!-- IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR -->
+<!-- PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR -->
+<!-- ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR           -->
+<!-- CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT  -->
+<!-- OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR -->
+<!-- BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF         -->
+<!-- LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT          -->
+<!-- (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE  -->
+<!-- USE OF THIS DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF   -->
+<!-- SUCH DAMAGE.                                                       -->
+
+<refentry id='make'>
+
+<refmeta>
+  <refentrytitle>MAKE</refentrytitle>
+  <manvolnum>1</manvolnum>
+  <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+  <refmiscinfo class='manual'>BRL-CAD User Commands</refmiscinfo>
+</refmeta>
+
+<refnamediv id='name'>
+  <refname>make</refname>
+  <refpurpose>Creates a <emphasis>new_shape</emphasis> of the indicated type.</refpurpose>
+</refnamediv>
+
+<!-- body begins here -->
+<refsynopsisdiv id='synopsis'>
+  <cmdsynopsis>
+    <command>make</command>    
+    <arg>-t</arg>
+    <arg><replaceable>new_shape type</replaceable></arg>
+  </cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1 id='description'>
+  <title>DESCRIPTION</title>
+  <para>Creates a <emphasis>new_shape</emphasis> of the indicated type.
+  	The <emphasis>new_shape</emphasis> is sized according to the current view size and is dependent on the 	<emphasis>type</emphasis>. The possible values for <emphasis>type</emphasis> are:
+  </para>
+<itemizedlist mark='bullet'>
+<listitem>
+ <para>
+   arb8 -- ARB (eight vertices)
+ </para>
+</listitem>
+<listitem>
+ <para>
+  arb7 -- ARB (seven vertices).
+ </para>
+</listitem>
+<listitem>
+ <para>
+  arb 6 -- ARB (six vertices).
+ </para>
+</listitem>
+<listitem>
+ <para>
+  arb 5 -- ARB (five vertices).
+ </para>
+</listitem>
+<listitem>
+ <para>
+  arb 4 -- ARB (four vertices).
+ </para>
+</listitem>
+<listitem>
+ <para>
+  bot -- Bag of Triangles.
+ </para>
+</listitem>
+<listitem>
+ <para>
+  sph -- Ellipsoid (sphere).
+ </para>
+</listitem>
+<listitem>
+ <para>
+  ell -- Ellipsoid (ellipsoid of revolution).
+ </para>
+</listitem>
+<listitem>
+ <para>
+  ellg -- Ellipsoid (general ellipsoid).
+ </para>
+</listitem>
+<listitem>
+ <para>
+  tor -- Torus.
+ </para>
+</listitem>
+<listitem>
+ <para>
+  tgc -- Truncated General Cone (most general TGC).
+ </para>
+</listitem>
+<listitem>
+ <para>
+  tec -- Truncated General Cone (truncated elliptical cone).
+ </para>
+</listitem>
+<listitem>
+ <para>
+  rec -- Truncated General Cone (right elliptical cylinder).
+ </para>
+</listitem>
+<listitem>
+ <para>
+  trc -- Truncated General Cone (truncated right circular cone).
+ </para>
+</listitem>
+<listitem>
+ <para>
+  rcc -- Truncated General Cone (right circular cylinder).
+ </para>
+</listitem>
+<listitem>
+ <para>
+  half -- Half Space.
+ </para>
+</listitem>
+<listitem>
+ <para>
+  rpc -- Right Parabolic Cylinder.
+ </para>
+</listitem>
+<listitem>
+ <para>
+  rhc -- Right Hyperbolic Cylinder.
+ </para>
+</listitem>
+<listitem>
+ <para>
+  epa -- Elliptical Paraboloid.
+ </para>
+</listitem>
+<listitem>
+ <para>
+  ehy -- Elliptical Hyperboloid.
+ </para>
+</listitem>
+<listitem>
+ <para>
+  eto -- Elliptical Torus.
+ </para>
+</listitem>
+<listitem>
+ <para>
+  part -- Particle.
+ </para>
+</listitem>
+<listitem>
+ <para>
+  nmg -- Non-Manifold Geometry (an NMG consisting of a single vertex is built).
+ </para>
+</listitem>
+<listitem>
+ <para>
+  pipe -- Pipe (run of connected pipe or wire).
+ </para>
+</listitem>
+<listitem>
+ <para>
+  grip -- Support for joints.
+ </para>
+</listitem>
+<listitem>
+ <para>
+  extrude -- Experimental.
+ </para>
+</listitem>
+<listitem>
+ <para>
+  sketch -- Experimental.
+ </para>
+</listitem>
+</itemizedlist>
+
+</refsect1>
+
+<refsect1 id='examples'>
+  <title>EXAMPLES</title>
+  <para>The first example shows the use of the <command>make</command> command to create a sphere with a specified 	name.  The second example shows the use of the <command>make</command> command with the <emphasis>-t	</emphasis> argument to generate a list of shape types handled by <command>make</command>.
+  </para>
+  <example>
+    <title>Create a sphere having a specified name.</title>
+    <variablelist>
+      <varlistentry>
+	   <term><prompt>mged></prompt> <userinput>make shapea sph</userinput></term>
+	   <listitem>
+	     <para>Creates a sphere named <emphasis>shapea</emphasis>.
+	      </para>
+	   </listitem>
+      </varlistentry>
+    </variablelist>
+  </example>
+  <example>
+    <title>Generate a list of shape types handled by <command>make</command>.</title>
+    <para>
+      <prompt>mged></prompt><userinput>make -t</userinput>
+    </para>
+    <para>
+       Lists the shape types handled by <command>make</command>.
+    </para>
+  </example>
+ 
+</refsect1>
+
+<refsect1 id='author'>
+  <title>AUTHOR</title>
+  <para>BRL-CAD Team</para>
+</refsect1>
+
+<refsect1 id='bug_reports'>
+  <title>BUG REPORTS</title>
+  <para>
+    Reports of bugs or problems should be submitted via electronic
+    mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.
+  </para>
+</refsect1>
+</refentry>
+
