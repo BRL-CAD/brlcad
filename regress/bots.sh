@@ -63,9 +63,10 @@ fi
 
 echo "testing BoT primitive..."
 
-rm -f bots.g bots.log
+rm -f bots.g bots.log bots.rh.pix bots.lh.pix bots.no.pix bots.sync.pix
 
 # create a geometry database with a BoT of each type
+
 $MGED -c > bots.log 2>&1 <<EOF
 opendb bots.g y
 make sph sph
@@ -80,16 +81,21 @@ bot_sync sph.sync.volume.no.bot
 EOF
 
 # begin validation checks
+
 FAILED=0
 
-# make sure their data seems okay
+echo "Getting BoT modes"
+
 rh_mode="`$MGED -c bots.g get sph.volume.rh.bot mode 2>&1`"
 lh_mode="`$MGED -c bots.g get sph.volume.lh.bot mode 2>&1`"
 no_mode="`$MGED -c bots.g get sph.volume.no.bot mode 2>&1`"
-if test "x`echo $rh_mode``echo $lh_mode``echo $no_mode`" != "xvolumevolumevolume" ; then
+sync_mode="`$MGED -c bots.g get sph.sync.volume.no.bot mode 2>&1`"
+if test "x`echo $rh_mode``echo $lh_mode``echo $no_mode``echo $sync_mode`" != "xvolumevolumevolumevolume" ; then
     echo "ERROR: volume BoT mode failure"
     FAILED="`expr $FAILED + 1`"
 fi
+
+echo "Getting BoT orientations"
 
 rh="`$MGED -c bots.g get sph.volume.rh.bot orient 2>&1`"
 if test "x`echo $rh`" != "xrh" ; then
@@ -103,7 +109,12 @@ if test "x`echo $lh`" != "xlh" ; then
 fi
 no="`$MGED -c bots.g get sph.volume.no.bot orient 2>&1`"
 if test "x`echo $no`" != "xno" ; then
-    echo "ERROR: unoriented BoT orientation (bot_merge) failure [$no]"
+    echo "ERROR: merged BoT orientation (bot_merge) failure [$no]"
+    FAILED="`expr $FAILED + 1`"
+fi
+sync="`$MGED -c bots.g get sph.sync.volume.no.bot orient 2>&1`"
+if test "x`echo $no`" != "xno" ; then
+    echo "ERROR: synced BoT orientation (bot_sync) failure [$no]"
     FAILED="`expr $FAILED + 1`"
 fi
 
@@ -117,7 +128,85 @@ if test "x$unfused_vertices" != "x$refused_vertices" ; then
     FAILED="`expr $FAILED + 1`"
 fi
 
+# exit early if they fail so we don't attempt to render
+if test $FAILED -ne 0 ; then
+    echo "-> BoT check FAILED"
+    exit $FAILED
+fi
+
 # now make sure they render identical
+
+echo "Rendering implicit sphere"
+$RT -s128 -o bots.sph.pix bots.g sph >> bots.log 2>&1
+if [ ! -f bots.sph.pix ] ; then
+    echo "ERROR: raytrace failure"
+    exit 1
+fi
+
+echo "Rendering right-handed volume BoT sphere"
+$RT -s128 -o bots.rh.pix bots.g sph.volume.rh.bot >> bots.log 2>&1
+if [ ! -f bots.rh.pix ] ; then
+    echo "ERROR: raytrace failure"
+    exit 1
+fi
+
+echo "Rendering left-handed volume BoT sphere"
+$RT -s128 -o bots.lh.pix bots.g sph.volume.lh.bot >> bots.log 2>&1
+if [ ! -f bots.lh.pix ] ; then
+    echo "ERROR: raytrace failure"
+    exit 1
+fi
+
+echo "Rendering unoriented volume BoT sphere"
+$RT -s128 -o bots.no.pix bots.g sph.volume.no.bot >> bots.log 2>&1
+if [ ! -f bots.no.pix ] ; then
+    echo "ERROR: raytrace failure"
+    exit 1
+fi
+
+echo "Rendering synced unoriented volume BoT sphere"
+$RT -s128 -o bots.sync.pix bots.g sph.sync.volume.no.bot >> bots.log 2>&1
+if [ ! -f bots.sync.pix ] ; then
+    echo "ERROR: raytrace failure"
+    exit 1
+fi
+
+# compare
+
+$PIXDIFF bots.sph.pix bots.rh.pix > bots.diff.pix 2>> bots.diff.log
+NUMBER_WRONG=`tail -n 1 bots.diff.log | tr , '\012' | awk '/many/ {print $1}'`
+if [ $NUMBER_WRONG -eq 0 ] ; then
+    # we expect implicit and BoT sphere to be different
+    echo "ERROR: bots.diff.pix $NUMBER_WRONG off by many (this is WRONG)"
+    FAILED="`expr $FAILED + 1`"
+fi
+
+$PIXDIFF bots.rh.pix bots.lh.pix > bots.rl.diff.pix 2>> bots.diff.log
+NUMBER_WRONG=`tail -n 1 bots.diff.log | tr , '\012' | awk '/many/ {print $1}'`
+if [ $NUMBER_WRONG -eq 0 ] ; then
+    tail -n 1 bots.diff.log
+else
+    echo "ERROR: bots.rl.diff.pix $NUMBER_WRONG off by many"
+    FAILED="`expr $FAILED + 1`"
+fi
+
+$PIXDIFF bots.rh.pix bots.no.pix > bots.rn.diff.pix 2>> bots.diff.log
+NUMBER_WRONG=`tail -n 1 bots.diff.log | tr , '\012' | awk '/many/ {print $1}'`
+if [ $NUMBER_WRONG -eq 0 ] ; then
+    tail -n 1 bots.diff.log
+else
+    echo "ERROR: bots.rn.diff.pix $NUMBER_WRONG off by many"
+    FAILED="`expr $FAILED + 1`"
+fi
+
+$PIXDIFF bots.rh.pix bots.sync.pix > bots.rs.diff.pix 2>> bots.diff.log
+NUMBER_WRONG=`tail -n 1 bots.diff.log | tr , '\012' | awk '/many/ {print $1}'`
+if [ $NUMBER_WRONG -eq 0 ] ; then
+    tail -n 1 bots.diff.log
+else
+    echo "ERROR: bots.rs.diff.pix $NUMBER_WRONG off by many"
+    FAILED="`expr $FAILED + 1`"
+fi
 
 
 if test $FAILED -eq 0 ; then
