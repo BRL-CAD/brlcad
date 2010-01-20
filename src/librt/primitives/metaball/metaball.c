@@ -533,6 +533,8 @@ rt_metaball_plot_sph(struct bu_list *vhead, point_t *center, fastf_t radius)
     point_t a, b, c;
     int i;
 
+    BU_CK_LIST_HEAD(vhead);
+
     VSET(a, radius, 0, 0);
     VSET(b, 0, radius, 0);
     VSET(c, 0, 0, radius);
@@ -560,6 +562,7 @@ rt_metaball_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
     point_t bsc;
     fastf_t rad;
 
+    BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
     mb = (struct rt_metaball_internal *)ip->idb_ptr;
     RT_METABALL_CK_MAGIC(mb);

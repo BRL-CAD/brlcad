@@ -1104,6 +1104,7 @@ rt_ebm_plate(int x_1, int y_1, int x_2, int y_2, double t, register fastf_t *mat
     point_t s, p;
     point_t srot, prot;
 
+    BU_CK_LIST_HEAD(vhead);
     VSET(s, x_1, y_1, 0.0);
     MAT4X3PNT(srot, mat, s);
     RT_ADD_VLIST(vhead, srot, BN_VLIST_LINE_MOVE);
@@ -1135,6 +1136,7 @@ rt_ebm_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     register int following;
     register int base;
 
+    BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
     eip = (struct rt_ebm_internal *)ip->idb_ptr;
     RT_EBM_CK_MAGIC(eip);
