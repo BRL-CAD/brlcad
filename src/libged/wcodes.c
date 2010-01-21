@@ -44,8 +44,10 @@
 static struct directory *path[RT_MAXARGS];
 
 
-static int
-printcodes(struct ged *gedp, FILE *fp, struct directory *dp, int pathpos)
+HIDDEN void wcodes_printnode(struct db_i *, struct rt_comb_internal *, union tree *, genptr_t, genptr_t, genptr_t);
+
+HIDDEN int
+wcodes_printcodes(struct ged *gedp, FILE *fp, struct directory *dp, int pathpos)
 {
     int i;
     struct rt_db_internal intern;
@@ -60,7 +62,7 @@ printcodes(struct ged *gedp, FILE *fp, struct directory *dp, int pathpos)
 	return GED_OK;
 
     if ((id=rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (matp_t)NULL, &rt_uniresource)) < 0) {
-	bu_vls_printf(&gedp->ged_result_str, "printcodes: Cannot get records for %s\n", dp->d_namep);
+	bu_vls_printf(&gedp->ged_result_str, "Cannot get records for %s\n", dp->d_namep);
 	return GED_ERROR;
     }
 
@@ -87,7 +89,7 @@ printcodes(struct ged *gedp, FILE *fp, struct directory *dp, int pathpos)
 
     if (comb->tree) {
 	path[pathpos] = dp;
-	db_tree_funcleaf(gedp->ged_wdbp->dbip, comb, comb->tree, Do_printnode,
+	db_tree_funcleaf(gedp->ged_wdbp->dbip, comb, comb->tree, wcodes_printnode,
 			 (genptr_t)fp, (genptr_t)&pathpos, (genptr_t)gedp);
     }
 
@@ -96,8 +98,8 @@ printcodes(struct ged *gedp, FILE *fp, struct directory *dp, int pathpos)
 }
 
 
-static void
-Do_printnode(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_leaf, genptr_t user_ptr1, genptr_t user_ptr2, genptr_t user_ptr3)
+HIDDEN void
+wcodes_printnode(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_leaf, genptr_t user_ptr1, genptr_t user_ptr2, genptr_t user_ptr3)
 {
     FILE *fp;
     int *pathpos;
@@ -116,7 +118,7 @@ Do_printnode(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_
 
     /* recurse on combinations */
     if (nextdp->d_flags & DIR_COMB)
-	(void)printcodes(gedp, fp, nextdp, (*pathpos)+1);
+	(void)wcodes_printcodes(gedp, fp, nextdp, (*pathpos)+1);
 }
 
 
@@ -154,7 +156,7 @@ ged_wcodes(struct ged *gedp, int argc, const char *argv[])
 
     for (i = 2; i < argc; ++i) {
 	if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) != DIR_NULL) {
-	    status = printcodes(gedp, fp, dp, 0);
+	    status = wcodes_printcodes(gedp, fp, dp, 0);
 
 	    if (status == GED_ERROR) {
 		(void)fclose(fp);
