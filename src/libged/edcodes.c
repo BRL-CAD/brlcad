@@ -33,13 +33,9 @@
 #include "./ged_private.h"
 
 
-#define ABORTED -99
-#define MAX_LEVELS 12
-
-
-static int regflag;
-static int lastmemb;
-static char tmpfil[MAXPATHLEN] = {0};
+#define EDCODES_OK GED_OK
+#define EDCODES_NOTOK GED_ERROR
+#define EDCODES_HALT -99
 
 
 HIDDEN int
@@ -66,58 +62,14 @@ edcodes_reg_compare(const void *p1, const void *p2)
 }
 
 
-HIDDEN int
-edcodes_collect_regnames(struct ged *gedp, struct directory *dp, int pathpos)
-{
-    int id;
-    struct rt_db_internal intern;
-    struct rt_comb_internal *comb;
-    HIDDEN void edcodes_traverse_node(struct db_i *, struct rt_comb_internal *, union tree *, genptr_t, genptr_t, genptr_t);
-
-    if (pathpos >= MAX_LEVELS) {
-	regflag = ABORTED;
-	return GED_ERROR;
-    }
-
-    if (!(dp->d_flags & RT_DIR_COMB))
-	return GED_OK;
-
-    if ((id=rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip,
-			       (matp_t)NULL, &rt_uniresource)) < 0) {
-	bu_vls_printf(&gedp->ged_result_str,
-		      "edcodes_collect_regnames: Cannot get records for %s\n", dp->d_namep);
-	return GED_ERROR;
-    }
-
-    if (id != ID_COMBINATION) {
-	intern.idb_meth->ft_ifree(&intern);
-	return GED_OK;
-    }
-
-    comb = (struct rt_comb_internal *)intern.idb_ptr;
-    RT_CK_COMB(comb);
-
-    if (comb->region_flag) {
-	bu_vls_printf(&gedp->ged_result_str, " %s", dp->d_namep);
-	intern.idb_meth->ft_ifree(&intern);
-	return GED_OK;
-    }
-
-    if (comb->tree)
-	db_tree_funcleaf(gedp->ged_wdbp->dbip, comb, comb->tree, edcodes_traverse_node,
-			 (genptr_t)&pathpos, (genptr_t)gedp, (genptr_t)NULL);
-
-    intern.idb_meth->ft_ifree(&intern);
-    return GED_OK;
-}
-
-
 HIDDEN void
-edcodes_traverse_node(struct db_i *dbip, struct rt_comb_internal *comb __attribute__((unused)), union tree *comb_leaf, genptr_t user_ptr1, genptr_t user_ptr2, genptr_t user_ptr3 __attribute__((unused)))
+edcodes_traverse_node(struct db_i *dbip, struct rt_comb_internal *comb __attribute__((unused)), union tree *comb_leaf, genptr_t user_ptr1, genptr_t user_ptr2, genptr_t user_ptr3)
 {
+    int ret;
     int *pathpos;
     struct directory *nextdp;
     struct ged *gedp;
+    HIDDEN int edcodes_collect_regnames(struct ged *, struct directory *, int);
 
     RT_CK_DBI(dbip);
     RT_CK_TREE(comb_leaf);
@@ -129,8 +81,60 @@ edcodes_traverse_node(struct db_i *dbip, struct rt_comb_internal *comb __attribu
     gedp = (struct ged *)user_ptr2;
 
     /* recurse on combinations */
-    if (nextdp->d_flags & DIR_COMB)
-	(void)edcodes_collect_regnames(gedp, nextdp, (*pathpos)+1);
+    if (nextdp->d_flags & DIR_COMB) {
+	int *status = (int *)user_ptr3;
+	ret = edcodes_collect_regnames(gedp, nextdp, (*pathpos)+1);
+	if (status && ret == EDCODES_HALT)
+	    *status = EDCODES_HALT;
+    }
+}
+
+
+HIDDEN int
+edcodes_collect_regnames(struct ged *gedp, struct directory *dp, int pathpos)
+{
+    int id;
+    int status = 0;
+    struct rt_db_internal intern;
+    struct rt_comb_internal *comb;
+
+    if (pathpos >= RT_MAXARGS) {
+	return EDCODES_HALT;
+    }
+
+    if (!(dp->d_flags & RT_DIR_COMB))
+	return EDCODES_OK;
+
+    if ((id=rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip,
+			       (matp_t)NULL, &rt_uniresource)) < 0) {
+	bu_vls_printf(&gedp->ged_result_str,
+		      "Cannot get records for %s\n", dp->d_namep);
+	return EDCODES_NOTOK;
+    }
+
+    if (id != ID_COMBINATION) {
+	intern.idb_meth->ft_ifree(&intern);
+	return EDCODES_OK;
+    }
+
+    comb = (struct rt_comb_internal *)intern.idb_ptr;
+    RT_CK_COMB(comb);
+
+    if (comb->region_flag) {
+	bu_vls_printf(&gedp->ged_result_str, " %s", dp->d_namep);
+	intern.idb_meth->ft_ifree(&intern);
+	return EDCODES_OK;
+    }
+
+    if (comb->tree) {
+	db_tree_funcleaf(gedp->ged_wdbp->dbip, comb, comb->tree, edcodes_traverse_node, (genptr_t)&pathpos, (genptr_t)gedp, (genptr_t)&status);
+    }
+
+    intern.idb_meth->ft_ifree(&intern);
+
+    if (status == EDCODES_HALT)
+	return EDCODES_HALT;
+    return EDCODES_OK;
 }
 
 
@@ -145,6 +149,7 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
     int c;
     char **av;
     FILE *fp = NULL;
+    char tmpfil[MAXPATHLEN] = {0};
 
     static const char *usage = "[-i|-n|-r] object(s)";
 
@@ -191,8 +196,8 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
 	    if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) != DIR_NULL) {
 		status = edcodes_collect_regnames(gedp, dp, 0);
 
-		if (status == GED_ERROR) {
-		    if (regflag == ABORTED)
+		if (status != EDCODES_OK) {
+		    if (status == EDCODES_HALT)
 			bu_vls_printf(&gedp->ged_result_str, "%s: nesting is too deep\n", argv[0]);
 
 		    return GED_ERROR;
@@ -207,7 +212,7 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
     if (!fp)
 	return GED_ERROR;
 
-    av = (char **)bu_malloc(sizeof(char *)*(argc + 2), "ged_edcodes: av");
+    av = (char **)bu_malloc(sizeof(char *)*(argc + 2), "ged_edcodes av");
     av[0] = "wcodes";
     av[1] = tmpfil;
     for (i = 2; i < argc + 1; ++i)
@@ -217,17 +222,11 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
 
     if (ged_wcodes(gedp, argc + 1, (const char **)av) == GED_ERROR) {
 	(void)unlink(tmpfil);
-	bu_free((genptr_t)av, "ged_edcodes: av");
+	bu_free((genptr_t)av, "ged_edcodes av");
 	return GED_ERROR;
     }
 
     (void)fclose(fp);
-
-    if (regflag == ABORTED) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: nesting is too deep\n", argv[0]);
-	(void)unlink(tmpfil);
-	return GED_ERROR;
-    }
 
     if (sort_by_ident || sort_by_region) {
 	char **line_array;
@@ -276,7 +275,6 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (ged_editit(tmpfil)) {
-	regflag = lastmemb = 0;
 	av[0] = "rcodes";
 	av[2] = NULL;
 	status = ged_rcodes(gedp, 2, (const char **)av);
@@ -284,7 +282,7 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
 	status = GED_ERROR;
 
     unlink(tmpfil);
-    bu_free((genptr_t)av, "ged_edcodes: av");
+    bu_free((genptr_t)av, "ged_edcodes av");
     return status;
 }
 
