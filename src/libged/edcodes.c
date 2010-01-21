@@ -230,7 +230,7 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
 
     if (sort_by_ident || sort_by_region) {
 	char **line_array;
-	char aline[256];
+	char aline[RT_MAXLINE];
 	FILE *f_srt;
 	int line_count=0;
 	int j;
@@ -242,7 +242,7 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	/* count lines */
-	while (bu_fgets(aline, 256, f_srt)) {
+	while (bu_fgets(aline, RT_MAXLINE, f_srt)) {
 	    line_count++;
 	}
 
@@ -252,7 +252,7 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
 	/* read lines and save into the array */
 	rewind(f_srt);
 	line_count = 0;
-	while (bu_fgets(aline, 256, f_srt)) {
+	while (bu_fgets(aline, RT_MAXLINE, f_srt)) {
 	    line_array[line_count] = bu_strdup(aline);
 	    line_count++;
 	}
