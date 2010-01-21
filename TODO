@@ -58,6 +58,12 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* make rt_prep_timer() take or return a context that gets subsequently
+  passed to rt_get_timer() calls for returning the elapsed time.  this
+  will allow multiple overlapping timers instead of just one global
+  timers.  move the timing facilities to libbu as part of the process
+  so API can be obsoleted cleanly.
+
 * separation of stderr from stdout within libbu, particularly for
   MGED, so that there is a clean separation of result output from
   diagnostic output.  this is a fairly separate idea from having log
