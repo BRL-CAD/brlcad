@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file ged.h
+/** @file gcv.h
  *
  * Functions provided by the LIBGCV geometry conversion library.
  *
@@ -63,7 +63,7 @@ GCV_EXPORT BU_EXTERN(union tree *gcv_region_end, (struct db_tree_state *tsp, str
 
 __END_DECLS
 
-#endif /* __GED_H__ */
+#endif /* __GCV_H__ */
 
 /*
  * Local Variables:
