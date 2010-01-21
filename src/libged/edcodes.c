@@ -36,15 +36,103 @@
 #define ABORTED -99
 #define MAX_LEVELS 12
 
-static int ged_id_compare(const void *p1, const void *p2);
-static int ged_reg_compare(const void *p1, const void *p2);
 
 static int regflag;
 static int lastmemb;
 static char tmpfil[MAXPATHLEN] = {0};
 
-static void traverse_node(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_leaf, genptr_t user_ptr1, genptr_t user_ptr2, genptr_t user_ptr3);
-static int collect_regnames(struct ged *gedp, struct directory *dp, int pathpos);
+
+HIDDEN int
+edcodes_id_compare(const void *p1, const void *p2)
+{
+    int id1, id2;
+
+    id1 = atoi(*(char **)p1);
+    id2 = atoi(*(char **)p2);
+
+    return (id1 - id2);
+}
+
+
+HIDDEN int
+edcodes_reg_compare(const void *p1, const void *p2)
+{
+    char *reg1, *reg2;
+
+    reg1 = strchr(*(char **)p1, '/');
+    reg2 = strchr(*(char **)p2, '/');
+
+    return strcmp(reg1, reg2);
+}
+
+
+HIDDEN int
+edcodes_collect_regnames(struct ged *gedp, struct directory *dp, int pathpos)
+{
+    int id;
+    struct rt_db_internal intern;
+    struct rt_comb_internal *comb;
+    HIDDEN void edcodes_traverse_node(struct db_i *, struct rt_comb_internal *, union tree *, genptr_t, genptr_t, genptr_t);
+
+    if (pathpos >= MAX_LEVELS) {
+	regflag = ABORTED;
+	return GED_ERROR;
+    }
+
+    if (!(dp->d_flags & RT_DIR_COMB))
+	return GED_OK;
+
+    if ((id=rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip,
+			       (matp_t)NULL, &rt_uniresource)) < 0) {
+	bu_vls_printf(&gedp->ged_result_str,
+		      "edcodes_collect_regnames: Cannot get records for %s\n", dp->d_namep);
+	return GED_ERROR;
+    }
+
+    if (id != ID_COMBINATION) {
+	intern.idb_meth->ft_ifree(&intern);
+	return GED_OK;
+    }
+
+    comb = (struct rt_comb_internal *)intern.idb_ptr;
+    RT_CK_COMB(comb);
+
+    if (comb->region_flag) {
+	bu_vls_printf(&gedp->ged_result_str, " %s", dp->d_namep);
+	intern.idb_meth->ft_ifree(&intern);
+	return GED_OK;
+    }
+
+    if (comb->tree)
+	db_tree_funcleaf(gedp->ged_wdbp->dbip, comb, comb->tree, edcodes_traverse_node,
+			 (genptr_t)&pathpos, (genptr_t)gedp, (genptr_t)NULL);
+
+    intern.idb_meth->ft_ifree(&intern);
+    return GED_OK;
+}
+
+
+HIDDEN void
+edcodes_traverse_node(struct db_i *dbip, struct rt_comb_internal *comb __attribute__((unused)), union tree *comb_leaf, genptr_t user_ptr1, genptr_t user_ptr2, genptr_t user_ptr3 __attribute__((unused)))
+{
+    int *pathpos;
+    struct directory *nextdp;
+    struct ged *gedp;
+
+    RT_CK_DBI(dbip);
+    RT_CK_TREE(comb_leaf);
+
+    if ((nextdp=db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_NOISY)) == DIR_NULL)
+	return;
+
+    pathpos = (int *)user_ptr1;
+    gedp = (struct ged *)user_ptr2;
+
+    /* recurse on combinations */
+    if (nextdp->d_flags & DIR_COMB)
+	(void)edcodes_collect_regnames(gedp, nextdp, (*pathpos)+1);
+}
+
 
 int
 ged_edcodes(struct ged *gedp, int argc, const char *argv[])
@@ -75,7 +163,7 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
 
     bu_optind = 1;
     while ((c = bu_getopt(argc, (char * const *)argv, "inr")) != EOF) {
-	switch( c ) {
+	switch(c) {
 	    case 'i':
 		sort_by_ident = 1;
 		break;
@@ -101,7 +189,7 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
 
 	for (i = 1; i < argc; ++i) {
 	    if ((dp = db_lookup(gedp->ged_wdbp->dbip, argv[i], LOOKUP_NOISY)) != DIR_NULL) {
-		status = collect_regnames(gedp, dp, 0);
+		status = edcodes_collect_regnames(gedp, dp, 0);
 
 		if (status == GED_ERROR) {
 		    if (regflag == ABORTED)
@@ -148,14 +236,14 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
 	int line_count=0;
 	int j;
 
-	if ((f_srt=fopen(tmpfil, "r+" )) == NULL) {
+	if ((f_srt=fopen(tmpfil, "r+")) == NULL) {
 	    bu_vls_printf(&gedp->ged_result_str, "%s: Failed to open temp file for sorting\n", argv[0]);
 	    (void)unlink(tmpfil);
 	    return GED_ERROR;
 	}
 
 	/* count lines */
-	while (bu_fgets(aline, 256, f_srt )) {
+	while (bu_fgets(aline, 256, f_srt)) {
 	    line_count++;
 	}
 
@@ -172,9 +260,9 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
 
 	/* sort the array of lines */
 	if (sort_by_ident) {
-	    qsort(line_array, line_count, sizeof( char *), ged_id_compare);
+	    qsort(line_array, line_count, sizeof(char *), edcodes_id_compare);
 	} else {
-	    qsort(line_array, line_count, sizeof( char *), ged_reg_compare);
+	    qsort(line_array, line_count, sizeof(char *), edcodes_reg_compare);
 	}
 
 	/* rewrite the temp file using the sorted lines */
@@ -198,99 +286,6 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
     unlink(tmpfil);
     bu_free((genptr_t)av, "ged_edcodes: av");
     return status;
-}
-
-static int
-ged_id_compare(const void *p1, const void *p2)
-{
-    int id1, id2;
-
-    id1 = atoi(*(char **)p1);
-    id2 = atoi(*(char **)p2);
-
-    return (id1 - id2);
-}
-
-static int
-ged_reg_compare(const void *p1, const void *p2)
-{
-    char *reg1, *reg2;
-
-    reg1 = strchr(*(char **)p1, '/');
-    reg2 = strchr(*(char **)p2, '/');
-
-    return strcmp(reg1, reg2);
-}
-
-static void
-traverse_node(struct db_i *dbip,
-	     struct rt_comb_internal *comb,
-	     union tree *comb_leaf,
-	     genptr_t user_ptr1,
-	     genptr_t user_ptr2,
-	     genptr_t user_ptr3)
-{
-    int *pathpos;
-    struct directory *nextdp;
-    struct ged *gedp;
-
-    RT_CK_DBI(dbip);
-    RT_CK_TREE(comb_leaf);
-
-    if ((nextdp=db_lookup(dbip, comb_leaf->tr_l.tl_name, LOOKUP_NOISY)) == DIR_NULL)
-	return;
-
-    pathpos = (int *)user_ptr2;
-    gedp = (struct ged *)user_ptr3; 
-
-    /* recurse on combinations */
-    if (nextdp->d_flags & DIR_COMB)
-	(void)collect_regnames(gedp, nextdp, (*pathpos)+1);
-}
-
-static int
-collect_regnames(struct ged *gedp, struct directory *dp, int pathpos)
-{
-    int i;
-    struct rt_db_internal intern;
-    struct rt_comb_internal *comb;
-    int id;
-
-    if (pathpos >= MAX_LEVELS) {
-	regflag = ABORTED;
-	return GED_ERROR;
-    }
-
-    if (!(dp->d_flags & RT_DIR_COMB))
-	return GED_OK;
-
-    if ((id=rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip,
-			       (matp_t)NULL, &rt_uniresource)) < 0) {
-	bu_vls_printf(&gedp->ged_result_str,
-		      "collect_regnames: Cannot get records for %s\n", dp->d_namep);
-	return GED_ERROR;
-    }
-
-    if (id != ID_COMBINATION) {
-	intern.idb_meth->ft_ifree(&intern);
-	return GED_OK;
-    }
-
-    comb = (struct rt_comb_internal *)intern.idb_ptr;
-    RT_CK_COMB(comb);
-
-    if (comb->region_flag) {
-	bu_vls_printf(&gedp->ged_result_str, " %s", dp->d_namep);
-	intern.idb_meth->ft_ifree(&intern);
-	return GED_OK;
-    }
-
-    if (comb->tree)
-	db_tree_funcleaf(gedp->ged_wdbp->dbip, comb, comb->tree, traverse_node,
-			 (genptr_t)0, (genptr_t)&pathpos, (genptr_t)gedp);
-
-    intern.idb_meth->ft_ifree(&intern);
-    return GED_OK;
 }
 
 
