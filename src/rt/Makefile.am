@@ -47,7 +47,7 @@ COMMON = \
 
 ALLSRCS = \
 	$(COMMON) \
-	heatgraph.c \
+	heatgraph.c \ 
 	libfb-dummy.c \
 	read-rtlog.c \
 	reshoot.c \
@@ -106,7 +106,7 @@ rtscale_SOURCES = \
 
 rt_SOURCES = \
 	$(COMMON) \
-	heatgraph.c \
+	heatgraph.c \ 
 	scanline.c \
 	view.c
 

@@ -27,21 +27,56 @@
 
 #include "common.h"
 
+#include <sys/types.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
 
+#include "bu.h"
 #include "vmath.h"
-#include "mater.h"
 #include "raytrace.h"
 #include "fb.h"
 #include "rtprivate.h"
 #include "./ext.h"
 #include "plot3.h"
-#include "photonmap.h"
 #include "scanline.h"
 
 extern FBIO *fbp;
+
+static struct timeval timeStart;
+
+/**
+ * P R E P _ P I X E L _ T I M E R
+ * 
+ * Prep the timer for each pixel 
+ */
+void prep_pixel_timer(void)
+{
+  gettimeofday(&timeStart, (struct timezone *)0);
+}
+
+
+/**
+ * G E T _ P I X E L _ T I M E R
+ * 
+ * Get the length of time the pixel
+ * was being made.
+ */
+fastf_t get_pixel_timer(void)
+{
+  struct timeval timeEnd;
+  fastf_t totalTime = 0;
+
+  gettimeofday(&timeEnd, (struct timezone *)0);
+
+  totalTime = (timeEnd.tv_sec - timeStart.tv_sec) +
+    (timeEnd.tv_usec - timeStart.tv_usec) / 1000000.0;
+  
+  return totalTime;
+}
+
 
 /**
  * T I M E T A B L E _ I N I T
@@ -167,7 +202,6 @@ fastf_t *timeTable_singleProcess(struct application *ap, fastf_t **timeTable, fa
     timeColor[0] = Rcolor;
     timeColor[1] = Gcolor;
     timeColor[2] = Bcolor;
-    /* bu_log("Color=%d %d %d, %lf\n", Rcolor, Gcolor, Bcolor, time); */
     return timeColor;
 }
 
