@@ -529,16 +529,18 @@ fastf_t *timeTable_init(FBIO *fbp)
      * So first we need to get the size of the framebuffer
      * height and width and use that as the starting point.
      */
+
     static fastf_t **timeTable = NULL;
     int x = fb_getwidth(fbp);
     int y = fb_getheight(fbp);
     /* bu_log("X is %d, Y is %d\n", x, y); */
-    int i;
-    int w;
+    int i=0;
+    int w=0;
 
     /* Semaphore Acquire goes here */
-    bu_semaphore_acquire(RT_SEM_LAST-1);
+
     if (timeTable == NULL) {
+	bu_log("Making time Table\n");
 	timeTable = bu_malloc(x * sizeof(fastf_t *), "timeTable");
 	for (i = 0; i < x; i++) {
 	    timeTable[i] = bu_malloc(y * sizeof(fastf_t *), "timeTable[i]");
@@ -551,7 +553,6 @@ fastf_t *timeTable_init(FBIO *fbp)
 	}
 	bu_log("Initialized timetable\n");
     }
-    bu_semaphore_release(RT_SEM_LAST-1);
     /* Semaphore release goes here */
 
     return timeTable;
@@ -615,7 +616,7 @@ fastf_t *timeTable_singleProcess(struct application *ap, fastf_t **timeTable, fa
      * to 0.00001 sec, and (255,255,255) will be set to any time longer than 0.01 sec,
      * making a gradient of black-white in between.
      */
-    
+
     if (time <= 0.00001) {
 	Rcolor = 1;
 	Gcolor = 1;
@@ -626,8 +627,11 @@ fastf_t *timeTable_singleProcess(struct application *ap, fastf_t **timeTable, fa
 	    Rcolor = Gcolor = Bcolor = 254;
 	if (Rcolor <= 1)
 	    Rcolor = Gcolor = Bcolor = 2;
-    } else {
+    } else if (time > 0.01) {
 	Rcolor = Gcolor = Bcolor = 255;
+    } else {     /* Error occured with time, color pixel Green */
+	Rcolor = Bcolor = 0;
+	Gcolor = 255;
     }
 
     timeColor[0] = Rcolor;
@@ -718,6 +722,12 @@ view_eol(struct application *ap)
 void
 view_end(struct application *ap)
 {
+    /* TODO: Add functionality that renders the heat-graph framebuffer all at
+     * once when finished rendering a normal picture */
+    if (lightmodel == 8) {
+	bu_log("Hooray, it got here\n");
+	
+    }
     if (fullfloat_mode) {
 	struct floatpixel *tmp;
 	/* Transmitting scanlines, is done by rtsync before calling
@@ -1218,8 +1228,11 @@ vdraw open iray;vdraw params c %2.2x%2.2x%2.2x;vdraw write n 0 %g %g %g;vdraw wr
 
 	    /* bu_log("Cur: %d, X = %d, Y = %d\n", cur_pixel, ap->a_x, ap->a_y); */
 	}
-	fastf_t pixelTime = rt_get_timer(NULL, NULL);
+	fastf_t pixelTime = 0;
+	pixelTime = rt_get_timer(NULL, NULL);
+	bu_semaphore_acquire(RT_SEM_LAST-1);
         fastf_t *timeTable = timeTable_init(fbp);
+	bu_semaphore_release(RT_SEM_LAST-1);
 	(void)timeTable_input((int)ap->a_x, (int)ap->a_y, pixelTime, timeTable);
 	/*
 	 * What will happen here is that the current pixel time will
@@ -1230,7 +1243,9 @@ vdraw open iray;vdraw params c %2.2x%2.2x%2.2x;vdraw write n 0 %g %g %g;vdraw wr
 
 	/* bu_log("Time taken: %lf\n", pixelTime); */
 	fastf_t timeColor[3]={0};
+	bu_semaphore_acquire(RT_SEM_LAST-1);
 	timeTable_singleProcess(ap, timeTable, timeColor);
+	bu_semaphore_release(RT_SEM_LAST-1);
 	/* bu_log("R:%d G:%d B:%d\n", timeColor[0], timeColor[1], timeColor[2]); */
 
 	/* Take 1-255 color values and set them to 0-1 range */
