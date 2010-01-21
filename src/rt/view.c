@@ -515,195 +515,6 @@ view_pixel(struct application *ap)
 
 
 /**
- * T I M E T A B L E _ I N I T
- * 
- * This function creates the table of values that will store the 
- * time taken to complete pixels during a raytrace. Returns a
- * pointer to the table.
- */
-fastf_t *timeTable_init(FBIO *fbp)
-{
-    /*
-     * Time table will be initialized to the size of the current
-     * framebuffer by using a malloc.
-     * So first we need to get the size of the framebuffer
-     * height and width and use that as the starting point.
-     */
-
-    static fastf_t **timeTable = NULL;
-    int x = fb_getwidth(fbp);
-    int y = fb_getheight(fbp);
-    /* bu_log("X is %d, Y is %d\n", x, y); */
-    int i=0;
-    int w=0;
-
-    /* Semaphore Acquire goes here */
-
-    if (timeTable == NULL) {
-	bu_log("Making time Table\n");
-	timeTable = bu_malloc(x * sizeof(fastf_t *), "timeTable");
-	for (i = 0; i < x; i++) {
-	    timeTable[i] = bu_malloc(y * sizeof(fastf_t *), "timeTable[i]");
-	}    
-	for (i = 0; i < x; i++) {
-	    for (w = 0; w < y; w++) {
-		timeTable[i][w] = -1;
-		/* bu_log("Initializing table %d %d %lf\n", i, w, timeTable[i][w]); */
-	    }
-	}
-	bu_log("Initialized timetable\n");
-    }
-    /* Semaphore release goes here */
-
-    return timeTable;
-}
-
-
-/**
- * T I M E T A B L E _ F R E E
- *
- * Frees up the time table array.
- */
-void timeTable_free(fastf_t **timeTable)
-{
-    /* Temporarily assigned variables, until real ones are found */
-    int x = width;
-    int y = height;
-    int i = 0;
-
-    for (i = 0; i < y; i++)
-	bu_free(timeTable[i], "timeTable[]");
-    bu_free(timeTable, "timeTable");
-}
-
-
-/**
- * T I M E T A B L E _ I N P U T 
- *
- * This function inputs the time taken to complete a pixel during a
- * raytrace and places it into the timeTable for use in creating a
- * heat graph light model.
- */
-void timeTable_input(int x, int y, fastf_t time, fastf_t **timeTable)
-{
-    /* bu_log("Enter timeTable input\n"); */
-    timeTable[x][y] = time;
-    /* bu_log("Input %lf into timeTable %d %d\n", time, x, y); */
-}
-
-
-/**
- * T I M E T A B L E _ S I N G L E P R O C E S S
- * 
- * This function processes the time table 1 pixel at a time, as
- * opposed to all at once like timeTable_process. Heat values are
- * bracketed to certain values, instead of normalized.
- */
-fastf_t *timeTable_singleProcess(struct application *ap, fastf_t **timeTable, fastf_t *timeColor)
-{
-    /* Process will take current X Y and time from timeTable, and apply
-     * color to that pixel inside the framebuffer.
-     */
-    fastf_t time = timeTable[ap->a_x][ap->a_y];
-    fastf_t Rcolor = 0;	/* 1-255 value of color */
-    fastf_t Gcolor = 0;	/* 1-255 value of color */
-    fastf_t Bcolor = 0;	/* 1-255 value of color */
-
-    /* bu_log("Time is %lf :", time); */
-
-    /* Eventually the time taken will also span the entire color spectrum (0-255!)
-     * For now, the darkest color (1,1,1) will be set to any time slower or equal
-     * to 0.00001 sec, and (255,255,255) will be set to any time longer than 0.01 sec,
-     * making a gradient of black-white in between.
-     */
-
-    if (time <= 0.00001) {
-	Rcolor = 1;
-	Gcolor = 1;
-	Bcolor = 1;
-    } else if (time > 0.00001 && time < 0.01) {
-	Rcolor = Gcolor = Bcolor = (time*1000)*255;
-	if (Rcolor >= 255)
-	    Rcolor = Gcolor = Bcolor = 254;
-	if (Rcolor <= 1)
-	    Rcolor = Gcolor = Bcolor = 2;
-    } else if (time > 0.01) {
-	Rcolor = Gcolor = Bcolor = 255;
-    } else {     /* Error occured with time, color pixel Green */
-	Rcolor = Bcolor = 0;
-	Gcolor = 255;
-    }
-
-    timeColor[0] = Rcolor;
-    timeColor[1] = Gcolor;
-    timeColor[2] = Bcolor;
-    /* bu_log("Color=%d %d %d, %lf\n", Rcolor, Gcolor, Bcolor, time); */
-    return timeColor;
-}
-
-
-/**
- * T I M E T A B L E _ P R O C E S S
- * 
- * This function takes the contents of the time table, and produces the 
- * heat graph based on time taken for each pixel.
- */
-void timeTable_process(fastf_t **timeTable)
-{
-    fastf_t maxTime = -MAX_FASTF;		/* The 255 value */
-    fastf_t minTime = MAX_FASTF; 		/* The 1 value */
-    fastf_t meanTime = 0;			/* the 128 value */
-    fastf_t range = 0;				/* All times should fall in this range */
-    RGBpixel p;					/* Pixel colors for particular pixel */
-
-    int maxX = width, maxY = height; 		/* Maximum render size. */
-
-    /* The following loop will work as follows, it will loop through
-     * timeTable and search for pixels which have a non-negative value.
-     * Once a value is found, it will assign a color value from 1-255,
-     * depending on time taken. ((time / maxTime) * 255), or similar
-     * function.
-     */
-    int x, y;
-    for (x = 0; x < maxX; x++) {
-	for (y = 0; y < maxY; y++) {
-	    if (timeTable[x][y] != -1) {
-		/* Semaphore acquire goes here */
-		if (timeTable[x][y] > maxTime)
-		    maxTime = timeTable[x][y];
-		if (timeTable[x][y] < minTime)
-		    minTime = timeTable[x][y];
-		/* Semaphore release goes here */
-	    }
-	}
-    }
-
-    meanTime = maxTime / minTime;
-    range = maxTime - minTime;
-    
-    int color = 0;
-    int npix = 0;
-    for (x = 0; x < maxX; x++) {
-	for (y = 0; y < maxY; y++) {
-	    color = ((timeTable[x][y] / maxTime) * 255);
-	    p[0]=color;
-	    p[1]=color;
-	    p[2]=color;
-
-	    if (fbp != FBIO_NULL) {
-		/* Framebuffer output */
-		bu_semaphore_acquire(BU_SEM_SYSCALL);
-		npix = fb_write(fbp, ap.a_x, ap.a_y, (unsigned char *)p, 1);
-		bu_semaphore_release(BU_SEM_SYSCALL);
-		if (npix < 1)
-		    bu_exit(EXIT_FAILURE, "pixel fb_write error");
-	    }
- 	}
-    }
-}
-
-
-/**
  * V I E W _ E O L
  *
  * This routine is not used; view_pixel() determines when the last
@@ -718,16 +529,22 @@ view_eol(struct application *ap)
 
 /**
  * V I E W _ E N D
+ *
+ * Now when lightmodel is 8, heat-graph will be drawn.
  */
 void
 view_end(struct application *ap)
 {
-    /* TODO: Add functionality that renders the heat-graph framebuffer all at
-     * once when finished rendering a normal picture */
+    /* If the heat graph is on, render it after all pixels completed */
     if (lightmodel == 8) {
-	bu_log("Hooray, it got here\n");
-	
+	bu_log("Building Heat-Graph\n");
+	fastf_t *timeTable = timeTable_init(NULL, NULL);
+	bu_log("Timetable accessed!\n");
+	timeTable_process(timeTable, ap);
+	bu_log("Heat Graph-built\n");
+	timeTable_free(timeTable);
     }
+
     if (fullfloat_mode) {
 	struct floatpixel *tmp;
 	/* Transmitting scanlines, is done by rtsync before calling
@@ -1186,7 +1003,7 @@ vdraw open iray;vdraw params c %2.2x%2.2x%2.2x;vdraw write n 0 %g %g %g;vdraw wr
      */
     if (lightmodel == 8) {
 	/* Invert lights for testing */
-	VSET(ap->a_color, 0.75, 0.5, 0.25);
+	/* VSET(ap->a_color, 0.75, 0.5, 0.25); */
     }
 
     if (airdensity != 0.0) {
@@ -1231,7 +1048,7 @@ vdraw open iray;vdraw params c %2.2x%2.2x%2.2x;vdraw write n 0 %g %g %g;vdraw wr
 	fastf_t pixelTime = 0;
 	pixelTime = rt_get_timer(NULL, NULL);
 	bu_semaphore_acquire(RT_SEM_LAST-1);
-        fastf_t *timeTable = timeTable_init(fbp);
+        fastf_t *timeTable = timeTable_init(fbp, NULL);
 	bu_semaphore_release(RT_SEM_LAST-1);
 	(void)timeTable_input((int)ap->a_x, (int)ap->a_y, pixelTime, timeTable);
 	/*
@@ -1242,20 +1059,22 @@ vdraw open iray;vdraw params c %2.2x%2.2x%2.2x;vdraw write n 0 %g %g %g;vdraw wr
 	 */
 
 	/* bu_log("Time taken: %lf\n", pixelTime); */
-	fastf_t timeColor[3]={0};
-	bu_semaphore_acquire(RT_SEM_LAST-1);
-	timeTable_singleProcess(ap, timeTable, timeColor);
-	bu_semaphore_release(RT_SEM_LAST-1);
-	/* bu_log("R:%d G:%d B:%d\n", timeColor[0], timeColor[1], timeColor[2]); */
+
+	/* fastf_t timeColor[3]={0};
+	 * bu_semaphore_acquire(RT_SEM_LAST-1);
+	 * timeTable_singleProcess(ap, timeTable, timeColor);
+	 * bu_semaphore_release(RT_SEM_LAST-1);
+	 */
 
 	/* Take 1-255 color values and set them to 0-1 range */
-	fastf_t a = timeColor[0] / 255;
-	fastf_t b = timeColor[1] / 255;
-	fastf_t c = timeColor[2] / 255;
+	/* fastf_t a = timeColor[0] / 255;
+	 * fastf_t b = timeColor[1] / 255;
+	 * fastf_t c = timeColor[2] / 255;
+	 */
 	/* bu_log("a:%lf b:%lf c:%lf\n", a, b, c); */
 
 	/* Apply new colors to framebuffer! */
-	VSET(ap->a_color, a, b ,c);
+	/* VSET(ap->a_color, a, b ,c); */
 	/* VPRINT("color   ", ap->a_color); */
     }
     return(1);
