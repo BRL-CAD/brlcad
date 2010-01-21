@@ -13,6 +13,14 @@ changes made.  See document footer for additional details.
 --- 2010-0x-xx  Release 7.16.6                                     ---
 ----------------------------------------------------------------------
 
+Considerable effort continues towards improving BRL-CAD's
+documentation.  Janine Gettier has now converted the documentation for
+approximately 200 of MGED's commands into the Docbook XML format.
+Jesica Guidice has translated 4 of MGED's 16 introductory tutorials to
+Spanish.  Cliff Yapp continues to work extensively with both to get
+their efforts integrated so that HTML and PDF documentation are
+cleanly generated.
+
 * increased 'rcodes' and 'edcodes' maximum line length - Sean Morrison
 * increased maximum path depth supported by 'wcodes' - Sean Morrison
 * extensive work on MGED Docbook man page conversions - Janine Gettier
