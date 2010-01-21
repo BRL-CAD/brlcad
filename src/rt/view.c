@@ -521,7 +521,7 @@ view_pixel(struct application *ap)
  * time taken to complete pixels during a raytrace. Returns a
  * pointer to the table.
  */
-fastf_t *timeTable_init(struct application *ap)
+fastf_t *timeTable_init(FBIO *fbp)
 {
     /*
      * Time table will be initialized to the size of the current
@@ -530,14 +530,14 @@ fastf_t *timeTable_init(struct application *ap)
      * height and width and use that as the starting point.
      */
     static fastf_t **timeTable = NULL;
-    /* FIXME: don't rely on globals (pass as parameters) */
-    int x = width; 	/* fb_getwidth(fbp) */
-    int y = height; 	/* fb_getheight(fbp) */
+    int x = fb_getwidth(fbp);
+    int y = fb_getheight(fbp);
     /* bu_log("X is %d, Y is %d\n", x, y); */
     int i;
     int w;
 
     /* Semaphore Acquire goes here */
+    bu_semaphore_acquire(RT_SEM_LAST-1);
     if (timeTable == NULL) {
 	timeTable = bu_malloc(x * sizeof(fastf_t *), "timeTable");
 	for (i = 0; i < x; i++) {
@@ -551,6 +551,7 @@ fastf_t *timeTable_init(struct application *ap)
 	}
 	bu_log("Initialized timetable\n");
     }
+    bu_semaphore_release(RT_SEM_LAST-1);
     /* Semaphore release goes here */
 
     return timeTable;
@@ -609,7 +610,7 @@ fastf_t *timeTable_singleProcess(struct application *ap, fastf_t **timeTable, fa
 
     /* bu_log("Time is %lf :", time); */
 
-    /* Eventually the time taken will span the entire color spectrum (0-255!)
+    /* Eventually the time taken will also span the entire color spectrum (0-255!)
      * For now, the darkest color (1,1,1) will be set to any time slower or equal
      * to 0.00001 sec, and (255,255,255) will be set to any time longer than 0.01 sec,
      * making a gradient of black-white in between.
@@ -1218,7 +1219,7 @@ vdraw open iray;vdraw params c %2.2x%2.2x%2.2x;vdraw write n 0 %g %g %g;vdraw wr
 	    /* bu_log("Cur: %d, X = %d, Y = %d\n", cur_pixel, ap->a_x, ap->a_y); */
 	}
 	fastf_t pixelTime = rt_get_timer(NULL, NULL);
-        fastf_t *timeTable = timeTable_init(ap);
+        fastf_t *timeTable = timeTable_init(fbp);
 	(void)timeTable_input((int)ap->a_x, (int)ap->a_y, pixelTime, timeTable);
 	/*
 	 * What will happen here is that the current pixel time will
