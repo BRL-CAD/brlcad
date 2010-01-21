@@ -33,14 +33,12 @@
 #include "./ged_private.h"
 
 
-#define LINELEN 256
-
 int
 ged_rcodes(struct ged *gedp, int argc, const char *argv[])
 {
     int item, air, mat, los;
     char name[256];
-    char line[LINELEN];
+    char line[RT_MAXLINE];
     char *cp;
     FILE *fp;
     struct directory *dp;
@@ -71,7 +69,7 @@ ged_rcodes(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    while (bu_fgets(line, LINELEN, fp) != NULL) {
+    while (bu_fgets(line, RT_MAXLINE, fp) != NULL) {
 	int changed;
 
 	if (sscanf(line, "%d%d%d%d%256s", &item, &air, &mat, &los, name) != 5)
@@ -86,7 +84,7 @@ ged_rcodes(struct ged *gedp, int argc, const char *argv[])
 	if (*cp == '\0')
 	    continue;
 
-	if ((dp = db_lookup( gedp->ged_wdbp->dbip, cp, LOOKUP_NOISY )) == DIR_NULL) {
+	if ((dp = db_lookup(gedp->ged_wdbp->dbip, cp, LOOKUP_NOISY)) == DIR_NULL) {
 	    bu_vls_printf(&gedp->ged_result_str, "%s: Warning - %s not found in database.\n", argv[1], cp);
 	    continue;
 	}
@@ -127,7 +125,7 @@ ged_rcodes(struct ged *gedp, int argc, const char *argv[])
 	    if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource)) {
 		bu_vls_printf(&gedp->ged_result_str, "Database write error, aborting.\n");
 		bu_vls_printf(&gedp->ged_result_str,
-			      "The in-memory table of contents may not match the status of the on-disk\ndatabase.  The on-disk database should still be intact.  For safety,\nyou should exit now, and resolve the I/O problem, before continuing.\n");
+			      "The in-memory table of contents may not match the status of the on-disk\ndatabase.  The on-disk database should still be intact.  For safety, \nyou should exit now, and resolve the I/O problem, before continuing.\n");
 
 		rt_db_free_internal(&intern);
 		return GED_ERROR;
@@ -138,6 +136,7 @@ ged_rcodes(struct ged *gedp, int argc, const char *argv[])
 
     return GED_OK;
 }
+
 
 /*
  * Local Variables:
