@@ -542,10 +542,7 @@ fastf_t *timeTable_init(struct application *ap)
 	timeTable = bu_malloc(x * sizeof(fastf_t *), "timeTable");
 	for (i = 0; i < x; i++) {
 	    timeTable[i] = bu_malloc(y * sizeof(fastf_t *), "timeTable[i]");
-	}
-    }
-    
-    if (timeTable[0][0]!=-1) {
+	}    
 	for (i = 0; i < x; i++) {
 	    for (w = 0; w < y; w++) {
 		timeTable[i][w] = -1;
@@ -553,7 +550,6 @@ fastf_t *timeTable_init(struct application *ap)
 	    }
 	}
 	bu_log("Initialized timetable\n");
-
     }
     /* Semaphore release goes here */
 
@@ -624,9 +620,11 @@ fastf_t *timeTable_singleProcess(struct application *ap, fastf_t **timeTable, fa
 	Gcolor = 1;
 	Bcolor = 1;
     } else if (time > 0.00001 && time < 0.01) {
-	Rcolor = Gcolor = Bcolor = (time*10000)*255;
+	Rcolor = Gcolor = Bcolor = (time*1000)*255;
 	if (Rcolor >= 255)
 	    Rcolor = Gcolor = Bcolor = 254;
+	if (Rcolor <= 1)
+	    Rcolor = Gcolor = Bcolor = 2;
     } else {
 	Rcolor = Gcolor = Bcolor = 255;
     }
@@ -634,7 +632,7 @@ fastf_t *timeTable_singleProcess(struct application *ap, fastf_t **timeTable, fa
     timeColor[0] = Rcolor;
     timeColor[1] = Gcolor;
     timeColor[2] = Bcolor;
-    /*  bu_log("Color=%d %d %d, %lf\n", Rcolor, Gcolor, Bcolor, time); */
+    /* bu_log("Color=%d %d %d, %lf\n", Rcolor, Gcolor, Bcolor, time); */
     return timeColor;
 }
 
