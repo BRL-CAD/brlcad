@@ -75,7 +75,7 @@ wcodes_printcodes(struct ged *gedp, FILE *fp, struct directory *dp, int pathpos)
     RT_CK_COMB(comb);
 
     if (comb->region_flag) {
-	fprintf(fp, "%-6d %-3d %-3d %-4d  ",
+	fprintf(fp, "%-6ld %-3ld %-3ld %-4ld  ",
 		comb->region_id,
 		comb->aircode,
 		comb->GIFTmater,
@@ -99,7 +99,7 @@ wcodes_printcodes(struct ged *gedp, FILE *fp, struct directory *dp, int pathpos)
 
 
 HIDDEN void
-wcodes_printnode(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_leaf, genptr_t user_ptr1, genptr_t user_ptr2, genptr_t user_ptr3)
+wcodes_printnode(struct db_i *dbip, struct rt_comb_internal *comb __attribute__((unused)), union tree *comb_leaf, genptr_t user_ptr1, genptr_t user_ptr2, genptr_t user_ptr3)
 {
     FILE *fp;
     int *pathpos;
