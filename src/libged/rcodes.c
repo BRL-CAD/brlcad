@@ -37,14 +37,13 @@ int
 ged_rcodes(struct ged *gedp, int argc, const char *argv[])
 {
     int item, air, mat, los;
-    char name[256];
+    char name[RT_MAXLINE];
     char line[RT_MAXLINE];
     char *cp;
     FILE *fp;
     struct directory *dp;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
-    static const char *usage = "filename";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -55,12 +54,12 @@ ged_rcodes(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s filename", argv[0]);
 	return GED_HELP;
     }
 
     if (argc != 2) {
-	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s filename", argv[0]);
 	return GED_ERROR;
     }
 
@@ -72,7 +71,7 @@ ged_rcodes(struct ged *gedp, int argc, const char *argv[])
     while (bu_fgets(line, RT_MAXLINE, fp) != NULL) {
 	int changed;
 
-	if (sscanf(line, "%d%d%d%d%256s", &item, &air, &mat, &los, name) != 5)
+	if (sscanf(line, "%d%d%d%d%s", &item, &air, &mat, &los, name) != 5)
 	    continue; /* not useful */
 
 	/* skip over the path */
