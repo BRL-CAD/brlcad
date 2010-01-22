@@ -420,13 +420,13 @@ do_pixel(int cpu, int pat_num, int pixelnum)
 
     /* Add get_pixel_timer here to get total time taken to get pixel, when asked */
     if (lightmodel == 8) {
-	fastf_t pixelTime = 0.0;
+	fastf_t pixelTime;
 	pixelTime = rt_get_timer(NULL,NULL);
 	/* bu_log("PixelTime = %lf X:%d Y:%d\n", pixelTime, a.a_x, a.a_y); */
 	bu_semaphore_acquire(RT_SEM_LAST-2);
-	fastf_t *timeTable;
+	fastf_t *(*timeTable);
 	timeTable = timeTable_init(width, height);
-	timeTable_input(a.a_x, a.a_y, pixelTime, timeTable);
+       	timeTable_input(a.a_x, a.a_y, pixelTime, timeTable);
 	bu_semaphore_release(RT_SEM_LAST-2);
     }
     /* we're done */

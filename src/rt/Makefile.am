@@ -199,6 +199,7 @@ librttherm_a_SOURCES = $(COMMON)
 libremrt_a_CFLAGS = -DRTSRV
 libremrt_a_SOURCES = \
 	do.c \
+	heatgraph.c \
 	opt.c \
 	scanline.c \
 	sh_tcl.c \
