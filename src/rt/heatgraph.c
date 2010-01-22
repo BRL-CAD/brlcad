@@ -151,7 +151,6 @@ fastf_t *timeTable_init(int x, int y)
 	    for (i = 0; i < x; i++) {
 		for (w = 0; w < y; w++) {
 		    timeTable[i][w] = -1;
-		    /* bu_log("Initializing table %d %d %lf\n", i, w, timeTable[i][w]); */
 		}
 	    }
 	    bu_log("Initialized timetable\n");
@@ -296,10 +295,10 @@ void timeTable_process(fastf_t **timeTable, struct application *ap)
     for (x = 0; x < maxX; x++) {
 	for (y = 0; y < maxY; y++) {
 	    if (timeTable[x][y] < minTime) {
-		/* Empty Pixels, i.e. background */
+		/* error pixels, time is less than minTime */
 		Rcolor = 0;
-		Gcolor = 0;
-		Bcolor = 12;
+		Gcolor = 255;
+		Bcolor = 0;
 	    } else {
 		/* Calculations for determining color of heat graph go here */
 		if (timeTable[x][y] >= minTime && timeTable[x][y] < meanTime) {

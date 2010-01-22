@@ -537,16 +537,9 @@ view_end(struct application *ap)
 {
     /* If the heat graph is on, render it after all pixels completed */
     if (lightmodel == 8) {
-	/*
-	  bu_log("Building Heat-Graph\n");
-	  fastf_t *timeTable;
-	  timeTable = timeTable_init(NULL, NULL);
-	  bu_log("Timetable accessed!\n");
-	  timeTable_process(timeTable, ap);
-	  bu_log("Heat Graph-built\n");
-        */
+
 	fastf_t *timeTable;
-	timeTable = timeTable_init(width, height, NULL);
+	timeTable = timeTable_init(NULL, NULL);
 	timeTable_process(timeTable, ap);
 	timeTable_free(timeTable);
     }
@@ -779,18 +772,6 @@ colorview(struct application *ap, struct partition *PartHeadp, struct seg *finis
     struct partition *pp;
     struct hit *hitp;
     struct shadework sw;
-
-    /*
-     * Add to this function a method for determining the length of
-     * time taken to calculate a pixel, using the new heat-graph light
-     * model. What it will do is, when active, start a timer here, and
-     * stop the timer at the end of this function, take the total time
-     * in this funtion, and place it into an array that is the size of
-     * the picture that is being rendered (X by Y)
-     */
-    if (lightmodel == 8) {
-	rt_prep_timer();
-    }
 
     pp = PartHeadp->pt_forw;
     if (ap->a_flag == 1) {
@@ -1648,13 +1629,15 @@ view_2init(struct application *ap, char *framename)
 	     */
 	case 8:
 	    {
-		/* Maybe do timetable_init here so it may be used later...*/
-		/* timeTable = timeTable_init(); */
 		ap->a_hit = colorview;
-		VSET(background, 0.0, 0.0, 0.05);
+		if (BU_LIST_IS_EMPTY(&(LightHead.l))  ||
+		    BU_LIST_UNINITIALIZED(&(LightHead.l))) {
+		    if (R_DEBUG&RDEBUG_SHOWERR)bu_log("No explicit light\n");
+		    light_maker(1, view2model);	
+		}
 		break;
 	    }
-
+	    
 	default:
 	    bu_exit(EXIT_FAILURE, "bad lighting model #");
     }
