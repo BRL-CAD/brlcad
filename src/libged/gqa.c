@@ -1078,13 +1078,13 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 	dist = pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
 	VJOIN1(pt, ap->a_ray.r_pt, pp->pt_inhit->hit_dist, ap->a_ray.r_dir);
 	VJOIN1(opt, ap->a_ray.r_pt, pp->pt_outhit->hit_dist, ap->a_ray.r_dir);
-
-	bu_semaphore_acquire(GED_SEM_WORKER);
-	DLOG(&_ged_current_gedp->ged_result_str, "%s %g->%g\n",
-	     pp->pt_regionp->reg_name,
-	     pp->pt_inhit->hit_dist,
-	     pp->pt_outhit->hit_dist);
-	bu_semaphore_release(GED_SEM_WORKER);
+	
+	if (debug) {
+    	    bu_semaphore_acquire(GED_SEM_WORKER);
+    	    bu_vls_printf(&_ged_current_gedp->ged_result_str, "%s %g->%g\n", pp->pt_regionp->reg_name,
+		    pp->pt_inhit->hit_dist, pp->pt_outhit->hit_dist);
+    	    bu_semaphore_release(GED_SEM_WORKER);
+	}
 
 	/* checking for air sticking out of the model.  This is done
 	 * here because there may be any number of air regions
@@ -1138,9 +1138,11 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 
 	/* computing the weight of the objects */
 	if (analysis_flags & ANALYSIS_WEIGHT) {
-	    bu_semaphore_acquire(GED_SEM_WORKER);
-	    DLOG(&_ged_current_gedp->ged_result_str, "Hit %s doing weight\n", pp->pt_regionp->reg_name);
-	    bu_semaphore_release(GED_SEM_WORKER);
+	    if (debug) {
+    		bu_semaphore_acquire(GED_SEM_WORKER);
+    		bu_vls_printf(&_ged_current_gedp->ged_result_str, "Hit %s doing weight\n", pp->pt_regionp->reg_name);
+    		bu_semaphore_release(GED_SEM_WORKER);
+	    }
 
 	    /* make sure mater index is within range of densities */
 	    if (pp->pt_regionp->reg_gmater >= num_densities) {
@@ -1289,14 +1291,12 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 
 		bu_semaphore_release(GED_SEM_STATS);
 	    }
-
-	    bu_semaphore_acquire(GED_SEM_WORKER);
-	    DLOG(&_ged_current_gedp->ged_result_str, "\t\tvol hit %s oDist:%g objVol:%g %s\n",
-		 pp->pt_regionp->reg_name,
-		 dist,
-		 prd->optr->o_len[state->curr_view],
-		 prd->optr->o_name);
-	    bu_semaphore_release(GED_SEM_WORKER);
+	    if  (debug) {
+    		bu_semaphore_acquire(GED_SEM_WORKER);
+    		bu_vls_printf(&_ged_current_gedp->ged_result_str, "\t\tvol hit %s oDist:%g objVol:%g %s\n",
+       			pp->pt_regionp->reg_name, dist, prd->optr->o_len[state->curr_view], prd->optr->o_name);
+    		bu_semaphore_release(GED_SEM_WORKER);
+	    }
 
 	    if (plot_volume) {
 		point_t opt;
@@ -1435,9 +1435,11 @@ plane_worker (int cpu, genptr_t ptr)
     while ((v = get_next_row(state))) {
 
 	v_coord = v * gridSpacing;
-	bu_semaphore_acquire(GED_SEM_WORKER);
-	DLOG(&_ged_current_gedp->ged_result_str, "  v = %d v_coord=%g\n", v, v_coord);
-	bu_semaphore_release(GED_SEM_WORKER);
+	if (debug) {
+	    bu_semaphore_acquire(GED_SEM_WORKER);
+    	    bu_vls_printf(&_ged_current_gedp->ged_result_str, "  v = %d v_coord=%g\n", v, v_coord);
+    	    bu_semaphore_release(GED_SEM_WORKER);
+	}
 
 	if ((v&1) || state->first) {
 	    /* shoot all the rays in this row.  This is either the
@@ -1449,9 +1451,12 @@ plane_worker (int cpu, genptr_t ptr)
 		ap.a_ray.r_pt[state->v_axis] = ap.a_rt_i->mdl_min[state->v_axis] + v*gridSpacing;
 		ap.a_ray.r_pt[state->i_axis] = ap.a_rt_i->mdl_min[state->i_axis];
 
-		bu_semaphore_acquire(GED_SEM_WORKER);
-		DLOG(&_ged_current_gedp->ged_result_str, "%5g %5g %5g -> %g %g %g\n", V3ARGS(ap.a_ray.r_pt), V3ARGS(ap.a_ray.r_dir));
-		bu_semaphore_release(GED_SEM_WORKER);
+		if (debug) {
+		    bu_semaphore_acquire(GED_SEM_WORKER);
+    		    bu_vls_printf(&_ged_current_gedp->ged_result_str, "%5g %5g %5g -> %g %g %g\n", V3ARGS(ap.a_ray.r_pt), 
+			    V3ARGS(ap.a_ray.r_dir));
+    		    bu_semaphore_release(GED_SEM_WORKER);
+		}
 		ap.a_user = v;
 		(void)rt_shootray(&ap);
 
@@ -1471,9 +1476,12 @@ plane_worker (int cpu, genptr_t ptr)
 		ap.a_ray.r_pt[state->v_axis] = ap.a_rt_i->mdl_min[state->v_axis] + v*gridSpacing;
 		ap.a_ray.r_pt[state->i_axis] = ap.a_rt_i->mdl_min[state->i_axis];
 
-		bu_semaphore_acquire(GED_SEM_WORKER);
-		DLOG(&_ged_current_gedp->ged_result_str, "%5g %5g %5g -> %g %g %g\n", V3ARGS(ap.a_ray.r_pt), V3ARGS(ap.a_ray.r_dir));
-		bu_semaphore_release(GED_SEM_WORKER);
+		if (debug) {
+    		    bu_semaphore_acquire(GED_SEM_WORKER);
+    		    bu_vls_printf(&_ged_current_gedp->ged_result_str, "%5g %5g %5g -> %g %g %g\n", V3ARGS(ap.a_ray.r_pt), 
+			    V3ARGS(ap.a_ray.r_dir));
+    		    bu_semaphore_release(GED_SEM_WORKER);
+		}
 		ap.a_user = v;
 		(void)rt_shootray(&ap);
 
@@ -1494,9 +1502,9 @@ plane_worker (int cpu, genptr_t ptr)
 	}
     }
 
-    if (u == -1) {
+    if (debug && (u == -1)) {
 	bu_semaphore_acquire(GED_SEM_WORKER);
-	DLOG(&_ged_current_gedp->ged_result_str, "didn't shoot any rays\n");
+	bu_vls_printf(&_ged_current_gedp->ged_result_str, "didn't shoot any rays\n");
 	bu_semaphore_release(GED_SEM_WORKER);
     }
 
