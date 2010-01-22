@@ -1463,6 +1463,13 @@ plane_worker (int cpu, genptr_t ptr)
 		if (aborted)
 		    return;
 
+		/* FIXME: This shots increment and it's twin in the else clause below
+		 * are presenting a significant drag on gqa performance via
+		 * heavy duty semaphore locking and unlocking.  Can a way
+		 * be found to do this job without needing to trigger the
+		 * semaphore locks?  Seems to be the major contributor to
+		 * semaphore overhead.
+		 */
 		bu_semaphore_acquire(GED_SEM_STATS);
 		state->shots[state->curr_view]++;
 		bu_semaphore_release(GED_SEM_STATS);
