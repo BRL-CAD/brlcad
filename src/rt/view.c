@@ -538,15 +538,15 @@ view_end(struct application *ap)
     /* If the heat graph is on, render it after all pixels completed */
     if (lightmodel == 8) {
 	/*
-	bu_log("Building Heat-Graph\n");
-	fastf_t *timeTable;
-	timeTable = timeTable_init(NULL, NULL);
-	bu_log("Timetable accessed!\n");
-	timeTable_process(timeTable, ap);
-	bu_log("Heat Graph-built\n");
+	  bu_log("Building Heat-Graph\n");
+	  fastf_t *timeTable;
+	  timeTable = timeTable_init(NULL, NULL);
+	  bu_log("Timetable accessed!\n");
+	  timeTable_process(timeTable, ap);
+	  bu_log("Heat Graph-built\n");
         */
 	fastf_t *timeTable;
-	timeTable = timeTable_init(width,height,NULL);
+	timeTable = timeTable_init(width, height, NULL);
 	timeTable_process(timeTable, ap);
 	timeTable_free(timeTable);
     }
@@ -1003,7 +1003,7 @@ vdraw open iray;vdraw params c %2.2x%2.2x%2.2x;vdraw write n 0 %g %g %g;vdraw wr
     /* XXX This is always negative when eye is inside air solid */
     ap->a_dist = hitp->hit_dist;
 
- out:
+out:
     /*
      * e ^(-density * distance)
      */
@@ -1064,7 +1064,7 @@ vdraw open iray;vdraw params c %2.2x%2.2x%2.2x;vdraw write n 0 %g %g %g;vdraw wr
 	 */
 	/* bu_log("a:%lf b:%lf c:%lf\n", a, b, c); */
 	/* Apply new colors to framebuffer! */
-	/* VSET(ap->a_color, a, b ,c); */
+	/* VSET(ap->a_color, a, b , c); */
 	/* VPRINT("color   ", ap->a_color); */
     }
     return(1);
@@ -1413,7 +1413,7 @@ reproject_worker(int cpu, genptr_t arg)
     }
 
     /* Deposit the statistics */
- out:
+out:
     bu_semaphore_acquire(RT_SEM_WORKER);
     reproj_cur += count;
     bu_semaphore_release(RT_SEM_WORKER);
@@ -1651,7 +1651,7 @@ view_2init(struct application *ap, char *framename)
 		/* Maybe do timetable_init here so it may be used later...*/
 		/* timeTable = timeTable_init(); */
 		ap->a_hit = colorview;
-		VSET(background, 0.0, 0.0, 0.05 );
+		VSET(background, 0.0, 0.0, 0.05);
 		break;
 	    }
 
