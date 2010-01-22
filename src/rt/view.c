@@ -540,8 +540,7 @@ view_end(struct application *ap)
 
 	fastf_t *timeTable;
 	timeTable = timeTable_init(NULL, NULL);
-	timeTable_process(timeTable, ap);
-	timeTable_free(timeTable);
+	timeTable_process(timeTable, ap, fbp);
     }
 
     if (fullfloat_mode) {
@@ -1003,50 +1002,6 @@ out:
 	       ap->a_user,
 	       pp->pt_regionp->reg_name);
 	VPRINT("color   ", ap->a_color);
-    }
-    if (lightmodel == 8) {
-
-	/* Note: framebuffer is the actual framebuffer destination
-	 * (/dev/X) fbp is the framebuffer handle (what?) outfp is
-	 * for writing to an external pix file.  height and width are
-	 * the dimentions of the trace ap->a_x ap->a_y is the current
-	 * X/Y coordinate being worked on
-	 */
-
-	/* pixelTime will soon be calculated in worker.c instead, for
-	 * better accuracy. At that time, this whole block can be 
-	 * removed.
-	 */
-	/* fastf_t pixelTime = 0;
-	 * pixelTime = rt_get_timer(NULL, NULL);
-	 * bu_semaphore_acquire(RT_SEM_LAST-1);
-         * fastf_t *timeTable = timeTable_init(fbp, NULL);
-	 * bu_semaphore_release(RT_SEM_LAST-1);
-	 * (void)timeTable_input((int)ap->a_x, (int)ap->a_y, pixelTime, timeTable);
-	 */
-
-	/*
-	 * What will happen here is that the current pixel time will
-	 * be shot off into an array at location (current x)(current
-	 * y) to be stored for processing. Once processed, the time
-	 * array will contain RGBpixel values
-	 */
-
-	/* This code is now out of date. Use timeTable_process(timeTable) instead */
-	/* fastf_t timeColor[3]={0};
-	 * bu_semaphore_acquire(RT_SEM_LAST-1);
-	 * timeTable_singleProcess(ap, timeTable, timeColor);
-	 * bu_semaphore_release(RT_SEM_LAST-1);
-	 */
-	/* Take 1-255 color values and set them to 0-1 range */
-	/* fastf_t a = timeColor[0] / 255;
-	 * fastf_t b = timeColor[1] / 255;
-	 * fastf_t c = timeColor[2] / 255;
-	 */
-	/* bu_log("a:%lf b:%lf c:%lf\n", a, b, c); */
-	/* Apply new colors to framebuffer! */
-	/* VSET(ap->a_color, a, b , c); */
-	/* VPRINT("color   ", ap->a_color); */
     }
     return(1);
 }
