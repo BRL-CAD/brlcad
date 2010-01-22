@@ -369,8 +369,10 @@ int
 rt_nmg_mc_realize_cube(struct shell *s, int pv, point_t *p, point_t *edges)
 {
     int *vi, fo;
-    struct vertex **corners[3];
-    struct faceuse *fu;
+
+    /* quellage until implemented */
+    s = s;
+    p = p;
 
     /* this is where we do s omething with the tables. */
 
