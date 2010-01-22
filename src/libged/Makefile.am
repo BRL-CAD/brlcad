@@ -282,7 +282,7 @@ libged_la_LIBADD = \
 EXTRA_DIST = \
         CMakeLists.txt
 
-DEPENDS = src/librt src/libwdb
+DEPENDS = src/librt src/libwdb src/libanalyze
 
 include $(top_srcdir)/misc/Makefile.defs
 

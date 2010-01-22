@@ -3745,6 +3745,7 @@ fi
 # set up the BRL-CAD libraries
 #
 
+ANALYZE='${top_builddir}/src/libanalyze/libanalyze.la'
 BN='${top_builddir}/src/libbn/libbn.la'
 BU='${top_builddir}/src/libbu/libbu.la'
 CURSOR='${top_builddir}/src/libcursor/libcursor.la'
@@ -3783,11 +3784,12 @@ SYSV_LIBS=
 TERMIO_LIBS="${TERMLIB}"
 CURSOR_LIBS="${TERMLIB}"
 FFT_LIBS="${LIBM}"
+ANALYZE_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 BU_LIBS="${TCL} ${PNG} ${LIBM} ${LIBMALLOC} ${LIBTHREAD}"
 BN_LIBS="${BU} ${BU_LIBS} ${TCL} ${LIBM}"
 RT_LIBS="${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${REGEX} ${LIBM} ${SYSV} ${OPENNURBS}"
 GCV_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
-GED_LIBS="${WDB} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${PNG} ${TCL} ${REGEX}"
+GED_LIBS="${WDB} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${PNG} ${TCL} ${REGEX} ${ANALYZE}"
 WDB_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 FB_LIBS="${BU} ${BU_LIBS} ${PKG} ${PKG_LIBS} ${TCL}" # additional/optional FB_LIBS: ${TK} ${X_LIBS} ${LIBGL}
 OPTICAL_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${TCL}"
@@ -3807,6 +3809,7 @@ else
 fi
 BRLCAD_LIBS="${GED} ${GED_LIBS} ${WDB} ${WDB_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 
+AC_SUBST(ANALYZE)
 AC_SUBST(BN)
 AC_SUBST(BU)
 AC_SUBST(CURSOR)
@@ -3839,6 +3842,7 @@ AC_SUBST(STEP_FEDEX_PLUS)
 AC_SUBST(STEP_EXPPP)
 AC_SUBST(STEP_AP203)
 
+AC_SUBST(ANALYZE_LIBS)
 AC_SUBST(BN_LIBS)
 AC_SUBST(BU_LIBS)
 AC_SUBST(CURSOR_LIBS)
@@ -3961,6 +3965,7 @@ AC_CONFIG_FILES([
 	misc/macosx/Resources/Welcome.rtfd/Makefile
 	misc/nsis/Makefile
 	misc/pkgconfig/Makefile
+	misc/pkgconfig/libanalyze.pc
 	misc/pkgconfig/libbn.pc
 	misc/pkgconfig/libbrlcad.pc
 	misc/pkgconfig/libbu.pc
@@ -4023,6 +4028,7 @@ AC_CONFIG_FILES([
 	src/java/mil/army/arl/Makefile
 	src/java/mil/army/arl/brlcad/Makefile
 	src/lgt/Makefile
+	src/libanalyze/Makefile
 	src/libbn/Makefile
 	src/libbu/Makefile
 	src/libcursor/Makefile
