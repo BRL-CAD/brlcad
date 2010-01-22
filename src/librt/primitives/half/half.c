@@ -439,6 +439,7 @@ rt_hlf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     vect_t y_1, y_2;
     vect_t tip;
 
+    BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
     hip = (struct rt_half_internal *)ip->idb_ptr;
     RT_HALF_CK_MAGIC(hip);

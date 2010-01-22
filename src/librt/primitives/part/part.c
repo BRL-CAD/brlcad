@@ -948,6 +948,7 @@ rt_part_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
     vect_t Hunit;
     register int i;
 
+    BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
     pip = (struct rt_part_internal *)ip->idb_ptr;
     RT_PART_CK_MAGIC(pip);

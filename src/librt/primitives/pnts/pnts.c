@@ -690,6 +690,7 @@ rt_pnts_plot(struct bu_list *vhead, struct rt_db_internal *internal, const struc
     double scale;
     point_t a, b;
 
+    BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(internal);
 
     pnts = (struct rt_pnts_internal *)internal->idb_ptr;

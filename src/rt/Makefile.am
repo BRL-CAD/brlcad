@@ -47,6 +47,7 @@ COMMON = \
 
 ALLSRCS = \
 	$(COMMON) \
+	heatgraph.c \ 
 	libfb-dummy.c \
 	read-rtlog.c \
 	reshoot.c \
@@ -102,8 +103,10 @@ rtscale_SOURCES = \
 	rtscale.c
 
 
+
 rt_SOURCES = \
 	$(COMMON) \
+	heatgraph.c \ 
 	scanline.c \
 	view.c
 
@@ -198,6 +201,7 @@ libremrt_a_CFLAGS = -DRTSRV
 libremrt_a_SOURCES = \
 	do.c \
 	opt.c \
+	heatgraph.c \
 	scanline.c \
 	sh_tcl.c \
 	view.c \

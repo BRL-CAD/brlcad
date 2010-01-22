@@ -26,19 +26,19 @@
  * as u_char's).
  *
  * The extern "lightmodel" selects which one is being used:
- *	0	Full lighting model (default)
- *	1	1-light, from the eye.
- *	2	Spencer's surface-normals-as-colors display
- *	3	(removed)
- *	4	curvature debugging display (inv radius of curvature)
- *	5	curvature debugging (principal direction)
- *	6	UV Coord
- *	7	Photon Mapping
- *      8       Time-to-render heat graph
+ * 0 Full lighting model (default)
+ * 1 1-light, from the eye.
+ * 2 Spencer's surface-normals-as-colors display
+ * 3 (removed)
+ * 4 curvature debugging display (inv radius of curvature)
+ * 5 curvature debugging (principal direction)
+ * 6 UV Coord
+ * 7 Photon Mapping
+ * 8 Time-to-render heat graph
  *
  * Notes -
- *	The normals on all surfaces point OUT of the solid.
- *	The incomming light rays point IN.
+ * The normals on all surfaces point OUT of the solid.
+ * The incomming light rays point IN.
  *
  */
 
@@ -83,48 +83,48 @@ Options:\n\
 ";
 
 
-extern FBIO	*fbp;			/* Framebuffer handle */
+extern FBIO *fbp;			/* Framebuffer handle */
 
-extern int	curframe;		/* from main.c */
-extern fastf_t	frame_delta_t;		/* from main.c */
-extern double	airdensity;		/* from opt.c */
-extern double	haze[3];		/* from opt.c */
-extern int      do_kut_plane;           /* from opt.c */
-extern plane_t  kut_plane;              /* from opt.c */
-vect_t          kut_norm;
-struct soltab   *kut_soltab = NULL;
+extern int curframe;		/* from main.c */
+extern fastf_t frame_delta_t;		/* from main.c */
+extern double airdensity;		/* from opt.c */
+extern double haze[3];		/* from opt.c */
+extern int do_kut_plane;           /* from opt.c */
+extern plane_t kut_plane;              /* from opt.c */
+vect_t kut_norm;
+struct soltab *kut_soltab = NULL;
 
-extern struct floatpixel	*curr_float_frame;	/* buffer of full frame */
+extern struct floatpixel *curr_float_frame;	/* buffer of full frame */
 
 
 vect_t ambient_color = { 1, 1, 1 };	/* Ambient white light */
 
-int	ibackground[3] = {0};		/* integer 0..255 version */
-int	inonbackground[3] = {0};	/* integer non-background */
+int ibackground[3] = {0};		/* integer 0..255 version */
+int inonbackground[3] = {0};	/* integer non-background */
 
 #ifdef RTSRV
-extern int	srv_startpix;		/* offset for view_pixel */
-extern int	srv_scanlen;		/* BUFMODE_RTSRV buffer length */
-extern char	*scanbuf;		/* scanline(s) buffer */
+extern int srv_startpix;		/* offset for view_pixel */
+extern int srv_scanlen;		/* BUFMODE_RTSRV buffer length */
+extern char *scanbuf;		/* scanline(s) buffer */
 #endif
 
-void		        free_scanlines(int, struct scanline *);
-struct scanline*    alloc_scanlines(int);
+void free_scanlines(int, struct scanline *);
+struct scanline* alloc_scanlines(int);
 
-static int	buf_mode=0;
-#define BUFMODE_UNBUF	1		/* No output buffering */
-#define BUFMODE_DYNAMIC	2		/* Dynamic output buffering */
-#define BUFMODE_INCR	3		/* incr_mode set, dynamic buffering */
-#define BUFMODE_RTSRV	4		/* output buffering into scanbuf */
-#define BUFMODE_FULLFLOAT 5		/* buffer entire frame as floats */
-#define BUFMODE_SCANLINE 6		/* Like _DYNAMIC, one scanline/cpu */
+static int buf_mode=0;
+#define BUFMODE_UNBUF     1	/* No output buffering */
+#define BUFMODE_DYNAMIC   2	/* Dynamic output buffering */
+#define BUFMODE_INCR      3	/* incr_mode set, dynamic buffering */
+#define BUFMODE_RTSRV     4	/* output buffering into scanbuf */
+#define BUFMODE_FULLFLOAT 5	/* buffer entire frame as floats */
+#define BUFMODE_SCANLINE  6	/* Like _DYNAMIC, one scanline/cpu */
 
 static struct scanline* scanline;
 
-static short int	pwidth;		/* Width of each pixel (in bytes) */
+static short int pwidth;		/* Width of each pixel (in bytes) */
 struct mfuncs *mfHead = MF_NULL;	/* Head of list of shaders */
 
-fastf_t	gamma_corr = 0.0;		/* gamma correction if !0 */
+fastf_t gamma_corr = 0.0;		/* gamma correction if !0 */
 
 
 /**
@@ -152,14 +152,14 @@ static int overlay = 0;
  * struct shadework.
  */
 struct bu_structparse view_parse[] = {
-    {"%f",	1, "gamma",	0,		BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "bounces",	0,		BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "ireflect",	0,		BU_STRUCTPARSE_FUNC_NULL },
-    {"%d",	1, "a_onehit",	0,		BU_STRUCTPARSE_FUNC_NULL },
-    {"%f", ELEMENTS_PER_VECT, "background", 0,	BU_STRUCTPARSE_FUNC_NULL },
-    {"%d", 1, "overlay",	0,		BU_STRUCTPARSE_FUNC_NULL },
-    {"%d", 1, "ov", 0,	BU_STRUCTPARSE_FUNC_NULL },
-    {"",	0, (char *)0,	0,				BU_STRUCTPARSE_FUNC_NULL }
+    {"%f", 1, "gamma", 0, BU_STRUCTPARSE_FUNC_NULL},
+    {"%d", 1, "bounces", 0, BU_STRUCTPARSE_FUNC_NULL},
+    {"%d", 1, "ireflect", 0, BU_STRUCTPARSE_FUNC_NULL},
+    {"%d", 1, "a_onehit", 0, BU_STRUCTPARSE_FUNC_NULL},
+    {"%f", ELEMENTS_PER_VECT, "background", 0, BU_STRUCTPARSE_FUNC_NULL},
+    {"%d", 1, "overlay", 0, BU_STRUCTPARSE_FUNC_NULL},
+    {"%d", 1, "ov", 0, BU_STRUCTPARSE_FUNC_NULL},
+    {"", 0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL}
 };
 
 
@@ -170,13 +170,13 @@ struct bu_structparse view_parse[] = {
  * reference.
  */
 void
-view_pixel(register struct application *ap)
+view_pixel(struct application *ap)
 {
-    register int	r, g, b;
-    register char	*pixelp;
-    register struct scanline	*slp;
-    register int	do_eol = 0;
-    unsigned char	dist[8];	/* pixel distance (in IEEE format) */
+    int r, g, b;
+    char *pixelp;
+    struct scanline *slp;
+    int do_eol = 0;
+    unsigned char dist[8];	/* pixel distance (in IEEE format) */
 
     if (rpt_dist)
 	htond(dist, (unsigned char *)&(ap->a_dist), 1);
@@ -242,7 +242,7 @@ view_pixel(register struct application *ap)
 		/* No output semaphores required for word-width memory
 		 * writes.
 		 */
-		register struct floatpixel	*fp;
+		struct floatpixel *fp;
 		fp = &curr_float_frame[ap->a_y*width + ap->a_x];
 		fp->ff_frame = curframe;
 		fp->ff_color[0] = r;
@@ -281,8 +281,8 @@ view_pixel(register struct application *ap)
 
 	case BUFMODE_UNBUF:
 	    {
-		RGBpixel	p;
-		int		npix;
+		RGBpixel p;
+		int npix;
 
 		p[0] = r;
 		p[1] = g;
@@ -368,7 +368,7 @@ view_pixel(register struct application *ap)
 
 	    /*
 	     * Only one CPU is working on this scanline, no parallel
-	     * interlock required!  Much faster.
+	     * interlock required! Much faster.
 	     */
 	case BUFMODE_SCANLINE:
 	    slp = &scanline[ap->a_y];
@@ -395,8 +395,8 @@ view_pixel(register struct application *ap)
 
 	case BUFMODE_INCR:
 	    {
-		register int dx, dy;
-		register int spread;
+		int dx, dy;
+		int spread;
 
 		spread = 1<<(incr_nlevel-incr_level);
 
@@ -444,8 +444,8 @@ view_pixel(register struct application *ap)
     switch (buf_mode) {
 	case BUFMODE_INCR:
 	    {
-		register int dy, yy;
-		register int spread;
+		int dy, yy;
+		int spread;
 		int npix = 0;
 
 		if (fbp == FBIO_NULL)
@@ -477,7 +477,7 @@ view_pixel(register struct application *ap)
 	case BUFMODE_SCANLINE:
 	case BUFMODE_DYNAMIC:
 	    if (fbp != FBIO_NULL) {
-		int		npix;
+		int npix;
 		bu_semaphore_acquire(BU_SEM_SYSCALL);
 		if (sub_grid_mode) {
 		    npix = fb_write(fbp, sub_xmin, ap->a_y,
@@ -497,7 +497,7 @@ view_pixel(register struct application *ap)
 		}
 	    }
 	    if (outfp != NULL) {
-		int	count;
+		int count;
 
 		bu_semaphore_acquire(BU_SEM_SYSCALL);
 		if (fseek(outfp, ap->a_y*width*pwidth, 0) != 0)
@@ -521,7 +521,7 @@ view_pixel(register struct application *ap)
  * pixel of a scanline is really done, for parallel considerations.
  */
 void
-view_eol(register struct application *ap)
+view_eol(struct application *ap)
 {
     return;
 }
@@ -529,12 +529,24 @@ view_eol(register struct application *ap)
 
 /**
  * V I E W _ E N D
+ *
+ * Now when lightmodel is 8, heat-graph will be drawn.
  */
 void
 view_end(struct application *ap)
 {
+    /* If the heat graph is on, render it after all pixels completed */
+    if (lightmodel == 8) {
+	bu_log("Building Heat-Graph\n");
+	fastf_t *timeTable = timeTable_init(NULL, NULL);
+	bu_log("Timetable accessed!\n");
+	timeTable_process(timeTable, ap);
+	bu_log("Heat Graph-built\n");
+	timeTable_free(timeTable);
+    }
+
     if (fullfloat_mode) {
-	struct floatpixel	*tmp;
+	struct floatpixel *tmp;
 	/* Transmitting scanlines, is done by rtsync before calling
 	 * here.  Exchange previous and current buffers.  No
 	 * freeing.
@@ -558,7 +570,7 @@ view_end(struct application *ap)
 void
 view_setup(struct rt_i *rtip)
 {
-    register struct region *regp;
+    struct region *regp;
 
     RT_CHECK_RTI(rtip);
 
@@ -650,9 +662,9 @@ view_re_setup(struct rt_i *rtip)
  *
  * Called before rt_clean() in do.c
  */
-void view_cleanup(struct rt_i	*rtip)
+void view_cleanup(struct rt_i *rtip)
 {
-    register struct region	*regp;
+    struct region *regp;
 
     RT_CHECK_RTI(rtip);
     for (BU_LIST_FOR(regp, region, &(rtip->HeadRegion))) {
@@ -675,10 +687,10 @@ void view_cleanup(struct rt_i	*rtip)
  * Background texture mapping could be done here.  For now, return a
  * pleasant dark blue.
  */
-static int hit_nothing(register struct application *ap)
+static int hit_nothing(struct application *ap)
 {
     if (R_DEBUG&RDEBUG_MISSPLOT) {
-	vect_t	out;
+	vect_t out;
 
 	/* XXX length should be 1 model diameter */
 	VJOIN1(out, ap->a_ray.r_pt,
@@ -692,7 +704,7 @@ static int hit_nothing(register struct application *ap)
     if (env_region.reg_mfuncs) {
 	struct gunk {
 	    struct partition part;
-	    struct hit	hit;
+	    struct hit hit;
 	    struct shadework sw;
 	} u;
 
@@ -756,10 +768,10 @@ static int hit_nothing(register struct application *ap)
  * recursive procedure.
  */
 int
-colorview(register struct application *ap, struct partition *PartHeadp, struct seg *finished_segs)
+colorview(struct application *ap, struct partition *PartHeadp, struct seg *finished_segs)
 {
-    register struct partition *pp;
-    register struct hit *hitp;
+    struct partition *pp;
+    struct hit *hitp;
     struct shadework sw;
 
     /*
@@ -918,10 +930,10 @@ colorview(register struct application *ap, struct partition *PartHeadp, struct s
     }
 
     if ((R_DEBUG&(RDEBUG_RAYPLOT|RDEBUG_RAYWRITE|RDEBUG_REFRACT)) && (hitp->hit_dist > 0.0001)) {
-	/*  There are two parts to plot here.  Ray start to inhit
-	 *  (purple), and inhit to outhit (grey).
+	/* There are two parts to plot here.  Ray start to inhit
+	 * (purple), and inhit to outhit (grey).
 	 */
-	register int i, lvl;
+	int i, lvl;
 	fastf_t out;
 	vect_t inhit, outhit;
 
@@ -987,10 +999,11 @@ vdraw open iray;vdraw params c %2.2x%2.2x%2.2x;vdraw write n 0 %g %g %g;vdraw wr
 
  out:
     /*
-     *  e ^(-density * distance)
+     * e ^(-density * distance)
      */
     if (lightmodel == 8) {
-	VSET(ap->a_color, 1-ap->a_color[0], 1-ap->a_color[1], 1-ap->a_color[2]);
+	/* Invert lights for testing */
+	/* VSET(ap->a_color, 0.75, 0.5, 0.25); */
     }
 
     if (airdensity != 0.0) {
@@ -1014,7 +1027,7 @@ vdraw open iray;vdraw params c %2.2x%2.2x%2.2x;vdraw write n 0 %g %g %g;vdraw wr
 	/* Note: framebuffer is the actual framebuffer destination
 	 * (/dev/X) fbp is the framebuffer handle (what?) outfp is
 	 * for writing to an external pix file.  height and width are
-	 * the dementions of the trace ap->a_x ap->a_y is the current
+	 * the dimentions of the trace ap->a_x ap->a_y is the current
 	 * X/Y coordinate being worked on
 	 */
 
@@ -1025,15 +1038,19 @@ vdraw open iray;vdraw params c %2.2x%2.2x%2.2x;vdraw write n 0 %g %g %g;vdraw wr
 	     * later, once all data points are converted to
 	     * time-heat-graph points
 	     *
-	     *	    bu_semaphore_acquire(BU_SEM_SYSCALL);
-	     *         (void)fb_view(fbp, width/2, height/2, 1, 1);
-	     *         bu_semaphore_release(BU_SEM_SYSCALL);
+	     * bu_semaphore_acquire(BU_SEM_SYSCALL);
+	     * (void)fb_view(fbp, width/2, height/2, 1, 1);
+	     * bu_semaphore_release(BU_SEM_SYSCALL);
 	     */
 
-	    bu_log("Cur: %d, X = %d, Y = %d\n", cur_pixel, ap->a_x, ap->a_y);
+	    /* bu_log("Cur: %d, X = %d, Y = %d\n", cur_pixel, ap->a_x, ap->a_y); */
 	}
-	fastf_t pixelTime = rt_get_timer(NULL, NULL);
-
+	fastf_t pixelTime = 0;
+	pixelTime = rt_get_timer(NULL, NULL);
+	bu_semaphore_acquire(RT_SEM_LAST-1);
+        fastf_t *timeTable = timeTable_init(fbp, NULL);
+	bu_semaphore_release(RT_SEM_LAST-1);
+	(void)timeTable_input((int)ap->a_x, (int)ap->a_y, pixelTime, timeTable);
 	/*
 	 * What will happen here is that the current pixel time will
 	 * be shot off into an array at location (current x)(current
@@ -1041,7 +1058,24 @@ vdraw open iray;vdraw params c %2.2x%2.2x%2.2x;vdraw write n 0 %g %g %g;vdraw wr
 	 * array will contain RGBpixel values
 	 */
 
-/*	bu_log("Time taken: %lf\n", pixelTime); */
+	/* bu_log("Time taken: %lf\n", pixelTime); */
+
+	/* fastf_t timeColor[3]={0};
+	 * bu_semaphore_acquire(RT_SEM_LAST-1);
+	 * timeTable_singleProcess(ap, timeTable, timeColor);
+	 * bu_semaphore_release(RT_SEM_LAST-1);
+	 */
+
+	/* Take 1-255 color values and set them to 0-1 range */
+	/* fastf_t a = timeColor[0] / 255;
+	 * fastf_t b = timeColor[1] / 255;
+	 * fastf_t c = timeColor[2] / 255;
+	 */
+	/* bu_log("a:%lf b:%lf c:%lf\n", a, b, c); */
+
+	/* Apply new colors to framebuffer! */
+	/* VSET(ap->a_color, a, b ,c); */
+	/* VPRINT("color   ", ap->a_color); */
     }
     return(1);
 }
@@ -1052,17 +1086,17 @@ vdraw open iray;vdraw params c %2.2x%2.2x%2.2x;vdraw write n 0 %g %g %g;vdraw wr
  *
  * a_hit() routine for simple lighting model.
  */
-int viewit(register struct application *ap,
+int viewit(struct application *ap,
 	   struct partition *PartHeadp,
-	   struct seg	*segHeadp)
+	   struct seg *segHeadp)
 {
-    register struct partition *pp;
-    register struct hit *hitp;
-    fastf_t	diffuse0 = 0;
-    fastf_t	cosI0 = 0;
+    struct partition *pp;
+    struct hit *hitp;
+    fastf_t diffuse0 = 0;
+    fastf_t cosI0 = 0;
     vect_t work0, work1;
     struct light_specific *lp;
-    vect_t		normal;
+    vect_t normal;
 
     for (pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw)
 	if (pp->pt_outhit->hit_dist >= 0.0) break;
@@ -1227,7 +1261,7 @@ kut_ft_norm(struct hit *hitp, struct soltab *stp, struct xray *ray)
  * Called once, early on in RT setup, before view size is set.
  */
 int
-view_init(register struct application *ap, char *file, char *obj, int minus_o, int minus_F)
+view_init(struct application *ap, char *file, char *obj, int minus_o, int minus_F)
 {
     if (rt_verbosity & VERBOSE_LIBVERSIONS)
 	bu_log("%s", optical_version());
@@ -1276,10 +1310,10 @@ int rt_scr_lim_dist_sq = 100;	/* dist**2 pixels allowed to move */
 
 
 int
-reproject_splat(int ix, int iy, register struct floatpixel *ip, const fastf_t *new_view_pt)
+reproject_splat(int ix, int iy, struct floatpixel *ip, const fastf_t *new_view_pt)
 {
-    register struct floatpixel	*op;
-    int	count = 1;
+    struct floatpixel *op;
+    int count = 1;
 
     /* Reprojection lies on screen, see if dest pixel already occupied */
     op = &curr_float_frame[iy*width + ix];
@@ -1314,10 +1348,10 @@ extern int last_pixel;		/* last pixel number */
 void
 reproject_worker(int cpu, genptr_t arg)
 {
-    int	pixel_start;
-    int	pixelnum;
-    register struct floatpixel	*ip;
-    int	count = 0;
+    int pixel_start;
+    int pixelnum;
+    struct floatpixel *ip;
+    int count = 0;
 
     /* The more CPUs at work, the bigger the bites we take */
     if (per_processor_chunk <= 0) per_processor_chunk = npsw;
@@ -1330,8 +1364,8 @@ reproject_worker(int cpu, genptr_t arg)
 	bu_semaphore_release(RT_SEM_WORKER);
 
 	for (pixelnum = pixel_start; pixelnum < pixel_start+per_processor_chunk; pixelnum++) {
-	    point_t	new_view_pt;
-	    int	ix, iy;
+	    point_t new_view_pt;
+	    int ix, iy;
 
 	    if (pixelnum > last_pixel)
 		goto out;
@@ -1349,12 +1383,12 @@ reproject_worker(int cpu, genptr_t arg)
 	    ix = (new_view_pt[X] + 1) * 0.5 * width;
 	    iy = (new_view_pt[Y] + 1) * 0.5 * height;
 
-	    /*  If not in reproject-only mode,
-	     *  apply quality-preserving heuristics.
+	    /* If not in reproject-only mode,
+	     * apply quality-preserving heuristics.
 	     */
 	    if (reproject_mode != 2) {
-		register int dx, dy;
-		int	agelim;
+		int dx, dy;
+		int agelim;
 
 		/* Don't reproject if too pixel moved too far on the screen */
 		dx = ix - ip->ff_x;
@@ -1422,9 +1456,9 @@ collect_soltabs(struct bu_ptbl *stp_list, union tree *tr)
  * Called each time a new image is about to be done.
  */
 void
-view_2init(register struct application *ap, char *framename)
+view_2init(struct application *ap, char *framename)
 {
-    register int i;
+    int i;
     struct bu_ptbl stps;
 
     ap->a_refrac_index = 1.0;	/* RI_AIR -- might be water? */
@@ -1485,7 +1519,7 @@ view_2init(register struct application *ap, char *framename)
 
 	    /* Mark entire current frame as "not computed" */
 	    {
-		register struct floatpixel	*fp;
+		struct floatpixel *fp;
 
 		for (fp = &curr_float_frame[width*height-1];
 		     fp >= curr_float_frame; fp--
@@ -1517,8 +1551,8 @@ view_2init(register struct application *ap, char *framename)
 #endif
 	case BUFMODE_INCR:
 	    {
-		register int j = 1<<incr_level;
-		register int w = 1<<(incr_nlevel-incr_level);
+		int j = 1<<incr_level;
+		int w = 1<<(incr_nlevel-incr_level);
 
 		bu_log("Incremental resolution %d\n", j);
 
@@ -1571,7 +1605,7 @@ view_2init(register struct application *ap, char *framename)
 	    ap->a_hit = colorview;
 
 	    /* If user did not specify any light sources then create
-	     *	default light sources
+	     * default light sources
 	     */
 	    if (BU_LIST_IS_EMPTY(&(LightHead.l))  ||
 		BU_LIST_UNINITIALIZED(&(LightHead.l))) {
@@ -1591,7 +1625,7 @@ view_2init(register struct application *ap, char *framename)
 	    break;
 	case 7:
 	    {
-		struct	application	bakapp;
+		struct application bakapp;
 
 		memcpy(&bakapp, ap, sizeof(struct application));
 
@@ -1624,8 +1658,10 @@ view_2init(register struct application *ap, char *framename)
 	     */
 	case 8:
 	    {
+		/* Maybe do timetable_init here so it may be used later...*/
+		/* timeTable = timeTable_init(); */
 		ap->a_hit = colorview;
-		VSETALL(background, 0.5);
+		VSET(background, 0.0, 0.0, 0.05 );
 		break;
 	    }
 
@@ -1716,7 +1752,7 @@ view_2init(register struct application *ap, char *framename)
  */
 void application_init (void)
 {
-    /*    rpt_overlap = 1; */
+    /* rpt_overlap = 1; */
 
     /* Set the byte offsets at run time */
     view_parse[0].sp_offset = bu_byteoffset(gamma_corr);
@@ -1726,19 +1762,6 @@ void application_init (void)
     view_parse[4].sp_offset = bu_byteoffset(background[0]);
     view_parse[5].sp_offset = bu_byteoffset(overlay);
     view_parse[6].sp_offset = bu_byteoffset(overlay);
-}
-
-
-/**
- * T I M E T A B L E _ I N I T
- *
- * This function creates a 2D array of size X by Y, for use by the
- * heat graph light model. Stores time used by each pixel for render.
- */
-void timeTable_init(int x, int y, fastf_t time)
-{
-    static fastf_t timeTable[256][256]={0};
-    timeTable[x][y]=time;
 }
 
 

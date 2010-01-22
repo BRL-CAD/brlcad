@@ -461,9 +461,10 @@ cmd_setup(void)
 
 
 static void
-mged_output_handler(struct ged *gedp, char *line)
+mged_output_handler(struct ged *gedp __attribute__((unused)), char *line)
 {
-    bu_log(line);
+    if (line)
+	bu_log("%s", line);
 }
 
 

@@ -61,16 +61,141 @@ man1DOCBOOK_EN = \
 	system/man1/en/decompose.xml \
 	system/man1/en/delay.xml \
 	system/man1/en/dm.xml \
+	system/man1/en/draw.xml \
+	system/man1/en/dup.xml \
+	system/man1/en/e_command.xml \
+	system/man1/en/e_muves.xml \
+	system/man1/en/eac.xml \
+	system/man1/en/echo.xml \
+	system/man1/en/edcodes.xml \
+	system/man1/en/edcolor.xml \
+	system/man1/en/edcomb.xml \
+	system/man1/en/edgedir.xml \
+	system/man1/en/edmater.xml \
+	system/man1/en/em.xml \
+	system/man1/en/eqn.xml \
+	system/man1/en/erase.xml \
+	system/man1/en/erase_all.xml \
+	system/man1/en/ev.xml \
+	system/man1/en/exit.xml \
+	system/man1/en/expand.xml \
+	system/man1/en/export_body.xml \
+	system/man1/en/extrude.xml \
+	system/man1/en/eye_pt.xml \
+	system/man1/en/facedef.xml \
+	system/man1/en/facetize.xml \
+	system/man1/en/find.xml \
+	system/man1/en/fracture.xml \
+	system/man1/en/g.xml \
+	system/man1/en/garbage_collect.xml \
 	system/man1/en/gastank.xml \
 	system/man1/en/gqa.xml \
+	system/man1/en/gui.xml \
 	system/man1/en/handle.xml \
+	system/man1/en/help.xml \
+	system/man1/en/helpdevel.xml \
+	system/man1/en/helplib.xml \
+	system/man1/en/hide.xml \
+	system/man1/en/history.xml \
+	system/man1/en/i.xml \
+	system/man1/en/idents.xml \
+	system/man1/en/ill.xml \
+	system/man1/en/in.xml \
+	system/man1/en/inside.xml \
+	system/man1/en/item.xml \
+	system/man1/en/journal.xml \
+	system/man1/en/keep.xml \
+	system/man1/en/keypoint.xml \
+	system/man1/en/kill.xml \
+	system/man1/en/killall.xml \
+	system/man1/en/killtree.xml \
+	system/man1/en/knob.xml \
+	system/man1/en/l.xml \
+	system/man1/en/l_muves.xml \
+	system/man1/en/labelvert.xml \
+	system/man1/en/listeval.xml \
+	system/man1/en/lm.xml \
+	system/man1/en/loadtk.xml \
+	system/man1/en/lookat.xml \
+	system/man1/en/ls.xml \
+	system/man1/en/make.xml \
+	system/man1/en/make_bb.xml \
+	system/man1/en/mater.xml \
+	system/man1/en/matpick.xml \
+	system/man1/en/memprint.xml \
 	system/man1/en/mged.xml \
+	system/man1/en/mirface.xml \
+	system/man1/en/mrot.xml \
+	system/man1/en/mv.xml \
+	system/man1/en/mvall.xml \
 	system/man1/en/nirt.xml \
+	system/man1/en/nmg_collapse.xml \
+	system/man1/en/nmg_simplify.xml \
+	system/man1/en/oed.xml \
+	system/man1/en/opendb.xml \
+	system/man1/en/orientation.xml \
+	system/man1/en/orot.xml \
+	system/man1/en/oscale.xml \
+	system/man1/en/overlay.xml \
+	system/man1/en/p.xml \
+	system/man1/en/pathlist.xml \
+	system/man1/en/paths.xml \
+	system/man1/en/permute.xml \
 	system/man1/en/picket_fence.xml \
+	system/man1/en/plot.xml \
+	system/man1/en/prcolor.xml \
+	system/man1/en/prefix.xml \
+	system/man1/en/press.xml \
+	system/man1/en/preview.xml \
+	system/man1/en/prj_add.xml \
+	system/man1/en/ps.xml \
+	system/man1/en/push.xml \
+	system/man1/en/putmat.xml \
+	system/man1/en/q.xml \
+	system/man1/en/qorot.xml \
+	system/man1/en/qray.xml \
+	system/man1/en/query_ray.xml \
+	system/man1/en/quit.xml \
+	system/man1/en/qvrot.xml \
+	system/man1/en/r.xml \
+	system/man1/en/rcc-blend.xml \
+	system/man1/en/rcc-cap.xml \
+	system/man1/en/rcc-tgc.xml \
+	system/man1/en/rcc-tor.xml \
+	system/man1/en/rcodes.xml \
+	system/man1/en/read_muves.xml \
+	system/man1/en/red.xml \
+	system/man1/en/redraw_vlist.xml \
+	system/man1/en/refresh.xml \
+	system/man1/en/regdebug.xml \
+	system/man1/en/regdef.xml \
+	system/man1/en/regions.xml \
+	system/man1/en/release.xml \
+	system/man1/en/rfarb.xml \
+	system/man1/en/rm.xml \
+	system/man1/en/rmater.xml \
+	system/man1/en/rmats.xml \
+	system/man1/en/rot.xml \
+	system/man1/en/rotobj.xml \
+	system/man1/en/rpp-arch.xml \
+	system/man1/en/rpp-cap.xml \
+	system/man1/en/rrt.xml \
 	system/man1/en/rt.xml \
 	system/man1/en/rtarea.xml \
 	system/man1/en/rtcheck.xml \
 	system/man1/en/rtedge.xml \
+	system/man1/en/savekey.xml \
+	system/man1/en/saveview.xml \
+	system/man1/en/sca.xml \
+	system/man1/en/sed.xml \
+	system/man1/en/setview.xml \
+	system/man1/en/shader.xml \
+	system/man1/en/shell.xml \
+	system/man1/en/showmats.xml \
+	system/man1/en/size.xml \
+	system/man1/en/solids.xml \
+	system/man1/en/sph-part.xml \
+	system/man1/en/status.xml \
 	system/man1/en/search.xml \
 	system/man1/en/tire.xml \
 	system/man1/en/window.xml \

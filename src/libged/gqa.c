@@ -47,6 +47,7 @@
 #include "raytrace.h"
 #include "plot3.h"
 #include "sysv.h"
+#include "analyze.h"
 
 #include "./ged_private.h"
 
@@ -199,18 +200,6 @@ static struct per_region_data {
     struct per_obj_data *optr;
 } *reg_tbl;
 
-
-struct region_pair {
-    struct bu_list l;
-    union {
-	char *name;
-	struct region *r1;
-    } r;
-    struct region *r2;
-    unsigned long count;
-    double max_dist;
-    vect_t coord;
-};
 
 /* Access to these lists should be in sections
  * of code protected by GED_SEM_LIST
@@ -932,60 +921,6 @@ get_densities_from_database(struct rt_i *rtip)
 
     return ret;
 }
-
-
-/**
- * This routine must be prepared to run in parallel
- */
-struct region_pair *
-add_unique_pair(struct region_pair *list, /* list to add into */
-		struct region *r1,        /* first region involved */
-		struct region *r2,        /* second region involved */
-		double dist,              /* distance/thickness metric value */
-		point_t pt)               /* location where this takes place */
-{
-    struct region_pair *rp, *rpair;
-
-    /* look for it in our list */
-    bu_semaphore_acquire(GED_SEM_LIST);
-    for (BU_LIST_FOR (rp, region_pair, &list->l)) {
-
-	if ((r1 == rp->r.r1 && r2 == rp->r2) || (r1 == rp->r2 && r2 == rp->r.r1)) {
-	    /* we already have an entry for this region pair, we
-	     * increase the counter, check the depth and update
-	     * thickness maximum and entry point if need be and
-	     * return.
-	     */
-	    rp->count++;
-
-	    if (dist > rp->max_dist) {
-		rp->max_dist = dist;
-		VMOVE(rp->coord, pt);
-	    }
-	    rpair = rp;
-	    goto found;
-	}
-    }
-    /* didn't find it in the list.  Add it */
-    rpair = bu_malloc(sizeof(struct region_pair), "region_pair");
-    rpair->r.r1 = r1;
-    rpair->r2 = r2;
-    rpair->count = 1;
-    rpair->max_dist = dist;
-    VMOVE(rpair->coord, pt);
-    list->max_dist ++; /* really a count */
-
-    /* insert in the list at the "nice" place */
-    for (BU_LIST_FOR (rp, region_pair, &list->l)) {
-	if (strcmp(rp->r.r1->reg_name, r1->reg_name) <= 0)
-	    break;
-    }
-    BU_LIST_INSERT(&rp->l, &rpair->l);
- found:
-    bu_semaphore_release(GED_SEM_LIST);
-    return rpair;
-}
-
 
 /**
  * Write end points of partition to the standard output.  If this

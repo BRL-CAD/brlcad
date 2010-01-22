@@ -206,19 +206,21 @@ ged_wireframe_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, 
 static union tree *
 ged_wireframe_leaf(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
 {
-    union tree	*curtree;
-    int		dashflag;		/* draw with dashed lines */
-    struct bu_list	vhead;
+    int dashflag; /* draw with dashed lines */
+    union tree *curtree;
+    struct bu_list vhead;
     struct _ged_client_data *dgcdp = (struct _ged_client_data *)client_data;
 
+    RT_CK_DB_INTERNAL(ip);
     RT_CK_TESS_TOL(tsp->ts_ttol);
     BN_CK_TOL(tsp->ts_tol);
     RT_CK_RESOURCE(tsp->ts_resp);
+    if (!dgcdp) return TREE_NULL;
 
     BU_LIST_INIT(&vhead);
 
     if (RT_G_DEBUG&DEBUG_TREEWALK) {
-	char	*sofar = db_path_to_string(pathp);
+	char *sofar = db_path_to_string(pathp);
 
 	bu_vls_printf(&dgcdp->gedp->ged_result_str, "dgo_wireframe_leaf(%s) path='%s'\n",
 		      ip->idb_meth->ft_name, sofar);
@@ -230,14 +232,11 @@ ged_wireframe_leaf(struct db_tree_state *tsp, struct db_full_path *pathp, struct
     else
 	dashflag = (tsp->ts_sofar & (TS_SOFAR_MINUS|TS_SOFAR_INTER));
 
-    RT_CK_DB_INTERNAL(ip);
-
-    if (!ip->idb_meth->ft_plot ||
-	ip->idb_meth->ft_plot(&vhead, ip,
-			      tsp->ts_ttol,
-			      tsp->ts_tol) < 0) {
+    if (!ip->idb_meth->ft_plot
+	|| ip->idb_meth->ft_plot(&vhead, ip, tsp->ts_ttol, tsp->ts_tol) < 0)
+    {
 	bu_vls_printf(&dgcdp->gedp->ged_result_str, "%s: plot failure\n", DB_FULL_PATH_CUR_DIR(pathp)->d_namep);
-	return (TREE_NULL);		/* ERROR */
+	return TREE_NULL;		/* ERROR */
     }
 
     /*
@@ -267,7 +266,7 @@ ged_wireframe_leaf(struct db_tree_state *tsp, struct db_full_path *pathp, struct
     curtree->magic = RT_TREE_MAGIC;
     curtree->tr_op = OP_NOP;
 
-    return (curtree);
+    return curtree;
 }
 
 
@@ -1274,14 +1273,14 @@ ged_addToDisplay(struct ged *gedp,
 		 const char *name)
 {
     int i;
-    struct directory *dp;
-    struct ged_display_list *gdlp;
-    char *cp;
+    struct directory *dp = NULL;
+    struct ged_display_list *gdlp = NULL;
+    char *cp = NULL;
     int found_namepath = 0;
     struct db_full_path namepath;
 
     cp = strrchr(name, '/');
-    if (cp == '\0')
+    if (!cp)
 	cp = (char *)name;
     else
 	++cp;

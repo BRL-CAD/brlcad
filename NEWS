@@ -9,9 +9,26 @@ first and are grouped by release.  Each release also includes optional
 descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
+----------------------------------------------------------------------
+--- 2010-0x-xx  Release 7.16.6                                     ---
+----------------------------------------------------------------------
+
+Considerable effort continues towards improving BRL-CAD's
+documentation.  Janine Gettier has now converted the documentation for
+approximately 200 of MGED's commands into the Docbook XML format.
+Jesica Guidice has translated 4 of MGED's 16 introductory tutorials to
+Spanish.  Cliff Yapp continues to work extensively with both to get
+their efforts integrated so that HTML and PDF documentation are
+cleanly generated.
+
+* increased 'rcodes' and 'edcodes' maximum line length - Sean Morrison
+* increased maximum path depth supported by 'wcodes' - Sean Morrison
+* extensive work on MGED Docbook man page conversions - Janine Gettier
+* fixed unoriented BoT badmagic raytrace failure - Sean Morrison
+
 
 ----------------------------------------------------------------------
---- 2009-12-XX  Release 7.16.4                                     ---
+--- 2010-01-15  Release 7.16.4                                     ---
 ----------------------------------------------------------------------
 
 * fixed gqa units argument parsing bug on 64-bit Linux - Sean Morrison
@@ -32,7 +49,6 @@ changes made.  See document footer for additional details.
 * librt now queries env LIBRT_DEBUG for more flags - Erik Greenwald
 * pixdiff outputs matching pixels at half-intensity - Sean Morrison
 * fixed rate interpolation bug in tabinterp - Emton
-* runtime toggling of display managers - Cliff Yapp
 
 
 ----------------------------------------------------------------------

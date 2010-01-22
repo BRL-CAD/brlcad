@@ -462,7 +462,6 @@ XGLUE(rt_bot_plate_segs_, TRI_TYPE)(struct hit *hits,
     }
     /* Every hit turns into two, and makes a seg.  No leftovers */
     return(nhits*2);
-
 }
 
 
@@ -472,8 +471,7 @@ XGLUE(rt_bot_unoriented_segs_, TRI_TYPE)(struct hit *hits,
 					 struct soltab *stp,
 					 struct xray *rp,
 					 struct application *ap,
-					 struct seg *seghead,
-					 struct bot_specific *bot)
+					 struct seg *seghead)
 {
     register struct seg *segp;
     register int i, j;
@@ -485,8 +483,6 @@ XGLUE(rt_bot_unoriented_segs_, TRI_TYPE)(struct hit *hits,
     int removed=0;
     static const int IN = 0;
     static const int OUT = 1;
-
-    if (bot) RT_BOT_CK_MAGIC(bot);
 
     if (nhits == 1) {
 	XGLUE(tri_specific_, TRI_TYPE) *trip=(XGLUE(tri_specific_, TRI_TYPE) *)hits[0].hit_private;
@@ -615,8 +611,7 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, int nhits, struct soltab *st
     BU_ASSERT(bot->bot_mode == RT_BOT_SOLID);
 
     if (bot->bot_orientation == RT_BOT_UNORIENTED) {
-	return rt_bot_unoriented_segs(hits, nhits, stp, rp, ap,
-				      seghead, bot);
+	return rt_bot_unoriented_segs(hits, nhits, stp, rp, ap, seghead, bot);
     }
 
     /*

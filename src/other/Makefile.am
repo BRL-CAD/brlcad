@@ -85,41 +85,16 @@ togl-uninstall:
 if BUILD_DOCS
 if BUILD_TKHTML3
 if WITH_TK
-TKHTML3_MAKE=$(MAKE)
+TKHTMLDIR=tkhtml3
 else
-TKHTML3_MAKE=:
+TKHTMLDIR=
 endif
 else
-TKHTML3_MAKE=:
+TKHTMLDIR=
 endif
 else
-TKHTML3_MAKE=:
+TKHTMLDIR=
 endif
-
-tkhtml3-all:
-	cd tkhtml3 && ${TKHTML3_MAKE} $(AM_MAKEFLAGS) LIBS="${X_LIBS} ${LIBS}" all
-
-tkhtml3-install:
-	cd tkhtml3 && ${TKHTML3_MAKE} $(AM_MAKEFLAGS) LIBS="${X_LIBS} ${LIBS}" install
-
-tkhtml3-clean:
-	cd tkhtml3 && ${TKHTML3_MAKE} $(AM_MAKEFLAGS) LIBS="${X_LIBS} ${LIBS}" clean
-
-tkhtml3-distclean:
-	cd tkhtml3 && ${TKHTML3_MAKE} $(AM_MAKEFLAGS) LIBS="${X_LIBS} ${LIBS}" distclean
-
-tkhtml3-uninstall:
-	cd tkhtml3 && ${TKHTML3_MAKE} $(AM_MAKEFLAGS) LIBS="${X_LIBS} ${LIBS}" uninstall
-
-all-local: tkhtml3-all togl-all
-install-exec-local: tkhtml3-install togl-install
-clean-local: tkhtml3-clean togl-clean
-distclean-local: tkhtml3-distclean togl-distclean
-uninstall-local: tkhtml3-uninstall togl-uninstall
-
-.PHONY : tkhtml3-all tkhtml3-install tkhtml3-clean tkhtml3-distclean tkhtml3-uninstall togl-all togl-install togl-clean togl-distclean togl-uninstall
-
-
 
 if BUILD_TKIMG
 if WITH_TK
@@ -186,6 +161,7 @@ SUBDIRS = \
 	${JOVEDIR} \
 	${STEPDIR} \
 	${TKIMGDIR} \
+	${TKHTMLDIR} \
 	${OPENNURBSDIR} \
 	${TNTDIR} \
 	awf
@@ -197,21 +173,7 @@ endif
 # end ONLY_BENCHMARK
 
 EXTRA_DIST = \
-	boost \
-	tkhtml3/AUTHORS \
-	tkhtml3/COPYING \
-	tkhtml3/ChangeLog \
-	tkhtml3/INSTALL \
-	tkhtml3/Makefile \
-	tkhtml3/Makefile.in \
-	tkhtml3/NEWS \
-	tkhtml3/README \
-	tkhtml3/aclocal.m4 \
-	tkhtml3/configure \
-	tkhtml3/configure.in \
-	tkhtml3/doc \
-	tkhtml3/src \
-	tkhtml3/tclconfig
+	boost 
 
 # FIXME: need to only traverse tcl/tk if configured
 DIST_SUBDIRS = \
@@ -230,6 +192,7 @@ DIST_SUBDIRS = \
 	tcl \
 	tk \
 	tkimg \
+	tkhtml3 \
 	tnt
 
 include $(top_srcdir)/misc/Makefile.defs

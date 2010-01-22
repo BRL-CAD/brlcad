@@ -4677,7 +4677,7 @@ BU_EXPORT BU_EXTERN(void bu_vls_vlscatzap,
 /**
  * b u _ v l s _ s t r c m p
  *
- * Lexicographically compare to vls strings.  Returns an integer
+ * Lexicographically compare two vls strings.  Returns an integer
  * greater than, equal to, or less than 0, according as the string s1
  * is greater than, equal to, or less than the string s2.
  */

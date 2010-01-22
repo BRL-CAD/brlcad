@@ -170,6 +170,14 @@ db5_realloc( struct db_i *dbip, struct directory *dp, struct bu_external *ep )
 	return 0;
     }
 
+    /* make sure the database directory is initialized */
+    if (dbip->dbi_eof == RT_DIR_PHONY_ADDR) {
+	int ret = db_dirbuild(dbip);
+	if (ret) {
+	    return -1;
+	}
+    }
+
     if ( dbip->dbi_read_only )  {
 	bu_log("db5_realloc(%s) on READ-ONLY file\n", dp->d_namep);
 	return(-1);

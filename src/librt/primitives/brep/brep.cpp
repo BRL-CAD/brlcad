@@ -2240,6 +2240,8 @@ rt_brep_free(register struct soltab *stp)
 void
 plot_bbnode(BBNode* node, struct bu_list* vhead, int depth, int start, int limit)
 {
+    BU_CK_LIST_HEAD(vhead);
+
     ON_3dPoint min = node->m_node.m_min;
     ON_3dPoint max = node->m_node.m_max;
     point_t verts[] = {{min[0], min[1], min[2]},
@@ -2337,6 +2339,7 @@ rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
     struct rt_brep_internal* bi;
     int i;
 
+    BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
     bi = (struct rt_brep_internal*)ip->idb_ptr;
     RT_BREP_CK_MAGIC(bi);

@@ -151,6 +151,7 @@ bu_log(const char *fmt, ...)
     bu_vls_init(&output);
 
     if (!fmt || strlen(fmt) == 0) {
+	bu_vls_free(&output);
 	return;
     }
 
@@ -180,6 +181,7 @@ bu_log(const char *fmt, ...)
 
 	len = bu_vls_strlen(&output);
 	if (len <= 0) {
+	    bu_vls_free(&output);
 	    return;
 	}
 

@@ -1086,6 +1086,7 @@ SourceForge and then select them on the sf.net File Release System:
 sftp sfusername@frs.sourceforge.net:/home/frs/project/b/br/brlcad
 cd BRL-CAD\ Source
 mkdir MAJOR.MINOR.PATCH
+cd MAJOR.MINOR.PATCH
 put brlcad-MAJOR.MINOR.PATCH*
 
 13) Increment and commit the next BRL-CAD release numbers to SVN;
@@ -1108,9 +1109,6 @@ Source or binary release:
 
       T2 package maintainer
       http://t2-project.org/packages/brlcad.html
-
-      Rock Linux package maintainer
-      http://www.rocklinux.net/packages/brlcad.html
 
 Binary release (any platform):
 

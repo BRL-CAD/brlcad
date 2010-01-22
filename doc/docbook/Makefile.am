@@ -23,19 +23,15 @@ XML_CATALOG_FILES=$(top_srcdir)/doc/docbook/catalog.xml
 	@mkdir -p $$(dirname $@)
 	XML_CATALOG_FILES=$(XML_CATALOG_FILES) $(XSLTPROC) $(XSLTPROC_FLAGS) -o $@ $(XSL_FO_STYLESHEET) $?
 
+
 include $(srcdir)/articles/en/Makefile.am
-
-include $(srcdir)/lessons/en/Makefile.am
-
 include $(srcdir)/books/en/Makefile.am
-
+include $(srcdir)/lessons/en/Makefile.am
+include $(srcdir)/lessons/es/Makefile.am
 include $(srcdir)/specifications/en/Makefile.am
-
 include $(srcdir)/system/man1/en/Makefile.am
-
 include $(srcdir)/system/man3/en/Makefile.am
 
-include $(srcdir)/lessons/es/Makefile.am
 
 if BUILD_DOCS
 
@@ -52,15 +48,15 @@ BUILT_SOURCES = \
 	$(BUILTMAN_ENPDF) \
 	$(BUILTMAN3_ENHTML) \
 	$(BUILTMAN3_ENPDF) \
-        $(BUILTLESSONS_ESHTML) \
-        $(BUILTLESSONS_ESPDF)
+	$(BUILTLESSONS_ESHTML) \
+	$(BUILTLESSONS_ESPDF)
 
 BUILTMAN_EN_SOURCES = \
 	${man1DOCBOOK_EN:xml=1}  \
 	${man3DOCBOOK_EN:xml=3}
 
 man_MANS = \
-         $(BUILTMAN_EN_SOURCES)
+	$(BUILTMAN_EN_SOURCES)
 
 else
 BUILT_SOURCES =
@@ -69,23 +65,30 @@ endif
 
 
 CLEANFILES = \
-         $(BUILT_SOURCES) \
-         $(BUILTMAN_EN_SOURCES)
+	$(BUILTMAN_EN_SOURCES) \
+	$(BUILT_SOURCES)
 
 
 EXTRA_DIST = \
+	articles/en/Makefile.am \
+	books/en/Makefile.am \
+	lessons/en/Makefile.am \
+	lessons/es/Makefile.am \
+	specifications/en/Makefile.am \
+	system/man1/en/Makefile.am \
+	system/man3/en/Makefile.am \
 	${articlesDOCBOOK_EN_IMAGES} \
 	${articlesDOCBOOK_EN} \
 	${booksDOCBOOK_EN_IMAGES} \
 	${booksDOCBOOK_EN} \
 	${lessonsDOCBOOK_EN_IMAGES} \
 	${lessonsDOCBOOK_EN} \
+	${lessonsDOCBOOK_ES_IMAGES} \
+	${lessonsDOCBOOK_ES} \
 	${man1DOCBOOK_EN} \
 	${man1INTRO_EN} \
 	${man3DOCBOOK_EN} \
 	${specificationsDOCBOOK_EN} \
-        ${lessonsDOCBOOK_ES} \
-	${lessonsDOCBOOK_ES_IMAGES} \
 	README \
 	articles/en/images/tire_fig12.svg \
 	articles/en/images/tire_fig13.svg \

@@ -1095,11 +1095,12 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
     struct curve *crv;
 
     vect_t ell[16], cir[16], ucir[16], height, xdir, ydir, ux, uy, uz, rEnd, xEnd, yEnd;
-    fastf_t cos22_5 = 0.9238795325112867385,
-	cos67_5 = 0.3826834323650898373;
+    fastf_t cos22_5 = 0.9238795325112867385;
+    fastf_t cos67_5 = 0.3826834323650898373;
     int *endcount;
     point_t add, add2, add3;
 
+    BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
     rip = (struct rt_revolve_internal *)ip->idb_ptr;
     RT_REVOLVE_CK_MAGIC(rip);

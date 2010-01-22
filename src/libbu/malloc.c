@@ -346,7 +346,7 @@ bu_realloc(register genptr_t ptr, size_t cnt, const char *str)
     struct memdebug *mp=NULL;
     genptr_t original_ptr;
 
-    if (! ptr) {
+    if (!ptr) {
 	/* This is so we are compatible with system realloc.  It seems
 	 * like an odd behaviour, but some non-BRL-CAD code relies on
 	 * this.
@@ -355,7 +355,8 @@ bu_realloc(register genptr_t ptr, size_t cnt, const char *str)
     }
 
     if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	if (ptr && (mp = _bu_memdebug_check(ptr, str)) == MEMDEBUG_NULL) {
+	mp = _bu_memdebug_check(ptr, str);
+	if (mp == MEMDEBUG_NULL) {
 	    fprintf(stderr, "%8lx realloc%6d %s ** barrier check failure\n",
 		    (long)ptr, (int)cnt, str);
 	}
@@ -379,6 +380,11 @@ bu_realloc(register genptr_t ptr, size_t cnt, const char *str)
 	}
 	ptr = (genptr_t)mqp;
 	BU_LIST_DEQUEUE(&(mqp->q));
+    }
+
+    if (cnt == 0) {
+	fprintf(stderr, "ERROR: bu_realloc cnt=0 (ptr=%p) %s\n", ptr, str);
+	bu_bomb("ERROR: bu_realloc(0)\n");
     }
 
     original_ptr = ptr;

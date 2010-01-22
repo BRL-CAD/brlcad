@@ -504,6 +504,8 @@ seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
     fastf_t radius;
     vect_t norm;
 
+    BU_CK_LIST_HEAD(vhead);
+
     VSETALL(semi_a, 0);
     VSETALL(semi_b, 0);
     VSETALL(center, 0);
@@ -886,6 +888,8 @@ curve_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V
     int seg_no;
     int ret=0;
 
+    BU_CK_LIST_HEAD(vhead);
+
     if (bu_debug&BU_DEBUG_MEM_CHECK) {
 	bu_log("Barrier check at start of curve_to_vlist():\n");
 	bu_mem_barriercheck();
@@ -914,6 +918,7 @@ rt_sketch_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt
     int ret;
     int myret=0;
 
+    BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
     sketch_ip = (struct rt_sketch_internal *)ip->idb_ptr;
     RT_SKETCH_CK_MAGIC(sketch_ip);
