@@ -537,11 +537,17 @@ view_end(struct application *ap)
 {
     /* If the heat graph is on, render it after all pixels completed */
     if (lightmodel == 8) {
+	/*
 	bu_log("Building Heat-Graph\n");
-	fastf_t *timeTable = timeTable_init(NULL, NULL);
+	fastf_t *timeTable;
+	timeTable = timeTable_init(NULL, NULL);
 	bu_log("Timetable accessed!\n");
 	timeTable_process(timeTable, ap);
 	bu_log("Heat Graph-built\n");
+        */
+	fastf_t *timeTable;
+	timeTable = timeTable_init(width,height,NULL);
+	timeTable_process(timeTable, ap);
 	timeTable_free(timeTable);
     }
 
@@ -1001,11 +1007,6 @@ vdraw open iray;vdraw params c %2.2x%2.2x%2.2x;vdraw write n 0 %g %g %g;vdraw wr
     /*
      * e ^(-density * distance)
      */
-    if (lightmodel == 8) {
-	/* Invert lights for testing */
-	/* VSET(ap->a_color, 0.75, 0.5, 0.25); */
-    }
-
     if (airdensity != 0.0) {
 	double g;
 	double f = exp(-hitp->hit_dist * airdensity);
@@ -1031,26 +1032,18 @@ vdraw open iray;vdraw params c %2.2x%2.2x%2.2x;vdraw write n 0 %g %g %g;vdraw wr
 	 * X/Y coordinate being worked on
 	 */
 
-	if (fbp != FBIO_NULL) {
-	    extern int cur_pixel;
+	/* pixelTime will soon be calculated in worker.c instead, for
+	 * better accuracy. At that time, this whole block can be 
+	 * removed.
+	 */
+	/* fastf_t pixelTime = 0;
+	 * pixelTime = rt_get_timer(NULL, NULL);
+	 * bu_semaphore_acquire(RT_SEM_LAST-1);
+         * fastf_t *timeTable = timeTable_init(fbp, NULL);
+	 * bu_semaphore_release(RT_SEM_LAST-1);
+	 * (void)timeTable_input((int)ap->a_x, (int)ap->a_y, pixelTime, timeTable);
+	 */
 
-	    /* This changes the framebuffer behavior. May be useful
-	     * later, once all data points are converted to
-	     * time-heat-graph points
-	     *
-	     * bu_semaphore_acquire(BU_SEM_SYSCALL);
-	     * (void)fb_view(fbp, width/2, height/2, 1, 1);
-	     * bu_semaphore_release(BU_SEM_SYSCALL);
-	     */
-
-	    /* bu_log("Cur: %d, X = %d, Y = %d\n", cur_pixel, ap->a_x, ap->a_y); */
-	}
-	fastf_t pixelTime = 0;
-	pixelTime = rt_get_timer(NULL, NULL);
-	bu_semaphore_acquire(RT_SEM_LAST-1);
-        fastf_t *timeTable = timeTable_init(fbp, NULL);
-	bu_semaphore_release(RT_SEM_LAST-1);
-	(void)timeTable_input((int)ap->a_x, (int)ap->a_y, pixelTime, timeTable);
 	/*
 	 * What will happen here is that the current pixel time will
 	 * be shot off into an array at location (current x)(current
@@ -1058,21 +1051,18 @@ vdraw open iray;vdraw params c %2.2x%2.2x%2.2x;vdraw write n 0 %g %g %g;vdraw wr
 	 * array will contain RGBpixel values
 	 */
 
-	/* bu_log("Time taken: %lf\n", pixelTime); */
-
+	/* This code is now out of date. Use timeTable_process(timeTable) instead */
 	/* fastf_t timeColor[3]={0};
 	 * bu_semaphore_acquire(RT_SEM_LAST-1);
 	 * timeTable_singleProcess(ap, timeTable, timeColor);
 	 * bu_semaphore_release(RT_SEM_LAST-1);
 	 */
-
 	/* Take 1-255 color values and set them to 0-1 range */
 	/* fastf_t a = timeColor[0] / 255;
 	 * fastf_t b = timeColor[1] / 255;
 	 * fastf_t c = timeColor[2] / 255;
 	 */
 	/* bu_log("a:%lf b:%lf c:%lf\n", a, b, c); */
-
 	/* Apply new colors to framebuffer! */
 	/* VSET(ap->a_color, a, b ,c); */
 	/* VPRINT("color   ", ap->a_color); */

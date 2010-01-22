@@ -165,7 +165,13 @@ void do_pixel(int cpu,
     static const double one_over_255 = 1.0 / 255.0;
     register RGBpixel		pixel = {0, 0, 0};
     const int pindex = (pixelnum * sizeof(RGBpixel));
-
+    fastf_t *timeTable;
+    if (lightmodel == 8)
+    {
+	/* Add prep_pixel_timer here to start pixel-time for heat graph, when asked */
+	prep_pixel_timer();
+    }
+    
     /* Obtain fresh copy of global application struct */
     a = ap;				/* struct copy */
     a.a_resource = &resource[cpu];
@@ -413,6 +419,17 @@ void do_pixel(int cpu,
 
     /* bu_log("2: [%d,%d] : [%.2f,%.2f,%.2f]\n", pixelnum%width, pixelnum/width, a.a_color[0], a.a_color[1], a.a_color[2]); */
 
+    /* Add get_pixel_timer here to get total time taken to get pixel, when asked */
+    if (lightmodel == 8)
+    {
+	bu_semaphore_acquire(RT_SEM_LAST-1);
+	fastf_t pixelTime = 0.0;
+	get_pixel_timer(NULL, NULL, &pixelTime);
+	/* bu_log("PixelTime = %lf\n", pixelTime); */
+	timeTable = timeTable_init(width, height);
+	timeTable_input(a.a_x, a.a_y, pixelTime, timeTable);
+	bu_semaphore_release(RT_SEM_LAST-1);
+    }
     /* we're done */
     view_pixel( &a );
     if ( a.a_x == width-1 ) {
@@ -471,6 +488,8 @@ worker(int cpu, genptr_t arg)
 	tmp = cur_pixel;
 	cur_pixel = last_pixel;
 	last_pixel = tmp;
+
+	timeTable_init(width, height);
 
 	while (1)  {
 	    if (stop_worker)

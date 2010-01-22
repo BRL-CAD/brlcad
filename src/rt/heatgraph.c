@@ -45,7 +45,11 @@
 
 extern FBIO *fbp;
 
-static struct timeval timeStart;
+static struct timeval timeStart;	/* These are pulled directly from timer42 */
+static struct rusage ru0;		/*  Resource utilization at the start */
+static struct rusage ru0c;
+
+static void tvsub(struct timeval *tdiff, struct timeval *t1, struct timeval *t0);
 
 /**
  * P R E P _ P I X E L _ T I M E R
@@ -54,9 +58,24 @@ static struct timeval timeStart;
  */
 void prep_pixel_timer(void)
 {
-  gettimeofday(&timeStart, (struct timezone *)0);
+    gettimeofday(&timeStart, (struct timezone *)0);
+    getrusage(RUSAGE_SELF, &ru0);
+    getrusage(RUSAGE_CHILDREN, &ru0c);
 }
 
+/**
+ * T V S U B 
+ */
+
+static void
+tvsub(struct timeval *tdiff, struct timeval *t1, struct timeval *t0)
+{
+    tdiff->tv_sec = t1->tv_sec - t0->tv_sec;
+    tdiff->tv_usec = t1->tv_usec - t0->tv_usec;
+    if (tdiff->tv_usec < 0) {
+	tdiff->tv_sec--, tdiff->tv_usec += 1000000;
+    }
+}
 
 /**
  * G E T _ P I X E L _ T I M E R
@@ -64,17 +83,38 @@ void prep_pixel_timer(void)
  * Get the length of time the pixel
  * was being made.
  */
-fastf_t get_pixel_timer(void)
+double get_pixel_timer(struct bu_vls *vp, double *elapsed, double *total)
 {
-  struct timeval timeEnd;
-  fastf_t totalTime = 0;
+    struct timeval timeEnd;
+    /* Pulled directly from timer42.c */
+    struct rusage ru1;
+    struct rusage ru1c;
+    struct timeval td;
+    double totalTime = 0;
+    double elapsed_secs = 0;
+    
+    getrusage(RUSAGE_SELF, &ru1);
+    getrusage(RUSAGE_CHILDREN, &ru1c);
+    gettimeofday(&timeEnd, (struct timezone *)0);
+    
+    elapsed_secs = (timeEnd.tv_sec - timeStart.tv_sec) + 
+	(timeEnd.tv_usec - timeStart.tv_usec)/1000000.0;
+    
+    tvsub(&td, &ru1.ru_utime, &ru0.ru_utime);
+    totalTime = td.tv_sec + ((double)td.tv_usec)/1000000.0;
+    
+    tvsub(&td, &ru1c.ru_utime, &ru0c.ru_utime);
+    totalTime += td.tv_sec + ((double)td.tv_usec) / 1000000.0;
+    
+    if (totalTime < 0.00001) totalTime = 0.00001;
+    if (elapsed_secs < 0.00001) elapsed_secs = totalTime;
 
-  gettimeofday(&timeEnd, (struct timezone *)0);
-
-  totalTime = (timeEnd.tv_sec - timeStart.tv_sec) +
-    (timeEnd.tv_usec - timeStart.tv_usec) / 1000000.0;
-  
-  return totalTime;
+    if (vp) {
+    }
+    if (elapsed) *elapsed = elapsed_secs;
+    if (total) *total = totalTime;
+    
+    return (totalTime);
 }
 
 
@@ -85,7 +125,7 @@ fastf_t get_pixel_timer(void)
  * time taken to complete pixels during a raytrace. Returns a
  * pointer to the table.
  */
-fastf_t *timeTable_init(FBIO *fbp, int a)
+fastf_t *timeTable_init(int x, int y)
 {
     /*
      * Time table will be initialized to the size of the current
@@ -93,11 +133,9 @@ fastf_t *timeTable_init(FBIO *fbp, int a)
      * So first we need to get the size of the framebuffer
      * height and width and use that as the starting point.
      */
-
+    
     static fastf_t **timeTable = NULL;
-    if (a == NULL && fbp != NULL) {
-	int x = fb_getwidth(fbp);
-	int y = fb_getheight(fbp);
+    if (x && y) {
 	/* bu_log("X is %d, Y is %d\n", x, y); */
 	int i=0;
 	int w=0;
@@ -109,7 +147,7 @@ fastf_t *timeTable_init(FBIO *fbp, int a)
 	    timeTable = bu_malloc(x * sizeof(fastf_t *), "timeTable");
 	    for (i = 0; i < x; i++) {
 		timeTable[i] = bu_malloc(y * sizeof(fastf_t *), "timeTable[i]");
-	}    
+	    }    
 	    for (i = 0; i < x; i++) {
 		for (w = 0; w < y; w++) {
 		    timeTable[i][w] = -1;
@@ -135,7 +173,7 @@ void timeTable_free(fastf_t **timeTable)
     int x = width;
     int y = height;
     int i = 0;
-
+    
     for (i = 0; i < y; i++)
 	bu_free(timeTable[i], "timeTable[]");
     bu_free(timeTable, "timeTable");
@@ -173,15 +211,15 @@ fastf_t *timeTable_singleProcess(struct application *ap, fastf_t **timeTable, fa
     fastf_t Rcolor = 0;	/* 1-255 value of color */
     fastf_t Gcolor = 0;	/* 1-255 value of color */
     fastf_t Bcolor = 0;	/* 1-255 value of color */
-
+    
     /* bu_log("Time is %lf :", time); */
-
+    
     /* Eventually the time taken will also span the entire color spectrum (0-255!)
      * For now, the darkest color (1,1,1) will be set to any time slower or equal
      * to 0.00001 sec, and (255,255,255) will be set to any time longer than 0.01 sec,
      * making a gradient of black-white in between.
      */
-
+    
     if (time <= 0.00001) {
 	Rcolor = 1;
 	Gcolor = 1;
@@ -198,7 +236,7 @@ fastf_t *timeTable_singleProcess(struct application *ap, fastf_t **timeTable, fa
 	Rcolor = Bcolor = 0;
 	Gcolor = 255;
     }
-
+    
     timeColor[0] = Rcolor;
     timeColor[1] = Gcolor;
     timeColor[2] = Bcolor;
@@ -222,7 +260,7 @@ void timeTable_process(fastf_t **timeTable, struct application *ap)
     int pixels = 0;				/* Used for calculating averages */
     RGBpixel p;					/* Pixel colors for particular pixel */
     int maxX = width, maxY = height; 		/* Maximum render size, uses evil globals */
-
+    
     /* The following loop will work as follows, it will loop through
      * timeTable and search for pixels which have a non-negative value.
      * Once a value is found, it will assign a color value from 1-255,
@@ -247,12 +285,12 @@ void timeTable_process(fastf_t **timeTable, struct application *ap)
     meanTime = totalTime / pixels;
     range = maxTime - minTime;
     bu_log("Max = %lf Min = %lf Mean = %lf Range = %lf\n", maxTime, minTime, meanTime, range);
-
+    
     int Rcolor = 0;
     int Gcolor = 0;
     int Bcolor = 0;
     int npix = 0;
-
+    
     /* Now fill out the framebuffer with the Heat Graph information */
 
     for (x = 0; x < maxX; x++) {
@@ -290,3 +328,14 @@ void timeTable_process(fastf_t **timeTable, struct application *ap)
     }
     (void)fb_view(fbp, width/2, height/2, 1, 1);
 }
+
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */
