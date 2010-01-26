@@ -800,42 +800,44 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, int nhits, struct soltab *st
 		}
 	    }
 	}
+
 	/*
-	 * Handle cases where there are multiple adjacent entrances or exits 
-	 * along the shotline. Using the FILO approach where we keep the 
-	 * "First In" from multiple entrances and the "Last Out" for multiple
-	 * exits. 
+	 * Handle cases where there are multiple adjacent entrances or
+	 * exits along the shotline.  Using the FILO approach where we
+	 * keep the "First In" from multiple entrances and the "Last
+	 * Out" for multiple exits.
 	 *
-	 * Many of these cases were being generated when the shot ray grazed
-	 * a surface. Grazing shots are treated as non-hits but can causes
-	 * multiple entrance/exits when adjacent surfaces are hit.
+	 * Many of these cases were being generated when the shot ray
+	 * grazed a surface.  Grazing shots should USUALLY be treated
+	 * as non-hits (and is the case for other primitives).  With
+	 * BoTs, however, these can cause multiple entrances and exits
+	 * when adjacent surfaces are hit.
 	 *
-	 * example: cross section of convex solid
+	 * Example #1: CROSS-SECTION OF CONVEX SOLID
+	 *
 	 *                      --------------
-	 *                      |            |
 	 *                      |            |
 	 *                      |entrance    |exit
 	 *   ray-->  ------------            ------------
 	 *           |entrance                           |exit
 	 *           |                                   |
 	 *
-	 * LOS(X) was being shown as:
+	 * For this grazing hit, LOS(X) was being shown as:
 	 *                      --------------
-	 *                      |            |
 	 *                      |            |
 	 *                      |entrance    |exit
 	 *   ray-->  XXXXXXXXXXXX            XXXXXXXXXXXXX
 	 *           |entrance                           |exit
 	 *           |                                   |
 	 *
-	 * now LOS(X) shows as:
+	 * Using a FILO approach, now LOS(X) shows as:
 	 *                      --------------
-	 *                      |            |
 	 *                      |            |
 	 *                      |entrance    |exit
 	 *   ray-->  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 	 *           |entrance                           |exit
 	 *           |                                   |
+	 *
 	 */
 	for (i=0; i<nhits-1; i++) {
 	    if (hits[i].hit_vpriv[X] < 0.0) { /* entering */
@@ -854,6 +856,37 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, int nhits, struct soltab *st
 		}
 	    }
 	}
+
+	/*
+	 * Note that we could try to use a LIFO approach so that we
+	 * more consistently count all grazing hits as a miss, but
+	 * there's an increased chance of slipping through a crack
+	 * with BoTs without a change to check mesh neighbors:
+	 *
+	 * Using a LIFO approach, the above LOS(X) would have been:
+	 *
+	 *                      --------------
+	 *                      |            |
+	 *                      |entrance    |exit
+	 *   ray-->  -----------XXXXXXXXXXXXXX------------
+	 *           |entrance                           |exit
+	 *           |                                   |
+	 *
+	 * Example #2: CROSS-SECTION OF CONCAVE SOLID
+	 *
+	 *   ray-->  ------------            ------------
+	 *           |entrance  |exit        |entrance  |exit
+	 *           |          |            |          |
+	 *                      --------------
+	 *
+	 * Using LIFO, we would report a miss for the concave case,
+	 * but with FILO this will return two hit segments.
+	 *
+	 *   ray-->  XXXXXXXXXXXX            XXXXXXXXXXXX
+	 *           |entrance  |exit        |entrance  |exit
+	 *           |          |            |          |
+	 *                      --------------
+	 */
     }
 
     /* if first hit is an exit, it is likely due to the "piece" for
