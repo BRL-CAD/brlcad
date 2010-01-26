@@ -1047,6 +1047,8 @@ bu_vls_prepend(struct bu_vls *vp, char *str)
 
     /* insert the data at the head of the string */
     memcpy(vp->vls_str+vp->vls_offset, str, len);
+
+    vp->vls_len += len;
 }
 
 /*
