@@ -800,6 +800,60 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, int nhits, struct soltab *st
 		}
 	    }
 	}
+	/*
+	 * Handle cases where there are multiple adjacent entrances or exits 
+	 * along the shotline. Using the FILO approach where we keep the 
+	 * "First In" from multiple entrances and the "Last Out" for multiple
+	 * exits. 
+	 *
+	 * Many of these cases were being generated when the shot ray grazed
+	 * a surface. Grazing shots are treated as non-hits but can causes
+	 * multiple entrance/exits when adjacent surfaces are hit.
+	 *
+	 * example: cross section of convex solid
+	 *                      --------------
+	 *                      |            |
+	 *                      |            |
+	 *                      |entrance    |exit
+	 *   ray-->  ------------            ------------
+	 *           |entrance                           |exit
+	 *           |                                   |
+	 *
+	 * LOS(X) was being shown as:
+	 *                      --------------
+	 *                      |            |
+	 *                      |            |
+	 *                      |entrance    |exit
+	 *   ray-->  XXXXXXXXXXXX            XXXXXXXXXXXXX
+	 *           |entrance                           |exit
+	 *           |                                   |
+	 *
+	 * now LOS(X) shows as:
+	 *                      --------------
+	 *                      |            |
+	 *                      |            |
+	 *                      |entrance    |exit
+	 *   ray-->  XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+	 *           |entrance                           |exit
+	 *           |                                   |
+	 */
+	for (i=0; i<nhits-1; i++) {
+	    if (hits[i].hit_vpriv[X] < 0.0) { /* entering */
+		k = i + 1;
+		while ((k < nhits) && (hits[k].hit_vpriv[X] < 0.0)) {
+		    for (j=i; j<nhits-1; j++)
+			hits[j] = hits[j+1];
+		    nhits--;
+		}
+	    } else if (hits[i].hit_vpriv[X] > 0.0) { /* exiting */
+		k = i + 1;
+		while ((k < nhits) && (hits[k].hit_vpriv[X] > 0.0)) {
+		    for (j=i+1; j<nhits-1; j++)
+			hits[j] = hits[j+1];
+		    nhits--;
+		}
+	    }
+	}
     }
 
     /* if first hit is an exit, it is likely due to the "piece" for
