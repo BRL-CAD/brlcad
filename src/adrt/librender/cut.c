@@ -65,6 +65,7 @@ void render_cut_init(render_t *render, char *buf) {
 	    ray_pos.v, ray_pos.v+1, ray_pos.v+2,
 	    ray_dir.v, ray_dir.v+1, ray_dir.v+2);
 
+#if 0
     /* 
      * fire through the entire geometry, marking each intersected mesh with
      * ADRT_MESH_HIT 
@@ -74,6 +75,7 @@ void render_cut_init(render_t *render, char *buf) {
     ray.depth = 0;
     while(tie_work(render->tie, &ray, &id, render_cut_hit_cutline, &step))
 	VJOIN1( ray.pos.v, ray.pos.v, step + SMALL_FASTF, ray.dir.v );
+#endif
 
     /* prepare cut stuff */
     tlist = (TIE_3 **)bu_malloc(sizeof(TIE_3 *) * 6, "cutting plane triangles");
@@ -168,7 +170,6 @@ void render_cut_work(render_t *render, tie_t *tie, tie_ray_t *ray, TIE_3 *pixel)
     TIE_3 color;
     tie_id_t id;
     tfloat t, dot;
-
 
     rd = (render_cut_t *)render->data;
 
