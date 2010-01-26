@@ -17,9 +17,6 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* test rcodes, wcodes, edcodes.  more specifically, make sure they
-  still work, then try lines longer than 256, depths greater than 12.
-
 * fix mged EDITOR invocation bug.  have to reconcile src/mged/editit.c
   and src/libged/editit.c where the latter had the libdm dependency
   removed.  that refactoring subsequently killed all of the logic used
