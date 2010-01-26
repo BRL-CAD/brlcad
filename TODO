@@ -20,9 +20,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 * test rcodes, wcodes, edcodes.  more specifically, make sure they
   still work, then try lines longer than 256, depths greater than 12.
 
-* implement a lighting model for rt that visualizes how expensive each
-  individual pixel is to compute with an intensity (heat graph)
-
 * fix mged EDITOR invocation bug.  have to reconcile src/mged/editit.c
   and src/libged/editit.c where the latter had the libdm dependency
   removed.  that refactoring subsequently killed all of the logic used
@@ -60,6 +57,9 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* clean up new rt -l8 heat graph lighting model so that it works in
+  parallel and with no "splotches"
 
 * make rt_prep_timer() take or return a context that gets subsequently
   passed to rt_get_timer() calls for returning the elapsed time.  this
