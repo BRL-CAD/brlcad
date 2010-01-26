@@ -26,6 +26,10 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   to know when to invoke the editor from within an xterm, which hangs
   mged since the user can't actually see/access the detached editor.
 
+
+THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
+-------------------------------------------------------
+
 * vls name wrapping (reversible argv-to-vls, vls-to-argv)
 
 * refactor rt_functab accessors to go through an api call or calls so
@@ -33,10 +37,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   interface with data-driven keys to tell it with function(s) to call,
   or simply have an rt_*() for each function (e.g., rt_mirror(),
   rt_shot(), rt_describe(), etc).
-
-
-THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
--------------------------------------------------------
 
 * investigate tessellation failures (Stryker, et al), possibily due to
   recent tolerance checks.
