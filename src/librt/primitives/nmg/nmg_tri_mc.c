@@ -52,8 +52,9 @@
 
 #include "common.h"
 
-#include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 #include <math.h>
 #include "bio.h"
 
@@ -365,8 +366,9 @@ int mc_tris[256][16] = {
 {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1}};
 
 
+/* returns the number of triangles added or -1 on failure */
 int
-rt_nmg_mc_realize_cube(struct shell *s, int pv, point_t *p, point_t *edges)
+rt_nmg_mc_realize_cube(struct shell *s, int pv, point_t *p, point_t *edges, const struct bn_tol *tol)
 {
     int *vi, fo;
 
@@ -385,34 +387,46 @@ rt_nmg_mc_realize_cube(struct shell *s, int pv, point_t *p, point_t *edges)
 
     fo = 0;
     while( *vi >= 0 ) {
+	int i;
+	point_t pt[3];
+	struct faceuse *fu;
+	struct vertex *verts[8], **vertp[3];
+
+	for(i=0;i<8;i++)
+	    verts[i] = (struct vertex *)NULL;
+
 	if(++fo > 5) {
 	    bu_log("Whoa, too many triangles?\n");
 	    return -1;
 	}
 
-	bu_log(" <%.2f %.2f %.2f / %.2f %.2f %.2f / %.2f %.2f %.2f>\n", 
-			edges[vi[0]][X], edges[vi[0]][Y], edges[vi[0]][Z],
-			edges[vi[1]][X], edges[vi[1]][Y], edges[vi[1]][Z],
-			edges[vi[2]][X], edges[vi[2]][Y], edges[vi[2]][Z]);
+       bu_log("<%.2f %.2f %.2f / %.2f %.2f %.2f / %.2f %.2f %.2f>\n", 
+	       V3ARGS(edges[vi[0]]), V3ARGS(edges[vi[1]]), V3ARGS(edges[vi[2]]));
 	/* 
 	 * wire these edge values into the corner stuff. One would think that
 	 * stuff like 'magic' would be important, but the bot tesselator seems
 	 * to do without...
 	 */
+	VMOVE(pt[0], edges[vi[0]]);
+	VMOVE(pt[1], edges[vi[1]]);
+	VMOVE(pt[2], edges[vi[2]]);
 
-	/* check for degredate triangles here? should never happen, ... */
-
-	/*
-	if ((fu=nmg_cmface(s, corners, 3)) == (struct faceuse *)NULL) {
-	    bu_log("rt_metaball_tess() nmg_cmface() failed\n");
+	bu_log("Building a cmface\n");
+	if((fu = nmg_cmface(s, vertp, 3)) == 0)
 	    return -1;
-	}
-	*/
+
+	bu_log("Adding faces\n");
+	nmg_vertex_gv(verts[0], pt[0]);
+	nmg_vertex_gv(verts[1], pt[1]);
+	nmg_vertex_gv(verts[2], pt[2]);
+
+	bu_log("building plane equation\n");
+	nmg_fu_planeeqn(fu, tol);
 
 	vi+=3;
     }
 
-    return 0;
+    return fo;
 }
 
 void
