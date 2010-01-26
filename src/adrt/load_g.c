@@ -60,6 +60,15 @@ static tie_t *cur_tie;
 static struct db_i *dbip;
 TIE_3 **tribuf;
 
+static void nmg_to_adrt_gcvwrite(struct nmgregion *r, struct db_full_path *pathp, int region_id, int material_id, float color[3]);
+
+struct gcv_data {
+    void (*func)(struct nmgregion *, struct db_full_path *, int, int, float [3]);
+    struct adrt_mesh_s **meshes;
+};
+static struct gcv_data gcvwriter = {nmg_to_adrt_gcvwrite};
+
+
 /* load the region into the tie image */
 static void
 nmg_to_adrt_internal(struct adrt_mesh_s *mesh, struct nmgregion *r)
@@ -165,9 +174,7 @@ nmg_to_adrt_regstart(struct db_tree_state *ts, struct db_full_path *path, const 
 
     mesh = BU_GETSTRUCT(mesh, adrt_mesh_s);
 
-    /* TODO: yeah, uh, yeah. this is busted.
-    BU_LIST_PUSH(&(isst.meshes->l), &(mesh->l));
-    */
+    BU_LIST_PUSH(&((*gcvwriter.meshes)->l), &(mesh->l));
 
     mesh->texture = NULL;
     mesh->flags = 0;
@@ -230,9 +237,7 @@ nmg_to_adrt_gcvwrite(struct nmgregion *r, struct db_full_path *pathp, int region
 
     mesh = BU_GETSTRUCT(mesh, adrt_mesh_s);
 
-    /* more busted.
-    BU_LIST_PUSH(&(isst.meshes->l), &(mesh->l));
-    */
+    BU_LIST_PUSH(&((*gcvwriter.meshes)->l), &(mesh->l));
 
     mesh->texture = NULL;
     mesh->flags = 0;
@@ -244,14 +249,9 @@ nmg_to_adrt_gcvwrite(struct nmgregion *r, struct db_full_path *pathp, int region
     nmg_to_adrt_internal(mesh, r);
 }
 
-/* FIXME: this be a dumb hack to avoid void* conversion */
-struct gcv_data {
-    void (*func)(struct nmgregion *, struct db_full_path *, int, int, float [3]);
-};
-static struct gcv_data gcvwriter = {nmg_to_adrt_gcvwrite};
 
 int
-load_g (tie_t *tie, const char *db, int argc, const char **argv)
+load_g (tie_t *tie, const char *db, int argc, const char **argv, struct adrt_mesh_s **meshes)
 {
     int c;
     double percent;
@@ -308,10 +308,10 @@ load_g (tie_t *tie, const char *db, int argc, const char **argv)
 
     tie_init(cur_tie, 4096, TIE_KDTREE_FAST);
 
-    /* very busted 
-    BU_GETSTRUCT(isst.meshes, adrt_mesh_s);
-    BU_LIST_INIT(&(isst.meshes->l));
-    */
+    BU_GETSTRUCT(*meshes, adrt_mesh_s);
+    BU_LIST_INIT(&((*meshes)->l));
+
+    gcvwriter.meshes = meshes;
 
     tribuf = (TIE_3 **)bu_malloc(sizeof(TIE_3 *) * 3, "triangle tribuffer tribuffer");
     tribuf[0] = (TIE_3 *)bu_malloc(sizeof(TIE_3) * 3, "triangle tribuffer");
