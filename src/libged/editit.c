@@ -26,11 +26,11 @@
 #include <stdlib.h>
 
 #ifdef HAVE_SYS_TYPES_H
-#   include <sys/types.h>
+#  include <sys/types.h>
 #endif
 
 #ifdef HAVE_SYS_WAIT_H
-#   include <sys/wait.h>
+#  include <sys/wait.h>
 #endif
 
 #include "bio.h"
@@ -40,10 +40,10 @@
 /* editors to test, in order of discovery preference (EDITOR overrides) */
 #define WIN_EDITOR "c:/Program Files/Windows NT/Accessories/wordpad"
 #define MAC_EDITOR "/Applications/TextEdit.app/Contents/MacOS/TextEdit"
-#define	EMACS_EDITOR "/usr/bin/emacs"
-#define	VIM_EDITOR "/usr/bin/vim"
-#define	VI_EDITOR "/usr/bin/vi"
-#define	ED_EDITOR "/bin/ed"
+#define EMACS_EDITOR "/usr/bin/emacs"
+#define VIM_EDITOR "/usr/bin/vim"
+#define VI_EDITOR "/usr/bin/vi"
+#define ED_EDITOR "/bin/ed"
 
 
 int
@@ -126,7 +126,6 @@ ged_editit(const char *file)
 	}
     }
 
-
     /* print a message to let the user know they need to quit their
      * editor before mged will come back to the land of the living.
      */
@@ -147,8 +146,8 @@ ged_editit(const char *file)
     }
 
 #if defined(SIGINT) && defined(SIGQUIT)
-    s2 = signal( SIGINT, SIG_IGN );
-    s3 = signal( SIGQUIT, SIG_IGN );
+    s2 = signal(SIGINT, SIG_IGN);
+    s3 = signal(SIGQUIT, SIG_IGN);
 #endif
 
 #ifdef HAVE_UNISTD_H
@@ -163,8 +162,8 @@ ged_editit(const char *file)
 
 #if defined(SIGINT) && defined(SIGQUIT)
 	/* deja vu */
-	(void)signal( SIGINT, SIG_DFL );
-	(void)signal( SIGQUIT, SIG_DFL );
+	(void)signal(SIGINT, SIG_DFL);
+	(void)signal(SIGQUIT, SIG_DFL);
 #endif
 
 	{
@@ -181,7 +180,7 @@ ged_editit(const char *file)
 	    snprintf(buffer, RT_MAXLINE, "%s %s", editor, file);
 
 	    CreateProcess(NULL, buffer, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi);
-	    WaitForSingleObject( pi.hProcess, INFINITE );
+	    WaitForSingleObject(pi.hProcess, INFINITE);
 	    return 1;
 #else
 	    (void)execlp(editor, editor, file, NULL);
