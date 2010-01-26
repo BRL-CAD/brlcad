@@ -23,8 +23,8 @@
  *
  * Routines to interface to nirt.
  *
- * This code was imported from MGED's/rtif.c and modified to work as
- * part of the drawable geometry object.
+ * This code was imported from the RTUIF and modified to work as part
+ * of the drawable geometry object.
  *
  */
 /** @} */
@@ -133,32 +133,9 @@ dgo_nirt_cmd(struct dg_obj	*dgop,
 	     -vop->vo_center[MDY], -vop->vo_center[MDZ]);
     }
 
-#if 0
-    if (mged_variables->mv_perspective_mode) {
-	point_t pt, eye;
-
-	/* get eye point */
-	VSET(pt, 0.0, 0.0, 1.0);
-	MAT4X3PNT(eye, vop->vo_view2model, pt);
-	VSCALE(eye, eye, base2local);
-
-	/* point passed in is actually the aim point */
-	VSCALE(cml, center_model, base2local);
-	VSUB2(dir, cml, eye);
-	VUNITIZE(dir);
-
-	/* copy eye point to cml (cml is used for the "xyz" command to nirt */
-	VMOVE(cml, eye);
-    } else {
-	VSCALE(cml, center_model, base2local);
-	VMOVEN(dir, vop->vo_rotation + 8, 3);
-	VSCALE(dir, dir, -1.0);
-    }
-#else
     VSCALE(cml, center_model, dgop->dgo_wdbp->dbip->dbi_base2local);
     VMOVEN(dir, vop->vo_rotation + 8, 3);
     VSCALE(dir, dir, -1.0);
-#endif
 
     bu_vls_init(&p_vls);
     bu_vls_printf(&p_vls, "xyz %lf %lf %lf;",

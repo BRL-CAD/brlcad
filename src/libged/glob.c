@@ -141,9 +141,9 @@ ged_glob(struct ged *gedp, int argc, const char *argv[])
     return GED_OK;
 }
 
+
 /**
- * debackslash, backslash_specials, mged_compat: routines for original
- *   mged emulation mode
+ * unescapes various special characters
  */
 static void
 ged_debackslash(struct bu_vls *dest, struct bu_vls *src)
@@ -160,6 +160,10 @@ ged_debackslash(struct bu_vls *dest, struct bu_vls *src)
     }
 }
 
+
+/**
+ * escapes various special characters
+ */
 static void
 ged_backslash_specials(struct bu_vls *dest, struct bu_vls *src)
 {

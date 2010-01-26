@@ -23,8 +23,8 @@
  *
  * Routines to interface to nirt.
  *
- * This code was imported from MGED's/rtif.c and modified to work as
- * part of the drawable geometry object.
+ * This code was imported from the RTUIF and modified to work as part
+ * of the drawable geometry object.
  *
  */
 /** @} */

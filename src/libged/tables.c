@@ -143,6 +143,7 @@ ged_tables(struct ged *gedp, int argc, const char *argv[])
 
     if ( flag == SOL_TABLE || flag == REG_TABLE ) {
 	/* temp file for discrimination of solids */
+	/* !!! this needs to be a bu_temp_file() */
 	if ( (idfd = creat("/tmp/mged_discr", 0600)) < 0 ) {
 	    perror( "/tmp/mged_discr" );
 	    status = GED_ERROR;

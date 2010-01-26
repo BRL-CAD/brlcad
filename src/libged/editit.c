@@ -127,7 +127,7 @@ ged_editit(const char *file)
     }
 
     /* print a message to let the user know they need to quit their
-     * editor before mged will come back to the land of the living.
+     * editor before the application will come back to life.
      */
     {
 	int length;

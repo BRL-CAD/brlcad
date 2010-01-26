@@ -329,8 +329,8 @@ ged_preview(struct ged *gedp, int argc, const char *argv[])
     bu_vls_printf(&gedp->ged_result_str, "eyepoint at (0, 0, 1) viewspace\n");
 
     /*
-     *  Initialize the view to the current one in MGED
-     *  in case a view specification is never given.
+     * Initialize the view to the current one provided by the ged
+     * structure in case a view specification is never given.
      */
     MAT_COPY(_ged_viewrot, gedp->ged_gvp->gv_rotation);
     VSET(temp, 0.0, 0.0, 1.0);

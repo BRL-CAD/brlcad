@@ -7237,56 +7237,6 @@ wdb_hide_cmd(struct rt_wdb *wdbp,
 	if (dp->d_major_type == DB5_MAJORTYPE_BRLCAD) {
 	    int no_hide=0;
 
-	    /* warn the user that this might be a bad idea */
-	    if (isatty(fileno(stdin)) && isatty(fileno(stdout))) {
-#if 0
-		char line[80];
-
-/*XXX Ditto on the message below. Besides, it screws with the cadwidgets. */
-		/* classic interactive MGED */
-		while (1) {
-		    bu_log("Hiding BRL-CAD geometry (%s) is generaly a bad idea.\n", dp->d_namep);
-		    bu_log("This may cause unexpected problems with other commands.\n");
-		    bu_log("Are you sure you want to do this?? (y/n)\n");
-		    (void)bu_fgets(line, sizeof(line), stdin);
-		    if (line[0] == 'y' || line[0] == 'Y') break;
-		    if (line[0] == 'n' || line[0] == 'N') {
-			no_hide = 1;
-			break;
-		    }
-		}
-#endif
-	    } else if (Tcl_GetVar2Ex(interp, "tk_version", NULL, TCL_GLOBAL_ONLY)) {
-#if 0
-		struct bu_vls vls;
-
-/*
- * We should give the user some credit here
- * and not annoy them with a message dialog.
- */
-		/* Tk is active, we can pop-up a window */
-		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "Hiding BRL-CAD geometry (%s) is generaly a bad idea.\n", dp->d_namep);
-		bu_vls_strcat(&vls, "This may cause unexpected problems with other commands.\n");
-		bu_vls_strcat(&vls, "Are you sure you want to do this?");
-		(void)Tcl_ResetResult(interp);
-		if (Tcl_VarEval(interp, "tk_messageBox -type yesno ",
-				"-title Warning -icon question -message {",
-				bu_vls_addr(&vls), "}",
-				(char *)NULL) != TCL_OK) {
-		    bu_log("Unable to post question!!!\n");
-		} else {
-		    const char *result;
-
-		    result = Tcl_GetStringResult(interp);
-		    if (!strcmp(result, "no")) {
-			no_hide = 1;
-		    }
-		    (void)Tcl_ResetResult(interp);
-		}
-		bu_vls_free(&vls);
-#endif
-	    }
 	    if (no_hide)
 		continue;
 	}
@@ -8862,11 +8812,10 @@ wdb__tcl(ClientData clientData,
 /****************** utility routines ********************/
 
 /**
- *			W D B _ C M P D I R N A M E
+ * W D B _ C M P D I R N A M E
  *
  * Given two pointers to pointers to directory entries, do a string compare
  * on the respective names and return that value.
- *  This routine was lifted from mged/columns.c.
  */
 int
 wdb_cmpdirname(const genptr_t a,
@@ -8928,11 +8877,11 @@ wdb_vls_col_eol(struct bu_vls *str,
 }
 
 /**
- *			W D B _ V L S _ C O L _ P R 4 V
+ * W D B _ V L S _ C O L _ P R 4 V
  *
- *  Given a pointer to a list of pointers to names and the number of names
- *  in that list, sort and print that list in column order over four columns.
- *  This routine was lifted from mged/columns.c.
+ * Given a pointer to a list of pointers to names and the number of
+ * names in that list, sort and print that list in column order over
+ * four columns.
  */
 void
 wdb_vls_col_pr4v(struct bu_vls *vls,
@@ -9185,11 +9134,10 @@ wdb_vls_long_dpp(struct bu_vls *vls,
 }
 
 /**
- *			W D B _ V L S _ L I N E _ D P P
+ * W D B _ V L S _ L I N E _ D P P
  *@brief
- *  Given a pointer to a list of pointers to names and the number of names
- *  in that list, sort and print that list on the same line.
- *  This routine was lifted from mged/columns.c.
+ * Given a pointer to a list of pointers to names and the number of
+ * names in that list, sort and print that list on the same line.
  */
 void
 wdb_vls_line_dpp(struct bu_vls *vls,
@@ -9236,14 +9184,15 @@ wdb_vls_line_dpp(struct bu_vls *vls,
     }
 }
 
+
 /**
- *			W D B _ G E T S P A C E
+ * W D B _ G E T S P A C E
  *
- * This routine walks through the directory entry list and mallocs enough
- * space for pointers to hold:
- *  a) all of the entries if called with an argument of 0, or
- *  b) the number of entries specified by the argument if > 0.
- *  This routine was lifted from mged/dir.c.
+ * This routine walks through the directory entry list and mallocs
+ * enough space for pointers to hold:
+ *
+ * a) all of the entries if called with an argument of 0, or
+ * b) the number of entries specified by the argument if > 0.
  */
 struct directory **
 wdb_getspace(struct db_i *dbip,

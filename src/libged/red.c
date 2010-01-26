@@ -227,7 +227,7 @@ ged_check_comb(struct ged *gedp)
     int rgb_valid;
 
     if ( (fp=fopen( _ged_tmpfil, "r" )) == NULL ) {
-	perror( "MGED" );
+	perror("fopen");
 	bu_vls_printf(&gedp->ged_result_str, "Cannot open temporary file for reading\n");
 	return -1;
     }
@@ -860,7 +860,7 @@ ged_write_comb(struct ged *gedp, const struct rt_comb_internal *comb, const char
 
     /* open the file */
     if ((fp=fopen(_ged_tmpfil, "w")) == NULL) {
-	perror("MGED");
+	perror("fopen");
 	bu_vls_printf(&gedp->ged_result_str, "ged_write_comb: Cannot open temporary file for writing\n");
 	return GED_ERROR;
     }

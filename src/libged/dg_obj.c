@@ -22,8 +22,7 @@
 /** @file dg_obj.c
  *
  * A drawable geometry object contains methods and attributes for
- * preparing geometry that is ready (i.e. vlists) for display. Much of
- * this code was extracted from MGED and modified to work herein.
+ * preparing geometry that is ready (i.e. vlists) for display.
  *
  */
 
@@ -1778,9 +1777,9 @@ dgo_rtcheck_cmd(struct dg_obj	*dgop,
     int	o_pipe[2];	/* object writes view parameters */
     int	e_pipe[2];	/* object reads textual results */
 #else
-    HANDLE	i_pipe[2], pipe_iDup;	/* MGED reads results for building vectors */
-    HANDLE	o_pipe[2], pipe_oDup;	/* MGED writes view parameters */
-    HANDLE	e_pipe[2], pipe_eDup;	/* MGED reads textual results */
+    HANDLE	i_pipe[2], pipe_iDup;	/* READS results for building vectors */
+    HANDLE	o_pipe[2], pipe_oDup;	/* WRITES view parameters */
+    HANDLE	e_pipe[2], pipe_eDup;	/* READS textual results */
     STARTUPINFO si;
     PROCESS_INFORMATION pi;
     SECURITY_ATTRIBUTES sa;
@@ -3826,7 +3825,7 @@ dgo_build_tops(Tcl_Interp	*interp,
 	if (vp < end)
 	    *vp++ = dp->d_namep;
 	else  {
-	    Tcl_AppendResult(interp, "mged: ran out of comand vector space at ",
+	    Tcl_AppendResult(interp, "INTERNAL ERROR: ran out of command vector space at ",
 			     dp->d_namep, "\n", (char *)NULL);
 	    break;
 	}
