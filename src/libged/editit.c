@@ -126,6 +126,26 @@ ged_editit(const char *file)
 	}
     }
 
+
+    /* print a message to let the user know they need to quit their
+     * editor before mged will come back to the land of the living.
+     */
+    {
+	int length;
+	struct bu_vls str;
+	struct bu_vls sep;
+	bu_vls_init(&str);
+	bu_vls_init(&sep);
+	bu_log("Invoking %s on %s\n\n", editor, file);
+	bu_vls_sprintf(&str, "\nNOTE: You must QUIT %s before %s will respond and continue.\n", bu_basename(editor), bu_getprogname());
+	for (length = bu_vls_strlen(&str) - 2; length > 0; length--) {
+	    bu_vls_putc(&sep, '*');
+	}
+	bu_log("%V%V%V\n\n", &sep, &str, &sep);
+	bu_vls_free(&str);
+	bu_vls_free(&sep);
+    }
+
 #if defined(SIGINT) && defined(SIGQUIT)
     s2 = signal( SIGINT, SIG_IGN );
     s3 = signal( SIGQUIT, SIG_IGN );
