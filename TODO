@@ -56,6 +56,9 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* fix !!! in src/libged/tables.c where a temporary file is getting
+  used.  needs to call bu_temp_file().
+
 * make the 'tree' command accept a full path, not just a combination
 
 * clean up new rt -l8 heat graph lighting model so that it works in
