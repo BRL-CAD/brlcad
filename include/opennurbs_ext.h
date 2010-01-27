@@ -97,8 +97,8 @@ bool ON_NearZero(double x, double tolerance = ON_ZERO_TOLERANCE);
  * size to key off of.
  */
 /* #define BREP_EDGE_MISS_TOLERANCE 5e-2 */
-#define BREP_EDGE_MISS_TOLERANCE 1e-3
-#define BREP_SAME_POINT_TOLERANCE 1e-3
+#define BREP_EDGE_MISS_TOLERANCE 5e-3
+#define BREP_SAME_POINT_TOLERANCE 1e-6
 
 // XXX debugging crapola (clean up later)
 #define ON_PRINT4(p) "[" << (p)[0] << ", " << (p)[1] << ", " << (p)[2] << ", " << (p)[3] << "]"
@@ -1109,14 +1109,13 @@ BVNode<BV>::prepTrims() {
     double dist = 0.000001;
     bool trim_already_assigned = false;
 
-    //	BVNode<BV>::GetBBox(surfmin, surfmax);
-
     m_trims_above.clear();
-    //m_trims_right.clear();
-    ct->getLeavesAbove(m_trims_above, m_u, m_v);
-//		ct->getLeavesRight(m_trims_right, m_u, m_v);
+
+    if (ct != NULL)
+    	ct->getLeavesAbove(m_trims_above, m_u, m_v);
+
     m_trims_above.sort(sortY);
-    //m_trims_right.sort(sortX);
+
 
     if (!m_trims_above.empty()) {
 	i = m_trims_above.begin();
@@ -1127,9 +1126,12 @@ BVNode<BV>::prepTrims() {
 		if (curvemin[Y]-dist <= m_v[1]) { //possibly contains trim can't rule out check closer
 		    m_checkTrim = true;
 		    trim_already_assigned = true;
+		    i++;
+		} else {
+		    i = m_trims_above.erase(i);
 		}
 		//i = m_trims_above.erase(i);
-		i++;
+		//i++;
 	    } else {
 		i++;
 	    }
