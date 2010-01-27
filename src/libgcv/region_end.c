@@ -35,6 +35,31 @@ struct gcv_data {
 
 
 union tree *
+_gcv_cleanup(int state, struct nmgregion *r, int empty_model, union tree *tp)
+{
+    /* restore previous debug state */
+    rt_g.NMG_debug = state;
+
+    /* clean up the region we were working with */
+    if (r && !empty_model)
+	nmg_kr(r);
+
+    /* Dispose of original tree, so that all associated dynamic memory
+     * is released now, not at the end of all regions.  A return of
+     * TREE_NULL from this routine signals an error, and there is no
+     * point to adding _another_ message to our output, so we need to
+     * cons up an OP_NOP node to return.
+     */
+    db_free_tree(tp, &rt_uniresource); /* Does an nmg_kr() */
+
+    BU_GETUNION(tp, tree);
+    tp->magic = RT_TREE_MAGIC;
+    tp->tr_op = OP_NOP;
+    return tp;
+}
+
+
+union tree *
 gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
     union tree *ret_tree;
@@ -87,31 +112,32 @@ gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 	nmg_isect2d_final_cleanup();
 
 	/* Get rid of (m)any other intermediate structures */
-	if ((*tsp->ts_m)->magic == NMG_MODEL_MAGIC) {
+	if ((*tsp->ts_m)->magic == NMG_MODEL_MAGIC)
 	    nmg_km(*tsp->ts_m);
-	} else {
+	else
 	    bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
-	}
 
 	/* Now, make a new, clean model structure for next pass. */
 	*tsp->ts_m = nmg_mm();
-	goto out;
+
+	return _gcv_cleanup(NMG_debug_state, r, empty_model, curtree);
     }
 
-    /* perform boolean evaluation on the NMG */
+    /* perform boolean evaluation on the NMG, presently modifies
+     * curtree to an evaluated result and returns it if the evaluation
+     * is successful.
+     */
     ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);
 
     /* Relinquish bomb protection */
     BU_UNSETJUMP;
 
     r = (struct nmgregion *)NULL;
-    if (ret_tree) {
+    if (ret_tree)
 	r = ret_tree->tr_d.td_r;
-    }
 
-    if (r == (struct nmgregion *)NULL) {
-	goto out;
-    }
+    if (r == (struct nmgregion *)NULL)
+	return _gcv_cleanup(NMG_debug_state, r, empty_model, curtree);
 
     /* Kill cracks */
     empty_region = 0;
@@ -131,13 +157,11 @@ gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 
     /* kill zero length edgeuses */
     empty_model = 0;
-    if (!empty_region) {
+    if (!empty_region)
 	empty_model = nmg_kill_zero_length_edgeuses(*tsp->ts_m);
-    }
 
-    if (empty_region || empty_model) {
-	goto out;
-    }
+    if (empty_region || empty_model)
+	return _gcv_cleanup(NMG_debug_state, r, empty_model, curtree);
 
     if (BU_SETJUMP) {
 	char *sofar;
@@ -153,15 +177,14 @@ gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 	nmg_isect2d_final_cleanup();
 
 	/* Get rid of (m)any other intermediate structures */
-	if ((*tsp->ts_m)->magic == NMG_MODEL_MAGIC) {
+	if ((*tsp->ts_m)->magic == NMG_MODEL_MAGIC)
 	    nmg_km(*tsp->ts_m);
-	} else {
+	else
 	    bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
-	}
 
 	/* Now, make a new, clean model structure for next pass. */
 	*tsp->ts_m = nmg_mm();
-	goto out;
+	return _gcv_cleanup(NMG_debug_state, r, empty_model, curtree);
     }
 
     /* Write the region out */
@@ -170,27 +193,7 @@ gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
     /* Relinquish bomb protection */
     BU_UNSETJUMP;
 
- out:
-
-    /* restore previous debug state */
-    rt_g.NMG_debug = NMG_debug_state;
-
-    /* clean up the region we were working with */
-    if (r && !empty_model)
-	nmg_kr(r);
-
-    /* Dispose of original tree, so that all associated dynamic memory
-     * is released now, not at the end of all regions.  A return of
-     * TREE_NULL from this routine signals an error, and there is no
-     * point to adding _another_ message to our output, so we need to
-     * cons up an OP_NOP node to return.
-     */
-    db_free_tree(curtree, &rt_uniresource); /* Does an nmg_kr() */
-
-    BU_GETUNION(curtree, tree);
-    curtree->magic = RT_TREE_MAGIC;
-    curtree->tr_op = OP_NOP;
-    return(curtree);
+    return _gcv_cleanup(NMG_debug_state, r, empty_model, curtree);
 }
 
 
