@@ -40,11 +40,19 @@ ged_edmater(struct ged *gedp, int argc, const char *argv[])
     const char **av;
     static const char *usage = "comb(s)";
     char tmpfil[MAXPATHLEN];
+    const char *editstring;
+    
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
+    /* First, grab the editstring off of the argv list */
+    editstring = argv[0];
+    argc--;
+    argv++;
+		
+    
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
 
@@ -74,7 +82,7 @@ ged_edmater(struct ged *gedp, int argc, const char *argv[])
 
     (void)fclose(fp);
 
-    if (ged_editit(tmpfil)) {
+    if (_ged_editit(editstring, tmpfil)) {
 	av[0] = "rmater";
 	av[2] = NULL;
 	status = ged_rmater(gedp, 2, av);

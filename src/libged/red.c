@@ -53,10 +53,16 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
     struct rt_comb_internal *comb;
     int node_count;
     static const char *usage = "comb";
+    const char *editstring;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
+    /* First, grab the editstring off of the argv list */
+    editstring = argv[0];
+    argc--;
+    argv++;
+    
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
 
@@ -123,7 +129,7 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
     (void)fclose(fp);
 
     /* Edit the file */
-    if (ged_editit(_ged_tmpfil)) {
+    if (_ged_editit(editstring, _ged_tmpfil)) {
 	/* specifically avoid CHECK_READ_ONLY; above so that
 	 * we can delay checking if the geometry is read-only
 	 * until here so that red may be used to view objects.

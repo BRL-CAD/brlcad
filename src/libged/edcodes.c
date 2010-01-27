@@ -150,12 +150,18 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
     char **av;
     FILE *fp = NULL;
     char tmpfil[MAXPATHLEN] = {0};
+    const char *editstring;
 
     static const char *usage = "[-i|-n|-r] object(s)";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+
+    /* First, grab the editstring off of the argv list */
+    editstring = argv[0];
+    argc--;
+    argv++;
 
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
@@ -274,7 +280,7 @@ ged_edcodes(struct ged *gedp, int argc, const char *argv[])
 	fclose(f_srt);
     }
 
-    if (ged_editit(tmpfil)) {
+    if (_ged_editit(editstring, tmpfil)) {
 	av[0] = "rcodes";
 	av[2] = NULL;
 	status = ged_rcodes(gedp, 2, (const char **)av);

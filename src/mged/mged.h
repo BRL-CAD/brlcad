@@ -692,7 +692,7 @@ void wrt_point_direc(mat_t out, const mat_t change, const mat_t in, const point_
 int f_matpick(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv);
 
 /* tedit.c */
-int editit(const char *file);
+int get_editor_string(struct bu_vls *editstring);
 
 /* titles.c */
 void create_text_overlay(struct bu_vls *vp);

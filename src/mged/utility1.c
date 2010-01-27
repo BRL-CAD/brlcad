@@ -117,6 +117,51 @@ reg_compare( const void *p1, const void *p2 )
 
 /*
  *
+ *	F _ E D C O L O R ( )
+ *
+ *		control routine for editing color
+ */
+int
+f_edcolor(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+{
+    char **av;
+    char **avtmp;
+
+    int i;
+
+    CHECK_DBI_NULL;
+
+    if (argc < 2) {
+	struct bu_vls vls;
+
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "help color");
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
+    }
+
+    struct bu_vls editstring;
+    bu_vls_init(&editstring);
+    get_editor_string(&editstring);
+
+    av = (char **)bu_malloc(sizeof(char *)*(argc + 1), "f_edcolor: av");
+    av[0] = bu_vls_addr(&editstring);
+    for (i = 1; i < argc + 1; ++i)
+	av[i] = argv[i-1];
+
+    av[i] = NULL;
+   
+    ged_color(gedp, argc + 1, (const char **)av);
+    
+    bu_vls_free(&editstring); 
+    bu_free((genptr_t)av, "f_edcolor: av");
+    return TCL_OK;
+}
+
+
+/*
+ *
  *	F _ E D C O D E S ( )
  *
  *		control routine for editing region ident codes
@@ -124,13 +169,10 @@ reg_compare( const void *p1, const void *p2 )
 int
 f_edcodes(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    int i;
-    int status;
-    int sort_by_ident=0;
-    int sort_by_region=0;
-    int c;
     char **av;
-    FILE *fp = NULL;
+    char **avtmp;
+
+    int i;
 
     CHECK_DBI_NULL;
 
@@ -144,118 +186,113 @@ f_edcodes(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_ERROR;
     }
 
-    bu_optind = 1;
-    while ((c = bu_getopt(argc, argv, "ir")) != EOF) {
-	switch( c ) {
-	    case 'i':
-		sort_by_ident = 1;
-		break;
-	    case 'r':
-		sort_by_region = 1;
-		break;
-	}
-    }
+    struct bu_vls editstring;
+    bu_vls_init(&editstring);
+    get_editor_string(&editstring);
 
-    if ((sort_by_ident + sort_by_region) > 1) {
-	Tcl_AppendResult(interp, "edcodes: can only sort by region or ident, not both\n",
-			 (char *)NULL );
-	return TCL_ERROR;
-    }
-
-    argc -= (bu_optind - 1);
-    argv += (bu_optind - 1);
-
-    fp = bu_temp_file(tmpfil, MAXPATHLEN);
-    if (!fp)
-	return TCL_ERROR;
-
-    av = (char **)bu_malloc(sizeof(char *)*(argc + 2), "f_edcodes: av");
-    av[0] = "wcodes";
-    av[1] = tmpfil;
-    for (i = 2; i < argc + 1; ++i)
+    av = (char **)bu_malloc(sizeof(char *)*(argc + 1), "f_edcodes: av");
+    av[0] = bu_vls_addr(&editstring);
+    for (i = 1; i < argc + 1; ++i)
 	av[i] = argv[i-1];
 
     av[i] = NULL;
-
-    if (f_wcodes(clientData, interp, argc + 1, av) == TCL_ERROR) {
-	(void)unlink(tmpfil);
-	bu_free((genptr_t)av, "f_edcodes: av");
-	return TCL_ERROR;
-    }
-
-    (void)fclose(fp);
-
-    if (regflag == ABORTED) {
-	Tcl_AppendResult(interp, "f_edcodes: nesting is too deep\n", (char *)NULL);
-	(void)unlink(tmpfil);
-	return TCL_ERROR;
-    }
-
-    if (sort_by_ident || sort_by_region) {
-	char **line_array;
-	char aline[256];
-	FILE *f_srt;
-	int line_count=0;
-	int j;
-
-	if ((f_srt=fopen(tmpfil, "r+" )) == NULL) {
-	    Tcl_AppendResult(interp, "edcodes: Failed to open temp file for sorting\n",
-			     (char *)NULL);
-	    (void)unlink(tmpfil);
-	    return TCL_ERROR;
-	}
-
-	/* count lines */
-	while (bu_fgets(aline, 256, f_srt )) {
-	    line_count++;
-	}
-
-	/* build array of lines */
-	line_array = (char **)bu_calloc(line_count, sizeof(char *), "edcodes line array");
-
-	/* read lines and save into the array */
-	rewind(f_srt);
-	line_count = 0;
-	while (bu_fgets(aline, 256, f_srt)) {
-	    line_array[line_count] = bu_strdup(aline);
-	    line_count++;
-	}
-
-	/* sort the array of lines */
-	if (sort_by_ident) {
-	    qsort(line_array, line_count, sizeof( char *), id_compare);
-	} else {
-	    qsort(line_array, line_count, sizeof( char *), reg_compare);
-	}
-
-	/* rewrite the temp file using the sorted lines */
-	rewind(f_srt);
-	for (j=0; j<line_count; j++) {
-	    fprintf(f_srt, "%s", line_array[j]);
-	    bu_free(line_array[j], "edcodes line array element");
-	}
-	bu_free((char *)line_array, "edcodes line array");
-	fclose(f_srt);
-    }
-
-    if (editit(tmpfil)) {
-	regflag = lastmemb = 0;
-
-	if (!dbip->dbi_read_only) {
-	    av[0] = "rcodes";
-	    av[2] = NULL;
-	    status = f_rcodes(clientData, interp, 2, av);
-	} else {
-	    Tcl_AppendResult(interp, "Because the database is READ-ONLY no changes were made.\n", (char *)NULL);
-	    status = TCL_OK;
-	}
-    } else
-	status = TCL_ERROR;
-
-    unlink(tmpfil);
+   
+    ged_edcodes(gedp, argc + 1, (const char **)av);
+   
+    bu_vls_free(&editstring); 
     bu_free((genptr_t)av, "f_edcodes: av");
-    return status;
+    return TCL_OK;
 }
+
+/*
+ *
+ *	F _ E D M A T E R ( )
+ *
+ *		control routine for editing mater information
+ */
+int
+f_edmater(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
+{
+    char **av;
+    char **avtmp;
+
+    int i;
+
+    CHECK_DBI_NULL;
+
+    if (argc < 2) {
+	struct bu_vls vls;
+
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "help edmater");
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
+    }
+
+    struct bu_vls editstring;
+    bu_vls_init(&editstring);
+    get_editor_string(&editstring);
+
+    av = (char **)bu_malloc(sizeof(char *)*(argc + 1), "f_edmater: av");
+    av[0] = bu_vls_addr(&editstring);
+    for (i = 1; i < argc + 1; ++i)
+	av[i] = (char *)argv[i-1];
+
+    av[i] = NULL;
+   
+    ged_edmater(gedp, argc + 1, (const char **)av);
+   
+    bu_vls_free(&editstring); 
+    bu_free((genptr_t)av, "f_edmater: av");
+    return TCL_OK;
+}
+
+/*
+ *
+ *	F _ R E D ( )
+ *
+ *	Get editing string and call ged_red
+ */
+int
+f_red(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+{
+    char **av;
+    char **avtmp;
+
+    int i;
+
+    CHECK_DBI_NULL;
+
+    if (argc < 2) {
+	struct bu_vls vls;
+
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "help red");
+	Tcl_Eval(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
+	return TCL_ERROR;
+    }
+
+    struct bu_vls editstring;
+    bu_vls_init(&editstring);
+    get_editor_string(&editstring);
+
+    av = (char **)bu_malloc(sizeof(char *)*(argc + 1), "f_red: av");
+    av[0] = bu_vls_addr(&editstring);
+    for (i = 1; i < argc + 1; ++i)
+	av[i] = argv[i-1];
+
+    av[i] = NULL;
+   
+    ged_red(gedp, argc + 1, (const char **)av);
+   
+    bu_vls_free(&editstring); 
+    bu_free((genptr_t)av, "f_red: av");
+    return TCL_OK;
+}
+
+
 
 
 /* write codes to a file */
