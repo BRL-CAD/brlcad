@@ -1952,8 +1952,18 @@ fi
 
 dnl debug flags
 if test "x$bc_use_debug" != "xno" ; then
-	BC_COMPILER_AND_LINKER_RECOGNIZES([-g], [debug_flag])
+	BC_COMPILER_AND_LINKER_RECOGNIZES([-g3 -gstabs+], [debug_flag])
 	if test "x$bc_debug_flag_works" = "xno" ; then
+		BC_COMPILER_AND_LINKER_RECOGNIZES([-g], [debug_flag])
+	fi
+   
+	if test "x$bc_debug_flag_works" = "xyes" ; then
+		# debug works
+	   	if test "x$bc_use_debug " = "xauto" ; then
+		   	# convert 'auto' to 'yes'
+			bc_use_debug="yes"
+		fi
+	else
 		# no debug
 		if test "x$bc_use_debug" = "xyes" ; then
 			dnl debug was requested, so abort
@@ -1963,12 +1973,6 @@ if test "x$bc_use_debug" != "xno" ; then
 		fi
 		AC_MSG_WARN([Do not know how to debug with this compiler])
 		sleep 1
-	else
-		# debug works
-		if test "x$bc_use_debug" = "xauto" ; then
-			# convert 'auto' to 'yes'
-			bc_use_debug="yes"
-		fi
 	fi
 fi
 
