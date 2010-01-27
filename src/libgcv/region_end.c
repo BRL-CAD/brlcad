@@ -69,10 +69,16 @@ gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 
     int NMG_debug_state = 0;
 
-    void (*write_region)(struct nmgregion *, const struct db_full_path *, int, int, float [3]) = ((struct gcv_data *)client_data)->func;
+    void (*write_region)(struct nmgregion *, const struct db_full_path *, int, int, float [3]);
 
+    if (!tsp || !curtree || !pathp || !client_data) {
+	bu_log("INTERNAL ERROR: gcv_region_end missing parameters\n");
+	return TREE_NULL;
+    }
+
+    write_region = ((struct gcv_data *)client_data)->func;
     if (!write_region) {
-	bu_log("gcv_region_end missing conversion callback\n");
+	bu_log("INTERNAL ERROR: gcv_region_end missing conversion callback function\n");
 	return TREE_NULL;
     }
 
