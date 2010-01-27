@@ -104,9 +104,6 @@ gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
     /* Relinquish bomb protection */
     BU_UNSETJUMP;
 
-    /* restore previous debug state */
-    rt_g.NMG_debug = NMG_debug_state;
-
     r = (struct nmgregion *)NULL;
     if (ret_tree) {
 	r = ret_tree->tr_d.td_r;
@@ -141,12 +138,6 @@ gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
     if (empty_region || empty_model) {
 	goto out;
     }
-
-    /* Sometimes the NMG library adds debugging bits when it
-     * detects an internal error, before bombing.  Stash in
-     * case write_region bombs.
-     */
-    NMG_debug_state = rt_g.NMG_debug;
 
     if (BU_SETJUMP) {
 	char *sofar;
