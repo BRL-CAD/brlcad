@@ -25,6 +25,7 @@ cleanly generated.
 * increased maximum path depth supported by 'wcodes' - Sean Morrison
 * extensive work on MGED Docbook man page conversions - Janine Gettier
 * fixed unoriented BoT badmagic raytrace failure - Sean Morrison
+* translation of mged tutorials 3 and 6 to Spanish - Jesica Giudice
 
 
 ----------------------------------------------------------------------
