@@ -66,6 +66,11 @@ gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
     if (curtree->tr_op == OP_NOP)
 	return curtree;
 
+    /* Sometimes the NMG library adds debugging bits when it detects
+     * an internal error, before bombing.  Stash.
+     */
+    NMG_debug_state = rt_g.NMG_debug;
+
     /* Begin bomb protection */
     if (BU_SETJUMP) {
 	/* Error, bail out */
@@ -77,9 +82,6 @@ gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 	sofar = db_path_to_string(pathp);
 	bu_log("FAILED in Boolean evaluation: %s\n", sofar);
 	bu_free((char *)sofar, "sofar");
-
-	/* restore previous debug state */
-	rt_g.NMG_debug = NMG_debug_state;
 
 	/* Release any intersector 2d tables */
 	nmg_isect2d_final_cleanup();
@@ -96,16 +98,14 @@ gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 	goto out;
     }
 
-    /* Sometimes the NMG library adds debugging bits when it detects
-     * an internal error, before bombing.  Stash.
-     */
-    NMG_debug_state = rt_g.NMG_debug;
-
     /* perform boolean evaluation on the NMG */
     ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);
 
     /* Relinquish bomb protection */
     BU_UNSETJUMP;
+
+    /* restore previous debug state */
+    rt_g.NMG_debug = NMG_debug_state;
 
     r = (struct nmgregion *)NULL;
     if (ret_tree) {
@@ -142,6 +142,12 @@ gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 	goto out;
     }
 
+    /* Sometimes the NMG library adds debugging bits when it
+     * detects an internal error, before bombing.  Stash in
+     * case write_region bombs.
+     */
+    NMG_debug_state = rt_g.NMG_debug;
+
     if (BU_SETJUMP) {
 	char *sofar;
 
@@ -151,9 +157,6 @@ gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 	sofar = db_path_to_string(pathp);
 	bu_log("FAILED in triangulator: %s\n", sofar);
 	bu_free((char *)sofar, "sofar");
-
-	/* restore previous debug state */
-	rt_g.NMG_debug = NMG_debug_state;
 
 	/* Release any intersector 2d tables */
 	nmg_isect2d_final_cleanup();
@@ -170,12 +173,6 @@ gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 	goto out;
     }
 
-    /* Sometimes the NMG library adds debugging bits when it
-     * detects an internal error, before bombing.  Stash in
-     * case write_region bombs.
-     */
-    NMG_debug_state = rt_g.NMG_debug;
-
     /* Write the region out */
     write_region(r, pathp, tsp->ts_regionid, tsp->ts_gmater, tsp->ts_mater.ma_color);
 
@@ -183,6 +180,9 @@ gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
     BU_UNSETJUMP;
 
  out:
+
+    /* restore previous debug state */
+    rt_g.NMG_debug = NMG_debug_state;
 
     /* clean up the region we were working with */
     if (r && !empty_model)
