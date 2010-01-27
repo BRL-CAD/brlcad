@@ -68,8 +68,8 @@ gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 
     /* static just in case setjmp clobbers registers */
     static struct nmgregion *r;
-    static int empty_region;
-    static int empty_model;
+    int empty_region = 0;
+    int empty_model = 0;
 
     int NMG_debug_state = 0;
 
@@ -120,7 +120,7 @@ gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 	/* Now, make a new, clean model structure for next pass. */
 	*tsp->ts_m = nmg_mm();
 
-	return _gcv_cleanup(NMG_debug_state, r, empty_model, curtree);
+	return _gcv_cleanup(NMG_debug_state, NULL, 1, curtree);
     }
 
     /* perform boolean evaluation on the NMG, presently modifies
@@ -137,10 +137,9 @@ gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 	r = ret_tree->tr_d.td_r;
 
     if (r == (struct nmgregion *)NULL)
-	return _gcv_cleanup(NMG_debug_state, r, empty_model, curtree);
+	return _gcv_cleanup(NMG_debug_state, NULL, 1, curtree);
 
     /* Kill cracks */
-    empty_region = 0;
     s = BU_LIST_FIRST(shell, &r->s_hd);
     while (BU_LIST_NOT_HEAD(&s->l, &r->s_hd)) {
 	struct shell *next_s;
@@ -154,13 +153,12 @@ gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 	}
 	s = next_s;
     }
+    if (empty_region)
+	return _gcv_cleanup(NMG_debug_state, r, empty_model, curtree);
 
     /* kill zero length edgeuses */
-    empty_model = 0;
-    if (!empty_region)
-	empty_model = nmg_kill_zero_length_edgeuses(*tsp->ts_m);
-
-    if (empty_region || empty_model)
+    empty_model = nmg_kill_zero_length_edgeuses(*tsp->ts_m);
+    if (empty_model)
 	return _gcv_cleanup(NMG_debug_state, r, empty_model, curtree);
 
     if (BU_SETJUMP) {
@@ -184,7 +182,7 @@ gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 
 	/* Now, make a new, clean model structure for next pass. */
 	*tsp->ts_m = nmg_mm();
-	return _gcv_cleanup(NMG_debug_state, r, empty_model, curtree);
+	return _gcv_cleanup(NMG_debug_state, r, 0, curtree);
     }
 
     /* Write the region out */
@@ -193,7 +191,7 @@ gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
     /* Relinquish bomb protection */
     BU_UNSETJUMP;
 
-    return _gcv_cleanup(NMG_debug_state, r, empty_model, curtree);
+    return _gcv_cleanup(NMG_debug_state, r, 0, curtree);
 }
 
 
