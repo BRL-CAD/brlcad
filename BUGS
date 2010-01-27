@@ -15,7 +15,8 @@ on-going issues.
 Recent Bugs
 -----------
 
-* mged rrt command is not respecting the view size, just does autoview.
+* mged rrt command is not respecting the view size, just does
+  something similar to autoview but even gets az/el wrong too.
 
 * reported that fbclear is not working on Windows build in mged.
 
