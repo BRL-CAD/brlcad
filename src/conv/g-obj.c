@@ -43,7 +43,7 @@
 
 #define V3ARGSIN(a)       (a)[X]/25.4, (a)[Y]/25.4, (a)[Z]/25.4
 
-BU_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
+BU_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
 
 static char	usage[] = "\
 Usage: %s [-m][-v][-i][-u][-xX lvl][-a abs_tess_tol][-r rel_tess_tol][-n norm_tess_tol]\n\
@@ -258,7 +258,7 @@ main(int argc, char **argv)
 }
 
 static void
-nmg_to_obj(struct nmgregion *r, struct db_full_path *pathp, int region_id, int aircode, int los, int material_id)
+nmg_to_obj(struct nmgregion *r, const struct db_full_path *pathp, int region_id, int aircode, int los, int material_id)
 {
     struct model *m;
     struct shell *s;
@@ -274,11 +274,6 @@ nmg_to_obj(struct nmgregion *r, struct db_full_path *pathp, int region_id, int a
     RT_CK_FULL_PATH(pathp);
 
     region_name = db_path_to_string( pathp );
-
-#if 0
-    printf("Attempting to process region %s\n", region_name);
-    fflush(stdout);
-#endif
 
     m = r->m_p;
     NMG_CK_MODEL( m );
@@ -519,7 +514,8 @@ nmg_to_obj(struct nmgregion *r, struct db_full_path *pathp, int region_id, int a
  *
  *  This routine must be prepared to run in parallel.
  */
-union tree *do_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+union tree *
+do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
     union tree		*ret_tree;
     struct bu_list		vhead;

@@ -2001,7 +2001,7 @@ db_tally_subtree_regions(
 /* ============================== */
 
 HIDDEN union tree *
-_db_gettree_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data __attribute__((unused)))
+_db_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data __attribute__((unused)))
 {
 
     RT_CK_DBTS(tsp);
@@ -2019,7 +2019,7 @@ _db_gettree_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, un
 
 
 HIDDEN union tree *
-_db_gettree_leaf(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data __attribute__((unused)))
+_db_gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data __attribute__((unused)))
 {
     union tree *curtree;
 
@@ -2059,7 +2059,7 @@ HIDDEN void
 _db_walk_subtree(
     union tree *tp,
     struct combined_tree_state **region_start_statepp,
-    union tree *(*leaf_func) BU_ARGS((struct db_tree_state *, struct db_full_path *, struct rt_db_internal *, void *)),
+    union tree *(*leaf_func) BU_ARGS((struct db_tree_state *, const struct db_full_path *, struct rt_db_internal *, void *)),
     genptr_t client_data,
     struct resource *resp)
 {
@@ -2291,9 +2291,9 @@ db_walk_tree(struct db_i *dbip,
 	     const char **argv,
 	     int ncpu,
 	     const struct db_tree_state *init_state,
-	     int (*reg_start_func) (struct db_tree_state *, struct db_full_path *, const struct rt_comb_internal *, genptr_t),
-	     union tree *(*reg_end_func) (struct db_tree_state *, struct db_full_path *, union tree *, genptr_t),
-	     union tree *(*leaf_func) (struct db_tree_state *, struct db_full_path *, struct rt_db_internal *, genptr_t),
+	     int (*reg_start_func) (struct db_tree_state *, const struct db_full_path *, const struct rt_comb_internal *, genptr_t),
+	     union tree *(*reg_end_func) (struct db_tree_state *, const struct db_full_path *, union tree *, genptr_t),
+	     union tree *(*leaf_func) (struct db_tree_state *, const struct db_full_path *, struct rt_db_internal *, genptr_t),
 	     genptr_t client_data)
 {
     union tree *whole_tree = TREE_NULL;

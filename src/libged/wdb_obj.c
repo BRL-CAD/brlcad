@@ -280,8 +280,8 @@ struct directory *wdb_combadd(Tcl_Interp *interp, struct db_i *dbip, struct dire
 void wdb_identitize(struct directory *dp, struct db_i *dbip, Tcl_Interp *interp);
 static void wdb_dir_summary(struct db_i *dbip, Tcl_Interp *interp, int flag);
 static struct directory ** wdb_dir_getspace(struct db_i *dbip, int num_entries);
-static union tree *wdb_pathlist_leaf_func(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data);
-HIDDEN union tree *facetize_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
+static union tree *wdb_pathlist_leaf_func(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data);
+HIDDEN union tree *facetize_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
 int wdb_dir_check(struct db_i *input_dbip, const char *name, long laddr, int len, int flags, genptr_t ptr);
 void wdb_dir_check5(struct db_i *input_dbip, const struct db5_raw_internal *rip, long addr, genptr_t ptr);
 
@@ -4322,11 +4322,7 @@ wdb_find_ref(struct db_i *dbip,
  *
  */
 HIDDEN union tree *
-facetize_region_end(tsp, pathp, curtree, client_data)
-    struct db_tree_state *tsp;
-    struct db_full_path *pathp;
-    union tree *curtree;
-    genptr_t client_data;
+facetize_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
     struct bu_list vhead;
     union tree **facetize_tree;
@@ -5742,7 +5738,7 @@ struct wdb_push_data {
  */
 static union tree *
 wdb_push_leaf(struct db_tree_state *tsp,
-	      struct db_full_path *pathp,
+	      const struct db_full_path *pathp,
 	      struct rt_db_internal *ip,
 	      genptr_t client_data)
 {
@@ -5818,7 +5814,7 @@ wdb_push_leaf(struct db_tree_state *tsp,
  */
 static union tree *
 wdb_push_region_end(struct db_tree_state *tsp,
-		    struct db_full_path *pathp,
+		    const struct db_full_path *pathp,
 		    union tree *curtree,
 		    genptr_t client_data)
 {
@@ -9617,7 +9613,7 @@ wdb_dir_getspace(struct db_i *dbip,
  */
 static union tree *
 wdb_pathlist_leaf_func(struct db_tree_state *tsp,
-		       struct db_full_path *pathp,
+		       const struct db_full_path *pathp,
 		       struct rt_db_internal *ip,
 		       genptr_t client_data)
 {
@@ -9628,13 +9624,17 @@ wdb_pathlist_leaf_func(struct db_tree_state *tsp,
     RT_CK_DB_INTERNAL(ip);
 
     if (pathListNoLeaf) {
-	--pathp->fp_len;
+	struct db_full_path pp;
+	db_full_path_init(&pp);
+	db_dup_full_path(&pp, pathp);
+	--pp.fp_len;
+	str = db_path_to_string(&pp);
+	Tcl_AppendElement(interp, str);
+	db_free_full_path(&pp);
+    } else {
 	str = db_path_to_string(pathp);
-	++pathp->fp_len;
-    } else
-	str = db_path_to_string(pathp);
-
-    Tcl_AppendElement(interp, str);
+	Tcl_AppendElement(interp, str);
+    }
 
     bu_free((genptr_t)str, "path string");
     return TREE_NULL;

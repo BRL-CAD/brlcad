@@ -623,7 +623,7 @@ bot_dump(struct directory *dp, struct rt_bot_internal *bot, FILE *fp, int fd, st
 
 static union tree *
 ged_bot_dump_leaf(struct db_tree_state	*tsp,
-		  struct db_full_path	*pathp,
+		  const struct db_full_path *pathp,
 		  struct rt_db_internal	*ip,
 		  genptr_t		client_data)
 {

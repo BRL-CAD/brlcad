@@ -3397,7 +3397,7 @@ struct bu_list artic_head = {
 };
 
 struct joint *
-findjoint(struct db_full_path *pathp)
+findjoint(const struct db_full_path *pathp)
 {
     int i, j;
     struct joint *jp;
@@ -3445,7 +3445,7 @@ findjoint(struct db_full_path *pathp)
 }
 
 HIDDEN union tree *
-mesh_leaf(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
+mesh_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
 {
     struct rt_grip_internal *gip;
     struct	artic_joints	*newJoint;
@@ -3503,7 +3503,7 @@ mesh_leaf(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_in
 }
 
 HIDDEN union tree *
-mesh_end_region (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+mesh_end_region (struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
     return curtree;
 }

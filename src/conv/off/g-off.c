@@ -40,7 +40,7 @@
 #include "plot3.h"
 
 
-BU_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
+BU_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
 
 
 static const char usage[] = "Usage: %s [-v] [-d] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-p prefix] brlcad_db.g object(s)\n";
@@ -211,7 +211,7 @@ main(int argc, char **argv)
  *
  *  This routine must be prepared to run in parallel.
  */
-union tree *do_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
     union tree		*ret_tree;
     struct nmgregion	*r;

@@ -1004,17 +1004,17 @@ struct db_tree_state {
 
     int			ts_stop_at_regions;	/**< @brief else stop at solids */
     int			(*ts_region_start_func) BU_ARGS((struct db_tree_state * /**< @brief tsp*/,
-							 struct db_full_path * /**< @brief pathp*/,
+							 const struct db_full_path * /**< @brief pathp*/,
 							 const struct rt_comb_internal * /**< @brief combp */,
 							 genptr_t client_data
 							    ));
     union tree *	(*ts_region_end_func) BU_ARGS((struct db_tree_state * /**< @brief tsp*/,
-						       struct db_full_path * /**< @brief pathp*/,
+						       const struct db_full_path * /**< @brief pathp*/,
 						       union tree * /**< @brief curtree*/,
 						       genptr_t client_data
 							  ));
     union tree *	(*ts_leaf_func) BU_ARGS((struct db_tree_state * /**< @brief tsp*/,
-						 struct db_full_path * /**< @brief pathp*/,
+						 const struct db_full_path * /**< @brief pathp*/,
 						 struct rt_db_internal * /**< @brief ip*/,
 						 genptr_t client_data
 						    ));
@@ -3196,15 +3196,15 @@ RT_EXPORT BU_EXTERN(int db_walk_tree,
 		     int ncpu,
 		     const struct db_tree_state *init_state,
 		     int (*reg_start_func) (struct db_tree_state * /*tsp*/,
-					    struct db_full_path * /*pathp*/,
+					    const struct db_full_path * /*pathp*/,
 					    const struct rt_comb_internal * /* combp */,
 					    genptr_t client_data),
 		     union tree *(*reg_end_func) (struct db_tree_state * /*tsp*/,
-						  struct db_full_path * /*pathp*/,
+						  const struct db_full_path * /*pathp*/,
 						  union tree * /*curtree*/,
 						  genptr_t client_data),
 		     union tree *(*leaf_func) (struct db_tree_state * /*tsp*/,
-					       struct db_full_path * /*pathp*/,
+					       const struct db_full_path * /*pathp*/,
 					       struct rt_db_internal * /*ip*/,
 					       genptr_t client_data),
 		     genptr_t client_data));
@@ -5066,12 +5066,12 @@ RT_EXPORT BU_EXTERN(int nmg_two_region_vertex_fuse,
 		     const struct bn_tol *tol));
 RT_EXPORT BU_EXTERN(union tree *nmg_booltree_leaf_tess,
 		    (struct db_tree_state *tsp,
-		     struct db_full_path *pathp,
+		     const struct db_full_path *pathp,
 		     struct rt_db_internal *ip,
 		     genptr_t client_data));
 RT_EXPORT BU_EXTERN(union tree *nmg_booltree_leaf_tnurb,
 		    (struct db_tree_state *tsp,
-		     struct db_full_path *pathp,
+		     const struct db_full_path *pathp,
 		     struct rt_db_internal *ip,
 		     genptr_t client_data));
 RT_EXPORT extern int nmg_bool_eval_silent;	/* quell output from nmg_booltree_evaluate */

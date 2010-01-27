@@ -41,7 +41,7 @@
 #include "raytrace.h"
 
 
-BU_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
+BU_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
 
 static char	usage[] = "Usage: %s [-v] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-o out_file] brlcad_db.g object(s)\n";
 
@@ -132,7 +132,7 @@ insert_id(int id)
 }
 
 static int
-select_region(struct db_tree_state *tsp, struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
+select_region(struct db_tree_state *tsp, const struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
 {
     if (verbose )
 	bu_log( "select_region: curr_id = %d, tsp->ts_regionid = %d\n", curr_id, tsp->ts_regionid);
@@ -144,7 +144,7 @@ select_region(struct db_tree_state *tsp, struct db_full_path *pathp, const struc
 }
 
 static int
-get_reg_id(struct db_tree_state *tsp, struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
+get_reg_id(struct db_tree_state *tsp, const struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
 {
     if ( verbose )
 	bu_log( "get_reg_id: Adding id %d to list\n", tsp->ts_regionid );
@@ -153,14 +153,14 @@ get_reg_id(struct db_tree_state *tsp, struct db_full_path *pathp, const struct r
 }
 
 static union tree *
-region_stub(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+region_stub(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
     bu_exit(1, "ERROR; region stub called, this shouldn't happen\n" );
     return( (union tree *)NULL ); /* just to keep the compilers happy */
 }
 
 static union tree *
-leaf_stub(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
+leaf_stub(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
 {
     bu_exit(1, "ERROR: leaf stub called, this shouldn't happen\n" );
     return( (union tree *)NULL ); /* just to keep the compilers happy */
@@ -659,7 +659,8 @@ main(int argc, char **argv)
  *
  *  This routine must be prepared to run in parallel.
  */
-union tree *do_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+union tree *
+do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
     struct nmgregion	*r;
     struct bu_list		vhead;

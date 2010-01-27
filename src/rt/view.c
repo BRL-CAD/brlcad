@@ -535,11 +535,13 @@ view_eol(struct application *ap)
 void
 view_end(struct application *ap)
 {
+    extern fastf_t** timeTable_init(int x, int y);
+
     /* If the heat graph is on, render it after all pixels completed */
     if (lightmodel == 8) {
 
-	fastf_t *(*timeTable);
-	timeTable = timeTable_init(NULL, NULL);
+	fastf_t **timeTable;
+	timeTable = timeTable_init(0, 0);
 	bu_log("Building Heat-Graph!\n");
 	bu_log("X:%d Y:%d W:%d H%d\n", ap->a_x, ap->a_y, width, height);
 	timeTable_process(timeTable, ap, fbp);

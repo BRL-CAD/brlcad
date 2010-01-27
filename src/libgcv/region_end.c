@@ -30,12 +30,12 @@
 
 /* FIXME: this be a dumb hack to avoid void* conversion */
 struct gcv_data {
-    void (*func)(struct nmgregion *, struct db_full_path *, int, int, float [3]);
+    void (*func)(struct nmgregion *, const struct db_full_path *, int, int, float [3]);
 };
 
 
 union tree *
-gcv_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
     union tree *ret_tree;
     struct bu_list vhead;
@@ -48,7 +48,7 @@ gcv_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union tree
 
     int NMG_debug_state = 0;
 
-    void (*write_region)(struct nmgregion *, struct db_full_path *, int, int, float [3]) = ((struct gcv_data *)client_data)->func;
+    void (*write_region)(struct nmgregion *, const struct db_full_path *, int, int, float [3]) = ((struct gcv_data *)client_data)->func;
 
     if (!write_region) {
 	bu_log("gcv_region_end missing conversion callback\n");

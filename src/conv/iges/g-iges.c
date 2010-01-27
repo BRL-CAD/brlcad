@@ -51,7 +51,7 @@
 #define	CP_BUF_SIZE	4096	/* size of buffer for file copy */
 #define SUFFIX_LEN	10	/* max size of suffix for 'part' files (-m option) */
 
-BU_EXTERN( union tree *do_nmg_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
+BU_EXTERN( union tree *do_nmg_region_end, (struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
 void w_start_global(
     FILE *fp_dir,
     FILE *fp_param,
@@ -460,11 +460,7 @@ main(int argc, char *argv[])
  *  This routine must be prepared to run in parallel.
  */
 union tree *
-do_nmg_region_end(tsp, pathp, curtree, client_data)
-    struct db_tree_state	*tsp;
-    struct db_full_path	*pathp;
-    union tree		*curtree;
-    genptr_t		client_data;
+do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
     union tree		*result;
     struct nmgregion	*r;

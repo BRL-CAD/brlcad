@@ -162,6 +162,8 @@ do_pixel(int cpu, int pat_num, int pixelnum)
     register RGBpixel pixel = {0, 0, 0};
     const int pindex = (pixelnum * sizeof(RGBpixel));
 
+    extern fastf_t** timeTable_init(int x, int y);
+
     if (lightmodel == 8) {
 	/* Add timer here to start pixel-time for heat
 	 * graph, when asked.
@@ -424,7 +426,7 @@ do_pixel(int cpu, int pat_num, int pixelnum)
 	pixelTime = rt_get_timer(NULL,NULL);
 	/* bu_log("PixelTime = %lf X:%d Y:%d\n", pixelTime, a.a_x, a.a_y); */
 	bu_semaphore_acquire(RT_SEM_LAST-2);
-	fastf_t *(*timeTable);
+	fastf_t **timeTable;
 	timeTable = timeTable_init(width, height);
        	timeTable_input(a.a_x, a.a_y, pixelTime, timeTable);
 	bu_semaphore_release(RT_SEM_LAST-2);

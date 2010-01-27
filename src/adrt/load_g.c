@@ -63,7 +63,7 @@ TIE_3 **tribuf;
 static void nmg_to_adrt_gcvwrite(struct nmgregion *r, struct db_full_path *pathp, int region_id, int material_id, float color[3]);
 
 struct gcv_data {
-    void (*func)(struct nmgregion *, struct db_full_path *, int, int, float [3]);
+    void (*func)(struct nmgregion *, const struct db_full_path *, int, int, float [3]);
     struct adrt_mesh_s **meshes;
 };
 static struct gcv_data gcvwriter = {nmg_to_adrt_gcvwrite};
@@ -144,7 +144,7 @@ nmg_to_adrt_internal(struct adrt_mesh_s *mesh, struct nmgregion *r)
 }
 
 int
-nmg_to_adrt_regstart(struct db_tree_state *ts, struct db_full_path *path, const struct rt_comb_internal *rci, genptr_t client_data)
+nmg_to_adrt_regstart(struct db_tree_state *ts, const struct db_full_path *path, const struct rt_comb_internal *rci, genptr_t client_data)
 {
     /* 
      * if it's a simple single bot region, just eat the bots and return -1.
@@ -220,7 +220,7 @@ nmg_to_adrt_regstart(struct db_tree_state *ts, struct db_full_path *path, const 
 
 
 static void
-nmg_to_adrt_gcvwrite(struct nmgregion *r, struct db_full_path *pathp, int region_id, int material_id, float color[3])
+nmg_to_adrt_gcvwrite(struct nmgregion *r, const struct db_full_path *pathp, int region_id, int material_id, float color[3])
 {
     struct model *m;
     struct shell *s;

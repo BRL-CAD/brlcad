@@ -123,7 +123,7 @@ get_pixel_timer(double *total)
  * time taken to complete pixels during a raytrace. Returns a
  * pointer to the table.
  */
-fastf_t*
+fastf_t**
 timeTable_init(int x, int y)
 {
     /*
@@ -132,21 +132,21 @@ timeTable_init(int x, int y)
      * So first we need to get the size of the framebuffer
      * height and width and use that as the starting point.
      */
-    
+
     static fastf_t **timeTable = NULL;
     if (x && y) {
 	int i=0;
 	int w=0;
 
 	/* Semaphore Acquire goes here */
-	
+
 	if (timeTable == NULL) {
 	    bu_log("X is %d, Y is %d\n", x, y);
 	    bu_log("Making time Table\n");
 	    timeTable = bu_malloc(x * sizeof(double *), "timeTable");
 	    for (i = 0; i < x; i++) {
 		timeTable[i] = bu_malloc(y * sizeof(double), "timeTable[i]");
-	    }    
+	    }
 	    for (i = 0; i < x; i++) {
 		for (w = 0; w < y; w++) {
 		    timeTable[i][w] = -1;

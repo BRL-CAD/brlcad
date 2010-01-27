@@ -654,7 +654,7 @@ struct goodies {
  * This routine should be generally exported for other uses.
  */
 HIDDEN union tree *
-rt_submodel_wireframe_leaf(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data __attribute__((unused)))
+rt_submodel_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data __attribute__((unused)))
 {
     union tree *curtree;
     struct goodies *gp;

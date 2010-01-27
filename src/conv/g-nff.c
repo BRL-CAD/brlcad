@@ -40,7 +40,7 @@
 #include "raytrace.h"
 
 
-BU_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
+BU_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
 
 static char	usage[] = "\
 Usage: %s [-v][-i][-xX lvl][-a abs_tess_tol][-r rel_tess_tol][-n norm_tess_tol]\n\
@@ -316,12 +316,9 @@ main(argc, argv)
     return 0;
 }
 
+
 static void
-nmg_to_nff( r, pathp, region_id, material_id )
-    struct nmgregion *r;
-    struct db_full_path *pathp;
-    int region_id;
-    int material_id;
+nmg_to_nff(struct nmgregion *r, const struct db_full_path *pathp, int region_id, int material_id)
 {
     struct model *m;
     struct shell *s;
@@ -388,11 +385,8 @@ nmg_to_nff( r, pathp, region_id, material_id )
  *
  *  This routine must be prepared to run in parallel.
  */
-union tree *do_region_end(tsp, pathp, curtree, client_data)
-    struct db_tree_state	*tsp;
-    struct db_full_path	*pathp;
-    union tree		*curtree;
-    genptr_t		client_data;
+union tree *
+do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
     union tree		*ret_tree;
     struct bu_list		vhead;

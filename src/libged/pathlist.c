@@ -56,7 +56,7 @@ ged_pathlist_leaf_func(struct db_tree_state	*tsp,
 
     if (pathListNoLeaf) {
 	struct db_full_path pp;
-	db_init_full_path(&pp);
+	db_full_path_init(&pp);
 	db_dup_full_path(&pp, pathp);
 	--pp.fp_len;
 	str = db_path_to_string(&pp);

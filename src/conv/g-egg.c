@@ -65,7 +65,7 @@ static unsigned int tot_polygons = 0;
 
 
 static void
-nmg_to_egg(struct nmgregion *r, struct db_full_path *pathp, int region_id, int material_id, float color[3])
+nmg_to_egg(struct nmgregion *r, const struct db_full_path *pathp, int region_id, int material_id, float color[3])
 {
     struct model *m;
     struct shell *s;
@@ -157,7 +157,7 @@ nmg_to_egg(struct nmgregion *r, struct db_full_path *pathp, int region_id, int m
 
 /* FIXME: this be a dumb hack to avoid void* conversion */
 struct gcv_data {
-    void (*func)(struct nmgregion *, struct db_full_path *, int, int, float [3]);
+    void (*func)(struct nmgregion *, const struct db_full_path *, int, int, float [3]);
 };
 static struct gcv_data gcvwriter = {nmg_to_egg};
 
