@@ -32,6 +32,9 @@
 
 #include "./ged_private.h"
 
+#define db_init_full_path(_fp) {\
+	(_fp)->fp_len = (_fp)->fp_maxlen = 0; \
+	(_fp)->magic = DB_FULL_PATH_MAGIC; }
 
 static int pathListNoLeaf = 0;
 
