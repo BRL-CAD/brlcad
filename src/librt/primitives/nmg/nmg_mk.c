@@ -1146,7 +1146,7 @@ nmg_kvu(struct vertexuse *vu)
     }
 
     v = vu->v_p;
-    if (!v) {
+    if (v) {
 	NMG_CK_VERTEX(v);
 
 	BU_LIST_DEQUEUE(&vu->l);
