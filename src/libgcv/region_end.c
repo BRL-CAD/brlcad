@@ -67,7 +67,7 @@ gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
     struct shell *s;
 
     /* static just in case setjmp clobbers registers */
-    static struct nmgregion *r;
+    struct nmgregion *r;
     int empty_region = 0;
     int empty_model = 0;
 
@@ -121,16 +121,15 @@ gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 	*tsp->ts_m = nmg_mm();
 
 	return _gcv_cleanup(NMG_debug_state, NULL, 1, curtree);
-    }
+    } else {
 
-    /* perform boolean evaluation on the NMG, presently modifies
-     * curtree to an evaluated result and returns it if the evaluation
-     * is successful.
-     */
-    ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);
+	/* perform boolean evaluation on the NMG, presently modifies
+	 * curtree to an evaluated result and returns it if the evaluation
+	 * is successful.
+	 */
+	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);
 
-    /* Relinquish bomb protection */
-    BU_UNSETJUMP;
+    } BU_UNSETJUMP; /* Relinquish bomb protection */
 
     r = (struct nmgregion *)NULL;
     if (ret_tree)
@@ -183,13 +182,12 @@ gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 	/* Now, make a new, clean model structure for next pass. */
 	*tsp->ts_m = nmg_mm();
 	return _gcv_cleanup(NMG_debug_state, r, 0, curtree);
-    }
+    } else {
 
-    /* Write the region out */
-    write_region(r, pathp, tsp->ts_regionid, tsp->ts_gmater, tsp->ts_mater.ma_color);
+	/* Write the region out */
+	write_region(r, pathp, tsp->ts_regionid, tsp->ts_gmater, tsp->ts_mater.ma_color);
 
-    /* Relinquish bomb protection */
-    BU_UNSETJUMP;
+    } BU_UNSETJUMP; /* Relinquish bomb protection */
 
     return _gcv_cleanup(NMG_debug_state, r, 0, curtree);
 }
