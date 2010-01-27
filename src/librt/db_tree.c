@@ -1421,7 +1421,6 @@ db_dup_subtree(const union tree *tp, struct resource *resp)
 void
 db_ck_tree(const union tree *tp)
 {
-
     RT_CK_TREE(tp);
 
     switch (tp->tr_op) {
@@ -1469,6 +1468,9 @@ db_ck_tree(const union tree *tp)
 void
 db_free_tree(union tree *tp, struct resource *resp)
 {
+    if (!tp)
+	return;
+
     RT_CK_TREE(tp);
     if (!resp) {
 	resp = &rt_uniresource;
