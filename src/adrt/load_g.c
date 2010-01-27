@@ -60,7 +60,7 @@ static tie_t *cur_tie;
 static struct db_i *dbip;
 TIE_3 **tribuf;
 
-static void nmg_to_adrt_gcvwrite(struct nmgregion *r, struct db_full_path *pathp, int region_id, int material_id, float color[3]);
+static void nmg_to_adrt_gcvwrite(struct nmgregion *r, const struct db_full_path *pathp, int region_id, int material_id, float color[3]);
 
 struct gcv_data {
     void (*func)(struct nmgregion *, const struct db_full_path *, int, int, float [3]);
