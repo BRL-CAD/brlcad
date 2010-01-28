@@ -23,6 +23,8 @@
  * Program to convert a BRL-CAD model (in a .g file) to a panda3d egg file by
  * calling on the NMG booleans.  Based on g-stl.c.
  *
+ * Format information is (currently) available at
+ * http://panda3d.cvs.sourceforge.net/panda3d/panda/src/doc/eggSyntax.txt?view=markup
  */
 
 #include "common.h"
