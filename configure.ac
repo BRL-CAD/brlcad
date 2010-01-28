@@ -2689,7 +2689,7 @@ TCL_CPPFLAGS=""
 TCL_DIR=""
 unset ac_cv_c_tclconfig
 if test "x$build_brlcad_tcl" = "xyes" ; then
-    TCL_VERSION="8.5"
+    TCL_VERSION="8.6"
     AC_MSG_RESULT(yes)
     case $host_os in
 	 darwin*)
@@ -2822,7 +2822,7 @@ TK=""
 TKSTUB=""
 TK_CPPFLAGS=""
 TK_DIR=""
-TK_VERSION="8.5"
+TK_VERSION="8.6"
 unset ac_cv_c_tkconfig
 
 if test "x$build_against_tk" = "xyes" ; then

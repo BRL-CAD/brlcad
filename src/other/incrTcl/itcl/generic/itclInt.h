@@ -12,7 +12,7 @@
  * RCS: @(#) $Id$
  */
 
-#include <unistd.h>
+/*#include <unistd.h>*/
 #include <string.h>
 #include <ctype.h>
 #include <tcl.h>
