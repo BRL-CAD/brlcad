@@ -6,7 +6,7 @@ htmltokens.c:   $(srcdir)/tokenlist.txt
 
 htmldefaultstyle.c: $(srcdir)/tkhtml.tcl  $(srcdir)/html.css \
                     $(srcdir)/mkdefaultstyle.tcl
-	$(TCLSH_PROG) $(srcdir)/mkdefaultstyle.tcl > htmldefaultstyle.c
+	$(TCLSH_PROG) $(srcdir)/mkdefaultstyle.tcl > $(top_builddir)/src/htmldefaultstyle.c
 
 htmltokens.h: htmltokens.c
 
@@ -20,8 +20,8 @@ cssprop.c: cssprop.h
 #
 lib@PACKAGE_NAME@@PACKAGE_VERSION@_la_SOURCES = \
 	css.c \
-	cssprop.c \
-	htmldefaultstyle.c \
+	$(top_builddir)/src/cssprop.c \
+	$(top_builddir)/src/htmldefaultstyle.c \
 	cssdynamic.c \
 	cssparser.c \
 	csssearch.c \
