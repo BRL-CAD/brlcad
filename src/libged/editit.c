@@ -107,6 +107,7 @@ _ged_editit(char *editstring, char *filename)
 
 	{
 #if defined(_WIN32) && !defined(__CYGWIN__)
+	    char buffer[RT_MAXLINE + 1] = {0};
 	    STARTUPINFO si = {0};
 	    PROCESS_INFORMATION pi = {0};
 	    si.cb = sizeof(STARTUPINFO);
