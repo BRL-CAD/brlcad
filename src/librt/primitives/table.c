@@ -122,7 +122,6 @@ extern int rt_generic_xform(struct rt_db_internal *, const mat_t, struct rt_db_i
 
 /* from db5_bin.c */
 BU_EXTERN(int rt_binunif_import5, (struct rt_db_internal * ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp));
-BU_EXTERN(int rt_binmime_import5, (struct rt_db_internal * ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp));
 BU_EXTERN(int rt_binunif_export5, (struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip, struct resource *resp));
 BU_EXTERN(void rt_binunif_ifree, (struct rt_db_internal *ip));
 BU_EXTERN(int rt_binunif_describe, (struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local, struct resource *resp, struct db_i *db_i));
@@ -1294,7 +1293,7 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	NULL,
 	NULL,
-	rt_generic_xform,
+	NULL,
 	NULL,
 	0,
 	0,
@@ -1341,8 +1340,10 @@ const struct rt_functab rt_functab[] = {
     },
 
     {
-	/* 34 */
-	RT_FUNCTAB_MAGIC, "ID_BINMIME", "binmime",
+	/* 34 available placeholder to not offset latter table indices
+	 * (was ID_BINMIME)
+	 */
+	RT_FUNCTAB_MAGIC, "ID_UNUSED2", "unused2",
 	0,
 	NULL,
 	NULL,
@@ -1358,13 +1359,13 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	NULL,
 	NULL,
-	rt_binmime_import5,
 	NULL,
 	NULL,
 	NULL,
 	NULL,
 	NULL,
-	rt_generic_xform,
+	NULL,
+	NULL,
 	NULL,
 	0,
 	0,

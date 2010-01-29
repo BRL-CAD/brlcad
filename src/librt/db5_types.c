@@ -100,7 +100,6 @@ static const struct db5_type type_table[] = {
     { DB5_MAJORTYPE_BINARY_UNIF, DB5_MINORTYPE_BINU_32BITINT, 1, "i", "array of 32-bit ints" },
     { DB5_MAJORTYPE_BINARY_UNIF, DB5_MINORTYPE_BINU_64BITINT, 1, "64", "array of 64-bit ints" },
     { DB5_MAJORTYPE_BINARY_UNIF, 0, 0, "binunif", "uniform-array binary" },
-    { DB5_MAJORTYPE_BINARY_MIME, 0, 0, "binmime", "MIME-typed binary" },
     /* Following entry must be at end of table */
     { DB5_MAJORTYPE_RESERVED, 0, 0, 0, 0 },
 };

@@ -529,7 +529,7 @@ struct soltab {
 #define ID_COMBINATION	31	/**< @brief Combination Record */
 #define ID_UNUSED1	32	/**< @brief UNUSED (placeholder)  */
 #define ID_BINUNIF	33	/**< @brief Uniform-array binary */
-#define ID_BINMIME	34	/**< @brief MIME-typed binary */
+#define ID_UNUSED2	34	/**< @brief UNUSED (placeholder) */
 #define ID_CONSTRAINT   39      /**< @brief Constraint object */
 
 /* XXX - superellipsoid should be 31, but is not v5 compatible */
