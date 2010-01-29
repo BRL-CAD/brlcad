@@ -2028,11 +2028,11 @@ Popup Menu    Right or Ctrl-Left
 	    function {
 		if {[llength $args] == 3} {
 		    set subcmd [lindex $args 2]
-		    if {[lsearch $subcmd $mArcherCoreCommands] == -1 &&
-			[lsearch $subcmd $mUnwrappedDbCommands] == -1} {
+		    if {[lsearch $mArcherCoreCommands $subcmd] == -1 &&
+			[lsearch $mUnwrappedDbCommands $subcmd] == -1} {
 			error "ArcherCore::cmd: unrecognized command - $subcmd"
 		    } else {
-			return
+			return $subcmd
 		    }
 		} else {
 		    return [eval list $mArcherCoreCommands $mUnwrappedDbCommands]
