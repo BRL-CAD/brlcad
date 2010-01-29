@@ -421,16 +421,19 @@ do_pixel(int cpu, int pat_num, int pixelnum)
     /* bu_log("2: [%d, %d] : [%.2f, %.2f, %.2f]\n", pixelnum%width, pixelnum/width, a.a_color[0], a.a_color[1], a.a_color[2]); */
 
     /* Add get_pixel_timer here to get total time taken to get pixel, when asked */
+#if !defined(_WIN32) || defined(__CYGWIN__)
     if (lightmodel == 8) {
 	fastf_t pixelTime;
+	fastf_t **timeTable;
+
 	pixelTime = rt_get_timer(NULL,NULL);
 	/* bu_log("PixelTime = %lf X:%d Y:%d\n", pixelTime, a.a_x, a.a_y); */
 	bu_semaphore_acquire(RT_SEM_LAST-2);
-	fastf_t **timeTable;
 	timeTable = timeTable_init(width, height);
        	timeTable_input(a.a_x, a.a_y, pixelTime, timeTable);
 	bu_semaphore_release(RT_SEM_LAST-2);
     }
+#endif
     /* we're done */
     view_pixel(&a);
     if (a.a_x == width-1) {
