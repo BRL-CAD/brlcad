@@ -1382,6 +1382,14 @@ GED_EXPORT BU_EXTERN(int ged_bot_decimate, (struct ged *gedp, int argc, const ch
 GED_EXPORT BU_EXTERN(int ged_bot_dump, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Dump displayed bots to the specified format.
+ *
+ * Usage:
+ *     dbot_dump [-b] [-m directory] [-o file] [-t dxf|obj|sat|stl] [-u units]";
+ */
+GED_EXPORT BU_EXTERN(int ged_dbot_dump, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Create new_bot by fusing faces in old_bot
  *
  * Usage:
