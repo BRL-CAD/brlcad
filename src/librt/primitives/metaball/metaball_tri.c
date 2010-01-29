@@ -114,7 +114,7 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
 
     *r = nmg_mrsv(m);	/* new empty nmg */
     s = BU_LIST_FIRST(shell, &(*r)->s_hd);
-    bu_log("Booyeah!\n");
+    bu_log("Booyeah! %f %f\n", mtol, tol->dist);
 
     /* the incredibly naïve approach. Time could be cut in half by simply
      * caching 4 point values, more by actually marching or doing active
@@ -174,10 +174,9 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
     bu_log("metaball tesselate (%d triangles): %s\n", numtri, bu_vls_addr(&times));
 
     nmg_mark_edges_real(&s->l.magic);
-    nmg_region_a(*r, tol);
+    nmg_region_a(*r, tol);	/* this causes a bus error trying to dereference some magic shtuff */
 
-    bu_log("ERROR: rt_metaball_tess called() is not implemented\n");
-    return -1;
+    return 0;
 }
 
 /*
