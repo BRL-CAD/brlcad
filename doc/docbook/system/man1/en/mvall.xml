@@ -91,10 +91,9 @@ old_name3 new_name3
     </example>
 </refsect1>
 
-<refsect1>
-    <title>See Also</title>
-    <para>mv prefix
-    </para>
+<refsect1 id='see_also'>
+    <title>SEE ALSO</title>
+    <para>mv prefix</para>
 </refsect1>
 
 <refsect1 id='author'>
