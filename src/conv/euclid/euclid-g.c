@@ -1037,16 +1037,17 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
     return(cur_id);
 }
 
+
 /*
- *	R e a d _ E u c l i d _ F a c e
+ * R e a d _ E u c l i d _ F a c e
  *
- *	Read in vertices from a Euclid facet file and store them in an
- *	array of nmg vertex structures.  Then make a list of indices of these
- *	vertices in the vertex array.  This list represents the face under
- *	construction.
+ * Read in vertices from a Euclid facet file and store them in an
+ * array of nmg vertex structures.  Then make a list of indices of
+ * these vertices in the vertex array.  This list represents the face
+ * under construction.
  *
- *	XXX Fix this!  Only allows set max of points and assumes
- *	no errors during reading...
+ * FIXME: Only allows set max of points and assumes no errors during
+ * reading...
  */
 int
 read_euclid_face(int *lst, int *ni, FILE *fp, struct vlist *vert, int *nv)
@@ -1084,7 +1085,7 @@ read_euclid_face(int *lst, int *ni, FILE *fp, struct vlist *vert, int *nv)
     if ( debug )
 	bu_log( "plane equation for face is ( %f %f %f %f )\n", a, b, c, d );
 
-    /* Remove duplicate points (XXX this should be improved). */
+    /* Remove duplicate points (FIXME: this should be improved). */
     for (i = 0; i < *ni; i++)
 	for (j = i+1; j < *ni; j++)
 	    if (lst[i] == lst[j]) {

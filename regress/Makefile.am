@@ -97,7 +97,17 @@ CLEANFILES = \
 	.density \
 	adj_air.pl \
 	bots.g \
+	bots.lh.pix \
 	bots.log \
+	bots.no.pix \
+	bots.rh.pix \
+	bots.sph.pix \
+	bots.diff.log \
+	bots.diff.pix \
+	bots.rl.diff.pix \
+	bots.rn.diff.pix \
+	bots.rs.diff.pix \
+	bots.sync.pix \
 	density_table.txt \
 	dsp.dat \
 	eagleCAD-512x438.pix \

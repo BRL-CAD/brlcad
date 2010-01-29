@@ -927,7 +927,7 @@ mater particle.r plastic 255 100 100 0
 
 in light1.s sph 141.642 12.8892 176.202 10
 r light1.r u light1.s
-mater light1.r "light shadow=1" 255 255 255 0
+mater light1.r "light shadows=1" 255 255 255 0
 
 # Group it all together
 g all.g *.r

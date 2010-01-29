@@ -1365,6 +1365,9 @@ db_dup_subtree(const union tree *tp, struct resource *resp)
 {
     union tree *new;
 
+    if (!tp)
+	return TREE_NULL;
+
     RT_CK_TREE(tp);
     if (!resp) {
 	resp = &rt_uniresource;
@@ -1407,6 +1410,45 @@ db_dup_subtree(const union tree *tp, struct resource *resp)
 	    new->tr_b.tb_right = db_dup_subtree(tp->tr_b.tb_right, resp);
 	    return(new);
 
+	case OP_NMG_TESS: {
+#if 0
+	    /* FIXME: something is wrong in here where we attempt to
+	     * get a full-fledged copy of a given nmgregion tree.
+	     */
+	    long **trans_tbl;
+	    struct model *m = nmg_mmr();
+	    struct shell *s;
+	    struct shell *dup_s;
+	    struct bn_tol tol;
+
+	    tol.magic = BN_TOL_MAGIC;
+	    tol.dist = 0.0005;
+	    tol.dist_sq = 0.05;
+	    tol.perp = 0.0;
+	    tol.para = 1.0;
+
+	    new->tr_d.td_r = BU_LIST_FIRST(nmgregion, &m->r_hd);
+	    for (BU_LIST_FOR(s, shell, &tp->tr_d.td_r->s_hd)) {
+		dup_s = nmg_dup_shell(s, &trans_tbl, &tol);
+		nmg_shell_a(dup_s, &tol);
+		nmg_fix_normals(dup_s, &tol);
+
+		/* it belongs to the new tree */
+		BU_LIST_DEQUEUE(&dup_s->l);
+		BU_LIST_APPEND(&new->tr_d.td_r->s_hd, &dup_s->l);
+		dup_s->r_p = new->tr_d.td_r;
+	    }
+	    nmg_region_a(new->tr_d.td_r, &tol);
+
+	    /* bu_free((char *)trans_tbl, "translate table"); */
+	    /* nmg_pr_r(new->tr_d.td_r, "ORIGINAL REGION"); */
+#endif
+	    /* !!! fake "copy" .. lie */
+ 	    new->tr_d.td_r = tp->tr_d.td_r;
+	    new->tr_d.td_name = bu_strdup(tp->tr_d.td_name);
+	    return(new);
+	}
+
 	default:
 	    bu_log("db_dup_subtree: bad op %d\n", tp->tr_op);
 	    bu_bomb("db_dup_subtree\n");
@@ -1421,7 +1463,6 @@ db_dup_subtree(const union tree *tp, struct resource *resp)
 void
 db_ck_tree(const union tree *tp)
 {
-
     RT_CK_TREE(tp);
 
     switch (tp->tr_op) {
@@ -1469,6 +1510,9 @@ db_ck_tree(const union tree *tp)
 void
 db_free_tree(union tree *tp, struct resource *resp)
 {
+    if (!tp)
+	return;
+
     RT_CK_TREE(tp);
     if (!resp) {
 	resp = &rt_uniresource;
@@ -2001,7 +2045,7 @@ db_tally_subtree_regions(
 /* ============================== */
 
 HIDDEN union tree *
-_db_gettree_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data __attribute__((unused)))
+_db_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data __attribute__((unused)))
 {
 
     RT_CK_DBTS(tsp);
@@ -2019,7 +2063,7 @@ _db_gettree_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, un
 
 
 HIDDEN union tree *
-_db_gettree_leaf(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data __attribute__((unused)))
+_db_gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data __attribute__((unused)))
 {
     union tree *curtree;
 
@@ -2059,7 +2103,7 @@ HIDDEN void
 _db_walk_subtree(
     union tree *tp,
     struct combined_tree_state **region_start_statepp,
-    union tree *(*leaf_func) BU_ARGS((struct db_tree_state *, struct db_full_path *, struct rt_db_internal *, void *)),
+    union tree *(*leaf_func) BU_ARGS((struct db_tree_state *, const struct db_full_path *, struct rt_db_internal *, void *)),
     genptr_t client_data,
     struct resource *resp)
 {
@@ -2291,9 +2335,9 @@ db_walk_tree(struct db_i *dbip,
 	     const char **argv,
 	     int ncpu,
 	     const struct db_tree_state *init_state,
-	     int (*reg_start_func) (struct db_tree_state *, struct db_full_path *, const struct rt_comb_internal *, genptr_t),
-	     union tree *(*reg_end_func) (struct db_tree_state *, struct db_full_path *, union tree *, genptr_t),
-	     union tree *(*leaf_func) (struct db_tree_state *, struct db_full_path *, struct rt_db_internal *, genptr_t),
+	     int (*reg_start_func) (struct db_tree_state *, const struct db_full_path *, const struct rt_comb_internal *, genptr_t),
+	     union tree *(*reg_end_func) (struct db_tree_state *, const struct db_full_path *, union tree *, genptr_t),
+	     union tree *(*leaf_func) (struct db_tree_state *, const struct db_full_path *, struct rt_db_internal *, genptr_t),
 	     genptr_t client_data)
 {
     union tree *whole_tree = TREE_NULL;

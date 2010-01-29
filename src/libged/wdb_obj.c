@@ -280,8 +280,8 @@ struct directory *wdb_combadd(Tcl_Interp *interp, struct db_i *dbip, struct dire
 void wdb_identitize(struct directory *dp, struct db_i *dbip, Tcl_Interp *interp);
 static void wdb_dir_summary(struct db_i *dbip, Tcl_Interp *interp, int flag);
 static struct directory ** wdb_dir_getspace(struct db_i *dbip, int num_entries);
-static union tree *wdb_pathlist_leaf_func(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data);
-HIDDEN union tree *facetize_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
+static union tree *wdb_pathlist_leaf_func(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data);
+HIDDEN union tree *facetize_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
 int wdb_dir_check(struct db_i *input_dbip, const char *name, long laddr, int len, int flags, genptr_t ptr);
 void wdb_dir_check5(struct db_i *input_dbip, const struct db5_raw_internal *rip, long addr, genptr_t ptr);
 
@@ -4322,11 +4322,7 @@ wdb_find_ref(struct db_i *dbip,
  *
  */
 HIDDEN union tree *
-facetize_region_end(tsp, pathp, curtree, client_data)
-    struct db_tree_state *tsp;
-    struct db_full_path *pathp;
-    union tree *curtree;
-    genptr_t client_data;
+facetize_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
     struct bu_list vhead;
     union tree **facetize_tree;
@@ -5742,7 +5738,7 @@ struct wdb_push_data {
  */
 static union tree *
 wdb_push_leaf(struct db_tree_state *tsp,
-	      struct db_full_path *pathp,
+	      const struct db_full_path *pathp,
 	      struct rt_db_internal *ip,
 	      genptr_t client_data)
 {
@@ -5818,7 +5814,7 @@ wdb_push_leaf(struct db_tree_state *tsp,
  */
 static union tree *
 wdb_push_region_end(struct db_tree_state *tsp,
-		    struct db_full_path *pathp,
+		    const struct db_full_path *pathp,
 		    union tree *curtree,
 		    genptr_t client_data)
 {
@@ -7237,56 +7233,6 @@ wdb_hide_cmd(struct rt_wdb *wdbp,
 	if (dp->d_major_type == DB5_MAJORTYPE_BRLCAD) {
 	    int no_hide=0;
 
-	    /* warn the user that this might be a bad idea */
-	    if (isatty(fileno(stdin)) && isatty(fileno(stdout))) {
-#if 0
-		char line[80];
-
-/*XXX Ditto on the message below. Besides, it screws with the cadwidgets. */
-		/* classic interactive MGED */
-		while (1) {
-		    bu_log("Hiding BRL-CAD geometry (%s) is generaly a bad idea.\n", dp->d_namep);
-		    bu_log("This may cause unexpected problems with other commands.\n");
-		    bu_log("Are you sure you want to do this?? (y/n)\n");
-		    (void)bu_fgets(line, sizeof(line), stdin);
-		    if (line[0] == 'y' || line[0] == 'Y') break;
-		    if (line[0] == 'n' || line[0] == 'N') {
-			no_hide = 1;
-			break;
-		    }
-		}
-#endif
-	    } else if (Tcl_GetVar2Ex(interp, "tk_version", NULL, TCL_GLOBAL_ONLY)) {
-#if 0
-		struct bu_vls vls;
-
-/*
- * We should give the user some credit here
- * and not annoy them with a message dialog.
- */
-		/* Tk is active, we can pop-up a window */
-		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "Hiding BRL-CAD geometry (%s) is generaly a bad idea.\n", dp->d_namep);
-		bu_vls_strcat(&vls, "This may cause unexpected problems with other commands.\n");
-		bu_vls_strcat(&vls, "Are you sure you want to do this?");
-		(void)Tcl_ResetResult(interp);
-		if (Tcl_VarEval(interp, "tk_messageBox -type yesno ",
-				"-title Warning -icon question -message {",
-				bu_vls_addr(&vls), "}",
-				(char *)NULL) != TCL_OK) {
-		    bu_log("Unable to post question!!!\n");
-		} else {
-		    const char *result;
-
-		    result = Tcl_GetStringResult(interp);
-		    if (!strcmp(result, "no")) {
-			no_hide = 1;
-		    }
-		    (void)Tcl_ResetResult(interp);
-		}
-		bu_vls_free(&vls);
-#endif
-	    }
 	    if (no_hide)
 		continue;
 	}
@@ -8862,11 +8808,10 @@ wdb__tcl(ClientData clientData,
 /****************** utility routines ********************/
 
 /**
- *			W D B _ C M P D I R N A M E
+ * W D B _ C M P D I R N A M E
  *
  * Given two pointers to pointers to directory entries, do a string compare
  * on the respective names and return that value.
- *  This routine was lifted from mged/columns.c.
  */
 int
 wdb_cmpdirname(const genptr_t a,
@@ -8928,11 +8873,11 @@ wdb_vls_col_eol(struct bu_vls *str,
 }
 
 /**
- *			W D B _ V L S _ C O L _ P R 4 V
+ * W D B _ V L S _ C O L _ P R 4 V
  *
- *  Given a pointer to a list of pointers to names and the number of names
- *  in that list, sort and print that list in column order over four columns.
- *  This routine was lifted from mged/columns.c.
+ * Given a pointer to a list of pointers to names and the number of
+ * names in that list, sort and print that list in column order over
+ * four columns.
  */
 void
 wdb_vls_col_pr4v(struct bu_vls *vls,
@@ -9185,11 +9130,10 @@ wdb_vls_long_dpp(struct bu_vls *vls,
 }
 
 /**
- *			W D B _ V L S _ L I N E _ D P P
+ * W D B _ V L S _ L I N E _ D P P
  *@brief
- *  Given a pointer to a list of pointers to names and the number of names
- *  in that list, sort and print that list on the same line.
- *  This routine was lifted from mged/columns.c.
+ * Given a pointer to a list of pointers to names and the number of
+ * names in that list, sort and print that list on the same line.
  */
 void
 wdb_vls_line_dpp(struct bu_vls *vls,
@@ -9236,14 +9180,15 @@ wdb_vls_line_dpp(struct bu_vls *vls,
     }
 }
 
+
 /**
- *			W D B _ G E T S P A C E
+ * W D B _ G E T S P A C E
  *
- * This routine walks through the directory entry list and mallocs enough
- * space for pointers to hold:
- *  a) all of the entries if called with an argument of 0, or
- *  b) the number of entries specified by the argument if > 0.
- *  This routine was lifted from mged/dir.c.
+ * This routine walks through the directory entry list and mallocs
+ * enough space for pointers to hold:
+ *
+ * a) all of the entries if called with an argument of 0, or
+ * b) the number of entries specified by the argument if > 0.
  */
 struct directory **
 wdb_getspace(struct db_i *dbip,
@@ -9668,7 +9613,7 @@ wdb_dir_getspace(struct db_i *dbip,
  */
 static union tree *
 wdb_pathlist_leaf_func(struct db_tree_state *tsp,
-		       struct db_full_path *pathp,
+		       const struct db_full_path *pathp,
 		       struct rt_db_internal *ip,
 		       genptr_t client_data)
 {
@@ -9679,13 +9624,17 @@ wdb_pathlist_leaf_func(struct db_tree_state *tsp,
     RT_CK_DB_INTERNAL(ip);
 
     if (pathListNoLeaf) {
-	--pathp->fp_len;
+	struct db_full_path pp;
+	db_full_path_init(&pp);
+	db_dup_full_path(&pp, pathp);
+	--pp.fp_len;
+	str = db_path_to_string(&pp);
+	Tcl_AppendElement(interp, str);
+	db_free_full_path(&pp);
+    } else {
 	str = db_path_to_string(pathp);
-	++pathp->fp_len;
-    } else
-	str = db_path_to_string(pathp);
-
-    Tcl_AppendElement(interp, str);
+	Tcl_AppendElement(interp, str);
+    }
 
     bu_free((genptr_t)str, "path string");
     return TREE_NULL;

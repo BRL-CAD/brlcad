@@ -37,11 +37,11 @@
 
 /* declare our callbacks used by _ged_drawtrees() */
 static union tree *ged_bot_check_region_end(struct db_tree_state *tsp,
-					    struct db_full_path *pathp,
+					    const struct db_full_path *pathp,
 					    union tree *curtree,
 					    genptr_t client_data);
 static union tree *ged_bot_check_leaf(struct db_tree_state *tsp,
-				      struct db_full_path *pathp,
+				      const struct db_full_path *pathp,
 				      struct rt_db_internal *ip,
 				      genptr_t client_data);
 
@@ -116,7 +116,7 @@ ged_bound_solid(struct ged *gedp, struct solid *sp)
  * This routine must be prepared to run in parallel.
  */
 void
-ged_drawH_part2(int dashflag, struct bu_list *vhead, struct db_full_path *pathp, struct db_tree_state *tsp, struct solid *existing_sp, struct _ged_client_data *dgcdp)
+ged_drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, struct solid *existing_sp, struct _ged_client_data *dgcdp)
 {
     struct solid *sp;
 
@@ -192,7 +192,7 @@ ged_drawH_part2(int dashflag, struct bu_list *vhead, struct db_full_path *pathp,
 
 
 static union tree *
-ged_wireframe_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+ged_wireframe_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
     return (curtree);
 }
@@ -204,7 +204,7 @@ ged_wireframe_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, 
  * This routine must be prepared to run in parallel.
  */
 static union tree *
-ged_wireframe_leaf(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
+ged_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
 {
     int dashflag; /* draw with dashed lines */
     union tree *curtree;
@@ -285,7 +285,7 @@ ged_wireframe_leaf(struct db_tree_state *tsp, struct db_full_path *pathp, struct
  * (converted from FASTGEN) more rapidly.
  */
 static int
-ged_nmg_region_start(struct db_tree_state *tsp, struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
+ged_nmg_region_start(struct db_tree_state *tsp, const struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
 {
     union tree		*tp;
     struct directory	*dp;
@@ -372,10 +372,18 @@ ged_nmg_region_start(struct db_tree_state *tsp, struct db_full_path *pathp, cons
     return 0;
 
  out:
-    /* Successful fastpath drawing of this solid */
-    db_add_node_to_full_path(pathp, dp);
-    ged_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
-    DB_FULL_PATH_POP(pathp);
+    {
+	struct db_full_path pp;
+	db_full_path_init(&pp);
+	db_dup_full_path(&pp, pathp);
+
+	/* Successful fastpath drawing of this solid */
+	db_add_node_to_full_path(&pp, dp);
+	ged_drawH_part2(0, &vhead, &pp, tsp, SOLID_NULL, dgcdp);
+
+	db_free_full_path(&pp);
+    }
+
     rt_db_free_internal(&intern);
     dgcdp->fastpath_count++;
     return -1;	/* SKIP THIS REGION */
@@ -388,7 +396,7 @@ ged_nmg_region_start(struct db_tree_state *tsp, struct db_full_path *pathp, cons
  * This routine must be prepared to run in parallel.
  */
 static union tree *
-ged_nmg_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+ged_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
     struct nmgregion	*r;
     struct bu_list		vhead;
@@ -724,8 +732,8 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 	    return(-1);
 	case 1:		/* Wireframes */
 	{
-	    union tree *(*reg_end_func) (struct db_tree_state *, struct db_full_path *, union tree *, genptr_t);
-	    union tree *(*leaf_func) (struct db_tree_state *, struct db_full_path *, struct rt_db_internal *, genptr_t);
+	    union tree *(*reg_end_func) (struct db_tree_state *, const struct db_full_path *, union tree *, genptr_t);
+	    union tree *(*leaf_func) (struct db_tree_state *, const struct db_full_path *, struct rt_db_internal *, genptr_t);
 
 	    /*
 	     * If asking for wireframe and in shaded_mode and no shaded mode override,
@@ -830,7 +838,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 
 static union tree *
 ged_bot_check_region_end(struct db_tree_state	*tsp,
-			 struct db_full_path		*pathp,
+			 const struct db_full_path *pathp,
 			 union tree			*curtree,
 			 genptr_t			client_data)
 {
@@ -840,7 +848,7 @@ ged_bot_check_region_end(struct db_tree_state	*tsp,
 
 static union tree *
 ged_bot_check_leaf(struct db_tree_state		*tsp,
-		   struct db_full_path		*pathp,
+		   const struct db_full_path *pathp,
 		   struct rt_db_internal	*ip,
 		   genptr_t			client_data)
 {

@@ -166,6 +166,10 @@ BU_EXTERN (int _ged_drawtrees,
 	    int kind,
 	    struct _ged_client_data *_dgcdp));
 
+/* defined in editit.c */
+BU_EXTERN (int _ged_editit, 
+	   (char *editstring, 
+	    char *file));
 
 /* defined in erase.c */
 BU_EXTERN (void _ged_eraseobjpath,

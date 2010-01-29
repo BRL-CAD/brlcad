@@ -47,7 +47,6 @@
  * a) all of the entries if called with an argument of 0, or
  * b) the number of entries specified by the argument if > 0.
  *
- * This routine was lifted from mged/dir.c.
  */
 struct directory **
 _ged_getspace(struct db_i *dbip,
@@ -74,8 +73,7 @@ _ged_getspace(struct db_i *dbip,
  * _ G E D _ C M P D I R N A M E
  *
  * Given two pointers to pointers to directory entries, do a string
- * compare on the respective names and return that value.  This
- * routine was lifted from mged/columns.c.
+ * compare on the respective names and return that value.
  */
 static int
 cmpdirname(const genptr_t a,
@@ -94,7 +92,7 @@ cmpdirname(const genptr_t a,
  *
  * Given a pointer to a list of pointers to names and the number of
  * names in that list, sort and print that list in column order over
- * four columns.  This routine was lifted from mged/columns.c.
+ * four columns.
  */
 void
 _ged_vls_col_pr4v(struct bu_vls *vls,
@@ -347,7 +345,6 @@ vls_long_dpp(struct bu_vls *vls,
  *
  * Given a pointer to a list of pointers to names and the number of names
  * in that list, sort and print that list on the same line.
- * This routine was lifted from mged/columns.c.
  */
 static void
 vls_line_dpp(struct bu_vls *vls,

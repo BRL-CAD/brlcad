@@ -21,10 +21,13 @@ Spanish.  Cliff Yapp continues to work extensively with both to get
 their efforts integrated so that HTML and PDF documentation are
 cleanly generated.
 
+* fixed invocation of external editor for MGED commands - Cliff Yapp
+* fixed BoT raytracing solidity failure on grazed edges - Keith Bowman
 * increased 'rcodes' and 'edcodes' maximum line length - Sean Morrison
 * increased maximum path depth supported by 'wcodes' - Sean Morrison
 * extensive work on MGED Docbook man page conversions - Janine Gettier
 * fixed unoriented BoT badmagic raytrace failure - Sean Morrison
+* translation of mged tutorials 3 and 6 to Spanish - Jesica Giudice
 
 
 ----------------------------------------------------------------------
@@ -49,6 +52,7 @@ cleanly generated.
 * librt now queries env LIBRT_DEBUG for more flags - Erik Greenwald
 * pixdiff outputs matching pixels at half-intensity - Sean Morrison
 * fixed rate interpolation bug in tabinterp - Emton
+* runtime toggling of display managers - Cliff Yapp
 
 
 ----------------------------------------------------------------------

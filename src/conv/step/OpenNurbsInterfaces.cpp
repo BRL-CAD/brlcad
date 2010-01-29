@@ -1255,7 +1255,7 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 	    brep->m_C2.Append(c2d);
 
 	    ON_BrepTrim& trim = brep->NewTrim((ON_BrepEdge&) *data->edge, data->order_reversed, (ON_BrepLoop&) *loop, trimCurve);
-	    trim.m_tolerance[0] = 1e-3; // XXX: tolerance?
+	    trim.m_tolerance[0] = 1e-3; // FIXME: tolerance?
 	    trim.m_tolerance[1] = 1e-3;
 	    ON_Interval PD = trim.ProxyCurveDomain();
 	    trim.m_iso = surface->IsIsoparametric(*c2d, &PD);

@@ -35,7 +35,7 @@
 #include "bn.h"
 #include "raytrace.h"
 
-/* XXX replicated from optical.h */
+/* FIXME: replicated from optical.h */
 #ifndef OPTICAL_EXPORT
 #  if defined(_WIN32) && !defined(__CYGWIN__) && defined(BRLCAD_DLL)
 #    ifdef OPTICAL_EXPORT_DLL

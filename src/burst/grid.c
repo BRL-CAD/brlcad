@@ -159,8 +159,8 @@ doBursts()
 {
     boolean			status = 1;
     noverlaps = 0;
-    VMOVE(ag.a_ray.r_dir, viewdir); /* XXX -- could be done up in
-					 gridModel() */
+    VMOVE(ag.a_ray.r_dir, viewdir);
+
     for (; ! userinterrupt; view_pix(&ag))
     {
 	if (	TSTBIT(firemode, FM_FILE)

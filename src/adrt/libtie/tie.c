@@ -444,7 +444,7 @@ TIE_FUNC(void tie_push, tie_t *tie, TIE_3 **tlist, unsigned int tnum, void *plis
 	if (plist)
 	    plist = (void *)((intptr_t)plist + pstride);
 
-/* XXX this looks like it might cause fragmentation? use a memory pool? */
+/* ??? this looks like it might cause fragmentation? use a memory pool? */
 	tie->tri_list[tie->tri_num].v = (tfloat *)bu_malloc(2*sizeof(tfloat),"");
 	tie->tri_num++;
     }

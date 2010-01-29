@@ -1179,18 +1179,6 @@ GED_EXPORT BU_EXTERN(int	vo_dir2ae_cmd,
 		     char *argv[]));
 
 
-/**
- * Launch an editor on file.
- *
- * Runs $EDITOR on temp file, defaulting to various system-specific
- * editors otherwise if unset.
- *
- * Usage:
- *     editit file
- */
-GED_EXPORT BU_EXTERN(int ged_editit, (const char *file));
-
-
 /* Defined in vutil.c */
 GED_EXPORT BU_EXTERN(void ged_persp_mat,
 		     (fastf_t *m,

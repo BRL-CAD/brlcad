@@ -535,15 +535,19 @@ view_eol(struct application *ap)
 void
 view_end(struct application *ap)
 {
+    extern fastf_t** timeTable_init(int x, int y);
+
     /* If the heat graph is on, render it after all pixels completed */
+#if !defined(_WIN32) || defined(__CYGWIN__)
     if (lightmodel == 8) {
-	bu_log("Building Heat-Graph\n");
-	fastf_t *timeTable = timeTable_init(NULL, NULL);
-	bu_log("Timetable accessed!\n");
-	timeTable_process(timeTable, ap);
-	bu_log("Heat Graph-built\n");
-	timeTable_free(timeTable);
+
+	fastf_t **timeTable;
+	timeTable = timeTable_init(0, 0);
+	bu_log("Building Heat-Graph!\n");
+	bu_log("X:%d Y:%d W:%d H%d\n", ap->a_x, ap->a_y, width, height);
+	timeTable_process(timeTable, ap, fbp);
     }
+#endif
 
     if (fullfloat_mode) {
 	struct floatpixel *tmp;
@@ -774,18 +778,6 @@ colorview(struct application *ap, struct partition *PartHeadp, struct seg *finis
     struct hit *hitp;
     struct shadework sw;
 
-    /*
-     * Add to this function a method for determining the length of
-     * time taken to calculate a pixel, using the new heat-graph light
-     * model. What it will do is, when active, start a timer here, and
-     * stop the timer at the end of this function, take the total time
-     * in this funtion, and place it into an array that is the size of
-     * the picture that is being rendered (X by Y)
-     */
-    if (lightmodel == 8) {
-	rt_prep_timer();
-    }
-
     pp = PartHeadp->pt_forw;
     if (ap->a_flag == 1) {
 	/* This ray is an escaping internal ray after refraction
@@ -997,15 +989,10 @@ vdraw open iray;vdraw params c %2.2x%2.2x%2.2x;vdraw write n 0 %g %g %g;vdraw wr
     /* XXX This is always negative when eye is inside air solid */
     ap->a_dist = hitp->hit_dist;
 
- out:
+out:
     /*
      * e ^(-density * distance)
      */
-    if (lightmodel == 8) {
-	/* Invert lights for testing */
-	/* VSET(ap->a_color, 0.75, 0.5, 0.25); */
-    }
-
     if (airdensity != 0.0) {
 	double g;
 	double f = exp(-hitp->hit_dist * airdensity);
@@ -1021,61 +1008,6 @@ vdraw open iray;vdraw params c %2.2x%2.2x%2.2x;vdraw write n 0 %g %g %g;vdraw wr
 	       ap->a_user,
 	       pp->pt_regionp->reg_name);
 	VPRINT("color   ", ap->a_color);
-    }
-    if (lightmodel == 8) {
-
-	/* Note: framebuffer is the actual framebuffer destination
-	 * (/dev/X) fbp is the framebuffer handle (what?) outfp is
-	 * for writing to an external pix file.  height and width are
-	 * the dimentions of the trace ap->a_x ap->a_y is the current
-	 * X/Y coordinate being worked on
-	 */
-
-	if (fbp != FBIO_NULL) {
-	    extern int cur_pixel;
-
-	    /* This changes the framebuffer behavior. May be useful
-	     * later, once all data points are converted to
-	     * time-heat-graph points
-	     *
-	     * bu_semaphore_acquire(BU_SEM_SYSCALL);
-	     * (void)fb_view(fbp, width/2, height/2, 1, 1);
-	     * bu_semaphore_release(BU_SEM_SYSCALL);
-	     */
-
-	    /* bu_log("Cur: %d, X = %d, Y = %d\n", cur_pixel, ap->a_x, ap->a_y); */
-	}
-	fastf_t pixelTime = 0;
-	pixelTime = rt_get_timer(NULL, NULL);
-	bu_semaphore_acquire(RT_SEM_LAST-1);
-        fastf_t *timeTable = timeTable_init(fbp, NULL);
-	bu_semaphore_release(RT_SEM_LAST-1);
-	(void)timeTable_input((int)ap->a_x, (int)ap->a_y, pixelTime, timeTable);
-	/*
-	 * What will happen here is that the current pixel time will
-	 * be shot off into an array at location (current x)(current
-	 * y) to be stored for processing. Once processed, the time
-	 * array will contain RGBpixel values
-	 */
-
-	/* bu_log("Time taken: %lf\n", pixelTime); */
-
-	/* fastf_t timeColor[3]={0};
-	 * bu_semaphore_acquire(RT_SEM_LAST-1);
-	 * timeTable_singleProcess(ap, timeTable, timeColor);
-	 * bu_semaphore_release(RT_SEM_LAST-1);
-	 */
-
-	/* Take 1-255 color values and set them to 0-1 range */
-	/* fastf_t a = timeColor[0] / 255;
-	 * fastf_t b = timeColor[1] / 255;
-	 * fastf_t c = timeColor[2] / 255;
-	 */
-	/* bu_log("a:%lf b:%lf c:%lf\n", a, b, c); */
-
-	/* Apply new colors to framebuffer! */
-	/* VSET(ap->a_color, a, b ,c); */
-	/* VPRINT("color   ", ap->a_color); */
     }
     return(1);
 }
@@ -1423,7 +1355,7 @@ reproject_worker(int cpu, genptr_t arg)
     }
 
     /* Deposit the statistics */
- out:
+out:
     bu_semaphore_acquire(RT_SEM_WORKER);
     reproj_cur += count;
     bu_semaphore_release(RT_SEM_WORKER);
@@ -1658,13 +1590,15 @@ view_2init(struct application *ap, char *framename)
 	     */
 	case 8:
 	    {
-		/* Maybe do timetable_init here so it may be used later...*/
-		/* timeTable = timeTable_init(); */
 		ap->a_hit = colorview;
-		VSET(background, 0.0, 0.0, 0.05 );
+		if (BU_LIST_IS_EMPTY(&(LightHead.l))  ||
+		    BU_LIST_UNINITIALIZED(&(LightHead.l))) {
+		    if (R_DEBUG&RDEBUG_SHOWERR)bu_log("No explicit light\n");
+		    light_maker(1, view2model);	
+		}
 		break;
 	    }
-
+	    
 	default:
 	    bu_exit(EXIT_FAILURE, "bad lighting model #");
     }

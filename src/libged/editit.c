@@ -26,109 +26,67 @@
 #include <stdlib.h>
 
 #ifdef HAVE_SYS_TYPES_H
-#   include <sys/types.h>
+#  include <sys/types.h>
 #endif
 
 #ifdef HAVE_SYS_WAIT_H
-#   include <sys/wait.h>
+#  include <sys/wait.h>
 #endif
 
 #include "bio.h"
 #include "ged.h"
 
-
-/* editors to test, in order of discovery preference (EDITOR overrides) */
-#define WIN_EDITOR "c:/Program Files/Windows NT/Accessories/wordpad"
-#define MAC_EDITOR "/Applications/TextEdit.app/Contents/MacOS/TextEdit"
-#define	EMACS_EDITOR "/usr/bin/emacs"
-#define	VIM_EDITOR "/usr/bin/vim"
-#define	VI_EDITOR "/usr/bin/vi"
-#define	ED_EDITOR "/bin/ed"
-
-
 int
-ged_editit(const char *file)
+_ged_editit(char *editstring, char *filename)
 {
     int pid = 0;
     int xpid = 0;
-    char buffer[RT_MAXLINE] = {0};
+    char **avtmp;
+    const char *terminal = (char *)NULL;
+    const char *terminal_opt = (char *)NULL;
     const char *editor = (char *)NULL;
+    const char *editor_opt = (char *)NULL;
+    const char *file = (const char *)filename;
+
     int stat = 0;
 #if defined(SIGINT) && defined(SIGQUIT)
     void (*s2)();
     void (*s3)();
 #endif
 
-    if (!editor || editor[0] == '\0')
-	editor = getenv("EDITOR");
+    /* convert the edit string into pieces suitable for arguments to execlp */
 
-    /* still unset? try windows */
-    if (!editor || editor[0] == '\0') {
-#if defined(_WIN32) && !defined(__CYGWIN__)
-	editor = WIN_EDITOR;
-#else
-	editor = (char *)NULL;
-#endif
-    }
+    avtmp = (char **)bu_malloc(sizeof(char *)*5, "ged_editit: editstring args");
+    bu_argv_from_string(avtmp, 4, editstring);
+    
+    
+    if (avtmp[0]) terminal = avtmp[0];
+    if (avtmp[1]) terminal_opt = avtmp[1];
+    if (avtmp[2]) editor = avtmp[2];
+    if (avtmp[3]) editor_opt = avtmp[3];
 
-    /* still unset? try mac os x */
-    if (!editor || editor[0] == '\0') {
-	if (bu_file_exists(MAC_EDITOR)) {
-	    editor = MAC_EDITOR;
+    /* print a message to let the user know they need to quit their
+     * editor before the application will come back to life.
+     */
+    {
+	int length;
+	struct bu_vls str;
+	struct bu_vls sep;
+	bu_vls_init(&str);
+	bu_vls_init(&sep);
+	bu_log("Invoking %s on %s\n\n", editor, file);
+	bu_vls_sprintf(&str, "\nNOTE: You must QUIT %s before %s will respond and continue.\n", bu_basename(editor), bu_getprogname());
+	for (length = bu_vls_strlen(&str) - 2; length > 0; length--) {
+	    bu_vls_putc(&sep, '*');
 	}
-    }
-
-    /* still unset? try emacs */
-    if (!editor || editor[0] == '\0') {
-	if (bu_file_exists(EMACS_EDITOR)) {
-	    editor = EMACS_EDITOR;
-	}
-    }
-
-    /* still unset? try vim */
-    if (!editor || editor[0] == '\0') {
-	if (bu_file_exists(VIM_EDITOR)) {
-	    editor = VIM_EDITOR;
-	}
-    }
-
-    /* still unset? try vi */
-    if (!editor || editor[0] == '\0') {
-	if (bu_file_exists(VI_EDITOR)) {
-	    editor = VI_EDITOR;
-	}
-    }
-
-    /* still unset? try ed */
-    if (!editor || editor[0] == '\0') {
-	if (bu_file_exists(ED_EDITOR)) {
-	    editor = ED_EDITOR;
-	}
-    }
-
-    /* still unset? default to jove */
-    if (!editor || editor[0] == '\0') {
-	const char *binpath = bu_brlcad_root("bin", 1);
-	editor = "jove";
-	if (!binpath) {
-	    snprintf(buffer, RT_MAXLINE, "%s/%s", binpath, editor);
-	    if (bu_file_exists(buffer)) {
-		editor = buffer;
-	    } else {
-		const char *dirn = bu_dirname(bu_argv0());
-		if (dirn) {
-		    snprintf(buffer, RT_MAXLINE, "%s/%s", dirn, editor);
-		    if (bu_file_exists(buffer)) {
-			editor = buffer;
-		    }
-		}
-	    }
-	}
+	bu_log("%V%V%V\n\n", &sep, &str, &sep);
+	bu_vls_free(&str);
+	bu_vls_free(&sep);
     }
 
 #if defined(SIGINT) && defined(SIGQUIT)
-    s2 = signal( SIGINT, SIG_IGN );
-    s3 = signal( SIGQUIT, SIG_IGN );
+    s2 = signal(SIGINT, SIG_IGN);
+    s3 = signal(SIGQUIT, SIG_IGN);
 #endif
 
 #ifdef HAVE_UNISTD_H
@@ -143,12 +101,13 @@ ged_editit(const char *file)
 
 #if defined(SIGINT) && defined(SIGQUIT)
 	/* deja vu */
-	(void)signal( SIGINT, SIG_DFL );
-	(void)signal( SIGQUIT, SIG_DFL );
+	(void)signal(SIGINT, SIG_DFL);
+	(void)signal(SIGQUIT, SIG_DFL);
 #endif
 
 	{
 #if defined(_WIN32) && !defined(__CYGWIN__)
+	    char buffer[RT_MAXLINE + 1] = {0};
 	    STARTUPINFO si = {0};
 	    PROCESS_INFORMATION pi = {0};
 	    si.cb = sizeof(STARTUPINFO);
@@ -161,10 +120,14 @@ ged_editit(const char *file)
 	    snprintf(buffer, RT_MAXLINE, "%s %s", editor, file);
 
 	    CreateProcess(NULL, buffer, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi);
-	    WaitForSingleObject( pi.hProcess, INFINITE );
+	    WaitForSingleObject(pi.hProcess, INFINITE);
 	    return 1;
 #else
-	    (void)execlp(editor, editor, file, NULL);
+	    if (strcmp(terminal,"(null)") == 0) {
+    		(void)execlp(editor, editor, file, NULL);
+	    } else {
+		(void)execlp(terminal, terminal, terminal_opt, editor, file, NULL);
+	    }
 #endif
 	    /* should not reach */
 	    perror(editor);
@@ -186,6 +149,7 @@ ged_editit(const char *file)
     (void)signal(SIGQUIT, s3);
 #endif
 
+    bu_free((genptr_t)avtmp, "ged_editit: avtmp");
     return (!stat);
 }
 

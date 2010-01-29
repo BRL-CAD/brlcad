@@ -35,10 +35,50 @@
 #include "./ged_private.h"
 
 
-static union tree *ged_facetize_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
-
 static union tree *ged_facetize_tree;
 static struct model *ged_nmg_model;
+
+/*
+ *			M G E D _ F A C E T I Z E _ R E G I O N _ E N D
+ *
+ *  This routine must be prepared to run in parallel.
+ */
+static union tree *
+ged_facetize_region_end(struct db_tree_state *tsp __attribute__((unused)), const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+{
+    struct bu_list vhead;
+    struct ged *gedp = (struct ged *)client_data;
+
+    BU_LIST_INIT( &vhead );
+
+    if (RT_G_DEBUG&DEBUG_TREEWALK)  {
+	char	*sofar = db_path_to_string(pathp);
+
+	bu_vls_printf(&gedp->ged_result_str, "ged_facetize_region_end() path='%s'\n", sofar);
+	bu_free((genptr_t)sofar, "path string");
+    }
+
+    if ( curtree->tr_op == OP_NOP )  return  curtree;
+
+    bu_semaphore_acquire( RT_SEM_MODEL );
+    if ( ged_facetize_tree )  {
+	union tree	*tr;
+	tr = (union tree *)bu_calloc(1, sizeof(union tree), "union tree");
+	tr->magic = RT_TREE_MAGIC;
+	tr->tr_op = OP_UNION;
+	tr->tr_b.tb_regionp = REGION_NULL;
+	tr->tr_b.tb_left = ged_facetize_tree;
+	tr->tr_b.tb_right = curtree;
+	ged_facetize_tree = tr;
+    } else {
+	ged_facetize_tree = curtree;
+    }
+    bu_semaphore_release( RT_SEM_MODEL );
+
+    /* Tree has been saved, and will be freed later */
+    return( TREE_NULL );
+}
+
 
 int
 ged_bev(struct ged *gedp, int argc, const char *argv[])
@@ -285,47 +325,6 @@ ged_bev(struct ged *gedp, int argc, const char *argv[])
     db_free_tree( tmp_tree, &rt_uniresource );
 
     return GED_OK;
-}
-
-/*
- *			M G E D _ F A C E T I Z E _ R E G I O N _ E N D
- *
- *  This routine must be prepared to run in parallel.
- */
-static union tree *
-ged_facetize_region_end(struct db_tree_state *tsp __attribute__((unused)), struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
-{
-    struct bu_list vhead;
-    struct ged *gedp = (struct ged *)client_data;
-
-    BU_LIST_INIT( &vhead );
-
-    if (RT_G_DEBUG&DEBUG_TREEWALK)  {
-	char	*sofar = db_path_to_string(pathp);
-
-	bu_vls_printf(&gedp->ged_result_str, "ged_facetize_region_end() path='%s'\n", sofar);
-	bu_free((genptr_t)sofar, "path string");
-    }
-
-    if ( curtree->tr_op == OP_NOP )  return  curtree;
-
-    bu_semaphore_acquire( RT_SEM_MODEL );
-    if ( ged_facetize_tree )  {
-	union tree	*tr;
-	tr = (union tree *)bu_calloc(1, sizeof(union tree), "union tree");
-	tr->magic = RT_TREE_MAGIC;
-	tr->tr_op = OP_UNION;
-	tr->tr_b.tb_regionp = REGION_NULL;
-	tr->tr_b.tb_left = ged_facetize_tree;
-	tr->tr_b.tb_right = curtree;
-	ged_facetize_tree = tr;
-    } else {
-	ged_facetize_tree = curtree;
-    }
-    bu_semaphore_release( RT_SEM_MODEL );
-
-    /* Tree has been saved, and will be freed later */
-    return( TREE_NULL );
 }
 
 

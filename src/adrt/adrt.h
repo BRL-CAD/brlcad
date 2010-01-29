@@ -25,6 +25,7 @@
  */
 
 #include <stdint.h>
+#include "adrt_struct.h"
 
 #ifndef _ADRT_H
 #define _ADRT_H
@@ -175,7 +176,7 @@ static int tienet_##name(int socket, void* data, size_t size) \
 TIENET_OP(send,write)
 TIENET_OP(recv,read)
 
-int load_g (tie_t *tie, const char *db, int argc, const char **argv);
+int load_g (tie_t *tie, const char *db, int argc, const char **argv, struct adrt_mesh_s **);
 
 #endif
 

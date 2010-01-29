@@ -427,7 +427,7 @@ flatten_tree( struct bu_vls *vls, union tree *tp, char *op, int neg )
  * in this region have been visited.
  */
 union tree *
-region_end( struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data )
+region_end( struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data )
 {
     struct directory	*dp;
     char			*fullname;
@@ -559,7 +559,7 @@ region_end( struct db_tree_state *tsp, struct db_full_path *pathp, union tree *c
  * Re-use the librt "soltab" structures here, for our own purposes.
  */
 union tree *
-gettree_leaf( struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data )
+gettree_leaf( struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data )
 {
     fastf_t	f;
     struct soltab	*stp;

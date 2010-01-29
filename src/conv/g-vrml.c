@@ -103,8 +103,8 @@ const struct bu_structparse vrml_mat_parse[]={
     {"",	0, (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
-BU_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
-BU_EXTERN(union tree *nmg_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
+BU_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
+BU_EXTERN(union tree *nmg_region_end, (struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
 
 static const char usage[] = "Usage: %s [-v] [-xX lvl] [-d tolerance_distance (mm) ] [-a abs_tol (mm)] [-r rel_tol] [-n norm_tol] [-o out_file] [-u units] brlcad_db.g object(s)\n";
 
@@ -186,7 +186,7 @@ dup_bot( struct rt_bot_internal *bot_in )
 }
 
 static int
-select_lights(struct db_tree_state *tsp, struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
+select_lights(struct db_tree_state *tsp, const struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
 {
     struct directory *dp;
     struct rt_db_internal intern;
@@ -229,7 +229,7 @@ select_lights(struct db_tree_state *tsp, struct db_full_path *pathp, const struc
 }
 
 static int
-select_non_lights(struct db_tree_state *tsp, struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
+select_non_lights(struct db_tree_state *tsp, const struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
 {
     int ret;
 
@@ -241,7 +241,7 @@ select_non_lights(struct db_tree_state *tsp, struct db_full_path *pathp, const s
 }
 
 union tree *
-leaf_tess(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
+leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
 {
     struct rt_bot_internal *bot;
     struct plate_mode *pmp = (struct plate_mode *)client_data;
@@ -537,17 +537,17 @@ main(int argc, char **argv)
     ttol.rel = 0.01;
     ttol.norm = 0.0;
 
-    /* XXX These need to be improved */
+    /* FIXME: These need to be improved */
     tol.magic = BN_TOL_MAGIC;
-    tol.dist = 0.005;
+    tol.dist = 0.0005;
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
-    /* XXX For visualization purposes, in the debug plot files */
+    /* NOTE: For visualization purposes, in the debug plot files */
     {
 	extern fastf_t	nmg_eue_dist;	/* librt/nmg_plot.c */
-	/* XXX This value is specific to the Bradley */
+	/* WTF: This value is specific to the Bradley */
 	nmg_eue_dist = 2.0;
     }
 
@@ -582,7 +582,7 @@ main(int argc, char **argv)
 		break;
 	    case 'P':
 /*			ncpu = atoi( bu_optarg ); */
-		rt_g.debug = 1;	/* XXX DEBUG_ALLRAYS -- to get core dumps */
+		rt_g.debug = 1;
 		break;
 	    case 'x':
 		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );
@@ -726,7 +726,7 @@ main(int argc, char **argv)
 }
 
 void
-nmg_2_vrml(FILE *fp, struct db_full_path *pathp, struct model *m, struct mater_info *mater)
+nmg_2_vrml(FILE *fp, const struct db_full_path *pathp, struct model *m, struct mater_info *mater)
 {
     struct nmgregion *reg;
     struct bu_ptbl verts;
@@ -1144,7 +1144,7 @@ nmg_2_vrml(FILE *fp, struct db_full_path *pathp, struct model *m, struct mater_i
 }
 
 void
-bot2vrml( struct plate_mode *pmp, struct db_full_path *pathp, int region_id )
+bot2vrml( struct plate_mode *pmp, const struct db_full_path *pathp, int region_id )
 {
     struct bu_vls shape_name;
     char *path_str;
@@ -1211,7 +1211,8 @@ bot2vrml( struct plate_mode *pmp, struct db_full_path *pathp, int region_id )
  *
  *  This routine must be prepared to run in parallel.
  */
-union tree *do_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+union tree *
+do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
     struct plate_mode *pmp = (struct plate_mode *)client_data;
     char *name;
@@ -1246,7 +1247,7 @@ union tree *do_region_end(struct db_tree_state *tsp, struct db_full_path *pathp,
     return( (union tree *)NULL );
 }
 
-union tree *nmg_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+union tree *nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
     struct nmgregion	*r;
     struct bu_list		vhead;

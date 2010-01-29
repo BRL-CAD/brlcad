@@ -439,7 +439,7 @@ struct seg {
 
 /**
  * Macros to operate on Right Rectangular Parallelpipeds (RPPs).
- * XXX move to vmath.h?
+ * TODO: move to vmath.h
  */
 struct bound_rpp {
     point_t min;
@@ -519,7 +519,8 @@ struct soltab {
 #define	ID_BOT		30	/**< @brief Bag o' triangles */
 
 /* Add a new primitive id above here (this is will break v5 format)
- * XXX must update the non-geometric object id's below XXX
+ * NOTE: must update the non-geometric object id's below the
+ * ADD_BELOW_HERE marker
  */
 #define	ID_MAX_SOLID	42	/**< @brief Maximum defined ID_xxx for solids */
 
@@ -529,10 +530,11 @@ struct soltab {
 #define ID_COMBINATION	31	/**< @brief Combination Record */
 #define ID_UNUSED1	32	/**< @brief UNUSED (placeholder)  */
 #define ID_BINUNIF	33	/**< @brief Uniform-array binary */
-#define ID_BINMIME	34	/**< @brief MIME-typed binary */
+#define ID_UNUSED2	34	/**< @brief UNUSED (placeholder) */
 #define ID_CONSTRAINT   39      /**< @brief Constraint object */
 
-/* XXX - superellipsoid should be 31, but is not v5 compatible */
+/* - ADD_BELOW_HERE - */
+/* superellipsoid should be 31, but is not v5 compatible */
 #define ID_SUPERELL	35	/**< @brief Superquadratic ellipsoid */
 #define ID_METABALL	36	/**< @brief Metaball */
 #define ID_BREP         37      /**< @brief B-rep object */
@@ -997,24 +999,24 @@ struct db_tree_state {
     int			ts_los;		/**< @brief equivalent LOS estimate */
     struct mater_info	ts_mater;	/**< @brief material properties */
 
-    /* XXX ts_mat should be a matrix pointer, not a matrix */
+    /* FIXME: ts_mat should be a matrix pointer, not a matrix */
     mat_t		ts_mat;		/**< @brief transform matrix */
     int			ts_is_fastgen;	/**< @brief REGION_NON_FASTGEN/_PLATE/_VOLUME */
     struct bu_attribute_value_set	ts_attrs;	/**< @brief attribute/value structure */
 
     int			ts_stop_at_regions;	/**< @brief else stop at solids */
     int			(*ts_region_start_func) BU_ARGS((struct db_tree_state * /**< @brief tsp*/,
-							 struct db_full_path * /**< @brief pathp*/,
+							 const struct db_full_path * /**< @brief pathp*/,
 							 const struct rt_comb_internal * /**< @brief combp */,
 							 genptr_t client_data
 							    ));
     union tree *	(*ts_region_end_func) BU_ARGS((struct db_tree_state * /**< @brief tsp*/,
-						       struct db_full_path * /**< @brief pathp*/,
+						       const struct db_full_path * /**< @brief pathp*/,
 						       union tree * /**< @brief curtree*/,
 						       genptr_t client_data
 							  ));
     union tree *	(*ts_leaf_func) BU_ARGS((struct db_tree_state * /**< @brief tsp*/,
-						 struct db_full_path * /**< @brief pathp*/,
+						 const struct db_full_path * /**< @brief pathp*/,
 						 struct rt_db_internal * /**< @brief ip*/,
 						 genptr_t client_data
 						    ));
@@ -1583,7 +1585,7 @@ struct application  {
  */
 struct rt_g {
     int			debug;		/**< @brief  !0 for debug, see librt/debug.h */
-    /* XXX rtg_parallel is not used by LIBRT any longer */
+    /* DEPRECATED:  rtg_parallel is not used by LIBRT any longer (and will be removed) */
     int			rtg_parallel;	/**< @brief  !0 = trying to use multi CPUs */
     struct bu_list	rtg_vlfree;	/**< @brief  head of bn_vlist freelist */
     int			NMG_debug;	/**< @brief  debug bits for NMG's see nmg.h */
@@ -1856,8 +1858,6 @@ struct bezier_seg	/**< @brief  Bezier curve segment */
  * all the structure names are known.  The "union record" and "struct
  * nmgregion" pointers are problematic, so generic pointers are used
  * when those header files have not yet been seen.
- *
- * XXX On SGI, can not use identifiers in prototypes inside structure!
  *
  * DEPRECATED: the size of this structure will likely change with new
  * size for ft_label and new object callbacks.
@@ -3196,15 +3196,15 @@ RT_EXPORT BU_EXTERN(int db_walk_tree,
 		     int ncpu,
 		     const struct db_tree_state *init_state,
 		     int (*reg_start_func) (struct db_tree_state * /*tsp*/,
-					    struct db_full_path * /*pathp*/,
+					    const struct db_full_path * /*pathp*/,
 					    const struct rt_comb_internal * /* combp */,
 					    genptr_t client_data),
 		     union tree *(*reg_end_func) (struct db_tree_state * /*tsp*/,
-						  struct db_full_path * /*pathp*/,
+						  const struct db_full_path * /*pathp*/,
 						  union tree * /*curtree*/,
 						  genptr_t client_data),
 		     union tree *(*leaf_func) (struct db_tree_state * /*tsp*/,
-					       struct db_full_path * /*pathp*/,
+					       const struct db_full_path * /*pathp*/,
 					       struct rt_db_internal * /*ip*/,
 					       genptr_t client_data),
 		     genptr_t client_data));
@@ -3220,12 +3220,12 @@ RT_EXPORT BU_EXTERN(void db_apply_anims,
 		     mat_t stck,
 		     mat_t arc,
 		     struct mater_info *materp));
-/* XXX db_shader_mat, should be called rt_shader_mat */
 RT_EXPORT BU_EXTERN(int db_region_mat,
 		    (mat_t		m,		/* result */
 		     struct db_i	*dbip,
 		     const char	*name,
 		     struct resource *resp));
+/* FIXME: db_shader_mat (DEPRECATED), should be called rt_shader_mat */
 RT_EXPORT BU_EXTERN(int db_shader_mat,
 		    (mat_t			model_to_shader,	/* result */
 		     const struct rt_i	*rtip,
@@ -3617,7 +3617,7 @@ RT_EXPORT BU_EXTERN(int rt_tree_elim_nops,
 
 
 /* vlist.c */
-/* XXX Has some stuff mixed in here that should go in LIBBN */
+/* FIXME: Has some stuff mixed in here that should go in LIBBN */
 RT_EXPORT BU_EXTERN(struct bn_vlblock *bn_vlblock_init,
 		    (struct bu_list	*free_vlist_hd,	/* where to get/put free vlists */
 		     int		max_ent));
@@ -5066,12 +5066,12 @@ RT_EXPORT BU_EXTERN(int nmg_two_region_vertex_fuse,
 		     const struct bn_tol *tol));
 RT_EXPORT BU_EXTERN(union tree *nmg_booltree_leaf_tess,
 		    (struct db_tree_state *tsp,
-		     struct db_full_path *pathp,
+		     const struct db_full_path *pathp,
 		     struct rt_db_internal *ip,
 		     genptr_t client_data));
 RT_EXPORT BU_EXTERN(union tree *nmg_booltree_leaf_tnurb,
 		    (struct db_tree_state *tsp,
-		     struct db_full_path *pathp,
+		     const struct db_full_path *pathp,
 		     struct rt_db_internal *ip,
 		     genptr_t client_data));
 RT_EXPORT extern int nmg_bool_eval_silent;	/* quell output from nmg_booltree_evaluate */

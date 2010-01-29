@@ -22,7 +22,7 @@ AM_CPPFLAGS = \
 	${BREP_CPPFLAGS}
 
 # must fix roots.c exact floating point comparison
-# AM_CFLAGS = ${STRICT_FLAGS}
+AM_CFLAGS = ${STRICT_FLAGS}
 
 noinst_PROGRAMS = \
 	comb \
@@ -134,6 +134,7 @@ librt_nil_la_SOURCES = \
 	primitives/eto/eto_mirror.c \
 	primitives/extrude/extrude.c \
 	primitives/extrude/extrude_brep.cpp \
+	primitives/generic.c \
 	primitives/grip/grip.c \
 	primitives/grip/grip_mirror.c \
 	primitives/half/half.c \

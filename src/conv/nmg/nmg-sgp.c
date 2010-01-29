@@ -136,9 +136,9 @@ main(argc, argv)
 #endif
     BU_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
 
-    /* XXX These need to be improved */
+    /* FIXME: These need to be improved */
     tol.magic = BN_TOL_MAGIC;
-    tol.dist = 0.1;
+    tol.dist = 0.0005;
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;

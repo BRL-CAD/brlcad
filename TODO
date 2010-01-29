@@ -17,16 +17,18 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* implement a lighting model for rt that visualizes how expensive each
-  individual pixel is to compute with an intensity (heat graph)
-
 * fix mged EDITOR invocation bug.  have to reconcile src/mged/editit.c
   and src/libged/editit.c where the latter had the libdm dependency
   removed.  that refactoring subsequently killed all of the logic used
   to know when to invoke the editor from within an xterm, which hangs
   mged since the user can't actually see/access the detached editor.
 
-* vls name wrapping (reversible argv-to-vls, vls-to-argv)
+
+THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
+-------------------------------------------------------
+
+* vls name wrapping (reversible argv-to-vls, vls-to-argv).  look at
+  src/libged/glob.c code, very similar.
 
 * refactor rt_functab accessors to go through an api call or calls so
   that the array is not accessed directly.  either an rt_eval() style
@@ -34,12 +36,8 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   or simply have an rt_*() for each function (e.g., rt_mirror(),
   rt_shot(), rt_describe(), etc).
 
-* fix src/librt/roots.c exact floating point comparison issue and
-  tight tolerance problems.  See !!! comments.
-
-
-THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
--------------------------------------------------------
+* investigate tessellation failures (Stryker, et al), possibily due to
+  recent tolerance checks.
 
 * 64-bit port of BRL-CAD on Windows
 
@@ -57,6 +55,14 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* fix !!! in src/libged/tables.c where a temporary file is getting
+  used.  needs to call bu_temp_file().
+
+* make the 'tree' command accept a full path, not just a combination
+
+* clean up new rt -l8 heat graph lighting model so that it works in
+  parallel and with no "splotches"
 
 * make rt_prep_timer() take or return a context that gets subsequently
   passed to rt_get_timer() calls for returning the elapsed time.  this

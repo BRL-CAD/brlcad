@@ -65,20 +65,20 @@ __BEGIN_DECLS
 #define WDB_ARGS(args) args
 
 /*
- *  In-memory form of database combinations
+ * In-memory form of database combinations
  */
-struct wmember  {
-    struct bu_list	l;
-    int		wm_op;		/**< @brief  Boolean operation */
-    mat_t		wm_mat;		/**< @brief  XXX Should be matp_t !!! */
-    char		*wm_name;
+struct wmember {
+    struct bu_list l;
+    int wm_op;		/**< @brief  Boolean operation */
+    mat_t wm_mat;	/**< @brief  FIXME: Should be a matp_t */
+    char *wm_name;
 };
 #define WMEMBER_NULL	((struct wmember *)0)
 #define WDB_CK_WMEMBER(_p)	BU_CKMAG(_p, WMEMBER_MAGIC, "wmember" );
 
 /*
- *  Definitions for pipe (wire) segments
- * XXX Why isn't this in rtgeom.h?
+ * Definitions for pipe (wire) segments
+ * FIXME: move to rtgeom.h?
  */
 
 struct wdb_pipept {

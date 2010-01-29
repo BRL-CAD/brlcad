@@ -40,7 +40,7 @@
 #include "plot3.h"
 
 
-BU_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
+BU_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
 
 
 static const char usage[] = "Usage: %s [-v] [-d] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-p prefix] brlcad_db.g object(s)\n";
@@ -89,9 +89,9 @@ main(int argc, char **argv)
     ttol.rel = 0.01;
     ttol.norm = 0.0;
 
-    /* XXX These need to be improved */
+    /* FIXME These need to be improved */
     tol.magic = BN_TOL_MAGIC;
-    tol.dist = 0.005;
+    tol.dist = 0.0005;
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
@@ -124,7 +124,7 @@ main(int argc, char **argv)
 		break;
 	    case 'P':
 		ncpu = atoi( bu_optarg );
-		rt_g.debug = 1;	/* XXX DEBUG_ALLRAYS -- to get core dumps */
+		rt_g.debug = 1;
 		break;
 	    case 'x':
 		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );
@@ -211,7 +211,7 @@ main(int argc, char **argv)
  *
  *  This routine must be prepared to run in parallel.
  */
-union tree *do_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
     union tree		*ret_tree;
     struct nmgregion	*r;
@@ -394,7 +394,7 @@ nmg_to_psurf(struct nmgregion *r, FILE *fp_psurf)
     /* Built list of vertex structs */
     nmg_vertex_tabulate( &vtab, &r->l.magic );
 
-    /* XXX What to do if 0 vertices?  */
+    /* FIXME: What to do if 0 vertices?  */
 
     /* Print list of unique vertices and convert from mm to cm. */
     for (i = 0; i < BU_PTBL_END(&vtab); i++)  {

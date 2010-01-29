@@ -229,7 +229,7 @@ namespace brlcad {
 
 
     Record::Record(FILE* in) : _fp(in) {
-	if (_reclen < 0) calcRecsize(in); // XXX: fixme
+	if (_reclen < 0) calcRecsize(in); // FIXME: ...
 	_start = ftell(in);
 	_read();
     }
@@ -431,7 +431,7 @@ namespace brlcad {
     }
 
     GlobalSection::GlobalSection() {
-	// XXX: todo
+	// TODO
     }
 
     GlobalSection::GlobalSection(const string& in) {
@@ -650,7 +650,7 @@ namespace brlcad {
     IGES::readBreps(Extractor* handler)
     {
 	DEList breps;
-	// XXX - right now this only reads one kind of object at a time.
+	// FIXME: right now this only reads one kind of object at a time.
 	find(ManifoldSolidBRepObject, breps);
 	//	find(RationalBSplineSurface, breps);
 	debug("Found " << breps.size() << " breps!");

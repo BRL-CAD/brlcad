@@ -390,7 +390,7 @@ Assign_vu_geom( vu, u, v, srf )
     }
 
     nmg_vertex_gv( vu->v_p, pt_on_srf );
-    /* XXXXX Need w coord! */
+    /* TODO: Need w coord! */
     VSET( uvw, u, v, 1.0 );
 
     for ( BU_LIST_FOR( vu1, vertexuse, &vu->v_p->vu_hd ) )
@@ -727,7 +727,7 @@ Make_trim_loop( entity_no, orientation, srf, fu )
 	    /* if old edge doesn't have vertex geometry, assign some */
 	    if ( !vp->vg_p )
 	    {
-		/* XXX Don't divied out rational coord */
+		/* Don't divied out rational coord */
 		if ( RT_NURB_IS_PT_RATIONAL( crv1->pt_type ) )
 		{
 		    u = crv1->ctl_points[0]/crv1->ctl_points[ncoords-1];

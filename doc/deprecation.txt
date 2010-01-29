@@ -56,6 +56,9 @@ new names should be listed for reference.
 
 7.16
 ----
+include/raytrace.h
+        rt_prep_timer() -> bu_timer() [deprecated 7.16]
+        rt_get_timer() -> bu_elapsed() [deprecated 7.16]
 mged
 	make_bb -> bb [deprecated 7.16]
 

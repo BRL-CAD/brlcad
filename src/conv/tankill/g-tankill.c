@@ -41,7 +41,7 @@
 #include "raytrace.h"
 
 
-BU_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
+BU_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
 
 static const char usage[] = "Usage:\n\
 	%s [-v] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-s surroundings_code] [-i idents_output_file] [-o out_file] brlcad_db.g object(s)\n\
@@ -104,7 +104,7 @@ insert_id(int id)
 
 /* routine used in tree walker to select regions with the current ident number */
 static int
-select_region(struct db_tree_state *tsp, struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
+select_region(struct db_tree_state *tsp, const struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
 {
     if ( tsp->ts_regionid == curr_id )
 	return( 0 );
@@ -114,7 +114,7 @@ select_region(struct db_tree_state *tsp, struct db_full_path *pathp, const struc
 
 /* routine used in tree walker to collect region ident numbers */
 static int
-get_reg_id(struct db_tree_state *tsp, struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
+get_reg_id(struct db_tree_state *tsp, const struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
 {
     insert_id( tsp->ts_regionid );
     return( -1 );
@@ -122,7 +122,7 @@ get_reg_id(struct db_tree_state *tsp, struct db_full_path *pathp, const struct r
 
 /* stubs to warn of the unexpected */
 static union tree *
-region_stub(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+region_stub(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
     struct directory *fp_name;	/* name from pathp */
 
@@ -132,7 +132,7 @@ region_stub(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *c
 }
 
 static union tree *
-leaf_stub(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
+leaf_stub(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
 {
     struct directory *fp_name;	/* name from pathp */
 
@@ -282,8 +282,6 @@ nmg_assoc_void_shells( r, flags, ttol )
 
 			    if ( !V3RPP1_IN_RPP2( void_s->sa_p->min_pt, void_s->sa_p->max_pt, test_s->sa_p->min_pt, test_s->sa_p->max_pt ) )
 				continue;
-
-			    /* XXXX check for wrong_void, set to one if wrong */
 			}
 		    }
 		    if ( wrong_void )
@@ -301,7 +299,7 @@ nmg_assoc_void_shells( r, flags, ttol )
 
 /*	Routine to write an nmgregion in the TANKILL format */
 static void
-Write_tankill_region(struct nmgregion *r, struct db_tree_state *tsp, struct db_full_path *pathp)
+Write_tankill_region(struct nmgregion *r, struct db_tree_state *tsp, const struct db_full_path *pathp)
 {
     struct model *m;
     struct shell *s;
@@ -355,7 +353,7 @@ Write_tankill_region(struct nmgregion *r, struct db_tree_state *tsp, struct db_f
     /* Now triangulate the entire model */
     nmg_triangulate_model( r->m_p, &tol );
 
-    /* XXXXX temporary fix for OT_UNSPEC loops */
+    /* FIXME: temporary fix for OT_UNSPEC loops */
     for ( BU_LIST_FOR( r, nmgregion, &l->r_hd ) )
     {
 	for ( BU_LIST_FOR( s, shell, &r->s_hd ) )
@@ -651,17 +649,17 @@ main(int argc, char **argv)
     ttol.rel = 0.01;
     ttol.norm = 0.0;
 
-    /* XXX These need to be improved */
+    /* FIXME: These need to be improved */
     tol.magic = BN_TOL_MAGIC;
-    tol.dist = 0.005;
+    tol.dist = 0.0005;
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
-    /* XXX For visualization purposes, in the debug plot files */
+    /* For visualization purposes, in the debug plot files */
     {
 	extern fastf_t	nmg_eue_dist;	/* librt/nmg_plot.c */
-	/* XXX This value is specific to the Bradley */
+	/* WTF: This value is specific to the Bradley */
 	nmg_eue_dist = 2.0;
     }
 
@@ -826,7 +824,7 @@ main(int argc, char **argv)
  *
  *  This routine must be prepared to run in parallel.
  */
-union tree *do_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
     struct nmgregion	*r;
     struct bu_list		vhead;

@@ -41,13 +41,13 @@ endif
 
 COMMON = \
 	do.c \
+	heatgraph.c \
 	main.c \
 	opt.c \
 	worker.c
 
 ALLSRCS = \
 	$(COMMON) \
-	heatgraph.c \ 
 	libfb-dummy.c \
 	read-rtlog.c \
 	reshoot.c \
@@ -106,7 +106,6 @@ rtscale_SOURCES = \
 
 rt_SOURCES = \
 	$(COMMON) \
-	heatgraph.c \ 
 	scanline.c \
 	view.c
 
@@ -200,8 +199,8 @@ librttherm_a_SOURCES = $(COMMON)
 libremrt_a_CFLAGS = -DRTSRV
 libremrt_a_SOURCES = \
 	do.c \
-	opt.c \
 	heatgraph.c \
+	opt.c \
 	scanline.c \
 	sh_tcl.c \
 	view.c \

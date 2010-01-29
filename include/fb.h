@@ -36,7 +36,7 @@
  * Needed for fd_set, avoid including sys/select.h outright since it
  * conflicts on some systems (e.g. freebsd4).
  *
- * XXX would be nice to decouple this interface from fd_set as it's
+ * FIXME: would be nice to decouple this interface from fd_set as it's
  * only used in one place right now.
  */
 #if defined(HAVE_SYS_TYPES_H)
