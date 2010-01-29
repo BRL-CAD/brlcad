@@ -29,11 +29,10 @@
 #include "common.h"
 
 #include "tcl.h"
+#include "itcl.h"
 
 #ifdef BWISH
 #  include "itk.h"
-#else
-#  include "itcl.h"
 #endif
 
 #include "bu.h"
