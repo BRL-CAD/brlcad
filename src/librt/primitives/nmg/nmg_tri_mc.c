@@ -398,6 +398,12 @@ rt_nmg_mc_realize_cube(struct shell *s, int pv, point_t *p, point_t *edges, cons
 	    return -1;
 	}
 
+	if (!bn_3pts_distinct(edges[vi[0]], edges[vi[1]], edges[vi[2]], tol) || 
+		bn_3pts_collinear(edges[vi[0]], edges[vi[1]], edges[vi[2]], tol)) {
+	    vi+=3;
+	    continue;
+	}
+
 	memset((char *)vertl, 0, sizeof(vertl));
 
 	fu = nmg_cmface(s, f_vertl, 3);
@@ -405,6 +411,9 @@ rt_nmg_mc_realize_cube(struct shell *s, int pv, point_t *p, point_t *edges, cons
 	nmg_vertex_gv(vertl[0], edges[vi[0]]);
 	nmg_vertex_gv(vertl[1], edges[vi[1]]);
 	nmg_vertex_gv(vertl[2], edges[vi[2]]);
+	if (nmg_calc_face_g(fu))
+	    nmg_kfu(fu);
+
 	if(nmg_fu_planeeqn(fu, tol)) {
 	    bu_log("Tiny triangle! %f (%f)\t", 
 		    min3(DIST_PT_PT(edges[vi[0]],edges[vi[1]]), 
