@@ -46,15 +46,17 @@ ged_move_all_file(struct ged *gedp, int nflag, const char *file)
     }
 
     while (bu_fgets(line, sizeof(line), fp) != NULL) {
-	char old[256];
-	char new[256];
+	char *cp;
+	char *new_av[3];
 
-	if (sscanf(line, "%s %s", old, new) != 2) {
-	    bu_vls_printf(&gedp->ged_result_str, "Discarding %s\n", line);
+	/* Skip comments */
+	if ((cp = strchr(line, '#')) != NULL)
+	    *cp = '\0';
+
+	if (bu_argv_from_string(new_av, 2, line) != 2)
 	    continue;
-	}
 
-	ged_move_all_func(gedp, nflag, (const char *)old, (const char *)new);
+	ged_move_all_func(gedp, nflag, (const char *)new_av[0], (const char *)new_av[1]);
     }
 
     fclose(fp);
