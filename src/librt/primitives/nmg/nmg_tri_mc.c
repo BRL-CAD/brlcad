@@ -365,18 +365,24 @@ int mc_tris[256][16] = {
 {0, 3, 8, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
 {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1}};
 
+fastf_t min3(fastf_t a, fastf_t b, fastf_t c) {
+	fastf_t r=(a<b?a:b);
+	return c<r?c:r;
+}
 
 /* returns the number of triangles added or -1 on failure */
 int
 rt_nmg_mc_realize_cube(struct shell *s, int pv, point_t *p, point_t *edges, const struct bn_tol *tol)
 {
     int *vi, fo;
+    struct faceuse *fu;
+    struct vertex *vertl[3], **f_vertl[3];
 
-    /* quellage until implemented */
-    s = s;
     p = p;
 
-    /* this is where we do s omething with the tables. */
+    f_vertl[0] = &vertl[0];
+    f_vertl[1] = &vertl[1];
+    f_vertl[2] = &vertl[2];
 
     vi = (int *)(mc_tris[pv]);
     /*
@@ -387,41 +393,29 @@ rt_nmg_mc_realize_cube(struct shell *s, int pv, point_t *p, point_t *edges, cons
 
     fo = 0;
     while( *vi >= 0 ) {
-	int i;
-	point_t pt[3];
-	struct faceuse *fu;
-	struct vertex *verts[8], **vertp[3];
-
-	for(i=0;i<8;i++)
-	    verts[i] = (struct vertex *)NULL;
-
 	if(++fo > 5) {
 	    bu_log("Whoa, too many triangles?\n");
 	    return -1;
 	}
 
-       bu_log("<%.2f %.2f %.2f / %.2f %.2f %.2f / %.2f %.2f %.2f>\n", 
-	       V3ARGS(edges[vi[0]]), V3ARGS(edges[vi[1]]), V3ARGS(edges[vi[2]]));
-	/* 
-	 * wire these edge values into the corner stuff. One would think that
-	 * stuff like 'magic' would be important, but the bot tesselator seems
-	 * to do without...
-	 */
-	VMOVE(pt[0], edges[vi[0]]);
-	VMOVE(pt[1], edges[vi[1]]);
-	VMOVE(pt[2], edges[vi[2]]);
+	memset((char *)vertl, 0, sizeof(vertl));
 
-	bu_log("Building a cmface\n");
-	if((fu = nmg_cmface(s, vertp, 3)) == 0)
-	    return -1;
+	fu = nmg_cmface(s, f_vertl, 3);
 
-	bu_log("Adding faces\n");
-	nmg_vertex_gv(verts[0], pt[0]);
-	nmg_vertex_gv(verts[1], pt[1]);
-	nmg_vertex_gv(verts[2], pt[2]);
-
-	bu_log("building plane equation\n");
-	nmg_fu_planeeqn(fu, tol);
+	nmg_vertex_gv(vertl[0], edges[vi[0]]);
+	nmg_vertex_gv(vertl[1], edges[vi[1]]);
+	nmg_vertex_gv(vertl[2], edges[vi[2]]);
+	if(nmg_fu_planeeqn(fu, tol)) {
+	    bu_log("Tiny triangle! %f (%f)\t", 
+		    min3(DIST_PT_PT(edges[vi[0]],edges[vi[1]]), 
+			DIST_PT_PT(edges[vi[1]],edges[vi[2]]), 
+			DIST_PT_PT(edges[vi[0]],edges[vi[2]])), tol->dist);
+	    bu_log("<%f %f %f> <%f %f %f> <%f %f %f> (%f %f %f)\n", 
+		    V3ARGS(edges[vi[0]]), V3ARGS(edges[vi[1]]), V3ARGS(edges[vi[2]]),
+		    DIST_PT_PT(edges[vi[0]],edges[vi[1]]), 
+		    DIST_PT_PT(edges[vi[0]],edges[vi[2]]), 
+		    DIST_PT_PT(edges[vi[1]],edges[vi[2]]));
+	}
 
 	vi+=3;
     }
