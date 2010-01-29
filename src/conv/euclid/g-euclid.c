@@ -489,7 +489,7 @@ main(int argc, char **argv)
     ttol.rel = 0.01;
     ttol.norm = 0.0;
 
-    /* XXX These need to be improved */
+    /* FIXME: These need to be improved */
     tol.magic = BN_TOL_MAGIC;
     tol.dist = 0.005;
     tol.dist_sq = tol.dist * tol.dist;
@@ -504,10 +504,10 @@ main(int argc, char **argv)
 
     rt_init_resource( &rt_uniresource, 0, NULL );
 
-    /* XXX For visualization purposes, in the debug plot files */
+    /* For visualization purposes, in the debug plot files */
     {
 	extern fastf_t	nmg_eue_dist;	/* librt/nmg_plot.c */
-	/* XXX This value is specific to the Bradley */
+	/* WTF: This value is specific to the Bradley */
 	nmg_eue_dist = 2.0;
     }
     BU_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
@@ -534,7 +534,7 @@ main(int argc, char **argv)
 		break;
 	    case 'P':
 /*			ncpu = atoi( bu_optarg ); */
-		rt_g.debug = 1;	/* XXX DEBUG_ALLRAYS -- to get core dumps */
+		rt_g.debug = 1;	/* NOTE: setting DEBUG_ALLRAYS to get core dumps */
 		break;
 	    case 'x':
 		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );

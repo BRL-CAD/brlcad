@@ -282,8 +282,6 @@ nmg_assoc_void_shells( r, flags, ttol )
 
 			    if ( !V3RPP1_IN_RPP2( void_s->sa_p->min_pt, void_s->sa_p->max_pt, test_s->sa_p->min_pt, test_s->sa_p->max_pt ) )
 				continue;
-
-			    /* XXXX check for wrong_void, set to one if wrong */
 			}
 		    }
 		    if ( wrong_void )
@@ -355,7 +353,7 @@ Write_tankill_region(struct nmgregion *r, struct db_tree_state *tsp, const struc
     /* Now triangulate the entire model */
     nmg_triangulate_model( r->m_p, &tol );
 
-    /* XXXXX temporary fix for OT_UNSPEC loops */
+    /* FIXME: temporary fix for OT_UNSPEC loops */
     for ( BU_LIST_FOR( r, nmgregion, &l->r_hd ) )
     {
 	for ( BU_LIST_FOR( s, shell, &r->s_hd ) )
@@ -651,17 +649,17 @@ main(int argc, char **argv)
     ttol.rel = 0.01;
     ttol.norm = 0.0;
 
-    /* XXX These need to be improved */
+    /* FIXME: These need to be improved */
     tol.magic = BN_TOL_MAGIC;
-    tol.dist = 0.005;
+    tol.dist = 0.0005;
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
-    /* XXX For visualization purposes, in the debug plot files */
+    /* For visualization purposes, in the debug plot files */
     {
 	extern fastf_t	nmg_eue_dist;	/* librt/nmg_plot.c */
-	/* XXX This value is specific to the Bradley */
+	/* WTF: This value is specific to the Bradley */
 	nmg_eue_dist = 2.0;
     }
 

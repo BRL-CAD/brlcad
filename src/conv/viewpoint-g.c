@@ -92,7 +92,7 @@ main(int argc, char **argv)
     struct faceuse *fu;
     struct wmember reg_head;
 
-    /* XXX These need to be improved */
+    /* FIXME: These need to be improved */
     tol.magic = BN_TOL_MAGIC;
     tol.dist = 0.0005;
     tol.dist_sq = tol.dist * tol.dist;

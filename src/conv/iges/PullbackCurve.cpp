@@ -130,7 +130,7 @@ getCoefficients(BSpline& bspline, Array1D<double>& N, double u) {
   return k;
 }
 
-// XXX: this function sucks...
+// FIXME: this function sucks...
 void
 generateParameters(BSpline& bspline) {
   double lastT = 0.0;
@@ -232,8 +232,6 @@ interpolateCurve(PBCData& data) {
     generateParameters(spline);
     generateControlPoints(spline, data);
     ON_NurbsCurve* nurbs = newNURBSCurve(spline);
-
-    // XXX - attempt to simplify here!
 
     return nurbs;
   }

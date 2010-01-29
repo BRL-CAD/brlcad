@@ -998,7 +998,7 @@ identbld(void)
     zap_nl();
     bu_strlcpy(title, buf, sizeof(title));
 
-    /* XXX Should use db_conversions() for this */
+    /* FIXME: Should use db_conversions() for this */
     switch (units) {
 	case ID_NO_UNIT:
 	    bu_strlcpy(unit_str, "mm", sizeof(unit_str));

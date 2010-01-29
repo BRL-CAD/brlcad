@@ -741,9 +741,9 @@ read_arbn(char *name)
     point_t	cent;			/* centroid of arbn */
     struct bn_tol	tol;
 
-    /* XXX The tolerance here is sheer guesswork */
+    /* FIXME: The tolerance here is sheer guesswork */
     tol.magic = BN_TOL_MAGIC;
-    tol.dist = 0.005;
+    tol.dist = 0.0005;
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;

@@ -427,9 +427,9 @@ main(int argc, char **argv)
     ttol.rel = 0.01;
     ttol.norm = 0.0;
 
-    /* XXX These need to be improved */
+    /* FIXME: These need to be improved */
     tol.magic = BN_TOL_MAGIC;
-    tol.dist = 0.005;
+    tol.dist = 0.0005;
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
@@ -463,8 +463,7 @@ main(int argc, char **argv)
 		verbose++;
 		break;
 	    case 'P':
-/*			ncpu = atoi( bu_optarg ); */
-		rt_g.debug = 1;	/* XXX DEBUG_ALLRAYS -- to get core dumps */
+		rt_g.debug = 1;
 		break;
 	    case 'x':
 		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );

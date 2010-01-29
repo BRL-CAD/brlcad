@@ -113,9 +113,9 @@ main(argc, argv)
     ttol.rel = 0.01;
     ttol.norm = 0.0;
 
-    /* XXX These need to be improved */
+    /* FIXME: These need to be improved */
     tol.magic = BN_TOL_MAGIC;
-    tol.dist = 0.005;
+    tol.dist = 0.0005;
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = 1e-5;
     tol.para = 1 - tol.perp;
@@ -147,7 +147,7 @@ main(argc, argv)
 		break;
 	    case 'P':
 		ncpu = atoi( bu_optarg );
-		rt_g.debug = 1;	/* XXX DEBUG_ALLRAYS -- to get core dumps */
+		rt_g.debug = 1;
 		break;
 	    case 'x':
 		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );
@@ -437,7 +437,9 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 	    nmg_isect2d_final_cleanup();
 
 	    /* Release the tree memory & input regions */
-/*XXX*/			/* db_free_tree(curtree);*/		/* Does an nmg_kr() */
+
+	    /* FIXME: memory leak? */
+	    /* db_free_tree(curtree);*/		/* Does an nmg_kr() */
 
 	    /* Get rid of (m)any other intermediate structures */
 	    if ( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC )  {
@@ -468,7 +470,6 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 	regions_written++; /* don't count as a failure */
 	r = (struct nmgregion *)NULL;
     }
-/*	regions_done++;  XXX */
 
     BU_UNSETJUMP;		/* Relinquish the protection */
     regions_converted++;

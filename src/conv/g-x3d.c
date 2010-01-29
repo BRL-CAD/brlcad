@@ -376,17 +376,17 @@ main(int argc, char **argv)
     ttol.rel = 0.01;
     ttol.norm = 0.0;
 
-    /* XXX These need to be improved */
+    /* FIXME: These need to be improved */
     tol.magic = BN_TOL_MAGIC;
-    tol.dist = 0.005;
+    tol.dist = 0.0005;
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
-    /* XXX For visualization purposes, in the debug plot files */
+    /* NOTE: For visualization purposes, in the debug plot files */
     {
 	extern fastf_t	nmg_eue_dist;	/* librt/nmg_plot.c */
-	/* XXX This value is specific to the Bradley */
+	/* WTF: This value is specific to the Bradley */
 	nmg_eue_dist = 2.0;
     }
 
@@ -420,8 +420,7 @@ main(int argc, char **argv)
 		verbose++;
 		break;
 	    case 'P':
-/*			ncpu = atoi( bu_optarg ); */
-		rt_g.debug = 1;	/* XXX DEBUG_ALLRAYS -- to get core dumps */
+		rt_g.debug = 1;
 		break;
 	    case 'x':
 		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );
@@ -746,7 +745,7 @@ nmg_2_vrml(FILE *fp, const struct db_full_path *pathp, struct model *m, struct m
 	fprintf( fp, "\t\t</Appearance>\n");
     }
 
-    /* XXX need code to handle light */
+    /* FIXME: need code to handle light */
 
     /* get list of vertices */
     nmg_vertex_tabulate( &verts, &m->magic );

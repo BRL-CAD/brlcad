@@ -502,12 +502,13 @@ Draw_entities( m, view_number, de_list, no_of_des, x, y, ang, local_scale, clip,
 		point_t tmp_pt;
 
 		/* Model to view transform */
-		if ( xform )
-		    MAT4X3PNT( tmp_pt, *xform, vp->pt[i] )
-			else
-			    VMOVE( tmp_pt, vp->pt[i] );
+		if ( xform ) {
+		    MAT4X3PNT( tmp_pt, *xform, vp->pt[i] );
+		} else {
+		    VMOVE( tmp_pt, vp->pt[i] );
+		}
 
-		/* XXXX should do clipping here */
+		/* FIXEM: should do clipping here */
 
 		/* project to XY plane */
 		if ( do_projection )
