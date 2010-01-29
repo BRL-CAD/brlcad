@@ -170,11 +170,13 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
 		}
 	    }
 
+    nmg_mark_edges_real(&s->l.magic);
+    nmg_region_a(*r, tol);
+
+    nmg_fix_normals(s, tol);
+
     rt_get_timer(&times, NULL);
     bu_log("metaball tesselate (%d triangles): %s\n", numtri, bu_vls_addr(&times));
-
-    nmg_mark_edges_real(&s->l.magic);
-    nmg_region_a(*r, tol);	/* this causes a bus error trying to dereference some magic shtuff */
 
     return 0;
 }
