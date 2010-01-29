@@ -21,6 +21,7 @@ Spanish.  Cliff Yapp continues to work extensively with both to get
 their efforts integrated so that HTML and PDF documentation are
 cleanly generated.
 
+* new mvall command -f filename option for bulk renaming - Bob Parker
 * fixed invocation of external editor for MGED commands - Cliff Yapp
 * fixed BoT raytracing solidity failure on grazed edges - Keith Bowman
 * increased 'rcodes' and 'edcodes' maximum line length - Sean Morrison
