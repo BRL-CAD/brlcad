@@ -932,7 +932,7 @@ TIE_FUNC(void tie_kdtree_prep, tie_t *tie)
 #endif
 
 /* Grow the head node to avoid floating point fuzz in the building process with edges */
-    VSCALE(delta.v,  delta.v,  1.0); /* XXX */
+    VSCALE(delta.v,  delta.v,  1.0);
     VSUB2(tie->min.v,  tie->min.v,  delta.v);
     VADD2(tie->max.v,  tie->max.v,  delta.v);
 

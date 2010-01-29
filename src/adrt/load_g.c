@@ -275,9 +275,9 @@ load_g (tie_t *tie, const char *db, int argc, const char **argv, struct adrt_mes
     ttol.norm = 0.0;
 
     /* Set up calculation tolerance defaults */
-    /* XXX These need to be improved */
+    /* FIXME: These need to be improved */
     tol.magic = BN_TOL_MAGIC;
-    tol.dist = 0.005;
+    tol.dist = 0.0005;
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = 1e-5;
     tol.para = 1 - tol.perp;

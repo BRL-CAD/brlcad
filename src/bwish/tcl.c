@@ -122,8 +122,9 @@ Cad_Main(int argc, char **argv, Tcl_AppInitProc (*appInitProc), Tcl_Interp *inte
     }
 
     if (filename != NULL) {
-	/*XXX ??? need to arrange for a bu_log handler and or handlers
-	  for stdout/stderr ??? */
+	/* ??? need to arrange for a bu_log handler and or handlers
+	 * for stdout/stderr?
+	 */
 	save_Tty(fileno(stdin));
 	Tcl_ResetResult(interp);
 	status = Tcl_EvalFile(interp, filename);

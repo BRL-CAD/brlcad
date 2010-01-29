@@ -46,7 +46,7 @@
 #include "tclcad.h"
 
 
-/* XXX -- it's probably a bad idea to import itcl/itk/iwidgets into
+/* NOTE: it's probably a bad idea to import itcl/itk/iwidgets into
  * the global namespace..  allow for easy means to disable the import.
  */
 #define IMPORT_ITCL	1
