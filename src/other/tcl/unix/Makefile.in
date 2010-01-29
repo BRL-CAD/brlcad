@@ -307,7 +307,7 @@ GENERIC_OBJS = regcomp.o regexec.o regfree.o regerror.o tclAlloc.o \
 	tclResolve.o tclResult.o tclScan.o tclStringObj.o \
 	tclStrToD.o tclThread.o \
 	tclThreadAlloc.o tclThreadJoin.o tclThreadStorage.o tclStubInit.o \
-	tclTimer.o tclTrace.o tclUtf.o tclUtil.o tclVar.o tclZlib.o \
+	tclTimer.o tclTrace.o tclUtf.o tclUtil.o tclVar.o \
 	tclTomMathInterface.o
 
 OO_OBJS = tclOO.o tclOOBasic.o tclOOCall.o tclOODefineCmds.o tclOOInfo.o \
@@ -346,13 +346,10 @@ MAC_OSX_OBJS = tclMacOSXBundle.o tclMacOSXFCmd.o tclMacOSXNotify.o
 
 DTRACE_OBJ = tclDTrace.o
 
-ZLIB_OBJS = Zadler32.o Zcompress.o Zcrc32.o Zdeflate.o Zgzio.o Zinfback.o \
-	Zinffast.o Zinflate.o Zinftrees.o Ztrees.o Zuncompr.o Zzutil.o
-
 TCL_OBJS = ${GENERIC_OBJS} ${UNIX_OBJS} ${NOTIFY_OBJS} ${COMPAT_OBJS} \
 	${OO_OBJS} @DL_OBJS@ @PLAT_OBJS@
 
-OBJS = ${TCL_OBJS} ${TOMMATH_OBJS} @DTRACE_OBJ@ @ZLIB_OBJS@
+OBJS = ${TCL_OBJS} ${TOMMATH_OBJS} @DTRACE_OBJ@ 
 
 TCL_DECLS = \
 	$(GENERIC_DIR)/tcl.decls \
@@ -448,8 +445,7 @@ GENERIC_SRCS = \
 	$(GENERIC_DIR)/tclTimer.c \
 	$(GENERIC_DIR)/tclTrace.c \
 	$(GENERIC_DIR)/tclUtil.c \
-	$(GENERIC_DIR)/tclVar.c \
-	$(GENERIC_DIR)/tclZlib.c
+	$(GENERIC_DIR)/tclVar.c
 
 OO_SRCS = \
 	$(GENERIC_DIR)/tclOO.c \
@@ -1248,9 +1244,6 @@ tclUtf.o: $(GENERIC_DIR)/tclUtf.c $(GENERIC_DIR)/tclUniData.c
 
 tclVar.o: $(GENERIC_DIR)/tclVar.c
 	$(CC) -c $(CC_SWITCHES) $(GENERIC_DIR)/tclVar.c
-
-tclZlib.o: $(GENERIC_DIR)/tclZlib.c
-	$(CC) -c $(ZLIB_INCLUDE) $(CC_SWITCHES) $(GENERIC_DIR)/tclZlib.c
 
 tclTest.o: $(GENERIC_DIR)/tclTest.c $(IOHDR) $(TCLREHDRS)
 	$(CC) -c $(APP_CC_SWITCHES) $(GENERIC_DIR)/tclTest.c

@@ -126,27 +126,6 @@ SC_TCL_LINK_LIBS
 LIBS="$LIBS$THREADS_LIBS"
 
 SC_ENABLE_SHARED
-
-#------------------------------------------------------------------------
-#	Add stuff for zlib
-#------------------------------------------------------------------------
-
-zlib_ok=yes
-AC_CHECK_HEADER([zlib.h],[
-  AC_CHECK_TYPE([gz_header],[],[zlib_ok=no],[#include <zlib.h>])],[
-  zlib_ok=no])
-AS_IF([test $zlib_ok = yes], [
-  AC_SEARCH_LIBS([deflateSetHeader],[z],[],[
-    zlib_ok=no
-  ])])
-AS_IF([test $zlib_ok = no], [
-  AC_SUBST(ZLIB_DIR,[\${COMPAT_DIR}/zlib])
-  AC_SUBST(ZLIB_OBJS,[\${ZLIB_OBJS}])
-  AC_SUBST(ZLIB_SRCS,[\${ZLIB_SRCS}])
-  AC_SUBST(ZLIB_INCLUDE,[-I\${ZLIB_DIR}])
-])
-AC_DEFINE(HAVE_ZLIB, 1, [Is there an installed zlib?])
-
 #--------------------------------------------------------------------
 # The statements below define a collection of compile flags.  This
 # macro depends on the value of SHARED_BUILD, and should be called
