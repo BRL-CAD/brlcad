@@ -653,6 +653,11 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   of these primitives, provided their continuity at the ends ensures
   continuity all along "seams" - something to consider.
 
+* implement a g-gcode exporter.  ideally this converts geometry to
+  NURBS format, trims surfaces, evaluates boolean expressions, and
+  then generates tool paths on resulting surfaces and interior paths.
+
+
 LIBPC
 -----
 
