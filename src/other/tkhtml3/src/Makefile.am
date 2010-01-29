@@ -4,9 +4,9 @@ lib_LTLIBRARIES = lib@PACKAGE_NAME@@PACKAGE_VERSION@.la
 htmltokens.c:   $(srcdir)/tokenlist.txt
 	$(TCLSH_PROG) $?
 
-htmldefaultstyle.c: $(srcdir)/tkhtml.tcl  $(srcdir)/html.css \
+$(srcdir)/htmldefaultstyle.c: $(srcdir)/tkhtml.tcl  $(srcdir)/html.css \
                     $(srcdir)/mkdefaultstyle.tcl
-	$(TCLSH_PROG) $(srcdir)/mkdefaultstyle.tcl > $(top_builddir)/src/htmldefaultstyle.c
+	$(TCLSH_PROG) $(srcdir)/mkdefaultstyle.tcl > $(srcdir)/htmldefaultstyle.c
 
 htmltokens.h: htmltokens.c
 
@@ -20,8 +20,7 @@ cssprop.c: cssprop.h
 #
 lib@PACKAGE_NAME@@PACKAGE_VERSION@_la_SOURCES = \
 	css.c \
-	$(top_builddir)/src/cssprop.c \
-	$(top_builddir)/src/htmldefaultstyle.c \
+	cssprop.c \
 	cssdynamic.c \
 	cssparser.c \
 	csssearch.c \
@@ -59,7 +58,7 @@ BUILT_SOURCES = \
 	cssprop.c \
 	cssprop.h \
 	htmltokens.h \
-	htmldefaultstyle.c \
+	$(srcdir)/htmldefaultstyle.c \
 	htmltokens.c
 
 DISTCLEANFILES = \
