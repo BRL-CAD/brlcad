@@ -56,24 +56,23 @@
 <refsynopsisdiv id='synopsis'>
   <cmdsynopsis>
     <command>mvall</command>    
-      <arg choice='req'><replaceable>old_name new_name</replaceable></arg>
+      <arg choice='opt'><replaceable>-n</replaceable></arg>
+      <arg choice='opt'><replaceable>(-f mapping_file) | (old_name new_name)</replaceable></arg>
    </cmdsynopsis>
 </refsynopsisdiv>
 
 <refsect1 id='description'>
   <title>DESCRIPTION</title>
   <para>Changes the name of <emphasis>old_name</emphasis> to <emphasis>new_name</emphasis>. This will also
-change any references to <emphasis>old_name</emphasis> that may appear in other combinations in the
-database. The <command>mv</command> command will change an object’s name without changing
-references to it. The <command>prefix</command> command will also change the names and references of
-objects.  
+change any references to <emphasis>old_name</emphasis> that may occur in other combinations in the
+database. If the <emphasis>-f</emphasis> variation of the command is used, all <emphasis>old_name</emphasis>
+ <emphasis>new_name</emphasis> pairings are read from the <emphasis>mapping_file</emphasis> and processed as
+ previously stated.
   </para>
 </refsect1>
 
 <refsect1 id='examples'>
   <title>EXAMPLES</title>
-  <para>The example shows the use of the <command>mvall</command> command to change the name of an object everywhere it occurs in the database.
-   </para>
   <example>
     <title>Change the name of an object everywhere it occurs in the database.</title>
      <para>
@@ -82,7 +81,20 @@ objects.
      <para>Changes the name of <emphasis>shapea</emphasis> to <emphasis>shapeb</emphasis> everywhere it occurs in the database.
      </para>
   </example>
- 
+    <example>
+      <title>This example shows a simple mapping file.</title>
+      <literallayout>
+old_name1 new_name1
+old_name2 new_name2
+old_name3 new_name3
+      </literallayout>
+    </example>
+</refsect1>
+
+<refsect1>
+    <title>See Also</title>
+    <para>mv prefix
+    </para>
 </refsect1>
 
 <refsect1 id='author'>
