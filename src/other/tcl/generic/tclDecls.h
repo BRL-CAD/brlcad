@@ -3637,77 +3637,6 @@ EXTERN int		Tcl_InterpActive (Tcl_Interp * interp);
 EXTERN void		Tcl_BackgroundException (Tcl_Interp * interp,
 				int code);
 #endif
-#ifndef Tcl_ZlibDeflate_TCL_DECLARED
-#define Tcl_ZlibDeflate_TCL_DECLARED
-/* 610 */
-EXTERN int		Tcl_ZlibDeflate (Tcl_Interp * interp, int format,
-				Tcl_Obj * data, int level,
-				Tcl_Obj * gzipHeaderDictObj);
-#endif
-#ifndef Tcl_ZlibInflate_TCL_DECLARED
-#define Tcl_ZlibInflate_TCL_DECLARED
-/* 611 */
-EXTERN int		Tcl_ZlibInflate (Tcl_Interp * interp, int format,
-				Tcl_Obj * data, int buffersize,
-				Tcl_Obj * gzipHeaderDictObj);
-#endif
-#ifndef Tcl_ZlibCRC32_TCL_DECLARED
-#define Tcl_ZlibCRC32_TCL_DECLARED
-/* 612 */
-EXTERN unsigned int	Tcl_ZlibCRC32 (unsigned int crc,
-				const unsigned char * buf, int len);
-#endif
-#ifndef Tcl_ZlibAdler32_TCL_DECLARED
-#define Tcl_ZlibAdler32_TCL_DECLARED
-/* 613 */
-EXTERN unsigned int	Tcl_ZlibAdler32 (unsigned int adler,
-				const unsigned char * buf, int len);
-#endif
-#ifndef Tcl_ZlibStreamInit_TCL_DECLARED
-#define Tcl_ZlibStreamInit_TCL_DECLARED
-/* 614 */
-EXTERN int		Tcl_ZlibStreamInit (Tcl_Interp * interp, int mode,
-				int format, int level, Tcl_Obj * dictObj,
-				Tcl_ZlibStream * zshandle);
-#endif
-#ifndef Tcl_ZlibStreamGetCommandName_TCL_DECLARED
-#define Tcl_ZlibStreamGetCommandName_TCL_DECLARED
-/* 615 */
-EXTERN Tcl_Obj *	Tcl_ZlibStreamGetCommandName (
-				Tcl_ZlibStream zshandle);
-#endif
-#ifndef Tcl_ZlibStreamEof_TCL_DECLARED
-#define Tcl_ZlibStreamEof_TCL_DECLARED
-/* 616 */
-EXTERN int		Tcl_ZlibStreamEof (Tcl_ZlibStream zshandle);
-#endif
-#ifndef Tcl_ZlibStreamChecksum_TCL_DECLARED
-#define Tcl_ZlibStreamChecksum_TCL_DECLARED
-/* 617 */
-EXTERN int		Tcl_ZlibStreamChecksum (Tcl_ZlibStream zshandle);
-#endif
-#ifndef Tcl_ZlibStreamPut_TCL_DECLARED
-#define Tcl_ZlibStreamPut_TCL_DECLARED
-/* 618 */
-EXTERN int		Tcl_ZlibStreamPut (Tcl_ZlibStream zshandle,
-				Tcl_Obj * data, int flush);
-#endif
-#ifndef Tcl_ZlibStreamGet_TCL_DECLARED
-#define Tcl_ZlibStreamGet_TCL_DECLARED
-/* 619 */
-EXTERN int		Tcl_ZlibStreamGet (Tcl_ZlibStream zshandle,
-				Tcl_Obj * data, int count);
-#endif
-#ifndef Tcl_ZlibStreamClose_TCL_DECLARED
-#define Tcl_ZlibStreamClose_TCL_DECLARED
-/* 620 */
-EXTERN int		Tcl_ZlibStreamClose (Tcl_ZlibStream zshandle);
-#endif
-#ifndef Tcl_ZlibStreamReset_TCL_DECLARED
-#define Tcl_ZlibStreamReset_TCL_DECLARED
-/* 621 */
-EXTERN int		Tcl_ZlibStreamReset (Tcl_ZlibStream zshandle);
-#endif
 #ifndef Tcl_SetStartupScript_TCL_DECLARED
 #define Tcl_SetStartupScript_TCL_DECLARED
 /* 622 */
@@ -4382,18 +4311,6 @@ typedef struct TclStubs {
     void (*tcl_TransferResult) (Tcl_Interp * sourceInterp, int result, Tcl_Interp * targetInterp); /* 607 */
     int (*tcl_InterpActive) (Tcl_Interp * interp); /* 608 */
     void (*tcl_BackgroundException) (Tcl_Interp * interp, int code); /* 609 */
-    int (*tcl_ZlibDeflate) (Tcl_Interp * interp, int format, Tcl_Obj * data, int level, Tcl_Obj * gzipHeaderDictObj); /* 610 */
-    int (*tcl_ZlibInflate) (Tcl_Interp * interp, int format, Tcl_Obj * data, int buffersize, Tcl_Obj * gzipHeaderDictObj); /* 611 */
-    unsigned int (*tcl_ZlibCRC32) (unsigned int crc, const unsigned char * buf, int len); /* 612 */
-    unsigned int (*tcl_ZlibAdler32) (unsigned int adler, const unsigned char * buf, int len); /* 613 */
-    int (*tcl_ZlibStreamInit) (Tcl_Interp * interp, int mode, int format, int level, Tcl_Obj * dictObj, Tcl_ZlibStream * zshandle); /* 614 */
-    Tcl_Obj * (*tcl_ZlibStreamGetCommandName) (Tcl_ZlibStream zshandle); /* 615 */
-    int (*tcl_ZlibStreamEof) (Tcl_ZlibStream zshandle); /* 616 */
-    int (*tcl_ZlibStreamChecksum) (Tcl_ZlibStream zshandle); /* 617 */
-    int (*tcl_ZlibStreamPut) (Tcl_ZlibStream zshandle, Tcl_Obj * data, int flush); /* 618 */
-    int (*tcl_ZlibStreamGet) (Tcl_ZlibStream zshandle, Tcl_Obj * data, int count); /* 619 */
-    int (*tcl_ZlibStreamClose) (Tcl_ZlibStream zshandle); /* 620 */
-    int (*tcl_ZlibStreamReset) (Tcl_ZlibStream zshandle); /* 621 */
     void (*tcl_SetStartupScript) (Tcl_Obj * path, const char * encoding); /* 622 */
     Tcl_Obj * (*tcl_GetStartupScript) (const char ** encodingPtr); /* 623 */
     int (*tcl_CloseEx) (Tcl_Interp * interp, Tcl_Channel chan, int flags); /* 624 */
@@ -6868,54 +6785,6 @@ extern const TclStubs *tclStubsPtr;
 #ifndef Tcl_BackgroundException
 #define Tcl_BackgroundException \
 	(tclStubsPtr->tcl_BackgroundException) /* 609 */
-#endif
-#ifndef Tcl_ZlibDeflate
-#define Tcl_ZlibDeflate \
-	(tclStubsPtr->tcl_ZlibDeflate) /* 610 */
-#endif
-#ifndef Tcl_ZlibInflate
-#define Tcl_ZlibInflate \
-	(tclStubsPtr->tcl_ZlibInflate) /* 611 */
-#endif
-#ifndef Tcl_ZlibCRC32
-#define Tcl_ZlibCRC32 \
-	(tclStubsPtr->tcl_ZlibCRC32) /* 612 */
-#endif
-#ifndef Tcl_ZlibAdler32
-#define Tcl_ZlibAdler32 \
-	(tclStubsPtr->tcl_ZlibAdler32) /* 613 */
-#endif
-#ifndef Tcl_ZlibStreamInit
-#define Tcl_ZlibStreamInit \
-	(tclStubsPtr->tcl_ZlibStreamInit) /* 614 */
-#endif
-#ifndef Tcl_ZlibStreamGetCommandName
-#define Tcl_ZlibStreamGetCommandName \
-	(tclStubsPtr->tcl_ZlibStreamGetCommandName) /* 615 */
-#endif
-#ifndef Tcl_ZlibStreamEof
-#define Tcl_ZlibStreamEof \
-	(tclStubsPtr->tcl_ZlibStreamEof) /* 616 */
-#endif
-#ifndef Tcl_ZlibStreamChecksum
-#define Tcl_ZlibStreamChecksum \
-	(tclStubsPtr->tcl_ZlibStreamChecksum) /* 617 */
-#endif
-#ifndef Tcl_ZlibStreamPut
-#define Tcl_ZlibStreamPut \
-	(tclStubsPtr->tcl_ZlibStreamPut) /* 618 */
-#endif
-#ifndef Tcl_ZlibStreamGet
-#define Tcl_ZlibStreamGet \
-	(tclStubsPtr->tcl_ZlibStreamGet) /* 619 */
-#endif
-#ifndef Tcl_ZlibStreamClose
-#define Tcl_ZlibStreamClose \
-	(tclStubsPtr->tcl_ZlibStreamClose) /* 620 */
-#endif
-#ifndef Tcl_ZlibStreamReset
-#define Tcl_ZlibStreamReset \
-	(tclStubsPtr->tcl_ZlibStreamReset) /* 621 */
 #endif
 #ifndef Tcl_SetStartupScript
 #define Tcl_SetStartupScript \

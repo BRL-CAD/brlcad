@@ -1094,18 +1094,6 @@ static const TclStubs tclStubs = {
     Tcl_TransferResult, /* 607 */
     Tcl_InterpActive, /* 608 */
     Tcl_BackgroundException, /* 609 */
-    Tcl_ZlibDeflate, /* 610 */
-    Tcl_ZlibInflate, /* 611 */
-    Tcl_ZlibCRC32, /* 612 */
-    Tcl_ZlibAdler32, /* 613 */
-    Tcl_ZlibStreamInit, /* 614 */
-    Tcl_ZlibStreamGetCommandName, /* 615 */
-    Tcl_ZlibStreamEof, /* 616 */
-    Tcl_ZlibStreamChecksum, /* 617 */
-    Tcl_ZlibStreamPut, /* 618 */
-    Tcl_ZlibStreamGet, /* 619 */
-    Tcl_ZlibStreamClose, /* 620 */
-    Tcl_ZlibStreamReset, /* 621 */
     Tcl_SetStartupScript, /* 622 */
     Tcl_GetStartupScript, /* 623 */
     Tcl_CloseEx, /* 624 */

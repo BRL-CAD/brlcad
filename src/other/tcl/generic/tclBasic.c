@@ -921,12 +921,6 @@ Tcl_CreateInterp(void)
      * compile and link against.
      */
 
-#ifdef HAVE_ZLIB
-    if (TclZlibInit(interp) != TCL_OK) {
-	Tcl_Panic(Tcl_GetString(Tcl_GetObjResult(interp)));
-    }
-#endif
-
     TOP_CB(iPtr) = NULL;
     return interp;
 }
