@@ -328,10 +328,13 @@ bu_free(genptr_t ptr, const char *str)
 #if defined(MALLOC_NOT_MP_SAFE)
     bu_semaphore_acquire(BU_SEM_SYSCALL);
 #endif
-/* Windows does not like */
+
 #ifndef _WIN32
+    /* !!! Windows apparently does not like this. */
+    /* TODO: figure out why. */
     *((int *)ptr) = -1;	/* zappo! */
 #endif
+
     free(ptr);
 #if defined(MALLOC_NOT_MP_SAFE)
     bu_semaphore_release(BU_SEM_SYSCALL);
