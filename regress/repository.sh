@@ -72,15 +72,20 @@ if test ! -f "$TOPSRC/include/common.h" ; then
     exit 1
 fi
 
-COMMONFILES="`find $TOPSRC -type f \( -name \*.c -o -name \*.cpp -o -name \*.cxx -o -name \*.h -o -name \*.y -o -name \*.l \) -not -regex '.*src/other.*' -not -regex '.*~' -not -regex '.*\.log' -not -regex '.*Makefile.*' -not -regex '.*cache.*' -not -regex '.*\.svn.*' -exec grep -n -I -e '#[[:space:]]*include' {} /dev/null \; | grep '\"common.h\"' | sed 's/:.*//g'`"
+COMMONFILES="`find ${TOPSRC}/src -type f \( -name \*.c -o -name \*.cpp -o -name \*.cxx -o -name \*.h -o -name \*.y -o -name \*.l \) -not -regex '.*src/other.*' -not -regex '.*~' -not -regex '.*\.log' -not -regex '.*Makefile.*' -not -regex '.*cache.*' -not -regex '.*\.svn.*' -exec grep -n -I -e '#[[:space:]]*include' {} /dev/null \; | grep '\"common.h\"' | sed 's/:.*//g'`"
+COMMONFILES2="`find ${TOPSRC}/include -type f \( -name \*.c -o -name \*.cpp -o -name \*.cxx -o -name \*.h -o -name \*.y -o -name \*.l \) -not -regex '.*src/other.*' -not -regex '.*~' -not -regex '.*\.log' -not -regex '.*Makefile.*' -not -regex '.*cache.*' -not -regex '.*\.svn.*' -exec grep -n -I -e '#[[:space:]]*include' {} /dev/null \; | grep '\"common.h\"' | sed 's/:.*//g'`"
 
 FOUND=
-for file in $COMMONFILES ; do
+for file in $COMMONFILES $COMMONFILES2 ; do
     if test -f "`echo $file | sed 's/\.c$/\.l/g'`" ; then
 	continue
     fi
     MATCH="`grep '#[[:space:]]*include' $file /dev/null | head -n 1 | grep -v '\"common.h\"' | sed 's/:.*//g'`"
     if test ! "x$MATCH" = "x" ; then
+	if test "x`head $file | grep BRL-CAD`" = "x" ; then
+	    # not a BRL-CAD file (or it's lexer-generated) , so skip it
+	    continue
+	fi
 	echo "Header (common.h) out of order: $MATCH"
 	FOUND=1
     fi
