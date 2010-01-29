@@ -41,6 +41,8 @@
 #   endif
 #endif
 
+/* FIXME: These should all have bn_ prefixes */
+
 typedef	struct	{
     unsigned long magic;
     int	ny;		/**< @brief  Number of "y" bins */
@@ -54,8 +56,6 @@ typedef	struct	{
 
 #define RT_CK_SPM(smp)		BU_CKMAG(smp, SPM_MAGIC, "spm_map_t" )
 #define BN_CK_SPM(smp)		BU_CKMAG(smp, SPM_MAGIC, "spm_map_t" )
-
-/* XXX These should all have bn_ prefixes */
 
 BN_EXPORT extern spm_map_t *spm_init();
 BN_EXPORT extern void	spm_free();

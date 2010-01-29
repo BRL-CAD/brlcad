@@ -192,7 +192,7 @@ __BEGIN_DECLS
 #include "tcl.h"	/* Included for Tcl_Interp definition */
 #include "magic.h"
 
-/*XXX Temporary global interp */
+/* FIXME Temporary global interp.  Remove me.  */
 BU_EXPORT extern Tcl_Interp *brlcad_interp;
 
 /**
@@ -3138,7 +3138,7 @@ BU_EXPORT BU_EXTERN(void bu_log_indent_vls, (struct bu_vls *v));
  * processed.  Typcially, these hook functions will display the output
  * (possibly in an X window) or record it.
  *
- * XXX The hook functions are all non-PARALLEL.
+ * NOTE: The hook functions are all non-PARALLEL.
  */
 BU_EXPORT BU_EXTERN(void bu_log_add_hook, (bu_hook_t func, genptr_t clientdata));
 

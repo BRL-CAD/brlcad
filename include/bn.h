@@ -137,7 +137,7 @@ struct bn_tol {
  * positive y-axis going upwards.
  */
 
-/* XXX These should all have bn_ prefixes */
+/* FIXME: These should all have bn_ prefixes */
 
 /**
  * @brief Pre-multiply a rotation matrix by a matrix which maps the
@@ -805,7 +805,7 @@ BN_EXPORT BU_EXTERN(void bn_noise_init,
 		    ());
 BN_EXPORT BU_EXTERN(double bn_noise_perlin,
 		    (point_t pt));
-/* XXX Why isn't the result listed first? */
+/* FIXME: Why isn't the result listed first? */
 BN_EXPORT BU_EXTERN(void bn_noise_vec,
 		    (point_t point,
 		     point_t result));

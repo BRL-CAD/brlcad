@@ -466,7 +466,7 @@ struct rt_sketch_internal
 				 	 * as endpoints, centers, or
 				 	 * spline control points.
 					 */
-/* XXX this should have a distinctive name, like rt_curve */
+/* FIXME: this should have a distinctive name, like rt_curve */
     struct curve {
 	int		seg_count;	/**< @brief  number of segments in this curve */
 	int		*reverse;	/**< @brief  array of ints indicating if segment should be reversed */
