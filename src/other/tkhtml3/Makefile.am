@@ -17,6 +17,7 @@ EXTRA_DIST = \
 	INSTALL \
 	NEWS \
 	README \
+	TODO \
 	configure.ac \
 	libtool \
 	doc

@@ -1,0 +1,4 @@
+Need to set up TCLSH_PROG so that it can run TCLSH without
+tclsh being installed in its final location - see
+regress/mged/run_test for an example.  Will need to incorporate
+this into the build logic in some way.
