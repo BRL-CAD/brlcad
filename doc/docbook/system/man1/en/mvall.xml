@@ -84,9 +84,10 @@ database. If the <emphasis>-f</emphasis> variation of the command is used, all <
     <example>
       <title>This example shows a simple mapping file.</title>
       <literallayout>
-old_name1 new_name1
-old_name2 new_name2
-old_name3 new_name3
+# this line is a comment
+old_name new_name
+foo bar # another comment, replacing foo with bar
+bad_name good_name
       </literallayout>
     </example>
 </refsect1>
