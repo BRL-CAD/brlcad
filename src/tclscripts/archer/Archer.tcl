@@ -2207,7 +2207,10 @@ package provide Archer 1.0
 	return [gedCmd $_cmd]
     }
 
-    if {$alen == 3} {
+    set fi [lsearch $args "-f"]
+    set ni [lsearch $args "-n"]
+
+    if {$fi != -1 || $ni != -1} {
 	# Must be using the -n option. If not, an error message
 	# containing the usage string will be returned.
 	return [eval gedCmd $_cmd $args]
@@ -2215,7 +2218,7 @@ package provide Archer 1.0
 
     # Get the list of potentially modified objects.
     if {$_cmd == "mvall"} {
-	set mlist [eval gedCmd $_cmd -n $args]
+	set mlist [lsort -dictionary -unique [eval gedCmd $_cmd -n $args]]
     } else {
 	set mlist {}
     }
