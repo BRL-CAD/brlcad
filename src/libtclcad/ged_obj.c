@@ -678,6 +678,7 @@ static struct go_cmdtab go_cmds[] = {
     {"dbconcat",	(char *)0, MAXARGS, go_pass_through_func, ged_concat},
     {"dbfind",	(char *)0, MAXARGS, go_pass_through_func, ged_find},
     {"dbip",	(char *)0, MAXARGS, go_pass_through_func, ged_dbip},
+    {"dbot_dump",	(char *)0, MAXARGS, go_pass_through_func, ged_dbot_dump},
     {"decompose",	(char *)0, MAXARGS, go_pass_through_func, ged_decompose},
     {"delay",	(char *)0, MAXARGS, go_pass_through_func, ged_delay},
     {"delete_view",	"vname", MAXARGS, go_delete_view, GED_FUNC_PTR_NULL},
