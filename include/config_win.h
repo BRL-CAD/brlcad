@@ -259,6 +259,10 @@ typedef unsigned short uint16_t;
 #undef DELETE
 #undef complex
 
+#ifndef STDIN_FILENO
+#   define STDIN_FILENO 0
+#endif
+
 /*
  * faking it
  */
