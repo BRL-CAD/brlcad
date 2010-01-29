@@ -126,8 +126,8 @@ f_edcolor(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
     char **av;
     char **avtmp;
-
     int i;
+    struct bu_vls editstring;
 
     CHECK_DBI_NULL;
 
@@ -141,7 +141,6 @@ f_edcolor(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_ERROR;
     }
 
-    struct bu_vls editstring;
     bu_vls_init(&editstring);
     get_editor_string(&editstring);
 
@@ -171,7 +170,7 @@ f_edcodes(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
     char **av;
     char **avtmp;
-
+    struct bu_vls editstring;
     int i;
 
     CHECK_DBI_NULL;
@@ -186,7 +185,6 @@ f_edcodes(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_ERROR;
     }
 
-    struct bu_vls editstring;
     bu_vls_init(&editstring);
     get_editor_string(&editstring);
 
@@ -215,7 +213,7 @@ f_edmater(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv
 {
     char **av;
     char **avtmp;
-
+    struct bu_vls editstring;
     int i;
 
     CHECK_DBI_NULL;
@@ -230,7 +228,6 @@ f_edmater(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv
 	return TCL_ERROR;
     }
 
-    struct bu_vls editstring;
     bu_vls_init(&editstring);
     get_editor_string(&editstring);
 
@@ -259,7 +256,7 @@ f_red(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
     char **av;
     char **avtmp;
-
+    struct bu_vls editstring;
     int i;
 
     CHECK_DBI_NULL;
@@ -274,7 +271,6 @@ f_red(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_ERROR;
     }
 
-    struct bu_vls editstring;
     bu_vls_init(&editstring);
     get_editor_string(&editstring);
 
