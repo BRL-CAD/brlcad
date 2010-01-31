@@ -537,8 +537,11 @@ view_end(struct application *ap)
 {
     extern fastf_t** timeTable_init(int x, int y);
 
-    /* If the heat graph is on, render it after all pixels completed */
+    /* FIXME: this should work on windows after the bu_timer() is
+     * created to replace the librt timing mechansim.
+     */
 #if !defined(_WIN32) || defined(__CYGWIN__)
+    /* If the heat graph is on, render it after all pixels completed */
     if (lightmodel == 8) {
 
 	fastf_t **timeTable;
