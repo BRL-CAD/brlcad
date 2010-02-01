@@ -56,32 +56,60 @@
 <refsynopsisdiv id='synopsis'>
   <cmdsynopsis>
     <command>sca</command>    
-    <arg choice='req'><replaceable>sfactor</replaceable></arg>
+    <group choice='req'>
+     <arg>sfactor</arg>
+     <arg>x-sfactor y-sfactor z-sfactor</arg>
+    </group>
   </cmdsynopsis>
 </refsynopsisdiv>
 
 <refsect1 id='description'>
   <title>DESCRIPTION</title>
-  <para>Applies a scaling factor to an object or view. The effect is determined by the Transrom option in the 	Settings menu. This is 	normally affected by the current mode of operation in MGED (e.g., matrix edit, 	primitive edit, or viewing).
+  <para>
+    Applies a scaling factor to an object or view. When passed one parameter,
+    an "object or view" is applied a uniform scale factor. When passed three
+    parameters, an "object" is applied a unique scale factor to each axis. The
+    effect is determined by the Transform option in the Settings menu. This is
+    normally affected by the current mode of operation in MGED (e.g., matrix
+    edit, primitive edit, or viewing).
+  </para>
+
+  <para>
+    NOTE: Three parameters can only be applied in "matrix edit" mode. Only
+    scale pipe and tori primitives uniformly otherwise raytracer and other
+    errors may occur.
   </para>
 </refsect1>
 
 <refsect1 id='examples'>
   <title>EXAMPLES</title>
-  <para>The example shows the use of the <command>sca</command> command to apply a scaling factor to an object or 	view.
+  <para>
+    The example shows the use of the <command>sca</command> command to apply a
+    scaling factor to an object or view.
   </para>
-        
   <example>
     <title>Apply a scaling factor to an object or view.</title>
     <para>
       <prompt>mged></prompt><userinput>sca 2</userinput>
     </para>
-    <para> In matrix edit mode, the object being affected will get twice as big.
- 	In view mode, the size of the view will be doubled (showing twice the volume of
-	space, hence making objects appear half their previous size on the display).       
+    <para>
+      In matrix edit mode, the object being affected will get twice as big. In
+      view mode, the size of the view will be doubled (showing twice the volume
+      of space, hence making objects appear half their previous size on the
+      display).
     </para>
   </example>
- 
+
+  <example>
+    <title>Apply a scaling factor to an object.</title>
+    <para>
+      <prompt>mged></prompt><userinput>sca 2 1 1</userinput>
+    </para>
+    <para>
+      In matrix edit mode, the object being affected will get twice as big
+      along the x-axis.
+    </para>
+  </example>
 </refsect1>
 
 <refsect1 id='author'>
