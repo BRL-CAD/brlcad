@@ -21,6 +21,9 @@ Spanish.  Cliff Yapp continues to work extensively with both to get
 their efforts integrated so that HTML and PDF documentation are
 cleanly generated.
 
+
+* added dbot_dump to Archer for dumping displayed BoTs - Bob Parker
+* added support to Archer for exporting view in OBJ format - Bob Parker
 * new mvall command -f filename option for bulk renaming - Bob Parker
 * fixed invocation of external editor for MGED commands - Cliff Yapp
 * fixed BoT raytracing solidity failure on grazed edges - Keith Bowman
