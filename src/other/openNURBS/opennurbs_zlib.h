@@ -40,6 +40,11 @@
 
 #include <zlib.h>
 
+#if defined(WIN32) && defined(WIN64)
+/* zlib.h includes zconf.h which defines WIN32 */
+#undef WIN32
+#endif
+
 ON_BEGIN_EXTERNC
 voidpf zcalloc (voidpf, unsigned, unsigned);
 void  zcfree (voidpf, voidpf);
