@@ -52,6 +52,24 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* alias objects.  this is an object handle in a geometry database that
+  refers to another geometry database object.  in effect, it
+  encapsulates the idea of a symbolic reference for database objects.
+
+  alias objects should be very lightweight, corresponding to basically
+  a simple named reference to another object.  this allows for
+  geometry objects to have multiple names, all referencing a given
+  primary name.  whenever an alias is referenced, it returns the
+  object pointed to instead of the alias object itself (this includes
+  the rt_db_internal()).  this prevents the creation of cyclic
+  references.
+
+  this directly supports geometry importers that contain object name
+  mappings (e.g., part numbers to engineering names) as well as
+  simply supporting multiple names per object that one might want to
+  persist.  there is an issue of whether aliases show as top-level
+  objects or even display by default without a listing option.
+
 * a "batch" command for libged to apply a given command template to
   all lines in a given input text file.  could be very similar to exec
   but instead of inspecting the current .g, it walks lines in file(s).
