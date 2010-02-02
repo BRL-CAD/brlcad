@@ -152,7 +152,7 @@ _rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
 {
     struct region *rp;
     struct directory *dp;
-    int shader_len=0;
+    size_t shader_len=0;
     struct rt_i *rtip;
     size_t i;
     Tcl_HashTable *tbl = (Tcl_HashTable *)client_data;

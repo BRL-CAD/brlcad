@@ -49,7 +49,7 @@
 void
 db_dup_db_tree_state(struct db_tree_state *otsp, const struct db_tree_state *itsp)
 {
-    int shader_len=0;
+    size_t shader_len=0;
     size_t i;
 
     RT_CK_DBTS(itsp);

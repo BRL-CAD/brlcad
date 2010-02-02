@@ -1384,7 +1384,7 @@ newNURBSCurve(BSpline& spline)
     // truly - i don't know WTF openNURBS is doing here
     // when it prints out the knots, they only have multiplicity 3,
     // but yet the order of the curve is 4!!!
-    int num_knots = spline.knots.size() - 2;
+    int num_knots = (int)spline.knots.size() - 2;
     for (int i = 0; i < num_knots; i++) {
 	double knot = spline.knots[i+1];
 	TRACE("knot: " << knot);

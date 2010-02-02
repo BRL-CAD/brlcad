@@ -2121,7 +2121,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	}
     }
 		
-    return (hit) ? hits.size() : 0; // MISS
+    return (hit) ? (int)hits.size() : 0; // MISS
 }
 
 
@@ -2641,8 +2641,8 @@ genptr_t
 RT_MemoryArchive::CreateCopy() const
 {
     genptr_t memory = (genptr_t)bu_malloc(m_buffer.size()*sizeof(char), "rt_memoryarchive createcopy");
-    const int size = m_buffer.size();
-    for (int i = 0; i < size; i++) {
+    const size_t size = m_buffer.size();
+    for (size_t i = 0; i < size; i++) {
 	((char*)memory)[i] = m_buffer[i];
     }
     return memory;
@@ -2652,7 +2652,7 @@ RT_MemoryArchive::CreateCopy() const
 size_t
 RT_MemoryArchive::Read(size_t amount, void* buf)
 {
-    const int read_amount = (pos + amount > m_buffer.size()) ? m_buffer.size()-pos : amount;
+    const size_t read_amount = (pos + amount > m_buffer.size()) ? m_buffer.size()-pos : amount;
     const size_t start = pos;
     for (; pos < (start+read_amount); pos++) {
 	((char*)buf)[pos-start] = m_buffer[pos];
@@ -2665,7 +2665,7 @@ size_t
 RT_MemoryArchive::Write(const size_t amount, const void* buf)
 {
     // the write can come in at any position!
-    const int start = pos;
+    const size_t start = pos;
     // resize if needed to support new data
     if (m_buffer.size() < (start+amount)) {
 	m_buffer.resize(start+amount);
@@ -2726,7 +2726,7 @@ rt_brep_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
     ON_TextLog err(stderr);
     bool ok = model.Write(archive, 4, "export5", &err);
     if (ok) {
-	ep->ext_nbytes = archive.Size();
+	ep->ext_nbytes = (long)archive.Size();
 	ep->ext_buf = archive.CreateCopy();
 	return 0;
     } else {
