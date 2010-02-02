@@ -171,6 +171,8 @@ typedef struct {
      * For compressing and decompressing IDAT chunks.
      */
 
+    Tcl_ZlibStream stream;	/* Inflating or deflating stream; this one is
+				 * not bound to a Tcl command. */
     Tcl_Obj *lastLineObj;	/* Last line of pixels, for unfiltering. */
     Tcl_Obj *thisLineObj;	/* Current line of pixels to process. */
     int lineSize;		/* Number of bytes in a PNG line. */
@@ -325,6 +327,19 @@ InitPNGImage(
 
     memset(pngPtr->palette, 255, sizeof(pngPtr->palette));
 
+    /*
+     * Initialize Zlib inflate/deflate stream.
+     */
+
+    if (Tcl_ZlibStreamInit(NULL, dir, TCL_ZLIB_FORMAT_ZLIB,
+	    TCL_ZLIB_COMPRESS_DEFAULT, NULL, &pngPtr->stream) != TCL_OK) {
+	Tcl_SetResult(interp, "zlib initialization failed", TCL_STATIC);
+	if (objPtr) {
+	    Tcl_DecrRefCount(objPtr);
+	}
+	return TCL_ERROR;
+    }
+
     return TCL_OK;
 }
 
@@ -364,6 +379,10 @@ CleanupPNGImage(
     /*
      * Discard pixel buffer.
      */
+
+    if (pngPtr->stream) {
+	Tcl_ZlibStreamClose(pngPtr->stream);
+    }
 
     if (pngPtr->block.pixelPtr) {
 	ckfree((char *) pngPtr->block.pixelPtr);
@@ -479,6 +498,10 @@ ReadBase64(
 	    }
 	}
 
+	if (crcPtr) {
+	    *crcPtr = Tcl_ZlibCRC32(*crcPtr, &c, 1);
+	}
+
 	if (destPtr) {
 	    *destPtr++ = c;
 	}
@@ -545,6 +568,10 @@ ReadByteArray(
 	pngPtr->strDataBuf += blockSz;
 	pngPtr->strDataLen -= blockSz;
 
+	if (crcPtr) {
+	    *crcPtr = Tcl_ZlibCRC32(*crcPtr, destPtr, blockSz);
+	}
+
 	destPtr += blockSz;
 	destSz -= blockSz;
     }
@@ -606,6 +633,10 @@ ReadData(
 	 */
 
 	if (blockSz) {
+	    if (crcPtr) {
+		*crcPtr = Tcl_ZlibCRC32(*crcPtr, destPtr, blockSz);
+	    }
+
 	    destPtr += blockSz;
 	    destSz -= blockSz;
 	}
@@ -856,6 +887,7 @@ ReadChunkHeader(
 	}
 
 	chunkSz = (int) temp;
+	crc = Tcl_ZlibCRC32(0, NULL, 0);
 
 	/*
 	 * Read the 4-byte chunk type.
@@ -1999,7 +2031,7 @@ ReadIDAT(
      * Process IDAT contents until there is no more in this chunk.
      */
 
-    while (chunkSz) {
+    while (chunkSz && !Tcl_ZlibStreamEof(pngPtr->stream)) {
 	int len1, len2;
 
 	/*
@@ -2010,6 +2042,16 @@ ReadIDAT(
 	    Tcl_Obj *inputObj = NULL;
 	    int blockSz = PNG_MIN(chunkSz, PNG_BLOCK_SZ);
 	    unsigned char *inputPtr = NULL;
+
+	    /*
+	     * Check for end of zlib stream.
+	     */
+
+	    if (Tcl_ZlibStreamEof(pngPtr->stream)) {
+		Tcl_SetResult(interp, "Extra data after end of zlib stream",
+			TCL_STATIC);
+		return TCL_ERROR;
+	    }
 
 	    inputObj = Tcl_NewObj();
 	    Tcl_IncrRefCount(inputObj);
@@ -2027,6 +2069,7 @@ ReadIDAT(
 
 	    chunkSz -= blockSz;
 
+	    Tcl_ZlibStreamPut(pngPtr->stream, inputObj, TCL_ZLIB_NO_FLUSH);
 	    Tcl_DecrRefCount(inputObj);
 	}
 
@@ -2037,6 +2080,10 @@ ReadIDAT(
 
     getNextLine:
 	Tcl_GetByteArrayFromObj(pngPtr->thisLineObj, &len1);
+	if (Tcl_ZlibStreamGet(pngPtr->stream, pngPtr->thisLineObj,
+		pngPtr->phaseSize - len1) == TCL_ERROR) {
+	    return TCL_ERROR;
+	}
 	Tcl_GetByteArrayFromObj(pngPtr->thisLineObj, &len2);
 
 	if (len2 == pngPtr->phaseSize) {
@@ -2534,6 +2581,8 @@ FileMatchPNG(
 
     Tcl_SaveResult(interp, &sya);
 
+    InitPNGImage(interp, &png, chan, NULL, TCL_ZLIB_STREAM_INFLATE);
+
     if (ReadIHDR(interp, &png) == TCL_OK) {
 	*widthPtr = png.block.width;
 	*heightPtr = png.block.height;
@@ -2582,6 +2631,12 @@ FileReadPNG(
     PNGImage png;
     int result = TCL_ERROR;
 
+    result = InitPNGImage(interp, &png, chan, NULL, TCL_ZLIB_STREAM_INFLATE);
+
+    if (TCL_OK == result) {
+	result = DecodePNG(interp, &png, fmtObj, imageHandle, destX, destY);
+    }
+
     CleanupPNGImage(&png);
     return result;
 }
@@ -2617,6 +2672,9 @@ StringMatchPNG(
     Tcl_SavedResult sya;
 
     Tcl_SaveResult(interp, &sya);
+    InitPNGImage(interp, &png, NULL, pObjData, TCL_ZLIB_STREAM_INFLATE);
+
+    png.strDataBuf = Tcl_GetByteArrayFromObj(pObjData, &png.strDataLen);
 
     if (ReadIHDR(interp, &png) == TCL_OK) {
 	*widthPtr = png.block.width;
@@ -2663,6 +2721,13 @@ StringReadPNG(
     PNGImage png;
     int result = TCL_ERROR;
 
+    result = InitPNGImage(interp, &png, NULL, pObjData,
+	    TCL_ZLIB_STREAM_INFLATE);
+
+    if (TCL_OK == result) {
+	result = DecodePNG(interp, &png, fmtObj, imageHandle, destX, destY);
+    }
+
     CleanupPNGImage(&png);
     return result;
 }
@@ -2693,6 +2758,10 @@ WriteData(
 {
     if (!srcPtr || !srcSz) {
 	return TCL_OK;
+    }
+
+    if (crcPtr) {
+	*crcPtr = Tcl_ZlibCRC32(*crcPtr, srcPtr, srcSz);
     }
 
     /*
@@ -2800,6 +2869,7 @@ WriteChunk(
     const unsigned char *dataPtr,
     int dataSize)
 {
+    unsigned long crc = Tcl_ZlibCRC32(0, NULL, 0);
     int result = TCL_OK;
 
     /*
@@ -2812,11 +2882,25 @@ WriteChunk(
      * Write the Chunk Type.
      */
 
+    if (TCL_OK == result) {
+	result = WriteInt32(interp, pngPtr, chunkType, &crc);
+    }
 
     /*
      * Write the contents (if any).
      */
 
+    if (TCL_OK == result) {
+	result = WriteData(interp, pngPtr, dataPtr, dataSize, &crc);
+    }
+
+    /*
+     * Write out the CRC at the end of the chunk.
+     */
+
+    if (TCL_OK == result) {
+	result = WriteInt32(interp, pngPtr, crc, NULL);
+    }
 
     return result;
 }
@@ -2844,6 +2928,7 @@ WriteIHDR(
     PNGImage *pngPtr,
     Tk_PhotoImageBlock *blockPtr)
 {
+    unsigned long crc = Tcl_ZlibCRC32(0, NULL, 0);
     int result = TCL_OK;
 
     /*
@@ -2856,11 +2941,23 @@ WriteIHDR(
      * Write the IHDR Chunk Type.
      */
 
+    if (TCL_OK == result) {
+	result = WriteInt32(interp, pngPtr, CHUNK_IHDR, &crc);
+    }
 
     /*
      * Write the image width, height.
      */
 
+    if (TCL_OK == result) {
+	result = WriteInt32(interp, pngPtr, (unsigned long) blockPtr->width,
+		&crc);
+    }
+
+    if (TCL_OK == result) {
+	result = WriteInt32(interp, pngPtr, (unsigned long) blockPtr->height,
+		&crc);
+    }
 
     /*
      * Write bit depth. Although the PNG format supports 16 bits per channel,
@@ -2868,21 +2965,33 @@ WriteIHDR(
      * points to.
      */
 
+    if (TCL_OK == result) {
+	result = WriteByte(interp, pngPtr, 8, &crc);
+    }
 
     /*
      * Write out the color type, previously determined.
      */
 
+    if (TCL_OK == result) {
+	result = WriteByte(interp, pngPtr, pngPtr->colorType, &crc);
+    }
 
     /*
      * Write compression method (only one method is defined).
      */
 
+    if (TCL_OK == result) {
+	result = WriteByte(interp, pngPtr, PNG_COMPRESS_DEFLATE, &crc);
+    }
 
     /*
      * Write filter method (only one method is defined).
      */
 
+    if (TCL_OK == result) {
+	result = WriteByte(interp, pngPtr, PNG_FILTMETH_STANDARD, &crc);
+    }
 
     /*
      * Write interlace method as not interlaced.
@@ -2890,11 +2999,17 @@ WriteIHDR(
      * TODO: support interlace through -format?
      */
 
+    if (TCL_OK == result) {
+	result = WriteByte(interp, pngPtr, PNG_INTERLACE_NONE, &crc);
+    }
 
     /*
      * Write out the CRC at the end of the chunk.
      */
 
+    if (TCL_OK == result) {
+	result = WriteInt32(interp, pngPtr, crc, NULL);
+    }
 
     return result;
 }
@@ -2923,7 +3038,100 @@ WriteIDAT(
     PNGImage *pngPtr,
     Tk_PhotoImageBlock *blockPtr)
 {
-  return 1;
+    int rowNum, flush = TCL_ZLIB_NO_FLUSH, outputSize, result;
+    Tcl_Obj *outputObj;
+    unsigned char *outputBytes;
+
+    /*
+     * Filter and compress each row one at a time.
+     */
+
+    for (rowNum=0 ; rowNum < blockPtr->height ; rowNum++) {
+	int colNum;
+	unsigned char *srcPtr, *destPtr;
+
+	srcPtr = blockPtr->pixelPtr + (rowNum * blockPtr->pitch);
+	destPtr = Tcl_SetByteArrayLength(pngPtr->thisLineObj,
+		pngPtr->lineSize);
+
+	/*
+	 * TODO: use Paeth filtering.
+	 */
+
+	*destPtr++ = PNG_FILTER_NONE;
+
+	/*
+	 * Copy each pixel into the destination buffer after the filter type
+	 * before filtering.
+	 */
+
+	for (colNum = 0 ; colNum < blockPtr->width ; colNum++) {
+	    /*
+	     * Copy red or gray channel.
+	     */
+
+	    *destPtr++ = srcPtr[blockPtr->offset[0]];
+
+	    /* 
+	     * If not grayscale, copy the green and blue channels.
+	     */
+
+	    if (pngPtr->colorType & PNG_COLOR_USED) {
+		*destPtr++ = srcPtr[blockPtr->offset[1]];
+		*destPtr++ = srcPtr[blockPtr->offset[2]];
+	    }
+
+	    /*
+	     * Copy the alpha channel, if used.
+	     */
+
+	    if (pngPtr->colorType & PNG_COLOR_ALPHA) {
+		*destPtr++ = srcPtr[blockPtr->offset[3]];
+	    }
+
+	    /*
+	     * Point to the start of the next pixel.
+	     */
+
+	    srcPtr += blockPtr->pixelSize;
+	}
+
+	/*
+	 * Compress the line of pixels into the destination. If this is the
+	 * last line, flush at the same time.
+	 */
+
+	if (rowNum + 1 == blockPtr->height) {
+	    flush = TCL_ZLIB_FLUSH;
+	}
+	if (Tcl_ZlibStreamPut(pngPtr->stream, pngPtr->thisLineObj,
+		flush) != TCL_OK) {
+	    Tcl_SetResult(interp, "deflate() returned error", TCL_STATIC);
+	    return TCL_ERROR;
+	}
+
+	/*
+	 * Swap line buffers to keep the last around for filtering next.
+	 */
+
+	{
+	    Tcl_Obj *temp = pngPtr->lastLineObj;
+
+	    pngPtr->lastLineObj = pngPtr->thisLineObj;
+	    pngPtr->thisLineObj = temp;
+	}
+    }
+
+    /*
+     * Now get the compressed data and write it as one big IDAT chunk.
+     */
+
+    outputObj = Tcl_NewObj();
+    (void) Tcl_ZlibStreamGet(pngPtr->stream, outputObj, -1);
+    outputBytes = Tcl_GetByteArrayFromObj(outputObj, &outputSize);
+    result = WriteChunk(interp, pngPtr, CHUNK_IDAT, outputBytes, outputSize);
+    Tcl_DecrRefCount(outputObj);
+    return result;
 }
 
 /*
@@ -3084,6 +3292,10 @@ FileWritePNG(
      * Initalize PNGImage instance for encoding.
      */
 
+    if (InitPNGImage(interp, &png, chan, NULL,
+	    TCL_ZLIB_STREAM_DEFLATE) == TCL_ERROR) {
+	goto cleanup;
+    }
 
     /*
      * Set the translation mode to binary so that CR and LF are not to the
@@ -3139,6 +3351,10 @@ StringWritePNG(
      * Initalize PNGImage instance for encoding.
      */
 
+    if (InitPNGImage(interp, &png, NULL, resultObj,
+	    TCL_ZLIB_STREAM_DEFLATE) == TCL_ERROR) {
+	goto cleanup;
+    }
 
     /*
      * Write the raw PNG data into the prepared Tcl_Obj buffer. Set the result

@@ -513,6 +513,7 @@ typedef struct Tcl_ThreadId_ *Tcl_ThreadId;
 typedef struct Tcl_TimerToken_ *Tcl_TimerToken;
 typedef struct Tcl_Trace_ *Tcl_Trace;
 typedef struct Tcl_Var_ *Tcl_Var;
+typedef struct Tcl_ZLibStream_ *Tcl_ZlibStream;
 
 typedef void *Tcl_ThreadDataKey;
 
@@ -2257,6 +2258,48 @@ typedef int (*Tcl_ArgvGenFuncProc)(ClientData clientData, Tcl_Interp *interp,
 	    "Marks the end of the options"}
 #define TCL_ARGV_TABLE_END \
     {TCL_ARGV_END}
+
+/*
+ *----------------------------------------------------------------------------
+ * Definitions needed for Tcl_Zlib routines. [TIP #234]
+ *----------------------------------------------------------------------------
+ *
+ * Constants for the format flags describing what sort of data format is
+ * desired/expected for the Tcl_ZlibDeflate, Tcl_ZlibInflate and
+ * Tcl_ZlibStreamInit functions.
+ */
+
+#define TCL_ZLIB_FORMAT_RAW	1
+#define TCL_ZLIB_FORMAT_ZLIB	2
+#define TCL_ZLIB_FORMAT_GZIP	4
+#define TCL_ZLIB_FORMAT_AUTO	8
+
+/*
+ * Constants that describe whether the stream is to operate in compressing or
+ * decompressing mode.
+ */
+
+#define TCL_ZLIB_STREAM_DEFLATE	16
+#define TCL_ZLIB_STREAM_INFLATE	32
+
+/*
+ * Constants giving compression levels. Use of TCL_ZLIB_COMPRESS_DEFAULT is
+ * recommended.
+ */
+
+#define TCL_ZLIB_COMPRESS_NONE	0
+#define TCL_ZLIB_COMPRESS_FAST	1
+#define TCL_ZLIB_COMPRESS_BEST	9
+#define TCL_ZLIB_COMPRESS_DEFAULT (-1)
+
+/*
+ * Constants for types of flushing, used with Tcl_ZlibFlush.
+ */
+
+#define TCL_ZLIB_NO_FLUSH	0
+#define TCL_ZLIB_FLUSH		2
+#define TCL_ZLIB_FULLFLUSH	3
+#define TCL_ZLIB_FINALIZE	4
 
 /*
  * The following constant is used to test for older versions of Tcl in the

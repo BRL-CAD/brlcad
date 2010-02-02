@@ -307,7 +307,7 @@ GENERIC_OBJS = regcomp.o regexec.o regfree.o regerror.o tclAlloc.o \
 	tclResolve.o tclResult.o tclScan.o tclStringObj.o \
 	tclStrToD.o tclThread.o \
 	tclThreadAlloc.o tclThreadJoin.o tclThreadStorage.o tclStubInit.o \
-	tclTimer.o tclTrace.o tclUtf.o tclUtil.o tclVar.o \
+	tclTimer.o tclTrace.o tclUtf.o tclUtil.o tclVar.o tclZlib.o \
 	tclTomMathInterface.o
 
 OO_OBJS = tclOO.o tclOOBasic.o tclOOCall.o tclOODefineCmds.o tclOOInfo.o \
@@ -445,7 +445,8 @@ GENERIC_SRCS = \
 	$(GENERIC_DIR)/tclTimer.c \
 	$(GENERIC_DIR)/tclTrace.c \
 	$(GENERIC_DIR)/tclUtil.c \
-	$(GENERIC_DIR)/tclVar.c
+	$(GENERIC_DIR)/tclVar.c \
+	$(GENERIC_DIR)/tclZlib.c
 
 OO_SRCS = \
 	$(GENERIC_DIR)/tclOO.c \
@@ -563,25 +564,12 @@ DTRACE_HDR = tclDTrace.h
 
 DTRACE_SRC = $(GENERIC_DIR)/tclDTrace.d
 
-ZLIB_SRCS = \
-	$(ZLIB_DIR)/adler32.c \
-	$(ZLIB_DIR)/compress.c \
-	$(ZLIB_DIR)/crc32.c \
-	$(ZLIB_DIR)/deflate.c \
-	$(ZLIB_DIR)/infback.c \
-	$(ZLIB_DIR)/inffast.c \
-	$(ZLIB_DIR)/inflate.c \
-	$(ZLIB_DIR)/inftrees.c \
-	$(ZLIB_DIR)/trees.c \
-	$(ZLIB_DIR)/uncompr.c \
-	$(ZLIB_DIR)/zutil.c
-
 # Note: don't include DL_SRCS or MAC_OSX_SRCS in SRCS: most of those files
 # won't compile on the current machine, and they will cause problems for
 # things like "make depend".
 
 SRCS = $(GENERIC_SRCS) $(TOMMATH_SRCS) $(UNIX_SRCS) $(NOTIFY_SRCS) \
-	$(OO_SRCS) $(STUB_SRCS) @PLAT_SRCS@ @ZLIB_SRCS@
+	$(OO_SRCS) $(STUB_SRCS) @PLAT_SRCS@
 
 #--------------------------------------------------------------------------
 # Start of rules
@@ -1244,6 +1232,9 @@ tclUtf.o: $(GENERIC_DIR)/tclUtf.c $(GENERIC_DIR)/tclUniData.c
 
 tclVar.o: $(GENERIC_DIR)/tclVar.c
 	$(CC) -c $(CC_SWITCHES) $(GENERIC_DIR)/tclVar.c
+
+tclZlib.o: $(GENERIC_DIR)/tclZlib.c
+	$(CC) -c $(ZLIB_INCLUDE) $(CC_SWITCHES) $(GENERIC_DIR)/tclZlib.c
 
 tclTest.o: $(GENERIC_DIR)/tclTest.c $(IOHDR) $(TCLREHDRS)
 	$(CC) -c $(APP_CC_SWITCHES) $(GENERIC_DIR)/tclTest.c
