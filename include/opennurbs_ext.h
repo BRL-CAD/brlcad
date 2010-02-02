@@ -424,14 +424,15 @@ BANode<BA>::getClosestPointEstimate(const ON_3dPoint& pt, ON_Interval& u, ON_Int
 	corners[4] = BANode<BA>::m_estimate;
     			
 	// find the point on the curve closest to pt
-	int mini = 0;
+	size_t mini = 0;
 	double mindist = pt.DistanceTo(corners[mini]);
 	double tmpdist;
 	for (size_t i = 1; i < 5; i++) {
 	    tmpdist = pt.DistanceTo(corners[i]);
 	    TRACE("\t" << mindist << " < " << tmpdist);
 	    if (tmpdist < mindist) {
-		mini = i;	    		    mindist = tmpdist;
+		mini = i;	    
+		mindist = tmpdist;
 	    }
 	}
 	TRACE("Closest: " << mindist << "; " << PT2(uvs[mini]));
@@ -896,7 +897,7 @@ BVNode<BV>::getClosestPointEstimate(const ON_3dPoint& pt, ON_Interval& u, ON_Int
 	corners[4] = BVNode<BV>::m_estimate;
 		
 	// find the point on the surface closest to pt
-	int mini = 0;
+	size_t mini = 0;
 	double mindist = pt.DistanceTo(corners[mini]);
 	double tmpdist;
 	for (size_t i = 1; i < 5; i++) {
