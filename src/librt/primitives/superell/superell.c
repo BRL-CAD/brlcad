@@ -47,10 +47,10 @@
 
 
 const struct bu_structparse rt_superell_parse[] = {
-    { "%f", 3, "V", (long)bu_offsetof(struct rt_superell_internal, v[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    { "%f", 3, "A", (long)bu_offsetof(struct rt_superell_internal, a[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    { "%f", 3, "B", (long)bu_offsetof(struct rt_superell_internal, b[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    { "%f", 3, "C", (long)bu_offsetof(struct rt_superell_internal, c[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "V", bu_offsetof(struct rt_superell_internal, v[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "A", bu_offsetof(struct rt_superell_internal, a[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "B", bu_offsetof(struct rt_superell_internal, b[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "C", bu_offsetof(struct rt_superell_internal, c[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 1, "n", bu_offsetof(struct rt_superell_internal, n), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { "%f", 1, "e", bu_offsetof(struct rt_superell_internal, e), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }

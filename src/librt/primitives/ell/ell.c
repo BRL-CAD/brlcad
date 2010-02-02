@@ -45,10 +45,10 @@ BU_EXTERN(int rt_sph_prep, (struct soltab *stp, struct rt_db_internal *ip,
 			    struct rt_i *rtip));
 
 const struct bu_structparse rt_ell_parse[] = {
-    { "%f", 3, "V", (long)bu_offsetof(struct rt_ell_internal, v[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    { "%f", 3, "A", (long)bu_offsetof(struct rt_ell_internal, a[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    { "%f", 3, "B", (long)bu_offsetof(struct rt_ell_internal, b[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    { "%f", 3, "C", (long)bu_offsetof(struct rt_ell_internal, c[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "V", bu_offsetof(struct rt_ell_internal, v[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "A", bu_offsetof(struct rt_ell_internal, a[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "B", bu_offsetof(struct rt_ell_internal, b[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    { "%f", 3, "C", bu_offsetof(struct rt_ell_internal, c[X]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 

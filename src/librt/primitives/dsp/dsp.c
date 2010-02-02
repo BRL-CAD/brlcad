@@ -271,7 +271,7 @@ const struct bu_structparse rt_dsp_parse[] = {
     {"%i",	1, "sm", DSP_O(dsp_smooth), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "w", DSP_O(dsp_xcnt), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "n", DSP_O(dsp_ycnt), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",     16, "stom", (long)DSP_AO(dsp_stom), hook_mtos_from_stom, NULL, NULL },
+    {"%f",     16, "stom", DSP_AO(dsp_stom), hook_mtos_from_stom, NULL, NULL },
     {"",	0, (char *)0, 0,	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
@@ -282,7 +282,7 @@ const struct bu_structparse rt_dsp_ptab[] = {
     {"%i",	1, "sm", DSP_O(dsp_smooth), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "w", DSP_O(dsp_xcnt), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "n", DSP_O(dsp_ycnt), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f",     16, "stom", (long)DSP_AO(dsp_stom), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%f",     16, "stom", DSP_AO(dsp_stom), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",	0, (char *)0, 0,	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
@@ -4638,7 +4638,7 @@ const struct bu_structparse fake_dsp_printab[] = {
     {"%d",  1, "n",  DSP_O(dsp_ycnt), hook_verify, NULL, NULL },
     {"%i",  1, "sm", DSP_O(dsp_smooth), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%c",  1, "cut", DSP_O(dsp_cuttype), hook_verify, NULL, NULL },
-    {"%f", 16, "stom", (long)DSP_AO(dsp_stom), hook_verify, NULL, NULL },
+    {"%f", 16, "stom", DSP_AO(dsp_stom), hook_verify, NULL, NULL },
     {"",    0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
