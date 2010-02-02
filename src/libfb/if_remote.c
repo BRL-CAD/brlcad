@@ -208,7 +208,7 @@ rem_log(char *msg)
 HIDDEN int
 rem_open(register FBIO *ifp, register char *file, int width, int height)
 {
-    register int i;
+    register size_t i;
     struct pkg_conn *pc;
     char buf[128] = {0};
     char hostname[MAX_HOSTNAME] = {0};
