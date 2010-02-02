@@ -294,8 +294,6 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
 	/* Make xtkwin a toplevel window */
 #if 1
 	Tcl_DString ds;
-	char *cp;
-	int ret;
 
 	Tcl_DStringInit(&ds);
 	Tcl_DStringAppend(&ds, "toplevel ", -1);
@@ -1249,7 +1247,7 @@ wgl_drawString2D( dmp, str, x, y, size, use_aspect )
 	glRasterPos2f(x, y);
 
     glListBase(((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
-    glCallLists(strlen( str ), GL_UNSIGNED_BYTE,  str );
+    glCallLists((GLuint)strlen( str ), GL_UNSIGNED_BYTE,  str );
 
     return TCL_OK;
 }

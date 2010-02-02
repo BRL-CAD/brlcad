@@ -43,7 +43,7 @@ struct dm *Nu_open(void);
 unsigned Nu_unsign(void);
 static int     Nu_fg(struct dm *, unsigned char, unsigned char, unsigned char, int strict, fastf_t transparency);
 static int     Nu_bg(struct dm *, unsigned char, unsigned char, unsigned char);
-static int     Nu_dr(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), genptr_t *data){};
+static int     Nu_dr(struct dm *dmp, struct bn_vlist *(*callback_function)BU_ARGS((void *)), genptr_t *data){return TCL_OK;};
 
 struct dm dm_Null = {
     Nu_int0,
