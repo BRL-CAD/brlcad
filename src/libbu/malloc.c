@@ -420,7 +420,7 @@ bu_realloc(register genptr_t ptr, size_t cnt, const char *str)
 	/* Even if ptr didn't change, need to update cnt & barrier */
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	mp->mdb_addr = ptr;
-	mp->mdb_len = cnt;
+	mp->mdb_len = (int)cnt;
 
 	/* Install a barrier word at the new end of the dynamic
 	 * arena. Correct location depends on 'cnt' being rounded up,
@@ -435,7 +435,7 @@ bu_realloc(register genptr_t ptr, size_t cnt, const char *str)
 	ptr = (genptr_t)(((struct memqdebug *)ptr)+1);
 	mqp->m.magic = MDB_MAGIC;
 	mqp->m.mdb_addr = ptr;
-	mqp->m.mdb_len = cnt;
+	mqp->m.mdb_len = (int)cnt;
 	mqp->m.mdb_str = str;
 	BU_ASSERT(bu_memq != BU_LIST_NULL);
 	BU_LIST_APPEND(bu_memq, &(mqp->q));

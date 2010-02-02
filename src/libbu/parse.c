@@ -197,7 +197,7 @@ bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_s
 		    register int lenstr;
 
 		    /* include the terminating null */
-		    lenstr = strlen(loc) + 1;
+		    lenstr = (int)strlen(loc) + 1;
 
 		    len = lenstr;
 
@@ -385,7 +385,7 @@ bu_struct_put(FILE *fp, const struct bu_external *ext)
 {
     BU_CK_GETPUT(ext);
 
-    return (fwrite(ext->ext_buf, 1, ext->ext_nbytes, fp));
+    return (int)(fwrite(ext->ext_buf, 1, ext->ext_nbytes, fp));
 }
 
 
@@ -398,7 +398,7 @@ bu_struct_get(struct bu_external *ext, FILE *fp)
     ext->ext_buf = (genptr_t) bu_malloc(6, "bu_struct_get buffer head");
     bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
 
-    i=fread((char *) ext->ext_buf, 1, 6, fp);	/* res_syscall */
+    i=(long)fread((char *) ext->ext_buf, 1, 6, fp);	/* res_syscall */
     bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
 
     if (i != 6) {
@@ -428,7 +428,7 @@ bu_struct_get(struct bu_external *ext, FILE *fp)
     ext->ext_buf = (genptr_t) bu_realloc((char *) ext->ext_buf, len,
 					 "bu_struct_get full buffer");
     bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
-    i=fread((char *) ext->ext_buf + 6, 1, len-6, fp);	/* res_syscall */
+    i=(long)fread((char *) ext->ext_buf + 6, 1, len-6, fp);	/* res_syscall */
     bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
     if (i != len-6) {
 	bu_log("ERROR: bu_struct_get bad fread (%ld), file %s, line %d\n",
@@ -845,7 +845,7 @@ bu_struct_parse(const struct bu_vls *in_vls, const struct bu_structparse *desc, 
 HIDDEN void
 _bu_matprint(const char *name, register const double *mat)
 {
-    int delta = strlen(name)+2;
+    int delta = (int)strlen(name)+2;
 
     /* indent the body of the matrix */
     bu_log_indent_delta(delta);
@@ -871,7 +871,7 @@ _bu_vls_matprint(struct bu_vls *vls,
 		 const char *name,
 		 register const double *mat)
 {
-    int delta = strlen(name)+2;
+    int delta = (int)strlen(name)+2;
 
     /* indent the body of the matrix */
     bu_log_indent_delta(delta);
@@ -1008,9 +1008,9 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
     for (sdp = parsetab; sdp->sp_name != (char *)0; sdp++) {
 
 	/* Skip alternate keywords for same value */
-	if (lastoff == sdp->sp_offset)
+	if (lastoff == (int)sdp->sp_offset)
 	    continue;
-	lastoff = sdp->sp_offset;
+	lastoff = (int)sdp->sp_offset;
 
 	loc = (char *)(base + sdp->sp_offset);
 
@@ -1047,7 +1047,7 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 		/* fall through */
 	    case 'V':
 		{
-		    int delta = strlen(sdp->sp_name)+2;
+		    int delta = (int)strlen(sdp->sp_name)+2;
 		    register struct bu_vls *vls =
 			(struct bu_vls *)loc;
 
@@ -1099,7 +1099,7 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 
 			bu_log("\n");
 		    } else {
-			int delta = strlen(sdp->sp_name)+2;
+			int delta = (int)strlen(sdp->sp_name)+2;
 
 			bu_log_indent_delta(delta);
 
@@ -1141,18 +1141,18 @@ _bu_vls_print_double(struct bu_vls *vls, const char *name, register long int cou
     register int tmpi;
     register char *cp;
 
-    int increase = strlen(name) + 3 + 32 * count;
+    int increase = (int)(strlen(name) + 3 + 32 * count);
     bu_vls_extend(vls, increase);
 
     cp = vls->vls_str + vls->vls_offset + vls->vls_len;
     snprintf(cp, increase, "%s%s=%.27G", (vls->vls_len?" ":""), name, *dp++);
-    tmpi = strlen(cp);
+    tmpi = (int)strlen(cp);
     vls->vls_len += tmpi;
 
     while (--count > 0) {
 	cp += tmpi;
 	sprintf(cp, "%c%.27G", COMMA, *dp++);
-	tmpi = strlen(cp);
+	tmpi = (int)strlen(cp);
 	vls->vls_len += tmpi;
     }
 }
@@ -1179,9 +1179,9 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
     for (; sdp->sp_name != (char*)NULL; sdp++) {
 	/* Skip alternate keywords for same value */
 
-	if (lastoff == sdp->sp_offset)
+	if (lastoff == (int)sdp->sp_offset)
 	    continue;
-	lastoff = sdp->sp_offset;
+	lastoff = (int)sdp->sp_offset;
 
 	loc = (char *)(base + sdp->sp_offset);
 
@@ -1210,7 +1210,7 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 		if (sdp->sp_count < 1)
 		    break;
 		if (sdp->sp_count == 1) {
-		    increase = strlen(sdp->sp_name)+6;
+		    increase = (int)strlen(sdp->sp_name)+6;
 		    bu_vls_extend(vls, increase);
 		    cp = vls->vls_str + vls->vls_offset + vls->vls_len;
 		    if (*loc == '"')
@@ -1232,7 +1232,7 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 			++p;
 			++count;
 		    }
-		    increase = strlen(sdp->sp_name)+strlen(loc)+5+count;
+		    increase = (int)(strlen(sdp->sp_name)+strlen(loc)+5+count);
 		    bu_vls_extend(vls, increase);
 
 		    cp = vls->vls_str + vls->vls_offset + vls->vls_len;
@@ -1254,7 +1254,7 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 		    *p++ = '"';
 		    *p = '\0';
 		}
-		vls->vls_len += strlen(cp);
+		vls->vls_len += (int)strlen(cp);
 		break;
 	    case 'S': /* XXX - DEPRECATED [7.14] */
 		printf("DEVELOPER DEPRECATION NOTICE: Using %%S for string printing is deprecated, use %%V instead\n");
@@ -1263,7 +1263,7 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 		{
 		    register struct bu_vls *vls_p = (struct bu_vls *)loc;
 
-		    increase =  bu_vls_strlen(vls_p) + 5 + strlen(sdp->sp_name);
+		    increase =  (int)(bu_vls_strlen(vls_p) + 5 + strlen(sdp->sp_name));
 		    bu_vls_extend(vls, increase);
 
 		    cp = vls->vls_str + vls->vls_offset + vls->vls_len;
@@ -1271,7 +1271,7 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 			     (vls->vls_len?" ":""),
 			     sdp->sp_name,
 			     bu_vls_addr(vls_p));
-		    vls->vls_len += strlen(cp);
+		    vls->vls_len += (int)strlen(cp);
 		}
 		break;
 	    case 'i':
@@ -1280,7 +1280,7 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 		    register short *sp = (short *)loc;
 		    register int tmpi;
 
-		    increase = 64 * i + strlen(sdp->sp_name) + 3;
+		    increase = 64 * i + (int)strlen(sdp->sp_name) + 3;
 		    bu_vls_extend(vls, increase);
 
 
@@ -1288,13 +1288,13 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 		    snprintf(cp, increase, "%s%s=%d",
 			     (vls->vls_len?" ":""),
 			     sdp->sp_name, *sp++);
-		    tmpi = strlen(cp);
+		    tmpi = (int)strlen(cp);
 		    vls->vls_len += tmpi;
 
 		    while (--i > 0) {
 			cp += tmpi;
 			sprintf(cp, "%c%d", COMMA, *sp++);
-			tmpi = strlen(cp);
+			tmpi = (int)strlen(cp);
 			vls->vls_len += tmpi;
 		    }
 		}
@@ -1305,20 +1305,20 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 		    register int *dp = (int *)loc;
 		    register int tmpi;
 
-		    increase = 64 * i + strlen(sdp->sp_name) + 3;
+		    increase = (int)(64 * i + strlen(sdp->sp_name) + 3);
 		    bu_vls_extend(vls, increase);
 
 		    cp = vls->vls_str + vls->vls_offset + vls->vls_len;
 		    snprintf(cp, increase, "%s%s=%d",
 			     (vls->vls_len?" ":""),
 			     sdp->sp_name, *dp++);
-		    tmpi = strlen(cp);
+		    tmpi = (int)strlen(cp);
 		    vls->vls_len += tmpi;
 
 		    while (--i > 0) {
 			cp += tmpi;
 			sprintf(cp, "%c%d", COMMA, *dp++);
-			tmpi = strlen(cp);
+			tmpi = (int)strlen(cp);
 			vls->vls_len += tmpi;
 		    }
 		}
@@ -1355,9 +1355,9 @@ bu_vls_struct_print2(struct bu_vls *vls_out,
     for (sdp = parsetab; sdp->sp_name != (char *)0; sdp++) {
 
 	/* Skip alternate keywords for same value */
-	if (lastoff == sdp->sp_offset)
+	if (lastoff == (int)sdp->sp_offset)
 	    continue;
-	lastoff = sdp->sp_offset;
+	lastoff = (int)sdp->sp_offset;
 
 	loc = (char *)(base + sdp->sp_offset);
 
@@ -1390,7 +1390,7 @@ bu_vls_struct_print2(struct bu_vls *vls_out,
 		/* fall through */
 	    case 'V':
 		{
-		    int delta = strlen(sdp->sp_name)+2;
+		    int delta = (int)strlen(sdp->sp_name)+2;
 		    register struct bu_vls *vls =
 			(struct bu_vls *)loc;
 
@@ -1445,7 +1445,7 @@ bu_vls_struct_print2(struct bu_vls *vls_out,
 
 			bu_vls_printf(vls_out, "\n");
 		    } else {
-			int delta = strlen(sdp->sp_name)+2;
+			int delta = (int)strlen(sdp->sp_name)+2;
 
 			bu_log_indent_delta(delta);
 			bu_vls_printf(vls_out, " %s=%.25G\n", sdp->sp_name, *dp++);

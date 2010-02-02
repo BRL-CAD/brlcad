@@ -124,7 +124,7 @@ HIDDEN void
 bu_cv_fmt_cookie(char *buf, size_t buflen, int cookie)
 {
     register char *cp = buf;
-    unsigned int len;
+    size_t len;
 
     if (buflen == 0) {
 	fprintf(stderr, "bu_cv_pr_cookie:  call me with a bigger buffer\n");
@@ -342,7 +342,7 @@ bu_cv_ntohss(register short int *out, size_t size, register genptr_t in, int cou
     int limit;
     register int i;
 
-    limit = size / sizeof(signed short);
+    limit = (int)(size / sizeof(signed short));
     if (limit < count) count = limit;
 
     for (i=0; i<count; i++) {
@@ -364,7 +364,7 @@ bu_cv_ntohus(register short unsigned int *out, size_t size, register genptr_t in
     int limit;
     register int i;
 
-    limit = size / sizeof(unsigned short);
+    limit = (int)(size / sizeof(unsigned short));
     if (limit < count) count = limit;
 
     for (i=0; i<count; i++) {
@@ -382,7 +382,7 @@ bu_cv_ntohsl(register long int *out, size_t size, register genptr_t in, int coun
     int limit;
     register int i;
 
-    limit = size / sizeof(signed long int);
+    limit = (int)(size / sizeof(signed long int));
     if (limit < count) count = limit;
 
     for (i=0; i<count; i++) {
@@ -404,7 +404,7 @@ bu_cv_ntohul(register long unsigned int *out, size_t size, register genptr_t in,
     int limit;
     register int i;
 
-    limit = size / sizeof(unsigned long int);
+    limit = (int)(size / sizeof(unsigned long int));
     if (limit < count) count = limit;
 
     for (i=0; i<count; i++) {
@@ -426,7 +426,7 @@ bu_cv_htonss(genptr_t out, size_t size, register short int *in, int count)
     register unsigned char *cp = (unsigned char *)out;
     register int val;
 
-    limit = size / 2;
+    limit = (int)(size / 2);
     if (count > limit)  count = limit;
 
     for (i=0; i<count; i++) {
@@ -445,7 +445,7 @@ bu_cv_htonus(genptr_t out, size_t size, register short unsigned int *in, int cou
     register unsigned char *cp = (unsigned char *)out;
     register int val;
 
-    limit = size / 2;
+    limit = (int)(size / 2);
     if (count > limit)  count = limit;
 
     for (i=0; i<count; i++) {
@@ -464,7 +464,7 @@ bu_cv_htonsl(genptr_t out, size_t size, register long int *in, int count)
     register unsigned char *cp = (unsigned char *)out;
     register long val;
 
-    limit = size / 4;
+    limit = (int)(size / 4);
     if (count > limit)  count = limit;
 
     for (i=0; i<count; i++) {
@@ -485,7 +485,7 @@ bu_cv_htonul(genptr_t out, size_t size, register long unsigned int *in, int coun
     register unsigned char *cp = (unsigned char *)out;
     register long val;
 
-    limit = size / 4;
+    limit = (int)(size / 4);
     if (count > limit) {
 	count = limit;
     }
@@ -557,7 +557,7 @@ bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incoo
 	     * remaining before doing the memmove.
 	     */
 	    if ((unsigned int)count * outsize > size) {
-		number_done = size / outsize;
+		number_done = (int)(size / outsize);
 	    } else {
 		number_done = count;
 	    }
@@ -642,7 +642,7 @@ bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incoo
 	/*
 	 * Get number of full entries that can be converted
 	 */
-	remaining = size / outsize;
+	remaining = (int)(size / outsize);
 
 	/*
 	 * If number of entries that would fit in the output buffer is

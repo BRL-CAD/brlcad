@@ -30,7 +30,7 @@ bu_dirname(const char *cp)
 {
     char *ret;
     char *slash;
-    int	len;
+    size_t len;
     const char *SLASH = "/";
     const char *DOT = ".";
     const char *DOTDOT = "..";

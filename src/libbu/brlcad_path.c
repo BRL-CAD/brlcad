@@ -285,7 +285,7 @@ for sh/bash users:\n\
 HIDDEN int
 _bu_find_path(char result[MAXPATHLEN], const char *lhs, const char *rhs, struct bu_vls *searched, const char *where)
 {
-    int llen, rlen;
+    size_t llen, rlen;
     static const char *currdir=".";
 
     /* swap right with left if there is no left so logic is simplified
@@ -425,7 +425,7 @@ bu_brlcad_root(const char *rhs, int fail_quietly)
     lhs = bu_getprogname();
     if (lhs) {
 	char argv0[MAX_WHERE_SIZE] = {0};
-	int len = strlen(lhs);
+	size_t len = strlen(lhs);
 	snprintf(argv0, MAX_WHERE_SIZE, "%s", lhs);
 
 	/* need to trim off the trailing binary */
