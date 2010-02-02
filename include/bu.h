@@ -1765,12 +1765,15 @@ BU_EXPORT extern int bu_debug;
  * Files using bu_offsetof or bu_offsetofarray will need to include
  * stddef.h in order to get offsetof()
  */
+/* FIXME - this is a temporary cast. The bu_structparse sp_offset member
+ *         should be a size_t.
+ */
 #ifndef offsetof
 #  define bu_offsetof(_t, _m) (size_t)(&(((_t *)0)->_m))
 #  define bu_offsetofarray(_t, _m) (size_t)((((_t *)0)->_m))
 #else
-#  define bu_offsetof(_t, _m) offsetof(_t, _m)
-#  define bu_offsetofarray(_t, _m) offsetof(_t, _m[0])
+#  define bu_offsetof(_t, _m) (long)offsetof(_t, _m)
+#  define bu_offsetofarray(_t, _m) (long)offsetof(_t, _m[0])
 #endif
 
 
