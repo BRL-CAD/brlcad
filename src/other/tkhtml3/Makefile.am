@@ -497,8 +497,8 @@ uninstall-doc:
 EXTRA_DIST = \
 	doc \
 	src \
-	tclconfig\README.txt \
-	tclconfig\tcl.m4
+	tclconfig/README.txt \
+	tclconfig/tcl.m4
 
 .PHONY: all binaries clean depend distclean doc install libraries test
 
