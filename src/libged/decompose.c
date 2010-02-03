@@ -133,7 +133,7 @@ ged_decompose(struct ged *gedp, int argc, const char *argv[])
 		struct directory *new_dp;
 		struct nmgregion *decomp_r;
 		char shell_no[32];
-		int end_prefix;
+		size_t end_prefix;
 
 		next_s = BU_LIST_NEXT( shell, &decomp_s->l );
 
@@ -156,7 +156,7 @@ ged_decompose(struct ged *gedp, int argc, const char *argv[])
 		    end_prefix = strlen( prefix );
 		    if ( end_prefix + strlen( shell_no ) > NAMESIZE )
 			end_prefix = NAMESIZE - strlen( shell_no );
-		    bu_vls_trunc( &solid_name, end_prefix );
+		    bu_vls_trunc( &solid_name, (int)end_prefix );
 		    bu_vls_strncat( &solid_name, shell_no, NAMESIZE-bu_vls_strlen(&solid_name) );
 		} else {
 		    bu_vls_strcat( &solid_name, shell_no );

@@ -116,7 +116,7 @@ ged_bound_solid(struct ged *gedp, struct solid *sp)
  * This routine must be prepared to run in parallel.
  */
 void
-ged_drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, struct solid *existing_sp, struct _ged_client_data *dgcdp)
+_ged_drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, struct solid *existing_sp, struct _ged_client_data *dgcdp)
 {
     struct solid *sp;
 
@@ -240,7 +240,7 @@ ged_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, 
     }
 
     /*
-     * XXX HACK CTJ - ged_drawH_part2 sets the default color of a
+     * XXX HACK CTJ - _ged_drawH_part2 sets the default color of a
      * solid by looking in tps->ts_mater.ma_color, for pseudo
      * solids, this needs to be something different and drawH
      * has no idea or need to know what type of solid this is.
@@ -253,12 +253,12 @@ ged_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, 
 	tsp->ts_mater.ma_color[0] = 0;
 	tsp->ts_mater.ma_color[1] = 128;
 	tsp->ts_mater.ma_color[2] = 128;
-	ged_drawH_part2(dashflag, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
+	_ged_drawH_part2(dashflag, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
 	tsp->ts_mater.ma_color[0] = r;
 	tsp->ts_mater.ma_color[1] = g;
 	tsp->ts_mater.ma_color[2] = b;
     } else {
-	ged_drawH_part2(dashflag, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
+	_ged_drawH_part2(dashflag, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
     }
 
     /* Indicate success by returning something other than TREE_NULL */
@@ -379,7 +379,7 @@ ged_nmg_region_start(struct db_tree_state *tsp, const struct db_full_path *pathp
 
 	/* Successful fastpath drawing of this solid */
 	db_add_node_to_full_path(&pp, dp);
-	ged_drawH_part2(0, &vhead, &pp, tsp, SOLID_NULL, dgcdp);
+	_ged_drawH_part2(0, &vhead, &pp, tsp, SOLID_NULL, dgcdp);
 
 	db_free_full_path(&pp);
     }
@@ -495,7 +495,7 @@ ged_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, 
 	}
 	nmg_r_to_vlist(&vhead, r, style);
 
-	ged_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
+	_ged_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
 
 	if (dgcdp->draw_edge_uses) {
 	    nmg_vlblock_r(dgcdp->draw_edge_uses_vbp, r, 1);
@@ -878,7 +878,7 @@ ged_bot_check_leaf(struct db_tree_state		*tsp,
 		BU_LIST_INIT(&vhead);
 
 		(void)rt_bot_plot_poly(&vhead, ip, tsp->ts_ttol, tsp->ts_tol);
-		ged_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
+		_ged_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
 	    } else if (ip->idb_major_type == DB5_MAJORTYPE_BRLCAD &&
 		       ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_POLY) {
 		struct bu_list vhead;
@@ -886,7 +886,7 @@ ged_bot_check_leaf(struct db_tree_state		*tsp,
 		BU_LIST_INIT(&vhead);
 
 		(void)rt_pg_plot_poly(&vhead, ip, tsp->ts_ttol, tsp->ts_tol);
-		ged_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
+		_ged_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
 	    } else {
 		/* save shaded mode states */
 		int save_dgo_shaded_mode = dgcdp->gedp->ged_gdp->gd_shaded_mode;
@@ -916,14 +916,14 @@ ged_bot_check_leaf(struct db_tree_state		*tsp,
 		    BU_LIST_INIT(&vhead);
 
 		    (void)rt_bot_plot_poly(&vhead, ip, tsp->ts_ttol, tsp->ts_tol);
-		    ged_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
+		    _ged_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
 		} else if (ip->idb_minor_type == DB5_MINORTYPE_BRLCAD_POLY) {
 		    struct bu_list vhead;
 
 		    BU_LIST_INIT(&vhead);
 
 		    (void)rt_pg_plot_poly(&vhead, ip, tsp->ts_ttol, tsp->ts_tol);
-		    ged_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
+		    _ged_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
 		} else
 		    _ged_drawtrees(dgcdp->gedp, ac, av, 3, client_data);
 	    } else {
@@ -1280,7 +1280,6 @@ struct ged_display_list *
 ged_addToDisplay(struct ged *gedp,
 		 const char *name)
 {
-    int i;
     struct directory *dp = NULL;
     struct ged_display_list *gdlp = NULL;
     char *cp = NULL;
@@ -1304,9 +1303,6 @@ ged_addToDisplay(struct ged *gedp,
     /* Make sure name is not already in the list */
     gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
     while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
-	struct solid *sp;
-	struct solid *nsp;
-
 	if (!strcmp(name, bu_vls_addr(&gdlp->gdl_path)))
 	    goto end;
 

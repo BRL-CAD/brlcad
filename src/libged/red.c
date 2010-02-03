@@ -187,7 +187,7 @@ ged_find_keyword(int i, char *line, char *word)
 {
     char *ptr1;
     char *ptr2;
-    int j;
+    size_t j;
 
     /* find the keyword */
     ptr1 = strstr( &line[i], word );
@@ -272,7 +272,7 @@ ged_check_comb(struct ged *gedp)
 
 	if ( (ptr=ged_find_keyword(i, line, "NAME" ) ) ) {
 	    if ( gedp->ged_wdbp->dbip->dbi_version < 5 ) {
-		int len;
+		size_t len;
 
 		len = strlen( ptr );
 		if ( len > NAMESIZE ) {
@@ -394,7 +394,7 @@ ged_check_comb(struct ged *gedp)
 			name_v4[j] = '\0';
 		    name = name_v4;
 		} else {
-		    int len;
+		    size_t len;
 
 		    len = strlen( ptr );
 		    name_v5 = (char *)bu_malloc( len+1, "name_v5" );
@@ -749,7 +749,7 @@ ged_build_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory
 	    if (gedp->ged_wdbp->dbip->dbi_version < 5)
 		i = NAMESIZE;
 	    else
-		i = strlen(name);
+		i = (int)strlen(name);
 	    while (isspace(name[--i]))
 		name[i] = '\0';
 

@@ -40,7 +40,6 @@ ged_copyeval(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal internal, new_int;
     struct rt_db_internal *ip;
     mat_t start_mat;
-    int id;
     int i;
     int endpos;
     char *tok;

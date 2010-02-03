@@ -44,7 +44,6 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 {
     struct bn_vlblock*vbp;
     char *solid_name;
-    char *command;
     static const char *usage = "brep brepname.s [command]";
     struct directory *ndp;
     struct rt_db_internal intern;

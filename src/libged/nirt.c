@@ -92,7 +92,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     SECURITY_ATTRIBUTES sa;
     char name[1024] = {0};
     char line1[2048] = {0};
-    int rem = 2048;
+    size_t rem = 2048;
 #endif
     int use_input_orig = 0;
     vect_t center_model;

@@ -2389,7 +2389,7 @@ metaball_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal
 /*   P N T S _ I N */
 static int
 pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *intern, char **prompt) {
-    int i, j;
+    int i;
     unsigned long numPoints;
     struct rt_pnts_internal *pnts;
     void *headPoint;
@@ -2751,7 +2751,6 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal internal;
     char **menu;
     int nvals, (*fn_in)();
-    void (*cur_sigint)();
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);

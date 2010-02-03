@@ -29,7 +29,7 @@
 #   include <unistd.h>
 #endif
 
-#include "ged.h"
+#include "./ged_private.h"
 
 int
 ged_edmater(struct ged *gedp, int argc, const char *argv[])

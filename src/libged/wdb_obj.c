@@ -6105,7 +6105,7 @@ Make_new_name(struct db_i *dbip,
     snprintf(format_v5, 25, "%%s_%%0%dd", digits);
     snprintf(format_v4, 25, "_%%0%dd", digits);
 
-    name_length = strlen(dp->d_namep);
+    name_length = (int)strlen(dp->d_namep);
     if (name_length + digits + 1 > NAMESIZE - 1)
 	suffix_start = NAMESIZE - digits - 2;
     else
@@ -7631,7 +7631,7 @@ wdb_attr_cmd(struct rt_wdb *wdbp,
 	    for (i=0; i < avs.count; i++, avpp++) {
 		int len;
 
-		len = strlen(avpp->name);
+		len = (int)strlen(avpp->name);
 		if (len > max_attr_name_len) {
 		    max_attr_name_len = len;
 		}
@@ -7645,7 +7645,7 @@ wdb_attr_cmd(struct rt_wdb *wdbp,
 		int len;
 
 		bu_vls_printf(&vls, "\t%s", avpp->name);
-		len = strlen(avpp->name);
+		len = (int)strlen(avpp->name);
 		tabs2 = tabs1 - 1 - len/8;
 		for (k=0; k<tabs2; k++) {
 		    bu_vls_putc(&vls, '\t');
@@ -7668,7 +7668,7 @@ wdb_attr_cmd(struct rt_wdb *wdbp,
 
 	    /* show just the specified attributes */
 	    for (i=0; i<argc; i++) {
-		len = strlen(argv[i]);
+		len = (int)strlen(argv[i]);
 		if (len > max_attr_name_len) {
 		    max_attr_name_len = len;
 		}
@@ -7690,7 +7690,7 @@ wdb_attr_cmd(struct rt_wdb *wdbp,
 		    return TCL_ERROR;
 		}
 		bu_vls_printf(&vls, "\t%s", argv[i]);
-		len = strlen(val);
+		len = (int)strlen(val);
 		tabs2 = tabs1 - 1 - len/8;
 		for (k=0; k<tabs2; k++) {
 		    bu_vls_putc(&vls, '\t');
@@ -8956,7 +8956,7 @@ wdb_vls_col_pr4v(struct bu_vls *vls,
      */
     maxnamelen = 0;
     for (k=0; k < num_in_list; k++) {
-	namelen = strlen(list_of_names[k]->d_namep);
+	namelen = (int)strlen(list_of_names[k]->d_namep);
 	if (namelen > maxnamelen)
 	    maxnamelen = namelen;
     }
@@ -8978,7 +8978,7 @@ wdb_vls_col_pr4v(struct bu_vls *vls,
 	for (j=0; j < numcol; j++) {
 	    this_one = j * lines + i;
 	    bu_vls_printf(vls, "%s", list_of_names[this_one]->d_namep);
-	    namelen = strlen(list_of_names[this_one]->d_namep);
+	    namelen = (int)strlen(list_of_names[this_one]->d_namep);
 
 	    /*
 	     * Region and ident checks here....  Since the code
@@ -9047,7 +9047,7 @@ wdb_vls_long_dpp(struct bu_vls *vls,
 	int len;
 
 	dp = list_of_names[i];
-	len = strlen(dp->d_namep);
+	len = (int)strlen(dp->d_namep);
 	if (len > max_nam_len)
 	    max_nam_len = len;
 
@@ -9056,17 +9056,17 @@ wdb_vls_long_dpp(struct bu_vls *vls,
 	else if (dp->d_flags & DIR_COMB)
 	    len = 4;
 	else if (dp->d_flags & DIR_SOLID)
-	    len = strlen(rt_functab[dp->d_minor_type].ft_label);
+	    len = (int)strlen(rt_functab[dp->d_minor_type].ft_label);
 	else {
 	    switch (list_of_names[i]->d_major_type) {
 		case DB5_MAJORTYPE_ATTRIBUTE_ONLY:
 		    len = 6;
 		    break;
 		case DB5_MAJORTYPE_BINARY_MIME:
-		    len = strlen("binary(mime)");
+		    len = (int)strlen("binary(mime)");
 		    break;
 		case DB5_MAJORTYPE_BINARY_UNIF:
-		    len = strlen(binu_types[list_of_names[i]->d_minor_type]);
+		    len = (int)strlen(binu_types[list_of_names[i]->d_minor_type]);
 		    break;
 	    }
 	}
@@ -9120,9 +9120,9 @@ wdb_vls_long_dpp(struct bu_vls *vls,
 	    (rflag && isRegion) ||
 	    (sflag && isSolid)) {
 	    bu_vls_printf(vls, "%s", dp->d_namep);
-	    bu_vls_spaces(vls, max_nam_len - strlen(dp->d_namep));
+	    bu_vls_spaces(vls, (int)(max_nam_len - strlen(dp->d_namep)));
 	    bu_vls_printf(vls, " %s", type);
-	    bu_vls_spaces(vls, max_type_len - strlen(type));
+	    bu_vls_spaces(vls, (int)(max_type_len - strlen(type)));
 	    bu_vls_printf(vls,  " %2d %2d %ld\n",
 			  dp->d_major_type, dp->d_minor_type, (long)(dp->d_len));
 	}
@@ -10320,7 +10320,6 @@ wdb_newcmds_tcl(ClientData clientData,
     struct ged ged;
     Tcl_DString ds;
     int ret;
-    char flags[128];
 
     /*XXX Eventually the clientData will be a "struct ged".
      *    In the meantime ...

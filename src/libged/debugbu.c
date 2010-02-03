@@ -36,7 +36,6 @@
 int
 ged_debugbu(struct ged *gedp, int argc, const char *argv[])
 {
-    fastf_t size;
     static const char *usage = "[hex_code]";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);

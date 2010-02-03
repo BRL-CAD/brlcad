@@ -171,7 +171,7 @@ _ged_vls_col_pr4v(struct bu_vls *vls,
      */
     maxnamelen = 0;
     for (k=0; k < num_in_list; k++) {
-	namelen = strlen(list_of_names[k]->d_namep);
+	namelen = (int)strlen(list_of_names[k]->d_namep);
 	if (namelen > maxnamelen)
 	    maxnamelen = namelen;
     }
@@ -193,7 +193,7 @@ _ged_vls_col_pr4v(struct bu_vls *vls,
 	for (j=0; j < numcol; j++) {
 	    this_one = j * lines + i;
 	    bu_vls_printf(vls, "%s", list_of_names[this_one]->d_namep);
-	    namelen = strlen(list_of_names[this_one]->d_namep);
+	    namelen = (int)strlen(list_of_names[this_one]->d_namep);
 
 	    /*
 	     * Region and ident checks here....  Since the code has
@@ -246,8 +246,8 @@ vls_long_dpp(struct bu_vls *vls,
     int isComb=0, isRegion=0;
     int isSolid=0;
     const char *type=NULL;
-    int max_nam_len = 0;
-    int max_type_len = 0;
+    size_t max_nam_len = 0;
+    size_t max_type_len = 0;
     struct directory *dp;
 
     qsort((genptr_t)list_of_names,
@@ -255,7 +255,7 @@ vls_long_dpp(struct bu_vls *vls,
 	  (int (*)(const void *, const void *))cmpdirname);
 
     for (i=0; i < num_in_list; i++) {
-	int len;
+	size_t len;
 
 	dp = list_of_names[i];
 	len = strlen(dp->d_namep);
@@ -331,9 +331,9 @@ vls_long_dpp(struct bu_vls *vls,
 	    (rflag && isRegion) ||
 	    (sflag && isSolid)) {
 	    bu_vls_printf(vls, "%s", dp->d_namep);
-	    bu_vls_spaces(vls, max_nam_len - strlen(dp->d_namep));
+	    bu_vls_spaces(vls, (int)(max_nam_len - strlen(dp->d_namep)));
 	    bu_vls_printf(vls, " %s", type);
-	    bu_vls_spaces(vls, max_type_len - strlen(type));
+	    bu_vls_spaces(vls, (int)(max_type_len - strlen(type)));
 	    bu_vls_printf(vls,  " %2d %2d %ld\n",
 			  dp->d_major_type, dp->d_minor_type, (long)(dp->d_len));
 	}

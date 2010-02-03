@@ -38,8 +38,6 @@
 int
 _ged_scale_eto(struct ged *gedp, struct rt_eto_internal *eto, const char *attribute, fastf_t sf, int rflag)
 {
-    fastf_t newrad;
-
     RT_ETO_CK_MAGIC(eto);
 
     switch (attribute[0]) {

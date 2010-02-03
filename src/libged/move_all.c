@@ -35,36 +35,6 @@
 #include "./ged_private.h"
 
 HIDDEN int
-ged_move_all_file(struct ged *gedp, int nflag, const char *file)
-{
-    FILE *fp;
-    char line[512];
-
-    if ((fp=fopen(file, "r")) == NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "cannot open %s\n", file);
-	return GED_ERROR;
-    }
-
-    while (bu_fgets(line, sizeof(line), fp) != NULL) {
-	char *cp;
-	char *new_av[3];
-
-	/* Skip comments */
-	if ((cp = strchr(line, '#')) != NULL)
-	    *cp = '\0';
-
-	if (bu_argv_from_string(new_av, 2, line) != 2)
-	    continue;
-
-	ged_move_all_func(gedp, nflag, (const char *)new_av[0], (const char *)new_av[1]);
-    }
-
-    fclose(fp);
-
-    return GED_OK;
-}
-
-HIDDEN int
 ged_move_all_func(struct ged *gedp, int nflag, const char *old, const char *new)
 {
     int	i;
@@ -251,6 +221,36 @@ ged_move_all_func(struct ged *gedp, int nflag, const char *old, const char *new)
 	    bu_vls_free(&new_path);
 	}
     }
+
+    return GED_OK;
+}
+
+HIDDEN int
+ged_move_all_file(struct ged *gedp, int nflag, const char *file)
+{
+    FILE *fp;
+    char line[512];
+
+    if ((fp=fopen(file, "r")) == NULL) {
+	bu_vls_printf(&gedp->ged_result_str, "cannot open %s\n", file);
+	return GED_ERROR;
+    }
+
+    while (bu_fgets(line, sizeof(line), fp) != NULL) {
+	char *cp;
+	char *new_av[3];
+
+	/* Skip comments */
+	if ((cp = strchr(line, '#')) != NULL)
+	    *cp = '\0';
+
+	if (bu_argv_from_string(new_av, 2, line) != 2)
+	    continue;
+
+	ged_move_all_func(gedp, nflag, (const char *)new_av[0], (const char *)new_av[1]);
+    }
+
+    fclose(fp);
 
     return GED_OK;
 }

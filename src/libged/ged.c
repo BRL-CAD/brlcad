@@ -220,7 +220,11 @@ ged_view_init(struct ged_view *gvp)
     VSET(gvp->gv_view_scale.gos_text_color, 255, 255, 255);
 
     /* FIXME: this causes the shaders.sh regression to fail */
+#if 0
+    _ged_mat_aet(gvp);
+#else
     /* _ged_mat_aet(gvp); */
+#endif
     ged_view_update(gvp);
 }
 

@@ -74,7 +74,6 @@ ged_erase(struct ged *gedp, int argc, const char *argv[])
     for ( i=0; i<argc; i++ ) {
 	char *ptr_A=NULL;
 	char *ptr_o=NULL;
-	char *c;
 
 	if ( *argv[i] != '-' ) break;
 	if ( (ptr_A=strchr(argv[i], 'A' )) ) flag_A_attr = 1;

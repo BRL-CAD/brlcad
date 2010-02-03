@@ -398,11 +398,12 @@ _ged_rt_output_handler(ClientData	clientData,
 
     if (read_failed) {
 	int retcode = 0;
-	int rpid;
 	int aborted;
 
 	/* was it aborted? */
 #ifndef _WIN32
+	int rpid;
+
 	Tcl_DeleteFileHandler(run_rtp->fd);
 	close(run_rtp->fd);
 

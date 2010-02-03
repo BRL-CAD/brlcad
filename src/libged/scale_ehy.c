@@ -36,7 +36,6 @@
 int
 _ged_scale_ehy(struct ged *gedp, struct rt_ehy_internal *ehy, const char *attribute, fastf_t sf, int rflag)
 {
-    fastf_t ma, mb;
     fastf_t newrad;
 
     RT_EHY_CK_MAGIC(ehy);

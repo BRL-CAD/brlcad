@@ -80,16 +80,16 @@ dgo_nirt_cmd(struct dg_obj	*dgop,
     char **vp;
     FILE *fp_in;
     FILE *fp_out, *fp_err;
+#ifndef _WIN32
     int pid, rpid;
     int retcode;
-#ifndef _WIN32
     int pipe_in[2];
     int pipe_out[2];
     int pipe_err[2];
 #else
-    HANDLE pipe_in[2], hSaveStdin, pipe_inDup;
-    HANDLE pipe_out[2], hSaveStdout, pipe_outDup;
-    HANDLE pipe_err[2], hSaveStderr, pipe_errDup;
+    HANDLE pipe_in[2], pipe_inDup;
+    HANDLE pipe_out[2], pipe_outDup;
+    HANDLE pipe_err[2], pipe_errDup;
     STARTUPINFO si;
     PROCESS_INFORMATION pi;
     SECURITY_ATTRIBUTES sa;
@@ -368,7 +368,7 @@ dgo_nirt_cmd(struct dg_obj	*dgop,
     si.wShowWindow = SW_HIDE;
 
     snprintf(line1, rem, "%s ", dgop->dgo_rt_cmd[0]);
-    rem -= strlen(line1) - 1;
+    rem -= (int)strlen(line1) - 1;
 
     for (i=1; i<dgop->dgo_rt_cmd_len; i++) {
 	/* skip commands */
@@ -382,7 +382,7 @@ dgo_nirt_cmd(struct dg_obj	*dgop,
 		return TCL_ERROR;
 	    }
 	    bu_strlcat(line1, name, sizeof(line1));
-	    rem -= strlen(name);
+	    rem -= (int)strlen(name);
 	}
     }
 
