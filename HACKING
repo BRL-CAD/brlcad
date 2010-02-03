@@ -129,6 +129,58 @@ See the PATCH SUBMISSION GUIDELINES section below for details on
 preparing and providing contributions.
 
 
+REFACTORING
+-----------
+
+proportion -> integrity -> clarity
+
+Refactoring is one of the most useful activities a contributor can
+make to BRL-CAD.  Code refactoring involves reviewing and rewriting
+source code to be more maintainable through reduced complexity and
+improved readability, structure, and extensibility.
+
+For each source file in BRL-CAD, the following checklist applies:
+
+* Consistent indentation.  See CODING STYLE & STANDARDS below.
+  Indents every 4 characters, tab stops at 8 characters with BSD KNF
+  indentation style.  The sh/indent.sh script will format a file
+  automatically, but requires a manual review afterwards.
+
+* Consistent whitespace.  See CODING STYLE & STANDARDS below, section
+  on stylistic whitespace.
+
+* Headers.  Only including headers that declare functions used by that
+  file.  If system headers are required, then common.h should be the
+  first header included.
+
+* Comments.  All public functions are documented with doxygen
+  comments.  Move public comments to the public header that declares
+  the function.  Format block comments to column 70 with only one
+  space (not tabs) after the asterisk.  Comments should explain why
+  more than what.
+
+* Magic numbers.  Eliminate constant numbers embedded in the code
+  wherever feasible, instead preferring dynamic/unbounded allocation.
+
+* Public symbols.  Public API symbols should be prefixed with the
+  library that they belong to and declared in a public header.  Public
+  symbols should consistently (only) use underscores, not CamelCase.
+
+* Private symbols.  Private functions should be declared HIDDEN.
+
+* Dead code.  Code that is commented out should be removed unless it
+  serves a specific documentation purpose.
+
+* Duplicate code.  Combine common functionality into a private
+  function or new public API routine.  Once and only once.
+
+* Verbose compilation warnings.  Quell them all.
+
+* Globals.  Eliminate globals by pulling them into an appropriate
+  scope and passing as parameters or embedding them in structures as
+  data.
+
+
 SYSTEM ARCHITECTURE
 -------------------
 
