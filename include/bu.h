@@ -1806,7 +1806,11 @@ BU_EXPORT extern int bu_debug;
 #        endif
 #      else
 /* "Conservative" way of finding # bytes as diff of 2 char ptrs */
-#        define bu_byteoffset(_i)	((size_t)(((char *)&(_i))-((char *)0)))
+#        if defined(_WIN32) && !defined(__CYGWIN__)
+#          define bu_byteoffset(_i)	((long)(((char *)&(_i))-((char *)0)))
+#        else
+#          define bu_byteoffset(_i)	((size_t)(((char *)&(_i))-((char *)0)))
+#        endif
 #      endif
 #    endif
 #  endif
