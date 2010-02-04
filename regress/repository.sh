@@ -54,7 +54,6 @@ if test ! -f "$TOPSRC/include/bio.h" ; then
     echo "Unable to find include/bio.h, aborting"
     exit 1
 fi
-
 FOUND="`grep '[^f]bio.h' $TOPSRC/include/*.h | grep -v 'include/bio.h'`"
 if test "x$FOUND" = "x" ; then
     echo "-> bio.h check succeeded"
@@ -90,12 +89,27 @@ for file in $COMMONFILES $COMMONFILES2 ; do
 	FOUND=1
     fi
 done
-
 if test "x$FOUND" = "x" ; then
     echo "-> common.h check succeeded"
 else
     echo "-> common.h check FAILED"
     FAILED="`expr $FAILED + 1`"
+fi
+
+
+# make sure every configure option is documented
+FOUND=
+for i in `grep ARG_ENABLE configure.ac | sed 's/[^,]*,\([^,]*\).*/\1/' | awk '{print $1}' | sed 's/\[\(.*\)\]/\1/g'` ; do
+    if test "x`grep "enable-$i" INSTALL`" = "x" ; then
+	echo "--enable-$i is not documented in INSTALL"
+	FOUND=1
+    fi
+done
+if test "x$FOUND" = "x" ; then
+    echo "--> configure documentation check succeeded"
+else
+    echo "--> configure documentation check FAILED (non-fatal)"
+    # FAILED="`expr $FAILED + 1`"
 fi
 
 
@@ -114,7 +128,6 @@ FOUND=
 for file in $AMFILES ; do
     echo "Target-specific CPPFLAGS found in $file"
 done
-
 if test "x$FOUND" = "x" ; then
     echo "-> cppflags check succeeded"
 else
