@@ -2250,7 +2250,6 @@ go_data_arrows(struct ged *gedp,
 	}
 
 	if (argc == 4) {
-	    int ret;
 	    int ac;
 	    const char **av;
 
@@ -2499,7 +2498,6 @@ go_data_axes(struct ged *gedp,
 	}
 
 	if (argc == 4) {
-	    int ret;
 	    int ac;
 	    const char **av;
 
@@ -2662,7 +2660,6 @@ go_data_labels(struct ged *gedp,
 	}
 
 	if (argc == 4) {
-	    int ret;
 	    int ac;
 	    const char **av;
 
@@ -2894,7 +2891,6 @@ go_data_lines(struct ged *gedp,
 	}
 
 	if (argc == 4) {
-	    int ret;
 	    int ac;
 	    const char **av;
 
@@ -2963,7 +2959,6 @@ go_data_move(struct ged *gedp,
 	     const char *usage,
 	     int maxargs)
 {
-    register int i;
     int mx, my;
     int dindex;
     fastf_t cx, cy;
