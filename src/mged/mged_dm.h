@@ -563,10 +563,18 @@ extern int update_views;		/* defined in mged.c */
 extern struct dm_list head_dm_list;	/* defined in attach.c */
 extern struct dm_list *curr_dm_list;	/* defined in attach.c */
 
-extern int doEvent(ClientData, XEvent *);			/* defined in doevent.c */
-extern int common_dm();			/* defined in dm-generic.c */
+/* defined in doevent.c */
+#ifdef HAVE_X11_TYPES
+extern int doEvent(ClientData, XEvent *);
+#else
+extern int doEvent(ClientData, void *);
+#endif
 
-extern void mged_rtCmdNotify();		/* defined in setup.c */
+/* defined in dm-generic.c */
+extern int common_dm(int argc, char *argv[]);
+
+/* defined in setup.c */
+extern void mged_rtCmdNotify();
 
 struct w_dm {
     int	type;
