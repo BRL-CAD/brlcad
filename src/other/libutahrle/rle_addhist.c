@@ -55,7 +55,8 @@ void rle_addhist(argv,in_hdr,out_hdr)
 register char	*argv[];
 rle_hdr *in_hdr,*out_hdr;
 {
-	register int	length,i;
+	register int	i;
+	register size_t	length;
 	time_t	temp;
 	/* padding must give number of characters in histoire 	*/
 	/*     plus one for "="					*/

@@ -61,9 +61,6 @@ char *prog_name, *file_name, *mode;
     FILE *fp;
     void perror();
     CONST_DECL char *err_str;
-    register char *cp;
-    char *combuf;
-    size_t combuf_size;
 
 #ifdef STDIO_NEEDS_BINARY
     char mode_string[32];	/* Should be enough. */
@@ -83,6 +80,10 @@ char *prog_name, *file_name, *mode;
     if ( file_name != NULL && strcmp( file_name, "-" ) != 0 )
     {
 #ifndef	NO_OPEN_PIPES
+      register char *cp;
+      char *combuf;
+      size_t combuf_size;
+
 	/* Check for dead children. */
 	if ( catching_children > 0 )
 	{
