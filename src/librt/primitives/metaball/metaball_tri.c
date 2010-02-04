@@ -127,15 +127,15 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
 		int pv = 0;
 
 		/* generate the vertex values */
-#define MEH(c,di,dj,dk) VSET(p[c], i+dj, j+di, k+dk); pv |= rt_metaball_point_inside((const point_t *)&p[c], mb) << c;
-		MEH(0, 0, 0, 0);
-		MEH(1, 0, 0, mtol);
-		MEH(2, 0, mtol, 0);
-		MEH(3, 0, mtol, mtol);
-		MEH(4, mtol, 0, 0);
-		MEH(5, mtol, 0, mtol);
+#define MEH(c,di,dj,dk) VSET(p[c], i+di, j+dj, k+dk); pv |= rt_metaball_point_inside((const point_t *)&p[c], mb) << c;
+		MEH(0, 0, 0, mtol);
+		MEH(1, mtol, 0, mtol);
+		MEH(2, mtol, 0, 0);
+		MEH(3, 0, 0, 0);
+		MEH(4, 0, mtol, mtol);
+		MEH(5, mtol, mtol, mtol);
 		MEH(6, mtol, mtol, 0);
-		MEH(7, mtol, mtol, mtol);
+		MEH(7, 0, mtol, 0);
 #undef MEH
 
 		if ( pv != 0 && pv != 255 ) {	/* entire cube is either inside or outside */
