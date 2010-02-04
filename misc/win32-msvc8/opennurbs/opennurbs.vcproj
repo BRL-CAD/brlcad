@@ -142,7 +142,7 @@
 				InlineFunctionExpansion="1"
 				EnableIntrinsicFunctions="false"
 				AdditionalIncludeDirectories="../../../include;../../../src/other/libz;../../../src/other/tcl/generic;../../../src/other/tcl/win"
-				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;ON_DLL_EXPORTS;ON_COMPILING_OPENNURBS;_CRT_SECURE_NO_WARNINGS"
+				PreprocessorDefinitions="WIN64;_M_X64;NDEBUG;_WINDOWS;_USRDLL;ON_DLL_EXPORTS;ON_COMPILING_OPENNURBS;_CRT_SECURE_NO_WARNINGS"
 				StringPooling="true"
 				ExceptionHandling="1"
 				RuntimeLibrary="2"
