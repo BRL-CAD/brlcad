@@ -186,7 +186,7 @@ bu_nice_set(int newnice)
 #else /* !HAVE_SETPRIORITY */
     /* no known means to change the nice value */
     if (bu_debug) {
-	bu_log("bu_nice_set() Priority NOT changed\n");
+	bu_log("bu_nice_set(%d) Priority NOT changed\n", newnice);
     }
 #endif  /* _WIN32 */
 }
