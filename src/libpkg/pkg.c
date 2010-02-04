@@ -201,7 +201,7 @@ _pkg_timestamp(void)
 	    tmp->tm_hour, tmp->tm_min, tmp->tm_sec,
 	    /* avoid libbu dependency */
 #ifdef HAVE_UNISTD_H
-	    getpid()
+	    (int)getpid()
 #else
 	    (int)GetCurrentProcessId()
 #endif
