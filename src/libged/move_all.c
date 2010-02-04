@@ -261,7 +261,7 @@ ged_move_all(struct ged *gedp, int argc, const char *argv[])
     char c;
     int fflag = 0;
     int nflag = 0;
-    static const char *usage = "[-n] [(-f mapping_file) | (from to)]";
+    static const char *usage = "[-n] {-f <mapping_file>|<from> <to>}";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
