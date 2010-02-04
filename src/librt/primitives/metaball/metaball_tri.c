@@ -127,7 +127,7 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
 		int pv = 0;
 
 		/* generate the vertex values */
-#define MEH(c,di,dj,dk) VSET(p[c], i+di, j+dj, k+dk); pv |= rt_metaball_point_inside((const point_t *)&p[c], mb) << c;
+#define MEH(c,di,dj,dk) VSET(p[c], i+dj, j+di, k+dk); pv |= rt_metaball_point_inside((const point_t *)&p[c], mb) << c;
 		MEH(0, 0, 0, 0);
 		MEH(1, 0, 0, mtol);
 		MEH(2, 0, mtol, 0);
@@ -172,8 +172,6 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
 
     nmg_mark_edges_real(&s->l.magic);
     nmg_region_a(*r, tol);
-
-    nmg_fix_normals(s, tol);
 
     rt_get_timer(&times, NULL);
     bu_log("metaball tesselate (%d triangles): %s\n", numtri, bu_vls_addr(&times));
