@@ -283,7 +283,7 @@ BC_ARG_ENABLE([build_urt], [urt-build], [Build the included Utah Raster Toolkit]
 # force enable/disable building of openNURBS
 BC_ARG_ENABLE([build_opennurbs], [opennurbs-build], [Build the included openNURBS library], [auto])
 
-# force enable/disable building of NIST STEP Class Libraries 
+# force enable/disable building of NIST STEP Class Libraries
 BC_ARG_ENABLE([build_step], [step-build], [Build the included STEP Class Libraries], [auto])
 
 # force enable/disable building of termlib
@@ -1956,7 +1956,7 @@ if test "x$bc_use_debug" != "xno" ; then
 	if test "x$bc_debug_flag_works" = "xno" ; then
 		BC_COMPILER_AND_LINKER_RECOGNIZES([-g], [debug_flag])
 	fi
-   
+
 	if test "x$bc_debug_flag_works" = "xyes" ; then
 		# debug works
 	   	if test "x$bc_use_debug " = "xauto" ; then
