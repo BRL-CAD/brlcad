@@ -381,8 +381,8 @@ rt_nmg_mc_realize_cube(struct shell *s, int pv, point_t *p, point_t *edges, cons
     p = p;
 
     f_vertl[0] = &vertl[0];
-    f_vertl[1] = &vertl[1];
-    f_vertl[2] = &vertl[2];
+    f_vertl[1] = &vertl[2];
+    f_vertl[2] = &vertl[1];
 
     vi = (int *)(mc_tris[pv]);
     /*
