@@ -35,13 +35,13 @@
  *	     [ ] regression shtuff (on hold; regress/ has issues)
  *       [X] edge solve cubes
  *       [X] write compiled table shtuff (use existing table, the hex/index one?)
- *       [ ] produce NMG mesh
+ *       [X] produce NMG mesh
  * ============================================================
  *       [ ] experiment with decimating
- *   [ ] hoist code where final cube edge intersections is known
+ *   [X] hoist code where final cube edge intersections is known
  *   [ ] implement ray-firing to find edge intersects
  *   [X] hoise table stuff
- *   [ ] hoist NMG mesh writer. (End of Feb10)
+ *   [X] hoist NMG mesh writer. (End of Feb10)
  * ============================================================
  *   [ ] try decimation?
  *   [ ] ???
