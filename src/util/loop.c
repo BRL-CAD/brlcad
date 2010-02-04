@@ -19,17 +19,16 @@
  */
 /** @file loop.c
  *
- *	Simple program to output integers or floats or chars between
- *	"start" and "finish", inclusive.  Default is an increment
- *	of +1 if start < finish or -1 if start > finish.  User may
- *	specify an alternate increment.  Also, user may left-pad
- *	output integers with zeros.  There is no attempt to prevent
- *	"infinite" loops.
+ * Simple program to output integers or floats or chars between
+ * "start" and "finish", inclusive.  Default is an increment of +1 if
+ * start < finish or -1 if start > finish.  User may specify an
+ * alternate increment.  Also, user may left-pad output integers with
+ * zeros.  There is no attempt to prevent "infinite" loops.
  *
- *  Authors -
- *	John Grosh
- *	Phil Dykstra
- *	Michael John Muuss
+ * Authors -
+ * John Grosh
+ * Phil Dykstra
+ * Michael John Muuss
  *
  */
 
@@ -43,24 +42,25 @@
 #include "bu.h"
 
 
-#define	INTEGER 0
-#define	REAL	1
-#define CHAR	2
+#define INTEGER 0
+#define REAL 1
+#define CHAR 2
+
 
 int
-main(int argc, char **argv)
+main(int argc, char *argv[])
 {
-    int	status = INTEGER;
+    int status = INTEGER;
 
-    int	i;
-    int 	start,  finish, incr;
+    int i;
+    int start,  finish, incr;
 
-    double	d;
-    double	dstart, dfinish, dincr;
+    double d;
+    double dstart, dfinish, dincr;
 
-    char       c;
-    char       cstart, cfinish;
-    int	cincr;
+    char c;
+    char cstart, cfinish;
+    int cincr;
 
     if (argc < 3 || argc > 5) {
 	bu_exit(9, "Usage:  loop [-c|-n] start finish [incr] \n -n is the default option\n");
@@ -68,7 +68,7 @@ main(int argc, char **argv)
 
     /* Check if -c is present in comandline argument*/
 
-    if(argv[1][0] == '-' && argv[1][1]) status = CHAR;
+    if (argv[1][0] == '-' && argv[1][1]) status = CHAR;
 
     /* determine if any arguments are real */
     for (i = 1; i < argc; i++) {
@@ -99,15 +99,15 @@ main(int argc, char **argv)
 		printf("%g\n", d);
     } else if (status == INTEGER) {
 	/* print out integer output */
-	char	*cp;
-	char	fmt_string[50];
+	char *cp;
+	char fmt_string[50];
 
-	int	field_width = 0;
+	int field_width = 0;
 
-	int	zeros      = 0;  /* leading zeros for output */
-	int	zeros_arg1 = 0;  /* leading zeros in arg[1]  */
-	int	zeros_arg2 = 0;  /* leading zeros in arg[2]  */
-	int	zeros_arg3 = 0;  /* leading zeros in arg[3]  */
+	int zeros      = 0;  /* leading zeros for output */
+	int zeros_arg1 = 0;  /* leading zeros in arg[1]  */
+	int zeros_arg2 = 0;  /* leading zeros in arg[2]  */
+	int zeros_arg3 = 0;  /* leading zeros in arg[3]  */
 
 	/* count leading leading zeros in argv[1] */
 	for (cp = argv[1]; *cp == '0'; cp++)
@@ -122,7 +122,7 @@ main(int argc, char **argv)
 	    zeros_arg2--;
 
 	/* if argv[3] exists, count leading leading zeros */
-	if (argc == 4 ) {
+	if (argc == 4) {
 	    for (cp = argv[3]; *cp == '0'; cp++)
 		zeros_arg3++;
 	    if (*cp == '\0')
@@ -180,14 +180,15 @@ main(int argc, char **argv)
 	}
 	if (cincr >= 0)
 	    for (c=cstart; c <= cfinish; c += cincr)
-		printf("%c\n",c);
+		printf("%c\n", c);
 	else
 	    for (c=cstart; c >= cfinish; c +=cincr)
-		printf("%c\n",c);
+		printf("%c\n", c);
     }
 
     return 0;
 }
+
 
 /*
  * Local Variables:
