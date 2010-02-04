@@ -36,10 +36,10 @@ extern const char bu_strdup_message[];
 /* private constants */
 
 /* minimum initial allocation size */
-static const unsigned int _VLS_ALLOC_MIN = 40;
+static const unsigned int _VLS_ALLOC_MIN = 32;
 
 /* minimum vls allocation increment size */
-static const int _VLS_ALLOC_STEP = 120;
+static const size_t _VLS_ALLOC_STEP = 128;
 
 /* minimum vls buffer allocation size */
 static const int _VLS_ALLOC_READ = 4096;
@@ -123,28 +123,30 @@ bu_vls_extend(register struct bu_vls *vp, unsigned int extra)
 {
     BU_CK_VLS(vp);
 
-    /* increment by at least 40 bytes */
+    /* allocate at least 32 bytes (8 or 4 words) extra */
     if (extra < _VLS_ALLOC_MIN)
 	extra = _VLS_ALLOC_MIN;
 
     /* first time allocation */
     if (vp->vls_max <= 0 || vp->vls_str == (char *)0) {
+	vp->vls_str = (char *)bu_malloc((size_t)extra, bu_vls_message);
 	vp->vls_max = extra;
-	vp->vls_str = (char *)bu_malloc((size_t)vp->vls_max, bu_vls_message);
 	vp->vls_len = 0;
 	vp->vls_offset = 0;
 	*vp->vls_str = '\0';
 	return;
     }
 
+    /* make sure to increase in step sized increments */
+    if ((size_t)extra < _VLS_ALLOC_STEP)
+	extra = (unsigned int)_VLS_ALLOC_STEP;
+    else if ((size_t)extra % _VLS_ALLOC_STEP != 0)
+	extra += (unsigned int)(_VLS_ALLOC_STEP - (extra % _VLS_ALLOC_STEP));
+
     /* need more space? */
     if (vp->vls_offset + vp->vls_len + extra >= (size_t)vp->vls_max) {
+	vp->vls_str = (char *)bu_realloc(vp->vls_str, (size_t)(vp->vls_max + extra), bu_vls_message);
 	vp->vls_max += extra;
-	if (vp->vls_max < _VLS_ALLOC_STEP) {
-	    /* extend to at least this much */
-	    vp->vls_max = _VLS_ALLOC_STEP;
-	}
-	vp->vls_str = (char *)bu_realloc(vp->vls_str, (size_t)vp->vls_max, bu_vls_message);
     }
 }
 
@@ -683,7 +685,7 @@ bu_vls_putc(register struct bu_vls *vp, int c)
     BU_CK_VLS(vp);
 
     if (vp->vls_offset + vp->vls_len+1 >= vp->vls_max)
-	bu_vls_extend(vp, _VLS_ALLOC_STEP);
+	bu_vls_extend(vp, (unsigned int)_VLS_ALLOC_STEP);
 
     vp->vls_str[vp->vls_offset + vp->vls_len++] = (char)c;
     vp->vls_str[vp->vls_offset + vp->vls_len] = '\0'; /* force null termination */
@@ -729,7 +731,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 
     BU_CK_VLS(vls);
 
-    bu_vls_extend(vls, _VLS_ALLOC_STEP);
+    bu_vls_extend(vls, (unsigned int)_VLS_ALLOC_STEP);
 
     sp = fmt;
     while (*sp) {
@@ -1011,7 +1013,7 @@ bu_vls_detab(struct bu_vls *vp)
 
     bu_vls_init(&src);
     bu_vls_vlscatzap(&src, vp);	/* make temporary copy of src */
-    bu_vls_extend(vp, (unsigned)bu_vls_strlen(&src) + _VLS_ALLOC_STEP);
+    bu_vls_extend(vp, (unsigned int)bu_vls_strlen(&src) + (unsigned int)_VLS_ALLOC_STEP);
 
     cp = bu_vls_addr(&src);
     used = 0;
