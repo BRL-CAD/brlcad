@@ -1478,7 +1478,7 @@ size_t opnd;
 	assert(p->slen < p->ssize);
 
 	/* finally, it's all reduced to the easy case */
-	p->strip[p->slen++] = SOP(op, opnd);
+	p->strip[p->slen++] = SOP(op, (sop)opnd);
 }
 
 /*
