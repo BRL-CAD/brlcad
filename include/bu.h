@@ -4516,7 +4516,8 @@ BU_EXPORT BU_EXTERN(char *bu_vls_addr,
  * b u _ v l s _ e x t e n d
  *
  * Ensure that the provided VLS has at least 'extra' characters of
- * space available.
+ * space available.  Additional space is allocated in minimum step
+ * sized amounts and may allocate more than requested.
  */
 BU_EXPORT BU_EXTERN(void bu_vls_extend,
 		    (struct bu_vls *vp,
