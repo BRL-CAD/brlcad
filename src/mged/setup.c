@@ -385,12 +385,6 @@ static struct cmdtab mged_cmdtab[] = {
 };
 
 
-void
-mged_rtCmdNotify()
-{
-    pr_prompt(interactive);
-}
-
 /**
  * C M D _ S E T U P
  *
