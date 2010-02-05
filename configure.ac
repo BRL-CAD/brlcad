@@ -2852,6 +2852,7 @@ if test "x$itcl_link_works" = "xyes" ; then
 fi
 AC_TRY_RUN([
 #include <itcl.h>
+#include <itk.h>
 #ifndef ITCL_MAJOR_VERSION
 #  error Unknown major version of incrTcl
 #endif
