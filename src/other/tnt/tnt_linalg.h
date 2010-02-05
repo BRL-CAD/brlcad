@@ -11,7 +11,6 @@
 namespace TNT {
 namespace Linear_Algebra {
 
-	using namespace std;
 
 /**
    <P>
@@ -442,12 +441,12 @@ class Eigenvalue
 
       Real f = Real(0.0);
       Real tst1 = Real(0.0);
-      Real eps = pow(2.0,-52.0);
+      Real eps = std::pow(2.0,-52.0);
       for (int l = 0; l < n; l++) {
 
          // Find small subdiagonal element
 
-         tst1 = max(tst1,abs(d[l]) + abs(e[l]));
+         tst1 = std::max(tst1,abs(d[l]) + abs(e[l]));
          int m = l;
 
         // Original while-loop from Java code
@@ -677,7 +676,7 @@ class Eigenvalue
       int n = nn-1;
       int low = 0;
       int high = nn-1;
-      Real eps = pow(2.0,-52.0);
+      Real eps = std::pow(2.0,-52.0);
       Real exshift = Real(0.0);
       Real p=0,q=0,r=0,s=0,z=0,t,w,x,y;
 
@@ -689,7 +688,7 @@ class Eigenvalue
             d[i] = H[i][i];
             e[i] = Real(0.0);
          }
-         for (int j = max(i-Real(1.0)); j < nn; j++) {
+         for (int j = std::max(i-Real(1.0)); j < nn; j++) {
             norm = norm + abs(H[i][j]);
          }
       }
@@ -920,7 +919,7 @@ class Eigenvalue
 
                   // Column modification
 
-                  for (int i = 0; i <= min(n,k+3); i++) {
+                  for (int i = 0; i <= std::min(n,k+3); i++) {
                      p = x * H[i][k] + y * H[i][k+1];
                      if (notlast) {
                         p = p + z * H[i][k+2];
@@ -1069,7 +1068,7 @@ class Eigenvalue
 
                   // Overflow control
 
-                  t = max(abs(H[i][n-1]),abs(H[i][n]));
+                  t = std::max(abs(H[i][n-1]),abs(H[i][n]));
                   if ((eps * t) * t > 1) {
                      for (int j = i; j <= n; j++) {
                         H[j][n-1] = H[j][n-1] / t;
@@ -1096,7 +1095,7 @@ class Eigenvalue
       for (int j = nn-1; j >= low; j--) {
          for (int i = low; i <= high; i++) {
             z = Real(0.0);
-            for (int k = low; k <= min(j,high); k++) {
+            for (int k = low; k <= std::min(j,high); k++) {
                z = z + V[i][k] * H[k][j];
             }
             V[i][j] = z;
@@ -1330,7 +1329,7 @@ class LU
 
             // Most of the time is spent in the following dot product.
 
-            int kmax = min(i,j);
+            int kmax = std::min(i,j);
             double s = Real(0.0);
             for (int k = 0; k < kmax; k++) {
                s += LUrowi[k]*LUcolj[k];
@@ -1881,8 +1880,8 @@ class SVD
 
       m = Arg.num_rows();
       n = Arg.num_cols();
-      int nu = min(m,n);
-      s = Vector<Real>(min(m+1,n));
+      int nu = std::min(m,n);
+      s = Vector<Real>(std::min(m+1,n));
       U = Matrix<Real>(m, nu, Real(0));
       V = Matrix<Real>(n,n);
       Vector<Real> e(n);
@@ -1895,9 +1894,9 @@ class SVD
       // Reduce A to bidiagonal form, storing the diagonal elements
       // in s and the super-diagonal elements in e.
 
-      int nct = min(m-1,n);
-      int nrt = max(0,min(n-2,m));
-      for (k = 0; k < max(nct,nrt); k++) {
+      int nct = std::min(m-1,n);
+      int nrt = std::max(0,std::min(n-2,m));
+      for (k = 0; k < std::max(nct,nrt); k++) {
          if (k < nct) {
 
             // Compute the transformation for the k-th column and
@@ -1999,7 +1998,7 @@ class SVD
 
       // Set up the final bidiagonal matrix or order p.
 
-      int p = min(n,m+1);
+      int p = std::min(n,m+1);
       if (nct < n) {
          s[nct] = A[nct][nct];
       }
@@ -2075,7 +2074,7 @@ class SVD
 
       int pp = p-1;
       int iter = 0;
-      double eps = pow(2.0,-52.0);
+      double eps = std::pow(2.0,-52.0);
       while (p > 0) {
          int k=0;
 		 int kase=0;
@@ -2185,7 +2184,7 @@ class SVD
 
                // Calculate the shift.
 
-               double scale = max(max(max(max(
+               double scale = std::max(std::max(std::max(std::max(
                        abs(s[p-1]),abs(s[p-2])),abs(e[p-2])),
                        abs(s[k])),abs(e[k]));
                double sp = s[p-1]/scale;
@@ -2294,7 +2293,7 @@ class SVD
 
    void getU (Matrix<Real> &A)
    {
-   	  int minm = min(m+1,n);
+          int minm = std::min(m+1,n);
 
 	  A = Matrix<Real>(m, minm);
 
@@ -2332,13 +2331,13 @@ class SVD
       }
    }
 
-   /** Two norm  (max(S)) */
+   /** Two norm  (std::max(S)) */
 
    double norm2 () {
       return s[0];
    }
 
-   /** Two norm of condition number (max(S)/min(S)) */
+   /** Two norm of condition number (std::max(S)/std::min(S)) */
 
    double cond () {
       return s[0]/s[min(m,n)-1];
@@ -2350,8 +2349,8 @@ class SVD
 
    int rank ()
    {
-      double eps = pow(2.0,-52.0);
-      double tol = max(m,n)*s[0]*eps;
+      double eps = std::pow(2.0,-52.0);
+      double tol = std::max(m,n)*s[0]*eps;
       int r = 0;
       for (int i = 0; i < s.dim(); i++) {
          if (s[i] > tol) {

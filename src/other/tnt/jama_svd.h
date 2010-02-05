@@ -13,8 +13,6 @@
 #include <cmath>
 // for abs() below
 
-using namespace TNT;
-using namespace std;
 
 namespace JAMA
 {
@@ -40,25 +38,25 @@ class SVD
 {
 
 
-	Array2D<Real> U, V;
-	Array1D<Real> s;
+	TNT::Array2D<Real> U, V;
+	TNT::Array1D<Real> s;
 	int m, n;
 
   public:
 
 
-   SVD (const Array2D<Real> &Arg) {
+   SVD (const TNT::Array2D<Real> &Arg) {
 
 
       m = Arg.dim1();
       n = Arg.dim2();
-      int nu = min(m,n);
-      s = Array1D<Real>(min(m+1,n));
-      U = Array2D<Real>(m, nu, Real(0));
-      V = Array2D<Real>(n,n);
-      Array1D<Real> e(n);
-      Array1D<Real> work(m);
-	  Array2D<Real> A(Arg.copy());
+      int nu = std::min(m,n);
+      s = TNT::Array1D<Real>(std::min(m+1,n));
+      U = TNT::Array2D<Real>(m, nu, Real(0));
+      V = TNT::Array2D<Real>(n,n);
+      TNT::Array1D<Real> e(n);
+      TNT::Array1D<Real> work(m);
+	  TNT::Array2D<Real> A(Arg.copy());
       int wantu = 1;  					/* boolean */
       int wantv = 1;  					/* boolean */
 	  int i=0, j=0, k=0;
@@ -66,9 +64,9 @@ class SVD
       // Reduce A to bidiagonal form, storing the diagonal elements
       // in s and the super-diagonal elements in e.
 
-      int nct = min(m-1,n);
-      int nrt = max(0,min(n-2,m));
-      for (k = 0; k < max(nct,nrt); k++) {
+      int nct = std::min(m-1,n);
+      int nrt = std::max(0,std::min(n-2,m));
+      for (k = 0; k < std::max(nct,nrt); k++) {
          if (k < nct) {
 
             // Compute the transformation for the k-th column and
@@ -170,7 +168,7 @@ class SVD
 
       // Set up the final bidiagonal matrix or order p.
 
-      int p = min(n,m+1);
+      int p = std::min(n,m+1);
       if (nct < n) {
          s[nct] = A[nct][nct];
       }
@@ -246,7 +244,7 @@ class SVD
 
       int pp = p-1;
       int iter = 0;
-      Real eps(pow(2.0,-52.0));
+      Real eps(std::pow(2.0,-52.0));
       while (p > 0) {
          int k=0;
 		 int kase=0;
@@ -267,7 +265,7 @@ class SVD
             if (k == -1) {
                break;
             }
-            if (abs(e[k]) <= eps*(abs(s[k]) + abs(s[k+1]))) {
+            if (std::abs(e[k]) <= eps*(std::abs(s[k]) + std::abs(s[k+1]))) {
                e[k] = 0.0;
                break;
             }
@@ -280,9 +278,9 @@ class SVD
                if (ks == k) {
                   break;
                }
-               Real t( (ks != p ? abs(e[ks]) : 0.) +
-                          (ks != k+1 ? abs(e[ks-1]) : 0.));
-               if (abs(s[ks]) <= eps*t)  {
+               Real t( (ks != p ? std::abs(e[ks]) : 0.) +
+                          (ks != k+1 ? std::abs(e[ks-1]) : 0.));
+               if (std::abs(s[ks]) <= eps*t)  {
                   s[ks] = 0.0;
                   break;
                }
@@ -356,9 +354,9 @@ class SVD
 
                // Calculate the shift.
 
-               Real scale = max(max(max(max(
-                       abs(s[p-1]),abs(s[p-2])),abs(e[p-2])),
-                       abs(s[k])),abs(e[k]));
+               Real scale = std::max(std::max(std::max(std::max(
+                       std::abs(s[p-1]),std::abs(s[p-2])),std::abs(e[p-2])),
+                       std::abs(s[k])),std::abs(e[k]));
                Real sp = s[p-1]/scale;
                Real spm1 = s[p-2]/scale;
                Real epm1 = e[p-2]/scale;
@@ -463,11 +461,11 @@ class SVD
    }
 
 
-   void getU (Array2D<Real> &A)
+   void getU (TNT::Array2D<Real> &A)
    {
-   	  int minm = min(m+1,n);
+   	  int minm = std::min(m+1,n);
 
-	  A = Array2D<Real>(m, minm);
+	  A = TNT::Array2D<Real>(m, minm);
 
 	  for (int i=0; i<m; i++)
 	  	for (int j=0; j<minm; j++)
@@ -477,14 +475,14 @@ class SVD
 
    /* Return the right singular vectors */
 
-   void getV (Array2D<Real> &A)
+   void getV (TNT::Array2D<Real> &A)
    {
    	  A = V;
    }
 
    /** Return the one-dimensional array of singular values */
 
-   void getSingularValues (Array1D<Real> &x)
+   void getSingularValues (TNT::Array1D<Real> &x)
    {
       x = s;
    }
@@ -493,8 +491,8 @@ class SVD
    @return     S
    */
 
-   void getS (Array2D<Real> &A) {
-   	  A = Array2D<Real>(n,n);
+   void getS (TNT::Array2D<Real> &A) {
+   	  A = TNT::Array2D<Real>(n,n);
       for (int i = 0; i < n; i++) {
          for (int j = 0; j < n; j++) {
             A[i][j] = 0.0;
@@ -503,16 +501,16 @@ class SVD
       }
    }
 
-   /** Two norm  (max(S)) */
+   /** Two norm  (std::max(S)) */
 
    Real norm2 () {
       return s[0];
    }
 
-   /** Two norm of condition number (max(S)/min(S)) */
+   /** Two norm of condition number (std::max(S)/std::min(S)) */
 
    Real cond () {
-      return s[0]/s[min(m,n)-1];
+      return s[0]/s[std::min(m,n)-1];
    }
 
    /** Effective numerical matrix rank
@@ -521,8 +519,8 @@ class SVD
 
    int rank ()
    {
-      Real eps = pow(2.0,-52.0);
-      Real tol = max(m,n)*s[0]*eps;
+      Real eps = std::pow(2.0,-52.0);
+      Real tol = std::max(m,n)*s[0]*eps;
       int r = 0;
       for (int i = 0; i < s.dim(); i++) {
          if (s[i] > tol) {

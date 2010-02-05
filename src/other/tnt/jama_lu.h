@@ -9,9 +9,6 @@
 #define NEAR_ZERO(val, epsilon)(((val) > -epsilon) && ((val) < epsilon))
 
 
-using namespace TNT;
-using namespace std;
-
 namespace JAMA
 {
 
@@ -34,17 +31,17 @@ class LU
 
 
    /* Array for internal storage of decomposition.  */
-   Array2D<Real>  LU_;
+   TNT::Array2D<Real>  LU_;
    int m, n, pivsign;
-   Array1D<int> piv;
+   TNT::Array1D<int> piv;
 
 
-   Array2D<Real> permute_copy(const Array2D<Real> &A,
-   			const Array1D<int> &pivot, int j0, int j1)
+   TNT::Array2D<Real> permute_copy(const TNT::Array2D<Real> &A,
+   			const TNT::Array1D<int> &pivot, int j0, int j1)
 	{
 		int pivotlength = pivot.dim();
 
-		Array2D<Real> X(pivotlength, j1-j0+1);
+		TNT::Array2D<Real> X(pivotlength, j1-j0+1);
 
 
          for (int i = 0; i < pivotlength; i++)
@@ -54,14 +51,14 @@ class LU
 		return X;
 	}
 
-   Array1D<Real> permute_copy(const Array1D<Real> &A,
-   		const Array1D<int> &pivot)
+   TNT::Array1D<Real> permute_copy(const TNT::Array1D<Real> &A,
+   		const TNT::Array1D<int> &pivot)
 	{
 		int pivotlength = pivot.dim();
 		if (pivotlength != A.dim())
-			return Array1D<Real>();
+			return TNT::Array1D<Real>();
 
-		Array1D<Real> x(pivotlength);
+		TNT::Array1D<Real> x(pivotlength);
 
 
          for (int i = 0; i < pivotlength; i++)
@@ -78,7 +75,7 @@ class LU
    @return     LU Decomposition object to access L, U and piv.
    */
 
-    LU (const Array2D<Real> &A) : LU_(A.copy()), m(A.dim1()), n(A.dim2()),
+    LU (const TNT::Array2D<Real> &A) : LU_(A.copy()), m(A.dim1()), n(A.dim2()),
 		piv(A.dim1())
 
 	{
@@ -91,7 +88,7 @@ class LU
       }
       pivsign = 1;
       Real *LUrowi = 0;;
-      Array1D<Real> LUcolj(m);
+      TNT::Array1D<Real> LUcolj(m);
 
       // Outer loop.
 
@@ -110,7 +107,7 @@ class LU
 
             // Most of the time is spent in the following dot product.
 
-            int kmax = min(i,j);
+            int kmax = std::min(i,j);
             double s = 0.0;
             for (int k = 0; k < kmax; k++) {
                s += LUrowi[k]*LUcolj[k];
@@ -123,7 +120,7 @@ class LU
 
          int p = j;
          for (int i = j+1; i < m; i++) {
-            if (abs(LUcolj[i]) > abs(LUcolj[p])) {
+            if (std::abs(LUcolj[i]) > std::abs(LUcolj[p])) {
                p = i;
             }
          }
@@ -168,8 +165,8 @@ class LU
    @return     L
    */
 
-   Array2D<Real> getL () {
-      Array2D<Real> L_(m,n);
+   TNT::Array2D<Real> getL () {
+      TNT::Array2D<Real> L_(m,n);
       for (int i = 0; i < m; i++) {
          for (int j = 0; j < n; j++) {
             if (i > j) {
@@ -188,8 +185,8 @@ class LU
    @return     U portion of LU factorization.
    */
 
-   Array2D<Real> getU () {
-   	  Array2D<Real> U_(n,n);
+   TNT::Array2D<Real> getU () {
+   	  TNT::Array2D<Real> U_(n,n);
       for (int i = 0; i < n; i++) {
          for (int j = 0; j < n; j++) {
             if (i <= j) {
@@ -206,7 +203,7 @@ class LU
    @return     piv
    */
 
-   Array1D<int> getPivot () {
+   TNT::Array1D<int> getPivot () {
       return piv;
    }
 
@@ -232,23 +229,23 @@ class LU
    					0x0 (null) array.
    */
 
-   Array2D<Real> solve (const Array2D<Real> &B)
+   TNT::Array2D<Real> solve (const TNT::Array2D<Real> &B)
    {
 
 	  /* Dimensions: A is mxn, X is nxk, B is mxk */
 
       if (B.dim1() != m) {
-	  	return Array2D<Real>(0,0);
+	  	return TNT::Array2D<Real>(0,0);
       }
       if (!isNonsingular()) {
-        return Array2D<Real>(0,0);
+        return TNT::Array2D<Real>(0,0);
       }
 
       // Copy right hand side with pivoting
       int nx = B.dim2();
 
 
-	  Array2D<Real> X = permute_copy(B, piv, 0, nx-1);
+	  TNT::Array2D<Real> X = permute_copy(B, piv, 0, nx-1);
 
       // Solve L*Y = B(piv,:)
       for (int k = 0; k < n; k++) {
@@ -276,26 +273,26 @@ class LU
    /** Solve A*x = b, where x and b are vectors of length equal
    		to the number of rows in A.
 
-   @param  b   a vector (Array1D> of length equal to the first dimension
+   @param  b   a vector (TNT::Array1D> of length equal to the first dimension
    						of A.
-   @return x a vector (Array1D> so that L*U*x = b(piv), if B is nonconformant,
+   @return x a vector (TNT::Array1D> so that L*U*x = b(piv), if B is nonconformant,
    					returns 0x0 (null) array.
    */
 
-   Array1D<Real> solve (const Array1D<Real> &b)
+   TNT::Array1D<Real> solve (const TNT::Array1D<Real> &b)
    {
 
 	  /* Dimensions: A is mxn, X is nxk, B is mxk */
 
       if (b.dim1() != m) {
-	  	return Array1D<Real>();
+	  	return TNT::Array1D<Real>();
       }
       if (!isNonsingular()) {
-        return Array1D<Real>();
+        return TNT::Array1D<Real>();
       }
 
 
-	  Array1D<Real> x = permute_copy(b, piv);
+	  TNT::Array1D<Real> x = permute_copy(b, piv);
 
       // Solve L*Y = B(piv)
       for (int k = 0; k < n; k++) {
