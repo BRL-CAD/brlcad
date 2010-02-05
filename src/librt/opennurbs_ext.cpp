@@ -1258,7 +1258,7 @@ getKnotInterval(BSpline& bspline, double u)
 
 
 int
-getCoefficients(BSpline& bspline, Array1D<double>& N, double u)
+getCoefficients(BSpline& bspline, TNT::Array1D<double>& N, double u)
 {
     // evaluate the b-spline basis function for the given parameter u
     // place the results in N[]
@@ -1298,10 +1298,10 @@ generateParameters(BSpline& bspline)
     TRACE("generateParameters");
     double lastT = 0.0;
     bspline.params.resize(bspline.n+1);
-    Array2D<double> N(UNIVERSAL_SAMPLE_COUNT, bspline.n+1);
+    TNT::Array2D<double> N(UNIVERSAL_SAMPLE_COUNT, bspline.n+1);
     for (int i = 0; i < UNIVERSAL_SAMPLE_COUNT; i++) {
 	double t = (double)i / (UNIVERSAL_SAMPLE_COUNT-1);
-	Array1D<double> n = Array1D<double>(N.dim2(), N[i]);
+	TNT::Array1D<double> n = TNT::Array1D<double>(N.dim2(), N[i]);
 	getCoefficients(bspline, n, t);
     }
     for (int i = 0; i < bspline.n+1; i++) {
@@ -1325,7 +1325,7 @@ generateParameters(BSpline& bspline)
 
 
 void
-printMatrix(Array2D<double>& m)
+printMatrix(TNT::Array2D<double>& m)
 {
     printf("---\n");
     for (int i = 0; i < m.dim1(); i++) {
@@ -1340,12 +1340,12 @@ printMatrix(Array2D<double>& m)
 void
 generateControlPoints(BSpline& bspline, PBCData& data)
 {
-    Array2D<double> bigN(bspline.n+1, bspline.n+1);
+    TNT::Array2D<double> bigN(bspline.n+1, bspline.n+1);
     for (int i = 0; i < bspline.n+1; i++) {
-	Array1D<double> n = Array1D<double>(bigN.dim2(), bigN[i]);
+	TNT::Array1D<double> n = TNT::Array1D<double>(bigN.dim2(), bigN[i]);
 	getCoefficients(bspline, n, bspline.params[i]);
     }
-    Array2D<double> bigD(bspline.n+1, 2);
+    TNT::Array2D<double> bigD(bspline.n+1, 2);
     for (int i = 0; i < bspline.n+1; i++) {
 	bigD[i][0] = data.samples[i].x;
 	bigD[i][1] = data.samples[i].y;
@@ -1356,7 +1356,7 @@ generateControlPoints(BSpline& bspline, PBCData& data)
 
     JAMA::LU<double> lu(bigN);
     assert(lu.isNonsingular() > 0);
-    Array2D<double> bigP = lu.solve(bigD); // big linear algebra black box here...
+    TNT::Array2D<double> bigP = lu.solve(bigD); // big linear algebra black box here...
 
     // extract the control points
     for (int i = 0; i < bspline.n+1; i++) {
