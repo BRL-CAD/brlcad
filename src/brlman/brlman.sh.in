@@ -108,7 +108,7 @@ path_elements=`echo ${MANPATH} | sed 's/^://
 				s/:/ /g'`
 
 for dir in ${path_elements} ; do
-	pattern="${dir}/man?/$1.?"
+	pattern="${dir}/man?/$1.?*"
 	try=`eval echo ${pattern}`
 	if test "${try}" != "${pattern}" ; then
 		# Found something(s), format it/them

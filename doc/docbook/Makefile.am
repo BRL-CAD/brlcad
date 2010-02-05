@@ -16,6 +16,10 @@ XML_CATALOG_FILES=$(top_srcdir)/doc/docbook/catalog.xml
 	XML_CATALOG_FILES=$(XML_CATALOG_FILES) $(XSLTPROC) $(XSLTPROC_FLAGS) $(XSL_MAN_STYLESHEET) $?
 	@dir="$$(dirname $@)" && mkdir -p $$dir && mv '$(@F)' $$dir
 
+.xml.nged:
+	XML_CATALOG_FILES=$(XML_CATALOG_FILES) $(XSLTPROC) $(XSLTPROC_FLAGS) $(XSL_MAN_STYLESHEET) $?
+	@dir="$$(dirname $@)" && mkdir -p $$dir && mv '$(@F)' $$dir
+
 .fo.pdf: .xml.fo
 	$(APACHEFOP) -c fop.xconf $? -pdf $@
 
@@ -31,7 +35,7 @@ include $(srcdir)/lessons/es/Makefile.am
 include $(srcdir)/specifications/en/Makefile.am
 include $(srcdir)/system/man1/en/Makefile.am
 include $(srcdir)/system/man3/en/Makefile.am
-
+include $(srcdir)/system/mann/en/Makefile.am
 
 if BUILD_DOCS
 
@@ -48,12 +52,15 @@ BUILT_SOURCES = \
 	$(BUILTMAN_ENPDF) \
 	$(BUILTMAN3_ENHTML) \
 	$(BUILTMAN3_ENPDF) \
+	$(BUILTMANN_ENHTML) \
+	$(BUILTMANN_ENPDF) \
 	$(BUILTLESSONS_ESHTML) \
 	$(BUILTLESSONS_ESPDF)
 
 BUILTMAN_EN_SOURCES = \
 	${man1DOCBOOK_EN:xml=1}  \
-	${man3DOCBOOK_EN:xml=3}
+	${man3DOCBOOK_EN:xml=3}  \
+	${mannDOCBOOK_EN:xml=nged}
 
 man_MANS = \
 	$(BUILTMAN_EN_SOURCES)
@@ -88,6 +95,7 @@ EXTRA_DIST = \
 	${man1DOCBOOK_EN} \
 	${man1INTRO_EN} \
 	${man3DOCBOOK_EN} \
+	${mannDOCBOOK_EN} \
 	${specificationsDOCBOOK_EN} \
 	README \
 	articles/en/images/tire_fig12.svg \
