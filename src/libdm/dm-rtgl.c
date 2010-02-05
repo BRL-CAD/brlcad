@@ -99,6 +99,7 @@ struct dm dm_rtgl = {
     rtgl_drawLines3D,
     rtgl_drawPoint2D,
     rtgl_drawVList,
+    rtgl_drawVList,
     rtgl_draw,
     rtgl_setFGColor,
     rtgl_setBGColor,
@@ -1888,6 +1889,8 @@ rtgl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 
     return TCL_OK;
 }
+
+
 
 /*
  * R T G L _ D R A W
