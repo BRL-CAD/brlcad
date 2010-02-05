@@ -88,6 +88,7 @@ EXTRA_DIST= \
 	kurt/kurt.vcproj \
 	libItcl/libItcl.vcproj \
 	libItk/libItk.vcproj \
+	libanalyze/libanalyze.vcproj \
 	libbn/libbn.vcproj \
 	libbu/libbu.vcproj \
 	libdm/libdm.vcproj \

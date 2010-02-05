@@ -294,6 +294,13 @@ attach_display_manager(Tcl_Interp *interp, const char *manager, const char *disp
 }
 
 
+HIDDEN void
+mged_notify()
+{
+    pr_prompt(interactive);
+}
+
+
 /*
  * M A I N
  */
@@ -698,7 +705,7 @@ main(int argc, char *argv[])
 
     if (dbip != DBI_NULL) {
 	setview(0.0, 0.0, 0.0);
-	gedp->ged_gdp->gd_rtCmdNotify = mged_rtCmdNotify;
+	gedp->ged_gdp->gd_rtCmdNotify = mged_notify;
     }
 
     /* --- Now safe to process commands. --- */

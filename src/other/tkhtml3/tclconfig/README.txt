@@ -19,8 +19,7 @@ the sample extension.
 
 README.txt	This file
 
-install-sh	Program used for copying binaries and script files
-		to their install locations.
-
 tcl.m4		Collection of Tcl autoconf macros.  Included by a package's
 		aclocal.m4 to define TEA_* macros.
+
+There will be other files created by the autotools process.

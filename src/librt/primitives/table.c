@@ -71,141 +71,60 @@
 	extern const struct bu_structparse rt_##name##_parse[]
 
 
-#define rt_tor_xform rt_generic_xform
 RT_DECLARE_INTERFACE(tor);
-
-#define rt_tgc_xform rt_generic_xform
 RT_DECLARE_INTERFACE(tgc);
-
-#define rt_ell_xform rt_generic_xform
 RT_DECLARE_INTERFACE(ell);
-
-#define rt_arb_xform rt_generic_xform
 RT_DECLARE_INTERFACE(arb);
-
-#define rt_ars_xform rt_generic_xform
 RT_DECLARE_INTERFACE(ars);
-
 RT_DECLARE_INTERFACE(hlf);
-
-#define rt_rec_xform rt_generic_xform
 RT_DECLARE_INTERFACE(rec);
-
-#define rt_pg_xform rt_generic_xform
 RT_DECLARE_INTERFACE(pg);
-
-#define rt_nurb_xform rt_generic_xform
 RT_DECLARE_INTERFACE(nurb);
-
-#define rt_sph_xform rt_generic_xform
 RT_DECLARE_INTERFACE(sph);
-
-#define rt_ebm_xform rt_generic_xform
 RT_DECLARE_INTERFACE(ebm);
-
-#define rt_vol_xform rt_generic_xform
 RT_DECLARE_INTERFACE(vol);
-
-#define rt_arbn_xform rt_generic_xform
 RT_DECLARE_INTERFACE(arbn);
-
-#define rt_pipe_xform rt_generic_xform
 RT_DECLARE_INTERFACE(pipe);
-
-#define rt_part_xform rt_generic_xform
 RT_DECLARE_INTERFACE(part);
-
-#define rt_nmg_xform rt_generic_xform
 RT_DECLARE_INTERFACE(nmg);
-
-#define rt_rpc_xform rt_generic_xform
 RT_DECLARE_INTERFACE(rpc);
-
-#define rt_rhc_xform rt_generic_xform
 RT_DECLARE_INTERFACE(rhc);
-
-#define rt_epa_xform rt_generic_xform
 RT_DECLARE_INTERFACE(epa);
-
-#define rt_ehy_xform rt_generic_xform
 RT_DECLARE_INTERFACE(ehy);
-
-#define rt_eto_xform rt_generic_xform
 RT_DECLARE_INTERFACE(eto);
-
-#define rt_grp_xform rt_generic_xform
 RT_DECLARE_INTERFACE(grp);
-
-#define rt_hf_xform rt_generic_xform
 RT_DECLARE_INTERFACE(hf);
-
-#define rt_dsp_xform rt_generic_xform
 RT_DECLARE_INTERFACE(dsp);
-
-#define rt_sketch_xform rt_generic_xform
 RT_DECLARE_INTERFACE(sketch);
-
 RT_DECLARE_INTERFACE(extrude);
-
-#define rt_submodel_xform rt_generic_xform
 RT_DECLARE_INTERFACE(submodel);
-
-#define rt_cline_xform rt_generic_xform
 RT_DECLARE_INTERFACE(cline);
-
 RT_DECLARE_INTERFACE(bot);
-
-#define rt_superell_xform rt_generic_xform
 RT_DECLARE_INTERFACE(superell);
-
-#define rt_metaball_xform rt_generic_xform
 RT_DECLARE_INTERFACE(metaball);
-
-#define rt_hyp_xform rt_generic_xform
 RT_DECLARE_INTERFACE(hyp);
-
-#define rt_revolve_xform rt_generic_xform
 RT_DECLARE_INTERFACE(revolve);
-
-#define rt_constraint_xform rt_generic_xform
 RT_DECLARE_INTERFACE(constraint);
-
-/*
-  #define rt_binunif_xform rt_generic_xform
-  RT_DECLARE_INTERFACE(binunif);
-*/
-
-#define rt_pnts_xform rt_generic_xform
+/* RT_DECLARE_INTERFACE(binunif); */
 RT_DECLARE_INTERFACE(pnts);
 
 #if OBJ_BREP
-#define rt_brep_xform rt_generic_xform
 RT_DECLARE_INTERFACE(brep);
 #endif
 
 
+/* generics for object manipulation, in generic.c */
+extern int rt_generic_get(struct bu_vls *, const struct rt_db_internal *, const char *);
+extern int rt_generic_adjust(struct bu_vls *, struct rt_db_internal *, int, char **);
+extern int rt_generic_form(struct bu_vls *, const struct rt_functab *);
+extern void rt_generic_make(const struct rt_functab *, struct rt_db_internal *);
+extern int rt_generic_xform(struct rt_db_internal *, const mat_t, struct rt_db_internal *, int, struct db_i *, struct resource *);
+
 /* from db5_bin.c */
-BU_EXTERN(int rt_binunif_import5, (struct rt_db_internal * ip,
-				   const struct bu_external *ep,
-				   const mat_t mat,
-				   const struct db_i *dbip,
-				   struct resource *resp));
-BU_EXTERN(int rt_binmime_import5, (struct rt_db_internal * ip,
-				   const struct bu_external *ep,
-				   const mat_t mat,
-				   const struct db_i *dbip,
-				   struct resource *resp));
-
-BU_EXTERN(int rt_binunif_export5, (struct bu_external *ep,
-				   const struct rt_db_internal *ip,
-				   double local2mm,
-				   const struct db_i *dbip,
-				   struct resource *resp));
-
+BU_EXTERN(int rt_binunif_import5, (struct rt_db_internal * ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp));
+BU_EXTERN(int rt_binunif_export5, (struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip, struct resource *resp));
 BU_EXTERN(void rt_binunif_ifree, (struct rt_db_internal *ip));
-BU_EXTERN(int rt_binunif_describe, (struct bu_vls *str,
-				    const struct rt_db_internal *ip, int verbose,
-				    double mm2local, struct resource *resp, struct db_i *db_i));
+BU_EXTERN(int rt_binunif_describe, (struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local, struct resource *resp, struct db_i *db_i));
 BU_EXTERN(void rt_binunif_make, (const struct rt_functab *ftp, struct rt_db_internal *intern));
 BU_EXTERN(int rt_binunif_get, (struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr));
 BU_EXTERN(int rt_binunif_adjust, (struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv));
@@ -219,38 +138,12 @@ BU_EXTERN(int rt_comb_form, (struct bu_vls *logstr, const struct rt_functab *ftp
 BU_EXTERN(void rt_comb_make, (const struct rt_functab *ftp, struct rt_db_internal *intern));
 BU_EXTERN(void rt_comb_ifree, (struct rt_db_internal *ip));
 
-/* generics for solid */
-BU_EXTERN(int rt_parsetab_get, (struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr));
-BU_EXTERN(int rt_parsetab_adjust, (struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv));
-BU_EXTERN(int rt_parsetab_form, (struct bu_vls *logstr, const struct rt_functab *ftp));
-BU_EXTERN(void rt_generic_make, (const struct rt_functab *ftp, struct rt_db_internal *intern));
-
-/* EBM solid */
 BU_EXTERN(int rt_ebm_form, (struct bu_vls *logstr, const struct rt_functab *ftp));
-BU_EXTERN(void rt_ebm_make, (const struct rt_functab *,	struct rt_db_internal *));
-
-/* DSP solid */
-BU_EXTERN(void rt_dsp_make, (const struct rt_functab *,	struct rt_db_internal *));
-
-/* NMG solid */
-BU_EXTERN(void rt_nmg_make, (const struct rt_functab *,	struct rt_db_internal *));
-
-/* BOT solid */
 BU_EXTERN(int rt_bot_form, (struct bu_vls *logstr, const struct rt_functab *ftp));
-
-/* SKETCH */
 BU_EXTERN(int rt_sketch_form, (struct bu_vls *logstr, const struct rt_functab *ftp));
-
-/* CLINE */
 BU_EXTERN(int rt_cline_form, (struct bu_vls *logstr, const struct rt_functab *ftp));
-
-/* EXTRUSION */
 BU_EXTERN(int rt_extrude_form, (struct bu_vls *logstr, const struct rt_functab *ftp));
 
-/* PNTS */
-
-/* From here in table.c */
-BU_EXTERN(int rt_generic_xform, (struct rt_db_internal *op, const mat_t mat, struct rt_db_internal *ip, int release, struct db_i *dbip, struct resource *resp));
 
 
 const struct rt_functab rt_functab[] = {
@@ -313,13 +206,13 @@ const struct rt_functab rt_functab[] = {
 	rt_tor_export4,
 	rt_tor_ifree,
 	rt_tor_describe,
-	rt_tor_xform,
+	rt_generic_xform,
 	rt_tor_parse,
 	sizeof(struct rt_tor_internal),
 	RT_TOR_INTERNAL_MAGIC,
-	rt_parsetab_get,
-	rt_parsetab_adjust,
-	rt_parsetab_form,
+	rt_generic_get,
+	rt_generic_adjust,
+	rt_generic_form,
 	NULL,
 	rt_tor_params
     },
@@ -348,13 +241,13 @@ const struct rt_functab rt_functab[] = {
 	rt_tgc_export4,
 	rt_tgc_ifree,
 	rt_tgc_describe,
-	rt_tgc_xform,
+	rt_generic_xform,
 	rt_tgc_parse,
 	sizeof(struct rt_tgc_internal),
 	RT_TGC_INTERNAL_MAGIC,
-	rt_parsetab_get,
-	rt_parsetab_adjust,
-	rt_parsetab_form,
+	rt_generic_get,
+	rt_generic_adjust,
+	rt_generic_form,
 	NULL,
 	rt_tgc_params
     },
@@ -383,13 +276,13 @@ const struct rt_functab rt_functab[] = {
 	rt_ell_export4,
 	rt_ell_ifree,
 	rt_ell_describe,
-	rt_ell_xform,
+	rt_generic_xform,
 	rt_ell_parse,
 	sizeof(struct rt_ell_internal),
 	RT_ELL_INTERNAL_MAGIC,
-	rt_parsetab_get,
-	rt_parsetab_adjust,
-	rt_parsetab_form,
+	rt_generic_get,
+	rt_generic_adjust,
+	rt_generic_form,
 	NULL,
 	rt_ell_params
     },
@@ -418,13 +311,13 @@ const struct rt_functab rt_functab[] = {
 	rt_arb_export4,
 	rt_arb_ifree,
 	rt_arb_describe,
-	rt_arb_xform,
+	rt_generic_xform,
 	rt_arb_parse,
 	sizeof(struct rt_arb_internal),
 	RT_ARB_INTERNAL_MAGIC,
-	rt_parsetab_get,
-	rt_parsetab_adjust,
-	rt_parsetab_form,
+	rt_generic_get,
+	rt_generic_adjust,
+	rt_generic_form,
 	NULL,
 	rt_arb_params
     },
@@ -453,13 +346,13 @@ const struct rt_functab rt_functab[] = {
 	rt_ars_export4,
 	rt_ars_ifree,
 	rt_ars_describe,
-	rt_ars_xform,
+	rt_generic_xform,
 	NULL,
 	sizeof(struct rt_ars_internal),
 	RT_ARS_INTERNAL_MAGIC,
 	rt_ars_get,
 	rt_ars_adjust,
-	rt_parsetab_form,
+	rt_generic_form,
 	NULL,
 	rt_ars_params
     },
@@ -488,13 +381,13 @@ const struct rt_functab rt_functab[] = {
 	rt_hlf_export4,
 	rt_hlf_ifree,
 	rt_hlf_describe,
-	rt_generic_xform,
+	rt_hlf_xform,
 	rt_hlf_parse,
 	sizeof(struct rt_half_internal),
 	RT_HALF_INTERNAL_MAGIC,
-	rt_parsetab_get,
-	rt_parsetab_adjust,
-	rt_parsetab_form,
+	rt_generic_get,
+	rt_generic_adjust,
+	rt_generic_form,
 	NULL,
 	rt_hlf_params
     },
@@ -523,13 +416,13 @@ const struct rt_functab rt_functab[] = {
 	rt_tgc_export4,
 	rt_tgc_ifree,
 	rt_tgc_describe,
-	rt_rec_xform,
+	rt_generic_xform,
 	rt_tgc_parse,
 	sizeof(struct rt_tgc_internal),
 	RT_TGC_INTERNAL_MAGIC,
-	rt_parsetab_get,
-	rt_parsetab_adjust,
-	rt_parsetab_form,
+	rt_generic_get,
+	rt_generic_adjust,
+	rt_generic_form,
 	NULL,
 	rt_rec_params
     },
@@ -558,13 +451,13 @@ const struct rt_functab rt_functab[] = {
 	rt_pg_export4,
 	rt_pg_ifree,
 	rt_pg_describe,
-	rt_pg_xform,
+	rt_generic_xform,
 	NULL,
 	sizeof(struct rt_pg_internal),
 	RT_PG_INTERNAL_MAGIC,
-	rt_parsetab_get,
-	rt_parsetab_adjust,
-	rt_parsetab_form,
+	rt_generic_get,
+	rt_generic_adjust,
+	rt_generic_form,
 	NULL,
 	rt_pg_params
     },
@@ -593,13 +486,13 @@ const struct rt_functab rt_functab[] = {
 	rt_nurb_export4,
 	rt_nurb_ifree,
 	rt_nurb_describe,
-	rt_nurb_xform,
+	rt_generic_xform,
 	NULL,
 	sizeof(struct rt_nurb_internal),
 	RT_NURB_INTERNAL_MAGIC,
 	rt_nurb_get,
 	rt_nurb_adjust,
-	rt_parsetab_form,
+	rt_generic_form,
 	NULL,
 	rt_nurb_params
     },
@@ -628,13 +521,13 @@ const struct rt_functab rt_functab[] = {
 	rt_ell_export4,
 	rt_ell_ifree,
 	rt_ell_describe,
-	rt_sph_xform,
+	rt_generic_xform,
 	rt_ell_parse,
 	sizeof(struct rt_ell_internal),
 	RT_ELL_INTERNAL_MAGIC,
-	rt_parsetab_get,
-	rt_parsetab_adjust,
-	rt_parsetab_form,
+	rt_generic_get,
+	rt_generic_adjust,
+	rt_generic_form,
 	NULL,
 	rt_sph_params
     },
@@ -663,13 +556,13 @@ const struct rt_functab rt_functab[] = {
 	rt_nmg_export4,
 	rt_nmg_ifree,
 	rt_nmg_describe,
-	rt_nmg_xform,
+	rt_generic_xform,
 	NULL,
 	sizeof(struct model),
 	NMG_MODEL_MAGIC,
 	rt_nmg_get,
 	rt_nmg_adjust,
-	rt_parsetab_form,
+	rt_generic_form,
 	rt_nmg_make,
 	rt_nmg_params
     },
@@ -698,7 +591,7 @@ const struct rt_functab rt_functab[] = {
 	rt_ebm_export4,
 	rt_ebm_ifree,
 	rt_ebm_describe,
-	rt_ebm_xform,
+	rt_generic_xform,
 	rt_ebm_parse,
 	sizeof(struct rt_ebm_internal),
 	RT_EBM_INTERNAL_MAGIC,
@@ -733,13 +626,13 @@ const struct rt_functab rt_functab[] = {
 	rt_vol_export4,
 	rt_vol_ifree,
 	rt_vol_describe,
-	rt_vol_xform,
+	rt_generic_xform,
 	rt_vol_parse,
 	sizeof(struct rt_vol_internal),
 	RT_VOL_INTERNAL_MAGIC,
-	rt_parsetab_get,
-	rt_parsetab_adjust,
-	rt_parsetab_form,
+	rt_generic_get,
+	rt_generic_adjust,
+	rt_generic_form,
 	NULL,
 	rt_vol_params
     },
@@ -768,13 +661,13 @@ const struct rt_functab rt_functab[] = {
 	rt_arbn_export4,
 	rt_arbn_ifree,
 	rt_arbn_describe,
-	rt_arbn_xform,
+	rt_generic_xform,
 	NULL,
 	sizeof(struct rt_arbn_internal),
 	RT_ARBN_INTERNAL_MAGIC,
 	rt_arbn_get,
 	rt_arbn_adjust,
-	rt_parsetab_form,
+	rt_generic_form,
 	NULL,
 	rt_arbn_params
     },
@@ -803,13 +696,13 @@ const struct rt_functab rt_functab[] = {
 	rt_pipe_export4,
 	rt_pipe_ifree,
 	rt_pipe_describe,
-	rt_pipe_xform,
+	rt_generic_xform,
 	NULL,
 	sizeof(struct rt_pipe_internal),
 	RT_PIPE_INTERNAL_MAGIC,
 	rt_pipe_get,
 	rt_pipe_adjust,
-	rt_parsetab_form,
+	rt_generic_form,
 	NULL,
 	rt_pipe_params
     },
@@ -838,13 +731,13 @@ const struct rt_functab rt_functab[] = {
 	rt_part_export4,
 	rt_part_ifree,
 	rt_part_describe,
-	rt_part_xform,
+	rt_generic_xform,
 	rt_part_parse,
 	sizeof(struct rt_part_internal),
 	RT_PART_INTERNAL_MAGIC,
-	rt_parsetab_get,
-	rt_parsetab_adjust,
-	rt_parsetab_form,
+	rt_generic_get,
+	rt_generic_adjust,
+	rt_generic_form,
 	NULL,
 	rt_part_params
     },
@@ -873,13 +766,13 @@ const struct rt_functab rt_functab[] = {
 	rt_rpc_export4,
 	rt_rpc_ifree,
 	rt_rpc_describe,
-	rt_rpc_xform,
+	rt_generic_xform,
 	rt_rpc_parse,
 	sizeof(struct rt_rpc_internal),
 	RT_RPC_INTERNAL_MAGIC,
-	rt_parsetab_get,
-	rt_parsetab_adjust,
-	rt_parsetab_form,
+	rt_generic_get,
+	rt_generic_adjust,
+	rt_generic_form,
 	NULL,
 	rt_rpc_params
     },
@@ -908,13 +801,13 @@ const struct rt_functab rt_functab[] = {
 	rt_rhc_export4,
 	rt_rhc_ifree,
 	rt_rhc_describe,
-	rt_rhc_xform,
+	rt_generic_xform,
 	rt_rhc_parse,
 	sizeof(struct rt_rhc_internal),
 	RT_RHC_INTERNAL_MAGIC,
-	rt_parsetab_get,
-	rt_parsetab_adjust,
-	rt_parsetab_form,
+	rt_generic_get,
+	rt_generic_adjust,
+	rt_generic_form,
 	NULL,
 	rt_rhc_params
     },
@@ -943,13 +836,13 @@ const struct rt_functab rt_functab[] = {
 	rt_epa_export4,
 	rt_epa_ifree,
 	rt_epa_describe,
-	rt_epa_xform,
+	rt_generic_xform,
 	rt_epa_parse,
 	sizeof(struct rt_epa_internal),
 	RT_EPA_INTERNAL_MAGIC,
-	rt_parsetab_get,
-	rt_parsetab_adjust,
-	rt_parsetab_form,
+	rt_generic_get,
+	rt_generic_adjust,
+	rt_generic_form,
 	NULL,
 	rt_epa_params
     },
@@ -978,13 +871,13 @@ const struct rt_functab rt_functab[] = {
 	rt_ehy_export4,
 	rt_ehy_ifree,
 	rt_ehy_describe,
-	rt_ehy_xform,
+	rt_generic_xform,
 	rt_ehy_parse,
 	sizeof(struct rt_ehy_internal),
 	RT_EHY_INTERNAL_MAGIC,
-	rt_parsetab_get,
-	rt_parsetab_adjust,
-	rt_parsetab_form,
+	rt_generic_get,
+	rt_generic_adjust,
+	rt_generic_form,
 	NULL,
 	rt_ehy_params
     },
@@ -1013,13 +906,13 @@ const struct rt_functab rt_functab[] = {
 	rt_eto_export4,
 	rt_eto_ifree,
 	rt_eto_describe,
-	rt_eto_xform,
+	rt_generic_xform,
 	rt_eto_parse,
 	sizeof(struct rt_eto_internal),
 	RT_ETO_INTERNAL_MAGIC,
-	rt_parsetab_get,
-	rt_parsetab_adjust,
-	rt_parsetab_form,
+	rt_generic_get,
+	rt_generic_adjust,
+	rt_generic_form,
 	NULL,
 	rt_eto_params
     },
@@ -1048,13 +941,13 @@ const struct rt_functab rt_functab[] = {
 	rt_grp_export4,
 	rt_grp_ifree,
 	rt_grp_describe,
-	rt_grp_xform,
+	rt_generic_xform,
 	rt_grp_parse,
 	sizeof(struct rt_grip_internal),
 	RT_GRIP_INTERNAL_MAGIC,
-	rt_parsetab_get,
-	rt_parsetab_adjust,
-	rt_parsetab_form,
+	rt_generic_get,
+	rt_generic_adjust,
+	rt_generic_form,
 	NULL,
 	rt_grp_params
     },
@@ -1118,13 +1011,13 @@ const struct rt_functab rt_functab[] = {
 	rt_hf_export4,
 	rt_hf_ifree,
 	rt_hf_describe,
-	rt_hf_xform,
+	rt_generic_xform,
 	rt_hf_parse,
 	sizeof(struct rt_hf_internal),
 	RT_HF_INTERNAL_MAGIC,
-	rt_parsetab_get,
-	rt_parsetab_adjust,
-	rt_parsetab_form,
+	rt_generic_get,
+	rt_generic_adjust,
+	rt_generic_form,
 	NULL,
 	rt_hf_params
     },
@@ -1153,7 +1046,7 @@ const struct rt_functab rt_functab[] = {
 	rt_dsp_export4,
 	rt_dsp_ifree,
 	rt_dsp_describe,
-	rt_dsp_xform,
+	rt_generic_xform,
 	rt_dsp_parse,
 	sizeof(struct rt_dsp_internal),
 	RT_DSP_INTERNAL_MAGIC,
@@ -1188,7 +1081,7 @@ const struct rt_functab rt_functab[] = {
 	rt_sketch_export4,
 	rt_sketch_ifree,
 	rt_sketch_describe,
-	rt_sketch_xform,
+	rt_generic_xform,
 	NULL,
 	sizeof(struct rt_sketch_internal),
 	RT_SKETCH_INTERNAL_MAGIC,
@@ -1258,13 +1151,13 @@ const struct rt_functab rt_functab[] = {
 	rt_submodel_export4,
 	rt_submodel_ifree,
 	rt_submodel_describe,
-	rt_submodel_xform,
+	rt_generic_xform,
 	rt_submodel_parse,
 	sizeof(struct rt_submodel_internal),
 	RT_SUBMODEL_INTERNAL_MAGIC,
-	rt_parsetab_get,
-	rt_parsetab_adjust,
-	rt_parsetab_form,
+	rt_generic_get,
+	rt_generic_adjust,
+	rt_generic_form,
 	NULL,
 	rt_submodel_params
     },
@@ -1293,7 +1186,7 @@ const struct rt_functab rt_functab[] = {
 	rt_cline_export4,
 	rt_cline_ifree,
 	rt_cline_describe,
-	rt_cline_xform,
+	rt_generic_xform,
 	rt_cline_parse,
 	sizeof(struct rt_cline_internal),
 	RT_CLINE_INTERNAL_MAGIC,
@@ -1400,7 +1293,7 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	NULL,
 	NULL,
-	rt_generic_xform,
+	NULL,
 	NULL,
 	0,
 	0,
@@ -1447,8 +1340,10 @@ const struct rt_functab rt_functab[] = {
     },
 
     {
-	/* 34 */
-	RT_FUNCTAB_MAGIC, "ID_BINMIME", "binmime",
+	/* 34 available placeholder to not offset latter table indices
+	 * (was ID_BINMIME)
+	 */
+	RT_FUNCTAB_MAGIC, "ID_UNUSED2", "unused2",
 	0,
 	NULL,
 	NULL,
@@ -1464,13 +1359,13 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	NULL,
 	NULL,
-	rt_binmime_import5,
 	NULL,
 	NULL,
 	NULL,
 	NULL,
 	NULL,
-	rt_generic_xform,
+	NULL,
+	NULL,
 	NULL,
 	0,
 	0,
@@ -1505,13 +1400,13 @@ const struct rt_functab rt_functab[] = {
 	rt_superell_export4,
 	rt_superell_ifree,
 	rt_superell_describe,
-	rt_superell_xform,
+	rt_generic_xform,
 	rt_superell_parse,
 	sizeof(struct rt_superell_internal),
 	RT_SUPERELL_INTERNAL_MAGIC,
-	rt_parsetab_get,
-	rt_parsetab_adjust,
-	rt_parsetab_form,
+	rt_generic_get,
+	rt_generic_adjust,
+	rt_generic_form,
 	NULL,
 	rt_superell_params
     },
@@ -1540,13 +1435,13 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_metaball_ifree,
 	rt_metaball_describe,
-	rt_metaball_xform,
+	rt_generic_xform,
 	NULL,
 	sizeof(struct rt_metaball_internal),
 	RT_METABALL_INTERNAL_MAGIC,
 	rt_metaball_get,
 	rt_metaball_adjust,
-	rt_parsetab_form,
+	rt_generic_form,
 	NULL,
 	rt_metaball_params
     },
@@ -1576,13 +1471,13 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_brep_ifree,
 	rt_brep_describe,
-	rt_brep_xform,
+	rt_generic_xform,
 	NULL,
 	sizeof(struct rt_brep_internal),
 	RT_BREP_INTERNAL_MAGIC,
-	rt_parsetab_get,
-	rt_parsetab_adjust,
-	rt_parsetab_form,
+	rt_generic_get,
+	rt_generic_adjust,
+	rt_generic_form,
 	NULL,
 	rt_brep_params
     },
@@ -1651,9 +1546,9 @@ const struct rt_functab rt_functab[] = {
 	rt_hyp_parse,
 	sizeof(struct rt_hyp_internal),
 	RT_HYP_INTERNAL_MAGIC,
-	rt_parsetab_get,
-	rt_parsetab_adjust,
-	rt_parsetab_form,
+	rt_generic_get,
+	rt_generic_adjust,
+	rt_generic_form,
 	NULL,
 	rt_hyp_params
     },
@@ -1721,9 +1616,9 @@ const struct rt_functab rt_functab[] = {
 	rt_revolve_parse,
 	sizeof(struct rt_revolve_internal),
 	RT_REVOLVE_INTERNAL_MAGIC,
-	rt_parsetab_get,
-	rt_parsetab_adjust,
-	rt_parsetab_form,
+	rt_generic_get,
+	rt_generic_adjust,
+	rt_generic_form,
 	NULL,
 	NULL
     },
@@ -1752,7 +1647,7 @@ const struct rt_functab rt_functab[] = {
 	NULL,
 	rt_pnts_ifree,
 	rt_pnts_describe,
-	rt_pnts_xform,
+	rt_generic_xform,
 	NULL,
 	sizeof(struct rt_pnts_internal),
 	RT_PNTS_INTERNAL_MAGIC,
@@ -1943,104 +1838,6 @@ rt_get_functab_by_label(const char *label)
 	    return ftp;
     }
     return NULL;
-}
-
-
-/**
- * R T _ G E N E R I C _ X F O R M
- *
- * Apply a 4x4 transformation matrix to the internal form of a solid.
- *
- * If "free" flag is non-zero, storage for the original solid is
- * released.  If "os" is same as "is", storage for the original solid
- * is overwritten with the new, transformed solid.
- *
- * Returns -
- * -1 FAIL
- *  0 OK
- */
-int
-rt_generic_xform(
-    struct rt_db_internal *op,
-    const mat_t mat,
-    struct rt_db_internal *ip,
-    int release,
-    struct db_i *dbip,
-    struct resource *resp)
-{
-    struct bu_external ext;
-    int id;
-    struct bu_attribute_value_set avs;
-
-
-    RT_CK_DB_INTERNAL(ip);
-    RT_CK_DBI(dbip);
-    RT_CK_RESOURCE(resp);
-
-    id = ip->idb_type;
-    BU_INIT_EXTERNAL(&ext);
-    /* Scale change on export is 1.0 -- no change */
-    switch (dbip->dbi_version) {
-	case 4:
-	    if (rt_functab[id].ft_export4(&ext, ip, 1.0, dbip, resp) < 0) {
-		bu_log("rt_generic_xform():  %s export failure\n",
-		       rt_functab[id].ft_name);
-		return -1;			/* FAIL */
-	    }
-	    if ((release || op == ip)) rt_db_free_internal(ip);
-
-	    RT_INIT_DB_INTERNAL(op);
-	    if (rt_functab[id].ft_import4(op, &ext, mat, dbip, resp) < 0) {
-		bu_log("rt_generic_xform():  solid import failure\n");
-		return -1;			/* FAIL */
-	    }
-	    break;
-	case 5:
-	    avs.magic = -1;
-
-	    if (rt_functab[id].ft_export5(&ext, ip, 1.0, dbip, resp) < 0) {
-		bu_log("rt_generic_xform():  %s export failure\n",
-		       rt_functab[id].ft_name);
-		return -1;			/* FAIL */
-	    }
-
-	    if ((release || op == ip)) {
-		if (ip->idb_avs.magic == BU_AVS_MAGIC) {
-		    /* grab the attributes before they are lost
-		     * by rt_db_free_internal or RT_INIT_DB_INTERNAL
-		     */
-		    bu_avs_init(&avs, ip->idb_avs.count, "avs");
-		    bu_avs_merge(&avs, &ip->idb_avs);
-		}
-		rt_db_free_internal(ip);
-	    }
-
-	    RT_INIT_DB_INTERNAL(op);
-
-	    if (!release && op != ip) {
-		/* just copy the attributes from ip to op */
-		if (ip->idb_avs.magic == BU_AVS_MAGIC) {
-		    bu_avs_init(&op->idb_avs, ip->idb_avs.count, "avs");
-		    bu_avs_merge(&op->idb_avs, &ip->idb_avs);
-		}
-	    } else if (avs.magic == BU_AVS_MAGIC) {
-		/* put the saved attributes in the output */
-		bu_avs_init(&op->idb_avs, avs.count, "avs");
-		bu_avs_merge(&op->idb_avs, &avs);
-		bu_avs_free(&avs);
-	    }
-
-	    if (rt_functab[id].ft_import5(op, &ext, mat, dbip, resp) < 0) {
-		bu_log("rt_generic_xform():  solid import failure\n");
-		return -1;			/* FAIL */
-	    }
-	    break;
-    }
-
-    bu_free_external(&ext);
-
-    RT_CK_DB_INTERNAL(op);
-    return 0;				/* OK */
 }
 
 

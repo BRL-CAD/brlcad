@@ -219,13 +219,15 @@ _ged_do_zoom(struct ged *gedp, fastf_t sf)
     return GED_OK;
 }
 
-/*
- *			P E R S P _ M A T
+
+/**
+ * P E R S P _ M A T
  *
- *  This code originally came from mged/dozoom.c.
- *  Compute a perspective matrix for a right-handed coordinate system.
- *  Reference: SGI Graphics Reference Appendix C
- *  (Note:  SGI is left-handed, but the fix is done in the Display Manger).
+ * Compute a perspective matrix for a right-handed coordinate system.
+ * Reference: SGI Graphics Reference Appendix C
+ *
+ * (Note: SGI is left-handed, but the fix is done in the Display
+ * Manager).
  */
 void
 ged_persp_mat(mat_t	m,
@@ -254,17 +256,17 @@ ged_persp_mat(mat_t	m,
     bn_mat_mul(m, m2, tran);
 }
 
-/*
- *  This code originally came from mged/dozoom.c.
- *  Create a perspective matrix that transforms the +/1 viewing cube,
- *  with the acutal eye position (not at Z=+1) specified in viewing coords,
- *  into a related space where the eye has been sheared onto the Z axis
- *  and repositioned at Z=(0, 0, 1), with the same perspective field of view
- *  as before.
+
+/**
+ * Create a perspective matrix that transforms the +/1 viewing cube,
+ * with the acutal eye position (not at Z=+1) specified in viewing
+ * coords, into a related space where the eye has been sheared onto
+ * the Z axis and repositioned at Z=(0, 0, 1), with the same
+ * perspective field of view as before.
  *
- *  The Zbuffer clips off stuff with negative Z values.
+ * The Zbuffer clips off stuff with negative Z values.
  *
- *  pmat = persp * xlate * shear
+ * pmat = persp * xlate * shear
  */
 void
 ged_mike_persp_mat(mat_t		pmat,

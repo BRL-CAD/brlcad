@@ -365,7 +365,7 @@ _ged_rt_output_handler(ClientData	clientData,
     struct ged_run_rt *run_rtp;
     int count;
     int read_failed = 0;
-    char line[RT_MAXLINE+1];
+    char line[RT_MAXLINE+1] = {0};
 
     if (drcdp == (struct _ged_rt_client_data *)NULL ||
 	drcdp->gedp == (struct ged *)NULL ||
@@ -383,22 +383,27 @@ _ged_rt_output_handler(ClientData	clientData,
     }
 #else
     if (Tcl_Eof(run_rtp->chan) ||
-	(!ReadFile(run_rtp->fd, line, 10240, &count, 0))) {
+	(!ReadFile(run_rtp->fd, line, RT_MAXLINE, &count, 0))) {
 	read_failed = 1;
     }
 #endif
 
+    /* sanity clamping */
+    if (count < 0) {
+	perror("READ ERROR");
+	count = 0;
+    } else if (count > RT_MAXLINE) {
+	count = RT_MAXLINE;
+    }
+
     if (read_failed) {
 	int retcode = 0;
-	int rpid;
 	int aborted;
-
-	if (count < 0) {
-	    perror("READ ERROR");
-	}
 
 	/* was it aborted? */
 #ifndef _WIN32
+	int rpid;
+
 	Tcl_DeleteFileHandler(run_rtp->fd);
 	close(run_rtp->fd);
 
@@ -450,9 +455,10 @@ _ged_rt_output_handler(ClientData	clientData,
 	return;
     }
 
+    /* for feelgoodedness */
     line[count] = '\0';
 
-    /*XXX For now just blather to stderr */
+    /* handle (i.e., probably log to stderr) the resulting line */
     if (drcdp->gedp->ged_output_handler != (void (*)())0)
 	drcdp->gedp->ged_output_handler(drcdp->gedp, line);
     else

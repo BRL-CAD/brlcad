@@ -1179,18 +1179,6 @@ GED_EXPORT BU_EXTERN(int	vo_dir2ae_cmd,
 		     char *argv[]));
 
 
-/**
- * Launch an editor on file.
- *
- * Runs $EDITOR on temp file, defaulting to various system-specific
- * editors otherwise if unset.
- *
- * Usage:
- *     editit file
- */
-GED_EXPORT BU_EXTERN(int ged_editit, (const char *file));
-
-
 /* Defined in vutil.c */
 GED_EXPORT BU_EXTERN(void ged_persp_mat,
 		     (fastf_t *m,
@@ -1392,6 +1380,14 @@ GED_EXPORT BU_EXTERN(int ged_bot_decimate, (struct ged *gedp, int argc, const ch
  *     bot_dump [-b] [-m directory] [-o file] [-t dxf|obj|sat|stl] [-u units] [bot1 bot2 ...]";
  */
 GED_EXPORT BU_EXTERN(int ged_bot_dump, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
+ * Dump displayed bots to the specified format.
+ *
+ * Usage:
+ *     dbot_dump [-b] [-m directory] [-o file] [-t dxf|obj|sat|stl] [-u units]";
+ */
+GED_EXPORT BU_EXTERN(int ged_dbot_dump, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
  * Create new_bot by fusing faces in old_bot

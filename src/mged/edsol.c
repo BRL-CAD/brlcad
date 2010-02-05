@@ -7825,9 +7825,7 @@ sedit_apply(int accept_flag)
 	struct model *m;
 
 	m = nmg_find_model(&lu_copy->l.magic);
-	if (m) {
-	    nmg_km(m);
-	}
+	nmg_km(m);
 	lu_copy = (struct loopuse *)NULL;
     }
 
@@ -7941,7 +7939,6 @@ sedit_reject(void)
 
     if (lu_copy) {
 	struct model *m;
-
 	m = nmg_find_model(&lu_copy->l.magic);
 	nmg_km(m);
 	lu_copy = (struct loopuse *)NULL;

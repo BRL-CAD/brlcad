@@ -19,6 +19,7 @@ brlcadinclude_required = \
 	tclcad.h
 
 brlcadinclude_wanted = \
+	analyze.h \
 	anim.h \
 	bot.h \
 	brep.h \

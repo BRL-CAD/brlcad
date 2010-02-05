@@ -19,7 +19,7 @@
  */
 /** @file grid.c
  *
- * Routines to implement MGED's snap to grid capability.
+ * Routines that provide the basics for a snap to grid capability.
  *
  */
 

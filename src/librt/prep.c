@@ -883,7 +883,7 @@ rt_get_solidbitv(size_t nbits, struct resource *resp)
     }
 
     if (BU_LIST_IS_EMPTY(&resp->re_solid_bitv)) {
-	solidbits = bu_bitv_new(nbits);
+	solidbits = bu_bitv_new((unsigned int)nbits);
     } else {
 	for (BU_LIST_FOR(solidbits, bu_bitv, &resp->re_solid_bitv)) {
 	    if (solidbits->nbits >= nbits) {
@@ -894,7 +894,7 @@ rt_get_solidbitv(size_t nbits, struct resource *resp)
 	    counter++;
 	}
 	if (solidbits == (struct bu_bitv *)&resp->re_solid_bitv) {
-	    solidbits = bu_bitv_new(nbits);
+	    solidbits = bu_bitv_new((unsigned int)nbits);
 	}
     }
 
@@ -1426,7 +1426,7 @@ rt_find_paths(struct db_i *dbip,
 int
 obj_in_path(const char *path, const char *obj)
 {
-    int obj_len=strlen(obj);
+    size_t obj_len=strlen(obj);
     char *ptr;
 
     ptr = strstr(path, obj);
@@ -1456,9 +1456,9 @@ obj_in_path(const char *path, const char *obj)
 }
 
 
-static int
+HIDDEN int
 unprep_reg_start(struct db_tree_state *tsp,
-		 struct db_full_path *pathp,
+		 const struct db_full_path *pathp,
 		 const struct rt_comb_internal *comb,
 		 genptr_t client_data __attribute__((unused)))
 {
@@ -1478,9 +1478,9 @@ unprep_reg_start(struct db_tree_state *tsp,
 }
 
 
-static union tree *
+HIDDEN union tree *
 unprep_reg_end(struct db_tree_state *tsp,
-	       struct db_full_path *pathp,
+	       const struct db_full_path *pathp,
 	       union tree *tree,
 	       genptr_t client_data __attribute__((unused)))
 {
@@ -1495,9 +1495,9 @@ unprep_reg_end(struct db_tree_state *tsp,
 }
 
 
-static union tree *
+HIDDEN union tree *
 unprep_leaf(struct db_tree_state *tsp,
-	    struct db_full_path *pathp,
+	    const struct db_full_path *pathp,
 	    struct rt_db_internal *ip,
 	    genptr_t client_data __attribute__((unused)))
 {

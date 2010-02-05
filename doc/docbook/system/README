@@ -1,5 +1,5 @@
 The files in these directories represent per-topic Docbook files in
-the style of UNIX man pages, and uses standard man1, man3, etc. 
+the style of UNIX man pages, and use standard man1, man3, etc. 
 directory layouts for toplevel directory structure.
 
 man1: executable programs and shell commands

@@ -21,6 +21,13 @@ AC_PROG_CC
 # check libraries
 AC_CHECK_LIB(crypt, crypt)
 
+dnl check for the getpass function in -lbsd and/or -lc
+LIBBSD=""
+AC_CHECK_LIB(bsd, getpass, LIBBSD="-lbsd",
+    [AC_CHECK_LIB(c, getpass, LIBBSD="-lc")]
+)
+AC_SUBST(LIBBSD)
+
 # do your thing
 AC_OUTPUT(Makefile)
 

@@ -52,20 +52,106 @@ struct ged_push_data {
     int			push_error;
 };
 
-static union tree *
-ged_push_leaf(struct db_tree_state	*tsp,
-	      struct db_full_path	*pathp,
-	      struct rt_db_internal	*ip,
-	      genptr_t			client_data);
-static union tree *
-ged_push_region_end(struct db_tree_state	*tsp,
-		    struct db_full_path			*pathp,
-		    union tree				*curtree,
-		    genptr_t				client_data);
 static void
 ged_identitize(struct directory	*dp,
 	       struct db_i	*dbip,
 	       struct bu_vls	*msg);
+
+
+/**
+ *		P U S H _ L E A F
+ *
+ * This routine must be prepared to run in parallel.
+ *
+ * @brief
+ * This routine is called once for eas leaf (solid) that is to
+ * be pushed.  All it does is build at push_id linked list.  The
+ * linked list could be handled by bu_list macros but it is simple
+ * enough to do hear with out them.
+ */
+static union tree *
+ged_push_leaf(struct db_tree_state	*tsp,
+	      const struct db_full_path *pathp,
+	      struct rt_db_internal	*ip,
+	      genptr_t			client_data)
+{
+    union tree	*curtree;
+    struct directory *dp;
+    struct ged_push_id *gpip;
+    struct ged_push_data *gpdp = (struct ged_push_data *)client_data;
+
+    RT_CK_TESS_TOL(tsp->ts_ttol);
+    BN_CK_TOL(tsp->ts_tol);
+    RT_CK_RESOURCE(tsp->ts_resp);
+
+    dp = pathp->fp_names[pathp->fp_len-1];
+
+    if (RT_G_DEBUG&DEBUG_TREEWALK) {
+	char *sofar = db_path_to_string(pathp);
+
+	bu_vls_printf(&gpdp->gedp->ged_result_str, "ged_push_leaf(%s) path='%s'\n", ip->idb_meth->ft_name, sofar);
+	bu_free((genptr_t)sofar, "path string");
+    }
+/*
+ * XXX - This will work but is not the best method.  dp->d_uses tells us
+ * if this solid (leaf) has been seen before.  If it hasn't just add
+ * it to the list.  If it has, search the list to see if the matricies
+ * match and do the "right" thing.
+ *
+ * (There is a question as to whether dp->d_uses is reset to zero
+ *  for each tree walk.  If it is not, then d_uses is NOT a safe
+ *  way to check and this method will always work.)
+ */
+    bu_semaphore_acquire(RT_SEM_WORKER);
+    FOR_ALL_GED_PUSH_SOLIDS(gpip, gpdp->pi_head) {
+	if (gpip->pi_dir == dp ) {
+	    if (!bn_mat_is_equal(gpip->pi_mat,
+				 tsp->ts_mat, tsp->ts_tol)) {
+		char *sofar = db_path_to_string(pathp);
+
+		bu_vls_printf(&gpdp->gedp->ged_result_str, "ged_push_leaf: matrix mismatch between '%s' and prior reference.\n", sofar);
+		bu_free((genptr_t)sofar, "path string");
+		gpdp->push_error = 1;
+	    }
+
+	    bu_semaphore_release(RT_SEM_WORKER);
+	    RT_GET_TREE(curtree, tsp->ts_resp);
+	    curtree->magic = RT_TREE_MAGIC;
+	    curtree->tr_op = OP_NOP;
+	    return curtree;
+	}
+    }
+/*
+ * This is the first time we have seen this solid.
+ */
+    gpip = (struct ged_push_id *) bu_malloc(sizeof(struct ged_push_id), "Push ident");
+    gpip->magic = GED_MAGIC_PUSH_ID;
+    gpip->pi_dir = dp;
+    MAT_COPY(gpip->pi_mat, tsp->ts_mat);
+    gpip->back = gpdp->pi_head.back;
+    gpdp->pi_head.back = gpip;
+    gpip->forw = &gpdp->pi_head;
+    gpip->back->forw = gpip;
+    bu_semaphore_release(RT_SEM_WORKER);
+    RT_GET_TREE( curtree, tsp->ts_resp );
+    curtree->magic = RT_TREE_MAGIC;
+    curtree->tr_op = OP_NOP;
+    return curtree;
+}
+
+
+/**
+ * @brief
+ * A null routine that does nothing.
+ */
+static union tree *
+ged_push_region_end(struct db_tree_state *tsp,
+		    const struct db_full_path *pathp,
+		    union tree *curtree,
+		    genptr_t client_data)
+{
+    return curtree;
+}
 
 
 int
@@ -216,98 +302,6 @@ ged_push(struct ged *gedp, int argc, const char *argv[])
     return push_error ? GED_ERROR : GED_OK;
 }
 
-/**
- *		P U S H _ L E A F
- *
- * This routine must be prepared to run in parallel.
- *
- * @brief
- * This routine is called once for eas leaf (solid) that is to
- * be pushed.  All it does is build at push_id linked list.  The
- * linked list could be handled by bu_list macros but it is simple
- * enough to do hear with out them.
- */
-static union tree *
-ged_push_leaf(struct db_tree_state	*tsp,
-	      struct db_full_path	*pathp,
-	      struct rt_db_internal	*ip,
-	      genptr_t			client_data)
-{
-    union tree	*curtree;
-    struct directory *dp;
-    struct ged_push_id *gpip;
-    struct ged_push_data *gpdp = (struct ged_push_data *)client_data;
-
-    RT_CK_TESS_TOL(tsp->ts_ttol);
-    BN_CK_TOL(tsp->ts_tol);
-    RT_CK_RESOURCE(tsp->ts_resp);
-
-    dp = pathp->fp_names[pathp->fp_len-1];
-
-    if (RT_G_DEBUG&DEBUG_TREEWALK) {
-	char *sofar = db_path_to_string(pathp);
-
-	bu_vls_printf(&gpdp->gedp->ged_result_str, "ged_push_leaf(%s) path='%s'\n", ip->idb_meth->ft_name, sofar);
-	bu_free((genptr_t)sofar, "path string");
-    }
-/*
- * XXX - This will work but is not the best method.  dp->d_uses tells us
- * if this solid (leaf) has been seen before.  If it hasn't just add
- * it to the list.  If it has, search the list to see if the matricies
- * match and do the "right" thing.
- *
- * (There is a question as to whether dp->d_uses is reset to zero
- *  for each tree walk.  If it is not, then d_uses is NOT a safe
- *  way to check and this method will always work.)
- */
-    bu_semaphore_acquire(RT_SEM_WORKER);
-    FOR_ALL_GED_PUSH_SOLIDS(gpip, gpdp->pi_head) {
-	if (gpip->pi_dir == dp ) {
-	    if (!bn_mat_is_equal(gpip->pi_mat,
-				 tsp->ts_mat, tsp->ts_tol)) {
-		char *sofar = db_path_to_string(pathp);
-
-		bu_vls_printf(&gpdp->gedp->ged_result_str, "ged_push_leaf: matrix mismatch between '%s' and prior reference.\n", sofar);
-		bu_free((genptr_t)sofar, "path string");
-		gpdp->push_error = 1;
-	    }
-
-	    bu_semaphore_release(RT_SEM_WORKER);
-	    RT_GET_TREE(curtree, tsp->ts_resp);
-	    curtree->magic = RT_TREE_MAGIC;
-	    curtree->tr_op = OP_NOP;
-	    return curtree;
-	}
-    }
-/*
- * This is the first time we have seen this solid.
- */
-    gpip = (struct ged_push_id *) bu_malloc(sizeof(struct ged_push_id), "Push ident");
-    gpip->magic = GED_MAGIC_PUSH_ID;
-    gpip->pi_dir = dp;
-    MAT_COPY(gpip->pi_mat, tsp->ts_mat);
-    gpip->back = gpdp->pi_head.back;
-    gpdp->pi_head.back = gpip;
-    gpip->forw = &gpdp->pi_head;
-    gpip->back->forw = gpip;
-    bu_semaphore_release(RT_SEM_WORKER);
-    RT_GET_TREE( curtree, tsp->ts_resp );
-    curtree->magic = RT_TREE_MAGIC;
-    curtree->tr_op = OP_NOP;
-    return curtree;
-}
-/**
- * @brief
- * A null routine that does nothing.
- */
-static union tree *
-ged_push_region_end(struct db_tree_state	*tsp,
-		    struct db_full_path			*pathp,
-		    union tree				*curtree,
-		    genptr_t				client_data)
-{
-    return curtree;
-}
 
 static void
 ged_do_identitize(struct db_i		*dbip,

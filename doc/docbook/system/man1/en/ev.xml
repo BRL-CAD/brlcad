@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "../../../resources/standard/dtd/docbookx.dtd">
+
+<!-- Copyright (c) 2005-2008 United States Government as represented by -->
+<!-- the U.S. Army Research Laboratory.                                 -->
+<!--                                                                    -->
+<!-- Redistribution and use in source (Docbook format) and 'compiled'   -->
+<!-- forms (PDF, PostScript, HTML, RTF, etc), with or without           -->
+<!-- modification, are permitted provided that the following conditions -->
+<!-- are met:                                                           -->
+<!--                                                                    -->
+<!-- 1. Redistributions of source code (Docbook format) must retain the -->
+<!-- above copyright notice, this list of conditions and the following  -->
+<!-- disclaimer.                                                        -->
+<!--                                                                    -->
+<!-- 2. Redistributions in compiled form (transformed to other DTDs,    -->
+<!-- converted to PDF, PostScript, HTML, RTF, and other formats) must   -->
+<!-- reproduce the above copyright notice, this list of conditions and  -->
+<!-- the following disclaimer in the documentation and/or other         -->
+<!-- materials provided with the distribution.                          -->
+<!--                                                                    -->
+<!-- 3. The name of the author may not be used to endorse or promote    -->
+<!-- products derived from this documentation without specific prior    -->
+<!-- written permission.                                                -->
+<!--                                                                    -->
+<!-- THIS DOCUMENTATION IS PROVIDED BY THE AUTHOR "AS IS" AND ANY       -->
+<!-- EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE  -->
+<!-- IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR -->
+<!-- PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR -->
+<!-- ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR           -->
+<!-- CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT  -->
+<!-- OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR -->
+<!-- BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF         -->
+<!-- LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT          -->
+<!-- (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE  -->
+<!-- USE OF THIS DOCUMENTATION, EVEN IF ADVISED OF THE POSSIBILITY OF   -->
+<!-- SUCH DAMAGE.                                                       -->
+
+<refentry id='ev'>
+
+<refmeta>
+  <refentrytitle>EV</refentrytitle>
+  <manvolnum>1</manvolnum>
+  <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+  <refmiscinfo class='manual'>BRL-CAD User Commands</refmiscinfo>
+</refmeta>
+
+<refnamediv id='name'>
+  <refname>ev</refname>
+  <refpurpose>Evaluates the <emphasis>objects</emphasis> specified by tessellating all primitive shapes
+	in the objects and then performing any Boolean operations specified in the <emphasis>objects</emphasis>.
+	The result is then displayed in the MGED display according to specified options. 
+   </refpurpose>
+</refnamediv>
+
+<!-- body begins here -->
+<refsynopsisdiv id='synopsis'>
+  <cmdsynopsis>
+    <command>ev</command>    
+    	<arg>-dfnrstuvwST</arg>
+      <arg>-P <replaceable>#</replaceable></arg>
+  	<arg>-C <replaceable>#/#/#</replaceable></arg>
+      <arg choice='req'>objects</arg>
+    <arg></arg>
+  </cmdsynopsis>
+</refsynopsisdiv>
+
+<refsect1 id='description'>
+  <title>DESCRIPTION</title>
+  <para>Evaluates the <emphasis>objects</emphasis> specified by tessellating all primitive shapes
+	in the objects and then performing any Boolean operations specified in them. 
+	The result is then displayed in the MGED display according to specified options.</para> 
+
+<itemizedlist mark='bullet'>
+<listitem>
+<para>
+   <emphasis>d</emphasis>--Do not perform Boolean operations or any checking; simply convert shapes to
+   polygons and draw them. Useful for visualizing BOT and polysolid primitives.
+</para>
+</listitem>
+<listitem>
+<para>
+  <emphasis>f</emphasis>--Fast path for quickly visualizing polysolid primitives.
+</para>
+</listitem>
+<listitem>
+<para>
+  <emphasis>w</emphasis>--Draw wireframes (rather than polygons).
+</para>
+</listitem>
+<listitem>
+<para>
+  <emphasis>n</emphasis>--Draw surface normals as little “hairs.”
+</para>
+</listitem>
+<listitem>
+<para>
+  <emphasis>s</emphasis>--Draw shape lines only (no dot-dash for subtract and intersect).
+</para>
+</listitem>
+<listitem>
+<para>
+  <emphasis>t</emphasis>--Perform CSG-to-tNURBS conversion (still under development).
+</para>
+</listitem>
+<listitem>
+<para>
+  <emphasis>v</emphasis>--Shade using per-vertex normals, when present.
+</para>
+</listitem>
+<listitem>
+<para>
+  <emphasis>u</emphasis>--Draw NMG edgeuses (for debugging).
+</para>
+</listitem>
+<listitem>
+<para>
+  <emphasis>S</emphasis>--Draw tNURBs with trimming curves only, no surfaces.
+</para>
+</listitem>
+<listitem>
+<para>
+  <emphasis>T</emphasis>--Do not triangulate after evaluating the Boolean (may produce unexpected
+  results if not used with the <emphasis>w</emphasis> option).
+</para>
+</listitem>
+<listitem>
+<para>
+  <emphasis>P#</emphasis>--Use # processors in parallel. Default=1.
+</para>
+</listitem>
+<listitem>
+<para>
+  <emphasis>r</emphasis>--Draw all objects in red. Useful for examining objects colored black.
+</para>
+</listitem>
+<listitem>
+<para>
+  <emphasis>C#/#/#</emphasis>--Draw all objects in the specified rgb color.
+</para>
+</listitem>
+</itemizedlist>
+</refsect1>
+
+<refsect1 id='examples'>
+  <title>EXAMPLES</title>
+  <para>The first example shows the use of the <command>ev</command> command to display two evaluated objects as shaded  	polygons.  The second example shows the use of the <command>ev</command> command to display an evaluated object as 	wireframe without triangulating.
+   </para>
+  <example>
+    <title>Display evaluted objects as polygons.</title>
+    <variablelist>
+      <varlistentry>
+	   <term><prompt>mged></prompt> <userinput>ev region1 shapea</userinput></term>
+	   <listitem>
+	     <para>Displays evaluated <emphasis>region1</emphasis> and <emphasis>shapea</emphasis> as shaded polygons.
+	     </para>
+	   </listitem>
+      </varlistentry>
+     </variablelist>
+  </example>
+       
+  <example>
+    <title>Display an evaluated object as wireframe without triangulation.</title>
+    <para>
+      <prompt>mged></prompt> <userinput>ev -wT region1</userinput>
+    </para>
+    <para>Displays an evaluated object, <emphasis>region1</emphasis>, as wireframe without triangulation.
+      
+    </para>
+  </example>
+ 
+</refsect1>
+
+<refsect1 id='author'>
+  <title>AUTHOR</title>
+  <para>BRL-CAD Team</para>
+</refsect1>
+
+<refsect1 id='bug_reports'>
+  <title>BUG REPORTS</title>
+  <para>
+    Reports of bugs or problems should be submitted via electronic
+    mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.
+  </para>
+</refsect1>
+</refentry>
+

@@ -41,9 +41,8 @@
 #include "./cmd.h"
 
 
-void		cvt_vlblock_to_solids(struct bn_vlblock *vbp, const char *name, int copy);
-void		drawH_part2(int dashflag, struct bu_list *vhead, struct db_full_path *pathp, struct db_tree_state *tsp, struct solid *existing_sp);
-long	nvectors;	/* number of vectors drawn so far */
+void cvt_vlblock_to_solids(struct bn_vlblock *vbp, const char *name, int copy);
+long nvectors;	/* number of vectors drawn so far */
 
 unsigned char geometry_default_color[] = { 255, 0, 0 };
 
@@ -216,13 +215,167 @@ hack_for_lee(void)
     refresh();		/* Force screen update */
 }
 
+
+/*
+ *  Compute the min, max, and center points of the solid.
+ *  Also finds s_vlen;
+ * XXX Should split out a separate bn_vlist_rpp() routine, for librt/vlist.c
+ */
+void
+mged_bound_solid(struct solid *sp)
+{
+    struct bn_vlist	*vp;
+    double			xmax, ymax, zmax;
+    double			xmin, ymin, zmin;
+
+    xmax = ymax = zmax = -INFINITY;
+    xmin = ymin = zmin =  INFINITY;
+    sp->s_vlen = 0;
+    for ( BU_LIST_FOR( vp, bn_vlist, &(sp->s_vlist) ) )  {
+	int	j;
+	int	nused = vp->nused;
+	int	*cmd = vp->cmd;
+	point_t *pt = vp->pt;
+	for ( j = 0; j < nused; j++, cmd++, pt++ )  {
+	    switch ( *cmd )  {
+		case BN_VLIST_POLY_START:
+		case BN_VLIST_POLY_VERTNORM:
+		    /* Has normal vector, not location */
+		    break;
+		case BN_VLIST_LINE_MOVE:
+		case BN_VLIST_LINE_DRAW:
+		case BN_VLIST_POLY_MOVE:
+		case BN_VLIST_POLY_DRAW:
+		case BN_VLIST_POLY_END:
+		    V_MIN( xmin, (*pt)[X] );
+		    V_MAX( xmax, (*pt)[X] );
+		    V_MIN( ymin, (*pt)[Y] );
+		    V_MAX( ymax, (*pt)[Y] );
+		    V_MIN( zmin, (*pt)[Z] );
+		    V_MAX( zmax, (*pt)[Z] );
+		    break;
+		default:
+		{
+		    struct bu_vls tmp_vls;
+
+		    bu_vls_init(&tmp_vls);
+		    bu_vls_printf(&tmp_vls, "unknown vlist op %d\n", *cmd);
+		    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+		    bu_vls_free(&tmp_vls);
+		}
+	    }
+	}
+	sp->s_vlen += nused;
+    }
+
+    sp->s_center[X] = (xmin + xmax) * 0.5;
+    sp->s_center[Y] = (ymin + ymax) * 0.5;
+    sp->s_center[Z] = (zmin + zmax) * 0.5;
+
+    sp->s_size = xmax - xmin;
+    V_MAX( sp->s_size, ymax - ymin );
+    V_MAX( sp->s_size, zmax - zmin );
+}
+
+
+/*
+ *			D R A W h _ P A R T 2
+ *
+ *  Once the vlist has been created, perform the common tasks
+ *  in handling the drawn solid.
+ *
+ *  This routine must be prepared to run in parallel.
+ */
+void
+drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, struct solid *existing_sp)
+{
+    struct ged_display_list *gdlp;
+    struct solid *sp;
+
+    if ( !existing_sp )  {
+	/* Handling a new solid */
+	GET_SOLID(sp, &MGED_FreeSolid.l);
+	/* NOTICE:  The structure is dirty & not initialized for you! */
+
+	/* Grab the last display list */
+	gdlp = BU_LIST_PREV(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+	sp->s_dlist = BU_LIST_LAST(solid, &gdlp->gdl_headSolid)->s_dlist + 1;
+    } else {
+	/* Just updating an existing solid.
+	 *  'tsp' and 'pathpos' will not be used
+	 */
+	sp = existing_sp;
+    }
+
+
+    /*
+     * Compute the min, max, and center points.
+     */
+    BU_LIST_APPEND_LIST( &(sp->s_vlist), vhead );
+    mged_bound_solid( sp );
+    nvectors += sp->s_vlen;
+
+    /*
+     *  If this solid is new, fill in it's information.
+     *  Otherwise, don't touch what is already there.
+     */
+    if ( !existing_sp )  {
+	/* Take note of the base color */
+	if ( mged_wireframe_color_override ) {
+	    /* a user specified the color, so arrange to use it */
+	    sp->s_uflag = 1;
+	    sp->s_dflag = 0;
+	    sp->s_basecolor[0] = mged_wireframe_color[0];
+	    sp->s_basecolor[1] = mged_wireframe_color[1];
+	    sp->s_basecolor[2] = mged_wireframe_color[2];
+	} else {
+	    sp->s_uflag = 0;
+	    if (tsp) {
+		if (tsp->ts_mater.ma_color_valid) {
+		    sp->s_dflag = 0;	/* color specified in db */
+		} else {
+		    sp->s_dflag = 1;	/* default color */
+		}
+		/* Copy into basecolor anyway, to prevent black */
+		sp->s_basecolor[0] = tsp->ts_mater.ma_color[0] * 255.;
+		sp->s_basecolor[1] = tsp->ts_mater.ma_color[1] * 255.;
+		sp->s_basecolor[2] = tsp->ts_mater.ma_color[2] * 255.;
+	    }
+	}
+	sp->s_cflag = 0;
+	sp->s_iflag = DOWN;
+	sp->s_soldash = dashflag;
+	sp->s_Eflag = 0;	/* This is a solid */
+	db_dup_full_path( &sp->s_fullpath, pathp );
+	sp->s_regionid = tsp->ts_regionid;
+    }
+
+    createDListALL(sp);
+
+    /* Solid is successfully drawn */
+    if ( !existing_sp )  {
+	/* Add to linked list of solid structs */
+	bu_semaphore_acquire( RT_SEM_MODEL );
+
+	/* Grab the last display list */
+	gdlp = BU_LIST_PREV(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
+	BU_LIST_APPEND(gdlp->gdl_headSolid.back, &sp->l);
+
+	bu_semaphore_release( RT_SEM_MODEL );
+    } else {
+	/* replacing existing solid -- struct already linked in */
+	sp->s_iflag = UP;
+    }
+}
+
+
 /*
  *			M G E D _ W I R E F R A M E _ R E G I O N _ E N D
  *
  *  This routine must be prepared to run in parallel.
  */
 HIDDEN union tree *
-mged_wireframe_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+mged_wireframe_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
     return( curtree );
 }
@@ -233,7 +386,7 @@ mged_wireframe_region_end(struct db_tree_state *tsp, struct db_full_path *pathp,
  *  This routine must be prepared to run in parallel.
  */
 HIDDEN union tree *
-mged_wireframe_leaf(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
+mged_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
 {
     union tree	*curtree;
     int		dashflag;		/* draw with dashed lines */
@@ -317,7 +470,7 @@ static struct bn_vlblock	*mged_draw_edge_uses_vbp;
  *  A hack to view polygonal models (converted from FASTGEN) more rapidly.
  */
 int
-mged_nmg_region_start(struct db_tree_state *tsp, struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
+mged_nmg_region_start(struct db_tree_state *tsp, const struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
 {
     union tree		*tp;
     struct directory	*dp;
@@ -401,9 +554,18 @@ mged_nmg_region_start(struct db_tree_state *tsp, struct db_full_path *pathp, con
 
  out:
     /* Successful fastpath drawing of this solid */
-    db_add_node_to_full_path( pathp, dp );
-    drawH_part2( 0, &vhead, pathp, tsp, SOLID_NULL );
-    DB_FULL_PATH_POP(pathp);
+    {
+	struct db_full_path pp;
+	db_full_path_init(&pp);
+	db_dup_full_path(&pp, pathp);
+
+	/* Successful fastpath drawing of this solid */
+	db_add_node_to_full_path(&pp, dp);
+	drawH_part2(0, &vhead, &pp, tsp, SOLID_NULL);
+
+	db_free_full_path(&pp);
+    }
+
     rt_db_free_internal(&intern);
     mged_fastpath_count++;
     return -1;	/* SKIP THIS REGION */
@@ -415,7 +577,7 @@ mged_nmg_region_start(struct db_tree_state *tsp, struct db_full_path *pathp, con
  *  This routine must be prepared to run in parallel.
  */
 HIDDEN union tree *
-mged_nmg_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+mged_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
     struct nmgregion	*r;
     struct bu_list		vhead;
@@ -526,6 +688,7 @@ mged_nmg_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union
     /* Return tree -- it needs to be freed (by caller) */
     return curtree;
 }
+
 
 /*
  *			D R A W T R E E S
@@ -765,161 +928,6 @@ A production implementation will exist in the maintenance release.\n", (char *)N
     return(0);	/* OK */
 }
 
-/*
- *  Compute the min, max, and center points of the solid.
- *  Also finds s_vlen;
- * XXX Should split out a separate bn_vlist_rpp() routine, for librt/vlist.c
- */
-void
-mged_bound_solid(struct solid *sp)
-{
-    struct bn_vlist	*vp;
-    double			xmax, ymax, zmax;
-    double			xmin, ymin, zmin;
-
-    xmax = ymax = zmax = -INFINITY;
-    xmin = ymin = zmin =  INFINITY;
-    sp->s_vlen = 0;
-    for ( BU_LIST_FOR( vp, bn_vlist, &(sp->s_vlist) ) )  {
-	int	j;
-	int	nused = vp->nused;
-	int	*cmd = vp->cmd;
-	point_t *pt = vp->pt;
-	for ( j = 0; j < nused; j++, cmd++, pt++ )  {
-	    switch ( *cmd )  {
-		case BN_VLIST_POLY_START:
-		case BN_VLIST_POLY_VERTNORM:
-		    /* Has normal vector, not location */
-		    break;
-		case BN_VLIST_LINE_MOVE:
-		case BN_VLIST_LINE_DRAW:
-		case BN_VLIST_POLY_MOVE:
-		case BN_VLIST_POLY_DRAW:
-		case BN_VLIST_POLY_END:
-		    V_MIN( xmin, (*pt)[X] );
-		    V_MAX( xmax, (*pt)[X] );
-		    V_MIN( ymin, (*pt)[Y] );
-		    V_MAX( ymax, (*pt)[Y] );
-		    V_MIN( zmin, (*pt)[Z] );
-		    V_MAX( zmax, (*pt)[Z] );
-		    break;
-		default:
-		{
-		    struct bu_vls tmp_vls;
-
-		    bu_vls_init(&tmp_vls);
-		    bu_vls_printf(&tmp_vls, "unknown vlist op %d\n", *cmd);
-		    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-		    bu_vls_free(&tmp_vls);
-		}
-	    }
-	}
-	sp->s_vlen += nused;
-    }
-
-    sp->s_center[X] = (xmin + xmax) * 0.5;
-    sp->s_center[Y] = (ymin + ymax) * 0.5;
-    sp->s_center[Z] = (zmin + zmax) * 0.5;
-
-    sp->s_size = xmax - xmin;
-    V_MAX( sp->s_size, ymax - ymin );
-    V_MAX( sp->s_size, zmax - zmin );
-}
-
-/*
- *			D R A W h _ P A R T 2
- *
- *  Once the vlist has been created, perform the common tasks
- *  in handling the drawn solid.
- *
- *  This routine must be prepared to run in parallel.
- */
-void
-drawH_part2(
-    int			dashflag,
-    struct bu_list		*vhead,
-    struct db_full_path	*pathp,
-    struct db_tree_state	*tsp,
-    struct solid		*existing_sp)
-{
-    struct ged_display_list *gdlp;
-    struct solid *sp;
-
-    if ( !existing_sp )  {
-	/* Handling a new solid */
-	GET_SOLID(sp, &MGED_FreeSolid.l);
-	/* NOTICE:  The structure is dirty & not initialized for you! */
-
-	/* Grab the last display list */
-	gdlp = BU_LIST_PREV(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
-	sp->s_dlist = BU_LIST_LAST(solid, &gdlp->gdl_headSolid)->s_dlist + 1;
-    } else {
-	/* Just updating an existing solid.
-	 *  'tsp' and 'pathpos' will not be used
-	 */
-	sp = existing_sp;
-    }
-
-
-    /*
-     * Compute the min, max, and center points.
-     */
-    BU_LIST_APPEND_LIST( &(sp->s_vlist), vhead );
-    mged_bound_solid( sp );
-    nvectors += sp->s_vlen;
-
-    /*
-     *  If this solid is new, fill in it's information.
-     *  Otherwise, don't touch what is already there.
-     */
-    if ( !existing_sp )  {
-	/* Take note of the base color */
-	if ( mged_wireframe_color_override ) {
-	    /* a user specified the color, so arrange to use it */
-	    sp->s_uflag = 1;
-	    sp->s_dflag = 0;
-	    sp->s_basecolor[0] = mged_wireframe_color[0];
-	    sp->s_basecolor[1] = mged_wireframe_color[1];
-	    sp->s_basecolor[2] = mged_wireframe_color[2];
-	} else {
-	    sp->s_uflag = 0;
-	    if (tsp) {
-		if (tsp->ts_mater.ma_color_valid) {
-		    sp->s_dflag = 0;	/* color specified in db */
-		} else {
-		    sp->s_dflag = 1;	/* default color */
-		}
-		/* Copy into basecolor anyway, to prevent black */
-		sp->s_basecolor[0] = tsp->ts_mater.ma_color[0] * 255.;
-		sp->s_basecolor[1] = tsp->ts_mater.ma_color[1] * 255.;
-		sp->s_basecolor[2] = tsp->ts_mater.ma_color[2] * 255.;
-	    }
-	}
-	sp->s_cflag = 0;
-	sp->s_iflag = DOWN;
-	sp->s_soldash = dashflag;
-	sp->s_Eflag = 0;	/* This is a solid */
-	db_dup_full_path( &sp->s_fullpath, pathp );
-	sp->s_regionid = tsp->ts_regionid;
-    }
-
-    createDListALL(sp);
-
-    /* Solid is successfully drawn */
-    if ( !existing_sp )  {
-	/* Add to linked list of solid structs */
-	bu_semaphore_acquire( RT_SEM_MODEL );
-
-	/* Grab the last display list */
-	gdlp = BU_LIST_PREV(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
-	BU_LIST_APPEND(gdlp->gdl_headSolid.back, &sp->l);
-
-	bu_semaphore_release( RT_SEM_MODEL );
-    } else {
-	/* replacing existing solid -- struct already linked in */
-	sp->s_iflag = UP;
-    }
-}
 
 HIDDEN void
 Do_getmat(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_leaf, genptr_t user_ptr1, genptr_t user_ptr2, genptr_t user_ptr3)
@@ -1234,7 +1242,7 @@ static union tree	*mged_facetize_tree;
  *  This routine must be prepared to run in parallel.
  */
 HIDDEN union tree *
-mged_facetize_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+mged_facetize_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
     struct bu_list		vhead;
 

@@ -228,22 +228,6 @@ rt_binunif_dump( struct rt_binunif_internal *bip) {
 
 
 /**
- * R T _ B I N M I M E _ I M P O R T 5
- *
- * Import a MIME-typed binary object from the database format to the
- * internal structure.
- */
-int
-rt_binmime_import5( struct rt_db_internal	*ip __attribute__((unused)),
-		    const struct bu_external	*ep __attribute__((unused)),
-		    const struct db_i		*dbip __attribute__((unused)))
-{
-    bu_log("rt_binmime_import5() not implemented yet\n");
-    return -1;
-}
-
-
-/**
  * R T _ B I N U N I F _ E X P O R T 5
  *
  * Create the "body" portion of external form

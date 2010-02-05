@@ -132,7 +132,6 @@ extern "C++" {
 
     //--------------------------------------------------------------------------------
     // MATH / VECTOR ops
-    // XXX put in VMATH?
     typedef fastf_t pt2d_t[2] VEC_ALIGN;
     typedef fastf_t mat2d_t[4] VEC_ALIGN; // row-major
     inline

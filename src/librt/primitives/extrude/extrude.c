@@ -1119,6 +1119,7 @@ rt_extrude_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
     int i1, i2, nused1, nused2;
     struct bn_vlist *vp1, *vp2, *vp2_start;
 
+    BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
     extrude_ip = (struct rt_extrude_internal *)ip->idb_ptr;
     RT_EXTRUDE_CK_MAGIC(extrude_ip);
@@ -2178,7 +2179,7 @@ rt_extrude_export5(struct bu_external *ep, const struct rt_db_internal *ip, doub
     RT_EXTRUDE_CK_MAGIC(extrude_ip);
 
     BU_CK_EXTERNAL(ep);
-    ep->ext_nbytes = 4 * ELEMENTS_PER_VECT * SIZEOF_NETWORK_DOUBLE + SIZEOF_NETWORK_LONG + strlen(extrude_ip->sketch_name) + 1;
+    ep->ext_nbytes = (long)(4 * ELEMENTS_PER_VECT * SIZEOF_NETWORK_DOUBLE + SIZEOF_NETWORK_LONG + strlen(extrude_ip->sketch_name) + 1);
     ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "extrusion external");
 
     ptr = (unsigned char *)ep->ext_buf;

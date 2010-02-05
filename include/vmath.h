@@ -963,9 +963,11 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 
 /**
  * if a value is within computation tolerance of an integer, clamp the
- * value to that integer.  XXX - should use VDIVIDE_TOL here, but
- * cannot yet until floats are replaced universally with fastf_t's
- * since their epsilon is considerably less than that of a double.
+ * value to that integer.
+ *
+ * NOTE: should use VDIVIDE_TOL here, but cannot yet until floats are
+ * replaced universally with fastf_t's since their epsilon is
+ * considerably less than that of a double.
  */
 #define INTCLAMP(_a) (NEAR_ZERO((_a) - rint(_a), VUNITIZE_TOL) ? (double)(long)rint(_a) : (_a))
 
@@ -1213,8 +1215,10 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 /**
  * @brief Some 2-D versions of the 3-D macros given above.
  *
- * A better naming convention is V2MOVE() rather than VMOVE_2D().  XXX
- * These xxx_2D names are slated to go away, use the others.
+ * A better naming convention is V2MOVE() rather than VMOVE_2D().
+ *
+ * DEPRECATED: These xxx_2D names are slated to go away, use the
+ * others.
  *
  * THESE ARE ALL DEPRECATED.
  */
@@ -1226,7 +1230,8 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 #define VSCALE_2D(a, b, c) V2SCALE(a, b, c)
 #define VJOIN1_2D(a, b, c, d) V2JOIN1(a, b, c, d)
 
-/** @brief Compare two vectors for EXACT equality.  Use carefully. 
+/**
+ * @brief Compare two vectors for EXACT equality.  Use carefully. 
  * Version for degree 2 vectors. 
  */
 #define V2EQUAL(a, b)	((a)[X]==(b)[X] && (a)[Y]==(b)[Y])

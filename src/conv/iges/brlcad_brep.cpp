@@ -56,7 +56,7 @@ namespace brlcad {
 	}
 
 	ON_TextLog tl;
-	// XXX - join trims? iterate and call CloseTrimGap
+	// ??? join trims? iterate and call CloseTrimGap
 	for (int faces = 0; faces < _brep->m_F.Count(); ++faces) {
 	    ON_BrepFace* face = _brep->Face(faces);
 	    for (int i = 0; i < face->LoopCount(); i++) {
@@ -152,7 +152,7 @@ namespace brlcad {
 	ON_Curve* c = ON_Curve::Cast(_objects[curve]);
 	int curveIndex = _brep->AddEdgeCurve(c);
 	ON_BrepEdge& edge = _brep->NewEdge(from, to, curveIndex);
-	edge.m_tolerance = 1e-3; // XXX - look into it
+	edge.m_tolerance = 1e-3; // FIXME: look into it
 	_edge = edge.m_edge_index;
 
 	_topology.push_back(_edge);
@@ -191,7 +191,7 @@ namespace brlcad {
 	ON_BrepTrim& trim = _brep->NewTrim(e, !orientWithCurve, loop(), trimCurve);
 	debug("handleEdgeUse: trim " << (orientWithCurve ? "is not " : "is ") << "reversed");
 	trim.m_type = ON_BrepTrim::mated; // closed solids!
-	trim.m_tolerance[0] = 1e-3; // XXX: tolerance?
+	trim.m_tolerance[0] = 1e-3; // FIXME: tolerance?
 	trim.m_tolerance[1] = 1e-3;
 	ON_Interval PD = trim.ProxyCurveDomain();
 	trim.m_iso = s->IsIsoparametric(*c2d, &PD);
@@ -209,7 +209,7 @@ namespace brlcad {
 	debug("handleVertex point: " << PT(pt));
 	int vi = _brep->m_V.Count();
 	ON_BrepVertex& b = _brep->NewVertex(ON_3dPoint(pt));
-	b.m_tolerance = 1e-3; // XXX use exact tolerance?
+	b.m_tolerance = 1e-3; // FIXME: use exact tolerance?
 
 	_topology.push_back(b.m_vertex_index);
 	return _topology.size()-1;
@@ -217,7 +217,7 @@ namespace brlcad {
 
     int
     BRLCADBrepHandler::handlePoint(double x, double y, double z) {
-	// XXX may be deprecated
+	// NOTE: may be deprecated
 	return 0;
     }
 

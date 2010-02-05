@@ -3113,6 +3113,7 @@ rt_dsp_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     if (RT_G_DEBUG & DEBUG_HF)
 	bu_log("rt_dsp_plot()\n");
 
+    BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
     RT_DSP_CK_MAGIC(dsp_ip);
 

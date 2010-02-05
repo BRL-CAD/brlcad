@@ -88,6 +88,7 @@
  */
 static char rcsid[] = "$Header$";
 
+#include <stdlib.h>
 #include <math.h>
 #include <stdio.h>
 #include "rle_config.h"

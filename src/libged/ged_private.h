@@ -165,7 +165,18 @@ BU_EXTERN (int _ged_drawtrees,
 	    const char *argv[],
 	    int kind,
 	    struct _ged_client_data *_dgcdp));
+BU_EXTERN (void _ged_drawH_part2,
+	   (int dashflag,
+	    struct bu_list *vhead,
+	    const struct db_full_path *pathp,
+	    struct db_tree_state *tsp,
+	    struct solid *existing_sp,
+	    struct _ged_client_data *dgcdp));
 
+/* defined in editit.c */
+BU_EXTERN (int _ged_editit, 
+	   (const char *editstring, 
+	    const char *file));
 
 /* defined in erase.c */
 BU_EXTERN (void _ged_eraseobjpath,
@@ -186,11 +197,11 @@ BU_EXTERN (void _ged_eraseobj,
 BU_EXTERN (void _ged_eraseAllNamesFromDisplay,
 	   (struct ged			*gedp,
 	    const char			*name,
-	    int				skip_first));
+	    const int			skip_first));
 BU_EXTERN (void _ged_eraseAllPathsFromDisplay,
 	   (struct ged			*gedp,
 	    const char			*path,
-	    int				skip_first));
+	    const int			skip_first));
 BU_EXTERN (void _ged_eraseAllSubpathsFromSolidList,
 	   (struct ged			*gedp,
 	    struct ged_display_list	*gdlp,
@@ -304,7 +315,7 @@ BU_EXTERN(void _ged_print_matrix,
 BU_EXTERN (void _ged_rt_set_eye_model,
 	   (struct ged *gedp,
 	    vect_t eye_model));
-BU_EXTERN (int ged_run_rt,
+BU_EXTERN (int _ged_run_rt,
 	   (struct ged *gdp));
 BU_EXTERN (void _ged_rt_write,
 	   (struct ged *gedp,

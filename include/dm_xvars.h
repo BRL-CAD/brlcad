@@ -51,8 +51,8 @@ typedef long Colormap;
 
 #define XVARS_MV_O(_m) offsetof(struct dm_xvars, _m)
 
-/* XXX - this really should not be variable-width and does not allow
- * multiple interfaces to be simultaneously compiled.
+/* FIXME: this structure really should not be variable-width and it
+ * does not allow multiple interfaces to be simultaneously compiled.
  */
 struct dm_xvars {
     Display *dpy;

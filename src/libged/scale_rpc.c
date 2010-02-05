@@ -36,8 +36,6 @@
 int
 _ged_scale_rpc(struct ged *gedp, struct rt_rpc_internal *rpc, const char *attribute, fastf_t sf, int rflag)
 {
-    fastf_t ma, mb;
-
     RT_RPC_CK_MAGIC(rpc);
 
     switch (attribute[0]) {

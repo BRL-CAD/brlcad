@@ -242,7 +242,7 @@ BU_EXTERN( struct shell *Add_inner_shell, ( struct nmgregion *r, int entityno, i
 BU_EXTERN( struct shell *Get_outer_shell, ( struct nmgregion *r, int entityno, int shell_orient ) );
 BU_EXTERN( struct face_g_snurb *Get_nurb_surf, (int entity_no, struct model *m ) );
 BU_EXTERN( struct vertex **Get_vertex, (struct iges_edge_use *edge ) );
-BU_EXTERN( union tree *do_nmg_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree));
+BU_EXTERN( union tree *do_nmg_region_end, (struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree));
 BU_EXTERN( void count_refs, ( struct db_i *dbip, struct directory *dp ) );
 BU_EXTERN( void csg_comb_func, ( struct db_i *dbip, struct directory *dp ) );
 BU_EXTERN( void csg_leaf_func, ( struct db_i *dbip, struct directory *dp ) );

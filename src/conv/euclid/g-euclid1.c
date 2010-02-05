@@ -41,8 +41,6 @@
 #include "raytrace.h"
 
 
-BU_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
-
 static char	usage[] = "Usage: %s [-v] [-s alarm_seconds] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] brlcad_db.g object(s)\n";
 
 static int	NMG_debug;		/* saved arg of -X, for longjmp handling */
@@ -110,6 +108,7 @@ handler(int code)
 {
     bu_exit( EXIT_FAILURE, "ALARM boolean evaluation aborted\n" );
 }
+
 
 static void
 Write_euclid_face(const struct loopuse *lu, const int facet_type, const int regionid, const int face_number, FILE *fp_out)
@@ -413,139 +412,6 @@ Write_euclid_region(struct nmgregion *r, struct db_tree_state *tsp, FILE *fp_out
     return;
 }
 
-/*
- *			M A I N
- */
-int
-main(int argc, char **argv)
-{
-    int	c;
-    double		percent;
-
-    bu_setlinebuf( stderr );
-
-#if MEMORY_LEAK_CHECKING
-    rt_g.debug |= DEBUG_MEM_FULL;
-#endif
-
-    ttol.magic = RT_TESS_TOL_MAGIC;
-    /* Defaults, updated by command line options. */
-    ttol.abs = 0.0;
-    ttol.rel = 0.01;
-    ttol.norm = 0.0;
-
-    /* XXX These need to be improved */
-    tol.magic = BN_TOL_MAGIC;
-    tol.dist = 0.005;
-    tol.dist_sq = tol.dist * tol.dist;
-    tol.perp = 1e-6;
-    tol.para = 1 - tol.perp;
-
-    the_model = (struct model *)NULL;
-    tree_state = rt_initial_tree_state;	/* struct copy */
-    tree_state.ts_m = &the_model;
-    tree_state.ts_tol = &tol;
-    tree_state.ts_ttol = &ttol;
-
-    BU_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
-
-    rt_init_resource( &rt_uniresource, 0, NULL );
-
-    /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "a:n:r:s:vx:P:X:")) != EOF) {
-	switch (c) {
-	    case 's':
-		alarm_secs = atoi( bu_optarg );
-		break;
-	    case 'a':		/* Absolute tolerance. */
-		ttol.abs = atof(bu_optarg);
-		ttol.rel = 0.0;
-		break;
-	    case 'n':		/* Surface normal tolerance. */
-		ttol.norm = atof(bu_optarg);
-		ttol.rel = 0.0;
-		break;
-	    case 'r':		/* Relative tolerance. */
-		ttol.rel = atof(bu_optarg);
-		break;
-	    case 'v':
-		verbose++;
-		break;
-	    case 'P':
-/*			ncpu = atoi( bu_optarg ); */
-		rt_g.debug = 1;	/* XXX DEBUG_ALLRAYS -- to get core dumps */
-		break;
-	    case 'x':
-		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );
-		break;
-	    case 'X':
-		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug );
-		NMG_debug = rt_g.NMG_debug;
-		break;
-	    default:
-		bu_exit(1, usage, argv[0]);
-		break;
-	}
-    }
-
-    if (bu_optind+1 >= argc) {
-	bu_exit(1, usage, argv[0]);
-    }
-
-    /* Open BRL-CAD database */
-    if ((dbip = db_open( argv[bu_optind], "r")) == DBI_NULL)
-    {
-	perror(argv[0]);
-	bu_exit(1, "Cannot open %s\n", argv[bu_optind] );
-    }
-    if ( db_dirbuild( dbip ) ) {
-	bu_exit(1, "db_dirbuild failed\n" );
-    }
-    bu_optind++;
-
-    /* Walk indicated tree(s).  Each region will be output separately */
-
-    tree_state = rt_initial_tree_state;	/* struct copy */
-    the_model = nmg_mm();
-    tree_state.ts_m = &the_model;
-    tree_state.ts_tol = &tol;
-    tree_state.ts_ttol = &ttol;
-
-    (void)db_walk_tree(dbip, argc-bu_optind, (const char **)(&argv[bu_optind]),
-		       1,			/* ncpu */
-		       &tree_state,
-		       0,
-		       do_region_end,
-		       nmg_booltree_leaf_tess,
-		       (genptr_t)NULL);	/* in librt/nmg_bool.c */
-
-    nmg_km( the_model );
-
-#if MEMORY_LEAK_CHECKING
-    bu_prmem("After conversions");
-#endif
-
-    percent = 0;
-    if ( regions_tried > 0 )
-	percent = ((double)regions_converted * 100) / regions_tried;
-    printf( "Tried %d regions, %d converted successfully.  %g%%\n",
-	    regions_tried, regions_converted, percent );
-    percent = 0;
-    if ( regions_tried > 0 )
-	percent = ((double)regions_written * 100) / regions_tried;
-    printf( "                  %d written successfully. %g%%\n",
-	    regions_written, percent );
-
-    /* Release dynamic storage */
-    rt_vlist_cleanup();
-    db_close(dbip);
-
-#if MEMORY_LEAK_CHECKING
-    bu_prmem("After complete G-EUCLID conversion");
-#endif
-
-    return 0;
-}
 
 /*
  *			D O _ R E G I O N _ E N D
@@ -554,7 +420,8 @@ main(int argc, char **argv)
  *
  *  This routine must be prepared to run in parallel.
  */
-union tree *do_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+union tree *
+do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
     FILE			*fp_out;
     struct nmgregion	*r;
@@ -725,6 +592,142 @@ union tree *do_region_end(struct db_tree_state *tsp, struct db_full_path *pathp,
     curtree->tr_op = OP_NOP;
     return(curtree);
 }
+
+
+/*
+ *			M A I N
+ */
+int
+main(int argc, char **argv)
+{
+    int	c;
+    double		percent;
+
+    bu_setlinebuf( stderr );
+
+#if MEMORY_LEAK_CHECKING
+    rt_g.debug |= DEBUG_MEM_FULL;
+#endif
+
+    ttol.magic = RT_TESS_TOL_MAGIC;
+    /* Defaults, updated by command line options. */
+    ttol.abs = 0.0;
+    ttol.rel = 0.01;
+    ttol.norm = 0.0;
+
+    /* FIXME: These need to be improved */
+    tol.magic = BN_TOL_MAGIC;
+    tol.dist = 0.0005;
+    tol.dist_sq = tol.dist * tol.dist;
+    tol.perp = 1e-6;
+    tol.para = 1 - tol.perp;
+
+    the_model = (struct model *)NULL;
+    tree_state = rt_initial_tree_state;	/* struct copy */
+    tree_state.ts_m = &the_model;
+    tree_state.ts_tol = &tol;
+    tree_state.ts_ttol = &ttol;
+
+    BU_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
+
+    rt_init_resource( &rt_uniresource, 0, NULL );
+
+    /* Get command line arguments. */
+    while ((c = bu_getopt(argc, argv, "a:n:r:s:vx:P:X:")) != EOF) {
+	switch (c) {
+	    case 's':
+		alarm_secs = atoi( bu_optarg );
+		break;
+	    case 'a':		/* Absolute tolerance. */
+		ttol.abs = atof(bu_optarg);
+		ttol.rel = 0.0;
+		break;
+	    case 'n':		/* Surface normal tolerance. */
+		ttol.norm = atof(bu_optarg);
+		ttol.rel = 0.0;
+		break;
+	    case 'r':		/* Relative tolerance. */
+		ttol.rel = atof(bu_optarg);
+		break;
+	    case 'v':
+		verbose++;
+		break;
+	    case 'P':
+/*			ncpu = atoi( bu_optarg ); */
+		rt_g.debug = 1;	/* NOTE: enabling DEBUG_ALLRAYS to get core dumps */
+		break;
+	    case 'x':
+		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );
+		break;
+	    case 'X':
+		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.NMG_debug );
+		NMG_debug = rt_g.NMG_debug;
+		break;
+	    default:
+		bu_exit(1, usage, argv[0]);
+		break;
+	}
+    }
+
+    if (bu_optind+1 >= argc) {
+	bu_exit(1, usage, argv[0]);
+    }
+
+    /* Open BRL-CAD database */
+    if ((dbip = db_open( argv[bu_optind], "r")) == DBI_NULL)
+    {
+	perror(argv[0]);
+	bu_exit(1, "Cannot open %s\n", argv[bu_optind] );
+    }
+    if ( db_dirbuild( dbip ) ) {
+	bu_exit(1, "db_dirbuild failed\n" );
+    }
+    bu_optind++;
+
+    /* Walk indicated tree(s).  Each region will be output separately */
+
+    tree_state = rt_initial_tree_state;	/* struct copy */
+    the_model = nmg_mm();
+    tree_state.ts_m = &the_model;
+    tree_state.ts_tol = &tol;
+    tree_state.ts_ttol = &ttol;
+
+    (void)db_walk_tree(dbip, argc-bu_optind, (const char **)(&argv[bu_optind]),
+		       1,			/* ncpu */
+		       &tree_state,
+		       0,
+		       do_region_end,
+		       nmg_booltree_leaf_tess,
+		       (genptr_t)NULL);	/* in librt/nmg_bool.c */
+
+    nmg_km( the_model );
+
+#if MEMORY_LEAK_CHECKING
+    bu_prmem("After conversions");
+#endif
+
+    percent = 0;
+    if ( regions_tried > 0 )
+	percent = ((double)regions_converted * 100) / regions_tried;
+    printf( "Tried %d regions, %d converted successfully.  %g%%\n",
+	    regions_tried, regions_converted, percent );
+    percent = 0;
+    if ( regions_tried > 0 )
+	percent = ((double)regions_written * 100) / regions_tried;
+    printf( "                  %d written successfully. %g%%\n",
+	    regions_written, percent );
+
+    /* Release dynamic storage */
+    rt_vlist_cleanup();
+    db_close(dbip);
+
+#if MEMORY_LEAK_CHECKING
+    bu_prmem("After complete G-EUCLID conversion");
+#endif
+
+    return 0;
+}
+
 
 /*
  * Local Variables:

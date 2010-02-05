@@ -201,8 +201,8 @@ bu_pr_bitv(const char *str, register const struct bu_bitv *bv)
 void
 bu_bitv_to_hex(struct bu_vls *v, const struct bu_bitv *bv)
 {
-    unsigned int word_count = 0;
-    unsigned int chunksize = 0;
+    size_t word_count = 0;
+    size_t chunksize = 0;
     /* necessarily volatile to keep the compiler from complaining
      * about unreachable code during optimization.
      */
@@ -212,7 +212,7 @@ bu_bitv_to_hex(struct bu_vls *v, const struct bu_bitv *bv)
     BU_CK_BITV(bv);
 
     word_count = bv->nbits / 8 / BVS;
-    bu_vls_extend(v, word_count * BVS * 2 + 1);
+    bu_vls_extend(v, (unsigned int)(word_count * BVS * 2 + 1));
 
     while (word_count--) {
 	chunksize = (unsigned int)BVS;
@@ -233,8 +233,8 @@ bu_hex_to_bitv(const char *str)
     int bytes;
     struct bu_bitv *bv;
     unsigned long c;
-    int word_count;
-    unsigned int chunksize = 0;
+    size_t word_count;
+    size_t chunksize = 0;
     volatile size_t BVS = sizeof(bitv_t);
 
     abyte[2] = '\0';

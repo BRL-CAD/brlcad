@@ -678,6 +678,7 @@ rt_rhc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     struct rt_rhc_internal *xip;
     struct rt_pt_node *old, *pos, *pts, *rt_ptalloc(void);
 
+    BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
     xip = (struct rt_rhc_internal *)ip->idb_ptr;
     RT_RHC_CK_MAGIC(xip);

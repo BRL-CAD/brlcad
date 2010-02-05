@@ -429,7 +429,6 @@ struct cmd_list {
 #define CMD_LIST_NULL ((struct cmd_list *)NULL)
 
 /* defined in cmd.c */
-extern Tcl_Interp *interp;
 extern struct cmd_list head_cmd_list;
 extern struct cmd_list *curr_cmd_list;
 
@@ -610,12 +609,6 @@ int cmd_killtree(
 
 /* dodraw.c */
 void cvt_vlblock_to_solids(struct bn_vlblock *vbp, const char *name, int copy);
-void drawH_part2(
-    int dashflag,
-    struct bu_list *vhead,
-    struct db_full_path *pathp,
-    struct db_tree_state *tsp,
-    struct solid *existing_sp);
 int drawtrees(int argc, char **argv, int kind);
 int invent_solid(const char *name, struct bu_list *vhead, long rgb, int copy);
 void pathHmat(struct solid *sp, matp_t matp, int depth);
@@ -698,7 +691,7 @@ void wrt_point_direc(mat_t out, const mat_t change, const mat_t in, const point_
 int f_matpick(ClientData clientData, Tcl_Interp *interpreter, int argc, char **argv);
 
 /* tedit.c */
-int editit(const char *file);
+int get_editor_string(struct bu_vls *editstring);
 
 /* titles.c */
 void create_text_overlay(struct bu_vls *vp);

@@ -92,7 +92,7 @@ db_tree_counter( const union tree *tp, struct db_tree_counter_state *tcsp )
 	    tcsp->n_leaf++;
 	    if ( tp->tr_l.tl_mat && !bn_mat_is_identity(tp->tr_l.tl_mat) )  tcsp->n_mat++;
 	    /* Over-estimate storage requirement for matrix # */
-	    tcsp->leafbytes += strlen(tp->tr_l.tl_name) + 1 + 8;
+	    tcsp->leafbytes += (long)strlen(tp->tr_l.tl_name) + 1 + 8;
 	    return 1;
 
 	case OP_NOT:
@@ -160,7 +160,7 @@ rt_comb_v5_serialize(
     const union tree	*tp,
     struct rt_comb_v5_serialize_state	*ssp)
 {
-    int	n;
+    size_t n;
     int	mi;
 
     RT_CK_TREE(tp);

@@ -155,6 +155,8 @@ plotsurfaceleafs(SurfaceTree* surf, struct bn_vlblock *vbp, bool dim3d)
     list<BBNode*> leaves;
     surf->getLeaves(leaves);
 
+    VSETALL(min, 0.0);
+
     ON_TextLog tl(stderr);
     vhead = rt_vlblock_find(vbp, RED);
     RT_ADD_VLIST(vhead, min, BN_VLIST_LINE_MOVE);
@@ -191,6 +193,8 @@ plottrimleafs(SurfaceTree* st, struct bn_vlblock *vbp, bool dim3d)
     double min[3], max[3];
     list<BRNode*> leaves;
     st->ctree->getLeaves(leaves);
+
+    VSETALL(min, 0.0);
 
     ON_TextLog tl(stderr);
     vhead = rt_vlblock_find(vbp, RED);

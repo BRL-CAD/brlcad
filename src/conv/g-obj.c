@@ -43,7 +43,7 @@
 
 #define V3ARGSIN(a)       (a)[X]/25.4, (a)[Y]/25.4, (a)[Z]/25.4
 
-BU_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
+BU_EXTERN(union tree *do_region_end, (struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data));
 
 static char	usage[] = "\
 Usage: %s [-m][-v][-i][-u][-xX lvl][-a abs_tess_tol][-r rel_tess_tol][-n norm_tess_tol]\n\
@@ -102,9 +102,9 @@ main(int argc, char **argv)
     ttol.rel = 0.01;
     ttol.norm = 0.0;
 
-    /* XXX These need to be improved */
+    /* FIXME: These need to be improved */
     tol.magic = BN_TOL_MAGIC;
-    tol.dist = 0.005;
+    tol.dist = 0.0005;
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = 1e-5;
     tol.para = 1 - tol.perp;
@@ -142,7 +142,7 @@ main(int argc, char **argv)
 		break;
 	    case 'P':
 		ncpu = atoi( bu_optarg );
-		rt_g.debug = 1;	/* XXX DEBUG_ALLRAYS -- to get core dumps */
+		rt_g.debug = 1;
 		break;
 	    case 'x':
 		sscanf( bu_optarg, "%x", (unsigned int *)&rt_g.debug );
@@ -258,7 +258,7 @@ main(int argc, char **argv)
 }
 
 static void
-nmg_to_obj(struct nmgregion *r, struct db_full_path *pathp, int region_id, int aircode, int los, int material_id)
+nmg_to_obj(struct nmgregion *r, const struct db_full_path *pathp, int region_id, int aircode, int los, int material_id)
 {
     struct model *m;
     struct shell *s;
@@ -274,11 +274,6 @@ nmg_to_obj(struct nmgregion *r, struct db_full_path *pathp, int region_id, int a
     RT_CK_FULL_PATH(pathp);
 
     region_name = db_path_to_string( pathp );
-
-#if 0
-    printf("Attempting to process region %s\n", region_name);
-    fflush(stdout);
-#endif
 
     m = r->m_p;
     NMG_CK_MODEL( m );
@@ -296,7 +291,6 @@ nmg_to_obj(struct nmgregion *r, struct db_full_path *pathp, int region_id, int a
     if ( do_normals )
 	nmg_vertexuse_normal_tabulate( &norms, &r->l.magic );
 
-/* XXX Check vertices, shells faces first? Do not want to punt mid-stream */
 /* BEGIN CHECK SECTION */
 /* Check vertices */
 
@@ -344,16 +338,16 @@ nmg_to_obj(struct nmgregion *r, struct db_full_path *pathp, int region_id, int a
 		    i = bu_ptbl_locate( &verts, (long *)v );
 		    if ( i < 0 )
 		    {
-			/*XXX*/				bu_ptbl_free( &verts);
-			/*XXX*/				bu_free( region_name, "region name" );
+			bu_ptbl_free( &verts);
+			bu_free( region_name, "region name" );
 			bu_log( "Vertex from eu x%x is not in nmgregion x%x\n", eu, r );
 			bu_exit(1, "ERROR: Can't find vertex in list!");
 		    }
 		}
 		if ( vert_count > 3 )
 		{
-		    /*XXX*/			bu_ptbl_free( &verts);
-		    /*XXX*/			bu_free( region_name, "region name" );
+		    bu_ptbl_free( &verts);
+		    bu_free( region_name, "region name" );
 		    bu_log( "lu x%x has %d vertices!\n", lu, vert_count );
 		    bu_exit(1, "ERROR: LU is not a triangle\n");
 		}
@@ -470,8 +464,8 @@ nmg_to_obj(struct nmgregion *r, struct db_full_path *pathp, int region_id, int a
 		    {
 			bu_ptbl_free( &verts);
 			bu_log( "Vertex from eu x%x is not in nmgregion x%x\n", eu, r );
-			/*XXX*/				bu_free( region_name, "region name" );
-			/*XXX*/				bu_exit(1, "Can't find vertex in list!\n");
+			bu_free( region_name, "region name" );
+			bu_exit(1, "Can't find vertex in list!\n");
 		    }
 
 		    if ( use_normals )
@@ -519,7 +513,8 @@ nmg_to_obj(struct nmgregion *r, struct db_full_path *pathp, int region_id, int a
  *
  *  This routine must be prepared to run in parallel.
  */
-union tree *do_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+union tree *
+do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
     union tree		*ret_tree;
     struct bu_list		vhead;
@@ -569,7 +564,9 @@ union tree *do_region_end(struct db_tree_state *tsp, struct db_full_path *pathp,
 	    nmg_isect2d_final_cleanup();
 
 	    /* Release the tree memory & input regions */
-/*XXX*/			/* db_free_tree(curtree);*/		/* Does an nmg_kr() */
+
+	    /* FIXME: memory leak? */
+	    /* db_free_tree(curtree);*/		/* Does an nmg_kr() */
 
 	    /* Get rid of (m)any other intermediate structures */
 	    if ( (*tsp->ts_m)->magic == NMG_MODEL_MAGIC )  {
@@ -589,7 +586,6 @@ union tree *do_region_end(struct db_tree_state *tsp, struct db_full_path *pathp,
 	r = ret_tree->tr_d.td_r;
     else
 	r = (struct nmgregion *)NULL;
-/*	regions_done++;  XXX */
 
     BU_UNSETJUMP;		/* Relinquish the protection */
     regions_converted++;

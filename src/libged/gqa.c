@@ -47,6 +47,7 @@
 #include "raytrace.h"
 #include "plot3.h"
 #include "sysv.h"
+#include "analyze.h"
 
 #include "./ged_private.h"
 
@@ -199,18 +200,6 @@ static struct per_region_data {
     struct per_obj_data *optr;
 } *reg_tbl;
 
-
-struct region_pair {
-    struct bu_list l;
-    union {
-	char *name;
-	struct region *r1;
-    } r;
-    struct region *r2;
-    unsigned long count;
-    double max_dist;
-    vect_t coord;
-};
 
 /* Access to these lists should be in sections
  * of code protected by GED_SEM_LIST
@@ -933,60 +922,6 @@ get_densities_from_database(struct rt_i *rtip)
     return ret;
 }
 
-
-/**
- * This routine must be prepared to run in parallel
- */
-struct region_pair *
-add_unique_pair(struct region_pair *list, /* list to add into */
-		struct region *r1,        /* first region involved */
-		struct region *r2,        /* second region involved */
-		double dist,              /* distance/thickness metric value */
-		point_t pt)               /* location where this takes place */
-{
-    struct region_pair *rp, *rpair;
-
-    /* look for it in our list */
-    bu_semaphore_acquire(GED_SEM_LIST);
-    for (BU_LIST_FOR (rp, region_pair, &list->l)) {
-
-	if ((r1 == rp->r.r1 && r2 == rp->r2) || (r1 == rp->r2 && r2 == rp->r.r1)) {
-	    /* we already have an entry for this region pair, we
-	     * increase the counter, check the depth and update
-	     * thickness maximum and entry point if need be and
-	     * return.
-	     */
-	    rp->count++;
-
-	    if (dist > rp->max_dist) {
-		rp->max_dist = dist;
-		VMOVE(rp->coord, pt);
-	    }
-	    rpair = rp;
-	    goto found;
-	}
-    }
-    /* didn't find it in the list.  Add it */
-    rpair = bu_malloc(sizeof(struct region_pair), "region_pair");
-    rpair->r.r1 = r1;
-    rpair->r2 = r2;
-    rpair->count = 1;
-    rpair->max_dist = dist;
-    VMOVE(rpair->coord, pt);
-    list->max_dist ++; /* really a count */
-
-    /* insert in the list at the "nice" place */
-    for (BU_LIST_FOR (rp, region_pair, &list->l)) {
-	if (strcmp(rp->r.r1->reg_name, r1->reg_name) <= 0)
-	    break;
-    }
-    BU_LIST_INSERT(&rp->l, &rpair->l);
- found:
-    bu_semaphore_release(GED_SEM_LIST);
-    return rpair;
-}
-
-
 /**
  * Write end points of partition to the standard output.  If this
  * routine return !0, this partition will be dropped from the boolean
@@ -1143,13 +1078,13 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 	dist = pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
 	VJOIN1(pt, ap->a_ray.r_pt, pp->pt_inhit->hit_dist, ap->a_ray.r_dir);
 	VJOIN1(opt, ap->a_ray.r_pt, pp->pt_outhit->hit_dist, ap->a_ray.r_dir);
-
-	bu_semaphore_acquire(GED_SEM_WORKER);
-	DLOG(&_ged_current_gedp->ged_result_str, "%s %g->%g\n",
-	     pp->pt_regionp->reg_name,
-	     pp->pt_inhit->hit_dist,
-	     pp->pt_outhit->hit_dist);
-	bu_semaphore_release(GED_SEM_WORKER);
+	
+	if (debug) {
+    	    bu_semaphore_acquire(GED_SEM_WORKER);
+    	    bu_vls_printf(&_ged_current_gedp->ged_result_str, "%s %g->%g\n", pp->pt_regionp->reg_name,
+		    pp->pt_inhit->hit_dist, pp->pt_outhit->hit_dist);
+    	    bu_semaphore_release(GED_SEM_WORKER);
+	}
 
 	/* checking for air sticking out of the model.  This is done
 	 * here because there may be any number of air regions
@@ -1203,9 +1138,11 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 
 	/* computing the weight of the objects */
 	if (analysis_flags & ANALYSIS_WEIGHT) {
-	    bu_semaphore_acquire(GED_SEM_WORKER);
-	    DLOG(&_ged_current_gedp->ged_result_str, "Hit %s doing weight\n", pp->pt_regionp->reg_name);
-	    bu_semaphore_release(GED_SEM_WORKER);
+	    if (debug) {
+    		bu_semaphore_acquire(GED_SEM_WORKER);
+    		bu_vls_printf(&_ged_current_gedp->ged_result_str, "Hit %s doing weight\n", pp->pt_regionp->reg_name);
+    		bu_semaphore_release(GED_SEM_WORKER);
+	    }
 
 	    /* make sure mater index is within range of densities */
 	    if (pp->pt_regionp->reg_gmater >= num_densities) {
@@ -1354,14 +1291,12 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 
 		bu_semaphore_release(GED_SEM_STATS);
 	    }
-
-	    bu_semaphore_acquire(GED_SEM_WORKER);
-	    DLOG(&_ged_current_gedp->ged_result_str, "\t\tvol hit %s oDist:%g objVol:%g %s\n",
-		 pp->pt_regionp->reg_name,
-		 dist,
-		 prd->optr->o_len[state->curr_view],
-		 prd->optr->o_name);
-	    bu_semaphore_release(GED_SEM_WORKER);
+	    if  (debug) {
+    		bu_semaphore_acquire(GED_SEM_WORKER);
+    		bu_vls_printf(&_ged_current_gedp->ged_result_str, "\t\tvol hit %s oDist:%g objVol:%g %s\n",
+       			pp->pt_regionp->reg_name, dist, prd->optr->o_len[state->curr_view], prd->optr->o_name);
+    		bu_semaphore_release(GED_SEM_WORKER);
+	    }
 
 	    if (plot_volume) {
 		point_t opt;
@@ -1500,9 +1435,11 @@ plane_worker (int cpu, genptr_t ptr)
     while ((v = get_next_row(state))) {
 
 	v_coord = v * gridSpacing;
-	bu_semaphore_acquire(GED_SEM_WORKER);
-	DLOG(&_ged_current_gedp->ged_result_str, "  v = %d v_coord=%g\n", v, v_coord);
-	bu_semaphore_release(GED_SEM_WORKER);
+	if (debug) {
+	    bu_semaphore_acquire(GED_SEM_WORKER);
+    	    bu_vls_printf(&_ged_current_gedp->ged_result_str, "  v = %d v_coord=%g\n", v, v_coord);
+    	    bu_semaphore_release(GED_SEM_WORKER);
+	}
 
 	if ((v&1) || state->first) {
 	    /* shoot all the rays in this row.  This is either the
@@ -1514,15 +1451,25 @@ plane_worker (int cpu, genptr_t ptr)
 		ap.a_ray.r_pt[state->v_axis] = ap.a_rt_i->mdl_min[state->v_axis] + v*gridSpacing;
 		ap.a_ray.r_pt[state->i_axis] = ap.a_rt_i->mdl_min[state->i_axis];
 
-		bu_semaphore_acquire(GED_SEM_WORKER);
-		DLOG(&_ged_current_gedp->ged_result_str, "%5g %5g %5g -> %g %g %g\n", V3ARGS(ap.a_ray.r_pt), V3ARGS(ap.a_ray.r_dir));
-		bu_semaphore_release(GED_SEM_WORKER);
+		if (debug) {
+		    bu_semaphore_acquire(GED_SEM_WORKER);
+    		    bu_vls_printf(&_ged_current_gedp->ged_result_str, "%5g %5g %5g -> %g %g %g\n", V3ARGS(ap.a_ray.r_pt), 
+			    V3ARGS(ap.a_ray.r_dir));
+    		    bu_semaphore_release(GED_SEM_WORKER);
+		}
 		ap.a_user = v;
 		(void)rt_shootray(&ap);
 
 		if (aborted)
 		    return;
 
+		/* FIXME: This shots increment and it's twin in the else clause below
+		 * are presenting a significant drag on gqa performance via
+		 * heavy duty semaphore locking and unlocking.  Can a way
+		 * be found to do this job without needing to trigger the
+		 * semaphore locks?  Seems to be the major contributor to
+		 * semaphore overhead.
+		 */
 		bu_semaphore_acquire(GED_SEM_STATS);
 		state->shots[state->curr_view]++;
 		bu_semaphore_release(GED_SEM_STATS);
@@ -1536,9 +1483,12 @@ plane_worker (int cpu, genptr_t ptr)
 		ap.a_ray.r_pt[state->v_axis] = ap.a_rt_i->mdl_min[state->v_axis] + v*gridSpacing;
 		ap.a_ray.r_pt[state->i_axis] = ap.a_rt_i->mdl_min[state->i_axis];
 
-		bu_semaphore_acquire(GED_SEM_WORKER);
-		DLOG(&_ged_current_gedp->ged_result_str, "%5g %5g %5g -> %g %g %g\n", V3ARGS(ap.a_ray.r_pt), V3ARGS(ap.a_ray.r_dir));
-		bu_semaphore_release(GED_SEM_WORKER);
+		if (debug) {
+    		    bu_semaphore_acquire(GED_SEM_WORKER);
+    		    bu_vls_printf(&_ged_current_gedp->ged_result_str, "%5g %5g %5g -> %g %g %g\n", V3ARGS(ap.a_ray.r_pt), 
+			    V3ARGS(ap.a_ray.r_dir));
+    		    bu_semaphore_release(GED_SEM_WORKER);
+		}
 		ap.a_user = v;
 		(void)rt_shootray(&ap);
 
@@ -1559,9 +1509,9 @@ plane_worker (int cpu, genptr_t ptr)
 	}
     }
 
-    if (u == -1) {
+    if (debug && (u == -1)) {
 	bu_semaphore_acquire(GED_SEM_WORKER);
-	DLOG(&_ged_current_gedp->ged_result_str, "didn't shoot any rays\n");
+	bu_vls_printf(&_ged_current_gedp->ged_result_str, "didn't shoot any rays\n");
 	bu_semaphore_release(GED_SEM_WORKER);
     }
 
@@ -1652,7 +1602,7 @@ allocate_per_region_data(struct cstate *state, int start, int ac, const char *av
 	reg_tbl[i].r_volume = bu_calloc(num_views, sizeof(double), "len");
 	reg_tbl[i].r_weight = bu_calloc(num_views, sizeof(double), "len");
 
-	m = strlen(regp->reg_name);
+	m = (int)strlen(regp->reg_name);
 	if (m > max_region_name_len) max_region_name_len = m;
 	reg_tbl[i].optr = &obj_tbl[ find_cmd_line_obj(obj_tbl, &regp->reg_name[1]) ];
 

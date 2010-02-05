@@ -241,7 +241,7 @@ spm_load(spm_map_t *mapp, char *filename)
 	total += mapp->nx[y];
 
     bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
-    y = fread( (char *)mapp->_data, mapp->elsize, total, fp );	/* res_syscall */
+    y = (int)fread( (char *)mapp->_data, mapp->elsize, total, fp );	/* res_syscall */
     (void) fclose( fp );
     bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
 
@@ -278,8 +278,8 @@ spm_save(spm_map_t *mapp, char *filename)
 
     for ( i = 0; i < mapp->ny; i++ ) {
 	bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
-	got = fwrite( (char *)mapp->xbin[i], mapp->elsize,	/* res_syscall */
-		      mapp->nx[i], fp );
+	got = (int)fwrite( (char *)mapp->xbin[i], mapp->elsize,	/* res_syscall */
+			   mapp->nx[i], fp );
 	bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
 	if ( got != mapp->nx[i] ) {
 	    bu_log("spm_save(%s): write error\n", filename);
@@ -332,7 +332,7 @@ spm_px_load(spm_map_t *mapp, char *filename, int nx, int ny)
     /* Shamelessly suck it all in */
     buffer = (unsigned char *)bu_malloc( (unsigned)(nx*nx*3), "spm_px_load buffer" );
     bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
-    i = fread( (char *)buffer, 3, nx*ny, fp );	/* res_syscall */
+    i = (int)fread( (char *)buffer, 3, nx*ny, fp );	/* res_syscall */
     (void) fclose( fp );
     bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
     if ( i != nx*ny )  {
@@ -401,7 +401,7 @@ spm_px_save(spm_map_t *mapp, char *filename, int nx, int ny)
 	for ( x = 0; x < nx; x++ ) {
 	    spm_read( mapp, pixel, (double)x/(double)nx, (double)y/(double)ny );
 	    bu_semaphore_acquire( BU_SEM_SYSCALL );		/* lock */
-	    got = fwrite( (char *)pixel, sizeof(pixel), 1, fp );	/* res_syscall */
+	    got = (int)fwrite( (char *)pixel, sizeof(pixel), 1, fp );	/* res_syscall */
 	    bu_semaphore_release( BU_SEM_SYSCALL );		/* unlock */
 	    if ( got != 1 )  {
 		bu_log("spm_px_save(%s): write error\n", filename);

@@ -38,8 +38,6 @@
 int
 _ged_rotate_hyp(struct ged *gedp, struct rt_hyp_internal *hyp, const char *attribute, matp_t rmat)
 {
-    fastf_t newrad;
-
     RT_HYP_CK_MAGIC(hyp);
 
     if (attribute[1] != '\0') {

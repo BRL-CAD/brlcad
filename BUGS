@@ -15,6 +15,9 @@ on-going issues.
 Recent Bugs
 -----------
 
+* mged rrt command is not respecting the view size, just does
+  something similar to autoview but even gets az/el wrong too.
+
 * reported that fbclear is not working on Windows build in mged.
 
 * Windows mged build is not generating tclIndex files with all

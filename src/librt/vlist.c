@@ -376,9 +376,9 @@ void
 rt_vlist_export(struct bu_vls *vls, struct bu_list *hp, const char *name)
 {
     register struct bn_vlist *vp;
-    int nelem;
-    int namelen;
-    int nbytes;
+    size_t nelem;
+    size_t namelen;
+    size_t nbytes;
     unsigned char *buf;
     unsigned char *bp;
 
@@ -396,9 +396,9 @@ rt_vlist_export(struct bu_vls *vls, struct bu_list *hp, const char *name)
     namelen = strlen(name)+1;
     nbytes = namelen + 4 + nelem * (1+3*8) + 2;
 
-    bu_vls_setlen(vls, nbytes);
+    bu_vls_setlen(vls, (int)nbytes);
     buf = (unsigned char *)bu_vls_addr(vls);
-    bp = bu_plong(buf, nelem);
+    bp = bu_plong(buf, (int)nelem);
     bu_strlcpy((char *)bp, name, namelen);
     bp += namelen;
 
@@ -436,9 +436,9 @@ rt_vlist_import(struct bu_list *hp, struct bu_vls *namevls, const unsigned char 
 {
     register const unsigned char *bp;
     const unsigned char *pp;		/* point pointer */
-    int nelem;
-    int namelen;
-    int i;
+    size_t nelem;
+    size_t namelen;
+    size_t i;
     point_t point;
 
     BU_CK_VLS(namevls);

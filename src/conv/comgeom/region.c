@@ -174,7 +174,7 @@ getregion(void)
 		    }
 		}
 	    } else {
-		/* XXX this may actually be an old piece of code,
+		/* FIXME: this may actually be an old piece of code,
 		 * rather than the V4 way of doing it. */
 		if ( cp[1] != ' ' )  {
 		    op = WMOP_UNION;

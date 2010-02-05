@@ -328,10 +328,13 @@ bu_free(genptr_t ptr, const char *str)
 #if defined(MALLOC_NOT_MP_SAFE)
     bu_semaphore_acquire(BU_SEM_SYSCALL);
 #endif
-/* Windows does not like */
+
 #ifndef _WIN32
+    /* !!! Windows apparently does not like this. */
+    /* TODO: figure out why. */
     *((int *)ptr) = -1;	/* zappo! */
 #endif
+
     free(ptr);
 #if defined(MALLOC_NOT_MP_SAFE)
     bu_semaphore_release(BU_SEM_SYSCALL);
@@ -346,7 +349,7 @@ bu_realloc(register genptr_t ptr, size_t cnt, const char *str)
     struct memdebug *mp=NULL;
     genptr_t original_ptr;
 
-    if (! ptr) {
+    if (!ptr) {
 	/* This is so we are compatible with system realloc.  It seems
 	 * like an odd behaviour, but some non-BRL-CAD code relies on
 	 * this.
@@ -355,7 +358,8 @@ bu_realloc(register genptr_t ptr, size_t cnt, const char *str)
     }
 
     if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	if (ptr && (mp = _bu_memdebug_check(ptr, str)) == MEMDEBUG_NULL) {
+	mp = _bu_memdebug_check(ptr, str);
+	if (mp == MEMDEBUG_NULL) {
 	    fprintf(stderr, "%8lx realloc%6d %s ** barrier check failure\n",
 		    (long)ptr, (int)cnt, str);
 	}
@@ -379,6 +383,11 @@ bu_realloc(register genptr_t ptr, size_t cnt, const char *str)
 	}
 	ptr = (genptr_t)mqp;
 	BU_LIST_DEQUEUE(&(mqp->q));
+    }
+
+    if (cnt == 0) {
+	fprintf(stderr, "ERROR: bu_realloc cnt=0 (ptr=%p) %s\n", ptr, str);
+	bu_bomb("ERROR: bu_realloc(0)\n");
     }
 
     original_ptr = ptr;
@@ -411,7 +420,7 @@ bu_realloc(register genptr_t ptr, size_t cnt, const char *str)
 	/* Even if ptr didn't change, need to update cnt & barrier */
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	mp->mdb_addr = ptr;
-	mp->mdb_len = cnt;
+	mp->mdb_len = (int)cnt;
 
 	/* Install a barrier word at the new end of the dynamic
 	 * arena. Correct location depends on 'cnt' being rounded up,
@@ -426,7 +435,7 @@ bu_realloc(register genptr_t ptr, size_t cnt, const char *str)
 	ptr = (genptr_t)(((struct memqdebug *)ptr)+1);
 	mqp->m.magic = MDB_MAGIC;
 	mqp->m.mdb_addr = ptr;
-	mqp->m.mdb_len = cnt;
+	mqp->m.mdb_len = (int)cnt;
 	mqp->m.mdb_str = str;
 	BU_ASSERT(bu_memq != BU_LIST_NULL);
 	BU_LIST_APPEND(bu_memq, &(mqp->q));

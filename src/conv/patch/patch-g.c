@@ -763,8 +763,8 @@ proc_sname(char shflg, char mrflg, int cnt, char ctflg)
  * If the "simplify" flag is set, pairs of loops in the face that
  * touch will be combined into a single loop where possible.
  *
- * XXX Perhaps should be recast as "nmg_shell_shared_face_merge()", leaving
- * XXX all the geometric calculations to the code in nmg_fuse.c ?
+ * FIXME: Perhaps should be recast as "nmg_shell_shared_face_merge()",
+ * leaving all the geometric calculations to the code in nmg_fuse.c ?
  */
 static void
 nmg_patch_coplanar_face_merge(struct shell *s, int *face_count, struct patch_faces *p_faces, struct bn_tol *tol, int simplify)

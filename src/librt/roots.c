@@ -119,7 +119,7 @@ rt_poly_findroot(register bn_poly_t *eqn, /* polynomial */
     int n;
     register int i;		/* iteration counter */
 
-    for (i=0; i < 20; i++) {
+    for (i=0; i < 100; i++) {
 	cZ = *nxZ;
 	rt_poly_eval_w_2derivatives(&cZ, eqn, &p0, &p1, &p2);
 
@@ -162,14 +162,20 @@ rt_poly_findroot(register bn_poly_t *eqn, /* polynomial */
 	 */
 	b = bn_cx_amplsq(nxZ);
 	diff = bn_cx_amplsq(&p0);
+
 	if (b < diff)
 	    continue;
-	/* !!! this is super-sensitive for eto (causing off-by-many changes) */
-	if ((b-diff) == b /* NEAR_ZERO(diff, SMALL_FASTF) */)
-	    return(i);		/* OK -- can't do better */
-	/* !!! this is super-sensitive for eto (causing off-by-one changes and convergence failures) */
-	if (diff > (b - diff) * 1.0e-5 /* SQRT_SMALL_FASTF */)
+
+	if (NEAR_ZERO(diff, SMALL_FASTF))
+	    return(i); /* OK -- can't do better */
+
+	/* FIXME: figure out why SMALL_FASTF is too sensitive, why
+	 * anything smaller than 1.0e-5 is too sensitive and causes
+	 * eto off-by-many differences.
+	 */
+	if (diff > (b - diff) * 1.0e-5)
 	    continue;
+
 	return(i);			/* OK */
     }
 

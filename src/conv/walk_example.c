@@ -72,6 +72,7 @@ void usage(const char *name, const char *str)
     bu_exit(1, "Usage: %s [ -%s ] input.g object(s) ...\n", name, options);
 }
 
+
 /** @if no
  *	P A R S E _ A R G S
  * @endif
@@ -122,10 +123,10 @@ int parse_args(int ac, char *av[])
  *
  */
 int
-region_start (struct db_tree_state * tsp,
-	      struct db_full_path * pathp,
-	      const struct rt_comb_internal * combp,
-	      genptr_t client_data )
+region_start(struct db_tree_state * tsp,
+	     const struct db_full_path * pathp,
+	     const struct rt_comb_internal * combp,
+	     genptr_t client_data)
 {
     if (debug&DEBUG_NAMES) {
 	char *name = db_path_to_string(pathp);
@@ -134,6 +135,7 @@ region_start (struct db_tree_state * tsp,
     }
     return 0;
 }
+
 
 /**
  *	R E G I O N _ E N D
@@ -154,10 +156,10 @@ region_start (struct db_tree_state * tsp,
  *
  */
 union tree *
-region_end (struct db_tree_state * tsp,
-	    struct db_full_path * pathp,
-	    union tree * curtree,
-	    genptr_t client_data )
+region_end(struct db_tree_state * tsp,
+	   const struct db_full_path * pathp,
+	   union tree *curtree,
+	   genptr_t client_data)
 {
     if (debug&DEBUG_NAMES) {
 	char *name = db_path_to_string(pathp);
@@ -181,9 +183,9 @@ region_end (struct db_tree_state * tsp,
  */
 union tree *
 leaf_func (struct db_tree_state * tsp,
-	   struct db_full_path * pathp,
+	   const struct db_full_path * pathp,
 	   struct rt_db_internal * internp,
-	   genptr_t client_data )
+	   genptr_t client_data)
 {
     /* the rt_db_internal structure is used to manage the payload of
      * "internal" or "in memory" representation of geometry as opposed
@@ -201,36 +203,37 @@ leaf_func (struct db_tree_state * tsp,
     /* here we do primitive type specific processing */
     switch (ip->idb_minor_type) {
 	case ID_BOT:
-	{
-	    /* This is the data payload for a "Bag of Triangles" or
-	     * "BOT" primitive.  see rtgeom.h for more information
-	     * about primitive solid specific data structures.
-	     */
-	    struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
-	    RT_BOT_CK_MAGIC(bot); /* check for data corruption */
+	    {
+		/* This is the data payload for a "Bag of Triangles" or
+		 * "BOT" primitive.  see rtgeom.h for more information
+		 * about primitive solid specific data structures.
+		 */
+		struct rt_bot_internal *bot = (struct rt_bot_internal *)ip->idb_ptr;
+		RT_BOT_CK_MAGIC(bot); /* check for data corruption */
 
-	    /* code to process bot goes here */
+		/* code to process bot goes here */
 
-	    break;
-	}
+		break;
+	    }
 	case ID_ARB8:
-	{
-	    struct rt_arb_internal *arb = (struct rt_arb_internal *)ip->idb_ptr;
-	    RT_ARB_CK_MAGIC(arb);
+	    {
+		struct rt_arb_internal *arb = (struct rt_arb_internal *)ip->idb_ptr;
+		RT_ARB_CK_MAGIC(arb);
 
-	    /* code to process arb goes here */
+		/* code to process arb goes here */
 
-	    break;
-	}
-	/*
-	 * Note:  A complete program would process each possible type of object here,
-	 * not just a couple of primitive types
-	 */
+		break;
+	    }
+	    /*
+	     * Note:  A complete program would process each possible type of object here,
+	     * not just a couple of primitive types
+	     */
 
     }
 
     return (union tree *)NULL;
 }
+
 
 /**
  *	M A I N
@@ -260,7 +263,7 @@ int main(int ac, char *av[])
 
     arg_count = parse_args(ac, av);
 
-    if ( (ac - arg_count) < 1) {
+    if ((ac - arg_count) < 1) {
 	usage(bu_basename(av[0]), "bad arugment count");
     }
 
@@ -271,7 +274,7 @@ int main(int ac, char *av[])
      *  title string in the header (ID) record.
      */
     rtip=rt_dirbuild(av[arg_count], idbuf, sizeof(idbuf));
-    if ( rtip == RTI_NULL) {
+    if (rtip == RTI_NULL) {
 	bu_exit(2, "%s: rt_dirbuild failure\n", av[0]);
     }
 

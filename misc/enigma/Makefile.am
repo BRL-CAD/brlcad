@@ -1,7 +1,8 @@
 
 bin_PROGRAMS = enigma
 
-engima_SOURCE = enigma.c
+enigma_SOURCE = enigma.c
+enigma_LDFLAGS = ${LIBBSD}
 
 dist_man_MANS = enigma.1
 

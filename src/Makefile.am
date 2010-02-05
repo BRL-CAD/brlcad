@@ -44,6 +44,7 @@ bench_dirs = \
 	libfb \
 	libwdb \
 	libgcv \
+	libanalyze \
 	libged \
 	liboptical \
 	liborle \

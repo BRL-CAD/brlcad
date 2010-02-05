@@ -59,6 +59,8 @@
 /* used to invoke the above editor if X11 is in use */
 #define XTERM_BINARY "/usr/X11R6/bin/xterm"
 
+#define MAC_BINARY "/Applications/Utilities/Terminal.app/Contents/MacOS/Terminal"
+
 extern struct rt_db_internal	es_int;
 extern struct rt_db_internal	es_int_orig;
 
@@ -73,7 +75,6 @@ static int j;
 			
 
 int writesolid(void), readsolid(void);
-int editit(const char *file);
 
 int
 f_tedit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
@@ -109,7 +110,7 @@ f_tedit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     (void)fclose(fp);
 
-    if (editit(tmpfil)) {
+    if (/*editit(tmpfil)*/0) {
 	if (readsolid()) {
 	    (void)unlink(tmpfil);
 	    return TCL_ERROR;
@@ -920,26 +921,27 @@ readsolid(void)
 }
 
 
-/* Run $EDITOR on temp file, defaulting to various system-specific
- * editors otherwise if unset.
- *
- * BUGS -- right now we only check at compile time whether or not to
+
+ /* BUGS -- right now we only check at compile time whether or not to
  * pop up an X window to display into (for editors that do not open
  * their own window like vi or jove).  If we have X support, we
  * automatically use xterm (regardless of whether the user is running
  * mged in console mode!)
  */
 int
-editit(const char *file)
+get_editor_string(struct bu_vls *editstring)
 {
     int pid = 0;
     int xpid = 0;
     char buffer[RT_MAXLINE] = {0};
-    const char *editor = (char *)NULL;
     int stat = 0;
     void (*s2)();
     void (*s3)();
-
+    const char *terminal = (char *)NULL;
+    const char *terminal_opt = (char *)NULL;
+    const char *editor = (char *)NULL;
+    const char *editor_opt = (char *)NULL;
+    
     editor = Tcl_GetVar(interp, "editor", TCL_GLOBAL_ONLY);
     if (!editor || editor[0] == '\0')
 	editor = Tcl_GetVar(interp, "EDITOR", TCL_GLOBAL_ONLY);
@@ -1011,80 +1013,20 @@ editit(const char *file)
 	}
     }
 
-    bu_log("Invoking %s on %s\n", editor, file);
-    bu_log("NOTE: YOU MUST QUIT %s BEFORE MGED WILL RESPOND AND CONTINUE\n", bu_basename(editor));
-
-#if defined(SIGINT) && defined(SIGQUIT)
-    s2 = signal( SIGINT, SIG_IGN );
-    s3 = signal( SIGQUIT, SIG_IGN );
-#endif
-
-#ifdef HAVE_UNISTD_H
-    if ((pid = fork()) < 0) {
-	perror("fork");
-	return (0);
-    }
-#endif
-
-    if (pid == 0) {
-	/* Don't call bu_log() here in the child! */
-
-#if defined(SIGINT) && defined(SIGQUIT)
-	/* deja vu */
-	(void)signal( SIGINT, SIG_DFL );
-	(void)signal( SIGQUIT, SIG_DFL );
-#endif
-
-	{
-#if defined(DM_WGL)
-	    STARTUPINFO si = {0};
-	    PROCESS_INFORMATION pi = {0};
-	    si.cb = sizeof(STARTUPINFO);
-	    si.lpReserved = NULL;
-	    si.lpReserved2 = NULL;
-	    si.cbReserved2 = 0;
-	    si.lpDesktop = NULL;
-	    si.dwFlags = 0;
-
-	    snprintf(buffer, RT_MAXLINE, "%s %s", editor, file);
-
-	    CreateProcess(NULL, buffer, NULL, NULL, TRUE, NORMAL_PRIORITY_CLASS, NULL, NULL, &si, &pi);
-	    WaitForSingleObject( pi.hProcess, INFINITE );
-	    return 1;
-#else /* !DM_WGL */
-
 #  if defined(DM_X) || defined(DM_OGL)
-	    /* if we have x support, pop open the editor in an
-	     * xterm.  otherwise, use whatever the user gave.
-	     */
-	    if (bu_file_exists(XTERM_BINARY)) {
-		(void)execlp(XTERM_BINARY, XTERM_BINARY, "-e", editor, file, (char *)0);
-	    }
+    /* if we have x support and aren't using the default
+     * Mac editor, pop open the editor in an xterm.  
+     * Otherwise, use whatever the user gave.
+     */
+    if (editor != MAC_EDITOR) {
+    	terminal = XTERM_BINARY;
+    	terminal_opt = "-e";
+    }
 #  endif /* DM_X || DM_OGL */
-	    (void)execlp(editor, editor, file, NULL);
 
-#endif /* DM_WGL */
-	    /* should not reach */
-	    perror(editor);
-	    bu_exit(1, NULL);
-	}
-    }
-
-#ifdef HAVE_UNISTD_H
-    /* wait for the editor to terminate */
-    while ((xpid = wait(&stat)) >= 0) {
-	if (xpid == pid) {
-	    break;
-	}
-    }
-#endif
-
-#if defined(SIGINT) && defined(SIGQUIT)
-    (void)signal(SIGINT, s2);
-    (void)signal(SIGQUIT, s3);
-#endif
-
-    return (!stat);
+    bu_vls_sprintf(editstring, "%s %s %s %s", terminal, terminal_opt, editor, editor_opt); 
+	
+    return 1;
 }
 
 /*

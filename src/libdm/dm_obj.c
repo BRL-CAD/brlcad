@@ -767,7 +767,6 @@ dmo_drawDataAxes_tcl(ClientData clientData,
 		     char **argv)
 {
     point_t modelAxesPos;
-    point_t viewAxesPos;
     fastf_t viewSize;
     mat_t rmat;
     mat_t model2view;
@@ -1313,10 +1312,7 @@ dmo_drawScale_cmd(struct dm_obj *dmop,
 		  char **argv)
 {
     int color[3];
-    int soffset;
     fastf_t viewSize;
-    fastf_t x1, x2;
-    fastf_t y1, y2;
     struct bu_vls vls;
 
     if (argc != 3) {

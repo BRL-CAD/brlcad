@@ -47,7 +47,6 @@
  * a) all of the entries if called with an argument of 0, or
  * b) the number of entries specified by the argument if > 0.
  *
- * This routine was lifted from mged/dir.c.
  */
 struct directory **
 _ged_getspace(struct db_i *dbip,
@@ -74,8 +73,7 @@ _ged_getspace(struct db_i *dbip,
  * _ G E D _ C M P D I R N A M E
  *
  * Given two pointers to pointers to directory entries, do a string
- * compare on the respective names and return that value.  This
- * routine was lifted from mged/columns.c.
+ * compare on the respective names and return that value.
  */
 static int
 cmpdirname(const genptr_t a,
@@ -94,7 +92,7 @@ cmpdirname(const genptr_t a,
  *
  * Given a pointer to a list of pointers to names and the number of
  * names in that list, sort and print that list in column order over
- * four columns.  This routine was lifted from mged/columns.c.
+ * four columns.
  */
 void
 _ged_vls_col_pr4v(struct bu_vls *vls,
@@ -173,7 +171,7 @@ _ged_vls_col_pr4v(struct bu_vls *vls,
      */
     maxnamelen = 0;
     for (k=0; k < num_in_list; k++) {
-	namelen = strlen(list_of_names[k]->d_namep);
+	namelen = (int)strlen(list_of_names[k]->d_namep);
 	if (namelen > maxnamelen)
 	    maxnamelen = namelen;
     }
@@ -195,7 +193,7 @@ _ged_vls_col_pr4v(struct bu_vls *vls,
 	for (j=0; j < numcol; j++) {
 	    this_one = j * lines + i;
 	    bu_vls_printf(vls, "%s", list_of_names[this_one]->d_namep);
-	    namelen = strlen(list_of_names[this_one]->d_namep);
+	    namelen = (int)strlen(list_of_names[this_one]->d_namep);
 
 	    /*
 	     * Region and ident checks here....  Since the code has
@@ -248,8 +246,8 @@ vls_long_dpp(struct bu_vls *vls,
     int isComb=0, isRegion=0;
     int isSolid=0;
     const char *type=NULL;
-    int max_nam_len = 0;
-    int max_type_len = 0;
+    size_t max_nam_len = 0;
+    size_t max_type_len = 0;
     struct directory *dp;
 
     qsort((genptr_t)list_of_names,
@@ -257,7 +255,7 @@ vls_long_dpp(struct bu_vls *vls,
 	  (int (*)(const void *, const void *))cmpdirname);
 
     for (i=0; i < num_in_list; i++) {
-	int len;
+	size_t len;
 
 	dp = list_of_names[i];
 	len = strlen(dp->d_namep);
@@ -333,9 +331,9 @@ vls_long_dpp(struct bu_vls *vls,
 	    (rflag && isRegion) ||
 	    (sflag && isSolid)) {
 	    bu_vls_printf(vls, "%s", dp->d_namep);
-	    bu_vls_spaces(vls, max_nam_len - strlen(dp->d_namep));
+	    bu_vls_spaces(vls, (int)(max_nam_len - strlen(dp->d_namep)));
 	    bu_vls_printf(vls, " %s", type);
-	    bu_vls_spaces(vls, max_type_len - strlen(type));
+	    bu_vls_spaces(vls, (int)(max_type_len - strlen(type)));
 	    bu_vls_printf(vls,  " %2d %2d %ld\n",
 			  dp->d_major_type, dp->d_minor_type, (long)(dp->d_len));
 	}
@@ -347,7 +345,6 @@ vls_long_dpp(struct bu_vls *vls,
  *
  * Given a pointer to a list of pointers to names and the number of names
  * in that list, sort and print that list on the same line.
- * This routine was lifted from mged/columns.c.
  */
 static void
 vls_line_dpp(struct bu_vls *vls,

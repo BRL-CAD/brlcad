@@ -57,7 +57,7 @@ Get_outer_brep(ON_Brep* brep, int entityno, int shell_orient)
 	Add_face_to_brep(brep, (face_de[face]-1)/2, face_orient[face]);
     }
 
-    // XXX do I need to glue these faces together?
+    // ??? do I need to glue these faces together?
 
     bu_free( (char *)face_de , "Get_outer_shell: face DE's" );
     bu_free( (char *)face_orient , "Get_outer_shell: face orients" );

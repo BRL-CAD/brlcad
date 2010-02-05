@@ -56,7 +56,9 @@
 #define MAX_BUF 2048
 
 /* FIXME: we utilize this Tcl internal in here */
+#if !defined(_WIN32) || defined(__CYGWIN__)
 extern Tcl_Obj *TclGetLibraryPath (void);
+#endif
 
 
 /* helper routine to determine whether the full 'path' includes a
@@ -220,13 +222,13 @@ tclcad_auto_path(Tcl_Interp *interp)
 	char *cp;
 
 	if (root != (char *)0) {
-	    for (cp = root; *cp != '\0'; ++cp)
+	    for (cp = (char *)root; *cp != '\0'; ++cp)
 		if (*cp == '\\') 
 		    *cp = '/';
  	}
 
 	if (data != (char *)0) {
-	    for (cp = data; *cp != '\0'; ++cp)
+	    for (cp = (char *)data; *cp != '\0'; ++cp)
 		if (*cp == '\\') 
 		    *cp = '/';
  	}

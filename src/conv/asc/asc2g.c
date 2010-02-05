@@ -998,7 +998,7 @@ identbld(void)
     zap_nl();
     bu_strlcpy(title, buf, sizeof(title));
 
-    /* XXX Should use db_conversions() for this */
+    /* FIXME: Should use db_conversions() for this */
     switch (units) {
 	case ID_NO_UNIT:
 	    bu_strlcpy(unit_str, "mm", sizeof(unit_str));
@@ -1697,7 +1697,6 @@ gettclblock(struct bu_vls *line, FILE *fp)
 int
 main(int argc, char *argv[])
 {
-    char c1[3];
     struct bu_vls       str_title;
     struct bu_vls       str_put;
     struct bu_vls	line;

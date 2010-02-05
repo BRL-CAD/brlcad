@@ -54,7 +54,7 @@ db_read(const struct db_i *dbip, genptr_t addr, long int count, long int offset)
     /* byte count */
     /* byte offset from start of file */
 {
-    int got;
+    long int got;
 
     RT_CK_DBI(dbip);
     if (RT_G_DEBUG&DEBUG_DB) {
@@ -79,7 +79,7 @@ db_read(const struct db_i *dbip, genptr_t addr, long int count, long int offset)
 
     if (fseek(dbip->dbi_fp, offset, 0))
 	bu_bomb("db_read: fseek error\n");
-    got = fread(addr, 1, count, dbip->dbi_fp);
+    got = (long int)fread(addr, 1, count, dbip->dbi_fp);
 
     bu_semaphore_release(BU_SEM_SYSCALL);
 
@@ -208,7 +208,7 @@ db_get(const struct db_i *dbip, const struct directory *dp, union record *where,
 int
 db_write(struct db_i *dbip, const genptr_t addr, long int count, long int offset)
 {
-    register int got;
+    register long int got;
 
     RT_CK_DBI(dbip);
     if (RT_G_DEBUG&DEBUG_DB) {
@@ -231,7 +231,7 @@ db_write(struct db_i *dbip, const genptr_t addr, long int count, long int offset
     bu_suspend_interrupts();
 
     (void)fseek(dbip->dbi_fp, offset, 0);
-    got = fwrite(addr, 1, count, dbip->dbi_fp);
+    got = (long int)fwrite(addr, 1, count, dbip->dbi_fp);
     fflush(dbip->dbi_fp);
 
     bu_restore_interrupts();

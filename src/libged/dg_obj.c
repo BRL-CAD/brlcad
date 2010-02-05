@@ -22,8 +22,7 @@
 /** @file dg_obj.c
  *
  * A drawable geometry object contains methods and attributes for
- * preparing geometry that is ready (i.e. vlists) for display. Much of
- * this code was extracted from MGED and modified to work herein.
+ * preparing geometry that is ready (i.e. vlists) for display.
  *
  */
 
@@ -90,12 +89,12 @@ struct dg_rt_client_data {
 #define DGO_BOOL_EVAL 3
 static union tree *
 dgo_bot_check_region_end(struct db_tree_state *tsp,
-			 struct db_full_path	*pathp,
+			 const struct db_full_path *pathp,
 			 union tree		*curtree,
 			 genptr_t		client_data);
 static union tree *
 dgo_bot_check_leaf(struct db_tree_state		*tsp,
-		   struct db_full_path		*pathp,
+		   const struct db_full_path *pathp,
 		   struct rt_db_internal	*ip,
 		   genptr_t			client_data);
 
@@ -149,12 +148,12 @@ static int dgo_vnirt_tcl(ClientData clientData, Tcl_Interp *interp, int argc, ch
 static int dgo_vdraw_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
 static int dgo_tree_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]);
 
-static union tree *dgo_wireframe_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
-static union tree *dgo_wireframe_leaf(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data);
+static union tree *dgo_wireframe_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
+static union tree *dgo_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data);
 static int dgo_drawtrees(struct dg_obj *dgop, Tcl_Interp *interp, int argc, char *argv[], int kind, struct dg_client_data *_dgcdp);
 int dgo_invent_solid(struct dg_obj *dgop, Tcl_Interp *interp, char *name, struct bu_list *vhead, long int rgb, int copy, fastf_t transparency, int dmode);
 static void dgo_bound_solid(Tcl_Interp *interp, struct solid *sp);
-void dgo_drawH_part2(int dashflag, struct bu_list *vhead, struct db_full_path *pathp, struct db_tree_state *tsp, struct solid *existing_sp, struct dg_client_data *dgcdp);
+void dgo_drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, struct solid *existing_sp, struct dg_client_data *dgcdp);
 void dgo_eraseobjpath(struct dg_obj *dgop, Tcl_Interp *interp, int argc, char *argv[], int noisy, int all);
 static void dgo_eraseobjall(struct dg_obj *dgop, Tcl_Interp *interp, struct directory **dpp);
 static void dgo_eraseobj(struct dg_obj *dgop, Tcl_Interp *interp, struct directory **dpp);
@@ -1778,9 +1777,9 @@ dgo_rtcheck_cmd(struct dg_obj	*dgop,
     int	o_pipe[2];	/* object writes view parameters */
     int	e_pipe[2];	/* object reads textual results */
 #else
-    HANDLE	i_pipe[2], pipe_iDup;	/* MGED reads results for building vectors */
-    HANDLE	o_pipe[2], pipe_oDup;	/* MGED writes view parameters */
-    HANDLE	e_pipe[2], pipe_eDup;	/* MGED reads textual results */
+    HANDLE	i_pipe[2], pipe_iDup;	/* READS results for building vectors */
+    HANDLE	o_pipe[2], pipe_oDup;	/* WRITES view parameters */
+    HANDLE	e_pipe[2], pipe_eDup;	/* READS textual results */
     STARTUPINFO si;
     PROCESS_INFORMATION pi;
     SECURITY_ATTRIBUTES sa;
@@ -2614,7 +2613,7 @@ dgo__tcl(ClientData	clientData,
 /****************** Utility Routines ********************/
 
 static union tree *
-dgo_wireframe_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+dgo_wireframe_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
     return (curtree);
 }
@@ -2625,7 +2624,7 @@ dgo_wireframe_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, 
  *  This routine must be prepared to run in parallel.
  */
 static union tree *
-dgo_wireframe_leaf(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
+dgo_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
 {
     union tree	*curtree;
     int		dashflag;		/* draw with dashed lines */
@@ -2706,7 +2705,7 @@ dgo_wireframe_leaf(struct db_tree_state *tsp, struct db_full_path *pathp, struct
  *  A hack to view polygonal models (converted from FASTGEN) more rapidly.
  */
 static int
-dgo_nmg_region_start(struct db_tree_state *tsp, struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
+dgo_nmg_region_start(struct db_tree_state *tsp, const struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
 {
     union tree		*tp;
     struct directory	*dp;
@@ -2793,10 +2792,18 @@ dgo_nmg_region_start(struct db_tree_state *tsp, struct db_full_path *pathp, cons
     return 0;
 
  out:
-    /* Successful fastpath drawing of this solid */
-    db_add_node_to_full_path(pathp, dp);
-    dgo_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
-    DB_FULL_PATH_POP(pathp);
+    {
+	struct db_full_path pp;
+	db_full_path_init(&pp);
+	db_dup_full_path(&pp, pathp);
+
+	/* Successful fastpath drawing of this solid */
+	db_add_node_to_full_path(&pp, dp);
+	dgo_drawH_part2(0, &vhead, &pp, tsp, SOLID_NULL, dgcdp);
+
+	db_free_full_path(&pp);
+    }
+
     rt_db_free_internal(&intern);
     dgcdp->fastpath_count++;
     return -1;	/* SKIP THIS REGION */
@@ -2808,7 +2815,7 @@ dgo_nmg_region_start(struct db_tree_state *tsp, struct db_full_path *pathp, cons
  *  This routine must be prepared to run in parallel.
  */
 static union tree *
-dgo_nmg_region_end(struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+dgo_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
     struct nmgregion	*r;
     struct bu_list		vhead;
@@ -3391,7 +3398,7 @@ dgo_bound_solid(Tcl_Interp *interp, struct solid *sp)
  *  This routine must be prepared to run in parallel.
  */
 void
-dgo_drawH_part2(int dashflag, struct bu_list *vhead, struct db_full_path *pathp, struct db_tree_state *tsp, struct solid *existing_sp, struct dg_client_data *dgcdp)
+dgo_drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, struct solid *existing_sp, struct dg_client_data *dgcdp)
 {
     struct solid *sp;
 
@@ -3826,7 +3833,7 @@ dgo_build_tops(Tcl_Interp	*interp,
 	if (vp < end)
 	    *vp++ = dp->d_namep;
 	else  {
-	    Tcl_AppendResult(interp, "mged: ran out of comand vector space at ",
+	    Tcl_AppendResult(interp, "INTERNAL ERROR: ran out of command vector space at ",
 			     dp->d_namep, "\n", (char *)NULL);
 	    break;
 	}
@@ -4520,7 +4527,7 @@ dgo_pr_wait_status(Tcl_Interp	*interp,
 
 static union tree *
 dgo_bot_check_region_end(struct db_tree_state	*tsp,
-			 struct db_full_path		*pathp,
+			 const struct db_full_path *pathp,
 			 union tree			*curtree,
 			 genptr_t			client_data)
 {
@@ -4529,7 +4536,7 @@ dgo_bot_check_region_end(struct db_tree_state	*tsp,
 
 static union tree *
 dgo_bot_check_leaf(struct db_tree_state		*tsp,
-		   struct db_full_path		*pathp,
+		   const struct db_full_path *pathp,
 		   struct rt_db_internal	*ip,
 		   genptr_t			client_data)
 {

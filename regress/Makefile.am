@@ -1,8 +1,8 @@
-.PHONY : regression regress test mged moss lights solids shaders spdi iges weight gqa fastgen flawfinder repository
+.PHONY : regression regress test mged moss lights solids shaders spdi iges weight gqa fastgen bots flawfinder repository
 
 SUBDIRS = mged
 
-regression: clean mged moss lights solids shaders spdi iges weight gqa fastgen flawfinder repository
+regression: clean mged moss lights solids shaders spdi iges weight gqa fastgen bots flawfinder repository
 	@${ECHO} ---
 	@${ECHO} Regression testing completed.
 
@@ -50,6 +50,10 @@ fastgen: $(top_srcdir)/regress/fastgen.sh
 	-${SH} $(top_srcdir)/regress/fastgen.sh $(top_srcdir)
 	@${ECHO} +++ $@ test complete.
 
+bots: $(top_srcdir)/regress/bots.sh
+	-${SH} $(top_srcdir)/regress/bots.sh $(top_srcdir)
+	@${ECHO} +++ $@ test complete.
+
 flawfinder: $(top_srcdir)/regress/flawfinder.sh
 	-${SH} $(top_srcdir)/regress/flawfinder.sh $(top_srcdir)
 	@${ECHO} +++ $@ test complete.
@@ -60,6 +64,7 @@ repository: $(top_srcdir)/regress/repository.sh
 
 # these are here because they go in the distribution but are not installed
 EXTRA_DIST = \
+	bots.sh \
 	fastgen.sh \
 	fastgen_dos.fast4 \
 	flawfinder.sh \
@@ -91,6 +96,18 @@ CLEANFILES = \
 	$(MOSTLYCLEANFILES) \
 	.density \
 	adj_air.pl \
+	bots.g \
+	bots.lh.pix \
+	bots.log \
+	bots.no.pix \
+	bots.rh.pix \
+	bots.sph.pix \
+	bots.diff.log \
+	bots.diff.pix \
+	bots.rl.diff.pix \
+	bots.rn.diff.pix \
+	bots.rs.diff.pix \
+	bots.sync.pix \
 	density_table.txt \
 	dsp.dat \
 	eagleCAD-512x438.pix \

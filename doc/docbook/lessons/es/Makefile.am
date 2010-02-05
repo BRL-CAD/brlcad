@@ -1,6 +1,8 @@
 lessonsDOCBOOK_ES = \
 	lessons/es/mged01_crear_figuras_primitivas.xml \
-	lessons/es/mged02_opciones_vistas.xml
+	lessons/es/mged02_opciones_vistas.xml \
+	lessons/es/mged03_utilizar_comando_in.xml \
+	lessons/es/mged06_crear_una_copa.xml
 	
 lessonsDOCBOOK_ES_IMAGES = \
 	lessons/es/images/mged01_commandwindow.png \
@@ -25,7 +27,14 @@ lessonsDOCBOOK_ES_IMAGES = \
  	lessons/es/images/mged02_truck_front.png \
  	lessons/es/images/mged02_truck_left.png \
  	lessons/es/images/mged02_truck_rear.png \
- 	lessons/es/images/mged02_truck_right.png
+ 	lessons/es/images/mged02_truck_right.png \
+	lessons/es/images/mged06_base_substracted_vol.png \
+	lessons/es/images/mged06_goblet1stsphere.png \
+	lessons/es/images/mged06_gobletbase.png \
+	lessons/es/images/mged06_gobletbasestembasin.png \
+	lessons/es/images/mged06_gobletstem.png \
+	lessons/es/images/mged06_rtgobletaz_35_el_25.png \
+	lessons/es/images/mged06_rtgoblet.png
 
 lessonsDOCBOOK_EShtmldir = $(BRLCAD_DATA)/html/lessons/es
 lessonsDOCBOOK_EShtml_DATA = \

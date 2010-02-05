@@ -49,11 +49,17 @@ _ged_edcolor(struct ged *gedp, int argc, const char *argv[])
     char line[128];
     static char hdr[] = "LOW\tHIGH\tRed\tGreen\tBlue\n";
     char tmpfil[MAXPATHLEN];
+    char *editstring;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
+    /* First, grab the editstring off of the argv list */
+    editstring = (char *)argv[0];
+    argc--;
+    argv++;
+        
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
 
@@ -72,7 +78,7 @@ _ged_edcolor(struct ged *gedp, int argc, const char *argv[])
     }
     (void)fclose(fp);
 
-    if (!ged_editit( tmpfil)) {
+    if (!_ged_editit(editstring, (const char *)tmpfil)) {
 	bu_vls_printf(&gedp->ged_result_str, "%s: editor returned bad status. Aborted\n", argv[0]);
 	return GED_ERROR;
     }
@@ -159,10 +165,6 @@ _ged_edcolor(struct ged *gedp, int argc, const char *argv[])
 int
 ged_edcolor(struct ged *gedp, int argc, const char *argv[])
 {
-    struct mater *newp;
-    struct mater *mp;
-    struct mater *next_mater;
-
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);

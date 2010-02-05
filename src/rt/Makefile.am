@@ -41,6 +41,7 @@ endif
 
 COMMON = \
 	do.c \
+	heatgraph.c \
 	main.c \
 	opt.c \
 	worker.c
@@ -100,6 +101,7 @@ rtregis_SOURCES = \
 rtscale_SOURCES = \
 	read-rtlog.c \
 	rtscale.c
+
 
 
 rt_SOURCES = \
@@ -197,6 +199,7 @@ librttherm_a_SOURCES = $(COMMON)
 libremrt_a_CFLAGS = -DRTSRV
 libremrt_a_SOURCES = \
 	do.c \
+	heatgraph.c \
 	opt.c \
 	scanline.c \
 	sh_tcl.c \

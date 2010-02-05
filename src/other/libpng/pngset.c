@@ -347,7 +347,7 @@ png_set_pCAL(png_structp png_ptr, png_infop info_ptr,
    if (png_ptr == NULL || info_ptr == NULL)
       return;
 
-   length = png_strlen(purpose) + 1;
+   length = (png_uint_32)png_strlen(purpose) + 1;
    png_debug1(3, "allocating purpose for info (%lu bytes)",
      (unsigned long)length);
    info_ptr->pcal_purpose = (png_charp)png_malloc_warn(png_ptr, length);
@@ -364,7 +364,7 @@ png_set_pCAL(png_structp png_ptr, png_infop info_ptr,
    info_ptr->pcal_type = (png_byte)type;
    info_ptr->pcal_nparams = (png_byte)nparams;
 
-   length = png_strlen(units) + 1;
+   length = (png_uint_32)png_strlen(units) + 1;
    png_debug1(3, "allocating units for info (%lu bytes)",
      (unsigned long)length);
    info_ptr->pcal_units = (png_charp)png_malloc_warn(png_ptr, length);
@@ -391,7 +391,7 @@ png_set_pCAL(png_structp png_ptr, png_infop info_ptr,
 
    for (i = 0; i < nparams; i++)
    {
-      length = png_strlen(params[i]) + 1;
+      length = (png_uint_32)png_strlen(params[i]) + 1;
       png_debug2(3, "allocating parameter %d for info (%lu bytes)", i,
         (unsigned long)length);
       info_ptr->pcal_params[i] = (png_charp)png_malloc_warn(png_ptr, length);
@@ -654,7 +654,7 @@ png_set_iCCP(png_structp png_ptr, png_infop info_ptr,
    if (png_ptr == NULL || info_ptr == NULL || name == NULL || profile == NULL)
       return;
 
-   length = png_strlen(name)+1;
+   length = (png_uint_32)png_strlen(name)+1;
    new_iccp_name = (png_charp)png_malloc_warn(png_ptr, length);
    if (new_iccp_name == NULL)
    {
@@ -971,7 +971,7 @@ png_set_sPLT(png_structp png_ptr,
         png_sPLT_tp from = entries + i;
         png_uint_32 length;
 
-        length = png_strlen(from->name) + 1;
+        length = (png_uint_32)png_strlen(from->name) + 1;
         to->name = (png_charp)png_malloc_warn(png_ptr, length);
         if (to->name == NULL)
         {

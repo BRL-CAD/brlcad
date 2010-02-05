@@ -116,9 +116,7 @@ static struct funtab joint_tab[] = {
      NULL, 0, 0, FALSE}
 };
 
-#define db_init_full_path(_fp) {\
-	(_fp)->fp_len = (_fp)->fp_maxlen = 0; \
-	(_fp)->magic = DB_FULL_PATH_MAGIC; }
+
 int
 f_jdebug(int	argc,
 	 char	**argv)
@@ -1732,11 +1730,11 @@ parse_hold(FILE *fip, struct bu_vls *str)
     BU_LIST_INIT(&hp->j_head);
     hp->effector.type = ID_FIXED;
     hp->effector.arc.type = ARC_UNSET;
-    db_init_full_path(&hp->effector.path);
+    db_full_path_init(&hp->effector.path);
     hp->effector.flag = 0;
     hp->objective.type = ID_FIXED;
     hp->objective.arc.type = ARC_UNSET;
-    db_init_full_path(&hp->objective.path);
+    db_full_path_init(&hp->objective.path);
     hp->objective.flag = 0;
     hp->j_set.joint = NULL;
     hp->j_set.path.type = ARC_UNSET;
@@ -1989,7 +1987,7 @@ f_jload(int argc, char **argv)
 	int i;
 
 	if (hp->effector.arc.type == ARC_ARC) {
-	    db_init_full_path(&hp->effector.path);
+	    db_full_path_init(&hp->effector.path);
 	    hp->effector.path.fp_len = hp->effector.arc.arc_last+1;
 	    hp->effector.path.fp_maxlen = hp->effector.arc.arc_last+1;
 	    hp->effector.path.fp_names = (struct directory **)
@@ -2007,7 +2005,7 @@ f_jload(int argc, char **argv)
 	    }
 	}
 	if (hp->objective.arc.type == ARC_ARC) {
-	    db_init_full_path(&hp->objective.path);
+	    db_full_path_init(&hp->objective.path);
 	    hp->objective.path.fp_len = hp->objective.arc.arc_last+1;
 	    hp->objective.path.fp_maxlen = hp->objective.arc.arc_last+1;
 	    hp->objective.path.fp_names = (struct directory **)
@@ -3171,7 +3169,7 @@ joint_move(struct joint *jp)
 	struct directory *dp = NULL;
 	BU_GETSTRUCT(anp, animate);
 	anp->magic = ANIMATE_MAGIC;
-	db_init_full_path(&anp->an_path);
+	db_full_path_init(&anp->an_path);
 	anp->an_path.fp_len = jp->path.arc_last+1;
 	anp->an_path.fp_maxlen= jp->path.arc_last+1;
 	anp->an_path.fp_names = (struct directory **)
@@ -3397,7 +3395,7 @@ struct bu_list artic_head = {
 };
 
 struct joint *
-findjoint(struct db_full_path *pathp)
+findjoint(const struct db_full_path *pathp)
 {
     int i, j;
     struct joint *jp;
@@ -3445,7 +3443,7 @@ findjoint(struct db_full_path *pathp)
 }
 
 HIDDEN union tree *
-mesh_leaf(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
+mesh_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
 {
     struct rt_grip_internal *gip;
     struct	artic_joints	*newJoint;
@@ -3503,7 +3501,7 @@ mesh_leaf(struct db_tree_state *tsp, struct db_full_path *pathp, struct rt_db_in
 }
 
 HIDDEN union tree *
-mesh_end_region (struct db_tree_state *tsp, struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+mesh_end_region (struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
     return curtree;
 }

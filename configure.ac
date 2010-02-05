@@ -283,7 +283,7 @@ BC_ARG_ENABLE([build_urt], [urt-build], [Build the included Utah Raster Toolkit]
 # force enable/disable building of openNURBS
 BC_ARG_ENABLE([build_opennurbs], [opennurbs-build], [Build the included openNURBS library], [auto])
 
-# force enable/disable building of NIST STEP Class Libraries 
+# force enable/disable building of NIST STEP Class Libraries
 BC_ARG_ENABLE([build_step], [step-build], [Build the included STEP Class Libraries], [auto])
 
 # force enable/disable building of termlib
@@ -1952,8 +1952,18 @@ fi
 
 dnl debug flags
 if test "x$bc_use_debug" != "xno" ; then
-	BC_COMPILER_AND_LINKER_RECOGNIZES([-g], [debug_flag])
+	BC_COMPILER_AND_LINKER_RECOGNIZES([-g3 -gstabs+], [debug_flag])
 	if test "x$bc_debug_flag_works" = "xno" ; then
+		BC_COMPILER_AND_LINKER_RECOGNIZES([-g], [debug_flag])
+	fi
+
+	if test "x$bc_debug_flag_works" = "xyes" ; then
+		# debug works
+	   	if test "x$bc_use_debug " = "xauto" ; then
+		   	# convert 'auto' to 'yes'
+			bc_use_debug="yes"
+		fi
+	else
 		# no debug
 		if test "x$bc_use_debug" = "xyes" ; then
 			dnl debug was requested, so abort
@@ -1963,12 +1973,6 @@ if test "x$bc_use_debug" != "xno" ; then
 		fi
 		AC_MSG_WARN([Do not know how to debug with this compiler])
 		sleep 1
-	else
-		# debug works
-		if test "x$bc_use_debug" = "xauto" ; then
-			# convert 'auto' to 'yes'
-			bc_use_debug="yes"
-		fi
 	fi
 fi
 
@@ -3745,6 +3749,7 @@ fi
 # set up the BRL-CAD libraries
 #
 
+ANALYZE='${top_builddir}/src/libanalyze/libanalyze.la'
 BN='${top_builddir}/src/libbn/libbn.la'
 BU='${top_builddir}/src/libbu/libbu.la'
 CURSOR='${top_builddir}/src/libcursor/libcursor.la'
@@ -3783,11 +3788,12 @@ SYSV_LIBS=
 TERMIO_LIBS="${TERMLIB}"
 CURSOR_LIBS="${TERMLIB}"
 FFT_LIBS="${LIBM}"
+ANALYZE_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 BU_LIBS="${TCL} ${PNG} ${LIBM} ${LIBMALLOC} ${LIBTHREAD}"
 BN_LIBS="${BU} ${BU_LIBS} ${TCL} ${LIBM}"
 RT_LIBS="${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${REGEX} ${LIBM} ${SYSV} ${OPENNURBS}"
 GCV_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
-GED_LIBS="${WDB} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${PNG} ${TCL} ${REGEX}"
+GED_LIBS="${WDB} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${PNG} ${TCL} ${REGEX} ${ANALYZE}"
 WDB_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 FB_LIBS="${BU} ${BU_LIBS} ${PKG} ${PKG_LIBS} ${TCL}" # additional/optional FB_LIBS: ${TK} ${X_LIBS} ${LIBGL}
 OPTICAL_LIBS="${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS} ${TCL}"
@@ -3807,6 +3813,7 @@ else
 fi
 BRLCAD_LIBS="${GED} ${GED_LIBS} ${WDB} ${WDB_LIBS} ${RT} ${RT_LIBS} ${BN} ${BN_LIBS} ${BU} ${BU_LIBS}"
 
+AC_SUBST(ANALYZE)
 AC_SUBST(BN)
 AC_SUBST(BU)
 AC_SUBST(CURSOR)
@@ -3839,6 +3846,7 @@ AC_SUBST(STEP_FEDEX_PLUS)
 AC_SUBST(STEP_EXPPP)
 AC_SUBST(STEP_AP203)
 
+AC_SUBST(ANALYZE_LIBS)
 AC_SUBST(BN_LIBS)
 AC_SUBST(BU_LIBS)
 AC_SUBST(CURSOR_LIBS)
@@ -3953,14 +3961,13 @@ AC_CONFIG_FILES([
 	misc/archlinux/Makefile
 	misc/brlcad-config
 	misc/brlcad.spec
-	misc/debian/Makefile
-	misc/debian/changelog
 	misc/macosx/Makefile
 	misc/macosx/Resources/Makefile
 	misc/macosx/Resources/ReadMe.rtfd/Makefile
 	misc/macosx/Resources/Welcome.rtfd/Makefile
 	misc/nsis/Makefile
 	misc/pkgconfig/Makefile
+	misc/pkgconfig/libanalyze.pc
 	misc/pkgconfig/libbn.pc
 	misc/pkgconfig/libbrlcad.pc
 	misc/pkgconfig/libbu.pc
@@ -4023,6 +4030,7 @@ AC_CONFIG_FILES([
 	src/java/mil/army/arl/Makefile
 	src/java/mil/army/arl/brlcad/Makefile
 	src/lgt/Makefile
+	src/libanalyze/Makefile
 	src/libbn/Makefile
 	src/libbu/Makefile
 	src/libcursor/Makefile

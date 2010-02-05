@@ -53,10 +53,16 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
     struct rt_comb_internal *comb;
     int node_count;
     static const char *usage = "comb";
+    const char *editstring;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
+    /* First, grab the editstring off of the argv list */
+    editstring = argv[0];
+    argc--;
+    argv++;
+    
     /* initialize result */
     bu_vls_trunc(&gedp->ged_result_str, 0);
 
@@ -123,7 +129,7 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
     (void)fclose(fp);
 
     /* Edit the file */
-    if (ged_editit(_ged_tmpfil)) {
+    if (_ged_editit(editstring, _ged_tmpfil)) {
 	/* specifically avoid CHECK_READ_ONLY; above so that
 	 * we can delay checking if the geometry is read-only
 	 * until here so that red may be used to view objects.
@@ -181,7 +187,7 @@ ged_find_keyword(int i, char *line, char *word)
 {
     char *ptr1;
     char *ptr2;
-    int j;
+    size_t j;
 
     /* find the keyword */
     ptr1 = strstr( &line[i], word );
@@ -227,7 +233,7 @@ ged_check_comb(struct ged *gedp)
     int rgb_valid;
 
     if ( (fp=fopen( _ged_tmpfil, "r" )) == NULL ) {
-	perror( "MGED" );
+	perror("fopen");
 	bu_vls_printf(&gedp->ged_result_str, "Cannot open temporary file for reading\n");
 	return -1;
     }
@@ -266,7 +272,7 @@ ged_check_comb(struct ged *gedp)
 
 	if ( (ptr=ged_find_keyword(i, line, "NAME" ) ) ) {
 	    if ( gedp->ged_wdbp->dbip->dbi_version < 5 ) {
-		int len;
+		size_t len;
 
 		len = strlen( ptr );
 		if ( len > NAMESIZE ) {
@@ -388,7 +394,7 @@ ged_check_comb(struct ged *gedp)
 			name_v4[j] = '\0';
 		    name = name_v4;
 		} else {
-		    int len;
+		    size_t len;
 
 		    len = strlen( ptr );
 		    name_v5 = (char *)bu_malloc( len+1, "name_v5" );
@@ -743,7 +749,7 @@ ged_build_comb(struct ged *gedp, struct rt_comb_internal *comb, struct directory
 	    if (gedp->ged_wdbp->dbip->dbi_version < 5)
 		i = NAMESIZE;
 	    else
-		i = strlen(name);
+		i = (int)strlen(name);
 	    while (isspace(name[--i]))
 		name[i] = '\0';
 
@@ -860,7 +866,7 @@ ged_write_comb(struct ged *gedp, const struct rt_comb_internal *comb, const char
 
     /* open the file */
     if ((fp=fopen(_ged_tmpfil, "w")) == NULL) {
-	perror("MGED");
+	perror("fopen");
 	bu_vls_printf(&gedp->ged_result_str, "ged_write_comb: Cannot open temporary file for writing\n");
 	return GED_ERROR;
     }

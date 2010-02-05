@@ -99,9 +99,9 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
     int	o_pipe[2];	/* object writes view parameters */
     int	e_pipe[2];	/* object reads textual results */
 #else
-    HANDLE	i_pipe[2], pipe_iDup;	/* MGED reads results for building vectors */
-    HANDLE	o_pipe[2], pipe_oDup;	/* MGED writes view parameters */
-    HANDLE	e_pipe[2], pipe_eDup;	/* MGED reads textual results */
+    HANDLE	i_pipe[2], pipe_iDup;	/* READS results for building vectors */
+    HANDLE	o_pipe[2], pipe_oDup;	/* WRITES view parameters */
+    HANDLE	e_pipe[2], pipe_eDup;	/* READS textual results */
     STARTUPINFO si;
     PROCESS_INFORMATION pi;
     SECURITY_ATTRIBUTES sa;

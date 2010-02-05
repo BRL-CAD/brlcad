@@ -390,7 +390,7 @@ namespace brlcad {
 	VertKey k = make_pair(de, index);
 	VertMap::iterator i = vertices.find(k);
 	if (i == vertices.end()) {
-	    // XXX: fix this...
+	    // FIXME: ...
 
 	    ParameterData params;
 	    _iges->getParameter(de->paramData(), params);
@@ -406,7 +406,7 @@ namespace brlcad {
 	    pt[Y] = params.getReal(i+1);
 	    pt[Z] = params.getReal(i+2);
 
-	    // XXX: xform matrix application?
+	    // xform matrix application?
 	    vertices[k] = handleVertex(pt);
 	    return vertices[k];
 	} else {

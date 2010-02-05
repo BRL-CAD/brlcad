@@ -678,6 +678,7 @@ static struct go_cmdtab go_cmds[] = {
     {"dbconcat",	(char *)0, MAXARGS, go_pass_through_func, ged_concat},
     {"dbfind",	(char *)0, MAXARGS, go_pass_through_func, ged_find},
     {"dbip",	(char *)0, MAXARGS, go_pass_through_func, ged_dbip},
+    {"dbot_dump",	(char *)0, MAXARGS, go_pass_through_func, ged_dbot_dump},
     {"decompose",	(char *)0, MAXARGS, go_pass_through_func, ged_decompose},
     {"delay",	(char *)0, MAXARGS, go_pass_through_func, ged_delay},
     {"delete_view",	"vname", MAXARGS, go_delete_view, GED_FUNC_PTR_NULL},
@@ -2249,7 +2250,6 @@ go_data_arrows(struct ged *gedp,
 	}
 
 	if (argc == 4) {
-	    int ret;
 	    int ac;
 	    const char **av;
 
@@ -2498,7 +2498,6 @@ go_data_axes(struct ged *gedp,
 	}
 
 	if (argc == 4) {
-	    int ret;
 	    int ac;
 	    const char **av;
 
@@ -2661,7 +2660,6 @@ go_data_labels(struct ged *gedp,
 	}
 
 	if (argc == 4) {
-	    int ret;
 	    int ac;
 	    const char **av;
 
@@ -2893,7 +2891,6 @@ go_data_lines(struct ged *gedp,
 	}
 
 	if (argc == 4) {
-	    int ret;
 	    int ac;
 	    const char **av;
 
@@ -2962,7 +2959,6 @@ go_data_move(struct ged *gedp,
 	     const char *usage,
 	     int maxargs)
 {
-    register int i;
     int mx, my;
     int dindex;
     fastf_t cx, cy;

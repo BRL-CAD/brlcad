@@ -54,10 +54,10 @@
 #  define EXPAND_IN_STRING_INTERN(x) #x
 #endif
 
-/* XXX - this is bogus, fixed path should not be in any source file */
+/* FIXME: this is bogus, fixed path should not be in any source file */
 #define INSTALL_DIRECTORY    "C:/brlcad" MAJOR_VERSION_STRING "_" MINOR_VERSION_STRING "_" PATCH_VERSION_STRING
 
-/* XXX - this is bogus, should not need to manually set the version in here */
+/* FIXME: this is bogus, should not need to manually set the version in here */
 #define IWIDGETS_VERSION  "4.0.2"
 
 /*
@@ -258,6 +258,10 @@ typedef unsigned short uint16_t;
 
 #undef DELETE
 #undef complex
+
+#ifndef STDIN_FILENO
+#   define STDIN_FILENO 0
+#endif
 
 /*
  * faking it

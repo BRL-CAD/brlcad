@@ -192,7 +192,7 @@ __BEGIN_DECLS
 #include "tcl.h"	/* Included for Tcl_Interp definition */
 #include "magic.h"
 
-/*XXX Temporary global interp */
+/* FIXME Temporary global interp.  Remove me.  */
 BU_EXPORT extern Tcl_Interp *brlcad_interp;
 
 /**
@@ -1765,12 +1765,15 @@ BU_EXPORT extern int bu_debug;
  * Files using bu_offsetof or bu_offsetofarray will need to include
  * stddef.h in order to get offsetof()
  */
+/* FIXME - this is a temporary cast. The bu_structparse sp_offset member
+ *         should be a size_t.
+ */
 #ifndef offsetof
 #  define bu_offsetof(_t, _m) (size_t)(&(((_t *)0)->_m))
 #  define bu_offsetofarray(_t, _m) (size_t)((((_t *)0)->_m))
 #else
-#  define bu_offsetof(_t, _m) offsetof(_t, _m)
-#  define bu_offsetofarray(_t, _m) offsetof(_t, _m[0])
+#  define bu_offsetof(_t, _m) (long)offsetof(_t, _m)
+#  define bu_offsetofarray(_t, _m) (long)offsetof(_t, _m[0])
 #endif
 
 
@@ -1803,7 +1806,11 @@ BU_EXPORT extern int bu_debug;
 #        endif
 #      else
 /* "Conservative" way of finding # bytes as diff of 2 char ptrs */
-#        define bu_byteoffset(_i)	((size_t)(((char *)&(_i))-((char *)0)))
+#        if defined(_WIN32) && !defined(__CYGWIN__)
+#          define bu_byteoffset(_i)	((long)(((char *)&(_i))-((char *)0)))
+#        else
+#          define bu_byteoffset(_i)	((size_t)(((char *)&(_i))-((char *)0)))
+#        endif
 #      endif
 #    endif
 #  endif
@@ -3138,7 +3145,7 @@ BU_EXPORT BU_EXTERN(void bu_log_indent_vls, (struct bu_vls *v));
  * processed.  Typcially, these hook functions will display the output
  * (possibly in an X window) or record it.
  *
- * XXX The hook functions are all non-PARALLEL.
+ * NOTE: The hook functions are all non-PARALLEL.
  */
 BU_EXPORT BU_EXTERN(void bu_log_add_hook, (bu_hook_t func, genptr_t clientdata));
 
@@ -4509,7 +4516,8 @@ BU_EXPORT BU_EXTERN(char *bu_vls_addr,
  * b u _ v l s _ e x t e n d
  *
  * Ensure that the provided VLS has at least 'extra' characters of
- * space available.
+ * space available.  Additional space is allocated in minimum step
+ * sized amounts and may allocate more than requested.
  */
 BU_EXPORT BU_EXTERN(void bu_vls_extend,
 		    (struct bu_vls *vp,
@@ -4677,7 +4685,7 @@ BU_EXPORT BU_EXTERN(void bu_vls_vlscatzap,
 /**
  * b u _ v l s _ s t r c m p
  *
- * Lexicographically compare to vls strings.  Returns an integer
+ * Lexicographically compare two vls strings.  Returns an integer
  * greater than, equal to, or less than 0, according as the string s1
  * is greater than, equal to, or less than the string s2.
  */

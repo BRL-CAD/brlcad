@@ -122,7 +122,7 @@ brep_newton_iterate(const ON_Surface* surf, plane_ray& pr, pt2d_t R, ON_3dVector
 	mat2d_pt2d_mul(tmp, inv_jacob, R);
 	pt2dsub(out_uv, uv, tmp);
     } else {
-	TRACE2("inverse failed"); // XXX how to handle this?
+	TRACE2("inverse failed"); // FIXME: how to handle this?
 	move(out_uv, uv);
     }
 }
@@ -355,7 +355,7 @@ printMatrix(Array1D<double>& m) {
 }
 
 
-// XXX: this function sucks...
+// FIXME: this function sucks...
 void
 generateParameters(BSpline& bspline)
 {
@@ -675,8 +675,6 @@ interpolateCurve(ON_2dPointArray &samples)
 	generateParameters(spline);
 	generateControlPoints(spline, samples);
 	ON_NurbsCurve* nurbs = newNURBSCurve(spline);
-
-	// XXX - attempt to simplify here!
 
 	return nurbs;
     } else {

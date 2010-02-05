@@ -452,6 +452,7 @@ rt_cline_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_
     fastf_t inner_radius;
     int i;
 
+    BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
     cline_ip = (struct rt_cline_internal *)ip->idb_ptr;
     RT_CLINE_CK_MAGIC(cline_ip);

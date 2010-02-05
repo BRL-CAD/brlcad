@@ -466,7 +466,7 @@ struct rt_sketch_internal
 				 	 * as endpoints, centers, or
 				 	 * spline control points.
 					 */
-/* XXX this should have a distinctive name, like rt_curve */
+/* FIXME: this should have a distinctive name, like rt_curve */
     struct curve {
 	int		seg_count;	/**< @brief  number of segments in this curve */
 	int		*reverse;	/**< @brief  array of ints indicating if segment should be reversed */
@@ -552,25 +552,45 @@ struct rt_cline_internal
 
 struct rt_bot_internal
 {
-    unsigned long	magic;
-    unsigned char	mode;
-    unsigned char	orientation;
-    unsigned char	bot_flags;		/**< @brief  flags, (indicates surface normals available, for example) */
-    int		num_vertices;
-    int		num_faces;
-    int		*faces;				/**< @brief  array of ints for faces [num_faces*3] */
-    fastf_t		*vertices;		/**< @brief  array of floats for vertices [num_vertices*3] */
-    fastf_t		*thickness;		/**< @brief  array of plate mode thicknesses (corresponds to array of faces)
-						 * NULL for modes RT_BOT_SURFACE and RT_BOT_SOLID.
-						 */
-    struct bu_bitv	*face_mode;		/**< @brief  a flag for each face indicating thickness is appended to hit point
-						 * in ray direction (if bit is set), otherwise thickness is centered
-						 * about hit point (NULL for modes RT_BOT_SURFACE and RT_BOT_SOLID).
-						 */
-    int		num_normals;
-    fastf_t		*normals;		/**< @brief  array of unit surface normals [num_normals*3] */
-    int		num_face_normals;		/**< @brief  current size of the face_normals array below (number of faces in the array) */
-    int		*face_normals;			/**< @brief  array of indices into the "normals" array, one per face vertex [num_face_normals*3] */
+    unsigned long magic;
+    unsigned char mode;
+    unsigned char orientation;
+    unsigned char bot_flags;	/**< @brief flags, (indicates surface
+				 * normals available, for example)
+				 */
+    int num_vertices;
+    int num_faces;
+    int *faces;			/**< @brief array of ints for faces
+				 * [num_faces*3]
+				 */
+    fastf_t *vertices;		/**< @brief array of floats for
+				 * vertices [num_vertices*3]
+				 */
+    fastf_t *thickness;		/**< @brief array of plate mode
+				 * thicknesses (corresponds to array
+				 * of faces) NULL for modes
+				 * RT_BOT_SURFACE and RT_BOT_SOLID.
+				 */
+    struct bu_bitv *face_mode;	/**< @brief a flag for each face
+				 * indicating thickness is appended to
+				 * hit point in ray direction (if bit
+				 * is set), otherwise thickness is
+				 * centered about hit point (NULL for
+				 * modes RT_BOT_SURFACE and
+				 * RT_BOT_SOLID).
+				 */
+    int num_normals;
+    fastf_t *normals;		/**< @brief array of unit surface
+				 * normals [num_normals*3]
+				 */
+    int num_face_normals;	/**< @brief current size of the
+				 * face_normals array below (number of
+				 * faces in the array)
+				 */
+    int *face_normals;		/**< @brief array of indices into the
+				 * "normals" array, one per face
+				 * vertex [num_face_normals*3]
+				 */
 };
 
 /* orientationss for BOT */

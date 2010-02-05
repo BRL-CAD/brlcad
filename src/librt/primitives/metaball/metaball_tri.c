@@ -65,7 +65,7 @@
 extern int mc_edges[256];
 
 /* TODO: make a real header entry once the signature is good... */
-int rt_nmg_mc_realize_cube(struct shell *s, int pv, point_t *p, point_t *edges);
+int rt_nmg_mc_realize_cube(struct shell *s, int pv, point_t *p, point_t *edges, const struct bn_tol *tol);
 
 /**
  * R T _ M E T A B A L L _ T E S S
@@ -82,6 +82,7 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
     struct bu_vls times;
     struct wdb_metaballpt *mbpt;
     struct shell *s;
+    int numtri = 0;
 
     if (r) *r = NULL;
     if (m) NMG_CK_MODEL(m);
@@ -113,7 +114,6 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
 
     *r = nmg_mrsv(m);	/* new empty nmg */
     s = BU_LIST_FIRST(shell, &(*r)->s_hd);
-    bu_log("Booyeah!\n");
 
     /* the incredibly naïve approach. Time could be cut in half by simply
      * caching 4 point values, more by actually marching or doing active
@@ -127,14 +127,14 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
 
 		/* generate the vertex values */
 #define MEH(c,di,dj,dk) VSET(p[c], i+di, j+dj, k+dk); pv |= rt_metaball_point_inside((const point_t *)&p[c], mb) << c;
-		MEH(0, 0, 0, 0);
-		MEH(1, 0, 0, mtol);
-		MEH(2, 0, mtol, 0);
-		MEH(3, 0, mtol, mtol);
-		MEH(4, mtol, 0, 0);
-		MEH(5, mtol, 0, mtol);
+		MEH(0, 0, 0, mtol);
+		MEH(1, mtol, 0, mtol);
+		MEH(2, mtol, 0, 0);
+		MEH(3, 0, 0, 0);
+		MEH(4, 0, mtol, mtol);
+		MEH(5, mtol, mtol, mtol);
 		MEH(6, mtol, mtol, 0);
-		MEH(7, mtol, mtol, mtol);
+		MEH(7, 0, mtol, 0);
 #undef MEH
 
 		if ( pv != 0 && pv != 255 ) {	/* entire cube is either inside or outside */
@@ -160,22 +160,22 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
 		    MEH(11,3,7);
 #undef MEH
 
-		    rval = rt_nmg_mc_realize_cube(s, pv, (point_t *)p, (point_t *)edges);
-		    if(rval) {
+		    rval = rt_nmg_mc_realize_cube(s, pv, (point_t *)p, (point_t *)edges, tol);
+		    numtri += rval;
+		    if(rval < 0) {
 			bu_log("Error attempting to realize a cube O.o\n");
 			return rval;
 		    }
 		}
 	    }
 
-    rt_get_timer(&times, NULL);
-    bu_log("metaball tesselate: %s\n", bu_vls_addr(&times));
-
     nmg_mark_edges_real(&s->l.magic);
     nmg_region_a(*r, tol);
 
-    bu_log("ERROR: rt_metaball_tess called() is not implemented\n");
-    return -1;
+    rt_get_timer(&times, NULL);
+    bu_log("metaball tesselate (%d triangles): %s\n", numtri, bu_vls_addr(&times));
+
+    return 0;
 }
 
 /*
