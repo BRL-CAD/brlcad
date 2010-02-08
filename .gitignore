@@ -1,8 +1,3 @@
-/Makefile.in
 /Makefile
-/libtool.m4
-/lt~obsolete.m4
-/ltsugar.m4
-/ltversion.m4
-/ltoptions.m4
-
+/Makefile.in
+/brlcadversion.h
