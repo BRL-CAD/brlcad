@@ -422,6 +422,36 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
     return retval;
 }
 
+inline void
+rt_metaball_norm_internal(vect_t *n, point_t *p, struct rt_metaball_internal *mb)
+{
+    struct wdb_metaballpt *mbpt;
+    vect_t v;
+    fastf_t a;
+
+    VSETALL(*n, 0.0);
+
+    switch (mb->method) {
+	case METABALL_METABALL: bu_log("Sorry, strict metaballs are not yet implemented\n");
+	    break;
+	case METABALL_ISOPOTENTIAL:
+	    for (BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_ctrl_head)) {
+		VSUB2(v, *p, mbpt->coord);
+		a = MAGSQ(v);
+		VJOIN1(*n, *n, fabs(mbpt->fldstr)*mbpt->fldstr / (SQ(a)), v);	/* f/r^4 */
+	    }
+	    break;
+	case METABALL_BLOB:
+	    for (BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_ctrl_head)) {
+		VSUB2(v, *p, mbpt->coord);
+		a = MAGSQ(v);
+		VJOIN1(*n, *n, 2.0*mbpt->sweat/SQ(mbpt->fldstr)*exp(mbpt->sweat*(1-(a/SQ(mbpt->fldstr)))) , v);
+	    }
+	    break;
+	default: bu_log("unknown metaball method\n"); break;
+    }
+    VUNITIZE(*n);
+}
 
 /**
  * R T _ M E T A B A L L _ N O R M
@@ -431,35 +461,8 @@ rt_metaball_shot(struct soltab *stp, register struct xray *rp, struct applicatio
 void
 rt_metaball_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
 {
-    struct rt_metaball_internal *mb = stp->st_specific;
-    struct wdb_metaballpt *mbpt;
-    vect_t v;
-    fastf_t a;
-
-    if (rp) RT_CK_RAY(rp);
-
-    VSETALL(hitp->hit_normal, 0.0);
-
-    switch (mb->method) {
-	case METABALL_METABALL: bu_log("Sorry, strict metaballs are not yet implemented\n");
-	    break;
-	case METABALL_ISOPOTENTIAL:
-	    for (BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_ctrl_head)) {
-		VSUB2(v, hitp->hit_point, mbpt->coord);
-		a = MAGSQ(v);
-		VJOIN1(hitp->hit_normal, hitp->hit_normal, fabs(mbpt->fldstr)*mbpt->fldstr / (SQ(a)), v);	/* f/r^4 */
-	    }
-	    break;
-	case METABALL_BLOB:
-	    for (BU_LIST_FOR(mbpt, wdb_metaballpt, &mb->metaball_ctrl_head)) {
-		VSUB2(v, hitp->hit_point, mbpt->coord);
-		a = MAGSQ(v);
-		VJOIN1(hitp->hit_normal, hitp->hit_normal, 2.0*mbpt->sweat/SQ(mbpt->fldstr)*exp(mbpt->sweat*(1-(a/SQ(mbpt->fldstr)))) , v);
-	    }
-	    break;
-	default: bu_log("unknown metaball method\n"); break;
-    }
-    VUNITIZE(hitp->hit_normal);
+    if (rp) RT_CK_RAY(rp);	/* unused. */
+    rt_metaball_norm_internal(&(hitp->hit_normal), &(hitp->hit_point), (struct rt_metaball_internal *)(stp->st_specific));
     return;
 }
 
