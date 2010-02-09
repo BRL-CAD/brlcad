@@ -26,9 +26,6 @@ Recent Bugs
   tclscripts/mged/tclIndex for examples:
   https://sourceforge.net/tracker/?func=detail&atid=640802&aid=2923199&group_id=105292
 
-* mged-invoked EDITOR locks up mged without a controlling terminal due
-  to lacking knowledge of needing to invoke xterm.
-
 * vdeck truncates the region names in the 'regions' file, probably
   wrong bu_strlcpy() length.
 
