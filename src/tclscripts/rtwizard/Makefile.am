@@ -4,7 +4,8 @@ SUBDIRS = examples lib
 this_dir = tclscripts/rtwizard
 tcldir = $(BRLCAD_DATA)/$(this_dir)
 
-scripties = RaytraceWizard.tcl
+dist_bin_SCRIPTS = \
+	rtwizard
 
 BUILT_SOURCES = \
 	pkgIndex.tcl \
@@ -12,11 +13,17 @@ BUILT_SOURCES = \
 
 tcl_SCRIPTS = \
 	$(BUILT_SOURCES) \
-	$(scripties)
+	RaytraceWizard.tcl \
+	rtwizard.bat \
+	rtwizard.tcl
 
 EXTRA_DIST = $(tcl_SCRIPTS)
 
-# CLEANFILES = $(BUILT_SOURCES)
+rtwizard: rtwizard.tcl
+	cp $(top_srcdir)/src/tclscripts/rtwizard/rtwizard.tcl rtwizard
+
+CLEANFILES = rtwizard
+
 
 pkgIndex.tcl:
 	TCL_LIBRARY=$(top_srcdir)/src/other/tcl/library \

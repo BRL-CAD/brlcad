@@ -164,9 +164,7 @@ noinst_PROGRAMS = \
 	${PC_TEST} \
 	roots_example
 
-
 dist_bin_SCRIPTS = \
-	rtwizard \
 	morphedit.tcl
 
 
@@ -572,11 +570,6 @@ xyz_pl_LDADD = ${BN} ${BU}
 yuv_pix_SOURCES = yuv-pix.c
 yuv_pix_LDADD = ${FB} ${BN} ${BU}
 
-rtwizard: rtwizard.tcl
-	cp $(top_srcdir)/src/util/rtwizard.tcl rtwizard
-
-CLEANFILES = rtwizard
-
 man_MANS = \
 	ap-pix.1 \
 	asc-pl.1 \
@@ -687,9 +680,7 @@ EXTRA_DIST = \
 	${BOMBARDIER_EXTRA} \
 	${PC_TEST_EXTRA} \
 	${PL_DM_EXTRA} \
-	${PL_X_EXTRA} \
-	rtwizard.bat \
-	rtwizard.tcl
+	${PL_X_EXTRA}
 
 DEPENDS = src/liborle src/libdm src/libfb src/libpc
 
