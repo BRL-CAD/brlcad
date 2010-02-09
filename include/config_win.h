@@ -259,10 +259,6 @@ typedef unsigned short uint16_t;
 #undef DELETE
 #undef complex
 
-#ifndef STDIN_FILENO
-#   define STDIN_FILENO 0
-#endif
-
 /*
  * faking it
  */
@@ -276,6 +272,37 @@ typedef unsigned short uint16_t;
 /*  Microsoft specific inline specifier */
 #   define inline __inline
 #endif /* not __cplusplus */
+
+/*
+ * defines for stdin/stdout/stderr file numbers
+ */
+
+#ifndef STDIN_FILENO
+#  ifdef _STDIN_FILENO
+#    define STDIN_FILENO _STDIN_FILENO
+#  endif
+#endif
+#ifndef STDIN_FILENO
+#  define STDIN_FILENO _fileno(stdin)
+#endif
+
+#ifndef STDOUT_FILENO
+#  ifdef _STDOUT_FILENO
+#    define STDOUT_FILENO _STDOUT_FILENO
+#  endif
+#endif
+#ifndef STDOUT_FILENO
+#  define STDOUT_FILENO _fileno(stdout)
+#endif
+
+#ifndef STDERR_FILENO
+#  ifdef _STDERR_FILENO
+#    define STDERR_FILENO _STDERR_FILENO
+#  endif
+#endif
+#ifndef STDERR_FILENO
+#  define STDERR_FILENO _fileno(stderr)
+#endif
 
 #endif /* if defined(_WIN32) */
 #endif /* ifndef IGNORE_CONFIG_H */
