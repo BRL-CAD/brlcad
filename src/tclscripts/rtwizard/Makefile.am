@@ -4,7 +4,7 @@ SUBDIRS = examples lib
 this_dir = tclscripts/rtwizard
 tcldir = $(BRLCAD_DATA)/$(this_dir)
 
-scripties = rtwizard.tcl
+scripties = RaytraceWizard.tcl
 
 BUILT_SOURCES = \
 	pkgIndex.tcl \

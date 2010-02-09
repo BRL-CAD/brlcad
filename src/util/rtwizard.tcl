@@ -20,7 +20,7 @@
 #
 ###
 #
-# rtwizard - Shell wrapper for the rtwizard.tcl script
+# rtwizard wrapper script to make things seem normal
 #
 # The trailing backslash forces tcl to skip the next line \
 exec bwish "$0" "$@"
@@ -29,7 +29,7 @@ exec bwish "$0" "$@"
 # Begin Tcl here!
 #
 foreach i $auto_path {
-    set wizpath [ file join $i {..} tclscripts rtwizard rtwizard.tcl ]
+    set wizpath [ file join $i {..} tclscripts rtwizard RaytraceWizard.tcl ]
     if { [file exists $wizpath] } {
 	source $wizpath
 	exit

@@ -28,7 +28,7 @@ SET CAD_VERSION=7.16.6
 SET SAVE_CD=%CD%
 SET PATH=%~dp0
 CD %PATH%\..
-SET RTWIZARD=%CD%\share\brlcad\%CAD_VERSION%\tclscripts\rtwizard\rtwizard.tcl
+SET RTWIZARD=%CD%\share\brlcad\%CAD_VERSION%\tclscripts\rtwizard\RaytraceWizard.tcl
 CD %SAVE_CD%
 
 START /B bwish "%RTWIZARD%" %1
