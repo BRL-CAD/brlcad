@@ -1,4 +1,4 @@
-#                    R T W I Z A R D . T C L
+#               R A Y T R A C E W I Z A R D . T C L
 # BRL-CAD
 #
 # Copyright (c) 2004-2010 United States Government as represented by
@@ -19,10 +19,8 @@
 #
 ###
 #
-# This is the main script for the RtWizard.
+# This is the main script for the RaytraceWizard.
 #
-# The development version codename is "Danube"
-# The final version will be "Defiant" ;-)
 
 #
 # Extend Autopath
@@ -37,9 +35,9 @@ foreach i $auto_path {
 
 
 #
-# All RtWizard stuff is in the RtWizard namespace
+# All RaytraceWizard stuff is in the RaytraceWizard namespace
 #
-namespace eval RtWizard {
+namespace eval RaytraceWizard {
 
     #
     # Required packages. There are several!
@@ -87,7 +85,7 @@ namespace eval RtWizard {
 	# Create the Feedback
 	#
 	set fb [ FeedbackDialog .\#auto \
-		     -title "Loading RtWizard ..." \
+		     -title "Loading rtwizard ..." \
 		     -width 250 \
 		     -height 100 ]
 
@@ -98,7 +96,7 @@ namespace eval RtWizard {
 	#
 	# Create the wizard
 	#
-	set w [ RtWizard::Wizard .\#auto ]
+	set w [ RaytraceWizard::Wizard .\#auto ]
 	$fb inform "Wizard megawidget created" 5
 
 	#
@@ -111,24 +109,24 @@ namespace eval RtWizard {
 	#
 
 	# Database Page
-	set ::dbp [$w add RtWizard::DbPage "dbp"]
+	set ::dbp [$w add RaytraceWizard::DbPage "dbp"]
 	$w enable "dbp"
 	$fb inform "Database page created." 6
 
 	# Framebuffer Page
-	set ::fbp [$w add RtWizard::FbPage "fbp"]
+	set ::fbp [$w add RaytraceWizard::FbPage "fbp"]
 	$w enable "fbp"
 	$fb inform "Frame buffer page created." 4
 
-	$w add RtWizard::IntroPage "intro"
+	$w add RaytraceWizard::IntroPage "intro"
 	$w enable "intro"
 	$fb inform "Intro page created." 4
 
-	$w add RtWizard::HelpPage "help"
+	$w add RaytraceWizard::HelpPage "help"
 	$w enable "help"
 	$fb inform "Help page created" 4
 
-	set ::exp [$w add RtWizard::ExamplePage "exp"]
+	set ::exp [$w add RaytraceWizard::ExamplePage "exp"]
 	$w enable "exp"
 	$fb inform "Example page created" 4
 
@@ -138,22 +136,22 @@ namespace eval RtWizard {
 	# radiobox in the "Image" menu. The "switch" for
 	# the picture type is maintained by the ExamplePage
 	#
-	$::exp addType RtWizard::PictureTypeA typeA
+	$::exp addType RaytraceWizard::PictureTypeA typeA
 	$fb inform "Support for image type A loaded." 1
 
-	$::exp addType RtWizard::PictureTypeB typeB
+	$::exp addType RaytraceWizard::PictureTypeB typeB
 	$fb inform "Support for image type B loaded." 1
 
-	$::exp addType RtWizard::PictureTypeC typeC
+	$::exp addType RaytraceWizard::PictureTypeC typeC
 	$fb inform "Support for image type C loaded." 1
 
-	$::exp addType RtWizard::PictureTypeD typeD
+	$::exp addType RaytraceWizard::PictureTypeD typeD
 	$fb inform "Support for image type D loaded." 1
 
-	$::exp addType RtWizard::PictureTypeE typeE
+	$::exp addType RaytraceWizard::PictureTypeE typeE
 	$fb inform "Support for image type E loaded." 2
 
-	$::exp addType RtWizard::PictureTypeF typeF
+	$::exp addType RaytraceWizard::PictureTypeF typeF
 	$fb inform "Support for image type F loaded." 2
 
 	#
@@ -170,13 +168,13 @@ namespace eval RtWizard {
 	# file to be specified.
 	#
 	if { [llength $args] > 0 } {
-	    set ::RtWizard::dbFile [ lindex $args 0 ]
-	    if { ! [file exists $::RtWizard::dbFile] } {
-		set ::RtWizard::dbFile ""
+	    set ::RaytraceWizard::dbFile [ lindex $args 0 ]
+	    if { ! [file exists $::RaytraceWizard::dbFile] } {
+		set ::RaytraceWizard::dbFile ""
 	    }
 	}
 
-	if { [string length $::RtWizard::dbFile] == 0 } {
+	if { [string length $::RaytraceWizard::dbFile] == 0 } {
 	    #
 	    # select the database page
 	    #
@@ -191,7 +189,7 @@ namespace eval RtWizard {
 	    # Start up the gui, and run until the dbFile has
 	    # been specified.
 	    #
-	    vwait ::RtWizard::dbFile
+	    vwait ::RaytraceWizard::dbFile
 
 	    #
 	    # Restore the Feedback
@@ -207,22 +205,22 @@ namespace eval RtWizard {
 	# We load the database ourselves and hand it to the
 	# pages.
 	#
-	set ::mgedObj [Mged .\#auto $::RtWizard::dbFile]
+	set ::mgedObj [Mged .\#auto $::RaytraceWizard::dbFile]
 	$::mgedObj configure -multi_pane 0
 	$fb inform "MGED object instantiated." 40
 
-	$w add RtWizard::FullColorPage fullColor $::RtWizard::dbFile
+	$w add RaytraceWizard::FullColorPage fullColor $::RaytraceWizard::dbFile
 	$fb inform "Support for full color images loaded." 5
 
-	$w add RtWizard::HighlightedPage highlighted $::RtWizard::dbFile
+	$w add RaytraceWizard::HighlightedPage highlighted $::RaytraceWizard::dbFile
 	$fb inform "Support for highlighted images loaded." 5
 
-	$w add RtWizard::GhostPage ghost $::RtWizard::dbFile
+	$w add RaytraceWizard::GhostPage ghost $::RaytraceWizard::dbFile
 	$fb inform "Support for ghost images loaded." 5
 
-	$w add RtWizard::LinePage lines $::RtWizard::dbFile
+	$w add RaytraceWizard::LinePage lines $::RaytraceWizard::dbFile
 	$w select "exp"
-	$fb inform "RtWizard ready!!." 5
+	$fb inform "rtwizard ready!" 5
 
 	#
 	# Pause...
@@ -242,7 +240,7 @@ namespace eval RtWizard {
 #
 # Start main
 #
-RtWizard::main $argv
+RaytraceWizard::main $argv
 
 
 # Local Variables:
