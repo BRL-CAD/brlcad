@@ -19,6 +19,10 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * test the EDITOR invocation
 
+* 64-bit port of BRL-CAD on Windows
+
+* Mac OS X 10.5+ X11 input bug
+
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
@@ -34,8 +38,6 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 * investigate tessellation failures (Stryker, et al), possibily due to
   recent tolerance checks.
-
-* 64-bit port of BRL-CAD on Windows
 
 * annotation primitive.  specifically a means to create an object in
   the database that can optionally be associated with an object and/or
