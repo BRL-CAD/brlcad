@@ -14,7 +14,7 @@ changes made.  See document footer for additional details.
 ----------------------------------------------------------------------
 
 * added initial manual page documentation for rtwizard - Sean Morrison
-* Metaball tesselation is now implemented - Erik Greenwald
+* support for metaball conversion to polygonal format - Erik Greenwald
 
 
 ----------------------------------------------------------------------
@@ -28,7 +28,6 @@ Jesica Guidice has translated 4 of MGED's 16 introductory tutorials to
 Spanish.  Cliff Yapp continues to work extensively with both to get
 their efforts integrated so that HTML and PDF documentation are
 cleanly generated.
-
 
 * added dbot_dump to Archer for dumping displayed BoTs - Bob Parker
 * added support to Archer for exporting view in OBJ format - Bob Parker
