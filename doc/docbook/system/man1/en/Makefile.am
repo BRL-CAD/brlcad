@@ -180,6 +180,7 @@ man1DOCBOOK_EN = \
 	system/man1/en/rtarea.xml \
 	system/man1/en/rtcheck.xml \
 	system/man1/en/rtedge.xml \
+	system/man1/en/rtwizard.xml \
 	system/man1/en/savekey.xml \
 	system/man1/en/saveview.xml \
 	system/man1/en/sca.xml \
