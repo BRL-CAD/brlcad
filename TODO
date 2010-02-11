@@ -17,7 +17,7 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* test the EDITOR invocation
+* fix EDITOR invocation in "mged -c"
 
 * 64-bit port of BRL-CAD on Windows
 
