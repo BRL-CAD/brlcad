@@ -108,8 +108,8 @@ bu_bomb(const char *str)
 	fd = open("/dev/tty", 1);
 	if (fd > 0) {
 	    if (str && (strlen(str) > 0)) {
-		write(fd, str, strlen(str));
-		write(fd, "\n", 1);
+		(void)write(fd, str, strlen(str));
+		(void)write(fd, "\n", 1);
 	    }
 	    close(fd);
 	}
@@ -154,7 +154,7 @@ bu_bomb(const char *str)
 
 	fd = open("/dev/tty", 1);
 	if (fd > 0) {
-	    write(fd, "Causing intentional core dump due to debug flag\n", 48);
+	    (void)write(fd, "Causing intentional core dump due to debug flag\n", 48);
 	    close(fd);
 	}
 	abort();	/* should dump if ulimit is non-zero */
