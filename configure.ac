@@ -417,7 +417,6 @@ BC_ARG_ALIAS([build_strict], [strict])
 BC_ARG_ALIAS([build_strict], [strict-compile])
 BC_ARG_ALIAS([build_strict], [strict-compile-flags])
 
-
 # Docbook documentation (help uses documentation)
 BC_ARG_ALIAS([build_docs], [documentation-install])
 BC_ARG_ALIAS([build_docs], [docs])
