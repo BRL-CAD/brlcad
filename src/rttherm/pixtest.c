@@ -19,10 +19,10 @@
  */
 /** @file pixtest.c
  *
- *  Take an RGB .pix file, convert it to spectral form, then sample it back
- *  to RGB and output it as a .pix file.
- *  A tool for testing the spectral conversion routines and the
- *  underlying libraries.
+ * This is a tool for testing the spectral conversion routines and the
+ * underlying libraries.  Take an RGB .pix file, convert it to
+ * spectral form, then sample it back to RGB and output it as a .pix
+ * file.
  *
  */
 
@@ -43,65 +43,66 @@ struct bn_tabdata *curve;
 
 #if 0
 /* Not many samples in visible part of spectrum */
-int	nsamp = 100;
-double	min_nm = 380;
-double	max_nm = 12000;
+int nsamp = 100;
+double min_nm = 380;
+double max_nm = 12000;
 #else
-int	nsamp = 20;
-double	min_nm = 340;
-double	max_nm = 760;
+int nsamp = 20;
+double min_nm = 340;
+double max_nm = 760;
 #endif
 
-struct bn_tabdata	*cie_x;
-struct bn_tabdata	*cie_y;
-struct bn_tabdata	*cie_z;
+struct bn_tabdata *cie_x;
+struct bn_tabdata *cie_y;
+struct bn_tabdata *cie_z;
 
-mat_t			xyz2rgb;
+mat_t xyz2rgb;
 
 int
 main(int ac, char *av)
 {
-    unsigned char	rgb[4];
-    float		src[3];
-    point_t		dest;
-    point_t		xyz;
+    unsigned char rgb[4];
+    float src[3];
+    point_t dest;
+    point_t xyz;
 
-    spectrum = bn_table_make_uniform( nsamp, min_nm, max_nm );
-    BN_GET_TABDATA( curve, spectrum );
+    spectrum = bn_table_make_uniform(nsamp, min_nm, max_nm);
+    BN_GET_TABDATA(curve, spectrum);
 
-    rt_spect_make_CIE_XYZ( &cie_x, &cie_y, &cie_z, spectrum );
-    rt_make_ntsc_xyz2rgb( xyz2rgb );
+    rt_spect_make_CIE_XYZ(&cie_x, &cie_y, &cie_z, spectrum);
+    rt_make_ntsc_xyz2rgb(xyz2rgb);
 
-    for (;;)  {
-	if ( fread(rgb, 1, 3, stdin) != 3 )  break;
-	if ( feof(stdin) )  break;
+    for (;;) {
+	if (fread(rgb, 1, 3, stdin) != 3) break;
+	if (feof(stdin)) break;
 
-	VSET( src, rgb[0]/255., rgb[1]/255., rgb[2]/255. );
+	VSET(src, rgb[0]/255., rgb[1]/255., rgb[2]/255.);
 
-	rt_spect_reflectance_rgb( curve, src );
+	rt_spect_reflectance_rgb(curve, src);
 
-	rt_spect_curve_to_xyz( xyz, curve, cie_x, cie_y, cie_z );
+	rt_spect_curve_to_xyz(xyz, curve, cie_x, cie_y, cie_z);
 
-	MAT3X3VEC( dest, xyz2rgb, xyz );
+	MAT3X3VEC(dest, xyz2rgb, xyz);
 
-	if ( dest[0] > 1 || dest[1] > 1 || dest[2] > 1 ||
-	     dest[0] < 0 || dest[1] < 0 || dest[2] < 0 )  {
+	if (dest[0] > 1 || dest[1] > 1 || dest[2] > 1 ||
+	    dest[0] < 0 || dest[1] < 0 || dest[2] < 0) {
 	    VPRINT("src ", src);
 	    VPRINT("dest", dest);
 	}
 
-	if ( dest[0] > 1 )  dest[0] = 1;
-	if ( dest[1] > 1 )  dest[1] = 1;
-	if ( dest[2] > 1 )  dest[2] = 1;
-	if ( dest[0] < 0 )  dest[0] = 0;
-	if ( dest[1] < 0 )  dest[1] = 0;
-	if ( dest[2] < 0 )  dest[2] = 0;
+	if (dest[0] > 1) dest[0] = 1;
+	if (dest[1] > 1) dest[1] = 1;
+	if (dest[2] > 1) dest[2] = 1;
+	if (dest[0] < 0) dest[0] = 0;
+	if (dest[1] < 0) dest[1] = 0;
+	if (dest[2] < 0) dest[2] = 0;
 
-	VSCALE( rgb, dest, 255.0 );
+	VSCALE(rgb, dest, 255.0);
 
-	fwrite( rgb, 1, 3, stdout );
+	fwrite(rgb, 1, 3, stdout);
     }
 }
+
 
 /*
  * Local Variables:
