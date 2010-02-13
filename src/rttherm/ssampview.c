@@ -253,7 +253,7 @@ getspectrum(ClientData cd, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_ERROR;
     }
 
-    bu_vls_printf(&vls, interp->result, "%g", spectrum->x[wl]);
+    bu_vls_printf(&vls, "%g", spectrum->x[wl]);
     Tcl_SetResult(interp, bu_vls_addr(&vls), TCL_VOLATILE);
     bu_vls_free(&vls);
     return TCL_OK;
