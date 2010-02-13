@@ -1967,12 +1967,18 @@ if test "x$bc_use_debug" != "xno" ; then
 		if test "x$bc_use_debug" = "xyes" ; then
 			dnl debug was requested, so abort
 			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-			AC_MSG_NOTICE([Debug was enabled but -g does not work])
+			AC_MSG_NOTICE([Debug was enabled but cannot find debug flags that work])
 			AC_MSG_ERROR([*** Don't know how to debug with this compiler ***])
 		fi
 		AC_MSG_WARN([Do not know how to debug with this compiler])
 		sleep 1
 	fi
+
+	dnl add -D_FORTIFY_SOURCE=2 to flags. provides compile-time
+	dnl best-practice error checking on certain libc functions
+	dnl (e.g., memcpy), and provides run-time checks on buffer
+	dnl lengths and memory regions.
+	BC_COMPILER_AND_LINKER_RECOGNIZES([-D_FORTIFY_SOURCE=2])
 fi
 
 dnl optimization flags
