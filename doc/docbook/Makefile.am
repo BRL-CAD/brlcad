@@ -77,13 +77,6 @@ CLEANFILES = \
 
 
 EXTRA_DIST = \
-	articles/en/Makefile.am \
-	books/en/Makefile.am \
-	lessons/en/Makefile.am \
-	lessons/es/Makefile.am \
-	specifications/en/Makefile.am \
-	system/man1/en/Makefile.am \
-	system/man3/en/Makefile.am \
 	${articlesDOCBOOK_EN_IMAGES} \
 	${articlesDOCBOOK_EN} \
 	${booksDOCBOOK_EN_IMAGES} \
@@ -98,15 +91,23 @@ EXTRA_DIST = \
 	${mannDOCBOOK_EN} \
 	${specificationsDOCBOOK_EN} \
 	README \
+	articles/en/Makefile.am \
 	articles/en/images/tire_fig12.svg \
 	articles/en/images/tire_fig13.svg \
 	books/README \
+	books/en/Makefile.am \
 	books/en/tutorial_series_authors.xml \
 	catalog.xml \
 	fop.xconf.in \
+	lessons/en/Makefile.am \
+	lessons/es/Makefile.am \
 	resources \
+	specifications/en/Makefile.am \
 	system/README \
+	system/man1/en/Makefile.am \
 	system/man1/mged_cmd_template.xml \
-	system/man3/mged_cmd_template.xml
+	system/man3/en/Makefile.am \
+	system/man3/mged_cmd_template.xml \
+	system/mann/en/Makefile.am
 
 include $(top_srcdir)/misc/Makefile.defs
