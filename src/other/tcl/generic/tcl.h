@@ -19,10 +19,6 @@
 #ifndef _TCL
 #define _TCL
 
-/* Need this for BRL-CAD - it's discouraged, so not sure
- * what we *should* be doing... - needs more work. */
-#define USE_INTERP_RESULT	1
-
 /*
  * For C++ compilers, use extern "C"
  */
