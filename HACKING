@@ -1137,7 +1137,7 @@ bench
 SourceForge and then select them on the sf.net File Release System:
 ssh SFUSERNAME,brlcad@shell.sourceforge.net "create && exit"
 ssh SFUSERNAME,brlcad@shell.sourceforge.net mkdir /home/frs/project/b/br/brlcad/BRL-CAD\ Source/MAJOR.MINOR.PATCH
-scp brlcad-MAJOR.MINOR.PATCH* SFUSERNAME,brlcad@shell.sourceforge.net:/home/frs/project/b/br/brlcad/BRL-CAD\ Source/MAJOR.MINOR.PATCH/.
+scp brlcad-MAJOR.MINOR.PATCH* "SFUSERNAME,brlcad@shell.sourceforge.net:/home/frs/project/b/br/brlcad/BRL-CAD\ Source/MAJOR.MINOR.PATCH/."
 ssh SFUSERNAME,brlcad@shell.sourceforge.net shutdown
 
 13) Increment and commit the next BRL-CAD release numbers to SVN;
