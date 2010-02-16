@@ -1149,35 +1149,33 @@ to an odd-numbered minor version or a new patch developer version
 (e.g. 7.11.0 or 7.4.1).  Update README and NEWS version to next
 _expected_ release number (e.g. 7.12.0 or 7.4.2).
 
-14) Announce the new release.  The NEWS file should generally be used
-as a basis for making release announcements though the announcements
-almost always require modification and customization tailored to the
-particular forum or audience.  If appropriate, notify and/or update
-the following information outlets with the details of the new release:
+14) Announce the new release.
+
+The NEWS file should generally be used as a basis for making release
+announcements though the announcements almost always require
+modification and customization tailored to the particular forum and
+audience.  Always notify the following when a release is made:
+
+      14.1) BRL-CAD Website
+         http://brlcad.org/d/node/add/story
+
+      14.2) BRL-CAD NEWS Mailing List
+         brlcad-news@lists.sourceforge.net
+
+      14.3) BRL-CAD Sourceforge NEWS
+         https://sourceforge.net/news/submit.php?group_id=105292
+
+      14.4) Freshmeat  (anyone can submit update)
+         http://freshmeat.net/projects/BRL-CAD/
+	 short summary without news details (sentence format)
+
+If appropriate, notify and/or update the following information outlets
+with the details of the new release:
 
 Source or binary release:
 
-      Freshmeat  (anyone can submit update)
-      http://freshmeat.net/projects/BRL-CAD/
-	short without news details (sentence format)
-
       T2 package maintainer
       http://t2-project.org/packages/brlcad.html
-
-Binary release (any platform):
-
-      News on the BRL-CAD website
-      http://brlcad.org/
-	with news details
-
-      SourceForge Project News
-      http://sf.net/projects/brlcad/
-	with news details
-
-      BRL-CAD News & Users mailing lists
-      brlcad-news@lists.sourceforge.net
-      brlcad-users@lists.sourceforge.net
-	with news details
 
 Linux binary release:
 
@@ -1204,32 +1202,32 @@ Mac OS X binary release:
       Fink package maintainer
       jack@krass.com
 
-Multiple platform binary release:
+Multiple platform major binary release:
 
-      upFront.ezine (if major)
+      upFront.ezine
       Ralph Grabowski
       ralphg@upfrontezine.com
 	with news details
 
-      CADinfo.NET (if major)
+      CADinfo.NET
       copyboy@cadinfo.net
 	with news details
 
-      TenLinks Daily (if major)
+      TenLinks Daily
       http://www.tenlinks.com/NEWS/tl_daily/submit_news.htm
       news@tenlinks.com
 	with news details
 
-      Slashdot (if major)
+      Slashdot
       http://slashdot.org
 	short without news details
 
-      Government Computer News (if major)
+      Government Computer News
       Joab Jackson
       jjackson@gcn.com
 	short without news details
 
-      DevMaster.net (if major and engine-related)
+      DevMaster.net (if engine-related)
       http://www.devmaster.net/news/submit.php
 
 16) Sit back and enjoy a beverage for a job well done.
