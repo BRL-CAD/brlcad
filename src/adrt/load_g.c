@@ -155,8 +155,6 @@ nmg_to_adrt_regstart(struct db_tree_state *ts, const struct db_full_path *path, 
     struct rt_bot_internal *bot;
     struct adrt_mesh_s *mesh;
 
-    return 0;
-
     RT_CHECK_COMB(rci);
     if(rci->tree == NULL)
 	return 0;
@@ -186,9 +184,8 @@ nmg_to_adrt_regstart(struct db_tree_state *ts, const struct db_full_path *path, 
     */
     strncpy(mesh->name, db_path_to_string(path), 255);
 
-    printf("Fastloading %s\n", mesh->name);
-
     if(intern.idb_minor_type == ID_NMG) {
+	return 0;	/* quick abort until we can make this NMG right. */
         nmg_to_adrt_internal(mesh, (struct nmgregion *)intern.idb_ptr);
 	return -1;
     } else if (intern.idb_minor_type == ID_BOT) {
@@ -199,16 +196,10 @@ nmg_to_adrt_regstart(struct db_tree_state *ts, const struct db_full_path *path, 
 
 	for(i=0;i<bot->num_faces;i++)
 	{
-	    VSCALE((*tribuf[0]).v, &bot->vertices[bot->faces[3*i+0]], 1.0/1000.0);
-	    VSCALE((*tribuf[1]).v, &bot->vertices[bot->faces[3*i+1]], 1.0/1000.0);
-	    VSCALE((*tribuf[2]).v, &bot->vertices[bot->faces[3*i+2]], 1.0/1000.0);
-	    /*
-	    printf("%d %d %d\n", bot->faces[3*i+0], bot->faces[3*i+1], bot->faces[3*i+2]);
-	    printf("%d	%f %f %f - %f %f %f - %f %f %f\n", i, 
-		    V3ARGS((*tribuf[0]).v), 
-		    V3ARGS((*tribuf[1]).v), 
-		    V3ARGS((*tribuf[2]).v));
-	    */
+	    VSCALE((*tribuf[0]).v, (bot->vertices+3*bot->faces[3*i+0]), 1.0/1000.0);
+	    VSCALE((*tribuf[1]).v, (bot->vertices+3*bot->faces[3*i+1]), 1.0/1000.0);
+	    VSCALE((*tribuf[2]).v, (bot->vertices+3*bot->faces[3*i+2]), 1.0/1000.0);
+
 	    tie_push(cur_tie, tribuf, 1, mesh, 0);
 	}
 	return -1;
