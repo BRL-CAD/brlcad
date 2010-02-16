@@ -191,7 +191,7 @@ do_line(struct vfont *vfp, char *line)
 {
     int    currx;
     int    char_count, char_id;
-    int	len = strlen( line );
+    size_t len = strlen( line );
 
     if ( vfp == VFONT_NULL )  return;
 

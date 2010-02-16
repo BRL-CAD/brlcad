@@ -125,7 +125,6 @@ int
 f_edcolor(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
     char **av;
-    char **avtmp;
     int i;
     struct bu_vls editstring;
 
@@ -169,7 +168,6 @@ int
 f_edcodes(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
     char **av;
-    char **avtmp;
     struct bu_vls editstring;
     int i;
 
@@ -212,7 +210,6 @@ int
 f_edmater(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv)
 {
     char **av;
-    char **avtmp;
     struct bu_vls editstring;
     int i;
 
@@ -255,7 +252,6 @@ int
 f_red(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
     char **av;
-    char **avtmp;
     struct bu_vls editstring;
     int i;
 
@@ -539,7 +535,7 @@ struct id_to_names {
 int
 f_which_shader(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    int	i, j;
+    int	j;
     struct directory *dp;
     struct rt_db_internal	intern;
     struct rt_comb_internal	*comb;

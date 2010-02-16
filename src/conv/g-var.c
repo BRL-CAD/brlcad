@@ -132,7 +132,7 @@ void dealloc_mesh_list()
  */
 void write_header( struct db_i *dbip )
 {
-    uint16_t len;
+    size_t len;
     char endian;
     /*
       Header format:
@@ -265,7 +265,7 @@ void write_mesh_data()
 
     curr = head;
     while ( NULL != curr ) {
-	uint16_t len;
+	size_t len;
 	uint32_t nvert, nface;
 	int i;
 	float vec[3];

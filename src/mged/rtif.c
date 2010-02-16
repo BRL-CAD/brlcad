@@ -110,8 +110,6 @@ cmd_rt(ClientData	clientData,
 int
 cmd_rrt(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    char **vp;
-    int i;
     int ret;
     Tcl_DString ds;
 

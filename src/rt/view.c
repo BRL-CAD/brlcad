@@ -497,7 +497,7 @@ view_pixel(struct application *ap)
 		}
 	    }
 	    if (outfp != NULL) {
-		int count;
+		size_t count;
 
 		bu_semaphore_acquire(BU_SEM_SYSCALL);
 		if (fseek(outfp, ap->a_y*width*pwidth, 0) != 0)

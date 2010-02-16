@@ -97,7 +97,6 @@ cmd_glob(int *argcp, char **argv, int maxargs)
     static char word[64];
     char *pattern;
     struct directory	*dp;
-    int i;
     int escaped = 0;
     int orig_numargs = *argcp;
 
@@ -179,7 +178,7 @@ Do_prefix(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_lea
 {
     char *prefix, *obj;
     char tempstring_v4[NAMESIZE+1];
-    int len = NAMESIZE+1;
+    size_t len = NAMESIZE+1;
 
     RT_CK_DBI( dbip );
     RT_CK_TREE( comb_leaf );

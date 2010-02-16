@@ -79,7 +79,6 @@ int writesolid(void), readsolid(void);
 int
 f_tedit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    int i;
     FILE *fp;
 
     CHECK_DBI_NULL;
@@ -303,8 +302,8 @@ static char *
 Get_next_line(FILE *fp)
 {
     static char line[RT_MAXLINE];
-    int i;
-    int len;
+    size_t i;
+    size_t len;
 
     if ( bu_fgets( line, sizeof( line ), fp ) == NULL )
 	return( (char *)NULL );
@@ -935,8 +934,6 @@ get_editor_string(struct bu_vls *editstring)
     int xpid = 0;
     char buffer[RT_MAXLINE] = {0};
     int stat = 0;
-    void (*s2)();
-    void (*s3)();
     const char *terminal = (char *)NULL;
     const char *terminal_opt = (char *)NULL;
     const char *editor = (char *)NULL;

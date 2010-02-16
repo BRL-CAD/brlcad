@@ -81,7 +81,7 @@ fastf_print(FILE *fp_out, int length, fastf_t f)
     char buffer[128];
     char *ptr;
     int i;
-    int buf_len;
+    size_t buf_len;
 
     sprintf( &buffer[1], "%f", f );
     buffer[0] = ' ';

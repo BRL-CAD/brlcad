@@ -47,27 +47,28 @@
 int
 f_area(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
+    static vect_t last;
+    static vect_t fin;
+    char result[RT_MAXLINE] = {0};
+    char tol_str[32] = {0};
+    int is_empty = 1;
+
+#ifndef _WIN32
     struct ged_display_list *gdlp;
     struct ged_display_list *next_gdlp;
     struct solid		*sp;
     struct bn_vlist	*vp;
-    static vect_t last;
-    static vect_t fin;
     FILE *fp_r;
     FILE *fp_w;
+    int rpid;
+    int pid1;
+    int pid2;
     int fd1[2]; /* mged | cad_boundp */
     int fd2[2]; /* cad_boundp | cad_parea */
     int fd3[2]; /* cad_parea | mged */
-    int pid1;
-    int pid2;
-    int rpid;
     int retcode;
-    char result[RT_MAXLINE] = {0};
-    char tol_str[32] = {0};
     char *tol_ptr;
-    int is_empty = 1;
 
-#ifndef _WIN32
     /* XXX needs fixing */
 
     CHECK_DBI_NULL;

@@ -40,7 +40,7 @@ unsigned char	ibuf[1024], obuf[3*1024];
 int
 main(int argc, char **argv)
 {
-    int	in, out, num;
+    size_t	in, out, num;
     FILE	*finp, *foutp;
 
     /* check for input file */

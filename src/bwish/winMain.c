@@ -187,7 +187,7 @@ Tcl_AppInit(Tcl_Interp *interp)
 
  error:
     MessageBeep(MB_ICONEXCLAMATION);
-    MessageBox(NULL, Tcl_GetStringResult(interp), "Error in bwish",
+    MessageBox(NULL, (LPCWSTR)Tcl_GetStringResult(interp), (LPCWSTR)"Error in bwish",
 	       MB_ICONSTOP | MB_OK | MB_TASKMODAL | MB_SETFOREGROUND);
     ExitProcess(1);
 
@@ -224,7 +224,7 @@ BwishPanic(const char *format, ...)
     vsnprintf(buf, 1024, format, argList);
 
     MessageBeep(MB_ICONEXCLAMATION);
-    MessageBox(NULL, buf, "Fatal Error in bwish",
+    MessageBox(NULL, (LPCWSTR)buf, (LPCWSTR)"Fatal Error in bwish",
 	       MB_ICONSTOP | MB_OK | MB_TASKMODAL | MB_SETFOREGROUND);
 #ifdef _MSC_VER
     DebugBreak();

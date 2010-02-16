@@ -595,7 +595,7 @@ process_tables_code( int code )
 static int
 process_blocks_code( int code )
 {
-    int len;
+    size_t len;
     int coord;
 
     switch ( code ) {
@@ -1883,7 +1883,7 @@ drawString( char *theText, point_t firstAlignmentPoint, point_t secondAlignmentP
 
     BU_LIST_INIT( &vhead );
 
-    copyOfText = bu_calloc( strlen( theText )+1, 1, "copyOfText" );
+    copyOfText = bu_calloc( (unsigned int)strlen( theText )+1, 1, "copyOfText" );
     c = theText;
     cp = copyOfText;
     (void)convertSecretCodes( c, cp, &maxLineLen );
@@ -1949,7 +1949,7 @@ void
 drawMtext( char *text, int attachPoint, int drawingDirection, double textHeight, double entityHeight,
 	   double charWidth, double rectWidth, double rotationAngle, double insertionPoint[3] )
 {
-    char *copyOfText = bu_calloc( strlen( text )+1, 1, "copyOfText" );
+    char *copyOfText = bu_calloc( (unsigned int)strlen( text )+1, 1, "copyOfText" );
     char *c;
     char *cp;
     int lineCount;
@@ -3078,7 +3078,7 @@ int
 readcodes()
 {
     int code;
-    int line_len;
+    size_t line_len;
     static int line_num=0;
 
     curr_state->file_offset = ftell( dxf );
@@ -3122,7 +3122,7 @@ int
 main( int argc, char *argv[] )
 {
     struct bu_list head_all;
-    int name_len;
+    size_t name_len;
     char *ptr1, *ptr2;
     int code;
     int c;
@@ -3195,7 +3195,7 @@ main( int argc, char *argv[] )
     else
 	name_len = ptr2 - ptr1;
 
-    base_name = (char *)bu_calloc( name_len + 1, 1, "base_name" );
+    base_name = (char *)bu_calloc( (unsigned int)name_len + 1, 1, "base_name" );
     bu_strlcpy( base_name , ptr1 , name_len+1 );
 
     mk_id( out_fp, base_name );

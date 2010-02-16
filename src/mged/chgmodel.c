@@ -48,6 +48,9 @@
 #include "./cmd.h"
 
 
+/* defined in chgview.c */
+extern int edit_com(int argc, const char *argv[], int kind, int catch_sigint);
+
 void set_tran();
 void aexists(char *name);
 

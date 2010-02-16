@@ -258,7 +258,7 @@ f_read_muves(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    {
 		if ( isalpha( *c ) )
 		{
-		    int length;
+		    size_t length;
 
 		    /* found a new component name, save the old one */
 		    if ( new_comp && BU_LIST_IS_EMPTY( &new_comp->l ) )
@@ -413,7 +413,7 @@ f_read_muves(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 	    if ( !new_sys )
 	    {
-		int length;
+		size_t length;
 
 		/* need to create a new system */
 		new_sys = (struct muves_sys *)bu_malloc( sizeof( struct muves_sys ), "new_sys" );

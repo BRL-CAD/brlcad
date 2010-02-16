@@ -29,8 +29,8 @@ Add_brl_name( name )
     char *name;
 {
     struct name_list *ptr;
-    int namelen;
-    int i;
+    size_t namelen;
+    size_t i;
 
     /* replace white space */
     namelen = strlen( name );
@@ -69,9 +69,9 @@ Make_unique_brl_name( name )
 {
     struct name_list *ptr;
     int found;
-    int namelen;
-    int char_ptr;
-    int i, j;
+    size_t namelen;
+    size_t char_ptr;
+    size_t i, j;
 
     /* replace white space */
     namelen = strlen( name );
@@ -106,7 +106,7 @@ Make_unique_brl_name( name )
     i = 0;
     while ( found && 'A'+i <= 'z' )
     {
-	name[char_ptr] = 'A' + i;
+	name[char_ptr] = 'A' + (char)i;
 	name[char_ptr+1] = '\0';
 	found = 0;
 	ptr = name_root;
@@ -134,8 +134,8 @@ Make_unique_brl_name( name )
     j = 0;
     while ( found && 'A'+i <= 'z' && 'A'+j <= 'z' )
     {
-	name[char_ptr] = 'A'+i;
-	name[char_ptr+1] = 'A'+j;
+	name[char_ptr] = 'A'+ (char)i;
+	name[char_ptr+1] = 'A'+ (char)j;
 	name[char_ptr+2] = '\0';
 	found = 0;
 	ptr = name_root;

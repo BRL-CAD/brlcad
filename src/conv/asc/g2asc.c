@@ -71,7 +71,7 @@ FILE	*ofp;
 char	*iname = "-";
 
 static char *tclified_name=NULL;
-static int tclified_name_buffer_len=0;
+static size_t tclified_name_buffer_len=0;
 
 
 /*	This routine escapes the '{' and '}' characters in any string and returns a static buffer containing the
@@ -85,7 +85,7 @@ tclify_name( const char *name )
     const char *src=name;
     char *dest;
 
-    int max_len=2*strlen( name ) + 1;
+    size_t max_len=2*strlen( name ) + 1;
 
     if ( max_len < 2 ) {
 	return( (char *)NULL );
@@ -413,7 +413,7 @@ main(int argc, char **argv)
 void
 get_ext(struct bu_external *ep, int ngran)
 {
-    int	count;
+    size_t	count;
 
     BU_INIT_EXTERNAL(ep);
 
@@ -426,7 +426,7 @@ get_ext(struct bu_external *ep, int ngran)
 
     count = fread( ((char *)ep->ext_buf)+sizeof(union record),
 		   sizeof(union record), ngran-1, ifp);
-    if ( count != ngran-1 )  {
+    if ( count != (size_t)ngran-1 )  {
 	fprintf(stderr,
 		"g2asc: get_ext:  wanted to read %d granules, got %d\n",
 		ngran-1, count);
@@ -1030,9 +1030,9 @@ bspldump(void)	/* Print out B-spline solid description record information */
 void
 bsurfdump(void)	/* Print d-spline surface description record information */
 {
-    int i;
+    size_t i;
     float *vp;
-    int nbytes, count;
+    size_t nbytes, count;
     float *fp;
 
     (void)fprintf(ofp,  "%c %d %d %d %d %d %d %d %d %d\n",
@@ -1064,7 +1064,7 @@ bsurfdump(void)	/* Print d-spline surface description record information */
 
     /* Malloc and clear memory for the KNOT DATA and read it */
     nbytes = record.d.d_nknots * sizeof(union record);
-    vp = (float *)bu_calloc(nbytes, 1, "KNOT DATA");
+    vp = (float *)bu_calloc((unsigned int)nbytes, 1, "KNOT DATA");
     fp = vp;
     count = fread( (char *)fp, 1, nbytes, ifp );
     if ( count != nbytes )  {
@@ -1081,7 +1081,7 @@ bsurfdump(void)	/* Print d-spline surface description record information */
 
     /* Malloc and clear memory for the CONTROL MESH data and read it */
     nbytes = record.d.d_nctls * sizeof(union record);
-    vp = (float *)bu_calloc(nbytes, 1, "CONTROL MESH");
+    vp = (float *)bu_calloc((unsigned int)nbytes, 1, "CONTROL MESH");
     fp = vp;
     count = fread( (char *)fp, 1, nbytes, ifp );
     if ( count != nbytes )  {
