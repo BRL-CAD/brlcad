@@ -496,6 +496,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\generic.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\globals.c"
 				>
 			</File>

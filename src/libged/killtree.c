@@ -149,7 +149,6 @@ ged_killtree_callback(struct db_i		*dbip,
 		      struct directory *dp,
 		      genptr_t			ptr)
 {
-    struct directory *dpp[2];
     struct ged_killtree_data *gktdp = (struct ged_killtree_data *)ptr;
 
     if (dbip == DBI_NULL)

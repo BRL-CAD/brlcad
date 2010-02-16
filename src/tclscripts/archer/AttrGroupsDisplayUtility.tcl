@@ -44,6 +44,7 @@
 
 	method exportAttrGroups {}
 	method exportAttrMap {}
+	method exportToObj {}
 	method exportToPng {}
 	method hideStatusbar {}
 	method hideToolbar {}
@@ -342,6 +343,24 @@
     close $fh
 }
 
+::itcl::body AttrGroupsDisplayUtility::exportToObj {} {
+    set typelist {
+	{"Text" {".obj"}}
+	{"All Files" {*}}
+    }
+
+    set file [tk_getSaveFile -parent $itk_interior \
+		  -initialdir [$mArcher getLastSelectedDir] \
+		  -title "Export display to OBJ (Wavefront)." \
+		  -filetypes $typelist]
+
+    if {$file == ""} {
+	return
+    }
+
+    $mArchersGed dbot_dump -o $file -t obj
+}
+
 ::itcl::body AttrGroupsDisplayUtility::exportToPng {} {
     set typelist {
 	{"Text" {".png"}}
@@ -361,7 +380,8 @@
 	wm withdraw $mToplevel
     }
 
-    # Hack to get around the dialog window (i.e. so it doesn't show up in the image)
+    #XXX Hack to get around the dialog window (i.e. so it doesn't show up in the image)
+    # Remove this hack when png is updated to draw to and pull from an in-memory buffer
     ::update idletasks
     after 1000
     $mArcher refreshDisplay

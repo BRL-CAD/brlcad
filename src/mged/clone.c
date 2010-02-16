@@ -1024,7 +1024,6 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	struct directory **dps = (struct directory **)NULL;
 	fastf_t units[6] = {1, 1, 10, 1000, 25.4, 304.8};
 	char *vargs[3];
-	vect_t *rots;
 
 	for (i = 0; i < 2; i++)
 	    vargs[i] = (char *)bu_calloc(CLONE_BUFSIZE, sizeof(char), "alloc vargs[i]");

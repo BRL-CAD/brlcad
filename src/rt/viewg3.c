@@ -66,8 +66,6 @@ extern int	npsw;			/* number of worker PSWs to run */
 
 extern int 	 rpt_overlap;
 
-extern fastf_t  rt_cline_radius;        /* from g_cline.c */
-
 extern struct bu_vls    ray_data_file;  /* file name for ray data output (declared in do.c) */
 FILE    *shot_fp;               /* FILE pointer for ray data output */
 static long     line_num;               /* count of lines output to shotline file */

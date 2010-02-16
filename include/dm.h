@@ -88,6 +88,8 @@
 #define FONT7 "7x13"
 #define FONT8 "8x13"
 #define FONT9 "9x15"
+#define FONT10 "10x20"
+#define FONT11 "12x24"
 
 /* Display Manager Types */
 #define DM_TYPE_BAD     -1

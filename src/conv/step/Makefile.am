@@ -7,8 +7,6 @@ AM_CPPFLAGS = \
 	${TNT_CPPFLAGS} \
 	${OPENNURBS_CPPFLAGS}
 
-noinst_LTLIBRARIES = libstep2g_nil.la
-
 fedex_srcs = \
 	SdaiAll.cc \
 	SdaiCONFIG_CONTROL_DESIGN.cc \
@@ -16,7 +14,7 @@ fedex_srcs = \
 	compstructs.cc \
 	schema.cc
 
-libstep2g_nil_la_SOURCES = \
+step_g_SOURCES = \
 	$(fedex_srcs) \
 	AdvancedBrepShapeRepresentation.cpp \
 	AdvancedFace.cpp \
@@ -381,14 +379,11 @@ BUILT_SOURCES = \
 	$(fedex_srcs) \
 	$(fedex_headers)
 
-step_g_SOURCES =
-
 step_g_LDADD = \
 	${BU} \
 	${WDB} \
 	${RT} \
-	${STEP_LIBS} \
-	libstep2g_nil.la
+	${STEP_LIBS}
 
 # per-program CPPFLAGS wasn't added until automake 1.7
 step_g_CXXFLAGS = \

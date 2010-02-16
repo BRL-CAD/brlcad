@@ -429,7 +429,6 @@ struct cmd_list {
 #define CMD_LIST_NULL ((struct cmd_list *)NULL)
 
 /* defined in cmd.c */
-extern Tcl_Interp *interp;
 extern struct cmd_list head_cmd_list;
 extern struct cmd_list *curr_cmd_list;
 

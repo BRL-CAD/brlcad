@@ -37,7 +37,7 @@
 #include "ged.h"
 
 int
-_ged_editit(char *editstring, char *filename)
+_ged_editit(char *editstring, const char *filename)
 {
     int pid = 0;
     int xpid = 0;

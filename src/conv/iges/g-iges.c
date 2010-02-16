@@ -178,10 +178,11 @@ int		do_nurbs=0;
 int
 main(int argc, char *argv[])
 {
-    int			i, ret;
+    size_t	i;
+    int		ret;
     int		c;
-    double			percent;
-    char			copy_buffer[CP_BUF_SIZE] = {0};
+    double		percent;
+    char		copy_buffer[CP_BUF_SIZE] = {0};
     struct directory	*dp;
 
     bu_setlinebuf( stderr );
@@ -467,7 +468,7 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
     struct bu_list		vhead;
     struct directory	*dp;
     int 			dependent;
-    int			i;
+    size_t			i;
 
     RT_CK_TESS_TOL(tsp->ts_ttol);
     BN_CK_TOL(tsp->ts_tol);
@@ -541,7 +542,7 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 		fp_dir = stdout;
 	    else {
 		char *multi_name;
-		int len;
+		size_t len;
 		int unique=0;
 		struct stat stat_ptr;
 		char suffix[SUFFIX_LEN+1];
@@ -554,7 +555,7 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 		suffix[0]--;
 		while ( !unique )
 		{
-		    int i;
+		    size_t i;
 
 		    if ( stat( multi_name, &stat_ptr ) )
 		    {

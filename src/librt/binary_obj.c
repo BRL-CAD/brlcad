@@ -106,7 +106,7 @@ rt_mk_binunif(struct rt_wdb *wdbp, const char *obj_name, const char *file_name, 
     }
 
     /* just copy the bytes */
-    bip->count = num_items;
+    bip->count = (long)num_items;
     bip->u.int8 = (char *)bu_malloc( obj_length, "binary uniform object" );
     memcpy(bip->u.int8, bu_fd->buf, obj_length);
 

@@ -151,7 +151,6 @@ jitter_start_pt(vect_t point, struct application *a, int samplenum, int pat_num)
 void
 do_pixel(int cpu, int pat_num, int pixelnum)
 {
-    int i;
     struct application a;
     struct pixel_ext pe;
     vect_t stereo_point;		/* Ref point on eye or view plane */
@@ -420,8 +419,11 @@ do_pixel(int cpu, int pat_num, int pixelnum)
 
     /* bu_log("2: [%d, %d] : [%.2f, %.2f, %.2f]\n", pixelnum%width, pixelnum/width, a.a_color[0], a.a_color[1], a.a_color[2]); */
 
-    /* Add get_pixel_timer here to get total time taken to get pixel, when asked */
+    /* FIXME: this should work on windows after the bu_timer() is
+     * created to replace the librt timing mechansim.
+     */
 #if !defined(_WIN32) || defined(__CYGWIN__)
+    /* Add get_pixel_timer here to get total time taken to get pixel, when asked */
     if (lightmodel == 8) {
 	fastf_t pixelTime;
 	fastf_t **timeTable;

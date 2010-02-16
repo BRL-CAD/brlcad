@@ -83,7 +83,7 @@ drop_client(int sub)
 #if defined(_WIN32) && !defined(__CYGWIN__)
 	Tcl_DeleteChannelHandler(clients[sub].c_chan,
 				 clients[sub].c_handler,
-				 clients[sub].c_fd);
+				 (ClientData)clients[sub].c_fd);
 	Tcl_Close(dmp->dm_interp, clients[sub].c_chan);
 	clients[sub].c_chan = NULL;
 #else
@@ -146,7 +146,7 @@ set_port(void)
 
 	Tcl_DeleteChannelHandler(netchan,
 				 new_client_handler,
-				 netfd);
+				 (ClientData)netfd);
 
 	Tcl_Close(dmp->dm_interp, netchan);
 	netchan = NULL;
@@ -197,7 +197,7 @@ set_port(void)
 	       mged_variables->mv_port, mged_variables->mv_port + MAX_PORT_TRIES - 1);
     } else {
 	mged_variables->mv_port = port;
-	Tcl_GetChannelHandle(netchan, TCL_READABLE, &netfd);
+	Tcl_GetChannelHandle(netchan, TCL_READABLE, (ClientData *)&netfd);
     }
 }
 
@@ -256,7 +256,7 @@ new_client_handler(ClientData	 clientData,
 
     curr_dm_list = dlp;
 
-    if (Tcl_GetChannelHandle(chan, TCL_READABLE, &fd) == TCL_OK)
+    if (Tcl_GetChannelHandle(chan, TCL_READABLE, (ClientData *)&fd) == TCL_OK)
 	new_client(fbserv_makeconn(fd, pkg_switch), chan);
 
     /* restore */

@@ -8,8 +8,6 @@
 namespace JAMA
 {
 
-using namespace TNT;
-
 /**
    <P>
    For a symmetric, positive definite matrix A, this function
@@ -21,8 +19,8 @@ using namespace TNT;
 
    <p>Typical usage looks like:
    <pre>
-	Array2D<double> A(n,n);
-	Array2D<double> L;
+	TNT::Array2D<double> A(n,n);
+	TNT::Array2D<double> L;
 
 	 ...
 
@@ -46,16 +44,16 @@ using namespace TNT;
 template <class Real>
 class Cholesky
 {
-	Array2D<Real> L_;		// lower triangular factor
+	TNT::Array2D<Real> L_;		// lower triangular factor
 	int isspd;				// 1 if matrix to be factored was SPD
 
 public:
 
 	Cholesky();
-	Cholesky(const Array2D<Real> &A);
-	Array2D<Real> getL() const;
-	Array1D<Real> solve(const Array1D<Real> &B);
-	Array2D<Real> solve(const Array2D<Real> &B);
+	Cholesky(const TNT::Array2D<Real> &A);
+	TNT::Array2D<Real> getL() const;
+	TNT::Array1D<Real> solve(const TNT::Array1D<Real> &B);
+	TNT::Array2D<Real> solve(const TNT::Array2D<Real> &B);
 	int is_spd() const;
 
 };
@@ -77,7 +75,7 @@ int Cholesky<Real>::is_spd() const
 	@return the lower triangular factor, L, such that L*L'=A.
 */
 template <class Real>
-Array2D<Real> Cholesky<Real>::getL() const
+TNT::Array2D<Real> Cholesky<Real>::getL() const
 {
 	return L_;
 }
@@ -89,7 +87,7 @@ Array2D<Real> Cholesky<Real>::getL() const
 	evalutate true (1) then the factorizaiton was successful.
 */
 template <class Real>
-Cholesky<Real>::Cholesky(const Array2D<Real> &A)
+Cholesky<Real>::Cholesky(const TNT::Array2D<Real> &A)
 {
 
 
@@ -100,11 +98,11 @@ Cholesky<Real>::Cholesky(const Array2D<Real> &A)
 
 	if (m != n)
 	{
-		L_ = Array2D<Real>(0,0);
+		L_ = TNT::Array2D<Real>(0,0);
 		return;
 	}
 
-	L_ = Array2D<Real>(n,n);
+	L_ = TNT::Array2D<Real>(n,n);
 
 
       // Main loop.
@@ -143,14 +141,14 @@ Cholesky<Real>::Cholesky(const Array2D<Real> &A)
    						array is returned.
 */
 template <class Real>
-Array1D<Real> Cholesky<Real>::solve(const Array1D<Real> &b)
+TNT::Array1D<Real> Cholesky<Real>::solve(const TNT::Array1D<Real> &b)
 {
 	int n = L_.dim1();
 	if (b.dim1() != n)
-		return Array1D<Real>();
+		return TNT::Array1D<Real>();
 
 
-	Array1D<Real> x = b.copy();
+	TNT::Array1D<Real> x = b.copy();
 
 
       // Solve L*y = b;
@@ -185,14 +183,14 @@ Array1D<Real> Cholesky<Real>::solve(const Array1D<Real> &b)
    						array is returned.
 */
 template <class Real>
-Array2D<Real> Cholesky<Real>::solve(const Array2D<Real> &B)
+TNT::Array2D<Real> Cholesky<Real>::solve(const TNT::Array2D<Real> &B)
 {
 	int n = L_.dim1();
 	if (B.dim1() != n)
-		return Array2D<Real>();
+		return TNT::Array2D<Real>();
 
 
-	Array2D<Real> X = B.copy();
+	TNT::Array2D<Real> X = B.copy();
 	int nx = B.dim2();
 
 // Cleve's original code

@@ -1697,7 +1697,6 @@ gettclblock(struct bu_vls *line, FILE *fp)
 int
 main(int argc, char *argv[])
 {
-    char c1[3];
     struct bu_vls       str_title;
     struct bu_vls       str_put;
     struct bu_vls	line;

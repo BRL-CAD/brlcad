@@ -94,8 +94,8 @@
  * compatibility macros should take care of this.
  */
 #ifdef HAVE_WINSOCK_H
-#  define PKG_READ(d, buf, nbytes) recv((d), (buf), (nbytes), 0)
-#  define PKG_SEND(d, buf, nbytes) send((d), (buf), (nbytes), 0)
+#  define PKG_READ(d, buf, nbytes) recv((d), (buf), (int)(nbytes), 0)
+#  define PKG_SEND(d, buf, nbytes) send((d), (buf), (int)(nbytes), 0)
 #else
 #  define PKG_READ(d, buf, nbytes) read((d), (buf), (nbytes))
 #  define PKG_SEND(d, buf, nbytes) write((d), (buf), (nbytes))
@@ -117,8 +117,9 @@
 #  define DMSG(s) /**/
 #endif
 
-
+#if !defined(_WIN32) || defined(__CYGWIN__)
 extern int errno;
+#endif
 
 int pkg_nochecking = 0;	/* set to disable extra checking for input */
 int pkg_permport = 0;	/* TCP port that pkg_permserver() is listening on XXX */
@@ -200,7 +201,7 @@ _pkg_timestamp(void)
 	    tmp->tm_hour, tmp->tm_min, tmp->tm_sec,
 	    /* avoid libbu dependency */
 #ifdef HAVE_UNISTD_H
-	    getpid()
+	    (int)getpid()
 #else
 	    (int)GetCurrentProcessId()
 #endif
@@ -851,9 +852,9 @@ _pkg_inget(struct pkg_conn *pc, char *buf, size_t count)
 	/* Input Buffer has some data in it, move to caller's buffer */
 	if ((int)len > todo)  len = todo;
 	memcpy(buf, &pc->pkc_inbuf[pc->pkc_incur], len);
-	pc->pkc_incur += len;
+	pc->pkc_incur += (int)len;
 	buf += len;
-	todo -= len;
+	todo -= (int)len;
     }
     return(count);
 }
@@ -1005,7 +1006,7 @@ pkg_send(int type, const char *buf, size_t len, struct pkg_conn *pc)
 	    (pc->pkc_errlog)(_pkg_errbuf);
 	    return(i-sizeof(hdr));	/* amount of user data sent */
 	}
-	return(len);
+	return((int)len);
     }
     /* Send them separately */
     if ((i = PKG_SEND(pc->pkc_fd, (char *)&hdr, sizeof(hdr))) != sizeof(hdr)) {
@@ -1031,7 +1032,7 @@ pkg_send(int type, const char *buf, size_t len, struct pkg_conn *pc)
 	return(i);		/* amount of user data sent */
     }
 #endif
-    return(len);
+    return((int)len);
 }
 
 
@@ -1122,7 +1123,7 @@ pkg_2send(int type, const char *buf1, size_t len1, const char *buf2, size_t len2
 	    (pc->pkc_errlog)(_pkg_errbuf);
 	    return(i-sizeof(hdr));	/* amount of user data sent */
 	}
-	return(len1+len2);
+	return((int)(len1+len2));
     }
     /* Send it in three pieces */
     if ((i = PKG_SEND(pc->pkc_fd, (char *)&hdr, sizeof(hdr))) != sizeof(hdr)) {
@@ -1166,10 +1167,10 @@ pkg_2send(int type, const char *buf1, size_t len1, const char *buf2, size_t len2
 	snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_2send of %d+%d+%d, wrote len2=%d\n",
 		 (int)sizeof(hdr), len1, len2, i);
 	(pc->pkc_errlog)(_pkg_errbuf);
-	return(len1+i);		/* amount of user data sent */
+	return((int)(len1+i));		/* amount of user data sent */
     }
 #endif
-    return(len1+len2);
+    return((int)(len1+len2));
 }
 
 
@@ -1200,7 +1201,7 @@ pkg_stream(int type, const char *buf, size_t len, struct pkg_conn *pc)
     memcpy(&(pc->pkc_stream[pc->pkc_strpos]), (char *)&hdr, sizeof(struct pkg_header));
     pc->pkc_strpos += sizeof(struct pkg_header);
     memcpy(&(pc->pkc_stream[pc->pkc_strpos]), buf, len);
-    pc->pkc_strpos += len;
+    pc->pkc_strpos += (int)len;
 
     return((int)(len + sizeof(struct pkg_header)));
 }
@@ -1299,7 +1300,7 @@ _pkg_gethdr(struct pkg_conn *pc, char *buf)
     pc->pkc_type = pkg_gshort((char *)pc->pkc_hdr.pkh_type);	/* host order */
     pc->pkc_len = pkg_glong((char *)pc->pkc_hdr.pkh_len);
     pc->pkc_buf = (char *)0;
-    pc->pkc_left = pc->pkc_len;
+    pc->pkc_left = (int)pc->pkc_len;
     if (pc->pkc_left == 0)  return(1);		/* msg here, no data */
 
     if (buf) {
@@ -1404,7 +1405,7 @@ pkg_waitfor (int type, char *buf, size_t len, struct pkg_conn *pc)
     pc->pkc_buf = (char *)0;
     pc->pkc_curpos = (char *)0;
     pc->pkc_left = -1;		/* safety */
-    return(pc->pkc_len);
+    return((int)pc->pkc_len);
 }
 
 
@@ -1585,7 +1586,7 @@ pkg_process(struct pkg_conn *pc)
 	    }
 	    len = _pkg_inget(pc, pc->pkc_curpos, len);
 	    pc->pkc_curpos += len;
-	    pc->pkc_left -= len;
+	    pc->pkc_left -= (int)len;
 	    if (pc->pkc_left > 0) {
 		/*
 		 * Input buffer is exhausted, but more data is needed
@@ -1699,13 +1700,13 @@ pkg_suckin(struct pkg_conn *pc)
 
     /* If cur point is near end of buffer, recopy data to buffer front */
     if (pc->pkc_incur >= (pc->pkc_inlen * 7) / 8) {
-	size_t ammount;
+	size_t amount;
 
-	ammount = pc->pkc_inend - pc->pkc_incur;
+	amount = pc->pkc_inend - pc->pkc_incur;
 	/* This copy can not overlap itself, because of 7/8 above */
-	memcpy(pc->pkc_inbuf, &pc->pkc_inbuf[pc->pkc_incur], ammount);
+	memcpy(pc->pkc_inbuf, &pc->pkc_inbuf[pc->pkc_incur], amount);
 	pc->pkc_incur = 0;
-	pc->pkc_inend = ammount;
+	pc->pkc_inend = (int)amount;
     }
 
     /* If remaining buffer space is small, make buffer bigger */
@@ -1759,7 +1760,7 @@ pkg_suckin(struct pkg_conn *pc)
     }
     if (got > (int)avail) {
 	pc->pkc_errlog("pkg_suckin: read more bytes than desired\n");
-	got = avail;
+	got = (int)avail;
     }
     pc->pkc_inend += got;
     ret = 1;

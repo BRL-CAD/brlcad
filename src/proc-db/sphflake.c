@@ -242,7 +242,7 @@ void initializeInfo(params_t *p, int inter, char *name, int depth)
 {
     char input[MAX_INPUT_LENGTH];
     int i = 0;
-    int len = 0;
+    size_t len = 0;
     unsigned int c[3];
 
     if (name == NULL) {

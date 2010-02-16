@@ -120,14 +120,8 @@ main(argc, argv)
     int	argc;
     char	*argv[];
 {
-    int		i;
     int	c;
     struct db_i	*dbip;
-    char		idbuf[132];
-    vect_t		h_delta, v_delta;
-    point_t		start_pt;
-    int		dir;
-    fastf_t		cell_width=100.0, cell_height=100.0;
 
     bu_setlinebuf( stderr );
 

@@ -44,10 +44,6 @@ dm_draw_data_axes(struct dm *dmp,
 {
     int i, j;
     fastf_t halfAxesSize;		/* half the length of an axis */
-    point_t v2;
-    point_t rxv1, rxv2;
-    point_t ryv1, ryv2;
-    point_t rzv1, rzv2;
     point_t ptA, ptB;
     int npoints = gdasp->gdas_num_points * 6;
     point_t *points;

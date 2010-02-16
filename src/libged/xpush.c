@@ -141,7 +141,7 @@ Make_new_name(struct db_i *dbip,
     snprintf(format_v5, 50, "%%s_%%0%dd", digits);
     snprintf(format_v4, 50, "_%%0%dd", digits);
 
-    name_length = strlen(dp->d_namep);
+    name_length = (int)strlen(dp->d_namep);
     if (name_length + digits + 1 > NAMESIZE - 1)
 	suffix_start = NAMESIZE - digits - 2;
     else

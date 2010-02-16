@@ -162,7 +162,7 @@ gui_output(genptr_t clientData, genptr_t str)
     Tcl_DecrRefCount(save_result);
 
     Tcl_DStringFree(&tclcommand);
-    return strlen(str);
+    return (int)strlen(str);
 }
 
 int
@@ -368,7 +368,6 @@ extern struct rt_db_internal es_int;
 int
 cmd_ged_inside(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
-    struct directory *dp;
     int ret;
     int arg;
     Tcl_DString ds;
@@ -1138,7 +1137,7 @@ cmdline(struct bu_vls *vp, int record)
 void
 mged_print_result(int status)
 {
-    int len;
+    size_t len;
     const char *result = Tcl_GetStringResult(interp);
 
 #if 0
@@ -1251,8 +1250,6 @@ mged_cmd(
 int
 f_comm(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
-    int pid, rpid;
-    int retcode;
 
     if (argc != 1 || !classic_mged || curr_cmd_list != &head_cmd_list) {
 	struct bu_vls vls;
@@ -1265,16 +1262,21 @@ f_comm(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     }
 
 #ifndef _WIN32
-    (void)signal(SIGINT, SIG_IGN);
-    if ((pid = fork()) == 0) {
-	(void)signal(SIGINT, SIG_DFL);
-	(void)execl("/bin/sh", "-", (char *)NULL);
-	perror("/bin/sh");
-	mged_finish(11);
-    }
+    {
+	int pid, rpid;
+	int retcode;
 
-    while ((rpid = wait(&retcode)) != pid && rpid != -1)
-	;
+	(void)signal(SIGINT, SIG_IGN);
+	if ((pid = fork()) == 0) {
+	    (void)signal(SIGINT, SIG_DFL);
+	    (void)execl("/bin/sh", "-", (char *)NULL);
+	    perror("/bin/sh");
+	    mged_finish(11);
+	}
+
+	while ((rpid = wait(&retcode)) != pid && rpid != -1)
+	    ;
+    }
 #endif
 
     Tcl_AppendResult(interp, "Returning to MGED\n", (char *)NULL);
@@ -1780,6 +1782,7 @@ cmd_units(ClientData	clientData,
     if (gedp == GED_NULL)
 	return TCL_OK;
 
+    sf = dbip->dbi_base2local;
     ret = ged_units(gedp, argc, (const char **)argv);
     Tcl_DStringInit(&ds);
     Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
@@ -1810,7 +1813,6 @@ cmd_search(ClientData	clientData,
 {
     int ret;
     Tcl_DString ds;
-    fastf_t sf;
 
     if (gedp == GED_NULL)
 	return TCL_OK;

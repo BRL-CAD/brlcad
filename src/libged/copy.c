@@ -38,7 +38,6 @@ ged_copy(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *from_dp;
     struct bu_external external;
-    int flags;
     static const char *usage = "from to";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -86,7 +85,6 @@ ged_dbcopy(struct ged *from_gedp, struct ged *to_gedp, const char *from, const c
 {
     struct directory *from_dp;
     struct bu_external external;
-    int exists;
 
     GED_CHECK_DATABASE_OPEN(from_gedp, GED_ERROR);
     GED_CHECK_DATABASE_OPEN(to_gedp, GED_ERROR);

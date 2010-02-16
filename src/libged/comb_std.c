@@ -209,7 +209,7 @@ ged_add_operand(struct ged *gedp, struct bu_list *hp, char *name)
 	    return (0);
 	}
     } else
-	name_len = strlen( name );
+	name_len = (int)strlen( name );
 
     node->tr_l.tl_name = (char *)bu_malloc(name_len+1, "node name");
     bu_strlcpy(node->tr_l.tl_name, name, name_len+1);

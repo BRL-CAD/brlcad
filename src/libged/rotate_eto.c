@@ -38,8 +38,6 @@
 int
 _ged_rotate_eto(struct ged *gedp, struct rt_eto_internal *eto, const char *attribute, matp_t rmat)
 {
-    fastf_t newrad;
-
     RT_ETO_CK_MAGIC(eto);
 
     if (attribute[1] != '\0') {

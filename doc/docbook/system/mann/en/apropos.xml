@@ -41,9 +41,9 @@
   
   <refmeta>
     <refentrytitle>APROPOS</refentrytitle>
-    <manvolnum>1</manvolnum>
+    <manvolnum>nged</manvolnum>
     <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
-    <refmiscinfo class='manual'>BRL-CAD User Commands</refmiscinfo>
+    <refmiscinfo class='manual'>BRL-CAD MGED Commands</refmiscinfo>
   </refmeta>
   
   <refnamediv id='name'>

@@ -58,17 +58,17 @@ typedef struct counter {
     INIT_TOKEN_T((c).token); \
 }
 
-#define COUNT(x) {\
-    count(x, yytext);\
+#define TABULATE(x) {\
+    tabulate(x, yytext);\
     yylval.type = # x;\
     return x;\
 }
 
 /** count up what's just been parsed */
-void count(long int id, const char *text);
+void tabulate(long int id, const char *text);
 
 /** release resources used counting */
-void freecount();
+void free_tabulation();
 
 
 /** get current column number */

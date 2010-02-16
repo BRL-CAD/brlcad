@@ -283,7 +283,7 @@ BC_ARG_ENABLE([build_urt], [urt-build], [Build the included Utah Raster Toolkit]
 # force enable/disable building of openNURBS
 BC_ARG_ENABLE([build_opennurbs], [opennurbs-build], [Build the included openNURBS library], [auto])
 
-# force enable/disable building of NIST STEP Class Libraries 
+# force enable/disable building of NIST STEP Class Libraries
 BC_ARG_ENABLE([build_step], [step-build], [Build the included STEP Class Libraries], [auto])
 
 # force enable/disable building of termlib
@@ -419,7 +419,6 @@ BC_ARG_ALIAS([build_runtime_debug], [run-time-debugging])
 BC_ARG_ALIAS([build_strict], [strict])
 BC_ARG_ALIAS([build_strict], [strict-compile])
 BC_ARG_ALIAS([build_strict], [strict-compile-flags])
-
 
 # Docbook documentation (help uses documentation)
 BC_ARG_ALIAS([build_docs], [documentation-install])
@@ -1989,7 +1988,7 @@ if test "x$bc_use_debug" != "xno" ; then
 	if test "x$bc_debug_flag_works" = "xno" ; then
 		BC_COMPILER_AND_LINKER_RECOGNIZES([-g], [debug_flag])
 	fi
-   
+
 	if test "x$bc_debug_flag_works" = "xyes" ; then
 		# debug works
 	   	if test "x$bc_use_debug " = "xauto" ; then
@@ -2001,12 +2000,18 @@ if test "x$bc_use_debug" != "xno" ; then
 		if test "x$bc_use_debug" = "xyes" ; then
 			dnl debug was requested, so abort
 			AC_MSG_NOTICE([}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}])
-			AC_MSG_NOTICE([Debug was enabled but -g does not work])
+			AC_MSG_NOTICE([Debug was enabled but cannot find debug flags that work])
 			AC_MSG_ERROR([*** Don't know how to debug with this compiler ***])
 		fi
 		AC_MSG_WARN([Do not know how to debug with this compiler])
 		sleep 1
 	fi
+
+	dnl add -D_FORTIFY_SOURCE=2 to flags. provides compile-time
+	dnl best-practice error checking on certain libc functions
+	dnl (e.g., memcpy), and provides run-time checks on buffer
+	dnl lengths and memory regions.
+	BC_COMPILER_AND_LINKER_RECOGNIZES([-D_FORTIFY_SOURCE=2])
 fi
 
 dnl optimization flags
@@ -2043,6 +2048,7 @@ if test "x$bc_build_warnings" != "xno" ; then
 	BC_COMPILER_AND_LINKER_RECOGNIZES([-W -Wall -Wundef -Wfloat-equal -Wshadow -Winline], [warning])
 	# XXX also of interest
 	# -Wunreachable-code -Wmissing-declarations -Wmissing-prototypes -Wstrict-prototypes -ansi
+	# -Wformat=2 (after bu_fopen_uniq() is obsolete)
 
 	if test "x$bc_warning_flag_works" = "xno" ; then
 		AC_MSG_WARN([Don't know how to output verbose warnings with this compiler])
@@ -4059,8 +4065,6 @@ AC_CONFIG_FILES([
 	misc/archlinux/Makefile
 	misc/brlcad-config
 	misc/brlcad.spec
-	misc/debian/Makefile
-	misc/debian/changelog
 	misc/macosx/Makefile
 	misc/macosx/Resources/Makefile
 	misc/macosx/Resources/ReadMe.rtfd/Makefile

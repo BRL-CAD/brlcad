@@ -151,7 +151,7 @@ ged_do_prefix(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb
 {
     char *prefix, *obj;
     char tempstring_v4[NAMESIZE+1];
-    int len = NAMESIZE+1;
+    size_t len = NAMESIZE+1;
 
     RT_CK_DBI( dbip );
     RT_CK_TREE( comb_leaf );

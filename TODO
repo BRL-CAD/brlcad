@@ -17,11 +17,11 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* fix mged EDITOR invocation bug.  have to reconcile src/mged/editit.c
-  and src/libged/editit.c where the latter had the libdm dependency
-  removed.  that refactoring subsequently killed all of the logic used
-  to know when to invoke the editor from within an xterm, which hangs
-  mged since the user can't actually see/access the detached editor.
+* fix EDITOR invocation in "mged -c"
+
+* 64-bit port of BRL-CAD on Windows
+
+* Mac OS X 10.5+ X11 input bug
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
@@ -39,8 +39,6 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 * investigate tessellation failures (Stryker, et al), possibily due to
   recent tolerance checks.
 
-* 64-bit port of BRL-CAD on Windows
-
 * annotation primitive.  specifically a means to create an object in
   the database that can optionally be associated with an object and/or
   location that a label refers to.  there are various styles such as
@@ -55,6 +53,60 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* alias objects.  this is an object handle in a geometry database that
+  refers to another geometry database object.  in effect, it
+  encapsulates the idea of a symbolic reference for database objects.
+
+  alias objects should be very lightweight, corresponding to basically
+  a simple named reference to another object.  this allows for
+  geometry objects to have multiple names, all referencing a given
+  primary name.  whenever an alias is referenced, it returns the
+  object pointed to instead of the alias object itself (this includes
+  the rt_db_internal()).  this prevents the creation of cyclic
+  references.
+
+  this directly supports geometry importers that contain object name
+  mappings (e.g., part numbers to engineering names) as well as
+  simply supporting multiple names per object that one might want to
+  persist.  there is an issue of whether aliases show as top-level
+  objects or even display by default without a listing option.
+
+* a "batch" command for libged to apply a given command template to
+  all lines in a given input text file.  could be very similar to exec
+  but instead of inspecting the current .g, it walks lines in file(s).
+  this would let you do things like:
+
+  # same as mvall -f file.txt
+  batch file.txt -exec "mvall \$*"
+  
+  # create an alternate hierarchy based on some mapping file
+  batch file.txt -exec "g \$*"
+
+  # for all lines in 3 files, kill first symbol, rename second to it
+  batch A.txt B.txt C.txt -exec "kill \$1" -exec "mv \$2 \$1"
+
+  # keep all objects in an edcodes file with region ID > 1000
+  batch A.txt -field 2 -ne 1000 -exec "keep subset.g \$5"
+
+  # for all regions, if they are listed in file.txt, add them to a
+  # parent assembly and set a specified material ID
+  search . -name "*.r" -exec batch file.txt -field 1 -eq {} -exec "g \$1 {}" -exec "mater {} \$3" \;
+
+  # run awk, get 4th column, run sed to change name, 
+  batch file.txt -awk '{print $4}' -sed 's/^r\.(.*)/\1\.r/g' -exec "mv \$1 \$$"
+
+  # outside of MGED, the above would have been similar to:
+  cat file.txt | awk '{print $4}' | sed 's/^r\.(.*)/r\.\1 \1\.r/g' | xargs mged test.g mv
+
+  The command becomes more of a stream processor on the input file, as
+  if piped on the shell line.  To embed awk, sed, cut, see qse:
+          http://code.google.com/p/qse/
+
+  The search and batch commands probably can't nor shouldn't use the
+  same replacement markers, with batch using $*, $1, $2, etc, to
+  represent file columns (in a poor man's awk fashion) and search
+  simply using "{}" as the the object name replacement marker.
 
 * fix !!! in src/libged/tables.c where a temporary file is getting
   used.  needs to call bu_temp_file().
@@ -135,12 +187,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * expose all manual page documentation from within mged through
   searchable viewer interface (GUI)
 
-* add support to 'mv' (and possibly friends like mvall) for renaming
-  objects based on a mapping file.  Primarily of benefit to imported
-  geometries, this would introduce a renaming capability similar to
-  rcodes, idents, and other similar commands that provide file-based
-  collective name editing.
-
 * add an option to bot_dump for outputting surface normals.  Make sure
   all supported dump formats (obj, dxf, etc) optionally write out
   normals.  Consider adding an option to smoothly interpolate normals
@@ -154,8 +200,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   command may have a bug in its calculations.  This needs to be
   investigated along with a review of the taxonomy used by rtarea for
   describing presented/projected areas.
-
-* make sca command accept three arguments for x/y/z.
 
 * obliterate verbose compilation warnings
 
@@ -207,16 +251,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * implement a new tool/command that reports summary information about
   a geometry file including number of objects, types of objects,
   classes of geometry representation types used, and potentially more.
-
-* add an option to mv/mvall to take input from a mapping file.
-  relates to sf feature request 2827957 from butler.  should be
-  something along the lines of simple file parsing such as the
-  following:
-
-  # this line is a comment
-  foo bar
-  "big foo" "big bar"
-  foobar "foo bar"  # another comment, replacing foobar with 'foo bar'
 
 * consider adding an option to reid/remat and edcodes (and others?) to
   ignore negative regions (regions subtracted from regions or
@@ -616,7 +650,7 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * modify the raytracers to use common fb and file output code
 
 * add missing manual pages (jra generated list on 04.2007):
-	a-d archer asc2g asc2pix binfo bot-bldxf bottest brep_cube brep_simple brickwall btclsh burst bw-a bw-d bwish c-d chan_add clutter contours d-a damdf dauto dauto2 d-bw dconv ddisp d-f dfft d-i dmod double-asc dpeak dsel dsp_add dstat d-u dwin euclid_format euclid_unformat fbgammamod f-d fence fhor f-i files-tape g-adrt g-euclid1 g-jack globe g-off i-a i-d i-f ihist imod ipuscan ipustat istat jack-g kurt lowp molecule msrandom mst nmgmodel nmg-sgp off-g pipe pipetest pix2g pix3filter pixcount pixelswap pixembed pixfields pixfieldsep pixflip-fb pix-ipu pixpaste pix-spm pix-yuv plstat png-ipu pyramid rawbot remapid rlesortmap rletovcr room rtcell rtexample rtfrac rtrad rtsil rtsrv rtwizard script-tab sgi-pix sketch solshoot sphflake spltest spm-fb ssampview syn tea tea_nmg testfree texturescale torii ttcp tube txyz-pl u-a u-bw u-d u-f umod ustat vcrtorle vegitation wall wdb_example xbmtorle xyz-pl yuv-pix
+	a-d archer asc2g asc2pix binfo bot-bldxf bottest brep_cube brep_simple brickwall btclsh burst bw-a bw-d bwish c-d chan_add clutter contours d-a damdf dauto dauto2 d-bw dconv ddisp d-f dfft d-i dmod double-asc dpeak dsel dsp_add dstat d-u dwin euclid_format euclid_unformat fbgammamod f-d fence fhor f-i files-tape g-adrt g-euclid1 g-jack globe g-off i-a i-d i-f ihist imod ipuscan ipustat istat jack-g kurt lowp molecule msrandom mst nmgmodel nmg-sgp off-g pipe pipetest pix2g pix3filter pixcount pixelswap pixembed pixfields pixfieldsep pixflip-fb pix-ipu pixpaste pix-spm pix-yuv plstat png-ipu pyramid rawbot remapid rlesortmap rletovcr room rtcell rtexample rtfrac rtrad rtsil rtsrv script-tab sgi-pix sketch solshoot sphflake spltest spm-fb ssampview syn tea tea_nmg testfree texturescale torii ttcp tube txyz-pl u-a u-bw u-d u-f umod ustat vcrtorle vegitation wall wdb_example xbmtorle xyz-pl yuv-pix
 
 * design plugin system to allow domain specific tools (say, for example,
   a tool to create propeller parts) to identify themselves and their
@@ -632,6 +666,11 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   for airfoil/wing shapes.  Interesting possibilities with boolean combinations
   of these primitives, provided their continuity at the ends ensures
   continuity all along "seams" - something to consider.
+
+* implement a g-gcode exporter.  ideally this converts geometry to
+  NURBS format, trims surfaces, evaluates boolean expressions, and
+  then generates tool paths on resulting surfaces and interior paths.
+
 
 LIBPC
 -----

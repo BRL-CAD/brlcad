@@ -250,12 +250,12 @@ main(int argc, char **argv)
 	unsigned char	*cb2, *cb3;
 	unsigned char	*obp; 	/* current output buf ptr */
 	unsigned char	*ebuf;		/* end ptr in buf[0] */
-	int		len;
+	size_t		len;
 	int	i;
 
 	len = CHUNK;
 	for ( i=0; i<NFILES; i++ )  {
-	    int	got;
+	    size_t	got;
 
 	    if ( fp[i] == NULL )  continue;
 	    got = fread( buf[i], width, CHUNK, fp[i] );

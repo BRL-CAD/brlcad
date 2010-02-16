@@ -2637,7 +2637,7 @@ RT_EXPORT BU_EXTERN(int db_identical_full_paths,
 RT_EXPORT BU_EXTERN(int db_full_path_subset,
 		    (const struct db_full_path	*a,
 		     const struct db_full_path	*b,
-		     int			skip_first));
+		     const int			skip_first));
 RT_EXPORT BU_EXTERN(int db_full_path_match_top,
 		    (const struct db_full_path	*a,
 		     const struct db_full_path	*b));

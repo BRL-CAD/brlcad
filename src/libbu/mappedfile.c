@@ -142,7 +142,8 @@ bu_open_mapped_file(const char *name, const char *appl)
     if (appl) mp->appl = bu_strdup(appl);
 
 #ifdef HAVE_SYS_STAT_H
-    mp->buflen = (size_t)sb.st_size;
+    /* The buflen member of "struct bu_mapped_file" should be a size_t. */
+    mp->buflen = (long)sb.st_size;
     mp->modtime = (long)sb.st_mtime;
 #  ifdef HAVE_SYS_MMAN_H
 

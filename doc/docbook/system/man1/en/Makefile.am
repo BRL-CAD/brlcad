@@ -17,7 +17,6 @@ man1DOCBOOK_EN = \
 	system/man1/en/anim_offset.xml \
 	system/man1/en/anim_orient.xml \
 	system/man1/en/animmate.xml \
-	system/man1/en/apropos.xml \
 	system/man1/en/aproposdevel.xml \
 	system/man1/en/aproposlib.xml \
 	system/man1/en/arb.xml \
@@ -25,7 +24,6 @@ man1DOCBOOK_EN = \
 	system/man1/en/area.xml \
 	system/man1/en/arot.xml \
 	system/man1/en/attach.xml \
-	system/man1/en/attr.xml \
 	system/man1/en/autoview.xml \
 	system/man1/en/bb.xml \
 	system/man1/en/bev.xml \
@@ -39,14 +37,12 @@ man1DOCBOOK_EN = \
 	system/man1/en/build_region.xml \
 	system/man1/en/bwscale.xml \
 	system/man1/en/c.xml \
-	system/man1/en/cat.xml \
 	system/man1/en/center.xml \
 	system/man1/en/coil.xml \
 	system/man1/en/color.xml \
 	system/man1/en/comb_color.xml \
 	system/man1/en/copyeval.xml \
 	system/man1/en/copymat.xml \
-	system/man1/en/cp.xml \
 	system/man1/en/cpi.xml \
 	system/man1/en/d.xml \
 	system/man1/en/dall.xml \
@@ -184,6 +180,7 @@ man1DOCBOOK_EN = \
 	system/man1/en/rtarea.xml \
 	system/man1/en/rtcheck.xml \
 	system/man1/en/rtedge.xml \
+	system/man1/en/rtwizard.xml \
 	system/man1/en/savekey.xml \
 	system/man1/en/saveview.xml \
 	system/man1/en/sca.xml \

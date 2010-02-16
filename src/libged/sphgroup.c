@@ -40,9 +40,8 @@ ged_sphgroup(struct ged *gedp, int argc, const char *argv[])
     struct directory *dp, *sphdp;
     point_t obj_min, obj_max;
     point_t rpp_min, rpp_max;
-    point_t testpts[8];
     point_t centerpt;
-    int i, j;
+    int i;
     int inside_flag = 0;
     struct rt_db_internal sph_intern;
     struct rt_ell_internal *bsph;

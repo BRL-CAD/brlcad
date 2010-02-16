@@ -306,6 +306,16 @@ render work where performance is critical.  Aliases:
 	--enable-runtime-debugging
 	--enable-run-time-debugging
 
+--enable-strict-build causes all compilation warnings to be treated as
+errors for certain portions of code that has undergone a more thorough
+review.  This behavior of this flag is heavily influenced by
+compilation settings (such as --enable-warnings) including
+optimization flags (such as --enable-optimized).  Default is "yes".
+Aliases:
+        --enable-strict
+        --enable-strict-compile
+        --enable-strict-compile-flags
+
 --enable-64bit-build attempts to force compilation to produce 64-bit
 binaries and libraries.  Note that it merely *ATTEMPTS* to force
 64-bit compilation but in all practicality and likelihood, you will
@@ -481,8 +491,11 @@ geometry models.  Default is "yes".  Aliases:
 	--enable-geometry-build
 	--enable-geometry-install
 
---enable-optimized turns on optimized compilation.  Default is "no".
-Aliases:
+--enable-optimized turns on optimized compilation.  Note that
+optimized compilation may potentially change the warnings produced by
+the compiler.  You may also need to specify --disable-strict or
+--disable-warnings to avoid halting on compilation warnings.  Default
+is "no".  Aliases:
 	--enable-opt
 	--enable-optimize
 	--enable-optimization

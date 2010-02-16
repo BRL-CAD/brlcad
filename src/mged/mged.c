@@ -294,6 +294,13 @@ attach_display_manager(Tcl_Interp *interp, const char *manager, const char *disp
 }
 
 
+HIDDEN void
+mged_notify()
+{
+    pr_prompt(interactive);
+}
+
+
 /*
  * M A I N
  */
@@ -303,8 +310,6 @@ main(int argc, char *argv[])
     int rateflag = 0;
     int c;
     int read_only_flag=0;
-
-    pid_t pid;
 
     int parent_pipe[2];
     int use_pipe = 0;
@@ -464,6 +469,8 @@ main(int argc, char *argv[])
 
 #ifdef HAVE_PIPE
     if (!classic_mged && !run_in_foreground) {
+	pid_t pid;
+
 	fprintf(stdout, "Initializing and backgrounding, please wait...");
 	fflush(stdout);
 
@@ -698,7 +705,7 @@ main(int argc, char *argv[])
 
     if (dbip != DBI_NULL) {
 	setview(0.0, 0.0, 0.0);
-	gedp->ged_gdp->gd_rtCmdNotify = mged_rtCmdNotify;
+	gedp->ged_gdp->gd_rtCmdNotify = mged_notify;
     }
 
     /* --- Now safe to process commands. --- */
@@ -831,7 +838,6 @@ main(int argc, char *argv[])
 	}
 #endif
     } else {
-	ClientData out, err;
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -840,22 +846,26 @@ main(int argc, char *argv[])
 	bu_vls_free(&vls);
 
 #if !defined(_WIN32) || defined(__CYGWIN__)
-	/* Redirect stdout */
-	(void)close(1);
-	(void)dup(pipe_out[1]);
-	(void)close(pipe_out[1]);
+	{
+	    ClientData out, err;
 
-	/* Redirect stderr */
-	(void)close(2);
-	(void)dup(pipe_err[1]);
-	(void)close(pipe_err[1]);
+	    /* Redirect stdout */
+	    (void)close(1);
+	    (void)dup(pipe_out[1]);
+	    (void)close(pipe_out[1]);
 
-	out = (ClientData)(size_t)pipe_out[0];
-	chan = Tcl_MakeFileChannel(out, TCL_READABLE);
-	Tcl_CreateChannelHandler(chan, TCL_READABLE, std_out_or_err, out);
-	err = (ClientData)(size_t)pipe_err[0];
-	chan = Tcl_MakeFileChannel(err, TCL_READABLE);
-	Tcl_CreateChannelHandler(chan, TCL_READABLE, std_out_or_err, err);
+	    /* Redirect stderr */
+	    (void)close(2);
+	    (void)dup(pipe_err[1]);
+	    (void)close(pipe_err[1]);
+
+	    out = (ClientData)(size_t)pipe_out[0];
+	    chan = Tcl_MakeFileChannel(out, TCL_READABLE);
+	    Tcl_CreateChannelHandler(chan, TCL_READABLE, std_out_or_err, out);
+	    err = (ClientData)(size_t)pipe_err[0];
+	    chan = Tcl_MakeFileChannel(err, TCL_READABLE);
+	    Tcl_CreateChannelHandler(chan, TCL_READABLE, std_out_or_err, err);
+	}
 #else
 	{
 	    HANDLE handle[2];

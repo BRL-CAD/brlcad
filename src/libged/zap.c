@@ -45,7 +45,6 @@ int
 ged_zap(struct ged *gedp, int argc, const char *argv[])
 {
     struct solid *sp;
-    struct solid *nsp;
     struct ged_display_list *gdlp;
     struct directory *dp;
 

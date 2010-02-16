@@ -85,6 +85,7 @@ static int
 create_cyl(point_line_t **plta, int count) {
     int i;
     point_line_t *plt = NULL;
+    const char *result;
 
     struct bu_vls vls;
     struct bu_vls vls2;
@@ -103,8 +104,9 @@ create_cyl(point_line_t **plta, int count) {
 #endif
 #if RUN_SCRIPT
     Tcl_Eval(twerp, bu_vls_addr(&vls2));
-    if (twerp->result[0] != '\0')
-	bu_log("create_cyl failure: %s\n", twerp->result);
+    result = Tcl_GetStringResult(twerp);
+    if (result && result[0] != '\0')
+	bu_log("create_cyl failure: %s\n", result);
     else
 	bu_log("create_cyl created\n");
 #endif
@@ -117,6 +119,7 @@ static int
 create_sphere(point_line_t **plta, int count) {
     int i;
     point_line_t *plt = NULL;
+    const char *result;
 
     struct bu_vls vls;
     struct bu_vls vls2;
@@ -135,8 +138,9 @@ create_sphere(point_line_t **plta, int count) {
 #endif
 #if RUN_SCRIPT
     Tcl_Eval(twerp, bu_vls_addr(&vls2));
-    if (twerp->result[0] != '\0') 
-	bu_log("create_cylinder failure: %s\n", twerp->result);
+    result = Tcl_GetStringResult(twerp);
+    if (result && result[0] != '\0')
+	bu_log("create_cylinder failure: %s\n", result);
     else 
 	bu_log("create_cylinder created\n");
 #endif
@@ -466,6 +470,7 @@ int
 create_plate(point_line_t **plta, int count) {
     int i;
     point_line_t *plt = NULL;
+    const char *result;
 
     struct bu_vls vls;
     struct bu_vls vls2;
@@ -485,11 +490,11 @@ create_plate(point_line_t **plta, int count) {
 #endif
 #if RUN_SCRIPT
     Tcl_Eval(twerp, bu_vls_addr(&vls2));
-    if (twerp->result[0] != '\0') {
-	bu_log("create_plate failure: %s\n", twerp->result);
-    } else {
+    result = Tcl_GetStringResult(twerp);
+    if (result && result[0] != '\0')
+	bu_log("create_plate failure: %s\n", result);
+    else
 	bu_log("create_plate created\n");
-    }
 #endif
 
     return 1;
@@ -499,6 +504,7 @@ int
 create_arb(point_line_t **plta, int count) {
     int i;
     point_line_t *plt = NULL;
+    const char *result;
 
     struct bu_vls vls;
     struct bu_vls vls2;
@@ -518,8 +524,9 @@ create_arb(point_line_t **plta, int count) {
 #endif
 #if RUN_SCRIPT
     Tcl_Eval(twerp, bu_vls_addr(&vls2));
-    if (twerp->result[0] != '\0')
-	bu_log("create_arb failure: %s\n", twerp->result);
+    result = Tcl_GetStringResult(twerp);
+    if (result && result[0] != '\0')
+	bu_log("create_arb failure: %s\n", result);
     else
 	bu_log("create_arb created\n");
 #endif
@@ -531,6 +538,7 @@ int
 create_cylinder(point_line_t **plta, int count) {
     int i;
     point_line_t *plt = NULL;
+    const char *result;
 
     struct bu_vls vls;
     struct bu_vls vls2;
@@ -549,8 +557,9 @@ create_cylinder(point_line_t **plta, int count) {
 #endif
 #if RUN_SCRIPT
     Tcl_Eval(twerp, bu_vls_addr(&vls2));
-    if (twerp->result[0] != '\0')
-	bu_log("create_cylinder failure: %s\n", twerp->result);
+    result = Tcl_GetStringResult(twerp);
+    if (result && result[0] != '\0')
+	bu_log("create_cylinder failure: %s\n", result);
     else
 	bu_log("create_cylinder created\n");
 #endif
@@ -562,6 +571,7 @@ int
 create_pipe(point_line_t **plta, int count) {
     int i;
     point_line_t *plt = NULL;
+    const char *result;
 
     struct bu_vls vls;
     struct bu_vls vls2;
@@ -580,8 +590,9 @@ create_pipe(point_line_t **plta, int count) {
 #endif
 #if RUN_SCRIPT
     Tcl_Eval(twerp, bu_vls_addr(&vls2));
-    if (twerp->result[0] != '\0') 
-	bu_log("create_pipe failure: %s\n", twerp->result);
+    result = Tcl_GetStringResult(twerp);
+    if (result && result[0] != '\0')
+	bu_log("create_pipe failure: %s\n", result);
     else 
 	bu_log("create_pipe created\n");
 #endif
@@ -593,6 +604,7 @@ int
 create_points(point_line_t **plta, int count) {
     int i;
     point_line_t *plt = NULL;
+    const char *result;
 
     struct bu_vls vls;
     struct bu_vls vls2;
@@ -611,8 +623,9 @@ create_points(point_line_t **plta, int count) {
 #endif
 #if RUN_SCRIPT
     Tcl_Eval(twerp, bu_vls_addr(&vls2));
-    if (twerp->result[0] != '\0') 
-	bu_log("create_points failure: %s\n", twerp->result);
+    result = Tcl_GetStringResult(twerp);
+    if (result && result[0] != '\0')
+	bu_log("create_points failure: %s\n", result);
     else 
 	bu_log("create_points created\n");
 #endif

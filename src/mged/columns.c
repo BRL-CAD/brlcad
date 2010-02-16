@@ -109,8 +109,8 @@ cmpdirname(const genptr_t a, const genptr_t b)
 void
 vls_col_pr4v(struct bu_vls *vls, struct directory **list_of_names, int num_in_list)
 {
-    int lines, i, j, namelen, this_one;
-    int k,
+    size_t lines, i, j, namelen, this_one;
+    size_t k,
 	maxnamelen,      /* longest name in list */
 	cwidth,          /* column width */
 	numcol;         /* number of columns */
@@ -197,8 +197,8 @@ vls_long_dpp(
     int isComb, isRegion;
     int isSolid;
     const char *type;
-    int max_nam_len = 0;
-    int max_type_len = 0;
+    size_t max_nam_len = 0;
+    size_t max_type_len = 0;
     struct directory *dp;
 
     qsort( (genptr_t)list_of_names,
@@ -206,7 +206,7 @@ vls_long_dpp(
 	   (int (*)())cmpdirname);
 
     for ( i=0; i<num_in_list; i++ ) {
-	int len;
+	size_t len;
 
 	dp = list_of_names[i];
 	len = strlen( dp->d_namep );
@@ -259,9 +259,9 @@ vls_long_dpp(
 	    (rflag && isRegion) ||
 	    (sflag && isSolid)) {
 	    bu_vls_printf(vls, "%s", dp->d_namep );
-	    bu_vls_spaces(vls, max_nam_len - strlen( dp->d_namep ) );
+	    bu_vls_spaces(vls, (int)(max_nam_len - strlen(dp->d_namep)) );
 	    bu_vls_printf(vls, " %s", type );
-	    bu_vls_spaces(vls, max_type_len - strlen( type ) );
+	    bu_vls_spaces(vls, (int)(max_type_len - strlen(type)) );
 	    bu_vls_printf(vls,  " %2d %2d %ld\n",
 			  dp->d_major_type, dp->d_minor_type, (long)dp->d_len);
 	}

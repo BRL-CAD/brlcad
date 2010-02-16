@@ -709,7 +709,6 @@ ged_bot_dump_leaf(struct db_tree_state	*tsp,
 		  genptr_t		client_data)
 {
     int ret;
-    char *pstr;
     union tree *curtree;
     mat_t mat;
     struct directory *dp;
@@ -815,7 +814,6 @@ ged_bot_dump_get_args(struct ged *gedp, int argc, const char *argv[])
 int
 ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
 {
-    char idbuf[132];		/* First ID record info */
     struct rt_db_internal intern;
     struct rt_bot_internal *bot;
     struct directory *dp;

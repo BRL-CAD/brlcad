@@ -492,7 +492,7 @@ rt_pr_tree_str(const union tree *tree)
     char *left, *right;
     char *return_str;
     char op = OP_GUARD;
-    int return_length;
+    size_t return_length;
 
     if ( tree == NULL )
 	return bu_strdup("NULL_ptr");

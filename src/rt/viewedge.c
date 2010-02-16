@@ -253,6 +253,9 @@ Options:\n\
 ";
 
 
+int handle_main_ray(struct application *ap, register struct partition *PartHeadp, struct seg *segp);
+int diffpixel(RGBpixel a, RGBpixel b);
+
 static int occlusion_hit(struct application *ap, struct partition *pt,
 			 struct seg *segp)
 {

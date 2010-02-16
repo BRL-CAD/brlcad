@@ -182,7 +182,7 @@ overlap(struct application *ap, struct partition *pp, struct region *reg1, struc
 int
 view_init(register struct application *ap, char *file, char *obj, int minus_o)
 {
-    register int i;
+    register size_t i;
     char buf[BUFSIZ+1];
     static char null = (char) 0;
     const char *curdir = getenv( "PWD" );
@@ -207,7 +207,7 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o)
 
 #define maxm(a, b) (a>b?a:b)
     i = maxm(strlen(curdir), strlen(homedir)) + strlen(DENSITY_FILE) + 2;
-    densityfile = bu_calloc( i, 1, "densityfile");
+    densityfile = bu_calloc( (unsigned int)i, 1, "densityfile");
 
     snprintf(densityfile, i, "%s/%s", curdir, DENSITY_FILE);
 
@@ -349,7 +349,7 @@ void	view_end(struct application *ap)
     }
     for ( BU_LIST_FOR( rp, region, &(rtip->HeadRegion) ) )  {
 	register fastf_t weight = 0;
-	register int l = strlen(rp->reg_name);
+	register size_t l = strlen(rp->reg_name);
 	register fastf_t *ptr;
 
 	/* */
@@ -409,7 +409,7 @@ void	view_end(struct application *ap)
 	    fprintf(outfp, "%4d %8.3f ", i, item_wt[i] );
 	    for ( BU_LIST_FOR( rp, region, &(rtip->HeadRegion) ) )  {
 		if ( rp->reg_regionid == i ) {
-		    register int l = strlen(rp->reg_name);
+		    register size_t l = strlen(rp->reg_name);
 		    l = l > 65 ? l-65 : 0;
 		    if ( CR )
 			fprintf(outfp, "              ");

@@ -180,7 +180,7 @@ rle_hdr *from_hdr, *to_hdr;
 	    size *= sizeof(char *);
 	    to_hdr->comments = (CONST_DECL char **)malloc( size );
 	    RLE_CHECK_ALLOC( to_hdr->cmd, to_hdr->comments, "comments" );
-	    bcopy( from_hdr->comments, to_hdr->comments, size );
+	    bcopy( (const void *)from_hdr->comments, (void *)to_hdr->comments, size );
 	}
 	else
 	    to_hdr->comments = NULL;	/* Blow off empty comment list. */
@@ -236,7 +236,7 @@ rle_hdr *the_hdr;
 	the_hdr->cmap = 0;
 	/* Unfortunately, we don't know how to free the comment memory. */
 	if ( the_hdr->comments )
-	    free( the_hdr->comments );
+           free( (void *)the_hdr->comments );
 	the_hdr->comments = 0;
     }
 }

@@ -119,52 +119,52 @@ COMMA	[,]
 <LINE>"PLATE" {
     BEGIN(INITIAL);
     process_type(&yylval, "PLATE", PLATE);
-    COUNT(PLATE);
+    TABULATE(PLATE);
 }
 <LINE>"STRIPPLATE" {
     BEGIN(INITIAL);
     process_type(&yylval, "PLATE", PLATE);
-    COUNT(PLATE);
+    TABULATE(PLATE);
 }
 <LINE>"ARB" {
     BEGIN(INITIAL);
     process_type(&yylval, "ARB", ARB);
-    COUNT(PLATE);
+    TABULATE(PLATE);
 }
 <LINE>"SYMMETRY" {
     BEGIN(INITIAL);
     process_type(&yylval, "POINTS", SYMMETRY);
-    COUNT(SYMMETRY);
+    TABULATE(SYMMETRY);
 }
 <LINE>"POINTS" {
     BEGIN(INITIAL);
     process_type(&yylval, "POINTS", POINTS);
-    COUNT(POINTS);
+    TABULATE(POINTS);
 }
 <LINE>"GROUND" {
     BEGIN(INITIAL);
     process_type(&yylval, "POINTS", POINTS);
-    COUNT(POINTS);
+    TABULATE(POINTS);
 }
 <LINE>"CYLINDER" {
     BEGIN(INITIAL);
     process_type(&yylval, "CYLINDER", CYLINDER);
-    COUNT(CYLINDER);
+    TABULATE(CYLINDER);
 }
 <LINE>"CYL" {
     BEGIN(INITIAL);
     process_type(&yylval, "CYL", CYL);
-    COUNT(CYL);
+    TABULATE(CYL);
 }
 <LINE>"PIPE" {
     BEGIN(INITIAL);
     process_type(&yylval, "PIPE", PIPE);
-    COUNT(PIPE);
+    TABULATE(PIPE);
 }
 <LINE>"SPHERE" {
     BEGIN(INITIAL);
     process_type(&yylval, "SPHERE", SPHERE);
-    COUNT(SPHERE);
+    TABULATE(SPHERE);
 }
 
 %{
@@ -172,7 +172,7 @@ COMMA	[,]
 %}
 
 {INT} {
-    count(INT, yytext);
+    tabulate(INT, yytext);
     /* printf("found int: %s (int %ld)\n", yytext, atol(yytext)); */
     if (yylval.index > 0 || yylval.count > 0) {
 	process_value(&yylval, atof(yytext));
@@ -183,14 +183,14 @@ COMMA	[,]
 }
 
 {FLOAT} {
-    count(FLT, yytext);
+    tabulate(FLT, yytext);
     /* printf("found a float: %s (flt %lf)\n", yytext, atof(yytext)); */
     process_value(&yylval, atof(yytext));
     return FLT;
 }
 
 {COMMENT} {
-    count(COMMENT, yytext);
+    tabulate(COMMENT, yytext);
     /* printf("found a comment: %s\n", yytext); */
     /*    yylval = strdup(yytext);*/
     return COMMENT;
@@ -201,7 +201,7 @@ COMMA	[,]
 }
 
 {SPACE} {
-    count(0, yytext);
+    tabulate(0, yytext);
 }
 
 {EOL}.* {
@@ -215,7 +215,7 @@ COMMA	[,]
 
     while (i < yyleng && (yytext[i] == '\n' || yytext[i] == '\r')) {
 	if (yytext[i] == '\n') {
-	    count(NL, "\n");
+	    tabulate(NL, "\n");
 	}
 	i++;
     }

@@ -938,7 +938,7 @@ f_permute(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
      *	2) Recompute plane equations?
      */
     int 	vertex, i, k;
-    int			arglen;
+    size_t		arglen;
     int			face_size;	/* # vertices in THE face */
     char		**p;
     struct rt_arb_internal	*arb;

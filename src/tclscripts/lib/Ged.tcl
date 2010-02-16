@@ -156,6 +156,7 @@ package provide cadwidgets::Ged 1.0
 	method dbconcat {args}
 	method dbfind {args}
 	method dbip {args}
+	method dbot_dump {args}
 	method decompose {args}
 	method delay {args}
 	method dir2ae {args}
@@ -1104,6 +1105,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::dbip {args} {
     eval $mGed dbip $args
+}
+
+::itcl::body cadwidgets::Ged::dbot_dump {args} {
+    eval $mGed dbot_dump $args
 }
 
 ::itcl::body cadwidgets::Ged::decompose {args} {
@@ -3129,14 +3134,14 @@ package provide cadwidgets::Ged 1.0
 	return $partitions
     }
 
-    set partition [lindex $partitions 0]
-
     if {$_pflag} {
 	return $partitions
     }
 
     # mMouseRayCallbacks is not currently active
     if {[llength $mMouseRayCallbacks] == 0} {
+	set partition [lindex $partitions 0]
+
 	if {$partition == {}} {
 	    tk_messageBox -message "Nothing hit"
 	} else {
@@ -3777,6 +3782,7 @@ package provide cadwidgets::Ged 1.0
     $help add dbconcat		{{file [prefix]} {concatenate 'file' onto end of present database.  Run 'dup file' first.}}
     $help add dbfind		{{[-s] <objects>} {find all references to objects}}
     $help add dbip		{{} {get dbip}}
+    $help add dbot_dump	{{[-b] [-m directory] [-o file] [-t dxf|obj|sat|stl] [-u units] \n} {dump the displayed bots}}
     $help add decompose		{{nmg_solid [prefix]}	{decompose nmg_solid into maximally connected shells}}
     $help add delay		{{sec usec} {delay processing for the specified amount of time}}
     $help add dir2ae		{{az el} {returns a direction vector given the azimuth and elevation}}

@@ -35,34 +35,6 @@
 #include "./ged_private.h"
 
 HIDDEN int
-ged_move_all_file(struct ged *gedp, int nflag, const char *file)
-{
-    FILE *fp;
-    char line[512];
-
-    if ((fp=fopen(file, "r")) == NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "cannot open %s\n", file);
-	return GED_ERROR;
-    }
-
-    while (bu_fgets(line, sizeof(line), fp) != NULL) {
-	char old[256];
-	char new[256];
-
-	if (sscanf(line, "%s %s", old, new) != 2) {
-	    bu_vls_printf(&gedp->ged_result_str, "Discarding %s\n", line);
-	    continue;
-	}
-
-	ged_move_all_func(gedp, nflag, (const char *)old, (const char *)new);
-    }
-
-    fclose(fp);
-
-    return GED_OK;
-}
-
-HIDDEN int
 ged_move_all_func(struct ged *gedp, int nflag, const char *old, const char *new)
 {
     int	i;
@@ -253,13 +225,43 @@ ged_move_all_func(struct ged *gedp, int nflag, const char *old, const char *new)
     return GED_OK;
 }
 
+HIDDEN int
+ged_move_all_file(struct ged *gedp, int nflag, const char *file)
+{
+    FILE *fp;
+    char line[512];
+
+    if ((fp=fopen(file, "r")) == NULL) {
+	bu_vls_printf(&gedp->ged_result_str, "cannot open %s\n", file);
+	return GED_ERROR;
+    }
+
+    while (bu_fgets(line, sizeof(line), fp) != NULL) {
+	char *cp;
+	char *new_av[3];
+
+	/* Skip comments */
+	if ((cp = strchr(line, '#')) != NULL)
+	    *cp = '\0';
+
+	if (bu_argv_from_string(new_av, 2, line) != 2)
+	    continue;
+
+	ged_move_all_func(gedp, nflag, (const char *)new_av[0], (const char *)new_av[1]);
+    }
+
+    fclose(fp);
+
+    return GED_OK;
+}
+
 int
 ged_move_all(struct ged *gedp, int argc, const char *argv[])
 {
     char c;
     int fflag = 0;
     int nflag = 0;
-    static const char *usage = "[-n] -f file | [-n] from to";
+    static const char *usage = "[-n] {-f <mapping_file>|<from> <to>}";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);

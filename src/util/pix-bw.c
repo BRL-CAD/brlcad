@@ -55,7 +55,7 @@ Usage: pix-bw [-ntsc -crt -R[#] -G[#] -B[#]] [in.pix] > out.bw\n";
 int
 main(int argc, char **argv)
 {
-    int	in, out, num;
+    size_t	in, out, num;
     int	multiple_colors, num_color_planes;
     int	clip_high, clip_low;
     double	value;

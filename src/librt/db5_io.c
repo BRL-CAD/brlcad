@@ -347,11 +347,11 @@ int
 db5_get_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp)
 {
     struct db5_ondisk_header	header;
-    unsigned char			lenbuf[8];
+    unsigned char		lenbuf[8];
     int				count = 0;
     int				used;
-    long				want, got;
-    unsigned char			*cp;
+    size_t			want, got;
+    unsigned char		*cp;
 
     if ( fread( (unsigned char *)&header, sizeof header, 1, fp ) != 1  )  {
 	if ( feof(fp) )  return -1;
@@ -476,7 +476,7 @@ db5_export_object3(
     need = sizeof(struct db5_ondisk_header);
     need += 8;	/* for object_length */
     if ( name )  {
-	namelen = strlen(name) + 1;	/* includes null */
+	namelen = (long)strlen(name) + 1;	/* includes null */
 	if ( namelen > 1 )  {
 	    n_width = db5_select_length_encoding(namelen);
 	    need += namelen + db5_enc_len[n_width];
@@ -811,12 +811,12 @@ db5_export_attributes( struct bu_external *ext, const struct bu_attribute_value_
     avpp = avs->avp;
     for ( i = 0; i < (size_t)avs->count; i++, avpp++ )  {
 	if (avpp->name) {
-	    need += strlen(avpp->name) + 1; /* include room for NULL */
+	    need += (int)strlen(avpp->name) + 1; /* include room for NULL */
 	} else {
 	    need += 1;
 	}
 	if (avpp->value) {
-	    need += strlen(avpp->value) + 1; /* include room for NULL */
+	    need += (int)strlen(avpp->value) + 1; /* include room for NULL */
 	} else {
 	    need += 1;
 	}
@@ -839,14 +839,14 @@ db5_export_attributes( struct bu_external *ext, const struct bu_attribute_value_
 	int len;
 
 	if (avpp->name) {
-	    len = strlen(avpp->name);
+	    len = (int)strlen(avpp->name);
 	    memcpy(cp, avpp->name, len);
 	    cp += len + 1;
 	}
 	*cp = '\0'; /* pad null */
 
 	if (avpp->value) {
-	    len = strlen(avpp->value);
+	    len = (int)strlen(avpp->value);
 	    memcpy(cp, avpp->value, strlen(avpp->value));
 	    cp += len + 1;
 	}

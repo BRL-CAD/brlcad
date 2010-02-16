@@ -6,4 +6,4 @@
 # element name is the name of a command and the value is
 # a script that loads the command.
 
-set auto_index(::RtWizard::main) [list source [file join $dir rtwizard.tcl]]
+set auto_index(::RaytraceWizard::main) [list source [file join $dir RaytraceWizard.tcl]]

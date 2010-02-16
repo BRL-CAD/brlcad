@@ -414,7 +414,7 @@ rt_vol_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     register int y;
     register int z;
     mat_t tmat;
-    int ret;
+    size_t ret;
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -558,7 +558,7 @@ rt_vol_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     register int y;
     register int z;
     mat_t tmat;
-    int ret;
+    size_t ret;
 
     if (dbip) RT_CK_DBI(dbip);
 

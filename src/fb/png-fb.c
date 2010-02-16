@@ -29,6 +29,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "bio.h"
 #include "png.h"
 #include "bu.h"
 #include "fb.h"

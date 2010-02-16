@@ -177,7 +177,7 @@ bu_units_conversion(const char *str)
     register const struct cvt_tab *tp;
     register const struct conv_table *cvtab;
     char ubuf[256];
-    int len;
+    size_t len;
 
     bu_strlcpy(ubuf, str, sizeof(ubuf));
 

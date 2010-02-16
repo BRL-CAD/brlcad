@@ -232,7 +232,7 @@ namespace eval RtWizard {
 	    NormalTag
 
 	$t insert insert \
-	    "Note that it is current not possible to change the BRL-CAD database once one has been opened. This is due to a bug in the MGED objects that the RtWizard uses to interact with the databases.\n\n" \
+	    "Note that it is current not possible to change the BRL-CAD database once one has been opened.\n\n" \
 	    NormalTag
 
 	$t insert insert \

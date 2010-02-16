@@ -247,7 +247,7 @@ register rle_hdr * the_hdr;
 	/* Get the total length of comments */
 	comlen = 0;
 	for ( com_p = the_hdr->comments; *com_p != NULL; com_p++ )
-	    comlen += 1 + strlen( *com_p );
+ 	    comlen += 1 + (int)strlen( *com_p );
 
 	put16( comlen );
 	for ( com_p = the_hdr->comments; *com_p != NULL; com_p++ )

@@ -1602,7 +1602,7 @@ allocate_per_region_data(struct cstate *state, int start, int ac, const char *av
 	reg_tbl[i].r_volume = bu_calloc(num_views, sizeof(double), "len");
 	reg_tbl[i].r_weight = bu_calloc(num_views, sizeof(double), "len");
 
-	m = strlen(regp->reg_name);
+	m = (int)strlen(regp->reg_name);
 	if (m > max_region_name_len) max_region_name_len = m;
 	reg_tbl[i].optr = &obj_tbl[ find_cmd_line_obj(obj_tbl, &regp->reg_name[1]) ];
 

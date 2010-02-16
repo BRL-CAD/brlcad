@@ -944,9 +944,9 @@ rt_nurb_export4(struct bu_external *ep, const struct rt_db_internal *ip, double 
 	grans = rt_nurb_grans(srf);
 
 	rec[rec_ptr].d.d_id = ID_BSURF;
-	rec[rec_ptr].d.d_nknots = (((srf->u.k_size + srf->v.k_size)
+	rec[rec_ptr].d.d_nknots = (short)(((srf->u.k_size + srf->v.k_size)
 				    * sizeof(dbfloat_t)) + sizeof(union record)-1)/ sizeof(union record);
-	rec[rec_ptr].d.d_nctls = ((
+	rec[rec_ptr].d.d_nctls = (short)((
 				      RT_NURB_EXTRACT_COORDS(srf->pt_type)
 				      * (srf->s_size[0] * srf->s_size[1])
 				      * sizeof(dbfloat_t)) + sizeof(union record)-1)

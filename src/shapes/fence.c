@@ -1861,7 +1861,7 @@ int main(int argc, char **argv)
     struct rt_wdb *fp;
     int errors;
 
-    int len = 0;
+    size_t len = 0;
     char *verboseinput;
     int colorinput[3];
 

@@ -1139,7 +1139,7 @@ nmg_booltree_evaluate(register union tree *tp, const struct bn_tol *tol, struct 
     int op;
     const char *op_str;
     char *name;
-    int rem;
+    size_t rem;
 
     RT_CK_TREE(tp);
     BN_CK_TOL(tol);

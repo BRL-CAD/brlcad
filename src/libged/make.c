@@ -55,7 +55,6 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
     struct rt_tor_internal	*tor_ip;
     struct rt_grip_internal	*grp_ip;
     struct rt_half_internal *half_ip;
-    struct rt_hyp_internal *hyp_ip;
     struct rt_rpc_internal *rpc_ip;
     struct rt_rhc_internal *rhc_ip;
     struct rt_epa_internal *epa_ip;

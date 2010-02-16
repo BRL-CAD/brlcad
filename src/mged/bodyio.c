@@ -66,7 +66,7 @@ cmd_import_body(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
     struct rt_db_internal	intern;
     struct rt_binunif_internal	*bip;
     int				fd;
-    int				gotten;
+    size_t			gotten;
 
     CHECK_DBI_NULL;
 
@@ -191,7 +191,7 @@ cmd_import_body(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 	    if (RT_G_DEBUG & DEBUG_VOL)
 		bu_log("gotten=%d,  minor_code is %d\n",
 		       gotten, minor_code);
-	    bip->count = gotten / db5_type_sizeof_n_binu( minor_code );
+	    bip->count = (long)(gotten / db5_type_sizeof_n_binu( minor_code ));
 	    if (RT_G_DEBUG & DEBUG_VOL) {
 		bu_log("Got 'em!\nThink I own %d of 'em\n", bip->count);
 		fflush(stderr);

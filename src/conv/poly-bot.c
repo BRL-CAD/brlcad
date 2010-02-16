@@ -89,8 +89,8 @@ main(int argc, char **argv)
 	}
 #if defined(_WIN32) && !defined(__CYGWIN__)
     } else {
-	setmode(ifp, O_BINARY);
-	setmode(ofp, O_BINARY);
+	setmode(fileno(ifp), O_BINARY);
+	setmode(fileno(ofp), O_BINARY);
 #endif
     }
     if (isatty(fileno(ifp))) {

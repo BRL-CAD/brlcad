@@ -1322,7 +1322,6 @@ Catch(int sig)
     /* signal number */
 {
     int pid;		/* this process's ID */
-    int *psig;		/* -> sigs[.] */
     int i;
 
     for (i = 0; sigs[i]; ++i)
@@ -1349,7 +1348,6 @@ Catch(int sig)
 static void
 SetSigs(void)
 {
-    int	*psig;		/* -> sigs[.] */
     int i;
 
     for (i = 0; sigs[i]; ++i) {

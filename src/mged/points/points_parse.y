@@ -68,6 +68,13 @@
 #include "./count.h"
 #include "./process.h"
 
+#ifndef YYDEBUG
+#  define YYDEBUG 0
+#endif
+#ifndef YYMAXDEPTH
+#  define YYMAXDEPTH 0
+#endif
+
 extern FILE *yyin;
 extern int yylex();
 int yyerror(char *msg);
@@ -198,7 +205,8 @@ file:
   */
 
 %%
-int yyerror(char *msg)
+int
+yyerror(char *msg)
 {
     if (get_column() == 0) {
 	printf("\nERROR: Unexpected end of line reached on line %ld, column %ld  (file offset %ld)\n", get_lines(), strlen(previous_linebuffer)+1, get_bytes());
@@ -209,11 +217,18 @@ int yyerror(char *msg)
 	printf("%s\n%*s\n", linebuffer, (int)get_column()-1, "^");
 	fprintf(stderr, "ERROR: Unexpected input on line %ld, column %ld  (file offset %ld)\n", get_lines()+1, get_column()-1, get_bytes());
     }
-    /* printf("ERROR:\n%s\n%*s (line %ld, column %ld)\n%s\n", lastline, column, "^", line, column, msg); */
+
+    if (msg) {
+	printf("\n%s\n", msg);
+    }
+
     bu_exit(1, NULL);
+
+    return 0;
 }
 
-int yywrap()
+int
+yywrap()
 {
     point_line_t plt;
     INITIALIZE_POINT_LINE_T(plt);

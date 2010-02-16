@@ -605,7 +605,7 @@ if test ! "x${ret}" = "x0" ; then
     $ECHO "ERROR:  CMP does not seem to work as expected"
     exit 2
 fi
-$ELP 0
+$ELP 0 > /dev/null 2>&1
 if test ! "x${ret}" = "x0" ; then
     $ECHO
     $ECHO "ERROR:  ELP does not seem to work as expected"

@@ -213,7 +213,7 @@ wdb_track_cmd(struct rt_wdb	*wdbp,
     /* base name */
     arg = 1;
     grpname = bu_strdup(argv[arg]);
-    grpname_len = strlen(grpname);
+    grpname_len = (int)strlen(grpname);
     len = grpname_len + 1 + extraChars;
     solname = bu_malloc(len, "solid name");
     regname = bu_malloc(len, "region name");
