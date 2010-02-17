@@ -351,8 +351,6 @@ Recent Bugs
 
 * bot-bldxf fails in db_walk_tree(), interface may have changed
 
-* you can't run a make benchmark unless you're compiling in place
-
 
 Older Bugs
 ----------
