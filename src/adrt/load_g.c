@@ -177,11 +177,14 @@ nmg_to_adrt_regstart(struct db_tree_state *ts, const struct db_full_path *path, 
     mesh->texture = NULL;
     mesh->flags = 0;
     mesh->attributes = (struct adrt_mesh_attributes_s *)bu_malloc(sizeof(struct adrt_mesh_attributes_s), "adrt mesh attributes");
-    VSET(mesh->attributes->color.v, 0, 1, 1);
 
+    VSET(mesh->attributes->color.v, 0, 1, 1);
+    if(rci->rgb_valid)
+	    VMOVE(mesh->attributes->color.v, rci->rgb);
     /*
-    VMOVE(mesh->attributes->color.v, color);
+	else handle materials if possible
     */
+
     strncpy(mesh->name, db_path_to_string(path), 255);
 
     if(intern.idb_minor_type == ID_NMG) {
