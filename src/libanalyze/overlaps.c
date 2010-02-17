@@ -17,11 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file overlaps.c
- *
- * Routines specific to overlap analysis.
- *
- */
 
 #include "common.h"
 
@@ -33,9 +28,6 @@
 #include "bu.h"
 
 
-/**
- * This routine must be prepared to run in parallel
- */
 struct region_pair *
 add_unique_pair(struct region_pair *list, /* list to add into */
 		struct region *r1,        /* first region involved */

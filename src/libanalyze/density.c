@@ -17,11 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file density.c
- *
- * Functionality specific to analysis routines using density information.
- *
- */
 
 #include "common.h"
 #include <stdlib.h>
@@ -30,9 +25,6 @@
 #include "analyze.h"
 #include "bu.h"
 
-/**
- * parse_densities_buffer
- */
 int
 parse_densities_buffer(char *buf, unsigned long len, struct density_entry *densities, struct bu_vls *result_str, int *num_densities)
 {
