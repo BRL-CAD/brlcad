@@ -46,6 +46,7 @@
 #include "common.h"
 
 #include <stdlib.h>
+#include <sys/types.h>
 
 __BEGIN_DECLS
 
