@@ -112,7 +112,7 @@ db5_select_length_encoding(long int len)
  *	The number of bytes of input that were decoded.
  */
 int
-db5_decode_length(long int *lenp, const unsigned char *cp, int format)
+db5_decode_length(ssize_t *lenp, const unsigned char *cp, int format)
 {
     switch ( format )  {
 	case DB5HDR_WIDTHCODE_8BIT:
@@ -149,7 +149,7 @@ db5_decode_length(long int *lenp, const unsigned char *cp, int format)
  *	The number of bytes of input that were decoded.
  */
 int
-db5_decode_signed(long int *lenp, const unsigned char *cp, int format)
+db5_decode_signed(ssize_t *lenp, const unsigned char *cp, int format)
 {
     switch ( format )  {
 	case DB5HDR_WIDTHCODE_8BIT:

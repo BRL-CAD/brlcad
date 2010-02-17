@@ -196,7 +196,7 @@ struct rt_grip_internal {
  */
 struct rt_pg_internal {
     unsigned long magic;
-    int	npoly;
+    ssize_t	npoly;
     struct rt_pg_face_internal {
 	int	npts;		/**< @brief  number of points for this polygon */
 	fastf_t	*verts;		/**< @brief  has 3*npts elements */

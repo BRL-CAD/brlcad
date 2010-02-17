@@ -177,6 +177,7 @@ typedef unsigned int gid_t;
 typedef unsigned int uid_t;
 typedef unsigned int uint32_t;
 typedef unsigned short uint16_t;
+typedef __int64 ssize_t;
 
 /*
  * for chmod()

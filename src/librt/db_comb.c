@@ -213,7 +213,7 @@ rt_comb_import4(
     union tree *tree;
     struct rt_comb_internal *comb;
     int j;
-    int node_count;
+    ssize_t node_count;
 
     BU_CK_EXTERNAL(ep);
     rp = (union record *)ep->ext_buf;

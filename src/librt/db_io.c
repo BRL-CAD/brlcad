@@ -50,7 +50,7 @@
  *	-1 FAILURE
  */
 HIDDEN int
-db_read(const struct db_i *dbip, genptr_t addr, long int count, long int offset)
+db_read(const struct db_i *dbip, genptr_t addr, ssize_t count, ssize_t offset)
     /* byte count */
     /* byte offset from start of file */
 {
@@ -137,7 +137,7 @@ db_getmrec(const struct db_i *dbip, const struct directory *dp)
     }
 
     if (db_read(dbip, (char *)where,
-		(long)dp->d_len * sizeof(union record),
+		dp->d_len * sizeof(union record),
 		dp->d_addr) < 0) {
 	bu_free((genptr_t)where, "db_getmrec record[]");
 	return((union record *)0);	/* VERY BAD */
@@ -183,7 +183,7 @@ db_get(const struct db_i *dbip, const struct directory *dp, union record *where,
 	return 0;		/* OK */
     }
 
-    if (db_read(dbip, (char *)where, (long)len * sizeof(union record),
+    if (db_read(dbip, (char *)where, len * sizeof(union record),
 		dp->d_addr + offset * sizeof(union record)) < 0) {
 	where->u_id = '\0';	/* undefined id */
 	return(-1);
@@ -206,7 +206,7 @@ db_get(const struct db_i *dbip, const struct directory *dp, union record *where,
  */
 /* should be HIDDEN */
 int
-db_write(struct db_i *dbip, const genptr_t addr, long int count, long int offset)
+db_write(struct db_i *dbip, const genptr_t addr, ssize_t count, ssize_t offset)
 {
     register long int got;
 
@@ -285,7 +285,7 @@ db_put(struct db_i *dbip, const struct directory *dp, union record *where, int o
 	return(-1);
     }
 
-    if (db_write(dbip, (char *)where, (long)len * sizeof(union record),
+    if (db_write(dbip, (char *)where, len * sizeof(union record),
 		 dp->d_addr + offset * sizeof(union record)) < 0) {
 	return(-1);
     }
@@ -333,7 +333,7 @@ db_get_external(register struct bu_external *ep, const struct directory *dp, con
     }
 
     if (db_read(dbip, (char *)ep->ext_buf,
-		(long)ep->ext_nbytes, dp->d_addr) < 0) {
+		ep->ext_nbytes, dp->d_addr) < 0) {
 	bu_free(ep->ext_buf, "db_get_ext ext_buf");
 	ep->ext_buf = (genptr_t)NULL;
 	ep->ext_nbytes = 0;
@@ -384,7 +384,7 @@ db_put_external(struct bu_external *ep, struct directory *dp, struct db_i *dbip)
 	return db_put_external5(ep, dp, dbip);
 
     if (dbip->dbi_version <= 4) {
-	int ngran;
+	ssize_t ngran;
 
 	ngran = (ep->ext_nbytes+sizeof(union record)-1)/sizeof(union record);
 	if (ngran != dp->d_len) {

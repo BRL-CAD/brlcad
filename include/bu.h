@@ -45,6 +45,8 @@
 
 #include "common.h"
 
+#include <stdlib.h>
+
 __BEGIN_DECLS
 
 #ifndef BU_EXPORT
@@ -1806,11 +1808,7 @@ BU_EXPORT extern int bu_debug;
 #        endif
 #      else
 /* "Conservative" way of finding # bytes as diff of 2 char ptrs */
-#        if defined(_WIN32) && !defined(__CYGWIN__)
-#          define bu_byteoffset(_i)	((long)(((char *)&(_i))-((char *)0)))
-#        else
-#          define bu_byteoffset(_i)	((size_t)(((char *)&(_i))-((char *)0)))
-#        endif
+#        define bu_byteoffset(_i)	((size_t)(((char *)&(_i))-((char *)0)))
 #      endif
 #    endif
 #  endif
@@ -1862,9 +1860,9 @@ BU_EXPORT extern int bu_debug;
  */
 struct bu_structparse {
     char sp_fmt[4];		/**< @brief "i" or "%f", etc */
-    long sp_count;		/**< @brief number of elements */
+    ssize_t sp_count;		/**< @brief number of elements */
     char *sp_name;		/**< @brief Element's symbolic name */
-    long sp_offset;		/**< @brief Byte offset in struct */
+    ssize_t sp_offset;		/**< @brief Byte offset in struct */
     void (*sp_hook)();	/**< @brief Optional hooked function, or indir ptr */
     char *sp_desc;		/**< @brief description of element */
     void *sp_default;		/**< @brief ptr to default value */
@@ -1885,7 +1883,7 @@ struct bu_structparse {
  */
 struct bu_external  {
     unsigned long ext_magic;
-    long ext_nbytes;
+    ssize_t ext_nbytes;
     genptr_t ext_buf;
 };
 #define BU_INIT_EXTERNAL(_p) {(_p)->ext_magic = BU_EXTERNAL_MAGIC; \

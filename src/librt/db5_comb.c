@@ -450,9 +450,9 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const m
 {
     struct rt_comb_internal	*comb;
     unsigned char	*cp;
-    int		wid;
-    long		nmat, nleaf, rpn_len, max_stack_depth;
-    long		leafbytes;
+    int			wid;
+    ssize_t		nmat, nleaf, rpn_len, max_stack_depth;
+    ssize_t		leafbytes;
     unsigned char	*matp;
     unsigned char	*leafp;
     unsigned char	*leafp_end;
@@ -461,7 +461,7 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const m
     union tree	*stack[MAX_V5_STACK];
     union tree	**sp;			/* stack pointer */
     const char	*ap;
-    int		i;
+    ssize_t		i;
 
     RT_CK_DB_INTERNAL( ip );
     BU_CK_EXTERNAL(ep);
@@ -501,7 +501,7 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const m
 	bu_ptbl_init( tbl1, nleaf, "rt_comb_import5: tbl" );
 	for ( i = nleaf-1; i >= 0; i-- )  {
 	    union tree	*tp;
-	    long		mi;
+	    ssize_t	mi;
 
 	    RT_GET_TREE( tp, resp );
 	    tp->tr_l.magic = RT_TREE_MAGIC;
@@ -618,7 +618,7 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const m
 
     for ( i=0; i < rpn_len; i++, exprp++ )  {
 	union tree	*tp;
-	long		mi;
+	ssize_t		mi;
 
 	RT_GET_TREE( tp, resp );
 	tp->tr_b.magic = RT_TREE_MAGIC;

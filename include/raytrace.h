@@ -737,8 +737,8 @@ union cutter  {
  */
 struct mem_map {
     struct mem_map *m_nxtp;	/**< @brief Linking pointer to next element */
-    unsigned m_size;		/**< @brief Size of this free element */
-    unsigned long m_addr;	/**< @brief Address of start of this element */
+    size_t m_size;		/**< @brief Size of this free element */
+    size_t m_addr;	/**< @brief Address of start of this element */
 };
 #define MAP_NULL	((struct mem_map *) 0)
 
@@ -778,8 +778,8 @@ struct db_i  {
     /* THESE ELEMENTS ARE FOR LIBRT ONLY, AND MAY CHANGE */
     struct directory *		dbi_Head[RT_DBNHASH];
     FILE *			dbi_fp;		/**< @brief standard file pointer */
-    long			dbi_eof;	/**< @brief End+1 pos after db_scan() */
-    long			dbi_nrec;	/**< @brief # records after db_scan() */
+    ssize_t			dbi_eof;	/**< @brief End+1 pos after db_scan() */
+    ssize_t			dbi_nrec;	/**< @brief # records after db_scan() */
     int				dbi_uses;	/**< @brief # of uses of this struct */
     struct mem_map *		dbi_freep;	/**< @brief map of free granules */
     genptr_t			dbi_inmem;	/**< @brief ptr to in-memory copy */
@@ -827,13 +827,13 @@ struct directory  {
     unsigned long	d_magic;		/**< @brief Magic number */
     char *		d_namep;		/**< @brief pointer to name string */
     union {
-	long		file_offset;		/**< @brief disk address in obj file */
+	ssize_t		file_offset;		/**< @brief disk address in obj file */
 	genptr_t	ptr;			/**< @brief ptr to in-memory-only obj */
     } d_un;
     struct directory *	d_forw;			/**< @brief link to next dir entry */
     struct animate *	d_animate;		/**< @brief link to animation */
     long		d_uses;			/**< @brief # uses, from instancing */
-    long		d_len;			/**< @brief # of db granules used */
+    ssize_t		d_len;			/**< @brief # of db granules used */
     long		d_nref;			/**< @brief # times ref'ed by COMBs */
     int			d_flags;		/**< @brief flags */
     unsigned char	d_major_type;		/**< @brief object major type */
@@ -2727,12 +2727,12 @@ RT_EXPORT BU_EXTERN(void db5_make_free_object,
 		    (struct bu_external *ep,
 		     long length));
 RT_EXPORT BU_EXTERN(int db5_decode_signed,
-		    (long			*lenp,
+		    (ssize_t			*lenp,
 		     const unsigned char	*cp,
 		     int			format));
 
 RT_EXPORT BU_EXTERN(int db5_decode_length,
-		    (long			*lenp,
+		    (ssize_t			*lenp,
 		     const unsigned char	*cp,
 		     int			format));
 
@@ -2880,8 +2880,8 @@ RT_EXPORT BU_EXTERN(int rt_poly_roots,
 RT_EXPORT BU_EXTERN(int db_write,
 		    (struct db_i	*dbip,
 		     const genptr_t	addr,
-		     long		count,
-		     long		offset));
+		     ssize_t		count,
+		     ssize_t		offset));
 RT_EXPORT BU_EXTERN(int db_fwrite_external,
 		    (FILE			*fp,
 		     const char		*name,
@@ -3408,20 +3408,20 @@ RT_EXPORT BU_EXTERN(struct rt_pt_node *rt_ptalloc,
 		    ());
 
 /* memalloc.c -- non PARALLEL routines */
-RT_EXPORT BU_EXTERN(unsigned long rt_memalloc,
+RT_EXPORT BU_EXTERN(size_t rt_memalloc,
 		    (struct mem_map **pp,
-		     unsigned size));
+		     size_t size));
 RT_EXPORT BU_EXTERN(struct mem_map * rt_memalloc_nosplit,
 		    (struct mem_map **pp,
-		     unsigned size));
-RT_EXPORT BU_EXTERN(unsigned long rt_memget,
+		     size_t size));
+RT_EXPORT BU_EXTERN(size_t rt_memget,
 		    (struct mem_map **pp,
-		     unsigned int size,
-		     unsigned int place));
+		     size_t size,
+		     size_t place));
 RT_EXPORT BU_EXTERN(void rt_memfree,
 		    (struct mem_map **pp,
-		     unsigned size,
-		     unsigned long addr));
+		     size_t size,
+		     size_t addr));
 RT_EXPORT BU_EXTERN(void rt_mempurge,
 		    (struct mem_map **pp));
 RT_EXPORT BU_EXTERN(void rt_memprint,

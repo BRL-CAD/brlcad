@@ -48,8 +48,8 @@
 int
 db_alloc(register struct db_i *dbip, register struct directory *dp, int count)
 {
-    unsigned long	addr;
-    union record	rec;
+    size_t addr;
+    union record rec;
 
     RT_CK_DBI(dbip);
     RT_CK_DIR(dp);
