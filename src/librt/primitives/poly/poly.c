@@ -815,7 +815,7 @@ rt_pg_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose,
     bu_vls_strcat(str, "polygon solid with no topology (POLY)\n");
 
     sprintf(buf, "\t%ld polygons (faces)\n",
-	    pgp->npoly);
+	    (long int)pgp->npoly);
     bu_vls_strcat(str, buf);
 
     sprintf(buf, "\tMost complex face has %d vertices\n",
