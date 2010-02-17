@@ -175,7 +175,7 @@ stash_shell(struct shell *s, char *file_name, char *title, const struct bn_tol *
     }
 
     nmg_rebound(m, tol);
-    snprintf(counted_name, 258, "%s%d.g", file_name, debug_file_count);
+    snprintf(counted_name, 256, "%s%d.g", file_name, debug_file_count);
     nmg_stash_model_to_file(counted_name, m, title);
     nmg_km(m);
 }
