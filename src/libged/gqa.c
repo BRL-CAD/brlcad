@@ -167,14 +167,8 @@ struct ged_gqa_plot {
 } ged_gqa_plot;
 
 /* the entries in the density table */
-struct density_entry {
-    long magic;
-    double grams_per_cu_mm;
-    char *name;
-} *densities = NULL;
+struct density_entry *densities = NULL;
 static int num_densities;
-#define DENSITY_MAGIC 0xaf0127
-
 
 /* summary data structure for objects specified on command line */
 static struct per_obj_data {
@@ -737,112 +731,6 @@ parse_args(int ac, char *av[])
     return(bu_optind);
 }
 
-
-/**
- * parse_densities_buffer
- */
-int
-parse_densities_buffer(char *buf, unsigned long len)
-{
-    char *p, *q, *last;
-    long idx;
-    double density;
-
-    buf[len] = '\0';
-    last = &buf[len];
-
-    p = buf;
-
-    densities = bu_calloc(128, sizeof(struct density_entry), "density entries");
-    num_densities = 128;
-
-    /* Skip initial whitespace */
-    while (*p && (*p == '\t' || *p == ' ' || *p == '\n')) p++;
-
-    /* Skip initial comments */
-    while (*p == '#') {
-	/* Skip comment */
-	while (*p && *p != '\n') p++;
-    }
-
-    /* Skip whitespace */
-    while (*p && (*p == '\t' || *p == ' ' || *p == '\n')) p++;
-
-    while (*p) {
-	/* Skip comments */
-	if (*p == '#') {
-	    /* Skip comment */
-	    while (*p && *p != '\n') p++;
-
-	    /* Skip whitespace */
-	    while (*p && (*p == '\t' || *p == ' ' || *p == '\n')) p++;
-
-	    continue;
-	}
-
-	idx = strtol(p, &q, 10);
-	if (q == (char *)NULL) {
-	    bu_vls_printf(&_ged_current_gedp->ged_result_str, "could not convert idx\n");
-	    return GED_ERROR;
-	}
-
-	if (idx < 0) {
-	    bu_vls_printf(&_ged_current_gedp->ged_result_str, "bad density index (%ld < 0)\n", idx);
-	    return GED_ERROR;
-	}
-
-	density = strtod(q, &p);
-	if (q == p) {
-	    bu_vls_printf(&_ged_current_gedp->ged_result_str, "could not convert density\n");
-	    return GED_ERROR;
-	}
-
-	if (density < 0.0) {
-	    bu_vls_printf(&_ged_current_gedp->ged_result_str, "bad density (%lf < 0)\n", density);
-	    return GED_ERROR;
-	}
-
-	/* Skip tabs and spaces */
-	while (*p && (*p == '\t' || *p == ' ')) p++;
-	if (!*p)
-	    break;
-
-	if ((q = strchr(p, '\n')))
-	    *q++ = '\0';
-	else
-	    q = last;
-
-	while (idx >= num_densities) {
-	    densities = bu_realloc(densities, sizeof(struct density_entry)*num_densities*2,
-				   "density entries");
-	    num_densities *= 2;
-	}
-
-	densities[idx].magic = DENSITY_MAGIC;
-	/* since BRL-CAD does computation in mm, but the table is in
-	 * grams / (cm^3) we convert the table on input
-	 */
-	densities[idx].grams_per_cu_mm = density / 1000.0;
-	densities[idx].name = bu_strdup(p);
-
-	p = q;
-
-	/* Skip whitespace */
-	while (*p && (*p == '\t' || *p == ' ' || *p == '\n')) p++;
-    }
-
-#ifdef PRINT_DENSITIES
-    for (idx=0; idx < num_densities; idx++)
-	if (densities[idx].magic == DENSITY_MAGIC)
-	    bu_vls_printf(&_ged_current_gedp->ged_result_str, "%4d %6g %s\n",
-			  idx,
-			  densities[idx].density,
-			  densities[idx].name);
-#endif
-
-    return GED_OK;
-}
-
 /**
  * Returns
  *	 0 on success
@@ -868,9 +756,12 @@ get_densities_from_file(char *name)
 	return GED_ERROR;
     }
 
+    densities = bu_calloc(128, sizeof(struct density_entry), "density entries");
+    num_densities = 128;
+    
     buf = bu_malloc(sb.st_size+1, "density buffer");
     fread(buf, sb.st_size, 1, fp);
-    ret = parse_densities_buffer(buf, (unsigned long)sb.st_size);
+    ret = parse_densities_buffer(buf, (unsigned long)sb.st_size, densities, _ged_current_gedp->ged_result_str, &num_densities);
     bu_free(buf, "density buffer");
     fclose(fp);
 
@@ -910,13 +801,16 @@ get_densities_from_database(struct rt_i *rtip)
     bu = (struct rt_binunif_internal *)intern.idb_ptr;
 
     RT_CHECK_BINUNIF (bu);
-
+   
+    densities = bu_calloc(128, sizeof(struct density_entry), "density entries");
+    num_densities = 128;
+ 
     /* Acquire one extra byte to accomodate parse_densities_buffer()
      *   (i.e. it wants to write an EOS in buf[bu->count]).
      */
     buf = bu_malloc(bu->count+1, "density buffer");
     memcpy(buf, bu->u.int8, bu->count);
-    ret = parse_densities_buffer(buf, bu->count);
+    ret = parse_densities_buffer(buf, bu->count, densities, _ged_current_gedp->ged_result_str, &num_densities);
     bu_free((genptr_t)buf, "density buffer");
 
     return ret;

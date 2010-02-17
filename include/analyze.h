@@ -42,6 +42,22 @@ __BEGIN_DECLS
 #  endif
 #endif
 
+/* Libanalyze return codes */
+#define ANALYZE_OK 0x0000
+#define ANALYZE_ERROR 0x0001 /**< something went wrong, function not completed */
+
+/*
+ *     Density specific structures
+ */
+
+#define DENSITY_MAGIC 0xaf0127
+
+/* the entries in the density table */
+struct density_entry {
+    long magic;
+    double grams_per_cu_mm;
+    char *name;
+};
 
 /*
  *     Overlap specific structures
@@ -59,6 +75,10 @@ struct region_pair {
     vect_t coord;
 };
 
+/**
+ *     Routine to parse a .density file
+ */
+ANALYZE_EXPORT BU_EXTERN(int returnval, (char *buf, unsigned long len, struct density_entry *densities, struct bu_vls *result_str, int *num_densities));
 
 /**
  *     region_pair for gqa 
