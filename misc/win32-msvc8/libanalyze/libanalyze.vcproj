@@ -229,6 +229,10 @@
 			Filter="cpp;c;cxx;rc;def;r;odl;idl;hpj;bat"
 			>
 			<File
+				RelativePath="..\..\..\src\libanalyze\density.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\libanalyze\overlaps.c"
 				>
 			</File>
