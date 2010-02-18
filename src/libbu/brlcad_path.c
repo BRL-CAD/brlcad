@@ -151,9 +151,6 @@ bu_argv0_full_path(void)
 
     const char *which = bu_which(argv0);
 
-    if (argv0 == (const char *)0)
-	return (const char *)0;
-
     if (argv0[0] == BU_DIR_SEPARATOR) {
 	/* seems to already be a full path */
 	snprintf(buffer, MAXPATHLEN, "%s", argv0);
