@@ -831,7 +831,6 @@ db_comb_describe(
 	    bu_vls_printf(str, "(FASTGEN volume mode) ");
     }
 
-
     bu_vls_strcat(str, "--\n");
     if (bu_vls_strlen(&comb->shader) > 0) {
 	bu_vls_printf(str,
