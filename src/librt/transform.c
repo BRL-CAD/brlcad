@@ -33,13 +33,13 @@
  * r t _ m a t r i x _ t r a n s f o r m
  *
  * apply a matrix transformation to a given input object, setting the
- * resultant transformed object as the output solid.  if free is set,
- * the input object will be released.
+ * resultant transformed object as the output solid.  if freeflag is
+ * set, the input object will be released.
  *
  * returns zero if matrix transform was applied, non-zero on failure.
  */
 int
-rt_matrix_transform(struct rt_db_internal *output, const mat_t matrix, struct rt_db_internal *input, int free, struct db_i *dbip, struct resource *resource)
+rt_matrix_transform(struct rt_db_internal *output, const mat_t matrix, struct rt_db_internal *input, int freeflag, struct db_i *dbip, struct resource *resource)
 {
     int ret;
 
@@ -50,7 +50,7 @@ rt_matrix_transform(struct rt_db_internal *output, const mat_t matrix, struct rt
 
     ret = -1;
     if (rt_functab[input->idb_type].ft_xform) {
-	ret = rt_functab[input->idb_type].ft_xform(output, matrix, input, free, dbip, resource);
+	ret = rt_functab[input->idb_type].ft_xform(output, matrix, input, freeflag, dbip, resource);
     }
 
     return ret;

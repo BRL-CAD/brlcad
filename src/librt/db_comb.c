@@ -159,7 +159,7 @@ db_flatten_tree(
     struct rt_tree_array *rt_tree_array,
     union tree *tp,
     int op,
-    int free,
+    int freeflag,
     struct resource *resp)
 {
 
@@ -176,9 +176,9 @@ db_flatten_tree(
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
 	    /* This node is known to be a binary op */
-	    rt_tree_array = db_flatten_tree(rt_tree_array, tp->tr_b.tb_left, op, free, resp);
-	    rt_tree_array = db_flatten_tree(rt_tree_array, tp->tr_b.tb_right, tp->tr_op, free, resp);
-	    if (free) {
+	    rt_tree_array = db_flatten_tree(rt_tree_array, tp->tr_b.tb_left, op, freeflag, resp);
+	    rt_tree_array = db_flatten_tree(rt_tree_array, tp->tr_b.tb_right, tp->tr_op, freeflag, resp);
+	    if (freeflag) {
 		/* The leaves have been stolen, free the binary op */
 		tp->tr_b.tb_left = TREE_NULL;
 		tp->tr_b.tb_right = TREE_NULL;
