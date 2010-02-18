@@ -213,7 +213,7 @@ bn_poly_sub(register struct bn_poly *diff, register const struct bn_poly *poly1,
 void
 bn_poly_synthetic_division(register struct bn_poly *quo, register struct bn_poly *rem, register const struct bn_poly *dvdend, register const struct bn_poly *dvsor)
 {
-    register int div;
+    register int divisor;
     register int n;
 
     *quo = *dvdend;
@@ -226,8 +226,8 @@ bn_poly_synthetic_division(register struct bn_poly *quo, register struct bn_poly
 
     for (n=0; n <= quo->dgr; ++n) {
 	quo->cf[n] /= dvsor->cf[0];
-	for (div=1; div <= dvsor->dgr; ++div) {
-	    quo->cf[n+div] -= quo->cf[n] * dvsor->cf[div];
+	for (divisor=1; divisor <= dvsor->dgr; ++divisor) {
+	    quo->cf[n+divisor] -= quo->cf[n] * dvsor->cf[divisor];
 	}
     }
     for (n=1; n<=(rem->dgr+1); ++n) {
