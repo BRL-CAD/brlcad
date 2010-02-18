@@ -21,7 +21,7 @@
 /** @{ */
 /** @file db5_comb.c
  *
- * Handle import/export of combinations (union tree) in v5 format.
+ * Implement support for combinations in v5 format.
  *
  * The on-disk record looks like this:
  *	width byte
@@ -44,6 +44,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 #include "bio.h"
 
 #include "bu.h"
@@ -63,6 +64,7 @@ struct db_tree_counter_state {
 };
 #define DB_TREE_COUNTER_STATE_MAGIC	0x64546373	/* dTcs */
 #define DB_CK_TREE_COUNTER_STATE(_p)	BU_CKMAG(_p, DB_TREE_COUNTER_STATE_MAGIC, "db_tree_counter_state");
+
 
 /**
  * D B _ T R E E _ C O U N T E R
@@ -238,6 +240,7 @@ rt_comb_v5_serialize(
     }
 }
 
+
 /**
  * R T _ C O M B _ E X P O R T 5
  */
@@ -391,7 +394,7 @@ rt_comb_export5(
     } else
 	bu_avs_remove( avsp, "rgb" );
 
-    /* optical shader string goes out in Tcl format */
+    /* optical shader string goes in an attribute */
     if ( bu_vls_strlen( &comb->shader ) > 0 )
 	bu_avs_add_vls( avsp, "oshader", &comb->shader );
     else
@@ -429,6 +432,7 @@ rt_comb_export5(
     bu_vls_free( &value );
     return 0;	/* OK */
 }
+
 
 /**
  * R T _ C O M B _ I M P O R T 5
@@ -771,6 +775,334 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const m
 
     return 0; /* OK */
 }
+
+
+/**
+ * R T _ C O M B _ G E T
+ *
+ * Sets the result string to a description of the given combination.
+ * Entered via rt_functab[].ft_get().
+ */
+int
+rt_comb_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *item)
+{
+    const struct rt_comb_internal *comb;
+    char buf[128];
+
+    RT_CK_DB_INTERNAL(intern);
+    comb = (struct rt_comb_internal *)intern->idb_ptr;
+    RT_CK_COMB(comb);
+
+    if (item==0) {
+	/* Print out the whole combination. */
+
+	bu_vls_printf(logstr, "comb region ");
+	if (comb->region_flag) {
+	    bu_vls_printf(logstr, "yes id %d ", comb->region_id);
+
+	    if (comb->aircode) {
+		bu_vls_printf(logstr, "air %d ", comb->aircode);
+	    }
+	    if (comb->los) {
+		bu_vls_printf(logstr, "los %d ", comb->los);
+	    }
+
+	    if (comb->GIFTmater) {
+		bu_vls_printf(logstr, "GIFTmater %d ", comb->GIFTmater);
+	    }
+	} else {
+	    bu_vls_printf(logstr, "no ");
+	}
+
+	if (comb->rgb_valid) {
+	    bu_vls_printf(logstr, "rgb {%d %d %d} ", V3ARGS(comb->rgb));
+	}
+
+	if (bu_vls_strlen(&comb->shader) > 0) {
+	    bu_vls_printf(logstr, "shader {%s} ", bu_vls_addr(&comb->shader));
+	}
+
+	if (bu_vls_strlen(&comb->material) > 0) {
+	    bu_vls_printf(logstr, "material %s ", bu_vls_addr(&comb->material));
+	}
+
+	if (comb->inherit) {
+	    bu_vls_printf(logstr, "inherit yes ");
+	}
+
+	db_tree_list(logstr, comb->tree);
+	return BRLCAD_OK;
+    } else {
+	/* Print out only the requested item. */
+	register int i;
+	char itemlwr[128];
+
+	for (i = 0; i < 128 && item[i]; i++) {
+	    itemlwr[i] = (isupper(item[i]) ? tolower(item[i]) :
+			  item[i]);
+	}
+	itemlwr[i] = 0;
+
+	if (strcmp(itemlwr, "region")==0) {
+	    snprintf(buf, 128, "%s", comb->region_flag ? "yes" : "no");
+	} else if (strcmp(itemlwr, "id")==0) {
+	    if (!comb->region_flag) goto not_region;
+	    snprintf(buf, 128, "%ld", comb->region_id);
+	} else if (strcmp(itemlwr, "air")==0) {
+	    if (!comb->region_flag) goto not_region;
+	    snprintf(buf, 128, "%ld", comb->aircode);
+	} else if (strcmp(itemlwr, "los")==0) {
+	    if (!comb->region_flag) goto not_region;
+	    snprintf(buf, 128, "%ld", comb->los);
+	} else if (strcmp(itemlwr, "giftmater")==0) {
+	    if (!comb->region_flag) goto not_region;
+	    snprintf(buf, 128, "%ld", comb->GIFTmater);
+	} else if (strcmp(itemlwr, "rgb")==0) {
+	    if (comb->rgb_valid)
+		snprintf(buf, 128, "%d %d %d", V3ARGS(comb->rgb));
+	    else
+		snprintf(buf, 128, "invalid");
+	} else if (strcmp(itemlwr, "shader")==0) {
+	    bu_vls_printf(logstr, "%s", bu_vls_addr(&comb->shader));
+	    return BRLCAD_OK;
+	} else if (strcmp(itemlwr, "material")==0) {
+	    bu_vls_printf(logstr, "%s", bu_vls_addr(&comb->material));
+	    return BRLCAD_OK;
+	} else if (strcmp(itemlwr, "inherit")==0) {
+	    snprintf(buf, 128, "%s", comb->inherit ? "yes" : "no");
+	} else if (strcmp(itemlwr, "tree")==0) {
+	    db_tree_list(logstr, comb->tree);
+	    return BRLCAD_OK;
+	} else {
+	    bu_vls_printf(logstr, "no such attribute");
+	    return BRLCAD_ERROR;
+	}
+
+	bu_vls_printf(logstr, "%s", buf);
+	return BRLCAD_OK;
+
+    not_region:
+	bu_vls_printf(logstr, "item not valid for non-region");
+	return BRLCAD_ERROR;
+    }
+}
+
+
+/**
+ * R T _ C O M B _ A D J U S T
+ *
+ * Example -
+ * rgb "1 2 3" ...
+ *
+ * Invoked via rt_functab[ID_COMBINATION].ft_adjust()
+ */
+int
+rt_comb_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv)
+{
+    struct rt_comb_internal *comb;
+    char buf[128];
+    int i;
+    double d;
+
+    RT_CK_DB_INTERNAL(intern);
+    comb = (struct rt_comb_internal *)intern->idb_ptr;
+    RT_CK_COMB(comb);
+
+    while (argc >= 2) {
+	/* Force to lower case */
+	for (i=0; i<128 && argv[0][i]!='\0'; i++)
+	    buf[i] = isupper(argv[0][i])?tolower(argv[0][i]):argv[0][i];
+	buf[i] = 0;
+
+	if (strcmp(buf, "region")==0) {
+	    if (strcmp(argv[1], "none") == 0) {
+		comb->region_flag = 0;
+	    } else if (strcmp(argv[1], "no") == 0) {
+		comb->region_flag = 0;
+	    } else if (strcmp(argv[1], "yes") == 0) {
+		comb->region_flag = 1;
+	    } else {
+		if (sscanf(argv[1], "%d", &i) != 1)
+		    return BRLCAD_ERROR;
+
+		if (i != 0)
+		    i = 1;
+
+		comb->region_flag = (char)i;
+	    }
+	} else if (strcmp(buf, "temp")==0) {
+	    if (!comb->region_flag) goto not_region;
+	    if (strcmp(argv[1], "none") == 0) {
+		comb->temperature = 0.0;
+	    } else {
+		if (sscanf(argv[1], "%lf", &d) != 1)
+		    return BRLCAD_ERROR;
+		comb->temperature = (float)d;
+	    }
+	} else if (strcmp(buf, "id")==0) {
+	    if (!comb->region_flag) goto not_region;
+	    if (strcmp(argv[1], "none") == 0) {
+		comb->region_id = 0;
+	    } else {
+		if (sscanf(argv[1], "%d", &i) != 1)
+		    return BRLCAD_ERROR;
+		comb->region_id = i;
+	    }
+	} else if (strcmp(buf, "air")==0) {
+	    if (!comb->region_flag) goto not_region;
+	    if (strcmp(argv[1], "none") == 0) {
+		comb->aircode = 0;
+	    } else {
+		if (sscanf(argv[1], "%d", &i) != 1)
+		    return BRLCAD_ERROR;
+		comb->aircode = i;
+	    }
+	} else if (strcmp(buf, "los")==0) {
+	    if (!comb->region_flag) goto not_region;
+	    if (strcmp(argv[1], "none") == 0) {
+		comb->los = 0;
+	    } else {
+		if (sscanf(argv[1], "%d", &i) != 1)
+		    return BRLCAD_ERROR;
+		comb->los = i;
+	    }
+	} else if (strcmp(buf, "giftmater")==0) {
+	    if (!comb->region_flag) goto not_region;
+	    if (strcmp(argv[1], "none") == 0) {
+		comb->GIFTmater = 0;
+	    } else {
+		if (sscanf(argv[1], "%d", &i) != 1)
+		    return BRLCAD_ERROR;
+		comb->GIFTmater = i;
+	    }
+	} else if (strcmp(buf, "rgb")==0) {
+	    if (strcmp(argv[1], "invalid")==0 || strcmp(argv[1], "none") == 0) {
+		comb->rgb[0] = comb->rgb[1] =
+		    comb->rgb[2] = 0;
+		comb->rgb_valid = 0;
+	    } else {
+		unsigned int r, g, b;
+		i = sscanf(argv[1], "%u %u %u",
+			   &r, &g, &b);
+		if (i != 3) {
+		    bu_vls_printf(logstr, "adjust rgb %s: not valid rgb 3-tuple\n", argv[1]);
+		    return BRLCAD_ERROR;
+		}
+		comb->rgb[0] = (unsigned char)r;
+		comb->rgb[1] = (unsigned char)g;
+		comb->rgb[2] = (unsigned char)b;
+		comb->rgb_valid = 1;
+	    }
+	} else if (strcmp(buf, "shader")==0) {
+	    bu_vls_trunc(&comb->shader, 0);
+	    if (strcmp(argv[1], "none")) {
+		bu_vls_strcat(&comb->shader, argv[1]);
+		/* Leading spaces boggle the combination exporter */
+		bu_vls_trimspace(&comb->shader);
+	    }
+	} else if (strcmp(buf, "material")==0) {
+	    bu_vls_trunc(&comb->material, 0);
+	    if (strcmp(argv[1], "none")) {
+		bu_vls_strcat(&comb->material, argv[1]);
+		bu_vls_trimspace(&comb->material);
+	    }
+	} else if (strcmp(buf, "inherit")==0) {
+	    if (strcmp(argv[1], "none") == 0) {
+		comb->inherit = 0;
+	    } else if (strcmp(argv[1], "no") == 0) {
+		comb->inherit = 0;
+	    } else if (strcmp(argv[1], "yes") == 0) {
+		comb->inherit = 1;
+	    } else {
+		if (sscanf(argv[1], "%d", &i) != 1)
+		    return BRLCAD_ERROR;
+
+		if (i != 0)
+		    i = 1;
+
+		comb->inherit = (char)i;
+	    }
+	} else if (strcmp(buf, "tree")==0) {
+	    union tree *new;
+
+	    if (*argv[1] == '\0' || strcmp(argv[1], "none") == 0) {
+		if (comb->tree) {
+		    db_free_tree(comb->tree, &rt_uniresource);
+		}
+		comb->tree = TREE_NULL;
+	    } else {
+		new = db_tree_parse(logstr, argv[1], &rt_uniresource);
+		if (new == TREE_NULL) {
+		    bu_vls_printf(logstr, "db adjust tree: bad tree '%s'\n", argv[1]);
+		    return BRLCAD_ERROR;
+		}
+		if (comb->tree)
+		    db_free_tree(comb->tree, &rt_uniresource);
+		comb->tree = new;
+	    }
+	} else {
+	    bu_vls_printf(logstr, "db adjust %s : no such attribute", buf);
+	    return BRLCAD_ERROR;
+	}
+	argc -= 2;
+	argv += 2;
+    }
+
+    return BRLCAD_OK;
+
+not_region:
+    bu_vls_printf(logstr, "adjusting attribute %s is not valid for a non-region combination.", buf);
+    return BRLCAD_ERROR;
+}
+
+
+/**
+ * R T _ C O M B _ F O R M
+ */
+int
+rt_comb_form(struct bu_vls *logstr, const struct rt_functab *ftp)
+{
+    RT_CK_FUNCTAB(ftp);
+
+    bu_vls_printf(logstr, "region {%%s} id {%%d} air {%%d} los {%%d} GIFTmater {%%d} rgb {%%d %%d %%d} shader {%%s} material {%%s} inherit {%%s} tree {%%s}");
+
+    return BRLCAD_OK;
+}
+
+
+/**
+ * R T _ C O M B _ M A K E
+ *
+ * Create a blank combination with appropriate values.  Called via
+ * rt_functab[ID_COMBINATION].ft_make().
+ */
+void
+rt_comb_make(const struct rt_functab *ftp __attribute__((unused)), struct rt_db_internal *intern)
+{
+    struct rt_comb_internal *comb;
+
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern->idb_type = ID_COMBINATION;
+    intern->idb_meth = &rt_functab[ID_COMBINATION];
+    intern->idb_ptr = bu_calloc(sizeof(struct rt_comb_internal), 1,
+				"rt_comb_internal");
+
+    comb = (struct rt_comb_internal *)intern->idb_ptr;
+    comb->magic = (long)RT_COMB_MAGIC;
+    comb->temperature = -1;
+    comb->tree = (union tree *)0;
+    comb->region_flag = 1;
+    comb->region_id = 0;
+    comb->aircode = 0;
+    comb->GIFTmater = 0;
+    comb->los = 0;
+    comb->rgb_valid = 0;
+    comb->rgb[0] = comb->rgb[1] = comb->rgb[2] = 0;
+    bu_vls_init(&comb->shader);
+    bu_vls_init(&comb->material);
+    comb->inherit = 0;
+}
+
 
 /*
  * Local Variables:
