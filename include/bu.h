@@ -2556,6 +2556,12 @@ BU_EXPORT BU_EXTERN(void bu_list_path, (char *path, char *substr, char **filearr
  * attempting to locate binaries, libraries, and resources.  This
  * routine will set argv0 if path is provided and should generally be
  * set early on by bu_setprogname().
+ *
+ * this routine will return "(unknown)" if argv[0] cannot be
+ * identified but should never return NULL.
+ *
+ * DEPRECATED: This routine is replaced by bu_argv0_full_path().
+ *             Do not use.
  */
 BU_EXPORT BU_EXTERN(const char *bu_argv0, (void));
 
@@ -2564,6 +2570,9 @@ BU_EXPORT BU_EXTERN(const char *bu_argv0, (void));
  *
  * returns the full path to argv0, regardless of how the application
  * was invoked.
+ *
+ * this routine will return "(unknown)" if argv[0] cannot be
+ * identified but should never return NULL.
  */
 BU_EXPORT BU_EXTERN(const char *bu_argv0_full_path, (void));
 
@@ -2628,41 +2637,37 @@ BU_EXPORT BU_EXTERN(const char *bu_brlcad_root, (const char *rhs, int fail_quiet
  */
 BU_EXPORT BU_EXTERN(const char *bu_brlcad_data, (const char *rhs, int fail_quietly));
 
-/** @file which.c
+/**
+ * b u _ w h i c h
+ *
+ * returns the first USER path match to a given executable name.
  *
  * Routine to provide BSD "which" functionality, locating binaries of
  * specified programs from the user's PATH. This is useful to locate
  * binaries and resources at run-time.
  *
- */
-
-/**
- * b u _ w h i c h
- *
- * returns the first USER path match to a given executable cmd name.
- *
  * caller should not free the result, though it will not be preserved
  * between calls either.  the caller should strdup the result if they
  * need to keep it around.
+ *
+ * routine will return NULL if the executable command cannot be found.
  */
 BU_EXPORT BU_EXTERN(const char *bu_which, (const char *cmd));
-
-/** @file whereis.c
- *
- * Routine to provide BSD "whereis" functionality, locating binaries
- * of specified programs from the SYSTEM path.  This is useful to
- * locate binaries and resources at run-time.
- *
- */
 
 /**
  * b u _ w h e r e i s
  *
  * returns the first SYSTEM path match to a given executable cmd name.
  *
+ * Routine to provide BSD "whereis" functionality, locating binaries
+ * of specified programs from the SYSTEM path.  This is useful to
+ * locate binaries and resources at run-time.
+ *
  * caller should not free the result, though it will not be preserved
  * between calls either.  the caller should strdup the result if they
  * need to keep it around.
+ *
+ * routine will return NULL if the executable command cannot be found.
  */
 BU_EXPORT BU_EXTERN(const char *bu_whereis, (const char *cmd));
 
