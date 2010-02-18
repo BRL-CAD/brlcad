@@ -56,7 +56,7 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * the 'l' and 'analyze' commands now require an object be specified
   and won't use the currently highlighted solid.  undoubtedly related
-  to libged refactoring.
+  to libged refactoring.  this is related to sf request 2954409.
 
 * alias objects.  this is an object handle in a geometry database that
   refers to another geometry database object.  in effect, it

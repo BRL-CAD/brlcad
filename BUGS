@@ -16,7 +16,8 @@ Recent Bugs
 -----------
 
 * mged raytrace fails with simple "raytrace failed" message when using
-  rt, nirt, etc on Windows after modifying a region.
+  rt, nirt, etc on Windows after modifying a region.  See sf bug
+  report 2954404.
 
 * mged rrt command is not respecting the view size, just does
   something similar to autoview but even gets az/el wrong too.
