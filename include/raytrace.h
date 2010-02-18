@@ -3233,6 +3233,9 @@ RT_EXPORT BU_EXTERN(int db_shader_mat,
 		     point_t			p_min,	/* input/output: shader/region min point */
 		     point_t			p_max,	/* input/output: shader/region max point */
 		     struct resource		*resp));
+RT_EXPORT BU_EXTERN(int db_tree_list, (struct bu_vls *vls, const union tree *tp));
+RT_EXPORT BU_EXTERN(union tree *db_tree_parse, (struct bu_vls *vls, const char *str, struct resource *resp));
+
 
 /* dir.c */
 RT_EXPORT BU_EXTERN(struct rt_i *rt_dirbuild,
