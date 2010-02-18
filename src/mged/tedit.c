@@ -921,7 +921,7 @@ readsolid(void)
 
 
 
- /* BUGS -- right now we only check at compile time whether or not to
+/* BUGS -- right now we only check at compile time whether or not to
  * pop up an X window to display into (for editors that do not open
  * their own window like vi or jove).  If we have X support, we
  * automatically use xterm (regardless of whether the user is running
@@ -994,19 +994,9 @@ get_editor_string(struct bu_vls *editstring)
     if (!editor || editor[0] == '\0') {
 	const char *binpath = bu_brlcad_root("bin", 1);
 	editor = "jove";
-	if (!binpath) {
+	if (binpath) {
 	    snprintf(buffer, RT_MAXLINE, "%s/%s", binpath, editor);
-	    if (bu_file_exists(buffer)) {
-		editor = buffer;
-	    } else {
-		const char *dirn = bu_dirname(bu_argv0());
-		if (dirn) {
-		    snprintf(buffer, RT_MAXLINE, "%s/%s", dirn, editor);
-		    if (bu_file_exists(buffer)) {
-			editor = buffer;
-		    }
-		}
-	    }
+	    editor = buffer;
 	}
     }
 
