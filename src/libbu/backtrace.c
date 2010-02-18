@@ -320,7 +320,7 @@ bu_backtrace(FILE *fp)
 
     snprintf(buffer, BT_BUFSIZE, "%d", bu_process_id());
 
-    debugger_args[1] = (char*) bu_argv0();
+    debugger_args[1] = (char*) bu_argv0_full_path();
     debugger_args[2] = buffer;
 
     if (bu_debug & BU_DEBUG_BACKTRACE) {
