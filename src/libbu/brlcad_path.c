@@ -113,7 +113,7 @@ _bu_ipwd()
 }
 
 
-const char *
+HIDDEN const char *
 _bu_argv0(void)
 {
     /* private stash */
@@ -146,7 +146,7 @@ bu_argv0_full_path(void)
 {
     static char buffer[MAXPATHLEN] = {0};
 
-    const char *argv0 = bu_argv0();
+    const char *argv0 = _bu_argv0();
     const char *ipwd = _bu_ipwd();
 
     const char *which = bu_which(argv0);
@@ -183,14 +183,6 @@ bu_argv0_full_path(void)
 }
 
 
-/* DEPRECATED: Do not use. */
-const char *
-bu_argv0(void)
-{
-    return _bu_argv0();
-}
-
-
 const char *
 bu_getprogname(void) {
     const char *name = NULL;
@@ -204,7 +196,7 @@ bu_getprogname(void) {
 #endif
 
     if (!name) {
-	name = bu_argv0();
+	name = _bu_argv0();
     }
 
     snprintf(bu_progname, MAXPATHLEN, "%s", name);
@@ -227,6 +219,14 @@ bu_setprogname(const char *argv0)
     (void)_bu_ipwd();
 
     return;
+}
+
+
+/* DEPRECATED: Do not use. */
+const char *
+bu_argv0(void)
+{
+    return _bu_argv0();
 }
 
 
