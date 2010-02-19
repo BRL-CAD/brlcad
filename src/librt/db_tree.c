@@ -2881,7 +2881,7 @@ tree_list_append(struct bu_vls *vls, const char *str)
 
 
 /* !!! temporary while testing implementation */
-#define VLS 1
+/* #define VLS 1 */
 
 
 /**
@@ -2987,7 +2987,6 @@ db_tree_list(struct bu_vls *vls, const union tree *tp)
 	    count += db_tree_list(vls, tp->tr_b.tb_left);
 	    tree_list_sublist_end(vls);
 #else
-	    Tcl_DStringStartSublist(&ds);
 	    {
 		struct bu_vls v;
 		bu_vls_init(&v);
@@ -2995,7 +2994,6 @@ db_tree_list(struct bu_vls *vls, const union tree *tp)
 		Tcl_DStringAppendElement(&ds, bu_vls_addr(&v));
 		bu_vls_free(&v);
 	    }
-	    Tcl_DStringEndSublist(&ds);
 #endif
 
 #ifdef VLS
@@ -3003,7 +3001,6 @@ db_tree_list(struct bu_vls *vls, const union tree *tp)
 	    count += db_tree_list(vls, tp->tr_b.tb_right);
 	    tree_list_sublist_end(vls);
 #else
-	    Tcl_DStringStartSublist(&ds);
 	    {
 		struct bu_vls v;
 		bu_vls_init(&v);
@@ -3011,7 +3008,6 @@ db_tree_list(struct bu_vls *vls, const union tree *tp)
 		Tcl_DStringAppendElement(&ds, bu_vls_addr(&v));
 		bu_vls_free(&v);
 	    }
-	    Tcl_DStringEndSublist(&ds);
 #endif
 	    break;
 
@@ -3042,7 +3038,6 @@ db_tree_list(struct bu_vls *vls, const union tree *tp)
 	    count += db_tree_list(vls, tp->tr_b.tb_left);
 	    tree_list_sublist_end(vls);
 #else
-	    Tcl_DStringStartSublist(&ds);
 	    {
 		struct bu_vls v;
 		bu_vls_init(&v);
@@ -3050,7 +3045,6 @@ db_tree_list(struct bu_vls *vls, const union tree *tp)
 		Tcl_DStringAppendElement(&ds, bu_vls_addr(&v));
 		bu_vls_free(&v);
 	    }
-	    Tcl_DStringEndSublist(&ds);
 #endif
 	    break;
 
