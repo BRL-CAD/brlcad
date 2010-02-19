@@ -4900,6 +4900,24 @@ BU_EXPORT BU_EXTERN(void bu_vls_prepend,
 		    (struct bu_vls *vp,
 		     char *str));
 
+/**
+ * b u _ v l s _ e n c o d e
+ *
+ * given an input string, wrap the string in double quotes if there is
+ * a space.  escape any existing double quotes.
+ */
+BU_EXPORT BU_EXTERN(void bu_vls_encode, (struct bu_vls *vp, const char *str));
+
+
+/**
+ * b u _ v l s _ d e c o d e
+ *
+ * given an encoded input string, unwrap the string from any
+ * surrounding double quotes and unescape any embedded double quotes.
+ */
+BU_EXPORT BU_EXTERN(void bu_vls_decode, (struct bu_vls *vp, const char *str));
+
+
 /** @} */
 /** @addtogroup vlb */
 /** @{ */

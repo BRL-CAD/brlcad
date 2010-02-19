@@ -30,10 +30,6 @@ static const char DQUOTE = '"';
 static const char ESCAPE = '\\';
 
 
-/**
- * given an input string, wrap the string in double quotes if there is
- * a space.  escape any existing double quotes.
- */
 void
 bu_vls_encode(struct bu_vls *vp, const char *str)
 {
@@ -65,10 +61,6 @@ bu_vls_encode(struct bu_vls *vp, const char *str)
 }
 
 
-/**
- * given an encoded input string, unwrap the string from any
- * surrounding double quotes and unescape any embedded double quotes.
- */
 void
 bu_vls_decode(struct bu_vls *vp, const char *str)
 {
