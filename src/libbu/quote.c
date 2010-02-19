@@ -57,7 +57,6 @@ bu_vls_encode(struct bu_vls *vp, const char *str)
 	}
 	bu_vls_putc(vp, DQUOTE);
     }
-
 }
 
 
