@@ -2807,9 +2807,18 @@ tree_list_needspace(struct bu_vls *vls)
 HIDDEN void
 tree_list_append(struct bu_vls *vls, const char *str)
 {
+    const char *str = NULL;
+
     if (!vls || !str) return;
 
-    
+    if (tree_list_needspace(vls)) {
+	bu_vls_putc(vls, ' ');
+    }
+
+    /* FIXME: need to encode the string, potentially escape/quote the
+     * string being appended.
+     */
+    bu_vls_strcat(vls, str);
 }
 
 
