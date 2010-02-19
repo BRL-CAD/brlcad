@@ -2804,19 +2804,58 @@ tree_list_needspace(struct bu_vls *vls)
     return 1;
 }
 
+
+/* implements a large portion of what Tcl does when appending elements
+ * to DStrings.
+ */
 HIDDEN void
 tree_list_append(struct bu_vls *vls, const char *str)
 {
-    if (!vls || !str) return;
+    const char *p;
+    int quoteit = 0;
+
+    if (!vls) return;
+
+    if (!str || strlen(str) == 0) {
+	str = "{}";
+    }
 
     if (tree_list_needspace(vls)) {
 	bu_vls_putc(vls, ' ');
     }
 
-    /* FIXME: need to encode the string, potentially escape/quote the
-     * string being appended.
-     */
-    bu_vls_strcat(vls, str);
+    /* see if we need to quote the string */
+    for (p = str; *p != '\0'; p++) {
+	switch (*p) {
+	    case '[':
+	    case '$':
+	    case ';':
+	    case ' ':
+	    case '\f':
+	    case '\n':
+	    case '\r':
+	    case '\t':
+	    case '\v':
+		quoteit = 1;
+		break;
+	}
+	if (quoteit)
+	    break;
+    }
+
+    /* already quoted? assumes cleanly balanced braces */
+    p = str;
+    if (*p == '{' || *p == '"') {
+	quoteit = 0;
+    }
+	
+    if (quoteit) {
+	tree_list_sublist_begin(vls);
+	bu_vls_strcat(vls, str);
+	tree_list_sublist_end(vls);
+    } else {
+	bu_vls_strcat(vls, str);
+    }
 }
 
 
