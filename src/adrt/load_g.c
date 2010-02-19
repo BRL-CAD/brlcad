@@ -146,31 +146,33 @@ nmg_to_adrt_internal(struct adrt_mesh_s *mesh, struct nmgregion *r)
 int
 nmg_to_adrt_regstart(struct db_tree_state *ts, const struct db_full_path *path, const struct rt_comb_internal *rci, genptr_t client_data)
 {
-    /* 
+    /*
      * if it's a simple single bot region, just eat the bots and return -1.
-     * Omnomnom. Return 0 to do nmg eval. 
+     * Omnomnom. Return 0 to do nmg eval.
      */
     struct directory *dir;
     struct rt_db_internal intern;
     struct rt_bot_internal *bot;
     struct adrt_mesh_s *mesh;
+    unsigned char rgb[3] = { 0xc0, 0xc0, 0xc0 };
 
     RT_CHECK_COMB(rci);
+
+    /* abort cases, no fast loading. */
     if(rci->tree == NULL)
 	return 0;
     RT_CK_TREE(rci->tree);
-    if( rci->tree->tr_op != OP_DB_LEAF ) 
+    if( rci->tree->tr_op != OP_DB_LEAF )
 	return 0;
     dir = db_lookup(dbip, rci->tree->tr_l.tl_name, 1);
     if(dir->d_minor_type != ID_BOT && dir->d_minor_type != ID_NMG)
 	return 0;
-
     if(rt_db_get_internal(&intern, dir, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	printf("Failed to load\n");
 	return 0;
     }
 
-    mesh = BU_GETSTRUCT(mesh, adrt_mesh_s);
+    BU_GETSTRUCT(mesh, adrt_mesh_s);
 
     BU_LIST_PUSH(&((*gcvwriter.meshes)->l), &(mesh->l));
 
@@ -178,18 +180,13 @@ nmg_to_adrt_regstart(struct db_tree_state *ts, const struct db_full_path *path, 
     mesh->flags = 0;
     mesh->attributes = (struct adrt_mesh_attributes_s *)bu_malloc(sizeof(struct adrt_mesh_attributes_s), "adrt mesh attributes");
 
-    VSET(mesh->attributes->color.v, 0, 1, 1);
-    if(rci->rgb_valid)
-	    VMOVE(mesh->attributes->color.v, rci->rgb);
-    /*
-	else handle materials if possible
-    */
+    rt_comb_get_color(rgb, rci);
+    VSCALE(mesh->attributes->color.v, rgb, 1.0/256.0);
 
     strncpy(mesh->name, db_path_to_string(path), 255);
 
     if(intern.idb_minor_type == ID_NMG) {
-	return 0;	/* quick abort until we can make this NMG right. */
-        nmg_to_adrt_internal(mesh, (struct nmgregion *)intern.idb_ptr);
+	nmg_to_adrt_internal(mesh, (struct nmgregion *)intern.idb_ptr);
 	return -1;
     } else if (intern.idb_minor_type == ID_BOT) {
 	struct rt_bot_internal *bot = intern.idb_ptr;
@@ -229,7 +226,7 @@ nmg_to_adrt_gcvwrite(struct nmgregion *r, const struct db_full_path *pathp, int 
     /* triangulate model */
     nmg_triangulate_model(m, &tol);
 
-    mesh = BU_GETSTRUCT(mesh, adrt_mesh_s);
+    BU_GETSTRUCT(mesh, adrt_mesh_s);
 
     BU_LIST_PUSH(&((*gcvwriter.meshes)->l), &(mesh->l));
 
@@ -284,7 +281,7 @@ load_g (tie_t *tie, const char *db, int argc, const char **argv, struct adrt_mes
     the_model = nmg_mm();
     BU_LIST_INIT(&rt_g.rtg_vlfree);	/* for vlist macros */
 
-    /* 
+    /*
      * these should probably encode so the result can be passed back to client
      */
     if ((dbip = db_open(db, "r")) == DBI_NULL) {
@@ -312,7 +309,7 @@ load_g (tie_t *tie, const char *db, int argc, const char **argv, struct adrt_mes
     tribuf[1] = (TIE_3 *)bu_malloc(sizeof(TIE_3) * 3, "triangle tribuffer");
     tribuf[2] = (TIE_3 *)bu_malloc(sizeof(TIE_3) * 3, "triangle tribuffer");
 
-    (void) db_walk_tree(dbip, 
+    (void) db_walk_tree(dbip,
 			argc,			/* number of toplevel regions */			
 			argv,			/* region names */
 			1,			/* ncpu */
