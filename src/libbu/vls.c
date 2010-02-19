@@ -42,7 +42,7 @@ static const unsigned int _VLS_ALLOC_MIN = 32;
 static const size_t _VLS_ALLOC_STEP = 128;
 
 /* minimum vls buffer allocation size */
-static const int _VLS_ALLOC_READ = 4096;
+static const unsigned int _VLS_ALLOC_READ = 4096;
 
 
 void
