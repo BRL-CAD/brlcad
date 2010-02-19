@@ -305,9 +305,11 @@ brep_build_bvh(struct brep_specific* bs)
     // First, run the openNURBS validity check on the brep in question
     ON_TextLog tl(stderr);
     ON_Brep* brep = bs->brep;
-    if (brep == NULL /*|| !brep->IsValid(&tl)*/) {
-	bu_log("brep is NOT valid");
+    if (brep == NULL) {
+	bu_log("NULL Brep");
 	return -1;
+    } else {
+	if (!brep->IsValid(&tl)) bu_log("brep is NOT valid\n");
     }
 
     /* May want to do something about setting orientation?  not used,
