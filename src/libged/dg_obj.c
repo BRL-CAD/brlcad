@@ -2333,9 +2333,9 @@ dgo_set_outputHandler_cmd(struct dg_obj	*dgop,
 			  int		argc,
 			  char 		*argv[])
 {
-    if (argc < 1 || 2 < argc) {
-	struct bu_vls vls;
+    struct bu_vls vls;
 
+    if (argc < 1 || 2 < argc) {
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib_alias dgo_set_outputHandler %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -2346,12 +2346,11 @@ dgo_set_outputHandler_cmd(struct dg_obj	*dgop,
 
     /* Get the output handler script */
     if (argc == 1) {
-	Tcl_DString ds;
-
-	Tcl_DStringInit(&ds);
+	bu_vls_init(&vls);
 	if (dgop->dgo_outputHandler != NULL)
-	    Tcl_DStringAppend(&ds, dgop->dgo_outputHandler, -1);
-	Tcl_DStringResult(interp, &ds);
+	    bu_vls_strcat(&vls, dgop->dgo_outputHandler);
+	Tcl_SetResult(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
 
 	return TCL_OK;
     }
@@ -2392,9 +2391,9 @@ dgo_set_uplotOutputMode_cmd(struct dg_obj	*dgop,
 			    int			argc,
 			    char 		*argv[])
 {
-    if (argc < 1 || 2 < argc) {
-	struct bu_vls vls;
+    struct bu_vls vls;
 
+    if (argc < 1 || 2 < argc) {
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib_alias dgo_set_plOutputMode %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -2405,14 +2404,14 @@ dgo_set_uplotOutputMode_cmd(struct dg_obj	*dgop,
 
     /* Get the plot output mode */
     if (argc == 1) {
-	Tcl_DString ds;
+	bu_vls_init(&vls);
 
-	Tcl_DStringInit(&ds);
 	if (dgop->dgo_uplotOutputMode == PL_OUTPUT_MODE_BINARY)
-	    Tcl_DStringAppend(&ds, "binary", -1);
+	    bu_vls_strcat(&vls, "binary");
 	else
-	    Tcl_DStringAppend(&ds, "text", -1);
-	Tcl_DStringResult(interp, &ds);
+	    bu_vls_strcat(&vls, "text");
+	Tcl_SetResult(interp, bu_vls_addr(&vls));
+	bu_vls_free(&vls);
 
 	return TCL_OK;
     }
@@ -2424,8 +2423,6 @@ dgo_set_uplotOutputMode_cmd(struct dg_obj	*dgop,
 	     !strcmp("text", argv[1]))
 	dgop->dgo_uplotOutputMode = PL_OUTPUT_MODE_TEXT;
     else {
-	struct bu_vls vls;
-
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib_alias dgo_set_plOutputMode %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
