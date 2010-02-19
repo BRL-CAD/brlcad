@@ -830,7 +830,10 @@ rt_comb_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const ch
 	    bu_vls_printf(logstr, "inherit yes ");
 	}
 
+	bu_vls_printf(logstr, "tree {");
 	db_tree_list(logstr, comb->tree);
+	bu_vls_putc(logstr, '}');
+
 	return BRLCAD_OK;
     } else {
 	/* Print out only the requested item. */
