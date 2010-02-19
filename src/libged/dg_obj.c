@@ -2349,7 +2349,7 @@ dgo_set_outputHandler_cmd(struct dg_obj	*dgop,
 	bu_vls_init(&vls);
 	if (dgop->dgo_outputHandler != NULL)
 	    bu_vls_strcat(&vls, dgop->dgo_outputHandler);
-	Tcl_SetResult(interp, bu_vls_addr(&vls));
+	Tcl_SetResult(interp, bu_vls_addr(&vls), TCL_VOLATILE);
 	bu_vls_free(&vls);
 
 	return TCL_OK;
@@ -2410,7 +2410,7 @@ dgo_set_uplotOutputMode_cmd(struct dg_obj	*dgop,
 	    bu_vls_strcat(&vls, "binary");
 	else
 	    bu_vls_strcat(&vls, "text");
-	Tcl_SetResult(interp, bu_vls_addr(&vls));
+	Tcl_SetResult(interp, bu_vls_addr(&vls), TCL_VOLATILE);
 	bu_vls_free(&vls);
 
 	return TCL_OK;
