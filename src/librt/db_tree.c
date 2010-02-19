@@ -2916,7 +2916,7 @@ tree_list_append(struct bu_vls *vls, const char *str)
 int
 db_tree_list(struct bu_vls *vls, const union tree *tp)
 {
-    int count;
+    int count = 0;
 #ifndef VLS
     Tcl_DString ds;
 #endif
