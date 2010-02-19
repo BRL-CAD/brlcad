@@ -3854,8 +3854,6 @@ wdb_dup_cmd(struct rt_wdb *wdbp,
     struct dir_check_stuff dcs;
 
     if (argc < 2 || 3 < argc) {
-	struct bu_vls vls;
-
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib_alias wdb_dup %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -4724,12 +4722,9 @@ wdb_rmap_cmd(struct rt_wdb *wdbp,
     struct wdb_id_to_names headIdName;
     struct wdb_id_to_names *itnp;
     struct wdb_id_names *inp;
-    Tcl_DString ds;
-
+    struct bu_vls vls;
 
     if (argc != 1) {
-	struct bu_vls vls;
-
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib_alias wdb_rmap %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -4737,12 +4732,11 @@ wdb_rmap_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    Tcl_DStringInit(&ds);
-
     if (wdbp->dbip->dbi_version < 5) {
-	Tcl_DStringAppend(&ds, argv[0], -1);
-	Tcl_DStringAppend(&ds, " is not available prior to version 5 of the .g file format\n", -1);
-	Tcl_DStringResult(interp, &ds);
+	bu_vls_init(&vls);
+	bu_vls_printf(&vls, "%s is not available prior to version 5 of the .g file format\n", argv[0]);
+	Tcl_SetResult(interp, bu_vls_addr(&vls), TCL_VOLATILE);
+	bu_vls_free(&vls);
 	return TCL_ERROR;
     }
 
@@ -4757,13 +4751,11 @@ wdb_rmap_cmd(struct rt_wdb *wdbp,
 		(dp->d_flags & DIR_HIDDEN))
 		continue;
 
-	    if (rt_db_get_internal(&intern,
-				   dp,
-				   wdbp->dbip,
-				   (fastf_t *)NULL,
-				   &rt_uniresource) < 0) {
-		Tcl_DStringAppend(&ds, "Database read error, aborting", -1);
-		Tcl_DStringResult(interp, &ds);
+	    if (rt_db_get_internal(&intern, dp, wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+		bu_vls_init(&vls);
+		bu_vls_strcat(&vls, "Database read error, aborting");
+		Tcl_SetResult(interp, bu_vls_addr(&vls), TCL_VOLATILE);
+		bu_vls_free(&vls);
 		return TCL_ERROR;
 	    }
 
@@ -4803,31 +4795,37 @@ wdb_rmap_cmd(struct rt_wdb *wdbp,
 	}
     }
 
+    bu_vls_init(&vls);
+
     /* place data in a dynamic tcl string */
     while (BU_LIST_WHILE (itnp, wdb_id_to_names, &headIdName.l)) {
-	char buf[32];
-
 	/* add this id to the list */
-	sprintf(buf, "%d", itnp->id);
-	Tcl_DStringAppendElement(&ds, buf);
+	bu_vls_printf(&vls, "%d {", itnp->id);
 
 	/* start sublist of names associated with this id */
-	Tcl_DStringStartSublist(&ds);
 	while (BU_LIST_WHILE (inp, wdb_id_names, &itnp->headName.l)) {
 	    /* add the this name to this sublist */
-	    Tcl_DStringAppendElement(&ds, bu_vls_addr(&inp->name));
+	    if (strchr(bu_vls_addr(&inp->name), ' ')) {
+		bu_vls_printf(&vls, "\"%V\" ", &inp->name);
+	    } else {
+		bu_vls_printf(&vls, "%V ", &inp->name);
+	    }
 
 	    BU_LIST_DEQUEUE(&inp->l);
 	    bu_vls_free(&inp->name);
 	    bu_free((genptr_t)inp, "rmap: inp");
 	}
-	Tcl_DStringEndSublist(&ds);
+	bu_vls_strcat(&vls, "} ");
 
 	BU_LIST_DEQUEUE(&itnp->l);
 	bu_free((genptr_t)itnp, "rmap: itnp");
-    }
 
-    Tcl_DStringResult(interp, &ds);
+    }
+    bu_vls_trimspace(&vls);
+
+    Tcl_SetResult(interp, bu_vls_addr(&vls), TCL_VOLATILE);
+    bu_vls_free(&vls);
+
     return TCL_OK;
 }
 
@@ -10310,6 +10308,7 @@ wdb_rotate_arb_face_tcl(ClientData clientData,
     return wdb_rotate_arb_face_cmd(wdbp, interp, argc-1, argv+1);
 }
 
+static int
 wdb_newcmds_tcl(ClientData clientData,
 		Tcl_Interp *interp,
 		int argc,
@@ -10318,7 +10317,7 @@ wdb_newcmds_tcl(ClientData clientData,
     struct bu_cmdtab *ctp;
     struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
     struct ged ged;
-    Tcl_DString ds;
+    struct bu_vls vls;
     int ret;
 
     /*XXX Eventually the clientData will be a "struct ged".
@@ -10341,15 +10340,20 @@ wdb_newcmds_tcl(ClientData clientData,
 	ret = GED_ERROR;
     }
 
-    Tcl_DStringInit(&ds);
+    bu_vls_init(&vls);
 
     if (ret == GED_HELP)
-	Tcl_DStringAppendElement(&ds, "1");
+	bu_vls_strcat(&vls, "1 ");
     else
-	Tcl_DStringAppendElement(&ds, "0");
+	bu_vls_strcat(&vls, "0 ");
 
-    Tcl_DStringAppendElement(&ds, bu_vls_addr(&ged.ged_result_str));
-    Tcl_DStringResult(interp, &ds);
+    if (strchr(bu_vls_addr(&ged.ged_result_str), ' '))
+	bu_vls_printf(&vls, "\"%V\"", &ged.ged_result_str);
+    else
+	bu_vls_vlscat(&vls, &ged.ged_result_str);
+
+    Tcl_SetResult(interp, bu_vls_addr(&vls), TCL_VOLATILE);
+    bu_vls_free(&vls);
 
     if (ret == GED_ERROR)
 	return TCL_ERROR;
