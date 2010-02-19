@@ -2807,8 +2807,6 @@ tree_list_needspace(struct bu_vls *vls)
 HIDDEN void
 tree_list_append(struct bu_vls *vls, const char *str)
 {
-    const char *str = NULL;
-
     if (!vls || !str) return;
 
     if (tree_list_needspace(vls)) {
@@ -2876,16 +2874,27 @@ int
 db_tree_list(struct bu_vls *vls, const union tree *tp)
 {
     int count;
+#ifndef VLS
     Tcl_DString ds;
+#endif
 
     if (!tp || !vls)
 	return 0;
 
+#ifndef VLS
     Tcl_DStringInit(&ds);
+#endif
 
     RT_CK_TREE(tp);
     switch (tp->tr_op) {
 	case OP_DB_LEAF:
+#ifdef VLS
+	    tree_list_append(vls, "l");
+	    tree_list_append(vls, tp->tr_l.tl_name);
+	    tree_list_sublist_begin(vls);
+	    bn_encode_mat(vls, tp->tr_l.tl_mat);
+	    tree_list_sublist_end(vls);
+#else
 	    Tcl_DStringAppendElement(&ds, "l");
 	    Tcl_DStringAppendElement(&ds, tp->tr_l.tl_name);
 	    if (tp->tr_l.tl_mat) {
@@ -2895,22 +2904,44 @@ db_tree_list(struct bu_vls *vls, const union tree *tp)
 		Tcl_DStringAppendElement(&ds, bu_vls_addr(&v));
 		bu_vls_free(&v);
 	    }
+#endif
 	    count++;
 	    break;
 
 	    /* This node is known to be a binary op */
 	case OP_UNION:
+#ifdef VLS
+	    tree_list_append(vls, "u");
+#else
 	    Tcl_DStringAppendElement(&ds, "u");
+#endif
 	    goto bin;
 	case OP_INTERSECT:
+#ifdef VLS
+	    tree_list_append(vls, "n");
+#else
 	    Tcl_DStringAppendElement(&ds, "n");
+#endif
 	    goto bin;
 	case OP_SUBTRACT:
+#ifdef VLS
+	    tree_list_append(vls, "-");
+#else
 	    Tcl_DStringAppendElement(&ds, "-");
+#endif
 	    goto bin;
 	case OP_XOR:
+#ifdef VLS
+	    tree_list_append(vls, "^");
+#else
 	    Tcl_DStringAppendElement(&ds, "^");
+#endif
 	bin:
+#ifdef VLS
+	    tree_list_sublist_begin(vls);
+	    count += db_tree_list(vls, tp->tr_b.tb_left);
+	    tree_list_sublist_end(vls);
+#else
 	    Tcl_DStringStartSublist(&ds);
 	    {
 		struct bu_vls v;
@@ -2920,7 +2951,13 @@ db_tree_list(struct bu_vls *vls, const union tree *tp)
 		bu_vls_free(&v);
 	    }
 	    Tcl_DStringEndSublist(&ds);
+#endif
 
+#ifdef VLS
+	    tree_list_sublist_begin(vls);
+	    count += db_tree_list(vls, tp->tr_b.tb_right);
+	    tree_list_sublist_end(vls);
+#else
 	    Tcl_DStringStartSublist(&ds);
 	    {
 		struct bu_vls v;
@@ -2930,19 +2967,36 @@ db_tree_list(struct bu_vls *vls, const union tree *tp)
 		bu_vls_free(&v);
 	    }
 	    Tcl_DStringEndSublist(&ds);
-
+#endif
 	    break;
 
 	    /* This node is known to be a unary op */
 	case OP_NOT:
+#ifdef VLS
+	    tree_list_append(vls, "!");
+#else
 	    Tcl_DStringAppendElement(&ds, "!");
+#endif
 	    goto unary;
 	case OP_GUARD:
+#ifdef VLS
+	    tree_list_append(vls, "G");
+#else
 	    Tcl_DStringAppendElement(&ds, "G");
+#endif
 	    goto unary;
 	case OP_XNOP:
+#ifdef VLS
+	    tree_list_append(vls, "X");
+#else
 	    Tcl_DStringAppendElement(&ds, "X");
+#endif
 	unary:
+#ifdef VLS
+	    tree_list_sublist_begin(vls);
+	    count += db_tree_list(vls, tp->tr_b.tb_left);
+	    tree_list_sublist_end(vls);
+#else
 	    Tcl_DStringStartSublist(&ds);
 	    {
 		struct bu_vls v;
@@ -2952,10 +3006,15 @@ db_tree_list(struct bu_vls *vls, const union tree *tp)
 		bu_vls_free(&v);
 	    }
 	    Tcl_DStringEndSublist(&ds);
+#endif
 	    break;
 
 	case OP_NOP:
+#ifdef VLS
+	    tree_list_append(vls, "N");
+#else
 	    Tcl_DStringAppendElement(&ds, "N");
+#endif
 	    break;
 
 	default:
@@ -2963,8 +3022,10 @@ db_tree_list(struct bu_vls *vls, const union tree *tp)
 	    bu_bomb("db_tree_list\n");
     }
 
+#ifndef VLS
     bu_vls_printf(vls, "%s", Tcl_DStringValue(&ds));
     Tcl_DStringFree(&ds);
+#endif
 
     return count;
 }
