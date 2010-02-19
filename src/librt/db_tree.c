@@ -2880,6 +2880,10 @@ tree_list_append(struct bu_vls *vls, const char *str)
 }
 
 
+/* !!! temporary while testing implementation */
+#define VLS 1
+
+
 /**
  * D B _ T R E E _ L I S T
  *
@@ -2930,9 +2934,11 @@ db_tree_list(struct bu_vls *vls, const union tree *tp)
 #ifdef VLS
 	    tree_list_append(vls, "l");
 	    tree_list_append(vls, tp->tr_l.tl_name);
-	    tree_list_sublist_begin(vls);
-	    bn_encode_mat(vls, tp->tr_l.tl_mat);
-	    tree_list_sublist_end(vls);
+	    if (tp->tr_l.tl_mat) {
+		tree_list_sublist_begin(vls);
+		bn_encode_mat(vls, tp->tr_l.tl_mat);
+		tree_list_sublist_end(vls);
+	    }
 #else
 	    Tcl_DStringAppendElement(&ds, "l");
 	    Tcl_DStringAppendElement(&ds, tp->tr_l.tl_name);
