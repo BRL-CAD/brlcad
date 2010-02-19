@@ -2880,18 +2880,11 @@ tree_list_append(struct bu_vls *vls, const char *str)
 }
 
 
-/* !!! temporary while testing implementation */
-/* #define VLS 1 */
-
-
 /**
  * D B _ T R E E _ L I S T
  *
- * Fills a Tcl_DString with a representation of the given tree
- * appropriate for processing by Tcl scripts.  The reason we use
- * Tcl_DStrings instead of bu_vlses is that Tcl_DStrings provide
- * "start/end sublist" commands and automatic escaping of Tcl-special
- * characters.
+ * Fills a bu_vls with a representation of the given tree appropriate
+ * for processing by Tcl scripts.
  *
  * A tree 't' is represented in the following manner:
  *
@@ -2917,21 +2910,13 @@ int
 db_tree_list(struct bu_vls *vls, const union tree *tp)
 {
     int count = 0;
-#ifndef VLS
-    Tcl_DString ds;
-#endif
 
     if (!tp || !vls)
 	return 0;
 
-#ifndef VLS
-    Tcl_DStringInit(&ds);
-#endif
-
     RT_CK_TREE(tp);
     switch (tp->tr_op) {
 	case OP_DB_LEAF:
-#ifdef VLS
 	    tree_list_append(vls, "l");
 	    tree_list_append(vls, tp->tr_l.tl_name);
 	    if (tp->tr_l.tl_mat) {
@@ -2939,132 +2924,54 @@ db_tree_list(struct bu_vls *vls, const union tree *tp)
 		bn_encode_mat(vls, tp->tr_l.tl_mat);
 		tree_list_sublist_end(vls);
 	    }
-#else
-	    Tcl_DStringAppendElement(&ds, "l");
-	    Tcl_DStringAppendElement(&ds, tp->tr_l.tl_name);
-	    if (tp->tr_l.tl_mat) {
-		struct bu_vls v;
-		bu_vls_init(&v);
-		bn_encode_mat(&v, tp->tr_l.tl_mat);
-		Tcl_DStringAppendElement(&ds, bu_vls_addr(&v));
-		bu_vls_free(&v);
-	    }
-#endif
 	    count++;
 	    break;
 
 	    /* This node is known to be a binary op */
 	case OP_UNION:
-#ifdef VLS
 	    tree_list_append(vls, "u");
-#else
-	    Tcl_DStringAppendElement(&ds, "u");
-#endif
 	    goto bin;
 	case OP_INTERSECT:
-#ifdef VLS
 	    tree_list_append(vls, "n");
-#else
-	    Tcl_DStringAppendElement(&ds, "n");
-#endif
 	    goto bin;
 	case OP_SUBTRACT:
-#ifdef VLS
 	    tree_list_append(vls, "-");
-#else
-	    Tcl_DStringAppendElement(&ds, "-");
-#endif
 	    goto bin;
 	case OP_XOR:
-#ifdef VLS
 	    tree_list_append(vls, "^");
-#else
-	    Tcl_DStringAppendElement(&ds, "^");
-#endif
 	bin:
-#ifdef VLS
 	    tree_list_sublist_begin(vls);
 	    count += db_tree_list(vls, tp->tr_b.tb_left);
 	    tree_list_sublist_end(vls);
-#else
-	    {
-		struct bu_vls v;
-		bu_vls_init(&v);
-		count += db_tree_list(&v, tp->tr_b.tb_left);
-		Tcl_DStringAppendElement(&ds, bu_vls_addr(&v));
-		bu_vls_free(&v);
-	    }
-#endif
 
-#ifdef VLS
 	    tree_list_sublist_begin(vls);
 	    count += db_tree_list(vls, tp->tr_b.tb_right);
 	    tree_list_sublist_end(vls);
-#else
-	    {
-		struct bu_vls v;
-		bu_vls_init(&v);
-		count += db_tree_list(&v, tp->tr_b.tb_right);
-		Tcl_DStringAppendElement(&ds, bu_vls_addr(&v));
-		bu_vls_free(&v);
-	    }
-#endif
 	    break;
 
 	    /* This node is known to be a unary op */
 	case OP_NOT:
-#ifdef VLS
 	    tree_list_append(vls, "!");
-#else
-	    Tcl_DStringAppendElement(&ds, "!");
-#endif
 	    goto unary;
 	case OP_GUARD:
-#ifdef VLS
 	    tree_list_append(vls, "G");
-#else
-	    Tcl_DStringAppendElement(&ds, "G");
-#endif
 	    goto unary;
 	case OP_XNOP:
-#ifdef VLS
 	    tree_list_append(vls, "X");
-#else
-	    Tcl_DStringAppendElement(&ds, "X");
-#endif
 	unary:
-#ifdef VLS
 	    tree_list_sublist_begin(vls);
 	    count += db_tree_list(vls, tp->tr_b.tb_left);
 	    tree_list_sublist_end(vls);
-#else
-	    {
-		struct bu_vls v;
-		bu_vls_init(&v);
-		count += db_tree_list(&v, tp->tr_b.tb_left);
-		Tcl_DStringAppendElement(&ds, bu_vls_addr(&v));
-		bu_vls_free(&v);
-	    }
-#endif
 	    break;
 
 	case OP_NOP:
-#ifdef VLS
 	    tree_list_append(vls, "N");
-#else
-	    Tcl_DStringAppendElement(&ds, "N");
-#endif
 	    break;
 
 	default:
 	    bu_log("db_tree_list: bad op %d\n", tp->tr_op);
 	    bu_bomb("db_tree_list\n");
     }
-
-#ifndef VLS
-    bu_vls_printf(vls, "%s", Tcl_DStringValue(&ds));
-    Tcl_DStringFree(&ds);
-#endif
 
     return count;
 }
