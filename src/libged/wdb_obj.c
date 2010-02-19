@@ -548,7 +548,7 @@ wdb_init_obj(Tcl_Interp *interp,
  *@n db close
  */
 static int
-wdb_open_tcl(ClientData clientData,
+wdb_open_tcl(ClientData clientData __attribute__((unused)),
 	     Tcl_Interp *interp,
 	     int argc,
 	     const char *argv[])
@@ -762,7 +762,7 @@ wdb_reopen_tcl(ClientData clientData,
 int
 wdb_match_cmd(struct rt_wdb *wdbp,
 	      Tcl_Interp *interp,
-	      int argc,
+	      int argc __attribute__((unused)),
 	      char *argv[])
 {
     struct bu_vls matches;
@@ -1279,7 +1279,7 @@ wdb_adjust_tcl(ClientData clientData,
  *
  */
 int
-wdb_form_cmd(struct rt_wdb *wdbp,
+wdb_form_cmd(struct rt_wdb *wdbp __attribute__((unused)),
 	     Tcl_Interp *interp,
 	     int argc,
 	     char *argv[])
@@ -1597,11 +1597,11 @@ struct showmats_data {
  */
 static void
 Do_showmats(struct db_i *dbip,
-	    struct rt_comb_internal *comb,
+	    struct rt_comb_internal *comb __attribute__((unused)),
 	    union tree *comb_leaf,
 	    genptr_t user_ptr1,
-	    genptr_t user_ptr2,
-	    genptr_t user_ptr3)
+	    genptr_t user_ptr2 __attribute__((unused)),
+	    genptr_t user_ptr3 __attribute__((unused)))
 {
     struct showmats_data *smdp;
 
@@ -1906,7 +1906,7 @@ wdb_dump_tcl(ClientData clientData,
  *
  */
 int
-wdb_stub_cmd(struct rt_wdb *wdbp,
+wdb_stub_cmd(struct rt_wdb *wdbp __attribute__((unused)),
 	     Tcl_Interp *interp,
 	     int argc,
 	     char *argv[])
@@ -3735,7 +3735,7 @@ struct dir_check_stuff {
 void
 wdb_dir_check5(struct db_i *input_dbip,
 	       const struct db5_raw_internal *rip,
-	       long addr,
+	       long addr __attribute__((unused)),
 	       genptr_t ptr)
 {
     char *name;
@@ -3798,7 +3798,7 @@ wdb_dir_check5(struct db_i *input_dbip,
  * Check a name against the global directory.
  */
 int
-wdb_dir_check(struct db_i *input_dbip, const char *name, long int laddr, int len, int flags, genptr_t ptr)
+wdb_dir_check(struct db_i *input_dbip, const char *name, long int laddr __attribute__((unused)), int len __attribute__((unused)), int flags __attribute__((unused)), genptr_t ptr)
 {
     struct directory *dupdp;
     struct bu_vls local;
@@ -4293,8 +4293,8 @@ wdb_comb_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[])
  *
  */
 static void
-wdb_find_ref(struct db_i *dbip,
-	     struct rt_comb_internal *comb,
+wdb_find_ref(struct db_i *dbip __attribute__((unused)),
+	     struct rt_comb_internal *comb __attribute__((unused)),
 	     union tree *comb_leaf,
 	     genptr_t object,
 	     genptr_t comb_name_ptr,
@@ -4320,7 +4320,7 @@ wdb_find_ref(struct db_i *dbip,
  *
  */
 HIDDEN union tree *
-facetize_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+facetize_region_end(struct db_tree_state *tsp __attribute__((unused)), const struct db_full_path *pathp __attribute__((unused)), union tree *curtree, genptr_t client_data)
 {
     struct bu_list vhead;
     union tree **facetize_tree;
@@ -5436,7 +5436,7 @@ wdb_pr_mater(const struct mater *mp,
  *
  */
 int
-wdb_prcolor_cmd(struct rt_wdb *wdbp,
+wdb_prcolor_cmd(struct rt_wdb *wdbp __attribute__((unused)),
 		Tcl_Interp *interp,
 		int argc,
 		char *argv[])
@@ -5811,10 +5811,10 @@ wdb_push_leaf(struct db_tree_state *tsp,
  * A null routine that does nothing.
  */
 static union tree *
-wdb_push_region_end(struct db_tree_state *tsp,
-		    const struct db_full_path *pathp,
+wdb_push_region_end(struct db_tree_state *tsp __attribute__((unused)),
+		    const struct db_full_path *pathp __attribute__((unused)),
 		    union tree *curtree,
-		    genptr_t client_data)
+		    genptr_t client_data __attribute__((unused)))
 {
     return curtree;
 }
@@ -6001,9 +6001,9 @@ wdb_push_tcl(ClientData clientData,
  *
  */
 static void
-increment_uses(struct db_i *db_ip,
+increment_uses(struct db_i *db_ip __attribute__((unused)),
 	       struct directory *dp,
-	       genptr_t ptr)
+	       genptr_t ptr __attribute__((unused)))
 {
     RT_CK_DIR(dp);
 
@@ -6015,9 +6015,9 @@ increment_uses(struct db_i *db_ip,
  *
  */
 static void
-increment_nrefs(struct db_i *db_ip,
+increment_nrefs(struct db_i *db_ip __attribute__((unused)),
 		struct directory *dp,
-		genptr_t ptr)
+		genptr_t ptr __attribute__((unused)))
 {
     RT_CK_DIR(dp);
 
@@ -6078,7 +6078,7 @@ Free_uses(struct db_i *dbip)
 static void
 Make_new_name(struct db_i *dbip,
 	      struct directory *dp,
-	      genptr_t ptr)
+	      genptr_t ptr __attribute__((unused)))
 {
     struct object_use *use;
     int use_no;
@@ -6257,7 +6257,7 @@ static struct directory *Copy_object(struct db_i *dbip, struct directory *dp, fa
  */
 HIDDEN void
 Do_copy_membs(struct db_i *dbip,
-	      struct rt_comb_internal *comb,
+	      struct rt_comb_internal *comb __attribute__((unused)),
 	      union tree *comb_leaf,
 	      genptr_t user_ptr1,
 	      genptr_t user_ptr2,
@@ -6401,11 +6401,11 @@ Copy_object(struct db_i *dbip,
  */
 HIDDEN void
 Do_ref_incr(struct db_i *dbip,
-	    struct rt_comb_internal *comb,
+	    struct rt_comb_internal *comb __attribute__((unused)),
 	    union tree *comb_leaf,
-	    genptr_t user_ptr1,
-	    genptr_t user_ptr2,
-	    genptr_t user_ptr3)
+	    genptr_t user_ptr1 __attribute__((unused)),
+	    genptr_t user_ptr2 __attribute__((unused)),
+	    genptr_t user_ptr3 __attribute__((unused)))
 {
     struct directory *dp;
 
@@ -6477,9 +6477,6 @@ wdb_xpush_cmd(struct rt_wdb *wdbp,
 	struct directory *dp;
 
 	for (dp=wdbp->dbip->dbi_Head[i]; dp!=DIR_NULL; dp=dp->d_forw) {
-	    struct rt_db_internal intern;
-	    struct rt_comb_internal *comb;
-
 	    if (dp->d_flags & DIR_SOLID)
 		continue;
 
@@ -7471,7 +7468,7 @@ wdb_attr_cmd(struct rt_wdb *wdbp,
 	if (argc == 3) {
 	    /* just list all the attributes */
 	    avpp = avs.avp;
-	    for (i=0; i < avs.count; i++, avpp++) {
+	    for (i=0; i < (int)avs.count; i++, avpp++) {
 		Tcl_AppendResult(interp, avpp->name, " {",
 				 avpp->value, "} ", (char *)NULL);
 	    }
@@ -7626,7 +7623,7 @@ wdb_attr_cmd(struct rt_wdb *wdbp,
 	if (argc == 3) {
 	    /* just display all attributes */
 	    avpp = avs.avp;
-	    for (i=0; i < avs.count; i++, avpp++) {
+	    for (i=0; i < (int)avs.count; i++, avpp++) {
 		int len;
 
 		len = (int)strlen(avpp->name);
@@ -7636,7 +7633,7 @@ wdb_attr_cmd(struct rt_wdb *wdbp,
 	    }
 	    tabs1 = 2 + max_attr_name_len/8;
 	    avpp = avs.avp;
-	    for (i=0; i < avs.count; i++, avpp++) {
+	    for (i=0; i < (int)avs.count; i++, avpp++) {
 		const char *c;
 		int tabs2;
 		int k;
@@ -9452,11 +9449,11 @@ wdb_combadd(Tcl_Interp *interp,
 
 static void
 wdb_do_identitize(struct db_i *dbip,
-		  struct rt_comb_internal *comb,
+		  struct rt_comb_internal *comb __attribute__((unused)),
 		  union tree *comb_leaf,
 		  genptr_t user_ptr1,
-		  genptr_t user_ptr2,
-		  genptr_t user_ptr3)
+		  genptr_t user_ptr2 __attribute__((unused)),
+		  genptr_t user_ptr3 __attribute__((unused)))
 {
     struct directory *dp;
     Tcl_Interp *interp = (Tcl_Interp *)user_ptr1;
@@ -9610,7 +9607,7 @@ wdb_dir_getspace(struct db_i *dbip,
  *			P A T H L I S T _ L E A F _ F U N C
  */
 static union tree *
-wdb_pathlist_leaf_func(struct db_tree_state *tsp,
+wdb_pathlist_leaf_func(struct db_tree_state *tsp __attribute__((unused)),
 		       const struct db_full_path *pathp,
 		       struct rt_db_internal *ip,
 		       genptr_t client_data)
@@ -10269,7 +10266,6 @@ wdb_rotate_arb_face_cmd(struct rt_wdb *wdbp,
     (void)rt_arb_calc_points(arb, arb_type, planes, &wdbp->wdb_tol);
 
     {
-	int i;
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
