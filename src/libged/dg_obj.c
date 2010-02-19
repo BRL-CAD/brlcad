@@ -313,7 +313,7 @@ dgo_open_cmd(char		*oname,
  *	  dgo_open [name rt_wdb]
  */
 static int
-dgo_open_tcl(ClientData	clientData,
+dgo_open_tcl(ClientData	clientData __attribute__((unused)),
 	     Tcl_Interp	*interp,
 	     int	argc,
 	     char	*argv[])
@@ -479,12 +479,17 @@ dgo_illum_tcl(ClientData	clientData,
 }
 
 int
-dgo_label_cmd(struct dg_obj	*dgop,
-	      Tcl_Interp	*interp,
-	      int		argc,
-	      char 		*argv[])
+dgo_label_cmd(struct dg_obj *dgop,
+	      Tcl_Interp *interp,
+	      int argc,
+	      char *argv[])
 {
     /* not yet implemented */
+    if (!dgop || !interp)
+	return TCL_ERROR;
+
+    while (argc-- > 1)
+	bu_log("Unexpected argument: %s", argv[argc]);
 
     return TCL_OK;
 }
@@ -1158,8 +1163,6 @@ dgo_get_autoview_cmd(struct dg_obj	*dgop,
     int	c;
 
     if (argc < 1 || 2 < argc) {
-	struct bu_vls vls;
-
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib_alias dgo_get_autoview %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -1175,8 +1178,6 @@ dgo_get_autoview_cmd(struct dg_obj	*dgop,
 		pflag = 1;
 		break;
 	    default: {
-		struct bu_vls vls;
-
 		bu_vls_init(&vls);
 		bu_vls_printf(&vls, "helplib_alias dgo_get_autoview %s", argv[0]);
 		Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -1264,8 +1265,6 @@ dgo_get_eyemodel_cmd(struct dg_obj	*dgop,
     vect_t		eye_model;
 
     if (argc != 2) {
-	struct bu_vls vls;
-
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib_alias dgo_get_eyemodel %s", argv[0]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
@@ -1301,7 +1300,9 @@ dgo_get_eyemodel_cmd(struct dg_obj	*dgop,
     bu_vls_printf(&vls, "eye_pt %.15e %.15e %.15e;\n",
 		  eye_model[X], eye_model[Y], eye_model[Z]);
     Tcl_AppendResult(interp, bu_vls_addr(&vls), NULL);
+
     bu_vls_free(&vls);
+
     return TCL_OK;
 }
 
@@ -1605,7 +1606,7 @@ dgo_wait_status(Tcl_Interp *interp, int status)
 
 #ifndef _WIN32
 static void
-dgo_rtcheck_vector_handler(ClientData clientData, int mask)
+dgo_rtcheck_vector_handler(ClientData clientData, int mask __attribute__((unused)))
 {
     int value;
     struct solid *sp;
@@ -1647,7 +1648,7 @@ dgo_rtcheck_vector_handler(ClientData clientData, int mask)
 }
 
 static void
-dgo_rtcheck_output_handler(ClientData clientData, int mask)
+dgo_rtcheck_output_handler(ClientData clientData, int mask __attribute__((unused)))
 {
     int count;
     char line[RT_MAXLINE] = {0};
@@ -1684,7 +1685,7 @@ dgo_rtcheck_output_handler(ClientData clientData, int mask)
 #else
 
 void
-dgo_rtcheck_vector_handler(ClientData clientData, int mask)
+dgo_rtcheck_vector_handler(ClientData clientData, int mask __attribute__((unused)))
 {
     int value;
     struct solid *sp;
@@ -1725,7 +1726,7 @@ dgo_rtcheck_vector_handler(ClientData clientData, int mask)
 }
 
 void
-dgo_rtcheck_output_handler(ClientData clientData, int mask)
+dgo_rtcheck_output_handler(ClientData clientData, int mask __attribute__((unused)))
 {
     int count;
     char line[RT_MAXLINE];
@@ -2216,12 +2217,20 @@ dgo_report_tcl(ClientData clientData, Tcl_Interp *interp, int argc, char *argv[]
 
 
 int
-dgo_rtabort_cmd(struct dg_obj	*dgop,
-		Tcl_Interp	*interp,
-		int		argc,
-		char 		*argv[])
+dgo_rtabort_cmd(struct dg_obj *dgop,
+		Tcl_Interp *interp,
+		int argc,
+		char *argv[])
 {
-    struct run_rt	*rrp;
+    struct run_rt *rrp;
+
+    while (argc-- > 1) {
+	if (interp) {
+	    Tcl_AppendResult(interp, "Unexpected argument: ", argv[argc]);
+	} else {
+	    bu_log("Unexpected argument: %s", argv[argc]);
+	}
+    }
 
     for (BU_LIST_FOR (rrp, run_rt, &dgop->dgo_headRunRt.l)) {
 	bu_terminate(rrp->pid);
@@ -2238,7 +2247,7 @@ dgo_rtabort_tcl(ClientData clientData,
 		int argc,
 		char *argv[])
 {
-    struct dg_obj	*dgop = (struct dg_obj *)clientData;
+    struct dg_obj *dgop = (struct dg_obj *)clientData;
 
     return dgo_rtabort_cmd(dgop, interp, argc-1, argv+1);
 }
@@ -2610,7 +2619,7 @@ dgo__tcl(ClientData	clientData,
 /****************** Utility Routines ********************/
 
 static union tree *
-dgo_wireframe_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+dgo_wireframe_region_end(struct db_tree_state *tsp __attribute__((unused)), const struct db_full_path *pathp __attribute__((unused)), union tree *curtree, genptr_t client_data __attribute__((unused)))
 {
     return (curtree);
 }
@@ -3897,8 +3906,7 @@ dgo_rt_write(struct dg_obj	*dgop,
 
 #ifndef _WIN32
 static void
-dgo_rt_output_handler(ClientData	clientData,
-		      int		mask)
+dgo_rt_output_handler(ClientData clientData, int mask __attribute__((unused)))
 {
     struct dg_rt_client_data *drcdp = (struct dg_rt_client_data *)clientData;
     struct run_rt *run_rtp;
@@ -3986,8 +3994,7 @@ dgo_rt_output_handler(ClientData	clientData,
 
 #else
 static void
-dgo_rt_output_handler(ClientData	clientData,
-		      int		mask)
+dgo_rt_output_handler(ClientData clientData, int mask __attribute__((unused)))
 {
     struct dg_rt_client_data *drcdp = (struct dg_rt_client_data *)clientData;
     struct run_rt *run_rtp;
@@ -4523,10 +4530,10 @@ dgo_pr_wait_status(Tcl_Interp	*interp,
 }
 
 static union tree *
-dgo_bot_check_region_end(struct db_tree_state	*tsp,
-			 const struct db_full_path *pathp,
-			 union tree			*curtree,
-			 genptr_t			client_data)
+dgo_bot_check_region_end(struct db_tree_state *tsp __attribute__((unused)),
+			 const struct db_full_path *pathp __attribute__((unused)),
+			 union tree *curtree,
+			 genptr_t client_data __attribute__((unused)))
 {
     return curtree;
 }
@@ -4715,7 +4722,6 @@ dgo_tree_cmd(struct dg_obj	*dgop,
 	char *whocmd[2] = {"who", NULL};
 	if (dgo_who_cmd(dgop, interp, 1, whocmd) == TCL_OK) {
 	    const char *result = Tcl_GetStringResult(interp);
-	    const char *space = NULL;
 	    buffer = bu_strdup(result);
 	    Tcl_ResetResult(interp);
 
