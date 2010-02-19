@@ -305,7 +305,7 @@ brep_build_bvh(struct brep_specific* bs)
     // First, run the openNURBS validity check on the brep in question
     ON_TextLog tl(stderr);
     ON_Brep* brep = bs->brep;
-    if (brep == NULL || !brep->IsValid(&tl)) {
+    if (brep == NULL /*|| !brep->IsValid(&tl)*/) {
 	bu_log("brep is NOT valid");
 	return -1;
     }
