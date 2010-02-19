@@ -2805,6 +2805,27 @@ tree_list_needspace(struct bu_vls *vls)
 }
 
 
+HIDDEN void
+tree_list_sublist_begin(struct bu_vls *vls)
+{
+    if (!vls) return;
+
+    if (tree_list_needspace(vls)) {
+        bu_vls_strcat(vls, " {");
+    } else {
+        bu_vls_putc(vls, '{');
+    }
+}
+
+
+HIDDEN void
+tree_list_sublist_end(struct bu_vls *vls)
+{
+    if (!vls) return;
+    bu_vls_putc(vls, '}');
+}
+
+
 /* implements a large portion of what Tcl does when appending elements
  * to DStrings.
  */
@@ -2856,27 +2877,6 @@ tree_list_append(struct bu_vls *vls, const char *str)
     } else {
 	bu_vls_strcat(vls, str);
     }
-}
-
-
-HIDDEN void
-tree_list_sublist_begin(struct bu_vls *vls)
-{
-    if (!vls) return;
-
-    if (tree_list_needspace(vls)) {
-        bu_vls_strcat(vls, " {");
-    } else {
-        bu_vls_putc(vls, '{');
-    }
-}
-
-
-HIDDEN void
-tree_list_sublist_end(struct bu_vls *vls)
-{
-    if (!vls) return;
-    bu_vls_putc(vls, '}');
 }
 
 
