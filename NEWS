@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2010-02-XX  Release 7.16.8                                     ---
 ----------------------------------------------------------------------
 
+* improved obj-g import support for object names - Sean Morrison
 * fix rtweight bug where incorrect units were reported - Cliff Yapp
 * added initial manual page documentation for rtwizard - Sean Morrison
 * support for metaball conversion to polygonal format - Erik Greenwald

@@ -47,16 +47,17 @@ static int debug = 0;
 static int verbose = 0;
 static int vertmax = 1;
 
-struct region_s {
+struct object_s {
     char *name;
     struct rt_bot_internal *bot;
 };
 
-struct region_s *
-new_region(char *name)
+
+struct object_s *
+new_object(const char *name)
 {
-    struct region_s *r = (struct region_s *)bu_calloc(1, sizeof(struct region_s), "new_region");;
-    r->bot = (struct rt_bot_internal *)bu_calloc(1, sizeof(struct rt_bot_internal), "new_region:rt_bot_internal");;
+    struct object_s *r = (struct object_s *)bu_calloc(1, sizeof(struct object_s), "new_object");;
+    r->bot = (struct rt_bot_internal *)bu_calloc(1, sizeof(struct rt_bot_internal), "new_object:rt_bot_internal");;
     r->name = strdup(name);
     r->bot->magic = RT_BOT_INTERNAL_MAGIC;
     r->bot->mode = RT_BOT_SURFACE;
@@ -68,20 +69,22 @@ new_region(char *name)
     return r;
 }
 
+
 int
-free_region(struct region_s * r)
+free_object(struct object_s * r)
 {
     if (r && r->name)
-	bu_free(r->name, "region name");
+	bu_free(r->name, "object name");
     if (r && r->bot)
 	bu_free(r->bot, "rt_bot_internal");
     if (r)
-	bu_free(r, "region");
+	bu_free(r, "object");
     return 0;
 }
 
+
 int
-write_region(struct region_s *r, struct rt_wdb *out_fp)
+write_object(struct object_s *r, struct rt_wdb *out_fp)
 {
     int rval = -1;
     const char *regname;
@@ -91,12 +94,12 @@ write_region(struct region_s *r, struct rt_wdb *out_fp)
 	    rval = fprintf(stderr, "%s has 0 faces, skipping\n", r->name), 0;
     } else {
 	int faces;
-	/* add the region long name to list */
+	/* add the object long name to list */
 	vertmax += r->bot->num_vertices;
 	regname = bu_basename(r->name);
 	faces = r->bot->num_faces;
 	rval = wdb_export(out_fp, regname, (genptr_t)(r->bot), ID_BOT, 1.0);
-	if(verbose)
+	if (verbose)
 	    printf("Wrote %s (%d faces)\n", regname, faces);
     }
     return rval;
@@ -104,7 +107,7 @@ write_region(struct region_s *r, struct rt_wdb *out_fp)
 
 
 int
-add_vertex(struct region_s * r, char *buf)
+add_vertex(struct object_s * r, char *buf)
 {
     /* syntax is "v <x> <y> <z> [w]" */
     r->bot->vertices = bu_realloc(r->bot->vertices, sizeof(fastf_t) * 3 * (r->bot->num_vertices + 1), "bot vertices");
@@ -116,10 +119,11 @@ add_vertex(struct region_s * r, char *buf)
     return 0;
 }
 
+
 int
-add_face(struct region_s * r, char *buf)
+add_face(struct object_s * r, char *buf)
 {
-    char *contains_slash = strchr( buf,'/');
+    char *contains_slash = strchr(buf, '/');
     /* syntax is ... messy. v1/vt1/vn1, can be
      * "f 1 2 3 ...", or "f 1//1 2//x ..." or "f 1/1/1/ ..." or "f 1/1 ..." or ... */
     r->bot->faces = bu_realloc(r->bot->faces, sizeof(int) * 3 * (r->bot->num_faces + 1), "bot faces");
@@ -145,14 +149,15 @@ add_face(struct region_s * r, char *buf)
     return 0;
 }
 
+
 int
-main(int argc, char **argv)
+main(int argc, char *argv[])
 {
     int c;
     char *prog = *argv, buf[BUFSIZ];
     FILE *fd_in;	/* input file */
     struct rt_wdb *fd_out;	/* Resulting BRL-CAD file */
-    struct region_s *region = NULL;
+    struct object_s *object = NULL;
 
     if (argc < 2)
 	bu_exit(1, usage, argv[0]);
@@ -193,8 +198,8 @@ main(int argc, char **argv)
 	bu_exit(1, NULL);
     }
 
-    /* prep the region, use a default name in case the OBJ has no groups */
-    region = new_region("all.s");
+    /* prep the object, use a default name in case the OBJ has no groups */
+    object = new_object("all.s");
     /* loop through the OBJ file. */
     while (bu_fgets(buf, BUFSIZ, fd_in)) {
 	if (ferror(fd_in)) {
@@ -211,13 +216,14 @@ main(int argc, char **argv)
 	    case '\n':
 	    case ' ':
 		continue;
-	    case 'g':	/* group (region) */
-		if (region) {
-		    write_region(region, fd_out);
-		    free_region(region);
+	    case 'o':
+	    case 'g':	/* group (object) */
+		if (object) {
+		    write_object(object, fd_out);
+		    free_object(object);
 		}
-		region = new_region(buf + 2);
-		if (!region) {
+		object = new_object(buf + 2);
+		if (!object) {
 		    perror(prog);
 		    return EXIT_FAILURE;
 		}
@@ -225,11 +231,11 @@ main(int argc, char **argv)
 	    case 'v':	/* vertex */
 		switch(buf[1]) {
 		    case ' ':
-			if (!region) {
+			if (!object) {
 			    perror(prog);
 			    return EXIT_FAILURE;
 			}
-			add_vertex(region, buf + 2);
+			add_vertex(object, buf + 2);
 			break;
 		    case 'n':
 			/* vertex normal here */
@@ -237,37 +243,52 @@ main(int argc, char **argv)
 		}
 		break;
 	    case 'f':	/* face */
-		if (!region) {
+		if (!object) {
 		    perror(prog);
 		    return EXIT_FAILURE;
 		}
-		add_face(region, buf + 2);
+		add_face(object, buf + 2);
 		break;
 	    case 'l': 
-		{ static int seen = 0; if(!seen) { printf("Saw a 'line' statement, ignoring lines.\n"); seen++; } } 
+		{
+		    static int seen = 0;
+		    if (!seen) {
+			printf("Saw a 'line' statement, ignoring lines.\n");
+			seen++;
+		    }
+		}
 		break;
 	    case 's':
-		{ static int seen = 0; if(!seen) { printf("Saw a 'smoothing group' statement, ignoring.\n"); seen++; } } 
+		{
+		    static int seen = 0;
+		    if (!seen) {
+			printf("Saw a 'smoothing group' statement, ignoring.\n");
+			seen++;
+		    }
+		}
 		break;
 	    case 'm':
-		if(!strncmp(buf,"mtllib",6)) printf("Ignoring this mtllib for now\n");
+		if (!strncmp(buf, "mtllib", 6))
+		    printf("Ignoring this mtllib for now\n");
 		break;
 	    case 'u':
-		if(!strncmp(buf,"usemtl",6)) printf("Ignoring this usemtl for now\n");
+		if (!strncmp(buf, "usemtl", 6))
+		    printf("Ignoring this usemtl for now\n");
 		break;
 	    default:
-		fprintf(stderr, "Unknown control code: %c\n", *buf);
-		return EXIT_FAILURE;
+		fprintf(stderr, "Unknown control code: %c (IGNORING)\n", *buf);
+		continue;
 	} 
     }
-    write_region(region, fd_out);
+    write_object(object, fd_out);
 
-    /* using the list generated in write regions, build the tree. */
+    /* using the list generated in write objects, build the tree. */
 
     wdb_close(fd_out);
 
     return 0;
 }
+
 
 /*
  * Local Variables:
