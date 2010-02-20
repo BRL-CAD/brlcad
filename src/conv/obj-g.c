@@ -90,8 +90,11 @@ write_object(struct object_s *r, struct rt_wdb *out_fp)
     const char *regname;
 
     if (r->bot->num_faces == 0) {
-	if (strncmp(r->name, "all.s", 6))
-	    rval = fprintf(stderr, "%s has 0 faces, skipping\n", r->name), 0;
+	if (strncmp(r->name, "all.s", 6)) {
+	    rval = 0;
+	    if (verbose)
+		bu_log("%s has 0 faces, skipping\n", r->name);
+	}
     } else {
 	int faces;
 	/* add the object long name to list */
@@ -100,7 +103,7 @@ write_object(struct object_s *r, struct rt_wdb *out_fp)
 	faces = r->bot->num_faces;
 	rval = wdb_export(out_fp, regname, (genptr_t)(r->bot), ID_BOT, 1.0);
 	if (verbose)
-	    printf("Wrote %s (%d faces)\n", regname, faces);
+	    bu_log("Wrote %s (%d faces)\n", regname, faces);
     }
     return rval;
 }
@@ -203,8 +206,7 @@ main(int argc, char *argv[])
     /* loop through the OBJ file. */
     while (bu_fgets(buf, BUFSIZ, fd_in)) {
 	if (ferror(fd_in)) {
-	    fprintf(stderr, "Ack! %d\nflaming death\n", ferror(fd_in));
-	    return EXIT_FAILURE;
+	    bu_exit(EXIT_FAILURE, "Ack! %d\nflaming death\n", ferror(fd_in));
 	}
 	/* ghetto chomp() */
 	if (strlen(buf)>2 && buf[strlen(buf) - 1] == '\n')
@@ -253,7 +255,8 @@ main(int argc, char *argv[])
 		{
 		    static int seen = 0;
 		    if (!seen) {
-			printf("Saw a 'line' statement, ignoring lines.\n");
+			if (verbose)
+			    bu_log("Saw a 'line' statement, ignoring lines.\n");
 			seen++;
 		    }
 		}
@@ -262,21 +265,24 @@ main(int argc, char *argv[])
 		{
 		    static int seen = 0;
 		    if (!seen) {
-			printf("Saw a 'smoothing group' statement, ignoring.\n");
+			if (verbose)
+			    bu_log("Saw a 'smoothing group' statement, ignoring.\n");
 			seen++;
 		    }
 		}
 		break;
 	    case 'm':
 		if (!strncmp(buf, "mtllib", 6))
-		    printf("Ignoring this mtllib for now\n");
+		    if (verbose)
+			bu_log("Ignoring this mtllib for now\n");
 		break;
 	    case 'u':
 		if (!strncmp(buf, "usemtl", 6))
-		    printf("Ignoring this usemtl for now\n");
+		    if (verbose)
+			bu_log("Ignoring this usemtl for now\n");
 		break;
 	    default:
-		fprintf(stderr, "Unknown control code: %c (IGNORING)\n", *buf);
+		bu_log("Ignoring unknown OBJ code: %c\n", *buf);
 		continue;
 	} 
     }
