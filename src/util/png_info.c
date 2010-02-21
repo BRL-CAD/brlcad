@@ -76,7 +76,7 @@ main(int argc, char **argv)
     if ( fread( header, 8, 1, fp_in ) != 1 )
 	bu_exit( EXIT_FAILURE, "ERROR: Failed while reading file header!!!\n" );
 
-    if ( !png_check_sig( (png_bytep)header, 8 ) )
+    if ( png_sig_cmp( (png_bytep)header, 0, 8 ) )
 	bu_exit( EXIT_FAILURE, "This is not a PNG file!!!\n" );
 
     png_p = png_create_read_struct( PNG_LIBPNG_VER_STRING, NULL, NULL, NULL );
