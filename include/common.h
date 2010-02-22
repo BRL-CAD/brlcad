@@ -86,6 +86,11 @@
 #  endif
 #endif
 
+/* C does not provide a ssize_t, though it is SUS97 */
+#ifndef HAVE_SSIZE_T
+typedef ptrdiff_t ssize_t;
+#endif
+
 #ifndef FMAX
 #  define FMAX(a, b)	(((a)>(b))?(a):(b))
 #endif
