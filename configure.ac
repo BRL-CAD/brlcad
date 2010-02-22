@@ -1810,6 +1810,9 @@ AC_CHECK_TYPE([socklen_t], [],
 #endif
 ])
 AC_CHECK_TYPES([sig_t], [], [], [#include <signal.h>])
+AC_TYPE_INT32_T
+AC_TYPE_INT64_T
+AC_CHECK_TYPE([ssize_t])
 
 
 dnl ******************************************
