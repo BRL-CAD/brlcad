@@ -53,8 +53,8 @@
  *  is assumed to exist everywhere. The range is [0, 1).
  */
 #  ifndef HAVE_DRAND48
-#    define HAVE_DRAND48 1
 #    define drand48() ((double)rand() / (double)(RAND_MAX + 1))
+#    define HAVE_DRAND48 1
 #  endif
 
 #endif  /* BRLCADBUILD & HAVE_CONFIG_H */
@@ -88,7 +88,9 @@
 
 /* C does not provide a ssize_t, though it is SUS97 */
 #ifndef HAVE_SSIZE_T
+#include <stddef.h>
 typedef ptrdiff_t ssize_t;
+#  define HAVE_SSIZE_T 1
 #endif
 
 #ifndef FMAX
