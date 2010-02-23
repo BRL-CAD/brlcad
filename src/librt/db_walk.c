@@ -92,7 +92,7 @@ void
 db_preorder_traverse( struct directory *dp,
 		      struct db_traverse *dtp )
 {
-    register int i;
+    register size_t i;
     RT_CK_DBTR(dtp);
     RT_CK_DBI(dtp->dbip);
 
@@ -209,7 +209,7 @@ db_functree(struct db_i *dbip,
 	    struct resource *resp,
 	    genptr_t client_data)
 {
-    register int		i;
+    register size_t		i;
 
     RT_CK_DBI(dbip);
 

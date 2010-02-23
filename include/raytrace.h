@@ -778,8 +778,8 @@ struct db_i  {
     /* THESE ELEMENTS ARE FOR LIBRT ONLY, AND MAY CHANGE */
     struct directory *		dbi_Head[RT_DBNHASH];
     FILE *			dbi_fp;		/**< @brief standard file pointer */
-    ssize_t			dbi_eof;	/**< @brief End+1 pos after db_scan() */
-    ssize_t			dbi_nrec;	/**< @brief # records after db_scan() */
+    size_t			dbi_eof;	/**< @brief End+1 pos after db_scan() */
+    size_t			dbi_nrec;	/**< @brief # records after db_scan() */
     int				dbi_uses;	/**< @brief # of uses of this struct */
     struct mem_map *		dbi_freep;	/**< @brief map of free granules */
     genptr_t			dbi_inmem;	/**< @brief ptr to in-memory copy */
@@ -802,7 +802,7 @@ struct db_i  {
  * One of these structures is allocated in memory to represent each
  * named object in the database.
  *
- * Note that a d_addr of RT_DIR_PHONY_ADDR (-1L) means that database
+ * Note that a d_addr of RT_DIR_PHONY_ADDR ((size_t)-1) means that database
  * storage has not been allocated yet.
  *
  * Note that there is special handling for RT_DIR_INMEM "in memory"
@@ -827,13 +827,13 @@ struct directory  {
     unsigned long	d_magic;		/**< @brief Magic number */
     char *		d_namep;		/**< @brief pointer to name string */
     union {
-	ssize_t		file_offset;		/**< @brief disk address in obj file */
+	size_t		file_offset;		/**< @brief disk address in obj file */
 	genptr_t	ptr;			/**< @brief ptr to in-memory-only obj */
     } d_un;
     struct directory *	d_forw;			/**< @brief link to next dir entry */
     struct animate *	d_animate;		/**< @brief link to animation */
     long		d_uses;			/**< @brief # uses, from instancing */
-    ssize_t		d_len;			/**< @brief # of db granules used */
+    size_t		d_len;			/**< @brief # of db granules used */
     long		d_nref;			/**< @brief # times ref'ed by COMBs */
     int			d_flags;		/**< @brief flags */
     unsigned char	d_major_type;		/**< @brief object major type */
@@ -845,7 +845,7 @@ struct directory  {
 #define RT_CK_DIR(_dp)	BU_CKMAG(_dp, RT_DIR_MAGIC, "(librt)directory")
 
 #define d_addr	d_un.file_offset
-#define RT_DIR_PHONY_ADDR	(-1L)	/**< @brief Special marker for d_addr field */
+#define RT_DIR_PHONY_ADDR	((size_t)-1)	/**< @brief Special marker for d_addr field */
 
 /* flags for db_diradd() and friends */
 #define RT_DIR_SOLID    0x1   /**< @brief this name is a solid */
@@ -2727,12 +2727,12 @@ RT_EXPORT BU_EXTERN(void db5_make_free_object,
 		    (struct bu_external *ep,
 		     long length));
 RT_EXPORT BU_EXTERN(int db5_decode_signed,
-		    (ssize_t			*lenp,
+		    (size_t			*lenp,
 		     const unsigned char	*cp,
 		     int			format));
 
 RT_EXPORT BU_EXTERN(int db5_decode_length,
-		    (ssize_t			*lenp,
+		    (size_t			*lenp,
 		     const unsigned char	*cp,
 		     int			format));
 
@@ -2880,8 +2880,8 @@ RT_EXPORT BU_EXTERN(int rt_poly_roots,
 RT_EXPORT BU_EXTERN(int db_write,
 		    (struct db_i	*dbip,
 		     const genptr_t	addr,
-		     ssize_t		count,
-		     ssize_t		offset));
+		     size_t		count,
+		     size_t		offset));
 RT_EXPORT BU_EXTERN(int db_fwrite_external,
 		    (FILE			*fp,
 		     const char		*name,

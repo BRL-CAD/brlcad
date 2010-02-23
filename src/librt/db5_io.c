@@ -112,7 +112,7 @@ db5_select_length_encoding(long int len)
  *	The number of bytes of input that were decoded.
  */
 int
-db5_decode_length(ssize_t *lenp, const unsigned char *cp, int format)
+db5_decode_length(size_t *lenp, const unsigned char *cp, int format)
 {
     switch ( format )  {
 	case DB5HDR_WIDTHCODE_8BIT:
@@ -149,7 +149,7 @@ db5_decode_length(ssize_t *lenp, const unsigned char *cp, int format)
  *	The number of bytes of input that were decoded.
  */
 int
-db5_decode_signed(ssize_t *lenp, const unsigned char *cp, int format)
+db5_decode_signed(size_t *lenp, const unsigned char *cp, int format)
 {
     switch ( format )  {
 	case DB5HDR_WIDTHCODE_8BIT:
@@ -790,7 +790,7 @@ db5_import_attributes( struct bu_attribute_value_set *avs, const struct bu_exter
 void
 db5_export_attributes( struct bu_external *ext, const struct bu_attribute_value_set *avs )
 {
-    int	need = 0;
+    size_t	need = 0;
     const struct bu_attribute_value_pair	*avpp;
     char	*cp;
     size_t	i;

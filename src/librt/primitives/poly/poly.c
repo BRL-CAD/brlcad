@@ -63,7 +63,7 @@ rt_pg_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_pg_internal *pgp;
     int i;
-    ssize_t p;
+    size_t p;
 
     pgp = (struct rt_pg_internal *)ip->idb_ptr;
     RT_PG_CK_MAGIC(pgp);
@@ -482,7 +482,7 @@ int
 rt_pg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
 {
     int i;
-    int p;	/* current polygon number */
+    size_t p;	/* current polygon number */
     struct rt_pg_internal *pgp;
 
     BU_CK_LIST_HEAD(vhead);
@@ -514,7 +514,7 @@ int
 rt_pg_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol __attribute__((unused)), const struct bn_tol *tol __attribute__((unused)))
 {
     int i;
-    int p;	/* current polygon number */
+    size_t p;	/* current polygon number */
     struct rt_pg_internal *pgp;
 
     BU_CK_LIST_HEAD(vhead);
@@ -572,7 +572,7 @@ rt_pg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, con
     struct vertex **verts;	/* dynamic array of pointers */
     struct vertex ***vertp;/* dynamic array of ptrs to pointers */
     struct faceuse *fu;
-    int p;	/* current polygon number */
+    size_t p;	/* current polygon number */
     struct rt_pg_internal *pgp;
 
     RT_CK_DB_INTERNAL(ip);
@@ -649,7 +649,7 @@ rt_pg_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
     union record *rp;
     int i;
     int rno;		/* current record number */
-    int p;		/* current polygon index */
+    size_t p;		/* current polygon index */
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -725,7 +725,7 @@ rt_pg_export4(struct bu_external *ep, const struct rt_db_internal *ip, double lo
     union record *rec;
     int i;
     int rno;		/* current record number */
-    int p;		/* current polygon index */
+    size_t p;		/* current polygon index */
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -809,7 +809,7 @@ rt_pg_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose,
     struct rt_pg_internal *pgp =
 	(struct rt_pg_internal *)ip->idb_ptr;
     char buf[256];
-    int i;
+    size_t i;
 
     RT_PG_CK_MAGIC(pgp);
     bu_vls_strcat(str, "polygon solid with no topology (POLY)\n");
@@ -867,7 +867,7 @@ void
 rt_pg_ifree(struct rt_db_internal *ip)
 {
     struct rt_pg_internal *pgp;
-    int i;
+    size_t i;
 
     RT_CK_DB_INTERNAL(ip);
 
@@ -921,7 +921,8 @@ rt_pg_to_bot(struct rt_db_internal *ip, const struct bn_tol *tol, struct resourc
     struct rt_bot_internal *ip_bot;
     int max_pts;
     int max_tri;
-    int p, i;
+    size_t p;
+    int i;
 
     RT_CK_DB_INTERNAL(ip);
     BN_CK_TOL(tol);

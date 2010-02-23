@@ -752,7 +752,7 @@ rt_bot_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     union record *rec;
     int i;
     int chars_used;
-    ssize_t num_recs;
+    size_t num_recs;
     struct bu_vls face_mode;
 
     if (dbip) RT_CK_DBI(dbip);

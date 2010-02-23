@@ -67,8 +67,8 @@
 }
 
 #define BU_CK_GETPUT(_p) {\
-	register ssize_t _i; \
-	register ssize_t _len; \
+	register size_t _i; \
+	register size_t _len; \
 	BU_CK_EXTERNAL(_p); \
 	if (!(_p->ext_buf)) { \
 		bu_log("ERROR: BU_CK_GETPUT null ext_buf, file %s, line %d\n", \
@@ -569,7 +569,7 @@ _bu_struct_lookup(register const struct bu_structparse *sdp, register const char
     /* string containing value */
 {
     register char *loc;
-    ssize_t i;
+    size_t i;
     int retval = 0;
 
     for (; sdp->sp_name != (char *)0; sdp++) {
@@ -602,7 +602,7 @@ _bu_struct_lookup(register const struct bu_structparse *sdp, register const char
 	    case 'c':
 	    case 's':
 		{
-		    register ssize_t j;
+		    register size_t j;
 
 		    /* copy the string, converting escaped double
 		     * quotes to just double quotes
@@ -2020,7 +2020,7 @@ bu_hexdump_external(FILE *fp, const struct bu_external *ep, const char *str)
 {
     const unsigned char *cp;
     const unsigned char *endp;
-    ssize_t i, j, k;
+    size_t i, j, k;
 
     BU_CK_EXTERNAL(ep);
 
@@ -2100,7 +2100,7 @@ void
 bu_structparse_get_terse_form(struct bu_vls *logstr, const struct bu_structparse *sp)
 {
     struct bu_vls str;
-    ssize_t i;
+    size_t i;
 
     bu_vls_init(&str);
 
@@ -2144,8 +2144,8 @@ bu_structparse_argv(struct bu_vls *logstr,
 {
     register char *cp, *loc;
     register const struct bu_structparse *sdp;
-    register ssize_t j;
-    register ssize_t ii;
+    register size_t j;
+    register size_t ii;
     struct bu_vls str;
 
     if (desc == (struct bu_structparse *)NULL) {

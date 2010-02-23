@@ -78,7 +78,7 @@ db_alloc(register struct db_i *dbip, register struct directory *dp, int count)
     while (1)  {
 	if ( (addr = rt_memalloc( &(dbip->dbi_freep), (unsigned)count )) == 0L )  {
 	    /* No contiguous free block, append to file */
-	    if ( (dp->d_addr = dbip->dbi_eof) < 0 )  {
+	    if ( (dp->d_addr = dbip->dbi_eof) == RT_DIR_PHONY_ADDR )  {
 		bu_log("db_alloc: bad EOF\n");
 		return(-1);
 	    }

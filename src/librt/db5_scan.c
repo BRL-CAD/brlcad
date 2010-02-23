@@ -88,7 +88,7 @@ db5_scan(
 	    addr += raw.object_length;
 	}
 	dbip->dbi_eof = addr;
-	BU_ASSERT_LONG(dbip->dbi_eof, ==, dbip->dbi_mf->buflen);
+	BU_ASSERT_LONG(dbip->dbi_eof, ==, (size_t)dbip->dbi_mf->buflen);
     }  else  {
 	/* In a totally portable way, read the database with stdio */
 	rewind(dbip->dbi_fp);

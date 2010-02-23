@@ -212,8 +212,8 @@ rt_comb_import4(
     struct rt_tree_array *rt_tree_array;
     union tree *tree;
     struct rt_comb_internal *comb;
-    int j;
-    ssize_t node_count;
+    size_t j;
+    size_t node_count;
 
     BU_CK_EXTERNAL(ep);
     rp = (union record *)ep->ext_buf;

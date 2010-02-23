@@ -1861,9 +1861,9 @@ BU_EXPORT extern int bu_debug;
  */
 struct bu_structparse {
     char sp_fmt[4];		/**< @brief "i" or "%f", etc */
-    ssize_t sp_count;		/**< @brief number of elements */
+    size_t sp_count;		/**< @brief number of elements */
     char *sp_name;		/**< @brief Element's symbolic name */
-    ssize_t sp_offset;		/**< @brief Byte offset in struct */
+    size_t sp_offset;		/**< @brief Byte offset in struct */
     void (*sp_hook)();	/**< @brief Optional hooked function, or indir ptr */
     char *sp_desc;		/**< @brief description of element */
     void *sp_default;		/**< @brief ptr to default value */
@@ -1884,7 +1884,7 @@ struct bu_structparse {
  */
 struct bu_external  {
     unsigned long ext_magic;
-    ssize_t ext_nbytes;
+    size_t ext_nbytes;
     genptr_t ext_buf;
 };
 #define BU_INIT_EXTERNAL(_p) {(_p)->ext_magic = BU_EXTERNAL_MAGIC; \

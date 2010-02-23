@@ -199,7 +199,7 @@ struct db5_raw_internal {
     unsigned char	b_zzz;
     unsigned char	major_type;
     unsigned char	minor_type;
-    ssize_t		object_length;		/* in bytes, on disk */
+    size_t		object_length;		/* in bytes, on disk */
     /* These three MUST NOT be passed to bu_free_external()! */
     struct bu_external name;
     struct bu_external body;

@@ -3341,7 +3341,7 @@ rt_pipe_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
     struct wdb_pipept *ptp;
     struct rt_pipe_internal *pip;
     fastf_t *vec;
-    int total_count;
+    size_t total_count;
     int double_count;
     int byte_count;
     unsigned long pipe_count;

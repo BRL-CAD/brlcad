@@ -533,7 +533,7 @@ rt_binunif_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const
 {
     register struct rt_binunif_internal *bip=(struct rt_binunif_internal *)intern->idb_ptr;
     struct bu_external	ext;
-    ssize_t		i;
+    size_t		i;
     unsigned char	*c;
 
     RT_CHECK_BINUNIF( bip );

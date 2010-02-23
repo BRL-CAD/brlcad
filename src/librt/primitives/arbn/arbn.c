@@ -903,7 +903,7 @@ rt_arbn_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
     int i;
     unsigned long neqn;
     int double_count;
-    int byte_count;
+    size_t byte_count;
 
     RT_CK_DB_INTERNAL(ip);
     BU_CK_EXTERNAL(ep);

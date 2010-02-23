@@ -455,8 +455,8 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const m
     struct rt_comb_internal	*comb;
     unsigned char	*cp;
     int			wid;
-    ssize_t		nmat, nleaf, rpn_len, max_stack_depth;
-    ssize_t		leafbytes;
+    size_t		nmat, nleaf, rpn_len, max_stack_depth;
+    size_t		leafbytes;
     unsigned char	*matp;
     unsigned char	*leafp;
     unsigned char	*leafp_end;
@@ -465,7 +465,7 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const m
     union tree	*stack[MAX_V5_STACK];
     union tree	**sp;			/* stack pointer */
     const char	*ap;
-    ssize_t		i;
+    size_t	ius;
 
     RT_CK_DB_INTERNAL( ip );
     BU_CK_EXTERNAL(ep);
@@ -495,6 +495,8 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const m
     leafp_end = exprp;
 
     if ( rpn_len == 0 )  {
+    	ssize_t is;
+
 	/* This tree is all union operators, import it as a balanced tree */
 	struct bu_ptbl *tbl1, *tbl2;
 
@@ -503,9 +505,9 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const m
 
 	/* insert all the leaf nodes into a bu_ptbl */
 	bu_ptbl_init( tbl1, nleaf, "rt_comb_import5: tbl" );
-	for ( i = nleaf-1; i >= 0; i-- )  {
+	for (is = nleaf-1; is >= 0; is-- )  {
 	    union tree	*tp;
-	    ssize_t	mi;
+	    size_t	mi;
 
 	    RT_GET_TREE( tp, resp );
 	    tp->tr_l.magic = RT_TREE_MAGIC;
@@ -517,7 +519,7 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const m
 	    mi = 4095;			/* sanity */
 	    leafp += db5_decode_signed( &mi, leafp, wid );
 
-	    if ( mi < 0 )  {
+	    if ( (ssize_t)mi < 0 )  {
 		/* Signal identity matrix */
 		if ( !mat || bn_mat_is_identity( mat ) ) {
 		    tp->tr_l.tl_mat = (matp_t)NULL;
@@ -559,12 +561,12 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const m
 	while ( 1 ) {
 	    struct bu_ptbl *tmp;
 
-	    for ( i=0; i<BU_PTBL_LEN( tbl1 ); i += 2 ) {
+	    for ( is=0; is<BU_PTBL_LEN( tbl1 ); is += 2 ) {
 		union tree *tp1, *tp2, *unionp;
 		int j;
 
-		j = i + 1;
-		tp1 = (union tree *)BU_PTBL_GET( tbl1, i );
+		j = is + 1;
+		tp1 = (union tree *)BU_PTBL_GET( tbl1, is );
 		if ( j < BU_PTBL_LEN( tbl1 ) ) {
 		    tp2 = (union tree *)BU_PTBL_GET( tbl1, j );
 		} else {
@@ -620,9 +622,9 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const m
     }
     sp = &stack[0];
 
-    for ( i=0; i < rpn_len; i++, exprp++ )  {
+    for ( ius=0; ius < rpn_len; ius++, exprp++ )  {
 	union tree	*tp;
-	ssize_t		mi;
+	size_t		mi;
 
 	RT_GET_TREE( tp, resp );
 	tp->tr_b.magic = RT_TREE_MAGIC;
@@ -637,7 +639,7 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep, const m
 		mi = 4095;			/* sanity */
 		leafp += db5_decode_signed( &mi, leafp, wid );
 
-		if ( mi < 0 )  {
+		if ( (ssize_t)mi < 0 )  {
 		    /* Signal identity matrix */
 		    if ( !mat || bn_mat_is_identity( mat ) ) {
 			tp->tr_l.tl_mat = (matp_t)NULL;
