@@ -94,11 +94,6 @@ struct _ged_client_data {
     int				num_halfs;
 };
 
-struct _ged_rt_client_data {
-    struct ged_run_rt 	*rrtp;
-    struct ged	       	*gedp;
-};
-
 struct _ged_trace_data {
     struct ged	      *gtd_gedp;
     struct directory  *gtd_path[_GED_MAX_LEVELS];

@@ -44,6 +44,12 @@
 #include "./ged_private.h"
 
 
+struct _ged_rt_client_data {
+    struct ged_run_rt 	*rrtp;
+    struct ged	       	*gedp;
+};
+
+
 int
 ged_rt(struct ged *gedp, int argc, const char *argv[])
 {
@@ -358,8 +364,7 @@ _ged_rt_write(struct ged *gedp,
 
 
 void
-_ged_rt_output_handler(ClientData	clientData,
-		      int		mask)
+_ged_rt_output_handler(ClientData clientData, int mask __attribute__((unused)))
 {
     struct _ged_rt_client_data *drcdp = (struct _ged_rt_client_data *)clientData;
     struct ged_run_rt *run_rtp;
