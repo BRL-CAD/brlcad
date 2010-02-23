@@ -325,7 +325,7 @@ main(int argc, char *argv[])
     }
 
     /* print the egg header shtuff, including the command line to execute it */
-    fprintf(fp, "<CoordinateSystem> { Y-Up }\n\n");
+    fprintf(fp, "<CoordinateSystem> { Z-Up }\n\n");
     fprintf(fp, "<Comment> {\n  \"%s", *argv);
     for (i=1; i<argc; i++)
 	fprintf(fp, " %s", argv[i]);
