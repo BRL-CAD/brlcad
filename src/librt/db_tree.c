@@ -2789,14 +2789,14 @@ tree_list_needspace(struct bu_vls *vls)
     }
 
     /* sanity, shouldn't happen */
-    if (!end || end == str) {
+    if (!end) {
 	return 0;
     }
 
     /* don't need a space if there is already whitespace separation,
      * unless it has been escaped.
      */
-    if (isspace(*end) && *(end-1) != '\\') {
+    if (isspace(*end) && ((end == str) || (*(end-1) != '\\'))) {
 	return 0;
     }
 
