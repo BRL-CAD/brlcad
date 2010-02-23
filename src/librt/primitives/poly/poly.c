@@ -837,7 +837,7 @@ rt_pg_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose,
 	fastf_t *v = pgp->poly[i].verts;
 	fastf_t *n = pgp->poly[i].norms;
 
-	sprintf(buf, "\tPolygon %d: (%d pts)\n",
+	sprintf(buf, "\tPolygon %lu: (%d pts)\n",
 		i, pgp->poly[i].npts);
 	bu_vls_strcat(str, buf);
 	for (j=0; j < pgp->poly[i].npts; j++) {
