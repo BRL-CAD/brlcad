@@ -1812,7 +1812,7 @@ AC_CHECK_TYPE([socklen_t], [],
 AC_CHECK_TYPES([sig_t], [], [], [#include <signal.h>])
 AC_TYPE_INT32_T
 AC_TYPE_INT64_T
-AC_CHECK_TYPE([ssize_t])
+AC_CHECK_TYPE([ssize_t], [AC_DEFINE([HAVE_SSIZE_T], [1], [Define to 1 if 'ssize_t' is available.])], [], [])
 
 
 dnl ******************************************
