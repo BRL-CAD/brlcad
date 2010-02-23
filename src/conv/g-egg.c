@@ -169,7 +169,7 @@ nmg_to_egg(struct nmgregion *r, const struct db_full_path *pathp, int region_id,
 		if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
 		    continue;
 
-	        fprintf(fp, "  <Polygon> { \n    <BFace> { 1 } \n    <VertexReg> { ");
+	        fprintf(fp, "  <Polygon> { \n    <RGBA> { 1 1 1 1 } \n    <VertexRef> { ");
 		/* check vertex numbers for each triangle */
 		for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd))
 		{
@@ -181,7 +181,7 @@ nmg_to_egg(struct nmgregion *r, const struct db_full_path *pathp, int region_id,
 		    NMG_CK_VERTEX(v);
 		    fprintf(fp, " %d", vert_count);
 		}
-	        fprintf(fp, " <Ref> { %s } }\n  }\n", region_name+1);
+	        fprintf(fp, " <Ref> { \"%s\" } }\n  }\n", region_name+1);
 
 		region_polys++;
 	    }
