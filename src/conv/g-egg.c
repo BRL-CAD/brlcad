@@ -133,8 +133,6 @@ nmg_to_egg(struct nmgregion *r, const struct db_full_path *pathp, int region_id,
 			    V3ARGS(v->vg_p->coord),
 			    V3ARGS(facet_normal));
 		}
-
-		region_polys++;
 	    }
 	}
     }
@@ -185,10 +183,10 @@ nmg_to_egg(struct nmgregion *r, const struct db_full_path *pathp, int region_id,
 
 		region_polys++;
 	    }
-	    tot_polygons++;
 	}
     }
 
+    tot_polygons += region_polys;
     bu_free(region_name, "region name");
 }
 
