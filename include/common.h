@@ -48,9 +48,8 @@
 #    include "brlcad_config.h"
 #  endif  /* _WIN32 */
 
-/**
- *  Simulates drand48() functionality using rand() which
- *  is assumed to exist everywhere. The range is [0, 1).
+/* Simulates drand48() functionality using rand() which is assumed to
+ * exist everywhere. The range is [0, 1).
  */
 #  ifndef HAVE_DRAND48
 #    define drand48() ((double)rand() / (double)(RAND_MAX + 1))
@@ -86,19 +85,25 @@
 #  endif
 #endif
 
-/* C does not provide a ssize_t, though it is SUS97 */
-#ifndef HAVE_SSIZE_T
-#include <stddef.h>
-typedef ptrdiff_t ssize_t;
-#  define HAVE_SSIZE_T 1
-#endif
-
 #ifndef FMAX
 #  define FMAX(a, b)	(((a)>(b))?(a):(b))
 #endif
 #ifndef FMIN
 #  define FMIN(a, b)	(((a)<(b))?(a):(b))
 #endif
+
+/* C does not provide a ssize_t even though it is provided by SUS97.
+ * regardless, we use it so make sure it's declared by using the
+ * similar POSIX ptrdiff_t type.
+ */
+#  ifndef HAVE_SSIZE_T
+#    include <stddef.h>
+#    include <limits.h>
+#    ifndef SSIZE_MAX
+typedef ptrdiff_t ssize_t;
+#      define HAVE_SSIZE_T 1
+#    endif
+#  endif
 
 #endif  /* __COMMON_H__ */
 /** @} */
