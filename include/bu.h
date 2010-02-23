@@ -1823,25 +1823,25 @@ BU_EXPORT extern int bu_debug;
  *@code
 
  struct data_structure {
- char a_char;
- char str[32];
- short a_short;
- int a_int;
- double a_double;
+   char a_char;
+   char str[32];
+   short a_short;
+   int a_int;
+   double a_double;
  }
 
- struct data_structure data_default =
+ struct data_structure default =
  { 'c', "the default string", 32767, 1, 1.0 };
 
  struct data_structure my_values;
 
  struct bu_structparse data_sp[] ={
- {"%c", 1,  "a_char",   bu_offsetof(data_structure, a_char), BU_STRUCTPARSE_FUNC_NULL, "a single character",	(void*)&default.a_char },
- {"%s", 32, "str",      bu_offsetofarray(data_structure, str), BU_STRUCTPARSE_FUNC_NULL, "This is a full character string", (void*)default.str }, },
- {"%i", 1,  "a_short",  bu_offsetof(data_structure, a_short), BU_STRUCTPARSE_FUNC_NULL, "A 16bit integer",	(void*)&default.a_short },
- {"%d", 1,  "a_int",    bu_offsetof(data_structure, a_int), BU_STRUCTPARSE_FUNC_NULL, "A full integer",	(void*)&default.a_int },
- {"%f", 1,  "a_double", bu_offsetof(data_structure, a_double), BU_STRUCTPARSE_FUNC_NULL, "A double-precision floating point value",  (void*)&default.a_double },
- { "", 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, (char *)NULL, (void *)NULL }
+   {"%c", 1,     "a_char",   bu_offsetof(data_structure, a_char), BU_STRUCTPARSE_FUNC_NULL,                      "a single character", (void*)&default.a_char},
+   {"%s", 32,       "str", bu_offsetofarray(data_structure, str), BU_STRUCTPARSE_FUNC_NULL,         "This is a full character string", (void*)default.str},
+   {"%i", 1,    "a_short",  bu_offsetof(data_structure, a_short), BU_STRUCTPARSE_FUNC_NULL,                         "A 16bit integer", (void*)&default.a_short},
+   {"%d", 1,      "a_int",    bu_offsetof(data_structure, a_int), BU_STRUCTPARSE_FUNC_NULL,                          "A full integer", (void*)&default.a_int},
+   {"%f", 1,   "a_double", bu_offsetof(data_structure, a_double), BU_STRUCTPARSE_FUNC_NULL, "A double-precision floating point value", (void*)&default.a_double},
+   {  "", 0, (char *)NULL,                                     0, BU_STRUCTPARSE_FUNC_NULL,                              (char *)NULL, (void *)NULL}
  };
 
  @endcode
@@ -1860,7 +1860,7 @@ BU_EXPORT extern int bu_debug;
  * probably shouldn't use this technique.
  */
 struct bu_structparse {
-    char sp_fmt[4];		/**< @brief "i" or "%f", etc */
+    char sp_fmt[4];		/**< @brief "%i" or "%f", etc */
     size_t sp_count;		/**< @brief number of elements */
     char *sp_name;		/**< @brief Element's symbolic name */
     size_t sp_offset;		/**< @brief Byte offset in struct */
