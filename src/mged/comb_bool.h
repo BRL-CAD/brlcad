@@ -23,23 +23,22 @@
 
 struct bool_tree_node
 {
-    long			    btn_magic;
-    int				    btn_opn;
-    union
-    {
-	char			*leaf_name;
-	struct bool_tree_node	*operands[2];
+    long btn_magic;
+    int btn_opn;
+    union {
+	char *leaf_name;
+	struct bool_tree_node *operands[2];
     }				    btn_operands;
 };
-#define	BOOL_TREE_NODE_NULL	((struct bool_tree_node *) 0)
+#define BOOL_TREE_NODE_NULL ((struct bool_tree_node *) 0)
 
-#define	OPN_NULL		0
-#define	OPN_UNION		1
-#define	OPN_INTERSECTION	2
-#define	OPN_DIFFERENCE		3
+#define OPN_NULL		0
+#define OPN_UNION		1
+#define OPN_INTERSECTION	2
+#define OPN_DIFFERENCE		3
 
-#define	BT_LEFT			0
-#define	BT_RIGHT		1
+#define BT_LEFT			0
+#define BT_RIGHT		1
 
 #define bt_opn(n)		((n) -> btn_opn)
 #define bt_leaf_name(n)		((n) -> btn_operands.leaf_name)
@@ -49,33 +48,32 @@ struct bool_tree_node
 
 struct tree_tail
 {
-    long		tt_magic;
-    int			tt_opn;
-    struct tree_tail	*tt_next;
+    long tt_magic;
+    int tt_opn;
+    struct tree_tail *tt_next;
 };
-#define	TREE_TAIL_NULL	((struct tree_tail *) 0)
+#define TREE_TAIL_NULL ((struct tree_tail *) 0)
 
 #define ZAPMAG(p)		(*((long *)(p)) = 0)
-#define	BOOL_TREE_NODE_MAGIC	0x62746e64
-#define	TREE_TAIL_MAGIC		0x74727461
+#define BOOL_TREE_NODE_MAGIC 0x62746e64
+#define TREE_TAIL_MAGIC 0x74727461
 
-extern struct bool_tree_node	*comb_bool_tree;
+extern struct bool_tree_node *comb_bool_tree;
 
-/*                      T A L L O C ( )
+/* T A L L O C ()
  *
- *                  Simple interface to malloc()
+ * Simple interface to malloc()
  *
- *      This macro has three parameters:  a pointer, a C data type,
- *      and a number of data objects.  Talloc() allocates enough
- *      memory to store n objects of type t.  It has the side-effect
- *      of causing l to point to the allocated storage.
+ * This macro has three parameters:  a pointer, a C data type,
+ * and a number of data objects.  Talloc() allocates enough
+ * memory to store n objects of type t.  It has the side-effect
+ * of causing l to point to the allocated storage.
  */
-#define         talloc(l, t, n)                                         \
-	if (((l) = (t *) malloc(n * sizeof(t))) == (t *) 0)             \
-	{                                                               \
+#define talloc(l, t, n)                                         \
+	if (((l) = (t *) malloc(n * sizeof(t))) == (t *) 0) {           \
 	    fprintf(stderr, "%s:%d: Ran out of memory\n",		\
 		    __FILE__, __LINE__);                                \
-	    bu_exit(1, NULL);                                              \
+	    bu_exit(1, NULL);                                           \
 	}
 
 /*

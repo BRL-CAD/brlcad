@@ -19,7 +19,7 @@
  */
 /** @file dm-plot.c
  *
- *  Routines specific to MGED's use of LIBDM's Plot display manager.
+ * Routines specific to MGED's use of LIBDM's Plot display manager.
  *
  */
 
@@ -51,6 +51,7 @@ Plot_dm_init(struct dm_list *o_dm_list, int argc, char **argv)
 
     return TCL_OK;
 }
+
 
 /*
  * Local Variables:

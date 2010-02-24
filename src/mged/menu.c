@@ -93,7 +93,7 @@ cmd_mmenu_get(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 
 /*
- *			M M E N U _ I N I T
+ * M M E N U _ I N I T
  *
  * Clear global data
  */
@@ -104,17 +104,11 @@ mmenu_init(void)
     menu_state->ms_menus[MENU_L1] = MENU_NULL;
     menu_state->ms_menus[MENU_L2] = MENU_NULL;
     menu_state->ms_menus[MENU_GEN] = MENU_NULL;
-#if 0
-    (void)Tcl_CreateCommand(interp, "mmenu_set", cmd_nop, (ClientData)NULL,
-			    (Tcl_CmdDeleteProc *)NULL);
-    (void)Tcl_CreateCommand(interp, "mmenu_get", cmd_mmenu_get,
-			    (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
-#endif
 }
 
 
 /*
- *			M M E N U _ S E T
+ * M M E N U _ S E T
  */
 
 void
@@ -145,6 +139,7 @@ mmenu_set(int index, struct menu_item *value)
     }
 }
 
+
 void
 mmenu_set_all(int index, struct menu_item *value)
 {
@@ -159,12 +154,13 @@ mmenu_set_all(int index, struct menu_item *value)
 	    curr_cmd_list = p->dml_tie;
 
 	curr_dm_list = p;
-	mmenu_set( index, value );
+	mmenu_set(index, value);
     }
 
     curr_cmd_list = save_cmd_list;
     curr_dm_list = save_dm_list;
 }
+
 
 void
 mged_highlight_menu_item(struct menu_item *mptr, int y)
@@ -204,19 +200,20 @@ mged_highlight_menu_item(struct menu_item *mptr, int y)
     }
 }
 
+
 /*
- *			M M E N U _ D I S P L A Y
+ * M M E N U _ D I S P L A Y
  *
- *  Draw one or more menus onto the display.
- *  If "menu_state->ms_flag" is non-zero, then the last selected
- *  menu item will be indicated with an arrow.
+ * Draw one or more menus onto the display.
+ * If "menu_state->ms_flag" is non-zero, then the last selected
+ * menu item will be indicated with an arrow.
  */
 void
 mmenu_display(int y_top)
 {
     static int menu, item;
-    struct menu_item	**m;
-    struct menu_item	*mptr;
+    struct menu_item **m;
+    struct menu_item *mptr;
     int y = y_top;
 
     menu_state->ms_top = y - MENU_DY / 2;
@@ -233,11 +230,11 @@ mmenu_display(int y_top)
 		    GED2PM1(MENUXLIM), GED2PM1(menu_state->ms_top),
 		    GED2PM1(XMIN), GED2PM1(menu_state->ms_top));
 
-    for ( menu=0, m = menu_state->ms_menus; m - menu_state->ms_menus < NMENU; m++, menu++ )  {
-	if ( *m == MENU_NULL )  continue;
-	for ( item=0, mptr = *m;
-	      mptr->menu_string[0] != '\0' && y > TITLE_YBASE;
-	      mptr++, y += MENU_DY, item++ )  {
+    for (menu=0, m = menu_state->ms_menus; m - menu_state->ms_menus < NMENU; m++, menu++) {
+	if (*m == MENU_NULL) continue;
+	for (item=0, mptr = *m;
+	     mptr->menu_string[0] != '\0' && y > TITLE_YBASE;
+	     mptr++, y += MENU_DY, item++) {
 #if 0
 	    if ((*m == (struct menu_item *)second_menu && (mptr->menu_arg == BV_RATE_TOGGLE ||
 							   mptr->menu_arg == BV_EDIT_TOGGLE))
@@ -270,7 +267,7 @@ mmenu_display(int y_top)
 	    DM_DRAW_LINE_2D(dmp,
 			    GED2PM1(MENUXLIM), GED2PM1(y+(MENU_DY/2)),
 			    GED2PM1(XMIN), GED2PM1(y+(MENU_DY/2)));
-	    if ( menu_state->ms_cur_item == item && menu_state->ms_cur_menu == menu && menu_state->ms_flag )  {
+	    if (menu_state->ms_cur_item == item && menu_state->ms_cur_menu == menu && menu_state->ms_flag) {
 		/* prefix item selected with "==>" */
 		DM_SET_FGCOLOR(dmp,
 			       color_scheme->cs_menu_arrow[0],
@@ -282,7 +279,7 @@ mmenu_display(int y_top)
 	}
     }
 
-    if ( y == y_top )
+    if (y == y_top)
 	return;	/* no active menus */
 
     DM_SET_FGCOLOR(dmp,
@@ -294,29 +291,31 @@ mmenu_display(int y_top)
 #else
     DM_SET_LINE_ATTR(dmp, 1, 0);
 #endif
-    DM_DRAW_LINE_2D( dmp,
-		     GED2PM1(MENUXLIM), GED2PM1(menu_state->ms_top-1),
-		     GED2PM1(MENUXLIM), GED2PM1(y-(MENU_DY/2)) );
+    DM_DRAW_LINE_2D(dmp,
+		    GED2PM1(MENUXLIM), GED2PM1(menu_state->ms_top-1),
+		    GED2PM1(MENUXLIM), GED2PM1(y-(MENU_DY/2)));
 }
 
+
 /*
- *			M M E N U _ S E L E C T
+ * M M E N U _ S E L E C T
  *
- *  Called with Y coordinate of pen in menu area.
+ * Called with Y coordinate of pen in menu area.
  *
- * Returns:	1 if menu claims these pen co-ordinates,
- *		0 if pen is BELOW menu
- *		-1 if pen is ABOVE menu	(error)
+ * Returns:
+ * 1 if menu claims these pen co-ordinates,
+ * 0 if pen is BELOW menu
+ * -1 if pen is ABOVE menu (error)
  */
 int
-mmenu_select( int pen_y, int do_func )
+mmenu_select(int pen_y, int do_func)
 {
     static int menu, item;
-    struct menu_item	**m;
-    struct menu_item	*mptr;
-    int			yy;
+    struct menu_item **m;
+    struct menu_item *mptr;
+    int yy;
 
-    if ( pen_y > menu_state->ms_top )
+    if (pen_y > menu_state->ms_top)
 	return(-1);	/* pen above menu area */
 
     /*
@@ -325,43 +324,45 @@ mmenu_select( int pen_y, int do_func )
      */
     yy = menu_state->ms_top;
 
-    for ( menu=0, m=menu_state->ms_menus; m - menu_state->ms_menus < NMENU; m++, menu++ )  {
-	if ( *m == MENU_NULL )  continue;
-	for ( item=0, mptr = *m;
-	      mptr->menu_string[0] != '\0';
-	      mptr++, item++ )  {
+    for (menu=0, m=menu_state->ms_menus; m - menu_state->ms_menus < NMENU; m++, menu++) {
+	if (*m == MENU_NULL) continue;
+	for (item=0, mptr = *m;
+	     mptr->menu_string[0] != '\0';
+	     mptr++, item++) {
 	    yy += MENU_DY;
-	    if ( pen_y <= yy )
+	    if (pen_y <= yy)
 		continue;	/* pen is below this item */
 	    menu_state->ms_cur_item = item;
 	    menu_state->ms_cur_menu = menu;
 	    menu_state->ms_flag = 1;
 	    /* It's up to the menu_func to set menu_state->ms_flag=0
 	     * if no arrow is desired */
-	    if ( do_func && mptr->menu_func != ((void (*)())0) )
+	    if (do_func && mptr->menu_func != ((void (*)())0))
 		(*(mptr->menu_func))(mptr->menu_arg, menu, item);
 
-	    return( 1 );		/* menu claims pen value */
+	    return(1);		/* menu claims pen value */
 	}
     }
-    return( 0 );		/* pen below menu area */
+    return(0);		/* pen below menu area */
 }
 
+
 /*
- *			M M E N U _ P N T R
+ * M M E N U _ P N T R
  *
- *  Routine to allow user to reset the arrow to any menu & item desired.
- *  Example:  menu_pntr( MENU_L1, 3 ).
- *  The arrow can always be eliminated by setting menu_state->ms_flag=0, view_state->flag=1.
+ * Routine to allow user to reset the arrow to any menu & item desired.
+ * Example:  menu_pntr(MENU_L1, 3).
+ * The arrow can always be eliminated by setting menu_state->ms_flag=0, view_state->flag=1.
  */
 void
 mmenu_pntr(int menu, int item)
 {
     menu_state->ms_cur_menu = menu;
     menu_state->ms_cur_item = item;
-    if ( menu_state->ms_cur_menu >= 0 )
+    if (menu_state->ms_cur_menu >= 0)
 	menu_state->ms_flag = 1;
 }
+
 
 /*
  * Local Variables:

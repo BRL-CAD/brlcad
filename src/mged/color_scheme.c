@@ -133,10 +133,11 @@ struct _color_scheme default_color_scheme = {
     /* cs_center_dot_ia */		{ 255, 255, 0 }
 };
 
+
 #define CS_OFFSET 1	/* offset to start of colors in color_scheme_vparse */
 
-#define CS_O(_m)        bu_offsetof(struct _color_scheme, _m)
-#define CS_OA(_m)	bu_offsetofarray(struct _color_scheme, _m)
+#define CS_O(_m) bu_offsetof(struct _color_scheme, _m)
+#define CS_OA(_m) bu_offsetofarray(struct _color_scheme, _m)
 struct bu_structparse color_scheme_vparse[] = {
     {"%d",	1, "mode",	CS_O(cs_mode),	cs_update },
     {"%d",  3, "bg",	CS_OA(cs_bg),	cs_set_bg },
@@ -238,6 +239,7 @@ struct bu_structparse color_scheme_vparse[] = {
     {"",	0,  (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
+
 void
 cs_set_dirty_flag(void)
 {
@@ -247,6 +249,7 @@ cs_set_dirty_flag(void)
 	if (dmlp->dml_color_scheme == color_scheme)
 	    dmlp->dml_dirty = 1;
 }
+
 
 void
 cs_update(void)
@@ -272,6 +275,7 @@ cs_update(void)
     bu_vls_free(&vls);
 }
 
+
 void
 cs_set_bg(void)
 {
@@ -295,6 +299,7 @@ cs_set_bg(void)
     bu_vls_free(&vls);
     curr_dm_list = save_curr_dmlp;
 }
+
 
 /*
  * Local Variables:

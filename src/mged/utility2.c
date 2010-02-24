@@ -20,10 +20,10 @@
 /** @file utility2.c
  *
  *
- *	f_pathsum()	gives various path summaries
- *	f_copyeval()	copy an evaluated solid
- *	f_push()	control routine to push transformations to bottom of paths
- *	f_showmats()	shows matrices along a path
+ *	f_pathsum() gives various path summaries
+ *	f_copyeval() copy an evaluated solid
+ *	f_push() control routine to push transformations to bottom of paths
+ *	f_showmats() shows matrices along a path
  *
  */
 

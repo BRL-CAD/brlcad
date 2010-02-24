@@ -67,15 +67,15 @@
 #define AMM_CON_ANG2 20
 #define AMM_CON_DIST 21
 
-#define IS_CONSTRAINED_ROT(_mode) ( \
+#define IS_CONSTRAINED_ROT(_mode) (\
 	(_mode) == AMM_CON_ROT_X || \
 	(_mode) == AMM_CON_ROT_Y || \
-	(_mode) == AMM_CON_ROT_Z )
+	(_mode) == AMM_CON_ROT_Z)
 
-#define IS_CONSTRAINED_TRAN(_mode) ( \
+#define IS_CONSTRAINED_TRAN(_mode) (\
 	(_mode) == AMM_CON_TRAN_X || \
 	(_mode) == AMM_CON_TRAN_Y || \
-	(_mode) == AMM_CON_TRAN_Z )
+	(_mode) == AMM_CON_TRAN_Z)
 
 struct view_ring {
     struct bu_list	l;
@@ -85,6 +85,7 @@ struct view_ring {
     int			vr_id;
 };
 
+
 #define NUM_TRAILS 8
 #define MAX_TRAIL 32
 struct trail {
@@ -92,6 +93,7 @@ struct trail {
     int		t_nused;          /* max index in use */
     point_t	t_pt[MAX_TRAIL];
 };
+
 
 #ifdef MAX_CLIENTS
 #	undef MAX_CLIENTS
@@ -108,6 +110,7 @@ struct client {
 #endif
     struct pkg_conn	*c_pkg;
 };
+
 
 /* mged command variables for affecting the user environment */
 struct _mged_variables {
@@ -146,6 +149,7 @@ struct _mged_variables {
     char	mv_difference_lexeme[1024];
 };
 
+
 struct _axes_state {
     int		ax_rc;
     int		ax_model_draw;			/* model axes */
@@ -163,11 +167,13 @@ struct _axes_state {
     int		ax_edit_linewidth2;
 };
 
+
 struct _dlist_state {
     int		dl_rc;
     int		dl_active;	/* 1 - actively using display lists */
     int		dl_flag;
 };
+
 
 struct _grid_state {
     int		gr_rc;
@@ -179,6 +185,7 @@ struct _grid_state {
     int		gr_res_major_h;	/* major grid resolution in h */
     int		gr_res_major_v;	/* major grid resolution in v */
 };
+
 
 struct _adc_state {
     int		adc_rc;
@@ -203,6 +210,7 @@ struct _adc_state {
     fastf_t	adc_anchor_pt_dst[3];
 };
 
+
 struct _rubber_band {
     int		rb_rc;
     int		rb_active;	/* 1 - actively drawing a rubber band */
@@ -216,6 +224,7 @@ struct _rubber_band {
     fastf_t	rb_width;	/* Width and height of rectangle in      */
     fastf_t	rb_height;	/* ------ normalized view coordinates.   */
 };
+
 
 struct _view_state {
     int		vs_rc;
@@ -263,6 +272,7 @@ struct _view_state {
     /* Virtual trackball stuff */
     point_t	vs_orig_pos;
 };
+
 
 struct _color_scheme {
     int	cs_rc;
@@ -365,6 +375,7 @@ struct _color_scheme {
     int	cs_center_dot_ia[3];
 };
 
+
 struct _menu_state {
     int	ms_rc;
     int	ms_flag;
@@ -373,6 +384,7 @@ struct _menu_state {
     int	ms_cur_item;
     struct menu_item	*ms_menus[NMENU];    /* base of menu items array */
 };
+
 
 struct dm_list {
     struct bu_list	l;
@@ -433,6 +445,7 @@ struct dm_list {
     void			(*dml_viewpoint_hook)();
     int			(*dml_eventHandler)();
 };
+
 
 #define DM_LIST_NULL ((struct dm_list *)NULL)
 #define dmp curr_dm_list->dml_dmp

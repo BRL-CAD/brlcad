@@ -42,7 +42,7 @@
 #include "./cmd.h"
 
 
-extern struct db_tree_state	mged_initial_tree_state;	/* dodraw.c */
+extern struct db_tree_state mged_initial_tree_state;	/* dodraw.c */
 
 extern void color_soltab(void);
 extern void set_absolute_tran(void); /* defined in set.c */
@@ -68,7 +68,7 @@ int mged_tran(fastf_t *tvec);
 
 
 extern vect_t curr_e_axes_pos;
-extern long	nvectors;
+extern long nvectors;
 
 extern vect_t e_axes_pos;
 
@@ -125,18 +125,18 @@ struct bu_vls edit_absolute_object_rotate_vls[3];
 struct bu_vls edit_absolute_view_rotate_vls[3];
 struct bu_vls edit_absolute_scale_vls;
 
-double		mged_abs_tol;
-double		mged_rel_tol = 0.01;		/* 1%, by default */
-double		mged_nrm_tol;			/* normal ang tol, radians */
+double mged_abs_tol;
+double mged_rel_tol = 0.01;		/* 1%, by default */
+double mged_nrm_tol;			/* normal ang tol, radians */
 
 
 /* DEBUG -- force view center */
-/* Format: C x y z	*/
+/* Format: C x y z */
 int
-cmd_center(ClientData	clientData,
-	   Tcl_Interp	*interp,
-	   int		argc,
-	   char		**argv)
+cmd_center(ClientData clientData,
+	   Tcl_Interp *interp,
+	   int argc,
+	   char **argv)
 {
     int ret;
     Tcl_DString ds;
@@ -159,6 +159,7 @@ cmd_center(ClientData	clientData,
 
     return TCL_OK;
 }
+
 
 void
 mged_center(point_t center)
@@ -185,15 +186,16 @@ mged_center(point_t center)
     view_state->vs_flag = 1;
 }
 
+
 /* DEBUG -- force viewsize */
-/* Format: view size	*/
+/* Format: view size */
 int
-cmd_size(ClientData	clientData,
-	 Tcl_Interp	*interp,
-	 int		argc,
-	 char		**argv)
+cmd_size(ClientData clientData,
+	 Tcl_Interp *interp,
+	 int argc,
+	 char **argv)
 {
-    int	ret;
+    int ret;
     Tcl_DString ds;
 
     if (gedp == GED_NULL)
@@ -223,12 +225,13 @@ cmd_size(ClientData	clientData,
     return TCL_ERROR;
 }
 
+
 /*
- *			S I Z E _ R E S E T
+ * S I Z E _ R E S E T
  *
- *  Reset view size and view center so that all solids in the solid table
- *  are in view.
- *  Caller is responsible for calling new_mats().
+ * Reset view size and view center so that all solids in the solid table
+ * are in view.
+ * Caller is responsible for calling new_mats().
  */
 void
 size_reset(void)
@@ -245,31 +248,32 @@ size_reset(void)
     view_state->vs_flag = 1;
 }
 
+
 /*
- *			E D I T _ C O M
+ * E D I T _ C O M
  *
  * B and e commands use this area as common
  */
 int
-edit_com(int	argc,
-	 char	**argv,
-	 int	kind,
-	 int	catch_sigint)
+edit_com(int argc,
+	 char **argv,
+	 int kind,
+	 int catch_sigint)
 {
     struct ged_display_list *gdlp;
     struct ged_display_list *next_gdlp;
     struct dm_list *dmlp;
     struct dm_list *save_dmlp;
     struct cmd_list *save_cmd_list;
-    int	ret;
-    int	initial_blank_screen = 1;
+    int ret;
+    int initial_blank_screen = 1;
 
-    int	flag_A_attr=0;
+    int flag_A_attr=0;
     int flag_R_noresize=0;
-    int	flag_o_nonunique=1;
+    int flag_o_nonunique=1;
 
-    int	i;
-    int	last_opt=0;
+    int i;
+    int last_opt=0;
     struct bu_vls vls;
 
     CHECK_DBI_NULL;
@@ -288,43 +292,43 @@ edit_com(int	argc,
     }
 
     /* check args for "-A" (attributes) and "-o" and "-R" */
-    bu_vls_init( &vls );
-    bu_vls_strcpy( &vls, argv[0] );
-    for ( i=1; i<argc; i++ ) {
+    bu_vls_init(&vls);
+    bu_vls_strcpy(&vls, argv[0]);
+    for (i=1; i<argc; i++) {
 	char *ptr_A=NULL;
 	char *ptr_o=NULL;
 	char *ptr_R=NULL;
 	char *c;
 
-	if ( *argv[i] != '-' ) break;
-	if ( (ptr_A=strchr( argv[i], 'A' )) ) flag_A_attr = 1;
-	if ( (ptr_o=strchr( argv[i], 'o' )) ) flag_o_nonunique = 2;
-	if ( (ptr_R=strchr( argv[i], 'R' )) ) flag_R_noresize = 1;
+	if (*argv[i] != '-') break;
+	if ((ptr_A=strchr(argv[i], 'A'))) flag_A_attr = 1;
+	if ((ptr_o=strchr(argv[i], 'o'))) flag_o_nonunique = 2;
+	if ((ptr_R=strchr(argv[i], 'R'))) flag_R_noresize = 1;
 	last_opt = i;
 
 	if (!ptr_A && !ptr_o && !ptr_R) {
-	    bu_vls_putc( &vls, ' ' );
-	    bu_vls_strcat( &vls, argv[i] );
+	    bu_vls_putc(&vls, ' ');
+	    bu_vls_strcat(&vls, argv[i]);
 	    continue;
 	}
 
-	if ( strlen( argv[i] ) == (1 + (ptr_A != NULL) + (ptr_o != NULL) + (ptr_R != NULL))) {
+	if (strlen(argv[i]) == (1 + (ptr_A != NULL) + (ptr_o != NULL) + (ptr_R != NULL))) {
 	    /* argv[i] is just a "-A" or "-o" or "-R" */
 	    continue;
 	}
 
 	/* copy args other than "-A" or "-o" or "-R" */
-	bu_vls_putc( &vls, ' ' );
+	bu_vls_putc(&vls, ' ');
 	c = argv[i];
-	while ( *c != '\0' ) {
+	while (*c != '\0') {
 	    if (*c != 'A' && *c != 'o' && *c != 'R') {
-		bu_vls_putc( &vls, *c );
+		bu_vls_putc(&vls, *c);
 	    }
 	    c++;
 	}
     }
 
-    if ( flag_A_attr ) {
+    if (flag_A_attr) {
 	/* args are attribute name/value pairs */
 	struct bu_attribute_value_set avs;
 	int max_count=0;
@@ -334,71 +338,71 @@ edit_com(int	argc,
 	struct bu_ptbl *tbl;
 
 	remaining_args = argc - last_opt - 1;;
-	if ( remaining_args < 2 || remaining_args%2 ) {
-	    bu_log( "Error: must have even number of arguments (name/value pairs)\n" );
-	    bu_vls_free( &vls );
+	if (remaining_args < 2 || remaining_args%2) {
+	    bu_log("Error: must have even number of arguments (name/value pairs)\n");
+	    bu_vls_free(&vls);
 	    return TCL_ERROR;
 	}
 
-	bu_avs_init( &avs, (argc - last_opt)/2, "edit_com avs" );
+	bu_avs_init(&avs, (argc - last_opt)/2, "edit_com avs");
 	i = 1;
-	while ( i < argc ) {
-	    if ( *argv[i] == '-' ) {
+	while (i < argc) {
+	    if (*argv[i] == '-') {
 		i++;
 		continue;
 	    }
 
 	    /* this is a name/value pair */
-	    if ( flag_o_nonunique == 2 ) {
-		bu_avs_add_nonunique( &avs, argv[i], argv[i+1] );
+	    if (flag_o_nonunique == 2) {
+		bu_avs_add_nonunique(&avs, argv[i], argv[i+1]);
 	    } else {
-		bu_avs_add( &avs, argv[i], argv[i+1] );
+		bu_avs_add(&avs, argv[i], argv[i+1]);
 	    }
 	    i += 2;
 	}
 
-	tbl = db_lookup_by_attr( dbip, DIR_REGION | DIR_SOLID | DIR_COMB, &avs, flag_o_nonunique );
-	bu_avs_free( &avs );
-	if ( !tbl ) {
-	    bu_log( "Error: db_lookup_by_attr() failed!!\n" );
-	    bu_vls_free( &vls );
+	tbl = db_lookup_by_attr(dbip, DIR_REGION | DIR_SOLID | DIR_COMB, &avs, flag_o_nonunique);
+	bu_avs_free(&avs);
+	if (!tbl) {
+	    bu_log("Error: db_lookup_by_attr() failed!!\n");
+	    bu_vls_free(&vls);
 	    return TCL_ERROR;
 	}
-	if ( BU_PTBL_LEN( tbl ) < 1 ) {
+	if (BU_PTBL_LEN(tbl) < 1) {
 	    /* nothing matched, just return */
-	    bu_vls_free( &vls );
+	    bu_vls_free(&vls);
 	    return TCL_OK;
 	}
-	for ( i=0; i<BU_PTBL_LEN( tbl ); i++ ) {
+	for (i=0; i<BU_PTBL_LEN(tbl); i++) {
 	    struct directory *dp;
 
-	    dp = (struct directory *)BU_PTBL_GET( tbl, i );
-	    bu_vls_putc( &vls, ' ' );
-	    bu_vls_strcat( &vls, dp->d_namep );
+	    dp = (struct directory *)BU_PTBL_GET(tbl, i);
+	    bu_vls_putc(&vls, ' ');
+	    bu_vls_strcat(&vls, dp->d_namep);
 	}
 
-	max_count = BU_PTBL_LEN( tbl ) + last_opt + 1;
-	bu_ptbl_free( tbl );
-	bu_free( (char *)tbl, "edit_com ptbl" );
-	new_argv = (char **)bu_calloc( max_count+1, sizeof( char *), "edit_com new_argv" );
-	new_argc = bu_argv_from_string( new_argv, max_count, bu_vls_addr( &vls ) );
+	max_count = BU_PTBL_LEN(tbl) + last_opt + 1;
+	bu_ptbl_free(tbl);
+	bu_free((char *)tbl, "edit_com ptbl");
+	new_argv = (char **)bu_calloc(max_count+1, sizeof(char *), "edit_com new_argv");
+	new_argc = bu_argv_from_string(new_argv, max_count, bu_vls_addr(&vls));
 
 	ret = ged_draw(gedp, new_argc, (const char **)new_argv);
 	if (ret == GED_ERROR) {
 	    bu_log("ERROR: %s\n", bu_vls_addr(&gedp->ged_result_str));
-	    bu_vls_free( &vls );
-	    bu_free( (char *)new_argv, "edit_com new_argv" );
+	    bu_vls_free(&vls);
+	    bu_free((char *)new_argv, "edit_com new_argv");
 	    return ret;
 	} else if (ret == GED_HELP) {
 	    bu_log("%s\n", bu_vls_addr(&gedp->ged_result_str));
-	    bu_vls_free( &vls );
-	    bu_free( (char *)new_argv, "edit_com new_argv" );
+	    bu_vls_free(&vls);
+	    bu_free((char *)new_argv, "edit_com new_argv");
 	    return ret;
 	}
-	bu_vls_free( &vls );
-	bu_free( (char *)new_argv, "edit_com new_argv" );
+	bu_vls_free(&vls);
+	bu_free((char *)new_argv, "edit_com new_argv");
     } else {
-	bu_vls_free( &vls );
+	bu_vls_free(&vls);
 	switch (kind) {
 	    default:
 	    case 1:
@@ -479,7 +483,7 @@ edit_com(int	argc,
 
 
 int
-emuves_com( int argc, char **argv )
+emuves_com(int argc, char **argv)
 {
     int i;
     struct bu_ptbl *tbl;
@@ -490,7 +494,7 @@ emuves_com( int argc, char **argv )
 
     CHECK_DBI_NULL;
 
-    if ( argc < 2 ) {
+    if (argc < 2) {
 	struct bu_vls vls;
 
 	bu_vls_init(&vls);
@@ -500,49 +504,50 @@ emuves_com( int argc, char **argv )
 	return TCL_ERROR;
     }
 
-    for ( i=1; i<argc; i++ ) {
-	if ( *argv[i] == '-' ) {
+    for (i=1; i<argc; i++) {
+	if (*argv[i] == '-') {
 	    num_opts++;
 	} else {
 	    break;
 	}
     }
 
-    bu_avs_init( &avs, argc/2, "muves_avs" );
-    for ( i=1; i<argc; i++ ) {
-	bu_avs_add_nonunique( &avs, "MUVES_Component", argv[i] );
+    bu_avs_init(&avs, argc/2, "muves_avs");
+    for (i=1; i<argc; i++) {
+	bu_avs_add_nonunique(&avs, "MUVES_Component", argv[i]);
     }
 
-    tbl = db_lookup_by_attr( dbip, DIR_REGION, &avs, 2 );
+    tbl = db_lookup_by_attr(dbip, DIR_REGION, &avs, 2);
 
-    bu_avs_free( &avs );
+    bu_avs_free(&avs);
 
-    if ( !tbl ) {
+    if (!tbl) {
 	return TCL_OK;
     }
 
-    if ( BU_PTBL_LEN( tbl ) < 1 ) {
-	bu_free( (char *)tbl, "tbl returned by wdb_get_by_attr" );
+    if (BU_PTBL_LEN(tbl) < 1) {
+	bu_free((char *)tbl, "tbl returned by wdb_get_by_attr");
 	return TCL_OK;
     }
 
-    objs = (char **)bu_calloc( (BU_PTBL_LEN( tbl ) + 1 + num_opts), sizeof( char *), "emuves_com objs" );
-    for ( i=0; i<=num_opts; i++ ) {
+    objs = (char **)bu_calloc((BU_PTBL_LEN(tbl) + 1 + num_opts), sizeof(char *), "emuves_com objs");
+    for (i=0; i<=num_opts; i++) {
 	objs[i] = argv[i];
     }
-    for ( i=0; i<BU_PTBL_LEN( tbl ); i++ ) {
+    for (i=0; i<BU_PTBL_LEN(tbl); i++) {
 	struct directory *dp;
 
-	dp = (struct directory *)BU_PTBL_GET( tbl, i );
+	dp = (struct directory *)BU_PTBL_GET(tbl, i);
 	objs[i+num_opts+1] = dp->d_namep;
     }
 
-    ret = edit_com( (BU_PTBL_LEN( tbl ) + 1), objs, 1, 1 );
-    bu_ptbl_free( tbl );
-    bu_free( (char *)tbl, "tbl returned by wdb_get_by_attr" );
-    bu_free( (char *)objs, "emuves_com objs" );
-    return( ret );
+    ret = edit_com((BU_PTBL_LEN(tbl) + 1), objs, 1, 1);
+    bu_ptbl_free(tbl);
+    bu_free((char *)tbl, "tbl returned by wdb_get_by_attr");
+    bu_free((char *)objs, "emuves_com objs");
+    return(ret);
 }
+
 
 int
 cmd_autoview(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
@@ -597,6 +602,7 @@ cmd_autoview(ClientData clientData, Tcl_Interp *interp, int argc, const char *ar
     return TCL_OK;
 }
 
+
 void
 solid_list_callback(void)
 {
@@ -617,10 +623,11 @@ solid_list_callback(void)
     Tcl_DecrRefCount(save_obj);
 }
 
+
 /*
- *			F _ R E G D E B U G
+ * F _ R E G D E B U G
  *
- *  Display-manager specific "hardware register" debugging.
+ * Display-manager specific "hardware register" debugging.
  */
 int
 f_regdebug(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
@@ -638,12 +645,12 @@ f_regdebug(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_ERROR;
     }
 
-    if ( argc == 1 )
+    if (argc == 1)
 	regdebug = !regdebug;	/* toggle */
     else
-	regdebug = atoi( argv[1] );
+	regdebug = atoi(argv[1]);
 
-    sprintf( debug_str, "%d", regdebug );
+    sprintf(debug_str, "%d", regdebug);
 
     Tcl_AppendResult(interp, "regdebug=", debug_str, "\n", (char *)NULL);
 
@@ -652,59 +659,62 @@ f_regdebug(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_OK;
 }
 
+
 /*
- *			D O _ L I S T
+ * D O _ L I S T
  */
 void
 do_list(struct bu_vls *outstrp, struct directory *dp, int verbose)
 {
-    int			id;
-    struct rt_db_internal	intern;
+    int id;
+    struct rt_db_internal intern;
 
     if (dbip == DBI_NULL)
 	return;
 
-    if ( (id = rt_db_get_internal( &intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource )) < 0 )  {
+    if ((id = rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource)) < 0) {
 	Tcl_AppendResult(interp, "rt_db_get_internal(", dp->d_namep,
-			 ") failure\n", (char *)NULL );
+			 ") failure\n", (char *)NULL);
 	return;
     }
 
-    bu_vls_printf( outstrp, "%s:  ", dp->d_namep );
+    bu_vls_printf(outstrp, "%s:  ", dp->d_namep);
 
-    if ( rt_functab[id].ft_describe( outstrp, &intern,
-				     verbose, base2local, &rt_uniresource, dbip ) < 0 )
+    if (rt_functab[id].ft_describe(outstrp, &intern,
+				   verbose, base2local, &rt_uniresource, dbip) < 0)
 	Tcl_AppendResult(interp, dp->d_namep, ": describe error\n", (char *)NULL);
     rt_db_free_internal(&intern);
 }
 
+
 /*
- *  To return all the free "struct bn_vlist" and "struct solid" items
- *  lurking on their respective freelists, back to bu_malloc().
- *  Primarily as an aid to tracking memory leaks.
- *  WARNING:  This depends on knowledge of the macro GET_SOLID in mged/solid.h
- *  and RT_GET_VLIST in h/raytrace.h.
+ * To return all the free "struct bn_vlist" and "struct solid" items
+ * lurking on their respective freelists, back to bu_malloc().
+ * Primarily as an aid to tracking memory leaks.
+ * WARNING:  This depends on knowledge of the macro GET_SOLID in mged/solid.h
+ * and RT_GET_VLIST in h/raytrace.h.
  */
 void
 mged_freemem(void)
 {
-    struct solid		*sp;
-    struct bn_vlist	*vp;
+    struct solid *sp;
+    struct bn_vlist *vp;
 
     FOR_ALL_SOLIDS(sp, &MGED_FreeSolid.l) {
 	GET_SOLID(sp, &MGED_FreeSolid.l);
 	bu_free((genptr_t)sp, "mged_freemem: struct solid");
     }
 
-    while ( BU_LIST_NON_EMPTY( &rt_g.rtg_vlfree ) )  {
-	vp = BU_LIST_FIRST( bn_vlist, &rt_g.rtg_vlfree );
-	BU_LIST_DEQUEUE( &(vp->l) );
-	bu_free( (genptr_t)vp, "mged_freemem: struct bn_vlist" );
+    while (BU_LIST_NON_EMPTY(&rt_g.rtg_vlfree)) {
+	vp = BU_LIST_FIRST(bn_vlist, &rt_g.rtg_vlfree);
+	BU_LIST_DEQUEUE(&(vp->l));
+	bu_free((genptr_t)vp, "mged_freemem: struct bn_vlist");
     }
 }
 
+
 /* ZAP the display -- everything dropped */
-/* Format: Z	*/
+/* Format: Z */
 int
 cmd_zap(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
@@ -742,6 +752,7 @@ cmd_zap(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     return TCL_OK;
 }
 
+
 int
 f_status(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
@@ -761,7 +772,7 @@ f_status(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     if (argc == 1) {
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "STATE=%s, ", state_str[state] );
+	bu_vls_printf(&vls, "STATE=%s, ", state_str[state]);
 	bu_vls_printf(&vls, "Viewscale=%f (%f mm)\n",
 		      view_state->vs_gvp->gv_scale*base2local, view_state->vs_gvp->gv_scale);
 	bu_vls_printf(&vls, "base2local=%f\n", base2local);
@@ -851,6 +862,7 @@ f_status(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_ERROR;
 }
 
+
 int
 f_refresh(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
@@ -868,22 +880,23 @@ f_refresh(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_OK;
 }
 
+
 /*
- *			P R _ S C H A I N
+ * P R _ S C H A I N
  *
- *  Given a pointer to a member of the circularly linked list of solids
- *  (typically the head), chase the list and print out the information
- *  about each solid structure.
+ * Given a pointer to a member of the circularly linked list of solids
+ * (typically the head), chase the list and print out the information
+ * about each solid structure.
  */
 void
 pr_schain(struct solid *startp, int lvl)
 
     /* debug level */
 {
-    struct solid	*sp;
-    struct bn_vlist	*vp;
-    int			nvlist;
-    int			npts;
+    struct solid *sp;
+    struct bn_vlist *vp;
+    int nvlist;
+    int npts;
     struct bu_vls vls;
 
     if (dbip == DBI_NULL)
@@ -891,8 +904,8 @@ pr_schain(struct solid *startp, int lvl)
 
     bu_vls_init(&vls);
 
-    if ( setjmp( jmp_env ) == 0 )
-	(void)signal( SIGINT, sig3);
+    if (setjmp(jmp_env) == 0)
+	(void)signal(SIGINT, sig3);
     else {
 	bu_vls_free(&vls);
 	return;
@@ -901,27 +914,27 @@ pr_schain(struct solid *startp, int lvl)
     FOR_ALL_SOLIDS(sp, &startp->l) {
 	if (lvl <= -2) {
 	    /* print only leaves */
-	    bu_vls_printf(&vls, "%s ", LAST_SOLID(sp)->d_namep );
+	    bu_vls_printf(&vls, "%s ", LAST_SOLID(sp)->d_namep);
 	    continue;
 	}
 
-	if ( lvl != -1 )
+	if (lvl != -1)
 	    bu_vls_printf(&vls, "%s", sp->s_flag == UP ? "VIEW " : "-no- ");
 	db_path_to_vls(&vls, &sp->s_fullpath);
-	if (( lvl != -1 ) && ( sp->s_iflag == UP ))
+	if ((lvl != -1) && (sp->s_iflag == UP))
 	    bu_vls_printf(&vls, " ILLUM");
 
 	bu_vls_printf(&vls, "\n");
 
-	if ( lvl <= 0 )  continue;
+	if (lvl <= 0) continue;
 
 	/* convert to the local unit for printing */
 	bu_vls_printf(&vls, "  cent=(%.3f,%.3f,%.3f) sz=%g ",
 		      sp->s_center[X]*base2local,
 		      sp->s_center[Y]*base2local,
 		      sp->s_center[Z]*base2local,
-		      sp->s_size*base2local );
-	bu_vls_printf(&vls, "reg=%d\n", sp->s_regionid );
+		      sp->s_size*base2local);
+	bu_vls_printf(&vls, "reg=%d\n", sp->s_regionid);
 	bu_vls_printf(&vls, "  basecolor=(%d,%d,%d) color=(%d,%d,%d)%s%s%s\n",
 		      sp->s_basecolor[0],
 		      sp->s_basecolor[1],
@@ -933,37 +946,38 @@ pr_schain(struct solid *startp, int lvl)
 		      sp->s_dflag?" D":"",
 		      sp->s_cflag?" C":"");
 
-	if ( lvl <= 1 )  continue;
+	if (lvl <= 1) continue;
 
 	/* Print the actual vector list */
 	nvlist = 0;
 	npts = 0;
-	for ( BU_LIST_FOR( vp, bn_vlist, &(sp->s_vlist) ) )  {
-	    int	i;
-	    int	nused = vp->nused;
-	    int	*cmd = vp->cmd;
+	for (BU_LIST_FOR(vp, bn_vlist, &(sp->s_vlist))) {
+	    int i;
+	    int nused = vp->nused;
+	    int *cmd = vp->cmd;
 	    point_t *pt = vp->pt;
 
-	    BN_CK_VLIST( vp );
+	    BN_CK_VLIST(vp);
 	    nvlist++;
 	    npts += nused;
-	    if ( lvl <= 2 )  continue;
+	    if (lvl <= 2) continue;
 
-	    for ( i = 0; i < nused; i++, cmd++, pt++ )  {
+	    for (i = 0; i < nused; i++, cmd++, pt++) {
 		bu_vls_printf(&vls, "  %s (%g, %g, %g)\n",
 			      rt_vlist_cmd_descriptions[*cmd],
-			      V3ARGS( *pt ) );
+			      V3ARGS(*pt));
 	    }
 	}
 
-	bu_vls_printf(&vls, "  %d vlist structures, %d pts\n", nvlist, npts );
-	bu_vls_printf(&vls, "  %d pts (via rt_ck_vlist)\n", rt_ck_vlist( &(sp->s_vlist) ) );
+	bu_vls_printf(&vls, "  %d vlist structures, %d pts\n", nvlist, npts);
+	bu_vls_printf(&vls, "  %d pts (via rt_ck_vlist)\n", rt_ck_vlist(&(sp->s_vlist)));
     }
 
     Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);
-    (void)signal( SIGINT, SIG_IGN );
+    (void)signal(SIGINT, SIG_IGN);
 }
+
 
 static char ** path_parse (char *path);
 
@@ -978,13 +992,13 @@ f_ill(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     struct solid *lastfound = SOLID_NULL;
     int i, j;
     int nmatch;
-    int	c;
-    int	ri = 0;
-    int	nm_pieces;
-    int	illum_only = 0;
-    char	**path_piece = 0;
-    char	*basename;
-    char	*sname;
+    int c;
+    int ri = 0;
+    int nm_pieces;
+    int illum_only = 0;
+    char **path_piece = 0;
+    char *basename;
+    char *sname;
 
     int early_out = 0;
 
@@ -1038,17 +1052,17 @@ f_ill(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 		break;
 	    default:
 	    case 'h':
-	    {
-		struct bu_vls vls;
+		{
+		    struct bu_vls vls;
 
-		bu_vls_init(&vls);
-		bu_vls_printf(&vls, "help ill");
-		Tcl_Eval(interp, bu_vls_addr(&vls));
-		bu_vls_free(&vls);
+		    bu_vls_init(&vls);
+		    bu_vls_printf(&vls, "help ill");
+		    Tcl_Eval(interp, bu_vls_addr(&vls));
+		    bu_vls_free(&vls);
 
-		early_out = 1;
-		break;
-	    }
+		    early_out = 1;
+		    break;
+		}
 	}
     }
 
@@ -1089,7 +1103,7 @@ f_ill(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 
     basename = path_piece[nm_pieces - 1];
 
-    if ( (dp = db_lookup( dbip,  basename, LOOKUP_NOISY )) == DIR_NULL ) {
+    if ((dp = db_lookup(dbip,  basename, LOOKUP_NOISY)) == DIR_NULL) {
 	Tcl_AppendResult(interp, "db_lookup failed for '", basename, "'\n", (char *)NULL);
 	goto bail_out;
     }
@@ -1105,7 +1119,7 @@ f_ill(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
-	    int	a_new_match;
+	    int a_new_match;
 
 /* XXX Could this make use of db_full_path_subset()? */
 	    if (nmatch == 0 || nmatch != ri) {
@@ -1154,9 +1168,9 @@ f_ill(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     illump->s_iflag = UP;
 
     if (!illum_only) {
-	if ( state == ST_O_PICK )  {
+	if (state == ST_O_PICK) {
 	    ipathpos = 0;
-	    (void)chg_state( ST_O_PICK, ST_O_PATH, "Keyboard illuminate");
+	    (void)chg_state(ST_O_PICK, ST_O_PATH, "Keyboard illuminate");
 	} else {
 	    /* Check details, Init menu, set state=ST_S_EDIT */
 	    init_sedit();
@@ -1203,6 +1217,7 @@ f_ill(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     return TCL_ERROR;
 }
 
+
 /* Simulate pressing "Solid Edit" and doing an ILLuminate command */
 int
 f_sed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
@@ -1224,7 +1239,7 @@ f_sed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 	return TCL_ERROR;
     }
 
-    if ( not_state( ST_VIEW, "keyboard solid edit start") )
+    if (not_state(ST_VIEW, "keyboard solid edit start"))
 	return TCL_ERROR;
 
     /* Common part of illumination */
@@ -1266,78 +1281,79 @@ f_sed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     return TCL_OK;
 }
 
+
 void
 check_nonzero_rates(void)
 {
-    if ( view_state->vs_rate_model_rotate[X] != 0.0 ||
-	 view_state->vs_rate_model_rotate[Y] != 0.0 ||
-	 view_state->vs_rate_model_rotate[Z] != 0.0 )
+    if (view_state->vs_rate_model_rotate[X] != 0.0 ||
+	view_state->vs_rate_model_rotate[Y] != 0.0 ||
+	view_state->vs_rate_model_rotate[Z] != 0.0)
 	view_state->vs_rateflag_model_rotate = 1;
     else
 	view_state->vs_rateflag_model_rotate = 0;
 
-    if ( view_state->vs_rate_model_tran[X] != 0.0 ||
-	 view_state->vs_rate_model_tran[Y] != 0.0 ||
-	 view_state->vs_rate_model_tran[Z] != 0.0 )
+    if (view_state->vs_rate_model_tran[X] != 0.0 ||
+	view_state->vs_rate_model_tran[Y] != 0.0 ||
+	view_state->vs_rate_model_tran[Z] != 0.0)
 	view_state->vs_rateflag_model_tran = 1;
     else
 	view_state->vs_rateflag_model_tran = 0;
 
-    if ( view_state->vs_rate_rotate[X] != 0.0 ||
-	 view_state->vs_rate_rotate[Y] != 0.0 ||
-	 view_state->vs_rate_rotate[Z] != 0.0 )
+    if (view_state->vs_rate_rotate[X] != 0.0 ||
+	view_state->vs_rate_rotate[Y] != 0.0 ||
+	view_state->vs_rate_rotate[Z] != 0.0)
 	view_state->vs_rateflag_rotate = 1;
     else
 	view_state->vs_rateflag_rotate = 0;
 
-    if ( view_state->vs_rate_tran[X] != 0.0 ||
-	 view_state->vs_rate_tran[Y] != 0.0 ||
-	 view_state->vs_rate_tran[Z] != 0.0 )
+    if (view_state->vs_rate_tran[X] != 0.0 ||
+	view_state->vs_rate_tran[Y] != 0.0 ||
+	view_state->vs_rate_tran[Z] != 0.0)
 	view_state->vs_rateflag_tran = 1;
     else
 	view_state->vs_rateflag_tran = 0;
 
-    if ( view_state->vs_rate_scale != 0.0 )
+    if (view_state->vs_rate_scale != 0.0)
 	view_state->vs_rateflag_scale = 1;
     else
 	view_state->vs_rateflag_scale = 0;
 
-    if ( edit_rate_model_tran[X] != 0.0 ||
-	 edit_rate_model_tran[Y] != 0.0 ||
-	 edit_rate_model_tran[Z] != 0.0 )
+    if (edit_rate_model_tran[X] != 0.0 ||
+	edit_rate_model_tran[Y] != 0.0 ||
+	edit_rate_model_tran[Z] != 0.0)
 	edit_rateflag_model_tran = 1;
     else
 	edit_rateflag_model_tran = 0;
 
-    if ( edit_rate_view_tran[X] != 0.0 ||
-	 edit_rate_view_tran[Y] != 0.0 ||
-	 edit_rate_view_tran[Z] != 0.0 )
+    if (edit_rate_view_tran[X] != 0.0 ||
+	edit_rate_view_tran[Y] != 0.0 ||
+	edit_rate_view_tran[Z] != 0.0)
 	edit_rateflag_view_tran = 1;
     else
 	edit_rateflag_view_tran = 0;
 
-    if ( edit_rate_model_rotate[X] != 0.0 ||
-	 edit_rate_model_rotate[Y] != 0.0 ||
-	 edit_rate_model_rotate[Z] != 0.0 )
+    if (edit_rate_model_rotate[X] != 0.0 ||
+	edit_rate_model_rotate[Y] != 0.0 ||
+	edit_rate_model_rotate[Z] != 0.0)
 	edit_rateflag_model_rotate = 1;
     else
 	edit_rateflag_model_rotate = 0;
 
-    if ( edit_rate_object_rotate[X] != 0.0 ||
-	 edit_rate_object_rotate[Y] != 0.0 ||
-	 edit_rate_object_rotate[Z] != 0.0 )
+    if (edit_rate_object_rotate[X] != 0.0 ||
+	edit_rate_object_rotate[Y] != 0.0 ||
+	edit_rate_object_rotate[Z] != 0.0)
 	edit_rateflag_object_rotate = 1;
     else
 	edit_rateflag_object_rotate = 0;
 
-    if ( edit_rate_view_rotate[X] != 0.0 ||
-	 edit_rate_view_rotate[Y] != 0.0 ||
-	 edit_rate_view_rotate[Z] != 0.0 )
+    if (edit_rate_view_rotate[X] != 0.0 ||
+	edit_rate_view_rotate[Y] != 0.0 ||
+	edit_rate_view_rotate[Z] != 0.0)
 	edit_rateflag_view_rotate = 1;
     else
 	edit_rateflag_view_rotate = 0;
 
-    if ( edit_rate_scale )
+    if (edit_rate_scale)
 	edit_rateflag_scale = 1;
     else
 	edit_rateflag_scale = 0;
@@ -1345,12 +1361,14 @@ check_nonzero_rates(void)
     view_state->vs_flag = 1;	/* values changed so update faceplate */
 }
 
+
 void
 knob_update_rate_vars(void)
 {
     if (!mged_variables->mv_rateknobs)
 	return;
 }
+
 
 int
 mged_print_knobvals(Tcl_Interp *interp)
@@ -1425,16 +1443,17 @@ mged_print_knobvals(Tcl_Interp *interp)
     return TCL_OK;
 }
 
+
 /* Main processing of knob twists.  "knob id val id val ..." */
 int
 f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    int	i;
+    int i;
     fastf_t f;
     fastf_t sf;
     vect_t tvec;
     vect_t rvec;
-    char	*cmd;
+    char *cmd;
     char origin = '\0';
     int do_tran = 0;
     int do_rot = 0;
@@ -1499,19 +1518,19 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     for (--argc, ++argv; argc; --argc, ++argv) {
 	cmd = *argv;
 
-	if ( strcmp( cmd, "zap" ) == 0 || strcmp( cmd, "zero" ) == 0 )  {
+	if (strcmp(cmd, "zap") == 0 || strcmp(cmd, "zero") == 0) {
 	    char *av[3];
 
-	    VSETALL( view_state->vs_rate_model_rotate, 0.0 );
-	    VSETALL( view_state->vs_rate_model_tran, 0.0 );
-	    VSETALL( view_state->vs_rate_rotate, 0.0 );
-	    VSETALL( view_state->vs_rate_tran, 0.0 );
+	    VSETALL(view_state->vs_rate_model_rotate, 0.0);
+	    VSETALL(view_state->vs_rate_model_tran, 0.0);
+	    VSETALL(view_state->vs_rate_rotate, 0.0);
+	    VSETALL(view_state->vs_rate_tran, 0.0);
 	    view_state->vs_rate_scale = 0.0;
-	    VSETALL( edit_rate_model_rotate, 0.0 );
-	    VSETALL( edit_rate_object_rotate, 0.0 );
-	    VSETALL( edit_rate_view_rotate, 0.0 );
-	    VSETALL( edit_rate_model_tran, 0.0 );
-	    VSETALL( edit_rate_view_tran, 0.0 );
+	    VSETALL(edit_rate_model_rotate, 0.0);
+	    VSETALL(edit_rate_object_rotate, 0.0);
+	    VSETALL(edit_rate_view_rotate, 0.0);
+	    VSETALL(edit_rate_model_tran, 0.0);
+	    VSETALL(edit_rate_view_tran, 0.0);
 	    edit_rate_scale = 0.0;
 	    knob_update_rate_vars();
 
@@ -1519,19 +1538,19 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    av[1] = "reset";
 	    av[2] = (char *)NULL;
 
-	    (void)f_adc( clientData, interp, 2, av );
+	    (void)f_adc(clientData, interp, 2, av);
 
 	    (void)mged_svbase();
-	} else if ( strcmp( cmd, "calibrate" ) == 0 ) {
-	    VSETALL( view_state->vs_absolute_tran, 0.0 );
+	} else if (strcmp(cmd, "calibrate") == 0) {
+	    VSETALL(view_state->vs_absolute_tran, 0.0);
 	} else {
 	    if (argc - 1) {
 		i = atoi(argv[1]);
 		f = atof(argv[1]);
 #if 0
-		if ( f < -1.0 )
+		if (f < -1.0)
 		    f = -1.0;
-		else if ( f > 1.0 )
+		else if (f > 1.0)
 		    f = 1.0;
 #endif
 	    } else
@@ -1540,15 +1559,15 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    --argc;
 	    ++argv;
 
-	    if ( cmd[1] == '\0' )  {
+	    if (cmd[1] == '\0') {
 #if 0
-		if ( f < -1.0 )
+		if (f < -1.0)
 		    f = -1.0;
-		else if ( f > 1.0 )
+		else if (f > 1.0)
 		    f = 1.0;
 #endif
 
-		switch ( cmd[0] )  {
+		switch (cmd[0]) {
 		    case 'x':
 			if (incr_flag) {
 			    if (EDIT_ROTATE && ((mged_variables->mv_transform == 'e' &&
@@ -1930,8 +1949,8 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		    default:
 			goto usage;
 		}
-	    } else if ( cmd[0] == 'a' && cmd[1] != '\0' && cmd[2] == '\0' ) {
-		switch ( cmd[1] ) {
+	    } else if (cmd[0] == 'a' && cmd[1] != '\0' && cmd[2] == '\0') {
+		switch (cmd[1]) {
 		    case 'x':
 			if (incr_flag) {
 			    if (EDIT_ROTATE && ((mged_variables->mv_transform == 'e' &&
@@ -2448,7 +2467,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		    default:
 			goto usage;
 		}
-	    } else if ( strcmp( cmd, "xadc" ) == 0 ) {
+	    } else if (strcmp(cmd, "xadc") == 0) {
 		char *av[5];
 		char sval[32];
 		int nargs = 3;
@@ -2468,7 +2487,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 		sprintf(sval, "%d", i);
 		(void)f_adc(clientData, interp, nargs, av);
-	    } else if ( strcmp( cmd, "yadc" ) == 0 )  {
+	    } else if (strcmp(cmd, "yadc") == 0) {
 		char *av[5];
 		char sval[32];
 		int nargs = 3;
@@ -2488,7 +2507,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 		sprintf(sval, "%d", i);
 		(void)f_adc(clientData, interp, nargs, av);
-	    } else if ( strcmp( cmd, "ang1" ) == 0 )  {
+	    } else if (strcmp(cmd, "ang1") == 0) {
 		char *av[5];
 		char sval[32];
 		int nargs = 3;
@@ -2508,7 +2527,7 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
 		sprintf(sval, "%f", f);
 		(void)f_adc(clientData, interp, nargs, av);
-	    } else if ( strcmp( cmd, "ang2" ) == 0 )  {
+	    } else if (strcmp(cmd, "ang2") == 0) {
 		char *av[5];
 		char sval[32];
 		int nargs = 3;
@@ -2574,11 +2593,12 @@ f_knob(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_OK;
 }
 
+
 int
-knob_tran(vect_t	tvec,
-	  int		model_flag,
-	  int		view_flag,
-	  int		edit_flag)
+knob_tran(vect_t tvec,
+	  int model_flag,
+	  int view_flag,
+	  int edit_flag)
 {
     if (EDIT_TRAN && ((mged_variables->mv_transform == 'e' &&
 		       !view_flag && !model_flag) || edit_flag))
@@ -2593,12 +2613,13 @@ knob_tran(vect_t	tvec,
     return TCL_OK;
 }
 
+
 int
-knob_rot(vect_t	rvec,
-	 char	origin,
-	 int	model_flag,
-	 int	view_flag,
-	 int	edit_flag)
+knob_rot(vect_t rvec,
+	 char origin,
+	 int model_flag,
+	 int view_flag,
+	 int edit_flag)
 {
     if (EDIT_ROTATE && ((mged_variables->mv_transform == 'e' &&
 			 !view_flag && !model_flag) || edit_flag))
@@ -2612,6 +2633,7 @@ knob_rot(vect_t	rvec,
 
     return TCL_OK;
 }
+
 
 /* absolute_scale's value range is [-1.0, 1.0] */
 static void
@@ -2647,10 +2669,11 @@ abs_zoom(void)
     }
 }
 
+
 int
 mged_zoom(double val)
 {
-    int	ret;
+    int ret;
     char *av[3];
     char buf[32];
     Tcl_DString ds;
@@ -2690,16 +2713,16 @@ mged_zoom(double val)
 
 
 /*
- *			F _ Z O O M
+ * F _ Z O O M
  *
- *  A scale factor of 2 will increase the view size by a factor of 2,
- *  (i.e., a zoom out) which is accomplished by reducing Viewscale in half.
+ * A scale factor of 2 will increase the view size by a factor of 2,
+ * (i.e., a zoom out) which is accomplished by reducing Viewscale in half.
  */
 int
-cmd_zoom(ClientData	clientData,
-	 Tcl_Interp	*interp,
-	 int		argc,
-	 char		**argv)
+cmd_zoom(ClientData clientData,
+	 Tcl_Interp *interp,
+	 int argc,
+	 char **argv)
 {
     if (argc != 2) {
 	struct bu_vls vls;
@@ -2714,26 +2737,27 @@ cmd_zoom(ClientData	clientData,
     return mged_zoom(atof(argv[1]));
 }
 
+
 /*
- *			P A T H _ P A R S E
+ * P A T H _ P A R S E
  *
- *	    Break up a path string into its constituents.
+ * Break up a path string into its constituents.
  *
- *	This function has one parameter:  a slash-separated path.
- *	path_parse() allocates storage for and copies each constituent
- *	of path.  It returns a null-terminated array of these copies.
+ * This function has one parameter:  a slash-separated path.
+ * path_parse() allocates storage for and copies each constituent
+ * of path.  It returns a null-terminated array of these copies.
  *
- *	It is the caller's responsibility to free the copies and the
- *	pointer to them.
+ * It is the caller's responsibility to free the copies and the
+ * pointer to them.
  */
 static char **
 path_parse (char *path)
 {
-    int		nm_constituents;
-    int		i;
-    char	*pp;
-    char	*start_addr;
-    char	**result;
+    int nm_constituents;
+    int i;
+    char *pp;
+    char *start_addr;
+    char **result;
 
     nm_constituents = ((*path != '/') && (*path != '\0'));
     for (pp = path; *pp != '\0'; ++pp)
@@ -2765,10 +2789,10 @@ path_parse (char *path)
 
 
 int
-cmd_setview(ClientData	clientData,
-	    Tcl_Interp	*interp,
-	    int     	argc,
-	    char    	*argv[])
+cmd_setview(ClientData clientData,
+	    Tcl_Interp *interp,
+	    int argc,
+	    char *argv[])
 {
     int ret;
     Tcl_DString ds;
@@ -2794,6 +2818,7 @@ cmd_setview(ClientData	clientData,
 
     return TCL_OK;
 }
+
 
 int
 f_slewview(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
@@ -2887,12 +2912,13 @@ f_svbase(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return status;
 }
 
+
 /*
- *			F _ V R O T _ C E N T E R
+ * F _ V R O T _ C E N T E R
  *
- *  Set the center of rotation, either in model coordinates, or
- *  in view (+/-1) coordinates.
- *  The default is to rotate around the view center: v=(0, 0, 0).
+ * Set the center of rotation, either in model coordinates, or
+ * in view (+/-1) coordinates.
+ * The default is to rotate around the view center: v=(0, 0, 0).
  */
 int
 f_vrot_center(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
@@ -2912,53 +2938,56 @@ f_vrot_center(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_OK;
 }
 
+
 /*
- *			U S E J O Y
+ * U S E J O Y
  *
- *  Apply the "joystick" delta rotation to the viewing direction,
- *  where the delta is specified in terms of the *viewing* axes.
- *  Rotation is performed about the view center, for now.
- *  Angles are in radians.
+ * Apply the "joystick" delta rotation to the viewing direction,
+ * where the delta is specified in terms of the *viewing* axes.
+ * Rotation is performed about the view center, for now.
+ * Angles are in radians.
  */
 void
 usejoy(double xangle, double yangle, double zangle)
 {
-    mat_t	newrot;		/* NEW rot matrix, from joystick */
+    mat_t newrot;		/* NEW rot matrix, from joystick */
 
     /* NORMAL CASE.
      * Apply delta viewing rotation for non-edited parts.
      * The view rotates around the VIEW CENTER.
      */
-    MAT_IDN( newrot );
-    bn_mat_angles_rad( newrot, xangle, yangle, zangle );
+    MAT_IDN(newrot);
+    bn_mat_angles_rad(newrot, xangle, yangle, zangle);
 
     bn_mat_mul2(newrot, view_state->vs_gvp->gv_rotation);
     {
-	mat_t	newinv;
-	bn_mat_inv( newinv, newrot );
-	wrt_view( view_state->vs_ModelDelta, newinv, view_state->vs_ModelDelta );	/* Updates ModelDelta */
+	mat_t newinv;
+	bn_mat_inv(newinv, newrot);
+	wrt_view(view_state->vs_ModelDelta, newinv, view_state->vs_ModelDelta);	/* Updates ModelDelta */
     }
     new_mats();
 }
 
+
 /*
- *			A B S V I E W _ V
+ * A B S V I E W _ V
  *
- *  The "angle" ranges from -1 to +1.
- *  Assume rotation around view center, for now.
+ * The "angle" ranges from -1 to +1.
+ * Assume rotation around view center, for now.
  */
 void
 absview_v(const fastf_t *ang)
 {
-    point_t	rad;
+    point_t rad;
 
-    VSCALE( rad, ang, bn_pi );	/* range from -pi to +pi */
+    VSCALE(rad, ang, bn_pi);	/* range from -pi to +pi */
     bn_mat_angles_rad(view_state->vs_gvp->gv_rotation, rad[X], rad[Y], rad[Z]);
     new_mats();
 }
 
+
 /*
- *			S E T V I E W
+ * S E T V I E W
  *
  * Set the view.  Angles are DOUBLES, in degrees.
  *
@@ -2967,9 +2996,9 @@ absview_v(const fastf_t *ang)
  * (This assumes rotation around the view center).
  */
 void
-setview(double	a1,
-	double	a2,
-	double	a3)		/* DOUBLE angles, in degrees */
+setview(double a1,
+	double a2,
+	double a3)		/* DOUBLE angles, in degrees */
 {
     char *av[5];
     char xbuf[32];
@@ -2999,11 +3028,12 @@ setview(double	a1,
     view_state->vs_flag = 1;
 }
 
+
 /*
- *			S L E W V I E W
+ * S L E W V I E W
  *
- *  Given a position in view space,
- *  make that point the new view center.
+ * Given a position in view space,
+ * make that point the new view center.
  */
 void
 slewview(vect_t view_pos)
@@ -3011,7 +3041,7 @@ slewview(vect_t view_pos)
     point_t old_model_center;
     point_t new_model_center;
     vect_t diff;
-    mat_t	delta;
+    mat_t delta;
     char *av[5];
     char xbuf[32];
     char ybuf[32];
@@ -3046,11 +3076,12 @@ slewview(vect_t view_pos)
     view_state->vs_flag = 1;
 }
 
+
 /*
- *			F _ M O D E L 2 V I E W _ L U
+ * F _ M O D E L 2 V I E W _ L U
  *
- *  Given a point in model coordinates (local units),
- *  convert it to view coordinates (local units).
+ * Given a point in model coordinates (local units),
+ * convert it to view coordinates (local units).
  */
 int
 f_model2view_lu(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
@@ -3093,11 +3124,12 @@ f_model2view_lu(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
     return TCL_ERROR;
 }
 
+
 /*
- *			F _ V I E W 2 M O D E L _ L U
+ * F _ V I E W 2 M O D E L _ L U
  *
- *  Given a point in view coordinates (local units),
- *  convert it to model coordinates (local units).
+ * Given a point in view coordinates (local units),
+ * convert it to model coordinates (local units).
  */
 int
 f_view2model_lu(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
@@ -3140,11 +3172,12 @@ f_view2model_lu(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
     return TCL_ERROR;
 }
 
+
 /*
- *			F _ M O D E L 2 G R I D _ L U
+ * F _ M O D E L 2 G R I D _ L U
  *
- *  Given a point in model coordinates (local units),
- *  convert it to grid coordinates (local units).
+ * Given a point in model coordinates (local units),
+ * convert it to grid coordinates (local units).
  */
 int
 f_model2grid_lu(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
@@ -3195,11 +3228,12 @@ f_model2grid_lu(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
     return TCL_ERROR;
 }
 
+
 /*
- *			F _ G R I D 2 M O D E L _ L U
+ * F _ G R I D 2 M O D E L _ L U
  *
- *  Given a point in grid coordinates (local units),
- *  convert it to model coordinates (local units).
+ * Given a point in grid coordinates (local units),
+ * convert it to model coordinates (local units).
  */
 int
 f_grid2model_lu(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
@@ -3249,11 +3283,12 @@ f_grid2model_lu(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
     return TCL_ERROR;
 }
 
+
 /*
- *			F _ V I E W 2 G R I D _ L U
+ * F _ V I E W 2 G R I D _ L U
  *
- *  Given a point in view coordinates (local units),
- *  convert it to grid coordinates (local units).
+ * Given a point in view coordinates (local units),
+ * convert it to grid coordinates (local units).
  */
 int
 f_view2grid_lu(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
@@ -3300,11 +3335,12 @@ f_view2grid_lu(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_ERROR;
 }
 
+
 /*
- *			F _ G R I D 2 V I E W _ L U
+ * F _ G R I D 2 V I E W _ L U
  *
- *  Given a point in grid coordinates (local units),
- *  convert it to view coordinates (local units).
+ * Given a point in grid coordinates (local units),
+ * convert it to view coordinates (local units).
  */
 int
 f_grid2view_lu(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
@@ -3349,11 +3385,12 @@ f_grid2view_lu(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_ERROR;
 }
 
+
 /*
- *			F _ V I E W 2 M O D E L _ V E C
+ * F _ V I E W 2 M O D E L _ V E C
  *
- *  Given a vector in view coordinates,
- *  convert it to model coordinates.
+ * Given a vector in view coordinates,
+ * convert it to model coordinates.
  */
 int
 f_view2model_vec(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
@@ -3394,6 +3431,7 @@ f_view2model_vec(ClientData clientData, Tcl_Interp *interp, int argc, char **arg
 
     return TCL_ERROR;
 }
+
 
 /*
  * Initialize vsp1 using vsp2 if vsp2 is not null.
@@ -3439,6 +3477,7 @@ view_ring_init(struct _view_state *vsp1, struct _view_state *vsp2)
     }
 }
 
+
 void
 view_ring_destroy(struct dm_list *dlp)
 {
@@ -3454,10 +3493,10 @@ view_ring_destroy(struct dm_list *dlp)
 
 /*
  * SYNOPSIS
- *	view_ring add|next|prev|toggle
- *	view_ring delete #			delete view #
- *	view_ring goto #			goto view #
- *	view_ring get [-a]			get the current view
+ * view_ring add|next|prev|toggle
+ * view_ring delete # delete view #
+ * view_ring goto # goto view #
+ * view_ring get [-a]			get the current view
  *
  * DESCRIPTION
  *
@@ -3465,10 +3504,10 @@ view_ring_destroy(struct dm_list *dlp)
  *
  */
 int
-f_view_ring(ClientData	clientData,
-	    Tcl_Interp	*interp,
-	    int		argc,
-	    char	**argv)
+f_view_ring(ClientData clientData,
+	    Tcl_Interp *interp,
+	    int argc,
+	    char **argv)
 {
     int n;
     struct view_ring *vrp;
@@ -3757,10 +3796,11 @@ f_view_ring(ClientData	clientData,
     return TCL_ERROR;
 }
 
+
 int
-mged_erot(char	coords,
-	  char	rotate_about,
-	  mat_t	newrot)
+mged_erot(char coords,
+	  char rotate_about,
+	  mat_t newrot)
 {
     int save_edflag;
     mat_t temp1, temp2;
@@ -3838,9 +3878,10 @@ mged_erot(char	coords,
     return TCL_OK;
 }
 
+
 int
-mged_erot_xyz(char	rotate_about,
-	      vect_t	rvec)
+mged_erot_xyz(char rotate_about,
+	      vect_t rvec)
 {
     mat_t newrot;
 
@@ -3850,11 +3891,12 @@ mged_erot_xyz(char	rotate_about,
     return mged_erot(mged_variables->mv_coords, rotate_about, newrot);
 }
 
+
 int
-cmd_mrot(ClientData	clientData,
-	 Tcl_Interp	*interp,
-	 int     	argc,
-	 char    	**argv)
+cmd_mrot(ClientData clientData,
+	 Tcl_Interp *interp,
+	 int argc,
+	 char **argv)
 {
     Tcl_DString ds;
 
@@ -3904,26 +3946,27 @@ cmd_mrot(ClientData	clientData,
     }
 }
 
+
 /*
- *			M G E D _ V R O T
+ * M G E D _ V R O T
  */
 int
 mged_vrot(char origin, fastf_t *newrot)
 {
-    mat_t   newinv;
+    mat_t newinv;
 
     bn_mat_inv(newinv, newrot);
 
     if (origin != 'v') {
-	point_t		rot_pt;
-	point_t		new_origin;
-	mat_t		viewchg, viewchginv;
-	point_t		new_cent_view;
-	point_t		new_cent_model;
+	point_t rot_pt;
+	point_t new_origin;
+	mat_t viewchg, viewchginv;
+	point_t new_cent_view;
+	point_t new_cent_model;
 
 	if (origin == 'e') {
 	    /* "VR driver" method: rotate around "eye" point (0, 0, 1) viewspace */
-	    VSET( rot_pt, 0.0, 0.0, 1.0 );		/* point to rotate around */
+	    VSET(rot_pt, 0.0, 0.0, 1.0);		/* point to rotate around */
 	} else if (origin == 'k' && state == ST_S_EDIT) {
 	    /* rotate around keypoint */
 	    MAT4X3PNT(rot_pt, view_state->vs_gvp->gv_model2view, curr_e_axes_pos);
@@ -3963,10 +4006,11 @@ mged_vrot(char origin, fastf_t *newrot)
     return TCL_OK;
 }
 
+
 int
-mged_vrot_xyz(char	origin,
-	      char	coords,
-	      vect_t	rvec)
+mged_vrot_xyz(char origin,
+	      char coords,
+	      vect_t rvec)
 {
     mat_t newrot;
     mat_t temp1, temp2;
@@ -3994,11 +4038,12 @@ mged_vrot_xyz(char	origin,
     return mged_vrot(origin, newrot);
 }
 
+
 int
-cmd_vrot(ClientData	clientData,
-	 Tcl_Interp	*interp,
-	 int		argc,
-	 char		**argv)
+cmd_vrot(ClientData clientData,
+	 Tcl_Interp *interp,
+	 int argc,
+	 char **argv)
 {
     int ret;
     Tcl_DString ds;
@@ -4021,11 +4066,12 @@ cmd_vrot(ClientData	clientData,
     return TCL_OK;
 }
 
+
 int
-cmd_rot(ClientData	clientData,
-	Tcl_Interp	*interp,
-	int		argc,
-	char		**argv)
+cmd_rot(ClientData clientData,
+	Tcl_Interp *interp,
+	int argc,
+	char **argv)
 {
     Tcl_DString ds;
 
@@ -4064,11 +4110,12 @@ cmd_rot(ClientData	clientData,
     }
 }
 
+
 int
-cmd_arot(ClientData	clientData,
-	 Tcl_Interp	*interp,
-	 int		argc,
-	 char		**argv)
+cmd_arot(ClientData clientData,
+	 Tcl_Interp *interp,
+	 int argc,
+	 char **argv)
 {
     Tcl_DString ds;
     static const char *usage = "x y z angle";
@@ -4107,9 +4154,10 @@ cmd_arot(ClientData	clientData,
     }
 }
 
+
 int
-mged_etran(char		coords,
-	   vect_t	tvec)
+mged_etran(char coords,
+	   vect_t tvec)
 {
     point_t p2;
     int save_edflag;
@@ -4158,6 +4206,7 @@ mged_etran(char		coords,
     return TCL_OK;
 }
 
+
 int
 mged_otran(const vect_t tvec)
 {
@@ -4170,6 +4219,7 @@ mged_otran(const vect_t tvec)
 
     return mged_mtran(work);
 }
+
 
 int
 mged_mtran(const vect_t tvec)
@@ -4189,10 +4239,11 @@ mged_mtran(const vect_t tvec)
     return TCL_OK;
 }
 
+
 int
 mged_vtran(const vect_t tvec)
 {
-    vect_t  tt;
+    vect_t tt;
     point_t delta;
     point_t work;
     point_t vc, nvc;
@@ -4212,6 +4263,7 @@ mged_vtran(const vect_t tvec)
     return TCL_OK;
 }
 
+
 int
 mged_tran(vect_t tvec)
 {
@@ -4229,11 +4281,12 @@ mged_tran(vect_t tvec)
     return mged_vtran(tvec);
 }
 
+
 int
-cmd_tra(ClientData	clientData,
-	Tcl_Interp	*interp,
-	int     	argc,
-	char    	**argv)
+cmd_tra(ClientData clientData,
+	Tcl_Interp *interp,
+	int argc,
+	char **argv)
 {
     Tcl_DString ds;
 
@@ -4271,6 +4324,7 @@ cmd_tra(ClientData	clientData,
 	return TCL_OK;
     }
 }
+
 
 int
 mged_escale(fastf_t sfactor)
@@ -4371,6 +4425,7 @@ mged_escale(fastf_t sfactor)
     return TCL_OK;
 }
 
+
 int
 mged_vscale(fastf_t sfactor)
 {
@@ -4393,6 +4448,7 @@ mged_vscale(fastf_t sfactor)
     return TCL_OK;
 }
 
+
 int
 mged_scale(fastf_t sfactor)
 {
@@ -4403,11 +4459,12 @@ mged_scale(fastf_t sfactor)
     return mged_vscale(sfactor);
 }
 
+
 int
-cmd_sca(ClientData	clientData,
-	Tcl_Interp	*interp,
-	int     	argc,
-	char    	**argv)
+cmd_sca(ClientData clientData,
+	Tcl_Interp *interp,
+	int argc,
+	char **argv)
 {
     Tcl_DString ds;
 
@@ -4454,13 +4511,13 @@ cmd_sca(ClientData	clientData,
 	        return ret;
 	    } else {
                 /* argc was 4 but state was ST_S_EDIT so do nothing */
-	        bu_log( "Error: Can only scale xyz independently on an object.\n" );
+	        bu_log("Error: Can only scale xyz independently on an object.\n");
 	        return TCL_OK;
             }
 	}
     } else {
 	int ret;
-	fastf_t	f;
+	fastf_t f;
 
 	Tcl_DStringInit(&ds);
 	ret = ged_scale(gedp, argc, (const char **)argv);
@@ -4482,16 +4539,17 @@ cmd_sca(ClientData	clientData,
     }
 }
 
+
 /**
- *		      C M D _ P O V
+ * C M D _ P O V
  *
- *  Process the "pov" command to change the point of view.
+ * Process the "pov" command to change the point of view.
  */
 int
-cmd_pov(ClientData	clientData,
-	Tcl_Interp	*interp,
-	int		argc,
-	char		*argv[])
+cmd_pov(ClientData clientData,
+	Tcl_Interp *interp,
+	int argc,
+	char *argv[])
 {
     int ret;
     Tcl_DString ds;

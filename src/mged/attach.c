@@ -265,6 +265,7 @@ release(char *name, int need_close)
     return TCL_OK;
 }
 
+
 int
 f_release(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
@@ -631,7 +632,7 @@ f_dm(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_ERROR;
     }
 
-    if (!strcmp(argv[1],"valid")) {
+    if (!strcmp(argv[1], "valid")) {
 	if (argc < 3) {
     	    struct bu_vls vls;
 	    
@@ -671,7 +672,7 @@ f_dm(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    Tcl_AppendResult(interp, "glx", (char *)NULL);
 	}
 #endif /* DM_GLX */
-       return TCL_OK;
+	return TCL_OK;
     }       
     
     if (!cmd_hook) {
@@ -799,6 +800,7 @@ f_get_dm_list(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     return TCL_OK;
 }
+
 
 /*
  * Local Variables:

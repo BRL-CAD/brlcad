@@ -51,73 +51,74 @@ extern void stateChange(int, int);	/* defined in dm-generic.c */
  * It is set to the 0 if off, or the value of the button function
  * that is currently in effect (eg, BE_S_SCALE).
  */
-static int	edsol;
+static int edsol;
 
 /* This flag indicates that Matrix editing is in effect.
  * edsol may not be set at the same time.
  * Value is 0 if off, or the value of the button function currently
  * in effect (eg, BE_O_XY).
  */
-int	edobj;		/* object editing */
-int	movedir;	/* RARROW | UARROW | SARROW | ROTARROW */
+int edobj;		/* object editing */
+int movedir;	/* RARROW | UARROW | SARROW | ROTARROW */
 
 /*
  * The "accumulation" solid rotation matrix and scale factor
  */
-mat_t	acc_rot_sol;
-fastf_t	acc_sc_sol;
-fastf_t	acc_sc_obj;     /* global object scale factor --- accumulations */
-fastf_t	acc_sc[3];	/* local object scale factors --- accumulations */
+mat_t acc_rot_sol;
+fastf_t acc_sc_sol;
+fastf_t acc_sc_obj;     /* global object scale factor --- accumulations */
+fastf_t acc_sc[3];	/* local object scale factors --- accumulations */
 
-struct buttons  {
-    int	bu_code;	/* dm_values.dv_button */
-    char	*bu_name;	/* keyboard string */
-    int	(*bu_func)(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);	/* function to call */
+struct buttons {
+    int bu_code;	/* dm_values.dv_button */
+    char *bu_name;	/* keyboard string */
+    int (*bu_func)(ClientData clientData, Tcl_Interp *interp, int argc, char **argv);	/* function to call */
 }  button_table[] = {
     {BV_35_25,		"35,25",	bv_35_25},
     {BV_45_45,		"45,45",	bv_45_45},
     {BE_ACCEPT,		"accept",	be_accept},
-    {BV_ADCURSOR,		"adc",		bv_adcursor},
+    {BV_ADCURSOR,	"adc",		bv_adcursor},
     {BV_BOTTOM,		"bottom",	bv_bottom},
     {BV_FRONT,		"front",	bv_front},
     {BV_LEFT,		"left",		bv_left},
     {BE_O_ILLUMINATE,	"oill",		be_o_illuminate},
-    {BE_O_ROTATE,		"orot",		be_o_rotate},
-    {BE_O_SCALE,		"oscale",	be_o_scale},
+    {BE_O_ROTATE,	"orot",		be_o_rotate},
+    {BE_O_SCALE,	"oscale",	be_o_scale},
     {BE_O_X,		"ox",		be_o_x},
     {BE_O_XY,		"oxy",		be_o_xy},
-    {BE_O_XSCALE,		"oxscale",	be_o_xscale},
+    {BE_O_XSCALE,	"oxscale",	be_o_xscale},
     {BE_O_Y,		"oy",		be_o_y},
-    {BE_O_YSCALE,		"oyscale",	be_o_yscale},
-    {BE_O_ZSCALE,		"ozscale",	be_o_zscale},
+    {BE_O_YSCALE,	"oyscale",	be_o_yscale},
+    {BE_O_ZSCALE,	"ozscale",	be_o_zscale},
     {BV_REAR,		"rear",		bv_rear},
     {BE_REJECT,		"reject",	be_reject},
     {BV_RESET,		"reset",	bv_reset},
-    {BV_VRESTORE,		"restore",	bv_vrestore},
+    {BV_VRESTORE,	"restore",	bv_vrestore},
     {BV_RIGHT,		"right",	bv_right},
     {BV_VSAVE,		"save",		bv_vsave},
     {BE_S_EDIT,		"sedit",	be_s_edit},
     {BE_S_ILLUMINATE,	"sill",		be_s_illuminate},
-    {BE_S_ROTATE,		"srot",		be_s_rotate},
-    {BE_S_SCALE,		"sscale",	be_s_scale},
-    {BE_S_TRANS,		"sxy",		be_s_trans},
+    {BE_S_ROTATE,	"srot",		be_s_rotate},
+    {BE_S_SCALE,	"sscale",	be_s_scale},
+    {BE_S_TRANS,	"sxy",		be_s_trans},
     {BV_TOP,		"top",		bv_top},
-    {BV_ZOOM_IN,		"zoomin",	bv_zoomin},
-    {BV_ZOOM_OUT,		"zoomout",	bv_zoomout},
+    {BV_ZOOM_IN,	"zoomin",	bv_zoomin},
+    {BV_ZOOM_OUT,	"zoomout",	bv_zoomout},
     {BV_RATE_TOGGLE,	"rate",		bv_rate_toggle},
-    {-1,			"-end-",	be_reject}
+    {-1,		"-end-",	be_reject}
 };
+
 
 static mat_t sav_viewrot, sav_toviewcenter;
 static fastf_t sav_vscale;
-static int	vsaved = 0;	/* set iff view saved */
+static int vsaved = 0;	/* set iff view saved */
 
 extern void color_soltab(void);
-extern void	sl_halt_scroll(void);	/* in scroll.c */
-extern void	sl_toggle_scroll(void);
+extern void sl_halt_scroll(void);	/* in scroll.c */
+extern void sl_toggle_scroll(void);
 
-void		btn_head_menu(int i, int menu, int item);
-void		btn_item_hit(int arg, int menu, int item);
+void btn_head_menu(int i, int menu, int item);
+void btn_item_hit(int arg, int menu, int item);
 
 static struct menu_item first_menu[] = {
     { "BUTTON MENU", btn_head_menu, 1 },		/* chg to 2nd menu */
@@ -154,6 +155,7 @@ struct menu_item sed_menu[] = {
     { "", (void (*)())NULL, 0 }
 };
 
+
 struct menu_item oed_menu[] = {
     { "*MATRIX EDIT*", btn_head_menu, 2 },
     { "Scale", btn_item_hit, BE_O_SCALE },
@@ -167,44 +169,46 @@ struct menu_item oed_menu[] = {
     { "", (void (*)())NULL, 0 }
 };
 
+
 /*
- *			B U T T O N
+ * B U T T O N
  */
 void
 button(int bnum)
 {
     struct buttons *bp;
 
-    if ( edsol && edobj )
+    if (edsol && edobj)
 	bu_log("WARNING: State error: edsol=%x, edobj=%x\n", edsol, edobj);
 
     /* Process the button function requested. */
-    for ( bp = button_table; bp->bu_code >= 0; bp++ )  {
-	if ( bnum != bp->bu_code )
+    for (bp = button_table; bp->bu_code >= 0; bp++) {
+	if (bnum != bp->bu_code)
 	    continue;
 
-	bp->bu_func( (ClientData)NULL, interp, 0, NULL );
+	bp->bu_func((ClientData)NULL, interp, 0, NULL);
 	return;
     }
 
     bu_log("button(%d):  Not a defined operation\n", bnum);
 }
 
+
 /*
- *			F _ P R E S S
+ * F _ P R E S S
  *
  * Hook for displays with no buttons
  *
- *  Given a string description of which button to press, simulate
- *  pressing that button on the button box.
+ * Given a string description of which button to press, simulate
+ * pressing that button on the button box.
  *
- *  These days, just hand off to the appropriate Tcl proc of the same name.
+ * These days, just hand off to the appropriate Tcl proc of the same name.
  */
 int
 f_press(ClientData clientData,
 	Tcl_Interp *interp,
-	int	argc,
-	char	**argv)
+	int argc,
+	char **argv)
 {
     int i;
 
@@ -218,18 +222,18 @@ f_press(ClientData clientData,
 	return TCL_ERROR;
     }
 
-    for ( i = 1; i < argc; i++ )  {
+    for (i = 1; i < argc; i++) {
 	char *str = argv[i];
 	struct buttons *bp;
-	struct menu_item	**m;
+	struct menu_item **m;
 	int menu, item;
-	struct menu_item	*mptr;
+	struct menu_item *mptr;
 
-	if ( edsol && edobj ) {
+	if (edsol && edobj) {
 	    struct bu_vls tmp_vls;
 
 	    bu_vls_init(&tmp_vls);
-	    bu_vls_printf(&tmp_vls, "WARNING: State error: edsol=%x, edobj=%x\n", edsol, edobj );
+	    bu_vls_printf(&tmp_vls, "WARNING: State error: edsol=%x, edobj=%x\n", edsol, edobj);
 	    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
 	    bu_vls_free(&tmp_vls);
 	}
@@ -239,7 +243,7 @@ f_press(ClientData clientData,
 
 	    bu_vls_init(&vls);
 
-	    for ( bp = button_table; bp->bu_code >= 0; bp++ )
+	    for (bp = button_table; bp->bu_code >= 0; bp++)
 		vls_col_item(&vls, bp->bu_name);
 	    vls_col_eol(&vls);
 
@@ -249,20 +253,20 @@ f_press(ClientData clientData,
 	}
 
 	/* Process the button function requested. */
-	for ( bp = button_table; bp->bu_code >= 0; bp++ )  {
-	    if ( strcmp( str, bp->bu_name ) != 0 )
+	for (bp = button_table; bp->bu_code >= 0; bp++) {
+	    if (strcmp(str, bp->bu_name) != 0)
 		continue;
 
 	    (void)bp->bu_func(clientData, interp, 2, argv+1);
 	    goto next;
 	}
 
-	for ( menu=0, m=menu_state->ms_menus; m - menu_state->ms_menus < NMENU; m++,menu++ )  {
-	    if ( *m == MENU_NULL )  continue;
-	    for ( item=0, mptr = *m;
-		  mptr->menu_string[0] != '\0';
-		  mptr++, item++ )  {
-		if ( strcmp( str, mptr->menu_string ) != 0 )
+	for (menu=0, m=menu_state->ms_menus; m - menu_state->ms_menus < NMENU; m++, menu++) {
+	    if (*m == MENU_NULL) continue;
+	    for (item=0, mptr = *m;
+		 mptr->menu_string[0] != '\0';
+		 mptr++, item++) {
+		if (strcmp(str, mptr->menu_string) != 0)
 		    continue;
 
 		menu_state->ms_cur_item = item;
@@ -270,7 +274,7 @@ f_press(ClientData clientData,
 		menu_state->ms_flag = 1;
 		/* It's up to the menu_func to set menu_state->ms_flag=0
 		 * if no arrow is desired */
-		if ( mptr->menu_func != ((void (*)())0) )
+		if (mptr->menu_func != ((void (*)())0))
 		    (*(mptr->menu_func))(mptr->menu_arg, menu, item);
 
 		goto next;
@@ -285,11 +289,12 @@ f_press(ClientData clientData,
     return TCL_OK;
 }
 
+
 /*
- *  			L A B E L _ B U T T O N
+ * L A B E L _ B U T T O N
  *
- *  For a given GED button number, return the "press" ID string.
- *  Useful for displays with programable button lables, etc.
+ * For a given GED button number, return the "press" ID string.
+ * Useful for displays with programable button lables, etc.
  */
 char *
 label_button(int bnum)
@@ -297,10 +302,10 @@ label_button(int bnum)
     struct buttons *bp;
 
     /* Process the button function requested. */
-    for ( bp = button_table; bp->bu_code >= 0; bp++ )  {
-	if ( bnum != bp->bu_code )
+    for (bp = button_table; bp->bu_code >= 0; bp++) {
+	if (bnum != bp->bu_code)
 	    continue;
-	return( bp->bu_name );
+	return(bp->bu_name);
     }
 
     {
@@ -315,6 +320,7 @@ label_button(int bnum)
     return("");
 }
 
+
 int
 bv_zoomin(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
@@ -322,12 +328,14 @@ bv_zoomin(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_OK;
 }
 
+
 int
 bv_zoomout(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
     (void)mged_zoom(0.5);
     return TCL_OK;
 }
+
 
 int
 bv_rate_toggle(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
@@ -337,6 +345,7 @@ bv_rate_toggle(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_OK;
 }
 
+
 int
 bv_top(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
@@ -344,6 +353,7 @@ bv_top(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     setview(0.0, 0.0, 0.0);
     return TCL_OK;
 }
+
 
 int
 bv_bottom(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
@@ -353,6 +363,7 @@ bv_bottom(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_OK;
 }
 
+
 int
 bv_right(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
@@ -360,6 +371,7 @@ bv_right(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     setview(270.0, 0.0, 0.0);
     return TCL_OK;
 }
+
 
 int
 bv_left(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
@@ -369,6 +381,7 @@ bv_left(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_OK;
 }
 
+
 int
 bv_front(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
@@ -376,6 +389,7 @@ bv_front(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     setview(270.0, 0.0, 270.0);
     return TCL_OK;
 }
+
 
 int
 bv_rear(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
@@ -385,11 +399,12 @@ bv_rear(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_OK;
 }
 
+
 int
-bv_vrestore(ClientData	clientData,
-	    Tcl_Interp	*interp,
-	    int		argc,
-	    char	**argv)
+bv_vrestore(ClientData clientData,
+	    Tcl_Interp *interp,
+	    int argc,
+	    char **argv)
 {
     /* restore to saved view */
     if (vsaved) {
@@ -404,11 +419,12 @@ bv_vrestore(ClientData	clientData,
     return TCL_OK;
 }
 
+
 int
-bv_vsave(ClientData	clientData,
-	 Tcl_Interp	*interp,
-	 int		argc,
-	 char		**argv)
+bv_vsave(ClientData clientData,
+	 Tcl_Interp *interp,
+	 int argc,
+	 char **argv)
 {
     /* save current view */
     sav_vscale = view_state->vs_gvp->gv_scale;
@@ -418,21 +434,22 @@ bv_vsave(ClientData	clientData,
     return TCL_OK;
 }
 
+
 /*
- *			B V _ A D C U R S O R
+ * B V _ A D C U R S O R
  *
- *  Toggle state of angle/distance cursor.
- *  "press adc"
- *  This command conflicts with existing "adc" command,
- *  can't be bound as "adc", only as "press adc".
+ * Toggle state of angle/distance cursor.
+ * "press adc"
+ * This command conflicts with existing "adc" command,
+ * can't be bound as "adc", only as "press adc".
  */
 int
 bv_adcursor(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    if (adc_state->adc_draw)  {
+    if (adc_state->adc_draw) {
 	/* Was on, turn off */
 	adc_state->adc_draw = 0;
-    }  else  {
+    } else {
 	/* Was off, turn on */
 	adc_state->adc_draw = 1;
     }
@@ -441,8 +458,9 @@ bv_adcursor(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_OK;
 }
 
+
 int
-bv_reset(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
+bv_reset(ClientData clientData, Tcl_Interp *interp, int argc, char **argv) {
     /* Reset view such that all solids can be seen */
     size_reset();
     setview(0.0, 0.0, 0.0);
@@ -450,18 +468,21 @@ bv_reset(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
     return TCL_OK;
 }
 
+
 int
-bv_45_45(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
+bv_45_45(ClientData clientData, Tcl_Interp *interp, int argc, char **argv) {
     setview(270.0+45.0, 0.0, 270.0-45.0);
     return TCL_OK;
 }
 
+
 int
-bv_35_25(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
+bv_35_25(ClientData clientData, Tcl_Interp *interp, int argc, char **argv) {
     /* Use Azmuth=35, Elevation=25 in GIFT's backwards space */
     setview(270.0+25.0, 0.0, 270.0-35.0);
     return TCL_OK;
 }
+
 
 /* returns 0 if error, !0 if success */
 static int
@@ -494,18 +515,19 @@ ill_common(void) {
     edobj = 0;		/* sanity */
     edsol = 0;		/* sanity */
     movedir = 0;		/* No edit modes set */
-    MAT_IDN( modelchanges );	/* No changes yet */
+    MAT_IDN(modelchanges);	/* No changes yet */
 
     return(1);		/* OK */
 }
 
+
 int
-be_o_illuminate(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
-    if ( not_state( ST_VIEW, "Matrix Illuminate" ) )
+be_o_illuminate(ClientData clientData, Tcl_Interp *interp, int argc, char **argv) {
+    if (not_state(ST_VIEW, "Matrix Illuminate"))
 	return TCL_ERROR;
 
-    if ( ill_common() )  {
-	(void)chg_state( ST_VIEW, ST_O_PICK, "Matrix Illuminate" );
+    if (ill_common()) {
+	(void)chg_state(ST_VIEW, ST_O_PICK, "Matrix Illuminate");
     }
     /* reset accumulation local scale factors */
     acc_sc[0] = acc_sc[1] = acc_sc[2] = 1.0;
@@ -515,20 +537,22 @@ be_o_illuminate(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
     return TCL_OK;
 }
 
+
 int
-be_s_illuminate(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
-    if ( not_state( ST_VIEW, "Primitive Illuminate" ) )
+be_s_illuminate(ClientData clientData, Tcl_Interp *interp, int argc, char **argv) {
+    if (not_state(ST_VIEW, "Primitive Illuminate"))
 	return TCL_ERROR;
 
-    if ( ill_common() )  {
-	(void)chg_state( ST_VIEW, ST_S_PICK, "Primitive Illuminate" );
+    if (ill_common()) {
+	(void)chg_state(ST_VIEW, ST_S_PICK, "Primitive Illuminate");
     }
     return TCL_OK;
 }
 
+
 int
-be_o_scale(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
-    if ( not_state( ST_O_EDIT, "Matrix Scale" ) )
+be_o_scale(ClientData clientData, Tcl_Interp *interp, int argc, char **argv) {
+    if (not_state(ST_O_EDIT, "Matrix Scale"))
 	return TCL_ERROR;
 
     edobj = BE_O_SCALE;
@@ -542,9 +566,10 @@ be_o_scale(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
     return TCL_OK;
 }
 
+
 int
-be_o_xscale(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
-    if ( not_state( ST_O_EDIT, "Matrix Local X Scale" ) )
+be_o_xscale(ClientData clientData, Tcl_Interp *interp, int argc, char **argv) {
+    if (not_state(ST_O_EDIT, "Matrix Local X Scale"))
 	return TCL_ERROR;
 
     edobj = BE_O_XSCALE;
@@ -558,9 +583,10 @@ be_o_xscale(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
     return TCL_OK;
 }
 
+
 int
-be_o_yscale(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
-    if ( not_state( ST_O_EDIT, "Matrix Local Y Scale" ) )
+be_o_yscale(ClientData clientData, Tcl_Interp *interp, int argc, char **argv) {
+    if (not_state(ST_O_EDIT, "Matrix Local Y Scale"))
 	return TCL_ERROR;
 
     edobj = BE_O_YSCALE;
@@ -574,9 +600,10 @@ be_o_yscale(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
     return TCL_OK;
 }
 
+
 int
-be_o_zscale(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
-    if ( not_state( ST_O_EDIT, "Matrix Local Z Scale" ) )
+be_o_zscale(ClientData clientData, Tcl_Interp *interp, int argc, char **argv) {
+    if (not_state(ST_O_EDIT, "Matrix Local Z Scale"))
 	return TCL_ERROR;
 
     edobj = BE_O_ZSCALE;
@@ -590,9 +617,10 @@ be_o_zscale(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
     return TCL_OK;
 }
 
+
 int
-be_o_x(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
-    if ( not_state( ST_O_EDIT, "Matrix X Motion" ) )
+be_o_x(ClientData clientData, Tcl_Interp *interp, int argc, char **argv) {
+    if (not_state(ST_O_EDIT, "Matrix X Motion"))
 	return TCL_ERROR;
 
     edobj = BE_O_X;
@@ -602,9 +630,10 @@ be_o_x(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
     return TCL_OK;
 }
 
+
 int
-be_o_y(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
-    if ( not_state( ST_O_EDIT, "Matrix Y Motion" ) )
+be_o_y(ClientData clientData, Tcl_Interp *interp, int argc, char **argv) {
+    if (not_state(ST_O_EDIT, "Matrix Y Motion"))
 	return TCL_ERROR;
 
     edobj = BE_O_Y;
@@ -616,8 +645,8 @@ be_o_y(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
 
 
 int
-be_o_xy(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
-    if ( not_state( ST_O_EDIT, "Matrix XY Motion" ) )
+be_o_xy(ClientData clientData, Tcl_Interp *interp, int argc, char **argv) {
+    if (not_state(ST_O_EDIT, "Matrix XY Motion"))
 	return TCL_ERROR;
 
     edobj = BE_O_XY;
@@ -627,9 +656,10 @@ be_o_xy(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
     return TCL_OK;
 }
 
+
 int
-be_o_rotate(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
-    if ( not_state( ST_O_EDIT, "Matrix Rotation" ) )
+be_o_rotate(ClientData clientData, Tcl_Interp *interp, int argc, char **argv) {
+    if (not_state(ST_O_EDIT, "Matrix Rotation"))
 	return TCL_ERROR;
 
     edobj = BE_O_ROTATE;
@@ -639,21 +669,22 @@ be_o_rotate(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
     return TCL_OK;
 }
 
+
 int
-be_accept(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
+be_accept(ClientData clientData, Tcl_Interp *interp, int argc, char **argv) {
     struct ged_display_list *gdlp;
     struct ged_display_list *next_gdlp;
     struct solid *sp;
     struct dm_list *dmlp;
 
-    if ( state == ST_S_EDIT )  {
+    if (state == ST_S_EDIT) {
 	/* Accept a solid edit */
 	edsol = 0;
 
 	sedit_accept();		/* zeros "edsol" var */
 
-	mmenu_set_all( MENU_L1, MENU_NULL );
-	mmenu_set_all( MENU_L2, MENU_NULL );
+	mmenu_set_all(MENU_L1, MENU_NULL);
+	mmenu_set_all(MENU_L2, MENU_NULL);
 
 	gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
 	while (BU_LIST_NOT_HEAD(gdlp, &gedp->ged_gdp->gd_headDisplay)) {
@@ -668,22 +699,22 @@ be_accept(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
 	illum_gdlp = GED_DISPLAY_LIST_NULL;
 	illump = SOLID_NULL;
 	color_soltab();
-	(void)chg_state( ST_S_EDIT, ST_VIEW, "Edit Accept" );
-    }  else if ( state == ST_O_EDIT )  {
+	(void)chg_state(ST_S_EDIT, ST_VIEW, "Edit Accept");
+    }  else if (state == ST_O_EDIT) {
 	/* Accept an object edit */
 	edobj = 0;
 	movedir = 0;	/* No edit modes set */
 
 	oedit_accept();
 
-	mmenu_set_all( MENU_L2, MENU_NULL );
+	mmenu_set_all(MENU_L2, MENU_NULL);
 
 	illum_gdlp = GED_DISPLAY_LIST_NULL;
 	illump = SOLID_NULL;
 	color_soltab();
-	(void)chg_state( ST_O_EDIT, ST_VIEW, "Edit Accept" );
+	(void)chg_state(ST_O_EDIT, ST_VIEW, "Edit Accept");
     } else {
-	if ( not_state( ST_S_EDIT, "Edit Accept" ) )
+	if (not_state(ST_S_EDIT, "Edit Accept"))
 	    return TCL_ERROR;
 	return TCL_OK;
     }
@@ -703,8 +734,9 @@ be_accept(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
     return TCL_OK;
 }
 
+
 int
-be_reject(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
+be_reject(ClientData clientData, Tcl_Interp *interp, int argc, char **argv) {
     struct ged_display_list *gdlp;
     struct ged_display_list *next_gdlp;
     struct solid *sp;
@@ -714,21 +746,21 @@ be_reject(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
 
     /* Reject edit */
 
-    switch ( state )  {
+    switch (state) {
 	default:
-	    state_err( "Edit Reject" );
+	    state_err("Edit Reject");
 	    return TCL_ERROR;
 
 	case ST_S_EDIT:
 	    /* Reject a solid edit */
-	    mmenu_set_all( MENU_L1, MENU_NULL );
-	    mmenu_set_all( MENU_L2, MENU_NULL );
+	    mmenu_set_all(MENU_L1, MENU_NULL);
+	    mmenu_set_all(MENU_L2, MENU_NULL);
 
 	    sedit_reject();
 	    break;
 
 	case ST_O_EDIT:
-	    mmenu_set_all( MENU_L2, MENU_NULL );
+	    mmenu_set_all(MENU_L2, MENU_NULL);
 
 	    oedit_reject();
 	    break;
@@ -760,7 +792,7 @@ be_reject(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
     }
 
     color_soltab();
-    (void)chg_state( state, ST_VIEW, "Edit Reject" );
+    (void)chg_state(state, ST_VIEW, "Edit Reject");
 
     FOR_ALL_DISPLAYS(dmlp, &head_dm_list.l)
 	if (dmlp->dml_mged_variables->mv_transform == 'e')
@@ -777,10 +809,11 @@ be_reject(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
     return TCL_OK;
 }
 
+
 int
-be_s_edit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
+be_s_edit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv) {
     /* solid editing */
-    if ( not_state( ST_S_EDIT, "Primitive Edit (Menu)" ) )
+    if (not_state(ST_S_EDIT, "Primitive Edit (Menu)"))
 	return TCL_ERROR;
 
     edsol = BE_S_EDIT;
@@ -788,60 +821,64 @@ be_s_edit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
     return TCL_OK;
 }
 
+
 int
-be_s_rotate(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
+be_s_rotate(ClientData clientData, Tcl_Interp *interp, int argc, char **argv) {
     /* rotate solid */
-    if ( not_state( ST_S_EDIT, "Primitive Rotate" ) )
+    if (not_state(ST_S_EDIT, "Primitive Rotate"))
 	return TCL_ERROR;
 
     es_edflag = SROT;
     edsol = BE_S_ROTATE;
-    mmenu_set( MENU_L1, MENU_NULL );
+    mmenu_set(MENU_L1, MENU_NULL);
 
     set_e_axes_pos(1);
     return TCL_OK;
 }
 
+
 int
-be_s_trans(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
+be_s_trans(ClientData clientData, Tcl_Interp *interp, int argc, char **argv) {
     /* translate solid */
-    if ( not_state( ST_S_EDIT, "Primitive Translate" ) )
+    if (not_state(ST_S_EDIT, "Primitive Translate"))
 	return TCL_ERROR;
 
     edsol = BE_S_TRANS;
     es_edflag = STRANS;
     movedir = UARROW | RARROW;
-    mmenu_set( MENU_L1, MENU_NULL );
+    mmenu_set(MENU_L1, MENU_NULL);
 
     set_e_axes_pos(1);
     return TCL_OK;
 }
 
+
 int
-be_s_scale(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)  {
+be_s_scale(ClientData clientData, Tcl_Interp *interp, int argc, char **argv) {
     /* scale solid */
-    if ( not_state( ST_S_EDIT, "Primitive Scale" ) )
+    if (not_state(ST_S_EDIT, "Primitive Scale"))
 	return TCL_ERROR;
 
     edsol = BE_S_SCALE;
     es_edflag = SSCALE;
-    mmenu_set( MENU_L1, MENU_NULL );
+    mmenu_set(MENU_L1, MENU_NULL);
     acc_sc_sol = 1.0;
 
     set_e_axes_pos(1);
     return TCL_OK;
 }
 
+
 /*
- *			N O T _ S T A T E
+ * N O T _ S T A T E
  *
- *  Returns 0 if current state is as desired,
- *  Returns !0 and prints error message if state mismatch.
+ * Returns 0 if current state is as desired,
+ * Returns !0 and prints error message if state mismatch.
  */
 int
 not_state(int desired, char *str)
 {
-    if ( state != desired ) {
+    if (state != desired) {
 	Tcl_AppendResult(interp, "Unable to do <", str, "> from ", state_str[state], " state.\n", (char *)NULL);
 	Tcl_AppendResult(interp, "Expecting ", state_str[desired], " state.\n", (char *)NULL);
 	return -1;
@@ -850,11 +887,12 @@ not_state(int desired, char *str)
     return 0;
 }
 
+
 /*
- *  			C H G _ S T A T E
+ * C H G _ S T A T E
  *
- *  Returns 0 if state change is OK,
- *  Returns !0 and prints error message if error.
+ * Returns 0 if state change is OK,
+ * Returns !0 and prints error message if error.
  */
 int
 chg_state(int from, int to, char *str)
@@ -889,6 +927,7 @@ chg_state(int from, int to, char *str)
     return(0);		/* GOOD */
 }
 
+
 void
 state_err(char *str)
 {
@@ -898,75 +937,78 @@ state_err(char *str)
 
 
 /*
- *			B T N _ I T E M _ H I T
+ * B T N _ I T E M _ H I T
  *
- *  Called when a menu item is hit
+ * Called when a menu item is hit
  */
 void
 btn_item_hit(int arg, int menu, int item) {
     button(arg);
-    if ( menu == MENU_GEN &&
-	 ( arg != BE_O_ILLUMINATE && arg != BE_S_ILLUMINATE) )
+    if (menu == MENU_GEN &&
+	(arg != BE_O_ILLUMINATE && arg != BE_S_ILLUMINATE))
 	menu_state->ms_flag = 0;
 }
 
+
 /*
- *			B T N _ H E A D _ M E N U
+ * B T N _ H E A D _ M E N U
  *
- *  Called to handle hits on menu heads.
- *  Also called from main() with arg 0 in init.
+ * Called to handle hits on menu heads.
+ * Also called from main() with arg 0 in init.
  */
 void
-btn_head_menu(int i, int menu, int item)  {
-    switch (i)  {
+btn_head_menu(int i, int menu, int item) {
+    switch (i) {
 	case 0:
-	    mmenu_set( MENU_GEN, first_menu );
+	    mmenu_set(MENU_GEN, first_menu);
 	    break;
 	case 1:
-	    mmenu_set( MENU_GEN, second_menu );
+	    mmenu_set(MENU_GEN, second_menu);
 	    break;
 	case 2:
 	    /* nothing happens */
 	    break;
 	default:
-	{
-	    struct bu_vls tmp_vls;
+	    {
+		struct bu_vls tmp_vls;
 
-	    bu_vls_init(&tmp_vls);
-	    bu_vls_printf(&tmp_vls, "btn_head_menu(%d): bad arg\n", i);
-	    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-	    bu_vls_free(&tmp_vls);
-	}
+		bu_vls_init(&tmp_vls);
+		bu_vls_printf(&tmp_vls, "btn_head_menu(%d): bad arg\n", i);
+		Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+		bu_vls_free(&tmp_vls);
+	    }
 
-	break;
+	    break;
     }
 }
+
 
 void
-chg_l2menu(int i)  {
-    switch ( i )  {
+chg_l2menu(int i) {
+    switch (i) {
 	case ST_S_EDIT:
-	    mmenu_set_all( MENU_L2, sed_menu );
+	    mmenu_set_all(MENU_L2, sed_menu);
 	    break;
 	case ST_S_NO_EDIT:
-	    mmenu_set_all( MENU_L2, MENU_NULL );
+	    mmenu_set_all(MENU_L2, MENU_NULL);
 	    break;
 	case ST_O_EDIT:
-	    mmenu_set_all( MENU_L2, oed_menu );
+	    mmenu_set_all(MENU_L2, oed_menu);
 	    break;
 	default:
-	{
-	    struct bu_vls tmp_vls;
+	    {
+		struct bu_vls tmp_vls;
 
-	    bu_vls_init(&tmp_vls);
-	    bu_vls_printf(&tmp_vls, "chg_l2menu(%d): bad arg\n", i);
-	    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-	    bu_vls_free(&tmp_vls);
-	}
+		bu_vls_init(&tmp_vls);
+		bu_vls_printf(&tmp_vls, "chg_l2menu(%d): bad arg\n", i);
+		Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+		bu_vls_free(&tmp_vls);
+	    }
 
-	break;
+	    break;
     }
 }
+
 
 /*
  * Local Variables:

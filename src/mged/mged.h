@@ -42,10 +42,10 @@
  * The most notable implication of this is the location of the
  * "delta" (translation) values in the matrix, ie:
  *
- *       x'     (R0   R1   R2   Dx)      x
- *       y' =  ( R4   R5   R6   Dy )  *  y
- *       z'    ( R8   R9   R10  Dz )     z
- *       w'     ( 0    0    0   1/s)      w
+ *       x'     (R0   R1   R2   Dx) x
+ *       y' =  (R4   R5   R6   Dy)  *  y
+ *       z'    (R8   R9   R10  Dz) z
+ *       w'     (0    0    0   1/s) w
  *
  * This of course requires that the rotation portion be computed
  * using somewhat different formulas (see buildHrot for both kinds).
@@ -343,7 +343,7 @@ you should exit MGED now, and resolve the I/O problem, before continuing.\n", (c
 #define READ_ERR { \
 	(void)printf("Database read error, aborting\n"); }
 
-#define READ_ERR_return		{ \
+#define READ_ERR_return { \
 	READ_ERR; \
 	return;  }
 
@@ -352,7 +352,7 @@ you should exit MGED now, and resolve the I/O problem, before continuing.\n", (c
 	(void)printf("Database write error, aborting.\n"); \
 	ERROR_RECOVERY_SUGGESTION; }
 
-#define WRITE_ERR_return	{ \
+#define WRITE_ERR_return { \
 	WRITE_ERR; \
 	return;  }
 
@@ -362,7 +362,7 @@ you should exit MGED now, and resolve the I/O problem, before continuing.\n", (c
 An error has occured while adding a new object to the database.\n"); \
 	ERROR_RECOVERY_SUGGESTION; }
 
-#define ALLOC_ERR_return	{ \
+#define ALLOC_ERR_return { \
 	ALLOC_ERR; \
 	return;  }
 
@@ -385,16 +385,14 @@ you should exit MGED now, and resolve the I/O problem, before continuing.\n")
 
 /* Check if database pointer is NULL */
 #define CHECK_DBI_NULL \
-	if (dbip == DBI_NULL) \
-	{ \
+	if (dbip == DBI_NULL) { \
 		Tcl_AppendResult(interp, "A database is not open!\n", (char *)NULL); \
 		return TCL_ERROR; \
 	}
 
 /* Check if the database is read only, and if so return TCL_ERROR */
 #define CHECK_READ_ONLY	\
-	if (dbip->dbi_read_only) \
-	{ \
+	if (dbip->dbi_read_only) { \
 		Tcl_AppendResult(interp, "Sorry, this database is READ-ONLY\n", (char *)NULL); \
 		return TCL_ERROR; \
 	}
@@ -409,6 +407,7 @@ struct funtab {
     int tcl_converted;
 };
 
+
 struct mged_hist {
     struct bu_list l;
     struct bu_vls mh_command;
@@ -416,6 +415,7 @@ struct mged_hist {
     struct timeval mh_finish;
     int mh_status;
 };
+
 
 /* internal variables related to the command window(s) */
 struct cmd_list {
@@ -449,7 +449,7 @@ extern struct run_rt head_run_rt;
 #define CMD_OK 919
 #define CMD_BAD 920
 #define CMD_MORE 921
-#define MORE_ARGS_STR    "more arguments needed::"
+#define MORE_ARGS_STR "more arguments needed::"
 
 
 /* adc.c */

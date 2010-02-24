@@ -73,10 +73,10 @@ HIDDEN void buttons_event_handler();
  * Map SGI Button numbers to MGED button functions.
  * The layout of this table is suggestive of the actual button box layout.
  */
-#define SW_HELP_KEY	SW0
-#define SW_ZERO_KEY	SW3
-#define HELP_KEY	0
-#define ZERO_KNOBS	0
+#define SW_HELP_KEY SW0
+#define SW_ZERO_KEY SW3
+#define HELP_KEY 0
+#define ZERO_KNOBS 0
 static unsigned char bmap[IR_BUTTONS] = {
     HELP_KEY,    BV_ADCURSOR, BV_RESET,    ZERO_KNOBS,
     BE_O_SCALE,  BE_O_XSCALE, BE_O_YSCALE, BE_O_ZSCALE, 0,           BV_VSAVE,

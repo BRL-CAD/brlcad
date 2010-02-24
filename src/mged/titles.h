@@ -19,10 +19,7 @@
  */
 /** @file titles.h
  *
- *  Constants that describe the layout of the faceplate.
- *
- *  Author -
- *	Michael John Muuss
+ * Constants that describe the layout of the faceplate.
  *
  */
 #define XMIN		(-2048)
@@ -39,9 +36,9 @@
 #define TITLE_XBASE	(-2048)		/* pixel X of title line start pos */
 #define TITLE_YBASE	(-1920)		/* pixel pos of last title line */
 #define SOLID_XBASE	MENUXLIM	/* X to start display text */
-#define SOLID_YBASE	( 1920)		/* pixel pos of first solid line */
-#define TEXT0_DY	(  -60)		/* #pixels per line, Size 0 */
-#define TEXT1_DY	(  -90)		/* #pixels per line, Size 1 */
+#define SOLID_YBASE	(1920)		/* pixel pos of first solid line */
+#define TEXT0_DY	(-60)		/* #pixels per line, Size 0 */
+#define TEXT1_DY	(-90)		/* #pixels per line, Size 1 */
 
 /*
  * Local Variables:

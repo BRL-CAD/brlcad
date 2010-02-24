@@ -19,16 +19,16 @@
  */
 /** @file scroll.h
  *
- *  Data structures for "scroll-bar" support
+ * Data structures for "scroll-bar" support
  *
  */
-struct	scroll_item  {
-    char	*scroll_string;
-    void	(*scroll_func)();
-    int	scroll_val;
-    char	*scroll_cmd;
+struct scroll_item {
+    char *scroll_string;
+    void (*scroll_func)();
+    int scroll_val;
+    char *scroll_cmd;
 };
-#define SCROLL_NULL		((struct scroll_item *)0)
+#define SCROLL_NULL ((struct scroll_item *)0)
 
 /*
  * Local Variables:

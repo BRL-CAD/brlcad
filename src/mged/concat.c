@@ -17,17 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file concat.c
- *
- *  Functions -
- *	f_dup()		checks for dup names before cat'ing of two files
- *	f_concat()	routine to cat another GED file onto end of current file
- *
- *  Authors -
- *	Michael John Muuss
- *	Keith A. Applin
- *
- */
 
 #include "common.h"
 
@@ -49,9 +38,9 @@
 #include "./mged.h"
 #include "./sedit.h"
 
-char	new_name[NAMESIZE+1];
-char	prestr[NAMESIZE+1];
-int	ncharadd;
+char new_name[NAMESIZE+1];
+char prestr[NAMESIZE+1];
+int ncharadd;
 
 
 /*

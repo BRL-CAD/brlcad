@@ -1,4 +1,4 @@
-/*		Q R A Y . H
+/*                         Q R A Y . H
  * BRL-CAD
  *
  * Copyright (c) 2004-2010 United States Government as represented by
@@ -31,11 +31,9 @@
 #include "bu.h"
 
 #define QRAY_BASENAME "query_ray"
-#define QRAY_TEXT	(qray_effects == 't' ||\
-			 qray_effects == 'b')
-#define QRAY_GRAPHICS	(qray_effects == 'g' ||\
-			 qray_effects == 'b')
-#define QRAY_BOTH	(qray_effects == 'b')
+#define QRAY_TEXT (qray_effects == 't' || qray_effects == 'b')
+#define QRAY_GRAPHICS (qray_effects == 'g' || qray_effects == 'b')
+#define QRAY_BOTH (qray_effects == 'b')
 
 #ifndef _WIN32
 #  define QRAY_FORMAT_P "fmt p \"%e %e %e %e\\n\" x_in y_in z_in los"
@@ -53,15 +51,18 @@ struct qray_color {
     unsigned char b;
 };
 
+
 struct qray_fmt {
     char type;
     struct bu_vls fmt;
 };
 
+
 struct qray_fmt_data {
     char type;
     char *fmt;
 };
+
 
 struct qray_dataList {
     struct bu_list l;
@@ -70,6 +71,7 @@ struct qray_dataList {
     fastf_t z_in;
     fastf_t los;
 };
+
 
 extern struct bu_vls qray_basename;
 extern struct bu_vls qray_script;

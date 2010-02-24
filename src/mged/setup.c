@@ -19,7 +19,7 @@
  */
 /** @file setup.c
  *
- *  routines to initialize mged
+ * routines to initialize mged
  *
  */
 
@@ -395,7 +395,7 @@ cmd_setup(void)
 {
     struct cmdtab *ctp;
     struct bu_vls temp;
-    struct bu_vls	vls;
+    struct bu_vls vls;
     const char *pathname;
     char buffer[1024];
 
@@ -606,13 +606,8 @@ mged_setup(void)
 
     /* Tcl needs to write nulls onto subscripted variable names */
     bu_vls_init(&str);
-    bu_vls_printf( &str, "%s(state)", MGED_DISPLAY_VAR );
+    bu_vls_printf(&str, "%s(state)", MGED_DISPLAY_VAR);
     Tcl_SetVar(interp, bu_vls_addr(&str), state_str[state], TCL_GLOBAL_ONLY);
-
-#if 0
-    /* initialize "Query Ray" variables */
-    init_qray();
-#endif
 
     /* Set defaults for view status variables */
     bu_vls_trunc(&str, 0);

@@ -39,60 +39,60 @@
 
 #include "./sedit.h"
 
-/*	Degree <-> Radian conversion factors	*/
-double	degtorad =  0.01745329251994329573;
-double	radtodeg = 57.29577951308232098299;
+/* Degree <-> Radian conversion factors */
+double degtorad =  0.01745329251994329573;
+double radtodeg = 57.29577951308232098299;
 
 struct ged_display_list *illum_gdlp = GED_DISPLAY_LIST_NULL;
-struct solid	*illump = SOLID_NULL;	/* == 0 if none, else points to ill. solid */
-int		ipathpos = 0;	/* path index of illuminated element */
-				/* set by e9.c, cleared here */
-void		wrt_view(fastf_t *out, const fastf_t *change, const fastf_t *in), wrt_point(fastf_t *out, const fastf_t *change, const fastf_t *in, const fastf_t *point);
-static void	illuminate(int y);
+struct solid *illump = SOLID_NULL;	/* == 0 if none, else points to ill. solid */
+int ipathpos = 0;	/* path index of illuminated element */
+/* set by e9.c, cleared here */
+void wrt_view(fastf_t *out, const fastf_t *change, const fastf_t *in), wrt_point(fastf_t *out, const fastf_t *change, const fastf_t *in, const fastf_t *point);
+static void illuminate(int y);
 
 /*
- *			F _ M O U S E
+ * F _ M O U S E
  *
- * X and Y are expected to be in -2048 <= x, y <= +2047 range.
- * The "up" flag is 1 on the not-pressed to pressed transition,
- * and 0 on the pressed to not-pressed transition.
+ * X and Y are expected to be in -2048 <= x, y <= +2047 range.  The
+ * "up" flag is 1 on the not-pressed to pressed transition, and 0 on
+ * the pressed to not-pressed transition.
  *
  * Note -
- *  The mouse is the focus of much of the editing activity in GED.
- *  The editor operates in one of seven basic editing states, recorded
- *  in the variable called "state".  When no editing is taking place,
- *  the editor is in state ST_VIEW.  There are two paths out of ST_VIEW:
+ * The mouse is the focus of much of the editing activity in GED.  The
+ * editor operates in one of seven basic editing states, recorded in
+ * the variable called "state".  When no editing is taking place, the
+ * editor is in state ST_VIEW.  There are two paths out of ST_VIEW:
  *
- *  BE_S_ILLUMINATE, when pressed, takes the editor into ST_S_PICK,
- *  where the mouse is used to pick a solid to edit, using our
- *  unusual "illuminate" technique.  Moving the mouse varies the solid
- *  being illuminated.  When the mouse is pressed, the editor moves into
- *  state ST_S_EDIT, and solid editing may begin.  Solid editing is
- *  terminated via BE_ACCEPT and BE_REJECT.
+ * BE_S_ILLUMINATE, when pressed, takes the editor into ST_S_PICK,
+ * where the mouse is used to pick a solid to edit, using our unusual
+ * "illuminate" technique.  Moving the mouse varies the solid being
+ * illuminated.  When the mouse is pressed, the editor moves into
+ * state ST_S_EDIT, and solid editing may begin.  Solid editing is
+ * terminated via BE_ACCEPT and BE_REJECT.
  *
- *  BE_O_ILLUMINATE, when pressed, takes the editor into ST_O_PICK,
- *  again performing the illuminate procedure.  When the mouse is pressed,
- *  the editor moves into state ST_O_PATH.  Now, moving the mouse allows
- *  the user to choose the portion of the path relation to be edited.
- *  When the mouse is pressed, the editor moves into state ST_O_EDIT,
- *  and object editing may begin.  Object editing is terminated via
- *  BE_ACCEPT and BE_REJECT.
+ * BE_O_ILLUMINATE, when pressed, takes the editor into ST_O_PICK,
+ * again performing the illuminate procedure.  When the mouse is
+ * pressed, the editor moves into state ST_O_PATH.  Now, moving the
+ * mouse allows the user to choose the portion of the path relation to
+ * be edited.  When the mouse is pressed, the editor moves into state
+ * ST_O_EDIT, and object editing may begin.  Object editing is
+ * terminated via BE_ACCEPT and BE_REJECT.
  *
- *  The only way to exit the intermediate states (non-VIEW, non-EDIT)
- *  is by completing the sequence, or pressing BE_REJECT.
+ * The only way to exit the intermediate states (non-VIEW, non-EDIT)
+ * is by completing the sequence, or pressing BE_REJECT.
  */
 int
 f_mouse(
     ClientData clientData,
     Tcl_Interp *interp,
-    int	argc,
-    char	**argv)
+    int argc,
+    char **argv)
 {
-    vect_t	mousevec;		/* float pt -1..+1 mouse pos vect */
-    int	isave;
-    int	up;
-    int	xpos;
-    int	ypos;
+    vect_t mousevec;		/* float pt -1..+1 mouse pos vect */
+    int isave;
+    int up;
+    int xpos;
+    int ypos;
 
     if (argc < 4 || 4 < argc) {
 	struct bu_vls vls;
@@ -118,20 +118,20 @@ f_mouse(
 	 * If mouse press is in scroll area, see if scrolling, and if so,
 	 * divert this mouse press.
 	 */
-	if ( (xpos >= MENUXLIM) || scroll_active )  {
+	if ((xpos >= MENUXLIM) || scroll_active) {
 	    int i;
 
 	    if (scroll_active)
 		ypos = scroll_y;
 
-	    if ( (i = scroll_select( xpos, ypos, 1 )) < 0 )  {
+	    if ((i = scroll_select(xpos, ypos, 1)) < 0) {
 		Tcl_AppendResult(interp,
 				 "mouse press outside valid scroll area\n",
 				 (char *)NULL);
 		return TCL_ERROR;
 	    }
 
-	    if ( i > 0 )  {
+	    if (i > 0) {
 		scroll_active = 1;
 		scroll_y = ypos;
 
@@ -142,20 +142,20 @@ f_mouse(
 	}
 
 	/*
-	 * If menu is active, and mouse press is in menu area,
-	 * divert this mouse press for menu purposes.
+	 * If menu is active, and mouse press is in menu area, divert
+	 * this mouse press for menu purposes.
 	 */
-	if ( xpos < MENUXLIM )  {
+	if (xpos < MENUXLIM) {
 	    int i;
 
-	    if ( (i = mmenu_select( ypos, 1 )) < 0 )  {
+	    if ((i = mmenu_select(ypos, 1)) < 0) {
 		Tcl_AppendResult(interp,
 				 "mouse press outside valid menu\n",
 				 (char *)NULL);
 		return TCL_ERROR;
 	    }
 
-	    if ( i > 0 )  {
+	    if (i > 0) {
 		/* Menu claimed button press */
 		return TCL_OK;
 	    }
@@ -164,12 +164,12 @@ f_mouse(
     }
 
     /*
-     *  In the best of all possible worlds, nothing should happen
-     *  when the mouse is not pressed;  this would relax the requirement
-     *  for the host being informed when the mouse changes position.
-     *  However, for now, illuminate mode makes this impossible.
+     * In the best of all possible worlds, nothing should happen when
+     * the mouse is not pressed; this would relax the requirement for
+     * the host being informed when the mouse changes position.
+     * However, for now, illuminate mode makes this impossible.
      */
-    if ( up == 0 )  switch ( state )  {
+    if (up == 0) switch (state) {
 
 	case ST_VIEW:
 	case ST_S_EDIT:
@@ -182,7 +182,7 @@ f_mouse(
 	    /*
 	     * Use the mouse for illuminating a solid
 	     */
-	    illuminate( ypos );
+	    illuminate(ypos);
 	    return TCL_OK;
 
 	case ST_O_PATH:
@@ -192,23 +192,23 @@ f_mouse(
 	    isave = ipathpos;
 	    ipathpos = illump->s_fullpath.fp_len-1 - (
 		(ypos+(int)GED_MAX) * (illump->s_fullpath.fp_len) / (int)GED_RANGE);
-	    if ( ipathpos != isave )
+	    if (ipathpos != isave)
 		view_state->vs_flag = 1;
 	    return TCL_OK;
 
-    } else switch ( state )  {
+    } else switch (state) {
 
 	case ST_VIEW:
 	    /*
-	     * Use the DT for moving view center.
-	     * Make indicated point be new view center (NEW).
+	     * Use the DT for moving view center.  Make indicated
+	     * point be new view center (NEW).
 	     */
-	    slewview( mousevec );
+	    slewview(mousevec);
 	    return TCL_OK;
 
 	case ST_O_PICK:
 	    ipathpos = 0;
-	    (void)chg_state( ST_O_PICK, ST_O_PATH, "mouse press");
+	    (void)chg_state(ST_O_PICK, ST_O_PATH, "mouse press");
 	    view_state->vs_flag = 1;
 	    return TCL_OK;
 
@@ -220,58 +220,58 @@ f_mouse(
 
 	case ST_S_EDIT:
 	    if ((SEDIT_TRAN || SEDIT_SCALE || SEDIT_PICK) && mged_variables->mv_transform == 'e')
-		sedit_mouse( mousevec );
+		sedit_mouse(mousevec);
 	    else
-		slewview( mousevec );
+		slewview(mousevec);
 	    return TCL_OK;
 
 	case ST_O_PATH:
 	    /*
-	     * Set combination "illuminate" mode.  This code
-	     * assumes that the user has already illuminated
-	     * a single solid, and wishes to move a collection of
-	     * objects of which the illuminated solid is a part.
-	     * The whole combination will not illuminate (to save
-	     * vector drawing time), but all the objects should
-	     * move/scale in unison.
+	     * Set combination "illuminate" mode.  This code assumes
+	     * that the user has already illuminated a single solid,
+	     * and wishes to move a collection of objects of which the
+	     * illuminated solid is a part.  The whole combination
+	     * will not illuminate (to save vector drawing time), but
+	     * all the objects should move/scale in unison.
 	     */
-	{
-	    char	*av[3];
-	    char	num[8];
-	    (void)sprintf(num, "%d", ipathpos);
-	    av[0] = "matpick";
-	    av[1] = num;
-	    av[2] = (char *)NULL;
-	    (void)f_matpick( clientData, interp, 2, av );
-	    /* How to record this in the journal file? */
-	    return TCL_OK;
-	}
+	    {
+		char *av[3];
+		char num[8];
+		(void)sprintf(num, "%d", ipathpos);
+		av[0] = "matpick";
+		av[1] = num;
+		av[2] = (char *)NULL;
+		(void)f_matpick(clientData, interp, 2, av);
+		/* How to record this in the journal file? */
+		return TCL_OK;
+	    }
 
 	case ST_S_VPICK:
-	    sedit_vpick( mousevec );
+	    sedit_vpick(mousevec);
 	    return TCL_OK;
 
 	case ST_O_EDIT:
 	    if ((OEDIT_TRAN || OEDIT_SCALE) && mged_variables->mv_transform == 'e')
-		objedit_mouse( mousevec );
+		objedit_mouse(mousevec);
 	    else
-		slewview( mousevec );
+		slewview(mousevec);
 
 	    return TCL_OK;
 
 	default:
-	    state_err( "mouse press" );
+	    state_err("mouse press");
 	    return TCL_ERROR;
     }
     /* NOTREACHED */
 }
 
+
 /*
- *			I L L U M I N A T E
+ * I L L U M I N A T E
  *
- *  All solids except for the illuminated one have s_iflag set to DOWN.
- *  The illuminated one has s_iflag set to UP, and also has the global
- *  variable "illump" pointing at it.
+ * All solids except for the illuminated one have s_iflag set to DOWN.
+ * The illuminated one has s_iflag set to UP, and also has the global
+ * variable "illump" pointing at it.
  */
 static void
 illuminate(int y) {
@@ -293,12 +293,12 @@ illuminate(int y) {
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
 	    /* Only consider solids which are presently in view */
-	    if ( sp->s_flag == UP )  {
-		if ( count-- == 0 ) {
+	    if (sp->s_flag == UP) {
+		if (count-- == 0) {
 		    sp->s_iflag = UP;
 		    illump = sp;
 		    illum_gdlp = gdlp;
-		}  else  {
+		} else {
 		    /* All other solids have s_iflag set DOWN */
 		    sp->s_iflag = DOWN;
 		}
@@ -311,10 +311,11 @@ illuminate(int y) {
     update_views = 1;
 }
 
+
 /*
- *                        A I L L
+ * A I L L
  *
- *   advance illump or ipathpos
+ * advance illump or ipathpos
  */
 int
 f_aip(
@@ -396,15 +397,15 @@ f_aip(
     return TCL_OK;
 }
 
+
 /*
- *  			W R T _ V I E W
+ * W R T _ V I E W
  *
- *  Given a model-space transformation matrix "change",
- *  return a matrix which applies the change with-respect-to
- *  the view center.
+ * Given a model-space transformation matrix "change", return a matrix
+ * which applies the change with-respect-to the view center.
  */
 void
-wrt_view( mat_t out, const mat_t change, const mat_t in )
+wrt_view(mat_t out, const mat_t change, const mat_t in)
 {
     static mat_t t1, t2;
 
@@ -417,47 +418,47 @@ wrt_view( mat_t out, const mat_t change, const mat_t in )
     bn_mat_mul(out, t1, t2);
 }
 
+
 /*
- *  			W R T _ P O I N T
+ * W R T _ P O I N T
  *
- *  Given a model-space transformation matrix "change",
- *  return a matrix which applies the change with-respect-to
- *  "point".
+ * Given a model-space transformation matrix "change", return a matrix
+ * which applies the change with-respect-to "point".
  */
 void
-wrt_point( mat_t out, const mat_t change, const mat_t in, const point_t point )
+wrt_point(mat_t out, const mat_t change, const mat_t in, const point_t point)
 {
-    mat_t	t;
+    mat_t t;
 
-    bn_mat_xform_about_pt( t, change, point );
+    bn_mat_xform_about_pt(t, change, point);
 
     if (out == in)
-	bn_mat_mul2( t, out );
+	bn_mat_mul2(t, out);
     else
-	bn_mat_mul( out, t, in );
+	bn_mat_mul(out, t, in);
 }
 
+
 /*
- *  			W R T _ P O I N T _ D I R E C
+ * W R T _ P O I N T _ D I R E C
  *
- *  Given a model-space transformation matrix "change",
- *  return a matrix which applies the change with-respect-to
- *  given "point" and "direc".
+ * Given a model-space transformation matrix "change", return a matrix
+ * which applies the change with-respect-to given "point" and "direc".
  */
 void
-wrt_point_direc( mat_t out, const mat_t change, const mat_t in, const point_t point, const vect_t direc )
+wrt_point_direc(mat_t out, const mat_t change, const mat_t in, const point_t point, const vect_t direc)
 {
-    static mat_t	t1;
-    static mat_t	pt_to_origin, origin_to_pt;
-    static mat_t	d_to_zaxis, zaxis_to_d;
-    static vect_t	zaxis;
+    static mat_t t1;
+    static mat_t pt_to_origin, origin_to_pt;
+    static mat_t d_to_zaxis, zaxis_to_d;
+    static vect_t zaxis;
 
     /* build "point to origin" matrix */
-    MAT_IDN( pt_to_origin );
+    MAT_IDN(pt_to_origin);
     MAT_DELTAS_VEC_NEG(pt_to_origin, point);
 
     /* build "origin to point" matrix */
-    MAT_IDN( origin_to_pt );
+    MAT_IDN(origin_to_pt);
     MAT_DELTAS_VEC_NEG(origin_to_pt, point);
 
     /* build "direc to zaxis" matrix */
@@ -468,43 +469,44 @@ wrt_point_direc( mat_t out, const mat_t change, const mat_t in, const point_t po
     bn_mat_inv(zaxis_to_d, d_to_zaxis);
 
     /* apply change matrix...
-     *	t1 = change * d_to_zaxis * pt_to_origin * in
+     * t1 = change * d_to_zaxis * pt_to_origin * in
      */
-    bn_mat_mul4( t1, change, d_to_zaxis, pt_to_origin, in );
+    bn_mat_mul4(t1, change, d_to_zaxis, pt_to_origin, in);
 
     /* apply origin_to_pt matrix:
-     *	out = origin_to_pt * zaxis_to_d *
-     *		change * d_to_zaxis * pt_to_origin * in
+     * out = origin_to_pt * zaxis_to_d *
+     * change * d_to_zaxis * pt_to_origin * in
      */
-    bn_mat_mul3( out, origin_to_pt, zaxis_to_d, t1 );
+    bn_mat_mul3(out, origin_to_pt, zaxis_to_d, t1);
 }
 
+
 /*
- *			F _ M A T P I C K
+ * F _ M A T P I C K
  *
- *  When in O_PATH state, select the arc which contains the matrix
- *  which is going to be "object edited".
- *  The choice is recorded in variable "ipathpos".
+ * When in O_PATH state, select the arc which contains the matrix
+ * which is going to be "object edited".  The choice is recorded in
+ * variable "ipathpos".
  *
- *  There are two syntaxes:
- *	matpick a/b	Pick arc between a and b.
- *	matpick #	Similar to internal interface.
- *			0 = top level object is a solid.
- *			n = edit arc from path [n-1] to [n]
+ * There are two syntaxes:
+ * matpick a/b Pick arc between a and b.
+ * matpick # Similar to internal interface.
+ * 0 = top level object is a solid.
+ * n = edit arc from path [n-1] to [n]
  */
 int
 f_matpick(
     ClientData clientData,
     Tcl_Interp *interp,
-    int	argc,
-    char	**argv)
+    int argc,
+    char **argv)
 {
     struct ged_display_list *gdlp;
     struct ged_display_list *next_gdlp;
-    struct solid	*sp;
-    char			*cp;
-    int		j;
-    int			illum_only = 0;
+    struct solid *sp;
+    char *cp;
+    int j;
+    int illum_only = 0;
 
     CHECK_DBI_NULL;
 
@@ -534,20 +536,20 @@ f_matpick(
 	return TCL_ERROR;
     }
 
-    if ( not_state( ST_O_PATH, "Object Edit matrix pick" ) )
+    if (not_state(ST_O_PATH, "Object Edit matrix pick"))
 	return TCL_ERROR;
 
-    if ( (cp = strchr( argv[1], '/' )) != NULL )  {
-	struct directory	*d0, *d1;
-	if ( (d1 = db_lookup( dbip, cp+1, LOOKUP_NOISY )) == DIR_NULL )
+    if ((cp = strchr(argv[1], '/')) != NULL) {
+	struct directory *d0, *d1;
+	if ((d1 = db_lookup(dbip, cp+1, LOOKUP_NOISY)) == DIR_NULL)
 	    return TCL_ERROR;
 	*cp = '\0';		/* modifies argv[1] */
-	if ( (d0 = db_lookup( dbip, argv[1], LOOKUP_NOISY )) == DIR_NULL )
+	if ((d0 = db_lookup(dbip, argv[1], LOOKUP_NOISY)) == DIR_NULL)
 	    return TCL_ERROR;
 	/* Find arc on illump path which runs from d0 to d1 */
-	for ( j=1; j < illump->s_fullpath.fp_len; j++ )  {
-	    if ( DB_FULL_PATH_GET(&illump->s_fullpath, j-1) != d0 )  continue;
-	    if ( DB_FULL_PATH_GET(&illump->s_fullpath, j-0) != d1 )  continue;
+	for (j=1; j < illump->s_fullpath.fp_len; j++) {
+	    if (DB_FULL_PATH_GET(&illump->s_fullpath, j-1) != d0) continue;
+	    if (DB_FULL_PATH_GET(&illump->s_fullpath, j-0) != d1) continue;
 	    ipathpos = j;
 	    goto got;
 	}
@@ -557,8 +559,8 @@ f_matpick(
 	return TCL_ERROR;
     } else {
 	ipathpos = atoi(argv[1]);
-	if ( ipathpos < 0 )  ipathpos = 0;
-	else if ( ipathpos >= illump->s_fullpath.fp_len )
+	if (ipathpos < 0) ipathpos = 0;
+	else if (ipathpos >= illump->s_fullpath.fp_len)
 	    ipathpos = illump->s_fullpath.fp_len-1;
     }
  got:
@@ -568,13 +570,13 @@ f_matpick(
 	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
-	    for ( j = 0; j <= ipathpos; j++ )  {
-		if ( DB_FULL_PATH_GET(&sp->s_fullpath, j) !=
-		     DB_FULL_PATH_GET(&illump->s_fullpath, j) )
+	    for (j = 0; j <= ipathpos; j++) {
+		if (DB_FULL_PATH_GET(&sp->s_fullpath, j) !=
+		    DB_FULL_PATH_GET(&illump->s_fullpath, j))
 		    break;
 	    }
 	    /* Only accept if top of tree is identical */
-	    if ( j == ipathpos+1 )
+	    if (j == ipathpos+1)
 		sp->s_iflag = UP;
 	    else
 		sp->s_iflag = DOWN;
@@ -584,7 +586,7 @@ f_matpick(
     }
 
     if (!illum_only) {
-	(void)chg_state( ST_O_PATH, ST_O_EDIT, "mouse press" );
+	(void)chg_state(ST_O_PATH, ST_O_EDIT, "mouse press");
 	chg_l2menu(ST_O_EDIT);
 
 	/* begin object editing - initialize */
@@ -594,6 +596,7 @@ f_matpick(
     update_views = 1;
     return TCL_OK;
 }
+
 
 /*
  * Local Variables:
