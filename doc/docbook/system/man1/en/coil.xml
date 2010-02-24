@@ -153,7 +153,7 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><option>-S number_of_turns,outer_diameter,wire_diameter,helix_angle,pitch</option></term>
+      <term><option>-S number_of_turns,outer_diameter,wire_diameter,helix_angle,pitch,winding_direction</option></term>
       <listitem>
 	<para>
 	  An advanced option that allows specification of multiple sections, with settings specified
@@ -188,9 +188,9 @@
     </para>
   </example>
   <example>
-    <title>Creating a multi-section coil</title>
+    <title>Creating a multi-section coil with right handed winding</title>
     <para>
-      <userinput>coil -S 10,1000,50,60,800 -S 10,1000,50,0,100</userinput>
+      <userinput>coil -S 10,1000,50,60,800,1 -S 10,1000,50,0,100,1</userinput>
     </para>
   </example>
 </refsect1>
