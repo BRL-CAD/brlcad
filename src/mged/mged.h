@@ -196,8 +196,8 @@ extern void sedit(void);
 extern void setview(double a1, double a2, double a3);
 extern void adcursor(void);
 extern void mmenu_display(int y_top);
-extern void mmenu_set(int index, struct menu_item *value);
-extern void mmenu_set_all(int index, struct menu_item *value);
+extern void mmenu_set(int idx, struct menu_item *value);
+extern void mmenu_set_all(int idx, struct menu_item *value);
 extern void
 col_item();
 extern void col_putchar();
@@ -722,7 +722,7 @@ void transform_editing_solid(
     struct rt_db_internal *os,		/* output solid */
     const mat_t mat,
     struct rt_db_internal *is,		/* input solid */
-    int free);
+    int freedbi);
 void replot_editing_solid(void);
 void sedit_abs_scale(void);
 void sedit_accept(void);
@@ -766,17 +766,17 @@ int scroll_select(int pen_x, int pen_y, int do_func);
 int scroll_display(int y_top);
 
 /* edpipe.c */
-void pipe_scale_od(struct rt_db_internal *db_int, fastf_t scale);
-void pipe_scale_id(struct rt_db_internal *db_int, fastf_t scale);
-void pipe_seg_scale_od(struct wdb_pipept *ps, fastf_t scale);
-void pipe_seg_scale_id(struct wdb_pipept *ps, fastf_t scale);
-void pipe_seg_scale_radius(struct wdb_pipept *ps, fastf_t scale);
-void pipe_scale_radius(struct rt_db_internal *db_int, fastf_t scale);
-struct wdb_pipept *find_pipept_nearest_pt(const struct bu_list *pipe_hd, const point_t pt);
-struct wdb_pipept *add_pipept(struct rt_pipe_internal *pipe, struct wdb_pipept *pp, const point_t new_pt);
-void ins_pipept(struct rt_pipe_internal *pipe, struct wdb_pipept *pp, const point_t new_pt);
-struct wdb_pipept *del_pipept(struct wdb_pipept *ps);
-void move_pipept(struct rt_pipe_internal *pipe, struct wdb_pipept *ps, const point_t new_pt);
+void pipe_scale_od(struct rt_db_internal *, fastf_t);
+void pipe_scale_id(struct rt_db_internal *, fastf_t);
+void pipe_seg_scale_od(struct wdb_pipept *, fastf_t);
+void pipe_seg_scale_id(struct wdb_pipept *, fastf_t);
+void pipe_seg_scale_radius(struct wdb_pipept *, fastf_t);
+void pipe_scale_radius(struct rt_db_internal *, fastf_t);
+struct wdb_pipept *find_pipept_nearest_pt(const struct bu_list *, const point_t);
+struct wdb_pipept *add_pipept(struct rt_pipe_internal *, struct wdb_pipept *, const point_t);
+void ins_pipept(struct rt_pipe_internal *, struct wdb_pipept *, const point_t);
+struct wdb_pipept *del_pipept(struct wdb_pipept *);
+void move_pipept(struct rt_pipe_internal *, struct wdb_pipept *, const point_t);
 
 /* vparse.c */
 void mged_vls_struct_parse_old(
