@@ -325,9 +325,9 @@ int ReadArgs(int argc, char **argv, struct bu_list *sections, fastf_t *mean_oute
     char *options="d:w:h:p:n:s:e:S:l";
     int numturns, stype, etype, lhflag;
     float mean_od, wired, h_angle, ptch;
-    int d1;
+    int d1, d6;
     float d2, d3, d4, d5;
-    char s1, s2, s3, s4;
+    char s1, s2, s3, s4, s5;
    
     struct coil_data_t *coil_data;
     
@@ -370,12 +370,17 @@ int ReadArgs(int argc, char **argv, struct bu_list *sections, fastf_t *mean_oute
 	    case 'S':
 	        coil_data = (struct coil_data_t *)
      	             bu_malloc( sizeof(struct coil_data_t), "coil data structure");
-		sscanf(bu_optarg, "%d%c%f%c%f%c%f%c%f", &d1,&s1,&d2,&s2,&d3,&s3,&d4,&s4,&d5);
+		sscanf(bu_optarg, "%d%c%f%c%f%c%f%c%f%c%d", &d1,&s1,&d2,&s2,&d3,&s3,&d4,&s4,&d5,&s5,&d6);
 	        coil_data->nt = d1;
 		coil_data->od = d2;
 		coil_data->wd = d3;
 		coil_data->ha = d4;
 		coil_data->p = d5;
+		if (d6 == 1) {
+    		    coil_data->lhf = 1;
+		} else {
+		    coil_data->lhf = -1;
+		}
 		BU_LIST_INSERT(&(*sections),&((*coil_data).l));	
 		break;
 	    default:
@@ -461,11 +466,9 @@ int main(int ac, char *av[])
 	coil_data->ha = helix_angle;
 	coil_data->p = pitch;
 	coil_data->lhf = lhf;
+	
         BU_LIST_APPEND(&(sections),&((*coil_data).l));	
-    }
-    
-    bu_log("Outer Diameter: %f\n",mean_outer_diameter);
-    bu_log("Wire Diameter: %f\n",wire_diameter);
+    }     
     
     /* Generate Name - this needs some thought for multiple section coils*/
     bu_vls_printf(&name, "coil");
