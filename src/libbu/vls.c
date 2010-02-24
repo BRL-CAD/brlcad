@@ -24,6 +24,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <stdarg.h>
+#include <stdint.h>
 #include "bio.h"
 
 #include "bu.h"
@@ -719,9 +720,9 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 #define SHORTINT 0x004
 #define LLONGINT 0x008
 #define SHHRTINT 0x010
-#define SIZETINT 0x020
+#define INTMAX_T 0x020
 #define PTRDIFFT 0x040
-#define INTMAX_T 0x080
+#define SIZETINT 0x080
 
     int flags;
     int fieldlen=-1;
@@ -926,6 +927,30 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 			snprintf(buf, BUFSIZ, fbuf, fieldlen, sh);
 		    else
 			snprintf(buf, BUFSIZ, fbuf, sh);
+		    bu_vls_strcat(vls, buf);
+		} else if (flags & INTMAX_T) {
+		    intmax_t im;
+		    im = va_arg(ap, intmax_t);
+		    if (flags & FIELDLEN)
+			snprintf(buf, BUFSIZ, fbuf, fieldlen, im);
+		    else
+			snprintf(buf, BUFSIZ, fbuf, im);
+		    bu_vls_strcat(vls, buf);
+		} else if (flags & PTRDIFFT) {
+		    ptrdiff_t pd;
+		    pd = va_arg(ap, ptrdiff_t);
+		    if (flags & FIELDLEN)
+			snprintf(buf, BUFSIZ, fbuf, fieldlen, pd);
+		    else
+			snprintf(buf, BUFSIZ, fbuf, pd);
+		    bu_vls_strcat(vls, buf);
+		} else if (flags & SIZETINT) {
+		    size_t st;
+		    st = (intmax_t)va_arg(ap, size_t);
+		    if (flags & FIELDLEN)
+			snprintf(buf, BUFSIZ, fbuf, fieldlen, st);
+		    else
+			snprintf(buf, BUFSIZ, fbuf, st);
 		    bu_vls_strcat(vls, buf);
 		} else {
 		    /* Regular unsigned int */
