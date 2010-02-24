@@ -714,10 +714,11 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
     register const char *ep; /* end pointer */
     register int len;
 
-#define LONGINT  0x001
+#define LONG_INT 0x001
 #define FIELDLEN 0x002
 #define SHORTINT 0x004
 #define LLONGINT 0x008
+#define SHHRTINT 0x010
 
     int flags;
     int fieldlen=-1;
@@ -757,16 +758,22 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 		*ep == '+' || *ep == '.' || isdigit(*ep))
 		continue;
 	    else if (*ep == 'l' || *ep == 'U' || *ep == 'O')
-		if (flags & LONGINT) {
+		if (flags & LONG_INT) {
+		    flags ^= LONG_INT;
 		    flags |= LLONGINT;
 		} else {
-		    flags |= LONGINT;
+		    flags |= LONG_INT;
 		}
 	    else if (*ep == '*') {
 		fieldlen = va_arg(ap, int);
 		flags |= FIELDLEN;
 	    } else if (*ep == 'h') {
-		flags |= SHORTINT;
+		if (flags & SHORTINT) {
+		    flags ^= SHORTINT;
+		    flags |= SHHRTINT;
+		} else {
+		    flags |= SHORTINT;
+		}
 	    } else
 		/* Anything else must be the end of the fmt specifier */
 		break;
@@ -881,9 +888,9 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 		}
 		break;
 	    case 'd':
-	    case 'p':
+	    case 'i':
 	    case 'x':
-		if (flags & LONGINT) {
+		if (flags & LONG_INT) {
 		    /* Long int */
 		    register long l;
 
@@ -903,7 +910,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 		    else
 			snprintf(buf, BUFSIZ, fbuf, ll);
 		    bu_vls_strcat(vls, buf);
-		} else if (flags & SHORTINT) {
+		} else if (flags & SHORTINT || flags & SHHRTINT) {
 		    /* short int */
 		    register short int sh;
 		    sh = (short int)va_arg(ap, int);
@@ -923,6 +930,18 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 			snprintf(buf, BUFSIZ, fbuf, j);
 		    bu_vls_strcat(vls, buf);
 		}
+		break;
+	    case 'p':
+		/* all pointer == "void *" */
+	        {
+		    void *vp;
+		    vp = (void *)va_arg(ap, void *);
+		    if (flags & FIELDLEN)
+			snprintf(buf, BUFSIZ, fbuf, fieldlen, vp);
+		    else
+			snprintf(buf, BUFSIZ, fbuf, vp);
+		    bu_vls_strcat(vls, buf);
+	        }
 		break;
 	    case '%':
 		bu_vls_putc(vls, '%');
