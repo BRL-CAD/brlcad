@@ -931,6 +931,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 		    bu_vls_strcat(vls, buf);
 		}
 		break;
+	    case 'n':
 	    case 'p':
 		/* all pointer == "void *" */
 	        {
