@@ -76,7 +76,6 @@ mged_SOURCES = \
 	clone.c \
 	color_scheme.c \
 	columns.c \
-	concat.c \
 	dir.c \
 	$(OGL_SRCS) \
 	$(RTGL_SRCS) \
