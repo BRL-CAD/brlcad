@@ -96,14 +96,17 @@
  * regardless, we use it so make sure it's declared by using the
  * similar POSIX ptrdiff_t type.
  */
-#  ifndef HAVE_SSIZE_T
-#    include <stddef.h>
-#    include <limits.h>
-#    ifndef SSIZE_MAX
-typedef ptrdiff_t ssize_t;
-#      define HAVE_SSIZE_T 1
-#    endif
+#ifndef HAVE_SSIZE_T
+#  ifdef HAVE_SYS_TYPES_H
+#    include <sys/types.h>
 #  endif
+#  include <limits.h>
+#  include <stddef.h>
+#  ifndef SSIZE_MAX
+typedef ptrdiff_t ssize_t;
+#    define HAVE_SSIZE_T 1
+#  endif
+#endif
 
 #endif  /* __COMMON_H__ */
 /** @} */
