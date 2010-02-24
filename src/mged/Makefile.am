@@ -120,8 +120,6 @@ mged_SOURCES = \
 	update.c \
 	usepen.c \
 	utility1.c \
-	utility2.c \
-	vdraw.c \
 	vparse.c \
 	vrlink.c
 
