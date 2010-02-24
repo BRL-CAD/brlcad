@@ -55,6 +55,9 @@
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 
 #include "vmath.h"
 #include "bu.h"
