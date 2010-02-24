@@ -719,6 +719,9 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 #define SHORTINT 0x004
 #define LLONGINT 0x008
 #define SHHRTINT 0x010
+#define SIZETINT 0x020
+#define PTRDIFFT 0x040
+#define INTMAX_T 0x080
 
     int flags;
     int fieldlen=-1;
@@ -754,17 +757,16 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 	ep = sp;
 	while (*ep) {
 	    ++ep;
-	    if (*ep == ' ' || *ep == '#' || *ep == '-' ||
-		*ep == '+' || *ep == '.' || isdigit(*ep))
+	    if (*ep == ' ' || *ep == '#' || *ep == '-' || *ep == '+' || *ep == '.' || isdigit(*ep)) {
 		continue;
-	    else if (*ep == 'l' || *ep == 'U' || *ep == 'O')
+	    } else if (*ep == 'l' || *ep == 'U' || *ep == 'O') {
 		if (flags & LONG_INT) {
 		    flags ^= LONG_INT;
 		    flags |= LLONGINT;
 		} else {
 		    flags |= LONG_INT;
 		}
-	    else if (*ep == '*') {
+	    } else if (*ep == '*') {
 		fieldlen = va_arg(ap, int);
 		flags |= FIELDLEN;
 	    } else if (*ep == 'h') {
@@ -774,6 +776,12 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 		} else {
 		    flags |= SHORTINT;
 		}
+	    } else if (*ep == 'j') {
+		flags |= INTMAX_T;
+	    } else if (*ep == 't') {
+		flags |= PTRDIFFT;
+	    } else if (*ep == 'z') {
+		flags |= SIZETINT;
 	    } else
 		/* Anything else must be the end of the fmt specifier */
 		break;
@@ -887,9 +895,52 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 		    bu_vls_strcat(vls, buf);
 		}
 		break;
+	    case 'o':
+	    case 'u':
+	    case 'x':
+		if (flags & LONG_INT) {
+		    /* Unsigned long int */
+		    unsigned long l;
+
+		    l = va_arg(ap, unsigned long);
+		    if (flags & FIELDLEN)
+			snprintf(buf, BUFSIZ, fbuf, fieldlen, l);
+		    else
+			snprintf(buf, BUFSIZ, fbuf, l);
+		    bu_vls_strcat(vls, buf);
+		} else if (flags & LLONGINT) {
+		    /* Unsigned long long int */
+		    unsigned long long ll;
+
+		    ll = va_arg(ap, unsigned long long);
+		    if (flags & FIELDLEN)
+			snprintf(buf, BUFSIZ, fbuf, fieldlen, ll);
+		    else
+			snprintf(buf, BUFSIZ, fbuf, ll);
+		    bu_vls_strcat(vls, buf);
+		} else if (flags & SHORTINT || flags & SHHRTINT) {
+		    /* unsigned short int */
+		    unsigned short int sh;
+		    sh = (unsigned short int)va_arg(ap, int);
+		    if (flags & FIELDLEN)
+			snprintf(buf, BUFSIZ, fbuf, fieldlen, sh);
+		    else
+			snprintf(buf, BUFSIZ, fbuf, sh);
+		    bu_vls_strcat(vls, buf);
+		} else {
+		    /* Regular unsigned int */
+		    register unsigned int j;
+
+		    j = (unsigned int)va_arg(ap, unsigned int);
+		    if (flags & FIELDLEN)
+			snprintf(buf, BUFSIZ, fbuf, fieldlen, j);
+		    else
+			snprintf(buf, BUFSIZ, fbuf, j);
+		    bu_vls_strcat(vls, buf);
+		}
+		break;
 	    case 'd':
 	    case 'i':
-	    case 'x':
 		if (flags & LONG_INT) {
 		    /* Long int */
 		    register long l;
