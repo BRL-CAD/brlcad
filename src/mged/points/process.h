@@ -48,6 +48,22 @@ typedef struct point_line {
 #undef YYSTYPE
 #define YYSTYPE point_line_t
 
+#ifndef YY_STACK_USED
+#  define YY_STACK_USED 0
+#endif
+#ifndef YY_STACK_UNUSED
+#  define YY_STACK_UNUSED 0
+#endif
+#ifndef YY_ALWAYS_INTERACTIVE
+#  define YY_ALWAYS_INTERACTIVE 0
+#endif
+#ifndef YY_NEVER_INTERACTIVE
+#  define YY_NEVER_INTERACTIVE 0
+#endif
+#ifndef YY_MAIN
+#  define YY_MAIN 0
+#endif
+
 /* must come after point_line_t typedef and YYSTYPE define */
 #include "./points_parse.h"
 
