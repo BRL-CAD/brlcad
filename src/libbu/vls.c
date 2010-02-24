@@ -716,7 +716,8 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 
 #define LONGINT  0x001
 #define FIELDLEN 0x002
-#define SHORTINT 0x003
+#define SHORTINT 0x004
+#define LLONGINT 0x008
 
     int flags;
     int fieldlen=-1;
@@ -756,7 +757,11 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 		*ep == '+' || *ep == '.' || isdigit(*ep))
 		continue;
 	    else if (*ep == 'l' || *ep == 'U' || *ep == 'O')
-		flags |= LONGINT;
+		if (flags & LONGINT) {
+		    flags |= LLONGINT;
+		} else {
+		    flags |= LONGINT;
+		}
 	    else if (*ep == '*') {
 		fieldlen = va_arg(ap, int);
 		flags |= FIELDLEN;
@@ -880,9 +885,19 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 	    case 'x':
 		if (flags & LONGINT) {
 		    /* Long int */
-		    register long ll;
+		    register long l;
 
-		    ll = va_arg(ap, long);
+		    l = va_arg(ap, long);
+		    if (flags & FIELDLEN)
+			snprintf(buf, BUFSIZ, fbuf, fieldlen, l);
+		    else
+			snprintf(buf, BUFSIZ, fbuf, l);
+		    bu_vls_strcat(vls, buf);
+		} else if (flags & LLONGINT) {
+		    /* Long long int */
+		    register long long ll;
+
+		    ll = va_arg(ap, long long);
 		    if (flags & FIELDLEN)
 			snprintf(buf, BUFSIZ, fbuf, fieldlen, ll);
 		    else
