@@ -334,7 +334,7 @@ int mc_tris[256][16] = {
 
 /* returns the number of triangles added or -1 on failure */
 int
-rt_nmg_mc_realize_cube(struct shell *s, int pv, point_t *p, point_t *edges, vect_t *normals, const struct bn_tol *tol)
+rt_nmg_mc_realize_cube(struct shell *s, int pv, point_t *p, point_t *edges, const struct bn_tol *tol)
 {
     int *vi, fo;
     struct faceuse *fu;
@@ -370,7 +370,6 @@ rt_nmg_mc_realize_cube(struct shell *s, int pv, point_t *p, point_t *edges, vect
 
 	fu = nmg_cmface(s, f_vertl, 3);
 
-	normals = normals;
 	nmg_vertex_gv(vertl[0], edges[vi[0]]);
 	nmg_vertex_gv(vertl[1], edges[vi[1]]);
 	nmg_vertex_gv(vertl[2], edges[vi[2]]);
