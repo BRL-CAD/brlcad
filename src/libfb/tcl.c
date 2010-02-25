@@ -56,8 +56,8 @@
 		return TCL_ERROR; \
 	} else if (*((long *)(_ptr)) != (_magic)) { \
 		bu_vls_init(&_fb_vls); \
-		bu_vls_printf(&_fb_vls, "ERROR: bad %s ptr x%lx, s/b x%x, was x%lx, file %s, line %d\n", \
-		_str, (long)_ptr, _magic, (long)*((long *)(_ptr)), __FILE__, __LINE__); \
+		bu_vls_printf(&_fb_vls, "ERROR: bad %s ptr %p, s/b x%x, was x%lx, file %s, line %d\n", \
+		_str, (void *)_ptr, _magic, (long)*((long *)(_ptr)), __FILE__, __LINE__); \
 		Tcl_AppendResult(interp, bu_vls_addr(&_fb_vls), (char *)NULL); \
 		bu_vls_free(&_fb_vls); \
 \
@@ -230,7 +230,7 @@ fb_cmd_open_existing(ClientData clientData, Tcl_Interp *interp, int argc, char *
 
     if (found) {
 	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "%lu", (unsigned long)ifp);
+	bu_vls_printf(&vls, "%p", (void *)ifp);
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
