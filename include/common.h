@@ -115,12 +115,14 @@ typedef ptrdiff_t ssize_t;
 #  ifdef HAVE_STDINT_H
 #    include <stdint.h>
 #  endif
-#  ifdef HAVE_UINT64_T
+#  ifndef UINTPTR_MAX
+#    ifdef HAVE_UINT64_T
 typedef uint64_t uintptr_t;
-#  else
+#    else
 typedef unsigned long long uintptr_t;
+#    endif
+#    define HAVE_UINT64_T 1
 #  endif
-#  define HAVE_UINT64_T 1
 #endif
 
 #endif  /* __COMMON_H__ */
