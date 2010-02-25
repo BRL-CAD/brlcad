@@ -55,9 +55,9 @@ struct mesh {
 
 static const char	usage[] = "Usage: %s [-v] [-y] [-s scale] [-f] [-o out_file] brlcad_db.h object\n";
 
-static uint8_t 		verbose = 0;
-static uint8_t		yup = 0;
-static uint8_t		flip_normals = 0;
+static int 		verbose = 0;
+static int		yup = 0;
+static int		flip_normals = 0;
 static float		scale = 0.001f;
 static char		*out_file = NULL;
 static char		*db_file = NULL;
@@ -66,7 +66,7 @@ static char		*object = NULL;
 static FILE		*fp_out;
 static struct db_i	*dbip;
 
-static uint8_t		format_version = MESH_FORMAT_VERSION;
+static char		format_version = MESH_FORMAT_VERSION;
 static struct mesh	*head = NULL;
 static struct mesh	*curr = NULL;
 static uint32_t		mesh_count = 0;
@@ -151,15 +151,15 @@ void write_header( struct db_i *dbip )
     } else {
 	endian = 0;
     }
-    fwrite( &endian, sizeof(char), 1, fp_out );
+    fwrite( &endian, 1, 1, fp_out );
 
     /* format version */
-    fwrite( &format_version, sizeof(char), 1, fp_out );
+    fwrite( &format_version, 1, 1, fp_out );
     len = strlen( dbip->dbi_title );
     /* model name string length */
     fwrite( &len, sizeof(uint16_t), 1, fp_out );
     /* model name string */
-    fwrite( dbip->dbi_title, sizeof(char), len, fp_out );
+    fwrite( dbip->dbi_title, 1, len, fp_out );
     /* mesh count */
     fwrite( &mesh_count, sizeof(uint32_t), 1, fp_out );
     /* total number of vertices */
@@ -272,7 +272,7 @@ void write_mesh_data()
 	char format;
 
 	/* face triples */
-	uint8_t ind8[3] = {0, 0, 0};
+	char ind8[3] = {0, 0, 0};
 	uint16_t ind16[3] = {0, 0, 0};
 	uint32_t ind32[3] = {0, 0, 0};
 
@@ -285,7 +285,7 @@ void write_mesh_data()
 	/* mesh name string length */
 	fwrite( &len, sizeof(uint16_t), 1, fp_out );
 	/* mesh name string */
-	fwrite( curr->name, sizeof(char), len, fp_out );
+	fwrite( curr->name, 1, len, fp_out );
 	nvert = curr->bot->num_vertices;
 	nface = curr->bot->num_faces;
 	/* number of vertices */
@@ -324,7 +324,7 @@ void write_mesh_data()
 	    format = 2;
 	}
 	/* face index format */
-	fwrite( &format, sizeof(char), 1, fp_out );
+	fwrite( &format, 1, 1, fp_out );
 	switch (format) {
 	    case 0:
 		for ( i=0; i< nface; i++) {
@@ -336,7 +336,7 @@ void write_mesh_data()
 			ind8[1] = curr->bot->faces[3*i+1];
 			ind8[2] = curr->bot->faces[3*i+2];
 		    }
-		    fwrite(&ind8, sizeof(uint8_t), 3, fp_out );
+		    fwrite(&ind8, 1, 3, fp_out );
 		}
 		break;
 	    case 1:
@@ -349,7 +349,7 @@ void write_mesh_data()
 			ind16[1] = curr->bot->faces[3*i+1];
 			ind16[2] = curr->bot->faces[3*i+2];
 		    }
-		    fwrite( &ind16, sizeof(uint16_t), 3, fp_out );
+		    fwrite( &ind16, 2, 3, fp_out );
 		}
 		break;
 	    case 2:
@@ -362,7 +362,7 @@ void write_mesh_data()
 			ind32[1] = curr->bot->faces[3*i+1];
 			ind32[2] = curr->bot->faces[3*i+2];
 		    }
-		    fwrite( &ind32, sizeof(uint32_t), 3, fp_out );
+		    fwrite( &ind32, 4, 3, fp_out );
 		}
 		break;
 	    default:
