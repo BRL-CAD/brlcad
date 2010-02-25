@@ -1814,6 +1814,7 @@ AC_CHECK_TYPES([sig_t], [], [], [#include <signal.h>])
 AC_CHECK_TYPES([uint64_t])
 AC_CHECK_TYPES([ssize_t])
 
+# AC_TYPE_UINTPTR_T
 AC_CHECK_TYPE([uintptr_t],
     [AC_DEFINE([HAVE_UINTPTR_T], 1, [Define to 1 if the system has the type `uintptr_t'.])],
     [for ac_type in 'unsigned int' 'unsigned long int' 'unsigned long long int'; do
