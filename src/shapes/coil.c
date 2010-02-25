@@ -319,12 +319,12 @@ void make_coil(struct rt_wdb (*file), char *prefix, struct bu_list *sections, in
 
 
 /* Process command line arguments */ 
-int ReadArgs(int argc, char **argv, struct bu_list *sections, fastf_t *mean_outer_diameter, fastf_t *wire_diameter, fastf_t *helix_angle, fastf_t *pitch, int *nt, int *start_cap_type, int *end_cap_type, int *lhf)
+int ReadArgs(int argc, char **argv, struct bu_list *sections, fastf_t *mean_outer_diameter, fastf_t *wire_diameter, fastf_t *helix_angle, fastf_t *pitch, int *nt, int *start_cap_type, int *end_cap_type, fastf_t *overall_length, int *lhf)
 {
     int c = 0;
-    char *options="d:w:h:p:n:s:e:S:l";
+    char *options="d:w:h:p:n:s:e:S:l:L";
     int numturns, stype, etype, lhflag;
-    float mean_od, wired, h_angle, ptch;
+    float mean_od, wired, h_angle, ptch, lngth;
     int d1, d6;
     float d2, d3, d4, d5;
     char s1, s2, s3, s4, s5;
@@ -347,7 +347,7 @@ int ReadArgs(int argc, char **argv, struct bu_list *sections, fastf_t *mean_oute
 		sscanf(bu_optarg, "%f", &h_angle);
 		*helix_angle = h_angle;
 		break;
-	    case 'l':
+	    case 'L':
 		lhflag = -1;
 		*lhf = lhflag;
 		break;
@@ -366,6 +366,10 @@ int ReadArgs(int argc, char **argv, struct bu_list *sections, fastf_t *mean_oute
 	    case 'e':
 		sscanf(bu_optarg, "%d", &etype);
 		*end_cap_type = etype;
+		break;
+	    case 'l':
+		sscanf(bu_optarg, "%f", &lngth);
+		*overall_length = lngth;
 		break;
 	    case 'S':
 	        coil_data = (struct coil_data_t *)
@@ -398,13 +402,14 @@ int main(int ac, char *av[])
     struct bu_vls coil_type;
     struct bu_vls name;
     struct bu_vls str;
-    fastf_t mean_outer_diameter, wire_diameter;
+    fastf_t mean_outer_diameter, wire_diameter, overall_length, nominal_length;
     fastf_t helix_angle, pitch;
 
     struct coil_data_t *coil_data;
     struct bu_list sections;
     
     int nt; /* Number of turns */
+    int nt_user_set = 1;
     int start_cap_type, end_cap_type;
     int lhf; /* Winding flag */
 
@@ -423,10 +428,11 @@ int main(int ac, char *av[])
     nt = 0;
     start_cap_type = 0;
     end_cap_type = 0;
+    overall_length = 0;
     lhf = 1;
    
     /* Process arguments */  
-    ReadArgs(ac, av, &sections, &mean_outer_diameter, &wire_diameter, &helix_angle, &pitch, &nt, &start_cap_type, &end_cap_type, &lhf);
+    ReadArgs(ac, av, &sections, &mean_outer_diameter, &wire_diameter, &helix_angle, &pitch, &nt, &start_cap_type, &end_cap_type, &overall_length, &lhf);
 
     /* Handle various potential errors in args and set defaults if nothing supplied */
   
@@ -457,7 +463,10 @@ int main(int ac, char *av[])
 	    pitch = wire_diameter;
         }
     
-        if (nt == 0) nt = 30;
+        if (nt == 0) {
+	    nt_user_set = 0;
+	    nt = 30;
+	}
 
 	coil_data = (struct coil_data_t *) bu_malloc( sizeof(struct coil_data_t), "coil data structure");
 	coil_data->nt = nt;
@@ -468,7 +477,13 @@ int main(int ac, char *av[])
 	coil_data->lhf = lhf;
 	
         BU_LIST_APPEND(&(sections),&((*coil_data).l));	
-    }     
+    }
+
+    /* If hard clamping the length, have to check some things and maybe clamp some values */
+
+    if (overall_length != 0) {
+
+    }	
     
     /* Generate Name - this needs some thought for multiple section coils*/
     bu_vls_printf(&name, "coil");
