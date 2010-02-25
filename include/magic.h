@@ -225,13 +225,13 @@
 #  define BU_CKMAG_TCL(_interp, _ptr, _magic, _str)
 #else
 #  define BU_CKMAG(_ptr, _magic, _str) { \
-	size_t _ptrval = (size_t)(_ptr); \
+	uintptr_t _ptrval = (uintptr_t)(_ptr); \
 	if ((_ptrval == 0) || (_ptrval & (sizeof(_ptrval)-1)) || *((unsigned long *)(_ptr)) != (unsigned long)(_magic)) { \
 		bu_badmagic((unsigned long *)(_ptr), (unsigned long)_magic, _str, __FILE__, __LINE__); \
 	} \
 }
 #  define BU_CKMAG_TCL(_interp, _ptr, _magic, _str) { \
-	size_t _ptrval = (size_t)(_ptr); \
+	uintptr_t _ptrval = (uintptr_t)(_ptr); \
 	if ((_ptrval == 0) || (_ptrval & (sizeof(_ptrval)-1)) || *((unsigned long *)(_ptr)) != (_magic)) { \
 		bu_badmagic_tcl((_interp), (unsigned long *)(_ptr), (unsigned long)_magic, _str, __FILE__, __LINE__); \
 		return TCL_ERROR; \
