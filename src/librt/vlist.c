@@ -633,9 +633,10 @@ getshort(FILE *fp)
 static void
 rt_uplot_get_args(FILE *fp, const struct uplot *up, char *carg, fastf_t *arg)
 {
+    int ret;
     int i, j;
-    int cc;
-    char inbuf[8];
+    int cc = 0;
+    char inbuf[8] = {'\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0'};
 
     for (i = 0; i < up->narg; i++) {
 	switch (up->targ) {
@@ -643,7 +644,9 @@ rt_uplot_get_args(FILE *fp, const struct uplot *up, char *carg, fastf_t *arg)
 		arg[i] = getshort(fp);
 		break;
 	    case TIEEE:
-		fread(inbuf, 8, 1, fp);
+		ret = fread(inbuf, 8, 1, fp);
+		if (ret != 1)
+		    bu_log("WARNING: uplot read failure\n");
 		ntohd((unsigned char *)&arg[i],
 		      (unsigned char *)inbuf, 1);
 		break;
@@ -670,22 +673,31 @@ rt_uplot_get_args(FILE *fp, const struct uplot *up, char *carg, fastf_t *arg)
 static void
 rt_uplot_get_text_args(FILE *fp, const struct uplot *up, char *carg, fastf_t *arg)
 {
-    int i;
-    unsigned int tchar;
+    int ret;
+    int i = 0;
+    unsigned int tchar = 0;
 
     for (i = 0; i < up->narg; i++) {
 	switch (up->targ) {
 	    case TSHORT:
-		fscanf(fp, "%lf", &arg[i]);
+		ret = fscanf(fp, "%lf", &arg[i]);
+		if (ret != 1)
+		    bu_log("WARNING: uplot short input failure\n");
 		break;
 	    case TIEEE:
-		fscanf(fp, "%lf", &arg[i]);
+		ret = fscanf(fp, "%lf", &arg[i]);
+		if (ret != 1)
+		    bu_log("WARNING: uplot floating point input failure\n");
 		break;
 	    case TSTRING:
-		fscanf(fp, "%256s\n", &carg[0]);
+		ret = fscanf(fp, "%256s\n", &carg[0]);
+		if (ret != 1)
+		    bu_log("WARNING: uplot string input failure\n");
 		break;
 	    case TCHAR:
-		fscanf(fp, "%u", &tchar);
+		ret = fscanf(fp, "%u", &tchar);
+		if (ret != 1)
+		    bu_log("WARNING: uplot character input failure\n");
 		if (tchar > 255) tchar = 255;
 		carg[i] = tchar;
 		arg[i] = 0;
