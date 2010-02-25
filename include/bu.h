@@ -1599,7 +1599,7 @@ struct bu_vls  {
 };
 #define BU_CK_VLS(_vp)		BU_CKMAG(_vp, BU_VLS_MAGIC, "bu_vls")
 #define BU_VLS_IS_INITIALIZED(_vp)	\
-	(((struct bu_vls *)(_vp) != 0) && ((_vp)->vls_magic == BU_VLS_MAGIC))
+    (((struct bu_vls *)(_vp) != (struct bu_vls *)0) && ((_vp)->vls_magic == BU_VLS_MAGIC))
 
 /** @} */
 
