@@ -159,11 +159,11 @@ fastf_t cap_ground(struct rt_wdb *file, struct bu_list *head, char *prefix, stru
    
     *need_subtraction += 1;
 
-    center_height = sqrt(((coil_radius/cos(D2R(helix_angle)))*(coil_radius/cos(D2R(helix_angle))))-coil_radius*coil_radius) + 0.25*pitch;
+    center_height = sqrt(((coil_radius/cos(D2R(helix_angle)))*(coil_radius/cos(D2R(helix_angle))))-coil_radius*coil_radius) + 0.25*pitch*cos(D2R(helix_angle));
     bu_log("Center_height:  %f\n", center_height);
     
     if (is_start == 1) {
-	VSET(pnt1, 0, -coil_radius, starting_pitch);
+	VSET(pnt1, 0, -coil_radius, starting_pitch + pitch/8);
 	VSET(pnt2, lhf*coil_radius , -coil_radius, pitch/8 + starting_pitch);
 	VSET(pnt4, lhf*coil_radius , coil_radius, pitch*3/8 + starting_pitch + 2 * sin(D2R(helix_angle))*coil_radius);
 	VSET(pnt6, lhf*-coil_radius , coil_radius, pitch*5/8 + starting_pitch + 2 * sin(D2R(helix_angle))*coil_radius);
@@ -173,7 +173,7 @@ fastf_t cap_ground(struct rt_wdb *file, struct bu_list *head, char *prefix, stru
     	mk_add_pipe_pt(head, pnt4, wire_diameter, 0.0, pipe_bend);
     	mk_add_pipe_pt(head, pnt6, wire_diameter, 0.0, pipe_bend);
     	mk_add_pipe_pt(head, pnt8, wire_diameter, 0.0, pipe_bend);
-        VSET(origin, 0, 0, center_height - 0.125*pitch);
+        VSET(origin, 0, 0, center_height);
         VSET(height, 0, sin(D2R(helix_angle))*(wire_diameter+0.25*pitch), -wire_diameter - 0.25*pitch);
     	bu_vls_trunc(&str, 0);
     	bu_vls_printf(&str, "%s-startcap.s", prefix);
