@@ -346,6 +346,7 @@ pl_3box(register FILE *plotfp, int px1, int py1, int pz1, int px2, int py2, int 
 void
 pd_point(register FILE *plotfp, double x, double y)
 {
+    int ret;
     double in[2];
     unsigned char out[2*8+1];
 
@@ -355,7 +356,7 @@ pd_point(register FILE *plotfp, double x, double y)
 	htond(&out[1], (unsigned char *)in, 2);
 
 	out[0] = 'x';
-	fwrite(out, 1, 2*8+1, plotfp);
+	ret = fwrite(out, 1, 2*8+1, plotfp);
     } else {
 	fprintf(plotfp, "x %g %g\n", x, y);
     }
@@ -364,6 +365,7 @@ pd_point(register FILE *plotfp, double x, double y)
 void
 pd_line(register FILE *plotfp, double px1, double py1, double px2, double py2)
 {
+    int ret;
     double in[4];
     unsigned char out[4*8+1];
 
@@ -375,7 +377,7 @@ pd_line(register FILE *plotfp, double px1, double py1, double px2, double py2)
 	htond(&out[1], (unsigned char *)in, 4);
 
 	out[0] = 'v';
-	fwrite(out, 1, 4*8+1, plotfp);
+	ret = fwrite(out, 1, 4*8+1, plotfp);
     } else {
 	fprintf(plotfp, "v %g %g %g %g\n", px1, py1, px2, py2);
     }
@@ -386,6 +388,7 @@ pd_line(register FILE *plotfp, double px1, double py1, double px2, double py2)
 void
 pd_move(register FILE *plotfp, double x, double y)
 {
+    int ret;
     double in[2];
     unsigned char out[2*8+1];
 
@@ -395,7 +398,7 @@ pd_move(register FILE *plotfp, double x, double y)
 	htond(&out[1], (unsigned char *)in, 2);
 
 	out[0] = 'o';
-	fwrite(out, 1, 2*8+1, plotfp);
+	ret = fwrite(out, 1, 2*8+1, plotfp);
     } else {
 	fprintf(plotfp, "o %g %g\n", x, y);
     }
@@ -404,6 +407,7 @@ pd_move(register FILE *plotfp, double x, double y)
 void
 pd_cont(register FILE *plotfp, double x, double y)
 {
+    int ret;
     double in[2];
     unsigned char out[2*8+1];
 
@@ -413,7 +417,7 @@ pd_cont(register FILE *plotfp, double x, double y)
 	htond(&out[1], (unsigned char *)in, 2);
 
 	out[0] = 'q';
-	fwrite(out, 1, 2*8+1, plotfp);
+	ret = fwrite(out, 1, 2*8+1, plotfp);
     } else {
 	fprintf(plotfp, "q %g %g\n", x, y);
     }
@@ -422,6 +426,7 @@ pd_cont(register FILE *plotfp, double x, double y)
 void
 pd_space(register FILE *plotfp, double px1, double py1, double px2, double py2)
 {
+    int ret;
     double in[4];
     unsigned char out[4*8+1];
 
@@ -433,7 +438,7 @@ pd_space(register FILE *plotfp, double px1, double py1, double px2, double py2)
 	htond(&out[1], (unsigned char *)in, 4);
 
 	out[0] = 'w';
-	fwrite(out, 1, 4*8+1, plotfp);
+	ret = fwrite(out, 1, 4*8+1, plotfp);
     } else {
 	fprintf(plotfp, "w %g %g %g %g\n", px1, py1, px2, py2);
     }
@@ -442,6 +447,7 @@ pd_space(register FILE *plotfp, double px1, double py1, double px2, double py2)
 void
 pd_circle(register FILE *plotfp, double x, double y, double r)
 {
+    int ret;
     double in[3];
     unsigned char out[3*8+1];
 
@@ -452,7 +458,7 @@ pd_circle(register FILE *plotfp, double x, double y, double r)
 	htond(&out[1], (unsigned char *)in, 3);
 
 	out[0] = 'i';
-	fwrite(out, 1, 3*8+1, plotfp);
+	ret = fwrite(out, 1, 3*8+1, plotfp);
     } else {
 	fprintf(plotfp, "i %g %g %g\n", x, y, r);
     }
@@ -461,6 +467,7 @@ pd_circle(register FILE *plotfp, double x, double y, double r)
 void
 pd_arc(register FILE *plotfp, double xc, double yc, double px1, double py1, double px2, double py2)
 {
+    int ret;
     double in[6];
     unsigned char out[6*8+1];
 
@@ -474,7 +481,7 @@ pd_arc(register FILE *plotfp, double xc, double yc, double px1, double py1, doub
 	htond(&out[1], (unsigned char *)in, 6);
 
 	out[0] = 'r';
-	fwrite(out, 1, 6*8+1, plotfp);
+	ret = fwrite(out, 1, 6*8+1, plotfp);
     } else {
 	fprintf(plotfp, "r %g %g %g %g %g %g\n", xc, yc, px1, py1, px2, py2);
     }
@@ -495,6 +502,7 @@ pd_box(register FILE *plotfp, double px1, double py1, double px2, double py2)
 void
 pdv_3space(register FILE *plotfp, const fastf_t *min, const fastf_t *max)
 {
+    int ret;
     unsigned char out[6*8+1];
 
     if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {
@@ -502,7 +510,7 @@ pdv_3space(register FILE *plotfp, const fastf_t *min, const fastf_t *max)
 	htond(&out[3*8+1], (unsigned char *)max, 3);
 
 	out[0] = 'W';
-	fwrite(out, 1, 6*8+1, plotfp);
+	ret = fwrite(out, 1, 6*8+1, plotfp);
     } else {
 	fprintf(plotfp, "W %g %g %g %g %g %g\n", V3ARGS(min), V3ARGS(max));
     }
@@ -511,6 +519,7 @@ pdv_3space(register FILE *plotfp, const fastf_t *min, const fastf_t *max)
 void
 pd_3space(register FILE *plotfp, double px1, double py1, double pz1, double px2, double py2, double pz2)
 {
+    int ret;
     double in[6];
     unsigned char out[6*8+1];
 
@@ -524,7 +533,7 @@ pd_3space(register FILE *plotfp, double px1, double py1, double pz1, double px2,
 	htond(&out[1], (unsigned char *)in, 6);
 
 	out[0] = 'W';
-	fwrite(out, 1, 6*8+1, plotfp);
+	ret = fwrite(out, 1, 6*8+1, plotfp);
     } else {
 	fprintf(plotfp, "W %g %g %g %g %g %g\n", px1, py1, pz1, px2, py2, pz2);
     }
@@ -533,13 +542,14 @@ pd_3space(register FILE *plotfp, double px1, double py1, double pz1, double px2,
 void
 pdv_3point(register FILE *plotfp, const fastf_t *pt)
 {
+    int ret;
     unsigned char out[3*8+1];
 
     if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {
 	htond(&out[1], (unsigned char *)pt, 3);
 
 	out[0] = 'X';
-	fwrite(out, 1, 3*8+1, plotfp);
+	ret = fwrite(out, 1, 3*8+1, plotfp);
     } else {
 	fprintf(plotfp, "X %g %g %g\n", V3ARGS(pt));
     }
@@ -548,6 +558,7 @@ pdv_3point(register FILE *plotfp, const fastf_t *pt)
 void
 pd_3point(register FILE *plotfp, double x, double y, double z)
 {
+    int ret;
     double in[3];
     unsigned char out[3*8+1];
 
@@ -558,7 +569,7 @@ pd_3point(register FILE *plotfp, double x, double y, double z)
 	htond(&out[1], (unsigned char *)in, 3);
 
 	out[0] = 'X';
-	fwrite(out, 1, 3*8+1, plotfp);
+	ret = fwrite(out, 1, 3*8+1, plotfp);
     } else {
 	fprintf(plotfp, "X %g %g %g\n", x, y, z);
     }
@@ -567,13 +578,14 @@ pd_3point(register FILE *plotfp, double x, double y, double z)
 void
 pdv_3move(register FILE *plotfp, const fastf_t *pt)
 {
+    int ret;
     unsigned char out[3*8+1];
 
     if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {
 	htond(&out[1], (unsigned char *)pt, 3);
 
 	out[0] = 'O';
-	fwrite(out, 1, 3*8+1, plotfp);
+	ret = fwrite(out, 1, 3*8+1, plotfp);
     } else {
 	fprintf(plotfp, "O %g %g %g\n", V3ARGS(pt));
     }
@@ -582,6 +594,7 @@ pdv_3move(register FILE *plotfp, const fastf_t *pt)
 void
 pd_3move(register FILE *plotfp, double x, double y, double z)
 {
+    int ret;
     double in[3];
     unsigned char out[3*8+1];
 
@@ -592,7 +605,7 @@ pd_3move(register FILE *plotfp, double x, double y, double z)
 	htond(&out[1], (unsigned char *)in, 3);
 
 	out[0] = 'O';
-	fwrite(out, 1, 3*8+1, plotfp);
+	ret = fwrite(out, 1, 3*8+1, plotfp);
     } else {
 	fprintf(plotfp, "O %g %g %g\n", x, y, z);
     }
@@ -601,13 +614,14 @@ pd_3move(register FILE *plotfp, double x, double y, double z)
 void
 pdv_3cont(register FILE *plotfp, const fastf_t *pt)
 {
+    int ret;
     unsigned char out[3*8+1];
 
     if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {
 	htond(&out[1], (unsigned char *)pt, 3);
 
 	out[0] = 'Q';
-	fwrite(out, 1, 3*8+1, plotfp);
+	ret = fwrite(out, 1, 3*8+1, plotfp);
     } else {
 	fprintf(plotfp, "Q %g %g %g\n", V3ARGS(pt));
     }
@@ -616,6 +630,7 @@ pdv_3cont(register FILE *plotfp, const fastf_t *pt)
 void
 pd_3cont(register FILE *plotfp, double x, double y, double z)
 {
+    int ret;
     double in[3];
     unsigned char out[3*8+1];
 
@@ -626,7 +641,7 @@ pd_3cont(register FILE *plotfp, double x, double y, double z)
 	htond(&out[1], (unsigned char *)in, 3);
 
 	out[0] = 'Q';
-	fwrite(out, 1, 3*8+1, plotfp);
+	ret = fwrite(out, 1, 3*8+1, plotfp);
     } else {
 	fprintf(plotfp, "Q %g %g %g\n", x, y, z);
     }
@@ -635,6 +650,7 @@ pd_3cont(register FILE *plotfp, double x, double y, double z)
 void
 pdv_3line(register FILE *plotfp, const fastf_t *a, const fastf_t *b)
 {
+    int ret;
     unsigned char out[6*8+1];
 
     if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {
@@ -642,7 +658,7 @@ pdv_3line(register FILE *plotfp, const fastf_t *a, const fastf_t *b)
 	htond(&out[3*8+1], (unsigned char *)b, 3);
 
 	out[0] = 'V';
-	fwrite(out, 1, 6*8+1, plotfp);
+	ret = fwrite(out, 1, 6*8+1, plotfp);
     } else {
 	fprintf(plotfp, "V %g %g %g %g %g %g\n", V3ARGS(a), V3ARGS(b));
     }
@@ -651,6 +667,7 @@ pdv_3line(register FILE *plotfp, const fastf_t *a, const fastf_t *b)
 void
 pd_3line(register FILE *plotfp, double px1, double py1, double pz1, double px2, double py2, double pz2)
 {
+    int ret;
     double in[6];
     unsigned char out[6*8+1];
 
@@ -664,7 +681,7 @@ pd_3line(register FILE *plotfp, double px1, double py1, double pz1, double px2, 
 	htond(&out[1], (unsigned char *)in, 6);
 
 	out[0] = 'V';
-	fwrite(out, 1, 6*8+1, plotfp);
+	ret = fwrite(out, 1, 6*8+1, plotfp);
     } else {
 	fprintf(plotfp, "V %g %g %g %g %g %g\n", px1, py1, pz1, px2, py2, pz2);
     }
