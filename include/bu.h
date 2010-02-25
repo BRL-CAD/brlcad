@@ -2873,7 +2873,7 @@ BU_EXPORT BU_EXTERN(void bu_hist_pr, (const struct bu_hist *histp, const char *t
 BU_EXPORT BU_EXTERN(void htond,
 		    (unsigned char *out,
 		     const unsigned char *in,
-		     int count));
+		     size_t count));
 
 /**
  * N T O H D
@@ -2883,7 +2883,7 @@ BU_EXPORT BU_EXTERN(void htond,
 BU_EXPORT BU_EXTERN(void ntohd,
 		    (unsigned char *out,
 		     const unsigned char *in,
-		     int count));
+		     size_t count));
 
 /** @file htonf.c
  *
@@ -2901,7 +2901,7 @@ BU_EXPORT BU_EXTERN(void ntohd,
 BU_EXPORT BU_EXTERN(void htonf,
 		    (unsigned char *out,
 		     const unsigned char *in,
-		     int count));
+		     size_t count));
 
 /**
  * N T O H F
@@ -2911,7 +2911,7 @@ BU_EXPORT BU_EXTERN(void htonf,
 BU_EXPORT BU_EXTERN(void ntohf,
 		    (unsigned char *out,
 		     const unsigned char *in,
-		     int count));
+		     size_t count));
 
 /** @} */
 

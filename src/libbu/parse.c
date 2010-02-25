@@ -69,7 +69,7 @@
 
 
 #define BU_CK_GETPUT(_p) {\
-	register size_t _i; \
+	register unsigned long _i; \
 	register size_t _len; \
 	BU_CK_EXTERNAL(_p); \
 	if (!(_p->ext_buf)) { \
@@ -78,8 +78,8 @@
 		bu_bomb("NULL pointer"); \
 	} \
 	if (_p->ext_nbytes < 6) { \
-		bu_log("ERROR: BU_CK_GETPUT buffer only %lu bytes, file %s, line %d\n", \
-		    (unsigned long)_p->ext_nbytes, __FILE__, __LINE__); \
+		bu_log("ERROR: BU_CK_GETPUT buffer only %llu bytes, file %s, line %d\n", \
+		    (unsigned long long)_p->ext_nbytes, __FILE__, __LINE__); \
 		bu_bomb("getput buffer too small"); \
 	} \
 	_i = (((unsigned char *)(_p->ext_buf))[0] << 8) | \
@@ -95,8 +95,8 @@
 	       (((unsigned char *)(_p->ext_buf))[4] <<  8) | \
 		((unsigned char *)(_p->ext_buf))[5]; \
 	if (_len > _p->ext_nbytes) { \
-		bu_log("ERROR: BU_CK_GETPUT buffer %p, expected len=%ld, ext_nbytes=%lu, file %s, line %d\n", \
-		    (void *)_p->ext_buf, _len, (unsigned long)_p->ext_nbytes, \
+		bu_log("ERROR: BU_CK_GETPUT buffer %p, expected len=%llu, ext_nbytes=%llu, file %s, line %d\n", \
+		       (void *)_p->ext_buf, (unsigned long long)_len, (unsigned long long)_p->ext_nbytes, \
 		    __FILE__, __LINE__); \
 		bu_bomb("Bad getput buffer"); \
 	} \
@@ -118,8 +118,8 @@ bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_s
     char *ep;		/* &ext->ext_buf[ext->ext_nbytes] */
     const struct bu_structparse *ip;	/* current imexport structure */
     char *loc;		/* where host-format data is */
-    int len;
-    register int i;
+    size_t len;
+    register size_t i;
 
     BU_INIT_EXTERNAL(ext);
 
@@ -169,7 +169,7 @@ bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_s
 		CKMEM(ip->sp_count * 4);
 		{
 		    register unsigned long l;
-		    for (i = ip->sp_count-1; i >= 0; i--) {
+		    for (i = ip->sp_count; i > 0; i--) {
 			l = *((int *)loc);
 			cp[3] = l;
 			cp[2] = l >> 8;
@@ -185,7 +185,7 @@ bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_s
 		CKMEM(ip->sp_count * 2);
 		{
 		    register unsigned short s;
-		    for (i = ip->sp_count-1; i >= 0; i--) {
+		    for (i = ip->sp_count; i > 0; i--) {
 			s = *((int *)loc);
 			cp[1] = s;
 			cp[0] = s >> 8;
@@ -203,7 +203,7 @@ bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_s
 		     *
 		     * ip->sp_count == sizeof(char array)
 		     */
-		    register int lenstr;
+		    register size_t lenstr;
 
 		    /* include the terminating null */
 		    lenstr = (int)strlen(loc) + 1;
@@ -218,10 +218,10 @@ bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_s
 
 		    /* put the length on the front of the string
 		     */
-		    cp[3] = len;
-		    cp[2] = len >> 8;
-		    cp[1] = len >> 16;
-		    cp[0] = len >> 24;
+		    cp[3] = (char)len;
+		    cp[2] = (char)(len >> 8);
+		    cp[1] = (char)(len >> 16);
+		    cp[0] = (char)(len >> 24);
 
 		    cp += 4;
 
@@ -233,10 +233,10 @@ bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_s
 	    case 'c':
 		{
 		    CKMEM(ip->sp_count + 4);
-		    cp[3] = ip->sp_count;
-		    cp[2] = ip->sp_count >> 8;
-		    cp[1] = ip->sp_count >> 16;
-		    cp[0] = ip->sp_count >> 24;
+		    cp[3] = (char)ip->sp_count;
+		    cp[2] = (char)(ip->sp_count >> 8);
+		    cp[1] = (char)(ip->sp_count >> 16);
+		    cp[0] = (char)(ip->sp_count >> 24);
 		    cp += 4;
 		    memcpy(cp, loc, ip->sp_count);
 		    cp += ip->sp_count;
@@ -258,10 +258,10 @@ bu_struct_export(struct bu_external *ext, const genptr_t base, const struct bu_s
 
     i = cp - (char *)ext->ext_buf;
     /* Fill in length in external buffer */
-    ((char *)ext->ext_buf)[5] = i;
-    ((char *)ext->ext_buf)[4] = i >> 8;
-    ((char *)ext->ext_buf)[3] = i >>16;
-    ((char *)ext->ext_buf)[2] = i >>24;
+    ((char *)ext->ext_buf)[5] = (char)i;
+    ((char *)ext->ext_buf)[4] = (char)(i >> 8);
+    ((char *)ext->ext_buf)[3] = (char)(i >>16);
+    ((char *)ext->ext_buf)[2] = (char)(i >>24);
     BU_INIT_GETPUT_2(ext, i);
     ext->ext_nbytes = i;	/* XXX this changes nbytes if i < 480 ? */
     return 1;
@@ -274,9 +274,9 @@ bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct b
     register const unsigned char *cp;	/* current possition in buffer */
     const struct bu_structparse *ip;	/* current imexport structure */
     char *loc;		/* where host-format data is */
-    int len;
-    int bytes_used;
-    register int i;
+    size_t len;
+    size_t bytes_used;
+    register size_t i;
 
     BU_CK_GETPUT(ext);
 
@@ -319,7 +319,7 @@ bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct b
 		/* 32-bit network integer, from "int" */
 		{
 		    register long l;
-		    for (i = ip->sp_count-1; i >= 0; i--) {
+		    for (i = ip->sp_count; i > 0; i--) {
 			l =	(cp[0] << 24) |
 			    (cp[1] << 16) |
 			    (cp[2] <<  8) |
@@ -333,7 +333,7 @@ bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct b
 		break;
 	    case 'i':
 		/* 16-bit integer, from "int" */
-		for (i = ip->sp_count-1; i >= 0; i--) {
+		for (i = ip->sp_count; i > 0; i--) {
 		    *(int *)loc =	(cp[0] <<  8) |
 			cp[1];
 		    loc += sizeof(int); /* XXX */
@@ -405,7 +405,8 @@ bu_struct_import(genptr_t base, const struct bu_structparse *imp, const struct b
     }
 
     /* This number may differ from that stored as "claimed_length" */
-    return (bytes_used);
+    /* FIXME: possible loss of data here */
+    return (int)(bytes_used);
 }
 
 
@@ -414,6 +415,7 @@ bu_struct_put(FILE *fp, const struct bu_external *ext)
 {
     BU_CK_GETPUT(ext);
 
+    /* FIXME: possible loss of data here */
     return (int)(fwrite(ext->ext_buf, 1, ext->ext_nbytes, fp));
 }
 
@@ -516,9 +518,9 @@ bu_struct_wrap_buf(struct bu_external *ext, genptr_t buf)
  *         <0 upon failure
  */
 HIDDEN int
-_bu_parse_double(const char *str, long int count, double *loc)
+_bu_parse_double(const char *str, size_t count, double *loc)
 {
-    long i;
+    size_t i;
     int dot_seen;
     const char *numstart;
     double tmp_double;
@@ -983,7 +985,7 @@ bu_vls_struct_item(struct bu_vls *vp, const struct bu_structparse *sdp, const ch
 	    break;
 	case 'i':
 	    {
-		register int i = sdp->sp_count;
+		register size_t i = sdp->sp_count;
 		register short *sp = (short *)loc;
 
 		bu_vls_printf(vp, "%d", *sp++);
@@ -992,7 +994,7 @@ bu_vls_struct_item(struct bu_vls *vp, const struct bu_structparse *sdp, const ch
 	    break;
 	case 'd':
 	    {
-		register int i = sdp->sp_count;
+		register size_t i = sdp->sp_count;
 		register int *dp = (int *)loc;
 
 		bu_vls_printf(vp, "%d", *dp++);
@@ -1001,7 +1003,7 @@ bu_vls_struct_item(struct bu_vls *vp, const struct bu_structparse *sdp, const ch
 	    break;
 	case 'f':
 	    {
-		register int i = sdp->sp_count;
+		register size_t i = sdp->sp_count;
 		register double *dp = (double *)loc;
 
 		bu_vls_printf(vp, "%.25G", *dp++);
@@ -1010,7 +1012,7 @@ bu_vls_struct_item(struct bu_vls *vp, const struct bu_structparse *sdp, const ch
 	    break;
 	case 'x':
 	    {
-		register int i = sdp->sp_count;
+		register size_t i = sdp->sp_count;
 		register int *dp = (int *)loc;
 
 		bu_vls_printf(vp, "%08x", *dp++);
@@ -1118,7 +1120,7 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 		break;
 	    case 'i':
 		{
-		    register int i = sdp->sp_count;
+		    register size_t i = sdp->sp_count;
 		    register short *sp = (short *)loc;
 
 		    bu_log(" %s=%d", sdp->sp_name, *sp++);
@@ -1130,7 +1132,7 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 		break;
 	    case 'd':
 		{
-		    register int i = sdp->sp_count;
+		    register size_t i = sdp->sp_count;
 		    register int *dp = (int *)loc;
 
 		    bu_log(" %s=%d", sdp->sp_name, *dp++);
@@ -1142,7 +1144,7 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 		break;
 	    case 'f':
 		{
-		    register int i = sdp->sp_count;
+		    register size_t i = sdp->sp_count;
 		    register double *dp = (double *)loc;
 
 		    if (sdp->sp_count == 16) {
@@ -1171,7 +1173,7 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 		break;
 	    case 'x':
 		{
-		    register int i = sdp->sp_count;
+		    register size_t i = sdp->sp_count;
 		    register int *dp = (int *)loc;
 
 		    bu_log(" %s=%08x", sdp->sp_name, *dp++);
@@ -1194,13 +1196,13 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 
 
 HIDDEN void
-_bu_vls_print_double(struct bu_vls *vls, const char *name, register long int count, register const double *dp)
+_bu_vls_print_double(struct bu_vls *vls, const char *name, register size_t count, register const double *dp)
 {
     register int tmpi;
     register char *cp;
 
-    int increase = (int)(strlen(name) + 3 + 32 * count);
-    bu_vls_extend(vls, increase);
+    size_t increase = strlen(name) + 3 + 32 * count;
+    bu_vls_extend(vls, (unsigned int)increase);
 
     cp = vls->vls_str + vls->vls_offset + vls->vls_len;
     snprintf(cp, increase, "%s%s=%.27G", (vls->vls_len?" ":""), name, *dp++);
@@ -1225,7 +1227,7 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
     register char *loc;
     register int lastoff = -1;
     register char *cp;
-    int increase;
+    size_t increase;
 
     BU_CK_VLS(vls);
 
@@ -1277,8 +1279,8 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 		if (sdp->sp_count < 1)
 		    break;
 		if (sdp->sp_count == 1) {
-		    increase = (int)strlen(sdp->sp_name)+6;
-		    bu_vls_extend(vls, increase);
+		    increase = strlen(sdp->sp_name)+6;
+		    bu_vls_extend(vls, (unsigned int)increase);
 		    cp = vls->vls_str + vls->vls_offset + vls->vls_len;
 		    if (*loc == '"')
 			snprintf(cp, increase, "%s%s=\"%s\"",
@@ -1299,8 +1301,8 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 			++p;
 			++count;
 		    }
-		    increase = (int)(strlen(sdp->sp_name)+strlen(loc)+5+count);
-		    bu_vls_extend(vls, increase);
+		    increase = strlen(sdp->sp_name)+strlen(loc)+5+count;
+		    bu_vls_extend(vls, (unsigned int)increase);
 
 		    cp = vls->vls_str + vls->vls_offset + vls->vls_len;
 		    if (vls->vls_len) (void)strcat(cp, " ");
@@ -1330,8 +1332,8 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 		{
 		    register struct bu_vls *vls_p = (struct bu_vls *)loc;
 
-		    increase =  (int)(bu_vls_strlen(vls_p) + 5 + strlen(sdp->sp_name));
-		    bu_vls_extend(vls, increase);
+		    increase =  bu_vls_strlen(vls_p) + 5 + strlen(sdp->sp_name);
+		    bu_vls_extend(vls, (unsigned int)increase);
 
 		    cp = vls->vls_str + vls->vls_offset + vls->vls_len;
 		    snprintf(cp, increase, "%s%s=\"%s\"",
@@ -1343,12 +1345,12 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 		break;
 	    case 'i':
 		{
-		    register int i = sdp->sp_count;
+		    register size_t i = sdp->sp_count;
 		    register short *sp = (short *)loc;
 		    register int tmpi;
 
-		    increase = 64 * i + (int)strlen(sdp->sp_name) + 3;
-		    bu_vls_extend(vls, increase);
+		    increase = 64 * i + strlen(sdp->sp_name) + 3;
+		    bu_vls_extend(vls, (unsigned int)increase);
 
 
 		    cp = vls->vls_str + vls->vls_offset + vls->vls_len;
@@ -1368,12 +1370,12 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 		break;
 	    case 'd':
 		{
-		    register int i = sdp->sp_count;
+		    register size_t i = sdp->sp_count;
 		    register int *dp = (int *)loc;
 		    register int tmpi;
 
-		    increase = (int)(64 * i + strlen(sdp->sp_name) + 3);
-		    bu_vls_extend(vls, increase);
+		    increase = 64 * i + strlen(sdp->sp_name) + 3;
+		    bu_vls_extend(vls, (unsigned int)increase);
 
 		    cp = vls->vls_str + vls->vls_offset + vls->vls_len;
 		    snprintf(cp, increase, "%s%s=%d",
@@ -1489,7 +1491,7 @@ bu_vls_struct_print2(struct bu_vls *vls_out,
 		break;
 	    case 'i':
 		{
-		    register int i = sdp->sp_count;
+		    register size_t i = sdp->sp_count;
 		    register short *sp = (short *)loc;
 
 		    bu_vls_printf(vls_out, " %s=%d", sdp->sp_name, *sp++);
@@ -1502,7 +1504,7 @@ bu_vls_struct_print2(struct bu_vls *vls_out,
 		break;
 	    case 'd':
 		{
-		    register int i = sdp->sp_count;
+		    register size_t i = sdp->sp_count;
 		    register int *dp = (int *)loc;
 
 		    bu_vls_printf(vls_out, " %s=%d", sdp->sp_name, *dp++);
@@ -1515,7 +1517,7 @@ bu_vls_struct_print2(struct bu_vls *vls_out,
 		break;
 	    case 'f':
 		{
-		    register int i = sdp->sp_count;
+		    register size_t i = sdp->sp_count;
 		    register double *dp = (double *)loc;
 
 		    if (sdp->sp_count == 16) {
@@ -1546,7 +1548,7 @@ bu_vls_struct_print2(struct bu_vls *vls_out,
 		break;
 	    case 'x':
 		{
-		    register int i = sdp->sp_count;
+		    register size_t i = sdp->sp_count;
 		    register int *dp = (int *)loc;
 
 		    bu_vls_printf(vls_out, " %s=%08x", sdp->sp_name, *dp++);
