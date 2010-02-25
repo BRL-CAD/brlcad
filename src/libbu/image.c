@@ -173,7 +173,10 @@ bmp_save(int fd, unsigned char *rgb, int width, int height)
 HIDDEN int
 pix_save(int fd, unsigned char *rgb, int size)
 {
-    write(fd, rgb, (unsigned)size);
+    int ret;
+    ret = write(fd, rgb, (unsigned)size);
+    if (ret != size)
+	return 0;
     return 2;
 }
 
@@ -183,6 +186,7 @@ pix_save(int fd, unsigned char *rgb, int size)
 HIDDEN int
 bw_save(int fd, unsigned char *rgb, int size)
 {
+    int ret;
     int bwsize = size/3, i;
 
     if (bwsize*3 != size) {
@@ -196,7 +200,9 @@ bw_save(int fd, unsigned char *rgb, int size)
     for (i=0;i<bwsize;++i)
 	rgb[i] = (int)((float)rgb[i*3]+(float)rgb[i*3+1]+(float)rgb[i*3+2]/3.0);
 
-    write(fd, rgb, (unsigned)bwsize);
+    ret = write(fd, rgb, (unsigned)bwsize);
+    if (ret != bwsize)
+	return 0;
 
     return 2;
 }
@@ -204,12 +210,15 @@ bw_save(int fd, unsigned char *rgb, int size)
 HIDDEN int
 ppm_save(int fd, unsigned char *rgb, int width, int height)
 {
+    int ret;
     char buf[BUFSIZ] = {0};
 
     image_flip(rgb, width, height);
     snprintf(buf, BUFSIZ, "P6 %d %d 255\n", width, height);
-    write(fd, buf, strlen(buf));
-    write(fd, rgb, (size_t)(3*width*height));
+    ret = write(fd, buf, strlen(buf));
+    ret = write(fd, rgb, (size_t)(3*width*height));
+    if (ret  != 3*width*height)
+	return 0;
     return 2;
 }
 

@@ -112,8 +112,9 @@ bu_vlb_free(struct bu_vlb *vlb)
 void
 bu_vlb_print(struct bu_vlb *vlb, FILE *fd)
 {
+    int ret;
     BU_CKMAG(vlb, BU_VLB_MAGIC, "magic for bu_vlb");
-    fwrite(vlb->buf, 1, vlb->nextByte, fd);
+    ret = fwrite(vlb->buf, 1, vlb->nextByte, fd);
 }
 
 /*
