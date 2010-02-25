@@ -192,20 +192,21 @@ _pkg_timestamp(void)
 {
     time_t now;
     struct tm *tmp;
+    int pid;
 
     if (!_pkg_debug)  return;
     (void)time(&now);
     tmp = localtime(&now);
-    fprintf(_pkg_debug, "%2.2d/%2.2d %2.2d:%2.2d:%2.2d [%5d] ",
-	    tmp->tm_mon+1, tmp->tm_mday,
-	    tmp->tm_hour, tmp->tm_min, tmp->tm_sec,
-	    /* avoid libbu dependency */
+
+    /* avoid libbu dependency */
 #ifdef HAVE_UNISTD_H
-	    (int)getpid()
+    pid = (int)getpid();
 #else
-	    (int)GetCurrentProcessId()
+    pid = (int)GetCurrentProcessId();
 #endif
-	);
+
+    fprintf(_pkg_debug, "%2.2d/%2.2d %2.2d:%2.2d:%2.2d [%5d] ",
+	    tmp->tm_mon+1, tmp->tm_mday, tmp->tm_hour, tmp->tm_min, tmp->tm_sec, pid);
     /* Don't fflush here, wait for rest of line */
 }
 
