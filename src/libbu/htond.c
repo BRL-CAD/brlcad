@@ -362,10 +362,13 @@ void
 ntohd(register unsigned char *out, register const unsigned char *in, size_t count)
 {
     register size_t i;
+    bu_endian_t order;
 
     assert(sizeof(double) == SIZEOF_NETWORK_DOUBLE);
 
-    switch (bu_byteorder()) {
+    order = bu_byteorder();
+
+    switch (order) {
 	case BU_BIG_ENDIAN:
 	    /*
 	     * First, the case where the system already operates in
