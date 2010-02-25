@@ -1475,7 +1475,6 @@ AC_CHECK_LIB(stdc++, main, stdcxx_link_works=yes ; LIBSTDCXX="-lstdc++",
 	 )]
 )
 
-
 dnl *************************
 dnl *** Check for headers ***
 dnl *************************
@@ -1812,7 +1811,23 @@ AC_CHECK_TYPE([socklen_t], [],
 AC_CHECK_TYPES([sig_t], [], [], [#include <signal.h>])
 # AC_TYPE_INT32_T
 # AC_TYPE_INT64_T
+AC_CHECK_TYPES([uint64_t])
 AC_CHECK_TYPES([ssize_t])
+
+AC_CHECK_TYPE([uintptr_t],
+    [AC_DEFINE([HAVE_UINTPTR_T], 1, [Define to 1 if the system has the type `uintptr_t'.])],
+    [for ac_type in 'unsigned int' 'unsigned long int' 'unsigned long long int'; do
+	AC_COMPILE_IFELSE(
+	    [AC_LANG_BOOL_COMPILE_TRY(
+		[AC_INCLUDES_DEFAULT],
+		[[sizeof (void *) <= sizeof ($ac_type)]])],
+	    [AC_DEFINE_UNQUOTED([uintptr_t], [$ac_type],
+		[Define to the type of an unsigned integer type wide enough to
+		 hold a pointer, if such a type exists, and if the system
+		 does not define it.])
+	    ac_type=])
+	test -z "$ac_type" && break
+    done])
 
 
 dnl ******************************************
@@ -2033,7 +2048,7 @@ if test "x$bc_build_strict" = "xyes" ; then
        # do not include -w as that was just to suppress any test warnings
        STRICT_FLAGS="-pedantic -W -Wall -Werror -Wno-long-long"
        AC_SUBST(STRICT_FLAGS)
-       AC_DEFINE([STRICT_FLAGS], [1], [Define to 1 if enabling strict compiler flags.])
+       AC_DEFINE([STRICT_FLAGS], [1], [Define to 1 if strict standards compliance compilation is enabled.])
    fi
 fi
 

@@ -92,7 +92,7 @@
 #  define FMIN(a, b)	(((a)<(b))?(a):(b))
 #endif
 
-/* C does not provide a ssize_t even though it is provided by SUS97.
+/* C99 does not provide a ssize_t even though it is provided by SUS97.
  * regardless, we use it so make sure it's declared by using the
  * similar POSIX ptrdiff_t type.
  */
@@ -106,6 +106,21 @@
 typedef ptrdiff_t ssize_t;
 #    define HAVE_SSIZE_T 1
 #  endif
+#endif
+
+/* C99 says uintptr_t is an optional type, so make sure something is
+ * provided.
+ */
+#if !defined(HAVE_UINTPTR_T) && !defined(uintptr_t)
+#  ifdef HAVE_STDINT_H
+#    include <stdint.h>
+#  endif
+#  ifdef HAVE_UINT64_T
+typedef uint64_t uintptr_t;
+#  else
+typedef unsigned long long uintptr_t;
+#  endif
+#  define HAVE_UINT64_T 1
 #endif
 
 #endif  /* __COMMON_H__ */
