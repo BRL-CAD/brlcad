@@ -631,7 +631,7 @@ typedef enum {
  *
  * returns the platform byte ordering (e.g., big-/little-endian)
  */
-BU_EXPORT BU_EXTERN(inline bu_endian_t bu_byteorder, (void));
+BU_EXPORT BU_EXTERN(bu_endian_t bu_byteorder, (void));
 
 
 /**@}*/
