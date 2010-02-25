@@ -272,7 +272,7 @@ void write_mesh_data()
 	char format;
 
 	/* face triples */
-	char ind8[3] = {0, 0, 0};
+	unsigned char ind8[3] = {0, 0, 0};
 	uint16_t ind16[3] = {0, 0, 0};
 	uint32_t ind32[3] = {0, 0, 0};
 
