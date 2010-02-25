@@ -128,7 +128,7 @@ nmg_to_adrt_internal(struct adrt_mesh_s *mesh, struct nmgregion *r)
 		}
 		if (vert_count > 3)
 		{
-		    bu_log("lu x%x has %d vertices!\n", (unsigned int)lu, vert_count);
+		    bu_log("lu x%p has %d vertices!\n", lu, vert_count);
 		    bu_exit(1, "ERROR: LU is not a triangle");
 		}
 		else if (vert_count < 3)
