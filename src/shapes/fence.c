@@ -1,5 +1,5 @@
-/* BRL-CAD                 F E N C E . C
- *
+/*                          F E N C E . C
+ * BRL-CAD
  *
  * Copyright (c) 2004-2010 United States Government as represented by
  * the U.S. Army Research Laboratory.
@@ -20,17 +20,16 @@
  */
 /** @file fence.c
  *
- *      This program generages a chain-link fence.  Every parameter of
- *      the fence may be adjusted.  Default values are held in fence.h
- *      Be wary of long fences...
+ * This program generages a chain-link fence.  Every parameter of the
+ * fence may be adjusted.  Default values are held in fence.h Be wary
+ * of long fences...
  *
- *      Note: It would be much more optimal for there to be a fence
- *      object type (or a mesh object type) so that memory usage is
- *      minimized.  I.e. instead of creating a thousand little
- *      translations, rotations, and copies of basic primitives for a
- *      short 5 foot fence, we would just store the height, width,
- *      and mesh parameters (angle of twists in xyz, vertical separation,
- *      horizontal separation, and depth).
+ * Note: It would be much more optimal for there to be a fence object
+ * type (or a mesh object type) so that memory usage is minimized.
+ * I.e. instead of creating a thousand little translations, rotations,
+ * and copies of basic primitives for a short 5 foot fence, we would
+ * just store the height, width, and mesh parameters (angle of twists
+ * in xyz, vertical separation, horizontal separation, and depth).
  *
  ***********************************************************************/
 
@@ -41,28 +40,32 @@
  */
 char *options="IiDdVvO:o:N:n:U:u:H:h:L:l:R:r:J:j:A:a:T:t:B:b:C:c:F:f:P:p:M:m:W:w:S:s:E:e:G:g:XxZz";
 
-/* these variables control the "behavior" of this program's output
- *   if debug is set, debug information (extra "useful" output is given) is
- *     displayed on stdout.
- *   if verbose is set, then all prompting and output that may be shown
- *     (such as results and errors) will be sent to stderr.  this should
- *     probably be switched with debug (maybe) but convention was taken
- *     from another db program.
- *   if interactive is set, then the user will be prompted for values from
- *     stdin.
+/*
+ * these variables control the "behavior" of this program's output if
+ * debug is set, debug information (extra "useful" output is given) is
+ * displayed on stdout.
  *
- *   the default output file pointers for debug and verbose can be set
- *     in the header file
+ * if verbose is set, then all prompting and output that may be shown
+ * (such as results and errors) will be sent to stderr.  this should
+ * probably be switched with debug (maybe) but convention was taken
+ * from another db program.
+ *
+ * if interactive is set, then the user will be prompted for values
+ * from stdin.
+ *
+ * the default output file pointers for debug and verbose can be set
+ * in the header file
  */
 int debug=DEFAULT_DEBUG;
 int verbose=DEFAULT_VERBOSE;
 int interactive=DEFAULT_INTERACTIVE;
 
-/* start of variable definitions for the fence
+/*
+ * start of variable definitions for the fence
  *
- * see the fence.h header file for a description of each of the default values
- * that may be set.  all default values should be set in the fence.h header
- * file, not here.
+ * see the fence.h header file for a description of each of the
+ * default values that may be set.  all default values should be set
+ * in the fence.h header file, not here.
  */
 char outputFilename[DEFAULT_MAXNAMELENGTH]=DEFAULT_OUTPUTFILENAME;
 char id[DEFAULT_MAXNAMELENGTH]=DEFAULT_ID;
@@ -115,9 +118,9 @@ size_t maxWireSegments=DEFAULT_MAXWIRESEGMENTS;
 
 
 /*
- * argumentHelp() is the all encompassing help message that is displayed when
- * an invalid command line argument is entered or if the user explicitly
- * requests assistance.
+ * argumentHelp() is the all encompassing help message that is
+ * displayed when an invalid command line argument is entered or if
+ * the user explicitly requests assistance.
  ***************************************/
 void argumentHelp(FILE *fp, char *progname, char *message)
 {
@@ -160,6 +163,7 @@ void argumentHelp(FILE *fp, char *progname, char *message)
 
     return;
 }
+
 
 /*
  * argumentExamples() outputs some examples of using the command line
@@ -250,9 +254,9 @@ void defaultSettings(FILE *fp)
 
 
 /*
- * parseArguments() is called by main to take care of all of the command-line
- * arguments that the user specifies.  The args that are read set variables
- * which, in turn, are used as fence parameters.
+ * parseArguments() is called by main to take care of all of the
+ * command-line arguments that the user specifies.  The args that are
+ * read set variables which, in turn, are used as fence parameters.
  *****************************/
 int parseArguments(int argc, char **argv)
 {
@@ -266,8 +270,7 @@ int parseArguments(int argc, char **argv)
 
     if (argc > 1) {
 	bu_strlcpy(progname, argv[0], (strlen(argv[0])+1>DEFAULT_MAXNAMELENGTH?DEFAULT_MAXNAMELENGTH:strlen(argv[0])+1));
-    }
-    else {
+    } else {
 	bu_strlcpy(progname, "fence\0", 6);
     }
     fflush(stdout);
@@ -278,7 +281,7 @@ int parseArguments(int argc, char **argv)
 	switch (c) {
 	    case 'I' :
 		interactive=(DEFAULT_INTERACTIVE) ? 0 : 1;
-		break;
+	    break;
 
 	    case 'i' :
 		interactive=1;
@@ -286,7 +289,7 @@ int parseArguments(int argc, char **argv)
 
 	    case 'D' :
 		debug=(DEFAULT_DEBUG) ? 0 : 1;
-		break;
+	    break;
 
 	    case 'd' :
 		debug=1;
@@ -294,7 +297,7 @@ int parseArguments(int argc, char **argv)
 
 	    case 'V' :
 		verbose=(DEFAULT_VERBOSE) ? 0 : 1;
-		break;
+	    break;
 
 	    case 'v' :
 		verbose=1;
@@ -346,8 +349,7 @@ int parseArguments(int argc, char **argv)
 		    fenceHeight[2]=d;
 		    poleHeight=(double)MAGNITUDE(fenceHeight);
 		    meshHeight=(double)poleHeight;
-		}
-		else {
+		} else {
 		    (void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Fence height may not be set to zero");
 		    bu_exit(1, NULL);
 		}
@@ -370,8 +372,7 @@ int parseArguments(int argc, char **argv)
 		    fenceWidth[1]=0.0;
 		    fenceWidth[2]=0.0;
 		    meshWidth=(double)MAGNITUDE(fenceWidth);
-		}
-		else {
+		} else {
 		    (void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Fence width may not be set to zero");
 		    bu_exit(1, NULL);
 		}
@@ -380,8 +381,7 @@ int parseArguments(int argc, char **argv)
 	    case 'r' :
 		if ((d=(double)atof(bu_optarg))!=0.0) {
 		    wireRadius=d;
-		}
-		else {
+		} else {
 		    (void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Wire radius may not be set to zero");
 		    bu_exit(1, NULL);
 		}
@@ -389,8 +389,7 @@ int parseArguments(int argc, char **argv)
 	    case 'R' :
 		if ((d=(double)atof(bu_optarg))!=0.0) {
 		    poleRadius=d;
-		}
-		else {
+		} else {
 		    (void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Pole radius may not be set to zero");
 		    bu_exit(1, NULL);
 		}
@@ -399,8 +398,7 @@ int parseArguments(int argc, char **argv)
 	    case 'a' :
 		if ((d=(double)atof(bu_optarg))!=0.0) {
 		    wireAngle=d;
-		}
-		else {
+		} else {
 		    (void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Wire angle may not be set to zero");
 		    bu_exit(1, NULL);
 		}
@@ -408,8 +406,7 @@ int parseArguments(int argc, char **argv)
 	    case 'A' :
 		if ((d=(double)atof(bu_optarg))!=0.0) {
 		    wireAngle=d;
-		}
-		else {
+		} else {
 		    (void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Wire angle may not be set to zero");
 		    bu_exit(1, NULL);
 		}
@@ -418,8 +415,7 @@ int parseArguments(int argc, char **argv)
 	    case 'j' :
 		if ((d=(double)atof(bu_optarg))!=0.0) {
 		    fencePoleSpacing=d;
-		}
-		else {
+		} else {
 		    (void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Pole spacing may not be set to zero");
 		    bu_exit(1, NULL);
 		}
@@ -427,8 +423,7 @@ int parseArguments(int argc, char **argv)
 	    case 'J' :
 		if ((d=(double)atof(bu_optarg))!=0.0) {
 		    fencePoleSpacing=d;
-		}
-		else {
+		} else {
 		    (void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Pole spacing may not be set to zero");
 		    bu_exit(1, NULL);
 		}
@@ -562,14 +557,14 @@ int parseArguments(int argc, char **argv)
 		break;
 	    case 'E' :
 		if (strchr(bu_optarg, 'f')!=NULL) fenceFence = (DEFAULT_FENCEFENCE) ? 0 : 1;
-		if (strchr(bu_optarg, 'p')!=NULL) fencePoles = (DEFAULT_FENCEPOLES) ? 0 : 1;
-		if (strchr(bu_optarg, 'm')!=NULL) fenceMesh = (DEFAULT_FENCEMESH) ? 0 : 1;
-		if (strchr(bu_optarg, 'w')!=NULL) fenceWire = (DEFAULT_FENCEWIRE) ? 0 : 1;
-		if (strchr(bu_optarg, 'F')!=NULL) fenceFence = (DEFAULT_FENCEFENCE) ? 0 : 1;
-		if (strchr(bu_optarg, 'P')!=NULL) fencePoles = (DEFAULT_FENCEPOLES) ? 0 : 1;
-		if (strchr(bu_optarg, 'M')!=NULL) fenceMesh = (DEFAULT_FENCEMESH) ? 0 : 1;
-		if (strchr(bu_optarg, 'W')!=NULL) fenceWire = (DEFAULT_FENCEWIRE) ? 0 : 1;
-		break;
+	    if (strchr(bu_optarg, 'p')!=NULL) fencePoles = (DEFAULT_FENCEPOLES) ? 0 : 1;
+	    if (strchr(bu_optarg, 'm')!=NULL) fenceMesh = (DEFAULT_FENCEMESH) ? 0 : 1;
+	    if (strchr(bu_optarg, 'w')!=NULL) fenceWire = (DEFAULT_FENCEWIRE) ? 0 : 1;
+	    if (strchr(bu_optarg, 'F')!=NULL) fenceFence = (DEFAULT_FENCEFENCE) ? 0 : 1;
+	    if (strchr(bu_optarg, 'P')!=NULL) fencePoles = (DEFAULT_FENCEPOLES) ? 0 : 1;
+	    if (strchr(bu_optarg, 'M')!=NULL) fenceMesh = (DEFAULT_FENCEMESH) ? 0 : 1;
+	    if (strchr(bu_optarg, 'W')!=NULL) fenceWire = (DEFAULT_FENCEWIRE) ? 0 : 1;
+	    break;
 
 	    case 'g' :
 		generateFenceParam = 0;
@@ -588,16 +583,16 @@ int parseArguments(int argc, char **argv)
 		break;
 	    case 'G' :
 		if (strchr(bu_optarg, 'f')!=NULL) generateFenceParam = (DEFAULT_GENERATEFENCE) ? 0 : 1;
-		if (strchr(bu_optarg, 'p')!=NULL) generatePolesParam = (DEFAULT_GENERATEPOLES) ? 0 : 1;
-		if (strchr(bu_optarg, 'm')!=NULL) generateMeshParam = (DEFAULT_GENERATEMESH) ? 0 : 1;
-		if (strchr(bu_optarg, 'F')!=NULL) generateFenceParam = (DEFAULT_GENERATEFENCE) ? 0 : 1;
-		if (strchr(bu_optarg, 'P')!=NULL) generatePolesParam = (DEFAULT_GENERATEPOLES) ? 0 : 1;
-		if (strchr(bu_optarg, 'M')!=NULL) generateMeshParam = (DEFAULT_GENERATEMESH) ? 0 : 1;
-		if (generateFenceParam == 0 && generatePolesParam == 0 && generateMeshParam == 0) {
-		    (void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Invalid generate parameters specified or all specified to zero");
-		    bu_exit(1, NULL);
-		}
-		break;
+	    if (strchr(bu_optarg, 'p')!=NULL) generatePolesParam = (DEFAULT_GENERATEPOLES) ? 0 : 1;
+	    if (strchr(bu_optarg, 'm')!=NULL) generateMeshParam = (DEFAULT_GENERATEMESH) ? 0 : 1;
+	    if (strchr(bu_optarg, 'F')!=NULL) generateFenceParam = (DEFAULT_GENERATEFENCE) ? 0 : 1;
+	    if (strchr(bu_optarg, 'P')!=NULL) generatePolesParam = (DEFAULT_GENERATEPOLES) ? 0 : 1;
+	    if (strchr(bu_optarg, 'M')!=NULL) generateMeshParam = (DEFAULT_GENERATEMESH) ? 0 : 1;
+	    if (generateFenceParam == 0 && generatePolesParam == 0 && generateMeshParam == 0) {
+		(void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, "Invalid generate parameters specified or all specified to zero");
+		bu_exit(1, NULL);
+	    }
+	    break;
 
 	    case 'x' :
 		(void)argumentExamples(DEFAULT_VERBOSE_OUTPUT, progname);
@@ -639,9 +634,11 @@ int parseArguments(int argc, char **argv)
     return(bu_optind);
 }
 
+
 /*
- * printMatrix() does just that, it prints out a matrix and a label passed to
- * some fp (usually DEFAULT_DEBUG_OUTPUT or DEFAULT_VERBOSE_OUTPUT).
+ * printMatrix() does just that, it prints out a matrix and a label
+ * passed to some fp (usually DEFAULT_DEBUG_OUTPUT or
+ * DEFAULT_VERBOSE_OUTPUT).
  *************************/
 void printMatrix(FILE *fp, char *n, fastf_t *m)
 {
@@ -656,11 +653,11 @@ void printMatrix(FILE *fp, char *n, fastf_t *m)
 
 
 /*
- * getName() returns a name back based on a base string, a numerical id and a
- * parameter string for merging those two parameters.  Basically it adds the
- * id number to the end of the base so that we can set unique ids for our
- * objects and groups.  (i.e. base="rcc", id="5"==> returns "rcc005.s" or
- * something like that)
+ * getName() returns a name back based on a base string, a numerical
+ * id and a parameter string for merging those two parameters.
+ * Basically it adds the id number to the end of the base so that we
+ * can set unique ids for our objects and groups.  (i.e. base="rcc",
+ * id="5"==> returns "rcc005.s" or something like that)
  ***********************************/
 char *getName(const char *base, int id, const char *paramstring)
 {
@@ -679,10 +676,10 @@ char *getName(const char *base, int id, const char *paramstring)
 
 
 /*
- * getPrePostName() returns a name for a region.  the name is formed by
- * simply appending three given strings passed.  the three strings comprise
- * the base, prefix, and suffix of the name.  any three are optional by
- * sending a NULL parameter
+ * getPrePostName() returns a name for a region.  the name is formed
+ * by simply appending three given strings passed.  the three strings
+ * comprise the base, prefix, and suffix of the name.  any three are
+ * optional by sending a NULL parameter
  *****************************************/
 char *getPrePostName(char *prefix, char *base, char *suffix)
 {
@@ -699,10 +696,11 @@ char *getPrePostName(char *prefix, char *base, char *suffix)
 
 
 /*
- * generateFence_s() is a simplified version of gererateFence() (this is the same for all
- * members of the "generate" family).  It's function is to provide a default-value based
- * interface to generating fence.  That is, the function may be called with as few parameters
- * as necessary to actually generate the fence.
+ * generateFence_s() is a simplified version of gererateFence() (this
+ * is the same for all members of the "generate" family).  It's
+ * function is to provide a default-value based interface to
+ * generating fence.  That is, the function may be called with as few
+ * parameters as necessary to actually generate the fence.
  *************************************************************/
 int generateFence_s(struct rt_wdb *fp, char *fencename, fastf_t *startposition, fastf_t *endposition)
 {
@@ -714,6 +712,7 @@ int generateFence_s(struct rt_wdb *fp, char *fencename, fastf_t *startposition, 
 
     return generateFence(fp, fencename, startposition, heightvector, widthvector);
 }
+
 
 int generateFence(struct rt_wdb *fp, char *fencename, fastf_t *startposition, fastf_t *heightvector, fastf_t *widthvector)
 {
@@ -736,8 +735,7 @@ int generateFence(struct rt_wdb *fp, char *fencename, fastf_t *startposition, fa
     if ((mk_id_units(fp, id, units))==0) {
 	if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generateFence:id[%s], units[%s]\n", id, units);
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "\"%s\" (units==\"%s\")\n", id, units);
-    }
-    else {
+    } else {
 	if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generateFence:mk_id_units FAILED with id[%s], units[%s]", id, units);
 	errors++;
     }
@@ -753,22 +751,19 @@ int generateFence(struct rt_wdb *fp, char *fencename, fastf_t *startposition, fa
 
 	    if ((mk_addmember(poleName, &fencemembers.l, NULL, WMOP_UNION))!=NULL) {
 		if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...building fence...poles added...\n");
-	    }
-	    else {
+	    } else {
 		if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...building fence...ERROR adding poles to fence combination\n");
 		if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generateFence:mk_addmember poleName[%s] FAILED\n", poleName);
 		errors++;
 	    }
 	    if ((mk_addmember(poleName, &fenceregionmembers.l, NULL, WMOP_UNION))!=NULL) {
 		if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...building fence region...poles added...\n");
-	    }
-	    else {
+	    } else {
 		if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...building fence region...ERROR adding poles to fence region\n");
 		if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generateFence:mk_addmember poleName[%s] FAILED\n", poleName);
 		errors++;
 	    }
-	}
-	else {
+	} else {
 	    if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...Pole generation FAILED\n");
 	    errors+=poleerrors;
 	}
@@ -781,21 +776,18 @@ int generateFence(struct rt_wdb *fp, char *fencename, fastf_t *startposition, fa
 
 	    if ((mk_addmember(meshName, &fencemembers.l, NULL, WMOP_UNION))!=NULL) {
 		if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...building fence...mesh added...\n");
-	    }
-	    else {
+	    } else {
 		if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...building fence...ERROR adding mesh to fence combination\n");
 		if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generateFence:mk_addmember meshName[%s] FAILED\n", meshName);
 	    }
 	    if ((mk_addmember(meshName, &fenceregionmembers.l, NULL, WMOP_UNION))!=NULL) {
 		if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...building fence region...mesh added...\n");
-	    }
-	    else {
+	    } else {
 		if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...building fence region...ERROR adding mesh to fence region\n");
 		if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generateFence:mk_addmember meshName[%s] FAILED\n", meshName);
 	    }
 
-	}
-	else {
+	} else {
 	    if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...Mesh generation FAILED\n");
 	    errors+=mesherrors;
 	}
@@ -805,8 +797,7 @@ int generateFence(struct rt_wdb *fp, char *fencename, fastf_t *startposition, fa
 	if (mk_lcomb (fp, fencename, &fencemembers, 0, NULL, NULL, NULL, 0)==0) {
 	    if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...completed fence [%s] combination\n", fencename);
 	    if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generateFence:fencename[%s]\n", fencename);
-	}
-	else {
+	} else {
 	    if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generateFence:mk_lcomb fencename[%s] FAILED\n", fencename);
 	    errors++;
 	}
@@ -814,8 +805,7 @@ int generateFence(struct rt_wdb *fp, char *fencename, fastf_t *startposition, fa
 	if (mk_lcomb (fp, getPrePostName(NULL, fencename, DEFAULT_REGIONSUFFIX), &fenceregionmembers, 1, fenceMaterial, fenceMaterialParams, fenceMaterialColor, 0)==0) {
 	    if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...completed fence [%s] region\n", getPrePostName(NULL, fencename, DEFAULT_REGIONSUFFIX));
 	    if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generateFence:fencename[%s]\n", getPrePostName(NULL, fencename, DEFAULT_REGIONSUFFIX));
-	}
-	else {
+	} else {
 	    if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generateFence:mk_lcomb fencename[%s] FAILED (region)\n", getPrePostName(NULL, fencename, DEFAULT_REGIONSUFFIX));
 	    errors++;
 	}
@@ -840,6 +830,7 @@ int generatePoles_s(struct rt_wdb *fp, char *polename)
 
     return generatePoles(fp, polename, fenceStartPosition, polevector, fenceWidth, poleRadius);
 }
+
 
 int generatePoles(struct rt_wdb *fp, char *polename, fastf_t *startposition, fastf_t *heightvector, fastf_t *widthvector, double radius)
 {
@@ -876,8 +867,7 @@ int generatePoles(struct rt_wdb *fp, char *polename, fastf_t *startposition, fas
 
 	if ((mk_rcc(fp, getName(polename, count, DEFAULT_POLEBASICPARAM), tempposition, heightvector, radius))==0) {
 	    if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...Pole [%d] generated\n", count);
-	}
-	else {
+	} else {
 	    if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...Pole [%d] generation FAILED\n", count);
 	    if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generatePoles: polename[%s], count[%d], tempposition[%f][%f][%f], heightvector[%f][%f][%f], radius[%f]\n", polename, count, tempposition[0], tempposition[1], tempposition[2], heightvector[0], heightvector[1], heightvector[2], radius);
 	    errors++;
@@ -885,15 +875,13 @@ int generatePoles(struct rt_wdb *fp, char *polename, fastf_t *startposition, fas
 
 	if ((mk_addmember(getName(polename, count, DEFAULT_POLEBASICPARAM), &polemembers.l, NULL, WMOP_UNION))!=NULL) {
 	    if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...adding pole [%d] to pole list\n", count);
-	}
-	else {
+	} else {
 	    if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generatePoles:mk_addmember count[%d] FAILED\n", count);
 	    errors++;
 	}
 	if ((mk_addmember(getName(polename, count, DEFAULT_POLEBASICPARAM), &poleregionmembers.l, NULL, WMOP_UNION))!=NULL) {
 	    if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...adding pole [%d] to pole region list\n", count);
-	}
-	else {
+	} else {
 	    if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generatePoles:mk_addmember count[%d] FAILED(region)\n", count);
 	    errors++;
 	}
@@ -907,8 +895,7 @@ int generatePoles(struct rt_wdb *fp, char *polename, fastf_t *startposition, fas
 
     if ((mk_rcc(fp, getName(polename, count, DEFAULT_POLEBASICPARAM), tempposition, heightvector, radius))==0) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...Pole [%d] generated\n", count);
-    }
-    else {
+    } else {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...Pole [%d] generation FAILED\n", count);
 	if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generatePoles: polename[%s], count[%d], tempposition[%f][%f][%f], heightvector[%f][%f][%f], radius[%f]\n", polename, count, tempposition[0], tempposition[1], tempposition[2], heightvector[0], heightvector[1], heightvector[2], radius);
 	errors++;
@@ -916,15 +903,13 @@ int generatePoles(struct rt_wdb *fp, char *polename, fastf_t *startposition, fas
 
     if ((mk_addmember(getName(polename, count, DEFAULT_POLEBASICPARAM), &polemembers.l, NULL, WMOP_UNION))!=NULL) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...adding pole [%d] to pole list\n", count);
-    }
-    else {
+    } else {
 	if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generatePoles:mk_addmember count[%d] FAILED\n", count);
 	errors++;
     }
     if ((mk_addmember(getName(polename, count, DEFAULT_POLEBASICPARAM), &poleregionmembers.l, NULL, WMOP_UNION))!=NULL) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...adding pole [%d] to pole region list\n", count);
-    }
-    else {
+    } else {
 	if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generatePoles:mk_addmember count[%d] FAILED (region)\n", count);
 	errors++;
     }
@@ -932,15 +917,13 @@ int generatePoles(struct rt_wdb *fp, char *polename, fastf_t *startposition, fas
 
     if (mk_lcomb (fp, poleName, &polemembers, 0, NULL, NULL, NULL,  0)==0) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...pole [%s] combination completed\n", poleName);
-    }
-    else {
+    } else {
 	if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generatePoles:mk_lcomb poleName[%s] FAILED\n", poleName);
 	errors++;
     }
     if (mk_lcomb (fp, getPrePostName(NULL, poleName, DEFAULT_REGIONSUFFIX), &poleregionmembers, 1, poleMaterial, poleMaterialParams, poleMaterialColor,  0)==0) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...pole [%s] region completed\n", getPrePostName(NULL, poleName, DEFAULT_REGIONSUFFIX));
-    }
-    else {
+    } else {
 	if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generatePoles:mk_lcomb poleName[%s] FAILED (region)\n", getPrePostName(NULL, poleName, DEFAULT_REGIONSUFFIX));
 	errors++;
     }
@@ -972,6 +955,7 @@ int generateMesh_s(struct rt_wdb *fp, char *meshname)
 
     return generateMesh(fp, meshname, meshstartposition, meshheightvector, meshwidthvector);
 }
+
 
 int generateMesh(struct rt_wdb *fp, char *meshname, fastf_t *startposition, fastf_t *heightvector, fastf_t *widthvector)
 {
@@ -1005,8 +989,7 @@ int generateMesh(struct rt_wdb *fp, char *meshname, fastf_t *startposition, fast
     VMOVE(tempposition, startposition);
     if ((generateWire_s(fp, wireName, tempposition))==0) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...Base wire generated\n");
-    }
-    else {
+    } else {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...Base wire generation FAILED\n");
 	errors++;
     }
@@ -1016,7 +999,7 @@ int generateMesh(struct rt_wdb *fp, char *meshname, fastf_t *startposition, fast
     width=MAGNITUDE(widthvector);
     VMOVE(incrementvector, widthvector);
     VUNITIZE(incrementvector);
-    VSCALE(incrementvector, incrementvector, (double) 2.0 * ( cos((double)RADIAN(angle)) * (wireSegmentLength-(2*radius)) ) );
+    VSCALE(incrementvector, incrementvector, (double) 2.0 * (cos((double)RADIAN(angle)) * (wireSegmentLength-(2*radius))));
 
     if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generateMesh: angle[%f], radius[%f], wireSegmentLength[%f]\n", angle, radius, wireSegmentLength);
     if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generateMesh: width[%f], MAGNITUDE(incrementvector)[%f]\n", width, MAGNITUDE(incrementvector));
@@ -1030,8 +1013,7 @@ int generateMesh(struct rt_wdb *fp, char *meshname, fastf_t *startposition, fast
 
 	    if ((matrixextractor=mk_addmember(wireName, &meshmembers.l, NULL, WMOP_UNION))!=NULL) {
 		if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...building mesh combination: wire [%d] of [%d]\n", count+1, count2);
-	    }
-	    else {
+	    } else {
 		if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generateMesh:mk_addmember wireName[%s], count2[%d] FAILED\n", wireName, count);
 		errors++;
 	    }
@@ -1041,8 +1023,7 @@ int generateMesh(struct rt_wdb *fp, char *meshname, fastf_t *startposition, fast
 
 	    if ((matrixextractor=mk_addmember(wireName, &meshregionmembers.l, NULL, WMOP_UNION))!=NULL) {
 		if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...building mesh region: wire [%d] of [%d]\n", count+1, count2);
-	    }
-	    else {
+	    } else {
 		if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generateMesh:mk_addmember wireName[%s], count2[%d] FAILED (region)\n", wireName, count);
 		errors++;
 	    }
@@ -1062,21 +1043,18 @@ int generateMesh(struct rt_wdb *fp, char *meshname, fastf_t *startposition, fast
 	if (mk_lcomb (fp, meshname, &meshmembers, 0, NULL, NULL, NULL, 0)==0) {
 	    if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...completed mesh [%s] combination\n", meshname);
 	    if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generateMesh:meshname[%s]\n", meshname);
-	}
-	else {
+	} else {
 	    if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generateMesh:mk_lcomb meshname[%s] FAILED\n", meshname);
 	    errors++;
 	}
 	if (mk_lcomb (fp, getPrePostName(NULL, meshname, DEFAULT_REGIONSUFFIX), &meshregionmembers, 1, meshMaterial, meshMaterialParams, meshMaterialColor, 0)==0) {
 	    if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...completed mesh [%s] region\n", getPrePostName(NULL, meshname, DEFAULT_REGIONSUFFIX));
 	    if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generateMesh:meshname[%s]\n", meshname);
-	}
-	else {
+	} else {
 	    if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generateMesh:mk_lcomb meshname[%s] FAILED (region)\n", getPrePostName(NULL, meshname, DEFAULT_REGIONSUFFIX));
 	    errors++;
 	}
-    }
-    else {
+    } else {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error, incrementvector magnitude is zero:Cannot create mesh\n");
 	if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generateMesh:MAGNITUDE(incrementvector)==[%f]\n", MAGNITUDE(incrementvector));
 	errors++;
@@ -1086,9 +1064,10 @@ int generateMesh(struct rt_wdb *fp, char *meshname, fastf_t *startposition, fast
 
 
 /*
- * generateWire() generates a wire-pair (two wires intertwining) that serves to form the entire
- * mesh of the fence.  The two wires are generated as a single process and are generated by creating
- * a basic segment of the fence mesh.
+ * generateWire() generates a wire-pair (two wires intertwining) that
+ * serves to form the entire mesh of the fence.  The two wires are
+ * generated as a single process and are generated by creating a basic
+ * segment of the fence mesh.
  *
  *****************************************/
 
@@ -1104,6 +1083,7 @@ int generateWire_s(struct rt_wdb *fp, char *wirename, fastf_t *position)
 
     return generateWire(fp, wirename, position, wirevector, widthvector, wireRadius, wireAngle, wireSegmentLength);
 }
+
 
 int generateWire(struct rt_wdb *fp, char *wirename, fastf_t *position, fastf_t *fenceheightvector, fastf_t *fencewidthvector, double radius, double angle, double segmentlength)
 {
@@ -1153,36 +1133,32 @@ int generateWire(struct rt_wdb *fp, char *wirename, fastf_t *position, fastf_t *
     for (count=0; count < DEFAULT_MESHPIECECOUNT; count++) {
 	if ((mk_addmember(getName(segmentName, count, DEFAULT_WIREBASICPARAM), &basicmeshmembers.l, NULL, WMOP_UNION))!=NULL) {
 	    if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...adding basic mesh segment component [%d] of [%d]\n", count, DEFAULT_MESHPIECECOUNT-1);
-	}
-	else {
+	} else {
 	    if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generateWire:mk_addmember count[%d] FAILED\n", count);
 	    errors++;
 	}
 	if ((mk_addmember(getName(segmentName, count, DEFAULT_WIREBASICPARAM), &basicmeshregionmembers.l, NULL, WMOP_UNION))!=NULL) {
 	    if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...adding basic mesh segment region component [%d] of [%d]\n", count, DEFAULT_MESHPIECECOUNT-1);
-	}
-	else {
+	} else {
 	    if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generateWire:mk_addmember count[%d] FAILED (region)\n", count);
 	    errors++;
 	}
     }
     if (mk_lcomb (fp, segmentName, &basicmeshmembers, 0, NULL, NULL, NULL,  0)==0) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...basic mesh segment [%s] combination completed\n", segmentName);
-    }
-    else {
+    } else {
 	if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generateWire:mk_lcomb segmentName[%s] FAILED\n", segmentName);
 	errors++;
     }
     if (mk_lcomb (fp, getPrePostName(NULL, segmentName, DEFAULT_REGIONSUFFIX), &basicmeshregionmembers, 1, wireMaterial, wireMaterialParams, wireMaterialColor, 0)==0) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...basic mesh segment [%s] region completed\n", getPrePostName(NULL, segmentName, DEFAULT_REGIONSUFFIX));
-    }
-    else {
+    } else {
 	if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generateWire:mk_lcomb segmentName[%s] FAILED (region)\n", getPrePostName(NULL, segmentName, DEFAULT_REGIONSUFFIX));
 	errors++;
     }
 
     height=MAGNITUDE(fenceheightvector);
-    VSCALE(incrementvector, heightvector, (double) 2.0 * ( sin((double)RADIAN(angle)) * (segmentlength+((double)2.0 * radius)) ) );
+    VSCALE(incrementvector, heightvector, (double) 2.0 * (sin((double)RADIAN(angle)) * (segmentlength+((double)2.0 * radius))));
 
     if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generateWire: height[%f], incrementvector[%f][%f][%f], MAGNITUDE(incrementvector)[%f]\n", height, incrementvector[0], incrementvector[1], incrementvector[2], MAGNITUDE(incrementvector));
 
@@ -1193,8 +1169,7 @@ int generateWire(struct rt_wdb *fp, char *wirename, fastf_t *position, fastf_t *
 
 	if ((matrixextractor=mk_addmember(segmentName, &wiremembers.l, NULL, WMOP_UNION))!=NULL) {
 	    if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...building base wire combination: piece [%d] of [%d]\n", count+1, count2);
-	}
-	else {
+	} else {
 	    if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generateWire:mk_addmember wirename[%s], count2[%d] FAILED\n", wirename, count);
 	    errors++;
 	}
@@ -1204,8 +1179,7 @@ int generateWire(struct rt_wdb *fp, char *wirename, fastf_t *position, fastf_t *
 
 	if ((matrixextractor=mk_addmember(segmentName, &wireregionmembers.l, NULL, WMOP_UNION))!=NULL) {
 	    if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...building base wire region: piece [%d] of [%d]\n", count+1, count2);
-	}
-	else {
+	} else {
 	    if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generateWire:mk_addmember wirename[%s], count2[%d] FAILED (region)\n", wirename, count);
 	    errors++;
 	}
@@ -1225,15 +1199,13 @@ int generateWire(struct rt_wdb *fp, char *wirename, fastf_t *position, fastf_t *
     if (mk_lcomb (fp, wirename, &wiremembers, 0, NULL, NULL, NULL, 0)==0) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...completed basic wire [%s] combination\n", wirename);
 	if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generateWire:wirename[%s]\n", wirename);
-    }
-    else {
+    } else {
 	if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generateWire:mk_lcomb wirename[%s] FAILED\n", wirename);
 	errors++;
     }
     if (mk_lcomb (fp, getPrePostName(NULL, wirename, DEFAULT_REGIONSUFFIX), &wireregionmembers, 1, wireMaterial, wireMaterialParams, wireMaterialColor, 0)==0) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...completed basic wire [%s] region\n", getPrePostName(NULL, wirename, DEFAULT_REGIONSUFFIX));
-    }
-    else {
+    } else {
 	if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "generateWire:mk_lcomb wirename[%s] FAILED (region)\n", getPrePostName(NULL, wirename, DEFAULT_REGIONSUFFIX));
 	errors++;
     }
@@ -1242,12 +1214,15 @@ int generateWire(struct rt_wdb *fp, char *wirename, fastf_t *position, fastf_t *
     return errors;
 }
 
+
 /*
- * createWire generates the basic "cell" of the fence which is physically a section of the fence
- * mesh that forms the "honey-comb"-like appearance for a standard chain-link fence (the triangular
- * subsections of the fence.  the actual cell is what forms two entire and intertwining wires.  the
- * wire segment consists of exactly 20 "pieces" (currently) which are the cylinders and spheres that
- * form the twists and straits of the wire.
+ * createWire generates the basic "cell" of the fence which is
+ * physically a section of the fence mesh that forms the
+ * "honey-comb"-like appearance for a standard chain-link fence (the
+ * triangular subsections of the fence.  the actual cell is what forms
+ * two entire and intertwining wires.  the wire segment consists of
+ * exactly 20 "pieces" (currently) which are the cylinders and spheres
+ * that form the twists and straits of the wire.
  *
  ***************************************************************************************************************/
 int createWire(struct rt_wdb *fp, char *segmentname, fastf_t *heightvector, fastf_t *widthvector, double radius, double angle, double segmentlength, double segmentdepthseparation)
@@ -1278,8 +1253,8 @@ int createWire(struct rt_wdb *fp, char *segmentname, fastf_t *heightvector, fast
 
     VMOVE(position, position);
 
-    angley=(double) sin( (double) RADIAN(angle) ) * segmentlength;
-    anglex=(double) cos( (double) RADIAN(angle) ) * segmentlength;
+    angley=(double) sin((double) RADIAN(angle)) * segmentlength;
+    anglex=(double) cos((double) RADIAN(angle)) * segmentlength;
 
     VSCALE(upvector, heightvector, angley);
     VSCALE(sidevector, widthvector, anglex);
@@ -1291,8 +1266,7 @@ int createWire(struct rt_wdb *fp, char *segmentname, fastf_t *heightvector, fast
 
     if ((mk_rcc(fp, getName(segmentName, count, DEFAULT_WIREBASICPARAM), position, segmentvector, radius))==0) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...Wire segment [%d] generated\n", count);
-    }
-    else {
+    } else {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...Wire segment [%d] generation FAILED\n", count);
 	errors++;
     }
@@ -1301,8 +1275,8 @@ int createWire(struct rt_wdb *fp, char *segmentname, fastf_t *heightvector, fast
     /*second segment going ne*/
     count++;
 
-    angley=(double) sin( (double) RADIAN(angle) ) * segmentlength;
-    anglex=(double) cos( (double) RADIAN(angle) ) * segmentlength;
+    angley=(double) sin((double) RADIAN(angle)) * segmentlength;
+    anglex=(double) cos((double) RADIAN(angle)) * segmentlength;
 
     VSCALE(upvector, heightvector, angley);
     VSCALE(sidevector, widthvector, anglex);
@@ -1319,8 +1293,7 @@ int createWire(struct rt_wdb *fp, char *segmentname, fastf_t *heightvector, fast
 
     if ((mk_rcc(fp, getName(segmentName, count, DEFAULT_WIREBASICPARAM), position, segmentvector, radius))==0) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...Wire segment [%d] generated\n", count);
-    }
-    else {
+    } else {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...Wire segment [%d] generation FAILED\n", count);
 	errors++;
     }
@@ -1330,12 +1303,12 @@ int createWire(struct rt_wdb *fp, char *segmentname, fastf_t *heightvector, fast
     count++;
 
     VCROSS(movebackvector, heightvector, widthvector);
-    VSCALE(movebackvector, movebackvector, (segmentdepthseparation+(2*radius)) );
+    VSCALE(movebackvector, movebackvector, (segmentdepthseparation+(2*radius)));
 
     VMOVE(position, movebackvector);
 
-    angley=(double) sin( (double) RADIAN((double)180.0-angle) )*segmentlength;
-    anglex=(double) cos( (double) RADIAN((double)180.0-angle) )*segmentlength;
+    angley=(double) sin((double) RADIAN((double)180.0-angle))*segmentlength;
+    anglex=(double) cos((double) RADIAN((double)180.0-angle))*segmentlength;
 
     VSCALE(upvector, heightvector, angley);
     VSCALE(sidevector, widthvector, anglex);
@@ -1347,8 +1320,7 @@ int createWire(struct rt_wdb *fp, char *segmentname, fastf_t *heightvector, fast
 
     if ((mk_rcc(fp, getName(segmentName, count, DEFAULT_WIREBASICPARAM), position, segmentvector, radius))==0) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...Wire segment [%d] generated\n", count);
-    }
-    else {
+    } else {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...Wire segment [%d] generation FAILED\n", count);
 	errors++;
     }
@@ -1357,8 +1329,8 @@ int createWire(struct rt_wdb *fp, char *segmentname, fastf_t *heightvector, fast
     /*fourth segment going nw*/
     count++;
 
-    angley=(double) sin( (double) RADIAN(angle) ) * segmentlength;
-    anglex=(double) cos( (double) RADIAN(angle) ) * segmentlength;
+    angley=(double) sin((double) RADIAN(angle)) * segmentlength;
+    anglex=(double) cos((double) RADIAN(angle)) * segmentlength;
 
     VSCALE(movesidevector, widthvector, (anglex));
     VSCALE(moveupvector, heightvector, (angley));
@@ -1366,12 +1338,12 @@ int createWire(struct rt_wdb *fp, char *segmentname, fastf_t *heightvector, fast
     VADD2(position, moveupvector, movesidevector);
 
     VCROSS(movebackvector, heightvector, widthvector);
-    VSCALE(movebackvector, movebackvector, (segmentdepthseparation+(2*radius)) );
+    VSCALE(movebackvector, movebackvector, (segmentdepthseparation+(2*radius)));
 
     VADD2(position, position, movebackvector);
 
-    angley=(double) sin( (double) RADIAN((double)180.0-angle) )*segmentlength;
-    anglex=(double) cos( (double) RADIAN((double)180.0-angle) )*segmentlength;
+    angley=(double) sin((double) RADIAN((double)180.0-angle))*segmentlength;
+    anglex=(double) cos((double) RADIAN((double)180.0-angle))*segmentlength;
 
     VSCALE(upvector, heightvector, angley);
     VSCALE(sidevector, widthvector, anglex);
@@ -1383,8 +1355,7 @@ int createWire(struct rt_wdb *fp, char *segmentname, fastf_t *heightvector, fast
 
     if ((mk_rcc(fp, getName(segmentName, count, DEFAULT_WIREBASICPARAM), position, segmentvector, radius))==0) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...Wire segment [%d] generated\n", count);
-    }
-    else {
+    } else {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...Wire segment [%d] generation FAILED\n", count);
 	errors++;
     }
@@ -1393,8 +1364,8 @@ int createWire(struct rt_wdb *fp, char *segmentname, fastf_t *heightvector, fast
     /*extension of first segment going ne*/
     count++;
 
-    angley=(double) sin( (double) RADIAN(angle) ) * ((double)2.0 * radius);
-    anglex=(double) cos( (double) RADIAN(angle) ) * ((double)2.0 * radius);
+    angley=(double) sin((double) RADIAN(angle)) * ((double)2.0 * radius);
+    anglex=(double) cos((double) RADIAN(angle)) * ((double)2.0 * radius);
 
     VSCALE(upvector, heightvector, -angley);
     VSCALE(sidevector, widthvector, -anglex);
@@ -1409,8 +1380,7 @@ int createWire(struct rt_wdb *fp, char *segmentname, fastf_t *heightvector, fast
 
     if ((mk_rcc(fp, getName(segmentName, count, DEFAULT_WIREBASICPARAM), position, segmentvector, radius))==0) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...Wire segment [%d] generated\n", count);
-    }
-    else {
+    } else {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...Wire segment [%d] generation FAILED\n", count);
 	errors++;
     }
@@ -1419,14 +1389,14 @@ int createWire(struct rt_wdb *fp, char *segmentname, fastf_t *heightvector, fast
     /*extension of second segment going ne*/
     count++;
 
-    angley=(double) sin( (double) RADIAN(angle) ) * ((double)2.0 * radius);
-    anglex=(double) cos( (double) RADIAN(angle) ) * ((double)2.0 * radius);
+    angley=(double) sin((double) RADIAN(angle)) * ((double)2.0 * radius);
+    anglex=(double) cos((double) RADIAN(angle)) * ((double)2.0 * radius);
 
     VSCALE(upvector, heightvector, angley);
     VSCALE(sidevector, widthvector, anglex);
     VADD2(segmentvector, upvector, sidevector);
 
-    angley=(double) sin( (double) RADIAN(angle) ) * segmentlength;
+    angley=(double) sin((double) RADIAN(angle)) * segmentlength;
     VSCALE(moveupvector, heightvector, ((double)2.0 * angley));
 
     VMOVE(position, moveupvector);
@@ -1437,8 +1407,7 @@ int createWire(struct rt_wdb *fp, char *segmentname, fastf_t *heightvector, fast
 
     if ((mk_rcc(fp, getName(segmentName, count, DEFAULT_WIREBASICPARAM), position, segmentvector, radius))==0) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...Wire segment [%d] generated\n", count);
-    }
-    else {
+    } else {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...Wire segment [%d] generation FAILED\n", count);
 	errors++;
     }
@@ -1448,12 +1417,12 @@ int createWire(struct rt_wdb *fp, char *segmentname, fastf_t *heightvector, fast
     count++;
 
     VCROSS(movebackvector, heightvector, widthvector);
-    VSCALE(movebackvector, movebackvector, (segmentdepthseparation+(2*radius)) );
+    VSCALE(movebackvector, movebackvector, (segmentdepthseparation+(2*radius)));
 
     VMOVE(position, movebackvector);
 
-    angley=(double) sin( (double) RADIAN((double)180.0-angle) ) * ((double)2.0 * radius);
-    anglex=(double) cos( (double) RADIAN((double)180.0-angle) ) * ((double)2.0 * radius);
+    angley=(double) sin((double) RADIAN((double)180.0-angle)) * ((double)2.0 * radius);
+    anglex=(double) cos((double) RADIAN((double)180.0-angle)) * ((double)2.0 * radius);
 
     VSCALE(upvector, heightvector, -angley);
     VSCALE(sidevector, widthvector, -anglex);
@@ -1465,8 +1434,7 @@ int createWire(struct rt_wdb *fp, char *segmentname, fastf_t *heightvector, fast
 
     if ((mk_rcc(fp, getName(segmentName, count, DEFAULT_WIREBASICPARAM), position, segmentvector, radius))==0) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...Wire segment [%d] generated\n", count);
-    }
-    else {
+    } else {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...Wire segment [%d] generation FAILED\n", count);
 	errors++;
     }
@@ -1475,19 +1443,19 @@ int createWire(struct rt_wdb *fp, char *segmentname, fastf_t *heightvector, fast
     /*extension of fourth segment going nw*/
     count++;
 
-    angley=(double) sin( (double) RADIAN(angle) ) * segmentlength;
+    angley=(double) sin((double) RADIAN(angle)) * segmentlength;
 
     VSCALE(moveupvector, heightvector, ((double)2.0 * angley));
 
     VMOVE(position, moveupvector);
 
     VCROSS(movebackvector, heightvector, widthvector);
-    VSCALE(movebackvector, movebackvector, (segmentdepthseparation+(2*radius)) );
+    VSCALE(movebackvector, movebackvector, (segmentdepthseparation+(2*radius)));
 
     VADD2(position, position, movebackvector);
 
-    angley=(double) sin( (double) RADIAN((double)180.0-angle) ) * ((double)2.0 * radius);
-    anglex=(double) cos( (double) RADIAN((double)180.0-angle) ) * ((double)2.0 * radius);
+    angley=(double) sin((double) RADIAN((double)180.0-angle)) * ((double)2.0 * radius);
+    anglex=(double) cos((double) RADIAN((double)180.0-angle)) * ((double)2.0 * radius);
 
     VSCALE(upvector, heightvector, angley);
     VSCALE(sidevector, widthvector, anglex);
@@ -1499,8 +1467,7 @@ int createWire(struct rt_wdb *fp, char *segmentname, fastf_t *heightvector, fast
 
     if ((mk_rcc(fp, getName(segmentName, count, DEFAULT_WIREBASICPARAM), position, segmentvector, radius))==0) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...Wire segment [%d] generated\n", count);
-    }
-    else {
+    } else {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...Wire segment [%d] generation FAILED\n", count);
 	errors++;
     }
@@ -1509,8 +1476,8 @@ int createWire(struct rt_wdb *fp, char *segmentname, fastf_t *heightvector, fast
     /*first ball joint segment*/
     count++;
 
-    angley=(double) sin( (double) RADIAN(angle) ) * segmentlength;
-    anglex=(double) cos( (double) RADIAN(angle) ) * segmentlength;
+    angley=(double) sin((double) RADIAN(angle)) * segmentlength;
+    anglex=(double) cos((double) RADIAN(angle)) * segmentlength;
 
     VSCALE(moveupvector, heightvector, angley);
     VSCALE(movesidevector, widthvector, anglex);
@@ -1521,8 +1488,7 @@ int createWire(struct rt_wdb *fp, char *segmentname, fastf_t *heightvector, fast
 
     if ((mk_sph(fp, getName(segmentName, count, DEFAULT_WIREBASICPARAM), position, radius))==0) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...Wire segment [%d] generated\n", count);
-    }
-    else {
+    } else {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...Wire segment [%d] generation FAILED\n", count);
 	errors++;
     }
@@ -1531,8 +1497,8 @@ int createWire(struct rt_wdb *fp, char *segmentname, fastf_t *heightvector, fast
     /*second ball joint segment*/
     count++;
 
-    angley=(double) sin( (double) RADIAN(angle) ) * segmentlength;
-    anglex=(double) cos( (double) RADIAN(angle) ) * segmentlength;
+    angley=(double) sin((double) RADIAN(angle)) * segmentlength;
+    anglex=(double) cos((double) RADIAN(angle)) * segmentlength;
 
     VSCALE(moveupvector, heightvector, angley);
     VSCALE(movesidevector, widthvector, anglex);
@@ -1544,8 +1510,7 @@ int createWire(struct rt_wdb *fp, char *segmentname, fastf_t *heightvector, fast
 
     if ((mk_sph(fp, getName(segmentName, count, DEFAULT_WIREBASICPARAM), position, radius))==0) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...Wire segment [%d] generated\n", count);
-    }
-    else {
+    } else {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...Wire segment [%d] generation FAILED\n", count);
 	errors++;
     }
@@ -1554,15 +1519,15 @@ int createWire(struct rt_wdb *fp, char *segmentname, fastf_t *heightvector, fast
     /*third ball joint segment*/
     count++;
 
-    angley=(double) sin( (double) RADIAN(angle) ) * segmentlength;
-    anglex=(double) cos( (double) RADIAN(angle) ) * segmentlength;
+    angley=(double) sin((double) RADIAN(angle)) * segmentlength;
+    anglex=(double) cos((double) RADIAN(angle)) * segmentlength;
 
     VSCALE(moveupvector, heightvector, angley);
     VSCALE(movesidevector, widthvector, anglex);
     VADD2(position, moveupvector, movesidevector);
 
     VCROSS(movebackvector, heightvector, widthvector);
-    VSCALE(movebackvector, movebackvector, (segmentdepthseparation+((double)2.0*radius)) );
+    VSCALE(movebackvector, movebackvector, (segmentdepthseparation+((double)2.0*radius)));
 
     VADD2(position, position, movebackvector);
 
@@ -1572,8 +1537,7 @@ int createWire(struct rt_wdb *fp, char *segmentname, fastf_t *heightvector, fast
 
     if ((mk_sph(fp, getName(segmentName, count, DEFAULT_WIREBASICPARAM), position, radius))==0) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...Wire segment [%d] generated\n", count);
-    }
-    else {
+    } else {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...Wire segment [%d] generation FAILED\n", count);
 	errors++;
     }
@@ -1582,15 +1546,15 @@ int createWire(struct rt_wdb *fp, char *segmentname, fastf_t *heightvector, fast
     /*fourth ball joint segment */
     count++;
 
-    angley=(double) sin( (double) RADIAN(angle) ) * segmentlength;
-    anglex=(double) cos( (double) RADIAN(angle) ) * segmentlength;
+    angley=(double) sin((double) RADIAN(angle)) * segmentlength;
+    anglex=(double) cos((double) RADIAN(angle)) * segmentlength;
 
     VSCALE(moveupvector, heightvector, angley);
     VSCALE(movesidevector, widthvector, anglex);
     VSUB2(position, moveupvector, movesidevector);
 
     VCROSS(movebackvector, heightvector, widthvector);
-    VSCALE(movebackvector, movebackvector, (segmentdepthseparation+(2*radius)) );
+    VSCALE(movebackvector, movebackvector, (segmentdepthseparation+(2*radius)));
 
     VADD2(position, position, movebackvector);
 
@@ -1600,8 +1564,7 @@ int createWire(struct rt_wdb *fp, char *segmentname, fastf_t *heightvector, fast
 
     if ((mk_sph(fp, getName(segmentName, count, DEFAULT_WIREBASICPARAM), position, radius))==0) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...Wire segment [%d] generated\n", count);
-    }
-    else {
+    } else {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...Wire segment [%d] generation FAILED\n", count);
 	errors++;
     }
@@ -1610,8 +1573,8 @@ int createWire(struct rt_wdb *fp, char *segmentname, fastf_t *heightvector, fast
     /*first segment going back*/
     count++;
 
-    angley=(double) sin( (double) RADIAN(angle) ) * segmentlength;
-    anglex=(double) cos( (double) RADIAN(angle) ) * segmentlength;
+    angley=(double) sin((double) RADIAN(angle)) * segmentlength;
+    anglex=(double) cos((double) RADIAN(angle)) * segmentlength;
 
     VSCALE(movesidevector, widthvector, (anglex));
     VSCALE(moveupvector, heightvector, (angley));
@@ -1619,7 +1582,7 @@ int createWire(struct rt_wdb *fp, char *segmentname, fastf_t *heightvector, fast
     VADD2(position, moveupvector, movesidevector);
 
     VCROSS(movebackvector, heightvector, widthvector);
-    VSCALE(movebackvector, movebackvector, (segmentdepthseparation+(2*radius)) );
+    VSCALE(movebackvector, movebackvector, (segmentdepthseparation+(2*radius)));
 
     VMOVE(segmentvector, movebackvector);
 
@@ -1629,8 +1592,7 @@ int createWire(struct rt_wdb *fp, char *segmentname, fastf_t *heightvector, fast
 
     if ((mk_rcc(fp, getName(segmentName, count, DEFAULT_WIREBASICPARAM), position, segmentvector, radius))==0) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...Wire segment [%d] generated\n", count);
-    }
-    else {
+    } else {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...Wire segment [%d] generation FAILED\n", count);
 	errors++;
     }
@@ -1639,15 +1601,15 @@ int createWire(struct rt_wdb *fp, char *segmentname, fastf_t *heightvector, fast
     /*second segment going back*/
     count++;
 
-    angley=(double) sin( (double) RADIAN((double)180.0-angle) )*segmentlength;
-    anglex=(double) cos( (double) RADIAN((double)180.0-angle) )*segmentlength;
+    angley=(double) sin((double) RADIAN((double)180.0-angle))*segmentlength;
+    anglex=(double) cos((double) RADIAN((double)180.0-angle))*segmentlength;
 
     VSCALE(moveupvector, heightvector, angley);
     VSCALE(movesidevector, widthvector, anglex);
     VADD2(position, moveupvector, movesidevector);
 
     VCROSS(movebackvector, heightvector, widthvector);
-    VSCALE(movebackvector, movebackvector, (segmentdepthseparation+(2*radius)) );
+    VSCALE(movebackvector, movebackvector, (segmentdepthseparation+(2*radius)));
 
     VMOVE(segmentvector, movebackvector);
 
@@ -1657,8 +1619,7 @@ int createWire(struct rt_wdb *fp, char *segmentname, fastf_t *heightvector, fast
 
     if ((mk_rcc(fp, getName(segmentName, count, DEFAULT_WIREBASICPARAM), position, segmentvector, radius))==0) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...Wire segment [%d] generated\n", count);
-    }
-    else {
+    } else {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...Wire segment [%d] generation FAILED\n", count);
 	errors++;
     }
@@ -1667,13 +1628,13 @@ int createWire(struct rt_wdb *fp, char *segmentname, fastf_t *heightvector, fast
     /*third segment going back*/
     count++;
 
-    angley=(double) sin( (double) RADIAN(angle) ) * segmentlength;
+    angley=(double) sin((double) RADIAN(angle)) * segmentlength;
 
     VSCALE(moveupvector, heightvector, ((double)2.0 * angley));
     VMOVE(position, moveupvector);
 
-    angley=(double) sin( (double) RADIAN(angle) ) * ((double)2.0 * radius);
-    anglex=(double) cos( (double) RADIAN(angle) ) * ((double)2.0 * radius);
+    angley=(double) sin((double) RADIAN(angle)) * ((double)2.0 * radius);
+    anglex=(double) cos((double) RADIAN(angle)) * ((double)2.0 * radius);
 
     VSCALE(upvector, heightvector, angley);
     VSCALE(sidevector, widthvector, anglex);
@@ -1682,7 +1643,7 @@ int createWire(struct rt_wdb *fp, char *segmentname, fastf_t *heightvector, fast
     VADD2(position, position, segmentvector);
 
     VCROSS(movebackvector, heightvector, widthvector);
-    VSCALE(movebackvector, movebackvector, (segmentdepthseparation+((double)2.0*radius)) );
+    VSCALE(movebackvector, movebackvector, (segmentdepthseparation+((double)2.0*radius)));
 
     VMOVE(segmentvector, movebackvector);
 
@@ -1692,8 +1653,7 @@ int createWire(struct rt_wdb *fp, char *segmentname, fastf_t *heightvector, fast
 
     if ((mk_rcc(fp, getName(segmentName, count, DEFAULT_WIREBASICPARAM), position, segmentvector, radius))==0) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...Wire segment [%d] generated\n", count);
-    }
-    else {
+    } else {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...Wire segment [%d] generation FAILED\n", count);
 	errors++;
     }
@@ -1702,13 +1662,13 @@ int createWire(struct rt_wdb *fp, char *segmentname, fastf_t *heightvector, fast
     /*fourth segment going back*/
     count++;
 
-    angley=(double) sin( (double) RADIAN((double)180.0-angle) ) * segmentlength;
+    angley=(double) sin((double) RADIAN((double)180.0-angle)) * segmentlength;
 
     VSCALE(moveupvector, heightvector, ((double)2.0 * angley));
     VMOVE(position, moveupvector);
 
-    angley=(double) sin( (double) RADIAN(angle) ) * ((double)2.0 * radius);
-    anglex=(double) cos( (double) RADIAN(angle) ) * ((double)2.0 * radius);
+    angley=(double) sin((double) RADIAN(angle)) * ((double)2.0 * radius);
+    anglex=(double) cos((double) RADIAN(angle)) * ((double)2.0 * radius);
 
     VSCALE(upvector, heightvector, angley);
     VSCALE(sidevector, widthvector, -anglex);
@@ -1717,7 +1677,7 @@ int createWire(struct rt_wdb *fp, char *segmentname, fastf_t *heightvector, fast
     VADD2(position, position, segmentvector);
 
     VCROSS(movebackvector, heightvector, widthvector);
-    VSCALE(movebackvector, movebackvector, (segmentdepthseparation+(2*radius)) );
+    VSCALE(movebackvector, movebackvector, (segmentdepthseparation+(2*radius)));
 
     VMOVE(segmentvector, movebackvector);
 
@@ -1727,8 +1687,7 @@ int createWire(struct rt_wdb *fp, char *segmentname, fastf_t *heightvector, fast
 
     if ((mk_rcc(fp, getName(segmentName, count, DEFAULT_WIREBASICPARAM), position, segmentvector, radius))==0) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...Wire segment [%d] generated\n", count);
-    }
-    else {
+    } else {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...Wire segment [%d] generation FAILED\n", count);
 	errors++;
     }
@@ -1737,8 +1696,8 @@ int createWire(struct rt_wdb *fp, char *segmentname, fastf_t *heightvector, fast
     /*first end ball joint segment*/
     count++;
 
-    angley=(double) sin( (double) RADIAN(angle) ) * ((double)2.0 * radius);
-    anglex=(double) cos( (double) RADIAN(angle) ) * ((double)2.0 * radius);
+    angley=(double) sin((double) RADIAN(angle)) * ((double)2.0 * radius);
+    anglex=(double) cos((double) RADIAN(angle)) * ((double)2.0 * radius);
 
     VSCALE(moveupvector, heightvector, -angley);
     VSCALE(movesidevector, widthvector, -anglex);
@@ -1751,8 +1710,7 @@ int createWire(struct rt_wdb *fp, char *segmentname, fastf_t *heightvector, fast
 
     if ((mk_sph(fp, getName(segmentName, count, DEFAULT_WIREBASICPARAM), position, radius))==0) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...Wire segment [%d] generated\n", count);
-    }
-    else {
+    } else {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...Wire segment [%d] generation FAILED\n", count);
 	errors++;
     }
@@ -1761,8 +1719,8 @@ int createWire(struct rt_wdb *fp, char *segmentname, fastf_t *heightvector, fast
     /*second end ball joint segment*/
     count++;
 
-    angley=(double) sin( (double) RADIAN(angle) ) * ((double)2.0 * radius);
-    anglex=(double) cos( (double) RADIAN(angle) ) * ((double)2.0 * radius);
+    angley=(double) sin((double) RADIAN(angle)) * ((double)2.0 * radius);
+    anglex=(double) cos((double) RADIAN(angle)) * ((double)2.0 * radius);
 
     VSCALE(moveupvector, heightvector, -angley);
     VSCALE(movesidevector, widthvector, anglex);
@@ -1770,7 +1728,7 @@ int createWire(struct rt_wdb *fp, char *segmentname, fastf_t *heightvector, fast
     VADD2(position, moveupvector, movesidevector);
 
     VCROSS(movebackvector, heightvector, widthvector);
-    VSCALE(movebackvector, movebackvector, (segmentdepthseparation+((double)2.0*radius)) );
+    VSCALE(movebackvector, movebackvector, (segmentdepthseparation+((double)2.0*radius)));
 
     VADD2(position, position, movebackvector);
 
@@ -1780,8 +1738,7 @@ int createWire(struct rt_wdb *fp, char *segmentname, fastf_t *heightvector, fast
 
     if ((mk_sph(fp, getName(segmentName, count, DEFAULT_WIREBASICPARAM), position, radius))==0) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...Wire segment [%d] generated\n", count);
-    }
-    else {
+    } else {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...Wire segment [%d] generation FAILED\n", count);
 	errors++;
     }
@@ -1790,15 +1747,15 @@ int createWire(struct rt_wdb *fp, char *segmentname, fastf_t *heightvector, fast
     /*third end ball joint segment*/
     count++;
 
-    angley=(double) sin( (double) RADIAN(angle) ) * ((double)2.0 * radius);
-    anglex=(double) cos( (double) RADIAN(angle) ) * ((double)2.0 * radius);
+    angley=(double) sin((double) RADIAN(angle)) * ((double)2.0 * radius);
+    anglex=(double) cos((double) RADIAN(angle)) * ((double)2.0 * radius);
 
     VSCALE(moveupvector, heightvector, angley);
     VSCALE(movesidevector, widthvector, anglex);
 
     VADD2(position, moveupvector, movesidevector);
 
-    angley=(double) sin( (double) RADIAN(angle) ) * segmentlength;
+    angley=(double) sin((double) RADIAN(angle)) * segmentlength;
     VSCALE(moveupvector, heightvector, ((double)2.0 * angley));
     VADD2(position, position, moveupvector);
 
@@ -1808,8 +1765,7 @@ int createWire(struct rt_wdb *fp, char *segmentname, fastf_t *heightvector, fast
 
     if ((mk_sph(fp, getName(segmentName, count, DEFAULT_WIREBASICPARAM), position, radius))==0) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...Wire segment [%d] generated\n", count);
-    }
-    else {
+    } else {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...Wire segment [%d] generation FAILED\n", count);
 	errors++;
     }
@@ -1818,8 +1774,8 @@ int createWire(struct rt_wdb *fp, char *segmentname, fastf_t *heightvector, fast
     /*fourth end ball joint segment*/
     count++;
 
-    angley=(double) sin( (double) RADIAN(angle) ) * ((double)2.0 * radius);
-    anglex=(double) cos( (double) RADIAN(angle) ) * ((double)2.0 * radius);
+    angley=(double) sin((double) RADIAN(angle)) * ((double)2.0 * radius);
+    anglex=(double) cos((double) RADIAN(angle)) * ((double)2.0 * radius);
 
     VSCALE(moveupvector, heightvector, angley);
     VSCALE(movesidevector, widthvector, -anglex);
@@ -1827,11 +1783,11 @@ int createWire(struct rt_wdb *fp, char *segmentname, fastf_t *heightvector, fast
     VADD2(position, moveupvector, movesidevector);
 
     VCROSS(movebackvector, heightvector, widthvector);
-    VSCALE(movebackvector, movebackvector, (segmentdepthseparation+((double)2.0*radius)) );
+    VSCALE(movebackvector, movebackvector, (segmentdepthseparation+((double)2.0*radius)));
 
     VADD2(position, position, movebackvector);
 
-    angley=(double) sin( (double) RADIAN(angle) ) * segmentlength;
+    angley=(double) sin((double) RADIAN(angle)) * segmentlength;
     VSCALE(moveupvector, heightvector, ((double)2.0 * angley));
     VADD2(position, position, moveupvector);
 
@@ -1841,8 +1797,7 @@ int createWire(struct rt_wdb *fp, char *segmentname, fastf_t *heightvector, fast
 
     if ((mk_sph(fp, getName(segmentName, count, DEFAULT_WIREBASICPARAM), position, radius))==0) {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...Wire segment [%d] generated\n", count);
-    }
-    else {
+    } else {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "...Wire segment [%d] generation FAILED\n", count);
 	errors++;
     }
@@ -1852,9 +1807,10 @@ int createWire(struct rt_wdb *fp, char *segmentname, fastf_t *heightvector, fast
 }
 
 
-/* main() is basically just a simple interface to the program.  The interface changes the
- * defaults according to what the user has specified and offers the opportunity to enter
- * data in an interactive mode
+/* main() is basically just a simple interface to the program.  The
+ * interface changes the defaults according to what the user has
+ * specified and offers the opportunity to enter data in an
+ * interactive mode
  *******************/
 int main(int argc, char **argv)
 {
@@ -1872,8 +1828,7 @@ int main(int argc, char **argv)
     if ((fp=wdb_fopen(outputFilename))==NULL) {
 	perror(outputFilename);
 	bu_exit(2, NULL);
-    }
-    else {
+    } else {
 	if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "\nUsing [%s] for output file\n\n", outputFilename);
     }
 
@@ -1900,11 +1855,10 @@ int main(int argc, char **argv)
     if (interactive) {
 	if (fenceFence) {
 	    if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "\nFence Name: [%s] ", fenceName);
-	    if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin) ) {
+	    if (! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin)) {
 		if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "fenceName");
 		if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "fenceName");
-	    }
-	    else {
+	    } else {
 		len = strlen(verboseinput);
 		if ((len>0) && (verboseinput[len-1]=='\n')) verboseinput[len-1] = 0;
 		if (debug) {
@@ -1917,11 +1871,10 @@ int main(int argc, char **argv)
 	    memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
 	    if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Start Position(x, y, z): [%f %f %f] ", fenceStartPosition[0], fenceStartPosition[1], fenceStartPosition[2]);
-	    if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH * 3, stdin) ) {
+	    if (! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH * 3, stdin)) {
 		if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "fenceStartPosition");
 		if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "fenceStartPosition");
-	    }
-	    else {
+	    } else {
 		len = strlen(verboseinput);
 		if ((len>0) && (verboseinput[len-1]=='\n')) verboseinput[len-1] = 0;
 		if (debug) {
@@ -1934,11 +1887,10 @@ int main(int argc, char **argv)
 	    memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
 	    if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "End Position(x, y, z): [%f %f %f] ", fenceEndPosition[0], fenceEndPosition[1], fenceEndPosition[2]);
-	    if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin) ) {
+	    if (! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin)) {
 		if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "fenceEndPosition");
 		if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "fenceEndPosition");
-	    }
-	    else {
+	    } else {
 		len = strlen(verboseinput);
 		if ((len>0) && (verboseinput[len-1]=='\n')) verboseinput[len-1] = 0;
 		if (debug) {
@@ -1951,11 +1903,10 @@ int main(int argc, char **argv)
 	    memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
 	    if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Fence Height(i, j, k): [%f %f %f] ", fenceHeight[0], fenceHeight[1], fenceHeight[2]);
-	    if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin) ) {
+	    if (! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin)) {
 		if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "fenceHeight");
 		if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "fenceHeight");
-	    }
-	    else {
+	    } else {
 		len = strlen(verboseinput);
 		if ((len>0) && (verboseinput[len-1]=='\n')) verboseinput[len-1] = 0;
 		if (debug) {
@@ -1979,11 +1930,10 @@ int main(int argc, char **argv)
 	    }
 
 	    if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Fence Material: [%s] ", fenceMaterial);
-	    if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin) ) {
+	    if (! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin)) {
 		if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "fenceMaterial");
 		if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "fenceMaterial");
-	    }
-	    else {
+	    } else {
 		len = strlen(verboseinput);
 		if ((len>0) && (verboseinput[len-1]=='\n')) verboseinput[len-1] = 0;
 		if (debug) {
@@ -1996,11 +1946,10 @@ int main(int argc, char **argv)
 	    memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
 	    if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Fence Material Parameters: [%s] ", fenceMaterialParams);
-	    if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin) ) {
+	    if (! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin)) {
 		if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "fenceMaterialParams");
 		if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "fenceMaterialParams");
-	    }
-	    else {
+	    } else {
 		len = strlen(verboseinput);
 		if ((len>0) && (verboseinput[len-1]=='\n')) verboseinput[len-1] = 0;
 		if (debug) {
@@ -2013,11 +1962,10 @@ int main(int argc, char **argv)
 	    memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
 	    if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Fence Material Color: [%d %d %d] ", fenceMaterialColor[0], fenceMaterialColor[1], fenceMaterialColor[2]);
-	    if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin) ) {
+	    if (! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin)) {
 		if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "fenceMaterialColor");
 		if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "fenceMaterialColor");
-	    }
-	    else {
+	    } else {
 		len = strlen(verboseinput);
 		if ((len>0) && (verboseinput[len-1]=='\n')) verboseinput[len-1] = 0;
 		if (debug) {
@@ -2049,11 +1997,10 @@ int main(int argc, char **argv)
 
 	if (fencePoles) {
 	    if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "\nPole Name: [%s] ", poleName);
-	    if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin) ) {
+	    if (! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin)) {
 		if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "poleName");
 		if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "poleName");
-	    }
-	    else {
+	    } else {
 		len = strlen(verboseinput);
 		if ((len>0) && (verboseinput[len-1]=='\n')) verboseinput[len-1] = 0;
 		if (debug) {
@@ -2066,11 +2013,10 @@ int main(int argc, char **argv)
 	    memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
 	    if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Pole Height: [%f] ", poleHeight);
-	    if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin) ) {
+	    if (! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin)) {
 		if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "poleHeight");
 		if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "poleHeight");
-	    }
-	    else {
+	    } else {
 		len = strlen(verboseinput);
 		if ((len>0) && (verboseinput[len-1]=='\n')) verboseinput[len-1] = 0;
 		if (debug) {
@@ -2083,11 +2029,10 @@ int main(int argc, char **argv)
 	    memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
 	    if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Pole Radius: [%f] ", poleRadius);
-	    if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin) ) {
+	    if (! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin)) {
 		if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "poleRadius");
 		if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "poleRadius");
-	    }
-	    else {
+	    } else {
 		len = strlen(verboseinput);
 		if ((len>0) && (verboseinput[len-1]=='\n')) verboseinput[len-1] = 0;
 		if (debug) {
@@ -2100,11 +2045,10 @@ int main(int argc, char **argv)
 	    memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
 	    if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Pole Spacing: [%f] ", fencePoleSpacing);
-	    if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin) ) {
+	    if (! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin)) {
 		if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "fencePoleSpacing");
 		if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "fencePoleSpacing");
-	    }
-	    else {
+	    } else {
 		len = strlen(verboseinput);
 		if ((len>0) && (verboseinput[len-1]=='\n')) verboseinput[len-1] = 0;
 		if (debug) {
@@ -2117,11 +2061,10 @@ int main(int argc, char **argv)
 	    memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
 	    if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Pole Material: [%s] ", poleMaterial);
-	    if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin) ) {
+	    if (! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin)) {
 		if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "poleMaterial");
 		if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "poleMaterial");
-	    }
-	    else {
+	    } else {
 		len = strlen(verboseinput);
 		if ((len>0) && (verboseinput[len-1]=='\n')) verboseinput[len-1] = 0;
 		if (debug) {
@@ -2134,11 +2077,10 @@ int main(int argc, char **argv)
 	    memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
 	    if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Pole Material Parameters: [%s] ", poleMaterialParams);
-	    if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin) ) {
+	    if (! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin)) {
 		if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "poleMaterialParams");
 		if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "poleMaterialParams");
-	    }
-	    else {
+	    } else {
 		len = strlen(verboseinput);
 		if ((len>0) && (verboseinput[len-1]=='\n')) verboseinput[len-1] = 0;
 		if (debug) {
@@ -2151,11 +2093,10 @@ int main(int argc, char **argv)
 	    memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
 	    if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Pole Material Color: [%d %d %d] ", poleMaterialColor[0], poleMaterialColor[1], poleMaterialColor[2]);
-	    if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin) ) {
+	    if (! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin)) {
 		if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "poleMaterialColor");
 		if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "poleMaterialColor");
-	    }
-	    else {
+	    } else {
 		len = strlen(verboseinput);
 		if ((len>0) && (verboseinput[len-1]=='\n')) verboseinput[len-1] = 0;
 		if (debug) {
@@ -2187,11 +2128,10 @@ int main(int argc, char **argv)
 
 	if (fenceMesh) {
 	    if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "\nMesh Name: [%s] ", meshName);
-	    if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin) ) {
+	    if (! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin)) {
 		if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "meshName");
 		if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "meshName");
-	    }
-	    else {
+	    } else {
 		len = strlen(verboseinput);
 		if ((len>0) && (verboseinput[len-1]=='\n')) verboseinput[len-1] = 0;
 		if (debug) {
@@ -2204,11 +2144,10 @@ int main(int argc, char **argv)
 	    memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
 	    if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Mesh Height: [%f] ", meshHeight);
-	    if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin) ) {
+	    if (! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin)) {
 		if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "meshHeight");
 		if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "meshHeight");
-	    }
-	    else {
+	    } else {
 		len = strlen(verboseinput);
 		if ((len>0) && (verboseinput[len-1]=='\n')) verboseinput[len-1] = 0;
 		if (debug) {
@@ -2221,11 +2160,10 @@ int main(int argc, char **argv)
 	    memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
 	    if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Mesh Width: [%f] ", meshWidth);
-	    if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin) ) {
+	    if (! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin)) {
 		if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "meshWidth");
 		if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "meshWidth");
-	    }
-	    else {
+	    } else {
 		len = strlen(verboseinput);
 		if ((len>0) && (verboseinput[len-1]=='\n')) verboseinput[len-1] = 0;
 		if (debug) {
@@ -2238,11 +2176,10 @@ int main(int argc, char **argv)
 	    memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
 	    if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Mesh Material: [%s] ", meshMaterial);
-	    if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin) ) {
+	    if (! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin)) {
 		if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "meshMaterial");
 		if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "meshMaterial");
-	    }
-	    else {
+	    } else {
 		len = strlen(verboseinput);
 		if ((len>0) && (verboseinput[len-1]=='\n')) verboseinput[len-1] = 0;
 		if (debug) {
@@ -2255,11 +2192,10 @@ int main(int argc, char **argv)
 	    memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
 	    if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Mesh Material Parameters: [%s] ", meshMaterialParams);
-	    if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin) ) {
+	    if (! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin)) {
 		if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "meshMaterialParams");
 		if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "meshMaterialParams");
-	    }
-	    else {
+	    } else {
 		len = strlen(verboseinput);
 		if ((len>0) && (verboseinput[len-1]=='\n')) verboseinput[len-1] = 0;
 		if (debug) {
@@ -2272,11 +2208,10 @@ int main(int argc, char **argv)
 	    memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
 	    if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Mesh Material Color: [%d %d %d] ", meshMaterialColor[0], meshMaterialColor[1], meshMaterialColor[2]);
-	    if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin) ) {
+	    if (! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin)) {
 		if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "meshMaterialColor");
 		if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "meshMaterialColor");
-	    }
-	    else {
+	    } else {
 		len = strlen(verboseinput);
 		if ((len>0) && (verboseinput[len-1]=='\n')) verboseinput[len-1] = 0;
 		if (debug) {
@@ -2308,11 +2243,10 @@ int main(int argc, char **argv)
 
 	if (fenceWire) {
 	    if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "\nWire Name: [%s] ", wireName);
-	    if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin) ) {
+	    if (! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin)) {
 		if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "wireName");
 		if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "wireName");
-	    }
-	    else {
+	    } else {
 		len = strlen(verboseinput);
 		if ((len>0) && (verboseinput[len-1]=='\n')) verboseinput[len-1] = 0;
 		if (debug) {
@@ -2325,11 +2259,10 @@ int main(int argc, char **argv)
 	    memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
 	    if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Wire Radius: [%f] ", wireRadius);
-	    if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin) ) {
+	    if (! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin)) {
 		if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "wireRadius");
 		if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "wireRadius");
-	    }
-	    else {
+	    } else {
 		len = strlen(verboseinput);
 		if ((len>0) && (verboseinput[len-1]=='\n')) verboseinput[len-1] = 0;
 		if (debug) {
@@ -2342,11 +2275,10 @@ int main(int argc, char **argv)
 	    memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
 	    if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Wire Angle: [%f] ", wireAngle);
-	    if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin) ) {
+	    if (! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin)) {
 		if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "wireAngle");
 		if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "wireAngle");
-	    }
-	    else {
+	    } else {
 		len = strlen(verboseinput);
 		if ((len>0) && (verboseinput[len-1]=='\n')) verboseinput[len-1] = 0;
 		if (debug) {
@@ -2359,11 +2291,10 @@ int main(int argc, char **argv)
 	    memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
 	    if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Wire Material: [%s] ", wireMaterial);
-	    if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin) ) {
+	    if (! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin)) {
 		if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "wireMaterial");
 		if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "wireMaterial");
-	    }
-	    else {
+	    } else {
 		len = strlen(verboseinput);
 		if ((len>0) && (verboseinput[len-1]=='\n')) verboseinput[len-1] = 0;
 		if (debug) {
@@ -2376,11 +2307,10 @@ int main(int argc, char **argv)
 	    memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
 	    if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Wire Material Parameters: [%s] ", wireMaterialParams);
-	    if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin) ) {
+	    if (! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin)) {
 		if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "wireMaterialParams");
 		if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "wireMaterialParams");
-	    }
-	    else {
+	    } else {
 		len = strlen(verboseinput);
 		if ((len>0) && (verboseinput[len-1]=='\n')) verboseinput[len-1] = 0;
 		if (debug) {
@@ -2393,11 +2323,10 @@ int main(int argc, char **argv)
 	    memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
 	    if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Wire Material Color: [%d %d %d] ", wireMaterialColor[0], wireMaterialColor[1], wireMaterialColor[2]);
-	    if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin) ) {
+	    if (! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH*3, stdin)) {
 		if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "wireMaterialColor");
 		if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "wireMaterialColor");
-	    }
-	    else {
+	    } else {
 		len = strlen(verboseinput);
 		if ((len>0) && (verboseinput[len-1]=='\n')) verboseinput[len-1] = 0;
 		if (debug) {
@@ -2426,11 +2355,10 @@ int main(int argc, char **argv)
 	    memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
 	    if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Wire Segment Length: [%f] ", wireSegmentLength);
-	    if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin) ) {
+	    if (! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin)) {
 		if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "wireSegmentLength");
 		if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "wireSegmentLength");
-	    }
-	    else {
+	    } else {
 		len = strlen(verboseinput);
 		if ((len>0) && (verboseinput[len-1]=='\n')) verboseinput[len-1] = 0;
 		if (debug) {
@@ -2443,11 +2371,10 @@ int main(int argc, char **argv)
 	    memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
 	    if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Wire Segment Separation: [%f] ", wireSegmentSeparation);
-	    if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin) ) {
+	    if (! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin)) {
 		if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "wireSegmentSeparation");
 		if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "wireSegmentSeparation");
-	    }
-	    else {
+	    } else {
 		len = strlen(verboseinput);
 		if ((len>0) && (verboseinput[len-1]=='\n')) verboseinput[len-1] = 0;
 		if (debug) {
@@ -2460,11 +2387,10 @@ int main(int argc, char **argv)
 	    memset(verboseinput, 0, DEFAULT_MAXNAMELENGTH*3);
 
 	    if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Segment Name: [%s] ", segmentName);
-	    if ( ! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin) ) {
+	    if (! bu_fgets(verboseinput, DEFAULT_MAXNAMELENGTH, stdin)) {
 		if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "Error reading input for %s encountered.\nContinuing with default values.\n", "segmentName");
 		if (debug) fprintf(DEFAULT_DEBUG_OUTPUT, "main:fgets error reading %s from stdin\n", "segmentName");
-	    }
-	    else {
+	    } else {
 		len = strlen(verboseinput);
 		if ((len>0) && (verboseinput[len-1]=='\n')) verboseinput[len-1] = 0;
 		if (debug) {
@@ -2480,16 +2406,13 @@ int main(int argc, char **argv)
 
 	if ((errors=generateFence_s(fp, fenceName, fenceStartPosition, fenceEndPosition))!=0) {
 	    if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "\n...[%d] Errors generating fence [%s]\n", errors, fenceName);
-	}
-	else {
+	} else {
 	    if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "\n...Fence [%s] Generated.\n", fenceName);
 	}
-    }
-    else {
+    } else {
 	if ((errors=generateFence(fp, fenceName, fenceStartPosition, fenceHeight, fenceWidth))!=0) {
 	    if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "\n...[%d] Errors generating fence [%s]\n", errors, fenceName);
-	}
-	else {
+	} else {
 	    if (verbose) fprintf(DEFAULT_VERBOSE_OUTPUT, "\n...Fence [%s] Generated.\n", fenceName);
 	}
     }
@@ -2499,6 +2422,7 @@ int main(int argc, char **argv)
     wdb_close(fp);
     return errors;
 }
+
 
 /*
  * Local Variables:
