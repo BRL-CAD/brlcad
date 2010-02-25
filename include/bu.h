@@ -191,6 +191,10 @@ __BEGIN_DECLS
 #include <stddef.h> /* for size_t */
 #include <limits.h> /* for CHAR_BIT */
 
+#ifdef HAVE_STDINT_H
+#  include <stdint.h> /* for [u]int[16|32|64]_t */
+#endif
+
 /* common interface headers */
 #include "tcl.h"	/* Included for Tcl_Interp definition */
 #include "magic.h"
