@@ -275,8 +275,8 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
 #else
 #  define BU_ASSERT_PTR(_lhs, _relation, _rhs)	\
 	if (!((_lhs) _relation (_rhs))) { \
-		bu_log("BU_ASSERT_PTR(" #_lhs #_relation #_rhs ") failed, lhs=x%lx, rhs=x%lx, file %s, line %d\n", \
-			(long)(_lhs), (long)(_rhs), \
+		bu_log("BU_ASSERT_PTR(" #_lhs #_relation #_rhs ") failed, lhs=%p, rhs=%p, file %s, line %d\n", \
+			(void *)(_lhs), (void *)(_rhs), \
 			__FILE__, __LINE__); \
 		bu_bomb("BU_ASSERT_PTR failure\n"); \
 	}
@@ -1599,7 +1599,7 @@ struct bu_vls  {
 };
 #define BU_CK_VLS(_vp)		BU_CKMAG(_vp, BU_VLS_MAGIC, "bu_vls")
 #define BU_VLS_IS_INITIALIZED(_vp)	\
-	(((unsigned long)(_vp) != 0) && ((_vp)->vls_magic == BU_VLS_MAGIC))
+	(((struct bu_vls *)(_vp) != 0) && ((_vp)->vls_magic == BU_VLS_MAGIC))
 
 /** @} */
 
