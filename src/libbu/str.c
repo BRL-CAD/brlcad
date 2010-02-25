@@ -150,7 +150,7 @@ bu_strdupm(register const char *cp, const char *label)
 
     if (bu_debug&BU_DEBUG_MEM_LOG) {
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
-	fprintf(stderr, "%8lx strdup%7ld \"%s\"\n", (long)base, (long)len, cp);
+	fprintf(stderr, "%p strdup%llu \"%s\"\n", (void *)base, (unsigned long long)len, cp);
 	bu_semaphore_release(BU_SEM_SYSCALL);
     }
 

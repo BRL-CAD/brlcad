@@ -281,8 +281,8 @@ bu_pr_mapped_file(const char *title, const struct bu_mapped_file *mp)
 {
     BU_CK_MAPPED_FILE(mp);
 
-    bu_log("%8lx mapped_file %s %lx len=%ld mapped=%d, uses=%d %s\n",
-	   (long)mp, mp->name, (long)mp->buf, mp->buflen,
+    bu_log("%p mapped_file %s %p len=%ld mapped=%d, uses=%d %s\n",
+	   (void *)mp, mp->name, mp->buf, mp->buflen,
 	   mp->is_mapped, mp->uses,
 	   title);
 }

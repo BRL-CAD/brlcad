@@ -77,8 +77,8 @@ bu_badmagic_tcl(Tcl_Interp *interp,
 	return;
     }
     if (*((unsigned long *)(ptr)) != (magic)) {
-	snprintf(buf, SMALLBUFSIZ, "ERROR: bad pointer in TCL interface x%lx: s/b %s(x%lx), was %s(x%lx), file %s, line %d\n",
-		 (unsigned long)ptr,
+	snprintf(buf, SMALLBUFSIZ, "ERROR: bad pointer in TCL interface %p: s/b %s(x%lx), was %s(x%lx), file %s, line %d\n",
+		 (void *)ptr,
 		 str, magic,
 		 bu_identify_magic((unsigned long)*(ptr)), *(ptr),
 		 file, line);
