@@ -24,7 +24,11 @@
 #include <ctype.h>
 #include <string.h>
 #include <stdarg.h>
-#include <stdint.h>
+
+#ifdef HAVE_STDINT_H
+#   include <stdint.h>
+#endif
+
 #include "bio.h"
 
 #include "bu.h"
@@ -941,7 +945,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 			snprintf(buf, BUFSIZ, fbuf, pd);
 		} else if (flags & SIZETINT) {
 		    size_t st;
-		    st = (intmax_t)va_arg(ap, size_t);
+		    st = va_arg(ap, size_t);
 		    if (flags & FIELDLEN)
 			snprintf(buf, BUFSIZ, fbuf, fieldlen, st);
 		    else
@@ -1002,7 +1006,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 			snprintf(buf, BUFSIZ, fbuf, pd);
 		} else if (flags & SIZETINT) {
 		    size_t st;
-		    st = (intmax_t)va_arg(ap, size_t);
+		    st = va_arg(ap, size_t);
 		    if (flags & FIELDLEN)
 			snprintf(buf, BUFSIZ, fbuf, fieldlen, st);
 		    else
