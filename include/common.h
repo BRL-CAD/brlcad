@@ -112,11 +112,10 @@ typedef ptrdiff_t ssize_t;
  * provided.
  */
 #if !defined(HAVE_UINTPTR_T) && !defined(uintptr_t)
-#  include <stddef.h>
 #  ifdef HAVE_STDINT_H
 #    include <stdint.h>
 #  endif
-#  if !defined(UINTPTR_MAX) && !defined(UINTPTRT_T_DEFINED)
+#  if !defined(UINTPTR_MAX) && !defined(_UINTPTR_T_DEFINED)
 #    ifdef HAVE_UINT64_T
 typedef uint64_t uintptr_t;
 #    else
