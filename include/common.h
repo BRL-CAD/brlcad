@@ -111,6 +111,10 @@ typedef ptrdiff_t ssize_t;
 /* C99 says uintptr_t is an optional type, so make sure something is
  * provided.
  */
+#if defined(_WIN32) && !defined(__CYGWIN__) && !defined(HAVE_UINTPTR_T)
+#   define HAVE_UINTPTR_T 1
+#endif
+
 #if !defined(HAVE_UINTPTR_T) && !defined(uintptr_t)
 #  ifdef HAVE_STDINT_H
 #    include <stdint.h>
