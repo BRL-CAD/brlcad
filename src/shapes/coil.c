@@ -512,11 +512,10 @@ main(int ac, char *av[])
 		   coil_data->nt--;
 	    	   coil_data->p = (overall_length - coil_data->wd + 0.125*pitch)/coil_data->nt;
 		}
-		coil_data->p = (overall_length - coil_data->wd + 0.125*pitch)/coil_data->nt;
 		if (coil_data->nt == 1) {
 		    /* THAT didn't work, change the wire diameter */
 		    coil_data->wd = overall_length/2;
-		    coil_data->p = coil_data->wd;
+		    coil_data->p = coil_data->wd *1.125;
 		}
 	    }
 	} else {
@@ -524,10 +523,10 @@ main(int ac, char *av[])
 		/* Add turns first, then adjust pitch */
 		while (nominal_length < overall_length) {
 		    coil_data->nt++;
-		    nominal_length = coil_data->wd + coil_data->p * coil_data->nt - 0.25*pitch;
+		    nominal_length = coil_data->wd + coil_data->p * coil_data->nt - 0.125*pitch;
 		}
 		coil_data->nt--;
-		coil_data->p = (overall_length - coil_data->wd - 0.25*pitch)/coil_data->nt;
+		coil_data->p = (overall_length - coil_data->wd - 0.125*pitch)/coil_data->nt;
 	    }
 	}
     }	
