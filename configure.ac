@@ -1948,6 +1948,10 @@ if test "x$bc_use_profiling" != "xno" ; then
 		# intel gprof compiler flag
 		BC_COMPILER_AND_LINKER_RECOGNIZES([-p], [profile_flag])
 	fi
+	if test "x$bc_profile_flag_works" = "xno" ; then
+		# intel profiler compiler flag
+		BC_COMPILER_AND_LINKER_RECOGNIZES([-prof_gen], [profile_flag])
+	fi
 
 	if test "x$bc_profile_flag_works" = "xno" ; then
 		# no profiling
@@ -1973,6 +1977,9 @@ if test "x$bc_use_debug" != "xno" ; then
 	BC_COMPILER_AND_LINKER_RECOGNIZES([-g3 -gstabs+], [debug_flag])
 	if test "x$bc_debug_flag_works" = "xno" ; then
 		BC_COMPILER_AND_LINKER_RECOGNIZES([-g], [debug_flag])
+	fi
+	if test "x$bc_debug_flag_works" = "xno" ; then
+		BC_COMPILER_AND_LINKER_RECOGNIZES([-debug], [debug_flag])
 	fi
 
 	if test "x$bc_debug_flag_works" = "xyes" ; then
