@@ -220,8 +220,8 @@ void
 rt_binunif_dump( struct rt_binunif_internal *bip) {
     RT_CK_BINUNIF(bip);
     bu_log("rt_bin_unif_internal <%x>...\n", bip);
-    bu_log("  type = x%x = %d", bip -> type, bip -> type);
-    bu_log("  count = %ld  first = 0x%02x", bip -> count,
+    bu_log("  type = x%x = %d", bip->type, bip->type);
+    bu_log("  count = %ld  first = 0x%02x", bip->count,
 	   bip->u.uint8[0] & 0x0ff);
     bu_log("- - - - -\n");
 }
@@ -463,7 +463,7 @@ rt_retrieve_binunif(struct rt_db_internal *intern,
 	bu_log("cmd_export_body() thinks bip->count=%d\n",
 	       bip->count);
 
-    switch (bip -> type) {
+    switch (bip->type) {
 	case DB5_MINORTYPE_BINU_FLOAT:
 	    if (RT_G_DEBUG & DEBUG_VOL)
 		bu_log("bip->type switch... float");

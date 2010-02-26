@@ -69,13 +69,13 @@ struct pixel *mk_pixel (unsigned char *color)
 
     pp = (struct pixel *) bu_malloc(sizeof(struct pixel), "pixel");
 
-    pp -> p_magic = PIXEL_MAGIC;
-    pp -> p_color = (unsigned char *)
+    pp->p_magic = PIXEL_MAGIC;
+    pp->p_color = (unsigned char *)
 	bu_malloc(pixel_size * sizeof(unsigned char),
 		  "pixel color");
     for (i = 0; i < pixel_size; ++i)
-	pp -> p_color[i] = color[i];
-    pp -> p_count = 0;
+	pp->p_color[i] = color[i];
+    pp->p_count = 0;
 
     return (pp);
 }
@@ -102,8 +102,8 @@ void print_pixel (void *p, int depth)
     BU_CKMAG(pp, PIXEL_MAGIC, "pixel");
 
     for (i = 0; i < pixel_size; ++i)
-	fprintf(outfp, "%3d ", pp -> p_color[i]);
-    fprintf(outfp, " %d\n", pp -> p_count);
+	fprintf(outfp, "%3d ", pp->p_color[i]);
+    fprintf(outfp, " %d\n", pp->p_count);
 }
 
 /*
@@ -122,9 +122,9 @@ int compare_pixels (void *v1, void *v2)
 
     for (i = 0; i < pixel_size; ++i)
     {
-	if (p1 -> p_color[i] < p2 -> p_color[i])
+	if (p1->p_color[i] < p2->p_color[i])
 	    return (-1);
-	else if (p1 -> p_color[i] > p2 -> p_color[i])
+	else if (p1->p_color[i] > p2->p_color[i])
 	    return (1);
     }
     return (0);
@@ -269,7 +269,7 @@ main (int argc, char **argv)
 	pp = lookup_pixel(palette, buf);
 	BU_CKMAG(pp, PIXEL_MAGIC, "pixel");
 
-	++(pp -> p_count);
+	++(pp->p_count);
     }
     bu_free((genptr_t) buf, "pixel buffer");
 

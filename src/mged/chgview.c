@@ -1109,7 +1109,7 @@ f_ill(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     }
 
     nmatch = 0;
-    if (!(dp -> d_flags & DIR_SOLID)) {
+    if (!(dp->d_flags & DIR_SOLID)) {
 	Tcl_AppendResult(interp, basename, " is not a solid\n", (char *)NULL);
 	goto bail_out;
     }
@@ -1123,7 +1123,7 @@ f_ill(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 
 /* XXX Could this make use of db_full_path_subset()? */
 	    if (nmatch == 0 || nmatch != ri) {
-		i = sp -> s_fullpath.fp_len-1;
+		i = sp->s_fullpath.fp_len-1;
 		if (DB_FULL_PATH_GET(&sp->s_fullpath, i) == dp) {
 		    a_new_match = 1;
 		    j = nm_pieces - 1;

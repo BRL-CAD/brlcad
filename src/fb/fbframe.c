@@ -111,10 +111,10 @@ main(int argc, char **argv)
 #define FLOOD(col)	{ for ( x=len-1; x >= 0; x-- ) {COPYRGB(&line[3*x], col);} }
 
     /*
-     * Red:		(   0 -> 510,   0	 )
-     * Green:	(        511,   0 -> 510 )
-     * Blue:	( 511 ->   1, 511	 )
-     * White:	(          0, 511 -> 1	 )
+     * Red:	( 0->510,      0 )
+     * Green:	(    511, 0->510 )
+     * Blue:	( 511->1,    511 )
+     * White:	(      0, 511->1 )
      */
     FLOOD( red );
     fb_writerect( fbp, 0, 0, xsize-1, 1, line );

@@ -40,9 +40,9 @@ struct bool_tree_node
 #define BT_LEFT			0
 #define BT_RIGHT		1
 
-#define bt_opn(n)		((n) -> btn_opn)
-#define bt_leaf_name(n)		((n) -> btn_operands.leaf_name)
-#define bt_opd(n, d)		((n) -> btn_operands.operands[(d)])
+#define bt_opn(n)		((n)->btn_opn)
+#define bt_leaf_name(n)		((n)->btn_operands.leaf_name)
+#define bt_opd(n, d)		((n)->btn_operands.operands[(d)])
 
 #define bt_is_leaf(n)		(bt_opn((n)) == OPN_NULL)
 

@@ -106,17 +106,17 @@ struct bridge *mk_bridge (struct vertex *vcp, struct vertex *vup, double weight)
 
     bp = (struct bridge *) bu_malloc(sizeof(struct bridge), "bridge");
 
-    bp -> b_magic = BRIDGE_MAGIC;
-    bp -> b_index = ++next_index;
-    bp -> b_weight = weight;
-    bp -> b_vert_civ = vcp;
-    bp -> b_vert_unciv = vup;
+    bp->b_magic = BRIDGE_MAGIC;
+    bp->b_index = ++next_index;
+    bp->b_weight = weight;
+    bp->b_vert_civ = vcp;
+    bp->b_vert_unciv = vup;
 
     return (bp);
 }
 #define	mk_init_bridge(vp)	(mk_bridge(VERTEX_NULL, (vp), 0.0))
-#define	is_finite_bridge(bp)	((bp) -> b_vert_civ != VERTEX_NULL)
-#define	is_infinite_bridge(bp)	((bp) -> b_vert_civ == VERTEX_NULL)
+#define	is_finite_bridge(bp)	((bp)->b_vert_civ != VERTEX_NULL)
+#define	is_infinite_bridge(bp)	((bp)->b_vert_civ == VERTEX_NULL)
 
 /*
  *			   F R E E _ B R I D G E ( )
@@ -139,8 +139,8 @@ void print_bridge (struct bridge *bp)
     BU_CKMAG(bp, BRIDGE_MAGIC, "bridge");
 
     bu_log(" bridge <x%x> %d... <x%x> and <x%x>, weight = %g\n",
-	   bp, bp -> b_index,
-	   bp -> b_vert_civ, bp -> b_vert_unciv, bp -> b_weight);
+	   bp, bp->b_index,
+	   bp->b_vert_civ, bp->b_vert_unciv, bp->b_weight);
 }
 
 /*
@@ -163,12 +163,12 @@ struct vertex *mk_vertex (long int index, char *label)
 
     vp = (struct vertex *) bu_malloc(sizeof(struct vertex), "vertex");
 
-    vp -> v_magic = VERTEX_MAGIC;
-    vp -> v_index = index;
-    vp -> v_label = label;
-    vp -> v_civilized = 0;
-    BU_LIST_INIT(&(vp -> v_neighbors));
-    vp -> v_bridge = mk_init_bridge(vp);
+    vp->v_magic = VERTEX_MAGIC;
+    vp->v_index = index;
+    vp->v_label = label;
+    vp->v_civilized = 0;
+    BU_LIST_INIT(&(vp->v_neighbors));
+    vp->v_bridge = mk_init_bridge(vp);
 
     return (vp);
 }
@@ -185,17 +185,17 @@ void print_vertex (void *v, int depth)
     BU_CKMAG(vp, VERTEX_MAGIC, "vertex");
 
     bu_log(" vertex <x%x> %d '%s' %s...\n",
-	   vp, vp -> v_index, vp -> v_label,
-	   vp -> v_civilized ? "civilized" : "uncivilized");
-    for (BU_LIST_FOR(np, neighbor, &(vp -> v_neighbors)))
+	   vp, vp->v_index, vp->v_label,
+	   vp->v_civilized ? "civilized" : "uncivilized");
+    for (BU_LIST_FOR(np, neighbor, &(vp->v_neighbors)))
     {
 	BU_CKMAG(np, NEIGHBOR_MAGIC, "neighbor");
-	BU_CKMAG(np -> n_vertex, VERTEX_MAGIC, "vertex");
+	BU_CKMAG(np->n_vertex, VERTEX_MAGIC, "vertex");
 
 	bu_log("  is a neighbor <x%x> of vertex <x%x> %d '%s' at cost %g\n",
-	       np, np -> n_vertex,
-	       np -> n_vertex -> v_index, np -> n_vertex -> v_label,
-	       np -> n_weight);
+	       np, np->n_vertex,
+	       np->n_vertex->v_index, np->n_vertex->v_label,
+	       np->n_weight);
     }
 }
 
@@ -207,7 +207,7 @@ void print_vertex (void *v, int depth)
 void free_vertex (struct vertex *vp)
 {
     BU_CKMAG(vp, VERTEX_MAGIC, "vertex");
-    free_bridge(vp -> v_bridge);
+    free_bridge(vp->v_bridge);
     bu_free((genptr_t) vp, "vertex");
 }
 
@@ -221,9 +221,9 @@ struct neighbor *mk_neighbor (struct vertex *vp, double weight)
 
     np = (struct neighbor *) bu_malloc(sizeof(struct neighbor), "neighbor");
 
-    np -> n_magic = NEIGHBOR_MAGIC;
-    np -> n_vertex = vp;
-    np -> n_weight = weight;
+    np->n_magic = NEIGHBOR_MAGIC;
+    np->n_vertex = vp;
+    np->n_weight = weight;
 
     return (np);
 }
@@ -245,7 +245,7 @@ int compare_vertex_indices (void *v1, void *v2)
     BU_CKMAG(vert1, VERTEX_MAGIC, "vertex");
     BU_CKMAG(vert2, VERTEX_MAGIC, "vertex");
 
-    return (vert1 -> v_index  -  vert2 -> v_index);
+    return (vert1->v_index  -  vert2->v_index);
 }
 
 /*
@@ -258,17 +258,17 @@ int compare_vertex_labels (void *v1, void *v2)
 
     BU_CKMAG(vert1, VERTEX_MAGIC, "vertex");
     BU_CKMAG(vert2, VERTEX_MAGIC, "vertex");
-    if (vert1 -> v_label == '\0')
-	bu_exit (1, "compare_vertex_labels: null label in vertex <x%x> %d\n", vert1, vert1 -> v_index);
-    if (vert2 -> v_label == '\0')
-	bu_exit (1, "compare_vertex_labels: null label in vertex <x%x> %d\n", vert2, vert2 -> v_index);
+    if (vert1->v_label == '\0')
+	bu_exit (1, "compare_vertex_labels: null label in vertex <x%x> %d\n", vert1, vert1->v_index);
+    if (vert2->v_label == '\0')
+	bu_exit (1, "compare_vertex_labels: null label in vertex <x%x> %d\n", vert2, vert2->v_index);
 
-    if (*(vert1 -> v_label) < *(vert2 -> v_label))
+    if (*(vert1->v_label) < *(vert2->v_label))
 	return -1;
-    else if (*(vert1 -> v_label) > *(vert2 -> v_label))
+    else if (*(vert1->v_label) > *(vert2->v_label))
 	return 1;
     else
-	return (strcmp(vert1 -> v_label, vert2 -> v_label));
+	return (strcmp(vert1->v_label, vert2->v_label));
 }
 
 /*
@@ -291,7 +291,7 @@ int compare_bridge_weights (void *v1, void *v2)
     else if (is_infinite_bridge(b2))
 	return -1;
 
-    delta = b1 -> b_weight  -  b2 -> b_weight;
+    delta = b1->b_weight  -  b2->b_weight;
     return ((delta <  0.0) ? -1 :
 	    (delta == 0.0) ?  0 :
 	    1);
@@ -308,9 +308,9 @@ int compare_bridge_indices (void *v1, void *v2)
     BU_CKMAG(b1, BRIDGE_MAGIC, "bridge");
     BU_CKMAG(b2, BRIDGE_MAGIC, "bridge");
 
-    if (b1 -> b_index < b2 -> b_index)
+    if (b1->b_index < b2->b_index)
 	return -1;
-    else if (b1 -> b_index == b2 -> b_index)
+    else if (b1->b_index == b2->b_index)
 	return 0;
     else
 	return 1;
@@ -395,9 +395,9 @@ void add_to_prioq (void *v, int depth)
     struct vertex	*vp = (struct vertex *) v;
 
     BU_CKMAG(vp, VERTEX_MAGIC, "vertex");
-    BU_CKMAG(vp -> v_bridge, BRIDGE_MAGIC, "bridge");
+    BU_CKMAG(vp->v_bridge, BRIDGE_MAGIC, "bridge");
 
-    bu_rb_insert(prioq, (void *) (vp -> v_bridge));
+    bu_rb_insert(prioq, (void *) (vp->v_bridge));
 }
 
 /*
@@ -407,14 +407,14 @@ void add_to_prioq (void *v, int depth)
 void del_from_prioq (struct vertex *vp)
 {
     BU_CKMAG(vp, VERTEX_MAGIC, "vertex");
-    BU_CKMAG(vp -> v_bridge, BRIDGE_MAGIC, "bridge");
+    BU_CKMAG(vp->v_bridge, BRIDGE_MAGIC, "bridge");
 
     if (debug)
 	bu_log("del_from_prioq(<x%x>... bridge <x%x> %d)\n",
-	       vp, vp -> v_bridge, vp -> v_bridge -> b_index);
-    if (bu_rb_search(prioq, PRIOQ_INDEX, (void *) (vp -> v_bridge)) == NULL)
+	       vp, vp->v_bridge, vp->v_bridge->b_index);
+    if (bu_rb_search(prioq, PRIOQ_INDEX, (void *) (vp->v_bridge)) == NULL)
     {
-	bu_exit(1, "del_from_prioq: Cannot find bridge <x%x>.", vp -> v_bridge);
+	bu_exit(1, "del_from_prioq: Cannot find bridge <x%x>.", vp->v_bridge);
     }
     bu_rb_delete(prioq, PRIOQ_INDEX);
 }
@@ -592,10 +592,10 @@ main (int argc, char **argv)
 	{
 	    vertex[i] = lookup_vertex(dictionary, index[i], label[i]);
 	    neighbor[i] = mk_neighbor(VERTEX_NULL, weight);
-	    BU_LIST_INSERT(&(vertex[i] -> v_neighbors), &(neighbor[i] -> l));
+	    BU_LIST_INSERT(&(vertex[i]->v_neighbors), &(neighbor[i]->l));
 	}
-	neighbor[0] -> n_vertex = vertex[1];
-	neighbor[1] -> n_vertex = vertex[0];
+	neighbor[0]->n_vertex = vertex[1];
+	neighbor[1]->n_vertex = vertex[0];
     }
 
     /*
@@ -635,8 +635,8 @@ main (int argc, char **argv)
 	}
 
 	BU_CKMAG(bp, BRIDGE_MAGIC, "bridge");
-	vcp = bp -> b_vert_civ;
-	vup = bp -> b_vert_unciv;
+	vcp = bp->b_vert_civ;
+	vup = bp->b_vert_unciv;
 	BU_CKMAG(vup, VERTEX_MAGIC, "vertex");
 
 	if (is_finite_bridge(bp))
@@ -644,57 +644,57 @@ main (int argc, char **argv)
 	    BU_CKMAG(vcp, VERTEX_MAGIC, "vertex");
 	    if (numeric)
 		(void) printf("%ld %ld %g\n",
-			      vcp -> v_index, vup -> v_index, bp -> b_weight);
+			      vcp->v_index, vup->v_index, bp->b_weight);
 	    else
 		(void) printf("%s %s %g\n",
-			      vcp -> v_label, vup -> v_label, bp -> b_weight);
-	    weight += bp -> b_weight;
+			      vcp->v_label, vup->v_label, bp->b_weight);
+	    weight += bp->b_weight;
 	}
 	free_bridge(bp);
-	vup -> v_civilized = 1;
+	vup->v_civilized = 1;
 
 	if (debug)
 	{
 	    bu_log("Looking for uncivilized neighbors of...\n");
 	    print_vertex((void *) vup, 0);
 	}
-	while (BU_LIST_WHILE(np, neighbor, &(vup -> v_neighbors)))
+	while (BU_LIST_WHILE(np, neighbor, &(vup->v_neighbors)))
 	{
 	    BU_CKMAG(np, NEIGHBOR_MAGIC, "neighbor");
-	    up = np -> n_vertex;
+	    up = np->n_vertex;
 	    BU_CKMAG(up, VERTEX_MAGIC, "vertex");
 
-	    if (up -> v_civilized == 0)
+	    if (up->v_civilized == 0)
 	    {
-		BU_CKMAG(up -> v_bridge, BRIDGE_MAGIC, "bridge");
-		if (compare_weights(np -> n_weight,
-				    up -> v_bridge -> b_weight) < 0)
+		BU_CKMAG(up->v_bridge, BRIDGE_MAGIC, "bridge");
+		if (compare_weights(np->n_weight,
+				    up->v_bridge->b_weight) < 0)
 		{
 		    del_from_prioq(up);
 		    if (debug)
 		    {
 			bu_log("After the deletion of bridge <x%x>...\n",
-			       up -> v_bridge);
+			       up->v_bridge);
 			print_prioq();
 		    }
-		    up -> v_bridge -> b_vert_civ = vup;
-		    up -> v_bridge -> b_weight = np -> n_weight;
+		    up->v_bridge->b_vert_civ = vup;
+		    up->v_bridge->b_weight = np->n_weight;
 		    add_to_prioq((void *) up, 0);
 		    if (debug)
 		    {
 			bu_log("Reduced bridge <x%x> weight to %g\n",
-			       up -> v_bridge,
-			       up -> v_bridge -> b_weight);
+			       up->v_bridge,
+			       up->v_bridge->b_weight);
 			print_prioq();
 		    }
 		}
 		else if (debug)
 		    bu_log("bridge <x%x>'s weight of %g stands up\n",
-			   up -> v_bridge, up -> v_bridge -> b_weight);
+			   up->v_bridge, up->v_bridge->b_weight);
 	    }
 	    else if (debug)
 		bu_log("Skipping civilized neighbor <x%x>\n", up);
-	    BU_LIST_DEQUEUE(&(np -> l));
+	    BU_LIST_DEQUEUE(&(np->l));
 	}
     }
 

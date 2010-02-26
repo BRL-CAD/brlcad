@@ -196,9 +196,9 @@ struct g_lint_seg *create_segment (void)
     struct g_lint_seg *sp;
 
     sp = bu_malloc(sizeof(struct g_lint_seg), "g_lint segment structure");
-    sp -> gls_magic = G_LINT_SEG_MAGIC;
-    sp -> gls_length = -1.0;
-    sp -> gls_next = G_LINT_SEG_NULL;
+    sp->gls_magic = G_LINT_SEG_MAGIC;
+    sp->gls_length = -1.0;
+    sp->gls_next = G_LINT_SEG_NULL;
 
     return (sp);
 }
@@ -231,19 +231,19 @@ struct g_lint_ovlp *create_overlap (struct region *r1, struct region *r2)
     BU_CKMAG(r2, RT_REGION_MAGIC, "region structure");
 
     op = bu_malloc(sizeof(struct g_lint_ovlp), "g_lint overlap structure");
-    op -> glo_magic = G_LINT_OVLP_MAGIC;
-    op -> glo_cum_length = 0.0;
-    op -> glo_segs = op -> glo_seg_last = G_LINT_SEG_NULL;
+    op->glo_magic = G_LINT_OVLP_MAGIC;
+    op->glo_cum_length = 0.0;
+    op->glo_segs = op->glo_seg_last = G_LINT_SEG_NULL;
 
     if (r1 < r2) {
-	op -> glo_r1 = r1;
-	op -> glo_r2 = r2;
+	op->glo_r1 = r1;
+	op->glo_r2 = r2;
     } else if (r1 > r2) {
-	op -> glo_r1 = r2;
-	op -> glo_r2 = r1;
+	op->glo_r1 = r2;
+	op->glo_r2 = r1;
     } else {
 	bu_log("%s:%d: Self-overlap of region '%s' (%p)\n",
-	       __FILE__, __LINE__, r1 -> reg_name, r1);
+	       __FILE__, __LINE__, r1->reg_name, r1);
 	bu_exit (1, "This shouldn't happen\n");
     }
 
@@ -259,7 +259,7 @@ void free_overlap (struct g_lint_ovlp *op)
     BU_CKMAG(op, G_LINT_OVLP_MAGIC, "g_lint overlap structure");
 
     /* XXX - Oughta do something cleaner than what follows... */
-    if (op -> glo_segs != G_LINT_SEG_NULL)
+    if (op->glo_segs != G_LINT_SEG_NULL)
 	bu_log("%s:%d: Memory Leak!\n", __FILE__, __LINE__);
 
     memset((void *) op, 0, sizeof(struct g_lint_ovlp));
@@ -280,16 +280,16 @@ void _print_overlap (void *v, int show_origin)
     struct g_lint_seg *sp;
 
     BU_CKMAG(op, G_LINT_OVLP_MAGIC, "g_lint overlap structure");
-    BU_CKMAG(op -> glo_r1, RT_REGION_MAGIC, "region structure");
-    BU_CKMAG(op -> glo_r2, RT_REGION_MAGIC, "region structure");
+    BU_CKMAG(op->glo_r1, RT_REGION_MAGIC, "region structure");
+    BU_CKMAG(op->glo_r2, RT_REGION_MAGIC, "region structure");
 
-    r1name = op -> glo_r1 -> reg_name;
-    r2name = op -> glo_r2 -> reg_name;
-    for (sp = op -> glo_segs; sp != G_LINT_SEG_NULL; sp = sp -> gls_next)
+    r1name = op->glo_r1->reg_name;
+    r2name = op->glo_r2->reg_name;
+    for (sp = op->glo_segs; sp != G_LINT_SEG_NULL; sp = sp->gls_next)
 	print_segment(r1name, r2name,
-		      sp -> gls_length,
-		      show_origin ?  sp -> gls_origin : 0,
-		      sp -> gls_entry, sp -> gls_exit);
+		      sp->gls_length,
+		      show_origin ?  sp->gls_origin : 0,
+		      sp->gls_entry, sp->gls_exit);
 }
 
 
@@ -330,13 +330,13 @@ int compare_overlaps (void *v1, void *v2)
     BU_CKMAG(o1, G_LINT_OVLP_MAGIC, "g_lint overlap structure");
     BU_CKMAG(o2, G_LINT_OVLP_MAGIC, "g_lint overlap structure");
 
-    if (o1 -> glo_r1 < o2 -> glo_r1)
+    if (o1->glo_r1 < o2->glo_r1)
 	return (-1);
-    else if (o1 -> glo_r1 > o2 -> glo_r1)
+    else if (o1->glo_r1 > o2->glo_r1)
 	return (1);
-    else if (o1 -> glo_r2 < o2 -> glo_r2)
+    else if (o1->glo_r2 < o2->glo_r2)
 	return (-1);
-    else if (o1 -> glo_r2 > o2 -> glo_r2)
+    else if (o1->glo_r2 > o2->glo_r2)
 	return (1);
     else
 	return (0);
@@ -357,9 +357,9 @@ int compare_by_vol (void *v1, void *v2)
     BU_CKMAG(o1, G_LINT_OVLP_MAGIC, "g_lint overlap structure");
     BU_CKMAG(o2, G_LINT_OVLP_MAGIC, "g_lint overlap structure");
 
-    if (o1 -> glo_cum_length < o2 -> glo_cum_length)
+    if (o1->glo_cum_length < o2->glo_cum_length)
 	return (1);
-    else if (o1 -> glo_cum_length > o2 -> glo_cum_length)
+    else if (o1->glo_cum_length > o2->glo_cum_length)
 	return (-1);
     else
 	return (0);
@@ -418,15 +418,15 @@ void update_ovlp_log (struct region *r1, struct region *r2, double seg_length, f
      * Fill in a new segment structure and add it to the overlap
      */
     sp = create_segment();
-    op -> glo_cum_length += (sp -> gls_length = seg_length);
-    VMOVE(sp -> gls_origin, origin);
-    VMOVE(sp -> gls_entry, entrypt);
-    VMOVE(sp -> gls_exit, exitpt);
-    if (op -> glo_segs == G_LINT_SEG_NULL)
-	op -> glo_segs = sp;
+    op->glo_cum_length += (sp->gls_length = seg_length);
+    VMOVE(sp->gls_origin, origin);
+    VMOVE(sp->gls_entry, entrypt);
+    VMOVE(sp->gls_exit, exitpt);
+    if (op->glo_segs == G_LINT_SEG_NULL)
+	op->glo_segs = sp;
     else
-	op -> glo_seg_last -> gls_next = sp;
-    op -> glo_seg_last = sp;
+	op->glo_seg_last->gls_next = sp;
+    op->glo_seg_last = sp;
 }
 
 unsigned char *get_color (unsigned char *ucp, unsigned long x)
@@ -466,7 +466,7 @@ static int rpt_hit (struct application *ap, struct partition *ph, struct seg *du
     fastf_t mag_del;
     int problems = 0;
     int last_air = 0;
-    struct g_lint_ctrl *cp = (struct g_lint_ctrl *) ap -> a_uptr;
+    struct g_lint_ctrl *cp = (struct g_lint_ctrl *) ap->a_uptr;
     int show_origin;
     int do_plot3;
     fastf_t tolerance;
@@ -478,214 +478,214 @@ static int rpt_hit (struct application *ap, struct partition *ph, struct seg *du
     BU_CKMAG(ph, PT_HD_MAGIC, "partition-list head");
     BU_CKMAG(cp, G_LINT_CTRL_MAGIC, "g_lint control structure");
 
-    show_origin = (cp -> glc_how_to_report == G_LINT_ASCII_WITH_ORIGIN);
-    do_plot3 = (cp -> glc_how_to_report == G_LINT_PLOT3);
-    tolerance = cp -> glc_tol;
-    what_to_report = cp -> glc_what_to_report;
-    debug = cp -> glc_debug;
+    show_origin = (cp->glc_how_to_report == G_LINT_ASCII_WITH_ORIGIN);
+    do_plot3 = (cp->glc_how_to_report == G_LINT_PLOT3);
+    tolerance = cp->glc_tol;
+    what_to_report = cp->glc_what_to_report;
+    debug = cp->glc_debug;
 
     /*
      * Before we do anything else, compute all the hit points along
      * this partition.
      */
-    for (pp = ph -> pt_forw; pp != ph; pp = pp -> pt_forw) {
+    for (pp = ph->pt_forw; pp != ph; pp = pp->pt_forw) {
 	BU_CKMAG(pp, PT_MAGIC, "partition structure");
 
-	RT_HIT_NORMAL(NULL, pp -> pt_inhit, pp -> pt_inseg -> seg_stp,
-		    &ap -> a_ray, 0);
-	RT_HIT_NORMAL(NULL, pp -> pt_outhit, pp -> pt_outseg -> seg_stp,
-		    &ap -> a_ray, 0);
+	RT_HIT_NORMAL(NULL, pp->pt_inhit, pp->pt_inseg->seg_stp,
+		    &ap->a_ray, 0);
+	RT_HIT_NORMAL(NULL, pp->pt_outhit, pp->pt_outseg->seg_stp,
+		    &ap->a_ray, 0);
     }
 
     /*
      * Now, do the real work of checking the partitions...
      */
-    for (pp = ph -> pt_forw; pp != ph; pp = pp -> pt_forw) {
+    for (pp = ph->pt_forw; pp != ph; pp = pp->pt_forw) {
 	/* Check air partitions */
 	if (what_to_report & G_LINT_A_ANY) {
-	    if (pp -> pt_regionp -> reg_regionid <= 0) {
-		if ((what_to_report & G_LINT_A_CONT) && last_air && (pp -> pt_regionp -> reg_aircode != last_air)) {
-		    VSUB2(delta, pp -> pt_inhit -> hit_point,
-			  pp -> pt_back -> pt_outhit -> hit_point);
+	    if (pp->pt_regionp->reg_regionid <= 0) {
+		if ((what_to_report & G_LINT_A_CONT) && last_air && (pp->pt_regionp->reg_aircode != last_air)) {
+		    VSUB2(delta, pp->pt_inhit->hit_point,
+			  pp->pt_back->pt_outhit->hit_point);
 		    if ((mag_del = MAGNITUDE(delta)) < tolerance) {
 			if (do_plot3) {
-			    color = get_color(cp -> glc_color, G_LINT_A_CONT);
-			    pl_color(cp -> glc_fp, V3ARGS(color));
-			    pdv_3point(cp -> glc_fp,
-				       pp -> pt_inhit -> hit_point);
+			    color = get_color(cp->glc_color, G_LINT_A_CONT);
+			    pl_color(cp->glc_fp, V3ARGS(color));
+			    pdv_3point(cp->glc_fp,
+				       pp->pt_inhit->hit_point);
 			} else {
 			    printf("air_contiguous ");
 			    if (show_origin)
 				printf("%g %g %g ",
-				       V3ARGS(ap -> a_ray.r_pt));
+				       V3ARGS(ap->a_ray.r_pt));
 			    printf("%s %d %s %d %g %g %g\n",
-				   pp -> pt_back -> pt_regionp -> reg_name,
+				   pp->pt_back->pt_regionp->reg_name,
 				   last_air,
-				   pp -> pt_regionp -> reg_name,
-				   pp -> pt_regionp -> reg_aircode,
-				   pp -> pt_inhit -> hit_point[X],
-				   pp -> pt_inhit -> hit_point[Y],
-				   pp -> pt_inhit -> hit_point[Z]);
+				   pp->pt_regionp->reg_name,
+				   pp->pt_regionp->reg_aircode,
+				   pp->pt_inhit->hit_point[X],
+				   pp->pt_inhit->hit_point[Y],
+				   pp->pt_inhit->hit_point[Z]);
 			}
 			++problems;
 		    }
 		}
 
-		if (pp -> pt_back == ph) {
+		if (pp->pt_back == ph) {
 		    if (what_to_report & G_LINT_A_1ST) {
 			if (do_plot3) {
-			    color = get_color(cp -> glc_color, G_LINT_A_1ST);
-			    pl_color(cp -> glc_fp, V3ARGS(color));
-			    pdv_3point(cp -> glc_fp,
-				       pp -> pt_inhit -> hit_point);
+			    color = get_color(cp->glc_color, G_LINT_A_1ST);
+			    pl_color(cp->glc_fp, V3ARGS(color));
+			    pdv_3point(cp->glc_fp,
+				       pp->pt_inhit->hit_point);
 			} else {
 			    printf("air_first ");
 			    if (show_origin)
-				printf("%g %g %g ", V3ARGS(ap -> a_ray.r_pt));
+				printf("%g %g %g ", V3ARGS(ap->a_ray.r_pt));
 			    printf("%s %d %g %g %g\n",
-				   pp -> pt_regionp -> reg_name,
-				   pp -> pt_regionp -> reg_aircode,
-				   pp -> pt_inhit -> hit_point[X],
-				   pp -> pt_inhit -> hit_point[Y],
-				   pp -> pt_inhit -> hit_point[Z]);
+				   pp->pt_regionp->reg_name,
+				   pp->pt_regionp->reg_aircode,
+				   pp->pt_inhit->hit_point[X],
+				   pp->pt_inhit->hit_point[Y],
+				   pp->pt_inhit->hit_point[Z]);
 			}
 			++problems;
 		    }
 		} else if (what_to_report & G_LINT_A_UNCONF) {
-		    VSUB2(delta, pp -> pt_inhit -> hit_point,
-			  pp -> pt_back -> pt_outhit -> hit_point);
+		    VSUB2(delta, pp->pt_inhit->hit_point,
+			  pp->pt_back->pt_outhit->hit_point);
 		    if (debug & G_LINT_A_UNCONF) {
 			bu_log("inhit (%g, %g, %g) - back outhit (%g, %g, %g) ",
-			       V3ARGS(pp -> pt_inhit -> hit_point),
-			       V3ARGS(pp -> pt_back -> pt_outhit -> hit_point));
+			       V3ARGS(pp->pt_inhit->hit_point),
+			       V3ARGS(pp->pt_back->pt_outhit->hit_point));
 			bu_log(" = (%g, %g, %g), mag=%g\n",
 			       V3ARGS(delta), MAGNITUDE(delta));
 		    }
 		    if ((mag_del = MAGNITUDE(delta)) > tolerance) {
 			if (do_plot3) {
-			    color = get_color(cp -> glc_color, G_LINT_A_UNCONF);
-			    pl_color(cp -> glc_fp, V3ARGS(color));
-			    pdv_3line(cp -> glc_fp,
-				      pp -> pt_back -> pt_outhit -> hit_point,
-				      pp -> pt_inhit -> hit_point);
+			    color = get_color(cp->glc_color, G_LINT_A_UNCONF);
+			    pl_color(cp->glc_fp, V3ARGS(color));
+			    pdv_3line(cp->glc_fp,
+				      pp->pt_back->pt_outhit->hit_point,
+				      pp->pt_inhit->hit_point);
 			} else {
 			    printf("air_unconfined ");
 			    if (show_origin)
-				printf("%g %g %g ", V3ARGS(ap -> a_ray.r_pt));
+				printf("%g %g %g ", V3ARGS(ap->a_ray.r_pt));
 			    printf("%s (%s) %s (%s) %g    %g %g %g    %g %g %g\n",
-				   pp -> pt_back -> pt_regionp -> reg_name,
-				   pp -> pt_back -> pt_outseg -> seg_stp->st_name,
-				   pp -> pt_regionp -> reg_name,
-				   pp -> pt_inseg -> seg_stp -> st_name,
+				   pp->pt_back->pt_regionp->reg_name,
+				   pp->pt_back->pt_outseg->seg_stp->st_name,
+				   pp->pt_regionp->reg_name,
+				   pp->pt_inseg->seg_stp->st_name,
 				   mag_del,
-				   pp -> pt_back -> pt_outhit -> hit_point[X],
-				   pp -> pt_back -> pt_outhit -> hit_point[Y],
-				   pp -> pt_back -> pt_outhit -> hit_point[Z],
-				   pp -> pt_inhit -> hit_point[X],
-				   pp -> pt_inhit -> hit_point[Y],
-				   pp -> pt_inhit -> hit_point[Z]);
+				   pp->pt_back->pt_outhit->hit_point[X],
+				   pp->pt_back->pt_outhit->hit_point[Y],
+				   pp->pt_back->pt_outhit->hit_point[Z],
+				   pp->pt_inhit->hit_point[X],
+				   pp->pt_inhit->hit_point[Y],
+				   pp->pt_inhit->hit_point[Z]);
 			}
 			++problems;
 		    }
 		}
 
-		if (pp -> pt_forw == ph) {
+		if (pp->pt_forw == ph) {
 		    if (what_to_report & G_LINT_A_LAST) {
 			if (do_plot3) {
-			    color = get_color(cp -> glc_color, G_LINT_A_LAST);
-			    pl_color(cp -> glc_fp, V3ARGS(color));
-			    pdv_3point(cp -> glc_fp,
-				       pp -> pt_outhit -> hit_point);
+			    color = get_color(cp->glc_color, G_LINT_A_LAST);
+			    pl_color(cp->glc_fp, V3ARGS(color));
+			    pdv_3point(cp->glc_fp,
+				       pp->pt_outhit->hit_point);
 			} else {
 			    printf("air_last ");
 			    if (show_origin)
-				printf("%g %g %g ", V3ARGS(ap -> a_ray.r_pt));
+				printf("%g %g %g ", V3ARGS(ap->a_ray.r_pt));
 			    printf("%s %d %g %g %g\n",
-				   pp -> pt_regionp -> reg_name,
-				   pp -> pt_regionp -> reg_aircode,
-				   pp -> pt_outhit -> hit_point[X],
-				   pp -> pt_outhit -> hit_point[Y],
-				   pp -> pt_outhit -> hit_point[Z]);
+				   pp->pt_regionp->reg_name,
+				   pp->pt_regionp->reg_aircode,
+				   pp->pt_outhit->hit_point[X],
+				   pp->pt_outhit->hit_point[Y],
+				   pp->pt_outhit->hit_point[Z]);
 			}
 			++problems;
 		    }
 		} else if (what_to_report & G_LINT_A_UNCONF) {
-		    VSUB2(delta, pp -> pt_forw -> pt_inhit -> hit_point,
-			  pp -> pt_outhit -> hit_point);
+		    VSUB2(delta, pp->pt_forw->pt_inhit->hit_point,
+			  pp->pt_outhit->hit_point);
 		    if (debug & G_LINT_A_UNCONF) {
 			bu_log("forw inhit (%g, %g, %g) - outhit (%g, %g, %g) ",
-			       V3ARGS(pp -> pt_forw -> pt_inhit -> hit_point),
-			       V3ARGS(pp -> pt_outhit -> hit_point));
+			       V3ARGS(pp->pt_forw->pt_inhit->hit_point),
+			       V3ARGS(pp->pt_outhit->hit_point));
 			bu_log(" = (%g, %g, %g), mag=%g\n",
 			       V3ARGS(delta), MAGNITUDE(delta));
 		    }
 		    if ((mag_del = MAGNITUDE(delta)) > tolerance) {
 			if (do_plot3) {
-			    color = get_color(cp -> glc_color, G_LINT_A_UNCONF);
-			    pl_color(cp -> glc_fp, V3ARGS(color));
-			    pdv_3line(cp -> glc_fp,
-				      pp -> pt_outhit -> hit_point,
-				      pp -> pt_forw -> pt_inhit -> hit_point);
+			    color = get_color(cp->glc_color, G_LINT_A_UNCONF);
+			    pl_color(cp->glc_fp, V3ARGS(color));
+			    pdv_3line(cp->glc_fp,
+				      pp->pt_outhit->hit_point,
+				      pp->pt_forw->pt_inhit->hit_point);
 			} else {
 			    printf("air_unconfined ");
 			    if (show_origin)
-				printf("%g %g %g ", V3ARGS(ap -> a_ray.r_pt));
+				printf("%g %g %g ", V3ARGS(ap->a_ray.r_pt));
 			    printf("%s (%s) %s (%s) %g    %g %g %g    %g %g %g\n",
-				   pp -> pt_regionp -> reg_name,
-				   pp -> pt_outseg -> seg_stp -> st_name,
-				   pp -> pt_forw -> pt_regionp -> reg_name,
-				   pp -> pt_forw -> pt_inseg -> seg_stp -> st_name,
+				   pp->pt_regionp->reg_name,
+				   pp->pt_outseg->seg_stp->st_name,
+				   pp->pt_forw->pt_regionp->reg_name,
+				   pp->pt_forw->pt_inseg->seg_stp->st_name,
 				   mag_del,
-				   pp -> pt_outhit -> hit_point[X],
-				   pp -> pt_outhit -> hit_point[Y],
-				   pp -> pt_outhit -> hit_point[Z],
-				   pp -> pt_forw -> pt_inhit -> hit_point[X],
-				   pp -> pt_forw -> pt_inhit -> hit_point[Y],
-				   pp -> pt_forw -> pt_inhit -> hit_point[Z]);
+				   pp->pt_outhit->hit_point[X],
+				   pp->pt_outhit->hit_point[Y],
+				   pp->pt_outhit->hit_point[Z],
+				   pp->pt_forw->pt_inhit->hit_point[X],
+				   pp->pt_forw->pt_inhit->hit_point[Y],
+				   pp->pt_forw->pt_inhit->hit_point[Z]);
 			}
 			++problems;
 		    }
 		}
-		last_air = pp -> pt_regionp -> reg_aircode;
+		last_air = pp->pt_regionp->reg_aircode;
 	    }
 	    else
 		last_air = 0;
 	}
 
 	/* Look for vacuum */
-	if ((what_to_report & G_LINT_VAC) && (pp -> pt_back != ph)) {
-	    VSUB2(delta, pp -> pt_inhit -> hit_point,
-		  pp -> pt_back -> pt_outhit -> hit_point);
+	if ((what_to_report & G_LINT_VAC) && (pp->pt_back != ph)) {
+	    VSUB2(delta, pp->pt_inhit->hit_point,
+		  pp->pt_back->pt_outhit->hit_point);
 	    if (debug & G_LINT_VAC) {
 		bu_log("inhit (%g, %g, %g) - back outhit (%g, %g, %g) ",
-		       V3ARGS(pp -> pt_inhit -> hit_point),
-		       V3ARGS(pp -> pt_back -> pt_outhit -> hit_point));
+		       V3ARGS(pp->pt_inhit->hit_point),
+		       V3ARGS(pp->pt_back->pt_outhit->hit_point));
 		bu_log(" = (%g, %g, %g), mag=%g\n",
 		       V3ARGS(delta), MAGNITUDE(delta));
 	    }
 	    if ((mag_del = MAGNITUDE(delta)) > tolerance) {
 		if (do_plot3) {
-		    color = get_color(cp -> glc_color, G_LINT_VAC);
-		    pl_color(cp -> glc_fp, V3ARGS(color));
-		    pdv_3line(cp -> glc_fp,
-			      pp -> pt_back -> pt_outhit -> hit_point,
-			      pp -> pt_inhit -> hit_point);
+		    color = get_color(cp->glc_color, G_LINT_VAC);
+		    pl_color(cp->glc_fp, V3ARGS(color));
+		    pdv_3line(cp->glc_fp,
+			      pp->pt_back->pt_outhit->hit_point,
+			      pp->pt_inhit->hit_point);
 		} else {
 		    printf("vacuum ");
 		    if (show_origin)
-			printf("%g %g %g ", V3ARGS(ap -> a_ray.r_pt));
+			printf("%g %g %g ", V3ARGS(ap->a_ray.r_pt));
 		    printf("%s (%s) %s (%s) %g    %g %g %g    %g %g %g\n",
-			   pp -> pt_back -> pt_regionp -> reg_name,
-			   pp -> pt_back -> pt_outseg -> seg_stp -> st_name,
-			   pp -> pt_regionp -> reg_name,
-			   pp -> pt_inseg -> seg_stp -> st_name,
+			   pp->pt_back->pt_regionp->reg_name,
+			   pp->pt_back->pt_outseg->seg_stp->st_name,
+			   pp->pt_regionp->reg_name,
+			   pp->pt_inseg->seg_stp->st_name,
 			   mag_del,
-			   pp -> pt_back -> pt_outhit -> hit_point[X],
-			   pp -> pt_back -> pt_outhit -> hit_point[Y],
-			   pp -> pt_back -> pt_outhit -> hit_point[Z],
-			   pp -> pt_inhit -> hit_point[X],
-			   pp -> pt_inhit -> hit_point[Y],
-			   pp -> pt_inhit -> hit_point[Z]);
+			   pp->pt_back->pt_outhit->hit_point[X],
+			   pp->pt_back->pt_outhit->hit_point[Y],
+			   pp->pt_back->pt_outhit->hit_point[Z],
+			   pp->pt_inhit->hit_point[X],
+			   pp->pt_inhit->hit_point[Y],
+			   pp->pt_inhit->hit_point[Z]);
 		}
 		++problems;
 	    }
@@ -750,34 +750,34 @@ static int rpt_ovlp (struct application *ap, struct partition *pp, struct region
     BU_CKMAG(pp, PT_MAGIC, "partition structure");
     BU_CKMAG(r1, RT_REGION_MAGIC, "region structure");
     BU_CKMAG(r2, RT_REGION_MAGIC, "region structure");
-    cp = (struct g_lint_ctrl *) ap -> a_uptr;
+    cp = (struct g_lint_ctrl *) ap->a_uptr;
     BU_CKMAG(cp, G_LINT_CTRL_MAGIC, "g_lint control structure");
 
-    show_origin = (cp -> glc_how_to_report == G_LINT_ASCII_WITH_ORIGIN);
-    do_plot3 = (cp -> glc_how_to_report == G_LINT_PLOT3);
-    tolerance = cp -> glc_tol;
+    show_origin = (cp->glc_how_to_report == G_LINT_ASCII_WITH_ORIGIN);
+    do_plot3 = (cp->glc_how_to_report == G_LINT_PLOT3);
+    tolerance = cp->glc_tol;
 
     /* Compute entry and exit points, and the vector between them */
-    RT_HIT_NORMAL(NULL, pp -> pt_inhit, pp -> pt_inseg -> seg_stp, &ap -> a_ray, 0);
-    RT_HIT_NORMAL(NULL, pp -> pt_outhit, pp -> pt_outseg -> seg_stp, &ap -> a_ray, 0);
-    VSUB2(delta, pp -> pt_inhit -> hit_point, pp -> pt_outhit -> hit_point);
+    RT_HIT_NORMAL(NULL, pp->pt_inhit, pp->pt_inseg->seg_stp, &ap->a_ray, 0);
+    RT_HIT_NORMAL(NULL, pp->pt_outhit, pp->pt_outseg->seg_stp, &ap->a_ray, 0);
+    VSUB2(delta, pp->pt_inhit->hit_point, pp->pt_outhit->hit_point);
 
     if ((mag_del = MAGNITUDE(delta)) > tolerance) {
 	if (do_plot3) {
-	    pl_color(cp -> glc_fp,
-		     V3ARGS(&(cp -> glc_color[log_2(G_LINT_OVLP)])));
-	    pdv_3line(cp -> glc_fp, pp -> pt_inhit -> hit_point,
-		      pp -> pt_outhit -> hit_point);
+	    pl_color(cp->glc_fp,
+		     V3ARGS(&(cp->glc_color[log_2(G_LINT_OVLP)])));
+	    pdv_3line(cp->glc_fp, pp->pt_inhit->hit_point,
+		      pp->pt_outhit->hit_point);
 	} else if (ovlp_log)
 	    update_ovlp_log(r1, r2, mag_del,
-			    ap -> a_ray.r_pt,
-			    pp -> pt_inhit -> hit_point,
-			    pp -> pt_outhit -> hit_point);
+			    ap->a_ray.r_pt,
+			    pp->pt_inhit->hit_point,
+			    pp->pt_outhit->hit_point);
 	else
-	    print_segment(r1 -> reg_name, r2 -> reg_name, mag_del,
-			  show_origin ? ap -> a_ray.r_pt : 0,
-			  pp -> pt_inhit -> hit_point,
-			  pp -> pt_outhit -> hit_point);
+	    print_segment(r1->reg_name, r2->reg_name, mag_del,
+			  show_origin ? ap->a_ray.r_pt : 0,
+			  pp->pt_inhit->hit_point,
+			  pp->pt_outhit->hit_point);
     }
     return (mag_del > tolerance);
 }
@@ -788,12 +788,12 @@ void init_plot3 (struct application *ap)
     struct g_lint_ctrl *cp;
 
     RT_AP_CHECK(ap);
-    rtip = ap -> a_rt_i;
+    rtip = ap->a_rt_i;
     RT_CHECK_RTI(rtip);
-    cp = (struct g_lint_ctrl *) ap -> a_uptr;
+    cp = (struct g_lint_ctrl *) ap->a_uptr;
     BU_CKMAG(cp, G_LINT_CTRL_MAGIC, "g_lint control structure");
 
-    pdv_3space(cp -> glc_fp, rtip->rti_pmin, rtip->rti_pmax);
+    pdv_3space(cp->glc_fp, rtip->rti_pmin, rtip->rti_pmax);
 }
 
 
@@ -945,7 +945,7 @@ main (int argc, char **argv)
     bu_log("Building the directory... ");
     if ((rtip = rt_dirbuild(argv[bu_optind], db_title, TITLE_LEN)) == RTI_NULL)
 	bu_exit (1, "Could not build directory for file '%s'\n", argv[bu_optind]);
-    rtip -> useair = use_air;
+    rtip->useair = use_air;
     bu_log("\nPreprocessing the geometry... ");
     while (++bu_optind < argc) {
 	if (rt_gettree(rtip, argv[bu_optind]) == -1)
@@ -992,8 +992,8 @@ main (int argc, char **argv)
      *    extrema in the view plane.
      * 4. Expand the extrema to the next whole multiple of celsiz.
      */
-    VMOVE(mdl_extrema[0], rtip -> mdl_min);
-    VMOVE(mdl_extrema[1], rtip -> mdl_max);
+    VMOVE(mdl_extrema[0], rtip->mdl_min);
+    VMOVE(mdl_extrema[1], rtip->mdl_max);
     VSETALL(g_min, 0.0);
     VMOVE(g_max, g_min);
     for (i = 0; i < 8; ++i) {

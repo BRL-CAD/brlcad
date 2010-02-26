@@ -295,19 +295,12 @@ cmd_export_body(ClientData clientData, Tcl_Interp *interp, int argc, char **argv
 		   raw.major_type, raw.minor_type, tmp);
 	switch (raw.major_type) {
 	    case DB5_MAJORTYPE_BINARY_UNIF:
-#if 0
-		if (rt_binunif_import5(&intern, &ext, 0, dbip,
-				       &rt_uniresource, raw.minor_type)) {
-		    (void)signal(SIGINT, SIG_IGN);
-		    TCL_READ_ERR_return;
-		}
-#endif
 		bip = (struct rt_binunif_internal *) intern.idb_ptr;
 		RT_CK_BINUNIF(bip);
 		rt_binunif_dump(bip);
 		bufp = (void *) bip->u.uint8;
 		bu_log("cmd_export_body() thinks bip->count=%d\n", bip->count);
-		switch (bip -> type) {
+		switch (bip->type) {
 		    case DB5_MINORTYPE_BINU_FLOAT:
 			if (RT_G_DEBUG & DEBUG_VOL)
 			    bu_log("bip->type switch... float");

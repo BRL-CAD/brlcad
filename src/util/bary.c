@@ -56,12 +56,12 @@ void enqueue_site (struct bu_list *sl, fastf_t x, fastf_t y, fastf_t z)
     BU_CK_LIST_HEAD(sl);
 
     sp = (struct site *) bu_malloc(sizeof(struct site), "site structure");
-    sp -> s_magic = SITE_MAGIC;
-    sp -> s_x = x;
-    sp -> s_y = y;
-    sp -> s_z = z;
+    sp->s_magic = SITE_MAGIC;
+    sp->s_x = x;
+    sp->s_y = y;
+    sp->s_z = z;
 
-    BU_LIST_INSERT(sl, &(sp -> l));
+    BU_LIST_INSERT(sl, &(sp->l));
 }
 
 void show_sites (struct bu_list *sl)
@@ -73,7 +73,7 @@ void show_sites (struct bu_list *sl)
     for (BU_LIST_FOR(sp, site, sl))
     {
 	bu_log("I got a site (%g, %g, %g)\n",
-	       sp -> s_x, sp -> s_y, sp -> s_z);
+	       sp->s_x, sp->s_y, sp->s_z);
     }
 }
 
@@ -209,9 +209,9 @@ main (int argc, char **argv)
 	i = 0;
 	for (BU_LIST_FOR(sp, site, &site_list))
 	{
-	    x += sp -> s_x * coeff[i];
-	    y += sp -> s_y * coeff[i];
-	    z += sp -> s_z * coeff[i];
+	    x += sp->s_x * coeff[i];
+	    y += sp->s_y * coeff[i];
+	    z += sp->s_z * coeff[i];
 	    ++i;
 	}
 	bu_flog(stdout, "%g %g %g", x, y, z);

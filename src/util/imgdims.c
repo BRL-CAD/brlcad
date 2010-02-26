@@ -84,9 +84,9 @@ static int pixel_size (char *buf)
     else
 	++ep;
 
-    for (ap = a_tbl; ap -> ext; ++ap)
-	if (strcmp(ep, ap -> ext) == 0)
-	    return (ap -> size);
+    for (ap = a_tbl; ap->ext; ++ap)
+	if (strcmp(ep, ap->ext) == 0)
+	    return (ap->size);
 
     return (DFLT_PIXEL_SIZE);
 }

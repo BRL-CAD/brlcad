@@ -75,7 +75,7 @@ sol_comp_name(void *v1, void *v2)
     BU_CKMAG(s1, SOL_NAME_DIST_MAGIC, "sol_name_dist structure");
     BU_CKMAG(s2, SOL_NAME_DIST_MAGIC, "sol_name_dist structure");
 
-    return(strcmp(s1 -> name, s2 -> name));
+    return(strcmp(s1->name, s2->name));
 }
 
 
@@ -93,11 +93,11 @@ sol_comp_dist(void *v1, void *v2)
     BU_CKMAG(s1, SOL_NAME_DIST_MAGIC, "sol_name_dist structure");
     BU_CKMAG(s2, SOL_NAME_DIST_MAGIC, "sol_name_dist structure");
 
-    if (s1 -> dist > s2 -> dist)
+    if (s1->dist > s2->dist)
 	return (1);
-    else if (s1 -> dist == s2 -> dist)
+    else if (s1->dist == s2->dist)
 	return (0);
-    else /* (s1 -> dist < s2 -> dist) */
+    else /* (s1->dist < s2->dist) */
 	return (-1);
 }
 
@@ -112,11 +112,11 @@ mk_solid(char *name, fastf_t dist)
 
     sp = (struct sol_name_dist *)
 	bu_malloc(sizeof(struct sol_name_dist), "solid");
-    sp -> magic = SOL_NAME_DIST_MAGIC;
-    sp -> name = (char *)
+    sp->magic = SOL_NAME_DIST_MAGIC;
+    sp->name = (char *)
 	bu_malloc(strlen(name)+1, "solid name");
-    bu_strlcpy(sp -> name, name, strlen(name)+1);
-    sp -> dist = dist;
+    bu_strlcpy(sp->name, name, strlen(name)+1);
+    sp->dist = dist;
     return (sp);
 }
 
@@ -134,7 +134,7 @@ free_solid(struct sol_name_dist *sol, int free_name)
     BU_CKMAG(sol, SOL_NAME_DIST_MAGIC, "sol_name_dist structure");
 
     if (free_name)
-	bu_free((genptr_t) sol -> name, "solid name");
+	bu_free((genptr_t) sol->name, "solid name");
     bu_free((genptr_t) sol, "solid");
 }
 
@@ -152,7 +152,7 @@ print_solid(void *vp)
 
     bu_vls_init(&tmp_vls);
     bu_vls_printf(&tmp_vls, "solid %s at distance %g along ray\n",
-		  sol -> name, sol -> dist);
+		  sol->name, sol->dist);
     Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
     bu_vls_free(&tmp_vls);
 }
@@ -229,7 +229,7 @@ rpt_solids(struct application *ap, struct partition *ph, struct seg *finished_se
      */
     if ((solids = bu_rb_create("Primitive list", 2, rpt_solids_orders)) == BU_RB_TREE_NULL)
 	bu_exit (1, "%s: %d: bu_rb_create() bombed\n", __FILE__, __LINE__);
-    solids -> rbt_print = print_solid;
+    solids->rbt_print = print_solid;
     bu_rb_uniq_on(solids, ORDER_BY_NAME);
 
     bu_vls_init(&sol_path_name);
@@ -239,7 +239,7 @@ rpt_solids(struct application *ap, struct partition *ph, struct seg *finished_se
      * and seek to its head
      */
     BU_CKMAG(ph, PT_HD_MAGIC, "partition head");
-    pp = ph -> pt_forw;
+    pp = ph->pt_forw;
     BU_CKMAG(pp, PT_MAGIC, "partition structure");
     if (BU_LIST_MAGIC_WRONG((struct bu_list *) finished_segs,
 			    RT_SEG_MAGIC))
@@ -251,27 +251,27 @@ rpt_solids(struct application *ap, struct partition *ph, struct seg *finished_se
 
     RT_CK_LIST_HEAD(&finished_segs->l);
 
-    for (BU_LIST_FOR(pp, partition, (struct bu_list *) &ph -> pt_magic)) {
+    for (BU_LIST_FOR(pp, partition, (struct bu_list *) &ph->pt_magic)) {
 	BU_CKMAG(pp, PT_MAGIC, "partition");
-	BU_CKMAG(pp -> pt_regionp, RT_REGION_MAGIC, "region");
+	BU_CKMAG(pp->pt_regionp, RT_REGION_MAGIC, "region");
 	printf("    Partition <x%lx> is '%s' ",
-	       (long)pp, pp -> pt_regionp -> reg_name);
+	       (long)pp, pp->pt_regionp->reg_name);
 
 	printf("\n--- Primitives hit on this partition ---\n");
-	for (i = 0; i < (pp -> pt_seglist).end; ++i) {
+	for (i = 0; i < (pp->pt_seglist).end; ++i) {
 	    stp = ((struct seg *)BU_PTBL_GET(&pp->pt_seglist, i))->seg_stp;
 	    RT_CK_SOLTAB(stp);
 	    bu_vls_trunc(&sol_path_name, 0);
-	    fp = &(stp -> st_path);
-	    if (fp -> magic != 0) {
+	    fp = &(stp->st_path);
+	    if (fp->magic != 0) {
 		printf(" full path... ");fflush(stdout);
 		RT_CK_FULL_PATH(fp);
 		bu_vls_strcpy(&sol_path_name, db_path_to_string(fp));
 	    } else {
 		printf(" dir-entry name... ");fflush(stdout);
-		BU_CKMAG(stp -> st_dp, RT_DIR_MAGIC,
+		BU_CKMAG(stp->st_dp, RT_DIR_MAGIC,
 			 "directory");
-		bu_vls_strcpy(&sol_path_name, stp -> st_name);
+		bu_vls_strcpy(&sol_path_name, stp->st_name);
 	    }
 	    printf("'%s'\n", bu_vls_addr(&sol_path_name));fflush(stdout);
 	}
@@ -283,20 +283,20 @@ rpt_solids(struct application *ap, struct partition *ph, struct seg *finished_se
 	for (index = 0; index < BU_PTBL_END(&pp->pt_seglist); index++) {
 	    segp = (struct seg *)BU_PTBL_GET(&pp->pt_seglist, index);
 	    RT_CK_SEG(segp);
-	    RT_CK_SOLTAB(segp -> seg_stp);
+	    RT_CK_SOLTAB(segp->seg_stp);
 
 	    printf("Primitive #%d in this partition is ", index);fflush(stdout);
 	    bu_vls_trunc(&sol_path_name, 0);
-	    fp = &(segp -> seg_stp -> st_path);
-	    if (fp -> magic != 0) {
+	    fp = &(segp->seg_stp->st_path);
+	    if (fp->magic != 0) {
 		printf(" full path... ");fflush(stdout);
 		RT_CK_FULL_PATH(fp);
 		bu_vls_strcpy(&sol_path_name, db_path_to_string(fp));
 	    } else {
 		printf(" dir-entry name... ");fflush(stdout);
-		BU_CKMAG(segp -> seg_stp -> st_dp, RT_DIR_MAGIC,
+		BU_CKMAG(segp->seg_stp->st_dp, RT_DIR_MAGIC,
 			 "directory");
-		bu_vls_strcpy(&sol_path_name, segp -> seg_stp -> st_name);
+		bu_vls_strcpy(&sol_path_name, segp->seg_stp->st_name);
 	    }
 	    printf("'%s'\n", bu_vls_addr(&sol_path_name));
 
@@ -306,13 +306,13 @@ rpt_solids(struct application *ap, struct partition *ph, struct seg *finished_se
 	     * then retain the one that appears earlier on the ray.
 	     */
 	    sol = mk_solid(bu_vls_addr(&sol_path_name),
-			   segp -> seg_in.hit_dist);
+			   segp->seg_in.hit_dist);
 	    if (bu_rb_insert(solids, (void *) sol) < 0) {
 		old_sol = (struct sol_name_dist *)
 		    bu_rb_curr(solids, ORDER_BY_NAME);
 		BU_CKMAG(old_sol, SOL_NAME_DIST_MAGIC,
 			 "sol_name_dist structure");
-		if (sol -> dist >= old_sol -> dist)
+		if (sol->dist >= old_sol->dist)
 		    free_solid(sol, 1);
 		else {
 		    bu_rb_delete(solids, ORDER_BY_NAME);
@@ -328,18 +328,18 @@ rpt_solids(struct application *ap, struct partition *ph, struct seg *finished_se
      * for use by the calling function
      */
     result = (char **)
-	bu_malloc((solids -> rbt_nm_nodes + 1) * sizeof(char *),
+	bu_malloc((solids->rbt_nm_nodes + 1) * sizeof(char *),
 		  "names of solids on ray");
     for (sol = (struct sol_name_dist *) bu_rb_min(solids, ORDER_BY_DISTANCE),
 	     i=0;
 	 sol != NULL;
 	 sol = (struct sol_name_dist *) bu_rb_succ(solids, ORDER_BY_DISTANCE),
 	     ++i) {
-	result[i] = sol -> name;
+	result[i] = sol->name;
 	free_solid(sol, 0);
     }
     result[i] = 0;
-    ap -> a_uptr = (char *) result;
+    ap->a_uptr = (char *) result;
 
     bu_rb_free(solids, BU_RB_RETAIN_DATA);
 
