@@ -5205,7 +5205,7 @@ BU_EXPORT BU_EXTERN(unsigned char *bu_plong, (unsigned char *msgp, unsigned long
 
 /** @} */
 
-/** @addtogroup butcl */
+/** @addtogroup tcl */
 /** @{ */
 /** @file observer.c
  *
@@ -5236,7 +5236,7 @@ BU_EXPORT BU_EXTERN(void bu_observer_notify, (Tcl_Interp *interp, struct bu_obse
  */
 BU_EXPORT BU_EXTERN(void bu_observer_free, (struct bu_observer *));
 
-/** @file bu_tcl.c
+/** @file tcl.c
  *
  * Tcl interfaces to all the LIBBU Basic BRL-CAD Utility routines.
  *
