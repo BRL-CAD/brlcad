@@ -2690,11 +2690,13 @@ BU_EXPORT BU_EXTERN(const char *bu_whereis, (const char *cmd));
 
 /**
  * B U _ F O P E N _ U N I Q
- * @brief
- * Open a file for output.  Assures that the file did not previously
- * exist.  This routine is DEPRECATED.  Do not use.
  *
- * Typical Usages:
+ * @brief Open a file for output.  Assures that the file did not previously
+ * exist.
+ *
+ * This routine is DEPRECATED.  Do not use.
+ *
+ * Typical usage:
  @code
  *	static int n = 0;
  *	FILE *fp;
@@ -2708,8 +2710,10 @@ BU_EXPORT BU_EXTERN(const char *bu_whereis, (const char *cmd));
  *	...
  *	fclose(fp);
  @endcode
-*/
-BU_EXPORT BU_EXTERN(FILE *bu_fopen_uniq, (const char *outfmt, const char *namefmt, int n)) __BU_ATTR_DEPRECATED; /**< DEPRECATED */
+ *
+ * DEPRECATED
+ */
+BU_EXPORT BU_EXTERN(FILE *bu_fopen_uniq, (const char *outfmt, const char *namefmt, int n)) __BU_ATTR_DEPRECATED;
 
 /** @file temp.c
  *
