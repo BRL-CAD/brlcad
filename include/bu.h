@@ -167,6 +167,11 @@ __BEGIN_DECLS
 #define __BU_ATTR_NORETURN __attribute__ ((__noreturn__))
 
 /**
+ * shorthand declaration of a function that is deprecated
+ */
+#define __BU_ATTR_DEPRECATED __attribute__ ((deprecated))
+
+/**
  *  If we're compiling strict, turn off "format string vs arguments"
  *  checks - BRL-CAD customizes the arguments to some of these
  *  function types (adding bu_vls support) and that is a problem with
@@ -176,9 +181,11 @@ __BEGIN_DECLS
 #  undef __BU_ATTR_FORMAT12
 #  undef __BU_ATTR_FORMAT23
 #  undef __BU_ATTR_NORETURN
+#  undef __BU_ATTR_DEPRECATED
 #  define __BU_ATTR_FORMAT12
 #  define __BU_ATTR_FORMAT23
 #  define __BU_ATTR_NORETURN
+#  define __BU_ATTR_DEPRECATED
 #endif
 
 
@@ -2567,7 +2574,7 @@ BU_EXPORT BU_EXTERN(void bu_list_path, (char *path, char *substr, char **filearr
  * DEPRECATED: This routine is replaced by bu_argv0_full_path().
  *             Do not use.
  */
-BU_EXPORT BU_EXTERN(const char *bu_argv0, (void));
+BU_EXPORT BU_EXTERN(const char *bu_argv0, (void)) __BU_ATTR_DEPRECATED;
 
 /**
  * b u _ a r g v 0 _ f u l l _ p a t h
@@ -2702,7 +2709,7 @@ BU_EXPORT BU_EXTERN(const char *bu_whereis, (const char *cmd));
  *	fclose(fp);
  @endcode
 */
-BU_EXPORT BU_EXTERN(FILE *bu_fopen_uniq, (const char *outfmt, const char *namefmt, int n)); /**< DEPRECATED */
+BU_EXPORT BU_EXTERN(FILE *bu_fopen_uniq, (const char *outfmt, const char *namefmt, int n)) __BU_ATTR_DEPRECATED; /**< DEPRECATED */
 
 /** @file temp.c
  *
@@ -3014,8 +3021,9 @@ BU_EXPORT BU_EXTERN(void bu_list_free,
 /**
  * B U _ L I S T _ P A R A L L E L _ A P P E N D
  *
- * Simple parallel-safe routine for appending a data structure to the end
- * of a bu_list doubly-linked list.
+ * Simple parallel-safe routine for appending a data structure to the
+ * end of a bu_list doubly-linked list.
+ *
  * @par Issues:
  *  	Only one semaphore shared by all list heads.
  * @n	No portable way to notify waiting thread(s) that are sleeping
