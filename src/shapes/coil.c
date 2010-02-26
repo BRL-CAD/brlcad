@@ -483,12 +483,52 @@ main(int ac, char *av[])
 	coil_data->lhf = lhf;
 	
         BU_LIST_APPEND(&(sections), &((*coil_data).l));	
+
+    	coil_data = BU_LIST_FIRST(coil_data_t, &sections);
     }
 
     /* If hard clamping the length, have to check some things and maybe clamp some values */
 
     if (overall_length != 0) {
-
+	bu_log("Caution:  Length clamping overrides other specified values - if supplied values are\ninconsistent with specified length, they will be overriden in this order:\n\nWhen Shrinking:  pitch, number of turns, wire diameter\nWhen Expanding:  number of turns, pitch\n\nCurrently, this override order is independent of whether the value is supplied by the user or calculated\ninternally - i.e. there is no preference for protecting user specified properties.\n");
+	if (start_cap_type != 0 || end_cap_type != 0) {
+	    bu_log("Note:  At this time only uncapped coils are allowed when length is constrained.\n");
+	    start_cap_type = 0;
+	    end_cap_type = 0;
+	}
+	if (helix_angle != 0) {
+	    bu_log("Note:  At this time variable helix angles are unsupported when length is constrained.\n");
+	    helix_angle = 0;
+	}
+	/* Thanks to earlier checks, we're guaranteed to have valid data for this calculation regardless of
+	 * user input */
+	nominal_length = coil_data->wd + coil_data->p * coil_data->nt;
+	if (nominal_length > overall_length) {
+	    /* Something has to give - start with pitch */
+	    coil_data->p = (overall_length - coil_data->wd)/coil_data->nt;
+	    while (coil_data->p < coil_data->wd) {
+		/* That didn't work, start knocking off turns*/
+		while ((coil_data->nt > 1) && (coil_data->p < coil_data->wd)) {
+		   coil_data->nt--;
+	    	   coil_data->p = (overall_length - coil_data->wd)/coil_data->nt;
+		}
+		if (coil_data->nt == 1) {
+		    /* THAT didn't work, change the wire diameter */
+		    coil_data->wd = overall_length/2;
+		    coil_data->p = coil_data->wd;
+		}
+	    }
+	} else {
+	    if (nominal_length != overall_length) {
+		/* Add turns first, then adjust pitch */
+		while (nominal_length < overall_length) {
+		    coil_data->nt++;
+		    nominal_length = coil_data->wd + coil_data->p * coil_data->nt;
+		}
+		coil_data->nt--;
+		coil_data->p = (overall_length - coil_data->wd)/coil_data->nt;
+	    }
+	}
     }	
     
     /* Generate Name - this needs some thought for multiple section coils*/
