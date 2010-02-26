@@ -14,7 +14,7 @@ changes made.  See document footer for additional details.
 ----------------------------------------------------------------------
 
 * removed the pcd-pix image conversion tool - Sean Morrison
-* fixed coil tool -S option - now takes 6 parameters - Cliff Yapp
+* fixed coil tool -S option, now takes 6 parameters - Cliff Yapp
 * fixed g-egg coordinate and polygon format bugs - Erik Greenwald
 * improved obj-g import support for object names - Sean Morrison
 * fix rtweight bug where incorrect units were reported - Cliff Yapp
