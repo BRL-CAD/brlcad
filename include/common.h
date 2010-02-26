@@ -116,7 +116,7 @@ typedef ptrdiff_t ssize_t;
 #  ifdef HAVE_STDINT_H
 #    include <stdint.h>
 #  endif
-#  ifndef UINTPTR_MAX
+#  if !defined(UINTPTR_MAX) && !defined(UINTPTRT_T_DEFINED)
 #    ifdef HAVE_UINT64_T
 typedef uint64_t uintptr_t;
 #    else
