@@ -60,7 +60,7 @@ __BEGIN_DECLS
 
 
 /** @} */
-
+/*----------------------------------------------------------------------*/
 /** @addtogroup tol */
 /** @{ */
 /**
@@ -117,9 +117,9 @@ struct bn_tol {
 	(((_dot) < 0) ? ((-(_dot))<=(_tol)->perp) : ((_dot) <= (_tol)->perp))
 
 #define BN_APPROXEQUAL(_a, _b, _tol) (fabs((_a) - (_b)) <= _tol->dist)
+
+
 /** @} */
-
-
 /*----------------------------------------------------------------------*/
 /* anim.c */
 /** @addtogroup anim */
@@ -445,8 +445,8 @@ BN_EXPORT BU_EXTERN(int Bn_Init,
 		    ());
 BN_EXPORT BU_EXTERN(void bn_tcl_mat_print,
 		    ());
-/** @} */
 
+/** @} */
 /*----------------------------------------------------------------------*/
 /* complex.c */
 /** @addtogroup complex */
@@ -493,7 +493,7 @@ BN_EXPORT BU_EXTERN(void bn_cx_div,
 BN_EXPORT BU_EXTERN(void bn_cx_sqrt,
 		    (bn_complex_t *op,
 		     const bn_complex_t *ip));
-/** @} */
+
 /*----------------------------------------------------------------------*/
 /* mat.c */
 /*
@@ -707,6 +707,7 @@ BN_EXPORT BU_EXTERN(void bn_wrt_point_direc,
 		     const point_t point,
 		     const vect_t direc));
 
+/** @} */
 /*----------------------------------------------------------------------*/
 /* msr.c */
 /** @addtogroup msr */
@@ -831,7 +832,7 @@ BN_EXPORT BU_EXTERN(double bn_noise_ridged,
 		     double lacunarity,
 		     double octaves,
 		     double offset));
-/** @} */
+
 /*----------------------------------------------------------------------*/
 /* plane.c */
 /*
@@ -1051,6 +1052,7 @@ BN_EXPORT BU_EXTERN(int bn_isect_planes,
 		     const plane_t planes[],
 		     const int pl_count));
 
+/** @} */
 /*----------------------------------------------------------------------*/
 /* poly.c */
 /** @addtogroup poly */
@@ -1127,6 +1129,8 @@ BN_EXPORT BU_EXTERN(void bn_pr_roots,
 		    (const char *title,
 		     const struct bn_complex roots[],
 		     int n));
+
+/** @} */
 /*----------------------------------------------------------------------*/
 /* multipoly.c */
 /** @addtogroup multipoly */
@@ -1269,7 +1273,6 @@ BN_EXPORT extern const float bn_sin_table[BN_SINTABSIZE];
 BN_EXPORT extern void bn_mathtab_constant();
 
 /** @} */
-
 /*----------------------------------------------------------------------*/
 /* randmt.c */
 /** @addtogroup rnd */
