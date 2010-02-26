@@ -103,7 +103,7 @@
 
 #define PKG_CK(p) { \
 	if (p==PKC_NULL||p->pkc_magic!=PKG_MAGIC) { \
-		snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "%s: bad pointer x%lx line %d\n", __FILE__, (long)(p), __LINE__); \
+		snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "%s: bad pointer %p line %d\n", __FILE__, (void *)(p), __LINE__); \
 		_pkg_errlog(_pkg_errbuf);abort(); \
 	} \
 }
@@ -273,8 +273,8 @@ _pkg_makeconn(int fd, const struct pkg_switch *switchp, void (*errlog) (char *ms
     if (_pkg_debug) {
 	_pkg_timestamp();
 	fprintf(_pkg_debug,
-		"_pkg_makeconn(fd=%d, switchp=x%lx, errlog=x%lx)\n",
-		fd, (long)switchp, (long)errlog);
+		"_pkg_makeconn(fd=%d, switchp=%p, errlog=x%lx)\n",
+		fd, (void *)switchp, (unsigned long)errlog);
 	fflush(_pkg_debug);
     }
 
@@ -355,9 +355,9 @@ pkg_open(const char *host, const char *service, const char *protocol, const char
     if (_pkg_debug) {
 	_pkg_timestamp();
 	fprintf(_pkg_debug,
-		"pkg_open(%s, %s, %s, %s, (passwd), switchp=x%lx, errlog=x%lx)\n",
+		"pkg_open(%s, %s, %s, %s, (passwd), switchp=%p, errlog=x%llx)\n",
 		host, service, protocol, uname,
-		(long)switchp, (long)errlog);
+		(void *)switchp, (unsigned long long)((uintptr_t)errlog));
 	fflush(_pkg_debug);
     }
 
@@ -496,8 +496,8 @@ pkg_transerver(const struct pkg_switch *switchp, void (*errlog)(char *))
     if (_pkg_debug) {
 	_pkg_timestamp();
 	fprintf(_pkg_debug,
-		"pkg_transerver(switchp=x%lx, errlog=0x%lx)\n",
-		(long)switchp, (long)errlog);
+		"pkg_transerver(switchp=%p, errlog=x%llx)\n",
+		(void *)switchp, (unsigned long long)((uintptr_t)errlog));
 	fflush(_pkg_debug);
     }
 
@@ -536,8 +536,8 @@ _pkg_permserver_impl(struct in_addr iface, const char *service, const char *prot
     if (_pkg_debug) {
 	_pkg_timestamp();
 	fprintf(_pkg_debug,
-		"pkg_permserver(%s, %s, backlog=%d, errlog=x%lx\n",
-		service, protocol, backlog, (long)errlog);
+		"pkg_permserver(%s, %s, backlog=%d, errlog=x%llx\n",
+		service, protocol, backlog, (unsigned long long)((uintptr_t)errlog));
 	fflush(_pkg_debug);
     }
 
@@ -721,8 +721,8 @@ pkg_getclient(int fd, const struct pkg_switch *switchp, void (*errlog) (char *ms
     if (_pkg_debug) {
 	_pkg_timestamp();
 	fprintf(_pkg_debug,
-		"pkg_getclient(fd=%d, switchp=x%lx, errlog=x%lx, nodelay=%d)\n",
-		fd, (long)switchp, (long)errlog, nodelay);
+		"pkg_getclient(fd=%d, switchp=%p, errlog=x%llx, nodelay=%d)\n",
+		fd, (void *)switchp, (unsigned long long)((uintptr_t)errlog), nodelay);
 	fflush(_pkg_debug);
     }
 
@@ -787,8 +787,8 @@ pkg_close(struct pkg_conn *pc)
     if (_pkg_debug) {
 	_pkg_timestamp();
 	fprintf(_pkg_debug,
-		"pkg_close(pc=x%lx) fd=%d\n",
-		(long)pc, pc->pkc_fd);
+		"pkg_close(pc=%p) fd=%d\n",
+		(void *)pc, pc->pkc_fd);
 	fflush(_pkg_debug);
     }
 
@@ -798,8 +798,8 @@ pkg_close(struct pkg_conn *pc)
     }
 
     if (pc->pkc_buf != (char *)0) {
-	snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_close(x%lx): partial input pkg discarded, buf=x%lx\n",
-		 (long)pc, (long)(pc->pkc_buf));
+	snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_close(%p): partial input pkg discarded, buf=%p\n",
+		 (void *)pc, (void *)(pc->pkc_buf));
 	pc->pkc_errlog(_pkg_errbuf);
 	(void)free(pc->pkc_buf);
     }
@@ -932,8 +932,8 @@ pkg_send(int type, const char *buf, size_t len, struct pkg_conn *pc)
     if (_pkg_debug) {
 	_pkg_timestamp();
 	fprintf(_pkg_debug,
-		"pkg_send(type=%d, buf=x%lx, len=%ld, pc=x%lx)\n",
-		type, (long)buf, (long)len, (long)pc);
+		"pkg_send(type=%d, buf=%p, len=%llu, pc=%p)\n",
+		type, (void *)buf, (unsigned long long)len, (void *)pc);
 	fflush(_pkg_debug);
     }
 
@@ -978,8 +978,8 @@ pkg_send(int type, const char *buf, size_t len, struct pkg_conn *pc)
 	    _pkg_perror(pc->pkc_errlog, "pkg_send: writev");
 	    return(-1);
 	}
-	snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_send of %ld+%ld, wrote %d\n",
-		 (long)sizeof(hdr), (long)len, i);
+	snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_send of %llu+%llu, wrote %d\n",
+		 (unsigned long long)sizeof(hdr), (unsigned long long)len, i);
 	(pc->pkc_errlog)(_pkg_errbuf);
 	return(i-sizeof(hdr));	/* amount of user data sent */
     }
@@ -1016,8 +1016,8 @@ pkg_send(int type, const char *buf, size_t len, struct pkg_conn *pc)
 	    _pkg_perror(pc->pkc_errlog, "pkg_send: header write");
 	    return(-1);
 	}
-	snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_send header of %d, wrote %d\n",
-		 (int)sizeof(hdr), i);
+	snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_send header of %llu, wrote %d\n",
+		 (unsigned long long)sizeof(hdr), i);
 	(pc->pkc_errlog)(_pkg_errbuf);
 	return(-1);		/* amount of user data sent */
     }
@@ -1051,8 +1051,8 @@ pkg_2send(int type, const char *buf1, size_t len1, const char *buf2, size_t len2
     if (_pkg_debug) {
 	_pkg_timestamp();
 	fprintf(_pkg_debug,
-		"pkg_send2(type=%d, buf1=x%lx, len1=%ld, buf2=x%lx, len2=%ld, pc=x%lx)\n",
-		type, (long)buf1, (long)len1, (long)buf2, (long)len2, (long)pc);
+		"pkg_send2(type=%d, buf1=%p, len1=%llu, buf2=%p, len2=%llu, pc=%p)\n",
+		type, (void *)buf1, (unsigned long long)len1, (void *)buf2, (unsigned long long)len2, (void *)pc);
 	fflush(_pkg_debug);
     }
 
@@ -1093,8 +1093,8 @@ pkg_2send(int type, const char *buf1, size_t len1, const char *buf2, size_t len2
 	    (pc->pkc_errlog)(_pkg_errbuf);
 	    return(-1);
 	}
-	snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_2send of %ld+%ld+%ld, wrote %d\n",
-		 (long)sizeof(hdr), (long)len1, (long)len2, i);
+	snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_2send of %llu+%llu+%llu, wrote %d\n",
+		 (unsigned long long)sizeof(hdr), (unsigned long long)len1, (unsigned long long)len2, i);
 	(pc->pkc_errlog)(_pkg_errbuf);
 	return(i-sizeof(hdr));	/* amount of user data sent */
     }
@@ -1119,8 +1119,8 @@ pkg_2send(int type, const char *buf1, size_t len1, const char *buf2, size_t len2
 		_pkg_perror(pc->pkc_errlog, "pkg_2send: tbuf write");
 		return(-1);
 	    }
-	    snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_2send of %d+%d, wrote %d\n",
-		     len1, len2, i-(int)sizeof(hdr));
+	    snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_2send of %llu+%llu, wrote %d\n",
+		     (unsigned long long)len1, (unsigned long long)len2, i-(int)sizeof(hdr));
 	    (pc->pkc_errlog)(_pkg_errbuf);
 	    return(i-sizeof(hdr));	/* amount of user data sent */
 	}
@@ -1131,8 +1131,8 @@ pkg_2send(int type, const char *buf1, size_t len1, const char *buf2, size_t len2
 	if (i < 0) {
 	    if (errno == EBADF)  return(-1);
 	    _pkg_perror(pc->pkc_errlog, "pkg_2send: header write");
-	    snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_2send write(%d, x%lx, %d) ret=%d\n",
-		     pc->pkc_fd, (long)&hdr, (int)sizeof(hdr), i);
+	    snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_2send write(%d, %p, %llu) ret=%d\n",
+		     pc->pkc_fd, (void *)&hdr, sizeof(hdr), i);
 	    (pc->pkc_errlog)(_pkg_errbuf);
 	    return(-1);
 	}
@@ -1145,13 +1145,13 @@ pkg_2send(int type, const char *buf1, size_t len1, const char *buf2, size_t len2
 	if (i < 0) {
 	    if (errno == EBADF)  return(-1);
 	    _pkg_perror(pc->pkc_errlog, "pkg_2send: write buf1");
-	    snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_2send write(%d, x%lx, %d) ret=%d\n",
-		     pc->pkc_fd, (long)buf1, len1, i);
+	    snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_2send write(%d, %p, %llu) ret=%d\n",
+		     pc->pkc_fd, (void *)buf1, (unsigned long long)len1, i);
 	    (pc->pkc_errlog)(_pkg_errbuf);
 	    return(-1);
 	}
-	snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_2send of %d+%d+%d, wrote len1=%d\n",
-		 (int)sizeof(hdr), len1, len2, i);
+	snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_2send of %llu+%llu+%llu, wrote len1=%d\n",
+		 (unsigned long long)sizeof(hdr), (unsigned long long)len1, (unsigned long long)len2, i);
 	(pc->pkc_errlog)(_pkg_errbuf);
 	return(i);		/* amount of user data sent */
     }
@@ -1160,13 +1160,13 @@ pkg_2send(int type, const char *buf1, size_t len1, const char *buf2, size_t len2
 	if (i < 0) {
 	    if (errno == EBADF)  return(-1);
 	    _pkg_perror(pc->pkc_errlog, "pkg_2send: write buf2");
-	    snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_2send write(%d, x%lx, %d) ret=%d\n",
-		     pc->pkc_fd, (long)buf2, len2, i);
+	    snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_2send write(%d, %p, %llu) ret=%d\n",
+		     pc->pkc_fd, (void *)buf2, (unsigned long long)len2, i);
 	    (pc->pkc_errlog)(_pkg_errbuf);
 	    return(-1);
 	}
-	snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_2send of %d+%d+%d, wrote len2=%d\n",
-		 (int)sizeof(hdr), len1, len2, i);
+	snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "pkg_2send of %llu+%llu+%llu, wrote len2=%d\n",
+		 (unsigned long long)sizeof(hdr), (unsigned long long)len1, (unsigned long long)len2, i);
 	(pc->pkc_errlog)(_pkg_errbuf);
 	return((int)(len1+i));		/* amount of user data sent */
     }
@@ -1183,8 +1183,8 @@ pkg_stream(int type, const char *buf, size_t len, struct pkg_conn *pc)
     if (_pkg_debug) {
 	_pkg_timestamp();
 	fprintf(_pkg_debug,
-		"pkg_stream(type=%d, buf=x%lx, len=%ld, pc=x%lx)\n",
-		type, (long)buf, (long)len, (long)pc);
+		"pkg_stream(type=%d, buf=%p, len=%llu, pc=%p)\n",
+		type, (void *)buf, (unsigned long long)len, (void *)pc);
 	fflush(_pkg_debug);
     }
 
@@ -1216,8 +1216,8 @@ pkg_flush(struct pkg_conn *pc)
     if (_pkg_debug) {
 	_pkg_timestamp();
 	fprintf(_pkg_debug,
-		"pkg_flush(pc=x%lx)\n",
-		(long)pc);
+		"pkg_flush(pc=%p)\n",
+		(void *)pc);
 	fflush(_pkg_debug);
     }
 
@@ -1327,8 +1327,8 @@ pkg_waitfor (int type, char *buf, size_t len, struct pkg_conn *pc)
     if (_pkg_debug) {
 	_pkg_timestamp();
 	fprintf(_pkg_debug,
-		"pkg_waitfor (type=%d, buf=x%lx, len=%ld, pc=x%lx)\n",
-		type, (long)buf, (long)len, (long)pc);
+		"pkg_waitfor (type=%d, buf=%p, len=%llu, pc=%p)\n",
+		type, (void *)buf, (unsigned long long)len, (void *)pc);
 	fflush(_pkg_debug);
     }
  again:
@@ -1420,8 +1420,8 @@ pkg_bwaitfor (int type, struct pkg_conn *pc)
     if (_pkg_debug) {
 	_pkg_timestamp();
 	fprintf(_pkg_debug,
-		"pkg_bwaitfor (type=%d, pc=x%lx)\n",
-		type, (long)pc);
+		"pkg_bwaitfor (type=%d, pc=%p)\n",
+		type, (void *)pc);
 	fflush(_pkg_debug);
     }
     do  {
@@ -1474,8 +1474,8 @@ _pkg_dispatch(struct pkg_conn *pc)
     if (_pkg_debug) {
 	_pkg_timestamp();
 	fprintf(_pkg_debug,
-		"_pkg_dispatch(pc=x%lx) type=%d, buf=x%lx, len=%ld\n",
-		(long)pc, pc->pkc_type, (long)(pc->pkc_buf), (long)(pc->pkc_len));
+		"_pkg_dispatch(pc=%p) type=%d, buf=%p, len=%llu\n",
+		(void *)pc, pc->pkc_type, (void *)(pc->pkc_buf), (unsigned long long)(pc->pkc_len));
 	fflush(_pkg_debug);
     }
     if (pc->pkc_left != 0)  return(-1);
@@ -1535,8 +1535,8 @@ pkg_process(struct pkg_conn *pc)
 	    }
 	    _pkg_timestamp();
 	    fprintf(_pkg_debug,
-		    "pkg_process(pc=x%lx) pkc_left=%d %s (avail=%d)\n",
-		    (long)pc, pc->pkc_left, _pkg_errbuf, available);
+		    "pkg_process(pc=%p) pkc_left=%d %s (avail=%d)\n",
+		    (void *)pc, pc->pkc_left, _pkg_errbuf, available);
 	    fflush(_pkg_debug);
 	}
 	if (pc->pkc_left < 0) {
@@ -1639,8 +1639,8 @@ pkg_block(struct pkg_conn *pc)
     if (_pkg_debug) {
 	_pkg_timestamp();
 	fprintf(_pkg_debug,
-		"pkg_block(pc=x%lx)\n",
-		(long)pc);
+		"pkg_block(pc=%p)\n",
+		(void *)pc);
 	fflush(_pkg_debug);
     }
 
