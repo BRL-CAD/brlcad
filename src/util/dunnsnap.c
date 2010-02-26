@@ -36,8 +36,8 @@
 
 
 /* Shared with dunncomm.c */
-extern int	fd;
-extern char	cmd;
+extern int fd;
+extern char cmd;
 extern void dunnopen(void);
 extern int ready(int nsecs);
 extern void getexposure(char *title);
@@ -46,10 +46,10 @@ extern int goodstatus(void);
 extern void hangten(void);
 
 
-static int	nframes = 1;
-static char	*framebuffer;
-static int	scr_width = 0;
-static int	scr_height = 0;
+static int nframes = 1;
+static char *framebuffer;
+static int scr_width = 0;
+static int scr_height = 0;
 
 static char usage[] = "\
 Usage: dunnsnap [-h] [-F framebuffer]\n\
@@ -61,8 +61,8 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ( (c = bu_getopt( argc, argv, "hF:s:S:w:W:n:N:" )) != EOF )  {
-	switch ( c )  {
+    while ((c = bu_getopt(argc, argv, "hF:s:S:w:W:n:N:")) != EOF) {
+	switch (c) {
 	    case 'h':
 		/* high-res */
 		scr_height = scr_width = 1024;
@@ -88,38 +88,39 @@ get_args(int argc, char **argv)
 	}
     }
 
-    if ( bu_optind < argc )  {
-	nframes = atoi( argv[bu_optind] );
+    if (bu_optind < argc) {
+	nframes = atoi(argv[bu_optind]);
     }
-    if ( argc > ++bu_optind )
-	(void)fprintf( stderr, "dunnsnap: excess argument(s) ignored\n" );
+    if (argc > ++bu_optind)
+	(void)fprintf(stderr, "dunnsnap: excess argument(s) ignored\n");
 
     return(1);		/* OK */
 }
+
 
 int
 main(int argc, char **argv)
 {
     FBIO *fbp = FBIO_NULL;
 
-    if ( !get_args( argc, argv ) )  {
+    if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);
-	bu_exit ( 1, NULL );
+	bu_exit (1, NULL);
     }
 
     dunnopen();
 
-    if ( framebuffer != (char *)0 )  {
-	if ( (fbp = fb_open( framebuffer, scr_width, scr_height )) == FBIO_NULL )
+    if (framebuffer != (char *)0) {
+	if ((fbp = fb_open(framebuffer, scr_width, scr_height)) == FBIO_NULL)
 	    bu_exit (12, NULL);
     }
 
     /* check argument */
-    if ( nframes < 0 )  {
+    if (nframes < 0) {
 	fprintf(stderr, "dunnsnap: negative frame count\n");
 	goto bad;
     }
-    if ( nframes >= 10000 )
+    if (nframes >= 10000)
 	fprintf(stderr, "dunnsnap: What a lot of film!\n");
 
     if (!ready(2)) {
@@ -153,15 +154,16 @@ main(int argc, char **argv)
 	}
 	--nframes;
     }
-    if ( fbp != FBIO_NULL )
+    if (fbp != FBIO_NULL)
 	fb_close(fbp);
     bu_exit (0, NULL);
 
  bad:
-    if ( fbp != FBIO_NULL )
+    if (fbp != FBIO_NULL)
 	fb_close(fbp);
     bu_exit (1, NULL);
 }
+
 
 /*
  * Local Variables:

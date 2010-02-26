@@ -34,24 +34,25 @@
 
 struct site
 {
-    struct bu_list	l;
-    fastf_t		s_x;
-    fastf_t		s_y;
-    fastf_t		s_z;
+    struct bu_list l;
+    fastf_t s_x;
+    fastf_t s_y;
+    fastf_t s_z;
 };
-#define	SITE_NULL	((struct site *) 0)
-#define	SITE_MAGIC	0x73697465
-#define s_magic		l.magic
-#define OPT_STRING	"ns:t?"
+#define SITE_NULL ((struct site *) 0)
+#define SITE_MAGIC 0x73697465
+#define s_magic l.magic
+#define OPT_STRING "ns:t?"
 
 void print_usage (void)
 {
     bu_exit(1, "Usage: 'bary [-nt] [-s \"x y z\"] [file]'\n");
 }
 
+
 void enqueue_site (struct bu_list *sl, fastf_t x, fastf_t y, fastf_t z)
 {
-    struct site	*sp;
+    struct site *sp;
 
     BU_CK_LIST_HEAD(sl);
 
@@ -64,32 +65,31 @@ void enqueue_site (struct bu_list *sl, fastf_t x, fastf_t y, fastf_t z)
     BU_LIST_INSERT(sl, &(sp->l));
 }
 
+
 void show_sites (struct bu_list *sl)
 {
-    struct site	*sp;
+    struct site *sp;
 
     BU_CK_LIST_HEAD(sl);
 
-    for (BU_LIST_FOR(sp, site, sl))
-    {
+    for (BU_LIST_FOR(sp, site, sl)) {
 	bu_log("I got a site (%g, %g, %g)\n",
 	       sp->s_x, sp->s_y, sp->s_z);
     }
 }
 
+
 int read_point (FILE *fp, fastf_t *c_p, int c_len, int normalize, struct bu_vls *tail)
 {
-    char		*cp = NULL;
-    fastf_t		sum;
-    int			i;
-    int			return_code = 1;
-    static int		line_nm = 0;
-    struct bu_vls	*bp;
+    char *cp = NULL;
+    fastf_t sum;
+    int i;
+    int return_code = 1;
+    static int line_nm = 0;
+    struct bu_vls *bp;
 
-    for (bp = bu_vls_vlsinit();; bu_vls_trunc(bp, 0))
-    {
-	if (bu_vls_gets(bp, fp) == -1)
-	{
+    for (bp = bu_vls_vlsinit();; bu_vls_trunc(bp, 0)) {
+	if (bu_vls_gets(bp, fp) == -1) {
 	    return_code = EOF;
 	    goto wrap_up;
 	}
@@ -103,9 +103,8 @@ int read_point (FILE *fp, fastf_t *c_p, int c_len, int normalize, struct bu_vls 
 	if ((*cp == '#') || (*cp == '\0'))
 	    continue;
 
-	for (i = 0; i < c_len; ++i)
-	{
-	    char	*endp;
+	for (i = 0; i < c_len; ++i) {
+	    char *endp;
 
 	    c_p[i] = strtod(cp, &endp);
 	    if (endp == cp)
@@ -114,8 +113,7 @@ int read_point (FILE *fp, fastf_t *c_p, int c_len, int normalize, struct bu_vls 
 	    cp = endp;
 	}
 
-	if (normalize)
-	{
+	if (normalize) {
 	    sum = 0.0;
 	    for (i = 0; i < c_len; ++i)
 		sum += c_p[i];
@@ -126,8 +124,7 @@ int read_point (FILE *fp, fastf_t *c_p, int c_len, int normalize, struct bu_vls 
     }
 
  wrap_up:
-    if ((return_code == 1) && (tail != 0))
-    {
+    if ((return_code == 1) && (tail != 0)) {
 	bu_vls_trunc(tail, 0);
 	bu_vls_strcat(tail, cp);
     }
@@ -135,31 +132,30 @@ int read_point (FILE *fp, fastf_t *c_p, int c_len, int normalize, struct bu_vls 
     return (return_code);
 }
 
+
 int
 main (int argc, char **argv)
 {
-    char		*inf_name;
-    int			ch;
-    int			i;
-    int			nm_sites;
-    int			normalize = 0;	/* Make all weights sum to one? */
-    fastf_t		*coeff;
-    fastf_t		x, y, z;
-    FILE		*infp;
-    struct bu_list	site_list;
-    struct bu_vls	*tail_buf = 0;
-    struct site		*sp;
+    char *inf_name;
+    int ch;
+    int i;
+    int nm_sites;
+    int normalize = 0;	/* Make all weights sum to one? */
+    fastf_t *coeff;
+    fastf_t x, y, z;
+    FILE *infp;
+    struct bu_list site_list;
+    struct bu_vls *tail_buf = 0;
+    struct site *sp;
 
     BU_LIST_INIT(&site_list);
     while ((ch = bu_getopt(argc, argv, OPT_STRING)) != EOF)
-	switch (ch)
-	{
+	switch (ch) {
 	    case 'n':
 		normalize = 1;
 		break;
 	    case 's':
-		if (sscanf(bu_optarg, "%lf %lf %lf", &x, &y, &z) != 3)
-		{
+		if (sscanf(bu_optarg, "%lf %lf %lf", &x, &y, &z) != 3) {
 		    bu_log("Illegal site: '%s'\n", bu_optarg);
 		    print_usage();
 		}
@@ -174,8 +170,7 @@ main (int argc, char **argv)
 		print_usage();
 	}
 
-    switch (argc - bu_optind)
-    {
+    switch (argc - bu_optind) {
 	case 0:
 	    inf_name = "stdin";
 	    infp = stdin;
@@ -189,8 +184,7 @@ main (int argc, char **argv)
 	    print_usage();
     }
 
-    if (BU_LIST_IS_EMPTY(&site_list))
-    {
+    if (BU_LIST_IS_EMPTY(&site_list)) {
 	enqueue_site(&site_list, (fastf_t) 1.0, (fastf_t) 0.0, (fastf_t) 0.0);
 	enqueue_site(&site_list, (fastf_t) 0.0, (fastf_t) 1.0, (fastf_t) 0.0);
 	enqueue_site(&site_list, (fastf_t) 0.0, (fastf_t) 0.0, (fastf_t) 1.0);
@@ -203,12 +197,10 @@ main (int argc, char **argv)
     coeff = (fastf_t *)
 	bu_malloc(nm_sites * sizeof(fastf_t), "coefficient array");
 
-    while (read_point(infp, coeff, nm_sites, normalize, tail_buf) != EOF)
-    {
+    while (read_point(infp, coeff, nm_sites, normalize, tail_buf) != EOF) {
 	x = y = z = 0.0;
 	i = 0;
-	for (BU_LIST_FOR(sp, site, &site_list))
-	{
+	for (BU_LIST_FOR(sp, site, &site_list)) {
 	    x += sp->s_x * coeff[i];
 	    y += sp->s_y * coeff[i];
 	    z += sp->s_z * coeff[i];
@@ -221,6 +213,7 @@ main (int argc, char **argv)
     }
     return 0;
 }
+
 
 /*
  * Local Variables:

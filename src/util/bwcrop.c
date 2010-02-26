@@ -21,18 +21,13 @@
  *
  * Crop Black and White files.
  *
- * Given four "corner points" in the input file, we produce an
- * output file of the requested size consisting of the nearest
- * pixels.  No filtering/interpolating is done.
+ * Given four "corner points" in the input file, we produce an output
+ * file of the requested size consisting of the nearest pixels.  No
+ * filtering/interpolating is done.
  *
- * This can handle arbitrarily large files.
- * We keep a buffer of scan lines centered around the last
- * point that fell outside of the buffer.
- * Note: this buffer code is shared with bwscale.c
- *
- *  Author -
- *	Phillip Dykstra
- *	16 June 1986
+ * This can handle arbitrarily large files.  We keep a buffer of scan
+ * lines centered around the last point that fell outside of the
+ * buffer.  Note: this buffer code is shared with bwscale.c
  *
  */
 
@@ -44,18 +39,18 @@
 #include "bu.h"
 
 
-#define	round(x) ((int)(x+0.5))
-#define	MAXBUFBYTES	1024*1024	/* max bytes to malloc in buffer space */
+#define round(x) ((int)(x+0.5))
+#define MAXBUFBYTES 1024*1024	/* max bytes to malloc in buffer space */
 
-unsigned char	*buffer;
-int	scanlen;			/* length of infile scanlines */
-int	buflines;			/* Number of lines held in buffer */
-int	buf_start = -1000;		/* First line in buffer */
+unsigned char *buffer;
+int scanlen;			/* length of infile scanlines */
+int buflines;			/* Number of lines held in buffer */
+int buf_start = -1000;		/* First line in buffer */
 
-float	xnum, ynum;			/* Number of pixels in new file */
-float	ulx, uly, urx, ury, lrx, lry, llx, lly;	/* Corners of original file */
+float xnum, ynum;			/* Number of pixels in new file */
+float ulx, uly, urx, ury, lrx, lry, llx, lly;	/* Corners of original file */
 
-FILE	*ifp, *ofp;
+FILE *ifp, *ofp;
 
 static const char usage[] = "\
 Usage: bwcrop in.bw out.bw (I prompt!)\n\
@@ -64,13 +59,13 @@ Usage: bwcrop in.bw out.bw (I prompt!)\n\
 
 /*
  * Determine max number of lines to buffer.
- *  and malloc space for it.
- *  XXX - CHECK FILE SIZE
+ * and malloc space for it.
+ * XXX - CHECK FILE SIZE
  */
 void
 init_buffer(int scanlen)
 {
-    int	max;
+    int max;
 
     /* See how many we could buffer */
     max = MAXBUFBYTES / scanlen;
@@ -80,11 +75,12 @@ init_buffer(int scanlen)
      * the input file is to decide if we should buffer
      * less than our max.
      */
-    if ( max > 512 ) max = 512;
+    if (max > 512) max = 512;
 
     buflines = max;
-    buffer = (unsigned char *)bu_malloc( buflines * scanlen, "buffer" );
+    buffer = (unsigned char *)bu_malloc(buflines * scanlen, "buffer");
 }
+
 
 /*
  * Load the buffer with scan lines centered around
@@ -94,70 +90,70 @@ void
 fill_buffer(int y)
 {
     buf_start = y - buflines/2;
-    if ( buf_start < 0 ) buf_start = 0;
+    if (buf_start < 0) buf_start = 0;
 
-    fseek( ifp, buf_start * scanlen, 0 );
-    fread( buffer, scanlen, buflines, ifp );
+    fseek(ifp, buf_start * scanlen, 0);
+    fread(buffer, scanlen, buflines, ifp);
 }
 
 
 int
 main(int argc, char **argv)
 {
-    float	row, col, x1, y1, x2, y2, x, y;
-    int	yindex;
-    char	value;
+    float row, col, x1, y1, x2, y2, x, y;
+    int yindex;
+    char value;
 
     if (argc < 3) {
-	bu_exit(1, "%s", usage );
+	bu_exit(1, "%s", usage);
     }
     if ((ifp = fopen(argv[1], "r")) == NULL) {
-	bu_exit(2, "bwcrop: can't open %s\n", argv[1] );
+	bu_exit(2, "bwcrop: can't open %s\n", argv[1]);
     }
     if ((ofp = fopen(argv[2], "w")) == NULL) {
-	bu_exit(3, "bwcrop: can't open %s\n", argv[1] );
+	bu_exit(3, "bwcrop: can't open %s\n", argv[1]);
     }
 
-    if ( argc == 14 ) {
-	scanlen = atoi( argv[3] );
-	xnum = atoi( argv[4] );
-	ynum = atoi( argv[5] );
-	ulx = atoi( argv[6] );
-	uly = atoi( argv[7] );
-	urx = atoi( argv[8] );
-	ury = atoi( argv[9] );
-	lrx = atoi( argv[10] );
-	lry = atoi( argv[11] );
-	llx = atoi( argv[12] );
-	lly = atoi( argv[13] );
+    if (argc == 14) {
+	scanlen = atoi(argv[3]);
+	xnum = atoi(argv[4]);
+	ynum = atoi(argv[5]);
+	ulx = atoi(argv[6]);
+	uly = atoi(argv[7]);
+	urx = atoi(argv[8]);
+	ury = atoi(argv[9]);
+	lrx = atoi(argv[10]);
+	lry = atoi(argv[11]);
+	llx = atoi(argv[12]);
+	lly = atoi(argv[13]);
     } else {
 	/* Get info */
 	printf("Scanline length in input file: ");
-	scanf( "%d", &scanlen );
-	if ( scanlen <= 0 ) {
-	    bu_exit(4, "bwcrop: scanlen = %d, don't be ridiculous\n", scanlen );
+	scanf("%d", &scanlen);
+	if (scanlen <= 0) {
+	    bu_exit(4, "bwcrop: scanlen = %d, don't be ridiculous\n", scanlen);
 	}
 	printf("Line Length and Number of scan lines (in new file)?: ");
-	scanf( "%f%f", &xnum, &ynum );
+	scanf("%f%f", &xnum, &ynum);
 	printf("Upper left corner in input file (x, y)?: ");
-	scanf( "%f%f", &ulx, &uly );
+	scanf("%f%f", &ulx, &uly);
 	printf("Upper right corner (x, y)?: ");
-	scanf( "%f%f", &urx, &ury );
+	scanf("%f%f", &urx, &ury);
 	printf("Lower right (x, y)?: ");
-	scanf( "%f%f", &lrx, &lry );
+	scanf("%f%f", &lrx, &lry);
 	printf("Lower left (x, y)?: ");
-	scanf( "%f%f", &llx, &lly );
+	scanf("%f%f", &llx, &lly);
     }
 
     /* See how many lines we can buffer */
-    init_buffer( scanlen );
+    init_buffer(scanlen);
 
     /* Check for silly buffer syndrome */
-    if ( abs((int)(ury - uly)) > buflines/2 || abs((int)(lry - lly)) > buflines/2 ) {
-	fprintf( stderr, "bwcrop: Warning: You are skewing enough in the y direction\n" );
-	fprintf( stderr, "bwcrop: relative to my buffer size that I will exhibit silly\n" );
-	fprintf( stderr, "bwcrop: buffer syndrome (two replacements per scanline).\n" );
-	fprintf( stderr, "bwcrop: Recompile me or use a smarter algorithm.\n" );
+    if (abs((int)(ury - uly)) > buflines/2 || abs((int)(lry - lly)) > buflines/2) {
+	fprintf(stderr, "bwcrop: Warning: You are skewing enough in the y direction\n");
+	fprintf(stderr, "bwcrop: relative to my buffer size that I will exhibit silly\n");
+	fprintf(stderr, "bwcrop: buffer syndrome (two replacements per scanline).\n");
+	fprintf(stderr, "bwcrop: Recompile me or use a smarter algorithm.\n");
     }
 
     /* Move all points */
@@ -176,8 +172,8 @@ main(int argc, char **argv)
 
 	    /* Make sure we are in the buffer */
 	    yindex = round(y) - buf_start;
-	    if ( yindex < 0 || yindex >= buflines ) {
-		fill_buffer( round(y) );
+	    if (yindex < 0 || yindex >= buflines) {
+		fill_buffer(round(y));
 		yindex = round(y) - buf_start;
 	    }
 

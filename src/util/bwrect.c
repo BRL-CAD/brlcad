@@ -21,10 +21,6 @@
  *
  * Remove a portion of a potentially huge .bw file.
  *
- *  Author -
- *	Phillip Dykstra
- *	2 Oct 1985
- *
  */
 
 #include "common.h"
@@ -35,18 +31,18 @@
 #include "bu.h"
 
 
-int	xnum, ynum;		/* Number of pixels in new map */
-int	xorig, yorig;		/* Bottom left corner to extract from */
-int	linelen;
-char	*buf;			/* output scanline buffer, malloc'd */
+int xnum, ynum;		/* Number of pixels in new map */
+int xorig, yorig;		/* Bottom left corner to extract from */
+int linelen;
+char *buf;			/* output scanline buffer, malloc'd */
 
 
 int
 main(int argc, char **argv)
 {
-    FILE	*ifp, *ofp;
-    int	row;
-    long	offset;
+    FILE *ifp, *ofp;
+    int row;
+    long offset;
 
     if (argc < 3) {
 	bu_exit(1, "usage: bwrect infile outfile (I prompt!)\n");
@@ -59,14 +55,14 @@ main(int argc, char **argv)
     }
 
     /* Get info */
-    printf( "Area to extract (x, y) in pixels " );
-    scanf( "%d%d", &xnum, &ynum );
-    printf( "Origin to extract from (0, 0 is lower left) " );
-    scanf( "%d%d", &xorig, &yorig );
-    printf( "Scan line length of input file " );
-    scanf( "%d", &linelen );
+    printf("Area to extract (x, y) in pixels ");
+    scanf("%d%d", &xnum, &ynum);
+    printf("Origin to extract from (0, 0 is lower left) ");
+    scanf("%d%d", &xorig, &yorig);
+    printf("Scan line length of input file ");
+    scanf("%d", &linelen);
 
-    buf = (char *)bu_malloc( xnum, "buffer" );
+    buf = (char *)bu_malloc(xnum, "buffer");
 
     /* Move all points */
     for (row = 0+yorig; row < ynum+yorig; row++) {
@@ -79,6 +75,7 @@ main(int argc, char **argv)
     bu_free(buf, "buffer");
     return 0;
 }
+
 
 /*
  * Local Variables:

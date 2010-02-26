@@ -19,21 +19,21 @@
  */
 /** @file bwrot.c
  *
- *  Rotate, Invert, and/or Reverse the pixels in a Black
- *  and White (.bw) file.
+ * Rotate, Invert, and/or Reverse the pixels in a Black
+ * and White (.bw) file.
  *
- *  The rotation logic was worked out for data ordered with
- *  "upper left" first.  It is being used on files in first
- *  quadrant order (lower left first).  Thus the "forward",
- *  "backward" flags are reversed.
+ * The rotation logic was worked out for data ordered with
+ * "upper left" first.  It is being used on files in first
+ * quadrant order (lower left first).  Thus the "forward",
+ * "backward" flags are reversed.
  *
- *  The code was designed to never need to seek on the input,
- *  while it *may* need to seek on output (if the max buffer
- *  is too small).  It would be nice if we could handle the
- *  reverse case also (e.g. pipe on stdout).
+ * The code was designed to never need to seek on the input,
+ * while it *may* need to seek on output (if the max buffer
+ * is too small).  It would be nice if we could handle the
+ * reverse case also (e.g. pipe on stdout).
  *
- *  Note that this program can be applied to any collection
- *  of single byte entities.
+ * Note that this program can be applied to any collection
+ * of single byte entities.
  *
  */
 
@@ -46,40 +46,40 @@
 #include "bu.h"
 
 
-#define	MAXBUFBYTES	(1280*1024)
+#define MAXBUFBYTES (1280*1024)
 
-int	buflines, scanbytes;
-int	firsty = -1;	/* first "y" scanline in buffer */
-int	lasty = -1;	/* last "y" scanline in buffer */
+int buflines, scanbytes;
+int firsty = -1;	/* first "y" scanline in buffer */
+int lasty = -1;	/* last "y" scanline in buffer */
 unsigned char *buffer;
 unsigned char *bp;
 unsigned char *obuf;
 unsigned char *obp;
 
-int	nxin = 512;
-int	nyin = 512;
-int	yin, xout, yout;
-int	plus90, minus90, reverse, invert;
-double	angle;
+int nxin = 512;
+int nyin = 512;
+int yin, xout, yout;
+int plus90, minus90, reverse, invert;
+double angle;
 
-static	char usage[] = "\
+static char usage[] = "\
 Usage: bwrot [-f -b -r -i] [-s squaresize]\n\
 	[-w width] [-n height] [file.bw] > file.bw\n\
   or   bwrot -a angle [-s squaresize]\n\
 	[-w width] [-n height] [file.bw] > file.bw\n";
 
-void	fill_buffer(void), reverse_buffer(void), arbrot(double a);
+void fill_buffer(void), reverse_buffer(void), arbrot(double a);
 
-static char	*file_name;
-FILE	*ifp, *ofp;
+static char *file_name;
+FILE *ifp, *ofp;
 
 int
 get_args(int argc, char **argv)
 {
     int c;
 
-    while ( (c = bu_getopt( argc, argv, "fbrihs:w:n:S:W:N:a:" )) != EOF )  {
-	switch ( c )  {
+    while ((c = bu_getopt(argc, argv, "fbrihs:w:n:S:W:N:a:")) != EOF) {
+	switch (c) {
 	    case 'f':
 		minus90++;
 		break;
@@ -119,64 +119,65 @@ get_args(int argc, char **argv)
     }
 
     /* XXX - backward compatability hack */
-    if ( bu_optind+2 == argc ) {
+    if (bu_optind+2 == argc) {
 	nxin = atoi(argv[bu_optind++]);
 	nyin = atoi(argv[bu_optind++]);
     }
-    if ( bu_optind >= argc )  {
-	if ( isatty(fileno(stdin)) )
+    if (bu_optind >= argc) {
+	if (isatty(fileno(stdin)))
 	    return(0);
 	file_name = "-";
 	ifp = stdin;
     } else {
 	file_name = argv[bu_optind];
-	if ( (ifp = fopen(file_name, "r")) == NULL )  {
-	    (void)fprintf( stderr,
-			   "bwrot: cannot open \"%s\" for reading\n",
-			   file_name );
+	if ((ifp = fopen(file_name, "r")) == NULL) {
+	    (void)fprintf(stderr,
+			  "bwrot: cannot open \"%s\" for reading\n",
+			  file_name);
 	    return(0);
 	}
     }
 
-    if ( argc > ++bu_optind )
-	(void)fprintf( stderr, "bwrot: excess argument(s) ignored\n" );
+    if (argc > ++bu_optind)
+	(void)fprintf(stderr, "bwrot: excess argument(s) ignored\n");
 
     return(1);		/* OK */
 }
 
+
 int
 main(int argc, char **argv)
 {
-    int	x, y;
-    long	outbyte, outplace;
+    int x, y;
+    long outbyte, outplace;
 
-    if ( !get_args( argc, argv ) || isatty(fileno(stdout)) )  {
+    if (!get_args(argc, argv) || isatty(fileno(stdout))) {
 	(void)fputs(usage, stderr);
-	bu_exit ( 1, NULL );
+	bu_exit (1, NULL);
     }
 
     ofp = stdout;
 
     scanbytes = nxin;
     buflines = MAXBUFBYTES / scanbytes;
-    if ( buflines <= 0 ) {
-	fprintf( stderr, "bwrot: I'm not compiled to do a scanline that long!\n" );
-	bu_exit ( 1, NULL );
+    if (buflines <= 0) {
+	fprintf(stderr, "bwrot: I'm not compiled to do a scanline that long!\n");
+	bu_exit (1, NULL);
     }
-    if ( buflines > nyin ) buflines = nyin;
-    buffer = (unsigned char *)malloc( buflines * scanbytes );
-    obuf = (unsigned char *)malloc( (nyin > nxin) ? nyin : nxin );
-    if ( buffer == (unsigned char *)0 || obuf == (unsigned char *)0 ) {
-	fprintf( stderr, "bwrot: malloc failed\n" );
-	bu_exit ( 3, NULL );
+    if (buflines > nyin) buflines = nyin;
+    buffer = (unsigned char *)malloc(buflines * scanbytes);
+    obuf = (unsigned char *)malloc((nyin > nxin) ? nyin : nxin);
+    if (buffer == (unsigned char *)0 || obuf == (unsigned char *)0) {
+	fprintf(stderr, "bwrot: malloc failed\n");
+	bu_exit (3, NULL);
     }
 
     /*
      * Break out to added arbitrary angle routine
      */
-    if ( angle ) {
-	arbrot( angle );
-	bu_exit ( 0, NULL );
+    if (angle) {
+	arbrot(angle);
+	bu_exit (0, NULL);
     }
 
     /*
@@ -187,18 +188,18 @@ main(int argc, char **argv)
     outplace = 0;
 
     yin = 0;
-    while ( yin < nyin ) {
+    while (yin < nyin) {
 	/* Fill buffer */
 	fill_buffer();
-	if ( !buflines )
+	if (!buflines)
 	    break;
-	if ( reverse )
+	if (reverse)
 	    reverse_buffer();
-	if ( plus90 ) {
-	    for ( x = 0; x < nxin; x++ ) {
+	if (plus90) {
+	    for (x = 0; x < nxin; x++) {
 		obp = obuf;
 		bp = &buffer[ (lasty-firsty)*scanbytes + x ];
-		for ( y = lasty; y >= yin; y-- ) {
+		for (y = lasty; y >= yin; y--) {
 		    /* firsty? */
 		    *obp++ = *bp;
 		    bp -= scanbytes;
@@ -206,55 +207,55 @@ main(int argc, char **argv)
 		yout = x;
 		xout = (nyin - 1) - lasty;
 		outbyte = ((yout * nyin) + xout);
-		if ( outplace != outbyte ) {
-		    if ( fseek( ofp, outbyte, 0 ) < 0 ) {
-			fprintf( stderr, "bwrot: Can't seek on output, yet I need to!\n" );
-			bu_exit ( 3, NULL );
+		if (outplace != outbyte) {
+		    if (fseek(ofp, outbyte, 0) < 0) {
+			fprintf(stderr, "bwrot: Can't seek on output, yet I need to!\n");
+			bu_exit (3, NULL);
 		    }
 		    outplace = outbyte;
 		}
-		fwrite( obuf, 1, buflines, ofp );
+		fwrite(obuf, 1, buflines, ofp);
 		outplace += buflines;
 	    }
-	} else if ( minus90 ) {
-	    for ( x = nxin-1; x >= 0; x-- ) {
+	} else if (minus90) {
+	    for (x = nxin-1; x >= 0; x--) {
 		obp = obuf;
 		bp = &buffer[ x ];
-		for ( y = firsty; y <= lasty; y++ ) {
+		for (y = firsty; y <= lasty; y++) {
 		    *obp++ = *bp;
 		    bp += scanbytes;
 		}
 		yout = (nxin - 1) - x;
 		xout = yin;
 		outbyte = ((yout * nyin) + xout);
-		if ( outplace != outbyte ) {
-		    if ( fseek( ofp, outbyte, 0 ) < 0 ) {
-			fprintf( stderr, "bwrot: Can't seek on output, yet I need to!\n" );
-			bu_exit ( 3, NULL );
+		if (outplace != outbyte) {
+		    if (fseek(ofp, outbyte, 0) < 0) {
+			fprintf(stderr, "bwrot: Can't seek on output, yet I need to!\n");
+			bu_exit (3, NULL);
 		    }
 		    outplace = outbyte;
 		}
-		fwrite( obuf, 1, buflines, ofp );
+		fwrite(obuf, 1, buflines, ofp);
 		outplace += buflines;
 	    }
-	} else if ( invert ) {
-	    for ( y = lasty; y >= firsty; y-- ) {
+	} else if (invert) {
+	    for (y = lasty; y >= firsty; y--) {
 		yout = (nyin - 1) - y;
 		outbyte = yout * scanbytes;
-		if ( outplace != outbyte ) {
-		    if ( fseek( ofp, outbyte, 0 ) < 0 ) {
-			fprintf( stderr, "bwrot: Can't seek on output, yet I need to!\n" );
-			bu_exit ( 3, NULL );
+		if (outplace != outbyte) {
+		    if (fseek(ofp, outbyte, 0) < 0) {
+			fprintf(stderr, "bwrot: Can't seek on output, yet I need to!\n");
+			bu_exit (3, NULL);
 		    }
 		    outplace = outbyte;
 		}
-		fwrite( &buffer[(y-firsty)*scanbytes], 1, scanbytes, ofp );
+		fwrite(&buffer[(y-firsty)*scanbytes], 1, scanbytes, ofp);
 		outplace += scanbytes;
 	    }
 	} else {
 	    /* Reverse only */
-	    for ( y = 0; y < buflines; y++ ) {
-		fwrite( &buffer[y*scanbytes], 1, scanbytes, ofp );
+	    for (y = 0; y < buflines; y++) {
+		fwrite(&buffer[y*scanbytes], 1, scanbytes, ofp);
 	    }
 	}
 
@@ -263,25 +264,27 @@ main(int argc, char **argv)
     return 0;
 }
 
+
 void
 fill_buffer(void)
 {
-    buflines = fread( buffer, scanbytes, buflines, ifp );
+    buflines = fread(buffer, scanbytes, buflines, ifp);
 
     firsty = lasty + 1;
     lasty = firsty + (buflines - 1);
 }
 
+
 void
 reverse_buffer(void)
 {
-    int	i;
+    int i;
     unsigned char *p1, *p2, temp;
 
-    for ( i = 0; i < buflines; i++ ) {
+    for (i = 0; i < buflines; i++) {
 	p1 = &buffer[ i * scanbytes ];
 	p2 = p1 + (scanbytes - 1);
-	while ( p1 < p2 ) {
+	while (p1 < p2) {
 	    temp = *p1;
 	    *p1++ = *p2;
 	    *p2-- = temp;
@@ -289,50 +292,51 @@ reverse_buffer(void)
     }
 }
 
+
 /*
- *  Arbitrary angle rotation.
- *  Currently this needs to be able to buffer the entire image
- *  in memory at one time.
+ * Arbitrary angle rotation.
+ * Currently this needs to be able to buffer the entire image
+ * in memory at one time.
  *
- *  To rotate a point (x, y) CCW about the origin:
- *    x' = x cos(a) - y sin(a)
- *    y' = x sin(a) + y cos(a)
- *  To rotate it about a point (xc, yc):
- *    x' = (x-xc) cos(a) - (y-yc) sin(a) + xc
+ * To rotate a point (x, y) CCW about the origin:
+ * x' = x cos(a) - y sin(a)
+ * y' = x sin(a) + y cos(a)
+ * To rotate it about a point (xc, yc):
+ * x' = (x-xc) cos(a) - (y-yc) sin(a) + xc
  *       = x cos(a) - y sin(a) + [xc - xc cos(a) + yc sin(a)]
- *    y' = (x-xc) sin(a) + (y-yc) cos(a) + yc
+ * y' = (x-xc) sin(a) + (y-yc) cos(a) + yc
  *	 = x sin(a) + y cos(a) + [yc - yc cos(a) - xc sin(a)]
- *  So, to take one step in x:
- *    dx' = cos(a)
- *    dy' = sin(a)
- *  or one step in y:
- *    dx' = -sin(a)
- *    dy' = cos(a)
+ * So, to take one step in x:
+ * dx' = cos(a)
+ * dy' = sin(a)
+ * or one step in y:
+ * dx' = -sin(a)
+ * dy' = cos(a)
  */
 #ifndef M_PI
-#define	PI	3.1415926535898
+#  define PI 3.1415926535898
 #else
-#define PI M_PI
+# define PI M_PI
 #endif
-#define	DtoR(x)	((x)*PI/180.0)
+#define DtoR(x)	((x)*PI/180.0)
 
 void
 arbrot(double a)
     /* rotation angle */
 {
-    int	x, y;				/* working coord */
-    double	x2, y2;				/* its rotated position */
-    double	xc, yc;				/* rotation origin */
-    int	x_min, y_min, x_max, y_max;	/* area to rotate */
-    double	x_goop, y_goop;
-    double	sina, cosa;
+    int x, y;				/* working coord */
+    double x2, y2;				/* its rotated position */
+    double xc, yc;				/* rotation origin */
+    int x_min, y_min, x_max, y_max;	/* area to rotate */
+    double x_goop, y_goop;
+    double sina, cosa;
 
-    if ( buflines != nyin ) {
+    if (buflines != nyin) {
 	/* I won't all fit in the buffer */
 	fprintf(stderr, "bwrot: Sorry but I can't do an arbitrary rotate of an image this large\n");
 	bu_exit (1, NULL);
     }
-    if ( buflines > nyin ) buflines = nyin;
+    if (buflines > nyin) buflines = nyin;
     fill_buffer();
 
     /*
@@ -356,12 +360,12 @@ arbrot(double a)
     x_max = nxin;
     y_max = nyin;
 
-    for ( y = y_min; y < y_max; y++ ) {
+    for (y = y_min; y < y_max; y++) {
 	x2 = x_min * cosa - y * sina + x_goop;
 	y2 = x_min * sina + y * cosa + y_goop;
-	for ( x = x_min; x < x_max; x++ ) {
+	for (x = x_min; x < x_max; x++) {
 	    /* check for in bounds */
-	    if ( x2 >= 0 && x2 < nxin && y2 >= 0 && y2 < nyin )
+	    if (x2 >= 0 && x2 < nxin && y2 >= 0 && y2 < nyin)
 		putchar(buffer[(int)y2*nyin + (int)x2]);
 	    else
 		putchar(0);	/* XXX - setable color? */
@@ -371,6 +375,7 @@ arbrot(double a)
 	}
     }
 }
+
 
 /*
  * Local Variables:

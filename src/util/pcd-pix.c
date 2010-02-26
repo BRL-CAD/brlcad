@@ -129,9 +129,9 @@ static long bufpos;
 #define melde(x)
 #endif
 
-#define EREADBUF {if(READBUF < (unsigned)1) error(E_READ);}
+#define EREADBUF {if (READBUF < (unsigned)1) error(E_READ);}
 
-#define SKIP(n)  { if (fseek(fin, (n), 1)) error(E_READ);}
+#define SKIP(n) { if (fseek(fin, (n), 1)) error(E_READ);}
 #define SKIPr(n) { if (fseek(fin, (n), 1)) return(E_READ);}
 
 static int clipped_low=0;
@@ -144,8 +144,7 @@ static double lum_mul = 1.0;
 static void error(enum ERRORS e)
 {
 
-    switch (e)
-    {
+    switch (e) {
 	case E_NONE:
 	    return;
 	case E_IMP:
@@ -231,6 +230,7 @@ static void error(enum ERRORS e)
     exit(9);
 }
 
+
 /*
  *			P L A N E A L L O C
  *
@@ -242,9 +242,10 @@ static void planealloc(implane *p, dim width, dim height)
     p->mwidth=width;
     p->mheight=height;
 
-    p->im = ( uBYTE * ) malloc  (width*height);
+    p->im = (uBYTE *) malloc  (width*height);
     if (!(p->im)) error(E_MEM);
 }
+
 
 /*
  *			M A I N
@@ -272,86 +273,76 @@ main(int argc, char **argv)
     ASKIP;
 
     /* Argument processing */
-    while ((argc>0) && **argv=='-')
-    {
+    while ((argc>0) && **argv=='-') {
 	opt= (*argv)+1;
 	ASKIP;
 
-	if ( strcmp(opt, "l") == 0 )  {
+	if (strcmp(opt, "l") == 0) {
 	    opt= (*argv);
 	    ASKIP;
 	    lum_mul = atof(opt);
 	    continue;
 	}
 
-	if ( strcmp(opt, "p") == 0 )  {
+	if (strcmp(opt, "p") == 0) {
 	    if (!do_pixfb) do_pixfb=1;
 	    else error(E_ARG);
 	    continue;
 	}
 
-	if ( strcmp(opt, "h") == 0 )  {
+	if (strcmp(opt, "h") == 0) {
 	    if (!do_headeronly) do_headeronly=1;
 	    else error(E_ARG);
 	    continue;
 	}
 
-	if (!strcmp(opt, "i"))
-	{
+	if (!strcmp(opt, "i")) {
 	    if (!do_info) do_info=1;
 	    else error(E_ARG);
 	    continue;
 	}
 
-	if (!strcmp(opt, "x"))
-	{
+	if (!strcmp(opt, "x")) {
 	    if (!do_overskip) do_overskip=1;
 	    else error(E_ARG);
 	    continue;
 	}
 
 
-	if (!strcmp(opt, "b"))
-	{
+	if (!strcmp(opt, "b")) {
 	    if (!do_bw) do_bw=1;
 	    else error(E_ARG);
 	    continue;
 	}
 
 
-	if ((!strcmp(opt, "Base/16")) || (!strcmp(opt, "1"))  || (!strcmp(opt, "128x192")))
-	{
+	if ((!strcmp(opt, "Base/16")) || (!strcmp(opt, "1"))  || (!strcmp(opt, "128x192"))) {
 	    if (size == S_UNSPEC) size = S_Base16;
 	    else error(E_ARG);
 	    continue;
 	}
-	if ((!strcmp(opt, "Base/4" )) || (!strcmp(opt, "2"))  || (!strcmp(opt, "256x384")))
-	{
+	if ((!strcmp(opt, "Base/4")) || (!strcmp(opt, "2"))  || (!strcmp(opt, "256x384"))) {
 	    if (size == S_UNSPEC) size = S_Base4;
 	    else error(E_ARG);
 	    continue;
 	}
-	if ((!strcmp(opt, "Base"   )) || (!strcmp(opt, "3"))  || (!strcmp(opt, "512x768")))
-	{
+	if ((!strcmp(opt, "Base")) || (!strcmp(opt, "3"))  || (!strcmp(opt, "512x768"))) {
 	    if (size == S_UNSPEC) size = S_Base;
 	    else error(E_ARG);
 	    continue;
 	}
-	if ((!strcmp(opt, "4Base"  )) || (!strcmp(opt, "4"))  || (!strcmp(opt, "1024x1536")))
-	{
+	if ((!strcmp(opt, "4Base")) || (!strcmp(opt, "4"))  || (!strcmp(opt, "1024x1536"))) {
 	    if (size == S_UNSPEC) size = S_4Base;
 	    else error(E_ARG);
 	    continue;
 	}
-	if ((!strcmp(opt, "16Base" )) || (!strcmp(opt, "5"))  || (!strcmp(opt, "2048x3072")))
-	{
+	if ((!strcmp(opt, "16Base")) || (!strcmp(opt, "5"))  || (!strcmp(opt, "2048x3072"))) {
 	    if (size == S_UNSPEC) size = S_16Base;
 	    else error(E_ARG);
 	    continue;
 	}
 
-	if ((!strcmp(opt, "Overview" )) || (!strcmp(opt, "0"))  || (!strcmp(opt, "O")))
-	{
+	if ((!strcmp(opt, "Overview")) || (!strcmp(opt, "0"))  || (!strcmp(opt, "O"))) {
 	    if (size == S_UNSPEC) size = S_Over;
 	    else error(E_ARG);
 	    continue;
@@ -370,13 +361,13 @@ main(int argc, char **argv)
 
     if (argc>0) error(E_ARG);
     if (do_info && (size==S_Over)) error(E_OPT);
-    if (do_overskip && (size != S_Base16) && (size != S_Base4) && (size != S_Base) && (size != S_4Base) ) error(E_OVSKIP);
+    if (do_overskip && (size != S_Base16) && (size != S_Base4) && (size != S_Base) && (size != S_4Base)) error(E_OVSKIP);
 
-    if (!(fin=fopen(pcdname, "r")))  {
+    if (!(fin=fopen(pcdname, "r"))) {
 	/* If name is frame number only, create name and go again */
-	if ( atoi(pcdname) > 0 )  {
-	    sprintf(nbuf, "img%4.4d.pcd", atoi(pcdname) );
-	    if (!(fin=fopen(nbuf, "r")))  {
+	if (atoi(pcdname) > 0) {
+	    sprintf(nbuf, "img%4.4d.pcd", atoi(pcdname));
+	    if (!(fin=fopen(nbuf, "r"))) {
 		perror(nbuf);
 		error(E_READ);
 	    }
@@ -386,13 +377,12 @@ main(int argc, char **argv)
 	}
     }
 
-    if (do_info)
-    {
+    if (do_info) {
 	SEEK(1);
 	EREADBUF;
     }
 
-    switch (size)  {
+    switch (size) {
 	case S_Base16:
 	    w=BaseW/4;
 	    h=BaseH/4;
@@ -421,18 +411,18 @@ main(int argc, char **argv)
 	    error(E_INTERN);
     }
 
-    if ( do_headeronly )  {
+    if (do_headeronly) {
 	printf("-w%ld -n%ld\n", w, h);
 	exit(0);
     }
 
-    if ( do_pixfb )  {
-	if ( do_bw )
+    if (do_pixfb) {
+	if (do_bw)
 	    sprintf(nbuf, "bw-fb -w%ld -n%ld", w, h);
 	else
 	    sprintf(nbuf, "pix-fb -w%ld -n%ld", w, h);
 
-	if ( (fout = popen( nbuf, "w" )) == NULL )  {
+	if ((fout = popen(nbuf, "w")) == NULL) {
 	    perror(nbuf);
 	    exit(42);
 	}
@@ -442,14 +432,12 @@ main(int argc, char **argv)
 
     if (do_info) druckeid();
 
-    switch (size)
-    {
+    switch (size) {
 	case S_Base16:
 	    w=BaseW/4;
 	    h=BaseH/4;
 
-	    if (!do_overskip)
-	    {
+	    if (!do_overskip) {
 		planealloc(&Luma, w, h);
 		planealloc(&Chroma1, w, h);
 		planealloc(&Chroma2, w, h);
@@ -457,9 +445,7 @@ main(int argc, char **argv)
 		error(readplain(w, h, &Luma, &Chroma1, &Chroma2));
 		interpolate(&Chroma1);
 		interpolate(&Chroma2);
-	    }
-	    else
-	    {
+	    } else {
 		planealloc(&Luma, w, h);
 		planealloc(&Chroma1, 2*w, 2*h);
 		planealloc(&Chroma2, 2*w, 2*h);
@@ -476,8 +462,7 @@ main(int argc, char **argv)
 	    w=BaseW/2;
 	    h=BaseH/2;
 
-	    if (!do_overskip)
-	    {
+	    if (!do_overskip) {
 		planealloc(&Luma, w, h);
 		planealloc(&Chroma1, w, h);
 		planealloc(&Chroma2, w, h);
@@ -485,9 +470,7 @@ main(int argc, char **argv)
 		error(readplain(w, h, &Luma, &Chroma1, &Chroma2));
 		interpolate(&Chroma1);
 		interpolate(&Chroma2);
-	    }
-	    else
-	    {
+	    } else {
 		planealloc(&Luma, w, h);
 		planealloc(&Chroma1, 2*w, 2*h);
 		planealloc(&Chroma2, 2*w, 2*h);
@@ -504,8 +487,7 @@ main(int argc, char **argv)
 	    w=BaseW;
 	    h=BaseH;
 
-	    if (!do_overskip)
-	    {
+	    if (!do_overskip) {
 		planealloc(&Luma, w, h);
 		planealloc(&Chroma1, w, h);
 		planealloc(&Chroma2, w, h);
@@ -513,9 +495,7 @@ main(int argc, char **argv)
 		error(readplain(w, h, &Luma, &Chroma1, &Chroma2));
 		interpolate(&Chroma1);
 		interpolate(&Chroma2);
-	    }
-	    else
-	    {
+	    } else {
 		planealloc(&Luma, w,  h);
 		planealloc(&Chroma1, 2*w, 2*h);
 		planealloc(&Chroma2, 2*w, 2*h);
@@ -545,8 +525,7 @@ main(int argc, char **argv)
 	    w=BaseW*2;
 	    h=BaseH*2;
 
-	    if (!do_overskip)
-	    {
+	    if (!do_overskip) {
 		planealloc(&Luma, w, h);
 		planealloc(&Chroma1, w, h);
 		planealloc(&Chroma2, w, h);
@@ -563,9 +542,7 @@ main(int argc, char **argv)
 		readhqt(w, h, 1);
 		SEEK(cd_offset + 5);
 		decode(w, h, &Luma, nullplane, nullplane, 0);
-	    }
-	    else
-	    {
+	    } else {
 		planealloc(&Luma, w, h);
 		planealloc(&Chroma1, 2*w, 2*h);
 		planealloc(&Chroma2, 2*w, 2*h);
@@ -643,8 +620,7 @@ main(int argc, char **argv)
 	    planealloc(&Chroma1, w, h);
 	    planealloc(&Chroma2, w, h);
 
-	    for (bildnr=0;!feof(fin);bildnr++)
-	    {
+	    for (bildnr=0;!feof(fin);bildnr++) {
 		SEEK(5+SeBase16*bildnr);
 
 		eret=readplain(w, h, &Luma, &Chroma1, &Chroma2);
@@ -663,11 +639,11 @@ main(int argc, char **argv)
 	    error(E_INTERN);
     }
 
-    if ( do_pixfb )  pclose(fout);
+    if (do_pixfb) pclose(fout);
 
-    if ( clipped_low || clipped_high )  {
-	bu_log( "pcd-pix: %d clipped low, %d clipped high\n",
-		clipped_low, clipped_high );
+    if (clipped_low || clipped_high) {
+	bu_log("pcd-pix: %d clipped low, %d clipped high\n",
+	       clipped_low, clipped_high);
     }
 
     return 0;
@@ -683,61 +659,52 @@ static enum ERRORS readplain(dim w, dim h, implane *l, implane *c1, implane *c2)
     uBYTE *pl=0, *pc1=0, *pc2=0;
     melde("readplain\n");
 
-    if (l)
-    {
+    if (l) {
 	if ((l->mwidth<w) || (l->mheight<h) || (!l->im)) error(E_INTERN);
 	l->iwidth=w;
 	l->iheight=h;
 	pl=l->im;
     }
 
-    if (c1)
-    {
+    if (c1) {
 	if ((c1->mwidth<w/2) || (c1->mheight<h/2) || (!c1->im)) error(E_INTERN);
 	c1->iwidth=w/2;
 	c1->iheight=h/2;
 	pc1=c1->im;
     }
 
-    if (c2)
-    {
+    if (c2) {
 	if ((c2->mwidth<w/2) || (c2->mheight<h/2) || (!c2->im)) error(E_INTERN);
 	c2->iwidth=w/2;
 	c2->iheight=h/2;
 	pc2=c2->im;
     }
 
-    for (i=0;i<h/2;i++)
-    {
-	if (pl)
-	{
+    for (i=0;i<h/2;i++) {
+	if (pl) {
 	    if (fread(pl, w, 1, fin)<(unsigned)1) return(E_READ);
 	    pl+= l->mwidth;
 
 	    if (fread(pl, w, 1, fin)<(unsigned)1) return(E_READ);
 	    pl+= l->mwidth;
-	}
-	else SKIPr(2*w);
+	} else SKIPr(2*w);
 
-	if (pc1)
-	{
+	if (pc1) {
 	    if (fread(pc1, w/2, 1, fin)<(unsigned)1) return(E_READ);
 	    pc1+= c1->mwidth;
-	}
-	else SKIPr(w/2);
+	} else SKIPr(w/2);
 
-	if (pc2)
-	{
+	if (pc2) {
 	    if (fread(pc2, w/2, 1, fin)<(unsigned)1) return(E_READ);
 	    pc2+= c2->mwidth;
-	}
-	else SKIPr(w/2);
+	} else SKIPr(w/2);
 
 
     }
     RPRINT;
     return E_NONE;
 }
+
 
 /*
  *			I N T E R P O L A T E
@@ -756,22 +723,20 @@ static void interpolate(implane *p)
     w=p->iwidth;
     h=p->iheight;
 
-    if (p->mwidth  < 2*w ) error(E_INTERN);
-    if (p->mheight < 2*h ) error(E_INTERN);
+    if (p->mwidth  < 2*w) error(E_INTERN);
+    if (p->mheight < 2*h) error(E_INTERN);
 
     p->iwidth=2*w;
     p->iheight=2*h;
 
-    for (y=0;y<h;y++)
-    {
+    for (y=0;y<h;y++) {
 	yi=h-1-y;
 	optr=p->im+  yi*p->mwidth + (w-1);
 	nptr=p->im+2*yi*p->mwidth + (2*w - 2);
 
 	nptr[0]=nptr[1]=optr[0];
 
-	for (x=1;x<w;x++)
-	{
+	for (x=1;x<w;x++) {
 	    optr--;
 	    nptr-=2;
 	    nptr[0]=optr[0];
@@ -779,14 +744,12 @@ static void interpolate(implane *p)
 	}
     }
 
-    for (y=0;y<h-1;y++)
-    {
+    for (y=0;y<h-1;y++) {
 	optr=p->im + 2*y*p->mwidth;
 	nptr=optr+p->mwidth;
 	uptr=nptr+p->mwidth;
 
-	for (x=0;x<w-1;x++)
-	{
+	for (x=0;x<w-1;x++) {
 	    nptr[0]=(((int)optr[0])+((int)uptr[0])+1)>>1;
 	    nptr[1]=(((int)optr[0])+((int)optr[2])+((int)uptr[0])+((int)uptr[2])+2)>>2;
 	    nptr+=2;
@@ -800,12 +763,12 @@ static void interpolate(implane *p)
     /* Duplicate the last line */
     optr=p->im + (2*h-2)*p->mwidth;
     nptr=p->im + (2*h-1)*p->mwidth;
-    for (x=0;x<w;x++)
-    {
+    for (x=0;x<w;x++) {
 	*(nptr++) = *(optr++);
 	*(nptr++) = *(optr++);
     }
 }
+
 
 /*
  *			H A L V E
@@ -824,23 +787,22 @@ static void halve(implane *p)
     h=p->iheight/=2;
 
 
-    for (y=0;y<h;y++)
-    {
+    for (y=0;y<h;y++) {
 	nptr=(p->im) +   y*(p->mwidth);
 	optr=(p->im) + 2*y*(p->mwidth);
 
-	for (x=0;x<w;x++, nptr++, optr+=2)
-	{
+	for (x=0;x<w;x++, nptr++, optr+=2) {
 	    *nptr = *optr;
 	}
     }
 }
 
+
 #define BUinit {BUcount=0;BUptr=BUF;}
 #define BUflush {fwrite(BUF, BUptr-BUF, 1, fout);BUinit; }
-#define BUwrite(r, g, b) {if(BUcount>=own_BUsize/3) BUflush; \
+#define BUwrite(r, g, b) {if (BUcount>=own_BUsize/3) BUflush; \
 	*BUptr++ = r; *BUptr++ = g; *BUptr++ = b; BUcount++;}
-#define BUwrite1(r) {if(BUcount>=own_BUsize) BUflush; \
+#define BUwrite1(r) {if (BUcount>=own_BUsize) BUflush; \
 	*BUptr++ = r; BUcount++;}
 
 #define BitShift 12
@@ -864,16 +826,14 @@ static void ycctorgb(dim w, dim h, implane *l, implane *c1, implane *c2)
     int   BUcount;
 
     melde("ycctorgb\n");
-    if ((!l ) || ( l->iwidth != w ) || ( l->iheight != h) || (! l->im)) error(E_INTERN);
-    if ((!c1) || (c1->iwidth != w ) || (c1->iheight != h) || (!c1->im)) error(E_INTERN);
-    if ((!c2) || (c2->iwidth != w ) || (c2->iheight != h) || (!c2->im)) error(E_INTERN);
+    if ((!l) || (l->iwidth != w) || (l->iheight != h) || (! l->im)) error(E_INTERN);
+    if ((!c1) || (c1->iwidth != w) || (c1->iheight != h) || (!c1->im)) error(E_INTERN);
+    if ((!c2) || (c2->iwidth != w) || (c2->iheight != h) || (!c2->im)) error(E_INTERN);
 
 
-    if (!init)
-    {
+    if (!init) {
 	init=1;
-	for (i=0;i<256;i++)
-	{
+	for (i=0;i<256;i++) {
 	    XL[i]= (5564 * i + 2048) * lum_mul;
 	    XC1[i]= 9085 * i - 1417185;
 	    XC2[i]= 7461 * i - 1022138;
@@ -883,26 +843,26 @@ static void ycctorgb(dim w, dim h, implane *l, implane *c1, implane *c2)
     }
 
     BUinit;
-    if (do_bw)  {
-	for ( y=h-1; y >= 0; y-- )  {
+    if (do_bw) {
+	for (y=h-1; y >= 0; y--) {
 	    pl =  l->im + y *  l->mwidth;
-	    for (x=0;x<w;x++)  {
+	    for (x=0;x<w;x++) {
 		L = XL[*pl++]>>BitShift;
 		NORM(L);
 		BUwrite1(L);
 	    }
 	}
     } else {
-	for ( y=h-1; y >= 0; y-- )  {
+	for (y=h-1; y >= 0; y--) {
 	    pl =  l->im + y *  l->mwidth;
 	    pc1= c1->im + y * c1->mwidth;
 	    pc2= c2->im + y * c2->mwidth;
 
-	    for (x=0;x<w;x++)  {
+	    for (x=0;x<w;x++) {
 		L = XL[*pl];
-		red  =(L + XC2[*pc2]               )>>BitShift;
-		green=(L + XC1g[*pc1] + XC2g[*pc2] )>>BitShift;
-		blue =(L + XC1[*pc1]               )>>BitShift;
+		red  =(L + XC2[*pc2])>>BitShift;
+		green=(L + XC1g[*pc1] + XC2g[*pc2])>>BitShift;
+		blue =(L + XC1[*pc1])>>BitShift;
 
 		NORM(red);
 		NORM(green);
@@ -974,6 +934,7 @@ struct pcdword
     uBYTE high, low;
 };
 
+
 static int lpt[1024];
 
 static void readlpt(w, h)
@@ -986,8 +947,7 @@ static void readlpt(w, h)
 
     ptr = (struct pcdword *)sbuffer;
 
-    for (i=0;i<h/4;i++, ptr++)
-    {
+    for (i=0;i<h/4;i++, ptr++) {
 	lpt[i] = ((int)ptr->high)<<8 | ptr->low;
     }
 
@@ -1019,8 +979,7 @@ static void readhqtsub(struct pcdhqt *source, struct myhqt *ziel, int *anzahl)
     struct myhqt *help;
     *anzahl=(source->entries)+1;
 
-    for (i=0;i<*anzahl;i++)
-    {
+    for (i=0;i<*anzahl;i++) {
 	sub = (struct pcdquad *)(((uBYTE *)source)+1+i*sizeof(*sub));
 	help=ziel+i;
 
@@ -1036,12 +995,11 @@ static void readhqtsub(struct pcdhqt *source, struct myhqt *ziel, int *anzahl)
 
 	if (help->len > 16) error(E_HUFF);
 
-	help->mask = ~ ( (E << (32-help->len)) -1);
+	help->mask = ~ ((E << (32-help->len)) -1);
 
     }
 #ifdef DEBUG
-    for (i=0;i<*anzahl;i++)
-    {
+    for (i=0;i<*anzahl;i++) {
 	help=ziel+i;
 	bu_log("H: %3d  %08lx & %08lx (%2d) = %02x = %5d  %8x\n",
 	       i, help->seq, help->mask, help->len, help->key, (signed char)help->key,
@@ -1050,6 +1008,7 @@ static void readhqtsub(struct pcdhqt *source, struct myhqt *ziel, int *anzahl)
 #endif
 
 }
+
 
 #undef E
 
@@ -1074,6 +1033,7 @@ static void readhqt(dim w, dim h, int n)
     ptr+= 1 + 4* myhufflen1;
     readhqtsub((struct pcdhqt *)ptr, myhuff2, &myhufflen2);
 }
+
 
 /*
  *			D E C O D E
@@ -1105,9 +1065,9 @@ static void decode(dim w, dim h, implane *f, implane *f1, implane *f2, int autos
 #define seeksync { while (!issync) shiftout(1);}
 
 
-    if ( f  && ((! f->im) || ( f->iheight < h  ) ||  (f->iwidth<w  ))) error(E_INTERN);
-    if ( f1 && ((!f1->im) || (f1->iheight < h/2) || (f1->iwidth<w/2))) error(E_INTERN);
-    if ( f2 && ((!f2->im) || (f2->iheight < h/2) || (f2->iwidth<w/2))) error(E_INTERN);
+    if (f  && ((! f->im) || (f->iheight < h) ||  (f->iwidth<w))) error(E_INTERN);
+    if (f1 && ((!f1->im) || (f1->iheight < h/2) || (f1->iwidth<w/2))) error(E_INTERN);
+    if (f2 && ((!f2->im) || (f2->iheight < h/2) || (f2->iwidth<w/2))) error(E_INTERN);
 
     htlen=sreg=maxwidth=0;
     htptr=0;
@@ -1120,10 +1080,8 @@ static void decode(dim w, dim h, implane *f, implane *f1, implane *f2, int autos
     if (autosync) seeksync;
 
     n=0;
-    for (;;)
-    {
-	if (issync)
-	{
+    for (;;) {
+	if (issync) {
 	    shiftout(24);
 	    ident=sreg>>16;
 	    shiftout(16);
@@ -1146,8 +1104,7 @@ static void decode(dim w, dim h, implane *f, implane *f1, implane *f2, int autos
 	    }
 	    if (zeile >h) error(E_SEQ2);
 
-	    switch (segment)
-	    {
+	    switch (segment) {
 		case 0:
 		    if ((!f) && autosync) {
 			seeksync;
@@ -1187,18 +1144,16 @@ static void decode(dim w, dim h, implane *f, implane *f1, implane *f2, int autos
 		default:
 		    error(E_SEQ3);
 	    }
-	}
-	else
-	{
+	} else {
 	    int	key;
 	    /*      if ((!lptr) || (n>maxwidth)) error(E_SEQ4);*/
-	    if (!lptr)      error(E_SEQ6);
+	    if (!lptr) error(E_SEQ6);
 	    if (n>maxwidth) error(E_SEQ4);
 	    for (i=0, hp=htptr;(i<htlen) && ((sreg & hp->mask)!= hp->seq); i++, hp++);
 	    if (i>=htlen) error(E_SEQ5);
 
 	    /* Ensure key is treated as signed byte */
-	    if ( (key = hp->key) & 0x80 )
+	    if ((key = hp->key) & 0x80)
 		key |= ((-1) & ~0x7F);
 	    sum=((int)(*lptr)) + key;
 	    /* NORM(sum); */
@@ -1221,6 +1176,7 @@ static void decode(dim w, dim h, implane *f, implane *f1, implane *f2, int autos
 
 }
 
+
 static int testbegin(void)
 {
     int i, j;
@@ -1231,6 +1187,7 @@ static int testbegin(void)
 
 }
 
+
 static long Skip4Base(void)
 {
     long cd_offset, cd_offhelp;
@@ -1238,19 +1195,19 @@ static long Skip4Base(void)
     cd_offset = L_Head + L_Base16 + L_Base4 + L_Base;
     SEEK(cd_offset+3);
     EREADBUF;
-    cd_offhelp = ( ((long)sbuffer[510]) << 8 ) | (sbuffer[511] + 1);
+    cd_offhelp = (((long)sbuffer[510]) << 8) | (sbuffer[511] + 1);
 
     cd_offset+=cd_offhelp;
 
     SEEK(cd_offset);
     EREADBUF;
-    while (!testbegin())
-    {
+    while (!testbegin()) {
 	cd_offset++;
 	EREADBUF;
     }
     return cd_offset;
 }
+
 
 /*
  * Local Variables:

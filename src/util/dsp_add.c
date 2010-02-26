@@ -21,8 +21,8 @@
  *
  * add 2 files of network unsigned shorts
  *
- *	Options
- *	h	help
+ * Options
+ * h help
  */
 
 #include "common.h"
@@ -50,7 +50,7 @@ char *progname = "(noname)";
 int style = ADD_STYLE_INT;
 
 /*
- *	U S A G E --- tell user how to invoke this program, then exit
+ * U S A G E --- tell user how to invoke this program, then exit
  */
 void usage(char *s)
 {
@@ -61,15 +61,16 @@ void usage(char *s)
     bu_exit (1, NULL);
 }
 
+
 /*
- *	P A R S E _ A R G S --- Parse through command line flags
+ * P A R S E _ A R G S --- Parse through command line flags
  */
 int parse_args(int ac, char *av[])
 {
-    int  c;
+    int c;
     char *strrchr(const char *, int);
 
-    if (  ! (progname=strrchr(*av, '/'))  )
+    if (! (progname=strrchr(*av, '/')))
 	progname = *av;
     else
 	++progname;
@@ -100,9 +101,9 @@ swap_bytes(unsigned short *buf, unsigned long count)
 
 
 /*
- *  A D D _ F L O A T
+ * A D D _ F L O A T
  *
- *  Perform floating point addition and re-normalization of the data.
+ * Perform floating point addition and re-normalization of the data.
  *
  */
 void
@@ -137,13 +138,14 @@ add_float(unsigned short *buf1, unsigned short *buf2, unsigned long count)
     bu_free(dbuf, "buffer of double");
 }
 
+
 /*
- *  A D D _ I N T
+ * A D D _ I N T
  *
- *  Perform simple integer addition to the input streams.
- *  Issue warning on overflow.
+ * Perform simple integer addition to the input streams.
+ * Issue warning on overflow.
  *
- *  Result:	buf1 contents modified
+ * Result:	buf1 contents modified
  */
 void
 add_int(unsigned short *buf1, unsigned short *buf2, unsigned long count)
@@ -158,7 +160,7 @@ add_int(unsigned short *buf1, unsigned short *buf2, unsigned long count)
 
 	if (s != int_value) {
 	    bu_log("overflow (%d+%d) == %d at %d\n",
-		   buf1[i], buf2[i], int_value, i );
+		   buf1[i], buf2[i], int_value, i);
 	}
 	buf1[i] = s;
     }
@@ -167,10 +169,10 @@ add_int(unsigned short *buf1, unsigned short *buf2, unsigned long count)
 
 
 /*
- *	M A I N
+ * M A I N
  *
- *	Call parse_args to handle command line arguments first, then
- *	process input.
+ * Call parse_args to handle command line arguments first, then
+ * process input.
  */
 int
 main(int ac, char *av[])
@@ -210,7 +212,7 @@ main(int ac, char *av[])
     }
 
     if (sb.st_size != count)
-	bu_exit( EXIT_FAILURE, "**** ERROR **** file size mis-match\n");
+	bu_exit(EXIT_FAILURE, "**** ERROR **** file size mis-match\n");
 
     buf2 = bu_malloc((size_t)sb.st_size, "buf2");
 

@@ -19,10 +19,7 @@
  */
 /** @file fix_polysolids.c
  *
- *  Program to fix polysolids with bad normals.
- *
- *  Author -
- *	John R. Anderson
+ * Program to fix polysolids with bad normals.
  *
  */
 
@@ -42,15 +39,15 @@
 
 
 /*
- *			M A I N
+ * M A I N
  */
 int
 main(int argc, char *argv[])
 {
-    static int	verbose;
-    static char	*out_file = NULL;	/* Output filename */
-    static FILE	*fp_out;		/* Output file pointer */
-    static FILE	*fp_in;			/* input file pointer */
+    static int verbose;
+    static char *out_file = NULL;	/* Output filename */
+    static FILE *fp_out;		/* Output file pointer */
+    static FILE *fp_in;			/* input file pointer */
     
     static struct rt_tess_tol ttol;
     static struct bn_tol tol;
@@ -76,7 +73,7 @@ main(int argc, char *argv[])
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
-    BU_LIST_INIT( &rt_g.rtg_vlfree );	/* for vlist macros */
+    BU_LIST_INIT(&rt_g.rtg_vlfree);	/* for vlist macros */
 
     /* Get command line arguments. */
     while ((c = bu_getopt(argc, argv, "vx:X:")) != EOF) {
@@ -85,19 +82,19 @@ main(int argc, char *argv[])
 		verbose++;
 		break;
 	    case 'x':
-		sscanf( bu_optarg, "%x", &rt_g.debug );
+		sscanf(bu_optarg, "%x", &rt_g.debug);
 		break;
 	    case 'X':
-		sscanf( bu_optarg, "%x", &rt_g.NMG_debug );
+		sscanf(bu_optarg, "%x", &rt_g.NMG_debug);
 		break;
 	    default:
 		bu_exit(1, usage, argv[0]);
 	}
     }
 
-    bu_ptbl( &faces, BU_PTBL_INIT, (long *)NULL );
+    bu_ptbl(&faces, BU_PTBL_INIT, (long *)NULL);
     m = nmg_mmr();
-    r = BU_LIST_FIRST( nmgregion, &m->r_hd );
+    r = BU_LIST_FIRST(nmgregion, &m->r_hd);
     while (1) {
 	struct vertex *verts[5];
 	union record rec2;
@@ -107,7 +104,7 @@ main(int argc, char *argv[])
 	    rec = rec2;
 	    done = 0;
 	} else {
-	    if (fread( &rec, sizeof( union record ), 1, stdin) != 1)
+	    if (fread(&rec, sizeof(union record), 1, stdin) != 1)
 		break;
 	}
 
@@ -116,56 +113,57 @@ main(int argc, char *argv[])
 		continue;
 		break;
 	    case ID_P_HEAD:
-		bu_log( "Polysolid (%s)\n", rec.p.p_name );
-		s = nmg_msv( r );
-		bu_ptbl( &faces, BU_PTBL_RST, (long *)NULL );
+		bu_log("Polysolid (%s)\n", rec.p.p_name);
+		s = nmg_msv(r);
+		bu_ptbl(&faces, BU_PTBL_RST, (long *)NULL);
 		while (!done) {
 		    struct faceuse *fu;
 		    struct loopuse *lu;
 		    struct edgeuse *eu;
 		    point_t pt;
 
-		    if ( fread( &rec2, sizeof( union record ), 1, stdin ) != 1 )
+		    if (fread(&rec2, sizeof(union record), 1, stdin) != 1)
 			done = 1;
-		    if ( rec2.u_id != ID_P_DATA )
+		    if (rec2.u_id != ID_P_DATA)
 			done = 2;
 
-		    if ( done )
+		    if (done)
 			break;
 
-		    for ( i=0; i<5; i++ )
+		    for (i=0; i<5; i++)
 			verts[i] = (struct vertex *)NULL;
 
-		    fu = nmg_cface( s, verts, rec2.q.q_count );
-		    lu = BU_LIST_FIRST( loopuse, &fu->lu_hd );
-		    eu = BU_LIST_FIRST( edgeuse, &lu->down_hd );
+		    fu = nmg_cface(s, verts, rec2.q.q_count);
+		    lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
+		    eu = BU_LIST_FIRST(edgeuse, &lu->down_hd);
 		    for (i=0; i<rec2.q.q_count; i++) {
-			VMOVE( pt, rec2.q.q_verts[i] );
-			nmg_vertex_gv( eu->vu_p->v_p, pt );
-			eu = BU_LIST_NEXT( edgeuse, &eu->l );
+			VMOVE(pt, rec2.q.q_verts[i]);
+			nmg_vertex_gv(eu->vu_p->v_p, pt);
+			eu = BU_LIST_NEXT(edgeuse, &eu->l);
 		    }
 
 		    if (nmg_calc_face_g(fu)) {
-			bu_log( "\tEliminating degenerate face\n" );
-			nmg_kfu( fu );
+			bu_log("\tEliminating degenerate face\n");
+			nmg_kfu(fu);
 		    } else {
-			bu_ptbl( &faces, BU_PTBL_INS, (long *)fu );
+			bu_ptbl(&faces, BU_PTBL_INS, (long *)fu);
 		    }
 		}
-		nmg_rebound( m, &tol );
-		(void)nmg_break_long_edges( s, &tol );
-		(void)nmg_model_vertex_fuse( m, &tol );
-		nmg_gluefaces( (struct faceuse **)BU_PTBL_BASEADDR( &faces), BU_PTBL_END( &faces ), &tol );
-		nmg_fix_normals( s, &tol );
+		nmg_rebound(m, &tol);
+		(void)nmg_break_long_edges(s, &tol);
+		(void)nmg_model_vertex_fuse(m, &tol);
+		nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), BU_PTBL_END(&faces), &tol);
+		nmg_fix_normals(s, &tol);
 
 		break;
 	    default:
-		fwrite( &rec, sizeof( union record ), 1, stdout );
+		fwrite(&rec, sizeof(union record), 1, stdout);
 		break;
 	}
     }
-    bu_ptbl( &faces, BU_PTBL_FREE, (long *)NULL );
+    bu_ptbl(&faces, BU_PTBL_FREE, (long *)NULL);
 }
+
 
 /*
  * Local Variables:
