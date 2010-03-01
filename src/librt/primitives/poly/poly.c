@@ -648,7 +648,7 @@ rt_pg_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
     struct rt_pg_internal *pgp;
     union record *rp;
     int i;
-    int rno;		/* current record number */
+    size_t rno;		/* current record number */
     size_t p;		/* current polygon index */
 
     if (dbip) RT_CK_DBI(dbip);
@@ -724,7 +724,7 @@ rt_pg_export4(struct bu_external *ep, const struct rt_db_internal *ip, double lo
     struct rt_pg_internal *pgp;
     union record *rec;
     int i;
-    int rno;		/* current record number */
+    size_t rno;		/* current record number */
     size_t p;		/* current polygon index */
 
     if (dbip) RT_CK_DBI(dbip);
@@ -919,8 +919,8 @@ rt_pg_to_bot(struct rt_db_internal *ip, const struct bn_tol *tol, struct resourc
 {
     struct rt_pg_internal *ip_pg;
     struct rt_bot_internal *ip_bot;
-    int max_pts;
-    int max_tri;
+    size_t max_pts;
+    size_t max_tri;
     size_t p;
     int i;
 
@@ -944,11 +944,11 @@ rt_pg_to_bot(struct rt_db_internal *ip, const struct bn_tol *tol, struct resourc
 
     /* maximum possible vertices */
     max_pts = ip_pg->npoly * ip_pg->max_npts;
-    BU_ASSERT_LONG(max_pts, >, 0);
+    BU_ASSERT_SIZE_T(max_pts, >, 0);
 
     /* maximum possible triangular faces */
     max_tri = ip_pg->npoly * 3;
-    BU_ASSERT_LONG(max_tri, >, 0);
+    BU_ASSERT_SIZE_T(max_tri, >, 0);
 
     ip_bot->num_vertices = 0;
     ip_bot->num_faces = 0;

@@ -116,11 +116,11 @@ rt_binunif_import5_minor_type(struct rt_db_internal *ip,
 			      int minor_type)
 {
     struct rt_binunif_internal *bip;
-    int i;
+    size_t i;
     unsigned char *srcp;
     unsigned long *ldestp;
     int in_cookie, out_cookie;
-    int gotten;
+    size_t gotten;
 
     BU_CK_EXTERNAL( ep );
     if (dbip) RT_CK_DBI(dbip);
@@ -181,8 +181,8 @@ rt_binunif_import5_minor_type(struct rt_db_internal *ip,
 				   ep->ext_nbytes,
 				   ep->ext_buf, in_cookie, bip->count);
 		if (gotten != bip->count) {
-		    bu_log("%s:%d: Tried to convert %d, did %d",
-			   __FILE__, __LINE__, bip->count, gotten);
+		    bu_log("%s:%d: Tried to convert %llu, did %d",
+			   __FILE__, __LINE__, (unsigned long long)bip->count, gotten);
 		    bu_bomb("\n");
 		}
 	    } else
@@ -240,11 +240,11 @@ rt_binunif_export5( struct bu_external		*ep,
 		    struct resource		*resp)
 {
     struct rt_binunif_internal	*bip;
-    int				i;
-    unsigned char			*destp;
-    unsigned long			*lsrcp;
+    size_t			i;
+    unsigned char		*destp;
+    unsigned long		*lsrcp;
     int				in_cookie, out_cookie;
-    int				gotten;
+    size_t			gotten;
 
     if (dbip) RT_CK_DBI(dbip);
     if (resp) RT_CK_RESOURCE(resp);
@@ -292,7 +292,7 @@ rt_binunif_export5( struct bu_external		*ep,
 				   bip->count);
 
 		if (gotten != bip->count) {
-		    bu_log("%s:%d: Tried to convert %d, did %d",
+		    bu_log("%s:%d: Tried to convert %llu, did %d",
 			   __FILE__, __LINE__, bip->count, gotten);
 		    bu_bomb("\n");
 		}
@@ -345,13 +345,13 @@ rt_binunif_describe( struct bu_vls		*str,
     wid = (bip->type & DB5_MINORTYPE_BINU_WID_MASK) >> 4;
     switch (wid) {
 	case 0:
-	    sprintf( buf, "%ld ", bip->count ); break;
+	    sprintf( buf, "%llu ", (unsigned long long)bip->count ); break;
 	case 1:
-	    sprintf( buf, "%ld pairs of ", bip->count / 2 ); break;
+	    sprintf( buf, "%llu pairs of ", (unsigned long long)(bip->count / 2) ); break;
 	case 2:
-	    sprintf( buf, "%ld triples of ", bip->count / 3 ); break;
+	    sprintf( buf, "%llu triples of ", (unsigned long long)(bip->count / 3) ); break;
 	case 3:
-	    sprintf( buf, "%ld quadruples of ", bip->count / 4 ); break;
+	    sprintf( buf, "%llu quadruples of ", (unsigned long long)(bip->count / 4) ); break;
     }
     bu_vls_strcat( str, buf );
     switch (bip->type & DB5_MINORTYPE_BINU_ATM_MASK) {
@@ -584,7 +584,7 @@ int
 rt_binunif_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv )
 {
     struct rt_binunif_internal *bip;
-    int i;
+    size_t i;
 
     RT_CK_DB_INTERNAL( intern );
     bip = (struct rt_binunif_internal *)intern->idb_ptr;
@@ -655,9 +655,9 @@ rt_binunif_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc
 		return BRLCAD_ERROR;
 	    } else {
 		if ( bip->u.uint8 ) {
-		    int new_count;
-		    int old_byte_count, new_byte_count;
-		    int remainder_count;
+		    size_t new_count;
+		    size_t old_byte_count, new_byte_count;
+		    size_t remainder_count;
 
 		    old_byte_count = bip->count * binu_sizes[bip->type];
 		    new_count = old_byte_count / binu_sizes[new_type];
@@ -697,7 +697,7 @@ rt_binunif_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc
 	    (void)Tcl_ListObjGetElements( brlcad_interp, list, &list_len, &obj_array );
 
 	    hexlen = 0;
-	    for ( i=0; i<list_len; i++ ) {
+	    for ( i=0; i<(size_t)list_len; i++ ) {
 		hexlen += Tcl_GetCharLength( obj_array[i] );
 	    }
 
@@ -708,7 +708,7 @@ rt_binunif_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc
 
 	    buf = (unsigned char *)bu_malloc( hexlen / 2, "tcladjust binary data" );
 	    d = buf;
-	    for ( i=0; i<list_len; i++ ) {
+	    for ( i=0; i<(size_t)list_len; i++ ) {
 		s = Tcl_GetString( obj_array[i] );
 		while ( *s ) {
 		    sscanf( s, "%2x", &h );

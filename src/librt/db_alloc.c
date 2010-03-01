@@ -45,8 +45,8 @@
  *	 0	OK
  *	-1	failure
  */
-int
-db_alloc(register struct db_i *dbip, register struct directory *dp, int count)
+size_t
+db_alloc(register struct db_i *dbip, register struct directory *dp, size_t count)
 {
     size_t addr;
     union record rec;
@@ -128,10 +128,10 @@ db_delrec(struct db_i *dbip, register struct directory *dp, int recnum)
  *  Arrange to write "free storage" database markers in it's place,
  *  positively erasing what had been there before.
  */
-int
+size_t
 db_delete(struct db_i *dbip, struct directory *dp)
 {
-    register int i = -1;
+    register size_t i = -1;
 
     RT_CK_DBI(dbip);
     RT_CK_DIR(dp);
@@ -173,12 +173,12 @@ db_delete(struct db_i *dbip, struct directory *dp)
  *	-1	on error
  *	0	on success (from db_put())
  */
-int
-db_zapper(struct db_i *dbip, struct directory *dp, int start)
+size_t
+db_zapper(struct db_i *dbip, struct directory *dp, size_t start)
 {
     register union record	*rp;
-    register int		i;
-    int			todo;
+    register size_t		i;
+    size_t			todo;
 
     RT_CK_DBI(dbip);
     RT_CK_DIR(dp);
@@ -192,10 +192,11 @@ db_zapper(struct db_i *dbip, struct directory *dp, int start)
 
     BU_ASSERT_LONG( dbip->dbi_version, ==, 4 );
 
+    if ( dp->d_len < start )
+	return(-1);
+
     if ( (todo = dp->d_len - start) == 0 )
 	return(0);		/* OK -- trivial */
-    if ( todo < 0 )
-	return(-1);
 
     rp = (union record *)bu_malloc( todo * sizeof(union record), "db_zapper buf");
     memset((char *)rp, 0, todo * sizeof(union record));

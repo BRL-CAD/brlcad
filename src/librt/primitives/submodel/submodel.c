@@ -142,10 +142,10 @@ rt_submodel_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 	    bu_semaphore_release(RT_SEM_MODEL);
 
 	    if (RT_G_DEBUG & (DEBUG_DB|DEBUG_SOLIDS)) {
-		bu_log("rt_submodel_prep(%s): Re-used already prepped database %s, rtip=x%lx\n",
+		bu_log("rt_submodel_prep(%s): Re-used already prepped database %s, rtip=%p\n",
 		       stp->st_dp->d_namep,
 		       sub_dbip->dbi_filename,
-		       (long)sub_rtip);
+		       (void *)sub_rtip);
 	    }
 	    goto done;
 	}

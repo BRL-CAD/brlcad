@@ -633,7 +633,7 @@ getshort(FILE *fp)
 static void
 rt_uplot_get_args(FILE *fp, const struct uplot *up, char *carg, fastf_t *arg)
 {
-    int ret;
+    size_t ret;
     int i, j;
     int cc = 0;
     char inbuf[8] = {'\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0'};

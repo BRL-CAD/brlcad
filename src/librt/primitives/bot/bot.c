@@ -976,7 +976,7 @@ rt_bot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     struct bu_vls vls;
     register unsigned char *cp;
     int i;
-    int rem;
+    size_t rem;
 
     RT_CK_DB_INTERNAL(ip);
     if (dbip) RT_CK_DBI(dbip);

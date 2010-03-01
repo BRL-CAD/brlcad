@@ -257,16 +257,16 @@ db_write(struct db_i *dbip, const genptr_t addr, size_t count, size_t offset)
  *	 0 OK
  *	-1 FAILURE
  */
-int
-db_put(struct db_i *dbip, const struct directory *dp, union record *where, int offset, int len)
+size_t
+db_put(struct db_i *dbip, const struct directory *dp, union record *where, size_t offset, size_t len)
 {
 
     RT_CK_DBI(dbip);
     RT_CK_DIR(dp);
-    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_put(%s) x%x, x%x x%x off=%d len=%d\n",
-				    dp->d_namep, dbip, dp, where, offset, len);
+    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_put(%s) x%x, x%x x%x off=%d len=%llu\n",
+				    dp->d_namep, dbip, dp, where, offset, (unsigned long long)len);
 
-    if (offset < 0 || (size_t)(offset+len) > dp->d_len) {
+    if ((offset+len) > dp->d_len) {
 	bu_log("db_put(%s):  xfer %d..%x exceeds 0..%d\n",
 	       dp->d_namep, offset, offset+len, dp->d_len);
 	return(-1);
@@ -389,10 +389,10 @@ db_put_external(struct bu_external *ep, struct directory *dp, struct db_i *dbip)
 	ngran = (ep->ext_nbytes+sizeof(union record)-1)/sizeof(union record);
 	if (ngran != dp->d_len) {
 	    if (dp->d_addr != RT_DIR_PHONY_ADDR) {
-		if (db_delete(dbip, dp) < 0)
+		if (db_delete(dbip, dp) == (size_t)-1)
 		    return -2;
 	    }
-	    if (db_alloc(dbip, dp, ngran) < 0) {
+	    if (db_alloc(dbip, dp, ngran) == (size_t)-1) {
 		return -3;
 	    }
 	}

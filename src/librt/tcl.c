@@ -192,8 +192,8 @@ rt_tcl_pr_cutter(Tcl_Interp *interp, const union cutter *cutp)
 	    }
 	    break;
 	default:
-	    bu_vls_printf(&str, "rt_tcl_pr_cutter() bad pointer cutp=x%lx",
-			  (long)cutp);
+	    bu_vls_printf(&str, "rt_tcl_pr_cutter() bad pointer cutp=%p",
+			  (void *)cutp);
 	    break;
     }
     Tcl_AppendResult(interp, bu_vls_addr(&str), (char *)NULL);

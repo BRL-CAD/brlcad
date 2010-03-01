@@ -946,7 +946,7 @@ struct rt_comb_internal  {
 struct rt_binunif_internal {
     unsigned long	magic;
     int			type;
-    long		count;
+    size_t		count;
     union {
 	float		*flt;
 	double		*dbl;
@@ -1894,10 +1894,15 @@ struct rt_functab {
     void (*ft_curve) BU_ARGS((struct curvature * /**< @brief cvp*/,
 			      struct hit * /**< @brief hitp*/,
 			      struct soltab * /**< @brief stp*/));
+#if 1
+    /*XXX temporarily changing signature to what's actually being used by the funtions */
+    int (*ft_classify) BU_ARGS(());
+#else
     int (*ft_classify) BU_ARGS((const struct soltab * /*stp*/,
 				const vect_t /*min*/,
 				const vect_t /*max*/,
 				const struct bn_tol * /*tol*/));
+#endif
     void (*ft_free) BU_ARGS((struct soltab * /*stp*/));
     int (*ft_plot) BU_ARGS((struct bu_list * /*vhead*/,
 			    struct rt_db_internal * /*ip*/,
@@ -2676,7 +2681,7 @@ RT_EXPORT BU_EXTERN(struct db_i *db_clone_dbi,
 RT_EXPORT BU_EXTERN(int db5_write_free,
 		    (struct db_i *dbip,
 		     struct directory *dp,
-		     long length));
+		     size_t length));
 RT_EXPORT BU_EXTERN(int db5_realloc,
 		    (struct db_i *dbip,
 		     struct directory *dp,
@@ -2722,10 +2727,10 @@ RT_EXPORT BU_EXTERN(int rt_db_put_internal5,
 
 RT_EXPORT BU_EXTERN(void db5_make_free_object_hdr,
 		    (struct bu_external *ep,
-		     long length));
+		     size_t length));
 RT_EXPORT BU_EXTERN(void db5_make_free_object,
 		    (struct bu_external *ep,
-		     long length));
+		     size_t length));
 RT_EXPORT BU_EXTERN(int db5_decode_signed,
 		    (size_t			*lenp,
 		     const unsigned char	*cp,
@@ -2899,11 +2904,11 @@ RT_EXPORT BU_EXTERN(int db_get,
 		     int offset,
 		     int len));
 /* put several records into db */
-RT_EXPORT BU_EXTERN(int db_put,
+RT_EXPORT BU_EXTERN(size_t db_put,
 		    (struct db_i *,
 		     const struct directory *dp,
 		     union record *where,
-		     int offset, int len));
+		     size_t offset, size_t len));
 
 RT_EXPORT BU_EXTERN(int db_get_external,
 		    (struct bu_external *ep,
@@ -3066,24 +3071,24 @@ RT_EXPORT BU_EXTERN(int db_flags_raw_internal,
 /* db_alloc.c */
 
 /* allocate "count" granules */
-RT_EXPORT BU_EXTERN(int db_alloc,
+RT_EXPORT BU_EXTERN(size_t db_alloc,
 		    (struct db_i *,
 		     struct directory *dp,
-		     int count));
+		     size_t count));
 /* delete "recnum" from entry */
 RT_EXPORT BU_EXTERN(int db_delrec,
 		    (struct db_i *,
 		     struct directory *dp,
 		     int recnum));
 /* delete all granules assigned dp */
-RT_EXPORT BU_EXTERN(int db_delete,
+RT_EXPORT BU_EXTERN(size_t db_delete,
 		    (struct db_i *,
 		     struct directory *dp));
 /* write FREE records from 'start' */
-RT_EXPORT BU_EXTERN(int db_zapper,
+RT_EXPORT BU_EXTERN(size_t db_zapper,
 		    (struct db_i *,
 		     struct directory *dp,
-		     int start));
+		     size_t start));
 
 /* db_tree.c */
 RT_EXPORT BU_EXTERN(void db_dup_db_tree_state,

@@ -308,6 +308,19 @@ BU_EXPORT extern Tcl_Interp *brlcad_interp;
 
 
 #ifdef NO_BOMBING_MACROS
+#  define BU_ASSERT_SIZE_T(_lhs, _relation, _rhs)
+#else
+#  define BU_ASSERT_SIZE_T(_lhs, _relation, _rhs)	\
+	if (!((_lhs) _relation (_rhs))) { \
+		bu_log("BU_ASSERT_SIZE_T(" #_lhs #_relation #_rhs ") failed, lhs=%llu, rhs=%llu, file %s, line %d\n", \
+			(size_t)(_lhs), (size_t)(_rhs), \
+			__FILE__, __LINE__); \
+		bu_bomb("BU_ASSERT_LONG failure\n"); \
+	}
+#endif
+
+
+#ifdef NO_BOMBING_MACROS
 #  define BU_ASSERT_DOUBLE(_lhs, _relation, _rhs)
 #else
 #  define BU_ASSERT_DOUBLE(_lhs, _relation, _rhs)	\
@@ -523,7 +536,7 @@ BU_EXPORT BU_EXTERN(int bu_cv_itemlen, (int cookie));
  *	done
  @endcode
 */
-BU_EXPORT BU_EXTERN(int bu_cv_w_cookie, (genptr_t, int, size_t, genptr_t, int, int));
+BU_EXPORT BU_EXTERN(size_t bu_cv_w_cookie, (genptr_t, int, size_t, genptr_t, int, size_t));
 
 /**
  * bu_cv_ntohss
@@ -544,46 +557,46 @@ BU_EXPORT BU_EXTERN(int bu_cv_w_cookie, (genptr_t, int, size_t, genptr_t, int, i
  *
  * @return	number of conversions done.
  */
-BU_EXPORT BU_EXTERN(int bu_cv_ntohss,
+BU_EXPORT BU_EXTERN(size_t bu_cv_ntohss,
 		    (signed short *,
 		     size_t,
 		     genptr_t,
-		     int));
-BU_EXPORT BU_EXTERN(int bu_cv_ntohus,
+		     size_t));
+BU_EXPORT BU_EXTERN(size_t bu_cv_ntohus,
 		    (unsigned short *,
 		     size_t,
 		     genptr_t,
-		     int));
-BU_EXPORT BU_EXTERN(int bu_cv_ntohsl,
+		     size_t));
+BU_EXPORT BU_EXTERN(size_t bu_cv_ntohsl,
 		    (signed long int *,
 		     size_t,
 		     genptr_t,
-		     int));
-BU_EXPORT BU_EXTERN(int bu_cv_ntohul,
+		     size_t));
+BU_EXPORT BU_EXTERN(size_t bu_cv_ntohul,
 		    (unsigned long int *,
 		     size_t,
 		     genptr_t,
-		     int));
-BU_EXPORT BU_EXTERN(int bu_cv_htonss,
+		     size_t));
+BU_EXPORT BU_EXTERN(size_t bu_cv_htonss,
 		    (genptr_t,
 		     size_t,
 		     signed short *,
-		     int));
-BU_EXPORT BU_EXTERN(int bu_cv_htonus,
+		     size_t));
+BU_EXPORT BU_EXTERN(size_t bu_cv_htonus,
 		    (genptr_t,
 		     size_t,
 		     unsigned short *,
-		     int));
-BU_EXPORT BU_EXTERN(int bu_cv_htonsl,
+		     size_t));
+BU_EXPORT BU_EXTERN(size_t bu_cv_htonsl,
 		    (genptr_t,
 		     size_t,
 		     long *,
-		     int));
-BU_EXPORT BU_EXTERN(int bu_cv_htonul,
+		     size_t));
+BU_EXPORT BU_EXTERN(size_t bu_cv_htonul,
 		    (genptr_t,
 		     size_t,
 		     unsigned long *,
-		     int));
+		     size_t));
 
 #define CV_CHANNEL_MASK 0x00ff
 #define CV_HOST_MASK    0x0100
@@ -1497,11 +1510,11 @@ struct bu_mapped_file {
     struct bu_list l;
     char *name;		/**< @brief bu_strdup() of file name */
     genptr_t buf;	/**< @brief In-memory copy of file (may be mmapped)  */
-    long buflen;	/**< @brief # bytes in 'buf'  */
+    size_t buflen;	/**< @brief # bytes in 'buf'  */
     int is_mapped;	/**< @brief 1=mmap() used, 0=bu_malloc/fread */
     char *appl;		/**< @brief bu_strdup() of tag for application using 'apbuf'  */
     genptr_t apbuf;	/**< @brief opt: application-specific buffer */
-    long apbuflen;	/**< @brief opt: application-specific buflen */
+    size_t apbuflen;	/**< @brief opt: application-specific buflen */
     long modtime;	/**< @brief date stamp, in case file is modified */
     int uses;		/**< @brief # ptrs to this struct handed out */
     int dont_restat;	/**< @brief 1=on subsequent opens, don't re-stat()  */

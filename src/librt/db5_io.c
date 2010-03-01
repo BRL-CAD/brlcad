@@ -465,7 +465,7 @@ db5_export_object3(
     struct db5_ondisk_header *odp;
     register unsigned char	*cp;
     long	namelen = 0;
-    long	need;
+    size_t	need;
     int	h_width, n_width, a_width, b_width;
     long	togo;
 
@@ -609,7 +609,7 @@ db5_export_object3(
  *  in the database (e.g. 50 MBytes).
  */
 void
-db5_make_free_object_hdr( struct bu_external *ep, long length )
+db5_make_free_object_hdr( struct bu_external *ep, size_t length )
 {
     struct db5_ondisk_header *odp;
     int		h_width;
@@ -617,8 +617,8 @@ db5_make_free_object_hdr( struct bu_external *ep, long length )
 
     BU_CK_EXTERNAL(ep);
 
-    BU_ASSERT_LONG( length, >=, 8 );
-    BU_ASSERT_LONG( length&7, ==, 0 );
+    BU_ASSERT_SIZE_T( length, >=, 8 );
+    BU_ASSERT_SIZE_T( length&7, ==, 0 );
 
     /* Reserve enough space to hold any free header, even w/64-bit len */
     ep->ext_nbytes = 8+8;
@@ -644,7 +644,7 @@ db5_make_free_object_hdr( struct bu_external *ep, long length )
  *  Note that free objects can sometimes get quite large.
  */
 void
-db5_make_free_object( struct bu_external *ep, long length )
+db5_make_free_object( struct bu_external *ep, size_t length )
 {
     struct db5_ondisk_header *odp;
     int		h_width;
@@ -652,8 +652,8 @@ db5_make_free_object( struct bu_external *ep, long length )
 
     BU_CK_EXTERNAL(ep);
 
-    BU_ASSERT_LONG( length, >=, 8 );
-    BU_ASSERT_LONG( length&7, ==, 0 );
+    BU_ASSERT_SIZE_T( length, >=, 8 );
+    BU_ASSERT_SIZE_T( length&7, ==, 0 );
 
     ep->ext_buf = bu_calloc( 1, length, "db5_make_free_object" );
     ep->ext_nbytes = length;

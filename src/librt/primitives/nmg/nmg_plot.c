@@ -1877,7 +1877,7 @@ nmg_show_broken_classifier_stuff(unsigned long *p, long int **classlist, int all
 	    show_broken_vu(vbp, (struct vertexuse *)p);
 	    break;
 	default:
-	    bu_log("Unknown magic number %ld %0lx %lu %0lx\n", *p, *p, (unsigned long)p, (unsigned long)p);
+	    bu_log("Unknown magic number %ld %0lx %llu %p\n", *p, *p, (unsigned long long)((size_t)p), (void *)p);
 	    break;
     }
 

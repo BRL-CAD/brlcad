@@ -254,7 +254,7 @@ bu_cv_pr_cookie(char *title, int cookie)
  *
  * FIXME: is this public API?
  */
-int
+size_t
 cv(genptr_t out, char *outfmt, size_t size, genptr_t in, char *infmt, int count)
 {
     int incookie, outcookie;
@@ -336,11 +336,11 @@ bu_cv_itemlen(register int cookie)
 }
 
 
-int
-bu_cv_ntohss(register short int *out, size_t size, register genptr_t in, int count)
+size_t
+bu_cv_ntohss(register short int *out, size_t size, register genptr_t in, size_t count)
 {
-    int limit;
-    register int i;
+    size_t limit;
+    register size_t i;
 
     limit = (int)(size / sizeof(signed short));
     if (limit < count) count = limit;
@@ -358,11 +358,11 @@ bu_cv_ntohss(register short int *out, size_t size, register genptr_t in, int cou
 }
 
 
-int
-bu_cv_ntohus(register short unsigned int *out, size_t size, register genptr_t in, int count)
+size_t
+bu_cv_ntohus(register short unsigned int *out, size_t size, register genptr_t in, size_t count)
 {
-    int limit;
-    register int i;
+    size_t limit;
+    register size_t i;
 
     limit = (int)(size / sizeof(unsigned short));
     if (limit < count) count = limit;
@@ -376,11 +376,11 @@ bu_cv_ntohus(register short unsigned int *out, size_t size, register genptr_t in
 }
 
 
-int
-bu_cv_ntohsl(register long int *out, size_t size, register genptr_t in, int count)
+size_t
+bu_cv_ntohsl(register long int *out, size_t size, register genptr_t in, size_t count)
 {
-    int limit;
-    register int i;
+    size_t limit;
+    register size_t i;
 
     limit = (int)(size / sizeof(signed long int));
     if (limit < count) count = limit;
@@ -398,11 +398,11 @@ bu_cv_ntohsl(register long int *out, size_t size, register genptr_t in, int coun
 }
 
 
-int
-bu_cv_ntohul(register long unsigned int *out, size_t size, register genptr_t in, int count)
+size_t
+bu_cv_ntohul(register long unsigned int *out, size_t size, register genptr_t in, size_t count)
 {
-    int limit;
-    register int i;
+    size_t limit;
+    register size_t i;
 
     limit = (int)(size / sizeof(unsigned long int));
     if (limit < count) count = limit;
@@ -418,11 +418,11 @@ bu_cv_ntohul(register long unsigned int *out, size_t size, register genptr_t in,
 }
 
 
-int
-bu_cv_htonss(genptr_t out, size_t size, register short int *in, int count)
+size_t
+bu_cv_htonss(genptr_t out, size_t size, register short int *in, size_t count)
 {
-    int limit;
-    register int i;
+    size_t limit;
+    register size_t i;
     register unsigned char *cp = (unsigned char *)out;
     register int val;
 
@@ -437,11 +437,11 @@ bu_cv_htonss(genptr_t out, size_t size, register short int *in, int count)
 }
 
 
-int
-bu_cv_htonus(genptr_t out, size_t size, register short unsigned int *in, int count)
+size_t
+bu_cv_htonus(genptr_t out, size_t size, register short unsigned int *in, size_t count)
 {
-    int limit;
-    register int i;
+    size_t limit;
+    register size_t i;
     register unsigned char *cp = (unsigned char *)out;
     register int val;
 
@@ -456,11 +456,11 @@ bu_cv_htonus(genptr_t out, size_t size, register short unsigned int *in, int cou
 }
 
 
-int
-bu_cv_htonsl(genptr_t out, size_t size, register long int *in, int count)
+size_t
+bu_cv_htonsl(genptr_t out, size_t size, register long int *in, size_t count)
 {
-    int limit;
-    register int i;
+    size_t limit;
+    register size_t i;
     register unsigned char *cp = (unsigned char *)out;
     register long val;
 
@@ -477,11 +477,11 @@ bu_cv_htonsl(genptr_t out, size_t size, register long int *in, int count)
 }
 
 
-int
-bu_cv_htonul(genptr_t out, size_t size, register long unsigned int *in, int count)
+size_t
+bu_cv_htonul(genptr_t out, size_t size, register long unsigned int *in, size_t count)
 {
-    int limit;
-    register int i;
+    size_t limit;
+    register size_t i;
     register unsigned char *cp = (unsigned char *)out;
     register long val;
 
@@ -500,18 +500,18 @@ bu_cv_htonul(genptr_t out, size_t size, register long unsigned int *in, int coun
 }
 
 
-int
-bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incookie,  int count)
+size_t
+bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incookie,  size_t count)
 {
-    int work_count = 4096;
-    int number_done = 0;
+    size_t work_count = 4096;
+    size_t number_done = 0;
     int inIsHost, outIsHost, infmt, outfmt, insize, outsize;
     size_t bufsize;
     genptr_t t1, t2, t3;
     genptr_t from;
     genptr_t to;
     genptr_t hold;
-    register int i;
+    register size_t i;
 
     /*
      * Work_count is the size of the working buffer.  If count is
@@ -631,7 +631,7 @@ bu_cv_w_cookie(genptr_t out, int outcookie, size_t size, genptr_t in,  int incoo
      * From here on we will be working on a chunk of process at a time.
      */
     while (size >= (unsigned int)outsize  && number_done < count) {
-	int remaining;
+	size_t remaining;
 
 	/*
 	 * Size is the number of bytes that the caller said was

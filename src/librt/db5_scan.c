@@ -56,8 +56,8 @@ db5_scan(
     unsigned char header[8];
     struct db5_raw_internal raw;
     int got;
-    long nrec;
-    long addr;
+    size_t nrec;
+    size_t addr;
 
     RT_CK_DBI(dbip);
     if (RT_G_DEBUG&DEBUG_DB) bu_log("db5_scan(x%x, x%x)\n", dbip, handler);
@@ -68,7 +68,7 @@ db5_scan(
     /* Fast-path when file is already memory-mapped */
     if (dbip->dbi_mf) {
 	const unsigned char *cp = (const unsigned char *)dbip->dbi_inmem;
-	long eof;
+	size_t eof;
 
 	BU_CK_MAPPED_FILE(dbip->dbi_mf);
 	eof = dbip->dbi_mf->buflen;

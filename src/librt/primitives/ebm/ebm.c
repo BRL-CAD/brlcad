@@ -578,7 +578,7 @@ rt_ebm_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	return -1;
     }
     eip->mp = mp;
-    if (mp->buflen < eip->xdim*eip->ydim) {
+    if (mp->buflen < (size_t)(eip->xdim*eip->ydim)) {
 	bu_log("rt_ebm_import4() file '%s' is too short %d < %d\n",
 	       eip->file, mp->buflen, eip->xdim*eip->ydim);
 	goto fail;
@@ -724,7 +724,7 @@ rt_ebm_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	return -1;
     }
     eip->mp = mp;
-    if (mp->buflen < eip->xdim*eip->ydim) {
+    if (mp->buflen < (size_t)(eip->xdim*eip->ydim)) {
 	bu_log("rt_ebm_import4() file '%s' is too short %d < %d\n",
 	       eip->file, mp->buflen, eip->xdim*eip->ydim);
 	goto fail;

@@ -4000,7 +4000,7 @@ get_file_data(struct rt_dsp_internal *dsp_ip, const struct db_i *dbip)
     out_cookie = bu_cv_cookie("hus");
 
     if (bu_cv_optimize(in_cookie) != bu_cv_optimize(out_cookie)) {
-	int got;
+	size_t got;
 	/* if we're on a little-endian machine we convert the input
 	 * file from network to host format
 	 */
@@ -4010,7 +4010,7 @@ get_file_data(struct rt_dsp_internal *dsp_ip, const struct db_i *dbip)
 
 	got = bu_cv_w_cookie(mf->apbuf, out_cookie, mf->apbuflen,
 			     mf->buf,    in_cookie, count);
-	if (got != count) {
+	if (got != (size_t)count) {
 	    bu_log("got %d != count %d", got, count);
 	    bu_bomb("\n");
 	}
@@ -4031,7 +4031,8 @@ HIDDEN int
 get_obj_data(struct rt_dsp_internal *dsp_ip, const struct db_i *dbip)
 {
     struct rt_binunif_internal *bip;
-    int in_cookie, out_cookie, got;
+    int in_cookie, out_cookie;
+    size_t got;
     int ret;
 
     BU_GETSTRUCT(dsp_ip->dsp_bip, rt_db_internal);
@@ -4067,7 +4068,7 @@ get_obj_data(struct rt_dsp_internal *dsp_ip, const struct db_i *dbip)
 			     bip->u.uint16, in_cookie, bip->count);
 
 	if (got != bip->count) {
-	    bu_log("got %d != count %d", got, bip->count);
+	    bu_log("got %d != count %llu", got, (unsigned long long)bip->count);
 	    bu_bomb("\n");
 	}
     }
@@ -4408,7 +4409,7 @@ rt_dsp_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     struct rt_dsp_internal *dsp_ip;
     unsigned long name_len;
     unsigned char *cp;
-    int rem;
+    size_t rem;
 
     if (resp) RT_CK_RESOURCE(resp);
     if (dbip) RT_CK_DBI(dbip);

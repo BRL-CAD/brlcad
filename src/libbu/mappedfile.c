@@ -80,7 +80,7 @@ bu_open_mapped_file(const char *name, const char *appl)
 	    ret = stat(name, &sb);
 	    bu_semaphore_release(BU_SEM_SYSCALL);
 	    if (ret < 0)  goto do_reuse;	/* File vanished from disk, mapped copy still OK */
-	    if (sb.st_size != mp->buflen) {
+	    if ((size_t)sb.st_size != mp->buflen) {
 		bu_log("bu_open_mapped_file(%s) WARNING: File size changed from %ld to %ld, opening new version.\n",
 		       name, (long)mp->buflen, (long)sb.st_size);
 		goto dont_reuse;

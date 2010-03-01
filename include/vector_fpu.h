@@ -267,7 +267,7 @@ private:
 
     void _init(double x, double y) {
 	// align to 16-byte boundary
-	v = (double*)((((long)m) + 0x10L) & ~0xFL);
+	v = (double*)((((uintptr_t)m) + 0x10L) & ~0xFL);
 	v[0] = x;
 	v[1] = y;
     }
