@@ -639,8 +639,9 @@ Usage: wdb_open\n\
 int
 wdb_decode_dbip(Tcl_Interp *interp, const char *dbip_string, struct db_i **dbipp)
 {
-
-    *dbipp = (struct db_i *)atol(dbip_string);
+    if (sscanf(dbip_string, "%p", dbipp) != 1) {
+	return GED_ERROR;
+    }
 
     /* Could core dump */
     RT_CK_DBI_TCL(interp, *dbipp);
@@ -1962,7 +1963,7 @@ wdb_dbip_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    bu_vls_printf(&vls, "%lu", (unsigned long)wdbp->dbip);
+    bu_vls_printf(&vls, "%p", wdbp->dbip);
     Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);
     return TCL_OK;
@@ -5128,7 +5129,7 @@ wdb_list_children(struct rt_wdb *wdbp,
 	    actual_count = (struct rt_tree_array *)db_flatten_tree(
 		rt_tree_array, comb->tree, OP_UNION,
 		1, &rt_uniresource) - rt_tree_array;
-	    BU_ASSERT_PTR(actual_count, ==, node_count);
+	    BU_ASSERT_LONG(actual_count, ==, node_count);
 	    comb->tree = TREE_NULL;
 	} else {
 	    actual_count = 0;
@@ -5341,7 +5342,7 @@ wdb_print_node(struct rt_wdb *wdbp,
 	    actual_count = (struct rt_tree_array *)db_flatten_tree(
 		rt_tree_array, comb->tree, OP_UNION,
 		1, &rt_uniresource) - rt_tree_array;
-	    BU_ASSERT_PTR(actual_count, ==, node_count);
+	    BU_ASSERT_LONG(actual_count, ==, node_count);
 	    comb->tree = TREE_NULL;
 	} else {
 	    actual_count = 0;

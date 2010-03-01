@@ -80,7 +80,7 @@ struct region_pair {
  */
 ANALYZE_EXPORT BU_EXTERN(int parse_densities_buffer,
 			 (char *buf,
-			  unsigned long len,
+			  size_t len,
 			  struct density_entry *densities,
 			  struct bu_vls *result_str,
 			  int *num_densities));

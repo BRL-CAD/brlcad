@@ -26,7 +26,7 @@
 #include "bu.h"
 
 int
-parse_densities_buffer(char *buf, unsigned long len, struct density_entry *densities, struct bu_vls *result_str, int *num_densities)
+parse_densities_buffer(char *buf, size_t len, struct density_entry *densities, struct bu_vls *result_str, int *num_densities)
 {
     char *p, *q, *last;
     long idx;

@@ -391,7 +391,7 @@ dgo_headSolid_tcl(ClientData	clientData,
 	return TCL_ERROR;
     }
 
-    bu_vls_printf(&vls, "%lu", (unsigned long)&dgop->dgo_headSolid);
+    bu_vls_printf(&vls, "%llu", (size_t)(&dgop->dgo_headSolid));
     Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);
     return TCL_OK;
@@ -2001,7 +2001,7 @@ dgo_rtcheck_cmd(struct dg_obj	*dgop,
     (void)CloseHandle(e_pipe[1]);
 
     /* As parent, send view information down pipe */
-    fp = _fdopen(_open_osfhandle((HFILE)pipe_oDup, _O_TEXT), "wb");
+    fp = _fdopen(_open_osfhandle((intptr_t)pipe_oDup, _O_TEXT), "wb");
     setmode(_fileno(fp), O_BINARY);
 
 #if 1
@@ -2017,7 +2017,7 @@ dgo_rtcheck_cmd(struct dg_obj	*dgop,
 
     /* initialize the rtcheck struct */
     rtcp->fd = pipe_iDup;
-    rtcp->fp = _fdopen(_open_osfhandle((HFILE)pipe_iDup, _O_TEXT), "rb");
+    rtcp->fp = _fdopen(_open_osfhandle((intptr_t)pipe_iDup, _O_TEXT), "rb");
     setmode(_fileno(rtcp->fp), O_BINARY);
     rtcp->hProcess = pi.hProcess;
     rtcp->pid = pi.dwProcessId;
@@ -4281,7 +4281,7 @@ dgo_run_rt(struct dg_obj *dgop,
     CloseHandle(pipe_err[1]);
 
     /* As parent, send view information down pipe */
-    fp_in = _fdopen(_open_osfhandle((HFILE)pipe_inDup, _O_TEXT), "wb");
+    fp_in = _fdopen(_open_osfhandle((intptr_t)pipe_inDup, _O_TEXT), "wb");
 
     dgo_rt_set_eye_model(dgop, vop, eye_model);
     dgo_rt_write(dgop, vop, fp_in, eye_model);

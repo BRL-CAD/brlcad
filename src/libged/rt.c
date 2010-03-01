@@ -266,7 +266,7 @@ _ged_run_rt(struct ged *gedp)
     CloseHandle(pipe_err[1]);
 
     /* As parent, send view information down pipe */
-    fp_in = _fdopen( _open_osfhandle((HFILE)pipe_inDup, _O_TEXT), "wb" );
+    fp_in = _fdopen( _open_osfhandle((intptr_t)pipe_inDup, _O_TEXT), "wb" );
 
     _ged_rt_set_eye_model(gedp, eye_model);
     _ged_rt_write(gedp, fp_in, eye_model);
