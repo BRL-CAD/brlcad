@@ -169,7 +169,7 @@ cap_ground(struct rt_wdb *file, struct bu_list *head, char *prefix, struct wmemb
     bu_log("Center_height:  %f\n", center_height);
     
     if (is_start == 1) {
-	VSET(pnt1, 0, -coil_radius, starting_pitch + pitch/8);
+	VSET(pnt1, 0, -coil_radius, starting_pitch);
 	VSET(pnt2, lhf*coil_radius , -coil_radius, pitch/8 + starting_pitch);
 	VSET(pnt4, lhf*coil_radius , coil_radius, pitch*3/8 + starting_pitch + 2 * sin(D2R(helix_angle))*coil_radius);
 	VSET(pnt6, lhf*-coil_radius , coil_radius, pitch*5/8 + starting_pitch + 2 * sin(D2R(helix_angle))*coil_radius);
@@ -192,7 +192,7 @@ cap_ground(struct rt_wdb *file, struct bu_list *head, char *prefix, struct wmemb
     	VSET(pnt4, lhf*coil_radius , coil_radius,  pitch*3/8 + starting_pitch + 2 * sin(D2R(helix_angle))*coil_radius);
     	VSET(pnt6, lhf*-coil_radius , coil_radius, pitch*5/8 + starting_pitch + 2 * sin(D2R(helix_angle))*coil_radius);
     	VSET(pnt8, lhf*-coil_radius , -coil_radius, pitch*7/8 + starting_pitch);
-	VSET(pnt1, 0 , -coil_radius, pitch*7/8+starting_pitch);
+	VSET(pnt1, 0 , -coil_radius, pitch+starting_pitch);
 	mk_add_pipe_pt(head, pnt2, wire_diameter, 0.0, pipe_bend);
     	mk_add_pipe_pt(head, pnt4, wire_diameter, 0.0, pipe_bend);
     	mk_add_pipe_pt(head, pnt6, wire_diameter, 0.0, pipe_bend);
