@@ -286,7 +286,7 @@ make_coil(struct rt_wdb (*file), char *prefix, struct bu_list *sections, int sta
 
     switch (end_cap_type) {
 	case 0:
-	    VSET(pnt1, 0 , -1*(e_data->od/2-e_data->wd/2), last_pitch_pt);
+	    VSET(pnt1, 0 , -1*(e_data->od/2-e_data->wd/2), last_pitch_pt + 0.125*e_data->p);
 	    mk_add_pipe_pt(&head, pnt1, e_data->wd, 0.0, (e_data->od/2-e_data->wd/2));
 	    break;
 	case 1:
@@ -502,7 +502,7 @@ main(int ac, char *av[])
 	}
 	/* Thanks to earlier checks, we're guaranteed to have valid data for this calculation regardless of
 	 * user input */
-	nominal_length = coil_data->wd + coil_data->p * coil_data->nt - 0.125*pitch;
+	nominal_length = coil_data->wd + coil_data->p * coil_data->nt;
 	if (nominal_length > overall_length) {
 	    /* Something has to give - start with pitch */
 	    coil_data->p = (overall_length - coil_data->wd)/coil_data->nt;
@@ -510,12 +510,12 @@ main(int ac, char *av[])
 		/* That didn't work, start knocking off turns*/
 		while ((coil_data->nt > 1) && (coil_data->p < coil_data->wd)) {
 		   coil_data->nt--;
-	    	   coil_data->p = (overall_length - coil_data->wd + 0.125*pitch)/coil_data->nt;
+	    	   coil_data->p = (overall_length - coil_data->wd)/coil_data->nt;
 		}
 		if (coil_data->nt == 1) {
 		    /* THAT didn't work, change the wire diameter */
 		    coil_data->wd = overall_length/2;
-		    coil_data->p = coil_data->wd *1.125;
+		    coil_data->p = coil_data->wd ;
 		}
 	    }
 	} else {
@@ -523,10 +523,10 @@ main(int ac, char *av[])
 		/* Add turns first, then adjust pitch */
 		while (nominal_length < overall_length) {
 		    coil_data->nt++;
-		    nominal_length = coil_data->wd + coil_data->p * coil_data->nt - 0.125*pitch;
+		    nominal_length = coil_data->wd + coil_data->p * coil_data->nt;
 		}
 		coil_data->nt--;
-		coil_data->p = (overall_length - coil_data->wd - 0.125*pitch)/coil_data->nt;
+		coil_data->p = (overall_length - coil_data->wd)/coil_data->nt;
 	    }
 	}
     }	
