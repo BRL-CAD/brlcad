@@ -264,11 +264,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\attributes.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\bezier_2d_isect.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\binary_obj.c"
+				RelativePath="..\..\..\src\librt\binunif\binunif.c"
 				>
 			</File>
 			<File
@@ -320,6 +324,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\comb.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\comb_mirror.c"
 				>
 			</File>
@@ -336,11 +344,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\db5_bin.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\librt\db5_comb.c"
+				RelativePath="..\..\..\src\librt\binunif\db5_bin.c"
 				>
 			</File>
 			<File
