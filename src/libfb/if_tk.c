@@ -45,6 +45,8 @@ Tk_Window fbwin;
 Tk_PhotoHandle fbphoto;
 int p[2] = {0, 0};
 
+int is_child = 0;
+
 /* Note that Tk_PhotoPutBlock claims to have a faster
  * copy method when pixelSize is 4 and alphaOffset is
  * 3 - perhaps output could be massaged to generate this
@@ -302,11 +304,17 @@ fb_tk_open(FBIO *ifp, char *file, int width, int height)
 
 	    while ((wpid = wait(&waitret)) != pid && wpid != -1)
 		; /* do nothing */
-	    exit(0);
+	    fclose(stdin);
+	    Tcl_Eval(fbinterp, "vwait CloseWindow");
+	    if (!strcmp(Tcl_GetVar(fbinterp, "CloseWindow", 0),"close")) {
+		Tcl_Eval(fbinterp, "destroy .");
+		exit(0);
+	    }
 	} else {
 	    /* child */
 	    printf("IMA CHILD\n");
 	    fflush(stdout);
+	    is_child = 1;
 	}
     }
 
@@ -316,6 +324,7 @@ fb_tk_open(FBIO *ifp, char *file, int width, int height)
 HIDDEN int
 fb_tk_close(FBIO *ifp)
 {
+    if (is_child == 0){
     FB_CK_FBIO(ifp);
     fb_log( "fb_close( 0x%lx )\n", (unsigned long)ifp );
     fclose(stdin);
@@ -325,6 +334,9 @@ fb_tk_close(FBIO *ifp)
     if (!strcmp(Tcl_GetVar(fbinterp, "CloseWindow", 0),"close")) {
 	Tcl_Eval(fbinterp, "destroy .");
 	return 0;
+    }
+    } else {
+	exit(0);
     }
 }
 
@@ -359,7 +371,7 @@ tk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
     int line[2];
 
     FB_CK_FBIO(ifp);
-
+if (is_child == 1) {
     /* Set local values of Tk_PhotoImageBlock */
     block.pixelPtr = (unsigned char *)pixelp;
     block.width = count;
@@ -410,8 +422,10 @@ tk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
 #endif
     } while (i);
 #endif
-   
     return count;
+} else {
+    return 0;
+}
 }
 
 HIDDEN int
