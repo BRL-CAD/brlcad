@@ -324,11 +324,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\comb.c"
+				RelativePath="..\..\..\src\librt\comb\comb.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\comb_mirror.c"
+				RelativePath="..\..\..\src\librt\comb\comb_mirror.c"
 				>
 			</File>
 			<File
@@ -368,7 +368,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\db_comb.c"
+				RelativePath="..\..\..\src\librt\comb\db_comb.c"
 				>
 			</File>
 			<File
@@ -821,6 +821,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\librt\pr.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\prcomb.c"
 				>
 			</File>
 			<File
