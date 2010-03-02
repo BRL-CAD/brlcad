@@ -2693,12 +2693,13 @@ unset ac_cv_c_tclconfig
 if test "x$build_brlcad_tcl" = "xyes" ; then
     TCL_VERSION="8.5"
     AC_MSG_RESULT(yes)
+    SC_ENABLE_THREADS
     case $host_os in
 	 darwin*)
-	     TCL='-L${top_builddir}/src/other/tcl/unix'" -ltcl${TCL_VERSION} $FRAMEWORK_COREFOUNDATION"
+	     TCL='-L${top_builddir}/src/other/tcl/unix'" -ltcl${TCL_VERSION} $FRAMEWORK_COREFOUNDATION $THREADS_LIBS"
 	     ;;
     	 *)
-	     TCL='-L${top_builddir}/src/other/tcl/unix'" -ltcl${TCL_VERSION} ${LIBDL} ${LIBM}"
+	     TCL='-L${top_builddir}/src/other/tcl/unix'" -ltcl${TCL_VERSION} ${LIBDL} ${LIBM} $THREADS_LIBS"
 	     ;;
     esac
     TCLSTUB='-L${top_builddir}/src/other/tcl/unix'" -ltclstub${TCL_VERSION}"
@@ -2826,8 +2827,9 @@ if test "x$build_against_tk" = "xyes" ; then
     AC_MSG_CHECKING(whether to build Tk)
     if test "x$build_brlcad_tk" = "xyes" ; then
 	AC_MSG_RESULT(yes)
-	TK='-L${top_builddir}/src/other/tk/unix'" -ltk${TCL_VERSION}"
-	TKSTUB='-L${top_builddir}/src/other/tk/unix'" -ltkstub${TK_VERSION}"
+    	SC_ENABLE_THREADS
+	TK='-L${top_builddir}/src/other/tk/unix'" -ltk${TCL_VERSION} $THREADS_LIBS"
+	TKSTUB='-L${top_builddir}/src/other/tk/unix'" -ltkstub${TK_VERSION} $THREADS_LIBS"
 	TK_CPPFLAGS='-I${top_srcdir}/src/other/tk/generic -I${top_srcdir}/src/other/tk/unix -I${top_srcdir}/src/other/tk/win'
 	if test "x$bc_build_aquatk" = "xyes" ; then
 	    TK_CPPFLAGS="$TK_CPPFLAGS "'-I${top_srcdir}/src/other/tk/xlib'
