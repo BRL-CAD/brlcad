@@ -770,7 +770,7 @@ db_tree_describe(
 	case OP_XOR:
 	    if (!indented) bu_vls_spaces(vls, 2*lvl);
 	    bu_vls_strcat(vls, "^ ");
-    bin:
+	bin:
 	    db_tree_describe(vls, tp->tr_b.tb_left, 1, lvl+1, mm2local);
 	    db_tree_describe(vls, tp->tr_b.tb_right, 0, lvl+1, mm2local);
 	    return;
@@ -787,7 +787,7 @@ db_tree_describe(
 	case OP_XNOP:
 	    if (!indented) bu_vls_spaces(vls, 2*lvl);
 	    bu_vls_strcat(vls, "X ");
-    unary:
+	unary:
 	    db_tree_describe(vls, tp->tr_b.tb_left, 1, lvl+1, mm2local);
 	    return;
 
@@ -920,6 +920,7 @@ rt_comb_describe(
     return 0;
 }
 
+
 /*==================== END g_comb.c / table.c interface ========== */
 
 /**
@@ -939,6 +940,7 @@ db_wrap_v4_external(struct bu_external *op, const char *name)
     rec = (union record *)op->ext_buf;
     NAMEMOVE(name, rec->s.s_name);
 }
+
 
 /* Some export support routines */
 
@@ -1094,6 +1096,7 @@ db_mkbool_tree(
     }
     return(curtree);
 }
+
 
 /**
  * D B _ M K G I F T _ T R E E

@@ -46,13 +46,13 @@
  * syscall semaphores, stdio-only machines, and in-memory buffering.
  *
  * Returns -
- *	 0 OK
- *	-1 FAILURE
+ * 0 OK
+ * -1 FAILURE
  */
 HIDDEN int
 db_read(const struct db_i *dbip, genptr_t addr, size_t count, size_t offset)
-    /* byte count */
-    /* byte offset from start of file */
+/* byte count */
+/* byte offset from start of file */
 {
     size_t got;
 
@@ -106,8 +106,8 @@ db_read(const struct db_i *dbip, genptr_t addr, size_t count, size_t offset)
  * This is in external v4 format.
  *
  * Returns -
- *	union record *	  - OK
- *	(union record *)0 - FAILURE
+ * union record * - OK
+ * (union record *)0 - FAILURE
  */
 union record *
 db_getmrec(const struct db_i *dbip, const struct directory *dp)
@@ -153,8 +153,8 @@ db_getmrec(const struct db_i *dbip, const struct directory *dp)
  * this entry.
  *
  * Returns -
- *	 0 OK
- *	-1 FAILURE
+ * 0 OK
+ * -1 FAILURE
  */
 int
 db_get(const struct db_i *dbip, const struct directory *dp, union record *where, int offset, int len)
@@ -201,8 +201,8 @@ db_get(const struct db_i *dbip, const struct directory *dp, union record *where,
  * buffering.
  *
  * Returns -
- *	 0 OK
- *	-1 FAILURE
+ * 0 OK
+ * -1 FAILURE
  */
 /* should be HIDDEN */
 int
@@ -254,8 +254,8 @@ db_write(struct db_i *dbip, const genptr_t addr, size_t count, size_t offset)
  * entry.
  *
  * Returns -
- *	 0 OK
- *	-1 FAILURE
+ * 0 OK
+ * -1 FAILURE
  */
 size_t
 db_put(struct db_i *dbip, const struct directory *dp, union record *where, size_t offset, size_t len)
@@ -306,8 +306,8 @@ db_put(struct db_i *dbip, const struct directory *dp, union record *where, size_
  * bu_free_external(ep);
  *
  * Returns -
- *	-1 error
- *	 0 success
+ * -1 error
+ * 0 success
  */
 int
 db_get_external(register struct bu_external *ep, const struct directory *dp, const struct db_i *dbip)
@@ -360,8 +360,8 @@ db_get_external(register struct bu_external *ep, const struct directory *dp, con
  * copy them.
  *
  * Returns -
- *	-1 error
- *	 0 success
+ * -1 error
+ * 0 success
  */
 int
 db_put_external(struct bu_external *ep, struct directory *dp, struct db_i *dbip)
@@ -432,8 +432,8 @@ db_put_external(struct bu_external *ep, struct directory *dp, struct db_i *dbip)
  * contain the desired name.  The 'ep' parameter cannot be const.
  *
  * Returns -
- *	<0 error
- *	0 OK
+ * <0 error
+ * 0 OK
  *
  * NOTE: Callers of this should be using wdb_export_external()
  * instead.
@@ -465,6 +465,7 @@ db_free_external(register struct bu_external *ep)
     BU_CK_EXTERNAL(ep);
     bu_free_external(ep);
 }
+
 
 /** @} */
 /*
