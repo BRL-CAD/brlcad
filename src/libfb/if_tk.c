@@ -269,44 +269,32 @@ fb_tk_open(FBIO *ifp, char *file, int width, int height)
 	} else if (pid > 0) {
 	    int line = 0;
 	    char buffer[1024*30];
+	    char c;
 	    int i;
+	    int y[2];
 
 	    /* parent */
-	    while (line < 1024) {
-		int y[2];
+	    while (y[0] != -1) {
 		int count = 1024;
-
-		read(p[0], y, sizeof(y));
 //		read(p[0], count, sizeof(count));
-
-		if (read(p[0], buffer, ifp->if_width * 3) == -1) {
-		    perror("Unable to read from pipe");
+		read(p[0], y, sizeof(y));
+		if (y[0] != -1) {
+    		    if (read(p[0], buffer, ifp->if_width * 3) == -1) {
+    			perror("Unable to read from pipe");
+    		    }
+    		    line++;
+    		    block.pixelPtr = (unsigned char *)buffer;
+    		    block.width = count;
+    		    block.pitch = 3 * ifp->if_width;
+		    
+    		    Tk_PhotoPutBlock(fbinterp, fbphoto, &block, 0, ifp->if_height-y[0], count, 1, TK_PHOTO_COMPOSITE_SET);
+		    
+    		    do {
+    			i = Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT);
+    		    } while (i);
+		} else {
+		    bu_exit(0,NULL);
 		}
-		line++;
-
-//		y = line;
-	//	printf("y is %d\n", y[0]);
-	//	fflush(stdout);
-
-		block.pixelPtr = (unsigned char *)buffer;
-		block.width = count;
-		block.pitch = 3 * ifp->if_width;
-
-		Tk_PhotoPutBlock(fbinterp, fbphoto, &block, 0, ifp->if_height-y[0], count, 1, TK_PHOTO_COMPOSITE_SET);
-
-		do {
-		    i = Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT);
-		} while (i);
-
-	    }
-
-	    while ((wpid = wait(&waitret)) != pid && wpid != -1)
-		; /* do nothing */
-	    fclose(stdin);
-	    Tcl_Eval(fbinterp, "vwait CloseWindow");
-	    if (!strcmp(Tcl_GetVar(fbinterp, "CloseWindow", 0),"close")) {
-		Tcl_Eval(fbinterp, "destroy .");
-		exit(0);
 	    }
 	} else {
 	    /* child */
@@ -321,7 +309,21 @@ fb_tk_open(FBIO *ifp, char *file, int width, int height)
 HIDDEN int
 fb_tk_close(FBIO *ifp)
 {
-    bu_exit(0, NULL);
+    int y[2];
+    y[0] = -1;
+    y[1] = 0;
+    printf("Entering fb_tk_close\n");
+    FB_CK_FBIO(ifp);
+    write(p[1],y,sizeof(y));
+    close(p[1]);
+    printf("Sent write from fb_tk_close\n");
+    fclose(stdin);
+    Tcl_Eval(fbinterp, "vwait CloseWindow");
+    if (!strcmp(Tcl_GetVar(fbinterp, "CloseWindow", 0),"close")) {
+	printf("Close Window event\n");
+	Tcl_Eval(fbinterp, "destroy .");
+    	return 0;
+    }
 }
 
 HIDDEN int
