@@ -293,7 +293,13 @@ fb_tk_open(FBIO *ifp, char *file, int width, int height)
     			i = Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT);
     		    } while (i);
 		} else {
-		    bu_exit(0,NULL);
+		    fclose(stdin);
+		    Tcl_Eval(fbinterp, "vwait CloseWindow");
+		    if (!strcmp(Tcl_GetVar(fbinterp, "CloseWindow", 0),"close")) {
+			printf("Close Window event\n");
+			Tcl_Eval(fbinterp, "destroy .");
+    			bu_exit(0,NULL);
+		    }
 		}
 	    }
 	} else {
@@ -317,14 +323,9 @@ fb_tk_close(FBIO *ifp)
     write(p[1],y,sizeof(y));
     close(p[1]);
     printf("Sent write from fb_tk_close\n");
-    fclose(stdin);
-    Tcl_Eval(fbinterp, "vwait CloseWindow");
-    if (!strcmp(Tcl_GetVar(fbinterp, "CloseWindow", 0),"close")) {
-	printf("Close Window event\n");
-	Tcl_Eval(fbinterp, "destroy .");
-    	return 0;
-    }
+    return 0;
 }
+
 
 HIDDEN int
 tk_clear(FBIO *ifp, unsigned char *pp)
