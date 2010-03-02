@@ -1,4 +1,4 @@
-/*                          C O M B . C
+/*                        P R C O M B . C
  * BRL-CAD
  *
  * Copyright (c) 1996-2010 United States Government as represented by
@@ -17,14 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup dbio */
-/** @{ */
-/** @file comb.c
- *
- * XXX Move to db_tree.c when complete.
+/** @file prcomb.c
  *
  */
-/** @} */
 
 #include "common.h"
 
