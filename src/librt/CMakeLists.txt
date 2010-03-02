@@ -1,6 +1,7 @@
 set(LIBRT_SOURCES
     bezier_2d_isect.c
-    binary_obj.c
+    binunif/binary_obj.c
+    binunif/db5_bin.c
     bomb.c
     bool.c
     bundle.c
@@ -11,7 +12,6 @@ set(LIBRT_SOURCES
     constraint.c
     cut.c
     db5_alloc.c
-    db5_bin.c
     db5_io.c
     db5_scan.c
     db5_types.c
