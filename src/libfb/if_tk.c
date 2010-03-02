@@ -234,9 +234,9 @@ fb_tk_open(FBIO *ifp, char *file, int width, int height)
      * window closing event has been seen from the
      * Window manager.  WM_DELETE_WINDOW will be
      * bound to a command setting this variable to
-     * the string "close", in order to let tk_fb_close
-     * detect the Tk event and handle the closure
-     * itself.
+     * the string "close", and a vwait watching
+     * for a change to the CloseWindow variable ensures
+     * a "lingering" tk window.
      */
     Tcl_SetVar(fbinterp, "CloseWindow", "open", 0);
     const char *wmcmd = "wm protocol . WM_DELETE_WINDOW {set CloseWindow \"close\"}";
@@ -285,8 +285,8 @@ fb_tk_open(FBIO *ifp, char *file, int width, int height)
 		line++;
 
 //		y = line;
-		printf("y is %d\n", y[0]);
-		fflush(stdout);
+	//	printf("y is %d\n", y[0]);
+	//	fflush(stdout);
 
 		block.pixelPtr = (unsigned char *)buffer;
 		block.width = count;
