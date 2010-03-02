@@ -43,6 +43,7 @@
 Tcl_Interp *fbinterp;
 Tk_Window fbwin;
 Tk_PhotoHandle fbphoto;
+int p[2] = {0, 0};
 
 /* Note that Tk_PhotoPutBlock claims to have a faster
  * copy method when pixelSize is 4 and alphaOffset is
@@ -246,6 +247,69 @@ fb_tk_open(FBIO *ifp, char *file, int width, int height)
 	 
     while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
 
+    {
+	int parent_pipe[2];
+	int pid, wpid;
+	int waitret;
+	void *buffer = (void*)0;
+	struct resource *tmp_res;
+	fd_set read_set;
+	struct timeval timeout;
+
+	timeout.tv_sec = 0;
+	timeout.tv_usec = 1;
+
+	if (pipe(p) == -1) {
+	    perror("pipe failed");
+	}
+
+	pid = fork();
+	if (pid < 0) {
+	    printf("boo, something bad\n");
+	} else if (pid > 0) {
+	    int line = 0;
+	    char buffer[1024*30];
+	    int i;
+
+	    /* parent */
+	    while (line < 1024) {
+		int y[2];
+		int count = 1024;
+
+		read(p[0], y, sizeof(y));
+//		read(p[0], count, sizeof(count));
+
+		if (read(p[0], buffer, ifp->if_width * 3) == -1) {
+		    perror("Unable to read from pipe");
+		}
+		line++;
+
+//		y = line;
+		printf("y is %d\n", y[0]);
+		fflush(stdout);
+
+		block.pixelPtr = (unsigned char *)buffer;
+		block.width = count;
+		block.pitch = 3 * ifp->if_width;
+
+		Tk_PhotoPutBlock(fbinterp, fbphoto, &block, 0, ifp->if_height-y[0], count, 1, TK_PHOTO_COMPOSITE_SET);
+
+		do {
+		    i = Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT);
+		} while (i);
+
+	    }
+
+	    while ((wpid = wait(&waitret)) != pid && wpid != -1)
+		; /* do nothing */
+	    exit(0);
+	} else {
+	    /* child */
+	    printf("IMA CHILD\n");
+	    fflush(stdout);
+	}
+    }
+
     return	0;
 }
 
@@ -292,6 +356,7 @@ HIDDEN int
 tk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
 {
     int	i;
+    int line[2];
 
     FB_CK_FBIO(ifp);
 
@@ -300,14 +365,51 @@ tk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
     block.width = count;
     block.pitch = 3 * ifp->if_width;
 
+    line[0] = y;
+    line[1] = 0;
+    write(p[1], line, sizeof(line));
+//    write(p[1], count, sizeof(count));
+/*
+    uint32_t linesz;
+    linesz = htonl(y);
+    memcpy(somebuffer, linesz, sizeof(uint32_t));
+    memcpy(somebuffer+sizeof(uint32_t), block.pixelPtr, 3 * ifp->if_width);
+*/
+    // write(p[1], somebuffer, 3*ifp->if_width + sizeof(uint32_t));
+
+    if (write(p[1], block.pixelPtr, 3 * ifp->if_width) == -1) {
+	perror("Unable to write to pipe");
+	sleep(1);
+    }
+
+#if 0
+!!!
 #if defined(TK_MAJOR_VERSION) && TK_MAJOR_VERSION == 8 && defined(TK_MINOR_VERSION) && TK_MINOR_VERSION < 5
     Tk_PhotoPutBlock(fbphoto, &block, x, ifp->if_height-y, count, 1, TK_PHOTO_COMPOSITE_SET);
 #else
     Tk_PhotoPutBlock(fbinterp, fbphoto, &block, x, ifp->if_height-y, count, 1, TK_PHOTO_COMPOSITE_SET);
 #endif
+#endif
 
+#if 0
+!!!
+    printf("Do event: %d, %d, %d\n", count, x, y);
+    (void)fflush(stdout);
+#endif
+
+#if 0
     /* Immediately update display window */
-    Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT);
+    do {
+	i = Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT);
+#if 0
+!!!
+	if (i) {
+	    printf("HANDLED EVENT (%d)\n", i);
+	    fflush(stdout);
+	}
+#endif
+    } while (i);
+#endif
    
     return count;
 }
