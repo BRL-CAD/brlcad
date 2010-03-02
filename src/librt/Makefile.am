@@ -25,9 +25,9 @@ AM_CPPFLAGS = \
 AM_CFLAGS = ${STRICT_FLAGS}
 
 noinst_PROGRAMS = \
-	comb \
+	${BREP_TEST} \
 	nurb_example \
-	${BREP_TEST}
+	prcomb
 
 # make sure the example compiles, but don't include it in librt
 librt_xxx_la_SOURCES = primitives/xxx/xxx.c
