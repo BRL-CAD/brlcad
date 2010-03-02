@@ -5,18 +5,18 @@ set(LIBRT_SOURCES
     bool.c
     bundle.c
     cmd.c
-    comb_mirror.c
+    comb/comb_mirror.c
+    comb/db5_comb.c
+    comb/db_comb.c
     constraint.c
     cut.c
     db5_alloc.c
     db5_bin.c
-    db5_comb.c
     db5_io.c
     db5_scan.c
     db5_types.c
     db_alloc.c
     db_anim.c
-    db_comb.c
     db_flags.c
     db_inmem.c
     db_io.c
