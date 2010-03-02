@@ -21,7 +21,6 @@ AM_CPPFLAGS = \
 	${TCL_CPPFLAGS} \
 	${BREP_CPPFLAGS}
 
-# must fix roots.c exact floating point comparison
 AM_CFLAGS = ${STRICT_FLAGS}
 
 noinst_PROGRAMS = \
