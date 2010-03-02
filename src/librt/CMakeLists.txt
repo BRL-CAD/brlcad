@@ -1,13 +1,13 @@
 set(LIBRT_SOURCES
     bezier_2d_isect.c
-    binunif/binary_obj.c
+    binunif/binunif.c
     binunif/db5_bin.c
     bomb.c
     bool.c
     bundle.c
     cmd.c
+    comb/comb.c
     comb/comb_mirror.c
-    comb/db5_comb.c
     comb/db_comb.c
     constraint.c
     cut.c
