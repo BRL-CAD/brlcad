@@ -192,6 +192,7 @@ set(LIBRT_SOURCES
 set(IGNORED_SOURCES
     brep_test.cpp
     nurb_example.c
+    prcomb.c
     primitives/xxx/xxx.c
 )
 
