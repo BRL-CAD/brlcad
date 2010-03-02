@@ -278,10 +278,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\mged\concat.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\src\mged\dir.c"
 				>
 			</File>
@@ -435,14 +431,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\mged\utility1.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\mged\utility2.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\mged\vdraw.c"
 				>
 			</File>
 			<File
