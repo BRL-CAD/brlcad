@@ -50,7 +50,7 @@ db5_scan(
     struct db_i *dbip,
     void		(*handler)(struct db_i *,
 				   const struct db5_raw_internal *,
-				   long addr, genptr_t client_data),
+				   size_t addr, genptr_t client_data),
     genptr_t client_data)
 {
     unsigned char header[8];
@@ -127,11 +127,11 @@ struct directory *
 db_diradd5(
     struct db_i *dbip,
     const char *name,
-    long laddr,
+    size_t laddr,
     unsigned char major_type,
     unsigned char minor_type,
     unsigned char name_hidden,
-    long object_length,
+    size_t object_length,
     struct bu_attribute_value_set *avs)
 {
     struct directory **headp;
@@ -200,7 +200,7 @@ db_diradd5(
 struct directory *
 db5_diradd(struct db_i *dbip,
 	   const struct db5_raw_internal *rip,
-	   long laddr,
+	   size_t laddr,
 	   genptr_t client_data)
 {
     struct directory **headp;
@@ -288,7 +288,7 @@ HIDDEN void
 db5_diradd_handler(
     struct db_i *dbip,
     const struct db5_raw_internal *rip,
-    long laddr,
+    size_t laddr,
     genptr_t client_data)	/* unused client_data from db5_scan() */
 {
     RT_CK_DBI(dbip);

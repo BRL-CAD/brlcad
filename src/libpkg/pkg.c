@@ -273,8 +273,8 @@ _pkg_makeconn(int fd, const struct pkg_switch *switchp, void (*errlog) (char *ms
     if (_pkg_debug) {
 	_pkg_timestamp();
 	fprintf(_pkg_debug,
-		"_pkg_makeconn(fd=%d, switchp=%p, errlog=x%lx)\n",
-		fd, (void *)switchp, (unsigned long)errlog);
+		"_pkg_makeconn(fd=%d, switchp=%p, errlog=x%llx)\n",
+		fd, (void *)switchp, (unsigned long long)((uintptr_t)errlog));
 	fflush(_pkg_debug);
     }
 

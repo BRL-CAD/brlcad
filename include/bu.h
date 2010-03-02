@@ -3249,7 +3249,7 @@ BU_EXPORT BU_EXTERN(genptr_t bu_malloc,
  * Failure results in bu_bomb() being called.
  */
 BU_EXPORT BU_EXTERN(genptr_t bu_calloc,
-		    (unsigned int nelem,
+		    (size_t nelem,
 		     size_t elsize,
 		     const char *str));
 
@@ -5191,42 +5191,47 @@ BU_EXPORT BU_EXTERN(void bu_mm_cvt,
  * The argument is expected to be of type "unsigned char"
  */
 #define BU_GLONGLONG(_cp)	\
-	    ((((long)((_cp)[0])) << 56) |	\
-	     (((long)((_cp)[1])) << 48) |	\
-	     (((long)((_cp)[2])) << 40) |	\
-	     (((long)((_cp)[3])) << 32) |	\
-	     (((long)((_cp)[4])) << 24) |	\
-	     (((long)((_cp)[5])) << 16) |	\
-	     (((long)((_cp)[6])) <<  8) |	\
-	      ((long)((_cp)[7])))
+	    ((((uint64_t)((_cp)[0])) << 56) |	\
+	     (((uint64_t)((_cp)[1])) << 48) |	\
+	     (((uint64_t)((_cp)[2])) << 40) |	\
+	     (((uint64_t)((_cp)[3])) << 32) |	\
+	     (((uint64_t)((_cp)[4])) << 24) |	\
+	     (((uint64_t)((_cp)[5])) << 16) |	\
+	     (((uint64_t)((_cp)[6])) <<  8) |	\
+	      ((uint64_t)((_cp)[7])))
 #define BU_GLONG(_cp)	\
-	    ((((long)((_cp)[0])) << 24) |	\
-	     (((long)((_cp)[1])) << 16) |	\
-	     (((long)((_cp)[2])) <<  8) |	\
-	      ((long)((_cp)[3])))
+	    ((((uint32_t)((_cp)[0])) << 24) |	\
+	     (((uint32_t)((_cp)[1])) << 16) |	\
+	     (((uint32_t)((_cp)[2])) <<  8) |	\
+	      ((uint32_t)((_cp)[3])))
 #define BU_GSHORT(_cp)	\
-	    ((((short)((_cp)[0])) << 8) | \
+	    ((((uint16_t)((_cp)[0])) << 8) | \
 		       (_cp)[1])
 
 /**
  * B U _ G S H O R T
  */
-BU_EXPORT BU_EXTERN(unsigned short bu_gshort, (const unsigned char *msgp));
+BU_EXPORT BU_EXTERN(uint16_t bu_gshort, (const unsigned char *msgp));
 
 /**
  * B U _ G L O N G
  */
-BU_EXPORT BU_EXTERN(unsigned long bu_glong, (const unsigned char *msgp));
+BU_EXPORT BU_EXTERN(uint32_t bu_glong, (const unsigned char *msgp));
 
 /**
  * B U _ P S H O R T
  */
-BU_EXPORT BU_EXTERN(unsigned char *bu_pshort, (unsigned char *msgp, int s));
+BU_EXPORT BU_EXTERN(unsigned char *bu_pshort, (unsigned char *msgp, uint16_t s));
 
 /**
  * B U _ P L O N G
  */
-BU_EXPORT BU_EXTERN(unsigned char *bu_plong, (unsigned char *msgp, unsigned long l));
+BU_EXPORT BU_EXTERN(unsigned char *bu_plong, (unsigned char *msgp, uint32_t l));
+
+/**
+ * B U _ P L O N G L O N G
+ */
+BU_EXPORT BU_EXTERN(unsigned char *bu_plonglong, (unsigned char *msgp, uint64_t l));
 
 /** @} */
 

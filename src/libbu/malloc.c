@@ -289,7 +289,7 @@ bu_malloc(size_t size, const char *str)
 
 
 genptr_t
-bu_calloc(unsigned int nelem, size_t elsize, const char *str)
+bu_calloc(size_t nelem, size_t elsize, const char *str)
 {
     return _bu_alloc(CALLOC, nelem, elsize, str);
 }

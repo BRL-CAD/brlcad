@@ -677,7 +677,8 @@ cmd_get_ptr(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
     char buf[128];
 
-    sprintf(buf, "%ld", (long)(*((void **)&dbip)));
+/*    sprintf(buf, "%llu", (unsigned long long)((uintptr_t)dbip)); */
+    sprintf(buf, "%llu", (unsigned long long)dbip);
     Tcl_AppendResult(interp, buf, (char *)NULL);
     return TCL_OK;
 }

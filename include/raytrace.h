@@ -2742,7 +2742,7 @@ RT_EXPORT BU_EXTERN(int db5_decode_length,
 		     int			format));
 
 RT_EXPORT BU_EXTERN(int db5_select_length_encoding,
-		    (long len));
+		    (size_t len));
 
 RT_EXPORT BU_EXTERN(void db5_import_color_table,
 		    (char *cp));
@@ -2929,8 +2929,8 @@ RT_EXPORT BU_EXTERN(int db_scan,
 		    (struct db_i *,
 		     int (*handler)BU_ARGS((struct db_i *,
 					    const char *name,
-					    long addr,
-					    int nrec,
+					    size_t addr,
+					    size_t nrec,
 					    int flags,
 					    genptr_t client_data)),
 		     int do_old_matter,
@@ -2957,7 +2957,7 @@ RT_EXPORT BU_EXTERN(int db_dirbuild,
 RT_EXPORT BU_EXTERN(struct directory *db5_diradd,
 		    (struct db_i *dbip,
 		     const struct db5_raw_internal *rip,
-		     long laddr,
+		     size_t laddr,
 		     genptr_t client_data));
 RT_EXPORT BU_EXTERN(int db_get_version,
 		    (struct db_i *dbip));
@@ -2965,7 +2965,7 @@ RT_EXPORT BU_EXTERN(int db5_scan,
 		    (struct db_i *dbip,
 		     void (*handler)(struct db_i *,
 				     const struct db5_raw_internal *,
-				     long addr,
+				     size_t addr,
 				     genptr_t client_data),
 		     genptr_t client_data));
 
@@ -3018,18 +3018,18 @@ RT_EXPORT BU_EXTERN(struct bu_ptbl *db_lookup_by_attr,
 RT_EXPORT BU_EXTERN(struct directory *db_diradd,
 		    (struct db_i *,
 		     const char *name,
-		     long laddr,
-		     int len,
+		     size_t laddr,
+		     size_t len,
 		     int flags,
 		     genptr_t ptr));
 RT_EXPORT BU_EXTERN(struct directory *db_diradd5,
 		    (struct db_i *dbip,
 		     const char *name,
-		     long				laddr,
+		     size_t				laddr,
 		     unsigned char			major_type,
 		     unsigned char 			minor_type,
 		     unsigned char			name_hidden,
-		     long				object_length,
+		     size_t				object_length,
 		     struct bu_attribute_value_set	*avs));
 
 /* delete entry from directory */

@@ -274,7 +274,7 @@ db_lookup(const struct db_i *dbip, const char *name, int noisy)
  * not been allocated yet.
  */
 struct directory *
-db_diradd(struct db_i *dbip, const char *name, long int laddr, int len, int flags, genptr_t ptr)
+db_diradd(struct db_i *dbip, const char *name, size_t laddr, size_t len, int flags, genptr_t ptr)
 {
     struct directory **headp;
     struct directory *dp;

@@ -70,7 +70,7 @@
  *	-1	Fatal Error
  */
 int
-db_scan(register struct db_i *dbip, int (*handler) (struct db_i *, const char *, long int, int, int, genptr_t), int do_old_matter, genptr_t client_data)
+db_scan(register struct db_i *dbip, int (*handler) (struct db_i *, const char *, size_t, size_t, int, genptr_t), int do_old_matter, genptr_t client_data)
 
 
     /* argument for handler */
@@ -98,7 +98,7 @@ db_scan(register struct db_i *dbip, int (*handler) (struct db_i *, const char *,
     rewind( dbip->dbi_fp );
     next = ftell(dbip->dbi_fp);
 
-    here = addr = -1L;
+    here = addr = (size_t)-1;
     totrec = 0;
     while (1)  {
 	nrec = 0;
@@ -323,7 +323,7 @@ db_scan(register struct db_i *dbip, int (*handler) (struct db_i *, const char *,
 		handler( dbip, record.c.c_name, addr, nrec, j, client_data );
 		break;
 	    default:
-		bu_log("db_scan ERROR:  bad record %c (0%o), addr=x%x\n",
+		bu_log("db_scan ERROR:  bad record %c (0%o), addr=x%llx\n",
 		       record.u_id, record.u_id, addr );
 		/* skip this record */
 		break;

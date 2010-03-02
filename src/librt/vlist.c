@@ -398,7 +398,7 @@ rt_vlist_export(struct bu_vls *vls, struct bu_list *hp, const char *name)
 
     bu_vls_setlen(vls, (int)nbytes);
     buf = (unsigned char *)bu_vls_addr(vls);
-    bp = bu_plong(buf, (int)nelem);
+    bp = bu_plong(buf, (uint32_t)nelem);
     bu_strlcpy((char *)bp, name, namelen);
     bp += namelen;
 
@@ -443,7 +443,7 @@ rt_vlist_import(struct bu_list *hp, struct bu_vls *namevls, const unsigned char 
 
     BU_CK_VLS(namevls);
 
-    nelem = bu_glong(buf);
+    nelem = (size_t)bu_glong(buf);
     bp = buf+4;
 
     namelen = strlen((char *)bp)+1;

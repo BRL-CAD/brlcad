@@ -93,7 +93,7 @@ db5_header_is_valid(const unsigned char *hp)
  * format which will contain it.
  */
 int
-db5_select_length_encoding(long int len)
+db5_select_length_encoding(size_t len)
 {
     if (len <= 255) return DB5HDR_WIDTHCODE_8BIT;
     if (len <= 65535) return DB5HDR_WIDTHCODE_16BIT;
@@ -127,12 +127,10 @@ db5_decode_length(size_t *lenp, const unsigned char *cp, int format)
 	    *lenp = BU_GLONG(cp);
 	    return 4;
 	case DB5HDR_WIDTHCODE_64BIT:
-#if defined(IRIX64)
-	    if (sizeof(long) >= 8) {
+	    if (sizeof(size_t) >= 8)  {
 		*lenp = BU_GLONGLONG(cp);
 		return 8;
 	    }
-#endif
 	    bu_bomb("db5_decode_length(): encountered 64-bit length on 32-bit machine\n");
     }
     bu_bomb("db5_decode_length(): unknown width code\n");
@@ -166,12 +164,10 @@ db5_decode_signed(size_t *lenp, const unsigned char *cp, int format)
 		*lenp |= (-1L ^ 0xFFFFFFFF);
 	    return 4;
 	case DB5HDR_WIDTHCODE_64BIT:
-#if defined(IRIX64)
-	    if (sizeof(long) >= 8) {
+	    if (sizeof(size_t) >= 8)  {
 		*lenp = BU_GLONGLONG(cp);
 		return 8;
 	    }
-#endif
 	    bu_bomb("db5_decode_length(): encountered 64-bit length on 32-bit machine\n");
     }
     bu_bomb("db5_decode_length(): unknown width code\n");
@@ -191,20 +187,19 @@ db5_decode_signed(size_t *lenp, const unsigned char *cp, int format)
 unsigned char *
 db5_encode_length(
     unsigned char *cp,
-    long val,
+    size_t val,
     int format)
 {
     switch (format) {
 	case DB5HDR_WIDTHCODE_8BIT:
-	    *cp = val & 0xFF;
+	    *cp = (unsigned char)val & 0xFF;
 	    return cp+1;
 	case DB5HDR_WIDTHCODE_16BIT:
 	    return bu_pshort(cp, (short)val);
 	case DB5HDR_WIDTHCODE_32BIT:
-	    return bu_plong(cp, val);
+	    return bu_plong(cp, (uint32_t)val);
 	case DB5HDR_WIDTHCODE_64BIT:
-#if defined(IRIX64)
-#endif
+	    return bu_plonglong( cp, (uint64_t)val );
 	    bu_bomb("db5_encode_length(): encountered 64-bit length\n");
     }
     bu_bomb("db5_encode_length(): unknown width code\n");

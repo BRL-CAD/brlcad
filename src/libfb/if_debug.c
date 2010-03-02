@@ -38,11 +38,11 @@ deb_open(FBIO *ifp, char *file, int width, int height)
 {
     FB_CK_FBIO(ifp);
     if ( file == (char *)NULL )
-	fb_log( "fb_open( 0x%lx, NULL, %d, %d )\n",
-		(unsigned long)ifp, width, height );
+	fb_log( "fb_open( %p, NULL, %d, %d )\n",
+		(void *)ifp, width, height );
     else
-	fb_log( "fb_open( 0x%lx, \"%s\", %d, %d )\n",
-		(unsigned long)ifp, file, width, height );
+	fb_log( "fb_open( %p, \"%s\", %d, %d )\n",
+		(void *)ifp, file, width, height );
 
     /* check for default size */
     if ( width <= 0 )
@@ -71,7 +71,7 @@ HIDDEN int
 deb_close(FBIO *ifp)
 {
     FB_CK_FBIO(ifp);
-    fb_log( "fb_close( 0x%lx )\n", (unsigned long)ifp );
+    fb_log( "fb_close( %p )\n", (void *)ifp );
     return	0;
 }
 
@@ -80,10 +80,10 @@ deb_clear(FBIO *ifp, unsigned char *pp)
 {
     FB_CK_FBIO(ifp);
     if ( pp == 0 )
-	fb_log( "fb_clear( 0x%lx, NULL )\n", (unsigned long)ifp );
+	fb_log( "fb_clear( %p, NULL )\n", (void *)ifp );
     else
-	fb_log( "fb_clear( 0x%lx, &[%d %d %d] )\n",
-		(unsigned long)ifp,
+	fb_log( "fb_clear( x%p, &[%d %d %d] )\n",
+		(void *)ifp,
 		(int)(pp[RED]), (int)(pp[GRN]),
 		(int)(pp[BLU]) );
     return	0;
@@ -93,9 +93,9 @@ HIDDEN int
 deb_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
 {
     FB_CK_FBIO(ifp);
-    fb_log( "fb_read( 0x%lx,%4d,%4d, 0x%lx, %d )\n",
-	    (unsigned long)ifp, x, y,
-	    (unsigned long)pixelp, count );
+    fb_log( "fb_read( %p,%4d,%4d, %p, %d )\n",
+	    (void *)ifp, x, y,
+	    (void *)pixelp, count );
     return	count;
 }
 
@@ -105,9 +105,9 @@ deb_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
     int	i;
 
     FB_CK_FBIO(ifp);
-    fb_log( "fb_write( 0x%lx,%4d,%4d, 0x%lx, %d )\n",
-	    (unsigned long)ifp, x, y,
-	    (unsigned long)pixelp, count );
+    fb_log( "fb_write( %p,%4d,%4d, 0x%lx, %d )\n",
+	    (void *)ifp, x, y,
+	    (void *)pixelp, count );
 
     /* write them out, four per line */
     if ( ifp->if_debug & FB_DEBUG_RW ) {
@@ -130,8 +130,8 @@ HIDDEN int
 deb_rmap(FBIO *ifp, ColorMap *cmp)
 {
     FB_CK_FBIO(ifp);
-    fb_log( "fb_rmap( 0x%lx, 0x%lx )\n",
-	    (unsigned long)ifp, (unsigned long)cmp );
+    fb_log( "fb_rmap( %p, %p )\n",
+	    (void *)ifp, (void *)cmp );
     return	0;
 }
 
@@ -142,11 +142,11 @@ deb_wmap(FBIO *ifp, const ColorMap *cmp)
 
     FB_CK_FBIO(ifp);
     if ( cmp == NULL )
-	fb_log( "fb_wmap( 0x%lx, NULL )\n",
-		(unsigned long)ifp );
+	fb_log( "fb_wmap( %p, NULL )\n",
+		(void *)ifp );
     else
-	fb_log( "fb_wmap( 0x%lx, 0x%lx )\n",
-		(unsigned long)ifp, (unsigned long)cmp );
+	fb_log( "fb_wmap( %p, %p )\n",
+		(void *)ifp, (void *)cmp );
 
     if ( ifp->if_debug & FB_DEBUG_CMAP && cmp != NULL ) {
 	for ( i = 0; i < 256; i++ ) {
@@ -165,8 +165,8 @@ HIDDEN int
 deb_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
     FB_CK_FBIO(ifp);
-    fb_log( "fb_view( 0x%lx,%4d,%4d,%4d,%4d )\n",
-	    (unsigned long)ifp, xcenter, ycenter, xzoom, yzoom );
+    fb_log( "fb_view( %p,%4d,%4d,%4d,%4d )\n",
+	    (void *)ifp, xcenter, ycenter, xzoom, yzoom );
     fb_sim_view( ifp, xcenter, ycenter, xzoom, yzoom );
     return	0;
 }
@@ -175,8 +175,8 @@ HIDDEN int
 deb_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
     FB_CK_FBIO(ifp);
-    fb_log( "fb_getview( 0x%lx, 0x%x, 0x%x, 0x%x, 0x%x )\n",
-	    (unsigned long)ifp, xcenter, ycenter, xzoom, yzoom );
+    fb_log( "fb_getview( %p, 0x%x, 0x%x, 0x%x, 0x%x )\n",
+	    (void *)ifp, xcenter, ycenter, xzoom, yzoom );
     fb_sim_getview( ifp, xcenter, ycenter, xzoom, yzoom );
     fb_log( " <= %d %d %d %d\n",
 	    *xcenter, *ycenter, *xzoom, *yzoom );
@@ -187,16 +187,16 @@ HIDDEN int
 deb_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig)
 {
     FB_CK_FBIO(ifp);
-    fb_log( "fb_setcursor( 0x%lx, 0x%lx, %d, %d, %d, %d )\n",
-	    (unsigned long)ifp, bits, xbits, ybits, xorig, yorig );
+    fb_log( "fb_setcursor( %p, 0x%lx, %d, %d, %d, %d )\n",
+	    (void *)ifp, bits, xbits, ybits, xorig, yorig );
     return	0;
 }
 
 HIDDEN int
 deb_cursor(FBIO *ifp, int mode, int x, int y)
 {
-    fb_log( "fb_cursor( 0x%lx, %d,%4d,%4d )\n",
-	    (unsigned long)ifp, mode, x, y );
+    fb_log( "fb_cursor( %p, %d,%4d,%4d )\n",
+	    (void *)ifp, mode, x, y );
     fb_sim_cursor( ifp, mode, x, y );
     return	0;
 }
@@ -205,8 +205,8 @@ HIDDEN int
 deb_getcursor(FBIO *ifp, int *mode, int *x, int *y)
 {
     FB_CK_FBIO(ifp);
-    fb_log( "fb_getcursor( 0x%lx, 0x%x, 0x%x, 0x%x )\n",
-	    (unsigned long)ifp, mode, x, y );
+    fb_log( "fb_getcursor( %p, 0x%x, 0x%x, 0x%x )\n",
+	    (void *)ifp, mode, x, y );
     fb_sim_getcursor( ifp, mode, x, y );
     fb_log( " <= %d %d %d\n", *mode, *x, *y );
     return	0;
@@ -216,9 +216,9 @@ HIDDEN int
 deb_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
     FB_CK_FBIO(ifp);
-    fb_log( "fb_readrect( 0x%lx, (%4d,%4d), %4d,%4d, 0x%lx )\n",
-	    (unsigned long)ifp, xmin, ymin, width, height,
-	    (unsigned long)pp );
+    fb_log( "fb_readrect( %p, (%4d,%4d), %4d,%4d, %p )\n",
+	    (void *)ifp, xmin, ymin, width, height,
+	    (void *)pp );
     return( width*height );
 }
 
@@ -226,9 +226,9 @@ HIDDEN int
 deb_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
     FB_CK_FBIO(ifp);
-    fb_log( "fb_writerect( 0x%lx,%4d,%4d,%4d,%4d, 0x%lx )\n",
-	    (unsigned long)ifp, xmin, ymin, width, height,
-	    (unsigned long)pp );
+    fb_log( "fb_writerect( %p,%4d,%4d,%4d,%4d, %p )\n",
+	    (void *)ifp, xmin, ymin, width, height,
+	    (void *)pp );
     return( width*height );
 }
 
@@ -236,9 +236,9 @@ HIDDEN int
 deb_bwreadrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
     FB_CK_FBIO(ifp);
-    fb_log( "fb_bwreadrect( 0x%lx, (%4d,%4d), %4d,%4d, 0x%lx )\n",
-	    (unsigned long)ifp, xmin, ymin, width, height,
-	    (unsigned long)pp );
+    fb_log( "fb_bwreadrect( %p, (%4d,%4d), %4d,%4d, %p )\n",
+	    (void *)ifp, xmin, ymin, width, height,
+	    (void *)pp );
     return( width*height );
 }
 
@@ -246,9 +246,9 @@ HIDDEN int
 deb_bwwriterect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
     FB_CK_FBIO(ifp);
-    fb_log( "fb_bwwriterect( 0x%lx,%4d,%4d,%4d,%4d, 0x%lx )\n",
-	    (unsigned long)ifp, xmin, ymin, width, height,
-	    (unsigned long)pp );
+    fb_log( "fb_bwwriterect( %p,%4d,%4d,%4d,%4d, %p )\n",
+	    (void *)ifp, xmin, ymin, width, height,
+	    (void *)pp );
     return( width*height );
 }
 
@@ -256,7 +256,7 @@ HIDDEN int
 deb_poll(FBIO *ifp)
 {
     FB_CK_FBIO(ifp);
-    fb_log( "fb_poll( 0x%lx )\n", (unsigned long)ifp );
+    fb_log( "fb_poll( %p )\n", (void *)ifp );
     return	0;
 }
 
@@ -264,7 +264,7 @@ HIDDEN int
 deb_flush(FBIO *ifp)
 {
     FB_CK_FBIO(ifp);
-    fb_log( "if_flush( 0x%lx )\n", (unsigned long)ifp );
+    fb_log( "if_flush( %p )\n", (void *)ifp );
     return	0;
 }
 
@@ -272,7 +272,7 @@ HIDDEN int
 deb_free(FBIO *ifp)
 {
     FB_CK_FBIO(ifp);
-    fb_log( "fb_free( 0x%lx )\n", (unsigned long)ifp );
+    fb_log( "fb_free( %p )\n", (void *)ifp );
     return	0;
 }
 

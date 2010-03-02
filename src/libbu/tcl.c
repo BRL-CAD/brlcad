@@ -189,6 +189,8 @@ bu_tcl_ck_malloc_ptr(ClientData clientData,
 		     int argc,
 		     const char **argv)
 {
+    void *voidp;
+
     /* quell usage warning */
     clientData = clientData;
 
@@ -196,7 +198,13 @@ bu_tcl_ck_malloc_ptr(ClientData clientData,
 	Tcl_AppendResult(interp, "Usage: bu_ck_malloc_ptr ascii-ptr description\n");
 	return TCL_ERROR;
     }
-    bu_ck_malloc_ptr((genptr_t)atol(argv[1]), argv[2]);
+
+    if (sscanf(argv[1], "%p", &voidp) != 1) {
+	Tcl_AppendResult(interp, "bu_ck_malloc_ptr: failed to convert %s to a pointer\n", argv[1]);
+	return TCL_ERROR;
+    }
+
+    bu_ck_malloc_ptr(voidp, argv[2]);
     return TCL_OK;
 }
 
