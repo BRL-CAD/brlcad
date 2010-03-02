@@ -230,8 +230,8 @@ librt_la_LIBADD = \
 	librt_nil.la \
 	${RT_LIBS}
 
-comb_SOURCES = comb.c
-comb_LDADD = \
+prcomb_SOURCES = prcomb.c
+prcomb_LDADD = \
 	librt.la \
 	${RT_LIBS}
 
