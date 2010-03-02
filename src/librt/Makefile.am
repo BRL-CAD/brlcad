@@ -41,8 +41,8 @@ librt_nil_la_SOURCES = \
 	bool.c \
 	bundle.c \
 	cmd.c \
+	comb/comb.c \
 	comb/comb_mirror.c \
-	comb/db5_comb.c \
 	comb/db_comb.c \
 	constraint.c \
 	cut.c \
