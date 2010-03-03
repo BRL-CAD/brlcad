@@ -43,6 +43,8 @@ rt_obj_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     ft = &rt_functab[id];
     if (!ft)
 	return -3;
+    if (!ft->ft_prep)
+	return -4;
 
     return ft->ft_prep(stp, ip, rtip);
 }
