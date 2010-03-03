@@ -109,24 +109,14 @@ RT_EXPORT extern int rt_obj_tess(struct nmgregion **r, struct model *m, struct r
 RT_EXPORT extern int rt_obj_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bn_tol *tol);
 
 /**
- * v5 object import from disk
+ * v4/v5 object import from disk
  */
-RT_EXPORT extern int rt_obj_import5(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp);
+RT_EXPORT extern int rt_obj_import(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp);
 
 /**
- * v5 object export to disk
+ * v4/v5 object export to disk
  */
-RT_EXPORT extern int rt_obj_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip, struct resource *resp);
-
-/**
- * v4 object import from disk
- */
-RT_EXPORT extern int rt_obj_import4(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp);
-
-/**
- * v4 object export to disk
- */
-RT_EXPORT extern int rt_obj_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip, struct resource *resp);
+RT_EXPORT extern int rt_obj_export(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip, struct resource *resp);
 
 /**
  * free the internal representation of an object
