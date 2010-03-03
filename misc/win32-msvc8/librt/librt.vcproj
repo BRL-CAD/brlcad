@@ -788,6 +788,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\obj_uv.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\opennurbs_ext.cpp"
 				>
 			</File>
