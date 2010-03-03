@@ -126,17 +126,17 @@ RT_EXPORT extern int rt_obj_ifree(struct rt_db_internal *ip);
 /**
  * db object 'get' support, obtain a tcl list representation
  */
-RT_EXPORT extern int rt_obj_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr);
+RT_EXPORT extern int rt_obj_get(struct bu_vls *logstr, const struct rt_db_internal *ip, const char *attr);
 
 /**
  * db object 'adjust' support, modify a tcl list representation
  */
-RT_EXPORT extern int rt_obj_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, char **argv);
+RT_EXPORT extern int rt_obj_adjust(struct bu_vls *logstr, struct rt_db_internal *ip, int argc, char **argv);
 
 /**
  * describe an object in text form (used by the 'l' command)
  */
-RT_EXPORT extern int rt_obj_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local, struct resource *resp, struct db_i *db_i);
+RT_EXPORT extern int rt_obj_describe(struct bu_vls *logstr, const struct rt_db_internal *ip, int verbose, double mm2local, struct resource *resp, struct db_i *db_i);
 
 /**
  * create a 'default' object
