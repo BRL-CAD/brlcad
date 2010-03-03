@@ -2562,7 +2562,7 @@ BU_EXPORT BU_EXTERN(int bu_count_path, (char *path, char *substr));
 /**
  * Return array with filenames with suffix matching substr
  */
-BU_EXPORT BU_EXTERN(void bu_list_path, (char *path, char *substr, char **filearray));
+BU_EXPORT BU_EXTERN(void bu_list_path, (char *path, char *substr, char **filearray)); 
 
 
 /** @file brlcad_path.c
@@ -5190,8 +5190,7 @@ BU_EXPORT BU_EXTERN(void bu_mm_cvt,
  *
  * The argument is expected to be of type "unsigned char"
  */
-#ifdef HAVE_UINT64_T
-#   define BU_GLONGLONG(_cp)	\
+#define BU_GLONGLONG(_cp)	\
 	    ((((uint64_t)((_cp)[0])) << 56) |	\
 	     (((uint64_t)((_cp)[1])) << 48) |	\
 	     (((uint64_t)((_cp)[2])) << 40) |	\
@@ -5200,56 +5199,39 @@ BU_EXPORT BU_EXTERN(void bu_mm_cvt,
 	     (((uint64_t)((_cp)[5])) << 16) |	\
 	     (((uint64_t)((_cp)[6])) <<  8) |	\
 	      ((uint64_t)((_cp)[7])))
-#endif
-
-#ifdef HAVE_UINT32_T
-#   define BU_GLONG(_cp)	\
+#define BU_GLONG(_cp)	\
 	    ((((uint32_t)((_cp)[0])) << 24) |	\
 	     (((uint32_t)((_cp)[1])) << 16) |	\
 	     (((uint32_t)((_cp)[2])) <<  8) |	\
 	      ((uint32_t)((_cp)[3])))
-#endif
-
-#ifdef HAVE_UINT16_T
-#   define BU_GSHORT(_cp)	\
+#define BU_GSHORT(_cp)	\
 	    ((((uint16_t)((_cp)[0])) << 8) | \
 		       (_cp)[1])
-#endif
 
 /**
  * B U _ G S H O R T
  */
-#ifdef HAVE_UINT16_T
 BU_EXPORT BU_EXTERN(uint16_t bu_gshort, (const unsigned char *msgp));
-#endif
 
 /**
  * B U _ G L O N G
  */
-#ifdef HAVE_UINT32_T
 BU_EXPORT BU_EXTERN(uint32_t bu_glong, (const unsigned char *msgp));
-#endif
 
 /**
  * B U _ P S H O R T
  */
-#ifdef HAVE_UINT16_T
 BU_EXPORT BU_EXTERN(unsigned char *bu_pshort, (unsigned char *msgp, uint16_t s));
-#endif
 
 /**
  * B U _ P L O N G
  */
-#ifdef HAVE_UINT32_T
 BU_EXPORT BU_EXTERN(unsigned char *bu_plong, (unsigned char *msgp, uint32_t l));
-#endif
 
 /**
  * B U _ P L O N G L O N G
  */
-#ifdef HAVE_UINT64_T
 BU_EXPORT BU_EXTERN(unsigned char *bu_plonglong, (unsigned char *msgp, uint64_t l));
-#endif
 
 /** @} */
 
