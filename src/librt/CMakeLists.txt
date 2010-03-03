@@ -148,6 +148,7 @@ set(LIBRT_SOURCES
     primitives/obj_print.c
     primitives/obj_shot.c
     primitives/obj_tess.c
+    primitives/obj_tnurb.c
     primitives/obj_uv.c
     primitives/obj_vshot.c
     primitives/part/part.c

@@ -804,6 +804,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\obj_tnurb.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\primitives\obj_uv.c"
 				>
 			</File>
