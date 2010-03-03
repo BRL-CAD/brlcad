@@ -159,6 +159,7 @@ fb_tk_open(FBIO *ifp, char *file, int width, int height)
     const char *cmd = "package require Tk";
     char image_create_cmd[255] = {'\0'};
     char canvas_create_cmd[255] = {'\0'};
+    char reportcolorcmd[255] = {'\0'};
     const char canvas_pack_cmd[255] =
 	"pack .fb_tk_canvas -fill both -expand true";
     const char place_image_cmd[255] =
@@ -226,8 +227,11 @@ fb_tk_open(FBIO *ifp, char *file, int width, int height)
     }
 
     sprintf(canvas_create_cmd,
-	    "canvas .fb_tk_canvas -height %d -width %d", width, height);
+	    "canvas .fb_tk_canvas -highlightthickness 0 -height %d -width %d", width, height);
 
+    sprintf (reportcolorcmd,
+	    "bind . <Button-3> {puts \"At image (%%x, [expr %d - %%y]), real RGB = [fb_tk_photo get %%x %%y]\n\"}", height);
+    
     if (Tcl_Eval(fbinterp, canvas_create_cmd) != TCL_OK) {
 	fb_log("Error returned attempting to create canvas in fb_open.");
     }
@@ -256,6 +260,9 @@ fb_tk_open(FBIO *ifp, char *file, int width, int height)
     }
     if (Tcl_Eval(fbinterp, bindclosecmd) != TCL_OK) {
 	fb_log("Error binding right mouse button.");
+    }
+    if (Tcl_Eval(fbinterp, reportcolorcmd) != TCL_OK) {
+	fb_log("Error binding middle mouse button.");
     }
  
     while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
