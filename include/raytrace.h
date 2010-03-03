@@ -1910,7 +1910,8 @@ struct rt_functab {
 			    const struct bn_tol * /*tol*/));
     void (*ft_vshot) BU_ARGS((struct soltab * /*stp*/[],
 			      struct xray *[] /*rp*/,
-			      struct seg [] /*segp*/, int /*n*/,
+			      struct seg * /*segp*/,
+			      int /*n*/,
 			      struct application * /*ap*/));
     int (*ft_tessellate) BU_ARGS((struct nmgregion ** /*r*/,
 				  struct model * /*m*/,

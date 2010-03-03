@@ -96,7 +96,7 @@ RT_EXPORT extern int rt_obj_plot(struct bu_list *vhead, struct rt_db_internal *i
 /**
  * shoot an array of rays at a set of homogenous objects.
  */
-RT_EXPORT extern int rt_obj_vshot(struct soltab *stp[], struct xray *rp[], struct seg segp[], int n, struct application *ap);
+RT_EXPORT extern int rt_obj_vshot(struct soltab *stp[], struct xray *rp[], struct seg *segp, int n, struct application *ap);
 
 /**
  * tessellate an object (into NMG form)
