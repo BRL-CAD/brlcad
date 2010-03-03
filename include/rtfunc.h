@@ -141,7 +141,7 @@ RT_EXPORT extern int rt_obj_describe(struct bu_vls *logstr, const struct rt_db_i
 /**
  * create a 'default' object
  */
-RT_EXPORT extern int rt_obj_make(const struct rt_functab *ftp, struct rt_db_internal *intern);
+RT_EXPORT extern int rt_obj_make(const struct rt_functab *ftp, struct rt_db_internal *ip);
 
 /**
  * apply a matrix transformation to an object (translation, rotation, scale)
