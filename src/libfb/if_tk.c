@@ -68,12 +68,14 @@ Tk_PhotoImageBlock block = {
     }
 };
 
+
 char *tkwrite_buffer;
 
 int tk_close_existing()
 {
     return 0;
 }
+
 
 HIDDEN int	fb_tk_open(FBIO *ifp, char *file, int width, int height),
     fb_tk_close(FBIO *ifp),
@@ -151,25 +153,25 @@ HIDDEN int
 fb_tk_open(FBIO *ifp, char *file, int width, int height)
 {
     FB_CK_FBIO(ifp);
-    if ( file == (char *)NULL )
-	fb_log( "fb_open( 0x%lx, NULL, %d, %d )\n",
-		(unsigned long)ifp, width, height );
+    if (file == (char *)NULL)
+	fb_log("fb_open(0x%lx, NULL, %d, %d)\n",
+	       (unsigned long)ifp, width, height);
     else
-	fb_log( "fb_open( 0x%lx, \"%s\", %d, %d )\n",
-		(unsigned long)ifp, file, width, height );
+	fb_log("fb_open(0x%lx, \"%s\", %d, %d)\n",
+	       (unsigned long)ifp, file, width, height);
 
     /* check for default size */
-    if ( width <= 0 )
+    if (width <= 0)
 	width = ifp->if_width;
-    if ( height <= 0 )
+    if (height <= 0)
 	height = ifp->if_height;
 
     /* set debug bit vector */
-    if ( file != NULL ) {
+    if (file != NULL) {
 	char *cp;
-	for ( cp = file; *cp != '\0' && !isdigit(*cp); cp++ )
+	for (cp = file; *cp != '\0' && !isdigit(*cp); cp++)
 	    ;
-	sscanf( cp, "%d", &ifp->if_debug );
+	sscanf(cp, "%d", &ifp->if_debug);
     } else {
 	ifp->if_debug = 0;
     }
@@ -182,11 +184,11 @@ fb_tk_open(FBIO *ifp, char *file, int width, int height)
     const char *cmd = "package require Tk";
 
     if (Tcl_Init(fbinterp) == TCL_ERROR) {
-	fb_log( "Tcl_Init returned error in fb_open." );
+	fb_log("Tcl_Init returned error in fb_open.");
     }
 
     if (Tcl_Eval(fbinterp, cmd) != TCL_OK) {
-	fb_log( "Error returned attempting to start tk in fb_open." );
+	fb_log("Error returned attempting to start tk in fb_open.");
     }
 
 
@@ -202,11 +204,11 @@ fb_tk_open(FBIO *ifp, char *file, int width, int height)
 	    width, height);
 
     if (Tcl_Eval(fbinterp, image_create_cmd) != TCL_OK) {
-	fb_log( "Error returned attempting to create image in fb_open." );
+	fb_log("Error returned attempting to create image in fb_open.");
     }
 
-    if ((fbphoto = Tk_FindPhoto(fbinterp, "fb_tk_photo")) == NULL ) {
-	fb_log( "Image creation unsuccessful in fb_open." );
+    if ((fbphoto = Tk_FindPhoto(fbinterp, "fb_tk_photo")) == NULL) {
+	fb_log("Image creation unsuccessful in fb_open.");
     }
 
     char canvas_create_cmd[255];
@@ -214,22 +216,22 @@ fb_tk_open(FBIO *ifp, char *file, int width, int height)
 	    "canvas .fb_tk_canvas -height %d -width %d", width, height);
 
     if (Tcl_Eval(fbinterp, canvas_create_cmd) != TCL_OK) {
-	fb_log( "Error returned attempting to create canvas in fb_open." );
+	fb_log("Error returned attempting to create canvas in fb_open.");
     }
 
     const char canvas_pack_cmd[255] =
 	"pack .fb_tk_canvas -fill both -expand true";
 
     if (Tcl_Eval(fbinterp, canvas_pack_cmd) != TCL_OK) {
-	fb_log( "Error returned attempting to pack canvas in fb_open. %s",
-		Tcl_GetStringResult(fbinterp));
+	fb_log("Error returned attempting to pack canvas in fb_open. %s",
+	       Tcl_GetStringResult(fbinterp));
     }
 
     const char place_image_cmd[255] =
 	".fb_tk_canvas create image 0 0 -image fb_tk_photo -anchor nw";
     if (Tcl_Eval(fbinterp, place_image_cmd) != TCL_OK) {
-	fb_log( "Error returned attempting to place image in fb_open. %s",
-		Tcl_GetStringResult(fbinterp));
+	fb_log("Error returned attempting to place image in fb_open. %s",
+	       Tcl_GetStringResult(fbinterp));
     }
 
     /* Set our Tcl variable pertaining to whether a
@@ -243,24 +245,24 @@ fb_tk_open(FBIO *ifp, char *file, int width, int height)
     Tcl_SetVar(fbinterp, "CloseWindow", "open", 0);
     const char *wmcmd = "wm protocol . WM_DELETE_WINDOW {set CloseWindow \"close\"}";
     if (Tcl_Eval(fbinterp, wmcmd) != TCL_OK) {
-	fb_log( "Error binding WM_DELETE_WINDOW." );
+	fb_log("Error binding WM_DELETE_WINDOW.");
     }
 	 
     while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
 
     {
-	int parent_pipe[2];
-	int pid, wpid;
-	int waitret;
+	int pid;
+
+	/* FIXME: malloc() is necessary here because there are callers
+	 * that acquire a BU_SYM_SYSCALL semaphore for libfb calls.
+	 * this should be investigated more closely to see if the
+	 * semaphore acquires are critical or if they can be pushed
+	 * down into libfb proper.  in the meantime, manually call
+	 * malloc()/free().
+	 */
 	char *buffer = (char *)malloc(sizeof(uint32_t)*3+ifp->if_width*3);
 	char *linebuffer = (char *)malloc(ifp->if_width*3);
 	tkwrite_buffer = (char *)malloc(ifp->if_width*3);
-	struct resource *tmp_res;
-	fd_set read_set;
-	struct timeval timeout;
-
-	timeout.tv_sec = 0;
-	timeout.tv_usec = 1;
 
 	if (pipe(p) == -1) {
 	    perror("pipe failed");
@@ -301,10 +303,10 @@ fb_tk_open(FBIO *ifp, char *file, int width, int height)
 		    free(tkwrite_buffer);
 		    fclose(stdin);
 		    Tcl_Eval(fbinterp, "vwait CloseWindow");
-		    if (!strcmp(Tcl_GetVar(fbinterp, "CloseWindow", 0),"close")) {
+		    if (!strcmp(Tcl_GetVar(fbinterp, "CloseWindow", 0), "close")) {
 			printf("Close Window event\n");
 			Tcl_Eval(fbinterp, "destroy .");
-    			bu_exit(0,NULL);
+    			bu_exit(0, NULL);
 		    }
 		}
 	    }
@@ -315,8 +317,9 @@ fb_tk_open(FBIO *ifp, char *file, int width, int height)
 	}
     }
 
-    return	0;
+    return 0;
 }
+
 
 HIDDEN int
 fb_tk_close(FBIO *ifp)
@@ -326,7 +329,7 @@ fb_tk_close(FBIO *ifp)
     y[1] = 0;
     printf("Entering fb_tk_close\n");
     FB_CK_FBIO(ifp);
-    write(p[1],y,sizeof(y));
+    write(p[1], y, sizeof(y));
     close(p[1]);
     printf("Sent write from fb_tk_close\n");
     return 0;
@@ -337,25 +340,27 @@ HIDDEN int
 tk_clear(FBIO *ifp, unsigned char *pp)
 {
     FB_CK_FBIO(ifp);
-    if ( pp == 0 )
-	fb_log( "fb_clear( 0x%lx, NULL )\n", (unsigned long)ifp );
+    if (pp == 0)
+	fb_log("fb_clear(0x%lx, NULL)\n", (unsigned long)ifp);
     else
-	fb_log( "fb_clear( 0x%lx, &[%d %d %d] )\n",
-		(unsigned long)ifp,
-		(int)(pp[RED]), (int)(pp[GRN]),
-		(int)(pp[BLU]) );
+	fb_log("fb_clear(0x%lx, &[%d %d %d])\n",
+	       (unsigned long)ifp,
+	       (int)(pp[RED]), (int)(pp[GRN]),
+	       (int)(pp[BLU]));
     return	0;
 }
+
 
 HIDDEN int
 tk_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
 {
     FB_CK_FBIO(ifp);
-    fb_log( "fb_read( 0x%lx,%4d,%4d, 0x%lx, %d )\n",
-	    (unsigned long)ifp, x, y,
-	    (unsigned long)pixelp, count );
+    fb_log("fb_read(0x%lx, %4d, %4d, 0x%lx, %d)\n",
+	   (unsigned long)ifp, x, y,
+	   (unsigned long)pixelp, count);
     return	count;
 }
+
 
 HIDDEN int
 tk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
@@ -386,14 +391,16 @@ tk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
     return count;
 }
 
+
 HIDDEN int
 tk_rmap(FBIO *ifp, ColorMap *cmp)
 {
     FB_CK_FBIO(ifp);
-    fb_log( "fb_rmap( 0x%lx, 0x%lx )\n",
-	    (unsigned long)ifp, (unsigned long)cmp );
+    fb_log("fb_rmap(0x%lx, 0x%lx)\n",
+	   (unsigned long)ifp, (unsigned long)cmp);
     return	0;
 }
+
 
 HIDDEN int
 tk_wmap(FBIO *ifp, const ColorMap *cmp)
@@ -401,165 +408,179 @@ tk_wmap(FBIO *ifp, const ColorMap *cmp)
     int	i;
 
     FB_CK_FBIO(ifp);
-    if ( cmp == NULL )
-	fb_log( "fb_wmap( 0x%lx, NULL )\n",
-		(unsigned long)ifp );
+    if (cmp == NULL)
+	fb_log("fb_wmap(0x%lx, NULL)\n",
+	       (unsigned long)ifp);
     else
-	fb_log( "fb_wmap( 0x%lx, 0x%lx )\n",
-		(unsigned long)ifp, (unsigned long)cmp );
+	fb_log("fb_wmap(0x%lx, 0x%lx)\n",
+	       (unsigned long)ifp, (unsigned long)cmp);
 
-    if ( ifp->if_debug & FB_DEBUG_CMAP && cmp != NULL ) {
-	for ( i = 0; i < 256; i++ ) {
-	    fb_log( "%3d: [ 0x%4lx, 0x%4lx, 0x%4lx ]\n",
-		    i,
-		    (unsigned long)cmp->cm_red[i],
-		    (unsigned long)cmp->cm_green[i],
-		    (unsigned long)cmp->cm_blue[i] );
+    if (ifp->if_debug & FB_DEBUG_CMAP && cmp != NULL) {
+	for (i = 0; i < 256; i++) {
+	    fb_log("%3d: [ 0x%4lx, 0x%4lx, 0x%4lx ]\n",
+		   i,
+		   (unsigned long)cmp->cm_red[i],
+		   (unsigned long)cmp->cm_green[i],
+		   (unsigned long)cmp->cm_blue[i]);
 	}
     }
 
     return	0;
 }
 
+
 HIDDEN int
 tk_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
     FB_CK_FBIO(ifp);
-    fb_log( "fb_view( 0x%lx,%4d,%4d,%4d,%4d )\n",
-	    (unsigned long)ifp, xcenter, ycenter, xzoom, yzoom );
-    fb_sim_view( ifp, xcenter, ycenter, xzoom, yzoom );
+    fb_log("fb_view(0x%lx, %4d, %4d, %4d, %4d)\n",
+	   (unsigned long)ifp, xcenter, ycenter, xzoom, yzoom);
+    fb_sim_view(ifp, xcenter, ycenter, xzoom, yzoom);
     return	0;
 }
+
 
 HIDDEN int
 tk_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
     FB_CK_FBIO(ifp);
-    fb_log( "fb_getview( 0x%lx, 0x%x, 0x%x, 0x%x, 0x%x )\n",
-	    (unsigned long)ifp, xcenter, ycenter, xzoom, yzoom );
-    fb_sim_getview( ifp, xcenter, ycenter, xzoom, yzoom );
-    fb_log( " <= %d %d %d %d\n",
-	    *xcenter, *ycenter, *xzoom, *yzoom );
+    fb_log("fb_getview(0x%lx, 0x%x, 0x%x, 0x%x, 0x%x)\n",
+	   (unsigned long)ifp, xcenter, ycenter, xzoom, yzoom);
+    fb_sim_getview(ifp, xcenter, ycenter, xzoom, yzoom);
+    fb_log(" <= %d %d %d %d\n",
+	   *xcenter, *ycenter, *xzoom, *yzoom);
     return	0;
 }
+
 
 HIDDEN int
 tk_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig)
 {
     FB_CK_FBIO(ifp);
-    fb_log( "fb_setcursor( 0x%lx, 0x%lx, %d, %d, %d, %d )\n",
-	    (unsigned long)ifp, bits, xbits, ybits, xorig, yorig );
+    fb_log("fb_setcursor(0x%lx, 0x%lx, %d, %d, %d, %d)\n",
+	   (unsigned long)ifp, bits, xbits, ybits, xorig, yorig);
     return	0;
 }
+
 
 HIDDEN int
 tk_cursor(FBIO *ifp, int mode, int x, int y)
 {
-    fb_log( "fb_cursor( 0x%lx, %d,%4d,%4d )\n",
-	    (unsigned long)ifp, mode, x, y );
-    fb_sim_cursor( ifp, mode, x, y );
+    fb_log("fb_cursor(0x%lx, %d, %4d, %4d)\n",
+	   (unsigned long)ifp, mode, x, y);
+    fb_sim_cursor(ifp, mode, x, y);
     return	0;
 }
+
 
 HIDDEN int
 tk_getcursor(FBIO *ifp, int *mode, int *x, int *y)
 {
     FB_CK_FBIO(ifp);
-    fb_log( "fb_getcursor( 0x%lx, 0x%x, 0x%x, 0x%x )\n",
-	    (unsigned long)ifp, mode, x, y );
-    fb_sim_getcursor( ifp, mode, x, y );
-    fb_log( " <= %d %d %d\n", *mode, *x, *y );
+    fb_log("fb_getcursor(0x%lx, 0x%x, 0x%x, 0x%x)\n",
+	   (unsigned long)ifp, mode, x, y);
+    fb_sim_getcursor(ifp, mode, x, y);
+    fb_log(" <= %d %d %d\n", *mode, *x, *y);
     return	0;
 }
+
 
 HIDDEN int
 tk_readrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
     FB_CK_FBIO(ifp);
-    fb_log( "fb_readrect( 0x%lx, (%4d,%4d), %4d,%4d, 0x%lx )\n",
-	    (unsigned long)ifp, xmin, ymin, width, height,
-	    (unsigned long)pp );
-    return( width*height );
+    fb_log("fb_readrect(0x%lx, (%4d, %4d), %4d, %4d, 0x%lx)\n",
+	   (unsigned long)ifp, xmin, ymin, width, height,
+	   (unsigned long)pp);
+    return(width*height);
 }
+
 
 HIDDEN int
 tk_writerect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
     FB_CK_FBIO(ifp);
-    fb_log( "fb_writerect( 0x%lx,%4d,%4d,%4d,%4d, 0x%lx )\n",
-	    (unsigned long)ifp, xmin, ymin, width, height,
-	    (unsigned long)pp );
-    return( width*height );
+    fb_log("fb_writerect(0x%lx, %4d, %4d, %4d, %4d, 0x%lx)\n",
+	   (unsigned long)ifp, xmin, ymin, width, height,
+	   (unsigned long)pp);
+    return(width*height);
 }
+
 
 HIDDEN int
 tk_bwreadrect(FBIO *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
     FB_CK_FBIO(ifp);
-    fb_log( "fb_bwreadrect( 0x%lx, (%4d,%4d), %4d,%4d, 0x%lx )\n",
-	    (unsigned long)ifp, xmin, ymin, width, height,
-	    (unsigned long)pp );
-    return( width*height );
+    fb_log("fb_bwreadrect(0x%lx, (%4d, %4d), %4d, %4d, 0x%lx)\n",
+	   (unsigned long)ifp, xmin, ymin, width, height,
+	   (unsigned long)pp);
+    return(width*height);
 }
+
 
 HIDDEN int
 tk_bwwriterect(FBIO *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
     FB_CK_FBIO(ifp);
-    fb_log( "fb_bwwriterect( 0x%lx,%4d,%4d,%4d,%4d, 0x%lx )\n",
-	    (unsigned long)ifp, xmin, ymin, width, height,
-	    (unsigned long)pp );
-    return( width*height );
+    fb_log("fb_bwwriterect(0x%lx, %4d, %4d, %4d, %4d, 0x%lx)\n",
+	   (unsigned long)ifp, xmin, ymin, width, height,
+	   (unsigned long)pp);
+    return(width*height);
 }
+
 
 HIDDEN int
 tk_poll(FBIO *ifp)
 {
     FB_CK_FBIO(ifp);
     while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
-    fb_log( "fb_poll( 0x%lx )\n", (unsigned long)ifp );
+    fb_log("fb_poll(0x%lx)\n", (unsigned long)ifp);
     return	0;
 }
+
 
 HIDDEN int
 tk_flush(FBIO *ifp)
 {
     FB_CK_FBIO(ifp);
-    fb_log( "if_flush( 0x%lx )\n", (unsigned long)ifp );
+    fb_log("if_flush(0x%lx)\n", (unsigned long)ifp);
     return	0;
 }
+
 
 HIDDEN int
 tk_free(FBIO *ifp)
 {
     FB_CK_FBIO(ifp);
-    fb_log( "fb_free( 0x%lx )\n", (unsigned long)ifp );
+    fb_log("fb_free(0x%lx)\n", (unsigned long)ifp);
     return	0;
 }
+
 
 /*ARGSUSED*/
 HIDDEN int
 tk_help(FBIO *ifp)
 {
     FB_CK_FBIO(ifp);
-    fb_log( "Description: %s\n", tk_interface.if_type );
-    fb_log( "Device: %s\n", ifp->if_name );
-    fb_log( "Max width/height: %d %d\n",
-	    tk_interface.if_max_width,
-	    tk_interface.if_max_height );
-    fb_log( "Default width/height: %d %d\n",
-	    tk_interface.if_width,
-	    tk_interface.if_height );
-    fb_log( "\
+    fb_log("Description: %s\n", tk_interface.if_type);
+    fb_log("Device: %s\n", ifp->if_name);
+    fb_log("Max width/height: %d %d\n",
+	   tk_interface.if_max_width,
+	   tk_interface.if_max_height);
+    fb_log("Default width/height: %d %d\n",
+	   tk_interface.if_width,
+	   tk_interface.if_height);
+    fb_log("\
 Usage: /dev/tk[#]\n\
   where # is a optional bit vector from:\n\
     1    debug buffered I/O calls\n\
     2    show colormap entries in rmap/wmap calls\n\
-    4    show actual pixel values in read/write calls\n" );
+    4    show actual pixel values in read/write calls\n");
     /*8    buffered read/write values - ifdef'd out*/
 
     return	0;
 }
+
 
 #else
 
