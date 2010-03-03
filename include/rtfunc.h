@@ -56,27 +56,27 @@ RT_EXPORT extern int rt_obj_piece_shot(struct rt_piecestate *psp, struct rt_piec
 /**
  * TBD.
  */
-RT_EXPORT extern void rt_obj_piece_hitsegs(struct rt_piecestate *psp, struct seg *seghead, struct application *ap);
+RT_EXPORT extern int rt_obj_piece_hitsegs(struct rt_piecestate *psp, struct seg *seghead, struct application *ap);
 
 /**
  * print an objects parameters in debug/diagnostic form
  */
-RT_EXPORT extern void rt_obj_print(const struct soltab *stp);
+RT_EXPORT extern int rt_obj_print(const struct soltab *stp);
 
 /**
  * calculate a normal on an object that has been hit via rt_shot()
  */
-RT_EXPORT extern void rt_obj_norm(struct hit *hitp, struct soltab *stp, struct xray *rp);
+RT_EXPORT extern int rt_obj_norm(struct hit *hitp, struct soltab *stp, struct xray *rp);
 
 /**
  * calculate object uv parameterization for a given hit point
  */
-RT_EXPORT extern void rt_obj_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp);
+RT_EXPORT extern int rt_obj_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp);
 
 /**
  * calculate object curvature for a given hit point
  */
-RT_EXPORT extern void rt_obj_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp);
+RT_EXPORT extern int rt_obj_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp);
 
 /**
  * DEPRECATED: Unimplemented.
@@ -86,7 +86,7 @@ RT_EXPORT extern int rt_obj_class();
 /**
  * release the memory used by a solid
  */
-RT_EXPORT extern void rt_obj_free(struct soltab *stp);
+RT_EXPORT extern int rt_obj_free(struct soltab *stp);
 
 /**
  * obtain a vlist wireframe representation of an object for plotting purposes
@@ -96,7 +96,7 @@ RT_EXPORT extern int rt_obj_plot(struct bu_list *vhead, struct rt_db_internal *i
 /**
  * shoot an array of rays at a set of homogenous objects.
  */
-RT_EXPORT extern void rt_obj_vshot(struct soltab *stp[], struct xray *rp[], struct seg segp[], int n, struct application *ap);
+RT_EXPORT extern int rt_obj_vshot(struct soltab *stp[], struct xray *rp[], struct seg segp[], int n, struct application *ap);
 
 /**
  * tessellate an object (into NMG form)
@@ -131,7 +131,7 @@ RT_EXPORT extern int rt_obj_export4(struct bu_external *ep, const struct rt_db_i
 /**
  * free the internal representation of an object
  */
-RT_EXPORT extern void rt_obj_ifree(struct rt_db_internal *ip);
+RT_EXPORT extern int rt_obj_ifree(struct rt_db_internal *ip);
 
 /**
  * db object 'get' support, obtain a tcl list representation
@@ -151,7 +151,7 @@ RT_EXPORT extern int rt_obj_describe(struct bu_vls *str, const struct rt_db_inte
 /**
  * create a 'default' object
  */
-RT_EXPORT extern void rt_obj_make(const struct rt_functab *ftp, struct rt_db_internal *intern);
+RT_EXPORT extern int rt_obj_make(const struct rt_functab *ftp, struct rt_db_internal *intern);
 
 /**
  * apply a matrix transformation to an object (translation, rotation, scale)
