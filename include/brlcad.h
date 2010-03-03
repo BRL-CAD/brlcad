@@ -67,6 +67,9 @@
  */
 #include "rtgeom.h"
 
+/* database object functions
+ */
+#include "rtfunc.h"
 
 #endif  /* __BRLCAD_H__ */
 /** @} */
