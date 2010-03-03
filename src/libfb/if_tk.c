@@ -163,7 +163,8 @@ fb_tk_open(FBIO *ifp, char *file, int width, int height)
 	"pack .fb_tk_canvas -fill both -expand true";
     const char place_image_cmd[255] =
 	".fb_tk_canvas create image 0 0 -image fb_tk_photo -anchor nw";
-    const char *wmcmd = "wm protocol . WM_DELETE_WINDOW {set CloseWindow \"close\"}";
+    const char *wmclosecmd = "wm protocol . WM_DELETE_WINDOW {set CloseWindow \"close\"}";
+    const char *bindclosecmd = "bind . <Button-2> {set CloseWindow \"close\"}";
 
     char *buffer;
     char *linebuffer;
@@ -250,10 +251,13 @@ fb_tk_open(FBIO *ifp, char *file, int width, int height)
      * a "lingering" tk window.
      */
     Tcl_SetVar(fbinterp, "CloseWindow", "open", 0);
-    if (Tcl_Eval(fbinterp, wmcmd) != TCL_OK) {
+    if (Tcl_Eval(fbinterp, wmclosecmd) != TCL_OK) {
 	fb_log("Error binding WM_DELETE_WINDOW.");
     }
-	 
+    if (Tcl_Eval(fbinterp, bindclosecmd) != TCL_OK) {
+	fb_log("Error binding right mouse button.");
+    }
+ 
     while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
 
     /* FIXME: malloc() is necessary here because there are callers
@@ -286,7 +290,6 @@ fb_tk_open(FBIO *ifp, char *file, int width, int height)
 	    
 	    /* If the Tk window gets a close event, bail */
 	    if (!strcmp(Tcl_GetVar(fbinterp, "CloseWindow", 0), "close")) {
-    		kill(pid, SIGTERM); /* Stop the child process - we don't need it anymore */
 		free(buffer);
 		free(linebuffer);
 		free(tkwrite_buffer);
