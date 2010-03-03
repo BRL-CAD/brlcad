@@ -163,16 +163,15 @@ FB_EXPORT extern int wgl_close_existing();
 #define	FB_DEBUG_BRW	8	/* Buffered IO rpixel and wpixel */
 
 #define FB_CKMAG(_ptr, _magic, _str)	\
-	if ( !(_ptr) )  { \
+	if (!(_ptr)) { \
 		fb_log("ERROR: null %s ptr, file %s, line %d\n", \
-			_str, __FILE__, __LINE__ ); \
-		abort(); \
-	} else if ( *((long *)(_ptr)) != (_magic) )  { \
-		fb_log("ERROR: bad %s ptr x%x, s/b x%x, was x%x, file %s, line %d\n", \
-			_str, _ptr, _magic, \
-			*((long *)(_ptr)), __FILE__, __LINE__ ); \
-		abort(); \
-	}
+			_str, __FILE__, __LINE__); \
+	} else if ((uint64_t)(uintptr_t)(_ptr) != (uint64_t)(_magic)) { \
+		fb_log("ERROR: bad %s ptr %p, s/b 0x%llx, was 0x%llx, file %s, line %d\n", \
+			_str, _ptr, (uint64_t)_magic, \
+			(uint64_t)(uintptr_t)(_ptr), __FILE__, __LINE__); \
+	} \
+	abort();
 
 /* tcl.c */
 /* The presence of Tcl_Interp as an arg prevents giving arg list */
