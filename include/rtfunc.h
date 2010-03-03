@@ -46,7 +46,7 @@ RT_EXPORT extern int rt_obj_prep(struct soltab *stp, struct rt_db_internal *ip, 
 /**
  * shoot a ray at an object that has been prepped for ray tracing
  */
-RT_EXPORT extern int rt_obj_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead);
+RT_EXPORT extern int rt_obj_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead);
 
 /**
  * TBD.
