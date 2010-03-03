@@ -143,6 +143,7 @@ set(LIBRT_SOURCES
     primitives/obj_curve.c
     primitives/obj_export.c
     primitives/obj_free.c
+    primitives/obj_ifree.c
     primitives/obj_import.c
     primitives/obj_norm.c
     primitives/obj_plot.c
