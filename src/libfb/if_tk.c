@@ -152,6 +152,19 @@ FBIO tk_interface = {
 HIDDEN int
 fb_tk_open(FBIO *ifp, char *file, int width, int height)
 {
+    int pid = -1;
+    const char *cmd = "package require Tk";
+    char image_create_cmd[255] = {'\0'};
+    char canvas_create_cmd[255] = {'\0'};
+    const char canvas_pack_cmd[255] =
+	"pack .fb_tk_canvas -fill both -expand true";
+    const char place_image_cmd[255] =
+	".fb_tk_canvas create image 0 0 -image fb_tk_photo -anchor nw";
+    const char *wmcmd = "wm protocol . WM_DELETE_WINDOW {set CloseWindow \"close\"}";
+
+    char *buffer;
+    char *linebuffer;
+
     FB_CK_FBIO(ifp);
     if (file == (char *)NULL)
 	fb_log("fb_open(0x%lx, NULL, %d, %d)\n",
@@ -181,7 +194,6 @@ fb_tk_open(FBIO *ifp, char *file, int width, int height)
     ifp->if_height = height;
 
     fbinterp = Tcl_CreateInterp();
-    const char *cmd = "package require Tk";
 
     if (Tcl_Init(fbinterp) == TCL_ERROR) {
 	fb_log("Tcl_Init returned error in fb_open.");
@@ -191,14 +203,12 @@ fb_tk_open(FBIO *ifp, char *file, int width, int height)
 	fb_log("Error returned attempting to start tk in fb_open.");
     }
 
-
     fbwin = Tk_MainWindow(fbinterp);
 
     Tk_GeometryRequest(fbwin, width, height);
 
     Tk_MakeWindowExist(fbwin);
 
-    char image_create_cmd[255];
     sprintf(image_create_cmd,
 	    "image create photo fb_tk_photo -height %d -width %d",
 	    width, height);
@@ -211,7 +221,6 @@ fb_tk_open(FBIO *ifp, char *file, int width, int height)
 	fb_log("Image creation unsuccessful in fb_open.");
     }
 
-    char canvas_create_cmd[255];
     sprintf(canvas_create_cmd,
 	    "canvas .fb_tk_canvas -height %d -width %d", width, height);
 
@@ -219,16 +228,11 @@ fb_tk_open(FBIO *ifp, char *file, int width, int height)
 	fb_log("Error returned attempting to create canvas in fb_open.");
     }
 
-    const char canvas_pack_cmd[255] =
-	"pack .fb_tk_canvas -fill both -expand true";
-
     if (Tcl_Eval(fbinterp, canvas_pack_cmd) != TCL_OK) {
 	fb_log("Error returned attempting to pack canvas in fb_open. %s",
 	       Tcl_GetStringResult(fbinterp));
     }
 
-    const char place_image_cmd[255] =
-	".fb_tk_canvas create image 0 0 -image fb_tk_photo -anchor nw";
     if (Tcl_Eval(fbinterp, place_image_cmd) != TCL_OK) {
 	fb_log("Error returned attempting to place image in fb_open. %s",
 	       Tcl_GetStringResult(fbinterp));
@@ -243,78 +247,77 @@ fb_tk_open(FBIO *ifp, char *file, int width, int height)
      * a "lingering" tk window.
      */
     Tcl_SetVar(fbinterp, "CloseWindow", "open", 0);
-    const char *wmcmd = "wm protocol . WM_DELETE_WINDOW {set CloseWindow \"close\"}";
     if (Tcl_Eval(fbinterp, wmcmd) != TCL_OK) {
 	fb_log("Error binding WM_DELETE_WINDOW.");
     }
 	 
     while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
 
-    {
-	int pid;
+    /* FIXME: malloc() is necessary here because there are callers
+     * that acquire a BU_SYM_SYSCALL semaphore for libfb calls.
+     * this should be investigated more closely to see if the
+     * semaphore acquires are critical or if they can be pushed
+     * down into libfb proper.  in the meantime, manually call
+     * malloc()/free().
+     */
+    buffer = (char *)malloc(sizeof(uint32_t)*3+ifp->if_width*3);
+    linebuffer = (char *)malloc(ifp->if_width*3);
+    tkwrite_buffer = (char *)malloc(ifp->if_width*3);
 
-	/* FIXME: malloc() is necessary here because there are callers
-	 * that acquire a BU_SYM_SYSCALL semaphore for libfb calls.
-	 * this should be investigated more closely to see if the
-	 * semaphore acquires are critical or if they can be pushed
-	 * down into libfb proper.  in the meantime, manually call
-	 * malloc()/free().
-	 */
-	char *buffer = (char *)malloc(sizeof(uint32_t)*3+ifp->if_width*3);
-	char *linebuffer = (char *)malloc(ifp->if_width*3);
-	tkwrite_buffer = (char *)malloc(ifp->if_width*3);
+    if (pipe(p) == -1) {
+	perror("pipe failed");
+    }
 
-	if (pipe(p) == -1) {
-	    perror("pipe failed");
-	}
+    pid = fork();
+    if (pid < 0) {
+	printf("boo, something bad\n");
+    } else if (pid > 0) {
+	int line = 0;
+	uint32_t lines[3];
+	char c;
+	int i;
+	int y[2];
 
-	pid = fork();
-	if (pid < 0) {
-	    printf("boo, something bad\n");
-	} else if (pid > 0) {
-	    int line = 0;
-	    uint32_t lines[3];
-	    char c;
-	    int i;
-	    int y[2];
+	/* parent */
+	while (y[0] >= 0) {
+	    int count;
 
-	    /* parent */
-	    while (y[0] != -1) {
-		int count;
-		read(p[0], buffer, sizeof(uint32_t)*3+ifp->if_width*3);
-		memcpy(lines, buffer, sizeof(uint32_t)*3);
-		memcpy(linebuffer, buffer+sizeof(uint32_t)*3, ifp->if_width*3);
-		y[0] = ntohl(lines[0]);
-		count = ntohl(lines[1]);
-		if (y[0] != -1) {
-    		    line++;
-    		    block.pixelPtr = (unsigned char *)linebuffer;
-    		    block.width = count;
-    		    block.pitch = 3 * ifp->if_width;
-		    
-    		    Tk_PhotoPutBlock(fbinterp, fbphoto, &block, 0, ifp->if_height-y[0], count, 1, TK_PHOTO_COMPOSITE_SET);
-		    
-    		    do {
-    			i = Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT);
-    		    } while (i);
-		} else {
-		    free(buffer);
-		    free(linebuffer);
-		    free(tkwrite_buffer);
-		    fclose(stdin);
-		    Tcl_Eval(fbinterp, "vwait CloseWindow");
-		    if (!strcmp(Tcl_GetVar(fbinterp, "CloseWindow", 0), "close")) {
-			printf("Close Window event\n");
-			Tcl_Eval(fbinterp, "destroy .");
-    			bu_exit(0, NULL);
-		    }
-		}
+	    read(p[0], buffer, sizeof(uint32_t)*3+ifp->if_width*3);
+	    memcpy(lines, buffer, sizeof(uint32_t)*3);
+	    memcpy(linebuffer, buffer+sizeof(uint32_t)*3, ifp->if_width*3);
+	    y[0] = ntohl(lines[0]);
+	    count = ntohl(lines[1]);
+
+	    if (y[0] < 0) {
+		break;
 	    }
-	} else {
-	    /* child */
-	    printf("IMA CHILD\n");
-	    fflush(stdout);
+
+	    line++;
+	    block.pixelPtr = (unsigned char *)linebuffer;
+	    block.width = count;
+	    block.pitch = 3 * ifp->if_width;
+		    
+	    Tk_PhotoPutBlock(fbinterp, fbphoto, &block, 0, ifp->if_height-y[0], count, 1, TK_PHOTO_COMPOSITE_SET);
+		    
+	    do {
+		i = Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT);
+	    } while (i);
 	}
+	/* very bad things will happen if the parent does not terminate here */
+	free(buffer);
+	free(linebuffer);
+	free(tkwrite_buffer);
+	fclose(stdin);
+	Tcl_Eval(fbinterp, "vwait CloseWindow");
+	if (!strcmp(Tcl_GetVar(fbinterp, "CloseWindow", 0), "close")) {
+	    printf("Close Window event\n");
+	    Tcl_Eval(fbinterp, "destroy .");
+	}
+	bu_exit(0, NULL);
+    } else {
+	/* child */
+	printf("IMA CHILD\n");
+	fflush(stdout);
     }
 
     return 0;
