@@ -772,7 +772,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\primitives\obj_curvec"
+				RelativePath="..\..\..\src\librt\primitives\obj_adjust.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\obj_curve.c"
 				>
 			</File>
 			<File
@@ -781,6 +785,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\librt\primitives\obj_free.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\obj_get.c"
 				>
 			</File>
 			<File
