@@ -33,6 +33,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <string.h>
 
 #include <tcl.h>
 #include <tk.h>
@@ -243,7 +244,6 @@ fb_tk_open(FBIO *ifp, char *file, int width, int height)
     if (Tcl_Eval(fbinterp, wmcmd) != TCL_OK) {
 	fb_log( "Error binding WM_DELETE_WINDOW." );
     }
-    
 	 
     while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
 
@@ -252,6 +252,7 @@ fb_tk_open(FBIO *ifp, char *file, int width, int height)
 	int pid, wpid;
 	int waitret;
 	void *buffer = (void*)0;
+	void *linebuffer = (void*)0;
 	struct resource *tmp_res;
 	fd_set read_set;
 	struct timeval timeout;
@@ -268,24 +269,24 @@ fb_tk_open(FBIO *ifp, char *file, int width, int height)
 	    printf("boo, something bad\n");
 	} else if (pid > 0) {
 	    int line = 0;
-	    uint32_t lines[2];
-	    char buffer[1024*30];
+	    char buffer[1024*33];
+	    char linebuffer[1024*33];
+	    uint32_t lines[3];
 	    char c;
 	    int i;
 	    int y[2];
 
 	    /* parent */
 	    while (y[0] != -1) {
-		int count = 1024;
-//		read(p[0], count, sizeof(count));
-		read(p[0], lines, sizeof(lines));
+		int count;
+		read(p[0], buffer, sizeof(uint32_t)*3+ifp->if_width*3);
+		memcpy(lines, buffer, sizeof(uint32_t)*3);
+		memcpy(linebuffer, buffer+sizeof(uint32_t)*3, ifp->if_width*3);
 		y[0] = ntohl(lines[0]);
+		count = ntohl(lines[1]);
 		if (y[0] != -1) {
-    		    if (read(p[0], buffer, ifp->if_width * 3) == -1) {
-    			perror("Unable to read from pipe");
-    		    }
     		    line++;
-    		    block.pixelPtr = (unsigned char *)buffer;
+    		    block.pixelPtr = (unsigned char *)linebuffer;
     		    block.width = count;
     		    block.pitch = 3 * ifp->if_width;
 		    
@@ -357,7 +358,8 @@ HIDDEN int
 tk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
 {
     int	i;
-    uint32_t line[2];
+    uint32_t line[3];
+    char buffer[1024*33];
 
     FB_CK_FBIO(ifp);
     /* Set local values of Tk_PhotoImageBlock */
@@ -366,18 +368,14 @@ tk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
     block.pitch = 3 * ifp->if_width;
 
     line[0] = htonl(y);
-    line[1] = 0;
-    write(p[1], line, sizeof(line));
-//    write(p[1], count, sizeof(count));
-/*
-    uint32_t linesz;
-    linesz = htonl(y);
-    memcpy(somebuffer, linesz, sizeof(uint32_t));
-    memcpy(somebuffer+sizeof(uint32_t), block.pixelPtr, 3 * ifp->if_width);
-*/
+    line[1] = htonl(count);
+    line[2] = 0;
+    memcpy(buffer, line, sizeof(uint32_t)*3);
+    memcpy(buffer+sizeof(uint32_t)*3, block.pixelPtr, 3 * ifp->if_width);
+    
     // write(p[1], somebuffer, 3*ifp->if_width + sizeof(uint32_t));
-
-    if (write(p[1], block.pixelPtr, 3 * ifp->if_width) == -1) {
+    
+    if (write(p[1], buffer, 3 * ifp->if_width + 3*sizeof(uint32_t)) == -1) {
 	perror("Unable to write to pipe");
 	sleep(1);
     }
