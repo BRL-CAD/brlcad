@@ -776,6 +776,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\obj_export.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\primitives\obj_free.c"
 				>
 			</File>
