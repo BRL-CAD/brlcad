@@ -283,7 +283,19 @@ fb_tk_open(FBIO *ifp, char *file, int width, int height)
 	/* parent */
 	while (y[0] >= 0) {
 	    int count;
+	    
+	    /* If the Tk window gets a close event, bail */
+	    if (!strcmp(Tcl_GetVar(fbinterp, "CloseWindow", 0), "close")) {
+    		free(buffer);
+		free(linebuffer);
+		free(tkwrite_buffer);
+		fclose(stdin);
+		printf("Close Window event\n");
+    		Tcl_Eval(fbinterp, "destroy .");
+    	    	bu_exit(0, NULL);
+	    }
 
+	    /* Unpack inputs from pipe */
 	    read(p[0], buffer, sizeof(uint32_t)*3+ifp->if_width*3);
 	    memcpy(lines, buffer, sizeof(uint32_t)*3);
 	    memcpy(linebuffer, buffer+sizeof(uint32_t)*3, ifp->if_width*3);
