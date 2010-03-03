@@ -34,6 +34,9 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 
 #include <tcl.h>
 #include <tk.h>
@@ -274,7 +277,6 @@ fb_tk_open(FBIO *ifp, char *file, int width, int height)
     } else if (pid > 0) {
 	int line = 0;
 	uint32_t lines[3];
-	char c;
 	int i;
 	int y[2];
 
@@ -366,9 +368,8 @@ tk_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
 
 
 HIDDEN int
-tk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
+tk_write(FBIO *ifp, int x __attribute__((unused)), int y, const unsigned char *pixelp, int count)
 {
-    int i;
     uint32_t line[3];
 
     FB_CK_FBIO(ifp);
