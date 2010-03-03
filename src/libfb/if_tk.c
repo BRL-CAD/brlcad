@@ -286,7 +286,8 @@ fb_tk_open(FBIO *ifp, char *file, int width, int height)
 	    
 	    /* If the Tk window gets a close event, bail */
 	    if (!strcmp(Tcl_GetVar(fbinterp, "CloseWindow", 0), "close")) {
-    		free(buffer);
+    		kill(pid, SIGTERM); /* Stop the child process - we don't need it anymore */
+		free(buffer);
 		free(linebuffer);
 		free(tkwrite_buffer);
 		fclose(stdin);
