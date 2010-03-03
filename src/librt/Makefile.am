@@ -181,6 +181,7 @@ librt_nil_la_SOURCES = \
 	primitives/obj_print.c \
 	primitives/obj_shot.c \
 	primitives/obj_uv.c \
+	primitives/obj_vshot.c \
 	primitives/part/part.c \
 	primitives/part/part_mirror.c \
 	primitives/pipe/pipe.c \
