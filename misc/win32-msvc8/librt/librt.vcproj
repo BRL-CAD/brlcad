@@ -780,6 +780,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\obj_import.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\primitives\obj_norm.c"
 				>
 			</File>

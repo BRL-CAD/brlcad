@@ -142,6 +142,7 @@ set(LIBRT_SOURCES
     primitives/nmg/nmg_visit.c
     primitives/obj_curve.c
     primitives/obj_free.c
+    primitives/obj_import.c
     primitives/obj_norm.c
     primitives/obj_plot.c
     primitives/obj_prep.c
