@@ -77,7 +77,7 @@ int tk_close_existing()
 }
 
 
-HIDDEN int	fb_tk_open(FBIO *ifp, char *file, int width, int height),
+HIDDEN int fb_tk_open(FBIO *ifp, char *file, int width, int height),
     fb_tk_close(FBIO *ifp),
     tk_clear(FBIO *ifp, unsigned char *pp),
     tk_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count),
@@ -350,7 +350,7 @@ tk_clear(FBIO *ifp, unsigned char *pp)
 	       (unsigned long)ifp,
 	       (int)(pp[RED]), (int)(pp[GRN]),
 	       (int)(pp[BLU]));
-    return	0;
+    return 0;
 }
 
 
@@ -361,14 +361,14 @@ tk_read(FBIO *ifp, int x, int y, unsigned char *pixelp, int count)
     fb_log("fb_read(0x%lx, %4d, %4d, 0x%lx, %d)\n",
 	   (unsigned long)ifp, x, y,
 	   (unsigned long)pixelp, count);
-    return	count;
+    return count;
 }
 
 
 HIDDEN int
 tk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
 {
-    int	i;
+    int i;
     uint32_t line[3];
 
     FB_CK_FBIO(ifp);
@@ -401,14 +401,14 @@ tk_rmap(FBIO *ifp, ColorMap *cmp)
     FB_CK_FBIO(ifp);
     fb_log("fb_rmap(0x%lx, 0x%lx)\n",
 	   (unsigned long)ifp, (unsigned long)cmp);
-    return	0;
+    return 0;
 }
 
 
 HIDDEN int
 tk_wmap(FBIO *ifp, const ColorMap *cmp)
 {
-    int	i;
+    int i;
 
     FB_CK_FBIO(ifp);
     if (cmp == NULL)
@@ -428,7 +428,7 @@ tk_wmap(FBIO *ifp, const ColorMap *cmp)
 	}
     }
 
-    return	0;
+    return 0;
 }
 
 
@@ -439,7 +439,7 @@ tk_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
     fb_log("fb_view(0x%lx, %4d, %4d, %4d, %4d)\n",
 	   (unsigned long)ifp, xcenter, ycenter, xzoom, yzoom);
     fb_sim_view(ifp, xcenter, ycenter, xzoom, yzoom);
-    return	0;
+    return 0;
 }
 
 
@@ -452,7 +452,7 @@ tk_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
     fb_sim_getview(ifp, xcenter, ycenter, xzoom, yzoom);
     fb_log(" <= %d %d %d %d\n",
 	   *xcenter, *ycenter, *xzoom, *yzoom);
-    return	0;
+    return 0;
 }
 
 
@@ -462,7 +462,7 @@ tk_setcursor(FBIO *ifp, const unsigned char *bits, int xbits, int ybits, int xor
     FB_CK_FBIO(ifp);
     fb_log("fb_setcursor(0x%lx, 0x%lx, %d, %d, %d, %d)\n",
 	   (unsigned long)ifp, bits, xbits, ybits, xorig, yorig);
-    return	0;
+    return 0;
 }
 
 
@@ -472,7 +472,7 @@ tk_cursor(FBIO *ifp, int mode, int x, int y)
     fb_log("fb_cursor(0x%lx, %d, %4d, %4d)\n",
 	   (unsigned long)ifp, mode, x, y);
     fb_sim_cursor(ifp, mode, x, y);
-    return	0;
+    return 0;
 }
 
 
@@ -484,7 +484,7 @@ tk_getcursor(FBIO *ifp, int *mode, int *x, int *y)
 	   (unsigned long)ifp, mode, x, y);
     fb_sim_getcursor(ifp, mode, x, y);
     fb_log(" <= %d %d %d\n", *mode, *x, *y);
-    return	0;
+    return 0;
 }
 
 
@@ -538,7 +538,7 @@ tk_poll(FBIO *ifp)
     FB_CK_FBIO(ifp);
     while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
     fb_log("fb_poll(0x%lx)\n", (unsigned long)ifp);
-    return	0;
+    return 0;
 }
 
 
@@ -547,7 +547,7 @@ tk_flush(FBIO *ifp)
 {
     FB_CK_FBIO(ifp);
     fb_log("if_flush(0x%lx)\n", (unsigned long)ifp);
-    return	0;
+    return 0;
 }
 
 
@@ -556,7 +556,7 @@ tk_free(FBIO *ifp)
 {
     FB_CK_FBIO(ifp);
     fb_log("fb_free(0x%lx)\n", (unsigned long)ifp);
-    return	0;
+    return 0;
 }
 
 
@@ -576,12 +576,12 @@ tk_help(FBIO *ifp)
     fb_log("\
 Usage: /dev/tk[#]\n\
   where # is a optional bit vector from:\n\
-    1    debug buffered I/O calls\n\
-    2    show colormap entries in rmap/wmap calls\n\
-    4    show actual pixel values in read/write calls\n");
-    /*8    buffered read/write values - ifdef'd out*/
+    1 debug buffered I/O calls\n\
+    2 show colormap entries in rmap/wmap calls\n\
+    4 show actual pixel values in read/write calls\n");
+    /*8 buffered read/write values - ifdef'd out*/
 
-    return	0;
+    return 0;
 }
 
 
