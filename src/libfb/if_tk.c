@@ -68,6 +68,7 @@ Tk_PhotoImageBlock block = {
     }
 };
 
+char *tkwrite_buffer;
 
 int tk_close_existing()
 {
@@ -251,8 +252,9 @@ fb_tk_open(FBIO *ifp, char *file, int width, int height)
 	int parent_pipe[2];
 	int pid, wpid;
 	int waitret;
-	void *buffer = (void*)0;
-	void *linebuffer = (void*)0;
+	char *buffer = (char *)malloc(sizeof(uint32_t)*3+ifp->if_width*3);
+	char *linebuffer = (char *)malloc(ifp->if_width*3);
+	tkwrite_buffer = (char *)malloc(ifp->if_width*3);
 	struct resource *tmp_res;
 	fd_set read_set;
 	struct timeval timeout;
@@ -269,8 +271,6 @@ fb_tk_open(FBIO *ifp, char *file, int width, int height)
 	    printf("boo, something bad\n");
 	} else if (pid > 0) {
 	    int line = 0;
-	    char buffer[1024*33];
-	    char linebuffer[1024*33];
 	    uint32_t lines[3];
 	    char c;
 	    int i;
@@ -296,6 +296,9 @@ fb_tk_open(FBIO *ifp, char *file, int width, int height)
     			i = Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT);
     		    } while (i);
 		} else {
+		    free(buffer);
+		    free(linebuffer);
+		    free(tkwrite_buffer);
 		    fclose(stdin);
 		    Tcl_Eval(fbinterp, "vwait CloseWindow");
 		    if (!strcmp(Tcl_GetVar(fbinterp, "CloseWindow", 0),"close")) {
@@ -359,7 +362,6 @@ tk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
 {
     int	i;
     uint32_t line[3];
-    char buffer[1024*33];
 
     FB_CK_FBIO(ifp);
     /* Set local values of Tk_PhotoImageBlock */
@@ -370,12 +372,12 @@ tk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
     line[0] = htonl(y);
     line[1] = htonl(count);
     line[2] = 0;
-    memcpy(buffer, line, sizeof(uint32_t)*3);
-    memcpy(buffer+sizeof(uint32_t)*3, block.pixelPtr, 3 * ifp->if_width);
+    memcpy(tkwrite_buffer, line, sizeof(uint32_t)*3);
+    memcpy(tkwrite_buffer+sizeof(uint32_t)*3, block.pixelPtr, 3 * ifp->if_width);
     
     // write(p[1], somebuffer, 3*ifp->if_width + sizeof(uint32_t));
     
-    if (write(p[1], buffer, 3 * ifp->if_width + 3*sizeof(uint32_t)) == -1) {
+    if (write(p[1], tkwrite_buffer, 3 * ifp->if_width + 3*sizeof(uint32_t)) == -1) {
 	perror("Unable to write to pipe");
 	sleep(1);
     }
