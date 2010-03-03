@@ -136,7 +136,7 @@ RT_EXPORT extern int rt_obj_adjust(struct bu_vls *logstr, struct rt_db_internal 
 /**
  * describe an object in text form (used by the 'l' command)
  */
-RT_EXPORT extern int rt_obj_describe(struct bu_vls *logstr, const struct rt_db_internal *ip, int verbose, double mm2local, struct resource *resp, struct db_i *db_i);
+RT_EXPORT extern int rt_obj_describe(struct bu_vls *logstr, const struct rt_db_internal *ip, int verbose, double mm2local, struct resource *resp, struct db_i *dbip);
 
 /**
  * create a 'default' object
