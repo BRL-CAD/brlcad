@@ -181,7 +181,9 @@ librt_nil_la_SOURCES = \
 	primitives/obj_get.c \
 	primitives/obj_ifree.c \
 	primitives/obj_import.c \
+	primitives/obj_make.c \
 	primitives/obj_norm.c \
+	primitives/obj_params.c \
 	primitives/obj_plot.c \
 	primitives/obj_prep.c \
 	primitives/obj_print.c \
@@ -190,6 +192,7 @@ librt_nil_la_SOURCES = \
 	primitives/obj_tnurb.c \
 	primitives/obj_uv.c \
 	primitives/obj_vshot.c \
+	primitives/obj_xform.c \
 	primitives/part/part.c \
 	primitives/part/part_mirror.c \
 	primitives/pipe/pipe.c \
