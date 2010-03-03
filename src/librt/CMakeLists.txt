@@ -141,6 +141,7 @@ set(LIBRT_SOURCES
     primitives/nmg/nmg_tri_mc.c
     primitives/nmg/nmg_visit.c
     primitives/obj_prep.c
+    primitives/obj_print.c
     primitives/obj_shot.c
     primitives/part/part.c
     primitives/part/part_mirror.c
