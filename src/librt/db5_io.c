@@ -1116,7 +1116,7 @@ db5_import_color_table(char *cp)
     while ((sp = strchr(sp, '{')) != NULL) {
 	sp++;
 	if (sscanf(sp, "%d %d %d %d %d", &low, &high, &r, &g, &b) != 5) break;
-	rt_color_addrec(low, high, r, g, b, -1L);
+	rt_color_addrec(low, high, r, g, b, MATER_NO_ADDR);
     }
 }
 
