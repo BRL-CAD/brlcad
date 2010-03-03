@@ -369,47 +369,20 @@ tk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
     block.width = count;
     block.pitch = 3 * ifp->if_width;
 
+    /* Pack values to be sent to parent */
     line[0] = htonl(y);
     line[1] = htonl(count);
     line[2] = 0;
+    
     memcpy(tkwrite_buffer, line, sizeof(uint32_t)*3);
     memcpy(tkwrite_buffer+sizeof(uint32_t)*3, block.pixelPtr, 3 * ifp->if_width);
-    
-    // write(p[1], somebuffer, 3*ifp->if_width + sizeof(uint32_t));
-    
+   
+    /* Send values and data to parent for display */ 
     if (write(p[1], tkwrite_buffer, 3 * ifp->if_width + 3*sizeof(uint32_t)) == -1) {
 	perror("Unable to write to pipe");
 	sleep(1);
     }
 
-#if 0
-!!!
-#if defined(TK_MAJOR_VERSION) && TK_MAJOR_VERSION == 8 && defined(TK_MINOR_VERSION) && TK_MINOR_VERSION < 5
-    Tk_PhotoPutBlock(fbphoto, &block, x, ifp->if_height-y, count, 1, TK_PHOTO_COMPOSITE_SET);
-#else
-    Tk_PhotoPutBlock(fbinterp, fbphoto, &block, x, ifp->if_height-y, count, 1, TK_PHOTO_COMPOSITE_SET);
-#endif
-#endif
-
-#if 0
-!!!
-    printf("Do event: %d, %d, %d\n", count, x, y);
-    (void)fflush(stdout);
-#endif
-
-#if 0
-    /* Immediately update display window */
-    do {
-	i = Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT);
-#if 0
-!!!
-	if (i) {
-	    printf("HANDLED EVENT (%d)\n", i);
-	    fflush(stdout);
-	}
-#endif
-    } while (i);
-#endif
     return count;
 }
 
