@@ -268,6 +268,7 @@ fb_tk_open(FBIO *ifp, char *file, int width, int height)
 	    printf("boo, something bad\n");
 	} else if (pid > 0) {
 	    int line = 0;
+	    uint32_t lines[2];
 	    char buffer[1024*30];
 	    char c;
 	    int i;
@@ -277,7 +278,8 @@ fb_tk_open(FBIO *ifp, char *file, int width, int height)
 	    while (y[0] != -1) {
 		int count = 1024;
 //		read(p[0], count, sizeof(count));
-		read(p[0], y, sizeof(y));
+		read(p[0], lines, sizeof(lines));
+		y[0] = ntohl(lines[0]);
 		if (y[0] != -1) {
     		    if (read(p[0], buffer, ifp->if_width * 3) == -1) {
     			perror("Unable to read from pipe");
@@ -355,7 +357,7 @@ HIDDEN int
 tk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
 {
     int	i;
-    int line[2];
+    uint32_t line[2];
 
     FB_CK_FBIO(ifp);
     /* Set local values of Tk_PhotoImageBlock */
@@ -363,7 +365,7 @@ tk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, int count)
     block.width = count;
     block.pitch = 3 * ifp->if_width;
 
-    line[0] = y;
+    line[0] = htonl(y);
     line[1] = 0;
     write(p[1], line, sizeof(line));
 //    write(p[1], count, sizeof(count));
