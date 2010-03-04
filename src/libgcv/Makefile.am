@@ -15,7 +15,8 @@ libgcv_la_LIBADD = \
 	${GCV_LIBS}
 
 EXTRA_DIST = \
-        CMakeLists.txt
+        CMakeLists.txt \
+	NOTES
 
 AM_CFLAGS = ${STRICT_FLAGS}
 
