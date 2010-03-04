@@ -1,0 +1,25 @@
+This patch is against the SGI Open Inventor sources, and up until recently
+was available from this website:
+
+http://www.mevislab.de/inventor/
+
+As of March 4, 2010 this patch wasn't available at the above address any more,
+and it wasn't immediately clear if it could be readily recovered from the SDK
+downloads now present (many megabytes and wrapped in a non-commercial license.)
+
+For the present, stash the patch and the terms from the old version of the
+website in the dmtogl branch libgcv - the hope is eventually the parsing code
+can be extracted from the SGI library and used in an inventor-g importer (and
+maybe an exporter, although that's lower priority) - when that becomes of interest
+this patch could help to update the original 2000 era SGI code.
+
+
+From  http://www.mevislab.de/inventor :
+
+These patches are free software; You can redistribute it and/or modify 
+it under the terms of the GNU Lesser General Public License as published 
+by the Free Software Foundation; either version 2.1 of the License, or 
+(at your option) any later version.
+
+Current release (compatible with MeVisLab 1.3 and 1.4)
+Patch1 of our current Open Inventor sources against the Open Inventor CVS @ SGI (Nov/23/2005)
