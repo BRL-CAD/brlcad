@@ -230,7 +230,7 @@ fb_tk_open(FBIO *ifp, char *file, int width, int height)
 	    "canvas .fb_tk_canvas -highlightthickness 0 -height %d -width %d", width, height);
 
     sprintf (reportcolorcmd,
-	    "bind . <Button-3> {puts \"At image (%%x, [expr %d - %%y]), real RGB = [fb_tk_photo get %%x %%y]\n\"}", height);
+	    "bind . <Button-3> {puts \"At image (%%x, [expr %d - %%y]), real RGB = ([fb_tk_photo get %%x %%y])\n\"}", height);
     
     if (Tcl_Eval(fbinterp, canvas_create_cmd) != TCL_OK) {
 	fb_log("Error returned attempting to create canvas in fb_open.");
