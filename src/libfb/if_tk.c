@@ -290,6 +290,7 @@ fb_tk_open(FBIO *ifp, char *file, int width, int height)
 	uint32_t lines[3];
 	int i;
 	int y[2];
+	y[0] = 0;
 
 	/* parent */
 	while (y[0] >= 0) {
