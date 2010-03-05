@@ -62,11 +62,6 @@
 
 #include "metaball.h"
 
-extern int mc_edges[256];
-
-/* TODO: make a real header entry once the signature is good... */
-int rt_nmg_mc_realize_cube(struct shell *s, int pv, point_t *p, point_t *edges, const struct bn_tol *tol);
-
 /**
  * R T _ M E T A B A L L _ T E S S
  *
