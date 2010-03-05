@@ -95,8 +95,9 @@ struct _mged_variables default_mged_variables = {
     /* mv_difference lexeme */	"-"
 };
 
-#define MV_O(_m)	bu_offsetof(struct _mged_variables, _m)
-#define MV_OA(_m)	bu_offsetofarray(struct _mged_variables, _m)
+
+#define MV_O(_m) bu_offsetof(struct _mged_variables, _m)
+#define MV_OA(_m) bu_offsetofarray(struct _mged_variables, _m)
 struct bu_structparse mged_vparse[] = {
     {"%d",	1, "autosize",		MV_O(mv_autosize),		BU_STRUCTPARSE_FUNC_NULL },
     {"%d",	1, "rateknobs",		MV_O(mv_rateknobs),	BU_STRUCTPARSE_FUNC_NULL },
@@ -132,6 +133,7 @@ struct bu_structparse mged_vparse[] = {
     {"",	0,  (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
+
 static void
 set_dirty_flag(void)
 {
@@ -141,6 +143,7 @@ set_dirty_flag(void)
 	if (dmlp->dml_mged_variables == mged_variables)
 	    dmlp->dml_dirty = 1;
 }
+
 
 static void
 nmg_eu_dist_set(void)
@@ -155,6 +158,7 @@ nmg_eu_dist_set(void)
     Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
     bu_vls_free(&tmp_vls);
 }
+
 
 /**
  ** R E A D _ V A R
@@ -175,8 +179,8 @@ read_var(ClientData clientData, Tcl_Interp *interp, char *name1, char *name2, in
 
     /* Ask the libbu structparser for the value of the variable */
 
-    bu_vls_init( &str );
-    bu_vls_struct_item( &str, sp, (const char *)mged_variables, ' ');
+    bu_vls_init(&str);
+    bu_vls_struct_item(&str, sp, (const char *)mged_variables, ' ');
 
     /* Next, set the Tcl variable to this value */
     (void)Tcl_SetVar(interp, sp->sp_name, bu_vls_addr(&str),
@@ -186,6 +190,7 @@ read_var(ClientData clientData, Tcl_Interp *interp, char *name1, char *name2, in
 
     return NULL;
 }
+
 
 /**
  ** W R I T E _ V A R
@@ -203,9 +208,9 @@ write_var(ClientData clientData, Tcl_Interp *interp, char *name1, char *name2, i
 
     newvalue = Tcl_GetVar(interp, sp->sp_name,
 			  (flags&TCL_GLOBAL_ONLY)|TCL_LEAVE_ERR_MSG);
-    bu_vls_init( &str );
-    bu_vls_printf( &str, "%s=\"%s\"", name1, newvalue );
-    if ( bu_struct_parse( &str, mged_vparse, (char *)mged_variables ) < 0) {
+    bu_vls_init(&str);
+    bu_vls_printf(&str, "%s=\"%s\"", name1, newvalue);
+    if (bu_struct_parse(&str, mged_vparse, (char *)mged_variables) < 0) {
 	Tcl_AppendResult(interp, "ERROR OCCURED WHEN SETTING ", name1,
 			 " TO ", newvalue, "\n", (char *)NULL);
     }
@@ -214,6 +219,7 @@ write_var(ClientData clientData, Tcl_Interp *interp, char *name1, char *name2, i
     return read_var(clientData, interp, name1, name2,
 		    (flags&(~TCL_TRACE_WRITES))|TCL_TRACE_READS);
 }
+
 
 /**
  ** U N S E T _ V A R
@@ -227,19 +233,19 @@ unset_var(ClientData clientData, Tcl_Interp *interp, char *name1, char *name2, i
 {
     struct bu_structparse *sp = (struct bu_structparse *)clientData;
 
-    if ( flags & TCL_INTERP_DESTROYED )
+    if (flags & TCL_INTERP_DESTROYED)
 	return NULL;
 
     Tcl_AppendResult(interp, "mged variables cannot be unset\n", (char *)NULL);
-    Tcl_TraceVar( interp, sp->sp_name, TCL_TRACE_READS,
-		  (Tcl_VarTraceProc *)read_var,
-		  (ClientData)sp );
-    Tcl_TraceVar( interp, sp->sp_name, TCL_TRACE_WRITES,
-		  (Tcl_VarTraceProc *)write_var,
-		  (ClientData)sp );
-    Tcl_TraceVar( interp, sp->sp_name, TCL_TRACE_UNSETS,
-		  (Tcl_VarTraceProc *)unset_var,
-		  (ClientData)sp );
+    Tcl_TraceVar(interp, sp->sp_name, TCL_TRACE_READS,
+		 (Tcl_VarTraceProc *)read_var,
+		 (ClientData)sp);
+    Tcl_TraceVar(interp, sp->sp_name, TCL_TRACE_WRITES,
+		 (Tcl_VarTraceProc *)write_var,
+		 (ClientData)sp);
+    Tcl_TraceVar(interp, sp->sp_name, TCL_TRACE_UNSETS,
+		 (Tcl_VarTraceProc *)unset_var,
+		 (ClientData)sp);
     read_var(clientData, interp, name1, name2,
 	     (flags&(~TCL_TRACE_UNSETS))|TCL_TRACE_READS);
     return NULL;
@@ -259,16 +265,17 @@ mged_variable_setup(Tcl_Interp *interp)
 {
     struct bu_structparse *sp;
 
-    for ( sp = &mged_vparse[0]; sp->sp_name != NULL; sp++ ) {
-	read_var( (ClientData)sp, interp, sp->sp_name, (char *)NULL, 0 );
-	Tcl_TraceVar( interp, sp->sp_name, TCL_TRACE_READS|TCL_GLOBAL_ONLY,
-		      (Tcl_VarTraceProc *)read_var, (ClientData)sp );
-	Tcl_TraceVar( interp, sp->sp_name, TCL_TRACE_WRITES|TCL_GLOBAL_ONLY,
-		      (Tcl_VarTraceProc *)write_var, (ClientData)sp );
-	Tcl_TraceVar( interp, sp->sp_name, TCL_TRACE_UNSETS|TCL_GLOBAL_ONLY,
-		      (Tcl_VarTraceProc *)unset_var, (ClientData)sp );
+    for (sp = &mged_vparse[0]; sp->sp_name != NULL; sp++) {
+	read_var((ClientData)sp, interp, sp->sp_name, (char *)NULL, 0);
+	Tcl_TraceVar(interp, sp->sp_name, TCL_TRACE_READS|TCL_GLOBAL_ONLY,
+		     (Tcl_VarTraceProc *)read_var, (ClientData)sp);
+	Tcl_TraceVar(interp, sp->sp_name, TCL_TRACE_WRITES|TCL_GLOBAL_ONLY,
+		     (Tcl_VarTraceProc *)write_var, (ClientData)sp);
+	Tcl_TraceVar(interp, sp->sp_name, TCL_TRACE_UNSETS|TCL_GLOBAL_ONLY,
+		     (Tcl_VarTraceProc *)unset_var, (ClientData)sp);
     }
 }
+
 
 int
 f_set(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
@@ -292,6 +299,7 @@ f_set(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     return TCL_OK;
 }
+
 
 void
 set_scroll_private(void)
@@ -317,6 +325,7 @@ set_scroll_private(void)
     curr_dm_list = save_dmlp;
 }
 
+
 void
 set_absolute_tran(void)
 {
@@ -327,6 +336,7 @@ set_absolute_tran(void)
     set_absolute_model_tran();
 }
 
+
 void
 set_absolute_view_tran(void)
 {
@@ -335,6 +345,7 @@ set_absolute_view_tran(void)
     /* This is used in f_knob()  ---- needed in case absolute_tran is set from Tcl */
     VMOVE(view_state->vs_last_absolute_tran, view_state->vs_absolute_tran);
 }
+
 
 void
 set_absolute_model_tran(void)
@@ -349,6 +360,7 @@ set_absolute_model_tran(void)
     /* This is used in f_knob()  ---- needed in case absolute_model_tran is set from Tcl */
     VMOVE(view_state->vs_last_absolute_model_tran, view_state->vs_absolute_model_tran);
 }
+
 
 static void
 set_dlist(void)
@@ -426,6 +438,7 @@ set_dlist(void)
     curr_dm_list = save_dlp;
 }
 
+
 extern void
 set_perspective(void)
 {
@@ -444,6 +457,7 @@ set_perspective(void)
     set_dirty_flag();
 }
 
+
 static void
 establish_perspective(void)
 {
@@ -458,6 +472,7 @@ establish_perspective(void)
 
     set_dirty_flag();
 }
+
 
 /*
   This routine toggles the perspective_angle if the
@@ -494,17 +509,20 @@ toggle_perspective(void)
     set_dirty_flag();
 }
 
+
 static void
 set_coords(void)
 {
     view_state->vs_gvp->gv_coord = mged_variables->mv_coords;
 }
 
+
 static void
 set_rotate_about(void)
 {
     view_state->vs_gvp->gv_rotate_about = mged_variables->mv_rotate_about;
 }
+
 
 /*
  * Local Variables:

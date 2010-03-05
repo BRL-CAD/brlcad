@@ -19,11 +19,7 @@
  */
 /** @file binfo.c
  *
- *  provides information about the version of libraries in use
- *
- *  Author -
- *  	Charles M Kennedy
- *	Christopher Sean Morrison
+ * provides information about the version of libraries in use
  *
  */
 

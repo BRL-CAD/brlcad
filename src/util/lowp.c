@@ -18,11 +18,9 @@
  * information.
  */
 /** @file lowp.c
- *  Read 3 .pix files, and do a 3D low-pass filter on them.
  *
- *  Mike Muuss, BRL.
+ * Read 3 .pix files, and do a 3D low-pass filter on them.
  *
- *  $Revision$
  */
 
 #include "common.h"
@@ -34,7 +32,7 @@
 #include "bu.h"
 
 
-#define MAX_LINE	10000		/* Max pixels/line */
+#define MAX_LINE 10000		/* Max pixels/line */
 static int scanbytes;			/* # of bytes of scanline */
 
 unsigned char *in1, *in2, *in3;
@@ -55,50 +53,50 @@ main(int argc, char **argv)
     int x, y;
     int readval;
 
-    if ( argc < 2 )  {
+    if (argc < 2) {
 	fprintf(stderr, "%s", usage);
 	bu_exit (1, NULL);
     }
 
     nlines = 512;
-    if ( (infd1 = open( argv[1], 0 )) < 0 )  {
-	perror( argv[1] );
+    if ((infd1 = open(argv[1], 0)) < 0) {
+	perror(argv[1]);
 	bu_exit (3, NULL);
     }
-    if ( (infd2 = open( argv[2], 0 )) < 0 )  {
-	perror( argv[2] );
+    if ((infd2 = open(argv[2], 0)) < 0) {
+	perror(argv[2]);
 	bu_exit (3, NULL);
     }
-    if ( (infd3 = open( argv[3], 0 )) < 0 )  {
-	perror( argv[3] );
+    if ((infd3 = open(argv[3], 0)) < 0) {
+	perror(argv[3]);
 	bu_exit (3, NULL);
     }
-    if ( argc == 5 ) {
-	nlines = atoi(argv[4] );
+    if (argc == 5) {
+	nlines = atoi(argv[4]);
     }
 
     pix_line = nlines;	/* Square pictures */
     scanbytes = nlines * pix_line * 3;
-    in1 = (unsigned char  *) bu_malloc( scanbytes, "lowp in1" );
-    in2 = (unsigned char  *) bu_malloc( scanbytes, "lowp in2" );
-    in3 = (unsigned char  *) bu_malloc( scanbytes, "lowp in3" );
+    in1 = (unsigned char *) bu_malloc(scanbytes, "lowp in1");
+    in2 = (unsigned char *) bu_malloc(scanbytes, "lowp in2");
+    in3 = (unsigned char *) bu_malloc(scanbytes, "lowp in3");
 
     readval = read(infd1, in1, scanbytes);
-    if (readval != scanbytes ) {
+    if (readval != scanbytes) {
 	if (readval < 0) {
 	    perror("lowp READ ERROR");
 	}
 	bu_exit (0, NULL);
     }
     readval = read(infd3, in3, scanbytes);
-    if (readval != scanbytes ) {
+    if (readval != scanbytes) {
 	if (readval < 0) {
 	    perror("lowp READ ERROR");
 	}
 	bu_exit (0, NULL);
     }
     readval = read(infd3, in3, scanbytes);
-    if (readval != scanbytes ) {
+    if (readval != scanbytes) {
 	if (readval < 0) {
 	    perror("lowp READ ERROR");
 	}
@@ -107,15 +105,15 @@ main(int argc, char **argv)
 
     /* First and last are black */
     memset(out1, 0, pix_line*3);
-    write( 1, out1, pix_line*3 );
+    write(1, out1, pix_line*3);
 
-    for ( y=1; y < nlines-2; y++ )  {
+    for (y=1; y < nlines-2; y++) {
 	static unsigned char *op;
 
 	op = out1+3;
 
 	/* do (width-2)*3 times, borders are black */
-	for ( x=3; x < (pix_line-2)*3; x++ )  {
+	for (x=3; x < (pix_line-2)*3; x++) {
 	    int i;
 	    unsigned char *a, *b, *c;
 
@@ -124,29 +122,30 @@ main(int argc, char **argv)
 	    b = in2+i;
 	    c = in3+i;
 	    i = pix_line*3;
-	    *op++ = ( (int)
-		      a[-i-3]    + a[-i  ]*3  + a[-i+3]    +
-		      a[  -3]*3  + a[   0]*5  + a[   3]*3  +
-		      a[ i-3]    + a[ i  ]*3  + a[ i+3]    +
+	    *op++ = ((int)
+		     a[-i-3]    + a[-i  ]*3  + a[-i+3]    +
+		     a[  -3]*3  + a[   0]*5  + a[   3]*3  +
+		     a[ i-3]    + a[ i  ]*3  + a[ i+3]    +
 
-		      b[-i-3]*3  + b[-i  ]*5  + b[-i+3]*3  +
-		      b[  -3]*5  + b[   0]*10 + b[   3]*5  +
-		      b[ i-3]*3  + b[ i  ]*5  + b[ i+3]*3  +
+		     b[-i-3]*3  + b[-i  ]*5  + b[-i+3]*3  +
+		     b[  -3]*5  + b[   0]*10 + b[   3]*5  +
+		     b[ i-3]*3  + b[ i  ]*5  + b[ i+3]*3  +
 
-		      c[-i-3]    + c[-i  ]*3  + c[-i+3]    +
-		      c[  -3]*3  + c[   0]*5  + c[   3]*3  +
-		      c[ i-3]    + c[ i  ]*3  + c[ i+3]
+		     c[-i-3]    + c[-i  ]*3  + c[-i+3]    +
+		     c[  -3]*3  + c[   0]*5  + c[   3]*3  +
+		     c[ i-3]    + c[ i  ]*3  + c[ i+3]
 		) / 84;
 	}
-	write( 1, out1, pix_line*3 );
+	write(1, out1, pix_line*3);
     }
 
     /* First and last are black */
     memset(out1, 0, pix_line*3);
-    write( 1, out1, pix_line*3 );
+    write(1, out1, pix_line*3);
 
     return 0;
 }
+
 
 /*
  * Local Variables:

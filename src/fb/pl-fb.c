@@ -184,8 +184,8 @@ typedef struct descr {
 
 #define	CK_STROKE(_sp)	{ \
 	if ((_sp)->magic != STROKE_MAGIC)  {  \
-		fprintf(stderr, "Bad stroke struct, ptr=x%lx, magic was x%lx, s/b=x%lx, at file %s, line %d\n",  \
-			(long)(_sp), (long)((_sp)->magic), (long)STROKE_MAGIC,  \
+		fprintf(stderr, "Bad stroke struct, ptr=%p, magic was x%lx, s/b=x%lx, at file %s, line %d\n",  \
+			(void *)(_sp), (long)((_sp)->magic), (long)STROKE_MAGIC,  \
 			__FILE__, __LINE__ );  \
 		abort();  \
 	} }

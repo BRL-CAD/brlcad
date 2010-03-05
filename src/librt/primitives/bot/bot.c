@@ -752,7 +752,7 @@ rt_bot_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
     union record *rec;
     int i;
     int chars_used;
-    int num_recs;
+    size_t num_recs;
     struct bu_vls face_mode;
 
     if (dbip) RT_CK_DBI(dbip);
@@ -792,7 +792,7 @@ rt_bot_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     rec->bot.bot_id = DBID_BOT;
 
-    bu_plong((unsigned char *)rec->bot.bot_nrec, num_recs);
+    bu_plong((unsigned char *)rec->bot.bot_nrec, (uint32_t)num_recs);
     rec->bot.bot_orientation = bot_ip->orientation;
     rec->bot.bot_mode = bot_ip->mode;
     rec->bot.bot_err_mode = 0;
@@ -976,7 +976,7 @@ rt_bot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     struct bu_vls vls;
     register unsigned char *cp;
     int i;
-    int rem;
+    size_t rem;
 
     RT_CK_DB_INTERNAL(ip);
     if (dbip) RT_CK_DBI(dbip);

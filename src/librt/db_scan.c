@@ -70,7 +70,7 @@
  *	-1	Fatal Error
  */
 int
-db_scan(register struct db_i *dbip, int (*handler) (struct db_i *, const char *, long int, int, int, genptr_t), int do_old_matter, genptr_t client_data)
+db_scan(register struct db_i *dbip, int (*handler) (struct db_i *, const char *, size_t, size_t, int, genptr_t), int do_old_matter, genptr_t client_data)
 
 
     /* argument for handler */
@@ -98,7 +98,7 @@ db_scan(register struct db_i *dbip, int (*handler) (struct db_i *, const char *,
     rewind( dbip->dbi_fp );
     next = ftell(dbip->dbi_fp);
 
-    here = addr = -1L;
+    here = addr = (size_t)-1;
     totrec = 0;
     while (1)  {
 	nrec = 0;
@@ -146,25 +146,21 @@ db_scan(register struct db_i *dbip, int (*handler) (struct db_i *, const char *,
 		    nrec++;
 		}
 		next = ftell(dbip->dbi_fp);
-		handler( dbip, record.a.a_name, addr, nrec,
-			 DIR_SOLID, client_data );
+		handler( dbip, record.a.a_name, addr, nrec, DIR_SOLID, client_data );
 		break;
 	    case ID_ARS_B:
 		bu_log("db_scan ERROR: Unattached ARS 'B' record\n");
 		break;
 	    case ID_SOLID:
-		handler( dbip, record.s.s_name, addr, nrec,
-			 DIR_SOLID, client_data );
+		handler( dbip, record.s.s_name, addr, nrec, DIR_SOLID, client_data );
 		break;
 	    case DBID_STRSOL:
 		for (; nrec < DB_SS_NGRAN; nrec++ )  {
-		    if ( fread( (char *)&rec2, sizeof(rec2),
-				1, dbip->dbi_fp ) != 1 )
+		    if ( fread( (char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp ) != 1 )
 			break;
 		}
 		next = ftell(dbip->dbi_fp);
-		handler( dbip, record.ss.ss_name, addr, nrec,
-			 DIR_SOLID, client_data );
+		handler( dbip, record.ss.ss_name, addr, nrec, DIR_SOLID, client_data );
 		break;
 	    case ID_MATERIAL:
 		if ( do_old_matter ) {
@@ -181,8 +177,7 @@ db_scan(register struct db_i *dbip, int (*handler) (struct db_i *, const char *,
 	    case ID_P_HEAD:
 		while (1) {
 		    here = ftell( dbip->dbi_fp );
-		    if ( fread( (char *)&rec2, sizeof(rec2),
-				1, dbip->dbi_fp ) != 1 )
+		    if ( fread( (char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp ) != 1 )
 			break;
 		    DEBUG_PR( here, rec2 );
 		    if ( rec2.u_id != ID_P_DATA )  {
@@ -192,8 +187,7 @@ db_scan(register struct db_i *dbip, int (*handler) (struct db_i *, const char *,
 		    nrec++;
 		}
 		next = ftell(dbip->dbi_fp);
-		handler( dbip, record.p.p_name, addr, nrec,
-			 DIR_SOLID, client_data );
+		handler( dbip, record.p.p_name, addr, nrec, DIR_SOLID, client_data );
 		break;
 	    case ID_P_DATA:
 		bu_log("db_scan ERROR: Unattached P_DATA record\n");
@@ -202,8 +196,7 @@ db_scan(register struct db_i *dbip, int (*handler) (struct db_i *, const char *,
 		while (1) {
 		    /* Find and skip subsequent BSURFs */
 		    here = ftell( dbip->dbi_fp );
-		    if ( fread( (char *)&rec2, sizeof(rec2),
-				1, dbip->dbi_fp ) != 1 )
+		    if ( fread( (char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp ) != 1 )
 			break;
 		    DEBUG_PR( here, rec2 );
 		    if ( rec2.u_id != ID_BSURF )  {
@@ -214,12 +207,13 @@ db_scan(register struct db_i *dbip, int (*handler) (struct db_i *, const char *,
 		    /* Just skip over knots and control mesh */
 		    j = (rec2.d.d_nknots + rec2.d.d_nctls);
 		    nrec += j+1;
-		    while ( j-- > 0 )
-			fread( (char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp );
+		    while ( j-- > 0 ) {
+			if (fread( (char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp ) != 1)
+			    break;
+		    }
 		    next = ftell(dbip->dbi_fp);
 		}
-		handler( dbip, record.B.B_name, addr, nrec,
-			 DIR_SOLID, client_data );
+		handler( dbip, record.B.B_name, addr, nrec, DIR_SOLID, client_data );
 		break;
 	    case ID_BSURF:
 		bu_log("db_scan ERROR: Unattached B-spline surface record\n");
@@ -227,17 +221,20 @@ db_scan(register struct db_i *dbip, int (*handler) (struct db_i *, const char *,
 		/* Just skip over knots and control mesh */
 		j = (record.d.d_nknots + record.d.d_nctls);
 		nrec += j;
-		while ( j-- > 0 )
-		    fread( (char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp );
+		while ( j-- > 0 ) {
+		    if (fread( (char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp ) != 1)
+			break;
+		}
 		break;
 	    case DBID_ARBN:
 		j = bu_glong(record.n.n_grans);
 		nrec += j;
-		while ( j-- > 0 )
-		    fread( (char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp );
+		while ( j-- > 0 ) {
+		    if (fread( (char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp ) != 1)
+			break;
+		}
 		next = ftell(dbip->dbi_fp);
-		handler( dbip, record.n.n_name, addr, nrec,
-			 DIR_SOLID, client_data );
+		handler( dbip, record.n.n_name, addr, nrec, DIR_SOLID, client_data );
 		break;
 	    case DBID_PARTICLE:
 		handler( dbip, record.part.p_name, addr, nrec,
@@ -246,51 +243,55 @@ db_scan(register struct db_i *dbip, int (*handler) (struct db_i *, const char *,
 	    case DBID_PIPE:
 		j = bu_glong(record.pwr.pwr_count);
 		nrec += j;
-		while ( j-- > 0 )
-		    fread( (char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp );
+		while ( j-- > 0 ) {
+		    if (fread( (char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp ) != 1)
+			break;
+		}
 		next = ftell(dbip->dbi_fp);
-		handler( dbip, record.pwr.pwr_name, addr, nrec,
-			 DIR_SOLID, client_data );
+		handler( dbip, record.pwr.pwr_name, addr, nrec, DIR_SOLID, client_data );
 		break;
 	    case DBID_NMG:
 		j = bu_glong(record.nmg.N_count);
 		nrec += j;
-		while ( j-- > 0 )
-		    (void)fread( (char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp );
+		while ( j-- > 0 ) {
+		    if (fread( (char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp ) != 1)
+			break;
+		}
 		next = ftell(dbip->dbi_fp);
-		handler( dbip, record.nmg.N_name, addr, nrec,
-			 DIR_SOLID, client_data );
+		handler( dbip, record.nmg.N_name, addr, nrec, DIR_SOLID, client_data );
 		break;
 	    case DBID_SKETCH:
 		j = bu_glong(record.skt.skt_count);
 		nrec += j;
-		while ( j-- > 0 )
-		    (void)fread( (char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp );
+		while ( j-- > 0 ) {
+		    if (fread( (char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp ) != 1)
+			break;
+		}
 		next = ftell(dbip->dbi_fp);
-		handler( dbip, record.skt.skt_name, addr, nrec,
-			 DIR_SOLID, client_data );
+		handler( dbip, record.skt.skt_name, addr, nrec, DIR_SOLID, client_data );
 		break;
 	    case DBID_EXTR:
 		j = bu_glong(record.extr.ex_count);
 		nrec += j;
-		while ( j-- > 0 )
-		    (void)fread( (char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp );
+		while ( j-- > 0 ) {
+		    if (fread( (char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp ) != 1)
+			break;
+		}
 		next = ftell(dbip->dbi_fp);
-		handler( dbip, record.extr.ex_name, addr, nrec,
-			 DIR_SOLID, client_data );
+		handler( dbip, record.extr.ex_name, addr, nrec, DIR_SOLID, client_data );
 		break;
 	    case DBID_CLINE:
-		handler( dbip, record.s.s_name, addr, nrec,
-			 DIR_SOLID, client_data );
+		handler( dbip, record.s.s_name, addr, nrec, DIR_SOLID, client_data );
 		break;
 	    case DBID_BOT:
 		j = bu_glong( record.bot.bot_nrec );
 		nrec += j;
-		while ( j-- > 0 )
-		    (void)fread( (char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp );
+		while ( j-- > 0 ) {
+		    if (fread( (char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp ) != 1)
+			break;
+		}
 		next = ftell(dbip->dbi_fp);
-		handler( dbip, record.s.s_name, addr, nrec,
-			 DIR_SOLID, client_data );
+		handler( dbip, record.s.s_name, addr, nrec, DIR_SOLID, client_data );
 		break;
 	    case ID_MEMB:
 		bu_log("db_scan ERROR: Unattached combination MEMBER record\n");
@@ -298,8 +299,7 @@ db_scan(register struct db_i *dbip, int (*handler) (struct db_i *, const char *,
 	    case ID_COMB:
 		while (1) {
 		    here = ftell( dbip->dbi_fp );
-		    if ( fread( (char *)&rec2, sizeof(rec2),
-				1, dbip->dbi_fp ) != 1 )
+		    if ( fread( (char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp ) != 1 )
 			break;
 		    DEBUG_PR( here, rec2 );
 		    if ( rec2.u_id != ID_MEMB )  {
@@ -320,11 +320,10 @@ db_scan(register struct db_i *dbip, int (*handler) (struct db_i *, const char *,
 			j = DIR_COMB|DIR_REGION;
 			break;
 		}
-		handler( dbip, record.c.c_name, addr, nrec, j,
-			 client_data );
+		handler( dbip, record.c.c_name, addr, nrec, j, client_data );
 		break;
 	    default:
-		bu_log("db_scan ERROR:  bad record %c (0%o), addr=x%x\n",
+		bu_log("db_scan ERROR:  bad record %c (0%o), addr=x%llx\n",
 		       record.u_id, record.u_id, addr );
 		/* skip this record */
 		break;

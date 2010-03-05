@@ -969,6 +969,7 @@ main(int argc, char **argv)
 	bu_exit(1, "%s and %s are the same file\n", file1, file2);
     }
 
+    Tcl_FindExecutable(argv[0]);
     interp = Tcl_CreateInterp();
     tclcad_auto_path(interp);
     tclcad_tcl_library(interp);

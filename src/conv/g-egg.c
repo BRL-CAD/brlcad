@@ -74,6 +74,7 @@ nmg_to_egg(struct nmgregion *r, const struct db_full_path *pathp, int region_id,
     struct vertex *v;
     char *region_name;
     int region_polys=0;
+    int vert_count=0;
 
     NMG_CK_REGION(r);
     RT_CK_FULL_PATH(pathp);
@@ -83,13 +84,13 @@ nmg_to_egg(struct nmgregion *r, const struct db_full_path *pathp, int region_id,
     m = r->m_p;
     NMG_CK_MODEL(m);
 
-    /* Write pertinent info for this region */
-    fprintf(fp, "  <VertexPool> %s {\n", (region_name+1));
-
     /* triangulate model */
     nmg_triangulate_model(m, &tol);
 
-    /* Check triangles */
+    /* Write pertinent info for this region */
+    fprintf(fp, "  <VertexPool> %s {\n", (region_name+1));
+
+    /* Build the VertexPool */
     for (BU_LIST_FOR (s, shell, &r->s_hd))
     {
 	struct faceuse *fu;
@@ -112,17 +113,11 @@ nmg_to_egg(struct nmgregion *r, const struct db_full_path *pathp, int region_id,
 	    for (BU_LIST_FOR (lu, loopuse, &fu->lu_hd))
 	    {
 		struct edgeuse *eu;
-		int vert_count=0;
-		float flts[12];
-		float *flt_ptr;
-		unsigned char vert_buffer[50];
 
 		NMG_CK_LOOPUSE(lu);
 
 		if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
 		    continue;
-
-		memset(vert_buffer, 0, sizeof(vert_buffer));
 
 		/* check vertex numbers for each triangle */
 		for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd))
@@ -134,25 +129,64 @@ nmg_to_egg(struct nmgregion *r, const struct db_full_path *pathp, int region_id,
 		    v = eu->vu_p->v_p;
 		    NMG_CK_VERTEX(v);
 		    fprintf(fp, "    <Vertex> %d {\n      %lf %lf %lf\n      <Normal> { %lf %lf %lf }\n    }\n",
-			    tot_polygons,
-			    V3ARGS(facet_normal),
-			    V3ARGS(v->vg_p->coord));
+			    vert_count,
+			    V3ARGS(v->vg_p->coord),
+			    V3ARGS(facet_normal));
 		}
-		if (vert_count > 3)
-		{
-		    bu_free(region_name, "region name");
-		    bu_log("lu x%x has %d vertices!\n", lu, vert_count);
-		    bu_exit(1, "ERROR: LU is not a triangle");
-		}
-		else if (vert_count < 3)
+	    }
+	}
+    }
+    fprintf(fp, "  }\n");
+    vert_count = 0;
+
+    for (BU_LIST_FOR (s, shell, &r->s_hd))
+    {
+	struct faceuse *fu;
+
+	NMG_CK_SHELL(s);
+
+	for (BU_LIST_FOR (fu, faceuse, &s->fu_hd))
+	{
+	    struct loopuse *lu;
+	    vect_t facet_normal;
+
+	    NMG_CK_FACEUSE(fu);
+
+	    if (fu->orientation != OT_SAME)
+		continue;
+
+	    /* Grab the face normal and save it for all the vertex loops */
+	    NMG_GET_FU_NORMAL(facet_normal, fu);
+
+	    for (BU_LIST_FOR (lu, loopuse, &fu->lu_hd))
+	    {
+		struct edgeuse *eu;
+
+		NMG_CK_LOOPUSE(lu);
+
+		if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
 		    continue;
+
+	        fprintf(fp, "  <Polygon> { \n    <RGBA> { 1 1 1 1 } \n    <VertexRef> { ");
+		/* check vertex numbers for each triangle */
+		for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd))
+		{
+		    NMG_CK_EDGEUSE(eu);
+
+		    vert_count++;
+
+		    v = eu->vu_p->v_p;
+		    NMG_CK_VERTEX(v);
+		    fprintf(fp, " %d", vert_count);
+		}
+	        fprintf(fp, " <Ref> { \"%s\" } }\n  }\n", region_name+1);
 
 		region_polys++;
 	    }
 	}
     }
-    fprintf(fp, "  }\n");
 
+    tot_polygons += region_polys;
     bu_free(region_name, "region name");
 }
 
@@ -289,11 +323,11 @@ main(int argc, char *argv[])
     }
 
     /* print the egg header shtuff, including the command line to execute it */
-    fprintf(fp, "<CoordinateSystem> { Y-Up }\n\n");
+    fprintf(fp, "<CoordinateSystem> { Z-Up }\n\n");
     fprintf(fp, "<Comment> {\n  \"%s", *argv);
     for (i=1; i<argc; i++)
 	fprintf(fp, " %s", argv[i]);
-    fprintf(fp, "\n}\n");
+    fprintf(fp, "\"\n}\n");
 
     /* Walk indicated tree(s).  Each region will be output separately */
     while (--argc) {

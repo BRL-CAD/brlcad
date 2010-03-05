@@ -330,7 +330,7 @@ void
 rt_arb_centroid(point_t center_pt, const struct rt_arb_internal *arb, int npoints)
 {
     register int j;
-    fastf_t div;
+    fastf_t divisor;
     point_t sum;
 
     RT_ARB_CK_MAGIC(arb);
@@ -340,8 +340,8 @@ rt_arb_centroid(point_t center_pt, const struct rt_arb_internal *arb, int npoint
     for (j=0; j < npoints; j++) {
 	VADD2(sum, sum, arb->pt[j]);
     }
-    div = 1.0 / npoints;
-    VSCALE(center_pt, sum, div);
+    divisor = 1.0 / npoints;
+    VSCALE(center_pt, sum, divisor);
 }
 
 

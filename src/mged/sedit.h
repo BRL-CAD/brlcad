@@ -19,9 +19,9 @@
  */
 /** @file sedit.h
  *
- *  This header file contains the esolid structure definition,
- *  which holds all the information necessary for solid editing.
- *  Storage is actually allocated in edsol.c
+ * This header file contains the esolid structure definition,
+ * which holds all the information necessary for solid editing.
+ * Storage is actually allocated in edsol.c
  *
  */
 
@@ -40,7 +40,7 @@
 #define SROT		3	/* buttons.c */
 #define PSCALE		4	/* Scale one solid parameter by scalor */
 
-#define	ECMD_TGC_MV_H	5
+#define ECMD_TGC_MV_H	5
 #define ECMD_TGC_MV_HH	6
 #define ECMD_TGC_ROT_H	7
 #define ECMD_TGC_ROT_AB	8
@@ -62,70 +62,70 @@
 #define ECMD_NMG_FORW		22	/* next eu */
 #define ECMD_NMG_BACK		23	/* prev eu */
 #define ECMD_NMG_RADIAL		24	/* radial+mate eu */
-#define	ECMD_NMG_ESPLIT		25	/* split current edge */
-#define	ECMD_NMG_EKILL		26	/* kill current edge */
-#define	ECMD_NMG_LEXTRU		27	/* Extrude loop */
+#define ECMD_NMG_ESPLIT		25	/* split current edge */
+#define ECMD_NMG_EKILL		26	/* kill current edge */
+#define ECMD_NMG_LEXTRU		27	/* Extrude loop */
 
 #define ECMD_PIPE_PICK		28	/* Pick pipe point */
-#define	ECMD_PIPE_SPLIT		29	/* Split a pipe segment into two */
-#define	ECMD_PIPE_PT_ADD	30	/* Add a pipe point to end of pipe */
-#define	ECMD_PIPE_PT_INS	31	/* Add a pipe point to start of pipe */
-#define	ECMD_PIPE_PT_DEL	32	/* Delete a pipe point */
-#define	ECMD_PIPE_PT_MOVE	33	/* Move a pipe point */
+#define ECMD_PIPE_SPLIT		29	/* Split a pipe segment into two */
+#define ECMD_PIPE_PT_ADD	30	/* Add a pipe point to end of pipe */
+#define ECMD_PIPE_PT_INS	31	/* Add a pipe point to start of pipe */
+#define ECMD_PIPE_PT_DEL	32	/* Delete a pipe point */
+#define ECMD_PIPE_PT_MOVE	33	/* Move a pipe point */
 
-#define	ECMD_ARS_PICK		34	/* select an ARS point */
-#define	ECMD_ARS_NEXT_PT	35	/* select next ARS point in same curve */
-#define	ECMD_ARS_PREV_PT	36	/* select previous ARS point in same curve */
-#define	ECMD_ARS_NEXT_CRV	37	/* select corresponding ARS point in next curve */
-#define	ECMD_ARS_PREV_CRV	38	/* select corresponding ARS point in previous curve */
-#define	ECMD_ARS_MOVE_PT	39	/* translate an ARS point */
-#define	ECMD_ARS_DEL_CRV	40	/* delete an ARS curve */
-#define	ECMD_ARS_DEL_COL	41	/* delete all corresponding points in each curve (a column) */
-#define	ECMD_ARS_DUP_CRV	42	/* duplicate an ARS curve */
-#define	ECMD_ARS_DUP_COL	43	/* duplicate an ARS column */
-#define	ECMD_ARS_MOVE_CRV	44	/* translate an ARS curve */
-#define	ECMD_ARS_MOVE_COL	45	/* translate an ARS column */
+#define ECMD_ARS_PICK		34	/* select an ARS point */
+#define ECMD_ARS_NEXT_PT	35	/* select next ARS point in same curve */
+#define ECMD_ARS_PREV_PT	36	/* select previous ARS point in same curve */
+#define ECMD_ARS_NEXT_CRV	37	/* select corresponding ARS point in next curve */
+#define ECMD_ARS_PREV_CRV	38	/* select corresponding ARS point in previous curve */
+#define ECMD_ARS_MOVE_PT	39	/* translate an ARS point */
+#define ECMD_ARS_DEL_CRV	40	/* delete an ARS curve */
+#define ECMD_ARS_DEL_COL	41	/* delete all corresponding points in each curve (a column) */
+#define ECMD_ARS_DUP_CRV	42	/* duplicate an ARS curve */
+#define ECMD_ARS_DUP_COL	43	/* duplicate an ARS column */
+#define ECMD_ARS_MOVE_CRV	44	/* translate an ARS curve */
+#define ECMD_ARS_MOVE_COL	45	/* translate an ARS column */
 #define ECMD_ARS_PICK_MENU	46	/* display the ARS pick menu */
 #define ECMD_ARS_EDIT_MENU	47	/* display the ARS edit menu */
 
-#define	ECMD_VOL_CSIZE		48	/* set voxel size */
-#define	ECMD_VOL_FSIZE		49	/* set VOL file dimensions */
-#define	ECMD_VOL_THRESH_LO	50	/* set VOL threshold (lo) */
-#define	ECMD_VOL_THRESH_HI	51	/* set VOL threshold (hi) */
-#define	ECMD_VOL_FNAME		52	/* set VOL file name */
+#define ECMD_VOL_CSIZE		48	/* set voxel size */
+#define ECMD_VOL_FSIZE		49	/* set VOL file dimensions */
+#define ECMD_VOL_THRESH_LO	50	/* set VOL threshold (lo) */
+#define ECMD_VOL_THRESH_HI	51	/* set VOL threshold (hi) */
+#define ECMD_VOL_FNAME		52	/* set VOL file name */
 
-#define	ECMD_EBM_FNAME		53	/* set EBM file name */
-#define	ECMD_EBM_FSIZE		54	/* set EBM file size */
-#define	ECMD_EBM_HEIGHT		55	/* set EBM extrusion depth */
+#define ECMD_EBM_FNAME		53	/* set EBM file name */
+#define ECMD_EBM_FSIZE		54	/* set EBM file size */
+#define ECMD_EBM_HEIGHT		55	/* set EBM extrusion depth */
 
-#define	ECMD_DSP_FNAME		56	/* set DSP file name */
-#define	ECMD_DSP_FSIZE		57	/* set DSP file size */
+#define ECMD_DSP_FNAME		56	/* set DSP file name */
+#define ECMD_DSP_FSIZE		57	/* set DSP file size */
 #define ECMD_DSP_SCALE_X        58	/* Scale DSP x size */
 #define ECMD_DSP_SCALE_Y        59	/* Scale DSP y size */
 #define ECMD_DSP_SCALE_ALT      60	/* Scale DSP Altitude size */
 
-#define	ECMD_BOT_PICKV		61	/* pick a BOT vertex */
-#define	ECMD_BOT_PICKE		62	/* pick a BOT edge */
-#define	ECMD_BOT_PICKT		63	/* pick a BOT triangle */
-#define	ECMD_BOT_MOVEV		64	/* move a BOT vertex */
-#define	ECMD_BOT_MOVEE		65	/* move a BOT edge */
-#define	ECMD_BOT_MOVET		66	/* move a BOT triangle */
-#define	ECMD_BOT_MODE		67	/* set BOT mode */
-#define	ECMD_BOT_ORIENT		68	/* set BOT face orientation */
-#define	ECMD_BOT_THICK		69	/* set face thickness (one or all) */
-#define	ECMD_BOT_FMODE		70	/* set face mode (one or all) */
+#define ECMD_BOT_PICKV		61	/* pick a BOT vertex */
+#define ECMD_BOT_PICKE		62	/* pick a BOT edge */
+#define ECMD_BOT_PICKT		63	/* pick a BOT triangle */
+#define ECMD_BOT_MOVEV		64	/* move a BOT vertex */
+#define ECMD_BOT_MOVEE		65	/* move a BOT edge */
+#define ECMD_BOT_MOVET		66	/* move a BOT triangle */
+#define ECMD_BOT_MODE		67	/* set BOT mode */
+#define ECMD_BOT_ORIENT		68	/* set BOT face orientation */
+#define ECMD_BOT_THICK		69	/* set face thickness (one or all) */
+#define ECMD_BOT_FMODE		70	/* set face mode (one or all) */
 #define ECMD_BOT_FDEL		71	/* delete current face */
 #define ECMD_BOT_FLAGS		72	/* set BOT flags */
 
-#define	ECMD_EXTR_SCALE_H	73	/* scale extrusion vector */
+#define ECMD_EXTR_SCALE_H	73	/* scale extrusion vector */
 #define ECMD_EXTR_MOV_H		74	/* move end of extrusion vector */
-#define	ECMD_EXTR_ROT_H		75	/* rotate extrusion vector */
-#define	ECMD_EXTR_SKT_NAME	76	/* set sketch that the extrusion uses */
+#define ECMD_EXTR_ROT_H		75	/* rotate extrusion vector */
+#define ECMD_EXTR_SKT_NAME	76	/* set sketch that the extrusion uses */
 
 #define ECMD_CLINE_SCALE_H	77	/* scale height vector */
 #define ECMD_CLINE_MOVE_H	78	/* move end of height vector */
-#define	ECMD_CLINE_SCALE_R	79	/* scale radius */
-#define	ECMD_CLINE_SCALE_T	80	/* scale thickness */
+#define ECMD_CLINE_SCALE_R	79	/* scale radius */
+#define ECMD_CLINE_SCALE_T	80	/* scale thickness */
 #define ECMD_TGC_MV_H_CD	81	/* move end of tgc, while scaling CD */
 #define ECMD_TGC_MV_H_V_AB	82	/* move vertex end of tgc, while scaling AB */
 
@@ -165,7 +165,7 @@
 		      es_edflag == ECMD_CLINE_SCALE_H || \
 		      es_edflag == ECMD_CLINE_SCALE_R || \
 		      es_edflag == ECMD_CLINE_SCALE_T || \
-		      es_edflag == ECMD_EXTR_SCALE_H ))
+		      es_edflag == ECMD_EXTR_SCALE_H))
 #define OEDIT_SCALE (state == ST_O_EDIT && \
 		     (edobj == BE_O_XSCALE || \
 		      edobj == BE_O_YSCALE || \
@@ -195,7 +195,7 @@
 		     es_edflag == ECMD_BOT_MOVEE || \
 		     es_edflag == ECMD_BOT_MOVET || \
 		     es_edflag == ECMD_CLINE_MOVE_H || \
-		     es_edflag == ECMD_EXTR_MOV_H ))
+		     es_edflag == ECMD_EXTR_MOV_H))
 #define OEDIT_TRAN (state == ST_O_EDIT && \
 		    (edobj == BE_O_X || \
 		     edobj == BE_O_Y || \
@@ -260,20 +260,20 @@ extern struct bu_vls edit_absolute_object_rotate_vls[3];
 extern struct bu_vls edit_absolute_view_rotate_vls[3];
 extern struct bu_vls edit_absolute_scale_vls;
 
-extern fastf_t	es_scale;		/* scale factor */
-extern fastf_t 	es_para[3];		/* keyboard input parameter changes */
-extern fastf_t	es_peqn[7][4];		/* ARBs defining plane equations */
-extern int	es_menu;		/* item/edit_mode selected from menu */
-extern int	es_edflag;		/* type of editing for this solid */
-extern int	es_edclass;		/* type of editing class for this solid */
-extern int	es_type;		/* COMGEOM solid type */
+extern fastf_t es_scale;	/* scale factor */
+extern fastf_t es_para[3];	/* keyboard input parameter changes */
+extern fastf_t es_peqn[7][4];	/* ARBs defining plane equations */
+extern int es_menu;		/* item/edit_mode selected from menu */
+extern int es_edflag;		/* type of editing for this solid */
+extern int es_edclass;		/* type of editing class for this solid */
+extern int es_type;		/* COMGEOM solid type */
 
-extern mat_t	es_mat;			/* accumulated matrix of path */
-extern mat_t 	es_invmat;		/* inverse of es_mat   KAA */
+extern mat_t es_mat;		/* accumulated matrix of path */
+extern mat_t es_invmat;		/* inverse of es_mat KAA */
 
-extern point_t	es_keypoint;		/* center of editing xforms */
-extern char	*es_keytag;		/* string identifying the keypoint */
-extern point_t	curr_e_axes_pos;	/* center of editing xforms */
+extern point_t es_keypoint;	/* center of editing xforms */
+extern char *es_keytag;		/* string identifying the keypoint */
+extern point_t curr_e_axes_pos;	/* center of editing xforms */
 
 extern int arb_faces[5][24];	/* from edarb.c */
 extern int arb_planes[5][24];	/* from edarb.c */

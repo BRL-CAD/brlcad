@@ -78,12 +78,12 @@ static struct mem_map *rt_mem_freemap = MAP_NULL;	/* Freelist of buffers */
  *	Comments:
  *	Algorithm is first fit.
  */
-unsigned long
-rt_memalloc(struct mem_map **pp, register unsigned int size)
+size_t
+rt_memalloc(struct mem_map **pp, register size_t size)
 {
     register struct mem_map *prevp = MAP_NULL;
     register struct mem_map *curp;
-    unsigned long	addr;
+    size_t	addr;
 
     if ( size == 0 )
 	return( 0L );	/* fail */
@@ -126,7 +126,7 @@ rt_memalloc(struct mem_map **pp, register unsigned int size)
  *	Algorithm is BEST fit.
  */
 struct mem_map *
-rt_memalloc_nosplit(struct mem_map **pp, register unsigned int size)
+rt_memalloc_nosplit(struct mem_map **pp, register size_t size)
 {
     register struct mem_map *prevp = MAP_NULL;
     register struct mem_map *curp;
@@ -166,18 +166,17 @@ rt_memalloc_nosplit(struct mem_map **pp, register unsigned int size)
  *			R T _ M E M G E T
  *
  *	Returns:	NULL	Error
- *			-1	Zero Request
  *			<addr>	Othewise
  *
  *	Comments:
  *	Algorithm is first fit.
  *	Free space can be split
  */
-unsigned long
-rt_memget(struct mem_map **pp, register unsigned int size, unsigned int place)
+size_t
+rt_memget(struct mem_map **pp, register size_t size, size_t place)
 {
     register struct mem_map *prevp, *curp;
-    unsigned int addr;
+    size_t addr;
 
     prevp = MAP_NULL;		/* special for first pass through */
     if ( size == 0 )
@@ -226,8 +225,8 @@ rt_memget(struct mem_map **pp, register unsigned int size, unsigned int place)
  *	Comments:
  *		Caller is responsible for returning unused portion.
  */
-unsigned long
-rt_memget_nosplit(struct mem_map **pp, register unsigned int size, unsigned int place)
+size_t
+rt_memget_nosplit(struct mem_map **pp, register size_t size, size_t place)
 {
     register struct mem_map *prevp, *curp;
 
@@ -273,7 +272,7 @@ rt_memget_nosplit(struct mem_map **pp, register unsigned int size, unsigned int 
  *	or changing addresses.  Other wrap-around conditions are flagged.
  */
 void
-rt_memfree(struct mem_map **pp, unsigned int size, long unsigned int addr)
+rt_memfree(struct mem_map **pp, size_t size, size_t addr)
 {
     register int type = 0;
     register struct mem_map *prevp = MAP_NULL;

@@ -59,17 +59,18 @@ struct _grid_state default_grid_state = {
     /* gr_res_major_v */	5,
 };
 
-#define GRID_O(_m)        bu_offsetof(struct _grid_state, _m)
-#define GRID_OA(_m)       bu_offsetofarray(struct _grid_state, _m)
+
+#define GRID_O(_m) bu_offsetof(struct _grid_state, _m)
+#define GRID_OA(_m) bu_offsetofarray(struct _grid_state, _m)
 struct bu_structparse grid_vparse[] = {
-    {"%d",  1, "draw",		GRID_O(gr_draw),		set_grid_draw },
-    {"%d",  1, "snap",		GRID_O(gr_snap),		grid_set_dirty_flag },
-    {"%f",	3, "anchor",		GRID_OA(gr_anchor),	grid_set_dirty_flag },
-    {"%f",	1, "rh",		GRID_O(gr_res_h),		set_grid_res },
-    {"%f",	1, "rv",		GRID_O(gr_res_v),		set_grid_res },
-    {"%d",  1, "mrh",		GRID_O(gr_res_major_h),	set_grid_res },
-    {"%d",  1, "mrv",		GRID_O(gr_res_major_v),	set_grid_res },
-    {"",	0,  (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
+    {"%d", 1, "draw",		GRID_O(gr_draw),		set_grid_draw },
+    {"%d", 1, "snap",		GRID_O(gr_snap),		grid_set_dirty_flag },
+    {"%f", 3, "anchor",		GRID_OA(gr_anchor),	grid_set_dirty_flag },
+    {"%f", 1, "rh",		GRID_O(gr_res_h),		set_grid_res },
+    {"%f", 1, "rv",		GRID_O(gr_res_v),		set_grid_res },
+    {"%d", 1, "mrh",		GRID_O(gr_res_major_h),	set_grid_res },
+    {"%d", 1, "mrv",		GRID_O(gr_res_major_v),	set_grid_res },
+    {"",   0,  (char *)0,		0,			BU_STRUCTPARSE_FUNC_NULL }
 };
 
 
@@ -82,6 +83,7 @@ grid_set_dirty_flag(void)
 	if (dmlp->dml_grid_state == grid_state)
 	    dmlp->dml_dirty = 1;
 }
+
 
 static void
 set_grid_draw(void)
@@ -107,6 +109,7 @@ set_grid_draw(void)
     }
 }
 
+
 static void
 set_grid_res(void)
 {
@@ -120,24 +123,25 @@ set_grid_res(void)
 		dlp->dml_grid_auto_size = 0;
 }
 
+
 void
 draw_grid(void)
 {
-    int		i, j;
-    int		nh, nv;
-    int		nv_dots, nh_dots;
-    fastf_t	fx, fy;
-    fastf_t	sf;
-    fastf_t	inv_sf;
-    point_t			model_grid_anchor;
-    point_t			view_grid_anchor;
-    point_t			view_lleft_corner;
-    point_t 		view_grid_anchor_local;
-    point_t 		view_lleft_corner_local;
-    point_t 		view_grid_start_pt_local;
-    fastf_t 		inv_grid_res_h;
-    fastf_t 		inv_grid_res_v;
-    fastf_t 		inv_aspect;
+    int i, j;
+    int nh, nv;
+    int nv_dots, nh_dots;
+    fastf_t fx, fy;
+    fastf_t sf;
+    fastf_t inv_sf;
+    point_t model_grid_anchor;
+    point_t view_grid_anchor;
+    point_t view_lleft_corner;
+    point_t view_grid_anchor_local;
+    point_t view_lleft_corner_local;
+    point_t view_grid_start_pt_local;
+    fastf_t inv_grid_res_h;
+    fastf_t inv_grid_res_v;
+    fastf_t inv_aspect;
 
     if (dbip == DBI_NULL ||
 	NEAR_ZERO(grid_state->gr_res_h, (fastf_t)SMALL_FASTF) ||
@@ -153,7 +157,7 @@ draw_grid(void)
     {
 	fastf_t pixel_size = 2.0 * sf / dmp->dm_width;
 
-	if ( grid_state->gr_res_h < pixel_size || grid_state->gr_res_v < pixel_size )
+	if (grid_state->gr_res_h < pixel_size || grid_state->gr_res_v < pixel_size)
 	    return;
     }
 
@@ -212,6 +216,7 @@ draw_grid(void)
     }
 }
 
+
 void
 snap_to_grid(
     fastf_t *mx,		/* input and return values */
@@ -261,11 +266,12 @@ snap_to_grid(
     else if (0.5 <= grid_units_v)
 	*my = view_grid_anchor[Y] - ((nv + 1) * grid_state->gr_res_v);
     else
-	*my = view_grid_anchor[Y] - (nv  * grid_state->gr_res_v);
+	*my = view_grid_anchor[Y] - (nv * grid_state->gr_res_v);
 
     *mx *= inv_sf;
     *my *= inv_sf;
 }
+
 
 void
 snap_keypoint_to_grid(void)
@@ -305,6 +311,7 @@ snap_keypoint_to_grid(void)
     dml_mouse_dx = dml_mouse_dy = 0;
 }
 
+
 void
 snap_view_center_to_grid(void)
 {
@@ -327,6 +334,7 @@ snap_view_center_to_grid(void)
     VMOVE(dml_work_pt, model_pt);
     dml_mouse_dx = dml_mouse_dy = 0;
 }
+
 
 /*
  * Expect values in the +-2.0 range,
@@ -373,6 +381,7 @@ round_to_grid(fastf_t *view_dx, fastf_t *view_dy)
     *view_dy *= inv_sf;
 }
 
+
 void
 snap_view_to_grid(fastf_t view_dx, fastf_t view_dy)
 {
@@ -398,6 +407,7 @@ snap_view_to_grid(fastf_t view_dx, fastf_t view_dy)
     MAT_DELTAS_VEC_NEG(view_state->vs_gvp->gv_center, model_pt);
     new_mats();
 }
+
 
 void
 update_grids(fastf_t sf)
@@ -426,6 +436,7 @@ update_grids(fastf_t sf)
     bu_vls_free(&cmd);
 }
 
+
 int
 f_grid_set (ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
@@ -448,6 +459,7 @@ f_grid_set (ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     return TCL_OK;
 }
+
 
 /*
  * Local Variables:

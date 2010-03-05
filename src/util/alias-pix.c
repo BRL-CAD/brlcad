@@ -40,10 +40,11 @@ void usage(void)
     bu_exit(1, "Usage: %s [ -v ] < ALIASpixfile >BRLpixfile\n", progname);
 }
 
+
 struct aliashead {
-    short	x, y;		/* dimensions of this image in X and Y */
-    short	xoff, yoff;	/* offsets of pixels */
-    short	bitplanes;	/* the number of bits per pixel */
+    short x, y;		/* dimensions of this image in X and Y */
+    short xoff, yoff;	/* offsets of pixels */
+    short bitplanes;	/* the number of bits per pixel */
 } hdr;
 
 #define BUFCNT 256
@@ -128,6 +129,7 @@ main(int ac, char **av)
     bu_free(image, "image buffer");
     return(0);
 }
+
 
 /*
  * Local Variables:

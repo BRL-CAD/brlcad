@@ -83,7 +83,6 @@ bin_PROGRAMS = \
 	msrandom \
 	mst \
 	orle-pix \
-	pcd-pix \
 	pix-alias \
 	pix-bw \
 	pix-bw3 \
@@ -316,9 +315,6 @@ mst_LDADD = ${BU}
 
 orle_pix_SOURCES = orle-pix.c
 orle_pix_LDADD = ${FB} ${BU} ${ORLE}
-
-pcd_pix_SOURCES = pcd-pix.c
-pcd_pix_LDADD = ${BU}
 
 pix3filter_SOURCES = pix3filter.c
 pix3filter_LDADD = ${BU}
@@ -607,7 +603,6 @@ man_MANS = \
 	mac-pix.1 \
 	morphedit.1 \
 	orle-pix.1 \
-	pcd-pix.1 \
 	pix-alias.1 \
 	pix-bw.1 \
 	pix-bw3.1 \
@@ -731,7 +726,6 @@ FAST_OBJECTS = \
 	$(mst_OBJECTS) \
 	$(op_bw_OBJECTS) \
 	$(orle_pix_OBJECTS) \
-	$(pcd_pix_OBJECTS) \
 	$(pix_alias_OBJECTS) \
 	$(pix_bw_OBJECTS) \
 	$(pix_bw3_OBJECTS) \

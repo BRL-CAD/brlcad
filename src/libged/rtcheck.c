@@ -335,7 +335,7 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
     (void)CloseHandle(e_pipe[1]);
 
     /* As parent, send view information down pipe */
-    fp = _fdopen(_open_osfhandle((HFILE)pipe_oDup, _O_TEXT), "wb");
+    fp = _fdopen(_open_osfhandle((intptr_t)pipe_oDup, _O_TEXT), "wb");
     setmode(_fileno(fp), O_BINARY);
 
     _ged_rt_set_eye_model(gedp, eye_model);
@@ -346,7 +346,7 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
 
     /* initialize the rtcheck struct */
     rtcp->fd = pipe_iDup;
-    rtcp->fp = _fdopen( _open_osfhandle((HFILE)pipe_iDup, _O_TEXT), "rb" );
+    rtcp->fp = _fdopen( _open_osfhandle((intptr_t)pipe_iDup, _O_TEXT), "rb" );
     setmode(_fileno(rtcp->fp), O_BINARY);
     rtcp->hProcess = pi.hProcess;
     rtcp->pid = pi.dwProcessId;

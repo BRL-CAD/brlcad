@@ -170,7 +170,7 @@
 				ProgramDataBaseFileName=".\$(PlatformName)\$(ConfigurationName)/"
 				WarningLevel="3"
 				SuppressStartupBanner="true"
-				Detect64BitPortabilityProblems="false"
+				Detect64BitPortabilityProblems="true"
 				DebugInformationFormat="0"
 				CompileAs="0"
 			/>
@@ -264,11 +264,15 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\attributes.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\bezier_2d_isect.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\binary_obj.c"
+				RelativePath="..\..\..\src\librt\binunif\binunif.c"
 				>
 			</File>
 			<File
@@ -320,7 +324,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\comb_mirror.c"
+				RelativePath="..\..\..\src\librt\comb\comb.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\comb\comb_mirror.c"
 				>
 			</File>
 			<File
@@ -336,11 +344,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\db5_bin.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\src\librt\db5_comb.c"
+				RelativePath="..\..\..\src\librt\binunif\db5_bin.c"
 				>
 			</File>
 			<File
@@ -364,7 +368,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\librt\db_comb.c"
+				RelativePath="..\..\..\src\librt\comb\db_comb.c"
 				>
 			</File>
 			<File
@@ -768,6 +772,90 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\src\librt\primitives\obj_adjust.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\obj_curve.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\obj_describe.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\obj_export.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\obj_free.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\obj_get.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\obj_ifree.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\obj_import.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\obj_make.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\obj_mirror.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\obj_norm.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\obj_params.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\obj_plot.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\obj_prep.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\obj_print.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\obj_shot.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\obj_tess.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\obj_tnurb.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\obj_uv.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\obj_vshot.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\primitives\obj_xform.c"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\src\librt\opennurbs_ext.cpp"
 				>
 			</File>
@@ -817,6 +905,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\src\librt\pr.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\src\librt\prcomb.c"
 				>
 			</File>
 			<File

@@ -19,9 +19,7 @@
  */
 /** @file vparse.c
  *
- * Description -
- *	Routines for interfacing with the LIBBU struct parsing
- *	utilities.
+ * Routines for interfacing with the LIBBU struct parsing utilities.
  *
  */
 
@@ -36,12 +34,12 @@
 #include "./mged_dm.h"
 
 void
-mged_vls_struct_parse(struct bu_vls		*vls,
-		      char			*title,
-		      struct bu_structparse	*how_to_parse,
-		      const char		*structp,
-		      int			argc,
-		      char			*argv[])
+mged_vls_struct_parse(struct bu_vls *vls,
+		      char *title,
+		      struct bu_structparse *how_to_parse,
+		      const char *structp,
+		      int argc,
+		      char *argv[])
 {
     if (argc < 2) {
 	/* Bare set command, print out current settings */
@@ -59,6 +57,7 @@ mged_vls_struct_parse(struct bu_vls		*vls,
 	bu_vls_free(&tmp_vls);
     }
 }
+
 
 void
 mged_vls_struct_parse_old(
@@ -81,6 +80,7 @@ mged_vls_struct_parse_old(
 	bu_vls_free(&tmp_vls);
     }
 }
+
 
 /*
  * Local Variables:

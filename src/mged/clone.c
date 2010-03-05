@@ -81,18 +81,18 @@
  * requested and values necessary to perform the cloning operation.
  */
 struct clone_state {
-    Tcl_Interp *interp;                 /* Stash a pointer to the tcl interpreter for output */
-    struct directory	*src;		/* Source object */
-    int			incr;		/* Amount to increment between copies */
-    int			n_copies;	/* Number of copies to make */
-    int			draw_obj;	/* 1 if draw copied object */
-    hvect_t		trans;		/* Translation between copies */
-    hvect_t		rot;		/* Rotation between copies */
-    hvect_t		rpnt;		/* Point to rotate about (default 0 0 0) */
-    int			miraxis;	/* Axis to mirror copy */
-    fastf_t		mirpos;		/* Point on axis to mirror copy */
-    int			autoview;	/* Execute autoview after drawing all objects */
-    int			updpos;		/* Position of number to update (for -c) */
+    Tcl_Interp *interp;         /* Stash a pointer to the tcl interpreter for output */
+    struct directory *src;	/* Source object */
+    int incr;			/* Amount to increment between copies */
+    int n_copies;		/* Number of copies to make */
+    int draw_obj;		/* 1 if draw copied object */
+    hvect_t trans;		/* Translation between copies */
+    hvect_t rot;		/* Rotation between copies */
+    hvect_t rpnt;		/* Point to rotate about (default 0 0 0) */
+    int miraxis;		/* Axis to mirror copy */
+    fastf_t mirpos;		/* Point on axis to mirror copy */
+    int autoview;		/* Execute autoview after drawing all objects */
+    int updpos;			/* Position of number to update (for -c) */
 };
 #define INTERP state->interp
 
@@ -101,10 +101,11 @@ struct name {
     struct bu_vls *dest;	/* dest object names */
 };
 
+
 /**
- * structure used to store the names of objects that are to be
- * cloned.  space is preallocated via names with len and used keeping
- * track of space available and used.
+ * structure used to store the names of objects that are to be cloned.
+ * space is preallocated via names with len and used keeping track of
+ * space available and used.
  */
 struct nametbl {
     struct name *names;
@@ -112,6 +113,7 @@ struct nametbl {
     int names_len;
     int names_used;
 };
+
 
 static struct nametbl obj_list;
 
@@ -123,9 +125,10 @@ struct knot {
     fastf_t c[3][4];
 };
 
+
 /**
  * a spline path with various segments, break points, and polynamial
- *  values.
+ * values.
  */
 struct spline {
     int n_segs;
@@ -133,11 +136,13 @@ struct spline {
     struct knot *k; /* polynomials */
 };
 
+
 struct link {
     struct bu_vls name;
     fastf_t len;
     fastf_t pct;
 };
+
 
 /**
  * initialize the name list used for stashing destination names
@@ -158,6 +163,7 @@ init_list(struct nametbl *l, int s)
     l->names_len = 10;
     l->names_used = 0;
 }
+
 
 /**
  * add a new name to the name list
@@ -185,6 +191,7 @@ add_to_list(struct nametbl *l, char *name)
     return l->names_used-1; /* return number of available slots */
 }
 
+
 /**
  * returns the location of 'name' in the list if it exists, returns
  * -1 otherwise.
@@ -200,6 +207,7 @@ index_in_list(struct nametbl l, char *name)
     return -1;
 }
 
+
 /**
  * returns truthfully if 'name' exists in the list
  */
@@ -208,6 +216,7 @@ is_in_list(struct nametbl l, char *name)
 {
     return index_in_list(l, name) != -1;
 }
+
 
 /**
  * returns the next available/unused name, using a consistent naming
@@ -224,10 +233,10 @@ get_name(struct db_i *_dbip, struct directory *dp, struct clone_state *state, in
     newname = bu_vls_vlsinit();
 
     /* Ugh. This needs much repair/cleanup. */
-    if ( state->updpos == 0 ) {
+    if (state->updpos == 0) {
 	sscanf(dp->d_namep, "%[!-/,:-~]%d%[!-/,:-~]%512s", &prefix, &num, &suffix, &suffix2); /* CLONE_BUFSIZE */
 	snprintf(suffix, CLONE_BUFSIZE, "%s", suffix2);
-    } else if ( state->updpos == 1 ) {
+    } else if (state->updpos == 1) {
 	int num2 = 0;
 	sscanf(dp->d_namep, "%[!-/,:-~]%d%[!-/,:-~]%d%[!-/,:-~]", &prefix, &num2, &suffix2, &num, &suffix);
 	snprintf(prefix, CLONE_BUFSIZE, "%s%d%s", prefix, num2, suffix2);
@@ -258,6 +267,7 @@ get_name(struct db_i *_dbip, struct directory *dp, struct clone_state *state, in
     } while (db_lookup(_dbip, bu_vls_addr(newname), LOOKUP_QUIET) != NULL);
     return newname;
 }
+
 
 /**
  * make a copy of a v4 solid by adding it to our book-keeping list,
@@ -346,6 +356,7 @@ copy_v4_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 
     return;
 }
+
 
 /**
  * make a copy of a v5 solid by adding it to our book-keeping list,
@@ -436,6 +447,7 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
     return;
 }
 
+
 /**
  * make n copies of a database combination by adding it to our
  * book-keeping list, adding it to the directory, then writing it out
@@ -465,6 +477,7 @@ copy_solid(struct db_i *_dbip, struct directory *proto, genptr_t state)
 	(void)copy_v5_solid(_dbip, proto, (struct clone_state *)state, idx);
     return;
 }
+
 
 /**
  * make n copies of a v4 combination.
@@ -537,6 +550,7 @@ copy_v4_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
     return dp;
 }
 
+
 /*
  * update the v5 combination tree with the new names.
  * DESTRUCTIVE RECURSIVE
@@ -569,6 +583,7 @@ copy_v5_comb_tree(union tree *tree, int idx)
     }
     return 0;
 }
+
 
 /**
  * make n copies of a v5 combination.
@@ -614,7 +629,7 @@ copy_v5_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
 		return NULL;
 	    }
 
-	    if ((dp=db_diradd(wdbp->dbip, bu_vls_addr(name), -1, 0, proto->d_flags, (genptr_t)&proto->d_minor_type)) == DIR_NULL ) {
+	    if ((dp=db_diradd(wdbp->dbip, bu_vls_addr(name), -1, 0, proto->d_flags, (genptr_t)&proto->d_minor_type)) == DIR_NULL) {
 		bu_log("An error has occured while adding a new object to the database.");
 		return NULL;
 	    }
@@ -642,6 +657,7 @@ copy_v5_comb(struct db_i *_dbip, struct directory *proto, struct clone_state *st
 
     return dp;
 }
+
 
 /**
  * make n copies of a database combination by adding it to our
@@ -674,6 +690,7 @@ copy_comb(struct db_i *_dbip, struct directory *proto, genptr_t state)
     return;
 }
 
+
 /**
  * recursively copy a tree of geometry
  */
@@ -681,7 +698,7 @@ static struct directory *
 copy_tree(struct db_i *_dbip, struct directory *dp, struct resource *resp, struct clone_state *state)
 {
     int i;
-    union record   *rp = (union record *)NULL;
+    union record *rp = (union record *)NULL;
     struct directory *mdp = (struct directory *)NULL;
     struct directory *copy = (struct directory *)NULL;
 
@@ -708,7 +725,7 @@ copy_tree(struct db_i *_dbip, struct directory *dp, struct resource *resp, struc
 	     * if it is a combination/region, copy the objects that
 	     * make up the object.
 	     */
-	    for (i = 1; i < dp->d_len; i++ ) {
+	    for (i = 1; i < dp->d_len; i++) {
 		if ((mdp = db_lookup(_dbip, rp[i].M.m_instname, LOOKUP_NOISY)) == DIR_NULL) {
 		    errors++;
 		    bu_log("WARNING: failed to locate \"%s\"\n", rp[i].M.m_instname);
@@ -755,6 +772,7 @@ copy_tree(struct db_i *_dbip, struct directory *dp, struct resource *resp, struc
     return copy;
 }
 
+
 /**
  * copy an object, recursivley copying all of the object's contents
  * if it's a combination/region.
@@ -783,7 +801,7 @@ copy_object(struct db_i *_dbip, struct resource *resp, struct clone_state *state
 	for (i = 0; i < (state->n_copies > obj_list.name_size ? obj_list.name_size : state->n_copies); i++) {
 	    av[1] = bu_vls_addr(&obj_list.names[idx].dest[i]);
 	    /* draw does not use clientdata */
-	    cmd_draw( (ClientData)NULL, INTERP, 2, av );
+	    cmd_draw((ClientData)NULL, INTERP, 2, av);
 	}
 	if (state->autoview) {
 	    av[0] = "autoview";
@@ -805,6 +823,7 @@ copy_object(struct db_i *_dbip, struct resource *resp, struct clone_state *state
 
     return copy;
 }
+
 
 /**
  * helper function that computes where a point is along a spline
@@ -835,6 +854,7 @@ interp_spl(fastf_t t, struct spline spl, vect_t pt)
     pt[Z] = spl.k[i].c[Z][0] + spl.k[i].c[Z][1]*s + spl.k[i].c[Z][2]*s2 + spl.k[i].c[Z][3]*s3;
 }
 
+
 /**
  * master hook function for the 'tracker' command used to create
  * copies of objects along a spline path.
@@ -858,8 +878,8 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     int no_draw = 0;
 
     /* allow interrupts */
-    if ( setjmp( jmp_env ) == 0 )
-	(void)signal( SIGINT, sig3 );
+    if (setjmp(jmp_env) == 0)
+	(void)signal(SIGINT, sig3);
     else
 	return TCL_OK;
 
@@ -1090,6 +1110,7 @@ f_tracker(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     (void)signal(SIGINT, SIG_IGN);
     return TCL_OK;
 }
+
 
 /*
  * Local Variables:

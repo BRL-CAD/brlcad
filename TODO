@@ -54,6 +54,10 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* the 'l' and 'analyze' commands now require an object be specified
+  and won't use the currently highlighted solid.  undoubtedly related
+  to libged refactoring.  this is related to sf request 2954409.
+
 * alias objects.  this is an object handle in a geometry database that
   refers to another geometry database object.  in effect, it
   encapsulates the idea of a symbolic reference for database objects.
@@ -159,6 +163,9 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   normals.. this certainly saves memory if the triangles don't have
   normals but at a rather expensive malloc cost (which is being seen
   on large BoT models) during prep.
+
+* need a simplified means to programmatically create and edit BoT
+  meshes via the command line without resorting to get/put.
 
 * make fbclear and raytrace control panel obey a -F advanced option,
   i.e., better remote framebuffer support.

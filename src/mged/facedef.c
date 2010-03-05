@@ -18,8 +18,6 @@
  * information.
  */
 /** @file facedef.c
- *  Authors -
- *	Daniel C. Dender
  *
  */
 
@@ -49,11 +47,13 @@ char *p_rotfb[] = {
     "Enter Z of point: "
 };
 
+
 char *p_3pts[] = {
     "Enter X, Y, Z of point",
     "Enter Y, Z of point",
     "Enter Z of point"
 };
+
 
 char *p_pleqn[] = {
     "Enter A, B, C, D of plane equation: ",
@@ -62,31 +62,33 @@ char *p_pleqn[] = {
     "Enter D of plane equation: "
 };
 
+
 char *p_nupnt[] = {
     "Enter X, Y, Z of fixed point: ",
     "Enter Y, Z of fixed point: ",
     "Enter Z of fixed point: "
 };
 
-static void	get_pleqn(fastf_t *plane, char **argv), get_rotfb(fastf_t *plane, char **argv, const struct rt_arb_internal *arb), get_nupnt(fastf_t *plane, char **argv);
-static int	get_3pts(fastf_t *plane, char **argv, const struct bn_tol *tol);
+
+static void get_pleqn(fastf_t *plane, char **argv), get_rotfb(fastf_t *plane, char **argv, const struct rt_arb_internal *arb), get_nupnt(fastf_t *plane, char **argv);
+static int get_3pts(fastf_t *plane, char **argv, const struct bn_tol *tol);
 
 /*
- *			F _ F A C E D E F
+ * F _ F A C E D E F
  *
- * Redefines one of the defining planes for a GENARB8. Finds
- * which plane to redefine and gets input, then shuttles the process over to
+ * Redefines one of the defining planes for a GENARB8. Finds which
+ * plane to redefine and gets input, then shuttles the process over to
  * one of four functions before calculating new vertices.
  */
 int
 f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
-    short int 	i;
-    int		face, prod, plane;
-    struct rt_db_internal	intern;
-    struct rt_arb_internal	*arb;
-    struct rt_arb_internal	*arbo;
-    plane_t		planes[6];
+    short int i;
+    int face, prod, plane;
+    struct rt_db_internal intern;
+    struct rt_arb_internal *arb;
+    struct rt_arb_internal *arbo;
+    plane_t planes[6];
     int status = TCL_OK;
     struct bu_vls error_msg;
 
@@ -102,24 +104,24 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_ERROR;
     }
 
-    if ( setjmp( jmp_env ) == 0 )
-	(void)signal( SIGINT, sig3);  /* allow interrupts */
+    if (setjmp(jmp_env) == 0)
+	(void)signal(SIGINT, sig3);  /* allow interrupts */
     else
 	return TCL_OK;
 
-    if ( state != ST_S_EDIT ) {
+    if (state != ST_S_EDIT) {
 	Tcl_AppendResult(interp, "Facedef: must be in solid edit mode\n", (char *)NULL);
 	status = TCL_ERROR;
 	goto end;
     }
-    if ( es_int.idb_type != ID_ARB8 )  {
+    if (es_int.idb_type != ID_ARB8) {
 	Tcl_AppendResult(interp, "Facedef: solid type must be ARB\n");
 	status = TCL_ERROR;
 	goto end;
     }
 
     /* apply es_mat editing to parameters.  "new way" */
-    transform_editing_solid( &intern, es_mat, &es_int, 0 );
+    transform_editing_solid(&intern, es_mat, &es_int, 0);
 
     arb = (struct rt_arb_internal *)intern.idb_ptr;
     RT_ARB_CK_MAGIC(arb);
@@ -136,67 +138,67 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     bu_vls_free(&error_msg);
 
     /* get face, initialize args and argcnt */
-    face = atoi( argv[1] );
+    face = atoi(argv[1]);
 
     /* use product of vertices to distinguish faces */
-    for (i=0, prod=1;i<4;i++)  {
-	if ( face > 0 ) {
+    for (i=0, prod=1;i<4;i++) {
+	if (face > 0) {
 	    prod *= face%10;
 	    face /= 10;
 	}
     }
 
-    switch ( prod ) {
-	case    6:			/* face  123 of arb4 */
-	case   24:plane=0;		/* face 1234 of arb8 */
+    switch (prod) {
+	case 6:			/* face 123 of arb4 */
+	case 24:plane=0;	/* face 1234 of arb8 */
 	    /* face 1234 of arb7 */
 	    /* face 1234 of arb6 */
 	    /* face 1234 of arb5 */
 	    if (es_type==4 && prod==24)
-		plane=2; 	/* face  234 of arb4 */
+		plane=2; 	/* face 234 of arb4 */
 	    break;
-	case    8:			/* face  124 of arb4 */
-	case  180: 			/* face 2365 of arb6 */
-	case  210:			/* face  567 of arb7 */
-	case 1680:plane=1;      	/* face 5678 of arb8 */
+	case 8:			/* face 124 of arb4 */
+	case 180: 		/* face 2365 of arb6 */
+	case 210:		/* face 567 of arb7 */
+	case 1680:plane=1;      /* face 5678 of arb8 */
 	    break;
-	case   30:			/* face  235 of arb5 */
-	case  120:			/* face 1564 of arb6 */
-	case   20:      		/* face  145 of arb7 */
-	case  160:plane=2;		/* face 1584 of arb8 */
+	case 30:		/* face 235 of arb5 */
+	case 120:		/* face 1564 of arb6 */
+	case 20:      		/* face 145 of arb7 */
+	case 160:plane=2;	/* face 1584 of arb8 */
 	    if (es_type==5)
-		plane=4; 	/* face  145 of arb5 */
+		plane=4; 	/* face 145 of arb5 */
 	    break;
-	case   12:			/* face  134 of arb4 */
-	case   10:			/* face  125 of arb6 */
-	case  252:plane=3;		/* face 2376 of arb8 */
+	case 12:		/* face 134 of arb4 */
+	case 10:		/* face 125 of arb6 */
+	case 252:plane=3;	/* face 2376 of arb8 */
 	    /* face 2376 of arb7 */
 	    if (es_type==5)
-		plane=1; 	/* face  125 of arb5 */
+		plane=1; 	/* face 125 of arb5 */
 	    break;
-	case   72:               	/* face  346 of arb6 */
-	case   60:plane=4;	 	/* face 1265 of arb8 */
+	case 72:               	/* face 346 of arb6 */
+	case 60:plane=4;	/* face 1265 of arb8 */
 	    /* face 1265 of arb7 */
 	    if (es_type==5)
-		plane=3; 	/* face  345 of arb5 */
+		plane=3; 	/* face 345 of arb5 */
 	    break;
-	case  420:			/* face 4375 of arb7 */
-	case  672:plane=5;		/* face 4378 of arb8 */
+	case 420:		/* face 4375 of arb7 */
+	case 672:plane=5;	/* face 4378 of arb8 */
 	    break;
 	default:
-	{
-	    struct bu_vls tmp_vls;
+	    {
+		struct bu_vls tmp_vls;
 
-	    bu_vls_init(&tmp_vls);
-	    bu_vls_printf(&tmp_vls, "bad face (product=%d)\n", prod);
-	    Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
-	    bu_vls_free(&tmp_vls);
-	    status = TCL_ERROR;
-	    goto end;
-	}
+		bu_vls_init(&tmp_vls);
+		bu_vls_printf(&tmp_vls, "bad face (product=%d)\n", prod);
+		Tcl_AppendResult(interp, bu_vls_addr(&tmp_vls), (char *)NULL);
+		bu_vls_free(&tmp_vls);
+		status = TCL_ERROR;
+		goto end;
+	    }
     }
 
-    if ( argc < 3 ) {
+    if (argc < 3) {
 	/* menu of choices for plane equation definition */
 	Tcl_AppendResult(interp,
 			 "\ta   planar equation\n",
@@ -209,32 +211,32 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	goto end;
     }
 
-    switch ( argv[2][0] ) {
+    switch (argv[2][0]) {
 	case 'a':
 	    /* special case for arb7, because of 2 4-pt planes meeting */
-	    if ( es_type == 7 )
-		if ( plane!=0 && plane!=3 ) {
+	    if (es_type == 7)
+		if (plane!=0 && plane!=3) {
 		    Tcl_AppendResult(interp, "Facedef: can't redefine that arb7 plane\n", (char *)NULL);
 		    status = TCL_ERROR;
 		    goto end;
 		}
-	    if ( argc < 7 ) {
+	    if (argc < 7) {
 		/* total # of args under this option */
 		Tcl_AppendResult(interp, MORE_ARGS_STR, p_pleqn[argc-3], (char *)NULL);
 		status = TCL_ERROR;
 		goto end;
 	    }
-	    get_pleqn( planes[plane], &argv[3] );
+	    get_pleqn(planes[plane], &argv[3]);
 	    break;
 	case 'b':
 	    /* special case for arb7, because of 2 4-pt planes meeting */
-	    if ( es_type == 7 )
-		if ( plane!=0 && plane!=3 ) {
+	    if (es_type == 7)
+		if (plane!=0 && plane!=3) {
 		    Tcl_AppendResult(interp, "Facedef: can't redefine that arb7 plane\n", (char *)NULL);
 		    status = TCL_ERROR;
 		    goto end;
 		}
-	    if ( argc < 12 ) {
+	    if (argc < 12) {
 		/* total # of args under this option */
 		struct bu_vls tmp_vls;
 
@@ -245,15 +247,15 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		status = TCL_ERROR;
 		goto end;
 	    }
-	    if ( get_3pts( planes[plane], &argv[3], &mged_tol) ) {
+	    if (get_3pts(planes[plane], &argv[3], &mged_tol)) {
 		status = TCL_ERROR;
 		goto end;
 	    }
 	    break;
 	case 'c':
 	    /* special case for arb7, because of 2 4-pt planes meeting */
-	    if ( es_type == 7 && (plane != 0 && plane != 3) ) {
-		if ( argc < 5 ) {
+	    if (es_type == 7 && (plane != 0 && plane != 3)) {
+		if (argc < 5) {
 		    /* total # of args under this option */
 		    Tcl_AppendResult(interp, MORE_ARGS_STR, p_rotfb[argc-3], (char *)NULL);
 		    status = TCL_ERROR;
@@ -264,7 +266,7 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 		Tcl_AppendResult(interp, "Fixed point is vertex five.\n");
 	    }
 	    /* total # of as under this option */
-	    else if ( argc < 8 && (argc > 5 ? argv[5][0] != 'R' : 1)) {
+	    else if (argc < 8 && (argc > 5 ? argv[5][0] != 'R' : 1)) {
 		Tcl_AppendResult(interp, MORE_ARGS_STR, p_rotfb[argc-3], (char *)NULL);
 		status = TCL_ERROR;
 		goto end;
@@ -273,13 +275,13 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    break;
 	case 'd':
 	    /* special case for arb7, because of 2 4-pt planes meeting */
-	    if ( es_type == 7 )
-		if ( plane!=0 && plane!=3 ) {
+	    if (es_type == 7)
+		if (plane!=0 && plane!=3) {
 		    Tcl_AppendResult(interp, "Facedef: can't redefine that arb7 plane\n", (char *)NULL);
 		    status = TCL_ERROR;
 		    goto end;
 		}
-	    if ( argc < 6 ) {
+	    if (argc < 6) {
 		/* total # of args under this option */
 		Tcl_AppendResult(interp, MORE_ARGS_STR, p_nupnt[argc-3], (char *)NULL);
 		status = TCL_ERROR;
@@ -296,7 +298,7 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     }
 
     /* find all vertices from the plane equations */
-    if ( rt_arb_calc_points( arb, es_type, planes, &mged_tol ) < 0 )  {
+    if (rt_arb_calc_points(arb, es_type, planes, &mged_tol) < 0) {
 	Tcl_AppendResult(interp, "facedef:  unable to find points\n", (char *)NULL);
 	status = TCL_ERROR;
 	goto end;
@@ -309,7 +311,7 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     RT_ARB_CK_MAGIC(arbo);
 
     for (i=0; i<8; i++) {
-	MAT4X3PNT( arbo->pt[i], es_invmat, arb->pt[i] );
+	MAT4X3PNT(arbo->pt[i], es_invmat, arb->pt[i]);
     }
     rt_db_free_internal(&intern);
 
@@ -317,16 +319,16 @@ f_facedef(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     replot_editing_solid();
 
  end:
-    (void)signal( SIGINT, SIG_IGN );
+    (void)signal(SIGINT, SIG_IGN);
     return status;
 }
 
 
 /*
- * 			G E T _ P L E Q N
+ * G E T _ P L E Q N
  *
- * Gets the planar equation from the array argv[]
- * and puts the result into 'plane'.
+ * Gets the planar equation from the array argv[] and puts the result
+ * into 'plane'.
  */
 static void
 get_pleqn(fastf_t *plane, char **argv)
@@ -338,28 +340,28 @@ get_pleqn(fastf_t *plane, char **argv)
 
     for (i=0; i<4; i++)
 	plane[i]= atof(argv[i]);
-    VUNITIZE( &plane[0] );
+    VUNITIZE(&plane[0]);
     plane[W] *= local2base;
     return;
 }
 
 
 /*
- * 			G E T _ 3 P T S
+ * G E T _ 3 P T S
  *
- *  Gets three definite points from the array argv[]
- *  and finds the planar equation from these points.
- *  The resulting plane equation is stored in 'plane'.
+ * Gets three definite points from the array argv[] and finds the
+ * planar equation from these points.  The resulting plane equation is
+ * stored in 'plane'.
  *
- *  Returns -
- *	 0	success
- *	-1	failure
+ * Returns -
+ * 0 success
+ * -1 failure
  */
 static int
 get_3pts(fastf_t *plane, char **argv, const struct bn_tol *tol)
 {
     int i;
-    point_t	a, b, c;
+    point_t a, b, c;
 
     CHECK_DBI_NULL;
 
@@ -370,27 +372,28 @@ get_3pts(fastf_t *plane, char **argv, const struct bn_tol *tol)
     for (i=0; i<3; i++)
 	c[i] = atof(argv[6+i]) * local2base;
 
-    if ( bn_mk_plane_3pts( plane, a, b, c, tol ) < 0 )  {
+    if (bn_mk_plane_3pts(plane, a, b, c, tol) < 0) {
 	Tcl_AppendResult(interp, "Facedef: not a plane\n", (char *)NULL);
 	return(-1);		/* failure */
     }
     return(0);			/* success */
 }
 
+
 /*
- * 			G E T _ R O T F B
+ * G E T _ R O T F B
  *
- * Gets information from the array argv[].
- * Finds the planar equation given rotation and fallback angles, plus a
- * fixed point. Result is stored in 'plane'. The vertices
- * pointed to by 's_recp' are used if a vertex is chosen as fixed point.
+ * Gets information from the array argv[].  Finds the planar equation
+ * given rotation and fallback angles, plus a fixed point. Result is
+ * stored in 'plane'. The vertices pointed to by 's_recp' are used if
+ * a vertex is chosen as fixed point.
  */
 static void
 get_rotfb(fastf_t *plane, char **argv, const struct rt_arb_internal *arb)
 {
     fastf_t rota, fb;
     short int i, temp;
-    point_t		pt;
+    point_t pt;
 
     if (dbip == DBI_NULL)
 	return;
@@ -403,7 +406,7 @@ get_rotfb(fastf_t *plane, char **argv, const struct rt_arb_internal *arb)
     plane[1] = cos(fb) * sin(rota);
     plane[2] = sin(fb);
 
-    if ( argv[2][0] == 'v' ) {
+    if (argv[2][0] == 'v') {
       	/* vertex given */
 	/* strip off 'v', subtract 1 */
 	temp = atoi(argv[2]+1) - 1;
@@ -416,18 +419,19 @@ get_rotfb(fastf_t *plane, char **argv, const struct rt_arb_internal *arb)
     }
 }
 
+
 /*
- * 			G E T _ N U P N T
+ * G E T _ N U P N T
  *
- * Gets a point from the three strings in the 'argv' array.
- * The value of D of 'plane' is changed such that the plane
- * passes through the input point.
+ * Gets a point from the three strings in the 'argv' array.  The value
+ * of D of 'plane' is changed such that the plane passes through the
+ * input point.
  */
 static void
 get_nupnt(fastf_t *plane, char **argv)
 {
-    int	i;
-    point_t	pt;
+    int i;
+    point_t pt;
 
     if (dbip == DBI_NULL)
 	return;
@@ -436,6 +440,7 @@ get_nupnt(fastf_t *plane, char **argv)
 	pt[i] = atof(argv[i]) * local2base;
     plane[W] = VDOT(&plane[0], pt);
 }
+
 
 /*
  * Local Variables:

@@ -2168,7 +2168,7 @@ rt_extrude_export5(struct bu_external *ep, const struct rt_db_internal *ip, doub
     struct rt_extrude_internal *extrude_ip;
     vect_t tmp_vec[4];
     unsigned char *ptr;
-    int rem;
+    size_t rem;
 
     if (dbip) RT_CK_DBI(dbip);
 

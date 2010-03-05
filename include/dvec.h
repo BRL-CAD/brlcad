@@ -130,10 +130,11 @@ extern "C++" {
 	    (fabs(a.y()-b.y()) < VEQUALITY);
     }
 
-    //--------------------------------------------------------------------------------
-    // MATH / VECTOR ops
     typedef fastf_t pt2d_t[2] VEC_ALIGN;
     typedef fastf_t mat2d_t[4] VEC_ALIGN; // row-major
+
+    //--------------------------------------------------------------------------------
+    // MATH / VECTOR ops
     inline
     bool mat2d_inverse(mat2d_t inv, mat2d_t m) {
 	pt2d_t _a = {m[0], m[1]};

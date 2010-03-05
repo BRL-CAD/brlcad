@@ -98,7 +98,7 @@ static int
 _fb_pgflush(register FBIO *ifp)
 {
     if (ifp->if_debug & FB_DEBUG_BIO) {
-	fb_log("_fb_pgflush(0x%lx)\n", (unsigned long)ifp);
+	fb_log("_fb_pgflush(%p)\n", (void *)ifp);
     }
 
     if (ifp->if_pdirty) {
@@ -121,7 +121,7 @@ int
 fb_ioinit(register FBIO *ifp)
 {
     if (ifp->if_debug & FB_DEBUG_BIO) {
-	fb_log("fb_ioinit(0x%lx)\n", (unsigned long)ifp);
+	fb_log("fb_ioinit(%p)\n", (void *)ifp);
     }
 
     ifp->if_pno = -1;		/* Force _fb_pgin() initially.	*/
@@ -149,8 +149,8 @@ fb_seek(register FBIO *ifp, int x, int y)
     long pagepixel;
 
     if (ifp->if_debug & FB_DEBUG_BIO) {
-	fb_log("fb_seek(0x%lx, %d, %d)\n",
-	       (unsigned long)ifp, x, y);
+	fb_log("fb_seek(%p, %d, %d)\n",
+	       (void *)ifp, x, y);
     }
 
     if (x < 0 || y < 0 || x >= ifp->if_width || y >= ifp->if_height) {
@@ -180,8 +180,8 @@ fb_tell(register FBIO *ifp, int *xp, int *yp)
     *xp = (int) (ifp->if_pixcur % ifp->if_width);
 
     if (ifp->if_debug & FB_DEBUG_BIO) {
-	fb_log("fb_tell(0x%lx, 0x%x, 0x%x) => (%4d, %4d)\n",
-	       (unsigned long)ifp, xp, yp, *xp, *yp);
+	fb_log("fb_tell(%p, 0x%x, 0x%x) => (%4d, %4d)\n",
+	       (void *)ifp, xp, yp, *xp, *yp);
     }
 
     return 0;

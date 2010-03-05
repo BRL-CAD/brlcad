@@ -24,6 +24,11 @@
 #include <ctype.h>
 #include <string.h>
 #include <stdarg.h>
+
+#ifdef HAVE_STDINT_H
+#   include <stdint.h>
+#endif
+
 #include "bio.h"
 
 #include "bu.h"
@@ -42,7 +47,7 @@ static const unsigned int _VLS_ALLOC_MIN = 32;
 static const size_t _VLS_ALLOC_STEP = 128;
 
 /* minimum vls buffer allocation size */
-static const int _VLS_ALLOC_READ = 4096;
+static const unsigned int _VLS_ALLOC_READ = 4096;
 
 
 void
@@ -714,9 +719,14 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
     register const char *ep; /* end pointer */
     register int len;
 
-#define LONGINT  0x001
+#define LONG_INT 0x001
 #define FIELDLEN 0x002
-#define SHORTINT 0x003
+#define SHORTINT 0x004
+#define LLONGINT 0x008
+#define SHHRTINT 0x010
+#define INTMAX_T 0x020
+#define PTRDIFFT 0x040
+#define SIZETINT 0x080
 
     int flags;
     int fieldlen=-1;
@@ -752,16 +762,31 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 	ep = sp;
 	while (*ep) {
 	    ++ep;
-	    if (*ep == ' ' || *ep == '#' || *ep == '-' ||
-		*ep == '+' || *ep == '.' || isdigit(*ep))
+	    if (*ep == ' ' || *ep == '#' || *ep == '-' || *ep == '+' || *ep == '.' || isdigit(*ep)) {
 		continue;
-	    else if (*ep == 'l' || *ep == 'U' || *ep == 'O')
-		flags |= LONGINT;
-	    else if (*ep == '*') {
+	    } else if (*ep == 'l' || *ep == 'U' || *ep == 'O') {
+		if (flags & LONG_INT) {
+		    flags ^= LONG_INT;
+		    flags |= LLONGINT;
+		} else {
+		    flags |= LONG_INT;
+		}
+	    } else if (*ep == '*') {
 		fieldlen = va_arg(ap, int);
 		flags |= FIELDLEN;
 	    } else if (*ep == 'h') {
-		flags |= SHORTINT;
+		if (flags & SHORTINT) {
+		    flags ^= SHORTINT;
+		    flags |= SHHRTINT;
+		} else {
+		    flags |= SHORTINT;
+		}
+	    } else if (*ep == 'j') {
+		flags |= INTMAX_T;
+	    } else if (*ep == 't') {
+		flags |= PTRDIFFT;
+	    } else if (*ep == 'z') {
+		flags |= SIZETINT;
 	    } else
 		/* Anything else must be the end of the fmt specifier */
 		break;
@@ -872,23 +897,92 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 			snprintf(buf, BUFSIZ, fbuf, fieldlen, d);
 		    else
 			snprintf(buf, BUFSIZ, fbuf, d);
-		    bu_vls_strcat(vls, buf);
 		}
+		bu_vls_strcat(vls, buf);
 		break;
-	    case 'd':
-	    case 'p':
+	    case 'o':
+	    case 'u':
 	    case 'x':
-		if (flags & LONGINT) {
-		    /* Long int */
-		    register long ll;
+		if (flags & LONG_INT) {
+		    /* Unsigned long int */
+		    unsigned long l;
 
-		    ll = va_arg(ap, long);
+		    l = va_arg(ap, unsigned long);
+		    if (flags & FIELDLEN)
+			snprintf(buf, BUFSIZ, fbuf, fieldlen, l);
+		    else
+			snprintf(buf, BUFSIZ, fbuf, l);
+		} else if (flags & LLONGINT) {
+		    /* Unsigned long long int */
+		    unsigned long long ll;
+
+		    ll = va_arg(ap, unsigned long long);
 		    if (flags & FIELDLEN)
 			snprintf(buf, BUFSIZ, fbuf, fieldlen, ll);
 		    else
 			snprintf(buf, BUFSIZ, fbuf, ll);
-		    bu_vls_strcat(vls, buf);
-		} else if (flags & SHORTINT) {
+		} else if (flags & SHORTINT || flags & SHHRTINT) {
+		    /* unsigned short int */
+		    unsigned short int sh;
+		    sh = (unsigned short int)va_arg(ap, int);
+		    if (flags & FIELDLEN)
+			snprintf(buf, BUFSIZ, fbuf, fieldlen, sh);
+		    else
+			snprintf(buf, BUFSIZ, fbuf, sh);
+		} else if (flags & INTMAX_T) {
+		    intmax_t im;
+		    im = va_arg(ap, intmax_t);
+		    if (flags & FIELDLEN)
+			snprintf(buf, BUFSIZ, fbuf, fieldlen, im);
+		    else
+			snprintf(buf, BUFSIZ, fbuf, im);
+		} else if (flags & PTRDIFFT) {
+		    ptrdiff_t pd;
+		    pd = va_arg(ap, ptrdiff_t);
+		    if (flags & FIELDLEN)
+			snprintf(buf, BUFSIZ, fbuf, fieldlen, pd);
+		    else
+			snprintf(buf, BUFSIZ, fbuf, pd);
+		} else if (flags & SIZETINT) {
+		    size_t st;
+		    st = va_arg(ap, size_t);
+		    if (flags & FIELDLEN)
+			snprintf(buf, BUFSIZ, fbuf, fieldlen, st);
+		    else
+			snprintf(buf, BUFSIZ, fbuf, st);
+		} else {
+		    /* Regular unsigned int */
+		    register unsigned int j;
+
+		    j = (unsigned int)va_arg(ap, unsigned int);
+		    if (flags & FIELDLEN)
+			snprintf(buf, BUFSIZ, fbuf, fieldlen, j);
+		    else
+			snprintf(buf, BUFSIZ, fbuf, j);
+		}
+		bu_vls_strcat(vls, buf);
+		break;
+	    case 'd':
+	    case 'i':
+		if (flags & LONG_INT) {
+		    /* Long int */
+		    register long l;
+
+		    l = va_arg(ap, long);
+		    if (flags & FIELDLEN)
+			snprintf(buf, BUFSIZ, fbuf, fieldlen, l);
+		    else
+			snprintf(buf, BUFSIZ, fbuf, l);
+		} else if (flags & LLONGINT) {
+		    /* Long long int */
+		    register long long ll;
+
+		    ll = va_arg(ap, long long);
+		    if (flags & FIELDLEN)
+			snprintf(buf, BUFSIZ, fbuf, fieldlen, ll);
+		    else
+			snprintf(buf, BUFSIZ, fbuf, ll);
+		} else if (flags & SHORTINT || flags & SHHRTINT) {
 		    /* short int */
 		    register short int sh;
 		    sh = (short int)va_arg(ap, int);
@@ -896,7 +990,27 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 			snprintf(buf, BUFSIZ, fbuf, fieldlen, sh);
 		    else
 			snprintf(buf, BUFSIZ, fbuf, sh);
-		    bu_vls_strcat(vls, buf);
+		} else if (flags & INTMAX_T) {
+		    intmax_t im;
+		    im = va_arg(ap, intmax_t);
+		    if (flags & FIELDLEN)
+			snprintf(buf, BUFSIZ, fbuf, fieldlen, im);
+		    else
+			snprintf(buf, BUFSIZ, fbuf, im);
+		} else if (flags & PTRDIFFT) {
+		    ptrdiff_t pd;
+		    pd = va_arg(ap, ptrdiff_t);
+		    if (flags & FIELDLEN)
+			snprintf(buf, BUFSIZ, fbuf, fieldlen, pd);
+		    else
+			snprintf(buf, BUFSIZ, fbuf, pd);
+		} else if (flags & SIZETINT) {
+		    size_t st;
+		    st = va_arg(ap, size_t);
+		    if (flags & FIELDLEN)
+			snprintf(buf, BUFSIZ, fbuf, fieldlen, st);
+		    else
+			snprintf(buf, BUFSIZ, fbuf, st);
 		} else {
 		    /* Regular int */
 		    register int j;
@@ -906,8 +1020,21 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 			snprintf(buf, BUFSIZ, fbuf, fieldlen, j);
 		    else
 			snprintf(buf, BUFSIZ, fbuf, j);
-		    bu_vls_strcat(vls, buf);
 		}
+		bu_vls_strcat(vls, buf);
+		break;
+	    case 'n':
+	    case 'p':
+		/* all pointer == "void *" */
+	        {
+		    void *vp;
+		    vp = (void *)va_arg(ap, void *);
+		    if (flags & FIELDLEN)
+			snprintf(buf, BUFSIZ, fbuf, fieldlen, vp);
+		    else
+			snprintf(buf, BUFSIZ, fbuf, vp);
+	        }
+		bu_vls_strcat(vls, buf);
 		break;
 	    case '%':
 		bu_vls_putc(vls, '%');
@@ -924,9 +1051,9 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 			snprintf(buf, BUFSIZ, fbuf, fieldlen, j);
 		    else
 			snprintf(buf, BUFSIZ, fbuf, j);
-		    bu_vls_strcat(vls, buf);
-		    break;
 		}
+		bu_vls_strcat(vls, buf);
+		break;
 	}
 	sp = ep+1;
     }

@@ -281,8 +281,8 @@ tthrm_setup(register struct region *rp, struct bu_vls *matparm, char **dpp, stru
 
 
     if (rdebug&RDEBUG_SHADE)
-	bu_log("tthrm_setup() data: %08lx total\n",
-	       (unsigned long)tt_data);
+	bu_log("tthrm_setup() data: %p total\n",
+	       (void *)tt_data);
 
     /* Compute how big the file should be, so that we can guess
      * at the size of the integer at the front of the file

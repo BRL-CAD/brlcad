@@ -737,8 +737,8 @@ union cutter  {
  */
 struct mem_map {
     struct mem_map *m_nxtp;	/**< @brief Linking pointer to next element */
-    unsigned m_size;		/**< @brief Size of this free element */
-    unsigned long m_addr;	/**< @brief Address of start of this element */
+    size_t m_size;		/**< @brief Size of this free element */
+    size_t m_addr;	/**< @brief Address of start of this element */
 };
 #define MAP_NULL	((struct mem_map *) 0)
 
@@ -778,8 +778,8 @@ struct db_i  {
     /* THESE ELEMENTS ARE FOR LIBRT ONLY, AND MAY CHANGE */
     struct directory *		dbi_Head[RT_DBNHASH];
     FILE *			dbi_fp;		/**< @brief standard file pointer */
-    long			dbi_eof;	/**< @brief End+1 pos after db_scan() */
-    long			dbi_nrec;	/**< @brief # records after db_scan() */
+    size_t			dbi_eof;	/**< @brief End+1 pos after db_scan() */
+    size_t			dbi_nrec;	/**< @brief # records after db_scan() */
     int				dbi_uses;	/**< @brief # of uses of this struct */
     struct mem_map *		dbi_freep;	/**< @brief map of free granules */
     genptr_t			dbi_inmem;	/**< @brief ptr to in-memory copy */
@@ -802,7 +802,7 @@ struct db_i  {
  * One of these structures is allocated in memory to represent each
  * named object in the database.
  *
- * Note that a d_addr of RT_DIR_PHONY_ADDR (-1L) means that database
+ * Note that a d_addr of RT_DIR_PHONY_ADDR ((size_t)-1) means that database
  * storage has not been allocated yet.
  *
  * Note that there is special handling for RT_DIR_INMEM "in memory"
@@ -827,13 +827,13 @@ struct directory  {
     unsigned long	d_magic;		/**< @brief Magic number */
     char *		d_namep;		/**< @brief pointer to name string */
     union {
-	long		file_offset;		/**< @brief disk address in obj file */
+	size_t		file_offset;		/**< @brief disk address in obj file */
 	genptr_t	ptr;			/**< @brief ptr to in-memory-only obj */
     } d_un;
     struct directory *	d_forw;			/**< @brief link to next dir entry */
     struct animate *	d_animate;		/**< @brief link to animation */
     long		d_uses;			/**< @brief # uses, from instancing */
-    long		d_len;			/**< @brief # of db granules used */
+    size_t		d_len;			/**< @brief # of db granules used */
     long		d_nref;			/**< @brief # times ref'ed by COMBs */
     int			d_flags;		/**< @brief flags */
     unsigned char	d_major_type;		/**< @brief object major type */
@@ -845,7 +845,7 @@ struct directory  {
 #define RT_CK_DIR(_dp)	BU_CKMAG(_dp, RT_DIR_MAGIC, "(librt)directory")
 
 #define d_addr	d_un.file_offset
-#define RT_DIR_PHONY_ADDR	(-1L)	/**< @brief Special marker for d_addr field */
+#define RT_DIR_PHONY_ADDR	((size_t)-1)	/**< @brief Special marker for d_addr field */
 
 /* flags for db_diradd() and friends */
 #define RT_DIR_SOLID    0x1   /**< @brief this name is a solid */
@@ -946,7 +946,7 @@ struct rt_comb_internal  {
 struct rt_binunif_internal {
     unsigned long	magic;
     int			type;
-    long		count;
+    size_t		count;
     union {
 	float		*flt;
 	double		*dbl;
@@ -1894,10 +1894,15 @@ struct rt_functab {
     void (*ft_curve) BU_ARGS((struct curvature * /**< @brief cvp*/,
 			      struct hit * /**< @brief hitp*/,
 			      struct soltab * /**< @brief stp*/));
+#if 1
+    /*XXX temporarily changing signature to what's actually being used by the funtions */
+    int (*ft_classify) BU_ARGS(());
+#else
     int (*ft_classify) BU_ARGS((const struct soltab * /*stp*/,
 				const vect_t /*min*/,
 				const vect_t /*max*/,
 				const struct bn_tol * /*tol*/));
+#endif
     void (*ft_free) BU_ARGS((struct soltab * /*stp*/));
     int (*ft_plot) BU_ARGS((struct bu_list * /*vhead*/,
 			    struct rt_db_internal * /*ip*/,
@@ -1905,7 +1910,8 @@ struct rt_functab {
 			    const struct bn_tol * /*tol*/));
     void (*ft_vshot) BU_ARGS((struct soltab * /*stp*/[],
 			      struct xray *[] /*rp*/,
-			      struct seg [] /*segp*/, int /*n*/,
+			      struct seg * /*segp*/,
+			      int /*n*/,
 			      struct application * /*ap*/));
     int (*ft_tessellate) BU_ARGS((struct nmgregion ** /*r*/,
 				  struct model * /*m*/,
@@ -2676,7 +2682,7 @@ RT_EXPORT BU_EXTERN(struct db_i *db_clone_dbi,
 RT_EXPORT BU_EXTERN(int db5_write_free,
 		    (struct db_i *dbip,
 		     struct directory *dp,
-		     long length));
+		     size_t length));
 RT_EXPORT BU_EXTERN(int db5_realloc,
 		    (struct db_i *dbip,
 		     struct directory *dp,
@@ -2722,22 +2728,22 @@ RT_EXPORT BU_EXTERN(int rt_db_put_internal5,
 
 RT_EXPORT BU_EXTERN(void db5_make_free_object_hdr,
 		    (struct bu_external *ep,
-		     long length));
+		     size_t length));
 RT_EXPORT BU_EXTERN(void db5_make_free_object,
 		    (struct bu_external *ep,
-		     long length));
+		     size_t length));
 RT_EXPORT BU_EXTERN(int db5_decode_signed,
-		    (long			*lenp,
+		    (size_t			*lenp,
 		     const unsigned char	*cp,
 		     int			format));
 
 RT_EXPORT BU_EXTERN(int db5_decode_length,
-		    (long			*lenp,
+		    (size_t			*lenp,
 		     const unsigned char	*cp,
 		     int			format));
 
 RT_EXPORT BU_EXTERN(int db5_select_length_encoding,
-		    (long len));
+		    (size_t len));
 
 RT_EXPORT BU_EXTERN(void db5_import_color_table,
 		    (char *cp));
@@ -2880,8 +2886,8 @@ RT_EXPORT BU_EXTERN(int rt_poly_roots,
 RT_EXPORT BU_EXTERN(int db_write,
 		    (struct db_i	*dbip,
 		     const genptr_t	addr,
-		     long		count,
-		     long		offset));
+		     size_t		count,
+		     size_t		offset));
 RT_EXPORT BU_EXTERN(int db_fwrite_external,
 		    (FILE			*fp,
 		     const char		*name,
@@ -2899,11 +2905,11 @@ RT_EXPORT BU_EXTERN(int db_get,
 		     int offset,
 		     int len));
 /* put several records into db */
-RT_EXPORT BU_EXTERN(int db_put,
+RT_EXPORT BU_EXTERN(size_t db_put,
 		    (struct db_i *,
 		     const struct directory *dp,
 		     union record *where,
-		     int offset, int len));
+		     size_t offset, size_t len));
 
 RT_EXPORT BU_EXTERN(int db_get_external,
 		    (struct bu_external *ep,
@@ -2924,8 +2930,8 @@ RT_EXPORT BU_EXTERN(int db_scan,
 		    (struct db_i *,
 		     int (*handler)BU_ARGS((struct db_i *,
 					    const char *name,
-					    long addr,
-					    int nrec,
+					    size_t addr,
+					    size_t nrec,
 					    int flags,
 					    genptr_t client_data)),
 		     int do_old_matter,
@@ -2952,7 +2958,7 @@ RT_EXPORT BU_EXTERN(int db_dirbuild,
 RT_EXPORT BU_EXTERN(struct directory *db5_diradd,
 		    (struct db_i *dbip,
 		     const struct db5_raw_internal *rip,
-		     long laddr,
+		     size_t laddr,
 		     genptr_t client_data));
 RT_EXPORT BU_EXTERN(int db_get_version,
 		    (struct db_i *dbip));
@@ -2960,7 +2966,7 @@ RT_EXPORT BU_EXTERN(int db5_scan,
 		    (struct db_i *dbip,
 		     void (*handler)(struct db_i *,
 				     const struct db5_raw_internal *,
-				     long addr,
+				     size_t addr,
 				     genptr_t client_data),
 		     genptr_t client_data));
 
@@ -3013,18 +3019,18 @@ RT_EXPORT BU_EXTERN(struct bu_ptbl *db_lookup_by_attr,
 RT_EXPORT BU_EXTERN(struct directory *db_diradd,
 		    (struct db_i *,
 		     const char *name,
-		     long laddr,
-		     int len,
+		     size_t laddr,
+		     size_t len,
 		     int flags,
 		     genptr_t ptr));
 RT_EXPORT BU_EXTERN(struct directory *db_diradd5,
 		    (struct db_i *dbip,
 		     const char *name,
-		     long				laddr,
+		     size_t				laddr,
 		     unsigned char			major_type,
 		     unsigned char 			minor_type,
 		     unsigned char			name_hidden,
-		     long				object_length,
+		     size_t				object_length,
 		     struct bu_attribute_value_set	*avs));
 
 /* delete entry from directory */
@@ -3066,24 +3072,24 @@ RT_EXPORT BU_EXTERN(int db_flags_raw_internal,
 /* db_alloc.c */
 
 /* allocate "count" granules */
-RT_EXPORT BU_EXTERN(int db_alloc,
+RT_EXPORT BU_EXTERN(size_t db_alloc,
 		    (struct db_i *,
 		     struct directory *dp,
-		     int count));
+		     size_t count));
 /* delete "recnum" from entry */
 RT_EXPORT BU_EXTERN(int db_delrec,
 		    (struct db_i *,
 		     struct directory *dp,
 		     int recnum));
 /* delete all granules assigned dp */
-RT_EXPORT BU_EXTERN(int db_delete,
+RT_EXPORT BU_EXTERN(size_t db_delete,
 		    (struct db_i *,
 		     struct directory *dp));
 /* write FREE records from 'start' */
-RT_EXPORT BU_EXTERN(int db_zapper,
+RT_EXPORT BU_EXTERN(size_t db_zapper,
 		    (struct db_i *,
 		     struct directory *dp,
-		     int start));
+		     size_t start));
 
 /* db_tree.c */
 RT_EXPORT BU_EXTERN(void db_dup_db_tree_state,
@@ -3233,6 +3239,9 @@ RT_EXPORT BU_EXTERN(int db_shader_mat,
 		     point_t			p_min,	/* input/output: shader/region min point */
 		     point_t			p_max,	/* input/output: shader/region max point */
 		     struct resource		*resp));
+RT_EXPORT BU_EXTERN(int db_tree_list, (struct bu_vls *vls, const union tree *tp));
+RT_EXPORT BU_EXTERN(union tree *db_tree_parse, (struct bu_vls *vls, const char *str, struct resource *resp));
+
 
 /* dir.c */
 RT_EXPORT BU_EXTERN(struct rt_i *rt_dirbuild,
@@ -3408,20 +3417,20 @@ RT_EXPORT BU_EXTERN(struct rt_pt_node *rt_ptalloc,
 		    ());
 
 /* memalloc.c -- non PARALLEL routines */
-RT_EXPORT BU_EXTERN(unsigned long rt_memalloc,
+RT_EXPORT BU_EXTERN(size_t rt_memalloc,
 		    (struct mem_map **pp,
-		     unsigned size));
+		     size_t size));
 RT_EXPORT BU_EXTERN(struct mem_map * rt_memalloc_nosplit,
 		    (struct mem_map **pp,
-		     unsigned size));
-RT_EXPORT BU_EXTERN(unsigned long rt_memget,
+		     size_t size));
+RT_EXPORT BU_EXTERN(size_t rt_memget,
 		    (struct mem_map **pp,
-		     unsigned int size,
-		     unsigned int place));
+		     size_t size,
+		     size_t place));
 RT_EXPORT BU_EXTERN(void rt_memfree,
 		    (struct mem_map **pp,
-		     unsigned size,
-		     unsigned long addr));
+		     size_t size,
+		     size_t addr));
 RT_EXPORT BU_EXTERN(void rt_mempurge,
 		    (struct mem_map **pp));
 RT_EXPORT BU_EXTERN(void rt_memprint,

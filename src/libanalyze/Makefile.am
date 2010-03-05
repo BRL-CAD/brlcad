@@ -3,6 +3,7 @@ lib_LTLIBRARIES = libanalyze.la
 noinst_LTLIBRARIES = libanalyze_nil.la
 
 libanalyze_nil_la_SOURCES = \
+	density.c \
 	overlaps.c
 
 AM_CPPFLAGS = ${TCL_CPPFLAGS}

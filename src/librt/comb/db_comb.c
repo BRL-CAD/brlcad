@@ -159,7 +159,7 @@ db_flatten_tree(
     struct rt_tree_array *rt_tree_array,
     union tree *tp,
     int op,
-    int free,
+    int freeflag,
     struct resource *resp)
 {
 
@@ -176,9 +176,9 @@ db_flatten_tree(
 	case OP_INTERSECT:
 	case OP_SUBTRACT:
 	    /* This node is known to be a binary op */
-	    rt_tree_array = db_flatten_tree(rt_tree_array, tp->tr_b.tb_left, op, free, resp);
-	    rt_tree_array = db_flatten_tree(rt_tree_array, tp->tr_b.tb_right, tp->tr_op, free, resp);
-	    if (free) {
+	    rt_tree_array = db_flatten_tree(rt_tree_array, tp->tr_b.tb_left, op, freeflag, resp);
+	    rt_tree_array = db_flatten_tree(rt_tree_array, tp->tr_b.tb_right, tp->tr_op, freeflag, resp);
+	    if (freeflag) {
 		/* The leaves have been stolen, free the binary op */
 		tp->tr_b.tb_left = TREE_NULL;
 		tp->tr_b.tb_right = TREE_NULL;
@@ -212,8 +212,8 @@ rt_comb_import4(
     struct rt_tree_array *rt_tree_array;
     union tree *tree;
     struct rt_comb_internal *comb;
-    int j;
-    int node_count;
+    size_t j;
+    size_t node_count;
 
     BU_CK_EXTERNAL(ep);
     rp = (union record *)ep->ext_buf;
@@ -770,7 +770,7 @@ db_tree_describe(
 	case OP_XOR:
 	    if (!indented) bu_vls_spaces(vls, 2*lvl);
 	    bu_vls_strcat(vls, "^ ");
-    bin:
+	bin:
 	    db_tree_describe(vls, tp->tr_b.tb_left, 1, lvl+1, mm2local);
 	    db_tree_describe(vls, tp->tr_b.tb_right, 0, lvl+1, mm2local);
 	    return;
@@ -787,7 +787,7 @@ db_tree_describe(
 	case OP_XNOP:
 	    if (!indented) bu_vls_spaces(vls, 2*lvl);
 	    bu_vls_strcat(vls, "X ");
-    unary:
+	unary:
 	    db_tree_describe(vls, tp->tr_b.tb_left, 1, lvl+1, mm2local);
 	    return;
 
@@ -830,7 +830,6 @@ db_comb_describe(
 	else if (comb->is_fastgen == REGION_FASTGEN_VOLUME)
 	    bu_vls_printf(str, "(FASTGEN volume mode) ");
     }
-
 
     bu_vls_strcat(str, "--\n");
     if (bu_vls_strlen(&comb->shader) > 0) {
@@ -921,6 +920,7 @@ rt_comb_describe(
     return 0;
 }
 
+
 /*==================== END g_comb.c / table.c interface ========== */
 
 /**
@@ -940,6 +940,7 @@ db_wrap_v4_external(struct bu_external *op, const char *name)
     rec = (union record *)op->ext_buf;
     NAMEMOVE(name, rec->s.s_name);
 }
+
 
 /* Some export support routines */
 
@@ -1095,6 +1096,7 @@ db_mkbool_tree(
     }
     return(curtree);
 }
+
 
 /**
  * D B _ M K G I F T _ T R E E

@@ -28,25 +28,20 @@
 #ifndef SEEN_MENU_H
 #define SEEN_MENU_H
 
-struct	menu_item  {
-    char	*menu_string;
-    void	(*menu_func)();
-    int	menu_arg;
+struct menu_item {
+    char *menu_string;
+    void (*menu_func)();
+    int menu_arg;
 };
 
 
-#define MENU_NULL		((struct menu_item *)0)
+#define MENU_NULL ((struct menu_item *)0)
 
-#define NMENU	3
+#define NMENU 3
 
-#define MENU_L1		0	/* top-level solid-edit menu */
-#define MENU_L2		1	/* second-level menu (unused) */
-#define MENU_GEN	2	/* general features (mouse buttons) */
-
-#if 0
-extern struct menu_item *menu_array[NMENU];
-extern int cur_menu, cur_item, menuflag;
-#endif
+#define MENU_L1 0 /* top-level solid-edit menu */
+#define MENU_L2 1 /* second-level menu (unused) */
+#define MENU_GEN 2 /* general features (mouse buttons) */
 
 #endif /* SEEN_MENU_H */
 

@@ -18,12 +18,11 @@
  * information.
  */
 /** @file bwshrink.c
- *			P I X S H R I N K . C
  *
- *	scale down a picture by a uniform factor.
+ * scale down a picture by a uniform factor.
  *
- *	Options
- *	h	help
+ * Options
+ * h help
  *
  */
 
@@ -42,7 +41,7 @@ char *options = "uhs:w:n:f:";
 char *progname = "(noname)";
 char *filename = "(stdin)";
 
-/*	S H R I N K _ I M A G E
+/* S H R I N K _ I M A G E
  */
 void
 shrink_image(int w, int h, unsigned char *buffer, int Factor)
@@ -54,7 +53,7 @@ shrink_image(int w, int h, unsigned char *buffer, int Factor)
     facsq = Factor * Factor;
     finalpixel = buffer;
 
-    for (y=0; y < h; y += Factor)
+    for (y=0; y < h; y += Factor) {
 	for (x=0; x < w; x += Factor) {
 
 	    /* average factor by factor grid of pixels */
@@ -71,10 +70,12 @@ shrink_image(int w, int h, unsigned char *buffer, int Factor)
 	    /* store resultant pixel back in buffer */
 	    *finalpixel++ = p / facsq;
 	}
+    }
 }
 
+
 /*
- *	Undersample image pixels
+ * Undersample image pixels
  */
 void
 usample_image(int w, int h, unsigned char *buffer, int Factor)
@@ -100,7 +101,7 @@ int factor = 2;
 int method = METH_BOXCAR;
 
 /*
- *	U S A G E --- tell user how to invoke this program, then exit
+ * U S A G E --- tell user how to invoke this program, then exit
  */
 void usage(void)
 {
@@ -112,11 +113,11 @@ void usage(void)
 
 
 /*
- *	P A R S E _ A R G S --- Parse through command line flags
+ * P A R S E _ A R G S --- Parse through command line flags
  */
 void parse_args(int ac, char **av)
 {
-    int  c;
+    int c;
 
     if (!(progname = strrchr(*av, '/')))
 	progname = *av;
@@ -146,7 +147,7 @@ void parse_args(int ac, char **av)
 	}
 
     if (bu_optind >= ac) {
-	if (isatty(fileno(stdout)) )
+	if (isatty(fileno(stdout)))
 	    usage();
     }
     if (bu_optind < ac) {
@@ -163,16 +164,16 @@ void parse_args(int ac, char **av)
 
 
 /*
- *	M A I N
+ * M A I N
  *
- *	Call parse_args to handle command line arguments first, then
- *	process input.
+ * Call parse_args to handle command line arguments first, then
+ * process input.
  */
 int main(int ac, char **av)
 {
     unsigned char *buffer = (unsigned char *)NULL;
-    int	size;
-    int	c = 0;
+    int size;
+    int c = 0;
     int t;
 
     (void)parse_args(ac, av);

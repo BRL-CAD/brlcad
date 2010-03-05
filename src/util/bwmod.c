@@ -48,20 +48,20 @@ char usage[] = "\
 Usage: bwmod [-c] {-a add -s sub -m mult -d div -A -e exp -r root\n\
 		   -S shift -M and -O or -X xor -t trunc} [file.bw] > file2.bw\n";
 
-#define	ADD	1
+#define ADD	1
 #define MULT	2
-#define	ABS	3
-#define	POW	4
+#define ABS	3
+#define POW	4
 #define SHIFT	5
 #define AND	6
 #define OR	7
-#define	XOR	8
-#define	TRUNC	9
-#define	BUFLEN	(8192*2)	/* usually 2 pages of memory, 16KB */
+#define XOR	8
+#define TRUNC	9
+#define BUFLEN	(8192*2)	/* usually 2 pages of memory, 16KB */
 
-int	numop = 0;		/* number of operations */
-int	op[256];		/* operations */
-double	val[256];		/* arguments to operations */
+int numop = 0;		/* number of operations */
+int op[256];		/* operations */
+double val[256];		/* arguments to operations */
 unsigned char ibuf[BUFLEN];	/* input buffer */
 
 #define MAPBUFLEN 256
@@ -72,11 +72,10 @@ int
 get_args(int argc, char **argv)
 {
     int c = 0;
-    double	d = 0.0;
+    double d = 0.0;
 
-    while ( (c = bu_getopt( argc, argv, "a:s:m:d:Ae:r:cS:O:M:X:t:" )) != EOF )
-    {
-	switch ( c )  {
+    while ((c = bu_getopt(argc, argv, "a:s:m:d:Ae:r:cS:O:M:X:t:")) != EOF) {
+	switch (c) {
 	    case 'a':
 		op[ numop ] = ADD;
 		val[ numop++ ] = atof(bu_optarg);
@@ -93,7 +92,7 @@ get_args(int argc, char **argv)
 		op[ numop ] = MULT;
 		d = atof(bu_optarg);
 
-		if ( NEAR_ZERO(d, SMALL_FASTF) ) {
+		if (NEAR_ZERO(d, SMALL_FASTF)) {
 		    bu_exit(2, "bwmod: cannot divide by zero!\n");
 		}
 		val[ numop++ ] = 1.0 / d;
@@ -109,7 +108,7 @@ get_args(int argc, char **argv)
 	    case 'r':
 		op[ numop ] = POW;
 		d = atof(bu_optarg);
-		if ( NEAR_ZERO(d, SMALL_FASTF) ) {
+		if (NEAR_ZERO(d, SMALL_FASTF)) {
 		    bu_exit(2, "bwmod: zero root!\n");
 		}
 		val[ numop++ ] = 1.0 / d;
@@ -141,25 +140,26 @@ get_args(int argc, char **argv)
 	}
     }
 
-    if ( bu_optind >= argc )  {
-	if ( isatty((int)fileno(stdin)) )
+    if (bu_optind >= argc) {
+	if (isatty((int)fileno(stdin)))
 	    return(0);
 	file_name = "-";
     } else {
 	file_name = argv[bu_optind];
 	if (freopen(file_name, "rb", stdin) == NULL) {
-	    (void)fprintf( stderr,
-			   "bwmod: cannot open \"%s\" for reading\n",
-			   file_name );
+	    (void)fprintf(stderr,
+			  "bwmod: cannot open \"%s\" for reading\n",
+			  file_name);
 	    return(0);
 	}
     }
     
-    if ( argc > ++bu_optind )
-	(void)fprintf( stderr, "bwmod: excess argument(s) ignored\n" );
+    if (argc > ++bu_optind)
+	(void)fprintf(stderr, "bwmod: excess argument(s) ignored\n");
     
     return(1);		/* OK */
 }
+
 
 void mk_trans_tbl(void)
 {
@@ -173,7 +173,7 @@ void mk_trans_tbl(void)
 	    switch (op[i]) {
 		case ADD : d += val[i]; break;
 		case MULT: d *= val[i]; break;
-		case POW : d = pow( d, val[i]); break;
+		case POW : d = pow(d, val[i]); break;
 		case ABS : if (d < 0.0) d = - d; break;
 		case SHIFT: tmp=d; tmp=tmp<<(int)val[i];d=tmp;break;
 		case OR  : tmp=d; tmp |= (int)val[i]; d=tmp;break;
@@ -205,7 +205,7 @@ void mk_char_trans_tbl(void)
 	    switch (op[i]) {
 		case ADD : d += val[i]; break;
 		case MULT: d *= val[i]; break;
-		case POW : d = pow( (double)d, val[i]); break;
+		case POW : d = pow((double)d, val[i]); break;
 		case ABS : if (d < 0.0) d = - d; break;
 		case SHIFT: d=d<<(int)val[i]; break;
 		case AND : d &= (int)val[i]; break;
@@ -222,10 +222,10 @@ void mk_char_trans_tbl(void)
 }
 int main(int argc, char **argv)
 {
-    unsigned char	*p, *q;
-    int		tmp;
-    int	 		n;
-    unsigned long		clip_high, clip_low;
+    unsigned char *p, *q;
+    int tmp;
+    int n;
+    unsigned long clip_high, clip_low;
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
     setmode(fileno(stdin), O_BINARY);
@@ -235,10 +235,10 @@ int main(int argc, char **argv)
 
     progname = *argv;
 
-    if ( !get_args( argc, argv ) || isatty((int)fileno(stdin))
-	 || isatty((int)fileno(stdout)) ) {
+    if (!get_args(argc, argv) || isatty((int)fileno(stdin))
+	|| isatty((int)fileno(stdout))) {
 	(void)fputs(usage, stderr);
-	bu_exit ( 1, NULL );
+	bu_exit (1, NULL);
     }
 
     if (char_arith)
@@ -247,7 +247,7 @@ int main(int argc, char **argv)
 	mk_trans_tbl();
 
     clip_high = clip_low = 0L;
-    while ( (n=read(0, (void *)ibuf, (unsigned)sizeof(ibuf))) > 0) {
+    while ((n=read(0, (void *)ibuf, (unsigned)sizeof(ibuf))) > 0) {
 	/* translate */
 	for (p = ibuf, q = &ibuf[n]; p < q; ++p) {
 	    tmp = mapbuf[*p];
@@ -266,12 +266,13 @@ int main(int argc, char **argv)
 	perror("READ ERROR");
     }
 
-    if ( clip_high != 0 || clip_low != 0 ) {
-	(void)fprintf( stderr, "bwmod: clipped %lu high, %lu low\n",
-		       clip_high, clip_low );
+    if (clip_high != 0 || clip_low != 0) {
+	(void)fprintf(stderr, "bwmod: clipped %lu high, %lu low\n",
+		      clip_high, clip_low);
     }
     return(0);
 }
+
 
 /*
  * Local Variables:

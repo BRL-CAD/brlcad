@@ -15,6 +15,10 @@ on-going issues.
 Recent Bugs
 -----------
 
+* mged raytrace fails with simple "raytrace failed" message when using
+  rt, nirt, etc on Windows after modifying a region.  See sf bug
+  report 2954404.
+
 * mged rrt command is not respecting the view size, just does
   something similar to autoview but even gets az/el wrong too.
 
@@ -154,10 +158,6 @@ Recent Bugs
 
 * bump shader seems to be busted.  only renders as flat by itself and
   stacked with phong it seems to ignore the uv settings.
-
-* rtweight prints incorrect units when units are set to ft.  Appears
-  to trace back to unit handling in view_end in viewweight.c.  This
-  logic should be replaced using the proper libbu functions.
 
 * the graphics window does not acquire keybinding focus in mged on
   ubuntu linux.  key events go to the command window even with the
@@ -354,8 +354,6 @@ Recent Bugs
   handler is set.
 
 * bot-bldxf fails in db_walk_tree(), interface may have changed
-
-* you can't run a make benchmark unless you're compiling in place
 
 
 Older Bugs

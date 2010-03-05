@@ -37,14 +37,14 @@
 #include "bn.h"
 
 
-#define	BELIEVE_NAME	0
-#define	BELIEVE_STAT	1
-#define	DFLT_PIXEL_SIZE	3
+#define BELIEVE_NAME 0
+#define BELIEVE_STAT 1
+#define DFLT_PIXEL_SIZE 3
 
 static char usage[] = "\
 Usage: 'imgdims [-ns] [-# bytes/pixel] file_name'\n\
     or 'imgdims [-# bytes/pixel] num_bytes'\n";
-#define OPT_STRING	"ns#:?"
+#define OPT_STRING "ns#:?"
 
 
 static void print_usage (void)
@@ -52,9 +52,10 @@ static void print_usage (void)
     bu_exit(1, "%s", usage);
 }
 
+
 static int grab_number (char *buf, int *np)
 {
-    char	*bp;
+    char *bp;
 
     for (bp = buf; *bp != '\0'; ++bp)
 	if (!isdigit(*bp))
@@ -64,55 +65,54 @@ static int grab_number (char *buf, int *np)
     return (1);
 }
 
+
 static int pixel_size (char *buf)
 {
-    char		*ep;
-    struct assoc
-    {
-	char	*ext;
-	int	size;
+    char *ep;
+    struct assoc {
+	char *ext;
+	int size;
     }			*ap;
-    static struct assoc	a_tbl[] =
-	{
-	    {"bw", 1},
-	    {"pix", 3},
-	    {0, 0}
-	};
+    static struct assoc a_tbl[] = {
+	{"bw", 1},
+	{"pix", 3},
+	{0, 0}
+    };
 
     if ((ep = strrchr(buf, '.')) == NULL)
 	return (DFLT_PIXEL_SIZE);
     else
 	++ep;
 
-    for (ap = a_tbl; ap -> ext; ++ap)
-	if (strcmp(ep, ap -> ext) == 0)
-	    return (ap -> size);
+    for (ap = a_tbl; ap->ext; ++ap)
+	if (strcmp(ep, ap->ext) == 0)
+	    return (ap->size);
 
     return (DFLT_PIXEL_SIZE);
 }
 
+
 int
 main (int argc, char **argv)
 {
-    char	*argument;		/* file name or size */
-    int		bytes_per_pixel = -1;
-    int		ch;
-    int		how = BELIEVE_NAME;
-    int		nm_bytes = -1;
-    int		nm_pixels;
-    unsigned long int		width;
-    unsigned long int		height;
-    struct stat	stat_buf;
+    char *argument;		/* file name or size */
+    int bytes_per_pixel = -1;
+    int ch;
+    int how = BELIEVE_NAME;
+    int nm_bytes = -1;
+    int nm_pixels;
+    unsigned long int width;
+    unsigned long int height;
+    struct stat stat_buf;
 
-    extern int	bu_optind;			/* index from bu_getopt(3C) */
-    extern char	*bu_optarg;		/* argument from bu_getopt(3C) */
+    extern int bu_optind;			/* index from bu_getopt(3C) */
+    extern char *bu_optarg;		/* argument from bu_getopt(3C) */
 
     /*
-     *	Process the command line
+     * Process the command line
      */
     while ((ch = bu_getopt(argc, argv, OPT_STRING)) != EOF)
-	switch (ch)
-	{
+	switch (ch) {
 	    case 'n':
 		how = BELIEVE_NAME;
 		break;
@@ -120,8 +120,7 @@ main (int argc, char **argv)
 		how = BELIEVE_STAT;
 		break;
 	    case '#':
-		if (sscanf(bu_optarg, "%d", &bytes_per_pixel) != 1)
-		{
+		if (sscanf(bu_optarg, "%d", &bytes_per_pixel) != 1) {
 		    bu_log("Invalid pixel-size value: '%s'\n", bu_optarg);
 		    print_usage();
 		}
@@ -130,8 +129,7 @@ main (int argc, char **argv)
 	    default:
 		print_usage();
 	}
-    if (argc - bu_optind != 1)
-    {
+    if (argc - bu_optind != 1) {
 	print_usage();
     }
 
@@ -144,15 +142,14 @@ main (int argc, char **argv)
     }
 
     /*
-     *	If the user specified a file,
-     *	determine its size
+     * If the user specified a file,
+     * determine its size
      */
     if (nm_bytes == -1) {
 	if ((how == BELIEVE_NAME)
 	    && fb_common_name_size(&width, &height, argument))
 	    goto done;
-	else
-	{
+	else {
 	    nm_bytes = (int)stat_buf.st_size;
 	    if (bytes_per_pixel == -1)
 		bytes_per_pixel = pixel_size(argument);
@@ -172,6 +169,7 @@ main (int argc, char **argv)
  done:
     bu_exit (0, "%lu %lu\n", width, height);
 }
+
 
 /*
  * Local Variables:

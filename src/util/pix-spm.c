@@ -47,7 +47,7 @@ main(int argc, char **argv)
 
     size = atoi( argv[2] );
     mp = spm_init( size, sizeof(RGBpixel) );
-    spm_px_load( mp, argv[1], size, size );
+    spm_pix_load( mp, argv[1], size, size );
     spm_save( mp, "-" );
 
     return 0;

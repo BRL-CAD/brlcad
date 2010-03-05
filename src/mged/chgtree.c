@@ -155,7 +155,7 @@ find_solid_with_path(struct db_full_path *pathp)
 	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
-	    if (!db_identical_full_paths(pathp, &sp->s_fullpath))  continue;
+	    if (!db_identical_full_paths(pathp, &sp->s_fullpath)) continue;
 
 	    /* Paths are the same */
 	    illum_gdlp = gdlp;
@@ -306,6 +306,7 @@ cmd_oed(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     db_free_full_path(&both);
     return TCL_OK;
 }
+
 
 /*
  * Local Variables:

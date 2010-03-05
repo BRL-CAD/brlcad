@@ -391,9 +391,9 @@ step_g_CXXFLAGS = \
 	${STEP_CPPFLAGS} \
 	${TCL_CPPFLAGS}
 
-$(fedex_srcs):
-	echo "Building fedex sources: ${fedex_srcs} ${fedex_hdrs}"
-	$(STEP_FEDEX_PLUS) $(STEP_AP203)
+#$(fedex_srcs):
+#	echo "Building fedex sources: ${fedex_srcs} ${fedex_hdrs}"
+#	$(STEP_FEDEX_PLUS) $(STEP_AP203)
 
 $(fedex_hdrs): ${fedex_srcs}
 

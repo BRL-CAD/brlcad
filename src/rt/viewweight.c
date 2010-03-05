@@ -291,36 +291,35 @@ void	view_end(struct application *ap)
 
     /* default units */
     bu_strlcpy(units, "grams", sizeof(units));
-    bu_strlcpy(unit2, "in.", sizeof(unit2));
+    bu_strlcpy(unit2, bu_units_string(dbp->dbi_local2base), sizeof(unit2));
 
     (void) time( &clock );
     locltime = localtime( &clock );
     timeptr = asctime( locltime );
 
-    /* XXX this should really use bu_units_conversion() and bu_units_string() */
-    if ( dbp->dbi_base2local == 304.8 )  {
+    /* This section is necessary because libbu doesn't yet
+     * support (nor do BRL-CAD databases store) defaults 
+     * for mass. Once it does, this section should be
+     * reorganized.*/
+    
+    if ( NEAR_ZERO(dbp->dbi_local2base - 304.8, SMALL_FASTF) )  {
 	/* Feet */
 	bu_strlcpy( units, "grams", sizeof(units) );
-	bu_strlcpy( unit2, "ft.", sizeof(unit2) );
-    } else if ( dbp->dbi_base2local == 25.4 )  {
+    } else if ( NEAR_ZERO(dbp->dbi_local2base - 25.4, SMALL_FASTF) )  {
 	/* inches */
 	conversion = 0.002204623;  /* lbs./gram */
 	bu_strlcpy( units, "lbs.", sizeof(units) );
-	bu_strlcpy( unit2, "in.", sizeof(unit2) );
-    } else if ( dbp->dbi_base2local == 1.0 )  {
+    } else if ( NEAR_ZERO(dbp->dbi_local2base - 1.0, SMALL_FASTF) )  {
 	/* mm */
 	conversion = 0.001;  /* kg/gram */
 	bu_strlcpy( units, "kg", sizeof(units) );
-	bu_strlcpy( unit2, "mm", sizeof(unit2) );
-    } else if ( dbp->dbi_base2local == 1000.0 )  {
+    } else if ( NEAR_ZERO(dbp->dbi_local2base - 1000.0, SMALL_FASTF) )  {
 	/* km */
 	conversion = 0.001;  /* kg/gram */
 	bu_strlcpy( units, "kg", sizeof(units) );
-	bu_strlcpy( unit2, "m", sizeof(unit2) );
-    } else if ( dbp->dbi_base2local == 0.1 )  {
+    } else if ( NEAR_ZERO(dbp->dbi_local2base - 0.1, SMALL_FASTF) )  {
 	/* cm */
 	bu_strlcpy( units, "grams", sizeof(units) );
-	bu_strlcpy( unit2, "cm.", sizeof(unit2) );
     } else {
 	bu_log("Warning: base2mm=%g, using default of %s--%s\n",
 	       dbp->dbi_base2local, units, unit2 );

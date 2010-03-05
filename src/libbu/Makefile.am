@@ -52,6 +52,7 @@ libbu_nil_la_SOURCES = \
 	printb.c \
 	process.c \
 	ptbl.c \
+	quote.c \
 	rb_create.c \
 	rb_delete.c \
 	rb_diag.c \

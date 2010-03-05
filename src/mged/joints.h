@@ -29,13 +29,13 @@
  * can be completely rooted or a partial description.
  *
  * In the simplest case, a joint moves in only one direction (1 degree of
- * freedom)  For rotations, this can be described completely as a
+ * freedom) For rotations, this can be described completely as a
  * quaternion.  For a slider, this can be described completely as a unit
  * vector.
  *
  * For two degrees of freedom, Two quaternions describe rotation one then
  * rotation two.  (Math: The two quaternions can be added "?" to make
- * a new quaternion that represents the movement around both axis)  For
+ * a new quaternion that represents the movement around both axis) For
  * sliders, two unit vectors and a starting point define the plane used.
  *
  * For three degrees of freedom, three quaternions or three unit vectors.
@@ -55,104 +55,107 @@
 
 /* NB: The quaternions should (MUST?) have zero twist! */
 struct arc {
-    struct bu_list	l;
-    int		type;
-    char		**arc;
-    int		arc_last;
-    char		**original;
-    int		org_last;
+    struct bu_list l;
+    int type;
+    char **arc;
+    int arc_last;
+    char **original;
+    int org_last;
 };
 
+
 #define ARC_UNSET	0x0
-#define	ARC_PATH	0x1
+#define ARC_PATH	0x1
 #define ARC_ARC		0x2
 #define ARC_LIST	0x4
 #define ARC_BOTH	0x8
 
-struct	rotation {
-    quat_t	quat;		/* direction of rotation */
-    double	lower;		/* min value in degrees */
-    double	upper;		/* max value in degrees */
-    double	current;	/* what the joint is currently at in degrees */
-    double	accepted;	/* what was the last accepted value of joint */
+struct rotation {
+    quat_t quat;		/* direction of rotation */
+    double lower;		/* min value in degrees */
+    double upper;		/* max value in degrees */
+    double current;	/* what the joint is currently at in degrees */
+    double accepted;	/* what was the last accepted value of joint */
 };
+
 
 struct direct {
-    vect_t	unitvec;
-    double	lower;
-    double	upper;
-    double	current;
-    double	last;
-    double	accepted;
-    int	changed;
+    vect_t unitvec;
+    double lower;
+    double upper;
+    double current;
+    double last;
+    double accepted;
+    int changed;
 };
 struct joint {
-    struct bu_list	l;
-    int		uses;
-    char		*name;
-    struct arc	path;
-    vect_t		location;
+    struct bu_list l;
+    int uses;
+    char *name;
+    struct arc path;
+    vect_t location;
 
-    struct rotation	rots[3];
-    struct direct	dirs[3];
+    struct rotation rots[3];
+    struct direct dirs[3];
 
-    struct animate	*anim;
+    struct animate *anim;
 };
-#define	MAGIC_JOINT_STRUCT	0x4a4f4900	/* 1246710016 */
+#define MAGIC_JOINT_STRUCT 0x4a4f4900	/* 1246710016 */
 struct jointH {
-    struct bu_list	l;
-    struct joint	*p;
-    int		arc_loc;
-    int		flag;
+    struct bu_list l;
+    struct joint *p;
+    int arc_loc;
+    int flag;
 };
-#define MAGIC_JOINT_HANDLE	0x44330048	/* 1144193096 */
-/*	Constraints
+#define MAGIC_JOINT_HANDLE 0x44330048	/* 1144193096 */
+/* Constraints
  *
  * Standard double linked list stuff.
  * name of the constraint (not required)
  * Set of is a linked list of joint HANDLES!
  */
 struct hold_point {
-    int	type;			/* SOLID ID + fixed */
+    int type;			/* SOLID ID + fixed */
     /* everything should reduce to a point at run time. */
-    vect_t	point;
-    int	vertex_number;
+    vect_t point;
+    int vertex_number;
 
     struct arc arc;		/* Path to object */
     struct db_full_path path;	/* after processing */
-    int	flag;
+    int flag;
 };
-#define ID_FIXED	-1
+#define ID_FIXED -1
 
-#define	HOLD_PT_GOOD 0x1
+#define HOLD_PT_GOOD 0x1
 
 struct j_set_desc {
-    char	*joint;
-    struct arc	path;
-    struct arc	exclude;
+    char *joint;
+    struct arc path;
+    struct arc exclude;
 };
 struct hold {
-    struct bu_list	l;
-    char		*name;
+    struct bu_list l;
+    char *name;
     /* set of joints is defined by joint to grip list of joints */
-    struct j_set_desc	j_set;
-    char		*joint;
-    struct bu_list	j_head;
-    struct hold_point	effector;
-    struct hold_point	objective;
-    double		weight;
-    int		priority;
-    int		flag;
-    double		eval;
+    struct j_set_desc j_set;
+    char *joint;
+    struct bu_list j_head;
+    struct hold_point effector;
+    struct hold_point objective;
+    double weight;
+    int priority;
+    int flag;
+    double eval;
 };
-#define	HOLD_FLAG_TRIED	0x1
+#define HOLD_FLAG_TRIED 0x1
 /*
  * Objective can be one of:
- *	POINT, LINE, LINE_SEGMENT, PLANE, FACE
- *The objective can be defined in terms of:
- *	GRIPs, JOINTs or FIXED POINTs
+ * POINT, LINE, LINE_SEGMENT, PLANE, FACE
+ *
+ * The objective can be defined in terms of:
+ * GRIPs, JOINTs or FIXED POINTs
  */
-#define	MAGIC_HOLD_STRUCT	0x684f4c63	/* 1750027363 */
+#define MAGIC_HOLD_STRUCT 0x684f4c63	/* 1750027363 */
 
 /*
  * Local Variables:

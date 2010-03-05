@@ -56,8 +56,8 @@ f_area(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 #ifndef _WIN32
     struct ged_display_list *gdlp;
     struct ged_display_list *next_gdlp;
-    struct solid		*sp;
-    struct bn_vlist	*vp;
+    struct solid *sp;
+    struct bn_vlist *vp;
     FILE *fp_r;
     FILE *fp_w;
     int rpid;
@@ -83,7 +83,7 @@ f_area(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	return TCL_ERROR;
     }
 
-    if ( not_state( ST_VIEW, "Presented Area Calculation" ) == TCL_ERROR )
+    if (not_state(ST_VIEW, "Presented Area Calculation") == TCL_ERROR)
 	return TCL_ERROR;
 
     gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
@@ -99,7 +99,7 @@ f_area(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     }
 
     if (is_empty) {
-	Tcl_AppendResult(interp, "No objects displayed!!!\n", (char *)NULL );
+	Tcl_AppendResult(interp, "No objects displayed!!!\n", (char *)NULL);
 	return TCL_ERROR;
     }
 
@@ -108,7 +108,7 @@ f_area(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
-	    if ( !sp->s_Eflag && sp->s_soldash != 0 )  {
+	    if (!sp->s_Eflag && sp->s_soldash != 0) {
 		struct bu_vls vls;
 
 		bu_vls_init(&vls);
@@ -201,36 +201,36 @@ f_area(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
-	    for ( BU_LIST_FOR( vp, bn_vlist, &(sp->s_vlist) ) )  {
-		int	i;
-		int	nused = vp->nused;
-		int	*cmd = vp->cmd;
+	    for (BU_LIST_FOR(vp, bn_vlist, &(sp->s_vlist))) {
+		int i;
+		int nused = vp->nused;
+		int *cmd = vp->cmd;
 		point_t *pt = vp->pt;
-		for ( i = 0; i < nused; i++, cmd++, pt++ )  {
-		    switch ( *cmd )  {
-		    case BN_VLIST_POLY_START:
-		    case BN_VLIST_POLY_VERTNORM:
-			continue;
-		    case BN_VLIST_POLY_MOVE:
-		    case BN_VLIST_LINE_MOVE:
-			/* Move, not draw */
-			MAT4X3VEC(last, view_state->vs_gvp->gv_rotation, *pt);
-			continue;
-		    case BN_VLIST_POLY_DRAW:
-		    case BN_VLIST_POLY_END:
-		    case BN_VLIST_LINE_DRAW:
-			/* draw.  */
-			MAT4X3VEC(fin, view_state->vs_gvp->gv_rotation, *pt);
-			break;
+		for (i = 0; i < nused; i++, cmd++, pt++) {
+		    switch (*cmd) {
+			case BN_VLIST_POLY_START:
+			case BN_VLIST_POLY_VERTNORM:
+			    continue;
+			case BN_VLIST_POLY_MOVE:
+			case BN_VLIST_LINE_MOVE:
+			    /* Move, not draw */
+			    MAT4X3VEC(last, view_state->vs_gvp->gv_rotation, *pt);
+			    continue;
+			case BN_VLIST_POLY_DRAW:
+			case BN_VLIST_POLY_END:
+			case BN_VLIST_LINE_DRAW:
+			    /* draw.  */
+			    MAT4X3VEC(fin, view_state->vs_gvp->gv_rotation, *pt);
+			    break;
 		    }
 
 		    fprintf(fp_w, "%.9e %.9e %.9e %.9e\n",
 			    last[X] * base2local,
 			    last[Y] * base2local,
 			    fin[X] * base2local,
-			    fin[Y] * base2local );
+			    fin[Y] * base2local);
 
-		    VMOVE( last, fin );
+		    VMOVE(last, fin);
 		}
 	    }
 	}
@@ -257,6 +257,7 @@ f_area(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     return TCL_OK;
 }
+
 
 /*
  * Local Variables:

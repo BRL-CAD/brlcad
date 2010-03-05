@@ -50,10 +50,10 @@ int journal_delay = 0;
 void history_journalize(struct mged_hist *hptr);
 
 /*
- *	H I S T O R Y _ R E C O R D
+ * H I S T O R Y _ R E C O R D
  *
- *	Stores the given command with start and finish times in the
- *	  history vls'es.
+ * Stores the given command with start and finish times in the
+ * history vls'es.
  */
 
 void
@@ -88,6 +88,7 @@ history_record(
     firstjournal = 0;
 }
 
+
 HIDDEN int
 timediff(struct timeval *tvdiff, struct timeval *start, struct timeval *finish)
 {
@@ -105,6 +106,7 @@ timediff(struct timeval *tvdiff, struct timeval *start, struct timeval *finish)
 
     return 0;
 }
+
 
 void
 history_journalize(struct mged_hist *hptr)
@@ -125,12 +127,13 @@ history_journalize(struct mged_hist *hptr)
 	fprintf(journalfp, "mged_update 1\n");
 }
 
+
 /*
- *	F _ J O U R N A L
+ * F _ J O U R N A L
  *
- *	Opens the journal file, so each command and the time since the previous
- *	  one will be recorded.  Or, if called with no arguments, closes the
- *	  journal file.
+ * Opens the journal file, so each command and the time since the previous
+ * one will be recorded.  Or, if called with no arguments, closes the
+ * journal file.
  */
 
 int
@@ -183,11 +186,12 @@ f_journal(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_OK;
 }
 
+
 /*
- *	F _ D E L A Y
+ * F _ D E L A Y
  *
- * 	Uses select to delay for the specified amount of seconds and
- *	  microseconds.
+ * Uses select to delay for the specified amount of seconds and
+ * microseconds.
  */
 
 int
@@ -212,10 +216,11 @@ f_delay(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_OK;
 }
 
+
 /*
- *	F _ H I S T O R Y
+ * F _ H I S T O R Y
  *
- *	Prints out the command history, either to bu_log or to a file.
+ * Prints out the command history, either to bu_log or to a file.
  */
 
 int
@@ -238,20 +243,20 @@ f_history(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     }
 
     fp = NULL;
-    while ( argc >= 2 ) {
-	if ( strcmp(argv[1], "-delays") == 0 )
+    while (argc >= 2) {
+	if (strcmp(argv[1], "-delays") == 0)
 	    with_delays = 1;
-	else if ( strcmp(argv[1], "-outfile") == 0 ) {
-	    if ( fp != NULL ) {
+	else if (strcmp(argv[1], "-outfile") == 0) {
+	    if (fp != NULL) {
 		Tcl_AppendResult(interp, "history: -outfile option given more than once\n",
 				 (char *)NULL);
 		return TCL_ERROR;
-	    } else if ( argc < 3 || strcmp(argv[2], "-delays") == 0 ) {
+	    } else if (argc < 3 || strcmp(argv[2], "-delays") == 0) {
 		Tcl_AppendResult(interp, "history: I need a file name\n", (char *)NULL);
 		return TCL_ERROR;
 	    } else {
-		fp = fopen( argv[2], "a+" );
-		if ( fp == NULL ) {
+		fp = fopen(argv[2], "a+");
+		if (fp == NULL) {
 		    Tcl_AppendResult(interp, "history: error opening file", (char *)NULL);
 		    return TCL_ERROR;
 		}
@@ -291,7 +296,8 @@ f_history(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_OK;
 }
 
-/*      H I S T O R Y _ P R E V
+
+/* H I S T O R Y _ P R E V
  */
 struct bu_vls *
 history_prev(const char *pat)
@@ -301,9 +307,9 @@ history_prev(const char *pat)
     hp = curr_cmd_list->cl_cur_hist;
     do {
 	hp = BU_LIST_PREV(mged_hist, &(hp->l));
-    } while (   !BU_LIST_IS_HEAD(hp, &(mged_hist_head.l))
-		&& pat
-		&& !strstr(bu_vls_addr(&(hp->mh_command)), pat));
+    } while (!BU_LIST_IS_HEAD(hp, &(mged_hist_head.l))
+	     && pat
+	     && !strstr(bu_vls_addr(&(hp->mh_command)), pat));
 
     if (BU_LIST_IS_HEAD(hp, &(mged_hist_head.l)))
 	return NULL;
@@ -313,7 +319,8 @@ history_prev(const char *pat)
     }
 }
 
-/*      H I S T O R Y _ C U R
+
+/* H I S T O R Y _ C U R
  */
 struct bu_vls *
 history_cur(void)
@@ -324,7 +331,8 @@ history_cur(void)
 	return &(curr_cmd_list->cl_cur_hist->mh_command);
 }
 
-/*      H I S T O R Y _ N E X T
+
+/* H I S T O R Y _ N E X T
  */
 struct bu_vls *
 history_next(const char *pat)
@@ -338,9 +346,9 @@ history_next(const char *pat)
     hp = curr_cmd_list->cl_cur_hist;
     do {
 	hp = BU_LIST_NEXT(mged_hist, &(hp->l));
-    } while (   !BU_LIST_IS_HEAD(hp, &(mged_hist_head.l))
-		&& pat
-		&& !strstr(bu_vls_addr(&(hp->mh_command)), pat));
+    } while (!BU_LIST_IS_HEAD(hp, &(mged_hist_head.l))
+	     && pat
+	     && !strstr(bu_vls_addr(&(hp->mh_command)), pat));
 
     if (BU_LIST_IS_HEAD(hp, &(mged_hist_head.l))) {
 	curr_cmd_list->cl_cur_hist = hp;
@@ -350,6 +358,7 @@ history_next(const char *pat)
 	return &(hp->mh_command);
     }
 }
+
 
 int
 cmd_hist(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
@@ -456,6 +465,7 @@ cmd_hist(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     return TCL_ERROR;
 }
 
+
 void
 history_setup(void)
 {
@@ -467,6 +477,7 @@ history_setup(void)
     mged_hist_head.mh_status = CMD_OK;
     journalfp = NULL;
 }
+
 
 /*
  * Local Variables:

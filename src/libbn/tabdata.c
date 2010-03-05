@@ -893,6 +893,7 @@ bn_table_write(const char *filename, const struct bn_table *tabp)
 struct bn_table *
 bn_table_read(const char *filename)
 {
+    int ret;
     struct bn_table	*tabp;
     struct bu_vls		line;
     FILE	*fp;
@@ -924,7 +925,11 @@ bn_table_read(const char *filename)
     bu_semaphore_acquire( BU_SEM_SYSCALL );
     for ( j=0; j <= tabp->nx; j++ )  {
 	/* XXX assumes fastf_t == double */
-	fscanf( fp, "%lf", &tabp->x[j] );
+	ret = fscanf( fp, "%lf", &tabp->x[j] );
+	if (ret != 1) {
+	    bu_log("bn_table_read(&s) READ FAILURE. Abort\n", filename);
+	    break;
+	}
     }
     fclose(fp);
     bu_semaphore_release( BU_SEM_SYSCALL );

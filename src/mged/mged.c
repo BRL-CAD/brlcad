@@ -90,11 +90,11 @@
 #ifdef DEBUG
 #  ifndef _WIN32
 #    ifndef LOGFILE
-#      define LOGFILE	"mged.log"	/* usage log */
+#      define LOGFILE "mged.log"	/* usage log */
 #    endif
 #  else
 #    ifndef LOGFILE
-#      define LOGFILE	"C:\\mged.log"		/* usage log */
+#      define LOGFILE "C:\\mged.log"		/* usage log */
 #    endif
 #  endif
 #else
@@ -907,7 +907,7 @@ main(int argc, char *argv[])
 	/* This test stops optimizers from complaining about an
 	 * infinite loop.
 	 */
-	if ((rateflag = event_check(rateflag)) < 0)  break;
+	if ((rateflag = event_check(rateflag)) < 0) break;
 
 	/*
 	 * Cause the control portion of the displaylist to be updated
@@ -1072,6 +1072,7 @@ stdin_input(ClientData clientData, int mask)
 #endif
 }
 
+
 static void
 do_tab_expansion()
 {
@@ -1116,6 +1117,7 @@ do_tab_expansion()
 
     bu_vls_free(&tab_expansion);
 }
+
 
 /* Process character */
 static void
@@ -1579,6 +1581,7 @@ mged_process_char(char ch)
     }
 }
 
+
 static void
 mged_insert_char(char ch)
 {
@@ -1633,6 +1636,7 @@ cmd_stuff_str(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     return TCL_OK;
 }
+
 
 void
 std_out_or_err(ClientData clientData, int mask)
@@ -2188,6 +2192,7 @@ refresh(void)
     bu_vls_free(&tmp_vls);
 }
 
+
 /*
  * L O G _ E V E N T
  *
@@ -2413,6 +2418,7 @@ new_edit_mats(void)
 
     curr_dm_list = save_dm_list;
 }
+
 
 void
 mged_view_callback(struct ged_view *gvp,
@@ -2901,6 +2907,7 @@ mged_bomb_hook(genptr_t clientData, genptr_t data)
 
     return TCL_OK;
 }
+
 
 /*
  * Local Variables:

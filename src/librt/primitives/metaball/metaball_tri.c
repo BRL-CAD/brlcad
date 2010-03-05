@@ -65,7 +65,7 @@
 extern int mc_edges[256];
 
 /* TODO: make a real header entry once the signature is good... */
-int rt_nmg_mc_realize_cube(struct shell *s, int pv, point_t *p, point_t *edges, vect_t *normals, const struct bn_tol *tol);
+int rt_nmg_mc_realize_cube(struct shell *s, int pv, point_t *p, point_t *edges, const struct bn_tol *tol);
 
 /**
  * R T _ M E T A B A L L _ T E S S
@@ -139,13 +139,15 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
 
 		if ( pv != 0 && pv != 255 ) {	/* entire cube is either inside or outside */
 		    point_t edges[12];
-		    vect_t n[12];
 		    int rval;
 
 		    /* compute the edge values (if needed) */
 #define MEH(a,b,c) if(!(pv&(1<<b)&&pv&(1<<c))) { \
     rt_metaball_find_intersection(edges+a, mb, (const point_t *)(p+b), (const point_t *)(p+c), mtol, finalstep); \
+}
+#if 0
     rt_metaball_norm_internal(n+a, p+a, mb); }
+#endif
 		    /* magic numbers! an edge, then the two attached vertices.
 		     * For edge/vertex mapping, refer to the awesome ascii art
 		     * at the beginning of this file. */
@@ -163,7 +165,7 @@ rt_metaball_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
 		    MEH(11,3,7);
 #undef MEH
 
-		    rval = rt_nmg_mc_realize_cube(s, pv, (point_t *)p, (point_t *)edges, (vect_t *)n, tol);
+		    rval = rt_nmg_mc_realize_cube(s, pv, (point_t *)p, (point_t *)edges, tol);
 		    numtri += rval;
 		    if(rval < 0) {
 			bu_log("Error attempting to realize a cube O.o\n");

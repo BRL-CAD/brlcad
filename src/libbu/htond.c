@@ -53,9 +53,9 @@
 
 
 void
-htond(register unsigned char *out, register const unsigned char *in, int count)
+htond(register unsigned char *out, register const unsigned char *in, size_t count)
 {
-    register int i;
+    register size_t i;
 
     assert(sizeof(double) == SIZEOF_NETWORK_DOUBLE);
 
@@ -72,7 +72,7 @@ htond(register unsigned char *out, register const unsigned char *in, int count)
 	    /*
 	     * This machine uses IEEE, but in little-endian byte order
 	     */
-	    for (i=count-1; i >= 0; i--) {
+	    for (i=count; i > 0; i--) {
 		*out++ = in[7];
 		*out++ = in[6];
 		*out++ = in[5];
@@ -102,7 +102,7 @@ htond(register unsigned char *out, register const unsigned char *in, int count)
      * precision has a different number of exponent bits than double
      * precision, so we have to engage in gyrations here.
      */
-    for (i=count-1; i >= 0; i--) {
+    for (i=count; i > 0; i--) {
 	/* Brain-damaged 3-D case */
 	float small;
 	long float big;
@@ -132,7 +132,7 @@ htond(register unsigned char *out, register const unsigned char *in, int count)
      * VAX order is +6, +4, +2, sign|exp|fraction+0
      * with 8 bits of exponent, excess 128 base 2, exp=0 => zero.
      */
-    for (i=count-1; i >= 0; i--) {
+    for (i=count; i > 0; i--) {
 	register unsigned long left, right, signbit;
 	register int exp;
 
@@ -174,7 +174,7 @@ htond(register unsigned char *out, register const unsigned char *in, int count)
      * 7-bit exponent, base 16.
      * No hidden bits in mantissa (56 bits).
      */
-    for (i=count-1; i >= 0; i--) {
+    for (i=count; i > 0; i--) {
 	register unsigned long left, right, signbit;
 	register int exp;
 
@@ -277,7 +277,7 @@ htond(register unsigned char *out, register const unsigned char *in, int count)
      * 15 bit exponent, biased 040000 (octal).  48 mantissa bits.
      * No hidden bits.
      */
-    for (i=count-1; i >= 0; i--) {
+    for (i=count; i > 0; i--) {
 	register unsigned long word, signbit;
 	register int exp;
 
@@ -327,7 +327,7 @@ htond(register unsigned char *out, register const unsigned char *in, int count)
      * In modern times, Convex seems to use IEEE by default,
      * so we do too.
      */
-    for (i=count-1; i >= 0; i--) {
+    for (i=count; i > 0; i--) {
 	register unsigned long long word;
 	register int exp;
 
@@ -359,13 +359,16 @@ htond(register unsigned char *out, register const unsigned char *in, int count)
 
 
 void
-ntohd(register unsigned char *out, register const unsigned char *in, int count)
+ntohd(register unsigned char *out, register const unsigned char *in, size_t count)
 {
-    register int i;
+    register size_t i;
+    bu_endian_t order;
 
     assert(sizeof(double) == SIZEOF_NETWORK_DOUBLE);
 
-    switch (bu_byteorder()) {
+    order = bu_byteorder();
+
+    switch (order) {
 	case BU_BIG_ENDIAN:
 	    /*
 	     * First, the case where the system already operates in
@@ -378,7 +381,7 @@ ntohd(register unsigned char *out, register const unsigned char *in, int count)
 	    /*
 	     * This machine uses IEEE, but in little-endian byte order
 	     */
-	    for (i=count-1; i >= 0; i--) {
+	    for (i=count; i > 0; i--) {
 		*out++ = in[7];
 		*out++ = in[6];
 		*out++ = in[5];
@@ -406,7 +409,7 @@ ntohd(register unsigned char *out, register const unsigned char *in, int count)
      * Silicon Graphics Iris workstation.
      * See comments in htond() for discussion of the braindamage.
      */
-    for (i=count-1; i >= 0; i--) {
+    for (i=count; i > 0; i--) {
 	/* Brain-damaged 3-D case */
 	float small;
 	long float big;
@@ -434,7 +437,7 @@ ntohd(register unsigned char *out, register const unsigned char *in, int count)
      * VAX order is +6, +4, +2, sign|exp|fraction+0
      * with 8 bits of exponent, excess 128 base 2, exp=0 => zero.
      */
-    for (i=count-1; i >= 0; i--) {
+    for (i=count; i > 0; i--) {
 	register unsigned long left, right, signbit;
 	register int fix, exp;
 
@@ -492,7 +495,7 @@ ntohd(register unsigned char *out, register const unsigned char *in, int count)
      * 7-bit exponent, base 16.
      * No hidden bits in mantissa (56 bits).
      */
-    for (i=count-1; i >= 0; i--) {
+    for (i=count; i > 0; i--) {
 	register unsigned long left, right;
 	register int fix, exp, signbit;
 
@@ -581,7 +584,7 @@ ntohd(register unsigned char *out, register const unsigned char *in, int count)
      * exponent, biased 040000 (octal).  48 mantissa bits.  No hidden
      * bits.
      */
-    for (i=count-1; i >= 0; i--) {
+    for (i=count; i > 0; i--) {
 	register unsigned long word, signbit;
 	register int exp;
 
@@ -622,7 +625,7 @@ ntohd(register unsigned char *out, register const unsigned char *in, int count)
     /*
      * Convex C1 version, for Native Convex floating point.
      */
-    for (i=count-1; i >= 0; i--) {
+    for (i=count; i > 0; i--) {
 	register unsigned long long word;
 	register int exp;
 

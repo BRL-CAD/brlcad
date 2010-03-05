@@ -35,32 +35,32 @@
 #endif
 #if defined(__bsdi__)
 #  include <sys/ioctl_compat.h>
-#  define OCRNL   0000010
+#  define OCRNL 0000010
 #endif
 #include "bio.h"
 
 /*
- *  This file will work IFF one of these three flags is set:
- *	HAVE_TERMIOS_H	use POSIX termios and tcsetattr() call with XOPEN flags
- *	BSD		use Version 7 / BSD sgttyb and TIOCSETP ioctl
+ * This file will work IFF one of these three flags is set:
+ * HAVE_TERMIOS_H use POSIX termios and tcsetattr() call with XOPEN flags
+ * BSD use Version 7 / BSD sgttyb and TIOCSETP ioctl
  */
 
 #ifdef HAVE_TERMIOS_H
 #  include <termios.h>
-static struct termios	tty;
+static struct termios tty;
 
 #else	/* !defined(HAVE_TERMIOS_H) */
 
 #  ifdef HAVE_SYS_IOCTL_H
 #    include <sys/ioctl.h>
-struct	sgttyb	tty;
-#    define TCSETA	TIOCSETP
-#    define TCGETA	TIOCGETP
+struct sgttyb tty;
+#    define TCSETA TIOCSETP
+#    define TCGETA TIOCGETP
 #  endif
 
 #  ifdef HAVE_TERMIO_H
 #    include <termio.h>
-struct	termio	tty;
+struct termio tty;
 #  endif
 
 #endif /* _POSIX_SOURCE */
@@ -80,17 +80,17 @@ struct	termio	tty;
 #  define TAB2 0x00000800
 #endif
 
-#ifndef	XTABS
+#ifndef XTABS
 #  define XTABS (TAB1 | TAB2)
 #endif /* XTABS */
 
 
 int fd;
 char cmd;
-unsigned char	status[4];
-unsigned char	values[21];
-fd_set	readfds;
-int	polaroid = 0;		/* 0 = aux camera, 1 = Polaroid 8x10 */
+unsigned char status[4];
+unsigned char values[21];
+fd_set readfds;
+int polaroid = 0;		/* 0 = aux camera, 1 = Polaroid 8x10 */
 
 void
 unsnooze(int x)
@@ -100,7 +100,7 @@ unsnooze(int x)
 
 
 /*
- *			D U N N O P E N
+ * D U N N O P E N
  */
 void
 dunnopen(void)
@@ -109,18 +109,18 @@ dunnopen(void)
     /* open the camera device */
 
 #ifdef HAVE_TERMIOS_H
-    if ( (fd = open("/dev/camera", O_RDWR | O_NONBLOCK)) < 0 )
+    if ((fd = open("/dev/camera", O_RDWR | O_NONBLOCK)) < 0)
 #else
-	if ( (fd = open("/dev/camera", O_RDWR | O_NDELAY)) < 0 )
+	if ((fd = open("/dev/camera", O_RDWR | O_NDELAY)) < 0)
 #endif
 	{
 	    close(fd);
 	    bu_exit(10, "\007dunnopen: can't open /dev/camera\n");
 	}
 #ifdef HAVE_TERMIOS_H
-    if ( tcgetattr( fd, &tty ) < 0 )
+    if (tcgetattr(fd, &tty) < 0)
 #else
-	if ( ioctl(fd, TCGETA, &tty) < 0)
+	if (ioctl(fd, TCGETA, &tty) < 0)
 #endif
 	{
 	    close(fd);
@@ -156,9 +156,9 @@ dunnopen(void)
 #endif
 
 #if HAVE_TERMIOS_H
-    if ( tcsetattr( fd, TCSAFLUSH, &tty ) < 0 )
+    if (tcsetattr(fd, TCSAFLUSH, &tty) < 0)
 #else
-	if ( ioctl(fd, TCSETA, &tty) < 0 )
+	if (ioctl(fd, TCSETA, &tty) < 0)
 #endif
 	{
 	    perror("/dev/camera");
@@ -166,21 +166,21 @@ dunnopen(void)
 	}
 
     /* Be certain the FNDELAY is off */
-    if ( fcntl(fd, F_SETFL, 0) < 0 )  {
+    if (fcntl(fd, F_SETFL, 0) < 0) {
 	perror("/dev/camera");
 	exit(21);
     }
 
     /* Set up alarm clock catcher */
-    (void)signal( SIGALRM, unsnooze );
+    (void)signal(SIGALRM, unsnooze);
 }
 
 
 /*
- *			G O O D S T A T U S
+ * G O O D S T A T U S
  *
- *	Checks the status of the Dunn camera and returns 1 for good status
- *	and 0 for bad status.
+ * Checks the status of the Dunn camera and returns 1 for good status
+ * and 0 for bad status.
  *
  */
 int
@@ -198,7 +198,7 @@ goodstatus(void)
     FD_ZERO(&readfds);
     FD_SET(fd, &readfds);
     select(fd+1, &readfds, (fd_set *)0, (fd_set *)0, timeout);
-    if ( FD_ISSET(fd, &readfds) ==0 ) {
+    if (FD_ISSET(fd, &readfds) ==0) {
 	printf("\007dunnsnap: status request timed out\n");
 	return(0);
     }
@@ -209,13 +209,13 @@ goodstatus(void)
     }
     alarm(0);
 
-    if (status[0]&0x1)  printf("No vertical sync\n");
-    if (status[0]&0x2)  printf("8x10 not ready\n");
-    if (status[0]&0x4)  printf("Expose in wrong mode\n");
-    if (status[0]&0x8)  printf("Aux camera out of film\n");
-    if (status[1]&0x1)  printf("B/W mode\n");
-    if (status[1]&0x2)  printf("Separate mode\n");
-    if (status[2]&0x1)  printf("Y-smoothing off\n");
+    if (status[0]&0x1) printf("No vertical sync\n");
+    if (status[0]&0x2) printf("8x10 not ready\n");
+    if (status[0]&0x4) printf("Expose in wrong mode\n");
+    if (status[0]&0x8) printf("Aux camera out of film\n");
+    if (status[1]&0x1) printf("B/W mode\n");
+    if (status[1]&0x2) printf("Separate mode\n");
+    if (status[2]&0x1) printf("Y-smoothing off\n");
 
     if ((status[0]&0xf) == 0x0 &&
 	(status[1]&0x3) == 0x0 &&
@@ -229,10 +229,11 @@ goodstatus(void)
     return 0;	/* status is bad or request timed out */
 }
 
+
 /*
- *			H A N G T E N
+ * H A N G T E N
  *
- *	Provides a 10 millisecond delay when called
+ * Provides a 10 millisecond delay when called
  *
  */
 void
@@ -243,12 +244,13 @@ hangten(void)
     select(0, (fd_set *)0, (fd_set *)0, (fd_set *)0, &delaytime);
 }
 
+
 /*
- *			R E A D Y
+ * R E A D Y
  *
- *	Sends a ready test command to the Dunn camera and returns 1 if the
- *	camera is ready or 0 if the camera is not ready after waiting the
- *	number of seconds specified by the argument.
+ * Sends a ready test command to the Dunn camera and returns 1 if the
+ * camera is ready or 0 if the camera is not ready after waiting the
+ * number of seconds specified by the argument.
  *
  */
 int
@@ -267,14 +269,14 @@ ready(int nsecs)
     FD_ZERO(&readfds);
     FD_SET(fd, &readfds);
     select(fd+1, &readfds, (fd_set *)0, (fd_set *)0, timeout);
-    if ( FD_ISSET(fd, &readfds) ) {
+    if (FD_ISSET(fd, &readfds)) {
 	return 0;	/* timeout after n secs */
     }
     status[0] = status[1] = '\0';
     /* This loop is needed to skip leading nulls in input stream */
     do {
 	i = read(fd, &status[0], 1);
-	if ( i != 1 )  {
+	if (i != 1) {
 	    if (i < 0) {
 		perror("dunnsnap READ ERROR");
 	    } else {
@@ -282,7 +284,7 @@ ready(int nsecs)
 	    }
 	    return 0;
 	}
-    } while ( status[0] == '\0' );
+    } while (status[0] == '\0');
 
     i = read(fd, &status[1], 1);
     if (i != 1) {
@@ -304,10 +306,11 @@ ready(int nsecs)
     return 0;
 }
 
+
 /*
- *			G E T E X P O S U R E
+ * G E T E X P O S U R E
  *
- *  Get and print the current exposure
+ * Get and print the current exposure
  */
 void
 getexposure(char *title)
@@ -330,7 +333,7 @@ getexposure(char *title)
     FD_ZERO(&readfds);
     FD_SET(fd, &readfds);
     select(fd+1, &readfds, (fd_set *)0, (fd_set *)0, &waittime);
-    if ( FD_ISSET(fd, &readfds) ) {
+    if (FD_ISSET(fd, &readfds)) {
 	bu_exit(40, "dunncolor:\007 %s request exposure value cmd: timed out\n", title);
     }
 
@@ -343,8 +346,9 @@ getexposure(char *title)
     printf("dunncolor: %s = %s\n", title, values);
 }
 
+
 /*
- *			D U N N S E N D
+ * D U N N S E N D
  *
  */
 int
@@ -362,7 +366,7 @@ dunnsend(char color, int val)
 	return(-1);
     }
 
-    if ( polaroid )
+    if (polaroid)
 	cmd = 'K';	/* set 8x10 exposure values */
     else
 	cmd = 'L';	/* set AUX exposure values */
@@ -382,6 +386,7 @@ dunnsend(char color, int val)
     hangten();
     return(0);		/* OK */
 }
+
 
 /*
  * Local Variables:

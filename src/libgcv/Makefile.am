@@ -3,7 +3,8 @@ lib_LTLIBRARIES = libgcv.la
 noinst_LTLIBRARIES = libgcv_nil.la
 
 libgcv_nil_la_SOURCES = \
-	region_end.c
+	region_end.c \
+	region_end_mc.c
 
 AM_CPPFLAGS = ${TCL_CPPFLAGS}
 
@@ -14,7 +15,8 @@ libgcv_la_LIBADD = \
 	${GCV_LIBS}
 
 EXTRA_DIST = \
-        CMakeLists.txt
+        CMakeLists.txt \
+	NOTES
 
 AM_CFLAGS = ${STRICT_FLAGS}
 

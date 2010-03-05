@@ -253,7 +253,7 @@ rt_poly_checkroots(register bn_poly_t *eqn, bn_complex_t *roots, register int nr
 void
 rt_poly_deflate(register bn_poly_t *oldP, register bn_complex_t *root)
 {
-    bn_poly_t div = bn_Zero_poly;
+    bn_poly_t divisor = bn_Zero_poly;
     bn_poly_t rem = bn_Zero_poly;
 
     /* Make a polynomial out of the given root:  Linear for a real
@@ -262,22 +262,22 @@ rt_poly_deflate(register bn_poly_t *oldP, register bn_complex_t *root)
      */
     if (NEAR_ZERO(root->im, SMALL)) {
 	/* root is real */
-	div.dgr = 1;
-	div.cf[0] = 1;
-	div.cf[1] = - root->re;
+	divisor.dgr = 1;
+	divisor.cf[0] = 1;
+	divisor.cf[1] = - root->re;
     } else {
 	/* root is complex */
-	div.dgr = 2;
-	div.cf[0] = 1;
-	div.cf[1] = -2 * root->re;
-	div.cf[2] = bn_cx_amplsq(root);
+	divisor.dgr = 2;
+	divisor.cf[0] = 1;
+	divisor.cf[1] = -2 * root->re;
+	divisor.cf[2] = bn_cx_amplsq(root);
     }
 
     /* Use synthetic division to find the quotient (new polynomial)
      * and the remainder (should be zero if the root was really a
      * root).
      */
-    bn_poly_synthetic_division(oldP, &rem, oldP, &div);
+    bn_poly_synthetic_division(oldP, &rem, oldP, &divisor);
 }
 
 

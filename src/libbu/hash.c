@@ -254,7 +254,7 @@ bu_hash_tbl_pr(struct bu_hash_tbl *hsh_tbl, char *str)
 	hsh_entry = hsh_tbl->lists[idx];
 	while (hsh_entry) {
 	    BU_CK_HASH_ENTRY(hsh_entry);
-	    fprintf(stderr, "\tindex=%ld, key=x%lx, value=x%lx\n", idx, (unsigned long int)hsh_entry->key, (unsigned long int)hsh_entry->value);
+	    fprintf(stderr, "\tindex=%ld, key=%p, value=%p\n", idx, (void *)hsh_entry->key, (void *)hsh_entry->value);
 	    hsh_entry = hsh_entry->next;
 	}
     }

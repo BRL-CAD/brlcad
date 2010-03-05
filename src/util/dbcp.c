@@ -41,20 +41,20 @@
 #include "bu.h"
 
 
-#define	STOP	0170
-#define	GO	0017
+#define STOP 0170
+#define GO 0017
 
-#define P_RD	0
-#define P_WR	1
+#define P_RD 0
+#define P_WR 1
 
 typedef int pipefds[2];
 
-static int	pid;
-static long	count;
+static int pid;
+static long count;
 
-static int	verbose;
+static int verbose;
 
-static char	errbuf[BUFSIZ] = {0};
+static char errbuf[BUFSIZ] = {0};
 
 static const char usage[] = "\
 Usage:  dbcp [-v] blocksize < input > output\n\
@@ -62,25 +62,25 @@ Usage:  dbcp [-v] blocksize < input > output\n\
 
 
 /*
- *			M A I N
+ * M A I N
  */
 int
 main(int argc, char **argv)
 {
-    char	*buffer;
-    unsigned int	size;
-    unsigned int	nread;
-    int	rfd;		/* pipe to read message from */
-    int	wfd;		/* pipe to write message to */
-    int	exitval=0;
-    int	saverrno=0;
-    int	waitcode;
-    char	msgchar;
+    char *buffer;
+    unsigned int size;
+    unsigned int nread;
+    int rfd;		/* pipe to read message from */
+    int wfd;		/* pipe to write message to */
+    int exitval=0;
+    int saverrno=0;
+    int waitcode;
+    char msgchar;
     pipefds par2chld, chld2par;
-    int	c;
+    int c;
 
-    while ( (c = bu_getopt( argc, argv, "v" )) != EOF )  {
-	switch ( c )  {
+    while ((c = bu_getopt(argc, argv, "v")) != EOF) {
+	switch (c) {
 	    case 'v':
 		verbose++;
 		break;
@@ -114,7 +114,7 @@ main(int argc, char **argv)
 	    bu_exit(99, "dbcp: Can't fork\n");
 
 	case 0:
-	    /*  Child  */
+	    /* Child */
 	    close (par2chld[P_WR]);
 	    close (chld2par[P_RD]);
 	    wfd = chld2par[P_WR];
@@ -123,7 +123,7 @@ main(int argc, char **argv)
 	    goto childstart;
 
 	default:
-	    /*  Parent  */
+	    /* Parent */
 	    close (par2chld[P_RD]);
 	    close (chld2par[P_WR]);
 	    wfd = par2chld[P_WR];

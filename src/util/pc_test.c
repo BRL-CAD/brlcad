@@ -25,8 +25,6 @@
  * Immediate jobs: Include cleanup
  * Short term: Clean up commandline argument parsing
  *
- * @author	Dawn Thomas
- *
  */
 
 #include "common.h"
@@ -107,8 +105,8 @@ main(int argc, char **argv)
     mk_constraint(fp, "Constraint", 0);
     if ((dp = db_lookup(fp->dbip, "Constraint", LOOKUP_QUIET)) == DIR_NULL)
 	return 3;
-    wdb_import(fp, &ip,solnam, (matp_t)NULL);
-    ip.idb_meth->ft_params(&pcs,&ip);
+    wdb_import(fp, &ip, solnam, (matp_t)NULL);
+    ip.idb_meth->ft_params(&pcs, &ip);
     
     /* Todo: Free pcs parametric set */
 
@@ -116,6 +114,7 @@ main(int argc, char **argv)
 
     return ret;
 }
+
 
 /*
  * Local Variables:

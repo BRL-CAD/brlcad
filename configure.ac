@@ -1843,6 +1843,26 @@ AC_CHECK_TYPE([socklen_t], [],
 #endif
 ])
 AC_CHECK_TYPES([sig_t], [], [], [#include <signal.h>])
+# AC_TYPE_INT32_T
+# AC_TYPE_INT64_T
+AC_CHECK_TYPES([uint64_t])
+AC_CHECK_TYPES([ssize_t])
+
+# AC_TYPE_UINTPTR_T
+AC_CHECK_TYPE([uintptr_t],
+    [AC_DEFINE([HAVE_UINTPTR_T], 1, [Define to 1 if the system has the type `uintptr_t'.])],
+    [for ac_type in 'unsigned int' 'unsigned long int' 'unsigned long long int'; do
+	AC_COMPILE_IFELSE(
+	    [AC_LANG_BOOL_COMPILE_TRY(
+		[AC_INCLUDES_DEFAULT],
+		[[sizeof (void *) <= sizeof ($ac_type)]])],
+	    [AC_DEFINE_UNQUOTED([uintptr_t], [$ac_type],
+		[Define to the type of an unsigned integer type wide enough to
+		 hold a pointer, if such a type exists, and if the system
+		 does not define it.])
+	    ac_type=])
+	test -z "$ac_type" && break
+    done])
 
 
 dnl ******************************************
@@ -1962,6 +1982,10 @@ if test "x$bc_use_profiling" != "xno" ; then
 		# intel gprof compiler flag
 		BC_COMPILER_AND_LINKER_RECOGNIZES([-p], [profile_flag])
 	fi
+	if test "x$bc_profile_flag_works" = "xno" ; then
+		# intel profiler compiler flag
+		BC_COMPILER_AND_LINKER_RECOGNIZES([-prof_gen], [profile_flag])
+	fi
 
 	if test "x$bc_profile_flag_works" = "xno" ; then
 		# no profiling
@@ -1987,6 +2011,9 @@ if test "x$bc_use_debug" != "xno" ; then
 	BC_COMPILER_AND_LINKER_RECOGNIZES([-g3 -gstabs+], [debug_flag])
 	if test "x$bc_debug_flag_works" = "xno" ; then
 		BC_COMPILER_AND_LINKER_RECOGNIZES([-g], [debug_flag])
+	fi
+	if test "x$bc_debug_flag_works" = "xno" ; then
+		BC_COMPILER_AND_LINKER_RECOGNIZES([-debug], [debug_flag])
 	fi
 
 	if test "x$bc_debug_flag_works" = "xyes" ; then
@@ -2063,7 +2090,7 @@ if test "x$bc_build_strict" = "xyes" ; then
        # do not include -w as that was just to suppress any test warnings
        STRICT_FLAGS="-pedantic -W -Wall -Werror -Wno-long-long"
        AC_SUBST(STRICT_FLAGS)
-       AC_DEFINE([STRICT_FLAGS], [1], [Define to 1 if enabling strict compiler flags.])
+       AC_DEFINE([STRICT_FLAGS], [1], [Define to 1 if strict standards compliance compilation is enabled.])
    fi
 fi
 
@@ -2701,16 +2728,17 @@ unset ac_cv_c_tclconfig
 if test "x$build_brlcad_tcl" = "xyes" ; then
     TCL_VERSION="8.6"
     AC_MSG_RESULT(yes)
+    SC_ENABLE_THREADS
     case $host_os in
 	 darwin*)
-	     TCL='-L${top_builddir}/src/other/tcl/macosx'" -ltcl${TCL_VERSION} $FRAMEWORK_COREFOUNDATION"
-    	     TCLSTUB='-L${top_builddir}/src/other/tcl/macosx'" -ltclstub${TCL_VERSION}"
+	     TCL='-L${top_builddir}/src/other/tcl/macosx'" -ltcl${TCL_VERSION} $FRAMEWORK_COREFOUNDATION $THREADS_LIBS"
+    	     TCLSTUB='-L${top_builddir}/src/other/tcl/macosx'" -ltclstub${TCL_VERSION} $THREADS_LIBS"
              TCL_CPPFLAGS='-I${top_srcdir}/src/other/tcl/generic -I${top_srcdir}/src/other/tcl/macosx -I${top_srcdir}/src/other/tcl/unix'
 	     TCL_DIR='macosx'
 	     ;;
     	 *)
-	     TCL='-L${top_builddir}/src/other/tcl/unix'" -ltcl${TCL_VERSION} ${LIBDL} ${LIBM}"
-             TCLSTUB='-L${top_builddir}/src/other/tcl/unix'" -ltclstub${TCL_VERSION}"
+	     TCL='-L${top_builddir}/src/other/tcl/unix'" -ltcl${TCL_VERSION} ${LIBDL} ${LIBM} $THREADS_LIBS"
+             TCLSTUB='-L${top_builddir}/src/other/tcl/unix'" -ltclstub${TCL_VERSION} $THREADS_LIBS"
              TCL_CPPFLAGS='-I${top_srcdir}/src/other/tcl/generic -I${top_srcdir}/src/other/tcl/unix'
 	     TCL_DIR='unix'
 	     ;;
@@ -2839,18 +2867,19 @@ if test "x$build_against_tk" = "xyes" ; then
     AC_MSG_CHECKING(whether to build Tk)
     if test "x$build_brlcad_tk" = "xyes" ; then
 	AC_MSG_RESULT(yes)
+	SC_ENABLE_THREADS
 	case $host_os in
 	 darwin*)
-             TK='-L${top_builddir}/src/other/tk/macosx'" -ltk${TCL_VERSION}"
-	     TKSTUB='-L${top_builddir}/src/other/tk/macosx'" -ltkstub${TK_VERSION}"
+             TK='-L${top_builddir}/src/other/tk/macosx'" -ltk${TCL_VERSION} $THREADS_LIBS"
+	     TKSTUB='-L${top_builddir}/src/other/tk/macosx'" -ltkstub${TK_VERSION}i $THREADS_LIBS"
 	     TK_DIR='macosx'
 	     if test "x$bc_build_aquatk" = "xyes" ; then
 	         TK_CPPFLAGS="$TK_CPPFLAGS "'-I${top_srcdir}/src/other/tk/xlib'
 	     fi
 	     ;;
     	 *)
-             TK='-L${top_builddir}/src/other/tk/unix'" -ltk${TCL_VERSION}"
-	     TKSTUB='-L${top_builddir}/src/other/tk/unix'" -ltkstub${TK_VERSION}"
+             TK='-L${top_builddir}/src/other/tk/unix'" -ltk${TCL_VERSION} $THREADS_LIBS"
+	     TKSTUB='-L${top_builddir}/src/other/tk/unix'" -ltkstub${TK_VERSION} $THREADS_LIBS"
 	     TK_DIR='unix'
 	     ;;
    	 esac

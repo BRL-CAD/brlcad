@@ -13,6 +13,7 @@ brlcadinclude_required = \
 	ged.h \
 	magic.h \
 	raytrace.h \
+	rtfunc.h \
 	rtgeom.h \
 	rtprivate.h \
 	rtserver.h \

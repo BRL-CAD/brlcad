@@ -38,14 +38,14 @@
 
 /* Usage:  overlay file.pl [name] */
 int
-cmd_overlay(ClientData	clientData,
-	    Tcl_Interp	*interp,
-	    int		argc,
-	    char	**argv)
+cmd_overlay(ClientData clientData,
+	    Tcl_Interp *interp,
+	    int argc,
+	    char **argv)
 {
     int ret;
     Tcl_DString ds;
-    int	 ac;
+    int ac;
     char *av[5];
     struct bu_vls char_size;
 
@@ -85,17 +85,18 @@ cmd_overlay(ClientData	clientData,
     return ret;
 }
 
+
 /* Usage:  labelvert solid(s) */
 int
 f_labelvert(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
     struct ged_display_list *gdlp;
     struct ged_display_list *next_gdlp;
-    int	i;
+    int i;
     struct bn_vlblock*vbp;
-    struct directory	*dp;
-    mat_t			mat;
-    fastf_t			scale;
+    struct directory *dp;
+    mat_t mat;
+    fastf_t scale;
 
     CHECK_DBI_NULL;
 
@@ -114,9 +115,9 @@ f_labelvert(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     bn_mat_inv(mat, view_state->vs_gvp->gv_rotation);
     scale = view_state->vs_gvp->gv_size / 100;		/* divide by # chars/screen */
 
-    for ( i=1; i<argc; i++ )  {
-	struct solid	*s;
-	if ( (dp = db_lookup( dbip, argv[i], LOOKUP_NOISY )) == DIR_NULL )
+    for (i=1; i<argc; i++) {
+	struct solid *s;
+	if ((dp = db_lookup(dbip, argv[i], LOOKUP_NOISY)) == DIR_NULL)
 	    continue;
 	/* Find uses of this solid in the solid table */
 	gdlp = BU_LIST_NEXT(ged_display_list, &gedp->ged_gdp->gd_headDisplay);
@@ -124,8 +125,8 @@ f_labelvert(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
 
 	    FOR_ALL_SOLIDS(s, &gdlp->gdl_headSolid) {
-		if ( db_full_path_search( &s->s_fullpath, dp ) )  {
-		    rt_label_vlist_verts( vbp, &s->s_vlist, mat, scale, base2local );
+		if (db_full_path_search(&s->s_fullpath, dp)) {
+		    rt_label_vlist_verts(vbp, &s->s_vlist, mat, scale, base2local);
 		}
 	    }
 
@@ -133,12 +134,13 @@ f_labelvert(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 	}
     }
 
-    cvt_vlblock_to_solids( vbp, "_LABELVERT_", 0 );
+    cvt_vlblock_to_solids(vbp, "_LABELVERT_", 0);
 
     rt_vlblock_free(vbp);
     update_views = 1;
     return TCL_OK;
 }
+
 
 /*
  * Local Variables:

@@ -3218,9 +3218,9 @@ dmo_getDrawLabelsHook_cmd(struct dm_obj *dmop,
 	return TCL_ERROR;
     }
 
-    sprintf(buf, "%lu %lu",
-	    (unsigned long)dmop->dmo_drawLabelsHook,
-	    (unsigned long)dmop->dmo_drawLabelsHookClientData);
+    sprintf(buf, "%p %p",
+	    dmop->dmo_drawLabelsHook,
+	    dmop->dmo_drawLabelsHookClientData);
     Tcl_DStringInit(&ds);
     Tcl_DStringAppend(&ds, buf, -1);
     Tcl_DStringResult(interp, &ds);
@@ -3245,8 +3245,8 @@ dmo_setDrawLabelsHook_cmd(struct dm_obj *dmop,
 			  int argc,
 			  char **argv)
 {
-    unsigned long hook;
-    unsigned long clientData;
+    void *hook;
+    void *clientData;
 
     if (argc != 3) {
 	struct bu_vls vls;
@@ -3258,7 +3258,7 @@ dmo_setDrawLabelsHook_cmd(struct dm_obj *dmop,
 	return TCL_ERROR;
     }
 
-    if (sscanf(argv[1], "%lu", (unsigned long *)&hook) != 1) {
+    if (sscanf(argv[1], "%p", &hook) != 1) {
 	Tcl_DString ds;
 
 	Tcl_DStringInit(&ds);
@@ -3271,7 +3271,7 @@ dmo_setDrawLabelsHook_cmd(struct dm_obj *dmop,
 	return TCL_ERROR;
     }
 
-    if (sscanf(argv[2], "%lu", (unsigned long *)&clientData) != 1) {
+    if (sscanf(argv[2], "%p", &clientData) != 1) {
 	Tcl_DString ds;
 
 	Tcl_DStringInit(&ds);
@@ -3284,8 +3284,8 @@ dmo_setDrawLabelsHook_cmd(struct dm_obj *dmop,
 	return TCL_ERROR;
     }
 
-    dmop->dmo_drawLabelsHook = (int (*)())hook;
-    dmop->dmo_drawLabelsHookClientData = (void *)clientData;
+    dmop->dmo_drawLabelsHook = (int (*)())((uintptr_t)hook);
+    dmop->dmo_drawLabelsHookClientData = (void (*)())((uintptr_t)clientData);
 
     return TCL_OK;
 }

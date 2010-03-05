@@ -471,10 +471,13 @@ bu_get_public_cpus(void)
     int public_cpus = 1;
     FILE *fp;
 
-    if ((fp = fopen(PUBLIC_CPUS1, "rb")) != NULL ||
-	(fp = fopen(PUBLIC_CPUS2, "rb")) != NULL
-	) {
-	(void)fscanf(fp, "%d", &public_cpus);
+    if ((fp = fopen(PUBLIC_CPUS1, "rb")) != NULL
+	|| (fp = fopen(PUBLIC_CPUS2, "rb")) != NULL)
+    {
+	int ret;
+	ret = fscanf(fp, "%d", &public_cpus);
+	if (ret != 1)
+	    public_cpus = 1;
 	fclose(fp);
 	if (public_cpus < 0)  public_cpus = avail_cpus + public_cpus;
 	if (public_cpus > avail_cpus)  public_cpus = avail_cpus;

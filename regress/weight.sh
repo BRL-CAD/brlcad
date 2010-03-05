@@ -101,11 +101,11 @@ Database Title: "Untitled BRL-CAD Database"
 Time Stamp: Day Mon  0 00:00:00 0000
 
 
-Total volume = 0.999991 cm.^3
+Total volume = 0.999991 cm^3
 
-Centroid: X = 0.5 cm.
-          Y = 0.5 cm.
-          Z = 0.5 cm.
+Centroid: X = 0.5 cm
+          Y = 0.5 cm
+          Z = 0.5 cm
 
 Total mass = 7.82943 grams
 

@@ -19,7 +19,7 @@
  */
 /** @file dm-tk.c
  *
- *  Routines specific to MGED's use of LIBDM's Tk display manager.
+ * Routines specific to MGED's use of LIBDM's Tk display manager.
  *
  */
 
@@ -63,10 +63,11 @@ struct bu_structparse tk_vparse[] = {
     {"",	  0, (char *)0,		 0,			BU_STRUCTPARSE_FUNC_NULL}
 };
 
+
 int
-tk_dm_init(struct dm_list	*o_dm_list,
-	   int			argc,
-	   char			*argv[])
+tk_dm_init(struct dm_list *o_dm_list,
+	   int argc,
+	   char *argv[])
 {
     struct bu_vls vls;
 
@@ -94,6 +95,7 @@ tk_dm_init(struct dm_list	*o_dm_list,
     return TCL_OK;
 }
 
+
 void
 tk_fb_open(void)
 {
@@ -113,23 +115,24 @@ tk_fb_open(void)
     /* Mark OK by filling in magic number */
     fbp->if_magic = FB_MAGIC;
 /* XXX TJM implement _tk_open_existing */
-   _tk_open_existing(fbp,
-   ((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-   ((struct x_vars *)dmp->dm_vars.priv_vars)->pix,
-   ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
-   ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap,
-   ((struct dm_xvars *)dmp->dm_vars.pub_vars)->vip,
-   dmp->dm_width, dmp->dm_height,
-   ((struct x_vars *)dmp->dm_vars.priv_vars)->gc);
+    _tk_open_existing(fbp,
+		      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+		      ((struct x_vars *)dmp->dm_vars.priv_vars)->pix,
+		      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
+		      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap,
+		      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->vip,
+		      dmp->dm_width, dmp->dm_height,
+		      ((struct x_vars *)dmp->dm_vars.priv_vars)->gc);
 #endif
 }
+
 
 /*
   This routine is being called from doEvent() to handle Expose events.
 */
 static int
-tk_doevent(ClientData	clientData,
-	   XEvent	*eventPtr)
+tk_doevent(ClientData clientData,
+	   XEvent *eventPtr)
 {
     if (eventPtr->type == Expose && eventPtr->xexpose.count == 0) {
 	dirty = 1;
@@ -142,20 +145,21 @@ tk_doevent(ClientData	clientData,
     return TCL_OK;
 }
 
+
 static int
-tk_dm(int	argc,
-      char	*argv[])
+tk_dm(int argc,
+      char *argv[])
 {
     if (!strcmp(argv[0], "set")) {
-	struct bu_vls	vls;
+	struct bu_vls vls;
 
 	bu_vls_init(&vls);
 
 	if (argc < 2) {
 	    /* Bare set command, print out current settings */
-	    bu_vls_struct_print2(&vls, "dm_Tk internal variables", tk_vparse, (const char *)dmp );
+	    bu_vls_struct_print2(&vls, "dm_Tk internal variables", tk_vparse, (const char *)dmp);
 	} else if (argc == 2) {
-	    bu_vls_struct_item_named(&vls, tk_vparse, argv[1], (const char *)dmp, ',');
+	    bu_vls_struct_item_named(&vls, tk_vparse, argv[1], (const char *)dmp, ', ');
 	} else {
 	    struct bu_vls tmp_vls;
 
@@ -176,11 +180,13 @@ tk_dm(int	argc,
     return common_dm(argc, argv);
 }
 
+
 static void
 dirty_hook(void)
 {
     dirty = 1;
 }
+
 
 static void
 zclip_hook(void)
