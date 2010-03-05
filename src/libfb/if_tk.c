@@ -165,7 +165,7 @@ fb_tk_open(FBIO *ifp, char *file, int width, int height)
     const char place_image_cmd[255] =
 	".fb_tk_canvas create image 0 0 -image fb_tk_photo -anchor nw";
     const char *wmclosecmd = "wm protocol . WM_DELETE_WINDOW {set CloseWindow \"close\"}";
-    const char *bindclosecmd = "bind . <Button-2> {set CloseWindow \"close\"}";
+    const char *bindclosecmd = "bind . <Button-3> {set CloseWindow \"close\"}";
 
     char *buffer;
     char *linebuffer;
@@ -230,7 +230,7 @@ fb_tk_open(FBIO *ifp, char *file, int width, int height)
 	    "canvas .fb_tk_canvas -highlightthickness 0 -height %d -width %d", width, height);
 
     sprintf (reportcolorcmd,
-	    "bind . <Button-3> {puts \"At image (%%x, [expr %d - %%y]), real RGB = ([fb_tk_photo get %%x %%y])\n\"}", height);
+	    "bind . <Button-2> {puts \"At image (%%x, [expr %d - %%y]), real RGB = ([fb_tk_photo get %%x %%y])\n\"}", height);
     
     if (Tcl_Eval(fbinterp, canvas_create_cmd) != TCL_OK) {
 	fb_log("Error returned attempting to create canvas in fb_open.");
