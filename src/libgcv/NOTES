@@ -12,6 +12,7 @@ Inventor files: (LGPL license)
 http://oss.sgi.com/projects/inventor/
 http://www.mevislab.de/inventor/ (website changed, see src/libgcv in dmtogl 
                                   branch of BRL-CAD for patch)
+http://fl-inventor.sourceforge.net/
 
 AutoCAD dwg - none (opendwg not compatible with BRL-CAD licensing)
 
