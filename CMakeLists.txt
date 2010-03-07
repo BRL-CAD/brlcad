@@ -88,12 +88,12 @@ IF(COMMAND CMAKE_POLICY)
 ENDIF(COMMAND CMAKE_POLICY)
 
 # set CMake project name
-PROJECT(BRL-CAD)
+PROJECT(BRLCAD)
 
 # CMake derives much of its functionality from modules, typically
 # stored in one directory - let CMake know where to find them.
-SET(VTK_CMAKE_DIR "${VTK_SOURCE_DIR}/misc/CMake")
-SET(CMAKE_MODULE_PATH "${VTK_CMAKE_DIR}" ${CMAKE_MODULE_PATH})
+SET(BRLCAD_CMAKE_DIR "${BRLCAD_SOURCE_DIR}/misc/CMake")
+SET(CMAKE_MODULE_PATH "${BRLCAD_CMAKE_DIR}" ${CMAKE_MODULE_PATH})
 
 #--------------------------------------------------------------------
 # BRL-CAD version numbers are read from files - to do this, support 
@@ -109,12 +109,12 @@ IF(WIN32)
   ELSE(NOT UNIX)
 ENDIF(WIN32)
 
-EXEC_PROGRAM(${cat_prog} ARGS ${VTK_SOURCE_DIR}/include/conf/MAJOR OUTPUT_VARIABLE BRL-CAD_MAJOR_VERSION)
-EXEC_PROGRAM(${cat_prog} ARGS ${VTK_SOURCE_DIR}/include/conf/MINOR OUTPUT_VARIABLE BRL-CAD_MINOR_VERSION)
-EXEC_PROGRAM(${cat_prog} ARGS ${VTK_SOURCE_DIR}/include/conf/PATCH OUTPUT_VARIABLE BRL-CAD_PATCH_VERSION)
+EXEC_PROGRAM(${cat_prog} ARGS ${BRLCAD_SOURCE_DIR}/include/conf/MAJOR OUTPUT_VARIABLE BRLCAD_MAJOR_VERSION)
+EXEC_PROGRAM(${cat_prog} ARGS ${BRLCAD_SOURCE_DIR}/include/conf/MINOR OUTPUT_VARIABLE BRLCAD_MINOR_VERSION)
+EXEC_PROGRAM(${cat_prog} ARGS ${BRLCAD_SOURCE_DIR}/include/conf/PATCH OUTPUT_VARIABLE BRLCAD_PATCH_VERSION)
 
-SET(BRL-CAD_VERSION
-    "${BRL-CAD_MAJOR_VERSION}.${BRL-CAD_MINOR_VERSION}.${BRL-CAD_PATCH_VERSION}")
+SET(BRLCAD_VERSION
+    "${BRLCAD_MAJOR_VERSION}.${BRLCAD_MINOR_VERSION}.${BRLCAD_PATCH_VERSION}")
 
 
 # Unfortunately, CMake doesn't give you variables with current day, month,
@@ -137,28 +137,29 @@ MESSAGE(STATUS "*** Configuring BRL-CAD Release $BRLCAD_VERSION, Build $CONFIG_D
 MESSAGE(STATUS)
 MESSAGE(STATUS)
 
-
+# For NFS volumes, to ensure proper file creation
+IF(NOT WIN32)
+  EXEC_PROGRAM(umask ARGS 022)
+ENDIF(NOT WIN32)
 
 #-----------------------------------------------------------------------------
 # Load some macros.
-INCLUDE(${VTK_CMAKE_DIR}/vtkDependentOption.cmake)
-INCLUDE(${VTK_CMAKE_DIR}/vtkThirdParty.cmake)
-INCLUDE(${VTK_CMAKE_DIR}/vtkExportKit.cmake)
-INCLUDE(${VTK_CMAKE_DIR}/vtkMakeInstantiator.cmake)
+INCLUDE(${BRLCAD_CMAKE_DIR}/vtkDependentOption.cmake)
+INCLUDE(${BRLCAD_CMAKE_DIR}/vtkThirdParty.cmake)
 INCLUDE(${CMAKE_ROOT}/Modules/CMakeExportBuildSettings.cmake)
 
 #-----------------------------------------------------------------------------
 # Choose static or shared libraries.
-INCLUDE(${VTK_CMAKE_DIR}/vtkSelectSharedLibraries.cmake)
+INCLUDE(${BRLCAD_CMAKE_DIR}/vtkSelectSharedLibraries.cmake)
 
 #-----------------------------------------------------------------------------
-# Does VTK require support for 64 bit file systems
-INCLUDE(${VTK_CMAKE_DIR}/CheckCXXSourceRuns.cmake)
-FILE(READ "${VTK_CMAKE_DIR}/vtkRequireLargeFilesSupport.cxx"
-  VTK_REQUIRE_LARGE_FILE_SUPPORT_FILE)
-CHECK_CXX_SOURCE_RUNS("${VTK_REQUIRE_LARGE_FILE_SUPPORT_FILE}"
+# Does BRLCAD require support for 64 bit file systems
+INCLUDE(${BRLCAD_CMAKE_DIR}/CheckCXXSourceRuns.cmake)
+FILE(READ "${BRLCAD_CMAKE_DIR}/vtkRequireLargeFilesSupport.cxx"
+  BRLCAD_REQUIRE_LARGE_FILE_SUPPORT_FILE)
+CHECK_CXX_SOURCE_RUNS("${BRLCAD_REQUIRE_LARGE_FILE_SUPPORT_FILE}"
   CMAKE_REQUIRE_LARGE_FILE_SUPPORT "Support for 64 bit file systems")
-SET(VTK_REQUIRE_LARGE_FILE_SUPPORT ${CMAKE_REQUIRE_LARGE_FILE_SUPPORT})
+SET(BRLCAD_REQUIRE_LARGE_FILE_SUPPORT ${CMAKE_REQUIRE_LARGE_FILE_SUPPORT})
 
 #-----------------------------------------------------------------------------
 # Discover the name of the runtime library path environment variable
@@ -166,70 +167,73 @@ SET(VTK_REQUIRE_LARGE_FILE_SUPPORT ${CMAKE_REQUIRE_LARGE_FILE_SUPPORT})
 # The result depends on the platform and on some platforms it depends on
 # the compiler options (32-bit vs. 64-bit).
 
-INCLUDE(${VTK_CMAKE_DIR}/SharedLibraryPathVarName.cmake)
+INCLUDE(${BRLCAD_CMAKE_DIR}/SharedLibraryPathVarName.cmake)
 
 #-----------------------------------------------------------------------------
 # Output directories.
 IF(NOT LIBRARY_OUTPUT_PATH)
-  SET(LIBRARY_OUTPUT_PATH ${VTK_BINARY_DIR}/bin CACHE INTERNAL "Single output directory for building all libraries.")
+  SET(LIBRARY_OUTPUT_PATH ${BRLCAD_BINARY_DIR}/bin CACHE INTERNAL "Single output directory for building all libraries.")
 ENDIF(NOT LIBRARY_OUTPUT_PATH)
 IF(NOT EXECUTABLE_OUTPUT_PATH)
-  SET(EXECUTABLE_OUTPUT_PATH ${VTK_BINARY_DIR}/bin CACHE INTERNAL "Single output directory for building all executables.")
+  SET(EXECUTABLE_OUTPUT_PATH ${BRLCAD_BINARY_DIR}/bin CACHE INTERNAL "Single output directory for building all executables.")
 ENDIF(NOT EXECUTABLE_OUTPUT_PATH)
-SET(VTK_LIBRARY_DIR ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR})
-SET(VTK_EXECUTABLE_DIR ${EXECUTABLE_OUTPUT_PATH}/${CMAKE_CFG_INTDIR})
+SET(BRLCAD_LIBRARY_DIR ${LIBRARY_OUTPUT_PATH}/${CMAKE_CFG_INTDIR})
+SET(BRLCAD_EXECUTABLE_DIR ${EXECUTABLE_OUTPUT_PATH}/${CMAKE_CFG_INTDIR})
 SET(CXX_TEST_PATH ${EXECUTABLE_OUTPUT_PATH})
 
 #-----------------------------------------------------------------------------
 # Configure install locations.  This allows parent projects to modify
-# the install location.  Optionally allow the project to specify a
-# single VTK_INSTALL_ROOT which basically adds to its install prefix
-# for VTK only.
+# the install location.  Specify a BRLCAD_INSTALL_ROOT which prefixes
+# all install targets.
 
-# The location in which to install VTK executables.
-IF(NOT VTK_INSTALL_BIN_DIR)
-  SET(VTK_INSTALL_BIN_DIR ${VTK_INSTALL_ROOT}/bin)
-ENDIF(NOT VTK_INSTALL_BIN_DIR)
+# The location in which to install BRLCAD.
+IF(NOT BRLCAD_INSTALL_ROOT)
+  IF(NOT WIN32)
+    SET(BRLCAD_INSTALL_ROOT /usr/brlcad)
+  ENDIF(NOT WIN32)
+ENDIF(NOT BRLCAD_INSTALL_ROOT)
 
-# The location in which to install VTK header files.
-IF(NOT VTK_INSTALL_INCLUDE_DIR)
-  SET(VTK_INSTALL_INCLUDE_DIR
-    ${VTK_INSTALL_ROOT}/include/vtk-${VTK_MAJOR_VERSION}.${VTK_MINOR_VERSION}
+# The location in which to install BRLCAD executables.
+IF(NOT BRLCAD_INSTALL_BIN_DIR)
+  SET(BRLCAD_INSTALL_BIN_DIR ${BRLCAD_INSTALL_ROOT}/bin)
+ENDIF(NOT BRLCAD_INSTALL_BIN_DIR)
+
+# The location in which to install BRLCAD header files.
+IF(NOT BRLCAD_INSTALL_INCLUDE_DIR)
+  SET(BRLCAD_INSTALL_INCLUDE_DIR
+    ${BRLCAD_INSTALL_ROOT}/include/brlcad-${BRLCAD_MAJOR_VERSION}.${BRLCAD_MINOR_VERSION}.${BRLCAD_PATCH_VERSION}
     )
-ENDIF(NOT VTK_INSTALL_INCLUDE_DIR)
+ENDIF(NOT BRLCAD_INSTALL_INCLUDE_DIR)
 
-# The location in which to install VTK libraries.
-IF(NOT VTK_INSTALL_LIB_DIR)
-  SET(VTK_INSTALL_LIB_DIR 
-    ${VTK_INSTALL_ROOT}/lib/vtk-${VTK_MAJOR_VERSION}.${VTK_MINOR_VERSION}
+# The location in which to install BRL-CAD libraries.
+IF(NOT BRLCAD_INSTALL_LIB_DIR)
+  SET(BRLCAD_INSTALL_LIB_DIR 
+    ${BRLCAD_INSTALL_ROOT}/lib/brlcad-${BRLCAD_MAJOR_VERSION}.${BRLCAD_MINOR_VERSION}
     )
-ENDIF(NOT VTK_INSTALL_LIB_DIR)
+ENDIF(NOT BRLCAD_INSTALL_LIB_DIR)
 
-# The location in which to install CMake scripts for packaging VTK.
-IF(NOT VTK_INSTALL_PACKAGE_DIR)
-  SET(VTK_INSTALL_PACKAGE_DIR ${VTK_INSTALL_LIB_DIR})
-ENDIF(NOT VTK_INSTALL_PACKAGE_DIR)
+# The location in which to install CMake scripts for packaging BRLCAD.
+IF(NOT BRLCAD_INSTALL_PACKAGE_DIR)
+  SET(BRLCAD_INSTALL_PACKAGE_DIR ${BRLCAD_INSTALL_LIB_DIR})
+ENDIF(NOT BRLCAD_INSTALL_PACKAGE_DIR)
 
-# The location in which to install VTK doxygen documentation helper
+# The location in which to install BRL-CAD doxygen documentation helper
 # files.
-IF(NOT VTK_INSTALL_DOXYGEN_DIR)
-  SET(VTK_INSTALL_DOXYGEN_DIR ${VTK_INSTALL_PACKAGE_DIR}/doxygen)
-ENDIF(NOT VTK_INSTALL_DOXYGEN_DIR)
+IF(NOT BRLCAD_INSTALL_DOXYGEN_DIR)
+  SET(BRLCAD_INSTALL_DOXYGEN_DIR ${BRLCAD_INSTALL_PACKAGE_DIR}/doxygen)
+ENDIF(NOT BRLCAD_INSTALL_DOXYGEN_DIR)
 
-# The location in which to install VTK documentation files that
+# The location in which to install BRL-CAD documentation files that
 # are not automatically generated.
-IF(NOT VTK_INSTALL_DOC_DIR)
-  SET(VTK_INSTALL_DOC_DIR ${VTK_INSTALL_PACKAGE_DIR}/doc)
-ENDIF(NOT VTK_INSTALL_DOC_DIR)
+IF(NOT BRLCAD_INSTALL_DOC_DIR)
+  SET(BRLCAD_INSTALL_DOC_DIR ${BRLCAD_INSTALL_PACKAGE_DIR}/doc)
+ENDIF(NOT BRLCAD_INSTALL_DOC_DIR)
 
 # Compute the proper location for installing the Tcl package.  This
 # must be a fixed relative path below the library install location and
 # is therefore not settable by parent projects.
-SET(VTK_INSTALL_TCL_DIR ${VTK_INSTALL_LIB_DIR})
+SET(BRLCAD_INSTALL_TCL_DIR ${BRLCAD_INSTALL_LIB_DIR})
 
-IF(NOT VTK_INSTALL_JAVA_DIR)
-  SET(VTK_INSTALL_JAVA_DIR ${VTK_INSTALL_PACKAGE_DIR}/java)
-ENDIF(NOT VTK_INSTALL_JAVA_DIR)
 
 # There are three basic components to the VTK installation: runtime,
 # development, and documentation.  Install rules for each component
