@@ -2629,9 +2629,6 @@ package provide Archer 1.0
     } {}
 
     # BRL-CAD License Info
-    set fd [open [file join $brlcadDataPath COPYING] r]
-    set mBrlcadLicenseInfo [read $fd]
-    close $fd
     itk_component add brlcadLicenseInfo {
 	::iwidgets::scrolledtext $itk_component(aboutDialogTabs).brlcadLicenseInfo \
 	    -wrap word \
@@ -2641,14 +2638,16 @@ package provide Archer 1.0
 	    -background $SystemButtonFace \
 	    -textbackground $SystemButtonFace
     } {}
-    $itk_component(brlcadLicenseInfo) insert 0.0 $mBrlcadLicenseInfo
+
+    set brlcadLicenseFile [file join $brlcadDataPath COPYING]
+    if {![catch {open $brlcadLicenseFile "r"} fd]} {
+	set brlcadLicenseInfo [read $fd]
+	close $fd
+	$itk_component(brlcadLicenseInfo) insert 0.0 $brlcadLicenseInfo
+    }
     $itk_component(brlcadLicenseInfo) configure -state disabled
 
     # Acknowledgement Info
-    #    set fd [open [file join $env(ARCHER_HOME) $brlcadDataPath doc archer_ack.txt] r]
-    set fd [open [file join $brlcadDataPath doc archer_ack.txt] r]
-    set mAckInfo [read $fd]
-    close $fd
     itk_component add ackInfo {
 	::iwidgets::scrolledtext $itk_component(aboutDialogTabs).info \
 	    -wrap word \
@@ -2658,35 +2657,69 @@ package provide Archer 1.0
 	    -background $SystemButtonFace \
 	    -textbackground $SystemButtonFace
     } {}
-    $itk_component(ackInfo) insert 0.0 $mAckInfo
+
+    set ackFile [file join $brlcadDataPath doc archer_ack.txt]
+    if {![catch {open $ackFile "r"} fd]} {
+	set ackInfo [read $fd]
+	close $fd
+	$itk_component(ackInfo) insert 0.0 $ackInfo
+    }
     $itk_component(ackInfo) configure -state disabled
+
+    itk_component add mikeF {
+	::frame $itk_component(aboutDialogTabs).mikeInfo
+    } {}
+
+    set mikeImg [image create photo -file [file join $brlcadDataPath tclscripts mged mike-tux.png]]
+    itk_component add mikePic {
+	::label $itk_component(mikeF).pic \
+	    -image $mikeImg
+    } {}
+
+    set row 0
+    grid $itk_component(mikePic) -row $row -sticky ew
+
+    itk_component add mikeDates {
+	label $itk_component(mikeF).dates \
+	    -text "Michael John Muuss\nOctober 16, 1958 - November 20, 2000"
+    } {}
+
+    incr row
+    grid $itk_component(mikeDates) -row $row -sticky ew
+
+    itk_component add mikeInfo {
+	::iwidgets::scrolledtext $itk_component(mikeF).info \
+	    -wrap word \
+	    -hscrollmode dynamic \
+	    -vscrollmode dynamic \
+	    -textfont $mFontText \
+	    -background $SystemButtonFace \
+	    -textbackground $SystemButtonFace
+    } {}
+
+    set mikeInfoFile [file join $brlcadDataPath tclscripts mged mike-dedication.txt]
+    if {![catch {open $mikeInfoFile "r"} fd]} {
+	set mikeInfo [read -nonewline $fd]
+	close $fd
+	$itk_component(mikeInfo) insert 0.0 $mikeInfo
+    }
+
+    incr row
+    grid $itk_component(mikeInfo) -row $row -sticky nsew
+
+    grid columnconfigure $itk_component(mikeF) 0 -weight 1
+    grid rowconfigure $itk_component(mikeF) $row -weight 1
 
     $itk_component(aboutDialogTabs) add $itk_component(aboutInfo) -text "About" -stick ns
     $itk_component(aboutDialogTabs) add $itk_component(brlcadLicenseInfo) -text "License"
     $itk_component(aboutDialogTabs) add $itk_component(ackInfo) -text "Acknowledgements"
-
-    # Version Info
-    itk_component add versionInfo {
-	::ttk::label $parent.versionInfo \
-	    -text "Version: $mArcherVersion" \
-	    -padding 0 \
-	    -font $mFontText \
-	    -anchor se
-    } {}
+    $itk_component(aboutDialogTabs) add $itk_component(mikeF) -text "Dedication"
 
     $itk_component(aboutDialog) configure -background $LABEL_BACKGROUND_COLOR
 
-    pack $itk_component(versionInfo) \
-	-expand yes \
-	-fill x \
-	-side bottom \
-	-pady 0 \
-	-ipady 0 \
-	-anchor se
-
     pack $itk_component(aboutDialogTabs) -expand yes -fill both
 
-    wm geometry $itk_component(aboutDialog) "600x540"
+    wm geometry $itk_component(aboutDialog) "600x600"
 }
 
 ::itcl::body Archer::buildBackgroundColor {parent} {
