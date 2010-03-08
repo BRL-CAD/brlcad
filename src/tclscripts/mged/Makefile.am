@@ -130,7 +130,8 @@ dist_tcl_DATA = \
 	l_i1_v1_s8.gif \
 	l_i1_v1_s9.gif \
 	mike-dedication.txt \
-	mike-tux.ppm
+	mike-tux.ppm \
+	mike-tux.png
 
 tcl_SCRIPTS = \
 	$(BUILT_SOURCES) \
