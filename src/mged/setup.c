@@ -552,6 +552,7 @@ mged_setup(void)
 	tclcad_auto_path(interp);
     }
 
+    /*XXX FIXME: Should not be importing Itcl into the global namespace */
     /* Import [incr Tcl] commands into the global namespace. */
     if (Tcl_Import(interp, Tcl_GetGlobalNamespace(interp), "::itcl::*", /* allowOverwrite */ 1) != TCL_OK) {
 	bu_log("Tcl_Import ERROR: %s\n", Tcl_GetStringResult(interp));
