@@ -1,6 +1,9 @@
 set(LIBGCV_SOURCES
+    obj/obj_rules.cc
+    obj/obj_grammar.cc
+    obj/obj_parser.cc
     region_end.c
-    region_end_mc.c
+    region_start_mc.c
 )
 
 include_directories(
