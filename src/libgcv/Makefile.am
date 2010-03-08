@@ -31,6 +31,7 @@ libgcv_la_LIBADD = \
 	${GCV_LIBS}
 
 noinst_HEADERS = \
+	obj/obj_parser.h \
 	obj/obj_rules.h \
 	obj/obj_grammar.h \
 	obj/obj_parser_state.h

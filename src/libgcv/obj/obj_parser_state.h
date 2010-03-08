@@ -23,7 +23,7 @@
 #include "brlcad_config.h"
 #endif
 
-#include "gcv/obj_parser.h"
+#include "obj_parser.h"
 
 #include <memory>
 #include <string>
