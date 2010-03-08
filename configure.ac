@@ -1830,6 +1830,46 @@ AC_CHECK_TYPE([uintptr_t],
 	test -z "$ac_type" && break
     done])
 
+# Make sure shared_ptr is available
+
+AC_MSG_CHECKING([for shared_ptr in <memory>])
+AC_LANG_PUSH(C++)
+shared_ptr_header=""
+AC_COMPILE_IFELSE(
+  [AC_LANG_PROGRAM([[#include <memory>]]
+    [[std::tr1::shared_ptr<int> p;]])],
+  [
+    AC_DEFINE([SHARED_PTR_STD],[1],[shared_ptr is in <memory>])
+    AC_MSG_RESULT(yes)
+    shared_ptr_header=std
+  ],
+  [AC_MSG_RESULT(no)]
+)
+
+if test "$shared_ptr_header" = ""; then
+  AC_MSG_CHECKING([for shared_ptr in <tr1/memory>])
+    AC_COMPILE_IFELSE(
+      [
+        AC_LANG_PROGRAM([[#include <tr1/memory>]]
+        [[std::tr1::shared_ptr<int> p;]])
+      ],
+      [
+        AC_DEFINE([SHARED_PTR_TR1_MEMORY],[1],[shared_ptr is in <tr1/memory>])
+        AC_MSG_RESULT(yes)
+        shared_ptr_header=gcc
+      ],[AC_MSG_RESULT(no)]
+    )
+fi
+
+AC_LANG_POP([C++])
+
+if test "$shared_ptr_header" = ""; then
+  AC_MSG_CHECKING([whether to use shared_ptr in Boost])
+  AC_DEFINE([SHARED_PTR_BOOST],[1],[shared_ptr is in <boost/shared_ptr.hpp>])
+  AC_MSG_RESULT(yes)
+  shared_ptr_header=boost
+fi
+
 
 dnl ******************************************
 dnl *** Check for compiler characteristics ***

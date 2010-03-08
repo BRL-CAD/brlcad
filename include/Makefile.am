@@ -47,6 +47,7 @@ brlcadinclude_wanted = \
 	fbio.h \
 	fbserv_obj.h \
 	gcv.h \
+	gcv/obj_parser.h \
 	libtermio.h \
 	light.h \
 	mater.h \
