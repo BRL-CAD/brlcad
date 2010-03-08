@@ -358,7 +358,7 @@ main(int argc, char *argv[])
 	    case 'r':
 		read_only_flag = 1;
 		break;
-	    case 'n'::           /* "not new" == "classic" */
+	    case 'n':           /* "not new" == "classic" */
 		bu_log("WARNING: -n is deprecated.  used -c instead.\n");
 		/* fall through */
 	    case 'c':
