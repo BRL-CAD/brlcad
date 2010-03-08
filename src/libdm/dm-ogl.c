@@ -177,7 +177,7 @@ static double ylim_view = 1.0;
 static float amb_three[] = {0.3, 0.3, 0.3, 1.0};
 
 static float light0_direction[] = {0.0, 0.0, 1.0, 0.0};
-static float light0_position[] = {100.0, 200.0, 100.0, 0.0};
+static float light0_position[] = {0.0, 0.0, 1.0, 0.0};
 static float light0_diffuse[] = {1.0, 1.0, 1.0, 1.0}; /* white */
 static float wireColor[4];
 static float ambientColor[4];
@@ -1236,7 +1236,7 @@ ogl_drawEnd(struct dm *dmp)
     if (dmp->dm_light) {
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	glLightfv(GL_LIGHT0, GL_POSITION, light0_direction);
+	glLightfv(GL_LIGHT0, GL_POSITION, light0_position);
     }
 
     if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->mvars.doublebuffer) {
