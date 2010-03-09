@@ -1,20 +1,22 @@
-/* 
-* Copyright (c) 1995-2010 United States Government as represented by
-* the U.S. Army Research Laboratory.
-*
-* This library is free software; you can redistribute it and/or
-* modify it under the terms of the GNU Lesser General Public License
-* version 2.1 as published by the Free Software Foundation.
-*
-* This library is distributed in the hope that it will be useful, but
-* WITHOUT ANY WARRANTY; without even the implied warranty of
-* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-* Lesser General Public License for more details.
-*
-* You should have received a copy of the GNU Lesser General Public
-* License along with this file; see the file named COPYING for more
-* information.
-*/
+/*                   O B J _ P A R S E R . H
+ * BRL-CAD
+ *
+ * Copyright (c) 2010 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
 
 #ifndef ARL_OBJ_PARSER_H
 #define ARL_OBJ_PARSER_H
@@ -30,14 +32,14 @@ extern "C" {
  *  A structure containing a wavefront obj parser
  */
 typedef struct {
-  void *p;
+    void *p;
 } obj_parser_t;
 
 /**
  *  A structure containing the contents of a parsed wavefront obj file
  */
 typedef struct {
-  void *p;
+    void *p;
 } obj_contents_t;
 
 /**
@@ -97,19 +99,19 @@ typedef struct {
  *  between 0 (all elements) and 100. As per wavefront spec, default is 0.
  */
 typedef struct {
-  size_t groupset_index;
-  size_t object_index;
-  size_t material_index;
-  size_t materiallibset_index;
-  size_t texmap_index;
-  size_t texmaplibset_index;
-  size_t shadow_obj_index;
-  size_t trace_obj_index;
-  unsigned int smooth_group;
-  unsigned char bevel;
-  unsigned char c_interp;
-  unsigned char d_interp;
-  unsigned char lod;
+    size_t groupset_index;
+    size_t object_index;
+    size_t material_index;
+    size_t materiallibset_index;
+    size_t texmap_index;
+    size_t texmaplibset_index;
+    size_t shadow_obj_index;
+    size_t trace_obj_index;
+    unsigned int smooth_group;
+    unsigned char bevel;
+    unsigned char c_interp;
+    unsigned char d_interp;
+    unsigned char lod;
 } obj_polygonal_attributes_t;
 
 /**
@@ -155,7 +157,7 @@ void obj_parser_destroy(obj_parser_t parser);
  *  <0 - failure, see obj_parse_error
  */
 int obj_parse(const char *filename, obj_parser_t parser,
-  obj_contents_t *contents);
+	      obj_contents_t *contents);
 
 /**
  *  Parse the obj file stream pointed to by 'stream' with 'parser', create and
@@ -297,7 +299,7 @@ size_t obj_num_groupsets(obj_contents_t contents);
  *  The length of the group set.
  */
 size_t obj_groupset(obj_contents_t contents, size_t n,
-  const size_t (*index_arr[]));
+		    const size_t (*index_arr[]));
 
 /**
  *  Obtain a unique set of all object names contained in 'contents'
@@ -369,7 +371,7 @@ size_t obj_materials(obj_contents_t contents, const char * const (*val_arr[]));
  *  The length of the material library name list.
  */
 size_t obj_materiallibs(obj_contents_t contents,
-  const char * const (*val_arr[]));
+			const char * const (*val_arr[]));
 
 /**
  *  Return the number of material library sets contained in 'contents'
@@ -396,7 +398,7 @@ size_t obj_num_materiallibsets(obj_contents_t contents);
  *  The length of the material library set.
  */
 size_t obj_materiallibset(obj_contents_t contents, size_t n,
-  const size_t (*index_arr[]));
+			  const size_t (*index_arr[]));
 
 /**
  *  Obtain a unique set of all texture map names contained in 'contents'
@@ -445,7 +447,7 @@ size_t obj_texmaps(obj_contents_t contents, const char * const (*val_arr[]));
  *  The length of the texture map library name list.
  */
 size_t obj_texmaplibs(obj_contents_t contents,
-  const char * const (*val_arr[]));
+		      const char * const (*val_arr[]));
 
 /**
  *  Return the number of texture map library sets contained in 'contents'
@@ -472,7 +474,7 @@ size_t obj_num_texmaplibsets(obj_contents_t contents);
  *  The length of the texture map library set.
  */
 size_t obj_texmaplibset(obj_contents_t contents, size_t set,
-  const size_t (*index_arr[]));
+			const size_t (*index_arr[]));
 
 /**
  *  Obtain a unique set of all shadow object names contained in 'contents'
@@ -496,7 +498,7 @@ size_t obj_texmaplibset(obj_contents_t contents, size_t set,
  *  The length of the shadow object name list.
  */
 size_t obj_shadow_objs(obj_contents_t contents,
-  const char * const (*val_arr[]));
+		       const char * const (*val_arr[]));
 
 /**
  *  Obtain a unique set of all trace object names contained in 'contents'
@@ -520,7 +522,7 @@ size_t obj_shadow_objs(obj_contents_t contents,
  *  The length of the trace object name list.
  */
 size_t obj_trace_objs(obj_contents_t contents,
-  const char * const (*val_arr[]));
+		      const char * const (*val_arr[]));
 
 /**
  *  Obtain a list of polygonal attributes in 'contents'
@@ -540,7 +542,7 @@ size_t obj_trace_objs(obj_contents_t contents,
  *  The length of the polygonal attributes list
  */
 size_t obj_polygonal_attributes(obj_contents_t contents,
-  const obj_polygonal_attributes_t (*attr_list[]));
+				const obj_polygonal_attributes_t (*attr_list[]));
 
 /**
  *  Obtain the list of polygonal attributes for all polygonal points
@@ -557,7 +559,7 @@ size_t obj_polygonal_attributes(obj_contents_t contents,
  *  The total number of polygonal points
  */
 size_t obj_polygonal_v_points(obj_contents_t contents,
-  const size_t (*attindex_arr[]));
+			      const size_t (*attindex_arr[]));
 
 /**
  *  Obtain the vertex indices for the 'n'th polygonal point only identifed by
@@ -571,7 +573,7 @@ size_t obj_polygonal_v_points(obj_contents_t contents,
  *  The number of vertices that make up the 'n'th polygonal point
  */
 size_t obj_polygonal_v_point_vertices(obj_contents_t contents, size_t n,
-  const size_t (*index_arr[]));
+				      const size_t (*index_arr[]));
 
 /**
  *  Obtain the list of polygonal attributes for all polygonal lines only
@@ -588,7 +590,7 @@ size_t obj_polygonal_v_point_vertices(obj_contents_t contents, size_t n,
  *  The total number of polygonal lines only identified by vertices
  */
 size_t obj_polygonal_v_lines(obj_contents_t contents,
-  const size_t (*attindex_arr[]));
+			     const size_t (*attindex_arr[]));
 
 /**
  *  Obtain the vertex indices for the 'n'th polygonal line only identifed by
@@ -602,7 +604,7 @@ size_t obj_polygonal_v_lines(obj_contents_t contents,
  *  The number of vertices that make up the 'n'th polygonal line
  */
 size_t obj_polygonal_v_line_vertices(obj_contents_t contents, size_t n,
-  const size_t (*index_arr[]));
+				     const size_t (*index_arr[]));
 
 /**
  *  Obtain the list of polygonal attributes for all textured polygonal lines
@@ -619,7 +621,7 @@ size_t obj_polygonal_v_line_vertices(obj_contents_t contents, size_t n,
  *  The total number of textured polygonal line
  */
 size_t obj_polygonal_tv_lines(obj_contents_t contents,
-  const size_t (*attindex_arr[]));
+			      const size_t (*attindex_arr[]));
 
 /**
  *  Obtain the textured coordinate and vertex indices for the 'n'th textured
@@ -636,7 +638,7 @@ size_t obj_polygonal_tv_lines(obj_contents_t contents,
  *  The number of vertices that make up the 'n'th polygonal line
  */
 size_t obj_polygonal_tv_line_vertices(obj_contents_t contents, size_t face,
-  const size_t (*index_arr[])[2]);
+				      const size_t (*index_arr[])[2]);
 
 /**
  *  Obtain the list of polygonal attributes for all polygonal faces only
@@ -653,7 +655,7 @@ size_t obj_polygonal_tv_line_vertices(obj_contents_t contents, size_t face,
  *  The total number of polygonal faces only identified by vertices
  */
 size_t obj_polygonal_v_faces(obj_contents_t contents,
-  const size_t (*attindex_arr[]));
+			     const size_t (*attindex_arr[]));
 
 /**
  *  Obtain the vertex indices for the 'n'th polygonal face only identifed by
@@ -667,7 +669,7 @@ size_t obj_polygonal_v_faces(obj_contents_t contents,
  *  The number of vertices that make up the 'n'th polygonal face
  */
 size_t obj_polygonal_v_face_vertices(obj_contents_t contents, size_t n,
-  const size_t (*index_arr[]));
+				     const size_t (*index_arr[]));
 
 /**
  *  Obtain the list of polygonal attributes for all textured polygonal faces
@@ -684,7 +686,7 @@ size_t obj_polygonal_v_face_vertices(obj_contents_t contents, size_t n,
  *  The total number of textured polygonal faces
  */
 size_t obj_polygonal_tv_faces(obj_contents_t contents,
-  const size_t (*attindex_arr[]));
+			      const size_t (*attindex_arr[]));
 
 /**
  *  Obtain the textured coordinate and vertex indices for the 'n'th textured
@@ -701,7 +703,7 @@ size_t obj_polygonal_tv_faces(obj_contents_t contents,
  *  The number of vertices that make up the 'n'th polygonal face
  */
 size_t obj_polygonal_tv_face_vertices(obj_contents_t contents, size_t face,
-  const size_t (*index_arr[])[2]);
+				      const size_t (*index_arr[])[2]);
 
 /**
  *  Obtain the list of polygonal attributes for all oriented polygonal faces
@@ -718,7 +720,7 @@ size_t obj_polygonal_tv_face_vertices(obj_contents_t contents, size_t face,
  *  The total number of oriented polygonal faces
  */
 size_t obj_polygonal_nv_faces(obj_contents_t contents,
-  const size_t (*attindex_arr[]));
+			      const size_t (*attindex_arr[]));
 
 /**
  *  Obtain the normal and vertex indices for the 'n'th oriented polygonal face
@@ -735,7 +737,7 @@ size_t obj_polygonal_nv_faces(obj_contents_t contents,
  *  The number of vertices that make up the 'n'th polygonal face
  */
 size_t obj_polygonal_nv_face_vertices(obj_contents_t contents, size_t face,
-  const size_t (*index_arr[])[2]);
+				      const size_t (*index_arr[])[2]);
 
 /**
  *  Obtain the list of polygonal attributes for all textured and oriented
@@ -752,7 +754,7 @@ size_t obj_polygonal_nv_face_vertices(obj_contents_t contents, size_t face,
  *  The total number of textured oriented polygonal faces
  */
 size_t obj_polygonal_tnv_faces(obj_contents_t contents,
-  const size_t (*attindex_arr[]));
+			       const size_t (*attindex_arr[]));
 
 /**
  *  Obtain the texture cordinate, normal and vertex indices for the 'n'th
@@ -769,10 +771,20 @@ size_t obj_polygonal_tnv_faces(obj_contents_t contents,
  *  The number of vertices that make up the 'n'th polygonal face
  */
 size_t obj_polygonal_tnv_face_vertices(obj_contents_t contents, size_t face,
-  const size_t (*index_arr[])[3]);
+				       const size_t (*index_arr[])[3]);
 
 #if defined(__cplusplus)
 }
 #endif
 
 #endif
+
+/*
+ * Local Variables:
+ * mode: C++
+ * tab-width: 8
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

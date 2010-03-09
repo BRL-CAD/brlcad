@@ -35,6 +35,7 @@ struct gcv_data {
     void (*func)(struct nmgregion *, const struct db_full_path *, int, int, float [3]);
 };
 
+
 /* in region_end.c */
 union tree * _gcv_cleanup(int state, union tree *tp);
 
@@ -156,6 +157,7 @@ gcv_region_start_mc(struct db_tree_state *tsp, const struct db_full_path *pathp,
 
     return -1;
 }
+
 
 /*
  * Local Variables:
