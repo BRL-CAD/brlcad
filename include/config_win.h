@@ -180,7 +180,6 @@ typedef int socklen_t;
 typedef unsigned int gid_t;
 typedef unsigned int uid_t;
 
-#define HAVE___INT8		1
 
 /*
  * for chmod()
