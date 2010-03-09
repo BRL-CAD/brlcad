@@ -82,6 +82,8 @@ package provide cadwidgets::Ged 1.0
 
     itk_option define -centerDotColor centerDotColor CenterDotColor Yellow
     itk_option define -centerDotEnable centerDotEnable CenterDotEnable 1
+    itk_option define -gridEnable gridEnable GridEnable 0
+    itk_option define -gridSnap gridSnap GridSnap 0
     itk_option define -measuringStickColor measuringStickColor MeasuringStickColor Yellow
     itk_option define -measuringStickMode measuringStickMode MeasuringStickMode 0
     itk_option define -primitiveLabelColor primitiveLabelColor PrimitiveLabelColor Yellow
@@ -709,6 +711,14 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::configbody cadwidgets::Ged::centerDotEnable {
     eval faceplate center_dot draw [get_rgb_color $itk_option(-centerDotEnable)]
+}
+
+::itcl::configbody cadwidgets::Ged::gridEnable {
+    grid draw $itk_option(-gridEnable)
+}
+
+::itcl::configbody cadwidgets::Ged::gridSnap {
+    grid snap $itk_option(-gridSnap)
 }
 
 ::itcl::configbody cadwidgets::Ged::mGedFile {

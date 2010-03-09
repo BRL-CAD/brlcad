@@ -274,6 +274,7 @@ package provide Archer 1.0
 	method buildBackgroundColor {_parent}
 	method buildDisplayPreferences {}
 	method buildGeneralPreferences {}
+	method buildGridPreferences {}
 	method buildGroundPlanePreferences {}
 	method buildInfoDialogs {}
 	method buildModelAxesPosition {_parent}
@@ -403,6 +404,8 @@ package provide Archer 1.0
 	method applyDisplayPreferencesIfDiff {}
 	method applyGeneralPreferences {}
 	method applyGeneralPreferencesIfDiff {}
+	method applyGridPreferences {}
+	method applyGridPreferencesIfDiff {}
 	method applyGroundPlanePreferencesIfDiff {}
 	method applyModelAxesPreferences {}
 	method applyModelAxesPreferencesIfDiff {}
@@ -1472,7 +1475,7 @@ package provide Archer 1.0
 
     $itk_component(ged) refresh_off
     set mDbTitle [$itk_component(ged) title]
-    set mDbUnits [$itk_component(ged) units]
+    set mDbUnits [$itk_component(ged) units -s]
 
     if {!$mViewOnly} {
 	initDbAttrView $mTarget
@@ -1562,7 +1565,27 @@ package provide Archer 1.0
 }
 
 ::itcl::body Archer::units {args} {
-    return [eval globalWrapper units $args]
+    set b2l_1 [gedCmd base2local]
+    set ret [eval globalWrapper units $args]
+    set mDbUnits [gedCmd units -s]
+    set b2l_2 [gedCmd base2local]
+
+    if {$b2l_1 != $b2l_2} {
+	# Update grid parameters
+	set sf [expr {$b2l_2 / $b2l_1}]
+
+	set X [lindex $mGridAnchor 0]
+	set Y [lindex $mGridAnchor 1]
+	set Z [lindex $mGridAnchor 2]
+	set X [expr {$sf * $X}]
+	set Y [expr {$sf * $Y}]
+	set Z [expr {$sf * $Z}]
+	set mGridAnchor "$X $Y $Z"
+	set mGridRh [expr {$sf * $mGridRh}]
+	set mGridRv [expr {$sf * $mGridRv}]
+    }
+
+    return $ret
 }
 
 ::itcl::body Archer::vmake {args} {
@@ -2341,6 +2364,8 @@ package provide Archer 1.0
 	    $itk_component(modesmenu) entryconfigure "Viewing Parameters" -state normal
 	    $itk_component(modesmenu) entryconfigure "Scale" -state normal
 	    $itk_component(modesmenu) entryconfigure "Lighting" -state normal
+	    $itk_component(modesmenu) entryconfigure "Grid" -state normal
+	    $itk_component(modesmenu) entryconfigure "Snap Grid" -state normal
 
 	    $itk_component(raytracemenu) entryconfigure "rt" -state normal
 	    $itk_component(raytracemenu) entryconfigure "rtcheck" -state normal
@@ -2365,6 +2390,8 @@ package provide Archer 1.0
 	    $itk_component(menubar) menuconfigure .modes.vparams -state normal
 	    $itk_component(menubar) menuconfigure .modes.scale -state normal
 	    $itk_component(menubar) menuconfigure .modes.light -state normal
+	    $itk_component(menubar) menuconfigure .modes.grid -state normal
+	    $itk_component(menubar) menuconfigure .modes.sgrid -state normal
 
 	    $itk_component(menubar) menuconfigure .raytrace.rt -state normal
 	    $itk_component(menubar) menuconfigure .raytrace.rtcheck -state normal
@@ -3005,6 +3032,175 @@ package provide Archer 1.0
 }
 
 
+::itcl::body Archer::buildGridPreferences {} {
+    set parent $itk_component(preferenceTabs)
+    itk_component add gridF {
+	::ttk::frame $parent.gridF
+    } {}
+
+    itk_component add gridAnchorXL {
+	::ttk::label $itk_component(gridF).anchorXL \
+	    -anchor e \
+	    -text "Anchor X:"
+    } {}
+    itk_component add gridAnchorXE {
+	::ttk::entry $itk_component(gridF).anchorXE \
+	    -width 12 \
+	    -textvariable [::itcl::scope mGridAnchorXPref] \
+	    -validate key \
+	    -validatecommand [::itcl::code $this validateDouble %P]
+    } {}
+    itk_component add gridAnchorXUnitsL {
+	::ttk::label $itk_component(gridF).anchorXUnitsL \
+	    -anchor e \
+	    -textvariable [::itcl::scope mDbUnits]
+    } {}
+
+    itk_component add gridAnchorYL {
+	::ttk::label $itk_component(gridF).anchorYL \
+	    -anchor e \
+	    -text "Anchor Y:"
+    } {}
+    itk_component add gridAnchorYE {
+	::ttk::entry $itk_component(gridF).anchorYE \
+	    -width 12 \
+	    -textvariable [::itcl::scope mGridAnchorYPref] \
+	    -validate key \
+	    -validatecommand [::itcl::code $this validateDouble %P]
+    } {}
+    itk_component add gridAnchorYUnitsL {
+	::ttk::label $itk_component(gridF).anchorYUnitsL \
+	    -anchor e \
+	    -textvariable [::itcl::scope mDbUnits]
+    } {}
+
+    itk_component add gridAnchorZL {
+	::ttk::label $itk_component(gridF).anchorZL \
+	    -anchor e \
+	    -text "Anchor Z:"
+    } {}
+    itk_component add gridAnchorZE {
+	::ttk::entry $itk_component(gridF).anchorZE \
+	    -width 12 \
+	    -textvariable [::itcl::scope mGridAnchorZPref] \
+	    -validate key \
+	    -validatecommand [::itcl::code $this validateDouble %P]
+    } {}
+    itk_component add gridAnchorZUnitsL {
+	::ttk::label $itk_component(gridF).anchorZUnitsL \
+	    -anchor e \
+	    -textvariable [::itcl::scope mDbUnits]
+    } {}
+
+    buildComboBox $itk_component(gridF) \
+	gridColor \
+	color \
+	mGridColorPref \
+	"Color:" \
+	$mColorListNoTriple
+
+    itk_component add gridMrhL {
+	::ttk::label $itk_component(gridF).mrhL \
+	    -anchor e \
+	    -text "Major Resolution (Horizontal):"
+    } {}
+    itk_component add gridMrhE {
+	::ttk::entry $itk_component(gridF).mrhE \
+	    -width 12 \
+	    -textvariable [::itcl::scope mGridMrhPref] \
+	    -validate key \
+	    -validatecommand [::itcl::code $this validateDouble %P]
+    } {}
+
+    itk_component add gridMrvL {
+	::ttk::label $itk_component(gridF).mrvL \
+	    -anchor e \
+	    -text "Major Resolution (Vertical):"
+    } {}
+    itk_component add gridMrvE {
+	::ttk::entry $itk_component(gridF).mrvE \
+	    -width 12 \
+	    -textvariable [::itcl::scope mGridMrvPref] \
+	    -validate key \
+	    -validatecommand [::itcl::code $this validateDouble %P]
+    } {}
+
+    itk_component add gridRhL {
+	::ttk::label $itk_component(gridF).rhL \
+	    -anchor e \
+	    -text "Minor Resolution (Horizontal):"
+    } {}
+    itk_component add gridRhE {
+	::ttk::entry $itk_component(gridF).rhE \
+	    -width 12 \
+	    -textvariable [::itcl::scope mGridRhPref] \
+	    -validate key \
+	    -validatecommand [::itcl::code $this validateDouble %P]
+    } {}
+    itk_component add gridRhUnitsL {
+	::ttk::label $itk_component(gridF).rhUnitsL \
+	    -anchor e \
+	    -textvariable [::itcl::scope mDbUnits]
+    } {}
+
+    itk_component add gridRvL {
+	::ttk::label $itk_component(gridF).rvL \
+	    -anchor e \
+	    -text "Minor Resolution (Vertical):"
+    } {}
+    itk_component add gridRvE {
+	::ttk::entry $itk_component(gridF).rvE \
+	    -width 12 \
+	    -textvariable [::itcl::scope mGridRvPref] \
+	    -validate key \
+	    -validatecommand [::itcl::code $this validateDouble %P]
+    } {}
+    itk_component add gridRvUnitsL {
+	::ttk::label $itk_component(gridF).rvUnitsL \
+	    -anchor e \
+	    -textvariable [::itcl::scope mDbUnits]
+    } {}
+
+    set i 0
+    grid $itk_component(gridAnchorXL) -column 0 -row $i -sticky e
+    grid $itk_component(gridAnchorXE) -column 1 -row $i -sticky ew
+    grid $itk_component(gridAnchorXUnitsL) -column 2 -row $i -sticky ew
+    incr i
+    grid $itk_component(gridAnchorYL) -column 0 -row $i -sticky e
+    grid $itk_component(gridAnchorYE) -column 1 -row $i -sticky ew
+    grid $itk_component(gridAnchorYUnitsL) -column 2 -row $i -sticky ew
+    incr i
+    grid $itk_component(gridAnchorZL) -column 0 -row $i -sticky e
+    grid $itk_component(gridAnchorZE) -column 1 -row $i -sticky ew
+    grid $itk_component(gridAnchorZUnitsL) -column 2 -row $i -sticky ew
+    incr i
+    grid $itk_component(gridColorL) -column 0 -row $i -sticky e
+    grid $itk_component(gridColorF) -column 1 -row $i -sticky ew
+    incr i
+    grid $itk_component(gridMrhL) -column 0 -row $i -sticky e
+    grid $itk_component(gridMrhE) -column 1 -row $i -sticky ew
+    incr i
+    grid $itk_component(gridMrvL) -column 0 -row $i -sticky e
+    grid $itk_component(gridMrvE) -column 1 -row $i -sticky ew
+    incr i
+    grid $itk_component(gridRhL) -column 0 -row $i -sticky e
+    grid $itk_component(gridRhE) -column 1 -row $i -sticky ew
+    grid $itk_component(gridRhUnitsL) -column 2 -row $i -sticky ew
+    incr i
+    grid $itk_component(gridRvL) -column 0 -row $i -sticky e
+    grid $itk_component(gridRvE) -column 1 -row $i -sticky ew
+    grid $itk_component(gridRvUnitsL) -column 2 -row $i -sticky ew
+
+    set i 0
+    grid $itk_component(gridF) -column 0 -row $i -sticky nw
+
+    grid rowconfigure $parent 0 -weight 1
+    grid columnconfigure $parent 0 -weight 1
+
+    $itk_component(preferenceTabs) add $itk_component(gridF) -text "Grid"
+}
+
+
 ::itcl::body Archer::buildGroundPlanePreferences {} {
     set parent $itk_component(preferenceTabs)
     itk_component add groundPlaneF {
@@ -3475,6 +3671,7 @@ package provide Archer 1.0
     buildViewAxesPreferences
     buildGroundPlanePreferences
     buildDisplayPreferences
+    buildGridPreferences
 
     $itk_component(preferencesDialog) configure -background $LABEL_BACKGROUND_COLOR
 
@@ -4760,6 +4957,10 @@ package provide Archer 1.0
 		-helpstr "Toggle display of the view scale."
 	    checkbutton light -label "Lighting" \
 		-helpstr "Toggle lighting on/off."
+	    checkbutton grid -label "Grid" \
+		-helpstr "Toggle display of the grid."
+	    checkbutton sgrid -label "Snap Grid" \
+		-helpstr "Toggle grid snapping."
 	}
     $itk_component(menubar) menuconfigure .modes.activepane \
 	-state disabled
@@ -4830,6 +5031,18 @@ package provide Archer 1.0
 	-onvalue 2 \
 	-variable [::itcl::scope mLighting] \
 	-command [::itcl::code $this doLighting] \
+	-state disabled
+    $itk_component(menubar) menuconfigure .modes.grid \
+	-offvalue 0 \
+	-onvalue 1 \
+	-variable [::itcl::scope mShowGrid] \
+	-command [::itcl::code $this showGrid] \
+	-state disabled
+    $itk_component(menubar) menuconfigure .modes.sgrid \
+	-offvalue 0 \
+	-onvalue 1 \
+	-variable [::itcl::scope mSnapGrid] \
+	-command [::itcl::code $this snapGrid] \
 	-state disabled
 }
 
@@ -5005,6 +5218,20 @@ package provide Archer 1.0
 	-onvalue 2 \
 	-variable [::itcl::scope mLighting] \
 	-command [::itcl::code $this doLighting] \
+	-state disabled
+    $itk_component(modesmenu) add checkbutton \
+	-label "Grid" \
+	-offvalue 0 \
+	-onvalue 1 \
+	-variable [::itcl::scope mShowGrid] \
+	-command [::itcl::code $this showGrid] \
+	-state disabled
+    $itk_component(modesmenu) add checkbutton \
+	-label "Snap Grid" \
+	-offvalue 0 \
+	-onvalue 1 \
+	-variable [::itcl::scope mSnapGrid] \
+	-command [::itcl::code $this snapGrid] \
 	-state disabled
 }
 
@@ -6875,6 +7102,52 @@ package provide Archer 1.0
 }
 
 
+::itcl::body Archer::applyGridPreferences {} {
+    eval gedCmd grid anchor $mGridAnchor
+    eval gedCmd grid color [getRgbColor $mGridColor]
+    gedCmd grid mrh $mGridMrh
+    gedCmd grid mrv $mGridMrv
+    gedCmd grid rh $mGridRh
+    gedCmd grid rv $mGridRv
+}
+
+::itcl::body Archer::applyGridPreferencesIfDiff {} {
+    set X [lindex $mGridAnchor 0]
+    set Y [lindex $mGridAnchor 1]
+    set Z [lindex $mGridAnchor 2]
+    if {$mGridAnchorXPref != $X ||
+	$mGridAnchorYPref != $Y ||
+	$mGridAnchorZPref != $Z} {
+	set mGridAnchor "$mGridAnchorXPref $mGridAnchorYPref $mGridAnchorZPref"
+	eval gedCmd grid anchor $mGridAnchor
+    }
+
+    if {$mGridColor != $mGridColorPref} {
+	set mGridColor $mGridColorPref
+	eval gedCmd grid color [getRgbColor $mGridColor]
+    }
+
+    if {$mGridMrh != $mGridMrhPref} {
+	set mGridMrh $mGridMrhPref
+	gedCmd grid mrh $mGridMrh
+    }
+
+    if {$mGridMrv != $mGridMrvPref} {
+	set mGridMrv $mGridMrvPref
+	gedCmd grid mrv $mGridMrv
+    }
+
+    if {$mGridRh != $mGridRhPref} {
+	set mGridRh $mGridRhPref
+	gedCmd grid rh $mGridRh
+    }
+
+    if {$mGridRv != $mGridRvPref} {
+	set mGridRv $mGridRvPref
+	gedCmd grid rv $mGridRv
+    }
+}
+
 ::itcl::body Archer::applyGroundPlanePreferencesIfDiff {} {
     if {$mGroundPlaneSize != $mGroundPlaneSizePref ||
 	$mGroundPlaneInterval != $mGroundPlaneIntervalPref ||
@@ -6970,8 +7243,8 @@ package provide Archer 1.0
     }
 
     set X [lindex $mModelAxesPosition 0]
-    set Y [lindex $mModelAxesPosition 0]
-    set Z [lindex $mModelAxesPosition 0]
+    set Y [lindex $mModelAxesPosition 1]
+    set Z [lindex $mModelAxesPosition 2]
     if {$mModelAxesPositionXPref != $X ||
 	$mModelAxesPositionYPref != $Y ||
 	$mModelAxesPositionZPref != $Z} {
@@ -7050,22 +7323,29 @@ package provide Archer 1.0
 
 
 ::itcl::body Archer::applyPreferences {} {
+    $itk_component(ged) refresh_off
+
     # Apply preferences to the cad widget.
-    applyGeneralPreferences
-    applyViewAxesPreferences
-    applyModelAxesPreferences
     applyDisplayPreferences
+    applyGeneralPreferences
+    applyGridPreferences
+    applyModelAxesPreferences
+    applyViewAxesPreferences
+
+    $itk_component(ged) refresh_on
+    $itk_component(ged) refresh
 }
 
 
 ::itcl::body Archer::applyPreferencesIfDiff {} {
     $itk_component(ged) refresh_off
 
-    applyGeneralPreferencesIfDiff
-    applyViewAxesPreferencesIfDiff
-    applyModelAxesPreferencesIfDiff
-    applyGroundPlanePreferencesIfDiff
     applyDisplayPreferencesIfDiff
+    applyGeneralPreferencesIfDiff
+    applyGridPreferencesIfDiff
+    applyGroundPlanePreferencesIfDiff
+    applyModelAxesPreferencesIfDiff
+    applyViewAxesPreferencesIfDiff
 
     ::update
     $itk_component(ged) refresh_on
@@ -7255,6 +7535,15 @@ package provide Archer 1.0
     set mScaleColorPref $mScaleColor
     set mViewingParamsColorPref $mViewingParamsColor
     set mThemePref $mTheme
+
+    set mGridAnchorXPref [lindex $mGridAnchor 0]
+    set mGridAnchorYPref [lindex $mGridAnchor 1]
+    set mGridAnchorZPref [lindex $mGridAnchor 2]
+    set mGridColorPref $mGridColor
+    set mGridMrhPref $mGridMrh
+    set mGridMrvPref $mGridMrv
+    set mGridRhPref $mGridRh
+    set mGridRvPref $mGridRv
 
     set mGroundPlaneSizePref $mGroundPlaneSize
     set mGroundPlaneIntervalPref $mGroundPlaneInterval

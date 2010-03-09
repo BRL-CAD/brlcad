@@ -316,6 +316,8 @@ namespace eval ArcherCore {
 	variable mShowPrimitiveLabels 0
 	variable mShowViewingParams 1
 	variable mShowScale 0
+	variable mShowGrid 0
+	variable mSnapGrid 0
 
 	# variables for preference state
 	variable mZClipMode 0
@@ -342,6 +344,21 @@ namespace eval ArcherCore {
 	variable mMeasuringStickColorVDraw ffff00
 	variable mEnableBigE 0
 	variable mEnableBigEPref ""
+
+	variable mGridAnchor "0 0 0"
+	variable mGridAnchorXPref ""
+	variable mGridAnchorYPref ""
+	variable mGridAnchorZPref ""
+	variable mGridColor White
+	variable mGridColorPref ""
+	variable mGridMrh 10
+	variable mGridMrhPref ""
+	variable mGridMrv 10
+	variable mGridMrvPref ""
+	variable mGridRh 1
+	variable mGridRhPref ""
+	variable mGridRv 1
+	variable mGridRvPref ""
 
 	variable mGroundPlaneSize 20000
 	variable mGroundPlaneSizePref ""
@@ -529,6 +546,8 @@ Popup Menu    Right or Ctrl-Left
 	method showViewAxes     {}
 	method showModelAxes    {}
 	method showModelAxesTicks {}
+	method showGrid     {}
+	method snapGrid     {}
 
 	# private mged commands
 	method alterObj          {_operation _obj}
@@ -2303,6 +2322,8 @@ Popup Menu    Right or Ctrl-Left
     set mShowModelAxes [gedCmd cget -modelAxesEnable]
     set mShowModelAxesTicks [gedCmd cget -modelAxesTickEnabled]
     set mShowViewAxes [gedCmd cget -viewAxesEnable]
+    set mShowGrid [gedCmd cget -gridEnable]
+    set mSnapGrid [gedCmd cget -gridSnap]
 }
 
 ::itcl::body ArcherCore::doMultiPane {} {
@@ -2395,6 +2416,14 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body ArcherCore::showModelAxesTicks {} {
     catch {gedCmd configure -modelAxesTickEnabled $mShowModelAxesTicks}
+}
+
+::itcl::body ArcherCore::showGrid {} {
+    catch {gedCmd configure -gridEnable $mShowGrid}
+}
+
+::itcl::body ArcherCore::snapGrid {} {
+    catch {gedCmd configure -gridSnap $mSnapGrid}
 }
 
 
