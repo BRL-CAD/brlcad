@@ -23,20 +23,20 @@
  * Transformations possible are decompositions and reconstructions.
  * Currently, only the Haar wavelet is supported.
  *
- *	Options
- *	-D		decompose
- *	-R		reconstruct
- *	-1		one-dimensional transform
- *	-2		two-dimensional transform
- *	-# n		n-elements/channels per sample (eg 3 for a pix file)
- *	-t[cdfils]	data type
- *	-D level	debug
- *	-s		squaresize of original image/dataset (power of 2)
- *	-R n		Restart with average image size n
- *	-n		number of scanlines
- *	-w		width of dataset
- *	-S		level/limit of transform ...
- *	-W			(size of avg img in transformed data output)
+ * Options
+ * -D decompose
+ * -R reconstruct
+ * -1 one-dimensional transform
+ * -2 two-dimensional transform
+ * -# n n-elements/channels per sample (eg 3 for a pix file)
+ * -t[cdfils]	data type
+ * -D level debug
+ * -s squaresize of original image/dataset (power of 2)
+ * -R n Restart with average image size n
+ * -n number of scanlines
+ * -w width of dataset
+ * -S level/limit of transform ...
+ * -W (size of avg img in transformed data output)
  *
  */
 
@@ -76,11 +76,11 @@ int value_type = CHAR;
 int value_size = sizeof(char);
 int avg_size = 0;
 unsigned long limit = 0;
-int	decomp_recon;
+int decomp_recon;
 
 
 /*
- *	U S A G E --- tell user how to invoke this program, then exit
+ * U S A G E --- tell user how to invoke this program, then exit
  */
 void
 usage(char *s)
@@ -96,16 +96,17 @@ usage(char *s)
     bu_exit (1, NULL);
 }
 
+
 /*
- *	P A R S E _ A R G S --- Parse through command line flags
+ * P A R S E _ A R G S --- Parse through command line flags
  */
 int
 parse_args(int ac, char **av)
 {
-    int  c;
+    int c;
     char *strrchr(const char *, int);
 
-    if ( (progname=strrchr(*av, '/')) )
+    if ((progname=strrchr(*av, '/')))
 	progname++;
     else
 	progname = *av;
@@ -177,8 +178,8 @@ wlt_decompose_1d(void)
     sample_size = value_size * channels;
     scanline_size = sample_size * width;
 
-    buf = bu_malloc( scanline_size, "wavelet buf");
-    tbuf = bu_malloc( scanline_size >> 1, "wavelet buf");
+    buf = bu_malloc(scanline_size, "wavelet buf");
+    tbuf = bu_malloc(scanline_size >> 1, "wavelet buf");
 
     if (debug)
 	fprintf(stderr, "1D decompose:\n\tdatatype_size:%d channels:%lu width:%lu height:%lu limit:%lu\n",
@@ -188,7 +189,7 @@ wlt_decompose_1d(void)
     for (i=0; i < height; i++) {
 
 	n = fread(buf, sample_size, width, stdin);
-	if (n  != width ) {
+	if (n != width) {
 	    fprintf(stderr,
 		    "read failed line %lu got %lu not %lu\n",
 		    i, n, width);
@@ -226,6 +227,7 @@ wlt_decompose_1d(void)
     }
 }
 
+
 void
 wlt_decompose_2d(void)
 {
@@ -236,8 +238,8 @@ wlt_decompose_2d(void)
     sample_size = value_size * channels;
     scanline_size = sample_size * width;
 
-    buf = bu_malloc( scanline_size * height, "wavelet buf");
-    tbuf = bu_malloc( scanline_size, "wavelet buf");
+    buf = bu_malloc(scanline_size * height, "wavelet buf");
+    tbuf = bu_malloc(scanline_size, "wavelet buf");
 
     if (debug)
 	fprintf(stderr, "2D decompose:\n\tdatatype_size:%d channels:%lu width:%lu height:%lu limit:%lu\n",
@@ -296,8 +298,8 @@ wlt_reconstruct_1d(void)
     sample_size = value_size * channels;
     scanline_size = sample_size * width;
 
-    buf = bu_malloc( scanline_size, "wavelet buf");
-    tbuf = bu_malloc( scanline_size >> 1, "wavelet buf");
+    buf = bu_malloc(scanline_size, "wavelet buf");
+    tbuf = bu_malloc(scanline_size >> 1, "wavelet buf");
 
     if (debug)
 	fprintf(stderr, "1D reconstruct:\n\tdatatype_size:%d channels:%lu width:%lu height:%lu limit:%lu\n",
@@ -308,7 +310,7 @@ wlt_reconstruct_1d(void)
 
 
 	n = fread(buf, sample_size, width, stdin);
-	if (n  != width ) {
+	if (n != width) {
 	    fprintf(stderr,
 		    "read failed line %lu got %lu not %lu\n",
 		    i, n, width);
@@ -357,8 +359,8 @@ wlt_reconstruct_2d(void)
     sample_size = value_size * channels;
     scanline_size = sample_size * width;
 
-    buf = bu_malloc( scanline_size * height, "wavelet buf");
-    tbuf = bu_malloc( scanline_size, "wavelet buf");
+    buf = bu_malloc(scanline_size * height, "wavelet buf");
+    tbuf = bu_malloc(scanline_size, "wavelet buf");
 
     if (debug)
 	fprintf(stderr, "2D reconstruct:\n\tdatatype_size:%d channels:%lu width:%lu height:%lu limit:%lu\n",
@@ -406,10 +408,10 @@ wlt_reconstruct_2d(void)
 
 
 /*
- *	M A I N
+ * M A I N
  *
- *	Call parse_args to handle command line arguments first, then
- *	process input.
+ * Call parse_args to handle command line arguments first, then
+ * process input.
  */
 int
 main(int ac, char **av)
@@ -418,11 +420,11 @@ main(int ac, char **av)
     /* parse command flags, and make sure there are arguments
      * left over for processing.
      */
-    if ( parse_args(ac, av) < ac) usage("Excess arguments ignored.\n");
+    if (parse_args(ac, av) < ac) usage("Excess arguments ignored.\n");
 
     if (isatty(fileno(stdout))) usage("Redirect input/output\n");
 
-    if ( !value_type)
+    if (!value_type)
 	usage("Must specify data type\n");
 
     if (decomp_recon == DECOMPOSE) {

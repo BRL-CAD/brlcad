@@ -33,17 +33,17 @@
 #include "bu.h"
 
 
-#define	TBAD	0	/* no such command */
+#define TBAD	0	/* no such command */
 #define TNONE	1	/* no arguments */
 #define TSHORT	2	/* Vax 16-bit short */
-#define	TIEEE	3	/* IEEE 64-bit floating */
-#define	TCHAR	4	/* unsigned chars */
-#define	TSTRING	5	/* linefeed terminated string */
+#define TIEEE	3	/* IEEE 64-bit floating */
+#define TCHAR	4	/* unsigned chars */
+#define TSTRING	5	/* linefeed terminated string */
 
 struct uplot {
-    int	targ;	/* type of args */
-    int	narg;	/* number or args */
-    char	*desc;	/* description */
+    int targ;	/* type of args */
+    int narg;	/* number or args */
+    char *desc;	/* description */
 };
 struct uplot uerror = { 0, 0, 0 };
 struct uplot letters[] = {
@@ -107,20 +107,21 @@ struct uplot letters[] = {
     /*z*/	{ 0, 0, 0 }
 };
 
-int	verbose;
-char	buf[8*32];
+
+int verbose;
+char buf[8*32];
 
 
 int
 main(int argc, char **argv)
 {
-    int	c;
-    struct	uplot *up;
-    int	desired_frame = 0;
-    int	current_frame = 0;
+    int c;
+    struct uplot *up;
+    int desired_frame = 0;
+    int current_frame = 0;
 
-    while ( argc > 1 ) {
-	if ( strcmp(argv[1], "-v") == 0 ) {
+    while (argc > 1) {
+	if (strcmp(argv[1], "-v") == 0) {
 	    verbose++;
 	} else
 	    break;
@@ -128,78 +129,78 @@ main(int argc, char **argv)
 	argc--;
 	argv++;
     }
-    if ( argc < 2 || isatty(fileno(stdin)) ) {
-	bu_exit(1, "Usage: plgetframe [-v] desired_frame < unix_plot\n" );
+    if (argc < 2 || isatty(fileno(stdin))) {
+	bu_exit(1, "Usage: plgetframe [-v] desired_frame < unix_plot\n");
     }
     desired_frame = atoi(argv[1]);
     current_frame = 0;
 
-    while ( (c = getchar()) != EOF ) {
+    while ((c = getchar()) != EOF) {
 	/* look it up */
-	if ( c < 'A' || c > 'z' ) {
+	if (c < 'A' || c > 'z') {
 	    up = &uerror;
 	} else {
 	    up = &letters[ c - 'A' ];
 	}
-	if ( c == 'e' )  {
+	if (c == 'e') {
 	    current_frame++;
-	    if (verbose)  {
+	    if (verbose) {
 		bu_log("%d, ", current_frame);
 	    }
-	    if ( current_frame > desired_frame )
+	    if (current_frame > desired_frame)
 		break;
 	    continue;
 	}
 
-	if ( up->targ == TBAD ) {
-	    bu_log( "Bad command '%c' (0x%02x)\n", c, c );
+	if (up->targ == TBAD) {
+	    bu_log("Bad command '%c' (0x%02x)\n", c, c);
 	    continue;
 	}
 
-	if ( current_frame == desired_frame )  {
+	if (current_frame == desired_frame) {
 	    /* Duplicate input as output */
-	    putchar( c );
-	    if ( up->narg <= 0 )  continue;
+	    putchar(c);
+	    if (up->narg <= 0) continue;
 
-	    switch ( up->targ ) {
+	    switch (up->targ) {
 		case TNONE:
 		    break;
 		case TCHAR:
-		    fread( buf, 1, up->narg, stdin );
-		    fwrite( buf, 1, up->narg, stdout );
+		    fread(buf, 1, up->narg, stdin);
+		    fwrite(buf, 1, up->narg, stdout);
 		    break;
 		case TSHORT:
-		    fread( buf, 2, up->narg, stdin );
-		    fwrite( buf, 2, up->narg, stdout );
+		    fread(buf, 2, up->narg, stdin);
+		    fwrite(buf, 2, up->narg, stdout);
 		    break;
 		case TIEEE:
-		    fread( buf, 8, up->narg, stdin );
-		    fwrite( buf, 8, up->narg, stdout );
+		    fread(buf, 8, up->narg, stdin);
+		    fwrite(buf, 8, up->narg, stdout);
 		    break;
 		case TSTRING:
-		    while ( (c = getchar()) != '\n' && c != EOF )
+		    while ((c = getchar()) != '\n' && c != EOF)
 			putchar(c);
 		    putchar('\n');
 		    break;
 	    }
 	} else {
 	    /* Silently discard input */
-	    if ( up->narg <= 0 )  continue;
+	    if (up->narg <= 0) continue;
 
-	    switch ( up->targ ) {
+	    switch (up->targ) {
 		case TNONE:
 		    break;
 		case TCHAR:
-		    fread( buf, 1, up->narg, stdin );
+		    fread(buf, 1, up->narg, stdin);
 		    break;
 		case TSHORT:
-		    fread( buf, 2, up->narg, stdin );
+		    fread(buf, 2, up->narg, stdin);
 		    break;
 		case TIEEE:
-		    fread( buf, 8, up->narg, stdin );
+		    fread(buf, 8, up->narg, stdin);
 		    break;
 		case TSTRING:
-		    while ( (c = getchar()) != '\n' && c != EOF )
+		    while ((c = getchar()) != '\n' && c != EOF)
 			; /* NULL */
 	    }
 	}
@@ -207,6 +208,7 @@ main(int argc, char **argv)
 
     return 0;
 }
+
 
 /*
  * Local Variables:

@@ -44,7 +44,7 @@ unsigned char obuf[32767 * 3];
 		      (a)[2] == (b)[2])
 
 /*
- *	U S A G E --- tell user how to invoke this program, then exit
+ * U S A G E --- tell user how to invoke this program, then exit
  */
 void usage(char *s)
 {
@@ -55,14 +55,15 @@ void usage(char *s)
     bu_exit (1, NULL);
 }
 
+
 /*
- *	P A R S E _ A R G S --- Parse through command line flags
+ * P A R S E _ A R G S --- Parse through command line flags
  */
 int parse_args(int ac, char **av)
 {
-    int  c;
+    int c;
 
-    if (  ! (progname=strrchr(*av, '/'))  )
+    if (! (progname=strrchr(*av, '/')))
 	progname = *av;
     else
 	++progname;
@@ -73,7 +74,7 @@ int parse_args(int ac, char **av)
     /* get all the option flags from the command line */
     while ((c=bu_getopt(ac, av, options)) != EOF)
 	switch (c) {
-	    case 'd'	: if ((c=atoi(bu_optarg)) > 0 )
+	    case 'd'	: if ((c=atoi(bu_optarg)) > 0)
 		depth = c;
 	    else
 		fprintf(stderr, "bad # of bytes per pixel (%d)\n", c);
@@ -86,10 +87,10 @@ int parse_args(int ac, char **av)
     return(bu_optind);
 }
 /*
- *	M A I N
+ * M A I N
  *
- *	Call parse_args to handle command line arguments first, then
- *	process input.
+ * Call parse_args to handle command line arguments first, then
+ * process input.
  */
 int main(int ac, char **av)
 {
@@ -113,7 +114,7 @@ int main(int ac, char **av)
 
     /* process stdin */
     while ((pixels = fread(ibuf, 3, sizeof(ibuf)/3, stdin)) > 0) {
-	for (i = 0; i < pixels; i++ ) {
+	for (i = 0; i < pixels; i++) {
 	    if (ibuf[i*3] == r &&
 		ibuf[i*3+1] == g &&
 		ibuf[i*3+2] == b) {
@@ -137,6 +138,7 @@ int main(int ac, char **av)
     }
     return(0);
 }
+
 
 /*
  * Local Variables:

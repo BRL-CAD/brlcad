@@ -44,36 +44,36 @@
 
 
 /*
- *	General I/O for ASCII files: remapid_file support
+ * General I/O for ASCII files: remapid_file support
  */
-struct remapid_file  {
-    long		file_magic;
-    FILE		*file_ptr;	/* the actual file */
-    char		*file_name;
-    struct bu_vls	file_buf;	/* contents of current line */
-    char		*file_bp;	/* pointer into current line */
-    int		file_needline;	/* time to grab another line? */
-    int		file_linenm;
-    int		file_comment;	/* the comment character */
-    int		file_buflen;	/* length of intact buffer */
+struct remapid_file {
+    long file_magic;
+    FILE *file_ptr;	/* the actual file */
+    char *file_name;
+    struct bu_vls file_buf;	/* contents of current line */
+    char *file_bp;	/* pointer into current line */
+    int file_needline;	/* time to grab another line? */
+    int file_linenm;
+    int file_comment;	/* the comment character */
+    int file_buflen;	/* length of intact buffer */
 };
-typedef struct remapid_file		REMAPID_FILE;
-#define REMAPID_FILE_MAGIC		0x6275666c
-#define BU_CK_FILE(_fp)		BU_CKMAG(_fp, REMAPID_FILE_MAGIC, "remapid_file")
+typedef struct remapid_file REMAPID_FILE;
+#define REMAPID_FILE_MAGIC 0x6275666c
+#define BU_CK_FILE(_fp) BU_CKMAG(_fp, REMAPID_FILE_MAGIC, "remapid_file")
 
-#define bu_stdin		(&bu_iob[0])
-extern REMAPID_FILE			bu_iob[1];
-#define REMAPID_FILE_NO_COMMENT	-1
+#define bu_stdin (&bu_iob[0])
+extern REMAPID_FILE bu_iob[1];
+#define REMAPID_FILE_NO_COMMENT -1
 
 
 /*
- *	XXX - The following initialization of bu_stdin is essentially
- *	an inline version of remapid_fopen() and bu_vls_init().  As
- *	such, it depends heavily on the definitions of struct
- *	remapid_file and struct bu_vls in ../h/bu.h
+ * XXX - The following initialization of bu_stdin is essentially
+ * an inline version of remapid_fopen() and bu_vls_init().  As
+ * such, it depends heavily on the definitions of struct
+ * remapid_file and struct bu_vls in ../h/bu.h
  */
-char	dmy_eos = '\0';
-REMAPID_FILE	bu_iob[1] = {
+char dmy_eos = '\0';
+REMAPID_FILE bu_iob[1] = {
     {
 	REMAPID_FILE_MAGIC,
 #if 0
@@ -92,8 +92,8 @@ REMAPID_FILE	bu_iob[1] = {
 
 REMAPID_FILE *remapid_fopen (char *fname, char *type)
 {
-    REMAPID_FILE	*bfp;
-    FILE	*fp;
+    REMAPID_FILE *bfp;
+    FILE *fp;
 
     if ((fp = fopen(fname, type)) == NULL)
 	return (NULL);
@@ -113,20 +113,20 @@ REMAPID_FILE *remapid_fopen (char *fname, char *type)
     return (bfp);
 }
 
+
 /*
- *	Close the file and free the associated memory
+ * Close the file and free the associated memory
  */
 int
 remapid_fclose (REMAPID_FILE *bfp)
 {
-    int	close_status;
+    int close_status;
 
     BU_CK_FILE(bfp);
 
     close_status = fclose(bfp->file_ptr);
 
-    if (bfp != bu_stdin)
-    {
+    if (bfp != bu_stdin) {
 	bfp->file_magic = 0;
 	bfp->file_ptr = NULL;
 	bfp->file_name = (char *) 0;
@@ -141,28 +141,26 @@ remapid_fclose (REMAPID_FILE *bfp)
 int
 remapid_fgetc (REMAPID_FILE *bfp)
 {
-    char	*cp = (char *)NULL;
-    int		comment_char;	/* The comment character */
-    int		strip_comments;	/* Should I strip comments? */
+    char *cp = (char *)NULL;
+    int comment_char;	/* The comment character */
+    int strip_comments;	/* Should I strip comments? */
 
     BU_CK_FILE(bfp);
 
     strip_comments = isprint(comment_char = bfp->file_comment);
 
     /*
-     *	If buffer is empty, note that it's time for a new line of input
+     * If buffer is empty, note that it's time for a new line of input
      */
-    if ((*(bfp->file_bp) == '\0') && ! (bfp->file_needline))
-    {
+    if ((*(bfp->file_bp) == '\0') && ! (bfp->file_needline)) {
 	bfp->file_needline = 1;
 	return ('\n');
     }
 
     /*
-     *    If it's time to grab a line of input from the file, do so.
+     * If it's time to grab a line of input from the file, do so.
      */
-    while (bfp->file_needline)
-    {
+    while (bfp->file_needline) {
 	bu_vls_trunc(&(bfp->file_buf), 0);
 	if (bu_vls_gets(&(bfp->file_buf), bfp->file_ptr) == -1)
 	    return (EOF);
@@ -171,12 +169,10 @@ remapid_fgetc (REMAPID_FILE *bfp)
 	if (bu_vls_strlen(&(bfp->file_buf)) == 0)
 	    continue;
 
-	if (strip_comments)
-	{
+	if (strip_comments) {
 	    bfp->file_buflen = -1;
 	    for (cp = bfp->file_bp; *cp != '\0'; ++cp)
-		if (*cp == comment_char)
-		{
+		if (*cp == comment_char) {
 		    bfp->file_buflen = (bfp->file_buf).vls_len;
 		    bu_vls_trunc(&(bfp->file_buf), cp - bfp->file_bp);
 		    break;
@@ -190,8 +186,9 @@ remapid_fgetc (REMAPID_FILE *bfp)
     return (*(bfp->file_bp)++);
 }
 
+
 /*
- *	Diagnostic routine to print out the contents of a struct remapid_file
+ * Diagnostic routine to print out the contents of a struct remapid_file
  */
 static void
 remapid_printfile (REMAPID_FILE *bfp)
@@ -210,34 +207,33 @@ remapid_printfile (REMAPID_FILE *bfp)
     bu_log("  buflen   %d\n", bfp->file_buflen);
 }
 
+
 /*
- *	Print out a syntax error message about a REMAPID_FILE
+ * Print out a syntax error message about a REMAPID_FILE
  */
 void
 remapid_file_err (REMAPID_FILE *bfp, char *text1, char *text2, int cursor_pos)
 {
-    char		*cp;
-    int			buflen;
-    int			i;
-    int			stripped_length;
+    char *cp;
+    int buflen;
+    int i;
+    int stripped_length;
 
     BU_CK_FILE(bfp);
 
     /*
-     *	Show any trailing comments
+     * Show any trailing comments
      */
-    if ((buflen = bfp->file_buflen) > -1)
-    {
+    if ((buflen = bfp->file_buflen) > -1) {
 	stripped_length = (bfp->file_buf).vls_len;
 	*(bu_vls_addr(&(bfp->file_buf)) + stripped_length) =
 	    bfp->file_comment;
 	(bfp->file_buf).vls_len = buflen;
-    }
-    else
+    } else
 	stripped_length = -1;
 
     /*
-     *	Print out the first line of the error message
+     * Print out the first line of the error message
      */
     if (text1 && (*text1 != '\0'))
 	bu_log("%s: ", text1);
@@ -246,7 +242,7 @@ remapid_file_err (REMAPID_FILE *bfp, char *text1, char *text2, int cursor_pos)
     bu_log("%s\n", bu_vls_addr(&(bfp->file_buf)));
 
     /*
-     *	Print out position-indicating arrow, if requested
+     * Print out position-indicating arrow, if requested
      */
     if ((cursor_pos >= 0)
 	&& (cursor_pos < bu_vls_strlen(&(bfp->file_buf))))
@@ -261,19 +257,20 @@ remapid_file_err (REMAPID_FILE *bfp, char *text1, char *text2, int cursor_pos)
     }
 
     /*
-     *	Hide the comments again
+     * Hide the comments again
      */
     if (stripped_length > -1)
 	bu_vls_trunc(&(bfp->file_buf), stripped_length);
 }
+
 
 /*
  * ******************** Hack
  */
 
 
-bu_rb_tree		*assignment;	/* Remapping assignment */
-struct db_i	*dbip;		/* Instance of BRL-CAD database */
+bu_rb_tree *assignment;	/* Remapping assignment */
+struct db_i *dbip;		/* Instance of BRL-CAD database */
 
 
 /************************************************************************
@@ -285,7 +282,7 @@ struct db_i	*dbip;		/* Instance of BRL-CAD database */
  *  containing commands, the grammar for which looks something like:	*
  *									*
  *	 command --> id_list ':' id					*
- *	 id_list --> id_block | id_block ',' id_list			*
+ *	 id_list --> id_block | id_block ', ' id_list			*
  *	id_block --> id | id '-' id					*
  *	   id    --> [0-9]+						*
  *									*
@@ -321,7 +318,7 @@ struct db_i	*dbip;		/* Instance of BRL-CAD database */
  *									*
  *									*
  *				        +-+				*
- *	       bu_rb_tree		        | |				*
+ *	       bu_rb_tree		| |				*
  *				        +-+				*
  *				       /   \				*
  *				   +-+/     \+-+			*
@@ -345,27 +342,27 @@ struct db_i	*dbip;		/* Instance of BRL-CAD database */
 
 struct curr_id
 {
-    struct bu_list	l;
-    int			ci_id;		/* The region ID */
-    struct bu_list	ci_regions;	/* Regions now holding this ID */
-    int			ci_newid;	/* Replacement ID for the regions */
+    struct bu_list l;
+    int ci_id;		/* The region ID */
+    struct bu_list ci_regions;	/* Regions now holding this ID */
+    int ci_newid;	/* Replacement ID for the regions */
 };
-#define	ci_magic	l.magic
-#define	CURR_ID_NULL	((struct curr_id *) 0)
-#define	CURR_ID_MAGIC	0x63726964
+#define ci_magic l.magic
+#define CURR_ID_NULL ((struct curr_id *) 0)
+#define CURR_ID_MAGIC 0x63726964
 
 struct remap_reg
 {
-    struct bu_list		l;
-    char			*rr_name;
-    struct directory		*rr_dp;
-    struct rt_db_internal	*rr_ip;
+    struct bu_list l;
+    char *rr_name;
+    struct directory *rr_dp;
+    struct rt_db_internal *rr_ip;
 };
-#define	rr_magic	l.magic
-#define	REMAP_REG_NULL	((struct remap_reg *) 0)
-#define	REMAP_REG_MAGIC	0x726d7267
+#define rr_magic l.magic
+#define REMAP_REG_NULL ((struct remap_reg *) 0)
+#define REMAP_REG_MAGIC 0x726d7267
 
-static int		debug = 0;
+static int debug = 0;
 
 /************************************************************************
  *									*
@@ -374,12 +371,12 @@ static int		debug = 0;
  ************************************************************************/
 
 /*
- *			     M K _ C U R R _ I D ( )
+ * M K _ C U R R _ I D
  *
  */
 struct curr_id *mk_curr_id (int region_id)
 {
-    struct curr_id	*cip;
+    struct curr_id *cip;
 
     cip = (struct curr_id *) bu_malloc(sizeof(struct curr_id), "curr_id");
 
@@ -391,44 +388,43 @@ struct curr_id *mk_curr_id (int region_id)
     return (cip);
 }
 
+
 /*
- *			  P R I N T _ C U R R _ I D ( )
+ * P R I N T _ C U R R _ I D
  *
  */
 void print_curr_id (void *v, int depth)
 {
-    struct curr_id	*cip = (struct curr_id *) v;
-    struct remap_reg	*rp;
+    struct curr_id *cip = (struct curr_id *) v;
+    struct remap_reg *rp;
 
     BU_CKMAG(cip, CURR_ID_MAGIC, "curr_id");
 
     bu_log(" curr_id <x%x> %d %d...\n",
 	   cip, cip->ci_id, cip->ci_newid);
-    for (BU_LIST_FOR(rp, remap_reg, &(cip->ci_regions)))
-    {
+    for (BU_LIST_FOR(rp, remap_reg, &(cip->ci_regions))) {
 	BU_CKMAG(rp, REMAP_REG_MAGIC, "remap_reg");
 
 	bu_log("  %s\n", rp->rr_name);
     }
 }
 
+
 /*
- *		P R I N T _ N O N E M P T Y _ C U R R _ I D ( )
+ * P R I N T _ N O N E M P T Y _ C U R R _ I D
  *
  */
 void print_nonempty_curr_id (void *v, int depth)
 {
-    struct curr_id	*cip = (struct curr_id *) v;
-    struct remap_reg	*rp;
+    struct curr_id *cip = (struct curr_id *) v;
+    struct remap_reg *rp;
 
     BU_CKMAG(cip, CURR_ID_MAGIC, "curr_id");
 
-    if (BU_LIST_NON_EMPTY(&(cip->ci_regions)))
-    {
+    if (BU_LIST_NON_EMPTY(&(cip->ci_regions))) {
 	bu_log(" curr_id <x%x> %d %d...\n",
 	       cip, cip->ci_id, cip->ci_newid);
-	for (BU_LIST_FOR(rp, remap_reg, &(cip->ci_regions)))
-	{
+	for (BU_LIST_FOR(rp, remap_reg, &(cip->ci_regions))) {
 	    BU_CKMAG(rp, REMAP_REG_MAGIC, "remap_reg");
 
 	    bu_log("  %s\n", rp->rr_name);
@@ -436,8 +432,9 @@ void print_nonempty_curr_id (void *v, int depth)
     }
 }
 
+
 /*
- *		F R E E _ C U R R _ I D ( )
+ * F R E E _ C U R R _ I D
  *
  */
 void free_curr_id (struct curr_id *cip)
@@ -446,32 +443,32 @@ void free_curr_id (struct curr_id *cip)
     bu_free((genptr_t) cip, "curr_id");
 }
 
+
 /*
- *		L O O K U P _ C U R R _ I D ( )
+ * L O O K U P _ C U R R _ I D
  *
- *	Scrounge for a particular region in the red-black tree.
- *	If it's not found there, add it to the tree.  In either
- *	event, return a pointer to it.
+ * Scrounge for a particular region in the red-black tree.
+ * If it's not found there, add it to the tree.  In either
+ * event, return a pointer to it.
  */
 struct curr_id *lookup_curr_id(int region_id)
 {
-    int			rc;	/* Return code from bu_rb_insert() */
-    struct curr_id	*qcip;	/* The query */
-    struct curr_id	*cip;	/* Value to return */
+    int rc;	/* Return code from bu_rb_insert() */
+    struct curr_id *qcip;	/* The query */
+    struct curr_id *cip;	/* Value to return */
 
     /*
-     *	Prepare the query
+     * Prepare the query
      */
     qcip = mk_curr_id(region_id);
 
     /*
-     *	Perform the query by attempting an insertion...
-     *	If the query succeeds (i.e., the insertion fails!),
-     *	then we have our curr_id.
-     *	Otherwise, we must create a new curr_id.
+     * Perform the query by attempting an insertion...
+     * If the query succeeds (i.e., the insertion fails!),
+     * then we have our curr_id.
+     * Otherwise, we must create a new curr_id.
      */
-    switch (rc = bu_rb_insert(assignment, (void *) qcip))
-    {
+    switch (rc = bu_rb_insert(assignment, (void *) qcip)) {
 	case -1:
 	    cip = (struct curr_id *) bu_rb_curr1(assignment);
 	    free_curr_id(qcip);
@@ -486,13 +483,14 @@ struct curr_id *lookup_curr_id(int region_id)
     return (cip);
 }
 
+
 /*
- *		M K _ R E M A P _ R E G ( )
+ * M K _ R E M A P _ R E G
  *
  */
 struct remap_reg *mk_remap_reg (char *region_name)
 {
-    struct remap_reg	*rp;
+    struct remap_reg *rp;
 
     rp = (struct remap_reg *) bu_malloc(sizeof(struct remap_reg), "remap_reg");
 
@@ -507,8 +505,9 @@ struct remap_reg *mk_remap_reg (char *region_name)
     return (rp);
 }
 
+
 /*
- *		F R E E _ R E M A P _ R E G ( )
+ * F R E E _ R E M A P _ R E G
  *
  */
 void free_remap_reg (struct remap_reg *rp)
@@ -519,6 +518,7 @@ void free_remap_reg (struct remap_reg *rp)
     bu_free((genptr_t) rp, "remap_reg");
 }
 
+
 /************************************************************************
  *									*
  *	  	The comparison callback for libredblack(3)		*
@@ -526,18 +526,19 @@ void free_remap_reg (struct remap_reg *rp)
  ************************************************************************/
 
 /*
- *		C O M P A R E _ C U R R _ I D S ( )
+ * C O M P A R E _ C U R R _ I D S
  */
 int compare_curr_ids (void *v1, void *v2)
 {
-    struct curr_id	*id1 = (struct curr_id *) v1;
-    struct curr_id	*id2 = (struct curr_id *) v2;
+    struct curr_id *id1 = (struct curr_id *) v1;
+    struct curr_id *id2 = (struct curr_id *) v2;
 
     BU_CKMAG(id1, CURR_ID_MAGIC, "curr_id");
     BU_CKMAG(id2, CURR_ID_MAGIC, "curr_id");
 
     return (id1->ci_id  -  id2->ci_id);
 }
+
 
 /************************************************************************
  *									*
@@ -546,7 +547,7 @@ int compare_curr_ids (void *v1, void *v2)
  ************************************************************************/
 
 /*
- *			  R E A D _ I N T ( )
+ * R E A D _ I N T
  */
 int read_int (REMAPID_FILE *sfp, int *ch, int *n)
 
@@ -554,27 +555,24 @@ int read_int (REMAPID_FILE *sfp, int *ch, int *n)
     /* The result */
 
 {
-    int	got_digit = 0;	/* Did we actually succeed in reading a number? */
-    int	result;
+    int got_digit = 0;	/* Did we actually succeed in reading a number? */
+    int result;
 
     BU_CK_FILE(sfp);
 
     while (isspace(*ch))
 	*ch = remapid_fgetc(sfp);
 
-    for (result = 0; isdigit(*ch); *ch = remapid_fgetc(sfp))
-    {
+    for (result = 0; isdigit(*ch); *ch = remapid_fgetc(sfp)) {
 	got_digit = 1;
 	result *= 10;
 	result += *ch - '0';
     }
 
-    if (got_digit)
-    {
+    if (got_digit) {
 	*n = result;
 	return (1);
-    }
-    else if (*ch == EOF)
+    } else if (*ch == EOF)
 	remapid_file_err(sfp, "remapid",
 			 "Encountered EOF while expecting an integer", -1);
     else
@@ -583,8 +581,9 @@ int read_int (REMAPID_FILE *sfp, int *ch, int *n)
     return (-1);
 }
 
+
 /*
- *			  R E A D _ B L O C K ( )
+ * R E A D _ B L O C K
  */
 int read_block (REMAPID_FILE *sfp, int *ch, int *n1, int *n2)
 {
@@ -595,9 +594,8 @@ int read_block (REMAPID_FILE *sfp, int *ch, int *n1, int *n2)
 
     while (isspace(*ch))
 	*ch = remapid_fgetc(sfp);
-    switch (*ch)
-    {
-	case ',':
+    switch (*ch) {
+	case ', ':
 	case ':':
 	    return (1);
 	case '-':
@@ -608,22 +606,23 @@ int read_block (REMAPID_FILE *sfp, int *ch, int *n1, int *n2)
 		return (2);
 	default:
 	    remapid_file_err(sfp, "remapid:read_block()", "Syntax error",
-			     (int)((sfp->file_bp) - bu_vls_addr(&(sfp->file_buf)) - 1) );
+			     (int)((sfp->file_bp) - bu_vls_addr(&(sfp->file_buf)) - 1));
 	    return (-1);
     }
 }
 
+
 /*
- *			  R E A D _ S P E C ( )
+ * R E A D _ S P E C
  */
 int read_spec (REMAPID_FILE *sfp, char *sf_name)
 {
-    int			ch;
-    int			i;
-    int			num1, num2;
-    int			newid;
-    struct bu_list	cids;
-    struct curr_id	*cip;
+    int ch;
+    int i;
+    int num1, num2;
+    int newid;
+    struct bu_list cids;
+    struct curr_id *cip;
 
     if ((sfp == NULL) && ((sfp = remapid_fopen(sf_name, "r")) == NULL))
 	bu_exit (1, "Cannot open specification file '%s'\n", sf_name);
@@ -631,32 +630,27 @@ int read_spec (REMAPID_FILE *sfp, char *sf_name)
 
     BU_LIST_INIT(&cids);
 
-    for (;;)
-    {
+    for (;;) {
 	/*
 	 *  Read in guy(s) to be assigned a particular new regionid
 	 */
-	for (;;)
-	{
+	for (;;) {
 	    while (isspace(ch = remapid_fgetc(sfp)))
 		;
 	    if (ch == EOF)
 		return (1);
-	    switch (read_block(sfp, &ch, &num1, &num2))
-	    {
+	    switch (read_block(sfp, &ch, &num1, &num2)) {
 		case 1:
 		    cip = lookup_curr_id(num1);
 		    BU_LIST_INSERT(&cids, &(cip->l));
 		    break;
 		case 2:
-		    if (num1 >= num2)
-		    {
+		    if (num1 >= num2) {
 			remapid_file_err(sfp, "remapid:read_spec()", "Range out of order",
-					 (int)((sfp->file_bp) - bu_vls_addr(&(sfp->file_buf)) - 1) );
+					 (int)((sfp->file_bp) - bu_vls_addr(&(sfp->file_buf)) - 1));
 			bu_exit (-1, NULL);
 		    }
-		    for (i = num1; i <= num2; ++i)
-		    {
+		    for (i = num1; i <= num2; ++i) {
 			cip = lookup_curr_id(i);
 			BU_LIST_INSERT(&cids, &(cip->l));
 		    }
@@ -667,9 +661,8 @@ int read_spec (REMAPID_FILE *sfp, char *sf_name)
 	    while (isspace(ch))
 		ch = remapid_fgetc(sfp);
 
-	    switch (ch)
-	    {
-		case ',':
+	    switch (ch) {
+		case ', ':
 		    continue;
 		case ':':
 		    ch = remapid_fgetc(sfp);
@@ -678,34 +671,34 @@ int read_spec (REMAPID_FILE *sfp, char *sf_name)
 		    break;
 		default:
 		    remapid_file_err(sfp, "remapid:read_spec()", "Syntax error",
-				     (int)((sfp->file_bp) - bu_vls_addr(&(sfp->file_buf)) - 1) );
+				     (int)((sfp->file_bp) - bu_vls_addr(&(sfp->file_buf)) - 1));
 		    bu_exit (-1, NULL);
 	    }
 	    break;
 	}
 
 	/*
-	 *	Tell each of these current regionids
-	 *	about it's going to get the new regionid value
+	 * Tell each of these current regionids
+	 * about it's going to get the new regionid value
 	 */
-	while (BU_LIST_WHILE(cip, curr_id, &cids))
-	{
+	while (BU_LIST_WHILE(cip, curr_id, &cids)) {
 	    cip->ci_newid = newid;
 	    BU_LIST_DEQUEUE(&(cip->l));
 	}
     }
 }
 
+
 /************************************************************************
  *									*
- *	  Routines for procesing the geometry databases			*
+ * Routines for procesing the geometry databases			*
  *									*
  ************************************************************************/
 
 void record_region (char *region_name, int region_id, struct directory *dp, struct rt_db_internal *ip)
 {
-    struct curr_id	*cip;
-    struct remap_reg	*rp;
+    struct curr_id *cip;
+    struct remap_reg *rp;
 
     cip = lookup_curr_id(region_id);
     rp = mk_remap_reg(region_name);
@@ -714,11 +707,12 @@ void record_region (char *region_name, int region_id, struct directory *dp, stru
     BU_LIST_INSERT(&(cip->ci_regions), &(rp->l));
 }
 
+
 void db_init(char *db_name)
 {
-    struct directory		*dp;
-    struct rt_comb_internal	*comb;
-    struct rt_db_internal	*ip;
+    struct directory *dp;
+    struct rt_comb_internal *comb;
+    struct rt_db_internal *ip;
 
     if ((dbip = db_open(db_name, "r+w")) == DBI_NULL)
 	bu_exit (1, "Cannot open database file '%s'\n", db_name);
@@ -739,32 +733,30 @@ void db_init(char *db_name)
     } FOR_ALL_DIRECTORY_END;
 }
 
+
 /*
- *		W R I T E _ A S S I G N M E N T ( )
+ * W R I T E _ A S S I G N M E N T
  *
  */
 void write_assignment (void *v, int depth)
 {
-    int				region_id;
-    struct curr_id		*cip = (struct curr_id *) v;
-    struct remap_reg		*rp;
-    struct rt_comb_internal	*comb;
+    int region_id;
+    struct curr_id *cip = (struct curr_id *) v;
+    struct remap_reg *rp;
+    struct rt_comb_internal *comb;
 
     BU_CKMAG(cip, CURR_ID_MAGIC, "curr_id");
 
-    if (BU_LIST_NON_EMPTY(&(cip->ci_regions)))
-    {
+    if (BU_LIST_NON_EMPTY(&(cip->ci_regions))) {
 	region_id = cip->ci_newid;
-	for (BU_LIST_FOR(rp, remap_reg, &(cip->ci_regions)))
-	{
+	for (BU_LIST_FOR(rp, remap_reg, &(cip->ci_regions))) {
 	    BU_CKMAG(rp, REMAP_REG_MAGIC, "remap_reg");
 	    RT_CK_DB_INTERNAL(rp->rr_ip);
 
 	    comb = (struct rt_comb_internal *) rp->rr_ip->idb_ptr;
 	    RT_CK_COMB(comb);
 	    comb->region_id = region_id;
-	    if (rt_db_put_internal(rp->rr_dp, dbip, rp->rr_ip, &rt_uniresource) < 0)
-	    {
+	    if (rt_db_put_internal(rp->rr_dp, dbip, rp->rr_ip, &rt_uniresource) < 0) {
 		bu_log("remapid: rt_db_put_internal(%s) failed.  ",
 		       rp->rr_dp->d_namep);
 		bu_exit (1, "This shouldn't happen\n");
@@ -772,6 +764,7 @@ void write_assignment (void *v, int depth)
 	}
     }
 }
+
 
 static void
 tankill_reassign(char *db_name)
@@ -781,51 +774,47 @@ tankill_reassign(char *db_name)
     struct curr_id *id_map, *cip;
 
     /* open TANKILL model */
-    if ( (fd_in=fopen( db_name, "r" )) == NULL )
-    {
-	bu_log( "Cannot open TANKILL database (%s)\n", db_name );
-	perror( "remapid" );
-	bu_exit( EXIT_FAILURE, "Cannot open TANKILL database\n" );
+    if ((fd_in=fopen(db_name, "r")) == NULL) {
+	bu_log("Cannot open TANKILL database (%s)\n", db_name);
+	perror("remapid");
+	bu_exit(EXIT_FAILURE, "Cannot open TANKILL database\n");
     }
 
     /* make a 'curr_id' structure to feed to bu_rb_search */
-    cip = mk_curr_id( 0 );
+    cip = mk_curr_id(0);
 
     /* filter TANKILL model, changing ids as we go */
-    while ( fscanf( fd_in, "%d %d %d", &vertex_count, &id, &surr_code ) != EOF )
-    {
+    while (fscanf(fd_in, "%d %d %d", &vertex_count, &id, &surr_code) != EOF) {
 	int coord_no=0;
 	int in_space=1;
 	int ch;
 
 	cip->ci_id = id;
-	id_map = (struct curr_id *)bu_rb_search( assignment, 0, (void *)cip );
-	if ( !id_map )
-	    printf( "%d %d %d", vertex_count, id, surr_code );
+	id_map = (struct curr_id *)bu_rb_search(assignment, 0, (void *)cip);
+	if (!id_map)
+	    printf("%d %d %d", vertex_count, id, surr_code);
 	else
-	    printf( "%d %d %d", vertex_count, id_map->ci_newid, surr_code );
+	    printf("%d %d %d", vertex_count, id_map->ci_newid, surr_code);
 
 	/* just copy the rest of the component */
-	while ( coord_no < 3*vertex_count || !in_space )
-	{
-	    ch = fgetc( fd_in );
-	    if ( ch == EOF && coord_no < 3*vertex_count )
-	    {
-		bu_log( "Unexpected EOF while processing ident %d\n", id );
-		bu_exit( EXIT_FAILURE, "Unexpected EOF\n" );
+	while (coord_no < 3*vertex_count || !in_space) {
+	    ch = fgetc(fd_in);
+	    if (ch == EOF && coord_no < 3*vertex_count) {
+		bu_log("Unexpected EOF while processing ident %d\n", id);
+		bu_exit(EXIT_FAILURE, "Unexpected EOF\n");
 	    }
 
-	    if ( isspace( ch ) )
+	    if (isspace(ch))
 		in_space = 1;
-	    else if ( in_space )
-	    {
+	    else if (in_space) {
 		in_space = 0;
 		coord_no++;
 	    }
-	    putchar( ch );
+	    putchar(ch);
 	}
     }
 }
+
 
 /************************************************************************
  *									*
@@ -834,7 +823,7 @@ tankill_reassign(char *db_name)
  ************************************************************************/
 
 /*
- *			   P R I N T _ U S A G E ( )
+ * P R I N T _ U S A G E
  */
 void print_usage (void)
 {
@@ -843,25 +832,25 @@ void print_usage (void)
         the '-t' option writes a modified file.tankill to stdout\n");
 }
 
+
 /*
- *                                M A I N ( )
+ * M A I N
  */
 int
 main (int argc, char **argv)
 {
-    char		*db_name;	/* Name of database */
-    char		*sf_name = NULL;	/* Name of spec file */
-    REMAPID_FILE		*sfp = NULL;	/* Spec file */
-    int			ch;		/* Command-line character */
-    int			tankill = 0;	/* TANKILL format (vs. BRL-CAD)? */
+    char *db_name;	/* Name of database */
+    char *sf_name = NULL;	/* Name of spec file */
+    REMAPID_FILE *sfp = NULL;	/* Spec file */
+    int ch;		/* Command-line character */
+    int tankill = 0;	/* TANKILL format (vs. BRL-CAD)? */
 
-    extern int	bu_optind;			/* index from bu_getopt(3C) */
+    extern int bu_optind;			/* index from bu_getopt(3C) */
 
     bu_stdin->file_ptr = stdin;		/* LINUX-required init */
 
     while ((ch = bu_getopt(argc, argv, "gt?")) != EOF)
-	switch (ch)
-	{
+	switch (ch) {
 	    case 'g':
 		tankill = 0;
 		break;
@@ -873,8 +862,7 @@ main (int argc, char **argv)
 		print_usage();
 	}
 
-    switch (argc - bu_optind)
-    {
+    switch (argc - bu_optind) {
 	case 1:
 	    sf_name = "stdin";
 	    sfp = bu_stdin;
@@ -885,33 +873,32 @@ main (int argc, char **argv)
 	    print_usage();
     }
 
-    rt_init_resource( &rt_uniresource, 0, NULL );
+    rt_init_resource(&rt_uniresource, 0, NULL);
 
     /*
-     *	Open database and specification file, as necessary
+     * Open database and specification file, as necessary
      */
     db_name = argv[bu_optind++];
     if (sfp == NULL)
 	sf_name = argv[bu_optind];
 
     /*
-     *	Initialize the assignment
+     * Initialize the assignment
      */
     assignment = bu_rb_create1("Remapping assignment", compare_curr_ids);
     bu_rb_uniq_on1(assignment);
 
     /*
-     *	Read in the specification for the reassignment
+     * Read in the specification for the reassignment
      */
     read_spec (sfp, sf_name);
 
     /*
-     *	Make the specified reassignment
+     * Make the specified reassignment
      */
-    if ( tankill )
-	tankill_reassign( db_name );
-    else
-    {
+    if (tankill)
+	tankill_reassign(db_name);
+    else {
 	db_init(db_name);
 
 	if (debug)
@@ -921,6 +908,7 @@ main (int argc, char **argv)
     }
     return 0;
 }
+
 
 /*
  * Local Variables:

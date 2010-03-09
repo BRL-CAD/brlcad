@@ -19,10 +19,8 @@
  */
 /** @file pix-spm.c
  *
- *  Turn a pix file into sphere map data.
+ * Turn a pix file into sphere map data.
  *
- *  Phil Dykstra
- *  12 Aug 1986
  */
 
 #include "common.h"
@@ -38,20 +36,21 @@
 int
 main(int argc, char **argv)
 {
-    int	size;
+    int size;
     spm_map_t *mp;
 
-    if ( argc != 3 ) {
-	bu_exit( 1, "usage: pix-spm file.pix size > file.spm\n" );
+    if (argc != 3) {
+	bu_exit(1, "usage: pix-spm file.pix size > file.spm\n");
     }
 
-    size = atoi( argv[2] );
-    mp = spm_init( size, sizeof(RGBpixel) );
-    spm_pix_load( mp, argv[1], size, size );
-    spm_save( mp, "-" );
+    size = atoi(argv[2]);
+    mp = spm_init(size, sizeof(RGBpixel));
+    spm_pix_load(mp, argv[1], size, size);
+    spm_save(mp, "-");
 
     return 0;
 }
+
 
 /*
  * Local Variables:

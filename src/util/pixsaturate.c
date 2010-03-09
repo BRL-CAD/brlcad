@@ -19,27 +19,27 @@
  */
 /** @file pixsaturate.c
  *
- *  A saturation value of 0 gives monochrome,
- *  1.0 gives the original image,
- *  and values larger than 1.0 give a more saturated image.
+ * A saturation value of 0 gives monochrome,
+ * 1.0 gives the original image,
+ * and values larger than 1.0 give a more saturated image.
  *
- *  Author -
- *	Michael John Muuss
- *	(based on a subroutine by Paul Haeberli)
+ * Author -
+ * Michael John Muuss
+ * (based on a subroutine by Paul Haeberli)
  *
- *  Remarks from Haeberli's routine:
- *	saturate-
- *		Change the saturation of a row of pixels.  If sat is
- *	set to 0.0 the result will be monochromatic, if sat is made
- *	1.0, the color will not change, if sat is made greater than 1.0,
- *	the amount of color is increased.
+ * Remarks from Haeberli's routine:
+ * saturate-
+ * Change the saturation of a row of pixels.  If sat is
+ * set to 0.0 the result will be monochromatic, if sat is made
+ * 1.0, the color will not change, if sat is made greater than 1.0,
+ * the amount of color is increased.
  *
- *	The input and output pixel values are in the range 0..255.
+ * The input and output pixel values are in the range 0..255.
  *
- *	This technique requires 6 multiplies, 5 adds and 3 bound
- *	checks per pixel.
+ * This technique requires 6 multiplies, 5 adds and 3 bound
+ * checks per pixel.
  *
- *			Paul Haeberli - 1988
+ * Paul Haeberli - 1988
  */
 
 #include "common.h"
@@ -51,25 +51,25 @@
 #include "bu.h"
 
 
-#define RINTLUM	(79)
-#define GINTLUM	(156)
-#define BINTLUM	(21)
+#define RINTLUM (79)
+#define GINTLUM (156)
+#define BINTLUM (21)
 
-char	buf[3*16*1024];
+char buf[3*16*1024];
 
 
 int
 main(int argc, char **argv)
 {
-    double	sat;			/* saturation */
-    int	bw;			/* monochrome intensity */
-    int	rwgt, gwgt, bwgt;
-    int	rt, gt, bt;
-    int	n;
-    int	nby;
-    unsigned char	*cp;
+    double sat;			/* saturation */
+    int bw;			/* monochrome intensity */
+    int rwgt, gwgt, bwgt;
+    int rt, gt, bt;
+    int n;
+    int nby;
+    unsigned char *cp;
 
-    if ( argc != 2 )  {
+    if (argc != 2) {
 	bu_exit(1, "Usage: pixsaturate saturation\n");
     }
     sat = atof(argv[1]);
@@ -78,9 +78,9 @@ main(int argc, char **argv)
     gwgt = GINTLUM*(1.0-sat);
     bwgt = BINTLUM*(1.0-sat);
 
-    while ( (nby = fread( buf, 1, sizeof(buf), stdin )) > 0 )  {
+    while ((nby = fread(buf, 1, sizeof(buf), stdin)) > 0) {
 	cp = (unsigned char *)buf;
-	for ( n = nby; n > 0; n -= 3 )  {
+	for (n = nby; n > 0; n -= 3) {
 	    rt = cp[0];
 	    gt = cp[1];
 	    bt = cp[2];
@@ -95,7 +95,7 @@ main(int argc, char **argv)
 	    *cp++ = gt;
 	    *cp++ = bt;
 	}
-	if ( fwrite( buf, 1, nby, stdout ) != nby )  {
+	if (fwrite(buf, 1, nby, stdout) != nby) {
 	    perror("fwrite");
 	    return 1;
 	}
@@ -103,6 +103,7 @@ main(int argc, char **argv)
 
     return 0;
 }
+
 
 /*
  * Local Variables:

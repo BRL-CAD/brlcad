@@ -19,17 +19,17 @@
  */
 /** @file pixmorph.c
  *
- *  Utility for morphing two BRL-CAD pix files.
+ * Utility for morphing two BRL-CAD pix files.
  *
- *  Morphs two pix files.  Performs the morph according to the given
- *  line segment correspondence file and two values in [0, 1]: the
- *  first, warpfrac, is a value which describes how far each image is
- *  warped; the second, dissolvefrac, specifies how much of a
- *  cross-dissolve is performed on the two resulting warped images to
- *  produce an output.  Typically, the user sets warpfrac =
- *  dissolvefrac.  See the man page for more details.
+ * Morphs two pix files.  Performs the morph according to the given
+ * line segment correspondence file and two values in [0, 1]: the
+ * first, warpfrac, is a value which describes how far each image is
+ * warped; the second, dissolvefrac, specifies how much of a
+ * cross-dissolve is performed on the two resulting warped images to
+ * produce an output.  Typically, the user sets warpfrac =
+ * dissolvefrac.  See the man page for more details.
  *
- *  For details of the morph algorithm, see
+ * For details of the morph algorithm, see
  *    T. Beier and S. Neely.  Feature-Based Image Metamorphosis.  In
  *    "SIGGRAPH 1992 Computer Graphics Proceedings (volume 26 number 2)"
  *    (Chicago, July 26-31, 1992).
@@ -49,9 +49,9 @@
 #include "fb.h"
 
 /* Adapted from an assignment for
- *    15-463 Advanced Computer Graphics
- *    Professor Paul Heckbert
- *    Carnegie Mellon University
+ * 15-463 Advanced Computer Graphics
+ * Professor Paul Heckbert
+ * Carnegie Mellon University
  */
 
 /* CBLEND is for interpolating characters.  Useful for dissolve. */
@@ -61,9 +61,9 @@
 /* DBLEND is for interpolating doubles.  Useful for warping. */
 #define DBLEND(a, b, dfrac) ((1.0-dfrac)*(double)(a)+dfrac*(double)(b))
 
-#define FIRST  0
+#define FIRST 0
 #define MIDDLE 1
-#define LAST   2
+#define LAST 2
 
 #define EPSILON 10e-8
 
@@ -75,14 +75,14 @@
 /* gprof tells me that 73% of the time to execute was spent in those two
    pow() function calls.  So, we "memoize" a little bit, and don't call those
    pow()s for weights already calculated (they only depend on length and dist,
-   which range from 0 to MAXLEN.)  Truncating them to integers changes things
+   which range from 0 to MAXLEN.) Truncating them to integers changes things
    *very* little...trust me. */
 double weightlookup[MAXLEN];
 
 /* Basically, we throw *everything* that doesn't need to be recalculated
  * into this structure.  Makes things go faster later.
  * "oo" means "one over" -- floating point divides are much more expensive
- *                          than multiplies
+ * than multiplies
  */
 
 struct ldata {
@@ -92,9 +92,11 @@ struct ldata {
     double len_pb;
 };
 
+
 struct lineseg {
     struct ldata s[3];
 };
+
 
 /*
  * cross_dissolve
@@ -325,6 +327,7 @@ lines_read(FILE *fp, long int numlines,
     return numlines;
 }
 
+
 /*
  * lines_headerinfo
  *
@@ -339,6 +342,7 @@ lines_headerinfo(FILE *fp, double *ap, double *bp, double *pp, long int *np)
 	bu_exit (1, NULL);
     }
 }
+
 
 int
 get_args(int argc, char **argv, char **picAnamep, char **picBnamep, char **linesfilenamep,
@@ -377,17 +381,20 @@ get_args(int argc, char **argv, char **picAnamep, char **picBnamep, char **lines
     return 1;
 }
 
+
 int
 pix_readpixels(FILE *fp, long int numpix, unsigned char *pixarray)
 {
     return fread(pixarray, 3, (size_t)numpix, fp);
 }
 
+
 int
 pix_writepixels(long int numpix, unsigned char *pixarray)
 {
     return fwrite(pixarray, 3, (size_t)numpix, stdout);
 }
+
 
 int
 main(int argc, char **argv)
@@ -534,6 +541,7 @@ main(int argc, char **argv)
 
     return 0;
 }
+
 
 /*
  * Local Variables:

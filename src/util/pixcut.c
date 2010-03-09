@@ -24,8 +24,8 @@
  * filled with a background solid color.
  *
  * Author -
- *	Christopher T. Johnson
- *	September 12, 1992
+ * Christopher T. Johnson
+ * September 12, 1992
  *
  * This software is Copyright (C) 1992 by Paladin Software.
  * All rights reserved.
@@ -42,23 +42,23 @@
 #include "bn.h"
 
 
-static long int	org_width = 512L;	/* Default file sizes 512x512 */
-static long int	org_height = 512L;
-static long int	new_width = 512L;
-static long int	new_height = 512L;
-static long int	base_x = 0;		/* Default to lower left corner */
-static long int	base_y = 0;
-static int	Verbose = 0;
-static long int	num_bytes = 3L;
+static long int org_width = 512L;	/* Default file sizes 512x512 */
+static long int org_height = 512L;
+static long int new_width = 512L;
+static long int new_height = 512L;
+static long int base_x = 0;		/* Default to lower left corner */
+static long int base_y = 0;
+static int Verbose = 0;
+static long int num_bytes = 3L;
 
-#define SIZEBACK	256
+#define SIZEBACK 256
 static unsigned char background[SIZEBACK];	/* Holds the fill background color */
 
-static char	stdiobuf[4*1024*1024] = {0};
-static FILE	*input = (FILE *)NULL;
-static char	*in_name = (char *)NULL;
-static int	autosize = 0;
-static int	isfile = 0;
+static char stdiobuf[4*1024*1024] = {0};
+static FILE *input = (FILE *)NULL;
+static char *in_name = (char *)NULL;
+static int autosize = 0;
+static int isfile = 0;
 
 static char usage[] = "\
 pixcut: Copyright (C) 1992 Paladin Software\n\
@@ -81,12 +81,13 @@ parse_color(unsigned char *bak, char *s)
     bak[2] = blue;
 }
 
+
 int
 get_args(int argc, char **argv)
 {
     int c;
 
-    while ( (c = bu_getopt(argc, argv, "vahHC:s:w:n:S:W:N:x:y:#:" )) != EOF) {
+    while ((c = bu_getopt(argc, argv, "vahHC:s:w:n:S:W:N:x:y:#:")) != EOF) {
 	switch (c) {
 	    case 'v':
 		Verbose = 1;
@@ -138,8 +139,8 @@ get_args(int argc, char **argv)
 		return(0);
 	}
     }
-    if (bu_optind >= argc ) {
-	if ( isatty(fileno(stdin))) return(0);
+    if (bu_optind >= argc) {
+	if (isatty(fileno(stdin))) return(0);
 	in_name = "-";
 	input = stdin;
     } else {
@@ -148,7 +149,7 @@ get_args(int argc, char **argv)
 	    if (isatty(fileno(stdin))) return(0);
 	    input = stdin;
 	} else {
-	    if ((input = fopen(in_name, "r")) == NULL ) {
+	    if ((input = fopen(in_name, "r")) == NULL) {
 		perror(in_name);
 		(void)fprintf(stderr,
 			      "pixcut: cannot open \"%s\" for reading\n",
@@ -198,7 +199,7 @@ main(int argc, char **argv)
      * big input buffer to allow decent sized transfers from the
      * filesystem.
      */
-    (void)setvbuf( input, stdiobuf, _IOFBF, sizeof(stdiobuf) );
+    (void)setvbuf(input, stdiobuf, _IOFBF, sizeof(stdiobuf));
 
 /*
  * Make a buffer will hold a single scan line of assuming a worst
@@ -238,7 +239,7 @@ main(int argc, char **argv)
 		}
 		last = "bottom";
 	    }
-	    if (base_x+new_width >org_width ) {
+	    if (base_x+new_width >org_width) {
 		if (last) {
 		    if (comma) {
 			(void)fprintf(stderr, ", %s", last);
@@ -365,6 +366,7 @@ main(int argc, char **argv)
     }
     return(0);
 }
+
 
 /*
  * Local Variables:
