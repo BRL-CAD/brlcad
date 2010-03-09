@@ -115,7 +115,7 @@ typedef ptrdiff_t ssize_t;
 #  ifdef HAVE_STDINT_H
 #    include <stdint.h>
 #  endif
-#  if !defined(UINTPTR_MAX) && !defined(_UINTPTR_T_DEFINED)
+#  if !defined(UINTPTR_MAX)
 #    ifdef HAVE___INT8
 typedef __int8 int8_t;
 typedef __int16 int16_t;
@@ -126,7 +126,9 @@ typedef unsigned __int8 uint8_t;
 typedef unsigned __int16 uint16_t;
 typedef unsigned __int32 uint32_t;
 typedef unsigned __int64 uint64_t;
+#      if !defined(_UINTPTR_T_DEFINED)
 typedef uint64_t uintptr_t;
+#      endif
 #    else
 typedef char int8_t;
 typedef short int16_t;
@@ -137,7 +139,9 @@ typedef unsigned char uint8_t;
 typedef unsigned short  uint16_t;
 typedef unsigned int uint32_t;
 typedef unsigned long long uint64_t;
+#      if !defined(_UINTPTR_T_DEFINED)
 typedef unsigned long long uintptr_t;
+#      endif
 #    endif
 #    define HAVE_INT8_T 1
 #    define HAVE_INT16_T 1
