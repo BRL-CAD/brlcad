@@ -84,7 +84,6 @@ noinst_HEADERS = \
 	sysv.h
 
 EXTRA_DIST = \
-	on_nurb.h \
 	sed4
 
 if ONLY_BENCHMARK
