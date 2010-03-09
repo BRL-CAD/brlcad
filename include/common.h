@@ -110,13 +110,23 @@ typedef ptrdiff_t ssize_t;
 
 /* C99 says uintptr_t is an optional type, so make sure something is
  * provided.  make sure all of the C99 stdint types are provided.
+ *
+ * make sure we get the limit macros for C++ as well even though
+ * they're not in the standard via __STDC_LIMIT_MACROS.
+ */
  */
 #if !defined(HAVE_UINTPTR_T) && !defined(uintptr_t)
+#  ifndef __STDC_LIMIT_MACROS
+#    define __STDC_LIMIT_MACROS 1
+#  endif
 #  ifdef HAVE_STDINT_H
 #    include <stdint.h>
 #  endif
+#  ifdef HAVE_INTTYPES_H
+#    include <inttypes.h>
+#  endif
 #  if !defined(UINTPTR_MAX)
-#    ifdef HAVE___INT8
+#    if defined(_I64_MIN)
 typedef __int8 int8_t;
 typedef __int16 int16_t;
 typedef __int32 int32_t;
