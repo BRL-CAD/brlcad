@@ -181,8 +181,6 @@ typedef unsigned int gid_t;
 typedef unsigned int uid_t;
 
 #define HAVE___INT8		1
-#define HAVE_UINT64_T		1
-#define HAVE_UINTPR_T		1
 
 /*
  * for chmod()
