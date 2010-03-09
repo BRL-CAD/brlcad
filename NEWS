@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2010-02-XX  Release 7.16.8                                     ---
 ----------------------------------------------------------------------
 
+* integration of mged authorship dedication into archer - Bob Parker
 * improved behavior of mged initialization options - Bob Parker
 * fixed namspace initialization failure in rtwizard - Bob Parker
 * removed the pcd-pix image conversion tool - Sean Morrison
