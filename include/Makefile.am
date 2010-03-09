@@ -12,6 +12,7 @@ brlcadinclude_required = \
 	config_win.h \
 	ged.h \
 	magic.h \
+	pstdint.h \
 	raytrace.h \
 	rtfunc.h \
 	rtgeom.h \
