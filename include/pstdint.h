@@ -303,7 +303,7 @@
 #ifndef UINT8_MAX
 # define UINT8_MAX 0xff
 #endif
-#ifndef uint8_t
+#if !defined(uint8_t) && !defined(_UINT8_T)
 # if (UCHAR_MAX == UINT8_MAX) || defined (S_SPLINT_S)
     typedef unsigned char uint8_t;
 #   define UINT8_C(v) ((uint8_t) v)
@@ -318,7 +318,7 @@
 #ifndef INT8_MIN
 # define INT8_MIN INT8_C(0x80)
 #endif
-#ifndef int8_t
+#if !defined(int8_t) && !defined(_INT8_t)
 # if (SCHAR_MAX == INT8_MAX) || defined (S_SPLINT_S)
     typedef signed char int8_t;
 #   define INT8_C(v) ((int8_t) v)
@@ -330,7 +330,7 @@
 #ifndef UINT16_MAX
 # define UINT16_MAX 0xffff
 #endif
-#ifndef uint16_t
+#if !defined(uint16_t) && !defined(_UINT16_T)
 #if (UINT_MAX == UINT16_MAX) || defined (S_SPLINT_S)
   typedef unsigned int uint16_t;
 # ifndef PRINTF_INT16_MODIFIER
@@ -354,7 +354,7 @@
 #ifndef INT16_MIN
 # define INT16_MIN INT16_C(0x8000)
 #endif
-#ifndef int16_t
+#if !defined(int16_t) && !defined(_INT16_T)
 #if (INT_MAX == INT16_MAX) || defined (S_SPLINT_S)
   typedef signed int int16_t;
 # define INT16_C(v) ((int16_t) (v))
@@ -375,12 +375,12 @@
 #ifndef UINT32_MAX
 # define UINT32_MAX (0xffffffffUL)
 #endif
-#ifndef uint32_t
-#if (ULONG_MAX == UINT32_MAX) || defined (S_SPLINT_S)
-  typedef unsigned long uint32_t;
-# define UINT32_C(v) v ## UL
+#if !defined(uint32_t) && !defined(_UINT32_T)
+#if (USHRT_MAX == UINT32_MAX)
+  typedef unsigned short uint32_t;
+# define UINT32_C(v) ((unsigned short) (v))
 # ifndef PRINTF_INT32_MODIFIER
-#  define PRINTF_INT32_MODIFIER "l"
+#  define PRINTF_INT32_MODIFIER ""
 # endif
 #elif (UINT_MAX == UINT32_MAX)
   typedef unsigned int uint32_t;
@@ -388,11 +388,11 @@
 #  define PRINTF_INT32_MODIFIER ""
 # endif
 # define UINT32_C(v) v ## U
-#elif (USHRT_MAX == UINT32_MAX)
-  typedef unsigned short uint32_t;
-# define UINT32_C(v) ((unsigned short) (v))
+#elif (ULONG_MAX == UINT32_MAX) || defined (S_SPLINT_S)
+  typedef unsigned long uint32_t;
+# define UINT32_C(v) v ## UL
 # ifndef PRINTF_INT32_MODIFIER
-#  define PRINTF_INT32_MODIFIER ""
+#  define PRINTF_INT32_MODIFIER "l"
 # endif
 #else
 #error "Platform not supported"
@@ -405,12 +405,12 @@
 #ifndef INT32_MIN
 # define INT32_MIN INT32_C(0x80000000)
 #endif
-#ifndef int32_t
-#if (LONG_MAX == INT32_MAX) || defined (S_SPLINT_S)
-  typedef signed long int32_t;
-# define INT32_C(v) v ## L
+#if !defined(int32_t) && !defined(_INT32_T)
+#if (SHRT_MAX == INT32_MAX)
+  typedef signed short int32_t;
+# define INT32_C(v) ((short) (v))
 # ifndef PRINTF_INT32_MODIFIER
-#  define PRINTF_INT32_MODIFIER "l"
+#  define PRINTF_INT32_MODIFIER ""
 # endif
 #elif (INT_MAX == INT32_MAX)
   typedef signed int int32_t;
@@ -418,11 +418,11 @@
 # ifndef PRINTF_INT32_MODIFIER
 #  define PRINTF_INT32_MODIFIER ""
 # endif
-#elif (SHRT_MAX == INT32_MAX)
-  typedef signed short int32_t;
-# define INT32_C(v) ((short) (v))
+#elif (LONG_MAX == INT32_MAX) || defined (S_SPLINT_S)
+  typedef signed long int32_t;
+# define INT32_C(v) v ## L
 # ifndef PRINTF_INT32_MODIFIER
-#  define PRINTF_INT32_MODIFIER ""
+#  define PRINTF_INT32_MODIFIER "l"
 # endif
 #else
 #error "Platform not supported"
@@ -661,12 +661,14 @@ typedef uint_least32_t uint_fast32_t;
  *  (u)intptr_t types and limits.
  */
 
-#if defined (_MSC_VER) && defined (_UINTPTR_T_DEFINED)
+#if defined (_UINTPTR_T)
+# define STDINT_H_UINTPTR_T_DEFINED
+#elif defined (_MSC_VER) && defined (_UINTPTR_T_DEFINED)
 # define STDINT_H_UINTPTR_T_DEFINED
 #endif
 
 #ifndef STDINT_H_UINTPTR_T_DEFINED
-# if defined (__alpha__) || defined (__ia64__) || defined (__x86_64__) || defined (_WIN64)
+# if defined (__alpha__) || defined (__ia64__) || defined (__x86_64__) || defined (_WIN64) || defined (__ppc64__)
 #  define stdint_intptr_bits 64
 # elif defined (__WATCOMC__) || defined (__TURBOC__)
 #  if defined(__TINY__) || defined(__SMALL__) || defined(__MEDIUM__)
@@ -674,10 +676,12 @@ typedef uint_least32_t uint_fast32_t;
 #  else
 #    define stdint_intptr_bits 32
 #  endif
-# elif defined (__i386__) || defined (_WIN32) || defined (WIN32)
+# elif defined (__i386__) || defined (_WIN32) || defined (WIN32) || defined (__ppc__)
 #  define stdint_intptr_bits 32
 # elif defined (__INTEL_COMPILER)
 /* TODO -- what will Intel do about x86-64? */
+# else
+/* #error "Platform probably not supported" */
 # endif
 
 # ifdef stdint_intptr_bits
@@ -715,6 +719,8 @@ typedef uint_least32_t uint_fast32_t;
   typedef ptrdiff_t intptr_t;
 # endif
 # define STDINT_H_UINTPTR_T_DEFINED
+# define _INTPTR_T
+# define _UINTPTR_T
 #endif
 
 /*
@@ -741,12 +747,12 @@ typedef uint_least32_t uint_fast32_t;
 #define glue3_aux(x,y,z) x ## y ## z
 #define glue3(x,y,z) glue3_aux(x,y,z)
 
-#define DECLU(bits) glue3(uint,bits,_t) glue3(u,bits,=) glue3(UINT,bits,_C) (0);
-#define DECLI(bits) glue3(int,bits,_t) glue3(i,bits,=) glue3(INT,bits,_C) (0);
+#define DECLU(bits) glue3(uint,bits,_t) glue3(u,bits,) = glue3(UINT,bits,_C) (0);
+#define DECLI(bits) glue3(int,bits,_t) glue3(i,bits,) = glue3(INT,bits,_C) (0);
 
 #define DECL(us,bits) glue3(DECL,us,) (bits)
 
-#define TESTUMAX(bits) glue3(u,bits,=) glue3(~,u,bits); if (glue3(UINT,bits,_MAX) glue3(!=,u,bits)) printf ("Something wrong with UINT%d_MAX\n", bits)
+#define TESTUMAX(bits) glue3(u,bits,) = ~glue3(,u,bits); if (glue3(UINT,bits,_MAX) != glue3(,u,bits)) printf ("Something wrong with UINT%d_MAX\n", bits)
  
 int main () {
 	DECL(I,8)
