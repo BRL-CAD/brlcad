@@ -3327,19 +3327,19 @@ static yyconst yy_state_type yy_NUL_trans[167] =
   * information.
   */
 
-  #ifdef HAVE_CONFIG_H
-  #include "brlcad_config.h"
-  #endif
+  #include "common.h"
+
+  #include "bio.h"
 
   #include "obj_parser_state.h"
-  
+
   #include <sys/types.h>
 
   #include "obj_grammar.h"
 
   #include <stdlib.h>
   #include <limits.h>
-  
+
   #if NO_POSIX_READ
   #define YY_INPUT(buf,result,max_size) \
     errno=0; \

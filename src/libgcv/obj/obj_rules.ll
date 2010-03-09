@@ -1,5 +1,5 @@
 %{
-  /* 
+  /*
   * Copyright (c) 1995-2010 United States Government as represented by
   * the U.S. Army Research Laboratory.
   *
@@ -17,19 +17,19 @@
   * information.
   */
 
-  #ifdef HAVE_CONFIG_H
-  #include "brlcad_config.h"
-  #endif
+  #include "common.h"
+
+  #include "bio.h"
 
   #include "obj_parser_state.h"
-  
+
   #include <sys/types.h>
 
   #include "obj_grammar.h"
 
   #include <stdlib.h>
   #include <limits.h>
-  
+
   #if NO_POSIX_READ
   #define YY_INPUT(buf,result,max_size) \
     errno=0; \
@@ -134,7 +134,7 @@ comment     "#"[^"\r\n""\n"]*{newline}
                       BEGIN(id_list_state);
                       return GROUP;
                     }
-                    
+
 {object}            {
                       BEGIN(id_state);
                       return OBJECT;
@@ -185,7 +185,7 @@ comment     "#"[^"\r\n""\n"]*{newline}
 {d_interp}          {
                       return D_INTERP;
                     }
-                    
+
 {lod}               {
                       return LOD;
                     }
@@ -207,7 +207,7 @@ comment     "#"[^"\r\n""\n"]*{newline}
 {off}               {
                       return OFF;
                     }
-                    
+
 {v_reference}       {
                       if(detail::split_reference(yytext,yylval->reference))
                         return V_REFERENCE;
@@ -265,7 +265,7 @@ comment     "#"[^"\r\n""\n"]*{newline}
 
 {off}               {
                       // off is a valid token, not an id
-                      BEGIN(INITIAL);                      
+                      BEGIN(INITIAL);
                       return OFF;
                     }
 
@@ -321,16 +321,16 @@ namespace detail {
 bool split_reference(const char *s, int val[3])
 {
   memset(val,sizeof(int)*3,0);
-  
+
   char *endptr;
   val[0] = strtol(s,&endptr,0);
   if(*endptr == 0)
     return true;
-  
+
   if(*endptr != '/')
     return false;
   ++endptr;
-  
+
   val[1] = strtol(endptr,&endptr,0);
   if(*endptr == 0)
     return true;

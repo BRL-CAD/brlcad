@@ -95,6 +95,9 @@
 #define HAVE_TK 1
 #define HAVE_X11_TYPES 1
 
+#define YY_NO_UNISTD_H		1
+#define YYTOKENTYPE		1
+
 /*
  * functions declared in io.h
  */
@@ -152,6 +155,8 @@
 
 #define fmax __max
 #define ioctl ioctlsocket
+
+#define SHARED_PTR_BOOST	1
 
 /* we need the function pointer of this */
 static int isblank(int c) {

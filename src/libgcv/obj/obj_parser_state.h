@@ -19,9 +19,7 @@
 #ifndef ARL_OBJ_PARSER_STATE_H
 #define ARL_OBJ_PARSER_STATE_H
 
-#ifdef HAVE_CONFIG_H
-#include "brlcad_config.h"
-#endif
+#include "common.h"
 
 #include "obj_parser.h"
 
