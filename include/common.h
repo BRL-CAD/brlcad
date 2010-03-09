@@ -114,7 +114,6 @@ typedef ptrdiff_t ssize_t;
  * make sure we get the limit macros for C++ as well even though
  * they're not in the standard via __STDC_LIMIT_MACROS.
  */
- */
 #if !defined(HAVE_UINTPTR_T) && !defined(uintptr_t)
 #  ifndef __STDC_LIMIT_MACROS
 #    define __STDC_LIMIT_MACROS 1
@@ -140,7 +139,7 @@ typedef unsigned __int64 uint64_t;
 typedef uint64_t uintptr_t;
 #      endif
 #    else
-typedef char int8_t;
+typedef signed char int8_t;
 typedef short int16_t;
 typedef int int32_t;
 typedef long long int64_t;
