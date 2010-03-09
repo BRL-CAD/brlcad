@@ -2313,6 +2313,19 @@ else
     bc_build_step="no"
 fi
 
+# check for flex version
+modern_flex="no"
+if test "x$build_parsers" = "xyes" ; then
+    if test "$LEX" = flex ; then
+	FLEX_VERSION="`$LEX --version | sed 's/flex\ //g'`"
+	AX_COMPARE_VERSION([2.5.32],[gt],[$FLEX_VERSION])
+	if test "$ax_compare_version" = "true"; then	
+	   AC_MSG_WARN([Found flex version < 2.5.33, enabling static builds for Lex files requiring modern parsers])
+	else
+	   modern_flex="yes"
+	fi
+    fi
+fi
 
 dnl *** libpng ***
 png_works=no
@@ -3757,6 +3770,7 @@ AM_CONDITIONAL(BUILD_RTGL, [test "x$build_rtgl" = "xyes"])
 AM_CONDITIONAL(WITH_JAVA, [test "x$build_against_java" != "xno"])
 AM_CONDITIONAL(WITH_PROE, [test "x$build_against_proe" != "xno"])
 AM_CONDITIONAL(WITH_PARSERS, [test "x$build_parsers" != "xno"])
+AM_CONDITIONAL(WITH_MODERN_PARSERS, [test "x$modern_flex" != "xno"])
 
 AM_CONDITIONAL(BUILD_DOCS, [test "x$docbook_processing" != "xno"])
 AM_CONDITIONAL(BUILD_PDF_DOCS, [test "x$docbook_pdf_processing" != "xno"])
