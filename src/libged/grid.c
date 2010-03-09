@@ -218,7 +218,7 @@ ged_grid(struct ged	*gedp,
 	    return GED_OK;
 	}
 
-	bu_vls_printf(&gedp->ged_result_str, "The '%s color' command requires 0 or 3 arguments\n", command);
+	bu_vls_printf(&gedp->ged_result_str, "The '%s anchor' command requires 0 or 3 arguments\n", command);
 	return GED_ERROR;
     }
 
