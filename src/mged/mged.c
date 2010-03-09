@@ -388,6 +388,7 @@ main(int argc, char *argv[])
 		 * I'm temporarily hijacking it for the new gui until
 		 * it becomes the default.
 		 */
+		bu_log("WARNING: -o is a developer option and subject to change.  Do not use.\n");
 		old_mged_gui = 0;
 		break;
 	    default:
