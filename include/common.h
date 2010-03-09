@@ -109,19 +109,46 @@ typedef ptrdiff_t ssize_t;
 #endif
 
 /* C99 says uintptr_t is an optional type, so make sure something is
- * provided.
+ * provided.  make sure all of the C99 stdint types are provided.
  */
 #if !defined(HAVE_UINTPTR_T) && !defined(uintptr_t)
 #  ifdef HAVE_STDINT_H
 #    include <stdint.h>
 #  endif
 #  if !defined(UINTPTR_MAX) && !defined(_UINTPTR_T_DEFINED)
-#    ifdef HAVE_UINT64_T
+#    ifdef HAVE___INT8
+typedef __int8 int8_t;
+typedef __int16 int16_t;
+typedef __int32 int32_t;
+typedef __int64 int64_t;
+typedef __int64 intmax_t;
+typedef unsigned __int8 uint8_t;
+typedef unsigned __int16 uint16_t;
+typedef unsigned __int32 uint32_t;
+typedef unsigned __int64 uint64_t;
 typedef uint64_t uintptr_t;
 #    else
+typedef char int8_t;
+typedef short int16_t;
+typedef int int32_t;
+typedef long long int64_t;
+typedef int64_t intmax_t;
+typedef unsigned char uint8_t;
+typedef unsigned short  uint16_t;
+typedef unsigned int uint32_t;
+typedef unsigned long long uint64_t;
 typedef unsigned long long uintptr_t;
 #    endif
+#    define HAVE_INT8_T 1
+#    define HAVE_INT16_T 1
+#    define HAVE_INT32_T 1
+#    define HAVE_INT64_T 1
+#    define HAVE_UINT8_T 1
+#    define HAVE_UINT16_T 1
+#    define HAVE_UINT32_T 1
 #    define HAVE_UINT64_T 1
+#    define HAVE_INTMAX_T 1
+#    define HAVE_UINTPTR_T 1
 #  endif
 #endif
 
