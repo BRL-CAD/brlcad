@@ -74,7 +74,6 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    bu_strlcpy(_ged_tmpcomb, _ged_tmpcomb_init, sizeof(_ged_tmpcomb));
     dp = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_QUIET);
     if (dp != DIR_NULL) {
 	if (!(dp->d_flags & DIR_COMB)) {

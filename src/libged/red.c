@@ -40,8 +40,7 @@ static int ged_build_comb(struct ged *gedp, struct rt_comb_internal *comb, struc
 static int ged_write_comb(struct ged *gedp, const struct rt_comb_internal *comb, const char *name);
 
 char _ged_tmpfil[MAXPATHLEN] = {0};
-char _ged_tmpcomb[17];
-char *_ged_tmpcomb_init = "ged_tmp.aXXXXXX";
+const char _ged_tmpcomb[16] = { 'g', 'e', 'd', '_', 't', 'm', 'p', '.', 'a', 'X', 'X', 'X', 'X', 'X', '\0' };
 char _delims[] = " \t/";	/* allowable delimiters */
 
 int
@@ -79,8 +78,6 @@ ged_red(struct ged *gedp, int argc, const char *argv[])
 
     GED_DB_LOOKUP(gedp, dp, argv[1], LOOKUP_QUIET, GED_ERROR);
     GED_CHECK_COMB(gedp, dp, GED_ERROR);
-
-    bu_strlcpy(_ged_tmpcomb, _ged_tmpcomb_init, sizeof(_ged_tmpcomb));
 
     if (dp != DIR_NULL) {
 	if (!(dp->d_flags & DIR_COMB)) {
