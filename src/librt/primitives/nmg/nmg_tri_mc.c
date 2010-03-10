@@ -63,6 +63,8 @@
 #include "raytrace.h"
 #include "plot3.h"
 
+#define MAX_INTERSECTS 1024
+
 /*
  * Table data acquired from Paul Borke's page at
  * http://local.wasp.uwa.edu.au/~pbourke/geometry/polygonise/
@@ -387,6 +389,149 @@ rt_nmg_mc_realize_cube(struct shell *s, int pv, point_t *p, point_t *edges, cons
     }
 
     return fo;
+}
+
+static fastf_t bin(fastf_t val, fastf_t step) {return step*floor(val/step);}
+
+struct whack {
+	point_t hit;
+	vect_t norm;
+	fastf_t dist;
+	int in;	/* 1 for inhit, 2 for outhit, -1 to terminate */
+};
+
+static int
+bangbang(struct application * a, struct partition *PartHeadp, struct seg * s)
+{
+    struct partition *pp;
+    struct whack *t = (struct whack *)a->a_uptr;
+    int intersects = 0;
+
+    s=s;
+
+#define MEH(dir,code) RT_HIT_NORM(pp->pt_##dir##hit,pp->pt_##dir##seg->seg_stp,a->a_ray); VJOIN1(t->hit,a->a_ray.r_pt,pp->pt_##dir##hit->hit_dist,a->a_ray.r_dir); VMOVE(t->norm,pp->pt_##dir##hit->hit_normal); t->dist=pp->pt_##dir##hit->hit_dist; t->in=code; t++;
+
+    for (pp = PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw) {
+	MEH(in,1);
+	MEH(out,2);
+	intersects += 2;
+	if(intersects >= MAX_INTERSECTS)
+	    bu_bomb("Too many intersects in marching cubes");
+    }
+    t->in = -1;
+    return 0;
+}
+
+static int
+missed(struct application *a) 
+{
+    struct whack *t = (struct whack *)a->a_uptr;
+    t->in = -1;
+    return 0;
+}
+
+/* rtip needs to be valid, s is where the results are stashed */
+int
+rt_nmg_mc_pewpewpew (struct shell *s, struct rt_i *rtip, const struct db_full_path *pathp, struct rt_tess_tol *ttol, struct bn_tol *tol)
+{
+    struct whack sw[MAX_INTERSECTS], nw[MAX_INTERSECTS], se[MAX_INTERSECTS], ne[MAX_INTERSECTS];
+
+    struct application a;
+    fastf_t x,y, endx, endy;
+    fastf_t step = 0.0;
+    int shots = 0;
+
+    RT_APPLICATION_INIT(&a);
+    a.a_rt_i = rtip;
+    a.a_rt_i->useair = 1;
+    a.a_hit = bangbang;
+    a.a_miss = missed;
+    a.a_onehit = 99;
+
+    rt_gettree( a.a_rt_i, db_path_to_string(pathp) );
+    rt_prep( a.a_rt_i );
+
+    /* use rel value * bounding spheres diameter or the abs tolerance */
+    step = NEAR_ZERO(ttol->abs, tol->dist) ? 0.5 * a.a_rt_i->rti_radius * ttol->rel : ttol->abs;
+
+    VSET(a.a_ray.r_dir, 0, 0, 1);
+
+    x=bin(a.a_rt_i->mdl_min[X], step);
+    endx=bin(a.a_rt_i->mdl_max[X], step) + step;
+    endy=bin(a.a_rt_i->mdl_max[Y], step) + step;
+    for(; x<endx; x+=step) {
+	y=bin(a.a_rt_i->mdl_min[Y], step);
+	for(; y<a.a_rt_i->mdl_max[Y]; y+=step) {
+	    struct whack *swp = sw, *nwp = nw, *sep = se, *nep = ne;
+	    ++shots;
+
+	    a.a_uptr = swp; VSET(a.a_ray.r_pt, x, y, a.a_rt_i->mdl_min[Z]); rt_shootray(&a); 
+	    a.a_uptr = sep; VSET(a.a_ray.r_pt, x+step, y, a.a_rt_i->mdl_min[Z]); rt_shootray(&a);
+	    a.a_uptr = nwp; VSET(a.a_ray.r_pt, x, y+step, a.a_rt_i->mdl_min[Z]); rt_shootray(&a);
+	    a.a_uptr = nep; VSET(a.a_ray.r_pt, x+step, y+step, a.a_rt_i->mdl_min[Z]); rt_shootray(&a);
+
+	    while(swp->in>0 || sep->in>0 || nwp->in>0 || nep->in>0) {
+		unsigned char pv;
+		point_t p[8];
+		point_t edges[12];
+		fastf_t b = +INFINITY;
+
+		/* figure out the first hit distance and bin it */
+		if(swp->in>0 && swp->dist < b) b = swp->dist;
+		if(sep->in>0 && sep->dist < b) b = sep->dist;
+		if(nwp->in>0 && nwp->dist < b) b = nwp->dist;
+		if(nep->in>0 && nep->dist < b) b = nep->dist;
+		b = bin(b+a.a_rt_i->mdl_min[Z], step);
+
+		/* set the points using the binned first hit distance */
+		VSET(p[0], x, y, b+step);
+		VSET(p[1], x+step, y, b+step);
+		VSET(p[2], x+step, y, b);
+		VSET(p[3], x, y, b);
+		VSET(p[4], x, y+step, b+step);
+		VSET(p[5], x+step, y+step, b+step);
+		VSET(p[6], x+step, y+step, b);
+		VSET(p[7], x, y+step, b);
+
+		/* buid the point vector */
+		pv = 0;
+		if(swp->in==1) pv |= 1<<0;
+		if(swp->in==2) pv |= 1<<3;
+		if(sep->in==1) pv |= 1<<1;
+		if(sep->in==2) pv |= 1<<2;
+		if(nwp->in==1) pv |= 1<<4;
+		if(nwp->in==2) pv |= 1<<7;
+		if(nep->in==1) pv |= 1<<5;
+		if(nep->in==2) pv |= 1<<6;
+
+		/* figure out needed edges, shoot down and across as needed */
+		if( (pv&0x0?1:0) != (pv&0x1?1:0) ) VADD2SCALE(edges[ 0], p[0], p[1], 0.5);
+		if( (pv&0x1?1:0) != (pv&0x2?1:0) ) VMOVE(edges[1], sep->hit);
+		if( (pv&0x2?1:0) != (pv&0x3?1:0) ) VADD2SCALE(edges[ 2], p[2], p[3], 0.5);
+		if( (pv&0x3?1:0) != (pv&0x0?1:0) ) VMOVE(edges[ 3], swp->hit);
+		if( (pv&0x4?1:0) != (pv&0x5?1:0) ) VADD2SCALE(edges[ 4], p[4], p[5], 0.5);
+		if( (pv&0x5?1:0) != (pv&0x6?1:0) ) VMOVE(edges[ 5], nep->hit);
+		if( (pv&0x6?1:0) != (pv&0x7?1:0) ) VADD2SCALE(edges[ 6], p[6], p[7], 0.5);
+		if( (pv&0x7?1:0) != (pv&0x4?1:0) ) VMOVE(edges[ 7], nwp->hit);
+		if( (pv&0x0?1:0) != (pv&0x4?1:0) ) VADD2SCALE(edges[ 8], p[0], p[4], 0.5);
+		if( (pv&0x1?1:0) != (pv&0x5?1:0) ) VADD2SCALE(edges[ 9], p[1], p[5], 0.5);
+		if( (pv&0x2?1:0) != (pv&0x6?1:0) ) VADD2SCALE(edges[10], p[2], p[6], 0.5);
+		if( (pv&0x3?1:0) != (pv&0x7?1:0) ) VADD2SCALE(edges[11], p[3], p[7], 0.5);
+
+		/* stuff it into an nmg shell */
+		if(pv != 0 && pv != 0xff && s)	/* && s should go away. */
+		    rt_nmg_mc_realize_cube(s, pv, p, edges, tol);
+
+		if(swp->in>0 && swp->hit[Z] < b+step) swp++;
+		if(sep->in>0 && sep->hit[Z] < b+step) sep++;
+		if(nep->in>0 && nep->hit[Z] < b+step) nep++;
+		if(nwp->in>0 && nwp->hit[Z] < b+step) nwp++;
+	    }
+	}
+    }
+    /* free the rt stuff we don't need anymore */
+
+    return shots;
 }
 
 void
