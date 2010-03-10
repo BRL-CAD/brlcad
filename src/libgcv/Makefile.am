@@ -50,7 +50,7 @@ obj_grammar.h: obj_grammar.cc
 libgcv_nil_la_SOURCES = \
 	$(OBJ_SRCS) \
 	region_end.c \
-	region_start_mc.c
+	region_end_mc.c
 
 EXTRA_DIST = \
 	$(OBJ_extradist) \
