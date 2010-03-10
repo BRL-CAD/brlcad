@@ -2317,7 +2317,7 @@ fi
 modern_flex="no"
 if test "x$build_parsers" = "xyes" ; then
     if test "$LEX" = flex ; then
-	FLEX_VERSION="`$LEX --version | sed 's/flex\ //g'`"
+	FLEX_VERSION="`$LEX --version | sed 's/flex\ //g' | sed 's/version\ //g`"
 	AX_COMPARE_VERSION([2.5.32],[gt],[$FLEX_VERSION])
 	if test "$ax_compare_version" = "true"; then	
 	   AC_MSG_WARN([Found flex version < 2.5.33, enabling static builds for Lex files requiring modern parsers])
