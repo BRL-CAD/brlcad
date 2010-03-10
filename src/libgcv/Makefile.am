@@ -47,18 +47,18 @@ OBJ_extradist = \
 
 endif
 
-obj_rules.cc: obj/obj_rules.ll
+obj_rules.cc: obj/obj_rules.ll obj_grammar.h
 	$(LEX) -Pobj_parser_ -oobj_rules.cc --header-file=obj_rules.h $^
 
-obj_rules.h: obj_rules.cc
+obj_grammar.cc: obj/obj_grammar.yy
+	$(top_srcdir)/misc/ylwrap $^ y.tab.c obj_grammar.cc y.tab.h obj_grammar.h y.output obj_grammar.output -- $(YACC) -d -p obj_parser_
+
+obj_grammar.h: obj_grammar.cc
 
 libgcv_nil_la_SOURCES = \
 	$(OBJ_SRCS) \
 	region_end.c \
 	region_start_mc.c
-
-BUILT_SOURCES = \
-	$(OBJ_BUILT)
 
 EXTRA_DIST = \
 	$(OBJ_extradist) \
@@ -76,7 +76,11 @@ noinst_HEADERS = \
 	obj/obj_parser.h \
 	obj/obj_parser_state.h
 
-DISTCLEANFILES = $(BUILT_SOURCES)
+DISTCLEANFILES = \
+	obj_rules.cc \
+	obj_rules.h \
+	obj_grammar.cc \
+	obj_grammar.h
 
 AM_CFLAGS = ${STRICT_FLAGS}
 
