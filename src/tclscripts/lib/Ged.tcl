@@ -342,11 +342,13 @@ package provide cadwidgets::Ged 1.0
 	method pane_saveview {_pane args}
 	method pane_sca {_pane args}
 	method pane_scale_mode {_pane args}
+	method pane_screen2view {args}
 	method pane_set_coord {_pane args}
 	method pane_set_fb_mode {_pane args}
 	method pane_setview {_pane args}
 	method pane_size {_pane args}
 	method pane_slew {_pane args}
+	method pane_snap_view {_pane args}
 	method pane_tra {_pane args}
 	method pane_translate_mode {_pane args}
 	method pane_v2m_point {_pane args}
@@ -441,6 +443,7 @@ package provide cadwidgets::Ged 1.0
 	method showmats {args}
 	method size {args}
 	method slew {args}
+	method snap_view {args}
 	method solids {args}
 	method solids_on_ray {args}
 	method summary {args}
@@ -1253,7 +1256,10 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::grid {args} {
-    eval $mGed grid $itk_component($itk_option(-pane)) $args
+    eval $mGed grid $itk_component(ur) $args
+    eval $mGed grid $itk_component(ul) $args
+    eval $mGed grid $itk_component(ll) $args
+    eval $mGed grid $itk_component(lr) $args
 }
 
 ::itcl::body cadwidgets::Ged::hide {args} {
@@ -1866,6 +1872,10 @@ package provide cadwidgets::Ged 1.0
     eval $mGed scale_mode $itk_component($_pane) $args
 }
 
+::itcl::body cadwidgets::Ged::pane_screen2view {_pane args} {
+    eval $mGed screen2view $itk_component($_pane) $args
+}
+
 ::itcl::body cadwidgets::Ged::pane_set_coord {_pane args} {
     eval $mGed set_coord $itk_component($_pane) $args
 }
@@ -1884,6 +1894,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::pane_slew {_pane args} {
     eval $mGed slew $itk_component($_pane) $args
+}
+
+::itcl::body cadwidgets::Ged::pane_snap_view {_pane args} {
+    eval $mGed snap_view $itk_component($_pane) $args
 }
 
 ::itcl::body cadwidgets::Ged::pane_tra {_pane args} {
@@ -2328,6 +2342,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::slew {args} {
     eval $mGed slew $itk_component($itk_option(-pane)) $args
+}
+
+::itcl::body cadwidgets::Ged::snap_view {args} {
+    eval $mGed snap_view $itk_component($itk_option(-pane)) $args
 }
 
 ::itcl::body cadwidgets::Ged::solids {args} {
@@ -3926,6 +3944,7 @@ package provide cadwidgets::Ged 1.0
     $help add showmats		{{path}	{show xform matrices along path}}
     $help add size		{{vsize} {set/get the view size}}
     $help add slew		{{"x y"} {slew the view}}
+    $help add snap_view		{{vx vy} {snap the view to grid}}
     $help add solids		{{file object(s)} {returns an ascii summary of solids}}
     $help add summary		{{[s r g]}	{count/list solid/reg/groups}}
     $help add sync		{{} {sync the in memory database to disk}}
