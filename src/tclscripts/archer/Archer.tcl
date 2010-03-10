@@ -319,11 +319,11 @@ package provide Archer 1.0
 	method beginObjScale {}
 	method beginObjTranslate {}
 	method beginObjCenter {}
-	method endObjCenter {_dm _obj}
+	method endObjCenter {_obj}
 	method endObjRotate {_dm _obj}
 	method endObjScale {_dm _obj}
-	method endObjTranslate {_dm _obj}
-	method handleObjCenter {_obj _x _y}
+	method endObjTranslate {_dm _obj _mx _my}
+	method handleObjCenter {_dm _obj _mx _my}
 
 
 	# Object Views Section
@@ -5547,7 +5547,7 @@ package provide Archer 1.0
 	    bind $win <1> "$itk_component(ged) pane_otranslate_mode $dname $obj %x %y; break"
 	}
 
-	bind $win <ButtonRelease-1> "[::itcl::code $this endObjTranslate $dname $obj]; break"
+	bind $win <ButtonRelease-1> "[::itcl::code $this endObjTranslate $dname $obj %x %y]; break"
     }
 }
 
@@ -5572,12 +5572,12 @@ package provide Archer 1.0
 
     foreach dname {ul ur ll lr} {
 	set win [$itk_component(ged) component $dname]
-	bind $win <1> "[::itcl::code $this handleObjCenter $obj %x %y]; break"
-	bind $win <ButtonRelease-1> "[::itcl::code $this endObjCenter $dname $obj]; break"
+	bind $win <1> "[::itcl::code $this handleObjCenter $dname $obj %x %y]; break"
+	bind $win <ButtonRelease-1> "[::itcl::code $this endObjCenter $obj]; break"
     }
 }
 
-::itcl::body Archer::endObjCenter {dname obj} {
+::itcl::body Archer::endObjCenter {_obj} {
     if {![info exists itk_component(ged)]} {
 	return
     }
@@ -5585,8 +5585,8 @@ package provide Archer 1.0
     updateObjSave
     initEdit 0
 
-    set center [$itk_component(ged) ocenter $obj]
-    addHistory "ocenter $center"
+    set center [$itk_component(ged) ocenter $_obj]
+    addHistory "ocenter $_obj $center"
 }
 
 ::itcl::body Archer::endObjRotate {dname obj} {
@@ -5619,37 +5619,47 @@ package provide Archer 1.0
     }
 }
 
-::itcl::body Archer::endObjTranslate {dname obj} {
+::itcl::body Archer::endObjTranslate {_dm _obj _mx _my} {
     if {![info exists itk_component(ged)]} {
 	return
     }
 
-    $itk_component(ged) pane_idle_mode $dname
-    updateObjSave
-    initEdit 0
+    $itk_component(ged) pane_idle_mode $_dm
+    handleObjCenter $_dm $_obj $_mx $_my 
+    endObjCenter $_obj
 
-    #XXX Need code to track overall transformation
-    #addHistory "otranslate obj dx dy dz"
+#    $itk_component(ged) pane_idle_mode $_dm
+#    updateObjSave
+#    initEdit 0
+
 }
 
-::itcl::body Archer::handleObjCenter {obj x y} {
-    set ocenter [gedCmd ocenter $obj]
+::itcl::body Archer::handleObjCenter {_dm _obj _mx _my} {
+    set ocenter [gedCmd ocenter $_obj]
     set ocenter [vscale $ocenter [gedCmd local2base]]
-    set ovcenter [eval gedCmd m2v_point $ocenter]
+    set ovcenter [eval gedCmd pane_m2v_point $_dm $ocenter]
 
     # This is the updated view center (i.e. we keep the original view Z)
-    set vcenter [gedCmd screen2view $x $y]
-    set vcenter [list [lindex $vcenter 0] [lindex $vcenter 1] [lindex $ovcenter 2]]
+    set vcenter [gedCmd pane_screen2view $_dm $_mx $_my]
 
-    set ocenter [vscale [eval gedCmd v2m_point $vcenter] [gedCmd base2local]]
+    set vx [lindex $vcenter 0]
+    set vy [lindex $vcenter 1]
+
+    set vl [gedCmd pane_snap_view $_dm $vx $vy]
+    set vx [lindex $vl 0]
+    set vy [lindex $vl 1]
+    set vcenter [list $vx $vy [lindex $ovcenter 2]]
+#   set vcenter [list [lindex $vcenter 0] [lindex $vcenter 1] [lindex $ovcenter 2]]
+
+    set ocenter [vscale [eval gedCmd pane_v2m_point $_dm $vcenter] [gedCmd base2local]]
 
     if {$GeometryEditFrame::mEditCommand != ""} {
-	gedCmd $GeometryEditFrame::mEditCommand $obj $GeometryEditFrame::mEditParam1 $ocenter
+	gedCmd $GeometryEditFrame::mEditCommand $_obj $GeometryEditFrame::mEditParam1 $ocenter
     } else {
-	eval gedCmd ocenter $obj $ocenter
+	eval gedCmd ocenter $_obj $ocenter
     }
 
-    redrawObj $obj 0
+    redrawObj $_obj 0
     initEdit 0
 }
 
@@ -7670,6 +7680,13 @@ package provide Archer 1.0
     puts $_pfile "set mScaleColor \"$mScaleColor\""
     puts $_pfile "set mViewingParamsColor \"$mViewingParamsColor\""
     puts $_pfile "set mTheme \"$mTheme\""
+
+    puts $_pfile "set mGridAnchor \"$mGridAnchor\""
+    puts $_pfile "set mGridColor \"$mGridColor\""
+    puts $_pfile "set mGridMrh \"$mGridMrh\""
+    puts $_pfile "set mGridMrv \"$mGridMrv\""
+    puts $_pfile "set mGridRh \"$mGridRh\""
+    puts $_pfile "set mGridRv \"$mGridRv\""
 
     puts $_pfile "set mGroundPlaneMajorColor \"$mGroundPlaneMajorColor\""
     puts $_pfile "set mGroundPlaneMinorColor \"$mGroundPlaneMinorColor\""
