@@ -145,7 +145,7 @@ f_edcolor(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     bu_vls_init(&editstring);
     get_editor_string(&editstring);
 
-    av = (char **)bu_malloc(sizeof(char *)*(argc + 1), "f_edcolor: av");
+    av = (char **)bu_malloc(sizeof(char *)*(argc + 2), "f_edcolor: av");
     av[0] = bu_vls_addr(&editstring);
     for (i = 1; i < argc + 1; ++i)
 	av[i] = argv[i-1];
@@ -188,7 +188,7 @@ f_edcodes(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     bu_vls_init(&editstring);
     get_editor_string(&editstring);
 
-    av = (char **)bu_malloc(sizeof(char *)*(argc + 1), "f_edcodes: av");
+    av = (char **)bu_malloc(sizeof(char *)*(argc + 2), "f_edcodes: av");
     av[0] = bu_vls_addr(&editstring);
     for (i = 1; i < argc + 1; ++i)
 	av[i] = argv[i-1];
@@ -231,7 +231,7 @@ f_edmater(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv
     bu_vls_init(&editstring);
     get_editor_string(&editstring);
 
-    av = (char **)bu_malloc(sizeof(char *)*(argc + 1), "f_edmater: av");
+    av = (char **)bu_malloc(sizeof(char *)*(argc + 2), "f_edmater: av");
     av[0] = bu_vls_addr(&editstring);
     for (i = 1; i < argc + 1; ++i)
 	av[i] = (char *)argv[i-1];
@@ -274,7 +274,7 @@ f_red(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     bu_vls_init(&editstring);
     get_editor_string(&editstring);
 
-    av = (char **)bu_malloc(sizeof(char *)*(argc + 1), "f_red: av");
+    av = (char **)bu_malloc(sizeof(char *)*(argc + 2), "f_red: av");
     av[0] = bu_vls_addr(&editstring);
     for (i = 1; i < argc + 1; ++i)
 	av[i] = argv[i-1];
