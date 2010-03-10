@@ -586,6 +586,10 @@ GED_EXPORT BU_EXTERN(struct ged *ged_open,
 GED_EXPORT BU_EXTERN(void ged_view_init,
 		     (struct ged_view *gvp));
 
+/* defined in grid.c */
+GED_EXPORT BU_EXTERN(void ged_snap_to_grid,
+		     (struct ged *gedp, fastf_t *vx, fastf_t *vy));
+
 /* defined in inside.c */
 GED_EXPORT BU_EXTERN(int ged_inside_internal,
 		     (struct ged *gedp,
