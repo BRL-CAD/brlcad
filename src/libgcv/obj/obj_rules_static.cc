@@ -3335,7 +3335,7 @@ static yyconst yy_state_type yy_NUL_trans[167] =
 
   #include <sys/types.h>
 
-  #include "obj_grammar.h"
+  #include "obj_grammar_static.h"
 
   #include <stdlib.h>
   #include <limits.h>
