@@ -496,6 +496,12 @@ HIDDEN int go_set_fb_mode(struct ged *gedp,
 			  ged_func_ptr func,
 			  const char *usage,
 			  int maxargs);
+HIDDEN int go_snap_view(struct ged *gedp,
+			int argc,
+			const char *argv[],
+			ged_func_ptr func,
+			const char *usage,
+			int maxargs);
 HIDDEN int go_translate_mode(struct ged *gedp,
 			     int argc,
 			     const char *argv[],
@@ -871,6 +877,7 @@ static struct go_cmdtab go_cmds[] = {
     {"showmats",	(char *)0, MAXARGS, go_pass_through_func, ged_showmats},
     {"size",	"[size]", 3, go_view_func, ged_size},
     {"slew",	"x y [z]", 5, go_view_func, ged_slew},
+    {"snap_view",	"vx vy", 4, go_snap_view, GED_FUNC_PTR_NULL},
     {"solids",	(char *)0, MAXARGS, go_pass_through_func, ged_tables},
     {"solids_on_ray",	(char *)0, MAXARGS, go_pass_through_func, ged_solids_on_ray},
     {"summary",	(char *)0, MAXARGS, go_pass_through_func, ged_summary},
@@ -7147,6 +7154,59 @@ go_set_fb_mode(struct ged *gedp,
 
     gdvp->gdv_fbs.fbs_mode = mode;
     go_refresh_view(gdvp);
+
+    return BRLCAD_OK;
+}
+
+HIDDEN int
+go_snap_view(struct ged *gedp,
+	     int argc,
+	     const char *argv[],
+	     ged_func_ptr func,
+	     const char *usage,
+	     int maxargs)
+{
+    fastf_t vx, vy;
+    struct ged_dm_view *gdvp;
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    if (argc != 4) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
+    }
+
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &go_current_gop->go_head_views.l)) {
+	if (!strcmp(bu_vls_addr(&gdvp->gdv_name), argv[1]))
+	    break;
+    }
+
+    if (BU_LIST_IS_HEAD(&gdvp->l, &go_current_gop->go_head_views.l)) {
+	bu_vls_printf(&gedp->ged_result_str, "View not found - %s", argv[1]);
+	return BRLCAD_ERROR;
+    }
+
+    if (sscanf(argv[2], "%lf", &vx) != 1 ||
+	sscanf(argv[3], "%lf", &vy) != 1) {
+	bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return BRLCAD_ERROR;
+    }
+
+    gedp->ged_gvp = gdvp->gdv_view;
+    if (!gedp->ged_gvp->gv_grid.ggs_snap) {
+	bu_vls_printf(&gedp->ged_result_str, "%lf %lf", vx, vy);
+	return BRLCAD_OK;
+    }
+
+    ged_snap_to_grid(gedp, &vx, &vy);
+    bu_vls_printf(&gedp->ged_result_str, "%lf %lf", vx, vy);
 
     return BRLCAD_OK;
 }
