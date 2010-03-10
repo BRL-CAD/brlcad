@@ -39,7 +39,7 @@ struct gcv_data {
 /* in region_end.c */
 union tree * _gcv_cleanup(int state, union tree *tp);
 
-int
+union tree *
 gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
     union tree *tp = NULL;
@@ -56,13 +56,13 @@ gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 
     if (!tsp || !curtree || !pathp || !client_data) {
 	bu_log("INTERNAL ERROR: gcv_region_end_mc missing parameters\n");
-	return 0;
+	return TREE_NULL;
     }
 
     write_region = ((struct gcv_data *)client_data)->func;
     if (!write_region) {
 	bu_log("INTERNAL ERROR: gcv_region_end missing conversion callback function\n");
-	return 0;
+	return TREE_NULL;
     }
 
     RT_CK_FULL_PATH(pathp);
@@ -73,8 +73,11 @@ gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 
     BU_LIST_INIT(&vhead);
 
+    /*
     if (curtree->tr_op == OP_NOP)
 	return 0;
+    */
+
 
     /* get a copy to play with as the parameters might get clobbered
      * by a longjmp.  FIXME: db_dup_subtree() doesn't create real copies
@@ -114,12 +117,12 @@ gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 	s = next_s;
     }
     if (empty_region)
-	return 0;
+	return _gcv_cleanup(NMG_debug_state, tp);
 
     /* kill zero length edgeuses */
     empty_model = nmg_kill_zero_length_edgeuses(*tsp->ts_m);
     if (empty_model)
-	return 0;
+	return _gcv_cleanup(NMG_debug_state, tp);
 
     if (BU_SETJUMP) {
 	/* Error, bail out */
@@ -145,7 +148,7 @@ gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 	*tsp->ts_m = nmg_mm();
 	nmg_kr(r);
 
-	return 0;
+	return _gcv_cleanup(NMG_debug_state, tp);
     } else {
 
 	/* Write the region out */
@@ -155,7 +158,7 @@ gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 
     nmg_kr(r);
 
-    return -1;
+    return _gcv_cleanup(NMG_debug_state, tp);
 }
 
 
