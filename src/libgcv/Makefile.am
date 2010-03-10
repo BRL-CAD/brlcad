@@ -12,12 +12,6 @@ OBJ_SRCS = \
 	obj/obj_grammar.yy \
 	obj/obj_parser.cc
 
-OBJ_BUILT = \
-	obj_rules.cc \
-	obj_rules.h \
-	obj_grammar.cc \
-	obj_grammar.h
-
 OBJ_noinst_HEADER =
 
 OBJ_extradist = \
@@ -33,8 +27,6 @@ OBJ_SRCS = \
 	obj/obj_rules_static.cc \
 	obj/obj_grammar_static.cc \
 	obj/obj_parser_static.cc
-
-OBJ_BUILT = 
 
 OBJ_noinst_HEADER = \
 	obj/obj_rules_static.h \
