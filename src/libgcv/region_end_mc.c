@@ -29,6 +29,7 @@
 
 #include "gcv.h"
 
+extern int rt_nmg_mc_pewpewpew (struct shell *s, struct rt_i *rtip, const struct db_full_path *pathp, const struct rt_tess_tol *ttol, const struct bn_tol *tol);
 
 /* FIXME: this be a dumb hack to avoid void* conversion */
 struct gcv_data {
@@ -43,7 +44,7 @@ union tree *
 gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
 {
     union tree *tp = NULL;
-    union tree *ret_tree = NULL;
+    struct model *m = NULL;
     struct nmgregion *r = NULL;
     struct shell *s = NULL;
     struct bu_list vhead;
@@ -95,15 +96,15 @@ gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, u
      */
     NMG_debug_state = rt_g.NMG_debug;
 
-    r = (struct nmgregion *)NULL;
-    if (ret_tree)
-	r = ret_tree->tr_d.td_r;
+    m = nmg_mmr();
+    r = nmg_mrsv(m);
 
-    if (r == (struct nmgregion *)NULL)
-	return 0;
+    rt_nmg_mc_pewpewpew (s, tsp->ts_rtip, pathp, tsp->ts_ttol, tsp->ts_tol);
+
+    nmg_mark_edges_real(&s->l.magic);
+    nmg_region_a(r, tsp->ts_tol);
 
     /* Kill cracks */
-    s = BU_LIST_FIRST(shell, &r->s_hd);
     while (BU_LIST_NOT_HEAD(&s->l, &r->s_hd)) {
 	struct shell *next_s;
 
