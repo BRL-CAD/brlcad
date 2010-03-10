@@ -75,6 +75,8 @@ noinst_HEADERS = \
 	obj/obj_parser.h \
 	obj/obj_parser_state.h
 
+DISTCLEANFILES = $(BUILT_SOURCES)
+
 AM_CFLAGS = ${STRICT_FLAGS}
 
 DEPENDS = src/librt
