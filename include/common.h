@@ -111,10 +111,15 @@ typedef ptrdiff_t ssize_t;
 /* make sure most of the C99 stdint types are provided including the
  * optional uintptr_t type.
  */
-#ifdef HAVE_STDINT_H
-#  include <stdint.h>
+#if !defined(INT8_MAX) || !defined(INT16_MAX) || !defined(INT32_MAX) || !defined(INT64_MAX)
+#  ifdef HAVE_STDINT_H
+#    define __STDC_LIMIT_MACROS 1
+#    define __STDC_CONSTANT_MACROS 1
+#    include <stdint.h>
+#  else
+#    include "pstdint.h"
+#  endif
 #endif
-#include "pstdint.h"
 
 #endif  /* __COMMON_H__ */
 /** @} */
