@@ -50,6 +50,7 @@ endif
 obj_rules.cc: obj/obj_rules.ll
 	$(LEX) -Pobj_parser_ -oobj_rules.cc --header-file=obj_rules.h $^
 
+obj_rules.h: obj_rules.cc
 
 libgcv_nil_la_SOURCES = \
 	$(OBJ_SRCS) \
