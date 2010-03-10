@@ -160,8 +160,8 @@
 
   #include "obj_parser.h"
   #include "obj_parser_state.h"
-  #include "obj_grammar.h"
-  #include "obj_rules.h"
+  #include "obj_grammar_static.h"
+  #include "obj_rules_static.h"
 
   #include <sys/types.h>
 
