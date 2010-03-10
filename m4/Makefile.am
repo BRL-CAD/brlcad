@@ -1,7 +1,6 @@
 
 brlcad_m4 = \
 	args.m4 \
-	ax_compare_version.m4 \
 	cache.m4 \
 	compiler.m4 \
 	epsilon.m4 \
