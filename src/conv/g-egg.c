@@ -197,34 +197,6 @@ struct gcv_data {
 };
 static struct gcv_data gcvwriter = {nmg_to_egg};
 
-union tree *
-do_mc (struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
-{
-    fastf_t x,y, endx, endy;
-    fastf_t step = 0.0;
-    int shots = 0;
-    struct nmgregion *r;
-    struct shell *s;
-    struct model *m = NULL;
-    float color[3] = { 1.0, 1.0, 1.0 };
-
-    if(tsp->ts_rtip == NULL)
-	tsp->ts_rtip = rt_new_rti(tsp->ts_dbip);
-
-    m = nmg_mmr();
-    r = nmg_mrsv(m);
-    s = BU_LIST_FIRST(shell, &r->s_hd);
-
-    rt_nmg_mc_pewpewpew (s, tsp->ts_rtip, pathp, tsp->ts_ttol, tsp->ts_tol);
-
-    nmg_mark_edges_real(&s->l.magic);
-    nmg_region_a(r, tsp->ts_tol);
-
-    nmg_to_egg(r, pathp, 0, 0, color);
-
-    return NULL;
-}
-
 
 /*
  *			M A I N
@@ -369,21 +341,21 @@ main(int argc, char *argv[])
 	fprintf(fp, "<Group> %s {\n", *(argv+1));
 	if(use_mc)
 	    (void) db_walk_tree(dbip,		/* db_i */
-				1,			/* argc */
-				(const char **)(++argv),	/* argv */
-				1,			/* ncpu */
+				1,		/* argc */
+				(const char **)(++argv), /* argv */
+				1,		/* ncpu */
 				&tree_state,	/* state */
 				NULL,		/* start func */
-				do_mc	,	/* end func */
+				gcv_region_end_mc, /* end func */
 				NULL,		/* leaf func */
 				NULL);		/* client_data */
 	else
 	    (void) db_walk_tree(dbip,		/* db_i */
-				1,			/* argc */
-				(const char **)(++argv),	/* argv */
-				1,			/* ncpu */
+				1,		/* argc */
+				(const char **)(++argv), /* argv */
+				1,		/* ncpu */
 				&tree_state,	/* state */
-				0,			/* start func */
+				NULL,		/* start func */
 				gcv_region_end,	/* end func */
 				nmg_booltree_leaf_tess, /* leaf func */
 				(genptr_t)&gcvwriter);  /* client_data */
