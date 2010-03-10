@@ -215,9 +215,7 @@ do_mc (struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *
     r = nmg_mrsv(m);
     s = BU_LIST_FIRST(shell, &r->s_hd);
 
-    bu_log("Pewpewpew! %s\n", db_path_to_string(pathp));
     rt_nmg_mc_pewpewpew (s, tsp->ts_rtip, pathp, tsp->ts_ttol, tsp->ts_tol);
-    bu_log("ahhh!\n");
 
     nmg_mark_edges_real(&s->l.magic);
     nmg_region_a(r, tsp->ts_tol);
