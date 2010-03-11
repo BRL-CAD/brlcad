@@ -1,6 +1,6 @@
 set(LIBGCV_SOURCES
     region_end.c
-    region_start_mc.c
+    region_end_mc.c
 )
 
 include_directories(
