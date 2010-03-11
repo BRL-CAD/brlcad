@@ -165,27 +165,19 @@ f_edcolor(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     CHECK_DBI_NULL;
 
-    if (argc < 2) {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "help color");
-	Tcl_Eval(interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return TCL_ERROR;
-    }
-
     bu_vls_init(&editstring);
     get_editor_string(&editstring);
 
-    av = (char **)bu_malloc(sizeof(char *)*(argc + 2), "f_edcolor: av");
-    av[0] = bu_vls_addr(&editstring);
-    for (i = 1; i < argc + 1; ++i)
-	av[i] = argv[i-1];
-
-    av[i] = NULL;
+    av = (char **)bu_malloc(sizeof(char *)*(argc + 3), "f_edcolor: av");
+    for (i = 0; i < argc; ++i) {
+	av[i] = argv[i];
+    }
+    argc += 2;
+    av[argc-2] = "-e";
+    av[argc-1] = bu_vls_addr(&editstring);
+    av[argc] = NULL;
    
-    ged_color(gedp, argc + 1, (const char **)av);
+    ged_edcolor(gedp, argc, (const char **)av);
     
     bu_vls_free(&editstring); 
     bu_free((genptr_t)av, "f_edcolor: av");
