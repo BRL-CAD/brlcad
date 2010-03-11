@@ -298,12 +298,13 @@ BU_EXTERN(int _ged_make_tree,
 	   const char *new_name,
 	   struct rt_tree_array *rt_tree_array,
 	   int tree_index));
-BU_EXTERN(int _ged_save_comb,
+BU_EXTERN(const char *_ged_save_comb,
 	  (struct ged *gedp,
 	   struct directory *dpold));
 BU_EXTERN(void _ged_restore_comb,
 	  (struct ged *gedp,
-	   struct directory *dp));
+	   struct directory *dp,
+	   const char *name));
 BU_EXTERN(void _ged_print_matrix,
 	  (FILE *fp, matp_t matrix));
 
