@@ -55,7 +55,7 @@ gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 
     void (*write_region)(struct nmgregion *, const struct db_full_path *, int, int, float [3]);
 
-    if (!tsp || !curtree || !pathp || !client_data) {
+    if (!tsp || !pathp || !client_data) {
 	bu_log("INTERNAL ERROR: gcv_region_end_mc missing parameters\n");
 	return TREE_NULL;
     }
@@ -98,6 +98,10 @@ gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 
     m = nmg_mmr();
     r = nmg_mrsv(m);
+    s = BU_LIST_FIRST(shell, &r->s_hd);
+
+    if(tsp->ts_rtip == NULL)
+	tsp->ts_rtip = rt_new_rti(tsp->ts_dbip);
 
     rt_nmg_mc_pewpewpew (s, tsp->ts_rtip, pathp, tsp->ts_ttol, tsp->ts_tol);
 
