@@ -1,11 +1,11 @@
-obj_dir = obj
-if WITH_PARSERS
-OBJ = ${obj_dir}
-OBJLIB=obj/libobj_nil.la
-else
+#obj_dir = obj
+#if WITH_PARSERS
+#OBJ = ${obj_dir}
+#OBJLIB=obj/libobj_nil.la
+#else
 OBJ = 
 OBJLIB = 
-endif
+#endif
 
 SUBDIRS = \
 	$(OBJ)

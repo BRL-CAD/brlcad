@@ -2298,21 +2298,21 @@ else
     AC_MSG_NOTICE([{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{])
     sleep 5
 fi
-if test "x$build_parsers" = "xyes" ; then
+#if test "x$build_parsers" = "xyes" ; then
      # test for modern features in lex
-     echo "%option reentrant bison-bridge" >> lex.l
-     echo "%%" >> lex.l
-     $LEX lex.l > /dev/null 2>&1
-     ret=$?
-     rm -f lex.l
-     if test "x${ret}" != "x0" ; then
-	build_parsers=no
-	AC_MSG_WARN([The LEX-style scanner found does not support features required by])
-	AC_MSG_WARN([BRL-CAD's LEX code.  Various MGED commands and geometry conversion])
-	AC_MSG_WARN([routines will be disabled.])
-	AC_MSG_NOTICE([Installation of a modern GNU Flex before continuing is recommended.])
-     fi
-fi
+     #echo "%option reentrant bison-bridge" >> lex.l
+     #echo "%%" >> lex.l
+     #$LEX lex.l > /dev/null 2>&1
+     #ret=$?
+     #rm -f lex.l
+     #if test "x${ret}" != "x0" ; then
+	#build_parsers=no
+	#AC_MSG_WARN([The LEX-style scanner found does not support features required by])
+	#AC_MSG_WARN([BRL-CAD's LEX code.  Various MGED commands and geometry conversion])
+	#AC_MSG_WARN([routines will be disabled.])
+	#AC_MSG_NOTICE([Installation of a modern GNU Flex before continuing is recommended.])
+     #fi
+#fi
 	
 AC_MSG_CHECKING([whether we have the essentials to make parsers])
 if test "x$build_parsers" = "xyes" ; then
