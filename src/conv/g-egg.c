@@ -339,26 +339,15 @@ main(int argc, char *argv[])
     /* Walk indicated tree(s).  Each region will be output separately */
     while (--argc) {
 	fprintf(fp, "<Group> %s {\n", *(argv+1));
-	if(use_mc)
-	    (void) db_walk_tree(dbip,		/* db_i */
-				1,		/* argc */
-				(const char **)(++argv), /* argv */
-				1,		/* ncpu */
-				&tree_state,	/* state */
-				NULL,		/* start func */
-				gcv_region_end_mc, /* end func */
-				NULL,		/* leaf func */
-				NULL);		/* client_data */
-	else
-	    (void) db_walk_tree(dbip,		/* db_i */
-				1,		/* argc */
-				(const char **)(++argv), /* argv */
-				1,		/* ncpu */
-				&tree_state,	/* state */
-				NULL,		/* start func */
-				gcv_region_end,	/* end func */
-				nmg_booltree_leaf_tess, /* leaf func */
-				(genptr_t)&gcvwriter);  /* client_data */
+	(void) db_walk_tree(dbip,		/* db_i */
+			    1,		/* argc */
+			    (const char **)(++argv), /* argv */
+			    1,		/* ncpu */
+			    &tree_state,	/* state */
+			    NULL,		/* start func */
+			    use_mc?gcv_region_end_mc:gcv_region_end,	/* end func */
+			    use_mc?NULL:nmg_booltree_leaf_tess, /* leaf func */
+			    (genptr_t)&gcvwriter);  /* client_data */
 	fprintf(fp, "}\n");
     }
 
