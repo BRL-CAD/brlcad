@@ -1720,6 +1720,12 @@ GED_EXPORT BU_EXTERN(int ged_edcodes, (struct ged *gedp, int argc, const char *a
 GED_EXPORT BU_EXTERN(int ged_edcomb, (struct ged *gedp, int argc, const char *argv[]));
 
 /**
+ * Edit file.
+ *
+ */
+GED_EXPORT BU_EXTERN(int ged_editit, (struct ged *gedp, int argc, const char *argv[]));
+
+/**
  * Edit combination materials.
  *
  * Command relies on rmater, editit, and wmater commands.

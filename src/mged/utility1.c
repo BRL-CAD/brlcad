@@ -116,6 +116,39 @@ reg_compare(const void *p1, const void *p2)
     return(strcmp(reg1, reg2));
 }
 
+/*
+ *
+ * E D I T I T
+ *
+ * No-frills edit - opens an editor on the supplied
+ * file name.
+ *
+ */
+int
+editit(char *tmpfile) {
+    int argc = 4;
+    char **av;
+    struct bu_vls editstring;
+
+    CHECK_DBI_NULL;
+
+    bu_vls_init(&editstring);
+    get_editor_string(&editstring);
+
+    av = (char **)bu_malloc(sizeof(char *)*(argc + 1), "editit: av");
+    av[0] = "e"; 
+    av[1] = bu_vls_addr(&editstring);
+    av[2] = "f";
+    av[3] = tmpfile;
+    av[4] = NULL;
+
+    ged_editit(gedp, argc, (const char **)av);
+
+    bu_vls_free(&editstring);
+    bu_free((genptr_t)av, "editit: av");
+    return TCL_OK;
+}
+
 
 /*
  *

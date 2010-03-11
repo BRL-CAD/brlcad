@@ -111,7 +111,7 @@ f_tedit(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     (void)fclose(fp);
 
-    if (/*editit(tmpfil)*/0) {
+    if (editit(tmpfil)) {
 	if (readsolid()) {
 	    (void)unlink(tmpfil);
 	    return TCL_ERROR;
