@@ -1,8 +1,10 @@
 obj_dir = obj
 if WITH_PARSERS
 OBJ = ${obj_dir}
+OBJLIB=obj/libobj_nil.la
 else
 OBJ = 
+OBJLIB = 
 endif
 
 SUBDIRS = \
@@ -28,6 +30,7 @@ libgcv_la_SOURCES =
 libgcv_la_LDFLAGS = -version-info 19:1 -no-undefined -Wc,${FEXCEPTIONS} 
 libgcv_la_LIBADD = \
 	libgcv_nil.la \
+	${OBJLIB} \
 	${GCV_LIBS}
 
 AM_CFLAGS = ${STRICT_FLAGS}
