@@ -96,14 +96,14 @@ inline static parser_extra & get_extra(yyscan_t scanner) {
 }
 
 inline static size_t real_index(int val, std::size_t nvert) {
-	return (val<0?nvert-size_t(std::abs(val+1)):size_t(val));
+	return (val<0?nvert-size_t(std::abs(val)):size_t(val-1));
 }
 
 template<typename charT>
 inline static bool index_check(int raw, std::size_t index,
 				   size_t vertices, const charT *log, yyscan_t scanner)
 {
-    if (!index || index > vertices) {
+    if (!raw || index >= vertices) {
 	std::stringstream err;
 	err << "index '" << raw << "': " << log;
         std::string str = err.str();
