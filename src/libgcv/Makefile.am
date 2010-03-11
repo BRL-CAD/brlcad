@@ -1,3 +1,15 @@
+obj_dir = obj
+if WITH_PARSERS
+OBJ = ${obj_dir}
+else
+OBJ = 
+endif
+
+SUBDIRS = \
+	$(OBJ)
+
+DIST_SUBDIRS = \
+	${obj_dir}
 
 lib_LTLIBRARIES = libgcv.la
 noinst_LTLIBRARIES = libgcv_nil.la
@@ -9,11 +21,6 @@ libgcv_nil_la_SOURCES = \
 	region_end_mc.c
 
 EXTRA_DIST = \
-	obj/obj_rules.ll \
-	obj/obj_grammar.yy \
-	obj/obj_parser.cc
-	obj/obj_parser.h \
-	obj/obj_parser_state.h
 	CMakeLists.txt \
 	NOTES
 
