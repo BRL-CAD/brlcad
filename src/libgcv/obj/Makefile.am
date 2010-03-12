@@ -25,6 +25,10 @@ BUILT_SOURCES = \
 
 DISTCLEANFILES = $(BUILT_SOURCES)
 
+EXTRA_DIST = \
+	obj_rules.l \
+	obj_grammar.y
+
 include $(top_srcdir)/misc/Makefile.defs
 
 FAST_OBJECTS = \
