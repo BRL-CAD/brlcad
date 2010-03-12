@@ -578,6 +578,7 @@ package provide cadwidgets::Ged 1.0
 	proc get_ged_color {_color}
 	proc get_rgb_color {_color}
 	proc get_vdraw_color {_color}
+	proc rgb_to_tk {_r _g _b}
     }
 
     protected {
@@ -3646,6 +3647,10 @@ package provide cadwidgets::Ged 1.0
 	    return "ffffff"
 	}
     }
+}
+
+::itcl::body cadwidgets::Ged::rgb_to_tk {_r _g _b} {
+    return [format \#%.2x%.2x%.2x $_r $_g $_b]
 }
 
 
