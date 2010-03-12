@@ -342,8 +342,6 @@ rt_nmg_mc_realize_cube(struct shell *s, int pv, point_t *edges, const struct bn_
     struct faceuse *fu;
     struct vertex *vertl[3], **f_vertl[3];
 
-    p = p;
-
     f_vertl[0] = &vertl[0];
     f_vertl[1] = &vertl[2];
     f_vertl[2] = &vertl[1];
