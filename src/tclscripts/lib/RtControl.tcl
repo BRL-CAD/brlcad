@@ -37,7 +37,7 @@ option add *RtControl*tearoff 0 widgetDefault
 
     itk_option define -olist olist Olist {}
     itk_option define -omode omode Omode {}
-    itk_option define -nproc nproc Nproc 1
+    itk_option define -nproc nproc Nproc 16
     itk_option define -hsample hsample Hsample 0
     itk_option define -jitter jitter Jitter 0
     itk_option define -lmodel lmodel Lmodel 0
@@ -66,9 +66,11 @@ option add *RtControl*tearoff 0 widgetDefault
 	variable pmIrradianceRaysScale 10
 	variable pmAngularTolerance 60.0
 	variable pmRandomSeedEntry 0
+	variable pmRandomSeedScale 0
 	variable pmImportanceMapping 0
 	variable pmIrradianceHypersamplingCache 0
 	variable pmVisualizeIrradiance 0
+	variable pmScaleIndirectEntry 1.0
 	variable pmScaleIndirectScale 1.0
 	variable pmCacheFileEntry ""
 
@@ -104,6 +106,12 @@ option add *RtControl*tearoff 0 widgetDefault
 	variable isaGed 0
 
 	method build_adv {}
+	method build_photon_map {_parent}
+	method build_pm_scale {_parent _name _text _cmd _from _to _vname1 _vname2 _orient}
+	method pm_nonLinearEvent {_entry _sval}
+	method pm_linearEvent {_entry _sval}
+	method pm_linearEventRound {_entry _sval}
+	method pm_raysEvent {_entry _sval}
 	method set_src {}
 	method set_dest {}
 	method colorChooser {_color}
@@ -413,6 +421,106 @@ option add *RtControl*tearoff 0 widgetDefault
     wm title $itk_component(hull) "Raytrace Control Panel"
 }
 
+
+############################### Configuration Options ###############################
+
+::itcl::configbody RtControl::nproc {
+    if {![regexp "^\[0-9\]+$" $itk_option(-nproc)]} {
+	error "Bad value - $itk_option(-nproc)"
+    }
+}
+
+::itcl::configbody RtControl::hsample {
+    if {![regexp "^\[0-9\]+$" $itk_option(-hsample)]} {
+	error "Bad value - $itk_option(-hsample)"
+    }
+}
+
+::itcl::configbody RtControl::mged {
+    if {$itk_option(-mged) == ""} {
+	return
+    }
+
+    update_control_panel
+}
+
+
+################################# Public Methods ################################
+
+
+::itcl::body RtControl::activate {} {
+    raise $itk_component(hull)
+
+    # center on screen
+    if {$win_geom == ""} {
+	center $itk_component(hull) win_geom
+    }
+    wm geometry $itk_component(hull) $win_geom
+    wm deiconify $itk_component(hull)
+
+    set rtSize "Size of Pane"
+    set_size 
+}
+
+::itcl::body RtControl::activate_adv {} {
+    set saveVisibilityBinding [bind $itk_component(hull) <Visibility>]
+    set saveFocusOutBinding [bind $itk_component(hull) <FocusOut>]
+    bind $itk_component(hull) <Visibility> {}
+    bind $itk_component(hull) <FocusOut> {}
+
+    raise $itk_component(adv)
+
+    # center over control panel
+    if {$win_geom_adv == ""} {
+	center $itk_component(adv) win_geom_adv $itk_component(hull)
+    }
+    wm geometry $itk_component(adv) $win_geom_adv
+    wm deiconify $itk_component(adv)
+}
+
+::itcl::body RtControl::deactivate {} {
+    set win_geom [wm geometry $itk_component(hull)]
+    wm withdraw $itk_component(hull)
+    deactivate_adv
+}
+
+::itcl::body RtControl::deactivate_adv {} {
+    set win_geom_adv [wm geometry $itk_component(adv)]
+    wm withdraw $itk_component(adv)
+
+    bind $itk_component(hull) <Visibility> $saveVisibilityBinding 
+    bind $itk_component(hull) <FocusOut> $saveFocusOutBinding 
+    raise $itk_component(hull)
+}
+
+::itcl::body RtControl::center {w gs {cw ""}} {
+    upvar $gs geom
+
+    update idletasks
+
+    if {$cw != "" && [winfo exists $cw]} {
+	set x [expr {int([winfo reqwidth $cw] * 0.5 + [winfo x $cw] - [winfo reqwidth $w] * 0.5)}]
+	set y [expr {int([winfo reqheight $cw] * 0.5 + [winfo y $cw] - [winfo reqheight $w] * 0.5)}]
+    } else {
+	set x [expr {int([winfo screenwidth $w] * 0.5 - [winfo reqwidth $w] * 0.5)}]
+	set y [expr {int([winfo screenheight $w] * 0.5 - [winfo reqheight $w] * 0.5)}]
+    }
+
+    wm geometry $w +$x+$y
+    set geom +$x+$y
+}
+
+::itcl::body RtControl::update_fb_mode {} {
+    # update the Inactive/Underlay/Overlay radiobutton
+    if {$isaMged} {
+	set fb_mode [$itk_option(-mged) component $rtDest fb_active]
+    } else {
+	set fb_mode [$itk_option(-mged) pane_set_fb_mode $rtDest]
+    }
+}
+
+############################### Protected Methods ###############################
+
 ::itcl::body RtControl::build_adv {} {
     itk_component add adv {
 	::toplevel $itk_interior.adv
@@ -425,7 +533,17 @@ option add *RtControl*tearoff 0 widgetDefault
     } {}
 
     itk_component add adv_gridF2 {
-	::ttk::frame $itk_component(adv).gridF2 -relief groove -borderwidth 2
+	::ttk::frame $itk_component(adv).gridF2 \
+	    -relief groove \
+	    -borderwidth 2
+    } {}
+
+    itk_component add adv_gridF3 {
+	::ttk::labelframe $itk_component(adv_gridF2).gridF3 \
+	    -borderwidth 2 \
+	    -labelanchor n \
+	    -relief groove \
+	    -text "Photon Mapping Controls"
     } {}
 
     itk_component add adv_nprocL {
@@ -535,105 +653,109 @@ option add *RtControl*tearoff 0 widgetDefault
     grid columnconfigure $itk_component(adv_gridF2) 0 -weight 1
     grid rowconfigure $itk_component(adv_gridF2) 0 -weight 1
 
-    grid $itk_component(adv_gridF2) -sticky nsew -padx 2 -pady 2
-    grid $itk_component(adv_dismissB) -sticky s -padx 2 -pady 2
-    grid $itk_component(adv_statusL) -padx 2 -pady 2 -sticky nsew
+    grid $itk_component(adv_gridF2) -row 0 -sticky nsew -padx 2 -pady 2
+#    grid $itk_component(adv_gridF3) -sticky nsew -padx 2 -pady 2
+    grid $itk_component(adv_dismissB) -row 2 -sticky s -padx 2 -pady 2
+    grid $itk_component(adv_statusL) -row 3 -padx 2 -pady 2 -sticky nsew
     grid columnconfigure $itk_component(adv) 0 -weight 1
     grid rowconfigure $itk_component(adv) 0 -weight 1
+
+    build_photon_map $itk_component(adv_gridF3)
 
     wm withdraw $itk_component(adv)
     wm title $itk_component(adv) "Advanced Settings"
 }
 
-::itcl::configbody RtControl::nproc {
-    if {![regexp "^\[0-9\]+$" $itk_option(-nproc)]} {
-	error "Bad value - $itk_option(-nproc)"
-    }
+::itcl::body RtControl::build_photon_map {_parent} {
+    build_pm_scale $_parent pm_global "Global Photons" \
+	pm_nonLinearEvent 10 24 pmGlobalPhotonsEntry pmGlobalPhotonsScale horizontal
+    build_pm_scale $_parent pm_caustic "Caustic Percent" \
+	pm_linearEventRound 0 100 pmCausticsPercentScale pmCausticsPercentScale horizontal
+    build_pm_scale $_parent pm_irrad "Irradiance Rays" \
+	pm_raysEvent 4 32 pmIrradianceRaysEntry pmIrradianceRaysScale horizontal
+    build_pm_scale $_parent pm_angular "Angular Tolerance" \
+	pm_linearEventRound 0 180 pmAngularTolerance pmAngularTolerance horizontal
+    build_pm_scale $_parent pm_rseed "Random Seed" \
+	pm_linearEventRound 0 9 pmRandomSeedEntry pmRandomSeedScale horizontal
+    build_pm_scale $_parent pm_scalei "Scale Indirect" \
+	pm_linearEvent 0.1 10 pmScaleIndirectEntry pmScaleIndirectScale horizontal
+
+    itk_component add pm_cachefileL {
+	::ttk::label $_parent.pm_cachefileL \
+	    -text "Load/Save File"
+    } {}
+
+    itk_component add pm_cachefileE {
+	::ttk::entry $_parent.pm_cachefileE \
+	    -textvariable [::itcl::scope pmCacheFileEntry]
+    } {}
+
+    itk_component add pm_importanceCB {
+	::ttk::checkbutton $_parent.pm_importanceCB \
+	    -text "Importance Mapping" \
+	    -variable [::itcl::scope pmImportanceMapping]
+    } {}
+
+    itk_component add pm_irradcacheCB {
+	::ttk::checkbutton $_parent.pm_irradcacheCB \
+	    -text "Irradiance Hypersampling Cache" \
+	    -variable [::itcl::scope pmIrradianceHypersamplingCache]
+    } {}
+
+    itk_component add pm_visualirradCB {
+	::ttk::checkbutton $_parent.pm_visualirradCB \
+	    -text "Visualize Irradiance Cache" \
+	    -variable [::itcl::scope pmVisualizeIrradiance]
+    } {}
+
+    grid $itk_component(pm_cachefileL) $itk_component(pm_cachefileE) - -sticky nsew
+    grid x $itk_component(pm_importanceCB) - -sticky nsew
+    grid x $itk_component(pm_irradcacheCB) - -sticky nsew
+    grid x $itk_component(pm_visualirradCB) - -sticky nsew
 }
 
-::itcl::configbody RtControl::hsample {
-    if {![regexp "^\[0-9\]+$" $itk_option(-hsample)]} {
-	error "Bad value - $itk_option(-hsample)"
-    }
+::itcl::body RtControl::build_pm_scale {_parent _name _text _cmd _from _to _vname1 _vname2 _orient} {
+    itk_component add $_name\L {
+	::ttk::label $_parent.$_name\L \
+	    -text $_text
+    } {}
+
+    itk_component add $_name\E {
+	::ttk::entry $_parent.$_name\E \
+	    -textvariable  [::itcl::scope $_vname1]
+    } {}
+
+    itk_component add $_name\SC {
+	::ttk::scale $_parent.$_name\SC \
+	    -command [::itcl::code $this $_cmd $itk_component($_name\E)] \
+	    -from $_from \
+	    -orient $_orient \
+	    -to $_to \
+	    -variable [::itcl::scope $_vname2]
+    } {}
+
+    grid $itk_component($_name\L) $itk_component($_name\E) $itk_component($_name\SC) -sticky nsew
 }
 
-::itcl::configbody RtControl::mged {
-    if {$itk_option(-mged) == ""} {
-	return
-    }
-
-    update_control_panel
+::itcl::body RtControl::pm_nonLinearEvent {_entry _sval} {
+    $_entry delete 0 end
+    $_entry insert 0 [expr {int(pow(2,$_sval))}]
 }
 
-::itcl::body RtControl::activate {} {
-    raise $itk_component(hull)
-
-    # center on screen
-    if {$win_geom == ""} {
-	center $itk_component(hull) win_geom
-    }
-    wm geometry $itk_component(hull) $win_geom
-    wm deiconify $itk_component(hull)
-
-    set rtSize "Size of Pane"
-    set_size 
+::itcl::body RtControl::pm_linearEvent {_entry _sval} {
+    $_entry delete 0 end
+    $_entry insert 0 [expr {double(round($_sval * 100.0)) / 100.0}]
+#    $_entry insert 0 $_sval
 }
 
-::itcl::body RtControl::activate_adv {} {
-    set saveVisibilityBinding [bind $itk_component(hull) <Visibility>]
-    set saveFocusOutBinding [bind $itk_component(hull) <FocusOut>]
-    bind $itk_component(hull) <Visibility> {}
-    bind $itk_component(hull) <FocusOut> {}
-
-    raise $itk_component(adv)
-
-    # center over control panel
-    if {$win_geom_adv == ""} {
-	center $itk_component(adv) win_geom_adv $itk_component(hull)
-    }
-    wm geometry $itk_component(adv) $win_geom_adv
-    wm deiconify $itk_component(adv)
+::itcl::body RtControl::pm_linearEventRound {_entry _sval} {
+    $_entry delete 0 end
+    $_entry insert 0 [expr {round($_sval)}]
 }
 
-::itcl::body RtControl::deactivate {} {
-    set win_geom [wm geometry $itk_component(hull)]
-    wm withdraw $itk_component(hull)
-    deactivate_adv
-}
-
-::itcl::body RtControl::deactivate_adv {} {
-    set win_geom_adv [wm geometry $itk_component(adv)]
-    wm withdraw $itk_component(adv)
-
-    bind $itk_component(hull) <Visibility> $saveVisibilityBinding 
-    bind $itk_component(hull) <FocusOut> $saveFocusOutBinding 
-    raise $itk_component(hull)
-}
-
-::itcl::body RtControl::center {w gs {cw ""}} {
-    upvar $gs geom
-
-    update idletasks
-
-    if {$cw != "" && [winfo exists $cw]} {
-	set x [expr {int([winfo reqwidth $cw] * 0.5 + [winfo x $cw] - [winfo reqwidth $w] * 0.5)}]
-	set y [expr {int([winfo reqheight $cw] * 0.5 + [winfo y $cw] - [winfo reqheight $w] * 0.5)}]
-    } else {
-	set x [expr {int([winfo screenwidth $w] * 0.5 - [winfo reqwidth $w] * 0.5)}]
-	set y [expr {int([winfo screenheight $w] * 0.5 - [winfo reqheight $w] * 0.5)}]
-    }
-
-    wm geometry $w +$x+$y
-    set geom +$x+$y
-}
-
-::itcl::body RtControl::update_fb_mode {} {
-    # update the Inactive/Underlay/Overlay radiobutton
-    if {$isaMged} {
-	set fb_mode [$itk_option(-mged) component $rtDest fb_active]
-    } else {
-	set fb_mode [$itk_option(-mged) pane_set_fb_mode $rtDest]
-    }
+::itcl::body RtControl::pm_raysEvent {_entry _sval} {
+    $_entry delete 0 end
+    $_entry insert 0 [expr {int(pow($_sval,2))}]
 }
 
 ::itcl::body RtControl::set_src {} {
@@ -802,9 +924,23 @@ option add *RtControl*tearoff 0 widgetDefault
 	}
 	"Photon Mapping" {
 	    set rtLightModel 7
+
+	    if {![winfo ismapped $itk_component(adv_gridF3)]} {
+		grid $itk_component(adv_gridF3) -row 1 -sticky nsew -padx 2 -pady 2
+	    }
 	}
 	default {
 	    error "RtControl::set_lmodel: bad value - $rtLightModelSpec"
+	}
+    }
+
+    if {$rtLightModel != 7} {
+	if {[winfo ismapped $itk_component(adv_gridF3)]} {
+	    grid forget $itk_component(adv_gridF3)
+	}
+    } else {
+	if {![winfo ismapped $itk_component(adv_gridF3)]} {
+	    grid $itk_component(adv_gridF3) -row 1 -sticky nsew -padx 2 -pady 2
 	}
     }
 }
