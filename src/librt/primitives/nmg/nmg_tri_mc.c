@@ -336,7 +336,7 @@ int mc_tris[256][16] = {
 
 /* returns the number of triangles added or -1 on failure */
 int
-rt_nmg_mc_realize_cube(struct shell *s, int pv, point_t *p, point_t *edges, const struct bn_tol *tol)
+rt_nmg_mc_realize_cube(struct shell *s, int pv, point_t *edges, const struct bn_tol *tol)
 {
     int *vi, fo;
     struct faceuse *fu;
@@ -534,7 +534,7 @@ rt_nmg_mc_pew(struct shell *s, struct application *a, fastf_t x, fastf_t y, fast
 
 	/* stuff it into an nmg shell */
 	if(pv != 0 && pv != 0xff && s)	/* && s should go away. */
-	    rt_nmg_mc_realize_cube(s, pv, p, edges, tol);
+	    rt_nmg_mc_realize_cube(s, pv, edges, tol);
 
 	if(swp->in>0 && swp->hit[Z] < b+step) swp++;
 	if(sep->in>0 && sep->hit[Z] < b+step) sep++;
