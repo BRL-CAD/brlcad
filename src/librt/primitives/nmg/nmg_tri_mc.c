@@ -355,7 +355,6 @@ rt_nmg_mc_realize_cube(struct shell *s, int pv, point_t *p, point_t *edges, cons
      * vi array is actually 16 triangles, with an extra terminal -1.
      */
 
-    bu_log("pv:%02x", pv);
     fo = 0;
     while( *vi >= 0 ) {
 	if(++fo > 5) {
@@ -363,10 +362,9 @@ rt_nmg_mc_realize_cube(struct shell *s, int pv, point_t *p, point_t *edges, cons
 	    return -1;
 	}
 
-	bu_log(" {<% 4.0f % 4.0f % 4.0f> <% 4.0f % 4.0f % 4.0f> <% 4.0f % 4.0f % 4.0f>}", V3ARGS(edges[vi[0]]), V3ARGS(edges[vi[1]]), V3ARGS(edges[vi[2]]));
 	if (!bn_3pts_distinct(edges[vi[0]], edges[vi[1]], edges[vi[2]], tol) || 
 		bn_3pts_collinear(edges[vi[0]], edges[vi[1]], edges[vi[2]], tol)) {
-		bu_log("All collinear, skipping %d %d %d\n", vi[0], vi[1], vi[2]);
+	    bu_log("All collinear, skipping %d %d %d\n", vi[0], vi[1], vi[2]);
 	    vi+=3;
 	    continue;
 	}
@@ -390,13 +388,15 @@ rt_nmg_mc_realize_cube(struct shell *s, int pv, point_t *p, point_t *edges, cons
 
 	vi+=3;
     }
-    bu_log("\n");
 
     return fo;
 }
 
 static fastf_t bin(fastf_t val, fastf_t step) {return step*floor(val/step);}
 
+#define INHIT 1
+#define OUTHIT 2
+#define NOHIT -1
 struct whack {
 	point_t hit;
 	vect_t norm;
@@ -416,15 +416,15 @@ bangbang(struct application * a, struct partition *PartHeadp, struct seg * s)
 #define MEH(dir,code) RT_HIT_NORM(pp->pt_##dir##hit,pp->pt_##dir##seg->seg_stp,a->a_ray); VJOIN1(t->hit,a->a_ray.r_pt,pp->pt_##dir##hit->hit_dist,a->a_ray.r_dir); VMOVE(t->norm,pp->pt_##dir##hit->hit_normal); t->dist=pp->pt_##dir##hit->hit_dist; t->in=code; t++;
 
     for (pp = PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw) {
-	MEH(in,1);
-	MEH(out,2);
+	MEH(in,INHIT);
+	MEH(out,OUTHIT);
 	intersects += 2;
 	if(intersects >= MAX_INTERSECTS)
 	    bu_bomb("Too many intersects in marching cubes");
     }
 
 #undef MEH
-    t->in = -1;
+    t->in = NOHIT;
     return 0;
 }
 
@@ -432,8 +432,18 @@ static int
 missed(struct application *a) 
 {
     struct whack *t = (struct whack *)a->a_uptr;
-    t->in = -1;
+    t->in = NOHIT;
     return 0;
+}
+
+static int
+bitdiff(unsigned char t, unsigned char a, unsigned char b)
+{
+    unsigned char ma, mb, hb;
+    ma = 1<<a;
+    mb = 1<<b;
+    hb = t&(ma|mb);
+    return hb == ma || hb == mb;
 }
 
 int
@@ -442,11 +452,12 @@ rt_nmg_mc_pew(struct shell *s, struct application *a, fastf_t x, fastf_t y, fast
     struct whack sw[MAX_INTERSECTS], nw[MAX_INTERSECTS], se[MAX_INTERSECTS], ne[MAX_INTERSECTS];
     struct whack *swp = sw, *nwp = nw, *sep = se, *nep = ne;
     int insw=0, inse=0, innw=0, inne=0;
+    fastf_t last_b = 0;
 
-    a->a_uptr = swp; VSET(a->a_ray.r_pt, x, y, a->a_rt_i->mdl_min[Z]); rt_shootray(a); 
-    a->a_uptr = sep; VSET(a->a_ray.r_pt, x+step, y, a->a_rt_i->mdl_min[Z]); rt_shootray(a);
-    a->a_uptr = nwp; VSET(a->a_ray.r_pt, x, y+step, a->a_rt_i->mdl_min[Z]); rt_shootray(a);
-    a->a_uptr = nep; VSET(a->a_ray.r_pt, x+step, y+step, a->a_rt_i->mdl_min[Z]); rt_shootray(a);
+    a->a_uptr = swp; VSET(a->a_ray.r_pt, x, y, a->a_rt_i->mdl_min[Z] - tol->dist); rt_shootray(a); 
+    a->a_uptr = sep; VSET(a->a_ray.r_pt, x+step, y, a->a_rt_i->mdl_min[Z] - tol->dist); rt_shootray(a);
+    a->a_uptr = nwp; VSET(a->a_ray.r_pt, x, y+step, a->a_rt_i->mdl_min[Z] - tol->dist); rt_shootray(a);
+    a->a_uptr = nep; VSET(a->a_ray.r_pt, x+step, y+step, a->a_rt_i->mdl_min[Z] - tol->dist); rt_shootray(a);
 
     while(swp->in>0 || sep->in>0 || nwp->in>0 || nep->in>0) {
 	unsigned char pv;
@@ -454,66 +465,72 @@ rt_nmg_mc_pew(struct shell *s, struct application *a, fastf_t x, fastf_t y, fast
 	point_t edges[12];
 	fastf_t b = +INFINITY;
 
-	/* figure out the first hit distance and bin it */
-	if(swp->in>0 && swp->dist < b) b = swp->dist;
-	if(sep->in>0 && sep->dist < b) b = sep->dist;
-	if(nwp->in>0 && nwp->dist < b) b = nwp->dist;
-	if(nep->in>0 && nep->dist < b) b = nep->dist;
-	b = bin(b+a->a_rt_i->mdl_min[Z], step);
+	if((insw|inse|innw|inne) == 0) {
+	    /* figure out the first hit distance and bin it */
+	    if(swp->in>0 && swp->dist < b) b = swp->dist;
+	    if(sep->in>0 && sep->dist < b) b = sep->dist;
+	    if(nwp->in>0 && nwp->dist < b) b = nwp->dist;
+	    if(nep->in>0 && nep->dist < b) b = nep->dist;
+	    b = bin(b+a->a_rt_i->mdl_min[Z], step);
+	} else {
+	    /* iff we know we're intersecting the surface, walk slow. */
+	    b = last_b + step;
+	}
 
 	/* set the points using the binned first hit distance */
-	VSET(p[0], x,		y,	b+step);
-	VSET(p[1], x+step,	y, 	b+step);
-	VSET(p[2], x+step,	y, 	b);
-	VSET(p[3], x,		y, 	b);
-	VSET(p[4], x,		y+step, b+step);
-	VSET(p[5], x+step,	y+step, b+step);
-	VSET(p[6], x+step,	y+step, b);
-	VSET(p[7], x,		y+step, b);
+	/* w/e		s/n	i/o (b/t) */
+	VSET(p[0], x,		y,	b+step);	/* sw o */
+	VSET(p[1], x+step,	y, 	b+step);	/* se o */
+	VSET(p[2], x+step,	y, 	b);		/* se i */
+	VSET(p[3], x,		y, 	b);		/* sw i */
+	VSET(p[4], x,		y+step, b+step);	/* nw o */
+	VSET(p[5], x+step,	y+step, b+step);	/* ne o */
+	VSET(p[6], x+step,	y+step, b);		/* ne i */
+	VSET(p[7], x,		y+step, b);		/* nw i */
 
 	/* build the point vector */
 	pv = 0;
+	if(insw && swp->hit[Z] > b+step) pv |= 0x09; 
+	if(inse && sep->hit[Z] > b+step) pv |= 0x06; 
+	if(innw && nwp->hit[Z] > b+step) pv |= 0x90;
+	if(inne && nep->hit[Z] > b+step) pv |= 0x60;
+
 #define MEH(C,I,O) \
 	if(C##p->hit[Z] < b+step) {  \
-	    if(C##p->in==1) { in##C++; pv |= 1<<I;} \
-	    if(C##p->in==2) { in##C--; pv |= 1<<O;} \
+	    if(C##p->in==1) { in##C=1; pv |= 1<<I;} \
+	    if(C##p->in==2) { in##C=0; pv |= 1<<O;} \
 	} \
 	else pv |= insw<<I | insw<<O;
 
-	MEH(sw, 3, 7);
-	MEH(se, 2, 6);
-	MEH(nw, 0, 4);
-	MEH(ne, 1, 5);
+	/*  p   t  b */
+	MEH(sw, 0, 3);
+	MEH(se, 1, 2);
+	MEH(nw, 4, 7);
+	MEH(ne, 5, 6);
 #undef MEH
 
 	/* figure out needed edges, shoot down and across as needed */
-	/*
-	   if( (pv&0x0?1:0) != (pv&0x1?1:0) ) VADD2SCALE(edges[ 0], p[0], p[1], 0.5);
-	   if( (pv&0x1?1:0) != (pv&0x2?1:0) ) VMOVE(edges[1], sep->hit);
-	   if( (pv&0x2?1:0) != (pv&0x3?1:0) ) VADD2SCALE(edges[ 2], p[2], p[3], 0.5);
-	   if( (pv&0x3?1:0) != (pv&0x0?1:0) ) VMOVE(edges[ 3], swp->hit);
-	   if( (pv&0x4?1:0) != (pv&0x5?1:0) ) VADD2SCALE(edges[ 4], p[4], p[5], 0.5);
-	   if( (pv&0x5?1:0) != (pv&0x6?1:0) ) VMOVE(edges[ 5], nep->hit);
-	   if( (pv&0x6?1:0) != (pv&0x7?1:0) ) VADD2SCALE(edges[ 6], p[6], p[7], 0.5);
-	   if( (pv&0x7?1:0) != (pv&0x4?1:0) ) VMOVE(edges[ 7], nwp->hit);
-	   if( (pv&0x0?1:0) != (pv&0x4?1:0) ) VADD2SCALE(edges[ 8], p[0], p[4], 0.5);
-	   if( (pv&0x1?1:0) != (pv&0x5?1:0) ) VADD2SCALE(edges[ 9], p[1], p[5], 0.5);
-	   if( (pv&0x2?1:0) != (pv&0x6?1:0) ) VADD2SCALE(edges[10], p[2], p[6], 0.5);
-	   if( (pv&0x3?1:0) != (pv&0x7?1:0) ) VADD2SCALE(edges[11], p[3], p[7], 0.5);
-	   */
 
-	VADD2SCALE(edges[ 0], p[0], p[1], 0.5);
-	VADD2SCALE(edges[ 1], p[1], p[2], 0.5);
-	VADD2SCALE(edges[ 2], p[2], p[3], 0.5);
-	VADD2SCALE(edges[ 3], p[3], p[0], 0.5);
-	VADD2SCALE(edges[ 4], p[4], p[5], 0.5);
-	VADD2SCALE(edges[ 5], p[5], p[6], 0.5);
-	VADD2SCALE(edges[ 6], p[6], p[7], 0.5);
-	VADD2SCALE(edges[ 7], p[7], p[4], 0.5);
-	VADD2SCALE(edges[ 8], p[0], p[4], 0.5);
-	VADD2SCALE(edges[ 9], p[1], p[5], 0.5);
-	VADD2SCALE(edges[10], p[2], p[6], 0.5);
-	VADD2SCALE(edges[11], p[3], p[7], 0.5);
+#define MEH(a,b,c) if(bitdiff(pv,b,c)) { VADD2SCALE(edges[a], p[b], p[c], 0.5); }	/* these need a new ray shot. */
+#define MUH(a,b,c,l) if(bitdiff(pv,b,c)) { VMOVE(edges[a], l->hit); MEH(a, b, c); } ;	/* we already have ray intersect data for these. */
+	/* southern edges */
+	MEH(0 ,0,1);
+	MUH(1 ,1,2,sep);
+	MEH(2 ,2,3);          
+	MUH(3 ,0,3,swp);
+
+	/* northern edges */
+	MEH(4 ,4,5);          
+	MUH(5 ,5,6,nep);
+	MEH(6 ,6,7);          
+	MUH(7 ,4,7,nwp);
+
+	MEH(8 ,0,4);	/* top west */
+	MEH(9 ,1,5);	/* top east */
+	MEH(10,2,6);	/* bottom east */
+	MEH(11,3,7);	/* bottom west */
+#undef MUH
+#undef MEH
 
 	/* stuff it into an nmg shell */
 	if(pv != 0 && pv != 0xff && s)	/* && s should go away. */
@@ -523,6 +540,8 @@ rt_nmg_mc_pew(struct shell *s, struct application *a, fastf_t x, fastf_t y, fast
 	if(sep->in>0 && sep->hit[Z] < b+step) sep++;
 	if(nep->in>0 && nep->hit[Z] < b+step) nep++;
 	if(nwp->in>0 && nwp->hit[Z] < b+step) nwp++;
+
+	last_b = b;
     }
     return 0;
 }
