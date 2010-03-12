@@ -47,81 +47,102 @@ option add *RtControl*tearoff 0 widgetDefault
     itk_option define -dest dest Dest ""
     itk_option define -mged mged Mged ""
 
-    public method activate {}
-    public method activate_adv {}
-    public method deactivate {}
-    public method deactivate_adv {}
-    public method center {w gs {cw ""}}
-    public method update_fb_mode {}
-
-    private method build_adv {}
-    private method set_src {}
-    private method set_dest {}
-    private method colorChooser {_color}
-    private method set_color {}
-    private method set_size {}
-    private method set_jitter {}
-    private method set_lmodel {}
-    private method cook_dest {dest}
-    private method fb_mode {}
-    private method ok {}
-    private method raytrace {}
-    private method abort {}
-    private method clear {}
-    private method get_cooked_dest {}
-    private method update_control_panel {}
-    private method menuStatusCB {w}
-    private method leaveCB {}
-    private method enterAdvCB {}
-    private method enterOkCB {}
-    private method enterRaytraceCB {}
-    private method enterAbortCB {}
-    private method enterClearCB {}
-    private method enterDismissCB {}
-    private method enterDestCB {}
-    private method enterSizeCB {}
-    private method enterColorCB {}
-    private method getPane {}
-    private method getPaneStr {}
-    private method getSize {}
-
-    private method menuStatusAdvCB {w}
-    private method leaveAdvCB {}
-    private method enterDismissAdvCB {}
-    private method enterNProcCB {}
-    private method enterHSampleCB {}
-    private method enterOtherCB {}
-
-    private variable fb_mode 0
-    private variable rtSrc ""
-    private variable rtDest ""
-    private variable rtColor "0 0 0"
-    private variable rtPrevColor "0 0 0"
-    private variable rtSize ""
-    private variable rtLightModel 0
-    private variable rtLightModelSpec "Full"
-    private variable rtJitter 0
-    private variable rtJitterSpec "None"
-    private variable win_geom ""
-    private variable win_geom_adv ""
-    private variable msg ""
-    private variable msg_adv ""
-    private variable srcM
-    private variable destM
-    private variable destE
-    private variable sizeM
-    private variable sizeE
-    private variable colorM
-    private variable colorE
-    private variable jitterM
-    private variable lmodelM
-    private variable isaMged 0
-    private variable isaGed 0
-
-    protected variable saveVisibilityBinding {}
-    protected variable saveFocusOutBinding {}
-
     constructor {args} {}
+
+    public {
+	method activate {}
+	method activate_adv {}
+	method deactivate {}
+	method deactivate_adv {}
+	method center {w gs {cw ""}}
+	method update_fb_mode {}
+    }    
+
+    protected {
+	variable pmGlobalPhotonsEntry 16384
+	variable pmGlobalPhotonsScale 14
+	variable pmCausticsPercentScale 0
+	variable pmIrradianceRaysEntry 100
+	variable pmIrradianceRaysScale 10
+	variable pmAngularTolerance 60.0
+	variable pmRandomSeedEntry 0
+	variable pmImportanceMapping 0
+	variable pmIrradianceHypersamplingCache 0
+	variable pmVisualizeIrradiance 0
+	variable pmScaleIndirectScale 1.0
+	variable pmCacheFileEntry ""
+
+	variable saveVisibilityBinding {}
+	variable saveFocusOutBinding {}
+
+	variable fb_enabled 0
+	variable fb_mode 0
+	variable prev_fb_mode 0
+	variable rtSrc ""
+	variable rtDest ""
+	variable rtColor "0 0 50"
+	variable rtPrevColor "0 0 0"
+	variable rtSize ""
+	variable rtLightModel 0
+	variable rtLightModelSpec "Full"
+	variable rtJitter 0
+	variable rtJitterSpec "None"
+	variable win_geom ""
+	variable win_geom_adv ""
+	variable msg ""
+	variable msg_adv ""
+	variable srcM
+	variable destM
+	variable destE
+	variable sizeM
+	variable sizeE
+	variable colorM
+	variable colorE
+	variable jitterM
+	variable lmodelM
+	variable isaMged 0
+	variable isaGed 0
+
+	method build_adv {}
+	method set_src {}
+	method set_dest {}
+	method colorChooser {_color}
+	method set_color {}
+	method set_size {}
+	method set_jitter {}
+	method set_lmodel {}
+	method cook_dest {dest}
+	method fb_mode {}
+	method ok {}
+	method raytrace {}
+	method abort {}
+	method clear {}
+	method get_cooked_dest {}
+	method update_control_panel {}
+	method menuStatusCB {w}
+	method leaveCB {}
+	method enterAdvCB {}
+	method enterEnablefbCB {}
+	method enterOkCB {}
+	method enterRaytraceCB {}
+	method enterAbortCB {}
+	method enterClearCB {}
+	method enterDismissCB {}
+	method enterDestCB {}
+	method enterSizeCB {}
+	method enterColorCB {}
+	method getPane {}
+	method getPaneStr {}
+	method getSize {}
+	method enableFB {}
+
+	method menuStatusAdvCB {w}
+	method leaveAdvCB {}
+	method enterDismissAdvCB {}
+	method enterNProcCB {}
+	method enterHSampleCB {}
+	method enterOtherCB {}
+    }
 }
 
 ::itcl::body RtControl::constructor {args} {
@@ -138,6 +159,10 @@ option add *RtControl*tearoff 0 widgetDefault
 
     itk_component add gridF3 {
 	::ttk::frame $itk_interior.gridF3
+    } {}
+
+    itk_component add gridF4 {
+	::ttk::frame $itk_interior.gridF4
     } {}
 
     itk_component add menubar {
@@ -167,8 +192,11 @@ option add *RtControl*tearoff 0 widgetDefault
 	$itk_component(menubar) add cascade -label "Objects" -underline 0 -menu $itk_component(objM)
     }
 
-    $itk_component(fbM) add radiobutton -value 2 -variable [::itcl::scope fb_mode] \
+    $itk_component(fbM) add radiobutton -value 3 -variable [::itcl::scope fb_mode] \
 	-label "Overlay" -underline 0 \
+	-command [::itcl::code $this fb_mode]
+    $itk_component(fbM) add radiobutton -value 2 -variable [::itcl::scope fb_mode] \
+	-label "Interlay" -underline 0 \
 	-command [::itcl::code $this fb_mode]
     $itk_component(fbM) add radiobutton -value 1 -variable [::itcl::scope fb_mode] \
 	-label "Underlay" -underline 0 \
@@ -222,8 +250,21 @@ option add *RtControl*tearoff 0 widgetDefault
 
     bind $itk_component(sizeCB) <<ComboboxSelected>> [::itcl::code $this set_size]
 
+    itk_component add bgcolorF {
+	::ttk::frame $itk_interior.bgcolorF
+    } {}
+
+    set bg [eval ::cadwidgets::Ged::rgb_to_tk $rtColor]
+    itk_component add bgcolorpatchL {
+	::ttk::label $itk_component(bgcolorF).bgcolorpatchL \
+	    -text " " \
+	    -width 2 \
+	    -background $bg \
+	    -anchor w
+    } {}
+
     itk_component add bgcolorL {
-	::ttk::label $itk_interior.bgcolorL \
+	::ttk::label $itk_component(bgcolorF).bgcolorL \
 	    -text "Background Color" \
 	    -anchor e
     } {}
@@ -232,7 +273,7 @@ option add *RtControl*tearoff 0 widgetDefault
 	::ttk::combobox $itk_interior.bgcolorCB \
 	    -state readonly \
 	    -textvariable [::itcl::scope rtColor] \
-	    -values {Black White Red Green Blue Yellow Cyan Magenta {Color Tool...}}
+	    -values {Navy Black White Red Green Blue Yellow Cyan Magenta {Color Tool...}}
     } {}
 
     bind $itk_component(bgcolorCB) <<ComboboxSelected>> [::itcl::code $this set_color]
@@ -253,6 +294,16 @@ option add *RtControl*tearoff 0 widgetDefault
     } {}
     bind $itk_component(advB) <Enter> [::itcl::code $this enterAdvCB]
     bind $itk_component(advB) <Leave> [::itcl::code $this leaveCB]
+
+    itk_component add enablefbB {
+	::ttk::checkbutton $itk_interior.enablefbB \
+	    -text "Enable Framebuffer" \
+	    -width 16 \
+	    -variable [::itcl::scope fb_enabled] \
+	    -command [::itcl::code $this enableFB]
+    } {}
+    bind $itk_component(enablefbB) <Enter> [::itcl::code $this enterEnablefbCB]
+    bind $itk_component(enablefbB) <Leave> [::itcl::code $this leaveCB]
 
     itk_component add okB {
 	::ttk::button $itk_interior.okB \
@@ -306,11 +357,20 @@ option add *RtControl*tearoff 0 widgetDefault
 	    -textvariable [::itcl::scope msg]
     } {}
 
+    grid $itk_component(bgcolorpatchL) $itk_component(bgcolorL) -sticky nsew
+    grid columnconfigure $itk_component(bgcolorF) 0 -weight 1
+
+    grid x $itk_component(advB) x $itk_component(enablefbB) x -sticky nsew -in $itk_component(gridF3)
+    grid columnconfigure $itk_component(gridF3) 0 -weight 1
+    grid columnconfigure $itk_component(gridF3) 2 -weight 1
+    grid columnconfigure $itk_component(gridF3) 4 -weight 1
+
     grid $itk_component(srcL) $itk_component(srcCB) -pady 1 -sticky nsew -in $itk_component(gridF1)
     grid $itk_component(destL) $itk_component(destCB) -pady 1 -sticky nsew -in $itk_component(gridF1)
     grid $itk_component(sizeL) $itk_component(sizeCB) -pady 1 -sticky nsew -in $itk_component(gridF1)
-    grid $itk_component(bgcolorL) $itk_component(bgcolorCB) -pady 1 -sticky nsew -in $itk_component(gridF1)
-    grid $itk_component(advB) - -pady 1 -sticky ns -in $itk_component(gridF1)
+    grid $itk_component(bgcolorF) $itk_component(bgcolorCB) -pady 1 -sticky nsew -in $itk_component(gridF1)
+#    grid $itk_component(advB) $itk_component(enablefbB) -pady 1 -sticky ns -in $itk_component(gridF1)
+#    grid $itk_component(gridF3) - -pady 1 -sticky nsew -in $itk_component(gridF1)
 
     grid columnconfigure $itk_component(gridF1) 1 -weight 1
     grid rowconfigure $itk_component(gridF1) 0 -weight 1
@@ -324,12 +384,13 @@ option add *RtControl*tearoff 0 widgetDefault
 
     grid $itk_component(okB) $itk_component(raytraceB) \
 	$itk_component(abortB) x $itk_component(clearB) x \
-	$itk_component(dismissB) -sticky "nsew" -in $itk_component(gridF3)
-    grid columnconfigure $itk_component(gridF3) 3 -weight 1
-    grid columnconfigure $itk_component(gridF3) 5 -weight 1
+	$itk_component(dismissB) -sticky "nsew" -in $itk_component(gridF4)
+    grid columnconfigure $itk_component(gridF4) 3 -weight 1
+    grid columnconfigure $itk_component(gridF4) 5 -weight 1
 
-    grid $itk_component(gridF2) -padx 4 -pady 4 -sticky nsew
-    grid $itk_component(gridF3) -padx 4 -pady 4 -sticky nsew
+    grid $itk_component(gridF2) -padx 4 -pady 2 -sticky nsew
+    grid $itk_component(gridF3) -padx 4 -pady 2 -sticky nsew
+    grid $itk_component(gridF4) -padx 4 -pady 2 -sticky nsew
     grid $itk_component(statusL) -padx 2 -pady 2 -sticky nsew
     grid columnconfigure $itk_component(hull) 0 -weight 1
     grid rowconfigure $itk_component(hull) 0 -weight 1
@@ -419,7 +480,7 @@ option add *RtControl*tearoff 0 widgetDefault
 	::ttk::combobox $itk_component(adv).lightCB \
 	    -state readonly \
 	    -textvariable [::itcl::scope rtLightModelSpec] \
-	    -values {Full Diffuse {Surface Normals} {Curvature - inverse radius} {Curvature - direction vector}}
+	    -values {Full Diffuse {Surface Normals} {Curvature - inverse radius} {Curvature - direction vector} {Photon Mapping}}
     } {}
     bind $itk_component(adv_lmodelCB) <<ComboboxSelected>> [::itcl::code $this set_lmodel]
 
@@ -650,6 +711,9 @@ option add *RtControl*tearoff 0 widgetDefault
     }
 
     switch -- $rtColor {
+	Navy {
+	    set rtColor "0 0 50"
+	}
 	Black {
 	    set rtColor "0 0 0"
 	}
@@ -680,6 +744,9 @@ option add *RtControl*tearoff 0 widgetDefault
     }
 
     set rtPrevColor $rtColor
+    
+    set bg [eval ::cadwidgets::Ged::rgb_to_tk $rtColor]
+    $itk_component(bgcolorpatchL) configure -background $bg
 }
 
 ::itcl::body RtControl::set_size {} {
@@ -733,6 +800,9 @@ option add *RtControl*tearoff 0 widgetDefault
 	"Curvature - direction vector" {
 	    set rtLightModel 5
 	}
+	"Photon Mapping" {
+	    set rtLightModel 7
+	}
 	default {
 	    error "RtControl::set_lmodel: bad value - $rtLightModelSpec"
 	}
@@ -782,6 +852,12 @@ option add *RtControl*tearoff 0 widgetDefault
 	$itk_option(-mged) component $pane fb_active $fb_mode
     } else {
 	$itk_option(-mged) pane_set_fb_mode $pane $fb_mode
+    }
+
+    if {$fb_mode} {
+	set fb_enabled 1
+    } else {
+	set fb_enabled 0
     }
 }
 
@@ -837,6 +913,10 @@ option add *RtControl*tearoff 0 widgetDefault
 
     if {$rtLightModel != ""} {
 	append rt_cmd " -l$rtLightModel"
+
+	if {$rtLightModel == 7} {
+	    append rt_cmd ",$pmGlobalPhotonsEntry,$pmCausticsPercentScale,$pmIrradianceRaysScale,$pmAngularTolerance,$pmRandomSeedEntry,$pmImportanceMapping,$pmIrradianceHypersamplingCache,$pmVisualizeIrradiance,$pmScaleIndirectScale,$pmCacheFileEntry -A0"
+	}
     }
 
     if {$itk_option(-other) != ""} {
@@ -1067,6 +1147,10 @@ option add *RtControl*tearoff 0 widgetDefault
     set msg "Activate the advanced settings dialog"
 }
 
+::itcl::body RtControl::enterEnablefbCB {} {
+    set msg "Toggle framebuffer on/off"
+}
+
 ::itcl::body RtControl::enterOkCB {} {
     if {!$isaMged && !$isaGed} {
 	set msg "Not associated with an Mged object"
@@ -1213,6 +1297,21 @@ option add *RtControl*tearoff 0 widgetDefault
 	set size [$itk_option(-mged) pane_win_size [$itk_option(-mged) pane]]
     }
     return "[lindex $size 0]x[lindex $size 1]"
+}
+
+::itcl::body RtControl::enableFB {} {
+    if {$fb_enabled} {
+	if {$prev_fb_mode} {
+	    set fb_mode $prev_fb_mode
+	} else {
+	    set fb_mode 1
+	}
+    } else {
+	set prev_fb_mode $fb_mode
+	set fb_mode 0
+    }
+
+    fb_mode
 }
 
 ::itcl::body RtControl::menuStatusAdvCB {w} {
