@@ -33,6 +33,7 @@ EXTRA_DIST = \
 	make_tgz.sh \
 	make_zip.sh \
 	prior.sh \
+	orbit.sh \
 	shtool \
 	template.sh \
 	ws.sh
