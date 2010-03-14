@@ -538,7 +538,7 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
      */
     t_scale = MAGNITUDE(dprime);
     if (NEAR_ZERO(t_scale, SMALL_FASTF)) {
-	bu_log("tgc(%s) dprime=(%g, %g, %g), t_scale=%e, miss.\n",
+	bu_log("tgc(%s) dprime=(%g, %g, %g), t_scale=%e, miss.\n", stp->st_dp->d_namep,
 	       V3ARGS(dprime), t_scale);
 	return 0;
     }
