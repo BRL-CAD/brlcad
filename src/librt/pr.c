@@ -764,7 +764,7 @@ rt_pr_tol(const struct bn_tol *tol)
 void
 rt_pr_uvcoord(const struct uvcoord *uvp)
 {
-    bu_log("%8.8x u, v=(%g, %g), du, dv=(%g, %g)\n",
+    bu_log("u, v=(%g, %g), du, dv=(%g, %g)\n",
 	   INTCLAMP(uvp->uv_u), INTCLAMP(uvp->uv_v),
 	   INTCLAMP(uvp->uv_du), INTCLAMP(uvp->uv_dv) );
 }
