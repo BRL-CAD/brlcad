@@ -180,7 +180,7 @@ wdb_export_external(
 
 	case RT_WDB_TYPE_DB_DISK:
 	    if (wdbp->dbip->dbi_read_only) {
-		bu_log("wdb_export_external(%s): read-only database, write aborted\n");
+		bu_log("wdb_export_external(%s): read-only database, write aborted\n", name);
 		return -5;
 	    }
 	    /* If name already exists, that object will be updated. */
@@ -207,7 +207,7 @@ wdb_export_external(
 
 	case RT_WDB_TYPE_DB_DISK_APPEND_ONLY:
 	    if (wdbp->dbip->dbi_read_only) {
-		bu_log("wdb_export_external(%s): read-only database, write aborted\n");
+		bu_log("wdb_export_external(%s): read-only database, write aborted\n", name);
 		return -5;
 	    }
 	    /* If name already exists, new non-conflicting name will be generated */
