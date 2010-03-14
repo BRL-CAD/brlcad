@@ -517,7 +517,7 @@ setup_socket(int fd)
 HIDDEN void
 comm_error(char *str)
 {
-    bu_log(str);
+    bu_log("%s",str);
 }
 
 /*

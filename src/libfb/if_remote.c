@@ -195,7 +195,7 @@ parse_file(char *file, char *host, int *portp, char *device, int length)
 HIDDEN void
 rem_log(char *msg)
 {
-    fb_log(msg);
+    fb_log("%s",msg);
 }
 
 

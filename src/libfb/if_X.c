@@ -701,7 +701,7 @@ X_open_fb(FBIO *ifp, char *file, int width, int height)
 static int alive = 1;
 
 HIDDEN
-x_linger(FBIO *ifp)
+int x_linger(FBIO *ifp)
 {
 #if 0
     if ( fork() != 0 )
