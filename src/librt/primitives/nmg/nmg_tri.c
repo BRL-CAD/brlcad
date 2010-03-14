@@ -386,7 +386,7 @@ map_vu_to_2d(struct vertexuse *vu, struct bu_list *tbl2d, fastf_t *mat, struct f
 	/* if vertexuse already transformed, skip it */
 	if (find_pt2d(tbl2d, vu_p)) {
 	    if (rt_g.NMG_debug & DEBUG_TRI && flatten_debug) {
-		bu_log("vertexuse already transformed\n", vu);
+		bu_log("%x vertexuse already transformed\n", vu);
 		nmg_pr_vu(vu, NULL);
 	    }
 	    continue;
@@ -638,7 +638,7 @@ vtype2d(struct pt2d *v, struct bu_list *tbl2d, const struct bn_tol *tol)
 	return(POLY_SIDE);
     }
     bu_log(
-	"%s %d HELP! special case:\n(%g %g)->(%g %g)\n(%g %g)->(%g %g)\n",
+	"%s %d HELP! special case:\np:(%g %g) v:(%g %g)\nn:(%g %g)\n",
 	__FILE__, __LINE__,
 	p->coord[X], p->coord[Y],
 	v->coord[X], v->coord[Y],
