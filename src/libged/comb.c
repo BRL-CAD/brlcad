@@ -180,7 +180,7 @@ _ged_combadd(struct ged			*gedp,
 	GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, 0);
 	return dp;
     } else if (!(dp->d_flags & DIR_COMB)) {
-	bu_vls_printf(&gedp->ged_result_str, "%s exists, but is not a combination\n");
+	bu_vls_printf(&gedp->ged_result_str, "%s exists, but is not a combination\n", dp->d_namep);
 	return DIR_NULL;
     }
 
@@ -191,7 +191,7 @@ _ged_combadd(struct ged			*gedp,
     RT_CK_COMB(comb);
 
     if (region_flag && !comb->region_flag) {
-	bu_vls_printf(&gedp->ged_result_str, "%s: not a region\n");
+	bu_vls_printf(&gedp->ged_result_str, "%s: not a region\n", dp->d_namep);
 	return DIR_NULL;
     }
 

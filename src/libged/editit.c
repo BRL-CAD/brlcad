@@ -156,7 +156,7 @@ _ged_editit(char *editstring, const char *filename)
 int
 ged_editit(struct ged *gedp, int argc, const char *argv[])
 {
-    _ged_editit(argv[1],argv[3]);
+    _ged_editit((char *)argv[1],argv[3]);
     return GED_OK;
 }
     

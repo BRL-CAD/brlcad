@@ -70,7 +70,7 @@ ged_who(struct ged *gedp, int argc, const char *argv[])
 		skip_phony = 1;
 		break;
 	    default:
-		bu_vls_printf(&gedp->ged_result_str, "ged_who: argument not understood\n", (char *)NULL);
+		bu_vls_printf(&gedp->ged_result_str, "ged_who: argument not understood\n");
 		return GED_ERROR;
 	}
     }

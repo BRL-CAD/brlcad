@@ -1329,7 +1329,7 @@ ged_addToDisplay(struct ged *gedp,
     BU_LIST_INIT(&gdlp->gdl_headSolid);
     gdlp->gdl_dp = dp;
     bu_vls_init(&gdlp->gdl_path);
-    bu_vls_printf(&gdlp->gdl_path, name);
+    bu_vls_printf(&gdlp->gdl_path, "%s", name);
 
  end:
     if (found_namepath)

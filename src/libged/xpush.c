@@ -246,7 +246,7 @@ Do_copy_membs(struct db_i *dbip,
 
     /* Copy member with current tranform matrix */
     if ((dp_new=Copy_object(gedp, dp, new_xform)) == DIR_NULL) {
-	bu_vls_printf(&gedp->ged_result_str, "Failed to copy object ", dp->d_namep);
+	bu_vls_printf(&gedp->ged_result_str, "Failed to copy object %s", dp->d_namep);
 	return;
     }
 
