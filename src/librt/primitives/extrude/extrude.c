@@ -738,8 +738,7 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 	    case CURVE_NURB_MAGIC:
 		break;
 	    default:
-		bu_log("Unrecognized segment type in sketch (%s) referenced by extrusion (%s)\n",
-		       stp->st_dp->d_namep);
+		bu_log("Unrecognized segment type in sketch referenced by extrusion (%s)\n",stp->st_dp->d_namep);
 		bu_bomb("Unrecognized segment type in sketch\n");
 		break;
 	}
