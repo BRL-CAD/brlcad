@@ -598,7 +598,7 @@ nmg_vshell(const struct bu_list *hp, const struct nmgregion *r)
 	    hpt = s->sa_p->max_pt;
 	    if (lpt[0] > hpt[0] || lpt[1] > hpt[1] ||
 		lpt[2] > hpt[2]) {
-		bu_log("Bnmg_vshell() ad min_pt/max_pt for shell(%8x)'s extent\n");
+		bu_log("Bnmg_vshell() ad min_pt/max_pt for shell(%8x)'s extent\n", s);
 		bu_log("Min_pt %g %g %g\n", lpt[0], lpt[1],
 		       lpt[2]);
 		bu_log("Max_pt %g %g %g\n", hpt[0], hpt[1],
