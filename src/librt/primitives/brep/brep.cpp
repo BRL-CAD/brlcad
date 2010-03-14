@@ -1679,7 +1679,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
     }
     ///////////// near hit end
     if (false) { //((hits.size() % 2) != 0) {
-	bu_log("**** After Pass3 Hits: %d\n", hits.size());
+	bu_log("**** After Pass3 Hits: %zu\n", hits.size());
 
 	for (HitList::iterator i = hits.begin(); i != hits.end(); ++i) {
 	    point_t prev;
@@ -1699,7 +1699,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	    VMOVE(prev, out.point);
 	    bu_log(")");
 	}
-	bu_log("\n**** Orig Hits: %d\n", orig.size());
+	bu_log("\n**** Orig Hits: %zu\n", orig.size());
 
 	for (HitList::iterator i = orig.begin(); i != orig.end(); ++i) {
 	    point_t prev;
@@ -2074,10 +2074,10 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	    hit = true;
 	} else {
 	    //TRACE2("screen xy: " << ap->a_x << ", " << ap->a_y);
-	    bu_log("**** ERROR odd number of hits: %d\n", hits.size());
+	    bu_log("**** ERROR odd number of hits: %zu\n", hits.size());
 	    bu_log("xyz %g %g %g \n", rp->r_pt[0], rp->r_pt[1], rp->r_pt[2]);
 	    bu_log("dir %g %g %g \n", rp->r_dir[0], rp->r_dir[1], rp->r_dir[2]);
-	    bu_log("**** Current Hits: %d\n", hits.size());
+	    bu_log("**** Current Hits: %zu\n", hits.size());
 				
 	    for (HitList::iterator i = hits.begin(); i != hits.end(); ++i) {
 		point_t prev;
@@ -2097,7 +2097,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 		VMOVE(prev, out.point);
 		bu_log(")");
 	    }
-	    bu_log("\n**** Orig Hits: %d\n", orig.size());
+	    bu_log("\n**** Orig Hits: %zu\n", orig.size());
 				
 	    for (HitList::iterator i = orig.begin(); i != orig.end(); ++i) {
 		point_t prev;
