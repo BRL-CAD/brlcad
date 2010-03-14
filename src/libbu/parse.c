@@ -1021,7 +1021,7 @@ bu_vls_struct_item(struct bu_vls *vp, const struct bu_structparse *sdp, const ch
 	    break;
 	case 'p':
 	    {
-		bu_log("Cannot print type '%p' yet!\n");
+		bu_log("Cannot print type '%%p' yet!\n");
 		/* Indirect to another structure */
 		/* FIXME: unimplemented */
 	    }
