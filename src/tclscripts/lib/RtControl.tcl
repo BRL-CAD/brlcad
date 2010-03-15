@@ -56,6 +56,12 @@ option add *RtControl*tearoff 0 widgetDefault
 	method deactivate_adv {}
 	method center {w gs {cw ""}}
 	method update_fb_mode {}
+
+	method abort {}
+	method clear {}
+	method raytrace {}
+	method raytracePlus {}
+	method toggleFB {}
     }    
 
     protected {
@@ -122,9 +128,6 @@ option add *RtControl*tearoff 0 widgetDefault
 	method cook_dest {dest}
 	method fb_mode {}
 	method ok {}
-	method raytrace {}
-	method abort {}
-	method clear {}
 	method get_cooked_dest {}
 	method update_control_panel {}
 	method menuStatusCB {w}
@@ -142,8 +145,8 @@ option add *RtControl*tearoff 0 widgetDefault
 	method getPane {}
 	method getPaneStr {}
 	method getSize {}
-	method enableFB {}
 
+	method enableFB {}
 	method menuStatusAdvCB {w}
 	method leaveAdvCB {}
 	method enterDismissAdvCB {}
@@ -518,6 +521,113 @@ option add *RtControl*tearoff 0 widgetDefault
 	set fb_mode [$itk_option(-mged) pane_set_fb_mode $rtDest]
     }
 }
+
+::itcl::body RtControl::abort {} {
+    if {!$isaMged && !$isaGed} {
+	error "Raytrace Control Panel($this) is not associated with an Mged object"
+    }
+
+    if {$isaMged} {
+	$itk_option(-mged) component $rtSrc rtabort
+    } else {
+	$itk_option(-mged) rtabort
+    }
+}
+
+::itcl::body RtControl::clear {} {
+    if {!$isaMged && !$isaGed} {
+	error "Raytrace Control Panel($this) is not associated with an Mged object"
+    }
+
+    set cooked_dest [get_cooked_dest]
+
+    set fbclear [bu_brlcad_root "bin/fbclear"]
+    set result [catch {eval exec $fbclear -F $cooked_dest $rtColor &} rt_error]
+
+    if {$result} {
+	error $rt_error
+    }
+}
+
+::itcl::body RtControl::raytrace {} {
+    if {!$isaMged && !$isaGed} {
+	error "Raytrace Control Panel($this) is not associated with an Mged object"
+    }
+
+    if {$isaMged} {
+	set rt_cmd "$itk_option(-mged) component $rtSrc rt -F [get_cooked_dest]"
+    } else {
+	set rt_cmd "$itk_option(-mged) pane_rt $rtSrc -F [get_cooked_dest]"
+    }
+
+    if {$rtSize != ""} {
+	set result [regexp "^(\[ \]*\[0-9\]+)((\[ \]*\[xX\]?\[ \]*)|(\[ \]+))(\[0-9\]*\[ \]*)$"\
+			$rtSize smatch width junkA junkB junkC height]
+	if {$result} {
+	    if {$height != ""} {
+		append rt_cmd " -w $width -n $height"
+		set width $width.0
+		set height $height.0
+		set aspect [expr {$width / $height}]
+		append rt_cmd " -V $aspect"
+	    } else {
+		append rt_cmd " -s $width"
+	    }
+	} else {
+	    error "Bad size - $rtSize"
+	}
+    }
+
+    append rt_cmd " -C[lindex $rtColor 0]/[lindex $rtColor 1]/[lindex $rtColor 2]"
+
+    if {$itk_option(-nproc) != ""} {
+	append rt_cmd " -P$itk_option(-nproc)"
+    }
+
+    if {$itk_option(-hsample) != ""} {
+	append rt_cmd " -H$itk_option(-hsample)"
+    }
+
+    append rt_cmd " -J$rtJitter"
+
+    if {$rtLightModel != ""} {
+	append rt_cmd " -l$rtLightModel"
+
+	if {$rtLightModel == 7} {
+	    append rt_cmd ",$pmGlobalPhotonsEntry,$pmCausticsPercentScale,$pmIrradianceRaysScale,$pmAngularTolerance,$pmRandomSeedEntry,$pmImportanceMapping,$pmIrradianceHypersamplingCache,$pmVisualizeIrradiance,$pmScaleIndirectScale,$pmCacheFileEntry -A0"
+	}
+    }
+
+    if {$itk_option(-other) != ""} {
+	append rt_cmd " $itk_option(-other)"
+    }
+
+    set result [catch {eval $rt_cmd} rt_error]
+    if {$result} {
+	error $rt_error
+    }
+}
+
+::itcl::body RtControl::raytracePlus {} {
+    if {!$fb_enabled} {
+	toggleFB
+    }
+
+    raytrace
+}
+
+::itcl::body RtControl::toggleFB {} {
+    if {$fb_enabled} {
+	set fb_enabled 0
+    } else {
+	set rtSize "Size of Pane"
+	set_size 
+	set fb_enabled 1
+    }
+
+    enableFB
+}
+
 
 ############################### Protected Methods ###############################
 
@@ -1004,92 +1114,6 @@ option add *RtControl*tearoff 0 widgetDefault
 
     raytrace
     deactivate
-}
-
-::itcl::body RtControl::raytrace {} {
-    if {!$isaMged && !$isaGed} {
-	error "Raytrace Control Panel($this) is not associated with an Mged object"
-    }
-
-    if {$isaMged} {
-	set rt_cmd "$itk_option(-mged) component $rtSrc rt -F [get_cooked_dest]"
-    } else {
-	set rt_cmd "$itk_option(-mged) pane_rt $rtSrc -F [get_cooked_dest]"
-    }
-
-    if {$rtSize != ""} {
-	set result [regexp "^(\[ \]*\[0-9\]+)((\[ \]*\[xX\]?\[ \]*)|(\[ \]+))(\[0-9\]*\[ \]*)$"\
-			$rtSize smatch width junkA junkB junkC height]
-	if {$result} {
-	    if {$height != ""} {
-		append rt_cmd " -w $width -n $height"
-		set width $width.0
-		set height $height.0
-		set aspect [expr {$width / $height}]
-		append rt_cmd " -V $aspect"
-	    } else {
-		append rt_cmd " -s $width"
-	    }
-	} else {
-	    error "Bad size - $rtSize"
-	}
-    }
-
-    append rt_cmd " -C[lindex $rtColor 0]/[lindex $rtColor 1]/[lindex $rtColor 2]"
-
-    if {$itk_option(-nproc) != ""} {
-	append rt_cmd " -P$itk_option(-nproc)"
-    }
-
-    if {$itk_option(-hsample) != ""} {
-	append rt_cmd " -H$itk_option(-hsample)"
-    }
-
-    append rt_cmd " -J$rtJitter"
-
-    if {$rtLightModel != ""} {
-	append rt_cmd " -l$rtLightModel"
-
-	if {$rtLightModel == 7} {
-	    append rt_cmd ",$pmGlobalPhotonsEntry,$pmCausticsPercentScale,$pmIrradianceRaysScale,$pmAngularTolerance,$pmRandomSeedEntry,$pmImportanceMapping,$pmIrradianceHypersamplingCache,$pmVisualizeIrradiance,$pmScaleIndirectScale,$pmCacheFileEntry -A0"
-	}
-    }
-
-    if {$itk_option(-other) != ""} {
-	append rt_cmd " $itk_option(-other)"
-    }
-
-    set result [catch {eval $rt_cmd} rt_error]
-    if {$result} {
-	error $rt_error
-    }
-}
-
-::itcl::body RtControl::abort {} {
-    if {!$isaMged && !$isaGed} {
-	error "Raytrace Control Panel($this) is not associated with an Mged object"
-    }
-
-    if {$isaMged} {
-	$itk_option(-mged) component $rtSrc rtabort
-    } else {
-	$itk_option(-mged) rtabort
-    }
-}
-
-::itcl::body RtControl::clear {} {
-    if {!$isaMged && !$isaGed} {
-	error "Raytrace Control Panel($this) is not associated with an Mged object"
-    }
-
-    set cooked_dest [get_cooked_dest]
-
-    set fbclear [bu_brlcad_root "bin/fbclear"]
-    set result [catch {eval exec $fbclear -F $cooked_dest $rtColor &} rt_error]
-
-    if {$result} {
-	error $rt_error
-    }
 }
 
 ## - get_cooked_dest
