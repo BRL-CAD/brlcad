@@ -30,6 +30,8 @@ dist_tcl_DATA = \
 	folder_open.png \
 	folder_open_small.png \
 	folder_open_small_disabled.png \
+	framebuffer.png \
+	framebuffer_clear.png \
 	global_undo.png \
 	measure.png \
 	object_undo.png \
@@ -62,6 +64,8 @@ dist_tcl_DATA = \
 	primitive_superell.png \
 	primitive_tgc.png \
 	primitive_tor.png \
+	raytrace.png \
+	raytrace_abort.png \
 	refresh.png \
 	revert.png \
 	run.png \
