@@ -298,6 +298,7 @@ package provide Archer 1.0
 
 	method updateCreationButtons {_on}
 	method updatePrimaryToolbar {}
+	method updateRaytraceButtons {_on}
 
 	method buildEmbeddedMenubar {}
 	method buildEmbeddedFileMenu {}
@@ -494,6 +495,7 @@ package provide Archer 1.0
 
 	readPreferences
 	updateCreationButtons 0
+	updateRaytraceButtons 0
 	updateCheckpointMode
 	updateSaveMode
 	updateUndoMode
@@ -1487,6 +1489,7 @@ package provide Archer 1.0
 #	createTargetLedger
 
 	updateCreationButtons 1
+	updateRaytraceButtons 1
 
 	buildGroundPlane
 	showGroundPlane
@@ -1740,6 +1743,19 @@ package provide Archer 1.0
 	    -image [image create photo \
 			-file [file join $dir option_tree.png]]
     }
+
+    $itk_component(primaryToolbar) itemconfigure toggle_fb \
+	-image [image create photo \
+		    -file [file join $dir framebuffer.png]]
+    $itk_component(primaryToolbar) itemconfigure raytrace \
+	-image [image create photo \
+		    -file [file join $dir raytrace.png]]
+    $itk_component(primaryToolbar) itemconfigure abort \
+	-image [image create photo \
+		    -file [file join $dir raytrace_abort.png]]
+    $itk_component(primaryToolbar) itemconfigure clear_fb \
+	-image [image create photo \
+		    -file [file join $dir framebuffer_clear.png]]
 }
 
 ::itcl::body Archer::setDefaultBindingMode {_mode} {
@@ -4355,6 +4371,28 @@ package provide Archer 1.0
     }
 }
 
+::itcl::body Archer::updateRaytraceButtons {_on} {
+    if {$_on} {
+	$itk_component(primaryToolbar) itemconfigure toggle_fb \
+	    -state normal \
+	    -command "$itk_component(rtcntrl) toggleFB"
+	$itk_component(primaryToolbar) itemconfigure raytrace \
+	    -state normal \
+	    -command "$itk_component(rtcntrl) raytracePlus"
+	$itk_component(primaryToolbar) itemconfigure abort \
+	    -state normal \
+	    -command "$itk_component(rtcntrl) abort"
+	$itk_component(primaryToolbar) itemconfigure clear_fb \
+	    -state normal \
+	    -command "$itk_component(rtcntrl) clear"
+    } else {
+	$itk_component(primaryToolbar) itemconfigure toggle_fb -state disabled
+	$itk_component(primaryToolbar) itemconfigure raytrace -state disabled
+	$itk_component(primaryToolbar) itemconfigure abort -state disabled
+	$itk_component(primaryToolbar) itemconfigure clear_fb -state disabled
+    }
+}
+
 ::itcl::body Archer::updatePrimaryToolbar {} {
     # Populate the primary toolbar
     $itk_component(primaryToolbar) insert 0 button new \
@@ -4734,6 +4772,43 @@ package provide Archer 1.0
     $itk_component(primaryToolbar) itemconfigure edit_translate -state disabled
     $itk_component(primaryToolbar) itemconfigure edit_scale -state disabled
     $itk_component(primaryToolbar) itemconfigure edit_center -state disabled
+
+    # add spacer
+    $itk_component(primaryToolbar) add frame fill12 \
+	-relief flat \
+	-width 3
+    $itk_component(primaryToolbar) add frame sep6 \
+	-relief sunken \
+	-width 2
+    $itk_component(primaryToolbar) add frame fill13 \
+	-relief flat \
+	-width 3
+
+    $itk_component(primaryToolbar) add button toggle_fb \
+	-state disabled \
+	-balloonstr "Toggle framebuffer" \
+	-helpstr "Toggle framebuffer" \
+	-relief flat \
+	-overrelief raised
+    $itk_component(primaryToolbar) add button raytrace \
+	-state disabled \
+	-balloonstr "Raytrace current view" \
+	-helpstr "Raytrace current view" \
+	-relief flat \
+	-overrelief raised
+    $itk_component(primaryToolbar) add button abort \
+	-state disabled \
+	-balloonstr "Abort raytrace" \
+	-helpstr "Abort raytrace" \
+	-relief flat \
+	-overrelief raised
+    $itk_component(primaryToolbar) add button clear_fb \
+	-state disabled \
+	-balloonstr "Clear framebuffer" \
+	-helpstr "Clear framebuffer" \
+	-relief flat \
+	-overrelief raised
+
 }
 
 
