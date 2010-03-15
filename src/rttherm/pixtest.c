@@ -59,7 +59,7 @@ struct bn_tabdata *cie_z;
 mat_t xyz2rgb;
 
 int
-main(int ac, char *av)
+main(int ac, char **av)
 {
     unsigned char rgb[4];
     float src[3];
