@@ -80,6 +80,7 @@ package provide cadwidgets::Ged 1.0
     itk_option define -viewAxesSize viewAxesSize AxesSize 0.2
     itk_option define -viewAxesTripleColor viewAxesTripleColor AxesTripleColor 1
 
+    itk_option define -adcEnable adcEnable AdcEnable 0
     itk_option define -centerDotColor centerDotColor CenterDotColor Yellow
     itk_option define -centerDotEnable centerDotEnable CenterDotEnable 1
     itk_option define -gridEnable gridEnable GridEnable 0
@@ -715,6 +716,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::configbody cadwidgets::Ged::centerDotEnable {
     eval faceplate center_dot draw [get_rgb_color $itk_option(-centerDotEnable)]
+}
+
+::itcl::configbody cadwidgets::Ged::adcEnable {
+    adc draw $itk_option(-adcEnable)
 }
 
 ::itcl::configbody cadwidgets::Ged::gridEnable {
