@@ -31,6 +31,10 @@ dist_tcl_DATA = \
 	folder_open_small_disabled.png \
 	framebuffer.png \
 	framebuffer_clear.png \
+	framebuffer_off.png \
+	framebuffer_underlay.png \
+	framebuffer_interlay.png \
+	framebuffer_overlay.png \
 	global_undo.png \
 	measure.png \
 	object_undo.png \
