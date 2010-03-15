@@ -318,6 +318,7 @@ namespace eval ArcherCore {
 	variable mShowScale 0
 	variable mShowGrid 0
 	variable mSnapGrid 0
+	variable mShowADC 0
 
 	# variables for preference state
 	variable mZClipMode 0
@@ -548,6 +549,7 @@ Popup Menu    Right or Ctrl-Left
 	method showModelAxesTicks {}
 	method showGrid     {}
 	method snapGrid     {}
+	method showADC     {}
 
 	# private mged commands
 	method alterObj          {_operation _obj}
@@ -2324,6 +2326,7 @@ Popup Menu    Right or Ctrl-Left
     set mShowViewAxes [gedCmd cget -viewAxesEnable]
     set mShowGrid [gedCmd cget -gridEnable]
     set mSnapGrid [gedCmd cget -gridSnap]
+    set mShowADC [gedCmd cget -adcEnable]
 }
 
 ::itcl::body ArcherCore::doMultiPane {} {
@@ -2424,6 +2427,10 @@ Popup Menu    Right or Ctrl-Left
 
 ::itcl::body ArcherCore::snapGrid {} {
     catch {gedCmd configure -gridSnap $mSnapGrid}
+}
+
+::itcl::body ArcherCore::showADC {} {
+    catch {gedCmd configure -adcEnable $mShowADC}
 }
 
 

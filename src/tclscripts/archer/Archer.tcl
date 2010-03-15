@@ -271,6 +271,7 @@ package provide Archer 1.0
 
 	# Miscellaneous Section
 	method buildAboutDialog {}
+	method buildADCPreferences {}
 	method buildBackgroundColor {_parent}
 	method buildDisplayPreferences {}
 	method buildGeneralPreferences {}
@@ -2382,6 +2383,7 @@ package provide Archer 1.0
 	    $itk_component(modesmenu) entryconfigure "Lighting" -state normal
 	    $itk_component(modesmenu) entryconfigure "Grid" -state normal
 	    $itk_component(modesmenu) entryconfigure "Snap Grid" -state normal
+	    $itk_component(modesmenu) entryconfigure "Angle/Distance Cursor" -state normal
 
 	    $itk_component(raytracemenu) entryconfigure "rt" -state normal
 	    $itk_component(raytracemenu) entryconfigure "rtcheck" -state normal
@@ -2408,6 +2410,7 @@ package provide Archer 1.0
 	    $itk_component(menubar) menuconfigure .modes.light -state normal
 	    $itk_component(menubar) menuconfigure .modes.grid -state normal
 	    $itk_component(menubar) menuconfigure .modes.sgrid -state normal
+	    $itk_component(menubar) menuconfigure .modes.adc -state normal
 
 	    $itk_component(menubar) menuconfigure .raytrace.rt -state normal
 	    $itk_component(menubar) menuconfigure .raytrace.rtcheck -state normal
@@ -2765,6 +2768,17 @@ package provide Archer 1.0
     wm geometry $itk_component(aboutDialog) "600x600"
 }
 
+::itcl::body Archer::buildADCPreferences {} {
+    set parent $itk_component(preferenceTabs)
+    itk_component add adcF {
+	::ttk::frame $parent.adcF
+    } {}
+
+    grid $itk_component(adcF) -column 0 -row 0 -sticky nw
+
+    $itk_component(preferenceTabs) add $itk_component(adcF) -text "ADC"
+}
+
 ::itcl::body Archer::buildBackgroundColor {parent} {
     itk_component add backgroundRedL {
 	::ttk::label $parent.redl \
@@ -2883,9 +2897,6 @@ package provide Archer 1.0
 
     set i 0
     grid $parent -column 0 -row $i -sticky nsew
-
-    grid rowconfigure $oglParent 0 -weight 1
-    grid columnconfigure $oglParent 0 -weight 1
 
     $itk_component(preferenceTabs) add $itk_component(displayF) -text "Display"
 }
@@ -3040,9 +3051,6 @@ package provide Archer 1.0
 
     set i 0
     grid $itk_component(generalF) -column 0 -row $i -sticky nsew
-
-    grid rowconfigure $parent 0 -weight 1
-    grid columnconfigure $parent 0 -weight 1
 
     $itk_component(preferenceTabs) add $itk_component(generalF) -text "General"
 }
@@ -3210,9 +3218,6 @@ package provide Archer 1.0
     set i 0
     grid $itk_component(gridF) -column 0 -row $i -sticky nw
 
-    grid rowconfigure $parent 0 -weight 1
-    grid columnconfigure $parent 0 -weight 1
-
     $itk_component(preferenceTabs) add $itk_component(gridF) -text "Grid"
 }
 
@@ -3290,9 +3295,6 @@ package provide Archer 1.0
 
     set i 0
     grid $itk_component(groundPlaneF) -column 0 -row $i -sticky nw
-
-    grid rowconfigure $parent 0 -weight 1
-    grid columnconfigure $parent 0 -weight 1
 
     $itk_component(preferenceTabs) add $itk_component(groundPlaneF) -text "Ground Plane"
 }
@@ -3524,9 +3526,6 @@ package provide Archer 1.0
     set i 0
     grid $itk_component(modelAxesF) -column 0 -row $i -sticky nw
 
-    grid rowconfigure $parent 0 -weight 1
-    grid columnconfigure $parent 0 -weight 1
-
     $itk_component(preferenceTabs) add $itk_component(modelAxesF) -text "Model Axes"
 }
 
@@ -3682,12 +3681,16 @@ package provide Archer 1.0
 	::ttk::notebook $parent.tabs
     } {}
 
+    grid rowconfigure $itk_component(preferenceTabs) 0 -weight 1
+    grid columnconfigure $itk_component(preferenceTabs) 0 -weight 1
+
     buildGeneralPreferences
     buildModelAxesPreferences
     buildViewAxesPreferences
     buildGroundPlanePreferences
     buildDisplayPreferences
     buildGridPreferences
+    buildADCPreferences
 
     $itk_component(preferencesDialog) configure -background $LABEL_BACKGROUND_COLOR
 
@@ -4048,9 +4051,6 @@ package provide Archer 1.0
 
     set i 0
     grid $itk_component(viewAxesF) -column 0 -row $i -sticky nw
-
-    grid rowconfigure $parent 0 -weight 1
-    grid columnconfigure $parent 0 -weight 1
 
     $itk_component(preferenceTabs) add $itk_component(viewAxesF) -text "View Axes"
 }
@@ -5036,6 +5036,8 @@ package provide Archer 1.0
 		-helpstr "Toggle display of the grid."
 	    checkbutton sgrid -label "Snap Grid" \
 		-helpstr "Toggle grid snapping."
+	    checkbutton adc -label "Angle/Distance Cursor" \
+		-helpstr "Toggle display of the angle distance cursor."
 	}
     $itk_component(menubar) menuconfigure .modes.activepane \
 	-state disabled
@@ -5118,6 +5120,12 @@ package provide Archer 1.0
 	-onvalue 1 \
 	-variable [::itcl::scope mSnapGrid] \
 	-command [::itcl::code $this snapGrid] \
+	-state disabled
+    $itk_component(menubar) menuconfigure .modes.adc \
+	-offvalue 0 \
+	-onvalue 1 \
+	-variable [::itcl::scope mShowADC] \
+	-command [::itcl::code $this showADC] \
 	-state disabled
 }
 
@@ -5307,6 +5315,13 @@ package provide Archer 1.0
 	-onvalue 1 \
 	-variable [::itcl::scope mSnapGrid] \
 	-command [::itcl::code $this snapGrid] \
+	-state disabled
+    $itk_component(modesmenu) add checkbutton \
+	-label "Angle/Distance Cursor" \
+	-offvalue 0 \
+	-onvalue 1 \
+	-variable [::itcl::scope mShowADC] \
+	-command [::itcl::code $this showADC] \
 	-state disabled
 }
 
