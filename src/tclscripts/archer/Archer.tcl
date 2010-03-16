@@ -291,6 +291,8 @@ package provide Archer 1.0
 	method launchDisplayMenuEnd {}
 	method fbEnabledCallback {_on}
 	method fbToggle {}
+	method rtEndCallback {_aborted}
+	method raytracePlus {}
 
 	#XXX Need to split up menuStatusCB into one method per menu
 	method menuStatusCB {_w}
@@ -1753,9 +1755,6 @@ package provide Archer 1.0
     $itk_component(primaryToolbar) itemconfigure raytrace \
 	-image [image create photo \
 		    -file [file join $dir raytrace.png]]
-    $itk_component(primaryToolbar) itemconfigure abort \
-	-image [image create photo \
-		    -file [file join $dir raytrace_abort.png]]
     $itk_component(primaryToolbar) itemconfigure clear_fb \
 	-image [image create photo \
 		    -file [file join $dir framebuffer_clear.png]]
@@ -4110,6 +4109,23 @@ package provide Archer 1.0
     fbEnabledCallback $on
 }
 
+::itcl::body Archer::rtEndCallback {_aborted} {
+    set dir [file join $mImgDir Themes $mTheme]
+    $itk_component(primaryToolbar) itemconfigure raytrace \
+	-image [image create photo \
+		    -file [file join $dir raytrace.png]] \
+	-command [::itcl::code $this raytracePlus]
+}
+
+::itcl::body Archer::raytracePlus {} {
+    set dir [file join $mImgDir Themes $mTheme]
+    $itk_component(primaryToolbar) itemconfigure raytrace \
+	-image [image create photo \
+		    -file [file join $dir raytrace_abort.png]] \
+	-command "$itk_component(rtcntrl) abort"
+    $itk_component(rtcntrl) raytracePlus
+}
+
 ::itcl::body Archer::menuStatusCB {_w} {
     if {$mDoStatus} {
 	# entry might not support -label (i.e. tearoffs)
@@ -4400,20 +4416,18 @@ package provide Archer 1.0
 	    -command [::itcl::code $this fbToggle]
 	$itk_component(primaryToolbar) itemconfigure raytrace \
 	    -state normal \
-	    -command "$itk_component(rtcntrl) raytracePlus"
-	$itk_component(primaryToolbar) itemconfigure abort \
-	    -state normal \
-	    -command "$itk_component(rtcntrl) abort"
+	    -command [::itcl::code $this raytracePlus]
 	$itk_component(primaryToolbar) itemconfigure clear_fb \
 	    -state normal \
 	    -command "$itk_component(rtcntrl) clear"
 
 	$itk_component(rtcntrl) configure \
 	    -fb_enabled_callback [::itcl::code $this fbEnabledCallback]
+
+	gedCmd rt_end_callback [::itcl::code $this rtEndCallback]
     } else {
 	$itk_component(primaryToolbar) itemconfigure toggle_fb -state disabled
 	$itk_component(primaryToolbar) itemconfigure raytrace -state disabled
-	$itk_component(primaryToolbar) itemconfigure abort -state disabled
 	$itk_component(primaryToolbar) itemconfigure clear_fb -state disabled
     }
 }
@@ -4825,12 +4839,6 @@ package provide Archer 1.0
 	-state disabled \
 	-balloonstr "Raytrace current view" \
 	-helpstr "Raytrace current view" \
-	-relief flat \
-	-overrelief raised
-    $itk_component(primaryToolbar) add button abort \
-	-state disabled \
-	-balloonstr "Abort raytrace" \
-	-helpstr "Abort raytrace" \
 	-relief flat \
 	-overrelief raised
 }
