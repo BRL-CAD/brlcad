@@ -409,6 +409,7 @@ package provide cadwidgets::Ged 1.0
 	method rotate_mode {args}
 	method rrt {args}
 	method rt {args}
+	method rt_end_callback {args}
 	method rt_gettrees {args}
 	method rtabort {args}
 	method rtarea {args}
@@ -2171,6 +2172,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::rt {args} {
     eval $mGed rt $itk_component($itk_option(-pane)) $args
+}
+
+::itcl::body cadwidgets::Ged::rt_end_callback {args} {
+    eval $mGed rt_end_callback $args
 }
 
 ::itcl::body cadwidgets::Ged::rt_gettrees {args} {
