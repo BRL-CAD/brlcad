@@ -1,23 +1,23 @@
-/*
- *                            O B J - G . C BRL-CAD
+/*                         O B J - G . C
+ * BRL-CAD
  *
- * Copyright (c) 2002-2010 United States Government as represented by the U.S.
- * Army Research Laboratory.
+ * Copyright (c) 2009-2010 United States Government as represented by
+ * the U.S. Army Research Laboratory.
  *
- * This program is free software; you can redistribute it and/or modify it under
- * the terms of the GNU Lesser General Public License version 2.1 as
- * published by the Free Software Foundation.
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
  *
- * This program is distributed in the hope that it will be useful, but WITHOUT
- * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
- * FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Lesser General Public
- * License for more details.
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
  *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this file; see the file named COPYING for more information.
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
  *
  */
-
 /** @file obj-g.c
  *
  * Convert wavefront obj format files to BRL-CAD .g binary format
@@ -71,7 +71,7 @@ new_object(const char *name)
 
 
 int
-free_object(struct object_s * r)
+free_object(struct object_s *r)
 {
     if (r && r->name)
 	bu_free(r->name, "object name");
@@ -111,7 +111,7 @@ write_object(struct object_s *r, struct rt_wdb *out_fp)
 
 
 int
-add_vertex(struct object_s * r, char *buf)
+add_vertex(struct object_s *r, char *buf)
 {
     /* syntax is "v <x> <y> <z> [w]" */
     r->bot->vertices = bu_realloc(r->bot->vertices, sizeof(fastf_t) * 3 * (r->bot->num_vertices + 1), "bot vertices");
@@ -125,7 +125,7 @@ add_vertex(struct object_s * r, char *buf)
 
 
 int
-add_face(struct object_s * r, char *buf)
+add_face(struct object_s *r, char *buf)
 {
     char *contains_slash = strchr(buf, '/');
     /* syntax is ... messy. v1/vt1/vn1, can be
@@ -159,8 +159,8 @@ main(int argc, char *argv[])
 {
     int c;
     char *prog = *argv, buf[BUFSIZ];
-    FILE *fd_in;	/* input file */
-    struct rt_wdb *fd_out;	/* Resulting BRL-CAD file */
+    FILE *fd_in; /* input file */
+    struct rt_wdb *fd_out; /* Resulting BRL-CAD file */
     struct object_s *object = NULL;
 
     if (argc < 2)
