@@ -459,9 +459,14 @@ rt_nmg_mc_pew(struct shell *s, struct application *a, fastf_t x, fastf_t y, fast
 
     while(swp->in>0 || sep->in>0 || nwp->in>0 || nep->in>0) {
 	unsigned char pv;
+#if 0
 	point_t p[8];
+#endif
 	point_t edges[12];
 	fastf_t b = +INFINITY;
+	struct whack muh[1024];
+
+	a->a_uptr = muh;
 
 	if((insw|inse|innw|inne) == 0) {
 	    /* figure out the first hit distance and bin it */
@@ -476,15 +481,17 @@ rt_nmg_mc_pew(struct shell *s, struct application *a, fastf_t x, fastf_t y, fast
 	}
 
 	/* set the points using the binned first hit distance */
+#if 0
 	/* w/e		s/n	i/o (b/t) */
 	VSET(p[0], x,		y,	b+step);	/* sw o */
-	VSET(p[1], x+step,	y, 	b+step);	/* se o */
-	VSET(p[2], x+step,	y, 	b);		/* se i */
-	VSET(p[3], x,		y, 	b);		/* sw i */
+	VSET(p[1], x+step,	y,	b+step);	/* se o */
+	VSET(p[2], x+step,	y,	b);		/* se i */
+	VSET(p[3], x,		y,	b);		/* sw i */
 	VSET(p[4], x,		y+step, b+step);	/* nw o */
 	VSET(p[5], x+step,	y+step, b+step);	/* ne o */
 	VSET(p[6], x+step,	y+step, b);		/* ne i */
 	VSET(p[7], x,		y+step, b);		/* nw i */
+#endif
 
 	/* build the point vector */
 	pv = 0;
@@ -507,27 +514,25 @@ rt_nmg_mc_pew(struct shell *s, struct application *a, fastf_t x, fastf_t y, fast
 	MEH(ne, 5, 6);
 #undef MEH
 
-	/* figure out needed edges, shoot down and across as needed */
-
-#define MEH(a,b,c) if(bitdiff(pv,b,c)) { VADD2SCALE(edges[a], p[b], p[c], 0.5); }	/* these need a new ray shot. */
-#define MUH(a,b,c,l) if(bitdiff(pv,b,c)) { VMOVE(edges[a], l->hit); MEH(a, b, c); } ;	/* we already have ray intersect data for these. */
-	/* southern edges */
-	MEH(0 ,0,1);
+#define MUH(a,b,c,l) if(bitdiff(pv,b,c)) { VMOVE(edges[a], l->hit); } ;	/* we already have ray intersect data for these. */
 	MUH(1 ,1,2,sep);
-	MEH(2 ,2,3);          
 	MUH(3 ,0,3,swp);
-
-	/* northern edges */
-	MEH(4 ,4,5);          
 	MUH(5 ,5,6,nep);
-	MEH(6 ,6,7);          
 	MUH(7 ,4,7,nwp);
-
-	MEH(8 ,0,4);	/* top west */
-	MEH(9 ,1,5);	/* top east */
-	MEH(10,2,6);	/* bottom east */
-	MEH(11,3,7);	/* bottom west */
 #undef MUH
+
+#define MEH(A,b,c) if(bitdiff(pv,b,c)) { rt_shootray(a); VMOVE(edges[A], muh->hit); }
+	VSET(a->a_ray.r_dir, 1, 0, 0);
+	VSET(a->a_ray.r_pt, x-tol->dist, y,	b+step	); MEH(0 ,0,1);
+	VSET(a->a_ray.r_pt, x-tol->dist, y,	b	); MEH(2 ,2,3);          
+	VSET(a->a_ray.r_pt, x-tol->dist, y+step,b+step	); MEH(4 ,4,5);          
+	VSET(a->a_ray.r_pt, x-tol->dist, y+step,b	); MEH(6 ,6,7);          
+
+	VSET(a->a_ray.r_dir, 0, 1, 0);
+	VSET(a->a_ray.r_pt, x,		y+step,	b-tol->dist); MEH(8 ,0,4);
+	VSET(a->a_ray.r_pt, x+step,	y+step,	b-tol->dist); MEH(9 ,1,5);
+	VSET(a->a_ray.r_pt, x+step,	y,	b-tol->dist); MEH(10,2,6);
+	VSET(a->a_ray.r_pt, x,		y,	b-tol->dist); MEH(11,3,7);
 #undef MEH
 
 	/* stuff it into an nmg shell */
@@ -566,8 +571,6 @@ rt_nmg_mc_pewpewpew (struct shell *s, struct rt_i *rtip, const struct db_full_pa
     /* use rel value * bounding spheres diameter or the abs tolerance */
     step = NEAR_ZERO(ttol->abs, tol->dist) ? 0.5 * a.a_rt_i->rti_radius * ttol->rel : ttol->abs;
 
-    VSET(a.a_ray.r_dir, 0, 0, 1);
-
     x=bin(a.a_rt_i->mdl_min[X], step);
     endx=bin(a.a_rt_i->mdl_max[X], step) + step;
     endy=bin(a.a_rt_i->mdl_max[Y], step) + step;
@@ -575,6 +578,7 @@ rt_nmg_mc_pewpewpew (struct shell *s, struct rt_i *rtip, const struct db_full_pa
 	y=bin(a.a_rt_i->mdl_min[Y], step);
 	for(; y<a.a_rt_i->mdl_max[Y]; y+=step) {
 	    ++shots;
+	    VSET(a.a_ray.r_dir, 0, 0, 1);
 	    rt_nmg_mc_pew(s,&a,x,y,step, tol);
 	}
     }
