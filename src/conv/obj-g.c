@@ -73,12 +73,19 @@ new_object(const char *name)
 int
 free_object(struct object_s *r)
 {
-    if (r && r->name)
+    if (!r)
+	return 0;
+
+    if (r->name)
 	bu_free(r->name, "object name");
-    if (r && r->bot)
+    r->name = NULL;
+
+    if (r->bot)
 	bu_free(r->bot, "rt_bot_internal");
-    if (r)
-	bu_free(r, "object");
+    r->bot = NULL;
+
+    bu_free(r, "object");
+
     return 0;
 }
 
@@ -93,8 +100,6 @@ write_object(struct object_s *r, struct rt_wdb *out_fp)
 	rval = 0;
 	if (r->name && verbose) {
 	    bu_log("%s has 0 faces, skipping\n", r->name);
-	} else {
-	    bu_log("Object has 0 faces, skipping\n");
 	}
     } else {
 	int faces;
@@ -103,9 +108,15 @@ write_object(struct object_s *r, struct rt_wdb *out_fp)
 	regname = bu_basename(r->name);
 	faces = r->bot->num_faces;
 	rval = wdb_export(out_fp, regname, (genptr_t)(r->bot), ID_BOT, 1.0);
+	r->bot = NULL; /* released during export */
 	if (verbose)
 	    bu_log("Wrote %s (%d faces)\n", regname, faces);
     }
+
+    /* done with this object, let it go */
+    free_object(r);
+    r = NULL;
+
     return rval;
 }
 
@@ -223,7 +234,6 @@ main(int argc, char *argv[])
 	    case 'g':	/* group (object) */
 		if (object) {
 		    write_object(object, fd_out);
-		    free_object(object);
 		}
 		object = new_object(buf + 2);
 		if (!object) {
