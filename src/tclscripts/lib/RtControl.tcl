@@ -46,6 +46,8 @@ option add *RtControl*tearoff 0 widgetDefault
     itk_option define -color color Color {0 0 0}
     itk_option define -dest dest Dest ""
     itk_option define -mged mged Mged ""
+    itk_option define -fb_enabled fb_enabled FB_Enabled 0
+    itk_option define -fb_enabled_callback fb_enabled_callback FB_Enabled_Callback 0
 
     constructor {args} {}
 
@@ -83,7 +85,6 @@ option add *RtControl*tearoff 0 widgetDefault
 	variable saveVisibilityBinding {}
 	variable saveFocusOutBinding {}
 
-	variable fb_enabled 0
 	variable fb_mode 0
 	variable prev_fb_mode 0
 	variable rtSrc ""
@@ -310,7 +311,7 @@ option add *RtControl*tearoff 0 widgetDefault
 	::ttk::checkbutton $itk_interior.enablefbB \
 	    -text "Enable Framebuffer" \
 	    -width 16 \
-	    -variable [::itcl::scope fb_enabled] \
+	    -variable [::itcl::scope itk_option(-fb_enabled)] \
 	    -command [::itcl::code $this enableFB]
     } {}
     bind $itk_component(enablefbB) <Enter> [::itcl::code $this enterEnablefbCB]
@@ -445,6 +446,14 @@ option add *RtControl*tearoff 0 widgetDefault
     }
 
     update_control_panel
+}
+
+::itcl::configbody RtControl::fb_enabled {
+    if {![string is digit $itk_option(-fb_enabled)]} {
+	error "Bad value - $itk_option(-fb_enabled)"
+    }
+
+    enableFB
 }
 
 
@@ -609,7 +618,7 @@ option add *RtControl*tearoff 0 widgetDefault
 }
 
 ::itcl::body RtControl::raytracePlus {} {
-    if {!$fb_enabled} {
+    if {!$itk_option(-fb_enabled)} {
 	toggleFB
     }
 
@@ -617,12 +626,12 @@ option add *RtControl*tearoff 0 widgetDefault
 }
 
 ::itcl::body RtControl::toggleFB {} {
-    if {$fb_enabled} {
-	set fb_enabled 0
+    if {$itk_option(-fb_enabled)} {
+	set itk_option(-fb_enabled) 0
     } else {
 	set rtSize "Size of Pane"
 	set_size 
-	set fb_enabled 1
+	set itk_option(-fb_enabled) 1
     }
 
     enableFB
@@ -1101,9 +1110,9 @@ option add *RtControl*tearoff 0 widgetDefault
     }
 
     if {$fb_mode} {
-	set fb_enabled 1
+	set itk_option(-fb_enabled) 1
     } else {
-	set fb_enabled 0
+	set itk_option(-fb_enabled) 0
     }
 }
 
@@ -1460,7 +1469,7 @@ option add *RtControl*tearoff 0 widgetDefault
 }
 
 ::itcl::body RtControl::enableFB {} {
-    if {$fb_enabled} {
+    if {$itk_option(-fb_enabled)} {
 	if {$prev_fb_mode} {
 	    set fb_mode $prev_fb_mode
 	} else {
@@ -1472,6 +1481,10 @@ option add *RtControl*tearoff 0 widgetDefault
     }
 
     fb_mode
+
+    if {$itk_option(-fb_enabled_callback) != ""} {
+	catch {$itk_option(-fb_enabled_callback) $itk_option(-fb_enabled)}
+    }
 }
 
 ::itcl::body RtControl::menuStatusAdvCB {w} {
