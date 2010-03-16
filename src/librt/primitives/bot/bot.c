@@ -457,7 +457,13 @@ rt_bot_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
     RT_BOT_CK_MAGIC(bot_ip);
 
+    if (bot_ip->num_vertices <= 0 || !bot_ip->vertices || bot_ip->num_faces <= 0 || !bot_ip->faces)
+	return 0;
+
     for (i=0; i<bot_ip->num_faces; i++) {
+	if (bot_ip->faces[i*3+2] * 3 > bot_ip->num_vertices)
+	    continue; /* sanity */
+
 	RT_ADD_VLIST(vhead, &bot_ip->vertices[bot_ip->faces[i*3+0]*3], BN_VLIST_LINE_MOVE);
 	RT_ADD_VLIST(vhead, &bot_ip->vertices[bot_ip->faces[i*3+1]*3], BN_VLIST_LINE_DRAW);
 	RT_ADD_VLIST(vhead, &bot_ip->vertices[bot_ip->faces[i*3+2]*3], BN_VLIST_LINE_DRAW);
@@ -482,11 +488,17 @@ rt_bot_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
     bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
     RT_BOT_CK_MAGIC(bot_ip);
 
+    if (bot_ip->num_vertices <= 0 || !bot_ip->vertices || bot_ip->num_faces <= 0 || !bot_ip->faces)
+	return 0;
+
     /* XXX Should consider orientation here, flip if necessary. */
     for (i=0; i<bot_ip->num_faces; i++) {
 	point_t aa, bb, cc;
 	vect_t ab, ac;
 	vect_t norm;
+
+	if (bot_ip->faces[i*3+2] * 3 > bot_ip->num_vertices)
+	    continue; /* sanity */
 
 	VMOVE(aa, &bot_ip->vertices[bot_ip->faces[i*3+0]*3]);
 	VMOVE(bb, &bot_ip->vertices[bot_ip->faces[i*3+1]*3]);
@@ -604,6 +616,9 @@ rt_bot_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     for (i=0; i<bot_ip->num_faces; i++) {
 	struct faceuse *fu;
 	struct vertex **corners[3];
+
+	if (bot_ip->faces[i*3+2] * 3 > bot_ip->num_vertices)
+	    continue; /* sanity */
 
 	if (bot_ip->orientation == RT_BOT_CW) {
 	    VMOVE(pt[2], &bot_ip->vertices[bot_ip->faces[i*3+0]*3]);
@@ -3739,6 +3754,9 @@ rt_bot_smooth(struct rt_bot_internal *bot, char *bot_name, struct db_i *dbip, fa
 	    vect_t a, b;
 	    vect_t inv_dir;
 
+	    if (bot->faces[i*3+2] * 3 > bot->num_vertices)
+		continue; /* sanity */
+
 	    VSUB2(a, &bot->vertices[bot->faces[i*3+1]*3], &bot->vertices[bot->faces[i*3]*3]);
 	    VSUB2(b, &bot->vertices[bot->faces[i*3+2]*3], &bot->vertices[bot->faces[i*3]*3]);
 	    VCROSS(ap.a_ray.r_dir, a, b);
@@ -3791,6 +3809,9 @@ rt_bot_smooth(struct rt_bot_internal *bot, char *bot_name, struct db_i *dbip, fa
 	/* calculate normals */
 	for (i=0; i<bot->num_faces; i++) {
 	    vect_t a, b;
+
+	    if (bot->faces[i*3+2] * 3 > bot->num_vertices)
+		continue; /* sanity */
 
 	    VSUB2(a, &bot->vertices[bot->faces[i*3+1]*3], &bot->vertices[bot->faces[i*3]*3]);
 	    VSUB2(b, &bot->vertices[bot->faces[i*3+2]*3], &bot->vertices[bot->faces[i*3]*3]);
