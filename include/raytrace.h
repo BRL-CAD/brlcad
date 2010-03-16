@@ -4691,6 +4691,7 @@ RT_EXPORT BU_EXTERN(void nmg_triangulate_model_mc,
 RT_EXPORT BU_EXTERN(int rt_nmg_mc_realize_cube,
 		    (struct shell *s,
 		     int pv,
+		     point_t *p,
 		     point_t *edges,
 		     const struct bn_tol *tol));
 
