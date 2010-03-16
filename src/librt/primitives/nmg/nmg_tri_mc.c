@@ -498,7 +498,7 @@ rt_nmg_mc_pew(struct shell *s, struct application *a, fastf_t x, fastf_t y, fast
 	    if(C##p->in==1) { in##C=1; pv |= 1<<I;} \
 	    if(C##p->in==2) { in##C=0; pv |= 1<<O;} \
 	} \
-	else pv |= insw<<I | insw<<O;
+	else pv |= in##C<<I | in##C<<O;
 
 	/*  p   t  b */
 	MEH(sw, 0, 3);
