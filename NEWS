@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 ----------------------------------------------------------------------
 
 * fixed obj-g crash when importing multiple objects - Sean Morrison
+* continued work on MGED Docbook man page conversions - Janine Gettier
 * integration of mged authorship dedication into archer - Bob Parker
 * improved behavior of mged initialization options - Bob Parker
 * fixed namspace initialization failure in rtwizard - Bob Parker
