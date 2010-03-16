@@ -399,7 +399,7 @@ struct ged_drawable {
     int				gd_rt_cmd_len;
     struct ged_run_rt		gd_headRunRt;		/**< @brief  head of forked rt processes */
 
-    void			(*gd_rtCmdNotify)();	/**< @brief  function called when rt command completes */
+    void			(*gd_rtCmdNotify)(int abort);	/**< @brief  function called when rt command completes */
 
     int				gd_uplotOutputMode;	/**< @brief  output mode for unix plots */
 
