@@ -442,6 +442,12 @@ HIDDEN int go_rotate_mode(struct ged *gedp,
 			  ged_func_ptr func,
 			  const char *usage,
 			  int maxargs);
+HIDDEN int go_rt_end_callback(struct ged *gedp,
+			      int argc,
+			      const char *argv[],
+			      ged_func_ptr func,
+			      const char *usage,
+			      int maxargs);
 HIDDEN int go_rt_gettrees(struct ged *gedp,
 			  int argc,
 			  const char *argv[],
@@ -602,6 +608,7 @@ HIDDEN void go_refresh_handler(void *clientdata);
 HIDDEN void go_refresh_all_views(struct ged_obj *gop);
 HIDDEN void go_autoview_view(struct ged_dm_view *gdvp);
 HIDDEN void go_autoview_all_views(struct ged_obj *gop);
+HIDDEN void go_rt_end_callback_internal(int aborted);
 
 HIDDEN void go_output_handler(struct ged *gedp, char *line);
 
@@ -848,6 +855,7 @@ static struct go_cmdtab go_cmds[] = {
     {"rotate_mode",	"x y", MAXARGS, go_rotate_mode, GED_FUNC_PTR_NULL},
     {"rrt",	"[args]", GO_MAX_RT_ARGS, go_view_func, ged_rrt},
     {"rt",	"[args]", GO_MAX_RT_ARGS, go_view_func, ged_rt},
+    {"rt_end_callback",	"[args]", GO_MAX_RT_ARGS, go_rt_end_callback, GED_FUNC_PTR_NULL},
     {"rt_gettrees",	"[-i] [-u] pname object", MAXARGS, go_rt_gettrees, GED_FUNC_PTR_NULL},
     {"rtabort",	(char *)0, GO_MAX_RT_ARGS, go_pass_through_func, ged_rtabort},
     {"rtarea",	"[args]", GO_MAX_RT_ARGS, go_view_func, ged_rt},
@@ -1171,9 +1179,11 @@ Usage: go_open\n\
     gop->go_gedp = gedp;
     gop->go_gedp->ged_output_handler = go_output_handler;
     gop->go_gedp->ged_refresh_handler = go_refresh_handler;
+    gop->go_gedp->ged_gdp->gd_rtCmdNotify = go_rt_end_callback_internal;
     bu_vls_init(&gop->go_name);
     bu_vls_strcpy(&gop->go_name, argv[1]);
     bu_vls_init(&gop->go_more_args_callback);
+    bu_vls_init(&gop->go_rt_end_callback);
     BU_LIST_INIT(&gop->go_observers.l);
     gop->go_interp = interp;
     gop->go_refresh_on = 1;
@@ -6597,6 +6607,34 @@ go_deleteProc_rt(ClientData clientData)
     bu_free((genptr_t)ap, "struct application");
 }
 
+HIDDEN int
+go_rt_end_callback(struct ged *gedp,
+		   int argc,
+		   const char *argv[],
+		   ged_func_ptr func,
+		   const char *usage,
+		   int maxargs)
+{
+    register int i;
+
+    /* initialize result */
+    bu_vls_trunc(&gedp->ged_result_str, 0);
+
+    /* get the callback string */
+    if (argc == 1) {
+	bu_vls_printf(&gedp->ged_result_str, "%s", bu_vls_addr(&go_current_gop->go_rt_end_callback));
+	
+	return BRLCAD_OK;
+    }
+
+    /* set the callback string */
+    bu_vls_trunc(&go_current_gop->go_rt_end_callback, 0);
+    for (i = 1; i < argc; ++i)
+	bu_vls_printf(&go_current_gop->go_rt_end_callback, "%s ", argv[i]);
+
+    return BRLCAD_OK;
+}
+
 /**
  * G O _ R T _ G E T T R E E S
  *
@@ -8591,6 +8629,20 @@ go_autoview_all_views(struct ged_obj *gop)
 
     for (BU_LIST_FOR(gdvp, ged_dm_view, &gop->go_head_views.l)) {
 	go_autoview_view(gdvp);
+    }
+}
+
+HIDDEN void
+go_rt_end_callback_internal(int aborted)
+{
+    if (0 < bu_vls_strlen(&go_current_gop->go_rt_end_callback)) {
+	struct bu_vls callback_cmd;
+
+	bu_vls_init(&callback_cmd);
+	bu_vls_printf(&callback_cmd, "%s %d",
+		      bu_vls_addr(&go_current_gop->go_rt_end_callback),
+		      aborted);
+	Tcl_Eval(go_current_gop->go_interp, bu_vls_addr(&callback_cmd));
     }
 }
 
