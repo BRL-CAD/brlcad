@@ -289,6 +289,8 @@ package provide Archer 1.0
 	method doArcherHelp {}
 	method launchDisplayMenuBegin {_dm _m _x _y}
 	method launchDisplayMenuEnd {}
+	method fbEnabledCallback {_on}
+	method fbToggle {}
 
 	#XXX Need to split up menuStatusCB into one method per menu
 	method menuStatusCB {_w}
@@ -4088,6 +4090,26 @@ package provide Archer 1.0
 #    set mCurrentPaneName ""
 }
 
+::itcl::body Archer::fbEnabledCallback {_on} {
+    set dir [file join $mImgDir Themes $mTheme]
+
+    if {$_on} {
+	$itk_component(primaryToolbar) itemconfigure toggle_fb \
+	    -image [image create photo \
+			-file [file join $dir framebuffer_off.png]]
+    } else {
+	$itk_component(primaryToolbar) itemconfigure toggle_fb \
+	    -image [image create photo \
+			-file [file join $dir framebuffer.png]]
+    }
+}
+
+::itcl::body Archer::fbToggle {} {
+    $itk_component(rtcntrl) toggleFB
+    set on [$itk_component(rtcntrl) cget -fb_enabled]
+    fbEnabledCallback $on
+}
+
 ::itcl::body Archer::menuStatusCB {_w} {
     if {$mDoStatus} {
 	# entry might not support -label (i.e. tearoffs)
@@ -4375,7 +4397,7 @@ package provide Archer 1.0
     if {$_on} {
 	$itk_component(primaryToolbar) itemconfigure toggle_fb \
 	    -state normal \
-	    -command "$itk_component(rtcntrl) toggleFB"
+	    -command [::itcl::code $this fbToggle]
 	$itk_component(primaryToolbar) itemconfigure raytrace \
 	    -state normal \
 	    -command "$itk_component(rtcntrl) raytracePlus"
@@ -4385,6 +4407,9 @@ package provide Archer 1.0
 	$itk_component(primaryToolbar) itemconfigure clear_fb \
 	    -state normal \
 	    -command "$itk_component(rtcntrl) clear"
+
+	$itk_component(rtcntrl) configure \
+	    -fb_enabled_callback [::itcl::code $this fbEnabledCallback]
     } else {
 	$itk_component(primaryToolbar) itemconfigure toggle_fb -state disabled
 	$itk_component(primaryToolbar) itemconfigure raytrace -state disabled
@@ -4790,6 +4815,12 @@ package provide Archer 1.0
 	-helpstr "Toggle framebuffer" \
 	-relief flat \
 	-overrelief raised
+    $itk_component(primaryToolbar) add button clear_fb \
+	-state disabled \
+	-balloonstr "Clear framebuffer" \
+	-helpstr "Clear framebuffer" \
+	-relief flat \
+	-overrelief raised
     $itk_component(primaryToolbar) add button raytrace \
 	-state disabled \
 	-balloonstr "Raytrace current view" \
@@ -4802,13 +4833,6 @@ package provide Archer 1.0
 	-helpstr "Abort raytrace" \
 	-relief flat \
 	-overrelief raised
-    $itk_component(primaryToolbar) add button clear_fb \
-	-state disabled \
-	-balloonstr "Clear framebuffer" \
-	-helpstr "Clear framebuffer" \
-	-relief flat \
-	-overrelief raised
-
 }
 
 
