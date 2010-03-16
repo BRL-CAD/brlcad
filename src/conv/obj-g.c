@@ -45,7 +45,6 @@ static char *usage = "%s [-d] [-x rt_debug_flag] input.obj output.g\n\
 			 The -x option specifies an RT debug flags (see raytrace.h).\n";
 static int debug = 0;
 static int verbose = 0;
-static int vertmax = 1;
 
 struct object_s {
     char *name;
@@ -53,11 +52,19 @@ struct object_s {
 };
 
 
+struct obj_data {
+    size_t num_vertices;
+    fastf_t *vertices;
+    size_t num_faces;
+    long *faces;
+};
+
+
 struct object_s *
 new_object(const char *name)
 {
-    struct object_s *r = (struct object_s *)bu_calloc(1, sizeof(struct object_s), "new_object");;
-    r->bot = (struct rt_bot_internal *)bu_calloc(1, sizeof(struct rt_bot_internal), "new_object:rt_bot_internal");;
+    struct object_s *r = (struct object_s *)bu_calloc(1, sizeof(struct object_s), "new_object");
+    r->bot = (struct rt_bot_internal *)bu_calloc(1, sizeof(struct rt_bot_internal), "new_object:rt_bot_internal");
     r->name = strdup(name);
     r->bot->magic = RT_BOT_INTERNAL_MAGIC;
     r->bot->mode = RT_BOT_SURFACE;
@@ -104,7 +111,6 @@ write_object(struct object_s *r, struct rt_wdb *out_fp)
     } else {
 	int faces;
 	/* add the object long name to list */
-	vertmax += r->bot->num_vertices;
 	regname = bu_basename(r->name);
 	faces = r->bot->num_faces;
 	rval = wdb_export(out_fp, regname, (genptr_t)(r->bot), ID_BOT, 1.0);
@@ -122,45 +128,98 @@ write_object(struct object_s *r, struct rt_wdb *out_fp)
 
 
 int
-add_vertex(struct object_s *r, char *buf)
+add_vertex(struct obj_data *o, char *buf)
 {
     /* syntax is "v <x> <y> <z> [w]" */
-    r->bot->vertices = bu_realloc(r->bot->vertices, sizeof(fastf_t) * 3 * (r->bot->num_vertices + 1), "bot vertices");
+    if (!o->vertices) {
+	o->vertices = bu_calloc(3, sizeof(fastf_t), "vertices");
+	o->num_vertices = 0;
+    } else {
+	o->vertices = bu_realloc(o->vertices, 3 * sizeof(fastf_t) * (o->num_vertices+1), "vertices");
+    }
+
     sscanf(buf, "%lf %lf %lf", 
-	   r->bot->vertices + 3*r->bot->num_vertices,
-	   r->bot->vertices + 3*r->bot->num_vertices + 1,
-	   r->bot->vertices + 3*r->bot->num_vertices + 2);
-    r->bot->num_vertices++;
+	   &(o->vertices[3*o->num_vertices + 0]),
+	   &(o->vertices[3*o->num_vertices + 1]),
+	   &(o->vertices[3*o->num_vertices + 2]));
+    o->num_vertices++;
+
     return 0;
 }
 
 
 int
-add_face(struct object_s *r, char *buf)
+add_face(struct object_s *r, struct obj_data *o, char *buf)
 {
-    char *contains_slash = strchr(buf, '/');
-    /* syntax is ... messy. v1/vt1/vn1, can be
-     * "f 1 2 3 ...", or "f 1//1 2//x ..." or "f 1/1/1/ ..." or "f 1/1 ..." or ... */
-    r->bot->faces = bu_realloc(r->bot->faces, sizeof(int) * 3 * (r->bot->num_faces + 1), "bot faces");
-    /*
-     * checking to see if OBJ file contains texture and/or normal data
+    long vertex;
+
+    /* checking to see if OBJ file contains texture and/or normal data.
      * we won't be using it but will need to parse around it.
+     * syntax is ... messy. v1/vt1/vn1, can be:
+     *
+     * "f 1 2 3 ...", or "f 1//1 2//x ..." or "f 1/1/1/ ..." or "f 1/1 ..." or ...
      */
-    if (contains_slash) {
-	sscanf(buf, "%d/%*s %d/%*s %d/%*s", 
-	       r->bot->faces + 3*r->bot->num_faces,
-	       r->bot->faces + 3*r->bot->num_faces + 1,
-	       r->bot->faces + 3*r->bot->num_faces + 2);
+
+    char *contains_slash = strchr(buf, '/');
+
+    if (!o->faces) {
+	o->faces = bu_calloc(3, sizeof(long), "faces");
+	o->num_faces = 0;
     } else {
-	sscanf(buf, "%d %d %d", 
-	       r->bot->faces + 3*r->bot->num_faces,
-	       r->bot->faces + 3*r->bot->num_faces + 1,
-	       r->bot->faces + 3*r->bot->num_faces + 2);
+	o->faces = bu_realloc(o->faces, 3 * sizeof(long) * (o->num_faces+1), "faces");
     }
-    r->bot->faces[3*r->bot->num_faces+0]-=vertmax;
-    r->bot->faces[3*r->bot->num_faces+1]-=vertmax;
-    r->bot->faces[3*r->bot->num_faces+2]-=vertmax;
+
+    /* add to global data */
+    if (contains_slash) {
+	sscanf(buf, "%ld/%*s %ld/%*s %ld/%*s", 
+	       &(o->faces[3*o->num_faces + 0]),
+	       &(o->faces[3*o->num_faces + 1]),
+	       &(o->faces[3*o->num_faces + 2]));
+    } else {
+	sscanf(buf, "%ld %ld %ld", 
+	       &(o->faces[3*o->num_faces + 0]),
+	       &(o->faces[3*o->num_faces + 1]),
+	       &(o->faces[3*o->num_faces + 2]));
+    }
+
+    /* add to BoT */
+    if (!r->bot->vertices) {
+	r->bot->vertices = bu_calloc(9, sizeof(fastf_t), "bot vertices");
+	r->bot->num_vertices = 0;
+    } else {
+	r->bot->vertices = bu_realloc(r->bot->vertices, 3 * sizeof(fastf_t) * (r->bot->num_vertices+3), "bot vertices");
+    }
+
+    /* face vertices are indexed from 1, not 0 */
+    vertex = o->faces[3*o->num_faces+0] - 1;
+    r->bot->vertices[3*r->bot->num_vertices + 0] = o->vertices[3*vertex + 0];
+    r->bot->vertices[3*r->bot->num_vertices + 1] = o->vertices[3*vertex + 1];
+    r->bot->vertices[3*r->bot->num_vertices + 2] = o->vertices[3*vertex + 2];
+    r->bot->num_vertices++;
+
+    vertex = o->faces[3*o->num_faces+1] - 1;
+    r->bot->vertices[3*r->bot->num_vertices + 0] = o->vertices[3*vertex + 0];
+    r->bot->vertices[3*r->bot->num_vertices + 1] = o->vertices[3*vertex + 1];
+    r->bot->vertices[3*r->bot->num_vertices + 2] = o->vertices[3*vertex + 2];
+    r->bot->num_vertices++;
+
+    vertex = o->faces[3*o->num_faces+2] - 1;
+    r->bot->vertices[3*r->bot->num_vertices + 0] = o->vertices[3*vertex + 0];
+    r->bot->vertices[3*r->bot->num_vertices + 1] = o->vertices[3*vertex + 1];
+    r->bot->vertices[3*r->bot->num_vertices + 2] = o->vertices[3*vertex + 2];
+    r->bot->num_vertices++;
+
+    if (!r->bot->faces)
+	r->bot->faces = bu_calloc(3, sizeof(int), "bot faces");
+    else
+	r->bot->faces = bu_realloc(r->bot->faces, 3 * sizeof(int) * (r->bot->num_faces+1), "bot faces");
+    r->bot->faces[3*r->bot->num_faces+0] = r->bot->num_vertices-3;
+    r->bot->faces[3*r->bot->num_faces+1] = r->bot->num_vertices-2;
+    r->bot->faces[3*r->bot->num_faces+2] = r->bot->num_vertices-1;
     r->bot->num_faces++;
+
+    o->num_faces++;
+
     return 0;
 }
 
@@ -173,6 +232,7 @@ main(int argc, char *argv[])
     FILE *fd_in; /* input file */
     struct rt_wdb *fd_out; /* Resulting BRL-CAD file */
     struct object_s *object = NULL;
+    struct obj_data data = {0, NULL, 0, NULL};
 
     if (argc < 2)
 	bu_exit(1, usage, argv[0]);
@@ -214,7 +274,7 @@ main(int argc, char *argv[])
     }
 
     /* prep the object, use a default name in case the OBJ has no groups */
-    object = new_object("all.s");
+    object = new_object("default.s");
     /* loop through the OBJ file. */
     while (bu_fgets(buf, BUFSIZ, fd_in)) {
 	if (ferror(fd_in)) {
@@ -232,8 +292,14 @@ main(int argc, char *argv[])
 		continue;
 	    case 'o':
 	    case 'g':	/* group (object) */
-		if (object) {
-		    write_object(object, fd_out);
+		if (object && object->bot) {
+		    if (object->bot->num_faces > 0 && object->bot->num_vertices > 0) {
+			bu_log("Writing [%s]\n", object->name);
+			write_object(object, fd_out);
+		    } else {
+			if (strncmp(object->name, "default.s", 9) != 0)
+			    bu_log("Skipping invalid mesh [%s] (faces=%ld, vertices=%ld)\n", object->name, (long)object->bot->num_faces, (long)object->bot->num_vertices);
+		    }
 		}
 		object = new_object(buf + 2);
 		if (!object) {
@@ -246,12 +312,19 @@ main(int argc, char *argv[])
 		    case ' ':
 			if (!object) {
 			    perror(prog);
+			    if (data.vertices)
+				bu_free(data.vertices, "vertices");
+			    if (data.faces)
+				bu_free(data.faces, "faces");
 			    return EXIT_FAILURE;
 			}
-			add_vertex(object, buf + 2);
+			add_vertex(&data, buf + 2);
 			break;
 		    case 'n':
 			/* vertex normal here */
+			break;
+		    case 't':
+			/* vertex texture coordinate here */
 			break;
 		}
 		break;
@@ -260,7 +333,7 @@ main(int argc, char *argv[])
 		    perror(prog);
 		    return EXIT_FAILURE;
 		}
-		add_face(object, buf + 2);
+		add_face(object, &data, buf + 2);
 		break;
 	    case 'l': 
 		{
@@ -295,13 +368,22 @@ main(int argc, char *argv[])
 	    default:
 		bu_log("Ignoring unknown OBJ code: %c\n", *buf);
 		continue;
-	} 
+	}
     }
-    write_object(object, fd_out);
+    if (object && object->bot && object->bot->num_faces > 0) {
+	bu_log("Writing [%s]\n", object->name);
+	write_object(object, fd_out);
+    }
 
     /* using the list generated in write objects, build the tree. */
 
     wdb_close(fd_out);
+
+    /* release face memory */
+    if (data.vertices)
+	bu_free(data.vertices, "vertices");
+    if (data.faces)
+	bu_free(data.faces, "faces");
 
     return 0;
 }
