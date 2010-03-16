@@ -90,10 +90,11 @@ write_object(struct object_s *r, struct rt_wdb *out_fp)
     const char *regname;
 
     if (r->bot->num_faces == 0) {
-	if (strncmp(r->name, "all.s", 6)) {
-	    rval = 0;
-	    if (verbose)
-		bu_log("%s has 0 faces, skipping\n", r->name);
+	rval = 0;
+	if (r->name && verbose) {
+	    bu_log("%s has 0 faces, skipping\n", r->name);
+	} else {
+	    bu_log("Object has 0 faces, skipping\n");
 	}
     } else {
 	int faces;
