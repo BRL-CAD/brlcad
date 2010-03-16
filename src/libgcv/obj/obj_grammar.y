@@ -144,7 +144,7 @@ n_vertex
 p_v_reference_list
   : INTEGER
     {
-      printf("\tpvrl INTEGER\n");
+      printf("\tpvrl INTEGER: %d\n", $1);
     }
   | V_REFERENCE
     {
@@ -152,7 +152,7 @@ p_v_reference_list
     }
   | p_v_reference_list INTEGER
     {
-      printf("\tpvrl p_v_reference_list INTEGER\n");
+      printf("\tpvrl p_v_reference_list INTEGER: %d\n", $2);
     }
   | p_v_reference_list V_REFERENCE
     {
@@ -163,7 +163,7 @@ p_v_reference_list
 l_v_reference_list
   : INTEGER
     {
-      printf("\tlvrl INTEGER\n");
+      printf("\tlvrl INTEGER: %d\n", $1);
     }
   | V_REFERENCE
     {
@@ -171,7 +171,7 @@ l_v_reference_list
     }
   | l_v_reference_list INTEGER
     {
-      printf("\tlvrl l_v_reference_list INTEGER\n");
+      printf("\tlvrl l_v_reference_list INTEGER: %d\n", $2);
     }
   | l_v_reference_list V_REFERENCE
     {
@@ -193,7 +193,7 @@ l_tv_reference_list
 f_v_reference_list
   : INTEGER
     {
-      printf("\tfvrl INTEGER\n");
+      printf("\tfvrl INTEGER %d\n", $1);
     }
   | V_REFERENCE
     {
@@ -201,7 +201,7 @@ f_v_reference_list
     }
   | f_v_reference_list INTEGER
     {
-      printf("\tfvrl f_v_reference_list INTEGER\n");
+      printf("\tfvrl f_v_reference_list INTEGER: %d\n", $2);
     }
   | f_v_reference_list V_REFERENCE
     {
@@ -348,13 +348,13 @@ trace_obj: TRACE_OBJ ID
 
 bevel: BEVEL toggle
     {
-      printf("\tBEVEL toggle: %s\n", $2);
+      printf("\tBEVEL toggle: %c\n", $2);
     }
   ;
 
 c_interp: C_INTERP toggle
     {
-      printf("\tC_INTERP toggle: %s\n", $2);
+      printf("\tC_INTERP toggle: %c\n", $2);
     }
   ;
 
