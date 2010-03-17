@@ -1,4 +1,5 @@
-#obj_dir = obj
+obj_dir = obj
+
 #if WITH_PARSERS
 #OBJ = ${obj_dir}
 #OBJLIB=obj/libobj_nil.la
