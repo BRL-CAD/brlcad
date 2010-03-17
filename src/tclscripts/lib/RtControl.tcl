@@ -26,11 +26,7 @@
 #
 
 ::itk::usual RtControl {
-    keep -tearoff
 }
-
-#XXX This should work.
-option add *RtControl*tearoff 0 widgetDefault
 
 ::itcl::class RtControl {
     inherit ::itk::Toplevel
@@ -44,26 +40,32 @@ option add *RtControl*tearoff 0 widgetDefault
     itk_option define -other other Other "-A 0.9"
     itk_option define -size size Size 512
     itk_option define -color color Color {0 0 0}
-    itk_option define -dest dest Dest ""
     itk_option define -mged mged Mged ""
+    itk_option define -fb_active_pane_callback fb_active_pane_callback FB_Active_Pane_Callback ""
     itk_option define -fb_enabled fb_enabled FB_Enabled 0
-    itk_option define -fb_enabled_callback fb_enabled_callback FB_Enabled_Callback 0
+    itk_option define -fb_enabled_callback fb_enabled_callback FB_Enabled_Callback ""
+    itk_option define -fb_mode_callback fb_mode_callback FB_Mode_Callback ""
 
     constructor {args} {}
 
     public {
+	common FB_MODES {Underlay Interlay Overlay}
+
 	method activate {}
 	method activate_adv {}
 	method deactivate {}
 	method deactivate_adv {}
 	method center {w gs {cw ""}}
-	method update_fb_mode {}
 
 	method abort {}
 	method clear {}
 	method raytrace {}
 	method raytracePlus {}
+	method setActivePane {{_pane ""}}
+	method setFbMode {args}
+	method toggleFbMode {}
 	method toggleFB {}
+	method updateControlPanel {}
     }    
 
     protected {
@@ -85,10 +87,14 @@ option add *RtControl*tearoff 0 widgetDefault
 	variable saveVisibilityBinding {}
 	variable saveFocusOutBinding {}
 
-	variable fb_mode 0
-	variable prev_fb_mode 0
-	variable rtSrc ""
-	variable rtDest ""
+	variable fb_mode 1
+	variable fb_mode_ur 1
+	variable fb_mode_ul 1
+	variable fb_mode_ll 1
+	variable fb_mode_lr 1
+	variable fb_mode_str [lindex $FB_MODES 0]
+	variable rtActivePane ""
+	variable rtActivePaneStr ""
 	variable rtColor "0 0 50"
 	variable rtPrevColor "0 0 0"
 	variable rtSize ""
@@ -100,11 +106,6 @@ option add *RtControl*tearoff 0 widgetDefault
 	variable win_geom_adv ""
 	variable msg ""
 	variable msg_adv ""
-	variable srcM
-	variable destM
-	variable destE
-	variable sizeM
-	variable sizeE
 	variable colorM
 	variable colorE
 	variable jitterM
@@ -119,10 +120,10 @@ option add *RtControl*tearoff 0 widgetDefault
 	method pm_linearEvent {_entry _sval}
 	method pm_linearEventRound {_entry _sval}
 	method pm_raysEvent {_entry _sval}
-	method set_src {}
-	method set_dest {}
 	method colorChooser {_color}
 	method set_color {}
+	method set_fb_mode {}
+	method set_fb_mode_str {}
 	method set_size {}
 	method set_jitter {}
 	method set_lmodel {}
@@ -130,7 +131,6 @@ option add *RtControl*tearoff 0 widgetDefault
 	method fb_mode {}
 	method ok {}
 	method get_cooked_dest {}
-	method update_control_panel {}
 	method menuStatusCB {w}
 	method leaveCB {}
 	method enterAdvCB {}
@@ -143,7 +143,6 @@ option add *RtControl*tearoff 0 widgetDefault
 	method enterDestCB {}
 	method enterSizeCB {}
 	method enterColorCB {}
-	method getPane {}
 	method getPaneStr {}
 	method getSize {}
 
@@ -154,6 +153,8 @@ option add *RtControl*tearoff 0 widgetDefault
 	method enterNProcCB {}
 	method enterHSampleCB {}
 	method enterOtherCB {}
+
+	method update_control_panel {}
     }
 }
 
@@ -177,90 +178,35 @@ option add *RtControl*tearoff 0 widgetDefault
 	::ttk::frame $itk_interior.gridF4
     } {}
 
-    itk_component add menubar {
-	::menu $itk_interior.menubar
-    } {
-	usual
-    }
-    #    $this component hull configure -menu $itk_component(menubar)
-    $this configure -menu $itk_component(menubar)
-
-    itk_component add fbM {
-	::menu $itk_component(menubar).fb -title "Framebuffer"
-    } {
-	usual
-    }
-    bind $itk_component(fbM) <<MenuSelect>> [::itcl::code $this menuStatusCB %W]
-
-    $itk_component(menubar) add cascade -label "Framebuffer" -underline 0 -menu $itk_component(fbM)
-
-    if {0} {
-	itk_component add objM {
-	    ::menu $itk_component(menubar).obj -title "Objects"
-	} {
-	    usual
-	}
-
-	$itk_component(menubar) add cascade -label "Objects" -underline 0 -menu $itk_component(objM)
-    }
-
-    $itk_component(fbM) add radiobutton -value 3 -variable [::itcl::scope fb_mode] \
-	-label "Overlay" -underline 0 \
-	-command [::itcl::code $this fb_mode]
-    $itk_component(fbM) add radiobutton -value 2 -variable [::itcl::scope fb_mode] \
-	-label "Interlay" -underline 0 \
-	-command [::itcl::code $this fb_mode]
-    $itk_component(fbM) add radiobutton -value 1 -variable [::itcl::scope fb_mode] \
-	-label "Underlay" -underline 0 \
-	-command [::itcl::code $this fb_mode]
-    $itk_component(fbM) add radiobutton -value 0 -variable [::itcl::scope fb_mode] \
-	-label "Inactive" -underline 0 \
-	-command [::itcl::code $this fb_mode]
-
-    itk_component add srcL {
-	::ttk::label $itk_interior.srcL \
-	    -text "Source" \
+    itk_component add apaneL {
+	::ttk::label $itk_interior.apaneL \
+	    -text "Active Pane" \
 	    -anchor e
     } {}
 
-    itk_component add srcCB {
-	::ttk::combobox $itk_interior.srcCB \
+    itk_component add apaneCB {
+	::ttk::combobox $itk_interior.apaneCB \
 	    -state readonly \
-	    -textvariable [::itcl::scope rtSrc] \
-	    -values {{Active Pane} {Upper Left} {Upper Right} {Lower Left} {Lower Right}}
+	    -textvariable [::itcl::scope rtActivePaneStr] \
+	    -values {{Upper Left} {Upper Right} {Lower Left} {Lower Right}}
     } {}
 
-    bind $itk_component(srcCB) <<ComboboxSelected>> [::itcl::code $this set_src]
+    bind $itk_component(apaneCB) <<ComboboxSelected>> [::itcl::code $this setActivePane]
 
-    itk_component add destL {
-	::ttk::label $itk_interior.destL \
-	    -text "Destination" \
+    itk_component add fbmodeL {
+	::ttk::label $itk_interior.fbmodeL \
+	    -text "Framebuffer Mode" \
 	    -anchor e
     } {}
 
-    itk_component add destCB {
-	::ttk::combobox $itk_interior.destCB \
+    itk_component add fbmodeCB {
+	::ttk::combobox $itk_interior.fbmodeCB \
 	    -state readonly \
-	    -textvariable [::itcl::scope rtDest] \
-	    -values {{Active Pane} {Upper Left} {Upper Right} {Lower Left} {Lower Right}}
+	    -textvariable [::itcl::scope fb_mode_str] \
+	    -values $FB_MODES
     } {}
 
-    bind $itk_component(destCB) <<ComboboxSelected>> [::itcl::code $this set_dest]
-
-    itk_component add sizeL {
-	::ttk::label $itk_interior.sizeL \
-	    -text "Size" \
-	    -anchor e
-    } {}
-
-    itk_component add sizeCB {
-	::ttk::combobox $itk_interior.sizeCB \
-	    -state readonly \
-	    -textvariable [::itcl::scope rtSize] \
-	    -values {{Size of Pane} 128 256 512 640x480 720x486 1024}
-    } {}
-
-    bind $itk_component(sizeCB) <<ComboboxSelected>> [::itcl::code $this set_size]
+    bind $itk_component(fbmodeCB) <<ComboboxSelected>> [::itcl::code $this set_fb_mode]
 
     itk_component add bgcolorF {
 	::ttk::frame $itk_interior.bgcolorF
@@ -289,14 +235,6 @@ option add *RtControl*tearoff 0 widgetDefault
     } {}
 
     bind $itk_component(bgcolorCB) <<ComboboxSelected>> [::itcl::code $this set_color]
-
-    if {0} {
-    set colorM [$itk_component(bgcolorCB) component menu]
-    set colorE [$itk_component(bgcolorCB) component entry]
-    bind $colorM <<MenuSelect>> [::itcl::code $this menuStatusCB %W]
-    bind $colorE <Enter> [::itcl::code $this enterColorCB]
-    bind $colorE <Leave> [::itcl::code $this leaveCB]
-    }
 
     itk_component add advB {
 	::ttk::button $itk_interior.advB \
@@ -377,12 +315,9 @@ option add *RtControl*tearoff 0 widgetDefault
     grid columnconfigure $itk_component(gridF3) 2 -weight 1
     grid columnconfigure $itk_component(gridF3) 4 -weight 1
 
-    grid $itk_component(srcL) $itk_component(srcCB) -pady 1 -sticky nsew -in $itk_component(gridF1)
-    grid $itk_component(destL) $itk_component(destCB) -pady 1 -sticky nsew -in $itk_component(gridF1)
-    grid $itk_component(sizeL) $itk_component(sizeCB) -pady 1 -sticky nsew -in $itk_component(gridF1)
+    grid $itk_component(apaneL) $itk_component(apaneCB) -pady 1 -sticky nsew -in $itk_component(gridF1)
+    grid $itk_component(fbmodeL) $itk_component(fbmodeCB) -pady 1 -sticky nsew -in $itk_component(gridF1)
     grid $itk_component(bgcolorF) $itk_component(bgcolorCB) -pady 1 -sticky nsew -in $itk_component(gridF1)
-#    grid $itk_component(advB) $itk_component(enablefbB) -pady 1 -sticky ns -in $itk_component(gridF1)
-#    grid $itk_component(gridF3) - -pady 1 -sticky nsew -in $itk_component(gridF1)
 
     grid columnconfigure $itk_component(gridF1) 1 -weight 1
     grid rowconfigure $itk_component(gridF1) 0 -weight 1
@@ -415,12 +350,6 @@ option add *RtControl*tearoff 0 widgetDefault
     # process options
     eval itk_initialize $args
 
-    # Disable the source, jitter and lmodel CombBox's entry widgets
-#    configure -sourceState disabled -jitterState disabled -lmodelState disabled
-
-    # Link the ComboBox's entry widgets to this class' variables
-#    $itk_component(bgcolorCB) configure -entryvariable [::itcl::scope itk_option(-color)]
-
     wm withdraw $itk_component(hull)
     wm title $itk_component(hull) "Raytrace Control Panel"
 }
@@ -445,7 +374,7 @@ option add *RtControl*tearoff 0 widgetDefault
 	return
     }
 
-    update_control_panel
+    updateControlPanel
 }
 
 ::itcl::configbody RtControl::fb_enabled {
@@ -470,7 +399,6 @@ option add *RtControl*tearoff 0 widgetDefault
     wm geometry $itk_component(hull) $win_geom
     wm deiconify $itk_component(hull)
 
-    set rtSize "Size of Pane"
     set_size 
 }
 
@@ -522,22 +450,13 @@ option add *RtControl*tearoff 0 widgetDefault
     set geom +$x+$y
 }
 
-::itcl::body RtControl::update_fb_mode {} {
-    # update the Inactive/Underlay/Overlay radiobutton
-    if {$isaMged} {
-	set fb_mode [$itk_option(-mged) component $rtDest fb_active]
-    } else {
-	set fb_mode [$itk_option(-mged) pane_set_fb_mode $rtDest]
-    }
-}
-
 ::itcl::body RtControl::abort {} {
     if {!$isaMged && !$isaGed} {
 	error "Raytrace Control Panel($this) is not associated with an Mged object"
     }
 
     if {$isaMged} {
-	$itk_option(-mged) component $rtSrc rtabort
+	$itk_option(-mged) component $rtActivePane rtabort
     } else {
 	$itk_option(-mged) rtabort
     }
@@ -564,9 +483,9 @@ option add *RtControl*tearoff 0 widgetDefault
     }
 
     if {$isaMged} {
-	set rt_cmd "$itk_option(-mged) component $rtSrc rt -F [get_cooked_dest]"
+	set rt_cmd "$itk_option(-mged) component $rtActivePane rt -F [get_cooked_dest]"
     } else {
-	set rt_cmd "$itk_option(-mged) pane_rt $rtSrc -F [get_cooked_dest]"
+	set rt_cmd "$itk_option(-mged) pane_rt $rtActivePane -F [get_cooked_dest]"
     }
 
     if {$rtSize != ""} {
@@ -625,16 +544,125 @@ option add *RtControl*tearoff 0 widgetDefault
     raytrace
 }
 
+::itcl::body RtControl::setActivePane {{_pane ""}} {
+    if {!$isaMged && !$isaGed} {
+	error "Raytrace Control Panel($this) is not associated with an Mged object"
+    }
+
+    if {$_pane == ""} {
+	switch -- $rtActivePaneStr {
+	    "Upper Left" {
+		set rtActivePane ul
+	    }
+	    "Upper Right" {
+		set rtActivePane ur
+	    }
+	    "Lower Left" {
+		set rtActivePane ll
+	    }
+	    "Lower Right" {
+		set rtActivePane lr
+	    }
+	}
+    } else {
+	set rtActivePane $_pane
+	switch -- $rtActivePane {
+	    "ul" {
+		set rtActivePaneStr "Upper Left"
+	    }
+	    "ur" {
+		set rtActivePaneStr "Upper Right"
+	    }
+	    "ll" {
+		set rtActivePaneStr "Lower Left"
+	    }
+	    "lr" {
+		set rtActivePaneStr "Lower Right"
+	    }
+	}
+    }
+
+
+    if {$itk_option(-fb_active_pane_callback) != ""} {
+	catch {$itk_option(-fb_active_pane_callback) $rtActivePane}
+    }
+
+    update_control_panel
+
+    if {$itk_option(-fb_enabled_callback) != ""} {
+	catch {$itk_option(-fb_enabled_callback) $itk_option(-fb_enabled)}
+    }
+
+    if {$itk_option(-fb_mode_callback) != ""} {
+	catch {$itk_option(-fb_mode_callback) $fb_mode}
+    }
+}
+
+::itcl::body RtControl::setFbMode {args} {
+    if {$args == ""} {
+	return $fb_mode
+    }
+
+    set arg [lindex $args 0]
+    if {![string is digit $arg]} {
+	return
+    }
+
+    switch -- $arg {
+	0 -
+	1 -
+	2 -
+	3 {
+	    set fb_mode $arg
+	    enableFB
+	    set_fb_mode_str
+	}
+	default {
+	    return
+	}
+    }
+}
+
+::itcl::body RtControl::toggleFbMode {} {
+    switch -- $fb_mode {
+	1 -
+	2 {
+	    incr fb_mode
+	}
+	3 {
+	    set fb_mode 1
+	}
+	default {
+	    return
+	}
+    }
+
+    enableFB
+    set_fb_mode_str
+}
+
 ::itcl::body RtControl::toggleFB {} {
     if {$itk_option(-fb_enabled)} {
 	set itk_option(-fb_enabled) 0
     } else {
-	set rtSize "Size of Pane"
 	set_size 
 	set itk_option(-fb_enabled) 1
     }
 
     enableFB
+}
+
+::itcl::body RtControl::updateControlPanel {} {
+    if {[catch {$itk_option(-mged) isa Mged} isaMged] ||
+	[catch {$itk_option(-mged) isa cadwidgets::Ged} isaGed] ||
+	(!$isaMged && !$isaGed)} {
+	error "Raytrace Control Panel($this) is not associated with an Mged object, itk_option(-mged) - $itk_option(-mged)"
+    }
+
+    set rtActivePane [$itk_option(-mged) pane]
+
+    # Doing it this way eliminates the obnoxious window flash
+    after idle [::itcl::code $this update_control_panel]
 }
 
 
@@ -877,61 +905,6 @@ option add *RtControl*tearoff 0 widgetDefault
     $_entry insert 0 [expr {int(pow($_sval,2))}]
 }
 
-::itcl::body RtControl::set_src {} {
-    if {!$isaMged && !$isaGed} {
-	error "Raytrace Control Panel($this) is not associated with an Mged object"
-    }
-
-    switch -- $rtSrc {
-	"Active Pane" {
-	    set rtSrc [$itk_option(-mged) pane]
-	}
-	"Upper Left" {
-	    set rtSrc ul
-	}
-	"Upper Right" {
-	    set rtSrc ur
-	}
-	"Lower Left" {
-	    set rtSrc ll
-	}
-	"Lower Right" {
-	    set rtSrc lr
-	}
-    }
-}
-
-::itcl::body RtControl::set_dest {} {
-    if {!$isaMged && !$isaGed} {
-	error "Raytrace Control Panel($this) is not associated with an Mged object"
-    }
-
-    switch -- $rtDest {
-	"Active Pane" {
-	    set rtDest [$itk_option(-mged) pane]
-	}
-	"Upper Left" {
-	    set rtDest ul
-	}
-	"Upper Right" {
-	    set rtDest ur
-	}
-	"Lower Left" {
-	    set rtDest ll
-	}
-	"Lower Right" {
-	    set rtDest lr
-	}
-    }
-
-    # update the Inactive/Underlay/Overlay radiobutton
-    if {$isaMged} {
-	set fb_mode [$itk_option(-mged) component $rtDest fb_active]
-    } else {
-	set fb_mode [$itk_option(-mged) pane_set_fb_mode $rtDest]
-    }
-}
-
 ::itcl::body RtControl::colorChooser {_color} {
     set ic [format "#%02x%02x%02x" [lindex $_color 0] [lindex $_color 1] [lindex $_color 2]]
     set c [tk_chooseColor -initialcolor $ic -title "Color Choose"]
@@ -990,18 +963,56 @@ option add *RtControl*tearoff 0 widgetDefault
     $itk_component(bgcolorpatchL) configure -background $bg
 }
 
+::itcl::body RtControl::set_fb_mode {} {
+    if {!$isaMged && !$isaGed} {
+	error "Raytrace Control Panel($this) is not associated with an Mged object"
+    }
+
+    switch -- $fb_mode_str {
+	Underlay {
+	    set fb_mode 1
+	}
+	Interlay {
+	    set fb_mode 2
+	}
+	Overlay {
+	    set fb_mode 3
+	}
+	default {
+	    error "Raytrace Control Panel($this): unrecognize fb mode string - $fb_mode_str"
+	}
+    }
+
+    fb_mode
+}
+
+::itcl::body RtControl::set_fb_mode_str {} {
+    if {!$isaMged && !$isaGed} {
+	error "Raytrace Control Panel($this) is not associated with an Mged object"
+    }
+
+    switch -- $fb_mode {
+	1 {
+	    set fb_mode_str "Underlay"
+	}
+	2 {
+	    set fb_mode_str "Interlay"
+	}
+	3 {
+	    set fb_mode_str "Overlay"
+	}
+	default {
+	    error "Raytrace Control Panel($this): unrecognize fb mode - $fb_mode"
+	}
+    }
+}
+
 ::itcl::body RtControl::set_size {} {
     if {!$isaMged && !$isaGed} {
 	error "Raytrace Control Panel($this) is not associated with an Mged object"
     }
 
-    if {$rtSize == "Size of Pane"} {
-	    set rtSize [getSize]
-    }
-
-    if {![regexp "^(\[ \]*\[0-9\]+)((\[ \]*\[xX\]?\[ \]*)|(\[ \]+))(\[0-9\]*\[ \]*)$" $rtSize]} {
-	error "Bad size - $rtSize"
-    }
+    set rtSize [getSize]
 }
 
 ::itcl::body RtControl::set_jitter {} {
@@ -1080,7 +1091,12 @@ option add *RtControl*tearoff 0 widgetDefault
 		    $itk_option(-mged) component $dest fb_active 1
 
 		    # update the Inactive/Underlay/Overlay radiobutton
-		    set fb_mode 1
+		    set fb_mode [subst $[subst fb_mode_$dest]]
+		    set_fb_mode_str
+
+		    if {$itk_option(-fb_mode_callback) != ""} {
+			catch {$itk_option(-fb_mode_callback) $fb_mode}
+		    }
 		}
 		return [$itk_option(-mged) component $dest listen]
 	    } else {
@@ -1088,7 +1104,12 @@ option add *RtControl*tearoff 0 widgetDefault
 		    $itk_option(-mged) component $dest fb_active 1
 
 		    # update the Inactive/Underlay/Overlay radiobutton
-		    set fb_mode 1
+		    set fb_mode [subst $[subst fb_mode_$dest]]
+		    set_fb_mode_str
+
+		    if {$itk_option(-fb_mode_callback) != ""} {
+			catch {$itk_option(-fb_mode_callback) $fb_mode}
+		    }
 		}
 		return [$itk_option(-mged) pane_listen $dest]
 	    }
@@ -1101,18 +1122,24 @@ option add *RtControl*tearoff 0 widgetDefault
 }
 
 ::itcl::body RtControl::fb_mode {} {
-    set pane [getPane]
-
     if {$isaMged} {
-	$itk_option(-mged) component $pane fb_active $fb_mode
+	if {$itk_option(-fb_enabled)} {
+	    $itk_option(-mged) component $rtActivePane fb_active $fb_mode
+	} else {
+	    $itk_option(-mged) component $rtActivePane fb_active 0
+	}
     } else {
-	$itk_option(-mged) pane_set_fb_mode $pane $fb_mode
+	if {$itk_option(-fb_enabled)} {
+	    $itk_option(-mged) pane_set_fb_mode $rtActivePane $fb_mode
+	} else {
+	    $itk_option(-mged) pane_set_fb_mode $rtActivePane 0
+	}
     }
 
-    if {$fb_mode} {
-	set itk_option(-fb_enabled) 1
-    } else {
-	set itk_option(-fb_enabled) 0
+    set fb_mode_$rtActivePane $fb_mode
+
+    if {$itk_option(-fb_mode_callback) != ""} {
+	catch {$itk_option(-fb_mode_callback) $fb_mode}
     }
 }
 
@@ -1132,14 +1159,14 @@ option add *RtControl*tearoff 0 widgetDefault
 # checking is performed on user specified strings.
 #
 ::itcl::body RtControl::get_cooked_dest {} {
-    if {$rtDest == ""} {
+    if {$rtActivePane == ""} {
 	# use the active pane
-	set rtDest [$itk_option(-mged) pane]
+	set rtActivePane [$itk_option(-mged) pane]
     }
 
-    set cooked_dest [cook_dest $rtDest]
+    set cooked_dest [cook_dest $rtActivePane]
     if {$cooked_dest == -1} {
-	switch -- $rtDest {
+	switch -- $rtActivePane {
 	    ul -
 	    ur -
 	    ll -
@@ -1148,9 +1175,9 @@ option add *RtControl*tearoff 0 widgetDefault
 		# If port 0 isn't available, the next available port will
 		# be returned.
 		if {$isaMged} {
-		    set cooked_dest [$itk_option(-mged) component $rtDest listen 0]
+		    set cooked_dest [$itk_option(-mged) component $rtActivePane listen 0]
 		} else {
-		    set cooked_dest [$itk_option(-mged) pane_listen $rtDest 0]
+		    set cooked_dest [$itk_option(-mged) pane_listen $rtActivePane 0]
 		}
 	    }
 	    default {
@@ -1162,33 +1189,6 @@ option add *RtControl*tearoff 0 widgetDefault
     }
 
     return $cooked_dest
-}
-
-::itcl::body RtControl::update_control_panel {} {
-    if {[catch {$itk_option(-mged) isa Mged} isaMged] ||
-	[catch {$itk_option(-mged) isa cadwidgets::Ged} isaGed] ||
-	(!$isaMged && !$isaGed)} {
-	error "Raytrace Control Panel($this) is not associated with an Mged object, itk_option(-mged) - $itk_option(-mged)"
-    }
-
-    #    if {![$itk_option(-mged) fb_active]} {
-    # Framebuffer is not active, so activate it
-    # by putting it in "Underlay" mode.
-    #	$itk_option(-mged) fb_active 1
-    #	set fb_mode 1
-    #    }
-
-#    set pane [$itk_option(-mged) pane]
-#    $itk_component(srcCB) setText $pane
-    #    $itk_component(destCB) setText $pane
-    set rtSrc [$itk_option(-mged) pane]
-    set rtDest $rtSrc
-    set rtSize "Size of Pane"
-    set_size
-
-    # Calling setColor so that the menubutton color gets set.
-#    eval $itk_component(bgcolorCB) setColor [$itk_option(-mged) bg]
-#    set rtColor [$itk_option(-mged) bg]
 }
 
 ::itcl::body RtControl::menuStatusCB {w} {
@@ -1219,44 +1219,17 @@ option add *RtControl*tearoff 0 widgetDefault
 		set msg "Put the $result framebuffer in overlay mode"
 	    }
 	}
-	"Active Pane" {
-	    if {[catch {getPaneStr} result]} {
-		set msg $result
-	    } else {
-		if {$srcM == $w} {
-		    set msg "Make the $result pane the source"
-		} else {
-		    set msg "Make the $result pane the destination"
-		}
-	    }
-	}
 	"Upper Left" {
-	    if {$srcM == $w} {
-		set msg "Make the upper left pane the source"
-	    } else {
-		set msg "Make the upper left pane the destination"
-	    }
+	    set msg "Make the upper left pane the active pane"
 	}
 	"Upper Right" {
-	    if {$srcM == $w} {
-		set msg "Make the upper right pane the source"
-	    } else {
-		set msg "Make the upper right pane the destination"
-	    }
+	    set msg "Make the upper right pane the active pane"
 	}
 	"Lower Left" {
-	    if {$srcM == $w} {
-		set msg "Make the lower left pane the source"
-	    } else {
-		set msg "Make the lower left pane the destination"
-	    }
+	    set msg "Make the lower left pane the active pane"
 	}
 	"Lower Right" {
-	    if {$srcM == $w} {
-		set msg "Make the lower right pane the source"
-	    } else {
-		set msg "Make the lower right pane the destination"
-	    }
+	    set msg "Make the lower right pane the active pane"
 	}
 	"Size of Pane" {
 	    if {[catch {getSize} result]} {
@@ -1324,7 +1297,7 @@ option add *RtControl*tearoff 0 widgetDefault
     if {!$isaMged && !$isaGed} {
 	set msg "Not associated with an Mged object"
     } else {
-	set msg "Raytrace $rtSrc's view into $rtDest and dismiss"
+	set msg "Raytrace $rtActivePane's view and dismiss"
     }
 }
 
@@ -1332,7 +1305,7 @@ option add *RtControl*tearoff 0 widgetDefault
     if {!$isaMged && !$isaGed} {
 	set msg "Not associated with an Mged object"
     } else {
-	set msg "Raytrace $rtSrc's view into $rtDest"
+	set msg "Raytrace $rtActivePane's view"
     }
 }
 
@@ -1340,7 +1313,7 @@ option add *RtControl*tearoff 0 widgetDefault
     if {!$isaMged && !$isaGed} {
 	set msg "Not associated with an Mged object"
     } else {
-	set msg "Abort all raytraces started from $rtSrc"
+	set msg "Abort all raytraces started from $rtActivePane"
     }
 }
 
@@ -1348,7 +1321,7 @@ option add *RtControl*tearoff 0 widgetDefault
     if {!$isaMged && !$isaGed} {
 	set msg "Not associated with an Mged object"
     } else {
-	set msg "Clear $rtDest with the following color - $rtColor"
+	set msg "Clear $rtActivePane with the following color - $rtColor"
     }
 }
 
@@ -1368,40 +1341,8 @@ option add *RtControl*tearoff 0 widgetDefault
     set msg "Specify an RGB color"
 }
 
-## - getPane
-#
-# Return a pane associated with $itk_option(-mged)
-# according to $rtDest.
-#
-# Note - if $rtDest is not a pane (i.e. it's a
-#        file or some other framebuffer) then the active
-#        pane is returned.
-#
-::itcl::body RtControl::getPane {} {
-    if {!$isaMged && !$isaGed} {
-	error "Not associated with an Mged object"
-    }
-
-    switch -- $rtDest {
-	ul -
-	ur -
-	ll -
-	lr {
-	    return $rtDest
-	}
-	default {
-	    # Use the active pane
-	    return [$itk_option(-mged) pane]
-	}
-    }
-}
-
 ::itcl::body RtControl::getPaneStr {} {
-    if {[catch {getPane} result]} {
-	return $result
-    }
-
-    switch -- $result {
+    switch -- $rtActivePane {
 	ul {
 	    return "upper left"
 	}
@@ -1426,60 +1367,15 @@ option add *RtControl*tearoff 0 widgetDefault
 	error "Not associated with an Mged object"
     }
 
-    # Try using the destination for obtaining the size.
-    switch -- $rtDest {
-	ul -
-	ur -
-	ll -
-	lr {
-	    if {$isaMged} {
-		set size [$itk_option(-mged) component $rtDest cget -dmsize]
-	    } else {
-		set size [$itk_option(-mged) pane_win_size $rtDest]
-	    }
-	    return "[lindex $size 0]x[lindex $size 1]"
-	}
-    }
-
-    # The destination could be a file or a framebuffer.
-    # We don't know what its size is so try to use the
-    # source pane for obtaining the size.
-    switch -- $rtSrc {
-	ul -
-	ur -
-	ll -
-	lr {
-	    if {$isaMged} {
-		set size [$itk_option(-mged) component $rtSrc cget -dmsize]
-	    } else {
-		set size [$itk_option(-mged) pane_win_size $rtSrc]
-	    }
-	    return "[lindex $size 0]x[lindex $size 1]"
-	}
-    }
-
-    # We failed to get the size using the destination and source panes.
-    # So, we use the active pane for obtaining the size.
     if {$isaMged} {
-	set size [$itk_option(-mged) component [$itk_option(-mged) pane] cget -dmsize]
+	set size [$itk_option(-mged) component $rtAcivePane cget -dmsize]
     } else {
-	set size [$itk_option(-mged) pane_win_size [$itk_option(-mged) pane]]
+	set size [$itk_option(-mged) pane_win_size $rtActivePane]
     }
     return "[lindex $size 0]x[lindex $size 1]"
 }
 
 ::itcl::body RtControl::enableFB {} {
-    if {$itk_option(-fb_enabled)} {
-	if {$prev_fb_mode} {
-	    set fb_mode $prev_fb_mode
-	} else {
-	    set fb_mode 1
-	}
-    } else {
-	set prev_fb_mode $fb_mode
-	set fb_mode 0
-    }
-
     fb_mode
 
     if {$itk_option(-fb_enabled_callback) != ""} {
@@ -1549,6 +1445,29 @@ option add *RtControl*tearoff 0 widgetDefault
 ::itcl::body RtControl::enterOtherCB {} {
     set msg_adv "Other rt options"
 }
+
+::itcl::body RtControl::update_control_panel {} {
+    ::update
+    set_size
+
+    # update the Inactive/Underlay/Overlay radiobutton
+    if {$isaMged} {
+	set mode [$itk_option(-mged) component $rtActivePane fb_active]
+    } else {
+	set mode [$itk_option(-mged) pane_set_fb_mode $rtActivePane]
+    }
+
+    if {$mode < 1} {
+	set itk_option(-fb_enabled) 0
+	set fb_mode [subst $[subst fb_mode_$rtActivePane]]
+    } else {
+	set itk_option(-fb_enabled) 1
+	set fb_mode $mode
+    }
+
+    set_fb_mode_str
+}
+
 
 # Local Variables:
 # mode: Tcl
