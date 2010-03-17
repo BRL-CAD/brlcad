@@ -4868,16 +4868,16 @@ package provide Archer 1.0
 	-relief flat \
 	-width 3
 
-    $itk_component(primaryToolbar) add button toggle_fb \
+    $itk_component(primaryToolbar) add button raytrace \
 	-state disabled \
-	-balloonstr "Toggle framebuffer" \
-	-helpstr "Toggle framebuffer" \
+	-balloonstr "Raytrace current view" \
+	-helpstr "Raytrace current view" \
 	-relief flat \
 	-overrelief raised
     $itk_component(primaryToolbar) add button toggle_fb_mode \
 	-state disabled \
 	-balloonstr "Toggle framebuffer mode" \
-	-helpstr "Toggle framebuffer mode" \
+	-helpstr "Change framebuffer mode" \
 	-relief flat \
 	-overrelief raised
     $itk_component(primaryToolbar) add button clear_fb \
@@ -4886,10 +4886,10 @@ package provide Archer 1.0
 	-helpstr "Clear framebuffer" \
 	-relief flat \
 	-overrelief raised
-    $itk_component(primaryToolbar) add button raytrace \
+    $itk_component(primaryToolbar) add button toggle_fb \
 	-state disabled \
-	-balloonstr "Raytrace current view" \
-	-helpstr "Raytrace current view" \
+	-balloonstr "Toggle framebuffer" \
+	-helpstr "Toggle framebuffer" \
 	-relief flat \
 	-overrelief raised
 }
