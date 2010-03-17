@@ -41,12 +41,6 @@
 #
 #   ./trimconfig.sh configure.ac
 #
-# Author -
-#   Christopher Sean Morrison
-#
-# Source -
-#   BRL-CAD Open Source
-#
 ###
 
 SELF="$0"
