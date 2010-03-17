@@ -264,6 +264,7 @@ package provide Archer 1.0
 	method initDefaultBindings {{_comp ""}}
 	method initGed {}
 	method selectNode {_tags {_rflag 1}}
+	method setActivePane {_pane}
 	method updateCheckpointMode {}
 	method updateSaveMode {}
 	method updateUndoMode {{_oflag 1}}
@@ -289,7 +290,10 @@ package provide Archer 1.0
 	method doArcherHelp {}
 	method launchDisplayMenuBegin {_dm _m _x _y}
 	method launchDisplayMenuEnd {}
+	method fbActivePaneCallback {_pane}
 	method fbEnabledCallback {_on}
+	method fbModeCallback {_mode}
+	method fbModeToggle {}
 	method fbToggle {}
 	method rtEndCallback {_aborted}
 	method raytracePlus {}
@@ -1752,6 +1756,9 @@ package provide Archer 1.0
     $itk_component(primaryToolbar) itemconfigure toggle_fb \
 	-image [image create photo \
 		    -file [file join $dir framebuffer.png]]
+    $itk_component(primaryToolbar) itemconfigure toggle_fb_mode \
+	-image [image create photo \
+		    -file [file join $dir framebuffer_underlay.png]]
     $itk_component(primaryToolbar) itemconfigure raytrace \
 	-image [image create photo \
 		    -file [file join $dir raytrace.png]]
@@ -2511,6 +2518,10 @@ package provide Archer 1.0
     $itk_component(tree) selection set $element
 }
 
+
+::itcl::body Archer::setActivePane {_pane} {
+    $itk_component(rtcntrl) setActivePane $_pane
+}
 
 ::itcl::body Archer::updateCheckpointMode {} {
     if {$mViewOnly} {
@@ -4089,6 +4100,10 @@ package provide Archer 1.0
 #    set mCurrentPaneName ""
 }
 
+::itcl::body Archer::fbActivePaneCallback {_pane} {
+    ArcherCore::setActivePane $_pane
+}
+
 ::itcl::body Archer::fbEnabledCallback {_on} {
     set dir [file join $mImgDir Themes $mTheme]
 
@@ -4103,10 +4118,35 @@ package provide Archer 1.0
     }
 }
 
+::itcl::body Archer::fbModeCallback {_mode} {
+    set dir [file join $mImgDir Themes $mTheme]
+    switch -- $_mode {
+	1 {
+	    set file framebuffer_underlay.png
+	}
+	2 {
+	    set file framebuffer_interlay.png
+	}
+	3 {
+	    set file framebuffer_overlay.png
+	}
+	default {
+	    return
+	}
+    }
+
+    $itk_component(primaryToolbar) itemconfigure toggle_fb_mode \
+	-image [image create photo -file [file join $dir $file]]
+}
+
+::itcl::body Archer::fbModeToggle {} {
+    $itk_component(rtcntrl) toggleFbMode
+}
+
 ::itcl::body Archer::fbToggle {} {
     $itk_component(rtcntrl) toggleFB
     set on [$itk_component(rtcntrl) cget -fb_enabled]
-    fbEnabledCallback $on
+#    fbEnabledCallback $on
 }
 
 ::itcl::body Archer::rtEndCallback {_aborted} {
@@ -4414,6 +4454,9 @@ package provide Archer 1.0
 	$itk_component(primaryToolbar) itemconfigure toggle_fb \
 	    -state normal \
 	    -command [::itcl::code $this fbToggle]
+	$itk_component(primaryToolbar) itemconfigure toggle_fb_mode \
+	    -state normal \
+	    -command [::itcl::code $this fbModeToggle]
 	$itk_component(primaryToolbar) itemconfigure raytrace \
 	    -state normal \
 	    -command [::itcl::code $this raytracePlus]
@@ -4422,7 +4465,9 @@ package provide Archer 1.0
 	    -command "$itk_component(rtcntrl) clear"
 
 	$itk_component(rtcntrl) configure \
-	    -fb_enabled_callback [::itcl::code $this fbEnabledCallback]
+	    -fb_active_pane_callback [::itcl::code $this fbActivePaneCallback] \
+	    -fb_enabled_callback [::itcl::code $this fbEnabledCallback] \
+	    -fb_mode_callback [::itcl::code $this fbModeCallback]
 
 	gedCmd rt_end_callback [::itcl::code $this rtEndCallback]
     } else {
@@ -4827,6 +4872,12 @@ package provide Archer 1.0
 	-state disabled \
 	-balloonstr "Toggle framebuffer" \
 	-helpstr "Toggle framebuffer" \
+	-relief flat \
+	-overrelief raised
+    $itk_component(primaryToolbar) add button toggle_fb_mode \
+	-state disabled \
+	-balloonstr "Toggle framebuffer mode" \
+	-helpstr "Toggle framebuffer mode" \
 	-relief flat \
 	-overrelief raised
     $itk_component(primaryToolbar) add button clear_fb \

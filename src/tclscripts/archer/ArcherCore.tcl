@@ -1210,12 +1210,12 @@ Popup Menu    Right or Ctrl-Left
 
     # RT Control Panel
     itk_component add rtcntrl {
-	RtControl $itk_interior.rtcp -mged $itk_component(ged) -tearoff 0
+	RtControl $itk_interior.rtcp -mged $itk_component(ged)
     } {
 	usual
     }
     $itk_component(ged) fb_active 0
-    $itk_component(rtcntrl) update_fb_mode
+    $itk_component(rtcntrl) updateControlPanel
     bind $itk_component(rtcntrl) <Visibility> "raise $itk_component(rtcntrl)"
     bind $itk_component(rtcntrl) <FocusOut> "raise $itk_component(rtcntrl)"
     wm protocol $itk_component(rtcntrl) WM_DELETE_WINDOW "$itk_component(rtcntrl) deactivate"
@@ -2289,6 +2289,8 @@ Popup Menu    Right or Ctrl-Left
 	set mLastSelectedDir [file dirname $finename]
 
 	#XXX Hack! Hack! Hack!
+	#XXX The png command below needs to be modified to draw
+	#XXX into an off screen buffer to avoid occlusion
 	raise .
 
 	update
