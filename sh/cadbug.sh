@@ -41,6 +41,11 @@
 #
 # $Revision$
 
+echo "************************************************************"
+echo "DEPRECATION WARNING: This script is deprecated and may be"
+echo "                     removed in a future release of BRL-CAD."
+echo "************************************************************"
+
 if [ -n "$EDITOR" ] ; then
     REPT_EDITOR=$EDITOR
 else

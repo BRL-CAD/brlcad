@@ -73,6 +73,11 @@
 #                                                               #
 #################################################################
 
+echo "************************************************************"
+echo "DEPRECATION WARNING: This script is deprecated and may be"
+echo "                     removed in a future release of BRL-CAD."
+echo "************************************************************"
+
 # Silicon Graphics renamed /usr/ucb as /usr/bsd, sigh
 PATH=/usr/bsd:$PATH
 export PATH
