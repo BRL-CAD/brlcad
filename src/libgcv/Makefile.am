@@ -9,10 +9,10 @@ OBJLIB =
 #endif
 
 SUBDIRS = \
-	$(OBJ)
+	${OBJ}
 
 DIST_SUBDIRS = \
-	${obj_dir}
+	${OBJ}
 
 lib_LTLIBRARIES = libgcv.la
 noinst_LTLIBRARIES = libgcv_nil.la
@@ -24,6 +24,7 @@ libgcv_nil_la_SOURCES = \
 	region_end_mc.c
 
 EXTRA_DIST = \
+	${obj_dir} \
 	CMakeLists.txt \
 	NOTES
 
