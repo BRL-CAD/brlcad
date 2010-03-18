@@ -1511,7 +1511,7 @@ package provide Archer 1.0
     refreshTree 0
 
     if {$mBindingMode == 0} {
-	set mDefaultBindingMode $ROTATE_MODE
+	set mDefaultBindingMode $VIEW_ROTATE_MODE
 	beginViewRotate
     }
     $itk_component(ged) refresh_on
@@ -4876,7 +4876,7 @@ package provide Archer 1.0
 	-overrelief raised
     $itk_component(primaryToolbar) add button toggle_fb_mode \
 	-state disabled \
-	-balloonstr "Toggle framebuffer mode" \
+	-balloonstr "Change framebuffer mode" \
 	-helpstr "Change framebuffer mode" \
 	-relief flat \
 	-overrelief raised
@@ -5636,7 +5636,7 @@ package provide Archer 1.0
     set obj $mSelectedObjPath
 
     if {$obj == ""} {
-	set mDefaultBindingMode $ROTATE_MODE
+	set mDefaultBindingMode $VIEW_ROTATE_MODE
 	beginViewRotate
 	return
     }
@@ -5644,6 +5644,8 @@ package provide Archer 1.0
     if {$GeometryEditFrame::mEditClass != $GeometryEditFrame::EDIT_CLASS_ROT} {
 	initEdit
     }
+
+    $itk_component(ged) init_button_no_op 2
 
     foreach dname {ul ur ll lr} {
 	set win [$itk_component(ged) component $dname]
@@ -5670,7 +5672,7 @@ package provide Archer 1.0
     set obj $mSelectedObjPath
 
     if {$obj == ""} {
-	set mDefaultBindingMode $ROTATE_MODE
+	set mDefaultBindingMode $VIEW_ROTATE_MODE
 	beginViewRotate
 	return
     }
@@ -5678,6 +5680,8 @@ package provide Archer 1.0
     if {$GeometryEditFrame::mEditClass != $GeometryEditFrame::EDIT_CLASS_SCALE} {
 	initEdit
     }
+
+    $itk_component(ged) init_button_no_op 2
 
     foreach dname {ul ur ll lr} {
 	set win [$itk_component(ged) component $dname]
@@ -5700,7 +5704,7 @@ package provide Archer 1.0
     set obj $mSelectedObjPath
 
     if {$obj == ""} {
-	set mDefaultBindingMode $ROTATE_MODE
+	set mDefaultBindingMode $VIEW_ROTATE_MODE
 	beginViewRotate
 	return
     }
@@ -5709,6 +5713,7 @@ package provide Archer 1.0
 	initEdit
     }
 
+    $itk_component(ged) init_button_no_op 2
     set ::GeometryEditFrame::mEditLastTransMode $OBJECT_TRANSLATE_MODE
 
     foreach dname {ul ur ll lr} {
@@ -5732,7 +5737,7 @@ package provide Archer 1.0
     set obj $mSelectedObjPath
 
     if {$obj == ""} {
-	set mDefaultBindingMode $ROTATE_MODE
+	set mDefaultBindingMode $VIEW_ROTATE_MODE
 	beginViewRotate
 	return
     }
@@ -5741,6 +5746,7 @@ package provide Archer 1.0
 	initEdit
     }
 
+    $itk_component(ged) init_button_no_op 2
     set ::GeometryEditFrame::mEditLastTransMode $OBJECT_CENTER_MODE
 
     foreach dname {ul ur ll lr} {

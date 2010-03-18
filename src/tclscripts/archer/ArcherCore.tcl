@@ -59,19 +59,18 @@ namespace eval ArcherCore {
 	common splash ""
 	common showWindow 0
 
-	common ROTATE_MODE 0
-	common TRANSLATE_MODE 1
-	common SCALE_MODE 2
-	common CENTER_MODE 3
-	common CENTER_VIEW_OBJECT_MODE 4
-	common COMP_PICK_MODE 5
-	common COMP_ERASE_MODE 6
-	common MEASURE_MODE 7
-	common OBJECT_ROTATE_MODE 8
-	common OBJECT_TRANSLATE_MODE 9
-	common OBJECT_SCALE_MODE 10
-	common OBJECT_CENTER_MODE 11
-	common FIRST_FREE_BINDING_MODE 12
+	common VIEW_ROTATE_MODE 0
+	common VIEW_TRANSLATE_MODE 1
+	common VIEW_SCALE_MODE 2
+	common VIEW_CENTER_MODE 3
+	common COMP_PICK_MODE 4
+	common COMP_ERASE_MODE 5
+	common MEASURE_MODE 6
+	common OBJECT_ROTATE_MODE 7
+	common OBJECT_TRANSLATE_MODE 8
+	common OBJECT_SCALE_MODE 9
+	common OBJECT_CENTER_MODE 10
+	common FIRST_FREE_BINDING_MODE 11
 
 	common OBJ_EDIT_VIEW_MODE 0
 	common OBJ_ATTR_VIEW_MODE 1
@@ -567,11 +566,11 @@ Popup Menu    Right or Ctrl-Left
 	method beginViewTranslate {}
 	method endViewTranslate {_pane}
 
-	method initCenterMode {}
-	method initCenterViewObjectMode {}
+	method initViewCenterMode {}
 
 	method initCompErase {}
 	method initCompPick {}
+
 	method mrayCallback_cvo {_start _target _partitions}
 	method mrayCallback_erase {_start _target _partitions}
 	method mrayCallback_pick {_start _target _partitions}
@@ -1572,35 +1571,28 @@ Popup Menu    Right or Ctrl-Left
 	-balloonstr "Rotate view" \
 	-helpstr "Rotate view" \
 	-variable [::itcl::scope mDefaultBindingMode] \
-	-value $ROTATE_MODE \
+	-value $VIEW_ROTATE_MODE \
 	-command [::itcl::code $this beginViewRotate]
     $itk_component(primaryToolbar) add radiobutton translate \
 	-balloonstr "Translate view" \
 	-helpstr "Translate view" \
 	-variable [::itcl::scope mDefaultBindingMode] \
-	-value $TRANSLATE_MODE \
+	-value $VIEW_TRANSLATE_MODE \
 	-command [::itcl::code $this beginViewTranslate] \
 	-state disabled
     $itk_component(primaryToolbar) add radiobutton scale \
 	-balloonstr "Scale view" \
 	-helpstr "Scale view" \
 	-variable [::itcl::scope mDefaultBindingMode] \
-	-value $SCALE_MODE \
+	-value $VIEW_SCALE_MODE \
 	-command [::itcl::code $this beginViewScale] \
 	-state disabled
     $itk_component(primaryToolbar) add radiobutton center \
 	-balloonstr "Center view" \
 	-helpstr "Center view" \
 	-variable [::itcl::scope mDefaultBindingMode] \
-	-value $CENTER_MODE \
-	-command [::itcl::code $this initCenterMode] \
-	-state disabled
-    $itk_component(primaryToolbar) add radiobutton centervo \
-	-balloonstr "Center View on Object" \
-	-helpstr "Center View on Object" \
-	-variable [::itcl::scope mDefaultBindingMode] \
-	-value $CENTER_VIEW_OBJECT_MODE \
-	-command [::itcl::code $this initCenterViewObjectMode] \
+	-value $VIEW_CENTER_MODE \
+	-command [::itcl::code $this initViewCenterMode] \
 	-state disabled
     $itk_component(primaryToolbar) add radiobutton cpick \
 	-balloonstr "Component Pick" \
@@ -1628,7 +1620,6 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(primaryToolbar) itemconfigure translate -state disabled
     $itk_component(primaryToolbar) itemconfigure scale -state disabled
     $itk_component(primaryToolbar) itemconfigure center -state disabled
-    $itk_component(primaryToolbar) itemconfigure centervo -state disabled
     $itk_component(primaryToolbar) itemconfigure cpick -state disabled
     $itk_component(primaryToolbar) itemconfigure cerase -state disabled
     $itk_component(primaryToolbar) itemconfigure measure -state disabled
@@ -1655,7 +1646,8 @@ Popup Menu    Right or Ctrl-Left
 	return
     }
 
-    $itk_component(ged) init_view_rotate
+    $itk_component(ged) init_view_rotate 1
+    $itk_component(ged) init_button_no_op 2
 }
 
 ::itcl::body ArcherCore::endViewRotate {_pane} {
@@ -1674,7 +1666,8 @@ Popup Menu    Right or Ctrl-Left
 	return
     }
 
-    $itk_component(ged) init_view_scale
+    $itk_component(ged) init_view_scale 1
+    $itk_component(ged) init_button_no_op 2
 }
 
 ::itcl::body ArcherCore::endViewScale {_pane} {
@@ -1693,7 +1686,7 @@ Popup Menu    Right or Ctrl-Left
 	return
     }
 
-    $itk_component(ged) init_view_translate
+    $itk_component(ged) init_view_translate 1
 }
 
 ::itcl::body ArcherCore::endViewTranslate {_pane} {
@@ -1707,22 +1700,16 @@ Popup Menu    Right or Ctrl-Left
     addHistory "center $center"
 }
 
-::itcl::body ArcherCore::initCenterMode {} {
+::itcl::body ArcherCore::initViewCenterMode {} {
     if {![info exists itk_component(ged)]} {
 	return
     }
 
-    $itk_component(ged) init_view_center
-}
-
-::itcl::body ArcherCore::initCenterViewObjectMode {} {
-    if {![info exists itk_component(ged)]} {
-	return
-    }
+    $itk_component(ged) init_view_center 1
 
     $itk_component(ged) clear_mouse_ray_callback_list
     $itk_component(ged) add_mouse_ray_callback [::itcl::code $this mrayCallback_cvo]
-    $itk_component(ged) init_comp_pick
+    $itk_component(ged) init_comp_pick 2
 }
 
 ::itcl::body ArcherCore::initCompErase {} {
@@ -1732,7 +1719,8 @@ Popup Menu    Right or Ctrl-Left
 
     $itk_component(ged) clear_mouse_ray_callback_list
     $itk_component(ged) add_mouse_ray_callback [::itcl::code $this mrayCallback_erase]
-    $itk_component(ged) init_comp_pick
+    $itk_component(ged) init_comp_pick 1
+    $itk_component(ged) init_button_no_op 2
 }
 
 ::itcl::body ArcherCore::initCompPick {} {
@@ -1742,7 +1730,8 @@ Popup Menu    Right or Ctrl-Left
 
     $itk_component(ged) clear_mouse_ray_callback_list
     $itk_component(ged) add_mouse_ray_callback [::itcl::code $this mrayCallback_pick]
-    $itk_component(ged) init_comp_pick
+    $itk_component(ged) init_comp_pick 1
+    $itk_component(ged) init_button_no_op 2
 }
 
 ::itcl::body ArcherCore::mrayCallback_cvo {_start _target _partitions} {
@@ -1830,7 +1819,6 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(primaryToolbar) itemconfigure translate -state normal
     $itk_component(primaryToolbar) itemconfigure scale -state normal
     $itk_component(primaryToolbar) itemconfigure center -state normal
-    $itk_component(primaryToolbar) itemconfigure centervo -state normal
     $itk_component(primaryToolbar) itemconfigure cpick -state normal
     $itk_component(primaryToolbar) itemconfigure cerase -state normal
     $itk_component(primaryToolbar) itemconfigure measure -state normal
@@ -1838,7 +1826,7 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(ged) init_view_bindings
 
     # Initialize rotate mode
-    set mDefaultBindingMode $ROTATE_MODE
+    set mDefaultBindingMode $VIEW_ROTATE_MODE
     beginViewRotate
 }
 
@@ -1851,7 +1839,6 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(primaryToolbar) itemconfigure translate -state disabled
     $itk_component(primaryToolbar) itemconfigure scale -state disabled
     $itk_component(primaryToolbar) itemconfigure center -state disabled
-    $itk_component(primaryToolbar) itemconfigure centervo -state disabled
     $itk_component(primaryToolbar) itemconfigure cpick -state disabled
     $itk_component(primaryToolbar) itemconfigure cerase -state disabled
     $itk_component(primaryToolbar) itemconfigure measure -state disabled
@@ -3222,9 +3209,6 @@ Popup Menu    Right or Ctrl-Left
     $itk_component(primaryToolbar) itemconfigure center \
 	-image [image create photo \
 		    -file [file join $dir view_select.png]]
-    $itk_component(primaryToolbar) itemconfigure centervo \
-	-image [image create photo \
-		    -file [file join $dir view_obj_select.png]]
     $itk_component(primaryToolbar) itemconfigure cpick \
 	-image [image create photo \
 		    -file [file join $dir compSelect.png]]
@@ -3525,24 +3509,20 @@ Popup Menu    Right or Ctrl-Left
 
     set ret 0
     switch -- $mDefaultBindingMode \
-	$ROTATE_MODE { \
+	$VIEW_ROTATE_MODE { \
 		beginViewRotate \
 		set ret 1
 	} \
-	$TRANSLATE_MODE { \
+	$VIEW_TRANSLATE_MODE { \
 		beginViewTranslate \
 		set ret 1
 	} \
-	$SCALE_MODE { \
+	$VIEW_SCALE_MODE { \
 		beginViewScale \
 		set ret 1
 	} \
-	$CENTER_MODE { \
-		initCenterMode \
-		set ret 1
-	} \
-	$CENTER_VIEW_OBJECT_MODE { \
-		initCenterViewObjectMode \
+	$VIEW_CENTER_MODE { \
+		initViewCenterMode \
 		set ret 1
 	} \
 	$COMP_ERASE_MODE { \
