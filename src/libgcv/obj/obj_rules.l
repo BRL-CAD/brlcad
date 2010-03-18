@@ -4,6 +4,10 @@
 #include "obj_grammar.h"
 %}
 
+%x id_state
+%x toggle_id_state
+%x id_list_state
+
 vertex      v
 t_vertex    vt
 n_vertex    vn
@@ -41,7 +45,6 @@ shadow_obj  shadow_obj
 trace_obj   trace_obj
 off         off
 on          on
-id_list     [.]+
 v_reference {integer}"/""/"?
 v_tv_reference {integer}"/"{integer}
 v_nt_reference {integer}"//"{integer}
@@ -61,6 +64,7 @@ comment     "#"[^"\r\n""\n"]*{newline}
 {line}              { return LINE; }
 {face}              { return FACE; }
 {group}             {
+		      BEGIN(id_list_state);
                       return GROUP;
                     }
                     
@@ -83,18 +87,22 @@ comment     "#"[^"\r\n""\n"]*{newline}
                     }
 
 {usemtl}            {
+                      BEGIN(id_state);
                       return USEMTL;
                     }
 
 {mtllib}            {
+	              BEGIN(id_list_state);
                       return MTLLIB;
                     }
 
 {usemap}            {
+                      BEGIN(toggle_id_state);
                       return USEMAP;
                     }
 
 {maplib}            {
+                      BEGIN(id_list_state);
                       return MAPLIB;
                     }
 
@@ -154,11 +162,80 @@ comment     "#"[^"\r\n""\n"]*{newline}
 {wspace}            { }
 
 {comment}|{newline} {
-		      BEGIN(INITIAL);
                       return '\n';
                     }
 
 .                   { return yytext[0]; }
+
+
+<id_state>{
+
+{id}                {
+                      // Keywords are valid identifiers here
+                      // Goto initial state after single token
+                      //working_string = yytext;
+                      BEGIN(INITIAL);
+                      return ID;
+                    }
+
+{wspace}            { }
+
+{comment}|{newline} {
+                      // Goto initial state when we hit newline
+                      BEGIN(INITIAL);
+                      return '\n';
+                    }
+
+.                   { return yytext[0]; }
+}
+
+<toggle_id_state>{
+
+{off}               {
+                      // off is a valid token, not an id
+                      BEGIN(INITIAL);                      
+                      return OFF;
+                    }
+
+{id}                {
+                      // Keywords are valid identifiers here
+                      // Goto initial state after single token
+                      //working_string = yytext;
+                      BEGIN(INITIAL);
+                      return ID;
+                    }
+
+{wspace}            { }
+
+{comment}|{newline} {
+                      // Goto initial state when we hit newline
+                      BEGIN(INITIAL);
+                      return '\n';
+                    }
+
+.                   { return yytext[0]; }
+}
+
+<id_list_state>{
+
+{id}                {
+                      // Keywords are valid identifiers here
+                      //working_string = yytext;
+                      return ID;
+                    }
+
+{wspace}            { }
+
+{comment}|{newline} {
+                      // Goto initial state when we hit newline
+                      BEGIN(INITIAL);
+                      return '\n';
+                    }
+
+.                   { return yytext[0]; }
+}
+
+
 
 %%
 
