@@ -301,13 +301,13 @@ smooth: SMOOTH INTEGER
   
 object: OBJECT ID
     {
-      printf("\tOBJECT ID\n");
+      printf("\tOBJECT ID: %s\n", yytext);
     }
   ;
 
 usemtl: USEMTL ID
     {
-      printf("\tUSEMTL ID\n");
+      printf("\tUSEMTL ID: %s\n", yytext);
     }
   ;
 
@@ -319,7 +319,7 @@ mtllib: MTLLIB id_list
 
 usemap: USEMAP ID
     {
-      printf("\tUSEMAP ID\n");
+      printf("\tUSEMAP ID %s\n", yytext);
     }
   | USEMAP OFF
     {
@@ -335,31 +335,31 @@ maplib: MAPLIB id_list
   
 shadow_obj: SHADOW_OBJ ID
     {
-      printf("\tSHADOW_OBJ ID\n");
+      printf("\tSHADOW_OBJ ID: %s\n", yytext);
     }
   ;
 
 trace_obj: TRACE_OBJ ID
     {
-      printf("\tTRACE_OBJ ID\n");
+      printf("\tTRACE_OBJ ID: %s\n", yytext);
     }
   ;
 
 bevel: BEVEL toggle
     {
-      printf("\tBEVEL toggle: %c\n", $2);
+      printf("\tBEVEL toggle\n");
     }
   ;
 
 c_interp: C_INTERP toggle
     {
-      printf("\tC_INTERP toggle: %c\n", $2);
+      printf("\tC_INTERP toggle\n");
     }
   ;
 
 d_interp: D_INTERP toggle
     {
-      printf("\tD_INTERP toggle: %s\n", $2);
+      printf("\tD_INTERP toggle\n");
     }
   ;
 
@@ -386,10 +386,12 @@ id_list: ID
 
 toggle: ON
     {
+      printf("1\n");
       $$ = 1;
     }
   | OFF
     {
+      printf("0\n");
       $$ = 0;
     }
   ;
