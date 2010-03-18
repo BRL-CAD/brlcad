@@ -1,7 +1,7 @@
 %{
 #include <stdio.h>
 #include <string.h>
-#include "obj_grammar.tab.h"
+#include "obj_grammar.h"
 %}
 
 vertex      v

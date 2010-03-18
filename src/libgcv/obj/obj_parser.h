@@ -18,22 +18,15 @@
  * information.
  */
 
-#ifndef ARL_OBJ_PARSER_H
-#define ARL_OBJ_PARSER_H
+#ifndef OBJ_PARSER_H
+#define OBJ_PARSER_H
 
-#include <sys/types.h>
-#include <stdio.h>
+#include "common.h" 
+#include "vmath.h"
 
 #if defined(__cplusplus)
 extern "C" {
 #endif
-
-/**
- *  A structure containing a wavefront obj parser
- */
-typedef struct {
-    void *p;
-} obj_parser_t;
 
 /**
  *  A structure containing the contents of a parsed wavefront obj file
@@ -115,22 +108,6 @@ typedef struct {
 } obj_polygonal_attributes_t;
 
 /**
- *  Allocate a obj_parser_t object.
- *
- *  You must eventually call obj_parser_destroy.
- *
- *  Return values:
- *  0 - success
- *  ENOMEM - out of memory
- */
-int obj_parser_create(obj_parser_t *parser);
-
-/**
- *  Destroy the obj_parser_t object.
- */
-void obj_parser_destroy(obj_parser_t parser);
-
-/**
  *  Parse the obj file 'filename' with 'parser', create and place results into
  *  'contents'.
  *
@@ -156,29 +133,16 @@ void obj_parser_destroy(obj_parser_t parser);
  *  Any error code returned by fopen
  *  <0 - failure, see obj_parse_error
  */
-int obj_parse(const char *filename, obj_parser_t parser,
-	      obj_contents_t *contents);
+int obj_file_parse(const char *filename, obj_contents_t *contents);
 
 /**
- *  Parse the obj file stream pointed to by 'stream' with 'parser', create and
+ *  Parse the obj data pointed to by 'data', create and
  *  place results into 'contents'.
- *
- *  Operational semantics with respect to 'stream' will mimic 'fread' and
- *  shall not close 'stream' under any circumstance.
- *
- *  From IEEE Std 1003.1-2001:
- *    The file position indicator for the stream (if defined) shall be advanced
- *    by the number of bytes successfully read. If an error occurs, the
- *    resulting value of the file position indicator for the stream is
- *    unspecified. If a partial element is read, its value is unspecified.
- *
- *  Any additional relative file inclusion mechanism will be relative to the
- *  current working directory.
  *
  *  After a successful call to obj_parse_file, you must eventually
  *  call obj_contents_destroy.
  *
- *  If unable to successfully parse the stream pointed to by 'stream' a
+ *  If unable to successfully parse the data pointed to by 'data' a
  *  negative value will be returned and the reason can be obtained by
  *  obj_parse_error.
  *
@@ -191,7 +155,7 @@ int obj_parse(const char *filename, obj_parser_t parser,
  *  Any error code returned by fopen
  *  <0 - failure, see obj_parse_error
  */
-int obj_fparse(FILE *stream, obj_parser_t parser, obj_contents_t *contents);
+int obj_parse(const char *data, obj_contents_t *contents);
 
 /**
  *  Return the reason the last attempt to parse a file failed or warnings
@@ -201,7 +165,7 @@ int obj_fparse(FILE *stream, obj_parser_t parser, obj_contents_t *contents);
  *  0 - The previous parse attempt succeeded and no warnings generated.
  *  !0 - A null terminated string containing information about the last parse 
  */
-const char * obj_parse_error(obj_parser_t parser);
+const char * obj_parse_error();
 
 /**
  *  Destroy the obj_contents_t object.
