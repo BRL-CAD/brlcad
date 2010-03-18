@@ -3012,7 +3012,7 @@ package provide Archer 1.0
 	    lappend themes $theme
 	}
     }
-    buildComboBox $itk_component(generalF) \
+#    buildComboBox $itk_component(generalF) \
 	themes \
 	themes \
 	mThemePref \
@@ -3039,20 +3039,20 @@ package provide Archer 1.0
     grid $itk_component(backgroundColorL) -column 0 -row $i -sticky ne
     grid $itk_component(backgroundColorF) -column 1 -row $i -sticky w
     incr i
+    grid $itk_component(measuringStickColorL) -column 0 -row $i -sticky e
+    grid $itk_component(measuringStickColorF) -column 1 -row $i -sticky ew
+    incr i
     grid $itk_component(primitiveLabelColorL) -column 0 -row $i -sticky e
     grid $itk_component(primitiveLabelColorF) -column 1 -row $i -sticky ew
     incr i
     grid $itk_component(scaleColorL) -column 0 -row $i -sticky e
     grid $itk_component(scaleColorF) -column 1 -row $i -sticky ew
     incr i
-    grid $itk_component(measuringStickColorL) -column 0 -row $i -sticky e
-    grid $itk_component(measuringStickColorF) -column 1 -row $i -sticky ew
-    incr i
     grid $itk_component(viewingParamsColorL) -column 0 -row $i -sticky e
     grid $itk_component(viewingParamsColorF) -column 1 -row $i -sticky ew
-    incr i
-    grid $itk_component(themesL) -column 0 -row $i -sticky ne
-    grid $itk_component(themesF) -column 1 -row $i -sticky w
+#    incr i
+#    grid $itk_component(themesL) -column 0 -row $i -sticky ne
+#    grid $itk_component(themesF) -column 1 -row $i -sticky w
     incr i
     grid $itk_component(bigEMenuItemCB) \
 	-columnspan 2 \

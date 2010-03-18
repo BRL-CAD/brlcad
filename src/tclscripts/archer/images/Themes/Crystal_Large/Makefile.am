@@ -10,9 +10,8 @@ dist_tcl_DATA = \
 	closeall.png \
 	combination.png \
 	command.png \
-	compErase.png \
-	compExclude.png \
-	compSelect.png \
+	component_pick.png \
+	component_erase.png \
 	configure.png \
 	edit_copy.png \
 	edit_cut.png \
@@ -73,11 +72,11 @@ dist_tcl_DATA = \
 	revert.png \
 	run.png \
 	save.png \
+	view_center.png \
 	view_left_right_small.png \
 	view_obj_select.png \
 	view_rotate.png \
 	view_scale.png \
-	view_select.png \
 	view_top_bottom_small.png \
 	view_translate.png \
 	wizard.png

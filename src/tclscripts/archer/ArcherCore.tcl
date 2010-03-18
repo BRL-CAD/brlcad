@@ -3208,13 +3208,13 @@ Popup Menu    Right or Ctrl-Left
 		    -file [file join $dir view_scale.png]]
     $itk_component(primaryToolbar) itemconfigure center \
 	-image [image create photo \
-		    -file [file join $dir view_select.png]]
+		    -file [file join $dir view_center.png]]
     $itk_component(primaryToolbar) itemconfigure cpick \
 	-image [image create photo \
-		    -file [file join $dir compSelect.png]]
+		    -file [file join $dir component_pick.png]]
     $itk_component(primaryToolbar) itemconfigure cerase \
 	-image [image create photo \
-		    -file [file join $dir compErase.png]]
+		    -file [file join $dir component_erase.png]]
     $itk_component(primaryToolbar) itemconfigure measure \
 	-image [image create photo \
 		    -file [file join $dir measure.png]]
