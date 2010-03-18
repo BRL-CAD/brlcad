@@ -4,7 +4,10 @@
   #include <stddef.h>
   #include <string.h>
 
-/*int yydebug = 1;*/
+int yydebug = 1;
+
+extern FILE *yyin;
+extern int yylex();
 
 void obj_parser_error()
 {
@@ -19,11 +22,6 @@ void yyerror(const char *str)
 int yywrap()
 {
         return 1;
-} 
-  
-main()
-{
-        yyparse();
 } 
 
 %}

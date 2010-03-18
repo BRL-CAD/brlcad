@@ -28,6 +28,27 @@
 extern "C" {
 #endif
 
+#undef YYSTYPE
+#define YYSTYPE point_line_t
+
+#ifndef YY_STACK_USED
+#  define YY_STACK_USED 0
+#endif
+#ifndef YY_STACK_UNUSED
+#  define YY_STACK_UNUSED 0
+#endif
+#ifndef YY_ALWAYS_INTERACTIVE
+#  define YY_ALWAYS_INTERACTIVE 0
+#endif
+#ifndef YY_NEVER_INTERACTIVE
+#  define YY_NEVER_INTERACTIVE 0
+#endif
+#ifndef YY_MAIN
+#  define YY_MAIN 0
+#endif
+
+#include "./obj_grammar.h"
+
 /**
  *  A structure containing the contents of a parsed wavefront obj file
  */
@@ -133,7 +154,7 @@ typedef struct {
  *  Any error code returned by fopen
  *  <0 - failure, see obj_parse_error
  */
-int obj_file_parse(const char *filename, obj_contents_t *contents);
+int obj_file_parse(FILE *filename, obj_contents_t *contents);
 
 /**
  *  Parse the obj data pointed to by 'data', create and

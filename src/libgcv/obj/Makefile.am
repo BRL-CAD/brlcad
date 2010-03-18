@@ -1,8 +1,16 @@
-noinst_LTLIBRARIES = libobj.la
+#noinst_LTLIBRARIES = libobj.la
 
-libobj_la_LDFLAGS = 
-libobj_la_LIBADD = ${BU}
-libobj_la_SOURCES = \
+bin_PROGRAMS = \
+	parse
+
+#libobj_la_LDFLAGS = 
+#libobj_la_LIBADD = ${BU}
+#libobj_la_SOURCES = \
+#	obj_grammar.y \
+#	obj_rules.l \
+#	obj_parser.c
+
+parse_SOURCES = \
 	obj_grammar.y \
 	obj_rules.l \
 	obj_parser.c

@@ -24,8 +24,6 @@
  *
  */
 
-#include "common.h"
-
 /* interface header */
 #include "./obj_parser.h"
 
@@ -41,7 +39,33 @@
 #include "bu.h"
 #include "vmath.h"
 
+extern FILE *yyin;
+extern int yyparse (void);
 
+int main(int argc, char *argv[]) 
+{
+  if (argc > 0) {
+     printf("Reading from %s\n", argv[1]);
+     yyin = fopen(argv[1], "r");
+     if (!yyin)
+     {
+         perror("Unable to open file");
+         return -1;
+     }
+     while (!feof(yyin)) {
+    	 yyparse();
+     }
+     if (yyin) {
+     	 fclose(yyin);
+     }
+ } else {
+     printf("Reading from stdin\n");
+     yyin = stdin;
+     yyparse();
+ }
+
+ return 0;
+} 
 
 /*
  * Local Variables:
