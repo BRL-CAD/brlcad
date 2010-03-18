@@ -65,6 +65,7 @@ comment     "#"[^"\r\n""\n"]*{newline}
 {face}              { return FACE; }
 {group}             {
 		      BEGIN(id_list_state);
+	      	      printf("entering id_list_state\n");
                       return GROUP;
                     }
                     
@@ -88,16 +89,19 @@ comment     "#"[^"\r\n""\n"]*{newline}
 
 {usemtl}            {
                       BEGIN(id_state);
+	      	      printf("entering id_state\n");
                       return USEMTL;
                     }
 
 {mtllib}            {
 	              BEGIN(id_list_state);
+	      	      printf("entering id_list_state\n");
                       return MTLLIB;
                     }
 
 {usemap}            {
                       BEGIN(toggle_id_state);
+	      	      printf("entering toggle_id_state\n");
                       return USEMAP;
                     }
 
@@ -175,6 +179,7 @@ comment     "#"[^"\r\n""\n"]*{newline}
                       // Goto initial state after single token
                       //working_string = yytext;
                       BEGIN(INITIAL);
+	      	      printf("entering INITIAL state\n");
                       return ID;
                     }
 
@@ -183,6 +188,7 @@ comment     "#"[^"\r\n""\n"]*{newline}
 {comment}|{newline} {
                       // Goto initial state when we hit newline
                       BEGIN(INITIAL);
+	      	      printf("entering INITIAL state\n");
                       return '\n';
                     }
 
@@ -194,6 +200,7 @@ comment     "#"[^"\r\n""\n"]*{newline}
 {off}               {
                       // off is a valid token, not an id
                       BEGIN(INITIAL);                      
+	      	      printf("entering INITIAL state\n");
                       return OFF;
                     }
 
@@ -202,6 +209,7 @@ comment     "#"[^"\r\n""\n"]*{newline}
                       // Goto initial state after single token
                       //working_string = yytext;
                       BEGIN(INITIAL);
+	      	      printf("entering INITIAL state\n");
                       return ID;
                     }
 
@@ -210,6 +218,7 @@ comment     "#"[^"\r\n""\n"]*{newline}
 {comment}|{newline} {
                       // Goto initial state when we hit newline
                       BEGIN(INITIAL);
+	      	      printf("entering INITIAL state\n");
                       return '\n';
                     }
 
@@ -229,6 +238,7 @@ comment     "#"[^"\r\n""\n"]*{newline}
 {comment}|{newline} {
                       // Goto initial state when we hit newline
                       BEGIN(INITIAL);
+	      	      printf("entering INITIAL state\n");
                       return '\n';
                     }
 
