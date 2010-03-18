@@ -508,6 +508,7 @@ package provide cadwidgets::Ged 1.0
 	method handle_view_translate_end {_pane}
 	method help {args}
 	method history_callback {args}
+	method init_button_no_op {{_button 1}}
 	method init_comp_pick {{_button 1}}
 	method init_data_arrow {{_button 1}}
 	method init_data_label {{_button 1}}
@@ -2850,6 +2851,17 @@ package provide cadwidgets::Ged 1.0
     }
 
     return $mHistoryCallback
+}
+
+::itcl::body cadwidgets::Ged::init_button_no_op {{_button 1}} {
+    bind $itk_component(ur) <$_button> ""
+    bind $itk_component(ul) <$_button> ""
+    bind $itk_component(ll) <$_button> ""
+    bind $itk_component(lr) <$_button> ""
+    bind $itk_component(ur) <ButtonRelease-$_button> ""
+    bind $itk_component(ul) <ButtonRelease-$_button> ""
+    bind $itk_component(ll) <ButtonRelease-$_button> ""
+    bind $itk_component(lr) <ButtonRelease-$_button> ""
 }
 
 ::itcl::body cadwidgets::Ged::init_comp_pick {{_button 1}} {
