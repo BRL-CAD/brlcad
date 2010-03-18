@@ -8,6 +8,7 @@ int yydebug = 1;
 
 extern FILE *yyin;
 extern int yylex();
+extern char *yytext;
 
 void obj_parser_error()
 {
@@ -375,7 +376,7 @@ lod: LOD INTEGER
   
 id_list: ID
     {
-      printf("\til ID\n");
+      printf("\til ID: %s\n", yytext);
     }
   | id_list ID
     {
