@@ -508,18 +508,18 @@ package provide cadwidgets::Ged 1.0
 	method handle_view_translate_end {_pane}
 	method help {args}
 	method history_callback {args}
-	method init_comp_pick {}
-	method init_data_arrow {}
-	method init_data_label {}
-	method init_data_line {}
-	method init_data_move {}
-	method init_data_pick {}
+	method init_comp_pick {{_button 1}}
+	method init_data_arrow {{_button 1}}
+	method init_data_label {{_button 1}}
+	method init_data_line {{_button 1}}
+	method init_data_move {{_button 1}}
+	method init_data_pick {{_button 1}}
 	method init_view_bindings {{_type default}}
-	method init_view_center {}
-	method init_view_measure {}
-	method init_view_rotate {}
-	method init_view_scale {}
-	method init_view_translate {}
+	method init_view_center {{_button 1}}
+	method init_view_measure {{_button 1}}
+	method init_view_rotate {{_button 1}}
+	method init_view_scale {{_button 1}}
+	method init_view_translate {{_button 1}}
 	method center_ray {{_pflag 0}}
 	method mouse_ray {_x _y {_pflag 0}}
 	method pane_mouse_3dpoint {_pane _x _y {_vflag 1}}
@@ -2852,76 +2852,76 @@ package provide cadwidgets::Ged 1.0
     return $mHistoryCallback
 }
 
-::itcl::body cadwidgets::Ged::init_comp_pick {} {
-    bind $itk_component(ur) <1> "[::itcl::code $this pane_mouse_ray ur %x %y]; break"
-    bind $itk_component(ul) <1> "[::itcl::code $this pane_mouse_ray ul %x %y]; break"
-    bind $itk_component(ll) <1> "[::itcl::code $this pane_mouse_ray ll %x %y]; break"
-    bind $itk_component(lr) <1> "[::itcl::code $this pane_mouse_ray lr %x %y]; break"
+::itcl::body cadwidgets::Ged::init_comp_pick {{_button 1}} {
+    bind $itk_component(ur) <$_button> "[::itcl::code $this pane_mouse_ray ur %x %y]; break"
+    bind $itk_component(ul) <$_button> "[::itcl::code $this pane_mouse_ray ul %x %y]; break"
+    bind $itk_component(ll) <$_button> "[::itcl::code $this pane_mouse_ray ll %x %y]; break"
+    bind $itk_component(lr) <$_button> "[::itcl::code $this pane_mouse_ray lr %x %y]; break"
 
-    bind $itk_component(ur) <ButtonRelease-1> ""
-    bind $itk_component(ul) <ButtonRelease-1> ""
-    bind $itk_component(ll) <ButtonRelease-1> ""
-    bind $itk_component(lr) <ButtonRelease-1> ""
+    bind $itk_component(ur) <ButtonRelease-$_button> ""
+    bind $itk_component(ul) <ButtonRelease-$_button> ""
+    bind $itk_component(ll) <ButtonRelease-$_button> ""
+    bind $itk_component(lr) <ButtonRelease-$_button> ""
 }
 
-::itcl::body cadwidgets::Ged::init_data_arrow {} {
-    bind $itk_component(ur) <1> "[::itcl::code $this begin_data_arrow ur %x %y]; break"
-    bind $itk_component(ul) <1> "[::itcl::code $this begin_data_arrow ul %x %y]; break"
-    bind $itk_component(ll) <1> "[::itcl::code $this begin_data_arrow ll %x %y]; break"
-    bind $itk_component(lr) <1> "[::itcl::code $this begin_data_arrow lr %x %y]; break"
+::itcl::body cadwidgets::Ged::init_data_arrow {{_button 1}} {
+    bind $itk_component(ur) <$_button> "[::itcl::code $this begin_data_arrow ur %x %y]; break"
+    bind $itk_component(ul) <$_button> "[::itcl::code $this begin_data_arrow ul %x %y]; break"
+    bind $itk_component(ll) <$_button> "[::itcl::code $this begin_data_arrow ll %x %y]; break"
+    bind $itk_component(lr) <$_button> "[::itcl::code $this begin_data_arrow lr %x %y]; break"
 
-    bind $itk_component(ur) <ButtonRelease-1> "[::itcl::code $this end_data_arrow ur]; break"
-    bind $itk_component(ul) <ButtonRelease-1> "[::itcl::code $this end_data_arrow ul]; break"
-    bind $itk_component(ll) <ButtonRelease-1> "[::itcl::code $this end_data_arrow ll]; break"
-    bind $itk_component(lr) <ButtonRelease-1> "[::itcl::code $this end_data_arrow lr]; break"
+    bind $itk_component(ur) <ButtonRelease-$_button> "[::itcl::code $this end_data_arrow ur]; break"
+    bind $itk_component(ul) <ButtonRelease-$_button> "[::itcl::code $this end_data_arrow ul]; break"
+    bind $itk_component(ll) <ButtonRelease-$_button> "[::itcl::code $this end_data_arrow ll]; break"
+    bind $itk_component(lr) <ButtonRelease-$_button> "[::itcl::code $this end_data_arrow lr]; break"
 }
 
-::itcl::body cadwidgets::Ged::init_data_label {} {
-    bind $itk_component(ur) <1> "[::itcl::code $this pane_mouse_data_label ur %x %y]; break"
-    bind $itk_component(ul) <1> "[::itcl::code $this pane_mouse_data_label ul %x %y]; break"
-    bind $itk_component(ll) <1> "[::itcl::code $this pane_mouse_data_label ll %x %y]; break"
-    bind $itk_component(lr) <1> "[::itcl::code $this pane_mouse_data_label lr %x %y]; break"
+::itcl::body cadwidgets::Ged::init_data_label {{_button 1}} {
+    bind $itk_component(ur) <$_button> "[::itcl::code $this pane_mouse_data_label ur %x %y]; break"
+    bind $itk_component(ul) <$_button> "[::itcl::code $this pane_mouse_data_label ul %x %y]; break"
+    bind $itk_component(ll) <$_button> "[::itcl::code $this pane_mouse_data_label ll %x %y]; break"
+    bind $itk_component(lr) <$_button> "[::itcl::code $this pane_mouse_data_label lr %x %y]; break"
 
-    bind $itk_component(ur) <ButtonRelease-1> ""
-    bind $itk_component(ul) <ButtonRelease-1> ""
-    bind $itk_component(ll) <ButtonRelease-1> ""
-    bind $itk_component(lr) <ButtonRelease-1> ""
+    bind $itk_component(ur) <ButtonRelease-$_button> ""
+    bind $itk_component(ul) <ButtonRelease-$_button> ""
+    bind $itk_component(ll) <ButtonRelease-$_button> ""
+    bind $itk_component(lr) <ButtonRelease-$_button> ""
 }
 
-::itcl::body cadwidgets::Ged::init_data_line {} {
-    bind $itk_component(ur) <1> "[::itcl::code $this begin_data_line ur %x %y]; break"
-    bind $itk_component(ul) <1> "[::itcl::code $this begin_data_line ul %x %y]; break"
-    bind $itk_component(ll) <1> "[::itcl::code $this begin_data_line ll %x %y]; break"
-    bind $itk_component(lr) <1> "[::itcl::code $this begin_data_line lr %x %y]; break"
+::itcl::body cadwidgets::Ged::init_data_line {{_button 1}} {
+    bind $itk_component(ur) <$_button> "[::itcl::code $this begin_data_line ur %x %y]; break"
+    bind $itk_component(ul) <$_button> "[::itcl::code $this begin_data_line ul %x %y]; break"
+    bind $itk_component(ll) <$_button> "[::itcl::code $this begin_data_line ll %x %y]; break"
+    bind $itk_component(lr) <$_button> "[::itcl::code $this begin_data_line lr %x %y]; break"
 
-    bind $itk_component(ur) <ButtonRelease-1> "[::itcl::code $this end_data_line ur]; break"
-    bind $itk_component(ul) <ButtonRelease-1> "[::itcl::code $this end_data_line ul]; break"
-    bind $itk_component(ll) <ButtonRelease-1> "[::itcl::code $this end_data_line ll]; break"
-    bind $itk_component(lr) <ButtonRelease-1> "[::itcl::code $this end_data_line lr]; break"
+    bind $itk_component(ur) <ButtonRelease-$_button> "[::itcl::code $this end_data_line ur]; break"
+    bind $itk_component(ul) <ButtonRelease-$_button> "[::itcl::code $this end_data_line ul]; break"
+    bind $itk_component(ll) <ButtonRelease-$_button> "[::itcl::code $this end_data_line ll]; break"
+    bind $itk_component(lr) <ButtonRelease-$_button> "[::itcl::code $this end_data_line lr]; break"
 }
 
-::itcl::body cadwidgets::Ged::init_data_move {} {
-    bind $itk_component(ur) <1> "[::itcl::code $this begin_data_move ur %x %y]; break"
-    bind $itk_component(ul) <1> "[::itcl::code $this begin_data_move ul %x %y]; break"
-    bind $itk_component(ll) <1> "[::itcl::code $this begin_data_move ll %x %y]; break"
-    bind $itk_component(lr) <1> "[::itcl::code $this begin_data_move lr %x %y]; break"
+::itcl::body cadwidgets::Ged::init_data_move {{_button 1}} {
+    bind $itk_component(ur) <$_button> "[::itcl::code $this begin_data_move ur %x %y]; break"
+    bind $itk_component(ul) <$_button> "[::itcl::code $this begin_data_move ul %x %y]; break"
+    bind $itk_component(ll) <$_button> "[::itcl::code $this begin_data_move ll %x %y]; break"
+    bind $itk_component(lr) <$_button> "[::itcl::code $this begin_data_move lr %x %y]; break"
 
-    bind $itk_component(ur) <ButtonRelease-1> "[::itcl::code $this end_data_move ur]; break"
-    bind $itk_component(ul) <ButtonRelease-1> "[::itcl::code $this end_data_move ul]; break"
-    bind $itk_component(ll) <ButtonRelease-1> "[::itcl::code $this end_data_move ll]; break"
-    bind $itk_component(lr) <ButtonRelease-1> "[::itcl::code $this end_data_move lr]; break"
+    bind $itk_component(ur) <ButtonRelease-$_button> "[::itcl::code $this end_data_move ur]; break"
+    bind $itk_component(ul) <ButtonRelease-$_button> "[::itcl::code $this end_data_move ul]; break"
+    bind $itk_component(ll) <ButtonRelease-$_button> "[::itcl::code $this end_data_move ll]; break"
+    bind $itk_component(lr) <ButtonRelease-$_button> "[::itcl::code $this end_data_move lr]; break"
 }
 
-::itcl::body cadwidgets::Ged::init_data_pick {} {
-    bind $itk_component(ur) <1> "[::itcl::code $this pane_mouse_data_pick ur %x %y]; break"
-    bind $itk_component(ul) <1> "[::itcl::code $this pane_mouse_data_pick ul %x %y]; break"
-    bind $itk_component(ll) <1> "[::itcl::code $this pane_mouse_data_pick ll %x %y]; break"
-    bind $itk_component(lr) <1> "[::itcl::code $this pane_mouse_data_pick lr %x %y]; break"
+::itcl::body cadwidgets::Ged::init_data_pick {{_button 1}} {
+    bind $itk_component(ur) <$_button> "[::itcl::code $this pane_mouse_data_pick ur %x %y]; break"
+    bind $itk_component(ul) <$_button> "[::itcl::code $this pane_mouse_data_pick ul %x %y]; break"
+    bind $itk_component(ll) <$_button> "[::itcl::code $this pane_mouse_data_pick ll %x %y]; break"
+    bind $itk_component(lr) <$_button> "[::itcl::code $this pane_mouse_data_pick lr %x %y]; break"
 
-    bind $itk_component(ur) <ButtonRelease-1> ""
-    bind $itk_component(ul) <ButtonRelease-1> ""
-    bind $itk_component(ll) <ButtonRelease-1> ""
-    bind $itk_component(lr) <ButtonRelease-1> ""
+    bind $itk_component(ur) <ButtonRelease-$_button> ""
+    bind $itk_component(ul) <ButtonRelease-$_button> ""
+    bind $itk_component(ll) <ButtonRelease-$_button> ""
+    bind $itk_component(lr) <ButtonRelease-$_button> ""
 }
 
 ::itcl::body cadwidgets::Ged::init_view_bindings {{_type default}} {
@@ -3004,64 +3004,64 @@ package provide cadwidgets::Ged 1.0
     }
 }
 
-::itcl::body cadwidgets::Ged::init_view_center {} {
-    bind $itk_component(ur) <1> "$mGed vslew $itk_component(ur) %x %y; break"
-    bind $itk_component(ul) <1> "$mGed vslew $itk_component(ul) %x %y; break"
-    bind $itk_component(ll) <1> "$mGed vslew $itk_component(ll) %x %y; break"
-    bind $itk_component(lr) <1> "$mGed vslew $itk_component(lr) %x %y; break"
+::itcl::body cadwidgets::Ged::init_view_center {{_button 1}} {
+    bind $itk_component(ur) <$_button> "$mGed vslew $itk_component(ur) %x %y; break"
+    bind $itk_component(ul) <$_button> "$mGed vslew $itk_component(ul) %x %y; break"
+    bind $itk_component(ll) <$_button> "$mGed vslew $itk_component(ll) %x %y; break"
+    bind $itk_component(lr) <$_button> "$mGed vslew $itk_component(lr) %x %y; break"
 
-    bind $itk_component(ur) <ButtonRelease-1> "[::itcl::code $this handle_view_translate_end ur]; break"
-    bind $itk_component(ul) <ButtonRelease-1> "[::itcl::code $this handle_view_translate_end ul]; break"
-    bind $itk_component(ll) <ButtonRelease-1> "[::itcl::code $this handle_view_translate_end ll]; break"
-    bind $itk_component(lr) <ButtonRelease-1> "[::itcl::code $this handle_view_translate_end lr]; break"
+    bind $itk_component(ur) <ButtonRelease-$_button> "[::itcl::code $this handle_view_translate_end ur]; break"
+    bind $itk_component(ul) <ButtonRelease-$_button> "[::itcl::code $this handle_view_translate_end ul]; break"
+    bind $itk_component(ll) <ButtonRelease-$_button> "[::itcl::code $this handle_view_translate_end ll]; break"
+    bind $itk_component(lr) <ButtonRelease-$_button> "[::itcl::code $this handle_view_translate_end lr]; break"
 }
 
-::itcl::body cadwidgets::Ged::init_view_measure {} {
-    bind $itk_component(ur) <1> "[::itcl::code $this begin_view_measure ur %x %y]; break"
-    bind $itk_component(ul) <1> "[::itcl::code $this begin_view_measure ul %x %y]; break"
-    bind $itk_component(ll) <1> "[::itcl::code $this begin_view_measure ll %x %y]; break"
-    bind $itk_component(lr) <1> "[::itcl::code $this begin_view_measure lr %x %y]; break"
+::itcl::body cadwidgets::Ged::init_view_measure {{_button 1}} {
+    bind $itk_component(ur) <$_button> "[::itcl::code $this begin_view_measure ur %x %y]; break"
+    bind $itk_component(ul) <$_button> "[::itcl::code $this begin_view_measure ul %x %y]; break"
+    bind $itk_component(ll) <$_button> "[::itcl::code $this begin_view_measure ll %x %y]; break"
+    bind $itk_component(lr) <$_button> "[::itcl::code $this begin_view_measure lr %x %y]; break"
 
-    bind $itk_component(ur) <ButtonRelease-1> "[::itcl::code $this end_view_measure ur]; break"
-    bind $itk_component(ul) <ButtonRelease-1> "[::itcl::code $this end_view_measure ul]; break"
-    bind $itk_component(ll) <ButtonRelease-1> "[::itcl::code $this end_view_measure ll]; break"
-    bind $itk_component(lr) <ButtonRelease-1> "[::itcl::code $this end_view_measure lr]; break"
+    bind $itk_component(ur) <ButtonRelease-$_button> "[::itcl::code $this end_view_measure ur]; break"
+    bind $itk_component(ul) <ButtonRelease-$_button> "[::itcl::code $this end_view_measure ul]; break"
+    bind $itk_component(ll) <ButtonRelease-$_button> "[::itcl::code $this end_view_measure ll]; break"
+    bind $itk_component(lr) <ButtonRelease-$_button> "[::itcl::code $this end_view_measure lr]; break"
 }
 
-::itcl::body cadwidgets::Ged::init_view_rotate {} {
-    bind $itk_component(ur) <1> "$mGed rotate_mode $itk_component(ur) %x %y; break"
-    bind $itk_component(ul) <1> "$mGed rotate_mode $itk_component(ul) %x %y; break"
-    bind $itk_component(ll) <1> "$mGed rotate_mode $itk_component(ll) %x %y; break"
-    bind $itk_component(lr) <1> "$mGed rotate_mode $itk_component(lr) %x %y; break"
+::itcl::body cadwidgets::Ged::init_view_rotate {{_button 1}} {
+    bind $itk_component(ur) <$_button> "$mGed rotate_mode $itk_component(ur) %x %y; break"
+    bind $itk_component(ul) <$_button> "$mGed rotate_mode $itk_component(ul) %x %y; break"
+    bind $itk_component(ll) <$_button> "$mGed rotate_mode $itk_component(ll) %x %y; break"
+    bind $itk_component(lr) <$_button> "$mGed rotate_mode $itk_component(lr) %x %y; break"
 
-    bind $itk_component(ur) <ButtonRelease-1> "[::itcl::code $this handle_view_rotate_end ur]; break"
-    bind $itk_component(ul) <ButtonRelease-1> "[::itcl::code $this handle_view_rotate_end ul]; break"
-    bind $itk_component(ll) <ButtonRelease-1> "[::itcl::code $this handle_view_rotate_end ll]; break"
-    bind $itk_component(lr) <ButtonRelease-1> "[::itcl::code $this handle_view_rotate_end lr]; break"
+    bind $itk_component(ur) <ButtonRelease-$_button> "[::itcl::code $this handle_view_rotate_end ur]; break"
+    bind $itk_component(ul) <ButtonRelease-$_button> "[::itcl::code $this handle_view_rotate_end ul]; break"
+    bind $itk_component(ll) <ButtonRelease-$_button> "[::itcl::code $this handle_view_rotate_end ll]; break"
+    bind $itk_component(lr) <ButtonRelease-$_button> "[::itcl::code $this handle_view_rotate_end lr]; break"
 }
 
-::itcl::body cadwidgets::Ged::init_view_scale {} {
-    bind $itk_component(ur) <1> "$mGed scale_mode $itk_component(ur) %x %y; break"
-    bind $itk_component(ul) <1> "$mGed scale_mode $itk_component(ul) %x %y; break"
-    bind $itk_component(ll) <1> "$mGed scale_mode $itk_component(ll) %x %y; break"
-    bind $itk_component(lr) <1> "$mGed scale_mode $itk_component(lr) %x %y; break"
+::itcl::body cadwidgets::Ged::init_view_scale {{_button 1}} {
+    bind $itk_component(ur) <$_button> "$mGed scale_mode $itk_component(ur) %x %y; break"
+    bind $itk_component(ul) <$_button> "$mGed scale_mode $itk_component(ul) %x %y; break"
+    bind $itk_component(ll) <$_button> "$mGed scale_mode $itk_component(ll) %x %y; break"
+    bind $itk_component(lr) <$_button> "$mGed scale_mode $itk_component(lr) %x %y; break"
 
-    bind $itk_component(ur) <ButtonRelease-1> "[::itcl::code $this handle_view_scale_end ur]; break"
-    bind $itk_component(ul) <ButtonRelease-1> "[::itcl::code $this handle_view_scale_end ul]; break"
-    bind $itk_component(ll) <ButtonRelease-1> "[::itcl::code $this handle_view_scale_end ll]; break"
-    bind $itk_component(lr) <ButtonRelease-1> "[::itcl::code $this handle_view_scale_end lr]; break"
+    bind $itk_component(ur) <ButtonRelease-$_button> "[::itcl::code $this handle_view_scale_end ur]; break"
+    bind $itk_component(ul) <ButtonRelease-$_button> "[::itcl::code $this handle_view_scale_end ul]; break"
+    bind $itk_component(ll) <ButtonRelease-$_button> "[::itcl::code $this handle_view_scale_end ll]; break"
+    bind $itk_component(lr) <ButtonRelease-$_button> "[::itcl::code $this handle_view_scale_end lr]; break"
 }
 
-::itcl::body cadwidgets::Ged::init_view_translate {} {
-    bind $itk_component(ur) <1> "$mGed translate_mode $itk_component(ur) %x %y; break"
-    bind $itk_component(ul) <1> "$mGed translate_mode $itk_component(ul) %x %y; break"
-    bind $itk_component(ll) <1> "$mGed translate_mode $itk_component(ll) %x %y; break"
-    bind $itk_component(lr) <1> "$mGed translate_mode $itk_component(lr) %x %y; break"
+::itcl::body cadwidgets::Ged::init_view_translate {{_button 1}} {
+    bind $itk_component(ur) <$_button> "$mGed translate_mode $itk_component(ur) %x %y; break"
+    bind $itk_component(ul) <$_button> "$mGed translate_mode $itk_component(ul) %x %y; break"
+    bind $itk_component(ll) <$_button> "$mGed translate_mode $itk_component(ll) %x %y; break"
+    bind $itk_component(lr) <$_button> "$mGed translate_mode $itk_component(lr) %x %y; break"
 
-    bind $itk_component(ur) <ButtonRelease-1> "[::itcl::code $this handle_view_translate_end ur]; break"
-    bind $itk_component(ul) <ButtonRelease-1> "[::itcl::code $this handle_view_translate_end ul]; break"
-    bind $itk_component(ll) <ButtonRelease-1> "[::itcl::code $this handle_view_translate_end ll]; break"
-    bind $itk_component(lr) <ButtonRelease-1> "[::itcl::code $this handle_view_translate_end lr]; break"
+    bind $itk_component(ur) <ButtonRelease-$_button> "[::itcl::code $this handle_view_translate_end ur]; break"
+    bind $itk_component(ul) <ButtonRelease-$_button> "[::itcl::code $this handle_view_translate_end ul]; break"
+    bind $itk_component(ll) <ButtonRelease-$_button> "[::itcl::code $this handle_view_translate_end ll]; break"
+    bind $itk_component(lr) <ButtonRelease-$_button> "[::itcl::code $this handle_view_translate_end lr]; break"
 }
 
 ::itcl::body cadwidgets::Ged::center_ray {{_pflag 0}} {
