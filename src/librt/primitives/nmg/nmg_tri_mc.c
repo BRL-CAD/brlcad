@@ -360,9 +360,12 @@ rt_nmg_mc_realize_cube(struct shell *s, int pv, point_t *edges, const struct bn_
 	    return -1;
 	}
 
-	if (!bn_3pts_distinct(edges[vi[0]], edges[vi[1]], edges[vi[2]], tol) || 
+	if (!bn_3pts_distinct(edges[vi[0]], edges[vi[1]], edges[vi[2]], tol) ||
 		bn_3pts_collinear(edges[vi[0]], edges[vi[1]], edges[vi[2]], tol)) {
-	    bu_log("All collinear, skipping %d %d %d\n", vi[0], vi[1], vi[2]);
+	    bu_log("All collinear, skipping %d %d %d (%g %g %g | %g %g %g | %g %g %g)\n", vi[0], vi[1], vi[2],
+			    V3ARGS(edges[vi[0]]),
+			    V3ARGS(edges[vi[1]]),
+			    V3ARGS(edges[vi[2]]));
 	    vi+=3;
 	    continue;
 	}
@@ -378,10 +381,10 @@ rt_nmg_mc_realize_cube(struct shell *s, int pv, point_t *edges, const struct bn_
 	    nmg_kfu(fu);
 
 	if(nmg_fu_planeeqn(fu, tol))
-	    bu_log("Tiny triangle! <%g %g %g> <%g %g %g> <%g %g %g> (%g %g %g)\n", 
+	    bu_log("Tiny triangle! <%g %g %g> <%g %g %g> <%g %g %g> (%g %g %g)\n",
 		    V3ARGS(edges[vi[0]]), V3ARGS(edges[vi[1]]), V3ARGS(edges[vi[2]]),
-		    DIST_PT_PT(edges[vi[0]],edges[vi[1]]), 
-		    DIST_PT_PT(edges[vi[0]],edges[vi[2]]), 
+		    DIST_PT_PT(edges[vi[0]],edges[vi[1]]),
+		    DIST_PT_PT(edges[vi[0]],edges[vi[2]]),
 		    DIST_PT_PT(edges[vi[1]],edges[vi[2]]));
 
 	vi+=3;
@@ -427,7 +430,7 @@ bangbang(struct application * a, struct partition *PartHeadp, struct seg * s)
 }
 
 static int
-missed(struct application *a) 
+missed(struct application *a)
 {
     struct whack *t = (struct whack *)a->a_uptr;
     t->in = NOHIT;
@@ -452,16 +455,13 @@ rt_nmg_mc_pew(struct shell *s, struct application *a, fastf_t x, fastf_t y, fast
     int insw=0, inse=0, innw=0, inne=0;
     fastf_t last_b = 0;
 
-    a->a_uptr = swp; VSET(a->a_ray.r_pt, x, y, a->a_rt_i->mdl_min[Z] - tol->dist); rt_shootray(a); 
+    a->a_uptr = swp; VSET(a->a_ray.r_pt, x, y, a->a_rt_i->mdl_min[Z] - tol->dist); rt_shootray(a);
     a->a_uptr = sep; VSET(a->a_ray.r_pt, x+step, y, a->a_rt_i->mdl_min[Z] - tol->dist); rt_shootray(a);
     a->a_uptr = nwp; VSET(a->a_ray.r_pt, x, y+step, a->a_rt_i->mdl_min[Z] - tol->dist); rt_shootray(a);
     a->a_uptr = nep; VSET(a->a_ray.r_pt, x+step, y+step, a->a_rt_i->mdl_min[Z] - tol->dist); rt_shootray(a);
 
     while(swp->in>0 || sep->in>0 || nwp->in>0 || nep->in>0) {
 	unsigned char pv;
-#if 0
-	point_t p[8];
-#endif
 	point_t edges[12];
 	fastf_t b = +INFINITY;
 	struct whack muh[1024];
@@ -480,23 +480,10 @@ rt_nmg_mc_pew(struct shell *s, struct application *a, fastf_t x, fastf_t y, fast
 	    b = last_b + step;
 	}
 
-	/* set the points using the binned first hit distance */
-#if 0
-	/* w/e		s/n	i/o (b/t) */
-	VSET(p[0], x,		y,	b+step);	/* sw o */
-	VSET(p[1], x+step,	y,	b+step);	/* se o */
-	VSET(p[2], x+step,	y,	b);		/* se i */
-	VSET(p[3], x,		y,	b);		/* sw i */
-	VSET(p[4], x,		y+step, b+step);	/* nw o */
-	VSET(p[5], x+step,	y+step, b+step);	/* ne o */
-	VSET(p[6], x+step,	y+step, b);		/* ne i */
-	VSET(p[7], x,		y+step, b);		/* nw i */
-#endif
-
 	/* build the point vector */
 	pv = 0;
-	if(insw && swp->hit[Z] > b+step) pv |= 0x09; 
-	if(inse && sep->hit[Z] > b+step) pv |= 0x06; 
+	if(insw && swp->hit[Z] > b+step) pv |= 0x09;
+	if(inse && sep->hit[Z] > b+step) pv |= 0x06;
 	if(innw && nwp->hit[Z] > b+step) pv |= 0x90;
 	if(inne && nep->hit[Z] > b+step) pv |= 0x60;
 
@@ -521,18 +508,19 @@ rt_nmg_mc_pew(struct shell *s, struct application *a, fastf_t x, fastf_t y, fast
 	MUH(7 ,4,7,nwp);
 #undef MUH
 
-#define MEH(A,b,c) if(bitdiff(pv,b,c)) { rt_shootray(a); VMOVE(edges[A], muh->hit); }
+	/* the 'muh' list may have to be walked. */
+#define MEH(A,b,c) { struct whack *puh; rt_shootray(a); puh=muh; while(puh->dist < 0.0) { puh++; if(puh->in < 1) bu_log("puhh?\n");} VMOVE(edges[A], muh->dist>0.0?muh->hit:muh[1].hit); }
 	VSET(a->a_ray.r_dir, 1, 0, 0);
-	VSET(a->a_ray.r_pt, x-tol->dist, y,	b+step	); MEH(0 ,0,1);
-	VSET(a->a_ray.r_pt, x-tol->dist, y,	b	); MEH(2 ,2,3);          
-	VSET(a->a_ray.r_pt, x-tol->dist, y+step,b+step	); MEH(4 ,4,5);          
-	VSET(a->a_ray.r_pt, x-tol->dist, y+step,b	); MEH(6 ,6,7);          
+	if(bitdiff(pv,0,1)) { VSET(a->a_ray.r_pt, x, y,     b+step); MEH(0 ,0,1); }
+	if(bitdiff(pv,2,3)) { VSET(a->a_ray.r_pt, x, y,     b     ); MEH(2 ,2,3); }
+	if(bitdiff(pv,4,5)) { VSET(a->a_ray.r_pt, x, y+step,b+step); MEH(4 ,4,5); }
+	if(bitdiff(pv,6,7)) { VSET(a->a_ray.r_pt, x, y+step,b     ); MEH(6 ,6,7); }
 
 	VSET(a->a_ray.r_dir, 0, 1, 0);
-	VSET(a->a_ray.r_pt, x,		y+step,	b-tol->dist); MEH(8 ,0,4);
-	VSET(a->a_ray.r_pt, x+step,	y+step,	b-tol->dist); MEH(9 ,1,5);
-	VSET(a->a_ray.r_pt, x+step,	y,	b-tol->dist); MEH(10,2,6);
-	VSET(a->a_ray.r_pt, x,		y,	b-tol->dist); MEH(11,3,7);
+	if(bitdiff(pv,0,4)) { VSET(a->a_ray.r_pt, x,	 y, b+step); MEH(8 ,0,4); }
+	if(bitdiff(pv,1,5)) { VSET(a->a_ray.r_pt, x+step,y, b+step); MEH(9 ,1,5); }
+	if(bitdiff(pv,2,6)) { VSET(a->a_ray.r_pt, x+step,y, b     ); MEH(10,2,6); }
+	if(bitdiff(pv,3,7)) { VSET(a->a_ray.r_pt, x,	 y, b     ); MEH(11,3,7); }
 #undef MEH
 
 	/* stuff it into an nmg shell */
