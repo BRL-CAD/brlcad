@@ -54,11 +54,16 @@
 
 /* Basic 3D vertices */
 
+struct ctrl_point {
+    point_t pt;
+    fastf_t w;
+}
+
 struct obj_vertices {
     point_t *geometric;
     point_t *texture;
     vect_t *vertex_norm;
-    point_t *control;
+    ctrl_point *control;
 }
 
 /* Elements */
@@ -92,6 +97,21 @@ struct obj_freeform_curve {
     int degree_u;
     int step_u;
     fastf_t *basis_matrix;
+    fastf_t u0;
+    fastf_t u1;
+    ctrl_point **control;
+    fastf_t *param_u;
+}
+
+struct obj_trim {
+    int type; /* 0 = hole, 1 = trim */
+    obj_freeform_curve *curve;
+    fastf_t u0;
+    fastf_t u1;
+}
+
+struct obj_trim_loop {
+    obj_trim **trims;
 }
 
 struct obj_freeform_surface {
@@ -102,17 +122,16 @@ struct obj_freeform_surface {
     int step_u;
     int step_v;
     fastf_t *basis_matrix;
-}
-
-/* Elements */
-
-struct obj_point {
-}
-
-struct obj_line {
-}
-
-struct obj_face {
+    fastf_t s0;
+    fastf_t s1;
+    fastf_t t0;
+    fastf_t t1;
+    ctrl_point **control;
+    point_t **texture;
+    vect_t **normal;
+    fastf_t *param_u;
+    fastf_t *param_v;
+    obj_trim_loop *loops;
 }
 
 /*
