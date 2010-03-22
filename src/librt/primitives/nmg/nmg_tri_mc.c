@@ -336,6 +336,32 @@ int mc_tris[256][16] = {
 
 /* returns the number of triangles added or -1 on failure */
 int
+rt_tri_mc_realize_cube(fastf_t *tris, int pv, point_t *edges)
+{
+    int *vi, fo;
+    fastf_t *mytri = tris;
+
+    vi = (int *)(mc_tris[pv]);
+
+    fo = 0;
+    while( *vi >= 0 ) {
+	if(++fo > 5) {
+	    bu_log("Whoa, too many triangles?\n");
+	    return -1;
+	}
+
+	VMOVE(mytri, edges[vi[0]]);
+	VMOVE(mytri+1, edges[vi[1]]);
+	VMOVE(mytri+2, edges[vi[2]]);
+
+	mytri+=3;
+	vi+=3;
+    }
+
+    return fo;
+}
+	
+int
 rt_nmg_mc_realize_cube(struct shell *s, int pv, point_t *edges, const struct bn_tol *tol)
 {
     int *vi, fo;
