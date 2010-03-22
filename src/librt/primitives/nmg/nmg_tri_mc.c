@@ -428,7 +428,6 @@ static fastf_t bin(fastf_t val, fastf_t step) {return step*floor(val/step);}
 #define NOHIT -1
 struct whack {
     point_t hit;
-    vect_t norm;
     fastf_t dist;
     int in;	/* 1 for inhit, 2 for outhit, -1 to terminate */
 };
@@ -442,8 +441,7 @@ bangbang(struct application * a, struct partition *PartHeadp, struct seg * s)
 
     s=s;
 
-#define MEH(dir,code) RT_HIT_NORM(pp->pt_##dir##hit,pp->pt_##dir##seg->seg_stp,a->a_ray); VJOIN1(t->hit,a->a_ray.r_pt,pp->pt_##dir##hit->hit_dist,a->a_ray.r_dir); VMOVE(t->norm,pp->pt_##dir##hit->hit_normal); t->dist=pp->pt_##dir##hit->hit_dist; t->in=code; t++;
-
+#define MEH(dir,code) VJOIN1(t->hit,a->a_ray.r_pt,pp->pt_##dir##hit->hit_dist,a->a_ray.r_dir); t->dist=pp->pt_##dir##hit->hit_dist; t->in=code; t++;
     for (pp = PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw) {
 	MEH(in,INHIT);
 	MEH(out,OUTHIT);
@@ -451,7 +449,6 @@ bangbang(struct application * a, struct partition *PartHeadp, struct seg * s)
 	if(intersects >= MAX_INTERSECTS)
 	    bu_bomb("Too many intersects in marching cubes");
     }
-
 #undef MEH
     t->in = NOHIT;
     return 0;
