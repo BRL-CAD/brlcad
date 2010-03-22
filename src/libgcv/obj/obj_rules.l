@@ -1,6 +1,7 @@
 %{
 #include <stdio.h>
 #include <string.h>
+#include "obj_parser.h"
 #include "obj_grammar.h"
 %}
 

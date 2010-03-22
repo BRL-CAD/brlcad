@@ -36,14 +36,6 @@ int yywrap()
 
 %}
 
-%union {
-    float real;
-    int integer;
-    int reference[3];
-    int toggle;
-    size_t index;
-}
-
 %token <real> FLOAT
 %token <integer> INTEGER
 %token <reference> V_REFERENCE
