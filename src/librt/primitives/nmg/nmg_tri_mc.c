@@ -65,6 +65,9 @@
 
 #define MAX_INTERSECTS 1024
 
+/* set this to 1 for full midpoint use. Set it to 2 for x/y mid and real z. */
+int marching_cubes_use_midpoint = 2;
+
 /*
  * Table data acquired from Paul Borke's page at
  * http://local.wasp.uwa.edu.au/~pbourke/geometry/polygonise/
@@ -74,7 +77,6 @@
  *
  * Grid definition matches SIGGRAPH 1987 p 164 (original presentation of technique)
  */
-
 
 int mc_tris[256][16] = {
 /* 00 */  {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
@@ -360,7 +362,7 @@ rt_tri_mc_realize_cube(fastf_t *tris, int pv, point_t *edges)
 
     return fo;
 }
-	
+
 int
 rt_nmg_mc_realize_cube(struct shell *s, int pv, point_t *edges, const struct bn_tol *tol)
 {
@@ -389,9 +391,9 @@ rt_nmg_mc_realize_cube(struct shell *s, int pv, point_t *edges, const struct bn_
 	if (!bn_3pts_distinct(edges[vi[0]], edges[vi[1]], edges[vi[2]], tol) ||
 		bn_3pts_collinear(edges[vi[0]], edges[vi[1]], edges[vi[2]], tol)) {
 	    bu_log("All collinear, skipping %d %d %d (%g %g %g | %g %g %g | %g %g %g)\n", vi[0], vi[1], vi[2],
-			    V3ARGS(edges[vi[0]]),
-			    V3ARGS(edges[vi[1]]),
-			    V3ARGS(edges[vi[2]]));
+		    V3ARGS(edges[vi[0]]),
+		    V3ARGS(edges[vi[1]]),
+		    V3ARGS(edges[vi[2]]));
 	    vi+=3;
 	    continue;
 	}
@@ -425,10 +427,10 @@ static fastf_t bin(fastf_t val, fastf_t step) {return step*floor(val/step);}
 #define OUTHIT 2
 #define NOHIT -1
 struct whack {
-	point_t hit;
-	vect_t norm;
-	fastf_t dist;
-	int in;	/* 1 for inhit, 2 for outhit, -1 to terminate */
+    point_t hit;
+    vect_t norm;
+    fastf_t dist;
+    int in;	/* 1 for inhit, 2 for outhit, -1 to terminate */
 };
 
 static int
@@ -527,27 +529,63 @@ rt_nmg_mc_pew(struct shell *s, struct application *a, fastf_t x, fastf_t y, fast
 	MEH(ne, 5, 6);
 #undef MEH
 
-#define MUH(a,b,c,l) if(bitdiff(pv,b,c)) { VMOVE(edges[a], l->hit); } ;	/* we already have ray intersect data for these. */
+#define MUH(a,b,c,l) if(bitdiff(pv,b,c)) VMOVE(edges[a], l->hit);	/* we already have ray intersect data for these. */
 	MUH(1 ,1,2,sep);
 	MUH(3 ,0,3,swp);
 	MUH(5 ,5,6,nep);
 	MUH(7 ,4,7,nwp);
 #undef MUH
 
-	/* the 'muh' list may have to be walked. */
-#define MEH(A,b,c) { struct whack *puh; rt_shootray(a); puh=muh; while(puh->dist < 0.0) { puh++; if(puh->in < 1) bu_log("puhh?\n");} VMOVE(edges[A], muh->dist>0.0?muh->hit:muh[1].hit); }
-	VSET(a->a_ray.r_dir, 1, 0, 0);
-	if(bitdiff(pv,0,1)) { VSET(a->a_ray.r_pt, x, y,     b+step); MEH(0 ,0,1); }
-	if(bitdiff(pv,2,3)) { VSET(a->a_ray.r_pt, x, y,     b     ); MEH(2 ,2,3); }
-	if(bitdiff(pv,4,5)) { VSET(a->a_ray.r_pt, x, y+step,b+step); MEH(4 ,4,5); }
-	if(bitdiff(pv,6,7)) { VSET(a->a_ray.r_pt, x, y+step,b     ); MEH(6 ,6,7); }
+	if(marching_cubes_use_midpoint) {
+	    point_t p[8];
+	    /* w/e		s/n	i/o (b/t) */
+	    VSET(p[0], x,		y,	b+step);	/* sw o */
+	    VSET(p[1], x+step,	y,	b+step);	/* se o */
+	    VSET(p[2], x+step,	y,	b);		/* se i */
+	    VSET(p[3], x,		y,	b);		/* sw i */
+	    VSET(p[4], x,		y+step, b+step);	/* nw o */
+	    VSET(p[5], x+step,	y+step, b+step);	/* ne o */
+	    VSET(p[6], x+step,	y+step, b);		/* ne i */
+	    VSET(p[7], x,		y+step, b);		/* nw i */
 
-	VSET(a->a_ray.r_dir, 0, 1, 0);
-	if(bitdiff(pv,0,4)) { VSET(a->a_ray.r_pt, x,	 y, b+step); MEH(8 ,0,4); }
-	if(bitdiff(pv,1,5)) { VSET(a->a_ray.r_pt, x+step,y, b+step); MEH(9 ,1,5); }
-	if(bitdiff(pv,2,6)) { VSET(a->a_ray.r_pt, x+step,y, b     ); MEH(10,2,6); }
-	if(bitdiff(pv,3,7)) { VSET(a->a_ray.r_pt, x,	 y, b     ); MEH(11,3,7); }
+#define MEH(a,b,c) if(bitdiff(pv,b,c)) { VADD2SCALE(edges[a], p[b], p[c], 0.5); }	/* these need a new ray shot. */
+	    if(marching_cubes_use_midpoint==1) {
+		MEH(1 ,1,2);
+		MEH(3 ,0,3);
+		MEH(5 ,5,6);
+		MEH(7 ,4,7);
+	    }
+
+	    /* southern edges */
+	    MEH(0 ,0,1);
+	    MEH(2 ,2,3);          
+
+	    /* northern edges */
+	    MEH(4 ,4,5);          
+	    MEH(6 ,6,7);          
+
+	    MEH(8 ,0,4);	/* top west */
+	    MEH(9 ,1,5);	/* top east */
+	    MEH(10,2,6);	/* bottom east */
+	    MEH(11,3,7);	/* bottom west */
 #undef MEH
+	} else {
+
+	    /* the 'muh' list may have to be walked. */
+#define MEH(A,b,c) { struct whack *puh; rt_shootray(a); puh=muh; while(puh->dist < 0.0) { puh++; if(puh->in < 1) bu_log("puhh?\n");} VMOVE(edges[A], muh->dist>0.0?muh->hit:muh[1].hit); }
+	    VSET(a->a_ray.r_dir, 1, 0, 0);
+	    if(bitdiff(pv,0,1)) { VSET(a->a_ray.r_pt, x, y,     b+step); MEH(0 ,0,1); }
+	    if(bitdiff(pv,2,3)) { VSET(a->a_ray.r_pt, x, y,     b     ); MEH(2 ,2,3); }
+	    if(bitdiff(pv,4,5)) { VSET(a->a_ray.r_pt, x, y+step,b+step); MEH(4 ,4,5); }
+	    if(bitdiff(pv,6,7)) { VSET(a->a_ray.r_pt, x, y+step,b     ); MEH(6 ,6,7); }
+
+	    VSET(a->a_ray.r_dir, 0, 1, 0);
+	    if(bitdiff(pv,0,4)) { VSET(a->a_ray.r_pt, x,	 y, b+step); MEH(8 ,0,4); }
+	    if(bitdiff(pv,1,5)) { VSET(a->a_ray.r_pt, x+step,y, b+step); MEH(9 ,1,5); }
+	    if(bitdiff(pv,2,6)) { VSET(a->a_ray.r_pt, x+step,y, b     ); MEH(10,2,6); }
+	    if(bitdiff(pv,3,7)) { VSET(a->a_ray.r_pt, x,	 y, b     ); MEH(11,3,7); }
+#undef MEH
+	}
 
 	/* stuff it into an nmg shell */
 	if(pv != 0 && pv != 0xff && s)	/* && s should go away. */
