@@ -495,15 +495,17 @@ package provide cadwidgets::Ged 1.0
 	method begin_data_line {_pane _x _y}
 	method begin_data_move {_pane _x _y}
 	method begin_view_measure {_pane _x _y}
+	method begin_view_measure_part2 {_pane _button _x _y}
 	method default_views {}
 	method end_data_arrow {_pane}
 	method end_data_line {_pane}
 	method end_data_move {_pane}
 	method end_view_measure {_pane {_part2_button 2}}
-	method end_view_measure_part2 {_button _pane _x _y}
+	method end_view_measure_part2 {_pane _button}
 	method getUserCmds {}
 	method handle_data_move {_pane _dtype _dindex _x _y}
 	method handle_view_measure {_pane _x _y}
+	method handle_view_measure_part2 {_pane _x _y}
 	method handle_view_rotate_end {_pane}
 	method handle_view_scale_end {_pane}
 	method handle_view_translate_end {_pane}
@@ -590,8 +592,6 @@ package provide cadwidgets::Ged 1.0
 	variable mGed ""
 	variable mSharedGed 0
 	variable mHistoryCallback ""
-	variable mMeasureEnd
-	variable mMeasureStart
 	variable mMeasuringStickColorVDraw2D ff00ff
 	variable mMeasuringStickColorVDraw3D ffff00
 	variable mMeasuringStick3D 1
@@ -602,6 +602,7 @@ package provide cadwidgets::Ged 1.0
 	variable mLastMouseRayPos ""
 	variable mLastMousePos ""
 	variable mBegin3DPoint ""
+	variable mMiddle3DPoint ""
 	variable mEnd3DPoint ""
 	variable mMeasureLineActive 0
 
@@ -2623,29 +2624,39 @@ package provide cadwidgets::Ged 1.0
 ::itcl::body cadwidgets::Ged::begin_view_measure {_pane _x _y} {
     measure_line_erase
 
-    set mLastMousePos "$_x $_y"
     set mBegin3DPoint [pane_mouse_3dpoint $_pane $_x $_y]
+    set mMiddle3DPoint $mBegin3DPoint
     set mMeasuringStick3D $mMeasuringStick3DCurrent
-
-    if {1} {
-	set mMeasureStart $mBegin3DPoint
-    } else {
-	if {$itk_option(-measuringStickMode) == 0} {
-	    # Draw on the front face of the viewing cube
-	    set view [$mGed screen2view $itk_component($_pane) $_x $_y]
-	    set bounds [$mGed bounds $itk_component($_pane)]
-	    set vZ [expr {[lindex $bounds 4] / -2048.0}]
-	    set mMeasureStart [$mGed v2m_point $itk_component($_pane) [lindex $view 0] [lindex $view 1] $vZ]
-	} else {
-	    # Draw on the center of the viewing cube (i.e. view Z is 0)
-	    set mMeasureStart [$mGed screen2model $itk_component($_pane) $_x $_y]
-	}
-    }
 
     # start receiving motion events
     bind $itk_component($_pane) <Motion> "[::itcl::code $this handle_view_measure $_pane %x %y]; break"
 
     set mMeasuringStickColorVDraw3D [get_vdraw_color $itk_option(-measuringStickColor)]
+}
+
+::itcl::body cadwidgets::Ged::begin_view_measure_part2 {_pane _button _x _y} {
+    if {$mMeasuringStick3D} {
+	set mMeasuringStick3D $mMeasuringStick3DCurrent
+    }
+
+    set mEnd3DPoint [pane_mouse_3dpoint $_pane $_x $_y]
+    set pt $mEnd3DPoint
+
+    if {[vnear_zero [vsub2 $mEnd3DPoint $mMiddle3DPoint] 0.0001]} {
+	return
+    }
+
+    $mGed vdraw open $MEASURING_STICK
+    if {$mMeasuringStick3D && $mMeasuringStick3DCurrent} {
+	$mGed vdraw params color $mMeasuringStickColorVDraw3D
+    } else {
+	$mGed vdraw params color $mMeasuringStickColorVDraw2D
+    }
+    eval $mGed vdraw write next 1 $pt
+    $mGed vdraw send
+
+    # start receiving motion events
+    bind $itk_component($_pane) <Motion> "[::itcl::code $this handle_view_measure_part2 $_pane %x %y]; break"
 }
 
 ::itcl::body cadwidgets::Ged::default_views {} {
@@ -2746,16 +2757,9 @@ package provide cadwidgets::Ged 1.0
 ::itcl::body cadwidgets::Ged::end_view_measure {_pane {_part2_button 2}} {
     $mGed idle_mode $itk_component($_pane)
 
-    if {$mLastMousePos == ""} {
-	return
-    }
-
     refresh_off
 
-    set mEnd3DPoint [eval pane_mouse_3dpoint $_pane $mLastMousePos]
-    set mLastMousePos ""
-
-    set diff [vsub2 $mEnd3DPoint $mBegin3DPoint]
+    set diff [vsub2 $mMiddle3DPoint $mBegin3DPoint]
     set delta [expr {[magnitude $diff] * [$mGed base2local $itk_component($_pane)]}]
 
     if {[expr {abs($delta) > 0.0001}]} {
@@ -2763,7 +2767,6 @@ package provide cadwidgets::Ged 1.0
 	init_view_measure_part2 $_part2_button
     } else {
 	refresh_on
-#	refresh_all
 	return
     }
 
@@ -2783,45 +2786,11 @@ package provide cadwidgets::Ged 1.0
     refresh_all
 }
 
-::itcl::body cadwidgets::Ged::end_view_measure_part2 {_button _pane _x _y} {
-    if {$mMeasuringStick3D} {
-	set mMeasuringStick3D $mMeasuringStick3DCurrent
-    }
+::itcl::body cadwidgets::Ged::end_view_measure_part2 {_pane _button} {
+    $mGed idle_mode $itk_component($_pane)
 
-    set last_pt [pane_mouse_3dpoint $_pane $_x $_y]
-
-    if {1} {
-	set pt $last_pt
-    } else {
-	if {$itk_option(-measuringStickMode) == 0} {
-	    # Draw on the front face of the viewing cube
-	    set view [$mGed screen2view $itk_component($_pane) $_x $_y]
-	    set bounds [$mGed bounds $itk_component($_pane)]
-	    set vZ [expr {[lindex $bounds 4] / -2048.0}]
-	    set pt [$mGed v2m_point $itk_component($_pane) [lindex $view 0] [lindex $view 1] $vZ]
-	} else {
-	    # Draw on the center of the viewing cube (i.e. view Z is 0)
-	    set pt [$mGed screen2model $itk_component($_pane) $_x $_y]
-	}
-    }
-
-    if {[vnear_zero [vsub2 $last_pt $mEnd3DPoint] 0.0001]} {
-	return
-    }
-
-    set move 0
-    set draw 1
-    $mGed vdraw open $MEASURING_STICK
-    if {$mMeasuringStick3D && $mMeasuringStick3DCurrent} {
-	$mGed vdraw params color $mMeasuringStickColorVDraw3D
-    } else {
-	$mGed vdraw params color $mMeasuringStickColorVDraw2D
-    }
-    eval $mGed vdraw write next $draw $pt
-    $mGed vdraw send
-
-    set A [vunitize [vsub2 $mBegin3DPoint $mEnd3DPoint]]
-    set B [vunitize [vsub2 $last_pt $mEnd3DPoint]]
+    set A [vunitize [vsub2 $mBegin3DPoint $mMiddle3DPoint]]
+    set B [vunitize [vsub2 $mEnd3DPoint $mMiddle3DPoint]]
     set cos [vdot $A $B]
     set angle [format "%.2f" [expr {acos($cos) * (180.0 / 3.141592653589793)}]]
 
@@ -2869,23 +2838,9 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::handle_view_measure {_pane _x _y} {
-    set mLastMousePos "$_x $_y"
     catch {$mGed vdraw vlist delete $MEASURING_STICK}
 
-    if {1} {
-	set mMeasureEnd [pane_mouse_3dpoint $_pane $_x $_y]
-    } else {
-	if {$itk_option(-measuringStickMode) == 0} {
-	    # Draw on the front face of the viewing cube
-	    set view [$mGed screen2view $itk_component($_pane) $_x $_y]
-	    set bounds [$mGed bounds $itk_component($_pane)]
-	    set vZ [expr {[lindex $bounds 4] / -2048.0}]
-	    set mMeasureEnd [$mGed v2m_point $itk_component($_pane) [lindex $view 0] [lindex $view 1] $vZ]
-	} else {
-	    # Draw on the center of the viewing cube (i.e. view Z is 0)
-	    set mMeasureEnd [$mGed screen2model $itk_component($_pane) $_x $_y]
-	}
-    }
+    set mMiddle3DPoint [pane_mouse_3dpoint $_pane $_x $_y]
 
     set move 0
     set draw 1
@@ -2895,8 +2850,24 @@ package provide cadwidgets::Ged 1.0
     } else {
 	$mGed vdraw params color $mMeasuringStickColorVDraw2D
     }
-    eval $mGed vdraw write next $move $mMeasureStart
-    eval $mGed vdraw write next $draw $mMeasureEnd
+    eval $mGed vdraw write next $move $mBegin3DPoint
+    eval $mGed vdraw write next $draw $mMiddle3DPoint
+    $mGed vdraw send
+}
+
+::itcl::body cadwidgets::Ged::handle_view_measure_part2 {_pane _x _y} {
+    set mEnd3DPoint [pane_mouse_3dpoint $_pane $_x $_y]
+
+    $mGed vdraw open $MEASURING_STICK
+    if {$mMeasuringStick3D && $mMeasuringStick3DCurrent} {
+	$mGed vdraw params color $mMeasuringStickColorVDraw3D
+    } else {
+	$mGed vdraw params color $mMeasuringStickColorVDraw2D
+    }
+
+    # Replace the end point
+    $mGed vdraw delete 2
+    eval $mGed vdraw write next 1 $mEnd3DPoint
     $mGed vdraw send
 }
 
@@ -3134,15 +3105,15 @@ package provide cadwidgets::Ged 1.0
 }
 
 ::itcl::body cadwidgets::Ged::init_view_measure_part2 {_button} {
-    bind $itk_component(ur) <$_button> "[::itcl::code $this end_view_measure_part2 $_button ur %x %y]; break"
-    bind $itk_component(ul) <$_button> "[::itcl::code $this end_view_measure_part2 $_button ul %x %y]; break"
-    bind $itk_component(ll) <$_button> "[::itcl::code $this end_view_measure_part2 $_button ll %x %y]; break"
-    bind $itk_component(lr) <$_button> "[::itcl::code $this end_view_measure_part2 $_button lr %x %y]; break"
+    bind $itk_component(ur) <$_button> "[::itcl::code $this begin_view_measure_part2 ur $_button %x %y]; break"
+    bind $itk_component(ul) <$_button> "[::itcl::code $this begin_view_measure_part2 ul $_button %x %y]; break"
+    bind $itk_component(ll) <$_button> "[::itcl::code $this begin_view_measure_part2 ll $_button %x %y]; break"
+    bind $itk_component(lr) <$_button> "[::itcl::code $this begin_view_measure_part2 lr $_button %x %y]; break"
 
-    bind $itk_component(ur) <ButtonRelease-$_button> ""
-    bind $itk_component(ul) <ButtonRelease-$_button> ""
-    bind $itk_component(ll) <ButtonRelease-$_button> ""
-    bind $itk_component(lr) <ButtonRelease-$_button> ""
+    bind $itk_component(ur) <ButtonRelease-$_button> "[::itcl::code $this end_view_measure_part2 ur $_button]; break"
+    bind $itk_component(ul) <ButtonRelease-$_button> "[::itcl::code $this end_view_measure_part2 ul $_button]; break"
+    bind $itk_component(ll) <ButtonRelease-$_button> "[::itcl::code $this end_view_measure_part2 ll $_button]; break"
+    bind $itk_component(lr) <ButtonRelease-$_button> "[::itcl::code $this end_view_measure_part2 lr $_button]; break"
 }
 
 ::itcl::body cadwidgets::Ged::init_view_rotate {{_button 1}} {
