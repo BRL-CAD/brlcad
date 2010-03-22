@@ -25,26 +25,6 @@
 #include "common.h" 
 #include "vmath.h"
 
-#undef YYSTYPE
-#define YYSTYPE point_line_t
-
-#ifndef YY_STACK_USED
-#  define YY_STACK_USED 0
-#endif
-#ifndef YY_STACK_UNUSED
-#  define YY_STACK_UNUSED 0
-#endif
-#ifndef YY_ALWAYS_INTERACTIVE
-#  define YY_ALWAYS_INTERACTIVE 0
-#endif
-#ifndef YY_NEVER_INTERACTIVE
-#  define YY_NEVER_INTERACTIVE 0
-#endif
-#ifndef YY_MAIN
-#  define YY_MAIN 0
-#endif
-
-#include "./obj_grammar.h"
 
 /* Freeform curve and surface types */
 #define BEZIER 1
@@ -133,7 +113,42 @@ typedef struct obj_freeform_surface {
     fastf_t *param_u;
     fastf_t *param_v;
     obj_trim_loop_t *loops;
-}
+} obj_freeform_surface_t;
+
+typedef struct obj_group {
+    obj_line_t *lines;
+    obj_face_t *faces;
+} obj_group_t;
+
+typedef struct obj_data {
+    float real;
+    int integer;
+    int reference[3];
+    int toggle;
+    size_t index;
+    obj_group_t *groups;
+} obj_data_t;
+
+#undef YYSTYPE
+#define YYSTYPE obj_data_t
+
+#ifndef YY_STACK_USED
+#  define YY_STACK_USED 0
+#endif
+#ifndef YY_STACK_UNUSED
+#  define YY_STACK_UNUSED 0
+#endif
+#ifndef YY_ALWAYS_INTERACTIVE
+#  define YY_ALWAYS_INTERACTIVE 0
+#endif
+#ifndef YY_NEVER_INTERACTIVE
+#  define YY_NEVER_INTERACTIVE 0
+#endif
+#ifndef YY_MAIN
+#  define YY_MAIN 0
+#endif
+
+#include "./obj_grammar.h"
 
 /*
  * Local Variables:
