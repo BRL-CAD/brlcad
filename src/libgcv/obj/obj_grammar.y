@@ -15,8 +15,6 @@ extern char *yytext;
  * in calling function */
 
 extern obj_vertices_t *vertices;
-extern obj_line_t *lines;
-extern obj_face_t *faces;
 extern obj_group_t *groups;
 
 /* lex/yacc definitions */
@@ -37,6 +35,14 @@ int yywrap()
 } 
 
 %}
+
+%union {
+    float real;
+    int integer;
+    int reference[3];
+    int toggle;
+    size_t index;
+}
 
 %token <real> FLOAT
 %token <integer> INTEGER

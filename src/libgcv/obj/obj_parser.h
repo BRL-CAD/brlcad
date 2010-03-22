@@ -120,36 +120,6 @@ typedef struct obj_group {
     obj_face_t *faces;
 } obj_group_t;
 
-typedef struct obj_data {
-    float real;
-    int integer;
-    int reference[3];
-    int toggle;
-    size_t index;
-    obj_group_t *groups;
-} obj_data_t;
-
-#undef YYSTYPE
-#define YYSTYPE obj_data_t
-
-#ifndef YY_STACK_USED
-#  define YY_STACK_USED 0
-#endif
-#ifndef YY_STACK_UNUSED
-#  define YY_STACK_UNUSED 0
-#endif
-#ifndef YY_ALWAYS_INTERACTIVE
-#  define YY_ALWAYS_INTERACTIVE 0
-#endif
-#ifndef YY_NEVER_INTERACTIVE
-#  define YY_NEVER_INTERACTIVE 0
-#endif
-#ifndef YY_MAIN
-#  define YY_MAIN 0
-#endif
-
-#include "./obj_grammar.h"
-
 /*
  * Local Variables:
  * mode: C++
