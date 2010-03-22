@@ -20,6 +20,7 @@
 
 #ifndef OBJ_PARSER_H
 #define OBJ_PARSER_H
+#endif
 
 #include "common.h" 
 #include "vmath.h"
@@ -54,44 +55,44 @@
 
 /* Basic 3D vertices */
 
-struct ctrl_point {
+typedef struct ctrl_point {
     point_t pt;
     fastf_t w;
-}
+} ctrl_point_t;
 
-struct obj_vertices {
+typedef struct obj_vertices {
     point_t *geometric;
     point_t *texture;
     vect_t *vertex_norm;
-    ctrl_point *control;
-}
+    ctrl_point_t *control;
+} obj_vertices_t;
 
 /* Elements */
 
-struct obj_point {
+typedef struct obj_point {
     point_t *vertex; 
-}
+} obj_point_t;
 
-struct obj_line {
+typedef struct obj_line {
     int v_count;
     int t_count;
     point_t **vertex;
     point_t **texture;
-}
+} obj_line_t;
 
-struct obj_face {
+typedef struct obj_face {
     int v_count;
     int t_count;
     int n_count;
     point_t **vertex;
     point_t **texture;
     vect_t **normal;
-}
+} obj_face_t;
 
 
 /* Curves and Surfaces */
 
-struct obj_freeform_curve {
+typedef struct obj_freeform_curve {
     int type;
     int rational;
     int degree_u;
@@ -99,22 +100,22 @@ struct obj_freeform_curve {
     fastf_t *basis_matrix;
     fastf_t u0;
     fastf_t u1;
-    ctrl_point **control;
+    ctrl_point_t **control;
     fastf_t *param_u;
-}
+} obj_freeform_curve_t;
 
-struct obj_trim {
+typedef struct obj_trim {
     int type; /* 0 = hole, 1 = trim */
-    obj_freeform_curve *curve;
+    obj_freeform_curve_t *curve;
     fastf_t u0;
     fastf_t u1;
-}
+} obj_trim_t;
 
-struct obj_trim_loop {
-    obj_trim **trims;
-}
+typedef struct obj_trim_loop {
+    obj_trim_t **trims;
+} obj_trim_loop_t;
 
-struct obj_freeform_surface {
+typedef struct obj_freeform_surface {
     int type;
     int rational;
     int degree_u;
@@ -126,12 +127,12 @@ struct obj_freeform_surface {
     fastf_t s1;
     fastf_t t0;
     fastf_t t1;
-    ctrl_point **control;
+    ctrl_point_t **control;
     point_t **texture;
     vect_t **normal;
     fastf_t *param_u;
     fastf_t *param_v;
-    obj_trim_loop *loops;
+    obj_trim_loop_t *loops;
 }
 
 /*
