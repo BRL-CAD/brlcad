@@ -336,6 +336,17 @@ int mc_tris[256][16] = {
 /* fe */  {0, 3, 8, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
 /* ff */  {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1}};
 
+/* pairs of vertices associated with the edge. */
+int edge_vertex[12][2] = {
+	{0, 1}, {1, 2}, {2, 3}, {3, 0},
+	{4, 5}, {5, 6}, {6, 7}, {7, 4},
+	{0, 4}, {1, 5}, {2, 6}, {3, 7}};
+
+point_t point_offset[8] = {
+	{0, 0, 1}, {1, 0, 1}, {1, 0, 0}, {0, 0, 0},
+	{0, 1, 1}, {1, 1, 1}, {1, 1, 0}, {0, 1, 0}};
+
+
 /* returns the number of triangles added or -1 on failure */
 int
 rt_tri_mc_realize_cube(fastf_t *tris, int pv, point_t *edges)
@@ -526,46 +537,29 @@ rt_nmg_mc_pew(struct shell *s, struct application *a, fastf_t x, fastf_t y, fast
 	MEH(ne, 5, 6);
 #undef MEH
 
-#define MUH(a,b,c,l) if(bitdiff(pv,b,c)) VMOVE(edges[a], l->hit);	/* we already have ray intersect data for these. */
-	MUH(1 ,1,2,sep);
-	MUH(3 ,0,3,swp);
-	MUH(5 ,5,6,nep);
-	MUH(7 ,4,7,nwp);
+#define MUH(a,l) if(bitdiff(pv,edge_vertex[a][0],edge_vertex[a][1])) VMOVE(edges[a], l->hit);	/* we already have ray intersect data for these. */
+	MUH(1 ,sep);
+	MUH(3 ,swp);
+	MUH(5 ,nep);
+	MUH(7 ,nwp);
 #undef MUH
 
 	if(marching_cubes_use_midpoint) {
 	    point_t p[8];
-	    /* w/e		s/n	i/o (b/t) */
-	    VSET(p[0], x,		y,	b+step);	/* sw o */
-	    VSET(p[1], x+step,	y,	b+step);	/* se o */
-	    VSET(p[2], x+step,	y,	b);		/* se i */
-	    VSET(p[3], x,		y,	b);		/* sw i */
-	    VSET(p[4], x,		y+step, b+step);	/* nw o */
-	    VSET(p[5], x+step,	y+step, b+step);	/* ne o */
-	    VSET(p[6], x+step,	y+step, b);		/* ne i */
-	    VSET(p[7], x,		y+step, b);		/* nw i */
+	    int i;
 
-#define MEH(a,b,c) if(bitdiff(pv,b,c)) { VADD2SCALE(edges[a], p[b], p[c], 0.5); }	/* these need a new ray shot. */
-	    if(marching_cubes_use_midpoint==1) {
-		MEH(1 ,1,2);
-		MEH(3 ,0,3);
-		MEH(5 ,5,6);
-		MEH(7 ,4,7);
-	    }
-
-	    /* southern edges */
-	    MEH(0 ,0,1);
-	    MEH(2 ,2,3);          
-
-	    /* northern edges */
-	    MEH(4 ,4,5);          
-	    MEH(6 ,6,7);          
-
-	    MEH(8 ,0,4);	/* top west */
-	    MEH(9 ,1,5);	/* top east */
-	    MEH(10,2,6);	/* bottom east */
-	    MEH(11,3,7);	/* bottom west */
-#undef MEH
+	    for(i=0;i<8;i++)
+		    VSET(p[i], x+step*point_offset[i][X], y+step*point_offset[i][Y], b+step*point_offset[i][Z]);
+	    if(marching_cubes_use_midpoint==1)
+		for(i=1;i<8;i+=2)
+		    if(bitdiff(pv,edge_vertex[i][0],edge_vertex[i][1])) 
+			VADD2SCALE(edges[i], p[edge_vertex[i][0]], p[edge_vertex[i][1]], 0.5);
+	    for(i=0;i<7;i+=2)
+		if(bitdiff(pv,edge_vertex[i][0],edge_vertex[i][1])) 
+		    VADD2SCALE(edges[i], p[edge_vertex[i][0]], p[edge_vertex[i][1]], 0.5);
+	    for(i=8;i<12;i++)
+		if(bitdiff(pv,edge_vertex[i][0],edge_vertex[i][1])) 
+		    VADD2SCALE(edges[i], p[edge_vertex[i][0]], p[edge_vertex[i][1]], 0.5);
 	} else {
 
 	    /* the 'muh' list may have to be walked. */
