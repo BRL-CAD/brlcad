@@ -2770,7 +2770,7 @@ package provide cadwidgets::Ged 1.0
 	return
     }
 
-    set mstring "Measured Distance:  $delta [$mGed units -s]"
+    set mstring "Measured Distance (Leg 1):  $delta [$mGed units -s]"
 
     if {[llength $mViewMeasureCallbacks] == 0} {
 	tk_messageBox -title "Measured Distance" \
@@ -2783,24 +2783,35 @@ package provide cadwidgets::Ged 1.0
     }
 
     refresh_on
-    refresh_all
+#    refresh_all
 }
 
 ::itcl::body cadwidgets::Ged::end_view_measure_part2 {_pane _button} {
     $mGed idle_mode $itk_component($_pane)
+
+    # Calculate length of leg 2
+    set diff [vsub2 $mEnd3DPoint $mMiddle3DPoint]
+    set delta [expr {[magnitude $diff] * [$mGed base2local $itk_component($_pane)]}]
 
     set A [vunitize [vsub2 $mBegin3DPoint $mMiddle3DPoint]]
     set B [vunitize [vsub2 $mEnd3DPoint $mMiddle3DPoint]]
     set cos [vdot $A $B]
     set angle [format "%.2f" [expr {acos($cos) * (180.0 / 3.141592653589793)}]]
 
-    set mstring "Measured Angle:  $angle"
-
     if {[llength $mViewMeasureCallbacks] == 0} {
+	set mstring "Measured Distance (Leg 2):  $delta [$mGed units -s]\nMeasured Angle:  $angle"
 	tk_messageBox -title "Measured Angle" \
 	    -icon info \
 	    -message $mstring
     } else {
+	# For some reason, having a newline in the string causes the geometry window to flash ????
+	# So, split the string into two pieces.
+	set mstring "Measured Distance (Leg 2):  $delta [$mGed units -s]"
+	foreach callback $mViewMeasureCallbacks {
+	    catch {$callback $mstring}
+	}
+
+	set mstring "Measured Angle:  $angle"
 	foreach callback $mViewMeasureCallbacks {
 	    catch {$callback $mstring}
 	}
