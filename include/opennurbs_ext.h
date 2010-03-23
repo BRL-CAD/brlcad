@@ -465,7 +465,7 @@ BANode<BA>::getCurveEstimateOfV(fastf_t u, fastf_t tol) const {
     ON_3dVector tangent;
     point_t A, B;
     double Ta, Tb;
-		
+
     if (m_start[X] < u) {
 	VMOVE(A, m_start);
 	VMOVE(B, m_end);
@@ -478,13 +478,39 @@ BANode<BA>::getCurveEstimateOfV(fastf_t u, fastf_t tol) const {
 	Tb = m_t[0];
     }
 
-    fastf_t dU = B[X] - A[X];
+    ON_3dVector Tan_start = m_trim->TangentAt(Ta);
+    ON_3dVector Tan_end = m_trim->TangentAt(Tb);
+
+
+    fastf_t du = fabs(Tan_end.x - Tan_start.x);
     fastf_t dT = Tb - Ta;
-    fastf_t guess = Ta + (u - A[X]) * dT/dU;
-    ON_3dPoint p = m_trim->PointAt(guess);
+    fastf_t guess;
+    ON_3dPoint p;
+
+    /* Use quick binary subdivision until derivatives at end points in 'u' are within 5 percent */
+    while (du > 0.05) {
+    	guess = Ta + dT/2;
+    	p = m_trim->PointAt(guess);
+    	if (p[X] < u) {
+    	    Ta = guess;
+    	    VMOVE(A, p);
+    	    Tan_start = m_trim->TangentAt(Ta);
+    	} else {
+    	    Tb = guess;
+    	    VMOVE(B, p);
+    	    Tan_end = m_trim->TangentAt(Tb);
+    	}
+    	dT = Tb - Ta;
+    	du = fabs(Tan_end.x - Tan_start.x);
+    }
+
+    fastf_t dU = B[X] - A[X];
+
+    guess = Ta + (u - A[X]) * dT/dU;
+    p = m_trim->PointAt(guess);
 
     int cnt=0;
-    while ((cnt < 50) && (!NEAR_ZERO(p[X]-u, tol))) {
+    while ((cnt < 1000) && (!NEAR_ZERO(p[X]-u, tol))) {
 	if (p[X] < u) {
 	    Ta = guess;
 	    VMOVE(A, p);
