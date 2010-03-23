@@ -74,13 +74,13 @@ int obj_add_vertex(int type, fastf_t x, fastf_t y, fastf_t  z) {
     array[*curr][0] = x;
     array[*curr][1] = y;
     array[*curr][2] = z;
-    printf("added vertex %d(type %d): (%f,%f,%f)\n", *curr, type, array[*curr][0], array[*curr][1], array[*curr][2]);
     *curr = *curr + 1;
     return *curr;
 }
 
 int main(int argc, char *argv[]) 
 {
+  int i;
   obj_global_vertices.geometric = (point_t *)bu_malloc(sizeof(point_t)*INITIAL_VERT_MAX, "initial geometric vertices malloc");
   obj_global_vertices.v_count = 0;
   obj_global_vertices.v_max = INITIAL_VERT_MAX;
@@ -109,6 +109,19 @@ int main(int argc, char *argv[])
      yyin = stdin;
      yyparse();
  }
+
+ for (i = 0; i < obj_global_vertices.v_count; i++) {
+    printf("added geometric vertex %d: (%f,%f,%f)\n", i+1, obj_global_vertices.geometric[i][0], obj_global_vertices.geometric[i][1], obj_global_vertices.geometric[i][2]);
+ }
+
+for (i = 0; i < obj_global_vertices.t_count; i++) {
+    printf("added texture vertex %d: (%f,%f,%f)\n", i+1, obj_global_vertices.texture[i][0], obj_global_vertices.texture[i][1], obj_global_vertices.texture[i][2]);
+ }
+
+for (i = 0; i < obj_global_vertices.n_count; i++) {
+    printf("added vertex normal %d: (%f,%f,%f)\n", i+1, obj_global_vertices.vertex_norm[i][0], obj_global_vertices.vertex_norm[i][1], obj_global_vertices.vertex_norm[i][2]);
+ }
+
 
  return 0;
 } 
