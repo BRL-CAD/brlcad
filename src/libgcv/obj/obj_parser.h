@@ -41,9 +41,17 @@ typedef struct ctrl_point {
 } ctrl_point_t;
 
 typedef struct obj_vertices {
+    int v_count;
+    int v_max;
     point_t *geometric;
+    int t_count;
+    int t_max; 
     point_t *texture;
+    int n_count;
+    int n_max;
     vect_t *vertex_norm;
+    int c_count;
+    int c_max; 
     ctrl_point_t *control;
 } obj_vertices_t;
 
@@ -55,15 +63,20 @@ typedef struct obj_point {
 
 typedef struct obj_line {
     int v_count;
+    int v_max;
     int t_count;
+    int t_max;
     point_t **vertex;
     point_t **texture;
 } obj_line_t;
 
 typedef struct obj_face {
     int v_count;
+    int v_max;
     int t_count;
+    int t_max;
     int n_count;
+    int n_max;
     point_t **vertex;
     point_t **texture;
     vect_t **normal;

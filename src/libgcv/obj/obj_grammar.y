@@ -11,12 +11,6 @@ extern FILE *yyin;
 extern int yylex();
 extern char *yytext;
 
-/* Pointers to data containers - initialized
- * in calling function */
-
-extern obj_vertices_t *vertices;
-extern obj_group_t *groups;
-
 /* lex/yacc definitions */
 
 void obj_parser_error()
@@ -111,7 +105,7 @@ coord: FLOAT { $$ = $1; }
 vertex
   : VERTEX coord coord coord
     {
-      printf("\tVERTEX: %f,%f,%f\t\n", $2,$3,$4);
+      obj_add_vertex($2, $3, $4);
     }
   | VERTEX coord coord coord coord
     {

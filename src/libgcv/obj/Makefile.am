@@ -10,6 +10,7 @@ bin_PROGRAMS = \
 #	obj_rules.l \
 #	obj_parser.c
 
+parse_LDADD = ${BU}
 parse_SOURCES = \
 	obj_grammar.y \
 	obj_rules.l \

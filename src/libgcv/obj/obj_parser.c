@@ -39,11 +39,33 @@
 #include "bu.h"
 #include "vmath.h"
 
+#define INITIAL_VERT_MAX 100
+
 extern FILE *yyin;
 extern int yyparse (void);
 
+obj_vertices_t obj_global_vertices;
+
+int obj_add_vertex(fastf_t x, fastf_t y, fastf_t  z) {
+    int curr = obj_global_vertices.v_count;
+    if (curr == obj_global_vertices.v_max - 1) {
+	obj_global_vertices.geometric = (point_t *)bu_realloc(obj_global_vertices.geometric, sizeof(point_t) * obj_global_vertices.v_max * 2, "realloc geometric vertices");
+	obj_global_vertices.v_max = obj_global_vertices.v_max * 2;
+    }
+    printf("x: %f  y: %f  z: %f \n", x, y ,z);
+    obj_global_vertices.geometric[curr][0] = x;
+    obj_global_vertices.geometric[curr][1] = y;
+    obj_global_vertices.geometric[curr][2] = z;
+    obj_global_vertices.v_count++;
+    printf("added vertex %d: (%f,%f,%f)\n", obj_global_vertices.v_count, obj_global_vertices.geometric[curr][0], obj_global_vertices.geometric[curr][1], obj_global_vertices.geometric[curr][2]);
+    return obj_global_vertices.v_count;
+}
+
 int main(int argc, char *argv[]) 
 {
+  obj_global_vertices.geometric = (point_t *)bu_malloc(sizeof(point_t)*INITIAL_VERT_MAX, "initial geometric vertices malloc");
+  obj_global_vertices.v_count = 0;
+  obj_global_vertices.v_max = INITIAL_VERT_MAX;
   if (argc > 0) {
      printf("Reading from %s\n", argv[1]);
      yyin = fopen(argv[1], "r");
