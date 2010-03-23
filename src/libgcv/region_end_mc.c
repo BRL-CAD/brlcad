@@ -29,8 +29,6 @@
 
 #include "gcv.h"
 
-extern int rt_nmg_mc_pewpewpew (struct shell *s, struct rt_i *rtip, const struct db_full_path *pathp, const struct rt_tess_tol *ttol, const struct bn_tol *tol);
-
 /* FIXME: this be a dumb hack to avoid void* conversion */
 struct gcv_data {
     void (*func)(struct nmgregion *, const struct db_full_path *, int, int, float [3]);

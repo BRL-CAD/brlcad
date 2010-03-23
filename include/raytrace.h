@@ -4693,6 +4693,12 @@ RT_EXPORT BU_EXTERN(int rt_nmg_mc_realize_cube,
 		     int pv,
 		     point_t *edges,
 		     const struct bn_tol *tol));
+RT_EXPORT BU_EXTERN(int rt_nmg_mc_pewpewpew,
+		    (struct shell *s,
+		     struct rt_i *rtip,
+		     const struct db_full_path *pathp,
+		     const struct rt_tess_tol *ttol,
+		     const struct bn_tol *tol));
 
 /* nmg_manif.c */
 RT_EXPORT BU_EXTERN(int nmg_dangling_face,

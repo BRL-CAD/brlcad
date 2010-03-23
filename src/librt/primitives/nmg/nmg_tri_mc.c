@@ -473,7 +473,7 @@ bitdiff(unsigned char t, unsigned char a, unsigned char b)
 }
 
 int
-rt_nmg_mc_pew(struct shell *s, struct application *a, fastf_t x, fastf_t y, fastf_t step, struct bn_tol *tol)
+rt_nmg_mc_pew(struct shell *s, struct application *a, fastf_t x, fastf_t y, fastf_t step, const struct bn_tol *tol)
 {
     struct whack sw[MAX_INTERSECTS], nw[MAX_INTERSECTS], se[MAX_INTERSECTS], ne[MAX_INTERSECTS];
     struct whack *swp = sw, *nwp = nw, *sep = se, *nep = ne;
@@ -600,7 +600,7 @@ rt_nmg_mc_pew(struct shell *s, struct application *a, fastf_t x, fastf_t y, fast
 
 /* rtip needs to be valid, s is where the results are stashed */
 int
-rt_nmg_mc_pewpewpew (struct shell *s, struct rt_i *rtip, const struct db_full_path *pathp, struct rt_tess_tol *ttol, struct bn_tol *tol)
+rt_nmg_mc_pewpewpew (struct shell *s, struct rt_i *rtip, const struct db_full_path *pathp, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
     struct application a;
     fastf_t x,y, endx, endy;
