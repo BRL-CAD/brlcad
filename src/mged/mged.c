@@ -411,6 +411,10 @@ main(int argc, char *argv[])
 	/* if there is more than a file name remaining, mged is not interactive */
 	interactive = 0;
     } else {
+#if defined(_WIN32) && !defined(__CYGWIN__)
+	if (!isatty(fileno(stdin)) || !isatty(fileno(stdout)))
+	    interactive = 0;
+#else
 	/* check if there is data on stdin (better than checking if isatty()) */
 	FD_ZERO(&read_set);
 	FD_SET(fileno(stdin), &read_set);
@@ -454,6 +458,7 @@ main(int argc, char *argv[])
 		interactive = 1;
 	    }
 	} /* read_set */
+#endif
 
 	if (bu_debug && out != stdout) {
 	    fflush(out);
