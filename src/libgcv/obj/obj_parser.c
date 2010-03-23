@@ -46,24 +46,48 @@ extern int yyparse (void);
 
 obj_vertices_t obj_global_vertices;
 
-int obj_add_vertex(fastf_t x, fastf_t y, fastf_t  z) {
-    int curr = obj_global_vertices.v_count;
-    if (curr == obj_global_vertices.v_max - 1) {
-	obj_global_vertices.geometric = (point_t *)bu_realloc(obj_global_vertices.geometric, sizeof(point_t) * obj_global_vertices.v_max * 2, "realloc geometric vertices");
-	obj_global_vertices.v_max = obj_global_vertices.v_max * 2;
+int obj_add_vertex(int type, fastf_t x, fastf_t y, fastf_t  z) {
+    int *curr;
+    int *max;
+    point_t *array;
+    switch (type) {
+	case 1:
+	    curr = &(obj_global_vertices.t_count);
+	    max = &(obj_global_vertices.t_max);
+	    array = obj_global_vertices.texture;
+	    break;
+	case 2:
+	    curr = &(obj_global_vertices.n_count);
+	    max = &(obj_global_vertices.n_max);
+	    array = obj_global_vertices.vertex_norm;
+	    break;
+   	default:
+	    curr = &(obj_global_vertices.v_count);
+	    max = &(obj_global_vertices.v_max);
+	    array = obj_global_vertices.geometric;
     }
-    printf("x: %f  y: %f  z: %f \n", x, y ,z);
-    obj_global_vertices.geometric[curr][0] = x;
-    obj_global_vertices.geometric[curr][1] = y;
-    obj_global_vertices.geometric[curr][2] = z;
-    obj_global_vertices.v_count++;
-    printf("added vertex %d: (%f,%f,%f)\n", obj_global_vertices.v_count, obj_global_vertices.geometric[curr][0], obj_global_vertices.geometric[curr][1], obj_global_vertices.geometric[curr][2]);
-    return obj_global_vertices.v_count;
+    if (*curr == *max - 1) {
+	printf("reallocing\n");
+	array = (point_t *)bu_realloc(array, sizeof(point_t) * INITIAL_VERT_MAX, "realloc geometric vertices");
+	*max = *max * 2;
+    }
+    array[*curr][0] = x;
+    array[*curr][1] = y;
+    array[*curr][2] = z;
+    printf("added vertex %d(type %d): (%f,%f,%f)\n", *curr, type, array[*curr][0], array[*curr][1], array[*curr][2]);
+    *curr = *curr + 1;
+    return *curr;
 }
 
 int main(int argc, char *argv[]) 
 {
   obj_global_vertices.geometric = (point_t *)bu_malloc(sizeof(point_t)*INITIAL_VERT_MAX, "initial geometric vertices malloc");
+  obj_global_vertices.v_count = 0;
+  obj_global_vertices.v_max = INITIAL_VERT_MAX;
+  obj_global_vertices.texture = (point_t *)bu_malloc(sizeof(point_t)*INITIAL_VERT_MAX, "initial texture vertices malloc");
+  obj_global_vertices.t_count = 0;
+  obj_global_vertices.t_max = INITIAL_VERT_MAX;
+  obj_global_vertices.vertex_norm = (point_t *)bu_malloc(sizeof(point_t)*INITIAL_VERT_MAX, "initial texture vertices malloc");
   obj_global_vertices.v_count = 0;
   obj_global_vertices.v_max = INITIAL_VERT_MAX;
   if (argc > 0) {

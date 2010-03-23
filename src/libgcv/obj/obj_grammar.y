@@ -105,7 +105,7 @@ coord: FLOAT { $$ = $1; }
 vertex
   : VERTEX coord coord coord
     {
-      obj_add_vertex($2, $3, $4);
+      obj_add_vertex(0, $2, $3, $4);
     }
   | VERTEX coord coord coord coord
     {
@@ -116,22 +116,22 @@ vertex
 t_vertex
   : T_VERTEX coord
     {
-      printf("\tT_VERTEX: %f,%f,%f\n", $2,0,0);
+      obj_add_vertex(1, $2, 0, 0);
     }
   | T_VERTEX coord coord
     {
-      printf("\tT_VERTEX: %f,%f,%f\n", $2,$3,0);
+      obj_add_vertex(1, $2, $3, 0);
     }
   | T_VERTEX coord coord coord
     {
-      printf("\tT_VERTEX: %f,%f,%f\n", $2,$3,$4);
+      obj_add_vertex(1, $2, $3, $4);
     }
   ;
 
 n_vertex
   : N_VERTEX coord coord coord
     {
-      printf("\tN_VERTEX: %f,%f,%f\t\n", $2,$3,$4);
+      obj_add_vertex(2, $2, $3, $4);
     }
   ;
 
