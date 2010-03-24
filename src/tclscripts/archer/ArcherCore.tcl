@@ -323,12 +323,11 @@ namespace eval ArcherCore {
 	variable mZClipMode 0
 	variable mZClipModePref ""
 
-	variable mBindingMode 0
+	variable mBindingMode Default
 	variable mBindingModePref ""
 	variable mBackground "0 0 0"
-	variable mBackgroundRedPref
-	variable mBackgroundGreenPref
-	variable mBackgroundBluePref
+	variable mBackgroundColor Black
+	variable mBackgroundColorPref ""
 	variable mPrimitiveLabelColor Yellow
 	variable mPrimitiveLabelColorPref
 	variable mViewingParamsColor Yellow
@@ -344,7 +343,6 @@ namespace eval ArcherCore {
 	variable mMeasuringStickColorVDraw ffff00
 	variable mEnableBigE 0
 	variable mEnableBigEPref ""
-	variable mUnits ""
 
 	variable mGridAnchor "0 0 0"
 	variable mGridAnchorXPref ""

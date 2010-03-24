@@ -272,8 +272,6 @@ package provide Archer 1.0
 
 	# Miscellaneous Section
 	method buildAboutDialog {}
-	method buildADCPreferences {}
-	method buildBackgroundColor {_parent}
 	method buildDisplayPreferences {}
 	method buildGeneralPreferences {}
 	method buildGridPreferences {}
@@ -509,9 +507,7 @@ package provide Archer 1.0
 	updateSaveMode
 	updateUndoMode
     } else {
-	backgroundColor [lindex $mBackground 0] \
-	    [lindex $mBackground 1] \
-	    [lindex $mBackground 2]
+	eval backgroundColor $mBackground
     }
 
     set mInstanceInit 0
@@ -1484,7 +1480,6 @@ package provide Archer 1.0
 	}
     }
 
-    set mUnits [$itk_component(ged) units -s]
     $itk_component(ged) refresh_off
     set mDbTitle [$itk_component(ged) title]
     set mDbUnits [$itk_component(ged) units -s]
@@ -1509,7 +1504,10 @@ package provide Archer 1.0
     }
 
     # update the units combobox in the General tab of the preferences panel
-    set utypes [split [$itk_component(ged) units -t] ,]
+    set utypes {}
+    foreach utype [split [$itk_component(ged) units -t] ,] {
+	lappend utypes [string trim $utype]
+    }
     $itk_component(unitsCB) configure \
 	-values $utypes \
 	-state readonly
@@ -1517,7 +1515,7 @@ package provide Archer 1.0
     # refresh tree contents
     refreshTree 0
 
-    if {$mBindingMode == 0} {
+    if {$mBindingMode == "Default"} {
 	set mDefaultBindingMode $VIEW_ROTATE_MODE
 	beginViewRotate
     }
@@ -2790,73 +2788,6 @@ package provide Archer 1.0
     wm geometry $itk_component(aboutDialog) "600x600"
 }
 
-::itcl::body Archer::buildADCPreferences {} {
-    set parent $itk_component(preferenceTabs)
-    itk_component add adcF {
-	::ttk::frame $parent.adcF
-    } {}
-
-    grid $itk_component(adcF) -column 0 -row 0 -sticky nw
-
-    $itk_component(preferenceTabs) add $itk_component(adcF) -text "ADC"
-}
-
-::itcl::body Archer::buildBackgroundColor {parent} {
-    itk_component add backgroundRedL {
-	::ttk::label $parent.redl \
-	    -anchor e \
-	    -text "Red:"
-    } {}
-
-    itk_component add backgroundRedE {
-	::ttk::entry $parent.rede \
-	    -width 3 \
-	    -background $SystemWindow \
-	    -textvariable [::itcl::scope mBackgroundRedPref] \
-	    -validate key \
-	    -validatecommand [::itcl::code $this validateColorComp %P]
-    } {}
-    itk_component add backgroundGreenL {
-	::ttk::label $parent.greenl \
-	    -anchor e \
-	    -text "Green:"
-    } {}
-    itk_component add backgroundGreenE {
-	::ttk::entry $parent.greene \
-	    -width 3 \
-	    -background $SystemWindow \
-	    -textvariable [::itcl::scope mBackgroundGreenPref] \
-	    -validate key \
-	    -validatecommand [::itcl::code $this validateColorComp %P]
-    } {}
-    itk_component add backgroundBlueL {
-	::ttk::label $parent.bluel \
-	    -anchor e \
-	    -text "Blue:"
-    } {}
-    itk_component add backgroundBlueE {
-	::ttk::entry $parent.bluee \
-	    -width 3 \
-	    -background $SystemWindow \
-	    -textvariable [::itcl::scope mBackgroundBluePref] \
-	    -validate key \
-	    -validatecommand [::itcl::code $this validateColorComp %P]
-    } {}
-
-    set row 0
-    grid $itk_component(backgroundRedL) -row $row -column 0 -sticky ew
-    grid $itk_component(backgroundRedE) -row $row -column 1 -sticky ew
-    incr row
-    grid $itk_component(backgroundGreenL) -row $row -column 0 -sticky ew
-    grid $itk_component(backgroundGreenE) -row $row -column 1 -sticky ew
-    incr row
-    grid $itk_component(backgroundBlueL) -row $row -column 0 -sticky ew
-    grid $itk_component(backgroundBlueE) -row $row -column 1 -sticky ew
-
-    grid columnconfigure $parent 1 -weight 1
-}
-
-
 ::itcl::body Archer::buildDisplayPreferences {} {
     set oglParent $itk_component(preferenceTabs)
     itk_component add displayF {
@@ -2930,70 +2861,23 @@ package provide Archer 1.0
 	::ttk::frame $parent.generalF
     } {}
 
-    itk_component add bindingL {
-	::ttk::label $itk_component(generalF).bindingL \
-	    -text "Display Bindings:"
-    } {}
+    buildComboBox $itk_component(generalF) \
+	backgroundColor \
+	bcolor \
+	mBackgroundColorPref \
+	"Background Color:" \
+	$mColorListNoTriple
 
-    itk_component add bindingF {
-	::ttk::frame $itk_component(generalF).bindingF
-    } {}
-
-    set i 0
-    set mBindingMode $i
-    itk_component add defaultBindingRB {
-	::ttk::radiobutton $itk_component(bindingF).defaultBindingRB \
-	    -text "Default" \
-	    -value $i \
-	    -variable [::itcl::scope mBindingModePref]
-    } {}
-
-    incr i
-    itk_component add brlcadBindingRB {
-	::ttk::radiobutton $itk_component(bindingF).brlcadBindingRB \
-	    -text "BRL-CAD" \
-	    -value $i \
-	    -variable [::itcl::scope mBindingModePref]
-    } {}
-
-#    itk_component add measuringL {
-#	::ttk::label $itk_component(generalF).measuringL \
-#	    -text "Measuring Stick Mode:"
-#    } {}
-#
-#    itk_component add measuringF {
-#	::ttk::frame $itk_component(generalF).measuringF
-#    } {}
-#
-#    set i 0
-#    set mMeasuringStickMode $i
-#    itk_component add topMeasuringStickRB {
-#	::ttk::radiobutton $itk_component(measuringF).topMeasuringStickRB \
-#	    -text "Default (Top)" \
-#	    -value $i \
-#	    -variable [::itcl::scope mMeasuringStickModePref]
-#    } {}
-#
-#    incr i
-#    itk_component add embeddedMeasuringStickRB {
-#	::ttk::radiobutton $itk_component(measuringF).embeddedMeasuringStickRB \
-#	    -text "Embedded" \
-#	    -value $i \
-#	    -variable [::itcl::scope mMeasuringStickModePref]
-#    } {}
-
-    itk_component add backgroundColorL {
-	::ttk::label $itk_component(generalF).backgroundColorL \
-	    -text "Background Color:"
-    } {}
-    itk_component add backgroundColorF {
-	::ttk::frame $itk_component(generalF).backgroundColorF
-    } {}
-    buildBackgroundColor $itk_component(backgroundColorF)
+    buildComboBox $itk_component(generalF) \
+	binding \
+	binding \
+	mBindingModePref \
+	"Display Window Bindings:" \
+	{Default BRL-CAD}
 
     buildComboBox $itk_component(generalF) \
 	primitiveLabelColor \
-	color \
+	plcolor \
 	mPrimitiveLabelColorPref \
 	"Primitive Label Color:" \
 	$mColorListNoTriple
@@ -3022,28 +2906,15 @@ package provide Archer 1.0
     buildComboBox $itk_component(generalF) \
 	units \
 	units \
-	mUnits \
+	mDbUnits \
 	"Units:" \
 	{}
     $itk_component(unitsCB) configure -state disabled
 
-    set tmp_themes [glob [file join $mImgDir Themes *]]
-    set themes {}
-    foreach theme $tmp_themes {
-	set theme [file tail $theme]
-
-	# This is not needed for the released code.
-	# However, it won't hurt anything to leave it.
-	if {$theme != "CVS" && $theme != ".svn"} {
-	    lappend themes $theme
-	}
-    }
-#    buildComboBox $itk_component(generalF) \
-	themes \
-	themes \
-	mThemePref \
-	"Themes:" \
-	$themes
+    itk_component add generalF2 {
+	::ttk::frame $itk_component(generalF).generalF2 \
+	    -height 10
+    } {}
 
     itk_component add bigEMenuItemCB {
 	::ttk::checkbutton $itk_component(generalF).bigECB \
@@ -3051,16 +2922,17 @@ package provide Archer 1.0
 	    -variable [::itcl::scope mEnableBigEPref]
     } {}
 
-    grid $itk_component(defaultBindingRB) $itk_component(brlcadBindingRB) -sticky nsew
-#    grid $itk_component(topMeasuringStickRB) $itk_component(embeddedMeasuringStickRB) -sticky nsew
-
     set i 0
-#    grid $itk_component(defaultBindingRB) -column 1 -row $i -sticky w
-#    incr i
-#    grid $itk_component(brlcadBindingRB) -column 1 -row $i -sticky w
-#    grid $itk_component(topMeasuringStickRB) -column 1 -row $i -sticky w
-#    incr i
-#    grid $itk_component(embeddedMeasuringStickRB) -column 1 -row $i -sticky w
+    grid $itk_component(bindingL) -column 0 -row $i -sticky e
+    grid $itk_component(bindingF) -column 1 -row $i -sticky ew
+    incr i
+    grid $itk_component(unitsL) -column 0 -row $i -sticky e
+    grid $itk_component(unitsF) -column 1 -row $i -sticky ew
+    incr i
+    grid $itk_component(generalF2) -column 0 -row $i -columnspan 2 -sticky nsew
+    incr i
+    grid $itk_component(backgroundColorL) -column 0 -row $i -sticky ne
+    grid $itk_component(backgroundColorF) -column 1 -row $i -sticky w
     incr i
     grid $itk_component(measuringStickColorL) -column 0 -row $i -sticky e
     grid $itk_component(measuringStickColorF) -column 1 -row $i -sticky ew
@@ -3073,21 +2945,6 @@ package provide Archer 1.0
     incr i
     grid $itk_component(viewingParamsColorL) -column 0 -row $i -sticky e
     grid $itk_component(viewingParamsColorF) -column 1 -row $i -sticky ew
-    incr i
-    grid $itk_component(unitsL) -column 0 -row $i -sticky e
-    grid $itk_component(unitsF) -column 1 -row $i -sticky ew
-    incr i
-    grid $itk_component(bindingL) -column 0 -row $i -sticky e
-    grid $itk_component(bindingF) -column 1 -row $i -sticky ew
-#    incr i
-#    grid $itk_component(measuringL) -column 0 -row $i -sticky e
-#    grid $itk_component(measuringF) -column 1 -row $i -sticky ew
-    incr i
-    grid $itk_component(backgroundColorL) -column 0 -row $i -sticky ne
-    grid $itk_component(backgroundColorF) -column 1 -row $i -sticky w
-#    incr i
-#    grid $itk_component(themesL) -column 0 -row $i -sticky ne
-#    grid $itk_component(themesF) -column 1 -row $i -sticky w
     incr i
     grid $itk_component(bigEMenuItemCB) \
 	-columnspan 2 \
@@ -3737,7 +3594,6 @@ package provide Archer 1.0
     buildGroundPlanePreferences
     buildDisplayPreferences
     buildGridPreferences
-    buildADCPreferences
 
     $itk_component(preferencesDialog) configure -background $LABEL_BACKGROUND_COLOR
 
@@ -5464,7 +5320,7 @@ package provide Archer 1.0
     updateWizardMenu
 
     if {$mTarget != "" &&
-	$mBindingMode == 0} {
+	$mBindingMode == "Default"} {
 	$itk_component(primaryToolbar) itemconfigure edit_rotate -state normal
 	$itk_component(primaryToolbar) itemconfigure edit_translate -state normal
 	$itk_component(primaryToolbar) itemconfigure edit_scale -state normal
@@ -7243,17 +7099,15 @@ package provide Archer 1.0
 
 ::itcl::body Archer::applyGeneralPreferences {} {
     switch -- $mBindingMode {
-	0 {
+	"Default" {
 	    initDefaultBindings
 	}
-	1 {
+	"BRL-CAD" {
 	    initBrlcadBindings
 	}
     }
 
-    backgroundColor [lindex $mBackground 0] \
-	[lindex $mBackground 1] \
-	[lindex $mBackground 2]
+    eval backgroundColor $mBackground
     gedCmd configure -measuringStickColor $mMeasuringStickColor
     gedCmd configure -measuringStickMode $mMeasuringStickMode
     gedCmd configure -primitiveLabelColor $mPrimitiveLabelColor
@@ -7266,10 +7120,10 @@ package provide Archer 1.0
     if {$mBindingModePref != $mBindingMode} {
 	set mBindingMode $mBindingModePref
 	switch -- $mBindingMode {
-	    0 {
+	    "Default" {
 		initDefaultBindings
 	    }
-	    1 {
+	    "BRL-CAD" {
 		initBrlcadBindings
 	    }
 	}
@@ -7279,24 +7133,10 @@ package provide Archer 1.0
 	set mMeasuringStickMode $mMeasuringStickModePref
     }
 
-    set r [lindex $mBackground 0]
-    set g [lindex $mBackground 1]
-    set b [lindex $mBackground 2]
-    if {$mBackgroundRedPref == ""} {
-	set mBackgroundRedPref 0
-    }
-    if {$mBackgroundGreenPref == ""} {
-	set mBackgroundGreenPref 0
-    }
-    if {$mBackgroundBluePref == ""} {
-	set mBackgroundBluePref 0
-    }
-
-    if {$mBackgroundRedPref != $r ||
-	$mBackgroundGreenPref != $g ||
-	$mBackgroundBluePref != $b} {
-
-	backgroundColor $mBackgroundRedPref $mBackgroundGreenPref $mBackgroundBluePref
+    if {$mBackgroundColor != $mBackgroundColorPref} {
+	set mBackgroundColor $mBackgroundColorPref
+	set mBackground [getRgbColor $mBackgroundColor]
+	eval backgroundColor $mBackground
     }
 
     if {$mPrimitiveLabelColor != $mPrimitiveLabelColorPref} {
@@ -7315,18 +7155,13 @@ package provide Archer 1.0
 	set mMeasuringStickColor $mMeasuringStickColorPref
     }
 
-#    if {$mTheme != $mThemePref} {
-#	set mTheme $mThemePref
-#	updateTheme
-#    }
-
     if {$mEnableBigEPref != $mEnableBigE} {
 	set mEnableBigE $mEnableBigEPref
     }
 
     set units [gedCmd units -s]
-    if {$units != $mUnits} {
-	units $mUnits
+    if {$units != $mDbUnits} {
+	units $mDbUnits
     }
 }
 
@@ -7754,9 +7589,7 @@ package provide Archer 1.0
     # update preference variables
     set mZClipModePref $mZClipMode
 
-    set mBackgroundRedPref [lindex $mBackground 0]
-    set mBackgroundGreenPref [lindex $mBackground 1]
-    set mBackgroundBluePref [lindex $mBackground 2]
+    set mBackgroundColorPref $mBackgroundColor
     set mBindingModePref $mBindingMode
     set mEnableBigEPref $mEnableBigE
     set mMeasuringStickColorPref $mMeasuringStickColor
@@ -7765,7 +7598,7 @@ package provide Archer 1.0
     set mScaleColorPref $mScaleColor
     set mViewingParamsColorPref $mViewingParamsColor
     set mThemePref $mTheme
-    set mUnits [gedCmd units -s]
+    set mDbUnits [gedCmd units -s]
 
     set mGridAnchorXPref [lindex $mGridAnchor 0]
     set mGridAnchorYPref [lindex $mGridAnchor 1]
@@ -7841,9 +7674,7 @@ package provide Archer 1.0
 	}
     }
 
-    backgroundColor [lindex $mBackground 0] \
-	[lindex $mBackground 1] \
-	[lindex $mBackground 2]
+    eval backgroundColor $mBackground
 
     update
     initMode
@@ -7892,7 +7723,7 @@ package provide Archer 1.0
 }
 
 ::itcl::body Archer::writePreferencesBody {_pfile} {
-    puts $_pfile "set mBackground \"$mBackground\""
+    puts $_pfile "set mBackgroundColor \"$mBackgroundColor\""
     puts $_pfile "set mBindingMode $mBindingMode"
     puts $_pfile "set mEnableBigE $mEnableBigE"
     puts $_pfile "set mMeasuringStickColor \"$mMeasuringStickColor\""
