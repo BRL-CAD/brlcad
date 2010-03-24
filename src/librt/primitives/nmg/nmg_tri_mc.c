@@ -501,6 +501,8 @@ rt_nmg_mc_pew(struct shell *s, struct application *a, fastf_t x, fastf_t y, fast
 	point_t edges[12];
 	fastf_t b = +INFINITY;
 	struct whack muh[1024];
+	point_t p[8];
+	int i;
 
 	a->a_uptr = muh;
 
@@ -515,6 +517,9 @@ rt_nmg_mc_pew(struct shell *s, struct application *a, fastf_t x, fastf_t y, fast
 	    /* iff we know we're intersecting the surface, walk slow. */
 	    b = last_b + step;
 	}
+
+	for(i=0;i<8;i++)
+	    VSET(p[i], x+step*point_offset[i][X], y+step*point_offset[i][Y], b+step*point_offset[i][Z]);
 
 	/* build the point vector */
 	pv = 0;
@@ -545,11 +550,6 @@ rt_nmg_mc_pew(struct shell *s, struct application *a, fastf_t x, fastf_t y, fast
 #undef MUH
 
 	if(marching_cubes_use_midpoint) {
-	    point_t p[8];
-	    int i;
-
-	    for(i=0;i<8;i++)
-		    VSET(p[i], x+step*point_offset[i][X], y+step*point_offset[i][Y], b+step*point_offset[i][Z]);
 	    if(marching_cubes_use_midpoint==1)
 		for(i=1;i<8;i+=2)
 		    if(bitdiff(pv,edge_vertex[i][0],edge_vertex[i][1])) 
@@ -563,18 +563,18 @@ rt_nmg_mc_pew(struct shell *s, struct application *a, fastf_t x, fastf_t y, fast
 	} else {
 
 	    /* the 'muh' list may have to be walked. */
-#define MEH(A,b,c) { struct whack *puh; rt_shootray(a); puh=muh; while(puh->dist < 0.0) { puh++; if(puh->in < 1) bu_log("puhh?\n");} VMOVE(edges[A], muh->dist>0.0?muh->hit:muh[1].hit); }
+#define MEH(A,B,C) if(bitdiff(pv,B,C)) { struct whack *puh; for(i=0;i<1024;i++) { muh[i].in=0;muh[i].dist=-1;VSETALL(muh[i].hit,-1);} VMOVE(a->a_ray.r_pt, p[B]); rt_shootray(a); puh=muh; while(puh->in > 0 && puh->dist < 0.0) { puh++; if(puh->in < 1) bu_log("puhh?\n");} VMOVE(edges[A], muh->dist>0.0?muh->hit:muh[1].hit); }
 	    VSET(a->a_ray.r_dir, 1, 0, 0);
-	    if(bitdiff(pv,0,1)) { VSET(a->a_ray.r_pt, x, y,     b+step); MEH(0 ,0,1); }
-	    if(bitdiff(pv,2,3)) { VSET(a->a_ray.r_pt, x, y,     b     ); MEH(2 ,2,3); }
-	    if(bitdiff(pv,4,5)) { VSET(a->a_ray.r_pt, x, y+step,b+step); MEH(4 ,4,5); }
-	    if(bitdiff(pv,6,7)) { VSET(a->a_ray.r_pt, x, y+step,b     ); MEH(6 ,6,7); }
+	    MEH(0 ,0,1);
+	    MEH(2 ,3,2);
+	    MEH(4 ,4,5);
+	    MEH(6 ,7,6);
 
 	    VSET(a->a_ray.r_dir, 0, 1, 0);
-	    if(bitdiff(pv,0,4)) { VSET(a->a_ray.r_pt, x,	 y, b+step); MEH(8 ,0,4); }
-	    if(bitdiff(pv,1,5)) { VSET(a->a_ray.r_pt, x+step,y, b+step); MEH(9 ,1,5); }
-	    if(bitdiff(pv,2,6)) { VSET(a->a_ray.r_pt, x+step,y, b     ); MEH(10,2,6); }
-	    if(bitdiff(pv,3,7)) { VSET(a->a_ray.r_pt, x,	 y, b     ); MEH(11,3,7); }
+	    MEH(8 ,0,4);
+	    MEH(9 ,1,5);
+	    MEH(10,2,6);
+	    MEH(11,3,7);
 #undef MEH
 	}
 
