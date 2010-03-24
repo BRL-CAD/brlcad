@@ -57,10 +57,6 @@ typedef struct obj_vertices {
 
 /* Elements */
 
-typedef struct obj_point {
-    point_t *vertex; 
-} obj_point_t;
-
 typedef struct obj_line {
     int v_count;
     int v_max;
@@ -82,6 +78,17 @@ typedef struct obj_face {
     vect_t **normal;
 } obj_face_t;
 
+typedef struct obj_elements {
+    int p_count;
+    int p_max;
+    point_t *points;
+    int l_count;
+    int l_max;
+    obj_line_t *lines;
+    int f_count;
+    int f_max;
+    obj_face_t *faces;
+} obj_elements_t;
 
 /* Curves and Surfaces */
 
@@ -129,9 +136,16 @@ typedef struct obj_freeform_surface {
 } obj_freeform_surface_t;
 
 typedef struct obj_group {
+    int active;
     obj_line_t *lines;
     obj_face_t *faces;
 } obj_group_t;
+
+typedef struct obj_groups {
+    int g_count;
+    int g_max;
+    obj_group_t *groups;
+} obj_groups_t;
 
 typedef struct obj_data {
     float real;
@@ -139,7 +153,6 @@ typedef struct obj_data {
     int reference[3];
     int toggle;
     size_t index;
-    obj_group_t *groups;
 } obj_data_t;
 
 #undef YYSTYPE

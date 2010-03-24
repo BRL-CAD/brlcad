@@ -40,11 +40,18 @@
 #include "vmath.h"
 
 #define INITIAL_VERT_MAX 100
+#define INITIAL_POINT_MAX 100
+#define INITIAL_LINE_MAX 100
+#define INITIAL_FACE_MAX 100
+#define INITIAL_GRP_MAX 100
 
 extern FILE *yyin;
 extern int yyparse (void);
 
 obj_vertices_t obj_global_vertices;
+obj_elements_t obj_global_elements;
+obj_groups_t obj_global_groups;
+
 
 int obj_add_vertex(int type, fastf_t x, fastf_t y, fastf_t  z) {
     int *curr;
@@ -67,7 +74,6 @@ int obj_add_vertex(int type, fastf_t x, fastf_t y, fastf_t  z) {
 	    array = obj_global_vertices.geometric;
     }
     if (*curr == *max - 1) {
-	printf("reallocing\n");
 	array = (point_t *)bu_realloc(array, sizeof(point_t) * INITIAL_VERT_MAX, "realloc geometric vertices");
 	*max = *max * 2;
     }
@@ -77,6 +83,38 @@ int obj_add_vertex(int type, fastf_t x, fastf_t y, fastf_t  z) {
     *curr = *curr + 1;
     return *curr;
 }
+
+
+int obj_add_group(struct bu_vls *grpname) {
+    int curr = obj_global_groups.g_count;
+    int max = obj_global_groups.g_max;
+    if (curr == max - 1) {
+	obj_global_groups.groups = (obj_group_t *)bu_realloc(obj_global_groups.groups, sizeof(obj_group_t) * INITIAL_GRP_MAX, "realloc groups array");
+	obj_global_groups.g_max = max * 2;
+    }
+}
+
+
+
+int obj_add_line() {
+    int curr = obj_global_elements.l_count;
+    int max = obj_global_elements.l_max;
+    if (curr == max - 1) {
+	obj_global_elements.lines = (obj_line_t *)bu_realloc(obj_global_elements.lines, sizeof(obj_line_t) * INITIAL_LINE_MAX, "realloc lines array");
+	obj_global_elements.l_max = max * 2;
+    }
+}
+
+int obj_add_face() {
+    int curr = obj_global_elements.f_count;
+    int max = obj_global_elements.f_max;
+    if (curr == max - 1) {
+	obj_global_elements.faces = (obj_face_t *)bu_realloc(obj_global_elements.faces, sizeof(obj_face_t) * INITIAL_FACE_MAX, "realloc lines array");
+	obj_global_elements.f_max = max * 2;
+    }
+}
+
+
 
 int main(int argc, char *argv[]) 
 {
@@ -90,6 +128,19 @@ int main(int argc, char *argv[])
   obj_global_vertices.vertex_norm = (point_t *)bu_malloc(sizeof(point_t)*INITIAL_VERT_MAX, "initial texture vertices malloc");
   obj_global_vertices.v_count = 0;
   obj_global_vertices.v_max = INITIAL_VERT_MAX;
+  obj_global_elements.points = (point_t *)bu_malloc(sizeof(point_t)*INITIAL_POINT_MAX, "initial point array malloc");
+  obj_global_elements.p_count = 0;
+  obj_global_elements.p_max = INITIAL_POINT_MAX;
+  obj_global_elements.lines = (obj_line_t *)bu_malloc(sizeof(obj_line_t)*INITIAL_LINE_MAX, "initial line array malloc");
+  obj_global_elements.l_count = 0;
+  obj_global_elements.l_max = INITIAL_LINE_MAX;
+  obj_global_elements.faces = (obj_face_t *)bu_malloc(sizeof(obj_face_t)*INITIAL_FACE_MAX, "initial face array malloc");
+  obj_global_elements.f_count = 0;
+  obj_global_elements.f_max = INITIAL_FACE_MAX;
+  obj_global_groups.groups = (obj_group_t *)bu_malloc(sizeof(obj_group_t)*INITIAL_GRP_MAX, "initial group array malloc");
+  obj_global_groups.g_count = 0;
+  obj_global_groups.g_max = INITIAL_GRP_MAX;
+
   if (argc > 0) {
      printf("Reading from %s\n", argv[1]);
      yyin = fopen(argv[1], "r");
