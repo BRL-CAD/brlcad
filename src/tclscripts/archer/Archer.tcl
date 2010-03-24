@@ -1484,6 +1484,7 @@ package provide Archer 1.0
 	}
     }
 
+    set mUnits [$itk_component(ged) units -s]
     $itk_component(ged) refresh_off
     set mDbTitle [$itk_component(ged) title]
     set mDbUnits [$itk_component(ged) units -s]
@@ -1506,6 +1507,12 @@ package provide Archer 1.0
 	applyPreferences
 	doLighting
     }
+
+    # update the units combobox in the General tab of the preferences panel
+    set utypes [split [$itk_component(ged) units -t] ,]
+    $itk_component(unitsCB) configure \
+	-values $utypes \
+	-state readonly
 
     # refresh tree contents
     refreshTree 0
@@ -2114,8 +2121,11 @@ package provide Archer 1.0
 	return [gedCmd $_cmd]
     }
 
-    if {$_cmd == "units" && [llength $args] == 1 && [lindex $args 0] == "-s"} {
-	return [gedCmd units -s]
+    if {$_cmd == "units" && [llength $args] == 1} {
+	set arg0 [lindex $args 0]
+	if {$arg0 == "-s" || $arg0 == "-t"} {
+	    return [gedCmd units $arg0]
+	}
     }
 
     set old_units [gedCmd units -s]
@@ -2925,10 +2935,14 @@ package provide Archer 1.0
 	    -text "Display Bindings:"
     } {}
 
+    itk_component add bindingF {
+	::ttk::frame $itk_component(generalF).bindingF
+    } {}
+
     set i 0
     set mBindingMode $i
     itk_component add defaultBindingRB {
-	::ttk::radiobutton $itk_component(generalF).defaultBindingRB \
+	::ttk::radiobutton $itk_component(bindingF).defaultBindingRB \
 	    -text "Default" \
 	    -value $i \
 	    -variable [::itcl::scope mBindingModePref]
@@ -2936,33 +2950,37 @@ package provide Archer 1.0
 
     incr i
     itk_component add brlcadBindingRB {
-	::ttk::radiobutton $itk_component(generalF).brlcadBindingRB \
+	::ttk::radiobutton $itk_component(bindingF).brlcadBindingRB \
 	    -text "BRL-CAD" \
 	    -value $i \
 	    -variable [::itcl::scope mBindingModePref]
     } {}
 
-    itk_component add measuringL {
-	::ttk::label $itk_component(generalF).measuringL \
-	    -text "Measuring Stick Mode:"
-    } {}
-
-    set i 0
-    set mMeasuringStickMode $i
-    itk_component add topMeasuringStickRB {
-	::ttk::radiobutton $itk_component(generalF).topMeasuringStickRB \
-	    -text "Default (Top)" \
-	    -value $i \
-	    -variable [::itcl::scope mMeasuringStickModePref]
-    } {}
-
-    incr i
-    itk_component add embeddedMeasuringStickRB {
-	::ttk::radiobutton $itk_component(generalF).embeddedMeasuringStickRB \
-	    -text "Embedded" \
-	    -value $i \
-	    -variable [::itcl::scope mMeasuringStickModePref]
-    } {}
+#    itk_component add measuringL {
+#	::ttk::label $itk_component(generalF).measuringL \
+#	    -text "Measuring Stick Mode:"
+#    } {}
+#
+#    itk_component add measuringF {
+#	::ttk::frame $itk_component(generalF).measuringF
+#    } {}
+#
+#    set i 0
+#    set mMeasuringStickMode $i
+#    itk_component add topMeasuringStickRB {
+#	::ttk::radiobutton $itk_component(measuringF).topMeasuringStickRB \
+#	    -text "Default (Top)" \
+#	    -value $i \
+#	    -variable [::itcl::scope mMeasuringStickModePref]
+#    } {}
+#
+#    incr i
+#    itk_component add embeddedMeasuringStickRB {
+#	::ttk::radiobutton $itk_component(measuringF).embeddedMeasuringStickRB \
+#	    -text "Embedded" \
+#	    -value $i \
+#	    -variable [::itcl::scope mMeasuringStickModePref]
+#    } {}
 
     itk_component add backgroundColorL {
 	::ttk::label $itk_component(generalF).backgroundColorL \
@@ -3001,6 +3019,14 @@ package provide Archer 1.0
 	"Viewing Parameters Color:" \
 	$mColorListNoTriple
 
+    buildComboBox $itk_component(generalF) \
+	units \
+	units \
+	mUnits \
+	"Units:" \
+	{}
+    $itk_component(unitsCB) configure -state disabled
+
     set tmp_themes [glob [file join $mImgDir Themes *]]
     set themes {}
     foreach theme $tmp_themes {
@@ -3025,19 +3051,16 @@ package provide Archer 1.0
 	    -variable [::itcl::scope mEnableBigEPref]
     } {}
 
+    grid $itk_component(defaultBindingRB) $itk_component(brlcadBindingRB) -sticky nsew
+#    grid $itk_component(topMeasuringStickRB) $itk_component(embeddedMeasuringStickRB) -sticky nsew
+
     set i 0
-    grid $itk_component(bindingL) -column 0 -row $i -sticky e
-    grid $itk_component(defaultBindingRB) -column 1 -row $i -sticky w
-    incr i
-    grid $itk_component(brlcadBindingRB) -column 1 -row $i -sticky w
-    incr i
-    grid $itk_component(measuringL) -column 0 -row $i -sticky e
-    grid $itk_component(topMeasuringStickRB) -column 1 -row $i -sticky w
-    incr i
-    grid $itk_component(embeddedMeasuringStickRB) -column 1 -row $i -sticky w
-    incr i
-    grid $itk_component(backgroundColorL) -column 0 -row $i -sticky ne
-    grid $itk_component(backgroundColorF) -column 1 -row $i -sticky w
+#    grid $itk_component(defaultBindingRB) -column 1 -row $i -sticky w
+#    incr i
+#    grid $itk_component(brlcadBindingRB) -column 1 -row $i -sticky w
+#    grid $itk_component(topMeasuringStickRB) -column 1 -row $i -sticky w
+#    incr i
+#    grid $itk_component(embeddedMeasuringStickRB) -column 1 -row $i -sticky w
     incr i
     grid $itk_component(measuringStickColorL) -column 0 -row $i -sticky e
     grid $itk_component(measuringStickColorF) -column 1 -row $i -sticky ew
@@ -3050,6 +3073,18 @@ package provide Archer 1.0
     incr i
     grid $itk_component(viewingParamsColorL) -column 0 -row $i -sticky e
     grid $itk_component(viewingParamsColorF) -column 1 -row $i -sticky ew
+    incr i
+    grid $itk_component(unitsL) -column 0 -row $i -sticky e
+    grid $itk_component(unitsF) -column 1 -row $i -sticky ew
+    incr i
+    grid $itk_component(bindingL) -column 0 -row $i -sticky e
+    grid $itk_component(bindingF) -column 1 -row $i -sticky ew
+#    incr i
+#    grid $itk_component(measuringL) -column 0 -row $i -sticky e
+#    grid $itk_component(measuringF) -column 1 -row $i -sticky ew
+    incr i
+    grid $itk_component(backgroundColorL) -column 0 -row $i -sticky ne
+    grid $itk_component(backgroundColorF) -column 1 -row $i -sticky w
 #    incr i
 #    grid $itk_component(themesL) -column 0 -row $i -sticky ne
 #    grid $itk_component(themesF) -column 1 -row $i -sticky w
@@ -7280,13 +7315,18 @@ package provide Archer 1.0
 	set mMeasuringStickColor $mMeasuringStickColorPref
     }
 
-    if {$mTheme != $mThemePref} {
-	set mTheme $mThemePref
-	updateTheme
-    }
+#    if {$mTheme != $mThemePref} {
+#	set mTheme $mThemePref
+#	updateTheme
+#    }
 
     if {$mEnableBigEPref != $mEnableBigE} {
 	set mEnableBigE $mEnableBigEPref
+    }
+
+    set units [gedCmd units -s]
+    if {$units != $mUnits} {
+	units $mUnits
     }
 }
 
@@ -7527,7 +7567,7 @@ package provide Archer 1.0
 
 
 ::itcl::body Archer::applyPreferencesIfDiff {} {
-    $itk_component(ged) refresh_off
+    gedCmd refresh_off
 
     applyDisplayPreferencesIfDiff
     applyGeneralPreferencesIfDiff
@@ -7537,8 +7577,9 @@ package provide Archer 1.0
     applyViewAxesPreferencesIfDiff
 
     ::update
-    $itk_component(ged) refresh_on
-    $itk_component(ged) refresh
+
+    gedCmd refresh_on
+    gedCmd refresh
 }
 
 
@@ -7724,6 +7765,7 @@ package provide Archer 1.0
     set mScaleColorPref $mScaleColor
     set mViewingParamsColorPref $mViewingParamsColor
     set mThemePref $mTheme
+    set mUnits [gedCmd units -s]
 
     set mGridAnchorXPref [lindex $mGridAnchor 0]
     set mGridAnchorYPref [lindex $mGridAnchor 1]

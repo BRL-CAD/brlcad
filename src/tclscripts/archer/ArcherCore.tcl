@@ -344,6 +344,7 @@ namespace eval ArcherCore {
 	variable mMeasuringStickColorVDraw ffff00
 	variable mEnableBigE 0
 	variable mEnableBigEPref ""
+	variable mUnits ""
 
 	variable mGridAnchor "0 0 0"
 	variable mGridAnchorXPref ""
@@ -4211,8 +4212,9 @@ Popup Menu    Right or Ctrl-Left
 	return [gedCmd units]
     }
 
-    if {[llength $args] == 1 && [lindex $args 0] == "-s"} {
-	return [gedCmd units -s]
+    set arg0 [lindex $args 0]
+    if {[llength $args] == 1 && ($arg0 == "-s" || $arg0 == "-t")} {
+	return [gedCmd units $arg0]
     }
 
     eval gedWrapper units 0 0 1 0 $args
