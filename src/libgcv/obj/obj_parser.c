@@ -20,7 +20,7 @@
  */
 /** @file obj_parser.c
  *
- *  Handling routines for obj parsing
+ * Handling routines for obj parsing
  *
  */
 
@@ -51,7 +51,9 @@ obj_elements_t obj_global_elements;
 obj_groups_t obj_global_groups;
 
 
-int obj_add_vertex(int type, fastf_t x, fastf_t y, fastf_t  z) {
+int
+obj_add_vertex(int type, fastf_t x, fastf_t y, fastf_t z)
+{
     int *curr;
     int *max;
     point_t *array;
@@ -83,7 +85,9 @@ int obj_add_vertex(int type, fastf_t x, fastf_t y, fastf_t  z) {
 }
 
 
-int obj_add_group(struct bu_vls *grpname) {
+int
+obj_add_group(struct bu_vls *grpname)
+{
     int curr = obj_global_groups.g_count;
     int max = obj_global_groups.g_max;
     if (curr == max - 1) {
@@ -93,8 +97,9 @@ int obj_add_group(struct bu_vls *grpname) {
 }
 
 
-
-int obj_add_line() {
+int
+obj_add_line()
+{
     int curr = obj_global_elements.l_count;
     int max = obj_global_elements.l_max;
     if (curr == max - 1) {
@@ -103,7 +108,10 @@ int obj_add_line() {
     }
 }
 
-int obj_add_face() {
+
+int
+obj_add_face()
+{
     int curr = obj_global_elements.f_count;
     int max = obj_global_elements.f_max;
     if (curr == max - 1) {
@@ -113,67 +121,67 @@ int obj_add_face() {
 }
 
 
-
-int main(int argc, char *argv[]) 
+int
+main(int argc, char *argv[]) 
 {
-  int i;
-  obj_global_vertices.geometric = (point_t *)bu_malloc(sizeof(point_t)*INITIAL_SIZE, "initial geometric vertices malloc");
-  obj_global_vertices.v_count = 0;
-  obj_global_vertices.v_max = INITIAL_SIZE;
-  obj_global_vertices.texture = (point_t *)bu_malloc(sizeof(point_t)*INITIAL_SIZE, "initial texture vertices malloc");
-  obj_global_vertices.t_count = 0;
-  obj_global_vertices.t_max = INITIAL_SIZE;
-  obj_global_vertices.vertex_norm = (point_t *)bu_malloc(sizeof(point_t)*INITIAL_SIZE, "initial texture vertices malloc");
-  obj_global_vertices.v_count = 0;
-  obj_global_vertices.v_max = INITIAL_SIZE;
-  obj_global_elements.points = (point_t *)bu_malloc(sizeof(point_t)*INITIAL_SIZE, "initial point array malloc");
-  obj_global_elements.p_count = 0;
-  obj_global_elements.p_max = INITIAL_SIZE;
-  obj_global_elements.lines = (obj_line_t *)bu_malloc(sizeof(obj_line_t)*INITIAL_SIZE, "initial line array malloc");
-  obj_global_elements.l_count = 0;
-  obj_global_elements.l_max = INITIAL_SIZE;
-  obj_global_elements.faces = (obj_face_t *)bu_malloc(sizeof(obj_face_t)*INITIAL_SIZE, "initial face array malloc");
-  obj_global_elements.f_count = 0;
-  obj_global_elements.f_max = INITIAL_SIZE;
-  obj_global_groups.groups = (obj_group_t *)bu_malloc(sizeof(obj_group_t)*INITIAL_SIZE, "initial group array malloc");
-  obj_global_groups.g_count = 0;
-  obj_global_groups.g_max = INITIAL_SIZE;
+    int i;
+    obj_global_vertices.geometric = (point_t *)bu_malloc(sizeof(point_t)*INITIAL_SIZE, "initial geometric vertices malloc");
+    obj_global_vertices.v_count = 0;
+    obj_global_vertices.v_max = INITIAL_SIZE;
+    obj_global_vertices.texture = (point_t *)bu_malloc(sizeof(point_t)*INITIAL_SIZE, "initial texture vertices malloc");
+    obj_global_vertices.t_count = 0;
+    obj_global_vertices.t_max = INITIAL_SIZE;
+    obj_global_vertices.vertex_norm = (point_t *)bu_malloc(sizeof(point_t)*INITIAL_SIZE, "initial texture vertices malloc");
+    obj_global_vertices.v_count = 0;
+    obj_global_vertices.v_max = INITIAL_SIZE;
+    obj_global_elements.points = (point_t *)bu_malloc(sizeof(point_t)*INITIAL_SIZE, "initial point array malloc");
+    obj_global_elements.p_count = 0;
+    obj_global_elements.p_max = INITIAL_SIZE;
+    obj_global_elements.lines = (obj_line_t *)bu_malloc(sizeof(obj_line_t)*INITIAL_SIZE, "initial line array malloc");
+    obj_global_elements.l_count = 0;
+    obj_global_elements.l_max = INITIAL_SIZE;
+    obj_global_elements.faces = (obj_face_t *)bu_malloc(sizeof(obj_face_t)*INITIAL_SIZE, "initial face array malloc");
+    obj_global_elements.f_count = 0;
+    obj_global_elements.f_max = INITIAL_SIZE;
+    obj_global_groups.groups = (obj_group_t *)bu_malloc(sizeof(obj_group_t)*INITIAL_SIZE, "initial group array malloc");
+    obj_global_groups.g_count = 0;
+    obj_global_groups.g_max = INITIAL_SIZE;
 
-  if (argc > 0) {
-     printf("Reading from %s\n", argv[1]);
-     yyin = fopen(argv[1], "r");
-     if (!yyin)
-     {
-         perror("Unable to open file");
-         return -1;
-     }
-     while (!feof(yyin)) {
-    	 yyparse();
-     }
-     if (yyin) {
-     	 fclose(yyin);
-     }
- } else {
-     printf("Reading from stdin\n");
-     yyin = stdin;
-     yyparse();
- }
+    if (argc > 0) {
+	printf("Reading from %s\n", argv[1]);
+	yyin = fopen(argv[1], "r");
+	if (!yyin) {
+	    perror("Unable to open file");
+	    return -1;
+	}
+	while (!feof(yyin)) {
+	    yyparse();
+	}
+	if (yyin) {
+	    fclose(yyin);
+	}
+    } else {
+	printf("Reading from stdin\n");
+	yyin = stdin;
+	yyparse();
+    }
 
- for (i = 0; i < obj_global_vertices.v_count; i++) {
-    printf("added geometric vertex %d: (%f,%f,%f)\n", i+1, obj_global_vertices.geometric[i][0], obj_global_vertices.geometric[i][1], obj_global_vertices.geometric[i][2]);
- }
+    for (i = 0; i < obj_global_vertices.v_count; i++) {
+	printf("added geometric vertex %d: (%f, %f, %f)\n", i+1, obj_global_vertices.geometric[i][0], obj_global_vertices.geometric[i][1], obj_global_vertices.geometric[i][2]);
+    }
 
-for (i = 0; i < obj_global_vertices.t_count; i++) {
-    printf("added texture vertex %d: (%f,%f,%f)\n", i+1, obj_global_vertices.texture[i][0], obj_global_vertices.texture[i][1], obj_global_vertices.texture[i][2]);
- }
+    for (i = 0; i < obj_global_vertices.t_count; i++) {
+	printf("added texture vertex %d: (%f, %f, %f)\n", i+1, obj_global_vertices.texture[i][0], obj_global_vertices.texture[i][1], obj_global_vertices.texture[i][2]);
+    }
 
-for (i = 0; i < obj_global_vertices.n_count; i++) {
-    printf("added vertex normal %d: (%f,%f,%f)\n", i+1, obj_global_vertices.vertex_norm[i][0], obj_global_vertices.vertex_norm[i][1], obj_global_vertices.vertex_norm[i][2]);
- }
+    for (i = 0; i < obj_global_vertices.n_count; i++) {
+	printf("added vertex normal %d: (%f, %f, %f)\n", i+1, obj_global_vertices.vertex_norm[i][0], obj_global_vertices.vertex_norm[i][1], obj_global_vertices.vertex_norm[i][2]);
+    }
 
 
- return 0;
-} 
+    return 0;
+}
+
 
 /*
  * Local Variables:
