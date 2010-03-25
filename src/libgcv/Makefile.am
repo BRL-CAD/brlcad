@@ -36,6 +36,8 @@ EXTRA_DIST = \
 	obj/obj_rules.l \
 	obj/obj_rules.ll
 
+CLEANFILES = obj/Makefile
+
 libgcv_la_SOURCES =
 libgcv_la_LDFLAGS = -version-info 19:1 -no-undefined -Wc,${FEXCEPTIONS} 
 libgcv_la_LIBADD = \
