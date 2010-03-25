@@ -508,7 +508,7 @@ rt_nmg_mc_pew(struct shell *s, struct application *a, fastf_t x, fastf_t y, fast
 	unsigned char pv;
 	point_t edges[12];
 	fastf_t b = +INFINITY;
-	struct whack muh[1024];
+	struct whack muh[MAX_INTERSECTS];
 	point_t p[8];
 	int i;
 
@@ -521,11 +521,8 @@ rt_nmg_mc_pew(struct shell *s, struct application *a, fastf_t x, fastf_t y, fast
 	    if(nwp->in>0 && nwp->dist < b) b = nwp->dist;
 	    if(nep->in>0 && nep->dist < b) b = nep->dist;
 	    b = bin(b+a->a_rt_i->mdl_min[Z], step);
-	} else {
-	    /* iff we know we're intersecting the surface, walk slow. */
+	} else /* iff we know we're intersecting the surface, walk slow. */
 	    b = last_b + step;
-	}
-
 
 	for(i=0;i<8;i++)
 	    VSET(p[i], x+step*point_offset[i][X], y+step*point_offset[i][Y], b+step*point_offset[i][Z]);
@@ -570,9 +567,8 @@ rt_nmg_mc_pew(struct shell *s, struct application *a, fastf_t x, fastf_t y, fast
 		if(bitdiff(pv,edge_vertex[i][0],edge_vertex[i][1])) 
 		    VADD2SCALE(edges[i], p[edge_vertex[i][0]], p[edge_vertex[i][1]], 0.5);
 	} else {
-
 	    /* the 'muh' list may have to be walked. */
-#define MEH(A,B,C) edgeofconcern=A; if(bitdiff(pv,B,C)) { struct whack *puh; for(i=0;i<1024;i++) { muh[i].in=0;muh[i].dist=-1;VSETALL(muh[i].hit,-1);} VMOVE(a->a_ray.r_pt, p[B]); rt_shootray(a); puh=muh; while(puh->in > 0 && puh->dist < 0.0) { puh++; if(puh->in < 1) bu_log("puhh?\n");} VMOVE(edges[A], muh->dist>0.0?muh->hit:muh[1].hit); }
+#define MEH(A,B,C) edgeofconcern=A; if(bitdiff(pv,B,C)) { struct whack *puh; for(i=0;i<MAX_INTERSECTS;i++) { muh[i].in=0;muh[i].dist=-1;VSETALL(muh[i].hit,-1);} VMOVE(a->a_ray.r_pt, p[B]); rt_shootray(a); puh=muh; while(puh->in > 0 && puh->dist < 0.0) { puh++; if(puh->in < 1) bu_log("puhh?\n");} VMOVE(edges[A], muh->dist>0.0?muh->hit:muh[1].hit); }
 	    VSET(a->a_ray.r_dir, 1, 0, 0);
 	    MEH(0 ,0,1);
 	    MEH(2 ,3,2);
