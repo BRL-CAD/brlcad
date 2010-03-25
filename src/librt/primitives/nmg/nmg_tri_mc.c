@@ -457,17 +457,24 @@ bangbang(struct application * a, struct partition *PartHeadp, struct seg * s)
 
     s=s;
 
-#define MEH(dir,code) { VJOIN1(t->hit,a->a_ray.r_pt,pp->pt_##dir##hit->hit_dist,a->a_ray.r_dir); t->dist=pp->pt_##dir##hit->hit_dist; t->in=code; t++; intersects++; }
     for (pp = PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw) {
 	if(pp->pt_outhit->hit_dist>0.0) {
-	    if(pp->pt_inhit->hit_dist>0.0)
-		MEH(in,INHIT);
-	    MEH(out,OUTHIT);
+	    if(pp->pt_inhit->hit_dist>0.0) {
+		VJOIN1(t->hit, a->a_ray.r_pt, pp->pt_inhit->hit_dist, a->a_ray.r_dir); 
+		t->dist=pp->pt_inhit->hit_dist; 
+		t->in=INHIT; 
+		t++; 
+		intersects++;
+	    }
+	    VJOIN1(t->hit, a->a_ray.r_pt, pp->pt_outhit->hit_dist, a->a_ray.r_dir); 
+	    t->dist=pp->pt_outhit->hit_dist; 
+	    t->in=OUTHIT; 
+	    t++; 
+	    intersects++;
 	    if(intersects >= MAX_INTERSECTS)
 		bu_bomb("Too many intersects in marching cubes");
 	}
     }
-#undef MEH
     t->in = NOHIT;
     return 0;
 }
@@ -516,10 +523,10 @@ rt_nmg_mc_pew(struct shell *s, struct application *a, fastf_t x, fastf_t y, fast
 
 	if((insw|inse|innw|inne) == 0) {
 	    /* figure out the first hit distance and bin it */
-	    if(swp->in>0 && swp->dist < b) b = swp->dist;
-	    if(sep->in>0 && sep->dist < b) b = sep->dist;
-	    if(nwp->in>0 && nwp->dist < b) b = nwp->dist;
-	    if(nep->in>0 && nep->dist < b) b = nep->dist;
+	    if(swp->in>0 && swp->dist < b+tol->dist) b = swp->dist;
+	    if(sep->in>0 && sep->dist < b+tol->dist) b = sep->dist;
+	    if(nwp->in>0 && nwp->dist < b+tol->dist) b = nwp->dist;
+	    if(nep->in>0 && nep->dist < b+tol->dist) b = nep->dist;
 	    b = bin(b+a->a_rt_i->mdl_min[Z], step);
 	} else /* iff we know we're intersecting the surface, walk slow. */
 	    b = last_b + step;
@@ -548,7 +555,7 @@ rt_nmg_mc_pew(struct shell *s, struct application *a, fastf_t x, fastf_t y, fast
 	MEH(ne, 5, 6);
 #undef MEH
 
-#define MUH(a,l) if(bitdiff(pv,edge_vertex[a][0],edge_vertex[a][1])) VMOVE(edges[a], l->hit);	/* we already have ray intersect data for these. */
+#define MUH(a,l) if(bitdiff(pv,edge_vertex[a][0],edge_vertex[a][1])) { VMOVE(edges[a], l->hit);	l++; } /* we already have ray intersect data for these. */
 	MUH(1 ,sep);
 	MUH(3 ,swp);
 	MUH(5 ,nep);
@@ -568,7 +575,8 @@ rt_nmg_mc_pew(struct shell *s, struct application *a, fastf_t x, fastf_t y, fast
 		    VADD2SCALE(edges[i], p[edge_vertex[i][0]], p[edge_vertex[i][1]], 0.5);
 	} else {
 	    /* the 'muh' list may have to be walked. */
-#define MEH(A,B,C) edgeofconcern=A; if(bitdiff(pv,B,C)) { struct whack *puh; for(i=0;i<MAX_INTERSECTS;i++) { muh[i].in=0;muh[i].dist=-1;VSETALL(muh[i].hit,-1);} VMOVE(a->a_ray.r_pt, p[B]); rt_shootray(a); puh=muh; while(puh->in > 0 && puh->dist < 0.0) { puh++; if(puh->in < 1) bu_log("puhh?\n");} VMOVE(edges[A], muh->dist>0.0?muh->hit:muh[1].hit); }
+#define CLMUH for(i=0;i<MAX_INTERSECTS;i++) { muh[i].in=0;muh[i].dist=-1;VSETALL(muh[i].hit,-1);}
+#define MEH(A,B,C) edgeofconcern=A; if(bitdiff(pv,B,C)) { struct whack *puh; CLMUH; VJOIN1(a->a_ray.r_pt, p[B], -tol->dist, a->a_ray.r_dir); rt_shootray(a); puh=muh; while(puh->in > 0 && puh->dist < 0.0) { puh++; if(puh->in < 1) bu_log("puhh?\n");} VMOVE(edges[A], muh->hit); }
 	    VSET(a->a_ray.r_dir, 1, 0, 0);
 	    MEH(0 ,0,1);
 	    MEH(2 ,3,2);
@@ -596,11 +604,6 @@ rt_nmg_mc_pew(struct shell *s, struct application *a, fastf_t x, fastf_t y, fast
 	/* stuff it into an nmg shell */
 	if(pv != 0 && pv != 0xff && s)	/* && s should go away. */
 	    rt_nmg_mc_realize_cube(s, pv, edges, tol);
-
-	if(swp->in>0 && swp->hit[Z] < b+step) swp++;
-	if(sep->in>0 && sep->hit[Z] < b+step) sep++;
-	if(nep->in>0 && nep->hit[Z] < b+step) nep++;
-	if(nwp->in>0 && nwp->hit[Z] < b+step) nwp++;
 
 	last_b = b;
     }
