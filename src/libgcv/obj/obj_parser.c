@@ -56,7 +56,7 @@ obj_add_vertex(int type, fastf_t x, fastf_t y, fastf_t z)
 {
     int *curr;
     int *max;
-    point_t **array, *newarray;
+    point_t **array;
     switch (type) {
 	case 1:
 	    curr = &(obj_global_vertices.t_count);
@@ -76,8 +76,7 @@ obj_add_vertex(int type, fastf_t x, fastf_t y, fastf_t z)
     if (*curr == *max - 1) {
 	printf("curr: %d\n", *curr);
 	printf("max: %d\n", *max);
-	newarray = (point_t *)bu_realloc(*array, sizeof(point_t) * (*max + INITIAL_SIZE), "realloc geometric vertices");
-	*array = newarray;
+	*array = (point_t *)bu_realloc(*array, sizeof(point_t) * (*max + INITIAL_SIZE), "realloc geometric vertices");
 	*max = *max + INITIAL_SIZE;
     }
     (*array)[*curr][0] = x;
