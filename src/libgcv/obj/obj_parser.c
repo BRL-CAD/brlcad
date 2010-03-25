@@ -56,32 +56,48 @@ obj_add_vertex(int type, fastf_t x, fastf_t y, fastf_t z)
 {
     int *curr;
     int *max;
-    point_t *array;
     switch (type) {
 	case 1:
 	    curr = &(obj_global_vertices.t_count);
 	    max = &(obj_global_vertices.t_max);
-	    array = obj_global_vertices.texture;
 	    break;
 	case 2:
 	    curr = &(obj_global_vertices.n_count);
 	    max = &(obj_global_vertices.n_max);
-	    array = obj_global_vertices.vertex_norm;
 	    break;
    	default:
 	    curr = &(obj_global_vertices.v_count);
 	    max = &(obj_global_vertices.v_max);
-	    array = obj_global_vertices.geometric;
     }
     if (*curr == *max - 1) {
-	printf("curr: %d\n", *curr);
-	printf("max: %d\n", *max);
-	array = (point_t *)bu_realloc(array, sizeof(point_t) * (*max + INITIAL_SIZE), "realloc geometric vertices");
+	switch (type) {
+	    case 1:
+		obj_global_vertices.texture = (point_t *)bu_realloc(obj_global_vertices.texture , sizeof(point_t) * (*max + INITIAL_SIZE), "realloc texture vertices");
+		break;
+	    case 2:
+		obj_global_vertices.vertex_norm= (point_t *)bu_realloc(obj_global_vertices.vertex_norm, sizeof(point_t) * (*max + INITIAL_SIZE), "realloc vertex_norm vertices");
+		break;
+	    default:
+		obj_global_vertices.geometric = (point_t *)bu_realloc(obj_global_vertices.geometric, sizeof(point_t) * (*max + INITIAL_SIZE), "realloc geometric vertices");
+	}
 	*max = *max + INITIAL_SIZE;
     }
-    array[*curr][0] = x;
-    array[*curr][1] = y;
-    array[*curr][2] = z;
+    switch (type) {
+	case 1:
+	    obj_global_vertices.texture[*curr][0] = x;
+	    obj_global_vertices.texture[*curr][1] = y;
+	    obj_global_vertices.texture[*curr][2] = z;
+       	    break;
+	case 2:
+	    obj_global_vertices.vertex_norm[*curr][0] = x;
+	    obj_global_vertices.vertex_norm[*curr][1] = y;
+	    obj_global_vertices.vertex_norm[*curr][2] = z;
+       	    break;
+	default:
+ 	    obj_global_vertices.geometric[*curr][0] = x;
+	    obj_global_vertices.geometric[*curr][1] = y;
+	    obj_global_vertices.geometric[*curr][2] = z;
+    }
     *curr = *curr + 1;
     return *curr;
 }
