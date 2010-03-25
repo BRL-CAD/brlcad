@@ -155,7 +155,7 @@ int process_nv_faces(struct ga_t *ga,
     const size_t (*index_arr_nv_faces)[2]; /* used by nv_faces */
     const size_t *indexset_arr;
     size_t groupid = 0;
-    size_t numNorFaces_in_current_bot = 0;
+    size_t numNorTriangles_in_current_bot = 0;
     int found = 0;
     size_t i = 0;
     int ret_val = 0;  /* 0=success !0=fail */
@@ -174,22 +174,34 @@ int process_nv_faces(struct ga_t *ga,
     int skip_degenerate_faces = 1; /* boolean */
     int degenerate_face = 0; /* boolean */
 
-    const size_t num_triangles_per_alloc = 128 ; /* for each alloc, number of faces to allocate memory for */
-    const size_t coordinates_per_face = 9 ; /* 3 coordinates per vertex, 3 vertex per face; i.e. 3*3=9 */
+#if 0
+    const size_t coordinates_per_triangle = 9 ; /* 3 coordinates per vertex, 3 vertex per face; i.e. 3*3=9 */
     size_t bot_vertex_array_size = 0;
+#endif
 
-    const size_t num_faces_tmp_per_alloc = 128 ;
-    const size_t coordinates_per_triangle = 9 ;
-    size_t faces_tmp_array_size = 0;
+    const size_t num_triangles_per_alloc = 128 ;
+    const size_t num_indexes_per_triangle = 6 ; /* 3 vert/tri, 1 norm/vert, 2 idx/vert */
+    size_t triangle_indexes_size = 0;
+    size_t (*triangle_indexes)[3][2] = NULL ;
+    size_t (*triangle_indexes_tmp)[3][2] = NULL ;
 
-    /* compute memory required for initial vertices array */
-    bot_vertex_array_size = num_triangles_per_alloc * coordinates_per_face ;
-
-    /* allocate memory for initial vertices array */
+#if 0
+    /* compute memory required for initial bot vertices array */
+    bot_vertex_array_size = num_triangles_per_alloc * coordinates_per_triangle ;
+    /* allocate memory for initial bot vertices array */
     vertices = (fastf_t *)bu_calloc((size_t)bot_vertex_array_size, sizeof(fastf_t), "vertices");
+#endif
 
-    /* allocate memory for initial vertices array */
-    faces_tmp = (size_t *)bu_calloc((size_t)faces_tmp_array_size, sizeof(size_t), "faces_tmp");
+
+    /* compute memory required for initial triangle_indexes array */
+    triangle_indexes_size = num_triangles_per_alloc * num_indexes_per_triangle ;
+
+    /* allocate memory for initial triangle_indexes array */
+    triangle_indexes = bu_calloc(triangle_indexes_size, sizeof(*triangle_indexes), "triangle_indexes");
+#if 0
+    triangle_indexes = (size_t *)bu_calloc((size_t)triangle_indexes_size, 
+                                                     sizeof(size_t), "triangle_indexes");
+#endif
 
     bu_vls_init(&outputObjectName);
 
@@ -282,7 +294,6 @@ int process_nv_faces(struct ga_t *ga,
         /* execute this code when there is a face to process */
         if ( found ) {
 
-            size_t (*face_tmp)[3]; 
             int idx = 0; 
             int numTriangles = 0; /* number of triangle faces which need to be created */
 
@@ -293,16 +304,56 @@ int process_nv_faces(struct ga_t *ga,
                 numTriangles = 1 ;
             }
 
-            /* this loop will when this loop end all faces should be written to faces_tmp */
+            /* numTriangles are the number of resulting triangles after triangulation */
+            /* this loop triangulates the current polygon, only works if convex */
             for (idx = 0 ; idx < numTriangles ; idx++) {
+                /* for each iteration of this loop, write all 6 indexes for the current triangle */
+
+                /* triangle vertices indexes */
+                triangle_indexes[numNorTriangles_in_current_bot][0][0] = index_arr_nv_faces[0][0] ;
+                triangle_indexes[numNorTriangles_in_current_bot][1][0] = index_arr_nv_faces[idx+1][0] ;
+                triangle_indexes[numNorTriangles_in_current_bot][2][0] = index_arr_nv_faces[idx+2][0] ;
+
+                /* triangle vertices normals indexes */
+                triangle_indexes[numNorTriangles_in_current_bot][0][1] = index_arr_nv_faces[0][1] ;
+                triangle_indexes[numNorTriangles_in_current_bot][1][1] = index_arr_nv_faces[idx+1][1] ;
+                triangle_indexes[numNorTriangles_in_current_bot][2][1] = index_arr_nv_faces[idx+2][1] ;
+
+                bu_log("(%lu)(%lu)(%lu)(%lu)(%lu)(%lu)(%lu)(%lu)\n",
+                   i,
+                   numNorTriangles_in_current_bot,
+                   triangle_indexes[numNorTriangles_in_current_bot][0][0],
+                   triangle_indexes[numNorTriangles_in_current_bot][1][0],
+                   triangle_indexes[numNorTriangles_in_current_bot][2][0],
+                   triangle_indexes[numNorTriangles_in_current_bot][0][1],
+                   triangle_indexes[numNorTriangles_in_current_bot][1][1],
+                   triangle_indexes[numNorTriangles_in_current_bot][2][1]); 
+
+                /* increment number of triangles in current grouping (i.e. current bot) */
+                numNorTriangles_in_current_bot++;
+
+                /* test if size of triangle_indexes needs to be increased */
+                if (numNorTriangles_in_current_bot >= (triangle_indexes_size / num_indexes_per_triangle)) {
+                    /* compute how large to make next alloc */
+                    triangle_indexes_size = triangle_indexes_size +
+                                                      (num_triangles_per_alloc * num_indexes_per_triangle);
+
+                    numRealloc++;
+                    bu_log("about to perform realloc number (%lu) with size (%lu)\n",
+                       numRealloc, triangle_indexes_size);
+
+                    triangle_indexes_tmp = bu_realloc(triangle_indexes, 
+                                                      sizeof(*triangle_indexes) * triangle_indexes_size,
+                                                      "triangle_indexes_tmp");
+                    triangle_indexes = triangle_indexes_tmp;
+                }
 
 
+            } /* this loop exits when all the triangles from the current polygon 
+                 are written to the triangle_indexes array */
 
-/* start loop here for trangulation */
 
-            /* increment number of faces in current grouping (i.e. current bot) */
-            numNorFaces_in_current_bot++;
-
+#if 0
             /* load the bot structure with vertices */
             for (vert = 0 ; vert < size ; vert++) {
                 bu_log("(%lu)(%lu)(%f)(%f)(%f)(%f)(%f)(%f)(%f)\n", 
@@ -320,19 +371,19 @@ int process_nv_faces(struct ga_t *ga,
                    /* place vertix indexes into face_tmp array structure */
                    /* a single face is 3 size_t */
 
-
                    /* places xyz vertices into bot structure */
-                   vertices[((numNorFaces_in_current_bot-1)*9)+(vert*3)+0] =
+                   vertices[((numNorTriangles_in_current_bot-1)*9)+(vert*3)+0] =
                        (ga->vert_list[index_arr_nv_faces[vert][0]][0]) * conversion_factor;
-                   vertices[((numNorFaces_in_current_bot-1)*9)+(vert*3)+1] =
+                   vertices[((numNorTriangles_in_current_bot-1)*9)+(vert*3)+1] =
                        (ga->vert_list[index_arr_nv_faces[vert][0]][1]) * conversion_factor;
-                   vertices[((numNorFaces_in_current_bot-1)*9)+(vert*3)+2] =
+                   vertices[((numNorTriangles_in_current_bot-1)*9)+(vert*3)+2] =
                        (ga->vert_list[index_arr_nv_faces[vert][0]][2]) * conversion_factor;
 
                    /* test if need a larger array */
-                   if (numNorFaces_in_current_bot >= (bot_vertex_array_size / coordinates_per_face)) {
+                   if (numNorTriangles_in_current_bot >= (bot_vertex_array_size / coordinates_per_triangle)) {
                        /* compute how large to make next alloc */
-                       bot_vertex_array_size = bot_vertex_array_size + (num_triangles_per_alloc * coordinates_per_face) ;
+                       bot_vertex_array_size = bot_vertex_array_size +
+                                               (num_triangles_per_alloc * coordinates_per_triangle) ;
 
                        numRealloc++;
                        bu_log("about to perform realloc number (%lu) with size (%lu)\n",
@@ -347,25 +398,24 @@ int process_nv_faces(struct ga_t *ga,
             } /* old: loop exits when all vertices for current face are written to the bot vertex array */
               /* new: loop exits when all vertices for current face are written to face_tmp, and
                       will need to be wriiten to the bot vertex array later */
-
-
-            } /* when this loop ends all triangular-faces for the current polygon are
-                 written to faces_tmp */
-
-
+#endif
         }
+
     }  /* numNorFaces loop, when loop exits, all nv_faces have been reviewed */
 
-    if ( numNorFaces_in_current_bot > 0 ) {
-        bu_log("Found %ld numNorFaces in current bot\n", numNorFaces_in_current_bot);
+/* need to process the triangle_indexes to find only the indexes needed */
+
+#if 0
+    if ( numNorTriangles_in_current_bot > 0 ) {
+        bu_log("Found %ld numNorFaces in current bot\n", numNorTriangles_in_current_bot);
         mk_id(outfp, "RAW BOT");
 
         /* allocate memory for faces and thickness arrays */
-        faces = (int *)bu_calloc(numNorFaces_in_current_bot * 3, sizeof(int), "faces");
-        thickness = (fastf_t *)bu_calloc(numNorFaces_in_current_bot * 3, sizeof(fastf_t), "thickness");
+        faces = (int *)bu_calloc(numNorTriangles_in_current_bot * 3, sizeof(int), "faces");
+        thickness = (fastf_t *)bu_calloc(numNorTriangles_in_current_bot * 3, sizeof(fastf_t), "thickness");
 
         /* populate faces and thickness arrays */
-        for ( j = 0 ; j < numNorFaces_in_current_bot ; j++ ) {
+        for ( j = 0 ; j < numNorTriangles_in_current_bot ; j++ ) {
             faces[(j*3)] = (j*3);
             faces[(j*3)+1] = (j*3) + 1;
             faces[(j*3)+2] = (j*3) + 2;
@@ -374,7 +424,7 @@ int process_nv_faces(struct ga_t *ga,
 
         /* write bot to ".g" file */
         ret_val = mk_bot(outfp, bu_vls_addr(&outputObjectName), RT_BOT_SURFACE, RT_BOT_UNORIENTED, 0, 
-                         numNorFaces_in_current_bot*3, numNorFaces_in_current_bot, vertices,
+                         numNorTriangles_in_current_bot*3, numNorTriangles_in_current_bot, vertices,
                          faces, (fastf_t *)NULL, (struct bu_bitv *)NULL);
 
 #if 0
@@ -388,6 +438,11 @@ int process_nv_faces(struct ga_t *ga,
         bu_free(thickness, "thickness");
 
     }
+#endif
+        /* duplicate code to allow above to be commented */
+        bu_vls_free(&outputObjectName);
+        bu_free(triangle_indexes, "triangle_indexes");
+
     return ret_val;
 }
 
