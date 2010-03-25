@@ -24,9 +24,17 @@ libgcv_nil_la_SOURCES = \
 	region_end_mc.c
 
 EXTRA_DIST = \
-	${obj_dir} \
 	CMakeLists.txt \
-	NOTES
+	NOTES \
+	obj/Makefile.in \
+	obj/Makefile.am \
+	obj/obj_grammar.y \
+	obj/obj_grammar.yy \
+	obj/obj_parser.cc \
+	obj/obj_parser.h \
+	obj/obj_parser_state.h \
+	obj/obj_rules.l \
+	obj/obj_rules.ll
 
 libgcv_la_SOURCES =
 libgcv_la_LDFLAGS = -version-info 19:1 -no-undefined -Wc,${FEXCEPTIONS} 
