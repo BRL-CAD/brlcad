@@ -67,6 +67,7 @@
 
 /* set this to 1 for full midpoint use. Set it to 2 for x/y mid and real z. */
 int marching_cubes_use_midpoint = 2;
+int edgeofconcern;
 
 /*
  * Table data acquired from Paul Borke's page at
@@ -405,6 +406,10 @@ rt_nmg_mc_realize_cube(struct shell *s, int pv, point_t *edges, const struct bn_
 		    V3ARGS(edges[vi[0]]),
 		    V3ARGS(edges[vi[1]]),
 		    V3ARGS(edges[vi[2]]));
+	    if(edges[vi[0]][X] == -1) {
+		bu_log("Heh.\n");
+		exit(-1);
+	    }
 	    vi+=3;
 	    continue;
 	}
@@ -452,13 +457,15 @@ bangbang(struct application * a, struct partition *PartHeadp, struct seg * s)
 
     s=s;
 
-#define MEH(dir,code) VJOIN1(t->hit,a->a_ray.r_pt,pp->pt_##dir##hit->hit_dist,a->a_ray.r_dir); t->dist=pp->pt_##dir##hit->hit_dist; t->in=code; t++;
+#define MEH(dir,code) { VJOIN1(t->hit,a->a_ray.r_pt,pp->pt_##dir##hit->hit_dist,a->a_ray.r_dir); t->dist=pp->pt_##dir##hit->hit_dist; t->in=code; t++; intersects++; }
     for (pp = PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw) {
-	MEH(in,INHIT);
-	MEH(out,OUTHIT);
-	intersects += 2;
-	if(intersects >= MAX_INTERSECTS)
-	    bu_bomb("Too many intersects in marching cubes");
+	if(pp->pt_outhit->hit_dist>0.0) {
+	    if(pp->pt_inhit->hit_dist>0.0)
+		MEH(in,INHIT);
+	    MEH(out,OUTHIT);
+	    if(intersects >= MAX_INTERSECTS)
+		bu_bomb("Too many intersects in marching cubes");
+	}
     }
 #undef MEH
     t->in = NOHIT;
@@ -491,6 +498,7 @@ rt_nmg_mc_pew(struct shell *s, struct application *a, fastf_t x, fastf_t y, fast
     int insw=0, inse=0, innw=0, inne=0;
     fastf_t last_b = 0;
 
+    VSET(a.a_ray.r_dir, 0, 0, 1);
     a->a_uptr = swp; VSET(a->a_ray.r_pt, x, y, a->a_rt_i->mdl_min[Z] - tol->dist); rt_shootray(a);
     a->a_uptr = sep; VSET(a->a_ray.r_pt, x+step, y, a->a_rt_i->mdl_min[Z] - tol->dist); rt_shootray(a);
     a->a_uptr = nwp; VSET(a->a_ray.r_pt, x, y+step, a->a_rt_i->mdl_min[Z] - tol->dist); rt_shootray(a);
@@ -518,6 +526,7 @@ rt_nmg_mc_pew(struct shell *s, struct application *a, fastf_t x, fastf_t y, fast
 	    b = last_b + step;
 	}
 
+
 	for(i=0;i<8;i++)
 	    VSET(p[i], x+step*point_offset[i][X], y+step*point_offset[i][Y], b+step*point_offset[i][Z]);
 
@@ -529,7 +538,7 @@ rt_nmg_mc_pew(struct shell *s, struct application *a, fastf_t x, fastf_t y, fast
 	if(inne && nep->hit[Z] > b+step) pv |= 0x60;
 
 #define MEH(C,I,O) \
-	if(C##p->hit[Z] < b+step) {  \
+	if(C##p->hit[Z] < b+step+tol->dist) {  \
 	    if(C##p->in==1) { in##C=1; pv |= 1<<I;} \
 	    if(C##p->in==2) { in##C=0; pv |= 1<<O;} \
 	} \
@@ -563,7 +572,7 @@ rt_nmg_mc_pew(struct shell *s, struct application *a, fastf_t x, fastf_t y, fast
 	} else {
 
 	    /* the 'muh' list may have to be walked. */
-#define MEH(A,B,C) if(bitdiff(pv,B,C)) { struct whack *puh; for(i=0;i<1024;i++) { muh[i].in=0;muh[i].dist=-1;VSETALL(muh[i].hit,-1);} VMOVE(a->a_ray.r_pt, p[B]); rt_shootray(a); puh=muh; while(puh->in > 0 && puh->dist < 0.0) { puh++; if(puh->in < 1) bu_log("puhh?\n");} VMOVE(edges[A], muh->dist>0.0?muh->hit:muh[1].hit); }
+#define MEH(A,B,C) edgeofconcern=A; if(bitdiff(pv,B,C)) { struct whack *puh; for(i=0;i<1024;i++) { muh[i].in=0;muh[i].dist=-1;VSETALL(muh[i].hit,-1);} VMOVE(a->a_ray.r_pt, p[B]); rt_shootray(a); puh=muh; while(puh->in > 0 && puh->dist < 0.0) { puh++; if(puh->in < 1) bu_log("puhh?\n");} VMOVE(edges[A], muh->dist>0.0?muh->hit:muh[1].hit); }
 	    VSET(a->a_ray.r_dir, 1, 0, 0);
 	    MEH(0 ,0,1);
 	    MEH(2 ,3,2);
@@ -575,6 +584,16 @@ rt_nmg_mc_pew(struct shell *s, struct application *a, fastf_t x, fastf_t y, fast
 	    MEH(9 ,1,5);
 	    MEH(10,2,6);
 	    MEH(11,3,7);
+#undef MEH
+#define MEH(A,B,C,D) if(NEAR_ZERO(edges[B][Z]-p[A][Z], tol->dist)) { VMOVE(edges[C], p[A]); VMOVE(edges[D], p[A]); }
+	    MEH(0,3,0,8);
+	    MEH(1,1,0,9);
+	    MEH(2,1,2,10);
+	    MEH(3,3,2,11);
+	    MEH(4,7,4,8);
+	    MEH(5,5,4,9);
+	    MEH(6,5,6,10);
+	    MEH(7,7,6,11);
 #undef MEH
 	}
 
@@ -621,7 +640,6 @@ rt_nmg_mc_pewpewpew (struct shell *s, struct rt_i *rtip, const struct db_full_pa
 	y=bin(a.a_rt_i->mdl_min[Y], step);
 	for(; y<a.a_rt_i->mdl_max[Y]; y+=step) {
 	    ++shots;
-	    VSET(a.a_ray.r_dir, 0, 0, 1);
 	    rt_nmg_mc_pew(s,&a,x,y,step, tol);
 	}
     }
