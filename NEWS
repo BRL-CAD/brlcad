@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2010-02-XX  Release 7.16.8                                     ---
 ----------------------------------------------------------------------
 
+* reorganization of archer buttons, panels, & preferences - Bob Parker
 * fix invocation of fbclear from MGED on Windows - Bob Parker
 * fixed obj-g crash when importing multiple objects - Sean Morrison
 * continued work on MGED Docbook man page conversions - Janine Gettier
