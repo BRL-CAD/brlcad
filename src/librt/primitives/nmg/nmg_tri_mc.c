@@ -406,12 +406,10 @@ rt_nmg_mc_realize_cube(struct shell *s, int pv, point_t *edges, const struct bn_
 		    V3ARGS(edges[vi[0]]),
 		    V3ARGS(edges[vi[1]]),
 		    V3ARGS(edges[vi[2]]));
-#ifdef FIXME_EXACT_FLOATING_POINT_COMPARISON
-	    if(edges[vi[0]][X] == -1) {
+	    if(NEAR_ZERO(edges[vi[0]][X]-1, tol->dist)) {
 		bu_log("Heh.\n");
 		exit(-1);
 	    }
-#endif
 	    vi+=3;
 	    continue;
 	}
