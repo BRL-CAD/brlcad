@@ -62,7 +62,7 @@ edcodes_reg_compare(const void *p1, const void *p2)
 }
 
 
-static int edcodes_collect_regnames(struct ged *, struct directory *, int);
+HIDDEN int edcodes_collect_regnames(struct ged *, struct directory *, int);
 
 HIDDEN void
 edcodes_traverse_node(struct db_i *dbip, struct rt_comb_internal *comb __attribute__((unused)), union tree *comb_leaf, genptr_t user_ptr1, genptr_t user_ptr2, genptr_t user_ptr3)
@@ -91,7 +91,7 @@ edcodes_traverse_node(struct db_i *dbip, struct rt_comb_internal *comb __attribu
 }
 
 
-static int
+HIDDEN int
 edcodes_collect_regnames(struct ged *gedp, struct directory *dp, int pathpos)
 {
     int id;
