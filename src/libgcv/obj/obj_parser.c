@@ -74,8 +74,8 @@ obj_add_vertex(int type, fastf_t x, fastf_t y, fastf_t z)
 	    array = obj_global_vertices.geometric;
     }
     if (*curr == *max - 1) {
-	array = (point_t *)bu_realloc(array, sizeof(point_t) * INITIAL_SIZE, "realloc geometric vertices");
-	*max = *max * 2;
+	array = (point_t *)bu_realloc(array, sizeof(point_t) * (*max + INITIAL_SIZE), "realloc geometric vertices");
+	*max = *max * INITIAL_SIZE;
     }
     array[*curr][0] = x;
     array[*curr][1] = y;
@@ -91,8 +91,8 @@ obj_add_group(struct bu_vls *grpname)
     int curr = obj_global_groups.g_count;
     int max = obj_global_groups.g_max;
     if (curr == max - 1) {
-	obj_global_groups.groups = (obj_group_t *)bu_realloc(obj_global_groups.groups, sizeof(obj_group_t) * INITIAL_SIZE, "realloc groups array");
-	obj_global_groups.g_max = max * 2;
+	obj_global_groups.groups = (obj_group_t *)bu_realloc(obj_global_groups.groups, sizeof(obj_group_t) * (max + INITIAL_SIZE), "realloc groups array");
+	obj_global_groups.g_max = max + INITIAL_SIZE;
     }
 }
 
@@ -103,8 +103,8 @@ obj_add_line()
     int curr = obj_global_elements.l_count;
     int max = obj_global_elements.l_max;
     if (curr == max - 1) {
-	obj_global_elements.lines = (obj_line_t *)bu_realloc(obj_global_elements.lines, sizeof(obj_line_t) * INITIAL_SIZE, "realloc lines array");
-	obj_global_elements.l_max = max * 2;
+	obj_global_elements.lines = (obj_line_t *)bu_realloc(obj_global_elements.lines, sizeof(obj_line_t) * (max + INITIAL_SIZE), "realloc lines array");
+	obj_global_elements.l_max = max + INITIAL_SIZE;
     }
 }
 
@@ -115,8 +115,8 @@ obj_add_face()
     int curr = obj_global_elements.f_count;
     int max = obj_global_elements.f_max;
     if (curr == max - 1) {
-	obj_global_elements.faces = (obj_face_t *)bu_realloc(obj_global_elements.faces, sizeof(obj_face_t) * INITIAL_SIZE, "realloc lines array");
-	obj_global_elements.f_max = max * 2;
+	obj_global_elements.faces = (obj_face_t *)bu_realloc(obj_global_elements.faces, sizeof(obj_face_t) * (max + INITIAL_SIZE), "realloc lines array");
+	obj_global_elements.f_max = max * INITIAL_SIZE;
     }
 }
 
