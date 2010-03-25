@@ -137,7 +137,11 @@ typedef struct obj_freeform_surface {
 
 typedef struct obj_group {
     int active;
+    int l_count;
+    int l_max;
     obj_line_t *lines;
+    int f_count;
+    int f_max;
     obj_face_t *faces;
 } obj_group_t;
 

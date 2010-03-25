@@ -74,8 +74,10 @@ obj_add_vertex(int type, fastf_t x, fastf_t y, fastf_t z)
 	    array = obj_global_vertices.geometric;
     }
     if (*curr == *max - 1) {
+	printf("curr: %d\n", *curr);
+	printf("max: %d\n", *max);
 	array = (point_t *)bu_realloc(array, sizeof(point_t) * (*max + INITIAL_SIZE), "realloc geometric vertices");
-	*max = *max * INITIAL_SIZE;
+	*max = *max + INITIAL_SIZE;
     }
     array[*curr][0] = x;
     array[*curr][1] = y;
@@ -86,7 +88,7 @@ obj_add_vertex(int type, fastf_t x, fastf_t y, fastf_t z)
 
 
 int
-obj_add_group(struct bu_vls *grpname)
+obj_add_group(char *grpname)
 {
     int curr = obj_global_groups.g_count;
     int max = obj_global_groups.g_max;
