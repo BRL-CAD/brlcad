@@ -498,7 +498,7 @@ rt_nmg_mc_pew(struct shell *s, struct application *a, fastf_t x, fastf_t y, fast
     int insw=0, inse=0, innw=0, inne=0;
     fastf_t last_b = 0;
 
-    VSET(a.a_ray.r_dir, 0, 0, 1);
+    VSET(a->a_ray.r_dir, 0, 0, 1);
     a->a_uptr = swp; VSET(a->a_ray.r_pt, x, y, a->a_rt_i->mdl_min[Z] - tol->dist); rt_shootray(a);
     a->a_uptr = sep; VSET(a->a_ray.r_pt, x+step, y, a->a_rt_i->mdl_min[Z] - tol->dist); rt_shootray(a);
     a->a_uptr = nwp; VSET(a->a_ray.r_pt, x, y+step, a->a_rt_i->mdl_min[Z] - tol->dist); rt_shootray(a);
