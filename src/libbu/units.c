@@ -251,7 +251,7 @@ bu_units_strings_vls()
     BU_GETSTRUCT(vlsp, bu_vls);
     bu_vls_init(vlsp);
     for (tp=bu_units_length_tab; tp->name[0]; tp++) {
-	if (prev_val == tp->val)
+	if (NEAR_ZERO(prev_val - tp->val, SMALL_FASTF))
 	    continue;
 
 	bu_vls_printf(vlsp, "%s, ", tp->name);
