@@ -62,6 +62,8 @@ edcodes_reg_compare(const void *p1, const void *p2)
 }
 
 
+HIDDEN int edcodes_collect_regnames(struct ged *, struct directory *, int);
+
 HIDDEN void
 edcodes_traverse_node(struct db_i *dbip, struct rt_comb_internal *comb __attribute__((unused)), union tree *comb_leaf, genptr_t user_ptr1, genptr_t user_ptr2, genptr_t user_ptr3)
 {
@@ -69,7 +71,6 @@ edcodes_traverse_node(struct db_i *dbip, struct rt_comb_internal *comb __attribu
     int *pathpos;
     struct directory *nextdp;
     struct ged *gedp;
-    HIDDEN int edcodes_collect_regnames(struct ged *, struct directory *, int);
 
     RT_CK_DBI(dbip);
     RT_CK_TREE(comb_leaf);
