@@ -499,6 +499,34 @@ bitdiff(unsigned char t, unsigned char a, unsigned char b)
 }
 
 int
+rt_nmg_mc_crosspew(struct application *a, int edge, point_t *p, point_t *edges, struct whack *muh, const fastf_t step, const struct bn_tol *tol)
+{
+    struct whack *puh; 
+    int i;
+
+    for(i=0;i<MAX_INTERSECTS;i++) { 
+	muh[i].in=0;
+	muh[i].dist=-VOODOO;
+	VSETALL(muh[i].hit,VOODOO);
+    }
+
+    VJOIN1(a->a_ray.r_pt, *p, -2*tol->dist, a->a_ray.r_dir); 
+    rt_shootray(a); 
+    puh=muh; 
+    while(puh->in > 0 && puh->dist < -tol->dist) { 
+	bu_log("%d %g isn't close enough, moving on\n", puh->in, puh->dist); 
+	puh++; 
+	if(puh->in < 1) 
+	    bu_log("puhh?\n"); 
+    } 
+    if(puh->dist > step + 2.5*tol->dist) 
+	bu_log("spooky action on edge %d. (%g %g %g -> %g %g %g) dist:%g\n", edge, V3ARGS(a->a_ray.r_pt), V3ARGS(a->a_ray.r_dir), puh->dist); 
+    if(puh->in > 0) 
+	VMOVE(edges[edge], muh->hit); 
+    return 0;
+}
+
+int
 rt_nmg_mc_pew(struct shell *s, struct application *a, fastf_t x, fastf_t y, fastf_t step, const struct bn_tol *tol)
 {
     struct whack sw[MAX_INTERSECTS], nw[MAX_INTERSECTS], se[MAX_INTERSECTS], ne[MAX_INTERSECTS];
@@ -576,8 +604,7 @@ rt_nmg_mc_pew(struct shell *s, struct application *a, fastf_t x, fastf_t y, fast
 		    VADD2SCALE(edges[i], p[edge_vertex[i][0]], p[edge_vertex[i][1]], 0.5);
 	} else {
 	    /* the 'muh' list may have to be walked. */
-#define CLMUH for(i=0;i<MAX_INTERSECTS;i++) { muh[i].in=0;muh[i].dist=VOODOO;VSETALL(muh[i].hit,VOODOO);}
-#define MEH(A,B,C) if(bitdiff(pv,B,C)) { struct whack *puh; CLMUH; VJOIN1(a->a_ray.r_pt, p[B], -2*tol->dist, a->a_ray.r_dir); rt_shootray(a); puh=muh; while(puh->in > 0 && puh->dist < -tol->dist) { bu_log("%d %g isn't close enough, moving on\n", puh->in, puh->dist); puh++; if(puh->in < 1) bu_log("puhh?\n");} if(puh->dist > step + 2.5*tol->dist) { bu_log("spooky action on edge %d. (%g %g %g -> %g %g %g) dist:%g\n", A, V3ARGS(a->a_ray.r_pt), V3ARGS(a->a_ray.r_dir), puh->dist); } VMOVE(edges[A], muh->hit); }
+#define MEH(A,B,C) if(bitdiff(pv,B,C)) rt_nmg_mc_crosspew(a, A, p+B, edges, muh, step, tol)
 	    VSET(a->a_ray.r_dir, 1, 0, 0);
 	    MEH(0 ,0,1);
 	    MEH(2 ,3,2);
