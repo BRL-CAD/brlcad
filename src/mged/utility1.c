@@ -136,9 +136,9 @@ editit(char *tmpfile) {
     get_editor_string(&editstring);
 
     av = (char **)bu_malloc(sizeof(char *)*(argc + 1), "editit: av");
-    av[0] = "e"; 
+    av[0] = "-e"; 
     av[1] = bu_vls_addr(&editstring);
-    av[2] = "f";
+    av[2] = "-f";
     av[3] = tmpfile;
     av[4] = NULL;
 
@@ -169,14 +169,15 @@ f_edcolor(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     get_editor_string(&editstring);
 
     av = (char **)bu_malloc(sizeof(char *)*(argc + 3), "f_edcolor: av");
-    for (i = 0; i < argc; ++i) {
-	av[i] = argv[i];
-    }
+    av[0] = argv[0];
+    av[1] = "-E";
+    av[2] = bu_vls_addr(&editstring);
     argc += 2;
-    av[argc-2] = "-e";
-    av[argc-1] = bu_vls_addr(&editstring);
+    for (i = 3; i < argc; ++i) {
+	av[i] = argv[i-2];
+    }
     av[argc] = NULL;
-   
+  
     ged_edcolor(gedp, argc, (const char **)av);
     
     bu_vls_free(&editstring); 
@@ -213,13 +214,16 @@ f_edcodes(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     bu_vls_init(&editstring);
     get_editor_string(&editstring);
 
-    av = (char **)bu_malloc(sizeof(char *)*(argc + 2), "f_edcodes: av");
-    av[0] = bu_vls_addr(&editstring);
-    for (i = 1; i < argc + 1; ++i)
-	av[i] = argv[i-1];
-
-    av[i] = NULL;
-   
+    av = (char **)bu_malloc(sizeof(char *)*(argc + 3), "f_edcodes: av");
+    av[0] = argv[0];
+    av[1] = "-E";
+    av[2] = bu_vls_addr(&editstring);
+    argc += 2;
+    for (i = 3; i < argc; ++i) {
+	av[i] = argv[i-2];
+    }
+    av[argc] = NULL;
+  
     ged_edcodes(gedp, argc + 1, (const char **)av);
    
     bu_vls_free(&editstring); 
@@ -256,13 +260,16 @@ f_edmater(ClientData clientData, Tcl_Interp *interp, int argc, const char **argv
     bu_vls_init(&editstring);
     get_editor_string(&editstring);
 
-    av = (char **)bu_malloc(sizeof(char *)*(argc + 2), "f_edmater: av");
-    av[0] = bu_vls_addr(&editstring);
-    for (i = 1; i < argc + 1; ++i)
-	av[i] = (char *)argv[i-1];
+    av = (char **)bu_malloc(sizeof(char *)*(argc + 3), "f_edmater: av");
+    av[0] = argv[0];
+    av[1] = "-E";
+    av[2] = bu_vls_addr(&editstring);
+    argc += 2;
+    for (i = 3; i < argc; ++i) {
+	av[i] = argv[i-2];
+    }
+    av[argc] = NULL;
 
-    av[i] = NULL;
-   
     ged_edmater(gedp, argc + 1, (const char **)av);
    
     bu_vls_free(&editstring); 
@@ -299,13 +306,16 @@ f_red(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     bu_vls_init(&editstring);
     get_editor_string(&editstring);
 
-    av = (char **)bu_malloc(sizeof(char *)*(argc + 2), "f_red: av");
-    av[0] = bu_vls_addr(&editstring);
-    for (i = 1; i < argc + 1; ++i)
-	av[i] = argv[i-1];
+    av = (char **)bu_malloc(sizeof(char *)*(argc + 3), "f_red: av");
+    av[0] = argv[0];
+    av[1] = "-E";
+    av[2] = bu_vls_addr(&editstring);
+    argc += 2;
+    for (i = 3; i < argc; ++i) {
+	av[i] = argv[i-2];
+    }
+    av[argc] = NULL;
 
-    av[i] = NULL;
-   
     ged_red(gedp, argc + 1, (const char **)av);
    
     bu_vls_free(&editstring); 
