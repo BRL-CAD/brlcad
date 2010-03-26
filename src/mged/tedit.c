@@ -890,7 +890,6 @@ get_editor_string(struct bu_vls *editstring)
    
     Tcl_Eval(interp, "set osname $::tcl_platform(os)");
     os = Tcl_GetVar(interp, "osname", TCL_GLOBAL_ONLY);
-    printf("%s\n",os);
     
     editor = Tcl_GetVar(interp, "editor", TCL_GLOBAL_ONLY);
     if (!editor || editor[0] == '\0')
