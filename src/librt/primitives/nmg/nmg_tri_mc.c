@@ -377,7 +377,7 @@ rt_tri_mc_realize_cube(fastf_t *tris, int pv, point_t *edges)
 int
 rt_nmg_mc_realize_cube(struct shell *s, int pv, point_t *edges, const struct bn_tol *tol)
 {
-    int *vi, fo;
+    int *vi, fo, valids=0;
     struct faceuse *fu;
     struct vertex *vertl[3], **f_vertl[3];
 
@@ -413,6 +413,8 @@ rt_nmg_mc_realize_cube(struct shell *s, int pv, point_t *edges, const struct bn_
 	    continue;
 	}
 
+	valids++;
+
 	memset((char *)vertl, 0, sizeof(vertl));
 
 	fu = nmg_cmface(s, f_vertl, 3);
@@ -433,7 +435,7 @@ rt_nmg_mc_realize_cube(struct shell *s, int pv, point_t *edges, const struct bn_
 	vi+=3;
     }
 
-    return fo;
+    return valids;
 }
 
 static fastf_t bin(fastf_t val, fastf_t step) {return step*floor(val/step);}
@@ -501,7 +503,7 @@ rt_nmg_mc_pew(struct shell *s, struct application *a, fastf_t x, fastf_t y, fast
 {
     struct whack sw[MAX_INTERSECTS], nw[MAX_INTERSECTS], se[MAX_INTERSECTS], ne[MAX_INTERSECTS];
     struct whack *swp = sw, *nwp = nw, *sep = se, *nep = ne;
-    int insw=0, inse=0, innw=0, inne=0;
+    int insw=0, inse=0, innw=0, inne=0, count=0;
     fastf_t last_b = 0;
 
     VSET(a->a_ray.r_dir, 0, 0, 1);
@@ -602,11 +604,11 @@ rt_nmg_mc_pew(struct shell *s, struct application *a, fastf_t x, fastf_t y, fast
 
 	/* stuff it into an nmg shell */
 	if(pv != 0 && pv != 0xff && s)	/* && s should go away. */
-	    rt_nmg_mc_realize_cube(s, pv, edges, tol);
+	    count += rt_nmg_mc_realize_cube(s, pv, edges, tol);
 
 	last_b = b;
     }
-    return 0;
+    return count;
 }
 
 /* rtip needs to be valid, s is where the results are stashed */
@@ -616,8 +618,8 @@ rt_nmg_mc_pewpewpew (struct shell *s, struct rt_i *rtip, const struct db_full_pa
     struct application a;
     fastf_t x,y, endx, endy;
     fastf_t step = 0.0;
-    int shots = 0;
     int ncpu;
+    int count = 0;
 
     RT_APPLICATION_INIT(&a);
     a.a_rt_i = rtip;
@@ -641,14 +643,12 @@ rt_nmg_mc_pewpewpew (struct shell *s, struct rt_i *rtip, const struct db_full_pa
     /* TODO: throw "ncpu" threads here? */
     for(; x<endx; x+=step) {
 	y=bin(a.a_rt_i->mdl_min[Y], step) - step;
-	for(; y<endy; y+=step) {
-	    ++shots;
-	    rt_nmg_mc_pew(s,&a,x,y,step, tol);
-	}
+	for(; y<endy; y+=step)
+	    count += rt_nmg_mc_pew(s,&a,x,y,step, tol);
     }
     /* free the rt stuff we don't need anymore */
 
-    return shots;
+    return count;
 }
 
 void
