@@ -973,13 +973,13 @@ get_editor_string(struct bu_vls *editstring)
 	 *
 	 * terminal and terminal_opt remain unset
 	 */
-	if (strcmp(editor, EMACS_EDITOR) && strcmp(editor, VIM_EDITOR)
-		&& strcmp(editor, VI_EDITOR) && strcmp(editor, ED_EDITOR) 
-		&& strcmp(editor, "jove")) {
+	if (!(!(!strcmp(editor, bu_which(EMACS_EDITOR)) && (!editor_opt || editor_opt[0] == '\0'))
+		&& (strcmp(editor, bu_which(VIM_EDITOR)) && strcmp(editor, bu_which(VI_EDITOR)) 
+			&& strcmp(editor, bu_which(ED_EDITOR)) && strcmp(editor, "jove")))) {
 	    /* start with emacs... */ 
 	    editor = bu_which(EMACS_EDITOR);
 	    /* if emacs is found, set editor_opt */
-	    if (!editor || editor[0] == '\0') {
+	    if (!strcmp(editor, bu_which(EMACS_EDITOR))) {
 		editor_opt = "-nw";
 	    }
 	    if (!editor || editor[0] == '\0') {
