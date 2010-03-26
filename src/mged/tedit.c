@@ -876,6 +876,7 @@ get_editor_string(struct bu_vls *editstring)
     int xpid = 0;
     char buffer[RT_MAXLINE] = {0};
     int stat = 0;
+    int count = 0;
     const char *os = (char *)NULL;
     const char *terminal = (char *)NULL;
     const char *terminal_opt = (char *)NULL;
@@ -964,9 +965,21 @@ get_editor_string(struct bu_vls *editstring)
 	 *
 	 * terminal and terminal_opt remain unset
 	 */
-	if (!(!(!strcmp(editor, bu_which(EMACS_EDITOR)) && (!editor_opt || editor_opt[0] == '\0'))
-	      && (strcmp(editor, bu_which(VIM_EDITOR)) && strcmp(editor, bu_which(VI_EDITOR)) 
-		  && strcmp(editor, bu_which(ED_EDITOR)) && strcmp(editor, "jove")))) {
+
+	/* Test for any of the editor conditions that will require intervention.
+	 * Unfortunately, because we can't be certain that a user supplied EDITOR
+	 * will work in console mode, if it's not one of the known good cases
+	 * we have to attempt to set one of the known working editor configs. 
+	 * Hence, check for known working AND known not-working up front - need
+	 * to satisfy both that there IS a working config already and that one
+	 * of the non-working configs isn't set.*/
+	count += (!strcmp(editor, bu_which(EMACS_EDITOR)) && (!editor_opt || editor_opt[0] == '\0'));
+	count += !(strcmp(editor, bu_which(VIM_EDITOR)));
+	count += !(strcmp(editor, bu_which(VI_EDITOR)));
+	count += !(strcmp(editor, bu_which(ED_EDITOR)));
+	count += !(strcmp(editor, "jove"));
+	count += !(!(!(strcmp(editor, MAC_EDITOR))));
+	if (count > 0) {
 	    /* start with emacs... */ 
 	    editor = bu_which(EMACS_EDITOR);
 	    /* if emacs is found, set editor_opt */
