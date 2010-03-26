@@ -869,12 +869,6 @@ readsolid(void)
 }
 
 
-/* BUGS -- right now we only check at compile time whether or not to
- * pop up an X window to display into (for editors that do not open
- * their own window like vi or jove).  If we have X support, we
- * automatically use xterm (regardless of whether the user is running
- * mged in console mode!)
- */
 int
 get_editor_string(struct bu_vls *editstring)
 {
