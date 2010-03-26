@@ -968,8 +968,7 @@ get_editor_string(struct bu_vls *editstring)
 	 * gui, regardless of EDITOR settings. In this situation, emacs
 	 * will be invoked with the -nw option.
 	 * 
-	 * Darwin:  emacs, vim, vi, ed, jove
-	 * Unix/Linux/BSD: vim, vi, ed, jove
+	 * Standard:  emacs, vim, vi, ed, jove
 	 * Windows: jove
 	 *
 	 * terminal and terminal_opt remain unset
