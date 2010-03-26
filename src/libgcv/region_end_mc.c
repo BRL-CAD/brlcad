@@ -50,6 +50,7 @@ gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, u
     int empty_region = 0;
     int empty_model = 0;
     int NMG_debug_state = 0;
+    int count = 0;
 
     void (*write_region)(struct nmgregion *, const struct db_full_path *, int, int, float [3]);
 
@@ -101,7 +102,13 @@ gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, u
     if(tsp->ts_rtip == NULL)
 	tsp->ts_rtip = rt_new_rti(tsp->ts_dbip);
 
-    rt_nmg_mc_pewpewpew (s, tsp->ts_rtip, pathp, tsp->ts_ttol, tsp->ts_tol);
+    count += rt_nmg_mc_pewpewpew (s, tsp->ts_rtip, pathp, tsp->ts_ttol, tsp->ts_tol);
+
+    /* empty region? */
+    if(count == 0) {
+	bu_log("Region %s appears to be empty.\n", db_path_to_string(pathp));
+	return TREE_NULL;
+    }
 
     nmg_mark_edges_real(&s->l.magic);
     nmg_region_a(r, tsp->ts_tol);
