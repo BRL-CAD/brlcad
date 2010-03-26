@@ -887,10 +887,8 @@ get_editor_string(struct bu_vls *editstring)
     const char *terminal_opt = (char *)NULL;
     const char *editor = (char *)NULL;
     const char *editor_opt = (char *)NULL;
-   
-    Tcl_Eval(interp, "set osname $::tcl_platform(os)");
-    os = Tcl_GetVar(interp, "osname", TCL_GLOBAL_ONLY);
-    
+
+    os = Tcl_GetVar(interp, "::tcl_platform(os)", TCL_GLOBAL_ONLY);
     editor = Tcl_GetVar(interp, "editor", TCL_GLOBAL_ONLY);
     if (!editor || editor[0] == '\0')
 	editor = Tcl_GetVar(interp, "EDITOR", TCL_GLOBAL_ONLY);
