@@ -51,6 +51,10 @@ struct ga_t {                                    /* assigned by ... */
     const size_t        *attindex_arr_tnv_faces; /* obj_polygonal_tnv_faces */
 };
 
+    /* global definition */
+    size_t *tmp_ptr = NULL ;
+    size_t (*triangle_indexes)[3][2] = NULL ;
+
 void collect_global_obj_file_attributes(struct ga_t *ga) {
     size_t i = 0;
 
@@ -143,6 +147,14 @@ void cleanup_name(struct bu_vls *outputObjectName_ptr) {
     return;
 }
 
+/* compare function for qsort for triangle indexes */
+static int comp(const void *p1, const void *p2) {
+   size_t i = * (size_t *) p1;
+   size_t j = * (size_t *) p2;
+
+   return (int)(tmp_ptr[i] - tmp_ptr[j]);
+}
+
 int process_nv_faces(struct ga_t *ga, 
                      struct rt_wdb *outfp, 
                      int grp_mode, 
@@ -182,7 +194,6 @@ int process_nv_faces(struct ga_t *ga,
     const size_t num_triangles_per_alloc = 128 ;
     const size_t num_indexes_per_triangle = 6 ; /* 3 vert/tri, 1 norm/vert, 2 idx/vert */
     size_t triangle_indexes_size = 0;
-    size_t (*triangle_indexes)[3][2] = NULL ;
     size_t (*triangle_indexes_tmp)[3][2] = NULL ;
 
 #if 0
@@ -403,7 +414,134 @@ int process_nv_faces(struct ga_t *ga,
 
     }  /* numNorFaces loop, when loop exits, all nv_faces have been reviewed */
 
-/* need to process the triangle_indexes to find only the indexes needed */
+    /* need to process the triangle_indexes to find only the indexes needed */
+
+    /* lets try just getting the sort to work on who array first, then get it to subsort
+       on just the vertex indexes */
+
+    if ( numNorTriangles_in_current_bot > 0 ) {
+    size_t num_indexes = 0; /* for vertices and normals */
+
+    /* num_indexes is the number of vertex indexes in triangle_indexes array */
+    /* num_indexes is also the number of vertex normal indexes in triangle_indexes array */
+    num_indexes = (numNorTriangles_in_current_bot * num_indexes_per_triangle) / 2 ;
+    bu_log("#ntri (%lu) #ni/tri (%lu) #elems (%lu)\n", 
+       numNorTriangles_in_current_bot,
+       num_indexes_per_triangle,
+       num_indexes);
+
+    /* replace "some_ints" with "triangle_indexes" */
+    /* where the data-type for "some_ints" is used, change to "size_t" */
+
+    size_t last = 0 ;
+    size_t k = 0 ;
+
+    size_t counter = 0;
+
+    size_t num_unique_vertex_indexes = 0 ;
+    size_t num_unique_vertex_normal_indexes = 0 ;
+
+    /* array to store sorted unique libobj vertex index values for current bot */
+    size_t *unique_vertex_indexes = NULL ;
+
+    /* array to store sorted unique libobj vertex normal index values for current bot */
+    size_t *unique_vertex_normal_indexes = NULL ;
+
+    size_t *vertex_sort_index = NULL ; 
+    size_t *vertex_normal_sort_index = NULL ;
+
+    vertex_sort_index = (size_t *)bu_calloc(num_indexes, sizeof(size_t), "vertex_sort_index");
+
+    vertex_normal_sort_index = (size_t *)bu_calloc(num_indexes, sizeof(size_t), "vertex_normal_sort_index");
+
+
+
+    /* populate index arrays */
+    for (k = 0 ; k < num_indexes ; k++) {
+        vertex_sort_index[k] = k*2 ;
+        vertex_normal_sort_index[k] = (k*2)+1 ;
+    }
+
+    tmp_ptr = (size_t *)triangle_indexes;
+
+    bu_log("non-sorted vertex_sort_index index contents ...\n");
+    for (k = 0; k < num_indexes ; ++k) {
+        bu_log("(%lu)\n", vertex_sort_index[k]);
+    }
+
+    /* sort vertex_sort_index containing indexes into vertex
+       indexes within triangle_indexes array */
+    qsort(vertex_sort_index, num_indexes, sizeof vertex_sort_index[0],
+         (int (*)(const void *a, const void *b))comp);
+
+    /* sort vertex_normal_sort_index containing indexes into vertex normal
+       indexes within triangle_indexes array */
+    qsort(vertex_normal_sort_index, num_indexes, sizeof vertex_normal_sort_index[0],
+         (int (*)(const void *a, const void *b))comp);
+
+    /* count sorted and unique libobj vertex indexes */
+    last = tmp_ptr[vertex_sort_index[0]];
+    num_unique_vertex_indexes = 1;
+    for (k = 1; k < num_indexes ; ++k) {
+        if (tmp_ptr[vertex_sort_index[k]] != last) {
+            last = tmp_ptr[vertex_sort_index[k]];
+            num_unique_vertex_indexes++;
+        }
+    }
+    bu_log("num_unique_vertex_indexes = (%lu)\n", num_unique_vertex_indexes);
+
+    unique_vertex_indexes = (size_t *)bu_calloc(num_unique_vertex_indexes, 
+                                                sizeof(size_t), "unique_vertex_indexes");
+
+    /* store sorted and unique libobj vertex indexes */
+    bu_log("storing sorted and unique libobj vertex indexes\n");
+    counter = 0;
+    last = tmp_ptr[vertex_sort_index[0]];
+    unique_vertex_indexes[counter] = last ;
+    for (k = 1; k < num_indexes ; ++k) {
+        if (tmp_ptr[vertex_sort_index[k]] != last) {
+            last = tmp_ptr[vertex_sort_index[k]];
+            counter++;
+            unique_vertex_indexes[counter] = last ;
+        }
+    }
+
+    /* output stored sorted and unique libobj vertex indexes */
+    bu_log("stored sorted and unique libobj vertex indexes\n");
+    for (k = 0; k < num_unique_vertex_indexes ; ++k)
+        bu_log("(%lu)\n", unique_vertex_indexes[k]);
+
+    /* output sorted and unique libobj vertex normal indexes */
+    bu_log("unique vertex normal indexes to store in bot vertex array ...\n");
+    bu_log("%lu\n",(last = tmp_ptr[vertex_normal_sort_index[0]]));
+    for (k = 1; k < num_indexes ; ++k)
+        if (tmp_ptr[vertex_normal_sort_index[k]] != last)
+            bu_log("%lu\n",(last = tmp_ptr[vertex_normal_sort_index[k]]));
+
+    bu_log("sorted vertex_sort_index & vertex_normal_sort_index index contents ...\n");
+    for (k = 0; k < num_indexes ; ++k) {
+        bu_log("(%lu)(%lu)\n", vertex_sort_index[k], vertex_normal_sort_index[k]);
+    }
+
+    bu_log("raw triangle_indexes contents ...\n");
+    for (k = 0; k < (num_indexes * 2) ; ++k) {
+        bu_log("(%lu)\n", tmp_ptr[k]);
+    }
+
+    bu_log("triangle_indexes vertex index contents ...\n");
+    for (k = 0; k < (num_indexes * 2) ; k=k+2) {
+        bu_log("(%lu)\n", tmp_ptr[k]);
+    }
+
+    bu_log("triangle_indexes vertex index normal contents ...\n");
+    for (k = 1; k < (num_indexes * 2) ; k=k+2) {
+        bu_log("(%lu)\n", tmp_ptr[k]);
+    }
+
+    bu_free(vertex_sort_index,"vertex_sort_index");
+    bu_free(vertex_normal_sort_index,"vertex_normal_sort_index");
+    bu_free(unique_vertex_indexes,"unique_vertex_indexes");
+
 
 #if 0
     if ( numNorTriangles_in_current_bot > 0 ) {
@@ -442,6 +580,7 @@ int process_nv_faces(struct ga_t *ga,
         /* duplicate code to allow above to be commented */
         bu_vls_free(&outputObjectName);
         bu_free(triangle_indexes, "triangle_indexes");
+    }
 
     return ret_val;
 }
