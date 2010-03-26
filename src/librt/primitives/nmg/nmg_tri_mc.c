@@ -632,12 +632,12 @@ rt_nmg_mc_pewpewpew (struct shell *s, struct rt_i *rtip, const struct db_full_pa
     /* use rel value * bounding spheres diameter or the abs tolerance */
     step = NEAR_ZERO(ttol->abs, tol->dist) ? 0.5 * a.a_rt_i->rti_radius * ttol->rel : ttol->abs;
 
-    x=bin(a.a_rt_i->mdl_min[X], step);
+    x=bin(a.a_rt_i->mdl_min[X], step) - step;
     endx=bin(a.a_rt_i->mdl_max[X], step) + step;
     endy=bin(a.a_rt_i->mdl_max[Y], step) + step;
     for(; x<endx; x+=step) {
-	y=bin(a.a_rt_i->mdl_min[Y], step);
-	for(; y<a.a_rt_i->mdl_max[Y]; y+=step) {
+	y=bin(a.a_rt_i->mdl_min[Y], step) - step;
+	for(; y<endy; y+=step) {
 	    ++shots;
 	    rt_nmg_mc_pew(s,&a,x,y,step, tol);
 	}
