@@ -123,11 +123,13 @@ _ged_editit(char *editstring, const char *filename)
 	    WaitForSingleObject(pi.hProcess, INFINITE);
 	    return 1;
 #else
-	    if (strcmp(terminal,"(null)") == 0) {
+	    if (!strcmp(terminal,"(null)") && !strcmp(editor_opt, "(null)")) {
     		(void)execlp(editor, editor, file, NULL);
-	    } else {
-		(void)execlp(terminal, terminal, terminal_opt, editor, file, NULL);
 	    }
+	    if (!strcmp(terminal,"(null)") && strcmp(editor_opt, "(null)")) {
+		(void)execlp(editor, editor, editor_opt, file, NULL);
+	    }
+	    (void)execlp(terminal, terminal, terminal_opt, editor, file, NULL);
 #endif
 	    /* should not reach */
 	    perror(editor);
