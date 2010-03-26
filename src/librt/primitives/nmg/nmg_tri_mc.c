@@ -65,6 +65,8 @@
 
 #define MAX_INTERSECTS 1024
 
+#define VOODOO 10010.001
+
 /* set this to 1 for full midpoint use. Set it to 2 for x/y mid and real z. */
 int marching_cubes_use_midpoint = 2;
 
@@ -401,13 +403,11 @@ rt_nmg_mc_realize_cube(struct shell *s, int pv, point_t *edges, const struct bn_
 
 	if (!bn_3pts_distinct(edges[vi[0]], edges[vi[1]], edges[vi[2]], tol) ||
 		bn_3pts_collinear(edges[vi[0]], edges[vi[1]], edges[vi[2]], tol)) {
-	    bu_log("All collinear, skipping %d %d %d (%g %g %g | %g %g %g | %g %g %g)\n", vi[0], vi[1], vi[2],
-		    V3ARGS(edges[vi[0]]),
-		    V3ARGS(edges[vi[1]]),
-		    V3ARGS(edges[vi[2]]));
-	    if(NEAR_ZERO(edges[vi[0]][X]+1, tol->dist)) {
-		bu_log("Heh.\n");
-		exit(-1);
+	    if(NEAR_ZERO(edges[vi[0]][X]-VOODOO, tol->dist) ||
+		NEAR_ZERO(edges[vi[1]][X]-VOODOO, tol->dist) ||
+		NEAR_ZERO(edges[vi[1]][X]-VOODOO, tol->dist)) {
+		bu_log("Heh, throwing away a triangle %d/%d/%d (%g %g %g | %g %g %g | %g %g %g)\n",
+		    V3ARGS(vi), V3ARGS(edges[vi[0]]), V3ARGS(edges[vi[1]]), V3ARGS(edges[vi[2]]));
 	    }
 	    vi+=3;
 	    continue;
@@ -576,8 +576,8 @@ rt_nmg_mc_pew(struct shell *s, struct application *a, fastf_t x, fastf_t y, fast
 		    VADD2SCALE(edges[i], p[edge_vertex[i][0]], p[edge_vertex[i][1]], 0.5);
 	} else {
 	    /* the 'muh' list may have to be walked. */
-#define CLMUH for(i=0;i<MAX_INTERSECTS;i++) { muh[i].in=0;muh[i].dist=-1;VSETALL(muh[i].hit,-1);}
-#define MEH(A,B,C) if(bitdiff(pv,B,C)) { struct whack *puh; CLMUH; VJOIN1(a->a_ray.r_pt, p[B], -tol->dist, a->a_ray.r_dir); rt_shootray(a); puh=muh; while(puh->in > 0 && puh->dist < 0.0) { puh++; if(puh->in < 1) bu_log("puhh?\n");} VMOVE(edges[A], muh->hit); }
+#define CLMUH for(i=0;i<MAX_INTERSECTS;i++) { muh[i].in=0;muh[i].dist=VOODOO;VSETALL(muh[i].hit,VOODOO);}
+#define MEH(A,B,C) if(bitdiff(pv,B,C)) { struct whack *puh; CLMUH; VJOIN1(a->a_ray.r_pt, p[B], -2*tol->dist, a->a_ray.r_dir); rt_shootray(a); puh=muh; while(puh->in > 0 && puh->dist < -tol->dist) { bu_log("%d %g isn't close enough, moving on\n", puh->in, puh->dist); puh++; if(puh->in < 1) bu_log("puhh?\n");} if(puh->dist > step + 2.5*tol->dist) { bu_log("spooky action on edge %d. (%g %g %g -> %g %g %g) dist:%g\n", A, V3ARGS(a->a_ray.r_pt), V3ARGS(a->a_ray.r_dir), puh->dist); } VMOVE(edges[A], muh->hit); }
 	    VSET(a->a_ray.r_dir, 1, 0, 0);
 	    MEH(0 ,0,1);
 	    MEH(2 ,3,2);
