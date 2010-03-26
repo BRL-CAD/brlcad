@@ -67,7 +67,6 @@
 
 /* set this to 1 for full midpoint use. Set it to 2 for x/y mid and real z. */
 int marching_cubes_use_midpoint = 2;
-int edgeofconcern;
 
 /*
  * Table data acquired from Paul Borke's page at
@@ -406,7 +405,7 @@ rt_nmg_mc_realize_cube(struct shell *s, int pv, point_t *edges, const struct bn_
 		    V3ARGS(edges[vi[0]]),
 		    V3ARGS(edges[vi[1]]),
 		    V3ARGS(edges[vi[2]]));
-	    if(NEAR_ZERO(edges[vi[0]][X]-1, tol->dist)) {
+	    if(NEAR_ZERO(edges[vi[0]][X]+1, tol->dist)) {
 		bu_log("Heh.\n");
 		exit(-1);
 	    }
@@ -576,7 +575,7 @@ rt_nmg_mc_pew(struct shell *s, struct application *a, fastf_t x, fastf_t y, fast
 	} else {
 	    /* the 'muh' list may have to be walked. */
 #define CLMUH for(i=0;i<MAX_INTERSECTS;i++) { muh[i].in=0;muh[i].dist=-1;VSETALL(muh[i].hit,-1);}
-#define MEH(A,B,C) edgeofconcern=A; if(bitdiff(pv,B,C)) { struct whack *puh; CLMUH; VJOIN1(a->a_ray.r_pt, p[B], -tol->dist, a->a_ray.r_dir); rt_shootray(a); puh=muh; while(puh->in > 0 && puh->dist < 0.0) { puh++; if(puh->in < 1) bu_log("puhh?\n");} VMOVE(edges[A], muh->hit); }
+#define MEH(A,B,C) if(bitdiff(pv,B,C)) { struct whack *puh; CLMUH; VJOIN1(a->a_ray.r_pt, p[B], -tol->dist, a->a_ray.r_dir); rt_shootray(a); puh=muh; while(puh->in > 0 && puh->dist < 0.0) { puh++; if(puh->in < 1) bu_log("puhh?\n");} VMOVE(edges[A], muh->hit); }
 	    VSET(a->a_ray.r_dir, 1, 0, 0);
 	    MEH(0 ,0,1);
 	    MEH(2 ,3,2);
@@ -618,13 +617,16 @@ rt_nmg_mc_pewpewpew (struct shell *s, struct rt_i *rtip, const struct db_full_pa
     fastf_t x,y, endx, endy;
     fastf_t step = 0.0;
     int shots = 0;
+    int ncpu;
 
     RT_APPLICATION_INIT(&a);
     a.a_rt_i = rtip;
     a.a_rt_i->useair = 1;
     a.a_hit = bangbang;
     a.a_miss = missed;
-    a.a_onehit = 99;
+    a.a_onehit = MAX_INTERSECTS;
+
+    ncpu = bu_avail_cpus();
 
     rt_gettree( a.a_rt_i, db_path_to_string(pathp) );
     rt_prep( a.a_rt_i );
@@ -635,6 +637,8 @@ rt_nmg_mc_pewpewpew (struct shell *s, struct rt_i *rtip, const struct db_full_pa
     x=bin(a.a_rt_i->mdl_min[X], step) - step;
     endx=bin(a.a_rt_i->mdl_max[X], step) + step;
     endy=bin(a.a_rt_i->mdl_max[Y], step) + step;
+
+    /* TODO: throw "ncpu" threads here? */
     for(; x<endx; x+=step) {
 	y=bin(a.a_rt_i->mdl_min[Y], step) - step;
 	for(; y<endy; y+=step) {
