@@ -48,6 +48,8 @@
 #define V3BASE2LOCAL(_pt)	(_pt)[X]*base2local, (_pt)[Y]*base2local, (_pt)[Z]*base2local
 #define V4BASE2LOCAL(_pt)	(_pt)[X]*base2local, (_pt)[Y]*base2local, (_pt)[Z]*base2local, (_pt)[W]*base2local
 
+extern int classic_mged;
+
 /* editors to test, in order of discovery preference (EDITOR overrides) */
 #define WIN_EDITOR "c:/Program Files/Windows NT/Accessories/wordpad"
 #define MAC_EDITOR "/Applications/TextEdit.app/Contents/MacOS/TextEdit"
@@ -943,44 +945,103 @@ get_editor_string(struct bu_vls *editstring)
 	}
     }
 
-    /* Spell out in which situations we need a terminal.
-     */
-    if (!strcmp(os, "Darwin")) {
-	/* on the mac, if it's not mac editor assume a terminal is needed. Until
-	 * we figure out how to use Mac terminal, use X11 xterm */
-	if (editor != MAC_EDITOR) {
-	    terminal = bu_which(XTERM_COMMAND);
-	    terminal_opt = "-e";
+    /* There are two possible situations for MGED - in classic mode
+     * the assumption is made that the command window is a controlling
+     * terminal, and an editor should be launched that will utilize
+     * that controlling window. Otherwise, some editor settings will
+     * need a terminal supplied via an xterm and some will not. */
+
+
+    /* If we're in classic mode on Windows, go with jove */
+    if (classic_mged && (!strcmp(os, "Windows 95") || !strcmp(os, "Windows NT"))) {
+	const char *binpath = bu_brlcad_root("bin", 1);
+	editor = "jove";
+	if (binpath) {
+	    snprintf(buffer, RT_MAXLINE, "%s/%s", binpath, editor);
+	    editor = buffer;
 	}
     }
 
-    /* For now, assume there aren't any situations where Windows will use a terminal */
-	    
-    /* If it's not mac, and it's not Windows, assume Emacs has X11 support.  Is there
-     * a way to test? */
-    if (strcmp(os, "Darwin") && strcmp(os, "Windows 95") && strcmp(os, "Windows NT") ) {
-	if (!strcmp(editor, "vim") ) {
-	    terminal = bu_which(XTERM_COMMAND);
-	    terminal_opt = "-e";
+    if (classic_mged) {
+	/* In this situation, make sure we're using an editor that will
+	 * work within the mged terminal (i.e. no launching a separate
+	 * gui, regardless of EDITOR settings. In this situation, emacs
+	 * will be invoked with the -nw option.
+	 * 
+	 * Darwin:  emacs, vim, vi, ed, jove
+	 * Unix/Linux/BSD: vim, vi, ed, jove
+	 * Windows: jove
+	 *
+	 * terminal and terminal_opt remain unset
+	 */
+	if (strcmp(editor, EMACS_EDITOR) && strcmp(editor, VIM_EDITOR)
+		&& strcmp(editor, VI_EDITOR) && strcmp(editor, ED_EDITOR) 
+		&& strcmp(editor, "jove")) {
+	    /* start with emacs... */ 
+	    editor = bu_which(EMACS_EDITOR);
+	    /* if emacs is found, set editor_opt */
+	    if (!editor || editor[0] == '\0') {
+		editor_opt = "-nw";
+	    }
+	    if (!editor || editor[0] == '\0') {
+		editor = bu_which(VIM_EDITOR);
+	    }
+	    if (!editor || editor[0] == '\0') {
+		editor = bu_which(VI_EDITOR);
+	    }
+	    if (!editor || editor[0] == '\0') {
+		editor = bu_which(ED_EDITOR);
+	    }
+	    if (!editor || editor[0] == '\0') {
+		const char *binpath = bu_brlcad_root("bin", 1);
+		editor = "jove";
+		if (binpath) {
+		    snprintf(buffer, RT_MAXLINE, "%s/%s", binpath, editor);
+		    editor = buffer;
+		}
+	    }
 	}
-	if (!strcmp(editor, "vi") ) {
-	    terminal = bu_which(XTERM_COMMAND);
-	    terminal_opt = "-e";
-	}
-	if (!strcmp(editor, "ed") ) {
-	    terminal = bu_which(XTERM_COMMAND);
-	    terminal_opt = "-e";
-	}
-	if (!strcmp(editor, "jove") ) {
-	    terminal = bu_which(XTERM_COMMAND);
-	    terminal_opt = "-e";
-	}
-    }
-
-    /* if it's not something we know about, assume no terminal - user can arrange for one if needed */
-
-    bu_vls_sprintf(editstring, "%s %s %s %s", terminal, terminal_opt, editor, editor_opt); 
+    	
+	bu_vls_sprintf(editstring, "%s %s %s %s", terminal, terminal_opt, editor, editor_opt); 
+    } else { 
+    	/* Spell out in which situations we need a terminal.
+	 */
+    	if (!strcmp(os, "Darwin")) {
+    	    /* on the mac, if it's not mac editor assume a terminal is needed. Until
+	     * we figure out how to use Mac terminal, use X11 xterm */
+    	    if (editor != MAC_EDITOR) {
+    		terminal = bu_which(XTERM_COMMAND);
+    		terminal_opt = "-e";
+    	    }
+    	}
 	
+    	/* For now, assume there aren't any situations where Windows will use a terminal */
+	
+    	/* If it's not mac, and it's not Windows, assume Emacs has X11 support.  Is there
+	 * a way to test? */
+    	if (strcmp(os, "Darwin") && strcmp(os, "Windows 95") && strcmp(os, "Windows NT") ) {
+    	    if (!strcmp(editor, "vim") ) {
+    		terminal = bu_which(XTERM_COMMAND);
+    		terminal_opt = "-e";
+    	    }
+    	    if (!strcmp(editor, "vi") ) {
+    		terminal = bu_which(XTERM_COMMAND);
+    		terminal_opt = "-e";
+    	    }
+    	    if (!strcmp(editor, "ed") ) {
+    		terminal = bu_which(XTERM_COMMAND);
+    		terminal_opt = "-e";
+    	    }
+    	    if (!strcmp(editor, "jove") ) {
+    		terminal = bu_which(XTERM_COMMAND);
+    		terminal_opt = "-e";
+    	    }
+    	}
+	
+    	/* if it's not something we know about, assume no terminal - user can arrange for one if needed */
+
+    	bu_vls_sprintf(editstring, "%s %s %s %s", terminal, terminal_opt, editor, editor_opt); 
+    }	
     return 1;
 }
 
