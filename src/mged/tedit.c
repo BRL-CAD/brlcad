@@ -900,7 +900,7 @@ get_editor_string(struct bu_vls *editstring)
 
     /* still unset? try windows */
     if (!editor || editor[0] == '\0') {
-	if (!strcmp(os,"Windows 95") || !strcmp(os,"Windows NT")) {
+	if (!strcmp(os, "Windows 95") || !strcmp(os, "Windows NT")) {
     	    editor = WIN_EDITOR;
 	} else {
     	    editor = (char *)NULL;
@@ -973,8 +973,8 @@ get_editor_string(struct bu_vls *editstring)
 	 * terminal and terminal_opt remain unset
 	 */
 	if (!(!(!strcmp(editor, bu_which(EMACS_EDITOR)) && (!editor_opt || editor_opt[0] == '\0'))
-		&& (strcmp(editor, bu_which(VIM_EDITOR)) && strcmp(editor, bu_which(VI_EDITOR)) 
-			&& strcmp(editor, bu_which(ED_EDITOR)) && strcmp(editor, "jove")))) {
+	      && (strcmp(editor, bu_which(VIM_EDITOR)) && strcmp(editor, bu_which(VI_EDITOR)) 
+		  && strcmp(editor, bu_which(ED_EDITOR)) && strcmp(editor, "jove")))) {
 	    /* start with emacs... */ 
 	    editor = bu_which(EMACS_EDITOR);
 	    /* if emacs is found, set editor_opt */
@@ -1017,20 +1017,20 @@ get_editor_string(struct bu_vls *editstring)
 	
     	/* If it's not mac, and it's not Windows, assume Emacs has X11 support.  Is there
 	 * a way to test? */
-    	if (strcmp(os, "Darwin") && strcmp(os, "Windows 95") && strcmp(os, "Windows NT") ) {
-    	    if (!strcmp(editor, "vim") ) {
+    	if (strcmp(os, "Darwin") && strcmp(os, "Windows 95") && strcmp(os, "Windows NT")) {
+    	    if (!strcmp(editor, "vim")) {
     		terminal = bu_which(XTERM_COMMAND);
     		terminal_opt = "-e";
     	    }
-    	    if (!strcmp(editor, "vi") ) {
+    	    if (!strcmp(editor, "vi")) {
     		terminal = bu_which(XTERM_COMMAND);
     		terminal_opt = "-e";
     	    }
-    	    if (!strcmp(editor, "ed") ) {
+    	    if (!strcmp(editor, "ed")) {
     		terminal = bu_which(XTERM_COMMAND);
     		terminal_opt = "-e";
     	    }
-    	    if (!strcmp(editor, "jove") ) {
+    	    if (!strcmp(editor, "jove")) {
     		terminal = bu_which(XTERM_COMMAND);
     		terminal_opt = "-e";
     	    }
