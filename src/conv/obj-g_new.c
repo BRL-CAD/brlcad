@@ -166,6 +166,14 @@ void cleanup_name(struct bu_vls *outputObjectName_ptr) {
     return;
 }
 
+/* compare function for bsearch for triangle indexes */
+static int comp_b(const void *p1, const void *p2) {
+   size_t i = * (size_t *) p1;
+   size_t j = * (size_t *) p2;
+
+   return (int)(i - j);
+}
+
 /* compare function for qsort for triangle indexes */
 static int comp(const void *p1, const void *p2) {
    size_t i = * (size_t *) p1;
@@ -196,7 +204,9 @@ int process_nv_faces(struct ga_t *ga,
     size_t vertices_next_size = 0;
     int *faces = NULL;
     fastf_t *thickness = NULL;
-    long int j = 0;
+    fastf_t *normals = NULL;
+    int *face_normals = NULL;
+    size_t j = 0;
 
     struct bu_vls outputObjectName;
 
@@ -205,22 +215,14 @@ int process_nv_faces(struct ga_t *ga,
     int skip_degenerate_faces = 1; /* boolean */
     int degenerate_face = 0; /* boolean */
 
-#if 0
-    const size_t coordinates_per_triangle = 9 ; /* 3 coordinates per vertex, 3 vertex per face; i.e. 3*3=9 */
     size_t bot_vertex_array_size = 0;
-#endif
+    size_t bot_normals_array_size = 0;
 
     const size_t num_triangles_per_alloc = 128 ;
     const size_t num_indexes_per_triangle = 6 ; /* 3 vert/tri, 1 norm/vert, 2 idx/vert */
     size_t triangle_indexes_size = 0;
     size_t (*triangle_indexes_tmp)[3][2] = NULL ;
 
-#if 0
-    /* compute memory required for initial bot vertices array */
-    bot_vertex_array_size = num_triangles_per_alloc * coordinates_per_triangle ;
-    /* allocate memory for initial bot vertices array */
-    vertices = (fastf_t *)bu_calloc((size_t)bot_vertex_array_size, sizeof(fastf_t), "vertices");
-#endif
 
 
     /* compute memory required for initial triangle_indexes array */
@@ -293,8 +295,8 @@ int process_nv_faces(struct ga_t *ga,
             size = obj_polygonal_nv_face_vertices(ga->contents,i,&index_arr_nv_faces);
         }
 
-        /* test for and force the skipp of degenerate faces */
-        /* in this case degenrate faces are those with duplicate vertices */
+        /* test for and force the skip of degenerate faces */
+        /* in this case degenerate faces are those with duplicate vertices */
         if ( found && skip_degenerate_faces ) {
             /* within the current face, compares vertice indices for duplicates */
             /* stops looking after found 1st duplicate */
@@ -435,9 +437,6 @@ int process_nv_faces(struct ga_t *ga,
 
     /* need to process the triangle_indexes to find only the indexes needed */
 
-    /* lets try just getting the sort to work on who array first, then get it to subsort
-       on just the vertex indexes */
-
     if ( numNorTriangles_in_current_bot > 0 ) {
     size_t num_indexes = 0; /* for vertices and normals */
 
@@ -509,8 +508,22 @@ int process_nv_faces(struct ga_t *ga,
     }
     bu_log("num_unique_vertex_indexes = (%lu)\n", num_unique_vertex_indexes);
 
+    /* count sorted and unique libobj vertex normal indexes */
+    last = tmp_ptr[vertex_normal_sort_index[0]];
+    num_unique_vertex_normal_indexes = 1;
+    for (k = 1; k < num_indexes ; ++k) {
+        if (tmp_ptr[vertex_normal_sort_index[k]] != last) {
+            last = tmp_ptr[vertex_normal_sort_index[k]];
+            num_unique_vertex_normal_indexes++;
+        }
+    }
+    bu_log("num_unique_vertex_normal_indexes = (%lu)\n", num_unique_vertex_normal_indexes);
+
     unique_vertex_indexes = (size_t *)bu_calloc(num_unique_vertex_indexes, 
                                                 sizeof(size_t), "unique_vertex_indexes");
+
+    unique_vertex_normal_indexes = (size_t *)bu_calloc(num_unique_vertex_normal_indexes, 
+                                                sizeof(size_t), "unique_vertex_normal_indexes");
 
     /* store sorted and unique libobj vertex indexes */
     bu_log("storing sorted and unique libobj vertex indexes\n");
@@ -525,17 +538,28 @@ int process_nv_faces(struct ga_t *ga,
         }
     }
 
+    /* store sorted and unique libobj vertex normal indexes */
+    bu_log("storing sorted and unique libobj vertex normal indexes\n");
+    counter = 0;
+    last = tmp_ptr[vertex_normal_sort_index[0]];
+    unique_vertex_normal_indexes[counter] = last ;
+    for (k = 1; k < num_indexes ; ++k) {
+        if (tmp_ptr[vertex_normal_sort_index[k]] != last) {
+            last = tmp_ptr[vertex_normal_sort_index[k]];
+            counter++;
+            unique_vertex_normal_indexes[counter] = last ;
+        }
+    }
+
     /* output stored sorted and unique libobj vertex indexes */
     bu_log("stored sorted and unique libobj vertex indexes\n");
     for (k = 0; k < num_unique_vertex_indexes ; ++k)
         bu_log("(%lu)\n", unique_vertex_indexes[k]);
 
-    /* output sorted and unique libobj vertex normal indexes */
-    bu_log("unique vertex normal indexes to store in bot vertex array ...\n");
-    bu_log("%lu\n",(last = tmp_ptr[vertex_normal_sort_index[0]]));
-    for (k = 1; k < num_indexes ; ++k)
-        if (tmp_ptr[vertex_normal_sort_index[k]] != last)
-            bu_log("%lu\n",(last = tmp_ptr[vertex_normal_sort_index[k]]));
+    /* output stored sorted and unique libobj vertex normal indexes */
+    bu_log("stored sorted and unique libobj vertex normal indexes\n");
+    for (k = 0; k < num_unique_vertex_normal_indexes ; ++k)
+        bu_log("(%lu)\n", unique_vertex_normal_indexes[k]);
 
     bu_log("sorted vertex_sort_index & vertex_normal_sort_index index contents ...\n");
     for (k = 0; k < num_indexes ; ++k) {
@@ -557,10 +581,110 @@ int process_nv_faces(struct ga_t *ga,
         bu_log("(%lu)\n", tmp_ptr[k]);
     }
 
+    /* compute memory required for bot vertices array */
+    bot_vertex_array_size = num_unique_vertex_indexes * 3 ; /* i.e. 3 coordinates per vertex index */
+
+    /* compute memory required for bot vertices normals array */
+    bot_normals_array_size = num_unique_vertex_normal_indexes * 3 ; /* i.e. 3 fastf_t per normal */
+
+    /* allocate memory for bot vertices array */
+    vertices = (fastf_t *)bu_calloc((size_t)bot_vertex_array_size, sizeof(fastf_t), "vertices");
+
+    /* allocate memory for bot normals array */
+    normals = (fastf_t *)bu_calloc((size_t)bot_normals_array_size, sizeof(fastf_t), "normals");
+
+    /* populate bot vertex array */
+    /* places xyz vertices into bot structure */
+    j = 0;
+    for (k = 0 ; k < bot_vertex_array_size ; k=k+3 ) {
+        vertices[k] =    (ga->vert_list[unique_vertex_indexes[j]][0]) * conversion_factor;
+        vertices[k+1] =  (ga->vert_list[unique_vertex_indexes[j]][1]) * conversion_factor;
+        vertices[k+2] =  (ga->vert_list[unique_vertex_indexes[j]][2]) * conversion_factor;
+        j++;
+    }
+
+    /* populate bot normals array */
+    /* places normals into bot structure */
+    j = 0;
+    for (k = 0 ; k < bot_normals_array_size ; k=k+3 ) {
+        normals[k] =    (ga->norm_list[unique_vertex_normal_indexes[j]][0]) ;
+        normals[k+1] =  (ga->norm_list[unique_vertex_normal_indexes[j]][1]) ;
+        normals[k+2] =  (ga->norm_list[unique_vertex_normal_indexes[j]][2]) ;
+        j++;
+    }
+
+    bu_log("raw populated bot vertices contents\n");
+    for (k = 0 ; k < bot_vertex_array_size ; k=k+3 ) {
+        bu_log("(%lu) (%f) (%f) (%f)\n", k, vertices[k], vertices[k+1], vertices[k+2]);
+    }
+
+    bu_log("raw populated bot normals contents\n");
+    for (k = 0 ; k < bot_normals_array_size ; k=k+3 ) {
+        bu_log("(%lu) (%f) (%f) (%f)\n", k, normals[k], normals[k+1], normals[k+2]);
+    }
+
+    /* allocate memory for faces and thickness arrays */
+    faces = (int *)bu_calloc(numNorTriangles_in_current_bot * 3, sizeof(int), "faces");
+    thickness = (fastf_t *)bu_calloc(numNorTriangles_in_current_bot * 3, sizeof(fastf_t), "thickness");
+
+    /* allocate memory for bot face_normals, i.e. indices into normals array */
+    face_normals = (int *)bu_calloc(numNorTriangles_in_current_bot * 3, sizeof(int), "face_normals");
+
+    size_t *res0 = NULL;
+    size_t *res1 = NULL;
+    size_t *res2 = NULL;
+
+    /* for each triangle, map libobj vertex indexes to bot vertex
+       indexes, i.e. populate bot faces array */
+    for (k = 0 ; k < numNorTriangles_in_current_bot ; k++ ) {
+
+        res0 = bsearch(&(triangle_indexes[k][0][0]),unique_vertex_indexes,
+                            num_unique_vertex_indexes, sizeof(size_t),
+                            (int (*)(const void *a, const void *b))comp_b) ;
+        res1 = bsearch(&(triangle_indexes[k][1][0]),unique_vertex_indexes,
+                            num_unique_vertex_indexes, sizeof(size_t),
+                            (int (*)(const void *a, const void *b))comp_b) ;
+        res2 = bsearch(&(triangle_indexes[k][2][0]),unique_vertex_indexes,
+                            num_unique_vertex_indexes, sizeof(size_t),
+                            (int (*)(const void *a, const void *b))comp_b) ;
+
+        /* should not need to test for null return from bsearch since we
+           know all values are in the list we just don't know where */
+        if ( res0 == NULL || res1 == NULL || res2 == NULL ) {
+            bu_log("ERROR: bsearch returned null\n");
+            return EXIT_FAILURE;
+        }
+
+        /* bsearch returns pointer to matching element, but need the index of
+           the element, pointer subtraction computes the correct index value
+           of the element */
+        faces[k*3] = (int) (res0 - unique_vertex_indexes);
+        faces[(k*3)+1] = (int) (res1 - unique_vertex_indexes);
+        faces[(k*3)+2] = (int) (res2 - unique_vertex_indexes);
+        thickness[(k*3)] = thickness[(k*3)+1] = thickness[(k*3)+2] = 1.0;
+
+        bu_log("libobj to bot vert idx mapping (%lu), (%lu) --> (%d), (%lu) --> (%d), (%lu) --> (%d)\n",
+           k,
+           triangle_indexes[k][0][0], faces[k*3],
+           triangle_indexes[k][1][0], faces[(k*3)+1],
+           triangle_indexes[k][2][0], faces[(k*3)+2] );
+    }
+
+
+
+    /* write bot to ".g" file */
+    ret_val = mk_bot(outfp, bu_vls_addr(&outputObjectName), RT_BOT_SURFACE, RT_BOT_UNORIENTED, 0, 
+                     numNorTriangles_in_current_bot*3, numNorTriangles_in_current_bot, vertices,
+                     faces, (fastf_t *)NULL, (struct bu_bitv *)NULL);
+
     bu_free(vertex_sort_index,"vertex_sort_index");
     bu_free(vertex_normal_sort_index,"vertex_normal_sort_index");
     bu_free(unique_vertex_indexes,"unique_vertex_indexes");
-
+    bu_free(vertices,"vertices");
+    bu_free(faces,"faces");
+    bu_free(thickness,"thickness");
+    bu_free(normals,"normals");
+    bu_free(face_normals,"face_normals");
 
 #if 0
     if ( numNorTriangles_in_current_bot > 0 ) {
@@ -626,7 +750,7 @@ main(int argc, char **argv)
 
     size_t i = 0;
 
-    char grouping_option = 'm'; /* to be selected by user from command line */
+    char grouping_option = 'o'; /* to be selected by user from command line */
 
     int weiss_result;
 
