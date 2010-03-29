@@ -86,9 +86,9 @@ EXTRA_DIST = \
 	${lessonsDOCBOOK_ES_IMAGES} \
 	${lessonsDOCBOOK_ES} \
 	${man1DOCBOOK_EN} \
-	${man1INTRO_EN} \
 	${man3DOCBOOK_EN} \
 	${mannDOCBOOK_EN} \
+	${mannINTRO_EN} \
 	${specificationsDOCBOOK_EN} \
 	README \
 	articles/en/Makefile.am \
