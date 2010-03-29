@@ -50,6 +50,16 @@ Recent Bugs
   mged -c moss.g "tops ; title"
   mged -c moss.g "puts OK ; tops ; puts OK2 ; title ; puts DONE"
 
+  Note that this is consistent with doing the same thing on the MGED
+  Command Window's command prompt - if the above is a bug it is 
+  apparently not restricted to command/classic mode.
+
+  A quick guess is that the processing of multiple commands in one
+  string will require breaking up the string into individual commands,
+  each of which will get its own Tcl_Eval call, allowing the parent
+  function to build a concatenation of the Tcl_GetStringResult(interp)
+  calls of all the individual commands.
+
 * kill command in archer deletes object but then reports a failure and
   mouse is stuck in a busy state.
 
