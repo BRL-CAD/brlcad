@@ -320,6 +320,8 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
     int offset;
     int save_comb_flag = 0;
     static const char *usage = "comb_name is_Region id air material los color shader inherit boolean_expr";
+    static const char *noregionusage = "comb_name n color shader inherit boolean_expr";
+    static const char *regionusage = "comb_name y id air material los color shader inherit boolean_expr";
     const char *saved_name = NULL;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -392,7 +394,8 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
 
     if (comb->region_flag) {
 	if (argc != 11) {
-	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	    bu_vls_printf(&gedp->ged_result_str, "region_flag is set, incorrect number of arguments supplied.\n");
+	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], regionusage);
 	    return GED_ERROR;
 	}
 
@@ -404,7 +407,8 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
 	offset = 6;
     } else {
 	if (argc != 7) {
-	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	    bu_vls_printf(&gedp->ged_result_str, "region_flag is not set, incorrect number of arguments supplied.\n");
+	    bu_vls_printf(&gedp->ged_result_str, "Usage: %s %s", argv[0], noregionusage);
 	    return GED_ERROR;
 	}
 	offset = 2;
@@ -430,7 +434,7 @@ ged_put_comb(struct ged *gedp, int argc, const char *argv[])
 	const char *av[3];
 
 	av[0] = "kill";
-	av[1] = _ged_tmpcomb;
+	av[1] = saved_name;
 	av[2] = NULL;
 	(void)ged_kill(gedp, 2, (const char **)av);
     }
