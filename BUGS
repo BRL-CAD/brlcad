@@ -22,8 +22,6 @@ Recent Bugs
 * mged rrt command is not respecting the view size, just does
   something similar to autoview but even gets az/el wrong too.
 
-* reported that fbclear is not working on Windows build in mged.
-
 * Windows mged build is not generating tclIndex files with all
   entries.  notably the pattern_gui.tcl file is not getting included
   as well as a variety of others.  see missing entries in
@@ -75,9 +73,6 @@ Recent Bugs
   depending on whether you shoot from the front or back can result in
   bogus lists visiable with nirt in mged, entirely missing the bot, or
   mismatched entry/exit/overlap segments.
-
-* coil -S ... generates bad pipes with values previously known to
-  work (see man page for one example).
 
 * nirt -e "xyz val val val" doesn't work due to the space after the -e
   and how the nirt/rt commands parse quoted args.
@@ -293,8 +288,6 @@ Recent Bugs
 * constrained axis translation bindings on OS X don't work
     object/matrix edit
     shift-alt mouse (left/mid/right for x/y/z respectively) should work
-
-* mged documentation doesn't open on OS X
 
 * the findfont directive in gv postscript is reporting font not found
 
