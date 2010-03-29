@@ -14,7 +14,7 @@ changes made.  See document footer for additional details.
 ----------------------------------------------------------------------
 
 * MGED help menu now lists all commands for which docs exist - C. Yapp
-* Fix put_comb when working on existing combinatiosn - Cliff Yapp
+* Fix put_comb when working on existing combinations - Cliff Yapp
 * Improve behavior of editor invocation in classic mode - Cliff Yapp
 * reorganization of archer buttons, panels, & preferences - Bob Parker
 * fix invocation of fbclear from MGED on Windows - Bob Parker
