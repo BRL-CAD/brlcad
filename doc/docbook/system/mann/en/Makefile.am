@@ -205,6 +205,7 @@ mannDOCBOOK_EN = \
 	system/mann/en/tree.xml \
 	system/mann/en/units.xml \
 	system/mann/en/vars.xml \
+	system/mann/en/vdraw.xml \
 	system/mann/en/view.xml \
 	system/mann/en/viewsize.xml \
 	system/mann/en/vnirt.xml \
