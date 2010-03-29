@@ -1,4 +1,16 @@
 mannDOCBOOK_EN = \
+	system/mann/en/3ptarb.xml \
+	system/mann/en/B.xml \
+	system/mann/en/E.xml \
+	system/mann/en/M.xml \
+	system/mann/en/Z.xml \
+	system/mann/en/adc.xml \
+	system/mann/en/ae.xml \
+	system/mann/en/alias-pix.xml \
+	system/mann/en/all_sf.xml \
+	system/mann/en/analyze.xml \
+	system/mann/en/anim_cascade.xml \
+	system/mann/en/anim_fly.xml \
 	system/mann/en/apropos.xml \
 	system/mann/en/attr.xml \
 	system/mann/en/cat.xml \
