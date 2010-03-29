@@ -17,10 +17,6 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* test put_comb and red, make sure they work and don't crash
-
-* fix EDITOR invocation in "mged -c"
-
 * 64-bit port of BRL-CAD on Windows
 
 * Mac OS X 10.5+ X11 input bug
