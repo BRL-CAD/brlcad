@@ -38,15 +38,14 @@ mannDOCBOOK_EN = \
 	system/mann/en/zoom.xml
 
 mannDOCBOOK_ENhtmldir = $(BRLCAD_DATA)/html/mann/en
-mannDOCBOOK_ENhtml_DATA = $(BUILTMAN_ENHTML)
+mannDOCBOOK_ENhtml_DATA = $(BUILTMANN_ENHTML)
 
 BUILTMANN_ENHTML = \
-	${mannDOCBOOK_EN:xml=html} \
-	${mannINTRO_EN:xml=html} 
+	${mannDOCBOOK_EN:xml=html}
 
 if BUILD_PDF_DOCS
 
-BUILTMANN_ENPDF = ${man1DOCBOOK_EN:xml=pdf}
+BUILTMANN_ENPDF = ${mannDOCBOOK_EN:xml=pdf}
 
 endif
 
