@@ -3,6 +3,7 @@ mannDOCBOOK_EN = \
 	system/mann/en/attr.xml \
 	system/mann/en/cat.xml \
 	system/mann/en/cp.xml \
+	system/mann/en/put_comb.xml \
 	system/mann/en/summary.xml \
 	system/mann/en/sv.xml \
 	system/mann/en/sync.xml \
