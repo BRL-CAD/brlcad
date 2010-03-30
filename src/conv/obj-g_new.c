@@ -70,6 +70,17 @@ struct ga_t {                                    /* assigned by ... */
     const size_t        *attindex_arr_tnv_faces; /* obj_polygonal_tnv_faces */
 };
 
+/* NMG2s */
+/* structure for storing coordinates and associated vertex pointer */
+struct my_verts
+{
+    point_t coord;
+    vect_t norm;
+    struct vertex *vp;
+    short has_norm;
+};
+/* NMG2e */
+
     /* global definition */
     size_t *tmp_ptr = NULL ;
     size_t (*triangle_indexes)[3][2] = NULL ;
@@ -195,6 +206,24 @@ int process_nv_faces(struct ga_t *ga,
     const size_t *indexset_arr;
     size_t groupid = 0;
     size_t numNorTriangles_in_current_bot = 0;
+    /* NMG2s */
+    size_t numNorPolygons_in_current_nmg = 0;
+    size_t numNorPolygonVertices_in_current_nmg = 0 ;
+    struct my_verts *nmg_verts;          /* array of structures holding coordinates and normals */
+    struct my_verts *nmg_verts_tmp;
+    struct bu_ptbl vertices2;         /* table of vertices for one face */
+    struct bu_ptbl faces2;            /* table of faces for one element */
+    struct bu_ptbl names2;            /* table of element names */
+    struct model *m2;
+    struct nmgregion *r2;
+    struct shell *s2;
+    struct faceuse *fu2;
+    struct wmember reg_head2;
+    struct bn_tol tol2;
+    size_t idx2 = 0;
+    long   tmp_long = 0 ;
+    size_t nmg_verts_size = 0 ;
+    /* NMG2e */
     int found = 0;
     size_t i = 0;
     int ret_val = 0;  /* 0=success !0=fail */
@@ -223,7 +252,25 @@ int process_nv_faces(struct ga_t *ga,
     size_t triangle_indexes_size = 0;
     size_t (*triangle_indexes_tmp)[3][2] = NULL ;
 
+    /* NMG2s */
+    tol2.magic = BN_TOL_MAGIC;
+    tol2.dist = 0.0005;
+    tol2.dist_sq = tol2.dist * tol2.dist;
+    tol2.perp = 1e-6;
+    tol2.para = 1 - tol2.perp;
 
+    /* initialize tables */
+    bu_ptbl_init(&vertices2, 64, " &vertices2 ");
+    bu_ptbl_init(&faces2, 64, " &faces2 ");
+    bu_ptbl_init(&names2, 64, " &names2 ");
+
+    /* initial number of structures to create, one structure is
+       required for each vertex in the nmg */
+    nmg_verts_size = 128 ;
+
+    /* allocate memory for initial nmg_verts array of structures */
+    nmg_verts = (struct my_verts *)bu_calloc(nmg_verts_size, sizeof(struct my_verts), "nmg_verts");
+    /* NMG2e */
 
     /* compute memory required for initial triangle_indexes array */
     triangle_indexes_size = num_triangles_per_alloc * num_indexes_per_triangle ;
@@ -322,10 +369,49 @@ int process_nv_faces(struct ga_t *ga,
                 vert++;
             }
         }
+
+        /* NMG2s */
+        if (found ) {
+            if ( !numNorPolygons_in_current_nmg ) {
+                /* make basic nmg structures if this is the first polygon */
+                m2 = nmg_mm();
+                r2 = nmg_mrsv(m2);
+                s2 = BU_LIST_FIRST(shell, &r2->s_hd);
+            }
  
+            /* add coordinates for each of the current polygon vertices into
+               the nmg_verts array of structures */
+            for ( idx2 = 0 ; idx2 < size ; idx2++ ) {
+                nmg_verts[numNorPolygons_in_current_nmg].coord[0] =
+                    (ga->vert_list[index_arr_nv_faces[idx2][0]][0]) * conversion_factor ;
+
+                nmg_verts[numNorPolygons_in_current_nmg].coord[1] = 
+                    (ga->vert_list[index_arr_nv_faces[idx2][0]][1]) * conversion_factor ;
+
+                nmg_verts[numNorPolygons_in_current_nmg].coord[2] = 
+                    (ga->vert_list[index_arr_nv_faces[idx2][0]][2]) * conversion_factor ;
+
+                /* set current vertex pointer to NULL */
+                nmg_verts[numNorPolygons_in_current_nmg].vp = (struct vertex *)NULL;
+                bu_ptbl_ins(&vertices2, (long *)(&nmg_verts[numNorPolygons_in_current_nmg].vp));
+
+                numNorPolygonVertices_in_current_nmg++;
+
+                /* if needed, increase size of nmg_verts array of structures */
+                if ( numNorPolygons_in_current_nmg >= nmg_verts_size ) {
+                    nmg_verts_size = nmg_verts_size + 128 ;
+                    nmg_verts_tmp = bu_realloc(nmg_verts, sizeof(struct my_verts) * nmg_verts_size, "nmg_verts_tmp");
+                    nmg_verts = nmg_verts_tmp;
+                }
+            }
+
+            /* increment number of polygons in current grouping (i.e. current nmg) */
+            numNorPolygons_in_current_nmg++;
+        }
+        /* NMG2e */
+
         /* execute this code when there is a face to process */
         if ( found ) {
-
             int idx = 0; 
             int numTriangles = 0; /* number of triangle faces which need to be created */
 
