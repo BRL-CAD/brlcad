@@ -1952,7 +1952,7 @@ fi
 
 dnl debug flags
 if test "x$bc_use_debug" != "xno" ; then
-	BC_COMPILER_AND_LINKER_RECOGNIZES([-g3 -gstabs+], [debug_flag])
+	BC_COMPILER_AND_LINKER_RECOGNIZES([-ggdb3], [debug_flag])
 	if test "x$bc_debug_flag_works" = "xno" ; then
 		BC_COMPILER_AND_LINKER_RECOGNIZES([-g], [debug_flag])
 	fi
