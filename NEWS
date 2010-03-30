@@ -14,7 +14,7 @@ changes made.  See document footer for additional details.
 ----------------------------------------------------------------------
 
 * MGED help menu lists all commands with documentation - Cliff Yapp
-* Improved put_comb usage statements and object cleanup - Cliff Yapp
+* Improved put_comb command usage and added documentation - Cliff Yapp
 * Improve behavior of editor invocation in classic mode - Cliff Yapp
 * reorganization of archer buttons, panels, & preferences - Bob Parker
 * fix invocation of fbclear from MGED on Windows - Bob Parker
