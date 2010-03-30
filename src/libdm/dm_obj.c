@@ -3362,8 +3362,8 @@ dmo_getDrawLabelsHook_cmd(struct dm_obj *dmop,
 
     /* FIXME: the standard forbids this kind of crap.  candidate for removal. */
     sprintf(buf, "%p %p",
-	    dmop->dmo_drawLabelsHook,
-	    dmop->dmo_drawLabelsHookClientData);
+	    (void *)(int)dmop->dmo_drawLabelsHook,
+	    (void *)(int)dmop->dmo_drawLabelsHookClientData);
     Tcl_DStringInit(&ds);
     Tcl_DStringAppend(&ds, buf, -1);
     Tcl_DStringResult(interp, &ds);
@@ -3432,6 +3432,9 @@ dmo_setDrawLabelsHook_cmd(struct dm_obj *dmop,
 	return TCL_ERROR;
     }
 
+    /* FIXME: standard prohibits casting between function pointers and
+     * void *.  find a better way.
+     */
     dmop->dmo_drawLabelsHook = (int (*)())((uintptr_t)hook);
     dmop->dmo_drawLabelsHookClientData = (void (*)())((uintptr_t)clientData);
 
