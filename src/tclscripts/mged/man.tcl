@@ -104,6 +104,7 @@ proc man {cmdname} {
 	   regexp {(.+/)(.+)(.html)} $cmdfile -> url cmdrootname htmlsuffix 
 	   set cmds [concat $cmds [list $cmdrootname]]
 	}
+	set cmds [lsort $cmds]
 	foreach cmd $cmds {
            .man.top.l insert end $cmd
 	}
