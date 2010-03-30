@@ -4855,7 +4855,7 @@ RT_EXPORT BU_EXTERN(void nmg_lu_to_vlist,
 		    (struct bu_list *vhead,
 		     const struct loopuse	*lu,
 		     int			poly_markers,
-		     const vectp_t		normal));
+		     const vectp_t		norm));
 RT_EXPORT BU_EXTERN(void nmg_snurb_fu_to_vlist,
 		    (struct bu_list		*vhead,
 		     const struct faceuse	*fu,
