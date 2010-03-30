@@ -8444,7 +8444,7 @@ go_draw_faceplate(struct ged_dm_view *gdvp)
 
     /* Draw rect */
     if (gdvp->gdv_view->gv_rect.grs_draw)
-	dm_draw_rect(gdvp->gdv_dmp, &gdvp->gdv_view->gv_rect, gdvp->gdv_view);
+	dm_draw_rect(gdvp->gdv_dmp, &gdvp->gdv_view->gv_rect);
 }
 
 HIDDEN void
@@ -8504,7 +8504,7 @@ go_refresh_view(struct ged_dm_view *gdvp)
 	    fb_refresh(gdvp->gdv_fbs.fbs_fbp,
 		       gdvp->gdv_view->gv_rect.grs_pos[X], gdvp->gdv_view->gv_rect.grs_pos[Y],
 		       gdvp->gdv_view->gv_rect.grs_dim[X], gdvp->gdv_view->gv_rect.grs_dim[Y]);
-	    dm_draw_rect(gdvp->gdv_dmp, &gdvp->gdv_view->gv_rect, gdvp->gdv_view);
+	    dm_draw_rect(gdvp->gdv_dmp, &gdvp->gdv_view->gv_rect);
 	} else
 	    fb_refresh(gdvp->gdv_fbs.fbs_fbp, 0, 0,
 		       gdvp->gdv_dmp->dm_width, gdvp->gdv_dmp->dm_height);

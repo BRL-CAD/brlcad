@@ -396,8 +396,7 @@ DM_EXPORT BU_EXTERN(int dm_draw_labels,
 /* rect.c */
 DM_EXPORT BU_EXTERN(void dm_draw_rect,
 		    (struct dm *dmp,
-		     struct ged_rect_state *grsp,
-		     struct ged_view *gvp));
+		     struct ged_rect_state *grsp));
 
 /* scale.c */
 DM_EXPORT BU_EXTERN(void dm_draw_scale,
