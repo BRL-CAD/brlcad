@@ -3362,8 +3362,8 @@ dmo_getDrawLabelsHook_cmd(struct dm_obj *dmop,
 
     /* FIXME: the standard forbids this kind of crap.  candidate for removal. */
     sprintf(buf, "%p %p",
-	    (void *)(int)dmop->dmo_drawLabelsHook,
-	    (void *)(int)dmop->dmo_drawLabelsHookClientData);
+	    (void *)(uintptr_t)dmop->dmo_drawLabelsHook,
+	    (void *)(uintptr_t)dmop->dmo_drawLabelsHookClientData);
     Tcl_DStringInit(&ds);
     Tcl_DStringAppend(&ds, buf, -1);
     Tcl_DStringResult(interp, &ds);
