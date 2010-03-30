@@ -339,8 +339,6 @@ DM_EXPORT BU_EXTERN(fastf_t dm_wrap,
 		    (fastf_t f));
 DM_EXPORT BU_EXTERN(void Nu_void,
 		    ());
-DM_EXPORT BU_EXTERN(struct dm *Nu_open,
-		    ());
 DM_EXPORT BU_EXTERN(int Nu_int0,
 		    ());
 DM_EXPORT BU_EXTERN(unsigned Nu_unsign,
