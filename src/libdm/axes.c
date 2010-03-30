@@ -241,6 +241,13 @@ dm_draw_axes(struct dm			*dmp,
 	vect_t maj_yend1, maj_yend2;
 	vect_t maj_zend1, maj_zend2;
 
+	VSETALL(xend1, 0.0);
+	VSETALL(xend2, 0.0);
+	VSETALL(yend1, 0.0);
+	VSETALL(yend2, 0.0);
+	VSETALL(zend1, 0.0);
+	VSETALL(zend2, 0.0);
+
 	if (dmp->dm_width <= numTicks / halfAxesSize * gasp->gas_tick_threshold * 2) {
 	    int numMajorTicks = numTicks / gasp->gas_ticks_per_major;
 
