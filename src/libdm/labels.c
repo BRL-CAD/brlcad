@@ -50,8 +50,6 @@
  */
 void
 dm_label_primitive(struct rt_wdb		*wdbp,
-		   int				*num_lines,
-		   point_t			*lines,
 		   struct rt_point_labels	pl[],
 		   int				max_pl,
 		   const mat_t			xform,
@@ -63,10 +61,13 @@ dm_label_primitive(struct rt_wdb		*wdbp,
     int		npl = 0;
 
 
-#define	POINT_LABEL( _pt, _char )	{ \
-	VMOVE( pl[npl].pt, _pt ); \
-	pl[npl].str[0] = _char; \
-	pl[npl++].str[1] = '\0'; }
+#define	POINT_LABEL( _pt, _char ) { \
+	if (npl+1 < max_pl) { \
+	    VMOVE( pl[npl].pt, _pt ); \
+	    pl[npl].str[0] = _char; \
+	    pl[npl++].str[1] = '\0'; \
+	} \
+    }
 
 #define	POINT_LABEL_STR( _pt, _str )	{ \
 	VMOVE( pl[npl].pt, _pt ); \
@@ -138,8 +139,6 @@ dm_label_primitive(struct rt_wdb		*wdbp,
 	    break;
 	case DB5_MINORTYPE_BRLCAD_SPH:
 	case DB5_MINORTYPE_BRLCAD_ELL: {
-	    point_t	work;
-	    point_t	pos_view;
 	    struct rt_ell_internal	*ell =
 		(struct rt_ell_internal *)ip->idb_ptr;
 
@@ -226,7 +225,6 @@ dm_label_primitive(struct rt_wdb		*wdbp,
 	    MAT4X3PNT(pos_view, xform, ars->curves[0])
 
 		if (ars_crv >= 0 && ars_col >= 0) {
-		    point_t work;
 		    point_t ars_pt;
 
 		    VMOVE(work, &ars->curves[ars_crv][ars_col*3]);
@@ -553,54 +551,7 @@ dm_label_primitive(struct rt_wdb		*wdbp,
 	    break;
 	case DB5_MINORTYPE_BRLCAD_BOT:
 	    /*XXX Needs work */
-#if 0
-	{
-	    struct rt_bot_internal *bot =
-		(struct rt_bot_internal *)ip->idb_ptr;
-
-	    RT_BOT_CK_MAGIC( bot );
-
-	    if (bot_verts[2] > -1 &&
-		bot_verts[1] > -1 &&
-		bot_verts[0] > -1) {
-		/* editing a face */
-		point_t mid_pt;
-		point_t p1, p2, p3;
-		fastf_t one_third=1.0/3.0;
-
-		MAT4X3PNT(p1, xform, &bot->vertices[bot_verts[0]*3]);
-		MAT4X3PNT(p2, xform, &bot->vertices[bot_verts[1]*3]);
-		MAT4X3PNT(p3, xform, &bot->vertices[bot_verts[2]*3]);
-		VADD3(mid_pt, p1, p2, p3);
-
-		VSCALE(mid_pt, mid_pt, one_third);
-
-		*num_lines = 3;
-		VMOVE(lines[0], mid_pt);
-		VMOVE(lines[1], p1);
-		VMOVE(lines[2], mid_pt);
-		VMOVE(lines[3], p2);
-		VMOVE(lines[4], mid_pt);
-		VMOVE(lines[5], p3);
-	    } else if (bot_verts[1] > -1 && bot_verts[0] > -1) {
-		/* editing an edge */
-		point_t mid_pt;
-
-		VBLEND2(mid_pt, 0.5, &bot->vertices[bot_verts[0]*3],
-			0.5, &bot->vertices[bot_verts[1]*3]);
-
-		MAT4X3PNT(pos_view, xform, mid_pt);
-		POINT_LABEL_STR(pos_view, "edge");
-	    }
-
-	    if (bot_verts[0] > -1) {
-		/* editing something, always label the vertex (this is the keypoint) */
-		MAT4X3PNT(pos_view, xform, &bot->vertices[bot_verts[0]*3]);
-		POINT_LABEL_STR(pos_view, "pt");
-	    }
-	}
-#endif
-	break;
+	    break;
 	case DB5_MINORTYPE_BRLCAD_COMBINATION:
 	    break;
 	default:
@@ -619,9 +570,8 @@ dm_draw_labels(struct dm	*dmp,
 	       int       	(*labelsHook)(),
 	       ClientData 	labelsHookClientdata)
 {
-    struct rt_point_labels pl[8+1];
-    point_t lines[2*4];	/* up to 4 lines to draw */
-    int num_lines=0;
+#define MAX_PL 8+1
+    struct rt_point_labels pl[MAX_PL];
     struct rt_db_internal intern;
     struct directory *dp;
     int i;
@@ -650,28 +600,16 @@ dm_draw_labels(struct dm	*dmp,
     dp = DB_FULL_PATH_CUR_DIR(&path);
 
     id = rt_db_get_internal(&intern, dp, wdbp->dbip, ts.ts_mat, &rt_uniresource);
-#if 0
-    if (id < 0) {
-	Tcl_AppendResult(interp, "rt_db_get_internal(", dp->d_namep,
-			 ") failure", (char *)NULL );
-    }
-#endif
 
-    dm_label_primitive(wdbp, &num_lines, lines, pl, 8+1, viewmat, &intern);
+    dm_label_primitive(wdbp, pl, MAX_PL, viewmat, &intern);
 
     DM_SET_FGCOLOR(dmp,
 		   (unsigned char)labelsColor[0],
 		   (unsigned char)labelsColor[1],
 		   (unsigned char)labelsColor[2],
 		   1, 1.0);
-    for (i=0; i<num_lines; i++)
-	DM_DRAW_LINE_2D(dmp,
-			((int)(lines[i*2][X]*GED_MAX))*INV_GED,
-			((int)(lines[i*2][Y]*GED_MAX))*dmp->dm_aspect*INV_GED,
-			((int)(lines[i*2+1][X]*GED_MAX))*INV_GED,
-			((int)(lines[i*2+1][Y]*GED_MAX))*dmp->dm_aspect*INV_GED);
 
-    for (i=0; i<8+1; i++) {
+    for (i=0; i<MAX_PL; i++) {
 	if (pl[i].str[0] == '\0')
 	    break;
 
