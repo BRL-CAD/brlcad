@@ -39,7 +39,7 @@
 
 void
 dm_draw_data_axes(struct dm *dmp,
-		  fastf_t viewSize, /* in mm */
+		  fastf_t viewSize __attribute__((unused)), /* in mm */
 		  struct ged_data_axes_state *gdasp)
 {
     int i, j;
@@ -55,6 +55,8 @@ dm_draw_data_axes(struct dm *dmp,
 	return;
 
     points = (point_t *)bu_calloc(npoints, sizeof(point_t), "data axes points");
+
+    /* FIXME: should be using viewSize */
     halfAxesSize = gdasp->gdas_size * 0.5;
 
     /* set color */
