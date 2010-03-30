@@ -13,8 +13,8 @@ changes made.  See document footer for additional details.
 --- 2010-02-XX  Release 7.16.8                                     ---
 ----------------------------------------------------------------------
 
-* MGED help menu now lists all commands for which docs exist - C. Yapp
-* Fix put_comb when working on existing combinations - Cliff Yapp
+* MGED help menu lists all commands with documentation - Cliff Yapp
+* Improved put_comb usage statements and object cleanup - Cliff Yapp
 * Improve behavior of editor invocation in classic mode - Cliff Yapp
 * reorganization of archer buttons, panels, & preferences - Bob Parker
 * fix invocation of fbclear from MGED on Windows - Bob Parker
