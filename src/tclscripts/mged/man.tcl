@@ -102,7 +102,9 @@ proc man {cmdname} {
 	set cmds [list ]
 	foreach cmdfile $cmdfiles {
 	   regexp {(.+/)(.+)(.html)} $cmdfile -> url cmdrootname htmlsuffix 
-	   set cmds [concat $cmds [list $cmdrootname]]
+           if {[string compare $cmdrootname "Introduction"]} {
+	      set cmds [concat $cmds [list $cmdrootname]]
+           }
 	}
 	set cmds [lsort $cmds]
 	foreach cmd $cmds {
