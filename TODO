@@ -21,9 +21,13 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * Mac OS X 10.5+ X11 input bug
 
+* fix benchmark regression (tgc failures)
+
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
+
+* fix archer/libdm labels/axes to not use pointer printing
 
 * vls name wrapping (reversible argv-to-vls, vls-to-argv).  look at
   src/libged/glob.c code, very similar.
