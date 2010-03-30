@@ -184,6 +184,11 @@ dm_Normal2Xy(struct dm *dmp, fastf_t f, int use_aspect)
 void
 dm_fogHint(struct dm *dmp, int fastfog)
 {
+    if (!dmp) {
+	bu_log("WARNING: NULL display (fastfog => %d)\n", fastfog);
+	return;
+    }
+
     switch (dmp->dm_type) {
 #ifdef DM_OGL
 	case DM_TYPE_OGL:
