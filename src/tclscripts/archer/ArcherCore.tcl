@@ -224,6 +224,7 @@ namespace eval ArcherCore {
 	method rmater              {args}
 	method rotate_arb_face     {args}
 	method search		   {args}
+	method sed		   {_prim}
 	method shader              {args}
 	method shells              {args}
 	method tire                {args}
@@ -426,7 +427,7 @@ namespace eval ArcherCore {
 					   mv mvall nmg_collapse nmg_simplify \
 					   ocenter orotate oscale otranslate p packTree prefix protate pscale ptranslate \
 					   push put put_comb putmat pwd r rcodes red rfarb rm rmater \
-					   rotate_arb_face search shader shells tire title track \
+					   rotate_arb_face search sed shader shells tire title track \
 					   unhide units unpackTree \
 					   vmake wmater xpush Z zap
 	}
@@ -1788,9 +1789,16 @@ Popup Menu    Right or Ctrl-Left
 	putString "Missed!"
 	set mStatusStr "Missed!"
     } else {
-	set region [bu_get_value_by_keyword "region" $partition]
-	putString "$region"
-	set mStatusStr "$region"
+	set in [bu_get_value_by_keyword "in" $partition]
+	set path [bu_get_value_by_keyword "path" $in]
+#	$itk_component(tree) selectpath [regsub {^/} $path {}]
+	set leaf [file tail $path]
+	set paths [gedCmd search -name $leaf]
+	$itk_component(tree) selectpaths $paths
+
+#	set region [bu_get_value_by_keyword "region" $partition]
+#	putString "$region"
+#	set mStatusStr "$region"
     }
 }
 
@@ -4169,13 +4177,23 @@ Popup Menu    Right or Ctrl-Left
 }
 
 ::itcl::body ArcherCore::search {args} {
-     if {$args == {}} {
+    if {$args == {}} {
 	return [gedCmd search]
     } else {
 	return [eval gedCmd search $args]
     }
 }
 
+::itcl::body ArcherCore::sed {_prim} {
+    if {$_prim == ""} {
+	return "Usage: sed prim"
+    }
+
+    set paths [gedCmd search -name $_prim]
+    $itk_component(tree) selectpaths $paths
+
+#    $itk_component(tree) selectitem $_prim
+}
 
 ::itcl::body ArcherCore::shader {args} {
     eval gedWrapper shader 0 0 1 0 $args
