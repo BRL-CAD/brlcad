@@ -54,11 +54,12 @@ Recent Bugs
   Command Window's command prompt - if the above is a bug it is 
   apparently not restricted to command/classic mode.
 
-  A quick guess is that the processing of multiple commands in one
-  string will require breaking up the string into individual commands,
-  each of which will get its own Tcl_Eval call, allowing the parent
-  function to build a concatenation of the Tcl_GetStringResult(interp)
-  calls of all the individual commands.
+  Further investigation suggests that this is a consequence of
+  Tcl treating multiple commands in a single " " block as one command,
+  insofar as capturing the output is concerned.  It probably relates
+  to situations where Tcl_SetResult is called where (in this case)
+  Tcl_AppendResult would have been better, but it is not clear whether
+  changing this result setting approach would cause other breakage.
 
 * kill command in archer deletes object but then reports a failure and
   mouse is stuck in a busy state.
