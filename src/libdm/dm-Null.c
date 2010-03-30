@@ -74,7 +74,7 @@ HIDDEN int
 Nu_fg(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency)
 {
     if (!dmp) {
-	bu_log("WARNING: dmp is NULL (r/g/b => %d/%d/%d; strict => %d; transparency => %f)\n", r, g, b, strict, transparency);
+	bu_log("WARNING: NULL display (r/g/b => %d/%d/%d; strict => %d; transparency => %f)\n", r, g, b, strict, transparency);
 	return TCL_ERROR;
     }
 
@@ -86,7 +86,7 @@ HIDDEN int
 Nu_bg(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
 {
     if (!dmp) {
-	bu_log("WARNING: dmp is NULL (r/g/b==%d/%d/%d)\n", r, g, b);
+	bu_log("WARNING: NULL display (r/g/b==%d/%d/%d)\n", r, g, b);
 	return TCL_ERROR;
     }
 
