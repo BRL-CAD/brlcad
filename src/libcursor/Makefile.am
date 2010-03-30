@@ -7,7 +7,9 @@ libcursor_la_SOURCES = cursor.c
 
 libcursor_la_LDFLAGS = -version-info 19:1 -no-undefined
 libcursor_la_LIBADD = ${CURSOR_LIBS}
-libcursor_la_CFLAGS = ${TERMLIB_CPPFLAGS}
+
+AM_CPPFLAGS = ${TERMLIB_CPPFLAGS}
+AM_CFLAGS = ${STRICT_FLAGS}
 
 EXTRA_DIST = $(man_MANS)
 
