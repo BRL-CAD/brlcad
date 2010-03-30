@@ -3435,8 +3435,8 @@ dmo_setDrawLabelsHook_cmd(struct dm_obj *dmop,
     /* FIXME: standard prohibits casting between function pointers and
      * void *.  find a better way.
      */
-    dmop->dmo_drawLabelsHook = (int (*)())((uintptr_t)hook);
-    dmop->dmo_drawLabelsHookClientData = (void (*)())((uintptr_t)clientData);
+    dmop->dmo_drawLabelsHook = (int (*)())(uintptr_t)hook;
+    dmop->dmo_drawLabelsHookClientData = clientData;
 
     return TCL_OK;
 }
