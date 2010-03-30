@@ -220,7 +220,7 @@ mannDOCBOOK_EN = \
 	system/mann/en/who.xml \
 	system/mann/en/window.xml \
 	system/mann/en/window_frame.xml \
-	system/mann/en/wire.xml
+	system/mann/en/wire.xml \
 	system/mann/en/wmater.xml \
 	system/mann/en/x.xml \
 	system/mann/en/xpush.xml \
