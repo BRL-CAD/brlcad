@@ -173,7 +173,6 @@ int
 cmd_ged_edit_wrapper(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
     int ret;
-    Tcl_DString ds;
     const char *av[3];
     struct cmdtab *ctp = (struct cmdtab *)clientData;
 
@@ -181,9 +180,7 @@ cmd_ged_edit_wrapper(ClientData clientData, Tcl_Interp *interp, int argc, const 
 	return TCL_OK;
 
     ret = (*ctp->ged_func)(gedp, argc, (const char **)argv);
-    Tcl_DStringInit(&ds);
-    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
-    Tcl_DStringResult(interp, &ds);
+    Tcl_AppendResult(interp, bu_vls_addr(&gedp->ged_result_str), NULL);
 
     if (ret & GED_HELP)
 	return TCL_OK;
@@ -204,16 +201,13 @@ int
 cmd_ged_erase_wrapper(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
     int ret;
-    Tcl_DString ds;
     struct cmdtab *ctp = (struct cmdtab *)clientData;
 
     if (gedp == GED_NULL)
 	return TCL_OK;
 
     ret = (*ctp->ged_func)(gedp, argc, (const char **)argv);
-    Tcl_DStringInit(&ds);
-    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
-    Tcl_DStringResult(interp, &ds);
+    Tcl_AppendResult(interp, bu_vls_addr(&gedp->ged_result_str), NULL);
 
     if (ret)
 	return TCL_ERROR;
@@ -231,7 +225,6 @@ cmd_ged_gqa(ClientData clientData, Tcl_Interp *interp, int argc, const char *arg
     char **vp;
     int i;
     int ret;
-    Tcl_DString ds;
     struct cmdtab *ctp = (struct cmdtab *)clientData;
 
     if (gedp == GED_NULL)
@@ -277,9 +270,7 @@ cmd_ged_gqa(ClientData clientData, Tcl_Interp *interp, int argc, const char *arg
     }
 
     ret = (*ctp->ged_func)(gedp, gedp->ged_gdp->gd_rt_cmd_len, (const char **)gedp->ged_gdp->gd_rt_cmd);
-    Tcl_DStringInit(&ds);
-    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
-    Tcl_DStringResult(interp, &ds);
+    Tcl_AppendResult(interp, bu_vls_addr(&gedp->ged_result_str), NULL);
 
     if (ret & GED_HELP)
 	return TCL_OK;
@@ -297,7 +288,6 @@ int
 cmd_ged_in(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
     int ret;
-    Tcl_DString ds;
     struct cmdtab *ctp = (struct cmdtab *)clientData;
     const char *new_cmd[3];
     int c;
@@ -335,11 +325,9 @@ cmd_ged_in(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv
     argv += bu_optind-1;
 
     ret = (*ctp->ged_func)(gedp, argc, (const char **)argv);
-    Tcl_DStringInit(&ds);
     if (ret & GED_MORE)
-	Tcl_DStringAppend(&ds, MORE_ARGS_STR, -1);
-    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
-    Tcl_DStringResult(interp, &ds);
+	Tcl_AppendResult(interp, MORE_ARGS_STR, NULL);
+    Tcl_AppendResult(interp, bu_vls_addr(&gedp->ged_result_str), NULL);
 
     if (dont_draw) {
 	if (ret & GED_HELP || ret == GED_OK)
@@ -378,7 +366,6 @@ cmd_ged_inside(ClientData clientData, Tcl_Interp *interp, int argc, const char *
 {
     int ret;
     int arg;
-    Tcl_DString ds;
     const char *new_cmd[3];
     struct rt_db_internal intern;
     struct directory *outdp;
@@ -436,11 +423,9 @@ cmd_ged_inside(ClientData clientData, Tcl_Interp *interp, int argc, const char *
 	ret = ged_inside(gedp, argc, (const char **)argv);
     }
 
-    Tcl_DStringInit(&ds);
     if (ret & GED_MORE)
-	Tcl_DStringAppend(&ds, MORE_ARGS_STR, -1);
-    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
-    Tcl_DStringResult(interp, &ds);
+	Tcl_AppendResult(interp, MORE_ARGS_STR, NULL);
+    Tcl_AppendResult(interp, bu_vls_addr(&gedp->ged_result_str), NULL);
 
     if (ret & GED_HELP) {
 	(void)signal(SIGINT, SIG_IGN);
@@ -468,7 +453,6 @@ int
 cmd_ged_more_wrapper(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
     int ret;
-    Tcl_DString ds;
     struct cmdtab *ctp = (struct cmdtab *)clientData;
     const char *new_cmd[3];
 
@@ -481,11 +465,9 @@ cmd_ged_more_wrapper(ClientData clientData, Tcl_Interp *interp, int argc, const 
 	return TCL_OK;
 
     ret = (*ctp->ged_func)(gedp, argc, (const char **)argv);
-    Tcl_DStringInit(&ds);
     if (ret & GED_MORE)
-	Tcl_DStringAppend(&ds, MORE_ARGS_STR, -1);
-    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
-    Tcl_DStringResult(interp, &ds);
+	Tcl_AppendResult(interp, MORE_ARGS_STR, NULL);
+    Tcl_AppendResult(interp, bu_vls_addr(&gedp->ged_result_str), NULL);
 
     if (ret & GED_HELP)
 	return TCL_OK;
@@ -517,16 +499,13 @@ int
 cmd_ged_plain_wrapper(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
     int ret;
-    Tcl_DString ds;
     struct cmdtab *ctp = (struct cmdtab *)clientData;
 
     if (gedp == GED_NULL)
 	return TCL_OK;
 
     ret = (*ctp->ged_func)(gedp, argc, (const char **)argv);
-    Tcl_DStringInit(&ds);
-    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
-    Tcl_DStringResult(interp, &ds);
+    Tcl_AppendResult(interp, bu_vls_addr(&gedp->ged_result_str), NULL);
 
     if (ret & GED_HELP || ret == GED_OK)
 	return TCL_OK;
@@ -539,7 +518,6 @@ int
 cmd_ged_view_wrapper(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
     int ret;
-    Tcl_DString ds;
     struct cmdtab *ctp = (struct cmdtab *)clientData;
 
     if (gedp == GED_NULL)
@@ -549,9 +527,7 @@ cmd_ged_view_wrapper(ClientData clientData, Tcl_Interp *interp, int argc, const 
 	gedp->ged_gvp = view_state->vs_gvp;
 
     ret = (*ctp->ged_func)(gedp, argc, (const char **)argv);
-    Tcl_DStringInit(&ds);
-    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
-    Tcl_DStringResult(interp, &ds);
+    Tcl_AppendResult(interp, bu_vls_addr(&gedp->ged_result_str), NULL);
 
     if (ret & GED_HELP)
 	return TCL_OK;
@@ -1743,15 +1719,12 @@ cmd_nmg_collapse(ClientData clientData, Tcl_Interp *interp, int argc, char **arg
 {
     const char *av[3];
     int ret;
-    Tcl_DString ds;
 
     if (gedp == GED_NULL)
 	return TCL_OK;
 
     ret = ged_nmg_collapse(gedp, argc, (const char **)argv);
-    Tcl_DStringInit(&ds);
-    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
-    Tcl_DStringResult(interp, &ds);
+    Tcl_AppendResult(interp, bu_vls_addr(&gedp->ged_result_str), NULL);
 
     if (ret)
 	return TCL_ERROR;
@@ -1778,7 +1751,6 @@ cmd_units(ClientData clientData,
 	  char **argv)
 {
     int ret;
-    Tcl_DString ds;
     fastf_t sf;
 
     if (gedp == GED_NULL)
@@ -1786,9 +1758,7 @@ cmd_units(ClientData clientData,
 
     sf = dbip->dbi_base2local;
     ret = ged_units(gedp, argc, (const char **)argv);
-    Tcl_DStringInit(&ds);
-    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
-    Tcl_DStringResult(interp, &ds);
+    Tcl_AppendResult(interp, bu_vls_addr(&gedp->ged_result_str), NULL);
 
     if (ret)
 	return TCL_ERROR;
@@ -1815,15 +1785,12 @@ cmd_search(ClientData clientData,
 	   char **argv)
 {
     int ret;
-    Tcl_DString ds;
 
     if (gedp == GED_NULL)
 	return TCL_OK;
 
     ret = ged_search(gedp, argc, (const char **)argv);
-    Tcl_DStringInit(&ds);
-    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
-    Tcl_DStringResult(interp, &ds);
+    Tcl_AppendResult(interp, bu_vls_addr(&gedp->ged_result_str), NULL);
 
     if (ret)
 	return TCL_ERROR;
@@ -1854,7 +1821,6 @@ cmd_lm(ClientData clientData,
     int new_argc;
     int ret;
     char **new_argv;
-    Tcl_DString ds;
 
     bu_vls_init(&vls);
     bu_vls_strcat(&vls, argv[0]);
@@ -1909,9 +1875,7 @@ cmd_lm(ClientData clientData,
     bu_vls_free(&vls);
     bu_free((char *)new_argv, "cmd_lm new_argv");
 
-    Tcl_DStringInit(&ds);
-    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
-    Tcl_DStringResult(interp, &ds);
+    Tcl_AppendResult(interp, bu_vls_addr(&gedp->ged_result_str), NULL);
 
     if (!ret)
 	return TCL_OK;
@@ -1937,15 +1901,12 @@ cmd_tol(ClientData clientData,
 	char **argv)
 {
     int ret;
-    Tcl_DString ds;
 
     if (gedp == GED_NULL)
 	return TCL_OK;
 
     ret = ged_tol(gedp, argc, (const char **)argv);
-    Tcl_DStringInit(&ds);
-    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
-    Tcl_DStringResult(interp, &ds);
+    Tcl_AppendResult(interp, bu_vls_addr(&gedp->ged_result_str), NULL);
 
     if (ret)
 	return TCL_ERROR;
@@ -2053,7 +2014,6 @@ cmd_shaded_mode(ClientData clientData,
 		char **argv)
 {
     int ret;
-    Tcl_DString ds;
 
     /* check to see if we have -a or -auto */
     if (argc == 3 &&
@@ -2074,9 +2034,7 @@ cmd_shaded_mode(ClientData clientData,
     }
 
     ret = ged_shaded_mode(gedp, argc, (const char **)argv);
-    Tcl_DStringInit(&ds);
-    Tcl_DStringAppend(&ds, bu_vls_addr(&gedp->ged_result_str), -1);
-    Tcl_DStringResult(interp, &ds);
+    Tcl_AppendResult(interp, bu_vls_addr(&gedp->ged_result_str), NULL);
 
     if (ret)
 	return TCL_ERROR;
@@ -2115,15 +2073,11 @@ cmd_has_embedded_fb(ClientData clientData,
 		    int argc,
 		    char **argv)
 {
-    Tcl_DString ds;
-
-    Tcl_DStringInit(&ds);
 #ifdef USE_FBSERV
-    Tcl_DStringAppend(&ds, "1", -1);
+    Tcl_AppendResult(interp, "1", NULL);
 #else
-    Tcl_DStringAppend(&ds, "0", -1);
+    Tcl_AppendResult(interp, "0", NULL);
 #endif
-    Tcl_DStringResult(interp, &ds);
 
     return TCL_OK;
 }
