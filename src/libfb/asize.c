@@ -171,13 +171,13 @@ fb_common_name_size(unsigned long int *widthp, unsigned long int *heightp, const
  *	1	width and height returned
  */
 int
-fb_common_image_size(unsigned long int *widthp, unsigned long int *heightp, register unsigned long int npixels)
+fb_common_image_size(unsigned long int *widthp, unsigned long int *heightp, unsigned long int npixels)
     /* pointer to returned width */
     /* pointer to returned height */
     /* Number of pixels */
 {
-    register struct	sizes	*sp;
-    long int		root;
+    struct sizes *sp;
+    unsigned long int root;
 
     if ( npixels <= 0 )
 	return	0;

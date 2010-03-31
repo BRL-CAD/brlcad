@@ -43,6 +43,8 @@
 int
 fb_sim_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
+    FB_CK_FBIO(ifp);
+
     ifp->if_xcenter = xcenter;
     ifp->if_ycenter = ycenter;
     ifp->if_xzoom = xzoom;
@@ -60,6 +62,8 @@ fb_sim_view(FBIO *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 int
 fb_sim_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
+    FB_CK_FBIO(ifp);
+
     *xcenter = ifp->if_xcenter;
     *ycenter = ifp->if_ycenter;
     *xzoom = ifp->if_xzoom;
@@ -77,6 +81,8 @@ fb_sim_getview(FBIO *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 int
 fb_sim_cursor(FBIO *ifp, int mode, int x, int y)
 {
+    FB_CK_FBIO(ifp);
+
     ifp->if_cursmode = mode;
     ifp->if_xcurs = x;
     ifp->if_ycurs = y;
@@ -93,6 +99,8 @@ fb_sim_cursor(FBIO *ifp, int mode, int x, int y)
 int
 fb_sim_getcursor(FBIO *ifp, int *mode, int *x, int *y)
 {
+    FB_CK_FBIO(ifp);
+
     *mode = ifp->if_cursmode;
     *x = ifp->if_xcurs;
     *y = ifp->if_ycurs;
@@ -105,12 +113,20 @@ fb_sim_getcursor(FBIO *ifp, int *mode, int *x, int *y)
 int
 fb_reset(FBIO *ifp)
 {
+    if (ifp) {
+	FB_CK_FBIO(ifp);
+    }
+
     return	0;
 }
 
 int
-fb_viewport(FBIO *ifp, int left, int top, int right, int bottom)
+fb_viewport(FBIO *ifp, int left __attribute__((unused)), int top __attribute__((unused)), int right __attribute__((unused)), int bottom __attribute__((unused)))
 {
+    if (ifp) {
+	FB_CK_FBIO(ifp);
+    }
+
     return	0;
 }
 
@@ -119,6 +135,10 @@ fb_window(FBIO *ifp, int x, int y)
 {
     int	xcenter, ycenter;
     int	xzoom, yzoom;
+
+    if (ifp) {
+	FB_CK_FBIO(ifp);
+    }
 
     fb_getview(ifp, &xcenter, &ycenter, &xzoom, &yzoom);
     xcenter = x;
@@ -132,6 +152,10 @@ fb_zoom(FBIO *ifp, int x, int y)
     int	xcenter, ycenter;
     int	xzoom, yzoom;
 
+    if (ifp) {
+	FB_CK_FBIO(ifp);
+    }
+
     fb_getview(ifp, &xcenter, &ycenter, &xzoom, &yzoom);
     xzoom = x;
     yzoom = y;
@@ -139,8 +163,12 @@ fb_zoom(FBIO *ifp, int x, int y)
 }
 
 int
-fb_scursor(FBIO *ifp, int mode, int x, int y)
+fb_scursor(FBIO *ifp, int mode __attribute__((unused)), int x __attribute__((unused)), int y __attribute__((unused)))
 {
+    if (ifp) {
+	FB_CK_FBIO(ifp);
+    }
+
     /* We could actually implement this but it
      * is probably of no value.
      */

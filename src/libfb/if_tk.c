@@ -74,11 +74,6 @@ Tk_PhotoImageBlock block = {
 
 char *tkwrite_buffer;
 
-int tk_close_existing()
-{
-    return 0;
-}
-
 
 HIDDEN int fb_tk_open(FBIO *ifp, char *file, int width, int height),
     fb_tk_close(FBIO *ifp),
