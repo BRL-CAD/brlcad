@@ -405,7 +405,7 @@ rt_nmg_mc_realize_cube(struct shell *s, int pv, point_t *edges, const struct bn_
 		bn_3pts_collinear(edges[vi[0]], edges[vi[1]], edges[vi[2]], tol)) {
 	    if(NEAR_ZERO(edges[vi[0]][X]-VOODOO, tol->dist) ||
 		NEAR_ZERO(edges[vi[1]][X]-VOODOO, tol->dist) ||
-		NEAR_ZERO(edges[vi[1]][X]-VOODOO, tol->dist)) {
+		NEAR_ZERO(edges[vi[2]][X]-VOODOO, tol->dist)) {
 		bu_log("Heh, throwing away a triangle %d/%d/%d (%g %g %g | %g %g %g | %g %g %g)\n",
 		    V3ARGS(vi), V3ARGS(edges[vi[0]]), V3ARGS(edges[vi[1]]), V3ARGS(edges[vi[2]]));
 	    }
@@ -510,18 +510,21 @@ rt_nmg_mc_crosspew(struct application *a, int edge, point_t *p, point_t *edges, 
 	VSETALL(muh[i].hit,VOODOO);
     }
 
+    VSETALL(edges[edge], VOODOO);
+
     VJOIN1(a->a_ray.r_pt, *p, -2*tol->dist, a->a_ray.r_dir); 
     rt_shootray(a); 
     puh=muh; 
-    while(puh->in > 0 && puh->dist < -tol->dist) { 
+    while(puh->in > 0 && puh->dist <= -tol->dist) { 
 	bu_log("%d %g isn't close enough, moving on\n", puh->in, puh->dist); 
 	puh++; 
 	if(puh->in < 1) 
 	    bu_log("puhh?\n"); 
     } 
-    if(puh->dist > step + 2.5*tol->dist) 
+    if(puh->dist > (step + 2.5*tol->dist)) {
 	bu_log("spooky action on edge %d. (%g %g %g -> %g %g %g) dist:%g\n", edge, V3ARGS(a->a_ray.r_pt), V3ARGS(a->a_ray.r_dir), puh->dist); 
-    if(puh->in > 0) 
+	VJOIN1(edges[edge], a->a_ray.r_pt, 0.5*step+tol->dist, a->a_ray.r_dir);
+    } else if(puh->in > 0) 
 	VMOVE(edges[edge], muh->hit); 
     return 0;
 }
@@ -535,10 +538,10 @@ rt_nmg_mc_pew(struct shell *s, struct application *a, fastf_t x, fastf_t y, fast
     fastf_t last_b = 0;
 
     VSET(a->a_ray.r_dir, 0, 0, 1);
-    a->a_uptr = swp; VSET(a->a_ray.r_pt, x, y, a->a_rt_i->mdl_min[Z] - tol->dist); rt_shootray(a);
-    a->a_uptr = sep; VSET(a->a_ray.r_pt, x+step, y, a->a_rt_i->mdl_min[Z] - tol->dist); rt_shootray(a);
-    a->a_uptr = nwp; VSET(a->a_ray.r_pt, x, y+step, a->a_rt_i->mdl_min[Z] - tol->dist); rt_shootray(a);
-    a->a_uptr = nep; VSET(a->a_ray.r_pt, x+step, y+step, a->a_rt_i->mdl_min[Z] - tol->dist); rt_shootray(a);
+    a->a_uptr = swp; VSET(a->a_ray.r_pt, x, y, a->a_rt_i->mdl_min[Z] - step - tol->dist); rt_shootray(a);
+    a->a_uptr = sep; VSET(a->a_ray.r_pt, x+step, y, a->a_rt_i->mdl_min[Z] - step - tol->dist); rt_shootray(a);
+    a->a_uptr = nwp; VSET(a->a_ray.r_pt, x, y+step, a->a_rt_i->mdl_min[Z] - step - tol->dist); rt_shootray(a);
+    a->a_uptr = nep; VSET(a->a_ray.r_pt, x+step, y+step, a->a_rt_i->mdl_min[Z] - step - tol->dist); rt_shootray(a);
 
     while(swp->in>0 || sep->in>0 || nwp->in>0 || nep->in>0) {
 	unsigned char pv;
@@ -666,6 +669,8 @@ rt_nmg_mc_pewpewpew (struct shell *s, struct rt_i *rtip, const struct db_full_pa
     x=bin(a.a_rt_i->mdl_min[X], step) - step;
     endx=bin(a.a_rt_i->mdl_max[X], step) + step;
     endy=bin(a.a_rt_i->mdl_max[Y], step) + step;
+
+    bu_log("Firing %s at %g\n", db_path_to_string(pathp), step);
 
     /* TODO: throw "ncpu" threads here? */
     for(; x<endx; x+=step) {
