@@ -21,8 +21,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * Mac OS X 10.5+ X11 input bug
 
-* fix benchmark regression (tgc failures)
-
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
