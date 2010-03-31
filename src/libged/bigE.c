@@ -188,7 +188,6 @@ add_solid(const struct directory *dp,
 
 	if (dgcdp->do_polysolids) {
 	    struct shell *s=(struct shell *)NULL;
-	    struct nmgregion *r=(struct nmgregion *)NULL;
 
 	    /* create and prep a BoT version of this solid */
 	    if (eptr->l.m) {
@@ -516,8 +515,8 @@ promote_ints(struct bu_list *head,
 		    continue;
 		}
 
-		if (a->seg_in.hit_dist == b->seg_in.hit_dist &&
-		    a->seg_out.hit_dist == b->seg_out.hit_dist)
+		if (NEAR_ZERO(a->seg_in.hit_dist - b->seg_in.hit_dist, SMALL_FASTF)
+		    && NEAR_ZERO(a->seg_out.hit_dist - b->seg_out.hit_dist, SMALL_FASTF))
 		{
 		    a->seg_stp = ON_SURF;
 		    tmp = b;
@@ -527,7 +526,7 @@ promote_ints(struct bu_list *head,
 			continue;;
 		}
 
-		if (a->seg_out.hit_dist == b->seg_out.hit_dist)
+		if (NEAR_ZERO(a->seg_out.hit_dist - b->seg_out.hit_dist, SMALL_FASTF))
 		    a->seg_out.hit_dist = b->seg_in.hit_dist;
 		else if (a->seg_out.hit_dist < b->seg_out.hit_dist) {
 		    if (b->seg_in.hit_dist > a->seg_in.hit_dist)
@@ -539,7 +538,7 @@ promote_ints(struct bu_list *head,
 			RT_FREE_SEG(tmp, dgcdp->ap->a_resource);
 			break;
 		    }
-		} else if (a->seg_in.hit_dist == b->seg_in.hit_dist) {
+		} else if (NEAR_ZERO(a->seg_in.hit_dist - b->seg_in.hit_dist, SMALL_FASTF)) {
 		    fastf_t tmp_dist;
 
 		    tmp_dist = a->seg_out.hit_dist;
@@ -561,8 +560,8 @@ promote_ints(struct bu_list *head,
 		    continue;
 		}
 
-		if (b->seg_in.hit_dist == a->seg_in.hit_dist &&
-		    b->seg_out.hit_dist == a->seg_out.hit_dist)
+		if (NEAR_ZERO(b->seg_in.hit_dist - a->seg_in.hit_dist, SMALL_FASTF)
+		    && NEAR_ZERO(b->seg_out.hit_dist - a->seg_out.hit_dist, SMALL_FASTF))
 		{
 		    b->seg_stp = ON_SURF;
 		    tmp = a;
@@ -572,7 +571,7 @@ promote_ints(struct bu_list *head,
 		    break;
 		}
 
-		if (b->seg_out.hit_dist == a->seg_out.hit_dist) {
+		if (NEAR_ZERO(b->seg_out.hit_dist - a->seg_out.hit_dist, SMALL_FASTF)) {
 		    tmp = b;
 		    b = BU_LIST_PNEXT(seg, &b->l);
 		    BU_LIST_DEQUEUE(&tmp->l);
@@ -587,7 +586,7 @@ promote_ints(struct bu_list *head,
 			RT_FREE_SEG(tmp, dgcdp->ap->a_resource);
 			continue;
 		    }
-		} else if (b->seg_in.hit_dist == a->seg_in.hit_dist) {
+		} else if (NEAR_ZERO(b->seg_in.hit_dist - a->seg_in.hit_dist, SMALL_FASTF)) {
 		    b->seg_in.hit_dist = a->seg_out.hit_dist;
 		} else {
 		    RT_GET_SEG(tmp, dgcdp->ap->a_resource);
@@ -612,8 +611,8 @@ promote_ints(struct bu_list *head,
 	    bu_log("\tfound overlapping ON_INT segs:\n");
 #endif
 
-	    if (a->seg_in.hit_dist == b->seg_in.hit_dist &&
-		a->seg_out.hit_dist == b->seg_out.hit_dist)
+	    if (NEAR_ZERO(a->seg_in.hit_dist - b->seg_in.hit_dist, SMALL_FASTF)
+		&& NEAR_ZERO(a->seg_out.hit_dist - b->seg_out.hit_dist, SMALL_FASTF))
 	    {
 #ifdef debug
 		bu_log("Promoting A, eliminating B\n");
@@ -625,7 +624,7 @@ promote_ints(struct bu_list *head,
 		break;
 	    }
 
-	    if (a->seg_out.hit_dist == b->seg_out.hit_dist) {
+	    if (NEAR_ZERO(a->seg_out.hit_dist - b->seg_out.hit_dist, SMALL_FASTF)) {
 		b->seg_stp = ON_SURF;
 		a->seg_out.hit_dist = b->seg_in.hit_dist;
 
@@ -654,7 +653,7 @@ promote_ints(struct bu_list *head,
 #endif
 		}
 	    } else {
-		if (a->seg_in.hit_dist == b->seg_in.hit_dist) {
+		if (NEAR_ZERO(a->seg_in.hit_dist - b->seg_in.hit_dist, SMALL_FASTF)) {
 		    fastf_t tmp_dist;
 
 		    tmp_dist = a->seg_out.hit_dist;
@@ -856,7 +855,6 @@ eval_op(struct bu_list *A,
 	     * order from smaller starting hit distance to larger
 	     */
 	    while (BU_LIST_WHILE (segb, seg, B)) {
-		int inserted;
 		BU_LIST_DEQUEUE(&segb->l);
 
 		if (segb->seg_stp == IN_SOL) {
@@ -1075,7 +1073,7 @@ inverse_dir(vect_t dir, vect_t inv_dir)
 }
 
 HIDDEN struct soltab *
-classify_seg(struct seg *seg, struct soltab *shoot, struct xray *rp, struct _ged_client_data *dgcdp)
+classify_seg(struct seg *segp, struct soltab *shoot, struct xray *rp, struct _ged_client_data *dgcdp)
 {
     fastf_t mid_dist;
     struct xray new_rp;
@@ -1087,7 +1085,7 @@ classify_seg(struct seg *seg, struct soltab *shoot, struct xray *rp, struct _ged
     BU_GETSTRUCT(rd.seghead, seg);
     BU_LIST_INIT(&rd.seghead->l);
 
-    mid_dist = (seg->seg_in.hit_dist + seg->seg_out.hit_dist) / 2.0;
+    mid_dist = (segp->seg_in.hit_dist + segp->seg_out.hit_dist) / 2.0;
     VJOIN1(new_rp.r_pt, rp->r_pt, mid_dist, rp->r_dir);
 #ifdef debug
     bu_log("Classifying segment with mid_pt (%g %g %g) with respct to %s\n", V3ARGS(new_rp.r_pt), shoot->st_dp->d_namep);
@@ -1515,7 +1513,7 @@ Eplot(union E_tree *eptr,
 		for (BU_LIST_FOR (fu2, faceuse, &s2->fu_hd)) {
 		    fastf_t dist;
 		    vect_t dir;
-		    vect_t diff;
+		    vect_t vdiff;
 		    fastf_t *dists1, *dists2;
 		    fastf_t min_dist, max_dist;
 		    int min_hit, max_hit;
@@ -1617,9 +1615,9 @@ Eplot(union E_tree *eptr,
 		    max_dist = dists1[1];
 		    max_hit = 1;
 		    for (i=2; i<hit_count1; i++) {
-			VSUB2(diff, hits1[i], start_pt);
-			dists1[i] = MAGNITUDE(diff);
-			if (VDOT(dir, diff) < 0.0)
+			VSUB2(vdiff, hits1[i], start_pt);
+			dists1[i] = MAGNITUDE(vdiff);
+			if (VDOT(dir, vdiff) < 0.0)
 			    dists1[i] = -dists1[i];
 			if (dists1[i] > max_dist) {
 			    max_dist = dists1[i];
@@ -1660,9 +1658,9 @@ Eplot(union E_tree *eptr,
 		    max_dist = -min_dist;
 		    max_hit = -1;
 		    for (i=0; i<hit_count2; i++) {
-			VSUB2(diff, hits2[i], start_pt);
-			dists2[i] = MAGNITUDE(diff);
-			if (VDOT(dir, diff) < 0.0)
+			VSUB2(vdiff, hits2[i], start_pt);
+			dists2[i] = MAGNITUDE(vdiff);
+			if (VDOT(dir, vdiff) < 0.0)
 			    dists2[i] = -dists2[i];
 			if (dists2[i] > max_dist) {
 			    max_dist = dists2[i];
@@ -1915,7 +1913,6 @@ fix_halfs(struct _ged_client_data *dgcdp)
 	    struct edgeuse *eu, *new_eu;
 	    struct loopuse *lu, *new_lu;
 	    plane_t pl;
-	    int count;
 	    struct vertexuse *vcut[2];
 	    point_t pt[2];
 	    struct edgeuse *eu_split[2];
