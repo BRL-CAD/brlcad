@@ -197,11 +197,6 @@ BU_EXTERN (void _ged_eraseAllPathsFromDisplay,
 	   (struct ged			*gedp,
 	    const char			*path,
 	    const int			skip_first));
-BU_EXTERN (void _ged_eraseAllSubpathsFromSolidList,
-	   (struct ged			*gedp,
-	    struct ged_display_list	*gdlp,
-	    struct db_full_path		*subpath,
-	    const int			skip_first));
 BU_EXTERN (void _ged_freeDisplayListItem,
 	   (struct ged			*gedp,
 	    struct ged_display_list *gdlp));
