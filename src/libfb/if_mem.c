@@ -87,7 +87,6 @@ mem_open(FBIO *ifp, char *file, int width, int height)
     mode = 0;
 
     if ( file != NULL )  {
-	register char *cp;
 	char	modebuf[80];
 	char	*mp;
 	int	alpha;
@@ -453,7 +452,13 @@ FBIO memory_interface =  {
     0,			/* page_dirty		*/
     0L,			/* page_curpos		*/
     0L,			/* page_pixels		*/
-    0			/* debug		*/
+    0,			/* debug */
+    {0}, /* u1 */
+    {0}, /* u2 */
+    {0}, /* u3 */
+    {0}, /* u4 */
+    {0}, /* u5 */
+    {0}  /* u6 */
 };
 
 /*
