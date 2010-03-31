@@ -82,8 +82,61 @@ Options:\n\
 ";
 
 
-int rayhit();
-int raymiss();
+/*
+ *			R A Y H I T
+ *
+ *  Rayhit() is called by rt_shootray() when the ray hits one or more objects.
+ */
+int
+rayhit( struct application *ap, struct partition *PartHeadp, struct seg *segp __attribute__((unused)) )
+{
+    register struct partition *pp = PartHeadp->pt_forw;
+    Tcl_HashEntry *entry;
+    int newPtr;
+    struct bu_ptbl *faces;
+
+    if ( pp == PartHeadp )
+	return(0);		/* nothing was actually hit?? */
+
+    if ( ap->a_rt_i->rti_save_overlaps )
+	rt_rebuild_overlaps( PartHeadp, ap, 1 );
+
+    /* did we hit a BOT?? */
+    if ( pp->pt_inseg->seg_stp->st_dp->d_major_type != DB5_MAJORTYPE_BRLCAD ||
+	 pp->pt_inseg->seg_stp->st_dp->d_minor_type != DB5_MINORTYPE_BRLCAD_BOT ) {
+	return 0;
+    }
+
+    /* this is a BOT, get the hash tabel entry for it */
+    bu_semaphore_acquire( BU_SEM_LISTS );
+    entry = Tcl_CreateHashEntry( &bots, pp->pt_inseg->seg_stp->st_dp->d_namep, &newPtr );
+    if ( newPtr ) {
+	faces = (struct bu_ptbl *)bu_malloc( sizeof( struct bu_ptbl ), "faces" );
+	bu_ptbl_init( faces, 128, "faces" );
+	Tcl_SetHashValue( entry, (char *)faces );
+    } else {
+	faces = (struct bu_ptbl *)Tcl_GetHashValue( entry );
+    }
+
+    bu_ptbl_ins_unique( faces, (long *)(size_t)pp->pt_inhit->hit_surfno );
+    bu_semaphore_release( BU_SEM_LISTS );
+
+    return(0);
+}
+
+
+/*
+ *			R A Y M I S S
+ *
+ *  Null function -- handle a miss
+ *  This function is called by rt_shootray(), which is called by
+ *  do_frame().
+ */
+int
+raymiss(struct application *ap __attribute__((unused)))
+{
+    return(0);
+}
 
 
 /*
@@ -187,18 +240,6 @@ view_2init( struct application *ap, char *framename )
 #endif
 }
 
-/*
- *			R A Y M I S S
- *
- *  Null function -- handle a miss
- *  This function is called by rt_shootray(), which is called by
- *  do_frame().
- */
-int
-raymiss()
-{
-    return(0);
-}
 
 /*
  *			V I E W _ P I X E L
@@ -209,48 +250,6 @@ void
 view_pixel()
 {
     return;
-}
-
-/*
- *			R A Y H I T
- *
- *  Rayhit() is called by rt_shootray() when the ray hits one or more objects.
- */
-int
-rayhit( struct application *ap, struct partition *PartHeadp )
-{
-    register struct partition *pp = PartHeadp->pt_forw;
-    Tcl_HashEntry *entry;
-    int newPtr;
-    struct bu_ptbl *faces;
-
-    if ( pp == PartHeadp )
-	return(0);		/* nothing was actually hit?? */
-
-    if ( ap->a_rt_i->rti_save_overlaps )
-	rt_rebuild_overlaps( PartHeadp, ap, 1 );
-
-    /* did we hit a BOT?? */
-    if ( pp->pt_inseg->seg_stp->st_dp->d_major_type != DB5_MAJORTYPE_BRLCAD ||
-	 pp->pt_inseg->seg_stp->st_dp->d_minor_type != DB5_MINORTYPE_BRLCAD_BOT ) {
-	return 0;
-    }
-
-    /* this is a BOT, get the hash tabel entry for it */
-    bu_semaphore_acquire( BU_SEM_LISTS );
-    entry = Tcl_CreateHashEntry( &bots, pp->pt_inseg->seg_stp->st_dp->d_namep, &newPtr );
-    if ( newPtr ) {
-	faces = (struct bu_ptbl *)bu_malloc( sizeof( struct bu_ptbl ), "faces" );
-	bu_ptbl_init( faces, 128, "faces" );
-	Tcl_SetHashValue( entry, (char *)faces );
-    } else {
-	faces = (struct bu_ptbl *)Tcl_GetHashValue( entry );
-    }
-
-    bu_ptbl_ins_unique( faces, (long *)(size_t)pp->pt_inhit->hit_surfno );
-    bu_semaphore_release( BU_SEM_LISTS );
-
-    return(0);
 }
 
 /*
