@@ -69,10 +69,13 @@ ged_close(struct ged *gedp)
     ged_free(gedp);
 }
 
+/* FIXME: this function should not exist.  passing pointers as strings
+ * indicates a failure in design and lazy coding.
+ */
 int
 ged_decode_dbip(const char *dbip_string, struct db_i **dbipp)
 {
-    if (sscanf(dbip_string, "%p", dbipp) != 1) {
+    if (sscanf(dbip_string, "%p", (void **)dbipp) != 1) {
 	return GED_ERROR;
     }
 
@@ -257,7 +260,10 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
     } else {
 	struct db_i	*dbip;
 
-	if (sscanf(filename, "%p", &dbip) != 1) {
+	/* FIXME: this call should not exist.  passing pointers as
+	 * strings indicates a failure in design and lazy coding.
+	 */
+	if (sscanf(filename, "%p", (void **)&dbip) != 1) {
 	    /* Restore RT's material head */
 	    rt_new_material_head(save_materp);
 
