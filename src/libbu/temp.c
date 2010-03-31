@@ -53,7 +53,7 @@ static struct _bu_tf_list *_bu_tf = NULL;
 
 
 HIDDEN void
-_bu_close_files()
+_bu_close_files(void)
 {
     struct _bu_tf_list *popped;
     if (!_bu_tf) {
