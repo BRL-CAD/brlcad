@@ -845,6 +845,8 @@ DOCUMENTATION
 * Geometry Conversion with BRL-CAD
         Overview of the various geometry conversion facilities in BRL-CAD and how they related to solid geometry representations.
 
+* A Developer's Introduction to BRL-CAD
+        An overview of BRL-CAD from a developer perspective intended for new developers.  Provides overview of structure, important sections, operating procedures, and answers to FAQ development questions.
 
 ---
 See the feature request and bug trackers for more tasks and future
