@@ -207,9 +207,14 @@ int process_nv_faces(struct ga_t *ga,
     size_t groupid = 0;
     size_t numNorTriangles_in_current_bot = 0;
     /* NMG2s */
+    const size_t ***index_arr_nv_faces_history = NULL ; 
+    const size_t ***index_arr_nv_faces_history_tmp = NULL ;
+    size_t *size_history = NULL ; 
+    size_t *size_history_tmp = NULL ;
+    size_t history_arrays_size = 0; 
     size_t numNorPolygons_in_current_nmg = 0;
     size_t numNorPolygonVertices_in_current_nmg = 0 ;
-    struct my_verts *nmg_verts;          /* array of structures holding coordinates and normals */
+    struct my_verts *nmg_verts;       /* array of structures holding coordinates and normals */
     struct my_verts *nmg_verts_tmp;
     struct bu_ptbl vertices2;         /* table of vertices for one face */
     struct bu_ptbl faces2;            /* table of faces for one element */
@@ -270,6 +275,18 @@ int process_nv_faces(struct ga_t *ga,
 
     /* allocate memory for initial nmg_verts array of structures */
     nmg_verts = (struct my_verts *)bu_calloc(nmg_verts_size, sizeof(struct my_verts), "nmg_verts");
+
+    /* initial number of history elements to create, one is required
+       for each polygon in the current nmg */
+    history_arrays_size = 128 ; 
+
+    /* allocate memory for initial index_arr_nv_faces_history array */
+    index_arr_nv_faces_history = (const size_t ***)bu_calloc(history_arrays_size,
+                                                             sizeof(size_t *) * 2,
+                                                             "index_arr_nv_faces_history");
+
+    /* allocate memory for initial size_history array */
+    size_history = (size_t *)bu_calloc(history_arrays_size, sizeof(size_history), "size_history");
     /* NMG2e */
 
     /* compute memory required for initial triangle_indexes array */
@@ -340,6 +357,28 @@ int process_nv_faces(struct ga_t *ga,
         /* is in the current group */
         if ( found ) {
             size = obj_polygonal_nv_face_vertices(ga->contents,i,&index_arr_nv_faces);
+
+            /* NMG2s */
+            index_arr_nv_faces_history[numNorPolygons_in_current_nmg][0] = index_arr_nv_faces[0];
+            index_arr_nv_faces_history[numNorPolygons_in_current_nmg][1] = index_arr_nv_faces[1];
+
+            size_history[numNorPolygons_in_current_nmg] = size;
+
+                /* if needed, increase size of index_arr_nv_faces_history and size_history */
+                if ( numNorPolygons_in_current_nmg >= history_arrays_size ) {
+                    history_arrays_size = history_arrays_size + 128 ;
+
+                    index_arr_nv_faces_history_tmp = bu_realloc(index_arr_nv_faces_history,
+                                                     sizeof(index_arr_nv_faces_history) * history_arrays_size,
+                                                     "index_arr_nv_faces_history_tmp");
+                    index_arr_nv_faces_history = index_arr_nv_faces_history_tmp;
+
+                    size_history_tmp = bu_realloc(size_history, sizeof(size_history) * history_arrays_size,
+                                       "size_history_tmp");
+                    size_history = size_history_tmp;
+                }
+            /* NMG2e */
+
         }
 
         /* test for and force the skip of degenerate faces */
