@@ -192,8 +192,12 @@ _ged_drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path 
 
 
 static union tree *
-ged_wireframe_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+ged_wireframe_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data __attribute__((unused)))
 {
+    if (tsp) RT_CK_DBTS(tsp);
+    if (pathp) RT_CK_FULL_PATH(pathp);
+    if (curtree) RT_CK_TREE(curtree);
+
     return (curtree);
 }
 
@@ -837,11 +841,15 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 
 
 static union tree *
-ged_bot_check_region_end(struct db_tree_state	*tsp,
+ged_bot_check_region_end(struct db_tree_state *tsp,
 			 const struct db_full_path *pathp,
-			 union tree			*curtree,
-			 genptr_t			client_data)
+			 union tree *curtree,
+			 genptr_t client_data __attribute__((unused)))
 {
+    if (tsp) RT_CK_DBTS(tsp);
+    if (pathp) RT_CK_FULL_PATH(pathp);
+    if (curtree) RT_CK_TREE(curtree);
+
     return curtree;
 }
 
@@ -1152,7 +1160,7 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
  	    continue;
 	}
 
-	if (strlen( argv[i] ) == (1 + (ptr_A != NULL) + (ptr_o != NULL))) {
+	if (strlen( argv[i] ) == ((size_t)1 + (ptr_A != NULL) + (ptr_o != NULL))) {
 	    /* argv[i] is just a "-A" or "-o" */
 	    continue;
 	}
