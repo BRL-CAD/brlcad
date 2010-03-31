@@ -23,7 +23,10 @@
  *
  */
 
+#include "common.h"
+
 #include <stdlib.h>
+#include <strings.h>
 
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
@@ -152,14 +155,24 @@ _ged_editit(char *editstring, const char *filename)
 #endif
 
     bu_free((genptr_t)avtmp, "ged_editit: avtmp");
-    return (!stat);
+    return 1;
 }
 
 int
 ged_editit(struct ged *gedp, int argc, const char *argv[])
 {
-    _ged_editit((char *)argv[1],argv[3]);
-    return GED_OK;
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+
+    /* FIXME: this should NOT assume that argv[2] and argv[4] are the
+     * edit string and temp file.  should use bu_getopt().
+     */
+    if (argc != 5) {
+	bu_vls_printf(&gedp->ged_result_str, "Internal Error: \"%s -e editstring -f tmpfile\" is malformed (argc == %d)", argv[0], argc);
+	return TCL_ERROR;
+    }
+
+    return _ged_editit((char *)argv[2], argv[4]);
 }
     
 

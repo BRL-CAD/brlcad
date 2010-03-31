@@ -125,9 +125,9 @@ reg_compare(const void *p1, const void *p2)
  *
  */
 int
-editit(char *tmpfile) {
-    int argc = 4;
-    char **av;
+editit(const char *command, const char *tmpfile) {
+    int argc = 5;
+    const char **av;
     struct bu_vls editstring;
 
     CHECK_DBI_NULL;
@@ -136,11 +136,12 @@ editit(char *tmpfile) {
     get_editor_string(&editstring);
 
     av = (char **)bu_malloc(sizeof(char *)*(argc + 1), "editit: av");
-    av[0] = "-e"; 
-    av[1] = bu_vls_addr(&editstring);
-    av[2] = "-f";
-    av[3] = tmpfile;
-    av[4] = NULL;
+    av[0] = command;
+    av[1] = "-e"; 
+    av[2] = bu_vls_addr(&editstring);
+    av[3] = "-f";
+    av[4] = tmpfile;
+    av[5] = NULL;
 
     ged_editit(gedp, argc, (const char **)av);
 
