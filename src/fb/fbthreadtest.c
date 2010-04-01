@@ -402,7 +402,11 @@ main(int argc, char **argv)
         bblock.pixelPtr = (unsigned char *)scanline;
         bblock.width = 512;
         bblock.pitch = 3 * scr_width;
+#if (TCL_MAJOR_VERSION == 8) && (TCL_MINOR_VERSION == 5)
 	Tk_PhotoPutBlock(binterp, bphoto, &bblock, 0, 512-y, 512, 1, TK_PHOTO_COMPOSITE_SET);
+#else
+	Tk_PhotoPutBlock(binterp, &bblock, 0, 512-y, 512, 1, TK_PHOTO_COMPOSITE_SET);
+#endif
 	while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
         /* slop at the end of the line? */
         if ( file_xoff+xskip+scanpix < file_width )
