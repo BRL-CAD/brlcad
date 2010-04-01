@@ -80,7 +80,7 @@ int marching_cubes_use_midpoint = 2;
  * Grid definition matches SIGGRAPH 1987 p 164 (original presentation of technique)
  */
 
-int mc_tris[256][16] = {
+static int mc_tris[256][16] = {
 /* 00 */  {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
 /* 01 */  {0, 8, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
 /* 02 */  {0, 1, 9, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
@@ -339,12 +339,12 @@ int mc_tris[256][16] = {
 /* ff */  {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1}};
 
 /* pairs of vertices associated with the edge. */
-int edge_vertex[12][2] = {
+static int edge_vertex[12][2] = {
 	{0, 1}, {1, 2}, {2, 3}, {3, 0},
 	{4, 5}, {5, 6}, {6, 7}, {7, 4},
 	{0, 4}, {1, 5}, {2, 6}, {3, 7}};
 
-point_t point_offset[8] = {
+static point_t point_offset[8] = {
 	{0, 0, 1}, {1, 0, 1}, {1, 0, 0}, {0, 0, 0},
 	{0, 1, 1}, {1, 1, 1}, {1, 1, 0}, {0, 1, 0}};
 
@@ -496,7 +496,7 @@ bitdiff(unsigned char t, unsigned char a, unsigned char b)
     return hb == ma || hb == mb;
 }
 
-int
+static int
 rt_nmg_mc_crosspew(struct application *a, int edge, point_t *p, point_t *edges, struct whack *muh, const fastf_t step, const struct bn_tol *tol)
 {
     struct whack *puh;
@@ -517,14 +517,14 @@ rt_nmg_mc_crosspew(struct application *a, int edge, point_t *p, point_t *edges, 
 	    bu_log("puhh?\n");
     }
     if(puh->hit[Z] > (step + 2.5*tol->dist)) {
-	bu_log("spooky action on edge %d. (%d) (%g %g %g -> %g %g %g) %g\n", edge, puh->in, V3ARGS(a->a_ray.r_pt), V3ARGS(a->a_ray.r_dir), puh->hit[Z]);
+	bu_log("spooky action on edge %d. (%d) (%g %g %g -> %g %g %g) %g\n", edge, puh->in, V3ARGS(a->a_ray.r_pt), V3ARGS(a->a_ray.r_dir), DIST_PT_PT(a->a_ray.r_pt, puh->hit));
 	VJOIN1(edges[edge], a->a_ray.r_pt, 0.5*step+tol->dist, a->a_ray.r_dir);
     } else if(puh->in > 0)
 	VMOVE(edges[edge], muh->hit);
     return 0;
 }
 
-int
+static int
 rt_nmg_mc_pew(struct shell *s, struct application *a, fastf_t x, fastf_t y, fastf_t step, const struct bn_tol *tol)
 {
     struct whack sw[MAX_INTERSECTS], nw[MAX_INTERSECTS], se[MAX_INTERSECTS], ne[MAX_INTERSECTS];
