@@ -1536,10 +1536,114 @@ abilities will be missed.
 
 
 ----------------------------------------------------------------------
---- 2001-03-05  Release 5.3                                        ---
+--- 2001-03-06  Release 5.3                                        ---
 ----------------------------------------------------------------------
 
-Bug fixes.
+A new maintenance release of BRL-CAD is now available.  The main
+features are:
+
+mged:
+    - A dedication page has been added in memory of Mike Muuss
+    - Solids are now referred to as Primitive Shapes or "prims" in
+        much of the user interface
+    - The 'make' command now properly distinguishes between "ell" and
+      "ell1"
+    - 'autoview' command added for resetting the view size and center
+    to get all displayed objects on the display
+    - Query ray now works when 'mged' is in perspective mode
+    - Snap-to-grid now works in Matrix Edit mode
+    - 'facetize' command now creates BOT primitives by default
+    - User can now use 'edcodes' and 'red' to view data even if
+    database is read-only
+    - 'rt" command now has a default resolution of 512x512 instead of
+      50x50
+    - 'xpush' command now considers primitives outside the tree being
+    pushed and will not create a duplicate of an existing unpushed
+    primitive
+    - "light" shader added to the shader selection GUI in the
+    combination editor
+    - Combination editor modified to warn user if he is about to
+    overwrite an existing combination that has never been reconciled
+    to the gui
+    - Primitive (solid) and matrix selection listboxes now have
+    horizontal scrollbars to enable users to see entire path
+    - Menu item added to dump current 'mged' state into a users
+    ".mgedrc" file
+    - The overlap tool now plots the actual overlapping regions (to
+    allow user to perform editing)
+    - Upon quit, the overlap tool now restores display to its prior
+      state
+    - The overlap tool now accepts input from a file containing
+    'g_lint' output
+    - The default objects used by the overlap tool are now the
+    currently displayed objects
+    - The ray-trace control panel now has an "abort" button to stop
+    currently running ray traces
+    - The ray-trace control panel is now kept in sync with the
+    relevant elements of the main menubar.
+    - Now handles case of ray-traced image with size different from
+    size of X window.
+    - Added a description of the BOT primitive shape to the online
+      manual
+
+rt:
+    - Ray-trace tolerance lowered to 0.0005 to produce more accurate
+      images
+    - Now honors the -R (do not report overlaps) option
+    - Corrections to handling of some reflection/refraction rays in
+    glass objects
+
+rtg3:
+    - Can now write a "ray_data" file containing ray origin and ray
+    direction for each shotline.
+
+nirt:
+    - Now prints ALL overlaps it finds
+
+poly-bot:
+    - Added man page for poly-bot
+
+fast4-g:
+    - Corrected handling of WALL cards.
+    - Added support for COMPSPLT
+    - Added check for illegal second SECTION card for same component
+
+g-vrml:
+    - Light sources are now only converted once
+    - Assigned colors are used even if no shader is applied
+    - Eliminated emissive color for non-lights
+
+nastran-g:
+    - Default output is now BOT primitives.
+
+g-iges:
+    - Now handles newer primitives (height field, DSP, extrusion,
+      CLINE, and BOT)
+
+iges-g:
+    - BOT primitives are now the default primitive for representing
+      BREP objects
+
+fbpoint:
+    - Now works with mged X frame buffer
+
+liboptical:
+    - Corrected missing specular highlights
+
+librt:
+    - Corrected a bug in rt_boolweave() where fusing two hit points
+    within tolerance gave incorrect results
+    - Added a check to ensure that long shader strings are not
+    truncated without the user being notified.
+    - Added code to prevent spurious lines in the 'mged' display
+    caused by a color change in the display list without a "move"
+    command
+
+CLINE primitive:
+    - Added support for radius addition
+
+PIPE primitive:
+    - Added support for "db put", "db get" and "db adjust"
 
 
 ----------------------------------------------------------------------
