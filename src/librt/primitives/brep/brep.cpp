@@ -336,7 +336,9 @@ brep_build_bvh(struct brep_specific* bs)
     ON_BrepFaceArray& faces = brep->m_F;
     for (int i = 0; i < faces.Count(); i++) {
 	ON_BrepFace& face = faces[i];
-	bu_log("Prepping Face: %d of %d\n", i+1, faces.Count());
+	/*
+	 * bu_log("Prepping Face: %d of %d\n", i+1, faces.Count());
+	 */
 	SurfaceTree* st = new SurfaceTree(&face);
 	face.m_face_user.p = st;
 	bs->bvh->addChild(st->getRootNode());
@@ -2746,10 +2748,6 @@ rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
     ON::Begin();
     TRACE1("rt_brep_import5");
 
-    if (mat) {
-	bu_log("Importing with a matrix, but don't know what to do with it.. fix me in %s:%d\n", __FILE__, __LINE__);
-    }
-
     struct rt_brep_internal* bi;
     if (dbip) RT_CK_DBI(dbip);
     BU_CK_EXTERNAL(ep);
@@ -2773,6 +2771,21 @@ rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
 	// XXX does openNURBS force us to copy? it seems the answer is
 	// YES due to the const-ness
 	bi->brep = ON_Brep::New(*ON_Brep::Cast(mo.m_object));
+    if (mat) {
+    	ON_Xform xform(mat);
+
+   	if (!xform.IsIdentity()) {
+			bu_log("Applying transformation matrix....\n");
+	    	for(int row=0;row<4;row++) {
+				bu_log("%d - ", row);
+	    		for(int col=0;col<4;col++) {
+	    			bu_log(" %5f", xform.m_xform[row][col]);
+	    		}
+				bu_log("\n");
+	    	}
+    		bi->brep->Transform(xform);
+    	}
+    }
 	return 0;
     } else {
 	return -1;
