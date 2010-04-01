@@ -501,6 +501,7 @@ rt_nmg_mc_crosspew(struct application *a, int edge, point_t *p, point_t *edges, 
 {
     struct whack *puh;
     int i;
+    fastf_t dist;
 
     for(i=0;i<MAX_INTERSECTS;i++) {
 	muh[i].in=0;
@@ -516,8 +517,9 @@ rt_nmg_mc_crosspew(struct application *a, int edge, point_t *p, point_t *edges, 
 	if(puh->in < 1)
 	    bu_log("puhh?\n");
     }
-    if(puh->hit[Z] > (step + 2.5*tol->dist)) {
-	bu_log("spooky action on edge %d. (%d) (%g %g %g -> %g %g %g) %g\n", edge, puh->in, V3ARGS(a->a_ray.r_pt), V3ARGS(a->a_ray.r_dir), DIST_PT_PT(a->a_ray.r_pt, puh->hit));
+    dist = DIST_PT_PT(a->a_ray.r_pt, puh->hit);
+    if(dist > (step + 2.5*tol->dist)) {
+	bu_log("spooky action on edge:%d. (in:%d) (%g %g %g -> %g %g %g) step:%g dist:%g\n", edge, puh->in, V3ARGS(a->a_ray.r_pt), V3ARGS(a->a_ray.r_dir), step, dist);
 	VJOIN1(edges[edge], a->a_ray.r_pt, 0.5*step+tol->dist, a->a_ray.r_dir);
     } else if(puh->in > 0)
 	VMOVE(edges[edge], muh->hit);
