@@ -581,11 +581,11 @@ rt_nmg_mc_pew(struct shell *s, struct application *a, fastf_t x, fastf_t y, fast
 	if(inne && nep->hit[Z] > b+step) pv |= 0x60;
 
 #define MEH(C,I,O) \
+	if(C##p[1].in > 0 && C##p[1].hit[Z] < b+step+tol->dist) C##p+=2; \
 	if(C##p->hit[Z] < b+step+tol->dist) {  \
 	    if(C##p->in==1) { in##C=1; pv |= 1<<I;} \
 	    if(C##p->in==2) { in##C=0; pv |= 1<<O;} \
-	} \
-	else pv |= in##C<<I | in##C<<O;
+	} else pv |= in##C<<I | in##C<<O;
 
 	/*  p   t  b */
 	MEH(sw, 0, 3);
