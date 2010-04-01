@@ -74,6 +74,7 @@ scripties = \
 	ray.tcl \
 	raypick.tcl \
 	reid.tcl \
+	remap_mater.tcl \
 	remat.tcl \
 	rt.tcl \
 	rt_script.tcl \
