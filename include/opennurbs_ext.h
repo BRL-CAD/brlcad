@@ -302,7 +302,6 @@ BANode<BA>::isLeaf() {
     return false;
 }
 
-
 template<class BA>
 inline void
 BANode<BA>::GetBBox(double* min, double* max) const {
@@ -313,7 +312,6 @@ BANode<BA>::GetBBox(double* min, double* max) const {
     max[1] = m_node.m_max[1];
     max[2] = m_node.m_max[2];
 }
-
 
 template<class BA>
 int
@@ -523,6 +521,10 @@ BANode<BA>::getCurveEstimateOfV(fastf_t u, fastf_t tol) const {
 	guess = Ta + (u - A[X]) * dT/dU;
 	p = m_trim->PointAt(guess);
 	cnt++;
+    }
+    if (cnt > 999) {
+	    bu_log("getCurveEstimateOfV(): estimate of 'v' given a trim curve and 'u' did not converge within iteration bound(%d).\n",
+	    		cnt);
     }
     return p[Y];
 }
@@ -1000,6 +1002,11 @@ BVNode<BV>::isTrimmed(const ON_2dPoint& uv, BRNode* closest, fastf_t &closesttri
 
 	    for (i=trims.begin();i!=trims.end();i++) {
 		br = dynamic_cast<BRNode*>(*i);
+
+		/* skip if trim below */
+	    if (br->m_node.m_max[1] < uv[Y])
+	    	continue;
+
 		if (br->m_Vertical) {
 		    if ((br->m_v[0] <= uv[Y]) && (br->m_v[1] >= uv[Y])) {
 			double dist = fabs(uv[X] - br->m_v[0]);
