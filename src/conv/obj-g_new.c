@@ -207,8 +207,12 @@ int process_nv_faces(struct ga_t *ga,
     size_t groupid = 0;
     size_t numNorTriangles_in_current_bot = 0;
     /* NMG2s */
+    const size_t (**index_arr_nv_faces_history)[2]; /* used by nv_faces */
+    const size_t (**index_arr_nv_faces_history_tmp)[2]; /* used by nv_faces */
+#if 0
     const size_t ***index_arr_nv_faces_history = NULL ; 
     const size_t ***index_arr_nv_faces_history_tmp = NULL ;
+#endif
     size_t *size_history = NULL ; 
     size_t *size_history_tmp = NULL ;
     size_t history_arrays_size = 0; 
@@ -264,11 +268,6 @@ int process_nv_faces(struct ga_t *ga,
     tol2.perp = 1e-6;
     tol2.para = 1 - tol2.perp;
 
-    /* initialize tables */
-    bu_ptbl_init(&vertices2, 64, " &vertices2 ");
-    bu_ptbl_init(&faces2, 64, " &faces2 ");
-    bu_ptbl_init(&names2, 64, " &names2 ");
-
     /* initial number of structures to create, one structure is
        required for each vertex in the nmg */
     nmg_verts_size = 128 ;
@@ -281,12 +280,12 @@ int process_nv_faces(struct ga_t *ga,
     history_arrays_size = 128 ; 
 
     /* allocate memory for initial index_arr_nv_faces_history array */
-    index_arr_nv_faces_history = (const size_t ***)bu_calloc(history_arrays_size,
+    index_arr_nv_faces_history = bu_calloc(history_arrays_size,
                                                              sizeof(size_t *) * 2,
                                                              "index_arr_nv_faces_history");
 
     /* allocate memory for initial size_history array */
-    size_history = (size_t *)bu_calloc(history_arrays_size, sizeof(size_history), "size_history");
+    size_history = (size_t *)bu_calloc(history_arrays_size, sizeof(size_t), "size_history");
     /* NMG2e */
 
     /* compute memory required for initial triangle_indexes array */
@@ -357,29 +356,8 @@ int process_nv_faces(struct ga_t *ga,
         /* is in the current group */
         if ( found ) {
             size = obj_polygonal_nv_face_vertices(ga->contents,i,&index_arr_nv_faces);
-
-            /* NMG2s */
-            index_arr_nv_faces_history[numNorPolygons_in_current_nmg][0] = index_arr_nv_faces[0];
-            index_arr_nv_faces_history[numNorPolygons_in_current_nmg][1] = index_arr_nv_faces[1];
-
-            size_history[numNorPolygons_in_current_nmg] = size;
-
-                /* if needed, increase size of index_arr_nv_faces_history and size_history */
-                if ( numNorPolygons_in_current_nmg >= history_arrays_size ) {
-                    history_arrays_size = history_arrays_size + 128 ;
-
-                    index_arr_nv_faces_history_tmp = bu_realloc(index_arr_nv_faces_history,
-                                                     sizeof(index_arr_nv_faces_history) * history_arrays_size,
-                                                     "index_arr_nv_faces_history_tmp");
-                    index_arr_nv_faces_history = index_arr_nv_faces_history_tmp;
-
-                    size_history_tmp = bu_realloc(size_history, sizeof(size_history) * history_arrays_size,
-                                       "size_history_tmp");
-                    size_history = size_history_tmp;
-                }
-            /* NMG2e */
-
         }
+
 
         /* test for and force the skip of degenerate faces */
         /* in this case degenerate faces are those with duplicate vertices */
@@ -410,14 +388,29 @@ int process_nv_faces(struct ga_t *ga,
         }
 
         /* NMG2s */
-        if (found ) {
-            if ( !numNorPolygons_in_current_nmg ) {
-                /* make basic nmg structures if this is the first polygon */
-                m2 = nmg_mm();
-                r2 = nmg_mrsv(m2);
-                s2 = BU_LIST_FIRST(shell, &r2->s_hd);
-            }
- 
+        if ( found ) {
+
+
+            index_arr_nv_faces_history[numNorPolygons_in_current_nmg] = index_arr_nv_faces;
+            size_history[numNorPolygons_in_current_nmg] = size;
+
+                /* if needed, increase size of index_arr_nv_faces_history and size_history */
+                if ( numNorPolygons_in_current_nmg >= history_arrays_size ) {
+                    history_arrays_size = history_arrays_size + 128 ;
+
+                    index_arr_nv_faces_history_tmp = bu_realloc(index_arr_nv_faces_history,
+                                                     sizeof(index_arr_nv_faces_history) * history_arrays_size,
+                                                     "index_arr_nv_faces_history_tmp");
+
+                    index_arr_nv_faces_history = index_arr_nv_faces_history_tmp;
+
+                    size_history_tmp = bu_realloc(size_history, sizeof(size_t) * history_arrays_size,
+                                       "size_history_tmp");
+
+                    size_history = size_history_tmp;
+                }
+
+#if 0
             /* add coordinates for each of the current polygon vertices into
                the nmg_verts array of structures */
             for ( idx2 = 0 ; idx2 < size ; idx2++ ) {
@@ -443,6 +436,7 @@ int process_nv_faces(struct ga_t *ga,
                     nmg_verts = nmg_verts_tmp;
                 }
             }
+#endif
 
             /* increment number of polygons in current grouping (i.e. current nmg) */
             numNorPolygons_in_current_nmg++;
@@ -802,6 +796,96 @@ int process_nv_faces(struct ga_t *ga,
                      numNorTriangles_in_current_bot*3, numNorTriangles_in_current_bot, vertices,
                      faces, (fastf_t *)NULL, (struct bu_bitv *)NULL);
 
+    /* NMG2s */
+    /* initialize tables */
+    bu_ptbl_init(&vertices2, 64, " &vertices2 ");
+    bu_ptbl_init(&faces2, 64, " &faces2 ");
+    bu_ptbl_init(&names2, 64, " &names2 ");
+
+    /* make basic nmg structures if this is the first polygon */
+    m2 = nmg_mm();
+    r2 = nmg_mrsv(m2);
+    s2 = BU_LIST_FIRST(shell, &r2->s_hd);
+
+    NMG_CK_MODEL(m2);
+    NMG_CK_REGION(r2);
+    NMG_CK_SHELL(s2);
+
+    size_t polygon3 = 0;
+    size_t vertex4 = 0;
+    bu_log("history: numNorPolygons_in_current_nmg = (%lu)\n", numNorPolygons_in_current_nmg);
+    for ( polygon3 = 0 ; polygon3 < numNorPolygons_in_current_nmg ; polygon3++ ) {
+        bu_log("history: num vertices in current polygon = (%lu)\n", size_history[polygon3]);
+        for ( vertex4 = 0 ; vertex4 < size_history[polygon3] ; vertex4++ ) {
+            bu_log("history: (%lu)(%lu)(%lu)(%f)(%f)(%f)(%f)(%f)(%f)(%f)\n", 
+               polygon3,
+               vertex4,
+               index_arr_nv_faces_history[polygon3][vertex4][0],
+               (ga->vert_list[index_arr_nv_faces_history[polygon3][vertex4][0]][0]) * conversion_factor,
+               (ga->vert_list[index_arr_nv_faces_history[polygon3][vertex4][0]][1]) * conversion_factor,
+               (ga->vert_list[index_arr_nv_faces_history[polygon3][vertex4][0]][2]) * conversion_factor,
+               ga->vert_list[index_arr_nv_faces_history[polygon3][vertex4][0]][3],
+               ga->norm_list[index_arr_nv_faces_history[polygon3][vertex4][1]][0],
+               ga->norm_list[index_arr_nv_faces_history[polygon3][vertex4][1]][1],
+               ga->norm_list[index_arr_nv_faces_history[polygon3][vertex4][1]][2]);
+        }
+    }
+
+    struct vertex **nmg2_verts = NULL;
+
+    size_t idx4 = 0;
+    size_t idx5 = 0;
+    /* insert pointers to each vertex structure into vertices2 list */
+    /* the vertices2 list should only contain the vertex structures
+       for the current face to be inserted into the nmg */
+
+    struct vertex ***nmg2_verts_ptr = NULL ;
+
+    /* loop thru all the polygons (i.e. faces) */
+    for ( idx4 = 0 ; idx4 < numNorPolygons_in_current_nmg ; idx4++ ) {
+        /* loop thru all vertices of the current polygon */
+
+        nmg2_verts = (struct vertex **)bu_calloc(size_history[idx4], sizeof(struct vertex *), "nmg2_verts");
+        nmg2_verts_ptr = (struct vertex ***)bu_calloc(size_history[idx4], sizeof(struct vertex ***), "nmg2_verts_ptr");
+#if 0
+        memset((void *)nmg2_verts, 0, sizeof(struct vertex) * size_history[idx4]);
+#endif
+
+        for ( idx5 = 0 ; idx5 < size_history[idx4] ; idx5++ ) {
+
+            bu_log("pointer put into buffer = (%lx)\n", &(nmg2_verts[idx5]));  
+         /* nmg2_verts_ptr[idx5] = &(nmg2_verts[idx5]); */
+            bu_ptbl_ins(&vertices2, (long *)(nmg2_verts[idx5]));
+        }
+        bu_log("about to assign fu2\n");
+        fu2 = nmg_cface(s2, (struct vertex **)BU_PTBL_BASEADDR(&vertices2), BU_PTBL_END(&vertices2));
+
+        NMG_CK_FACE(&fu2);
+
+        bu_ptbl_ins(&faces2, (long *)fu2);
+        bu_ptbl_reset(&vertices2);
+    }
+    bu_free(nmg2_verts,"nmg2_verts");
+    bu_free(nmg2_verts_ptr,"nmg2_verts_ptr");
+
+    for ( idx5 = 0 ; idx5 < 6 ; idx5 ++ ) {
+        bu_log("addresses of vertex structures (%lu)(%lx)\n", idx5, &(nmg2_verts[idx5]));
+    }
+    size_t idx3 = 0;
+    fastf_t tmp5[3] = { 0, 0, 0 };
+    /* insert fastf_t coordinates into vertex/vertex_g structures */
+    for ( idx3 = 0 ; idx3 < num_unique_vertex_indexes ; idx3++ ) {
+        VSCALE(tmp5, (ga->vert_list[unique_vertex_indexes[idx3]]), conversion_factor);
+        bu_log("1\n");
+    /*  NMG_CK_VERTEX(&(nmg2_verts[idx3])); */
+        bu_log("2\n");
+    /*  nmg_vertex_gv(&(nmg2_verts[idx3]), tmp5); */
+    }
+
+    /* NMG2e */
+
+    bu_free(index_arr_nv_faces_history,"index_arr_nv_faces_history");
+    bu_free(size_history,"size_history");
     bu_free(vertex_sort_index,"vertex_sort_index");
     bu_free(vertex_normal_sort_index,"vertex_normal_sort_index");
     bu_free(unique_vertex_indexes,"unique_vertex_indexes");
