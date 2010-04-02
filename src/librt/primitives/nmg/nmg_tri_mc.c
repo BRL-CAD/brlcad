@@ -68,7 +68,7 @@
 #define VOODOO 10010.001
 
 /* set this to 1 for full midpoint use. Set it to 2 for x/y mid and real z. */
-int marching_cubes_use_midpoint = 2;
+int marching_cubes_use_midpoint = 0;
 
 /*
  * Table data acquired from Paul Borke's page at
@@ -418,6 +418,7 @@ rt_nmg_mc_realize_cube(struct shell *s, int pv, point_t *edges, const struct bn_
 
 	memset((char *)vertl, 0, sizeof(vertl));
 
+	/* LOCK */
 	fu = nmg_cmface(s, f_vertl, 3);
 
 	nmg_vertex_gv(vertl[0], edges[vi[0]]);
@@ -432,6 +433,7 @@ rt_nmg_mc_realize_cube(struct shell *s, int pv, point_t *edges, const struct bn_
 		    DIST_PT_PT(edges[vi[0]],edges[vi[1]]),
 		    DIST_PT_PT(edges[vi[0]],edges[vi[2]]),
 		    DIST_PT_PT(edges[vi[1]],edges[vi[2]]));
+	/* UNLOCK */
 
 	vi+=3;
     }
