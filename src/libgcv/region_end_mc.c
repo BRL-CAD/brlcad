@@ -50,7 +50,7 @@ gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, u
     int empty_region = 0;
     int empty_model = 0;
     int NMG_debug_state = 0;
-    int count = 0;
+    int count = 0, removed = 0;
 
     void (*write_region)(struct nmgregion *, const struct db_full_path *, int, int, float [3]);
 
@@ -167,6 +167,9 @@ gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, u
     } BU_UNSETJUMP; /* Relinquish bomb protection */
 
     nmg_kr(r);
+
+    removed = nmg_edge_collapse(m, tsp->ts_tol, tsp->ts_ttol->abs, tsp->ts_ttol->norm);
+    bu_log("decimate reduced %d faces to %d in %s\n", count, count - removed, db_path_to_string(pathp));
 
     return _gcv_cleanup(NMG_debug_state, tp);
 }
