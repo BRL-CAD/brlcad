@@ -168,6 +168,7 @@ gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 
     nmg_kr(r);
 
+    bu_log("Fusing vertices: %d eliminated\n", nmg_model_vertex_fuse(m, tsp->ts_tol));
     removed = nmg_edge_collapse(m, tsp->ts_tol, tsp->ts_ttol->abs, tsp->ts_ttol->norm);
     bu_log("decimate reduced %d faces to %d in %s\n", count, count - removed, db_path_to_string(pathp));
 
